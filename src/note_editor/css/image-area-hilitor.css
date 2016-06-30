@@ -1,0 +1,7 @@
+.image-area-hilitor {
+    position: absolute;
+    background-color: rgb(255, 255, 102);
+    opacity: 0.4;
+    cursor: default;
+    z-index: 200;
+}
