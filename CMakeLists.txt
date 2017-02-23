@@ -1,30 +1,45 @@
 cmake_minimum_required(VERSION 2.8)
 
-include(QuentierCMakePolicies)
+set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules ${CMAKE_MODULE_PATH})
+
+include(LibquentierCMakePolicies)
 SET_POLICIES()
 
 if("${CMAKE_MAJOR_VERSION}" GREATER "2")
   project(libquentier
-          VERSION 0.2.0)
+          VERSION 0.4.0)
 else()
   project(libquentier)
   set(PROJECT_VERSION_MAJOR "0")
-  set(PROJECT_VERSION_MINOR "2")
+  set(PROJECT_VERSION_MINOR "4")
   set(PROJECT_VERSION_PATCH "0")
   set(PROJECT_VERSION_COUNT 3)
   set(PROJECT_VERSION "${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}.${PROJECT_VERSION_PATCH}")
 endif()
 
 set(PROJECT_VENDOR "Dmitry Ivanov")
-set(PROJECT_COPYRIGHT_YEAR "2016")
-set(PROJECT_DOMAIN_FIRST "d1vanov")
-set(PROJECT_DOMAIN_SECOND "com")
+set(PROJECT_COPYRIGHT_YEAR "2017")
+set(PROJECT_DOMAIN_FIRST "quentier")
+set(PROJECT_DOMAIN_SECOND "org")
 set(PROJECT_DOMAIN "${PROJECT_DOMAIN_FIRST}.${PROJECT_DOMAIN_SECOND}")
+
+include(LibquentierCompilerSettings)
+include(LibquentierAdditionalCompilerWarnings)
+include(LibquentierLinkerSettings)
+include(LibquentierSetupQt)
+include(LibquentierFindLibXml2)
+include(LibquentierFindOpenSSL)
+include(LibquentierFindBoost)
+include(LibquentierFindHunspell)
+include(LibquentierFindQtKeychain)
+include(LibquentierFindQEverCloud)
+include(LibquentierFindQt4Mimetypes)
+include(LibquentierFindLibTidyHtml5)
+include(LibquentierSetupDoxygen)
+include(PrependPath)
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/headers
                     ${CMAKE_CURRENT_SOURCE_DIR}/src)
-
-include(QuentierAdditionalCompilerWarnings)
 
 set(THIRDPARTY_LIBS ${QEVERCLOUD_LIBRARIES})
 list(APPEND THIRDPARTY_LIBS ${LIB_TIDY_LIBRARIES})
@@ -37,6 +52,9 @@ if(NOT USE_QT5)
 endif()
 if(LIBCPP)
   list(APPEND THIRDPARTY_LIBS ${LIBCPP})
+endif()
+if(MSVC)
+  list(APPEND THIRDPARTY_LIBS secur32.lib)
 endif()
 
 set(THIRDPARTY_LIB_DIRS ${QEVERCLOUD_LIB_DIR})
@@ -476,25 +494,40 @@ else()
   set(${PROJECT_NAME}_QM_FILES "")
 endif()
 
-add_library(${PROJECT_NAME} SHARED
+if(USE_QT5)
+  set(LIBQUENTIER_QT_VERSION "qt5")
+else()
+  set(LIBQUENTIER_QT_VERSION "qt4")
+endif()
+
+set(MAJOR_VERSION_LIB_NAME_SUFFIX OFF CACHE BOOL "If on, the project's major version would be added to the library's name as a suffix")
+
+set(LIBQUENTIER_LIBNAME_SUFFIX "")
+if(MAJOR_VERSION_LIB_NAME_SUFFIX)
+  set(LIBQUENTIER_LIBNAME_SUFFIX "${PROJECT_VERSION_MAJOR}")
+endif()
+
+set(LIBNAME "lib${LIBQUENTIER_QT_VERSION}quentier${LIBQUENTIER_LIBNAME_SUFFIX}")
+
+add_library(${LIBNAME} SHARED
             ${${PROJECT_NAME}_HEADERS}
             ${${PROJECT_NAME}_SOURCES}
             ${${PROJECT_NAME}_RESOURCES_RCC}
             ${${PROJECT_NAME}_FORMS_HEADERS}
             ${${PROJECT_NAME}_QM_FILES})
 
-set_target_properties(${PROJECT_NAME} PROPERTIES
+set_target_properties(${LIBNAME} PROPERTIES
                       PREFIX ""
                       VERSION "${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}.${PROJECT_VERSION_PATCH}"
                       SOVERSION "${PROJECT_VERSION_MAJOR}"
                       MACOSX_RPATH 1
-                      INSTALL_NAME_DIR "${CMAKE_INSTALL_PREFIX}/lib")
+                      INSTALL_RPATH_USE_LINK_PATH TRUE)
 
-if(MSVC)
-  list(APPEND THIRDPARTY_LIBS secur32.lib)
+target_link_libraries(${LIBNAME} ${QT_LIBRARIES} ${THIRDPARTY_LIBS})
+
+if(${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
+  set_target_properties(${LIBNAME} PROPERTIES COMPILE_DEFINITIONS "BUILDING_QUENTIER_DLL=1")
 endif()
-
-target_link_libraries(${PROJECT_NAME} ${QT_LIBRARIES} ${THIRDPARTY_LIBS})
 
 set(TEST_HEADERS
     src/tests/EncryptionManagerTests.h
@@ -539,11 +572,7 @@ qt_add_resources(${PROJECT_NAME}_TEST_RESOURCES_RCC ${TEST_RESOURCES})
 add_executable(test_${PROJECT_NAME} ${TEST_HEADERS} ${TEST_SOURCES} ${${PROJECT_NAME}_TEST_RESOURCES_RCC})
 add_test(test_${PROJECT_NAME} test_${PROJECT_NAME})
 
-target_link_libraries(test_${PROJECT_NAME} ${PROJECT_NAME} ${QT_LIBRARIES} ${THIRDPARTY_LIBS})
-
-if(${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
-  set_target_properties(${PROJECT_NAME} PROPERTIES COMPILE_DEFINITIONS "BUILDING_QUENTIER_DLL=1")
-endif()
+target_link_libraries(test_${PROJECT_NAME} ${LIBNAME} ${QT_LIBRARIES} ${THIRDPARTY_LIBS})
 
 # set Doxygen documentation properties
 set(DOXY_INPUT "${CMAKE_CURRENT_SOURCE_DIR}/headers ${CMAKE_CURRENT_SOURCE_DIR}/README.md")
@@ -559,15 +588,61 @@ ADD_DOCUMENTATION(doc Doxyfile)
 prepend_path(${PROJECT_NAME}_SOURCES "${${PROJECT_NAME}_SOURCES}" ${CMAKE_CURRENT_SOURCE_DIR})
 prepend_path(TEST_SOURCES "${TEST_SOURCES}" ${CMAKE_CURRENT_SOURCE_DIR})
 
-# collect the list of sources to be checked by static analyzer
-set(${PROJECT_NAME}_CHECKABLE_SOURCES ${${PROJECT_NAME}_SOURCES})
-list(APPEND ${PROJECT_NAME}_CHECKABLE_SOURCES ${TEST_SOURCES})
+# collect the list of sources to be checked by the static analyzer
+set(LIBQUENTIER_CPPCHECKABLE_SOURCES ${${PROJECT_NAME}_SOURCES})
+list(APPEND LIBQUENTIER_CPPCHECKABLE_SOURCES ${TEST_SOURCES})
+
+# installation settings
+if(NOT CMAKE_INSTALL_LIBDIR)
+  set(CMAKE_INSTALL_LIBDIR "${CMAKE_INSTALL_PREFIX}/lib")
+endif()
+
+if(NOT CMAKE_INSTALL_BINDIR)
+  set(CMAKE_INSTALL_BINDIR "${CMAKE_INSTALL_PREFIX}/bin")
+endif()
+
+if(NOT CMAKE_INSTALL_INCLUDEDIR)
+  set(CMAKE_INSTALL_INCLUDEDIR "${CMAKE_INSTALL_PREFIX}/include")
+endif()
+
+if(NOT INSTALL_CMAKE_DIR)
+  if(WIN32 AND NOT CYGWIN)
+    set(DEF_INSTALL_CMAKE_DIR "${CMAKE_INSTALL_PREFIX}/CMake")
+  else()
+    set(DEF_INSTALL_CMAKE_DIR "${CMAKE_INSTALL_LIBDIR}/cmake/Libquentier-${LIBQUENTIER_QT_VERSION}")
+  endif()
+  set(INSTALL_CMAKE_DIR ${DEF_INSTALL_CMAKE_DIR} CACHE PATH "Installation directory for CMake files")
+endif()
+
+configure_file(cmake/modules/LibquentierBuildTreeSettings.cmake.in
+               ${PROJECT_BINARY_DIR}/Libquentier-${LIBQUENTIER_QT_VERSION}BuildTreeSettings.cmake @ONLY)
+configure_file(cmake/modules/LibquentierConfig.cmake.in
+               ${PROJECT_BINARY_DIR}/Libquentier-${LIBQUENTIER_QT_VERSION}Config.cmake @ONLY)
+configure_file(cmake/modules/LibquentierConfigVersion.cmake.in
+               ${PROJECT_BINARY_DIR}/Libquentier-${LIBQUENTIER_QT_VERSION}ConfigVersion.cmake @ONLY)
+
+if(USE_QT5)
+  if(USE_QT5_WEBKIT OR (Qt5Core_VERSION VERSION_LESS "5.4.0"))
+    file(COPY cmake/modules/LibquentierFindQt5DependenciesWebKit.cmake DESTINATION ${PROJECT_BINARY_DIR})
+    file(RENAME ${PROJECT_BINARY_DIR}/LibquentierFindQt5DependenciesWebKit.cmake ${PROJECT_BINARY_DIR}/Libquentier-${LIBQUENTIER_QT_VERSION}FindQtDependencies.cmake)
+  elseif(Qt5Core_VERSION VERSION_LESS "5.6.0")
+    file(COPY cmake/modules/LibquentierFindQt5DependenciesWebEngineNoCore.cmake DESTINATION ${PROJECT_BINARY_DIR})
+    file(RENAME ${PROJECT_BINARY_DIR}/LibquentierFindQt5DependenciesWebEngineNoCore.cmake ${PROJECT_BINARY_DIR}/Libquentier-${LIBQUENTIER_QT_VERSION}FindQtDependencies.cmake)
+  else()
+    file(COPY cmake/modules/LibquentierFindQt5DependenciesWebEngineCore.cmake DESTINATION ${PROJECT_BINARY_DIR})
+    file(RENAME ${PROJECT_BINARY_DIR}/LibquentierFindQt5DependenciesWebEngineCore.cmake ${PROJECT_BINARY_DIR}/Libquentier-${LIBQUENTIER_QT_VERSION}FindQtDependencies.cmake)
+  endif()
+else()
+  file(COPY cmake/modules/LibquentierFindQt4Dependencies.cmake DESTINATION ${PROJECT_BINARY_DIR})
+  file(RENAME ${PROJECT_BINARY_DIR}/LibquentierFindQt4Dependencies.cmake ${PROJECT_BINARY_DIR}/Libquentier-${LIBQUENTIER_QT_VERSION}FindQtDependencies.cmake)
+endif()
 
 # install shared library
-install(TARGETS ${PROJECT_NAME}
-        ARCHIVE DESTINATION lib
-        LIBRARY DESTINATION lib
-        RUNTIME DESTINATION bin)
+install(TARGETS ${LIBNAME}
+        EXPORT Libquentier-${LIBQUENTIER_QT_VERSION}LibraryDepends
+        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
 # install headers
 foreach(ITEM ${NOTE_EDITOR_HEADERS})
@@ -602,6 +677,22 @@ foreach(ITEM ${UTILITY_HEADERS})
   install(FILES ${ITEM} DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/quentier/utility)
 endforeach()
 
+# install translations
 if(UPDATE_TRANSLATIONS)
   install(FILES ${${PROJECT_NAME}_QM_FILES} DESTINATION ${CMAKE_INSTALL_TRANSLATIONSDIR})
 endif()
+
+# install cmake files
+install(EXPORT Libquentier-${LIBQUENTIER_QT_VERSION}LibraryDepends DESTINATION ${INSTALL_CMAKE_DIR})
+install(FILES ${PROJECT_SOURCE_DIR}/cmake/modules/LibquentierFindPackageWrapperMacro.cmake DESTINATION ${INSTALL_CMAKE_DIR})
+install(FILES ${PROJECT_BINARY_DIR}/Libquentier-${LIBQUENTIER_QT_VERSION}FindQtDependencies.cmake DESTINATION ${INSTALL_CMAKE_DIR})
+install(FILES ${PROJECT_BINARY_DIR}/Libquentier-${LIBQUENTIER_QT_VERSION}Config.cmake DESTINATION ${INSTALL_CMAKE_DIR})
+install(FILES ${PROJECT_BINARY_DIR}/Libquentier-${LIBQUENTIER_QT_VERSION}ConfigVersion.cmake DESTINATION ${INSTALL_CMAKE_DIR})
+
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+enable_testing()
+
+add_custom_target(check COMMAND "${CMAKE_CTEST_COMMAND}" "--verbose")
+
+set(LIBQUENTIER_CPPCHECKABLE_INCLUDE_DIRS "${PROJECT_SOURCE_DIR}/headers")
+include(LibquentierSetupCppCheck)

@@ -1,0 +1,26 @@
+# - Try to find libquentier
+# Once done this will define
+#  LIBQUENTIER_FOUND - libquentier library was found
+#  LIBQUENTIER_INCLUDE_DIRS - libquentier include directories
+#  LIBQUENTIER_LIBRARIES - The libraries needed to use libquentier
+
+# Compute paths
+get_filename_component(LIBQUENTIER_CMAKE_DIR "${CMAKE_CURRENT_LIST_FILE}" PATH)
+if(EXISTS "${LIBQUENTIER_CMAKE_DIR}/CMakeCache.txt")
+  # in build tree
+  include("${LIBQUENTIER_CMAKE_DIR}/Libquentier-@LIBQUENTIER_QT_VERSION@BuildTreeSettings.cmake")
+else()
+  set(LIBQUENTIER_INCLUDE_DIRS "@CMAKE_INSTALL_INCLUDEDIR@")
+endif()
+
+# Find the libquentier's Qt dependencies
+include("${LIBQUENTIER_CMAKE_DIR}/LibquentierFindPackageWrapperMacro.cmake")
+include("${LIBQUENTIER_CMAKE_DIR}/Libquentier-@LIBQUENTIER_QT_VERSION@FindQtDependencies.cmake")
+
+# libquentier library dependencies (contains definitions for IMPORTED targets)
+include("${LIBQUENTIER_CMAKE_DIR}/Libquentier-@LIBQUENTIER_QT_VERSION@LibraryDepends.cmake")
+
+# These are IMPORTED targets created by Libquentier-@LIBQUENTIER_QT_VERSION@LibraryDepends.cmake
+set(LIBQUENTIER_LIBRARIES "lib@LIBQUENTIER_QT_VERSION@quentier@LIBQUENTIER_LIBNAME_SUFFIX@")
+
+set(LIBQUENTIER_FOUND TRUE)

@@ -1,0 +1,5 @@
+macro(LibquentierFindPackageWrapper dep)
+  if (NOT ${dep}_FOUND)
+    find_package(${dep} ${ARGV1} REQUIRED)
+  endif()
+endmacro()
