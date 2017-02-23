@@ -101,8 +101,8 @@ bool ENMLConverterPrivate::htmlToNoteContent(const QString & html, const QVector
     bool insideEnMediaElement = false;
     QXmlStreamAttributes enMediaAttributes;
 
-    size_t  skippedElementNestingCounter = 0;
-    size_t  skippedElementWithPreservedContentsNestingCounter = 0;
+    size_t skippedElementNestingCounter = 0;
+    size_t skippedElementWithPreservedContentsNestingCounter = 0;
 
     while(!reader.atEnd())
     {
@@ -379,6 +379,289 @@ bool ENMLConverterPrivate::htmlToNoteContent(const QString & html, const QVector
     if (!res) {
         errorDescription = validationError;
         QNWARNING(errorDescription << QStringLiteral(", ENML: ") << noteContent << QStringLiteral("\nHTML: ") << html);
+        return false;
+    }
+
+    return true;
+}
+
+bool ENMLConverterPrivate::htmlToQTextDocument(const QString & html, QTextDocument & doc,
+                                               ErrorString & errorDescription) const
+{
+    QNDEBUG(QStringLiteral("ENMLConverterPrivate::htmlToQTextDocument: ") << html);
+
+    if (!m_pHtmlCleaner) {
+        m_pHtmlCleaner = new HTMLCleaner;
+    }
+
+    QString error;
+    m_cachedConvertedXml.resize(0);
+    bool res = m_pHtmlCleaner->htmlToXml(html, m_cachedConvertedXml, error);
+    if (!res) {
+        errorDescription.base() = QT_TRANSLATE_NOOP("", "Failed to clean up the note's html");
+        errorDescription.details() = error;
+        return false;
+    }
+
+    QNTRACE(QStringLiteral("HTML converted to XML by tidy: ") << m_cachedConvertedXml);
+
+    QXmlStreamReader reader(m_cachedConvertedXml);
+
+    QString simplifiedHtml;
+    QXmlStreamWriter writer(&simplifiedHtml);
+    writer.setAutoFormatting(true);
+    writer.setCodec("UTF-8");
+    writer.writeDTD(QStringLiteral("<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01//EN\" \"http://www.w3.org/TR/html4/strict.dtd\">"));
+
+    int writeElementCounter = 0;
+    QString lastElementName;
+    QXmlStreamAttributes lastElementAttributes;
+
+    size_t skippedElementNestingCounter = 0;
+
+    while(!reader.atEnd())
+    {
+        Q_UNUSED(reader.readNext());
+
+        if (reader.isStartDocument()) {
+            continue;
+        }
+
+        if (reader.isDTD()) {
+            continue;
+        }
+
+        if (reader.isEndDocument()) {
+            break;
+        }
+
+        if (reader.isStartElement())
+        {
+            if (skippedElementNestingCounter) {
+                QNTRACE(QStringLiteral("Skipping everyting inside element skipped together with its contents"));
+                ++skippedElementNestingCounter;
+                continue;
+            }
+
+            lastElementName = reader.name().toString();
+
+            if ( (lastElementName == QStringLiteral("map")) ||
+                 (lastElementName == QStringLiteral("area")) ||
+                 (lastElementName == QStringLiteral("bdo")) ||
+                 (lastElementName == QStringLiteral("caption")) ||
+                 (lastElementName == QStringLiteral("col")) ||
+                 (lastElementName == QStringLiteral("colgroup")) )
+            {
+                QNTRACE(QStringLiteral("Skipping element ") << lastElementName);
+                ++skippedElementNestingCounter;
+                continue;
+            }
+
+            if (lastElementName == QStringLiteral("abbr")) {
+                lastElementName = QStringLiteral("div");
+                QNTRACE(QStringLiteral("Replaced abbr with div"));
+            }
+            else if (lastElementName == QStringLiteral("acronym")) {
+                lastElementName = QStringLiteral("u");
+                QNTRACE(QStringLiteral("Replaced acronym with u"));
+            }
+            else if (lastElementName == QStringLiteral("del")) {
+                lastElementName = QStringLiteral("s");
+                QNTRACE(QStringLiteral("Replaced del with s"));
+            }
+            else if (lastElementName == QStringLiteral("ins")) {
+                lastElementName = QStringLiteral("u");
+                QNTRACE(QStringLiteral("Replaced ins with u"));
+            }
+            else if (lastElementName == QStringLiteral("q")) {
+                lastElementName = QStringLiteral("blockquote");
+                QNTRACE(QStringLiteral("Replaced q with blockquote"));
+            }
+            else if (lastElementName == QStringLiteral("strike")) {
+                lastElementName = QStringLiteral("s");
+                QNTRACE(QStringLiteral("Replaced strike with s"));
+            }
+            else if (lastElementName == QStringLiteral("xmp")) {
+                lastElementName = QStringLiteral("tt");
+                QNTRACE(QStringLiteral("Replaced xmp with tt"));
+            }
+
+            writer.writeStartElement(lastElementName);
+
+            lastElementAttributes = reader.attributes();
+
+            if ( (lastElementName == QStringLiteral("div")) ||
+                 (lastElementName == QStringLiteral("p")) ||
+                 (lastElementName == QStringLiteral("dl")) ||
+                 (lastElementName == QStringLiteral("dt")) ||
+                 (lastElementName == QStringLiteral("h1")) ||
+                 (lastElementName == QStringLiteral("h2")) ||
+                 (lastElementName == QStringLiteral("h3")) ||
+                 (lastElementName == QStringLiteral("h4")) ||
+                 (lastElementName == QStringLiteral("h5")) ||
+                 (lastElementName == QStringLiteral("h6")) )
+            {
+                QXmlStreamAttributes filteredAttributes;
+
+                QStringRef alignAttrRef = lastElementAttributes.value(QStringLiteral("align"));
+                if (!alignAttrRef.isEmpty())
+                {
+                    QString alignAttr = alignAttrRef.toString();
+                    if ( (alignAttr == QStringLiteral("left")) ||
+                         (alignAttr == QStringLiteral("right")) ||
+                         (alignAttr == QStringLiteral("center")) ||
+                         (alignAttr == QStringLiteral("justify")) )
+                    {
+                        filteredAttributes.append(QStringLiteral("align"), alignAttr);
+                    }
+                }
+
+                QStringRef dirAttrRef = lastElementAttributes.value(QStringLiteral("dir"));
+                if (!dirAttrRef.isEmpty())
+                {
+                    QString dirAttr = dirAttrRef.toString();
+                    if ( (dirAttr == QStringLiteral("ltr")) ||
+                         (dirAttr == QStringLiteral("rtl")) )
+                    {
+                        filteredAttributes.append(QStringLiteral("dir"), dirAttr);
+                    }
+                }
+
+                if (!filteredAttributes.isEmpty()) {
+                    writer.writeAttributes(filteredAttributes);
+                }
+            }
+            else if ( (lastElementName == QStringLiteral("ol")) ||
+                      (lastElementName == QStringLiteral("ul")) )
+            {
+                QStringRef typeAttrRef = lastElementAttributes.value(QStringLiteral("type"));
+                if (!typeAttrRef.isEmpty())
+                {
+                    QString typeAttr = typeAttrRef.toString();
+                    if ( (typeAttr == QStringLiteral("1")) ||
+                         (typeAttr == QStringLiteral("a")) ||
+                         (typeAttr == QStringLiteral("A")) ||
+                         (typeAttr == QStringLiteral("square")) ||
+                         (typeAttr == QStringLiteral("disc")) ||
+                         (typeAttr == QStringLiteral("circle")) )
+                    {
+                        writer.writeAttribute(QStringLiteral("type"), typeAttr);
+                    }
+                }
+            }
+            else if ( (lastElementName == QStringLiteral("td")) ||
+                      (lastElementName == QStringLiteral("th")) )
+            {
+                QXmlStreamAttributes filteredAttributes;
+
+                if (lastElementAttributes.hasAttribute(QStringLiteral("width")))
+                {
+                    QString widthAttr = lastElementAttributes.value(QStringLiteral("width")).toString();
+                    if ( widthAttr.isEmpty() ||
+                         (widthAttr == QStringLiteral("absolute")) ||
+                         (widthAttr == QStringLiteral("relative")) )
+                    {
+                        filteredAttributes.append(QStringLiteral("width"), widthAttr);
+                    }
+                }
+
+                QStringRef bgcolorAttrRef = lastElementAttributes.value(QStringLiteral("bgcolor"));
+                if (!bgcolorAttrRef.isEmpty()) {
+                    filteredAttributes.append(QStringLiteral("bgcolor"), bgcolorAttrRef.toString());
+                }
+
+                QStringRef colspanAttrRef = lastElementAttributes.value(QStringLiteral("colspan"));
+                if (!colspanAttrRef.isEmpty()) {
+                    filteredAttributes.append(QStringLiteral("colspan"), colspanAttrRef.toString());
+                }
+
+                QStringRef rowspanAttrRef = lastElementAttributes.value(QStringLiteral("rowspan"));
+                if (!rowspanAttrRef.isEmpty()) {
+                    filteredAttributes.append(QStringLiteral("rowspan"), rowspanAttrRef.toString());
+                }
+
+                QStringRef alignAttrRef = lastElementAttributes.value(QStringLiteral("align"));
+                if (!alignAttrRef.isEmpty())
+                {
+                    QString alignAttr = alignAttrRef.toString();
+                    if ( (alignAttr == QStringLiteral("left")) ||
+                         (alignAttr == QStringLiteral("right")) ||
+                         (alignAttr == QStringLiteral("center")) ||
+                         (alignAttr == QStringLiteral("justify")) )
+                    {
+                        filteredAttributes.append(QStringLiteral("align"), alignAttr);
+                    }
+                }
+
+                QStringRef valignAttrRef = lastElementAttributes.value(QStringLiteral("valign"));
+                if (!valignAttrRef.isEmpty())
+                {
+                    QString valignAttr = valignAttrRef.toString();
+                    if ( (valignAttr == QStringLiteral("top")) ||
+                         (valignAttr == QStringLiteral("middle")) ||
+                         (valignAttr == QStringLiteral("bottom")) )
+                    {
+                        filteredAttributes.append(QStringLiteral("valign"), valignAttr);
+                    }
+                }
+
+                if (!filteredAttributes.isEmpty()) {
+                    writer.writeAttributes(filteredAttributes);
+                }
+            }
+
+            ++writeElementCounter;
+
+            QNTRACE(QStringLiteral("Wrote element: name = ") << lastElementName);
+        }
+
+        if ((writeElementCounter > 0) && reader.isCharacters())
+        {
+            if (skippedElementNestingCounter) {
+                continue;
+            }
+
+            QString text = reader.text().toString();
+
+            if (reader.isCDATA()) {
+                writer.writeCDATA(text);
+                QNTRACE(QStringLiteral("Wrote CDATA: ") << text);
+            }
+            else {
+                writer.writeCharacters(text);
+                QNTRACE(QStringLiteral("Wrote characters: ") << text);
+            }
+        }
+
+        if (reader.isEndElement())
+        {
+            if (skippedElementNestingCounter) {
+                --skippedElementNestingCounter;
+                continue;
+            }
+
+            if (writeElementCounter <= 0) {
+                continue;
+            }
+
+            writer.writeEndElement();
+            --writeElementCounter;
+        }
+    }
+
+    if (reader.hasError()) {
+        errorDescription.base() = QT_TRANSLATE_NOOP("", "Can't convert the note's html to QTextDocument");
+        errorDescription.details() = reader.errorString();
+        QNWARNING(QStringLiteral("Error reading html: ") << errorDescription
+                  << QStringLiteral(", HTML: ") << html << QStringLiteral("\nXML: ") << m_cachedConvertedXml);
+        return false;
+    }
+
+    doc.setHtml(simplifiedHtml);
+    if (Q_UNLIKELY(doc.isEmpty())) {
+        errorDescription.base() = QT_TRANSLATE_NOOP("", "Can't convert the note's html to QTextDocument: the document "
+                                                    "is empty after setting the simplified HTML");
+        QNWARNING(errorDescription << QStringLiteral(", simplified HTML: ") << simplifiedHtml);
         return false;
     }
 

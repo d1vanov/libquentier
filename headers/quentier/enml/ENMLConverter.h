@@ -25,6 +25,7 @@
 #include <quentier/types/ErrorString.h>
 #include <QSet>
 #include <QString>
+#include <QTextDocument>
 
 namespace quentier {
 
@@ -96,6 +97,20 @@ public:
                            DecryptedTextManager & decryptedTextManager,
                            ErrorString & errorDescription,
                            const QVector<SkipHtmlElementRule> & skipRules = QVector<SkipHtmlElementRule>()) const;
+
+    /**
+     * Converts the passed in HTML into its simplified form acceptable by
+     * QTextDocument (see http://doc.qt.io/qt-5/richtext-html-subset.html for
+     * the list of elements supported by QTextDocument)
+     *
+     * @param html - the input HTML which needs to be converted to QTextDocument
+     * @param doc - QTextDocument filled with the result of the method's work
+     * @param errorDescription - the textual description of the error if
+     * conversion of input HTML into QTextDocument has failed
+     *
+     * @return true in case of successful conversion, false otherwise
+     */
+    bool htmlToQTextDocument(const QString & html, QTextDocument & doc, ErrorString & errorDescription) const;
 
     struct NoteContentToHtmlExtraData
     {

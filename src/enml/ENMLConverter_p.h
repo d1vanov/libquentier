@@ -55,6 +55,8 @@ public:
                            DecryptedTextManager & decryptedTextManager,
                            NoteContentToHtmlExtraData & extraData) const;
 
+    bool htmlToQTextDocument(const QString & html, QTextDocument & doc, ErrorString & errorDescription) const;
+
     bool validateEnml(const QString & enml, ErrorString & errorDescription) const;
 
     static bool noteContentToPlainText(const QString & noteContent, QString & plainText,
