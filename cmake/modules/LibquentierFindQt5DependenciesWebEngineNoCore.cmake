@@ -16,3 +16,7 @@ LibquentierFindPackageWrapper(Qt5WebSockets ${LIBQUENTIER_FIND_PACKAGE_ARG})
 LibquentierFindPackageWrapper(Qt5WebChannel ${LIBQUENTIER_FIND_PACKAGE_ARG})
 LibquentierFindPackageWrapper(Qt5WebEngine ${Libquentier_FIND_PACKAGE_ARG})
 LibquentierFindPackageWrapper(Qt5WebEngineWidgets ${Libquentier_FIND_PACKAGE_ARG})
+
+if(NOT ${CMAKE_SYSTEM_NAME} STREQUAL "Windows" AND NOT ${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
+  LibquentierFindPackageWrapper(Qt5DBus ${Libquentier_FIND_PACKAGE_ARG})
+endif()
