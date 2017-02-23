@@ -106,6 +106,7 @@ set(ENML_HEADERS
 set(LOCAL_STORAGE_HEADERS
     headers/quentier/local_storage/ILocalStorageCacheExpiryChecker.h
     headers/quentier/local_storage/DefaultLocalStorageCacheExpiryChecker.h
+    headers/quentier/local_storage/Lists.h
     headers/quentier/local_storage/LocalStorageCacheManager.h
     headers/quentier/local_storage/LocalStorageManager.h
     headers/quentier/local_storage/LocalStorageManagerThreadWorker.h
@@ -140,6 +141,7 @@ set(UTILITY_HEADERS
     headers/quentier/utility/FileSystemWatcher.h
     headers/quentier/utility/LimitedStack.h
     headers/quentier/utility/Linkage.h
+    headers/quentier/utility/LRUCache.hpp
     headers/quentier/utility/ShortcutManager.h
     headers/quentier/utility/StringUtils.h
     headers/quentier/utility/SysInfo.h
