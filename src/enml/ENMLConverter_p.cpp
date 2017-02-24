@@ -457,6 +457,18 @@ bool ENMLConverterPrivate::htmlToQTextDocument(const QString & html, QTextDocume
                 continue;
             }
 
+            if (lastElementName == QStringLiteral("link"))
+            {
+                lastElementAttributes = reader.attributes();
+                QStringRef relAttrRef = lastElementAttributes.value(QStringLiteral("rel"));
+                if (!relAttrRef.isEmpty())
+                {
+                    QNTRACE(QStringLiteral("Skipping CSS style element ") << lastElementName);
+                    ++skippedElementNestingCounter;
+                    continue;
+                }
+            }
+
             if (lastElementName == QStringLiteral("abbr")) {
                 lastElementName = QStringLiteral("div");
                 QNTRACE(QStringLiteral("Replaced abbr with div"));
