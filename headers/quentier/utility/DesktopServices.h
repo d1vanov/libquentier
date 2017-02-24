@@ -19,6 +19,7 @@
 #ifndef LIB_QUENTIER_UTILITY_DESKTOP_SERVICES_H
 #define LIB_QUENTIER_UTILITY_DESKTOP_SERVICES_H
 
+#include <quentier/utility/Macros.h>
 #include <quentier/utility/Linkage.h>
 #include <QString>
 #include <QStyle>
@@ -30,7 +31,15 @@ QT_FORWARD_DECLARE_CLASS(QWidget)
 namespace quentier {
 
 // Convenience functions for some paths important for the application
-const QString QUENTIER_EXPORT applicationPersistentStoragePath();
+
+/**
+ * applicationPersistentStoragePath - returns the folder in which the application should store
+ * its persistent data. By default chooses the appropriate system location but that can be overridden
+ * by setting QUENTIER_PERSISTENCE_STORAGE_PATH environment variable. If the standard location
+ * is overridden via the environment variable, the bool pointed to by pNonStandardLocation (if any) is set to false
+ */
+const QString QUENTIER_EXPORT applicationPersistentStoragePath(bool * pNonStandardLocation = Q_NULLPTR);
+
 const QString QUENTIER_EXPORT applicationTemporaryStoragePath();
 const QString QUENTIER_EXPORT homePath();
 

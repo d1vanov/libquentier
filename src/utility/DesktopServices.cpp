@@ -60,8 +60,18 @@
 
 namespace quentier {
 
-const QString applicationPersistentStoragePath()
+const QString applicationPersistentStoragePath(bool * pNonStandardLocation)
 {
+    QByteArray envOverride = qgetenv("QUENTIER_PERSISTENCE_STORAGE_PATH");
+    if (!envOverride.isEmpty())
+    {
+        if (pNonStandardLocation) {
+            *pNonStandardLocation = true;
+        }
+
+        return QString::fromLocal8Bit(envOverride);
+    }
+
 #if defined(Q_OS_MAC) || defined (Q_OS_WIN)
     // FIXME: clarify in which version the enum item was actually renamed
     // Seriously, WTF is going on? Why the API gets changed within the major release?
