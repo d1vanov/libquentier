@@ -449,6 +449,21 @@ elseif(${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
   list(APPEND ${PROJECT_NAME}_SOURCES src/utility/unix/StackTrace.cpp)
 endif()
 
+# generate version info header
+if(QUENTIER_USE_QT_WEB_ENGINE)
+  set(LIB_QUENTIER_QT_WEB_ENGINE_DEFINE "#define LIB_QUENTIER_USE_QT_WEB_ENGINE")
+else()
+  set(LIB_QUENTIER_QT_WEB_ENGINE_DEFINE "")
+endif()
+
+set(LIBQUENTIER_LIBRARY_VERSION "${PROJECT_VERSION_MAJOR} * 10000 + ${PROJECT_VERSION_MINOR} * 100 + ${PROJECT_VERSION_PATCH}")
+
+configure_file(headers/quentier/utility/VersionInfo.h.in
+               ${PROJECT_BINARY_DIR}/VersionInfo.h @ONLY)
+
+list(APPEND UTILITY_HEADERS ${PROJECT_BINARY_DIR}/VersionInfo.h)
+list(APPEND PUBLIC_HEADERS ${PROJECT_BINARY_DIR}/VersionInfo.h)
+
 set(RESOURCES
     src/note_editor/images/underline.qrc
     src/note_editor/css/css.qrc
