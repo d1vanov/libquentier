@@ -24,6 +24,7 @@
 #include <quentier/utility/Linkage.h>
 #include <quentier/types/ErrorString.h>
 #include <QWidget>
+#include <QPrinter>
 
 QT_FORWARD_DECLARE_CLASS(QUndoStack)
 
@@ -157,7 +158,6 @@ Q_SIGNALS:
     void insertTableDialogRequested();
 
 public Q_SLOTS:
-
     /**
      * Invoke this slot to launch the asynchronous procedure of converting the current contents of the note editor
      * to note; the @link convertedToNote @endlink signal would be emitted in response when the conversion is done
@@ -237,6 +237,8 @@ public Q_SLOTS:
     void removeHyperlink();
 
     void onNoteLoadCancelled();
+
+    void print(QPrinter & printer);
 
 protected:
     virtual void dragMoveEvent(QDragMoveEvent * pEvent) Q_DECL_OVERRIDE;

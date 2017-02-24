@@ -56,6 +56,7 @@
 #include "undo_stack/SpellCheckAddToUserWordListUndoCommand.h"
 #include "undo_stack/TableActionUndoCommand.h"
 #include <quentier/utility/ApplicationSettings.h>
+#include <quentier/utility/EventLoopWithExitStatus.h>
 #include <quentier/note_editor/SpellChecker.h>
 
 #ifndef QUENTIER_USE_QT_WEB_ENGINE
@@ -81,6 +82,7 @@ typedef QWebSettings WebSettings;
 #include <QtWebSockets/QWebSocketServer>
 #include <QtWebChannel>
 #include <QWebEngineSettings>
+#include <QTimer>
 typedef QWebEngineSettings WebSettings;
 #endif
 
@@ -218,6 +220,9 @@ NoteEditorPrivate::NoteEditorPrivate(NoteEditor & noteEditor) :
     m_pPageMutationHandler(new PageMutationHandler(this)),
     m_pUndoStack(Q_NULLPTR),
     m_pAccount(),
+#if defined(QUENTIER_USE_QT_WEB_ENGINE) && (QT_VERSION < QT_VERSION_CHECK(5, 8, 0))
+    m_htmlForPrinting(),
+#endif
     m_blankPageHtml(),
     m_contextMenuSequenceNumber(1),     // NOTE: must start from 1 as JavaScript treats 0 as null!
     m_lastContextMenuEventGlobalPos(),
@@ -2068,6 +2073,18 @@ void NoteEditorPrivate::onUndoCommandError(ErrorString error)
     emit notifyError(error);
 }
 
+#if defined(QUENTIER_USE_QT_WEB_ENGINE) && (QT_VERSION < QT_VERSION_CHECK(5, 8, 0))
+void NoteEditorPrivate::onPageHtmlReceivedForPrinting(const QString & html,
+                                                      const QVector<QPair<QString, QString> > & extraData)
+{
+    QNDEBUG(QStringLiteral("NoteEditorPrivate::onPageHtmlReceivedForPrinting: ") << html);
+
+    Q_UNUSED(extraData)
+    m_htmlForPrinting = html;
+    emit htmlReadyForPrinting();
+}
+#endif
+
 void NoteEditorPrivate::timerEvent(QTimerEvent * pEvent)
 {
     QNDEBUG(QStringLiteral("NoteEditorPrivate::timerEvent: ") << (pEvent ? QString::number(pEvent->timerId()) : QStringLiteral("<null>")));
@@ -2129,6 +2146,16 @@ void NoteEditorPrivate::dropEvent(QDropEvent * pEvent)
 {
     onDropEvent(pEvent);
 }
+
+#if defined(QUENTIER_USE_QT_WEB_ENGINE) && (QT_VERSION < QT_VERSION_CHECK(5, 8, 0))
+void NoteEditorPrivate::getHtmlForPrinting()
+{
+    QNDEBUG(QStringLiteral("NoteEditorPrivate::getHtmlForPrinting"));
+
+    GET_PAGE()
+    page->toHtml(NoteEditorCallbackFunctor<QString>(this, &NoteEditorPrivate::onPageHtmlReceivedForPrinting));
+}
+#endif
 
 void NoteEditorPrivate::init()
 {
@@ -4804,6 +4831,73 @@ void NoteEditorPrivate::setUndoStack(QUndoStack * pUndoStack)
 
     QUENTIER_CHECK_PTR(pUndoStack, QStringLiteral("null undo stack passed to note editor"));
     m_pUndoStack = pUndoStack;
+}
+
+void NoteEditorPrivate::print(QPrinter & printer)
+{
+    QNDEBUG(QStringLiteral("NoteEditorPrivate::print"));
+
+    if (Q_UNLIKELY(!m_pNote)) {
+        QNDEBUG(QStringLiteral("Can't print: no note is set to the editor"));
+        return;
+    }
+
+#ifndef QUENTIER_USE_QT_WEB_ENGINE
+    GET_PAGE()
+
+    QWebFrame * pFrame = page->mainFrame();
+    if (Q_UNLIKELY(!pFrame)) {
+        QNFATAL(QStringLiteral("Can't get access to note editor page's main frame!")); \
+        return;
+    }
+
+    pFrame->print(&printer);
+#else
+    GET_PAGE()
+
+#if QT_VERSION >= QT_VERSION_CHECK(5, 8, 0)
+    page->print(&printer, PrintCallback());
+#else
+    m_htmlForPrinting.resize(0);
+
+    QTimer * pConversionTimer = new QTimer(this);
+    pConversionTimer->setSingleShot(true);
+
+    EventLoopWithExitStatus eventLoop;
+    QObject::connect(pConversionTimer, QNSIGNAL(QTimer,timeout),
+                     &eventLoop, QNSLOT(EventLoopWithExitStatus,exitAsTimeout));
+    QObject::connect(this, QNSIGNAL(NoteEditorPrivate,htmlReadyForPrinting),
+                     &eventLoop, QNSLOT(EventLoopWithExitStatus,exitAsSuccess));
+
+    pConversionTimer->start(500);
+
+    QTimer::singleShot(0, this, SLOT(getHtmlForPrinting));
+
+    int result = eventLoop.exec(QEventLoop::ExcludeUserInputEvents);
+    if (result == EventLoopWithExitStatus::ExitStatus::Timeout) {
+        ErrorString error(QT_TRANSLATE_NOOP("", "Could not print the note editor page: failed to get the page's HTML in time"));
+        QNWARNING(error);
+        emit notifyError(error);
+        return;
+    }
+
+    QTextDocument doc;
+    ErrorString errorDescription;
+    bool res = m_enmlConverter.htmlToQTextDocument(m_htmlForPrinting, doc, errorDescription);
+    if (Q_UNLIKELY(!res)) {
+        ErrorString error(QT_TRANSLATE_NOOP("", "Can't print note"));
+        error.additionalBases().append(errorDescription.base());
+        error.additionalBases().append(errorDescription.additionalBases());
+        error.details() = errorDescription.details();
+        QNWARNING(error);
+        emit notifyError(error);
+        return;
+    }
+
+    doc.print(&printer);
+
+#endif // QT_VERSION
+#endif // QUENTIER_USE_QT_WEB_ENGINE
 }
 
 void NoteEditorPrivate::setNoteAndNotebook(const Note & note, const Notebook & notebook)

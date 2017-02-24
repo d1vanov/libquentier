@@ -388,6 +388,11 @@ void NoteEditor::onNoteLoadCancelled()
     m_backend->onNoteLoadCancelled();
 }
 
+void NoteEditor::print(QPrinter & printer)
+{
+    m_backend->print(printer);
+}
+
 void NoteEditor::dragMoveEvent(QDragMoveEvent * pEvent)
 {
     if (Q_LIKELY(pEvent)) {

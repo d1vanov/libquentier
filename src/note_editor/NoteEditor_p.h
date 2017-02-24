@@ -282,6 +282,8 @@ public Q_SLOTS:
 
     virtual void onNoteLoadCancelled() Q_DECL_OVERRIDE;
 
+    virtual void print(QPrinter & printer) Q_DECL_OVERRIDE;
+
     virtual void setNoteAndNotebook(const Note & note, const Notebook & notebook) Q_DECL_OVERRIDE;
     virtual void clear() Q_DECL_OVERRIDE;
     virtual bool isModified() const Q_DECL_OVERRIDE;
@@ -308,6 +310,10 @@ Q_SIGNALS:
     void saveGenericResourceImageToFile(QString noteLocalUid, QString resourceLocalUid, QByteArray resourceImageData,
                                         QString resourceFileSuffix, QByteArray resourceActualHash,
                                         QString resourceDisplayName, QUuid requestId);
+
+#if defined(QUENTIER_USE_QT_WEB_ENGINE) && (QT_VERSION < QT_VERSION_CHECK(5, 8, 0))
+    void htmlReadyForPrinting();
+#endif
 
 private Q_SLOTS:
     void onTableResized();
@@ -434,6 +440,10 @@ private Q_SLOTS:
     // Slots for undo command signals
     void onUndoCommandError(ErrorString error);
 
+#if defined(QUENTIER_USE_QT_WEB_ENGINE) && (QT_VERSION < QT_VERSION_CHECK(5, 8, 0))
+    void getHtmlForPrinting();
+#endif
+
 private:
     void init();
 
@@ -537,6 +547,11 @@ private:
 
     void setupAddHyperlinkDelegate(const quint64 hyperlinkId, const QString & presetHyperlink = QString());
 
+#if defined(QUENTIER_USE_QT_WEB_ENGINE) && (QT_VERSION < QT_VERSION_CHECK(5, 8, 0))
+    void onPageHtmlReceivedForPrinting(const QString & html,
+                                       const QVector<QPair<QString,QString> > & extraData = QVector<QPair<QString,QString> >());
+#endif
+
 private:
     // Overrides for some Qt's virtual methods
     virtual void timerEvent(QTimerEvent * pEvent) Q_DECL_OVERRIDE;
@@ -581,6 +596,14 @@ private:
     private:
         QPointer<NoteEditorPrivate>     m_pNoteEditor;
     };
+
+#if defined(QUENTIER_USE_QT_WEB_ENGINE) && (QT_VERSION >= QT_VERSION_CHECK(5, 8, 0))
+    class PrintCallback
+    {
+    public:
+        void operator()(bool) {}
+    };
+#endif
 
     struct Alignment
     {
@@ -742,6 +765,10 @@ private:
     QUndoStack * m_pUndoStack;
 
     QScopedPointer<Account>     m_pAccount;
+
+#if defined(QUENTIER_USE_QT_WEB_ENGINE) && (QT_VERSION < QT_VERSION_CHECK(5, 8, 0))
+    QString     m_htmlForPrinting;
+#endif
 
     QString     m_blankPageHtml;
 

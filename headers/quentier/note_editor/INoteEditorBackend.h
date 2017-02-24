@@ -25,6 +25,7 @@
 #include <quentier/types/Note.h>
 #include <quentier/types/Notebook.h>
 #include <QWidget>
+#include <QPrinter>
 
 QT_FORWARD_DECLARE_CLASS(QUndoStack)
 
@@ -149,6 +150,8 @@ public:
     virtual void removeHyperlink() = 0;
 
     virtual void onNoteLoadCancelled() = 0;
+
+    virtual void print(QPrinter & printer) = 0;
 
     virtual void setNoteAndNotebook(const Note & note, const Notebook & notebook) = 0;
 
