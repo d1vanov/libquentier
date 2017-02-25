@@ -4878,6 +4878,7 @@ bool NoteEditorPrivate::print(QPrinter & printer, ErrorString & errorDescription
 
 #if QT_VERSION >= QT_VERSION_CHECK(5, 8, 0)
     pPage->print(&printer, PrintCallback());
+    return true;
 #else
     m_htmlForPrinting.resize(0);
 
@@ -4915,7 +4916,6 @@ bool NoteEditorPrivate::print(QPrinter & printer, ErrorString & errorDescription
 
     doc.print(&printer);
     return true;
-
 #endif // QT_VERSION
 #endif // QUENTIER_USE_QT_WEB_ENGINE
 }
@@ -4988,7 +4988,7 @@ bool NoteEditorPrivate::exportToPdf(const QString & absoluteFilePath, ErrorStrin
     printer.setOutputFormat(QPrinter::PdfFormat);
     printer.setPaperSize(QPrinter::A4);
     printer.setOutputFileName(filePath);
-    return print(printer);
+    return print(printer, errorDescription);
 #endif // QUENTIER_USE_QT_WEB_ENGINE
 }
 
