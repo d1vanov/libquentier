@@ -41,7 +41,10 @@ namespace quentier {
 const QString QUENTIER_EXPORT applicationPersistentStoragePath(bool * pNonStandardLocation = Q_NULLPTR);
 
 const QString QUENTIER_EXPORT applicationTemporaryStoragePath();
+
 const QString QUENTIER_EXPORT homePath();
+
+const QString QUENTIER_EXPORT documentsPath();
 
 QUENTIER_EXPORT QStyle * applicationStyle();
 const QString QUENTIER_EXPORT humanReadableSize(const quint64 bytes);

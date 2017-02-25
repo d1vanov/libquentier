@@ -115,6 +115,15 @@ const QString homePath()
 #endif
 }
 
+const QString documentsPath()
+{
+#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
+    return QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation);
+#else
+    return QDesktopServices::storageLocation(QDesktopServices::DocumentsLocation);
+#endif
+}
+
 QStyle * applicationStyle()
 {
     QStyle * appStyle = QApplication::style();
