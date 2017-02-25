@@ -1,0 +1,8 @@
+if("${LIBQUENTIER_FIND_PACKAGE_ARG}" STREQUAL "")
+  set(LIBQUENTIER_FIND_PACKAGE_ARG "QUIET")
+else()
+  set(LIBQUENTIER_FIND_PACKAGE_ARG "")
+endif()
+
+LibquentierFindPackageWrapper(QEverCloud-qt5 ${LIBQUENTIER_FIND_PACKAGE_ARG})
+LibquentierFindPackageWrapper(Qt5Keychain ${LIBQUENTIER_FIND_PACKAGE_ARG})

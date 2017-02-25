@@ -20,6 +20,9 @@ include("${LIBQUENTIER_CMAKE_DIR}/Libquentier-@LIBQUENTIER_QT_VERSION@FindQtDepe
 # libquentier library dependencies (contains definitions for IMPORTED targets)
 include("${LIBQUENTIER_CMAKE_DIR}/Libquentier-@LIBQUENTIER_QT_VERSION@LibraryDepends.cmake")
 
+# find libquentier library dependencies being IMPORTED targets
+include("${LIBQUENTIER_CMAKE_DIR}/Libquentier-@LIBQUENTIER_QT_VERSION@FindOtherDependencies.cmake")
+
 # These are IMPORTED targets created by Libquentier-@LIBQUENTIER_QT_VERSION@LibraryDepends.cmake
 set(LIBQUENTIER_LIBRARIES "lib@LIBQUENTIER_QT_VERSION@quentier@LIBQUENTIER_LIBNAME_SUFFIX@")
 
