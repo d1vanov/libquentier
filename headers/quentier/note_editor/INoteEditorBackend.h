@@ -151,7 +151,9 @@ public:
 
     virtual void onNoteLoadCancelled() = 0;
 
-    virtual void print(QPrinter & printer) = 0;
+    virtual bool print(QPrinter & printer, ErrorString & errorDescription) = 0;
+
+    virtual bool exportToPdf(const QString & absoluteFilePath, ErrorString & errorDescription) = 0;
 
     virtual void setNoteAndNotebook(const Note & note, const Notebook & notebook) = 0;
 

@@ -4833,30 +4833,51 @@ void NoteEditorPrivate::setUndoStack(QUndoStack * pUndoStack)
     m_pUndoStack = pUndoStack;
 }
 
-void NoteEditorPrivate::print(QPrinter & printer)
+bool NoteEditorPrivate::print(QPrinter & printer, ErrorString & errorDescription)
 {
     QNDEBUG(QStringLiteral("NoteEditorPrivate::print"));
 
     if (Q_UNLIKELY(!m_pNote)) {
-        QNDEBUG(QStringLiteral("Can't print: no note is set to the editor"));
-        return;
+        errorDescription.base() = QT_TRANSLATE_NOOP("", "Can't print note: no note is set to the editor");
+        QNDEBUG(errorDescription);
+        return false;
+    }
+
+    if (m_pendingNotePageLoad || m_pendingIndexHtmlWritingToFile || m_pendingJavaScriptExecution) {
+        errorDescription.base() = QT_TRANSLATE_NOOP("", "Can't print note: the note has not been fully loaded "
+                                                    "into the editor yet, please try again in a few seconds");
+        QNDEBUG(errorDescription);
+        return false;
     }
 
 #ifndef QUENTIER_USE_QT_WEB_ENGINE
-    GET_PAGE()
+    QWebPage * pPage = page();
+    if (Q_UNLIKELY(!pPage)) {
+        errorDescription.base() = QT_TRANSLATE_NOOP("", "Can't print note: internal error, no note editor page");
+        QNWARNING(errorDescription);
+        return false;
+    }
 
-    QWebFrame * pFrame = page->mainFrame();
+    QWebFrame * pFrame = pPage->mainFrame();
     if (Q_UNLIKELY(!pFrame)) {
-        QNFATAL(QStringLiteral("Can't get access to note editor page's main frame!")); \
-        return;
+        errorDescription.base() = QT_TRANSLATE_NOOP("", "Can't print note: internal error, no main frame was found "
+                                                    "within the note editor page");
+        QNWARNING(errorDescription);
+        return false;
     }
 
     pFrame->print(&printer);
+    return true;
 #else
-    GET_PAGE()
+    QWebEnginePage * pPage = page();
+    if (Q_UNLIKELY(!pPage)) {
+        errorDescription.base() = QT_TRANSLATE_NOOP("", "Can't print note: internal error, no note editor page");
+        QNWARNING(errorDescription);
+        return false;
+    }
 
 #if QT_VERSION >= QT_VERSION_CHECK(5, 8, 0)
-    page->print(&printer, PrintCallback());
+    pPage->print(&printer, PrintCallback());
 #else
     m_htmlForPrinting.resize(0);
 
@@ -4875,28 +4896,99 @@ void NoteEditorPrivate::print(QPrinter & printer)
 
     int result = eventLoop.exec(QEventLoop::ExcludeUserInputEvents);
     if (result == EventLoopWithExitStatus::ExitStatus::Timeout) {
-        ErrorString error(QT_TRANSLATE_NOOP("", "Could not print the note editor page: failed to get the page's HTML in time"));
-        QNWARNING(error);
-        emit notifyError(error);
-        return;
+        errorDescription.base() = QT_TRANSLATE_NOOP("", "Can't print note: failed to get the note editor page's HTML in time");
+        QNWARNING(errorDescription);
+        return false;
     }
 
     QTextDocument doc;
-    ErrorString errorDescription;
-    bool res = m_enmlConverter.htmlToQTextDocument(m_htmlForPrinting, doc, errorDescription);
+    ErrorString error;
+    bool res = m_enmlConverter.htmlToQTextDocument(m_htmlForPrinting, doc, error);
     if (Q_UNLIKELY(!res)) {
-        ErrorString error(QT_TRANSLATE_NOOP("", "Can't print note"));
-        error.additionalBases().append(errorDescription.base());
-        error.additionalBases().append(errorDescription.additionalBases());
-        error.details() = errorDescription.details();
-        QNWARNING(error);
-        emit notifyError(error);
-        return;
+        errorDescription.base() = (QT_TRANSLATE_NOOP("", "Can't print note"));
+        errorDescription.additionalBases().append(error.base());
+        errorDescription.additionalBases().append(error.additionalBases());
+        errorDescription.details() = error.details();
+        QNWARNING(errorDescription);
+        return false;
     }
 
     doc.print(&printer);
+    return true;
 
 #endif // QT_VERSION
+#endif // QUENTIER_USE_QT_WEB_ENGINE
+}
+
+bool NoteEditorPrivate::exportToPdf(const QString & absoluteFilePath, ErrorString & errorDescription)
+{
+    QNDEBUG("NoteEditorPrivate::exportToPdf: " << absoluteFilePath);
+
+    if (Q_UNLIKELY(!m_pNote)) {
+        errorDescription.base() = QT_TRANSLATE_NOOP("", "Can't export note to pdf: no note is set to the editor");
+        QNDEBUG(errorDescription);
+        return false;
+    }
+
+    if (m_pendingNotePageLoad || m_pendingIndexHtmlWritingToFile || m_pendingJavaScriptExecution) {
+        errorDescription.base() = QT_TRANSLATE_NOOP("", "Can't export note to pdf: the note has not been fully loaded "
+                                                    "into the editor yet, please try again in a few seconds");
+        QNDEBUG(errorDescription);
+        return false;
+    }
+
+    QString filePath = absoluteFilePath;
+    if (!filePath.endsWith(QStringLiteral(".pdf"))) {
+        filePath += QStringLiteral(".pdf");
+    }
+
+    QFileInfo pdfFileInfo(filePath);
+    if (!pdfFileInfo.isWritable()) {
+        errorDescription.base() = QT_TRANSLATE_NOOP("", "Can't export note to pdf: the output pdf file is not writable");
+        errorDescription.details() = absoluteFilePath;
+        QNDEBUG(errorDescription);
+        return false;
+    }
+
+#ifndef QUENTIER_USE_QT_WEB_ENGINE
+    QPrinter printer(QPrinter::PrinterResolution);
+    printer.setOutputFormat(QPrinter::PdfFormat);
+    printer.setPaperSize(QPrinter::A4);
+    printer.setOutputFileName(filePath);
+
+    QWebPage * pPage = page();
+    if (Q_UNLIKELY(!pPage)) {
+        errorDescription.base() = QT_TRANSLATE_NOOP("", "Can't export note to pdf: internal error, no note editor page");
+        QNWARNING(errorDescription);
+        return false;
+    }
+
+    QWebFrame * pFrame = pPage->mainFrame();
+    if (Q_UNLIKELY(!pFrame)) {
+        errorDescription.base() = QT_TRANSLATE_NOOP("", "Can't export note to pdf: internal error, no main frame was found "
+                                                    "within the note editor page");
+        QNWARNING(errorDescription);
+        return false;
+    }
+
+    pFrame->print(&printer);
+    return true;
+#elif (QT_VERSION >= QT_VERSION_CHECK(5, 7, 0))
+    QWebEnginePage * pPage = page();
+    if (Q_UNLIKELY(!pPage)) {
+        errorDescription.base() = QT_TRANSLATE_NOOP("", "Can't export note to pdf: internal error, no note editor page");
+        QNWARNING(errorDescription);
+        return false;
+    }
+
+    pPage->printToPdf(filePath);
+    return true;
+#else
+    QPrinter printer(QPrinter::PrinterResolution);
+    printer.setOutputFormat(QPrinter::PdfFormat);
+    printer.setPaperSize(QPrinter::A4);
+    printer.setOutputFileName(filePath);
+    return print(printer);
 #endif // QUENTIER_USE_QT_WEB_ENGINE
 }
 

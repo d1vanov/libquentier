@@ -282,7 +282,8 @@ public Q_SLOTS:
 
     virtual void onNoteLoadCancelled() Q_DECL_OVERRIDE;
 
-    virtual void print(QPrinter & printer) Q_DECL_OVERRIDE;
+    virtual bool print(QPrinter & printer, ErrorString & errorDescription) Q_DECL_OVERRIDE;
+    virtual bool exportToPdf(const QString & absoluteFilePath, ErrorString & errorDescription) Q_DECL_OVERRIDE;
 
     virtual void setNoteAndNotebook(const Note & note, const Notebook & notebook) Q_DECL_OVERRIDE;
     virtual void clear() Q_DECL_OVERRIDE;

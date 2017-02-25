@@ -388,9 +388,14 @@ void NoteEditor::onNoteLoadCancelled()
     m_backend->onNoteLoadCancelled();
 }
 
-void NoteEditor::print(QPrinter & printer)
+bool NoteEditor::print(QPrinter & printer, ErrorString & errorDescription)
 {
-    m_backend->print(printer);
+    return m_backend->print(printer, errorDescription);
+}
+
+bool NoteEditor::exportToPdf(const QString & absoluteFilePath, ErrorString & errorDescription)
+{
+    return m_backend->exportToPdf(absoluteFilePath, errorDescription);
 }
 
 void NoteEditor::dragMoveEvent(QDragMoveEvent * pEvent)

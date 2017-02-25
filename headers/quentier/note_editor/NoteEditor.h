@@ -238,7 +238,9 @@ public Q_SLOTS:
 
     void onNoteLoadCancelled();
 
-    void print(QPrinter & printer);
+    bool print(QPrinter & printer, ErrorString & errorDescription);
+
+    bool exportToPdf(const QString & absoluteFilePath, ErrorString & errorDescription);
 
 protected:
     virtual void dragMoveEvent(QDragMoveEvent * pEvent) Q_DECL_OVERRIDE;
