@@ -4893,7 +4893,7 @@ bool NoteEditorPrivate::print(QPrinter & printer, ErrorString & errorDescription
 
     pConversionTimer->start(500);
 
-    QTimer::singleShot(0, this, SLOT(getHtmlForPrinting));
+    QTimer::singleShot(0, this, SLOT(getHtmlForPrinting()));
 
     int result = eventLoop.exec(QEventLoop::ExcludeUserInputEvents);
     if (result == EventLoopWithExitStatus::ExitStatus::Timeout) {
@@ -4943,9 +4943,10 @@ bool NoteEditorPrivate::exportToPdf(const QString & absoluteFilePath, ErrorStrin
     }
 
     QFileInfo pdfFileInfo(filePath);
-    if (!pdfFileInfo.isWritable()) {
-        errorDescription.base() = QT_TRANSLATE_NOOP("", "Can't export note to pdf: the output pdf file is not writable");
-        errorDescription.details() = absoluteFilePath;
+    if (pdfFileInfo.exists() && !pdfFileInfo.isWritable()) {
+        errorDescription.base() = QT_TRANSLATE_NOOP("", "Can't export note to pdf: the output pdf file already exists "
+                                                    "and it is not writable");
+        errorDescription.details() = filePath;
         QNDEBUG(errorDescription);
         return false;
     }
