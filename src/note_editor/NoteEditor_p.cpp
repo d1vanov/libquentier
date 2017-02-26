@@ -221,9 +221,7 @@ NoteEditorPrivate::NoteEditorPrivate(NoteEditor & noteEditor) :
     m_pPageMutationHandler(new PageMutationHandler(this)),
     m_pUndoStack(Q_NULLPTR),
     m_pAccount(),
-#if defined(QUENTIER_USE_QT_WEB_ENGINE) && (QT_VERSION < QT_VERSION_CHECK(5, 8, 0))
     m_htmlForPrinting(),
-#endif
     m_blankPageHtml(),
     m_contextMenuSequenceNumber(1),     // NOTE: must start from 1 as JavaScript treats 0 as null!
     m_lastContextMenuEventGlobalPos(),
@@ -2074,7 +2072,7 @@ void NoteEditorPrivate::onUndoCommandError(ErrorString error)
     emit notifyError(error);
 }
 
-#if defined(QUENTIER_USE_QT_WEB_ENGINE) && (QT_VERSION < QT_VERSION_CHECK(5, 8, 0))
+#ifdef QUENTIER_USE_QT_WEB_ENGINE
 void NoteEditorPrivate::onPageHtmlReceivedForPrinting(const QString & html,
                                                       const QVector<QPair<QString, QString> > & extraData)
 {
@@ -2148,7 +2146,7 @@ void NoteEditorPrivate::dropEvent(QDropEvent * pEvent)
     onDropEvent(pEvent);
 }
 
-#if defined(QUENTIER_USE_QT_WEB_ENGINE) && (QT_VERSION < QT_VERSION_CHECK(5, 8, 0))
+#ifdef QUENTIER_USE_QT_WEB_ENGINE
 void NoteEditorPrivate::getHtmlForPrinting()
 {
     QNDEBUG(QStringLiteral("NoteEditorPrivate::getHtmlForPrinting"));
@@ -4867,19 +4865,7 @@ bool NoteEditorPrivate::print(QPrinter & printer, ErrorString & errorDescription
         return false;
     }
 
-    pFrame->print(&printer);
-    return true;
-#else
-    QWebEnginePage * pPage = page();
-    if (Q_UNLIKELY(!pPage)) {
-        errorDescription.base() = QT_TRANSLATE_NOOP("", "Can't print note: internal error, no note editor page");
-        QNWARNING(errorDescription);
-        return false;
-    }
-
-#if QT_VERSION >= QT_VERSION_CHECK(5, 8, 0)
-    pPage->print(&printer, PrintCallback());
-    return true;
+    m_htmlForPrinting = pFrame->toHtml();
 #else
     m_htmlForPrinting.resize(0);
 
@@ -4902,6 +4888,7 @@ bool NoteEditorPrivate::print(QPrinter & printer, ErrorString & errorDescription
         QNWARNING(errorDescription);
         return false;
     }
+#endif // QUENTIER_USE_QT_WEB_ENGINE
 
     QTextDocument doc;
     ErrorString error;
@@ -4917,8 +4904,6 @@ bool NoteEditorPrivate::print(QPrinter & printer, ErrorString & errorDescription
 
     doc.print(&printer);
     return true;
-#endif // QT_VERSION
-#endif // QUENTIER_USE_QT_WEB_ENGINE
 }
 
 bool NoteEditorPrivate::exportToPdf(const QString & absoluteFilePath, ErrorString & errorDescription)
@@ -4952,30 +4937,7 @@ bool NoteEditorPrivate::exportToPdf(const QString & absoluteFilePath, ErrorStrin
         return false;
     }
 
-#ifndef QUENTIER_USE_QT_WEB_ENGINE
-    QPrinter printer(QPrinter::PrinterResolution);
-    printer.setOutputFormat(QPrinter::PdfFormat);
-    printer.setPaperSize(QPrinter::A4);
-    printer.setOutputFileName(filePath);
-
-    QWebPage * pPage = page();
-    if (Q_UNLIKELY(!pPage)) {
-        errorDescription.base() = QT_TRANSLATE_NOOP("", "Can't export note to pdf: internal error, no note editor page");
-        QNWARNING(errorDescription);
-        return false;
-    }
-
-    QWebFrame * pFrame = pPage->mainFrame();
-    if (Q_UNLIKELY(!pFrame)) {
-        errorDescription.base() = QT_TRANSLATE_NOOP("", "Can't export note to pdf: internal error, no main frame was found "
-                                                    "within the note editor page");
-        QNWARNING(errorDescription);
-        return false;
-    }
-
-    pFrame->print(&printer);
-    return true;
-#elif (QT_VERSION >= QT_VERSION_CHECK(5, 7, 0))
+#if defined(QUENTIER_USE_QT_WEB_ENGINE) && (QT_VERSION >= QT_VERSION_CHECK(5, 7, 0))
     QWebEnginePage * pPage = page();
     if (Q_UNLIKELY(!pPage)) {
         errorDescription.base() = QT_TRANSLATE_NOOP("", "Can't export note to pdf: internal error, no note editor page");

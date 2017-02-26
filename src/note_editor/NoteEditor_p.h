@@ -312,7 +312,7 @@ Q_SIGNALS:
                                         QString resourceFileSuffix, QByteArray resourceActualHash,
                                         QString resourceDisplayName, QUuid requestId);
 
-#if defined(QUENTIER_USE_QT_WEB_ENGINE) && (QT_VERSION < QT_VERSION_CHECK(5, 8, 0))
+#ifdef QUENTIER_USE_QT_WEB_ENGINE
     void htmlReadyForPrinting();
 #endif
 
@@ -441,7 +441,7 @@ private Q_SLOTS:
     // Slots for undo command signals
     void onUndoCommandError(ErrorString error);
 
-#if defined(QUENTIER_USE_QT_WEB_ENGINE) && (QT_VERSION < QT_VERSION_CHECK(5, 8, 0))
+#ifdef QUENTIER_USE_QT_WEB_ENGINE
     void getHtmlForPrinting();
 #endif
 
@@ -548,7 +548,7 @@ private:
 
     void setupAddHyperlinkDelegate(const quint64 hyperlinkId, const QString & presetHyperlink = QString());
 
-#if defined(QUENTIER_USE_QT_WEB_ENGINE) && (QT_VERSION < QT_VERSION_CHECK(5, 8, 0))
+#ifdef QUENTIER_USE_QT_WEB_ENGINE
     void onPageHtmlReceivedForPrinting(const QString & html,
                                        const QVector<QPair<QString,QString> > & extraData = QVector<QPair<QString,QString> >());
 #endif
@@ -597,14 +597,6 @@ private:
     private:
         QPointer<NoteEditorPrivate>     m_pNoteEditor;
     };
-
-#if defined(QUENTIER_USE_QT_WEB_ENGINE) && (QT_VERSION >= QT_VERSION_CHECK(5, 8, 0))
-    class PrintCallback
-    {
-    public:
-        void operator()(bool) {}
-    };
-#endif
 
     struct Alignment
     {
@@ -767,9 +759,7 @@ private:
 
     QScopedPointer<Account>     m_pAccount;
 
-#if defined(QUENTIER_USE_QT_WEB_ENGINE) && (QT_VERSION < QT_VERSION_CHECK(5, 8, 0))
     QString     m_htmlForPrinting;
-#endif
 
     QString     m_blankPageHtml;
 
