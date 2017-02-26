@@ -83,6 +83,7 @@ typedef QWebSettings WebSettings;
 #include <QtWebChannel>
 #include <QWebEngineSettings>
 #include <QTimer>
+#include <QPageLayout>
 typedef QWebEngineSettings WebSettings;
 #endif
 
@@ -4982,7 +4983,11 @@ bool NoteEditorPrivate::exportToPdf(const QString & absoluteFilePath, ErrorStrin
         return false;
     }
 
-    pPage->printToPdf(filePath);
+    QPageSize pageSize(QPageSize::A4);
+    QMarginsF margins(20.0, 20.0, 20.0, 20.0);
+    QPageLayout pageLayout(pageSize, QPageLayout::Portrait, margins);
+
+    pPage->printToPdf(filePath, pageLayout);
     return true;
 #else
     QPrinter printer(QPrinter::PrinterResolution);
