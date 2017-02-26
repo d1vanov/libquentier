@@ -55,7 +55,8 @@ public:
                            DecryptedTextManager & decryptedTextManager,
                            NoteContentToHtmlExtraData & extraData) const;
 
-    bool htmlToQTextDocument(const QString & html, QTextDocument & doc, ErrorString & errorDescription) const;
+    bool htmlToQTextDocument(const QString & html, QTextDocument & doc, ErrorString & errorDescription,
+                             const QVector<SkipHtmlElementRule> & skipRules) const;
 
     bool validateEnml(const QString & enml, ErrorString & errorDescription) const;
 

@@ -107,10 +107,12 @@ public:
      * @param doc - QTextDocument filled with the result of the method's work
      * @param errorDescription - the textual description of the error if
      * conversion of input HTML into QTextDocument has failed
+     * @param skipRules - rules for skipping the particular elements
      *
      * @return true in case of successful conversion, false otherwise
      */
-    bool htmlToQTextDocument(const QString & html, QTextDocument & doc, ErrorString & errorDescription) const;
+    bool htmlToQTextDocument(const QString & html, QTextDocument & doc, ErrorString & errorDescription,
+                             const QVector<SkipHtmlElementRule> & skipRules = QVector<SkipHtmlElementRule>()) const;
 
     struct NoteContentToHtmlExtraData
     {

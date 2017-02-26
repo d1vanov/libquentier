@@ -29,6 +29,14 @@
 #include <QDomDocument>
 #include <QRegExp>
 #include <QFile>
+#include <QFileInfo>
+#include <QImage>
+#include <QPixmap>
+#include <QPainter>
+#include <QBrush>
+#include <QPen>
+#include <QThread>
+#include <QApplication>
 
 namespace quentier {
 
@@ -385,8 +393,8 @@ bool ENMLConverterPrivate::htmlToNoteContent(const QString & html, const QVector
     return true;
 }
 
-bool ENMLConverterPrivate::htmlToQTextDocument(const QString & html, QTextDocument & doc,
-                                               ErrorString & errorDescription) const
+bool ENMLConverterPrivate::htmlToQTextDocument(const QString & html, QTextDocument & doc, ErrorString & errorDescription,
+                                               const QVector<SkipHtmlElementRule> & skipRules) const
 {
     QNDEBUG(QStringLiteral("ENMLConverterPrivate::htmlToQTextDocument: ") << html);
 
@@ -418,6 +426,7 @@ bool ENMLConverterPrivate::htmlToQTextDocument(const QString & html, QTextDocume
     QXmlStreamAttributes lastElementAttributes;
 
     size_t skippedElementNestingCounter = 0;
+    size_t skippedElementWithPreservedContentsNestingCounter = 0;
 
     while(!reader.atEnd())
     {
@@ -444,6 +453,23 @@ bool ENMLConverterPrivate::htmlToQTextDocument(const QString & html, QTextDocume
             }
 
             lastElementName = reader.name().toString();
+            lastElementAttributes = reader.attributes();
+
+            ShouldSkipElementResult::type shouldSkip = shouldSkipElement(lastElementName, lastElementAttributes, skipRules);
+            if (shouldSkip != ShouldSkipElementResult::ShouldNotSkip)
+            {
+                QNTRACE(QStringLiteral("Skipping element ") << lastElementName << QStringLiteral(" per skip rules; the contents would be ")
+                        << (shouldSkip == ShouldSkipElementResult::SkipWithContents ? QStringLiteral("skipped") : QStringLiteral("preserved")));
+
+                if (shouldSkip == ShouldSkipElementResult::SkipWithContents) {
+                    ++skippedElementNestingCounter;
+                }
+                else if (shouldSkip == ShouldSkipElementResult::SkipButPreserveContents) {
+                    ++skippedElementWithPreservedContentsNestingCounter;
+                }
+
+                continue;
+            }
 
             if ( (lastElementName == QStringLiteral("map")) ||
                  (lastElementName == QStringLiteral("area")) ||
@@ -497,10 +523,7 @@ bool ENMLConverterPrivate::htmlToQTextDocument(const QString & html, QTextDocume
                 lastElementName = QStringLiteral("tt");
                 QNTRACE(QStringLiteral("Replaced xmp with tt"));
             }
-
             writer.writeStartElement(lastElementName);
-
-            lastElementAttributes = reader.attributes();
 
             if ( (lastElementName == QStringLiteral("div")) ||
                  (lastElementName == QStringLiteral("p")) ||
@@ -621,6 +644,77 @@ bool ENMLConverterPrivate::htmlToQTextDocument(const QString & html, QTextDocume
                     writer.writeAttributes(filteredAttributes);
                 }
             }
+            else if (lastElementName == QStringLiteral("img"))
+            {
+                QStringRef srcAttrRef = lastElementAttributes.value(QStringLiteral("src"));
+                if (Q_UNLIKELY(srcAttrRef.isEmpty())) {
+                    errorDescription.base() = QT_TRANSLATE_NOOP("", "found img tag without src or with empty src attribute");
+                    return false;
+                }
+
+                QString srcAttr = srcAttrRef.toString();
+                QFileInfo imgFileInfo(srcAttr);
+                if (!imgFileInfo.exists()) {
+                    errorDescription.base() = QT_TRANSLATE_NOOP("", "couldn't find the file corresponding to the src attribute of img tag");
+                    errorDescription.details() = srcAttr;
+                    return false;
+                }
+
+                bool isGenericResourceImage = true;
+                QStringRef typeAttrRef = lastElementAttributes.value(QStringLiteral("type"));
+                if (!typeAttrRef.isEmpty())
+                {
+                    QString typeAttr = typeAttrRef.toString();
+                    if (typeAttr.startsWith(QStringLiteral("image/"))) {
+                        isGenericResourceImage = false;
+                    }
+                }
+
+                QImage img(srcAttr);
+
+                if (isGenericResourceImage)
+                {
+                    /** If the method is run by a GUI application *and* in a GUI
+                     * (main) thread, we should add the outline to the image
+                     */
+                    QApplication * pApp = dynamic_cast<QApplication*>(QCoreApplication::instance());
+                    if (pApp)
+                    {
+                        QThread * pCurrentThread = QThread::currentThread();
+                        if (pApp->thread() == pCurrentThread)
+                        {
+                            QPixmap pixmap = QPixmap::fromImage(img);
+
+                            QPainter painter(&pixmap);
+                            painter.setRenderHints(QPainter::Antialiasing, true);
+
+                            QPen pen;
+                            pen.setWidth(2);
+                            pen.setColor(Qt::lightGray);
+                            painter.setPen(pen);
+
+                            painter.drawRoundedRect(pixmap.rect(), 4, 4);
+
+                            img = pixmap.toImage();
+                        }
+                        else
+                        {
+                            QNTRACE(QStringLiteral("Won't add the outline to the generic resource image: "
+                                                   "the method is not run inside the main thread"));
+                        }
+                    }
+                    else
+                    {
+                        QNTRACE(QStringLiteral("Won't add the outline to the generic resource image: not running a QApplication"));
+                    }
+                }
+
+                doc.addResource(QTextDocument::ImageResource, QUrl(srcAttr), img);
+
+                QXmlStreamAttributes filteredAttributes;
+                filteredAttributes.append(QStringLiteral("src"), srcAttr);
+                writer.writeAttributes(filteredAttributes);
+            }
 
             ++writeElementCounter;
 
@@ -649,6 +743,11 @@ bool ENMLConverterPrivate::htmlToQTextDocument(const QString & html, QTextDocume
         {
             if (skippedElementNestingCounter) {
                 --skippedElementNestingCounter;
+                continue;
+            }
+
+            if (skippedElementWithPreservedContentsNestingCounter) {
+                --skippedElementWithPreservedContentsNestingCounter;
                 continue;
             }
 

@@ -43,13 +43,13 @@ bool ENMLConverter::htmlToNoteContent(const QString & html, QString & noteConten
     return d->htmlToNoteContent(html, skipRules, noteContent, decryptedTextManager, errorDescription);
 }
 
-bool ENMLConverter::htmlToQTextDocument(const QString & html, QTextDocument & doc,
-                                        ErrorString & errorDescription) const
+bool ENMLConverter::htmlToQTextDocument(const QString & html, QTextDocument & doc, ErrorString & errorDescription,
+                                        const QVector<SkipHtmlElementRule> & skipRules) const
 {
     QNDEBUG(QStringLiteral("ENMLConverter::htmlToQTextDocument"));
 
     Q_D(const ENMLConverter);
-    return d->htmlToQTextDocument(html, doc, errorDescription);
+    return d->htmlToQTextDocument(html, doc, errorDescription, skipRules);
 }
 
 bool ENMLConverter::noteContentToHtml(const QString & noteContent, QString & html,

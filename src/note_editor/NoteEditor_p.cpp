@@ -4905,7 +4905,7 @@ bool NoteEditorPrivate::print(QPrinter & printer, ErrorString & errorDescription
 
     QTextDocument doc;
     ErrorString error;
-    bool res = m_enmlConverter.htmlToQTextDocument(m_htmlForPrinting, doc, error);
+    bool res = m_enmlConverter.htmlToQTextDocument(m_htmlForPrinting, doc, error, m_skipRulesForHtmlToEnmlConversion);
     if (Q_UNLIKELY(!res)) {
         errorDescription.base() = (QT_TRANSLATE_NOOP("", "Can't print note"));
         errorDescription.additionalBases().append(error.base());
