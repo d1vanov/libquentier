@@ -652,27 +652,48 @@ bool ENMLConverterPrivate::htmlToQTextDocument(const QString & html, QTextDocume
                     return false;
                 }
 
-                QString srcAttr = srcAttrRef.toString();
-                QFileInfo imgFileInfo(srcAttr);
-                if (!imgFileInfo.exists()) {
-                    errorDescription.base() = QT_TRANSLATE_NOOP("", "couldn't find the file corresponding to the src attribute of img tag");
-                    errorDescription.details() = srcAttr;
-                    return false;
-                }
+                bool isGenericResourceImage = false;
+                bool isEnCryptTag = false;
 
-                bool isGenericResourceImage = true;
-                QStringRef typeAttrRef = lastElementAttributes.value(QStringLiteral("type"));
-                if (!typeAttrRef.isEmpty())
+                QString typeAttr = lastElementAttributes.value(QStringLiteral("type")).toString();
+                if (!typeAttr.isEmpty())
                 {
-                    QString typeAttr = typeAttrRef.toString();
-                    if (typeAttr.startsWith(QStringLiteral("image/"))) {
-                        isGenericResourceImage = false;
+                    if (!typeAttr.startsWith(QStringLiteral("image/"))) {
+                        isGenericResourceImage = true;
                     }
                 }
+                else
+                {
+                    isEnCryptTag = true;
+                }
 
-                QImage img(srcAttr);
+                QImage img;
+                bool shouldOutlineImg = (isGenericResourceImage || isEnCryptTag);
+                bool shouldAddImgAsResource = false;
 
-                if (isGenericResourceImage)
+                QString srcAttr = srcAttrRef.toString();
+
+                QVariant existingDocImgData = doc.resource(QTextDocument::ImageResource, QUrl(srcAttr));
+                if (existingDocImgData.isNull() || !existingDocImgData.isValid())
+                {
+                    QFileInfo imgFileInfo(srcAttr);
+                    if (!imgFileInfo.exists()) {
+                        errorDescription.base() = QT_TRANSLATE_NOOP("", "couldn't find the file corresponding to the src attribute of img tag");
+                        errorDescription.details() = srcAttr;
+                        return false;
+                    }
+
+                    img = QImage(srcAttr, "PNG");
+                    shouldAddImgAsResource = true;
+                }
+                else
+                {
+                    QNDEBUG(QStringLiteral("img tag with src = ") << srcAttr
+                            << QStringLiteral(" already has some data associated with the document"));
+                    img = existingDocImgData.value<QImage>();
+                }
+
+                if (shouldOutlineImg)
                 {
                     /** If the method is run by a GUI application *and* in a GUI
                      * (main) thread, we should add the outline to the image
@@ -709,7 +730,9 @@ bool ENMLConverterPrivate::htmlToQTextDocument(const QString & html, QTextDocume
                     }
                 }
 
-                doc.addResource(QTextDocument::ImageResource, QUrl(srcAttr), img);
+                if (shouldOutlineImg || shouldAddImgAsResource) {
+                    doc.addResource(QTextDocument::ImageResource, QUrl(srcAttr), img);
+                }
 
                 QXmlStreamAttributes filteredAttributes;
                 filteredAttributes.append(QStringLiteral("src"), srcAttr);

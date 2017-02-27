@@ -68,7 +68,10 @@ typedef QWebSettings WebSettings;
 #else
     typedef QWebFrame OwnershipNamespace;
 #endif
-#else
+
+#include <QXmlStreamReader>
+#include <QXmlStreamWriter>
+#else // QUENTIER_USE_QT_WEB_ENGINE
 #include "javascript_glue/EnCryptElementOnClickHandler.h"
 #include "javascript_glue/GenericResourceOpenAndSaveButtonsOnClickHandler.h"
 #include "javascript_glue/GenericResourceImageJavaScriptHandler.h"
@@ -85,7 +88,7 @@ typedef QWebSettings WebSettings;
 #include <QTimer>
 #include <QPageLayout>
 typedef QWebEngineSettings WebSettings;
-#endif
+#endif // QUENTIER_USE_QT_WEB_ENGINE
 
 #include <quentier/note_editor/ResourceFileStorageManager.h>
 #include <quentier/exception/NoteEditorInitializationException.h>
@@ -96,6 +99,7 @@ typedef QWebEngineSettings WebSettings;
 #include <quentier/types/ResourceRecognitionIndexItem.h>
 #include <quentier/types/Account.h>
 #include <quentier/enml/ENMLConverter.h>
+#include <quentier/enml/HTMLCleaner.h>
 #include <quentier/utility/Utility.h>
 #include <quentier/logging/QuentierLogger.h>
 #include <quentier/utility/FileIOThreadWorker.h>
@@ -4849,6 +4853,8 @@ bool NoteEditorPrivate::print(QPrinter & printer, ErrorString & errorDescription
         return false;
     }
 
+    QTextDocument doc;
+
 #ifndef QUENTIER_USE_QT_WEB_ENGINE
     QWebPage * pPage = page();
     if (Q_UNLIKELY(!pPage)) {
@@ -4865,8 +4871,221 @@ bool NoteEditorPrivate::print(QPrinter & printer, ErrorString & errorDescription
         return false;
     }
 
-    m_htmlForPrinting = pFrame->toHtml();
-#else
+    /**
+     * QtWebKit-based note editor uses plugins for encrypted text as well as for "generic" resources;
+     * these plugins won't be printable within QTextDocument, of course. For this reason need to convert
+     * the HTML pieces representing these plugins to plain images
+     */
+
+    QString initialHtml = pFrame->toHtml();
+
+    HTMLCleaner htmlCleaner;
+    QString initialXml;
+
+    QString htmlToXmlError;
+    bool htmlToXmlRes = htmlCleaner.htmlToXml(initialHtml, initialXml, htmlToXmlError);
+    if (Q_UNLIKELY(!htmlToXmlRes)) {
+        errorDescription.base() = QT_TRANSLATE_NOOP("", "Can't print note: failed to convert the note editor's HTML to XML");
+        errorDescription.details() = htmlToXmlError;
+        QNWARNING(errorDescription);
+        return false;
+    }
+
+    QList<Resource> resources = m_pNote->resources();
+
+    QString preprocessedHtml;
+    QXmlStreamReader reader(initialXml);
+    QXmlStreamWriter writer(&preprocessedHtml);
+    writer.setAutoFormatting(true);
+
+    int writeElementCounter = 0;
+    bool insideGenericResourceImage = false;
+    bool insideEnCryptTag = false;
+
+    while(!reader.atEnd())
+    {
+        Q_UNUSED(reader.readNext());
+
+        if (reader.isStartDocument()) {
+            continue;
+        }
+
+        if (reader.isDTD()) {
+            continue;
+        }
+
+        if (reader.isEndDocument()) {
+            break;
+        }
+
+        if (reader.isStartElement())
+        {
+            ++writeElementCounter;
+
+            QString elementName = reader.name().toString();
+            QXmlStreamAttributes elementAttributes = reader.attributes();
+
+            if (!elementAttributes.hasAttribute(QStringLiteral("en-tag"))) {
+                writer.writeStartElement(elementName);
+                writer.writeAttributes(elementAttributes);
+                continue;
+            }
+
+            QString enTagAttr = elementAttributes.value(QStringLiteral("en-tag")).toString();
+            if (enTagAttr == QStringLiteral("en-media"))
+            {
+                if (elementName == QStringLiteral("img")) {
+                    writer.writeStartElement(elementName);
+                    writer.writeAttributes(elementAttributes);
+                    continue;
+                }
+
+                QString typeAttr = elementAttributes.value(QStringLiteral("type")).toString();
+
+                QString hashAttr = elementAttributes.value("hash").toString();
+                if (Q_UNLIKELY(hashAttr.isEmpty())) {
+                    errorDescription.base() = QT_TRANSLATE_NOOP("", "Can't print note: found generic resource image "
+                                                                "without hash attribute");
+                    QNWARNING(errorDescription);
+                    return false;
+                }
+
+                QByteArray hashAttrByteArray = QByteArray::fromHex(hashAttr.toLocal8Bit());
+                QNTRACE(QStringLiteral("Will look for resource with hash ") << hashAttrByteArray);
+
+                const Resource * pTargetResource = Q_NULLPTR;
+                for(auto it = resources.constBegin(), end = resources.constEnd(); it != end; ++it)
+                {
+                    const Resource & resource = *it;
+                    QNTRACE(QStringLiteral("Examining resource: data hash = ")
+                            << (resource.hasDataHash() ? QString::fromLocal8Bit(resource.dataHash()) : QStringLiteral("<null>")));
+
+                    if (resource.hasDataHash() && (resource.dataHash() == hashAttrByteArray)) {
+                        pTargetResource = &resource;
+                        break;
+                    }
+                }
+
+                if (Q_UNLIKELY(!pTargetResource)) {
+                    errorDescription.base() = QT_TRANSLATE_NOOP("", "Can't print note: could not find one of resources "
+                                                                "referenced in the note text within the actual note's resources");
+                    errorDescription.details() = QStringLiteral("hash = ");
+                    errorDescription.details() += hashAttr;
+                    QNWARNING(errorDescription);
+                    return false;
+                }
+
+                QImage genericResourceImage = buildGenericResourceImage(*pTargetResource);
+                if (Q_UNLIKELY(genericResourceImage.isNull())) {
+                    errorDescription.base() = QT_TRANSLATE_NOOP("", "Can't print note: could not generate the generic resource image");
+                    QNWARNING(errorDescription);
+                    return false;
+                }
+
+                writer.writeStartElement(QStringLiteral("img"));
+
+                QXmlStreamAttributes filteredAttributes;
+                filteredAttributes.append(QStringLiteral("en-tag"), QStringLiteral("en-media"));
+                filteredAttributes.append(QStringLiteral("type"), typeAttr);
+                filteredAttributes.append(QStringLiteral("hash"), hashAttr);
+
+                hashAttr.prepend(QStringLiteral(":"));
+                filteredAttributes.append(QStringLiteral("src"),  hashAttr);
+
+                doc.addResource(QTextDocument::ImageResource, QUrl(hashAttr), genericResourceImage);
+
+                writer.writeAttributes(filteredAttributes);
+
+                insideGenericResourceImage = true;
+            }
+            else if (enTagAttr == QStringLiteral("en-crypt"))
+            {
+                QString enCryptImageFilePath = QStringLiteral(":/encrypted_area_icons/en-crypt/en-crypt.png");
+                QImage encryptedTextImage(enCryptImageFilePath, "PNG");
+                enCryptImageFilePath.prepend("qrc");
+
+                writer.writeStartElement(QStringLiteral("img"));
+
+                QXmlStreamAttributes filteredAttributes;
+                filteredAttributes.append(QStringLiteral("type"), QStringLiteral("image/png"));
+                filteredAttributes.append(QStringLiteral("src"), enCryptImageFilePath);
+
+                writer.writeAttributes(filteredAttributes);
+
+                doc.addResource(QTextDocument::ImageResource, QUrl(enCryptImageFilePath), encryptedTextImage);
+
+                insideEnCryptTag = true;
+            }
+            else
+            {
+                writer.writeStartElement(elementName);
+                writer.writeAttributes(elementAttributes);
+            }
+        }
+
+        if ((writeElementCounter > 0) && reader.isCharacters())
+        {
+            if (insideGenericResourceImage) {
+                insideGenericResourceImage = false;
+                continue;
+            }
+
+            if (insideEnCryptTag) {
+                insideEnCryptTag = false;
+                continue;
+            }
+
+            if (reader.isCDATA()) {
+                writer.writeCDATA(reader.text().toString());
+                QNTRACE(QStringLiteral("Wrote CDATA: ") << reader.text().toString());
+            }
+            else {
+                writer.writeCharacters(reader.text().toString());
+                QNTRACE(QStringLiteral("Wrote characters: ") << reader.text().toString());
+            }
+        }
+
+        if ((writeElementCounter > 0) && reader.isEndElement()) {
+            writer.writeEndElement();
+            --writeElementCounter;
+        }
+    }
+
+    if (Q_UNLIKELY(reader.hasError()))
+    {
+        errorDescription.base() = QT_TRANSLATE_NOOP("", "Can't print note: failed to read the XML translated from "
+                                                    "the note editor's HTML");
+        errorDescription.details() = reader.errorString();
+        errorDescription.details() += QStringLiteral("; error code = ");
+        errorDescription.details() += QString::number(reader.error());
+        QNWARNING(errorDescription);
+        return false;
+    }
+
+    int bodyTagIndex = preprocessedHtml.indexOf(QStringLiteral("<body>"));
+    if (Q_UNLIKELY(bodyTagIndex < 0)) {
+        errorDescription.base() = QT_TRANSLATE_NOOP("", "Can't print note: can't find the body tag within the preprocessed HTML "
+                                                    "prepared for conversion to QTextDocument");
+        QNWARNING(errorDescription << QStringLiteral("; preprocessed HTML: ") << preprocessedHtml);
+        return false;
+    }
+
+    preprocessedHtml.replace(0, bodyTagIndex, m_pagePrefix);
+
+    int bodyClosingTagIndex = preprocessedHtml.indexOf(QStringLiteral("</body>"));
+    if (Q_UNLIKELY(bodyClosingTagIndex < 0)) {
+        errorDescription.base() = QT_TRANSLATE_NOOP("", "Can't print note: can't find the enclosing body tag within "
+                                                    "the preprocessed HTML prepared to conversion to QTextDocument");
+        QNWARNING(errorDescription << QStringLiteral("; preprocessed HTML: ") << preprocessedHtml);
+        return false;
+    }
+
+    preprocessedHtml.insert(bodyClosingTagIndex + 7, QStringLiteral("</html>"));
+    preprocessedHtml.replace(QStringLiteral("<br></br>"), QStringLiteral("</br>"));
+
+    m_htmlForPrinting = preprocessedHtml;
+
+#else // QUENTIER_USE_QT_WEB_ENGINE
     m_htmlForPrinting.resize(0);
 
     QTimer * pConversionTimer = new QTimer(this);
@@ -4890,7 +5109,6 @@ bool NoteEditorPrivate::print(QPrinter & printer, ErrorString & errorDescription
     }
 #endif // QUENTIER_USE_QT_WEB_ENGINE
 
-    QTextDocument doc;
     ErrorString error;
     bool res = m_enmlConverter.htmlToQTextDocument(m_htmlForPrinting, doc, error, m_skipRulesForHtmlToEnmlConversion);
     if (Q_UNLIKELY(!res)) {
