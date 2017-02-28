@@ -25,18 +25,11 @@
 #include <quentier/types/Resource.h>
 #include <quentier/utility/QuentierCheckPtr.h>
 #include <quentier/utility/ApplicationSettings.h>
+#include <quentier/utility/SysInfo.h>
 #include <quentier/logging/QuentierLogger.h>
 #include <QTimerEvent>
 #include <QThreadPool>
-#include <QSysInfo>
 #include <algorithm>
-
-#if defined(Q_OS_WIN32)
-#define NOMINMAX
-#include <windows.h>
-#elif defined(Q_OS_LINUX) || defined(Q_OS_FREEBSD) || defined(Q_OS_NETBSD) || defined(Q_OS_OPENBSD)
-#include <sys/utsname.h>
-#endif
 
 #define ACCOUNT_LIMITS_KEY_GROUP QStringLiteral("account_limits/")
 #define ACCOUNT_LIMITS_LAST_SYNC_TIME_KEY QStringLiteral("last_sync_time")
@@ -4899,83 +4892,9 @@ QString RemoteToLocalSynchronizationManager::clientNameForProtocolVersionCheck()
     clientName += QCoreApplication::applicationVersion();
     clientName += QStringLiteral("; ");
 
-#if defined(Q_OS_WIN32)
-    OSVERSIONINFOA info;
-    ZeroMemory(&info, sizeof(OSVERSIONINFOA));
-    info.dwOSVersionInfoSize = sizeof(OSVERSIONINFOA);
-    GetVersionEx(&info);
-    clientName += QStringLiteral("Windows/");
-    clientName += QString::number(info.dwMajorVersion);
-    clientName += QStringLiteral(".");
-    clientName += QString::number(info.dwMinorVersion);
-#elif defined(Q_OS_MAC)
-    switch(QSysInfo::MacintoshVersion)
-    {
-    case QSysInfo::MV_9:
-        clientName += QStringLiteral("Mac OS/9");
-        break;
-    case QSysInfo::MV_10_0:
-        clientName += QStringLiteral("Mac OS X/10.0");
-        break;
-    case QSysInfo::MV_10_1:
-        clientName += QStringLiteral("Mac OS X/10.1");
-        break;
-    case QSysInfo::MV_10_2:
-        clientName += QStringLiteral("Mac OS X/10.2");
-        break;
-    case QSysInfo::MV_10_3:
-        clientName += QStringLiteral("Mac OS X/10.3");
-        break;
-    case QSysInfo::MV_10_4:
-        clientName += QStringLiteral("Mac OS X/10.4");
-        break;
-    case QSysInfo::MV_10_5:
-        clientName += QStringLiteral("Mac OS X/10.5");
-        break;
-    case QSysInfo::MV_10_6:
-        clientName += QStringLiteral("Mac OS X/10.6");
-        break;
-    case QSysInfo::MV_10_7:
-        clientName += QStringLiteral("Mac OS X/10.7");
-        break;
-    case QSysInfo::MV_10_8:
-        clientName += QStringLiteral("OS X/10.8");
-        break;
-    case QSysInfo::MV_10_9:
-        clientName += QStringLiteral("OS X/10.9");
-        break;
-#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
-    case QSysInfo::MV_10_10:
-        clientName += QStringLiteral("OS X/10.10");
-        break;
-    case QSysInfo::MV_10_11:
-        clientName += QStringLiteral("OS X/10.11");
-        break;
-#endif
-    // NOTE: intentional fall-through
-    case QSysInfo::MV_Unknown:
-    default:
-        clientName += QStringLiteral("Unknown Apple OS/unknown version");
-        break;
-    }
-#elif defined(Q_OS_LINUX) || defined(Q_OS_FREEBSD) || defined(Q_OS_NETBSD) || defined(Q_OS_OPENBSD)
-    utsname info;
-    int res = uname(&info);
-    if (Q_UNLIKELY(res != 0))
-    {
-        clientName += QStringLiteral("Unknown Unix/unknown version");
-    }
-    else
-    {
-        clientName += QString::fromUtf8(info.sysname);
-        clientName += QStringLiteral("/");
-        clientName += QString::fromUtf8(info.release);
-        clientName += QStringLiteral(" ");
-        clientName += QString::fromUtf8(info.version);
-    }
-#else
-    clientName += QStringLiteral("Unknown OS/unknown version");
-#endif
+    SysInfo sysInfo;
+    QString platformName = sysInfo.platformName();
+    clientName += platformName;
 
     return clientName;
 }

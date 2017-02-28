@@ -20,6 +20,7 @@
 #include "../../SysInfo_p.h"
 #include <unistd.h>
 #include <sys/sysinfo.h>
+#include <sys/utsname.h>
 #include <QString>
 #include <QMutexLocker>
 
@@ -51,6 +52,22 @@ qint64 SysInfo::freeMemory()
     }
 
     return static_cast<qint64>(si.freeram);
+}
+
+QString SysInfo::platformName()
+{
+    utsname info;
+    int res = uname(&info);
+    if (Q_UNLIKELY(res != 0)) {
+        return QStringLiteral("Unknown Unix/Linux");
+    }
+
+    QString result = QString::fromUtf8(info.sysname);
+    result += QStringLiteral("/");
+    result += QString::fromUtf8(info.release);
+    result += QStringLiteral(" ");
+    result += QString::fromUtf8(info.version);
+    return result;
 }
 
 } // namespace quentier

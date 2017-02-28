@@ -39,6 +39,8 @@ public:
 
     QString stackTrace();
 
+    QString platformName();
+
 private:
     Q_DISABLE_COPY(SysInfo)
 

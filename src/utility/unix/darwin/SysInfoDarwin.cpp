@@ -17,6 +17,7 @@
  */
 
 #include <quentier/utility/SysInfo.h>
+#include <quentier/utility/Macros.h>
 #include "../../SysInfo_p.h"
 #include <unistd.h>
 #include <sys/sysctl.h>
@@ -70,6 +71,57 @@ qint64 SysInfo::freeMemory()
     {
         return -1;
     }
+}
+
+QString SysInfo::platformName()
+{
+    char str[256];
+    size_t size = sizeof(str);
+    int ret = sysctlbyname("kern.osrelease", str, &size, NULL, 0);
+    if (ret != 0) {
+        return QStringLiteral("Unknown Darwin");
+    }
+
+    QString qstr = QString::fromLocal8Bit(&str[0], static_cast<int>(size));
+
+    if (qstr.startsWith("5.")) {
+        return QStringLiteral("Mac OS X 10.1 Puma");
+    }
+    else if (qstr.startsWith("6.")) {
+        return QStringLiteral("Mac OS X 10.2 Jaguar");
+    }
+    else if (qstr.startsWith("7.")) {
+        return QStringLiteral("Mac OS X 10.3 Panther");
+    }
+    else if (qstr.startsWith("8.")) {
+        return QStringLiteral("Mac OS X 10.4 Tiger");
+    }
+    else if (qstr.startsWith("9.")) {
+        return QStringLiteral("Mac OS X 10.5 Leopard");
+    }
+    else if (qstr.startsWith("10.")) {
+        return QStringLiteral("Mac OS X 10.6 Snow Leopard");
+    }
+    else if (qstr.startsWith("11.")) {
+        return QStringLiteral("Mac OS X 10.7 Lion");
+    }
+    else if (qstr.startsWith("12.")) {
+        return QStringLiteral("Mac OS X 10.8 Mountain Lion");
+    }
+    else if (qstr.startsWith("13.")) {
+        return QStringLiteral("Mac OS X 10.9 Mavericks");
+    }
+    else if (qstr.startsWith("14.")) {
+        return QStringLiteral("Mac OS X 10.10 Yosemite");
+    }
+    else if (qstr.startsWith("15.")) {
+        return QStringLiteral("Mac OS X 10.11 El Capitan");
+    }
+    else if (qstr.startsWith("16.")) {
+        return QStringLiteral("macOS 10.12 Sierra");
+    }
+
+    return QStringLiteral("Unknown Darwin");
 }
 
 } // namespace quentier

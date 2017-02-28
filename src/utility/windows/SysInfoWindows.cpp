@@ -20,6 +20,8 @@
 #include "../SysInfo_p.h"
 #include <QMutexLocker>
 #include <QString>
+
+#define NOMINMAX
 #include <windows.h>
 
 namespace quentier {
@@ -66,6 +68,20 @@ qint64 SysInfo::totalMemory()
 QString SysInfo::stackTrace()
 {
     return QStringLiteral("Stack trace obtaining is not implemented on Windows, patches are welcome");
+}
+
+QString SysInfo::platformName()
+{
+    OSVERSIONINFOA info;
+    ZeroMemory(&info, sizeof(OSVERSIONINFOA));
+    info.dwOSVersionInfoSize = sizeof(OSVERSIONINFOA);
+    GetVersionEx(&info);
+
+    QString result = QStringLiteral("Windows/");
+    result += QString::number(info.dwMajorVersion);
+    result += QStringLiteral(".");
+    result += QString::number(info.dwMinorVersion);
+    return result;
 }
 
 } // namespace quentier
