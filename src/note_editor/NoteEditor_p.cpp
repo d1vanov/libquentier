@@ -5009,6 +5009,7 @@ bool NoteEditorPrivate::print(QPrinter & printer, ErrorString & errorDescription
                 QXmlStreamAttributes filteredAttributes;
                 filteredAttributes.append(QStringLiteral("type"), QStringLiteral("image/png"));
                 filteredAttributes.append(QStringLiteral("src"), enCryptImageFilePath);
+                filteredAttributes.append(QStringLiteral("en-tag"), QStringLiteral("en-crypt"));
 
                 writer.writeAttributes(filteredAttributes);
 

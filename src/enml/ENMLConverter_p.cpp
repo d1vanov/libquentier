@@ -655,14 +655,18 @@ bool ENMLConverterPrivate::htmlToQTextDocument(const QString & html, QTextDocume
                 bool isGenericResourceImage = false;
                 bool isEnCryptTag = false;
 
-                QString typeAttr = lastElementAttributes.value(QStringLiteral("type")).toString();
-                if (!typeAttr.isEmpty())
+                QString enTag = lastElementAttributes.value(QStringLiteral("en-tag")).toString();
+                if (enTag == QStringLiteral("en-media"))
                 {
-                    if (!typeAttr.startsWith(QStringLiteral("image/"))) {
-                        isGenericResourceImage = true;
+                    QString typeAttr = lastElementAttributes.value(QStringLiteral("type")).toString();
+                    if (!typeAttr.isEmpty())
+                    {
+                        if (!typeAttr.startsWith(QStringLiteral("image/"))) {
+                            isGenericResourceImage = true;
+                        }
                     }
                 }
-                else
+                else if (enTag == QStringLiteral("en-crypt"))
                 {
                     isEnCryptTag = true;
                 }
@@ -676,14 +680,24 @@ bool ENMLConverterPrivate::htmlToQTextDocument(const QString & html, QTextDocume
                 QVariant existingDocImgData = doc.resource(QTextDocument::ImageResource, QUrl(srcAttr));
                 if (existingDocImgData.isNull() || !existingDocImgData.isValid())
                 {
-                    QFileInfo imgFileInfo(srcAttr);
-                    if (!imgFileInfo.exists()) {
-                        errorDescription.base() = QT_TRANSLATE_NOOP("", "couldn't find the file corresponding to the src attribute of img tag");
-                        errorDescription.details() = srcAttr;
-                        return false;
+                    if (srcAttr.startsWith(QStringLiteral("qrc:/")))
+                    {
+                        QString srcAttrShortened = srcAttr;
+                        srcAttrShortened.remove(0, 3);
+                        img = QImage(srcAttrShortened, "PNG");
+                    }
+                    else
+                    {
+                        QFileInfo imgFileInfo(srcAttr);
+                        if (!imgFileInfo.exists()) {
+                            errorDescription.base() = QT_TRANSLATE_NOOP("", "couldn't find the file corresponding to the src attribute of img tag");
+                            errorDescription.details() = srcAttr;
+                            return false;
+                        }
+
+                        img = QImage(srcAttr, "PNG");
                     }
 
-                    img = QImage(srcAttr, "PNG");
                     shouldAddImgAsResource = true;
                 }
                 else
