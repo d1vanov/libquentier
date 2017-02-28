@@ -33,9 +33,6 @@
         console.log("WebSocket connected, setting up QWebChannel.");
 
         new QWebChannel(socket, function(channel) {
-            window.webSocketWaiter = channel.objects.webSocketWaiter;
-            window.webSocketWaiter.onReady();
-
             window.resourceCache = channel.objects.resourceCache;
             window.resourceCache.notifyResourceInfo.connect(onResourceInfoReceived);
 
@@ -52,6 +49,9 @@
             window.toDoCheckboxClickHandler = channel.objects.toDoCheckboxClickHandler;
             window.tableResizeHandler = channel.objects.tableResizeHandler;
             window.spellCheckerDynamicHelper = channel.objects.spellCheckerDynamicHelper;
+
+            window.webSocketWaiter = channel.objects.webSocketWaiter;
+            window.webSocketWaiter.onReady();
 
             console.log("Created window variables for objects exposed to JavaScript");
         });
