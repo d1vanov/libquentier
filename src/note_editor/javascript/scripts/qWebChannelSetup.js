@@ -31,7 +31,11 @@
 
     socket.onopen = function() {
         console.log("WebSocket connected, setting up QWebChannel.");
+
         new QWebChannel(socket, function(channel) {
+            window.webSocketWaiter = channel.objects.webSocketWaiter;
+            window.webSocketWaiter.onReady();
+
             window.resourceCache = channel.objects.resourceCache;
             window.resourceCache.notifyResourceInfo.connect(onResourceInfoReceived);
 

@@ -81,6 +81,7 @@ QT_FORWARD_DECLARE_CLASS(EnCryptElementOnClickHandler)
 QT_FORWARD_DECLARE_CLASS(GenericResourceOpenAndSaveButtonsOnClickHandler)
 QT_FORWARD_DECLARE_CLASS(GenericResourceImageJavaScriptHandler)
 QT_FORWARD_DECLARE_CLASS(HyperlinkClickJavaScriptHandler)
+QT_FORWARD_DECLARE_CLASS(WebSocketWaiter)
 #endif
 
 class NoteEditorPrivate: public WebView,
@@ -339,6 +340,8 @@ private Q_SLOTS:
                                      QUuid requestId);
 
     void onHyperlinkClicked(QString url);
+
+    void onWebSocketReady();
 #else
     void onHyperlinkClicked(QUrl url);
 #endif
@@ -744,6 +747,8 @@ private:
     EnCryptElementOnClickHandler * m_pEnCryptElementClickHandler;
     GenericResourceOpenAndSaveButtonsOnClickHandler * m_pGenericResourceOpenAndSaveButtonsOnClickHandler;
     HyperlinkClickJavaScriptHandler * m_pHyperlinkClickJavaScriptHandler;
+    WebSocketWaiter * m_pWebSocketWaiter;
+    bool        m_webSocketReady;
 
     quint16     m_webSocketServerPort;
 #endif

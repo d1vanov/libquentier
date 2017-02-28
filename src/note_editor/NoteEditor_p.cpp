@@ -76,6 +76,7 @@ typedef QWebSettings WebSettings;
 #include "javascript_glue/GenericResourceOpenAndSaveButtonsOnClickHandler.h"
 #include "javascript_glue/GenericResourceImageJavaScriptHandler.h"
 #include "javascript_glue/HyperlinkClickJavaScriptHandler.h"
+#include "javascript_glue/WebSocketWaiter.h"
 #include "WebSocketClientWrapper.h"
 #include "WebSocketTransport.h"
 #include <quentier/utility/DesktopServices.h>
@@ -215,6 +216,8 @@ NoteEditorPrivate::NoteEditorPrivate(NoteEditor & noteEditor) :
     m_pEnCryptElementClickHandler(new EnCryptElementOnClickHandler(this)),
     m_pGenericResourceOpenAndSaveButtonsOnClickHandler(new GenericResourceOpenAndSaveButtonsOnClickHandler(this)),
     m_pHyperlinkClickJavaScriptHandler(new HyperlinkClickJavaScriptHandler(this)),
+    m_pWebSocketWaiter(new WebSocketWaiter(this)),
+    m_webSocketReady(false),
     m_webSocketServerPort(0),
 #endif
     m_pSpellCheckerDynamicHandler(new SpellCheckerDynamicHelper(this)),
@@ -428,11 +431,18 @@ void NoteEditorPrivate::onNoteLoadFinished(bool ok)
     page->executeJavaScript(m_qWebKitSetupJs);
 #else
     page->executeJavaScript(m_qWebChannelJs);
-    page->executeJavaScript(QStringLiteral("(function(){window.websocketserverport = ") +
-                            QString::number(m_webSocketServerPort) + QStringLiteral("})();"));
     page->executeJavaScript(m_onResourceInfoReceivedJs);
     page->executeJavaScript(m_onGenericResourceImageReceivedJs);
-    page->executeJavaScript(m_qWebChannelSetupJs);
+
+    if (!m_webSocketReady) {
+        QNDEBUG(QStringLiteral("Waiting for web socket connection"));
+        page->executeJavaScript(QStringLiteral("(function(){window.websocketserverport = ") +
+                                QString::number(m_webSocketServerPort) + QStringLiteral("})();"));
+        page->executeJavaScript(m_qWebChannelSetupJs);
+        page->startJavaScriptAutoExecution();
+        return;
+    }
+
     page->executeJavaScript(m_genericResourceOnClickHandlerJs);
     page->executeJavaScript(m_setupGenericResourceOnClickHandlerJs);
     page->executeJavaScript(m_provideSrcAndOnClickScriptForEnCryptImgTagsJs);
@@ -873,6 +883,14 @@ void NoteEditorPrivate::onGenericResourceImageSaved(bool success, QByteArray res
 void NoteEditorPrivate::onHyperlinkClicked(QString url)
 {
     openUrl(QUrl(url));
+}
+
+void NoteEditorPrivate::onWebSocketReady()
+{
+    QNDEBUG(QStringLiteral("NoteEditorPrivate::onWebSocketReady"));
+
+    m_webSocketReady = true;
+    onNoteLoadFinished(true);
 }
 
 #else
@@ -3477,6 +3495,10 @@ void NoteEditorPrivate::setupJavaScriptObjects()
                      &HyperlinkClickJavaScriptHandler::hyperlinkClicked,
                      this, &NoteEditorPrivate::onHyperlinkClicked);
 
+    QObject::connect(m_pWebSocketWaiter, &WebSocketWaiter::ready,
+                     this, &NoteEditorPrivate::onWebSocketReady);
+
+    m_pWebChannel->registerObject(QStringLiteral("webSocketWaiter"), m_pWebSocketWaiter);
     m_pWebChannel->registerObject(QStringLiteral("resourceCache"), m_pResourceInfoJavaScriptHandler);
     m_pWebChannel->registerObject(QStringLiteral("enCryptElementClickHandler"), m_pEnCryptElementClickHandler);
     m_pWebChannel->registerObject(QStringLiteral("pageMutationObserver"), m_pPageMutationHandler);
