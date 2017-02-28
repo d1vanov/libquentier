@@ -3322,11 +3322,6 @@ void NoteEditorPrivate::provideSrcAndOnClickScriptForImgEnCryptTags()
         return;
     }
 
-    if (!m_pNote->containsEncryption()) {
-        QNTRACE(QStringLiteral("Current note doesn't contain any encryption, nothing to do"));
-        return;
-    }
-
     QString iconPath = QStringLiteral("qrc:/encrypted_area_icons/en-crypt/en-crypt.png");
     QString javascript = QStringLiteral("provideSrcAndOnClickScriptForEnCryptImgTags(\"") + iconPath + QStringLiteral("\")");
 
