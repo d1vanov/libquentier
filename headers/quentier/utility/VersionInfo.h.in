@@ -1,13 +1,11 @@
 #ifndef LIB_QUENTIER_UTILITY_VERSION_INFO_H
 #define LIB_QUENTIER_UTILITY_VERSION_INFO_H
 
-#include <quentier/utility/Linkage.h>
-
 @LIB_QUENTIER_QT_WEB_ENGINE_DEFINE@
 
 namespace quentier {
 
-QUENTIER_EXPORT int libraryVersion() { return @LIBQUENTIER_LIBRARY_VERSION@; }
+int libraryVersion() { return @LIBQUENTIER_LIBRARY_VERSION@; }
 
 } // namespace quentier
 
