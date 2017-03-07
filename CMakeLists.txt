@@ -535,12 +535,35 @@ add_library(${LIBNAME} SHARED
             ${${PROJECT_NAME}_FORMS_HEADERS}
             ${${PROJECT_NAME}_QM_FILES})
 
+# installation settings, needed for target properties
+if(NOT CMAKE_INSTALL_LIBDIR)
+  set(CMAKE_INSTALL_LIBDIR "${CMAKE_INSTALL_PREFIX}/lib")
+endif()
+
+if(NOT CMAKE_INSTALL_BINDIR)
+  set(CMAKE_INSTALL_BINDIR "${CMAKE_INSTALL_PREFIX}/bin")
+endif()
+
+if(NOT CMAKE_INSTALL_INCLUDEDIR)
+  set(CMAKE_INSTALL_INCLUDEDIR "${CMAKE_INSTALL_PREFIX}/include")
+endif()
+
+if(NOT INSTALL_CMAKE_DIR)
+  if(WIN32 AND NOT CYGWIN)
+    set(DEF_INSTALL_CMAKE_DIR "${CMAKE_INSTALL_PREFIX}/CMake")
+  else()
+    set(DEF_INSTALL_CMAKE_DIR "${CMAKE_INSTALL_LIBDIR}/cmake/Libquentier-${LIBQUENTIER_QT_VERSION}")
+  endif()
+  set(INSTALL_CMAKE_DIR ${DEF_INSTALL_CMAKE_DIR} CACHE PATH "Installation directory for CMake files")
+endif()
+
+# library target properties
 set_target_properties(${LIBNAME} PROPERTIES
                       PREFIX ""
                       VERSION "${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}.${PROJECT_VERSION_PATCH}"
                       SOVERSION "${PROJECT_VERSION_MAJOR}"
                       MACOSX_RPATH 1
-                      INSTALL_RPATH_USE_LINK_PATH TRUE)
+                      INSTALL_NAME_DIR "${CMAKE_INSTALL_LIBDIR}")
 
 target_link_libraries(${LIBNAME} ${QT_LIBRARIES} ${THIRDPARTY_LIBS})
 
@@ -610,28 +633,6 @@ prepend_path(TEST_SOURCES "${TEST_SOURCES}" ${CMAKE_CURRENT_SOURCE_DIR})
 # collect the list of sources to be checked by the static analyzer
 set(LIBQUENTIER_CPPCHECKABLE_SOURCES ${${PROJECT_NAME}_SOURCES})
 list(APPEND LIBQUENTIER_CPPCHECKABLE_SOURCES ${TEST_SOURCES})
-
-# installation settings
-if(NOT CMAKE_INSTALL_LIBDIR)
-  set(CMAKE_INSTALL_LIBDIR "${CMAKE_INSTALL_PREFIX}/lib")
-endif()
-
-if(NOT CMAKE_INSTALL_BINDIR)
-  set(CMAKE_INSTALL_BINDIR "${CMAKE_INSTALL_PREFIX}/bin")
-endif()
-
-if(NOT CMAKE_INSTALL_INCLUDEDIR)
-  set(CMAKE_INSTALL_INCLUDEDIR "${CMAKE_INSTALL_PREFIX}/include")
-endif()
-
-if(NOT INSTALL_CMAKE_DIR)
-  if(WIN32 AND NOT CYGWIN)
-    set(DEF_INSTALL_CMAKE_DIR "${CMAKE_INSTALL_PREFIX}/CMake")
-  else()
-    set(DEF_INSTALL_CMAKE_DIR "${CMAKE_INSTALL_LIBDIR}/cmake/Libquentier-${LIBQUENTIER_QT_VERSION}")
-  endif()
-  set(INSTALL_CMAKE_DIR ${DEF_INSTALL_CMAKE_DIR} CACHE PATH "Installation directory for CMake files")
-endif()
 
 configure_file(cmake/modules/LibquentierBuildTreeSettings.cmake.in
                ${PROJECT_BINARY_DIR}/Libquentier-${LIBQUENTIER_QT_VERSION}BuildTreeSettings.cmake @ONLY)
@@ -708,6 +709,8 @@ endif()
 # install cmake files
 install(EXPORT Libquentier-${LIBQUENTIER_QT_VERSION}LibraryDepends DESTINATION ${INSTALL_CMAKE_DIR})
 install(FILES ${PROJECT_SOURCE_DIR}/cmake/modules/LibquentierFindPackageWrapperMacro.cmake DESTINATION ${INSTALL_CMAKE_DIR})
+install(FILES ${PROJECT_SOURCE_DIR}/cmake/modules/LibquentierFindHunspell.cmake DESTINATION ${INSTALL_CMAKE_DIR})
+install(FILES ${PROJECT_SOURCE_DIR}/cmake/modules/LibquentierFindLibTidyHtml5.cmake DESTINATION ${INSTALL_CMAKE_DIR})
 install(FILES ${PROJECT_BINARY_DIR}/Libquentier-${LIBQUENTIER_QT_VERSION}FindQtDependencies.cmake DESTINATION ${INSTALL_CMAKE_DIR})
 install(FILES ${PROJECT_BINARY_DIR}/Libquentier-${LIBQUENTIER_QT_VERSION}FindOtherDependencies.cmake DESTINATION ${INSTALL_CMAKE_DIR})
 install(FILES ${PROJECT_BINARY_DIR}/Libquentier-${LIBQUENTIER_QT_VERSION}Config.cmake DESTINATION ${INSTALL_CMAKE_DIR})

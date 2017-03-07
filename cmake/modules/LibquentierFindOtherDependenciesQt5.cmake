@@ -6,3 +6,5 @@ endif()
 
 LibquentierFindPackageWrapper(QEverCloud-qt5 ${LIBQUENTIER_FIND_PACKAGE_ARG})
 LibquentierFindPackageWrapper(Qt5Keychain ${LIBQUENTIER_FIND_PACKAGE_ARG})
+LibquentierFindPackageWrapper(LibXml2 ${LIBQUENTIER_FIND_PACKAGE_ARG})
+LibquentierFindPackageWrapper(OpenSSL ${LIBQUENTIER_FIND_PACKAGE_ARG})
