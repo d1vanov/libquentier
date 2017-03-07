@@ -30,7 +30,7 @@ elseif(${CMAKE_CXX_COMPILER_ID} MATCHES "Clang")
     add_definitions("-DCPP11_COMPLIANT=1")
   else()
     message(WARNING "Your compiler may not support all the necessary C++11 standard features
-                     to build this application. If you'd get any compilation errors, consider
+                     to build this library. If you get any compilation errors, consider
                      upgrading to a compiler version which fully supports the C++11 standard.")
   endif()
   set(CMAKE_CXX_FLAGS "-std=c++11 ${CMAKE_CXX_FLAGS}")
@@ -53,13 +53,13 @@ elseif(${CMAKE_CXX_COMPILER_ID} STREQUAL "MSVC")
     add_definitions("-DCPP11_COMPLIANT")
     set(CMAKE_CXX_FLAGS "-D_SCL_SECURE_NO_WARNINGS -D_CRT_SECURE_NO_WARNINGS ${CMAKE_CXX_FLAGS}")
   elseif(MSVC11 OR MSVC10)
-    message(STATUS "This version of Visual C++ compiler only partially supports C++11 standard but it is capable of building Quentier")
+    message(STATUS "This version of Visual C++ compiler only partially supports C++11 standard but it is capable of building libquentier")
   else()
     message(STATUS "Unidentified version of Visual C++ compiler")
   endif()
   set(CMAKE_CXX_FLAGS "-D_SCL_SECURE_NO_WARNINGS -D_CRT_SECURE_NO_WARNINGS ${CMAKE_CXX_FLAGS}")
 else()
-  message(WARNING "Your C++ compiler is not officially supported for building of this application.
-                   If you'd get any compilation errors, consider upgrading to a compiler version
+  message(WARNING "Your C++ compiler is not officially supported for building of this library.
+                   If you get any compilation errors, consider upgrading to a compiler version
                    which fully supports the C++11 standard.")
 endif(CMAKE_COMPILER_IS_GNUCXX)
