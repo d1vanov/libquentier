@@ -5,7 +5,7 @@
 
 namespace quentier {
 
-int libraryVersion() { return @LIBQUENTIER_LIBRARY_VERSION@; }
+inline int libraryVersion() { return @LIBQUENTIER_LIBRARY_VERSION@; }
 
 } // namespace quentier
 
