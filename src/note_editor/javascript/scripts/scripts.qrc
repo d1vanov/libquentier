@@ -37,5 +37,6 @@
         <file>findReplaceManager.js</file>
         <file>imageAreasHilitor.js</file>
         <file>managedPageAction.js</file>
+        <file>setInitialCaretPosition.js</file>
     </qresource>
 </RCC>

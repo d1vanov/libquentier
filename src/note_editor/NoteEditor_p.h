@@ -726,6 +726,7 @@ private:
     QString     m_findReplaceManagerJs;
     QString     m_spellCheckerJs;
     QString     m_managedPageActionJs;
+    QString     m_setInitialCaretPositionJs;
 
 #ifndef QUENTIER_USE_QT_WEB_ENGINE
     QString     m_qWebKitSetupJs;

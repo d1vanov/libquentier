@@ -197,6 +197,7 @@ NoteEditorPrivate::NoteEditorPrivate(NoteEditor & noteEditor) :
     m_findReplaceManagerJs(),
     m_spellCheckerJs(),
     m_managedPageActionJs(),
+    m_setInitialCaretPositionJs(),
 #ifndef QUENTIER_USE_QT_WEB_ENGINE
     m_qWebKitSetupJs(),
 #else
@@ -492,6 +493,9 @@ void NoteEditorPrivate::onNoteLoadFinished(bool ok)
     setupTextCursorPositionTracking();
     setupGenericResourceImages();
 #endif
+
+    // Set the caret position to the end of the body
+    page->executeJavaScript(m_setInitialCaretPositionJs);
 
     // NOTE: executing page mutation observer's script last
     // so that it doesn't catch the mutations originating from the above scripts
@@ -3938,6 +3942,7 @@ void NoteEditorPrivate::setupScripts()
     SETUP_SCRIPT("javascript/scripts/findReplaceManager.js", m_findReplaceManagerJs);
     SETUP_SCRIPT("javascript/scripts/spellChecker.js", m_spellCheckerJs);
     SETUP_SCRIPT("javascript/scripts/managedPageAction.js", m_managedPageActionJs);
+    SETUP_SCRIPT("javascript/scripts/setInitialCaretPosition.js", m_setInitialCaretPositionJs);
     SETUP_SCRIPT("javascript/scripts/replaceHyperlinkContent.js", m_replaceHyperlinkContentJs);
     SETUP_SCRIPT("javascript/scripts/updateResourceHash.js", m_updateResourceHashJs);
     SETUP_SCRIPT("javascript/scripts/updateImageResourceSrc.js", m_updateImageResourceSrcJs);
