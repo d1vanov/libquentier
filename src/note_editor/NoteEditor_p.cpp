@@ -5514,7 +5514,34 @@ bool NoteEditorPrivate::isModified() const
 void NoteEditorPrivate::setFocusToEditor()
 {
     QNDEBUG(QStringLiteral("NoteEditorPrivate::setFocusToEditor"));
+
+#ifdef QUENTIER_USE_QT_WEB_ENGINE
+#if QT_VERSION < QT_VERSION_CHECK(5, 9, 0)
+    QNDEBUG(QStringLiteral("Working around the Qt bug https://bugreports.qt.io/browse/QTBUG-58515"));
+
+    QWidget * pFocusWidget = qApp->focusWidget();
+    if (pFocusWidget) {
+        QNDEBUG(QStringLiteral("Removing focus from widget: ") << pFocusWidget);
+        pFocusWidget->clearFocus();
+    }
+#endif
+#endif
+
     setFocus();
+
+#ifdef QUENTIER_USE_QT_WEB_ENGINE
+#if QT_VERSION < QT_VERSION_CHECK(5, 9, 0)
+    QRect r = rect();
+    QPoint bottomRight = r.bottomRight();
+    bottomRight.setX(bottomRight.x() - 1);
+    bottomRight.setY(bottomRight.y() - 1);
+    QMouseEvent event(QEvent::MouseButtonPress, bottomRight, bottomRight, mapToGlobal(bottomRight),
+                      Qt::LeftButton, Qt::MouseButtons(Qt::LeftButton), Qt::NoModifier, Qt::MouseEventNotSynthesized);
+    QNDEBUG(QStringLiteral("Sending QMouseEvent to the note editor: point x = ") << bottomRight.x()
+            << QStringLiteral(", y = ") << bottomRight.y());
+    QApplication::sendEvent(this, &event);
+#endif
+#endif
 }
 
 void NoteEditorPrivate::setModified()
