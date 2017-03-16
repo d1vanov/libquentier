@@ -20,6 +20,7 @@
 #define LIB_QUENTIER_UTILITY_QUENTIER_APPLICATION_H
 
 #include <quentier/utility/Linkage.h>
+#include <quentier/utility/Macros.h>
 #include <QApplication>
 
 namespace quentier {
@@ -31,7 +32,8 @@ public:
     QuentierApplication(int & argc, char * argv[]);
     virtual ~QuentierApplication();
 
-    virtual bool notify(QObject * object, QEvent * event);
+    virtual bool notify(QObject * pObject, QEvent * pEvent) Q_DECL_OVERRIDE;
+    virtual bool event(QEvent * pEvent) Q_DECL_OVERRIDE;
 };
 
 } // namespace quentier

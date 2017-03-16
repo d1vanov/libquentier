@@ -30,11 +30,11 @@ QuentierApplication::QuentierApplication(int & argc, char * argv[]) :
 QuentierApplication::~QuentierApplication()
 {}
 
-bool QuentierApplication::notify(QObject * object, QEvent * event)
+bool QuentierApplication::notify(QObject * pObject, QEvent * pEvent)
 {
     try
     {
-        return QApplication::notify(object, event);
+        return QApplication::notify(pObject, pEvent);
     }
     catch(const std::exception & e)
     {
@@ -43,6 +43,19 @@ bool QuentierApplication::notify(QObject * object, QEvent * event)
                    << QStringLiteral(", backtrace: ") << sysInfo.stackTrace());
         return false;
     }
+}
+
+bool QuentierApplication::event(QEvent * pEvent)
+{
+#ifdef Q_WS_MAC
+    // Handling close action from OS X / macOS dock properly
+    if (pEvent && (pEvent->type() == QEvent::Close)) {
+        quit();
+        return true;
+    }
+#endif
+
+    return QApplication::event(pEvent);
 }
 
 } // namespace quentier
