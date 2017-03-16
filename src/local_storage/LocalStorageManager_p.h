@@ -335,6 +335,8 @@ private:
 
     void clearDatabaseFile();
 
+    void clearCachedQueries();
+
     struct SharedNotebookCompareByIndex
     {
         bool operator()(const SharedNotebook & lhs, const SharedNotebook & rhs) const;

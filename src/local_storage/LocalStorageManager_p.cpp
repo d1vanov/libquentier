@@ -587,6 +587,8 @@ void LocalStorageManagerPrivate::switchUser(const Account & account,
         throw DatabaseSqlErrorException(error);
     }
 
+    clearCachedQueries();
+
     // TODO: in future should check whether the upgrade from previous database version is necessary
 }
 
@@ -9974,6 +9976,51 @@ void LocalStorageManagerPrivate::clearDatabaseFile()
     databaseFile.resize(0);
     databaseFile.flush();
     databaseFile.close();
+}
+
+void LocalStorageManagerPrivate::clearCachedQueries()
+{
+    QNDEBUG(QStringLiteral("LocalStorageManagerPrivate::clearCachedQueries"));
+
+    m_insertOrReplaceSavedSearchQueryPrepared = false;
+    m_getSavedSearchCountQueryPrepared = false;
+    m_insertOrReplaceResourceQueryPrepared = false;
+    m_insertOrReplaceNoteResourceQueryPrepared = false;
+    m_deleteResourceFromResourceRecognitionTypesQueryPrepared = false;
+    m_insertOrReplaceIntoResourceRecognitionDataQueryPrepared = false;
+    m_deleteResourceFromResourceAttributesQueryPrepared = false;
+    m_deleteResourceFromResourceAttributesApplicationDataKeysOnlyQueryPrepared = false;
+    m_deleteResourceFromResourceAttributesApplicationDataFullMapQueryPrepared = false;
+    m_insertOrReplaceResourceAttributesQueryPrepared = false;
+    m_insertOrReplaceResourceAttributeApplicationDataKeysOnlyQueryPrepared = false;
+    m_insertOrReplaceResourceAttributeApplicationDataFullMapQueryPrepared = false;
+    m_getResourceCountQueryPrepared = false;
+    m_getTagCountQueryPrepared = false;
+    m_insertOrReplaceTagQueryPrepared = false;
+    m_getNoteCountQueryPrepared = false;
+    m_insertOrReplaceNoteQueryPrepared = false;
+    m_insertOrReplaceSharedNoteQueryPrepared = false;
+    m_insertOrReplaceNoteRestrictionsQueryPrepared = false;
+    m_insertOrReplaceNoteLimitsQueryPrepared = false;
+    m_canAddNoteToNotebookQueryPrepared = false;
+    m_canUpdateNoteInNotebookQueryPrepared = false;
+    m_canExpungeNoteInNotebookQueryPrepared = false;
+    m_insertOrReplaceNoteIntoNoteTagsQueryPrepared = false;
+    m_getLinkedNotebookCountQueryPrepared = false;
+    m_insertOrReplaceLinkedNotebookQueryPrepared = false;
+    m_getNotebookCountQueryPrepared = false;
+    m_insertOrReplaceNotebookQueryPrepared = false;
+    m_insertOrReplaceNotebookRestrictionsQueryPrepared = false;
+    m_insertOrReplaceSharedNotebookQueryPrepared = false;
+    m_getUserCountQueryPrepared = false;
+    m_insertOrReplaceUserQueryPrepared = false;
+    m_insertOrReplaceUserAttributesQueryPrepared = false;
+    m_insertOrReplaceAccountingQueryPrepared = false;
+    m_insertOrReplaceAccountLimitsQueryPrepared = false;
+    m_insertOrReplaceBusinessUserInfoQueryPrepared = false;
+    m_insertOrReplaceUserAttributesViewedPromotionsQueryPrepared = false;
+    m_insertOrReplaceUserAttributesRecentMailedAddressesQueryPrepared = false;
+    m_deleteUserQueryPrepared = false;
 }
 
 template <class T>
