@@ -26,6 +26,12 @@
 #include <QFileDialog>
 #include <QMessageBox>
 
+/**
+ * This macro defines the name of the environment variable which can be set to
+ * override the default persistence storage path used by libquentier
+ */
+#define LIBQUENTIER_PERSISTENCE_STORAGE_PATH "LIBQUENTIER_PERSISTENCE_STORAGE_PATH"
+
 QT_FORWARD_DECLARE_CLASS(QWidget)
 
 namespace quentier {
