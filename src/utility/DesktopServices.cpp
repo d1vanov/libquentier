@@ -62,7 +62,7 @@ namespace quentier {
 
 const QString applicationPersistentStoragePath(bool * pNonStandardLocation)
 {
-    QByteArray envOverride = qgetenv("QUENTIER_PERSISTENCE_STORAGE_PATH");
+    QByteArray envOverride = qgetenv("LIBQUENTIER_PERSISTENCE_STORAGE_PATH");
     if (!envOverride.isEmpty())
     {
         if (pNonStandardLocation) {
