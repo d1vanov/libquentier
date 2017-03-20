@@ -60,12 +60,49 @@ AddResourceDelegate::AddResourceDelegate(const QString & filePath, NoteEditorPri
     m_pGenericResourceImageManager(pGenericResourceImageManager),
     m_saveResourceImageRequestId(),
     m_filePath(filePath),
-    m_resourceFileMimeType(),
+    m_data(),
+    m_resourceMimeType(),
     m_resource(),
     m_resourceFileStoragePath(),
     m_readResourceFileRequestId(),
     m_saveResourceToStorageRequestId()
 {}
+
+AddResourceDelegate::AddResourceDelegate(const QByteArray & resourceData,
+                                         const QString & mimeType, NoteEditorPrivate & noteEditor,
+                                         ResourceFileStorageManager * pResourceFileStorageManager,
+                                         FileIOThreadWorker * pFileIOThreadWorker,
+                                         GenericResourceImageManager * pGenericResourceImageManager,
+                                         QHash<QByteArray, QString> & genericResourceImageFilePathsByResourceHash) :
+    QObject(&noteEditor),
+    m_noteEditor(noteEditor),
+    m_pResourceFileStorageManager(pResourceFileStorageManager),
+    m_pFileIOThreadWorker(pFileIOThreadWorker),
+    m_genericResourceImageFilePathsByResourceHash(genericResourceImageFilePathsByResourceHash),
+    m_pGenericResourceImageManager(pGenericResourceImageManager),
+    m_saveResourceImageRequestId(),
+    m_filePath(),
+    m_data(resourceData),
+    m_resourceMimeType(),
+    m_resource(),
+    m_resourceFileStoragePath(),
+    m_readResourceFileRequestId(),
+    m_saveResourceToStorageRequestId()
+{
+    QMimeDatabase mimeDatabase;
+    m_resourceMimeType = mimeDatabase.mimeTypeForName(mimeType);
+
+    if (!m_resourceMimeType.isValid())
+    {
+        QNDEBUG(QStringLiteral("The mime type deduced from the mime type name ") << mimeType
+                << QStringLiteral(" is invalid, trying to deduce the mime type from the raw data"));
+
+        m_resourceMimeType = mimeDatabase.mimeTypeForData(m_data);
+
+        QNDEBUG(QStringLiteral("Mime type deduced from the data is ")
+                << (m_resourceMimeType.isValid() ? QStringLiteral("valid") : QStringLiteral("invalid")));
+    }
+}
 
 void AddResourceDelegate::start()
 {
@@ -98,8 +135,26 @@ void AddResourceDelegate::doStart()
     QNDEBUG(QStringLiteral("AddResourceDelegate::doStart"));
 
     const Note * pNote = m_noteEditor.notePtr();
-    if (!pNote) {
-        QNINFO(QStringLiteral("Can't add resource: no note is set to the editor"));
+    if (Q_UNLIKELY(!pNote)) {
+        ErrorString error(QT_TRANSLATE_NOOP("", "Can't add attachment: no note is set to the editor"));
+        QNWARNING(error);
+        emit notifyError(error);
+        return;
+    }
+
+    if (m_filePath.isEmpty() && m_data.isEmpty())
+    {
+        ErrorString error(QT_TRANSLATE_NOOP("", "Can't add attachment: the file path of the data to be added is empty "
+                                            "and the raw data is empty as well"));
+        QNWARNING(error);
+        emit notifyError(error);
+        return;
+    }
+    else if (m_filePath.isEmpty() && !m_resourceMimeType.isValid())
+    {
+        ErrorString error(QT_TRANSLATE_NOOP("", "Can't add attachment: the mime type of the data to be added is invalid"));
+        QNWARNING(error);
+        emit notifyError(error);
         return;
     }
 
@@ -137,6 +192,18 @@ void AddResourceDelegate::doStart()
         QNINFO(QStringLiteral("No account when adding the resource to note, can't check account-wise note limits"));
     }
 
+    if (!m_filePath.isEmpty()) {
+        doStartUsingFile();
+    }
+    else {
+        doStartUsingData();
+    }
+}
+
+void AddResourceDelegate::doStartUsingFile()
+{
+    QNDEBUG(QStringLiteral("AddResourceDelegate::doStartUsingFile"));
+
     QFileInfo fileInfo(m_filePath);
     if (!fileInfo.isFile()) {
         QNINFO(QStringLiteral("Detected attempt to drop something else rather than file: ") << m_filePath);
@@ -148,52 +215,27 @@ void AddResourceDelegate::doStart()
         return;
     }
 
-    if (noteHasLimits)
-    {
-        const qevercloud::NoteLimits & limits = pNote->noteLimits();
-        const qint64 fileSize = fileInfo.size();
-        bool violatesNoteResourceSizeMax = limits.resourceSizeMax.isSet() && (fileSize > limits.resourceSizeMax.ref());
-
-        if (Q_UNLIKELY(violatesNoteResourceSizeMax))
-        {
-            ErrorString error(QT_TRANSLATE_NOOP("", "can't add resource to note: the resource file is too large, "
-                                                "max resource size allowed is"));
-            error.details() = humanReadableSize(static_cast<quint64>(pNote->noteLimits().resourceSizeMax.ref()));
-            emit notifyError(error);
-            return;
-        }
-
-        const qint64 previousNoteSize = m_noteEditor.noteSize();
-        bool violatesNoteSizeMax = limits.noteSizeMax.isSet() && limits.noteSizeMax.ref() > (previousNoteSize + fileSize);
-        if (violatesNoteSizeMax)
-        {
-            ErrorString error(QT_TRANSLATE_NOOP("", "can't add resource to note: the addition of the resource file "
-                                                "would violate the max resource size which is"));
-            error.details() = humanReadableSize(static_cast<quint64>(pNote->noteLimits().noteSizeMax.ref()));
-            emit notifyError(error);
-            return;
-        }
+    const Note * pNote = m_noteEditor.notePtr();
+    if (Q_UNLIKELY(!pNote)) {
+        ErrorString error(QT_TRANSLATE_NOOP("", "Can't add attachment: no note is set to the editor"));
+        QNWARNING(error);
+        emit notifyError(error);
+        return;
     }
-    else if (pAccount)
-    {
-        const qint64 fileSize = fileInfo.size();
-        bool violatesNoteResourceSizeMax = (fileSize > pAccount->resourceSizeMax());
 
-        if (Q_UNLIKELY(violatesNoteResourceSizeMax))
-        {
-            ErrorString error(QT_TRANSLATE_NOOP("", "can't add resource to note: the resource file is too large, "
-                                                "max resource size allowed is"));
-            error.details() = humanReadableSize(static_cast<quint64>(pAccount->resourceSizeMax()));
-            emit notifyError(error);
-            return;
-        }
+    const Account * pAccount = m_noteEditor.accountPtr();
+    const qint64 fileSize = fileInfo.size();
+    if (!checkResourceDataSize(*pNote, pAccount, fileSize)) {
+        return;
     }
 
     QMimeDatabase mimeDatabase;
-    m_resourceFileMimeType = mimeDatabase.mimeTypeForFile(fileInfo);
-
-    if (!m_resourceFileMimeType.isValid()) {
-        QNINFO(QStringLiteral("Detected invalid mime type for file ") << m_filePath);
+    m_resourceMimeType = mimeDatabase.mimeTypeForFile(fileInfo);
+    if (Q_UNLIKELY(!m_resourceMimeType.isValid())) {
+        ErrorString error(QT_TRANSLATE_NOOP("", "Can't add attachment: the mime type of the resource file is invalid"));
+        error.details() = QStringLiteral("file: ");
+        error.details() += m_filePath;
+        emit notifyError(error);
         return;
     }
 
@@ -230,23 +272,69 @@ void AddResourceDelegate::onResourceFileRead(bool success, ErrorString errorDesc
         return;
     }
 
+    QFileInfo fileInfo(m_filePath);
+    doSaveResourceToStorage(data, fileInfo.fileName());
+}
+
+void AddResourceDelegate::doStartUsingData()
+{
+    QNDEBUG(QStringLiteral("AddResourceDelegate::doStartUsingData"));
+
+    const Note * pNote = m_noteEditor.notePtr();
+    if (Q_UNLIKELY(!pNote)) {
+        ErrorString error(QT_TRANSLATE_NOOP("", "Can't add attachment: no note is set to the editor"));
+        QNWARNING(error);
+        emit notifyError(error);
+        return;
+    }
+
+    if (Q_UNLIKELY(!m_resourceMimeType.isValid()))
+    {
+        ErrorString error(QT_TRANSLATE_NOOP("", "Can't add attachment: bad mime type"));
+
+        QString mimeTypeName = m_resourceMimeType.name();
+        if (!mimeTypeName.isEmpty()) {
+            error.details() = QStringLiteral(": ");
+            error.details() += mimeTypeName;
+        }
+
+        QNWARNING(error);
+        emit notifyError(error);
+        return;
+    }
+
+    const Account * pAccount = m_noteEditor.accountPtr();
+    if (!checkResourceDataSize(*pNote, pAccount, static_cast<qint64>(m_data.size()))) {
+        return;
+    }
+
+    doSaveResourceToStorage(m_data, QString());
+}
+
+void AddResourceDelegate::doSaveResourceToStorage(const QByteArray & data, QString resourceName)
+{
+    QNDEBUG(QStringLiteral("AddResourceDelegate::doSaveResourceToStorage: resource name = ") << resourceName);
+
     const Note * pNote = m_noteEditor.notePtr();
     if (!pNote) {
-        errorDescription.base() = QT_TRANSLATE_NOOP("", "can't save the added resource to local file: no note is set to the editor");
+        ErrorString errorDescription(QT_TRANSLATE_NOOP("", "can't save the added resource to local file: no note is set to the editor"));
         QNWARNING(errorDescription);
         emit notifyError(errorDescription);
         return;
     }
 
-    QFileInfo fileInfo(m_filePath);
+    if (resourceName.isEmpty()) {
+        resourceName = tr("Attachment");
+    }
+
     QByteArray dataHash = QCryptographicHash::hash(data, QCryptographicHash::Md5);
-    m_resource = m_noteEditor.attachResourceToNote(data, dataHash, m_resourceFileMimeType, fileInfo.fileName());
+    m_resource = m_noteEditor.attachResourceToNote(data, dataHash, m_resourceMimeType, resourceName);
     QString resourceLocalUid = m_resource.localUid();
     if (Q_UNLIKELY(resourceLocalUid.isEmpty())) {
         return;
     }
 
-    bool isImage = m_resourceFileMimeType.name().startsWith(QStringLiteral("image/"));
+    bool isImage = m_resourceMimeType.name().startsWith(QStringLiteral("image/"));
     if (isImage) {
         m_resourceFileStoragePath = m_noteEditor.imageResourcesStoragePath();
     }
@@ -256,10 +344,15 @@ void AddResourceDelegate::onResourceFileRead(bool success, ErrorString errorDesc
 
     m_resourceFileStoragePath += QStringLiteral("/") + pNote->localUid() + QStringLiteral("/") + resourceLocalUid;
 
-    QString fileInfoSuffix = fileInfo.completeSuffix();
+    QString fileInfoSuffix;
+    if (!m_filePath.isEmpty()) {
+        QFileInfo fileInfo(m_filePath);
+        fileInfoSuffix = fileInfo.completeSuffix();
+    }
+
     if (fileInfoSuffix.isEmpty())
     {
-        const QStringList suffixes = m_resourceFileMimeType.suffixes();
+        const QStringList suffixes = m_resourceMimeType.suffixes();
         if (!suffixes.isEmpty()) {
             fileInfoSuffix = suffixes.front();
         }
@@ -272,9 +365,9 @@ void AddResourceDelegate::onResourceFileRead(bool success, ErrorString errorDesc
     QObject::connect(m_pResourceFileStorageManager, QNSIGNAL(ResourceFileStorageManager,writeResourceToFileCompleted,QUuid,QByteArray,QString,int,ErrorString),
                      this, QNSLOT(AddResourceDelegate,onResourceSavedToStorage,QUuid,QByteArray,QString,int,ErrorString));
 
-    QNTRACE(QStringLiteral("Emitting the request to save the dropped resource to local file storage: generated local uid = ")
+    QNTRACE(QStringLiteral("Emitting the request to save the dropped/pasted resource to local file storage: generated local uid = ")
             << resourceLocalUid << QStringLiteral(", data hash = ") << dataHash.toHex() << QStringLiteral(", request id = ")
-            << m_saveResourceToStorageRequestId << QStringLiteral(", mime type name = ") << m_resourceFileMimeType.name());
+            << m_saveResourceToStorageRequestId << QStringLiteral(", mime type name = ") << m_resourceMimeType.name());
     emit saveResourceToStorage(pNote->localUid(), resourceLocalUid, data, dataHash, fileInfoSuffix,
                                m_saveResourceToStorageRequestId, isImage);
 }
@@ -314,7 +407,7 @@ void AddResourceDelegate::onResourceSavedToStorage(QUuid requestId, QByteArray d
         m_noteEditor.replaceResourceInNote(m_resource);
     }
 
-    if (m_resourceFileMimeType.name().startsWith(QStringLiteral("image/"))) {
+    if (m_resourceMimeType.name().startsWith(QStringLiteral("image/"))) {
         QNTRACE(QStringLiteral("Done adding the image resource to the note, moving on to adding it to the page"));
         insertNewResourceHtml();
         return;
@@ -446,6 +539,53 @@ void AddResourceDelegate::onNewResourceHtmlInserted(const QVariant & data)
     }
 
     emit finished(m_resource, m_resourceFileStoragePath);
+}
+
+bool AddResourceDelegate::checkResourceDataSize(const Note & note, const Account * pAccount, const qint64 size)
+{
+    QNDEBUG(QStringLiteral("AddResourceDelegate::checkResourceDataSize: size = ") << size);
+
+    bool noteHasLimits = note.hasNoteLimits();
+    if (noteHasLimits)
+    {
+        const qevercloud::NoteLimits & limits = note.noteLimits();
+        bool violatesNoteResourceSizeMax = limits.resourceSizeMax.isSet() && (size > limits.resourceSizeMax.ref());
+
+        if (Q_UNLIKELY(violatesNoteResourceSizeMax))
+        {
+            ErrorString error(QT_TRANSLATE_NOOP("", "can't add attachment: the resource to be added "
+                                                "is too large, max resource size allowed is"));
+            error.details() = humanReadableSize(static_cast<quint64>(note.noteLimits().resourceSizeMax.ref()));
+            emit notifyError(error);
+            return false;
+        }
+
+        const qint64 previousNoteSize = m_noteEditor.noteSize();
+        bool violatesNoteSizeMax = limits.noteSizeMax.isSet() && limits.noteSizeMax.ref() > (previousNoteSize + size);
+        if (violatesNoteSizeMax)
+        {
+            ErrorString error(QT_TRANSLATE_NOOP("", "can't add attachment: the addition of the resource "
+                                                "would violate the max resource size which is"));
+            error.details() = humanReadableSize(static_cast<quint64>(note.noteLimits().noteSizeMax.ref()));
+            emit notifyError(error);
+            return false;
+        }
+    }
+    else if (pAccount)
+    {
+        bool violatesNoteResourceSizeMax = (size > pAccount->resourceSizeMax());
+
+        if (Q_UNLIKELY(violatesNoteResourceSizeMax))
+        {
+            ErrorString error(QT_TRANSLATE_NOOP("", "can't add attachment: the resource is too large, "
+                                                "max resource size allowed is"));
+            error.details() = humanReadableSize(static_cast<quint64>(pAccount->resourceSizeMax()));
+            emit notifyError(error);
+            return false;
+        }
+    }
+
+    return true;
 }
 
 } // namespace quentier

@@ -111,8 +111,6 @@ typedef QWebEngineSettings WebSettings;
 #include <QFileInfo>
 #include <QByteArray>
 #include <QDropEvent>
-#include <QMimeType>
-#include <QMimeData>
 #include <QMimeDatabase>
 #include <QThread>
 #include <QApplication>
@@ -127,6 +125,7 @@ typedef QWebEngineSettings WebSettings;
 #include <QPixmap>
 #include <QBuffer>
 #include <QImage>
+#include <QBuffer>
 #include <QTransform>
 
 #define GET_PAGE() \
@@ -5692,7 +5691,7 @@ const Account * NoteEditorPrivate::accountPtr() const
 }
 
 const Resource NoteEditorPrivate::attachResourceToNote(const QByteArray & data, const QByteArray & dataHash,
-                                                              const QMimeType & mimeType, const QString & filename)
+                                                       const QMimeType & mimeType, const QString & filename)
 {
     QNDEBUG(QStringLiteral("NoteEditorPrivate::attachResourceToNote: hash = ") << dataHash.toHex()
             << QStringLiteral(", mime type = ") << mimeType.name());
@@ -5723,6 +5722,11 @@ const Resource NoteEditorPrivate::attachResourceToNote(const QByteArray & data, 
         qevercloud::ResourceAttributes attributes;
         attributes.fileName = filename;
         resource.setResourceAttributes(attributes);
+    }
+
+    resource.setNoteLocalUid(m_pNote->localUid());
+    if (m_pNote->hasGuid()) {
+        resource.setNoteGuid(m_pNote->guid());
     }
 
     m_pNote->addResource(resource);
@@ -6142,8 +6146,28 @@ void NoteEditorPrivate::paste()
         return;
     }
 
+    const QMimeData * pMimeData = pClipboard->mimeData(QClipboard::Clipboard);
+    if (pMimeData)
+    {
+        if (pMimeData->hasImage()) {
+            pasteImageData(*pMimeData);
+            return;
+        }
+
+        // TODO: support other kinds of mime data
+    }
+    else
+    {
+        QNDEBUG(QStringLiteral("Unable to retrieve the mime data from the clipboard"));
+    }
+
     QString textToPaste = pClipboard->text();
     QNTRACE(QStringLiteral("Text to paste: ") << textToPaste);
+
+    if (textToPaste.isEmpty()) {
+        QNDEBUG(QStringLiteral("The text to paste is empty"));
+        return;
+    }
 
     bool shouldBeHyperlink = textToPaste.startsWith(QStringLiteral("http://")) ||
                              textToPaste.startsWith(QStringLiteral("https://")) ||
@@ -7441,6 +7465,30 @@ void NoteEditorPrivate::dropFile(const QString & filePath)
     CHECK_NOTE_EDITABLE(QT_TRANSLATE_NOOP("", "Can't add the attachment via drag'n'drop"))
 
     AddResourceDelegate * delegate = new AddResourceDelegate(filePath, *this, m_pResourceFileStorageManager,
+                                                             m_pFileIOThreadWorker, m_pGenericResourceImageManager,
+                                                             m_genericResourceImageFilePathsByResourceHash);
+
+    QObject::connect(delegate, QNSIGNAL(AddResourceDelegate,finished,Resource,QString),
+                     this, QNSLOT(NoteEditorPrivate,onAddResourceDelegateFinished,Resource,QString));
+    QObject::connect(delegate, QNSIGNAL(AddResourceDelegate,notifyError,ErrorString),
+                     this, QNSLOT(NoteEditorPrivate,onAddResourceDelegateError,ErrorString));
+
+    delegate->start();
+}
+
+void NoteEditorPrivate::pasteImageData(const QMimeData & mimeData)
+{
+    QNDEBUG(QStringLiteral("NoteEditorPrivate::pasteImageData"));
+
+    QImage image = qvariant_cast<QImage>(mimeData.imageData());
+    QByteArray data;
+    QBuffer imageDataBuffer(&data);
+    imageDataBuffer.open(QIODevice::WriteOnly);
+    image.save(&imageDataBuffer, "PNG");
+
+    QString mimeType = QStringLiteral("image/png");
+
+    AddResourceDelegate * delegate = new AddResourceDelegate(data, mimeType, *this, m_pResourceFileStorageManager,
                                                              m_pFileIOThreadWorker, m_pGenericResourceImageManager,
                                                              m_genericResourceImageFilePathsByResourceHash);
 

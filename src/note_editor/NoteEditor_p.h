@@ -37,6 +37,7 @@
 #include <QUndoStack>
 #include <QPointer>
 #include <QScopedPointer>
+#include <QMimeData>
 
 #ifdef QUENTIER_USE_QT_WEB_ENGINE
 #include <QWebEngineView>
@@ -562,6 +563,8 @@ private:
 
     virtual void dragMoveEvent(QDragMoveEvent * pEvent) Q_DECL_OVERRIDE;
     virtual void dropEvent(QDropEvent * pEvent) Q_DECL_OVERRIDE;
+
+    void pasteImageData(const QMimeData & mimeData);
 
 private:
     template <class T>
