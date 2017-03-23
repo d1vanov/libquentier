@@ -154,8 +154,8 @@ bool ENMLConverterPrivate::htmlToNoteContent(const QString & html, const QVector
                 QNTRACE(QStringLiteral("Found \"body\" HTML tag, will replace it with \"en-note\" tag for written ENML"));
             }
 
-            auto tagIt = m_forbiddenXhtmlTags.find(lastElementName);
-            if ((tagIt != m_forbiddenXhtmlTags.end()) && (lastElementName != QStringLiteral("object"))) {
+            QSet<QString>::const_iterator tagIt = m_forbiddenXhtmlTags.find(lastElementName);
+            if ((tagIt != m_forbiddenXhtmlTags.constEnd()) && (lastElementName != QStringLiteral("object"))) {
                 QNTRACE(QStringLiteral("Skipping forbidden XHTML tag: ") << lastElementName);
                 continue;
             }
@@ -430,7 +430,7 @@ bool ENMLConverterPrivate::htmlToQTextDocument(const QString & html, QTextDocume
 
     while(!reader.atEnd())
     {
-        Q_UNUSED(reader.readNext());
+        Q_UNUSED(reader.readNext())
 
         if (reader.isStartDocument()) {
             continue;
@@ -812,6 +812,139 @@ bool ENMLConverterPrivate::htmlToQTextDocument(const QString & html, QTextDocume
         QNWARNING(errorDescription << QStringLiteral(", simplified HTML: ") << simplifiedHtml);
         return false;
     }
+
+    return true;
+}
+
+bool ENMLConverterPrivate::cleanupExternalHtml(const QString & inputHtml, QString & cleanedUpHtml,
+                                               ErrorString & errorDescription) const
+{
+    QNDEBUG(QStringLiteral("ENMLConverterPrivate::cleanupExternalHtml: input HTML = ") << inputHtml);
+
+    if (!m_pHtmlCleaner) {
+        m_pHtmlCleaner = new HTMLCleaner;
+    }
+
+    QString supplementedHtml = QStringLiteral("<html><body>");
+    supplementedHtml += inputHtml;
+    supplementedHtml += QStringLiteral("</body></html>");
+
+    QString error;
+    m_cachedConvertedXml.resize(0);
+    bool res = m_pHtmlCleaner->htmlToXml(supplementedHtml, m_cachedConvertedXml, error);
+    if (!res) {
+        errorDescription.base() = QT_TRANSLATE_NOOP("", "Failed to clean up the input HTML");
+        errorDescription.details() = error;
+        return false;
+    }
+
+    m_cachedConvertedXml.prepend(QStringLiteral("<!DOCTYPE doctypeName [<!ENTITY nbsp \"&#160;\">]>"));
+    QNTRACE(QStringLiteral("HTML converted to XML by tidy: ") << m_cachedConvertedXml);
+
+    QXmlStreamReader reader(m_cachedConvertedXml);
+
+    QString outputSupplementedHtml;
+    QXmlStreamWriter writer(&outputSupplementedHtml);
+    writer.setAutoFormatting(true);
+    writer.setCodec("UTF-8");
+    writer.writeDTD(QStringLiteral("<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01//EN\" \"http://www.w3.org/TR/html4/strict.dtd\">"));
+
+    int writeElementCounter = 0;
+    QString lastElementName;
+    QXmlStreamAttributes lastElementAttributes;
+
+    while(!reader.atEnd())
+    {
+        Q_UNUSED(reader.readNext())
+
+        if (reader.isStartDocument()) {
+            continue;
+        }
+
+        if (reader.isDTD()) {
+            continue;
+        }
+
+        if (reader.isEndDocument()) {
+            break;
+        }
+
+        if (reader.isStartElement())
+        {
+            lastElementName = reader.name().toString();
+
+            QSet<QString>::const_iterator tagIt = m_forbiddenXhtmlTags.find(lastElementName);
+            if (tagIt != m_forbiddenXhtmlTags.constEnd()) {
+                QNTRACE(QStringLiteral("Skipping forbidden tag: ") << lastElementName);
+                continue;
+            }
+
+            tagIt = m_allowedXhtmlTags.find(lastElementName);
+            if (tagIt == m_allowedXhtmlTags.end())
+            {
+                QNTRACE(QStringLiteral("Haven't found tag ") << lastElementName
+                        << QStringLiteral(" within the list of allowed XHTML tags, skipping it"));
+                continue;
+            }
+
+            lastElementAttributes = reader.attributes();
+
+            // Erasing the forbidden attributes
+            for(QXmlStreamAttributes::iterator it = lastElementAttributes.begin(); it != lastElementAttributes.end(); )
+            {
+                const QStringRef attributeName = it->name();
+                if (isForbiddenXhtmlAttribute(attributeName.toString())) {
+                    QNTRACE(QStringLiteral("Erasing the forbidden attribute ") << attributeName);
+                    it = lastElementAttributes.erase(it);
+                    continue;
+                }
+
+                ++it;
+            }
+
+            writer.writeStartElement(lastElementName);
+            writer.writeAttributes(lastElementAttributes);
+            ++writeElementCounter;
+            QNTRACE(QStringLiteral("Wrote element: name = ") << lastElementName << QStringLiteral(" and its attributes"));
+        }
+
+        if ((writeElementCounter > 0) && reader.isCharacters())
+        {
+            QString text = reader.text().toString();
+
+            if (reader.isCDATA()) {
+                writer.writeCDATA(text);
+                QNTRACE(QStringLiteral("Wrote CDATA: ") << text);
+            }
+            else {
+                writer.writeCharacters(text);
+                QNTRACE(QStringLiteral("Wrote characters: ") << text);
+            }
+        }
+
+        if (reader.isEndElement())
+        {
+            if (writeElementCounter <= 0) {
+                continue;
+            }
+
+            writer.writeEndElement();
+            --writeElementCounter;
+        }
+    }
+
+    if (reader.hasError()) {
+        errorDescription.base() = QT_TRANSLATE_NOOP("", "Failed to clean up the input HTML");
+        errorDescription.details() = reader.errorString();
+        QNWARNING(QStringLiteral("Error reading the input HTML: ") << errorDescription
+                  << QStringLiteral(", input HTML: ") << inputHtml
+                  << QStringLiteral("\n\nSupplemented input HTML: ") << supplementedHtml
+                  << QStringLiteral("\n\nHTML converted to XML: ") << m_cachedConvertedXml);
+        return false;
+    }
+
+    cleanedUpHtml = outputSupplementedHtml;
+    QNDEBUG(QStringLiteral("Cleaned up HTML: ") << cleanedUpHtml);
 
     return true;
 }

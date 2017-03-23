@@ -29,7 +29,6 @@
 #include <QUuid>
 #include <QMimeType>
 #include <QHash>
-#include <QMimeType>
 
 namespace quentier {
 

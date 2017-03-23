@@ -6152,6 +6152,26 @@ void NoteEditorPrivate::paste()
             return;
         }
 
+        if (pMimeData->hasHtml())
+        {
+            QString html = pMimeData->html();
+            QNDEBUG(QStringLiteral("HTML from mime data: ") << html);
+
+            QString cleanedUpHtml;
+            ErrorString errorDescription;
+            bool res = m_enmlConverter.cleanupExternalHtml(html, cleanedUpHtml, errorDescription);
+            if (!res) {
+                emit notifyError(errorDescription);
+                return;
+            }
+
+            QNDEBUG(QStringLiteral("Cleaned up HTML from mime data: ") << cleanedUpHtml);
+
+            // TODO: process it further
+
+            return;
+        }
+
         // TODO: support other kinds of mime data
     }
     else

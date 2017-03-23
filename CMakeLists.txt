@@ -181,6 +181,7 @@ set(PRIVATE_HEADERS
     src/note_editor/dialogs/RenameResourceDialog.h
     src/note_editor/delegates/JsResultCallbackFunctor.hpp
     src/note_editor/delegates/HtmlCallbackFunctor.hpp
+    src/note_editor/delegates/InsertHtmlDelegate.h
     src/note_editor/delegates/ParsePageScrollData.h
     src/note_editor/delegates/ImageResourceRotationDelegate.h
     src/note_editor/delegates/AddResourceDelegate.h
@@ -301,6 +302,7 @@ set(${PROJECT_NAME}_SOURCES
     src/note_editor/dialogs/DecryptionDialog.cpp
     src/note_editor/dialogs/EditHyperlinkDialog.cpp
     src/note_editor/dialogs/RenameResourceDialog.cpp
+    src/note_editor/delegates/InsertHtmlDelegate.cpp
     src/note_editor/delegates/ParsePageScrollData.cpp
     src/note_editor/delegates/ImageResourceRotationDelegate.cpp
     src/note_editor/delegates/AddResourceDelegate.cpp

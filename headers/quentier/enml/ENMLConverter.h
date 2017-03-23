@@ -99,6 +99,21 @@ public:
                            const QVector<SkipHtmlElementRule> & skipRules = QVector<SkipHtmlElementRule>()) const;
 
     /**
+     * @brief cleanupExternalHtml method cleans up a piece of HTML coming from some external source: the cleanup includes
+     * the removal (or replacement with equivalents/alternatives) of any tags and attributes not supported by the ENML
+     * representation of note page's HTML
+     *
+     * @param inputHtml - the input HTML to be cleaned up
+     * @param cleanedUpHtml - the result of the method's work
+     * @param errorDescription - the textual description of the error if
+     * conversion of input HTML into QTextDocument has failed
+     *
+     * @return true in case of successful conversion, false otherwise
+     */
+    bool cleanupExternalHtml(const QString & inputHtml, QString & cleanedUpHtml,
+                             ErrorString & errorDescription) const;
+
+    /**
      * Converts the passed in HTML into its simplified form acceptable by
      * QTextDocument (see http://doc.qt.io/qt-5/richtext-html-subset.html for
      * the list of elements supported by QTextDocument)

@@ -50,6 +50,10 @@ public:
                            QString & noteContent,
                            DecryptedTextManager & decryptedTextManager,
                            ErrorString & errorDescription) const;
+
+    bool cleanupExternalHtml(const QString & inputHtml, QString & cleanedUpHtml,
+                             ErrorString & errorDescription) const;
+
     bool noteContentToHtml(const QString & noteContent, QString & html,
                            ErrorString & errorDescription,
                            DecryptedTextManager & decryptedTextManager,
