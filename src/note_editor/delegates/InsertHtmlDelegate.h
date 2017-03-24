@@ -43,6 +43,7 @@ private:
     FileIOThreadWorker *            m_pFileIOThreadWorker;
 
     QString                         m_inputHtml;
+    QString                         m_cleanedUpHtml;
 };
 
 } // namespace quentier
