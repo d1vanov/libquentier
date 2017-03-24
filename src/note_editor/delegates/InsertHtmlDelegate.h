@@ -3,7 +3,13 @@
 
 #include <quentier/utility/Macros.h>
 #include <quentier/types/Note.h>
+#include <quentier/types/Resource.h>
 #include <QObject>
+#include <QNetworkAccessManager>
+#include <QNetworkRequest>
+#include <QNetworkReply>
+#include <QSet>
+#include <QMap>
 
 namespace quentier {
 
@@ -31,6 +37,7 @@ Q_SIGNALS:
 
 private Q_SLOTS:
     void onOriginalPageConvertedToNote(Note note);
+    void onImageDataDownloadFinished(QNetworkReply * pReply);
 
 private:
     void doStart();
@@ -44,6 +51,12 @@ private:
 
     QString                         m_inputHtml;
     QString                         m_cleanedUpHtml;
+
+    QSet<QUrl>                      m_imageUrls;
+    QSet<QString>                   m_failingImageUrls;
+    QList<Resource>                 m_addedResources;
+
+    QNetworkAccessManager           m_networkAccessManager;
 };
 
 } // namespace quentier
