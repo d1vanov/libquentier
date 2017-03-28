@@ -72,6 +72,7 @@ QuentierFileLogWriter::QuentierFileLogWriter(const MaxSizeBytes & maxSizeBytes,
 
 QuentierFileLogWriter::~QuentierFileLogWriter()
 {
+    m_stream.flush();
     Q_UNUSED(m_logFile.flush())
     m_logFile.close();
 }
