@@ -128,7 +128,7 @@ public:
                         const size_t limit, const size_t offset, const LocalStorageManager::ListTagsOrder::type & order,
                         const LocalStorageManager::OrderDirection::type & orderDirection,
                         const QString & linkedNotebookGuid) const;
-    bool expungeTag(Tag & tag, ErrorString & errorDescription);
+    bool expungeTag(Tag & tag, QStringList & expungedChildTagLocalUids, ErrorString & errorDescription);
     bool expungeNotelessTagsFromLinkedNotebooks(ErrorString & errorDescription);
 
     int enResourceCount(ErrorString & errorDescription) const;

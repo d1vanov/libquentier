@@ -791,10 +791,12 @@ public:
      * deleted via either official desktop client or web GUI.
      * @param tag - tag to be expunged; may be changed as a result of the call,
      * automatically filled with local uid if it was empty before the call
+     * @param expungedChildTagLocalUids - if the expunged tag was a parent of some other tags,
+     * these were expunged as well; this parameter would contain the local uids of expunged child tags
      * @param errorDescription - error description if tag could not be expunged
      * @return true if tag was expunged successfully, false otherwise
      */
-    bool expungeTag(Tag & tag, ErrorString & errorDescription);
+    bool expungeTag(Tag & tag, QStringList & expungedChildTagLocalUids, ErrorString & errorDescription);
 
     /**
      * @brief expungeNotelessTagsFromLinkedNotebooks - permanently deletes from local storage those tags

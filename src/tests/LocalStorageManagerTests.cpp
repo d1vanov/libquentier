@@ -397,11 +397,14 @@ bool TestTagAddFindUpdateExpungeInLocalStorage(Tag & tag,
     }
 
     // ========== Check Expunge + Find (failure expected) ==========
-    res = localStorageManager.expungeTag(modifiedTag, errorMessage);
+    QStringList expungedChildTagLocalUids;
+    res = localStorageManager.expungeTag(modifiedTag, expungedChildTagLocalUids, errorMessage);
     if (!res) {
         errorDescription = errorMessage.nonLocalizedString();
         return false;
     }
+
+    Q_UNUSED(expungedChildTagLocalUids)
 
     res = localStorageManager.findTag(foundTag, errorMessage);
     if (res) {

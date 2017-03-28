@@ -1122,17 +1122,25 @@ void LocalStorageManagerThreadWorker::onExpungeTagRequest(Tag tag, QUuid request
     {
         ErrorString errorDescription;
 
-        bool res = m_pLocalStorageManager->expungeTag(tag, errorDescription);
+        QStringList expungedChildTagLocalUids;
+        bool res = m_pLocalStorageManager->expungeTag(tag, expungedChildTagLocalUids, errorDescription);
         if (!res) {
             emit expungeTagFailed(tag, errorDescription, requestId);
             return;
         }
 
-        if (m_useCache) {
+        if (m_useCache)
+        {
             m_pLocalStorageCacheManager->expungeTag(tag);
+
+            for(auto it = expungedChildTagLocalUids.constBegin(), end = expungedChildTagLocalUids.constEnd(); it != end; ++it) {
+                Tag dummyTag;
+                dummyTag.setLocalUid(*it);
+                m_pLocalStorageCacheManager->expungeTag(dummyTag);
+            }
         }
 
-        emit expungeTagComplete(tag, requestId);
+        emit expungeTagComplete(tag, expungedChildTagLocalUids, requestId);
     }
     CATCH_EXCEPTION
 }
