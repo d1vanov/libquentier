@@ -31,7 +31,10 @@ class LRUCache
 {
 public:
     LRUCache(const size_t maxSize = 100) :
-        m_maxSize(maxSize)
+        m_container(),
+        m_currentSize(0),
+        m_maxSize(maxSize),
+        m_mapper()
     {}
 
     typedef Key key_type;
@@ -60,7 +63,7 @@ public:
 
     iterator begin() { return m_container.begin(); }
     const_iterator begin() const { return m_container.begin(); }
-    
+
     reverse_iterator rbegin() { return m_container.rbegin(); }
     const_reverse_iterator rbegin() const { return m_container.rbegin(); }
 
@@ -74,7 +77,7 @@ public:
     size_t size() const { return m_currentSize; }
     size_t max_size() const { return m_maxSize; }
 
-    void clear() { m_container.clear(); m_mapper.clear(); }
+    void clear() { m_container.clear(); m_mapper.clear(); m_currentSize = 0; }
 
     void put(const key_type & key, const mapped_type & value)
     {
@@ -83,18 +86,28 @@ public:
             auto it = mapperIt.value();
             Q_UNUSED(m_container.erase(it))
             Q_UNUSED(m_mapper.erase(mapperIt))
+            if (m_currentSize != 0) {
+                --m_currentSize;
+            }
         }
 
         m_container.push_front(value_type(key, value));
         m_mapper[key] = m_container.begin();
+        ++m_currentSize;
 
-        if (m_container.size() > m_maxSize) {
+        if (m_currentSize > m_maxSize)
+        {
             auto lastIt = m_container.end();
             --lastIt;
 
             const key_type & lastElementKey = lastIt->first;
+
             Q_UNUSED(m_mapper.remove(lastElementKey))
             Q_UNUSED(m_container.erase(lastIt))
+
+            if (m_currentSize != 0) {
+                --m_currentSize;
+            }
         }
     }
 
@@ -105,8 +118,10 @@ public:
             return Q_NULLPTR;
         }
 
-        m_container.splice(m_container.begin(), m_container, mapperIt.value());
-        return &mapperIt.value()->second;
+        auto it = mapperIt.value();
+        m_container.splice(m_container.begin(), m_container, it);
+        mapperIt.value() = m_container.begin();
+        return &(mapperIt.value()->second);
     }
 
     bool exists(const key_type & key)
@@ -125,6 +140,10 @@ public:
         auto it = mapperIt.value();
         Q_UNUSED(m_container.erase(it))
         Q_UNUSED(m_mapper.erase(mapperIt))
+        if (m_currentSize != 0) {
+            --m_currentSize;
+        }
+
         return true;
     }
 
@@ -133,7 +152,7 @@ private:
     size_t                      m_currentSize;
     size_t                      m_maxSize;
 
-    QHash<Key, iterator>        m_mapper;
+    mutable QHash<Key, iterator>    m_mapper;
 };
 
 } // namespace quentier

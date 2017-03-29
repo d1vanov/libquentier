@@ -360,9 +360,10 @@ void TagLocalStorageManagerAsyncTester::onListAllTagsFailed(size_t limit, size_t
     emit failure(errorDescription.nonLocalizedString());
 }
 
-void TagLocalStorageManagerAsyncTester::onExpungeTagCompleted(Tag tag, QUuid requestId)
+void TagLocalStorageManagerAsyncTester::onExpungeTagCompleted(Tag tag, QStringList expungedChildTagLocalUids, QUuid requestId)
 {
     Q_UNUSED(requestId)
+    Q_UNUSED(expungedChildTagLocalUids)
 
     ErrorString errorDescription;
 
@@ -451,8 +452,8 @@ void TagLocalStorageManagerAsyncTester::createConnections()
                      this,
                      QNSLOT(TagLocalStorageManagerAsyncTester,onListAllTagsFailed,size_t,size_t,LocalStorageManager::ListTagsOrder::type,
                             LocalStorageManager::OrderDirection::type,QString,ErrorString,QUuid));
-    QObject::connect(m_pLocalStorageManagerThreadWorker, QNSIGNAL(LocalStorageManagerThreadWorker,expungeTagComplete,Tag,QUuid),
-                     this, QNSLOT(TagLocalStorageManagerAsyncTester,onExpungeTagCompleted,Tag,QUuid));
+    QObject::connect(m_pLocalStorageManagerThreadWorker, QNSIGNAL(LocalStorageManagerThreadWorker,expungeTagComplete,Tag,QStringList,QUuid),
+                     this, QNSLOT(TagLocalStorageManagerAsyncTester,onExpungeTagCompleted,Tag,QStringList,QUuid));
     QObject::connect(m_pLocalStorageManagerThreadWorker, QNSIGNAL(LocalStorageManagerThreadWorker,expungeTagFailed,Tag,ErrorString,QUuid),
                      this, QNSLOT(TagLocalStorageManagerAsyncTester,onExpungeTagFailed,Tag,ErrorString,QUuid));
 }

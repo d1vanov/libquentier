@@ -2914,9 +2914,11 @@ QList<Tag> LocalStorageManagerPrivate::listTags(const LocalStorageManager::ListO
                                                                       linkedNotebookGuidSqlQueryCondition);
 }
 
-bool LocalStorageManagerPrivate::expungeTag(Tag & tag, ErrorString & errorDescription)
+bool LocalStorageManagerPrivate::expungeTag(Tag & tag, QStringList & expungedChildTagLocalUids, ErrorString & errorDescription)
 {
     ErrorString errorPrefix(QT_TRANSLATE_NOOP("", "Can't expunge tag from the local storage database"));
+
+    expungedChildTagLocalUids.clear();
 
     QString localUid = tag.localUid();
 
@@ -2978,9 +2980,38 @@ bool LocalStorageManagerPrivate::expungeTag(Tag & tag, ErrorString & errorDescri
 
     QSqlQuery query(m_sqlDatabase);
 
-    // Removing child tags first
+    QString findChildTagsQueryString = QString("SELECT localUid FROM Tags WHERE %1='%2'").arg(parentColumn, uid);
+    bool res = query.exec(findChildTagsQueryString);
+    DATABASE_CHECK_AND_SET_ERROR();
+
+    while(query.next())
+    {
+        QSqlRecord record = query.record();
+
+        int index = record.indexOf(QStringLiteral("localUid"));
+        if (Q_UNLIKELY(index < 0)) {
+            QNDEBUG(QStringLiteral("Index of localUid within the SQL record is negative"));
+            continue;
+        }
+
+        QVariant value = record.value(index);
+        if (Q_UNLIKELY(value.isNull())) {
+            QNDEBUG(QStringLiteral("The value from the SQL record is null"));
+            continue;
+        }
+
+        QString childTagLocalUid = value.toString();
+        if (Q_UNLIKELY(childTagLocalUid.isEmpty())) {
+            QNDEBUG(QStringLiteral("The string from the value from the SQL record is empty"));
+            continue;
+        }
+
+        expungedChildTagLocalUids << childTagLocalUid;
+    }
+
+    // Removing child tags
     QString queryString = QString("DELETE FROM Tags WHERE %1='%2'").arg(parentColumn,uid);
-    bool res = query.exec(queryString);
+    res = query.exec(queryString);
     DATABASE_CHECK_AND_SET_ERROR();
 
     queryString = QString("DELETE FROM Tags WHERE %1='%2'").arg(column,uid);

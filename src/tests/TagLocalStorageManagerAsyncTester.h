@@ -70,7 +70,7 @@ private Q_SLOTS:
     void onListAllTagsFailed(size_t limit, size_t offset, LocalStorageManager::ListTagsOrder::type order,
                              LocalStorageManager::OrderDirection::type orderDirection, QString linkedNotebookGuid,
                              ErrorString errorDescription, QUuid requestId);
-    void onExpungeTagCompleted(Tag tag, QUuid requestId);
+    void onExpungeTagCompleted(Tag tag, QStringList expungedChildTagLocalUids, QUuid requestId);
     void onExpungeTagFailed(Tag tag, ErrorString errorDescription, QUuid requestId);
 
     void onFailure(ErrorString errorDescription);

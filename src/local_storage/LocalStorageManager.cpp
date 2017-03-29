@@ -349,10 +349,10 @@ QList<Tag> LocalStorageManager::listTags(const ListObjectsOptions flag, ErrorStr
     return d->listTags(flag, errorDescription, limit, offset, order, orderDirection, linkedNotebookGuid);
 }
 
-bool LocalStorageManager::expungeTag(Tag & tag, ErrorString & errorDescription)
+bool LocalStorageManager::expungeTag(Tag & tag, QStringList & expungedChildTagLocalUids, ErrorString & errorDescription)
 {
     Q_D(LocalStorageManager);
-    return d->expungeTag(tag, errorDescription);
+    return d->expungeTag(tag, expungedChildTagLocalUids, errorDescription);
 }
 
 bool LocalStorageManager::expungeNotelessTagsFromLinkedNotebooks(ErrorString & errorDescription)

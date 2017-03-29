@@ -227,7 +227,7 @@ Q_SIGNALS:
                         size_t limit, size_t offset, LocalStorageManager::ListTagsOrder::type order,
                         LocalStorageManager::OrderDirection::type orderDirection, QString linkedNotebookGuid,
                         ErrorString errorDescription, QUuid requestId = QUuid());
-    void expungeTagComplete(Tag tag, QUuid requestId = QUuid());
+    void expungeTagComplete(Tag tag, QStringList expungedChildTagLocalUids, QUuid requestId = QUuid());
     void expungeTagFailed(Tag tag, ErrorString errorDescription, QUuid requestId = QUuid());
     void expungeNotelessTagsFromLinkedNotebooksComplete(QUuid requestId = QUuid());
     void expungeNotelessTagsFromLinkedNotebooksFailed(ErrorString errorDescription, QUuid requestId = QUuid());

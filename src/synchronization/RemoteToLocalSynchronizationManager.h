@@ -160,7 +160,7 @@ private Q_SLOTS:
     void onUpdateUserFailed(User user, ErrorString errorDescription, QUuid requestId);
     void onUpdateTagCompleted(Tag tag, QUuid requestId);
     void onUpdateTagFailed(Tag tag, ErrorString errorDescription, QUuid requestId);
-    void onExpungeTagCompleted(Tag tag, QUuid requestId);
+    void onExpungeTagCompleted(Tag tag, QStringList expungedChildTagLocalUids, QUuid requestId);
     void onExpungeTagFailed(Tag tag, ErrorString errorDescription, QUuid requestId);
 
     void onExpungeNotelessTagsFromLinkedNotebooksCompleted(QUuid requestId);
