@@ -2,12 +2,18 @@
 #include "../NoteEditor_p.h"
 #include <quentier/enml/ENMLConverter.h>
 #include <quentier/types/Account.h>
+#include <quentier/types/Note.h>
 #include <quentier/note_editor/ResourceFileStorageManager.h>
 #include <quentier/utility/FileIOThreadWorker.h>
+#include <quentier/utility/ApplicationSettings.h>
 #include <quentier/logging/QuentierLogger.h>
 #include <QXmlStreamReader>
+#include <QXmlStreamWriter>
 #include <QSet>
 #include <QUrl>
+#include <QImage>
+#include <QBuffer>
+#include <limits>
 
 namespace quentier {
 
@@ -23,6 +29,8 @@ InsertHtmlDelegate::InsertHtmlDelegate(const QString & inputHtml, NoteEditorPriv
     m_pFileIOThreadWorker(pFileIOThreadWorker),
     m_inputHtml(inputHtml),
     m_cleanedUpHtml(),
+    m_imageUrls(),
+    m_pendingImageUrls(),
     m_failingImageUrls(),
     m_addedResources(),
     m_networkAccessManager()
@@ -196,16 +204,16 @@ void InsertHtmlDelegate::doStart()
 
     if (m_imageUrls.isEmpty()) {
         QNDEBUG(QStringLiteral("Found no images within the input HTML, thus don't need to download them"));
-        // TODO: actually insert the cleaned up HTML into the note editor + set
-        // up the callback to capture the result of this
+        insertHtmlIntoEditor();
         return;
     }
 
-    // TODO: set up the proxy settings for the network access manager, get the
-    // proxy settings from the application settings
+    // NOTE: will be using the application-wide proxy settings for image downloading
 
     QObject::connect(&m_networkAccessManager, QNSIGNAL(QNetworkAccessManager,finished,QNetworkReply*),
                      this, QNSLOT(InsertHtmlDelegate,onImageDataDownloadFinished,QNetworkReply*));
+
+    m_pendingImageUrls = m_imageUrls;
 
     for(auto it = m_imageUrls.constBegin(), end = m_imageUrls.constEnd(); it != end; ++it) {
         const QUrl & url = *it;
@@ -224,7 +232,117 @@ void InsertHtmlDelegate::onImageDataDownloadFinished(QNetworkReply * pReply)
         return;
     }
 
-    // TODO: implement further
+    QUrl url = pReply->url();
+    Q_UNUSED(m_pendingImageUrls.remove(url))
+
+    QByteArray downloadedData = pReply->readAll();
+
+    QImage image;
+    bool res = image.loadFromData(downloadedData);
+    if (Q_UNLIKELY(!res)) {
+        QNDEBUG(QStringLiteral("Wasn't able to load the image from the downloaded data"));
+        Q_UNUSED(m_failingImageUrls.insert(url))
+        checkImagesDownloaded();
+        return;
+    }
+
+    QNDEBUG(QStringLiteral("Successfully loaded the image from the downloaded data"));
+
+    QByteArray pngImageData;
+    QBuffer buffer(&pngImageData);
+    Q_UNUSED(buffer.open(QIODevice::WriteOnly));
+
+    res = image.save(&buffer, "PNG");
+    if (Q_UNLIKELY(!res)) {
+        QNDEBUG(QStringLiteral("Wasn't able to save the downloaded image to PNG format byte array"));
+        Q_UNUSED(m_failingImageUrls.insert(url))
+        checkImagesDownloaded();
+        return;
+    }
+
+    buffer.close();
+
+    res = addResource(pngImageData, "PNG");
+    if (Q_UNLIKELY(!res)) {
+        QNDEBUG(QStringLiteral("Wasn't able to add the image to note as a resource"));
+        Q_UNUSED(m_failingImageUrls.insert(url))
+        checkImagesDownloaded();
+        return;
+    }
+
+    QNDEBUG(QStringLiteral("Successfully added the image to note as a resource"));
+    checkImagesDownloaded();
+}
+
+void InsertHtmlDelegate::checkImagesDownloaded()
+{
+    QNDEBUG(QStringLiteral("InsertHtmlDelegate::checkImagesDownloaded"));
+
+    if (!m_pendingImageUrls.isEmpty()) {
+        QNDEBUG(QStringLiteral("Still pending ") << QString::number(m_pendingImageUrls.size())
+                << QStringLiteral(" urls"));
+        return;
+    }
+
+    insertHtmlIntoEditor();
+}
+
+void InsertHtmlDelegate::insertHtmlIntoEditor()
+{
+    QNDEBUG(QStringLiteral("InsertHtmlDelegate::insertHtmlIntoEditor"));
+
+    // TODO: implement
+}
+
+bool InsertHtmlDelegate::addResource(const QByteArray & resourceData,
+                                     const char * imageFormat)
+{
+    QNDEBUG(QStringLiteral("InsertHtmlDelegate::addResource"));
+
+    const Note * pNote = m_noteEditor.notePtr();
+    if (Q_UNLIKELY(!pNote)) {
+        QNWARNING(QStringLiteral("Can't add image from inserted HTML: no note is set to the editor"));
+        return false;
+    }
+
+    const Account * pAccount = m_noteEditor.accountPtr();
+
+    bool noteHasLimits = pNote->hasNoteLimits();
+    if (noteHasLimits)
+    {
+        QNTRACE(QStringLiteral("Note has its own limits, will use them to check the number of note resources"));
+
+        const qevercloud::NoteLimits & limits = pNote->noteLimits();
+        if (limits.noteResourceCountMax.isSet() && (limits.noteResourceCountMax.ref() == pNote->numResources()))
+        {
+            QNINFO(QStringLiteral("Can't add image from inserted HTML: the note is already at max allowed "
+                                  "number of attachments (judging by note limits)"));
+            return false;
+        }
+    }
+    else if (pAccount)
+    {
+        QNTRACE(QStringLiteral("Note has no limits of its own, will use the account-wise limits to check the number of note resources"));
+
+        int numNoteResources = pNote->numResources();
+        ++numNoteResources;
+        if (numNoteResources > pAccount->noteResourceCountMax()) {
+            QNINFO(QStringLiteral("Can't add image from inserted HTML: the note is already at max allowed "
+                                  "number of attachments (judging by account limits)"));
+            return false;
+        }
+    }
+    else
+    {
+        QNINFO(QStringLiteral("No account when adding image from inserted HTML to note, can't check "
+                              "the account-wise note limits"));
+    }
+
+    // TODO: actually insert the new resource to note
+    Q_UNUSED(resourceData)
+    Q_UNUSED(imageFormat)
+
+    return true;
 }
 
 } // namespace quentier

@@ -41,6 +41,10 @@ private Q_SLOTS:
 
 private:
     void doStart();
+    void checkImagesDownloaded();
+    bool addResource(const QByteArray & resourceData,
+                     const char * imageFormat);
+    void insertHtmlIntoEditor();
 
 private:
     NoteEditorPrivate &             m_noteEditor;
@@ -53,7 +57,8 @@ private:
     QString                         m_cleanedUpHtml;
 
     QSet<QUrl>                      m_imageUrls;
-    QSet<QString>                   m_failingImageUrls;
+    QSet<QUrl>                      m_pendingImageUrls;
+    QSet<QUrl>                      m_failingImageUrls;
     QList<Resource>                 m_addedResources;
 
     QNetworkAccessManager           m_networkAccessManager;
