@@ -4,12 +4,14 @@
 #include <quentier/utility/Macros.h>
 #include <quentier/types/Note.h>
 #include <quentier/types/Resource.h>
+#include <quentier/types/ErrorString.h>
 #include <QObject>
 #include <QNetworkAccessManager>
 #include <QNetworkRequest>
 #include <QNetworkReply>
 #include <QSet>
-#include <QMap>
+#include <QHash>
+#include <QUuid>
 
 namespace quentier {
 
@@ -35,15 +37,23 @@ Q_SIGNALS:
     void finished();
     void notifyError(ErrorString error);
 
+    // private signals:
+    void saveResourceToStorage(QString noteLocalUid, QString resourceLocalUid, QByteArray data, QByteArray dataHash,
+                               QString preferredFileSuffix, QUuid requestId, bool isImage);
+
 private Q_SLOTS:
     void onOriginalPageConvertedToNote(Note note);
     void onImageDataDownloadFinished(QNetworkReply * pReply);
+    void onResourceSavedToStorage(QUuid requestId, QByteArray dataHash,
+                                  QString fileStoragePath, int errorCode,
+                                  ErrorString errorDescription);
 
 private:
     void doStart();
-    void checkImagesDownloaded();
-    bool addResource(const QByteArray & resourceData,
-                     const char * imageFormat);
+    void checkImageResourcesReady();
+    bool addResource(const QByteArray & resourceData, const QUrl & url);
+
+    bool adjustImgTagsInHtml();
     void insertHtmlIntoEditor();
 
 private:
@@ -59,7 +69,18 @@ private:
     QSet<QUrl>                      m_imageUrls;
     QSet<QUrl>                      m_pendingImageUrls;
     QSet<QUrl>                      m_failingImageUrls;
+
     QList<Resource>                 m_addedResources;
+    QHash<QUuid, Resource>          m_resourceBySaveToStorageRequestId;
+    QHash<QString, QUrl>            m_sourceUrlByResourceLocalUid;
+
+    struct ImgData
+    {
+        Resource    m_resource;
+        QString     m_resourceFileStoragePath;
+    };
+
+    QHash<QUrl, ImgData>            m_imgDataBySourceUrl;
 
     QNetworkAccessManager           m_networkAccessManager;
 };

@@ -146,7 +146,8 @@ public:
     const Account * accountPtr() const;
 
     const Resource attachResourceToNote(const QByteArray & data, const QByteArray & dataHash,
-                                               const QMimeType & mimeType, const QString & filename);
+                                        const QMimeType & mimeType, const QString & filename,
+                                        const QString & sourceUrl = QString());
     void addResourceToNote(const Resource & resource);
     void removeResourceFromNote(const Resource & resource);
     void replaceResourceInNote(const Resource & resource);

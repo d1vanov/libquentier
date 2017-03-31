@@ -5689,10 +5689,12 @@ const Account * NoteEditorPrivate::accountPtr() const
 }
 
 const Resource NoteEditorPrivate::attachResourceToNote(const QByteArray & data, const QByteArray & dataHash,
-                                                       const QMimeType & mimeType, const QString & filename)
+                                                       const QMimeType & mimeType, const QString & filename,
+                                                       const QString & sourceUrl)
 {
     QNDEBUG(QStringLiteral("NoteEditorPrivate::attachResourceToNote: hash = ") << dataHash.toHex()
-            << QStringLiteral(", mime type = ") << mimeType.name());
+            << QStringLiteral(", mime type = ") << mimeType.name() << QStringLiteral(", filename = ")
+            << filename << QStringLiteral(", source url = ") << sourceUrl);
 
     Resource resource;
     QString resourceLocalUid = resource.localUid();
@@ -5716,10 +5718,24 @@ const Resource NoteEditorPrivate::attachResourceToNote(const QByteArray & data, 
     resource.setMime(mimeType.name());
     resource.setDirty(true);
 
-    if (!filename.isEmpty()) {
-        qevercloud::ResourceAttributes attributes;
+    if (!filename.isEmpty())
+    {
+        if (!resource.hasResourceAttributes()) {
+            resource.setResourceAttributes(qevercloud::ResourceAttributes());
+        }
+
+        qevercloud::ResourceAttributes & attributes = resource.resourceAttributes();
         attributes.fileName = filename;
-        resource.setResourceAttributes(attributes);
+    }
+
+    if (!sourceUrl.isEmpty())
+    {
+        if (!resource.hasResourceAttributes()) {
+            resource.setResourceAttributes(qevercloud::ResourceAttributes());
+        }
+
+        qevercloud::ResourceAttributes & attributes = resource.resourceAttributes();
+        attributes.sourceURL = sourceUrl;
     }
 
     resource.setNoteLocalUid(m_pNote->localUid());
