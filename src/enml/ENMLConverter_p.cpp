@@ -838,8 +838,7 @@ bool ENMLConverterPrivate::cleanupExternalHtml(const QString & inputHtml, QStrin
         return false;
     }
 
-    m_cachedConvertedXml.prepend(QStringLiteral("<!DOCTYPE doctypeName [<!ENTITY nbsp \"&#160;\">]>"));
-    QNTRACE(QStringLiteral("HTML converted to XML by tidy: ") << m_cachedConvertedXml);
+    QNTRACE(QStringLiteral("HTML converted to XML: ") << m_cachedConvertedXml);
 
     QXmlStreamReader reader(m_cachedConvertedXml);
 
@@ -847,7 +846,6 @@ bool ENMLConverterPrivate::cleanupExternalHtml(const QString & inputHtml, QStrin
     QXmlStreamWriter writer(&outputSupplementedHtml);
     writer.setAutoFormatting(true);
     writer.setCodec("UTF-8");
-    writer.writeDTD(QStringLiteral("<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01//EN\" \"http://www.w3.org/TR/html4/strict.dtd\">"));
 
     int writeElementCounter = 0;
     QString lastElementName;
