@@ -1,10 +1,10 @@
 #include "InsertHtmlDelegate.h"
 #include "../NoteEditor_p.h"
+#include "../NoteEditorPage.h"
 #include <quentier/enml/ENMLConverter.h>
 #include <quentier/types/Account.h>
 #include <quentier/types/Note.h>
 #include <quentier/note_editor/ResourceFileStorageManager.h>
-#include <quentier/utility/FileIOThreadWorker.h>
 #include <quentier/utility/ApplicationSettings.h>
 #include <quentier/logging/QuentierLogger.h>
 #include <quentier/enml/ENMLConverter.h>
@@ -24,19 +24,16 @@ namespace quentier {
 InsertHtmlDelegate::InsertHtmlDelegate(const QString & inputHtml, NoteEditorPrivate & noteEditor,
                                        ENMLConverter & enmlConverter,
                                        ResourceFileStorageManager * pResourceFileStorageManager,
-                                       FileIOThreadWorker * pFileIOThreadWorker,
                                        QObject * parent) :
     QObject(parent),
     m_noteEditor(noteEditor),
     m_enmlConverter(enmlConverter),
     m_pResourceFileStorageManager(pResourceFileStorageManager),
-    m_pFileIOThreadWorker(pFileIOThreadWorker),
     m_inputHtml(inputHtml),
     m_cleanedUpHtml(),
     m_imageUrls(),
     m_pendingImageUrls(),
     m_failingImageUrls(),
-    m_addedResources(),
     m_resourceBySaveToStorageRequestId(),
     m_sourceUrlByResourceLocalUid(),
     m_imgDataBySourceUrl(),
@@ -129,6 +126,61 @@ void InsertHtmlDelegate::onResourceSavedToStorage(QUuid requestId, QByteArray da
     checkImageResourcesReady();
 }
 
+void InsertHtmlDelegate::onHtmlInserted(const QVariant & responseData)
+{
+    QNDEBUG(QStringLiteral("InsertHtmlDelegate::onHtmlInserted"));
+
+    QMap<QString,QVariant> resultMap = responseData.toMap();
+
+    auto statusIt = resultMap.find(QStringLiteral("status"));
+    if (Q_UNLIKELY(statusIt == resultMap.end()))
+    {
+        removeAddedResourcesFromNote();
+
+        ErrorString error(QT_TRANSLATE_NOOP("", "Internal error: can't parse the result of html insertion from JavaScript"));
+        QNWARNING(error);
+        emit notifyError(error);
+        return;
+    }
+
+    bool res = statusIt.value().toBool();
+    if (!res)
+    {
+        removeAddedResourcesFromNote();
+
+        ErrorString error;
+        auto errorIt = resultMap.find(QStringLiteral("error"));
+        if (Q_UNLIKELY(errorIt == resultMap.end())) {
+            error.base() = QT_TRANSLATE_NOOP("", "Internal error: can't parse the error of html insertion from JavaScript");
+        }
+        else {
+            error.base() = QT_TRANSLATE_NOOP("", "Internal error: can't insert html into the note editor");
+            error.details() = errorIt.value().toString();
+        }
+
+        QNWARNING(error);
+        emit notifyError(error);
+        return;
+    }
+
+    int numResources = m_imgDataBySourceUrl.size();
+
+    QList<Resource> resources;
+    resources.reserve(numResources);
+
+    QStringList resourceFileStoragePaths;
+    resourceFileStoragePaths.reserve(numResources);
+
+    for(auto it = m_imgDataBySourceUrl.constBegin(), end = m_imgDataBySourceUrl.constEnd(); it != end; ++it) {
+        const ImgData & imgData = it.value();
+        resources << imgData.m_resource;
+        resourceFileStoragePaths << imgData.m_resourceFileStoragePath;
+    }
+
+    QNDEBUG(QStringLiteral("Finished the html insertion, number of added image resources: ") << resources.size());
+    emit finished(resources, resourceFileStoragePaths);
+}
+
 void InsertHtmlDelegate::doStart()
 {
     QNDEBUG(QStringLiteral("InsertHtmlDelegate::doStart"));
@@ -152,13 +204,16 @@ void InsertHtmlDelegate::doStart()
 
     m_imageUrls.clear();
 
-    QXmlStreamReader reader(m_cleanedUpHtml);
+    QString supplementedHtml = QStringLiteral("<html><body>");
+    supplementedHtml += m_cleanedUpHtml;
+    supplementedHtml += QStringLiteral("</body></html>");
+
+    QXmlStreamReader reader(supplementedHtml);
 
     QString secondRoundCleanedUpHtml;
     QXmlStreamWriter writer(&secondRoundCleanedUpHtml);
     writer.setAutoFormatting(true);
     writer.setCodec("UTF-8");
-    writer.writeStartDocument();
 
     int writeElementCounter = 0;
     size_t skippedElementWithPreservedContentsNestingCounter = 0;
@@ -187,7 +242,20 @@ void InsertHtmlDelegate::doStart()
             lastElementName = reader.name().toString();
             lastElementAttributes = reader.attributes();
 
-            if (lastElementName == QStringLiteral("img"))
+            QNTRACE(QStringLiteral("Start element: ") << lastElementName);
+
+            if ( (lastElementName == QStringLiteral("title")) ||
+                 (lastElementName == QStringLiteral("head")) )
+            {
+                lastElementName = QStringLiteral("div");
+            }
+
+            if ( (lastElementName == QStringLiteral("html")) ||
+                 (lastElementName == QStringLiteral("body")) )
+            {
+                continue;
+            }
+            else if (lastElementName == QStringLiteral("img"))
             {
                 if (Q_UNLIKELY(!lastElementAttributes.hasAttribute(QStringLiteral("src")))) {
                     QNDEBUG(QStringLiteral("Detected an img tag without src attribute, will skip this tag"));
@@ -245,6 +313,8 @@ void InsertHtmlDelegate::doStart()
 
         if (reader.isEndElement())
         {
+            QNTRACE(QStringLiteral("End element"));
+
             if (writeElementCounter <= 0) {
                 continue;
             }
@@ -380,13 +450,16 @@ bool InsertHtmlDelegate::adjustImgTagsInHtml()
 {
     QNDEBUG(QStringLiteral("InsertHtmlDelegate::adjustImgTagsInHtml"));
 
-    QXmlStreamReader reader(m_cleanedUpHtml);
+    QString supplementedHtml = QStringLiteral("<html><body>");
+    supplementedHtml += m_cleanedUpHtml;
+    supplementedHtml += QStringLiteral("</body></html>");
+
+    QXmlStreamReader reader(supplementedHtml);
 
     QString htmlWithAlteredImgTags;
     QXmlStreamWriter writer(&htmlWithAlteredImgTags);
     writer.setAutoFormatting(true);
     writer.setCodec("UTF-8");
-    writer.writeStartDocument();
 
     int writeElementCounter = 0;
     QString lastElementName;
@@ -413,7 +486,20 @@ bool InsertHtmlDelegate::adjustImgTagsInHtml()
             lastElementName = reader.name().toString();
             lastElementAttributes = reader.attributes();
 
-            if (lastElementName == QStringLiteral("img"))
+            QNTRACE(QStringLiteral("Start element: ") << lastElementName);
+
+            if ( (lastElementName == QStringLiteral("title")) ||
+                 (lastElementName == QStringLiteral("head")) )
+            {
+                lastElementName = QStringLiteral("div");
+            }
+
+            if ( (lastElementName == QStringLiteral("html")) ||
+                 (lastElementName == QStringLiteral("body")) )
+            {
+                continue;
+            }
+            else if (lastElementName == QStringLiteral("img"))
             {
                 if (Q_UNLIKELY(!lastElementAttributes.hasAttribute(QStringLiteral("src")))) {
                     QNDEBUG(QStringLiteral("Detected an img tag without src attribute, will skip this img tag"));
@@ -440,11 +526,7 @@ bool InsertHtmlDelegate::adjustImgTagsInHtml()
                 QString resourceHtml = ENMLConverter::resourceHtml(imgData.m_resource, resourceHtmlComposingError);
                 if (Q_UNLIKELY(resourceHtml.isEmpty()))
                 {
-                    // Trying to undo the harm done to the note
-                    for(auto iit = m_imgDataBySourceUrl.constBegin(), iend = m_imgDataBySourceUrl.constEnd(); iit != iend; ++iit) {
-                        m_noteEditor.removeResourceFromNote(iit.value().m_resource);
-                    }
-
+                    removeAddedResourcesFromNote();
                     ErrorString errorDescription(QT_TRANSLATE_NOOP("", "Can't insert HTML: can't compose the HTML representation "
                                                                    "of a resource that replaced the external image link"));
                     QNWARNING(errorDescription << QStringLiteral("; resource: ") << imgData.m_resource);
@@ -452,7 +534,11 @@ bool InsertHtmlDelegate::adjustImgTagsInHtml()
                     return false;
                 }
 
-                QXmlStreamReader resourceHtmlReader(resourceHtml);
+                QString supplementedResourceHtml = QStringLiteral("<html><body>");
+                supplementedResourceHtml += resourceHtml;
+                supplementedResourceHtml += QStringLiteral("</body></html>");
+
+                QXmlStreamReader resourceHtmlReader(supplementedResourceHtml);
                 QXmlStreamAttributes resourceAttributes;
                 while(!resourceHtmlReader.atEnd())
                 {
@@ -470,7 +556,7 @@ bool InsertHtmlDelegate::adjustImgTagsInHtml()
                         break;
                     }
 
-                    if (resourceHtmlReader.isStartElement()) {
+                    if (resourceHtmlReader.isStartElement() && (resourceHtmlReader.name().toString() == QStringLiteral("img"))) {
                         resourceAttributes = resourceHtmlReader.attributes();
                     }
                 }
@@ -510,6 +596,8 @@ bool InsertHtmlDelegate::adjustImgTagsInHtml()
 
         if (reader.isEndElement())
         {
+            QNTRACE(QStringLiteral("End element"));
+
             if (writeElementCounter <= 0) {
                 continue;
             }
@@ -537,7 +625,22 @@ void InsertHtmlDelegate::insertHtmlIntoEditor()
 {
     QNDEBUG(QStringLiteral("InsertHtmlDelegate::insertHtmlIntoEditor"));
 
-    // TODO: implement
+    NoteEditorPage * pPage = qobject_cast<NoteEditorPage*>(m_noteEditor.page());
+    if (Q_UNLIKELY(!pPage)) {
+        ErrorString error(QT_TRANSLATE_NOOP("", "Can't insert HTML: no note editor page"));
+        QNWARNING(error);
+        emit notifyError(error);
+        return;
+    }
+
+    ENMLConverter::escapeString(m_cleanedUpHtml, /* simplify = */ false);
+    m_cleanedUpHtml = m_cleanedUpHtml.trimmed();
+    QNTRACE(QStringLiteral("Trimmed HTML: ") << m_cleanedUpHtml);
+    m_cleanedUpHtml.replace(QStringLiteral("\n"), QStringLiteral("\\n"));
+    QNTRACE(QStringLiteral("Trimmed HTML with escaped newlines: ") << m_cleanedUpHtml);
+
+    pPage->executeJavaScript(QStringLiteral("htmlInsertionManager.insertHtml('") + m_cleanedUpHtml + QStringLiteral("');"),
+                             JsCallback(*this, &InsertHtmlDelegate::onHtmlInserted));
 }
 
 bool InsertHtmlDelegate::addResource(const QByteArray & resourceData, const QUrl & url)
@@ -624,6 +727,15 @@ bool InsertHtmlDelegate::addResource(const QByteArray & resourceData, const QUrl
     emit saveResourceToStorage(pNote->localUid(), resource.localUid(), resourceData, dataHash,
                                resourceFileSuffix, requestId, /* is image = */ true);
     return true;
+}
+
+void InsertHtmlDelegate::removeAddedResourcesFromNote()
+{
+    QNDEBUG(QStringLiteral("InsertHtmlDelegate::removeAddedResourcesFromNote"));
+
+    for(auto iit = m_imgDataBySourceUrl.constBegin(), iend = m_imgDataBySourceUrl.constEnd(); iit != iend; ++iit) {
+        m_noteEditor.removeResourceFromNote(iit.value().m_resource);
+    }
 }
 
 } // namespace quentier

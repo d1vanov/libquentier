@@ -23,6 +23,7 @@
 #include "delegates/RemoveResourceDelegate.h"
 #include "delegates/RenameResourceDelegate.h"
 #include "delegates/ImageResourceRotationDelegate.h"
+#include "delegates/InsertHtmlDelegate.h"
 #include "delegates/EncryptSelectedTextDelegate.h"
 #include "delegates/DecryptEncryptedTextDelegate.h"
 #include "delegates/AddHyperlinkToSelectedTextDelegate.h"
@@ -189,6 +190,7 @@ NoteEditorPrivate::NoteEditorPrivate(NoteEditor & noteEditor) :
     m_pageMutationObserverJs(),
     m_tableManagerJs(),
     m_resourceManagerJs(),
+    m_htmlInsertionManagerJs(),
     m_hyperlinkManagerJs(),
     m_encryptDecryptManagerJs(),
     m_hilitorJs(),
@@ -470,6 +472,7 @@ void NoteEditorPrivate::onNoteLoadFinished(bool ok)
     page->executeJavaScript(m_changeFontSizeForSelectionJs);
     page->executeJavaScript(m_tableManagerJs);
     page->executeJavaScript(m_resourceManagerJs);
+    page->executeJavaScript(m_htmlInsertionManagerJs);
     page->executeJavaScript(m_hyperlinkManagerJs);
     page->executeJavaScript(m_encryptDecryptManagerJs);
     page->executeJavaScript(m_hilitorJs);
@@ -1392,9 +1395,9 @@ void NoteEditorPrivate::onAddResourceDelegateFinished(Resource addedResource, QS
                      this, QNSLOT(NoteEditorPrivate,onUndoCommandError,ErrorString));
     m_pUndoStack->push(pCommand);
 
-    AddResourceDelegate * delegate = qobject_cast<AddResourceDelegate*>(sender());
-    if (Q_LIKELY(delegate)) {
-        delegate->deleteLater();
+    AddResourceDelegate * pDelegate = qobject_cast<AddResourceDelegate*>(sender());
+    if (Q_LIKELY(pDelegate)) {
+        pDelegate->deleteLater();
     }
 
     setModified();
@@ -1404,6 +1407,7 @@ void NoteEditorPrivate::onAddResourceDelegateFinished(Resource addedResource, QS
 void NoteEditorPrivate::onAddResourceDelegateError(ErrorString error)
 {
     QNDEBUG(QStringLiteral("NoteEditorPrivate::onAddResourceDelegateError: ") << error);
+
     emit notifyError(error);
 
     AddResourceDelegate * delegate = qobject_cast<AddResourceDelegate*>(sender());
@@ -2089,6 +2093,97 @@ void NoteEditorPrivate::onRemoveHyperlinkUndoRedoFinished(const QVariant & data,
     }
 
     convertToNote();
+}
+
+void NoteEditorPrivate::onInsertHtmlDelegateFinished(QList<Resource> addedResources, QStringList resourceFileStoragePaths)
+{
+    QNDEBUG(QStringLiteral("NoteEditorPrivate::onInsertHtmlDelegateFinished: num added resources = ") << addedResources);
+
+    if (QuentierIsLogLevelActive(LogLevel::TraceLevel))
+    {
+        QNTRACE(QStringLiteral("Resources: "));
+        for(auto it = addedResources.constBegin(), end = addedResources.constEnd(); it != end; ++it) {
+            QNTRACE(*it);
+        }
+
+        QNTRACE(QStringLiteral("Resource file storage paths: "));
+        for(auto it = resourceFileStoragePaths.constBegin(), end = resourceFileStoragePaths.constEnd(); it != end; ++it) {
+            QNTRACE(*it);
+        }
+    }
+
+    InsertHtmlDelegate * pDelegate = qobject_cast<InsertHtmlDelegate*>(sender());
+    if (Q_LIKELY(pDelegate)) {
+        pDelegate->deleteLater();
+    }
+
+    int numResources = addedResources.size();
+    if (Q_UNLIKELY(numResources != resourceFileStoragePaths.size())) {
+        ErrorString errorDescription(QT_TRANSLATE_NOOP("", "Internal error after processing the HTML insertion: the number "
+                                                       "of added image resources doesn't match the number of resource file storage paths"));
+        QNWARNING(errorDescription);
+        emit notifyError(errorDescription);
+        return;
+    }
+
+    // NOTE: preventing detach on walking through the container due to operator[]'s and at() method's potential non-constness
+    const QList<Resource> & addedResourcesRef = addedResources;
+    const QStringList & resourceFileStoragePathsRef = resourceFileStoragePaths;
+
+    for(int i = 0; i < numResources; ++i)
+    {
+        const Resource * pResource = &(addedResourcesRef.at(i));
+
+        if (Q_UNLIKELY(!pResource->hasDataHash()))
+        {
+            QNDEBUG(QStringLiteral("One of added resources has no data hash"));
+
+            if (Q_UNLIKELY(!pResource->hasDataBody())) {
+                QNDEBUG(QStringLiteral("This resource has no data body as well, will just skip it"));
+                continue;
+            }
+
+            QByteArray dataHash = QCryptographicHash::hash(pResource->dataBody(), QCryptographicHash::Md5);
+            addedResources[i].setDataHash(dataHash);
+            // This might have caused resize, need to update the pointer to the resource
+            pResource = &(addedResourcesRef.at(i));
+        }
+
+        if (Q_UNLIKELY(!pResource->hasDataSize()))
+        {
+            QNDEBUG(QStringLiteral("One of added resources has no data size"));
+
+            if (Q_UNLIKELY(!pResource->hasDataBody())) {
+                QNDEBUG(QStringLiteral("This resource has no data body as well, will just skip it"));
+                continue;
+            }
+
+            int dataSize = pResource->dataBody().size();
+            addedResources[i].setDataSize(dataSize);
+            // This might have caused resize, need to update the pointer to the resource
+            pResource = &(addedResourcesRef.at(i));
+        }
+
+        const QString & resourceFileStoragePath = resourceFileStoragePathsRef.at(i);
+
+        m_resourceFileStoragePathsByResourceLocalUid[pResource->localUid()] = resourceFileStoragePath;
+        m_resourceInfo.cacheResourceInfo(pResource->dataHash(), pResource->displayName(),
+                                         humanReadableSize(static_cast<quint64>(pResource->dataSize())), resourceFileStoragePath);
+    }
+
+    // TODO: push the undo command on the undo stack
+}
+
+void NoteEditorPrivate::onInsertHtmlDelegateError(ErrorString error)
+{
+    QNDEBUG(QStringLiteral("NoteEditorPrivate::onInsertHtmlDelegateError: ") << error);
+
+    emit notifyError(error);
+
+    InsertHtmlDelegate * pDelegate = qobject_cast<InsertHtmlDelegate*>(sender());
+    if (Q_LIKELY(pDelegate)) {
+        pDelegate->deleteLater();
+    }
 }
 
 void NoteEditorPrivate::onUndoCommandError(ErrorString error)
@@ -3953,6 +4048,7 @@ void NoteEditorPrivate::setupScripts()
     SETUP_SCRIPT("javascript/scripts/changeFontSizeForSelection.js", m_changeFontSizeForSelectionJs);
     SETUP_SCRIPT("javascript/scripts/tableManager.js", m_tableManagerJs);
     SETUP_SCRIPT("javascript/scripts/resourceManager.js", m_resourceManagerJs);
+    SETUP_SCRIPT("javascript/scripts/htmlInsertionManager.js", m_htmlInsertionManagerJs);
     SETUP_SCRIPT("javascript/scripts/hyperlinkManager.js", m_hyperlinkManagerJs);
     SETUP_SCRIPT("javascript/scripts/encryptDecryptManager.js", m_encryptDecryptManagerJs);
 
@@ -6173,22 +6269,16 @@ void NoteEditorPrivate::paste()
             QString html = pMimeData->html();
             QNDEBUG(QStringLiteral("HTML from mime data: ") << html);
 
-            QString cleanedUpHtml;
-            ErrorString errorDescription;
-            bool res = m_enmlConverter.cleanupExternalHtml(html, cleanedUpHtml, errorDescription);
-            if (!res) {
-                emit notifyError(errorDescription);
-                return;
-            }
+            InsertHtmlDelegate * pInsertHtmlDelegate = new InsertHtmlDelegate(html, *this, m_enmlConverter,
+                                                                              m_pResourceFileStorageManager, this);
+            QObject::connect(pInsertHtmlDelegate, QNSIGNAL(InsertHtmlDelegate,finished,QList<Resource>,QStringList),
+                             this, QNSLOT(NoteEditorPrivate,onInsertHtmlDelegateFinished,QList<Resource>,QStringList));
+            QObject::connect(pInsertHtmlDelegate, QNSIGNAL(InsertHtmlDelegate,notifyError,ErrorString),
+                             this, QNSLOT(NoteEditorPrivate,onInsertHtmlDelegateError,ErrorString));
 
-            QNDEBUG(QStringLiteral("Cleaned up HTML from mime data: ") << cleanedUpHtml);
-
-            // TODO: process it further
-
+            pInsertHtmlDelegate->start();
             return;
         }
-
-        // TODO: support other kinds of mime data
     }
     else
     {

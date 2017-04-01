@@ -443,6 +443,9 @@ private Q_SLOTS:
     void onRemoveHyperlinkDelegateError(ErrorString error);
     void onRemoveHyperlinkUndoRedoFinished(const QVariant & data, const QVector<QPair<QString,QString> > & extraData);
 
+    void onInsertHtmlDelegateFinished(QList<Resource> addedResources, QStringList resourceFileStoragePaths);
+    void onInsertHtmlDelegateError(ErrorString error);
+
     // Slots for undo command signals
     void onUndoCommandError(ErrorString error);
 
@@ -723,6 +726,7 @@ private:
     QString     m_pageMutationObserverJs;
     QString     m_tableManagerJs;
     QString     m_resourceManagerJs;
+    QString     m_htmlInsertionManagerJs;
     QString     m_hyperlinkManagerJs;
     QString     m_encryptDecryptManagerJs;
     QString     m_hilitorJs;
