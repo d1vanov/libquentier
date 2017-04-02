@@ -78,6 +78,12 @@ bool ENMLConverter::validateEnml(const QString & enml, ErrorString & errorDescri
     return d->validateEnml(enml, errorDescription);
 }
 
+bool ENMLConverter::validateAndFixupEnml(QString & enml, ErrorString & errorDescription) const
+{
+    Q_D(const ENMLConverter);
+    return d->validateAndFixupEnml(enml, errorDescription);
+}
+
 bool ENMLConverter::noteContentToPlainText(const QString & noteContent, QString & plainText,
                                            ErrorString & errorMessage)
 {

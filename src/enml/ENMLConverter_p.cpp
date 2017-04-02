@@ -65,6 +65,15 @@ ENMLConverterPrivate::ENMLConverterPrivate() :
 
 #undef WRAP
 
+void xmlValidationErrorFunc(void * ctx, const char * msg, va_list args)
+{
+    QNDEBUG(QStringLiteral("xmlValidationErrorFunc"));
+
+    QString * pErrorString = reinterpret_cast<QString*>(ctx);
+    pErrorString->sprintf(msg, args);
+    QNDEBUG(QStringLiteral("Error string: ") << *pErrorString);
+}
+
 ENMLConverterPrivate::~ENMLConverterPrivate()
 {
     delete m_pHtmlCleaner;
@@ -1085,6 +1094,8 @@ bool ENMLConverterPrivate::noteContentToHtml(const QString & noteContent, QStrin
 
 bool ENMLConverterPrivate::validateEnml(const QString & enml, ErrorString & errorDescription) const
 {
+    QNDEBUG(QStringLiteral("ENMLConverterPrivate::validateEnml"));
+
     errorDescription.clear();
 
     QByteArray inputBuffer = enml.toLocal8Bit();
@@ -1132,6 +1143,10 @@ bool ENMLConverterPrivate::validateEnml(const QString & enml, ErrorString & erro
         return false;
     }
 
+    QString errorString;
+    pContext->vctxt.userData = &errorString;
+    pContext->vctxt.error = (xmlValidityErrorFunc)xmlValidationErrorFunc;
+
     bool res = static_cast<bool>(xmlValidateDtd(&pContext->vctxt, pDoc, pDtd));
 
     xmlFreeParserCtxt(pContext);
@@ -1139,6 +1154,29 @@ bool ENMLConverterPrivate::validateEnml(const QString & enml, ErrorString & erro
     // WARNING: xmlIOParseDTD should have "consumed" the input buffer so one should not attempt to free it manually
     xmlFreeDoc(pDoc);
 
+    if (!res)
+    {
+        errorDescription.base() = QT_TRANSLATE_NOOP("", "ENML is invalid");
+
+        if (!errorString.isEmpty()) {
+            errorDescription.details() = QStringLiteral(": ");
+            errorDescription.details() += errorString;
+        }
+    }
+
+    return res;
+}
+
+bool ENMLConverterPrivate::validateAndFixupEnml(QString & enml, ErrorString & errorDescription) const
+{
+    QNDEBUG(QStringLiteral("ENMLConverterPrivate::validateAndFixupEnml: ") << enml);
+
+    bool res = validateEnml(enml, errorDescription);
+    if (res) {
+        return true;
+    }
+
+    // TODO: implement
     return res;
 }
 

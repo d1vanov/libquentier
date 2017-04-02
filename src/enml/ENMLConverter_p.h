@@ -64,6 +64,8 @@ public:
 
     bool validateEnml(const QString & enml, ErrorString & errorDescription) const;
 
+    bool validateAndFixupEnml(QString & enml, ErrorString & errorDescription) const;
+
     static bool noteContentToPlainText(const QString & noteContent, QString & plainText,
                                        ErrorString & errorMessage);
 
