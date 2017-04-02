@@ -69,8 +69,11 @@ void xmlValidationErrorFunc(void * ctx, const char * msg, va_list args)
 {
     QNDEBUG(QStringLiteral("xmlValidationErrorFunc"));
 
+    QString currentError;
+    currentError.sprintf(msg, args);
+
     QString * pErrorString = reinterpret_cast<QString*>(ctx);
-    pErrorString->sprintf(msg, args);
+    *pErrorString += currentError;
     QNDEBUG(QStringLiteral("Error string: ") << *pErrorString);
 }
 
@@ -392,7 +395,7 @@ bool ENMLConverterPrivate::htmlToNoteContent(const QString & html, const QVector
     QNTRACE(QStringLiteral("Converted ENML: ") << noteContent);
 
     ErrorString validationError;
-    res = validateEnml(noteContent, validationError);
+    res = validateAndFixupEnml(noteContent, validationError);
     if (!res) {
         errorDescription = validationError;
         QNWARNING(errorDescription << QStringLiteral(", ENML: ") << noteContent << QStringLiteral("\nHTML: ") << html);
@@ -1176,8 +1179,165 @@ bool ENMLConverterPrivate::validateAndFixupEnml(QString & enml, ErrorString & er
         return true;
     }
 
-    // TODO: implement
-    return res;
+    // If we got here, the ENML it not valid. Most probably it is due to some
+    // attributes on some elements that Evernote doesn't quite like. Will try to
+    // parse the names of such attributes and corresponding elements from the error description
+    // and remove them during one more pass.
+
+    // FIXME: a better approach would be to consult the DTD file which knows
+    // exactly what attributes allowed on what elements but it's kinda
+    // troublesome - libxml2 is probably capable of this but it's tedious to
+    // learn the exact way to do this. Hence, this simplified solution involving
+    // parsing the error description.
+
+    // I've tried to get a regex do this for me but it turned pretty bad pretty
+    // quickly so here's the dirty yet working solution
+
+    QString error = errorDescription.details();
+    QHash<QString, QStringList> elementToForbiddenAttributes;
+
+    int lastIndex = 0;
+
+    QString attributePrefix = QStringLiteral("No declaration for attribute ");
+    int attributePrefixSize = attributePrefix.size();
+
+    QString elementPrefix = QStringLiteral("element ");
+    int elementPrefixSize = elementPrefix.size();
+
+    while(true)
+    {
+        int attributeNameIndex = error.indexOf(attributePrefix, lastIndex);
+        if (attributeNameIndex < 0) {
+            break;
+        }
+
+        attributeNameIndex += attributePrefixSize;
+
+        int attributeNameEndIndex = error.indexOf(QStringLiteral(" "), attributeNameIndex);
+        if (attributeNameEndIndex < 0) {
+            break;
+        }
+
+        int elementNameIndex = error.indexOf(elementPrefix, attributeNameEndIndex);
+        if (elementNameIndex < 0) {
+            break;
+        }
+
+        elementNameIndex += elementPrefixSize;
+
+        int elementNameIndexEnd = error.indexOf(QStringLiteral("\n"), elementNameIndex);
+        if (elementNameIndexEnd < 0) {
+            break;
+        }
+
+        lastIndex = elementNameIndexEnd;
+
+        QString elementName = error.mid(elementNameIndex, (elementNameIndexEnd - elementNameIndex));
+        QString attributeName = error.mid(attributeNameIndex, (attributeNameEndIndex - attributeNameIndex));
+
+        QStringList & attributesForElement = elementToForbiddenAttributes[elementName];
+        if (!attributesForElement.contains(attributeName)) {
+            attributesForElement << attributeName;
+        }
+    }
+
+    if (QuentierIsLogLevelActive(LogLevel::TraceLevel))
+    {
+        QNTRACE(QStringLiteral("Parsed forbidden attributes per element: "));
+        for(auto it = elementToForbiddenAttributes.constBegin(), end = elementToForbiddenAttributes.constEnd(); it != end; ++it) {
+            QNTRACE(QStringLiteral("[") << it.key() << QStringLiteral("]: ") << it.value());
+        }
+    }
+
+    QXmlStreamReader reader(enml);
+
+    QString fixedUpEnml;
+    QXmlStreamWriter writer(&fixedUpEnml);
+    writer.setAutoFormatting(false);
+    writer.setCodec("UTF-8");
+    writer.writeStartDocument();
+    writer.writeDTD(QStringLiteral("<!DOCTYPE en-note SYSTEM \"http://xml.evernote.com/pub/enml2.dtd\">"));
+
+    QString lastElementName;
+    QXmlStreamAttributes lastElementAttributes;
+
+    while(!reader.atEnd())
+    {
+        Q_UNUSED(reader.readNext());
+
+        if (reader.isStartDocument()) {
+            continue;
+        }
+
+        if (reader.isDTD()) {
+            continue;
+        }
+
+        if (reader.isEndDocument()) {
+            break;
+        }
+
+        if (reader.isStartElement())
+        {
+            lastElementName = reader.name().toString();
+            lastElementAttributes = reader.attributes();
+
+            auto it = elementToForbiddenAttributes.find(lastElementName);
+            if (it == elementToForbiddenAttributes.end()) {
+                QNTRACE(QStringLiteral("No forbidden attributes for element ") << lastElementName);
+                writer.writeStartElement(lastElementName);
+                writer.writeAttributes(lastElementAttributes);
+                continue;
+            }
+
+            const QStringList & forbiddenAttributes = it.value();
+
+            // Erasing the forbidden attributes
+            for(QXmlStreamAttributes::iterator ait = lastElementAttributes.begin(); ait != lastElementAttributes.end(); )
+            {
+                QString attributeName = ait->name().toString();
+                if (forbiddenAttributes.contains(attributeName)) {
+                    QNTRACE(QStringLiteral("Erasing the forbidden attribute ") << attributeName);
+                    ait = lastElementAttributes.erase(ait);
+                    continue;
+                }
+
+                ++ait;
+            }
+
+            writer.writeStartElement(lastElementName);
+            writer.writeAttributes(lastElementAttributes);
+            QNTRACE(QStringLiteral("Wrote element: name = ") << lastElementName << QStringLiteral(" and its attributes"));
+        }
+
+        if (reader.isCharacters())
+        {
+            QString text = reader.text().toString();
+
+            if (reader.isCDATA()) {
+                writer.writeCDATA(text);
+                QNTRACE(QStringLiteral("Wrote CDATA: ") << text);
+            }
+            else {
+                writer.writeCharacters(text);
+                QNTRACE(QStringLiteral("Wrote characters: ") << text);
+            }
+        }
+
+        if (reader.isEndElement()) {
+            writer.writeEndElement();
+        }
+    }
+
+    if (Q_UNLIKELY(reader.hasError())) {
+        QNWARNING(QStringLiteral("Wasn't able to fixup the ENML as it is a malformed XML: ") << reader.errorString());
+        return false;
+    }
+
+    QNTRACE(QStringLiteral("ENML after fixing up: ") << fixedUpEnml);
+    enml = fixedUpEnml;
+
+    return validateEnml(enml, errorDescription);
 }
 
 bool ENMLConverterPrivate::noteContentToPlainText(const QString & noteContent, QString & plainText,
@@ -1398,7 +1558,7 @@ bool ENMLConverterPrivate::isForbiddenXhtmlAttribute(const QString & attributeNa
         return true;
     }
 
-    return !attributeName.startsWith(QStringLiteral("on"));
+    return attributeName.startsWith(QStringLiteral("on"));
 }
 
 bool ENMLConverterPrivate::isEvernoteSpecificXhtmlTag(const QString & tagName) const
