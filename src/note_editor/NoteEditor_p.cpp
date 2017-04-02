@@ -48,6 +48,7 @@
 #include "undo_stack/AddResourceUndoCommand.h"
 #include "undo_stack/RemoveResourceUndoCommand.h"
 #include "undo_stack/RenameResourceUndoCommand.h"
+#include "undo_stack/InsertHtmlUndoCommand.h"
 #include "undo_stack/ImageResourceRotationUndoCommand.h"
 #include "undo_stack/ImageResizeUndoCommand.h"
 #include "undo_stack/ReplaceUndoCommand.h"
@@ -1426,7 +1427,7 @@ void NoteEditorPrivate::onAddResourceUndoRedoFinished(const QVariant & data, con
 
     auto statusIt = resultMap.find(QStringLiteral("status"));
     if (Q_UNLIKELY(statusIt == resultMap.end())) {
-        ErrorString error(QT_TRANSLATE_NOOP("", "can't parse the result of new resource html insertion from JavaScript"));
+        ErrorString error(QT_TRANSLATE_NOOP("", "can't parse the result of new resource html insertion undo/redo from JavaScript"));
         QNWARNING(error);
         emit notifyError(error);
         return;
@@ -1439,10 +1440,10 @@ void NoteEditorPrivate::onAddResourceUndoRedoFinished(const QVariant & data, con
 
         auto errorIt = resultMap.find(QStringLiteral("error"));
         if (Q_UNLIKELY(errorIt == resultMap.end())) {
-            error.base() = QT_TRANSLATE_NOOP("", "can't parse the error of new resource html insertion from JavaScript");
+            error.base() = QT_TRANSLATE_NOOP("", "can't parse the error of new resource html insertion undo/redo from JavaScript");
         }
         else {
-            error.base() = QT_TRANSLATE_NOOP("", "can't insert resource html into the note editor");
+            error.base() = QT_TRANSLATE_NOOP("", "can't undo/redo the new resource html insertion into the note editor");
             error.details() = errorIt.value().toString();
         }
 
@@ -2097,11 +2098,13 @@ void NoteEditorPrivate::onRemoveHyperlinkUndoRedoFinished(const QVariant & data,
 
 void NoteEditorPrivate::onInsertHtmlDelegateFinished(QList<Resource> addedResources, QStringList resourceFileStoragePaths)
 {
-    QNDEBUG(QStringLiteral("NoteEditorPrivate::onInsertHtmlDelegateFinished: num added resources = ") << addedResources);
+    QNDEBUG(QStringLiteral("NoteEditorPrivate::onInsertHtmlDelegateFinished: num added resources = ") << addedResources.size());
+
+    setModified();
 
     if (QuentierIsLogLevelActive(LogLevel::TraceLevel))
     {
-        QNTRACE(QStringLiteral("Resources: "));
+        QNTRACE(QStringLiteral("Added resources: "));
         for(auto it = addedResources.constBegin(), end = addedResources.constEnd(); it != end; ++it) {
             QNTRACE(*it);
         }
@@ -2117,61 +2120,15 @@ void NoteEditorPrivate::onInsertHtmlDelegateFinished(QList<Resource> addedResour
         pDelegate->deleteLater();
     }
 
-    int numResources = addedResources.size();
-    if (Q_UNLIKELY(numResources != resourceFileStoragePaths.size())) {
-        ErrorString errorDescription(QT_TRANSLATE_NOOP("", "Internal error after processing the HTML insertion: the number "
-                                                       "of added image resources doesn't match the number of resource file storage paths"));
-        QNWARNING(errorDescription);
-        emit notifyError(errorDescription);
-        return;
-    }
+    InsertHtmlUndoCommand * pCommand = new InsertHtmlUndoCommand(addedResources, resourceFileStoragePaths,
+                                                                 NoteEditorCallbackFunctor<QVariant>(this, &NoteEditorPrivate::onInsertHtmlUndoRedoFinished),
+                                                                 *this, m_resourceFileStoragePathsByResourceLocalUid,
+                                                                 m_resourceInfo);
+    QObject::connect(pCommand, QNSIGNAL(InsertHtmlUndoCommand,notifyError,ErrorString),
+                     this, QNSLOT(NoteEditorPrivate,onUndoCommandError,ErrorString));
+    m_pUndoStack->push(pCommand);
 
-    // NOTE: preventing detach on walking through the container due to operator[]'s and at() method's potential non-constness
-    const QList<Resource> & addedResourcesRef = addedResources;
-    const QStringList & resourceFileStoragePathsRef = resourceFileStoragePaths;
-
-    for(int i = 0; i < numResources; ++i)
-    {
-        const Resource * pResource = &(addedResourcesRef.at(i));
-
-        if (Q_UNLIKELY(!pResource->hasDataHash()))
-        {
-            QNDEBUG(QStringLiteral("One of added resources has no data hash"));
-
-            if (Q_UNLIKELY(!pResource->hasDataBody())) {
-                QNDEBUG(QStringLiteral("This resource has no data body as well, will just skip it"));
-                continue;
-            }
-
-            QByteArray dataHash = QCryptographicHash::hash(pResource->dataBody(), QCryptographicHash::Md5);
-            addedResources[i].setDataHash(dataHash);
-            // This might have caused resize, need to update the pointer to the resource
-            pResource = &(addedResourcesRef.at(i));
-        }
-
-        if (Q_UNLIKELY(!pResource->hasDataSize()))
-        {
-            QNDEBUG(QStringLiteral("One of added resources has no data size"));
-
-            if (Q_UNLIKELY(!pResource->hasDataBody())) {
-                QNDEBUG(QStringLiteral("This resource has no data body as well, will just skip it"));
-                continue;
-            }
-
-            int dataSize = pResource->dataBody().size();
-            addedResources[i].setDataSize(dataSize);
-            // This might have caused resize, need to update the pointer to the resource
-            pResource = &(addedResourcesRef.at(i));
-        }
-
-        const QString & resourceFileStoragePath = resourceFileStoragePathsRef.at(i);
-
-        m_resourceFileStoragePathsByResourceLocalUid[pResource->localUid()] = resourceFileStoragePath;
-        m_resourceInfo.cacheResourceInfo(pResource->dataHash(), pResource->displayName(),
-                                         humanReadableSize(static_cast<quint64>(pResource->dataSize())), resourceFileStoragePath);
-    }
-
-    // TODO: push the undo command on the undo stack
+    convertToNote();
 }
 
 void NoteEditorPrivate::onInsertHtmlDelegateError(ErrorString error)
@@ -2184,6 +2141,44 @@ void NoteEditorPrivate::onInsertHtmlDelegateError(ErrorString error)
     if (Q_LIKELY(pDelegate)) {
         pDelegate->deleteLater();
     }
+}
+
+void NoteEditorPrivate::onInsertHtmlUndoRedoFinished(const QVariant & data, const QVector<QPair<QString,QString> > & extraData)
+{
+    QNDEBUG(QStringLiteral("NoteEditorPrivate::onInsertHtmlUndoRedoFinished: ") << data);
+
+    Q_UNUSED(extraData);
+
+    QMap<QString,QVariant> resultMap = data.toMap();
+
+    auto statusIt = resultMap.find(QStringLiteral("status"));
+    if (Q_UNLIKELY(statusIt == resultMap.end())) {
+        ErrorString error(QT_TRANSLATE_NOOP("", "can't parse the result of html insertion undo/redo from JavaScript"));
+        QNWARNING(error);
+        emit notifyError(error);
+        return;
+    }
+
+    bool res = statusIt.value().toBool();
+    if (!res)
+    {
+        ErrorString error;
+
+        auto errorIt = resultMap.find(QStringLiteral("error"));
+        if (Q_UNLIKELY(errorIt == resultMap.end())) {
+            error.base() = QT_TRANSLATE_NOOP("", "can't parse the error of html insertion undo/redo from JavaScript");
+        }
+        else {
+            error.base() = QT_TRANSLATE_NOOP("", "can't undo/redo the html insertion into the note editor");
+            error.details() = errorIt.value().toString();
+        }
+
+        QNWARNING(error);
+        emit notifyError(error);
+        return;
+    }
+
+    convertToNote();
 }
 
 void NoteEditorPrivate::onUndoCommandError(ErrorString error)
@@ -6270,7 +6265,9 @@ void NoteEditorPrivate::paste()
             QNDEBUG(QStringLiteral("HTML from mime data: ") << html);
 
             InsertHtmlDelegate * pInsertHtmlDelegate = new InsertHtmlDelegate(html, *this, m_enmlConverter,
-                                                                              m_pResourceFileStorageManager, this);
+                                                                              m_pResourceFileStorageManager,
+                                                                              m_resourceFileStoragePathsByResourceLocalUid,
+                                                                              m_resourceInfo, this);
             QObject::connect(pInsertHtmlDelegate, QNSIGNAL(InsertHtmlDelegate,finished,QList<Resource>,QStringList),
                              this, QNSLOT(NoteEditorPrivate,onInsertHtmlDelegateFinished,QList<Resource>,QStringList));
             QObject::connect(pInsertHtmlDelegate, QNSIGNAL(InsertHtmlDelegate,notifyError,ErrorString),

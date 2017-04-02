@@ -6,6 +6,7 @@
 #include <quentier/types/Note.h>
 #include <quentier/note_editor/ResourceFileStorageManager.h>
 #include <quentier/utility/ApplicationSettings.h>
+#include <quentier/utility/DesktopServices.h>
 #include <quentier/logging/QuentierLogger.h>
 #include <quentier/enml/ENMLConverter.h>
 #include <QXmlStreamReader>
@@ -24,11 +25,15 @@ namespace quentier {
 InsertHtmlDelegate::InsertHtmlDelegate(const QString & inputHtml, NoteEditorPrivate & noteEditor,
                                        ENMLConverter & enmlConverter,
                                        ResourceFileStorageManager * pResourceFileStorageManager,
+                                       QHash<QString, QString> & resourceFileStoragePathsByResourceLocalUid,
+                                       ResourceInfo & resourceInfo,
                                        QObject * parent) :
     QObject(parent),
     m_noteEditor(noteEditor),
     m_enmlConverter(enmlConverter),
     m_pResourceFileStorageManager(pResourceFileStorageManager),
+    m_resourceFileStoragePathsByResourceLocalUid(resourceFileStoragePathsByResourceLocalUid),
+    m_resourceInfo(resourceInfo),
     m_inputHtml(inputHtml),
     m_cleanedUpHtml(),
     m_imageUrls(),
@@ -171,9 +176,42 @@ void InsertHtmlDelegate::onHtmlInserted(const QVariant & responseData)
     QStringList resourceFileStoragePaths;
     resourceFileStoragePaths.reserve(numResources);
 
-    for(auto it = m_imgDataBySourceUrl.constBegin(), end = m_imgDataBySourceUrl.constEnd(); it != end; ++it) {
-        const ImgData & imgData = it.value();
-        resources << imgData.m_resource;
+    for(auto it = m_imgDataBySourceUrl.begin(), end = m_imgDataBySourceUrl.end(); it != end; ++it)
+    {
+        ImgData & imgData = it.value();
+        Resource & resource = imgData.m_resource;
+
+        if (Q_UNLIKELY(!resource.hasDataHash()))
+        {
+            QNDEBUG(QStringLiteral("One of added resources has no data hash"));
+
+            if (Q_UNLIKELY(!resource.hasDataBody())) {
+                QNDEBUG(QStringLiteral("This resource has no data body as well, will just skip it"));
+                continue;
+            }
+
+            QByteArray dataHash = QCryptographicHash::hash(resource.dataBody(), QCryptographicHash::Md5);
+            resource.setDataHash(dataHash);
+        }
+
+        if (Q_UNLIKELY(!resource.hasDataSize()))
+        {
+            QNDEBUG(QStringLiteral("One of added resources has no data size"));
+
+            if (Q_UNLIKELY(!resource.hasDataBody())) {
+                QNDEBUG(QStringLiteral("This resource has no data body as well, will just skip it"));
+                continue;
+            }
+
+            int dataSize = resource.dataBody().size();
+            resource.setDataSize(dataSize);
+        }
+
+        m_resourceFileStoragePathsByResourceLocalUid[resource.localUid()] = imgData.m_resourceFileStoragePath;
+        m_resourceInfo.cacheResourceInfo(resource.dataHash(), resource.displayName(),
+                                         humanReadableSize(static_cast<quint64>(resource.dataSize())), imgData.m_resourceFileStoragePath);
+
+        resources << resource;
         resourceFileStoragePaths << imgData.m_resourceFileStoragePath;
     }
 
@@ -212,7 +250,7 @@ void InsertHtmlDelegate::doStart()
 
     QString secondRoundCleanedUpHtml;
     QXmlStreamWriter writer(&secondRoundCleanedUpHtml);
-    writer.setAutoFormatting(true);
+    writer.setAutoFormatting(false);
     writer.setCodec("UTF-8");
 
     int writeElementCounter = 0;
@@ -458,7 +496,7 @@ bool InsertHtmlDelegate::adjustImgTagsInHtml()
 
     QString htmlWithAlteredImgTags;
     QXmlStreamWriter writer(&htmlWithAlteredImgTags);
-    writer.setAutoFormatting(true);
+    writer.setAutoFormatting(false);
     writer.setCodec("UTF-8");
 
     int writeElementCounter = 0;

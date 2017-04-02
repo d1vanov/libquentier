@@ -225,7 +225,7 @@ bool HTMLCleaner::Impl::convertHtml(const QString & html, const TidyOptionId out
 
     QString fixedUpOutput;
     QXmlStreamWriter writer(&fixedUpOutput);
-    writer.setAutoFormatting(true);
+    writer.setAutoFormatting(false);
     writer.setCodec("UTF-8");
     writer.writeStartDocument();
 

@@ -95,7 +95,7 @@ bool ENMLConverterPrivate::htmlToNoteContent(const QString & html, const QVector
 
     noteContent.resize(0);
     QXmlStreamWriter writer(&noteContent);
-    writer.setAutoFormatting(true);
+    writer.setAutoFormatting(false);
     writer.setCodec("UTF-8");
     writer.writeStartDocument();
     writer.writeDTD(QStringLiteral("<!DOCTYPE en-note SYSTEM \"http://xml.evernote.com/pub/enml2.dtd\">"));
@@ -417,7 +417,7 @@ bool ENMLConverterPrivate::htmlToQTextDocument(const QString & html, QTextDocume
 
     QString simplifiedHtml;
     QXmlStreamWriter writer(&simplifiedHtml);
-    writer.setAutoFormatting(true);
+    writer.setAutoFormatting(false);
     writer.setCodec("UTF-8");
     writer.writeDTD(QStringLiteral("<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01//EN\" \"http://www.w3.org/TR/html4/strict.dtd\">"));
 
@@ -844,7 +844,7 @@ bool ENMLConverterPrivate::cleanupExternalHtml(const QString & inputHtml, QStrin
 
     QString outputSupplementedHtml;
     QXmlStreamWriter writer(&outputSupplementedHtml);
-    writer.setAutoFormatting(true);
+    writer.setAutoFormatting(false);
     writer.setCodec("UTF-8");
 
     int writeElementCounter = 0;
@@ -965,7 +965,7 @@ bool ENMLConverterPrivate::noteContentToHtml(const QString & noteContent, QStrin
     QXmlStreamReader reader(noteContent);
 
     QXmlStreamWriter writer(&html);
-    writer.setAutoFormatting(true);
+    writer.setAutoFormatting(false);
     int writeElementCounter = 0;
 
     bool insideEnCryptTag = false;
@@ -1356,12 +1356,11 @@ bool ENMLConverterPrivate::isForbiddenXhtmlTag(const QString & tagName) const
 bool ENMLConverterPrivate::isForbiddenXhtmlAttribute(const QString & attributeName) const
 {
     auto it = m_forbiddenXhtmlAttributes.find(attributeName);
-    if (it == m_forbiddenXhtmlAttributes.constEnd()) {
-        return false;
-    }
-    else {
+    if (it != m_forbiddenXhtmlAttributes.constEnd()) {
         return true;
     }
+
+    return !attributeName.startsWith(QStringLiteral("on"));
 }
 
 bool ENMLConverterPrivate::isEvernoteSpecificXhtmlTag(const QString & tagName) const

@@ -445,6 +445,7 @@ private Q_SLOTS:
 
     void onInsertHtmlDelegateFinished(QList<Resource> addedResources, QStringList resourceFileStoragePaths);
     void onInsertHtmlDelegateError(ErrorString error);
+    void onInsertHtmlUndoRedoFinished(const QVariant & data, const QVector<QPair<QString,QString> > & extraData);
 
     // Slots for undo command signals
     void onUndoCommandError(ErrorString error);

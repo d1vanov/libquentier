@@ -20,6 +20,7 @@ QT_FORWARD_DECLARE_CLASS(Account)
 QT_FORWARD_DECLARE_CLASS(NoteEditorPrivate)
 QT_FORWARD_DECLARE_CLASS(ENMLConverter)
 QT_FORWARD_DECLARE_CLASS(ResourceFileStorageManager)
+QT_FORWARD_DECLARE_CLASS(ResourceInfo)
 
 class InsertHtmlDelegate: public QObject
 {
@@ -28,6 +29,8 @@ public:
     explicit InsertHtmlDelegate(const QString & inputHtml, NoteEditorPrivate & noteEditor,
                                 ENMLConverter & enmlConverter,
                                 ResourceFileStorageManager * pResourceFileStorageManager,
+                                QHash<QString, QString> & resourceFileStoragePathsByResourceLocalUid,
+                                ResourceInfo & resourceInfo,
                                 QObject * parent = Q_NULLPTR);
 
     void start();
@@ -67,6 +70,8 @@ private:
     ENMLConverter &                 m_enmlConverter;
 
     ResourceFileStorageManager *    m_pResourceFileStorageManager;
+    QHash<QString, QString> &       m_resourceFileStoragePathsByResourceLocalUid;
+    ResourceInfo &                  m_resourceInfo;
 
     QString                         m_inputHtml;
     QString                         m_cleanedUpHtml;
