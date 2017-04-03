@@ -18,6 +18,7 @@
 #include <QCryptographicHash>
 #include <QMimeType>
 #include <QMimeDatabase>
+#include <QTemporaryFile>
 #include <limits>
 
 namespace quentier {
@@ -385,6 +386,14 @@ void InsertHtmlDelegate::doStart()
         return;
     }
 
+    QNetworkAccessManager::NetworkAccessibility networkAccessibility = m_networkAccessManager.networkAccessible();
+    if (networkAccessibility != QNetworkAccessManager::Accessible) {
+        QNDEBUG(QStringLiteral("The network is not accessible, can't load any image"));
+        m_failingImageUrls = m_imageUrls;
+        checkImageResourcesReady();
+        return;
+    }
+
     // NOTE: will be using the application-wide proxy settings for image downloading
 
     QObject::connect(&m_networkAccessManager, QNSIGNAL(QNetworkAccessManager,finished,QNetworkReply*),
@@ -395,14 +404,15 @@ void InsertHtmlDelegate::doStart()
     for(auto it = m_imageUrls.constBegin(), end = m_imageUrls.constEnd(); it != end; ++it) {
         const QUrl & url = *it;
         QNetworkRequest request(url);
-        m_networkAccessManager.get(request);
+        Q_UNUSED(m_networkAccessManager.get(request))
         QNTRACE(QStringLiteral("Issued get request for url " ) << url);
     }
 }
 
 void InsertHtmlDelegate::onImageDataDownloadFinished(QNetworkReply * pReply)
 {
-    QNDEBUG(QStringLiteral("InsertHtmlDelegate::onImageDataDownloadFinished: url = ") << (pReply ? pReply->url().toString() : QStringLiteral("<null>")));
+    QNDEBUG(QStringLiteral("InsertHtmlDelegate::onImageDataDownloadFinished: url = ")
+            << (pReply ? pReply->url().toString() : QStringLiteral("<null>")));
 
     if (Q_UNLIKELY(!pReply)) {
         QNWARNING(QStringLiteral("Received null QNetworkReply while trying to download the image from the pasted HTML"));
@@ -422,14 +432,59 @@ void InsertHtmlDelegate::onImageDataDownloadFinished(QNetworkReply * pReply)
     }
 
     QByteArray downloadedData = pReply->readAll();
+    pReply->deleteLater();
 
     QImage image;
     bool res = image.loadFromData(downloadedData);
-    if (Q_UNLIKELY(!res)) {
-        QNDEBUG(QStringLiteral("Wasn't able to load the image from the downloaded data"));
-        Q_UNUSED(m_failingImageUrls.insert(url))
-        checkImageResourcesReady();
-        return;
+    if (Q_UNLIKELY(!res))
+    {
+        QNDEBUG(QStringLiteral("Wasn't able to load the image from the downloaded data without format specification"));
+
+        QString format;
+        QString urlString = url.toString();
+        int dotIndex = urlString.lastIndexOf(QStringLiteral("."), -1, Qt::CaseInsensitive);
+        if (dotIndex >= 0) {
+            format = urlString.mid(dotIndex + 1, urlString.size() - dotIndex - 1);
+            QNTRACE(QStringLiteral("Trying to load the image with format ") << format.toUpper().toLocal8Bit().constData());
+            res = image.loadFromData(downloadedData, format.toUpper().toLocal8Bit().constData());
+        }
+        else {
+            QNDEBUG(QStringLiteral("Can't find the last dot within the url, can't deduce the image format; url = ") << urlString);
+        }
+
+        if (!res)
+        {
+            QNTRACE(QStringLiteral("Still can't load the image from the downloaded data, trying to write it "
+                                   "to the temporary file first and load from there"));
+
+            QTemporaryFile file;
+            if (file.open())
+            {
+                Q_UNUSED(file.write(downloadedData));
+                file.flush();
+                QNTRACE(QStringLiteral("Wrote the downloaded data into the temporary file: ") << file.fileName());
+
+                res = image.load(file.fileName());
+                if (!res) {
+                    QNTRACE(QStringLiteral("Could not load the image from temporary file without format specification"));
+                }
+
+                if (!res && !format.isEmpty())
+                {
+                    res = image.load(file.fileName(), format.toUpper().toLocal8Bit().constData());
+                    if (!res) {
+                        QNTRACE(QStringLiteral("Could not load the image from temporary file with the format specification too: ")
+                                << format.toUpper().toLocal8Bit().constData());
+                    }
+                }
+            }
+        }
+
+        if (!res) {
+            Q_UNUSED(m_failingImageUrls.insert(url))
+            checkImageResourcesReady();
+            return;
+        }
     }
 
     QNDEBUG(QStringLiteral("Successfully loaded the image from the downloaded data"));
