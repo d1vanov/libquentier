@@ -565,7 +565,7 @@ private:
 private:
     // Overrides for some Qt's virtual methods
     virtual void timerEvent(QTimerEvent * pEvent) Q_DECL_OVERRIDE;
-
+    virtual bool eventFilter(QObject * pWatched, QEvent * pEvent) Q_DECL_OVERRIDE;
     virtual void dragMoveEvent(QDragMoveEvent * pEvent) Q_DECL_OVERRIDE;
     virtual void dropEvent(QDropEvent * pEvent) Q_DECL_OVERRIDE;
 
@@ -736,6 +736,7 @@ private:
     QString     m_spellCheckerJs;
     QString     m_managedPageActionJs;
     QString     m_setInitialCaretPositionJs;
+    QString     m_disableKeyboardModifiersJs;
 
 #ifndef QUENTIER_USE_QT_WEB_ENGINE
     QString     m_qWebKitSetupJs;

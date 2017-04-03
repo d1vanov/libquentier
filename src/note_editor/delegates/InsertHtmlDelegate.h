@@ -82,6 +82,7 @@ private:
 
     QHash<QUuid, Resource>          m_resourceBySaveToStorageRequestId;
     QHash<QString, QUrl>            m_sourceUrlByResourceLocalUid;
+    QHash<QUrl, QUrl>               m_urlToRedirectUrl;
 
     struct ImgData
     {

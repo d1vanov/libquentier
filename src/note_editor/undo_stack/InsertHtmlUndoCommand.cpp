@@ -72,7 +72,7 @@ void InsertHtmlUndoCommand::undoImpl()
             pResource = &(addedResources.at(i));
         }
 
-        m_noteEditorPrivate.removeAttachment(pResource->dataHash());
+        m_noteEditorPrivate.removeResourceFromNote(*pResource);
 
         auto rit = m_resourceFileStoragePathsByResourceLocalUid.find(pResource->localUid());
         if (Q_LIKELY(rit != m_resourceFileStoragePathsByResourceLocalUid.end())) {
@@ -163,15 +163,7 @@ void InsertHtmlUndoCommand::redoImpl()
             pResource = &(addedResources.at(i));
         }
 
-        QString sourceUrl;
-        if (pResource->hasResourceAttributes()) {
-            sourceUrl = (pResource->resourceAttributes().sourceURL.isSet()
-                         ? pResource->resourceAttributes().sourceURL.ref()
-                         : QString());
-        }
-
-        m_noteEditorPrivate.attachResourceToNote(pResource->dataBody(), pResource->dataHash(),
-                                                 mimeType, pResource->displayName(), sourceUrl);
+        m_noteEditorPrivate.addResourceToNote(*pResource);
 
         if (Q_LIKELY(m_resourceFileStoragePaths.size() > i))
         {

@@ -200,6 +200,7 @@ NoteEditorPrivate::NoteEditorPrivate(NoteEditor & noteEditor) :
     m_spellCheckerJs(),
     m_managedPageActionJs(),
     m_setInitialCaretPositionJs(),
+    m_disableKeyboardModifiersJs(),
 #ifndef QUENTIER_USE_QT_WEB_ENGINE
     m_qWebKitSetupJs(),
 #else
@@ -499,6 +500,10 @@ void NoteEditorPrivate::onNoteLoadFinished(bool ok)
 
     // Set the caret position to the end of the body
     page->executeJavaScript(m_setInitialCaretPositionJs);
+
+    // Disable the keyboard modifiers to prevent auto-triggering of note editor page actions -
+    // they should go through the preprocessing of the note editor
+    page->executeJavaScript(m_disableKeyboardModifiersJs);
 
     // NOTE: executing page mutation observer's script last
     // so that it doesn't catch the mutations originating from the above scripts
@@ -2233,6 +2238,35 @@ void NoteEditorPrivate::timerEvent(QTimerEvent * pEvent)
         m_watchingForContentChange = false;
         m_contentChangedSinceWatchingStart = false;
     }
+}
+
+bool NoteEditorPrivate::eventFilter(QObject * pWatched, QEvent * pEvent)
+{
+    NoteEditorPage * pPage = qobject_cast<NoteEditorPage*>(pWatched);
+    if (!pPage) {
+        return WebView::eventFilter(pWatched, pEvent);
+    }
+
+    if (!pEvent || (pEvent->type() != QEvent::KeyRelease)) {
+        return WebView::eventFilter(pWatched, pEvent);
+    }
+
+    QKeyEvent * pKeyEvent = dynamic_cast<QKeyEvent*>(pEvent);
+    if (!pKeyEvent) {
+        return WebView::eventFilter(pWatched, pEvent);
+    }
+
+    Qt::KeyboardModifiers modifiers = pKeyEvent->modifiers();
+    if (!modifiers.testFlag(Qt::ControlModifier) &&
+        !modifiers.testFlag(Qt::AltModifier))
+    {
+        return WebView::eventFilter(pWatched, pEvent);
+    }
+
+    QNDEBUG(QStringLiteral("Stealing the keyboard shortcut from the web page"));
+    // Need to steal away the keyboard shortcuts from the page to ensure they would be propaged
+    // up in the widgets hierarchy - it would be up to the client to handle the keyboard shortcuts
+    return false;
 }
 
 void NoteEditorPrivate::dragMoveEvent(QDragMoveEvent * pEvent)
@@ -4032,6 +4066,7 @@ void NoteEditorPrivate::setupScripts()
     SETUP_SCRIPT("javascript/scripts/spellChecker.js", m_spellCheckerJs);
     SETUP_SCRIPT("javascript/scripts/managedPageAction.js", m_managedPageActionJs);
     SETUP_SCRIPT("javascript/scripts/setInitialCaretPosition.js", m_setInitialCaretPositionJs);
+    SETUP_SCRIPT("javascript/scripts/disableKeyboardModifiers.js", m_disableKeyboardModifiersJs);
     SETUP_SCRIPT("javascript/scripts/replaceHyperlinkContent.js", m_replaceHyperlinkContentJs);
     SETUP_SCRIPT("javascript/scripts/updateResourceHash.js", m_updateResourceHashJs);
     SETUP_SCRIPT("javascript/scripts/updateImageResourceSrc.js", m_updateImageResourceSrcJs);
@@ -4157,6 +4192,8 @@ void NoteEditorPrivate::setupNoteEditorPage()
 
     page->setPluginFactory(m_pPluginFactory);
 #endif
+
+    page->installEventFilter(this);
 
     setupNoteEditorPageConnections(page);
     setPage(page);

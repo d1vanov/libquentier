@@ -42,6 +42,7 @@ InsertHtmlDelegate::InsertHtmlDelegate(const QString & inputHtml, NoteEditorPriv
     m_failingImageUrls(),
     m_resourceBySaveToStorageRequestId(),
     m_sourceUrlByResourceLocalUid(),
+    m_urlToRedirectUrl(),
     m_imgDataBySourceUrl(),
     m_networkAccessManager()
 {}
@@ -420,6 +421,27 @@ void InsertHtmlDelegate::onImageDataDownloadFinished(QNetworkReply * pReply)
         return;
     }
 
+    // Check for redirection
+    QVariant redirectionTarget = pReply->attribute(QNetworkRequest::RedirectionTargetAttribute);
+    if (!redirectionTarget.isNull())
+    {
+        auto it = m_pendingImageUrls.find(pReply->url());
+        if (it != m_pendingImageUrls.end()) {
+            Q_UNUSED(m_pendingImageUrls.erase(it))
+        }
+
+        QUrl redirectUrl = pReply->url().resolved(redirectionTarget.toUrl());
+        Q_UNUSED(m_pendingImageUrls.insert(redirectUrl))
+        m_urlToRedirectUrl[pReply->url()] = redirectUrl;
+
+        QNetworkRequest request(redirectUrl);
+        Q_UNUSED(m_networkAccessManager.get(request))
+        QNTRACE(QStringLiteral("Issued get request for redirect url: ") << redirectUrl);
+
+        pReply->deleteLater();
+        return;
+    }
+
     QUrl url = pReply->url();
     Q_UNUSED(m_pendingImageUrls.remove(url))
 
@@ -428,6 +450,7 @@ void InsertHtmlDelegate::onImageDataDownloadFinished(QNetworkReply * pReply)
         QNWARNING(QStringLiteral("Detected error when attempting to download the image from pasted HTML: ")
                   << pReply->errorString() << QStringLiteral(", error code = ") << error);
         checkImageResourcesReady();
+        pReply->deleteLater();
         return;
     }
 
@@ -608,12 +631,30 @@ bool InsertHtmlDelegate::adjustImgTagsInHtml()
                 }
 
                 auto it = m_imgDataBySourceUrl.find(url);
-                if (Q_UNLIKELY(it == m_imgDataBySourceUrl.end())) {
+                if (Q_UNLIKELY(it == m_imgDataBySourceUrl.end()))
+                {
                     QNDEBUG(QStringLiteral("Can't find the replacement data for the image url ") << url
-                            << QStringLiteral(", will skip this img tag"));
-                    continue;
+                            << QStringLiteral(", see if it's due to redirect url usage"));
+
+                    auto rit = m_urlToRedirectUrl.find(url);
+                    if (rit == m_urlToRedirectUrl.end()) {
+                        QNDEBUG(QStringLiteral("Couldn't find the redirect url for url ") << url
+                                << QStringLiteral(", will just skip this img tag"));
+                        continue;
+                    }
+
+                    const QUrl & redirectUrl = rit.value();
+                    QNDEBUG(QStringLiteral("Found redirect url for url ") << url << QStringLiteral(": ") << redirectUrl);
+
+                    it = m_imgDataBySourceUrl.find(redirectUrl);
+                    if (it == m_imgDataBySourceUrl.end()) {
+                        QNDEBUG(QStringLiteral("Couldn't find the replacenent data for the image's redirect url ") << redirectUrl
+                                << QStringLiteral(", will just skip this img tag"));
+                        continue;
+                    }
                 }
 
+                QNDEBUG(QStringLiteral("Successfully found the replacement data for the image url"));
                 const ImgData & imgData = it.value();
                 ErrorString resourceHtmlComposingError;
                 QString resourceHtml = ENMLConverter::resourceHtml(imgData.m_resource, resourceHtmlComposingError);
