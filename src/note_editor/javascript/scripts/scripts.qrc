@@ -39,6 +39,6 @@
         <file>imageAreasHilitor.js</file>
         <file>managedPageAction.js</file>
         <file>setInitialCaretPosition.js</file>
-	<file>disableKeyboardModifiers.js</file>
+	<file>disablePaste.js</file>
     </qresource>
 </RCC>

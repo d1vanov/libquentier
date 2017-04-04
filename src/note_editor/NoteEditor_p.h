@@ -736,7 +736,7 @@ private:
     QString     m_spellCheckerJs;
     QString     m_managedPageActionJs;
     QString     m_setInitialCaretPositionJs;
-    QString     m_disableKeyboardModifiersJs;
+    QString     m_disablePasteJs;
 
 #ifndef QUENTIER_USE_QT_WEB_ENGINE
     QString     m_qWebKitSetupJs;

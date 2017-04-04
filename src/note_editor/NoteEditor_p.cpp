@@ -200,7 +200,7 @@ NoteEditorPrivate::NoteEditorPrivate(NoteEditor & noteEditor) :
     m_spellCheckerJs(),
     m_managedPageActionJs(),
     m_setInitialCaretPositionJs(),
-    m_disableKeyboardModifiersJs(),
+    m_disablePasteJs(),
 #ifndef QUENTIER_USE_QT_WEB_ENGINE
     m_qWebKitSetupJs(),
 #else
@@ -503,7 +503,7 @@ void NoteEditorPrivate::onNoteLoadFinished(bool ok)
 
     // Disable the keyboard modifiers to prevent auto-triggering of note editor page actions -
     // they should go through the preprocessing of the note editor
-    page->executeJavaScript(m_disableKeyboardModifiersJs);
+    page->executeJavaScript(m_disablePasteJs);
 
     // NOTE: executing page mutation observer's script last
     // so that it doesn't catch the mutations originating from the above scripts
@@ -4066,7 +4066,7 @@ void NoteEditorPrivate::setupScripts()
     SETUP_SCRIPT("javascript/scripts/spellChecker.js", m_spellCheckerJs);
     SETUP_SCRIPT("javascript/scripts/managedPageAction.js", m_managedPageActionJs);
     SETUP_SCRIPT("javascript/scripts/setInitialCaretPosition.js", m_setInitialCaretPositionJs);
-    SETUP_SCRIPT("javascript/scripts/disableKeyboardModifiers.js", m_disableKeyboardModifiersJs);
+    SETUP_SCRIPT("javascript/scripts/disablePaste.js", m_disablePasteJs);
     SETUP_SCRIPT("javascript/scripts/replaceHyperlinkContent.js", m_replaceHyperlinkContentJs);
     SETUP_SCRIPT("javascript/scripts/updateResourceHash.js", m_updateResourceHashJs);
     SETUP_SCRIPT("javascript/scripts/updateImageResourceSrc.js", m_updateImageResourceSrcJs);
