@@ -6283,7 +6283,7 @@ void NoteEditorPrivate::paste()
     QClipboard * pClipboard = QApplication::clipboard();
     if (Q_UNLIKELY(!pClipboard)) {
         QNWARNING(QStringLiteral("Can't access the application clipboard to analyze the pasted content"));
-        page->triggerAction(WebPage::Paste);
+        execJavascriptCommand(QStringLiteral("insertText"));
         setModified();
         return;
     }
@@ -6335,7 +6335,7 @@ void NoteEditorPrivate::paste()
 
     if (!shouldBeHyperlink && !shouldBeAttachment) {
         QNTRACE(QStringLiteral("The pasted text doesn't appear to be a url of hyperlink or attachment"));
-        page->triggerAction(WebPage::Paste);
+        execJavascriptCommand(QStringLiteral("insertText"), textToPaste);
         return;
     }
 
@@ -6344,7 +6344,7 @@ void NoteEditorPrivate::paste()
     {
         if (!url.isValid()) {
             QNTRACE(QStringLiteral("The pasted text seemed like file url but the url isn't valid after all, fallback to simple paste"));
-            page->triggerAction(WebPage::Paste);
+            execJavascriptCommand(QStringLiteral("insertText"), textToPaste);
             setModified();
         }
         else {
@@ -6360,7 +6360,7 @@ void NoteEditorPrivate::paste()
 
     if (!url.isValid()) {
         QNDEBUG(QStringLiteral("It appears we don't paste a url"));
-        page->triggerAction(WebPage::Paste);
+        execJavascriptCommand(QStringLiteral("insertText"), textToPaste);
         setModified();
         return;
     }
@@ -6381,8 +6381,22 @@ void NoteEditorPrivate::pasteUnformatted()
 {
     QNDEBUG(QStringLiteral("NoteEditorPrivate::pasteUnformatted"));
     CHECK_NOTE_EDITABLE(QT_TRANSLATE_NOOP("", "Can't paste the unformatted text"));
-    GET_PAGE()
-    page->triggerAction(WebPage::PasteAndMatchStyle);
+
+    QClipboard * pClipboard = QApplication::clipboard();
+    if (Q_UNLIKELY(!pClipboard)) {
+        QNWARNING(QStringLiteral("Can't access the application clipboard to analyze the pasted content"));
+        execJavascriptCommand(QStringLiteral("insertText"));
+        setModified();
+        return;
+    }
+
+    QString textToPaste = pClipboard->text();
+    QNTRACE(QStringLiteral("Text to paste: ") << textToPaste);
+    if (textToPaste.isEmpty()) {
+        return;
+    }
+
+    execJavascriptCommand(QStringLiteral("insertText"), textToPaste);
     setModified();
 }
 
