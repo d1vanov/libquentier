@@ -47,10 +47,12 @@ public:
     virtual ~NoteEditor();
 
     /**
-     * NoteEditor requires FileIOThreadWorker and SpellChecker for its work but due to the particularities of Qt's .ui
+     * NoteEditor requires FileIOThreadWorker, SpellChecker and Account for its work but due to the particularities of Qt's .ui
      * files processing these can't be passed right inside the constructor, hence here's a special initialization method
      */
-    void initialize(FileIOThreadWorker & fileIOThreadWorker, SpellChecker & spellChecker);
+    void initialize(FileIOThreadWorker & fileIOThreadWorker,
+                    SpellChecker & spellChecker,
+                    const Account & account);
 
     /**
      * This method can be used to set the backend to the note editor; the note editor has the default backend

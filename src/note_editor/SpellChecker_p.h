@@ -22,6 +22,7 @@
 #include "SpellCheckerDictionariesFinder.h"
 #include <quentier/utility/Macros.h>
 #include <quentier/types/ErrorString.h>
+#include <quentier/types/Account.h>
 #include <QObject>
 #include <QStringList>
 #include <QVector>
@@ -40,11 +41,14 @@ class SpellCheckerPrivate: public QObject
 {
     Q_OBJECT
 public:
-    SpellCheckerPrivate(FileIOThreadWorker * pFileIOThreadWorker, QObject * parent = Q_NULLPTR,
+    SpellCheckerPrivate(FileIOThreadWorker * pFileIOThreadWorker,
+                        const Account & account, QObject * parent = Q_NULLPTR,
                         const QString & userDictionaryPath = QString());
 
     // The second bool in the pair indicates whether the dictionary is enabled or disabled
     QVector<QPair<QString,bool> > listAvailableDictionaries() const;
+
+    void setAccount(const Account & account);
 
     void enableDictionary(const QString & language);
     void disableDictionary(const QString & language);
@@ -76,11 +80,13 @@ private:
     void initializeUserDictionary(const QString & userDictionaryPath);
     bool checkUserDictionaryPath(const QString & userDictionaryPath) const;
 
-
     void checkUserDictionaryDataPendingWriting();
 
     void onAppendUserDictionaryPartDone(bool success, ErrorString errorDescription);
     void onUpdateUserDictionaryDone(bool success, ErrorString errorDescription);
+
+    void persistEnabledSystemDictionaries();
+    void restoreSystemDictionatiesEnabledDisabledSettings();
 
 private Q_SLOTS:
     void onReadFileRequestProcessed(bool success, ErrorString errorDescription, QByteArray data, QUuid requestId);
@@ -102,6 +108,8 @@ private:
 
 private:
     FileIOThreadWorker *        m_pFileIOThreadWorker;
+
+    Account                     m_currentAccount;
 
     // Hashed by the language code
     QHash<QString, Dictionary>  m_systemDictionaries;

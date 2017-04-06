@@ -29,16 +29,20 @@ namespace quentier {
 
 QT_FORWARD_DECLARE_CLASS(FileIOThreadWorker)
 QT_FORWARD_DECLARE_CLASS(SpellCheckerPrivate)
+QT_FORWARD_DECLARE_CLASS(Account)
 
 class QUENTIER_EXPORT SpellChecker : public QObject
 {
     Q_OBJECT
 public:
-    SpellChecker(FileIOThreadWorker * pFileIOThreadWorker, QObject * parent = Q_NULLPTR,
+    SpellChecker(FileIOThreadWorker * pFileIOThreadWorker,
+                 const Account & account, QObject * parent = Q_NULLPTR,
                  const QString & userDictionaryPath = QString());
 
     // The second bool in the pair indicates whether the dictionary is enabled or disabled
     QVector<QPair<QString,bool> > listAvailableDictionaries() const;
+
+    void setAccount(const Account & account);
 
     void enableDictionary(const QString & language);
     void disableDictionary(const QString & language);

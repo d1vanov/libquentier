@@ -43,9 +43,11 @@ NoteEditor::NoteEditor(QWidget * parent, Qt::WindowFlags flags) :
 NoteEditor::~NoteEditor()
 {}
 
-void NoteEditor::initialize(FileIOThreadWorker & fileIOThreadWorker, SpellChecker & spellChecker)
+void NoteEditor::initialize(FileIOThreadWorker & fileIOThreadWorker,
+                            SpellChecker & spellChecker,
+                            const Account & account)
 {
-    m_backend->initialize(fileIOThreadWorker, spellChecker);
+    m_backend->initialize(fileIOThreadWorker, spellChecker, account);
 }
 
 void NoteEditor::setBackend(INoteEditorBackend * backend)

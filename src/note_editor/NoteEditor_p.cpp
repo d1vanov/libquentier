@@ -2192,6 +2192,45 @@ void NoteEditorPrivate::onUndoCommandError(ErrorString error)
     emit notifyError(error);
 }
 
+void NoteEditorPrivate::onSpellCheckerDictionaryEnabledOrDisabled(bool checked)
+{
+    QNDEBUG(QStringLiteral("NoteEditorPrivate::onSpellCheckerDictionaryEnabledOrDisabled: checked = ")
+            << (checked ? QStringLiteral("true") : QStringLiteral("false")));
+
+    QAction * pAction = qobject_cast<QAction*>(sender());
+    if (Q_UNLIKELY(!pAction)) {
+        ErrorString errorDescription(QT_TRANSLATE_NOOP("", "Can't change the enabled/disabled state of a spell checker "
+                                                       "dictionary: internal error, can't cast the slot invoker to QAction"));
+        QNWARNING(errorDescription);
+        emit notifyError(errorDescription);
+        return;
+    }
+
+    if (Q_UNLIKELY(!m_pSpellChecker)) {
+        ErrorString errorDescription(QT_TRANSLATE_NOOP("", "Can't change the enabled/disabled state of a spell checker "
+                                                       "dictionary: internal error, the spell checker is not set up "
+                                                       "for the note editor"));
+        QNWARNING(errorDescription);
+        emit notifyError(errorDescription);
+        return;
+    }
+
+    if (checked) {
+        m_pSpellChecker->enableDictionary(pAction->text());
+    }
+    else {
+        m_pSpellChecker->disableDictionary(pAction->text());
+    }
+
+    if (!m_spellCheckerEnabled) {
+        QNDEBUG(QStringLiteral("The spell checker is not enabled at the moment, won't refresh it"));
+        return;
+    }
+
+    refreshMisSpelledWordsList();
+    applySpellCheck();
+}
+
 #ifdef QUENTIER_USE_QT_WEB_ENGINE
 void NoteEditorPrivate::onPageHtmlReceivedForPrinting(const QString & html,
                                                       const QVector<QPair<QString, QString> > & extraData)
@@ -3816,6 +3855,7 @@ void NoteEditorPrivate::setupGenericTextContextMenu(const QStringList & extraDat
     ADD_ACTION_WITH_SHORTCUT(ShortcutManager::Font, tr("Font..."), m_pGenericTextContextMenu, fontMenu, m_isPageEditable);
     setupParagraphSubMenuForGenericTextMenu(selectedHtml);
     setupStyleSubMenuForGenericTextMenu();
+    setupSpellCheckerDictionariesSubMenuForGenericTextMenu();
 
     Q_UNUSED(m_pGenericTextContextMenu->addSeparator());
 
@@ -3841,6 +3881,8 @@ void NoteEditorPrivate::setupGenericTextContextMenu(const QStringList & extraDat
 
     ADD_ACTION_WITH_SHORTCUT(ShortcutManager::InsertToDoTag, tr("Insert ToDo tag"),
                              m_pGenericTextContextMenu, insertToDoCheckbox, m_isPageEditable);
+
+    Q_UNUSED(m_pGenericTextContextMenu->addSeparator());
 
     QMenu * pHyperlinkMenu = m_pGenericTextContextMenu->addMenu(tr("Hyperlink"));
     ADD_ACTION_WITH_SHORTCUT(ShortcutManager::EditHyperlink, tr("Add/edit..."), pHyperlinkMenu, editHyperlinkDialog, m_isPageEditable);
@@ -4022,7 +4064,7 @@ void NoteEditorPrivate::setupSpellChecker()
 {
     QNDEBUG(QStringLiteral("NoteEditorPrivate::setupSpellChecker"));
 
-    QUENTIER_CHECK_PTR(m_pSpellChecker, QStringLiteral("np spell checker was passed to note editor"));
+    QUENTIER_CHECK_PTR(m_pSpellChecker, QStringLiteral("no spell checker was passed to note editor"));
 
     if (!m_pSpellChecker->isReady()) {
         QObject::connect(m_pSpellChecker, QNSIGNAL(SpellChecker,ready), this, QNSLOT(NoteEditorPrivate,onSpellCheckerReady));
@@ -4646,6 +4688,41 @@ void NoteEditorPrivate::setupStyleSubMenuForGenericTextMenu()
     ADD_ACTION_WITH_SHORTCUT(ShortcutManager::Highlight, tr("Highlight"), pStyleSubMenu, textHighlight, m_isPageEditable);
 }
 
+void NoteEditorPrivate::setupSpellCheckerDictionariesSubMenuForGenericTextMenu()
+{
+    QNDEBUG(QStringLiteral("NoteEditorPrivate::setupSpellCheckerDictionariesSubMenuForGenericTextMenu"));
+
+    if (Q_UNLIKELY(!m_pGenericTextContextMenu)) {
+        QNDEBUG(QStringLiteral("No generic text context menu, nothing to do"));
+        return;
+    }
+
+    if (Q_UNLIKELY(!m_pSpellChecker)) {
+        QNWARNING(QStringLiteral("No spell checker was set up for the note editor"));
+        return;
+    }
+
+    QVector<QPair<QString,bool> > availableDictionaries = m_pSpellChecker->listAvailableDictionaries();
+    if (Q_UNLIKELY(availableDictionaries.isEmpty())) {
+        QNDEBUG(QStringLiteral("The list of available dictionaries is empty"));
+        return;
+    }
+
+    QMenu * pSpellCheckerDictionariesSubMenu = m_pGenericTextContextMenu->addMenu(tr("Spell checker dictionaries"));
+    for(auto it = availableDictionaries.constBegin(), end = availableDictionaries.constEnd(); it != end; ++it)
+    {
+        const QString & name = it->first;
+
+        QAction * pAction = new QAction(name, pSpellCheckerDictionariesSubMenu);
+        pAction->setEnabled(true);
+        pAction->setCheckable(true);
+        pAction->setChecked(it->second);
+        QObject::connect(pAction, QNSIGNAL(QAction,toggled,bool),
+                         this, QNSLOT(NoteEditorPrivate,onSpellCheckerDictionaryEnabledOrDisabled,bool));
+        pSpellCheckerDictionariesSubMenu->addAction(pAction);
+    }
+}
+
 void NoteEditorPrivate::rebuildRecognitionIndicesCache()
 {
     QNDEBUG(QStringLiteral("NoteEditorPrivate::rebuildRecognitionIndicesCache"));
@@ -4944,12 +5021,15 @@ void NoteEditorPrivate::execJavascriptCommand(const QString & command, const QSt
     page->executeJavaScript(javascript, callback);
 }
 
-void NoteEditorPrivate::initialize(FileIOThreadWorker & fileIOThreadWorker, SpellChecker & spellChecker)
+void NoteEditorPrivate::initialize(FileIOThreadWorker & fileIOThreadWorker,
+                                   SpellChecker & spellChecker,
+                                   const Account & account)
 {
     QNDEBUG(QStringLiteral("NoteEditorPrivate::initialize"));
 
     m_pFileIOThreadWorker = &fileIOThreadWorker;
     m_pSpellChecker = &spellChecker;
+    setAccount(account);
 }
 
 void NoteEditorPrivate::setAccount(const Account & account)

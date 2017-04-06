@@ -41,7 +41,9 @@ class QUENTIER_EXPORT INoteEditorBackend
 public:
     virtual ~INoteEditorBackend();
 
-    virtual void initialize(FileIOThreadWorker & fileIOThreadWorker, SpellChecker & spellChecker) = 0;
+    virtual void initialize(FileIOThreadWorker & fileIOThreadWorker,
+                            SpellChecker & spellChecker,
+                            const Account & account) = 0;
 
     virtual QObject * object() = 0;   // provide QObject interface
     virtual QWidget * widget() = 0;   // provide QWidget interface

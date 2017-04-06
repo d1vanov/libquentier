@@ -27,6 +27,7 @@
 #include <QDirIterator>
 #include <QBuffer>
 #include <QThreadPool>
+#include <QLocale>
 #include <algorithm>
 
 #define SPELL_CHECKER_FOUND_DICTIONARIES_GROUP QStringLiteral("SpellCheckerFoundDictionaries")
@@ -34,13 +35,16 @@
 #define SPELL_CHECKER_FOUND_DICTIONARIES_AFF_FILE_ITEM QStringLiteral("AffFile")
 #define SPELL_CHECKER_FOUND_DICTIONARIES_LANGUAGE_KEY QStringLiteral("LanguageKey")
 #define SPELL_CHECKER_FOUND_DICTIONARIES_ARRAY QStringLiteral("Dictionaries")
+#define SPELL_CHECKER_ENABLED_SYSTEM_DICTIONARIES_KEY QStringLiteral("EnabledSystemDictionaries")
 
 namespace quentier {
 
 SpellCheckerPrivate::SpellCheckerPrivate(FileIOThreadWorker * pFileIOThreadWorker,
-                                         QObject * parent, const QString & userDictionaryPath) :
+                                         const Account & account, QObject * parent,
+                                         const QString & userDictionaryPath) :
     QObject(parent),
     m_pFileIOThreadWorker(pFileIOThreadWorker),
+    m_currentAccount(account),
     m_systemDictionaries(),
     m_systemDictionariesReady(false),
     m_readUserDictionaryRequestId(),
@@ -73,6 +77,14 @@ QVector<QPair<QString,bool> > SpellCheckerPrivate::listAvailableDictionaries() c
     return result;
 }
 
+void SpellCheckerPrivate::setAccount(const Account & account)
+{
+    QNDEBUG(QStringLiteral("SpellCheckerPrivate::setAccount: ") << account);
+
+    m_currentAccount = account;
+    restoreSystemDictionatiesEnabledDisabledSettings();
+}
+
 void SpellCheckerPrivate::enableDictionary(const QString & language)
 {
     QNDEBUG(QStringLiteral("SpellCheckerPrivate::enableDictionary: language = ") << language);
@@ -84,6 +96,7 @@ void SpellCheckerPrivate::enableDictionary(const QString & language)
     }
 
     it.value().m_enabled = true;
+    persistEnabledSystemDictionaries();
 }
 
 void SpellCheckerPrivate::disableDictionary(const QString & language)
@@ -97,6 +110,7 @@ void SpellCheckerPrivate::disableDictionary(const QString & language)
     }
 
     it.value().m_enabled = false;
+    persistEnabledSystemDictionaries();
 }
 
 bool SpellCheckerPrivate::checkSpell(const QString & word) const
@@ -268,6 +282,8 @@ void SpellCheckerPrivate::onDictionariesFound(SpellCheckerDictionariesFinder::Di
                 << pair.first << QStringLiteral(", affix file ") << pair.second);
     }
 
+    restoreSystemDictionatiesEnabledDisabledSettings();
+
     ApplicationSettings settings;
     settings.beginGroup(SPELL_CHECKER_FOUND_DICTIONARIES_GROUP);
 
@@ -277,7 +293,7 @@ void SpellCheckerPrivate::onDictionariesFound(SpellCheckerDictionariesFinder::Di
 
     settings.beginWriteArray(SPELL_CHECKER_FOUND_DICTIONARIES_ARRAY);
     int index = 0;
-    for(auto it = files.begin(), end = files.end(); it != end; ++it)
+    for(auto it = files.constBegin(), end = files.constEnd(); it != end; ++it)
     {
         const QPair<QString, QString> & pair = it.value();
         settings.setArrayIndex(index);
@@ -472,8 +488,35 @@ void SpellCheckerPrivate::scanSystemDictionaries()
     if (!m_systemDictionaries.isEmpty())
     {
         QNDEBUG(QStringLiteral("Found some dictionaries at the expected locations, won't search for dictionaries just everywhere at the system"));
-        m_systemDictionariesReady = true;
+        restoreSystemDictionatiesEnabledDisabledSettings();
 
+        ApplicationSettings settings;
+        settings.beginGroup(SPELL_CHECKER_FOUND_DICTIONARIES_GROUP);
+
+        // Removing any previously existing array
+        settings.setValue(SPELL_CHECKER_FOUND_DICTIONARIES_ARRAY, QVariant(QStringList()));
+        // TODO: verify that actually works as expected
+
+        settings.beginWriteArray(SPELL_CHECKER_FOUND_DICTIONARIES_ARRAY);
+        int index = 0;
+        for(auto it = m_systemDictionaries.constBegin(), end = m_systemDictionaries.constEnd(); it != end; ++it)
+        {
+            settings.setArrayIndex(index);
+
+            const QString & dictionaryName = it.key();
+            settings.setValue(SPELL_CHECKER_FOUND_DICTIONARIES_LANGUAGE_KEY, dictionaryName);
+
+            const Dictionary & dictionary = it.value();
+            QString dicFilePath = dictionary.m_dictionaryPath + QStringLiteral("/") + dictionaryName;
+            settings.setValue(SPELL_CHECKER_FOUND_DICTIONARIES_DIC_FILE_ITEM, dicFilePath + QStringLiteral(".dic"));
+            settings.setValue(SPELL_CHECKER_FOUND_DICTIONARIES_AFF_FILE_ITEM, dicFilePath + QStringLiteral(".aff"));
+
+            ++index;
+        }
+        settings.endArray();
+        settings.endGroup();
+
+        m_systemDictionariesReady = true;
         if (isReady()) {
             emit ready();
         }
@@ -731,6 +774,80 @@ void SpellCheckerPrivate::checkUserDictionaryDataPendingWriting()
     }
 
     m_userDictionaryPartPendingWriting.clear();
+}
+
+void SpellCheckerPrivate::persistEnabledSystemDictionaries()
+{
+    QNDEBUG(QStringLiteral("SpellCheckerPrivate::persistEnabledSystemDictionaries"));
+
+    QStringList enabledSystemDictionaries;
+    enabledSystemDictionaries.reserve(m_systemDictionaries.size());
+
+    for(auto it = m_systemDictionaries.constBegin(), end = m_systemDictionaries.constEnd(); it != end; ++it)
+    {
+        if (it.value().m_enabled) {
+            enabledSystemDictionaries << it.key();
+        }
+    }
+
+    QNTRACE(QStringLiteral("Enabled system dictionaties: ") << enabledSystemDictionaries.join(QStringLiteral(", ")));
+
+    ApplicationSettings appSettings(m_currentAccount);
+    appSettings.setValue(SPELL_CHECKER_ENABLED_SYSTEM_DICTIONARIES_KEY, enabledSystemDictionaries);
+}
+
+void SpellCheckerPrivate::restoreSystemDictionatiesEnabledDisabledSettings()
+{
+    QNDEBUG(QStringLiteral("SpellCheckerPrivate::restoreSystemDictionatiesEnabledDisabledSettings"));
+
+    ApplicationSettings appSettings(m_currentAccount);
+    bool containsEnabledSystemDictionaries = appSettings.contains(SPELL_CHECKER_ENABLED_SYSTEM_DICTIONARIES_KEY);
+    QStringList enabledSystemDictionaries = appSettings.value(SPELL_CHECKER_ENABLED_SYSTEM_DICTIONARIES_KEY).toStringList();
+
+    for(auto it = m_systemDictionaries.begin(), end = m_systemDictionaries.end(); it != end; ++it)
+    {
+        const QString & name = it.key();
+
+        if (enabledSystemDictionaries.contains(name)) {
+            it.value().m_enabled = true;
+            QNTRACE(QStringLiteral("Enabled ") << name << QStringLiteral(" dictionary"));
+        }
+        else {
+            it.value().m_enabled = false;
+            QNTRACE(QStringLiteral("Disabled ") << name << QStringLiteral(" dictionary"));
+        }
+    }
+
+    if (containsEnabledSystemDictionaries) {
+        return;
+    }
+
+    QNDEBUG(QStringLiteral("Found no previously persisted settings for enabled system dictionaries, "
+                           "will enable the dictionary corresponding to the system locale"));
+
+    QLocale systemLocale = QLocale::system();
+    QString systemLocaleName = systemLocale.name();
+    QNDEBUG(QStringLiteral("System locale name: ") << systemLocaleName);
+
+    auto systemLocaleDictIt = m_systemDictionaries.find(systemLocaleName);
+    if (systemLocaleDictIt != m_systemDictionaries.end())
+    {
+        for(auto it = m_systemDictionaries.begin(), end = m_systemDictionaries.end(); it != end; ++it) {
+            it.value().m_enabled = (it == systemLocaleDictIt);
+        }
+    }
+    else
+    {
+        QNINFO(QStringLiteral("Found no dictionary corresponding to the system locale!"));
+
+        // Ok, will enable all existing system dictionaries
+        for(auto it = m_systemDictionaries.begin(), end = m_systemDictionaries.end(); it != end; ++it) {
+            it.value().m_enabled = true;
+        }
+    }
+
+    // Since we had no persistent enabled/disabled dictionaties before, let's persist the default we ended up with
+    persistEnabledSystemDictionaries();
 }
 
 void SpellCheckerPrivate::onReadFileRequestProcessed(bool success, ErrorString errorDescription, QByteArray data, QUuid requestId)

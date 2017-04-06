@@ -190,7 +190,9 @@ public:
     void disableDynamicSpellCheck();
 
 public Q_SLOTS:
-    virtual void initialize(FileIOThreadWorker & fileIOThreadWorker, SpellChecker & spellChecker) Q_DECL_OVERRIDE;
+    virtual void initialize(FileIOThreadWorker & fileIOThreadWorker,
+                            SpellChecker & spellChecker,
+                            const Account & account) Q_DECL_OVERRIDE;
     virtual QObject * object() Q_DECL_OVERRIDE { return this; }
     virtual QWidget * widget() Q_DECL_OVERRIDE { return this; }
     virtual void setAccount(const Account & account) Q_DECL_OVERRIDE;
@@ -450,6 +452,8 @@ private Q_SLOTS:
     // Slots for undo command signals
     void onUndoCommandError(ErrorString error);
 
+    void onSpellCheckerDictionaryEnabledOrDisabled(bool checked);
+
 #ifdef QUENTIER_USE_QT_WEB_ENGINE
     void getHtmlForPrinting();
 #endif
@@ -545,6 +549,7 @@ private:
     void setupPasteGenericTextMenuActions();
     void setupParagraphSubMenuForGenericTextMenu(const QString & selectedHtml);
     void setupStyleSubMenuForGenericTextMenu();
+    void setupSpellCheckerDictionariesSubMenuForGenericTextMenu();
 
     void rebuildRecognitionIndicesCache();
 

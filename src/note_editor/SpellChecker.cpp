@@ -1,13 +1,15 @@
 #include <quentier/note_editor/SpellChecker.h>
 #include <quentier/utility/FileIOThreadWorker.h>
+#include <quentier/types/Account.h>
 #include "SpellChecker_p.h"
 
 namespace quentier {
 
-SpellChecker::SpellChecker(FileIOThreadWorker * pFileIOThreadWorker, QObject * parent,
+SpellChecker::SpellChecker(FileIOThreadWorker * pFileIOThreadWorker,
+                           const Account & account, QObject * parent,
                            const QString & userDictionaryPath) :
     QObject(parent),
-    d_ptr(new SpellCheckerPrivate(pFileIOThreadWorker, this, userDictionaryPath))
+    d_ptr(new SpellCheckerPrivate(pFileIOThreadWorker, account, this, userDictionaryPath))
 {
     QObject::connect(d_ptr, QNSIGNAL(SpellCheckerPrivate,ready),
                      this, QNSIGNAL(SpellChecker,ready));
@@ -17,6 +19,12 @@ QVector<QPair<QString,bool> > SpellChecker::listAvailableDictionaries() const
 {
     Q_D(const SpellChecker);
     return d->listAvailableDictionaries();
+}
+
+void SpellChecker::setAccount(const Account & account)
+{
+    Q_D(SpellChecker);
+    d->setAccount(account);
 }
 
 void SpellChecker::enableDictionary(const QString & language)
