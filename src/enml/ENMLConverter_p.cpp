@@ -28,6 +28,7 @@
 #include <QScopedPointer>
 #include <QDomDocument>
 #include <QRegExp>
+#include <QDateTime>
 #include <QFile>
 #include <QFileInfo>
 #include <QImage>
@@ -1538,6 +1539,184 @@ void ENMLConverterPrivate::escapeString(QString & string, const bool simplify)
         string = string.simplified();
     }
     QNTRACE(QStringLiteral("String after escaping: ") << string);
+}
+
+bool ENMLConverterPrivate::exportNotesToEnex(const QVector<Note> & notes, const QHash<QString, QString> & tagNamesByTagLocalUids,
+                                             QString & enex, ErrorString & errorDescription, const QString & version) const
+{
+    QNDEBUG(QStringLiteral("ENMLConverterPrivate::exportNotesToEnex: num notes = ") << notes.size()
+            << QStringLiteral(", num tag names by tag local uids = ") << tagNamesByTagLocalUids.size()
+            << QStringLiteral(", version = ") << version);
+
+    enex.resize(0);
+
+    if (notes.isEmpty()) {
+        errorDescription.base() = QT_TRANSLATE_NOOP("", "Can't export notes to ENEX: no notes");
+        QNWARNING(errorDescription);
+        return false;
+    }
+
+    bool foundNoteEligibleForExport = false;
+    for(auto it = notes.constBegin(), end = notes.constEnd(); it != end; ++it)
+    {
+        const Note & note = *it;
+
+        if (!note.hasTitle() && !note.hasContent() && !note.hasResources() && !note.hasTagLocalUids()) {
+            continue;
+        }
+
+        foundNoteEligibleForExport = true;
+        break;
+    }
+
+    if (!foundNoteEligibleForExport) {
+        errorDescription.base() = QT_TRANSLATE_NOOP("", "Can't export notes to ENEX: no notes eligible for export");
+        QNWARNING(errorDescription);
+        return false;
+    }
+
+    QXmlStreamWriter writer(&enex);
+    writer.setAutoFormatting(false);
+    writer.setCodec("UTF-8");
+    writer.writeStartDocument();
+    writer.writeDTD(QStringLiteral("<!DOCTYPE en-export SYSTEM \"http://xml.evernote.com/pub/evernote-export3.dtd\">"));
+
+    writer.writeStartElement(QStringLiteral("en-export"));
+    QXmlStreamAttributes enExportAttributes;
+
+    QDateTime currentDateTime = QDateTime::currentDateTimeUtc();
+    QString currentDateTimeString = currentDateTime.toString(Qt::ISODate);
+    currentDateTimeString.remove(QChar(':'), Qt::CaseInsensitive);
+    currentDateTimeString.remove(QChar('-'), Qt::CaseInsensitive);
+    enExportAttributes.append(QStringLiteral("export-date"), currentDateTimeString);
+
+    enExportAttributes.append(QStringLiteral("application"), QApplication::applicationName());
+    enExportAttributes.append(QStringLiteral("version"), version);
+
+    writer.writeAttributes(enExportAttributes);
+
+    for(auto it = notes.constBegin(), end = notes.constEnd(); it != end; ++it)
+    {
+        const Note & note = *it;
+
+        if (!note.hasTitle() && !note.hasContent() && !note.hasResources() && !note.hasTagLocalUids()) {
+            QNINFO(QStringLiteral("Skipping note without title, content, resources or tags in export to ENML"));
+            continue;
+        }
+
+        writer.writeStartElement(QStringLiteral("note"));
+
+        writer.writeStartElement(QStringLiteral("title"));
+        if (note.hasTitle()) {
+            writer.writeCharacters(note.title());
+        }
+        writer.writeEndElement();   // title
+
+        writer.writeStartElement(QStringLiteral("content"));
+        if (note.hasContent()) {
+            writer.writeCDATA(note.content());
+        }
+        writer.writeEndElement();   // content
+
+        writer.writeStartElement(QStringLiteral("created"));
+        if (note.hasCreationTimestamp())
+        {
+            QDateTime creationDateTime = QDateTime::fromMSecsSinceEpoch(note.creationTimestamp());
+            QString creationDateTimeString = creationDateTime.toString(Qt::ISODate);
+            creationDateTimeString.remove(QChar(':'), Qt::CaseInsensitive);
+            creationDateTimeString.remove(QChar('-'), Qt::CaseInsensitive);
+            writer.writeCharacters(creationDateTimeString);
+        }
+        writer.writeEndElement();   // created
+
+        writer.writeStartElement(QStringLiteral("updated"));
+        if (note.hasModificationTimestamp())
+        {
+            QDateTime modificationDateTime = QDateTime::fromMSecsSinceEpoch(note.modificationTimestamp());
+            QString modificationDateTimeString = modificationDateTime.toString(Qt::ISODate);
+            modificationDateTimeString.remove(QChar(':'), Qt::CaseInsensitive);
+            modificationDateTimeString.remove(QChar('-'), Qt::CaseInsensitive);
+            writer.writeCharacters(modificationDateTimeString);
+        }
+        writer.writeEndElement();   // updated
+
+        if (note.hasTagLocalUids())
+        {
+            const QStringList & tagLocalUids = note.tagLocalUids();
+            for(auto tagIt = tagLocalUids.constBegin(), tagEnd = tagLocalUids.constEnd(); tagIt != tagEnd; ++tagIt)
+            {
+                auto tagNameIt = tagNamesByTagLocalUids.find(*tagIt);
+                if (Q_UNLIKELY(tagNameIt == tagNamesByTagLocalUids.end())) {
+                    enex.clear();
+                    errorDescription.base() = QT_TRANSLATE_NOOP("", "Can't export notes to ENEX: one of notes has tag local uid "
+                                                                "for which no tag name was found");
+                    QNWARNING(errorDescription);
+                    return false;
+                }
+
+                const QString & tagName = tagNameIt.value();
+                if (Q_UNLIKELY(tagName.isEmpty())) {
+                    QNWARNING(QStringLiteral("Skipping tag with empty name, tag local uid = ") << *tagIt
+                              << QStringLiteral(", note: ") << note);
+                    continue;
+                }
+
+                writer.writeStartElement(QStringLiteral("tag"));
+                writer.writeCharacters(tagName);
+                writer.writeEndElement();
+            }
+        }
+
+        if (note.hasNoteAttributes())
+        {
+            const qevercloud::NoteAttributes & noteAttributes = note.noteAttributes();
+
+            if (noteAttributes.latitude.isSet() || noteAttributes.longitude.isSet() ||
+                noteAttributes.altitude.isSet() || noteAttributes.author.isSet())
+            {
+                writer.writeStartElement(QStringLiteral("note-attributes"));
+
+                if (noteAttributes.latitude.isSet()) {
+                    writer.writeStartElement(QStringLiteral("latitude"));
+                    writer.writeCharacters(QString::number(noteAttributes.latitude.ref()));
+                    writer.writeEndElement();
+                }
+
+                if (noteAttributes.longitude.isSet()) {
+                    writer.writeStartElement(QStringLiteral("longitude"));
+                    writer.writeCharacters(QString::number(noteAttributes.longitude.ref()));
+                    writer.writeEndElement();
+                }
+
+                if (noteAttributes.altitude.isSet()) {
+                    writer.writeStartElement(QStringLiteral("altitude"));
+                    writer.writeCharacters(QString::number(noteAttributes.altitude.ref()));
+                    writer.writeEndElement();
+                }
+
+                if (noteAttributes.author.isSet()) {
+                    writer.writeStartElement(QStringLiteral("author"));
+                    writer.writeCharacters(noteAttributes.author.ref());
+                    writer.writeEndElement();
+                }
+
+                // TODO: handle other attributes: source, source-url, source-application,
+                // reminder-order, reminder-time, reminder-done-time, place-name,
+                // content-class, application-data
+
+                writer.writeEndElement();   // note-attributes
+            }
+        }
+
+        // TODO: write note's resources (if any)
+
+        writer.writeEndElement();   // note
+    }
+
+    writer.writeEndElement();   // en-export
+
+    // TODO: implement
+    return true;
 }
 
 bool ENMLConverterPrivate::isForbiddenXhtmlTag(const QString & tagName) const

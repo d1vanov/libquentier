@@ -131,6 +131,13 @@ void ENMLConverter::escapeString(QString & string, const bool simplify)
     ENMLConverterPrivate::escapeString(string, simplify);
 }
 
+bool ENMLConverter::exportNotesToEnex(const QVector<Note> & notes, const QHash<QString, QString> & tagNamesByTagLocalUids,
+                                      QString & enex, ErrorString & errorDescription, const QString & version) const
+{
+    Q_D(const ENMLConverter);
+    return d->exportNotesToEnex(notes, tagNamesByTagLocalUids, enex, errorDescription, version);
+}
+
 QTextStream & ENMLConverter::SkipHtmlElementRule::print(QTextStream & strm) const
 {
 #define PRINT_COMPARISON_RULE(rule) \

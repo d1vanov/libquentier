@@ -1,5 +1,6 @@
 <RCC>
     <qresource prefix="/">
         <file>enml2.dtd</file>
+	<file>evernote-export3.dtd</file>
     </qresource>
 </RCC>

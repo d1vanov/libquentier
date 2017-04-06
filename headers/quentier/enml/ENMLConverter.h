@@ -23,8 +23,10 @@
 #include <quentier/utility/Linkage.h>
 #include <quentier/utility/Macros.h>
 #include <quentier/types/ErrorString.h>
+#include <quentier/types/Note.h>
 #include <QSet>
 #include <QString>
+#include <QHash>
 #include <QTextDocument>
 
 namespace quentier {
@@ -165,6 +167,23 @@ public:
     static QString resourceHtml(const Resource & resource, ErrorString & errorDescription);
 
     static void escapeString(QString & string, const bool simplify = true);
+
+    /**
+     * @brief exportNotesToEnex - exports either a single note or a set of notes into ENEX format
+     *
+     * @param notes - the notes to be exported into the enex format. The connection of particular notes to tags
+     * is expected to follow from note's tag local uids. In other words, if some note has no tag local uids,
+     * its corresponding fragment of ENEX won't contain tag names associated with the note
+     * @param tagNamesByTagLocalUids - tag names for all tag local uids across all passed in notes. The lack of any tag
+     * name for any tag local uid is considered an error and the overall export attempt fails
+     * @param enex - the output of the method
+     * @param errorDescription - the textual description of the error, if any
+     * @param version - optional "version" tag for the ENEX. If not set, the corresponding ENEX tag is set to empty value
+     *
+     * @return true if the export completed successfully, false otherwise
+     */
+    bool exportNotesToEnex(const QVector<Note> & notes, const QHash<QString, QString> & tagNamesByTagLocalUids,
+                           QString & enex, ErrorString & errorDescription, const QString & version = QString()) const;
 
 private:
     Q_DISABLE_COPY(ENMLConverter)

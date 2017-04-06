@@ -22,6 +22,7 @@
 #include <quentier/enml/ENMLConverter.h>
 #include <quentier/utility/Macros.h>
 #include <quentier/types/ErrorString.h>
+#include <quentier/types/Note.h>
 #include <QtGlobal>
 #include <QStringList>
 #include <QFlag>
@@ -88,6 +89,9 @@ public:
 
     static void escapeString(QString & string, const bool simplify);
 
+    bool exportNotesToEnex(const QVector<Note> & notes, const QHash<QString, QString> & tagNamesByTagLocalUids,
+                           QString & enex, ErrorString & errorDescription, const QString & version) const;
+
 private:
     bool isForbiddenXhtmlTag(const QString & tagName) const;
     bool isForbiddenXhtmlAttribute(const QString & attributeName) const;
@@ -133,7 +137,6 @@ private:
     ShouldSkipElementResult::type shouldSkipElement(const QString & elementName,
                                                     const QXmlStreamAttributes & attributes,
                                                     const QVector<SkipHtmlElementRule> & skipRules) const;
-
 private:
     Q_DISABLE_COPY(ENMLConverterPrivate)
 
