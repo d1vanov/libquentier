@@ -1672,7 +1672,12 @@ bool ENMLConverterPrivate::exportNotesToEnex(const QVector<Note> & notes, const 
             const qevercloud::NoteAttributes & noteAttributes = note.noteAttributes();
 
             if (noteAttributes.latitude.isSet() || noteAttributes.longitude.isSet() ||
-                noteAttributes.altitude.isSet() || noteAttributes.author.isSet())
+                noteAttributes.altitude.isSet() || noteAttributes.author.isSet() ||
+                noteAttributes.source.isSet() || noteAttributes.sourceURL.isSet() ||
+                noteAttributes.sourceApplication.isSet() || noteAttributes.reminderOrder.isSet() ||
+                noteAttributes.reminderTime.isSet() || noteAttributes.reminderDoneTime.isSet() ||
+                noteAttributes.placeName.isSet() || noteAttributes.contentClass.isSet() ||
+                noteAttributes.applicationData.isSet())
             {
                 writer.writeStartElement(QStringLiteral("note-attributes"));
 
@@ -1700,22 +1705,197 @@ bool ENMLConverterPrivate::exportNotesToEnex(const QVector<Note> & notes, const 
                     writer.writeEndElement();
                 }
 
-                // TODO: handle other attributes: source, source-url, source-application,
-                // reminder-order, reminder-time, reminder-done-time, place-name,
-                // content-class, application-data
+                if (noteAttributes.source.isSet()) {
+                    writer.writeStartElement(QStringLiteral("source"));
+                    writer.writeCharacters(noteAttributes.source.ref());
+                    writer.writeEndElement();
+                }
+
+                if (noteAttributes.sourceURL.isSet()) {
+                    writer.writeStartElement(QStringLiteral("source-url"));
+                    writer.writeCharacters(noteAttributes.sourceURL.ref());
+                    writer.writeEndElement();
+                }
+
+                if (noteAttributes.sourceApplication.isSet()) {
+                    writer.writeStartElement(QStringLiteral("source-application"));
+                    writer.writeCharacters(noteAttributes.sourceApplication.ref());
+                    writer.writeEndElement();
+                }
+
+                if (noteAttributes.reminderOrder.isSet()) {
+                    writer.writeStartElement(QStringLiteral("reminder-order"));
+                    writer.writeCharacters(QString::number(noteAttributes.reminderOrder.ref()));
+                    writer.writeEndElement();
+                }
+
+                if (noteAttributes.reminderTime.isSet())
+                {
+                    writer.writeStartElement(QStringLiteral("reminder-time"));
+                    QDateTime reminderTime = QDateTime::fromMSecsSinceEpoch(noteAttributes.reminderTime.ref());
+                    QString reminderTimeString = reminderTime.toString(Qt::ISODate);
+                    reminderTimeString.remove(QChar(':'), Qt::CaseInsensitive);
+                    reminderTimeString.remove(QChar('-'), Qt::CaseInsensitive);
+                    writer.writeCharacters(reminderTimeString);
+                    writer.writeEndElement();
+                }
+
+                if (noteAttributes.reminderDoneTime.isSet())
+                {
+                    writer.writeStartElement(QStringLiteral("reminder-done-time"));
+                    QDateTime reminderDoneTime = QDateTime::fromMSecsSinceEpoch(noteAttributes.reminderDoneTime.ref());
+                    QString reminderDoneTimeString = reminderDoneTime.toString(Qt::ISODate);
+                    reminderDoneTimeString.remove(QChar(':'), Qt::CaseInsensitive);
+                    reminderDoneTimeString.remove(QChar('-'), Qt::CaseInsensitive);
+                    writer.writeCharacters(reminderDoneTimeString);
+                    writer.writeEndElement();
+                }
+
+                if (noteAttributes.placeName.isSet()) {
+                    writer.writeStartElement(QStringLiteral("place-name"));
+                    writer.writeCharacters(noteAttributes.placeName.ref());
+                    writer.writeEndElement();
+                }
+
+                if (noteAttributes.contentClass.isSet()) {
+                    writer.writeStartElement(QStringLiteral("content-class"));
+                    writer.writeCharacters(noteAttributes.contentClass.ref());
+                    writer.writeEndElement();
+                }
+
+                if (noteAttributes.applicationData.isSet())
+                {
+                    const qevercloud::LazyMap & appData = noteAttributes.applicationData.ref();
+                    if (appData.fullMap.isSet())
+                    {
+                        const QMap<QString, QString> & fullMap = appData.fullMap.ref();
+
+                        for(auto mapIt = fullMap.constBegin(), mapEnd = fullMap.constEnd(); mapIt != mapEnd; ++mapIt) {
+                            writer.writeStartElement(QStringLiteral("application-data"));
+                            writer.writeAttribute(QStringLiteral("key"), mapIt.key());
+                            writer.writeCharacters(mapIt.value());
+                            writer.writeEndElement();
+                        }
+                    }
+                }
 
                 writer.writeEndElement();   // note-attributes
             }
         }
 
-        // TODO: write note's resources (if any)
+        if (note.hasResources())
+        {
+            const QList<Resource> & resources = note.resources();
+
+            for(auto resIt = resources.constBegin(), resEnd = resources.constEnd(); resIt != resEnd; ++resIt)
+            {
+                const Resource & resource = *resIt;
+                if (!resource.hasDataBody()) {
+                    QNINFO(QStringLiteral("Skipping ENEX export of a resource without data body: ") << resource);
+                    continue;
+                }
+
+                if (!resource.hasMime()) {
+                    QNINFO(QStringLiteral("Skipping ENEX export of a resource without mime type: ") << resource);
+                    continue;
+                }
+
+                writer.writeStartElement(QStringLiteral("resource"));
+
+                const QByteArray & resourceData = resource.dataBody();
+                writer.writeStartElement(QStringLiteral("data"));
+                writer.writeAttribute(QStringLiteral("encoding"), QStringLiteral("base64"));
+                writer.writeCharacters(QString::fromLocal8Bit(resourceData.toBase64()));
+                writer.writeEndElement();   // data
+
+                writer.writeStartElement(QStringLiteral("mime"));
+                writer.writeCharacters(resource.mime());
+                writer.writeEndElement();   // mime
+
+                if (resource.hasWidth()) {
+                    writer.writeStartElement(QStringLiteral("width"));
+                    writer.writeCharacters(QString::number(resource.width()));
+                    writer.writeEndElement();   // width
+                }
+
+                if (resource.hasHeight()) {
+                    writer.writeStartElement(QStringLiteral("height"));
+                    writer.writeCharacters(QString::number(resource.height()));
+                    writer.writeEndElement();
+                }
+
+                if (resource.hasRecognitionDataBody()) {
+                    const QByteArray & recognitionData = resource.recognitionDataBody();
+                    writer.writeStartElement(QStringLiteral("recognition"));
+                    writer.writeCDATA(QString::fromLocal8Bit(recognitionData));
+                    writer.writeEndElement();  // recognition
+                }
+
+                if (resource.hasResourceAttributes())
+                {
+                    const qevercloud::ResourceAttributes & resourceAttributes = resource.resourceAttributes();
+
+                    if (resourceAttributes.sourceURL.isSet() || resourceAttributes.timestamp.isSet() ||
+                        resourceAttributes.latitude.isSet() || resourceAttributes.longitude.isSet() ||
+                        resourceAttributes.altitude.isSet() || resourceAttributes.cameraMake.isSet() ||
+                        resourceAttributes.recoType.isSet() || resourceAttributes.fileName.isSet() ||
+                        resourceAttributes.attachment.isSet() || resourceAttributes.applicationData.isSet())
+                    {
+                        if (resourceAttributes.sourceURL.isSet()) {
+                            writer.writeStartElement(QStringLiteral("source-url"));
+                            writer.writeCharacters(resourceAttributes.sourceURL.ref());
+                            writer.writeEndElement();   // source-url
+                        }
+
+                        if (resourceAttributes.timestamp.isSet())
+                        {
+                            writer.writeStartElement(QStringLiteral("timestamp"));
+                            QDateTime resourceTimestamp = QDateTime::fromMSecsSinceEpoch(resourceAttributes.timestamp.ref());
+                            QString resourceTimestampString = resourceTimestamp.toString(Qt::ISODate);
+                            resourceTimestampString.remove(QChar(':'), Qt::CaseInsensitive);
+                            resourceTimestampString.remove(QChar('-'), Qt::CaseInsensitive);
+                            writer.writeCharacters(resourceTimestampString);
+                            writer.writeEndElement();
+                        }
+
+                        if (resourceAttributes.latitude.isSet()) {
+                            writer.writeStartElement(QStringLiteral("latitude"));
+                            writer.writeCharacters(QString::number(resourceAttributes.latitude.ref()));
+                            writer.writeEndElement();
+                        }
+
+                        if (resourceAttributes.longitude.isSet()) {
+                            writer.writeStartElement(QStringLiteral("longitude"));
+                            writer.writeCharacters(QString::number(resourceAttributes.longitude.ref()));
+                            writer.writeEndElement();
+                        }
+
+                        if (resourceAttributes.altitude.isSet()) {
+                            writer.writeStartElement(QStringLiteral("altitude"));
+                            writer.writeCharacters(QString::number(resourceAttributes.altitude.ref()));
+                            writer.writeEndElement();
+                        }
+
+                        // TODO: write other attributes
+                    }
+                }
+
+                if (resource.hasAlternateDataBody()) {
+                    const QByteArray & resourceAltData = resource.alternateDataBody();
+                    writer.writeStartElement(QStringLiteral("alternate-data"));
+                    writer.writeAttribute(QStringLiteral("encoding"), QStringLiteral("base64"));
+                    writer.writeCharacters(QString::fromLocal8Bit(resourceAltData.toBase64()));
+                    writer.writeEndElement();   // alternate-data
+                }
+
+                writer.writeEndElement();   // resource
+            }
+        }
 
         writer.writeEndElement();   // note
     }
 
     writer.writeEndElement();   // en-export
-
-    // TODO: implement
     return true;
 }
 
