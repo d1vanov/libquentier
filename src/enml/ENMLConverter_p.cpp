@@ -1099,76 +1099,7 @@ bool ENMLConverterPrivate::noteContentToHtml(const QString & noteContent, QStrin
 bool ENMLConverterPrivate::validateEnml(const QString & enml, ErrorString & errorDescription) const
 {
     QNDEBUG(QStringLiteral("ENMLConverterPrivate::validateEnml"));
-
-    errorDescription.clear();
-
-    QByteArray inputBuffer = enml.toLocal8Bit();
-    xmlDocPtr pDoc = xmlParseMemory(inputBuffer.constData(), inputBuffer.size());
-    if (!pDoc) {
-        errorDescription.base() = QT_TRANSLATE_NOOP("", "Can't validate ENML: can't parse enml into xml doc");
-        QNWARNING(errorDescription << QStringLiteral(": enml = ") << enml);
-        return false;
-    }
-
-    QFile dtdFile(QStringLiteral(":/enml2.dtd"));
-    if (!dtdFile.open(QIODevice::ReadOnly)) {
-        errorDescription.base() = QT_TRANSLATE_NOOP("", "Can't validate ENML: can't open the resource file with DTD");
-        QNWARNING(errorDescription << QStringLiteral(": enml = ") << enml);
-        xmlFreeDoc(pDoc);
-        return false;
-    }
-
-    QByteArray dtdRawData = dtdFile.readAll();
-
-    xmlParserInputBufferPtr pBuf = xmlParserInputBufferCreateMem(dtdRawData.constData(), dtdRawData.size(),
-                                                                 XML_CHAR_ENCODING_NONE);
-    if (!pBuf) {
-        errorDescription.base() = QT_TRANSLATE_NOOP("", "Can't validate ENML: can't allocate the input buffer for dtd validation");
-        QNWARNING(errorDescription);
-        xmlFreeDoc(pDoc);
-        return false;
-    }
-
-    xmlDtdPtr pDtd = xmlIOParseDTD(NULL, pBuf, XML_CHAR_ENCODING_NONE);
-    if (!pDtd) {
-        errorDescription.base() = QT_TRANSLATE_NOOP("", "Can't validate ENML: failed to parse DTD");
-        QNWARNING(errorDescription);
-        xmlFreeParserInputBuffer(pBuf);
-        xmlFreeDoc(pDoc);
-        return false;
-    }
-
-    xmlParserCtxtPtr pContext = xmlNewParserCtxt();
-    if (!pContext) {
-        errorDescription.base() = QT_TRANSLATE_NOOP("", "Can't validate ENML: can't allocate parser context");
-        QNWARNING(errorDescription);
-        xmlFreeDtd(pDtd);
-        xmlFreeDoc(pDoc);
-        return false;
-    }
-
-    QString errorString;
-    pContext->vctxt.userData = &errorString;
-    pContext->vctxt.error = (xmlValidityErrorFunc)xmlValidationErrorFunc;
-
-    bool res = static_cast<bool>(xmlValidateDtd(&pContext->vctxt, pDoc, pDtd));
-
-    xmlFreeParserCtxt(pContext);
-    xmlFreeDtd(pDtd);
-    // WARNING: xmlIOParseDTD should have "consumed" the input buffer so one should not attempt to free it manually
-    xmlFreeDoc(pDoc);
-
-    if (!res)
-    {
-        errorDescription.base() = QT_TRANSLATE_NOOP("", "ENML is invalid");
-
-        if (!errorString.isEmpty()) {
-            errorDescription.details() = QStringLiteral(": ");
-            errorDescription.details() += errorString;
-        }
-    }
-
-    return res;
+    return validateAgainstDtd(enml, QStringLiteral(":/enml2.dtd"), errorDescription);
 }
 
 bool ENMLConverterPrivate::validateAndFixupEnml(QString & enml, ErrorString & errorDescription) const
@@ -1876,7 +1807,44 @@ bool ENMLConverterPrivate::exportNotesToEnex(const QVector<Note> & notes, const 
                             writer.writeEndElement();
                         }
 
-                        // TODO: write other attributes
+                        if (resourceAttributes.cameraMake.isSet()) {
+                            writer.writeStartElement(QStringLiteral("camera-make"));
+                            writer.writeCharacters(resourceAttributes.cameraMake.ref());
+                            writer.writeEndElement();
+                        }
+
+                        if (resourceAttributes.recoType.isSet()) {
+                            writer.writeStartElement(QStringLiteral("reco-type"));
+                            writer.writeCharacters(resourceAttributes.recoType.ref());
+                            writer.writeEndElement();
+                        }
+
+                        if (resourceAttributes.fileName.isSet()) {
+                            writer.writeStartElement(QStringLiteral("file-name"));
+                            writer.writeCharacters(resourceAttributes.fileName.ref());
+                            writer.writeEndElement();
+                        }
+
+                        if (resourceAttributes.attachment.isSet()) {
+                            writer.writeStartElement(QStringLiteral("attachment"));
+                            writer.writeCharacters(resourceAttributes.attachment.ref() ? QStringLiteral("true") : QStringLiteral("false"));
+                            writer.writeEndElement();
+                        }
+
+                        if (resourceAttributes.applicationData.isSet())
+                        {
+                            const qevercloud::LazyMap & appData = resourceAttributes.applicationData.ref();
+                            if (appData.fullMap.isSet())
+                            {
+                                const QMap<QString, QString> & fullMap = appData.fullMap.ref();
+                                for(auto mapIt = fullMap.constBegin(), mapEnd = fullMap.constEnd(); mapIt != mapEnd; ++mapIt) {
+                                    writer.writeStartElement(QStringLiteral("application-data"));
+                                    writer.writeAttribute(QStringLiteral("key"), mapIt.key());
+                                    writer.writeCharacters(mapIt.value());
+                                    writer.writeEndElement();
+                                }
+                            }
+                        }
                     }
                 }
 
@@ -1896,6 +1864,19 @@ bool ENMLConverterPrivate::exportNotesToEnex(const QVector<Note> & notes, const 
     }
 
     writer.writeEndElement();   // en-export
+    writer.writeEndDocument();
+
+    bool res = validateEnex(enex, errorDescription);
+    if (!res) {
+        ErrorString error(QT_TRANSLATE_NOOP("", "Can't export notes to enex"));
+        error.additionalBases().append(errorDescription.base());
+        error.additionalBases().append(errorDescription.additionalBases());
+        error.details() = errorDescription.details();
+        errorDescription = error;
+        QNWARNING(errorDescription << QStringLiteral(", enex: ") << enex);
+        return false;
+    }
+
     return true;
 }
 
@@ -2328,6 +2309,88 @@ void ENMLConverterPrivate::decryptedTextHtml(const QString & decryptedText, cons
         writer.writeCharacters(decryptedText);
         QNTRACE(QStringLiteral("Wrote unformatted decrypted text: ") << decryptedText);
     }
+}
+
+bool ENMLConverterPrivate::validateEnex(const QString & enex, ErrorString & errorDescription) const
+{
+    QNDEBUG(QStringLiteral("ENMLConverterPrivate::validateEnex"));
+    return validateAgainstDtd(enex, QStringLiteral(":/evernote-export3.dtd"), errorDescription);
+}
+
+bool ENMLConverterPrivate::validateAgainstDtd(const QString & input, const QString & dtdFilePath, ErrorString & errorDescription) const
+{
+    QNDEBUG(QStringLiteral("ENMLConverterPrivate::validateAgainstDtd: dtd file ") << dtdFilePath);
+
+    errorDescription.clear();
+
+    QByteArray inputBuffer = input.toLocal8Bit();
+    xmlDocPtr pDoc = xmlParseMemory(inputBuffer.constData(), inputBuffer.size());
+    if (!pDoc) {
+        errorDescription.base() = QT_TRANSLATE_NOOP("", "could not validate document, can't parse the input into xml doc");
+        QNWARNING(errorDescription << QStringLiteral(": input = ") << input);
+        return false;
+    }
+
+    QFile dtdFile(dtdFilePath);
+    if (!dtdFile.open(QIODevice::ReadOnly)) {
+        errorDescription.base() = QT_TRANSLATE_NOOP("", "could not validate document, can't open the resource file with DTD");
+        QNWARNING(errorDescription << QStringLiteral(": input = ") << input
+                  << QStringLiteral(", DTD file path = ") << dtdFilePath);
+        xmlFreeDoc(pDoc);
+        return false;
+    }
+
+    QByteArray dtdRawData = dtdFile.readAll();
+
+    xmlParserInputBufferPtr pBuf = xmlParserInputBufferCreateMem(dtdRawData.constData(), dtdRawData.size(),
+                                                                 XML_CHAR_ENCODING_NONE);
+    if (!pBuf) {
+        errorDescription.base() = QT_TRANSLATE_NOOP("", "could not validate document, can't allocate the input buffer for dtd validation");
+        QNWARNING(errorDescription);
+        xmlFreeDoc(pDoc);
+        return false;
+    }
+
+    xmlDtdPtr pDtd = xmlIOParseDTD(NULL, pBuf, XML_CHAR_ENCODING_NONE);
+    if (!pDtd) {
+        errorDescription.base() = QT_TRANSLATE_NOOP("", "could not validate document, failed to parse DTD");
+        QNWARNING(errorDescription);
+        xmlFreeParserInputBuffer(pBuf);
+        xmlFreeDoc(pDoc);
+        return false;
+    }
+
+    xmlParserCtxtPtr pContext = xmlNewParserCtxt();
+    if (!pContext) {
+        errorDescription.base() = QT_TRANSLATE_NOOP("", "could not validate document, can't allocate parser context");
+        QNWARNING(errorDescription);
+        xmlFreeDtd(pDtd);
+        xmlFreeDoc(pDoc);
+        return false;
+    }
+
+    QString errorString;
+    pContext->vctxt.userData = &errorString;
+    pContext->vctxt.error = (xmlValidityErrorFunc)xmlValidationErrorFunc;
+
+    bool res = static_cast<bool>(xmlValidateDtd(&pContext->vctxt, pDoc, pDtd));
+
+    xmlFreeParserCtxt(pContext);
+    xmlFreeDtd(pDtd);
+    // WARNING: xmlIOParseDTD should have "consumed" the input buffer so one should not attempt to free it manually
+    xmlFreeDoc(pDoc);
+
+    if (!res)
+    {
+        errorDescription.base() = QT_TRANSLATE_NOOP("", "document is invalid");
+
+        if (!errorString.isEmpty()) {
+            errorDescription.details() = QStringLiteral(": ");
+            errorDescription.details() += errorString;
+        }
+    }
+
+    return res;
 }
 
 ENMLConverterPrivate::ShouldSkipElementResult::type ENMLConverterPrivate::shouldSkipElement(const QString & elementName,

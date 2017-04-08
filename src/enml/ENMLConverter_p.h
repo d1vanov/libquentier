@@ -119,6 +119,10 @@ private:
                                   const QString & hint, const QString & cipher, const size_t keyLength, const quint64 enDecryptedIndex,
                                   QXmlStreamWriter & writer);
 
+    bool validateEnex(const QString & enex, ErrorString & errorDescription) const;
+
+    bool validateAgainstDtd(const QString & input, const QString & dtdFilePath, ErrorString & errorDescription) const;
+
     class ShouldSkipElementResult: public Printable
     {
     public:
