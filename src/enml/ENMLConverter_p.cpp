@@ -2062,7 +2062,7 @@ bool ENMLConverterPrivate::importEnex(const QString & enex, QVector<Note> & note
                     QString latitude = reader.readElementText(QXmlStreamReader::SkipChildElements);
                     bool conversionResult = false;
                     double latitudeNum = latitude.toDouble(&conversionResult);
-                    if (!conversionResult) {
+                    if (Q_UNLIKELY(!conversionResult)) {
                         errorDescription.base() = QT_TRANSLATE_NOOP("", "Failed to parse latitude");
                         errorDescription.details() = latitude;
                         QNWARNING(errorDescription);
@@ -2077,6 +2077,118 @@ bool ENMLConverterPrivate::importEnex(const QString & enex, QVector<Note> & note
                 }
 
                 errorDescription.base() = QT_TRANSLATE_NOOP("", "Detected latitude tag outside of note or note attributes");
+                QNWARNING(errorDescription);
+                return false;
+            }
+
+            if (elementName == QStringLiteral("longitude"))
+            {
+                if (insideNote && insideNoteAttributes)
+                {
+                    QString longitude = reader.readElementText(QXmlStreamReader::SkipChildElements);
+                    bool conversionResult = false;
+                    double longitudeNum = longitude.toDouble(&conversionResult);
+                    if (Q_UNLIKELY(!conversionResult)) {
+                        errorDescription.base() = QT_TRANSLATE_NOOP("", "Failed to parse longitude");
+                        errorDescription.details() = longitude;
+                        QNWARNING(errorDescription);
+                        return false;
+                    }
+
+                    qevercloud::NoteAttributes & noteAttributes = currentNote.noteAttributes();
+                    noteAttributes.longitude = longitudeNum;
+                    QNTRACE(QStringLiteral("Set longitude to ") << longitudeNum);
+
+                    continue;
+                }
+
+                errorDescription.base() = QT_TRANSLATE_NOOP("", "Detected longitude tag outside of note or note attributes");
+                QNWARNING(errorDescription);
+                return false;
+            }
+
+            if (elementName == QStringLiteral("altitude"))
+            {
+                if (insideNote && insideNoteAttributes)
+                {
+                    QString altitude = reader.readElementText(QXmlStreamReader::SkipChildElements);
+                    bool conversionResult = false;
+                    double altitudeNum = altitude.toDouble(&conversionResult);
+                    if (Q_UNLIKELY(!conversionResult)) {
+                        errorDescription.base() = QT_TRANSLATE_NOOP("", "Failed to parse altitude");
+                        errorDescription.details() = altitude;
+                        QNWARNING(errorDescription);
+                        return false;
+                    }
+
+                    qevercloud::NoteAttributes & noteAttributes = currentNote.noteAttributes();
+                    noteAttributes.altitude = altitude.toDouble(&conversionResult);
+                    QNTRACE(QStringLiteral("Set altitude to ") << altitudeNum);
+
+                    continue;
+                }
+
+                errorDescription.base() = QT_TRANSLATE_NOOP("", "Detected altitude tag outside of note or note attributes");
+                QNWARNING(errorDescription);
+                return false;
+            }
+
+            if (elementName == QStringLiteral("author"))
+            {
+                if (insideNote && insideNoteAttributes) {
+                    QString author = reader.readElementText(QXmlStreamReader::SkipChildElements);
+                    qevercloud::NoteAttributes & noteAttributes = currentNote.noteAttributes();
+                    noteAttributes.author = author;
+                    QNTRACE(QStringLiteral("Set author to ") << author);
+                    continue;
+                }
+
+                errorDescription.base() = QT_TRANSLATE_NOOP("", "Detected author tag outside of note or note attributes");
+                QNWARNING(errorDescription);
+                return false;
+            }
+
+            if (elementName == QStringLiteral("source"))
+            {
+                if (insideNote && insideNoteAttributes) {
+                    QString source = reader.readElementText(QXmlStreamReader::SkipChildElements);
+                    qevercloud::NoteAttributes & noteAttributes = currentNote.noteAttributes();
+                    noteAttributes.source = source;
+                    QNTRACE(QStringLiteral("Set source to ") << source);
+                    continue;
+                }
+
+                errorDescription.base() = QT_TRANSLATE_NOOP("", "Detected source tag outside of note or note attributes");
+                QNWARNING(errorDescription);
+                return false;
+            }
+
+            if (elementName == QStringLiteral("source-url"))
+            {
+                if (insideNote && insideNoteAttributes) {
+                    QString sourceUrl = reader.readElementText(QXmlStreamReader::SkipChildElements);
+                    qevercloud::NoteAttributes & noteAttributes = currentNote.noteAttributes();
+                    noteAttributes.sourceURL = sourceUrl;
+                    QNTRACE(QStringLiteral("Set source url to ") << sourceUrl);
+                    continue;
+                }
+
+                errorDescription.base() = QT_TRANSLATE_NOOP("", "Detected source-url tag outside of note or note attributes");
+                QNWARNING(errorDescription);
+                return false;
+            }
+
+            if (elementName == QStringLiteral("source-application"))
+            {
+                if (insideNote && insideNoteAttributes) {
+                    QString sourceApplication = reader.readElementText(QXmlStreamReader::SkipChildElements);
+                    qevercloud::NoteAttributes & noteAttributes = currentNote.noteAttributes();
+                    noteAttributes.sourceApplication = sourceApplication;
+                    QNTRACE(QStringLiteral("Set source application to ") << sourceApplication);
+                    continue;
+                }
+
+                errorDescription.base() = QT_TRANSLATE_NOOP("", "Detected source-application tag outside of note or note attributes");
                 QNWARNING(errorDescription);
                 return false;
             }
