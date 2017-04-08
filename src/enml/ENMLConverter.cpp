@@ -139,7 +139,7 @@ bool ENMLConverter::exportNotesToEnex(const QVector<Note> & notes, const QHash<Q
 }
 
 bool ENMLConverter::importEnex(const QString & enex, QVector<Note> & notes,
-                               QHash<QString, QString> & tagNamesByNoteLocalUid,
+                               QHash<QString, QStringList> & tagNamesByNoteLocalUid,
                                ErrorString & errorDescription) const
 {
     Q_D(const ENMLConverter);

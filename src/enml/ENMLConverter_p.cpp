@@ -1882,7 +1882,7 @@ bool ENMLConverterPrivate::exportNotesToEnex(const QVector<Note> & notes, const 
 }
 
 bool ENMLConverterPrivate::importEnex(const QString & enex, QVector<Note> & notes,
-                                      QHash<QString, QString> & tagNamesByNoteLocalUid,
+                                      QHash<QString, QStringList> & tagNamesByNoteLocalUid,
                                       ErrorString & errorDescription) const
 {
     QNDEBUG(QStringLiteral("ENMLConverterPrivate::importEnex"));
@@ -1900,6 +1900,7 @@ bool ENMLConverterPrivate::importEnex(const QString & enex, QVector<Note> & note
 
     bool insideNote = false;
     bool insideNoteContent = false;
+    bool insideNoteAttributes = false;
 
     Note currentNote;
     QString currentNoteContent;
@@ -1994,6 +1995,92 @@ bool ENMLConverterPrivate::importEnex(const QString & enex, QVector<Note> & note
                 return false;
             }
 
+            if (elementName == QStringLiteral(""))
+            {
+                if (insideNote)
+                {
+                    QString modificationDateTimeString = reader.readElementText(QXmlStreamReader::SkipChildElements);
+                    QNTRACE(QStringLiteral("Modification datetime: ") << modificationDateTimeString);
+                    QDateTime modificationDateTime = QDateTime::fromString(modificationDateTimeString, dateTimeFormat);
+                    if (Q_UNLIKELY(!modificationDateTime.isValid())) {
+                        errorDescription.base() = QT_TRANSLATE_NOOP("", "failed to parse the modification datetime from string");
+                        errorDescription.details() = modificationDateTimeString;
+                        QNWARNING(errorDescription);
+                        return false;
+                    }
+
+                    qint64 timestamp = modificationDateTime.toMSecsSinceEpoch();
+                    currentNote.setModificationTimestamp(timestamp);
+                    QNTRACE(QStringLiteral("Set modification timestamp to ") << timestamp);
+
+                    continue;
+                }
+
+                errorDescription.base() = QT_TRANSLATE_NOOP("", "Detected updated tag outside of note tag");
+                QNWARNING(errorDescription);
+                return false;
+            }
+
+            if (elementName == QStringLiteral("tag"))
+            {
+                if (insideNote)
+                {
+                    QString tagName = reader.readElementText(QXmlStreamReader::SkipChildElements);
+                    QString noteLocalUid = currentNote.localUid();
+
+                    QStringList & tagNames = tagNamesByNoteLocalUid[noteLocalUid];
+                    if (!tagNames.contains(tagName)) {
+                        tagNames << tagName;
+                        QNTRACE(QStringLiteral("Added tag name ") << tagName << QStringLiteral(" for note local uid ") << noteLocalUid);
+                    }
+
+                    continue;
+                }
+
+                errorDescription.base() = QT_TRANSLATE_NOOP("", "Detected tag outside of note");
+                QNWARNING(errorDescription);
+                return false;
+            }
+
+            if (elementName == QStringLiteral("note-attributes"))
+            {
+                if (insideNote) {
+                    QNTRACE(QStringLiteral("Start of note attributes"));
+                    insideNoteAttributes = true;
+                    continue;
+                }
+
+                errorDescription.base() = QT_TRANSLATE_NOOP("", "Detected note-attributes tag outside of note");
+                QNWARNING(errorDescription);
+                return false;
+            }
+
+            if (elementName == QStringLiteral("latitude"))
+            {
+                if (insideNote && insideNoteAttributes)
+                {
+                    QString latitude = reader.readElementText(QXmlStreamReader::SkipChildElements);
+                    bool conversionResult = false;
+                    double latitudeNum = latitude.toDouble(&conversionResult);
+                    if (!conversionResult) {
+                        errorDescription.base() = QT_TRANSLATE_NOOP("", "Failed to parse latitude");
+                        errorDescription.details() = latitude;
+                        QNWARNING(errorDescription);
+                        return false;
+                    }
+
+                    qevercloud::NoteAttributes & noteAttributes = currentNote.noteAttributes();
+                    noteAttributes.latitude = latitudeNum;
+                    QNTRACE(QStringLiteral("Set latitude to ") << latitudeNum);
+
+                    continue;
+                }
+
+                errorDescription.base() = QT_TRANSLATE_NOOP("", "Detected latitude tag outside of note or note attributes");
+                QNWARNING(errorDescription);
+                return false;
+            }
+
             // TODO: continue
         }
 
@@ -2010,7 +2097,9 @@ bool ENMLConverterPrivate::importEnex(const QString & enex, QVector<Note> & note
 
         if (reader.isEndElement())
         {
-            if (insideNoteContent) {
+            QStringRef elementName = reader.name();
+
+            if (elementName == QStringLiteral("content")) {
                 QNTRACE(QStringLiteral("End of note content: ") << currentNoteContent);
                 currentNote.setContent(currentNoteContent);
                 insideNoteContent = false;
@@ -2019,7 +2108,13 @@ bool ENMLConverterPrivate::importEnex(const QString & enex, QVector<Note> & note
 
             // TODO: continue;
 
-            if (insideNote) {
+            if (elementName == QStringLiteral("note-attributes")) {
+                QNTRACE(QStringLiteral("End of note attributes"));
+                insideNoteAttributes = false;
+                continue;
+            }
+
+            if (elementName == QStringLiteral("note")) {
                 QNTRACE(QStringLiteral("End of note: ") << currentNote);
                 notes << currentNote;
                 currentNote.clear();

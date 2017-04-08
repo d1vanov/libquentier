@@ -93,7 +93,7 @@ public:
                            QString & enex, ErrorString & errorDescription, const QString & version) const;
 
     bool importEnex(const QString & enex, QVector<Note> & notes,
-                    QHash<QString, QString> & tagNamesByNoteLocalUid,
+                    QHash<QString, QStringList> & tagNamesByNoteLocalUid,
                     ErrorString & errorDescription) const;
 
 private:
