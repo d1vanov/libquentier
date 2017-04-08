@@ -92,6 +92,10 @@ public:
     bool exportNotesToEnex(const QVector<Note> & notes, const QHash<QString, QString> & tagNamesByTagLocalUids,
                            QString & enex, ErrorString & errorDescription, const QString & version) const;
 
+    bool importEnex(const QString & enex, QVector<Note> & notes,
+                    QHash<QString, QString> & tagNamesByNoteLocalUid,
+                    ErrorString & errorDescription) const;
+
 private:
     bool isForbiddenXhtmlTag(const QString & tagName) const;
     bool isForbiddenXhtmlAttribute(const QString & attributeName) const;

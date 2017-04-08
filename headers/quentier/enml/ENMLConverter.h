@@ -185,6 +185,24 @@ public:
     bool exportNotesToEnex(const QVector<Note> & notes, const QHash<QString, QString> & tagNamesByTagLocalUids,
                            QString & enex, ErrorString & errorDescription, const QString & version = QString()) const;
 
+    /**
+     * @brief importEnex - reads the content of input ENEX file and converts it into a set of notes
+     * and tag names.
+     *
+     * @param enex - the input ENEX file contents
+     * @param notes - notes read from the ENEX
+     * @param tagNamesByNoteLocalUid - tag names per each read note; it is the responsibility of the method caller
+     * to find the actual tags corresponding to these names and set the tag local uids and/or guids to the note
+     * @param errorDescription - the textual descrition of the error if the ENEX file could not be read and converted
+     * into a set of notes and tag names for them
+     *
+     * @return true of the ENEX file was read and converted into a set of notes and tag names successfully,
+     * false otherwise
+     */
+    bool importEnex(const QString & enex, QVector<Note> & notes,
+                    QHash<QString, QString> & tagNamesByNoteLocalUid,
+                    ErrorString & errorDescription) const;
+
 private:
     Q_DISABLE_COPY(ENMLConverter)
 

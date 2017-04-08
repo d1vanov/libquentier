@@ -138,6 +138,14 @@ bool ENMLConverter::exportNotesToEnex(const QVector<Note> & notes, const QHash<Q
     return d->exportNotesToEnex(notes, tagNamesByTagLocalUids, enex, errorDescription, version);
 }
 
+bool ENMLConverter::importEnex(const QString & enex, QVector<Note> & notes,
+                               QHash<QString, QString> & tagNamesByNoteLocalUid,
+                               ErrorString & errorDescription) const
+{
+    Q_D(const ENMLConverter);
+    return d->importEnex(enex, notes, tagNamesByNoteLocalUid, errorDescription);
+}
+
 QTextStream & ENMLConverter::SkipHtmlElementRule::print(QTextStream & strm) const
 {
 #define PRINT_COMPARISON_RULE(rule) \

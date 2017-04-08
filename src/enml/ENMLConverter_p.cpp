@@ -21,6 +21,7 @@
 #include <quentier/enml/HTMLCleaner.h>
 #include <quentier/types/Resource.h>
 #include <quentier/logging/QuentierLogger.h>
+#include <quentier/utility/UidGenerator.h>
 #include <libxml/xmlreader.h>
 #include <QString>
 #include <QXmlStreamReader>
@@ -1876,6 +1877,159 @@ bool ENMLConverterPrivate::exportNotesToEnex(const QVector<Note> & notes, const 
         QNWARNING(errorDescription << QStringLiteral(", enex: ") << enex);
         return false;
     }
+
+    return true;
+}
+
+bool ENMLConverterPrivate::importEnex(const QString & enex, QVector<Note> & notes,
+                                      QHash<QString, QString> & tagNamesByNoteLocalUid,
+                                      ErrorString & errorDescription) const
+{
+    QNDEBUG(QStringLiteral("ENMLConverterPrivate::importEnex"));
+
+    if (Q_UNLIKELY(enex.isEmpty())) {
+        errorDescription.base() = QT_TRANSLATE_NOOP("", "Can't import ENEX: the input is empty");
+        QNWARNING(errorDescription << QStringLiteral(", enex: ") << enex);
+        return false;
+    }
+
+    notes.resize(0);
+    tagNamesByNoteLocalUid.clear();
+
+    const QString dateTimeFormat = QStringLiteral("yyyyMMdd'T'HHmmss'Z'");
+
+    bool insideNote = false;
+    bool insideNoteContent = false;
+
+    Note currentNote;
+    QString currentNoteContent;
+
+    QXmlStreamReader reader(enex);
+    while(!reader.atEnd())
+    {
+        Q_UNUSED(reader.readNext())
+
+        if (reader.isStartElement())
+        {
+            QStringRef elementName = reader.name();
+
+            if (elementName == QStringLiteral("en-export")) {
+                continue;
+            }
+
+            if (elementName == QStringLiteral("export-date")) {
+                QNTRACE(QStringLiteral("export date: ") << reader.readElementText(QXmlStreamReader::SkipChildElements));
+                continue;
+            }
+
+            if (elementName == QStringLiteral("application")) {
+                QNTRACE(QStringLiteral("application: ") << reader.readElementText(QXmlStreamReader::SkipChildElements));
+                continue;
+            }
+
+            if (elementName == QStringLiteral("version")) {
+                QNTRACE(QStringLiteral("version") << reader.readElementText(QXmlStreamReader::SkipChildElements));
+                continue;
+            }
+
+            if (elementName == QStringLiteral("note")) {
+                QNTRACE(QStringLiteral("Starting a new note"));
+                currentNote.clear();
+                currentNote.setLocalUid(UidGenerator::Generate());
+                insideNote = true;
+                continue;
+            }
+
+            if (elementName == QStringLiteral("title"))
+            {
+                if (insideNote) {
+                    QString title = reader.readElementText(QXmlStreamReader::SkipChildElements);
+                    QNTRACE(QStringLiteral("Note title: ") << title);
+                    currentNote.setTitle(title);
+                    continue;
+                }
+
+                errorDescription.base() = QT_TRANSLATE_NOOP("", "Detected title tag outside of note tag");
+                QNWARNING(errorDescription);
+                return false;
+            }
+
+            if (elementName == QStringLiteral("content"))
+            {
+                if (insideNote) {
+                    QNTRACE(QStringLiteral("Start of note content"));
+                    insideNoteContent = true;
+                    currentNoteContent.resize(0);
+                    continue;
+                }
+
+                errorDescription.base() = QT_TRANSLATE_NOOP("", "Detected content tag outside of note tag");
+                QNWARNING(errorDescription);
+                return false;
+            }
+
+            if (elementName == QStringLiteral("created"))
+            {
+                if (insideNote)
+                {
+                    QString creationDateTimeString = reader.readElementText(QXmlStreamReader::SkipChildElements);
+                    QNTRACE(QStringLiteral("Creation datetime: ") << creationDateTimeString);
+                    QDateTime creationDateTime = QDateTime::fromString(creationDateTimeString, dateTimeFormat);
+                    if (Q_UNLIKELY(!creationDateTime.isValid())) {
+                        errorDescription.base() = QT_TRANSLATE_NOOP("", "failed to parse the creation datetime from string");
+                        errorDescription.details() = creationDateTimeString;
+                        QNWARNING(errorDescription);
+                        return false;
+                    }
+
+                    qint64 timestamp = creationDateTime.toMSecsSinceEpoch();
+                    currentNote.setCreationTimestamp(timestamp);
+                    QNTRACE(QStringLiteral("Set creation timestamp to ") << timestamp);
+
+                    continue;
+                }
+
+                errorDescription.base() = QT_TRANSLATE_NOOP("", "Detected created tag outside of note tag");
+                QNWARNING(errorDescription);
+                return false;
+            }
+
+            // TODO: continue
+        }
+
+        if (reader.isCharacters())
+        {
+            if (insideNoteContent && reader.isCDATA()) {
+                currentNoteContent = reader.text().toString();
+                QNTRACE(QStringLiteral("Current note content: ") << currentNoteContent);
+                continue;
+            }
+
+            // TODO: continue;
+        }
+
+        if (reader.isEndElement())
+        {
+            if (insideNoteContent) {
+                QNTRACE(QStringLiteral("End of note content: ") << currentNoteContent);
+                currentNote.setContent(currentNoteContent);
+                insideNoteContent = false;
+                continue;
+            }
+
+            // TODO: continue;
+
+            if (insideNote) {
+                QNTRACE(QStringLiteral("End of note: ") << currentNote);
+                notes << currentNote;
+                currentNote.clear();
+                insideNote = false;
+                continue;
+            }
+        }
+    }
+
+    // TODO: continue
 
     return true;
 }
