@@ -125,6 +125,8 @@ private:
 
     bool validateEnex(const QString & enex, ErrorString & errorDescription) const;
 
+    bool validateRecoIndex(const QString & recoIndex, ErrorString & errorDescription) const;
+
     bool validateAgainstDtd(const QString & input, const QString & dtdFilePath, ErrorString & errorDescription) const;
 
     class ShouldSkipElementResult: public Printable

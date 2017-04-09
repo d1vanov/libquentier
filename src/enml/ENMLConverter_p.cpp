@@ -41,6 +41,9 @@
 #include <QThread>
 #include <QApplication>
 
+// 25 Mb in bytes
+#define ENEX_MAX_RESOURCE_DATA_SIZE (26214400)
+
 namespace quentier {
 
 #define WRAP(x) \
@@ -1736,8 +1739,11 @@ bool ENMLConverterPrivate::exportNotesToEnex(const QVector<Note> & notes, const 
                 writer.writeStartElement(QStringLiteral("resource"));
 
                 const QByteArray & resourceData = resource.dataBody();
-                // FIXME: check that data does not exceed 25 Mb, otherwise abort
-                // the export
+                if (resourceData.size() > ENEX_MAX_RESOURCE_DATA_SIZE) {
+                    errorDescription.base() = QT_TRANSLATE_NOOP("", "Can't export note(s) to ENEX: found resource larger than 25 Mb");
+                    QNINFO(errorDescription << QStringLiteral(", resource: ") << resource);
+                    return false;
+                }
 
                 writer.writeStartElement(QStringLiteral("data"));
                 writer.writeAttribute(QStringLiteral("encoding"), QStringLiteral("base64"));
@@ -1760,9 +1766,21 @@ bool ENMLConverterPrivate::exportNotesToEnex(const QVector<Note> & notes, const 
                     writer.writeEndElement();
                 }
 
-                if (resource.hasRecognitionDataBody()) {
+                if (resource.hasRecognitionDataBody())
+                {
                     const QByteArray & recognitionData = resource.recognitionDataBody();
-                    // FIXME: validate the recognition data against DTD
+
+                    ErrorString error;
+                    bool res = validateRecoIndex(QString::fromLocal8Bit(recognitionData), error);
+                    if (Q_UNLIKELY(!res)) {
+                        errorDescription.base() = QT_TRANSLATE_NOOP("", "Resource recognition index is invalid");
+                        errorDescription.additionalBases().append(error.base());
+                        errorDescription.additionalBases().append(error.additionalBases());
+                        errorDescription.details() = error.details();
+                        QNWARNING(errorDescription);
+                        return false;
+                    }
+
                     writer.writeStartElement(QStringLiteral("recognition"));
                     writer.writeCDATA(QString::fromLocal8Bit(recognitionData));
                     writer.writeEndElement();  // recognition
@@ -2684,10 +2702,22 @@ bool ENMLConverterPrivate::importEnex(const QString & enex, QVector<Note> & note
                         continue;
                     }
 
-                    if (insideResourceRecognitionData) {
+                    if (insideResourceRecognitionData)
+                    {
                         currentResourceRecognitionData = QByteArray::fromBase64(reader.text().toString().toLocal8Bit());
                         QNTRACE(QStringLiteral("Read resource recognition data"));
-                        // FIXME: need to validate this data against DTD!
+
+                        ErrorString error;
+                        bool res = validateRecoIndex(QString::fromLocal8Bit(currentResourceRecognitionData), error);
+                        if (Q_UNLIKELY(!res)) {
+                            errorDescription.base() = QT_TRANSLATE_NOOP("", "Resource recognition index is invalid");
+                            errorDescription.additionalBases().append(error.base());
+                            errorDescription.additionalBases().append(error.additionalBases());
+                            errorDescription.details() = error.details();
+                            QNWARNING(errorDescription);
+                            return false;
+                        }
+
                         continue;
                     }
 
@@ -3232,6 +3262,12 @@ bool ENMLConverterPrivate::validateEnex(const QString & enex, ErrorString & erro
 {
     QNDEBUG(QStringLiteral("ENMLConverterPrivate::validateEnex"));
     return validateAgainstDtd(enex, QStringLiteral(":/evernote-export3.dtd"), errorDescription);
+}
+
+bool ENMLConverterPrivate::validateRecoIndex(const QString & recoIndex, ErrorString & errorDescription) const
+{
+    QNDEBUG(QStringLiteral("ENMLConverterPrivate::validateRecoIndex: reco index = ") << recoIndex);
+    return validateAgainstDtd(recoIndex, QStringLiteral(":/recoIndex.dtd"), errorDescription);
 }
 
 bool ENMLConverterPrivate::validateAgainstDtd(const QString & input, const QString & dtdFilePath, ErrorString & errorDescription) const
