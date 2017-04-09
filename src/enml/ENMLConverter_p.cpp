@@ -2072,9 +2072,7 @@ bool ENMLConverterPrivate::importEnex(const QString & enex, QVector<Note> & note
 
             if (elementName == QStringLiteral("latitude"))
             {
-                // TODO: process this tag for resource attributes as well
-
-                if (insideNote && insideNoteAttributes)
+                if (insideNote)
                 {
                     QString latitude = reader.readElementText(QXmlStreamReader::SkipChildElements);
                     bool conversionResult = false;
@@ -2086,70 +2084,99 @@ bool ENMLConverterPrivate::importEnex(const QString & enex, QVector<Note> & note
                         return false;
                     }
 
-                    qevercloud::NoteAttributes & noteAttributes = currentNote.noteAttributes();
-                    noteAttributes.latitude = latitudeNum;
-                    QNTRACE(QStringLiteral("Set latitude to ") << latitudeNum);
+                    if (insideNoteAttributes) {
+                        qevercloud::NoteAttributes & noteAttributes = currentNote.noteAttributes();
+                        noteAttributes.latitude = latitudeNum;
+                        QNTRACE(QStringLiteral("Set note latitude to ") << latitudeNum);
+                        continue;
+                    }
+                    else if (insideResourceAttributes) {
+                        qevercloud::ResourceAttributes & resourceAttributes = currentResource.resourceAttributes();
+                        resourceAttributes.latitude = latitudeNum;
+                        QNTRACE(QStringLiteral("Set resource latitude to ") << latitudeNum);
+                        continue;
+                    }
 
-                    continue;
+                    errorDescription.base() = QT_TRANSLATE_NOOP("", "Detected latitude tag outside of note attributes or resource attributes");
+                    QNWARNING(errorDescription);
+                    return false;
                 }
 
-                errorDescription.base() = QT_TRANSLATE_NOOP("", "Detected latitude tag outside of note or note attributes");
+                errorDescription.base() = QT_TRANSLATE_NOOP("", "Detected latitude tag outside of note");
                 QNWARNING(errorDescription);
                 return false;
             }
 
             if (elementName == QStringLiteral("longitude"))
             {
-                // TODO: process this tag for resource attributes as well
-
-                if (insideNote && insideNoteAttributes)
-                {
-                    QString longitude = reader.readElementText(QXmlStreamReader::SkipChildElements);
-                    bool conversionResult = false;
-                    double longitudeNum = longitude.toDouble(&conversionResult);
-                    if (Q_UNLIKELY(!conversionResult)) {
-                        errorDescription.base() = QT_TRANSLATE_NOOP("", "Failed to parse longitude");
-                        errorDescription.details() = longitude;
-                        QNWARNING(errorDescription);
-                        return false;
-                    }
-
-                    qevercloud::NoteAttributes & noteAttributes = currentNote.noteAttributes();
-                    noteAttributes.longitude = longitudeNum;
-                    QNTRACE(QStringLiteral("Set longitude to ") << longitudeNum);
-
-                    continue;
+                QString longitude = reader.readElementText(QXmlStreamReader::SkipChildElements);
+                bool conversionResult = false;
+                double longitudeNum = longitude.toDouble(&conversionResult);
+                if (Q_UNLIKELY(!conversionResult)) {
+                    errorDescription.base() = QT_TRANSLATE_NOOP("", "Failed to parse longitude");
+                    errorDescription.details() = longitude;
+                    QNWARNING(errorDescription);
+                    return false;
                 }
 
-                errorDescription.base() = QT_TRANSLATE_NOOP("", "Detected longitude tag outside of note or note attributes");
+                if (insideNote)
+                {
+                    if (insideNoteAttributes) {
+                        qevercloud::NoteAttributes & noteAttributes = currentNote.noteAttributes();
+                        noteAttributes.longitude = longitudeNum;
+                        QNTRACE(QStringLiteral("Set note longitude to ") << longitudeNum);
+                        continue;
+                    }
+                    else if (insideResourceAttributes) {
+                        qevercloud::ResourceAttributes & resourceAttributes = currentResource.resourceAttributes();
+                        resourceAttributes.longitude = longitudeNum;
+                        QNTRACE(QStringLiteral("Set resource longitude to ") << longitudeNum);
+                        continue;
+                    }
+
+                    errorDescription.base() = QT_TRANSLATE_NOOP("", "Detected longitude tag outside of note attributes or resource attributes");
+                    QNWARNING(errorDescription);
+                    return false;
+                }
+
+                errorDescription.base() = QT_TRANSLATE_NOOP("", "Detected longitude tag outside of note");
                 QNWARNING(errorDescription);
                 return false;
             }
 
             if (elementName == QStringLiteral("altitude"))
             {
-                // TODO: process this tag for resource attributes as well
-
-                if (insideNote && insideNoteAttributes)
-                {
-                    QString altitude = reader.readElementText(QXmlStreamReader::SkipChildElements);
-                    bool conversionResult = false;
-                    double altitudeNum = altitude.toDouble(&conversionResult);
-                    if (Q_UNLIKELY(!conversionResult)) {
-                        errorDescription.base() = QT_TRANSLATE_NOOP("", "Failed to parse altitude");
-                        errorDescription.details() = altitude;
-                        QNWARNING(errorDescription);
-                        return false;
-                    }
-
-                    qevercloud::NoteAttributes & noteAttributes = currentNote.noteAttributes();
-                    noteAttributes.altitude = altitude.toDouble(&conversionResult);
-                    QNTRACE(QStringLiteral("Set altitude to ") << altitudeNum);
-
-                    continue;
+                QString altitude = reader.readElementText(QXmlStreamReader::SkipChildElements);
+                bool conversionResult = false;
+                double altitudeNum = altitude.toDouble(&conversionResult);
+                if (Q_UNLIKELY(!conversionResult)) {
+                    errorDescription.base() = QT_TRANSLATE_NOOP("", "Failed to parse altitude");
+                    errorDescription.details() = altitude;
+                    QNWARNING(errorDescription);
+                    return false;
                 }
 
-                errorDescription.base() = QT_TRANSLATE_NOOP("", "Detected altitude tag outside of note or note attributes");
+                if (insideNote)
+                {
+                    if (insideNoteAttributes) {
+                        qevercloud::NoteAttributes & noteAttributes = currentNote.noteAttributes();
+                        noteAttributes.altitude = altitudeNum;
+                        QNTRACE(QStringLiteral("Set note altitude to ") << altitudeNum);
+                        continue;
+                    }
+                    else if (insideResourceAttributes) {
+                        qevercloud::ResourceAttributes & resourceAttributes = currentResource.resourceAttributes();
+                        resourceAttributes.altitude = altitudeNum;
+                        QNTRACE(QStringLiteral("Set resource altitude to ") << altitudeNum);
+                        continue;
+                    }
+
+                    errorDescription.base() = QT_TRANSLATE_NOOP("", "Detected altitude tag outside of note attributes or resource attributes");
+                    QNWARNING(errorDescription);
+                    return false;
+                }
+
+                errorDescription.base() = QT_TRANSLATE_NOOP("", "Detected altitude tag outside of note");
                 QNWARNING(errorDescription);
                 return false;
             }
@@ -2340,9 +2367,10 @@ bool ENMLConverterPrivate::importEnex(const QString & enex, QVector<Note> & note
             {
                 if (insideNote)
                 {
+                    QXmlStreamAttributes appDataAttributes = reader.attributes();
+
                     if (insideNoteAttributes)
                     {
-                        QXmlStreamAttributes appDataAttributes = reader.attributes();
                         if (appDataAttributes.hasAttribute(QStringLiteral("key")))
                         {
                             QString key = appDataAttributes.value(QStringLiteral("key")).toString();
@@ -2376,7 +2404,41 @@ bool ENMLConverterPrivate::importEnex(const QString & enex, QVector<Note> & note
                             return false;
                         }
                     }
-                    // TODO: also handle the case of resource attributes
+                    else if (insideResourceAttributes)
+                    {
+                        if (appDataAttributes.hasAttribute(QStringLiteral("key")))
+                        {
+                            QString key = appDataAttributes.value(QStringLiteral("key")).toString();
+                            QString value = reader.readElementText(QXmlStreamReader::SkipChildElements);
+
+                            qevercloud::ResourceAttributes & resourceAttributes = currentResource.resourceAttributes();
+
+                            if (!resourceAttributes.applicationData.isSet()) {
+                                resourceAttributes.applicationData = qevercloud::LazyMap();
+                            }
+
+                            if (!resourceAttributes.applicationData->keysOnly.isSet()) {
+                                resourceAttributes.applicationData->keysOnly = QSet<QString>();
+                            }
+
+                            if (!resourceAttributes.applicationData->fullMap.isSet()) {
+                                resourceAttributes.applicationData->fullMap = QMap<QString, QString>();
+                            }
+
+                            Q_UNUSED(resourceAttributes.applicationData->keysOnly.ref().insert(key));
+                            resourceAttributes.applicationData->fullMap.ref()[key] = value;
+
+                            QNTRACE(QStringLiteral("Inserted resource application data entry: key = ") << key
+                                    << QStringLiteral(", value = ") << value);
+                            continue;
+                        }
+                        else
+                        {
+                            errorDescription.base() = QT_TRANSLATE_NOOP("", "failed to parse application-data tag for resource: no key attribute");
+                            QNWARNING(errorDescription);
+                            return false;
+                        }
+                    }
 
                     errorDescription.base() = QT_TRANSLATE_NOOP("", "Detected application-data tag outside of note attributes or resource attributes");
                     QNWARNING(errorDescription);
@@ -2491,7 +2553,117 @@ bool ENMLConverterPrivate::importEnex(const QString & enex, QVector<Note> & note
                 return false;
             }
 
-            // TODO: continue
+            if (elementName == QStringLiteral("timestamp"))
+            {
+                if (insideResource && insideResourceAttributes)
+                {
+                    QString timestampString = reader.readElementText(QXmlStreamReader::SkipChildElements);
+                    QDateTime timestampDateTime = QDateTime::fromString(timestampString, dateTimeFormat);
+                    if (Q_UNLIKELY(!timestampDateTime.isValid())) {
+                        errorDescription.base() = QT_TRANSLATE_NOOP("", "failed to parse the resource timestamp from string");
+                        errorDescription.details() = timestampString;
+                        QNWARNING(errorDescription);
+                        return false;
+                    }
+
+                    qint64 timestamp = timestampDateTime.toMSecsSinceEpoch();
+                    qevercloud::ResourceAttributes & resourceAttributes = currentResource.resourceAttributes();
+                    resourceAttributes.timestamp = timestamp;
+                    QNTRACE(QStringLiteral("Set resource timestamp to ") << timestamp);
+
+                    continue;
+                }
+
+                errorDescription.base() = QT_TRANSLATE_NOOP("", "Detected timestamp tag outside of resource or resource attributes");
+                QNWARNING(errorDescription);
+                return false;
+            }
+
+            if (elementName == QStringLiteral("camera-make"))
+            {
+                if (insideResource && insideResourceAttributes) {
+                    QString cameraMake = reader.readElementText(QXmlStreamReader::SkipChildElements);
+                    qevercloud::ResourceAttributes & resourceAttributes = currentResource.resourceAttributes();
+                    resourceAttributes.cameraMake = cameraMake;
+                    QNTRACE(QStringLiteral("Set camera make to ") << cameraMake);
+                    continue;
+                }
+
+                errorDescription.base() = QT_TRANSLATE_NOOP("", "Detected camera-make tag outside of resource or resource attributes");
+                QNWARNING(errorDescription);
+                return false;
+            }
+
+            if (elementName == QStringLiteral("reco-type"))
+            {
+                if (insideResource && insideResourceAttributes) {
+                    QString recoType = reader.readElementText(QXmlStreamReader::SkipChildElements);
+                    qevercloud::ResourceAttributes & resourceAttributes = currentResource.resourceAttributes();
+                    resourceAttributes.recoType = recoType;
+                    QNTRACE(QStringLiteral("Set reco type to ") << recoType);
+                    continue;
+                }
+
+                errorDescription.base() = QT_TRANSLATE_NOOP("", "Detected reco-type tag outside of resource or resource attributes");
+                QNWARNING(errorDescription);
+                return false;
+            }
+
+            if (elementName == QStringLiteral("file-name"))
+            {
+                if (insideResource && insideResourceAttributes) {
+                    QString fileName = reader.readElementText(QXmlStreamReader::SkipChildElements);
+                    qevercloud::ResourceAttributes & resourceAttributes = currentResource.resourceAttributes();
+                    resourceAttributes.fileName = fileName;
+                    QNTRACE(QStringLiteral("Set file name to ") << fileName);
+                    continue;
+                }
+
+                errorDescription.base() = QT_TRANSLATE_NOOP("", "Detected file-name tag outside of resource or resource attributes");
+                QNWARNING(errorDescription);
+                return false;
+            }
+
+            if (elementName == QStringLiteral("attachment"))
+            {
+                if (insideResource && insideResourceAttributes)
+                {
+                    QString attachment = reader.readElementText(QXmlStreamReader::SkipChildElements);
+                    qevercloud::ResourceAttributes & resourceAttributes = currentResource.resourceAttributes();
+                    if (attachment == QStringLiteral("true")) {
+                        resourceAttributes.attachment = true;
+                        QNTRACE(QStringLiteral("Set attachment to true"));
+                    }
+                    else if (attachment == QStringLiteral("false")) {
+                        resourceAttributes.attachment = false;
+                        QNTRACE(QStringLiteral("Set attachment to false"));
+                    }
+                    else {
+                        errorDescription.base() = QT_TRANSLATE_NOOP("", "Detected attachment tag with wrong value, must be true or false");
+                        QNWARNING(errorDescription);
+                        return false;
+                    }
+
+                    continue;
+                }
+
+                errorDescription.base() = QT_TRANSLATE_NOOP("", "Detected attachment tag outside of resource or resource attributes");
+                QNWARNING(errorDescription);
+                return false;
+            }
+
+            if (elementName == QStringLiteral("alternate-data"))
+            {
+                if (insideResource) {
+                    QNTRACE(QStringLiteral("Start of resource alternate data"));
+                    insideResourceAlternateData = true;
+                    continue;
+                }
+
+                errorDescription.base() = QT_TRANSLATE_NOOP("", "Detected alternate-data tag outside of resource");
+                QNWARNING(errorDescription);
+                return false;
+            }
         }
 
         if (reader.isCharacters())
@@ -2526,8 +2698,6 @@ bool ENMLConverterPrivate::importEnex(const QString & enex, QVector<Note> & note
                     }
                 }
             }
-
-            // TODO: continue;
         }
 
         if (reader.isEndElement())
@@ -2541,22 +2711,41 @@ bool ENMLConverterPrivate::importEnex(const QString & enex, QVector<Note> & note
                 continue;
             }
 
-            // TODO: continue;
-
             if (elementName == QStringLiteral("note-attributes")) {
                 QNTRACE(QStringLiteral("End of note attributes"));
                 insideNoteAttributes = false;
                 continue;
             }
 
-            if (elementName == QStringLiteral("data"))
-            {
+            if (elementName == QStringLiteral("resource-attributes")) {
+                QNTRACE(QStringLiteral("End of resource attributes"));
+                insideResourceAttributes = false;
+                continue;
+            }
+
+            if (elementName == QStringLiteral("data")) {
                 QNTRACE(QStringLiteral("End of resource data"));
                 currentResource.setDataBody(currentResourceData);
                 currentResource.setDataHash(QCryptographicHash::hash(currentResourceData, QCryptographicHash::Md5));
                 currentResource.setDataSize(currentResourceData.size());
+                continue;
             }
 
+            if (elementName == QStringLiteral("recognition")) {
+                QNTRACE(QStringLiteral("End of resource recognition data"));
+                currentResource.setRecognitionDataBody(currentResourceRecognitionData);
+                currentResource.setRecognitionDataHash(QCryptographicHash::hash(currentResourceRecognitionData, QCryptographicHash::Md5));
+                currentResource.setRecognitionDataSize(currentResourceRecognitionData.size());
+                continue;
+            }
+
+            if (elementName == QStringLiteral("alternate-data")) {
+                QNTRACE(QStringLiteral("End of resource alternate data"));
+                currentResource.setAlternateDataBody(currentResourceAlternateData);
+                currentResource.setAlternateDataHash(QCryptographicHash::hash(currentResourceAlternateData, QCryptographicHash::Md5));
+                currentResource.setAlternateDataSize(currentResourceAlternateData.size());
+                continue;
+            }
 
             if (elementName == QStringLiteral("resource"))
             {
@@ -2604,8 +2793,7 @@ bool ENMLConverterPrivate::importEnex(const QString & enex, QVector<Note> & note
         }
     }
 
-    // TODO: continue
-
+    QNDEBUG(QStringLiteral("ENEX import end: num notes = ") << notes.size());
     return true;
 }
 
