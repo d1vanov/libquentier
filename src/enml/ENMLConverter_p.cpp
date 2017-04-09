@@ -28,6 +28,7 @@
 #include <QXmlStreamWriter>
 #include <QScopedPointer>
 #include <QDomDocument>
+#include <QCryptographicHash>
 #include <QRegExp>
 #include <QDateTime>
 #include <QFile>
@@ -1735,6 +1736,9 @@ bool ENMLConverterPrivate::exportNotesToEnex(const QVector<Note> & notes, const 
                 writer.writeStartElement(QStringLiteral("resource"));
 
                 const QByteArray & resourceData = resource.dataBody();
+                // FIXME: check that data does not exceed 25 Mb, otherwise abort
+                // the export
+
                 writer.writeStartElement(QStringLiteral("data"));
                 writer.writeAttribute(QStringLiteral("encoding"), QStringLiteral("base64"));
                 writer.writeCharacters(QString::fromLocal8Bit(resourceData.toBase64()));
@@ -1758,6 +1762,7 @@ bool ENMLConverterPrivate::exportNotesToEnex(const QVector<Note> & notes, const 
 
                 if (resource.hasRecognitionDataBody()) {
                     const QByteArray & recognitionData = resource.recognitionDataBody();
+                    // FIXME: validate the recognition data against DTD
                     writer.writeStartElement(QStringLiteral("recognition"));
                     writer.writeCDATA(QString::fromLocal8Bit(recognitionData));
                     writer.writeEndElement();  // recognition
@@ -1901,9 +1906,19 @@ bool ENMLConverterPrivate::importEnex(const QString & enex, QVector<Note> & note
     bool insideNote = false;
     bool insideNoteContent = false;
     bool insideNoteAttributes = false;
+    bool insideResource = false;
+    bool insideResourceData = false;
+    bool insideResourceRecognitionData = false;
+    bool insideResourceAlternateData = false;
+    bool insideResourceAttributes = false;
 
     Note currentNote;
     QString currentNoteContent;
+
+    Resource currentResource;
+    QByteArray currentResourceData;
+    QByteArray currentResourceRecognitionData;
+    QByteArray currentResourceAlternateData;
 
     QXmlStreamReader reader(enex);
     while(!reader.atEnd())
@@ -2057,6 +2072,8 @@ bool ENMLConverterPrivate::importEnex(const QString & enex, QVector<Note> & note
 
             if (elementName == QStringLiteral("latitude"))
             {
+                // TODO: process this tag for resource attributes as well
+
                 if (insideNote && insideNoteAttributes)
                 {
                     QString latitude = reader.readElementText(QXmlStreamReader::SkipChildElements);
@@ -2083,6 +2100,8 @@ bool ENMLConverterPrivate::importEnex(const QString & enex, QVector<Note> & note
 
             if (elementName == QStringLiteral("longitude"))
             {
+                // TODO: process this tag for resource attributes as well
+
                 if (insideNote && insideNoteAttributes)
                 {
                     QString longitude = reader.readElementText(QXmlStreamReader::SkipChildElements);
@@ -2109,6 +2128,8 @@ bool ENMLConverterPrivate::importEnex(const QString & enex, QVector<Note> & note
 
             if (elementName == QStringLiteral("altitude"))
             {
+                // TODO: process this tag for resource attributes as well
+
                 if (insideNote && insideNoteAttributes)
                 {
                     QString altitude = reader.readElementText(QXmlStreamReader::SkipChildElements);
@@ -2165,15 +2186,29 @@ bool ENMLConverterPrivate::importEnex(const QString & enex, QVector<Note> & note
 
             if (elementName == QStringLiteral("source-url"))
             {
-                if (insideNote && insideNoteAttributes) {
+                if (insideNote)
+                {
                     QString sourceUrl = reader.readElementText(QXmlStreamReader::SkipChildElements);
-                    qevercloud::NoteAttributes & noteAttributes = currentNote.noteAttributes();
-                    noteAttributes.sourceURL = sourceUrl;
-                    QNTRACE(QStringLiteral("Set source url to ") << sourceUrl);
-                    continue;
+
+                    if (insideNoteAttributes) {
+                        qevercloud::NoteAttributes & noteAttributes = currentNote.noteAttributes();
+                        noteAttributes.sourceURL = sourceUrl;
+                        QNTRACE(QStringLiteral("Set note source url to ") << sourceUrl);
+                        continue;
+                    }
+                    else if (insideResource && insideResourceAttributes) {
+                        qevercloud::ResourceAttributes & resourceAttributes = currentResource.resourceAttributes();
+                        resourceAttributes.sourceURL = sourceUrl;
+                        QNTRACE(QStringLiteral("Set resource source url to ") << sourceUrl);
+                        continue;
+                    }
+
+                    errorDescription.base() = QT_TRANSLATE_NOOP("", "Detected source-url tag outside of note attributes or resource attributes");
+                    QNWARNING(errorDescription);
+                    return false;
                 }
 
-                errorDescription.base() = QT_TRANSLATE_NOOP("", "Detected source-url tag outside of note or note attributes");
+                errorDescription.base() = QT_TRANSLATE_NOOP("", "Detected source-url tag outside of note");
                 QNWARNING(errorDescription);
                 return false;
             }
@@ -2193,15 +2228,303 @@ bool ENMLConverterPrivate::importEnex(const QString & enex, QVector<Note> & note
                 return false;
             }
 
+            if (elementName == QStringLiteral("reminder-order"))
+            {
+                if (insideNote && insideNoteAttributes)
+                {
+                    QString reminderOrder = reader.readElementText(QXmlStreamReader::SkipChildElements);
+                    bool conversionResult = false;
+                    qint64 reminderOrderNum = reminderOrder.toLongLong(&conversionResult);
+                    if (Q_UNLIKELY(!conversionResult)) {
+                        errorDescription.base() = QT_TRANSLATE_NOOP("", "Failed to parse reminder order");
+                        errorDescription.details() = reminderOrder;
+                        QNWARNING(errorDescription);
+                        return false;
+                    }
+
+                    qevercloud::NoteAttributes & noteAttributes = currentNote.noteAttributes();
+                    noteAttributes.reminderOrder = reminderOrderNum;
+                    QNTRACE(QStringLiteral("Set the reminder order to ") << reminderOrderNum);
+
+                    continue;
+                }
+
+                errorDescription.base() = QT_TRANSLATE_NOOP("", "Detected reminder-order tag outside of note or note attributes");
+                QNWARNING(errorDescription);
+                return false;
+            }
+
+            if (elementName == QStringLiteral("reminder-time"))
+            {
+                if (insideNote && insideNoteAttributes)
+                {
+                    QString reminderTimeString = reader.readElementText(QXmlStreamReader::SkipChildElements);
+                    QDateTime reminderTimeDateTime = QDateTime::fromString(reminderTimeString, dateTimeFormat);
+                    if (Q_UNLIKELY(!reminderTimeDateTime.isValid())) {
+                        errorDescription.base() = QT_TRANSLATE_NOOP("", "failed to parse the reminder time from string");
+                        errorDescription.details() = reminderTimeString;
+                        QNWARNING(errorDescription);
+                        return false;
+                    }
+
+                    qint64 timestamp = reminderTimeDateTime.toMSecsSinceEpoch();
+                    qevercloud::NoteAttributes & noteAttributes = currentNote.noteAttributes();
+                    noteAttributes.reminderTime = timestamp;
+                    QNTRACE(QStringLiteral("Set reminder time to ") << timestamp);
+
+                    continue;
+                }
+
+                errorDescription.base() = QT_TRANSLATE_NOOP("", "Detected reminder-time tag outside of note or note attributes");
+                QNWARNING(errorDescription);
+                return false;
+            }
+
+            if (elementName == QStringLiteral("reminder-done-time"))
+            {
+                if (insideNote && insideNoteAttributes)
+                {
+                    QString reminderDoneTimeString = reader.readElementText(QXmlStreamReader::SkipChildElements);
+                    QDateTime reminderDoneTimeDateTime = QDateTime::fromString(reminderDoneTimeString, dateTimeFormat);
+                    if (Q_UNLIKELY(!reminderDoneTimeDateTime.isValid())) {
+                        errorDescription.base() = QT_TRANSLATE_NOOP("", "failed to parse the reminder done time from string");
+                        errorDescription.details() = reminderDoneTimeString;
+                        QNWARNING(errorDescription);
+                        return false;
+                    }
+
+                    qint64 timestamp = reminderDoneTimeDateTime.toMSecsSinceEpoch();
+                    qevercloud::NoteAttributes & noteAttributes = currentNote.noteAttributes();
+                    noteAttributes.reminderDoneTime = timestamp;
+                    QNTRACE(QStringLiteral("Set reminder done time to ") << timestamp);
+
+                    continue;
+                }
+
+                errorDescription.base() = QT_TRANSLATE_NOOP("", "Detected reminder-done-time tag outside of note or note attributes");
+                QNWARNING(errorDescription);
+                return false;
+            }
+
+            if (elementName == QStringLiteral("place-name"))
+            {
+                if (insideNote && insideNoteAttributes) {
+                    QString placeName = reader.readElementText(QXmlStreamReader::SkipChildElements);
+                    qevercloud::NoteAttributes & noteAttributes = currentNote.noteAttributes();
+                    noteAttributes.placeName = placeName;
+                    QNTRACE(QStringLiteral("Set place name to ") << placeName);
+                    continue;
+                }
+
+                errorDescription.base() = QT_TRANSLATE_NOOP("", "Detected place-name tag outside of note or note attributes");
+                QNWARNING(errorDescription);
+                return false;
+            }
+
+            if (elementName == QStringLiteral("content-class"))
+            {
+                if (insideNote && insideNoteAttributes) {
+                    QString contentClass = reader.readElementText(QXmlStreamReader::SkipChildElements);
+                    qevercloud::NoteAttributes & noteAttributes = currentNote.noteAttributes();
+                    noteAttributes.contentClass = contentClass;
+                    QNTRACE(QStringLiteral("Set content class to ") << contentClass);
+                    continue;
+                }
+
+                errorDescription.base() = QT_TRANSLATE_NOOP("", "Detected content-class tag outside of note or note attributes");
+                QNWARNING(errorDescription);
+                return false;
+            }
+
+            if (elementName == QStringLiteral("application-data"))
+            {
+                if (insideNote)
+                {
+                    if (insideNoteAttributes)
+                    {
+                        QXmlStreamAttributes appDataAttributes = reader.attributes();
+                        if (appDataAttributes.hasAttribute(QStringLiteral("key")))
+                        {
+                            QString key = appDataAttributes.value(QStringLiteral("key")).toString();
+                            QString value = reader.readElementText(QXmlStreamReader::SkipChildElements);
+
+                            qevercloud::NoteAttributes & noteAttributes = currentNote.noteAttributes();
+
+                            if (!noteAttributes.applicationData.isSet()) {
+                                noteAttributes.applicationData = qevercloud::LazyMap();
+                            }
+
+                            if (!noteAttributes.applicationData->keysOnly.isSet()) {
+                                noteAttributes.applicationData->keysOnly = QSet<QString>();
+                            }
+
+                            if (!noteAttributes.applicationData->fullMap.isSet()) {
+                                noteAttributes.applicationData->fullMap = QMap<QString, QString>();
+                            }
+
+                            Q_UNUSED(noteAttributes.applicationData->keysOnly.ref().insert(key));
+                            noteAttributes.applicationData->fullMap.ref()[key] = value;
+
+                            QNTRACE(QStringLiteral("Inserted note application data entry: key = ") << key
+                                    << QStringLiteral(", value = ") << value);
+                            continue;
+                        }
+                        else
+                        {
+                            errorDescription.base() = QT_TRANSLATE_NOOP("", "failed to parse application-data tag for note: no key attribute");
+                            QNWARNING(errorDescription);
+                            return false;
+                        }
+                    }
+                    // TODO: also handle the case of resource attributes
+
+                    errorDescription.base() = QT_TRANSLATE_NOOP("", "Detected application-data tag outside of note attributes or resource attributes");
+                    QNWARNING(errorDescription);
+                    return false;
+                }
+
+                errorDescription.base() = QT_TRANSLATE_NOOP("", "Detected application-data tag outside of note");
+                QNWARNING(errorDescription);
+                return false;
+            }
+
+            if (elementName == QStringLiteral("resource"))
+            {
+                QNTRACE(QStringLiteral("Start of resource tag"));
+                insideResource = true;
+
+                currentResource.clear();
+                currentResource.setLocalUid(UidGenerator::Generate());
+
+                currentResourceData.resize(0);
+                currentResourceRecognitionData.resize(0);
+                currentResourceAlternateData.resize(0);
+
+                continue;
+            }
+
+            if (elementName == QStringLiteral("data"))
+            {
+                if (insideResource) {
+                    QNTRACE(QStringLiteral("Start of resource data"));
+                    insideResourceData = true;
+                    continue;
+                }
+
+                errorDescription.base() = QT_TRANSLATE_NOOP("", "Detected data tag outside of resource");
+                QNWARNING(errorDescription);
+                return false;
+            }
+
+            if (elementName == QStringLiteral("mime"))
+            {
+                if (insideResource) {
+                    QString mime = reader.readElementText(QXmlStreamReader::SkipChildElements);
+                    currentResource.setMime(mime);
+                    QNTRACE(QStringLiteral("Set resource mime to ") << mime);
+                    continue;
+                }
+
+                errorDescription.base() = QT_TRANSLATE_NOOP("", "Detected mime tag outside of resource");
+                QNWARNING(errorDescription);
+                return false;
+            }
+
+            if (elementName == QStringLiteral("width"))
+            {
+                if (insideResource)
+                {
+                    QString width = reader.readElementText(QXmlStreamReader::SkipChildElements);
+                    bool conversionResult = false;
+                    qint16 widthNum = width.toShort(&conversionResult);
+                    if (Q_UNLIKELY(!conversionResult)) {
+                        errorDescription.base() = QT_TRANSLATE_NOOP("", "Failed to parse resource width from string");
+                        errorDescription.details() = width;
+                        QNWARNING(errorDescription);
+                        return false;
+                    }
+
+                    currentResource.setWidth(widthNum);
+                    QNTRACE(QStringLiteral("Set resource width to ") << widthNum);
+                    continue;
+                }
+
+                errorDescription.base() = QT_TRANSLATE_NOOP("", "Detected width tag outside of resource");
+                QNWARNING(errorDescription);
+                return false;
+            }
+
+            if (elementName == QStringLiteral("height"))
+            {
+                if (insideResource)
+                {
+                    QString height = reader.readElementText(QXmlStreamReader::SkipChildElements);
+                    bool conversionResult = false;
+                    qint16 heightNum = height.toShort(&conversionResult);
+                    if (Q_UNLIKELY(!conversionResult)) {
+                        errorDescription.base() = QT_TRANSLATE_NOOP("", "Failed to parse resource height from string");
+                        errorDescription.details() = height;
+                        QNWARNING(errorDescription);
+                        return false;
+                    }
+
+                    currentResource.setHeight(heightNum);
+                    QNTRACE(QStringLiteral("Set resource height to ") << heightNum);
+                    continue;
+                }
+
+                errorDescription.base() = QT_TRANSLATE_NOOP("", "Detected height tag outside of resource");
+                QNWARNING(errorDescription);
+                return false;
+            }
+
+            if (elementName == QStringLiteral("recognition"))
+            {
+                if (insideResource) {
+                    QNTRACE(QStringLiteral("Start of resource recognition data"));
+                    insideResourceRecognitionData = true;
+                    continue;
+                }
+
+                errorDescription.base() = QT_TRANSLATE_NOOP("", "Detected recognition tag outside of resource");
+                QNWARNING(errorDescription);
+                return false;
+            }
+
             // TODO: continue
         }
 
         if (reader.isCharacters())
         {
-            if (insideNoteContent && reader.isCDATA()) {
-                currentNoteContent = reader.text().toString();
-                QNTRACE(QStringLiteral("Current note content: ") << currentNoteContent);
-                continue;
+            if (insideNote)
+            {
+                if (insideNoteContent && reader.isCDATA()) {
+                    currentNoteContent = reader.text().toString();
+                    QNTRACE(QStringLiteral("Current note content: ") << currentNoteContent);
+                    continue;
+                }
+
+                if (insideResource)
+                {
+                    if (insideResourceData) {
+                        currentResourceData = QByteArray::fromBase64(reader.text().toString().toLocal8Bit());
+                        QNTRACE(QStringLiteral("Read resource data"));
+                        continue;
+                    }
+
+                    if (insideResourceRecognitionData) {
+                        currentResourceRecognitionData = QByteArray::fromBase64(reader.text().toString().toLocal8Bit());
+                        QNTRACE(QStringLiteral("Read resource recognition data"));
+                        // FIXME: need to validate this data against DTD!
+                        continue;
+                    }
+
+                    if (insideResourceAlternateData) {
+                        currentResourceAlternateData = QByteArray::fromBase64(reader.text().toString().toLocal8Bit());
+                        QNTRACE(QStringLiteral("Read resource alternate data"));
+                        continue;
+                    }
+                }
             }
 
             // TODO: continue;
@@ -2223,6 +2546,51 @@ bool ENMLConverterPrivate::importEnex(const QString & enex, QVector<Note> & note
             if (elementName == QStringLiteral("note-attributes")) {
                 QNTRACE(QStringLiteral("End of note attributes"));
                 insideNoteAttributes = false;
+                continue;
+            }
+
+            if (elementName == QStringLiteral("data"))
+            {
+                QNTRACE(QStringLiteral("End of resource data"));
+                currentResource.setDataBody(currentResourceData);
+                currentResource.setDataHash(QCryptographicHash::hash(currentResourceData, QCryptographicHash::Md5));
+                currentResource.setDataSize(currentResourceData.size());
+            }
+
+
+            if (elementName == QStringLiteral("resource"))
+            {
+                QNTRACE(QStringLiteral("End of resource"));
+
+                if (Q_UNLIKELY(!currentResource.hasDataBody())) {
+                    errorDescription.base() = QT_TRANSLATE_NOOP("", "Parsed resource without a data body");
+                    QNWARNING(errorDescription << QStringLiteral(", resource: ") << currentResource);
+                    return false;
+                }
+
+                if (Q_UNLIKELY(!currentResource.hasDataHash())) {
+                    errorDescription.base() = QT_TRANSLATE_NOOP("", "Internal error: data hash is not computed for the resource");
+                    QNWARNING(errorDescription << QStringLiteral(", resource: ") << currentResource);
+                    return false;
+                }
+
+                if (Q_UNLIKELY(!currentResource.hasDataSize())) {
+                    errorDescription.base() = QT_TRANSLATE_NOOP("", "Internal error: data size is not computed for the resource");
+                    QNWARNING(errorDescription << QStringLiteral(", resource: ") << currentResource);
+                    return false;
+                }
+
+                if (Q_UNLIKELY(!currentResource.hasMime())) {
+                    errorDescription.base() = QT_TRANSLATE_NOOP("", "Parsed resource without a mime type");
+                    QNWARNING(errorDescription << QStringLiteral(", resource: ") << currentResource);
+                    return false;
+                }
+
+                insideResource = false;
+                currentNote.addResource(currentResource);
+                QNTRACE(QStringLiteral("Added resource to note: ") << currentResource);
+
+                currentResource.clear();
                 continue;
             }
 

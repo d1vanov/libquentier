@@ -123,7 +123,6 @@ typedef QWebEngineSettings WebSettings;
 #include <QDesktopWidget>
 #include <QFontDialog>
 #include <QFontDatabase>
-#include <QCryptographicHash>
 #include <QPixmap>
 #include <QBuffer>
 #include <QImage>
