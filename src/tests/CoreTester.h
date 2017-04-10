@@ -54,6 +54,8 @@ private slots:
     void enmlConverterHtmlWithTableHelperTags();
     void enmlConverterHtmlWithTableAndHilitorHelperTags();
 
+    void enexExportImportSingleSimpleNoteTest();
+
     void resourceRecognitionIndicesParsingTest();
 
     void noteSearchQueryTest();

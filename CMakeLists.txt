@@ -577,6 +577,7 @@ endif()
 
 set(TEST_HEADERS
     src/tests/EncryptionManagerTests.h
+    src/tests/EnexExportImportTests.h
     src/tests/ENMLConverterTests.h
     src/tests/LocalStorageCacheAsyncTester.h
     src/tests/LinkedNotebookLocalStorageManagerAsyncTester.h
@@ -594,6 +595,7 @@ set(TEST_HEADERS
 
 set(TEST_SOURCES
     src/tests/EncryptionManagerTests.cpp
+    src/tests/EnexExportImportTests.cpp
     src/tests/ENMLConverterTests.cpp
     src/tests/LocalStorageCacheAsyncTester.cpp
     src/tests/LinkedNotebookLocalStorageManagerAsyncTester.cpp

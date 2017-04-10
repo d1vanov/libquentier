@@ -1613,9 +1613,19 @@ bool ENMLConverterPrivate::exportNotesToEnex(const QVector<Note> & notes, const 
                 noteAttributes.sourceApplication.isSet() || noteAttributes.reminderOrder.isSet() ||
                 noteAttributes.reminderTime.isSet() || noteAttributes.reminderDoneTime.isSet() ||
                 noteAttributes.placeName.isSet() || noteAttributes.contentClass.isSet() ||
-                noteAttributes.applicationData.isSet())
+                noteAttributes.subjectDate.isSet() || noteAttributes.applicationData.isSet())
             {
                 writer.writeStartElement(QStringLiteral("note-attributes"));
+
+                if (noteAttributes.subjectDate.isSet()) {
+                    writer.writeStartElement(QStringLiteral("subject-date"));
+                    QDateTime subjectDateTime = QDateTime::fromMSecsSinceEpoch(noteAttributes.subjectDate.ref());
+                    QString subjectDateString = subjectDateTime.toString(Qt::ISODate);
+                    subjectDateString.remove(QChar(':'), Qt::CaseInsensitive);
+                    subjectDateString.remove(QChar('-'), Qt::CaseInsensitive);
+                    writer.writeCharacters(subjectDateString);
+                    writer.writeEndElement();
+                }
 
                 if (noteAttributes.latitude.isSet()) {
                     writer.writeStartElement(QStringLiteral("latitude"));
@@ -2321,6 +2331,32 @@ bool ENMLConverterPrivate::importEnex(const QString & enex, QVector<Note> & note
                 }
 
                 errorDescription.base() = QT_TRANSLATE_NOOP("", "Detected reminder-time tag outside of note or note attributes");
+                QNWARNING(errorDescription);
+                return false;
+            }
+
+            if (elementName == QStringLiteral("subject-date"))
+            {
+                if (insideNote && insideNoteAttributes)
+                {
+                    QString subjectDateString = reader.readElementText(QXmlStreamReader::SkipChildElements);
+                    QDateTime subjectDateTime = QDateTime::fromString(subjectDateString, dateTimeFormat);
+                    if (Q_UNLIKELY(!subjectDateTime.isValid())) {
+                        errorDescription.base() = QT_TRANSLATE_NOOP("", "failed to parse the subject date from string");
+                        errorDescription.details() = subjectDateString;
+                        QNWARNING(errorDescription);
+                        return false;
+                    }
+
+                    qint64 timestamp = subjectDateTime.toMSecsSinceEpoch();
+                    qevercloud::NoteAttributes & noteAttributes = currentNote.noteAttributes();
+                    noteAttributes.subjectDate = timestamp;
+                    QNTRACE(QStringLiteral("Set subject date to ") << timestamp);
+
+                    continue;
+                }
+
+                errorDescription.base() = QT_TRANSLATE_NOOP("", "Detected subject-date tag outside of note or note attributes");
                 QNWARNING(errorDescription);
                 return false;
             }

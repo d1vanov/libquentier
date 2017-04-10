@@ -30,6 +30,7 @@
 #include "LocalStorageCacheAsyncTester.h"
 #include "EncryptionManagerTests.h"
 #include "ENMLConverterTests.h"
+#include "EnexExportImportTests.h"
 #include "ResourceRecognitionIndicesParsingTest.h"
 #include <quentier/exception/IQuentierException.h>
 #include <quentier/utility/EventLoopWithExitStatus.h>
@@ -322,6 +323,17 @@ void CoreTester::enmlConverterHtmlWithTableAndHilitorHelperTags()
     {
         QString error;
         bool res = convertHtmlWithTableAndHilitorHelperTagsToEnml(error);
+        QVERIFY2(res == true, qPrintable(error));
+    }
+    CATCH_EXCEPTION();
+}
+
+void CoreTester::enexExportImportSingleSimpleNoteTest()
+{
+    try
+    {
+        QString error;
+        bool res = exportSingleNoteWithoutTagsAndResourcesToEnexAndImportBack(error);
         QVERIFY2(res == true, qPrintable(error));
     }
     CATCH_EXCEPTION();
