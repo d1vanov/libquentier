@@ -339,6 +339,28 @@ void CoreTester::enexExportImportSingleSimpleNoteTest()
     CATCH_EXCEPTION();
 }
 
+void CoreTester::enexExportImportSingleNoteWithTagsTest()
+{
+    try
+    {
+        QString error;
+        bool res = exportSingleNoteWithTagsButNoResourcesToEnexAndImportBack(error);
+        QVERIFY2(res == true, qPrintable(error));
+    }
+    CATCH_EXCEPTION();
+}
+
+void CoreTester::enexExportImportSingleNoteWithResourcesTest()
+{
+    try
+    {
+        QString error;
+        bool res = exportSingleNoteWithResourcesButNoTagsToEnexAndImportBack(error);
+        QVERIFY2(res == true, qPrintable(error));
+    }
+    CATCH_EXCEPTION();
+}
+
 void CoreTester::resourceRecognitionIndicesParsingTest()
 {
     try

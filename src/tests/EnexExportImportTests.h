@@ -25,6 +25,8 @@ namespace quentier {
 namespace test {
 
 bool exportSingleNoteWithoutTagsAndResourcesToEnexAndImportBack(QString & error);
+bool exportSingleNoteWithTagsButNoResourcesToEnexAndImportBack(QString & error);
+bool exportSingleNoteWithResourcesButNoTagsToEnexAndImportBack(QString & error);
 
 } // namespace test
 } // namespace quentier

@@ -44,6 +44,8 @@
 // 25 Mb in bytes
 #define ENEX_MAX_RESOURCE_DATA_SIZE (26214400)
 
+#define ENEX_DATE_TIME_FORMAT (QStringLiteral("yyyyMMdd'T'HHmmss'Z'"))
+
 namespace quentier {
 
 #define WRAP(x) \
@@ -1520,10 +1522,10 @@ bool ENMLConverterPrivate::exportNotesToEnex(const QVector<Note> & notes, const 
     writer.writeStartElement(QStringLiteral("en-export"));
     QXmlStreamAttributes enExportAttributes;
 
+    const QString dateTimeFormat = ENEX_DATE_TIME_FORMAT;
+
     QDateTime currentDateTime = QDateTime::currentDateTimeUtc();
-    QString currentDateTimeString = currentDateTime.toString(Qt::ISODate);
-    currentDateTimeString.remove(QChar(':'), Qt::CaseInsensitive);
-    currentDateTimeString.remove(QChar('-'), Qt::CaseInsensitive);
+    QString currentDateTimeString = currentDateTime.toString(dateTimeFormat);
     enExportAttributes.append(QStringLiteral("export-date"), currentDateTimeString);
 
     enExportAttributes.append(QStringLiteral("application"), QApplication::applicationName());
@@ -1558,9 +1560,7 @@ bool ENMLConverterPrivate::exportNotesToEnex(const QVector<Note> & notes, const 
         if (note.hasCreationTimestamp())
         {
             QDateTime creationDateTime = QDateTime::fromMSecsSinceEpoch(note.creationTimestamp());
-            QString creationDateTimeString = creationDateTime.toString(Qt::ISODate);
-            creationDateTimeString.remove(QChar(':'), Qt::CaseInsensitive);
-            creationDateTimeString.remove(QChar('-'), Qt::CaseInsensitive);
+            QString creationDateTimeString = creationDateTime.toString(dateTimeFormat);
             writer.writeCharacters(creationDateTimeString);
         }
         writer.writeEndElement();   // created
@@ -1569,9 +1569,7 @@ bool ENMLConverterPrivate::exportNotesToEnex(const QVector<Note> & notes, const 
         if (note.hasModificationTimestamp())
         {
             QDateTime modificationDateTime = QDateTime::fromMSecsSinceEpoch(note.modificationTimestamp());
-            QString modificationDateTimeString = modificationDateTime.toString(Qt::ISODate);
-            modificationDateTimeString.remove(QChar(':'), Qt::CaseInsensitive);
-            modificationDateTimeString.remove(QChar('-'), Qt::CaseInsensitive);
+            QString modificationDateTimeString = modificationDateTime.toString(dateTimeFormat);
             writer.writeCharacters(modificationDateTimeString);
         }
         writer.writeEndElement();   // updated
@@ -1620,9 +1618,7 @@ bool ENMLConverterPrivate::exportNotesToEnex(const QVector<Note> & notes, const 
                 if (noteAttributes.subjectDate.isSet()) {
                     writer.writeStartElement(QStringLiteral("subject-date"));
                     QDateTime subjectDateTime = QDateTime::fromMSecsSinceEpoch(noteAttributes.subjectDate.ref());
-                    QString subjectDateString = subjectDateTime.toString(Qt::ISODate);
-                    subjectDateString.remove(QChar(':'), Qt::CaseInsensitive);
-                    subjectDateString.remove(QChar('-'), Qt::CaseInsensitive);
+                    QString subjectDateString = subjectDateTime.toString(dateTimeFormat);
                     writer.writeCharacters(subjectDateString);
                     writer.writeEndElement();
                 }
@@ -1679,9 +1675,7 @@ bool ENMLConverterPrivate::exportNotesToEnex(const QVector<Note> & notes, const 
                 {
                     writer.writeStartElement(QStringLiteral("reminder-time"));
                     QDateTime reminderTime = QDateTime::fromMSecsSinceEpoch(noteAttributes.reminderTime.ref());
-                    QString reminderTimeString = reminderTime.toString(Qt::ISODate);
-                    reminderTimeString.remove(QChar(':'), Qt::CaseInsensitive);
-                    reminderTimeString.remove(QChar('-'), Qt::CaseInsensitive);
+                    QString reminderTimeString = reminderTime.toString(dateTimeFormat);
                     writer.writeCharacters(reminderTimeString);
                     writer.writeEndElement();
                 }
@@ -1690,9 +1684,7 @@ bool ENMLConverterPrivate::exportNotesToEnex(const QVector<Note> & notes, const 
                 {
                     writer.writeStartElement(QStringLiteral("reminder-done-time"));
                     QDateTime reminderDoneTime = QDateTime::fromMSecsSinceEpoch(noteAttributes.reminderDoneTime.ref());
-                    QString reminderDoneTimeString = reminderDoneTime.toString(Qt::ISODate);
-                    reminderDoneTimeString.remove(QChar(':'), Qt::CaseInsensitive);
-                    reminderDoneTimeString.remove(QChar('-'), Qt::CaseInsensitive);
+                    QString reminderDoneTimeString = reminderDoneTime.toString(dateTimeFormat);
                     writer.writeCharacters(reminderDoneTimeString);
                     writer.writeEndElement();
                 }
@@ -1806,19 +1798,18 @@ bool ENMLConverterPrivate::exportNotesToEnex(const QVector<Note> & notes, const 
                         resourceAttributes.recoType.isSet() || resourceAttributes.fileName.isSet() ||
                         resourceAttributes.attachment.isSet() || resourceAttributes.applicationData.isSet())
                     {
+                        writer.writeStartElement(QStringLiteral("resource-attributes"));
+
                         if (resourceAttributes.sourceURL.isSet()) {
                             writer.writeStartElement(QStringLiteral("source-url"));
                             writer.writeCharacters(resourceAttributes.sourceURL.ref());
                             writer.writeEndElement();   // source-url
                         }
 
-                        if (resourceAttributes.timestamp.isSet())
-                        {
+                        if (resourceAttributes.timestamp.isSet()) {
                             writer.writeStartElement(QStringLiteral("timestamp"));
                             QDateTime resourceTimestamp = QDateTime::fromMSecsSinceEpoch(resourceAttributes.timestamp.ref());
-                            QString resourceTimestampString = resourceTimestamp.toString(Qt::ISODate);
-                            resourceTimestampString.remove(QChar(':'), Qt::CaseInsensitive);
-                            resourceTimestampString.remove(QChar('-'), Qt::CaseInsensitive);
+                            QString resourceTimestampString = resourceTimestamp.toString(dateTimeFormat);
                             writer.writeCharacters(resourceTimestampString);
                             writer.writeEndElement();
                         }
@@ -1879,6 +1870,8 @@ bool ENMLConverterPrivate::exportNotesToEnex(const QVector<Note> & notes, const 
                                 }
                             }
                         }
+
+                        writer.writeEndElement();   // resource-attributes
                     }
                 }
 
@@ -1929,7 +1922,7 @@ bool ENMLConverterPrivate::importEnex(const QString & enex, QVector<Note> & note
     notes.resize(0);
     tagNamesByNoteLocalUid.clear();
 
-    const QString dateTimeFormat = QStringLiteral("yyyyMMdd'T'HHmmss'Z'");
+    const QString dateTimeFormat = ENEX_DATE_TIME_FORMAT;
 
     bool insideNote = false;
     bool insideNoteContent = false;
@@ -2038,7 +2031,7 @@ bool ENMLConverterPrivate::importEnex(const QString & enex, QVector<Note> & note
                 return false;
             }
 
-            if (elementName == QStringLiteral(""))
+            if (elementName == QStringLiteral("updated"))
             {
                 if (insideNote)
                 {
@@ -2607,6 +2600,19 @@ bool ENMLConverterPrivate::importEnex(const QString & enex, QVector<Note> & note
                 return false;
             }
 
+            if (elementName == QStringLiteral("resource-attributes"))
+            {
+                if (insideResource) {
+                    QNTRACE(QStringLiteral("Start of resource attributes"));
+                    insideResourceAttributes = true;
+                    continue;
+                }
+
+                errorDescription.base() = QT_TRANSLATE_NOOP("", "Detected resource-attributes tag outside of resource");
+                QNWARNING(errorDescription);
+                return false;
+            }
+
             if (elementName == QStringLiteral("timestamp"))
             {
                 if (insideResource && insideResourceAttributes)
@@ -2740,7 +2746,7 @@ bool ENMLConverterPrivate::importEnex(const QString & enex, QVector<Note> & note
 
                     if (insideResourceRecognitionData)
                     {
-                        currentResourceRecognitionData = QByteArray::fromBase64(reader.text().toString().toLocal8Bit());
+                        currentResourceRecognitionData = reader.text().toString().toLocal8Bit();
                         QNTRACE(QStringLiteral("Read resource recognition data"));
 
                         ErrorString error;
@@ -2794,6 +2800,7 @@ bool ENMLConverterPrivate::importEnex(const QString & enex, QVector<Note> & note
                 currentResource.setDataBody(currentResourceData);
                 currentResource.setDataHash(QCryptographicHash::hash(currentResourceData, QCryptographicHash::Md5));
                 currentResource.setDataSize(currentResourceData.size());
+                insideResourceData = false;
                 continue;
             }
 
@@ -2802,6 +2809,7 @@ bool ENMLConverterPrivate::importEnex(const QString & enex, QVector<Note> & note
                 currentResource.setRecognitionDataBody(currentResourceRecognitionData);
                 currentResource.setRecognitionDataHash(QCryptographicHash::hash(currentResourceRecognitionData, QCryptographicHash::Md5));
                 currentResource.setRecognitionDataSize(currentResourceRecognitionData.size());
+                insideResourceRecognitionData = false;
                 continue;
             }
 
@@ -2810,6 +2818,7 @@ bool ENMLConverterPrivate::importEnex(const QString & enex, QVector<Note> & note
                 currentResource.setAlternateDataBody(currentResourceAlternateData);
                 currentResource.setAlternateDataHash(QCryptographicHash::hash(currentResourceAlternateData, QCryptographicHash::Md5));
                 currentResource.setAlternateDataSize(currentResourceAlternateData.size());
+                insideResourceAlternateData = false;
                 continue;
             }
 

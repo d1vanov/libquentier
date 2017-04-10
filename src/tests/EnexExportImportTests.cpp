@@ -19,32 +19,33 @@
 #include "EnexExportImportTests.h"
 #include <quentier/enml/ENMLConverter.h>
 #include <quentier/types/Note.h>
+#include <quentier/types/Tag.h>
 #include <quentier/types/Resource.h>
 #include <quentier/types/ErrorString.h>
+#include <quentier/logging/QuentierLogger.h>
 #include <QHash>
+#include <QCryptographicHash>
+#include <QFile>
 #include <cmath>
 
 namespace quentier {
 namespace test {
 
 bool compareNoteContents(const Note & lhs, const Note & rhs, QString & error);
+bool compareNotes(const QVector<Note> & originalNotes, const QVector<Note> & importedNotes, QString & error);
+
+void setupSampleNote(Note & note);
+
+void setupNoteTags(Note & note, QHash<QString, QString> & tagNamesByTagLocalUids);
+void bindTagsWithNotes(QVector<Note> & importedNotes, const QHash<QString, QStringList> & tagNamesByNoteLocalUid,
+                       const QHash<QString, QString> & tagNamesByTagLocalUids);
+
+bool setupNoteResources(Note & note, QString & error);
 
 bool exportSingleNoteWithoutTagsAndResourcesToEnexAndImportBack(QString & error)
 {
     Note note;
-    note.setTitle(QStringLiteral("Simple note"));
-    note.setContent(QStringLiteral("<en-note><h1>Hello, world</h1></en-note>"));
-
-    qint64 timestamp = QDateTime::currentMSecsSinceEpoch();
-    note.setCreationTimestamp(timestamp);
-    note.setModificationTimestamp(timestamp);
-
-    qevercloud::NoteAttributes & noteAttributes = note.noteAttributes();
-    noteAttributes.source = QStringLiteral("The magnificent author");
-    noteAttributes.author = QStringLiteral("Very cool guy");
-    noteAttributes.placeName = QStringLiteral("bathroom");
-    noteAttributes.contentClass = QStringLiteral("average");
-    noteAttributes.subjectDate = timestamp;
+    setupSampleNote(note);
 
     QVector<Note> notes;
     notes << note;
@@ -70,24 +71,77 @@ bool exportSingleNoteWithoutTagsAndResourcesToEnexAndImportBack(QString & error)
         return false;
     }
 
-    if (notes.size() != importedNotes.size()) {
-        error = QStringLiteral("The number of original and imported notes doesn't match");
+    return compareNotes(notes, importedNotes, error);
+}
+
+bool exportSingleNoteWithTagsButNoResourcesToEnexAndImportBack(QString & error)
+{
+    Note note;
+    setupSampleNote(note);
+
+    QHash<QString, QString> tagNamesByTagLocalUids;
+    setupNoteTags(note, tagNamesByTagLocalUids);
+
+    QVector<Note> notes;
+    notes << note;
+
+    ErrorString errorDescription;
+    QString enex;
+
+    ENMLConverter converter;
+    bool res = converter.exportNotesToEnex(notes, tagNamesByTagLocalUids, enex, errorDescription);
+    if (Q_UNLIKELY(!res)) {
+        error = errorDescription.nonLocalizedString();
         return false;
     }
 
-    int numNotes = notes.size();
-    for(int i = 0; i < numNotes; ++i)
-    {
-        const Note & originalNote = notes.at(i);
-        const Note & importedNote = importedNotes.at(i);
+    QVector<Note> importedNotes;
+    QHash<QString, QStringList> tagNamesByNoteLocalUid;
 
-        res = compareNoteContents(originalNote, importedNote, error);
-        if (!res) {
-            return false;
-        }
+    res = converter.importEnex(enex, importedNotes, tagNamesByNoteLocalUid, errorDescription);
+    if (Q_UNLIKELY(!res)) {
+        error = errorDescription.nonLocalizedString();
+        return false;
     }
 
-    return true;
+    bindTagsWithNotes(importedNotes, tagNamesByNoteLocalUid, tagNamesByTagLocalUids);
+    return compareNotes(notes, importedNotes, error);
+}
+
+bool exportSingleNoteWithResourcesButNoTagsToEnexAndImportBack(QString & error)
+{
+    Note note;
+    setupSampleNote(note);
+    bool res = setupNoteResources(note, error);
+    if (Q_UNLIKELY(!res)) {
+        return false;
+    }
+
+    QHash<QString, QString> tagNamesByTagLocalUids;
+
+    QVector<Note> notes;
+    notes << note;
+
+    ErrorString errorDescription;
+    QString enex;
+
+    ENMLConverter converter;
+    res = converter.exportNotesToEnex(notes, tagNamesByTagLocalUids, enex, errorDescription);
+    if (Q_UNLIKELY(!res)) {
+        error = errorDescription.nonLocalizedString();
+        return false;
+    }
+
+    QVector<Note> importedNotes;
+    QHash<QString, QStringList> tagNamesByNoteLocalUid;
+
+    res = converter.importEnex(enex, importedNotes, tagNamesByNoteLocalUid, errorDescription);
+    if (Q_UNLIKELY(!res)) {
+        error = errorDescription.nonLocalizedString();
+        return false;
+    }
+
+    return compareNotes(notes, importedNotes, error);
 }
 
 bool compareNoteContents(const Note & lhs, const Note & rhs, QString & error)
@@ -453,6 +507,169 @@ bool compareNoteContents(const Note & lhs, const Note & rhs, QString & error)
         }
     }
 
+    return true;
+}
+
+bool compareNotes(const QVector<Note> & notes, const QVector<Note> & importedNotes, QString & error)
+{
+    int numNotes = notes.size();
+
+    if (numNotes != importedNotes.size()) {
+        error = QStringLiteral("The number of original and imported notes doesn't match");
+        return false;
+    }
+
+    for(int i = 0; i < numNotes; ++i)
+    {
+        const Note & originalNote = notes.at(i);
+        const Note & importedNote = importedNotes.at(i);
+
+        bool res = compareNoteContents(originalNote, importedNote, error);
+        if (!res) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+void setupSampleNote(Note & note)
+{
+    note.setTitle(QStringLiteral("Simple note"));
+    note.setContent(QStringLiteral("<en-note><h1>Hello, world</h1></en-note>"));
+
+    qint64 timestamp = QDateTime::currentMSecsSinceEpoch();
+    // NOTE: rounding the timestamp to ensure the msec would all be zero
+    timestamp /= 1000;
+    timestamp *= 1000;
+
+    note.setCreationTimestamp(timestamp);
+    note.setModificationTimestamp(timestamp);
+
+    qevercloud::NoteAttributes & noteAttributes = note.noteAttributes();
+    noteAttributes.source = QStringLiteral("The magnificent author");
+    noteAttributes.author = QStringLiteral("Very cool guy");
+    noteAttributes.placeName = QStringLiteral("bathroom");
+    noteAttributes.contentClass = QStringLiteral("average");
+    noteAttributes.subjectDate = timestamp;
+}
+
+void setupNoteTags(Note & note, QHash<QString, QString> & tagNamesByTagLocalUids)
+{
+    Tag tag1, tag2, tag3;
+    tag1.setName(QStringLiteral("First tag"));
+    tag2.setName(QStringLiteral("Second tag"));
+    tag3.setName(QStringLiteral("Third tag"));
+
+    note.addTagLocalUid(tag1.localUid());
+    note.addTagLocalUid(tag2.localUid());
+    note.addTagLocalUid(tag3.localUid());
+
+    tagNamesByTagLocalUids[tag1.localUid()] = tag1.name();
+    tagNamesByTagLocalUids[tag2.localUid()] = tag2.name();
+    tagNamesByTagLocalUids[tag3.localUid()] = tag3.name();
+}
+
+void bindTagsWithNotes(QVector<Note> & importedNotes, const QHash<QString, QStringList> & tagNamesByNoteLocalUid,
+                       const QHash<QString, QString> & tagNamesByTagLocalUids)
+{
+    for(auto it = importedNotes.begin(), end = importedNotes.end(); it != end; ++it)
+    {
+        Note & note = *it;
+        auto tagIt = tagNamesByNoteLocalUid.find(note.localUid());
+        if (tagIt == tagNamesByNoteLocalUid.end()) {
+            continue;
+        }
+
+        const QStringList & tagNames = tagIt.value();
+        for(auto tagNameIt = tagNames.constBegin(), tagNameEnd = tagNames.constEnd(); tagNameIt != tagNameEnd; ++tagNameIt)
+        {
+            const QString & tagName = *tagNameIt;
+
+            // Linear search, not nice but ok on this tiny set
+            for(auto tagNamesByTagLocalUidsIt = tagNamesByTagLocalUids.constBegin(),
+                tagNamesByTagLocalUidsEnd = tagNamesByTagLocalUids.constEnd();
+                tagNamesByTagLocalUidsIt != tagNamesByTagLocalUidsEnd; ++tagNamesByTagLocalUidsIt)
+            {
+                if (tagNamesByTagLocalUidsIt.value() == tagName) {
+                    note.addTagLocalUid(tagNamesByTagLocalUidsIt.key());
+                }
+            }
+        }
+    }
+}
+
+bool setupNoteResources(Note & note, QString & error)
+{
+    Resource firstResource;
+
+    QString sampleDataBody = QStringLiteral("XXXXXXXXXXXXXXXXXXXXXXXXXXXXX");
+    firstResource.setDataBody(sampleDataBody.toLocal8Bit());
+    firstResource.setDataHash(QCryptographicHash::hash(firstResource.dataBody(), QCryptographicHash::Md5));
+    firstResource.setDataSize(firstResource.dataBody().size());
+
+    firstResource.setMime("application/text-plain");
+
+    qevercloud::ResourceAttributes & firstResourceAttributes = firstResource.resourceAttributes();
+
+    qint64 timestamp = QDateTime::currentMSecsSinceEpoch();
+    // NOTE: rounding the timestamp to ensure the msec would all be zero
+    timestamp /= 1000;
+    timestamp *= 1000;
+
+    firstResourceAttributes.timestamp = timestamp;
+    firstResourceAttributes.cameraMake = QStringLiteral("Canon. Or Nixon");
+    firstResourceAttributes.fileName = QStringLiteral("Huh?");
+    firstResourceAttributes.attachment = false;
+
+    Resource secondResource;
+
+    QFile imageResourceFile(QStringLiteral(":/tests/life_to_blame.jpg"));
+    bool res = imageResourceFile.open(QIODevice::ReadOnly);
+    if (Q_UNLIKELY(!res)) {
+        error = QStringLiteral("Failed to open the qrc resource file with sample image resource data");
+        return false;
+    }
+
+    QByteArray imageResourceDataBody = imageResourceFile.readAll();
+
+    secondResource.setDataBody(imageResourceDataBody);
+    secondResource.setDataHash(QCryptographicHash::hash(imageResourceDataBody, QCryptographicHash::Md5));
+    secondResource.setDataSize(imageResourceDataBody.size());
+
+    secondResource.setWidth(640);
+    secondResource.setHeight(480);
+
+    secondResource.setMime(QStringLiteral("image/jpg"));
+
+    qevercloud::ResourceAttributes & secondResourceAttributes = secondResource.resourceAttributes();
+    secondResourceAttributes.sourceURL = QStringLiteral("https://www.google.ru");
+    secondResourceAttributes.fileName = imageResourceFile.fileName();
+    secondResourceAttributes.attachment = true;
+    secondResourceAttributes.latitude = 53.02;
+    secondResourceAttributes.longitude = 43.16;
+    secondResourceAttributes.altitude = 28.92;
+    secondResourceAttributes.recoType = QStringLiteral("Fake");
+
+    QFile fakeRecognitionDataFile(QStringLiteral(":/tests/recoIndex-all-in-one-example.xml"));
+    res = fakeRecognitionDataFile.open(QIODevice::ReadOnly);
+    if (Q_UNLIKELY(!res)) {
+        error = QStringLiteral("Failed to open the qrc resource file with sample resource recognition data");
+        return false;
+    }
+
+    QByteArray recognitionDataBody = fakeRecognitionDataFile.readAll();
+
+    secondResource.setRecognitionDataBody(recognitionDataBody);
+    secondResource.setRecognitionDataHash(QCryptographicHash::hash(recognitionDataBody, QCryptographicHash::Md5));
+    secondResource.setRecognitionDataSize(recognitionDataBody.size());
+
+    QList<Resource> resources;
+    resources.reserve(2);
+    resources << firstResource;
+    resources << secondResource;
+
+    note.setResources(resources);
     return true;
 }
 
