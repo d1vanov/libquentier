@@ -383,6 +383,17 @@ void CoreTester::enexExportImportSingleNoteWithTagsButSkipTagsTest()
     CATCH_EXCEPTION();
 }
 
+void CoreTester::enexExportImportMultipleNotesWithTagsAndResourcesTest()
+{
+    try
+    {
+        QString error;
+        bool res = exportMultipleNotesWithTagsAndResourcesAndImportBack(error);
+        QVERIFY2(res == true, qPrintable(error));
+    }
+    CATCH_EXCEPTION();
+}
+
 void CoreTester::resourceRecognitionIndicesParsingTest()
 {
     try

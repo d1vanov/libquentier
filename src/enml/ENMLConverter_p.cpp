@@ -1549,6 +1549,7 @@ bool ENMLConverterPrivate::exportNotesToEnex(const QVector<Note> & notes, const 
 
         writer.writeStartElement(QStringLiteral("note"));
 
+        // NOTE: per DTD, title and content tags have to exist while created and updated don't have to
         writer.writeStartElement(QStringLiteral("title"));
         if (note.hasTitle()) {
             writer.writeCharacters(note.title());
@@ -1561,23 +1562,21 @@ bool ENMLConverterPrivate::exportNotesToEnex(const QVector<Note> & notes, const 
         }
         writer.writeEndElement();   // content
 
-        writer.writeStartElement(QStringLiteral("created"));
-        if (note.hasCreationTimestamp())
-        {
+        if (note.hasCreationTimestamp()) {
+            writer.writeStartElement(QStringLiteral("created"));
             QDateTime creationDateTime = QDateTime::fromMSecsSinceEpoch(note.creationTimestamp());
             QString creationDateTimeString = creationDateTime.toString(dateTimeFormat);
             writer.writeCharacters(creationDateTimeString);
+            writer.writeEndElement();   // created
         }
-        writer.writeEndElement();   // created
 
-        writer.writeStartElement(QStringLiteral("updated"));
-        if (note.hasModificationTimestamp())
-        {
+        if (note.hasModificationTimestamp()) {
+            writer.writeStartElement(QStringLiteral("updated"));
             QDateTime modificationDateTime = QDateTime::fromMSecsSinceEpoch(note.modificationTimestamp());
             QString modificationDateTimeString = modificationDateTime.toString(dateTimeFormat);
             writer.writeCharacters(modificationDateTimeString);
+            writer.writeEndElement();   // updated
         }
-        writer.writeEndElement();   // updated
 
         if ((exportTagsOption == ENMLConverter::EnexExportTags::Yes) && note.hasTagLocalUids())
         {

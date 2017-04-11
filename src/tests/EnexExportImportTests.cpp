@@ -35,12 +35,16 @@ bool compareNoteContents(const Note & lhs, const Note & rhs, QString & error);
 bool compareNotes(const QVector<Note> & originalNotes, const QVector<Note> & importedNotes, QString & error);
 
 void setupSampleNote(Note & note);
+void setupSampleNoteV2(Note & note);
 
 void setupNoteTags(Note & note, QHash<QString, QString> & tagNamesByTagLocalUids);
+void setupNoteTagsV2(Note & note, QHash<QString, QString> & tagNamesByTagLocalUids);
+
 void bindTagsWithNotes(QVector<Note> & importedNotes, const QHash<QString, QStringList> & tagNamesByNoteLocalUid,
                        const QHash<QString, QString> & tagNamesByTagLocalUids);
 
 bool setupNoteResources(Note & note, QString & error);
+void setupNoteResourcesV2(Note & note);
 
 bool exportSingleNoteWithoutTagsAndResourcesToEnexAndImportBack(QString & error)
 {
@@ -226,6 +230,57 @@ bool exportSingleNoteWithTagsToEnexButSkipTagsAndImportBack(QString & error)
     }
 
     notes[0].setTagLocalUids(QStringList());
+    return compareNotes(notes, importedNotes, error);
+}
+
+bool exportMultipleNotesWithTagsAndResourcesAndImportBack(QString & error)
+{
+    Note firstNote;
+    setupSampleNote(firstNote);
+
+    Note secondNote;
+    setupSampleNoteV2(secondNote);
+
+    Note thirdNote;
+    thirdNote.setContent(QStringLiteral("<en-note><h1>Quick note</h1></en-note>"));
+
+    QHash<QString, QString> tagNamesByTagLocalUids;
+    setupNoteTags(firstNote, tagNamesByTagLocalUids);
+    setupNoteTagsV2(secondNote, tagNamesByTagLocalUids);
+
+    bool res = setupNoteResources(thirdNote, error);
+    if (Q_UNLIKELY(!res)) {
+        return false;
+    }
+
+    setupNoteResourcesV2(secondNote);
+
+    QVector<Note> notes;
+    notes << firstNote;
+    notes << secondNote;
+    notes << thirdNote;
+
+    ErrorString errorDescription;
+    QString enex;
+
+    ENMLConverter converter;
+    ENMLConverter::EnexExportTags::type exportTagsOption = ENMLConverter::EnexExportTags::Yes;
+    res = converter.exportNotesToEnex(notes, tagNamesByTagLocalUids, exportTagsOption, enex, errorDescription);
+    if (Q_UNLIKELY(!res)) {
+        error = errorDescription.nonLocalizedString();
+        return false;
+    }
+
+    QVector<Note> importedNotes;
+    QHash<QString, QStringList> tagNamesByNoteLocalUid;
+
+    res = converter.importEnex(enex, importedNotes, tagNamesByNoteLocalUid, errorDescription);
+    if (Q_UNLIKELY(!res)) {
+        error = errorDescription.nonLocalizedString();
+        return false;
+    }
+
+    bindTagsWithNotes(importedNotes, tagNamesByNoteLocalUid, tagNamesByTagLocalUids);
     return compareNotes(notes, importedNotes, error);
 }
 
@@ -639,6 +694,47 @@ void setupSampleNote(Note & note)
     noteAttributes.subjectDate = timestamp;
 }
 
+void setupSampleNoteV2(Note & note)
+{
+    note.setTitle(QStringLiteral("My cool note"));
+    note.setContent(QStringLiteral("<en-note><h2>Rock hard</h2><div>Rock free</div><div>All day, all night</div></en-note>"));
+
+    qint64 timestamp = QDateTime::currentMSecsSinceEpoch();
+    // NOTE: rounding the timestamp to ensure the msec would all be zero
+    timestamp /= 1000;
+    timestamp *= 1000;
+
+    note.setCreationTimestamp(timestamp);
+    note.setModificationTimestamp(timestamp);
+
+    qevercloud::NoteAttributes & noteAttributes = note.noteAttributes();
+    noteAttributes.subjectDate = timestamp;
+    noteAttributes.latitude = 23.48;
+    noteAttributes.longitude = 72.11;
+    noteAttributes.altitude = 52.36;
+    noteAttributes.author = QStringLiteral("The creator");
+    noteAttributes.source = QStringLiteral("Brain");
+    noteAttributes.sourceURL = QStringLiteral("https://www.google.com");
+    noteAttributes.sourceApplication = QApplication::applicationName();
+    noteAttributes.reminderOrder = 2;
+    noteAttributes.reminderTime = timestamp + 2000;
+    noteAttributes.reminderDoneTime = timestamp + 3000;
+    noteAttributes.placeName = QStringLiteral("shower");
+    noteAttributes.contentClass = QStringLiteral("awesome");
+
+    noteAttributes.applicationData = qevercloud::LazyMap();
+
+    noteAttributes.applicationData->keysOnly = QSet<QString>();
+    Q_UNUSED(noteAttributes.applicationData->keysOnly->insert(QStringLiteral("key1")))
+    Q_UNUSED(noteAttributes.applicationData->keysOnly->insert(QStringLiteral("key2")))
+    Q_UNUSED(noteAttributes.applicationData->keysOnly->insert(QStringLiteral("key3")))
+
+    noteAttributes.applicationData->fullMap = QMap<QString, QString>();
+    noteAttributes.applicationData->fullMap.ref()[QStringLiteral("key1")] = QStringLiteral("value1");
+    noteAttributes.applicationData->fullMap.ref()[QStringLiteral("key2")] = QStringLiteral("value2");
+    noteAttributes.applicationData->fullMap.ref()[QStringLiteral("key3")] = QStringLiteral("value3");
+}
+
 void setupNoteTags(Note & note, QHash<QString, QString> & tagNamesByTagLocalUids)
 {
     Tag tag1, tag2, tag3;
@@ -653,6 +749,19 @@ void setupNoteTags(Note & note, QHash<QString, QString> & tagNamesByTagLocalUids
     tagNamesByTagLocalUids[tag1.localUid()] = tag1.name();
     tagNamesByTagLocalUids[tag2.localUid()] = tag2.name();
     tagNamesByTagLocalUids[tag3.localUid()] = tag3.name();
+}
+
+void setupNoteTagsV2(Note & note, QHash<QString, QString> & tagNamesByTagLocalUids)
+{
+    Tag tag1, tag2;
+    tag1.setName(QStringLiteral("Cool tag"));
+    tag2.setName(QStringLiteral("Even cooler tag"));
+
+    note.addTagLocalUid(tag1.localUid());
+    note.addTagLocalUid(tag2.localUid());
+
+    tagNamesByTagLocalUids[tag1.localUid()] = tag1.name();
+    tagNamesByTagLocalUids[tag2.localUid()] = tag2.name();
 }
 
 void bindTagsWithNotes(QVector<Note> & importedNotes, const QHash<QString, QStringList> & tagNamesByNoteLocalUid,
@@ -756,6 +865,50 @@ bool setupNoteResources(Note & note, QString & error)
 
     note.setResources(resources);
     return true;
+}
+
+void setupNoteResourcesV2(Note & note)
+{
+    Resource resource;
+
+    QString sampleDataBody = QStringLiteral("Suppose this would be some meaningless piece of text");
+    resource.setDataBody(sampleDataBody.toLocal8Bit());
+    resource.setDataHash(QCryptographicHash::hash(resource.dataBody(), QCryptographicHash::Md5));
+    resource.setDataSize(resource.dataBody().size());
+
+    resource.setMime("application/text-plain");
+
+    qevercloud::ResourceAttributes & resourceAttributes = resource.resourceAttributes();
+
+    qint64 timestamp = QDateTime::currentMSecsSinceEpoch();
+    // NOTE: rounding the timestamp to ensure the msec would all be zero
+    timestamp /= 1000;
+    timestamp *= 1000;
+
+    resourceAttributes.sourceURL = QStringLiteral("https://www.google.com");
+    resourceAttributes.timestamp = timestamp;
+    resourceAttributes.latitude = 52.43;
+    resourceAttributes.longitude = 23.46;
+    resourceAttributes.altitude = 82.13;
+    resourceAttributes.cameraMake = QStringLiteral("something");
+    resourceAttributes.fileName = QStringLiteral("None");
+    resourceAttributes.attachment = true;
+
+    resourceAttributes.applicationData = qevercloud::LazyMap();
+
+    resourceAttributes.applicationData->keysOnly = QSet<QString>();
+    Q_UNUSED(resourceAttributes.applicationData->keysOnly->insert(QStringLiteral("resKey1")))
+    Q_UNUSED(resourceAttributes.applicationData->keysOnly->insert(QStringLiteral("resKey2")))
+    Q_UNUSED(resourceAttributes.applicationData->keysOnly->insert(QStringLiteral("resKey3")))
+    Q_UNUSED(resourceAttributes.applicationData->keysOnly->insert(QStringLiteral("resKey4")))
+
+    resourceAttributes.applicationData->fullMap = QMap<QString, QString>();
+    resourceAttributes.applicationData->fullMap.ref()[QStringLiteral("resKey1")] = QStringLiteral("resVal1");
+    resourceAttributes.applicationData->fullMap.ref()[QStringLiteral("resKey2")] = QStringLiteral("resVal2");
+    resourceAttributes.applicationData->fullMap.ref()[QStringLiteral("resKey3")] = QStringLiteral("resVal3");
+    resourceAttributes.applicationData->fullMap.ref()[QStringLiteral("resKey4")] = QStringLiteral("resVal4");
+
+    note.addResource(resource);
 }
 
 } // namespace test
