@@ -8,5 +8,9 @@
         <file>complexNoteHtmlWithTableAndHilitorHelperTags.txt</file>
         <file>recoIndex-all-in-one-example.xml</file>
         <file>life_to_blame.jpg</file>
+	<file>SampleEnex1.enex</file>
+	<file>SampleEnex2.enex</file>
+	<file>SampleEnex3.enex</file>
+	<file>SampleEnex4.enex</file>
     </qresource>
 </RCC>

@@ -30,6 +30,7 @@ bool exportSingleNoteWithResourcesButNoTagsToEnexAndImportBack(QString & error);
 bool exportSingleNoteWithTagsAndResourcesToEnexAndImportBack(QString & error);
 bool exportSingleNoteWithTagsToEnexButSkipTagsAndImportBack(QString & error);
 bool exportMultipleNotesWithTagsAndResourcesAndImportBack(QString & error);
+bool importRealWorldEnex(QString & error);
 
 } // namespace test
 } // namespace quentier

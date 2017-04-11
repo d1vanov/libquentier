@@ -1,0 +1,558 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE en-export SYSTEM "http://xml.evernote.com/pub/evernote-export3.dtd">
+<en-export export-date="20170410T134656Z" application="Evernote" version="Evernote Mac 6.8 (453748)">
+<note><title>Make it super simple to use on Travis CI · Issue #81 · probonopd/linuxdeployqt</title><content><![CDATA[<?xml version="1.0" encoding="utf-8"?><!DOCTYPE en-note SYSTEM "http://xml.evernote.com/pub/enml2.dtd"><en-note><div style="-evernote-webclip:true"><br/><div style="font-size: 16px; display: inline-block;"><div style="box-sizing:border-box;font-family:sans-serif;text-size-adjust:100%;"><div style="box-sizing:border-box;font-family:-apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, Helvetica, Arial, sans-serif, &quot;Apple Color Emoji&quot;, &quot;Segoe UI Emoji&quot;, &quot;Segoe UI Symbol&quot;;font-size:14px;line-height:1.5;color:rgb(51, 51, 51);background-color:rgb(255, 255, 255);min-width:1020px;word-wrap:break-word;"><div style="box-sizing:border-box;"><div style="box-sizing:border-box;"><div style="box-sizing:border-box;"><div style="box-sizing:border-box;"><div style="box-sizing:border-box;"><div style="box-sizing:border-box;"><div style="box-sizing:border-box;">
+
+    
+  <div style="box-sizing:border-box;">
+
+  <div style="box-sizing:border-box;">
+      <div style="box-sizing:border-box;float:right;margin-top:3px;">
+          <a href="https://github.com/probonopd/linuxdeployqt/issues/new" style="white-space:nowrap;background-color:rgb(108, 198, 68);color:rgb(255, 255, 255);text-decoration:none;position:relative;display:inline-block;padding:3px 10px;font-size:12px;font-weight:600;line-height:20px;box-sizing:border-box;vertical-align:middle;cursor:pointer;user-select:none;background-image:linear-gradient(rgb(145, 221, 112), rgb(85, 174, 46));border:1px solid rgb(90, 173, 53);border-radius:3px;-webkit-appearance:none;text-shadow:rgba(0, 0, 0, 0.14902) 0px -1px 0px;margin-left:5px;float:right;">
+            New issue
+          </a>
+      </div>
+
+    <h1 style="box-sizing:border-box;font-size:32px;margin:0.67em 0px;margin-top:0px;margin-bottom:0px;font-weight:normal;margin-right:150px;line-height:1.125;word-wrap:break-word;">
+      <span style="box-sizing:border-box;">
+        Make it super simple to use on Travis CI
+      </span>
+      <span style="box-sizing:border-box;font-weight:300;color:rgb(170, 170, 170);letter-spacing:-1px;">#81</span>
+    </h1>
+  </div>
+
+
+  <div style="box-sizing:border-box;display:table;padding-bottom:20px;margin-top:9px;font-size:14px;line-height:20px;color:rgb(118, 118, 118);border-bottom:1px solid rgb(238, 238, 238);margin-bottom:15px;">
+    <div style="box-sizing:border-box;display:table-cell;width:1%;white-space:nowrap;vertical-align:top;">
+        <div style="box-sizing:border-box;display:inline-block;padding:4px 8px;font-weight:600;line-height:20px;color:rgb(255, 255, 255);text-align:center;background-color:rgb(108, 198, 68);border-radius:3px;margin-right:8px;">
+          <span style="box-sizing:border-box;display:inline-block;vertical-align:text-bottom;fill:currentcolor;overflow:hidden;"><span style="box-sizing:border-box;"></span></span>
+          Open
+        </div>
+    </div>
+    <div style="box-sizing:border-box;display:table-cell;width:99%;white-space:normal;vertical-align:top;padding-top:4px;word-wrap:break-word;">
+        <a href="https://github.com/probonopd" style="box-sizing:border-box;background-color:transparent;text-decoration:none;color:rgb(85, 85, 85);font-weight:600;">probonopd</a>  opened this <span style="box-sizing:border-box;text-transform:lowercase;">Issue</span> <span title="Feb 21, 2017, 12:47 AM GMT+3" style="box-sizing:border-box;">4 days ago</span>
+        · 1 comment
+    </div>
+  </div>
+</div>
+
+
+    <div style="box-sizing:border-box;"><span style="display:table;"></span>
+      <div style="box-sizing:border-box;top:0px;z-index:21;float:right;width:200px;">
+        <div style="box-sizing:border-box;">
+
+  <div style="box-sizing:border-box;padding-top:15px;font-size:12px;color:rgb(118, 118, 118);">
+  <div style="box-sizing:border-box;"><div style="box-sizing:border-box;margin:0;padding:0;display:inline;"></div>
+    
+  <h3 style="box-sizing:border-box;margin-top:0px;font-weight:600;margin-bottom:10px;font-size:12px;line-height:16px;color:rgb(118, 118, 118);">
+    Assignees
+  </h3>
+
+
+    <span style="box-sizing:border-box;">
+    No one assigned
+</span>
+
+</div></div>
+
+  <div style="box-sizing:border-box;padding-top:15px;font-size:12px;color:rgb(118, 118, 118);margin-top:15px;border-top:1px solid rgb(238, 238, 238);">
+  <div style="box-sizing:border-box;"><div style="box-sizing:border-box;margin:0;padding:0;display:inline;"></div>
+      
+  <h3 style="box-sizing:border-box;margin-top:0px;font-weight:600;margin-bottom:10px;font-size:12px;line-height:16px;color:rgb(118, 118, 118);">
+    Labels
+  </h3>
+
+
+    <div style="box-sizing:border-box;position:relative;">
+      <a href="https://github.com/probonopd/linuxdeployqt/labels/enhancement" title="enhancement" style="white-space:nowrap;border-radius:2px;line-height:1;text-decoration:none;font-weight:600;box-sizing:border-box;overflow:hidden;text-overflow:ellipsis;vertical-align:top;max-width:100%;padding:6px 10px;font-size:12px;box-shadow:none;display:block;color:rgb(28, 39, 51);background-color:rgb(132, 182, 235);">enhancement</a>
+
+</div>
+
+</div></div>
+
+  <div style="box-sizing:border-box;padding-top:15px;font-size:12px;color:rgb(118, 118, 118);margin-top:15px;border-top:1px solid rgb(238, 238, 238);">
+  <div style="box-sizing:border-box;"><div style="box-sizing:border-box;margin:0;padding:0;display:inline;"></div>
+    
+  <h3 style="box-sizing:border-box;margin-top:0px;font-weight:600;margin-bottom:10px;font-size:12px;line-height:16px;color:rgb(118, 118, 118);">
+    Projects
+  </h3>
+
+
+    <span style="box-sizing:border-box;">
+    None yet
+</span>
+
+</div></div>
+
+  <div style="box-sizing:border-box;padding-top:15px;font-size:12px;color:rgb(118, 118, 118);margin-top:15px;border-top:1px solid rgb(238, 238, 238);">
+  <div style="box-sizing:border-box;"><div style="box-sizing:border-box;margin:0;padding:0;display:inline;"></div>
+    
+  <h3 style="box-sizing:border-box;margin-top:0px;font-weight:600;margin-bottom:10px;font-size:12px;line-height:16px;color:rgb(118, 118, 118);">
+    Milestone
+  </h3>
+
+
+      No milestone
+
+</div></div>
+
+    <div style="box-sizing:border-box;padding-top:15px;font-size:12px;color:rgb(118, 118, 118);position:relative;margin-top:15px;border-top:1px solid rgb(238, 238, 238);">
+    <h3 style="box-sizing:border-box;margin-top:0px;font-weight:600;margin-bottom:10px;font-size:12px;line-height:16px;color:rgb(118, 118, 118);">Notifications</h3>
+    <div style="box-sizing:border-box;color:rgb(118, 118, 118);background-color:rgb(255, 255, 255);border-radius:3px;padding:0px;margin:0px;border:0px;">
+
+  
+
+  <div style="box-sizing:border-box;vertical-align:middle;display:block;"><div style="box-sizing:border-box;margin:0;padding:0;display:inline;"></div>    
+    
+    
+    
+
+    
+</div>
+  <p style="box-sizing:border-box;display:inline-block;vertical-align:middle;padding:0px;margin:5px 0px 0px;color:rgb(118, 118, 118);font-size:12px;">You’re receiving notifications because you’re subscribed to this repository.</p>
+</div>
+
+  </div>
+
+  <div style="box-sizing:border-box;padding-top:15px;font-size:12px;color:rgb(118, 118, 118);margin-top:15px;border-top:1px solid rgb(238, 238, 238);">
+  <div style="box-sizing:border-box;">
+
+    <h3 style="box-sizing:border-box;margin-top:0px;font-weight:600;margin-bottom:10px;font-size:12px;line-height:16px;color:rgb(118, 118, 118);">
+      1 participant
+    </h3>
+    <div style="box-sizing:border-box;margin-left:-3px;"><span style="display:table;"></span>
+        <a href="https://github.com/probonopd" style="box-sizing:border-box;background-color:transparent;text-decoration:none;position:relative;color:rgb(118, 118, 118);float:left;margin:3px 0px 0px 3px;"><span style="color:rgb(118, 118, 118);position:absolute;z-index:1000001;display:none;width:0px;height:0px;pointer-events:none;border:5px solid transparent;opacity:0;top:-5px;right:50%;bottom:auto;margin-right:-5px;border-top-color:rgba(0, 0, 0, 0.8);"></span><en-media type="image/png" hash="7c7bfafc8560b457eb3494b2b35020ae" alt="@probonopd" height="26" width="26" style="box-sizing:border-box;border-style:none;display:inline-block;overflow:hidden;line-height:1;vertical-align:middle;border-radius:3px;"></en-media> <span style="color:rgb(118, 118, 118);position:absolute;z-index:1000000;display:none;padding:5px 8px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:11px;line-height:1.5;font-family:-apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, Helvetica, Arial, sans-serif, &quot;Apple Color Emoji&quot;, &quot;Segoe UI Emoji&quot;, &quot;Segoe UI Symbol&quot;;-webkit-font-smoothing:subpixel-antialiased;text-align:center;text-decoration:none;text-shadow:none;text-transform:none;letter-spacing:normal;word-wrap:break-word;white-space:pre;pointer-events:none;background:rgba(0, 0, 0, 0.8);border-radius:3px;opacity:0;right:50%;bottom:100%;margin-bottom:5px;transform:translateX(50%);">probonopd</span></a>
+    <span style="display:table;clear:both;"></span></div>
+  </div>
+</div>
+
+
+  
+
+</div>
+
+      </div>
+
+      <div style="box-sizing:border-box;position:relative;float:left;width:760px;"><span style="position:absolute;top:0px;bottom:0px;left:79px;z-index:-1;display:block;width:2px;background-color:rgb(243, 243, 243);"></span>
+
+        <div style="box-sizing:border-box;">
+          
+
+  <div style="box-sizing:border-box;position:relative;padding-left:60px;margin-bottom:15px;border-top:2px solid rgb(255, 255, 255);border-bottom:2px solid rgb(255, 255, 255);margin-top:0px;">
+    <a href="https://github.com/probonopd" style="box-sizing:border-box;background-color:transparent;color:rgb(64, 120, 192);text-decoration:none;"><en-media type="image/png" hash="c0cff7455cc5ae20bcbf68bb5a8f8917" alt="@probonopd" height="44" width="44" style="box-sizing:border-box;border-style:none;float:left;margin-left:-60px;border-radius:3px;"></en-media></a>
+    
+
+<div style="box-sizing:border-box;position:relative;background-color:rgb(255, 255, 255);border:1px solid rgb(221, 221, 221);border-radius:3px;"><span style="position:absolute;top:11px;right:100%;left:-16px;display:block;width:0px;height:0px;pointer-events:none;border-color:transparent;border-style:solid solid outset;border-width:8px;border-right-color:rgb(221, 221, 221);"> </span>
+
+  
+<div style="box-sizing:border-box;padding-right:15px;padding-left:15px;color:rgb(118, 118, 118);background-color:rgb(247, 247, 247);border-bottom:1px solid rgb(221, 221, 221);border-top-left-radius:3px;border-top-right-radius:3px;">
+  <div style="box-sizing:border-box;float:right;margin-right:-5px;margin-left:10px;">
+      
+  <span style="box-sizing:border-box;position:relative;display:inline-block;">
+    
+    
+
+
+  </span>
+
+
+
+  </div>
+
+    
+    <span style="box-sizing:border-box;position:relative;float:right;padding:2px 5px;margin:8px 0px 0px 10px;font-size:12px;cursor:default;border:1px solid rgba(0, 0, 0, 0.0980392);border-radius:3px;font-weight:600;"><span style="font-weight:600;font-size:12px;cursor:default;position:absolute;z-index:1000001;display:none;width:0px;height:0px;color:rgba(0, 0, 0, 0.8);pointer-events:none;border:5px solid transparent;opacity:0;top:auto;right:50%;bottom:-5px;margin-right:-5px;border-bottom-color:rgba(0, 0, 0, 0.8);"></span>
+      Owner
+    <span style="font-weight:600;font-size:12px;cursor:default;position:absolute;z-index:1000000;display:none;padding:5px 8px;font-style:normal;font-variant:normal;font-stretch:normal;line-height:1.5;font-family:-apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, Helvetica, Arial, sans-serif, &quot;Apple Color Emoji&quot;, &quot;Segoe UI Emoji&quot;, &quot;Segoe UI Symbol&quot;;-webkit-font-smoothing:subpixel-antialiased;color:rgb(255, 255, 255);text-align:center;text-decoration:none;text-shadow:none;text-transform:none;letter-spacing:normal;word-wrap:normal;white-space:pre-line;pointer-events:none;background:rgba(0, 0, 0, 0.8);border-radius:3px;opacity:0;top:100%;right:auto;margin-top:5px;transform:translateX(-50%);width:max-content;max-width:250px;word-break:break-word;border-collapse:separate;left:50%;">This user is the owner of the linuxdeployqt repository.</span></span>
+
+
+
+  <div style="box-sizing:border-box;max-width:78%;padding-top:10px;padding-bottom:10px;">
+
+    <strong style="box-sizing:border-box;font-weight:600;">
+      <a href="https://github.com/probonopd" style="box-sizing:border-box;background-color:transparent;text-decoration:none;color:rgb(85, 85, 85);">probonopd</a> 
+    </strong>
+
+    commented
+
+      <a href="https://github.com/probonopd/linuxdeployqt/issues/81#issue-208988984" style="box-sizing:border-box;background-color:transparent;text-decoration:none;color:inherit;white-space:nowrap;"><span title="Feb 21, 2017, 12:47 AM GMT+3" style="box-sizing:border-box;">4 days ago</span></a>
+
+      •
+      <span style="box-sizing:border-box;position:relative;color:inherit;white-space:nowrap;cursor:default;"><span style="color:inherit;white-space:nowrap;cursor:default;position:absolute;z-index:1000001;display:none;width:0px;height:0px;pointer-events:none;border:5px solid transparent;opacity:0;top:-5px;right:50%;bottom:auto;margin-right:-5px;border-top-color:rgba(0, 0, 0, 0.8);"></span>
+        edited
+      <span style="color:inherit;white-space:nowrap;cursor:default;position:absolute;z-index:1000000;display:none;padding:5px 8px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:11px;line-height:1.5;font-family:-apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, Helvetica, Arial, sans-serif, &quot;Apple Color Emoji&quot;, &quot;Segoe UI Emoji&quot;, &quot;Segoe UI Symbol&quot;;-webkit-font-smoothing:subpixel-antialiased;text-align:center;text-decoration:none;text-shadow:none;text-transform:none;letter-spacing:normal;word-wrap:break-word;pointer-events:none;background:rgba(0, 0, 0, 0.8);border-radius:3px;opacity:0;right:50%;bottom:100%;margin-bottom:5px;transform:translateX(50%);">probonopd edited this issue about 5 hours ago</span></span>
+  </div>
+</div>
+
+
+  <div style="box-sizing:border-box;">
+    <table style="font-size:inherit;font-weight:inherit;font-style:inherit;font-variant:inherit;box-sizing:border-box;border-spacing:0px;border-collapse:collapse;display:block;">
+      <tbody style="box-sizing:border-box;display:block;">
+        <tr style="box-sizing:border-box;display:block;">
+          <td style="box-sizing:border-box;padding:15px;font-family:-apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, Helvetica, Arial, sans-serif, &quot;Apple Color Emoji&quot;, &quot;Segoe UI Emoji&quot;, &quot;Segoe UI Symbol&quot;;font-size:14px;line-height:1.5;word-wrap:break-word;width:100%;overflow:visible;display:block;"><span style="font-family:-apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, Helvetica, Arial, sans-serif, &quot;Apple Color Emoji&quot;, &quot;Segoe UI Emoji&quot;, &quot;Segoe UI Symbol&quot;;font-size:14px;line-height:1.5;display:table;"></span>
+              <p style="box-sizing:border-box;margin-bottom:16px;margin-top:0px;">A common use case for <code style="box-sizing:border-box;font-family:SFMono-Regular, Consolas, &quot;Liberation Mono&quot;, Menlo, Courier, monospace;font-size:85%;padding:0.2em 0px;margin:0px;background-color:rgba(0, 0, 0, 0.0392157);border-radius:3px;"><span style="font-family:SFMono-Regular, Consolas, &quot;Liberation Mono&quot;, Menlo, Courier, monospace;font-size:85%;letter-spacing:-0.2em;"> </span>linuxdeployqt<span style="font-family:SFMono-Regular, Consolas, &quot;Liberation Mono&quot;, Menlo, Courier, monospace;font-size:85%;letter-spacing:-0.2em;"> </span></code> is to use it on Travis CI after the <code style="box-sizing:border-box;font-family:SFMono-Regular, Consolas, &quot;Liberation Mono&quot;, Menlo, Courier, monospace;font-size:85%;padding:0.2em 0px;margin:0px;background-color:rgba(0, 0, 0, 0.0392157);border-radius:3px;"><span style="font-family:SFMono-Regular, Consolas, &quot;Liberation Mono&quot;, Menlo, Courier, monospace;font-size:85%;letter-spacing:-0.2em;"> </span>make<span style="font-family:SFMono-Regular, Consolas, &quot;Liberation Mono&quot;, Menlo, Courier, monospace;font-size:85%;letter-spacing:-0.2em;"> </span></code> command.</p>
+<p style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;">Currently quite some hoops are necessary. We should make <code style="box-sizing:border-box;font-family:SFMono-Regular, Consolas, &quot;Liberation Mono&quot;, Menlo, Courier, monospace;font-size:85%;padding:0.2em 0px;margin:0px;background-color:rgba(0, 0, 0, 0.0392157);border-radius:3px;"><span style="font-family:SFMono-Regular, Consolas, &quot;Liberation Mono&quot;, Menlo, Courier, monospace;font-size:85%;letter-spacing:-0.2em;"> </span>linuxdeployqt<span style="font-family:SFMono-Regular, Consolas, &quot;Liberation Mono&quot;, Menlo, Courier, monospace;font-size:85%;letter-spacing:-0.2em;"> </span></code> so intelligent as to be a one-line operation, ideally replacing most of the manual work of</p>
+<pre style="font-weight:normal;font-family:SFMono-Regular, Consolas, &quot;Liberation Mono&quot;, Menlo, Courier, monospace;box-sizing:border-box;font-stretch:normal;font-variant:normal;font-style:normal;margin-bottom:16px;font-size:85%;margin-top:0px;line-height:1.45;word-wrap:normal;padding:16px;overflow:auto;background-color:rgb(247, 247, 247);border-radius:3px;"><code style="white-space:pre;font-family:SFMono-Regular, Consolas, &quot;Liberation Mono&quot;, Menlo, Courier, monospace;box-sizing:border-box;border:0px;padding:0px;border-radius:3px;word-break:normal;font-size:100%;background:transparent;margin:0px;display:inline;overflow:visible;line-height:inherit;word-wrap:normal;background-color:transparent;"><span style="font-family:SFMono-Regular, Consolas, &quot;Liberation Mono&quot;, Menlo, Courier, monospace;font-size:100%;white-space:pre;line-height:inherit;letter-spacing:-0.2em;">normal</span>language: cpp
+compiler: gcc
+sudo: require
+dist: trusty
+
+before_install:
+    - sudo add-apt-repository ppa:beineri/opt-qt58-trusty -y
+    - sudo apt-get update -qq
+    
+install: 
+    - sudo apt-get -y install qt58base
+    - source /opt/qt58/bin/qt58-env.sh
+
+script:
+  - qmake PREFIX=/usr
+  - make -j4
+  - sudo apt-get -y install checkinstall
+  - sudo checkinstall --pkgname=app --pkgversion="1" --pkgrelease="1" --backup=no --fstrans=no --default --deldoc 
+  - mkdir appdir ; cd appdir
+  - dpkg -x ../app_1-1_amd64.deb . ; find .
+  - cp ./usr/share/applications/edfbrowser.desktop .
+  - cp ./usr/share/icons/hicolor/48x48/apps/edf.png .
+  - cd .. 
+  - wget -c "https://github.com/probonopd/linuxdeployqt/releases/download/3/linuxdeployqt-3-x86_64.AppImage" 
+  - chmod a+x linuxdeployqt*.AppImage
+  - unset QTDIR; unset QT_PLUGIN_PATH ; unset LD_LIBRARY_PATH
+  - ./linuxdeployqt*.AppImage ./appdir/usr/bin/edfbrowser -bundle-non-qt-libs
+  - ./linuxdeployqt*.AppImage ./appdir/usr/bin/edfbrowser -appimage 
+  - curl --upload-file ./EDFbrowser-*.AppImage https://transfer.sh/EDFbrowser-git$(git rev-parse --short HEAD)-x86_64.AppImage 
+
+<span style="font-family:SFMono-Regular, Consolas, &quot;Liberation Mono&quot;, Menlo, Courier, monospace;font-size:100%;white-space:pre;line-height:inherit;letter-spacing:-0.2em;">normal</span></code></pre>
+<p style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;">We could, as part of <code style="box-sizing:border-box;font-family:SFMono-Regular, Consolas, &quot;Liberation Mono&quot;, Menlo, Courier, monospace;font-size:85%;padding:0.2em 0px;margin:0px;background-color:rgba(0, 0, 0, 0.0392157);border-radius:3px;"><span style="font-family:SFMono-Regular, Consolas, &quot;Liberation Mono&quot;, Menlo, Courier, monospace;font-size:85%;letter-spacing:-0.2em;"> </span>linuxdeployqt<span style="font-family:SFMono-Regular, Consolas, &quot;Liberation Mono&quot;, Menlo, Courier, monospace;font-size:85%;letter-spacing:-0.2em;"> </span></code> and/or the underlying <code style="box-sizing:border-box;font-family:SFMono-Regular, Consolas, &quot;Liberation Mono&quot;, Menlo, Courier, monospace;font-size:85%;padding:0.2em 0px;margin:0px;background-color:rgba(0, 0, 0, 0.0392157);border-radius:3px;"><span style="font-family:SFMono-Regular, Consolas, &quot;Liberation Mono&quot;, Menlo, Courier, monospace;font-size:85%;letter-spacing:-0.2em;"> </span>appimagetool<span style="font-family:SFMono-Regular, Consolas, &quot;Liberation Mono&quot;, Menlo, Courier, monospace;font-size:85%;letter-spacing:-0.2em;"> </span></code>,</p>
+<ul style="box-sizing:border-box;padding-left:2em;margin-top:0px;margin-bottom:0px;">
+<li style="box-sizing:border-box;margin-left:0px;">Unset the offending Qt environment variables that prevent <code style="box-sizing:border-box;font-family:SFMono-Regular, Consolas, &quot;Liberation Mono&quot;, Menlo, Courier, monospace;font-size:85%;padding:0.2em 0px;margin:0px;background-color:rgba(0, 0, 0, 0.0392157);border-radius:3px;"><span style="font-family:SFMono-Regular, Consolas, &quot;Liberation Mono&quot;, Menlo, Courier, monospace;font-size:85%;letter-spacing:-0.2em;"> </span>linuxdeployqt<span style="font-family:SFMono-Regular, Consolas, &quot;Liberation Mono&quot;, Menlo, Courier, monospace;font-size:85%;letter-spacing:-0.2em;"> </span></code> from running</li>
+<li style="box-sizing:border-box;margin-top:0.25em;margin-left:0px;">Check if there is exactly one desktop file in <code style="box-sizing:border-box;font-family:SFMono-Regular, Consolas, &quot;Liberation Mono&quot;, Menlo, Courier, monospace;font-size:85%;padding:0.2em 0px;margin:0px;background-color:rgba(0, 0, 0, 0.0392157);border-radius:3px;"><span style="font-family:SFMono-Regular, Consolas, &quot;Liberation Mono&quot;, Menlo, Courier, monospace;font-size:85%;letter-spacing:-0.2em;"> </span>usr/share/applications<span style="font-family:SFMono-Regular, Consolas, &quot;Liberation Mono&quot;, Menlo, Courier, monospace;font-size:85%;letter-spacing:-0.2em;"> </span></code> and if so, use that. Otherwise have the user specify the desktop file rather than the executable and figure out the executable and icon from there, hence doing the copying automatically</li>
+<li style="box-sizing:border-box;margin-top:0.25em;margin-left:0px;">Use <strong style="box-sizing:border-box;font-weight:600;">checkinstall</strong>. This is because I could not figure out a <em style="box-sizing:border-box;">reliable</em> method of installing to a different location than <code style="box-sizing:border-box;font-family:SFMono-Regular, Consolas, &quot;Liberation Mono&quot;, Menlo, Courier, monospace;font-size:85%;padding:0.2em 0px;margin:0px;background-color:rgba(0, 0, 0, 0.0392157);border-radius:3px;"><span style="font-family:SFMono-Regular, Consolas, &quot;Liberation Mono&quot;, Menlo, Courier, monospace;font-size:85%;letter-spacing:-0.2em;"> </span>/usr<span style="font-family:SFMono-Regular, Consolas, &quot;Liberation Mono&quot;, Menlo, Courier, monospace;font-size:85%;letter-spacing:-0.2em;"> </span></code></li>
+<li style="box-sizing:border-box;margin-top:0.25em;margin-left:0px;">Optionally, use the git information to determine the version</li>
+<li style="box-sizing:border-box;margin-top:0.25em;margin-left:0px;">Optionally, upload to transfer.sh</li>
+</ul>
+          <span style="font-family:-apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, Helvetica, Arial, sans-serif, &quot;Apple Color Emoji&quot;, &quot;Segoe UI Emoji&quot;, &quot;Segoe UI Symbol&quot;;font-size:14px;line-height:1.5;display:table;clear:both;"></span></td>
+        </tr>
+      </tbody>
+    </table>
+
+      
+
+<div style="box-sizing:border-box;"><span style="display:table;"></span>
+<span style="display:table;clear:both;"></span></div>
+
+  </div>
+
+<span style="position:absolute;top:11px;right:100%;left:-16px;display:block;width:0px;height:0px;pointer-events:none;border-color:transparent;border-style:solid solid outset;margin-top:1px;margin-left:2px;border-width:7px;border-right-color:rgb(247, 247, 247);"> </span></div>
+
+  </div>
+  
+
+
+      
+
+
+  <div style="box-sizing:border-box;position:relative;padding-left:25px;margin:15px 0px 15px 79px;">
+    <div style="box-sizing:border-box;min-height:30px;padding-top:5px;line-height:20px;color:rgb(118, 118, 118);word-wrap:break-word;padding-bottom:0px;">
+
+      <span style="line-height:28px;box-sizing:border-box;width:32px;height:32px;margin-top:-7px;margin-left:-40px;float:left;color:rgb(118, 118, 118);text-align:center;background-color:rgb(243, 243, 243);border:2px solid rgb(255, 255, 255);border-radius:50%;">
+        <span style="box-sizing:border-box;display:inline-block;vertical-align:text-bottom;fill:currentcolor;overflow:hidden;"><span style="box-sizing:border-box;"></span></span>
+      </span>
+      <en-media type="image/png" hash="b22a22533a56e35d5daa464428a303a4" alt="@probonopd" height="16" width="16" style="box-sizing:border-box;border-style:none;display:inline-block;overflow:hidden;line-height:1;vertical-align:middle;border-radius:3px;width:16px;height:16px;"></en-media>
+      <a href="https://github.com/probonopd" style="box-sizing:border-box;background-color:transparent;text-decoration:none;color:rgb(85, 85, 85);font-weight:600;">probonopd</a>
+      
+      added the <span style="box-sizing:border-box;padding:2px 4px;font-size:12px;font-weight:600;border-radius:2px;box-shadow:rgba(0, 0, 0, 0.117647) 0px -1px 0px inset;background-color:#84b6eb;"><a href="https://github.com/probonopd/linuxdeployqt/labels/enhancement" style="box-sizing:border-box;background-color:transparent;color:#1c2733;text-decoration:none;">enhancement</a></span> label <a href="https://github.com/probonopd/linuxdeployqt/issues/81#event-969837089" style="box-sizing:border-box;background-color:transparent;text-decoration:none;color:inherit;white-space:nowrap;"><span title="Feb 21, 2017, 12:54 AM GMT+3" style="box-sizing:border-box;color:inherit;white-space:nowrap;">4 days ago</span></a>
+    </div>
+  </div>
+
+
+
+  <div style="box-sizing:border-box;position:relative;padding-left:60px;margin-top:15px;margin-bottom:15px;border-top:2px solid rgb(255, 255, 255);border-bottom:2px solid rgb(255, 255, 255);">
+    <a href="https://github.com/probonopd" style="box-sizing:border-box;background-color:transparent;color:rgb(64, 120, 192);text-decoration:none;"><en-media type="image/png" hash="c0cff7455cc5ae20bcbf68bb5a8f8917" alt="@probonopd" height="44" width="44" style="box-sizing:border-box;border-style:none;float:left;margin-left:-60px;border-radius:3px;"></en-media></a>
+    
+
+<div style="box-sizing:border-box;position:relative;background-color:rgb(255, 255, 255);border:1px solid rgb(221, 221, 221);border-radius:3px;"><span style="position:absolute;top:11px;right:100%;left:-16px;display:block;width:0px;height:0px;pointer-events:none;border-color:transparent;border-style:solid solid outset;border-width:8px;border-right-color:rgb(221, 221, 221);"> </span>
+
+  
+<div style="box-sizing:border-box;padding-right:15px;padding-left:15px;color:rgb(118, 118, 118);background-color:rgb(247, 247, 247);border-bottom:1px solid rgb(221, 221, 221);border-top-left-radius:3px;border-top-right-radius:3px;">
+  <div style="box-sizing:border-box;float:right;margin-right:-5px;margin-left:10px;">
+      
+  <span style="box-sizing:border-box;position:relative;display:inline-block;">
+    
+    
+
+
+  </span>
+
+
+
+  </div>
+
+    
+    <span style="box-sizing:border-box;position:relative;float:right;padding:2px 5px;margin:8px 0px 0px 10px;font-size:12px;cursor:default;border:1px solid rgba(0, 0, 0, 0.0980392);border-radius:3px;font-weight:600;"><span style="font-weight:600;font-size:12px;cursor:default;position:absolute;z-index:1000001;display:none;width:0px;height:0px;color:rgba(0, 0, 0, 0.8);pointer-events:none;border:5px solid transparent;opacity:0;top:auto;right:50%;bottom:-5px;margin-right:-5px;border-bottom-color:rgba(0, 0, 0, 0.8);"></span>
+      Owner
+    <span style="font-weight:600;font-size:12px;cursor:default;position:absolute;z-index:1000000;display:none;padding:5px 8px;font-style:normal;font-variant:normal;font-stretch:normal;line-height:1.5;font-family:-apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, Helvetica, Arial, sans-serif, &quot;Apple Color Emoji&quot;, &quot;Segoe UI Emoji&quot;, &quot;Segoe UI Symbol&quot;;-webkit-font-smoothing:subpixel-antialiased;color:rgb(255, 255, 255);text-align:center;text-decoration:none;text-shadow:none;text-transform:none;letter-spacing:normal;word-wrap:normal;white-space:pre-line;pointer-events:none;background:rgba(0, 0, 0, 0.8);border-radius:3px;opacity:0;top:100%;right:auto;margin-top:5px;transform:translateX(-50%);width:max-content;max-width:250px;word-break:break-word;border-collapse:separate;left:50%;">This user is the owner of the linuxdeployqt repository.</span></span>
+
+
+
+  <div style="box-sizing:border-box;max-width:78%;padding-top:10px;padding-bottom:10px;">
+
+    <strong style="box-sizing:border-box;font-weight:600;">
+      <a href="https://github.com/probonopd" style="box-sizing:border-box;background-color:transparent;text-decoration:none;color:rgb(85, 85, 85);">probonopd</a> 
+    </strong>
+
+    commented
+
+      <a href="https://github.com/probonopd/linuxdeployqt/issues/81#issuecomment-282431960" style="box-sizing:border-box;background-color:transparent;text-decoration:none;color:inherit;white-space:nowrap;"><span title="Feb 25, 2017, 2:18 AM GMT+3" style="box-sizing:border-box;">9 hours ago</span></a>
+
+      •
+      <span style="box-sizing:border-box;position:relative;color:inherit;white-space:nowrap;cursor:default;"><span style="color:inherit;white-space:nowrap;cursor:default;position:absolute;z-index:1000001;display:none;width:0px;height:0px;pointer-events:none;border:5px solid transparent;opacity:0;top:-5px;right:50%;bottom:auto;margin-right:-5px;border-top-color:rgba(0, 0, 0, 0.8);"></span>
+        edited
+      <span style="color:inherit;white-space:nowrap;cursor:default;position:absolute;z-index:1000000;display:none;padding:5px 8px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:11px;line-height:1.5;font-family:-apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, Helvetica, Arial, sans-serif, &quot;Apple Color Emoji&quot;, &quot;Segoe UI Emoji&quot;, &quot;Segoe UI Symbol&quot;;-webkit-font-smoothing:subpixel-antialiased;text-align:center;text-decoration:none;text-shadow:none;text-transform:none;letter-spacing:normal;word-wrap:break-word;pointer-events:none;background:rgba(0, 0, 0, 0.8);border-radius:3px;opacity:0;right:50%;bottom:100%;margin-bottom:5px;transform:translateX(50%);">probonopd edited this comment about 5 hours ago</span></span>
+  </div>
+</div>
+
+
+  <div style="box-sizing:border-box;">
+    <table style="font-size:inherit;font-weight:inherit;font-style:inherit;font-variant:inherit;box-sizing:border-box;border-spacing:0px;border-collapse:collapse;display:block;">
+      <tbody style="box-sizing:border-box;display:block;">
+        <tr style="box-sizing:border-box;display:block;">
+          <td style="box-sizing:border-box;padding:15px;font-family:-apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, Helvetica, Arial, sans-serif, &quot;Apple Color Emoji&quot;, &quot;Segoe UI Emoji&quot;, &quot;Segoe UI Symbol&quot;;font-size:14px;line-height:1.5;word-wrap:break-word;width:100%;overflow:visible;display:block;"><span style="font-family:-apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, Helvetica, Arial, sans-serif, &quot;Apple Color Emoji&quot;, &quot;Segoe UI Emoji&quot;, &quot;Segoe UI Symbol&quot;;font-size:14px;line-height:1.5;display:table;"></span>
+              <p style="box-sizing:border-box;margin-bottom:16px;margin-top:0px;">Similar build procedures used for</p>
+<ul style="box-sizing:border-box;padding-left:2em;margin-top:0px;margin-bottom:16px;">
+<li style="box-sizing:border-box;margin-left:0px;"><a href="https://github.com/dannagle/PacketSender" style="box-sizing:border-box;background-color:transparent;color:rgb(64, 120, 192);text-decoration:none;">https://github.com/dannagle/PacketSender</a> | <a href="https://github.com/dannagle/PacketSender/pull/66" title="Generate AppImage from Travis CI build artefacts" style="box-sizing:border-box;background-color:transparent;color:rgb(64, 120, 192);text-decoration:none;">dannagle/PacketSender#66</a></li>
+<li style="box-sizing:border-box;margin-top:0.25em;margin-left:0px;"><a href="https://github.com/nuttyartist/notes" style="box-sizing:border-box;background-color:transparent;color:rgb(64, 120, 192);text-decoration:none;">https://github.com/nuttyartist/notes</a> | <a href="https://github.com/nuttyartist/notes/pull/119" title="Generate AppImage on each git push" style="box-sizing:border-box;background-color:transparent;color:rgb(64, 120, 192);text-decoration:none;">nuttyartist/notes#119</a></li>
+<li style="box-sizing:border-box;margin-top:0.25em;margin-left:0px;"><a href="https://github.com/Swordfish90/cool-retro-term" style="box-sizing:border-box;background-color:transparent;color:rgb(64, 120, 192);text-decoration:none;">https://github.com/Swordfish90/cool-retro-term</a> | <a href="https://github.com/Swordfish90/cool-retro-term/pull/336" style="box-sizing:border-box;background-color:transparent;color:rgb(64, 120, 192);text-decoration:none;">Swordfish90/cool-retro-term#336</a></li>
+<li style="box-sizing:border-box;margin-top:0.25em;margin-left:0px;"><a href="https://github.com/leozide/leocad/" style="box-sizing:border-box;background-color:transparent;color:rgb(64, 120, 192);text-decoration:none;">https://github.com/leozide/leocad/</a> | <a href="https://github.com/leozide/leocad/pull/22" style="box-sizing:border-box;background-color:transparent;color:rgb(64, 120, 192);text-decoration:none;">leozide/leocad#22</a></li>
+<li style="box-sizing:border-box;margin-top:0.25em;margin-left:0px;"><a href="https://github.com/Teuniz/DSRemote" style="box-sizing:border-box;background-color:transparent;color:rgb(64, 120, 192);text-decoration:none;">https://github.com/Teuniz/DSRemote</a> | <a href="https://github.com/Teuniz/DSRemote/pull/14" style="box-sizing:border-box;background-color:transparent;color:rgb(64, 120, 192);text-decoration:none;">Teuniz/DSRemote#14</a></li>
+<li style="box-sizing:border-box;margin-top:0.25em;margin-left:0px;"><a href="https://github.com/Teuniz/EDFbrowser/" style="box-sizing:border-box;background-color:transparent;color:rgb(64, 120, 192);text-decoration:none;">https://github.com/Teuniz/EDFbrowser/</a> | <a href="https://github.com/Teuniz/EDFbrowser/pull/31" style="box-sizing:border-box;background-color:transparent;color:rgb(64, 120, 192);text-decoration:none;">Teuniz/EDFbrowser#31</a></li>
+<li style="box-sizing:border-box;margin-top:0.25em;margin-left:0px;"><a href="https://github.com/trevorsandy/lpub3d/" style="box-sizing:border-box;background-color:transparent;color:rgb(64, 120, 192);text-decoration:none;">https://github.com/trevorsandy/lpub3d/</a> | <a href="https://github.com/probonopd/lpub3d/blob/patch-1/.travis.yml" style="box-sizing:border-box;background-color:transparent;color:rgb(64, 120, 192);text-decoration:none;">https://github.com/probonopd/lpub3d/blob/patch-1/.travis.yml</a></li>
+</ul>
+<p style="box-sizing:border-box;margin-top:0px;margin-bottom:0px;">Once this is closed, should see if we can simplify their <code style="box-sizing:border-box;font-family:SFMono-Regular, Consolas, &quot;Liberation Mono&quot;, Menlo, Courier, monospace;font-size:85%;padding:0.2em 0px;margin:0px;background-color:rgba(0, 0, 0, 0.0392157);border-radius:3px;"><span style="font-family:SFMono-Regular, Consolas, &quot;Liberation Mono&quot;, Menlo, Courier, monospace;font-size:85%;letter-spacing:-0.2em;"> </span>.travis.yml<span style="font-family:SFMono-Regular, Consolas, &quot;Liberation Mono&quot;, Menlo, Courier, monospace;font-size:85%;letter-spacing:-0.2em;"> </span></code> files.</p>
+          <span style="font-family:-apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, Helvetica, Arial, sans-serif, &quot;Apple Color Emoji&quot;, &quot;Segoe UI Emoji&quot;, &quot;Segoe UI Symbol&quot;;font-size:14px;line-height:1.5;display:table;clear:both;"></span></td>
+        </tr>
+      </tbody>
+    </table>
+
+      
+
+<div style="box-sizing:border-box;"><span style="display:table;"></span>
+<span style="display:table;clear:both;"></span></div>
+
+  </div>
+
+<span style="position:absolute;top:11px;right:100%;left:-16px;display:block;width:0px;height:0px;pointer-events:none;border-color:transparent;border-style:solid solid outset;margin-top:1px;margin-left:2px;border-width:7px;border-right-color:rgb(247, 247, 247);"> </span></div>
+
+  </div>
+
+
+
+
+
+
+<div style="box-sizing:border-box;">
+
+    </div>
+
+
+        </div>
+
+          <div style="box-sizing:border-box;background-color:rgb(255, 255, 255);border-top:2px solid rgb(243, 243, 243);">
+              
+  
+<div style="box-sizing:border-box;position:relative;padding-left:60px;margin-bottom:0px;border-top:2px solid rgb(255, 255, 255);border-bottom:2px solid rgb(255, 255, 255);max-width:780px;margin-top:15px;">
+  <a href="https://github.com/d1vanov" style="box-sizing:border-box;background-color:transparent;color:rgb(64, 120, 192);text-decoration:none;"><en-media type="image/jpeg" hash="5b24a4c9914dc0d328d678e4fefce10d" alt="@d1vanov" height="44" width="44" style="box-sizing:border-box;border-style:none;float:left;margin-left:-60px;border-radius:3px;"></en-media></a>
+
+  <div style="box-sizing:border-box;"><div style="box-sizing:border-box;margin:0;padding:0;display:inline;"></div>
+    <div style="box-sizing:border-box;position:relative;background-color:rgb(255, 255, 255);border:1px solid rgb(221, 221, 221);border-radius:3px;"><span style="position:absolute;top:11px;right:100%;left:-16px;display:block;width:0px;height:0px;pointer-events:none;border-color:transparent;border-style:solid solid outset;border-width:8px;border-right-color:rgb(221, 221, 221);"> </span>
+      
+        <div style="box-sizing:border-box;position:relative;">
+  <div style="box-sizing:border-box;margin-top:0px;border-bottom:1px solid rgb(221, 221, 221);position:relative;margin-bottom:10px;padding:6px 10px 0px;background:rgb(247, 247, 247);border-radius:3px 3px 0px 0px;">
+      <div style="box-sizing:border-box;float:right;">
+  <div style="box-sizing:border-box;display:inline-block;margin-left:0px;">
+    <div style="box-sizing:border-box;position:relative;display:block;float:left;color:rgb(118, 118, 118);background:none;border:0px;padding:0px;">
+      
+
+      
+    </div>
+
+    
+
+    
+  </div>
+
+  <div style="box-sizing:border-box;display:inline-block;margin-left:20px;">
+    
+
+    
+
+    
+  </div>
+
+  <div style="box-sizing:border-box;display:inline-block;margin-left:20px;">
+    
+    
+
+      
+  </div>
+
+  <div style="box-sizing:border-box;display:inline-block;margin-left:20px;">
+      <div style="box-sizing:border-box;display:block;float:left;color:rgb(118, 118, 118);background:none;border:0px;position:relative;padding:0px;">
+        
+
+        
+      </div>
+
+      
+
+      
+  </div>
+</div>
+
+      <div style="box-sizing:border-box;display:block;margin-bottom:-1px;">
+        
+        
+      </div>
+  </div>
+
+
+  
+  <div style="box-sizing:border-box;position:relative;padding:0px 0px 8px;margin:0px 8px;display:block;">
+
+    
+
+    
+
+          <p style="border-bottom-style:solid;box-sizing:border-box;border-left-style:solid;margin:0px;line-height:16px;color:rgb(118, 118, 118);background-color:rgb(250, 250, 250);border-width:0px 1px 1px;border-right-style:solid;padding:7px 10px;font-size:13px;border-right-color:rgb(204, 204, 204);border-bottom-color:rgb(204, 204, 204);border-left-color:rgb(204, 204, 204);border-image:initial;border-top-style:initial;border-top-color:initial;border-bottom-right-radius:3px;border-bottom-left-radius:3px;">
+    <span style="box-sizing:border-box;display:inline-block;">
+        Attach files by dragging &amp; dropping,
+        
+        <span style="white-space:nowrap;box-sizing:border-box;padding:0px;font-size:inherit;color:rgb(64, 120, 192);text-decoration:none;display:inline-block;cursor:pointer;user-select:none;background-color:transparent;border:0px;-webkit-appearance:none;">selecting them</span>, or pasting
+        from the clipboard.
+    </span>
+    
+    
+    
+    
+    
+    
+    
+    
+  </p>
+
+
+    <div style="box-sizing:border-box;position:absolute;top:0px;left:0px;z-index:30;transform:translateZ(0px);">
+      
+    </div>
+  </div>
+
+  
+
+  <div style="box-sizing:border-box;float:left;">
+      <a href="https://guides.github.com/features/mastering-markdown/" target="_blank" style="box-sizing:border-box;background-color:transparent;text-decoration:none;color:rgb(102, 102, 102);display:inline-block;padding-top:10px;margin-left:10px;font-size:12px;">
+        <span style="box-sizing:border-box;display:inline-block;fill:currentcolor;margin-right:2px;overflow:hidden;vertical-align:bottom;"><span style="box-sizing:border-box;"></span></span>
+        Styling with Markdown is supported
+      </a>
+  </div>
+
+
+  
+</div>
+
+        <div style="box-sizing:border-box;padding:0px 10px 10px;"><span style="display:table;"></span>
+          <div style="box-sizing:border-box;">
+
+  
+
+  
+</div>
+
+        <span style="display:table;clear:both;"></span></div>
+    <span style="position:absolute;top:11px;right:100%;left:-16px;display:block;width:0px;height:0px;pointer-events:none;border-color:transparent;border-style:solid solid outset;margin-top:1px;margin-left:2px;border-width:7px;border-right-color:rgb(247, 247, 247);"> </span></div>
+</div>
+</div>
+
+
+          </div>
+      </div>
+
+    <span style="display:table;clear:both;"></span></div>
+    <div style="box-sizing:border-box;"></div>
+  </div></div></div></div></div></div></div></div></div></div><br/></div></en-note>]]></content><created>20170225T083041Z</created><updated>20170225T083041Z</updated><tag>Development</tag><tag>Linux</tag><tag>Qt</tag><tag>Quentier</tag><tag>linuxdeployqt</tag><note-attributes><source>web.clip</source><source-url>https://github.com/probonopd/linuxdeployqt/issues/81#issuecomment-282431960</source-url><reminder-order>0</reminder-order></note-attributes><resource><data encoding="base64">iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAAAAABWESUoAAABkElEQVR4nKSTa2/aMBSGT24OGyEYTSxs
+bAIkKiT6//9EvxchFRG1tOXSAiUkNFdThzgXh6p8aCQ78jmP32O/tuUb+PoTL+QvAzJHaz9kCF07+hyo
+GfVEj1hL6xxQujgTwtgy/dIaqte4WEwfajxQHUj3L1npaGXCQC+WUK6k3QpmbfkQHCVVeI5A/9W/9XKg
+o0BAJz7kNUKQeuOshNYAQGfbr+EMaNF24IE5ATBSQKxTySceeF/TrSgM0Gi3IzwAW9pqDKjQ5pfyp0CF
+AbGSUAaAJVInUTkpF/6en8Dcp9KgxxS8Ix3rJYBaAy4DHAUh1FO5fBPTmMMAEp8+Gv7Ob5fyv0t7O0jX
+ssRgoj+df/ZuGc9pa8lZx4NkF5YFHecVpHqsCSRM8s4mA8AMxNb8cT2zEXUPvZ1i0RRywJ8QvbmYLgCD
+CvjkOpm4RT/su/5fwzuOBBASU6MJu7fpyq3RXvqZ2+mMrJKj4I4bRgzQ+dF+tcnQwrvYbkVwIIJ9OC44
+xj09AjasS3fr+4/3IwAA//8ZBXtGHGII/gAAAABJRU5ErkJggg==</data><mime>image/png</mime><width>32</width><height>32</height><duration>0</duration><resource-attributes><source-url>https://avatars3.githubusercontent.com/u/2480569?v=3&amp;s=32</source-url><timestamp>19700101T000000Z</timestamp><file-name>2480569.png</file-name></resource-attributes></resource><resource><data encoding="base64">/9j/2wCEAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8UHRofHh0aHBwgJC4nICIsIxwcKDcpLDAxNDQ0
+Hyc5PTgyPC4zNDIBCQkJDAsMGA0NGDIhHCEyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIy
+MjIyMjIyMjIyMjIyMjIyMv/AABEIAFgAWAMBIgACEQEDEQH/xAGiAAABBQEBAQEBAQAAAAAAAAAAAQID
+BAUGBwgJCgsQAAIBAwMCBAMFBQQEAAABfQECAwAEEQUSITFBBhNRYQcicRQygZGhCCNCscEVUtHwJDNi
+coIJChYXGBkaJSYnKCkqNDU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6g4SFhoeI
+iYqSk5SVlpeYmZqio6Slpqeoqaqys7S1tre4ubrCw8TFxsfIycrS09TV1tfY2drh4uPk5ebn6Onq8fLz
+9PX29/j5+gEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoLEQACAQIEBAMEBwUEBAABAncAAQIDEQQF
+ITEGEkFRB2FxEyIygQgUQpGhscEJIzNS8BVictEKFiQ04SXxFxgZGiYnKCkqNTY3ODk6Q0RFRkdISUpT
+VFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqCg4SFhoeIiYqSk5SVlpeYmZqio6Slpqeoqaqys7S1tre4ubrC
+w8TFxsfIycrS09TV1tfY2dri4+Tl5ufo6ery8/T19vf4+fr/2gAMAwEAAhEDEQA/AOixS4p2KXFehc4r
+DMUuKceBk1zGq+KkhkMNnhiDgyHp+FJySBJs6bFKAD0Oa4CLXJJJQ80hc+5ruPDev6PkJfxAoeM+lZOt
+5Gip36ljFLil1nU9HjmDabPmNhkBjwf61Da3cV2mUPI6r6VUaikTKDRNijFOA4pcVdybDcUuKdijFFx2
+IsUuKdijFTcqxyvjHWxp9qLWNsSSjLY7L6fjXmcl8zSlua1/Ft6bjWrpmOQH2r7KOBXNCZVz+73f7xxX
+POV2aRjoaKXLeWZMgAdqtQX7MuC1YXnt5m75Rn+HHH5VKl7Kp+VYif8ArmP8Kz5i+R7nUw3LORuOcDAy
+en41raVqMttPHIJN3tnORXFHU52iKSRoBjGVjCn9K0bLWoPlWRWUgAbs5pqQOL6nskEqTwpKhyrDIqXF
+c14c1Nbi1MMTFwnzbgPlwe2fXrW+s/TIroUroycbE+KMUwSoe9O3r/eH50XCw2msyopZjhVGSfasoazI
+elqcf72f6VDdXk9zayxCIguhUAZ7isXVia+ykeQzXhub6S5ccu5I9hzWWC0nJO1SetWQuxtpBB56/jUM
+Ef2lgm/ao7VnsWtbJEAbaflPHvUkRZ3z5hGPQ9qmubLyACCWU96qgDJz0ovcOWz1LygrxvY5PHNRliWy
+2QR+dJbB3VyspQAcYPU0yNjNJtYlvfNC0Kk79LHe/Dtpze3JAPkeV8x7bsjH6Zr0MNXnXgS1kRb5mdlT
+eqAjoxGc/lkfnXZLHH3Yt9TS9ty6WBUb6s1C1G/3rNCRqM7B+NGYv7qfpR9Y8h+w8ykdXIYDaFY9Af8A
+9dR3GtCCIvIo2gfXP4VEYz0xxWJ4iurW0sfs90s2LlWClFB2kY55I9RWEFeSNpu0Wzib5o5JXaFhs3Er
+zjj0qihwT2NMDKJfmGR3xQwPr15rqj3OSTJ/NfGN7Y9M1GVDt0GaYGI6mnKxzhRzVNxtdAlJuzJAoXri
+p4c7tyAcDqex9aiSLuxyasEnZ5a4+b5fzrJzeyOn2NlzSPRNCRrfRrYRPt3KHYYBJY9TWl50+Mbzg1m+
+HbCfT9L8q4zvZy4QdVBA4+vFbAi9WHP4Vyvc1WxW2+YQWOcdzTvIHpU5VUHA3H2pu8/88WoGZWp60FZr
+axjDyY+Z2baFHrmvOtSubq4uZBcuSd2dueAfatxpIlBSLCpnPux9aw9ST/SS3PzDIr23RjCFoo8dVZTn
+eRmshzTckVNgN9ajYflXLOHY3UhpYk+1PG9DlTkVGR3pyOUI7isWmawauWY58nlTmu18MeG4722h1GaR
+g6yEogxgcdT755/CuKEkZyd2Pat7w/rklvdeSrsueVOeM+lEKaqPlvY1q1HBXbuekrp7KmDMzcdW5NL9
+ibB/eOCe47VRsvEtpK7pcHyHXueVb6d62o5YZo1eORHU9GByKxnRnT+JFQqQn8LKgswCMu7nuS2P5U77
+FH7/APfRq6NnqKX5ag0seNKv2eMPM4Utzz1qhd3KTONu4445q3qv+rg/3TWSPvGvZnJ83Kjx4rTmHZ9j
+TSQeD1pe9MP+srOWiNEGCD04NMYAHI6VKelRH7v41hUWhcHqWbKMy3cSjaPmzlulWLi2awv1ZcFdwKgd
+j6VDp/8Ax9xf71X9V/4/l/31px0jfzB72CK+ilSEMMbMq2e+Scmt7Q/EL2jrsH7lWEciE9uin+lcfB2r
+R07/AFU/+9H/AOhCuuL51yy2Zg1ye9Hc9cg1azmiV/tcSZ/heQAj8Kl/tKz/AOf2D/v8K8+H+sT/AHD/
+AOy06sJYKnfdnSsVO3Q//9k=</data><mime>image/jpeg</mime><width>88</width><height>88</height><duration>0</duration><recognition><![CDATA[<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<!DOCTYPE recoIndex PUBLIC "SYSTEM" "http://xml.evernote.com/pub/recoIndex.dtd">
+<recoIndex docType="unknown" objType="image" objID="5b24a4c9914dc0d328d678e4fefce10d" engineVersion="7.0.24.1" recoType="service" lang="ru" objWidth="88" objHeight="88"/>]]></recognition><resource-attributes><source-url>https://avatars1.githubusercontent.com/u/2050562?v=3&amp;s=88</source-url><timestamp>19700101T000000Z</timestamp><reco-type>unknown</reco-type><file-name>2050562.jpg</file-name></resource-attributes></resource><resource><data encoding="base64">iVBORw0KGgoAAAANSUhEUgAAAFgAAABYCAAAAABU/m/oAAAFD0lEQVR4nOyZ+1fiRhTHJ08ggKyIiu6q
+dXd99PX//w/9sdu69XRXbBFYUR6JAnmnmQSSSXJnGNpuz+k53h9gnGQ+mdy59zt3UP4JfR0TvxL3BfwC
+/i/BMud9qqJIAgo813aCfwtcqlerlfTNfHM2ezL/MVhtNSvZHlHTdpE1Hi3YAwWmVjR3t6jX5g8PLKew
+wNo3VeakrFuDfpHuCvX1jsDkotLF9I7qECp490hiY7G9agz6FH9QwNLp9npsaMLh1mcbvAIniHzJxw2t
+9i28viBY+17j5YZrcQZOAgLXLlV+boh4vwP0Aj7WzvGy2V2hvFVjEg197h3g6b4Nxhxg+SwKh0l4b6/c
+3qGq1GPfwp+RH07Nef5yYZx0HvvhCX+Ytx8eYezkQ8dKbkPiRXntjFfZ9hx/2Z3hSdVfzE3bdv0ACZKs
+liqakOScN4/WWX5/5bPBreZygLPqmX3UFj48bWxWHECVN39m+3OuUI6XDTftC2YMLlpNYL/OBL9e5TGf
+mpN2xAJXWqsW786S3lhtMcCniZ7JHBIUWRoOxzIVvE3ob50TrCQtqU0F7xFt3qzupM0WDawSOmUMOcH6
+fdJUGhQwoSVeh5OLUHeaNFsUcDNtDmD1hizoJs1XIghWUxF277m5oaBMElgDBBNxMGLlWsESMKqBYCLW
+RptwkbEGnPZ6s43ATrIgGghOc2h9ZZa15H6xDICJJHY2BKdSCIGJVNtU2tL7FQCc9qE1pRXDIDAhZ5uW
++QIAESEatxjz4VJT/jYYAWBixZQNp5xOxAfAHnEnr8rHJpQASAom9mX0aiMwcUhJMyB9aRt5luuF7yKK
+UqGuYZq0lJbQmTMIPJHUihS+ge97fkPfALyXCvkXAIxKWEIcx8WrWNsALAl6PF+lIpoQeBSKlCArZez2
+xnzCDW6vCm/neRFAYI9csmOdV+vr+6uWohCySCTIM3m7esrJlU4kEEGAFxY5oPmWSzGkc/JErINglK33
+d36gH3cT074jTxM6kQtk8o4OMoNKF5Me+ySu7WcLQXKrJMGLuDpH1qwUb6zb28aQHh31di5BvQkFjB5O
+oq+O9e7qMB60teUaTwszv1cp5WqtVtDAMRlImdO/8GMkJ86Noe07pF/Ma7IyKp/BKf8zufqZpQ/+iOdz
+cTwfyMRSep8yFZf5mwVx+5nebEzpy3jZPzC7X9IXu8+toXMHcO0+ooPRasRhSW1+SsgPecgEKBDuAhZ4
+vnyseLgYHvy+fLdRofQMiho1zZVl+U2o34gjrXVnXTe7QlXx7FlUm1VCd+yUe2Gy48cU4tvJF9T5vA0+
+L9+yHU7LUJyRZ0SRso0lTMSyUMNJ4RaG5XsKgmB1YtfuVpDrPQyNwSzycJoLAZTpvad8T1Fp9JvoSzqv
+480kWG6P8X4ZVSZAEPcGhS5Awiaxu9TLd0uBwThBWHGBAmzQL1KgCuLRP42e12y6povkcj85OGBmFFWZ
+0OoBXLiaGttncb9cy+DAajEA/IBo9d/zR1AvIa5zDXJphaV5lc82IUNOXDH9pRAPsdGqNP92fKSRzNwj
+YrN61GMQvfwzft17ky8js48IqL8/MsEIDSftFr4eoMLpIfzTGw9A9eQAI6d712g1RFyQSZgcBXOAX0Mf
+6RN24bGmEg6mU6kWLo9axbGq4vyz1ZKF/Bv2uHW/eCemVPEZ/0DphhMXuA5VnLW7E/12EEcs32Ht//cP
+lhfwC7hofwUAAP//xd+Gr8wISEUAAAAASUVORK5CYII=</data><mime>image/png</mime><width>88</width><height>88</height><duration>0</duration><recognition><![CDATA[<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<!DOCTYPE recoIndex PUBLIC "SYSTEM" "http://xml.evernote.com/pub/recoIndex.dtd">
+<recoIndex docType="unknown" objType="image" objID="c0cff7455cc5ae20bcbf68bb5a8f8917" engineVersion="7.0.24.1" recoType="service" lang="ru" objWidth="88" objHeight="88"/>]]></recognition><resource-attributes><source-url>https://avatars2.githubusercontent.com/u/2480569?v=3&amp;s=88</source-url><timestamp>19700101T000000Z</timestamp><reco-type>unknown</reco-type><file-name>2480569.png</file-name></resource-attributes></resource><resource><data encoding="base64">iVBORw0KGgoAAAANSUhEUgAAADQAAAA0CAAAAADgE0Q3AAAC0ElEQVR4nMyWW3PaOBSAD5INNksgFxYS
+yM5mJ8m26f//FZ3pU9tpkwyZtBBwceOASQBbvlSWZCzfQpun6MGSj84nHZ2LbOU9/HlDL2BeO6QUi7Gm
+YvDJ2v9dqNLcbWpi7Cxms3A7hLsdNXmr1dqeaXhboG4vK1GOOsYkfAaqnjby5gLu7w9WsiDlPf2iiIkm
+3jXKoL/eVosZqvZmt9g8/X8FpmN97wCn9IOf98uDE3R6tSiAqpQBixB71D3EnuP6YQVXa+hH5LsZ3ev8
+yyoPnUa2RXJ/bCInlmIWXkJUwGefg+yZOuyoXEw2DIiUiORaDzIQ7vOuxBHMoG4tA3W4nSUu52uhoyzE
+nt5TMeQPWBf7VUBNHqE7t8S8OfM32k9Be3wjs4QBGLPnbgraYc+CKoib7SVqAkI66x5LGYBl9MC6BIma
+I89AnqTIodJETRq3XJXN4xNloU1UsKwOWzdUcguITKw/A/EU8qUFXMfPrpZp2GOeWEvQGtOFAh83Sp0e
+RQhVEZGg4Im6BWHcvyyDjmmEAsfndSgc4dbrdU1Vmr0S5u8oqkgXZxfQTEz2/6kUMie8fwDJPJh7YnDY
+ustlYKPX4oPQSkGhSQts7Grdin5G5oulI8oc1fRGK77YwfJSEBgdDIfDh5CyarsdXNti+rwmbTmB1JnA
+M+j4X9XmVhuCAfebxJirDASTSHK8sKa0I+Zmap5kPhnGo00ShDcXCLSWFTyqxHOhNYfeCHYWsN58eG42
+X7gkYZdXNAr/6bN7434O0KYfN3bdbFw5sCEPwWIQgHLRr2OlLpVMDN1aiaaco7PrM4x7NCmCD9FrKswD
+iUnXk/3Vkd4kiFzKTOaXYPnJCGVhyEHzo51Sy5RQMJweHSB5pzC0Jqu0Ur7unNvRnsY2o1OB6g5v83dU
+QbFG92xlRE+I/e++qNWtEDOKfgmm8WWXa6/8L+xF0K8AAAD//zNN5CYD6qN5AAAAAElFTkSuQmCC</data><mime>image/png</mime><width>52</width><height>52</height><duration>0</duration><resource-attributes><source-url>https://avatars1.githubusercontent.com/u/2480569?v=3&amp;s=52</source-url><timestamp>19700101T000000Z</timestamp><file-name>2480569.png</file-name></resource-attributes></resource></note>
+</en-export>

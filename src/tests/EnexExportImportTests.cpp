@@ -284,6 +284,110 @@ bool exportMultipleNotesWithTagsAndResourcesAndImportBack(QString & error)
     return compareNotes(notes, importedNotes, error);
 }
 
+bool importRealWorldEnex(QString & error)
+{
+    ENMLConverter converter;
+    ErrorString errorDescription;
+
+    // 1) First sample
+    QFile sampleEnex1File(QStringLiteral(":/tests/SampleEnex1.enex"));
+    bool res = sampleEnex1File.open(QIODevice::ReadOnly);
+    if (Q_UNLIKELY(!res)) {
+        error = QStringLiteral("Failed to open the sample enex file for reading");
+        return false;
+    }
+
+    QString sampleEnex1 = QString::fromLocal8Bit(sampleEnex1File.readAll());
+
+    QVector<Note> importedNotes;
+    QHash<QString, QStringList> tagNamesByNoteLocalUid;
+
+    res = converter.importEnex(sampleEnex1, importedNotes, tagNamesByNoteLocalUid, errorDescription);
+    if (!res) {
+        error = errorDescription.nonLocalizedString();
+        return false;
+    }
+
+    if (importedNotes.size() != 1) {
+        error = QStringLiteral("Unexpected number of imported notes, expected 1, got ") + QString::number(importedNotes.size());
+        return false;
+    }
+
+    // 2) Second sample
+    QFile sampleEnex2File(QStringLiteral(":/tests/SampleEnex2.enex"));
+    res = sampleEnex2File.open(QIODevice::ReadOnly);
+    if (Q_UNLIKELY(!res)) {
+        error = QStringLiteral("Failed to open the sample enex file for reading");
+        return false;
+    }
+
+    QString sampleEnex2 = QString::fromLocal8Bit(sampleEnex2File.readAll());
+
+    importedNotes.clear();
+    tagNamesByNoteLocalUid.clear();
+
+    res = converter.importEnex(sampleEnex2, importedNotes, tagNamesByNoteLocalUid, errorDescription);
+    if (!res) {
+        error = errorDescription.nonLocalizedString();
+        return false;
+    }
+
+    if (importedNotes.size() != 1) {
+        error = QStringLiteral("Unexpected number of imported notes, expected 1, got ") + QString::number(importedNotes.size());
+        return false;
+    }
+
+    // 3) Third sample
+    QFile sampleEnex3File(QStringLiteral(":/tests/SampleEnex3.enex"));
+    res = sampleEnex3File.open(QIODevice::ReadOnly);
+    if (Q_UNLIKELY(!res)) {
+        error = QStringLiteral("Failed to open the sample enex file for reading");
+        return false;
+    }
+
+    QString sampleEnex3 = QString::fromLocal8Bit(sampleEnex3File.readAll());
+
+    importedNotes.clear();
+    tagNamesByNoteLocalUid.clear();
+
+    res = converter.importEnex(sampleEnex3, importedNotes, tagNamesByNoteLocalUid, errorDescription);
+    if (!res) {
+        error = errorDescription.nonLocalizedString();
+        return false;
+    }
+
+    if (importedNotes.size() != 1) {
+        error = QStringLiteral("Unexpected number of imported notes, expected 1, got ") + QString::number(importedNotes.size());
+        return false;
+    }
+
+    // 4) Fourth sample
+    QFile sampleEnex4File(QStringLiteral(":/tests/SampleEnex4.enex"));
+    res = sampleEnex4File.open(QIODevice::ReadOnly);
+    if (Q_UNLIKELY(!res)) {
+        error = QStringLiteral("Failed to open the sample enex file for reading");
+        return false;
+    }
+
+    QString sampleEnex4 = QString::fromLocal8Bit(sampleEnex4File.readAll());
+
+    importedNotes.clear();
+    tagNamesByNoteLocalUid.clear();
+
+    res = converter.importEnex(sampleEnex4, importedNotes, tagNamesByNoteLocalUid, errorDescription);
+    if (!res) {
+        error = errorDescription.nonLocalizedString();
+        return false;
+    }
+
+    if (importedNotes.size() != 1) {
+        error = QStringLiteral("Unexpected number of imported notes, expected 1, got ") + QString::number(importedNotes.size());
+        return false;
+    }
+
+    return true;
+}
+
 bool compareNoteContents(const Note & lhs, const Note & rhs, QString & error)
 {
     if (lhs.hasTitle() != rhs.hasTitle()) {

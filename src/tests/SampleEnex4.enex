@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE en-export SYSTEM "http://xml.evernote.com/pub/evernote-export3.dtd">
+<en-export export-date="20170410T134915Z" application="Evernote" version="Evernote Mac 6.8 (453748)">
+<note><title>QtWebKit-NG: a nice open source project to do something for</title><content><![CDATA[<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE en-note SYSTEM "http://xml.evernote.com/pub/enml2.dtd">
+<en-note>
+<div><a href="https://github.com/annulen/webkit" rev="en_rl_small">https://github.com/annulen/webkit</a></div>
+<div><br/></div>
+<div>It has the potential to be useful: <a href="https://github.com/annulen/webkit/wiki/Use-cases-of-QtWebKit" rev="en_rl_minimal">https://github.com/annulen/webkit/wiki/Use-cases-of-QtWebKit</a></div>
+<div><br/></div>
+<div>It has attention: 209 issues at the time of this writing, 4 pull requests</div>
+<div><br/></div>
+<div>It even has junior jobs, like this one: <a href="https://github.com/annulen/webkit/issues/329" rev="en_rl_minimal">https://github.com/annulen/webkit/issues/329</a></div>
+<div><br/></div>
+<div>Some other junior jobs:</div>
+<div><a href="https://github.com/annulen/webkit/issues/275" rev="en_rl_small">https://github.com/annulen/webkit/issues/275</a></div>
+<div><a href="https://github.com/annulen/webkit/issues/20" rev="en_rl_small">https://github.com/annulen/webkit/issues/20</a></div>
+<div><a href="https://github.com/annulen/webkit/issues/12" rev="en_rl_small">https://github.com/annulen/webkit/issues/12</a></div>
+<div><br/></div>
+</en-note>
+]]></content><created>20161012T095656Z</created><updated>20161012T112734Z</updated><tag>Development</tag><tag>Qt</tag><tag>open source</tag><note-attributes><author>d_ivanov_1988</author><source>desktop.mac</source><reminder-order>0</reminder-order></note-attributes></note>
+</en-export>

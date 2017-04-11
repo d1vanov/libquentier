@@ -394,6 +394,17 @@ void CoreTester::enexExportImportMultipleNotesWithTagsAndResourcesTest()
     CATCH_EXCEPTION();
 }
 
+void CoreTester::importRealWorldEnexTest()
+{
+    try
+    {
+        QString error;
+        bool res = importRealWorldEnex(error);
+        QVERIFY2(res == true, qPrintable(error));
+    }
+    CATCH_EXCEPTION();
+}
+
 void CoreTester::resourceRecognitionIndicesParsingTest()
 {
     try
