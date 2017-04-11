@@ -56,7 +56,8 @@ bool exportSingleNoteWithoutTagsAndResourcesToEnexAndImportBack(QString & error)
     QString enex;
 
     ENMLConverter converter;
-    bool res = converter.exportNotesToEnex(notes, tagNamesByTagLocalUids, enex, errorDescription);
+    ENMLConverter::EnexExportTags::type exportTagsOption = ENMLConverter::EnexExportTags::Yes;
+    bool res = converter.exportNotesToEnex(notes, tagNamesByTagLocalUids, exportTagsOption, enex, errorDescription);
     if (Q_UNLIKELY(!res)) {
         error = errorDescription.nonLocalizedString();
         return false;
@@ -89,7 +90,8 @@ bool exportSingleNoteWithTagsButNoResourcesToEnexAndImportBack(QString & error)
     QString enex;
 
     ENMLConverter converter;
-    bool res = converter.exportNotesToEnex(notes, tagNamesByTagLocalUids, enex, errorDescription);
+    ENMLConverter::EnexExportTags::type exportTagsOption = ENMLConverter::EnexExportTags::Yes;
+    bool res = converter.exportNotesToEnex(notes, tagNamesByTagLocalUids, exportTagsOption, enex, errorDescription);
     if (Q_UNLIKELY(!res)) {
         error = errorDescription.nonLocalizedString();
         return false;
@@ -112,6 +114,7 @@ bool exportSingleNoteWithResourcesButNoTagsToEnexAndImportBack(QString & error)
 {
     Note note;
     setupSampleNote(note);
+
     bool res = setupNoteResources(note, error);
     if (Q_UNLIKELY(!res)) {
         return false;
@@ -126,7 +129,8 @@ bool exportSingleNoteWithResourcesButNoTagsToEnexAndImportBack(QString & error)
     QString enex;
 
     ENMLConverter converter;
-    res = converter.exportNotesToEnex(notes, tagNamesByTagLocalUids, enex, errorDescription);
+    ENMLConverter::EnexExportTags::type exportTagsOption = ENMLConverter::EnexExportTags::Yes;
+    res = converter.exportNotesToEnex(notes, tagNamesByTagLocalUids, exportTagsOption, enex, errorDescription);
     if (Q_UNLIKELY(!res)) {
         error = errorDescription.nonLocalizedString();
         return false;
@@ -141,6 +145,46 @@ bool exportSingleNoteWithResourcesButNoTagsToEnexAndImportBack(QString & error)
         return false;
     }
 
+    return compareNotes(notes, importedNotes, error);
+}
+
+bool exportSingleNoteWithTagsAndResourcesToEnexAndImportBack(QString & error)
+{
+    Note note;
+    setupSampleNote(note);
+
+    bool res = setupNoteResources(note, error);
+    if (Q_UNLIKELY(!res)) {
+        return false;
+    }
+
+    QHash<QString, QString> tagNamesByTagLocalUids;
+    setupNoteTags(note, tagNamesByTagLocalUids);
+
+    QVector<Note> notes;
+    notes << note;
+
+    ErrorString errorDescription;
+    QString enex;
+
+    ENMLConverter converter;
+    ENMLConverter::EnexExportTags::type exportTagsOption = ENMLConverter::EnexExportTags::Yes;
+    res = converter.exportNotesToEnex(notes, tagNamesByTagLocalUids, exportTagsOption, enex, errorDescription);
+    if (Q_UNLIKELY(!res)) {
+        error = errorDescription.nonLocalizedString();
+        return false;
+    }
+
+    QVector<Note> importedNotes;
+    QHash<QString, QStringList> tagNamesByNoteLocalUid;
+
+    res = converter.importEnex(enex, importedNotes, tagNamesByNoteLocalUid, errorDescription);
+    if (Q_UNLIKELY(!res)) {
+        error = errorDescription.nonLocalizedString();
+        return false;
+    }
+
+    bindTagsWithNotes(importedNotes, tagNamesByNoteLocalUid, tagNamesByTagLocalUids);
     return compareNotes(notes, importedNotes, error);
 }
 

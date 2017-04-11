@@ -1480,10 +1480,13 @@ void ENMLConverterPrivate::escapeString(QString & string, const bool simplify)
 }
 
 bool ENMLConverterPrivate::exportNotesToEnex(const QVector<Note> & notes, const QHash<QString, QString> & tagNamesByTagLocalUids,
+                                             const ENMLConverter::EnexExportTags::type exportTagsOption,
                                              QString & enex, ErrorString & errorDescription, const QString & version) const
 {
     QNDEBUG(QStringLiteral("ENMLConverterPrivate::exportNotesToEnex: num notes = ") << notes.size()
             << QStringLiteral(", num tag names by tag local uids = ") << tagNamesByTagLocalUids.size()
+            << QStringLiteral(", export tags option = ")
+            << ((exportTagsOption == ENMLConverter::EnexExportTags::Yes) ? QStringLiteral("Yes") : QStringLiteral("No"))
             << QStringLiteral(", version = ") << version);
 
     enex.resize(0);
@@ -1537,7 +1540,9 @@ bool ENMLConverterPrivate::exportNotesToEnex(const QVector<Note> & notes, const 
     {
         const Note & note = *it;
 
-        if (!note.hasTitle() && !note.hasContent() && !note.hasResources() && !note.hasTagLocalUids()) {
+        if (!note.hasTitle() && !note.hasContent() && !note.hasResources() &&
+            ((exportTagsOption != ENMLConverter::EnexExportTags::Yes) || !note.hasTagLocalUids()))
+        {
             QNINFO(QStringLiteral("Skipping note without title, content, resources or tags in export to ENML"));
             continue;
         }
@@ -1574,7 +1579,7 @@ bool ENMLConverterPrivate::exportNotesToEnex(const QVector<Note> & notes, const 
         }
         writer.writeEndElement();   // updated
 
-        if (note.hasTagLocalUids())
+        if ((exportTagsOption == ENMLConverter::EnexExportTags::Yes) && note.hasTagLocalUids())
         {
             const QStringList & tagLocalUids = note.tagLocalUids();
             for(auto tagIt = tagLocalUids.constBegin(), tagEnd = tagLocalUids.constEnd(); tagIt != tagEnd; ++tagIt)

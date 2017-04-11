@@ -16,8 +16,8 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LIB_QUENTIER_TEXTX_ENEX_EXPORT_IMPORT_TESTS_H
-#define LIB_QUENTIER_TEXTX_ENEX_EXPORT_IMPORT_TESTS_H
+#ifndef LIB_QUENTIER_TESTS_ENEX_EXPORT_IMPORT_TESTS_H
+#define LIB_QUENTIER_TESTS_ENEX_EXPORT_IMPORT_TESTS_H
 
 #include <QString>
 
@@ -27,8 +27,9 @@ namespace test {
 bool exportSingleNoteWithoutTagsAndResourcesToEnexAndImportBack(QString & error);
 bool exportSingleNoteWithTagsButNoResourcesToEnexAndImportBack(QString & error);
 bool exportSingleNoteWithResourcesButNoTagsToEnexAndImportBack(QString & error);
+bool exportSingleNoteWithTagsAndResourcesToEnexAndImportBack(QString & error);
 
 } // namespace test
 } // namespace quentier
 
-#endif // LIB_QUENTIER_TEXTX_ENEX_EXPORT_IMPORT_TESTS_H
+#endif // LIB_QUENTIER_TESTS_ENEX_EXPORT_IMPORT_TESTS_H

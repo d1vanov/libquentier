@@ -132,10 +132,11 @@ void ENMLConverter::escapeString(QString & string, const bool simplify)
 }
 
 bool ENMLConverter::exportNotesToEnex(const QVector<Note> & notes, const QHash<QString, QString> & tagNamesByTagLocalUids,
-                                      QString & enex, ErrorString & errorDescription, const QString & version) const
+                                      const EnexExportTags::type exportTagsOption, QString & enex, ErrorString & errorDescription,
+                                      const QString & version) const
 {
     Q_D(const ENMLConverter);
-    return d->exportNotesToEnex(notes, tagNamesByTagLocalUids, enex, errorDescription, version);
+    return d->exportNotesToEnex(notes, tagNamesByTagLocalUids, exportTagsOption, enex, errorDescription, version);
 }
 
 bool ENMLConverter::importEnex(const QString & enex, QVector<Note> & notes,

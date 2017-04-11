@@ -169,6 +169,19 @@ public:
     static void escapeString(QString & string, const bool simplify = true);
 
     /**
+     * @brief The EnexExportTags struct is a C++98 style scoped enum which allows to specify whether export of note(s)
+     * to ENEX should include the names of note's tags
+     */
+    struct EnexExportTags
+    {
+        enum type
+        {
+            Yes = 0,
+            No
+        };
+    };
+
+    /**
      * @brief exportNotesToEnex - exports either a single note or a set of notes into ENEX format
      *
      * @param notes - the notes to be exported into the enex format. The connection of particular notes to tags
@@ -176,6 +189,7 @@ public:
      * its corresponding fragment of ENEX won't contain tag names associated with the note
      * @param tagNamesByTagLocalUids - tag names for all tag local uids across all passed in notes. The lack of any tag
      * name for any tag local uid is considered an error and the overall export attempt fails
+     * @param exportTagsOption - whether the export to ENEX should include the names of notes' tags
      * @param enex - the output of the method
      * @param errorDescription - the textual description of the error, if any
      * @param version - optional "version" tag for the ENEX. If not set, the corresponding ENEX tag is set to empty value
@@ -183,7 +197,8 @@ public:
      * @return true if the export completed successfully, false otherwise
      */
     bool exportNotesToEnex(const QVector<Note> & notes, const QHash<QString, QString> & tagNamesByTagLocalUids,
-                           QString & enex, ErrorString & errorDescription, const QString & version = QString()) const;
+                           const EnexExportTags::type exportTagsOption, QString & enex, ErrorString & errorDescription,
+                           const QString & version = QString()) const;
 
     /**
      * @brief importEnex - reads the content of input ENEX file and converts it into a set of notes

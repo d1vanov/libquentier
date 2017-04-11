@@ -57,6 +57,7 @@ private slots:
     void enexExportImportSingleSimpleNoteTest();
     void enexExportImportSingleNoteWithTagsTest();
     void enexExportImportSingleNoteWithResourcesTest();
+    void enexExportImportSingleNoteWithTagsAndResourcesTest();
 
     void resourceRecognitionIndicesParsingTest();
 

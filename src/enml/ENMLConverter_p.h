@@ -90,6 +90,7 @@ public:
     static void escapeString(QString & string, const bool simplify);
 
     bool exportNotesToEnex(const QVector<Note> & notes, const QHash<QString, QString> & tagNamesByTagLocalUids,
+                           const ENMLConverter::EnexExportTags::type exportTagsOption,
                            QString & enex, ErrorString & errorDescription, const QString & version) const;
 
     bool importEnex(const QString & enex, QVector<Note> & notes,
