@@ -188,6 +188,47 @@ bool exportSingleNoteWithTagsAndResourcesToEnexAndImportBack(QString & error)
     return compareNotes(notes, importedNotes, error);
 }
 
+bool exportSingleNoteWithTagsToEnexButSkipTagsAndImportBack(QString & error)
+{
+    Note note;
+    setupSampleNote(note);
+
+    QHash<QString, QString> tagNamesByTagLocalUids;
+    setupNoteTags(note, tagNamesByTagLocalUids);
+
+    QVector<Note> notes;
+    notes << note;
+
+    ErrorString errorDescription;
+    QString enex;
+
+    ENMLConverter converter;
+    ENMLConverter::EnexExportTags::type exportTagsOption = ENMLConverter::EnexExportTags::No;
+    bool res = converter.exportNotesToEnex(notes, tagNamesByTagLocalUids, exportTagsOption, enex, errorDescription);
+    if (Q_UNLIKELY(!res)) {
+        error = errorDescription.nonLocalizedString();
+        return false;
+    }
+
+    QVector<Note> importedNotes;
+    QHash<QString, QStringList> tagNamesByNoteLocalUid;
+
+    res = converter.importEnex(enex, importedNotes, tagNamesByNoteLocalUid, errorDescription);
+    if (Q_UNLIKELY(!res)) {
+        error = errorDescription.nonLocalizedString();
+        return false;
+    }
+
+    if (Q_UNLIKELY(!tagNamesByNoteLocalUid.isEmpty())) {
+        error = QStringLiteral("The hash of tag names by note local uid is not empty even though the option "
+                               "to not include tag names to ENEX was specified during export");
+        return false;
+    }
+
+    notes[0].setTagLocalUids(QStringList());
+    return compareNotes(notes, importedNotes, error);
+}
+
 bool compareNoteContents(const Note & lhs, const Note & rhs, QString & error)
 {
     if (lhs.hasTitle() != rhs.hasTitle()) {

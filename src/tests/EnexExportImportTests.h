@@ -28,6 +28,7 @@ bool exportSingleNoteWithoutTagsAndResourcesToEnexAndImportBack(QString & error)
 bool exportSingleNoteWithTagsButNoResourcesToEnexAndImportBack(QString & error);
 bool exportSingleNoteWithResourcesButNoTagsToEnexAndImportBack(QString & error);
 bool exportSingleNoteWithTagsAndResourcesToEnexAndImportBack(QString & error);
+bool exportSingleNoteWithTagsToEnexButSkipTagsAndImportBack(QString & error);
 
 } // namespace test
 } // namespace quentier
