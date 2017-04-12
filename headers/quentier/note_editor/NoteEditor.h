@@ -25,6 +25,7 @@
 #include <quentier/types/ErrorString.h>
 #include <QWidget>
 #include <QPrinter>
+#include <QStringList>
 
 QT_FORWARD_DECLARE_CLASS(QUndoStack)
 
@@ -241,8 +242,9 @@ public Q_SLOTS:
     void onNoteLoadCancelled();
 
     bool print(QPrinter & printer, ErrorString & errorDescription);
-
     bool exportToPdf(const QString & absoluteFilePath, ErrorString & errorDescription);
+    bool exportToEnex(const QStringList & tagNames,
+                      QString & enex, ErrorString & errorDescription);
 
 protected:
     virtual void dragMoveEvent(QDragMoveEvent * pEvent) Q_DECL_OVERRIDE;

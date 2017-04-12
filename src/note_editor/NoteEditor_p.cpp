@@ -5407,6 +5407,76 @@ bool NoteEditorPrivate::exportToPdf(const QString & absoluteFilePath, ErrorStrin
 #endif // QUENTIER_USE_QT_WEB_ENGINE
 }
 
+bool NoteEditorPrivate::exportToEnex(const QStringList & tagNames,
+                                     QString & enex, ErrorString & errorDescription)
+{
+    QNDEBUG(QStringLiteral("NoteEditorPrivate::exportToEnex"));
+
+    if (Q_UNLIKELY(!m_pNote)) {
+        errorDescription.base() = QT_TRANSLATE_NOOP("", "Can't export note to enex: no note is set to the editor");
+        QNDEBUG(errorDescription);
+        return false;
+    }
+
+    if (m_pendingNotePageLoad || m_pendingIndexHtmlWritingToFile || m_pendingJavaScriptExecution) {
+        errorDescription.base() = QT_TRANSLATE_NOOP("", "Can't export note to enex: the note has not been fully loaded "
+                                                    "into the editor yet, please try again in a few seconds");
+        QNDEBUG(errorDescription);
+        return false;
+    }
+
+    if (m_modified)
+    {
+        // Need to save the editor's content into a note before proceeding
+        QTimer * pSaveNoteTimer = new QTimer(this);
+        pSaveNoteTimer->setSingleShot(true);
+
+        EventLoopWithExitStatus eventLoop;
+        QObject::connect(pSaveNoteTimer, QNSIGNAL(QTimer,timeout),
+                         &eventLoop, QNSLOT(EventLoopWithExitStatus,exitAsTimeout));
+        QObject::connect(this, SIGNAL(convertedToNote(Note)),
+                         &eventLoop, SLOT(exitAsSuccess()));
+        QObject::connect(this, SIGNAL(cantConvertToNote(ErrorString)),
+                         &eventLoop, SLOT(exitAsFailure()));
+
+        pSaveNoteTimer->start(500);
+
+        QTimer::singleShot(0, this, SLOT(convertToNote()));
+
+        int result = eventLoop.exec(QEventLoop::ExcludeUserInputEvents);
+        if (result == EventLoopWithExitStatus::ExitStatus::Timeout) {
+            errorDescription.base() = QT_TRANSLATE_NOOP("", "Can't export note to enex: failed to save the edited note in time");
+            QNWARNING(errorDescription);
+            return false;
+        }
+        else if (result == EventLoopWithExitStatus::ExitStatus::Failure) {
+            errorDescription.base() = QT_TRANSLATE_NOOP("", "Can't export note to enex: failed to save the edited note");
+            QNWARNING(errorDescription);
+            return false;
+        }
+
+        QNDEBUG(QStringLiteral("Successfully saved the edited note"));
+    }
+
+    QVector<Note> notes;
+    notes << *m_pNote;
+
+    notes[0].setTagLocalUids(QStringList());
+    QHash<QString, QString> tagNamesByTagLocalUid;
+
+    for(auto it = tagNames.constBegin(), end = tagNames.constEnd(); it != end; ++it) {
+        QString fakeTagLocalUid = UidGenerator::Generate();
+        notes[0].addTagLocalUid(fakeTagLocalUid);
+        tagNamesByTagLocalUid[fakeTagLocalUid] = *it;
+    }
+
+    ENMLConverter::EnexExportTags::type exportTagsOption = (tagNames.isEmpty()
+                                                            ? ENMLConverter::EnexExportTags::No
+                                                            : ENMLConverter::EnexExportTags::Yes);
+    return m_enmlConverter.exportNotesToEnex(notes, tagNamesByTagLocalUid,
+                                             exportTagsOption, enex, errorDescription);
+}
+
 void NoteEditorPrivate::setNoteAndNotebook(const Note & note, const Notebook & notebook)
 {
     QNDEBUG(QStringLiteral("NoteEditorPrivate::setNoteAndNotebook: note: local uid = ") << note.localUid()

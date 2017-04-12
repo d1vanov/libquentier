@@ -26,6 +26,7 @@
 #include <quentier/types/Notebook.h>
 #include <QWidget>
 #include <QPrinter>
+#include <QStringList>
 
 QT_FORWARD_DECLARE_CLASS(QUndoStack)
 
@@ -154,8 +155,9 @@ public:
     virtual void onNoteLoadCancelled() = 0;
 
     virtual bool print(QPrinter & printer, ErrorString & errorDescription) = 0;
-
     virtual bool exportToPdf(const QString & absoluteFilePath, ErrorString & errorDescription) = 0;
+    virtual bool exportToEnex(const QStringList & tagNames,
+                              QString & enex, ErrorString & errorDescription) = 0;
 
     virtual void setNoteAndNotebook(const Note & note, const Notebook & notebook) = 0;
 

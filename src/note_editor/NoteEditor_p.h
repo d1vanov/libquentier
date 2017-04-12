@@ -289,6 +289,8 @@ public Q_SLOTS:
 
     virtual bool print(QPrinter & printer, ErrorString & errorDescription) Q_DECL_OVERRIDE;
     virtual bool exportToPdf(const QString & absoluteFilePath, ErrorString & errorDescription) Q_DECL_OVERRIDE;
+    virtual bool exportToEnex(const QStringList & tagNames,
+                              QString & enex, ErrorString & errorDescription) Q_DECL_OVERRIDE;
 
     virtual void setNoteAndNotebook(const Note & note, const Notebook & notebook) Q_DECL_OVERRIDE;
     virtual void clear() Q_DECL_OVERRIDE;

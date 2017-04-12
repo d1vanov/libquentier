@@ -400,6 +400,12 @@ bool NoteEditor::exportToPdf(const QString & absoluteFilePath, ErrorString & err
     return m_backend->exportToPdf(absoluteFilePath, errorDescription);
 }
 
+bool NoteEditor::exportToEnex(const QStringList & tagNames, QString & enex,
+                              ErrorString & errorDescription)
+{
+    return m_backend->exportToEnex(tagNames, enex, errorDescription);
+}
+
 void NoteEditor::dragMoveEvent(QDragMoveEvent * pEvent)
 {
     if (Q_LIKELY(pEvent)) {
