@@ -128,6 +128,7 @@ typedef QWebEngineSettings WebSettings;
 #include <QImage>
 #include <QBuffer>
 #include <QTransform>
+#include <QTimer>
 
 #define GET_PAGE() \
     NoteEditorPage * page = qobject_cast<NoteEditorPage*>(this->page()); \
