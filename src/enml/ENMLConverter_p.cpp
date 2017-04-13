@@ -1492,7 +1492,7 @@ bool ENMLConverterPrivate::exportNotesToEnex(const QVector<Note> & notes, const 
     enex.resize(0);
 
     if (notes.isEmpty()) {
-        errorDescription.base() = QT_TRANSLATE_NOOP("", "Can't export notes to ENEX: no notes");
+        errorDescription.base() = QT_TRANSLATE_NOOP("", "Can't export note(s) to ENEX: no notes");
         QNWARNING(errorDescription);
         return false;
     }
@@ -1511,7 +1511,7 @@ bool ENMLConverterPrivate::exportNotesToEnex(const QVector<Note> & notes, const 
     }
 
     if (!foundNoteEligibleForExport) {
-        errorDescription.base() = QT_TRANSLATE_NOOP("", "Can't export notes to ENEX: no notes eligible for export");
+        errorDescription.base() = QT_TRANSLATE_NOOP("", "Can't export note(s) to ENEX: no notes eligible for export");
         QNWARNING(errorDescription);
         return false;
     }
@@ -1586,7 +1586,7 @@ bool ENMLConverterPrivate::exportNotesToEnex(const QVector<Note> & notes, const 
                 auto tagNameIt = tagNamesByTagLocalUids.find(*tagIt);
                 if (Q_UNLIKELY(tagNameIt == tagNamesByTagLocalUids.end())) {
                     enex.clear();
-                    errorDescription.base() = QT_TRANSLATE_NOOP("", "Can't export notes to ENEX: one of notes has tag local uid "
+                    errorDescription.base() = QT_TRANSLATE_NOOP("", "Can't export note(s) to ENEX: one of notes has tag local uid "
                                                                 "for which no tag name was found");
                     QNWARNING(errorDescription);
                     return false;
@@ -1779,7 +1779,7 @@ bool ENMLConverterPrivate::exportNotesToEnex(const QVector<Note> & notes, const 
                     ErrorString error;
                     bool res = validateRecoIndex(QString::fromLocal8Bit(recognitionData), error);
                     if (Q_UNLIKELY(!res)) {
-                        errorDescription.base() = QT_TRANSLATE_NOOP("", "Resource recognition index is invalid");
+                        errorDescription.base() = QT_TRANSLATE_NOOP("", "Can't export note(s) to ENEX: found invalid resource recognition index at one of notes");
                         errorDescription.additionalBases().append(error.base());
                         errorDescription.additionalBases().append(error.additionalBases());
                         errorDescription.details() = error.details();
@@ -1899,7 +1899,7 @@ bool ENMLConverterPrivate::exportNotesToEnex(const QVector<Note> & notes, const 
 
     bool res = validateEnex(enex, errorDescription);
     if (!res) {
-        ErrorString error(QT_TRANSLATE_NOOP("", "Can't export notes to enex"));
+        ErrorString error(QT_TRANSLATE_NOOP("", "Can't export note(s) to ENEX"));
         error.additionalBases().append(errorDescription.base());
         error.additionalBases().append(errorDescription.additionalBases());
         error.details() = errorDescription.details();
