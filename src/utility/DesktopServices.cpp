@@ -231,8 +231,11 @@ int criticalMessageBox(QWidget * parent, const QString & title, const QString & 
 int questionMessageBox(QWidget * parent, const QString & title, const QString & briefText,
                         const QString & detailedText, const QMessageBox::StandardButtons buttons)
 {
+    QMessageBox::StandardButtons actualButtons = buttons;
+    actualButtons |= QMessageBox::Ok | QMessageBox::Cancel;
+
     return messageBoxImplementation(QMessageBox::Question, parent, title, briefText,
-                                    detailedText, buttons);
+                                    detailedText, actualButtons);
 }
 
 void internalErrorMessageBox(QWidget * parent, QString detailedText)

@@ -70,7 +70,7 @@ int QUENTIER_EXPORT criticalMessageBox(QWidget * parent, const QString & title,
                                        const QMessageBox::StandardButtons standardButtons = QMessageBox::Ok);
 int QUENTIER_EXPORT questionMessageBox(QWidget * parent, const QString & title,
                                        const QString & briefText, const QString & detailedText = QString(),
-                                       const QMessageBox::StandardButtons standardButtons = QMessageBox::Ok);
+                                       const QMessageBox::StandardButtons standardButtons = QMessageBox::Ok | QMessageBox::Cancel);
 
 // Convenience function for critical message box due to internal error, has built-in title
 // ("Internal error") and brief text so the caller only needs to provide the detailed text
