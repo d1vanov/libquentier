@@ -31,10 +31,10 @@ ShortcutManagerPrivate::ShortcutManagerPrivate(ShortcutManager & shortcutManager
 {
     Q_Q(ShortcutManager);
 
-    QObject::connect(this, QNSIGNAL(ShortcutManagerPrivate,shortcutChanged,int,QKeySequence,QString),
-                     q, QNSIGNAL(ShortcutManager,shortcutChanged,int,QKeySequence,QString));
-    QObject::connect(this, QNSIGNAL(ShortcutManagerPrivate,nonStandardShortcutChanged,QString,QKeySequence,QString),
-                     q, QNSIGNAL(ShortcutManager,nonStandardShortcutChanged,QString,QKeySequence,QString));
+    QObject::connect(this, QNSIGNAL(ShortcutManagerPrivate,shortcutChanged,int,QKeySequence,Account,QString),
+                     q, QNSIGNAL(ShortcutManager,shortcutChanged,int,QKeySequence,Account,QString));
+    QObject::connect(this, QNSIGNAL(ShortcutManagerPrivate,nonStandardShortcutChanged,QString,QKeySequence,Account,QString),
+                     q, QNSIGNAL(ShortcutManager,nonStandardShortcutChanged,QString,QKeySequence,Account,QString));
 }
 
 QKeySequence ShortcutManagerPrivate::shortcut(const int key, const Account & account, const QString & context) const
