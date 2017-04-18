@@ -16,8 +16,8 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LIB_QUENTIER_LOCAL_STORAGE_LOCAL_STORAGE_MANAGER_THREAD_WORKER_H
-#define LIB_QUENTIER_LOCAL_STORAGE_LOCAL_STORAGE_MANAGER_THREAD_WORKER_H
+#ifndef LIB_QUENTIER_LOCAL_STORAGE_LOCAL_STORAGE_MANAGER_ASYNC_H
+#define LIB_QUENTIER_LOCAL_STORAGE_LOCAL_STORAGE_MANAGER_ASYNC_H
 
 #include <quentier/utility/Macros.h>
 #include <quentier/types/ErrorString.h>
@@ -35,14 +35,13 @@
 
 namespace quentier {
 
-class QUENTIER_EXPORT LocalStorageManagerThreadWorker: public QObject
+class QUENTIER_EXPORT LocalStorageManagerAsync: public QObject
 {
     Q_OBJECT
 public:
-    explicit LocalStorageManagerThreadWorker(const Account & account,
-                                             const bool startFromScratch, const bool overrideLock,
-                                             QObject * parent = Q_NULLPTR);
-    virtual ~LocalStorageManagerThreadWorker();
+    explicit LocalStorageManagerAsync(const Account & account, const bool startFromScratch,
+                                      const bool overrideLock, QObject * parent = Q_NULLPTR);
+    virtual ~LocalStorageManagerAsync();
 
     void setUseCache(const bool useCache);
 
@@ -396,8 +395,8 @@ public Q_SLOTS:
     void onExpungeSavedSearch(SavedSearch search, QUuid requestId);
 
 private:
-    LocalStorageManagerThreadWorker() Q_DECL_EQ_DELETE;
-    Q_DISABLE_COPY(LocalStorageManagerThreadWorker)
+    LocalStorageManagerAsync() Q_DECL_EQ_DELETE;
+    Q_DISABLE_COPY(LocalStorageManagerAsync)
 
     Account                     m_account;
     bool                        m_startFromScratch;
@@ -409,4 +408,4 @@ private:
 
 } // namespace quentier
 
-#endif // LIB_QUENTIER_LOCAL_STORAGE_LOCAL_STORAGE_MANAGER_THREAD_WORKER_H
+#endif // LIB_QUENTIER_LOCAL_STORAGE_LOCAL_STORAGE_MANAGER_ASYNC_H

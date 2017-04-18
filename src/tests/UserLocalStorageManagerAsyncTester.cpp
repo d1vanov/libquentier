@@ -17,7 +17,7 @@
  */
 
 #include "UserLocalStorageManagerAsyncTester.h"
-#include <quentier/local_storage/LocalStorageManagerThreadWorker.h>
+#include <quentier/local_storage/LocalStorageManagerAsync.h>
 #include <quentier/logging/QuentierLogger.h>
 #include <QThread>
 
@@ -27,7 +27,7 @@ namespace test {
 UserLocalStorageManagerAsyncTester::UserLocalStorageManagerAsyncTester(QObject * parent) :
     QObject(parent),
     m_state(STATE_UNINITIALIZED),
-    m_pLocalStorageManagerThreadWorker(Q_NULLPTR),
+    m_pLocalStorageManagerAsync(Q_NULLPTR),
     m_pLocalStorageManagerThread(Q_NULLPTR),
     m_userId(3),
     m_initialUser(),
@@ -37,16 +37,7 @@ UserLocalStorageManagerAsyncTester::UserLocalStorageManagerAsyncTester(QObject *
 
 UserLocalStorageManagerAsyncTester::~UserLocalStorageManagerAsyncTester()
 {
-    // NOTE: shouldn't attempt to delete m_pLocalStorageManagerThread as Qt's parent-child system
-    // should take care of that
-    if (m_pLocalStorageManagerThread) {
-        m_pLocalStorageManagerThread->quit();
-        m_pLocalStorageManagerThread->wait();
-    }
-
-    if (m_pLocalStorageManagerThreadWorker) {
-        delete m_pLocalStorageManagerThreadWorker;
-    }
+    clear();
 }
 
 void UserLocalStorageManagerAsyncTester::onInitTestCase()
@@ -55,22 +46,12 @@ void UserLocalStorageManagerAsyncTester::onInitTestCase()
     bool startFromScratch = true;
     bool overrideLock = false;
 
-    if (m_pLocalStorageManagerThread) {
-        delete m_pLocalStorageManagerThread;
-        m_pLocalStorageManagerThread = Q_NULLPTR;
-    }
-
-    if (m_pLocalStorageManagerThreadWorker) {
-        delete m_pLocalStorageManagerThreadWorker;
-        m_pLocalStorageManagerThreadWorker = Q_NULLPTR;
-    }
-
-    m_state = STATE_UNINITIALIZED;
+    clear();
 
     m_pLocalStorageManagerThread = new QThread(this);
     Account account(username, Account::Type::Evernote, m_userId);
-    m_pLocalStorageManagerThreadWorker = new LocalStorageManagerThreadWorker(account, startFromScratch, overrideLock);
-    m_pLocalStorageManagerThreadWorker->moveToThread(m_pLocalStorageManagerThread);
+    m_pLocalStorageManagerAsync = new LocalStorageManagerAsync(account, startFromScratch, overrideLock);
+    m_pLocalStorageManagerAsync->moveToThread(m_pLocalStorageManagerThread);
 
     createConnections();
 
@@ -324,56 +305,73 @@ void UserLocalStorageManagerAsyncTester::onFailure(ErrorString errorDescription)
 
 void UserLocalStorageManagerAsyncTester::createConnections()
 {
-    QObject::connect(m_pLocalStorageManagerThreadWorker, QNSIGNAL(LocalStorageManagerThreadWorker,failure,ErrorString),
+    QObject::connect(m_pLocalStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,failure,ErrorString),
                      this, QNSLOT(UserLocalStorageManagerAsyncTester,onFailure,ErrorString));
 
     QObject::connect(m_pLocalStorageManagerThread, QNSIGNAL(QThread,started),
-                     m_pLocalStorageManagerThreadWorker, QNSLOT(LocalStorageManagerThreadWorker,init));
+                     m_pLocalStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,init));
     QObject::connect(m_pLocalStorageManagerThread, QNSIGNAL(QThread,finished),
                      m_pLocalStorageManagerThread, QNSLOT(QThread,deleteLater));
 
-    QObject::connect(m_pLocalStorageManagerThreadWorker, QNSIGNAL(LocalStorageManagerThreadWorker,initialized),
+    QObject::connect(m_pLocalStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,initialized),
                      this, QNSLOT(UserLocalStorageManagerAsyncTester,onWorkerInitialized));
 
     // Request --> slot connections
     QObject::connect(this, QNSIGNAL(UserLocalStorageManagerAsyncTester,getUserCountRequest,QUuid),
-                     m_pLocalStorageManagerThreadWorker, QNSLOT(LocalStorageManagerThreadWorker,onGetUserCountRequest,QUuid));
+                     m_pLocalStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,onGetUserCountRequest,QUuid));
     QObject::connect(this, QNSIGNAL(UserLocalStorageManagerAsyncTester,addUserRequest,User,QUuid),
-                     m_pLocalStorageManagerThreadWorker, QNSLOT(LocalStorageManagerThreadWorker,onAddUserRequest,User,QUuid));
+                     m_pLocalStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,onAddUserRequest,User,QUuid));
     QObject::connect(this, QNSIGNAL(UserLocalStorageManagerAsyncTester,updateUserRequest,User,QUuid),
-                     m_pLocalStorageManagerThreadWorker, QNSLOT(LocalStorageManagerThreadWorker,onUpdateUserRequest,User,QUuid));
+                     m_pLocalStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,onUpdateUserRequest,User,QUuid));
     QObject::connect(this, QNSIGNAL(UserLocalStorageManagerAsyncTester,findUserRequest,User,QUuid),
-                     m_pLocalStorageManagerThreadWorker, QNSLOT(LocalStorageManagerThreadWorker,onFindUserRequest,User,QUuid));
+                     m_pLocalStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,onFindUserRequest,User,QUuid));
     QObject::connect(this, QNSIGNAL(UserLocalStorageManagerAsyncTester,deleteUserRequest,User,QUuid),
-                     m_pLocalStorageManagerThreadWorker, QNSLOT(LocalStorageManagerThreadWorker,onDeleteUserRequest,User,QUuid));
+                     m_pLocalStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,onDeleteUserRequest,User,QUuid));
     QObject::connect(this, QNSIGNAL(UserLocalStorageManagerAsyncTester,expungeUserRequest,User,QUuid),
-                     m_pLocalStorageManagerThreadWorker, QNSLOT(LocalStorageManagerThreadWorker,onExpungeUserRequest,User,QUuid));
+                     m_pLocalStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,onExpungeUserRequest,User,QUuid));
 
     // Slot <-- result connections
-    QObject::connect(m_pLocalStorageManagerThreadWorker, QNSIGNAL(LocalStorageManagerThreadWorker,getUserCountComplete,int,QUuid),
+    QObject::connect(m_pLocalStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,getUserCountComplete,int,QUuid),
                      this, QNSLOT(UserLocalStorageManagerAsyncTester,onGetUserCountCompleted,int,QUuid));
-    QObject::connect(m_pLocalStorageManagerThreadWorker, QNSIGNAL(LocalStorageManagerThreadWorker,getUserCountFailed,ErrorString,QUuid),
+    QObject::connect(m_pLocalStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,getUserCountFailed,ErrorString,QUuid),
                      this, QNSLOT(UserLocalStorageManagerAsyncTester,onGetUserCountFailed,ErrorString,QUuid));
-    QObject::connect(m_pLocalStorageManagerThreadWorker, QNSIGNAL(LocalStorageManagerThreadWorker,addUserComplete,User,QUuid),
+    QObject::connect(m_pLocalStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,addUserComplete,User,QUuid),
                      this, QNSLOT(UserLocalStorageManagerAsyncTester,onAddUserCompleted,User,QUuid));
-    QObject::connect(m_pLocalStorageManagerThreadWorker, QNSIGNAL(LocalStorageManagerThreadWorker,addUserFailed,User,ErrorString,QUuid),
+    QObject::connect(m_pLocalStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,addUserFailed,User,ErrorString,QUuid),
                      this, QNSLOT(UserLocalStorageManagerAsyncTester,onAddUserFailed,User,ErrorString,QUuid));
-    QObject::connect(m_pLocalStorageManagerThreadWorker, QNSIGNAL(LocalStorageManagerThreadWorker,updateUserComplete,User,QUuid),
+    QObject::connect(m_pLocalStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,updateUserComplete,User,QUuid),
                      this, QNSLOT(UserLocalStorageManagerAsyncTester,onUpdateUserCompleted,User,QUuid));
-    QObject::connect(m_pLocalStorageManagerThreadWorker, QNSIGNAL(LocalStorageManagerThreadWorker,updateUserFailed,User,ErrorString,QUuid),
+    QObject::connect(m_pLocalStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,updateUserFailed,User,ErrorString,QUuid),
                      this, QNSLOT(UserLocalStorageManagerAsyncTester,onUpdateUserFailed,User,ErrorString,QUuid));
-    QObject::connect(m_pLocalStorageManagerThreadWorker, QNSIGNAL(LocalStorageManagerThreadWorker,findUserComplete,User,QUuid),
+    QObject::connect(m_pLocalStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,findUserComplete,User,QUuid),
                      this, QNSLOT(UserLocalStorageManagerAsyncTester,onFindUserCompleted,User,QUuid));
-    QObject::connect(m_pLocalStorageManagerThreadWorker, QNSIGNAL(LocalStorageManagerThreadWorker,findUserFailed,User,ErrorString,QUuid),
+    QObject::connect(m_pLocalStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,findUserFailed,User,ErrorString,QUuid),
                      this, QNSLOT(UserLocalStorageManagerAsyncTester,onFindUserFailed,User,ErrorString,QUuid));
-    QObject::connect(m_pLocalStorageManagerThreadWorker, QNSIGNAL(LocalStorageManagerThreadWorker,deleteUserComplete,User,QUuid),
+    QObject::connect(m_pLocalStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,deleteUserComplete,User,QUuid),
                      this, QNSLOT(UserLocalStorageManagerAsyncTester,onDeleteUserCompleted,User,QUuid));
-    QObject::connect(m_pLocalStorageManagerThreadWorker, QNSIGNAL(LocalStorageManagerThreadWorker,deleteUserFailed,User,ErrorString,QUuid),
+    QObject::connect(m_pLocalStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,deleteUserFailed,User,ErrorString,QUuid),
                      this, QNSLOT(UserLocalStorageManagerAsyncTester,onDeleteUserFailed,User,ErrorString,QUuid));
-    QObject::connect(m_pLocalStorageManagerThreadWorker, QNSIGNAL(LocalStorageManagerThreadWorker,expungeUserComplete,User,QUuid),
+    QObject::connect(m_pLocalStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,expungeUserComplete,User,QUuid),
                      this, QNSLOT(UserLocalStorageManagerAsyncTester,onExpungeUserCompleted,User,QUuid));
-    QObject::connect(m_pLocalStorageManagerThreadWorker, QNSIGNAL(LocalStorageManagerThreadWorker,expungeUserFailed,User,ErrorString,QUuid),
+    QObject::connect(m_pLocalStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,expungeUserFailed,User,ErrorString,QUuid),
                      this, QNSLOT(UserLocalStorageManagerAsyncTester,onExpungeUserFailed,User,ErrorString,QUuid));
+}
+
+void UserLocalStorageManagerAsyncTester::clear()
+{
+    if (m_pLocalStorageManagerThread) {
+        m_pLocalStorageManagerThread->quit();
+        m_pLocalStorageManagerThread->wait();
+        m_pLocalStorageManagerThread->deleteLater();
+        m_pLocalStorageManagerThread = Q_NULLPTR;
+    }
+
+    if (m_pLocalStorageManagerAsync) {
+        m_pLocalStorageManagerAsync->deleteLater();
+        m_pLocalStorageManagerAsync = Q_NULLPTR;
+    }
+
+    m_state = STATE_UNINITIALIZED;
 }
 
 #undef HANDLE_WRONG_STATE

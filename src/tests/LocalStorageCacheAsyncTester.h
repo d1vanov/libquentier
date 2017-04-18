@@ -29,7 +29,7 @@
 
 namespace quentier {
 
-QT_FORWARD_DECLARE_CLASS(LocalStorageManagerThreadWorker)
+QT_FORWARD_DECLARE_CLASS(LocalStorageManagerAsync)
 QT_FORWARD_DECLARE_CLASS(LocalStorageCacheManager)
 
 namespace test {
@@ -102,6 +102,7 @@ private Q_SLOTS:
 
 private:
     void createConnections();
+    void clear();
 
     void addNotebook();
     void updateNotebook();
@@ -134,7 +135,7 @@ private:
     };
 
     State   m_state;
-    LocalStorageManagerThreadWorker *   m_pLocalStorageManagerThreadWorker;
+    LocalStorageManagerAsync *          m_pLocalStorageManagerAsync;
     const LocalStorageCacheManager *    m_pLocalStorageCacheManager;
     QThread *                           m_pLocalStorageManagerThread;
 

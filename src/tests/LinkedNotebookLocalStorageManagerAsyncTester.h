@@ -26,7 +26,7 @@
 
 namespace quentier {
 
-QT_FORWARD_DECLARE_CLASS(LocalStorageManagerThreadWorker)
+QT_FORWARD_DECLARE_CLASS(LocalStorageManagerAsync)
 
 namespace test {
 
@@ -81,6 +81,7 @@ private Q_SLOTS:
 
 private:
     void createConnections();
+    void clear();
 
     enum State
     {
@@ -100,8 +101,8 @@ private:
 
     State   m_state;
 
-    LocalStorageManagerThreadWorker     * m_pLocalStorageManagerThreadWorker;
-    QThread *               m_pLocalStorageManagerThread;
+    LocalStorageManagerAsync *      m_pLocalStorageManagerAsync;
+    QThread *                       m_pLocalStorageManagerThread;
 
     LinkedNotebook          m_initialLinkedNotebook;
     LinkedNotebook          m_foundLinkedNotebook;

@@ -16,16 +16,15 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <quentier/local_storage/LocalStorageManagerThreadWorker.h>
+#include <quentier/local_storage/LocalStorageManagerAsync.h>
 #include <quentier/local_storage/NoteSearchQuery.h>
 #include <quentier/logging/QuentierLogger.h>
 #include <quentier/utility/SysInfo.h>
 
 namespace quentier {
 
-LocalStorageManagerThreadWorker::LocalStorageManagerThreadWorker(const Account & account,
-                                                                 const bool startFromScratch, const bool overrideLock,
-                                                                 QObject * parent) :
+LocalStorageManagerAsync::LocalStorageManagerAsync(const Account & account, const bool startFromScratch,
+                                                   const bool overrideLock, QObject * parent) :
     QObject(parent),
     m_account(account),
     m_startFromScratch(startFromScratch),
@@ -35,7 +34,7 @@ LocalStorageManagerThreadWorker::LocalStorageManagerThreadWorker(const Account &
     m_pLocalStorageCacheManager(Q_NULLPTR)
 {}
 
-LocalStorageManagerThreadWorker::~LocalStorageManagerThreadWorker()
+LocalStorageManagerAsync::~LocalStorageManagerAsync()
 {
     if (m_pLocalStorageManager) {
         delete m_pLocalStorageManager;
@@ -46,7 +45,7 @@ LocalStorageManagerThreadWorker::~LocalStorageManagerThreadWorker()
     }
 }
 
-void LocalStorageManagerThreadWorker::setUseCache(const bool useCache)
+void LocalStorageManagerAsync::setUseCache(const bool useCache)
 {
     if (m_useCache) {
         // Cache is being disabled - no point to store things in it anymore, it would get rotten pretty quick
@@ -56,7 +55,7 @@ void LocalStorageManagerThreadWorker::setUseCache(const bool useCache)
     m_useCache = useCache;
 }
 
-const LocalStorageCacheManager * LocalStorageManagerThreadWorker::localStorageCacheManager() const
+const LocalStorageCacheManager * LocalStorageManagerAsync::localStorageCacheManager() const
 {
     if (!m_useCache) {
         return Q_NULLPTR;
@@ -66,7 +65,7 @@ const LocalStorageCacheManager * LocalStorageManagerThreadWorker::localStorageCa
     }
 }
 
-void LocalStorageManagerThreadWorker::init()
+void LocalStorageManagerAsync::init()
 {
     if (m_pLocalStorageManager) {
         delete m_pLocalStorageManager;
@@ -94,7 +93,7 @@ void LocalStorageManagerThreadWorker::init()
         emit failure(error); \
     }
 
-void LocalStorageManagerThreadWorker::onGetUserCountRequest(QUuid requestId)
+void LocalStorageManagerAsync::onGetUserCountRequest(QUuid requestId)
 {
     try
     {
@@ -110,8 +109,7 @@ void LocalStorageManagerThreadWorker::onGetUserCountRequest(QUuid requestId)
     CATCH_EXCEPTION
 }
 
-void LocalStorageManagerThreadWorker::onSwitchUserRequest(Account account,
-                                                          bool startFromScratch, QUuid requestId)
+void LocalStorageManagerAsync::onSwitchUserRequest(Account account, bool startFromScratch, QUuid requestId)
 {
     try {
         m_pLocalStorageManager->switchUser(account, startFromScratch);
@@ -126,7 +124,7 @@ void LocalStorageManagerThreadWorker::onSwitchUserRequest(Account account,
     emit switchUserComplete(account, requestId);
 }
 
-void LocalStorageManagerThreadWorker::onAddUserRequest(User user, QUuid requestId)
+void LocalStorageManagerAsync::onAddUserRequest(User user, QUuid requestId)
 {
     try
     {
@@ -143,7 +141,7 @@ void LocalStorageManagerThreadWorker::onAddUserRequest(User user, QUuid requestI
     CATCH_EXCEPTION
 }
 
-void LocalStorageManagerThreadWorker::onUpdateUserRequest(User user, QUuid requestId)
+void LocalStorageManagerAsync::onUpdateUserRequest(User user, QUuid requestId)
 {
     try
     {
@@ -160,7 +158,7 @@ void LocalStorageManagerThreadWorker::onUpdateUserRequest(User user, QUuid reque
     CATCH_EXCEPTION
 }
 
-void LocalStorageManagerThreadWorker::onFindUserRequest(User user, QUuid requestId)
+void LocalStorageManagerAsync::onFindUserRequest(User user, QUuid requestId)
 {
     try
     {
@@ -177,7 +175,7 @@ void LocalStorageManagerThreadWorker::onFindUserRequest(User user, QUuid request
     CATCH_EXCEPTION
 }
 
-void LocalStorageManagerThreadWorker::onDeleteUserRequest(User user, QUuid requestId)
+void LocalStorageManagerAsync::onDeleteUserRequest(User user, QUuid requestId)
 {
     try
     {
@@ -194,7 +192,7 @@ void LocalStorageManagerThreadWorker::onDeleteUserRequest(User user, QUuid reque
     CATCH_EXCEPTION
 }
 
-void LocalStorageManagerThreadWorker::onExpungeUserRequest(User user, QUuid requestId)
+void LocalStorageManagerAsync::onExpungeUserRequest(User user, QUuid requestId)
 {
     try
     {
@@ -211,7 +209,7 @@ void LocalStorageManagerThreadWorker::onExpungeUserRequest(User user, QUuid requ
     CATCH_EXCEPTION
 }
 
-void LocalStorageManagerThreadWorker::onGetNotebookCountRequest(QUuid requestId)
+void LocalStorageManagerAsync::onGetNotebookCountRequest(QUuid requestId)
 {
     try
     {
@@ -227,7 +225,7 @@ void LocalStorageManagerThreadWorker::onGetNotebookCountRequest(QUuid requestId)
     CATCH_EXCEPTION
 }
 
-void LocalStorageManagerThreadWorker::onAddNotebookRequest(Notebook notebook, QUuid requestId)
+void LocalStorageManagerAsync::onAddNotebookRequest(Notebook notebook, QUuid requestId)
 {
     try
     {
@@ -248,7 +246,7 @@ void LocalStorageManagerThreadWorker::onAddNotebookRequest(Notebook notebook, QU
     CATCH_EXCEPTION
 }
 
-void LocalStorageManagerThreadWorker::onUpdateNotebookRequest(Notebook notebook, QUuid requestId)
+void LocalStorageManagerAsync::onUpdateNotebookRequest(Notebook notebook, QUuid requestId)
 {
     try
     {
@@ -269,7 +267,7 @@ void LocalStorageManagerThreadWorker::onUpdateNotebookRequest(Notebook notebook,
     CATCH_EXCEPTION
 }
 
-void LocalStorageManagerThreadWorker::onFindNotebookRequest(Notebook notebook, QUuid requestId)
+void LocalStorageManagerAsync::onFindNotebookRequest(Notebook notebook, QUuid requestId)
 {
     try
     {
@@ -315,7 +313,7 @@ void LocalStorageManagerThreadWorker::onFindNotebookRequest(Notebook notebook, Q
     CATCH_EXCEPTION
 }
 
-void LocalStorageManagerThreadWorker::onFindDefaultNotebookRequest(Notebook notebook, QUuid requestId)
+void LocalStorageManagerAsync::onFindDefaultNotebookRequest(Notebook notebook, QUuid requestId)
 {
     try
     {
@@ -332,7 +330,7 @@ void LocalStorageManagerThreadWorker::onFindDefaultNotebookRequest(Notebook note
     CATCH_EXCEPTION
 }
 
-void LocalStorageManagerThreadWorker::onFindLastUsedNotebookRequest(Notebook notebook, QUuid requestId)
+void LocalStorageManagerAsync::onFindLastUsedNotebookRequest(Notebook notebook, QUuid requestId)
 {
     try
     {
@@ -349,7 +347,7 @@ void LocalStorageManagerThreadWorker::onFindLastUsedNotebookRequest(Notebook not
     CATCH_EXCEPTION
 }
 
-void LocalStorageManagerThreadWorker::onFindDefaultOrLastUsedNotebookRequest(Notebook notebook, QUuid requestId)
+void LocalStorageManagerAsync::onFindDefaultOrLastUsedNotebookRequest(Notebook notebook, QUuid requestId)
 {
     try
     {
@@ -366,10 +364,10 @@ void LocalStorageManagerThreadWorker::onFindDefaultOrLastUsedNotebookRequest(Not
     CATCH_EXCEPTION
 }
 
-void LocalStorageManagerThreadWorker::onListAllNotebooksRequest(size_t limit, size_t offset,
-                                                                LocalStorageManager::ListNotebooksOrder::type order,
-                                                                LocalStorageManager::OrderDirection::type orderDirection,
-                                                                QString linkedNotebookGuid, QUuid requestId)
+void LocalStorageManagerAsync::onListAllNotebooksRequest(size_t limit, size_t offset,
+                                                         LocalStorageManager::ListNotebooksOrder::type order,
+                                                         LocalStorageManager::OrderDirection::type orderDirection,
+                                                         QString linkedNotebookGuid, QUuid requestId)
 {
     try
     {
@@ -396,7 +394,7 @@ void LocalStorageManagerThreadWorker::onListAllNotebooksRequest(size_t limit, si
     CATCH_EXCEPTION
 }
 
-void LocalStorageManagerThreadWorker::onListAllSharedNotebooksRequest(QUuid requestId)
+void LocalStorageManagerAsync::onListAllSharedNotebooksRequest(QUuid requestId)
 {
     try
     {
@@ -412,11 +410,11 @@ void LocalStorageManagerThreadWorker::onListAllSharedNotebooksRequest(QUuid requ
     CATCH_EXCEPTION
 }
 
-void LocalStorageManagerThreadWorker::onListNotebooksRequest(LocalStorageManager::ListObjectsOptions flag,
-                                                             size_t limit, size_t offset,
-                                                             LocalStorageManager::ListNotebooksOrder::type order,
-                                                             LocalStorageManager::OrderDirection::type orderDirection,
-                                                             QString linkedNotebookGuid, QUuid requestId)
+void LocalStorageManagerAsync::onListNotebooksRequest(LocalStorageManager::ListObjectsOptions flag,
+                                                      size_t limit, size_t offset,
+                                                      LocalStorageManager::ListNotebooksOrder::type order,
+                                                      LocalStorageManager::OrderDirection::type orderDirection,
+                                                      QString linkedNotebookGuid, QUuid requestId)
 {
     try
     {
@@ -443,7 +441,7 @@ void LocalStorageManagerThreadWorker::onListNotebooksRequest(LocalStorageManager
     CATCH_EXCEPTION
 }
 
-void LocalStorageManagerThreadWorker::onListSharedNotebooksPerNotebookGuidRequest(QString notebookGuid, QUuid requestId)
+void LocalStorageManagerAsync::onListSharedNotebooksPerNotebookGuidRequest(QString notebookGuid, QUuid requestId)
 {
     try
     {
@@ -459,7 +457,7 @@ void LocalStorageManagerThreadWorker::onListSharedNotebooksPerNotebookGuidReques
     CATCH_EXCEPTION
 }
 
-void LocalStorageManagerThreadWorker::onExpungeNotebookRequest(Notebook notebook, QUuid requestId)
+void LocalStorageManagerAsync::onExpungeNotebookRequest(Notebook notebook, QUuid requestId)
 {
     try
     {
@@ -480,7 +478,7 @@ void LocalStorageManagerThreadWorker::onExpungeNotebookRequest(Notebook notebook
     CATCH_EXCEPTION
 }
 
-void LocalStorageManagerThreadWorker::onGetLinkedNotebookCountRequest(QUuid requestId)
+void LocalStorageManagerAsync::onGetLinkedNotebookCountRequest(QUuid requestId)
 {
     try
     {
@@ -496,7 +494,7 @@ void LocalStorageManagerThreadWorker::onGetLinkedNotebookCountRequest(QUuid requ
     CATCH_EXCEPTION
 }
 
-void LocalStorageManagerThreadWorker::onAddLinkedNotebookRequest(LinkedNotebook linkedNotebook, QUuid requestId)
+void LocalStorageManagerAsync::onAddLinkedNotebookRequest(LinkedNotebook linkedNotebook, QUuid requestId)
 {
     try
     {
@@ -517,7 +515,7 @@ void LocalStorageManagerThreadWorker::onAddLinkedNotebookRequest(LinkedNotebook 
     CATCH_EXCEPTION
 }
 
-void LocalStorageManagerThreadWorker::onUpdateLinkedNotebookRequest(LinkedNotebook linkedNotebook, QUuid requestId)
+void LocalStorageManagerAsync::onUpdateLinkedNotebookRequest(LinkedNotebook linkedNotebook, QUuid requestId)
 {
     try
     {
@@ -538,7 +536,7 @@ void LocalStorageManagerThreadWorker::onUpdateLinkedNotebookRequest(LinkedNotebo
     CATCH_EXCEPTION
 }
 
-void LocalStorageManagerThreadWorker::onFindLinkedNotebookRequest(LinkedNotebook linkedNotebook, QUuid requestId)
+void LocalStorageManagerAsync::onFindLinkedNotebookRequest(LinkedNotebook linkedNotebook, QUuid requestId)
 {
     try
     {
@@ -569,10 +567,10 @@ void LocalStorageManagerThreadWorker::onFindLinkedNotebookRequest(LinkedNotebook
     CATCH_EXCEPTION
 }
 
-void LocalStorageManagerThreadWorker::onListAllLinkedNotebooksRequest(size_t limit, size_t offset,
-                                                                      LocalStorageManager::ListLinkedNotebooksOrder::type order,
-                                                                      LocalStorageManager::OrderDirection::type orderDirection,
-                                                                      QUuid requestId)
+void LocalStorageManagerAsync::onListAllLinkedNotebooksRequest(size_t limit, size_t offset,
+                                                               LocalStorageManager::ListLinkedNotebooksOrder::type order,
+                                                               LocalStorageManager::OrderDirection::type orderDirection,
+                                                               QUuid requestId)
 {
     try
     {
@@ -598,11 +596,11 @@ void LocalStorageManagerThreadWorker::onListAllLinkedNotebooksRequest(size_t lim
     CATCH_EXCEPTION
 }
 
-void LocalStorageManagerThreadWorker::onListLinkedNotebooksRequest(LocalStorageManager::ListObjectsOptions flag,
-                                                                   size_t limit, size_t offset,
-                                                                   LocalStorageManager::ListLinkedNotebooksOrder::type order,
-                                                                   LocalStorageManager::OrderDirection::type orderDirection,
-                                                                   QUuid requestId)
+void LocalStorageManagerAsync::onListLinkedNotebooksRequest(LocalStorageManager::ListObjectsOptions flag,
+                                                            size_t limit, size_t offset,
+                                                            LocalStorageManager::ListLinkedNotebooksOrder::type order,
+                                                            LocalStorageManager::OrderDirection::type orderDirection,
+                                                            QUuid requestId)
 {
     try
     {
@@ -628,7 +626,7 @@ void LocalStorageManagerThreadWorker::onListLinkedNotebooksRequest(LocalStorageM
     CATCH_EXCEPTION
 }
 
-void LocalStorageManagerThreadWorker::onExpungeLinkedNotebookRequest(LinkedNotebook linkedNotebook, QUuid requestId)
+void LocalStorageManagerAsync::onExpungeLinkedNotebookRequest(LinkedNotebook linkedNotebook, QUuid requestId)
 {
     try
     {
@@ -649,7 +647,7 @@ void LocalStorageManagerThreadWorker::onExpungeLinkedNotebookRequest(LinkedNoteb
     CATCH_EXCEPTION
 }
 
-void LocalStorageManagerThreadWorker::onNoteCountRequest(QUuid requestId)
+void LocalStorageManagerAsync::onNoteCountRequest(QUuid requestId)
 {
     try
     {
@@ -665,7 +663,7 @@ void LocalStorageManagerThreadWorker::onNoteCountRequest(QUuid requestId)
     CATCH_EXCEPTION
 }
 
-void LocalStorageManagerThreadWorker::onNoteCountPerNotebookRequest(Notebook notebook, QUuid requestId)
+void LocalStorageManagerAsync::onNoteCountPerNotebookRequest(Notebook notebook, QUuid requestId)
 {
     try
     {
@@ -681,7 +679,7 @@ void LocalStorageManagerThreadWorker::onNoteCountPerNotebookRequest(Notebook not
     CATCH_EXCEPTION
 }
 
-void LocalStorageManagerThreadWorker::onNoteCountPerTagRequest(Tag tag, QUuid requestId)
+void LocalStorageManagerAsync::onNoteCountPerTagRequest(Tag tag, QUuid requestId)
 {
     try
     {
@@ -697,7 +695,7 @@ void LocalStorageManagerThreadWorker::onNoteCountPerTagRequest(Tag tag, QUuid re
     CATCH_EXCEPTION
 }
 
-void LocalStorageManagerThreadWorker::onAddNoteRequest(Note note, QUuid requestId)
+void LocalStorageManagerAsync::onAddNoteRequest(Note note, QUuid requestId)
 {
     try
     {
@@ -718,8 +716,8 @@ void LocalStorageManagerThreadWorker::onAddNoteRequest(Note note, QUuid requestI
     CATCH_EXCEPTION
 }
 
-void LocalStorageManagerThreadWorker::onUpdateNoteRequest(Note note, bool updateResources,
-                                                          bool updateTags, QUuid requestId)
+void LocalStorageManagerAsync::onUpdateNoteRequest(Note note, bool updateResources,
+                                                   bool updateTags, QUuid requestId)
 {
     try
     {
@@ -748,7 +746,7 @@ void LocalStorageManagerThreadWorker::onUpdateNoteRequest(Note note, bool update
     CATCH_EXCEPTION
 }
 
-void LocalStorageManagerThreadWorker::onFindNoteRequest(Note note, bool withResourceBinaryData, QUuid requestId)
+void LocalStorageManagerAsync::onFindNoteRequest(Note note, bool withResourceBinaryData, QUuid requestId)
 {
     try
     {
@@ -786,12 +784,12 @@ void LocalStorageManagerThreadWorker::onFindNoteRequest(Note note, bool withReso
     CATCH_EXCEPTION
 }
 
-void LocalStorageManagerThreadWorker::onListNotesPerNotebookRequest(Notebook notebook, bool withResourceBinaryData,
-                                                                    LocalStorageManager::ListObjectsOptions flag,
-                                                                    size_t limit, size_t offset,
-                                                                    LocalStorageManager::ListNotesOrder::type order,
-                                                                    LocalStorageManager::OrderDirection::type orderDirection,
-                                                                    QUuid requestId)
+void LocalStorageManagerAsync::onListNotesPerNotebookRequest(Notebook notebook, bool withResourceBinaryData,
+                                                             LocalStorageManager::ListObjectsOptions flag,
+                                                             size_t limit, size_t offset,
+                                                             LocalStorageManager::ListNotesOrder::type order,
+                                                             LocalStorageManager::OrderDirection::type orderDirection,
+                                                             QUuid requestId)
 {
     try
     {
@@ -821,12 +819,12 @@ void LocalStorageManagerThreadWorker::onListNotesPerNotebookRequest(Notebook not
     CATCH_EXCEPTION
 }
 
-void LocalStorageManagerThreadWorker::onListNotesPerTagRequest(Tag tag, bool withResourceBinaryData,
-                                                               LocalStorageManager::ListObjectsOptions flag,
-                                                               size_t limit, size_t offset,
-                                                               LocalStorageManager::ListNotesOrder::type order,
-                                                               LocalStorageManager::OrderDirection::type orderDirection,
-                                                               QUuid requestId)
+void LocalStorageManagerAsync::onListNotesPerTagRequest(Tag tag, bool withResourceBinaryData,
+                                                        LocalStorageManager::ListObjectsOptions flag,
+                                                        size_t limit, size_t offset,
+                                                        LocalStorageManager::ListNotesOrder::type order,
+                                                        LocalStorageManager::OrderDirection::type orderDirection,
+                                                        QUuid requestId)
 {
     try
     {
@@ -856,9 +854,9 @@ void LocalStorageManagerThreadWorker::onListNotesPerTagRequest(Tag tag, bool wit
     CATCH_EXCEPTION
 }
 
-void LocalStorageManagerThreadWorker::onListNotesRequest(LocalStorageManager::ListObjectsOptions flag, bool withResourceBinaryData,
-                                                         size_t limit, size_t offset, LocalStorageManager::ListNotesOrder::type order,
-                                                         LocalStorageManager::OrderDirection::type orderDirection, QUuid requestId)
+void LocalStorageManagerAsync::onListNotesRequest(LocalStorageManager::ListObjectsOptions flag, bool withResourceBinaryData,
+                                                  size_t limit, size_t offset, LocalStorageManager::ListNotesOrder::type order,
+                                                  LocalStorageManager::OrderDirection::type orderDirection, QUuid requestId)
 {
     try
     {
@@ -885,7 +883,7 @@ void LocalStorageManagerThreadWorker::onListNotesRequest(LocalStorageManager::Li
     CATCH_EXCEPTION
 }
 
-void LocalStorageManagerThreadWorker::onFindNoteLocalUidsWithSearchQuery(NoteSearchQuery noteSearchQuery, QUuid requestId)
+void LocalStorageManagerAsync::onFindNoteLocalUidsWithSearchQuery(NoteSearchQuery noteSearchQuery, QUuid requestId)
 {
     try
     {
@@ -902,7 +900,7 @@ void LocalStorageManagerThreadWorker::onFindNoteLocalUidsWithSearchQuery(NoteSea
     CATCH_EXCEPTION
 }
 
-void LocalStorageManagerThreadWorker::onExpungeNoteRequest(Note note, QUuid requestId)
+void LocalStorageManagerAsync::onExpungeNoteRequest(Note note, QUuid requestId)
 {
     try
     {
@@ -923,7 +921,7 @@ void LocalStorageManagerThreadWorker::onExpungeNoteRequest(Note note, QUuid requ
     CATCH_EXCEPTION
 }
 
-void LocalStorageManagerThreadWorker::onGetTagCountRequest(QUuid requestId)
+void LocalStorageManagerAsync::onGetTagCountRequest(QUuid requestId)
 {
     try
     {
@@ -939,7 +937,7 @@ void LocalStorageManagerThreadWorker::onGetTagCountRequest(QUuid requestId)
     CATCH_EXCEPTION
 }
 
-void LocalStorageManagerThreadWorker::onAddTagRequest(Tag tag, QUuid requestId)
+void LocalStorageManagerAsync::onAddTagRequest(Tag tag, QUuid requestId)
 {
     try
     {
@@ -960,7 +958,7 @@ void LocalStorageManagerThreadWorker::onAddTagRequest(Tag tag, QUuid requestId)
     CATCH_EXCEPTION
 }
 
-void LocalStorageManagerThreadWorker::onUpdateTagRequest(Tag tag, QUuid requestId)
+void LocalStorageManagerAsync::onUpdateTagRequest(Tag tag, QUuid requestId)
 {
     try
     {
@@ -981,7 +979,7 @@ void LocalStorageManagerThreadWorker::onUpdateTagRequest(Tag tag, QUuid requestI
     CATCH_EXCEPTION
 }
 
-void LocalStorageManagerThreadWorker::onFindTagRequest(Tag tag, QUuid requestId)
+void LocalStorageManagerAsync::onFindTagRequest(Tag tag, QUuid requestId)
 {
     try
     {
@@ -1027,11 +1025,11 @@ void LocalStorageManagerThreadWorker::onFindTagRequest(Tag tag, QUuid requestId)
     CATCH_EXCEPTION
 }
 
-void LocalStorageManagerThreadWorker::onListAllTagsPerNoteRequest(Note note, LocalStorageManager::ListObjectsOptions flag,
-                                                                  size_t limit, size_t offset,
-                                                                  LocalStorageManager::ListTagsOrder::type order,
-                                                                  LocalStorageManager::OrderDirection::type orderDirection,
-                                                                  QUuid requestId)
+void LocalStorageManagerAsync::onListAllTagsPerNoteRequest(Note note, LocalStorageManager::ListObjectsOptions flag,
+                                                           size_t limit, size_t offset,
+                                                           LocalStorageManager::ListTagsOrder::type order,
+                                                           LocalStorageManager::OrderDirection::type orderDirection,
+                                                           QUuid requestId)
 {
     try
     {
@@ -1057,10 +1055,10 @@ void LocalStorageManagerThreadWorker::onListAllTagsPerNoteRequest(Note note, Loc
     CATCH_EXCEPTION
 }
 
-void LocalStorageManagerThreadWorker::onListAllTagsRequest(size_t limit, size_t offset,
-                                                           LocalStorageManager::ListTagsOrder::type order,
-                                                           LocalStorageManager::OrderDirection::type orderDirection,
-                                                           QString linkedNotebookGuid, QUuid requestId)
+void LocalStorageManagerAsync::onListAllTagsRequest(size_t limit, size_t offset,
+                                                    LocalStorageManager::ListTagsOrder::type order,
+                                                    LocalStorageManager::OrderDirection::type orderDirection,
+                                                    QString linkedNotebookGuid, QUuid requestId)
 {
     try
     {
@@ -1087,11 +1085,11 @@ void LocalStorageManagerThreadWorker::onListAllTagsRequest(size_t limit, size_t 
     CATCH_EXCEPTION
 }
 
-void LocalStorageManagerThreadWorker::onListTagsRequest(LocalStorageManager::ListObjectsOptions flag,
-                                                        size_t limit, size_t offset,
-                                                        LocalStorageManager::ListTagsOrder::type order,
-                                                        LocalStorageManager::OrderDirection::type orderDirection,
-                                                        QString linkedNotebookGuid, QUuid requestId)
+void LocalStorageManagerAsync::onListTagsRequest(LocalStorageManager::ListObjectsOptions flag,
+                                                 size_t limit, size_t offset,
+                                                 LocalStorageManager::ListTagsOrder::type order,
+                                                 LocalStorageManager::OrderDirection::type orderDirection,
+                                                 QString linkedNotebookGuid, QUuid requestId)
 {
     try
     {
@@ -1116,7 +1114,7 @@ void LocalStorageManagerThreadWorker::onListTagsRequest(LocalStorageManager::Lis
     CATCH_EXCEPTION
 }
 
-void LocalStorageManagerThreadWorker::onExpungeTagRequest(Tag tag, QUuid requestId)
+void LocalStorageManagerAsync::onExpungeTagRequest(Tag tag, QUuid requestId)
 {
     try
     {
@@ -1145,7 +1143,7 @@ void LocalStorageManagerThreadWorker::onExpungeTagRequest(Tag tag, QUuid request
     CATCH_EXCEPTION
 }
 
-void LocalStorageManagerThreadWorker::onExpungeNotelessTagsFromLinkedNotebooksRequest(QUuid requestId)
+void LocalStorageManagerAsync::onExpungeNotelessTagsFromLinkedNotebooksRequest(QUuid requestId)
 {
     try
     {
@@ -1161,7 +1159,7 @@ void LocalStorageManagerThreadWorker::onExpungeNotelessTagsFromLinkedNotebooksRe
     CATCH_EXCEPTION
 }
 
-void LocalStorageManagerThreadWorker::onGetResourceCountRequest(QUuid requestId)
+void LocalStorageManagerAsync::onGetResourceCountRequest(QUuid requestId)
 {
     try
     {
@@ -1177,7 +1175,7 @@ void LocalStorageManagerThreadWorker::onGetResourceCountRequest(QUuid requestId)
     CATCH_EXCEPTION
 }
 
-void LocalStorageManagerThreadWorker::onAddResourceRequest(Resource resource, QUuid requestId)
+void LocalStorageManagerAsync::onAddResourceRequest(Resource resource, QUuid requestId)
 {
     try
     {
@@ -1194,7 +1192,7 @@ void LocalStorageManagerThreadWorker::onAddResourceRequest(Resource resource, QU
     CATCH_EXCEPTION
 }
 
-void LocalStorageManagerThreadWorker::onUpdateResourceRequest(Resource resource, QUuid requestId)
+void LocalStorageManagerAsync::onUpdateResourceRequest(Resource resource, QUuid requestId)
 {
     try
     {
@@ -1211,7 +1209,7 @@ void LocalStorageManagerThreadWorker::onUpdateResourceRequest(Resource resource,
     CATCH_EXCEPTION
 }
 
-void LocalStorageManagerThreadWorker::onFindResourceRequest(Resource resource, bool withBinaryData, QUuid requestId)
+void LocalStorageManagerAsync::onFindResourceRequest(Resource resource, bool withBinaryData, QUuid requestId)
 {
     try
     {
@@ -1228,7 +1226,7 @@ void LocalStorageManagerThreadWorker::onFindResourceRequest(Resource resource, b
     CATCH_EXCEPTION
 }
 
-void LocalStorageManagerThreadWorker::onExpungeResourceRequest(Resource resource, QUuid requestId)
+void LocalStorageManagerAsync::onExpungeResourceRequest(Resource resource, QUuid requestId)
 {
     try
     {
@@ -1245,7 +1243,7 @@ void LocalStorageManagerThreadWorker::onExpungeResourceRequest(Resource resource
     CATCH_EXCEPTION
 }
 
-void LocalStorageManagerThreadWorker::onGetSavedSearchCountRequest(QUuid requestId)
+void LocalStorageManagerAsync::onGetSavedSearchCountRequest(QUuid requestId)
 {
     try
     {
@@ -1261,7 +1259,7 @@ void LocalStorageManagerThreadWorker::onGetSavedSearchCountRequest(QUuid request
     CATCH_EXCEPTION
 }
 
-void LocalStorageManagerThreadWorker::onAddSavedSearchRequest(SavedSearch search, QUuid requestId)
+void LocalStorageManagerAsync::onAddSavedSearchRequest(SavedSearch search, QUuid requestId)
 {
     try
     {
@@ -1282,7 +1280,7 @@ void LocalStorageManagerThreadWorker::onAddSavedSearchRequest(SavedSearch search
     CATCH_EXCEPTION
 }
 
-void LocalStorageManagerThreadWorker::onUpdateSavedSearchRequest(SavedSearch search, QUuid requestId)
+void LocalStorageManagerAsync::onUpdateSavedSearchRequest(SavedSearch search, QUuid requestId)
 {
     try
     {
@@ -1303,7 +1301,7 @@ void LocalStorageManagerThreadWorker::onUpdateSavedSearchRequest(SavedSearch sea
     CATCH_EXCEPTION
 }
 
-void LocalStorageManagerThreadWorker::onFindSavedSearchRequest(SavedSearch search, QUuid requestId)
+void LocalStorageManagerAsync::onFindSavedSearchRequest(SavedSearch search, QUuid requestId)
 {
     try
     {
@@ -1349,10 +1347,10 @@ void LocalStorageManagerThreadWorker::onFindSavedSearchRequest(SavedSearch searc
     CATCH_EXCEPTION
 }
 
-void LocalStorageManagerThreadWorker::onListAllSavedSearchesRequest(size_t limit, size_t offset,
-                                                                    LocalStorageManager::ListSavedSearchesOrder::type order,
-                                                                    LocalStorageManager::OrderDirection::type orderDirection,
-                                                                    QUuid requestId)
+void LocalStorageManagerAsync::onListAllSavedSearchesRequest(size_t limit, size_t offset,
+                                                             LocalStorageManager::ListSavedSearchesOrder::type order,
+                                                             LocalStorageManager::OrderDirection::type orderDirection,
+                                                             QUuid requestId)
 {
     try
     {
@@ -1379,11 +1377,11 @@ void LocalStorageManagerThreadWorker::onListAllSavedSearchesRequest(size_t limit
     CATCH_EXCEPTION
 }
 
-void LocalStorageManagerThreadWorker::onListSavedSearchesRequest(LocalStorageManager::ListObjectsOptions flag,
-                                                                 size_t limit, size_t offset,
-                                                                 LocalStorageManager::ListSavedSearchesOrder::type order,
-                                                                 LocalStorageManager::OrderDirection::type orderDirection,
-                                                                 QUuid requestId)
+void LocalStorageManagerAsync::onListSavedSearchesRequest(LocalStorageManager::ListObjectsOptions flag,
+                                                          size_t limit, size_t offset,
+                                                          LocalStorageManager::ListSavedSearchesOrder::type order,
+                                                          LocalStorageManager::OrderDirection::type orderDirection,
+                                                          QUuid requestId)
 {
     try
     {
@@ -1410,7 +1408,7 @@ void LocalStorageManagerThreadWorker::onListSavedSearchesRequest(LocalStorageMan
     CATCH_EXCEPTION
 }
 
-void LocalStorageManagerThreadWorker::onExpungeSavedSearch(SavedSearch search, QUuid requestId)
+void LocalStorageManagerAsync::onExpungeSavedSearch(SavedSearch search, QUuid requestId)
 {
     try
     {

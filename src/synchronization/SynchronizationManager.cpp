@@ -18,14 +18,13 @@
 
 #include <quentier/synchronization/SynchronizationManager.h>
 #include "SynchronizationManager_p.h"
-#include <quentier/local_storage/LocalStorageManagerThreadWorker.h>
+#include <quentier/local_storage/LocalStorageManagerAsync.h>
 
 namespace quentier {
 
 SynchronizationManager::SynchronizationManager(const QString & consumerKey, const QString & consumerSecret,
-                                               const QString & host,
-                                               LocalStorageManagerThreadWorker & localStorageManagerThreadWorker) :
-    d_ptr(new SynchronizationManagerPrivate(consumerKey, consumerSecret, host, localStorageManagerThreadWorker))
+                                               const QString & host, LocalStorageManagerAsync & localStorageManagerAsync) :
+    d_ptr(new SynchronizationManagerPrivate(consumerKey, consumerSecret, host, localStorageManagerAsync))
 {
     QObject::connect(d_ptr, QNSIGNAL(SynchronizationManagerPrivate,notifyError,ErrorString),
                      this, QNSIGNAL(SynchronizationManager,failed,ErrorString));

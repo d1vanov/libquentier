@@ -41,13 +41,13 @@
 
 namespace quentier {
 
-QT_FORWARD_DECLARE_CLASS(LocalStorageManagerThreadWorker)
+QT_FORWARD_DECLARE_CLASS(LocalStorageManagerAsync)
 
 class RemoteToLocalSynchronizationManager: public QObject
 {
     Q_OBJECT
 public:
-    explicit RemoteToLocalSynchronizationManager(LocalStorageManagerThreadWorker & localStorageManagerThreadWorker,
+    explicit RemoteToLocalSynchronizationManager(LocalStorageManagerAsync & localStorageManagerAsync,
                                                  const QString & host, QSharedPointer<qevercloud::NoteStore> pNoteStore,
                                                  QSharedPointer<qevercloud::UserStore> pUserStore,
                                                  QObject * parent = Q_NULLPTR);
@@ -503,7 +503,7 @@ private:
     friend QTextStream & operator<<(QTextStream & strm, const SyncMode::type & obj);
 
 private:
-    LocalStorageManagerThreadWorker &       m_localStorageManagerThreadWorker;
+    LocalStorageManagerAsync &              m_localStorageManagerAsync;
     bool                                    m_connectedToLocalStorage;
 
     QString                                 m_host;

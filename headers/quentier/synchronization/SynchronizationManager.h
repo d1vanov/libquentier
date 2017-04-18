@@ -27,7 +27,7 @@
 
 namespace quentier {
 
-QT_FORWARD_DECLARE_CLASS(LocalStorageManagerThreadWorker)
+QT_FORWARD_DECLARE_CLASS(LocalStorageManagerAsync)
 QT_FORWARD_DECLARE_CLASS(SynchronizationManagerPrivate)
 
 /**
@@ -44,10 +44,10 @@ public:
      * @param consumerSecret - consumer secret for your application obtained from the Evernote service
      * @param host - the host to use for the connection with the Evernote service - typically www.evernote.com
      *               but could be sandbox.evernote.com or some other one
-     * @param localStorageManagerThreadWorker - local storage manager
+     * @param localStorageManagerAsync - local storage manager
      */
     SynchronizationManager(const QString & consumerKey, const QString & consumerSecret,
-                           const QString & host, LocalStorageManagerThreadWorker & localStorageManagerThreadWorker);
+                           const QString & host, LocalStorageManagerAsync & localStorageManagerAsync);
 
     virtual ~SynchronizationManager();
 

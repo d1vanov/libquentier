@@ -109,7 +109,7 @@ set(LOCAL_STORAGE_HEADERS
     headers/quentier/local_storage/Lists.h
     headers/quentier/local_storage/LocalStorageCacheManager.h
     headers/quentier/local_storage/LocalStorageManager.h
-    headers/quentier/local_storage/LocalStorageManagerThreadWorker.h
+    headers/quentier/local_storage/LocalStorageManagerAsync.h
     headers/quentier/local_storage/NoteSearchQuery.h)
 
 set(SYNCHRONIZATION_HEADERS
@@ -382,7 +382,7 @@ set(${PROJECT_NAME}_SOURCES
     src/local_storage/LocalStorageManager_p.cpp
     src/local_storage/LocalStorageCacheManager.cpp
     src/local_storage/LocalStorageCacheManager_p.cpp
-    src/local_storage/LocalStorageManagerThreadWorker.cpp
+    src/local_storage/LocalStorageManagerAsync.cpp
     src/local_storage/NoteSearchQuery.cpp
     src/local_storage/NoteSearchQueryData.cpp
     src/local_storage/Transaction.cpp

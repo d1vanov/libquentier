@@ -19,7 +19,7 @@
 #include "SynchronizationManager_p.h"
 #include "SynchronizationPersistenceName.h"
 #include <quentier/utility/Utility.h>
-#include <quentier/local_storage/LocalStorageManagerThreadWorker.h>
+#include <quentier/local_storage/LocalStorageManagerAsync.h>
 #include <quentier/logging/QuentierLogger.h>
 #include <quentier/utility/ApplicationSettings.h>
 #include <quentier/utility/QuentierCheckPtr.h>
@@ -48,7 +48,7 @@
 namespace quentier {
 
 SynchronizationManagerPrivate::SynchronizationManagerPrivate(const QString & consumerKey, const QString & consumerSecret,
-                                                             const QString & host, LocalStorageManagerThreadWorker & localStorageManagerThreadWorker) :
+                                                             const QString & host, LocalStorageManagerAsync & localStorageManagerAsync) :
     m_consumerKey(consumerKey),
     m_consumerSecret(consumerSecret),
     m_host(host),
@@ -65,9 +65,9 @@ SynchronizationManagerPrivate::SynchronizationManagerPrivate(const QString & con
     m_OAuthWebView(),
     m_OAuthResult(),
     m_authenticationInProgress(false),
-    m_remoteToLocalSyncManager(localStorageManagerThreadWorker, m_host,
+    m_remoteToLocalSyncManager(localStorageManagerAsync, m_host,
                                m_noteStore.getQecNoteStore(), m_userStore.getQecUserStore()),
-    m_sendLocalChangesManager(localStorageManagerThreadWorker, m_noteStore.getQecNoteStore()),
+    m_sendLocalChangesManager(localStorageManagerAsync, m_noteStore.getQecNoteStore()),
     m_cachedLinkedNotebookAuthTokensAndShardIdsByGuid(),
     m_cachedLinkedNotebookAuthTokenExpirationTimeByGuid(),
     m_linkedNotebookGuidsAndGlobalIdsWaitingForAuth(),

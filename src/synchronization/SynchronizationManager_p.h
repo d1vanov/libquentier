@@ -47,7 +47,7 @@ class SynchronizationManagerPrivate: public QObject
     Q_OBJECT
 public:
     SynchronizationManagerPrivate(const QString & consumerKey, const QString & consumerSecret,
-                                  const QString & host, LocalStorageManagerThreadWorker & localStorageManagerThreadWorker);
+                                  const QString & host, LocalStorageManagerAsync & localStorageManagerAsync);
     virtual ~SynchronizationManagerPrivate();
 
     bool active() const;

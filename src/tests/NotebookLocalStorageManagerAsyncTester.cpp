@@ -17,7 +17,7 @@
  */
 
 #include "NotebookLocalStorageManagerAsyncTester.h"
-#include <quentier/local_storage/LocalStorageManagerThreadWorker.h>
+#include <quentier/local_storage/LocalStorageManagerAsync.h>
 #include <quentier/logging/QuentierLogger.h>
 #include <QThread>
 
@@ -27,7 +27,7 @@ namespace test {
 NotebookLocalStorageManagerAsyncTester::NotebookLocalStorageManagerAsyncTester(QObject *parent) :
     QObject(parent),
     m_state(STATE_UNINITIALIZED),
-    m_pLocalStorageManagerThreadWorker(Q_NULLPTR),
+    m_pLocalStorageManagerAsync(Q_NULLPTR),
     m_pLocalStorageManagerThread(Q_NULLPTR),
     m_userId(4),
     m_initialNotebook(),
@@ -40,14 +40,7 @@ NotebookLocalStorageManagerAsyncTester::NotebookLocalStorageManagerAsyncTester(Q
 
 NotebookLocalStorageManagerAsyncTester::~NotebookLocalStorageManagerAsyncTester()
 {
-    if (m_pLocalStorageManagerThread) {
-        m_pLocalStorageManagerThread->quit();
-        m_pLocalStorageManagerThread->wait();
-    }
-
-    if (m_pLocalStorageManagerThreadWorker) {
-        delete m_pLocalStorageManagerThreadWorker;
-    }
+    clear();
 }
 
 void NotebookLocalStorageManagerAsyncTester::onInitTestCase()
@@ -56,22 +49,12 @@ void NotebookLocalStorageManagerAsyncTester::onInitTestCase()
     bool startFromScratch = true;
     bool overrideLock = false;
 
-    if (m_pLocalStorageManagerThread) {
-        delete m_pLocalStorageManagerThread;
-        m_pLocalStorageManagerThread = Q_NULLPTR;
-    }
-
-    if (m_pLocalStorageManagerThreadWorker) {
-        delete m_pLocalStorageManagerThreadWorker;
-        m_pLocalStorageManagerThreadWorker = Q_NULLPTR;
-    }
-
-    m_state = STATE_UNINITIALIZED;
+    clear();
 
     m_pLocalStorageManagerThread = new QThread(this);
     Account account(username, Account::Type::Evernote, m_userId);
-    m_pLocalStorageManagerThreadWorker = new LocalStorageManagerThreadWorker(account, startFromScratch, overrideLock);
-    m_pLocalStorageManagerThreadWorker->moveToThread(m_pLocalStorageManagerThread);
+    m_pLocalStorageManagerAsync = new LocalStorageManagerAsync(account, startFromScratch, overrideLock);
+    m_pLocalStorageManagerAsync->moveToThread(m_pLocalStorageManagerThread);
 
     createConnections();
 
@@ -739,105 +722,122 @@ void NotebookLocalStorageManagerAsyncTester::onFailure(ErrorString errorDescript
 
 void NotebookLocalStorageManagerAsyncTester::createConnections()
 {
-    QObject::connect(m_pLocalStorageManagerThreadWorker, QNSIGNAL(LocalStorageManagerThreadWorker,failure,ErrorString),
+    QObject::connect(m_pLocalStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,failure,ErrorString),
                      this, QNSLOT(NotebookLocalStorageManagerAsyncTester,onFailure,ErrorString));
 
-    QObject::connect(m_pLocalStorageManagerThread, QNSIGNAL(QThread,started), m_pLocalStorageManagerThreadWorker, QNSLOT(LocalStorageManagerThreadWorker,init));
+    QObject::connect(m_pLocalStorageManagerThread, QNSIGNAL(QThread,started), m_pLocalStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,init));
     QObject::connect(m_pLocalStorageManagerThread, QNSIGNAL(QThread,finished), m_pLocalStorageManagerThread, QNSLOT(QThread,deleteLater));
 
-    QObject::connect(m_pLocalStorageManagerThreadWorker, QNSIGNAL(LocalStorageManagerThreadWorker,initialized),
+    QObject::connect(m_pLocalStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,initialized),
                      this, QNSLOT(NotebookLocalStorageManagerAsyncTester,onWorkerInitialized));
 
     // Request --> slot connections
     QObject::connect(this, QNSIGNAL(NotebookLocalStorageManagerAsyncTester,getNotebookCountRequest,QUuid),
-                     m_pLocalStorageManagerThreadWorker, QNSLOT(LocalStorageManagerThreadWorker,onGetNotebookCountRequest,QUuid));
+                     m_pLocalStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,onGetNotebookCountRequest,QUuid));
     QObject::connect(this, QNSIGNAL(NotebookLocalStorageManagerAsyncTester,addNotebookRequest,Notebook,QUuid),
-                     m_pLocalStorageManagerThreadWorker, QNSLOT(LocalStorageManagerThreadWorker,onAddNotebookRequest,Notebook,QUuid));
+                     m_pLocalStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,onAddNotebookRequest,Notebook,QUuid));
     QObject::connect(this, QNSIGNAL(NotebookLocalStorageManagerAsyncTester,updateNotebookRequest,Notebook,QUuid),
-                     m_pLocalStorageManagerThreadWorker, QNSLOT(LocalStorageManagerThreadWorker,onUpdateNotebookRequest,Notebook,QUuid));
+                     m_pLocalStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,onUpdateNotebookRequest,Notebook,QUuid));
     QObject::connect(this, QNSIGNAL(NotebookLocalStorageManagerAsyncTester,findNotebookRequest,Notebook,QUuid),
-                     m_pLocalStorageManagerThreadWorker, QNSLOT(LocalStorageManagerThreadWorker,onFindNotebookRequest,Notebook,QUuid));
+                     m_pLocalStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,onFindNotebookRequest,Notebook,QUuid));
     QObject::connect(this, QNSIGNAL(NotebookLocalStorageManagerAsyncTester,findDefaultNotebookRequest,Notebook,QUuid),
-                     m_pLocalStorageManagerThreadWorker, QNSLOT(LocalStorageManagerThreadWorker,onFindDefaultNotebookRequest,Notebook,QUuid));
+                     m_pLocalStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,onFindDefaultNotebookRequest,Notebook,QUuid));
     QObject::connect(this, QNSIGNAL(NotebookLocalStorageManagerAsyncTester,findLastUsedNotebookRequest,Notebook,QUuid),
-                     m_pLocalStorageManagerThreadWorker, QNSLOT(LocalStorageManagerThreadWorker,onFindLastUsedNotebookRequest,Notebook,QUuid));
+                     m_pLocalStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,onFindLastUsedNotebookRequest,Notebook,QUuid));
     QObject::connect(this, QNSIGNAL(NotebookLocalStorageManagerAsyncTester,findDefaultOrLastUsedNotebookRequest,Notebook,QUuid),
-                     m_pLocalStorageManagerThreadWorker, QNSLOT(LocalStorageManagerThreadWorker,onFindDefaultOrLastUsedNotebookRequest,Notebook,QUuid));
+                     m_pLocalStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,onFindDefaultOrLastUsedNotebookRequest,Notebook,QUuid));
     QObject::connect(this,
                      QNSIGNAL(NotebookLocalStorageManagerAsyncTester,listAllNotebooksRequest,size_t,size_t,
                               LocalStorageManager::ListNotebooksOrder::type,LocalStorageManager::OrderDirection::type,QString,QUuid),
-                     m_pLocalStorageManagerThreadWorker,
-                     QNSLOT(LocalStorageManagerThreadWorker,onListAllNotebooksRequest,size_t,size_t,LocalStorageManager::ListNotebooksOrder::type,
+                     m_pLocalStorageManagerAsync,
+                     QNSLOT(LocalStorageManagerAsync,onListAllNotebooksRequest,size_t,size_t,LocalStorageManager::ListNotebooksOrder::type,
                             LocalStorageManager::OrderDirection::type,QString,QUuid));
     QObject::connect(this, QNSIGNAL(NotebookLocalStorageManagerAsyncTester,listAllSharedNotebooksRequest,QUuid),
-                     m_pLocalStorageManagerThreadWorker, QNSLOT(LocalStorageManagerThreadWorker,onListAllSharedNotebooksRequest,QUuid));
+                     m_pLocalStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,onListAllSharedNotebooksRequest,QUuid));
     QObject::connect(this, QNSIGNAL(NotebookLocalStorageManagerAsyncTester,listSharedNotebooksPerNotebookRequest,QString,QUuid),
-                     m_pLocalStorageManagerThreadWorker, QNSLOT(LocalStorageManagerThreadWorker,onListSharedNotebooksPerNotebookGuidRequest,QString,QUuid));
+                     m_pLocalStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,onListSharedNotebooksPerNotebookGuidRequest,QString,QUuid));
     QObject::connect(this, QNSIGNAL(NotebookLocalStorageManagerAsyncTester,expungeNotebookRequest,Notebook,QUuid),
-                     m_pLocalStorageManagerThreadWorker, QNSLOT(LocalStorageManagerThreadWorker,onExpungeNotebookRequest,Notebook,QUuid));
+                     m_pLocalStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,onExpungeNotebookRequest,Notebook,QUuid));
 
     // Slot <-- result connections
-    QObject::connect(m_pLocalStorageManagerThreadWorker, QNSIGNAL(LocalStorageManagerThreadWorker,getNotebookCountComplete,int,QUuid),
+    QObject::connect(m_pLocalStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,getNotebookCountComplete,int,QUuid),
                      this, QNSLOT(NotebookLocalStorageManagerAsyncTester,onGetNotebookCountCompleted,int,QUuid));
-    QObject::connect(m_pLocalStorageManagerThreadWorker, QNSIGNAL(LocalStorageManagerThreadWorker,getNotebookCountFailed,ErrorString,QUuid),
+    QObject::connect(m_pLocalStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,getNotebookCountFailed,ErrorString,QUuid),
                      this, QNSLOT(NotebookLocalStorageManagerAsyncTester,onGetNotebookCountFailed,ErrorString,QUuid));
-    QObject::connect(m_pLocalStorageManagerThreadWorker, QNSIGNAL(LocalStorageManagerThreadWorker,addNotebookComplete,Notebook,QUuid),
+    QObject::connect(m_pLocalStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,addNotebookComplete,Notebook,QUuid),
                      this, QNSLOT(NotebookLocalStorageManagerAsyncTester,onAddNotebookCompleted,Notebook,QUuid));
-    QObject::connect(m_pLocalStorageManagerThreadWorker, QNSIGNAL(LocalStorageManagerThreadWorker,addNotebookFailed,Notebook,ErrorString,QUuid),
+    QObject::connect(m_pLocalStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,addNotebookFailed,Notebook,ErrorString,QUuid),
                      this, QNSLOT(NotebookLocalStorageManagerAsyncTester,onAddNotebookFailed,Notebook,ErrorString,QUuid));
-    QObject::connect(m_pLocalStorageManagerThreadWorker, QNSIGNAL(LocalStorageManagerThreadWorker,updateNotebookComplete,Notebook,QUuid),
+    QObject::connect(m_pLocalStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,updateNotebookComplete,Notebook,QUuid),
                      this, QNSLOT(NotebookLocalStorageManagerAsyncTester,onUpdateNotebookCompleted,Notebook,QUuid));
-    QObject::connect(m_pLocalStorageManagerThreadWorker, QNSIGNAL(LocalStorageManagerThreadWorker,updateNotebookFailed,Notebook,ErrorString,QUuid),
+    QObject::connect(m_pLocalStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,updateNotebookFailed,Notebook,ErrorString,QUuid),
                      this, QNSLOT(NotebookLocalStorageManagerAsyncTester,onUpdateNotebookFailed,Notebook,ErrorString,QUuid));
-    QObject::connect(m_pLocalStorageManagerThreadWorker, QNSIGNAL(LocalStorageManagerThreadWorker,findNotebookComplete,Notebook,QUuid),
+    QObject::connect(m_pLocalStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,findNotebookComplete,Notebook,QUuid),
                      this, QNSLOT(NotebookLocalStorageManagerAsyncTester,onFindNotebookCompleted,Notebook,QUuid));
-    QObject::connect(m_pLocalStorageManagerThreadWorker, QNSIGNAL(LocalStorageManagerThreadWorker,findNotebookFailed,Notebook,ErrorString,QUuid),
+    QObject::connect(m_pLocalStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,findNotebookFailed,Notebook,ErrorString,QUuid),
                      this, QNSLOT(NotebookLocalStorageManagerAsyncTester,onFindNotebookFailed,Notebook,ErrorString,QUuid));
-    QObject::connect(m_pLocalStorageManagerThreadWorker, QNSIGNAL(LocalStorageManagerThreadWorker,findDefaultNotebookComplete,Notebook,QUuid),
+    QObject::connect(m_pLocalStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,findDefaultNotebookComplete,Notebook,QUuid),
                      this, QNSLOT(NotebookLocalStorageManagerAsyncTester,onFindDefaultNotebookCompleted,Notebook,QUuid));
-    QObject::connect(m_pLocalStorageManagerThreadWorker, QNSIGNAL(LocalStorageManagerThreadWorker,findDefaultNotebookFailed,Notebook,ErrorString,QUuid),
+    QObject::connect(m_pLocalStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,findDefaultNotebookFailed,Notebook,ErrorString,QUuid),
                      this, QNSLOT(NotebookLocalStorageManagerAsyncTester,onFindDefaultNotebookFailed,Notebook,ErrorString,QUuid));
-    QObject::connect(m_pLocalStorageManagerThreadWorker, QNSIGNAL(LocalStorageManagerThreadWorker,findLastUsedNotebookComplete,Notebook,QUuid),
+    QObject::connect(m_pLocalStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,findLastUsedNotebookComplete,Notebook,QUuid),
                      this, QNSLOT(NotebookLocalStorageManagerAsyncTester,onFindLastUsedNotebookCompleted,Notebook,QUuid));
-    QObject::connect(m_pLocalStorageManagerThreadWorker, QNSIGNAL(LocalStorageManagerThreadWorker,findLastUsedNotebookFailed,Notebook,ErrorString,QUuid),
+    QObject::connect(m_pLocalStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,findLastUsedNotebookFailed,Notebook,ErrorString,QUuid),
                      this, QNSLOT(NotebookLocalStorageManagerAsyncTester,onFindLastUsedNotebookFailed,Notebook,ErrorString,QUuid));
-    QObject::connect(m_pLocalStorageManagerThreadWorker, QNSIGNAL(LocalStorageManagerThreadWorker,findDefaultOrLastUsedNotebookComplete,Notebook,QUuid),
+    QObject::connect(m_pLocalStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,findDefaultOrLastUsedNotebookComplete,Notebook,QUuid),
                      this, QNSLOT(NotebookLocalStorageManagerAsyncTester,onFindDefaultOrLastUsedNotebookCompleted,Notebook,QUuid));
-    QObject::connect(m_pLocalStorageManagerThreadWorker, QNSIGNAL(LocalStorageManagerThreadWorker,findDefaultOrLastUsedNotebookFailed,Notebook,ErrorString,QUuid),
+    QObject::connect(m_pLocalStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,findDefaultOrLastUsedNotebookFailed,Notebook,ErrorString,QUuid),
                      this, QNSLOT(NotebookLocalStorageManagerAsyncTester,onFindDefaultOrLastUsedNotebookFailed,Notebook,ErrorString,QUuid));
-    QObject::connect(m_pLocalStorageManagerThreadWorker,
-                     QNSIGNAL(LocalStorageManagerThreadWorker,listAllNotebooksComplete,size_t,size_t,
+    QObject::connect(m_pLocalStorageManagerAsync,
+                     QNSIGNAL(LocalStorageManagerAsync,listAllNotebooksComplete,size_t,size_t,
                               LocalStorageManager::ListNotebooksOrder::type,LocalStorageManager::OrderDirection::type,
                               QString,QList<Notebook>,QUuid),
                      this,
                      QNSLOT(NotebookLocalStorageManagerAsyncTester,onListAllNotebooksCompleted,size_t,size_t,
                             LocalStorageManager::ListNotebooksOrder::type,LocalStorageManager::OrderDirection::type,
                             QString,QList<Notebook>,QUuid));
-    QObject::connect(m_pLocalStorageManagerThreadWorker,
-                     QNSIGNAL(LocalStorageManagerThreadWorker,listAllNotebooksFailed,size_t,size_t,
+    QObject::connect(m_pLocalStorageManagerAsync,
+                     QNSIGNAL(LocalStorageManagerAsync,listAllNotebooksFailed,size_t,size_t,
                               LocalStorageManager::ListNotebooksOrder::type,
                               LocalStorageManager::OrderDirection::type,QString,ErrorString,QUuid),
                      this,
                      QNSLOT(NotebookLocalStorageManagerAsyncTester,onListAllNotebooksFailed,size_t,size_t,
                             LocalStorageManager::ListNotebooksOrder::type,LocalStorageManager::OrderDirection::type,
                             QString,ErrorString,QUuid));
-    QObject::connect(m_pLocalStorageManagerThreadWorker, QNSIGNAL(LocalStorageManagerThreadWorker,listAllSharedNotebooksComplete,
-                                                                  QList<SharedNotebook>,QUuid),
+    QObject::connect(m_pLocalStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,listAllSharedNotebooksComplete,
+                                                           QList<SharedNotebook>,QUuid),
                      this, QNSLOT(NotebookLocalStorageManagerAsyncTester,onListAllSharedNotebooksCompleted,
                                   QList<SharedNotebook>,QUuid));
-    QObject::connect(m_pLocalStorageManagerThreadWorker, QNSIGNAL(LocalStorageManagerThreadWorker,listAllSharedNotebooksFailed,ErrorString,QUuid),
+    QObject::connect(m_pLocalStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,listAllSharedNotebooksFailed,ErrorString,QUuid),
                      this, QNSLOT(NotebookLocalStorageManagerAsyncTester,onListAllSharedNotebooksFailed,ErrorString,QUuid));
-    QObject::connect(m_pLocalStorageManagerThreadWorker, QNSIGNAL(LocalStorageManagerThreadWorker,listSharedNotebooksPerNotebookGuidComplete,
-                                                                  QString,QList<SharedNotebook>,QUuid),
+    QObject::connect(m_pLocalStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,listSharedNotebooksPerNotebookGuidComplete,
+                                                           QString,QList<SharedNotebook>,QUuid),
                      this, QNSLOT(NotebookLocalStorageManagerAsyncTester,onListSharedNotebooksPerNotebookGuidCompleted,
                                   QString,QList<SharedNotebook>,QUuid));
-    QObject::connect(m_pLocalStorageManagerThreadWorker, QNSIGNAL(LocalStorageManagerThreadWorker,listSharedNotebooksPerNotebookGuidFailed,
-                                                                  QString,ErrorString,QUuid),
+    QObject::connect(m_pLocalStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,listSharedNotebooksPerNotebookGuidFailed,
+                                                           QString,ErrorString,QUuid),
                      this, QNSLOT(NotebookLocalStorageManagerAsyncTester,onListSharedNotebooksPerNotebookGuidFailed,QString,ErrorString,QUuid));
-    QObject::connect(m_pLocalStorageManagerThreadWorker, QNSIGNAL(LocalStorageManagerThreadWorker,expungeNotebookComplete,Notebook,QUuid),
+    QObject::connect(m_pLocalStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,expungeNotebookComplete,Notebook,QUuid),
                      this, QNSLOT(NotebookLocalStorageManagerAsyncTester,onExpungeNotebookCompleted,Notebook,QUuid));
-    QObject::connect(m_pLocalStorageManagerThreadWorker, QNSIGNAL(LocalStorageManagerThreadWorker,expungeNotebookFailed,Notebook,ErrorString,QUuid),
+    QObject::connect(m_pLocalStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,expungeNotebookFailed,Notebook,ErrorString,QUuid),
                      this, QNSLOT(NotebookLocalStorageManagerAsyncTester,onExpungeNotebookFailed,Notebook,ErrorString,QUuid));
+}
+
+void NotebookLocalStorageManagerAsyncTester::clear()
+{
+    if (m_pLocalStorageManagerThread) {
+        m_pLocalStorageManagerThread->quit();
+        m_pLocalStorageManagerThread->wait();
+        m_pLocalStorageManagerThread->deleteLater();
+        m_pLocalStorageManagerThread = Q_NULLPTR;
+    }
+
+    if (m_pLocalStorageManagerAsync) {
+        m_pLocalStorageManagerAsync->deleteLater();
+        m_pLocalStorageManagerAsync = Q_NULLPTR;
+    }
+
+    m_state = STATE_UNINITIALIZED;
 }
 
 #undef HANDLE_WRONG_STATE

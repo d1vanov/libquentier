@@ -31,13 +31,13 @@
 
 namespace quentier {
 
-QT_FORWARD_DECLARE_CLASS(LocalStorageManagerThreadWorker)
+QT_FORWARD_DECLARE_CLASS(LocalStorageManagerAsync)
 
 class SendLocalChangesManager: public QObject
 {
     Q_OBJECT
 public:
-    explicit SendLocalChangesManager(LocalStorageManagerThreadWorker & localStorageManagerThreadWorker,
+    explicit SendLocalChangesManager(LocalStorageManagerAsync & localStorageManagerAsync,
                                      QSharedPointer<qevercloud::NoteStore> pNoteStore,
                                      QObject * parent = Q_NULLPTR);
 
@@ -234,7 +234,7 @@ private:
     };
 
 private:
-    LocalStorageManagerThreadWorker     &   m_localStorageManagerThreadWorker;
+    LocalStorageManagerAsync     &          m_localStorageManagerAsync;
     NoteStore                               m_noteStore;
     qint32                                  m_lastUpdateCount;
     QHash<QString,qint32>                   m_lastUpdateCountByLinkedNotebookGuid;
