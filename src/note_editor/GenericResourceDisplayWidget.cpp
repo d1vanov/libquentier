@@ -20,7 +20,7 @@
 #include "ui_GenericResourceDisplayWidget.h"
 #include "NoteEditorSettingsName.h"
 #include <quentier/note_editor/ResourceFileStorageManager.h>
-#include <quentier/utility/FileIOThreadWorker.h>
+#include <quentier/utility/FileIOProcessorAsync.h>
 #include <quentier/utility/QuentierCheckPtr.h>
 #include <quentier/utility/DesktopServices.h>
 #include <quentier/types/Resource.h>
@@ -41,7 +41,7 @@ GenericResourceDisplayWidget::GenericResourceDisplayWidget(QWidget * parent) :
     m_pUI(new Ui::GenericResourceDisplayWidget),
     m_pResource(Q_NULLPTR),
     m_pResourceFileStorageManager(Q_NULLPTR),
-    m_pFileIOThreadWorker(Q_NULLPTR),
+    m_pFileIOProcessorAsync(Q_NULLPTR),
     m_preferredFileSuffixes(Q_NULLPTR),
     m_filterString(),
     m_saveResourceToFileRequestId(),
@@ -65,13 +65,13 @@ void GenericResourceDisplayWidget::initialize(const QIcon & icon, const QString 
                                               const QString & filterString,
                                               const Resource & resource, const Account & account,
                                               const ResourceFileStorageManager & resourceFileStorageManager,
-                                              const FileIOThreadWorker & fileIOThreadWorker)
+                                              const FileIOProcessorAsync & fileIOProcessorAsync)
 {
     QNDEBUG(QStringLiteral("GenericResourceDisplayWidget::initialize: name = ") << name << QStringLiteral(", size = ") << size);
 
     m_pResource = new Resource(resource);
     m_pResourceFileStorageManager = &resourceFileStorageManager;
-    m_pFileIOThreadWorker = &fileIOThreadWorker;
+    m_pFileIOProcessorAsync = &fileIOProcessorAsync;
     m_preferredFileSuffixes = preferredFileSuffixes;
 
     m_account = account;
@@ -105,10 +105,10 @@ void GenericResourceDisplayWidget::initialize(const QIcon & icon, const QString 
     QObject::connect(this, QNSIGNAL(GenericResourceDisplayWidget,saveResourceToStorage,QString,QString,QByteArray,QByteArray,QString,QUuid,bool),
                      m_pResourceFileStorageManager, QNSLOT(ResourceFileStorageManager,onWriteResourceToFileRequest,QString,QString,QByteArray,QByteArray,QString,QUuid,bool));
 
-    QObject::connect(m_pFileIOThreadWorker, QNSIGNAL(FileIOThreadWorker,writeFileRequestProcessed,bool,ErrorString,QUuid),
+    QObject::connect(m_pFileIOProcessorAsync, QNSIGNAL(FileIOProcessorAsync,writeFileRequestProcessed,bool,ErrorString,QUuid),
                      this, QNSLOT(GenericResourceDisplayWidget,onSaveResourceToFileRequestProcessed,bool,ErrorString,QUuid));
     QObject::connect(this, QNSIGNAL(GenericResourceDisplayWidget,saveResourceToFile,QString,QByteArray,QUuid,bool),
-                     m_pFileIOThreadWorker, QNSLOT(FileIOThreadWorker,onWriteFileRequest,QString,QByteArray,QUuid,bool));
+                     m_pFileIOProcessorAsync, QNSLOT(FileIOProcessorAsync,onWriteFileRequest,QString,QByteArray,QUuid,bool));
 
     if (!m_pResource->hasDataBody() && !m_pResource->hasAlternateDataBody()) {
         QNWARNING(QStringLiteral("Resource passed to GenericResourceDisplayWidget has no data: ") << *m_pResource);

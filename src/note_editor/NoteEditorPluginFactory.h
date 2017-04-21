@@ -36,7 +36,7 @@ namespace quentier {
 
 QT_FORWARD_DECLARE_CLASS(Note)
 QT_FORWARD_DECLARE_CLASS(ResourceFileStorageManager)
-QT_FORWARD_DECLARE_CLASS(FileIOThreadWorker)
+QT_FORWARD_DECLARE_CLASS(FileIOProcessorAsync)
 QT_FORWARD_DECLARE_CLASS(EncryptionManager)
 QT_FORWARD_DECLARE_CLASS(DecryptedTextManager)
 QT_FORWARD_DECLARE_CLASS(NoteEditorPrivate)
@@ -53,7 +53,7 @@ class NoteEditorPluginFactory: public QWebPluginFactory
 public:
     explicit NoteEditorPluginFactory(NoteEditorPrivate & editor,
                                      const ResourceFileStorageManager & resourceFileStorageManager,
-                                     const FileIOThreadWorker & fileIOThreadWorker,
+                                     const FileIOProcessorAsync & fileIOThreadWorker,
                                      QObject * parent = Q_NULLPTR);
     virtual ~NoteEditorPluginFactory();
 
@@ -181,7 +181,7 @@ private:
     QMimeDatabase                                       m_mimeDatabase;
 
     const ResourceFileStorageManager *                  m_pResourceFileStorageManager;
-    const FileIOThreadWorker *                          m_pFileIOThreadWorker;
+    const FileIOProcessorAsync *                        m_pFileIOProcessorAsync;
 
     mutable QHash<QString, QIcon>                       m_resourceIconCache;
     mutable QHash<QString, QStringList>                 m_fileSuffixesCache;

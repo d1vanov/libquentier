@@ -35,7 +35,7 @@ namespace quentier {
 
 QT_FORWARD_DECLARE_CLASS(Resource)
 QT_FORWARD_DECLARE_CLASS(ResourceFileStorageManager)
-QT_FORWARD_DECLARE_CLASS(FileIOThreadWorker)
+QT_FORWARD_DECLARE_CLASS(FileIOProcessorAsync)
 QT_FORWARD_DECLARE_CLASS(Resource)
 
 class GenericResourceDisplayWidget: public QWidget
@@ -49,7 +49,7 @@ public:
                     const QString & size, const QStringList & preferredFileSuffixes,
                     const QString & filterString, const Resource & resource,
                     const Account & account, const ResourceFileStorageManager & resourceFileStorageManager,
-                    const FileIOThreadWorker & fileIOThreadWorker);
+                    const FileIOProcessorAsync & fileIOProcessorAsync);
 
     QString resourceLocalUid() const;
 
@@ -87,7 +87,7 @@ private:
 
     const Resource *                    m_pResource;
     const ResourceFileStorageManager *  m_pResourceFileStorageManager;
-    const FileIOThreadWorker *          m_pFileIOThreadWorker;
+    const FileIOProcessorAsync *        m_pFileIOProcessorAsync;
     QStringList                         m_preferredFileSuffixes;
     QString                             m_filterString;
 

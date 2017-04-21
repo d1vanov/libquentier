@@ -21,7 +21,6 @@
 #include "../NoteEditor_p.h"
 #include "../NoteEditorPage.h"
 #include "../dialogs/DecryptionDialog.h"
-#include <quentier/utility/FileIOThreadWorker.h>
 #include <quentier/utility/EncryptionManager.h>
 #include <quentier/enml/ENMLConverter.h>
 #include <quentier/note_editor/DecryptedTextManager.h>

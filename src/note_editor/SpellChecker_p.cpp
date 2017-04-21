@@ -17,7 +17,7 @@
  */
 
 #include "SpellChecker_p.h"
-#include <quentier/utility/FileIOThreadWorker.h>
+#include <quentier/utility/FileIOProcessorAsync.h>
 #include <quentier/utility/ApplicationSettings.h>
 #include <quentier/utility/DesktopServices.h>
 #include <quentier/logging/QuentierLogger.h>
@@ -39,11 +39,11 @@
 
 namespace quentier {
 
-SpellCheckerPrivate::SpellCheckerPrivate(FileIOThreadWorker * pFileIOThreadWorker,
+SpellCheckerPrivate::SpellCheckerPrivate(FileIOProcessorAsync * pFileIOProcessorAsync,
                                          const Account & account, QObject * parent,
                                          const QString & userDictionaryPath) :
     QObject(parent),
-    m_pFileIOThreadWorker(pFileIOThreadWorker),
+    m_pFileIOProcessorAsync(pFileIOProcessorAsync),
     m_currentAccount(account),
     m_systemDictionaries(),
     m_systemDictionariesReady(false),
@@ -206,8 +206,8 @@ void SpellCheckerPrivate::removeFromUserWordList(const QString & word)
     }
 
     QObject::connect(this, QNSIGNAL(SpellCheckerPrivate,writeFile,QString,QByteArray,QUuid,bool),
-                     m_pFileIOThreadWorker, QNSLOT(FileIOThreadWorker,onWriteFileRequest,QString,QByteArray,QUuid,bool));
-    QObject::connect(m_pFileIOThreadWorker, QNSIGNAL(FileIOThreadWorker,writeFileRequestProcessed,bool,ErrorString,QUuid),
+                     m_pFileIOProcessorAsync, QNSLOT(FileIOProcessorAsync,onWriteFileRequest,QString,QByteArray,QUuid,bool));
+    QObject::connect(m_pFileIOProcessorAsync, QNSIGNAL(FileIOProcessorAsync,writeFileRequestProcessed,bool,ErrorString,QUuid),
                      this, QNSLOT(SpellCheckerPrivate,onWriteFileRequestProcessed,bool,ErrorString,QUuid));
 
     m_updateUserDictionaryFileRequestId = QUuid::createUuid();
@@ -692,8 +692,8 @@ void SpellCheckerPrivate::initializeUserDictionary(const QString & userDictionar
         settings.endGroup();
 
         QObject::connect(this, QNSIGNAL(SpellCheckerPrivate,readFile,QString,QUuid),
-                         m_pFileIOThreadWorker, QNSLOT(FileIOThreadWorker,onReadFileRequest,QString,QUuid));
-        QObject::connect(m_pFileIOThreadWorker, QNSIGNAL(FileIOThreadWorker,readFileRequestProcessed,bool,ErrorString,QByteArray,QUuid),
+                         m_pFileIOProcessorAsync, QNSLOT(FileIOProcessorAsync,onReadFileRequest,QString,QUuid));
+        QObject::connect(m_pFileIOProcessorAsync, QNSIGNAL(FileIOProcessorAsync,readFileRequestProcessed,bool,ErrorString,QByteArray,QUuid),
                          this, QNSLOT(SpellCheckerPrivate,onReadFileRequestProcessed,bool,ErrorString,QByteArray,QUuid));
 
         m_readUserDictionaryRequestId = QUuid::createUuid();
@@ -763,8 +763,8 @@ void SpellCheckerPrivate::checkUserDictionaryDataPendingWriting()
     if (!dataToWrite.isEmpty())
     {
         QObject::connect(this, QNSIGNAL(SpellCheckerPrivate,writeFile,QString,QByteArray,QUuid,bool),
-                         m_pFileIOThreadWorker, QNSLOT(FileIOThreadWorker,onWriteFileRequest,QString,QByteArray,QUuid,bool));
-        QObject::connect(m_pFileIOThreadWorker, QNSIGNAL(FileIOThreadWorker,writeFileRequestProcessed,bool,ErrorString,QUuid),
+                         m_pFileIOProcessorAsync, QNSLOT(FileIOProcessorAsync,onWriteFileRequest,QString,QByteArray,QUuid,bool));
+        QObject::connect(m_pFileIOProcessorAsync, QNSIGNAL(FileIOProcessorAsync,writeFileRequestProcessed,bool,ErrorString,QUuid),
                          this, QNSLOT(SpellCheckerPrivate,onWriteFileRequestProcessed,bool,ErrorString,QUuid));
 
         m_appendUserDictionaryPartToFileRequestId = QUuid::createUuid();
@@ -864,8 +864,8 @@ void SpellCheckerPrivate::onReadFileRequestProcessed(bool success, ErrorString e
     m_readUserDictionaryRequestId = QUuid();
 
     QObject::disconnect(this, QNSIGNAL(SpellCheckerPrivate,readFile,QString,QUuid),
-                        m_pFileIOThreadWorker, QNSLOT(FileIOThreadWorker,onReadFileRequest,QString,QUuid));
-    QObject::disconnect(m_pFileIOThreadWorker, QNSIGNAL(FileIOThreadWorker,readFileRequestProcessed,bool,ErrorString,QByteArray,QUuid),
+                        m_pFileIOProcessorAsync, QNSLOT(FileIOProcessorAsync,onReadFileRequest,QString,QUuid));
+    QObject::disconnect(m_pFileIOProcessorAsync, QNSIGNAL(FileIOProcessorAsync,readFileRequestProcessed,bool,ErrorString,QByteArray,QUuid),
                         this, QNSLOT(SpellCheckerPrivate,onReadFileRequestProcessed,bool,ErrorString,QByteArray,QUuid));
 
     if (Q_LIKELY(success))
@@ -920,8 +920,8 @@ void SpellCheckerPrivate::onWriteFileRequestProcessed(bool success, ErrorString 
         m_updateUserDictionaryFileRequestId.isNull())
     {
         QObject::disconnect(this, QNSIGNAL(SpellCheckerPrivate,writeFile,QString,QByteArray,QUuid,bool),
-                            m_pFileIOThreadWorker, QNSLOT(FileIOThreadWorker,onWriteFileRequest,QString,QByteArray,QUuid,bool));
-        QObject::disconnect(m_pFileIOThreadWorker, QNSIGNAL(FileIOThreadWorker,writeFileRequestProcessed,bool,ErrorString,QUuid),
+                            m_pFileIOProcessorAsync, QNSLOT(FileIOProcessorAsync,onWriteFileRequest,QString,QByteArray,QUuid,bool));
+        QObject::disconnect(m_pFileIOProcessorAsync, QNSIGNAL(FileIOProcessorAsync,writeFileRequestProcessed,bool,ErrorString,QUuid),
                             this, QNSLOT(SpellCheckerPrivate,onWriteFileRequestProcessed,bool,ErrorString,QUuid));
     }
 }

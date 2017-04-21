@@ -65,7 +65,7 @@ namespace quentier {
 
 QT_FORWARD_DECLARE_CLASS(ResourceInfoJavaScriptHandler)
 QT_FORWARD_DECLARE_CLASS(ResourceFileStorageManager)
-QT_FORWARD_DECLARE_CLASS(FileIOThreadWorker)
+QT_FORWARD_DECLARE_CLASS(FileIOProcessorAsync)
 QT_FORWARD_DECLARE_CLASS(TextCursorPositionJavaScriptHandler)
 QT_FORWARD_DECLARE_CLASS(ContextMenuEventJavaScriptHandler)
 QT_FORWARD_DECLARE_CLASS(TableResizeJavaScriptHandler)
@@ -190,7 +190,7 @@ public:
     void disableDynamicSpellCheck();
 
 public Q_SLOTS:
-    virtual void initialize(FileIOThreadWorker & fileIOThreadWorker,
+    virtual void initialize(FileIOProcessorAsync & fileIOProcessorAsync,
                             SpellChecker & spellChecker,
                             const Account & account) Q_DECL_OVERRIDE;
     virtual QObject * object() Q_DECL_OVERRIDE { return this; }
@@ -868,7 +868,7 @@ private:
     QVector<ENMLConverter::SkipHtmlElementRule>     m_skipRulesForHtmlToEnmlConversion;
 
     ResourceFileStorageManager *    m_pResourceFileStorageManager;
-    FileIOThreadWorker *            m_pFileIOThreadWorker;
+    FileIOProcessorAsync *          m_pFileIOProcessorAsync;
 
     ResourceInfo                    m_resourceInfo;
     ResourceInfoJavaScriptHandler * m_pResourceInfoJavaScriptHandler;

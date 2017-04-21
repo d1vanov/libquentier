@@ -34,7 +34,7 @@ namespace quentier {
 QT_FORWARD_DECLARE_CLASS(Account)
 QT_FORWARD_DECLARE_CLASS(Notebook)
 QT_FORWARD_DECLARE_CLASS(INoteEditorBackend)
-QT_FORWARD_DECLARE_CLASS(FileIOThreadWorker)
+QT_FORWARD_DECLARE_CLASS(FileIOProcessorAsync)
 QT_FORWARD_DECLARE_CLASS(SpellChecker)
 
 /**
@@ -48,10 +48,10 @@ public:
     virtual ~NoteEditor();
 
     /**
-     * NoteEditor requires FileIOThreadWorker, SpellChecker and Account for its work but due to the particularities of Qt's .ui
+     * NoteEditor requires FileIOProcessorAsync, SpellChecker and Account for its work but due to the particularities of Qt's .ui
      * files processing these can't be passed right inside the constructor, hence here's a special initialization method
      */
-    void initialize(FileIOThreadWorker & fileIOThreadWorker,
+    void initialize(FileIOProcessorAsync & fileIOProcessorAsync,
                     SpellChecker & spellChecker,
                     const Account & account);
 

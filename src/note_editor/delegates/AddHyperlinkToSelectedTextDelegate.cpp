@@ -20,7 +20,6 @@
 #include "ParsePageScrollData.h"
 #include "../NoteEditor_p.h"
 #include "../dialogs/EditHyperlinkDialog.h"
-#include <quentier/utility/FileIOThreadWorker.h>
 #include <quentier/logging/QuentierLogger.h>
 #include <QScopedPointer>
 

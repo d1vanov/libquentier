@@ -137,7 +137,7 @@ set(UTILITY_HEADERS
     headers/quentier/utility/DesktopServices.h
     headers/quentier/utility/EncryptionManager.h
     headers/quentier/utility/EventLoopWithExitStatus.h
-    headers/quentier/utility/FileIOThreadWorker.h
+    headers/quentier/utility/FileIOProcessorAsync.h
     headers/quentier/utility/FileSystemWatcher.h
     headers/quentier/utility/LimitedStack.h
     headers/quentier/utility/Linkage.h
@@ -252,7 +252,7 @@ set(PRIVATE_HEADERS
     src/synchronization/SendLocalChangesManager.h
     src/synchronization/SynchronizationManager_p.h
     src/utility/EncryptionManager_p.h
-    src/utility/FileIOThreadWorker_p.h
+    src/utility/FileIOProcessorAsync_p.h
     src/utility/FileSystemWatcher_p.h
     src/utility/ShortcutManager_p.h
     src/utility/SysInfo_p.h
@@ -411,8 +411,8 @@ set(${PROJECT_NAME}_SOURCES
     src/utility/EncryptionManager.cpp
     src/utility/EncryptionManager_p.cpp
     src/utility/EventLoopWithExitStatus.cpp
-    src/utility/FileIOThreadWorker.cpp
-    src/utility/FileIOThreadWorker_p.cpp
+    src/utility/FileIOProcessorAsync.cpp
+    src/utility/FileIOProcessorAsync_p.cpp
     src/utility/FileSystemWatcher.cpp
     src/utility/FileSystemWatcher_p.cpp
     src/utility/Printable.cpp

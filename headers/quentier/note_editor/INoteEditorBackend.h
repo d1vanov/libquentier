@@ -34,7 +34,7 @@ namespace quentier {
 
 QT_FORWARD_DECLARE_CLASS(Account)
 QT_FORWARD_DECLARE_CLASS(NoteEditor)
-QT_FORWARD_DECLARE_CLASS(FileIOThreadWorker)
+QT_FORWARD_DECLARE_CLASS(FileIOProcessorAsync)
 QT_FORWARD_DECLARE_CLASS(SpellChecker)
 
 class QUENTIER_EXPORT INoteEditorBackend
@@ -42,7 +42,7 @@ class QUENTIER_EXPORT INoteEditorBackend
 public:
     virtual ~INoteEditorBackend();
 
-    virtual void initialize(FileIOThreadWorker & fileIOThreadWorker,
+    virtual void initialize(FileIOProcessorAsync & fileIOProcessorAsync,
                             SpellChecker & spellChecker,
                             const Account & account) = 0;
 

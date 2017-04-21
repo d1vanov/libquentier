@@ -27,7 +27,7 @@
 
 namespace quentier {
 
-QT_FORWARD_DECLARE_CLASS(FileIOThreadWorker)
+QT_FORWARD_DECLARE_CLASS(FileIOProcessorAsync)
 QT_FORWARD_DECLARE_CLASS(SpellCheckerPrivate)
 QT_FORWARD_DECLARE_CLASS(Account)
 
@@ -35,7 +35,7 @@ class QUENTIER_EXPORT SpellChecker : public QObject
 {
     Q_OBJECT
 public:
-    SpellChecker(FileIOThreadWorker * pFileIOThreadWorker,
+    SpellChecker(FileIOProcessorAsync * pFileIOProcessorAsync,
                  const Account & account, QObject * parent = Q_NULLPTR,
                  const QString & userDictionaryPath = QString());
 

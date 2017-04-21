@@ -16,8 +16,8 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LIB_QUENTIER_UTILITY_FILE_IO_THREAD_WORKER_H
-#define LIB_QUENTIER_UTILITY_FILE_IO_THREAD_WORKER_H
+#ifndef LIB_QUENTIER_UTILITY_FILE_IO_PROCESSOR_ASYNC_H
+#define LIB_QUENTIER_UTILITY_FILE_IO_PROCESSOR_ASYNC_H
 
 #include <quentier/utility/Linkage.h>
 #include <quentier/utility/Macros.h>
@@ -30,20 +30,20 @@
 
 namespace quentier {
 
-QT_FORWARD_DECLARE_CLASS(FileIOThreadWorkerPrivate)
+QT_FORWARD_DECLARE_CLASS(FileIOProcessorAsyncPrivate)
 
 /**
- * @brief The FileIOThreadWorker class is a wrapper under simple file IO operations,
+ * @brief The FileIOProcessorAsync class is a wrapper under simple file IO operations,
  * it is meant to be used for simple asynchronous IO
  */
-class QUENTIER_EXPORT FileIOThreadWorker: public QObject
+class QUENTIER_EXPORT FileIOProcessorAsync: public QObject
 {
     Q_OBJECT
 public:
-    explicit FileIOThreadWorker(QObject * parent = Q_NULLPTR);
+    explicit FileIOProcessorAsync(QObject * parent = Q_NULLPTR);
 
     /**
-     * @brief setIdleTimePeriod - set time period defining the idle state of FileIOThreadWorker:
+     * @brief setIdleTimePeriod - set time period defining the idle state of FileIOProcessorAsync:
      * once the time measured since the last IO operation is over the specified number of seconds,
      * the class emits readyForIO signal to any interested listeners of this event. If this method
      * is not called ever, the default idle time period would be 30 seconds.
@@ -56,7 +56,7 @@ Q_SIGNALS:
      * @brief readyForIO - signal sent when the queue for file IO is empty for some time
      * (30 seconds by default, can also be configured via setIdleTimePeriod method)
      * after the last IO event to indicate to signal listeners that they can perform some IO
-     * via the FileIOThreadWorker thread
+     * via the FileIOProcessorAsync thread
      */
     void readyForIO();
 
@@ -99,10 +99,10 @@ public Q_SLOTS:
                            QUuid requestId);
 
 private:
-    FileIOThreadWorkerPrivate * const d_ptr;
-    Q_DECLARE_PRIVATE(FileIOThreadWorker)
+    FileIOProcessorAsyncPrivate * const d_ptr;
+    Q_DECLARE_PRIVATE(FileIOProcessorAsync)
 };
 
 } // namespace quentier
 
-#endif // LIB_QUENTIER_UTILITY_FILE_IO_THREAD_WORKER_H
+#endif // LIB_QUENTIER_UTILITY_FILE_IO_PROCESSOR_ASYNC_H

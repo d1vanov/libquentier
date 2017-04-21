@@ -35,13 +35,13 @@ QT_FORWARD_DECLARE_CLASS(Hunspell)
 
 namespace quentier {
 
-QT_FORWARD_DECLARE_CLASS(FileIOThreadWorker)
+QT_FORWARD_DECLARE_CLASS(FileIOProcessorAsync)
 
 class SpellCheckerPrivate: public QObject
 {
     Q_OBJECT
 public:
-    SpellCheckerPrivate(FileIOThreadWorker * pFileIOThreadWorker,
+    SpellCheckerPrivate(FileIOProcessorAsync * pFileIOProcessorAsync,
                         const Account & account, QObject * parent = Q_NULLPTR,
                         const QString & userDictionaryPath = QString());
 
@@ -107,7 +107,7 @@ private:
     };
 
 private:
-    FileIOThreadWorker *        m_pFileIOThreadWorker;
+    FileIOProcessorAsync *      m_pFileIOProcessorAsync;
 
     Account                     m_currentAccount;
 

@@ -21,7 +21,7 @@
 #include "../NoteEditorPage.h"
 #include "../GenericResourceImageManager.h"
 #include <quentier/note_editor/ResourceFileStorageManager.h>
-#include <quentier/utility/FileIOThreadWorker.h>
+#include <quentier/utility/FileIOProcessorAsync.h>
 #include <quentier/utility/DesktopServices.h>
 #include <quentier/logging/QuentierLogger.h>
 #include <quentier/types/Resource.h>
@@ -49,13 +49,13 @@ namespace quentier {
 
 AddResourceDelegate::AddResourceDelegate(const QString & filePath, NoteEditorPrivate & noteEditor,
                                          ResourceFileStorageManager * pResourceFileStorageManager,
-                                         FileIOThreadWorker * pFileIOThreadWorker,
+                                         FileIOProcessorAsync * pFileIOProcessorAsync,
                                          GenericResourceImageManager * pGenericResourceImageManager,
                                          QHash<QByteArray, QString> & genericResourceImageFilePathsByResourceHash) :
     QObject(&noteEditor),
     m_noteEditor(noteEditor),
     m_pResourceFileStorageManager(pResourceFileStorageManager),
-    m_pFileIOThreadWorker(pFileIOThreadWorker),
+    m_pFileIOProcessorAsync(pFileIOProcessorAsync),
     m_genericResourceImageFilePathsByResourceHash(genericResourceImageFilePathsByResourceHash),
     m_pGenericResourceImageManager(pGenericResourceImageManager),
     m_saveResourceImageRequestId(),
@@ -71,13 +71,13 @@ AddResourceDelegate::AddResourceDelegate(const QString & filePath, NoteEditorPri
 AddResourceDelegate::AddResourceDelegate(const QByteArray & resourceData,
                                          const QString & mimeType, NoteEditorPrivate & noteEditor,
                                          ResourceFileStorageManager * pResourceFileStorageManager,
-                                         FileIOThreadWorker * pFileIOThreadWorker,
+                                         FileIOProcessorAsync * pFileIOProcessorAsync,
                                          GenericResourceImageManager * pGenericResourceImageManager,
                                          QHash<QByteArray, QString> & genericResourceImageFilePathsByResourceHash) :
     QObject(&noteEditor),
     m_noteEditor(noteEditor),
     m_pResourceFileStorageManager(pResourceFileStorageManager),
-    m_pFileIOThreadWorker(pFileIOThreadWorker),
+    m_pFileIOProcessorAsync(pFileIOProcessorAsync),
     m_genericResourceImageFilePathsByResourceHash(genericResourceImageFilePathsByResourceHash),
     m_pGenericResourceImageManager(pGenericResourceImageManager),
     m_saveResourceImageRequestId(),
@@ -242,8 +242,8 @@ void AddResourceDelegate::doStartUsingFile()
     m_readResourceFileRequestId = QUuid::createUuid();
 
     QObject::connect(this, QNSIGNAL(AddResourceDelegate,readFileData,QString,QUuid),
-                     m_pFileIOThreadWorker, QNSLOT(FileIOThreadWorker,onReadFileRequest,QString,QUuid));
-    QObject::connect(m_pFileIOThreadWorker, QNSIGNAL(FileIOThreadWorker,readFileRequestProcessed,bool,ErrorString,QByteArray,QUuid),
+                     m_pFileIOProcessorAsync, QNSLOT(FileIOProcessorAsync,onReadFileRequest,QString,QUuid));
+    QObject::connect(m_pFileIOProcessorAsync, QNSIGNAL(FileIOProcessorAsync,readFileRequestProcessed,bool,ErrorString,QByteArray,QUuid),
                      this, QNSLOT(AddResourceDelegate,onResourceFileRead,bool,ErrorString,QByteArray,QUuid));
 
     emit readFileData(m_filePath, m_readResourceFileRequestId);
@@ -259,8 +259,8 @@ void AddResourceDelegate::onResourceFileRead(bool success, ErrorString errorDesc
             << (success ? QStringLiteral("true") : QStringLiteral("false")));
 
     QObject::disconnect(this, QNSIGNAL(AddResourceDelegate,readFileData,QString,QUuid),
-                        m_pFileIOThreadWorker, QNSLOT(FileIOThreadWorker,onReadFileRequest,QString,QUuid));
-    QObject::disconnect(m_pFileIOThreadWorker, QNSIGNAL(FileIOThreadWorker,readFileRequestProcessed,bool,ErrorString,QByteArray,QUuid),
+                        m_pFileIOProcessorAsync, QNSLOT(FileIOProcessorAsync,onReadFileRequest,QString,QUuid));
+    QObject::disconnect(m_pFileIOProcessorAsync, QNSIGNAL(FileIOProcessorAsync,readFileRequestProcessed,bool,ErrorString,QByteArray,QUuid),
                         this, QNSLOT(AddResourceDelegate,onResourceFileRead,bool,ErrorString,QByteArray,QUuid));
 
     if (Q_UNLIKELY(!success)) {

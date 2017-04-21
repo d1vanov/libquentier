@@ -28,11 +28,11 @@
 
 namespace quentier {
 
-class FileIOThreadWorkerPrivate: public QObject
+class FileIOProcessorAsyncPrivate: public QObject
 {
     Q_OBJECT
 public:
-    explicit FileIOThreadWorkerPrivate(QObject * parent = Q_NULLPTR);
+    explicit FileIOProcessorAsyncPrivate(QObject * parent = Q_NULLPTR);
 
     void setIdleTimePeriod(const qint32 seconds);
 

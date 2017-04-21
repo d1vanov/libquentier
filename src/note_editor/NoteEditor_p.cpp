@@ -105,7 +105,7 @@ typedef QWebEngineSettings WebSettings;
 #include <quentier/enml/HTMLCleaner.h>
 #include <quentier/utility/Utility.h>
 #include <quentier/logging/QuentierLogger.h>
-#include <quentier/utility/FileIOThreadWorker.h>
+#include <quentier/utility/FileIOProcessorAsync.h>
 #include <quentier/utility/QuentierCheckPtr.h>
 #include <quentier/utility/DesktopServices.h>
 #include <quentier/utility/ShortcutManager.h>
@@ -293,7 +293,7 @@ NoteEditorPrivate::NoteEditorPrivate(NoteEditor & noteEditor) :
     m_errorCachedMemory(),
     m_skipRulesForHtmlToEnmlConversion(),
     m_pResourceFileStorageManager(Q_NULLPTR),
-    m_pFileIOThreadWorker(Q_NULLPTR),
+    m_pFileIOProcessorAsync(Q_NULLPTR),
     m_resourceInfo(),
     m_pResourceInfoJavaScriptHandler(new ResourceInfoJavaScriptHandler(m_resourceInfo, this)),
     m_resourceLocalFileStorageFolder(),
@@ -4006,13 +4006,13 @@ void NoteEditorPrivate::setupFileIO()
 {
     QNDEBUG(QStringLiteral("NoteEditorPrivate::setupFileIO"));
 
-    QUENTIER_CHECK_PTR(m_pFileIOThreadWorker, QStringLiteral("no file IO thread worker was passed to note editor"));
+    QUENTIER_CHECK_PTR(m_pFileIOProcessorAsync, QStringLiteral("no file IO processor async was passed to note editor"));
 
     QObject::connect(this, QNSIGNAL(NoteEditorPrivate,writeNoteHtmlToFile,QString,QByteArray,QUuid,bool),
-                     m_pFileIOThreadWorker, QNSLOT(FileIOThreadWorker,onWriteFileRequest,QString,QByteArray,QUuid,bool));
+                     m_pFileIOProcessorAsync, QNSLOT(FileIOProcessorAsync,onWriteFileRequest,QString,QByteArray,QUuid,bool));
     QObject::connect(this, QNSIGNAL(NoteEditorPrivate,saveResourceToFile,QString,QByteArray,QUuid,bool),
-                     m_pFileIOThreadWorker, QNSLOT(FileIOThreadWorker,onWriteFileRequest,QString,QByteArray,QUuid,bool));
-    QObject::connect(m_pFileIOThreadWorker, QNSIGNAL(FileIOThreadWorker,writeFileRequestProcessed,bool,ErrorString,QUuid),
+                     m_pFileIOProcessorAsync, QNSLOT(FileIOProcessorAsync,onWriteFileRequest,QString,QByteArray,QUuid,bool));
+    QObject::connect(m_pFileIOProcessorAsync, QNSIGNAL(FileIOProcessorAsync,writeFileRequestProcessed,bool,ErrorString,QUuid),
                      this, QNSLOT(NoteEditorPrivate,onWriteFileRequestProcessed,bool,ErrorString,QUuid));
 
     if (m_pResourceFileStorageManager) {
@@ -4021,7 +4021,7 @@ void NoteEditorPrivate::setupFileIO()
     }
 
     m_pResourceFileStorageManager = new ResourceFileStorageManager(m_resourceLocalFileStorageFolder, m_noteEditorImageResourcesStoragePath);
-    m_pResourceFileStorageManager->moveToThread(m_pFileIOThreadWorker->thread());
+    m_pResourceFileStorageManager->moveToThread(m_pFileIOProcessorAsync->thread());
 
     QObject::connect(this, QNSIGNAL(NoteEditorPrivate,currentNoteChanged,Note),
                      m_pResourceFileStorageManager, QNSLOT(ResourceFileStorageManager,onCurrentNoteChanged,Note));
@@ -4045,7 +4045,7 @@ void NoteEditorPrivate::setupFileIO()
 
     m_pGenericResourceImageManager = new GenericResourceImageManager;
     m_pGenericResourceImageManager->setStorageFolderPath(m_genericResourceImageFileStoragePath);
-    m_pGenericResourceImageManager->moveToThread(m_pFileIOThreadWorker->thread());
+    m_pGenericResourceImageManager->moveToThread(m_pFileIOProcessorAsync->thread());
 
 #ifdef QUENTIER_USE_QT_WEB_ENGINE
     QObject::connect(this,
@@ -4227,7 +4227,7 @@ void NoteEditorPrivate::setupNoteEditorPage()
     page->mainFrame()->addToJavaScriptWindowObject(QStringLiteral("spellCheckerDynamicHelper"), m_pSpellCheckerDynamicHandler,
                                                    OwnershipNamespace::QtOwnership);
 
-    m_pPluginFactory = new NoteEditorPluginFactory(*this, *m_pResourceFileStorageManager, *m_pFileIOThreadWorker, page);
+    m_pPluginFactory = new NoteEditorPluginFactory(*this, *m_pResourceFileStorageManager, *m_pFileIOProcessorAsync, page);
     if (Q_LIKELY(!m_pNote.isNull())) {
         m_pPluginFactory->setNote(*m_pNote);
     }
@@ -5021,13 +5021,13 @@ void NoteEditorPrivate::execJavascriptCommand(const QString & command, const QSt
     page->executeJavaScript(javascript, callback);
 }
 
-void NoteEditorPrivate::initialize(FileIOThreadWorker & fileIOThreadWorker,
+void NoteEditorPrivate::initialize(FileIOProcessorAsync & fileIOProcessorAsync,
                                    SpellChecker & spellChecker,
                                    const Account & account)
 {
     QNDEBUG(QStringLiteral("NoteEditorPrivate::initialize"));
 
-    m_pFileIOThreadWorker = &fileIOThreadWorker;
+    m_pFileIOProcessorAsync = &fileIOProcessorAsync;
     m_pSpellChecker = &spellChecker;
     setAccount(account);
 }
@@ -5581,7 +5581,7 @@ void NoteEditorPrivate::setNoteAndNotebook(const Note & note, const Notebook & n
     {
         bool missingPluginFactory = !m_pPluginFactory;
         if (missingPluginFactory) {
-            m_pPluginFactory = new NoteEditorPluginFactory(*this, *m_pResourceFileStorageManager, *m_pFileIOThreadWorker, pNoteEditorPage);
+            m_pPluginFactory = new NoteEditorPluginFactory(*this, *m_pResourceFileStorageManager, *m_pFileIOProcessorAsync, pNoteEditorPage);
         }
 
         m_pPluginFactory->setNote(*m_pNote);
@@ -7787,7 +7787,7 @@ void NoteEditorPrivate::dropFile(const QString & filePath)
     CHECK_NOTE_EDITABLE(QT_TRANSLATE_NOOP("", "Can't add the attachment via drag'n'drop"))
 
     AddResourceDelegate * delegate = new AddResourceDelegate(filePath, *this, m_pResourceFileStorageManager,
-                                                             m_pFileIOThreadWorker, m_pGenericResourceImageManager,
+                                                             m_pFileIOProcessorAsync, m_pGenericResourceImageManager,
                                                              m_genericResourceImageFilePathsByResourceHash);
 
     QObject::connect(delegate, QNSIGNAL(AddResourceDelegate,finished,Resource,QString),
@@ -7811,7 +7811,7 @@ void NoteEditorPrivate::pasteImageData(const QMimeData & mimeData)
     QString mimeType = QStringLiteral("image/png");
 
     AddResourceDelegate * delegate = new AddResourceDelegate(data, mimeType, *this, m_pResourceFileStorageManager,
-                                                             m_pFileIOThreadWorker, m_pGenericResourceImageManager,
+                                                             m_pFileIOProcessorAsync, m_pGenericResourceImageManager,
                                                              m_genericResourceImageFilePathsByResourceHash);
 
     QObject::connect(delegate, QNSIGNAL(AddResourceDelegate,finished,Resource,QString),

@@ -35,7 +35,7 @@ namespace quentier {
 QT_FORWARD_DECLARE_CLASS(Account)
 QT_FORWARD_DECLARE_CLASS(NoteEditorPrivate)
 QT_FORWARD_DECLARE_CLASS(ResourceFileStorageManager)
-QT_FORWARD_DECLARE_CLASS(FileIOThreadWorker)
+QT_FORWARD_DECLARE_CLASS(FileIOProcessorAsync)
 QT_FORWARD_DECLARE_CLASS(GenericResourceImageManager)
 
 /**
@@ -53,14 +53,14 @@ public:
      * @param noteEditor - the note editor holding the note to which the resource is to be added
      * @param pResourceFileStorageManager - the pointer to ResourceFileStorageManager which is required for storing
      * the new resource's data in a proper place on the hard drive
-     * @param pFileIOThreadWorker - the pointer to FileIOThreadWorker worker performing the actual IO of file data
+     * @param pFileIOThreadWorker - the pointer to FileIOProcessorAsync worker performing the actual IO of file data
      * @param pGenericResourceImageManager - the pointer to GenericResourceImageManager required for composing
      * the generic resource image for QWebEngine-based backend of NoteEditor
      * @param genericResourceImageFilePathsByResourceHash - the hash container storing generic resource file paths by resource hash
      */
     explicit AddResourceDelegate(const QString & filePath, NoteEditorPrivate & noteEditor,
                                  ResourceFileStorageManager * pResourceFileStorageManager,
-                                 FileIOThreadWorker * pFileIOThreadWorker,
+                                 FileIOProcessorAsync * pFileIOThreadWorker,
                                  GenericResourceImageManager * pGenericResourceImageManager,
                                  QHash<QByteArray, QString> & genericResourceImageFilePathsByResourceHash);
 
@@ -72,7 +72,7 @@ public:
      * @param noteEditor - the note editor holding the note to which the resource is to be added
      * @param pResourceFileStorageManager - the pointer to ResourceFileStorageManager which is required for storing
      * the new resource's data in a proper place on the hard drive
-     * @param pFileIOThreadWorker - the pointer to FileIOThreadWorker worker performing the actual IO of file data
+     * @param pFileIOThreadWorker - the pointer to FileIOProcessorAsync worker performing the actual IO of file data
      * @param pGenericResourceImageManager - the pointer to GenericResourceImageManager required for composing
      * the generic resource image for QWebEngine-based backend of NoteEditor
      * @param genericResourceImageFilePathsByResourceHash - the hash container storing generic resource file paths by resource hash
@@ -80,7 +80,7 @@ public:
     explicit AddResourceDelegate(const QByteArray & resourceData, const QString & mimeType,
                                  NoteEditorPrivate & noteEditor,
                                  ResourceFileStorageManager * pResourceFileStorageManager,
-                                 FileIOThreadWorker * pFileIOThreadWorker,
+                                 FileIOProcessorAsync * pFileIOThreadWorker,
                                  GenericResourceImageManager * pGenericResourceImageManager,
                                  QHash<QByteArray, QString> & genericResourceImageFilePathsByResourceHash);
 
@@ -130,7 +130,7 @@ private:
 private:
     NoteEditorPrivate &             m_noteEditor;
     ResourceFileStorageManager *    m_pResourceFileStorageManager;
-    FileIOThreadWorker *            m_pFileIOThreadWorker;
+    FileIOProcessorAsync *          m_pFileIOProcessorAsync;
 
     QHash<QByteArray, QString> &    m_genericResourceImageFilePathsByResourceHash;
     GenericResourceImageManager *   m_pGenericResourceImageManager;
