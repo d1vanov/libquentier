@@ -108,8 +108,8 @@ void LocalStorageCacheAsyncTester::onAddNotebookCompleted(Notebook notebook, QUu
     if (m_state == STATE_SENT_NOTEBOOK_ADD_REQUEST)
     {
         if (m_currentNotebook != notebook) {
-            errorDescription.base() = "Internal error in LocalStorageCacheAsyncTester: notebook in onAddNotebookCompleted "
-                                      "doesn't match the original notebook";
+            errorDescription.base() = QStringLiteral("Internal error in LocalStorageCacheAsyncTester: notebook in onAddNotebookCompleted "
+                                                     "doesn't match the original notebook");
             QNWARNING(errorDescription << QStringLiteral("; original notebook: ") << m_currentNotebook
                       << QStringLiteral("\nFound notebook: ") << notebook);
             emit failure(errorDescription.nonLocalizedString());
@@ -833,7 +833,7 @@ void LocalStorageCacheAsyncTester::addTag()
 {
     m_currentTag = Tag();
     m_currentTag.setUpdateSequenceNumber(static_cast<qint32>(m_addedTagsCount + 1));
-    m_currentTag.setName("Fake tag #" + QString::number(m_addedTagsCount + 1));
+    m_currentTag.setName(QStringLiteral("Fake tag #") + QString::number(m_addedTagsCount + 1));
 
     m_state = STATE_SENT_TAG_ADD_REQUEST;
     emit addTagRequest(m_currentTag);
@@ -854,7 +854,7 @@ void LocalStorageCacheAsyncTester::addLinkedNotebook()
 
     QString guid = QStringLiteral("00000000-0000-0000-c000-0000000000");
     if (m_addedLinkedNotebooksCount < 9) {
-        guid += "0";
+        guid += QStringLiteral("0");
     }
     guid += QString::number(m_addedLinkedNotebooksCount + 1);
 

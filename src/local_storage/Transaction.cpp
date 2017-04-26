@@ -67,14 +67,14 @@ Transaction::~Transaction()
 bool Transaction::commit(ErrorString & errorDescription)
 {
     if (m_type == Selection) {
-        errorDescription.base() = QT_TRANSLATE_NOOP("", "Can't commit the transaction of selection type");
+        errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "Can't commit the transaction of selection type"));
         return false;
     }
 
     QSqlQuery query(m_db);
     bool res = query.exec(QStringLiteral("COMMIT"));
     if (!res) {
-        errorDescription.base() = QT_TRANSLATE_NOOP("", "Can't commit the SQL transaction");
+        errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "Can't commit the SQL transaction"));
         errorDescription.details() = query.lastError().text();
         QNWARNING(errorDescription << QStringLiteral(", full last query error: ") << query.lastError());
         return false;
@@ -87,15 +87,15 @@ bool Transaction::commit(ErrorString & errorDescription)
 bool Transaction::end(ErrorString & errorDescription)
 {
     if (m_type != Selection) {
-        errorDescription.base() = QT_TRANSLATE_NOOP("", "Only transactions used for selection queries should be "
-                                                    "explicitly ended without committing the changes");
+        errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "Only transactions used for selection queries should be "
+                                                    "explicitly ended without committing the changes"));
         return false;
     }
 
     QSqlQuery query(m_db);
     bool res = query.exec(QStringLiteral("END"));
     if (!res) {
-        errorDescription.base() = QT_TRANSLATE_NOOP("", "Can't end the SQL transaction");
+        errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "Can't end the SQL transaction"));
         errorDescription.details() = query.lastError().text();
         QNWARNING(errorDescription << QStringLiteral(", full last query error: ") << query.lastError());
         return false;

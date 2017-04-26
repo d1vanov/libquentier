@@ -27,7 +27,7 @@
 namespace quentier {
 
 #define SET_EDAM_USER_EXCEPTION_ERROR(userException) \
-    errorDescription.base() = QT_TRANSLATE_NOOP("", "caught EDAM user exception"); \
+    errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "caught EDAM user exception")); \
     errorDescription.details() = QStringLiteral("error code"); \
     errorDescription.details() += ToString(userException.errorCode); \
     if (!userException.exceptionData().isNull()) { \
@@ -322,8 +322,8 @@ qint32 NoteStore::getLinkedNotebookSyncState(const qevercloud::LinkedNotebook & 
     }
     catch(const qevercloud::EDAMNotFoundException & notFoundException)
     {
-        errorDescription.base() = QT_TRANSLATE_NOOP("", "caught EDAM not found exception, could not find "
-                                                    "linked notebook to get the sync state for");
+        errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "caught EDAM not found exception, could not find "
+                                                                      "linked notebook to get the sync state for"));
         if (!notFoundException.exceptionData().isNull()) {
             errorDescription.details() += ToString(notFoundException.exceptionData()->errorMessage);
         }
@@ -358,22 +358,25 @@ qint32 NoteStore::getLinkedNotebookSyncChunk(const qevercloud::LinkedNotebook & 
     }
     catch(const qevercloud::EDAMNotFoundException & notFoundException)
     {
-        errorDescription.base() = QT_TRANSLATE_NOOP("", "caught EDAM not found exception while attempting to "
-                                                    "download the sync chunk for linked notebook");
+        errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "caught EDAM not found exception while attempting to "
+                                                                      "download the sync chunk for linked notebook"));
         if (!notFoundException.exceptionData().isNull())
         {
             const QString & errorMessage = notFoundException.exceptionData()->errorMessage;
             if (errorMessage == QStringLiteral("LinkedNotebook")) {
-                errorDescription.additionalBases().append(QT_TRANSLATE_NOOP("", "the provided information doesn't match any valid notebook"));
+                errorDescription.additionalBases().append(QString::fromUtf8(QT_TRANSLATE_NOOP("", "the provided information "
+                                                                                              "doesn't match any valid notebook")));
             }
             else if (errorMessage == QStringLiteral("LinkedNotebook.uri")) {
-                errorDescription.additionalBases().append(QT_TRANSLATE_NOOP("", "the provided public URI doesn't match any valid notebook"));
+                errorDescription.additionalBases().append(QString::fromUtf8(QT_TRANSLATE_NOOP("", "the provided public URI doesn't "
+                                                                                              "match any valid notebook")));
             }
             else if (errorMessage == QStringLiteral("SharedNotebook.id")) {
-                errorDescription.additionalBases().append(QT_TRANSLATE_NOOP("", "the provided information indicates the shared notebook no longer exists"));
+                errorDescription.additionalBases().append(QString::fromUtf8(QT_TRANSLATE_NOOP("", "the provided information indicates "
+                                                                                              "the shared notebook no longer exists")));
             }
             else {
-                errorDescription.additionalBases().append(QT_TRANSLATE_NOOP("", "unknown error"));
+                errorDescription.additionalBases().append(QString::fromUtf8(QT_TRANSLATE_NOOP("", "unknown error")));
                 errorDescription.details() = errorMessage;
             }
         }
@@ -393,7 +396,7 @@ qint32 NoteStore::getNote(const bool withContent, const bool withResourcesData,
                           Note & note, ErrorString & errorDescription, qint32 & rateLimitSeconds)
 {
     if (!note.hasGuid()) {
-        errorDescription.base() = QT_TRANSLATE_NOOP("", "can't get note: note's guid is empty");
+        errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "can't get note: note's guid is empty"));
         return qevercloud::EDAMErrorCode::UNKNOWN;
     }
 
@@ -430,13 +433,13 @@ qint32 NoteStore::authenticateToSharedNotebook(const QString & shareKey, qevercl
     catch(const qevercloud::EDAMUserException & userException)
     {
         if (userException.errorCode == qevercloud::EDAMErrorCode::DATA_REQUIRED) {
-            errorDescription.base() = QT_TRANSLATE_NOOP("", "no valid authentication token for current user");
+            errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "no valid authentication token for current user"));
         }
         else if (userException.errorCode == qevercloud::EDAMErrorCode::PERMISSION_DENIED) {
-            errorDescription.base() = QT_TRANSLATE_NOOP("", "share requires login, and another username has already been bound to this notebook");
+            errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "share requires login, and another username has already been bound to this notebook"));
         }
         else {
-            errorDescription.base() = QT_TRANSLATE_NOOP("", "unexpected EDAM user exception");
+            errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "unexpected EDAM user exception"));
             errorDescription.details() = QStringLiteral("error code = ");
             errorDescription.details() += ToString(userException.errorCode);
         }
@@ -457,20 +460,21 @@ qint32 NoteStore::authenticateToSharedNotebook(const QString & shareKey, qevercl
     {
         if (systemException.errorCode == qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED) {
             if (!systemException.rateLimitDuration.isSet()) {
-                errorDescription.base() = QT_TRANSLATE_NOOP("", "QEverCloud error: RATE_LIMIT_REACHED exception was caught but rateLimitDuration is not set");
+                errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "QEverCloud error: RATE_LIMIT_REACHED exception "
+                                                                              "was caught but rateLimitDuration is not set"));
                 return qevercloud::EDAMErrorCode::UNKNOWN;
             }
 
             rateLimitSeconds = systemException.rateLimitDuration;
         }
         else if (systemException.errorCode == qevercloud::EDAMErrorCode::BAD_DATA_FORMAT) {
-            errorDescription.base() = QT_TRANSLATE_NOOP("", "invalid share key");
+            errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "invalid share key"));
         }
         else if (systemException.errorCode == qevercloud::EDAMErrorCode::INVALID_AUTH) {
-            errorDescription.base() = QT_TRANSLATE_NOOP("", "bad signature of share key");
+            errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "bad signature of share key"));
         }
         else {
-            errorDescription.base() = QT_TRANSLATE_NOOP("", "unexpected EDAM system exception");
+            errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "unexpected EDAM system exception"));
             errorDescription.details() = QStringLiteral("error code = ");
             errorDescription.details() += ToString(systemException.errorCode);
         }
@@ -492,10 +496,10 @@ qint32 NoteStore::processEdamUserExceptionForTag(const Tag & tag, const qeverclo
     if (userException.errorCode == qevercloud::EDAMErrorCode::BAD_DATA_FORMAT)
     {
         if (thrownOnCreation) {
-            errorDescription.base() = QT_TRANSLATE_NOOP("", "BAD_DATA_FORMAT exception during the attempt to create a tag");
+            errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "BAD_DATA_FORMAT exception during the attempt to create a tag"));
         }
         else {
-            errorDescription.base() = QT_TRANSLATE_NOOP("", "BAD_DATA_FORMAT exception during the attempt to update a tag");
+            errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "BAD_DATA_FORMAT exception during the attempt to update a tag"));
         }
 
         if (!userException.parameter.isSet())
@@ -509,24 +513,24 @@ qint32 NoteStore::processEdamUserExceptionForTag(const Tag & tag, const qeverclo
 
         if (userException.parameter.ref() == QStringLiteral("Tag.name")) {
             if (tag.hasName()) {
-                errorDescription.additionalBases().append(QT_TRANSLATE_NOOP("", "invalid length or pattern of tag's name"));
+                errorDescription.additionalBases().append(QString::fromUtf8(QT_TRANSLATE_NOOP("", "invalid length or pattern of tag's name")));
                 errorDescription.details() = tag.name();
             }
             else {
-                errorDescription.additionalBases().append(QT_TRANSLATE_NOOP("", "tag has no name"));
+                errorDescription.additionalBases().append(QString::fromUtf8(QT_TRANSLATE_NOOP("", "tag has no name")));
             }
         }
         else if (userException.parameter.ref() == QStringLiteral("Tag.parentGuid")) {
             if (tag.hasParentGuid()) {
-                errorDescription.additionalBases().append(QT_TRANSLATE_NOOP("", "malformed parent guid of tag"));
+                errorDescription.additionalBases().append(QString::fromUtf8(QT_TRANSLATE_NOOP("", "malformed parent guid of tag")));
                 errorDescription.details() = tag.parentGuid();
             }
             else {
-                errorDescription.additionalBases().append(QT_TRANSLATE_NOOP("", "error code indicates malformed parent guid but it is empty"));
+                errorDescription.additionalBases().append(QString::fromUtf8(QT_TRANSLATE_NOOP("", "error code indicates malformed parent guid but it is empty")));
             }
         }
         else {
-            errorDescription.additionalBases().append(QT_TRANSLATE_NOOP("", "unexpected parameter"));
+            errorDescription.additionalBases().append(QString::fromUtf8(QT_TRANSLATE_NOOP("", "unexpected parameter")));
             errorDescription.details() = userException.parameter.ref();
         }
 
@@ -535,10 +539,10 @@ qint32 NoteStore::processEdamUserExceptionForTag(const Tag & tag, const qeverclo
     else if (userException.errorCode == qevercloud::EDAMErrorCode::DATA_CONFLICT)
     {
         if (thrownOnCreation) {
-            errorDescription.base() = QT_TRANSLATE_NOOP("", "DATA_CONFLICT exception during the attempt to create a tag");
+            errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "DATA_CONFLICT exception during the attempt to create a tag"));
         }
         else {
-            errorDescription.base() = QT_TRANSLATE_NOOP("", "DATA_CONFLICT exception during the attempt to update a tag");
+            errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "DATA_CONFLICT exception during the attempt to update a tag"));
         }
 
         if (!userException.parameter.isSet())
@@ -552,26 +556,28 @@ qint32 NoteStore::processEdamUserExceptionForTag(const Tag & tag, const qeverclo
 
         if (userException.parameter.ref() == QStringLiteral("Tag.name")) {
             if (tag.hasName()) {
-                errorDescription.additionalBases().append(QT_TRANSLATE_NOOP("", "invalid length or pattern of tag's name"));
+                errorDescription.additionalBases().append(QString::fromUtf8(QT_TRANSLATE_NOOP("", "invalid length or pattern of tag's name")));
                 errorDescription.details() = tag.name();
             }
             else {
-                errorDescription.additionalBases().append(QT_TRANSLATE_NOOP("", "tag has no name"));
+                errorDescription.additionalBases().append(QString::fromUtf8(QT_TRANSLATE_NOOP("", "tag has no name")));
             }
         }
 
         if (!thrownOnCreation && (userException.parameter.ref() == QStringLiteral("Tag.parentGuid"))) {
             if (tag.hasParentGuid()) {
-                errorDescription.additionalBases().append(QT_TRANSLATE_NOOP("", "can't set parent for tag: circular parent-child correlation detected"));
+                errorDescription.additionalBases().append(QString::fromUtf8(QT_TRANSLATE_NOOP("", "can't set parent for tag: circular "
+                                                                                              "parent-child correlation detected")));
                 errorDescription.details() = tag.parentGuid();
             }
             else {
-                errorDescription.additionalBases().append(QT_TRANSLATE_NOOP("", "error code indicates the problem with circular parent-child correlation "
-                                                                            "but tag's parent guid is empty"));
+                errorDescription.additionalBases().append(QString::fromUtf8(QT_TRANSLATE_NOOP("", "error code indicates the problem with "
+                                                                                              "circular parent-child correlation "
+                                                                                              "but tag's parent guid is empty")));
             }
         }
         else {
-            errorDescription.additionalBases().append(QT_TRANSLATE_NOOP("", "unexpected parameter"));
+            errorDescription.additionalBases().append(QString::fromUtf8(QT_TRANSLATE_NOOP("", "unexpected parameter")));
             errorDescription.details() = userException.parameter.ref();
         }
 
@@ -579,20 +585,20 @@ qint32 NoteStore::processEdamUserExceptionForTag(const Tag & tag, const qeverclo
     }
     else if (thrownOnCreation && (userException.errorCode == qevercloud::EDAMErrorCode::LIMIT_REACHED))
     {
-        errorDescription.base() = QT_TRANSLATE_NOOP("", "LIMIT_REACHED exception during the attempt to create a tag");
+        errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "LIMIT_REACHED exception during the attempt to create a tag"));
 
-        if (userException.parameter.isSet() && (userException.parameter.ref() == "Tag")) {
-            errorDescription.additionalBases().append(QT_TRANSLATE_NOOP("", "already at max number of tags, please remove some of them"));
+        if (userException.parameter.isSet() && (userException.parameter.ref() == QStringLiteral("Tag"))) {
+            errorDescription.additionalBases().append(QString::fromUtf8(QT_TRANSLATE_NOOP("", "already at max number of tags, please remove some of them")));
         }
 
         return userException.errorCode;
     }
     else if (!thrownOnCreation && (userException.errorCode == qevercloud::EDAMErrorCode::PERMISSION_DENIED))
     {
-        errorDescription.base() = QT_TRANSLATE_NOOP("", "PERMISSION_DENIED exception during the attempt to update a tag");
+        errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "PERMISSION_DENIED exception during the attempt to update a tag"));
 
-        if (userException.parameter.isSet() && (userException.parameter.ref() == "Tag")) {
-            errorDescription.additionalBases().append(QT_TRANSLATE_NOOP("", "user doesn't own the tag, it can't be updated"));
+        if (userException.parameter.isSet() && (userException.parameter.ref() == QStringLiteral("Tag"))) {
+            errorDescription.additionalBases().append(QString::fromUtf8(QT_TRANSLATE_NOOP("", "user doesn't own the tag, it can't be updated")));
             if (tag.hasName()) {
                 errorDescription.details() = tag.name();
             }
@@ -616,10 +622,10 @@ qint32 NoteStore::processEdamUserExceptionForSavedSearch(const SavedSearch & sea
     if (userException.errorCode == qevercloud::EDAMErrorCode::BAD_DATA_FORMAT)
     {
         if (thrownOnCreation) {
-            errorDescription.base() = QT_TRANSLATE_NOOP("", "BAD_DATA_FORMAT exception during the attempt to create a saved search");
+            errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "BAD_DATA_FORMAT exception during the attempt to create a saved search"));
         }
         else {
-            errorDescription.base() = QT_TRANSLATE_NOOP("", "BAD_DATA_FORMAT exception during the attempt to update a saved search");
+            errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "BAD_DATA_FORMAT exception during the attempt to update a saved search"));
         }
 
         if (!userException.parameter.isSet())
@@ -633,25 +639,25 @@ qint32 NoteStore::processEdamUserExceptionForSavedSearch(const SavedSearch & sea
 
         if (userException.parameter.ref() == QStringLiteral("SavedSearch.name")) {
             if (search.hasName()) {
-                errorDescription.additionalBases().append(QT_TRANSLATE_NOOP("", "invalid length or pattern of saved search's name"));
+                errorDescription.additionalBases().append(QString::fromUtf8(QT_TRANSLATE_NOOP("", "invalid length or pattern of saved search's name")));
                 errorDescription.details() = search.name();
             }
             else {
-                errorDescription.additionalBases().append(QT_TRANSLATE_NOOP("", "saved search has no name"));
+                errorDescription.additionalBases().append(QString::fromUtf8(QT_TRANSLATE_NOOP("", "saved search has no name")));
             }
         }
         else if (userException.parameter.ref() == QStringLiteral("SavedSearch.query")) {
             if (search.hasQuery()) {
-                errorDescription.additionalBases().append(QT_TRANSLATE_NOOP("", "invalid length of saved search's query"));
+                errorDescription.additionalBases().append(QString::fromUtf8(QT_TRANSLATE_NOOP("", "invalid length of saved search's query")));
                 errorDescription.details() = QString::number(search.query().length());
                 QNWARNING(errorDescription << QStringLiteral(", query: ") << search.query());
             }
             else {
-                errorDescription.additionalBases().append(QT_TRANSLATE_NOOP("", "saved search has no query"));
+                errorDescription.additionalBases().append(QString::fromUtf8(QT_TRANSLATE_NOOP("", "saved search has no query")));
             }
         }
         else {
-            errorDescription.additionalBases().append(QT_TRANSLATE_NOOP("", "unexpected parameter"));
+            errorDescription.additionalBases().append(QString::fromUtf8(QT_TRANSLATE_NOOP("", "unexpected parameter")));
             errorDescription.details() = userException.parameter.ref();
         }
 
@@ -660,10 +666,10 @@ qint32 NoteStore::processEdamUserExceptionForSavedSearch(const SavedSearch & sea
     else if (userException.errorCode == qevercloud::EDAMErrorCode::DATA_CONFLICT)
     {
         if (thrownOnCreation) {
-            errorDescription.base() = QT_TRANSLATE_NOOP("", "DATA_CONFLICT exception during the attempt to create a saved search");
+            errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "DATA_CONFLICT exception during the attempt to create a saved search"));
         }
         else {
-            errorDescription.base() = QT_TRANSLATE_NOOP("", "DATA_CONFLICT exception during the attempt to update a saved search");
+            errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "DATA_CONFLICT exception during the attempt to update a saved search"));
         }
 
         if (!userException.parameter.isSet())
@@ -677,15 +683,15 @@ qint32 NoteStore::processEdamUserExceptionForSavedSearch(const SavedSearch & sea
 
         if (userException.parameter.ref() == QStringLiteral("SavedSearch.name")) {
             if (search.hasName()) {
-                errorDescription.additionalBases().append(QT_TRANSLATE_NOOP("", "saved search's name is already in use"));
+                errorDescription.additionalBases().append(QString::fromUtf8(QT_TRANSLATE_NOOP("", "saved search's name is already in use")));
                 errorDescription.details() = search.name();
             }
             else {
-                errorDescription.additionalBases().append(QT_TRANSLATE_NOOP("", "saved search has no name"));
+                errorDescription.additionalBases().append(QString::fromUtf8(QT_TRANSLATE_NOOP("", "saved search has no name")));
             }
         }
         else {
-            errorDescription.additionalBases().append(QT_TRANSLATE_NOOP("", "unexpected parameter"));
+            errorDescription.additionalBases().append(QString::fromUtf8(QT_TRANSLATE_NOOP("", "unexpected parameter")));
             errorDescription.details() = userException.parameter.ref();
         }
 
@@ -693,14 +699,14 @@ qint32 NoteStore::processEdamUserExceptionForSavedSearch(const SavedSearch & sea
     }
     else if (thrownOnCreation && (userException.errorCode == qevercloud::EDAMErrorCode::LIMIT_REACHED))
     {
-        errorDescription.base() = QT_TRANSLATE_NOOP("", "LIMIT_REACHED exception during the attempt to create saved search: "
-                                                    "already at max number of saved searches");
+        errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "LIMIT_REACHED exception during the attempt to create saved search: "
+                                                                      "already at max number of saved searches"));
         return userException.errorCode;
     }
     else if (!thrownOnCreation && (userException.errorCode == qevercloud::EDAMErrorCode::PERMISSION_DENIED))
     {
-        errorDescription.base() = QT_TRANSLATE_NOOP("", "PERMISSION_DENIED exception during the attempt to update saved search: "
-                                                    "user doesn't own saved search");
+        errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "PERMISSION_DENIED exception during the attempt to update saved search: "
+                                                                      "user doesn't own saved search"));
         return userException.errorCode;
     }
 
@@ -716,7 +722,7 @@ qint32 NoteStore::processEdamUserExceptionForGetSyncChunk(const qevercloud::EDAM
 
     if (userException.errorCode == qevercloud::EDAMErrorCode::BAD_DATA_FORMAT)
     {
-        errorDescription.base() = QT_TRANSLATE_NOOP("", "BAD_DATA_FORMAT exception during the attempt to get sync chunk");
+        errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "BAD_DATA_FORMAT exception during the attempt to get sync chunk"));
 
         if (!userException.parameter.isSet())
         {
@@ -728,21 +734,21 @@ qint32 NoteStore::processEdamUserExceptionForGetSyncChunk(const qevercloud::EDAM
         }
 
         if (userException.parameter.ref() == QStringLiteral("afterUSN")) {
-            errorDescription.additionalBases().append(QT_TRANSLATE_NOOP("", "afterUSN is negative"));
+            errorDescription.additionalBases().append(QString::fromUtf8(QT_TRANSLATE_NOOP("", "afterUSN is negative")));
             errorDescription.details() = QString::number(afterUSN);
         }
         else if (userException.parameter.ref() == QStringLiteral("maxEntries")) {
-            errorDescription.additionalBases().append(QT_TRANSLATE_NOOP("", "maxEntries is less than 1"));
+            errorDescription.additionalBases().append(QString::fromUtf8(QT_TRANSLATE_NOOP("", "maxEntries is less than 1")));
             errorDescription.details() = QString::number(maxEntries);
         }
         else {
-            errorDescription.additionalBases().append(QT_TRANSLATE_NOOP("", "unexpected parameter"));
+            errorDescription.additionalBases().append(QString::fromUtf8(QT_TRANSLATE_NOOP("", "unexpected parameter")));
             errorDescription.details() = userException.parameter.ref();
         }
     }
     else
     {
-        errorDescription.base() = QT_TRANSLATE_NOOP("", "Unknown EDAM user exception on attempt to get filtered sync chunk");
+        errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "Unknown EDAM user exception on attempt to get filtered sync chunk"));
     }
 
     return userException.errorCode;
@@ -757,7 +763,7 @@ qint32 NoteStore::processEdamUserExceptionForGetNote(const Note & note, const qe
 
     if (userException.errorCode == qevercloud::EDAMErrorCode::BAD_DATA_FORMAT)
     {
-        errorDescription.base() = QT_TRANSLATE_NOOP("", "BAD_DATA_FORMAT exception during the attempt to get note");
+        errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "BAD_DATA_FORMAT exception during the attempt to get note"));
 
         if (!userException.parameter.isSet())
         {
@@ -769,10 +775,10 @@ qint32 NoteStore::processEdamUserExceptionForGetNote(const Note & note, const qe
         }
 
         if (userException.parameter.ref() == QStringLiteral("Note.guid")) {
-            errorDescription.additionalBases().append(QT_TRANSLATE_NOOP("", "note's guid is missing"));
+            errorDescription.additionalBases().append(QString::fromUtf8(QT_TRANSLATE_NOOP("", "note's guid is missing")));
         }
         else {
-            errorDescription.additionalBases().append(QT_TRANSLATE_NOOP("", "unexpected parameter"));
+            errorDescription.additionalBases().append(QString::fromUtf8(QT_TRANSLATE_NOOP("", "unexpected parameter")));
             errorDescription.details() = userException.parameter.ref();
         }
 
@@ -780,7 +786,7 @@ qint32 NoteStore::processEdamUserExceptionForGetNote(const Note & note, const qe
     }
     else if (userException.errorCode == qevercloud::EDAMErrorCode::PERMISSION_DENIED)
     {
-        errorDescription.base() = QT_TRANSLATE_NOOP("", "PERMISSION_DENIED exception during the attempt to get note");
+        errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "PERMISSION_DENIED exception during the attempt to get note"));
 
         if (!userException.parameter.isSet())
         {
@@ -792,17 +798,17 @@ qint32 NoteStore::processEdamUserExceptionForGetNote(const Note & note, const qe
         }
 
         if (userException.parameter.ref() == QStringLiteral("Note")) {
-            errorDescription.additionalBases().append(QT_TRANSLATE_NOOP("", "note is not owned by user"));
+            errorDescription.additionalBases().append(QString::fromUtf8(QT_TRANSLATE_NOOP("", "note is not owned by user")));
         }
         else {
-            errorDescription.additionalBases().append(QT_TRANSLATE_NOOP("", "unexpected parameter"));
+            errorDescription.additionalBases().append(QString::fromUtf8(QT_TRANSLATE_NOOP("", "unexpected parameter")));
             errorDescription.details() = userException.parameter.ref();
         }
 
         return userException.errorCode;
     }
 
-    errorDescription.base() = QT_TRANSLATE_NOOP("", "Unexpected EDAM user exception on attempt to get note");
+    errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "Unexpected EDAM user exception on attempt to get note"));
     errorDescription.details() = QStringLiteral("error code = ");
     errorDescription.details() += ToString(userException.errorCode);
 
@@ -826,10 +832,10 @@ qint32 NoteStore::processEdamUserExceptionForNotebook(const Notebook & notebook,
     if (userException.errorCode == qevercloud::EDAMErrorCode::BAD_DATA_FORMAT)
     {
         if (thrownOnCreation) {
-            errorDescription.base() = QT_TRANSLATE_NOOP("", "BAD_DATA_FORMAT exception during the attempt to create a notebook");
+            errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "BAD_DATA_FORMAT exception during the attempt to create a notebook"));
         }
         else {
-            errorDescription.base() = QT_TRANSLATE_NOOP("", "BAD_DATA_FORMAT exception during the attempt to update a notebook");
+            errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "BAD_DATA_FORMAT exception during the attempt to update a notebook"));
         }
 
         if (!userException.parameter.isSet())
@@ -843,43 +849,43 @@ qint32 NoteStore::processEdamUserExceptionForNotebook(const Notebook & notebook,
 
         if (userException.parameter.ref() == QStringLiteral("Notebook.name")) {
             if (notebook.hasName()) {
-                errorDescription.additionalBases().append(QT_TRANSLATE_NOOP("", "invalid length or pattern of notebook's name"));
+                errorDescription.additionalBases().append(QString::fromUtf8(QT_TRANSLATE_NOOP("", "invalid length or pattern of notebook's name")));
                 errorDescription.details() = notebook.name();
             }
             else {
-                errorDescription.additionalBases().append(QT_TRANSLATE_NOOP("", "notebook has no name"));
+                errorDescription.additionalBases().append(QString::fromUtf8(QT_TRANSLATE_NOOP("", "notebook has no name")));
             }
         }
         else if (userException.parameter.ref() == QStringLiteral("Notebook.stack")) {
             if (notebook.hasStack()) {
-                errorDescription.additionalBases().append(QT_TRANSLATE_NOOP("", "invalid length or pattern of notebook's stack"));
+                errorDescription.additionalBases().append(QString::fromUtf8(QT_TRANSLATE_NOOP("", "invalid length or pattern of notebook's stack")));
                 errorDescription.details() = notebook.stack();
             }
             else {
-                errorDescription.additionalBases().append(QT_TRANSLATE_NOOP("", "notebook has no stack"));
+                errorDescription.additionalBases().append(QString::fromUtf8(QT_TRANSLATE_NOOP("", "notebook has no stack")));
             }
         }
         else if (userException.parameter.ref() == QStringLiteral("Publishing.uri")) {
             if (notebook.hasPublishingUri()) {
-                errorDescription.additionalBases().append(QT_TRANSLATE_NOOP("", "invalid publishing uri for notebook"));
+                errorDescription.additionalBases().append(QString::fromUtf8(QT_TRANSLATE_NOOP("", "invalid publishing uri for notebook")));
                 errorDescription.details() = notebook.publishingUri();
             }
             else {
-                errorDescription.additionalBases().append(QT_TRANSLATE_NOOP("", "notebook has no publishing uri"));
+                errorDescription.additionalBases().append(QString::fromUtf8(QT_TRANSLATE_NOOP("", "notebook has no publishing uri")));
             }
         }
         else if (userException.parameter.ref() == QStringLiteral("Publishing.publicDescription"))
         {
             if (notebook.hasPublishingPublicDescription()) {
-                errorDescription.additionalBases().append(QT_TRANSLATE_NOOP("", "public description for notebook is too long"));
+                errorDescription.additionalBases().append(QString::fromUtf8(QT_TRANSLATE_NOOP("", "public description for notebook is too long")));
                 errorDescription.details() = notebook.publishingPublicDescription();
             }
             else {
-                errorDescription.additionalBases().append(QT_TRANSLATE_NOOP("", "notebook has no public description"));
+                errorDescription.additionalBases().append(QString::fromUtf8(QT_TRANSLATE_NOOP("", "notebook has no public description")));
             }
         }
         else {
-            errorDescription.additionalBases().append(QT_TRANSLATE_NOOP("", "unexpected parameter"));
+            errorDescription.additionalBases().append(QString::fromUtf8(QT_TRANSLATE_NOOP("", "unexpected parameter")));
             errorDescription.details() = userException.parameter.ref();
         }
 
@@ -888,10 +894,10 @@ qint32 NoteStore::processEdamUserExceptionForNotebook(const Notebook & notebook,
     else if (userException.errorCode == qevercloud::EDAMErrorCode::DATA_CONFLICT)
     {
         if (thrownOnCreation) {
-            errorDescription.base() = QT_TRANSLATE_NOOP("", "DATA_CONFLICT exception during the attempt to create a notebook");
+            errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "DATA_CONFLICT exception during the attempt to create a notebook"));
         }
         else {
-            errorDescription.base() = QT_TRANSLATE_NOOP("", "DATA_CONFLICT exception during the attempt to update a notebook");
+            errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "DATA_CONFLICT exception during the attempt to update a notebook"));
         }
 
         if (!userException.parameter.isSet())
@@ -905,24 +911,24 @@ qint32 NoteStore::processEdamUserExceptionForNotebook(const Notebook & notebook,
 
         if (userException.parameter.ref() == QStringLiteral("Notebook.name")) {
             if (notebook.hasName()) {
-                errorDescription.additionalBases().append(QT_TRANSLATE_NOOP("", "notebook's name is already in use"));
+                errorDescription.additionalBases().append(QString::fromUtf8(QT_TRANSLATE_NOOP("", "notebook's name is already in use")));
                 errorDescription.details() = notebook.name();
             }
             else {
-                errorDescription.additionalBases().append(QT_TRANSLATE_NOOP("", "notebook has no name"));
+                errorDescription.additionalBases().append(QString::fromUtf8(QT_TRANSLATE_NOOP("", "notebook has no name")));
             }
         }
         else if (userException.parameter.ref() == QStringLiteral("Publishing.uri")) {
             if (notebook.hasPublishingUri()) {
-                errorDescription.additionalBases().append(QT_TRANSLATE_NOOP("", "notebook's publishing uri is already in use"));
+                errorDescription.additionalBases().append(QString::fromUtf8(QT_TRANSLATE_NOOP("", "notebook's publishing uri is already in use")));
                 errorDescription.details() = notebook.publishingUri();
             }
             else {
-                errorDescription.additionalBases().append(QT_TRANSLATE_NOOP("", "notebook has no publishing uri"));
+                errorDescription.additionalBases().append(QString::fromUtf8(QT_TRANSLATE_NOOP("", "notebook has no publishing uri")));
             }
         }
         else {
-            errorDescription.additionalBases().append(QT_TRANSLATE_NOOP("", "unexpected parameter"));
+            errorDescription.additionalBases().append(QString::fromUtf8(QT_TRANSLATE_NOOP("", "unexpected parameter")));
             errorDescription.details() = userException.parameter.ref();
         }
 
@@ -930,10 +936,11 @@ qint32 NoteStore::processEdamUserExceptionForNotebook(const Notebook & notebook,
     }
     else if (thrownOnCreation && (userException.errorCode == qevercloud::EDAMErrorCode::LIMIT_REACHED))
     {
-        errorDescription.base() = QT_TRANSLATE_NOOP("", "LIMIT_REACHED exception durig the attempt to create notebook");
+        errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "LIMIT_REACHED exception durig the attempt to create notebook"));
 
-        if (userException.parameter.isSet() && (userException.parameter.ref() == "Notebook")) {
-            errorDescription.additionalBases().append(QT_TRANSLATE_NOOP("", "already at max number of notebooks, please remove some of them"));
+        if (userException.parameter.isSet() && (userException.parameter.ref() == QStringLiteral("Notebook"))) {
+            errorDescription.additionalBases().append(QString::fromUtf8(QT_TRANSLATE_NOOP("", "already at max number of notebooks, "
+                                                                                          "please remove some of them")));
         }
 
         return userException.errorCode;
@@ -953,10 +960,10 @@ qint32 NoteStore::processEdamUserExceptionForNote(const Note & note, const qever
     if (userException.errorCode == qevercloud::EDAMErrorCode::BAD_DATA_FORMAT)
     {
         if (thrownOnCreation) {
-            errorDescription.base() = QT_TRANSLATE_NOOP("", "BAD_DATA_FORMAT exception during the attempt to create a note");
+            errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "BAD_DATA_FORMAT exception during the attempt to create a note"));
         }
         else {
-            errorDescription.base() = QT_TRANSLATE_NOOP("", "BAD_DATA_FORMAT exception during the attempt to update a note");
+            errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "BAD_DATA_FORMAT exception during the attempt to update a note"));
         }
 
         if (!userException.parameter.isSet())
@@ -970,47 +977,48 @@ qint32 NoteStore::processEdamUserExceptionForNote(const Note & note, const qever
 
         if (userException.parameter.ref() == QStringLiteral("Note.title")) {
             if (note.hasTitle()) {
-                errorDescription.additionalBases().append(QT_TRANSLATE_NOOP("", "invalid length or pattetn of note's title"));
+                errorDescription.additionalBases().append(QString::fromUtf8(QT_TRANSLATE_NOOP("", "invalid length or pattetn of note's title")));
                 errorDescription.details() = note.title();
             }
             else {
-                errorDescription.additionalBases().append(QT_TRANSLATE_NOOP("", "note has no title"));
+                errorDescription.additionalBases().append(QString::fromUtf8(QT_TRANSLATE_NOOP("", "note has no title")));
             }
         }
         else if (userException.parameter.ref() == QStringLiteral("Note.content")) {
             if (note.hasContent()) {
-                errorDescription.additionalBases().append(QT_TRANSLATE_NOOP("", "invalid length for note's ENML content"));
+                errorDescription.additionalBases().append(QString::fromUtf8(QT_TRANSLATE_NOOP("", "invalid length for note's ENML content")));
                 errorDescription.details() = QString::number(note.content().length());
                 QNWARNING(errorDescription << QStringLiteral(", note's content: ") << note.content());
             }
             else {
-                errorDescription.additionalBases().append(QT_TRANSLATE_NOOP("", "note has no content"));
+                errorDescription.additionalBases().append(QString::fromUtf8(QT_TRANSLATE_NOOP("", "note has no content")));
             }
         }
         else if (userException.parameter.ref().startsWith(QStringLiteral("NoteAttributes."))) {
             if (note.hasNoteAttributes()) {
-                errorDescription.additionalBases().append(QT_TRANSLATE_NOOP("", "invalid note attributes"));
+                errorDescription.additionalBases().append(QString::fromUtf8(QT_TRANSLATE_NOOP("", "invalid note attributes")));
                 QNWARNING(errorDescription << QStringLiteral(": ") << note.noteAttributes());
             }
             else {
-                errorDescription.additionalBases().append(QT_TRANSLATE_NOOP("", "note has no attributes"));
+                errorDescription.additionalBases().append(QString::fromUtf8(QT_TRANSLATE_NOOP("", "note has no attributes")));
             }
         }
         else if (userException.parameter.ref().startsWith(QStringLiteral("ResourceAttributes."))) {
-            errorDescription.additionalBases().append(QT_TRANSLATE_NOOP("", "invalid resource attributes for some of note's resources"));
+            errorDescription.additionalBases().append(QString::fromUtf8(QT_TRANSLATE_NOOP("", "invalid resource attributes for some of note's resources")));
             QNWARNING(errorDescription << QStringLiteral(", note: ") << note);
         }
         else if (userException.parameter.ref() == QStringLiteral("Resource.mime")) {
-            errorDescription.additionalBases().append(QT_TRANSLATE_NOOP("", "invalid mime type for some of note's resources"));
+            errorDescription.additionalBases().append(QString::fromUtf8(QT_TRANSLATE_NOOP("", "invalid mime type for some of note's resources")));
             QNWARNING(errorDescription << QStringLiteral(", note: ") << note);
         }
         else if (userException.parameter.ref() == QStringLiteral("Tag.name")) {
-            errorDescription.additionalBases().append(QT_TRANSLATE_NOOP("", "Note.tagNames was provided and one "
-                                                                        "of the specified tags had an invalid length or pattern"));
+            errorDescription.additionalBases().append(QString::fromUtf8(QT_TRANSLATE_NOOP("", "Note.tagNames was provided and one )"
+                                                                                          "of the specified tags had an invalid "
+                                                                                          "length or pattern")));
             QNWARNING(errorDescription << QStringLiteral(", note: ") << note);
         }
         else {
-            errorDescription.additionalBases().append(QT_TRANSLATE_NOOP("", "unexpected parameter"));
+            errorDescription.additionalBases().append(QString::fromUtf8(QT_TRANSLATE_NOOP("", "unexpected parameter")));
             errorDescription.details() = userException.parameter.ref();
         }
 
@@ -1019,10 +1027,10 @@ qint32 NoteStore::processEdamUserExceptionForNote(const Note & note, const qever
     else if (userException.errorCode == qevercloud::EDAMErrorCode::DATA_CONFLICT)
     {
         if (thrownOnCreation) {
-            errorDescription.base() = QT_TRANSLATE_NOOP("", "DATA_CONFLICT exception during the attempt to create a note");
+            errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "DATA_CONFLICT exception during the attempt to create a note"));
         }
         else {
-            errorDescription.base() = QT_TRANSLATE_NOOP("", "DATA_CONFLICT exception during the attempt to update a note");
+            errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "DATA_CONFLICT exception during the attempt to update a note"));
         }
 
         if (!userException.parameter.isSet())
@@ -1035,7 +1043,7 @@ qint32 NoteStore::processEdamUserExceptionForNote(const Note & note, const qever
         }
 
         if (userException.parameter.ref() == QStringLiteral("Note.deleted")) {
-            errorDescription.additionalBases().append(QT_TRANSLATE_NOOP("", "deletion timestamp is set on active note"));
+            errorDescription.additionalBases().append(QString::fromUtf8(QT_TRANSLATE_NOOP("", "deletion timestamp is set on active note")));
         }
 
         return userException.errorCode;
@@ -1043,10 +1051,10 @@ qint32 NoteStore::processEdamUserExceptionForNote(const Note & note, const qever
     else if (userException.errorCode == qevercloud::EDAMErrorCode::DATA_REQUIRED)
     {
         if (thrownOnCreation) {
-            errorDescription.base() = QT_TRANSLATE_NOOP("", "DATA_REQUIRED exception during the attempt to create a note");
+            errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "DATA_REQUIRED exception during the attempt to create a note"));
         }
         else {
-            errorDescription.base() = QT_TRANSLATE_NOOP("", "DATA_REQUIRED exception during the attempt to update a note");
+            errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "DATA_REQUIRED exception during the attempt to update a note"));
         }
 
         if (!userException.parameter.isSet())
@@ -1059,7 +1067,7 @@ qint32 NoteStore::processEdamUserExceptionForNote(const Note & note, const qever
         }
 
         if (userException.parameter.ref() == QStringLiteral("Resource.data")) {
-            errorDescription.additionalBases().append(QT_TRANSLATE_NOOP("", "data body for some of note's resources is missing"));
+            errorDescription.additionalBases().append(QString::fromUtf8(QT_TRANSLATE_NOOP("", "data body for some of note's resources is missing")));
             QNWARNING(errorDescription << QStringLiteral(", note: ") << note);
         }
 
@@ -1068,23 +1076,23 @@ qint32 NoteStore::processEdamUserExceptionForNote(const Note & note, const qever
     else if (userException.errorCode == qevercloud::EDAMErrorCode::ENML_VALIDATION)
     {
         if (thrownOnCreation) {
-            errorDescription.base() = QT_TRANSLATE_NOOP("", "ENML_VALIDATION exception during the attempt to create a note");
+            errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "ENML_VALIDATION exception during the attempt to create a note"));
         }
         else {
-            errorDescription.base() = QT_TRANSLATE_NOOP("", "ENML_VALIDATION exception during the attempt to update a note");
+            errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "ENML_VALIDATION exception during the attempt to update a note"));
         }
 
-        errorDescription.additionalBases().append(QT_TRANSLATE_NOOP("", "note's content doesn't validate against DTD"));
+        errorDescription.additionalBases().append(QString::fromUtf8(QT_TRANSLATE_NOOP("", "note's content doesn't validate against DTD")));
         QNWARNING(errorDescription << QStringLiteral(", note: ") << note);
         return userException.errorCode;
     }
     else if (userException.errorCode == qevercloud::EDAMErrorCode::LIMIT_REACHED)
     {
         if (thrownOnCreation) {
-            errorDescription.base() = QT_TRANSLATE_NOOP("", "LIMIT_REACHED exception during the attempt to create a note");
+            errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "LIMIT_REACHED exception during the attempt to create a note"));
         }
         else {
-            errorDescription.base() = QT_TRANSLATE_NOOP("", "LIMIT_REACHED exception during the attempt to update a note");
+            errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "LIMIT_REACHED exception during the attempt to update a note"));
         }
 
         if (!userException.parameter.isSet())
@@ -1097,37 +1105,38 @@ qint32 NoteStore::processEdamUserExceptionForNote(const Note & note, const qever
         }
 
         if (thrownOnCreation && (userException.parameter.ref() == QStringLiteral("Note"))) {
-            errorDescription.additionalBases().append(QT_TRANSLATE_NOOP("", "already at maximum number of notes per account"));
+            errorDescription.additionalBases().append(QString::fromUtf8(QT_TRANSLATE_NOOP("", "already at maximum number of notes per account")));
         }
         else if (userException.parameter.ref() == QStringLiteral("Note.size")) {
-            errorDescription.additionalBases().append(QT_TRANSLATE_NOOP("", "total note size is too large"));
+            errorDescription.additionalBases().append(QString::fromUtf8(QT_TRANSLATE_NOOP("", "total note size is too large")));
         }
         else if (userException.parameter.ref() == QStringLiteral("Note.resources")) {
-            errorDescription.additionalBases().append(QT_TRANSLATE_NOOP("", "too many resources on note"));
+            errorDescription.additionalBases().append(QString::fromUtf8(QT_TRANSLATE_NOOP("", "too many resources on note")));
         }
         else if (userException.parameter.ref() == QStringLiteral("Note.tagGuids")) {
-            errorDescription.additionalBases().append(QT_TRANSLATE_NOOP("", "too many tags on note"));
+            errorDescription.additionalBases().append(QString::fromUtf8(QT_TRANSLATE_NOOP("", "too many tags on note")));
         }
         else if (userException.parameter.ref() == QStringLiteral("Resource.data.size")) {
-            errorDescription.additionalBases().append(QT_TRANSLATE_NOOP("", "one of note's resource's data is too large"));
+            errorDescription.additionalBases().append(QString::fromUtf8(QT_TRANSLATE_NOOP("", "one of note's resource's data is too large")));
         }
         else if (userException.parameter.ref().startsWith(QStringLiteral("NoteAttribute."))) {
-            errorDescription.additionalBases().append(QT_TRANSLATE_NOOP("", "note attributes string is too large"));
+            errorDescription.additionalBases().append(QString::fromUtf8(QT_TRANSLATE_NOOP("", "note attributes string is too large")));
             if (note.hasNoteAttributes()) {
                 QNWARNING(errorDescription << QStringLiteral(", note attributes: ") << note.noteAttributes());
             }
         }
         else if (userException.parameter.ref().startsWith(QStringLiteral("ResourceAttribute."))) {
-            errorDescription.additionalBases().append(QT_TRANSLATE_NOOP("", "one of note's resources has too large resource attributes string"));
+            errorDescription.additionalBases().append(QString::fromUtf8(QT_TRANSLATE_NOOP("", "one of note's resources has too "
+                                                                                          "large resource attributes string")));
             QNWARNING(errorDescription << QStringLiteral(", note: ") << note);
         }
         else if (userException.parameter.ref() == QStringLiteral("Tag")) {
-            errorDescription.additionalBases().append(QT_TRANSLATE_NOOP("", "Note.tagNames was provided, and the required new tags "
-                                                                        "would exceed the maximum number per account"));
+            errorDescription.additionalBases().append(QString::fromUtf8(QT_TRANSLATE_NOOP("", "Note.tagNames was provided, and the required new tags "
+                                                                                          "would exceed the maximum number per account")));
             QNWARNING(errorDescription << QStringLiteral(", note: ") << note);
         }
         else {
-            errorDescription.additionalBases().append(QT_TRANSLATE_NOOP("", "unexpected parameter"));
+            errorDescription.additionalBases().append(QString::fromUtf8(QT_TRANSLATE_NOOP("", "unexpected parameter")));
             errorDescription.details() = userException.parameter.ref();
         }
 
@@ -1136,10 +1145,10 @@ qint32 NoteStore::processEdamUserExceptionForNote(const Note & note, const qever
     else if (userException.errorCode == qevercloud::EDAMErrorCode::PERMISSION_DENIED)
     {
         if (thrownOnCreation) {
-            errorDescription.base() = QT_TRANSLATE_NOOP("", "PERMISSION_DENIED exception during the attempt to create a note");
+            errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "PERMISSION_DENIED exception during the attempt to create a note"));
         }
         else {
-            errorDescription.base() = QT_TRANSLATE_NOOP("", "PERMISSION_DENIED exception during the attempt to update a note");
+            errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "PERMISSION_DENIED exception during the attempt to update a note"));
         }
 
         if (!userException.parameter.isSet())
@@ -1152,16 +1161,16 @@ qint32 NoteStore::processEdamUserExceptionForNote(const Note & note, const qever
         }
 
         if (userException.parameter.ref() == QStringLiteral("Note.notebookGuid")) {
-            errorDescription.additionalBases().append(QT_TRANSLATE_NOOP("", "note's notebook is not owned by user"));
+            errorDescription.additionalBases().append(QString::fromUtf8(QT_TRANSLATE_NOOP("", "note's notebook is not owned by user")));
             if (note.hasNotebookGuid()) {
                 QNWARNING(errorDescription << QStringLiteral(", notebook guid: ") << note.notebookGuid());
             }
         }
         else if (!thrownOnCreation && (userException.parameter.ref() == QStringLiteral("Note"))) {
-            errorDescription.additionalBases().append(QT_TRANSLATE_NOOP("", "note is not owned by user"));
+            errorDescription.additionalBases().append(QString::fromUtf8(QT_TRANSLATE_NOOP("", "note is not owned by user")));
         }
         else {
-            errorDescription.additionalBases().append(QT_TRANSLATE_NOOP("", "unexpected parameter"));
+            errorDescription.additionalBases().append(QString::fromUtf8(QT_TRANSLATE_NOOP("", "unexpected parameter")));
             errorDescription.details() = userException.parameter.ref();
         }
 
@@ -1170,13 +1179,13 @@ qint32 NoteStore::processEdamUserExceptionForNote(const Note & note, const qever
     else if (userException.errorCode == qevercloud::EDAMErrorCode::QUOTA_REACHED)
     {
         if (thrownOnCreation) {
-            errorDescription.base() = QT_TRANSLATE_NOOP("", "QUOTA_REACHED exception during the attempt to create a note");
+            errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "QUOTA_REACHED exception during the attempt to create a note"));
         }
         else {
-            errorDescription.base() = QT_TRANSLATE_NOOP("", "QUOTA_REACHED exception during the attempt to update a note");
+            errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "QUOTA_REACHED exception during the attempt to update a note"));
         }
 
-        errorDescription.additionalBases().append(QT_TRANSLATE_NOOP("", "note exceeds upload quota limit"));
+        errorDescription.additionalBases().append(QString::fromUtf8(QT_TRANSLATE_NOOP("", "note exceeds upload quota limit")));
         return userException.errorCode;
     }
 
@@ -1191,10 +1200,10 @@ qint32 NoteStore::processUnexpectedEdamUserException(const QString & typeName,
     bool thrownOnCreation = (source == UserExceptionSource::Creation);
 
     if (thrownOnCreation) {
-        errorDescription.base() = QT_TRANSLATE_NOOP("", "Unexpected EDAM user exception on attempt to create data element");
+        errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "Unexpected EDAM user exception on attempt to create data element"));
     }
     else {
-        errorDescription.base() = QT_TRANSLATE_NOOP("", "Unexpected EDAM user exception on attempt to update data element");
+        errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "Unexpected EDAM user exception on attempt to update data element"));
     }
 
     errorDescription.details() = typeName;
@@ -1217,10 +1226,11 @@ qint32 NoteStore::processEdamSystemException(const qevercloud::EDAMSystemExcepti
     if (systemException.errorCode == qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED)
     {
         if (!systemException.rateLimitDuration.isSet()) {
-            errorDescription.base() = QT_TRANSLATE_NOOP("", "Evernote API rate limit exceeded but no rate limit duration is available");
+            errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "Evernote API rate limit exceeded but no "
+                                                                          "rate limit duration is available"));
         }
         else {
-            errorDescription.base() = QT_TRANSLATE_NOOP("", "Evernote API rate limit exceeded, retry in");
+            errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "Evernote API rate limit exceeded, retry in"));
             errorDescription.details() = QString::number(systemException.rateLimitDuration.ref());
             errorDescription.details() += QStringLiteral(" sec");
             rateLimitSeconds = systemException.rateLimitDuration.ref();
@@ -1228,7 +1238,7 @@ qint32 NoteStore::processEdamSystemException(const qevercloud::EDAMSystemExcepti
     }
     else
     {
-        errorDescription.base() = QT_TRANSLATE_NOOP("", "Caught EDAM system exception");
+        errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "Caught EDAM system exception"));
         errorDescription.details() = QStringLiteral("error code = ");
         errorDescription.details() += ToString(systemException.errorCode);
 
@@ -1244,7 +1254,7 @@ qint32 NoteStore::processEdamSystemException(const qevercloud::EDAMSystemExcepti
 void NoteStore::processEdamNotFoundException(const qevercloud::EDAMNotFoundException & notFoundException,
                                              ErrorString & errorDescription) const
 {
-    errorDescription.base() = QT_TRANSLATE_NOOP("", "Note store could not find data element");
+    errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "Note store could not find data element"));
 
     if (notFoundException.identifier.isSet() && !notFoundException.identifier->isEmpty()) {
         errorDescription.details() = notFoundException.identifier.ref();

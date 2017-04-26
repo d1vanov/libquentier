@@ -84,40 +84,40 @@ QString SysInfo::platformName()
 
     QString qstr = QString::fromLocal8Bit(&str[0], static_cast<int>(size));
 
-    if (qstr.startsWith("5.")) {
+    if (qstr.startsWith(QStringLiteral("5."))) {
         return QStringLiteral("Mac OS X 10.1 Puma");
     }
-    else if (qstr.startsWith("6.")) {
+    else if (qstr.startsWith(QStringLiteral("6."))) {
         return QStringLiteral("Mac OS X 10.2 Jaguar");
     }
-    else if (qstr.startsWith("7.")) {
+    else if (qstr.startsWith(QStringLiteral("7."))) {
         return QStringLiteral("Mac OS X 10.3 Panther");
     }
-    else if (qstr.startsWith("8.")) {
+    else if (qstr.startsWith(QStringLiteral("8."))) {
         return QStringLiteral("Mac OS X 10.4 Tiger");
     }
-    else if (qstr.startsWith("9.")) {
+    else if (qstr.startsWith(QStringLiteral("9."))) {
         return QStringLiteral("Mac OS X 10.5 Leopard");
     }
-    else if (qstr.startsWith("10.")) {
+    else if (qstr.startsWith(QStringLiteral("10."))) {
         return QStringLiteral("Mac OS X 10.6 Snow Leopard");
     }
-    else if (qstr.startsWith("11.")) {
+    else if (qstr.startsWith(QStringLiteral("11."))) {
         return QStringLiteral("Mac OS X 10.7 Lion");
     }
-    else if (qstr.startsWith("12.")) {
+    else if (qstr.startsWith(QStringLiteral("12."))) {
         return QStringLiteral("Mac OS X 10.8 Mountain Lion");
     }
-    else if (qstr.startsWith("13.")) {
+    else if (qstr.startsWith(QStringLiteral("13."))) {
         return QStringLiteral("Mac OS X 10.9 Mavericks");
     }
-    else if (qstr.startsWith("14.")) {
+    else if (qstr.startsWith(QStringLiteral("14."))) {
         return QStringLiteral("Mac OS X 10.10 Yosemite");
     }
-    else if (qstr.startsWith("15.")) {
+    else if (qstr.startsWith(QStringLiteral("15."))) {
         return QStringLiteral("Mac OS X 10.11 El Capitan");
     }
-    else if (qstr.startsWith("16.")) {
+    else if (qstr.startsWith(QStringLiteral("16."))) {
         return QStringLiteral("macOS 10.12 Sierra");
     }
 

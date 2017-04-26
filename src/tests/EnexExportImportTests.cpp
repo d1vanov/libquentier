@@ -906,7 +906,7 @@ bool setupNoteResources(Note & note, QString & error)
     firstResource.setDataHash(QCryptographicHash::hash(firstResource.dataBody(), QCryptographicHash::Md5));
     firstResource.setDataSize(firstResource.dataBody().size());
 
-    firstResource.setMime("application/text-plain");
+    firstResource.setMime(QStringLiteral("application/text-plain"));
 
     qevercloud::ResourceAttributes & firstResourceAttributes = firstResource.resourceAttributes();
 
@@ -980,7 +980,7 @@ void setupNoteResourcesV2(Note & note)
     resource.setDataHash(QCryptographicHash::hash(resource.dataBody(), QCryptographicHash::Md5));
     resource.setDataSize(resource.dataBody().size());
 
-    resource.setMime("application/text-plain");
+    resource.setMime(QStringLiteral("application/text-plain"));
 
     qevercloud::ResourceAttributes & resourceAttributes = resource.resourceAttributes();
 

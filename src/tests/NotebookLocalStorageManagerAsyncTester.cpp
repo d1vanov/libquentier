@@ -45,7 +45,7 @@ NotebookLocalStorageManagerAsyncTester::~NotebookLocalStorageManagerAsyncTester(
 
 void NotebookLocalStorageManagerAsyncTester::onInitTestCase()
 {
-    QString username = "NotebookLocalStorageManagerAsyncTester";
+    QString username = QStringLiteral("NotebookLocalStorageManagerAsyncTester");
     bool startFromScratch = true;
     bool overrideLock = false;
 

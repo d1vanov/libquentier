@@ -191,7 +191,7 @@ bool convertComplexNoteToHtmlAndBack(QString & error)
         return false;
     }
 
-    QString noteContent = file.readAll();
+    QString noteContent = QString::fromLocal8Bit(file.readAll());
     DecryptedTextManager decryptedTextManager;
     return convertNoteToHtmlAndBackImpl(noteContent, decryptedTextManager, error);
 }
@@ -206,7 +206,7 @@ bool convertComplexNote2ToHtmlAndBack(QString & error)
         return false;
     }
 
-    QString noteContent = file.readAll();
+    QString noteContent = QString::fromLocal8Bit(file.readAll());
     DecryptedTextManager decryptedTextManager;
     return convertNoteToHtmlAndBackImpl(noteContent, decryptedTextManager, error);
 }
@@ -221,7 +221,7 @@ bool convertComplexNote3ToHtmlAndBack(QString & error)
         return false;
     }
 
-    QString noteContent = file.readAll();
+    QString noteContent = QString::fromLocal8Bit(file.readAll());
     DecryptedTextManager decryptedTextManager;
     return convertNoteToHtmlAndBackImpl(noteContent, decryptedTextManager, error);
 }
@@ -236,7 +236,7 @@ bool convertComplexNote4ToHtmlAndBack(QString &error)
         return false;
     }
 
-    QString noteContent = file.readAll();
+    QString noteContent = QString::fromLocal8Bit(file.readAll());
     DecryptedTextManager decryptedTextManager;
     return convertNoteToHtmlAndBackImpl(noteContent, decryptedTextManager, error);
 }
@@ -396,7 +396,7 @@ bool compareEnml(const QString & original, const QString & processed, QString & 
                 bool processedChecked = false;
                 if (processedAttributes.hasAttribute(QStringLiteral("checked"))) {
                     QStringRef processedCheckedStr = processedAttributes.value(QStringLiteral("checked"));
-                    if (processedCheckedStr == "true") {
+                    if (processedCheckedStr == QStringLiteral("true")) {
                         processedChecked = true;
                     }
                 }
@@ -408,7 +408,7 @@ bool compareEnml(const QString & original, const QString & processed, QString & 
                     return false;
                 }
             }
-            else if (originalName == "td")
+            else if (originalName == QStringLiteral("td"))
             {
                 const int numOriginalAttributes = originalAttributes.size();
                 const int numProcessedAttributes = processedAttributes.size();
@@ -657,7 +657,7 @@ bool convertHtmlWithTableHelperTagsToEnml(QString & error)
         return false;
     }
 
-    QString noteContent = file.readAll();
+    QString noteContent = QString::fromLocal8Bit(file.readAll());
     file.close();
 
     file.setFileName(QStringLiteral(":/tests/complexNoteHtmlWithHelperTags.txt"));
@@ -666,7 +666,7 @@ bool convertHtmlWithTableHelperTagsToEnml(QString & error)
         return false;
     }
 
-    QString html = file.readAll();
+    QString html = QString::fromLocal8Bit(file.readAll());
     file.close();
 
     ENMLConverter converter;
@@ -707,7 +707,7 @@ bool convertHtmlWithTableAndHilitorHelperTagsToEnml(QString & error)
         return false;
     }
 
-    QString noteContent = file.readAll();
+    QString noteContent = QString::fromLocal8Bit(file.readAll());
     file.close();
 
     file.setFileName(QStringLiteral(":/tests/complexNoteHtmlWithTableAndHilitorHelperTags.txt"));
@@ -716,7 +716,7 @@ bool convertHtmlWithTableAndHilitorHelperTagsToEnml(QString & error)
         return false;
     }
 
-    QString html = file.readAll();
+    QString html = QString::fromLocal8Bit(file.readAll());
     file.close();
 
     ENMLConverter converter;

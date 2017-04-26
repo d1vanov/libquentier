@@ -73,7 +73,7 @@ void ResourceLocalStorageManagerAsyncTester::onWorkerInitialized()
     m_notebook.setPublishingUri(QStringLiteral("Fake publishing uri"));
     m_notebook.setPublishingOrder(1);
     m_notebook.setPublishingAscending(true);
-    m_notebook.setPublishingPublicDescription("Fake public description");
+    m_notebook.setPublishingPublicDescription(QStringLiteral("Fake public description"));
     m_notebook.setPublished(true);
     m_notebook.setStack(QStringLiteral("Fake notebook stack"));
     m_notebook.setBusinessNotebookDescription(QStringLiteral("Fake business notebook description"));

@@ -100,7 +100,7 @@ QTextStream & operator <<(QTextStream & strm,
 
 QString byteArrayToHex(const QByteArray & bytes)
 {
-    return bytes.toHex();
+    return QString::fromLocal8Bit(bytes.toHex());
 }
 
 QString contactTypeToString(const qevercloud::ContactType::type & type)
@@ -134,7 +134,7 @@ QTextStream & operator <<(QTextStream & strm, const qevercloud::Contact & contac
     PRINT_FIELD(contact, type, contactTypeToString);
     PRINT_FIELD(contact, photoUrl);
     PRINT_FIELD(contact, photoLastUpdated, quentier::printableDateTimeFromTimestamp);
-    PRINT_FIELD(contact, messagingPermit);
+    PRINT_FIELD(contact, messagingPermit, QString::fromLocal8Bit);
     PRINT_FIELD(contact, messagingPermitExpires, quentier::printableDateTimeFromTimestamp);
 
     strm << QStringLiteral("}; \n");
@@ -564,7 +564,7 @@ QTextStream & operator <<(QTextStream & strm, const qevercloud::Resource & resou
 
         PRINT_FIELD(resource.recognition.ref(), size, QString::number);
         PRINT_FIELD(resource.recognition.ref(), bodyHash, byteArrayToHex);
-        PRINT_FIELD(resource.recognition.ref(), body);
+        PRINT_FIELD(resource.recognition.ref(), body, QString::fromLocal8Bit);
 
         strm << indent << QStringLiteral("};\n");
     }
@@ -915,7 +915,7 @@ QTextStream & operator<<(QTextStream & strm, const qevercloud::Note & note)
     PRINT_FIELD(note, guid);
     PRINT_FIELD(note, title);
     PRINT_FIELD(note, content);
-    PRINT_FIELD(note, contentHash);
+    PRINT_FIELD(note, contentHash, QString::fromLocal8Bit);
     PRINT_FIELD(note, created, quentier::printableDateTimeFromTimestamp);
     PRINT_FIELD(note, updated, quentier::printableDateTimeFromTimestamp);
     PRINT_FIELD(note, deleted, quentier::printableDateTimeFromTimestamp);

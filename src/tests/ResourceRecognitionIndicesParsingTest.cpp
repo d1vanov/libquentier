@@ -49,7 +49,7 @@ bool parseResourceRecognitionIndicesAndItemsTest(QString & error)
     }
 
 #define CHECK_INDICES_PROPERTY(accessor, expected, property) \
-    if (recoIndices.accessor() != expected) { \
+    if (recoIndices.accessor() != QStringLiteral(expected)) { \
         error = QStringLiteral("Incorrectly parsed reco indices " property ": expected \"" expected "\", got \"") + \
                 recoIndices.accessor() + QStringLiteral("\""); \
         QNWARNING(error << QStringLiteral("; reco indices: ") << recoIndices); \
@@ -107,7 +107,8 @@ bool parseResourceRecognitionIndicesAndItemsTest(QString & error)
 
     QVector<ResourceRecognitionIndexItem::ShapeItem> shapeItems0 = item0.shapeItems();
     if (!shapeItems0.empty()) {
-        error = "Incorrectly parsed recognition item's shape items: expected none of them, got " + QString::number(shapeItems0.size());
+        error = QStringLiteral("Incorrectly parsed recognition item's shape items: expected none of them, got ") +
+                QString::number(shapeItems0.size());
         QNWARNING(error << "; reco indices: " << recoIndices);
         return false;
     }
@@ -129,9 +130,9 @@ bool parseResourceRecognitionIndicesAndItemsTest(QString & error)
 
 #define CHECK_TEXT_ITEM_TEXT(item, global_index, index, expected) \
     const ResourceRecognitionIndexItem::TextItem & item##_textItem##index = textItems##global_index[index]; \
-    if (item##_textItem##index.m_text != expected) { \
+    if (item##_textItem##index.m_text != QStringLiteral(expected)) { \
         error = QStringLiteral("Incorrectly parsed recognition item's text item's text: expected ") + \
-                QString(expected) + QStringLiteral(", got ") + item##_textItem##index.m_text; \
+                QStringLiteral(expected) + QStringLiteral(", got ") + item##_textItem##index.m_text; \
         QNWARNING(error << QStringLiteral("; reco indices: ") << recoIndices); \
         return false; \
     }

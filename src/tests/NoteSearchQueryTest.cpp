@@ -391,7 +391,7 @@ bool NoteSearchQueryTest(QString & error)
         }
 
         if (bits[7]) {
-            queryString += "-encryption: ";
+            queryString += QStringLiteral("-encryption: ");
         }
 
 #define ADD_LIST_TO_QUERY_STRING(keyword, list, type, ...) \
@@ -538,7 +538,7 @@ bool NoteSearchQueryTest(QString & error)
         }
 
         if (!noteSearchQuery.hasNegatedAnyModificationTimestamp()) {
-            error = "NoteSearchQuery doesn't have negated any modification timestamp while it should have one";
+            error = QStringLiteral("NoteSearchQuery doesn't have negated any modification timestamp while it should have one");
             return false;
         }
 

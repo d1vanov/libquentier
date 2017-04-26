@@ -241,7 +241,7 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
     int numTitles = 3;
     QVector<QString> titles;
     titles.reserve(numTitles);
-    titles << QString::fromUtf8("Potato (είΝΑΙ)") << "Ham" << "Eggs";
+    titles << QStringLiteral("Potato (είΝΑΙ)") << QStringLiteral("Ham") << QStringLiteral("Eggs");
 
     int numContents = 9;
     QVector<QString> contents;

@@ -512,31 +512,31 @@ void SynchronizationManagerPrivate::onRemoteToLocalSyncStopped()
 void SynchronizationManagerPrivate::onRemoteToLocalSyncChunksDownloaded()
 {
     QNDEBUG(QStringLiteral("SynchronizationManagerPrivate::onRemoteToLocalSyncChunksDownloaded"));
-    emit progress(QT_TRANSLATE_NOOP("", "Downloaded user account's sync chunks"), 0.125);
+    emit progress(QString::fromUtf8(QT_TRANSLATE_NOOP("", "Downloaded user account's sync chunks")), 0.125);
 }
 
 void SynchronizationManagerPrivate::onRemoteToLocalSyncFullNotesContentDownloaded()
 {
     QNDEBUG(QStringLiteral("SynchronizationManagerPrivate::onRemoteToLocalSyncFullNotesContentDownloaded"));
-    emit progress(QT_TRANSLATE_NOOP("", "Downloaded full content of notes from user's account"), 0.25);
+    emit progress(QString::fromUtf8(QT_TRANSLATE_NOOP("", "Downloaded full content of notes from user's account")), 0.25);
 }
 
 void SynchronizationManagerPrivate::onRemoteToLocalSyncExpungedFromServerToClient()
 {
     QNDEBUG(QStringLiteral("SynchronizationManagerPrivate::onRemoteToLocalSyncExpungedFromServerToClient"));
-    emit progress(QT_TRANSLATE_NOOP("", "Expunged local items which were also expunged in the remote service"), 0.375);
+    emit progress(QString::fromUtf8(QT_TRANSLATE_NOOP("", "Expunged local items which were also expunged in the remote service")), 0.375);
 }
 
 void SynchronizationManagerPrivate::onRemoteToLocalSyncLinkedNotebooksSyncChunksDownloaded()
 {
     QNDEBUG(QStringLiteral("SynchronizationManagerPrivate::onRemoteToLocalSyncLinkedNotebooksSyncChunksDownloaded"));
-    emit progress(QT_TRANSLATE_NOOP("", "Downloaded sync chunks from linked notebooks"), 0.5);
+    emit progress(QString::fromUtf8(QT_TRANSLATE_NOOP("", "Downloaded sync chunks from linked notebooks")), 0.5);
 }
 
 void SynchronizationManagerPrivate::onRemoteToLocalSyncLinkedNotebooksFullNotesContentDownloaded()
 {
     QNDEBUG(QStringLiteral("SynchronizationManagerPrivate::onRemoteToLocalSyncLinkedNotebooksFullNotesContentDownloaded"));
-    emit progress(QT_TRANSLATE_NOOP("", "Downloaded the full content of notes from linked notebooks"), 0.625);
+    emit progress(QString::fromUtf8(QT_TRANSLATE_NOOP("", "Downloaded the full content of notes from linked notebooks")), 0.625);
 }
 
 void SynchronizationManagerPrivate::onShouldRepeatIncrementalSync()
@@ -600,13 +600,15 @@ void SynchronizationManagerPrivate::onSendLocalChangesStopped()
 void SynchronizationManagerPrivate::onSendingLocalChangesReceivedUsersDirtyObjects()
 {
     QNDEBUG(QStringLiteral("SynchronizationManagerPrivate::onSendingLocalChangesReceivedUsersDirtyObjects"));
-    emit progress(QT_TRANSLATE_NOOP("", "Prepared new and modified data from user's account for sending back to the remote service"), 0.75);
+    emit progress(QString::fromUtf8(QT_TRANSLATE_NOOP("", "Prepared new and modified data from user's account "
+                                                      "for sending back to the remote service")), 0.75);
 }
 
 void SynchronizationManagerPrivate::onSendingLocalChangesReceivedAllDirtyObjects()
 {
     QNDEBUG(QStringLiteral("SynchronizationManagerPrivate::onSendingLocalChangesReceivedAllDirtyObjects"));
-    emit progress(QT_TRANSLATE_NOOP("", "Prepared new and modified data from linked notebooks for sending back to the remote service"), 0.875);
+    emit progress(QString::fromUtf8(QT_TRANSLATE_NOOP("", "Prepared new and modified data from linked notebooks "
+                                                      "for sending back to the remote service")), 0.875);
 }
 
 void SynchronizationManagerPrivate::onRateLimitExceeded(qint32 secondsToWait)
@@ -1304,7 +1306,7 @@ void SynchronizationManagerPrivate::authenticateToLinkedNotebooks()
         else if (errorCode == qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED)
         {
             if (rateLimitSeconds <= 0) {
-                errorDescription.base() = QT_TRANSLATE_NOOP("", "Rate limit reached but the number of seconds to wait is incorrect");
+                errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "Rate limit reached but the number of seconds to wait is incorrect"));
                 errorDescription.details() = QString::number(rateLimitSeconds);
                 emit notifyError(errorDescription);
                 return;

@@ -189,7 +189,7 @@ int messageBoxImplementation(const QMessageBox::Icon icon, QWidget * parent,
         pMessageBox->setWindowModality(Qt::WindowModal);
     }
 
-    pMessageBox->setWindowTitle(QApplication::applicationName() + " - " + title);
+    pMessageBox->setWindowTitle(QApplication::applicationName() + QStringLiteral(" - ") + title);
     pMessageBox->setText(briefText);
     if (!detailedText.isEmpty()) {
         pMessageBox->setInformativeText(detailedText);
@@ -245,7 +245,7 @@ void internalErrorMessageBox(QWidget * parent, QString detailedText)
     }
 
     criticalMessageBox(parent, QObject::tr("Internal error"),
-                       QObject::tr("Unfortunately, ") + QApplication::applicationName() + " " +
+                       QObject::tr("Unfortunately, ") + QApplication::applicationName() + QStringLiteral(" ") +
                        QObject::tr("encountered internal error. Please report the bug "
                                    "to the developers and try restarting the application"),
                        detailedText);
@@ -315,9 +315,9 @@ const QString getCurrentUserName()
     {
         QNTRACE(QStringLiteral("Native platform API failed to provide the username, trying environment variables fallback"));
 
-        userName = qgetenv("USER");
+        userName = QString::fromLocal8Bit(qgetenv("USER"));
         if (userName.isEmpty()) {
-            userName = qgetenv("USERNAME");
+            userName = QString::fromLocal8Bit(qgetenv("USERNAME"));
         }
     }
 
@@ -362,7 +362,7 @@ const QString getCurrentUserFullName()
 
     // NOTE: some Unix systems put more than full user name into this field but also something about the location etc.
     // The convention is to use comma to split the values of different kind and the user's full name is the first one
-    int commaIndex = userFullName.indexOf(QChar(','));
+    int commaIndex = userFullName.indexOf(QChar::fromLatin1(','));
     if (commaIndex > 0) {   // NOTE: not >= but >
         userFullName.truncate(commaIndex);
     }

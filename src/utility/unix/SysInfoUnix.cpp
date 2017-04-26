@@ -73,7 +73,7 @@ QString SysInfo::stackTrace()
     }
 
     QByteArray rawOutput = file.readAll();
-    QString output(rawOutput);
+    QString output = QString::fromLocal8Bit(rawOutput);
     return output;
 }
 

@@ -275,7 +275,7 @@ QString ShortcutManagerPrivate::keyToString(const int key) const
 
     if (key < ShortcutManager::NewNote)
     {
-#define PRINT_ITEM(item) case QKeySequence::item: return #item
+#define PRINT_ITEM(item) case QKeySequence::item: return QStringLiteral(#item)
 
         switch(key)
         {
@@ -365,7 +365,7 @@ QString ShortcutManagerPrivate::keyToString(const int key) const
 
     switch(key)
     {
-#define PRINT_ITEM(item) case ShortcutManager::item: return #item
+#define PRINT_ITEM(item) case ShortcutManager::item: return QStringLiteral(#item)
 
     PRINT_ITEM(NewNote);
     PRINT_ITEM(NewTag);
