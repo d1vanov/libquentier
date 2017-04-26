@@ -73,7 +73,9 @@ void RemoveResourceDelegate::doStart()
         return;
     }
 
-    QString javascript = QStringLiteral("resourceManager.removeResource('") + m_resource.dataHash().toHex() + QStringLiteral("');");
+    QString javascript = QStringLiteral("resourceManager.removeResource('") +
+                         QString::fromLocal8Bit(m_resource.dataHash().toHex()) +
+                         QStringLiteral("');");
 
     GET_PAGE()
     page->executeJavaScript(javascript, JsCallback(*this, &RemoveResourceDelegate::onResourceReferenceRemovedFromNoteContent));
@@ -100,10 +102,10 @@ void RemoveResourceDelegate::onResourceReferenceRemovedFromNoteContent(const QVa
 
         auto errorIt = resultMap.find(QStringLiteral("error"));
         if (Q_UNLIKELY(errorIt == resultMap.end())) {
-            error.base() = QT_TRANSLATE_NOOP("", "can't parse the error of attachment reference removal from JavaScript");
+            error.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "can't parse the error of attachment reference removal from JavaScript"));
         }
         else {
-            error.base() = QT_TRANSLATE_NOOP("", "can't remove the attachment reference from the note editor");
+            error.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "can't remove the attachment reference from the note editor"));
             error.details() = errorIt.value().toString();
         }
 

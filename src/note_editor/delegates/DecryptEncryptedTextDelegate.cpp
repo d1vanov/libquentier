@@ -134,7 +134,7 @@ void DecryptEncryptedTextDelegate::raiseDecryptionDialog()
     CHECK_ACCOUNT()
 
     if (m_cipher.isEmpty()) {
-        m_cipher = "AES";
+        m_cipher = QStringLiteral("AES");
     }
 
     QScopedPointer<DecryptionDialog> pDecryptionDialog(new DecryptionDialog(m_encryptedText, m_cipher, m_hint, m_length,
@@ -206,10 +206,10 @@ void DecryptEncryptedTextDelegate::onDecryptionScriptFinished(const QVariant & d
 
         auto errorIt = resultMap.find(QStringLiteral("error"));
         if (Q_UNLIKELY(errorIt == resultMap.end())) {
-            error.base() = QT_TRANSLATE_NOOP("", "can't parse the error of text decryption from JavaScript");
+            error.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "can't parse the error of text decryption from JavaScript"));
         }
         else {
-            error.base() = QT_TRANSLATE_NOOP("", "can't decrypt the encrypted text");
+            error.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "can't decrypt the encrypted text"));
             error.details() = errorIt.value().toString();
         }
 

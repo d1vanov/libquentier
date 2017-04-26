@@ -214,8 +214,8 @@ bool HTMLCleaner::Impl::convertHtml(const QString & html, const TidyOptionId out
     }
 
     output.resize(0);
-    output.append(QByteArray(reinterpret_cast<const char*>(m_tidyOutput.bp),
-                             static_cast<int>(m_tidyOutput.size)));
+    output.append(QString::fromLocal8Bit(QByteArray(reinterpret_cast<const char*>(m_tidyOutput.bp),
+                                                    static_cast<int>(m_tidyOutput.size))));
 
     // Prepend the nbsp entity declaration
     output.prepend(QStringLiteral("<!DOCTYPE doctypeName [<!ENTITY nbsp \"&#160;\">]>"));

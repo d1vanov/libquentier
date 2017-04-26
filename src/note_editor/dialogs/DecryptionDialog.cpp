@@ -145,7 +145,7 @@ void DecryptionDialog::accept()
     if (!res && (m_cipher == QStringLiteral("AES")) && (m_keyLength == 128)) {
         QNDEBUG(QStringLiteral("The initial attempt to decrypt the text using AES cipher and 128 bit key has failed; "
                                "checking whether it is old encrypted text area using RC2 encryption and 64 bit key"));
-        res = m_encryptionManager->decrypt(m_encryptedText, passphrase, "RC2", 64,
+        res = m_encryptionManager->decrypt(m_encryptedText, passphrase, QStringLiteral("RC2"), 64,
                                            m_cachedDecryptedText, errorDescription);
     }
 

@@ -96,7 +96,7 @@ void ResourceFileStorageManagerPrivate::onWriteResourceToFileRequest(QString not
     fileStoragePath += QStringLiteral("/") + noteLocalUid + QStringLiteral("/") + resourceLocalUid;
 
     if (!preferredFileSuffix.isEmpty()) {
-        fileStoragePath += "." + preferredFileSuffix;
+        fileStoragePath += QStringLiteral(".") + preferredFileSuffix;
     }
 
     QFileInfo fileStoragePathInfo(fileStoragePath);
@@ -395,7 +395,8 @@ bool ResourceFileStorageManagerPrivate::checkIfResourceFileExistsAndIsActual(con
         return false;
     }
 
-    QFileInfo resourceHashFileInfo(resourceFileInfo.absolutePath() + "/" + resourceFileInfo.baseName() + ".hash");
+    QFileInfo resourceHashFileInfo(resourceFileInfo.absolutePath() + QStringLiteral("/") +
+                                   resourceFileInfo.baseName() + QStringLiteral(".hash"));
     if (!resourceHashFileInfo.exists()) {
         QNTRACE(QStringLiteral("Resource hash file for note local uid ") << noteLocalUid << QStringLiteral(" and resource local uid ")
                 << resourceLocalUid << QStringLiteral(" does not exist"));
@@ -431,7 +432,7 @@ bool ResourceFileStorageManagerPrivate::updateResourceHash(const QString & resou
 
     bool open = file.open(QIODevice::WriteOnly);
     if (Q_UNLIKELY(!open)) {
-        errorDescription.base() = QT_TRANSLATE_NOOP("", "can't open the file with resource's hash for writing");
+        errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "can't open the file with resource's hash for writing"));
         errorDescription.details() = file.errorString();
         errorCode = file.error();
         return false;
@@ -439,7 +440,7 @@ bool ResourceFileStorageManagerPrivate::updateResourceHash(const QString & resou
 
     qint64 writeRes = file.write(dataHash);
     if (Q_UNLIKELY(writeRes < 0)) {
-        errorDescription.base() = QT_TRANSLATE_NOOP("", "can't write resource data hash to the separate file");
+        errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "can't write resource data hash to the separate file"));
         errorDescription.details() = file.errorString();
         errorCode = file.error();
         return false;

@@ -420,7 +420,7 @@ void SpellCheckerPrivate::scanSystemDictionaries()
             hunspellDictionaryName = hunspellDictionaryName.left(nameSeparatorIndex);
         }
 
-        int nameColonIndex = hunspellDictionaryName.indexOf(",");
+        int nameColonIndex = hunspellDictionaryName.indexOf(QStringLiteral(","));
         if (nameColonIndex >= 0) {
             hunspellDictionaryName = hunspellDictionaryName.left(nameColonIndex);
         }

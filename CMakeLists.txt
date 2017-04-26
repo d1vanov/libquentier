@@ -575,6 +575,8 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
   set_target_properties(${LIBNAME} PROPERTIES COMPILE_DEFINITIONS "BUILDING_QUENTIER_DLL=1")
 endif()
 
+add_definitions("-DQT_NO_CAST_FROM_ASCII")
+
 set(TEST_HEADERS
     src/tests/EncryptionManagerTests.h
     src/tests/EnexExportImportTests.h

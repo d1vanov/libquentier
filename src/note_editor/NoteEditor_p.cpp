@@ -140,7 +140,7 @@ typedef QWebEngineSettings WebSettings;
 #define CHECK_NOTE_EDITABLE(message) \
     if (Q_UNLIKELY(!isPageEditable())) { \
         ErrorString error(message); \
-        error.additionalBases().append(QT_TRANSLATE_NOOP("", "note is not editable")); \
+        error.additionalBases().append(QString::fromUtf8(QT_TRANSLATE_NOOP("", "note is not editable"))); \
         QNINFO(error << QStringLiteral(", note: ") << (m_pNote.isNull() ? QStringLiteral("<null>") : m_pNote->toString()) \
                << QStringLiteral("\nNotebook: ") << (m_pNotebook.isNull() ? QStringLiteral("<null>") : m_pNotebook->toString())); \
         emit notifyError(error); \
@@ -150,7 +150,7 @@ typedef QWebEngineSettings WebSettings;
 #define CHECK_ACCOUNT(message, ...) \
     if (Q_UNLIKELY(m_pAccount.isNull())) { \
         ErrorString error(message); \
-        error.additionalBases().append(QT_TRANSLATE_NOOP("", "no account is associated with the note editor")); \
+        error.additionalBases().append(QString::fromUtf8(QT_TRANSLATE_NOOP("", "no account is associated with the note editor"))); \
         QNWARNING(error); \
         emit notifyError(error); \
         return __VA_ARGS__; \
@@ -843,8 +843,8 @@ void NoteEditorPrivate::onResourceFileReadFromStorage(QUuid requestId, QByteArra
 
         if (!m_pendingNotePageLoad) {
             GET_PAGE()
-            page->executeJavaScript(QStringLiteral("updateImageResourceSrc('") + dataHash.toHex() + QStringLiteral("', '") +
-                                    linkFileName + QStringLiteral("');"));
+            page->executeJavaScript(QStringLiteral("updateImageResourceSrc('") + QString::fromLocal8Bit(dataHash.toHex()) +
+                                    QStringLiteral("', '") + linkFileName + QStringLiteral("');"));
         }
     }
     else
@@ -1271,7 +1271,7 @@ void NoteEditorPrivate::onTextCursorOnImageResourceStateChanged(bool state, QByt
 
     m_currentTextFormattingState.m_onImageResource = state;
     if (state) {
-        m_currentTextFormattingState.m_resourceHash = resourceHash;
+        m_currentTextFormattingState.m_resourceHash = QString::fromLocal8Bit(resourceHash);
     }
 }
 
@@ -1283,14 +1283,16 @@ void NoteEditorPrivate::onTextCursorOnNonImageResourceStateChanged(bool state, Q
 
     m_currentTextFormattingState.m_onNonImageResource = state;
     if (state) {
-        m_currentTextFormattingState.m_resourceHash = resourceHash;
+        m_currentTextFormattingState.m_resourceHash = QString::fromLocal8Bit(resourceHash);
     }
 }
 
 void NoteEditorPrivate::onTextCursorOnEnCryptTagStateChanged(bool state, QString encryptedText, QString cipher, QString length)
 {
-    QNDEBUG(QStringLiteral("NoteEditorPrivate::onTextCursorOnEnCryptTagStateChanged: ") << (state ? QStringLiteral("yes") : "no")
-            << ", encrypted text = " << encryptedText << ", cipher = " << cipher << ", length = " << length);
+    QNDEBUG(QStringLiteral("NoteEditorPrivate::onTextCursorOnEnCryptTagStateChanged: ") << (state ? QStringLiteral("yes") : QStringLiteral("no"))
+            << QStringLiteral(", encrypted text = ") << encryptedText << QStringLiteral(", cipher = ") << cipher
+            << QStringLiteral(", length = ") << length);
+
     m_currentTextFormattingState.m_onEnCryptTag = state;
     if (state) {
         m_currentTextFormattingState.m_encryptedText = encryptedText;
@@ -1445,10 +1447,10 @@ void NoteEditorPrivate::onAddResourceUndoRedoFinished(const QVariant & data, con
 
         auto errorIt = resultMap.find(QStringLiteral("error"));
         if (Q_UNLIKELY(errorIt == resultMap.end())) {
-            error.base() = QT_TRANSLATE_NOOP("", "can't parse the error of new resource html insertion undo/redo from JavaScript");
+            error.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "can't parse the error of new resource html insertion undo/redo from JavaScript"));
         }
         else {
-            error.base() = QT_TRANSLATE_NOOP("", "can't undo/redo the new resource html insertion into the note editor");
+            error.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "can't undo/redo the new resource html insertion into the note editor"));
             error.details() = errorIt.value().toString();
         }
 
@@ -1609,10 +1611,10 @@ void NoteEditorPrivate::onHideDecryptedTextFinished(const QVariant & data, const
 
         auto errorIt = resultMap.find(QStringLiteral("error"));
         if (Q_UNLIKELY(errorIt == resultMap.end())) {
-            error.base() = QT_TRANSLATE_NOOP("", "can't parse the error of decrypted text hiding from JavaScript");
+            error.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "can't parse the error of decrypted text hiding from JavaScript"));
         }
         else {
-            error.base() = QT_TRANSLATE_NOOP("", "can't hide the decrypted text");
+            error.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "can't hide the decrypted text"));
             error.details() = errorIt.value().toString();
         }
 
@@ -1659,10 +1661,10 @@ void NoteEditorPrivate::onHideDecryptedTextUndoRedoFinished(const QVariant & dat
 
         auto errorIt = resultMap.find(QStringLiteral("error"));
         if (Q_UNLIKELY(errorIt == resultMap.end())) {
-            error.base() = QT_TRANSLATE_NOOP("", "can't parse the error of decrypted text hiding undo/redo from JavaScript");
+            error.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "can't parse the error of decrypted text hiding undo/redo from JavaScript"));
         }
         else {
-            error.base() = QT_TRANSLATE_NOOP("", "can't undo/redo the decrypted text hiding");
+            error.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "can't undo/redo the decrypted text hiding"));
             error.details() = errorIt.value().toString();
         }
 
@@ -1745,10 +1747,10 @@ void NoteEditorPrivate::onEncryptSelectedTextUndoRedoFinished(const QVariant & d
 
         auto errorIt = resultMap.find(QStringLiteral("error"));
         if (Q_UNLIKELY(errorIt == resultMap.end())) {
-            error.base() = QT_TRANSLATE_NOOP("", "can't parse the error of encryption undo/redo from JavaScript");
+            error.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "can't parse the error of encryption undo/redo from JavaScript"));
         }
         else {
-            error.base() = QT_TRANSLATE_NOOP("", "can't undo/redo the selected text encryption");
+            error.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "can't undo/redo the selected text encryption"));
             error.details() = errorIt.value().toString();
         }
 
@@ -1845,10 +1847,10 @@ void NoteEditorPrivate::onDecryptEncryptedTextUndoRedoFinished(const QVariant & 
 
         auto errorIt = resultMap.find(QStringLiteral("error"));
         if (Q_UNLIKELY(errorIt == resultMap.end())) {
-            error.base() = QT_TRANSLATE_NOOP("", "can't parse the error of encrypted text decryption undo/redo from JavaScript");
+            error.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "can't parse the error of encrypted text decryption undo/redo from JavaScript"));
         }
         else {
-            error.base() = QT_TRANSLATE_NOOP("", "can't undo/redo the encrypted text decryption");
+            error.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "can't undo/redo the encrypted text decryption"));
             error.details() = errorIt.value().toString();
         }
 
@@ -1935,10 +1937,10 @@ void NoteEditorPrivate::onAddHyperlinkToSelectedTextUndoRedoFinished(const QVari
 
         auto errorIt = resultMap.find(QStringLiteral("error"));
         if (Q_UNLIKELY(errorIt == resultMap.end())) {
-            error.base() = QT_TRANSLATE_NOOP("", "can't parse the error of hyperlink addition undo/redo from JavaScript");
+            error.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "can't parse the error of hyperlink addition undo/redo from JavaScript"));
         }
         else {
-            error.base() = QT_TRANSLATE_NOOP("", "can't undo/redo the hyperlink addition");
+            error.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "can't undo/redo the hyperlink addition"));
             error.details() = errorIt.value().toString();
         }
 
@@ -2015,10 +2017,10 @@ void NoteEditorPrivate::onEditHyperlinkUndoRedoFinished(const QVariant & data, c
 
         auto errorIt = resultMap.find(QStringLiteral("error"));
         if (Q_UNLIKELY(errorIt == resultMap.end())) {
-            error.base() = QT_TRANSLATE_NOOP("", "can't parse the error of hyperlink edit undo/redo from JavaScript");
+            error.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "can't parse the error of hyperlink edit undo/redo from JavaScript"));
         }
         else {
-            error.base() = QT_TRANSLATE_NOOP("", "can't undo/redo the hyperlink edit");
+            error.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "can't undo/redo the hyperlink edit"));
             error.details() = errorIt.value().toString();
         }
 
@@ -2086,10 +2088,10 @@ void NoteEditorPrivate::onRemoveHyperlinkUndoRedoFinished(const QVariant & data,
 
         auto errorIt = resultMap.find(QStringLiteral("error"));
         if (Q_UNLIKELY(errorIt == resultMap.end())) {
-            error.base() = QT_TRANSLATE_NOOP("", "can't parse the error of hyperlink removal undo/redo from JavaScript");
+            error.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "can't parse the error of hyperlink removal undo/redo from JavaScript"));
         }
         else {
-            error.base() = QT_TRANSLATE_NOOP("", "can't undo/redo the hyperlink removal");
+            error.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "can't undo/redo the hyperlink removal"));
             error.details() = errorIt.value().toString();
         }
 
@@ -2171,10 +2173,10 @@ void NoteEditorPrivate::onInsertHtmlUndoRedoFinished(const QVariant & data, cons
 
         auto errorIt = resultMap.find(QStringLiteral("error"));
         if (Q_UNLIKELY(errorIt == resultMap.end())) {
-            error.base() = QT_TRANSLATE_NOOP("", "can't parse the error of html insertion undo/redo from JavaScript");
+            error.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "can't parse the error of html insertion undo/redo from JavaScript"));
         }
         else {
-            error.base() = QT_TRANSLATE_NOOP("", "can't undo/redo the html insertion into the note editor");
+            error.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "can't undo/redo the html insertion into the note editor"));
             error.details() = errorIt.value().toString();
         }
 
@@ -2735,7 +2737,7 @@ void NoteEditorPrivate::highlightRecognizedImageAreas(const QString & textToFind
             }
 
             if (matchFound) {
-                page->executeJavaScript(QStringLiteral("imageAreasHilitor.hiliteImageArea('") + resourceHash.toHex() + QStringLiteral("', ") +
+                page->executeJavaScript(QStringLiteral("imageAreasHilitor.hiliteImageArea('") + QString::fromLocal8Bit(resourceHash.toHex()) + QStringLiteral("', ") +
                                         QString::number(recoIndexItem.x()) + QStringLiteral(", ") + QString::number(recoIndexItem.y()) + QStringLiteral(", ") +
                                         QString::number(recoIndexItem.h()) + QStringLiteral(", ") + QString::number(recoIndexItem.w()) + QStringLiteral(");"));
             }
@@ -2831,7 +2833,7 @@ void NoteEditorPrivate::noteToEditorContent()
 
     int bodyClosingTagIndex = m_htmlCachedMemory.indexOf(QStringLiteral("</body>"));
     if (bodyClosingTagIndex < 0) {
-        error.base() = QT_TRANSLATE_NOOP("", "can't find </body> tag in the result of note to HTML conversion");
+        error.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "can't find </body> tag in the result of note to HTML conversion"));
         QNWARNING(error << QStringLiteral(", note content: ") << m_pNote->content()
                   << QStringLiteral(", html: ") << m_htmlCachedMemory);
         emit notifyError(error);
@@ -2927,7 +2929,7 @@ void NoteEditorPrivate::inkNoteToEditorContent()
             inkNoteHtml += QStringLiteral(" ");
         }
 
-        inkNoteHtml += "/>";
+        inkNoteHtml += QStringLiteral("/>");
     }
 
     if (problemDetected) {
@@ -2946,13 +2948,13 @@ bool NoteEditorPrivate::htmlToNoteContent(ErrorString & errorDescription)
     QNDEBUG(QStringLiteral("NoteEditorPrivate::htmlToNoteContent"));
 
     if (m_pNote.isNull()) {
-        errorDescription.base() = QT_TRANSLATE_NOOP("", "no note was set to note editor");
+        errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "no note was set to note editor"));
         emit cantConvertToNote(errorDescription);
         return false;
     }
 
     if (m_pNote->hasActive() && !m_pNote->active()) {
-        errorDescription.base() = QT_TRANSLATE_NOOP("", "current note is marked as read-only, the changes won't be saved");
+        errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "current note is marked as read-only, the changes won't be saved"));
         QNINFO(errorDescription << QStringLiteral(", note: local uid = ") << m_pNote->localUid()
                << QStringLiteral(", guid = ") << (m_pNote->hasGuid() ? m_pNote->guid() : QStringLiteral("<null>"))
                << QStringLiteral(", title = ") << (m_pNote->hasTitle() ? m_pNote->title() : QStringLiteral("<null>")));
@@ -2964,8 +2966,8 @@ bool NoteEditorPrivate::htmlToNoteContent(ErrorString & errorDescription)
     {
         const qevercloud::NotebookRestrictions & restrictions = m_pNotebook->restrictions();
         if (restrictions.noUpdateNotes.isSet() && restrictions.noUpdateNotes.ref()) {
-            errorDescription.base() = QT_TRANSLATE_NOOP("", "The notebook the current note belongs to doesn't allow "
-                                                        "notes modification, the changes won't be saved");
+            errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "The notebook the current note belongs to doesn't allow "
+                                                                          "notes modification, the changes won't be saved"));
             QNINFO(errorDescription << QStringLiteral(", note: local uid = ") << m_pNote->localUid()
                    << QStringLiteral(", guid = ") << (m_pNote->hasGuid() ? m_pNote->guid() : QStringLiteral("<null>"))
                    << QStringLiteral(", title = ") << (m_pNote->hasTitle() ? m_pNote->title() : QStringLiteral("<null>"))
@@ -3113,8 +3115,8 @@ void NoteEditorPrivate::updateHashForResourceTag(const QByteArray & oldResourceH
             << QStringLiteral(", new hash = ") << newResourceHash.toHex());
 
     GET_PAGE()
-    page->executeJavaScript(QStringLiteral("updateResourceHash('") + oldResourceHash.toHex() + QStringLiteral("', '") +
-                            newResourceHash.toHex() + QStringLiteral("');"));
+    page->executeJavaScript(QStringLiteral("updateResourceHash('") + QString::fromLocal8Bit(oldResourceHash.toHex()) + QStringLiteral("', '") +
+                            QString::fromLocal8Bit(newResourceHash.toHex()) + QStringLiteral("');"));
 }
 
 void NoteEditorPrivate::provideSrcForResourceImgTags()
@@ -3766,7 +3768,7 @@ void NoteEditorPrivate::setupGenericTextContextMenu(const QStringList & extraDat
     { \
         QAction * action = new QAction(name, menu); \
         action->setEnabled(enabled); \
-        setupActionShortcut(key, QString(#__VA_ARGS__), *action); \
+        setupActionShortcut(key, QStringLiteral(#__VA_ARGS__), *action); \
         QObject::connect(action, QNSIGNAL(QAction,triggered), this, QNSLOT(NoteEditorPrivate,slot)); \
         menu->addAction(action); \
     }
@@ -4085,7 +4087,7 @@ void NoteEditorPrivate::setupScripts()
 #define SETUP_SCRIPT(scriptPathPart, scriptVarName) \
     file.setFileName(QStringLiteral( ":/" scriptPathPart)); \
     file.open(QIODevice::ReadOnly); \
-    scriptVarName = file.readAll(); \
+    scriptVarName = QString::fromUtf8(file.readAll()); \
     file.close()
 
     SETUP_SCRIPT("javascript/jquery/jquery-2.1.3.min.js", m_jQueryJs);
@@ -4554,13 +4556,13 @@ bool NoteEditorPrivate::parseEncryptedTextContextMenuExtraData(const QStringList
                                                                QString & hint, QString & id, ErrorString & errorDescription) const
 {
     if (Q_UNLIKELY(extraData.empty())) {
-        errorDescription.base() = QT_TRANSLATE_NOOP("", "extra data from JavaScript is empty");
+        errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "extra data from JavaScript is empty"));
         return false;
     }
 
     int extraDataSize = extraData.size();
     if (Q_UNLIKELY(extraDataSize != 5) && Q_UNLIKELY(extraDataSize != 6)) {
-        errorDescription.base() = QT_TRANSLATE_NOOP("", "extra data from JavaScript has wrong size");
+        errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "extra data from JavaScript has wrong size"));
         errorDescription.details() = QString::number(extraDataSize);
         return false;
     }
@@ -4978,10 +4980,10 @@ void NoteEditorPrivate::setupAddHyperlinkDelegate(const quint64 hyperlinkId, con
 }
 
 #define COMMAND_TO_JS(command) \
-    QString javascript = QString("managedPageAction(\"%1\", null)").arg(command)
+    QString javascript = QString::fromUtf8("managedPageAction(\"%1\", null)").arg(command)
 
 #define COMMAND_WITH_ARGS_TO_JS(command, args) \
-    QString javascript = QString("managedPageAction('%1', '%2')").arg(command,args)
+    QString javascript = QString::fromUtf8("managedPageAction('%1', '%2')").arg(command,args)
 
 #ifndef QUENTIER_USE_QT_WEB_ENGINE
 QVariant NoteEditorPrivate::execJavascriptCommandWithResult(const QString & command)
@@ -5070,14 +5072,14 @@ bool NoteEditorPrivate::print(QPrinter & printer, ErrorString & errorDescription
     QNDEBUG(QStringLiteral("NoteEditorPrivate::print"));
 
     if (Q_UNLIKELY(!m_pNote)) {
-        errorDescription.base() = QT_TRANSLATE_NOOP("", "Can't print note: no note is set to the editor");
+        errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "Can't print note: no note is set to the editor"));
         QNDEBUG(errorDescription);
         return false;
     }
 
     if (m_pendingNotePageLoad || m_pendingIndexHtmlWritingToFile || m_pendingJavaScriptExecution) {
-        errorDescription.base() = QT_TRANSLATE_NOOP("", "Can't print note: the note has not been fully loaded "
-                                                    "into the editor yet, please try again in a few seconds");
+        errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "Can't print note: the note has not been fully loaded "
+                                                                      "into the editor yet, please try again in a few seconds"));
         QNDEBUG(errorDescription);
         return false;
     }
@@ -5087,15 +5089,15 @@ bool NoteEditorPrivate::print(QPrinter & printer, ErrorString & errorDescription
 #ifndef QUENTIER_USE_QT_WEB_ENGINE
     QWebPage * pPage = page();
     if (Q_UNLIKELY(!pPage)) {
-        errorDescription.base() = QT_TRANSLATE_NOOP("", "Can't print note: internal error, no note editor page");
+        errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "Can't print note: internal error, no note editor page"));
         QNWARNING(errorDescription);
         return false;
     }
 
     QWebFrame * pFrame = pPage->mainFrame();
     if (Q_UNLIKELY(!pFrame)) {
-        errorDescription.base() = QT_TRANSLATE_NOOP("", "Can't print note: internal error, no main frame was found "
-                                                    "within the note editor page");
+        errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "Can't print note: internal error, no main frame was found "
+                                                                      "within the note editor page"));
         QNWARNING(errorDescription);
         return false;
     }
@@ -5114,7 +5116,7 @@ bool NoteEditorPrivate::print(QPrinter & printer, ErrorString & errorDescription
     QString htmlToXmlError;
     bool htmlToXmlRes = htmlCleaner.htmlToXml(initialHtml, initialXml, htmlToXmlError);
     if (Q_UNLIKELY(!htmlToXmlRes)) {
-        errorDescription.base() = QT_TRANSLATE_NOOP("", "Can't print note: failed to convert the note editor's HTML to XML");
+        errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "Can't print note: failed to convert the note editor's HTML to XML"));
         errorDescription.details() = htmlToXmlError;
         QNWARNING(errorDescription);
         return false;
@@ -5173,8 +5175,8 @@ bool NoteEditorPrivate::print(QPrinter & printer, ErrorString & errorDescription
 
                 QString hashAttr = elementAttributes.value("hash").toString();
                 if (Q_UNLIKELY(hashAttr.isEmpty())) {
-                    errorDescription.base() = QT_TRANSLATE_NOOP("", "Can't print note: found generic resource image "
-                                                                "without hash attribute");
+                    errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "Can't print note: found generic resource image "
+                                                                                  "without hash attribute"));
                     QNWARNING(errorDescription);
                     return false;
                 }
@@ -5196,8 +5198,8 @@ bool NoteEditorPrivate::print(QPrinter & printer, ErrorString & errorDescription
                 }
 
                 if (Q_UNLIKELY(!pTargetResource)) {
-                    errorDescription.base() = QT_TRANSLATE_NOOP("", "Can't print note: could not find one of resources "
-                                                                "referenced in the note text within the actual note's resources");
+                    errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "Can't print note: could not find one of resources "
+                                                                                  "referenced in the note text within the actual note's resources"));
                     errorDescription.details() = QStringLiteral("hash = ");
                     errorDescription.details() += hashAttr;
                     QNWARNING(errorDescription);
@@ -5206,7 +5208,7 @@ bool NoteEditorPrivate::print(QPrinter & printer, ErrorString & errorDescription
 
                 QImage genericResourceImage = buildGenericResourceImage(*pTargetResource);
                 if (Q_UNLIKELY(genericResourceImage.isNull())) {
-                    errorDescription.base() = QT_TRANSLATE_NOOP("", "Can't print note: could not generate the generic resource image");
+                    errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "Can't print note: could not generate the generic resource image"));
                     QNWARNING(errorDescription);
                     return false;
                 }
@@ -5283,8 +5285,8 @@ bool NoteEditorPrivate::print(QPrinter & printer, ErrorString & errorDescription
 
     if (Q_UNLIKELY(reader.hasError()))
     {
-        errorDescription.base() = QT_TRANSLATE_NOOP("", "Can't print note: failed to read the XML translated from "
-                                                    "the note editor's HTML");
+        errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "Can't print note: failed to read the XML translated from "
+                                                                      "the note editor's HTML");
         errorDescription.details() = reader.errorString();
         errorDescription.details() += QStringLiteral("; error code = ");
         errorDescription.details() += QString::number(reader.error());
@@ -5294,8 +5296,8 @@ bool NoteEditorPrivate::print(QPrinter & printer, ErrorString & errorDescription
 
     int bodyTagIndex = preprocessedHtml.indexOf(QStringLiteral("<body>"));
     if (Q_UNLIKELY(bodyTagIndex < 0)) {
-        errorDescription.base() = QT_TRANSLATE_NOOP("", "Can't print note: can't find the body tag within the preprocessed HTML "
-                                                    "prepared for conversion to QTextDocument");
+        errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "Can't print note: can't find the body tag within the preprocessed HTML "
+                                                                      "prepared for conversion to QTextDocument"));
         QNWARNING(errorDescription << QStringLiteral("; preprocessed HTML: ") << preprocessedHtml);
         return false;
     }
@@ -5304,8 +5306,8 @@ bool NoteEditorPrivate::print(QPrinter & printer, ErrorString & errorDescription
 
     int bodyClosingTagIndex = preprocessedHtml.indexOf(QStringLiteral("</body>"));
     if (Q_UNLIKELY(bodyClosingTagIndex < 0)) {
-        errorDescription.base() = QT_TRANSLATE_NOOP("", "Can't print note: can't find the enclosing body tag within "
-                                                    "the preprocessed HTML prepared to conversion to QTextDocument");
+        errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "Can't print note: can't find the enclosing body tag within "
+                                                                      "the preprocessed HTML prepared to conversion to QTextDocument"));
         QNWARNING(errorDescription << QStringLiteral("; preprocessed HTML: ") << preprocessedHtml);
         return false;
     }
@@ -5333,7 +5335,7 @@ bool NoteEditorPrivate::print(QPrinter & printer, ErrorString & errorDescription
 
     int result = eventLoop.exec(QEventLoop::ExcludeUserInputEvents);
     if (result == EventLoopWithExitStatus::ExitStatus::Timeout) {
-        errorDescription.base() = QT_TRANSLATE_NOOP("", "Can't print note: failed to get the note editor page's HTML in time");
+        errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "Can't print note: failed to get the note editor page's HTML in time"));
         QNWARNING(errorDescription);
         return false;
     }
@@ -5342,7 +5344,7 @@ bool NoteEditorPrivate::print(QPrinter & printer, ErrorString & errorDescription
     ErrorString error;
     bool res = m_enmlConverter.htmlToQTextDocument(m_htmlForPrinting, doc, error, m_skipRulesForHtmlToEnmlConversion);
     if (Q_UNLIKELY(!res)) {
-        errorDescription.base() = (QT_TRANSLATE_NOOP("", "Can't print note"));
+        errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "Can't print note"));
         errorDescription.additionalBases().append(error.base());
         errorDescription.additionalBases().append(error.additionalBases());
         errorDescription.details() = error.details();
@@ -5359,14 +5361,14 @@ bool NoteEditorPrivate::exportToPdf(const QString & absoluteFilePath, ErrorStrin
     QNDEBUG("NoteEditorPrivate::exportToPdf: " << absoluteFilePath);
 
     if (Q_UNLIKELY(!m_pNote)) {
-        errorDescription.base() = QT_TRANSLATE_NOOP("", "Can't export note to pdf: no note is set to the editor");
+        errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "Can't export note to pdf: no note is set to the editor"));
         QNDEBUG(errorDescription);
         return false;
     }
 
     if (m_pendingNotePageLoad || m_pendingIndexHtmlWritingToFile || m_pendingJavaScriptExecution) {
-        errorDescription.base() = QT_TRANSLATE_NOOP("", "Can't export note to pdf: the note has not been fully loaded "
-                                                    "into the editor yet, please try again in a few seconds");
+        errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "Can't export note to pdf: the note has not been fully loaded "
+                                                                      "into the editor yet, please try again in a few seconds"));
         QNDEBUG(errorDescription);
         return false;
     }
@@ -5378,8 +5380,8 @@ bool NoteEditorPrivate::exportToPdf(const QString & absoluteFilePath, ErrorStrin
 
     QFileInfo pdfFileInfo(filePath);
     if (pdfFileInfo.exists() && !pdfFileInfo.isWritable()) {
-        errorDescription.base() = QT_TRANSLATE_NOOP("", "Can't export note to pdf: the output pdf file already exists "
-                                                    "and it is not writable");
+        errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "Can't export note to pdf: the output pdf file already exists "
+                                                                      "and it is not writable"));
         errorDescription.details() = filePath;
         QNDEBUG(errorDescription);
         return false;
@@ -5388,7 +5390,7 @@ bool NoteEditorPrivate::exportToPdf(const QString & absoluteFilePath, ErrorStrin
 #if defined(QUENTIER_USE_QT_WEB_ENGINE) && (QT_VERSION >= QT_VERSION_CHECK(5, 7, 0))
     QWebEnginePage * pPage = page();
     if (Q_UNLIKELY(!pPage)) {
-        errorDescription.base() = QT_TRANSLATE_NOOP("", "Can't export note to pdf: internal error, no note editor page");
+        errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "Can't export note to pdf: internal error, no note editor page"));
         QNWARNING(errorDescription);
         return false;
     }
@@ -5414,14 +5416,14 @@ bool NoteEditorPrivate::exportToEnex(const QStringList & tagNames,
     QNDEBUG(QStringLiteral("NoteEditorPrivate::exportToEnex"));
 
     if (Q_UNLIKELY(!m_pNote)) {
-        errorDescription.base() = QT_TRANSLATE_NOOP("", "Can't export note to enex: no note is set to the editor");
+        errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "Can't export note to enex: no note is set to the editor"));
         QNDEBUG(errorDescription);
         return false;
     }
 
     if (m_pendingNotePageLoad || m_pendingIndexHtmlWritingToFile || m_pendingJavaScriptExecution) {
-        errorDescription.base() = QT_TRANSLATE_NOOP("", "Can't export note to enex: the note has not been fully loaded "
-                                                    "into the editor yet, please try again in a few seconds");
+        errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "Can't export note to enex: the note has not been fully loaded "
+                                                                      "into the editor yet, please try again in a few seconds"));
         QNDEBUG(errorDescription);
         return false;
     }
@@ -5446,12 +5448,12 @@ bool NoteEditorPrivate::exportToEnex(const QStringList & tagNames,
 
         int result = eventLoop.exec(QEventLoop::ExcludeUserInputEvents);
         if (result == EventLoopWithExitStatus::ExitStatus::Timeout) {
-            errorDescription.base() = QT_TRANSLATE_NOOP("", "Can't export note to enex: failed to save the edited note in time");
+            errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "Can't export note to enex: failed to save the edited note in time"));
             QNWARNING(errorDescription);
             return false;
         }
         else if (result == EventLoopWithExitStatus::ExitStatus::Failure) {
-            errorDescription.base() = QT_TRANSLATE_NOOP("", "Can't export note to enex: failed to save the edited note");
+            errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "Can't export note to enex: failed to save the edited note"));
             QNWARNING(errorDescription);
             return false;
         }
@@ -5920,7 +5922,8 @@ QString NoteEditorPrivate::createSymlinkToImageResourceFile(const QString & file
     QFile imageResourceFile(fileStoragePath);
     bool res = imageResourceFile.link(linkFileName);
     if (Q_UNLIKELY(!res)) {
-        errorDescription.base() = QT_TRANSLATE_NOOP("", "can't process the image resource update: can't create a symlink to the resource file");
+        errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "can't process the image resource update: "
+                                                                      "can't create a symlink to the resource file"));
         errorDescription.details() = imageResourceFile.errorString();
         errorDescription.details() += QStringLiteral(", error code = ");
         errorDescription.details() += QString::number(imageResourceFile.error());
@@ -6132,7 +6135,7 @@ void NoteEditorPrivate::flipEnToDoCheckboxState(const quint64 enToDoIdNumber)
     CHECK_NOTE_EDITABLE(QT_TRANSLATE_NOOP("", "Can't flip the todo checkbox state"))
 
     GET_PAGE()
-    QString javascript = QString("flipEnToDoCheckboxState(%1);").arg(QString::number(enToDoIdNumber));
+    QString javascript = QString::fromUtf8("flipEnToDoCheckboxState(%1);").arg(QString::number(enToDoIdNumber));
     page->executeJavaScript(javascript);
     setModified();
 }
@@ -6286,10 +6289,10 @@ void NoteEditorPrivate::onSpellCheckCorrectionActionDone(const QVariant & data, 
 
         auto errorIt = resultMap.find(QStringLiteral("error"));
         if (Q_UNLIKELY(errorIt == resultMap.end())) {
-            error.base() = QT_TRANSLATE_NOOP("", "can't parse the error of spelling correction from JavaScript");
+            error.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "can't parse the error of spelling correction from JavaScript"));
         }
         else {
-            error.base() = QT_TRANSLATE_NOOP("", "can't correct spelling");
+            error.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "can't correct spelling"));
             error.details() = errorIt.value().toString();
         }
 
@@ -6334,10 +6337,10 @@ void NoteEditorPrivate::onSpellCheckCorrectionUndoRedoFinished(const QVariant & 
 
         auto errorIt = resultMap.find(QStringLiteral("error"));
         if (Q_UNLIKELY(errorIt == resultMap.end())) {
-            error.base() = QT_TRANSLATE_NOOP("", "Can't parse the error of spelling correction undo/redo from JavaScript");
+            error.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "Can't parse the error of spelling correction undo/redo from JavaScript"));
         }
         else {
-            error.base() = QT_TRANSLATE_NOOP("", "Can't undo/redo the spelling correction");
+            error.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "Can't undo/redo the spelling correction"));
             error.details() = errorIt.value().toString();
         }
 
@@ -6703,8 +6706,8 @@ void NoteEditorPrivate::replace(const QString & textToReplace, const QString & r
     QString escapedReplacementText = replacementText;
     ENMLConverter::escapeString(escapedReplacementText);
 
-    QString javascript = QString("findReplaceManager.replace('%1', '%2', %3);").arg(escapedTextToReplace, escapedReplacementText,
-                                                                                    (matchCase ? QStringLiteral("true") : QStringLiteral("false")));
+    QString javascript = QString::fromUtf8("findReplaceManager.replace('%1', '%2', %3);").arg(escapedTextToReplace, escapedReplacementText,
+                                                                                              (matchCase ? QStringLiteral("true") : QStringLiteral("false")));
     page->executeJavaScript(javascript, ReplaceCallback(this));
 
     ReplaceUndoCommand * pCommand = new ReplaceUndoCommand(textToReplace, matchCase, *this, ReplaceCallback(this));
@@ -6730,7 +6733,9 @@ void NoteEditorPrivate::replaceAll(const QString & textToReplace, const QString 
     QString escapedReplacementText = replacementText;
     ENMLConverter::escapeString(escapedReplacementText);
 
-    QString javascript = QString("findReplaceManager.replaceAll('%1', '%2', %3);").arg(escapedTextToReplace, escapedReplacementText, (matchCase ? "true" : "false"));
+    QString javascript = QString::fromUtf8("findReplaceManager.replaceAll('%1', '%2', %3);").arg(escapedTextToReplace,
+                                                                                                 escapedReplacementText,
+                                                                                                 (matchCase ? QStringLiteral("true") : QStringLiteral("false")));
     page->executeJavaScript(javascript, ReplaceCallback(this));
 
     ReplaceAllUndoCommand * pCommand = new ReplaceAllUndoCommand(textToReplace, matchCase, *this, ReplaceCallback(this));
@@ -6759,7 +6764,7 @@ void NoteEditorPrivate::insertToDoCheckbox()
     CHECK_NOTE_EDITABLE(QT_TRANSLATE_NOOP("", "Can't insert checkbox"))
 
     QString html = ENMLConverter::toDoCheckboxHtml(/* checked = */ false, m_lastFreeEnToDoIdNumber++);
-    QString javascript = QString("managedPageAction('insertHtml', '%1'); ").arg(html);
+    QString javascript = QString::fromUtf8("managedPageAction('insertHtml', '%1'); ").arg(html);
     javascript += m_setupEnToDoTagsJs;
 
     page->executeJavaScript(javascript);
@@ -7301,7 +7306,7 @@ void NoteEditorPrivate::removeAttachment(const QByteArray & resourceHash)
 
     if (Q_UNLIKELY(!foundResourceToRemove)) {
         ErrorString error(QT_TRANSLATE_NOOP("", "can't remove the attachment by hash: no resource with such hash was found within the note"));
-        error.details() = resourceHash.toHex();
+        error.details() = QString::fromUtf8(resourceHash.toHex());
         QNWARNING(error);
         emit notifyError(error);
     }
@@ -7352,7 +7357,7 @@ void NoteEditorPrivate::renameAttachment(const QByteArray & resourceHash)
 
     if (Q_UNLIKELY(m_pNote.isNull())) {
         ErrorString error = errorPrefix;
-        error.additionalBases().append(QT_TRANSLATE_NOOP("", "no note is set to the editor"));
+        error.additionalBases().append(QString::fromUtf8(QT_TRANSLATE_NOOP("", "no note is set to the editor")));
         QNWARNING(error);
         emit notifyError(error);
         return;
@@ -7374,7 +7379,7 @@ void NoteEditorPrivate::renameAttachment(const QByteArray & resourceHash)
 
     if (Q_UNLIKELY(targetResourceIndex < 0)) {
         ErrorString error = errorPrefix;
-        error.additionalBases().append(QT_TRANSLATE_NOOP("", "can't find the corresponding resource in the note"));
+        error.additionalBases().append(QString::fromUtf8(QT_TRANSLATE_NOOP("", "can't find the corresponding resource in the note")));
         QNWARNING(error);
         emit notifyError(error);
         return;
@@ -7383,7 +7388,7 @@ void NoteEditorPrivate::renameAttachment(const QByteArray & resourceHash)
     Resource & resource = resources[targetResourceIndex];
     if (Q_UNLIKELY(!resource.hasDataBody())) {
         ErrorString error = errorPrefix;
-        error.additionalBases().append(QT_TRANSLATE_NOOP("", "the resource doesn't have the data body set"));
+        error.additionalBases().append(QString::fromUtf8(QT_TRANSLATE_NOOP("", "the resource doesn't have the data body set")));
         QNWARNING(error);
         emit notifyError(error);
         return;
@@ -7391,7 +7396,7 @@ void NoteEditorPrivate::renameAttachment(const QByteArray & resourceHash)
 
     if (Q_UNLIKELY(!resource.hasDataHash())) {
         ErrorString error = errorPrefix;
-        error.additionalBases().append(QT_TRANSLATE_NOOP("", "the resource doesn't have the data hash set"));
+        error.additionalBases().append(QString::fromUtf8(QT_TRANSLATE_NOOP("", "the resource doesn't have the data hash set")));
         QNWARNING(error << QStringLiteral(", resource: ") << resource);
         emit notifyError(error);
         return;
@@ -7412,7 +7417,7 @@ void NoteEditorPrivate::rotateImageAttachment(const QByteArray & resourceHash, c
 
     if (Q_UNLIKELY(m_pNote.isNull())) {
         ErrorString error = errorPrefix;
-        error.additionalBases().append(QT_TRANSLATE_NOOP("", "no note is set to the editor"));
+        error.additionalBases().append(QString::fromUtf8(QT_TRANSLATE_NOOP("", "no note is set to the editor")));
         QNWARNING(error);
         emit notifyError(error);
         return;
@@ -7430,7 +7435,7 @@ void NoteEditorPrivate::rotateImageAttachment(const QByteArray & resourceHash, c
 
         if (Q_UNLIKELY(!resource.hasMime())) {
             ErrorString error = errorPrefix;
-            error.additionalBases().append(QT_TRANSLATE_NOOP("", "the corresponding attachment's mime type is not set"));
+            error.additionalBases().append(QString::fromUtf8(QT_TRANSLATE_NOOP("", "the corresponding attachment's mime type is not set")));
             QNWARNING(error << QStringLiteral(", resource: ") << resource);
             emit notifyError(error);
             return;
@@ -7438,7 +7443,7 @@ void NoteEditorPrivate::rotateImageAttachment(const QByteArray & resourceHash, c
 
         if (Q_UNLIKELY(!resource.mime().startsWith(QStringLiteral("image/")))) {
             ErrorString error = errorPrefix;
-            error.additionalBases().append(QT_TRANSLATE_NOOP("", "the corresponding attachment's mime type indicates it is not an image"));
+            error.additionalBases().append(QString::fromUtf8(QT_TRANSLATE_NOOP("", "the corresponding attachment's mime type indicates it is not an image")));
             error.details() = resource.mime();
             QNWARNING(error << QStringLiteral(", resource: ") << resource);
             emit notifyError(error);
@@ -7451,7 +7456,7 @@ void NoteEditorPrivate::rotateImageAttachment(const QByteArray & resourceHash, c
 
     if (Q_UNLIKELY(targetResourceIndex < 0)) {
         ErrorString error = errorPrefix;
-        error.additionalBases().append(QT_TRANSLATE_NOOP("", "can't find the corresponding attachment within the note"));
+        error.additionalBases().append(QString::fromUtf8(QT_TRANSLATE_NOOP("", "can't find the corresponding attachment within the note")));
         QNWARNING(error);
         emit notifyError(error);
         return;
@@ -7460,7 +7465,7 @@ void NoteEditorPrivate::rotateImageAttachment(const QByteArray & resourceHash, c
     Resource & resource = resources[targetResourceIndex];
     if (Q_UNLIKELY(!resource.hasDataBody())) {
         ErrorString error = errorPrefix;
-        error.additionalBases().append(QT_TRANSLATE_NOOP("", "the attachment doesn't have the data body set"));
+        error.additionalBases().append(QString::fromUtf8(QT_TRANSLATE_NOOP("", "the attachment doesn't have the data body set")));
         QNWARNING(error);
         emit notifyError(error);
         return;
@@ -7468,7 +7473,7 @@ void NoteEditorPrivate::rotateImageAttachment(const QByteArray & resourceHash, c
 
     if (Q_UNLIKELY(!resource.hasDataHash())) {
         ErrorString error = errorPrefix;
-        error.additionalBases().append(QT_TRANSLATE_NOOP("", "the attachment doesn't have the data hash set"));
+        error.additionalBases().append(QString::fromUtf8(QT_TRANSLATE_NOOP("", "the attachment doesn't have the data hash set")));
         QNWARNING(error << QStringLiteral(", resource: ") << resource);
         emit notifyError(error);
         return;

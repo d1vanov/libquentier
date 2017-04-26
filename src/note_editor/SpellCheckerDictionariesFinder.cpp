@@ -25,7 +25,7 @@
 namespace quentier {
 
 #define WRAP(x) \
-    << QString(x).toUpper()
+    << QStringLiteral(x).toUpper()
 
 SpellCheckerDictionariesFinder::SpellCheckerDictionariesFinder(QObject * parent) :
     QObject(parent),
@@ -73,7 +73,7 @@ void SpellCheckerDictionariesFinder::run()
             if (fileNameSuffix == QStringLiteral("dic")) {
                 isDicFile = true;
             }
-            else if (fileNameSuffix != "aff") {
+            else if (fileNameSuffix != QStringLiteral("aff")) {
                 QNTRACE(QStringLiteral("Skipping file not actually matching the filter: ") << fileInfo.absoluteFilePath());
                 continue;
             }

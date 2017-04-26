@@ -62,13 +62,13 @@ void TagData::clear()
 bool TagData::checkParameters(ErrorString & errorDescription) const
 {
     if (m_qecTag.guid.isSet() && !checkGuid(m_qecTag.guid.ref())) {
-        errorDescription.base() = QT_TRANSLATE_NOOP("", "Tag's guid is invalid");
+        errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "Tag's guid is invalid"));
         errorDescription.details() = m_qecTag.guid;
         return false;
     }
 
     if (m_linkedNotebookGuid.isSet() && !checkGuid(m_linkedNotebookGuid.ref())) {
-        errorDescription.base() = QT_TRANSLATE_NOOP("", "Tag's linked notebook guid is invalid");
+        errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "Tag's linked notebook guid is invalid"));
         errorDescription.details() = m_linkedNotebookGuid;
         return false;
     }
@@ -78,13 +78,13 @@ bool TagData::checkParameters(ErrorString & errorDescription) const
     }
 
     if (m_qecTag.updateSequenceNum.isSet() && !checkUpdateSequenceNumber(m_qecTag.updateSequenceNum)) {
-        errorDescription.base() = QT_TRANSLATE_NOOP("", "Tag's update sequence number is invalid");
+        errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "Tag's update sequence number is invalid"));
         errorDescription.details() = QString::number(m_qecTag.updateSequenceNum);
         return false;
     }
 
     if (m_qecTag.parentGuid.isSet() && !checkGuid(m_qecTag.parentGuid.ref())) {
-        errorDescription.base() = QT_TRANSLATE_NOOP("", "Tag's parent guid is invalid");
+        errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "Tag's parent guid is invalid"));
         errorDescription.details() = m_qecTag.parentGuid;
         return false;
     }

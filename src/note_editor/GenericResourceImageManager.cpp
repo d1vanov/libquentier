@@ -131,7 +131,7 @@ void GenericResourceImageManager::onGenericResourceImageWriteRequest(QString not
             {
                 QFile resourceNameFile(resourceNameFileInfo.absoluteFilePath());
                 Q_UNUSED(resourceNameFile.open(QIODevice::ReadOnly));
-                QString previousResourceName = resourceNameFile.readAll();
+                QString previousResourceName = QString::fromLocal8Bit(resourceNameFile.readAll());
 
                 if (resourceDisplayName != previousResourceName) {
                     QNTRACE(QStringLiteral("Resource display name has changed from ") << previousResourceName

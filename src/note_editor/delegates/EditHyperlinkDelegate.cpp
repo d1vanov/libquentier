@@ -88,10 +88,10 @@ void EditHyperlinkDelegate::onHyperlinkDataReceived(const QVariant & data)
 
         auto errorIt = resultMap.find(QStringLiteral("error"));
         if (Q_UNLIKELY(errorIt == resultMap.end())) {
-            error.base() = QT_TRANSLATE_NOOP("", "can't parse the error of hyperlink data request from JavaScript");
+            error.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "can't parse the error of hyperlink data request from JavaScript"));
         }
         else {
-            error.base() = QT_TRANSLATE_NOOP("", "can't get hyperlink data from JavaScript");
+            error.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "can't get hyperlink data from JavaScript"));
             error.details() = errorIt.value().toString();
         }
 
@@ -195,10 +195,10 @@ void EditHyperlinkDelegate::onHyperlinkModified(const QVariant & data)
 
         auto errorIt = resultMap.find(QStringLiteral("error"));
         if (Q_UNLIKELY(errorIt == resultMap.end())) {
-            error.base() = QT_TRANSLATE_NOOP("", "can't parse the error of hyperlink editing from JavaScript");
+            error.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "can't parse the error of hyperlink editing from JavaScript"));
         }
         else {
-            error.base() = QT_TRANSLATE_NOOP("", "can't edit hyperlink: ");
+            error.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "can't edit hyperlink: "));
             error.details() = errorIt.value().toString();
         }
 

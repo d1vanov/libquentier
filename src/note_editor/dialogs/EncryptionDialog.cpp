@@ -95,7 +95,7 @@ void EncryptionDialog::onRememberPassphraseStateChanged(int checked)
         QNINFO(QStringLiteral("Can't persist remember passphrase for session setting: settings are not writable"));
     }
     else {
-        appSettings.setValue("Encryption/rememberPassphraseForSession",
+        appSettings.setValue(QStringLiteral("Encryption/rememberPassphraseForSession"),
                              QVariant(m_pUI->rememberPasswordForSessionCheckBox->isChecked()));
     }
 }

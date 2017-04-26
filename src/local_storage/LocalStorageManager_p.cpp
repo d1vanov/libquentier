@@ -125,7 +125,7 @@ LocalStorageManagerPrivate::LocalStorageManagerPrivate(const Account & account, 
     m_preservedAsterisk()
 {
     m_preservedAsterisk.reserve(1);
-    m_preservedAsterisk.push_back('*');
+    m_preservedAsterisk.push_back(QChar::fromLatin1('*'));
 
     switchUser(account, startFromScratch, overrideLock);
 }
@@ -167,7 +167,7 @@ bool LocalStorageManagerPrivate::addUser(const User & user, ErrorString & errorD
     bool exists = rowExists(QStringLiteral("Users"), QStringLiteral("id"), userId);
     if (exists) {
         errorDescription.base() = errorPrefix.base();
-        errorDescription.additionalBases().append(QT_TRANSLATE_NOOP("", "user with the same id already exists"));
+        errorDescription.additionalBases().append(QString::fromUtf8(QT_TRANSLATE_NOOP("", "user with the same id already exists")));
         errorDescription.details() = userId;
         QNWARNING(errorDescription << QStringLiteral(", id: ") << userId);
         return false;
@@ -206,7 +206,7 @@ bool LocalStorageManagerPrivate::updateUser(const User & user, ErrorString & err
     bool exists = rowExists(QStringLiteral("Users"), QStringLiteral("id"), userId);
     if (!exists) {
         errorDescription.base() = errorPrefix.base();
-        errorDescription.additionalBases().append(QT_TRANSLATE_NOOP("", "user with the specified id was not found"));
+        errorDescription.additionalBases().append(QString::fromUtf8(QT_TRANSLATE_NOOP("", "user with the specified id was not found")));
         errorDescription.details() = userId;
         QNWARNING(errorDescription << QStringLiteral(", id: ") << userId);
         return false;
@@ -234,7 +234,7 @@ bool LocalStorageManagerPrivate::findUser(User & user, ErrorString & errorDescri
 
     if (!user.hasId()) {
         errorDescription.base() = errorPrefix.base();
-        errorDescription.additionalBases().append(QT_TRANSLATE_NOOP("", "user id is not set"));;
+        errorDescription.additionalBases().append(QString::fromUtf8(QT_TRANSLATE_NOOP("", "user id is not set")));
         QNWARNING(errorDescription);
         return false;
     }
@@ -286,14 +286,14 @@ bool LocalStorageManagerPrivate::deleteUser(const User & user, ErrorString & err
 
     if (!user.hasDeletionTimestamp()) {
         errorDescription.base() = errorPrefix.base();
-        errorDescription.additionalBases().append(QT_TRANSLATE_NOOP("", "deletion timestamp is not set"));
+        errorDescription.additionalBases().append(QString::fromUtf8(QT_TRANSLATE_NOOP("", "deletion timestamp is not set")));
         QNWARNING(errorDescription);
         return false;
     }
 
     if (!user.hasId()) {
         errorDescription.base() = errorPrefix.base();
-        errorDescription.additionalBases().append(QT_TRANSLATE_NOOP("", "user id is not set"));
+        errorDescription.additionalBases().append(QString::fromUtf8(QT_TRANSLATE_NOOP("", "user id is not set")));
         QNWARNING(errorDescription);
         return false;
     }
@@ -319,7 +319,7 @@ bool LocalStorageManagerPrivate::expungeUser(const User & user, ErrorString & er
 
     if (!user.hasId()) {
         errorDescription.base() = errorPrefix.base();
-        errorDescription.additionalBases().append(QT_TRANSLATE_NOOP("", "user id is not set"));
+        errorDescription.additionalBases().append(QString::fromUtf8(QT_TRANSLATE_NOOP("", "user id is not set")));
         QNWARNING(errorDescription);
         return false;
     }
@@ -346,12 +346,12 @@ bool LocalStorageManagerPrivate::expungeUser(const User & user, ErrorString & er
 
 #define SET_INT_CONVERSION_ERROR() \
     errorDescription.base() = errorPrefix.base(); \
-    errorDescription.additionalBases().append(QT_TRANSLATE_NOOP("", "can't convert the fetched data to int")); \
+    errorDescription.additionalBases().append(QString::fromUtf8(QT_TRANSLATE_NOOP("", "can't convert the fetched data to int"))); \
     QNCRITICAL(errorDescription << QStringLiteral(": ") << query.value(0))
 
 #define SET_NO_DATA_FOUND() \
     errorDescription.base() = errorPrefix.base(); \
-    errorDescription.additionalBases().append(QT_TRANSLATE_NOOP("", "no data found")); \
+    errorDescription.additionalBases().append(QString::fromUtf8(QT_TRANSLATE_NOOP("", "no data found"))); \
     QNWARNING(errorDescription)
 
 int LocalStorageManagerPrivate::notebookCount(ErrorString & errorDescription) const
@@ -562,7 +562,7 @@ void LocalStorageManagerPrivate::switchUser(const Account & account,
 
     SysInfo sysInfo;
     qint64 pageSize = sysInfo.pageSize();
-    QString pageSizeQuery = QString("PRAGMA page_size = %1").arg(QString::number(pageSize));
+    QString pageSizeQuery = QString::fromUtf8("PRAGMA page_size = %1").arg(QString::number(pageSize));
     if (!query.exec(pageSizeQuery)) {
         QString lastErrorText = m_sqlDatabase.lastError().text();
         ErrorString error(QT_TRANSLATE_NOOP("", "Can't set page_size pragma for the local storage database"));
@@ -657,7 +657,7 @@ bool LocalStorageManagerPrivate::addNotebook(Notebook & notebook, ErrorString & 
 
         if (!checkGuid(uid)) {
             errorDescription.base() = errorPrefix.base();
-            errorDescription.additionalBases().append(QT_TRANSLATE_NOOP("", "notebook guid is invalid"));
+            errorDescription.additionalBases().append(QString::fromUtf8(QT_TRANSLATE_NOOP("", "notebook guid is invalid")));
             errorDescription.details() = uid;
             QNWARNING(errorDescription);
             return false;
@@ -669,8 +669,8 @@ bool LocalStorageManagerPrivate::addNotebook(Notebook & notebook, ErrorString & 
             bool res = getNotebookLocalUidForGuid(uid, localUid, error);
             if (res || !localUid.isEmpty()) {
                 errorDescription.base() = errorPrefix.base();
-                errorDescription.additionalBases().append(QT_TRANSLATE_NOOP("", "found existing notebook "
-                                                                            "corresponding to the added notebook by guid"));
+                errorDescription.additionalBases().append(QString::fromUtf8(QT_TRANSLATE_NOOP("", "found existing notebook corresponding "
+                                                                                              "to the added notebook by guid")));
                 errorDescription.details() = uid;
                 QNWARNING(errorDescription);
                 return false;
@@ -689,7 +689,7 @@ bool LocalStorageManagerPrivate::addNotebook(Notebook & notebook, ErrorString & 
 
     if (shouldCheckRowExistence && rowExists(QStringLiteral("Notebooks"), column, QVariant(uid))) {
         errorDescription.base() = errorPrefix.base();
-        errorDescription.additionalBases().append(QT_TRANSLATE_NOOP("", "notebook already exists"));
+        errorDescription.additionalBases().append(QString::fromUtf8(QT_TRANSLATE_NOOP("", "notebook already exists")));
         errorDescription.details() = column;
         errorDescription.details() += QStringLiteral(" = ");
         errorDescription.details() += uid;
@@ -739,7 +739,7 @@ bool LocalStorageManagerPrivate::updateNotebook(Notebook & notebook, ErrorString
 
         if (!checkGuid(uid)) {
             errorDescription.base() = errorPrefix.base();
-            errorDescription.additionalBases().append(QT_TRANSLATE_NOOP("", "notebook guid is invalid"));
+            errorDescription.additionalBases().append(QString::fromUtf8(QT_TRANSLATE_NOOP("", "notebook guid is invalid")));
             errorDescription.details() = uid;
             QNWARNING(errorDescription);
             return false;
@@ -771,7 +771,7 @@ bool LocalStorageManagerPrivate::updateNotebook(Notebook & notebook, ErrorString
     if (shouldCheckRowExistence && !rowExists(QStringLiteral("Notebooks"), column, uid))
     {
         errorDescription.base() = errorPrefix.base();
-        errorDescription.additionalBases().append(QT_TRANSLATE_NOOP("", "notebook to be updated was not found in local storage"));
+        errorDescription.additionalBases().append(QString::fromUtf8(QT_TRANSLATE_NOOP("", "notebook to be updated was not found in local storage")));
         errorDescription.details() = column;
         errorDescription.details() += QStringLiteral(" = ");
         errorDescription.details() += uid;
@@ -806,7 +806,7 @@ bool LocalStorageManagerPrivate::findNotebook(Notebook & notebook, ErrorString &
 
         if (!checkGuid(value)) {
             errorDescription.base() = errorPrefix.base();
-            errorDescription.additionalBases().append(QT_TRANSLATE_NOOP("", "notebook guid is invalid"));
+            errorDescription.additionalBases().append(QString::fromUtf8(QT_TRANSLATE_NOOP("", "notebook guid is invalid")));
             QNWARNING(errorDescription);
             return false;
         }
@@ -815,7 +815,8 @@ bool LocalStorageManagerPrivate::findNotebook(Notebook & notebook, ErrorString &
     {
         if (!notebook.hasName()) {
             errorDescription.base() = errorPrefix.base();
-            errorDescription.additionalBases().append(QT_TRANSLATE_NOOP("", "need either guid or local uid or name as search criteria"));
+            errorDescription.additionalBases().append(QString::fromUtf8(QT_TRANSLATE_NOOP("", "need either guid or local uid "
+                                                                                          "or name as search criteria")));
             QNWARNING(errorDescription);
             return false;
         }
@@ -831,21 +832,21 @@ bool LocalStorageManagerPrivate::findNotebook(Notebook & notebook, ErrorString &
 
     value = sqlEscapeString(value);
 
-    QString queryString = QString("SELECT * FROM Notebooks LEFT OUTER JOIN NotebookRestrictions "
-                                  "ON Notebooks.localUid = NotebookRestrictions.localUid "
-                                  "LEFT OUTER JOIN SharedNotebooks ON Notebooks.guid = SharedNotebooks.sharedNotebookNotebookGuid "
-                                  "LEFT OUTER JOIN Users ON Notebooks.contactId = Users.id "
-                                  "LEFT OUTER JOIN UserAttributes ON Notebooks.contactId = UserAttributes.id "
-                                  "LEFT OUTER JOIN UserAttributesViewedPromotions ON Notebooks.contactId = UserAttributesViewedPromotions.id "
-                                  "LEFT OUTER JOIN UserAttributesRecentMailedAddresses ON Notebooks.contactId = UserAttributesRecentMailedAddresses.id "
-                                  "LEFT OUTER JOIN Accounting ON Notebooks.contactId = Accounting.id "
-                                  "LEFT OUTER JOIN AccountLimits ON Notebooks.contactId = AccountLimits.id "
-                                  "LEFT OUTER JOIN BusinessUserInfo ON Notebooks.contactId = BusinessUserInfo.id "
-                                  "WHERE (Notebooks.%1 = '%2'").arg(column,value);
+    QString queryString = QString::fromUtf8("SELECT * FROM Notebooks LEFT OUTER JOIN NotebookRestrictions "
+                                            "ON Notebooks.localUid = NotebookRestrictions.localUid "
+                                            "LEFT OUTER JOIN SharedNotebooks ON Notebooks.guid = SharedNotebooks.sharedNotebookNotebookGuid "
+                                            "LEFT OUTER JOIN Users ON Notebooks.contactId = Users.id "
+                                            "LEFT OUTER JOIN UserAttributes ON Notebooks.contactId = UserAttributes.id "
+                                            "LEFT OUTER JOIN UserAttributesViewedPromotions ON Notebooks.contactId = UserAttributesViewedPromotions.id "
+                                            "LEFT OUTER JOIN UserAttributesRecentMailedAddresses ON Notebooks.contactId = UserAttributesRecentMailedAddresses.id "
+                                            "LEFT OUTER JOIN Accounting ON Notebooks.contactId = Accounting.id "
+                                            "LEFT OUTER JOIN AccountLimits ON Notebooks.contactId = AccountLimits.id "
+                                            "LEFT OUTER JOIN BusinessUserInfo ON Notebooks.contactId = BusinessUserInfo.id "
+                                            "WHERE (Notebooks.%1 = '%2'").arg(column,value);
 
     if (notebook.hasLinkedNotebookGuid()) {
         QString linkedNotebookGuid = sqlEscapeString(notebook.linkedNotebookGuid());
-        queryString += QString(" AND Notebooks.linkedNotebookGuid = '%1')").arg(linkedNotebookGuid);
+        queryString += QString::fromUtf8(" AND Notebooks.linkedNotebookGuid = '%1')").arg(linkedNotebookGuid);
     }
     else {
         queryString += QStringLiteral(" AND Notebooks.linkedNotebookGuid IS NULL)");
@@ -905,7 +906,7 @@ bool LocalStorageManagerPrivate::findDefaultNotebook(Notebook & notebook, ErrorS
 
     if (!query.next()) {
         errorDescription.base() = errorPrefix.base();
-        errorDescription.additionalBases().append(QT_TRANSLATE_NOOP("", "no default notebook was found"));
+        errorDescription.additionalBases().append(QString::fromUtf8(QT_TRANSLATE_NOOP("", "no default notebook was found")));
         QNDEBUG(errorDescription);
         return false;
     }
@@ -947,7 +948,7 @@ bool LocalStorageManagerPrivate::findLastUsedNotebook(Notebook & notebook, Error
 
     if (!query.next()) {
         errorDescription.base() = errorPrefix.base();
-        errorDescription.additionalBases().append(QT_TRANSLATE_NOOP("", "no last used notebook exists in local storage"));
+        errorDescription.additionalBases().append(QString::fromUtf8(QT_TRANSLATE_NOOP("", "no last used notebook exists in local storage")));
         QNDEBUG(errorDescription);
         return false;
     }
@@ -999,7 +1000,7 @@ QList<Notebook> LocalStorageManagerPrivate::listNotebooks(const LocalStorageMana
 
     QString linkedNotebookGuidSqlQueryCondition = (linkedNotebookGuid.isEmpty()
                                                    ? QStringLiteral("linkedNotebookGuid IS NULL")
-                                                   : QString("linkedNotebookGuid = '%1'").arg(sqlEscapeString(linkedNotebookGuid)));
+                                                   : QString::fromUtf8("linkedNotebookGuid = '%1'").arg(sqlEscapeString(linkedNotebookGuid)));
 
     return listObjects<Notebook, LocalStorageManager::ListNotebooksOrder::type>(flag, errorDescription, limit,
                                                                                 offset, order, orderDirection,
@@ -1050,7 +1051,8 @@ QList<SharedNotebook> LocalStorageManagerPrivate::listAllSharedNotebooks(ErrorSt
 
     if (numSharedNotebooks <= 0) {
         errorDescription.base() = errorPrefix.base();
-        errorDescription.additionalBases().append(QT_TRANSLATE_NOOP("", "no shared notebooks were found in the local storage database"));
+        errorDescription.additionalBases().append(QString::fromUtf8(QT_TRANSLATE_NOOP("", "no shared notebooks were found "
+                                                                                      "in the local storage database")));
         QNDEBUG(errorDescription);
     }
 
@@ -1087,7 +1089,7 @@ QList<qevercloud::SharedNotebook> LocalStorageManagerPrivate::listEnSharedNotebo
 
     if (!checkGuid(notebookGuid)) {
         errorDescription.base() = errorPrefix.base();
-        errorDescription.additionalBases().append(QT_TRANSLATE_NOOP("", "notebook guid is invalid"));
+        errorDescription.additionalBases().append(QString::fromUtf8(QT_TRANSLATE_NOOP("", "notebook guid is invalid")));
         errorDescription.details() = notebookGuid;
         QNWARNING(errorDescription);
         return qecSharedNotebooks;
@@ -1160,7 +1162,7 @@ bool LocalStorageManagerPrivate::expungeNotebook(Notebook & notebook, ErrorStrin
 
         if (!checkGuid(uid)) {
             errorDescription.base() = errorPrefix.base();
-            errorDescription.additionalBases().append(QT_TRANSLATE_NOOP("", "notebook's guid is invalid"));
+            errorDescription.additionalBases().append(QString::fromUtf8(QT_TRANSLATE_NOOP("", "notebook's guid is invalid")));
             errorDescription.details() = uid;
             QNWARNING(errorDescription);
             return false;
@@ -1191,7 +1193,7 @@ bool LocalStorageManagerPrivate::expungeNotebook(Notebook & notebook, ErrorStrin
 
     if (shouldCheckRowExistence && !rowExists(QStringLiteral("Notebooks"), column, uid)) {
         errorDescription.base() = errorPrefix.base();
-        errorDescription.additionalBases().append(QT_TRANSLATE_NOOP("", "notebook to be expunged was not found"));
+        errorDescription.additionalBases().append(QString::fromUtf8(QT_TRANSLATE_NOOP("", "notebook to be expunged was not found")));
         errorDescription.details() = column;
         errorDescription.details() = QStringLiteral(" = ");
         errorDescription.details() = uid;
@@ -1201,7 +1203,7 @@ bool LocalStorageManagerPrivate::expungeNotebook(Notebook & notebook, ErrorStrin
 
     uid = sqlEscapeString(uid);
 
-    QString queryString = QString("DELETE FROM Notebooks WHERE %1 = '%2'").arg(column,uid);
+    QString queryString = QString::fromUtf8("DELETE FROM Notebooks WHERE %1 = '%2'").arg(column,uid);
     QSqlQuery query(m_sqlDatabase);
     bool res = query.exec(queryString);
     DATABASE_CHECK_AND_SET_ERROR();
@@ -1266,7 +1268,7 @@ bool LocalStorageManagerPrivate::addLinkedNotebook(const LinkedNotebook & linked
     bool exists = rowExists(QStringLiteral("LinkedNotebooks"), QStringLiteral("guid"), QVariant(linkedNotebook.guid()));
     if (exists) {
         errorDescription.base() = errorPrefix.base();
-        errorDescription.additionalBases().append(QT_TRANSLATE_NOOP("", "linked notebook with specified guid already exists"));
+        errorDescription.additionalBases().append(QString::fromUtf8(QT_TRANSLATE_NOOP("", "linked notebook with specified guid already exists")));
         errorDescription.details() = linkedNotebook.guid();
         QNWARNING(errorDescription);
         return false;
@@ -1308,7 +1310,7 @@ bool LocalStorageManagerPrivate::updateLinkedNotebook(const LinkedNotebook & lin
     bool exists = rowExists(QStringLiteral("LinkedNotebooks"), QStringLiteral("guid"), QVariant(guid));
     if (!exists) {
         errorDescription.base() = errorPrefix.base();
-        errorDescription.additionalBases().append(QT_TRANSLATE_NOOP("", "linked notebook to be updated was not found"));
+        errorDescription.additionalBases().append(QString::fromUtf8(QT_TRANSLATE_NOOP("", "linked notebook to be updated was not found")));
         errorDescription.details() = guid;
         QNWARNING(errorDescription);
         return false;
@@ -1336,7 +1338,7 @@ bool LocalStorageManagerPrivate::findLinkedNotebook(LinkedNotebook & linkedNoteb
 
     if (!linkedNotebook.hasGuid()) {
         errorDescription.base() = errorPrefix.base();
-        errorDescription.additionalBases().append(QT_TRANSLATE_NOOP("", "linked notebook's guid is not set"));
+        errorDescription.additionalBases().append(QString::fromUtf8(QT_TRANSLATE_NOOP("", "linked notebook's guid is not set")));
         QNWARNING(errorDescription);
         return false;
     }
@@ -1345,7 +1347,7 @@ bool LocalStorageManagerPrivate::findLinkedNotebook(LinkedNotebook & linkedNoteb
     QNDEBUG(QStringLiteral("guid = ") << notebookGuid);
     if (!checkGuid(notebookGuid)) {
         errorDescription.base() = errorPrefix.base();
-        errorDescription.additionalBases().append(QT_TRANSLATE_NOOP("", "linked notebook's guid is invalid"));
+        errorDescription.additionalBases().append(QString::fromUtf8(QT_TRANSLATE_NOOP("", "linked notebook's guid is invalid")));
         errorDescription.details() = notebookGuid;
         QNWARNING(errorDescription);
         return false;
@@ -1407,7 +1409,7 @@ bool LocalStorageManagerPrivate::expungeLinkedNotebook(const LinkedNotebook & li
 
     if (!linkedNotebook.hasGuid()) {
         errorDescription.base() = errorPrefix.base();
-        errorDescription.additionalBases().append(QT_TRANSLATE_NOOP("", "linked notebook's guid is not set"));
+        errorDescription.additionalBases().append(QString::fromUtf8(QT_TRANSLATE_NOOP("", "linked notebook's guid is not set")));
         QNWARNING(errorDescription);
         return false;
     }
@@ -1416,7 +1418,7 @@ bool LocalStorageManagerPrivate::expungeLinkedNotebook(const LinkedNotebook & li
 
     if (!checkGuid(linkedNotebookGuid)) {
         errorDescription.base() = errorPrefix.base();
-        errorDescription.additionalBases().append(QT_TRANSLATE_NOOP("", "linked notebook's guid is invalid"));
+        errorDescription.additionalBases().append(QString::fromUtf8(QT_TRANSLATE_NOOP("", "linked notebook's guid is invalid")));
         errorDescription.details() = linkedNotebookGuid;
         QNWARNING(errorDescription);
         return false;
@@ -1425,12 +1427,12 @@ bool LocalStorageManagerPrivate::expungeLinkedNotebook(const LinkedNotebook & li
     bool exists = rowExists(QStringLiteral("LinkedNotebooks"), QStringLiteral("guid"), linkedNotebookGuid);
     if (!exists) {
         errorDescription.base() = errorPrefix.base();
-        errorDescription.additionalBases().append(QT_TRANSLATE_NOOP("", "can't find the linked notebook to be expunged"));
+        errorDescription.additionalBases().append(QString::fromUtf8(QT_TRANSLATE_NOOP("", "can't find the linked notebook to be expunged")));
         errorDescription.details() = linkedNotebookGuid;
         return false;
     }
 
-    QString queryString = QString("DELETE FROM LinkedNotebooks WHERE guid='%1'").arg(linkedNotebookGuid);
+    QString queryString = QString::fromUtf8("DELETE FROM LinkedNotebooks WHERE guid='%1'").arg(linkedNotebookGuid);
     QSqlQuery query(m_sqlDatabase);
     bool res = query.exec(queryString);
     DATABASE_CHECK_AND_SET_ERROR();
@@ -1502,7 +1504,7 @@ int LocalStorageManagerPrivate::noteCountPerNotebook(const Notebook & notebook, 
 
     value = sqlEscapeString(value);
 
-    QString queryString = QString("SELECT COUNT(*) FROM Notes WHERE deletionTimestamp IS NULL AND %1 = '%2'").arg(column, value);
+    QString queryString = QString::fromUtf8("SELECT COUNT(*) FROM Notes WHERE deletionTimestamp IS NULL AND %1 = '%2'").arg(column, value);
     QSqlQuery query(m_sqlDatabase);
     res = query.exec(queryString);
 

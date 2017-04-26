@@ -104,7 +104,7 @@ bool ENMLConverterPrivate::htmlToNoteContent(const QString & html, const QVector
     m_cachedConvertedXml.resize(0);
     bool res = m_pHtmlCleaner->htmlToXml(html, m_cachedConvertedXml, error);
     if (!res) {
-        errorDescription.base() = QT_TRANSLATE_NOOP("", "Failed to clean up the note's html");
+        errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "Failed to clean up the note's html"));
         errorDescription.details() = error;
         return false;
     }
@@ -257,7 +257,7 @@ bool ENMLConverterPrivate::htmlToNoteContent(const QString & html, const QVector
                     }
 
                     if (!attributes.hasAttribute(QStringLiteral("encrypted_text"))) {
-                        errorDescription.base() = QT_TRANSLATE_NOOP("", "Found en-crypt tag without encrypted_text attribute");
+                        errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "Found en-crypt tag without encrypted_text attribute"));
                         QNDEBUG(errorDescription);
                         return false;
                     }
@@ -393,7 +393,7 @@ bool ENMLConverterPrivate::htmlToNoteContent(const QString & html, const QVector
     }
 
     if (reader.hasError()) {
-        errorDescription.base() = QT_TRANSLATE_NOOP("", "Can't convert the note's html to ENML");
+        errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "Can't convert the note's html to ENML"));
         errorDescription.details() = reader.errorString();
         QNWARNING(QStringLiteral("Error reading html: ") << errorDescription
                   << QStringLiteral(", HTML: ") << html << QStringLiteral("\nXML: ") << m_cachedConvertedXml);
@@ -426,7 +426,7 @@ bool ENMLConverterPrivate::htmlToQTextDocument(const QString & html, QTextDocume
     m_cachedConvertedXml.resize(0);
     bool res = m_pHtmlCleaner->htmlToXml(html, m_cachedConvertedXml, error);
     if (!res) {
-        errorDescription.base() = QT_TRANSLATE_NOOP("", "Failed to clean up the note's html");
+        errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "Failed to clean up the note's html"));
         errorDescription.details() = error;
         return false;
     }
@@ -668,7 +668,7 @@ bool ENMLConverterPrivate::htmlToQTextDocument(const QString & html, QTextDocume
             {
                 QStringRef srcAttrRef = lastElementAttributes.value(QStringLiteral("src"));
                 if (Q_UNLIKELY(srcAttrRef.isEmpty())) {
-                    errorDescription.base() = QT_TRANSLATE_NOOP("", "found img tag without src or with empty src attribute");
+                    errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "found img tag without src or with empty src attribute"));
                     return false;
                 }
 
@@ -710,7 +710,7 @@ bool ENMLConverterPrivate::htmlToQTextDocument(const QString & html, QTextDocume
                     {
                         QFileInfo imgFileInfo(srcAttr);
                         if (!imgFileInfo.exists()) {
-                            errorDescription.base() = QT_TRANSLATE_NOOP("", "couldn't find the file corresponding to the src attribute of img tag");
+                            errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "couldn't find the file corresponding to the src attribute of img tag"));
                             errorDescription.details() = srcAttr;
                             return false;
                         }
@@ -818,7 +818,7 @@ bool ENMLConverterPrivate::htmlToQTextDocument(const QString & html, QTextDocume
     }
 
     if (reader.hasError()) {
-        errorDescription.base() = QT_TRANSLATE_NOOP("", "Can't convert the note's html to QTextDocument");
+        errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "Can't convert the note's html to QTextDocument"));
         errorDescription.details() = reader.errorString();
         QNWARNING(QStringLiteral("Error reading html: ") << errorDescription
                   << QStringLiteral(", HTML: ") << html << QStringLiteral("\nXML: ") << m_cachedConvertedXml);
@@ -827,8 +827,8 @@ bool ENMLConverterPrivate::htmlToQTextDocument(const QString & html, QTextDocume
 
     doc.setHtml(simplifiedHtml);
     if (Q_UNLIKELY(doc.isEmpty())) {
-        errorDescription.base() = QT_TRANSLATE_NOOP("", "Can't convert the note's html to QTextDocument: the document "
-                                                    "is empty after setting the simplified HTML");
+        errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "Can't convert the note's html to QTextDocument: the document "
+                                                    "is empty after setting the simplified HTML"));
         QNWARNING(errorDescription << QStringLiteral(", simplified HTML: ") << simplifiedHtml);
         return false;
     }
@@ -853,7 +853,7 @@ bool ENMLConverterPrivate::cleanupExternalHtml(const QString & inputHtml, QStrin
     m_cachedConvertedXml.resize(0);
     bool res = m_pHtmlCleaner->htmlToXml(supplementedHtml, m_cachedConvertedXml, error);
     if (!res) {
-        errorDescription.base() = QT_TRANSLATE_NOOP("", "Failed to clean up the input HTML");
+        errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "Failed to clean up the input HTML"));
         errorDescription.details() = error;
         return false;
     }
@@ -952,7 +952,7 @@ bool ENMLConverterPrivate::cleanupExternalHtml(const QString & inputHtml, QStrin
     }
 
     if (reader.hasError()) {
-        errorDescription.base() = QT_TRANSLATE_NOOP("", "Failed to clean up the input HTML");
+        errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "Failed to clean up the input HTML"));
         errorDescription.details() = reader.errorString();
         QNWARNING(QStringLiteral("Error reading the input HTML: ") << errorDescription
                   << QStringLiteral(", input HTML: ") << inputHtml
@@ -1331,7 +1331,7 @@ bool ENMLConverterPrivate::noteContentToPlainText(const QString & noteContent, Q
     }
 
     if (Q_UNLIKELY(reader.hasError())) {
-        errorMessage.base() = QT_TRANSLATE_NOOP("", "Failed to convert the note content to plain text");
+        errorMessage.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "Failed to convert the note content to plain text"));
         errorMessage.details() = reader.errorString();
         errorMessage.details() += QStringLiteral(", error code ");
         errorMessage.details() += QString::number(reader.error());
@@ -1440,19 +1440,19 @@ QString ENMLConverterPrivate::resourceHtml(const Resource & resource, ErrorStrin
     QNDEBUG(QStringLiteral("ENMLConverterPrivate::resourceHtml"));
 
     if (Q_UNLIKELY(!resource.hasDataHash())) {
-        errorDescription.base() = QT_TRANSLATE_NOOP("", "Can't compose the resource's html representation: no data hash is set");
+        errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "Can't compose the resource's html representation: no data hash is set"));
         QNWARNING(errorDescription << QStringLiteral(", resource: ") << resource);
         return QString();
     }
 
     if (Q_UNLIKELY(!resource.hasMime())) {
-        errorDescription.base() = QT_TRANSLATE_NOOP("", "Can't compose the resource's html representation: no mime type is set");
+        errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "Can't compose the resource's html representation: no mime type is set"));
         QNWARNING(errorDescription << QStringLiteral(", resource: ") << resource);
         return QString();
     }
 
     QXmlStreamAttributes attributes;
-    attributes.append(QStringLiteral("hash"), resource.dataHash().toHex());
+    attributes.append(QStringLiteral("hash"), QString::fromLocal8Bit(resource.dataHash().toHex()));
     attributes.append(QStringLiteral("type"), resource.mime());
 
     QString html;
@@ -1492,7 +1492,7 @@ bool ENMLConverterPrivate::exportNotesToEnex(const QVector<Note> & notes, const 
     enex.resize(0);
 
     if (notes.isEmpty()) {
-        errorDescription.base() = QT_TRANSLATE_NOOP("", "Can't export note(s) to ENEX: no notes");
+        errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "Can't export note(s) to ENEX: no notes"));
         QNWARNING(errorDescription);
         return false;
     }
@@ -1511,7 +1511,7 @@ bool ENMLConverterPrivate::exportNotesToEnex(const QVector<Note> & notes, const 
     }
 
     if (!foundNoteEligibleForExport) {
-        errorDescription.base() = QT_TRANSLATE_NOOP("", "Can't export note(s) to ENEX: no notes eligible for export");
+        errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "Can't export note(s) to ENEX: no notes eligible for export"));
         QNWARNING(errorDescription);
         return false;
     }
@@ -1586,8 +1586,8 @@ bool ENMLConverterPrivate::exportNotesToEnex(const QVector<Note> & notes, const 
                 auto tagNameIt = tagNamesByTagLocalUids.find(*tagIt);
                 if (Q_UNLIKELY(tagNameIt == tagNamesByTagLocalUids.end())) {
                     enex.clear();
-                    errorDescription.base() = QT_TRANSLATE_NOOP("", "Can't export note(s) to ENEX: one of notes has tag local uid "
-                                                                "for which no tag name was found");
+                    errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "Can't export note(s) to ENEX: one of notes has tag local uid "
+                                                                                  "for which no tag name was found"));
                     QNWARNING(errorDescription);
                     return false;
                 }
@@ -1746,7 +1746,7 @@ bool ENMLConverterPrivate::exportNotesToEnex(const QVector<Note> & notes, const 
 
                 const QByteArray & resourceData = resource.dataBody();
                 if (resourceData.size() > ENEX_MAX_RESOURCE_DATA_SIZE) {
-                    errorDescription.base() = QT_TRANSLATE_NOOP("", "Can't export note(s) to ENEX: found resource larger than 25 Mb");
+                    errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "Can't export note(s) to ENEX: found resource larger than 25 Mb"));
                     QNINFO(errorDescription << QStringLiteral(", resource: ") << resource);
                     return false;
                 }
@@ -1779,7 +1779,8 @@ bool ENMLConverterPrivate::exportNotesToEnex(const QVector<Note> & notes, const 
                     ErrorString error;
                     bool res = validateRecoIndex(QString::fromLocal8Bit(recognitionData), error);
                     if (Q_UNLIKELY(!res)) {
-                        errorDescription.base() = QT_TRANSLATE_NOOP("", "Can't export note(s) to ENEX: found invalid resource recognition index at one of notes");
+                        errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "Can't export note(s) to ENEX: found invalid "
+                                                                                      "resource recognition index at one of notes"));
                         errorDescription.additionalBases().append(error.base());
                         errorDescription.additionalBases().append(error.additionalBases());
                         errorDescription.details() = error.details();
@@ -1918,7 +1919,7 @@ bool ENMLConverterPrivate::importEnex(const QString & enex, QVector<Note> & note
     QNDEBUG(QStringLiteral("ENMLConverterPrivate::importEnex"));
 
     if (Q_UNLIKELY(enex.isEmpty())) {
-        errorDescription.base() = QT_TRANSLATE_NOOP("", "Can't import ENEX: the input is empty");
+        errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "Can't import ENEX: the input is empty"));
         QNWARNING(errorDescription << QStringLiteral(", enex: ") << enex);
         return false;
     }
@@ -1990,7 +1991,7 @@ bool ENMLConverterPrivate::importEnex(const QString & enex, QVector<Note> & note
                     continue;
                 }
 
-                errorDescription.base() = QT_TRANSLATE_NOOP("", "Detected title tag outside of note tag");
+                errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "Detected title tag outside of note tag"));
                 QNWARNING(errorDescription);
                 return false;
             }
@@ -2004,7 +2005,7 @@ bool ENMLConverterPrivate::importEnex(const QString & enex, QVector<Note> & note
                     continue;
                 }
 
-                errorDescription.base() = QT_TRANSLATE_NOOP("", "Detected content tag outside of note tag");
+                errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "Detected content tag outside of note tag"));
                 QNWARNING(errorDescription);
                 return false;
             }
@@ -2017,7 +2018,7 @@ bool ENMLConverterPrivate::importEnex(const QString & enex, QVector<Note> & note
                     QNTRACE(QStringLiteral("Creation datetime: ") << creationDateTimeString);
                     QDateTime creationDateTime = QDateTime::fromString(creationDateTimeString, dateTimeFormat);
                     if (Q_UNLIKELY(!creationDateTime.isValid())) {
-                        errorDescription.base() = QT_TRANSLATE_NOOP("", "failed to parse the creation datetime from string");
+                        errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "failed to parse the creation datetime from string"));
                         errorDescription.details() = creationDateTimeString;
                         QNWARNING(errorDescription);
                         return false;
@@ -2030,7 +2031,7 @@ bool ENMLConverterPrivate::importEnex(const QString & enex, QVector<Note> & note
                     continue;
                 }
 
-                errorDescription.base() = QT_TRANSLATE_NOOP("", "Detected created tag outside of note tag");
+                errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "Detected created tag outside of note tag"));
                 QNWARNING(errorDescription);
                 return false;
             }
@@ -2043,7 +2044,7 @@ bool ENMLConverterPrivate::importEnex(const QString & enex, QVector<Note> & note
                     QNTRACE(QStringLiteral("Modification datetime: ") << modificationDateTimeString);
                     QDateTime modificationDateTime = QDateTime::fromString(modificationDateTimeString, dateTimeFormat);
                     if (Q_UNLIKELY(!modificationDateTime.isValid())) {
-                        errorDescription.base() = QT_TRANSLATE_NOOP("", "failed to parse the modification datetime from string");
+                        errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "failed to parse the modification datetime from string"));
                         errorDescription.details() = modificationDateTimeString;
                         QNWARNING(errorDescription);
                         return false;
@@ -2056,7 +2057,7 @@ bool ENMLConverterPrivate::importEnex(const QString & enex, QVector<Note> & note
                     continue;
                 }
 
-                errorDescription.base() = QT_TRANSLATE_NOOP("", "Detected updated tag outside of note tag");
+                errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "Detected updated tag outside of note tag"));
                 QNWARNING(errorDescription);
                 return false;
             }
@@ -2077,7 +2078,7 @@ bool ENMLConverterPrivate::importEnex(const QString & enex, QVector<Note> & note
                     continue;
                 }
 
-                errorDescription.base() = QT_TRANSLATE_NOOP("", "Detected tag outside of note");
+                errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "Detected tag outside of note"));
                 QNWARNING(errorDescription);
                 return false;
             }
@@ -2090,7 +2091,7 @@ bool ENMLConverterPrivate::importEnex(const QString & enex, QVector<Note> & note
                     continue;
                 }
 
-                errorDescription.base() = QT_TRANSLATE_NOOP("", "Detected note-attributes tag outside of note");
+                errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "Detected note-attributes tag outside of note"));
                 QNWARNING(errorDescription);
                 return false;
             }
@@ -2103,7 +2104,7 @@ bool ENMLConverterPrivate::importEnex(const QString & enex, QVector<Note> & note
                     bool conversionResult = false;
                     double latitudeNum = latitude.toDouble(&conversionResult);
                     if (Q_UNLIKELY(!conversionResult)) {
-                        errorDescription.base() = QT_TRANSLATE_NOOP("", "Failed to parse latitude");
+                        errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "Failed to parse latitude"));
                         errorDescription.details() = latitude;
                         QNWARNING(errorDescription);
                         return false;
@@ -2122,12 +2123,13 @@ bool ENMLConverterPrivate::importEnex(const QString & enex, QVector<Note> & note
                         continue;
                     }
 
-                    errorDescription.base() = QT_TRANSLATE_NOOP("", "Detected latitude tag outside of note attributes or resource attributes");
+                    errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "Detected latitude tag outside of "
+                                                                                  "note attributes or resource attributes"));
                     QNWARNING(errorDescription);
                     return false;
                 }
 
-                errorDescription.base() = QT_TRANSLATE_NOOP("", "Detected latitude tag outside of note");
+                errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "Detected latitude tag outside of note"));
                 QNWARNING(errorDescription);
                 return false;
             }
@@ -2138,7 +2140,7 @@ bool ENMLConverterPrivate::importEnex(const QString & enex, QVector<Note> & note
                 bool conversionResult = false;
                 double longitudeNum = longitude.toDouble(&conversionResult);
                 if (Q_UNLIKELY(!conversionResult)) {
-                    errorDescription.base() = QT_TRANSLATE_NOOP("", "Failed to parse longitude");
+                    errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "Failed to parse longitude"));
                     errorDescription.details() = longitude;
                     QNWARNING(errorDescription);
                     return false;
@@ -2159,12 +2161,13 @@ bool ENMLConverterPrivate::importEnex(const QString & enex, QVector<Note> & note
                         continue;
                     }
 
-                    errorDescription.base() = QT_TRANSLATE_NOOP("", "Detected longitude tag outside of note attributes or resource attributes");
+                    errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "Detected longitude tag outside of "
+                                                                                  "note attributes or resource attributes"));
                     QNWARNING(errorDescription);
                     return false;
                 }
 
-                errorDescription.base() = QT_TRANSLATE_NOOP("", "Detected longitude tag outside of note");
+                errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "Detected longitude tag outside of note"));
                 QNWARNING(errorDescription);
                 return false;
             }
@@ -2175,7 +2178,7 @@ bool ENMLConverterPrivate::importEnex(const QString & enex, QVector<Note> & note
                 bool conversionResult = false;
                 double altitudeNum = altitude.toDouble(&conversionResult);
                 if (Q_UNLIKELY(!conversionResult)) {
-                    errorDescription.base() = QT_TRANSLATE_NOOP("", "Failed to parse altitude");
+                    errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "Failed to parse altitude"));
                     errorDescription.details() = altitude;
                     QNWARNING(errorDescription);
                     return false;
@@ -2196,12 +2199,13 @@ bool ENMLConverterPrivate::importEnex(const QString & enex, QVector<Note> & note
                         continue;
                     }
 
-                    errorDescription.base() = QT_TRANSLATE_NOOP("", "Detected altitude tag outside of note attributes or resource attributes");
+                    errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "Detected altitude tag outside of note "
+                                                                                  "attributes or resource attributes"));
                     QNWARNING(errorDescription);
                     return false;
                 }
 
-                errorDescription.base() = QT_TRANSLATE_NOOP("", "Detected altitude tag outside of note");
+                errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "Detected altitude tag outside of note"));
                 QNWARNING(errorDescription);
                 return false;
             }
@@ -2216,7 +2220,7 @@ bool ENMLConverterPrivate::importEnex(const QString & enex, QVector<Note> & note
                     continue;
                 }
 
-                errorDescription.base() = QT_TRANSLATE_NOOP("", "Detected author tag outside of note or note attributes");
+                errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "Detected author tag outside of note or note attributes"));
                 QNWARNING(errorDescription);
                 return false;
             }
@@ -2231,7 +2235,7 @@ bool ENMLConverterPrivate::importEnex(const QString & enex, QVector<Note> & note
                     continue;
                 }
 
-                errorDescription.base() = QT_TRANSLATE_NOOP("", "Detected source tag outside of note or note attributes");
+                errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "Detected source tag outside of note or note attributes"));
                 QNWARNING(errorDescription);
                 return false;
             }
@@ -2255,12 +2259,13 @@ bool ENMLConverterPrivate::importEnex(const QString & enex, QVector<Note> & note
                         continue;
                     }
 
-                    errorDescription.base() = QT_TRANSLATE_NOOP("", "Detected source-url tag outside of note attributes or resource attributes");
+                    errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "Detected source-url tag outside of "
+                                                                                  "note attributes or resource attributes"));
                     QNWARNING(errorDescription);
                     return false;
                 }
 
-                errorDescription.base() = QT_TRANSLATE_NOOP("", "Detected source-url tag outside of note");
+                errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "Detected source-url tag outside of note"));
                 QNWARNING(errorDescription);
                 return false;
             }
@@ -2275,7 +2280,7 @@ bool ENMLConverterPrivate::importEnex(const QString & enex, QVector<Note> & note
                     continue;
                 }
 
-                errorDescription.base() = QT_TRANSLATE_NOOP("", "Detected source-application tag outside of note or note attributes");
+                errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "Detected source-application tag outside of note or note attributes"));
                 QNWARNING(errorDescription);
                 return false;
             }
@@ -2288,7 +2293,7 @@ bool ENMLConverterPrivate::importEnex(const QString & enex, QVector<Note> & note
                     bool conversionResult = false;
                     qint64 reminderOrderNum = reminderOrder.toLongLong(&conversionResult);
                     if (Q_UNLIKELY(!conversionResult)) {
-                        errorDescription.base() = QT_TRANSLATE_NOOP("", "Failed to parse reminder order");
+                        errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "Failed to parse reminder order"));
                         errorDescription.details() = reminderOrder;
                         QNWARNING(errorDescription);
                         return false;
@@ -2301,7 +2306,7 @@ bool ENMLConverterPrivate::importEnex(const QString & enex, QVector<Note> & note
                     continue;
                 }
 
-                errorDescription.base() = QT_TRANSLATE_NOOP("", "Detected reminder-order tag outside of note or note attributes");
+                errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "Detected reminder-order tag outside of note or note attributes"));
                 QNWARNING(errorDescription);
                 return false;
             }
@@ -2313,7 +2318,7 @@ bool ENMLConverterPrivate::importEnex(const QString & enex, QVector<Note> & note
                     QString reminderTimeString = reader.readElementText(QXmlStreamReader::SkipChildElements);
                     QDateTime reminderTimeDateTime = QDateTime::fromString(reminderTimeString, dateTimeFormat);
                     if (Q_UNLIKELY(!reminderTimeDateTime.isValid())) {
-                        errorDescription.base() = QT_TRANSLATE_NOOP("", "failed to parse the reminder time from string");
+                        errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "failed to parse the reminder time from string"));
                         errorDescription.details() = reminderTimeString;
                         QNWARNING(errorDescription);
                         return false;
@@ -2327,7 +2332,7 @@ bool ENMLConverterPrivate::importEnex(const QString & enex, QVector<Note> & note
                     continue;
                 }
 
-                errorDescription.base() = QT_TRANSLATE_NOOP("", "Detected reminder-time tag outside of note or note attributes");
+                errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "Detected reminder-time tag outside of note or note attributes"));
                 QNWARNING(errorDescription);
                 return false;
             }
@@ -2339,7 +2344,7 @@ bool ENMLConverterPrivate::importEnex(const QString & enex, QVector<Note> & note
                     QString subjectDateString = reader.readElementText(QXmlStreamReader::SkipChildElements);
                     QDateTime subjectDateTime = QDateTime::fromString(subjectDateString, dateTimeFormat);
                     if (Q_UNLIKELY(!subjectDateTime.isValid())) {
-                        errorDescription.base() = QT_TRANSLATE_NOOP("", "failed to parse the subject date from string");
+                        errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "failed to parse the subject date from string"));
                         errorDescription.details() = subjectDateString;
                         QNWARNING(errorDescription);
                         return false;
@@ -2353,7 +2358,7 @@ bool ENMLConverterPrivate::importEnex(const QString & enex, QVector<Note> & note
                     continue;
                 }
 
-                errorDescription.base() = QT_TRANSLATE_NOOP("", "Detected subject-date tag outside of note or note attributes");
+                errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "Detected subject-date tag outside of note or note attributes"));
                 QNWARNING(errorDescription);
                 return false;
             }
@@ -2365,7 +2370,7 @@ bool ENMLConverterPrivate::importEnex(const QString & enex, QVector<Note> & note
                     QString reminderDoneTimeString = reader.readElementText(QXmlStreamReader::SkipChildElements);
                     QDateTime reminderDoneTimeDateTime = QDateTime::fromString(reminderDoneTimeString, dateTimeFormat);
                     if (Q_UNLIKELY(!reminderDoneTimeDateTime.isValid())) {
-                        errorDescription.base() = QT_TRANSLATE_NOOP("", "failed to parse the reminder done time from string");
+                        errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "failed to parse the reminder done time from string"));
                         errorDescription.details() = reminderDoneTimeString;
                         QNWARNING(errorDescription);
                         return false;
@@ -2379,7 +2384,7 @@ bool ENMLConverterPrivate::importEnex(const QString & enex, QVector<Note> & note
                     continue;
                 }
 
-                errorDescription.base() = QT_TRANSLATE_NOOP("", "Detected reminder-done-time tag outside of note or note attributes");
+                errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "Detected reminder-done-time tag outside of note or note attributes"));
                 QNWARNING(errorDescription);
                 return false;
             }
@@ -2394,7 +2399,7 @@ bool ENMLConverterPrivate::importEnex(const QString & enex, QVector<Note> & note
                     continue;
                 }
 
-                errorDescription.base() = QT_TRANSLATE_NOOP("", "Detected place-name tag outside of note or note attributes");
+                errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "Detected place-name tag outside of note or note attributes"));
                 QNWARNING(errorDescription);
                 return false;
             }
@@ -2409,7 +2414,7 @@ bool ENMLConverterPrivate::importEnex(const QString & enex, QVector<Note> & note
                     continue;
                 }
 
-                errorDescription.base() = QT_TRANSLATE_NOOP("", "Detected content-class tag outside of note or note attributes");
+                errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "Detected content-class tag outside of note or note attributes"));
                 QNWARNING(errorDescription);
                 return false;
             }
@@ -2450,7 +2455,8 @@ bool ENMLConverterPrivate::importEnex(const QString & enex, QVector<Note> & note
                         }
                         else
                         {
-                            errorDescription.base() = QT_TRANSLATE_NOOP("", "failed to parse application-data tag for note: no key attribute");
+                            errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "failed to parse application-data "
+                                                                                          "tag for note: no key attribute"));
                             QNWARNING(errorDescription);
                             return false;
                         }
@@ -2485,18 +2491,20 @@ bool ENMLConverterPrivate::importEnex(const QString & enex, QVector<Note> & note
                         }
                         else
                         {
-                            errorDescription.base() = QT_TRANSLATE_NOOP("", "failed to parse application-data tag for resource: no key attribute");
+                            errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "failed to parse application-data tag "
+                                                                                          "for resource: no key attribute"));
                             QNWARNING(errorDescription);
                             return false;
                         }
                     }
 
-                    errorDescription.base() = QT_TRANSLATE_NOOP("", "Detected application-data tag outside of note attributes or resource attributes");
+                    errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "Detected application-data tag outside "
+                                                                                  "of note attributes or resource attributes"));
                     QNWARNING(errorDescription);
                     return false;
                 }
 
-                errorDescription.base() = QT_TRANSLATE_NOOP("", "Detected application-data tag outside of note");
+                errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "Detected application-data tag outside of note"));
                 QNWARNING(errorDescription);
                 return false;
             }
@@ -2524,7 +2532,7 @@ bool ENMLConverterPrivate::importEnex(const QString & enex, QVector<Note> & note
                     continue;
                 }
 
-                errorDescription.base() = QT_TRANSLATE_NOOP("", "Detected data tag outside of resource");
+                errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "Detected data tag outside of resource"));
                 QNWARNING(errorDescription);
                 return false;
             }
@@ -2538,7 +2546,7 @@ bool ENMLConverterPrivate::importEnex(const QString & enex, QVector<Note> & note
                     continue;
                 }
 
-                errorDescription.base() = QT_TRANSLATE_NOOP("", "Detected mime tag outside of resource");
+                errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "Detected mime tag outside of resource"));
                 QNWARNING(errorDescription);
                 return false;
             }
@@ -2551,7 +2559,7 @@ bool ENMLConverterPrivate::importEnex(const QString & enex, QVector<Note> & note
                     bool conversionResult = false;
                     qint16 widthNum = width.toShort(&conversionResult);
                     if (Q_UNLIKELY(!conversionResult)) {
-                        errorDescription.base() = QT_TRANSLATE_NOOP("", "Failed to parse resource width from string");
+                        errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "Failed to parse resource width from string"));
                         errorDescription.details() = width;
                         QNWARNING(errorDescription);
                         return false;
@@ -2562,7 +2570,7 @@ bool ENMLConverterPrivate::importEnex(const QString & enex, QVector<Note> & note
                     continue;
                 }
 
-                errorDescription.base() = QT_TRANSLATE_NOOP("", "Detected width tag outside of resource");
+                errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "Detected width tag outside of resource"));
                 QNWARNING(errorDescription);
                 return false;
             }
@@ -2575,7 +2583,7 @@ bool ENMLConverterPrivate::importEnex(const QString & enex, QVector<Note> & note
                     bool conversionResult = false;
                     qint16 heightNum = height.toShort(&conversionResult);
                     if (Q_UNLIKELY(!conversionResult)) {
-                        errorDescription.base() = QT_TRANSLATE_NOOP("", "Failed to parse resource height from string");
+                        errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "Failed to parse resource height from string"));
                         errorDescription.details() = height;
                         QNWARNING(errorDescription);
                         return false;
@@ -2586,7 +2594,7 @@ bool ENMLConverterPrivate::importEnex(const QString & enex, QVector<Note> & note
                     continue;
                 }
 
-                errorDescription.base() = QT_TRANSLATE_NOOP("", "Detected height tag outside of resource");
+                errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "Detected height tag outside of resource"));
                 QNWARNING(errorDescription);
                 return false;
             }
@@ -2599,7 +2607,7 @@ bool ENMLConverterPrivate::importEnex(const QString & enex, QVector<Note> & note
                     continue;
                 }
 
-                errorDescription.base() = QT_TRANSLATE_NOOP("", "Detected recognition tag outside of resource");
+                errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "Detected recognition tag outside of resource"));
                 QNWARNING(errorDescription);
                 return false;
             }
@@ -2612,7 +2620,7 @@ bool ENMLConverterPrivate::importEnex(const QString & enex, QVector<Note> & note
                     continue;
                 }
 
-                errorDescription.base() = QT_TRANSLATE_NOOP("", "Detected resource-attributes tag outside of resource");
+                errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "Detected resource-attributes tag outside of resource"));
                 QNWARNING(errorDescription);
                 return false;
             }
@@ -2624,7 +2632,7 @@ bool ENMLConverterPrivate::importEnex(const QString & enex, QVector<Note> & note
                     QString timestampString = reader.readElementText(QXmlStreamReader::SkipChildElements);
                     QDateTime timestampDateTime = QDateTime::fromString(timestampString, dateTimeFormat);
                     if (Q_UNLIKELY(!timestampDateTime.isValid())) {
-                        errorDescription.base() = QT_TRANSLATE_NOOP("", "failed to parse the resource timestamp from string");
+                        errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "failed to parse the resource timestamp from string"));
                         errorDescription.details() = timestampString;
                         QNWARNING(errorDescription);
                         return false;
@@ -2638,7 +2646,8 @@ bool ENMLConverterPrivate::importEnex(const QString & enex, QVector<Note> & note
                     continue;
                 }
 
-                errorDescription.base() = QT_TRANSLATE_NOOP("", "Detected timestamp tag outside of resource or resource attributes");
+                errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "Detected timestamp tag outside of "
+                                                                              "resource or resource attributes"));
                 QNWARNING(errorDescription);
                 return false;
             }
@@ -2653,7 +2662,8 @@ bool ENMLConverterPrivate::importEnex(const QString & enex, QVector<Note> & note
                     continue;
                 }
 
-                errorDescription.base() = QT_TRANSLATE_NOOP("", "Detected camera-make tag outside of resource or resource attributes");
+                errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "Detected camera-make tag outside of "
+                                                                              "resource or resource attributes"));
                 QNWARNING(errorDescription);
                 return false;
             }
@@ -2668,7 +2678,8 @@ bool ENMLConverterPrivate::importEnex(const QString & enex, QVector<Note> & note
                     continue;
                 }
 
-                errorDescription.base() = QT_TRANSLATE_NOOP("", "Detected reco-type tag outside of resource or resource attributes");
+                errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "Detected reco-type tag outside of "
+                                                                              "resource or resource attributes"));
                 QNWARNING(errorDescription);
                 return false;
             }
@@ -2683,7 +2694,8 @@ bool ENMLConverterPrivate::importEnex(const QString & enex, QVector<Note> & note
                     continue;
                 }
 
-                errorDescription.base() = QT_TRANSLATE_NOOP("", "Detected file-name tag outside of resource or resource attributes");
+                errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "Detected file-name tag outside of "
+                                                                              "resource or resource attributes"));
                 QNWARNING(errorDescription);
                 return false;
             }
@@ -2703,7 +2715,8 @@ bool ENMLConverterPrivate::importEnex(const QString & enex, QVector<Note> & note
                         QNTRACE(QStringLiteral("Set attachment to false"));
                     }
                     else {
-                        errorDescription.base() = QT_TRANSLATE_NOOP("", "Detected attachment tag with wrong value, must be true or false");
+                        errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "Detected attachment tag with "
+                                                                                      "wrong value, must be true or false"));
                         QNWARNING(errorDescription);
                         return false;
                     }
@@ -2711,7 +2724,8 @@ bool ENMLConverterPrivate::importEnex(const QString & enex, QVector<Note> & note
                     continue;
                 }
 
-                errorDescription.base() = QT_TRANSLATE_NOOP("", "Detected attachment tag outside of resource or resource attributes");
+                errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "Detected attachment tag outside of "
+                                                                              "resource or resource attributes"));
                 QNWARNING(errorDescription);
                 return false;
             }
@@ -2724,7 +2738,7 @@ bool ENMLConverterPrivate::importEnex(const QString & enex, QVector<Note> & note
                     continue;
                 }
 
-                errorDescription.base() = QT_TRANSLATE_NOOP("", "Detected alternate-data tag outside of resource");
+                errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "Detected alternate-data tag outside of resource"));
                 QNWARNING(errorDescription);
                 return false;
             }
@@ -2756,7 +2770,7 @@ bool ENMLConverterPrivate::importEnex(const QString & enex, QVector<Note> & note
                         ErrorString error;
                         bool res = validateRecoIndex(QString::fromLocal8Bit(currentResourceRecognitionData), error);
                         if (Q_UNLIKELY(!res)) {
-                            errorDescription.base() = QT_TRANSLATE_NOOP("", "Resource recognition index is invalid");
+                            errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "Resource recognition index is invalid"));
                             errorDescription.additionalBases().append(error.base());
                             errorDescription.additionalBases().append(error.additionalBases());
                             errorDescription.details() = error.details();
@@ -2831,25 +2845,25 @@ bool ENMLConverterPrivate::importEnex(const QString & enex, QVector<Note> & note
                 QNTRACE(QStringLiteral("End of resource"));
 
                 if (Q_UNLIKELY(!currentResource.hasDataBody())) {
-                    errorDescription.base() = QT_TRANSLATE_NOOP("", "Parsed resource without a data body");
+                    errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "Parsed resource without a data body"));
                     QNWARNING(errorDescription << QStringLiteral(", resource: ") << currentResource);
                     return false;
                 }
 
                 if (Q_UNLIKELY(!currentResource.hasDataHash())) {
-                    errorDescription.base() = QT_TRANSLATE_NOOP("", "Internal error: data hash is not computed for the resource");
+                    errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "Internal error: data hash is not computed for the resource"));
                     QNWARNING(errorDescription << QStringLiteral(", resource: ") << currentResource);
                     return false;
                 }
 
                 if (Q_UNLIKELY(!currentResource.hasDataSize())) {
-                    errorDescription.base() = QT_TRANSLATE_NOOP("", "Internal error: data size is not computed for the resource");
+                    errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "Internal error: data size is not computed for the resource"));
                     QNWARNING(errorDescription << QStringLiteral(", resource: ") << currentResource);
                     return false;
                 }
 
                 if (Q_UNLIKELY(!currentResource.hasMime())) {
-                    errorDescription.base() = QT_TRANSLATE_NOOP("", "Parsed resource without a mime type");
+                    errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "Parsed resource without a mime type"));
                     QNWARNING(errorDescription << QStringLiteral(", resource: ") << currentResource);
                     return false;
                 }
@@ -3042,13 +3056,13 @@ bool ENMLConverterPrivate::resourceInfoToHtml(const QXmlStreamAttributes & attri
     QNDEBUG(QStringLiteral("ENMLConverterPrivate::resourceInfoToHtml"));
 
     if (!attributes.hasAttribute(QStringLiteral("hash"))) {
-        errorDescription.base() = QT_TRANSLATE_NOOP("", "Detected incorrect en-media tag missing hash attribute");
+        errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "Detected incorrect en-media tag missing hash attribute"));
         QNDEBUG(errorDescription);
         return false;
     }
 
     if (!attributes.hasAttribute(QStringLiteral("type"))) {
-        errorDescription.base() = QT_TRANSLATE_NOOP("", "Detected incorrect en-media tag missing type attribute");
+        errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "Detected incorrect en-media tag missing type attribute"));
         QNDEBUG(errorDescription);
         return false;
     }
@@ -3134,7 +3148,7 @@ bool ENMLConverterPrivate::decryptedTextToEnml(QXmlStreamReader & reader,
 
     const QXmlStreamAttributes attributes = reader.attributes();
     if (!attributes.hasAttribute(QStringLiteral("encrypted_text"))) {
-        errorDescription.base() = QT_TRANSLATE_NOOP("", "Missing encrypted text attribute within en-decrypted div tag");
+        errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "Missing encrypted text attribute within en-decrypted div tag"));
         QNDEBUG(errorDescription);
         return false;
     }
@@ -3145,7 +3159,7 @@ bool ENMLConverterPrivate::decryptedTextToEnml(QXmlStreamReader & reader,
     bool rememberForSession = false;
     bool res = decryptedTextManager.findDecryptedTextByEncryptedText(encryptedText, storedDecryptedText, rememberForSession);
     if (!res) {
-        errorDescription.base() = QT_TRANSLATE_NOOP("", "Can't find the decrypted text by its encrypted text");
+        errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "Can't find the decrypted text by its encrypted text"));
         QNWARNING(errorDescription);
         return false;
     }
@@ -3181,7 +3195,7 @@ bool ENMLConverterPrivate::decryptedTextToEnml(QXmlStreamReader & reader,
     }
 
     if (reader.hasError()) {
-        errorDescription.base() = QT_TRANSLATE_NOOP("", "Text decryption failed");
+        errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "Text decryption failed"));
         errorDescription.details() = reader.errorString();
         QNWARNING(QStringLiteral("Couldn't read the nested contents of en-decrypted div, reader has error: ")
                   << errorDescription);
@@ -3328,14 +3342,14 @@ bool ENMLConverterPrivate::validateAgainstDtd(const QString & input, const QStri
     QByteArray inputBuffer = input.toLocal8Bit();
     xmlDocPtr pDoc = xmlParseMemory(inputBuffer.constData(), inputBuffer.size());
     if (!pDoc) {
-        errorDescription.base() = QT_TRANSLATE_NOOP("", "could not validate document, can't parse the input into xml doc");
+        errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "could not validate document, can't parse the input into xml doc"));
         QNWARNING(errorDescription << QStringLiteral(": input = ") << input);
         return false;
     }
 
     QFile dtdFile(dtdFilePath);
     if (!dtdFile.open(QIODevice::ReadOnly)) {
-        errorDescription.base() = QT_TRANSLATE_NOOP("", "could not validate document, can't open the resource file with DTD");
+        errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "could not validate document, can't open the resource file with DTD"));
         QNWARNING(errorDescription << QStringLiteral(": input = ") << input
                   << QStringLiteral(", DTD file path = ") << dtdFilePath);
         xmlFreeDoc(pDoc);
@@ -3347,7 +3361,8 @@ bool ENMLConverterPrivate::validateAgainstDtd(const QString & input, const QStri
     xmlParserInputBufferPtr pBuf = xmlParserInputBufferCreateMem(dtdRawData.constData(), dtdRawData.size(),
                                                                  XML_CHAR_ENCODING_NONE);
     if (!pBuf) {
-        errorDescription.base() = QT_TRANSLATE_NOOP("", "could not validate document, can't allocate the input buffer for dtd validation");
+        errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "could not validate document, can't allocate "
+                                                                      "the input buffer for dtd validation"));
         QNWARNING(errorDescription);
         xmlFreeDoc(pDoc);
         return false;
@@ -3355,7 +3370,7 @@ bool ENMLConverterPrivate::validateAgainstDtd(const QString & input, const QStri
 
     xmlDtdPtr pDtd = xmlIOParseDTD(NULL, pBuf, XML_CHAR_ENCODING_NONE);
     if (!pDtd) {
-        errorDescription.base() = QT_TRANSLATE_NOOP("", "could not validate document, failed to parse DTD");
+        errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "could not validate document, failed to parse DTD"));
         QNWARNING(errorDescription);
         xmlFreeParserInputBuffer(pBuf);
         xmlFreeDoc(pDoc);
@@ -3364,7 +3379,7 @@ bool ENMLConverterPrivate::validateAgainstDtd(const QString & input, const QStri
 
     xmlParserCtxtPtr pContext = xmlNewParserCtxt();
     if (!pContext) {
-        errorDescription.base() = QT_TRANSLATE_NOOP("", "could not validate document, can't allocate parser context");
+        errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "could not validate document, can't allocate parser context"));
         QNWARNING(errorDescription);
         xmlFreeDtd(pDtd);
         xmlFreeDoc(pDoc);
@@ -3384,7 +3399,7 @@ bool ENMLConverterPrivate::validateAgainstDtd(const QString & input, const QStri
 
     if (!res)
     {
-        errorDescription.base() = QT_TRANSLATE_NOOP("", "document is invalid");
+        errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "document is invalid"));
 
         if (!errorString.isEmpty()) {
             errorDescription.details() = QStringLiteral(": ");

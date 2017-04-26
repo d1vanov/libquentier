@@ -85,7 +85,7 @@ void LocalStorageManagerAsync::init()
 #define CATCH_EXCEPTION \
     catch(const std::exception & e) { \
         ErrorString error(QT_TRANSLATE_NOOP("", "Caught exception")); \
-        error.details() = QString(e.what()); \
+        error.details() = QString::fromUtf8(e.what()); \
         error.details() += QStringLiteral(", backtrace: "); \
         SysInfo sysInfo; \
         error.details() += sysInfo.stackTrace(); \

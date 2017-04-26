@@ -131,7 +131,7 @@ bool User::checkParameters(ErrorString & errorDescription) const
     const auto & enUser = d->m_qecUser;
 
     if (!enUser.id.isSet()) {
-        errorDescription.base() = QT_TRANSLATE_NOOP("", "User id is not set");
+        errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "User id is not set"));
         return false;
     }
 
@@ -143,15 +143,15 @@ bool User::checkParameters(ErrorString & errorDescription) const
         if ( (usernameSize > qevercloud::EDAM_USER_USERNAME_LEN_MAX) ||
              (usernameSize < qevercloud::EDAM_USER_USERNAME_LEN_MIN) )
         {
-            errorDescription.base() = QT_TRANSLATE_NOOP("", "User's name has invalid size");
+            errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "User's name has invalid size"));
             errorDescription.details() = username;
             return false;
         }
 
         QRegExp usernameRegExp(qevercloud::EDAM_USER_USERNAME_REGEX);
         if (usernameRegExp.indexIn(username) < 0) {
-            errorDescription.base() = QT_TRANSLATE_NOOP("", "User's name can contain only \"a-z\" or \"0-9\""
-                                                        "or \"-\" but should not start or end with \"-\"");
+            errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "User's name can contain only \"a-z\" or \"0-9\""
+                                                                          "or \"-\" but should not start or end with \"-\""));
             return false;
         }
     }
@@ -167,15 +167,15 @@ bool User::checkParameters(ErrorString & errorDescription) const
         if ( (nameSize > qevercloud::EDAM_USER_NAME_LEN_MAX) ||
              (nameSize < qevercloud::EDAM_USER_NAME_LEN_MIN) )
         {
-            errorDescription.base() = QT_TRANSLATE_NOOP("", "User's displayed name has invalid size");
+            errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "User's displayed name has invalid size"));
             errorDescription.details() = name;
             return false;
         }
 
         QRegExp nameRegExp(qevercloud::EDAM_USER_NAME_REGEX);
         if (nameRegExp.indexIn(name) < 0) {
-            errorDescription.base() = QT_TRANSLATE_NOOP("", "User's displayed name doesn't match its regular expression. "
-                                                        "Consider removing any special characters");
+            errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "User's displayed name doesn't match its regular expression. "
+                                                                          "Consider removing any special characters"));
             return false;
         }
     }
@@ -188,16 +188,16 @@ bool User::checkParameters(ErrorString & errorDescription) const
         if ( (timezoneSize > qevercloud::EDAM_TIMEZONE_LEN_MAX) ||
              (timezoneSize < qevercloud::EDAM_TIMEZONE_LEN_MIN) )
         {
-            errorDescription.base() = QT_TRANSLATE_NOOP("", "User's timezone has invalid size");
+            errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "User's timezone has invalid size"));
             errorDescription.details() = timezone;
             return false;
         }
 
         QRegExp timezoneRegExp(qevercloud::EDAM_TIMEZONE_REGEX);
         if (timezoneRegExp.indexIn(timezone) < 0) {
-            errorDescription.base() = QT_TRANSLATE_NOOP("", "User's timezone doesn't match its regular expression. "
-                                                        "It must be encoded as a standard zone ID such as \"America/Los_Angeles\" "
-                                                        "or \"GMT+08:00\".");
+            errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "User's timezone doesn't match its regular expression. "
+                                                                          "It must be encoded as a standard zone ID such as \"America/Los_Angeles\" "
+                                                                          "or \"GMT+08:00\"."));
             return false;
         }
     }
@@ -214,7 +214,7 @@ bool User::checkParameters(ErrorString & errorDescription) const
             if ( (defaultLocationNameSize > qevercloud::EDAM_ATTRIBUTE_LEN_MAX) ||
                  (defaultLocationNameSize < qevercloud::EDAM_ATTRIBUTE_LEN_MIN) )
             {
-                errorDescription.base() = QT_TRANSLATE_NOOP("", "User's default location name has invalid size");
+                errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "User's default location name has invalid size"));
                 errorDescription.details() = defaultLocationName;
                 return false;
             }
@@ -229,7 +229,7 @@ bool User::checkParameters(ErrorString & errorDescription) const
                 if ( (viewedPromotionSize > qevercloud::EDAM_ATTRIBUTE_LEN_MAX) ||
                      (viewedPromotionSize < qevercloud::EDAM_ATTRIBUTE_LEN_MIN) )
                 {
-                    errorDescription.base() = QT_TRANSLATE_NOOP("", "User's viewed promotion has invalid size");
+                    errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "User's viewed promotion has invalid size"));
                     errorDescription.details() = viewedPromotion;
                     return false;
                 }
@@ -244,7 +244,7 @@ bool User::checkParameters(ErrorString & errorDescription) const
             if ( (incomingEmailAddressSize > qevercloud::EDAM_ATTRIBUTE_LEN_MAX) ||
                  (incomingEmailAddressSize < qevercloud::EDAM_ATTRIBUTE_LEN_MIN) )
             {
-                errorDescription.base() = QT_TRANSLATE_NOOP("", "User's incoming email address has invalid size");
+                errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "User's incoming email address has invalid size"));
                 errorDescription.details() = incomingEmailAddress;
                 return false;
             }
@@ -257,7 +257,7 @@ bool User::checkParameters(ErrorString & errorDescription) const
 
             if (numRecentMailedAddresses > qevercloud::EDAM_USER_RECENT_MAILED_ADDRESSES_MAX)
             {
-                errorDescription.base() = QT_TRANSLATE_NOOP("", "User recent mailed addresses size is invalid");
+                errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "User recent mailed addresses size is invalid"));
                 errorDescription.details() = QString::number(numRecentMailedAddresses);
                 return false;
             }
@@ -268,7 +268,7 @@ bool User::checkParameters(ErrorString & errorDescription) const
                 if ( (recentMailedAddressSize > qevercloud::EDAM_ATTRIBUTE_LEN_MAX) ||
                      (recentMailedAddressSize < qevercloud::EDAM_ATTRIBUTE_LEN_MIN) )
                 {
-                    errorDescription.base() = QT_TRANSLATE_NOOP("", "User's recent emailed address has invalid size");
+                    errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "User's recent emailed address has invalid size"));
                     errorDescription.details() = recentMailedAddress;
                     return false;
                 }
@@ -283,7 +283,7 @@ bool User::checkParameters(ErrorString & errorDescription) const
             if ( (commentsSize > qevercloud::EDAM_ATTRIBUTE_LEN_MAX) ||
                  (commentsSize < qevercloud::EDAM_ATTRIBUTE_LEN_MIN) )
             {
-                errorDescription.base() = QT_TRANSLATE_NOOP("", "User's comments have invalid size");
+                errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "User's comments have invalid size"));
                 errorDescription.details() = QString::number(commentsSize);
                 return false;
             }

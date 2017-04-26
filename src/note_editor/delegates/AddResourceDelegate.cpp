@@ -416,8 +416,8 @@ void AddResourceDelegate::onResourceSavedToStorage(QUuid requestId, QByteArray d
     // Otherwise need to build the image for the generic resource
     const Note * pNote = m_noteEditor.notePtr();
     if (!pNote) {
-        errorDescription.base() = QT_TRANSLATE_NOOP("", "can't set up the image corresponding to the resource: "
-                                                    "no note is set to the editor");
+        errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "can't set up the image corresponding to the resource: "
+                                                                      "no note is set to the editor"));
         QNWARNING(errorDescription);
         emit notifyError(errorDescription);
         return;
@@ -526,10 +526,10 @@ void AddResourceDelegate::onNewResourceHtmlInserted(const QVariant & data)
 
         auto errorIt = resultMap.find(QStringLiteral("error"));
         if (Q_UNLIKELY(errorIt == resultMap.end())) {
-            error.base() = QT_TRANSLATE_NOOP("", "can't parse the error of new resource html insertion from JavaScript");
+            error.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "can't parse the error of new resource html insertion from JavaScript"));
         }
         else {
-            error.base() = QT_TRANSLATE_NOOP("", "can't insert resource html into the note editor");
+            error.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "can't insert resource html into the note editor"));
             error.details() = errorIt.value().toString();
         }
 
