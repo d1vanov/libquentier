@@ -5173,7 +5173,7 @@ bool NoteEditorPrivate::print(QPrinter & printer, ErrorString & errorDescription
 
                 QString typeAttr = elementAttributes.value(QStringLiteral("type")).toString();
 
-                QString hashAttr = elementAttributes.value("hash").toString();
+                QString hashAttr = elementAttributes.value(QStringLiteral("hash")).toString();
                 if (Q_UNLIKELY(hashAttr.isEmpty())) {
                     errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "Can't print note: found generic resource image "
                                                                                   "without hash attribute"));
@@ -5233,7 +5233,7 @@ bool NoteEditorPrivate::print(QPrinter & printer, ErrorString & errorDescription
             {
                 QString enCryptImageFilePath = QStringLiteral(":/encrypted_area_icons/en-crypt/en-crypt.png");
                 QImage encryptedTextImage(enCryptImageFilePath, "PNG");
-                enCryptImageFilePath.prepend("qrc");
+                enCryptImageFilePath.prepend(QStringLiteral("qrc"));
 
                 writer.writeStartElement(QStringLiteral("img"));
 
@@ -5286,7 +5286,7 @@ bool NoteEditorPrivate::print(QPrinter & printer, ErrorString & errorDescription
     if (Q_UNLIKELY(reader.hasError()))
     {
         errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "Can't print note: failed to read the XML translated from "
-                                                                      "the note editor's HTML");
+                                                                      "the note editor's HTML"));
         errorDescription.details() = reader.errorString();
         errorDescription.details() += QStringLiteral("; error code = ");
         errorDescription.details() += QString::number(reader.error());

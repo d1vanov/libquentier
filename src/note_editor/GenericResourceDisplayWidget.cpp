@@ -42,7 +42,7 @@ GenericResourceDisplayWidget::GenericResourceDisplayWidget(QWidget * parent) :
     m_pResource(Q_NULLPTR),
     m_pResourceFileStorageManager(Q_NULLPTR),
     m_pFileIOProcessorAsync(Q_NULLPTR),
-    m_preferredFileSuffixes(Q_NULLPTR),
+    m_preferredFileSuffixes(),
     m_filterString(),
     m_saveResourceToFileRequestId(),
     m_saveResourceToStorageRequestId(),

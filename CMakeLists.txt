@@ -575,7 +575,10 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
   set_target_properties(${LIBNAME} PROPERTIES COMPILE_DEFINITIONS "BUILDING_QUENTIER_DLL=1")
 endif()
 
-add_definitions("-DQT_NO_CAST_FROM_ASCII -DQT_NO_CAST_TO_ASCII -DQT_NO_CAST_FROM_BYTEARRAY")
+add_definitions("-DQT_NO_CAST_FROM_ASCII -DQT_NO_CAST_TO_ASCII")
+if(USE_QT5)
+  add_definitions("-DQT_NO_CAST_FROM_BYTEARRAY")
+endif()
 
 set(TEST_HEADERS
     src/tests/EncryptionManagerTests.h

@@ -29,8 +29,8 @@
 
 QT_FORWARD_DECLARE_CLASS(QRegExp)
 
-#define RESOURCE_PLUGIN_HTML_OBJECT_TYPE "application/vnd.quentier.resource"
-#define ENCRYPTED_AREA_PLUGIN_OBJECT_TYPE "application/vnd.quentier.encrypt"
+#define RESOURCE_PLUGIN_HTML_OBJECT_TYPE QStringLiteral("application/vnd.quentier.resource")
+#define ENCRYPTED_AREA_PLUGIN_OBJECT_TYPE QStringLiteral("application/vnd.quentier.encrypt")
 
 namespace quentier {
 
