@@ -71,6 +71,8 @@ if(LIBCPP)
   list(APPEND THIRDPARTY_LIB_DIRS ${LIBCPP_LIB_DIR})
 endif()
 
+set(BUILD_WITH_AUTHENTICATION_MANAGER ON CACHE BOOL "If on, libquentier includes its own authentication manager, otherwise only the interface for it is included")
+
 include_directories(headers)
 
 set(NOTE_EDITOR_HEADERS
@@ -113,7 +115,13 @@ set(LOCAL_STORAGE_HEADERS
     headers/quentier/local_storage/NoteSearchQuery.h)
 
 set(SYNCHRONIZATION_HEADERS
-    headers/quentier/synchronization/SynchronizationManager.h)
+    headers/quentier/synchronization/SynchronizationManager.h
+    headers/quentier/synchronization/IAuthenticationManager.h)
+
+if(BUILD_WITH_AUTHENTICATION_MANAGER)
+  list(APPEND SYNCHRONIZATION_HEADERS
+    headers/quentier/synchronization/AuthenticationManager.h)
+endif()
 
 set(LOGGING_HEADERS
     headers/quentier/logging/QuentierLogger.h)
@@ -258,6 +266,11 @@ set(PRIVATE_HEADERS
     src/utility/SysInfo_p.h
     src/utility/StringUtils_p.h)
 
+if(BUILD_WITH_AUTHENTICATION_MANAGER)
+  list(APPEND PRIVATE_HEADERS
+       src/synchronization/AuthenticationManager_p.h)
+endif()
+
 if(NOT ${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
   list(APPEND PRIVATE_HEADERS
        src/utility/unix/StackTrace.h)
@@ -386,6 +399,7 @@ set(${PROJECT_NAME}_SOURCES
     src/local_storage/NoteSearchQuery.cpp
     src/local_storage/NoteSearchQueryData.cpp
     src/local_storage/Transaction.cpp
+    src/synchronization/IAuthenticationManager.cpp
     src/synchronization/InkNoteImageDownloader.cpp
     src/synchronization/NoteStore.cpp
     src/synchronization/UserStore.cpp
@@ -425,6 +439,12 @@ set(${PROJECT_NAME}_SOURCES
     src/utility/SysInfo.cpp
     src/utility/Utility.cpp
     src/utility/UidGenerator.cpp)
+
+if(BUILD_WITH_AUTHENTICATION_MANAGER)
+  list(APPEND ${PROJECT_NAME}_SOURCES
+    src/synchronization/AuthenticationManager.cpp
+    src/synchronization/AuthenticationManager_p.cpp)
+endif()
 
 if(NOT QUENTIER_USE_QT_WEB_ENGINE)
   list(APPEND ${PROJECT_NAME}_SOURCES
