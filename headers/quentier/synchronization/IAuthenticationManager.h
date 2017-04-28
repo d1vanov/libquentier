@@ -48,11 +48,18 @@ Q_SIGNALS:
     void sendAuthenticationTokenAndShardId(QString authToken, QString shardId, qevercloud::Timestamp expirationTime);
     void sendAuthenticationTokensForLinkedNotebooks(QHash<QString,QPair<QString,QString> > authenticationTokensAndShardIdsByLinkedNotebookGuids,
                                                     QHash<QString,qevercloud::Timestamp> authenticatonTokenExpirationTimesByLinkedNotebookGuids);
+    void authenticationRevokeReply(bool success, ErrorString errorDescription, qevercloud::UserID userId);
     void notifyError(ErrorString errorDescription);
 
 public Q_SLOTS:
     virtual void onRequestAuthenticationToken() = 0;
     virtual void onRequestAuthenticationTokensForLinkedNotebooks(QVector<QPair<QString,QString> > linkedNotebookGuidsAndShareKeys) = 0;
+
+    /**
+     * Use this slot to remove any previously received & cached authentication tokens and shard ids for a given user ID.
+     * @link authenticationRevokeReply @endlink signal would be emitted in response
+     */
+    virtual void onRequestAuthenticationRevoke(qevercloud::UserID userId) = 0;
 };
 
 } // namespace quentier

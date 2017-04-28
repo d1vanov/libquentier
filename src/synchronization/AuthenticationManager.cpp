@@ -22,14 +22,16 @@
 namespace quentier {
 
 AuthenticationManager::AuthenticationManager(const QString & consumerKey, const QString & consumerSecret,
-                                             const QString & host, QObject * parent) :
+                                             const QString & host, const Account & account, QObject * parent) :
     IAuthenticationManager(parent),
-    d_ptr(new AuthenticationManagerPrivate(consumerKey, consumerSecret, host, this))
+    d_ptr(new AuthenticationManagerPrivate(consumerKey, consumerSecret, host, account, this))
 {
     QObject::connect(d_ptr, QNSIGNAL(AuthenticationManagerPrivate,sendAuthenticationTokenAndShardId,QString,QString,qevercloud::Timestamp),
                      this, QNSIGNAL(AuthenticationManager,sendAuthenticationTokenAndShardId,QString,QString,qevercloud::Timestamp));
     QObject::connect(d_ptr, QNSIGNAL(AuthenticationManagerPrivate,sendAuthenticationTokensForLinkedNotebooks,QHash<QString,QPair<QString,QString> >,QHash<QString,qevercloud::Timestamp>),
                      this, QNSIGNAL(AuthenticationManager,sendAuthenticationTokensForLinkedNotebooks,QHash<QString,QPair<QString,QString> >,QHash<QString,qevercloud::Timestamp>));
+    QObject::connect(d_ptr, QNSIGNAL(AuthenticationManagerPrivate,authenticationRevokeReply,bool,ErrorString,qevercloud::UserID),
+                     this, QNSIGNAL(AuthenticationManager,authenticationRevokeReply,bool,ErrorString,qevercloud::UserID));
     QObject::connect(d_ptr, QNSIGNAL(AuthenticationManagerPrivate,notifyError,ErrorString),
                      this, QNSIGNAL(AuthenticationManager,notifyError,ErrorString));
 }
@@ -53,6 +55,12 @@ void AuthenticationManager::onRequestAuthenticationTokensForLinkedNotebooks(QVec
 {
     Q_D(AuthenticationManager);
     d->onRequestAuthenticationTokensForLinkedNotebooks(linkedNotebookGuidsAndShareKeys);
+}
+
+void AuthenticationManager::onRequestAuthenticationRevoke(qevercloud::UserID userId)
+{
+    Q_D(AuthenticationManager);
+    d->onRequestAuthenticationRevoke(userId);
 }
 
 } // namespace quentier
