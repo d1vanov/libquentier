@@ -20,7 +20,6 @@
 #define LIB_QUENTIER_SYNCHRONIZATION_AUTHENTICATION_MANAGER_H
 
 #include <quentier/synchronization/IAuthenticationManager.h>
-#include <quentier/types/Account.h>
 
 namespace quentier {
 
@@ -31,16 +30,11 @@ class AuthenticationManager: public IAuthenticationManager
     Q_OBJECT
 public:
     explicit AuthenticationManager(const QString & consumerKey, const QString & consumerSecret,
-                                   const QString & host, const Account & account, QObject * parent = Q_NULLPTR);
+                                   const QString & host, QObject * parent = Q_NULLPTR);
     virtual ~AuthenticationManager();
 
-public:
-    virtual bool isInProgress() const Q_DECL_OVERRIDE;
-
 public Q_SLOTS:
-    virtual void onRequestAuthenticationToken() Q_DECL_OVERRIDE;
-    virtual void onRequestAuthenticationTokensForLinkedNotebooks(QVector<QPair<QString,QString> > linkedNotebookGuidsAndShareKeys) Q_DECL_OVERRIDE;
-    virtual void onRequestAuthenticationRevoke(qevercloud::UserID userId) Q_DECL_OVERRIDE;
+    virtual void onAuthenticationRequest() Q_DECL_OVERRIDE;
 
 private:
     AuthenticationManager() Q_DECL_EQ_DELETE;

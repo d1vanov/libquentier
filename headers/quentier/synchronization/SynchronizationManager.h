@@ -19,6 +19,7 @@
 #ifndef LIB_QUENTIER_SYNCHRONIZATION_SYNCHRONIZATION_MANAGER_H
 #define LIB_QUENTIER_SYNCHRONIZATION_SYNCHRONIZATION_MANAGER_H
 
+#include <quentier/synchronization/IAuthenticationManager.h>
 #include <quentier/types/Account.h>
 #include <quentier/utility/Linkage.h>
 #include <quentier/utility/Macros.h>
@@ -45,9 +46,11 @@ public:
      * @param host - the host to use for the connection with the Evernote service - typically www.evernote.com
      *               but could be sandbox.evernote.com or some other one
      * @param localStorageManagerAsync - local storage manager
+     * @param authenticationManager - authentication manager (particular implementation of IAuthenticationManager abstract class)
      */
     SynchronizationManager(const QString & consumerKey, const QString & consumerSecret,
-                           const QString & host, LocalStorageManagerAsync & localStorageManagerAsync);
+                           const QString & host, LocalStorageManagerAsync & localStorageManagerAsync,
+                           IAuthenticationManager & authenticationManager);
 
     virtual ~SynchronizationManager();
 
@@ -62,7 +65,6 @@ public:
     bool paused() const;
 
 public Q_SLOTS:
-
     /**
      * Use this slot to set the current account for the synchronization manager. If the slot is called during the synchronization running,
      * it would stop, any internal caches belonging to previously selected account (if any) would be purged (but persistent settings

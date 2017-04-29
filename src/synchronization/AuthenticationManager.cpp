@@ -22,45 +22,23 @@
 namespace quentier {
 
 AuthenticationManager::AuthenticationManager(const QString & consumerKey, const QString & consumerSecret,
-                                             const QString & host, const Account & account, QObject * parent) :
+                                             const QString & host, QObject * parent) :
     IAuthenticationManager(parent),
-    d_ptr(new AuthenticationManagerPrivate(consumerKey, consumerSecret, host, account, this))
+    d_ptr(new AuthenticationManagerPrivate(consumerKey, consumerSecret, host, this))
 {
-    QObject::connect(d_ptr, QNSIGNAL(AuthenticationManagerPrivate,sendAuthenticationTokenAndShardId,QString,QString,qevercloud::Timestamp),
-                     this, QNSIGNAL(AuthenticationManager,sendAuthenticationTokenAndShardId,QString,QString,qevercloud::Timestamp));
-    QObject::connect(d_ptr, QNSIGNAL(AuthenticationManagerPrivate,sendAuthenticationTokensForLinkedNotebooks,QHash<QString,QPair<QString,QString> >,QHash<QString,qevercloud::Timestamp>),
-                     this, QNSIGNAL(AuthenticationManager,sendAuthenticationTokensForLinkedNotebooks,QHash<QString,QPair<QString,QString> >,QHash<QString,qevercloud::Timestamp>));
-    QObject::connect(d_ptr, QNSIGNAL(AuthenticationManagerPrivate,authenticationRevokeReply,bool,ErrorString,qevercloud::UserID),
-                     this, QNSIGNAL(AuthenticationManager,authenticationRevokeReply,bool,ErrorString,qevercloud::UserID));
-    QObject::connect(d_ptr, QNSIGNAL(AuthenticationManagerPrivate,notifyError,ErrorString),
-                     this, QNSIGNAL(AuthenticationManager,notifyError,ErrorString));
+    QObject::connect(d_ptr, QNSIGNAL(AuthenticationManagerPrivate,sendAuthenticationResult,bool,qevercloud::UserID,
+                                     QString,qevercloud::Timestamp,QString,QString,QString,ErrorString),
+                     this, QNSIGNAL(AuthenticationManager,sendAuthenticationResult,bool,qevercloud::UserID,
+                                    QString,qevercloud::Timestamp,QString,QString,QString,ErrorString));
 }
 
 AuthenticationManager::~AuthenticationManager()
 {}
 
-bool AuthenticationManager::isInProgress() const
-{
-    Q_D(const AuthenticationManager);
-    return d->isInProgress();
-}
-
-void AuthenticationManager::onRequestAuthenticationToken()
+void AuthenticationManager::onAuthenticationRequest()
 {
     Q_D(AuthenticationManager);
-    d->onRequestAuthenticationToken();
-}
-
-void AuthenticationManager::onRequestAuthenticationTokensForLinkedNotebooks(QVector<QPair<QString,QString> > linkedNotebookGuidsAndShareKeys)
-{
-    Q_D(AuthenticationManager);
-    d->onRequestAuthenticationTokensForLinkedNotebooks(linkedNotebookGuidsAndShareKeys);
-}
-
-void AuthenticationManager::onRequestAuthenticationRevoke(qevercloud::UserID userId)
-{
-    Q_D(AuthenticationManager);
-    d->onRequestAuthenticationRevoke(userId);
+    d->onAuthenticationRequest();
 }
 
 } // namespace quentier

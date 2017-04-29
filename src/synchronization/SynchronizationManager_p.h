@@ -21,16 +21,8 @@
 
 #include "RemoteToLocalSynchronizationManager.h"
 #include "SendLocalChangesManager.h"
+#include <quentier/synchronization/IAuthenticationManager.h>
 #include <quentier/types/Account.h>
-#include <quentier/types/ErrorString.h>
-
-#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
-#include <qt5qevercloud/QEverCloud.h>
-#include <qt5qevercloud/QEverCloudOAuth.h>
-#else
-#include <qt4qevercloud/QEverCloud.h>
-#include <qt4qevercloud/QEverCloudOAuth.h>
-#endif
 
 #if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
 #include <qt5keychain/keychain.h>
@@ -47,7 +39,8 @@ class SynchronizationManagerPrivate: public QObject
     Q_OBJECT
 public:
     SynchronizationManagerPrivate(const QString & consumerKey, const QString & consumerSecret,
-                                  const QString & host, LocalStorageManagerAsync & localStorageManagerAsync);
+                                  const QString & host, LocalStorageManagerAsync & localStorageManagerAsync,
+                                  IAuthenticationManager & authenticationManager);
     virtual ~SynchronizationManagerPrivate();
 
     bool active() const;
@@ -89,6 +82,7 @@ public Q_SLOTS:
 
 Q_SIGNALS:
 // private signals
+    void requestAuthentication();
     void sendAuthenticationTokenAndShardId(QString authToken, QString shardId, qevercloud::Timestamp expirationTime);
     void sendAuthenticationTokensForLinkedNotebooks(QHash<QString,QPair<QString,QString> > authenticationTokensAndShardIdsByLinkedNotebookGuids,
                                                     QHash<QString,qevercloud::Timestamp> authenticatonTokenExpirationTimesByLinkedNotebookGuids);
@@ -105,9 +99,9 @@ Q_SIGNALS:
     void stopSendingLocalChanges();
 
 private Q_SLOTS:
-    void onOAuthResult(bool result);
-    void onOAuthSuccess();
-    void onOAuthFailure();
+    void onOAuthResult(bool success, qevercloud::UserID userId, QString authToken,
+                       qevercloud::Timestamp authTokenExpirationTime, QString shardId,
+                       QString noteStoreUrl, QString webApiUrlPrefix, ErrorString errorDescription);
 
     void onKeychainJobFinished(QKeychain::Job * job);
 
@@ -147,7 +141,7 @@ private:
     SynchronizationManagerPrivate(const SynchronizationManagerPrivate & other) Q_DECL_EQ_DELETE;
     SynchronizationManagerPrivate & operator=(const SynchronizationManagerPrivate & other) Q_DECL_EQ_DELETE;
 
-    void createConnections();
+    void createConnections(IAuthenticationManager & authenticationManager);
 
     void readLastSyncParameters();
 
@@ -165,7 +159,20 @@ private:
     void authenticateImpl(const AuthContext::type authContext);
     void finalizeAuthentication();
 
-    void launchStoreOAuthResult(const qevercloud::EvernoteOAuthWebView::OAuthResult & result);
+    class AuthData: public Printable
+    {
+    public:
+        qevercloud::UserID      m_userId;
+        QString                 m_authToken;
+        qevercloud::Timestamp   m_expirationTime;
+        QString                 m_shardId;
+        QString                 m_noteStoreUrl;
+        QString                 m_webApiUrlPrefix;
+
+        virtual QTextStream & print(QTextStream & strm) const Q_DECL_OVERRIDE;
+    };
+
+    void launchStoreOAuthResult(const AuthData & result);
     void finalizeStoreOAuthResult();
 
     void finalizeRevokeAuthentication();
@@ -211,8 +218,7 @@ private:
 
     int                                     m_launchSyncPostponeTimerId;
 
-    qevercloud::EvernoteOAuthWebView        m_OAuthWebView;
-    qevercloud::EvernoteOAuthWebView::OAuthResult   m_OAuthResult;
+    AuthData                                m_OAuthResult;
     bool                                    m_authenticationInProgress;
 
     RemoteToLocalSynchronizationManager     m_remoteToLocalSyncManager;
@@ -233,7 +239,7 @@ private:
     QKeychain::WritePasswordJob             m_writeShardIdJob;
     bool                                    m_writingAuthToken;
     bool                                    m_writingShardId;
-    qevercloud::EvernoteOAuthWebView::OAuthResult   m_writtenOAuthResult;
+    AuthData                                m_writtenOAuthResult;
 
     QKeychain::DeletePasswordJob            m_deleteAuthTokenJob;
     QKeychain::DeletePasswordJob            m_deleteShardIdJob;

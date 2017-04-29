@@ -3,6 +3,8 @@
 
 @LIB_QUENTIER_QT_WEB_ENGINE_DEFINE@
 
+@LIB_QUENTIER_HAS_AUTHENTICATION_MANAGER_DEFINE@
+
 namespace quentier {
 
 inline int libraryVersion() { return @LIBQUENTIER_LIBRARY_VERSION@; }
