@@ -4520,6 +4520,9 @@ void RemoteToLocalSynchronizationManager::timerEvent(QTimerEvent * pEvent)
 
 qint32 RemoteToLocalSynchronizationManager::tryToGetFullNoteData(Note & note, ErrorString & errorDescription)
 {
+    QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::tryToGetFullNoteData: note guid = ")
+            << (note.hasGuid() ? note.guid() : QStringLiteral("<empty>")));
+
     if (!note.hasGuid())
     {
         errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "Detected the attempt to get full note's data for a note without guid"));

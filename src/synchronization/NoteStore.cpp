@@ -35,8 +35,10 @@ namespace quentier {
         errorDescription.details() += userException.exceptionData()->errorMessage; \
     }
 
-NoteStore::NoteStore(QSharedPointer<qevercloud::NoteStore> pQecNoteStore) :
-    m_pQecNoteStore(pQecNoteStore)
+NoteStore::NoteStore(QSharedPointer<qevercloud::NoteStore> pQecNoteStore, QObject * parent) :
+    QObject(parent),
+    m_pQecNoteStore(pQecNoteStore),
+    m_noteGuidByAsyncResultPtr()
 {
     QUENTIER_CHECK_PTR(m_pQecNoteStore)
 }
@@ -422,6 +424,43 @@ qint32 NoteStore::getNote(const bool withContent, const bool withResourcesData,
     return qevercloud::EDAMErrorCode::UNKNOWN;
 }
 
+bool NoteStore::getNoteAsync(const bool withContent, const bool withResourceData, const bool withResourcesRecognition,
+                             const bool withResourceAlternateData, const bool withSharedNotes,
+                             const bool withNoteAppDataValues, const bool withResourceAppDataValues,
+                             const bool withNoteLimits, const QString & noteGuid, ErrorString & errorDescription)
+{
+    if (Q_UNLIKELY(noteGuid.isEmpty())) {
+        errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "Detected the attempt to get "
+                                                                      "full note's data for empty note guid"));
+        return false;
+    }
+
+    qevercloud::NoteResultSpec noteResultSpec;
+    noteResultSpec.includeContent = withContent;
+    noteResultSpec.includeResourcesData = withResourceData;
+    noteResultSpec.includeResourcesRecognition = withResourcesRecognition;
+    noteResultSpec.includeResourcesAlternateData = withResourceAlternateData;
+    noteResultSpec.includeSharedNotes = withSharedNotes;
+    noteResultSpec.includeNoteAppDataValues = withNoteAppDataValues;
+    noteResultSpec.includeResourceAppDataValues = withResourceAppDataValues;
+    noteResultSpec.includeAccountLimits = withNoteLimits;
+
+    qevercloud::AsyncResult * pAsyncResult = m_pQecNoteStore->getNoteWithResultSpecAsync(noteGuid, noteResultSpec);
+    if (Q_UNLIKELY(!pAsyncResult)) {
+        errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "Can't get full note data: "
+                                                                      "internal error, QEverCloud library returned "
+                                                                      "null pointer to asynchronous result object"));
+        return false;
+    }
+
+    m_noteGuidByAsyncResultPtr[pAsyncResult] = noteGuid;
+
+
+    QObject::connect(pAsyncResult, QNSIGNAL(qevercloud::AsyncResult,finished,QVariant,QSharedPointer<qevercloud::EverCloudExceptionData>),
+                     this, QNSLOT(NoteStore,onGetNoteAsyncFinished,QVariant,QSharedPointer<qevercloud::EverCloudExceptionData>));
+    return true;
+}
+
 qint32 NoteStore::authenticateToSharedNotebook(const QString & shareKey, qevercloud::AuthenticationResult & authResult,
                                                ErrorString & errorDescription, qint32 & rateLimitSeconds)
 {
@@ -483,6 +522,71 @@ qint32 NoteStore::authenticateToSharedNotebook(const QString & shareKey, qevercl
     }
 
     return qevercloud::EDAMErrorCode::UNKNOWN;
+}
+
+void NoteStore::onGetNoteAsyncFinished(QVariant result, QSharedPointer<qevercloud::EverCloudExceptionData> exceptionData)
+{
+    QNDEBUG(QStringLiteral("NoteStore::onGetNoteAsyncFinished"));
+
+    QString noteGuid;
+
+    qevercloud::AsyncResult * pAsyncResult = qobject_cast<qevercloud::AsyncResult*>(sender());
+    if (pAsyncResult)
+    {
+        auto it = m_noteGuidByAsyncResultPtr.find(pAsyncResult);
+        if (it != m_noteGuidByAsyncResultPtr.end()) {
+            noteGuid = it.value();
+        }
+        else {
+            QNDEBUG(QStringLiteral("Couldn't find the note guid by async result ptr, will clear the container "
+                                   "to prevent it leaking memory"));
+            m_noteGuidByAsyncResultPtr.clear();
+        }
+    }
+    else
+    {
+        QNDEBUG(QStringLiteral("Couldn't get non-NULL pointer to AsyncResult, hence can't get the note guid "
+                               "to which the result corresponds, will clear the note guid by async result ptr "
+                               "container in order to prevent it leaking memory"));
+        m_noteGuidByAsyncResultPtr.clear();
+    }
+
+    Note note;
+    note.setGuid(noteGuid);
+
+    ErrorString errorDescription;
+    qint32 errorCode = 0;
+    qint32 rateLimitSeconds = -1;
+
+    if (!exceptionData.isNull())
+    {
+        QNDEBUG(QStringLiteral("Error: ") << exceptionData->errorMessage);
+
+        try
+        {
+            exceptionData->throwException();
+        }
+        catch(const qevercloud::EDAMUserException & userException)
+        {
+            errorCode = processEdamUserExceptionForGetNote(note, userException, errorDescription);
+        }
+        catch(const qevercloud::EDAMNotFoundException & notFoundException)
+        {
+            processEdamNotFoundException(notFoundException, errorDescription);
+            errorCode = qevercloud::EDAMErrorCode::UNKNOWN;
+        }
+        catch(const qevercloud::EDAMSystemException & systemException)
+        {
+            errorCode = processEdamSystemException(systemException, errorDescription, rateLimitSeconds);
+        }
+
+        emit getNoteAsyncFinished(errorCode, note, rateLimitSeconds, errorDescription);
+        return;
+    }
+
+    qevercloud::Note qecNote = result.value<qevercloud::Note>();
+    note = Note(qecNote);
+    emit getNoteAsyncFinished(errorCode, note, rateLimitSeconds, errorDescription);
 }
 
 qint32 NoteStore::processEdamUserExceptionForTag(const Tag & tag, const qevercloud::EDAMUserException & userException,

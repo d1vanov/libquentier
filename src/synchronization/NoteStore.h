@@ -19,8 +19,11 @@
 #ifndef LIB_QUENTIER_SYNCHRONIZATION_NOTE_STORE_H
 #define LIB_QUENTIER_SYNCHRONIZATION_NOTE_STORE_H
 
+#include <quentier/utility/Macros.h>
 #include <quentier/types/ErrorString.h>
 #include <QSharedPointer>
+#include <QObject>
+#include <QHash>
 
 #if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
 #include <qt5qevercloud/QEverCloud.h>
@@ -46,10 +49,11 @@ QT_FORWARD_DECLARE_CLASS(SavedSearch)
  * Quentier at the moment uses only several methods from those available in QEverCloud's NoteStore
  * so only the small subset of original NoteStore's API is wrapped here at the moment.
  */
-class NoteStore
+class NoteStore: public QObject
 {
+    Q_OBJECT
 public:
-    NoteStore(QSharedPointer<qevercloud::NoteStore> pQecNoteStore);
+    explicit NoteStore(QSharedPointer<qevercloud::NoteStore> pQecNoteStore, QObject * parent = Q_NULLPTR);
 
     QSharedPointer<qevercloud::NoteStore> getQecNoteStore();
 
@@ -92,10 +96,21 @@ public:
                    const bool withResourcesRecognition, const bool withResourceAlternateData,
                    Note & note, ErrorString & errorDescription, qint32 & rateLimitSeconds);
 
+    bool getNoteAsync(const bool withContent, const bool withResourceData, const bool withResourcesRecognition,
+                      const bool withResourceAlternateData, const bool withSharedNotes,
+                      const bool withNoteAppDataValues, const bool withResourceAppDataValues,
+                      const bool withNoteLimits, const QString & noteGuid, ErrorString & errorDescription);
+
     qint32 authenticateToSharedNotebook(const QString & shareKey, qevercloud::AuthenticationResult & authResult,
                                         ErrorString & errorDescription, qint32 & rateLimitSeconds);
-private:
 
+Q_SIGNALS:
+    void getNoteAsyncFinished(qint32 errorCode, Note note, qint32 rateLimitSeconds, ErrorString errorDescription);
+
+private Q_SLOTS:
+    void onGetNoteAsyncFinished(QVariant result, QSharedPointer<qevercloud::EverCloudExceptionData> exceptionData);
+
+private:
     struct UserExceptionSource
     {
         enum type {
@@ -133,12 +148,11 @@ private:
                                       ErrorString & errorDescription) const;
 
 private:
-    NoteStore() Q_DECL_EQ_DELETE;
-    NoteStore(const NoteStore & other) Q_DECL_EQ_DELETE;
-    NoteStore & operator=(const NoteStore & other) Q_DECL_EQ_DELETE;
+    Q_DISABLE_COPY(NoteStore)
 
 private:
-    QSharedPointer<qevercloud::NoteStore> m_pQecNoteStore;
+    QSharedPointer<qevercloud::NoteStore>       m_pQecNoteStore;
+    QHash<qevercloud::AsyncResult*, QString>    m_noteGuidByAsyncResultPtr;
 };
 
 } // namespace quentier
