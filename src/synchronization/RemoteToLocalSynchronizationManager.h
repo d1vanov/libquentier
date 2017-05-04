@@ -207,7 +207,10 @@ private Q_SLOTS:
     void onUpdateResourceFailed(Resource resource, ErrorString errorDescription, QUuid requestId);
 
     void onInkNoteImageDownloadFinished(bool status, QString inkNoteImageFilePath, ErrorString errorDescription);
-    void onNoteThumbnailDownloadingFinished(bool status, QString noteGuid, QString downloadedThumbnailImageFilePath, ErrorString errorDescription);
+    void onNoteThumbnailDownloadingFinished(bool status, QString noteGuid, QString downloadedThumbnailImageFilePath,
+                                            ErrorString errorDescription);
+
+    void onGetNoteAsyncFinished(qint32 errorCode, Note note, qint32 rateLimitSeconds, ErrorString errorDescription);
 
 private:
     void createConnections();
@@ -420,7 +423,9 @@ private:
 
     virtual void timerEvent(QTimerEvent * pEvent);
 
-    qint32 tryToGetFullNoteData(Note & note, ErrorString & errorDescription);
+    void getFullNoteDataAsync(const Note & note);
+    void getFullNoteDataAsyncAndAddToLocalStorage(const Note & note);
+    void getFullNoteDataAsyncAndUpdateInLocalStorage(const Note & note);
 
     void downloadSyncChunksAndLaunchSync(qint32 afterUsn);
 
@@ -632,6 +637,9 @@ private:
     QSet<QUuid>                             m_findNotebookForNotesWithConflictedResourcesRequestIds;
 
     QSet<QString>                           m_localUidsOfElementsAlreadyAttemptedToFindByName;
+
+    QSet<QString>                           m_guidsOfNotesPendingDownloadForAddingToLocalStorage;
+    QSet<QString>                           m_guidsOfNotesPendingDownloadForUpdatingInLocalStorage;
 
     QHash<int,Note>                         m_notesToAddPerAPICallPostponeTimerId;
     QHash<int,Note>                         m_notesToUpdatePerAPICallPostponeTimerId;

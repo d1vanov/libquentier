@@ -164,6 +164,8 @@ RemoteToLocalSynchronizationManager::RemoteToLocalSynchronizationManager(LocalSt
     m_resourceConflictedAndRemoteNotesPerNotebookGuid(),
     m_findNotebookForNotesWithConflictedResourcesRequestIds(),
     m_localUidsOfElementsAlreadyAttemptedToFindByName(),
+    m_guidsOfNotesPendingDownloadForAddingToLocalStorage(),
+    m_guidsOfNotesPendingDownloadForUpdatingInLocalStorage(),
     m_notesToAddPerAPICallPostponeTimerId(),
     m_notesToUpdatePerAPICallPostponeTimerId(),
     m_afterUsnForSyncChunkPerAPICallPostponeTimerId(),
@@ -550,45 +552,7 @@ template <>
 void RemoteToLocalSynchronizationManager::emitUpdateRequest<Note>(const Note & note, const Note *)
 {
     QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::emitUpdateRequest<Note>: note = ") << note);
-
-    const Notebook * pNotebook = getNotebookPerNote(note);
-    if (!pNotebook) {
-        ErrorString errorDescription(QT_TRANSLATE_NOOP("", "Detected attempt to update a note in the local storage "
-                                                       "during the synchronization before the note's notebook was found"));
-        QNWARNING(errorDescription << QStringLiteral(": ") << note);
-        emit failure(errorDescription);
-        return;
-    }
-
-    // Dealing with separate Evernote API call for getting the content of note to be updated
-    Note localNote = note;
-    ErrorString errorDescription;
-
-    qint32 postponeAPICallSeconds = tryToGetFullNoteData(localNote, errorDescription);
-    if (postponeAPICallSeconds < 0)
-    {
-        return;
-    }
-    else if (postponeAPICallSeconds > 0)
-    {
-        int timerId = startTimer(SEC_TO_MSEC(postponeAPICallSeconds));
-        if (Q_UNLIKELY(timerId == 0)) {
-            ErrorString errorDescription(QT_TRANSLATE_NOOP("", "Failed to start a timer to postpone the Evernote API call "
-                                                           "due to rate limit exceeding"));
-            emit failure(errorDescription);
-            return;
-        }
-
-        m_notesToUpdatePerAPICallPostponeTimerId[timerId] = localNote;
-        emit rateLimitExceeded(postponeAPICallSeconds);
-        return;
-    }
-
-    QUuid updateNoteRequestId = QUuid::createUuid();
-    Q_UNUSED(m_updateNoteRequestIds.insert(updateNoteRequestId));
-
-    localNote.setNotebookLocalUid(pNotebook->localUid());
-    emit updateNote(localNote, /* update resources = */ true, /* update tags = */ true, updateNoteRequestId);
+    getFullNoteDataAsyncAndUpdateInLocalStorage(note);
 }
 
 #define CHECK_PAUSED() \
@@ -1108,7 +1072,8 @@ void RemoteToLocalSynchronizationManager::onFindNoteFailed(Note note, bool withR
 {
     CHECK_PAUSED();
 
-    Q_UNUSED(withResourceBinaryData);
+    Q_UNUSED(withResourceBinaryData)
+    Q_UNUSED(errorDescription)
 
     QSet<QUuid>::iterator it = m_findNoteByGuidRequestIds.find(requestId);
     if (it != m_findNoteByGuidRequestIds.end())
@@ -1128,29 +1093,8 @@ void RemoteToLocalSynchronizationManager::onFindNoteFailed(Note note, bool withR
         // Removing the note from the list of notes waiting for processing
         Q_UNUSED(m_notes.erase(it));
 
-        qint32 postponeAPICallSeconds = tryToGetFullNoteData(note, errorDescription);
-        if (postponeAPICallSeconds < 0)
-        {
-            return;
-        }
-        else if (postponeAPICallSeconds > 0)
-        {
-            int timerId = startTimer(SEC_TO_MSEC(postponeAPICallSeconds));
-            if (Q_UNLIKELY(timerId == 0)) {
-                ErrorString errorDescription(QT_TRANSLATE_NOOP("", "Failed to start a timer to postpone the Evernote API call "
-                                                               "due to rate limit exceeding"));
-                emit failure(errorDescription);
-                return;
-            }
-
-            m_notesToAddPerAPICallPostponeTimerId[timerId] = note;
-            emit rateLimitExceeded(postponeAPICallSeconds);
-            return;
-        }
-
-        // Note duplicates by title are completely allowed, so can add the note as is,
-        // without any conflict by title resolution
-        emitAddRequest(note);
+        getFullNoteDataAsyncAndAddToLocalStorage(note);
+        return;
     }
 
     ResourceDataPerFindNoteRequestId::iterator rit = m_resourcesWithFindRequestIdsPerFindNoteRequestId.find(requestId);
@@ -2438,8 +2382,111 @@ void RemoteToLocalSynchronizationManager::onLastSyncParametersReceived(qint32 la
     start(m_lastUsnOnStart);
 }
 
+void RemoteToLocalSynchronizationManager::onGetNoteAsyncFinished(qint32 errorCode, Note note, qint32 rateLimitSeconds,
+                                                                 ErrorString errorDescription)
+{
+    QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::onGetNoteAsyncFinished: error code = ")
+            << errorCode << QStringLiteral(", rate limit seconds = ") << rateLimitSeconds
+            << QStringLiteral(", error description: ") << errorDescription
+            << QStringLiteral(", note: ") << note);
+
+    if (Q_UNLIKELY(!note.hasGuid())) {
+        errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "Internal error: just downloaded note has no guid"));
+        QNWARNING(errorDescription << QStringLiteral(", note: ") << note);
+        emit failure(errorDescription);
+        return;
+    }
+
+    QString noteGuid = note.guid();
+
+    auto addIt = m_guidsOfNotesPendingDownloadForAddingToLocalStorage.find(noteGuid);
+    auto updateIt = ((addIt == m_guidsOfNotesPendingDownloadForUpdatingInLocalStorage.end())
+                     ? m_guidsOfNotesPendingDownloadForUpdatingInLocalStorage.find(noteGuid)
+                     : m_guidsOfNotesPendingDownloadForUpdatingInLocalStorage.end());
+
+    bool needToAddNote = (addIt != m_guidsOfNotesPendingDownloadForAddingToLocalStorage.end());
+    bool needToUpdateNote = (updateIt != m_guidsOfNotesPendingDownloadForUpdatingInLocalStorage.end());
+
+    if (needToAddNote) {
+        Q_UNUSED(m_guidsOfNotesPendingDownloadForAddingToLocalStorage.erase(addIt))
+    }
+    else if (needToUpdateNote) {
+        Q_UNUSED(m_guidsOfNotesPendingDownloadForUpdatingInLocalStorage.erase(updateIt))
+    }
+
+    if (!needToAddNote && !needToUpdateNote) {
+        QNDEBUG(QStringLiteral("Found no note waiting for downloading for either being added to the local storage"
+                               "or for being updated in the local storage"));
+        return;
+    }
+
+    if (errorCode == qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED)
+    {
+        if (rateLimitSeconds <= 0) {
+            errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "QEverCloud or Evernote protocol error: caught RATE_LIMIT_REACHED "
+                                                        "exception but the number of seconds to wait is zero or negative"));
+            errorDescription.details() = QString::number(rateLimitSeconds);
+            emit failure(errorDescription);
+            return;
+        }
+
+        int timerId = startTimer(SEC_TO_MSEC(rateLimitSeconds));
+        if (Q_UNLIKELY(timerId == 0)) {
+            ErrorString errorDescription(QT_TRANSLATE_NOOP("", "Failed to start a timer to postpone the Evernote API call "
+                                                           "due to rate limit exceeding"));
+            emit failure(errorDescription);
+            return;
+        }
+
+        if (needToAddNote) {
+            m_notesToAddPerAPICallPostponeTimerId[timerId] = note;
+        }
+        else {
+            m_notesToUpdatePerAPICallPostponeTimerId[timerId] = note;
+        }
+
+        emit rateLimitExceeded(rateLimitSeconds);
+        return;
+    }
+    else if (errorCode == qevercloud::EDAMErrorCode::AUTH_EXPIRED)
+    {
+        handleAuthExpiration();
+        return;
+    }
+    else if (errorCode != 0) {
+        emit failure(errorDescription);
+        return;
+    }
+
+    if (needToAddNote) {
+        emitAddRequest(note);
+        return;
+    }
+
+    const Notebook * pNotebook = getNotebookPerNote(note);
+    if (!pNotebook) {
+        ErrorString errorDescription(QT_TRANSLATE_NOOP("", "Detected attempt to update note in the local storage "
+                                                       "during the synchronization before the note's notebook was found"));
+        QNWARNING(errorDescription << QStringLiteral(": ") << note);
+        emit failure(errorDescription);
+        return;
+    }
+
+    note.setNotebookLocalUid(pNotebook->localUid());
+    QUuid updateNoteRequestId = QUuid::createUuid();
+    Q_UNUSED(m_updateNoteRequestIds.insert(updateNoteRequestId));
+    QNTRACE(QStringLiteral("Emitting the request to update note in local storage: request id = ")
+            << updateNoteRequestId << QStringLiteral(", note; ") << note);
+    emit updateNote(note, /* update resources = */ true, /* update tags = */ true, updateNoteRequestId);
+}
+
 void RemoteToLocalSynchronizationManager::createConnections()
 {
+    QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::createConnections"));
+
+    QObject::connect(&m_noteStore, QNSIGNAL(NoteStore,getNoteAsyncFinished,qint32,Note,qint32,ErrorString),
+                     this, QNSLOT(RemoteToLocalSynchronizationManager,onGetNoteAsyncFinished,qint32,Note,qint32,ErrorString));
+
     // Connect local signals with localStorageManagerThread's slots
     QObject::connect(this, QNSIGNAL(RemoteToLocalSynchronizationManager,addUser,User,QUuid),
                      &m_localStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,onAddUserRequest,User,QUuid));
@@ -4281,6 +4328,9 @@ void RemoteToLocalSynchronizationManager::clear()
 
     m_localUidsOfElementsAlreadyAttemptedToFindByName.clear();
 
+    m_guidsOfNotesPendingDownloadForAddingToLocalStorage.clear();
+    m_guidsOfNotesPendingDownloadForUpdatingInLocalStorage.clear();
+
     auto notesToAddPerAPICallPostponeTimerIdEnd = m_notesToAddPerAPICallPostponeTimerId.end();
     for(auto it = m_notesToAddPerAPICallPostponeTimerId.begin(); it != notesToAddPerAPICallPostponeTimerIdEnd; ++it) {
         int key = it.key();
@@ -4419,29 +4469,9 @@ void RemoteToLocalSynchronizationManager::timerEvent(QTimerEvent * pEvent)
     if (noteToAddIt != m_notesToAddPerAPICallPostponeTimerId.end())
     {
         Note note = noteToAddIt.value();
-
         Q_UNUSED(m_notesToAddPerAPICallPostponeTimerId.erase(noteToAddIt));
 
-        ErrorString errorDescription;
-        qint32 postponeAPICallSeconds = tryToGetFullNoteData(note, errorDescription);
-        if (postponeAPICallSeconds > 0)
-        {
-            int timerId = startTimer(SEC_TO_MSEC(postponeAPICallSeconds));
-            if (Q_UNLIKELY(timerId == 0)) {
-                ErrorString errorDescription(QT_TRANSLATE_NOOP("", "Failed to start a timer to postpone the Evernote API call "
-                                                               "due to rate limit exceeding"));
-                emit failure(errorDescription);
-                return;
-            }
-
-            m_notesToAddPerAPICallPostponeTimerId[timerId] = note;
-            emit rateLimitExceeded(postponeAPICallSeconds);
-        }
-        else if (postponeAPICallSeconds == 0)
-        {
-            emitAddRequest(note);
-        }
-
+        getFullNoteDataAsyncAndAddToLocalStorage(note);
         return;
     }
 
@@ -4449,30 +4479,10 @@ void RemoteToLocalSynchronizationManager::timerEvent(QTimerEvent * pEvent)
     if (noteToUpdateIt != m_notesToUpdatePerAPICallPostponeTimerId.end())
     {
         Note noteToUpdate = noteToUpdateIt.value();
-
         Q_UNUSED(m_notesToUpdatePerAPICallPostponeTimerId.erase(noteToUpdateIt));
 
-        ErrorString errorDescription;
-        qint32 postponeAPICallSeconds = tryToGetFullNoteData(noteToUpdate, errorDescription);
-        if (postponeAPICallSeconds > 0)
-        {
-            int timerId = startTimer(SEC_TO_MSEC(postponeAPICallSeconds));
-            if (timerId == 0) {
-                ErrorString errorDescription(QT_TRANSLATE_NOOP("", "Failed to start a timer to postpone the Evernote API call "
-                                                               "due to rate limit exceeding"));
-                emit failure(errorDescription);
-                return;
-            }
-
-            m_notesToUpdatePerAPICallPostponeTimerId[timerId] = noteToUpdate;
-            emit rateLimitExceeded(postponeAPICallSeconds);
-        }
-        else if (postponeAPICallSeconds == 0)
-        {
-            // NOTE: workarounding the stupidity of MSVC 2013
-            emitUpdateRequest<Note>(noteToUpdate, static_cast<const Note*>(Q_NULLPTR));
-        }
-
+        // NOTE: workarounding the stupidity of MSVC 2013
+        emitUpdateRequest(noteToUpdate, static_cast<const Note*>(Q_NULLPTR));
         return;
     }
 
@@ -4518,53 +4528,97 @@ void RemoteToLocalSynchronizationManager::timerEvent(QTimerEvent * pEvent)
     }
 }
 
-qint32 RemoteToLocalSynchronizationManager::tryToGetFullNoteData(Note & note, ErrorString & errorDescription)
+void RemoteToLocalSynchronizationManager::getFullNoteDataAsync(const Note & note)
 {
-    QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::tryToGetFullNoteData: note guid = ")
-            << (note.hasGuid() ? note.guid() : QStringLiteral("<empty>")));
+    QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::getFullNoteDataAsync: ") << note);
 
-    if (!note.hasGuid())
-    {
-        errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "Detected the attempt to get full note's data for a note without guid"));
+    if (!note.hasGuid()) {
+        ErrorString errorDescription(QT_TRANSLATE_NOOP("", "Detected the attempt to get full note's data for a note without guid"));
         APPEND_NOTE_DETAILS(errorDescription, note)
-
         QNWARNING(errorDescription << QStringLiteral(": ") << note);
-        return -1;
+        return;
     }
 
     bool withContent = true;
     bool withResourceData = true;
     bool withResourceRecognition = true;
     bool withResourceAlternateData = true;
-    qint32 rateLimitSeconds = 0;
+    bool withSharedNotes = true;
+    bool withNoteAppDataValues = true;
+    bool withResourceAppDataValues = true;
+    bool withNoteLimits = syncingLinkedNotebooksContent();
 
-    qint32 errorCode = m_noteStore.getNote(withContent, withResourceData,
-                                           withResourceRecognition,
-                                           withResourceAlternateData,
-                                           note, errorDescription, rateLimitSeconds);
-    if (errorCode == qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED)
-    {
-        if (rateLimitSeconds <= 0) {
-            errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "QEverCloud or Evernote protocol error: caught RATE_LIMIT_REACHED "
-                                                        "exception but the number of seconds to wait is zero or negative"));
-            errorDescription.details() = QString::number(rateLimitSeconds);
-            emit failure(errorDescription);
-            return -1;
-        }
-
-        return rateLimitSeconds;
-    }
-    else if (errorCode == qevercloud::EDAMErrorCode::AUTH_EXPIRED)
-    {
-        handleAuthExpiration();
-        return -1;
-    }
-    else if (errorCode != 0) {
+    ErrorString errorDescription;
+    bool res = m_noteStore.getNoteAsync(withContent, withResourceData, withResourceRecognition,
+                                        withResourceAlternateData, withSharedNotes,
+                                        withNoteAppDataValues, withResourceAppDataValues,
+                                        withNoteLimits, note.guid(), errorDescription);
+    if (!res) {
+        APPEND_NOTE_DETAILS(errorDescription, note)
+        QNWARNING(errorDescription << QStringLiteral(", note: ") << note);
         emit failure(errorDescription);
-        return -1;
+    }
+}
+
+void RemoteToLocalSynchronizationManager::getFullNoteDataAsyncAndAddToLocalStorage(const Note & note)
+{
+    QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::getFullNoteDataAsyncAndAddToLocalStorage: ") << note);
+
+    if (Q_UNLIKELY(!note.hasGuid()))
+    {
+        ErrorString errorDescription(QT_TRANSLATE_NOOP("", "Internal error: the synced note to be added "
+                                                       "to the local storage has no guid"));
+        APPEND_NOTE_DETAILS(errorDescription, note)
+
+        QNWARNING(errorDescription << QStringLiteral(", note: ") << note);
+        emit failure(errorDescription);
+        return;
     }
 
-    return 0;
+    QString noteGuid = note.guid();
+
+    auto it = m_guidsOfNotesPendingDownloadForAddingToLocalStorage.find(noteGuid);
+    if (Q_UNLIKELY(it != m_guidsOfNotesPendingDownloadForAddingToLocalStorage.end())) {
+        QNDEBUG(QStringLiteral("Note with guid ") << noteGuid << QStringLiteral(" is already being downloaded"));
+        return;
+    }
+
+    QNTRACE(QStringLiteral("Adding note guid into the list of those pending download for adding to the local storage: ")
+            << noteGuid);
+    Q_UNUSED(m_guidsOfNotesPendingDownloadForAddingToLocalStorage.insert(noteGuid))
+
+    getFullNoteDataAsync(note);
+}
+
+void RemoteToLocalSynchronizationManager::getFullNoteDataAsyncAndUpdateInLocalStorage(const Note & note)
+{
+    QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::getFullNoteDataAsyncAndUpdateInLocalStorage: ")
+            << note);
+
+    if (Q_UNLIKELY(!note.hasGuid()))
+    {
+        ErrorString errorDescription(QT_TRANSLATE_NOOP("", "Internal error: the synced note to be updated "
+                                                       "in the local storage has no guid"));
+        APPEND_NOTE_DETAILS(errorDescription, note)
+
+        QNWARNING(errorDescription << QStringLiteral(", note: ") << note);
+        emit failure(errorDescription);
+        return;
+    }
+
+    QString noteGuid = note.guid();
+
+    auto it = m_guidsOfNotesPendingDownloadForUpdatingInLocalStorage.find(noteGuid);
+    if (Q_UNLIKELY(it != m_guidsOfNotesPendingDownloadForUpdatingInLocalStorage.end())) {
+        QNDEBUG(QStringLiteral("Note with guid ") << noteGuid << QStringLiteral(" is already being downloaded"));
+        return;
+    }
+
+    QNTRACE(QStringLiteral("Adding note guid into the list of those pending download for update in the local storage: ")
+            << noteGuid);
+    Q_UNUSED(m_guidsOfNotesPendingDownloadForUpdatingInLocalStorage.insert(noteGuid))
+
+    getFullNoteDataAsync(note);
 }
 
 void RemoteToLocalSynchronizationManager::downloadSyncChunksAndLaunchSync(qint32 afterUsn)
@@ -5597,7 +5651,6 @@ void RemoteToLocalSynchronizationManager::processConflictedElement(const Element
                                                                    const QString & typeName, ElementType & element)
 {
     setConflicted(typeName, element);
-
     emitUpdateRequest(element, &remoteElement);
 }
 
