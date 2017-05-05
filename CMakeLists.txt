@@ -27,6 +27,7 @@ include(LibquentierCompilerSettings)
 include(LibquentierAdditionalCompilerWarnings)
 include(LibquentierLinkerSettings)
 include(LibquentierSetupQt)
+include(LibquentierUpdateTranslations)
 include(LibquentierFindLibXml2)
 include(LibquentierFindOpenSSL)
 include(LibquentierFindBoost)
@@ -528,20 +529,13 @@ qt_wrap_ui(${PROJECT_NAME}_FORMS_HEADERS ${FORMS})
 
 set(${PROJECT_NAME}_TR_SOURCES
     ${${PROJECT_NAME}_HEADERS}
-    ${${PROJECT_NAME}_SOURCES}
-    ${FORMS})
+    ${${PROJECT_NAME}_SOURCES})
 
 set(${PROJECT_NAME}_TR_FILES
     translations/libquentier_ru.ts)
 
-if(UPDATE_TRANSLATIONS)
-  qt_create_translation(${PROJECT_NAME}_MESSAGES ${${PROJECT_NAME}_TR_SOURCES} ${${PROJECT_NAME}_TR_FILES})
-  qt_add_translation(${PROJECT_NAME}_QM_FILES ${${PROJECT_NAME}_TR_FILES})
-  add_custom_target(${PROJECT_NAME}_messages DEPENDS ${${PROJECT_NAME}_TRANSLATION})
-  add_custom_target(${PROJECT_NAME}_translations DEPENDS ${${PROJECT_NAME}_QM_FILES})
-else()
-  set(${PROJECT_NAME}_QM_FILES "")
-endif()
+set(${PROJECT_NAME}_QM_FILES "")
+update_translation("${${PROJECT_NAME}_TR_SOURCES}" "${FORMS}" "${${PROJECT_NAME}_TR_FILES}")
 
 if(USE_QT5)
   set(LIBQUENTIER_QT_VERSION "qt5")
@@ -562,8 +556,7 @@ add_library(${LIBNAME} SHARED
             ${${PROJECT_NAME}_HEADERS}
             ${${PROJECT_NAME}_SOURCES}
             ${${PROJECT_NAME}_RESOURCES_RCC}
-            ${${PROJECT_NAME}_FORMS_HEADERS}
-            ${${PROJECT_NAME}_QM_FILES})
+            ${${PROJECT_NAME}_FORMS_HEADERS})
 
 # installation settings, needed for target properties
 if(NOT CMAKE_INSTALL_LIBDIR)
