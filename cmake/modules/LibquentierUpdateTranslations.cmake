@@ -46,4 +46,17 @@ macro(update_translation SOURCES FORMS TRANSLATIONS)
   endif()
 
   add_custom_target(lupdate COMMAND ${LUPDATE} -verbose \"${fake_pro_file}\" DEPENDS ${fake_pro_file})
+
+  add_custom_target(lrelease)
+  foreach(translation_file ${TRANSLATIONS})
+    string(LENGTH ${translation_file} TR_FILE_LEN)
+    string(FIND ${translation_file} "_" BEGIN_POS REVERSE)
+    math(EXPR BEGIN_POS "${BEGIN_POS}+1")
+    string(FIND ${translation_file} "." END_POS REVERSE)
+    math(EXPR LANG_CODE_LEN "${END_POS}-${BEGIN_POS}")
+    string(SUBSTRING ${translation_file} ${BEGIN_POS} ${LANG_CODE_LEN} LANG_CODE)
+    set(QM_FILE "${PROJECT_BINARY_DIR}/translations/libquentier_${LANG_CODE}.qm")
+    add_custom_command(COMMAND ${LRELEASE} \"${PROJECT_SOURCE_DIR}/${translation_file}\" -qm \"${QM_FILE}\" TARGET lrelease)
+  endforeach()
+
 endmacro()
