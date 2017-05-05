@@ -203,10 +203,10 @@ void EncryptSelectedTextDelegate::onEncryptionScriptDone(const QVariant & data)
 
         auto errorIt = resultMap.find(QStringLiteral("error"));
         if (Q_UNLIKELY(errorIt == resultMap.end())) {
-            error.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "can't parse the error of text encryption from JavaScript"));
+            error.setBase(QT_TRANSLATE_NOOP("", "can't parse the error of text encryption from JavaScript"));
         }
         else {
-            error.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "can't encrypt the selected text"));
+            error.setBase(QT_TRANSLATE_NOOP("", "can't encrypt the selected text"));
             error.details() = errorIt.value().toString();
         }
 

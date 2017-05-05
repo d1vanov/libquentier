@@ -26,7 +26,7 @@ namespace quentier {
 #define CATCH_THRIFT_EXCEPTION() \
     catch(const qevercloud::ThriftException & thriftException) \
     { \
-        errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "Thrift exception")); \
+        errorDescription.setBase(QT_TRANSLATE_NOOP("", "Thrift exception")); \
         errorDescription.details() = QStringLiteral("type = "); \
         errorDescription.details() += QString::number(thriftException.type()); \
         errorDescription.details() += QStringLiteral(": "); \
@@ -38,7 +38,7 @@ namespace quentier {
 #define CATCH_EVER_CLOUD_EXCEPTION() \
     catch(const qevercloud::EverCloudException & everCloudException) \
     { \
-        errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "QEverCloud exception")); \
+        errorDescription.setBase(QT_TRANSLATE_NOOP("", "QEverCloud exception")); \
         errorDescription.details() = QString::fromUtf8(everCloudException.what()); \
         QNWARNING(errorDescription); \
         return false; \
@@ -47,7 +47,7 @@ namespace quentier {
 #define CATCH_STD_EXCEPTION() \
     catch(const std::exception & e) \
     { \
-        errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "std::exception")); \
+        errorDescription.setBase(QT_TRANSLATE_NOOP("", "std::exception")); \
         errorDescription.details() = QString::fromUtf8(e.what()); \
         QNWARNING(errorDescription); \
         return false; \
@@ -140,25 +140,25 @@ qint32 UserStore::processEdamUserException(const qevercloud::EDAMUserException &
     switch(userException.errorCode)
     {
     case qevercloud::EDAMErrorCode::BAD_DATA_FORMAT:
-        errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "BAD_DATA_FORMAT exception"));
+        errorDescription.setBase(QT_TRANSLATE_NOOP("", "BAD_DATA_FORMAT exception"));
         break;
     case qevercloud::EDAMErrorCode::INTERNAL_ERROR:
-        errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "INTERNAL_ERROR exception"));
+        errorDescription.setBase(QT_TRANSLATE_NOOP("", "INTERNAL_ERROR exception"));
         break;
     case qevercloud::EDAMErrorCode::TAKEN_DOWN:
-        errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "TAKEN_DOWN exception"));
+        errorDescription.setBase(QT_TRANSLATE_NOOP("", "TAKEN_DOWN exception"));
         break;
     case qevercloud::EDAMErrorCode::INVALID_AUTH:
-        errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "INVALID_AUTH exception"));
+        errorDescription.setBase(QT_TRANSLATE_NOOP("", "INVALID_AUTH exception"));
         break;
     case qevercloud::EDAMErrorCode::AUTH_EXPIRED:
-        errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "AUTH_EXPIRED exception"));
+        errorDescription.setBase(QT_TRANSLATE_NOOP("", "AUTH_EXPIRED exception"));
         break;
     case qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED:
-        errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "RATE_LIMIT_REACHED exception"));
+        errorDescription.setBase(QT_TRANSLATE_NOOP("", "RATE_LIMIT_REACHED exception"));
         break;
     default:
-        errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "Error"));
+        errorDescription.setBase(QT_TRANSLATE_NOOP("", "Error"));
         errorDescription.details() = QStringLiteral("error code = ");
         errorDescription.details() += QString::number(userException.errorCode);
         break;
@@ -187,11 +187,11 @@ qint32 UserStore::processEdamSystemException(const qevercloud::EDAMSystemExcepti
     if (systemException.errorCode == qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED)
     {
         if (!systemException.rateLimitDuration.isSet()) {
-            errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "Evernote API rate limit exceeded but "
-                                                                          "no rate limit duration is available"));
+            errorDescription.setBase(QT_TRANSLATE_NOOP("", "Evernote API rate limit exceeded but "
+                                                       "no rate limit duration is available"));
         }
         else {
-            errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "Evernote API rate limit exceeded, retry in"));
+            errorDescription.setBase(QT_TRANSLATE_NOOP("", "Evernote API rate limit exceeded, retry in"));
             errorDescription.details() = QString::number(systemException.rateLimitDuration.ref());
             errorDescription.details() += QStringLiteral(" sec");
             rateLimitSeconds = systemException.rateLimitDuration.ref();
@@ -199,7 +199,7 @@ qint32 UserStore::processEdamSystemException(const qevercloud::EDAMSystemExcepti
     }
     else
     {
-        errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "Caught EDAM system exception, error code "));
+        errorDescription.setBase(QT_TRANSLATE_NOOP("", "Caught EDAM system exception, error code "));
         errorDescription.details() += QStringLiteral("error code = ");
         errorDescription.details() += ToString(systemException.errorCode);
 

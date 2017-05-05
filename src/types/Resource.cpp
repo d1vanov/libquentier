@@ -146,24 +146,24 @@ bool Resource::checkParameters(ErrorString & errorDescription) const
     const qevercloud::Resource & enResource = d->m_qecResource;
 
     if (localUid().isEmpty() && !enResource.guid.isSet()) {
-        errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "Both resource's local and remote guids are empty"));
+        errorDescription.setBase(QT_TRANSLATE_NOOP("", "Both resource's local and remote guids are empty"));
         return false;
     }
 
     if (enResource.guid.isSet() && !checkGuid(enResource.guid.ref())) {
-        errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "Resource's guid is invalid"));
+        errorDescription.setBase(QT_TRANSLATE_NOOP("", "Resource's guid is invalid"));
         errorDescription.details() = enResource.guid.ref();
         return false;
     }
 
     if (enResource.updateSequenceNum.isSet() && !checkUpdateSequenceNumber(enResource.updateSequenceNum)) {
-        errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "Resource's update sequence number is invalid"));
+        errorDescription.setBase(QT_TRANSLATE_NOOP("", "Resource's update sequence number is invalid"));
         errorDescription.details() = QString::number(enResource.updateSequenceNum.ref());
         return false;
     }
 
     if (enResource.noteGuid.isSet() && !checkGuid(enResource.noteGuid.ref())) {
-        errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "Resource's note guid is invalid"));
+        errorDescription.setBase(QT_TRANSLATE_NOOP("", "Resource's note guid is invalid"));
         errorDescription.details() = enResource.noteGuid.ref();
         return false;
     }
@@ -171,25 +171,25 @@ bool Resource::checkParameters(ErrorString & errorDescription) const
     if (enResource.data.isSet())
     {
         if (!enResource.data->body.isSet()) {
-            errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "Resource's data body is not set"));
+            errorDescription.setBase(QT_TRANSLATE_NOOP("", "Resource's data body is not set"));
             return false;
         }
 
         if (!enResource.data->size.isSet()) {
-            errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "Resource's data size is not set"));
+            errorDescription.setBase(QT_TRANSLATE_NOOP("", "Resource's data size is not set"));
             return false;
         }
 
         if (!enResource.data->bodyHash.isSet())
         {
-            errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "Resource's data hash is not set"));
+            errorDescription.setBase(QT_TRANSLATE_NOOP("", "Resource's data hash is not set"));
             return false;
         }
         else
         {
             qint32 hashSize = static_cast<qint32>(enResource.data->bodyHash->size());
             if (hashSize != qevercloud::EDAM_HASH_LEN) {
-                errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "Resource's data hash has invalid size"));
+                errorDescription.setBase(QT_TRANSLATE_NOOP("", "Resource's data hash has invalid size"));
                 errorDescription.details() = QString::fromLocal8Bit(enResource.data->bodyHash.ref());
                 return false;
             }
@@ -199,25 +199,25 @@ bool Resource::checkParameters(ErrorString & errorDescription) const
     if (enResource.recognition.isSet())
     {
         if (!enResource.recognition->body.isSet()) {
-            errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "Resource's recognition data body is not set"));
+            errorDescription.setBase(QT_TRANSLATE_NOOP("", "Resource's recognition data body is not set"));
             return false;
         }
 
         if (!enResource.recognition->size.isSet()) {
-            errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "Resource's recognition data size is not set"));
+            errorDescription.setBase(QT_TRANSLATE_NOOP("", "Resource's recognition data size is not set"));
             return false;
         }
 
         if (!enResource.recognition->bodyHash.isSet())
         {
-            errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "Resource's recognition data hash is not set"));
+            errorDescription.setBase(QT_TRANSLATE_NOOP("", "Resource's recognition data hash is not set"));
             return false;
         }
         else
         {
             qint32 hashSize = static_cast<qint32>(enResource.recognition->bodyHash->size());
             if (hashSize != qevercloud::EDAM_HASH_LEN) {
-                errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "Resource's recognition data hash has invalid size"));
+                errorDescription.setBase(QT_TRANSLATE_NOOP("", "Resource's recognition data hash has invalid size"));
                 errorDescription.details() = QString::fromLocal8Bit(enResource.recognition->bodyHash.ref());
                 return false;
             }
@@ -227,25 +227,25 @@ bool Resource::checkParameters(ErrorString & errorDescription) const
     if (enResource.alternateData.isSet())
     {
         if (!enResource.alternateData->body.isSet()) {
-            errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "Resource's alternate data body is not set"));
+            errorDescription.setBase(QT_TRANSLATE_NOOP("", "Resource's alternate data body is not set"));
             return false;
         }
 
         if (!enResource.alternateData->size.isSet()) {
-            errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "Resource's alternate data size is not set"));
+            errorDescription.setBase(QT_TRANSLATE_NOOP("", "Resource's alternate data size is not set"));
             return false;
         }
 
         if (!enResource.alternateData->bodyHash.isSet())
         {
-            errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "Resource's alternate data hash is not set"));
+            errorDescription.setBase(QT_TRANSLATE_NOOP("", "Resource's alternate data hash is not set"));
             return false;
         }
         else
         {
             qint32 hashSize = static_cast<qint32>(enResource.alternateData->bodyHash->size());
             if (hashSize != qevercloud::EDAM_HASH_LEN) {
-                errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "Resource's alternate data hash has invalid size"));
+                errorDescription.setBase(QT_TRANSLATE_NOOP("", "Resource's alternate data hash has invalid size"));
                 errorDescription.details() = QString::fromLocal8Bit(enResource.alternateData->bodyHash.ref());
                 return false;
             }
@@ -258,7 +258,7 @@ bool Resource::checkParameters(ErrorString & errorDescription) const
         if ( (mimeSize < qevercloud::EDAM_MIME_LEN_MIN) ||
              (mimeSize > qevercloud::EDAM_MIME_LEN_MAX) )
         {
-            errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "Resource's mime type has invalid length"));
+            errorDescription.setBase(QT_TRANSLATE_NOOP("", "Resource's mime type has invalid length"));
             errorDescription.details() = enResource.mime.ref();
             return false;
         }
@@ -272,7 +272,7 @@ bool Resource::checkParameters(ErrorString & errorDescription) const
             if ( (sourceURLSize < qevercloud::EDAM_ATTRIBUTE_LEN_MIN) ||
                  (sourceURLSize > qevercloud::EDAM_ATTRIBUTE_LEN_MAX) )
             {
-                errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "Resource's sourceURL attribute has invalid length"));
+                errorDescription.setBase(QT_TRANSLATE_NOOP("", "Resource's sourceURL attribute has invalid length"));
                 errorDescription.details() = enResource.attributes->sourceURL.ref();
                 return false;
             }
@@ -284,7 +284,7 @@ bool Resource::checkParameters(ErrorString & errorDescription) const
             if ( (cameraMakeSize < qevercloud::EDAM_ATTRIBUTE_LEN_MIN) ||
                  (cameraMakeSize > qevercloud::EDAM_ATTRIBUTE_LEN_MAX) )
             {
-                errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "Resource's cameraMake attribute has invalid length"));
+                errorDescription.setBase(QT_TRANSLATE_NOOP("", "Resource's cameraMake attribute has invalid length"));
                 errorDescription.details() = enResource.attributes->cameraMake.ref();
                 return false;
             }
@@ -296,7 +296,7 @@ bool Resource::checkParameters(ErrorString & errorDescription) const
             if ( (cameraModelSize < qevercloud::EDAM_ATTRIBUTE_LEN_MIN) ||
                  (cameraModelSize > qevercloud::EDAM_ATTRIBUTE_LEN_MAX) )
             {
-                errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "Resource's cameraModel attribute has invalid length"));
+                errorDescription.setBase(QT_TRANSLATE_NOOP("", "Resource's cameraModel attribute has invalid length"));
                 errorDescription.details() = enResource.attributes->cameraModel.ref();
                 return false;
             }

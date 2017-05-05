@@ -265,8 +265,8 @@ void AddResourceDelegate::onResourceFileRead(bool success, ErrorString errorDesc
 
     if (Q_UNLIKELY(!success)) {
         ErrorString error(QT_TRANSLATE_NOOP("", "can't read the contents of the attachment file"));
-        error.additionalBases().append(errorDescription.base());
-        error.additionalBases().append(errorDescription.additionalBases());
+        error.appendBase(errorDescription.base());
+        error.appendBase(errorDescription.additionalBases());
         error.details() = errorDescription.details();
         emit notifyError(error);
         return;
@@ -393,8 +393,8 @@ void AddResourceDelegate::onResourceSavedToStorage(QUuid requestId, QByteArray d
 
     if (Q_UNLIKELY(errorCode != 0)) {
         ErrorString error(QT_TRANSLATE_NOOP("", "can't write the resource to local file"));
-        error.additionalBases().append(errorDescription.base());
-        error.additionalBases().append(errorDescription.additionalBases());
+        error.appendBase(errorDescription.base());
+        error.appendBase(errorDescription.additionalBases());
         error.details() = errorDescription.details();
         QNWARNING(error);
         m_noteEditor.removeResourceFromNote(m_resource);
@@ -416,8 +416,8 @@ void AddResourceDelegate::onResourceSavedToStorage(QUuid requestId, QByteArray d
     // Otherwise need to build the image for the generic resource
     const Note * pNote = m_noteEditor.notePtr();
     if (!pNote) {
-        errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "can't set up the image corresponding to the resource: "
-                                                                      "no note is set to the editor"));
+        errorDescription.setBase(QT_TRANSLATE_NOOP("", "can't set up the image corresponding to the resource: "
+                                                   "no note is set to the editor"));
         QNWARNING(errorDescription);
         emit notifyError(errorDescription);
         return;
@@ -469,8 +469,8 @@ void AddResourceDelegate::onGenericResourceImageSaved(bool success, QByteArray r
 
     if (Q_UNLIKELY(!success)) {
         ErrorString error(QT_TRANSLATE_NOOP("", "Can't write the image representing the resource to local file"));
-        error.additionalBases().append(errorDescription.base());
-        error.additionalBases().append(errorDescription.additionalBases());
+        error.appendBase(errorDescription.base());
+        error.appendBase(errorDescription.additionalBases());
         error.details() = errorDescription.details();
         QNWARNING(error);
         m_noteEditor.removeResourceFromNote(m_resource);
@@ -489,8 +489,8 @@ void AddResourceDelegate::insertNewResourceHtml()
     QString resourceHtml = ENMLConverter::resourceHtml(m_resource, errorDescription);
     if (Q_UNLIKELY(resourceHtml.isEmpty())) {
         ErrorString error(QT_TRANSLATE_NOOP("", "can't compose the html representation of the attachment"));
-        error.additionalBases().append(errorDescription.base());
-        error.additionalBases().append(errorDescription.additionalBases());
+        error.appendBase(errorDescription.base());
+        error.appendBase(errorDescription.additionalBases());
         error.details() = errorDescription.details();
         QNWARNING(error);
         m_noteEditor.removeResourceFromNote(m_resource);
@@ -526,10 +526,10 @@ void AddResourceDelegate::onNewResourceHtmlInserted(const QVariant & data)
 
         auto errorIt = resultMap.find(QStringLiteral("error"));
         if (Q_UNLIKELY(errorIt == resultMap.end())) {
-            error.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "can't parse the error of new resource html insertion from JavaScript"));
+            error.setBase(QT_TRANSLATE_NOOP("", "can't parse the error of new resource html insertion from JavaScript"));
         }
         else {
-            error.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "can't insert resource html into the note editor"));
+            error.setBase(QT_TRANSLATE_NOOP("", "can't insert resource html into the note editor"));
             error.details() = errorIt.value().toString();
         }
 

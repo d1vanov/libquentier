@@ -432,7 +432,7 @@ bool ResourceFileStorageManagerPrivate::updateResourceHash(const QString & resou
 
     bool open = file.open(QIODevice::WriteOnly);
     if (Q_UNLIKELY(!open)) {
-        errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "can't open the file with resource's hash for writing"));
+        errorDescription.setBase(QT_TRANSLATE_NOOP("", "can't open the file with resource's hash for writing"));
         errorDescription.details() = file.errorString();
         errorCode = file.error();
         return false;
@@ -440,7 +440,7 @@ bool ResourceFileStorageManagerPrivate::updateResourceHash(const QString & resou
 
     qint64 writeRes = file.write(dataHash);
     if (Q_UNLIKELY(writeRes < 0)) {
-        errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "can't write resource data hash to the separate file"));
+        errorDescription.setBase(QT_TRANSLATE_NOOP("", "can't write resource data hash to the separate file"));
         errorDescription.details() = file.errorString();
         errorCode = file.error();
         return false;

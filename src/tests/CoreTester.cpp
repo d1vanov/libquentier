@@ -2071,12 +2071,12 @@ void CoreTester::localStorageManagerExpungeNotelessTagsFromLinkedNotebooksTest()
             const Tag & tag = tags[i];
 
             if ((i > 2) && foundTags.contains(tag)) {
-                errorMessage.base() = QStringLiteral("Found tag from linked notebook which should have been expunged");
+                errorMessage.setBase("Found tag from linked notebook which should have been expunged");
                 QNWARNING(errorMessage);
                 QFAIL(qPrintable(errorMessage.nonLocalizedString()));
             }
             else if ((i <= 2) && !foundTags.contains(tag)) {
-                errorMessage.base() = QStringLiteral("Could not find tag which should have remained in the local storage");
+                errorMessage.setBase("Could not find tag which should have remained in the local storage");
                 QNWARNING(errorMessage);
                 QFAIL(qPrintable(errorMessage.nonLocalizedString()));
             }

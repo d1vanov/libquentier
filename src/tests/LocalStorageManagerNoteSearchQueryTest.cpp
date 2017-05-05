@@ -50,9 +50,8 @@ bool CheckQueryString(const QString & queryString, const QVector<Note> & notes,
 
         if (errorDescription.isEmpty())
         {
-            errorDescription.base() = QStringLiteral("Internal error: no notes corresponding to note search query "
-                                                     "were found and the error description is empty as well; "
-                                                     "query string");
+            errorDescription.setBase("Internal error: no notes corresponding to note search query "
+                                     "were found and the error description is empty as well; query string");
             errorDescription.details() = queryString;
             errorDescription.details() += QStringLiteral("; \nNoteSearchQuery: ");
             errorDescription.details() += noteSearchQuery.toString();
@@ -71,7 +70,7 @@ bool CheckQueryString(const QString & queryString, const QVector<Note> & notes,
 
     if (!res)
     {
-        errorDescription.base() = QStringLiteral("Internal error: unexpected result of note search query processing");
+        errorDescription.setBase("Internal error: unexpected result of note search query processing");
 
         for(int i = 0; i < numOriginalNotes; ++i)
         {

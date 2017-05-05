@@ -102,10 +102,10 @@ void RemoveResourceDelegate::onResourceReferenceRemovedFromNoteContent(const QVa
 
         auto errorIt = resultMap.find(QStringLiteral("error"));
         if (Q_UNLIKELY(errorIt == resultMap.end())) {
-            error.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "can't parse the error of attachment reference removal from JavaScript"));
+            error.setBase(QT_TRANSLATE_NOOP("", "can't parse the error of attachment reference removal from JavaScript"));
         }
         else {
-            error.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "can't remove the attachment reference from the note editor"));
+            error.setBase(QT_TRANSLATE_NOOP("", "can't remove the attachment reference from the note editor"));
             error.details() = errorIt.value().toString();
         }
 

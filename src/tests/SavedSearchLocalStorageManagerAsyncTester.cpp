@@ -90,7 +90,7 @@ void SavedSearchLocalStorageManagerAsyncTester::onGetSavedSearchCountCompleted(i
 
 #define HANDLE_WRONG_STATE() \
     else { \
-        errorDescription.base() = QStringLiteral("Internal error in SavedSearchLocalStorageManagerAsyncTester: found wrong state"); \
+        errorDescription.setBase("Internal error in SavedSearchLocalStorageManagerAsyncTester: found wrong state"); \
         emit failure(errorDescription.nonLocalizedString()); \
         return; \
     }
@@ -98,7 +98,7 @@ void SavedSearchLocalStorageManagerAsyncTester::onGetSavedSearchCountCompleted(i
     if (m_state == STATE_SENT_GET_COUNT_AFTER_UPDATE_REQUEST)
     {
         if (count != 1) {
-            errorDescription.base() = QStringLiteral("GetSavedSearchCount returned result different from the expected one (1)");
+            errorDescription.setBase("GetSavedSearchCount returned result different from the expected one (1)");
             errorDescription.details() = QString::number(count);
             emit failure(errorDescription.nonLocalizedString());
             return;
@@ -110,7 +110,7 @@ void SavedSearchLocalStorageManagerAsyncTester::onGetSavedSearchCountCompleted(i
     else if (m_state == STATE_SENT_GET_COUNT_AFTER_EXPUNGE_REQUEST)
     {
         if (count != 0) {
-            errorDescription.base() = QStringLiteral("GetSavedSearchCount returned result different from the expected one (0)");
+            errorDescription.setBase("GetSavedSearchCount returned result different from the expected one (0)");
             errorDescription.details() = QString::number(count);
             emit failure(errorDescription.nonLocalizedString());
             return;
@@ -147,8 +147,8 @@ void SavedSearchLocalStorageManagerAsyncTester::onAddSavedSearchCompleted(SavedS
     if (m_state == STATE_SENT_ADD_REQUEST)
     {
         if (m_initialSavedSearch != search) {
-            errorDescription.base() = QStringLiteral("Internal error in SavedSearchLocalStorageManagerAsyncTester: "
-                                                     "search in onAddSavedSearchCompleted slot doesn't match the original SavedSearch");
+            errorDescription.setBase("Internal error in SavedSearchLocalStorageManagerAsyncTester: "
+                                     "search in onAddSavedSearchCompleted slot doesn't match the original SavedSearch");
             QNWARNING(errorDescription);
             emit failure(errorDescription.nonLocalizedString());
             return;
@@ -205,9 +205,9 @@ void SavedSearchLocalStorageManagerAsyncTester::onUpdateSavedSearchCompleted(Sav
     if (m_state == STATE_SENT_UPDATE_REQUEST)
     {
         if (m_modifiedSavedSearch != search) {
-            errorDescription.base() = QStringLiteral("Internal error in SavedSearchLocalStorageManagerAsyncTester: "
-                                                     "search in onUpdateSavedSearchCompleted slot doesn't match "
-                                                     "the original modified SavedSearch");
+            errorDescription.setBase("Internal error in SavedSearchLocalStorageManagerAsyncTester: "
+                                     "search in onUpdateSavedSearchCompleted slot doesn't match "
+                                     "the original modified SavedSearch");
             QNWARNING(errorDescription);
             emit failure(errorDescription.nonLocalizedString());
             return;
@@ -237,7 +237,7 @@ void SavedSearchLocalStorageManagerAsyncTester::onFindSavedSearchCompleted(Saved
     if (m_state == STATE_SENT_FIND_AFTER_ADD_REQUEST)
     {
         if (search != m_initialSavedSearch) {
-            errorDescription.base() = QStringLiteral("Added and found saved searches in local storage don't match");
+            errorDescription.setBase("Added and found saved searches in local storage don't match");
             QNWARNING(errorDescription << QStringLiteral(": SavedSearch added to LocalStorageManager: ") << m_initialSavedSearch
                       << QStringLiteral("\nSavedSearch found in LocalStorageManager: ") << search);
             emit failure(errorDescription.nonLocalizedString());
@@ -255,7 +255,7 @@ void SavedSearchLocalStorageManagerAsyncTester::onFindSavedSearchCompleted(Saved
     else if (m_state == STATE_SENT_FIND_BY_NAME_AFTER_ADD_REQUEST)
     {
         if (search != m_initialSavedSearch) {
-            errorDescription.base() = QStringLiteral("Added and found by name saved searches in local storage don't match");
+            errorDescription.setBase("Added and found by name saved searches in local storage don't match");
             QNWARNING(errorDescription << QStringLiteral(": SavedSearch added to LocalStorageManager: ") << m_initialSavedSearch
                       << QStringLiteral("\nSavedSearch found by name in LocalStorageManager: ") << search);
             emit failure(errorDescription.nonLocalizedString());
@@ -274,7 +274,7 @@ void SavedSearchLocalStorageManagerAsyncTester::onFindSavedSearchCompleted(Saved
     else if (m_state == STATE_SENT_FIND_AFTER_UPDATE_REQUEST)
     {
         if (search != m_modifiedSavedSearch) {
-            errorDescription.base() = QStringLiteral("Updated and found saved searches in local storage don't match");
+            errorDescription.setBase("Updated and found saved searches in local storage don't match");
             QNWARNING(errorDescription << QStringLiteral(": SavedSearch updated in LocalStorageManager: ") << m_modifiedSavedSearch
                       << QStringLiteral("\nSavedSearch found in LocalStorageManager: ") << search);
             emit failure(errorDescription.nonLocalizedString());
@@ -286,7 +286,7 @@ void SavedSearchLocalStorageManagerAsyncTester::onFindSavedSearchCompleted(Saved
     }
     else if (m_state == STATE_SENT_FIND_AFTER_EXPUNGE_REQUEST)
     {
-        errorDescription.base() = QStringLiteral("Error: found saved search which should have been expunged from local storage");
+        errorDescription.setBase("Error: found saved search which should have been expunged from local storage");
         QNWARNING(errorDescription << QStringLiteral(": SavedSearch expunged from LocalStorageManager: ") << m_modifiedSavedSearch
                   << QStringLiteral("\nSavedSearch found in LocalStorageManager: ") << search);
         emit failure(errorDescription.nonLocalizedString());
@@ -324,8 +324,8 @@ void SavedSearchLocalStorageManagerAsyncTester::onListAllSavedSearchesCompleted(
     ErrorString errorDescription;
 
     if (numInitialSearches != numFoundSearches) {
-        errorDescription.base() = QStringLiteral("Number of found saved searches does not correspond "
-                                                 "to the number of original added saved searches");
+        errorDescription.setBase("Number of found saved searches does not correspond "
+                                 "to the number of original added saved searches");
         QNWARNING(errorDescription);
         emit failure(errorDescription.nonLocalizedString());
         return;
@@ -334,8 +334,7 @@ void SavedSearchLocalStorageManagerAsyncTester::onListAllSavedSearchesCompleted(
     foreach(const SavedSearch & search, m_initialSavedSearches)
     {
         if (!searches.contains(search)) {
-            errorDescription.base() = QStringLiteral("One of initial saved searches was not found "
-                                                     "within found saved searches");
+            errorDescription.setBase("One of initial saved searches was not found within found saved searches");
             QNWARNING(errorDescription);
             emit failure(errorDescription.nonLocalizedString());
             return;
@@ -364,9 +363,9 @@ void SavedSearchLocalStorageManagerAsyncTester::onExpungeSavedSearchCompleted(Sa
     ErrorString errorDescription;
 
     if (m_modifiedSavedSearch != search) {
-        errorDescription.base() = QStringLiteral("Internal error in SavedSearchLocalStorageManagerAsyncTester: "
-                                                 "search in onExpungeSavedSearchCompleted slot doesn't match "
-                                                 "the original expunged SavedSearch");
+        errorDescription.setBase("Internal error in SavedSearchLocalStorageManagerAsyncTester: "
+                                 "search in onExpungeSavedSearchCompleted slot doesn't match "
+                                 "the original expunged SavedSearch");
         QNWARNING(errorDescription << QStringLiteral(", requestId = ") << requestId);
         emit failure(errorDescription.nonLocalizedString());
         return;

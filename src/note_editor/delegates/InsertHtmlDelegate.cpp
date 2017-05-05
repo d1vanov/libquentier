@@ -158,10 +158,10 @@ void InsertHtmlDelegate::onHtmlInserted(const QVariant & responseData)
         ErrorString error;
         auto errorIt = resultMap.find(QStringLiteral("error"));
         if (Q_UNLIKELY(errorIt == resultMap.end())) {
-            error.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "Internal error: can't parse the error of html insertion from JavaScript"));
+            error.setBase(QT_TRANSLATE_NOOP("", "Internal error: can't parse the error of html insertion from JavaScript"));
         }
         else {
-            error.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "Internal error: can't insert html into the note editor"));
+            error.setBase(QT_TRANSLATE_NOOP("", "Internal error: can't insert html into the note editor"));
             error.details() = errorIt.value().toString();
         }
 

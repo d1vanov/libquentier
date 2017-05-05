@@ -45,6 +45,16 @@ QString & ErrorString::base()
     return d->m_base;
 }
 
+const QStringList & ErrorString::additionalBases() const
+{
+    return d->m_additionalBases;
+}
+
+QStringList & ErrorString::additionalBases()
+{
+    return d->m_additionalBases;
+}
+
 const QString & ErrorString::details() const
 {
     return d->m_details;
@@ -55,14 +65,39 @@ QString & ErrorString::details()
     return d->m_details;
 }
 
-const QStringList & ErrorString::additionalBases() const
+void ErrorString::setBase(const QString & error)
 {
-    return d->m_additionalBases;
+    d->m_base = error;
 }
 
-QStringList & ErrorString::additionalBases()
+void ErrorString::setBase(const char * error)
 {
-    return d->m_additionalBases;
+    d->m_base = QString::fromUtf8(error);
+}
+
+void ErrorString::appendBase(const QString & error)
+{
+    d->m_additionalBases.append(error);
+}
+
+void ErrorString::appendBase(const QStringList & errors)
+{
+    d->m_additionalBases.append(errors);
+}
+
+void ErrorString::appendBase(const char * error)
+{
+    appendBase(QString::fromUtf8(error));
+}
+
+void ErrorString::setDetails(const QString & error)
+{
+    d->m_details = error;
+}
+
+void ErrorString::setDetails(const char * error)
+{
+    d->m_details = QString::fromUtf8(error);
 }
 
 bool ErrorString::isEmpty() const

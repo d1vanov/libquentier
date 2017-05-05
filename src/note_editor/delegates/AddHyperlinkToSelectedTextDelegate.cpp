@@ -177,10 +177,10 @@ void AddHyperlinkToSelectedTextDelegate::onHyperlinkSetToSelection(const QVarian
 
         auto errorIt = resultMap.find(QStringLiteral("error"));
         if (Q_UNLIKELY(errorIt == resultMap.end())) {
-            error.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "can't parse the error of the attempt to set the hyperlink to selection from JavaScript"));
+            error.setBase(QT_TRANSLATE_NOOP("", "can't parse the error of the attempt to set the hyperlink to selection from JavaScript"));
         }
         else {
-            error.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "can't set the hyperlink to selection"));
+            error.setBase(QT_TRANSLATE_NOOP("", "can't set the hyperlink to selection"));
             error.details() = errorIt.value().toString();
         }
 

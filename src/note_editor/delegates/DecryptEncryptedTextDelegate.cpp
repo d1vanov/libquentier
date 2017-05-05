@@ -206,10 +206,10 @@ void DecryptEncryptedTextDelegate::onDecryptionScriptFinished(const QVariant & d
 
         auto errorIt = resultMap.find(QStringLiteral("error"));
         if (Q_UNLIKELY(errorIt == resultMap.end())) {
-            error.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "can't parse the error of text decryption from JavaScript"));
+            error.setBase(QT_TRANSLATE_NOOP("", "can't parse the error of text decryption from JavaScript"));
         }
         else {
-            error.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "can't decrypt the encrypted text"));
+            error.setBase(QT_TRANSLATE_NOOP("", "can't decrypt the encrypted text"));
             error.details() = errorIt.value().toString();
         }
 

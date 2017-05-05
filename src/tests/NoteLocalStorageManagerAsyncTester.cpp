@@ -103,7 +103,7 @@ void NoteLocalStorageManagerAsyncTester::onAddNotebookCompleted(Notebook noteboo
 
 #define HANDLE_WRONG_STATE() \
     else { \
-        errorDescription.base() = QStringLiteral("Internal error in NoteLocalStorageManagerAsyncTester: found wrong state"); \
+        errorDescription.setBase("Internal error in NoteLocalStorageManagerAsyncTester: found wrong state"); \
         QNWARNING(errorDescription << ": " << m_state); \
         emit failure(errorDescription.nonLocalizedString()); \
     }
@@ -111,9 +111,9 @@ void NoteLocalStorageManagerAsyncTester::onAddNotebookCompleted(Notebook noteboo
     if (m_state == STATE_SENT_ADD_NOTEBOOK_REQUEST)
     {
         if (m_notebook != notebook) {
-            errorDescription.base() = QStringLiteral("Internal error in NoteLocalStorageManagerAsyncTester: "
-                                                     "notebook in onAddNotebookCompleted slot doesn't match "
-                                                     "the original Notebook");
+            errorDescription.setBase("Internal error in NoteLocalStorageManagerAsyncTester: "
+                                     "notebook in onAddNotebookCompleted slot doesn't match "
+                                     "the original Notebook");
             QNWARNING(errorDescription);
             emit failure(errorDescription.nonLocalizedString());
             return;
@@ -167,7 +167,7 @@ void NoteLocalStorageManagerAsyncTester::onNoteCountCompleted(int count, QUuid r
     if (m_state == STATE_SENT_GET_COUNT_AFTER_UPDATE_REQUEST)
     {
         if (count != 1) {
-            errorDescription.base() = QStringLiteral("GetNoteCount returned result different from the expected one (1): ");
+            errorDescription.setBase("GetNoteCount returned result different from the expected one (1)");
             errorDescription.details() = QString::number(count);
             QNWARNING(errorDescription);
             emit failure(errorDescription.nonLocalizedString());
@@ -183,7 +183,7 @@ void NoteLocalStorageManagerAsyncTester::onNoteCountCompleted(int count, QUuid r
     else if (m_state == STATE_SENT_GET_COUNT_AFTER_EXPUNGE_REQUEST)
     {
         if (count != 0) {
-            errorDescription.base() = QStringLiteral("GetNoteCount returned result different from the expected one (0): ");
+            errorDescription.setBase("GetNoteCount returned result different from the expected one (0)");
             errorDescription.details() = QString::number(count);
             QNWARNING(errorDescription);
             emit failure(errorDescription.nonLocalizedString());
@@ -257,8 +257,8 @@ void NoteLocalStorageManagerAsyncTester::onAddNoteCompleted(Note note, QUuid req
     if (m_state == STATE_SENT_ADD_REQUEST)
     {
         if (m_initialNote != note) {
-            errorDescription.base() = QStringLiteral("Internal error in NoteLocalStorageManagerAsyncTester: "
-                                                     "note in onAddNoteCompleted slot doesn't match the original Note");
+            errorDescription.setBase("Internal error in NoteLocalStorageManagerAsyncTester: "
+                                     "note in onAddNoteCompleted slot doesn't match the original Note");
             QNWARNING(errorDescription);
             emit failure(errorDescription.nonLocalizedString());
             return;
@@ -339,9 +339,9 @@ void NoteLocalStorageManagerAsyncTester::onUpdateNoteCompleted(Note note, bool u
     if (m_state == STATE_SENT_UPDATE_REQUEST)
     {
         if (m_modifiedNote != note) {
-            errorDescription.base() = QStringLiteral("Internal error in NoteLocalStorageManagerAsyncTester: "
-                                                     "note in onUpdateNoteCompleted slot doesn't match "
-                                                     "the original updated Note");
+            errorDescription.setBase("Internal error in NoteLocalStorageManagerAsyncTester: "
+                                     "note in onUpdateNoteCompleted slot doesn't match "
+                                     "the original updated Note");
             QNWARNING(errorDescription);
             emit failure(errorDescription.nonLocalizedString());
             return;
@@ -356,9 +356,9 @@ void NoteLocalStorageManagerAsyncTester::onUpdateNoteCompleted(Note note, bool u
         ErrorString errorDescription;
 
         if (m_modifiedNote != note) {
-            errorDescription.base() = QStringLiteral("Internal error in NoteLocalStorageManagerAsyncTester: "
-                                                     "note in onUpdateNoteCompleted slot after the deletion update doesn't match "
-                                                     "the original deleted Note");
+            errorDescription.setBase("Internal error in NoteLocalStorageManagerAsyncTester: "
+                                     "note in onUpdateNoteCompleted slot after the deletion update doesn't match "
+                                     "the original deleted Note");
             QNWARNING(errorDescription);
             emit failure(errorDescription.nonLocalizedString());
             return;
@@ -391,8 +391,8 @@ void NoteLocalStorageManagerAsyncTester::onFindNoteCompleted(Note note, bool wit
     if (m_state == STATE_SENT_FIND_AFTER_ADD_REQUEST)
     {
         if (m_initialNote != note) {
-            errorDescription.base() = QStringLiteral("Internal error in NoteLocalStorageManagerAsyncTester: "
-                                                     "note in onFindNoteCompleted slot doesn't match the original Note");
+            errorDescription.setBase("Internal error in NoteLocalStorageManagerAsyncTester: "
+                                     "note in onFindNoteCompleted slot doesn't match the original Note");
             QNWARNING(errorDescription << QStringLiteral("; original note: ") << m_initialNote
                       << QStringLiteral("\nFound note: ") << note);
             emit failure(errorDescription.nonLocalizedString());
@@ -410,9 +410,9 @@ void NoteLocalStorageManagerAsyncTester::onFindNoteCompleted(Note note, bool wit
     else if (m_state == STATE_SENT_FIND_AFTER_UPDATE_REQUEST)
     {
         if (m_modifiedNote != note) {
-            errorDescription.base() = QStringLiteral("Internal error in NoteLocalStorageManagerAsyncTester: "
-                                                     "not in onFindNoteCompleted slot doesn't match "
-                                                     "the original modified Note");
+            errorDescription.setBase("Internal error in NoteLocalStorageManagerAsyncTester: "
+                                     "not in onFindNoteCompleted slot doesn't match "
+                                     "the original modified Note");
             QNWARNING(errorDescription);
             emit failure(errorDescription.nonLocalizedString());
             return;
@@ -425,7 +425,7 @@ void NoteLocalStorageManagerAsyncTester::onFindNoteCompleted(Note note, bool wit
     }
     else if (m_state == STATE_SENT_FIND_AFTER_EXPUNGE_REQUEST)
     {
-        errorDescription.base() = QStringLiteral("Found note which should have been expunged from local storage");
+        errorDescription.setBase("Found note which should have been expunged from local storage");
         QNWARNING(errorDescription << QStringLiteral(": Note expunged from LocalStorageManager: ") << m_modifiedNote
                   << QStringLiteral("\nNote found in LocalStorageManager: ") << m_foundNote);
         emit failure(errorDescription.nonLocalizedString());
@@ -470,14 +470,14 @@ void NoteLocalStorageManagerAsyncTester::onListNotesPerNotebookCompleted(Noteboo
         foreach(const Note & note, notes)
         {
             if (!m_initialNotes.contains(note)) {
-                errorDescription.base() = QStringLiteral("One of found notes was not found within initial notes");
+                errorDescription.setBase("One of found notes was not found within initial notes");
                 QNWARNING(errorDescription << QStringLiteral(", unfound note: ") << note);
                 emit failure(errorDescription.nonLocalizedString());
                 return;
             }
 
             if (note.notebookGuid() != m_notebook.guid()) {
-                errorDescription.base() = QStringLiteral("One of found notes has invalid notebook guid");
+                errorDescription.setBase("One of found notes has invalid notebook guid");
                 errorDescription.details() = QStringLiteral("expected ");
                 errorDescription.details() += m_notebook.guid();
                 errorDescription.details() += QStringLiteral(", found: ");
@@ -493,14 +493,14 @@ void NoteLocalStorageManagerAsyncTester::onListNotesPerNotebookCompleted(Noteboo
         foreach(const Note & note, notes)
         {
             if (!m_initialNotes.contains(note)) {
-                errorDescription.base() = QStringLiteral("One of found notes was not found within initial notes");
+                errorDescription.setBase("One of found notes was not found within initial notes");
                 QNWARNING(errorDescription);
                 emit failure(errorDescription.nonLocalizedString());
                 return;
             }
 
             if (note.notebookGuid() != m_extraNotebook.guid()) {
-                errorDescription.base() = QStringLiteral("One of found notes has invalid notebook guid");
+                errorDescription.setBase("One of found notes has invalid notebook guid");
                 errorDescription.details() = QStringLiteral("expected ");
                 errorDescription.details() += m_extraNotebook.guid();
                 errorDescription.details() += QStringLiteral(", found: ");
@@ -541,9 +541,9 @@ void NoteLocalStorageManagerAsyncTester::onExpungeNoteCompleted(Note note, QUuid
     ErrorString errorDescription;
 
     if (m_modifiedNote != note) {
-        errorDescription.base() = QStringLiteral("Internal error in NoteLocalStorageManagerAsyncTester: "
-                                                 "note in onExpungeNoteCompleted slot doesn't match "
-                                                 "the original expunged Note");
+        errorDescription.setBase("Internal error in NoteLocalStorageManagerAsyncTester: "
+                                 "note in onExpungeNoteCompleted slot doesn't match "
+                                 "the original expunged Note");
         QNWARNING(errorDescription);
         emit failure(errorDescription.nonLocalizedString());
         return;

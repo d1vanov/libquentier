@@ -1226,7 +1226,7 @@ void RemoteToLocalSynchronizationManager::onFindResourceFailed(Resource resource
 
         // need to find the note owning the resource to proceed
         if (!resource.hasNoteGuid()) {
-            errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "Detected resource which doesn't have note guid set"));
+            errorDescription.setBase(QT_TRANSLATE_NOOP("", "Detected resource which doesn't have note guid set"));
             QNWARNING(errorDescription << QStringLiteral(": ") << resource);
             emit failure(errorDescription);
             return;
@@ -1558,10 +1558,10 @@ void RemoteToLocalSynchronizationManager::onUpdateDataElementFailed(const Elemen
     typename ElementsToAddByUuid::iterator addIt = elementsToAddByRenameRequestId.find(requestId);
     if (addIt != elementsToAddByRenameRequestId.end()) {
         Q_UNUSED(elementsToAddByRenameRequestId.erase(addIt));
-        error.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "Can't rename the local dirty duplicate item in the local storage"));
+        error.setBase(QT_TRANSLATE_NOOP("", "Can't rename the local dirty duplicate item in the local storage"));
     }
     else {
-        error.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "Can't update the item in the local storage"));
+        error.setBase(QT_TRANSLATE_NOOP("", "Can't update the item in the local storage"));
     }
 
     error.additionalBases().append(errorDescription.base());
@@ -2391,7 +2391,7 @@ void RemoteToLocalSynchronizationManager::onGetNoteAsyncFinished(qint32 errorCod
             << QStringLiteral(", note: ") << note);
 
     if (Q_UNLIKELY(!note.hasGuid())) {
-        errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "Internal error: just downloaded note has no guid"));
+        errorDescription.setBase(QT_TRANSLATE_NOOP("", "Internal error: just downloaded note has no guid"));
         QNWARNING(errorDescription << QStringLiteral(", note: ") << note);
         emit failure(errorDescription);
         return;
@@ -2423,8 +2423,8 @@ void RemoteToLocalSynchronizationManager::onGetNoteAsyncFinished(qint32 errorCod
     if (errorCode == qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED)
     {
         if (rateLimitSeconds <= 0) {
-            errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "QEverCloud or Evernote protocol error: caught RATE_LIMIT_REACHED "
-                                                        "exception but the number of seconds to wait is zero or negative"));
+            errorDescription.setBase(QT_TRANSLATE_NOOP("", "QEverCloud or Evernote protocol error: caught RATE_LIMIT_REACHED "
+                                                       "exception but the number of seconds to wait is zero or negative"));
             errorDescription.details() = QString::number(rateLimitSeconds);
             emit failure(errorDescription);
             return;
@@ -2997,8 +2997,8 @@ bool RemoteToLocalSynchronizationManager::checkProtocolVersion(ErrorString & err
         }
         else
         {
-            errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "Evernote service reports the currently used protocol version "
-                                                                          "can no longer be used for the communication with it"));
+            errorDescription.setBase(QT_TRANSLATE_NOOP("", "Evernote service reports the currently used protocol version "
+                                                       "can no longer be used for the communication with it"));
             errorDescription.details() = QString::number(edamProtocolVersionMajor);
             errorDescription.details() += QStringLiteral(".");
             errorDescription.details() += QString::number(edamProtocolVersionMinor);
@@ -3028,7 +3028,7 @@ bool RemoteToLocalSynchronizationManager::syncUserImpl(const bool waitIfRateLimi
     if (errorCode == qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED)
     {
         if (rateLimitSeconds <= 0) {
-            errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "Rate limit reached but the number of seconds to wait is incorrect"));
+            errorDescription.setBase(QT_TRANSLATE_NOOP("", "Rate limit reached but the number of seconds to wait is incorrect"));
             errorDescription.details() = QString::number(rateLimitSeconds);
             QNWARNING(errorDescription);
             return false;
@@ -3136,7 +3136,7 @@ bool RemoteToLocalSynchronizationManager::syncAccountLimits(const bool waitIfRat
             << (waitIfRateLimitReached ? QStringLiteral("true") : QStringLiteral("false")));
 
     if (Q_UNLIKELY(!m_user.hasServiceLevel())) {
-        errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "No Evernote service level was found for the current user"));
+        errorDescription.setBase(QT_TRANSLATE_NOOP("", "No Evernote service level was found for the current user"));
         QNDEBUG(errorDescription);
         return false;
     }
@@ -3146,7 +3146,7 @@ bool RemoteToLocalSynchronizationManager::syncAccountLimits(const bool waitIfRat
     if (errorCode == qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED)
     {
         if (rateLimitSeconds <= 0) {
-            errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "Rate limit reached but the number of seconds to wait is incorrect"));
+            errorDescription.setBase(QT_TRANSLATE_NOOP("", "Rate limit reached but the number of seconds to wait is incorrect"));
             errorDescription.details() = QString::number(rateLimitSeconds);
             QNWARNING(errorDescription);
             return false;
@@ -3813,7 +3813,7 @@ void RemoteToLocalSynchronizationManager::getLinkedNotebookSyncState(const Linke
     if (errorCode == qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED)
     {
         if (rateLimitSeconds <= 0) {
-            errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "Rate limit reached but the number of seconds to wait is incorrect"));
+            errorDescription.setBase(QT_TRANSLATE_NOOP("", "Rate limit reached but the number of seconds to wait is incorrect"));
             errorDescription.details() = QString::number(rateLimitSeconds);
             emit failure(errorDescription);
             error = true;
@@ -3983,7 +3983,7 @@ bool RemoteToLocalSynchronizationManager::downloadLinkedNotebooksSyncChunks()
             if (errorCode == qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED)
             {
                 if (rateLimitSeconds <= 0) {
-                    errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "Rate limit reached but the number of seconds to wait is incorrect"));
+                    errorDescription.setBase(QT_TRANSLATE_NOOP("", "Rate limit reached but the number of seconds to wait is incorrect"));
                     errorDescription.details() = QString::number(rateLimitSeconds);
                     emit failure(errorDescription);
                     return false;
@@ -4662,7 +4662,7 @@ void RemoteToLocalSynchronizationManager::downloadSyncChunksAndLaunchSync(qint32
         if (errorCode == qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED)
         {
             if (rateLimitSeconds <= 0) {
-                errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "Rate limit reached but the number of seconds to wait is incorrect"));
+                errorDescription.setBase(QT_TRANSLATE_NOOP("", "Rate limit reached but the number of seconds to wait is incorrect"));
                 errorDescription.details() = QString::number(rateLimitSeconds);
                 emit failure(errorDescription);
                 return;
@@ -4751,7 +4751,7 @@ bool RemoteToLocalSynchronizationManager::checkUserAccountSyncState(bool & async
     if (errorCode == qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED)
     {
         if (rateLimitSeconds <= 0) {
-            errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "Rate limit reached but the number of seconds to wait is incorrect"));
+            errorDescription.setBase(QT_TRANSLATE_NOOP("", "Rate limit reached but the number of seconds to wait is incorrect"));
             errorDescription.details() = QString::number(rateLimitSeconds);
             emit failure(errorDescription);
             error = true;
@@ -4760,8 +4760,8 @@ bool RemoteToLocalSynchronizationManager::checkUserAccountSyncState(bool & async
 
         m_getSyncStateBeforeStartAPICallPostponeTimerId = startTimer(SEC_TO_MSEC(rateLimitSeconds));
         if (Q_UNLIKELY(m_getSyncStateBeforeStartAPICallPostponeTimerId == 0)) {
-            errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "Failed to start a timer to postpone "
-                                                                          "the Evernote API call due to rate limit exceeding"));
+            errorDescription.setBase(QT_TRANSLATE_NOOP("", "Failed to start a timer to postpone "
+                                                       "the Evernote API call due to rate limit exceeding"));
             emit failure(errorDescription);
             error = true;
         }

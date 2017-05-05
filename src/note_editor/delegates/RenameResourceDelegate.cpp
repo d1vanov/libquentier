@@ -221,8 +221,8 @@ void RenameResourceDelegate::onGenericResourceImageWriterFinished(bool success, 
 
     if (Q_UNLIKELY(!success)) {
         ErrorString error(QT_TRANSLATE_NOOP("", "can't rename generic resource: can't write generic resource image to file"));
-        error.additionalBases().append(errorDescription.base());
-        error.additionalBases().append(errorDescription.additionalBases());
+        error.appendBase(errorDescription.base());
+        error.appendBase(errorDescription.additionalBases());
         error.details() = errorDescription.details();
         QNWARNING(error);
         emit notifyError(error);

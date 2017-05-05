@@ -53,6 +53,16 @@ public:
     const QString & details() const;
     QString & details();
 
+    void setBase(const QString & error);
+    void setBase(const char * error);
+
+    void appendBase(const QString & error);
+    void appendBase(const QStringList & errors);
+    void appendBase(const char * error);
+
+    void setDetails(const QString & error);
+    void setDetails(const char * error);
+
     bool isEmpty() const;
     void clear();
 

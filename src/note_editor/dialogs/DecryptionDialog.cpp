@@ -151,8 +151,8 @@ void DecryptionDialog::accept()
 
     if (!res) {
         ErrorString error(QT_TRANSLATE_NOOP("", "failed to decrypt the text"));
-        error.additionalBases().append(errorDescription.base());
-        error.additionalBases().append(errorDescription.additionalBases());
+        error.appendBase(errorDescription.base());
+        error.appendBase(errorDescription.additionalBases());
         error.details() = errorDescription.details();
         setError(error);
         return;

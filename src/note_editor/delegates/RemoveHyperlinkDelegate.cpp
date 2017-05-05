@@ -92,10 +92,10 @@ void RemoveHyperlinkDelegate::onHyperlinkIdFound(const QVariant & data)
 
         auto errorIt = resultMap.find(QStringLiteral("error"));
         if (Q_UNLIKELY(errorIt == resultMap.end())) {
-            error.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "can't parse the error of hyperlink data request from JavaScript"));
+            error.setBase(QT_TRANSLATE_NOOP("", "can't parse the error of hyperlink data request from JavaScript"));
         }
         else {
-            error.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "can't get hyperlink data from JavaScript"));
+            error.setBase(QT_TRANSLATE_NOOP("", "can't get hyperlink data from JavaScript"));
             error.details() = errorIt.value().toString();
         }
 
@@ -157,10 +157,10 @@ void RemoveHyperlinkDelegate::onHyperlinkRemoved(const QVariant & data)
 
         auto errorIt = resultMap.find(QStringLiteral("error"));
         if (Q_UNLIKELY(errorIt == resultMap.end())) {
-            error.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "can't parse the error of hyperlink removal from JavaScript"));
+            error.setBase(QT_TRANSLATE_NOOP("", "can't parse the error of hyperlink removal from JavaScript"));
         }
         else {
-            error.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "can't remove hyperlink, JavaScript error"));
+            error.setBase(QT_TRANSLATE_NOOP("", "can't remove hyperlink, JavaScript error"));
             error.details() = errorIt.value().toString();
         }
 
