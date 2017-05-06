@@ -48,6 +48,7 @@ macro(update_translation SOURCES FORMS TRANSLATIONS)
   add_custom_target(lupdate COMMAND ${LUPDATE} -verbose \"${fake_pro_file}\" DEPENDS ${fake_pro_file})
 
   add_custom_target(lrelease)
+  file(MAKE_DIRECTORY "${PROJECT_BINARY_DIR}/translations")
   foreach(translation_file ${TRANSLATIONS})
     string(LENGTH ${translation_file} TR_FILE_LEN)
     string(FIND ${translation_file} "_" BEGIN_POS REVERSE)
@@ -59,5 +60,4 @@ macro(update_translation SOURCES FORMS TRANSLATIONS)
     list(APPEND ${PROJECT_NAME}_QM_FILES ${QM_FILE})
     add_custom_command(COMMAND ${LRELEASE} \"${PROJECT_SOURCE_DIR}/${translation_file}\" -qm \"${QM_FILE}\" TARGET lrelease)
   endforeach()
-
 endmacro()

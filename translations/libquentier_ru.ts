@@ -5276,6 +5276,46 @@
         <source>can&apos;t open file for reading</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <location filename="../src/note_editor/EncryptedAreaPlugin.cpp" line="69"/>
+        <source>no value was found for cipher attribute</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/note_editor/EncryptedAreaPlugin.cpp" line="75"/>
+        <source>encrypted text parameter was not found within the object with encrypted text</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/note_editor/EncryptedAreaPlugin.cpp" line="82"/>
+        <source>no value was found for length attribute</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/note_editor/NoteEditorPluginFactory.cpp" line="94"/>
+        <source>detected attempt to install null note editor plugin</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/note_editor/NoteEditorPluginFactory.cpp" line="104"/>
+        <source>Detected attempt to install the same resource plugin instance more than once</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/note_editor/NoteEditorPluginFactory.cpp" line="113"/>
+        <source>Can&apos;t install a note editor resource plugin without supported mime types</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/note_editor/NoteEditorPluginFactory.cpp" line="132"/>
+        <source>Can&apos;t install a note editor resource plugin: found conflicting mime type from another plugin</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/note_editor/NoteEditorPluginFactory.cpp" line="162"/>
+        <source>can&apos;t uninstall note editor plugin: plugin not found</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>DecryptionDialog</name>
@@ -5339,6 +5379,14 @@
     </message>
 </context>
 <context>
+    <name>EncryptedAreaPlugin</name>
+    <message>
+        <location filename="../src/note_editor/EncryptedAreaPlugin.ui" line="35"/>
+        <source>Form</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>EncryptionDialog</name>
     <message>
         <location filename="../src/note_editor/dialogs/EncryptionDialog.ui" line="14"/>
@@ -5368,6 +5416,14 @@
     <message>
         <location filename="../src/note_editor/dialogs/EncryptionDialog.ui" line="99"/>
         <source>Remember the password for session</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>GenericResourceDisplayWidget</name>
+    <message>
+        <location filename="../src/note_editor/GenericResourceDisplayWidget.ui" line="35"/>
+        <source>Form</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -5504,6 +5560,57 @@
     <message>
         <location filename="../src/note_editor/undo_stack/EncryptUndoCommand.cpp" line="20"/>
         <source>Encrypt selected text</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>quentier::EncryptedAreaPlugin</name>
+    <message>
+        <location filename="../src/note_editor/EncryptedAreaPlugin.cpp" line="41"/>
+        <source>Show encrypted text</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/note_editor/EncryptedAreaPlugin.cpp" line="133"/>
+        <source>Encrypted area plugin - note editor plugin used for the display and convenient work with encrypted text within notes</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>quentier::GenericResourceDisplayWidget</name>
+    <message>
+        <location filename="../src/note_editor/GenericResourceDisplayWidget.cpp" line="181"/>
+        <source>resource has neither data body nor alternate data body</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/note_editor/GenericResourceDisplayWidget.cpp" line="244"/>
+        <source>Save as...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/note_editor/GenericResourceDisplayWidget.cpp" line="291"/>
+        <source>Error saving the resource to hidden file</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/note_editor/GenericResourceDisplayWidget.cpp" line="292"/>
+        <source>Could not save the resource to hidden file (in order to make it possible to open it with some application)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/note_editor/GenericResourceDisplayWidget.cpp" line="294"/>
+        <source>Error code</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/note_editor/GenericResourceDisplayWidget.cpp" line="319"/>
+        <source>Error saving the resource to file</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/note_editor/GenericResourceDisplayWidget.cpp" line="320"/>
+        <source>Could not save the resource to file</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
