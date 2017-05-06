@@ -301,7 +301,7 @@ const QString getCurrentUserName()
     TCHAR acUserName[UNLEN+1];
     DWORD nUserName = sizeof(acUserName);
     if (GetUserName(acUserName, &nUserName)) {
-        userName = static_cast<LPSTR>(acUserName);
+        userName = QString::fromUtf8(static_cast<LPSTR>(acUserName));
     }
 #else
     uid_t uid = geteuid();
@@ -336,7 +336,7 @@ const QString getCurrentUserFullName()
     DWORD nUserName = sizeof(acUserName);
     bool res = GetUserNameEx(NameDisplay, acUserName, &nUserName);
     if (res) {
-        userFullName = static_cast<LPSTR>(acUserName);
+        userFullName = QString::fromUtf8(static_cast<LPSTR>(acUserName));
     }
 
     if (userFullName.isEmpty())

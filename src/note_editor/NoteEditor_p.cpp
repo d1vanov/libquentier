@@ -3768,7 +3768,7 @@ void NoteEditorPrivate::setupGenericTextContextMenu(const QStringList & extraDat
     { \
         QAction * action = new QAction(name, menu); \
         action->setEnabled(enabled); \
-        setupActionShortcut(key, QStringLiteral(#__VA_ARGS__), *action); \
+        setupActionShortcut(key, QStringLiteral("" #__VA_ARGS__), *action); \
         QObject::connect(action, QNSIGNAL(QAction,triggered), this, QNSLOT(NoteEditorPrivate,slot)); \
         menu->addAction(action); \
     }
@@ -5807,7 +5807,7 @@ void NoteEditorPrivate::setFocusToEditor()
     setFocus();
 
 #ifdef QUENTIER_USE_QT_WEB_ENGINE
-#if QT_VERSION < QT_VERSION_CHECK(5, 9, 0)
+#if (QT_VERSION < QT_VERSION_CHECK(5, 9, 0)) && (QT_VERSION >= QT_VERSION_CHECK(5, 7, 0))
     QRect r = rect();
     QPoint bottomRight = r.bottomRight();
     bottomRight.setX(bottomRight.x() - 1);

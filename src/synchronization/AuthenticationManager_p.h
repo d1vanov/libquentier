@@ -23,9 +23,21 @@
 
 #if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
 
+#ifdef _MSC_VER
+// God, MSVC is such a piece of CRAP! See https://msdn.microsoft.com/en-us/library/h5sh3k99.aspx
+#define true 1
+#define false 0
+#endif
+
 #include <qt5qevercloud/VersionInfo.h>
+
 #if !QEVERCLOUD_HAS_OAUTH
 #error "The used QEverCloud library has no OAuth support"
+#endif
+
+#ifdef _MSC_VER
+#undef true
+#undef false
 #endif
 
 #include <qt5qevercloud/QEverCloudOAuth.h>
