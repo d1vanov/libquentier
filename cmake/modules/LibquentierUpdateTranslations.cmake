@@ -56,6 +56,7 @@ macro(update_translation SOURCES FORMS TRANSLATIONS)
     math(EXPR LANG_CODE_LEN "${END_POS}-${BEGIN_POS}")
     string(SUBSTRING ${translation_file} ${BEGIN_POS} ${LANG_CODE_LEN} LANG_CODE)
     set(QM_FILE "${PROJECT_BINARY_DIR}/translations/libquentier_${LANG_CODE}.qm")
+    list(APPEND ${PROJECT_NAME}_QM_FILES ${QM_FILE})
     add_custom_command(COMMAND ${LRELEASE} \"${PROJECT_SOURCE_DIR}/${translation_file}\" -qm \"${QM_FILE}\" TARGET lrelease)
   endforeach()
 
