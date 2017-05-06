@@ -19,6 +19,7 @@
 #ifndef LIB_QUENTIER_SYNCHRONIZATION_I_AUTHENTICATION_MANAGER_H
 #define LIB_QUENTIER_SYNCHRONIZATION_I_AUTHENTICATION_MANAGER_H
 
+#include <quentier/utility/Linkage.h>
 #include <quentier/utility/Macros.h>
 #include <quentier/types/ErrorString.h>
 #include <QObject>
@@ -33,7 +34,7 @@
 
 namespace quentier {
 
-class IAuthenticationManager: public QObject
+class QUENTIER_EXPORT IAuthenticationManager: public QObject
 {
     Q_OBJECT
 protected:

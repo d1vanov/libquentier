@@ -25,7 +25,7 @@ namespace quentier {
 
 QT_FORWARD_DECLARE_CLASS(AuthenticationManagerPrivate)
 
-class AuthenticationManager: public IAuthenticationManager
+class QUENTIER_EXPORT AuthenticationManager: public IAuthenticationManager
 {
     Q_OBJECT
 public:
