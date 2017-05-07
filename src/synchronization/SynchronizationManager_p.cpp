@@ -131,6 +131,9 @@ void SynchronizationManagerPrivate::setAccount(const Account & account)
 
     clear();
 
+    m_OAuthResult = AuthData();
+    m_OAuthResult.m_userId = -1;
+
     if (account.type() == Account::Type::Local) {
         return;
     }
@@ -257,11 +260,11 @@ void SynchronizationManagerPrivate::onOAuthResult(bool success, qevercloud::User
         authData.m_noteStoreUrl = noteStoreUrl;
         authData.m_webApiUrlPrefix = webApiUrlPrefix;
 
-        if (m_authContext != AuthContext::Request) {
-            m_OAuthResult = authData;
-            m_noteStore.setNoteStoreUrl(noteStoreUrl);
-            m_noteStore.setAuthenticationToken(authToken);
-        }
+        m_OAuthResult = authData;
+        QNDEBUG(QStringLiteral("OAuth result = ") << m_OAuthResult);
+
+        m_noteStore.setNoteStoreUrl(noteStoreUrl);
+        m_noteStore.setAuthenticationToken(authToken);
 
         Account previousAccount = m_remoteToLocalSyncManager.account();
 
@@ -1119,6 +1122,8 @@ void SynchronizationManagerPrivate::timerEvent(QTimerEvent * pTimerEvent)
 
 void SynchronizationManagerPrivate::clear()
 {
+    QNDEBUG(QStringLiteral("SynchronizationManagerPrivate::clear"));
+
     m_lastUpdateCount = -1;
     m_lastSyncTime = -1;
     m_cachedLinkedNotebookLastUpdateCountByGuid.clear();
@@ -1128,9 +1133,6 @@ void SynchronizationManagerPrivate::clear()
     m_authContext = AuthContext::Blank;
 
     m_launchSyncPostponeTimerId = -1;
-
-    m_OAuthResult = AuthData();
-    m_OAuthResult.m_userId = -1;
 
     m_remoteToLocalSyncManager.stop();
     m_sendLocalChangesManager.stop();
@@ -1166,9 +1168,13 @@ bool SynchronizationManagerPrivate::validAuthentication() const
 
 bool SynchronizationManagerPrivate::checkIfTimestampIsAboutToExpireSoon(const qevercloud::Timestamp timestamp) const
 {
-    qevercloud::Timestamp currentTimestamp = QDateTime::currentMSecsSinceEpoch();
+    QNDEBUG(QStringLiteral("SynchronizationManagerPrivate::checkIfTimestampIsAboutToExpireSoon: ")
+            << printableDateTimeFromTimestamp(timestamp));
 
-    if (currentTimestamp - timestamp < SIX_HOURS_IN_MSEC) {
+    qevercloud::Timestamp currentTimestamp = QDateTime::currentMSecsSinceEpoch();
+    QNTRACE(QStringLiteral("Current datetime: ") << printableDateTimeFromTimestamp(currentTimestamp));
+
+    if ((timestamp - currentTimestamp) < SIX_HOURS_IN_MSEC) {
         return true;
     }
 
@@ -1589,7 +1595,7 @@ QTextStream & SynchronizationManagerPrivate::AuthData::print(QTextStream & strm)
 {
     strm << QStringLiteral("AuthData: {\n")
          << QStringLiteral("    user id = ") << m_userId << QStringLiteral(";\n")
-         << QStringLiteral("    auth token expiration time = ") << m_expirationTime << QStringLiteral(";\n")
+         << QStringLiteral("    auth token expiration time = ") << printableDateTimeFromTimestamp(m_expirationTime) << QStringLiteral(";\n")
          << QStringLiteral("    shard id = ") << m_shardId << QStringLiteral(";\n")
          << QStringLiteral("    note store url = ") << m_noteStoreUrl << QStringLiteral(";\n")
          << QStringLiteral("    web API url prefix = ") << m_webApiUrlPrefix << QStringLiteral(";\n")

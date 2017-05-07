@@ -225,6 +225,8 @@ private:
     bool syncUserImpl(const bool waitIfRateLimitReached, ErrorString & errorDescription,
                       const bool writeUserDataToLocalStorage = true);
 
+    void launchWritingUserDataToLocalStorage();
+
     bool checkAndSyncAccountLimits(const bool waitIfRateLimitReached, ErrorString & errorDescription);
     bool syncAccountLimits(const bool waitIfRateLimitReached, ErrorString & errorDescription);
     void readSavedAccountLimits();
@@ -586,6 +588,7 @@ private:
 
     QUuid                                   m_findUserRequestId;
     QUuid                                   m_addOrUpdateUserRequestId;
+    bool                                    m_onceAddedOrUpdatedUserInLocalStorage;
 
     QHash<QString,QPair<QString,QString> >  m_authenticationTokensAndShardIdsByLinkedNotebookGuid;
     QHash<QString,qevercloud::Timestamp>    m_authenticationTokenExpirationTimesByLinkedNotebookGuid;

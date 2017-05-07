@@ -127,6 +127,7 @@ RemoteToLocalSynchronizationManager::RemoteToLocalSynchronizationManager(LocalSt
     m_user(),
     m_findUserRequestId(),
     m_addOrUpdateUserRequestId(),
+    m_onceAddedOrUpdatedUserInLocalStorage(false),
     m_authenticationTokensAndShardIdsByLinkedNotebookGuid(),
     m_authenticationTokenExpirationTimesByLinkedNotebookGuid(),
     m_pendingAuthenticationTokensForLinkedNotebooks(false),
@@ -1371,6 +1372,7 @@ void RemoteToLocalSynchronizationManager::onAddUserCompleted(User user, QUuid re
             << QStringLiteral("\nRequest id = ") << requestId);
 
     m_addOrUpdateUserRequestId = QUuid();
+    m_onceAddedOrUpdatedUserInLocalStorage = true;
     CHECK_STOPPED();
 }
 
@@ -1457,6 +1459,7 @@ void RemoteToLocalSynchronizationManager::onUpdateUserCompleted(User user, QUuid
             << QStringLiteral("\nRequest id = ") << requestId);
 
     m_addOrUpdateUserRequestId = QUuid();
+    m_onceAddedOrUpdatedUserInLocalStorage = true;
     CHECK_STOPPED();
 }
 
@@ -3102,6 +3105,19 @@ bool RemoteToLocalSynchronizationManager::syncUserImpl(const bool waitIfRateLimi
         return true;
     }
 
+    launchWritingUserDataToLocalStorage();
+    return true;
+}
+
+void RemoteToLocalSynchronizationManager::launchWritingUserDataToLocalStorage()
+{
+    QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::launchWritingUserDataToLocalStorage"));
+
+    if (m_onceAddedOrUpdatedUserInLocalStorage) {
+        QNDEBUG(QStringLiteral("Already added or updated the user data in the local storage, no need to do that again"));
+        return;
+    }
+
     if (!m_connectedToLocalStorage) {
         createConnections();
     }
@@ -3111,8 +3127,6 @@ bool RemoteToLocalSynchronizationManager::syncUserImpl(const bool waitIfRateLimi
     QNTRACE(QStringLiteral("Emitting request to find user in the local storage database: request id = ")
             << m_findUserRequestId << QStringLiteral(", user = ") << m_user);
     emit findUser(m_user, m_findUserRequestId);
-
-    return true;
 }
 
 bool RemoteToLocalSynchronizationManager::checkAndSyncAccountLimits(const bool waitIfRateLimitReached, ErrorString & errorDescription)
@@ -4311,6 +4325,10 @@ void RemoteToLocalSynchronizationManager::clear()
     m_listAllLinkedNotebooksRequestId = QUuid();
     m_allLinkedNotebooksListed = false;
     m_pendingAuthenticationTokensForLinkedNotebooks = false;
+
+    m_findUserRequestId = QUuid();
+    m_addOrUpdateUserRequestId = QUuid();
+    m_onceAddedOrUpdatedUserInLocalStorage = false;
 
     m_syncStatesByLinkedNotebookGuid.clear();
     // NOTE: not clearing last synchronized usns by linked notebook guid; it is intentional,
