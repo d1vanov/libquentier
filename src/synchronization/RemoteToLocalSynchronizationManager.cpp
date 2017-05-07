@@ -1970,53 +1970,71 @@ void RemoteToLocalSynchronizationManager::checkExpungesCompletion()
 template <>
 void RemoteToLocalSynchronizationManager::emitFindByGuidRequest<Tag>(const QString & guid)
 {
+    QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::emitFindByGuidRequest<Tag>: guid = ") << guid);
+
     Tag tag;
     tag.unsetLocalUid();
     tag.setGuid(guid);
 
     QUuid requestId = QUuid::createUuid();
     Q_UNUSED(m_findTagByGuidRequestIds.insert(requestId));
+    QNTRACE(QStringLiteral("Emitting the request to find tag in the local storage: request id = ") << requestId
+            << QStringLiteral(", tag: ") << tag);
     emit findTag(tag, requestId);
 }
 
 template <>
 void RemoteToLocalSynchronizationManager::emitFindByGuidRequest<SavedSearch>(const QString & guid)
 {
+    QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::emitFindByGuidRequest<SavedSearch>: guid = ") << guid);
+
     SavedSearch search;
     search.unsetLocalUid();
     search.setGuid(guid);
 
     QUuid requestId = QUuid::createUuid();
     Q_UNUSED(m_findSavedSearchByGuidRequestIds.insert(requestId));
+    QNTRACE(QStringLiteral("Emitting the request to find saved search in the local storage: request id = ") << requestId
+            << QStringLiteral(", saved search: ") << search);
     emit findSavedSearch(search, requestId);
 }
 
 template <>
 void RemoteToLocalSynchronizationManager::emitFindByGuidRequest<Notebook>(const QString & guid)
 {
+    QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::emitFindByGuidRequest<Notebook>: guid = ") << guid);
+
     Notebook notebook;
     notebook.unsetLocalUid();
     notebook.setGuid(guid);
 
     QUuid requestId = QUuid::createUuid();
     Q_UNUSED(m_findNotebookByGuidRequestIds.insert(requestId));
+    QNTRACE(QStringLiteral("Emitting the request to find notebook in the local storage: request id = ") << requestId
+            << QStringLiteral(", notebook: ") << notebook);
     emit findNotebook(notebook, requestId);
 }
 
 template <>
 void RemoteToLocalSynchronizationManager::emitFindByGuidRequest<LinkedNotebook>(const QString & guid)
 {
+    QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::emitFindByGuidRequest<LinkedNotebook>: guid = ") << guid);
+
     LinkedNotebook linkedNotebook;
     linkedNotebook.setGuid(guid);
 
     QUuid requestId = QUuid::createUuid();
     Q_UNUSED(m_findLinkedNotebookRequestIds.insert(requestId));
+    QNTRACE(QStringLiteral("Emitting the request to find linked notebook in the local storage: request id = ") << requestId
+            << QStringLiteral(", linked notebook: ") << linkedNotebook);
     emit findLinkedNotebook(linkedNotebook, requestId);
 }
 
 template <>
 void RemoteToLocalSynchronizationManager::emitFindByGuidRequest<Note>(const QString & guid)
 {
+    QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::emitFindByGuidRequest<Note>: guid = ") << guid);
+
     Note note;
     note.unsetLocalUid();
     note.setGuid(guid);
@@ -2024,12 +2042,16 @@ void RemoteToLocalSynchronizationManager::emitFindByGuidRequest<Note>(const QStr
     QUuid requestId = QUuid::createUuid();
     Q_UNUSED(m_findNoteByGuidRequestIds.insert(requestId));
     bool withResourceDataOption = false;
+    QNTRACE(QStringLiteral("Emiting the request to find note in the local storage: request id = ") << requestId
+            << QStringLiteral(", note: ") << note);
     emit findNote(note, withResourceDataOption, requestId);
 }
 
 template <>
 void RemoteToLocalSynchronizationManager::emitFindByGuidRequest<Resource>(const QString & guid)
 {
+    QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::emitFindByGuidRequest<Resource>: guid = ") << guid);
+
     Resource resource;
     resource.unsetLocalUid();
     resource.setGuid(guid);
@@ -2037,6 +2059,8 @@ void RemoteToLocalSynchronizationManager::emitFindByGuidRequest<Resource>(const 
     QUuid requestId = QUuid::createUuid();
     Q_UNUSED(m_findResourceByGuidRequestIds.insert(requestId));
     bool withBinaryData = false;
+    QNTRACE(QStringLiteral("Emitting the request to find resource in the local storage: request id = ") << requestId
+            << QStringLiteral(", resource: ") << resource);
     emit findResource(resource, withBinaryData, requestId);
 }
 
@@ -5021,6 +5045,8 @@ template <>
 void RemoteToLocalSynchronizationManager::appendDataElementsFromSyncChunkToContainer<RemoteToLocalSynchronizationManager::TagsList>(const qevercloud::SyncChunk & syncChunk,
                                                                                                                                     RemoteToLocalSynchronizationManager::TagsList & container)
 {
+    QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::appendDataElementsFromSyncChunkToContainer: tags"));
+
     if (syncChunk.tags.isSet()) {
         const auto & tags = syncChunk.tags.ref();
         container.append(tags);
@@ -5053,6 +5079,8 @@ template <>
 void RemoteToLocalSynchronizationManager::appendDataElementsFromSyncChunkToContainer<RemoteToLocalSynchronizationManager::SavedSearchesList>(const qevercloud::SyncChunk & syncChunk,
                                                                                                                                              RemoteToLocalSynchronizationManager::SavedSearchesList & container)
 {
+    QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::appendDataElementsFromSyncChunkToContainer: saved searches"));
+
     if (syncChunk.searches.isSet()) {
         container.append(syncChunk.searches.ref());
     }
@@ -5076,6 +5104,8 @@ template <>
 void RemoteToLocalSynchronizationManager::appendDataElementsFromSyncChunkToContainer<RemoteToLocalSynchronizationManager::LinkedNotebooksList>(const qevercloud::SyncChunk & syncChunk,
                                                                                                                                                RemoteToLocalSynchronizationManager::LinkedNotebooksList & container)
 {
+    QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::appendDataElementsFromSyncChunkToContainer: linked notebooks"));
+
     if (syncChunk.linkedNotebooks.isSet()) {
         container.append(syncChunk.linkedNotebooks.ref());
     }
@@ -5099,6 +5129,8 @@ template <>
 void RemoteToLocalSynchronizationManager::appendDataElementsFromSyncChunkToContainer<RemoteToLocalSynchronizationManager::NotebooksList>(const qevercloud::SyncChunk & syncChunk,
                                                                                                                                          RemoteToLocalSynchronizationManager::NotebooksList & container)
 {
+    QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::appendDataElementsFromSyncChunkToContainer: notebooks"));
+
     if (syncChunk.notebooks.isSet()) {
         container.append(syncChunk.notebooks.ref());
     }
@@ -5122,6 +5154,8 @@ template <>
 void RemoteToLocalSynchronizationManager::appendDataElementsFromSyncChunkToContainer<RemoteToLocalSynchronizationManager::NotesList>(const qevercloud::SyncChunk & syncChunk,
                                                                                                                                      RemoteToLocalSynchronizationManager::NotesList & container)
 {
+    QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::appendDataElementsFromSyncChunkToContainer: notes"));
+
     if (syncChunk.notes.isSet())
     {
         container.append(syncChunk.notes.ref());
@@ -5192,6 +5226,8 @@ template <>
 void RemoteToLocalSynchronizationManager::appendDataElementsFromSyncChunkToContainer<RemoteToLocalSynchronizationManager::ResourcesList>(const qevercloud::SyncChunk & syncChunk,
                                                                                                                                          RemoteToLocalSynchronizationManager::ResourcesList & container)
 {
+    QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::appendDataElementsFromSyncChunkToContainer: resources"));
+
     if (syncChunk.resources.isSet()) {
         const auto & resources = syncChunk.resources.ref();
         container.append(resources);
@@ -5374,6 +5410,8 @@ template <class ContainerType, class ElementType>
 void RemoteToLocalSynchronizationManager::launchDataElementSync(const ContentSource::type contentSource, const QString & typeName,
                                                                 ContainerType & container, QList<QString> & expungedElements)
 {
+    QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::launchDataElementSync: ") << typeName);
+
     bool syncingUserAccountData = (contentSource == ContentSource::UserAccount);
     const auto & syncChunks = (syncingUserAccountData ? m_syncChunks : m_linkedNotebookSyncChunks);
 
@@ -5497,6 +5535,8 @@ void RemoteToLocalSynchronizationManager::setConflicted<Tag>(const QString & typ
 template <>
 void RemoteToLocalSynchronizationManager::emitFindByNameRequest<Tag>(const Tag & tag)
 {
+    QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::emitFindByNameRequest<Tag>: ") << tag);
+
     if (!tag.hasName()) {
         ErrorString errorDescription(QT_TRANSLATE_NOOP("", "Detected tag from remote storage which needs "
                                                        "to be searched by name in the local storage but "
@@ -5508,12 +5548,16 @@ void RemoteToLocalSynchronizationManager::emitFindByNameRequest<Tag>(const Tag &
 
     QUuid findElementRequestId = QUuid::createUuid();
     Q_UNUSED(m_findTagByNameRequestIds.insert(findElementRequestId));
+    QNTRACE(QStringLiteral("Emitting the request to find tag in the local storage: request id = ")
+            << findElementRequestId << QStringLiteral(", tag: ") << tag);
     emit findTag(tag, findElementRequestId);
 }
 
 template <>
 void RemoteToLocalSynchronizationManager::emitFindByNameRequest<SavedSearch>(const SavedSearch & search)
 {
+    QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::emitFindByNameRequest<SavedSearch>: ") << search);
+
     if (!search.hasName()) {
         ErrorString errorDescription(QT_TRANSLATE_NOOP("", "Detected saved search from remote storage which needs to be "
                                                         "searched by name in the local storage but it has no name set"));
@@ -5523,12 +5567,16 @@ void RemoteToLocalSynchronizationManager::emitFindByNameRequest<SavedSearch>(con
 
     QUuid findElementRequestId = QUuid::createUuid();
     Q_UNUSED(m_findSavedSearchByNameRequestIds.insert(findElementRequestId));
+    QNTRACE(QStringLiteral("Emitting the request to find saved search in the local storage: request id = ")
+            << findElementRequestId << QStringLiteral(", saved search: ") << search);
     emit findSavedSearch(search, findElementRequestId);
 }
 
 template <>
 void RemoteToLocalSynchronizationManager::emitFindByNameRequest<Notebook>(const Notebook & notebook)
 {
+    QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::emitFindByNameRequest<Notebook>: ") << notebook);
+
     if (!notebook.hasName()) {
         ErrorString errorDescription(QT_TRANSLATE_NOOP("", "Detected notebook from remote storage which needs to be "
                                                        "searched by name in the local storage but it has no name set"));
@@ -5538,6 +5586,8 @@ void RemoteToLocalSynchronizationManager::emitFindByNameRequest<Notebook>(const 
 
     QUuid findElementRequestId = QUuid::createUuid();
     Q_UNUSED(m_findNotebookByNameRequestIds.insert(findElementRequestId));
+    QNTRACE(QStringLiteral("Emitting the request to find saved search in the local storage: request id = ")
+            << findElementRequestId << QStringLiteral(", notebook: ") << notebook);
     emit findNotebook(notebook, findElementRequestId);
 }
 
