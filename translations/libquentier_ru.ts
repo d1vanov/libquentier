@@ -6,184 +6,184 @@
     <message>
         <location filename="../headers/quentier/utility/QuentierCheckPtr.h" line="30"/>
         <source>Detected the unintended null pointer</source>
-        <translation type="unfinished">Обнаружен неожиданный нулевой указатель </translation>
+        <translation>Обнаружен неожиданный нулевой указатель </translation>
     </message>
     <message>
         <location filename="../src/enml/ENMLConverter_p.cpp" line="107"/>
         <location filename="../src/enml/ENMLConverter_p.cpp" line="429"/>
         <source>Failed to clean up the note&apos;s html</source>
-        <translation type="unfinished">Ошибка конвертации HTML заметки в XML</translation>
+        <translation>Ошибка конвертации HTML заметки в XML</translation>
     </message>
     <message>
         <location filename="../src/enml/ENMLConverter_p.cpp" line="260"/>
         <source>Found en-crypt tag without encrypted_text attribute</source>
-        <translation type="unfinished"></translation>
+        <translation>Обнаружен en_crypt тег без атрибута encrypted_text</translation>
     </message>
     <message>
         <location filename="../src/enml/ENMLConverter_p.cpp" line="396"/>
         <source>Can&apos;t convert the note&apos;s html to ENML</source>
-        <translation type="unfinished"></translation>
+        <translation>Невозможно преобразовать HTML заметки в ENML</translation>
     </message>
     <message>
         <location filename="../src/enml/ENMLConverter_p.cpp" line="671"/>
         <source>found img tag without src or with empty src attribute</source>
-        <translation type="unfinished"></translation>
+        <translation>обнаружен img тег без атрибута src или с пустым значением атрибута src </translation>
     </message>
     <message>
         <location filename="../src/enml/ENMLConverter_p.cpp" line="713"/>
         <source>couldn&apos;t find the file corresponding to the src attribute of img tag</source>
-        <translation type="unfinished"></translation>
+        <translation>Файл, соответствующий атрибуту src тега img, не найден</translation>
     </message>
     <message>
         <location filename="../src/enml/ENMLConverter_p.cpp" line="821"/>
         <source>Can&apos;t convert the note&apos;s html to QTextDocument</source>
-        <translation type="unfinished"></translation>
+        <translation>Невозможно преобразовать HTML заметки в объект класса QTextDocument</translation>
     </message>
     <message>
         <location filename="../src/enml/ENMLConverter_p.cpp" line="830"/>
         <source>Can&apos;t convert the note&apos;s html to QTextDocument: the document is empty after setting the simplified HTML</source>
-        <translation type="unfinished"></translation>
+        <translation>Невозможно преобразовать HTML заметки в объект класса QTextDocument: документ пуст после вставки в него HTML</translation>
     </message>
     <message>
         <location filename="../src/enml/ENMLConverter_p.cpp" line="856"/>
         <location filename="../src/enml/ENMLConverter_p.cpp" line="955"/>
         <source>Failed to clean up the input HTML</source>
-        <translation type="unfinished"></translation>
+        <translation>Ошибка конвертации вставляемого HTML в XML</translation>
     </message>
     <message>
         <location filename="../src/enml/ENMLConverter_p.cpp" line="1334"/>
         <source>Failed to convert the note content to plain text</source>
-        <translation type="unfinished"></translation>
+        <translation>Ошибка преобразования ENML заметки в неформатированный текст</translation>
     </message>
     <message>
         <location filename="../src/enml/ENMLConverter_p.cpp" line="1443"/>
         <source>Can&apos;t compose the resource&apos;s html representation: no data hash is set</source>
-        <translation type="unfinished"></translation>
+        <translation>Ошибка формирования HTML ресурса: не указан хеш данных ресурса</translation>
     </message>
     <message>
         <location filename="../src/enml/ENMLConverter_p.cpp" line="1449"/>
         <source>Can&apos;t compose the resource&apos;s html representation: no mime type is set</source>
-        <translation type="unfinished"></translation>
+        <translation>Ошибка формирования HTML ресурса: не указан mime тип данных ресурса</translation>
     </message>
     <message>
         <location filename="../src/enml/ENMLConverter_p.cpp" line="1495"/>
         <source>Can&apos;t export note(s) to ENEX: no notes</source>
-        <translation type="unfinished"></translation>
+        <translation>Невозможно выполнить экспорт в ENEX: заметки не обнаружены</translation>
     </message>
     <message>
         <location filename="../src/enml/ENMLConverter_p.cpp" line="1514"/>
         <source>Can&apos;t export note(s) to ENEX: no notes eligible for export</source>
-        <translation type="unfinished"></translation>
+        <translation>Невозможно выполнить экспорт в ENEX: заметки, подлежащие экспорту, не обнаружены</translation>
     </message>
     <message>
         <location filename="../src/enml/ENMLConverter_p.cpp" line="1589"/>
         <source>Can&apos;t export note(s) to ENEX: one of notes has tag local uid for which no tag name was found</source>
-        <translation type="unfinished"></translation>
+        <translation>Невозможно выполнить экспорт в ENEX: обнаружена заметка с локальным id тега, для которого не найдено соответствующего имени тега</translation>
     </message>
     <message>
         <location filename="../src/enml/ENMLConverter_p.cpp" line="1749"/>
         <source>Can&apos;t export note(s) to ENEX: found resource larger than 25 Mb</source>
-        <translation type="unfinished"></translation>
+        <translation>Невозможно выполнить экспорт в ENEX: обнаружен ресурс размером больше 25 Мб</translation>
     </message>
     <message>
         <location filename="../src/enml/ENMLConverter_p.cpp" line="1782"/>
         <source>Can&apos;t export note(s) to ENEX: found invalid resource recognition index at one of notes</source>
-        <translation type="unfinished"></translation>
+        <translation>Невозможно выполнить экспорт в ENEX: обнаружен повреждённый индекс распознавания ресурса в одной из заметок</translation>
     </message>
     <message>
         <location filename="../src/enml/ENMLConverter_p.cpp" line="1903"/>
         <source>Can&apos;t export note(s) to ENEX</source>
-        <translation type="unfinished"></translation>
+        <translation>Невозможно выполнить экспорт в ENEX</translation>
     </message>
     <message>
         <location filename="../src/enml/ENMLConverter_p.cpp" line="1922"/>
         <source>Can&apos;t import ENEX: the input is empty</source>
-        <translation type="unfinished"></translation>
+        <translation>Невозможно выполнить импорт из ENEX: строка ENEX пуста</translation>
     </message>
     <message>
         <location filename="../src/enml/ENMLConverter_p.cpp" line="1994"/>
         <source>Detected title tag outside of note tag</source>
-        <translation type="unfinished"></translation>
+        <translation>Обнаружен тег title вне тега note</translation>
     </message>
     <message>
         <location filename="../src/enml/ENMLConverter_p.cpp" line="2008"/>
         <source>Detected content tag outside of note tag</source>
-        <translation type="unfinished"></translation>
+        <translation>Обнаружен тег content вне тега note</translation>
     </message>
     <message>
         <location filename="../src/enml/ENMLConverter_p.cpp" line="2021"/>
         <source>failed to parse the creation datetime from string</source>
-        <translation type="unfinished"></translation>
+        <translation>Ошибка чтения времени создания из строки</translation>
     </message>
     <message>
         <location filename="../src/enml/ENMLConverter_p.cpp" line="2034"/>
         <source>Detected created tag outside of note tag</source>
-        <translation type="unfinished"></translation>
+        <translation>Обнаружен тег created вне тега note</translation>
     </message>
     <message>
         <location filename="../src/enml/ENMLConverter_p.cpp" line="2047"/>
         <source>failed to parse the modification datetime from string</source>
-        <translation type="unfinished"></translation>
+        <translation>Ошибка чтения времени последней модификации из строки</translation>
     </message>
     <message>
         <location filename="../src/enml/ENMLConverter_p.cpp" line="2060"/>
         <source>Detected updated tag outside of note tag</source>
-        <translation type="unfinished"></translation>
+        <translation>Обнаружен тег updated вне тега note</translation>
     </message>
     <message>
         <location filename="../src/enml/ENMLConverter_p.cpp" line="2081"/>
         <source>Detected tag outside of note</source>
-        <translation type="unfinished"></translation>
+        <translation>Обнаружен тег tag вне тега note</translation>
     </message>
     <message>
         <location filename="../src/enml/ENMLConverter_p.cpp" line="2094"/>
         <source>Detected note-attributes tag outside of note</source>
-        <translation type="unfinished"></translation>
+        <translation>Обнаружен тег note-attributes вне тега note</translation>
     </message>
     <message>
         <location filename="../src/enml/ENMLConverter_p.cpp" line="2107"/>
         <source>Failed to parse latitude</source>
-        <translation type="unfinished"></translation>
+        <translation>Ошибка чтения поля latitude из строки</translation>
     </message>
     <message>
         <location filename="../src/enml/ENMLConverter_p.cpp" line="2126"/>
         <source>Detected latitude tag outside of note attributes or resource attributes</source>
-        <translation type="unfinished"></translation>
+        <translation>Обнаружен тег latitude вне тега note attributes или resource attributes</translation>
     </message>
     <message>
         <location filename="../src/enml/ENMLConverter_p.cpp" line="2132"/>
         <source>Detected latitude tag outside of note</source>
-        <translation type="unfinished"></translation>
+        <translation>Обнаружен тег latitude вне тега note</translation>
     </message>
     <message>
         <location filename="../src/enml/ENMLConverter_p.cpp" line="2143"/>
         <source>Failed to parse longitude</source>
-        <translation type="unfinished"></translation>
+        <translation>Ошибка чтения поля longitude из строки</translation>
     </message>
     <message>
         <location filename="../src/enml/ENMLConverter_p.cpp" line="2164"/>
         <source>Detected longitude tag outside of note attributes or resource attributes</source>
-        <translation type="unfinished"></translation>
+        <translation>Обнаружен тег longitude вне тега note attributes или resource attributes</translation>
     </message>
     <message>
         <location filename="../src/enml/ENMLConverter_p.cpp" line="2170"/>
         <source>Detected longitude tag outside of note</source>
-        <translation type="unfinished"></translation>
+        <translation>Обнаружен тег longitude вне тега note</translation>
     </message>
     <message>
         <location filename="../src/enml/ENMLConverter_p.cpp" line="2181"/>
         <source>Failed to parse altitude</source>
-        <translation type="unfinished"></translation>
+        <translation>Ошибка чтения поля altitude из строки</translation>
     </message>
     <message>
         <location filename="../src/enml/ENMLConverter_p.cpp" line="2202"/>
         <source>Detected altitude tag outside of note attributes or resource attributes</source>
-        <translation type="unfinished"></translation>
+        <translation>Обнаружен тег altitude вне тега note attributes или resource attributes</translation>
     </message>
     <message>
         <location filename="../src/enml/ENMLConverter_p.cpp" line="2208"/>
         <source>Detected altitude tag outside of note</source>
-        <translation type="unfinished"></translation>
+        <translation>Обнаружен тег altitude вне тега note</translation>
     </message>
     <message>
         <location filename="../src/enml/ENMLConverter_p.cpp" line="2223"/>
@@ -5390,33 +5390,33 @@
     <name>EncryptionDialog</name>
     <message>
         <location filename="../src/note_editor/dialogs/EncryptionDialog.ui" line="14"/>
-        <source>Dialog</source>
-        <translation type="unfinished"></translation>
+        <source>Encrypt text</source>
+        <translation>Шифрование текста</translation>
     </message>
     <message>
         <location filename="../src/note_editor/dialogs/EncryptionDialog.ui" line="20"/>
         <source>Enter the encryption password (take into account that it is case sensitive):</source>
-        <translation type="unfinished"></translation>
+        <translation>Введите пароль шифрования (учтите, что регистр имеет значение):</translation>
     </message>
     <message>
         <location filename="../src/note_editor/dialogs/EncryptionDialog.ui" line="43"/>
         <source>Enter the encryption password again:</source>
-        <translation type="unfinished"></translation>
+        <translation>Введите пароль шифрования ещё раз:</translation>
     </message>
     <message>
         <location filename="../src/note_editor/dialogs/EncryptionDialog.ui" line="66"/>
         <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;WARNING: the encryption password is not stored in either local or remote storage! If you forget it, nobody would be able to help you to decrypt the encrypted text.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
-        <translation type="unfinished"></translation>
+        <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;ВНИМАНИЕ: запомните пароль шифрования! Без него зашифрованный текст невозможно будет восстановить&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
     </message>
     <message>
         <location filename="../src/note_editor/dialogs/EncryptionDialog.ui" line="79"/>
         <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Optional: enter the hint to help you memorize the password in future. The hint is stored in unencrypted form. &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
-        <translation type="unfinished"></translation>
+        <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Опционально: введите подсказку, чтобы вспомнить пароль. Подсказка хранится в незашифрованном виде.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
     </message>
     <message>
         <location filename="../src/note_editor/dialogs/EncryptionDialog.ui" line="99"/>
         <source>Remember the password for session</source>
-        <translation type="unfinished"></translation>
+        <translation>Не спрашивать пароль до перезапуска</translation>
     </message>
 </context>
 <context>
