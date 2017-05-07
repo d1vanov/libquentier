@@ -188,277 +188,277 @@
     <message>
         <location filename="../src/enml/ENMLConverter_p.cpp" line="2223"/>
         <source>Detected author tag outside of note or note attributes</source>
-        <translation type="unfinished"></translation>
+        <translation>Обнаружен тег author вне тега note attributes </translation>
     </message>
     <message>
         <location filename="../src/enml/ENMLConverter_p.cpp" line="2238"/>
         <source>Detected source tag outside of note or note attributes</source>
-        <translation type="unfinished"></translation>
+        <translation>Обнаружен тег source вне тега note attributes </translation>
     </message>
     <message>
         <location filename="../src/enml/ENMLConverter_p.cpp" line="2262"/>
         <source>Detected source-url tag outside of note attributes or resource attributes</source>
-        <translation type="unfinished"></translation>
+        <translation>Обнаружен тег source-url вне тега note attributes или resource attributes</translation>
     </message>
     <message>
         <location filename="../src/enml/ENMLConverter_p.cpp" line="2268"/>
         <source>Detected source-url tag outside of note</source>
-        <translation type="unfinished"></translation>
+        <translation>Обнаружен тег source-url вне тега note</translation>
     </message>
     <message>
         <location filename="../src/enml/ENMLConverter_p.cpp" line="2283"/>
         <source>Detected source-application tag outside of note or note attributes</source>
-        <translation type="unfinished"></translation>
+        <translation>Обнаружен тег source-application вне тегов note или note attributes</translation>
     </message>
     <message>
         <location filename="../src/enml/ENMLConverter_p.cpp" line="2296"/>
         <source>Failed to parse reminder order</source>
-        <translation type="unfinished"></translation>
+        <translation>Ошибка чтения порядка напоминания из строки</translation>
     </message>
     <message>
         <location filename="../src/enml/ENMLConverter_p.cpp" line="2309"/>
         <source>Detected reminder-order tag outside of note or note attributes</source>
-        <translation type="unfinished"></translation>
+        <translation>Обнаружен тег reminder-order вне тегов note или note attributes</translation>
     </message>
     <message>
         <location filename="../src/enml/ENMLConverter_p.cpp" line="2321"/>
         <source>failed to parse the reminder time from string</source>
-        <translation type="unfinished"></translation>
+        <translation>Ошибка чтения времени напоминания из строки</translation>
     </message>
     <message>
         <location filename="../src/enml/ENMLConverter_p.cpp" line="2335"/>
         <source>Detected reminder-time tag outside of note or note attributes</source>
-        <translation type="unfinished"></translation>
+        <translation>Обнаружен тег reminder-time вне тегов note или note attributes</translation>
     </message>
     <message>
         <location filename="../src/enml/ENMLConverter_p.cpp" line="2347"/>
         <source>failed to parse the subject date from string</source>
-        <translation type="unfinished"></translation>
+        <translation>Ошибка чтения целевой даты из строки</translation>
     </message>
     <message>
         <location filename="../src/enml/ENMLConverter_p.cpp" line="2361"/>
         <source>Detected subject-date tag outside of note or note attributes</source>
-        <translation type="unfinished"></translation>
+        <translation>Обнаружен тег subject-date вне тегов note или note attributes</translation>
     </message>
     <message>
         <location filename="../src/enml/ENMLConverter_p.cpp" line="2373"/>
         <source>failed to parse the reminder done time from string</source>
-        <translation type="unfinished"></translation>
+        <translation>Ошибка чтения времени окончания напоминаний из строки</translation>
     </message>
     <message>
         <location filename="../src/enml/ENMLConverter_p.cpp" line="2387"/>
         <source>Detected reminder-done-time tag outside of note or note attributes</source>
-        <translation type="unfinished"></translation>
+        <translation>Обнаружен тег reminder-done-time вне тегов note или note attributes</translation>
     </message>
     <message>
         <location filename="../src/enml/ENMLConverter_p.cpp" line="2402"/>
         <source>Detected place-name tag outside of note or note attributes</source>
-        <translation type="unfinished"></translation>
+        <translation>Обнаружен тег place-name вне тегов note или note attributes</translation>
     </message>
     <message>
         <location filename="../src/enml/ENMLConverter_p.cpp" line="2417"/>
         <source>Detected content-class tag outside of note or note attributes</source>
-        <translation type="unfinished"></translation>
+        <translation>Обнаружен тег content-class вне тегов note или note attributes</translation>
     </message>
     <message>
         <location filename="../src/enml/ENMLConverter_p.cpp" line="2458"/>
         <source>failed to parse application-data tag for note: no key attribute</source>
-        <translation type="unfinished"></translation>
+        <translation>Ошибка чтения тега applciation-data для заметки: не найдено атрибута key</translation>
     </message>
     <message>
         <location filename="../src/enml/ENMLConverter_p.cpp" line="2494"/>
         <source>failed to parse application-data tag for resource: no key attribute</source>
-        <translation type="unfinished"></translation>
+        <translation>Ошибка чтения тега applciation-data для вложения: не найдено атрибута key</translation>
     </message>
     <message>
         <location filename="../src/enml/ENMLConverter_p.cpp" line="2501"/>
         <source>Detected application-data tag outside of note attributes or resource attributes</source>
-        <translation type="unfinished"></translation>
+        <translation>Обнаружен тег application-data вне тега note attributes или resource attributes</translation>
     </message>
     <message>
         <location filename="../src/enml/ENMLConverter_p.cpp" line="2507"/>
         <source>Detected application-data tag outside of note</source>
-        <translation type="unfinished"></translation>
+        <translation>Обнаружен тег application-data вне тега note</translation>
     </message>
     <message>
         <location filename="../src/enml/ENMLConverter_p.cpp" line="2535"/>
         <source>Detected data tag outside of resource</source>
-        <translation type="unfinished"></translation>
+        <translation>Обнаружен тег data вне вложения</translation>
     </message>
     <message>
         <location filename="../src/enml/ENMLConverter_p.cpp" line="2549"/>
         <source>Detected mime tag outside of resource</source>
-        <translation type="unfinished"></translation>
+        <translation>Обнаружен тег mime вне вложения</translation>
     </message>
     <message>
         <location filename="../src/enml/ENMLConverter_p.cpp" line="2562"/>
         <source>Failed to parse resource width from string</source>
-        <translation type="unfinished"></translation>
+        <translation>Ошибка чтения ширины вложения из строки</translation>
     </message>
     <message>
         <location filename="../src/enml/ENMLConverter_p.cpp" line="2573"/>
         <source>Detected width tag outside of resource</source>
-        <translation type="unfinished"></translation>
+        <translation>Обнаружен тег width вне вложения</translation>
     </message>
     <message>
         <location filename="../src/enml/ENMLConverter_p.cpp" line="2586"/>
         <source>Failed to parse resource height from string</source>
-        <translation type="unfinished"></translation>
+        <translation>Ошибка чтения высоты вложения из строки</translation>
     </message>
     <message>
         <location filename="../src/enml/ENMLConverter_p.cpp" line="2597"/>
         <source>Detected height tag outside of resource</source>
-        <translation type="unfinished"></translation>
+        <translation>Обнаружен тег height вне вложения</translation>
     </message>
     <message>
         <location filename="../src/enml/ENMLConverter_p.cpp" line="2610"/>
         <source>Detected recognition tag outside of resource</source>
-        <translation type="unfinished"></translation>
+        <translation>Обнаружен тег recognition вне вложения</translation>
     </message>
     <message>
         <location filename="../src/enml/ENMLConverter_p.cpp" line="2623"/>
         <source>Detected resource-attributes tag outside of resource</source>
-        <translation type="unfinished"></translation>
+        <translation>Обнаружен тег resource-attributes вне вложения</translation>
     </message>
     <message>
         <location filename="../src/enml/ENMLConverter_p.cpp" line="2635"/>
         <source>failed to parse the resource timestamp from string</source>
-        <translation type="unfinished"></translation>
+        <translation>Ошибка чтения временной марки вложения из строки</translation>
     </message>
     <message>
         <location filename="../src/enml/ENMLConverter_p.cpp" line="2649"/>
         <source>Detected timestamp tag outside of resource or resource attributes</source>
-        <translation type="unfinished"></translation>
+        <translation>Обнаружен тег timestamp вне тега resource или resource-attributes</translation>
     </message>
     <message>
         <location filename="../src/enml/ENMLConverter_p.cpp" line="2665"/>
         <source>Detected camera-make tag outside of resource or resource attributes</source>
-        <translation type="unfinished"></translation>
+        <translation>Обнаружен тег camera-make вне тега resource или resource-attributes</translation>
     </message>
     <message>
         <location filename="../src/enml/ENMLConverter_p.cpp" line="2681"/>
         <source>Detected reco-type tag outside of resource or resource attributes</source>
-        <translation type="unfinished"></translation>
+        <translation>Обнаружен тег reco-type вне тега resource или resource-attributes</translation>
     </message>
     <message>
         <location filename="../src/enml/ENMLConverter_p.cpp" line="2697"/>
         <source>Detected file-name tag outside of resource or resource attributes</source>
-        <translation type="unfinished"></translation>
+        <translation>Обнаружен тег file-name вне тега resource или resource-attributes</translation>
     </message>
     <message>
         <location filename="../src/enml/ENMLConverter_p.cpp" line="2718"/>
         <source>Detected attachment tag with wrong value, must be true or false</source>
-        <translation type="unfinished"></translation>
+        <translation>Обнаружен тег attachment с неверным значение, должно быть true или false</translation>
     </message>
     <message>
         <location filename="../src/enml/ENMLConverter_p.cpp" line="2727"/>
         <source>Detected attachment tag outside of resource or resource attributes</source>
-        <translation type="unfinished"></translation>
+        <translation>Обнаружен тег attachment вне тега resource или resource-attributes</translation>
     </message>
     <message>
         <location filename="../src/enml/ENMLConverter_p.cpp" line="2741"/>
         <source>Detected alternate-data tag outside of resource</source>
-        <translation type="unfinished"></translation>
+        <translation>Обнаружен тег alternate-data вне вложения</translation>
     </message>
     <message>
         <location filename="../src/enml/ENMLConverter_p.cpp" line="2773"/>
         <source>Resource recognition index is invalid</source>
-        <translation type="unfinished"></translation>
+        <translation>Индекс распознавания вложения является невалидным</translation>
     </message>
     <message>
         <location filename="../src/enml/ENMLConverter_p.cpp" line="2848"/>
         <source>Parsed resource without a data body</source>
-        <translation type="unfinished"></translation>
+        <translation>Считанное вложение не имеет данных</translation>
     </message>
     <message>
         <location filename="../src/enml/ENMLConverter_p.cpp" line="2854"/>
         <source>Internal error: data hash is not computed for the resource</source>
-        <translation type="unfinished"></translation>
+        <translation>Внутренняя ошибка: хеш данных не вычислен для вложения</translation>
     </message>
     <message>
         <location filename="../src/enml/ENMLConverter_p.cpp" line="2860"/>
         <source>Internal error: data size is not computed for the resource</source>
-        <translation type="unfinished"></translation>
+        <translation>Внутренняя ошибка: размер данных не вычислен для вложения</translation>
     </message>
     <message>
         <location filename="../src/enml/ENMLConverter_p.cpp" line="2866"/>
         <source>Parsed resource without a mime type</source>
-        <translation type="unfinished"></translation>
+        <translation>Считанное вложение не имеет объявленного типа данных (mime)</translation>
     </message>
     <message>
         <location filename="../src/enml/ENMLConverter_p.cpp" line="3059"/>
         <source>Detected incorrect en-media tag missing hash attribute</source>
-        <translation type="unfinished"></translation>
+        <translation>Обнаружен некорректный тег en-media: отсутствует атрибут hash</translation>
     </message>
     <message>
         <location filename="../src/enml/ENMLConverter_p.cpp" line="3065"/>
         <source>Detected incorrect en-media tag missing type attribute</source>
-        <translation type="unfinished"></translation>
+        <translation>Обнаружен некорректный тег en-media: отсутствует атрибут type</translation>
     </message>
     <message>
         <location filename="../src/enml/ENMLConverter_p.cpp" line="3151"/>
         <source>Missing encrypted text attribute within en-decrypted div tag</source>
-        <translation type="unfinished"></translation>
+        <translation>Отсутствует атрибут encrypted-text в теге en-decrypted </translation>
     </message>
     <message>
         <location filename="../src/enml/ENMLConverter_p.cpp" line="3162"/>
         <source>Can&apos;t find the decrypted text by its encrypted text</source>
-        <translation type="unfinished"></translation>
+        <translation>Не найден расшифрованный текст, соответствующий зашифрованному</translation>
     </message>
     <message>
         <location filename="../src/enml/ENMLConverter_p.cpp" line="3198"/>
         <source>Text decryption failed</source>
-        <translation type="unfinished"></translation>
+        <translation>Расшифровка текста не удалась</translation>
     </message>
     <message>
         <location filename="../src/enml/ENMLConverter_p.cpp" line="3345"/>
         <source>could not validate document, can&apos;t parse the input into xml doc</source>
-        <translation type="unfinished"></translation>
+        <translation>невозможно проверить валидность документа: не удалось преобразовать документ в xml doc из libxml2</translation>
     </message>
     <message>
         <location filename="../src/enml/ENMLConverter_p.cpp" line="3352"/>
         <source>could not validate document, can&apos;t open the resource file with DTD</source>
-        <translation type="unfinished"></translation>
+        <translation>невозможно проверить валидность документа: не удалось открыть файл с декларацией DTD</translation>
     </message>
     <message>
         <location filename="../src/enml/ENMLConverter_p.cpp" line="3364"/>
         <source>could not validate document, can&apos;t allocate the input buffer for dtd validation</source>
-        <translation type="unfinished"></translation>
+        <translation>невозможно проверить валидность документа: не удалось выделить буфер для валидации документа по DTD</translation>
     </message>
     <message>
         <location filename="../src/enml/ENMLConverter_p.cpp" line="3373"/>
         <source>could not validate document, failed to parse DTD</source>
-        <translation type="unfinished"></translation>
+        <translation>невозможно проверить валидность документа: не удалось прочитать декларацию DTD</translation>
     </message>
     <message>
         <location filename="../src/enml/ENMLConverter_p.cpp" line="3382"/>
         <source>could not validate document, can&apos;t allocate parser context</source>
-        <translation type="unfinished"></translation>
+        <translation>невозможно проверить валидность документа: не удалось создать контекст парсера из libxml2</translation>
     </message>
     <message>
         <location filename="../src/enml/ENMLConverter_p.cpp" line="3402"/>
         <source>document is invalid</source>
-        <translation type="unfinished"></translation>
+        <translation>документ не является валидным</translation>
     </message>
     <message>
         <location filename="../src/local_storage/LocalStorageCacheManager_p.cpp" line="115"/>
         <source>Unable to insert the data item into the local storage cache</source>
-        <translation type="unfinished"></translation>
+        <translation>Ошибка добавления элемента данных в кэш локального хранилища</translation>
     </message>
     <message>
         <location filename="../src/local_storage/LocalStorageManagerAsync.cpp" line="87"/>
         <source>Caught exception</source>
-        <translation type="unfinished"></translation>
+        <translation>Поймано исключение</translation>
     </message>
     <message>
         <location filename="../src/local_storage/LocalStorageManagerAsync.cpp" line="118"/>
         <source>Failed to switch user</source>
-        <translation type="unfinished"></translation>
+        <translation>Не удалось переключить аккаунт</translation>
     </message>
     <message>
         <location filename="../src/local_storage/LocalStorageManager_p.cpp" line="153"/>
         <source>Can&apos;t insert user data into the local storage database</source>
-        <translation type="unfinished"></translation>
+        <translation>Ошибка вставки данных пользователя в локальное хранилище</translation>
     </message>
     <message>
         <location filename="../src/local_storage/LocalStorageManager_p.cpp" line="170"/>
@@ -4378,32 +4378,32 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/synchronization/RemoteToLocalSynchronizationManager.cpp" line="5457"/>
+        <location filename="../src/synchronization/RemoteToLocalSynchronizationManager.cpp" line="5459"/>
         <source>Detected tag from remote storage which needs to be searched by name in the local storage but it has no name set</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/synchronization/RemoteToLocalSynchronizationManager.cpp" line="5474"/>
+        <location filename="../src/synchronization/RemoteToLocalSynchronizationManager.cpp" line="5476"/>
         <source>Detected saved search from remote storage which needs to be searched by name in the local storage but it has no name set</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/synchronization/RemoteToLocalSynchronizationManager.cpp" line="5489"/>
+        <location filename="../src/synchronization/RemoteToLocalSynchronizationManager.cpp" line="5491"/>
         <source>Detected notebook from remote storage which needs to be searched by name in the local storage but it has no name set</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/synchronization/RemoteToLocalSynchronizationManager.cpp" line="5524"/>
+        <location filename="../src/synchronization/RemoteToLocalSynchronizationManager.cpp" line="5526"/>
         <source>Found a data item without the update sequence number within the sync chunk</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/synchronization/RemoteToLocalSynchronizationManager.cpp" line="5556"/>
+        <location filename="../src/synchronization/RemoteToLocalSynchronizationManager.cpp" line="5558"/>
         <source>Could not find the remote item by guid when reported of duplicate by guid in the local storage</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/synchronization/RemoteToLocalSynchronizationManager.cpp" line="5567"/>
+        <location filename="../src/synchronization/RemoteToLocalSynchronizationManager.cpp" line="5569"/>
         <source>Found a remote data item without the update sequence number</source>
         <translation type="unfinished"></translation>
     </message>
@@ -5321,61 +5321,61 @@
     <name>DecryptionDialog</name>
     <message>
         <location filename="../src/note_editor/dialogs/DecryptionDialog.ui" line="14"/>
-        <source>Note decryption</source>
-        <translation type="unfinished"></translation>
+        <source>Decrypt text</source>
+        <translation>Расшифровать текст</translation>
     </message>
     <message>
         <location filename="../src/note_editor/dialogs/DecryptionDialog.ui" line="29"/>
         <source>Enter passphrase to decrypt content:</source>
-        <translation type="unfinished"></translation>
+        <translation>Введите пароль для расшифровки текста:</translation>
     </message>
     <message>
         <location filename="../src/note_editor/dialogs/DecryptionDialog.ui" line="46"/>
         <source>Show password</source>
-        <translation type="unfinished"></translation>
+        <translation>Показать пароль</translation>
     </message>
     <message>
         <location filename="../src/note_editor/dialogs/DecryptionDialog.ui" line="60"/>
         <source>Hint:</source>
-        <translation type="unfinished"></translation>
+        <translation>Подсказка:</translation>
     </message>
     <message>
         <location filename="../src/note_editor/dialogs/DecryptionDialog.ui" line="70"/>
         <source>Remember passphrase during the session</source>
-        <translation type="unfinished"></translation>
+        <translation>Не спрашивать пароль до перезапуска</translation>
     </message>
     <message>
         <location filename="../src/note_editor/dialogs/DecryptionDialog.ui" line="77"/>
         <source>Decrypt permanently</source>
-        <translation type="unfinished"></translation>
+        <translation>Убрать блок шифрования насовсем</translation>
     </message>
 </context>
 <context>
     <name>EditHyperlinkDialog</name>
     <message>
         <location filename="../src/note_editor/dialogs/EditHyperlinkDialog.ui" line="20"/>
-        <source>Dialog</source>
-        <translation type="unfinished"></translation>
+        <source>Edit hyperlink</source>
+        <translation>Редактировать гиперссылку</translation>
     </message>
     <message>
         <location filename="../src/note_editor/dialogs/EditHyperlinkDialog.ui" line="26"/>
         <source>Url:</source>
-        <translation type="unfinished"></translation>
+        <translation>Ссылка:</translation>
     </message>
     <message>
         <location filename="../src/note_editor/dialogs/EditHyperlinkDialog.ui" line="39"/>
         <source>Please enter the url here</source>
-        <translation type="unfinished"></translation>
+        <translation>Пожалуйста, введите адрес ссылки</translation>
     </message>
     <message>
         <location filename="../src/note_editor/dialogs/EditHyperlinkDialog.ui" line="56"/>
         <source>Text:</source>
-        <translation type="unfinished"></translation>
+        <translation>Текст:</translation>
     </message>
     <message>
         <location filename="../src/note_editor/dialogs/EditHyperlinkDialog.ui" line="69"/>
         <source>Please enter the link text here</source>
-        <translation type="unfinished"></translation>
+        <translation>Пожалуйста, введите текст ссылки</translation>
     </message>
 </context>
 <context>
@@ -5383,7 +5383,7 @@
     <message>
         <location filename="../src/note_editor/EncryptedAreaPlugin.ui" line="35"/>
         <source>Form</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
 </context>
 <context>
@@ -5424,7 +5424,7 @@
     <message>
         <location filename="../src/note_editor/GenericResourceDisplayWidget.ui" line="35"/>
         <source>Form</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
 </context>
 <context>
@@ -5432,56 +5432,50 @@
     <message>
         <location filename="../src/note_editor/undo_stack/ImageResourceRotationUndoCommand.cpp" line="19"/>
         <source>Image resource rotation</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/note_editor/undo_stack/ImageResourceRotationUndoCommand.cpp" line="20"/>
-        <source>clockwise</source>
-        <translation type="unfinished"></translation>
+        <translation>Вращение изображения</translation>
     </message>
     <message>
         <location filename="../src/note_editor/undo_stack/ImageResourceRotationUndoCommand.cpp" line="21"/>
-        <source>counterclockwise</source>
-        <translation type="unfinished"></translation>
+        <source>clockwise</source>
+        <translation>по часовой стрелке</translation>
     </message>
     <message>
-        <location filename="../src/synchronization/RemoteToLocalSynchronizationManager.cpp" line="5423"/>
-        <location filename="../src/synchronization/RemoteToLocalSynchronizationManager.cpp" line="5434"/>
-        <source>Conflicted</source>
-        <translation type="unfinished"></translation>
+        <location filename="../src/note_editor/undo_stack/ImageResourceRotationUndoCommand.cpp" line="22"/>
+        <source>counterclockwise</source>
+        <translation>против часовой стрелки</translation>
     </message>
     <message>
         <location filename="../src/utility/DesktopServices.cpp" line="244"/>
         <source>Technical details on the issue: </source>
-        <translation type="unfinished"></translation>
+        <translation>Техническая информация о проблеме:</translation>
     </message>
     <message>
         <location filename="../src/utility/DesktopServices.cpp" line="247"/>
         <source>Internal error</source>
-        <translation type="unfinished"></translation>
+        <translation>Внутренняя ошибка</translation>
     </message>
     <message>
         <location filename="../src/utility/DesktopServices.cpp" line="248"/>
         <source>Unfortunately, </source>
-        <translation type="unfinished"></translation>
+        <translation>К сожалению, </translation>
     </message>
     <message>
         <location filename="../src/utility/DesktopServices.cpp" line="249"/>
         <source>encountered internal error. Please report the bug to the developers and try restarting the application</source>
-        <translation type="unfinished"></translation>
+        <translation>столкнулся с внутренней ошибкой. Пожалуйста, сообщите о проблеме разработчикам и попробуйте перезапустить приложение</translation>
     </message>
 </context>
 <context>
     <name>RenameResourceDialog</name>
     <message>
         <location filename="../src/note_editor/dialogs/RenameResourceDialog.ui" line="14"/>
-        <source>Dialog</source>
-        <translation type="unfinished"></translation>
+        <source>Rename attachment</source>
+        <translation>Переименование вложения</translation>
     </message>
     <message>
         <location filename="../src/note_editor/dialogs/RenameResourceDialog.ui" line="20"/>
-        <source>Please set the new name for the resource:</source>
-        <translation type="unfinished"></translation>
+        <source>Please set the new name for the attachment:</source>
+        <translation>Пожалуйста, введите новое имя для вложения:</translation>
     </message>
 </context>
 <context>
@@ -5489,7 +5483,7 @@
     <message>
         <location filename="../src/note_editor/undo_stack/AddHyperlinkUndoCommand.cpp" line="20"/>
         <source>Add hyperlink</source>
-        <translation type="unfinished"></translation>
+        <translation>Добавить гиперссылку</translation>
     </message>
 </context>
 <context>
@@ -5497,7 +5491,7 @@
     <message>
         <location filename="../src/note_editor/delegates/AddResourceDelegate.cpp" line="327"/>
         <source>Attachment</source>
-        <translation type="unfinished"></translation>
+        <translation>Вложение</translation>
     </message>
 </context>
 <context>
@@ -5505,7 +5499,7 @@
     <message>
         <location filename="../src/note_editor/undo_stack/AddResourceUndoCommand.cpp" line="22"/>
         <source>Add attachment</source>
-        <translation type="unfinished"></translation>
+        <translation>Добавить вложение</translation>
     </message>
 </context>
 <context>
@@ -5513,7 +5507,7 @@
     <message>
         <location filename="../src/note_editor/undo_stack/DecryptUndoCommand.cpp" line="23"/>
         <source>Decrypt text</source>
-        <translation type="unfinished"></translation>
+        <translation>Расшифровать текст</translation>
     </message>
 </context>
 <context>
@@ -5521,12 +5515,12 @@
     <message>
         <location filename="../src/note_editor/dialogs/DecryptionDialog.cpp" line="103"/>
         <source>Hint: </source>
-        <translation type="unfinished"></translation>
+        <translation>Подсказка:</translation>
     </message>
     <message>
         <location filename="../src/note_editor/dialogs/DecryptionDialog.cpp" line="104"/>
         <source>No hint available</source>
-        <translation type="unfinished"></translation>
+        <translation>Подсказка недоступна</translation>
     </message>
 </context>
 <context>
@@ -5534,17 +5528,17 @@
     <message>
         <location filename="../src/note_editor/dialogs/EditHyperlinkDialog.cpp" line="97"/>
         <source>No URL is entered</source>
-        <translation type="unfinished"></translation>
+        <translation>Адрес ссылки не введён</translation>
     </message>
     <message>
         <location filename="../src/note_editor/dialogs/EditHyperlinkDialog.cpp" line="108"/>
         <source>Entered URL is empty</source>
-        <translation type="unfinished"></translation>
+        <translation>Введённый адрес пуст</translation>
     </message>
     <message>
         <location filename="../src/note_editor/dialogs/EditHyperlinkDialog.cpp" line="114"/>
         <source>Entered URL is not valid</source>
-        <translation type="unfinished"></translation>
+        <translation>Введённый адрес не является валидным</translation>
     </message>
 </context>
 <context>
@@ -5552,7 +5546,7 @@
     <message>
         <location filename="../src/note_editor/undo_stack/EditHyperlinkUndoCommand.cpp" line="20"/>
         <source>Edit hyperlink</source>
-        <translation type="unfinished"></translation>
+        <translation>Редактировать гиперссылку</translation>
     </message>
 </context>
 <context>
@@ -5560,7 +5554,7 @@
     <message>
         <location filename="../src/note_editor/undo_stack/EncryptUndoCommand.cpp" line="20"/>
         <source>Encrypt selected text</source>
-        <translation type="unfinished"></translation>
+        <translation>Зашифровать текст</translation>
     </message>
 </context>
 <context>
@@ -5568,12 +5562,12 @@
     <message>
         <location filename="../src/note_editor/EncryptedAreaPlugin.cpp" line="41"/>
         <source>Show encrypted text</source>
-        <translation type="unfinished"></translation>
+        <translation>Показать зашифрованный текст</translation>
     </message>
     <message>
         <location filename="../src/note_editor/EncryptedAreaPlugin.cpp" line="133"/>
         <source>Encrypted area plugin - note editor plugin used for the display and convenient work with encrypted text within notes</source>
-        <translation type="unfinished"></translation>
+        <translation>Плагин шифрования текста - плагин редактора заметок, используемый для отображения и удобной работы с зашифрованным текстом внутри заметок</translation>
     </message>
 </context>
 <context>
@@ -5581,37 +5575,37 @@
     <message>
         <location filename="../src/note_editor/GenericResourceDisplayWidget.cpp" line="181"/>
         <source>resource has neither data body nor alternate data body</source>
-        <translation type="unfinished"></translation>
+        <translation>У вложения отсутствуют как данные, так и альтернативные данные</translation>
     </message>
     <message>
         <location filename="../src/note_editor/GenericResourceDisplayWidget.cpp" line="244"/>
-        <source>Save as...</source>
-        <translation type="unfinished"></translation>
+        <source>Save as</source>
+        <translation>Сохранить как</translation>
     </message>
     <message>
         <location filename="../src/note_editor/GenericResourceDisplayWidget.cpp" line="291"/>
         <source>Error saving the resource to hidden file</source>
-        <translation type="unfinished"></translation>
+        <translation>Ошибка сохранения вложения в файл</translation>
     </message>
     <message>
         <location filename="../src/note_editor/GenericResourceDisplayWidget.cpp" line="292"/>
         <source>Could not save the resource to hidden file (in order to make it possible to open it with some application)</source>
-        <translation type="unfinished"></translation>
+        <translation>невозможно сохранить вложение в файл (для открытия его в каком-либо приложении)</translation>
     </message>
     <message>
         <location filename="../src/note_editor/GenericResourceDisplayWidget.cpp" line="294"/>
         <source>Error code</source>
-        <translation type="unfinished"></translation>
+        <translation>Код ошибки</translation>
     </message>
     <message>
         <location filename="../src/note_editor/GenericResourceDisplayWidget.cpp" line="319"/>
         <source>Error saving the resource to file</source>
-        <translation type="unfinished"></translation>
+        <translation>Ошибка сохранения вложения в файл</translation>
     </message>
     <message>
         <location filename="../src/note_editor/GenericResourceDisplayWidget.cpp" line="320"/>
         <source>Could not save the resource to file</source>
-        <translation type="unfinished"></translation>
+        <translation>Невозможно сохранить вложение в файл</translation>
     </message>
 </context>
 <context>
@@ -5619,7 +5613,7 @@
     <message>
         <location filename="../src/note_editor/undo_stack/HideDecryptedTextUndoCommand.cpp" line="20"/>
         <source>Hide decrypted text</source>
-        <translation type="unfinished"></translation>
+        <translation>Спрятать расшифрованный текст</translation>
     </message>
 </context>
 <context>
@@ -5627,7 +5621,7 @@
     <message>
         <location filename="../src/note_editor/undo_stack/InsertHtmlUndoCommand.cpp" line="31"/>
         <source>Insert HTML</source>
-        <translation type="unfinished"></translation>
+        <translation>Вставить HTML</translation>
     </message>
 </context>
 <context>
@@ -5635,7 +5629,7 @@
     <message>
         <location filename="../src/note_editor/undo_stack/NoteEditorContentEditUndoCommand.cpp" line="43"/>
         <source>Note text edit</source>
-        <translation type="unfinished"></translation>
+        <translation>Редактирование текста заметки</translation>
     </message>
 </context>
 <context>
@@ -5643,12 +5637,12 @@
     <message>
         <location filename="../src/note_editor/NoteEditorPage.cpp" line="97"/>
         <source>Note editor hanged</source>
-        <translation type="unfinished"></translation>
+        <translation>Редактор заметки завис</translation>
     </message>
     <message>
         <location filename="../src/note_editor/NoteEditorPage.cpp" line="98"/>
         <source>Note editor seems hanged when loading or editing the note. Would you like to cancel loading the note?</source>
-        <translation type="unfinished"></translation>
+        <translation>Похоже, редактор заметки завис при загрузке или редактировании заметки. Хотите попытаться отменить загрузку заметки?</translation>
     </message>
 </context>
 <context>
@@ -5656,38 +5650,38 @@
     <message>
         <location filename="../src/note_editor/NoteEditor_p.cpp" line="2938"/>
         <source>The read-only ink note image should have been present here but something went wrong so the image is not accessible</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/note_editor/NoteEditor_p.cpp" line="3268"/>
-        <location filename="../src/note_editor/NoteEditor_p.cpp" line="3936"/>
-        <source>Save as...</source>
-        <translation type="unfinished"></translation>
+        <translation>Здесь должно было быть нередактируемое изображение рукописной заметки, но что-то пошло не так и изображение не удалось загрузить</translation>
     </message>
     <message>
         <location filename="../src/note_editor/NoteEditor_p.cpp" line="3332"/>
         <source>Attachment</source>
-        <translation type="unfinished"></translation>
+        <translation>Вложение</translation>
+    </message>
+    <message>
+        <location filename="../src/note_editor/NoteEditor_p.cpp" line="3268"/>
+        <location filename="../src/note_editor/NoteEditor_p.cpp" line="3936"/>
+        <source>Save as</source>
+        <translation>Сохранить как</translation>
     </message>
     <message>
         <location filename="../src/note_editor/NoteEditor_p.cpp" line="3812"/>
         <source>Correct the misspelled word</source>
-        <translation type="unfinished"></translation>
+        <translation>Исправить слово</translation>
     </message>
     <message>
         <location filename="../src/note_editor/NoteEditor_p.cpp" line="3821"/>
         <source>Ignore word</source>
-        <translation type="unfinished"></translation>
+        <translation>Игнорировать слово</translation>
     </message>
     <message>
         <location filename="../src/note_editor/NoteEditor_p.cpp" line="3823"/>
         <source>Add word to user dictionary</source>
-        <translation type="unfinished"></translation>
+        <translation>Добавить слово в словарь</translation>
     </message>
     <message>
         <location filename="../src/note_editor/NoteEditor_p.cpp" line="3852"/>
         <source>Cut</source>
-        <translation type="unfinished"></translation>
+        <translation>Вырезать</translation>
     </message>
     <message>
         <location filename="../src/note_editor/NoteEditor_p.cpp" line="3853"/>
@@ -5695,210 +5689,210 @@
         <location filename="../src/note_editor/NoteEditor_p.cpp" line="3919"/>
         <location filename="../src/note_editor/NoteEditor_p.cpp" line="3953"/>
         <source>Copy</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/note_editor/NoteEditor_p.cpp" line="3857"/>
-        <source>Font...</source>
-        <translation type="unfinished"></translation>
+        <translation>Копировать</translation>
     </message>
     <message>
         <location filename="../src/note_editor/NoteEditor_p.cpp" line="3865"/>
         <source>Table</source>
-        <translation type="unfinished"></translation>
+        <translation>Таблица</translation>
     </message>
     <message>
         <location filename="../src/note_editor/NoteEditor_p.cpp" line="3866"/>
         <location filename="../src/note_editor/NoteEditor_p.cpp" line="7058"/>
         <source>Insert row</source>
-        <translation type="unfinished"></translation>
+        <translation>Вставить строку</translation>
     </message>
     <message>
         <location filename="../src/note_editor/NoteEditor_p.cpp" line="3867"/>
         <location filename="../src/note_editor/NoteEditor_p.cpp" line="7072"/>
         <source>Insert column</source>
-        <translation type="unfinished"></translation>
+        <translation>Вставить столбец</translation>
     </message>
     <message>
         <location filename="../src/note_editor/NoteEditor_p.cpp" line="3868"/>
         <location filename="../src/note_editor/NoteEditor_p.cpp" line="7086"/>
         <source>Remove row</source>
-        <translation type="unfinished"></translation>
+        <translation>Удалить строку</translation>
     </message>
     <message>
         <location filename="../src/note_editor/NoteEditor_p.cpp" line="3869"/>
         <location filename="../src/note_editor/NoteEditor_p.cpp" line="7100"/>
         <source>Remove column</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/note_editor/NoteEditor_p.cpp" line="3873"/>
-        <source>Insert table...</source>
-        <translation type="unfinished"></translation>
+        <translation>Удалить столбец</translation>
     </message>
     <message>
         <location filename="../src/note_editor/NoteEditor_p.cpp" line="3877"/>
         <source>Insert horizontal line</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/note_editor/NoteEditor_p.cpp" line="3879"/>
-        <location filename="../src/note_editor/NoteEditor_p.cpp" line="7133"/>
-        <source>Add attachment...</source>
-        <translation type="unfinished"></translation>
+        <translation>Вставить горизонтальную линию</translation>
     </message>
     <message>
         <location filename="../src/note_editor/NoteEditor_p.cpp" line="3884"/>
         <source>Insert ToDo tag</source>
-        <translation type="unfinished"></translation>
+        <translation>Вставить ToDo чекбокс</translation>
     </message>
     <message>
         <location filename="../src/note_editor/NoteEditor_p.cpp" line="3889"/>
         <source>Hyperlink</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/note_editor/NoteEditor_p.cpp" line="3890"/>
-        <source>Add/edit...</source>
-        <translation type="unfinished"></translation>
+        <translation>Гиперссылка</translation>
     </message>
     <message>
         <location filename="../src/note_editor/NoteEditor_p.cpp" line="3892"/>
         <location filename="../src/note_editor/NoteEditor_p.cpp" line="3922"/>
         <location filename="../src/note_editor/NoteEditor_p.cpp" line="3954"/>
         <source>Remove</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/note_editor/NoteEditor_p.cpp" line="3896"/>
-        <source>Encrypt selected fragment...</source>
-        <translation type="unfinished"></translation>
+        <translation>Удалить</translation>
     </message>
     <message>
         <location filename="../src/note_editor/NoteEditor_p.cpp" line="3901"/>
         <source>Encrypt back</source>
-        <translation type="unfinished"></translation>
+        <translation>Зашифровать снова</translation>
     </message>
     <message>
         <location filename="../src/note_editor/NoteEditor_p.cpp" line="3927"/>
         <source>Rotate clockwise</source>
-        <translation type="unfinished"></translation>
+        <translation>Вращать по часовой стрелке</translation>
     </message>
     <message>
         <location filename="../src/note_editor/NoteEditor_p.cpp" line="3929"/>
         <source>Rotate countercloskwise</source>
-        <translation type="unfinished"></translation>
+        <translation>Вращать против часовой стрелки</translation>
     </message>
     <message>
         <location filename="../src/note_editor/NoteEditor_p.cpp" line="3934"/>
         <source>Open</source>
-        <translation type="unfinished"></translation>
+        <translation>Открыть</translation>
     </message>
     <message>
         <location filename="../src/note_editor/NoteEditor_p.cpp" line="3956"/>
         <source>Rename</source>
-        <translation type="unfinished"></translation>
+        <translation>Переименовать</translation>
     </message>
     <message>
         <location filename="../src/note_editor/NoteEditor_p.cpp" line="3962"/>
         <location filename="../src/note_editor/NoteEditor_p.cpp" line="4620"/>
         <source>Paste</source>
-        <translation type="unfinished"></translation>
+        <translation>Вставить</translation>
+    </message>
+    <message>
+        <location filename="../src/note_editor/NoteEditor_p.cpp" line="3857"/>
+        <source>Font</source>
+        <translation>Шрифт</translation>
+    </message>
+    <message>
+        <location filename="../src/note_editor/NoteEditor_p.cpp" line="3873"/>
+        <source>Insert table</source>
+        <translation>Вставить таблицу</translation>
+    </message>
+    <message>
+        <location filename="../src/note_editor/NoteEditor_p.cpp" line="3879"/>
+        <location filename="../src/note_editor/NoteEditor_p.cpp" line="7133"/>
+        <source>Add attachment</source>
+        <translation>Добавить вложение</translation>
+    </message>
+    <message>
+        <location filename="../src/note_editor/NoteEditor_p.cpp" line="3890"/>
+        <source>Add/edit</source>
+        <translation>Добавить/редактировать</translation>
+    </message>
+    <message>
+        <location filename="../src/note_editor/NoteEditor_p.cpp" line="3896"/>
+        <source>Encrypt selected fragment</source>
+        <translation>Зашифровать выбранный фрагмент</translation>
     </message>
     <message>
         <location filename="../src/note_editor/NoteEditor_p.cpp" line="3985"/>
-        <source>Decrypt...</source>
-        <translation type="unfinished"></translation>
+        <source>Decrypt</source>
+        <translation>Расшифровать</translation>
     </message>
     <message>
         <location filename="../src/note_editor/NoteEditor_p.cpp" line="4625"/>
         <source>Paste as unformatted text</source>
-        <translation type="unfinished"></translation>
+        <translation>Вставить без форматирования</translation>
     </message>
     <message>
         <location filename="../src/note_editor/NoteEditor_p.cpp" line="4646"/>
         <source>Paragraph</source>
-        <translation type="unfinished"></translation>
+        <translation>Параграф</translation>
     </message>
     <message>
         <location filename="../src/note_editor/NoteEditor_p.cpp" line="4647"/>
         <source>Align left</source>
-        <translation type="unfinished"></translation>
+        <translation>Выровнять по левому краю</translation>
     </message>
     <message>
         <location filename="../src/note_editor/NoteEditor_p.cpp" line="4648"/>
         <source>Center text</source>
-        <translation type="unfinished"></translation>
+        <translation>Выровнять по центру</translation>
     </message>
     <message>
         <location filename="../src/note_editor/NoteEditor_p.cpp" line="4649"/>
         <source>Align right</source>
-        <translation type="unfinished"></translation>
+        <translation>Выровнять по правому краю</translation>
     </message>
     <message>
         <location filename="../src/note_editor/NoteEditor_p.cpp" line="4651"/>
         <source>Increase indentation</source>
-        <translation type="unfinished"></translation>
+        <translation>Увеличить отступ</translation>
     </message>
     <message>
         <location filename="../src/note_editor/NoteEditor_p.cpp" line="4653"/>
         <source>Decrease indentation</source>
-        <translation type="unfinished"></translation>
+        <translation>Уменьшить отступ</translation>
     </message>
     <message>
         <location filename="../src/note_editor/NoteEditor_p.cpp" line="4658"/>
         <source>Increase font size</source>
-        <translation type="unfinished"></translation>
+        <translation>Увеличить размер шрифта</translation>
     </message>
     <message>
         <location filename="../src/note_editor/NoteEditor_p.cpp" line="4660"/>
         <source>Decrease font size</source>
-        <translation type="unfinished"></translation>
+        <translation>Уменьшить размер шрифта</translation>
     </message>
     <message>
         <location filename="../src/note_editor/NoteEditor_p.cpp" line="4665"/>
         <source>Numbered list</source>
-        <translation type="unfinished"></translation>
+        <translation>Нумерованный список</translation>
     </message>
     <message>
         <location filename="../src/note_editor/NoteEditor_p.cpp" line="4667"/>
         <source>Bulleted list</source>
-        <translation type="unfinished"></translation>
+        <translation>Ненумерованный список</translation>
     </message>
     <message>
         <location filename="../src/note_editor/NoteEditor_p.cpp" line="4685"/>
         <source>Style</source>
-        <translation type="unfinished"></translation>
+        <translation>Стиль</translation>
     </message>
     <message>
         <location filename="../src/note_editor/NoteEditor_p.cpp" line="4686"/>
         <source>Bold</source>
-        <translation type="unfinished"></translation>
+        <translation>Жирный шрифт</translation>
     </message>
     <message>
         <location filename="../src/note_editor/NoteEditor_p.cpp" line="4687"/>
         <source>Italic</source>
-        <translation type="unfinished"></translation>
+        <translation>Наклонный шрифт</translation>
     </message>
     <message>
         <location filename="../src/note_editor/NoteEditor_p.cpp" line="4688"/>
         <source>Underline</source>
-        <translation type="unfinished"></translation>
+        <translation>Подчёркнутый шрифт</translation>
     </message>
     <message>
         <location filename="../src/note_editor/NoteEditor_p.cpp" line="4689"/>
         <source>Strikethrough</source>
-        <translation type="unfinished"></translation>
+        <translation>Перечёркнутый шрифт</translation>
     </message>
     <message>
         <location filename="../src/note_editor/NoteEditor_p.cpp" line="4690"/>
         <source>Highlight</source>
-        <translation type="unfinished"></translation>
+        <translation>Подсветить</translation>
     </message>
     <message>
         <location filename="../src/note_editor/NoteEditor_p.cpp" line="4713"/>
         <source>Spell checker dictionaries</source>
-        <translation type="unfinished"></translation>
+        <translation>Словари проверки правописания</translation>
     </message>
 </context>
 <context>
@@ -5906,17 +5900,23 @@
     <message>
         <location filename="../src/synchronization/RemoteToLocalSynchronizationManager.cpp" line="984"/>
         <source>Note</source>
-        <translation type="unfinished"></translation>
+        <translation>Заметка</translation>
     </message>
     <message>
         <location filename="../src/synchronization/RemoteToLocalSynchronizationManager.cpp" line="985"/>
         <source>containing conflicted resource</source>
-        <translation type="unfinished"></translation>
+        <translation>содержащая конфликтующее вложение</translation>
     </message>
     <message>
         <location filename="../src/synchronization/RemoteToLocalSynchronizationManager.cpp" line="986"/>
         <source>Note containing conflicted resource</source>
-        <translation type="unfinished"></translation>
+        <translation>Заметка, содержащая конфликтующее вложение</translation>
+    </message>
+    <message>
+        <location filename="../src/synchronization/RemoteToLocalSynchronizationManager.cpp" line="5423"/>
+        <location filename="../src/synchronization/RemoteToLocalSynchronizationManager.cpp" line="5435"/>
+        <source>Conflicted</source>
+        <translation>Конфликтующий элемент данных</translation>
     </message>
 </context>
 <context>
@@ -5924,7 +5924,7 @@
     <message>
         <location filename="../src/note_editor/undo_stack/RemoveHyperlinkUndoCommand.cpp" line="21"/>
         <source>Remove hyperlink</source>
-        <translation type="unfinished"></translation>
+        <translation>Удалить гиперссылку</translation>
     </message>
 </context>
 <context>
@@ -5932,7 +5932,7 @@
     <message>
         <location filename="../src/note_editor/undo_stack/RemoveResourceUndoCommand.cpp" line="22"/>
         <source>Remove attachment</source>
-        <translation type="unfinished"></translation>
+        <translation>Удалить вложение</translation>
     </message>
 </context>
 <context>
@@ -5940,7 +5940,7 @@
     <message>
         <location filename="../src/note_editor/undo_stack/RenameResourceUndoCommand.cpp" line="20"/>
         <source>Rename attachment</source>
-        <translation type="unfinished"></translation>
+        <translation>Переименование вложения</translation>
     </message>
 </context>
 <context>
@@ -5948,7 +5948,7 @@
     <message>
         <location filename="../src/note_editor/undo_stack/ReplaceAllUndoCommand.cpp" line="23"/>
         <source>Replace all</source>
-        <translation type="unfinished"></translation>
+        <translation>Заменить всё</translation>
     </message>
 </context>
 <context>
@@ -5956,7 +5956,7 @@
     <message>
         <location filename="../src/note_editor/undo_stack/ReplaceUndoCommand.cpp" line="24"/>
         <source>Replace text</source>
-        <translation type="unfinished"></translation>
+        <translation>Заменить текст</translation>
     </message>
 </context>
 <context>
@@ -5964,7 +5964,7 @@
     <message>
         <location filename="../src/note_editor/undo_stack/SpellCheckAddToUserWordListUndoCommand.cpp" line="14"/>
         <source>Add to user word list</source>
-        <translation type="unfinished"></translation>
+        <translation>Добавить к пользовательскому словарю</translation>
     </message>
 </context>
 <context>
@@ -5972,7 +5972,7 @@
     <message>
         <location filename="../src/note_editor/undo_stack/SpellCheckIgnoreWordUndoCommand.cpp" line="14"/>
         <source>Ignore word</source>
-        <translation type="unfinished"></translation>
+        <translation>Игнорировать слово</translation>
     </message>
 </context>
 <context>
@@ -5980,7 +5980,7 @@
     <message>
         <location filename="../src/note_editor/undo_stack/SpellCorrectionUndoCommand.cpp" line="21"/>
         <source>Spelling correction</source>
-        <translation type="unfinished"></translation>
+        <translation>Коррекция правописания</translation>
     </message>
 </context>
 <context>
@@ -5988,7 +5988,7 @@
     <message>
         <location filename="../src/note_editor/undo_stack/TableActionUndoCommand.cpp" line="20"/>
         <source>Table action</source>
-        <translation type="unfinished"></translation>
+        <translation>Действие с таблицей</translation>
     </message>
 </context>
 <context>
@@ -5996,7 +5996,7 @@
     <message>
         <location filename="../src/note_editor/undo_stack/ToDoCheckboxUndoCommand.cpp" line="12"/>
         <source>Change ToDo state</source>
-        <translation type="unfinished"></translation>
+        <translation>Изменить состояние ToDo чекбокса</translation>
     </message>
 </context>
 <context>
@@ -6004,7 +6004,7 @@
     <message>
         <location filename="../src/note_editor/undo_stack/UpdateResourceUndoCommand.cpp" line="46"/>
         <source>Edit attachment</source>
-        <translation type="unfinished"></translation>
+        <translation>Редактировать вложение</translation>
     </message>
 </context>
 </TS>

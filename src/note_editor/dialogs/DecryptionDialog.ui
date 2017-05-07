@@ -7,11 +7,11 @@
     <x>0</x>
     <y>0</y>
     <width>298</width>
-    <height>224</height>
+    <height>228</height>
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Note decryption</string>
+   <string>Decrypt text</string>
   </property>
   <property name="styleSheet">
    <string notr="true">QDialog#NoteDecryptionDialog {

@@ -3265,7 +3265,7 @@ void NoteEditorPrivate::manualSaveResourceToFile(const Resource & resource)
                                  ? &resourcePreferredFilterString
                                  : Q_NULLPTR);
 
-    QString absoluteFilePath = QFileDialog::getSaveFileName(this, tr("Save as..."),
+    QString absoluteFilePath = QFileDialog::getSaveFileName(this, tr("Save as") + QStringLiteral("..."),
                                                             preferredFolderPath, filterString,
                                                             pSelectedFilter);
     if (absoluteFilePath.isEmpty()) {
@@ -3854,7 +3854,7 @@ void NoteEditorPrivate::setupGenericTextContextMenu(const QStringList & extraDat
     }
 
     setupPasteGenericTextMenuActions();
-    ADD_ACTION_WITH_SHORTCUT(ShortcutManager::Font, tr("Font..."), m_pGenericTextContextMenu, fontMenu, m_isPageEditable);
+    ADD_ACTION_WITH_SHORTCUT(ShortcutManager::Font, tr("Font") + QStringLiteral("..."), m_pGenericTextContextMenu, fontMenu, m_isPageEditable);
     setupParagraphSubMenuForGenericTextMenu(selectedHtml);
     setupStyleSubMenuForGenericTextMenu();
     setupSpellCheckerDictionariesSubMenuForGenericTextMenu();
@@ -3870,13 +3870,13 @@ void NoteEditorPrivate::setupGenericTextContextMenu(const QStringList & extraDat
         Q_UNUSED(m_pGenericTextContextMenu->addSeparator());
     }
     else {
-        ADD_ACTION_WITH_SHORTCUT(ShortcutManager::InsertTable, tr("Insert table..."),
+        ADD_ACTION_WITH_SHORTCUT(ShortcutManager::InsertTable, tr("Insert table") + QStringLiteral("..."),
                                  m_pGenericTextContextMenu, insertTableDialog, m_isPageEditable);
     }
 
     ADD_ACTION_WITH_SHORTCUT(ShortcutManager::InsertHorizontalLine, tr("Insert horizontal line"),
                              m_pGenericTextContextMenu, insertHorizontalLine, m_isPageEditable);
-    ADD_ACTION_WITH_SHORTCUT(ShortcutManager::AddAttachment, tr("Add attachment..."),
+    ADD_ACTION_WITH_SHORTCUT(ShortcutManager::AddAttachment, tr("Add attachment") + QStringLiteral("..."),
                              m_pGenericTextContextMenu, addAttachmentDialog, m_isPageEditable);
 
     Q_UNUSED(m_pGenericTextContextMenu->addSeparator());
@@ -3887,13 +3887,13 @@ void NoteEditorPrivate::setupGenericTextContextMenu(const QStringList & extraDat
     Q_UNUSED(m_pGenericTextContextMenu->addSeparator());
 
     QMenu * pHyperlinkMenu = m_pGenericTextContextMenu->addMenu(tr("Hyperlink"));
-    ADD_ACTION_WITH_SHORTCUT(ShortcutManager::EditHyperlink, tr("Add/edit..."), pHyperlinkMenu, editHyperlinkDialog, m_isPageEditable);
+    ADD_ACTION_WITH_SHORTCUT(ShortcutManager::EditHyperlink, tr("Add/edit") + QStringLiteral("..."), pHyperlinkMenu, editHyperlinkDialog, m_isPageEditable);
     ADD_ACTION_WITH_SHORTCUT(ShortcutManager::CopyHyperlink, tr("Copy"), pHyperlinkMenu, copyHyperlink, m_isPageEditable);
     ADD_ACTION_WITH_SHORTCUT(ShortcutManager::RemoveHyperlink, tr("Remove"), pHyperlinkMenu, removeHyperlink, m_isPageEditable);
 
     if (!insideDecryptedTextFragment && !selectedHtml.isEmpty()) {
         Q_UNUSED(m_pGenericTextContextMenu->addSeparator());
-        ADD_ACTION_WITH_SHORTCUT(ShortcutManager::Encrypt, tr("Encrypt selected fragment..."),
+        ADD_ACTION_WITH_SHORTCUT(ShortcutManager::Encrypt, tr("Encrypt selected fragment") + QStringLiteral("..."),
                                  m_pGenericTextContextMenu, encryptSelectedText, m_isPageEditable);
     }
     else if (insideDecryptedTextFragment) {
@@ -3933,7 +3933,7 @@ void NoteEditorPrivate::setupImageResourceContextMenu(const QByteArray & resourc
 
     ADD_ACTION_WITH_SHORTCUT(ShortcutManager::OpenAttachment, tr("Open"), m_pImageResourceContextMenu,
                              openAttachmentUnderCursor, m_isPageEditable);
-    ADD_ACTION_WITH_SHORTCUT(ShortcutManager::SaveAttachment, tr("Save as..."), m_pImageResourceContextMenu,
+    ADD_ACTION_WITH_SHORTCUT(ShortcutManager::SaveAttachment, tr("Save as") + QStringLiteral("..."), m_pImageResourceContextMenu,
                              saveAttachmentUnderCursor, enabled);
 
     m_pImageResourceContextMenu->exec(m_lastContextMenuEventGlobalPos);
@@ -3982,7 +3982,7 @@ void NoteEditorPrivate::setupEncryptedTextContextMenu(const QString & cipher, co
     delete m_pEncryptedTextContextMenu;
     m_pEncryptedTextContextMenu = new QMenu(this);
 
-    ADD_ACTION_WITH_SHORTCUT(ShortcutManager::Decrypt, tr("Decrypt..."), m_pEncryptedTextContextMenu,
+    ADD_ACTION_WITH_SHORTCUT(ShortcutManager::Decrypt, tr("Decrypt") + QStringLiteral("..."), m_pEncryptedTextContextMenu,
                              decryptEncryptedTextUnderCursor, m_isPageEditable);
 
     m_pEncryptedTextContextMenu->exec(m_lastContextMenuEventGlobalPos);
@@ -7130,7 +7130,7 @@ void NoteEditorPrivate::addAttachmentDialog()
         }
     }
 
-    QString absoluteFilePath = QFileDialog::getOpenFileName(this, tr("Add attachment..."),
+    QString absoluteFilePath = QFileDialog::getOpenFileName(this, tr("Add attachment") + QStringLiteral("..."),
                                                             addAttachmentInitialFolderPath);
     if (absoluteFilePath.isEmpty()) {
         QNTRACE(QStringLiteral("User cancelled adding the attachment"));

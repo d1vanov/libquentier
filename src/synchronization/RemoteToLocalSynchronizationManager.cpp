@@ -5420,7 +5420,8 @@ void setConflictedBase(const QString & typeName, ElementType & element)
     QString currentDateTime = QDateTime::currentDateTime().toString(Qt::ISODate);
 
     element.setGuid(QString());
-    element.setName(QObject::tr("Conflicted") + QStringLiteral(" ") + typeName + element.name() + QStringLiteral(" (") +
+    element.setName(RemoteToLocalSynchronizationManager::tr("Conflicted") + QStringLiteral(" ") + typeName +
+                    QStringLiteral(" ") + element.name() + QStringLiteral(" (") +
                     currentDateTime + QStringLiteral(")"));
     element.setDirty(true);
 }
@@ -5431,7 +5432,8 @@ void setConflictedBase<Note>(const QString & typeName, Note & note)
     QString currentDateTime = QDateTime::currentDateTime().toString(Qt::ISODate);
 
     note.setGuid(QString());
-    note.setTitle(QObject::tr("Conflicted") + QStringLiteral(" ") + typeName + (note.hasTitle() ? note.title() : QStringLiteral("note")) +
+    note.setTitle(RemoteToLocalSynchronizationManager::tr("Conflicted") + QStringLiteral(" ") + typeName +
+                  QStringLiteral(" ") + (note.hasTitle() ? note.title() : QStringLiteral("note")) +
                   QStringLiteral(" (") + currentDateTime + QStringLiteral(")"));
     note.setDirty(true);
     note.setLocal(true);

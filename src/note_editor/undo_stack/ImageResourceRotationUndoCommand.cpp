@@ -16,9 +16,10 @@ ImageResourceRotationUndoCommand::ImageResourceRotationUndoCommand(const QByteAr
     m_resourceAfter(resourceAfter),
     m_rotationDirection(rotationDirection)
 {
-    setText(QObject::tr("Image resource rotation") + (m_rotationDirection == INoteEditorBackend::Rotation::Clockwise
-                                                      ? QObject::tr("clockwise")
-                                                      : QObject::tr("counterclockwise")));
+    setText(QObject::tr("Image resource rotation") + QStringLiteral(" ") +
+            ((m_rotationDirection == INoteEditorBackend::Rotation::Clockwise)
+             ? QObject::tr("clockwise")
+             : QObject::tr("counterclockwise")));
 }
 
 ImageResourceRotationUndoCommand::ImageResourceRotationUndoCommand(const QByteArray & resourceDataBefore, const QByteArray & resourceHashBefore,

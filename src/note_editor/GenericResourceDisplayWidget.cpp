@@ -241,7 +241,7 @@ void GenericResourceDisplayWidget::onSaveAsButtonPressed()
         }
     }
 
-    QString fileName = QFileDialog::getSaveFileName(this, tr("Save as..."),
+    QString fileName = QFileDialog::getSaveFileName(this, tr("Save as") + QStringLiteral("..."),
                                                     preferredDirectory, m_filterString);
     if (fileName.isEmpty()) {
         QNINFO(QStringLiteral("User cancelled writing to file"));
