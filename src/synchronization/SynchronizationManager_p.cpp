@@ -263,6 +263,42 @@ void SynchronizationManagerPrivate::onOAuthResult(bool success, qevercloud::User
             m_noteStore.setAuthenticationToken(authToken);
         }
 
+        Account previousAccount = m_remoteToLocalSyncManager.account();
+
+        Account newAccount(QString(), Account::Type::Evernote, userId, Account::EvernoteAccountType::Free, m_host);
+        m_remoteToLocalSyncManager.setAccount(newAccount);
+
+        ErrorString error;
+        bool res = m_remoteToLocalSyncManager.syncUser(userId, error, authToken, /* write user data to local storage = */ false);
+        if (Q_UNLIKELY(!res))
+        {
+            errorDescription.setBase(QT_TRANSLATE_NOOP("", "Can't switch to new Evernote account: failed to sync user data"));
+            errorDescription.appendBase(error.base());
+            errorDescription.appendBase(error.additionalBases());
+            errorDescription.details() = error.details();
+            QNWARNING(errorDescription);
+            emit notifyError(errorDescription);
+
+            m_remoteToLocalSyncManager.setAccount(previousAccount);
+
+            return;
+        }
+
+        const User & user = m_remoteToLocalSyncManager.user();
+        if (Q_UNLIKELY(!user.hasUsername()))
+        {
+            errorDescription.setBase(QT_TRANSLATE_NOOP("", "Can't switch to new Evernote account: the synched user data lacks username"));
+            errorDescription.appendBase(error.base());
+            errorDescription.appendBase(error.additionalBases());
+            errorDescription.details() = error.details();
+            QNWARNING(errorDescription);
+            emit notifyError(errorDescription);
+
+            m_remoteToLocalSyncManager.setAccount(previousAccount);
+
+            return;
+        }
+
         launchStoreOAuthResult(authData);
     }
     else
@@ -278,6 +314,8 @@ void SynchronizationManagerPrivate::onOAuthResult(bool success, qevercloud::User
 
 void SynchronizationManagerPrivate::onKeychainJobFinished(QKeychain::Job * job)
 {
+    QNDEBUG(QStringLiteral("SynchronizationManagerPrivate::onKeychainJobFinished"));
+
     if (!job) {
         ErrorString error(QT_TRANSLATE_NOOP("", "qtkeychain error: null pointer to keychain job on finish"));
         emit notifyError(error);
@@ -960,6 +998,8 @@ void SynchronizationManagerPrivate::launchStoreOAuthResult(const AuthData & resu
 
 void SynchronizationManagerPrivate::finalizeStoreOAuthResult()
 {
+    QNDEBUG(QStringLiteral("SynchronizationManagerPrivate::finalizeStoreOAuthResult"));
+
     ApplicationSettings appSettings(m_remoteToLocalSyncManager.account(), SYNCHRONIZATION_PERSISTENCE_NAME);
 
     QString keyGroup = QStringLiteral("Authentication/") + m_host + QStringLiteral("/") +
@@ -1026,17 +1066,9 @@ void SynchronizationManagerPrivate::finalizeAuthentication()
         break;
     case AuthContext::Request:
     {
-        ErrorString errorDescription;
-        bool res = m_remoteToLocalSyncManager.syncUser(m_writtenOAuthResult.m_userId, errorDescription);
-        if (!res) {
-            QNDEBUG(QStringLiteral("Can't sync user: ") << errorDescription);
-            emit authenticationFinished(/* success = */ false, errorDescription, Account());
-        }
-        else {
-            Account account = m_remoteToLocalSyncManager.account();
-            QNDEBUG(QStringLiteral("Emitting the authenticationFinished signal: ") << account);
-            emit authenticationFinished(/* success = */ true, ErrorString(), account);
-        }
+        Account account = m_remoteToLocalSyncManager.account();
+        QNDEBUG(QStringLiteral("Emitting the authenticationFinished signal: ") << account);
+        emit authenticationFinished(/* success = */ true, ErrorString(), account);
 
         m_writtenOAuthResult = AuthData();
         m_writtenOAuthResult.m_userId = -1;

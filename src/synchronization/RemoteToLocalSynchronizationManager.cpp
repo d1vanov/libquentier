@@ -223,8 +223,8 @@ Account RemoteToLocalSynchronizationManager::account() const
     QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::account"));
 
     QString name;
-    if (m_user.hasName()) {
-        name = m_user.name();
+    if (m_user.hasUsername()) {
+        name = m_user.username();
     }
 
     Account::EvernoteAccountType::type accountEnType = Account::EvernoteAccountType::Free;
@@ -254,12 +254,20 @@ Account RemoteToLocalSynchronizationManager::account() const
     return account;
 }
 
-bool RemoteToLocalSynchronizationManager::syncUser(const qevercloud::UserID userId, ErrorString & errorDescription)
+bool RemoteToLocalSynchronizationManager::syncUser(const qevercloud::UserID userId, ErrorString & errorDescription,
+                                                   const QString & authToken, const bool writeUserDataToLocalStorage)
 {
-    QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::syncUser: user id = ") << userId);
+    QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::syncUser: user id = ") << userId
+            << QStringLiteral(", write user data to local storage = ")
+            << (writeUserDataToLocalStorage ? QStringLiteral("true") : QStringLiteral("false")));
 
     m_user = User();
     m_user.setId(userId);
+
+    if (!authToken.isEmpty()) {
+        m_noteStore.setAuthenticationToken(authToken);
+        m_userStore.setAuthenticationToken(authToken);
+    }
 
     // Checking the protocol version first
     if (!checkProtocolVersion(errorDescription)) {
@@ -270,7 +278,7 @@ bool RemoteToLocalSynchronizationManager::syncUser(const qevercloud::UserID user
     bool waitIfRateLimitReached = false;
 
     // Retrieving the latest user info then, to figure out the service level and stuff like that
-    if (!syncUserImpl(waitIfRateLimitReached, errorDescription)) {
+    if (!syncUserImpl(waitIfRateLimitReached, errorDescription, writeUserDataToLocalStorage)) {
         QNDEBUG(QStringLiteral("Syncing the user has failed: ") << errorDescription);
         return false;
     }
@@ -281,6 +289,11 @@ bool RemoteToLocalSynchronizationManager::syncUser(const qevercloud::UserID user
     }
 
     return true;
+}
+
+const User & RemoteToLocalSynchronizationManager::user() const
+{
+    return m_user;
 }
 
 void RemoteToLocalSynchronizationManager::start(qint32 afterUsn)
@@ -3012,10 +3025,13 @@ bool RemoteToLocalSynchronizationManager::checkProtocolVersion(ErrorString & err
     return true;
 }
 
-bool RemoteToLocalSynchronizationManager::syncUserImpl(const bool waitIfRateLimitReached, ErrorString & errorDescription)
+bool RemoteToLocalSynchronizationManager::syncUserImpl(const bool waitIfRateLimitReached, ErrorString & errorDescription,
+                                                       const bool writeUserDataToLocalStorage)
 {
     QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::syncUserImpl: wait if rate limit reached = ")
-            << (waitIfRateLimitReached ? QStringLiteral("true") : QStringLiteral("false")));
+            << (waitIfRateLimitReached ? QStringLiteral("true") : QStringLiteral("false"))
+            << QStringLiteral(", write user data to local storage = ")
+            << (writeUserDataToLocalStorage ? QStringLiteral("true") : QStringLiteral("false")));
 
     if (m_user.hasId() && m_user.hasServiceLevel()) {
         QNDEBUG(QStringLiteral("User id and service level are set, that means the user info has already been synchronized once "
@@ -3080,6 +3096,14 @@ bool RemoteToLocalSynchronizationManager::syncUserImpl(const bool waitIfRateLimi
     if (m_user.hasAccountLimits()) {
         m_accountLimits = m_user.accountLimits();
         writeAccountLimitsToAppSettings();
+    }
+
+    if (!writeUserDataToLocalStorage) {
+        return true;
+    }
+
+    if (!m_connectedToLocalStorage) {
+        createConnections();
     }
 
     // See if this user's entry already exists in the local storage or not

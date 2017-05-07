@@ -57,7 +57,9 @@ public:
     void setAccount(const Account & account);
     Account account() const;
 
-    bool syncUser(const qevercloud::UserID userId, ErrorString & errorDescription);
+    bool syncUser(const qevercloud::UserID userId, ErrorString & errorDescription,
+                  const QString & authToken = QString(), const bool writeUserDataToLocalStorage = true);
+    const User & user() const;
 
 Q_SIGNALS:
     void failure(ErrorString errorDescription);
@@ -220,7 +222,8 @@ private:
 
     // If any of these returns false, it is either due to error or due to API rate limit exceeding
     bool checkProtocolVersion(ErrorString & errorDescription);
-    bool syncUserImpl(const bool waitIfRateLimitReached, ErrorString & errorDescription);
+    bool syncUserImpl(const bool waitIfRateLimitReached, ErrorString & errorDescription,
+                      const bool writeUserDataToLocalStorage = true);
 
     bool checkAndSyncAccountLimits(const bool waitIfRateLimitReached, ErrorString & errorDescription);
     bool syncAccountLimits(const bool waitIfRateLimitReached, ErrorString & errorDescription);

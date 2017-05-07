@@ -19,6 +19,29 @@
 #include "AuthenticationManager_p.h"
 #include <quentier/logging/QuentierLogger.h>
 
+#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
+
+#include <qt5qevercloud/VersionInfo.h>
+
+#if !QEVERCLOUD_HAS_OAUTH
+#error "The used QEverCloud library has no OAuth support"
+#endif
+
+#include <qt5qevercloud/QEverCloudOAuth.h>
+
+#else // QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
+
+#include <qt4qevercloud/VersionInfo.h>
+#if !QEVERCLOUD_HAS_OAUTH
+#error "The used QEverCloud library has no OAuth support"
+#endif
+
+#include <qt4qevercloud/QEverCloudOAuth.h>
+
+#endif // QT_VERSION
+
+#include <QScopedPointer>
+
 namespace quentier {
 
 AuthenticationManagerPrivate::AuthenticationManagerPrivate(const QString & consumerKey, const QString & consumerSecret,
@@ -26,56 +49,33 @@ AuthenticationManagerPrivate::AuthenticationManagerPrivate(const QString & consu
     QObject(parent),
     m_consumerKey(consumerKey),
     m_consumerSecret(consumerSecret),
-    m_host(host),
-    m_OAuthWebView()
-{
-    // Connections with OAuth handler
-    QObject::connect(&m_OAuthWebView, QNSIGNAL(qevercloud::EvernoteOAuthWebView,authenticationFinished,bool),
-                     this, QNSLOT(AuthenticationManagerPrivate,onOAuthResult,bool));
-    QObject::connect(&m_OAuthWebView, QNSIGNAL(qevercloud::EvernoteOAuthWebView,authenticationSuceeded),
-                     this, QNSLOT(AuthenticationManagerPrivate,onOAuthSuccess));
-    QObject::connect(&m_OAuthWebView, QNSIGNAL(qevercloud::EvernoteOAuthWebView,authenticationFailed),
-                     this, QNSLOT(AuthenticationManagerPrivate,onOAuthFailure));
-}
-
-void AuthenticationManagerPrivate::onOAuthResult(bool result)
-{
-    QNDEBUG(QStringLiteral("AuthenticationManagerPrivate::onOAuthResult: result = ")
-            << (result ? QStringLiteral("true") : QStringLiteral("false")));
-
-    if (result) {
-        onOAuthSuccess();
-    }
-    else {
-        onOAuthFailure();
-    }
-}
-
-void AuthenticationManagerPrivate::onOAuthSuccess()
-{
-    QNDEBUG(QStringLiteral("AuthenticationManagerPrivate::onOAuthSuccess"));
-
-    qevercloud::EvernoteOAuthDialog::OAuthResult result = m_OAuthWebView.oauthResult();
-    emit sendAuthenticationResult(/* success = */ true, result.userId, result.authenticationToken,
-                                  result.expires, result.shardId, result.noteStoreUrl,
-                                  result.webApiUrlPrefix, ErrorString());
-}
-
-void AuthenticationManagerPrivate::onOAuthFailure()
-{
-    QNDEBUG(QStringLiteral("AuthenticationManagerPrivate::onOAuthFailure: ") << m_OAuthWebView.oauthError());
-
-    ErrorString errorDescription(QT_TRANSLATE_NOOP("", "Authentication failed"));
-    errorDescription.details() = m_OAuthWebView.oauthError();
-    emit sendAuthenticationResult(/* success = */ false, qevercloud::UserID(-1), QString(),
-                                  qevercloud::Timestamp(0), QString(), QString(), QString(),
-                                  errorDescription);
-}
+    m_host(host)
+{}
 
 void AuthenticationManagerPrivate::onAuthenticationRequest()
 {
-    QNDEBUG(QStringLiteral("SynchronizationManagerPrivate::onAuthenticationRequest"));
-    m_OAuthWebView.authenticate(m_host, m_consumerKey, m_consumerSecret);
+    QNDEBUG(QStringLiteral("AuthenticationManagerPrivate::onAuthenticationRequest"));
+
+    QWidget * pParentWidget = qobject_cast<QWidget*>(parent());
+    QScopedPointer<qevercloud::EvernoteOAuthDialog> pDialog(new qevercloud::EvernoteOAuthDialog(m_consumerKey, m_consumerSecret, m_host, pParentWidget));
+    pDialog->setWindowModality(Qt::WindowModal);
+
+    auto res = pDialog->exec();
+    if (res == QDialog::Accepted)
+    {
+        qevercloud::EvernoteOAuthDialog::OAuthResult result = pDialog->oauthResult();
+        emit sendAuthenticationResult(/* success = */ true, result.userId, result.authenticationToken,
+                                      result.expires, result.shardId, result.noteStoreUrl,
+                                      result.webApiUrlPrefix, ErrorString());
+    }
+    else
+    {
+        ErrorString errorDescription(QT_TRANSLATE_NOOP("", "Authentication failed"));
+        errorDescription.details() = pDialog->oauthError();
+        emit sendAuthenticationResult(/* success = */ false, qevercloud::UserID(-1), QString(),
+                                      qevercloud::Timestamp(0), QString(), QString(), QString(),
+                                      errorDescription);
+    }
 }
 
 } // namespace quentier

@@ -104,6 +104,11 @@ QString Account::name() const
     return d->m_name;
 }
 
+void Account::setName(const QString & name)
+{
+    d->m_name = name;
+}
+
 QString Account::displayName() const
 {
     return d->m_displayName;

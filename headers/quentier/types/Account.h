@@ -69,6 +69,11 @@ public:
     QString name() const;
 
     /**
+     * @brief setName - set the username to the account
+     */
+    void setName(const QString & name);
+
+    /**
      * @return printable user's name that is not used to uniquely identify the account, so this name
      * may repeat across different local and Evernote accounts
      */

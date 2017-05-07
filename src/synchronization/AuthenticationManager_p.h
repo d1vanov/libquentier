@@ -21,27 +21,6 @@
 
 #include <quentier/synchronization/AuthenticationManager.h>
 
-#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
-
-#include <qt5qevercloud/VersionInfo.h>
-
-#if !QEVERCLOUD_HAS_OAUTH
-#error "The used QEverCloud library has no OAuth support"
-#endif
-
-#include <qt5qevercloud/QEverCloudOAuth.h>
-
-#else // QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
-
-#include <qt4qevercloud/VersionInfo.h>
-#if !QEVERCLOUD_HAS_OAUTH
-#error "The used QEverCloud library has no OAuth support"
-#endif
-
-#include <qt4qevercloud/QEverCloudOAuth.h>
-
-#endif // QT_VERSION
-
 namespace quentier {
 
 class AuthenticationManagerPrivate: public QObject
@@ -59,11 +38,6 @@ Q_SIGNALS:
 public Q_SLOTS:
     void onAuthenticationRequest();
 
-private Q_SLOTS:
-    void onOAuthResult(bool result);
-    void onOAuthSuccess();
-    void onOAuthFailure();
-
 private:
     Q_DISABLE_COPY(AuthenticationManagerPrivate)
 
@@ -71,8 +45,6 @@ private:
     QString         m_consumerKey;
     QString         m_consumerSecret;
     QString         m_host;
-
-    qevercloud::EvernoteOAuthWebView        m_OAuthWebView;
 };
 
 } // namespace quentier
