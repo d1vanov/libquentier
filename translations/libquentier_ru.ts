@@ -458,134 +458,134 @@
     <message>
         <location filename="../src/local_storage/LocalStorageManager_p.cpp" line="153"/>
         <source>Can&apos;t insert user data into the local storage database</source>
-        <translation>Ошибка вставки данных пользователя в локальное хранилище</translation>
+        <translation>Невозможно вставить данные о пользователе в базу данных локального хранилища</translation>
     </message>
     <message>
         <location filename="../src/local_storage/LocalStorageManager_p.cpp" line="170"/>
         <source>user with the same id already exists</source>
-        <translation type="unfinished"></translation>
+        <translation>пользователь с данным идентификатором уже существует</translation>
     </message>
     <message>
         <location filename="../src/local_storage/LocalStorageManager_p.cpp" line="192"/>
         <source>Can&apos;t update user data in the local storage database</source>
-        <translation type="unfinished"></translation>
+        <translation>Ошибка обновления данных пользователя в локальном хранилище</translation>
     </message>
     <message>
         <location filename="../src/local_storage/LocalStorageManager_p.cpp" line="209"/>
         <source>user with the specified id was not found</source>
-        <translation type="unfinished"></translation>
+        <translation>пользователь с указанным идентификатором не найден</translation>
     </message>
     <message>
         <location filename="../src/local_storage/LocalStorageManager_p.cpp" line="233"/>
         <source>Can&apos;t find user data in the local storage database</source>
-        <translation type="unfinished"></translation>
+        <translation>Данные пользователя не найдены в локальном хранилище</translation>
     </message>
     <message>
         <location filename="../src/local_storage/LocalStorageManager_p.cpp" line="237"/>
         <location filename="../src/local_storage/LocalStorageManager_p.cpp" line="296"/>
         <location filename="../src/local_storage/LocalStorageManager_p.cpp" line="322"/>
         <source>user id is not set</source>
-        <translation type="unfinished"></translation>
+        <translation>не указан идентификатор пользователя</translation>
     </message>
     <message>
         <location filename="../src/local_storage/LocalStorageManager_p.cpp" line="285"/>
         <source>Can&apos;t mark the user data as deleted in the local storage database</source>
-        <translation type="unfinished"></translation>
+        <translation>Невозможно пометить данные пользователя как удалённые в локальном хранилище </translation>
     </message>
     <message>
         <location filename="../src/local_storage/LocalStorageManager_p.cpp" line="289"/>
         <source>deletion timestamp is not set</source>
-        <translation type="unfinished"></translation>
+        <translation>время удаления не проставлено</translation>
     </message>
     <message>
         <location filename="../src/local_storage/LocalStorageManager_p.cpp" line="318"/>
         <source>Can&apos;t expunge user data from the local storage database</source>
-        <translation type="unfinished"></translation>
+        <translation>Невозможно удалить данные пользователя из локального хранилища</translation>
     </message>
     <message>
         <location filename="../src/local_storage/LocalStorageManager_p.cpp" line="349"/>
         <source>can&apos;t convert the fetched data to int</source>
-        <translation type="unfinished"></translation>
+        <translation>невозможно преобразовать полученные данные к целочисленному типу</translation>
     </message>
     <message>
         <location filename="../src/local_storage/LocalStorageManager_p.cpp" line="354"/>
         <source>no data found</source>
-        <translation type="unfinished"></translation>
+        <translation>данные не найдены</translation>
     </message>
     <message>
         <location filename="../src/local_storage/LocalStorageManager_p.cpp" line="359"/>
         <source>Can&apos;t get the number of notebooks from the local storage database</source>
-        <translation type="unfinished"></translation>
+        <translation>Невозможно определить количество блокнотов в локальном хранилище</translation>
     </message>
     <message>
         <location filename="../src/local_storage/LocalStorageManager_p.cpp" line="420"/>
         <source>SQLite driver is not available</source>
-        <translation type="unfinished"></translation>
+        <translation>Драйвер базы данных SQLite недоступен</translation>
     </message>
     <message>
         <location filename="../src/local_storage/LocalStorageManager_p.cpp" line="440"/>
         <source>Can&apos;t initialize local storage: account name is empty</source>
-        <translation type="unfinished"></translation>
+        <translation>Невозможно проинициализировать локальное хранилище: не указано имя аккаунта </translation>
     </message>
     <message>
         <location filename="../src/local_storage/LocalStorageManager_p.cpp" line="470"/>
         <source>Can&apos;t create the folder for local storage database file</source>
-        <translation type="unfinished"></translation>
+        <translation>Невозможно создать каталог для хранения базы данных локального хранилища</translation>
     </message>
     <message>
         <location filename="../src/local_storage/LocalStorageManager_p.cpp" line="478"/>
         <source>Local storage database file is not readable</source>
-        <translation type="unfinished"></translation>
+        <translation>Файл с базой данных локального хранилища не может быть открыт для чтения</translation>
     </message>
     <message>
         <location filename="../src/local_storage/LocalStorageManager_p.cpp" line="484"/>
         <source>Local storage database file is not writable</source>
-        <translation type="unfinished"></translation>
+        <translation>Файл с базой данных локального хранилища не может быть открыт для записи</translation>
     </message>
     <message>
         <location filename="../src/local_storage/LocalStorageManager_p.cpp" line="516"/>
         <source>Can&apos;t lock the database file</source>
-        <translation type="unfinished"></translation>
+        <translation>Невозможно пометить файл базы данных локального хранилища заблокированным</translation>
     </message>
     <message>
         <location filename="../src/local_storage/LocalStorageManager_p.cpp" line="527"/>
         <source>Local storage database file is locked</source>
-        <translation type="unfinished"></translation>
+        <translation>Файл с базой данных локального хранилища заблокирован</translation>
     </message>
     <message>
         <location filename="../src/local_storage/LocalStorageManager_p.cpp" line="550"/>
         <source>Can&apos;t connect to the local storage database</source>
-        <translation type="unfinished"></translation>
+        <translation>Невозможно соединиться с базой данных локального хранилища</translation>
     </message>
     <message>
         <location filename="../src/local_storage/LocalStorageManager_p.cpp" line="558"/>
         <source>Can&apos;t set foreign_keys = ON pragma for the local storage database</source>
-        <translation type="unfinished"></translation>
+        <translation>Невозможно задать прагму foreign_keys = ON для базы данных локального хранилища</translation>
     </message>
     <message>
         <location filename="../src/local_storage/LocalStorageManager_p.cpp" line="568"/>
         <source>Can&apos;t set page_size pragma for the local storage database</source>
-        <translation type="unfinished"></translation>
+        <translation>Невозможно задать размер страницы для базы данных локального хранилища</translation>
     </message>
     <message>
         <location filename="../src/local_storage/LocalStorageManager_p.cpp" line="576"/>
         <source>Can&apos;t set journal_mode pragma to WAL for the local storage database</source>
-        <translation type="unfinished"></translation>
+        <translation>Невозможно задать прагму journal_mode = WAL для базы данных локального хранилища</translation>
     </message>
     <message>
         <location filename="../src/local_storage/LocalStorageManager_p.cpp" line="583"/>
         <source>Can&apos;t initialize tables in the local storage database</source>
-        <translation type="unfinished"></translation>
+        <translation>Невозможно проинициализировать таблицы в базе данных локального хранилища</translation>
     </message>
     <message>
         <location filename="../src/local_storage/LocalStorageManager_p.cpp" line="597"/>
         <source>Can&apos;t get the number of users within the local storage database</source>
-        <translation type="unfinished"></translation>
+        <translation>Невозможно получить число записей о пользователях в базе данных локального хранилища </translation>
     </message>
     <message>
         <location filename="../src/local_storage/LocalStorageManager_p.cpp" line="634"/>
         <source>Can&apos;t insert notebook data into the local storage database</source>
-        <translation type="unfinished"></translation>
+        <translation>Невозможно вставить данные блокнота в базу данных локального хранилища</translation>
     </message>
     <message>
         <location filename="../src/local_storage/LocalStorageManager_p.cpp" line="660"/>
@@ -593,161 +593,161 @@
         <location filename="../src/local_storage/LocalStorageManager_p.cpp" line="809"/>
         <location filename="../src/local_storage/LocalStorageManager_p.cpp" line="1092"/>
         <source>notebook guid is invalid</source>
-        <translation type="unfinished"></translation>
+        <translation>глобальный идентификатор блокнота не является валидным</translation>
     </message>
     <message>
         <location filename="../src/local_storage/LocalStorageManager_p.cpp" line="672"/>
         <source>found existing notebook corresponding to the added notebook by guid</source>
-        <translation type="unfinished"></translation>
+        <translation>найден уже существующий блокнот с таким же глобальным идентификатором, как и у добавляемого блокнота </translation>
     </message>
     <message>
         <location filename="../src/local_storage/LocalStorageManager_p.cpp" line="692"/>
         <source>notebook already exists</source>
-        <translation type="unfinished"></translation>
+        <translation>блокнот уже существует</translation>
     </message>
     <message>
         <location filename="../src/local_storage/LocalStorageManager_p.cpp" line="716"/>
         <source>Can&apos;t update notebook data in the local storage database</source>
-        <translation type="unfinished"></translation>
+        <translation>Невозможно обновить данные блокнота в базе данных локального хранилища</translation>
     </message>
     <message>
         <location filename="../src/local_storage/LocalStorageManager_p.cpp" line="774"/>
         <source>notebook to be updated was not found in local storage</source>
-        <translation type="unfinished"></translation>
+        <translation>блокнот, который нужно обновить, не найден в локальном хранилище</translation>
     </message>
     <message>
         <location filename="../src/local_storage/LocalStorageManager_p.cpp" line="798"/>
         <source>Can&apos;t find notebook in the local storage database</source>
-        <translation type="unfinished"></translation>
+        <translation>Блокнот не найден в локальном хранилище</translation>
     </message>
     <message>
         <location filename="../src/local_storage/LocalStorageManager_p.cpp" line="818"/>
         <location filename="../src/local_storage/LocalStorageManager_p.cpp" line="3468"/>
         <source>need either guid or local uid or name as search criteria</source>
-        <translation type="unfinished"></translation>
+        <translation>требуется указать глобальный или локальный идентификатор либо название в качестве критерия поиска</translation>
     </message>
     <message>
         <location filename="../src/local_storage/LocalStorageManager_p.cpp" line="890"/>
         <source>Can&apos;t find the default notebook in the local storage database</source>
-        <translation type="unfinished"></translation>
+        <translation>Блокнот по умолчанию не найден в локальном хранилище </translation>
     </message>
     <message>
         <location filename="../src/local_storage/LocalStorageManager_p.cpp" line="909"/>
         <source>no default notebook was found</source>
-        <translation type="unfinished"></translation>
+        <translation>блокнот по умолчанию не найден</translation>
     </message>
     <message>
         <location filename="../src/local_storage/LocalStorageManager_p.cpp" line="932"/>
         <source>Can&apos;t find the last used notebook in the local storage database</source>
-        <translation type="unfinished"></translation>
+        <translation>Последний использованный блокнот не найден в локальном хранилище </translation>
     </message>
     <message>
         <location filename="../src/local_storage/LocalStorageManager_p.cpp" line="951"/>
         <source>no last used notebook exists in local storage</source>
-        <translation type="unfinished"></translation>
+        <translation>Последний использованный блокнот не найден в локальном хранилище</translation>
     </message>
     <message>
         <location filename="../src/local_storage/LocalStorageManager_p.cpp" line="1015"/>
         <source>Can&apos;t list all shared notebooks</source>
-        <translation type="unfinished"></translation>
+        <translation>Невозможно получить информацию обо всех коллективных/разделённых блокнотах</translation>
     </message>
     <message>
         <location filename="../src/local_storage/LocalStorageManager_p.cpp" line="1054"/>
         <source>no shared notebooks were found in the local storage database</source>
-        <translation type="unfinished"></translation>
+        <translation>Не найдено коллективных/разделённых блокнотов в локальном хранилище</translation>
     </message>
     <message>
         <location filename="../src/local_storage/LocalStorageManager_p.cpp" line="1088"/>
         <source>Can&apos;t list shared notebooks per notebook guid</source>
-        <translation type="unfinished"></translation>
+        <translation>Невозможно получить информацию о коллективных/разделённых блокнотах для указанного глобального идентификатора блокнота</translation>
     </message>
     <message>
         <location filename="../src/local_storage/LocalStorageManager_p.cpp" line="1150"/>
         <source>Can&apos;t expunge notebook from the local storage database</source>
-        <translation type="unfinished"></translation>
+        <translation>Невозможно удалить блокнот из локального хранилища</translation>
     </message>
     <message>
         <location filename="../src/local_storage/LocalStorageManager_p.cpp" line="1165"/>
         <location filename="../src/local_storage/LocalStorageManager_p.cpp" line="2016"/>
         <source>notebook&apos;s guid is invalid</source>
-        <translation type="unfinished"></translation>
+        <translation>глобальный идентификатор блокнота не является валидным</translation>
     </message>
     <message>
         <location filename="../src/local_storage/LocalStorageManager_p.cpp" line="1196"/>
         <source>notebook to be expunged was not found</source>
-        <translation type="unfinished"></translation>
+        <translation>блокнот, подлежащий удалению, не найден</translation>
     </message>
     <message>
         <location filename="../src/local_storage/LocalStorageManager_p.cpp" line="1216"/>
         <source>Can&apos;t get the number of linked notebooks in the local storage database</source>
-        <translation type="unfinished"></translation>
+        <translation>Невозможно получить число прилинкованных блокнотов в базе данных локального хранилища</translation>
     </message>
     <message>
         <location filename="../src/local_storage/LocalStorageManager_p.cpp" line="1254"/>
         <source>Can&apos;t add linked notebook to the local storage database</source>
-        <translation type="unfinished"></translation>
+        <translation>Невозможно добавить прилинкованный блокнот в базу данных локального хранилища</translation>
     </message>
     <message>
         <location filename="../src/local_storage/LocalStorageManager_p.cpp" line="1271"/>
         <source>linked notebook with specified guid already exists</source>
-        <translation type="unfinished"></translation>
+        <translation>прилинкованный блокнот с указанным глобальным идентификатором уже существует</translation>
     </message>
     <message>
         <location filename="../src/local_storage/LocalStorageManager_p.cpp" line="1294"/>
         <source>Can&apos;t update linked notebook in the local storage database</source>
-        <translation type="unfinished"></translation>
+        <translation>Невозможно обновить данные прилинкованного блокнота в базе данных локального хранилища</translation>
     </message>
     <message>
         <location filename="../src/local_storage/LocalStorageManager_p.cpp" line="1313"/>
         <source>linked notebook to be updated was not found</source>
-        <translation type="unfinished"></translation>
+        <translation>прилинкованный блокнот, подлежащий обновлению, не найден</translation>
     </message>
     <message>
         <location filename="../src/local_storage/LocalStorageManager_p.cpp" line="1337"/>
         <source>Can&apos;t find linked notebook in the local storage database</source>
-        <translation type="unfinished"></translation>
+        <translation>Прилинкованный блокнот не найден в базе данных локального хранилища</translation>
     </message>
     <message>
         <location filename="../src/local_storage/LocalStorageManager_p.cpp" line="1341"/>
         <location filename="../src/local_storage/LocalStorageManager_p.cpp" line="1412"/>
         <source>linked notebook&apos;s guid is not set</source>
-        <translation type="unfinished"></translation>
+        <translation>не указан глобальный идентификатор прилинкованного блокнота</translation>
     </message>
     <message>
         <location filename="../src/local_storage/LocalStorageManager_p.cpp" line="1350"/>
         <location filename="../src/local_storage/LocalStorageManager_p.cpp" line="1421"/>
         <source>linked notebook&apos;s guid is invalid</source>
-        <translation type="unfinished"></translation>
+        <translation>глобальный идентификатор прилинкованного блокнота не является валидным</translation>
     </message>
     <message>
         <location filename="../src/local_storage/LocalStorageManager_p.cpp" line="1408"/>
         <source>Can&apos;t expunge linked notebook from the local storage database</source>
-        <translation type="unfinished"></translation>
+        <translation>Невозможно удалить прилинкованный блокнот из локального хранилища</translation>
     </message>
     <message>
         <location filename="../src/local_storage/LocalStorageManager_p.cpp" line="1430"/>
         <source>can&apos;t find the linked notebook to be expunged</source>
-        <translation type="unfinished"></translation>
+        <translation>прилинкованный блокнот, подлежащий удалению, не найден</translation>
     </message>
     <message>
         <location filename="../src/local_storage/LocalStorageManager_p.cpp" line="1445"/>
         <source>Can&apos;t get the number of notes in the local storage database</source>
-        <translation type="unfinished"></translation>
+        <translation>Невозможно получить число заметок в базе данных локального хранилища</translation>
     </message>
     <message>
         <location filename="../src/local_storage/LocalStorageManager_p.cpp" line="1482"/>
         <source>Can&apos;t get the number of notes per notebook in the local storage database</source>
-        <translation type="unfinished"></translation>
+        <translation>Невозможно получить число заметок в блокноте в базе данных локального хранилища</translation>
     </message>
     <message>
         <location filename="../src/local_storage/LocalStorageManager_p.cpp" line="1533"/>
         <source>Can&apos;t get number of notes per tag in the local storage database</source>
-        <translation type="unfinished"></translation>
+        <translation>Невозможно получить число заметок с меткой в базе данных локального хранилища</translation>
     </message>
     <message>
         <location filename="../src/local_storage/LocalStorageManager_p.cpp" line="1584"/>
         <source>Can&apos;t add note to the local storage database</source>
-        <translation type="unfinished"></translation>
+        <translation>Невозможно добавить заметку в базу данных локального хранилища</translation>
     </message>
     <message>
         <location filename="../src/local_storage/LocalStorageManager_p.cpp" line="1649"/>
@@ -756,219 +756,219 @@
         <location filename="../src/local_storage/LocalStorageManager_p.cpp" line="2321"/>
         <location filename="../src/local_storage/LocalStorageManager_p.cpp" line="2817"/>
         <source>note&apos;s guid is invalid</source>
-        <translation type="unfinished"></translation>
+        <translation>глобальный идентификатор заметки не является валидным</translation>
     </message>
     <message>
         <location filename="../src/local_storage/LocalStorageManager_p.cpp" line="1660"/>
         <source>found already existing note with the same guid</source>
-        <translation type="unfinished"></translation>
+        <translation>обнаружена уже существующая заметка с указанным глобальным идентификатором </translation>
     </message>
     <message>
         <location filename="../src/local_storage/LocalStorageManager_p.cpp" line="1679"/>
         <source>note already exists</source>
-        <translation type="unfinished"></translation>
+        <translation>заметка уже существует</translation>
     </message>
     <message>
         <location filename="../src/local_storage/LocalStorageManager_p.cpp" line="1693"/>
         <source>Can&apos;t update note in the local storage database</source>
-        <translation type="unfinished"></translation>
+        <translation>Невозможно обновить заметку в базе данных локального хранилища </translation>
     </message>
     <message>
         <location filename="../src/local_storage/LocalStorageManager_p.cpp" line="1789"/>
         <source>note was not found in the local storage database</source>
-        <translation type="unfinished"></translation>
+        <translation>заметка не найдена в локальном хранилище</translation>
     </message>
     <message>
         <location filename="../src/local_storage/LocalStorageManager_p.cpp" line="1805"/>
         <source>Can&apos;t find note in the local storage database</source>
-        <translation type="unfinished"></translation>
+        <translation>Невозможно найти заметку в базе данных локального хранилища</translation>
     </message>
     <message>
         <location filename="../src/local_storage/LocalStorageManager_p.cpp" line="2002"/>
         <source>Can&apos;t list notes per notebook</source>
-        <translation type="unfinished"></translation>
+        <translation>Невозможно получить все заметки в блокноте</translation>
     </message>
     <message>
         <location filename="../src/local_storage/LocalStorageManager_p.cpp" line="2103"/>
         <source>Can&apos;t list all notes with tag</source>
-        <translation type="unfinished"></translation>
+        <translation>Невозможно получить все заметки с меткой</translation>
     </message>
     <message>
         <location filename="../src/local_storage/LocalStorageManager_p.cpp" line="2116"/>
         <location filename="../src/local_storage/LocalStorageManager_p.cpp" line="2731"/>
         <location filename="../src/local_storage/LocalStorageManager_p.cpp" line="2939"/>
         <source>tag&apos;s guid is invalid</source>
-        <translation type="unfinished"></translation>
+        <translation>глобальный идентификатор метки не является влаидным</translation>
     </message>
     <message>
         <location filename="../src/local_storage/LocalStorageManager_p.cpp" line="2202"/>
         <source>Can&apos;t list notes from the local storage database</source>
-        <translation type="unfinished"></translation>
+        <translation>Невозможно получить заметки из базы данных локального хранилища</translation>
     </message>
     <message>
         <location filename="../src/local_storage/LocalStorageManager_p.cpp" line="2267"/>
         <source>Can&apos;t expunge note from the local storage database</source>
-        <translation type="unfinished"></translation>
+        <translation>Невозможно удалить заметку из базы данных локального хранилища</translation>
     </message>
     <message>
         <location filename="../src/local_storage/LocalStorageManager_p.cpp" line="2354"/>
         <source>note to be expunged was not found</source>
-        <translation type="unfinished"></translation>
+        <translation>заметка, подлежащая удалению, не найдена</translation>
     </message>
     <message>
         <location filename="../src/local_storage/LocalStorageManager_p.cpp" line="2386"/>
         <location filename="../src/local_storage/LocalStorageManager_p.cpp" line="2458"/>
         <source>Can&apos;t find notes with the note search query</source>
-        <translation type="unfinished"></translation>
+        <translation>Невозможно найти заметки по строке запроса</translation>
     </message>
     <message>
         <location filename="../src/local_storage/LocalStorageManager_p.cpp" line="2484"/>
         <location filename="../src/local_storage/LocalStorageManager_p.cpp" line="2496"/>
         <source>can&apos;t fetch note&apos;s tag ids</source>
-        <translation type="unfinished"></translation>
+        <translation>невозможно получить идентификаторы меток из заметки</translation>
     </message>
     <message>
         <location filename="../src/local_storage/LocalStorageManager_p.cpp" line="2508"/>
         <location filename="../src/local_storage/LocalStorageManager_p.cpp" line="2520"/>
         <source>can&apos;t fetch note&apos;s resources</source>
-        <translation type="unfinished"></translation>
+        <translation>невозможно получить вложения из заметки</translation>
     </message>
     <message>
         <location filename="../src/local_storage/LocalStorageManager_p.cpp" line="2535"/>
         <source>Can&apos;t get the number of tags in the local storage database</source>
-        <translation type="unfinished"></translation>
+        <translation>Невозможно получить число меток в базе данных локального хранилища</translation>
     </message>
     <message>
         <location filename="../src/local_storage/LocalStorageManager_p.cpp" line="2572"/>
         <source>Can&apos;t add tag to the local storage database</source>
-        <translation type="unfinished"></translation>
+        <translation>Невозможно добавить метку в базу данных локального хранилища</translation>
     </message>
     <message>
         <location filename="../src/local_storage/LocalStorageManager_p.cpp" line="2602"/>
         <source>found already existing tag</source>
-        <translation type="unfinished"></translation>
+        <translation>метка уже существует</translation>
     </message>
     <message>
         <location filename="../src/local_storage/LocalStorageManager_p.cpp" line="2622"/>
         <source>tag already exists</source>
-        <translation type="unfinished"></translation>
+        <translation>метка уже существует</translation>
     </message>
     <message>
         <location filename="../src/local_storage/LocalStorageManager_p.cpp" line="2646"/>
         <source>Can&apos;t update tag in the local storage database</source>
-        <translation type="unfinished"></translation>
+        <translation>Невозможно обновить метку в базе данных локального хранилища </translation>
     </message>
     <message>
         <location filename="../src/local_storage/LocalStorageManager_p.cpp" line="2694"/>
         <source>tag was not found in the local storage database</source>
-        <translation type="unfinished"></translation>
+        <translation>метка не найдена в локальном хранилище</translation>
     </message>
     <message>
         <location filename="../src/local_storage/LocalStorageManager_p.cpp" line="2720"/>
         <source>Can&apos;t find tag in the local storage database</source>
-        <translation type="unfinished"></translation>
+        <translation>Невозможно найти метку в базе данных локального хранилища</translation>
     </message>
     <message>
         <location filename="../src/local_storage/LocalStorageManager_p.cpp" line="2741"/>
         <source>need either guid or local uid or name as a search criteria</source>
-        <translation type="unfinished"></translation>
+        <translation>требуется указать глобальный или локальный идентификатор либо название в качестве критерия поиска</translation>
     </message>
     <message>
         <location filename="../src/local_storage/LocalStorageManager_p.cpp" line="2806"/>
         <source>Can&apos;t list all tags per note from the local storage database</source>
-        <translation type="unfinished"></translation>
+        <translation>Невозможно получить все метки указанной заметки из базы данных локального хранилища</translation>
     </message>
     <message>
         <location filename="../src/local_storage/LocalStorageManager_p.cpp" line="2860"/>
         <source>internal error: no tag&apos;s local uid in the result of SQL query</source>
-        <translation type="unfinished"></translation>
+        <translation>внутренняя ошибка: не найден локальный идентификатор метки в результате SQL запроса</translation>
     </message>
     <message>
         <location filename="../src/local_storage/LocalStorageManager_p.cpp" line="2921"/>
         <source>Can&apos;t expunge tag from the local storage database</source>
-        <translation type="unfinished"></translation>
+        <translation>Невозможно удалить метку из базы данных локального хранилища</translation>
     </message>
     <message>
         <location filename="../src/local_storage/LocalStorageManager_p.cpp" line="2951"/>
         <location filename="../src/local_storage/LocalStorageManager_p.cpp" line="2974"/>
         <source>tag to be expunged was not found in the local storage database</source>
-        <translation type="unfinished"></translation>
+        <translation>метка, подлежащая удалению, не найдена в локальном хранилище</translation>
     </message>
     <message>
         <location filename="../src/local_storage/LocalStorageManager_p.cpp" line="3028"/>
         <source>Can&apos;t expunge tags from linked notebooks not connected to any notes</source>
-        <translation type="unfinished"></translation>
+        <translation>Невозможно удалить метки из прилинкованных блокнотов, не используемые в заметках</translation>
     </message>
     <message>
         <location filename="../src/local_storage/LocalStorageManager_p.cpp" line="3041"/>
         <source>Can&apos;t get the number of resources in the local storage database</source>
-        <translation type="unfinished"></translation>
+        <translation>Невозможно получить число вложений в базе данных локального хранилища</translation>
     </message>
     <message>
         <location filename="../src/local_storage/LocalStorageManager_p.cpp" line="3081"/>
         <source>Can&apos;t find resource in the local storage database</source>
-        <translation type="unfinished"></translation>
+        <translation>Данные вложения не найдены в локальном хранилище</translation>
     </message>
     <message>
         <location filename="../src/local_storage/LocalStorageManager_p.cpp" line="3092"/>
         <location filename="../src/local_storage/LocalStorageManager_p.cpp" line="3205"/>
         <location filename="../src/local_storage/LocalStorageManager_p.cpp" line="5615"/>
         <source>resource&apos;s guid is invalid</source>
-        <translation type="unfinished"></translation>
+        <translation>глобальный идентификатор вложения не является валидным</translation>
     </message>
     <message>
         <location filename="../src/local_storage/LocalStorageManager_p.cpp" line="3143"/>
         <source>Can&apos;t expunge resource from the local storage database</source>
-        <translation type="unfinished"></translation>
+        <translation>Невозможно удалить вложение из локального хранилища</translation>
     </message>
     <message>
         <location filename="../src/local_storage/LocalStorageManager_p.cpp" line="3159"/>
         <source>note&apos;s local uid corresponding to the resource is empty</source>
-        <translation type="unfinished"></translation>
+        <translation>не указан локальный идентификатор заметки, которой принадлежит вложение </translation>
     </message>
     <message>
         <location filename="../src/local_storage/LocalStorageManager_p.cpp" line="3217"/>
         <location filename="../src/local_storage/LocalStorageManager_p.cpp" line="3837"/>
         <location filename="../src/local_storage/LocalStorageManager_p.cpp" line="3859"/>
         <source>resource to be updated was not found in the local storage database</source>
-        <translation type="unfinished"></translation>
+        <translation>вложение, которое нужно обновить, не найдено в локальном хранилище</translation>
     </message>
     <message>
         <location filename="../src/local_storage/LocalStorageManager_p.cpp" line="3239"/>
         <source>resource to be expunged was not found in the local storage database</source>
-        <translation type="unfinished"></translation>
+        <translation>вложение, подлежащее удалению, не найдено в локальном хранилище</translation>
     </message>
     <message>
         <location filename="../src/local_storage/LocalStorageManager_p.cpp" line="3258"/>
         <source>Can&apos;t get the number of saved searches in the local storage database</source>
-        <translation type="unfinished"></translation>
+        <translation>Невозможно получить число сохраненных поисков в базе данных локального хранилища</translation>
     </message>
     <message>
         <location filename="../src/local_storage/LocalStorageManager_p.cpp" line="3295"/>
         <source>Can&apos;t add saved search to the local storage database</source>
-        <translation type="unfinished"></translation>
+        <translation>Невозможно добавить сохранённый поиск в базу данных локального хранилища</translation>
     </message>
     <message>
         <location filename="../src/local_storage/LocalStorageManager_p.cpp" line="3325"/>
         <location filename="../src/local_storage/LocalStorageManager_p.cpp" line="3346"/>
         <source>saved search already exists</source>
-        <translation type="unfinished"></translation>
+        <translation>сохранённый поиск уже существует</translation>
     </message>
     <message>
         <location filename="../src/local_storage/LocalStorageManager_p.cpp" line="3370"/>
         <source>Can&apos;t update saved search in the local storage database</source>
-        <translation type="unfinished"></translation>
+        <translation>Невозможно обновить данные сохранённого поиска в базе данных локального хранилища</translation>
     </message>
     <message>
         <location filename="../src/local_storage/LocalStorageManager_p.cpp" line="3400"/>
         <location filename="../src/local_storage/LocalStorageManager_p.cpp" line="3421"/>
         <source>Saved search to be updated was not found in the local storage database</source>
-        <translation type="unfinished"></translation>
+        <translation>Сохранённый поиск, который нужно обновить, не найден в локальном хранилище</translation>
     </message>
     <message>
         <location filename="../src/local_storage/LocalStorageManager_p.cpp" line="3448"/>
         <source>Can&apos;t find saved search in the local storage database</source>
-        <translation type="unfinished"></translation>
+        <translation>Данные сохранённого поиска не найдены в локальном хранилище</translation>
     </message>
     <message>
         <location filename="../src/local_storage/LocalStorageManager_p.cpp" line="3459"/>
