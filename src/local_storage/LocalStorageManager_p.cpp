@@ -795,6 +795,8 @@ bool LocalStorageManagerPrivate::updateNotebook(Notebook & notebook, ErrorString
 
 bool LocalStorageManagerPrivate::findNotebook(Notebook & notebook, ErrorString & errorDescription) const
 {
+    QNDEBUG(QStringLiteral("LocalStorageManagerPrivate::findNotebook: notebook = ") << notebook);
+
     ErrorString errorPrefix(QT_TRANSLATE_NOOP("", "Can't find notebook in the local storage database"));
 
     QString column, value;
@@ -852,7 +854,7 @@ bool LocalStorageManagerPrivate::findNotebook(Notebook & notebook, ErrorString &
         queryString += QStringLiteral(" AND Notebooks.linkedNotebookGuid IS NULL)");
     }
 
-    notebook = Notebook();
+    Notebook result;
 
     QSqlQuery query(m_sqlDatabase);
     bool res = query.exec(queryString);
@@ -863,7 +865,7 @@ bool LocalStorageManagerPrivate::findNotebook(Notebook & notebook, ErrorString &
     {
         QSqlRecord rec = query.record();
         ErrorString error;
-        res = fillNotebookFromSqlRecord(rec, notebook, error);
+        res = fillNotebookFromSqlRecord(rec, result, error);
         if (!res) {
             errorDescription.base() = errorPrefix.base();
             errorDescription.appendBase(error.base());
@@ -881,7 +883,8 @@ bool LocalStorageManagerPrivate::findNotebook(Notebook & notebook, ErrorString &
         return false;
     }
 
-    sortSharedNotebooks(notebook);
+    sortSharedNotebooks(result);
+    notebook = result;
     return true;
 }
 
@@ -889,7 +892,6 @@ bool LocalStorageManagerPrivate::findDefaultNotebook(Notebook & notebook, ErrorS
 {
     ErrorString errorPrefix(QT_TRANSLATE_NOOP("", "Can't find the default notebook in the local storage database"));
 
-    notebook = Notebook();
     QSqlQuery query(m_sqlDatabase);
     bool res = query.exec(QStringLiteral("SELECT * FROM Notebooks LEFT OUTER JOIN NotebookRestrictions "
                                          "ON Notebooks.localUid = NotebookRestrictions.localUid "
@@ -911,9 +913,10 @@ bool LocalStorageManagerPrivate::findDefaultNotebook(Notebook & notebook, ErrorS
         return false;
     }
 
+    Notebook result;
     QSqlRecord rec = query.record();
     ErrorString error;
-    res = fillNotebookFromSqlRecord(rec, notebook, error);
+    res = fillNotebookFromSqlRecord(rec, result, error);
     if (!res) {
         errorDescription.base() = errorPrefix.base();
         errorDescription.appendBase(error.base());
@@ -923,7 +926,8 @@ bool LocalStorageManagerPrivate::findDefaultNotebook(Notebook & notebook, ErrorS
         return false;
     }
 
-    sortSharedNotebooks(notebook);
+    sortSharedNotebooks(result);
+    notebook = result;
     return true;
 }
 
@@ -931,7 +935,6 @@ bool LocalStorageManagerPrivate::findLastUsedNotebook(Notebook & notebook, Error
 {
     ErrorString errorPrefix(QT_TRANSLATE_NOOP("", "Can't find the last used notebook in the local storage database"));
 
-    notebook = Notebook();
     QSqlQuery query(m_sqlDatabase);
     bool res = query.exec(QStringLiteral("SELECT * FROM Notebooks LEFT OUTER JOIN NotebookRestrictions "
                                          "ON Notebooks.localUid = NotebookRestrictions.localUid "
@@ -953,9 +956,10 @@ bool LocalStorageManagerPrivate::findLastUsedNotebook(Notebook & notebook, Error
         return false;
     }
 
+    Notebook result;
     QSqlRecord rec = query.record();
     ErrorString error;
-    res = fillNotebookFromSqlRecord(rec, notebook, error);
+    res = fillNotebookFromSqlRecord(rec, result, error);
     if (!res) {
         errorDescription.base() = errorPrefix.base();
         errorDescription.appendBase(error.base());
@@ -965,7 +969,8 @@ bool LocalStorageManagerPrivate::findLastUsedNotebook(Notebook & notebook, Error
         return false;
     }
 
-    sortSharedNotebooks(notebook);
+    sortSharedNotebooks(result);
+    notebook = result;
     return true;
 }
 
@@ -1825,8 +1830,6 @@ bool LocalStorageManagerPrivate::findNote(Note & note, ErrorString & errorDescri
         uid = note.localUid();
     }
 
-    note = Note();
-
     QString resourcesTable = QStringLiteral("Resources");
     if (!withResourceBinaryData) {
         resourcesTable += QStringLiteral("WithoutBinaryData");
@@ -1855,6 +1858,8 @@ bool LocalStorageManagerPrivate::findNote(Note & note, ErrorString & errorDescri
     bool res = query.exec(queryString);
     DATABASE_CHECK_AND_SET_ERROR();
 
+    Note result;
+
     QList<Resource> resources;
     QHash<QString, int> resourceIndexPerLocalUid;
 
@@ -1870,7 +1875,7 @@ bool LocalStorageManagerPrivate::findNote(Note & note, ErrorString & errorDescri
         QSqlRecord rec = query.record();
 
         ErrorString error;
-        bool res = fillNoteFromSqlRecord(rec, note, error);
+        bool res = fillNoteFromSqlRecord(rec, result, error);
         if (!res) {
             errorDescription.base() = errorPrefix.base();
             errorDescription.appendBase(error.base());
@@ -1935,7 +1940,7 @@ bool LocalStorageManagerPrivate::findNote(Note & note, ErrorString & errorDescri
     int numResources = resources.size();
     if (numResources > 0) {
         qSort(resources.begin(), resources.end(), ResourceCompareByIndex());
-        note.setResources(resources);
+        result.setResources(resources);
     }
 
     int numTagGuids = tagGuidsAndIndices.size();
@@ -1954,7 +1959,7 @@ bool LocalStorageManagerPrivate::findNote(Note & note, ErrorString & errorDescri
             tagGuids << guid;
         }
 
-        note.setTagGuids(tagGuids);
+        result.setTagGuids(tagGuids);
     }
 
     int numTagLocalUids = tagLocalUidsAndIndices.size();
@@ -1967,13 +1972,13 @@ bool LocalStorageManagerPrivate::findNote(Note & note, ErrorString & errorDescri
             tagLocalUids << tagLocalUidsAndIndices[i].first;
         }
 
-        note.setTagLocalUids(tagLocalUids);
+        result.setTagLocalUids(tagLocalUids);
     }
 
-    sortSharedNotes(note);
+    sortSharedNotes(result);
 
     ErrorString error;
-    res = note.checkParameters(error);
+    res = result.checkParameters(error);
     if (!res) {
         errorDescription.base() = errorPrefix.base();
         errorDescription.appendBase(error.base());
@@ -1983,6 +1988,7 @@ bool LocalStorageManagerPrivate::findNote(Note & note, ErrorString & errorDescri
         return false;
     }
 
+    note = result;
     return true;
 }
 
@@ -2767,8 +2773,6 @@ bool LocalStorageManagerPrivate::findTag(Tag & tag, ErrorString & errorDescripti
         queryString += QStringLiteral(")");
     }
 
-    tag.clear();
-
     QSqlQuery query(m_sqlDatabase);
     bool res = query.exec(queryString);
     DATABASE_CHECK_AND_SET_ERROR();
@@ -2780,8 +2784,9 @@ bool LocalStorageManagerPrivate::findTag(Tag & tag, ErrorString & errorDescripti
 
     QSqlRecord record = query.record();
 
+    Tag result;
     ErrorString error;
-    res = fillTagFromSqlRecord(record, tag, error);
+    res = fillTagFromSqlRecord(record, result, error);
     if (!res) {
         errorDescription.base() = errorPrefix.base();
         errorDescription.appendBase(error.base());
@@ -2791,6 +2796,7 @@ bool LocalStorageManagerPrivate::findTag(Tag & tag, ErrorString & errorDescripti
         return false;
     }
 
+    tag = result;
     return true;
 }
 
@@ -3479,8 +3485,6 @@ bool LocalStorageManagerPrivate::findSavedSearch(SavedSearch & search, ErrorStri
         value = search.localUid();
     }
 
-    search.clear();
-
     value = sqlEscapeString(value);
 
     QString queryString = QString::fromUtf8("SELECT localUid, guid, name, query, format, updateSequenceNumber, isDirty, isLocal, "
@@ -3495,9 +3499,10 @@ bool LocalStorageManagerPrivate::findSavedSearch(SavedSearch & search, ErrorStri
         return false;
     }
 
+    SavedSearch result;
     QSqlRecord rec = query.record();
     ErrorString error;
-    res = fillSavedSearchFromSqlRecord(rec, search, error);
+    res = fillSavedSearchFromSqlRecord(rec, result, error);
     if (!res) {
         errorDescription.base() = errorPrefix.base();
         errorDescription.appendBase(error.base());
@@ -3507,6 +3512,7 @@ bool LocalStorageManagerPrivate::findSavedSearch(SavedSearch & search, ErrorStri
         return false;
     }
 
+    search = result;
     return true;
 }
 
