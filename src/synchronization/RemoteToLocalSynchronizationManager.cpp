@@ -630,6 +630,9 @@ void RemoteToLocalSynchronizationManager::onFindUserFailed(User user, ErrorStrin
 
 void RemoteToLocalSynchronizationManager::onFindNotebookCompleted(Notebook notebook, QUuid requestId)
 {
+    QNTRACE(QStringLiteral("RemoteToLocalSynchronizationManager::onFindNotebookCompleted: request id = ")
+            << requestId << QStringLiteral(", notebook: ") << notebook);
+
     CHECK_PAUSED();
 
     bool foundByGuid = onFoundDuplicateByGuid(notebook, requestId, QStringLiteral("Notebook"),
@@ -649,6 +652,8 @@ void RemoteToLocalSynchronizationManager::onFindNotebookCompleted(Notebook noteb
     NoteDataPerFindNotebookRequestId::iterator rit = m_notesWithFindRequestIdsPerFindNotebookRequestId.find(requestId);
     if (rit != m_notesWithFindRequestIdsPerFindNotebookRequestId.end())
     {
+        QNDEBUG(QStringLiteral("Found notebook needed for note synchronization"));
+
         const QPair<Note,QUuid> & noteWithFindRequestId = rit.value();
         const Note & note = noteWithFindRequestId.first;
         const QUuid & findNoteRequestId = noteWithFindRequestId.second;
@@ -673,6 +678,8 @@ void RemoteToLocalSynchronizationManager::onFindNotebookCompleted(Notebook noteb
     QSet<QUuid>::iterator nit = m_findNotebookForNotesWithConflictedResourcesRequestIds.find(requestId);
     if (nit != m_findNotebookForNotesWithConflictedResourcesRequestIds.end())
     {
+        QNDEBUG(QStringLiteral("Found notebook for the synchronization of note with conflicted resources"));
+
         Q_UNUSED(m_findNotebookForNotesWithConflictedResourcesRequestIds.erase(nit));
 
         CHECK_STOPPED();
@@ -718,10 +725,14 @@ void RemoteToLocalSynchronizationManager::onFindNotebookCompleted(Notebook noteb
 
         QUuid updateNoteRequestId = QUuid::createUuid();
         Q_UNUSED(m_updateNoteRequestIds.insert(updateNoteRequestId));
+        QNTRACE(QStringLiteral("Emitting the request to update note: request id = ") << updateNoteRequestId
+                << QStringLiteral(", note: ") << updatedNote);
         emit updateNote(updatedNote, /* update resources = */ true, /* update tags = */ true, updateNoteRequestId);
 
         QUuid addNoteRequestId = QUuid::createUuid();
         Q_UNUSED(m_addNoteRequestIds.insert(addNoteRequestId));
+        QNTRACE(QStringLiteral("Emitting the request to add note: request id = ") << addNoteRequestId
+                << QStringLiteral(", note: ") << conflictedNote);
         emit addNote(conflictedNote, addNoteRequestId);
 
         return;
@@ -730,6 +741,8 @@ void RemoteToLocalSynchronizationManager::onFindNotebookCompleted(Notebook noteb
     auto iit = m_inkNoteResourceDataPerFindNotebookRequestId.find(requestId);
     if (iit != m_inkNoteResourceDataPerFindNotebookRequestId.end())
     {
+        QNDEBUG(QStringLiteral("Found notebook for ink note synchronization"));
+
         InkNoteResourceData resourceData = iit.value();
         Q_UNUSED(m_inkNoteResourceDataPerFindNotebookRequestId.erase(iit))
 
@@ -743,6 +756,8 @@ void RemoteToLocalSynchronizationManager::onFindNotebookCompleted(Notebook noteb
     auto thumbnailIt = m_noteGuidForThumbnailDownloadByFindNotebookRequestId.find(requestId);
     if (thumbnailIt != m_noteGuidForThumbnailDownloadByFindNotebookRequestId.end())
     {
+        QNDEBUG(QStringLiteral("Found note for note thumbnail downloading"));
+
         QString noteGuid = thumbnailIt.value();
         Q_UNUSED(m_noteGuidForThumbnailDownloadByFindNotebookRequestId.erase(thumbnailIt))
 
@@ -756,6 +771,10 @@ void RemoteToLocalSynchronizationManager::onFindNotebookCompleted(Notebook noteb
 void RemoteToLocalSynchronizationManager::onFindNotebookFailed(Notebook notebook, ErrorString errorDescription,
                                                                QUuid requestId)
 {
+    QNTRACE(QStringLiteral("RemoteToLocalSynchronizationManager::onFindNotebookFailed: request id = ")
+            << requestId << QStringLiteral(", error description: ") << errorDescription
+            << QStringLiteral(", notebook: ") << notebook);
+
     CHECK_PAUSED();
 
     bool failedToFindByGuid = onNoDuplicateByGuid(notebook, requestId, errorDescription, QStringLiteral("Notebook"),
@@ -5642,7 +5661,7 @@ bool RemoteToLocalSynchronizationManager::onFoundDuplicateByGuid(ElementType ele
         return false;
     }
 
-    QNDEBUG(QStringLiteral("onFoundDuplicateByGuid<") << typeName << QStringLiteral(">: ")
+    QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::onFoundDuplicateByGuid<") << typeName << QStringLiteral(">: ")
             << typeName << QStringLiteral(" = ") << element << QStringLiteral(", requestId = ") << requestId);
 
     typename ContainerType::iterator it = findItemByGuid(container, element, typeName);
