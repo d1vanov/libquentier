@@ -450,52 +450,76 @@ void RemoteToLocalSynchronizationManager::resume()
 template <>
 void RemoteToLocalSynchronizationManager::emitAddRequest<Tag>(const Tag & tag)
 {
+    QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::emitAddRequest<Tag>: ") << tag);
+
     QUuid addTagRequestId = QUuid::createUuid();
     Q_UNUSED(m_addTagRequestIds.insert(addTagRequestId));
+    QNTRACE(QStringLiteral("Emitting the request to add tag to local storage: request id = ")
+            << addTagRequestId << QStringLiteral(", tag: ") << tag);
     emit addTag(tag, addTagRequestId);
 }
 
 template <>
 void RemoteToLocalSynchronizationManager::emitAddRequest<SavedSearch>(const SavedSearch & search)
 {
+    QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::emitAddRequest<SavedSearch>: ") << search);
+
     QUuid addSavedSearchRequestId = QUuid::createUuid();
     Q_UNUSED(m_addSavedSearchRequestIds.insert(addSavedSearchRequestId));
+    QNTRACE(QStringLiteral("Emitting the request to add saved search to local storage: request id = ")
+            << addSavedSearchRequestId << QStringLiteral(", saved search: ") << search);
     emit addSavedSearch(search, addSavedSearchRequestId);
 }
 
 template <>
 void RemoteToLocalSynchronizationManager::emitAddRequest<LinkedNotebook>(const LinkedNotebook & linkedNotebook)
 {
+    QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::emitAddRequest<LinkedNotebook>: ") << linkedNotebook);
+
     QUuid addLinkedNotebookRequestId = QUuid::createUuid();
     Q_UNUSED(m_addLinkedNotebookRequestIds.insert(addLinkedNotebookRequestId));
+    QNTRACE(QStringLiteral("Emitting the request to add linked notebook to local storage: request id = ")
+            << addLinkedNotebookRequestId << QStringLiteral(", linked notebook: ") << linkedNotebook);
     emit addLinkedNotebook(linkedNotebook, addLinkedNotebookRequestId);
 }
 
 template <>
 void RemoteToLocalSynchronizationManager::emitAddRequest<Notebook>(const Notebook & notebook)
 {
+    QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::emitAddRequest<Notebook>: ") << notebook);
+
     QUuid addNotebookRequestId = QUuid::createUuid();
     Q_UNUSED(m_addNotebookRequestIds.insert(addNotebookRequestId));
+    QNTRACE(QStringLiteral("Emitting the request to add notebook to local storage: request id = ")
+            << addNotebookRequestId << QStringLiteral(", notebook: ") << notebook);
     emit addNotebook(notebook, addNotebookRequestId);
 }
 
 template <>
 void RemoteToLocalSynchronizationManager::emitAddRequest<Note>(const Note & note)
 {
+    QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::emitAddRequest<Note>: ") << note);
+
     QUuid addNoteRequestId = QUuid::createUuid();
     Q_UNUSED(m_addNoteRequestIds.insert(addNoteRequestId));
+    QNTRACE(QStringLiteral("Emitting the request to add note to local storage: request id = ")
+            << addNoteRequestId << QStringLiteral(", note: ") << note);
     emit addNote(note, addNoteRequestId);
 }
 
 template <>
 void RemoteToLocalSynchronizationManager::emitAddRequest<Resource>(const Resource & resource)
 {
+    QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::emitAddRequest<Resource>: ") << resource);
+
     QString resourceGuid = (resource.hasGuid() ? resource.guid() : QString());
     QString resourceLocalUid = resource.localUid();
     QPair<QString,QString> key(resourceGuid, resourceLocalUid);
 
     QUuid addResourceRequestId = QUuid::createUuid();
     Q_UNUSED(m_addResourceRequestIds.insert(addResourceRequestId));
+    QNTRACE(QStringLiteral("Emitting the request to add resource to local storage: request id = ")
+            << addResourceRequestId << QStringLiteral(", resource: ") << resource);
     emit addResource(resource, addResourceRequestId);
 }
 
@@ -4208,52 +4232,68 @@ void RemoteToLocalSynchronizationManager::checkServerDataMergeCompletion()
     QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::checkServerDataMergeCompletion"));
 
     // Need to check whether we are still waiting for the response from some add or update request
-    bool tagsReady = m_updateTagRequestIds.empty() && m_addTagRequestIds.empty();
+    bool tagsReady = m_findTagByGuidRequestIds.empty() && m_findTagByNameRequestIds.empty() &&
+                     m_updateTagRequestIds.empty() && m_addTagRequestIds.empty();
     if (!tagsReady) {
         QNDEBUG(QStringLiteral("Tags are not ready, pending response for ") << m_updateTagRequestIds.size()
-                << QStringLiteral(" tag update requests and/or ") << m_addTagRequestIds.size() << QStringLiteral(" tag add requests"));
+                << QStringLiteral(" tag update requests and/or ") << m_addTagRequestIds.size() << QStringLiteral(" tag add requests and/or ")
+                << m_findTagByGuidRequestIds.size() << QStringLiteral(" find tag by guid requests and/or ")
+                << m_findTagByNameRequestIds.size() << QStringLiteral(" find tag by name requests"));
         return;
     }
 
-    bool searchesReady = m_updateSavedSearchRequestIds.empty() && m_addSavedSearchRequestIds.empty();
+    bool searchesReady = m_findSavedSearchByGuidRequestIds.empty() && m_findSavedSearchByNameRequestIds.empty() &&
+                         m_updateSavedSearchRequestIds.empty() && m_addSavedSearchRequestIds.empty();
     if (!searchesReady) {
         QNDEBUG(QStringLiteral("Saved searches are not ready, pending response for ") << m_updateSavedSearchRequestIds.size()
                 << QStringLiteral(" saved search update requests and/or ") << m_addSavedSearchRequestIds.size()
-                << QStringLiteral(" saved search add requests"));
+                << QStringLiteral(" saved search add requests and/or ") << m_findSavedSearchByGuidRequestIds.size()
+                << QStringLiteral(" find saved search by guid requests and/or ") << m_findSavedSearchByNameRequestIds.size()
+                << QStringLiteral(" find saved search by name requests"));
         return;
     }
 
-    bool linkedNotebooksReady = m_updateLinkedNotebookRequestIds.empty() && m_addLinkedNotebookRequestIds.empty();
+    bool linkedNotebooksReady = m_findLinkedNotebookRequestIds.empty() && m_updateLinkedNotebookRequestIds.empty() &&
+                                m_addLinkedNotebookRequestIds.empty();
     if (!linkedNotebooksReady) {
         QNDEBUG(QStringLiteral("Linked notebooks are not ready, pending response for ") << m_updateLinkedNotebookRequestIds.size()
                 << QStringLiteral(" linked notebook update requests and/or ") << m_addLinkedNotebookRequestIds.size()
-                << QStringLiteral(" linked notebook add requests"));
+                << QStringLiteral(" linked notebook add requests and/or ") << m_findLinkedNotebookRequestIds.size()
+                << QStringLiteral(" find linked notebook requests"));
         return;
     }
 
-    bool notebooksReady = m_updateNotebookRequestIds.empty() && m_addNotebookRequestIds.empty();
+    bool notebooksReady = m_findNotebookByGuidRequestIds.empty() && m_findNotebookByNameRequestIds.empty() &&
+                          m_updateNotebookRequestIds.empty() && m_addNotebookRequestIds.empty();
     if (!notebooksReady) {
         QNDEBUG(QStringLiteral("Notebooks are not ready, pending response for ") << m_updateNotebookRequestIds.size()
                 << QStringLiteral(" notebook update requests and/or ") << m_addNotebookRequestIds.size()
-                << QStringLiteral(" notebook add requests"));
+                << QStringLiteral(" notebook add requests and/or ") << m_findNotebookByGuidRequestIds.size()
+                << QStringLiteral(" find notebook by guid requests and/or ") << m_findNotebookByNameRequestIds.size()
+                << QStringLiteral(" find notebook by name requests"));
         return;
     }
 
-    bool notesReady = m_updateNoteRequestIds.empty() && m_addNoteRequestIds.empty() &&
+    bool notesReady = m_findNoteByGuidRequestIds.empty() && m_updateNoteRequestIds.empty() && m_addNoteRequestIds.empty() &&
+                      m_guidsOfNotesPendingDownloadForAddingToLocalStorage.empty() &&
+                      m_guidsOfNotesPendingDownloadForUpdatingInLocalStorage.empty() &&
                       m_notesToAddPerAPICallPostponeTimerId.empty() && m_notesToUpdatePerAPICallPostponeTimerId.empty();
     if (!notesReady) {
         QNDEBUG(QStringLiteral("Notes are not ready, pending response for ") << m_updateNoteRequestIds.size()
                 << QStringLiteral(" note update requests and/or ") << m_addNoteRequestIds.size()
-                << QStringLiteral(" note add requests; also, there are ") << m_notesToAddPerAPICallPostponeTimerId.size()
+                << QStringLiteral(" note add requests and/or ") << m_findNoteByGuidRequestIds.size()
+                << QStringLiteral(" find note by guid requests and/or ") << m_guidsOfNotesPendingDownloadForAddingToLocalStorage.size()
+                << QStringLiteral(" async full new note data downloads and/or ") << m_guidsOfNotesPendingDownloadForUpdatingInLocalStorage.size()
+                << QStringLiteral(" async full existing note data downloads; also, there are ") << m_notesToAddPerAPICallPostponeTimerId.size()
                 << QStringLiteral(" postponed note add requests and/or ") << m_notesToUpdatePerAPICallPostponeTimerId.size()
-                << QStringLiteral(" note update requests"));
+                << QStringLiteral(" postponed note update requests"));
         return;
     }
 
     if (m_lastSyncMode == SyncMode::IncrementalSync)
     {
-        bool resourcesReady = m_updateResourceRequestIds.empty() && m_addResourceRequestIds.empty() &&
-                              m_resourcesWithFindRequestIdsPerFindNoteRequestId.empty() &&
+        bool resourcesReady = m_findResourceByGuidRequestIds.empty() && m_updateResourceRequestIds.empty() &&
+                              m_addResourceRequestIds.empty() && m_resourcesWithFindRequestIdsPerFindNoteRequestId.empty() &&
                               m_findNotebookForNotesWithConflictedResourcesRequestIds.empty() &&
                               m_inkNoteResourceDataPerFindNotebookRequestId.empty() &&
                               (m_numPendingInkNoteImageDownloads == 0) &&
@@ -4263,6 +4303,7 @@ void RemoteToLocalSynchronizationManager::checkServerDataMergeCompletion()
             QNDEBUG(QStringLiteral("Resources are not ready, pending response for ") << m_updateResourceRequestIds.size()
                     << QStringLiteral(" resource update requests and/or ") << m_addResourceRequestIds.size()
                     << QStringLiteral(" resource add requests and/or ") << m_resourcesWithFindRequestIdsPerFindNoteRequestId.size()
+                    << QStringLiteral(" find resource by guid requests and/or ") << m_findResourceByGuidRequestIds.size()
                     << QStringLiteral(" resource find note requests and/or ") << m_findNotebookForNotesWithConflictedResourcesRequestIds.size()
                     << QStringLiteral(" resource find notebook requests and/or ") << m_inkNoteResourceDataPerFindNotebookRequestId.size()
                     << QStringLiteral(" resource find notebook for ink note image download processing and/or ") << m_numPendingInkNoteImageDownloads
@@ -5664,6 +5705,8 @@ bool RemoteToLocalSynchronizationManager::onFoundDuplicateByGuid(ElementType ele
     QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::onFoundDuplicateByGuid<") << typeName << QStringLiteral(">: ")
             << typeName << QStringLiteral(" = ") << element << QStringLiteral(", requestId = ") << requestId);
 
+    Q_UNUSED(findByGuidRequestIds.erase(rit));
+
     typename ContainerType::iterator it = findItemByGuid(container, element, typeName);
     if (it == container.end()) {
         ErrorString errorDescription(QT_TRANSLATE_NOOP("", "Could not find the remote item by guid when reported "
@@ -5688,10 +5731,7 @@ bool RemoteToLocalSynchronizationManager::onFoundDuplicateByGuid(ElementType ele
     checkAndAddLinkedNotebookBinding(element, remoteElementAdapter);
 
     checkUpdateSequenceNumbersAndProcessConflictedElements(remoteElementAdapter, typeName, element);
-
     Q_UNUSED(container.erase(it));
-    Q_UNUSED(findByGuidRequestIds.erase(rit));
-
     return true;
 }
 
@@ -5736,7 +5776,7 @@ bool RemoteToLocalSynchronizationManager::onNoDuplicateByName(ElementType elemen
         return false;
     }
 
-    QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::onNoDuplicateByUniqueKey<") << typeName << QStringLiteral(">: ")
+    QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::onNoDuplicateByName<") << typeName << QStringLiteral(">: ")
             << element << QStringLiteral(", errorDescription = ") << errorDescription << QStringLiteral(", requestId = ")
             << requestId);
 
