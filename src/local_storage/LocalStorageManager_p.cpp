@@ -1914,8 +1914,12 @@ bool LocalStorageManagerPrivate::findNote(Note & note, ErrorString & errorDescri
         }
     }
 
-    if (!counter) {
-        QNDEBUG(errorDescription);
+    if (!counter)
+    {
+        if (!errorDescription.isEmpty()) {
+            QNDEBUG(errorDescription);
+        }
+
         return false;
     }
 

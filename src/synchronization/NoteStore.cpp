@@ -455,9 +455,15 @@ bool NoteStore::getNoteAsync(const bool withContent, const bool withResourceData
 
     m_noteGuidByAsyncResultPtr[pAsyncResult] = noteGuid;
 
+    // NOTE: Qt4's connection syntax doesn't understand namespaces, hence this typedef
+    typedef qevercloud::EverCloudExceptionData EverCloudExceptionData;
 
-    QObject::connect(pAsyncResult, QNSIGNAL(qevercloud::AsyncResult,finished,QVariant,QSharedPointer<qevercloud::EverCloudExceptionData>),
-                     this, QNSLOT(NoteStore,onGetNoteAsyncFinished,QVariant,QSharedPointer<qevercloud::EverCloudExceptionData>));
+    // NOTE: making the compiler believe the typedef is actually used
+    EverCloudExceptionData * pDummy = Q_NULLPTR;
+    Q_UNUSED(pDummy)
+
+    QObject::connect(pAsyncResult, QNSIGNAL(qevercloud::AsyncResult,finished,QVariant,QSharedPointer<EverCloudExceptionData>),
+                     this, QNSLOT(NoteStore,onGetNoteAsyncFinished,QVariant,QSharedPointer<EverCloudExceptionData>));
     return true;
 }
 
