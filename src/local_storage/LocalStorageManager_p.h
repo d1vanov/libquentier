@@ -239,6 +239,9 @@ private:
     bool insertOrReplaceResourceAttributes(const QString & localUid,
                                            const qevercloud::ResourceAttributes & attributes,
                                            ErrorString & errorDescription);
+    bool updateCommonResourceData(const Resource & resource, ErrorString & errorDescription);
+    bool updateNoteResources(const Resource & resource, ErrorString & errorDescription);
+
     bool checkAndPrepareInsertOrReplaceResourceQuery();
     bool checkAndPrepareInsertOrReplaceNoteResourceQuery();
     bool checkAndPrepareDeleteResourceFromResourceRecognitionTypesQuery();
