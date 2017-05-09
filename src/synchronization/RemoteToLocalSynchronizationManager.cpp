@@ -1458,7 +1458,7 @@ void RemoteToLocalSynchronizationManager::onAddDataElementFailed(const ElementTy
     QSet<QUuid>::iterator it = addElementRequestIds.find(requestId);
     if (it != addElementRequestIds.end())
     {
-        QNWARNING(QStringLiteral("FullSyncronizationManager::onAddDataElementFailed<") << typeName
+        QNWARNING(QStringLiteral("RemoteToLocalSynchronizationManager::onAddDataElementFailed<") << typeName
                   << QStringLiteral(">: ") << typeName << QStringLiteral(" = ") << element << QStringLiteral(", error description = ")
                   << errorDescription << QStringLiteral(", requestId = ") << requestId);
 
@@ -1468,6 +1468,7 @@ void RemoteToLocalSynchronizationManager::onAddDataElementFailed(const ElementTy
         error.additionalBases().append(errorDescription.base());
         error.additionalBases().append(errorDescription.additionalBases());
         error.details() = errorDescription.details();
+        QNWARNING(error);
         emit failure(error);
     }
 }
