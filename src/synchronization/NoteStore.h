@@ -107,8 +107,11 @@ public:
 Q_SIGNALS:
     void getNoteAsyncFinished(qint32 errorCode, Note note, qint32 rateLimitSeconds, ErrorString errorDescription);
 
+private:
+    typedef qevercloud::EverCloudExceptionData EverCloudExceptionData;
+
 private Q_SLOTS:
-    void onGetNoteAsyncFinished(QVariant result, QSharedPointer<qevercloud::EverCloudExceptionData> exceptionData);
+    void onGetNoteAsyncFinished(QVariant result, QSharedPointer<EverCloudExceptionData> exceptionData);
 
 private:
     struct UserExceptionSource
