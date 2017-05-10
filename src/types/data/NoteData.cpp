@@ -63,7 +63,19 @@ NoteData::NoteData(const qevercloud::Note & other) :
     m_notebookLocalUid(),
     m_tagLocalUids(),
     m_thumbnail()
-{}
+{
+    if (m_qecNote.resources.isSet())
+    {
+        const auto & resources = m_qecNote.resources.ref();
+        m_resourcesAdditionalInfo.reserve(resources.size());
+        for(auto it = resources.constBegin(), end = resources.constEnd(); it != end; ++it) {
+            m_resourcesAdditionalInfo.push_back(ResourceAdditionalInfo());
+            ResourceAdditionalInfo & info = m_resourcesAdditionalInfo.back();
+            info.isDirty = false;
+            info.localUid = UidGenerator::Generate();
+        }
+    }
+}
 
 bool NoteData::ResourceAdditionalInfo::operator==(const NoteData::ResourceAdditionalInfo & other) const
 {
