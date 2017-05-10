@@ -1385,10 +1385,13 @@ void LocalStorageManagerAsync::onListSavedSearchesRequest(LocalStorageManager::L
 {
     try
     {
+        QNTRACE(QStringLiteral("LocalStorageManagerAsync::onListSavedSearchesRequest: request id = ") << requestId);
+
         ErrorString errorDescription;
         QList<SavedSearch> savedSearches = m_pLocalStorageManager->listSavedSearches(flag, errorDescription, limit,
                                                                                      offset, order, orderDirection);
         if (savedSearches.isEmpty() && !errorDescription.isEmpty()) {
+            QNTRACE(QStringLiteral("Failed: ") << errorDescription);
             emit listSavedSearchesFailed(flag, limit, offset, order, orderDirection,
                                          errorDescription, requestId);
             return;
@@ -1403,6 +1406,7 @@ void LocalStorageManagerAsync::onListSavedSearchesRequest(LocalStorageManager::L
             }
         }
 
+        QNTRACE(QStringLiteral("Complete: request id = ") << requestId);
         emit listSavedSearchesComplete(flag, limit, offset, order, orderDirection, savedSearches, requestId);
     }
     CATCH_EXCEPTION

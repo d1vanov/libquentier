@@ -263,6 +263,8 @@ void SendLocalChangesManager::onListDirtySavedSearchesCompleted(LocalStorageMana
 {
     CHECK_PAUSED();
 
+    QNTRACE(QStringLiteral("SendLocalChangesManager::onListDirtySavedSearchesCompleted: request id = ") << requestId);
+
     if (requestId != m_listDirtySavedSearchesRequestId) {
         return;
     }
@@ -286,6 +288,9 @@ void SendLocalChangesManager::onListDirtySavedSearchesFailed(LocalStorageManager
                                                              ErrorString errorDescription, QUuid requestId)
 {
     CHECK_PAUSED();
+
+    QNTRACE(QStringLiteral("SendLocalChangesManager::onListDirtySavedSearchesFailed: request id = ") << requestId
+            << QStringLiteral(", error: ") << errorDescription);
 
     if (requestId != m_listDirtySavedSearchesRequestId) {
         return;
@@ -1096,6 +1101,8 @@ void SendLocalChangesManager::requestStuffFromLocalStorage(const QString & linke
     else {
         Q_UNUSED(m_listDirtyTagsFromLinkedNotebooksRequestIds.insert(listDirtyTagsRequestId));
     }
+    QNTRACE(QStringLiteral("Emitting the request to fetch unsynchronized tags from local storage: request id = ")
+            << listDirtyTagsRequestId);
     emit requestLocalUnsynchronizedTags(listDirtyObjectsFlag, limit, offset, tagsOrder,
                                         orderDirection, linkedNotebookGuid, listDirtyTagsRequestId);
 
@@ -1103,8 +1110,10 @@ void SendLocalChangesManager::requestStuffFromLocalStorage(const QString & linke
     {
         LocalStorageManager::ListSavedSearchesOrder::type savedSearchesOrder = LocalStorageManager::ListSavedSearchesOrder::NoOrder;
         m_listDirtySavedSearchesRequestId = QUuid::createUuid();
+        QNTRACE(QStringLiteral("Emitting the request to fetch unsynchronized saved searches from local storage: request id = ")
+                << m_listDirtySavedSearchesRequestId);
         emit requestLocalUnsynchronizedSavedSearches(listDirtyObjectsFlag, limit, offset, savedSearchesOrder,
-                orderDirection, linkedNotebookGuid, m_listDirtySavedSearchesRequestId);
+                                                     orderDirection, linkedNotebookGuid, m_listDirtySavedSearchesRequestId);
     }
 
     LocalStorageManager::ListNotebooksOrder::type notebooksOrder = LocalStorageManager::ListNotebooksOrder::NoOrder;
@@ -1115,6 +1124,9 @@ void SendLocalChangesManager::requestStuffFromLocalStorage(const QString & linke
     else {
         Q_UNUSED(m_listDirtyNotebooksFromLinkedNotebooksRequestIds.insert(listDirtyNotebooksRequestId));
     }
+
+    QNTRACE(QStringLiteral("Emitting the request to fetch unsynchronized notebooks from local storage: request id = ")
+            << listDirtyNotebooksRequestId);
     emit requestLocalUnsynchronizedNotebooks(listDirtyObjectsFlag, limit, offset, notebooksOrder,
                                              orderDirection, linkedNotebookGuid, listDirtyNotebooksRequestId);
 
@@ -1126,6 +1138,8 @@ void SendLocalChangesManager::requestStuffFromLocalStorage(const QString & linke
     else {
         Q_UNUSED(m_listDirtyNotesFromLinkedNotebooksRequestIds.insert(listDirtyNotesRequestId));
     }
+    QNTRACE(QStringLiteral("Emitting the request to fetch unsynchronized notes from local storage: request id = ")
+            << listDirtyNotesRequestId);
     emit requestLocalUnsynchronizedNotes(listDirtyObjectsFlag, /* with resource binary data = */ true,
                                          limit, offset, notesOrder, orderDirection, linkedNotebookGuid,
                                          listDirtyNotesRequestId);
@@ -1135,6 +1149,8 @@ void SendLocalChangesManager::requestStuffFromLocalStorage(const QString & linke
         LocalStorageManager::ListObjectsOptions linkedNotebooksListOption = LocalStorageManager::ListAll;
         LocalStorageManager::ListLinkedNotebooksOrder::type linkedNotebooksOrder = LocalStorageManager::ListLinkedNotebooksOrder::NoOrder;
         m_listLinkedNotebooksRequestId = QUuid::createUuid();
+        QNTRACE(QStringLiteral("Emitting the request to fetch unsynchronized linked notebooks from local storage: request id = ")
+                << m_listLinkedNotebooksRequestId);
         emit requestLinkedNotebooksList(linkedNotebooksListOption, limit, offset, linkedNotebooksOrder, orderDirection, m_listLinkedNotebooksRequestId);
     }
 }
