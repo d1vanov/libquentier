@@ -313,8 +313,7 @@ public:
      * @param order - allows to specify a particular ordering of notebooks in the result, NoOrder by default
      * @param orderDirection - specifies the direction of ordering, by defauls ascending direction is used;
      * this parameter has no meaning if order is equal to NoOrder
-     * @param linkedNotebookGuid - if it's null, the method would list the notebooks ignoring their belonging
-     * to the current account or to some linked notebook; if it's empty, only the non-linked notebooks would be listed;
+     * @param linkedNotebookGuid - if it's empty, only the non-linked notebooks would be listed;
      * otherwise, the only one notebook from the corresponding linked notebook would be listed
      * @return either the list of notebooks within the account conforming to the filter or empty list
      * in cases of error or no notebooks conforming to the filter exist within the account
@@ -618,13 +617,17 @@ public:
      * @param order - allows to specify particular ordering of notes in the result, NoOrder by default
      * @param orderDirection - specifies the direction of ordering, by defauls ascending direction is used;
      * this parameter has no meaning if order is equal to NoOrder
+     * @param linkedNotebookGuid - if it's null, notes from both user's own notebooks and linked notebooks would be listed;
+     * if it's empty, only the notes from non-linked notebooks would be listed;
+     * otherwise, only the notes from the specified linked notebook would be listed
      * @return either list of notes within the account conforming to the filter or empty list
      * in cases of error or no notes conforming to the filter exist within the account
      */
     QList<Note> listNotes(const ListObjectsOptions flag, ErrorString & errorDescription,
                           const bool withResourceBinaryData = true, const size_t limit = 0,
                           const size_t offset = 0, const ListNotesOrder::type order = ListNotesOrder::NoOrder,
-                          const OrderDirection::type orderDirection = OrderDirection::Ascending) const;
+                          const OrderDirection::type orderDirection = OrderDirection::Ascending,
+                          const QString & linkedNotebookGuid = QString()) const;
 
     /**
      * @brief findNoteLocalUidsWithSearchQuery - attempt to find note local uids of notes

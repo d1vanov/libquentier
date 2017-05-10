@@ -2186,12 +2186,28 @@ QList<Note> LocalStorageManagerPrivate::listNotes(const LocalStorageManager::Lis
                                                   ErrorString & errorDescription, const bool withResourceBinaryData,
                                                   const size_t limit, const size_t offset,
                                                   const LocalStorageManager::ListNotesOrder::type & order,
-                                                  const LocalStorageManager::OrderDirection::type & orderDirection) const
+                                                  const LocalStorageManager::OrderDirection::type & orderDirection,
+                                                  const QString & linkedNotebookGuid) const
 {
     QNDEBUG(QStringLiteral("LocalStorageManagerPrivate::listNotes: flag = ") << flag << QStringLiteral(", withResourceBinaryData = ")
-            << (withResourceBinaryData ? QStringLiteral("true") : QStringLiteral("false")));
+            << (withResourceBinaryData ? QStringLiteral("true") : QStringLiteral("false"))
+            << QStringLiteral(", linked notebook guid = ") << linkedNotebookGuid);
 
     ErrorString errorPrefix(QT_TRANSLATE_NOOP("", "Can't list notes from the local storage database"));
+
+    QString linkedNotebookGuidSqlQueryCondition;
+    if (!linkedNotebookGuid.isNull())
+    {
+        linkedNotebookGuidSqlQueryCondition = QStringLiteral("localUid IN (SELECT DISTINCT Notes.localUid FROM (Notes "
+                                                             "LEFT OUTER JOIN Notebooks ON Notes.notebookLocalUid = Notebooks.localUid) "
+                                                             "WHERE Notebooks.linkedNotebookGuid");
+        if (linkedNotebookGuid.isEmpty()) {
+            linkedNotebookGuidSqlQueryCondition += QStringLiteral(" IS NULL)");
+        }
+        else {
+            linkedNotebookGuidSqlQueryCondition += QString::fromUtf8(" = '%1')").arg(sqlEscapeString(linkedNotebookGuid));
+        }
+    }
 
     // Will run all the queries from this method and its sub-methods within a single transaction
     // to prevent multiple drops and re-obtainings of shared lock
@@ -2200,7 +2216,8 @@ QList<Note> LocalStorageManagerPrivate::listNotes(const LocalStorageManager::Lis
 
     ErrorString error;
     QList<Note> notes = listObjects<Note, LocalStorageManager::ListNotesOrder::type>(flag, error, limit,
-                                                                                     offset, order, orderDirection);
+                                                                                     offset, order, orderDirection,
+                                                                                     linkedNotebookGuidSqlQueryCondition);
     if (notes.isEmpty() && !error.isEmpty()) {
         errorDescription.base() = errorPrefix.base();
         errorDescription.appendBase(error.base());

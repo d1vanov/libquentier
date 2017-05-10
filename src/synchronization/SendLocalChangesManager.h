@@ -83,7 +83,7 @@ Q_SIGNALS:
                                                  size_t limit, size_t offset,
                                                  LocalStorageManager::ListSavedSearchesOrder::type order,
                                                  LocalStorageManager::OrderDirection::type orderDirection,
-                                                 QString linkedNotebookGuid, QUuid requestId);
+                                                 QUuid requestId);
     void requestLocalUnsynchronizedNotebooks(LocalStorageManager::ListObjectsOptions flag,
                                              size_t limit, size_t offset,
                                              LocalStorageManager::ListNotebooksOrder::type order,
@@ -106,7 +106,6 @@ Q_SIGNALS:
     void updateTag(Tag tag, QUuid requestId);
     void updateSavedSearch(SavedSearch savedSearch, QUuid requestId);
     void updateNotebook(Notebook notebook, QUuid requestId);
-    void updateNote(Note note, bool updateResources, bool updateTags, QUuid requestId);
 
     void findNotebook(Notebook notebook, QUuid requestId);
 
@@ -149,12 +148,12 @@ private Q_SLOTS:
                                    size_t limit, size_t offset,
                                    LocalStorageManager::ListNotesOrder::type order,
                                    LocalStorageManager::OrderDirection::type orderDirection,
-                                   QList<Note> notes, QUuid requestId);
+                                   QString linkedNotebookGuid, QList<Note> notes, QUuid requestId);
     void onListDirtyNotesFailed(LocalStorageManager::ListObjectsOptions flag, bool withResourceBinaryData,
                                 size_t limit, size_t offset,
                                 LocalStorageManager::ListNotesOrder::type order,
                                 LocalStorageManager::OrderDirection::type orderDirection,
-                                ErrorString errorDescription, QUuid requestId);
+                                QString linkedNotebookGuid, ErrorString errorDescription, QUuid requestId);
 
     void onListLinkedNotebooksCompleted(LocalStorageManager::ListObjectsOptions flag,
                                         size_t limit, size_t offset,

@@ -856,16 +856,17 @@ void LocalStorageManagerAsync::onListNotesPerTagRequest(Tag tag, bool withResour
 
 void LocalStorageManagerAsync::onListNotesRequest(LocalStorageManager::ListObjectsOptions flag, bool withResourceBinaryData,
                                                   size_t limit, size_t offset, LocalStorageManager::ListNotesOrder::type order,
-                                                  LocalStorageManager::OrderDirection::type orderDirection, QUuid requestId)
+                                                  LocalStorageManager::OrderDirection::type orderDirection,
+                                                  QString linkedNotebookGuid, QUuid requestId)
 {
     try
     {
         ErrorString errorDescription;
         QList<Note> notes = m_pLocalStorageManager->listNotes(flag, errorDescription, withResourceBinaryData,
-                                                              limit, offset, order, orderDirection);
+                                                              limit, offset, order, orderDirection, linkedNotebookGuid);
         if (notes.isEmpty() && !errorDescription.isEmpty()) {
             emit listNotesFailed(flag, withResourceBinaryData, limit, offset, order,
-                                 orderDirection, errorDescription, requestId);
+                                 orderDirection, linkedNotebookGuid, errorDescription, requestId);
             return;
         }
 
@@ -878,7 +879,8 @@ void LocalStorageManagerAsync::onListNotesRequest(LocalStorageManager::ListObjec
             }
         }
 
-        emit listNotesComplete(flag, withResourceBinaryData, limit, offset, order, orderDirection, notes, requestId);
+        emit listNotesComplete(flag, withResourceBinaryData, limit, offset, order,
+                               orderDirection, linkedNotebookGuid, notes, requestId);
     }
     CATCH_EXCEPTION
 }
@@ -1385,8 +1387,6 @@ void LocalStorageManagerAsync::onListSavedSearchesRequest(LocalStorageManager::L
 {
     try
     {
-        QNTRACE(QStringLiteral("LocalStorageManagerAsync::onListSavedSearchesRequest: request id = ") << requestId);
-
         ErrorString errorDescription;
         QList<SavedSearch> savedSearches = m_pLocalStorageManager->listSavedSearches(flag, errorDescription, limit,
                                                                                      offset, order, orderDirection);
@@ -1406,7 +1406,6 @@ void LocalStorageManagerAsync::onListSavedSearchesRequest(LocalStorageManager::L
             }
         }
 
-        QNTRACE(QStringLiteral("Complete: request id = ") << requestId);
         emit listSavedSearchesComplete(flag, limit, offset, order, orderDirection, savedSearches, requestId);
     }
     CATCH_EXCEPTION

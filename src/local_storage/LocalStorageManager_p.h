@@ -102,7 +102,8 @@ public:
     QList<Note> listNotes(const LocalStorageManager::ListObjectsOptions flag, ErrorString & errorDescription,
                           const bool withResourceBinaryData, const size_t limit,
                           const size_t offset, const LocalStorageManager::ListNotesOrder::type & order,
-                          const LocalStorageManager::OrderDirection::type & orderDirection) const;
+                          const LocalStorageManager::OrderDirection::type & orderDirection,
+                          const QString & linkedNotebookGuid) const;
     bool expungeNote(Note & note, ErrorString & errorDescription);
 
     QStringList findNoteLocalUidsWithSearchQuery(const NoteSearchQuery & noteSearchQuery,

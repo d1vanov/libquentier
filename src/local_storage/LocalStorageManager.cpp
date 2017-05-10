@@ -270,10 +270,11 @@ QList<Note> LocalStorageManager::listNotesPerTag(const Tag & tag, ErrorString & 
 QList<Note> LocalStorageManager::listNotes(const ListObjectsOptions flag, ErrorString & errorDescription,
                                            const bool withResourceBinaryData, const size_t limit,
                                            const size_t offset, const ListNotesOrder::type order,
-                                           const OrderDirection::type orderDirection) const
+                                           const OrderDirection::type orderDirection,
+                                           const QString & linkedNotebookGuid) const
 {
     Q_D(const LocalStorageManager);
-    return d->listNotes(flag, errorDescription, withResourceBinaryData, limit, offset, order, orderDirection);
+    return d->listNotes(flag, errorDescription, withResourceBinaryData, limit, offset, order, orderDirection, linkedNotebookGuid);
 }
 
 QStringList LocalStorageManager::findNoteLocalUidsWithSearchQuery(const NoteSearchQuery & noteSearchQuery,
