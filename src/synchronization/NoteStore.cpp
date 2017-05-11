@@ -406,6 +406,8 @@ qint32 NoteStore::getNote(const bool withContent, const bool withResourcesData,
     {
         note = m_pQecNoteStore->getNote(note.guid(), withContent, withResourcesData,
                                         withResourcesRecognition, withResourceAlternateData);
+        note.setLocal(false);
+        note.setDirty(false);
         return 0;
     }
     catch(const qevercloud::EDAMUserException & userException)
@@ -584,7 +586,11 @@ void NoteStore::onGetNoteAsyncFinished(QVariant result, QSharedPointer<EverCloud
     }
 
     qevercloud::Note qecNote = result.value<qevercloud::Note>();
+
     note = Note(qecNote);
+    note.setLocal(false);
+    note.setDirty(false);
+
     emit getNoteAsyncFinished(errorCode, note, rateLimitSeconds, errorDescription);
 }
 

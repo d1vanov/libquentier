@@ -1781,6 +1781,19 @@ void RemoteToLocalSynchronizationManager::unsetLocalUid<LinkedNotebook>(LinkedNo
 }
 
 template <class ElementType>
+void RemoteToLocalSynchronizationManager::setNonLocalAndNonDirty(ElementType & element)
+{
+    element.setLocal(false);
+    element.setDirty(false);
+}
+
+template <>
+void RemoteToLocalSynchronizationManager::setNonLocalAndNonDirty<LinkedNotebook>(LinkedNotebook & linkedNotebook)
+{
+    linkedNotebook.setDirty(false);
+}
+
+template <class ElementType>
 void RemoteToLocalSynchronizationManager::onExpungeDataElementCompleted(const ElementType & element, const QUuid & requestId,
                                                                         const QString & typeName, QSet<QUuid> & expungeElementRequestIds)
 {
@@ -5684,6 +5697,7 @@ bool RemoteToLocalSynchronizationManager::onFoundDuplicateByName(ElementType ele
     }
 
     ElementType remoteElementAdapter(remoteElement);
+    setNonLocalAndNonDirty(remoteElementAdapter);
     checkAndAddLinkedNotebookBinding(element, remoteElementAdapter);
 
     checkUpdateSequenceNumbersAndProcessConflictedElements(remoteElementAdapter, typeName, element);
@@ -5729,6 +5743,7 @@ bool RemoteToLocalSynchronizationManager::onFoundDuplicateByGuid(ElementType ele
     }
 
     ElementType remoteElementAdapter(remoteElement);
+    setNonLocalAndNonDirty(remoteElementAdapter);
     checkAndAddLinkedNotebookBinding(element, remoteElementAdapter);
 
     checkUpdateSequenceNumbersAndProcessConflictedElements(remoteElementAdapter, typeName, element);
@@ -5790,6 +5805,7 @@ bool RemoteToLocalSynchronizationManager::onNoDuplicateByName(ElementType elemen
 
     // This element wasn't found in the local storage by guid or name ==> it's new from remote storage, adding it
     ElementType newElement(*it);
+    setNonLocalAndNonDirty(newElement);
     checkAndAddLinkedNotebookBinding(element, newElement);
 
     emitAddRequest(newElement);
@@ -5877,6 +5893,7 @@ void RemoteToLocalSynchronizationManager::checkUpdateSequenceNumbersAndProcessCo
             // Remote element is more recent, need to update the element existing in local storage
             ElementType elementToUpdate(remoteElement);
             unsetLocalUid(elementToUpdate);
+            setNonLocalAndNonDirty(elementToUpdate);
 
             // NOTE: workarounding the stupidity of MSVC 2013
             emitUpdateRequest<ElementType>(elementToUpdate, static_cast<const ElementType*>(Q_NULLPTR));

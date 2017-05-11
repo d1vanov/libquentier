@@ -354,6 +354,9 @@ private:
     template <class ElementType>
     void unsetLocalUid(ElementType & element);
 
+    template <class ElementType>
+    void setNonLocalAndNonDirty(ElementType & element);
+
     // ========= Expunge helpers ============
 
     template <class ElementType>
