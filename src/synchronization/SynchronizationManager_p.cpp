@@ -952,6 +952,8 @@ void SynchronizationManagerPrivate::launchSync()
         readLastSyncParameters();
     }
 
+    emit notifyStart();
+
     if (m_lastUpdateCount <= 0) {
         QNDEBUG(QStringLiteral("The client has never synchronized with the remote service, "
                                "performing the full sync"));

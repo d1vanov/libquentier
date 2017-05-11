@@ -116,6 +116,12 @@ public Q_SLOTS:
 
 Q_SIGNALS:
     /**
+     * This signal is emitted when the synchronization is started (authentication is not considered a part of
+     * synchronization so this signal is only emitted when the authentication is completed)
+     */
+    void started();
+
+    /**
      * This signal is emitted when the synchronization fails; at this moment there is no error code explaining the reason
      * of the failure programmatically so the only explanation available is the textual one for the end user
      */

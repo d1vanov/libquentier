@@ -47,6 +47,7 @@ public:
     bool paused() const;
 
 Q_SIGNALS:
+    void notifyStart();
     void notifyError(ErrorString errorDescription);
     void notifyRemoteToLocalSyncDone();
     void notifyFinish(Account account);

@@ -27,6 +27,8 @@ SynchronizationManager::SynchronizationManager(const QString & consumerKey, cons
                                                IAuthenticationManager & authenticationManager) :
     d_ptr(new SynchronizationManagerPrivate(consumerKey, consumerSecret, host, localStorageManagerAsync, authenticationManager))
 {
+    QObject::connect(d_ptr, QNSIGNAL(SynchronizationManagerPrivate,notifyStart),
+                     this, QNSIGNAL(SynchronizationManager,started));
     QObject::connect(d_ptr, QNSIGNAL(SynchronizationManagerPrivate,notifyError,ErrorString),
                      this, QNSIGNAL(SynchronizationManager,failed,ErrorString));
     QObject::connect(d_ptr, QNSIGNAL(SynchronizationManagerPrivate,notifyFinish,Account),
