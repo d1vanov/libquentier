@@ -390,6 +390,12 @@ void RemoteToLocalSynchronizationManager::start(qint32 afterUsn)
 void RemoteToLocalSynchronizationManager::stop()
 {
     QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::stop"));
+
+    if (!m_active) {
+        QNDEBUG(QStringLiteral("Already stopped"));
+        return;
+    }
+
     m_requestedToStop = true;
     m_active = false;
     emit stopped();

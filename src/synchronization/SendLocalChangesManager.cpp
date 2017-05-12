@@ -120,6 +120,12 @@ void SendLocalChangesManager::pause()
 void SendLocalChangesManager::stop()
 {
     QNDEBUG(QStringLiteral("SendLocalChangesManager::stop"));
+
+    if (!m_active) {
+        QNDEBUG(QStringLiteral("Already stopped"));
+        return;
+    }
+
     m_requestedToStop = true;
     m_active = false;
     emit stopped();
