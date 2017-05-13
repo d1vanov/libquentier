@@ -210,12 +210,42 @@ Q_SIGNALS:
     void remoteToLocalSyncDone();
 
     /**
-     * This signal is emitted several times during the synchronization to notify the interested clients
-     * of the synchronization procedure progress
-     * @param message - textual description of what is currently being done during the synchronization
-     * @param workDonePercentage - the approximate percentage of finished synchronization work
+     * This signal is emitted when the sync chunks for the stuff from user's own account are downloaded
+     * during "remote to local" synchronization step
      */
-    void progress(QString message, double workDonePercentage);
+    void syncChunksDownloaded();
+
+    /**
+     * This signal is emitted when the sync chunks for the stuff from linked notebooks are downloaded
+     * during "remote to local" synchronization step
+     */
+    void linkedNotebooksSyncChunksDownloaded();
+
+    /**
+     * This signal is emitted on each successful download of full note data from user's own account
+     * @param notesDownloaded is the number of notes downloaded by the moment
+     * @param totalNotesToDownload is the total number of notes that need to be downloaded
+     */
+    void notesDownloadProgress(quint32 notesDownloaded, quint32 totalNotesToDownload);
+
+    /**
+     * This signal is emitted on each successful download of full note data from linked notebooks
+     * @param notesDownloaded is the number of notes downloaded by the moment
+     * @param totalNotesToDownload is the total number of notes that need to be downloaded
+     */
+    void linkedNotebooksNotesDownloadProgress(quint32 notesDownloaded, quint32 totalNotesToDownload);
+
+    /**
+     * This signal is emitted during "send local changes" synchronization step when all the relevant
+     * data elements from user's own account were prepared for sending to the Evernote service
+     */
+    void preparedDirtyObjectsForSending();
+
+    /**
+     * This signal is emitted during "send local changes" synchronization step when all the relevant
+     * data elements from linked notebooks were prepared for sending to the Evernote service
+     */
+    void preparedLinkedNotebooksDirtyObjectsForSending();
 
 private:
     SynchronizationManager() Q_DECL_EQ_DELETE;

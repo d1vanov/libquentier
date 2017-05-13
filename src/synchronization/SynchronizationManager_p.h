@@ -52,6 +52,16 @@ Q_SIGNALS:
     void notifyRemoteToLocalSyncDone();
     void notifyFinish(Account account);
 
+// progress signals
+    void syncChunksDownloaded();
+    void linkedNotebooksSyncChunksDownloaded();
+
+    void notesDownloadProgress(quint32 notesDownloaded, quint32 totalNotesToDownload);
+    void linkedNotebooksNotesDownloadProgress(quint32 notesDownloaded, quint32 totalNotesToDownload);
+
+    void preparedDirtyObjectsForSending();
+    void preparedLinkedNotebooksDirtyObjectsForSending();
+
 // state signals
     void remoteToLocalSyncPaused(bool pendingAuthenticaton);
     void remoteToLocalSyncStopped();
@@ -117,23 +127,12 @@ private Q_SLOTS:
     void onRemoteToLocalSyncPaused(bool pendingAuthenticaton);
     void onRemoteToLocalSyncStopped();
 
-    // RemoteToLocalSyncManager's progress tracking slots
-    void onRemoteToLocalSyncChunksDownloaded();
-    void onRemoteToLocalSyncFullNotesContentDownloaded();
-    void onRemoteToLocalSyncExpungedFromServerToClient();
-    void onRemoteToLocalSyncLinkedNotebooksSyncChunksDownloaded();
-    void onRemoteToLocalSyncLinkedNotebooksFullNotesContentDownloaded();
-
     void onShouldRepeatIncrementalSync();
     void onConflictDetectedDuringLocalChangesSending();
 
     void onLocalChangesSent(qint32 lastUpdateCount, QHash<QString,qint32> lastUpdateCountByLinkedNotebookGuid);
     void onSendLocalChangesPaused(bool pendingAuthenticaton);
     void onSendLocalChangesStopped();
-
-    // SendLocalChangesManager's progress tracking slots
-    void onSendingLocalChangesReceivedUsersDirtyObjects();
-    void onSendingLocalChangesReceivedAllDirtyObjects();
 
     void onRateLimitExceeded(qint32 secondsToWait);
 

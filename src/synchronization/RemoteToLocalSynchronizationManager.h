@@ -73,10 +73,12 @@ Q_SIGNALS:
 
     // signals notifying about the progress of synchronization
     void syncChunksDownloaded();
-    void fullNotesContentsDownloaded();
-    void expungedFromServerToClient();
+    void notesDownloadProgress(quint32 notesDownloaded, quint32 totalNotesToDownload);
+
     void linkedNotebooksSyncChunksDownloaded();
-    void linkedNotebooksFullNotesContentsDownloaded();
+    void linkedNotebooksNotesDownloadProgress(quint32 notesDownloaded, quint32 totalNotesToDownload);
+
+    void expungedFromServerToClient();
 
     void paused(bool pendingAuthenticaton);
     void stopped();
@@ -614,6 +616,8 @@ private:
     QHash<QString,QString>                  m_linkedNotebookGuidsByNotebookGuids;
 
     NotesList                               m_notes;
+    quint32                                 m_originalNumberOfNotes;
+    quint32                                 m_numNotesDownloaded;
     QList<QString>                          m_expungedNotes;
     QSet<QUuid>                             m_findNoteByGuidRequestIds;
     QSet<QUuid>                             m_addNoteRequestIds;

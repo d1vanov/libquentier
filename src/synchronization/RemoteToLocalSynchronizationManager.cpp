@@ -145,6 +145,8 @@ RemoteToLocalSynchronizationManager::RemoteToLocalSynchronizationManager(LocalSt
     m_expungeNotebookRequestIds(),
     m_linkedNotebookGuidsByNotebookGuids(),
     m_notes(),
+    m_originalNumberOfNotes(0),
+    m_numNotesDownloaded(0),
     m_expungedNotes(),
     m_findNoteByGuidRequestIds(),
     m_addNoteRequestIds(),
@@ -2517,9 +2519,10 @@ void RemoteToLocalSynchronizationManager::onGetNoteAsyncFinished(qint32 errorCod
         Q_UNUSED(m_guidsOfNotesPendingDownloadForUpdatingInLocalStorage.erase(updateIt))
     }
 
-    if (!needToAddNote && !needToUpdateNote) {
-        QNDEBUG(QStringLiteral("Found no note waiting for downloading for either being added to the local storage"
-                               "or for being updated in the local storage"));
+    if (Q_UNLIKELY(!needToAddNote && !needToUpdateNote)) {
+        errorDescription.setBase(QT_TRANSLATE_NOOP("", "Internal error: the downloaded note was not expected"));
+        QNWARNING(errorDescription << QStringLiteral(", note: ") << note);
+        emit failure(errorDescription);
         return;
     }
 
@@ -2559,6 +2562,18 @@ void RemoteToLocalSynchronizationManager::onGetNoteAsyncFinished(qint32 errorCod
     else if (errorCode != 0) {
         emit failure(errorDescription);
         return;
+    }
+
+    ++m_numNotesDownloaded;
+    QNTRACE(QStringLiteral("Incremented the number of downloaded notes to ")
+            << m_numNotesDownloaded << QStringLiteral(", the total number of notes to download = ")
+            << m_originalNumberOfNotes);
+
+    if (syncingLinkedNotebooksContent()) {
+        emit linkedNotebooksNotesDownloadProgress(m_numNotesDownloaded, m_originalNumberOfNotes);
+    }
+    else {
+        emit notesDownloadProgress(m_numNotesDownloaded, m_originalNumberOfNotes);
     }
 
     if (needToAddNote) {
@@ -3791,8 +3806,6 @@ void RemoteToLocalSynchronizationManager::startLinkedNotebooksSync()
     if (numAllLinkedNotebooks == 0) {
         QNDEBUG(QStringLiteral("No linked notebooks are present within the account, can finish the synchronization right away"));
         m_linkedNotebooksSyncChunksDownloaded = true;
-        emit linkedNotebooksSyncChunksDownloaded();
-        emit linkedNotebooksFullNotesContentsDownloaded();
         finalize();
         return;
     }
@@ -4337,7 +4350,6 @@ void RemoteToLocalSynchronizationManager::checkServerDataMergeCompletion()
     if (syncingLinkedNotebooksContent())
     {
         QNDEBUG(QStringLiteral("Synchronized the whole contents from linked notebooks"));
-        emit linkedNotebooksFullNotesContentsDownloaded();
 
         if (!m_expungedNotes.isEmpty()) {
             expungeNotes();
@@ -4352,7 +4364,6 @@ void RemoteToLocalSynchronizationManager::checkServerDataMergeCompletion()
         QNDEBUG(QStringLiteral("Synchronized the whole contents from user's account"));
 
         m_fullNoteContentsDownloaded = true;
-        emit fullNotesContentsDownloaded();
 
         if (m_lastSyncMode == SyncMode::FullSync) {
             startLinkedNotebooksSync();
@@ -5508,6 +5519,12 @@ void RemoteToLocalSynchronizationManager::launchDataElementSync(const ContentSou
     }
 
     int numElements = container.size();
+
+    if (typeName == QStringLiteral("Note")) {
+        m_originalNumberOfNotes = static_cast<quint32>(std::max(numElements, 0));
+        m_numNotesDownloaded = static_cast<quint32>(0);
+    }
+
     for(int i = 0; i < numElements; ++i)
     {
         const typename ContainerType::value_type & element = container[i];

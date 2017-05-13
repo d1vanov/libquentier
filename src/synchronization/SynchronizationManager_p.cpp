@@ -548,36 +548,6 @@ void SynchronizationManagerPrivate::onRemoteToLocalSyncStopped()
     emit remoteToLocalSyncStopped();
 }
 
-void SynchronizationManagerPrivate::onRemoteToLocalSyncChunksDownloaded()
-{
-    QNDEBUG(QStringLiteral("SynchronizationManagerPrivate::onRemoteToLocalSyncChunksDownloaded"));
-    emit progress(QString::fromUtf8(QT_TRANSLATE_NOOP("", "Downloaded user account's sync chunks")), 0.125);
-}
-
-void SynchronizationManagerPrivate::onRemoteToLocalSyncFullNotesContentDownloaded()
-{
-    QNDEBUG(QStringLiteral("SynchronizationManagerPrivate::onRemoteToLocalSyncFullNotesContentDownloaded"));
-    emit progress(QString::fromUtf8(QT_TRANSLATE_NOOP("", "Downloaded full content of notes from user's account")), 0.25);
-}
-
-void SynchronizationManagerPrivate::onRemoteToLocalSyncExpungedFromServerToClient()
-{
-    QNDEBUG(QStringLiteral("SynchronizationManagerPrivate::onRemoteToLocalSyncExpungedFromServerToClient"));
-    emit progress(QString::fromUtf8(QT_TRANSLATE_NOOP("", "Expunged local items which were also expunged in the remote service")), 0.375);
-}
-
-void SynchronizationManagerPrivate::onRemoteToLocalSyncLinkedNotebooksSyncChunksDownloaded()
-{
-    QNDEBUG(QStringLiteral("SynchronizationManagerPrivate::onRemoteToLocalSyncLinkedNotebooksSyncChunksDownloaded"));
-    emit progress(QString::fromUtf8(QT_TRANSLATE_NOOP("", "Downloaded sync chunks from linked notebooks")), 0.5);
-}
-
-void SynchronizationManagerPrivate::onRemoteToLocalSyncLinkedNotebooksFullNotesContentDownloaded()
-{
-    QNDEBUG(QStringLiteral("SynchronizationManagerPrivate::onRemoteToLocalSyncLinkedNotebooksFullNotesContentDownloaded"));
-    emit progress(QString::fromUtf8(QT_TRANSLATE_NOOP("", "Downloaded the full content of notes from linked notebooks")), 0.625);
-}
-
 void SynchronizationManagerPrivate::onShouldRepeatIncrementalSync()
 {
     QNDEBUG(QStringLiteral("SynchronizationManagerPrivate::onShouldRepeatIncrementalSync"));
@@ -636,20 +606,6 @@ void SynchronizationManagerPrivate::onSendLocalChangesStopped()
     emit sendLocalChangesStopped();
 }
 
-void SynchronizationManagerPrivate::onSendingLocalChangesReceivedUsersDirtyObjects()
-{
-    QNDEBUG(QStringLiteral("SynchronizationManagerPrivate::onSendingLocalChangesReceivedUsersDirtyObjects"));
-    emit progress(QString::fromUtf8(QT_TRANSLATE_NOOP("", "Prepared new and modified data from user's account "
-                                                      "for sending back to the remote service")), 0.75);
-}
-
-void SynchronizationManagerPrivate::onSendingLocalChangesReceivedAllDirtyObjects()
-{
-    QNDEBUG(QStringLiteral("SynchronizationManagerPrivate::onSendingLocalChangesReceivedAllDirtyObjects"));
-    emit progress(QString::fromUtf8(QT_TRANSLATE_NOOP("", "Prepared new and modified data from linked notebooks "
-                                                      "for sending back to the remote service")), 0.875);
-}
-
 void SynchronizationManagerPrivate::onRateLimitExceeded(qint32 secondsToWait)
 {
     QNDEBUG(QStringLiteral("SynchronizationManagerPrivate::onRateLimitExceeded"));
@@ -686,15 +642,13 @@ void SynchronizationManagerPrivate::createConnections(IAuthenticationManager & a
     QObject::connect(&m_remoteToLocalSyncManager, QNSIGNAL(RemoteToLocalSynchronizationManager,requestLastSyncParameters),
                      this, QNSLOT(SynchronizationManagerPrivate,onRequestLastSyncParameters));
     QObject::connect(&m_remoteToLocalSyncManager, QNSIGNAL(RemoteToLocalSynchronizationManager,syncChunksDownloaded),
-                     this, QNSLOT(SynchronizationManagerPrivate,onRemoteToLocalSyncChunksDownloaded));
-    QObject::connect(&m_remoteToLocalSyncManager, QNSIGNAL(RemoteToLocalSynchronizationManager,fullNotesContentsDownloaded),
-                     this, QNSLOT(SynchronizationManagerPrivate,onRemoteToLocalSyncFullNotesContentDownloaded));
-    QObject::connect(&m_remoteToLocalSyncManager, QNSIGNAL(RemoteToLocalSynchronizationManager,expungedFromServerToClient),
-                     this, QNSLOT(SynchronizationManagerPrivate,onRemoteToLocalSyncExpungedFromServerToClient));
+                     this, QNSIGNAL(SynchronizationManagerPrivate,syncChunksDownloaded));
+    QObject::connect(&m_remoteToLocalSyncManager, QNSIGNAL(RemoteToLocalSynchronizationManager,notesDownloadProgress,quint32,quint32),
+                     this, QNSIGNAL(SynchronizationManagerPrivate,notesDownloadProgress,quint32,quint32));
     QObject::connect(&m_remoteToLocalSyncManager, QNSIGNAL(RemoteToLocalSynchronizationManager,linkedNotebooksSyncChunksDownloaded),
-                     this, QNSLOT(SynchronizationManagerPrivate,onRemoteToLocalSyncLinkedNotebooksSyncChunksDownloaded));
-    QObject::connect(&m_remoteToLocalSyncManager, QNSIGNAL(RemoteToLocalSynchronizationManager,linkedNotebooksFullNotesContentsDownloaded),
-                     this, QNSLOT(SynchronizationManagerPrivate,onRemoteToLocalSyncLinkedNotebooksFullNotesContentDownloaded));
+                     this, QNSIGNAL(SynchronizationManagerPrivate,linkedNotebooksSyncChunksDownloaded));
+    QObject::connect(&m_remoteToLocalSyncManager, QNSIGNAL(RemoteToLocalSynchronizationManager,linkedNotebooksNotesDownloadProgress,quint32,quint32),
+                     this, QNSIGNAL(SynchronizationManagerPrivate,linkedNotebooksNotesDownloadProgress,quint32,quint32));
     QObject::connect(this, QNSIGNAL(SynchronizationManagerPrivate,pauseRemoteToLocalSync),
                      &m_remoteToLocalSyncManager, QNSLOT(RemoteToLocalSynchronizationManager,pause));
     QObject::connect(this, QNSIGNAL(SynchronizationManagerPrivate,resumeRemoteToLocalSync),
@@ -728,9 +682,9 @@ void SynchronizationManagerPrivate::createConnections(IAuthenticationManager & a
     QObject::connect(&m_sendLocalChangesManager, QNSIGNAL(SendLocalChangesManager,stopped),
                      this, QNSLOT(SynchronizationManagerPrivate,onSendLocalChangesStopped));
     QObject::connect(&m_sendLocalChangesManager, QNSIGNAL(SendLocalChangesManager,receivedUserAccountDirtyObjects),
-                     this, QNSLOT(SynchronizationManagerPrivate,onSendingLocalChangesReceivedUsersDirtyObjects));
+                     this, QNSIGNAL(SynchronizationManagerPrivate,preparedDirtyObjectsForSending));
     QObject::connect(&m_sendLocalChangesManager, QNSIGNAL(SendLocalChangesManager,receivedAllDirtyObjects),
-                     this, QNSLOT(SynchronizationManagerPrivate,onSendingLocalChangesReceivedAllDirtyObjects));
+                     this, QNSIGNAL(SynchronizationManagerPrivate,preparedLinkedNotebooksDirtyObjectsForSending));
     QObject::connect(this, QNSIGNAL(SynchronizationManagerPrivate,sendAuthenticationTokensForLinkedNotebooks,QHash<QString,QPair<QString,QString> >,QHash<QString,qevercloud::Timestamp>),
                      &m_sendLocalChangesManager, QNSLOT(SendLocalChangesManager,onAuthenticationTokensForLinkedNotebooksReceived,QHash<QString,QPair<QString,QString> >,QHash<QString,qevercloud::Timestamp>));
     QObject::connect(this, QNSIGNAL(SynchronizationManagerPrivate,pauseSendingLocalChanges),
