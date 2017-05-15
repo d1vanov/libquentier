@@ -976,6 +976,14 @@ QTextStream & Note::print(QTextStream & strm) const
     }
     INSERT_DELIMITER;
 
+    if (d->m_notebookLocalUid.isSet()) {
+        strm << QStringLiteral("notebookLocalUid: ") << d->m_notebookLocalUid;
+    }
+    else {
+        strm << QStringLiteral("notebookLocalUid is not set");
+    }
+    INSERT_DELIMITER;
+
     if (d->m_qecNote.tagGuids.isSet())
     {
         strm << QStringLiteral("tagGuids: {");
