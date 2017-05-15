@@ -52,10 +52,20 @@ bool QUENTIER_EXPORT QuentierIsLogLevelActive(const LogLevel::type logLevel);
 
 } // namespace quentier
 
+#if QT_VERSION >= QT_VERSION_CHECK(5, 4, 0)
+#define __QNLOG_SETUP_HELPER(debug) \
+    debug.nospace(); \
+    debug.noquote()
+#else
+#define __QNLOG_SETUP_HELPER(debug) \
+    debug.nospace()
+#endif
+
 #define __QNLOG_BASE(message, level) \
     if (quentier::QuentierIsLogLevelActive(quentier::LogLevel::level##Level)) { \
         QString __quentierLogEntry; \
         QDebug __quentierLogStrm(&__quentierLogEntry); \
+        __QNLOG_SETUP_HELPER(__quentierLogStrm); \
         QString __quentierLogRelativeFileName(QStringLiteral(__FILE__)); \
         QString __quentierAppName = QApplication::applicationName(); \
         int prefixIndex = __quentierLogRelativeFileName.indexOf(__quentierAppName); \
@@ -69,8 +79,9 @@ bool QUENTIER_EXPORT QuentierIsLogLevelActive(const LogLevel::type logLevel);
                 __quentierLogRelativeFileName.remove(0, prefixIndex); \
             } \
         } \
-        __quentierLogStrm << __quentierLogRelativeFileName << QStringLiteral("@") << QString::number(__LINE__) \
-                          << QStringLiteral("[") << QStringLiteral(#level) << QStringLiteral("]") << message; \
+        __quentierLogStrm << __quentierLogRelativeFileName.toUtf8().data() << " @ " \
+                          << QString::number(__LINE__).toUtf8().data() \
+                          << " [" << #level << "]: " << message; \
         quentier::QuentierAddLogEntry(__quentierLogEntry, quentier::LogLevel::level##Level); \
     }
 

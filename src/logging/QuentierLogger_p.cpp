@@ -72,7 +72,6 @@ QuentierFileLogWriter::QuentierFileLogWriter(const MaxSizeBytes & maxSizeBytes,
 
 QuentierFileLogWriter::~QuentierFileLogWriter()
 {
-    m_stream.flush();
     Q_UNUSED(m_logFile.flush())
     m_logFile.close();
 }
@@ -95,6 +94,7 @@ void QuentierFileLogWriter::write(QString message)
     }
 
     m_stream << message << QStringLiteral("\n");
+    m_stream.flush();
 }
 
 void QuentierFileLogWriter::rotate()
