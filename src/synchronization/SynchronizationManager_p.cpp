@@ -119,6 +119,16 @@ bool SynchronizationManagerPrivate::paused() const
     return m_paused;
 }
 
+bool SynchronizationManagerPrivate::downloadNoteThumbnailsOption() const
+{
+    return m_remoteToLocalSyncManager.shouldDownloadThumbnailsForNotes();
+}
+
+QString SynchronizationManagerPrivate::noteThumbnailsStoragePath() const
+{
+    return m_remoteToLocalSyncManager.noteThumbnailsStoragePath();
+}
+
 void SynchronizationManagerPrivate::setAccount(const Account & account)
 {
     QNDEBUG(QStringLiteral("SynchronizationManagerPrivate::setAccount: ") << account);
@@ -238,6 +248,16 @@ void SynchronizationManagerPrivate::revokeAuthentication(const qevercloud::UserI
                               m_host + QStringLiteral("_") + QString::number(m_lastRevokedAuthenticationUserId));
     m_deletingShardId = true;
     m_deleteShardIdJob.start();
+}
+
+void SynchronizationManagerPrivate::setDownloadNoteThumbnails(const bool flag)
+{
+    m_remoteToLocalSyncManager.setDownloadNoteThumbnails(flag);
+}
+
+void SynchronizationManagerPrivate::setNoteThumbnailsStoragePath(const QString & path)
+{
+    m_remoteToLocalSyncManager.setNoteThumbnailsStoragePath(path);
 }
 
 void SynchronizationManagerPrivate::onOAuthResult(bool success, qevercloud::UserID userId, QString authToken,

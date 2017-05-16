@@ -35,19 +35,22 @@ namespace quentier {
 NoteThumbnailDownloader::NoteThumbnailDownloader(const QString & host, const QString & noteGuid,
                                                  const QString & authToken, const QString & shardId,
                                                  const bool noteFromPublicLinkedNotebook,
-                                                 QObject * parent) :
+                                                 const QString & storagePath, QObject * parent) :
     QObject(parent),
     m_host(host),
     m_noteGuid(noteGuid),
     m_authToken(authToken),
     m_shardId(shardId),
+    m_storagePath(storagePath),
     m_noteFromPublicLinkedNotebook(noteFromPublicLinkedNotebook)
 {}
 
 void NoteThumbnailDownloader::run()
 {
     QNDEBUG(QStringLiteral("NoteThumbnailDownloader::run: host = ") << m_host << QStringLiteral(", note guid = ")
-            << m_noteGuid << QStringLiteral(", is public = ") << (m_noteFromPublicLinkedNotebook ? QStringLiteral("true") : QStringLiteral("false")));
+            << m_noteGuid << QStringLiteral(", is public = ")
+            << (m_noteFromPublicLinkedNotebook ? QStringLiteral("true") : QStringLiteral("false"))
+            << QStringLiteral(", storage path = ") << m_storagePath);
 
 #define SET_ERROR(error) \
     ErrorString errorDescription(error); \
@@ -77,12 +80,11 @@ void NoteThumbnailDownloader::run()
         SET_ERROR(QT_TRANSLATE_NOOP("", "received empty note thumbnail data"));
     }
 
-    QString folderPath = applicationPersistentStoragePath() + QStringLiteral("/NoteEditorPage/thumbnails");
-    QFileInfo folderPathInfo(folderPath);
+    QFileInfo folderPathInfo(m_storagePath);
     if (Q_UNLIKELY(!folderPathInfo.exists()))
     {
-        QDir dir(folderPath);
-        bool res = dir.mkpath(folderPath);
+        QDir dir(m_storagePath);
+        bool res = dir.mkpath(m_storagePath);
         if (Q_UNLIKELY(!res)) {
             SET_ERROR(QT_TRANSLATE_NOOP("", "can't create folder to store note thumbnails in"));
         }
@@ -95,7 +97,7 @@ void NoteThumbnailDownloader::run()
         SET_ERROR(QT_TRANSLATE_NOOP("", "folder to store note thumbnails in is not writable"));
     }
 
-    QString filePath = folderPath + QStringLiteral("/") + m_noteGuid;
+    QString filePath = m_storagePath + QStringLiteral("/") + m_noteGuid + QStringLiteral(".png");
     QFile file(filePath);
     if (Q_UNLIKELY(!file.open(QIODevice::WriteOnly))) {
         SET_ERROR(QT_TRANSLATE_NOOP("", "can't open file to write the note thumbnail into"));

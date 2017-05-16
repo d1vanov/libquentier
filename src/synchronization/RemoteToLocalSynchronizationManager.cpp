@@ -25,10 +25,13 @@
 #include <quentier/types/Resource.h>
 #include <quentier/utility/QuentierCheckPtr.h>
 #include <quentier/utility/ApplicationSettings.h>
+#include <quentier/utility/DesktopServices.h>
 #include <quentier/utility/SysInfo.h>
 #include <quentier/logging/QuentierLogger.h>
 #include <QTimerEvent>
 #include <QThreadPool>
+#include <QFileInfo>
+#include <QDir>
 #include <algorithm>
 
 #define ACCOUNT_LIMITS_KEY_GROUP QStringLiteral("account_limits/")
@@ -45,6 +48,10 @@
 #define ACCOUNT_LIMITS_NOTE_TAG_COUNT_MAX_KEY QStringLiteral("note_tag_count_max")
 #define ACCOUNT_LIMITS_USER_SAVED_SEARCH_COUNT_MAX_KEY QStringLiteral("user_saved_search_count_max")
 #define ACCOUNT_LIMITS_NOTE_RESOURCE_COUNT_MAX_KEY QStringLiteral("note_resource_count_max")
+
+#define SYNC_SETTINGS_KEY_GROUP QStringLiteral("SynchronizationSettings")
+#define SHOULD_DOWNLOAD_NOTE_THUMBNAILS QStringLiteral("DownloadNoteThumbnails")
+#define NOTE_THUMBNAILS_STORAGE_PATH_KEY QStringLiteral("NoteThumbnailsStoragePath")
 
 #define THIRTY_DAYS_IN_MSEC (2592000000)
 
@@ -297,6 +304,28 @@ bool RemoteToLocalSynchronizationManager::syncUser(const qevercloud::UserID user
 const User & RemoteToLocalSynchronizationManager::user() const
 {
     return m_user;
+}
+
+bool RemoteToLocalSynchronizationManager::shouldDownloadThumbnailsForNotes() const
+{
+    ApplicationSettings appSettings(account(), SYNCHRONIZATION_PERSISTENCE_NAME);
+    appSettings.beginGroup(SYNC_SETTINGS_KEY_GROUP);
+    bool res = (appSettings.contains(SHOULD_DOWNLOAD_NOTE_THUMBNAILS)
+                ? appSettings.value(SHOULD_DOWNLOAD_NOTE_THUMBNAILS).toBool()
+                : false);
+    appSettings.endGroup();
+    return res;
+}
+
+QString RemoteToLocalSynchronizationManager::noteThumbnailsStoragePath() const
+{
+    ApplicationSettings appSettings(account(), SYNCHRONIZATION_PERSISTENCE_NAME);
+    appSettings.beginGroup(SYNC_SETTINGS_KEY_GROUP);
+    QString path = (appSettings.contains(NOTE_THUMBNAILS_STORAGE_PATH_KEY)
+                    ? appSettings.value(NOTE_THUMBNAILS_STORAGE_PATH_KEY).toString()
+                    : applicationPersistentStoragePath() + QStringLiteral("/thumbnails"));
+    appSettings.endGroup();
+    return path;
 }
 
 void RemoteToLocalSynchronizationManager::start(qint32 afterUsn)
@@ -942,42 +971,45 @@ void RemoteToLocalSynchronizationManager::onFindNoteCompleted(Note note, bool wi
         const Resource & resource = resourceWithFindRequestId.first;
         const QUuid & findResourceRequestId = resourceWithFindRequestId.second;
 
-        auto noteThumbnailDownloadIt = m_noteGuidsPendingThumbnailDownload.find(note.guid());
-        if (noteThumbnailDownloadIt == m_noteGuidsPendingThumbnailDownload.end())
+        if (shouldDownloadThumbnailsForNotes())
         {
-            QNDEBUG(QStringLiteral("Need to downloading the thumbnail for the note with added or updated resource"));
-            if (pNotebook)
+            auto noteThumbnailDownloadIt = m_noteGuidsPendingThumbnailDownload.find(note.guid());
+            if (noteThumbnailDownloadIt == m_noteGuidsPendingThumbnailDownload.end())
             {
-                setupNoteThumbnailDownloading(note.guid(), *pNotebook);
-            }
-            else if (note.hasNotebookLocalUid() || note.hasNotebookGuid())
-            {
-                Notebook dummyNotebook;
-                if (note.hasNotebookLocalUid()) {
-                    dummyNotebook.setLocalUid(note.notebookLocalUid());
+                QNDEBUG(QStringLiteral("Need to downloading the thumbnail for the note with added or updated resource"));
+                if (pNotebook)
+                {
+                    setupNoteThumbnailDownloading(note.guid(), *pNotebook);
                 }
-                else {
-                    dummyNotebook.setLocalUid(QString());
-                    dummyNotebook.setGuid(note.notebookGuid());
+                else if (note.hasNotebookLocalUid() || note.hasNotebookGuid())
+                {
+                    Notebook dummyNotebook;
+                    if (note.hasNotebookLocalUid()) {
+                        dummyNotebook.setLocalUid(note.notebookLocalUid());
+                    }
+                    else {
+                        dummyNotebook.setLocalUid(QString());
+                        dummyNotebook.setGuid(note.notebookGuid());
+                    }
+
+                    QUuid findNotebookForNoteThumbnailDownloadRequestId = QUuid::createUuid();
+                    m_noteGuidForThumbnailDownloadByFindNotebookRequestId[findNotebookForNoteThumbnailDownloadRequestId] = note.guid();
+
+                    // NOTE: technically, here we don't start downloading the thumbnail yet; but it is necessary
+                    // to insert the guid into the set right here in order to prevent multiple thumbnail downloads
+                    // for the same note during the sync process
+                    Q_UNUSED(m_noteGuidsPendingThumbnailDownload.insert(note.guid()))
+
+                        QNTRACE(QStringLiteral("Emitting the request to find a notebook for the note thumbnail download setup: ")
+                                << findNotebookForNoteThumbnailDownloadRequestId << QStringLiteral(", note guid = ") << note.guid()
+                                << ", notebook: " << dummyNotebook);
+                    emit findNotebook(dummyNotebook, findNotebookForNoteThumbnailDownloadRequestId);
                 }
-
-                QUuid findNotebookForNoteThumbnailDownloadRequestId = QUuid::createUuid();
-                m_noteGuidForThumbnailDownloadByFindNotebookRequestId[findNotebookForNoteThumbnailDownloadRequestId] = note.guid();
-
-                // NOTE: technically, here we don't start downloading the thumbnail yet; but it is necessary
-                // to insert the guid into the set right here in order to prevent multiple thumbnail downloads
-                // for the same note during the sync process
-                Q_UNUSED(m_noteGuidsPendingThumbnailDownload.insert(note.guid()))
-
-                QNTRACE(QStringLiteral("Emitting the request to find a notebook for the note thumbnail download setup: ")
-                        << findNotebookForNoteThumbnailDownloadRequestId << QStringLiteral(", note guid = ") << note.guid()
-                        << ", notebook: " << dummyNotebook);
-                emit findNotebook(dummyNotebook, findNotebookForNoteThumbnailDownloadRequestId);
-            }
-            else
-            {
-                QNWARNING(QStringLiteral("Can't download the note thumbnail: the note has neither notebook local uid "
-                                         "nor notebook guid: ") << note);
+                else
+                {
+                    QNWARNING(QStringLiteral("Can't download the note thumbnail: the note has neither notebook local uid "
+                                             "nor notebook guid: ") << note);
+                }
             }
         }
 
@@ -2410,6 +2442,7 @@ void RemoteToLocalSynchronizationManager::onNoteThumbnailDownloadingFinished(boo
                   << noteGuid);
     }
 
+    incrementNoteDownloadProgress();
     checkServerDataMergeCompletion();
 
     if (status) {
@@ -2485,6 +2518,50 @@ void RemoteToLocalSynchronizationManager::onLastSyncParametersReceived(qint32 la
     }
 
     start(m_lastUsnOnStart);
+}
+
+void RemoteToLocalSynchronizationManager::setDownloadNoteThumbnails(const bool flag)
+{
+    QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::setDownloadNoteThumbnails: flag = ")
+            << (flag ? QStringLiteral("true") : QStringLiteral("false")));
+
+    ApplicationSettings appSettings(account(), SYNCHRONIZATION_PERSISTENCE_NAME);
+    appSettings.beginGroup(SYNC_SETTINGS_KEY_GROUP);
+    appSettings.setValue(SHOULD_DOWNLOAD_NOTE_THUMBNAILS, flag);
+    appSettings.endGroup();
+}
+
+void RemoteToLocalSynchronizationManager::setNoteThumbnailsStoragePath(const QString & path)
+{
+    QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::setNoteThumbnailsStoragePath: ") << path);
+
+    QFileInfo pathInfo(path);
+    if (pathInfo.exists() && !pathInfo.isDir())
+    {
+        QNWARNING(QStringLiteral("Detected attempt to set note thumbnails storage path to something other than a folder: ")
+                  << path);
+        return;
+    }
+    else if (pathInfo.exists() && pathInfo.isDir() && !pathInfo.isWritable())
+    {
+        QNWARNING(QStringLiteral("Detected attempt to set note thumbnails storage path to a non-writable folder: ")
+                  << path);
+        return;
+    }
+    else if (!pathInfo.exists())
+    {
+        QDir dir(path);
+        bool res = dir.mkpath(path);
+        if (!res) {
+            QNWARNING(QStringLiteral("Cannot create a folder for the specified path"));
+            return;
+        }
+    }
+
+    ApplicationSettings appSettings(account(), SYNCHRONIZATION_PERSISTENCE_NAME);
+    appSettings.beginGroup(SYNC_SETTINGS_KEY_GROUP);
+    appSettings.setValue(NOTE_THUMBNAILS_STORAGE_PATH_KEY, path);
+    appSettings.endGroup();
 }
 
 void RemoteToLocalSynchronizationManager::onGetNoteAsyncFinished(qint32 errorCode, Note note, qint32 rateLimitSeconds,
@@ -2564,16 +2641,25 @@ void RemoteToLocalSynchronizationManager::onGetNoteAsyncFinished(qint32 errorCod
         return;
     }
 
-    ++m_numNotesDownloaded;
-    QNTRACE(QStringLiteral("Incremented the number of downloaded notes to ")
-            << m_numNotesDownloaded << QStringLiteral(", the total number of notes to download = ")
-            << m_originalNumberOfNotes);
+    const Notebook * pNotebook = Q_NULLPTR;
+    if (shouldDownloadThumbnailsForNotes() && note.hasResources())
+    {
+        QNDEBUG(QStringLiteral("The added or updated note contains resources, need to download the thumbnails for it"));
 
-    if (syncingLinkedNotebooksContent()) {
-        emit linkedNotebooksNotesDownloadProgress(m_numNotesDownloaded, m_originalNumberOfNotes);
+        pNotebook = getNotebookPerNote(note);
+        if (Q_UNLIKELY(!pNotebook)) {
+            ErrorString errorDescription(QT_TRANSLATE_NOOP("", "Detected attempt to download thumbnails for note "
+                                                           "during the synchronization before the note's notebook was found"));
+            QNWARNING(errorDescription << QStringLiteral(": ") << note);
+            emit failure(errorDescription);
+            return;
+        }
+
+        setupNoteThumbnailDownloading(noteGuid, *pNotebook);
     }
-    else {
-        emit notesDownloadProgress(m_numNotesDownloaded, m_originalNumberOfNotes);
+    else
+    {
+        incrementNoteDownloadProgress();
     }
 
     if (needToAddNote) {
@@ -2581,13 +2667,17 @@ void RemoteToLocalSynchronizationManager::onGetNoteAsyncFinished(qint32 errorCod
         return;
     }
 
-    const Notebook * pNotebook = getNotebookPerNote(note);
-    if (!pNotebook) {
-        ErrorString errorDescription(QT_TRANSLATE_NOOP("", "Detected attempt to update note in the local storage "
-                                                       "during the synchronization before the note's notebook was found"));
-        QNWARNING(errorDescription << QStringLiteral(": ") << note);
-        emit failure(errorDescription);
-        return;
+    if (!pNotebook)
+    {
+        pNotebook = getNotebookPerNote(note);
+
+        if (Q_UNLIKELY(!pNotebook)) {
+            ErrorString errorDescription(QT_TRANSLATE_NOOP("", "Detected attempt to update note in the local storage "
+                                                           "during the synchronization before the note's notebook was found"));
+            QNWARNING(errorDescription << QStringLiteral(": ") << note);
+            emit failure(errorDescription);
+            return;
+        }
     }
 
     note.setNotebookLocalUid(pNotebook->localUid());
@@ -3617,6 +3707,23 @@ bool RemoteToLocalSynchronizationManager::syncingLinkedNotebooksContent() const
     }
 
     return m_expungedFromServerToClient;
+}
+
+void RemoteToLocalSynchronizationManager::incrementNoteDownloadProgress()
+{
+    QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::incrementNoteDownloadProgress"));
+
+    ++m_numNotesDownloaded;
+    QNTRACE(QStringLiteral("Incremented the number of downloaded notes to ")
+            << m_numNotesDownloaded << QStringLiteral(", the total number of notes to download = ")
+            << m_originalNumberOfNotes);
+
+    if (syncingLinkedNotebooksContent()) {
+        emit linkedNotebooksNotesDownloadProgress(m_numNotesDownloaded, m_originalNumberOfNotes);
+    }
+    else {
+        emit notesDownloadProgress(m_numNotesDownloaded, m_originalNumberOfNotes);
+    }
 }
 
 QTextStream & operator<<(QTextStream & strm, const RemoteToLocalSynchronizationManager::ContentSource::type & obj)
@@ -5083,8 +5190,8 @@ void RemoteToLocalSynchronizationManager::setupInkNoteImageDownloading(const QSt
 
 void RemoteToLocalSynchronizationManager::setupNoteThumbnailDownloading(const QString & noteGuid, const Notebook & notebook)
 {
-    QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::setupNoteThumbnailDownloading: note guid = ") << noteGuid
-            << QStringLiteral(", notebook: ") << notebook);
+    QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::setupNoteThumbnailDownloading: note guid = ")
+            << noteGuid << QStringLiteral(", notebook: ") << notebook);
 
     QString authToken, shardId;
     bool isPublicNotebook = false;
@@ -5092,9 +5199,10 @@ void RemoteToLocalSynchronizationManager::setupNoteThumbnailDownloading(const QS
 
     Q_UNUSED(m_noteGuidsPendingThumbnailDownload.insert(noteGuid))
 
+    QString storagePath = noteThumbnailsStoragePath();
     NoteThumbnailDownloader * pDownloader = new NoteThumbnailDownloader(m_host, noteGuid, authToken, shardId,
                                                                         /* from public linked notebook = */
-                                                                        isPublicNotebook, this);
+                                                                        isPublicNotebook, storagePath, this);
     QObject::connect(pDownloader, QNSIGNAL(NoteThumbnailDownloader,finished,bool,QString,ErrorString),
                      this, QNSLOT(RemoteToLocalSynchronizationManager,onNoteThumbnailDownloadingFinished,bool,QString,ErrorString));
     QThreadPool::globalInstance()->start(pDownloader);

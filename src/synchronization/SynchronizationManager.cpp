@@ -84,6 +84,18 @@ bool SynchronizationManager::paused() const
     return d->paused();
 }
 
+bool SynchronizationManager::downloadNoteThumbnailsOption() const
+{
+    Q_D(const SynchronizationManager);
+    return d->downloadNoteThumbnailsOption();
+}
+
+QString SynchronizationManager::noteThumbnailsStoragePath() const
+{
+    Q_D(const SynchronizationManager);
+    return d->noteThumbnailsStoragePath();
+}
+
 void SynchronizationManager::setAccount(Account account)
 {
     Q_D(SynchronizationManager);
@@ -124,6 +136,18 @@ void SynchronizationManager::revokeAuthentication(const qevercloud::UserID userI
 {
     Q_D(SynchronizationManager);
     d->revokeAuthentication(userId);
+}
+
+void SynchronizationManager::setDownloadNoteThumbnails(const bool flag)
+{
+    Q_D(SynchronizationManager);
+    d->setDownloadNoteThumbnails(flag);
+}
+
+void SynchronizationManager::setNoteThumbnailsStoragePath(QString path)
+{
+    Q_D(SynchronizationManager);
+    d->setNoteThumbnailsStoragePath(path);
 }
 
 } // namespace quentier

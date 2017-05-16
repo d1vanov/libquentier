@@ -64,6 +64,18 @@ public:
      */
     bool paused() const;
 
+    /**
+     * @return true or false depending on the option to download the thumbnails for notes containing resources
+     * during sync; by default no thumbnails are downloaded
+     */
+    bool downloadNoteThumbnailsOption() const;
+
+    /**
+     * @return the absolute path of the folder that would be used to store the downloaded note thumbnails (if any);
+     * by default it is "thumbnails" folder within the app's persistence storage path
+     */
+    QString noteThumbnailsStoragePath() const;
+
 public Q_SLOTS:
     /**
      * Use this slot to set the current account for the synchronization manager. If the slot is called during the synchronization running,
@@ -113,6 +125,28 @@ public Q_SLOTS:
      * authentication token
      */
     void revokeAuthentication(const qevercloud::UserID userId);
+
+    /**
+     * Use this slot to switch the option whether the synchronization of notes would download the note thumbnails or not
+     *
+     * NOTE: even if thumbnails downloading is enabled, the thumbnails would be downloaded during sync only for notes
+     * containing resources
+     */
+    void setDownloadNoteThumbnails(const bool flag);
+
+    /**
+     * Use this slot to change the absolute path of the folder used to store the downloaded note thumbnails;
+     * each downloaded thumbnail would be stored as a PNG file with the name corresponding to the note guid
+     *
+     * NOTE: if the folder pointed to by that path doesn't exist, it would be created
+     * NOTE: if the path is valid (folder exists or can be created / is writable), it is persisted within
+     * the application settings
+     * WARNING: if the folder doesn't exist and cannot be created or if it's not writable or if the path doesn't point
+     * to a directory, the attempt to change the storage path would be ignored
+     * WARNING: the attempt to change this setting during sync running can lead to some thumbnails being put
+     * into one location
+     */
+    void setNoteThumbnailsStoragePath(QString path);
 
 Q_SIGNALS:
     /**

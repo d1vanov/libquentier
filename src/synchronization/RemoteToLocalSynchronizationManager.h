@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Dmitry Ivanov
+ * Copyright 2017 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -61,6 +61,9 @@ public:
                   const QString & authToken = QString(), const bool writeUserDataToLocalStorage = true);
     const User & user() const;
 
+    bool shouldDownloadThumbnailsForNotes() const;
+    QString noteThumbnailsStoragePath() const;
+
 Q_SIGNALS:
     void failure(ErrorString errorDescription);
     void finished(qint32 lastUpdateCount, qevercloud::Timestamp lastSyncTime, QHash<QString,qint32> lastUpdateCountByLinkedNotebookGuid,
@@ -99,6 +102,9 @@ public Q_SLOTS:
     void onLastSyncParametersReceived(qint32 lastUpdateCount, qevercloud::Timestamp lastSyncTime,
                                       QHash<QString,qint32> lastUpdateCountByLinkedNotebookGuid,
                                       QHash<QString,qevercloud::Timestamp> lastSyncTimeByLinkedNotebookGuid);
+
+    void setDownloadNoteThumbnails(const bool flag);
+    void setNoteThumbnailsStoragePath(const QString & path);
 
 // private signals
 Q_SIGNALS:
@@ -240,6 +246,8 @@ private:
     void launchNotebookSync();
 
     bool syncingLinkedNotebooksContent() const;
+
+    void incrementNoteDownloadProgress();
 
     struct ContentSource
     {

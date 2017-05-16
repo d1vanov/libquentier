@@ -45,6 +45,8 @@ public:
 
     bool active() const;
     bool paused() const;
+    bool downloadNoteThumbnailsOption() const;
+    QString noteThumbnailsStoragePath() const;
 
 Q_SIGNALS:
     void notifyStart();
@@ -90,6 +92,9 @@ public Q_SLOTS:
     void stop();
 
     void revokeAuthentication(const qevercloud::UserID userId);
+
+    void setDownloadNoteThumbnails(const bool flag);
+    void setNoteThumbnailsStoragePath(const QString & path);
 
 Q_SIGNALS:
 // private signals

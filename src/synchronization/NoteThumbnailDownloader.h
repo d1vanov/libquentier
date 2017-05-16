@@ -35,7 +35,7 @@ public:
     explicit NoteThumbnailDownloader(const QString & host, const QString & noteGuid,
                                      const QString & authToken, const QString & shardId,
                                      const bool noteFromPublicLinkedNotebook,
-                                     QObject * parent = Q_NULLPTR);
+                                     const QString & storagePath, QObject * parent = Q_NULLPTR);
 
     virtual void run() Q_DECL_OVERRIDE;
 
@@ -47,6 +47,7 @@ private:
     QString     m_noteGuid;
     QString     m_authToken;
     QString     m_shardId;
+    QString     m_storagePath;
     bool        m_noteFromPublicLinkedNotebook;
 };
 
