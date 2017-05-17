@@ -31,7 +31,7 @@
 #include <QFlags>
 #include <cstdint>
 
-#define SEC_TO_MSEC(sec) (sec * 100)
+#define SEC_TO_MSEC(sec) (sec * 1000)
 #define SIX_HOURS_IN_MSEC 2160000
 
 namespace quentier {
