@@ -5294,17 +5294,25 @@ bool NoteEditorPrivate::print(QPrinter & printer, ErrorString & errorDescription
         return false;
     }
 
-    int bodyTagIndex = preprocessedHtml.indexOf(QStringLiteral("<body>"));
-    if (Q_UNLIKELY(bodyTagIndex < 0)) {
+    int bodyOpeningTagStartIndex = preprocessedHtml.indexOf(QStringLiteral("<body"));
+    if (Q_UNLIKELY(bodyOpeningTagStartIndex < 0)) {
         errorDescription.setBase(QT_TRANSLATE_NOOP("", "Can't print note: can't find the body tag within the preprocessed HTML "
                                                    "prepared for conversion to QTextDocument"));
         QNWARNING(errorDescription << QStringLiteral("; preprocessed HTML: ") << preprocessedHtml);
         return false;
     }
 
-    preprocessedHtml.replace(0, bodyTagIndex, m_pagePrefix);
+    int bodyOpeningTagEndIndex = preprocessedHtml.indexOf(QStringLiteral(">"), bodyOpeningTagStartIndex);
+    if (Q_UNLIKELY(bodyOpeningTagEndIndex < 0)) {
+        errorDescription.setBase(QT_TRANSLATE_NOOP("", "Can't print note: can't find the end of the body tag within the preprocessed HTML "
+                                                   "prepared for conversion to QTextDocument"));
+        QNWARNING(errorDescription << QStringLiteral("; preprocessed HTML: ") << preprocessedHtml);
+        return false;
+    }
 
-    int bodyClosingTagIndex = preprocessedHtml.indexOf(QStringLiteral("</body>"));
+    preprocessedHtml.replace(0, bodyOpeningTagEndIndex, m_pagePrefix);
+
+    int bodyClosingTagIndex = preprocessedHtml.indexOf(QStringLiteral("</body>"), bodyOpeningTagEndIndex);
     if (Q_UNLIKELY(bodyClosingTagIndex < 0)) {
         errorDescription.setBase(QT_TRANSLATE_NOOP("", "Can't print note: can't find the enclosing body tag within "
                                                    "the preprocessed HTML prepared to conversion to QTextDocument"));
