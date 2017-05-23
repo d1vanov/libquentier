@@ -84,6 +84,8 @@ public Q_SLOTS:
      * the synchronization for it, use @link synchronize @endling slot for this.
      *
      * The attempt to set the current account of "Local" type would just clean up the synchronization manager as if it was just created
+     *
+     * After the method finishes its job, setAccountDone signal is emitted
      */
     void setAccount(Account account);
 
@@ -131,8 +133,10 @@ public Q_SLOTS:
      *
      * NOTE: even if thumbnails downloading is enabled, the thumbnails would be downloaded during sync only for notes
      * containing resources
+     *
+     * After the method finishes its job, setDownloadNoteThumbnailsDone signal is emitted
      */
-    void setDownloadNoteThumbnails(const bool flag);
+    void setDownloadNoteThumbnails(bool flag);
 
     /**
      * Use this slot to change the absolute path of the folder used to store the downloaded note thumbnails;
@@ -145,6 +149,8 @@ public Q_SLOTS:
      * to a directory, the attempt to change the storage path would be ignored
      * WARNING: the attempt to change this setting during sync running can lead to some thumbnails being put
      * into one location
+     *
+     * After the method finishes its job, setNoteThumbnailsStoragePathDone signal is emitted
      */
     void setNoteThumbnailsStoragePath(QString path);
 
@@ -280,6 +286,23 @@ Q_SIGNALS:
      * data elements from linked notebooks were prepared for sending to the Evernote service
      */
     void preparedLinkedNotebooksDirtyObjectsForSending();
+
+    /**
+     * This signal is emitted in response to invoking the setAccount slot after all the activities involved
+     * in switching the account inside SynchronizationManager are finished
+     */
+    void setAccountDone(Account account);
+
+    /**
+     * This signal is emitted in response to invoking the setDownloadNoteThumbnails slot after the setting is accepted
+     */
+    void setDownloadNoteThumbnailsDone(const bool flag);
+
+    /**
+     * This signal is emitted in response to invoking the setNoteThumbnailsStoragePath slot after the setting is
+     * accepted
+     */
+    void setNoteThumbnailsStoragePathDone(QString path);
 
 private:
     SynchronizationManager() Q_DECL_EQ_DELETE;

@@ -458,6 +458,8 @@ private:
 
     void setupInkNoteImageDownloading(const QString & resourceGuid, const int resourceHeight, const int resourceWidth,
                                       const Notebook & notebook);
+
+    void findNotebookForNoteThumbnailDownloading(const Note & note);
     void setupNoteThumbnailDownloading(const QString & noteGuid, const Notebook & notebook);
 
     QString clientNameForProtocolVersionCheck() const;

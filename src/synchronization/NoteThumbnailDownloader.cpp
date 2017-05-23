@@ -54,6 +54,7 @@ void NoteThumbnailDownloader::run()
 
 #define SET_ERROR(error) \
     ErrorString errorDescription(error); \
+    QNDEBUG(errorDescription); \
     emit finished(false, m_noteGuid, QString(), errorDescription); \
     return
 

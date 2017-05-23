@@ -977,38 +977,12 @@ void RemoteToLocalSynchronizationManager::onFindNoteCompleted(Note note, bool wi
             if (noteThumbnailDownloadIt == m_noteGuidsPendingThumbnailDownload.end())
             {
                 QNDEBUG(QStringLiteral("Need to downloading the thumbnail for the note with added or updated resource"));
-                if (pNotebook)
-                {
+
+                if (pNotebook) {
                     setupNoteThumbnailDownloading(note.guid(), *pNotebook);
                 }
-                else if (note.hasNotebookLocalUid() || note.hasNotebookGuid())
-                {
-                    Notebook dummyNotebook;
-                    if (note.hasNotebookLocalUid()) {
-                        dummyNotebook.setLocalUid(note.notebookLocalUid());
-                    }
-                    else {
-                        dummyNotebook.setLocalUid(QString());
-                        dummyNotebook.setGuid(note.notebookGuid());
-                    }
-
-                    QUuid findNotebookForNoteThumbnailDownloadRequestId = QUuid::createUuid();
-                    m_noteGuidForThumbnailDownloadByFindNotebookRequestId[findNotebookForNoteThumbnailDownloadRequestId] = note.guid();
-
-                    // NOTE: technically, here we don't start downloading the thumbnail yet; but it is necessary
-                    // to insert the guid into the set right here in order to prevent multiple thumbnail downloads
-                    // for the same note during the sync process
-                    Q_UNUSED(m_noteGuidsPendingThumbnailDownload.insert(note.guid()))
-
-                        QNTRACE(QStringLiteral("Emitting the request to find a notebook for the note thumbnail download setup: ")
-                                << findNotebookForNoteThumbnailDownloadRequestId << QStringLiteral(", note guid = ") << note.guid()
-                                << ", notebook: " << dummyNotebook);
-                    emit findNotebook(dummyNotebook, findNotebookForNoteThumbnailDownloadRequestId);
-                }
-                else
-                {
-                    QNWARNING(QStringLiteral("Can't download the note thumbnail: the note has neither notebook local uid "
-                                             "nor notebook guid: ") << note);
+                else {
+                    findNotebookForNoteThumbnailDownloading(note);
                 }
             }
         }
@@ -2642,20 +2616,18 @@ void RemoteToLocalSynchronizationManager::onGetNoteAsyncFinished(qint32 errorCod
     }
 
     const Notebook * pNotebook = Q_NULLPTR;
+
     if (shouldDownloadThumbnailsForNotes() && note.hasResources())
     {
         QNDEBUG(QStringLiteral("The added or updated note contains resources, need to download the thumbnails for it"));
 
         pNotebook = getNotebookPerNote(note);
-        if (Q_UNLIKELY(!pNotebook)) {
-            ErrorString errorDescription(QT_TRANSLATE_NOOP("", "Detected attempt to download thumbnails for note "
-                                                           "during the synchronization before the note's notebook was found"));
-            QNWARNING(errorDescription << QStringLiteral(": ") << note);
-            emit failure(errorDescription);
-            return;
+        if (pNotebook) {
+            setupNoteThumbnailDownloading(noteGuid, *pNotebook);
         }
-
-        setupNoteThumbnailDownloading(noteGuid, *pNotebook);
+        else {
+            findNotebookForNoteThumbnailDownloading(note);
+        }
     }
     else
     {
@@ -5186,6 +5158,40 @@ void RemoteToLocalSynchronizationManager::setupInkNoteImageDownloading(const QSt
     QObject::connect(pDownloader, QNSIGNAL(InkNoteImageDownloader,finished,bool,QString,ErrorString),
                      this, QNSLOT(RemoteToLocalSynchronizationManager,onInkNoteImageDownloadFinished,bool,QString,ErrorString));
     QThreadPool::globalInstance()->start(pDownloader);
+}
+
+void RemoteToLocalSynchronizationManager::findNotebookForNoteThumbnailDownloading(const Note & note)
+{
+    QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::findNotebookForNoteThumbnailDownloading: note local uid = ")
+            << note.localUid() << QStringLiteral(", note guid = ") << (note.hasGuid() ? note.guid() : QStringLiteral("<empty>")));
+
+    if (Q_UNLIKELY(!note.hasNotebookLocalUid() && !note.hasNotebookGuid())) {
+        QNWARNING(QStringLiteral("Can't find notebook for note thumbnail downloading: the note has neither notebook local uid "
+                                 "nor notebook guid: ") << note);
+        return;
+    }
+
+    Notebook dummyNotebook;
+    if (note.hasNotebookLocalUid()) {
+        dummyNotebook.setLocalUid(note.notebookLocalUid());
+    }
+    else {
+        dummyNotebook.setLocalUid(QString());
+        dummyNotebook.setGuid(note.notebookGuid());
+    }
+
+    QUuid findNotebookForNoteThumbnailDownloadRequestId = QUuid::createUuid();
+    m_noteGuidForThumbnailDownloadByFindNotebookRequestId[findNotebookForNoteThumbnailDownloadRequestId] = note.guid();
+
+    // NOTE: technically, here we don't start downloading the thumbnail yet; but it is necessary
+    // to insert the guid into the set right here in order to prevent multiple thumbnail downloads
+    // for the same note during the sync process
+    Q_UNUSED(m_noteGuidsPendingThumbnailDownload.insert(note.guid()))
+
+    QNTRACE(QStringLiteral("Emitting the request to find a notebook for the note thumbnail download setup: ")
+            << findNotebookForNoteThumbnailDownloadRequestId << QStringLiteral(", note guid = ") << note.guid()
+            << ", notebook: " << dummyNotebook);
+    emit findNotebook(dummyNotebook, findNotebookForNoteThumbnailDownloadRequestId);
 }
 
 void RemoteToLocalSynchronizationManager::setupNoteThumbnailDownloading(const QString & noteGuid, const Notebook & notebook)

@@ -100,6 +100,8 @@ void SynchronizationManager::setAccount(Account account)
 {
     Q_D(SynchronizationManager);
     d->setAccount(account);
+
+    emit setAccountDone(account);
 }
 
 void SynchronizationManager::authenticate()
@@ -138,16 +140,20 @@ void SynchronizationManager::revokeAuthentication(const qevercloud::UserID userI
     d->revokeAuthentication(userId);
 }
 
-void SynchronizationManager::setDownloadNoteThumbnails(const bool flag)
+void SynchronizationManager::setDownloadNoteThumbnails(bool flag)
 {
     Q_D(SynchronizationManager);
     d->setDownloadNoteThumbnails(flag);
+
+    emit setDownloadNoteThumbnailsDone(flag);
 }
 
 void SynchronizationManager::setNoteThumbnailsStoragePath(QString path)
 {
     Q_D(SynchronizationManager);
     d->setNoteThumbnailsStoragePath(path);
+
+    emit setNoteThumbnailsStoragePathDone(path);
 }
 
 } // namespace quentier
