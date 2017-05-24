@@ -1012,6 +1012,9 @@ QTextStream & Note::print(QTextStream & strm) const
     }
     INSERT_DELIMITER
 
+    strm << QStringLiteral("thumbnail is ") << (d->m_thumbnail.isNull() ? QStringLiteral("null") : QStringLiteral("non-null"));
+    INSERT_DELIMITER
+
     if (d->m_qecNote.resources.isSet())
     {
         strm << QStringLiteral("resources: { \n");

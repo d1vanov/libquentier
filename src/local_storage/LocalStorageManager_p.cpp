@@ -30,6 +30,7 @@
 #include <quentier/utility/SysInfo.h>
 #include <quentier/utility/UidGenerator.h>
 #include <quentier/types/ResourceRecognitionIndices.h>
+#include <QBuffer>
 #include <algorithm>
 
 namespace quentier {
@@ -5967,8 +5968,27 @@ bool LocalStorageManagerPrivate::insertOrReplaceNote(const Note & note, const bo
 
         QImage thumbnail = note.thumbnail();
         bool thumbnailIsNull = thumbnail.isNull();
+        QByteArray thumbnailData;
 
-        query.bindValue(QStringLiteral(":thumbnail"), (thumbnailIsNull ? nullValue : thumbnail));
+        if (!thumbnailIsNull)
+        {
+            QBuffer buf(&thumbnailData);
+            if (buf.open(QIODevice::WriteOnly))
+            {
+                bool res = thumbnail.save(&buf, "PNG");
+                if (!res) {
+                    QNDEBUG(QStringLiteral("Failed to save the thumbnail as PNG image"));
+                    thumbnailIsNull = true;
+                }
+            }
+            else
+            {
+                QNWARNING(QStringLiteral("Failed to open QBuffer for writing"));
+                thumbnailIsNull = true;
+            }
+        }
+
+        query.bindValue(QStringLiteral(":thumbnail"), (thumbnailIsNull ? nullValue : thumbnailData));
         query.bindValue(QStringLiteral(":notebookLocalUid"), (notebookLocalUid.isEmpty() ? nullValue : notebookLocalUid));
         query.bindValue(QStringLiteral(":notebookGuid"), (note.hasNotebookGuid() ? note.notebookGuid() : nullValue));
 
@@ -8051,10 +8071,20 @@ bool LocalStorageManagerPrivate::fillNoteFromSqlRecord(const QSqlRecord & rec, N
 #undef CHECK_AND_SET_NOTE_PROPERTY
 
     int indexOfThumbnail = rec.indexOf(QStringLiteral("thumbnail"));
-    if (indexOfThumbnail >= 0) {
+    if (indexOfThumbnail >= 0)
+    {
+        QNTRACE(QStringLiteral("Found thumbnail data for note within the SQL record"));
+
         QVariant thumbnailValue = rec.value(indexOfThumbnail);
-        if (!thumbnailValue.isNull()) {
-            QImage thumbnail = thumbnailValue.value<QImage>();
+        if (!thumbnailValue.isNull())
+        {
+            QByteArray thumbnailData = thumbnailValue.toByteArray();
+
+            QImage thumbnail;
+            bool res = thumbnail.loadFromData(thumbnailData, "PNG");
+            QNTRACE(QStringLiteral("Loading thumbnail image from PNG binary data: ")
+                    << (res ? QStringLiteral("successful") : QStringLiteral("failed")));
+
             note.setThumbnail(thumbnail);
         }
     }

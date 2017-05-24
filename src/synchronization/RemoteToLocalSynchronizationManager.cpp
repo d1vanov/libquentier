@@ -51,7 +51,6 @@
 
 #define SYNC_SETTINGS_KEY_GROUP QStringLiteral("SynchronizationSettings")
 #define SHOULD_DOWNLOAD_NOTE_THUMBNAILS QStringLiteral("DownloadNoteThumbnails")
-#define NOTE_THUMBNAILS_STORAGE_PATH_KEY QStringLiteral("NoteThumbnailsStoragePath")
 
 #define THIRTY_DAYS_IN_MSEC (2592000000)
 
@@ -168,8 +167,8 @@ RemoteToLocalSynchronizationManager::RemoteToLocalSynchronizationManager(LocalSt
     m_resourcesWithFindRequestIdsPerFindNoteRequestId(),
     m_inkNoteResourceDataPerFindNotebookRequestId(),
     m_numPendingInkNoteImageDownloads(0),
-    m_noteGuidForThumbnailDownloadByFindNotebookRequestId(),
-    m_noteGuidsPendingThumbnailDownload(),
+    m_notesPendingThumbnailDownloadByFindNotebookRequestId(),
+    m_notesPendingThumbnailDownloadByGuid(),
     m_resourceFoundFlagPerFindResourceRequestId(),
     m_resourceConflictedAndRemoteNotesPerNotebookGuid(),
     m_findNotebookForNotesWithConflictedResourcesRequestIds(),
@@ -315,17 +314,6 @@ bool RemoteToLocalSynchronizationManager::shouldDownloadThumbnailsForNotes() con
                 : false);
     appSettings.endGroup();
     return res;
-}
-
-QString RemoteToLocalSynchronizationManager::noteThumbnailsStoragePath() const
-{
-    ApplicationSettings appSettings(account(), SYNCHRONIZATION_PERSISTENCE_NAME);
-    appSettings.beginGroup(SYNC_SETTINGS_KEY_GROUP);
-    QString path = (appSettings.contains(NOTE_THUMBNAILS_STORAGE_PATH_KEY)
-                    ? appSettings.value(NOTE_THUMBNAILS_STORAGE_PATH_KEY).toString()
-                    : applicationPersistentStoragePath() + QStringLiteral("/thumbnails"));
-    appSettings.endGroup();
-    return path;
 }
 
 void RemoteToLocalSynchronizationManager::start(qint32 afterUsn)
@@ -814,17 +802,27 @@ void RemoteToLocalSynchronizationManager::onFindNotebookCompleted(Notebook noteb
         return;
     }
 
-    auto thumbnailIt = m_noteGuidForThumbnailDownloadByFindNotebookRequestId.find(requestId);
-    if (thumbnailIt != m_noteGuidForThumbnailDownloadByFindNotebookRequestId.end())
+    auto thumbnailIt = m_notesPendingThumbnailDownloadByFindNotebookRequestId.find(requestId);
+    if (thumbnailIt != m_notesPendingThumbnailDownloadByFindNotebookRequestId.end())
     {
         QNDEBUG(QStringLiteral("Found note for note thumbnail downloading"));
 
-        QString noteGuid = thumbnailIt.value();
-        Q_UNUSED(m_noteGuidForThumbnailDownloadByFindNotebookRequestId.erase(thumbnailIt))
+        Note note = thumbnailIt.value();
+        Q_UNUSED(m_notesPendingThumbnailDownloadByFindNotebookRequestId.erase(thumbnailIt))
 
         CHECK_STOPPED();
 
-        setupNoteThumbnailDownloading(noteGuid, notebook);
+        bool res = setupNoteThumbnailDownloading(note, notebook);
+        if (Q_UNLIKELY(!res))
+        {
+            QNDEBUG(QStringLiteral("Wasn't able to set up the thumbnail downloading for note: ")
+                    << note << QStringLiteral("\nNotebook: ") << notebook);
+
+            // NOTE: treat it as a recoverable failure, just ignore it and consider the note properly downloaded
+            incrementNoteDownloadProgress();
+            checkServerDataMergeCompletion();
+        }
+
         return;
     }
 }
@@ -884,22 +882,35 @@ void RemoteToLocalSynchronizationManager::onFindNotebookFailed(Notebook notebook
         return;
     }
 
-    auto thumbnailIt = m_noteGuidForThumbnailDownloadByFindNotebookRequestId.find(requestId);
-    if (thumbnailIt != m_noteGuidForThumbnailDownloadByFindNotebookRequestId.end())
+    auto thumbnailIt = m_notesPendingThumbnailDownloadByFindNotebookRequestId.find(requestId);
+    if (thumbnailIt != m_notesPendingThumbnailDownloadByFindNotebookRequestId.end())
     {
-        const QString & noteGuid = thumbnailIt.value();
+        const Note & note = thumbnailIt.value();
 
-        // We already have this note guid within those "pending the thumbnail download" for technical reasons, need to
-        // remove it from there
-        auto dit = m_noteGuidsPendingThumbnailDownload.find(noteGuid);
-        if (dit != m_noteGuidsPendingThumbnailDownload.end()) {
-            Q_UNUSED(m_noteGuidsPendingThumbnailDownload.erase(dit))
+        if (note.hasGuid())
+        {
+            // We might already have this note within those "pending the thumbnail download",
+            // need to remove it from there
+            auto dit = m_notesPendingThumbnailDownloadByGuid.find(note.guid());
+            if (dit != m_notesPendingThumbnailDownloadByGuid.end()) {
+                Q_UNUSED(m_notesPendingThumbnailDownloadByGuid.erase(dit))
+            }
         }
 
-        Q_UNUSED(m_noteGuidForThumbnailDownloadByFindNotebookRequestId.erase(thumbnailIt))
+        Q_UNUSED(m_notesPendingThumbnailDownloadByFindNotebookRequestId.erase(thumbnailIt))
 
         QNWARNING(QStringLiteral("Can't find the notebook for the purpose of setting up the note thumbnail downloading"));
         CHECK_STOPPED();
+
+        // NOTE: incrementing note download progress here because we haven't incremented it
+        // on the receipt of full note data before setting up the thumbnails downloading
+        incrementNoteDownloadProgress();
+
+        // NOTE: handle failure to download the note thumbnail as a recoverable error
+        // i.e. consider the note successfully downloaded anyway - hence, need to check if that
+        // was the last note pending its downloading events sequence
+        checkServerDataMergeCompletion();
+
         return;
     }
 }
@@ -973,16 +984,18 @@ void RemoteToLocalSynchronizationManager::onFindNoteCompleted(Note note, bool wi
 
         if (shouldDownloadThumbnailsForNotes())
         {
-            auto noteThumbnailDownloadIt = m_noteGuidsPendingThumbnailDownload.find(note.guid());
-            if (noteThumbnailDownloadIt == m_noteGuidsPendingThumbnailDownload.end())
+            auto noteThumbnailDownloadIt = m_notesPendingThumbnailDownloadByGuid.find(note.guid());
+            if (noteThumbnailDownloadIt == m_notesPendingThumbnailDownloadByGuid.end())
             {
                 QNDEBUG(QStringLiteral("Need to downloading the thumbnail for the note with added or updated resource"));
 
+                // NOTE: don't care whether was capable to start downloading the note thumnail,
+                // if not, this error is simply ignored
                 if (pNotebook) {
-                    setupNoteThumbnailDownloading(note.guid(), *pNotebook);
+                    Q_UNUSED(setupNoteThumbnailDownloading(note, *pNotebook))
                 }
                 else {
-                    findNotebookForNoteThumbnailDownloading(note);
+                    Q_UNUSED(findNotebookForNoteThumbnailDownloading(note))
                 }
             }
         }
@@ -1096,7 +1109,9 @@ void RemoteToLocalSynchronizationManager::onFindNoteCompleted(Note note, bool wi
             }
 
             QUuid updateNoteRequestId = QUuid::createUuid();
-            Q_UNUSED(m_updateNoteRequestIds.insert(updateNoteRequestId));
+            Q_UNUSED(m_updateNoteRequestIds.insert(updateNoteRequestId))
+            QNTRACE(QStringLiteral("Emitting the request to update note: request id = ") << updateNoteRequestId
+                    << QStringLiteral(", note: ") << updatedNote);
             emit updateNote(updatedNote, /* update resources = */ true, /* update tags = */ true, updateNoteRequestId);
 
             conflictedNote.setNotebookLocalUid(pNotebook->localUid());
@@ -1105,7 +1120,9 @@ void RemoteToLocalSynchronizationManager::onFindNoteCompleted(Note note, bool wi
             }
 
             QUuid addNoteRequestId = QUuid::createUuid();
-            Q_UNUSED(m_addNoteRequestIds.insert(addNoteRequestId));
+            Q_UNUSED(m_addNoteRequestIds.insert(addNoteRequestId))
+            QNTRACE(QStringLiteral("Emitting the request to add conflicted note: request id = ") << addNoteRequestId
+                    << QStringLiteral(", note: ") << conflictedNote);
             emit addNote(conflictedNote, addNoteRequestId);
 
             return;
@@ -1133,6 +1150,9 @@ void RemoteToLocalSynchronizationManager::onFindNoteCompleted(Note note, bool wi
 
         QUuid findNotebookForNotesWithConflictedResourcesRequestId = QUuid::createUuid();
         Q_UNUSED(m_findNotebookForNotesWithConflictedResourcesRequestIds.insert(findNotebookForNotesWithConflictedResourcesRequestId));
+        QNTRACE(QStringLiteral("Emitting the request to find notebook for note with conflicted resources: request id = ")
+                << findNotebookForNotesWithConflictedResourcesRequestId << ", notebook guid = "
+                << note.notebookGuid() << QStringLiteral(", note: ") << note);
         emit findNotebook(notebookToFind, findNotebookForNotesWithConflictedResourcesRequestId);
         return;
     }
@@ -1759,8 +1779,8 @@ void RemoteToLocalSynchronizationManager::performPostAddOrUpdateChecks<Resource>
         m_findNotebookForNotesWithConflictedResourcesRequestIds.empty() &&
         m_inkNoteResourceDataPerFindNotebookRequestId.empty() &&
         (m_numPendingInkNoteImageDownloads == 0) &&
-        m_noteGuidForThumbnailDownloadByFindNotebookRequestId.empty() &&
-        m_noteGuidsPendingThumbnailDownload.empty())
+        m_notesPendingThumbnailDownloadByFindNotebookRequestId.empty() &&
+        m_notesPendingThumbnailDownloadByGuid.empty())
     {
         if (!m_expungedNotes.empty()) {
             expungeNotes();
@@ -2295,15 +2315,29 @@ void RemoteToLocalSynchronizationManager::onUpdateNoteCompleted(Note note, bool 
     Q_UNUSED(updateResources)
     Q_UNUSED(updateTags)
 
-    QSet<QUuid>::iterator it = m_updateNoteRequestIds.find(requestId);
+    auto it = m_updateNoteRequestIds.find(requestId);
     if (it != m_updateNoteRequestIds.end())
     {
         QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::onUpdateNoteCompleted: note = ") << note
-                << QStringLiteral("\nrequestId = ") << requestId);
+                << QStringLiteral("\nRequestId = ") << requestId);
 
         Q_UNUSED(m_updateNoteRequestIds.erase(it));
 
         checkServerDataMergeCompletion();
+        return;
+    }
+
+    auto tit = m_updateNoteWithThumbnailRequestIds.find(requestId);
+    if (tit != m_updateNoteWithThumbnailRequestIds.end())
+    {
+        QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::onUpdateNoteCompleted: note with updated thumbnail = ")
+                << note << QStringLiteral("\nRequestId = ") << requestId);
+
+        Q_UNUSED(m_updateNoteWithThumbnailRequestIds.erase(tit))
+
+        incrementNoteDownloadProgress();
+        checkServerDataMergeCompletion();
+        return;
     }
 }
 
@@ -2313,18 +2347,39 @@ void RemoteToLocalSynchronizationManager::onUpdateNoteFailed(Note note, bool upd
     Q_UNUSED(updateResources)
     Q_UNUSED(updateTags)
 
-    QSet<QUuid>::iterator it = m_updateNoteRequestIds.find(requestId);
+    auto it = m_updateNoteRequestIds.find(requestId);
     if (it != m_updateNoteRequestIds.end())
     {
         QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::onUpdateNoteFailed: note = ") << note
-                << QStringLiteral("\nerrorDescription = ") << errorDescription << QStringLiteral("\nrequestId = ")
+                << QStringLiteral("\nErrorDescription = ") << errorDescription << QStringLiteral("\nRequestId = ")
                 << requestId);
+
+        Q_UNUSED(m_updateNoteRequestIds.erase(it))
 
         ErrorString error(QT_TRANSLATE_NOOP("", "Failed to update the note in the local storage"));
         error.additionalBases().append(errorDescription.base());
         error.additionalBases().append(errorDescription.additionalBases());
         error.details() = errorDescription.details();
+        QNWARNING(error);
         emit failure(error);
+
+        return;
+    }
+
+    auto tit = m_updateNoteWithThumbnailRequestIds.find(requestId);
+    if (tit != m_updateNoteWithThumbnailRequestIds.end())
+    {
+        QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::onUpdateNoteFailed: note with thumbnail = ") << note
+                << QStringLiteral("\nErrorDescription = ") << errorDescription << QStringLiteral("\nRequestId = ")
+                << requestId);
+
+        QNWARNING(errorDescription);
+
+        Q_UNUSED(m_updateNoteWithThumbnailRequestIds.erase(tit))
+
+        incrementNoteDownloadProgress();
+        checkServerDataMergeCompletion();
+        return;
     }
 }
 
@@ -2399,31 +2454,52 @@ void RemoteToLocalSynchronizationManager::onInkNoteImageDownloadFinished(bool st
 }
 
 void RemoteToLocalSynchronizationManager::onNoteThumbnailDownloadingFinished(bool status, QString noteGuid,
-                                                                             QString downloadedThumbnailImageFilePath,
+                                                                             QByteArray downloadedThumbnailImageData,
                                                                              ErrorString errorDescription)
 {
     QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::onNoteThumbnailDownloadingFinished: status = ")
-            << (status ? QStringLiteral("true") : QStringLiteral("false"))
-            << QStringLiteral(", note guid = ") << noteGuid << QStringLiteral(", downloaded thumbnail image file path = ")
-            << downloadedThumbnailImageFilePath << QStringLiteral(", error description = ") << errorDescription);
+            << (status ? QStringLiteral("true") : QStringLiteral("false")) << QStringLiteral(", note guid = ")
+            << noteGuid << QStringLiteral(", error description = ") << errorDescription);
 
-    auto it = m_noteGuidsPendingThumbnailDownload.find(noteGuid);
-    if (Q_LIKELY(it != m_noteGuidsPendingThumbnailDownload.end())) {
-        Q_UNUSED(m_noteGuidsPendingThumbnailDownload.erase(it))
-    }
-    else {
-        QNWARNING(QStringLiteral("Received note thumbnail downloaded event for note which seemingly was not pending it: note guid = ")
-                  << noteGuid);
-    }
-
-    incrementNoteDownloadProgress();
-    checkServerDataMergeCompletion();
-
-    if (status) {
+    if (!status)
+    {
+        QNWARNING(errorDescription);
+        incrementNoteDownloadProgress();
+        checkServerDataMergeCompletion();
         return;
     }
 
-    QNWARNING(errorDescription);
+    auto it = m_notesPendingThumbnailDownloadByGuid.find(noteGuid);
+    if (Q_UNLIKELY(it == m_notesPendingThumbnailDownloadByGuid.end()))
+    {
+        QNWARNING(QStringLiteral("Received note thumbnail downloaded event for note which seemingly was not pending it: note guid = ")
+                  << noteGuid);
+
+        incrementNoteDownloadProgress();
+        checkServerDataMergeCompletion();
+        return;
+    }
+
+    Note note = it.value();
+    Q_UNUSED(m_notesPendingThumbnailDownloadByGuid.erase(it))
+
+    QImage thumbnailImage;
+    bool res = thumbnailImage.loadFromData(downloadedThumbnailImageData, "PNG");
+    if (Q_UNLIKELY(!res)) {
+        QNWARNING("Wasn't able to load the thumbnail image from the downloaded data");
+        incrementNoteDownloadProgress();
+        checkServerDataMergeCompletion();
+        return;
+    }
+
+    note.setThumbnail(thumbnailImage);
+
+    QUuid updateNoteRequestId = QUuid::createUuid();
+    Q_UNUSED(m_updateNoteWithThumbnailRequestIds.insert(updateNoteRequestId))
+
+    QNTRACE(QStringLiteral("Emitting the request to update note with downloaded thumbnail: request id = ")
+            << updateNoteRequestId << QStringLiteral(", note: ") << note);
+    emit updateNote(note, /* update resources = */ false, /* update tags = */ false, updateNoteRequestId);
 }
 
 void RemoteToLocalSynchronizationManager::onAuthenticationInfoReceived(QString authToken, QString shardId,
@@ -2505,39 +2581,6 @@ void RemoteToLocalSynchronizationManager::setDownloadNoteThumbnails(const bool f
     appSettings.endGroup();
 }
 
-void RemoteToLocalSynchronizationManager::setNoteThumbnailsStoragePath(const QString & path)
-{
-    QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::setNoteThumbnailsStoragePath: ") << path);
-
-    QFileInfo pathInfo(path);
-    if (pathInfo.exists() && !pathInfo.isDir())
-    {
-        QNWARNING(QStringLiteral("Detected attempt to set note thumbnails storage path to something other than a folder: ")
-                  << path);
-        return;
-    }
-    else if (pathInfo.exists() && pathInfo.isDir() && !pathInfo.isWritable())
-    {
-        QNWARNING(QStringLiteral("Detected attempt to set note thumbnails storage path to a non-writable folder: ")
-                  << path);
-        return;
-    }
-    else if (!pathInfo.exists())
-    {
-        QDir dir(path);
-        bool res = dir.mkpath(path);
-        if (!res) {
-            QNWARNING(QStringLiteral("Cannot create a folder for the specified path"));
-            return;
-        }
-    }
-
-    ApplicationSettings appSettings(account(), SYNCHRONIZATION_PERSISTENCE_NAME);
-    appSettings.beginGroup(SYNC_SETTINGS_KEY_GROUP);
-    appSettings.setValue(NOTE_THUMBNAILS_STORAGE_PATH_KEY, path);
-    appSettings.endGroup();
-}
-
 void RemoteToLocalSynchronizationManager::onGetNoteAsyncFinished(qint32 errorCode, Note note, qint32 rateLimitSeconds,
                                                                  ErrorString errorDescription)
 {
@@ -2615,6 +2658,14 @@ void RemoteToLocalSynchronizationManager::onGetNoteAsyncFinished(qint32 errorCod
         return;
     }
 
+    // NOTE: thumbnails for notes are downloaded separately and their download is optional;
+    // for the sake of better error tolerance the failure to download thumbnails for particular notes
+    // should not be considered the failure of the synchronization algorithm as a whole.
+    //
+    // For these reasons, even if the thumbnail downloading was set up for some particular note, we don't wait for it to finish
+    // before adding the note to local storage or updating the note in the local storage; if the thumbnail is downloaded
+    // successfully, the note would be updated one more time; otherwise, it just won't be updated
+
     const Notebook * pNotebook = Q_NULLPTR;
 
     if (shouldDownloadThumbnailsForNotes() && note.hasResources())
@@ -2622,11 +2673,28 @@ void RemoteToLocalSynchronizationManager::onGetNoteAsyncFinished(qint32 errorCod
         QNDEBUG(QStringLiteral("The added or updated note contains resources, need to download the thumbnails for it"));
 
         pNotebook = getNotebookPerNote(note);
-        if (pNotebook) {
-            setupNoteThumbnailDownloading(noteGuid, *pNotebook);
+        if (pNotebook)
+        {
+            bool res = setupNoteThumbnailDownloading(note, *pNotebook);
+            if (Q_UNLIKELY(!res))
+            {
+                QNDEBUG(QStringLiteral("Wasn't able to set up the note thumbnail downloading"));
+
+                // NOTE: treating this failure as a recoverable one, will just skip downloading the thumbnail for this note
+                incrementNoteDownloadProgress();
+            }
         }
-        else {
-            findNotebookForNoteThumbnailDownloading(note);
+        else
+        {
+            bool res = findNotebookForNoteThumbnailDownloading(note);
+            if (Q_UNLIKELY(!res))
+            {
+                QNDEBUG(QStringLiteral("Wasn't able to set up the search for the notebook of the note for which "
+                                       "the thumbnail was meant to be downloaded"));
+
+                // NOTE: treating this failure as a recoverable one, will just skip downloading the thumbnail for this note
+                incrementNoteDownloadProgress();
+            }
         }
     }
     else
@@ -4389,8 +4457,12 @@ void RemoteToLocalSynchronizationManager::checkServerDataMergeCompletion()
     bool notesReady = m_findNoteByGuidRequestIds.empty() && m_updateNoteRequestIds.empty() && m_addNoteRequestIds.empty() &&
                       m_guidsOfNotesPendingDownloadForAddingToLocalStorage.empty() &&
                       m_guidsOfNotesPendingDownloadForUpdatingInLocalStorage.empty() &&
-                      m_notesToAddPerAPICallPostponeTimerId.empty() && m_notesToUpdatePerAPICallPostponeTimerId.empty();
-    if (!notesReady) {
+                      m_notesToAddPerAPICallPostponeTimerId.empty() && m_notesToUpdatePerAPICallPostponeTimerId.empty() &&
+                      m_notesPendingThumbnailDownloadByFindNotebookRequestId.empty() &&
+                      m_notesPendingThumbnailDownloadByGuid.empty() &&
+                      m_updateNoteWithThumbnailRequestIds.empty();
+    if (!notesReady)
+    {
         QNDEBUG(QStringLiteral("Notes are not ready, pending response for ") << m_updateNoteRequestIds.size()
                 << QStringLiteral(" note update requests and/or ") << m_addNoteRequestIds.size()
                 << QStringLiteral(" note add requests and/or ") << m_findNoteByGuidRequestIds.size()
@@ -4398,7 +4470,10 @@ void RemoteToLocalSynchronizationManager::checkServerDataMergeCompletion()
                 << QStringLiteral(" async full new note data downloads and/or ") << m_guidsOfNotesPendingDownloadForUpdatingInLocalStorage.size()
                 << QStringLiteral(" async full existing note data downloads; also, there are ") << m_notesToAddPerAPICallPostponeTimerId.size()
                 << QStringLiteral(" postponed note add requests and/or ") << m_notesToUpdatePerAPICallPostponeTimerId.size()
-                << QStringLiteral(" postponed note update requests"));
+                << QStringLiteral(" postponed note update requests and/or ") << m_notesPendingThumbnailDownloadByFindNotebookRequestId.size()
+                << QStringLiteral(" find notebook requests for note thumbnail download processing and/or ") << m_notesPendingThumbnailDownloadByGuid.size()
+                << QStringLiteral(" note thumbnail downloads and/or ") << m_updateNoteWithThumbnailRequestIds.size()
+                << QStringLiteral(" update note with downloaded thumbnails requests"));
         return;
     }
 
@@ -4408,10 +4483,9 @@ void RemoteToLocalSynchronizationManager::checkServerDataMergeCompletion()
                               m_addResourceRequestIds.empty() && m_resourcesWithFindRequestIdsPerFindNoteRequestId.empty() &&
                               m_findNotebookForNotesWithConflictedResourcesRequestIds.empty() &&
                               m_inkNoteResourceDataPerFindNotebookRequestId.empty() &&
-                              (m_numPendingInkNoteImageDownloads == 0) &&
-                              m_noteGuidForThumbnailDownloadByFindNotebookRequestId.empty() &&
-                              m_noteGuidsPendingThumbnailDownload.empty();
-        if (!resourcesReady) {
+                              (m_numPendingInkNoteImageDownloads == 0);
+        if (!resourcesReady)
+        {
             QNDEBUG(QStringLiteral("Resources are not ready, pending response for ") << m_updateResourceRequestIds.size()
                     << QStringLiteral(" resource update requests and/or ") << m_addResourceRequestIds.size()
                     << QStringLiteral(" resource add requests and/or ") << m_resourcesWithFindRequestIdsPerFindNoteRequestId.size()
@@ -4419,9 +4493,7 @@ void RemoteToLocalSynchronizationManager::checkServerDataMergeCompletion()
                     << QStringLiteral(" resource find note requests and/or ") << m_findNotebookForNotesWithConflictedResourcesRequestIds.size()
                     << QStringLiteral(" resource find notebook requests and/or ") << m_inkNoteResourceDataPerFindNotebookRequestId.size()
                     << QStringLiteral(" resource find notebook for ink note image download processing and/or ") << m_numPendingInkNoteImageDownloads
-                    << QStringLiteral(" ink note image downloads and/or ") << m_noteGuidForThumbnailDownloadByFindNotebookRequestId.size()
-                    << QStringLiteral(" resource find notebook for note thumbnail download processing and/or ") << m_noteGuidsPendingThumbnailDownload.size()
-                    << QStringLiteral(" note thumbnail downloads"));
+                    << QStringLiteral(" ink note image downloads"));
             return;
         }
     }
@@ -4436,6 +4508,8 @@ void RemoteToLocalSynchronizationManager::checkServerDataMergeCompletion()
         }
 
         m_expungeNotelessTagsRequestId = QUuid::createUuid();
+        QNTRACE(QStringLiteral("Emitting the request to expunge noteless tags from linked notebooks: ")
+                << m_expungeNotelessTagsRequestId);
         emit expungeNotelessTagsFromLinkedNotebooks(m_expungeNotelessTagsRequestId);
     }
     else
@@ -4556,8 +4630,8 @@ void RemoteToLocalSynchronizationManager::clear()
     m_resourcesWithFindRequestIdsPerFindNoteRequestId.clear();
     m_inkNoteResourceDataPerFindNotebookRequestId.clear();
     m_numPendingInkNoteImageDownloads = 0;
-    m_noteGuidForThumbnailDownloadByFindNotebookRequestId.clear();
-    m_noteGuidsPendingThumbnailDownload.clear();
+    m_notesPendingThumbnailDownloadByFindNotebookRequestId.clear();
+    m_notesPendingThumbnailDownloadByGuid.clear();
     m_resourceFoundFlagPerFindResourceRequestId.clear();
     m_resourceConflictedAndRemoteNotesPerNotebookGuid.clear();
     m_findNotebookForNotesWithConflictedResourcesRequestIds.clear();
@@ -5160,15 +5234,20 @@ void RemoteToLocalSynchronizationManager::setupInkNoteImageDownloading(const QSt
     QThreadPool::globalInstance()->start(pDownloader);
 }
 
-void RemoteToLocalSynchronizationManager::findNotebookForNoteThumbnailDownloading(const Note & note)
+bool RemoteToLocalSynchronizationManager::findNotebookForNoteThumbnailDownloading(const Note & note)
 {
     QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::findNotebookForNoteThumbnailDownloading: note local uid = ")
             << note.localUid() << QStringLiteral(", note guid = ") << (note.hasGuid() ? note.guid() : QStringLiteral("<empty>")));
 
+    if (Q_UNLIKELY(!note.hasGuid())) {
+        QNWARNING(QStringLiteral("Can't find notebook for note thumbnail downloading: note has no guid: ") << note);
+        return false;
+    }
+
     if (Q_UNLIKELY(!note.hasNotebookLocalUid() && !note.hasNotebookGuid())) {
         QNWARNING(QStringLiteral("Can't find notebook for note thumbnail downloading: the note has neither notebook local uid "
                                  "nor notebook guid: ") << note);
-        return;
+        return false;
     }
 
     Notebook dummyNotebook;
@@ -5181,37 +5260,48 @@ void RemoteToLocalSynchronizationManager::findNotebookForNoteThumbnailDownloadin
     }
 
     QUuid findNotebookForNoteThumbnailDownloadRequestId = QUuid::createUuid();
-    m_noteGuidForThumbnailDownloadByFindNotebookRequestId[findNotebookForNoteThumbnailDownloadRequestId] = note.guid();
+    m_notesPendingThumbnailDownloadByFindNotebookRequestId[findNotebookForNoteThumbnailDownloadRequestId] = note;
+
+    QString noteGuid = note.guid();
 
     // NOTE: technically, here we don't start downloading the thumbnail yet; but it is necessary
-    // to insert the guid into the set right here in order to prevent multiple thumbnail downloads
+    // to insert the note into the container right here in order to prevent multiple thumbnail downloads
     // for the same note during the sync process
-    Q_UNUSED(m_noteGuidsPendingThumbnailDownload.insert(note.guid()))
+    m_notesPendingThumbnailDownloadByGuid[noteGuid] = note;
 
     QNTRACE(QStringLiteral("Emitting the request to find a notebook for the note thumbnail download setup: ")
-            << findNotebookForNoteThumbnailDownloadRequestId << QStringLiteral(", note guid = ") << note.guid()
-            << ", notebook: " << dummyNotebook);
+            << findNotebookForNoteThumbnailDownloadRequestId << QStringLiteral(", note guid = ")
+            << noteGuid << ", notebook: " << dummyNotebook);
     emit findNotebook(dummyNotebook, findNotebookForNoteThumbnailDownloadRequestId);
+
+    return true;
 }
 
-void RemoteToLocalSynchronizationManager::setupNoteThumbnailDownloading(const QString & noteGuid, const Notebook & notebook)
+bool RemoteToLocalSynchronizationManager::setupNoteThumbnailDownloading(const Note & note, const Notebook & notebook)
 {
     QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::setupNoteThumbnailDownloading: note guid = ")
-            << noteGuid << QStringLiteral(", notebook: ") << notebook);
+            << (note.hasGuid() ? note.guid() : QStringLiteral("<empty>")) << QStringLiteral(", notebook: ") << notebook);
+
+    if (Q_UNLIKELY(!note.hasGuid())) {
+        QNWARNING(QStringLiteral("Can't setup downloading the thumbnail: note has no guid: ") << note);
+        return false;
+    }
+
+    const QString & noteGuid = note.guid();
+    m_notesPendingThumbnailDownloadByGuid[noteGuid] = note;
 
     QString authToken, shardId;
     bool isPublicNotebook = false;
     authenticationInfoForNotebook(notebook, authToken, shardId, isPublicNotebook);
 
-    Q_UNUSED(m_noteGuidsPendingThumbnailDownload.insert(noteGuid))
-
-    QString storagePath = noteThumbnailsStoragePath();
     NoteThumbnailDownloader * pDownloader = new NoteThumbnailDownloader(m_host, noteGuid, authToken, shardId,
                                                                         /* from public linked notebook = */
-                                                                        isPublicNotebook, storagePath, this);
-    QObject::connect(pDownloader, QNSIGNAL(NoteThumbnailDownloader,finished,bool,QString,ErrorString),
-                     this, QNSLOT(RemoteToLocalSynchronizationManager,onNoteThumbnailDownloadingFinished,bool,QString,ErrorString));
+                                                                        isPublicNotebook, this);
+    QObject::connect(pDownloader, QNSIGNAL(NoteThumbnailDownloader,finished,bool,QString,QByteArray,ErrorString),
+                     this, QNSLOT(RemoteToLocalSynchronizationManager,onNoteThumbnailDownloadingFinished,bool,QString,QByteArray,ErrorString));
     QThreadPool::globalInstance()->start(pDownloader);
+
+    return true;
 }
 
 QString RemoteToLocalSynchronizationManager::clientNameForProtocolVersionCheck() const

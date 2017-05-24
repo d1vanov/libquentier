@@ -26,22 +26,16 @@
 #include <qt5qevercloud/thumbnail.h>
 #endif
 
-#include <QFile>
-#include <QFileInfo>
-#include <QDir>
-
 namespace quentier {
 
 NoteThumbnailDownloader::NoteThumbnailDownloader(const QString & host, const QString & noteGuid,
                                                  const QString & authToken, const QString & shardId,
-                                                 const bool noteFromPublicLinkedNotebook,
-                                                 const QString & storagePath, QObject * parent) :
+                                                 const bool noteFromPublicLinkedNotebook, QObject * parent) :
     QObject(parent),
     m_host(host),
     m_noteGuid(noteGuid),
     m_authToken(authToken),
     m_shardId(shardId),
-    m_storagePath(storagePath),
     m_noteFromPublicLinkedNotebook(noteFromPublicLinkedNotebook)
 {}
 
@@ -49,13 +43,12 @@ void NoteThumbnailDownloader::run()
 {
     QNDEBUG(QStringLiteral("NoteThumbnailDownloader::run: host = ") << m_host << QStringLiteral(", note guid = ")
             << m_noteGuid << QStringLiteral(", is public = ")
-            << (m_noteFromPublicLinkedNotebook ? QStringLiteral("true") : QStringLiteral("false"))
-            << QStringLiteral(", storage path = ") << m_storagePath);
+            << (m_noteFromPublicLinkedNotebook ? QStringLiteral("true") : QStringLiteral("false")));
 
 #define SET_ERROR(error) \
     ErrorString errorDescription(error); \
     QNDEBUG(errorDescription); \
-    emit finished(false, m_noteGuid, QString(), errorDescription); \
+    emit finished(false, m_noteGuid, QByteArray(), errorDescription); \
     return
 
     if (Q_UNLIKELY(m_host.isEmpty())) {
@@ -81,33 +74,7 @@ void NoteThumbnailDownloader::run()
         SET_ERROR(QT_TRANSLATE_NOOP("", "received empty note thumbnail data"));
     }
 
-    QFileInfo folderPathInfo(m_storagePath);
-    if (Q_UNLIKELY(!folderPathInfo.exists()))
-    {
-        QDir dir(m_storagePath);
-        bool res = dir.mkpath(m_storagePath);
-        if (Q_UNLIKELY(!res)) {
-            SET_ERROR(QT_TRANSLATE_NOOP("", "can't create folder to store note thumbnails in"));
-        }
-    }
-    else if (Q_UNLIKELY(!folderPathInfo.isDir())) {
-        SET_ERROR(QT_TRANSLATE_NOOP("", "can't create the folder to store the note thumbnails in: "
-                                    "a file with similar name and path exists"));
-    }
-    else if (Q_UNLIKELY(!folderPathInfo.isWritable())) {
-        SET_ERROR(QT_TRANSLATE_NOOP("", "folder to store note thumbnails in is not writable"));
-    }
-
-    QString filePath = m_storagePath + QStringLiteral("/") + m_noteGuid + QStringLiteral(".png");
-    QFile file(filePath);
-    if (Q_UNLIKELY(!file.open(QIODevice::WriteOnly))) {
-        SET_ERROR(QT_TRANSLATE_NOOP("", "can't open file to write the note thumbnail into"));
-    }
-
-    file.write(thumbnailImageData);
-    file.close();
-
-    emit finished(true, m_noteGuid, filePath, ErrorString());
+    emit finished(true, m_noteGuid, thumbnailImageData, ErrorString());
 }
 
 } // namespace quentier
