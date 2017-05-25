@@ -37,15 +37,17 @@
 namespace quentier {
 
 InkNoteImageDownloader::InkNoteImageDownloader(const QString & host, const QString & resourceGuid,
-                                               const QString & authToken, const QString & shardId,
-                                               const int height, const int width,
+                                               const QString & noteGuid, const QString & authToken,
+                                               const QString & shardId, const int height, const int width,
                                                const bool noteFromPublicLinkedNotebook,
-                                               QObject * parent) :
+                                               const QString & storageFolderPath, QObject * parent) :
     QObject(parent),
     m_host(host),
     m_resourceGuid(resourceGuid),
+    m_noteGuid(noteGuid),
     m_authToken(authToken),
     m_shardId(shardId),
+    m_storageFolderPath(storageFolderPath),
     m_height(height),
     m_width(width),
     m_noteFromPublicLinkedNotebook(noteFromPublicLinkedNotebook)
@@ -53,11 +55,13 @@ InkNoteImageDownloader::InkNoteImageDownloader(const QString & host, const QStri
 
 void InkNoteImageDownloader::run()
 {
-    QNDEBUG(QStringLiteral("InkNoteImageDownloader::run: host = ") << m_host << QStringLiteral(", resource guid = ") << m_resourceGuid);
+    QNDEBUG(QStringLiteral("InkNoteImageDownloader::run: host = ") << m_host << QStringLiteral(", resource guid = ")
+            << m_resourceGuid << QStringLiteral(", note guid = ") << m_noteGuid << QStringLiteral(", storage folder path = ")
+            << m_storageFolderPath);
 
 #define SET_ERROR(error) \
     ErrorString errorDescription(error); \
-    emit finished(false, QString(), errorDescription); \
+    emit finished(false, m_resourceGuid, m_noteGuid, errorDescription); \
     return
 
     if (Q_UNLIKELY(m_host.isEmpty())) {
@@ -82,12 +86,11 @@ void InkNoteImageDownloader::run()
         SET_ERROR(QT_TRANSLATE_NOOP("", "received empty note thumbnail data"));
     }
 
-    QString folderPath = applicationPersistentStoragePath() + QStringLiteral("/NoteEditorPage/inkNoteImages");
-    QFileInfo folderPathInfo(folderPath);
+    QFileInfo folderPathInfo(m_storageFolderPath);
     if (Q_UNLIKELY(!folderPathInfo.exists()))
     {
-        QDir dir(folderPath);
-        bool res = dir.mkpath(folderPath);
+        QDir dir(m_storageFolderPath);
+        bool res = dir.mkpath(m_storageFolderPath);
         if (Q_UNLIKELY(!res)) {
             SET_ERROR(QT_TRANSLATE_NOOP("", "can't create a folder to store the ink note images in"));
         }
@@ -100,7 +103,7 @@ void InkNoteImageDownloader::run()
         SET_ERROR(QT_TRANSLATE_NOOP("", "the folder for ink note images storage is not writable"));
     }
 
-    QString filePath = folderPath + QStringLiteral("/") + m_resourceGuid;
+    QString filePath = m_storageFolderPath + QStringLiteral("/") + m_resourceGuid;
     QFile file(filePath);
     if (Q_UNLIKELY(!file.open(QIODevice::WriteOnly))) {
         SET_ERROR(QT_TRANSLATE_NOOP("", "can't open the ink note image file for writing"));
@@ -109,7 +112,7 @@ void InkNoteImageDownloader::run()
     file.write(inkNoteImageData);
     file.close();
 
-    emit finished(true, filePath, ErrorString());
+    emit finished(true, m_resourceGuid, m_noteGuid, ErrorString());
 }
 
 } // namespace quentier

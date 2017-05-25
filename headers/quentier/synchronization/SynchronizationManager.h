@@ -123,7 +123,8 @@ public Q_SLOTS:
     void revokeAuthentication(const qevercloud::UserID userId);
 
     /**
-     * Use this slot to switch the option whether the synchronization of notes would download the note thumbnails or not
+     * Use this slot to switch the option whether the synchronization of notes would download the note thumbnails or not.
+     * By default the downloading of thumbnails for notes containing resources is disabled.
      *
      * NOTE: even if thumbnails downloading is enabled, the thumbnails would be downloaded during sync only for notes
      * containing resources
@@ -131,6 +132,29 @@ public Q_SLOTS:
      * After the method finishes its job, setDownloadNoteThumbnailsDone signal is emitted
      */
     void setDownloadNoteThumbnails(bool flag);
+
+    /**
+     * Use this slot to switch the option whether the synchronization of notes would download the plain images corresponding
+     * to ink notes or not. By default the downloading of ink note images is disabled.
+     *
+     * After the method finishes its job, setDownloadInkNoteImagesDone signal is emitted
+     */
+    void setDownloadInkNoteImages(bool flag);
+
+    /**
+     * Use this slot to specify the path to folder at which the downloaded ink note images should be stored. Each
+     * ink note image would be stored in a separate PNG file which name would be the same as the guid of the corresponding
+     * resource and the file extension would be PNG
+     *
+     * The default storage path would be the folder "inkNoteImages" within the folder returned by
+     * applicationPersistentStoragePath function found in quentier/DesktopServices.h header
+     *
+     * WARNING: if the passed in path cannot be used (either it doesn't exist and cannot be created or exists but is not writable),
+     * the default path is silently restored. So make sure you'return setting a valid path
+     *
+     * After the method finishes its job, setInkNoteImagesStoragePathDone signal is emitted
+     */
+    void setInkNoteImagesStoragePath(QString path);
 
 Q_SIGNALS:
     /**
@@ -274,7 +298,17 @@ Q_SIGNALS:
     /**
      * This signal is emitted in response to invoking the setDownloadNoteThumbnails slot after the setting is accepted
      */
-    void setDownloadNoteThumbnailsDone(const bool flag);
+    void setDownloadNoteThumbnailsDone(bool flag);
+
+    /**
+     * This signal is emitted in response to invoking the setDownloadInkNoteImages slot after the setting is accepted
+     */
+    void setDownloadInkNoteImagesDone(bool flag);
+
+    /**
+     * This signal is emitted in response to invoking the setInkNoteImagesStoragePath slot after the setting is accepted
+     */
+    void setInkNoteImagesStoragePathDone(QString path);
 
 private:
     SynchronizationManager() Q_DECL_EQ_DELETE;

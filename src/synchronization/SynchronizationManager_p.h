@@ -91,6 +91,8 @@ public Q_SLOTS:
     void revokeAuthentication(const qevercloud::UserID userId);
 
     void setDownloadNoteThumbnails(const bool flag);
+    void setDownloadInkNoteImages(const bool flag);
+    void setInkNoteImagesStoragePath(const QString & path);
 
 Q_SIGNALS:
 // private signals

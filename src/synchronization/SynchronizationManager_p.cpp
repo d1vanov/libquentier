@@ -250,6 +250,16 @@ void SynchronizationManagerPrivate::setDownloadNoteThumbnails(const bool flag)
     m_remoteToLocalSyncManager.setDownloadNoteThumbnails(flag);
 }
 
+void SynchronizationManagerPrivate::setDownloadInkNoteImages(const bool flag)
+{
+    m_remoteToLocalSyncManager.setDownloadInkNoteImages(flag);
+}
+
+void SynchronizationManagerPrivate::setInkNoteImagesStoragePath(const QString & path)
+{
+    m_remoteToLocalSyncManager.setInkNoteImagesStoragePath(path);
+}
+
 void SynchronizationManagerPrivate::onOAuthResult(bool success, qevercloud::UserID userId, QString authToken,
                                                   qevercloud::Timestamp authTokenExpirationTime, QString shardId,
                                                   QString noteStoreUrl, QString webApiUrlPrefix, ErrorString errorDescription)

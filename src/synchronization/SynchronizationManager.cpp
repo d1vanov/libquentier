@@ -142,4 +142,20 @@ void SynchronizationManager::setDownloadNoteThumbnails(bool flag)
     emit setDownloadNoteThumbnailsDone(flag);
 }
 
+void SynchronizationManager::setDownloadInkNoteImages(bool flag)
+{
+    Q_D(SynchronizationManager);
+    d->setDownloadInkNoteImages(flag);
+
+    emit setDownloadInkNoteImagesDone(flag);
+}
+
+void SynchronizationManager::setInkNoteImagesStoragePath(QString path)
+{
+    Q_D(SynchronizationManager);
+    d->setInkNoteImagesStoragePath(path);
+
+    emit setInkNoteImagesStoragePathDone(path);
+}
+
 } // namespace quentier

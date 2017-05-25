@@ -32,21 +32,23 @@ class InkNoteImageDownloader: public QObject,
     Q_OBJECT
 public:
     explicit InkNoteImageDownloader(const QString & host, const QString & resourceGuid,
-                                    const QString & authToken, const QString & shardId,
-                                    const int height, const int width,
+                                    const QString & noteGuid, const QString & authToken,
+                                    const QString & shardId, const int height, const int width,
                                     const bool noteFromPublicLinkedNotebook,
-                                    QObject * parent = Q_NULLPTR);
+                                    const QString & storageFolderPath, QObject * parent = Q_NULLPTR);
 
     virtual void run() Q_DECL_OVERRIDE;
 
 Q_SIGNALS:
-    void finished(bool status, QString inkNoteImageFilePath, ErrorString errorDescription);
+    void finished(bool status, QString resourceGuid, QString noteGuid, ErrorString errorDescription);
 
 private:
     QString     m_host;
     QString     m_resourceGuid;
+    QString     m_noteGuid;
     QString     m_authToken;
     QString     m_shardId;
+    QString     m_storageFolderPath;
     int         m_height;
     int         m_width;
     bool        m_noteFromPublicLinkedNotebook;

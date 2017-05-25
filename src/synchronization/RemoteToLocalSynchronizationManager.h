@@ -39,6 +39,8 @@
 #include <qt4qevercloud/QEverCloudOAuth.h>
 #endif
 
+#include <QMultiHash>
+
 namespace quentier {
 
 QT_FORWARD_DECLARE_CLASS(LocalStorageManagerAsync)
@@ -62,6 +64,8 @@ public:
     const User & user() const;
 
     bool shouldDownloadThumbnailsForNotes() const;
+    bool shouldDownloadInkNoteImages() const;
+    QString inkNoteImagesStoragePath() const;
 
 Q_SIGNALS:
     void failure(ErrorString errorDescription);
@@ -103,6 +107,8 @@ public Q_SLOTS:
                                       QHash<QString,qevercloud::Timestamp> lastSyncTimeByLinkedNotebookGuid);
 
     void setDownloadNoteThumbnails(const bool flag);
+    void setDownloadInkNoteImages(const bool flag);
+    void setInkNoteImagesStoragePath(const QString & path);
 
 // private signals
 Q_SIGNALS:
@@ -214,7 +220,7 @@ private Q_SLOTS:
     void onUpdateResourceCompleted(Resource resource, QUuid requestId);
     void onUpdateResourceFailed(Resource resource, ErrorString errorDescription, QUuid requestId);
 
-    void onInkNoteImageDownloadFinished(bool status, QString inkNoteImageFilePath, ErrorString errorDescription);
+    void onInkNoteImageDownloadFinished(bool status, QString resourceGuid, QString noteGuid, ErrorString errorDescription);
     void onNoteThumbnailDownloadingFinished(bool status, QString noteGuid, QByteArray downloadedThumbnailImageData,
                                             ErrorString errorDescription);
 
@@ -223,6 +229,8 @@ private Q_SLOTS:
 private:
     void createConnections();
     void disconnectFromLocalStorage();
+
+    QString defaultInkNoteImageStoragePath() const;
 
     void launchSync();
 
@@ -245,7 +253,7 @@ private:
 
     bool syncingLinkedNotebooksContent() const;
 
-    void incrementNoteDownloadProgress();
+    void checkAndIncrementNoteDownloadProgress(const QString & noteGuid);
 
     struct ContentSource
     {
@@ -454,11 +462,14 @@ private:
 
     void authenticationInfoForNotebook(const Notebook & notebook, QString & authToken, QString & shardId, bool & isPublic) const;
 
+    bool findNotebookForInkNoteImageDownloading(const Note & note);
     void setupInkNoteImageDownloading(const QString & resourceGuid, const int resourceHeight, const int resourceWidth,
-                                      const Notebook & notebook);
+                                      const QString & noteGuid, const Notebook & notebook);
+    bool setupInkNoteImageDownloadingForNote(const Note & note, const Notebook & notebook);
 
     bool findNotebookForNoteThumbnailDownloading(const Note & note);
     bool setupNoteThumbnailDownloading(const Note & note, const Notebook & notebook);
+
 
     QString clientNameForProtocolVersionCheck() const;
 
@@ -499,17 +510,20 @@ private:
     {
         InkNoteResourceData() :
             m_resourceGuid(),
+            m_noteGuid(),
             m_resourceHeight(0),
             m_resourceWidth(0)
         {}
 
-        InkNoteResourceData(const QString & resourceGuid, int height, int width) :
+        InkNoteResourceData(const QString & resourceGuid, const QString & noteGuid, int height, int width) :
             m_resourceGuid(resourceGuid),
+            m_noteGuid(noteGuid),
             m_resourceHeight(height),
             m_resourceWidth(width)
         {}
 
         QString     m_resourceGuid;
+        QString     m_noteGuid;
         int         m_resourceHeight;
         int         m_resourceWidth;
     };
@@ -646,10 +660,15 @@ private:
     ResourceDataPerFindNoteRequestId        m_resourcesWithFindRequestIdsPerFindNoteRequestId;
 
     typedef QHash<QUuid,InkNoteResourceData> InkNoteResourceDataPerFindNotebookRequestId;
-    InkNoteResourceDataPerFindNotebookRequestId     m_inkNoteResourceDataPerFindNotebookRequestId;
+    InkNoteResourceDataPerFindNotebookRequestId             m_inkNoteResourceDataPerFindNotebookRequestId;
+
+    typedef QMultiHash<QString,QString> ResourceGuidsPendingInkNoteImageDownloadPerNoteGuid;
+    ResourceGuidsPendingInkNoteImageDownloadPerNoteGuid     m_resourceGuidsPendingInkNoteImageDownloadPerNoteGuid;
+
+    QHash<QUuid,Note>                       m_notesPendingInkNoteImagesDownloadByFindNotebookRequestId;
+
     qint64                                  m_numPendingInkNoteImageDownloads;
 
-    QHash<QUuid,QString>                    m_noteGuidForThumbnailDownloadByFindNotebookRequestId;
     QHash<QUuid,Note>                       m_notesPendingThumbnailDownloadByFindNotebookRequestId;
     QHash<QString,Note>                     m_notesPendingThumbnailDownloadByGuid;
     QSet<QUuid>                             m_updateNoteWithThumbnailRequestIds;
