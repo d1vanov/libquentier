@@ -170,7 +170,6 @@ RemoteToLocalSynchronizationManager::RemoteToLocalSynchronizationManager(LocalSt
     m_inkNoteResourceDataPerFindNotebookRequestId(),
     m_resourceGuidsPendingInkNoteImageDownloadPerNoteGuid(),
     m_notesPendingInkNoteImagesDownloadByFindNotebookRequestId(),
-    m_numPendingInkNoteImageDownloads(0),
     m_notesPendingThumbnailDownloadByFindNotebookRequestId(),
     m_notesPendingThumbnailDownloadByGuid(),
     m_resourceFoundFlagPerFindResourceRequestId(),
@@ -936,6 +935,7 @@ void RemoteToLocalSynchronizationManager::onFindNotebookFailed(Notebook notebook
     if (iit_note != m_notesPendingInkNoteImagesDownloadByFindNotebookRequestId.end())
     {
         Note note = iit_note.value();
+        Q_UNUSED(m_notesPendingInkNoteImagesDownloadByFindNotebookRequestId.erase(iit_note))
 
         if (note.hasGuid())
         {
@@ -1858,7 +1858,6 @@ void RemoteToLocalSynchronizationManager::performPostAddOrUpdateChecks<Resource>
         m_inkNoteResourceDataPerFindNotebookRequestId.empty() &&
         m_resourceGuidsPendingInkNoteImageDownloadPerNoteGuid.empty() &&
         m_notesPendingInkNoteImagesDownloadByFindNotebookRequestId.empty() &&
-        (m_numPendingInkNoteImageDownloads == 0) &&
         m_notesPendingThumbnailDownloadByFindNotebookRequestId.empty() &&
         m_notesPendingThumbnailDownloadByGuid.empty())
     {
@@ -2527,9 +2526,6 @@ void RemoteToLocalSynchronizationManager::onInkNoteImageDownloadFinished(bool st
 
     Q_UNUSED(m_resourceGuidsPendingInkNoteImageDownloadPerNoteGuid.remove(noteGuid, resourceGuid))
 
-    --m_numPendingInkNoteImageDownloads;
-    m_numPendingInkNoteImageDownloads = std::max(m_numPendingInkNoteImageDownloads, qint64(0));
-
     checkAndIncrementNoteDownloadProgress(noteGuid);
     checkServerDataMergeCompletion();
 }
@@ -2825,7 +2821,7 @@ void RemoteToLocalSynchronizationManager::onGetNoteAsyncFinished(qint32 errorCod
     // and for better error tolerance the failure to download the ink note image is not considered a failure
     // of the synchronization procedure
 
-    if (shouldDownloadInkNoteImages() && note.hasResources() && note.isInkNote() && note.hasGuid())
+    if (shouldDownloadInkNoteImages() && note.hasResources() && note.isInkNote())
     {
         QNDEBUG(QStringLiteral("The added or updated note is the ink note, need to download the ink note image for it"));
 
@@ -3320,6 +3316,11 @@ void RemoteToLocalSynchronizationManager::disconnectFromLocalStorage()
 
     // With the disconnect from local storage the list of previously received linked notebooks (if any) + new additions/updates becomes invalidated
     m_allLinkedNotebooksListed = false;
+}
+
+QString RemoteToLocalSynchronizationManager::defaultInkNoteImageStoragePath() const
+{
+    return applicationPersistentStoragePath() + QStringLiteral("/inkNoteImages");
 }
 
 void RemoteToLocalSynchronizationManager::launchSync()
@@ -4644,7 +4645,7 @@ void RemoteToLocalSynchronizationManager::checkServerDataMergeCompletion()
                               m_addResourceRequestIds.empty() && m_resourcesWithFindRequestIdsPerFindNoteRequestId.empty() &&
                               m_findNotebookForNotesWithConflictedResourcesRequestIds.empty() &&
                               m_inkNoteResourceDataPerFindNotebookRequestId.empty() &&
-                              (m_numPendingInkNoteImageDownloads == 0);
+                              m_resourceGuidsPendingInkNoteImageDownloadPerNoteGuid.empty();
         if (!resourcesReady)
         {
             QNDEBUG(QStringLiteral("Resources are not ready, pending response for ") << m_updateResourceRequestIds.size()
@@ -4653,8 +4654,8 @@ void RemoteToLocalSynchronizationManager::checkServerDataMergeCompletion()
                     << QStringLiteral(" find resource by guid requests and/or ") << m_findResourceByGuidRequestIds.size()
                     << QStringLiteral(" resource find note requests and/or ") << m_findNotebookForNotesWithConflictedResourcesRequestIds.size()
                     << QStringLiteral(" resource find notebook requests and/or ") << m_inkNoteResourceDataPerFindNotebookRequestId.size()
-                    << QStringLiteral(" resource find notebook for ink note image download processing and/or ") << m_numPendingInkNoteImageDownloads
-                    << QStringLiteral(" ink note image downloads"));
+                    << QStringLiteral(" resource find notebook for ink note image download processing and/or ") << m_resourceGuidsPendingInkNoteImageDownloadPerNoteGuid.size()
+                    << QStringLiteral(" pending ink note image downloads"));
             return;
         }
     }
@@ -4792,7 +4793,6 @@ void RemoteToLocalSynchronizationManager::clear()
     m_inkNoteResourceDataPerFindNotebookRequestId.clear();
     m_resourceGuidsPendingInkNoteImageDownloadPerNoteGuid.clear();
     m_notesPendingInkNoteImagesDownloadByFindNotebookRequestId.clear();
-    m_numPendingInkNoteImageDownloads = 0;
     m_notesPendingThumbnailDownloadByFindNotebookRequestId.clear();
     m_notesPendingThumbnailDownloadByGuid.clear();
     m_resourceFoundFlagPerFindResourceRequestId.clear();
@@ -5452,8 +5452,9 @@ void RemoteToLocalSynchronizationManager::setupInkNoteImageDownloading(const QSt
     bool isPublicNotebook = false;
     authenticationInfoForNotebook(notebook, authToken, shardId, isPublicNotebook);
 
-    ++m_numPendingInkNoteImageDownloads;
-    m_resourceGuidsPendingInkNoteImageDownloadPerNoteGuid.insert(noteGuid, resourceGuid);
+    if (!m_resourceGuidsPendingInkNoteImageDownloadPerNoteGuid.contains(noteGuid, resourceGuid)) {
+        m_resourceGuidsPendingInkNoteImageDownloadPerNoteGuid.insert(noteGuid, resourceGuid);
+    }
 
     QString storageFolderPath = inkNoteImagesStoragePath();
 

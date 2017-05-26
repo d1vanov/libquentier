@@ -150,7 +150,7 @@ public Q_SLOTS:
      * applicationPersistentStoragePath function found in quentier/DesktopServices.h header
      *
      * WARNING: if the passed in path cannot be used (either it doesn't exist and cannot be created or exists but is not writable),
-     * the default path is silently restored. So make sure you'return setting a valid path
+     * the default path is silently restored. So make sure you're setting a valid path
      *
      * After the method finishes its job, setInkNoteImagesStoragePathDone signal is emitted
      */

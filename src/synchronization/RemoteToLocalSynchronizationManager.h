@@ -666,10 +666,8 @@ private:
     ResourceGuidsPendingInkNoteImageDownloadPerNoteGuid     m_resourceGuidsPendingInkNoteImageDownloadPerNoteGuid;
 
     QHash<QUuid,Note>                       m_notesPendingInkNoteImagesDownloadByFindNotebookRequestId;
-
-    qint64                                  m_numPendingInkNoteImageDownloads;
-
     QHash<QUuid,Note>                       m_notesPendingThumbnailDownloadByFindNotebookRequestId;
+
     QHash<QString,Note>                     m_notesPendingThumbnailDownloadByGuid;
     QSet<QUuid>                             m_updateNoteWithThumbnailRequestIds;
 
