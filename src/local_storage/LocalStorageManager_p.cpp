@@ -436,20 +436,10 @@ void LocalStorageManagerPrivate::switchUser(const Account & account,
         throw DatabaseOpeningException(error);
     }
 
-    m_databaseFilePath = applicationPersistentStoragePath();
-    if (account.type() == Account::Type::Local)
-    {
-        m_databaseFilePath += QStringLiteral("/LocalAccounts/");
-        m_databaseFilePath += accountName;
-    }
-    else
-    {
-        m_databaseFilePath += QStringLiteral("/EvernoteAccounts/");
-        m_databaseFilePath += accountName;
-        m_databaseFilePath += QStringLiteral("_");
-        m_databaseFilePath += account.evernoteHost();
-        m_databaseFilePath += QStringLiteral("_");
-        m_databaseFilePath += QString::number(account.id());
+    m_databaseFilePath = accountPersistentStoragePath(account);
+    if (Q_UNLIKELY(m_databaseFilePath.isEmpty())) {
+        ErrorString error(QT_TRANSLATE_NOOP("", "Can't initialize local storage: account persistent storage path is empty"));
+        throw DatabaseOpeningException(error);
     }
 
     m_databaseFilePath += QStringLiteral("/") + QStringLiteral(QUENTIER_DATABASE_NAME);

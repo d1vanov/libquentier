@@ -47,30 +47,15 @@ QString defaultApplicationStoragePath()
 
 QString accountApplicationStoragePath(const Account & account, const QString & settingsName)
 {
-    QString storagePath = applicationPersistentStoragePath();
-    if (Q_UNLIKELY(storagePath.isEmpty())) {
-        throw ApplicationSettingsInitializationException(ErrorString(QT_TRANSLATE_NOOP("", "Can't create ApplicationSettings instance: no persistent storage path")));
-    }
-
     QString accountName = account.name();
     if (Q_UNLIKELY(accountName.isEmpty())) {
         QNWARNING(QStringLiteral("Detected attempt to create ApplicationSettings for account with empty name"));
         throw ApplicationSettingsInitializationException(ErrorString(QT_TRANSLATE_NOOP("", "Can't create ApplicationSettings instance: the account name is empty")));
     }
 
-    if (account.type() == Account::Type::Local)
-    {
-        storagePath += QStringLiteral("/LocalAccounts/");
-        storagePath += accountName;
-    }
-    else
-    {
-        storagePath += QStringLiteral("/EvernoteAccounts/");
-        storagePath += accountName;
-        storagePath += QStringLiteral("_");
-        storagePath += account.evernoteHost();
-        storagePath += QStringLiteral("_");
-        storagePath += QString::number(account.id());
+    QString storagePath = accountPersistentStoragePath(account);
+    if (Q_UNLIKELY(storagePath.isEmpty())) {
+        throw ApplicationSettingsInitializationException(ErrorString(QT_TRANSLATE_NOOP("", "Can't create ApplicationSettings instance: no account persistent storage path")));
     }
 
     storagePath += QStringLiteral("/settings/");

@@ -97,6 +97,40 @@ const QString applicationPersistentStoragePath(bool * pNonStandardLocation)
 #endif // Q_OS_<smth>
 }
 
+const QString accountPersistentStoragePath(const Account & account)
+{
+    QString storagePath = applicationPersistentStoragePath();
+    if (Q_UNLIKELY(storagePath.isEmpty())) {
+        return storagePath;
+    }
+
+    if (Q_UNLIKELY(account.isEmpty())) {
+        return storagePath;
+    }
+
+    QString accountName = account.name();
+    if (Q_UNLIKELY(accountName.isEmpty())) {
+        return storagePath;
+    }
+
+    if (account.type() == Account::Type::Local)
+    {
+        storagePath += QStringLiteral("/LocalAccounts/");
+        storagePath += accountName;
+    }
+    else
+    {
+        storagePath += QStringLiteral("/EvernoteAccounts/");
+        storagePath += accountName;
+        storagePath += QStringLiteral("_");
+        storagePath += account.evernoteHost();
+        storagePath += QStringLiteral("_");
+        storagePath += QString::number(account.id());
+    }
+
+    return storagePath;
+}
+
 const QString applicationTemporaryStoragePath()
 {
 #if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)

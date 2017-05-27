@@ -2360,22 +2360,15 @@ void NoteEditorPrivate::init()
         return;
     }
 
-    m_noteEditorPageFolderPath = applicationPersistentStoragePath();
-    if (m_pAccount->type() == Account::Type::Local)
-    {
-        m_noteEditorPageFolderPath += QStringLiteral("/LocalAccounts/");
-        m_noteEditorPageFolderPath += accountName;
-    }
-    else
-    {
-        m_noteEditorPageFolderPath += QStringLiteral("/EvernoteAccounts/");
-        m_noteEditorPageFolderPath += accountName;
-        m_noteEditorPageFolderPath += QStringLiteral("_");
-        m_noteEditorPageFolderPath += m_pAccount->evernoteHost();
-        m_noteEditorPageFolderPath += QStringLiteral("_");
-        m_noteEditorPageFolderPath += QString::number(m_pAccount->id());
+    QString storagePath = accountPersistentStoragePath(*m_pAccount);
+    if (Q_UNLIKELY(storagePath.isEmpty())) {
+        ErrorString error(QT_TRANSLATE_NOOP("", "Can't initialize the note editor: account persistent storage path is empty"));
+        QNWARNING(error);
+        emit notifyError(error);
+        return;
     }
 
+    m_noteEditorPageFolderPath = storagePath;
     m_noteEditorPageFolderPath += QStringLiteral("/NoteEditorPage");
 
     m_resourceLocalFileStorageFolder = m_noteEditorPageFolderPath + QStringLiteral("/nonImageResources");
