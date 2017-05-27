@@ -22,7 +22,8 @@
 #include <quentier/note_editor/ResourceFileStorageManager.h>
 #include <quentier/utility/FileIOProcessorAsync.h>
 #include <quentier/utility/QuentierCheckPtr.h>
-#include <quentier/utility/DesktopServices.h>
+#include <quentier/utility/Utility.h>
+#include <quentier/utility/MessageBox.h>
 #include <quentier/types/Resource.h>
 #include <quentier/logging/QuentierLogger.h>
 #include <quentier/utility/ApplicationSettings.h>

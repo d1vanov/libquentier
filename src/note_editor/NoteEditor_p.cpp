@@ -59,6 +59,7 @@
 #include "undo_stack/TableActionUndoCommand.h"
 #include <quentier/utility/ApplicationSettings.h>
 #include <quentier/utility/EventLoopWithExitStatus.h>
+#include <quentier/utility/StandardPaths.h>
 #include <quentier/note_editor/SpellChecker.h>
 
 #ifndef QUENTIER_USE_QT_WEB_ENGINE
@@ -81,7 +82,6 @@ typedef QWebSettings WebSettings;
 #include "javascript_glue/WebSocketWaiter.h"
 #include "WebSocketClientWrapper.h"
 #include "WebSocketTransport.h"
-#include <quentier/utility/DesktopServices.h>
 #include <QPainter>
 #include <QIcon>
 #include <QFontMetrics>
@@ -107,7 +107,6 @@ typedef QWebEngineSettings WebSettings;
 #include <quentier/logging/QuentierLogger.h>
 #include <quentier/utility/FileIOProcessorAsync.h>
 #include <quentier/utility/QuentierCheckPtr.h>
-#include <quentier/utility/DesktopServices.h>
 #include <quentier/utility/ShortcutManager.h>
 #include <QFile>
 #include <QFileInfo>

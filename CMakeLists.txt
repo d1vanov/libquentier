@@ -143,7 +143,8 @@ set(EXCEPTION_HEADERS
 
 set(UTILITY_HEADERS
     headers/quentier/utility/ApplicationSettings.h
-    headers/quentier/utility/DesktopServices.h
+    headers/quentier/utility/MessageBox.h
+    headers/quentier/utility/StandardPaths.h
     headers/quentier/utility/EncryptionManager.h
     headers/quentier/utility/EventLoopWithExitStatus.h
     headers/quentier/utility/FileIOProcessorAsync.h
@@ -422,7 +423,8 @@ set(${PROJECT_NAME}_SOURCES
     src/exception/LocalStorageCacheManagerException.cpp
     src/exception/LoggerInitializationException.cpp
     src/utility/ApplicationSettings.cpp
-    src/utility/DesktopServices.cpp
+    src/utility/MessageBox.cpp
+    src/utility/StandardPaths.cpp
     src/utility/EncryptionManager.cpp
     src/utility/EncryptionManager_p.cpp
     src/utility/EventLoopWithExitStatus.cpp

@@ -6,7 +6,7 @@
 #include <quentier/types/Note.h>
 #include <quentier/note_editor/ResourceFileStorageManager.h>
 #include <quentier/utility/ApplicationSettings.h>
-#include <quentier/utility/DesktopServices.h>
+#include <quentier/utility/Utility.h>
 #include <quentier/logging/QuentierLogger.h>
 #include <quentier/enml/ENMLConverter.h>
 #include <QXmlStreamReader>

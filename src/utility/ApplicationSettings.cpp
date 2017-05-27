@@ -17,7 +17,7 @@
  */
 
 #include <quentier/utility/ApplicationSettings.h>
-#include <quentier/utility/DesktopServices.h>
+#include <quentier/utility/StandardPaths.h>
 #include <quentier/exception/ApplicationSettingsInitializationException.h>
 #include <quentier/logging/QuentierLogger.h>
 #include <QApplication>

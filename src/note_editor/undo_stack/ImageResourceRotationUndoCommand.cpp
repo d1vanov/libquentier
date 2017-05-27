@@ -1,6 +1,5 @@
 #include "ImageResourceRotationUndoCommand.h"
 #include <quentier/logging/QuentierLogger.h>
-#include <quentier/utility/DesktopServices.h>
 
 namespace quentier {
 

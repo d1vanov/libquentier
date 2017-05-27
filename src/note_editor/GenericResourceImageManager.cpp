@@ -18,7 +18,7 @@
 
 #include "GenericResourceImageManager.h"
 #include <quentier/logging/QuentierLogger.h>
-#include <quentier/utility/DesktopServices.h>
+#include <quentier/utility/Utility.h>
 #include <quentier/types/Resource.h>
 #include <QFile>
 #include <QFileInfo>

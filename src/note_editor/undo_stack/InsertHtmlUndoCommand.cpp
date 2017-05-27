@@ -1,7 +1,7 @@
 #include "InsertHtmlUndoCommand.h"
 #include "../NoteEditor_p.h"
 #include <quentier/logging/QuentierLogger.h>
-#include <quentier/utility/DesktopServices.h>
+#include <quentier/utility/Utility.h>
 #include <QCryptographicHash>
 #include <QMimeDatabase>
 #include <QMimeType>

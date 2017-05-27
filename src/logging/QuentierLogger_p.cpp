@@ -1,6 +1,6 @@
 #include "QuentierLogger_p.h"
 #include <quentier/exception/LoggerInitializationException.h>
-#include <quentier/utility/DesktopServices.h>
+#include <quentier/utility/StandardPaths.h>
 #include <QApplication>
 #include <QFileInfo>
 #include <QTextCodec>

@@ -147,7 +147,7 @@ public Q_SLOTS:
      * resource and the file extension would be PNG
      *
      * The default storage path would be the folder "inkNoteImages" within the folder returned by
-     * applicationPersistentStoragePath function found in quentier/DesktopServices.h header
+     * applicationPersistentStoragePath function found in quentier/StandardPaths.h header
      *
      * WARNING: if the passed in path cannot be used (either it doesn't exist and cannot be created or exists but is not writable),
      * the default path is silently restored. So make sure you're setting a valid path

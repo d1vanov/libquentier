@@ -19,7 +19,7 @@
 #include "SpellChecker_p.h"
 #include <quentier/utility/FileIOProcessorAsync.h>
 #include <quentier/utility/ApplicationSettings.h>
-#include <quentier/utility/DesktopServices.h>
+#include <quentier/utility/StandardPaths.h>
 #include <quentier/logging/QuentierLogger.h>
 #include <hunspell/hunspell.hxx>
 #include <QFileInfo>

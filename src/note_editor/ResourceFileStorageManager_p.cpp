@@ -21,7 +21,7 @@
 #include <quentier/types/Note.h>
 #include <quentier/types/Resource.h>
 #include <quentier/logging/QuentierLogger.h>
-#include <quentier/utility/DesktopServices.h>
+#include <quentier/utility/Utility.h>
 #include <QWidget>
 #include <QFileInfo>
 #include <QDir>
