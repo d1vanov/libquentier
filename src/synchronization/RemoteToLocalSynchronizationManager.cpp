@@ -200,6 +200,7 @@ void RemoteToLocalSynchronizationManager::setAccount(const Account & account)
 
     m_user.setId(account.id());
     m_user.setName(account.name());
+    m_user.setUsername(account.name());
 
     Account::EvernoteAccountType::type accountEnType = account.evernoteAccountType();
     switch(accountEnType)
@@ -235,7 +236,11 @@ Account RemoteToLocalSynchronizationManager::account() const
     QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::account"));
 
     QString name;
-    if (m_user.hasUsername()) {
+    if (m_user.hasName()) {
+        name = m_user.name();
+    }
+
+    if (name.isEmpty() && m_user.hasUsername()) {
         name = m_user.username();
     }
 
