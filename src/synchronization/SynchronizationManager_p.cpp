@@ -45,6 +45,9 @@
 #define LINKED_NOTEBOOK_LAST_UPDATE_COUNT_KEY QStringLiteral("linked_notebook_last_update_count")
 #define LINKED_NOTEBOOK_LAST_SYNC_TIME_KEY QStringLiteral("linked_notebook_last_sync_time")
 
+#define AUTH_TOKEN_KEYCHAIN_KEY_PART QStringLiteral("_auth_token")
+#define SHARD_ID_KEYCHAIN_KEY_PART QStringLiteral("_shard_id")
+
 namespace quentier {
 
 SynchronizationManagerPrivate::SynchronizationManagerPrivate(const QString & consumerKey, const QString & consumerSecret,
@@ -72,16 +75,16 @@ SynchronizationManagerPrivate::SynchronizationManagerPrivate(const QString & con
     m_cachedLinkedNotebookAuthTokenExpirationTimeByGuid(),
     m_linkedNotebookGuidsAndGlobalIdsWaitingForAuth(),
     m_authenticateToLinkedNotebooksPostponeTimerId(-1),
-    m_readAuthTokenJob(QApplication::applicationName() + QStringLiteral("_read_auth_token")),
-    m_readShardIdJob(QApplication::applicationName() + QStringLiteral("_read_shard_id")),
+    m_readAuthTokenJob(QApplication::applicationName() + AUTH_TOKEN_KEYCHAIN_KEY_PART),
+    m_readShardIdJob(QApplication::applicationName() + SHARD_ID_KEYCHAIN_KEY_PART),
     m_readingAuthToken(false),
     m_readingShardId(false),
-    m_writeAuthTokenJob(QApplication::applicationName() + QStringLiteral("_write_auth_token")),
-    m_writeShardIdJob(QApplication::applicationName() + QStringLiteral("_write_shard_id")),
+    m_writeAuthTokenJob(QApplication::applicationName() + AUTH_TOKEN_KEYCHAIN_KEY_PART),
+    m_writeShardIdJob(QApplication::applicationName() + SHARD_ID_KEYCHAIN_KEY_PART),
     m_writingAuthToken(false),
     m_writingShardId(false),
-    m_deleteAuthTokenJob(QApplication::applicationName() + QStringLiteral("_delete_auth_token")),
-    m_deleteShardIdJob(QApplication::applicationName() + QStringLiteral("delete_shard_id")),
+    m_deleteAuthTokenJob(QApplication::applicationName() + AUTH_TOKEN_KEYCHAIN_KEY_PART),
+    m_deleteShardIdJob(QApplication::applicationName() + SHARD_ID_KEYCHAIN_KEY_PART),
     m_deletingAuthToken(false),
     m_deletingShardId(false),
     m_lastRevokedAuthenticationUserId(-1),
