@@ -35,6 +35,14 @@ namespace quentier {
         errorDescription.details() += userException.exceptionData()->errorMessage; \
     }
 
+#define CATCH_GENERIC_EXCEPTIONS() \
+    catch(const qevercloud::EvernoteException & evernoteException) { \
+        return processEvernoteException(evernoteException, errorDescription); \
+    } \
+    catch(const qevercloud::EverCloudException & everCloudException) { \
+        return processEverCloudException(everCloudException, errorDescription); \
+    }
+
 NoteStore::NoteStore(QSharedPointer<qevercloud::NoteStore> pQecNoteStore, QObject * parent) :
     QObject(parent),
     m_pQecNoteStore(pQecNoteStore),
@@ -87,6 +95,7 @@ qint32 NoteStore::createNotebook(Notebook & notebook, ErrorString & errorDescrip
         return processEdamSystemException(systemException, errorDescription,
                                           rateLimitSeconds);
     }
+    CATCH_GENERIC_EXCEPTIONS()
 
     return qevercloud::EDAMErrorCode::UNKNOWN;
 }
@@ -115,6 +124,7 @@ qint32 NoteStore::updateNotebook(Notebook & notebook, ErrorString & errorDescrip
     {
         processEdamNotFoundException(notFoundException, errorDescription);
     }
+    CATCH_GENERIC_EXCEPTIONS()
 
     return qevercloud::EDAMErrorCode::UNKNOWN;
 }
@@ -136,6 +146,7 @@ qint32 NoteStore::createNote(Note & note, ErrorString & errorDescription, qint32
         return processEdamSystemException(systemException, errorDescription,
                                           rateLimitSeconds);
     }
+    CATCH_GENERIC_EXCEPTIONS()
 
     return qevercloud::EDAMErrorCode::UNKNOWN;
 }
@@ -161,6 +172,7 @@ qint32 NoteStore::updateNote(Note & note, ErrorString & errorDescription, qint32
     {
         processEdamNotFoundException(notFoundException, errorDescription);
     }
+    CATCH_GENERIC_EXCEPTIONS()
 
     return qevercloud::EDAMErrorCode::UNKNOWN;
 }
@@ -183,6 +195,7 @@ qint32 NoteStore::createTag(Tag & tag, ErrorString & errorDescription, qint32 & 
         return processEdamSystemException(systemException, errorDescription,
                                           rateLimitSeconds);
     }
+    CATCH_GENERIC_EXCEPTIONS()
 
     return qevercloud::EDAMErrorCode::UNKNOWN;
 }
@@ -210,6 +223,7 @@ qint32 NoteStore::updateTag(Tag & tag, ErrorString & errorDescription, qint32 & 
     {
         processEdamNotFoundException(notFoundException, errorDescription);
     }
+    CATCH_GENERIC_EXCEPTIONS()
 
     return qevercloud::EDAMErrorCode::UNKNOWN;
 }
@@ -232,6 +246,7 @@ qint32 NoteStore::createSavedSearch(SavedSearch & savedSearch, ErrorString & err
         return processEdamSystemException(systemException, errorDescription,
                                           rateLimitSeconds);
     }
+    CATCH_GENERIC_EXCEPTIONS()
 
     return qevercloud::EDAMErrorCode::UNKNOWN;
 }
@@ -259,6 +274,7 @@ qint32 NoteStore::updateSavedSearch(SavedSearch & savedSearch, ErrorString & err
     {
         processEdamNotFoundException(notFoundException, errorDescription);
     }
+    CATCH_GENERIC_EXCEPTIONS()
 
     return qevercloud::EDAMErrorCode::UNKNOWN;
 }
@@ -280,6 +296,7 @@ qint32 NoteStore::getSyncState(qevercloud::SyncState & syncState, ErrorString & 
     {
         return processEdamSystemException(systemException, errorDescription, rateLimitSeconds);
     }
+    CATCH_GENERIC_EXCEPTIONS()
 
     return qevercloud::EDAMErrorCode::UNKNOWN;
 }
@@ -304,6 +321,7 @@ qint32 NoteStore::getSyncChunk(const qint32 afterUSN, const qint32 maxEntries,
         return processEdamSystemException(systemException, errorDescription,
                                           rateLimitSeconds);
     }
+    CATCH_GENERIC_EXCEPTIONS()
 
     return qevercloud::EDAMErrorCode::UNKNOWN;
 }
@@ -336,6 +354,7 @@ qint32 NoteStore::getLinkedNotebookSyncState(const qevercloud::LinkedNotebook & 
     {
         return processEdamSystemException(systemException, errorDescription, rateLimitSeconds);
     }
+    CATCH_GENERIC_EXCEPTIONS()
 
     return qevercloud::EDAMErrorCode::UNKNOWN;
 }
@@ -389,6 +408,7 @@ qint32 NoteStore::getLinkedNotebookSyncChunk(const qevercloud::LinkedNotebook & 
     {
         return processEdamSystemException(systemException, errorDescription, rateLimitSeconds);
     }
+    CATCH_GENERIC_EXCEPTIONS()
 
     return qevercloud::EDAMErrorCode::UNKNOWN;
 }
@@ -422,6 +442,7 @@ qint32 NoteStore::getNote(const bool withContent, const bool withResourcesData,
     {
         return processEdamSystemException(systemException, errorDescription, rateLimitSeconds);
     }
+    CATCH_GENERIC_EXCEPTIONS()
 
     return qevercloud::EDAMErrorCode::UNKNOWN;
 }
@@ -521,6 +542,7 @@ qint32 NoteStore::authenticateToSharedNotebook(const QString & shareKey, qevercl
 
         return systemException.errorCode;
     }
+    CATCH_GENERIC_EXCEPTIONS()
 
     return qevercloud::EDAMErrorCode::UNKNOWN;
 }
@@ -579,6 +601,15 @@ void NoteStore::onGetNoteAsyncFinished(QVariant result, QSharedPointer<EverCloud
         catch(const qevercloud::EDAMSystemException & systemException)
         {
             errorCode = processEdamSystemException(systemException, errorDescription, rateLimitSeconds);
+        }
+        catch(const qevercloud::EverCloudException & everCloudException)
+        {
+            errorDescription.setBase(QT_TRANSLATE_NOOP("", "Caught EverCloudException"));
+            if (!everCloudException.exceptionData().isNull()) {
+                errorDescription.details() = everCloudException.exceptionData()->errorMessage;
+            }
+
+            errorCode = qevercloud::EDAMErrorCode::UNKNOWN;
         }
 
         emit getNoteAsyncFinished(errorCode, note, rateLimitSeconds, errorDescription);
@@ -1372,6 +1403,36 @@ void NoteStore::processEdamNotFoundException(const qevercloud::EDAMNotFoundExcep
     if (notFoundException.key.isSet() && !notFoundException.key->isEmpty()) {
         errorDescription.details() = notFoundException.key.ref();
     }
+}
+
+qint32 NoteStore::processEvernoteException(const qevercloud::EvernoteException & evernoteException,
+                                           ErrorString & errorDescription) const
+{
+    errorDescription.setBase(QT_TRANSLATE_NOOP("", "Note store caught EvernoteException from QEverCloud"));
+
+    if (Q_UNLIKELY(evernoteException.exceptionData().isNull())) {
+        errorDescription.appendBase(QT_TRANSLATE_NOOP("", "exception data is null"));
+    }
+    else {
+        errorDescription.details() = evernoteException.exceptionData()->errorMessage;
+    }
+
+    return qevercloud::EDAMErrorCode::UNKNOWN;
+}
+
+qint32 NoteStore::processEverCloudException(const qevercloud::EverCloudException & everCloudException,
+                                            ErrorString & errorDescription) const
+{
+    errorDescription.setBase(QT_TRANSLATE_NOOP("", "Note store caught EverCloudException from QEverCloud"));
+
+    if (Q_UNLIKELY(everCloudException.exceptionData().isNull())) {
+        errorDescription.appendBase(QT_TRANSLATE_NOOP("", "exception data is null"));
+    }
+    else {
+        errorDescription.details() = everCloudException.exceptionData()->errorMessage;
+    }
+
+    return qevercloud::EDAMErrorCode::UNKNOWN;
 }
 
 } // namespace quentier
