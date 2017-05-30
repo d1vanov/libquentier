@@ -286,9 +286,6 @@ void SynchronizationManagerPrivate::onOAuthResult(bool success, qevercloud::User
         m_OAuthResult = authData;
         QNDEBUG(QStringLiteral("OAuth result = ") << m_OAuthResult);
 
-        m_noteStore.setNoteStoreUrl(noteStoreUrl);
-        m_noteStore.setAuthenticationToken(authToken);
-
         Account previousAccount = m_remoteToLocalSyncManager.account();
 
         Account newAccount(QString(), Account::Type::Evernote, userId, Account::EvernoteAccountType::Free, m_host);
@@ -931,6 +928,10 @@ void SynchronizationManagerPrivate::launchSync()
 
     emit notifyStart();
 
+    m_noteStore.setNoteStoreUrl(m_OAuthResult.m_noteStoreUrl);
+    m_noteStore.setAuthenticationToken(m_OAuthResult.m_authToken);
+    m_userStore.setAuthenticationToken(m_OAuthResult.m_authToken);
+
     if (m_lastUpdateCount <= 0) {
         QNDEBUG(QStringLiteral("The client has never synchronized with the remote service, "
                                "performing the full sync"));
@@ -1044,8 +1045,10 @@ void SynchronizationManagerPrivate::finalizeAuthentication()
         break;
     }
     case AuthContext::SyncLaunch:
+    {
         launchSync();
         break;
+    }
     case AuthContext::Request:
     {
         Account account = m_remoteToLocalSyncManager.account();

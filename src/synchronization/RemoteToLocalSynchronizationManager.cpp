@@ -2636,7 +2636,7 @@ void RemoteToLocalSynchronizationManager::onLastSyncParametersReceived(qint32 la
     QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::onLastSyncParametersReceived: last update count = ")
             << lastUpdateCount << QStringLiteral(", last sync time = ") << lastSyncTime
             << QStringLiteral(", last update counts per linked notebook = ") << lastUpdateCountByLinkedNotebookGuid
-            << QStringLiteral("last sync time per linked notebook = ") << lastSyncTimeByLinkedNotebookGuid);
+            << QStringLiteral(", last sync time per linked notebook = ") << lastSyncTimeByLinkedNotebookGuid);
 
     m_lastUpdateCount = lastUpdateCount;
     m_lastSyncTime = lastSyncTime;
@@ -4335,6 +4335,7 @@ bool RemoteToLocalSynchronizationManager::downloadLinkedNotebooksSyncChunks()
         const QString & linkedNotebookGuid = linkedNotebook.guid();
 
         bool fullSyncOnly = false;
+
         auto lastSynchronizedUsnIt = m_lastSynchronizedUsnByLinkedNotebookGuid.find(linkedNotebookGuid);
         if (lastSynchronizedUsnIt == m_lastSynchronizedUsnByLinkedNotebookGuid.end()) {
             lastSynchronizedUsnIt = m_lastSynchronizedUsnByLinkedNotebookGuid.insert(linkedNotebookGuid, 0);
@@ -4414,13 +4415,12 @@ bool RemoteToLocalSynchronizationManager::downloadLinkedNotebooksSyncChunks()
         {
             if (pSyncChunk) {
                 afterUsn = pSyncChunk->chunkHighUSN;
+                QNTRACE(QStringLiteral("Updated afterUSN for linked notebook to sync chunk's high USN: ")
+                        << pSyncChunk->chunkHighUSN);
             }
 
             m_linkedNotebookSyncChunks.push_back(qevercloud::SyncChunk());
             pSyncChunk = &(m_linkedNotebookSyncChunks.back());
-
-            m_lastSyncTime = std::max(pSyncChunk->currentTime, m_lastSyncTime);
-            m_lastUpdateCount = std::max(pSyncChunk->updateCount, m_lastUpdateCount);
 
             ErrorString errorDescription;
             qint32 rateLimitSeconds = 0;
@@ -4480,6 +4480,14 @@ bool RemoteToLocalSynchronizationManager::downloadLinkedNotebooksSyncChunks()
 
             QNDEBUG(QStringLiteral("Received sync chunk: ") << *pSyncChunk);
 
+            lastSyncTime = std::max(pSyncChunk->currentTime, lastSyncTime);
+            lastUpdateCount = std::max(pSyncChunk->updateCount, lastUpdateCount);
+
+            QNTRACE(QStringLiteral("Linked notebook's sync chunk current time: ") << printableDateTimeFromTimestamp(pSyncChunk->currentTime)
+                    << QStringLiteral(", last sync time = ") << printableDateTimeFromTimestamp(lastSyncTime)
+                    << QStringLiteral(", sync chunk update count = ") << pSyncChunk->updateCount
+                    << QStringLiteral(", last update count = ") << lastUpdateCount);
+
             if (pSyncChunk->tags.isSet())
             {
                 bool res = mapContainerElementsWithLinkedNotebookGuid<TagsList>(linkedNotebookGuid, pSyncChunk->tags.ref());
@@ -4505,8 +4513,10 @@ bool RemoteToLocalSynchronizationManager::downloadLinkedNotebooksSyncChunks()
             }
         }
 
+        lastSynchronizedUsnIt.value() = afterUsn;
+        lastSyncTimeIt.value() = lastSyncTime;
+        lastUpdateCountIt.value() = lastUpdateCount;
         Q_UNUSED(m_linkedNotebookGuidsForWhichSyncChunksWereDownloaded.insert(linkedNotebook.guid()));
-        m_lastSynchronizedUsnByLinkedNotebookGuid[linkedNotebookGuid] = afterUsn;
     }
 
     QNDEBUG(QStringLiteral("Done. Processing content pointed to by linked notebooks from buffered sync chunks"));
@@ -4701,6 +4711,26 @@ void RemoteToLocalSynchronizationManager::checkServerDataMergeCompletion()
 
 void RemoteToLocalSynchronizationManager::finalize()
 {
+    QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::finalize: last update count = ")
+            << m_lastUpdateCount << QStringLiteral(", last sync time = ") << printableDateTimeFromTimestamp(m_lastSyncTime));
+
+    if (QuentierIsLogLevelActive(LogLevel::TraceLevel))
+    {
+        QNTRACE(QStringLiteral("Last update counts by linked notebook guids: "));
+        for(auto it = m_lastUpdateCountByLinkedNotebookGuid.constBegin(),
+            end = m_lastUpdateCountByLinkedNotebookGuid.constEnd(); it != end; ++it)
+        {
+            QNTRACE(QStringLiteral("guid = ") << it.key() << QStringLiteral(", last update count = ") << it.value());
+        }
+
+        QNTRACE(QStringLiteral("Last sync times by linked notebook guids: "));
+        for(auto it = m_lastSyncTimeByLinkedNotebookGuid.constBegin(),
+            end = m_lastSyncTimeByLinkedNotebookGuid.constEnd(); it != end; ++it)
+        {
+            QNTRACE(QStringLiteral("guid = ") << it.key() << QStringLiteral(", last sync time = ") << printableDateTimeFromTimestamp(it.value()));
+        }
+    }
+
     m_onceSyncDone = true;
     emit finished(m_lastUpdateCount, m_lastSyncTime, m_lastUpdateCountByLinkedNotebookGuid, m_lastSyncTimeByLinkedNotebookGuid);
     clear();
@@ -5109,13 +5139,11 @@ void RemoteToLocalSynchronizationManager::downloadSyncChunksAndLaunchSync(qint32
     {
         if (pSyncChunk) {
             afterUsn = pSyncChunk->chunkHighUSN;
+            QNTRACE(QStringLiteral("Updated after USN to sync chunk's high USN: ") << pSyncChunk->chunkHighUSN);
         }
 
         m_syncChunks.push_back(qevercloud::SyncChunk());
         pSyncChunk = &(m_syncChunks.back());
-
-        m_lastSyncTime = std::max(pSyncChunk->currentTime, m_lastSyncTime);
-        m_lastUpdateCount = std::max(pSyncChunk->updateCount, m_lastUpdateCount);
 
         qevercloud::SyncChunkFilter filter;
         filter.includeNotebooks = true;
@@ -5176,6 +5204,14 @@ void RemoteToLocalSynchronizationManager::downloadSyncChunksAndLaunchSync(qint32
         }
 
         QNDEBUG(QStringLiteral("Received sync chunk: ") << *pSyncChunk);
+
+        m_lastSyncTime = std::max(pSyncChunk->currentTime, m_lastSyncTime);
+        m_lastUpdateCount = std::max(pSyncChunk->updateCount, m_lastUpdateCount);
+
+        QNTRACE(QStringLiteral("Sync chunk current time: ") << printableDateTimeFromTimestamp(pSyncChunk->currentTime)
+                << QStringLiteral(", last sync time = ") << printableDateTimeFromTimestamp(m_lastSyncTime)
+                << QStringLiteral(", sync chunk update count = ") << pSyncChunk->updateCount << QStringLiteral(", last update count = ")
+                << m_lastUpdateCount);
     }
 
     QNDEBUG(QStringLiteral("Done. Processing tags, saved searches, linked notebooks and notebooks from buffered sync chunks"));
@@ -6161,7 +6197,7 @@ void RemoteToLocalSynchronizationManager::emitFindByNameRequest<Notebook>(const 
 
     QUuid findElementRequestId = QUuid::createUuid();
     Q_UNUSED(m_findNotebookByNameRequestIds.insert(findElementRequestId));
-    QNTRACE(QStringLiteral("Emitting the request to find saved search in the local storage: request id = ")
+    QNTRACE(QStringLiteral("Emitting the request to find notebook in the local storage by name: request id = ")
             << findElementRequestId << QStringLiteral(", notebook: ") << notebook);
     emit findNotebook(notebook, findElementRequestId);
 }
