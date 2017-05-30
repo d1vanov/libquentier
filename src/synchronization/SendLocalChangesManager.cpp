@@ -1013,10 +1013,10 @@ void SendLocalChangesManager::disconnectFromLocalStorage()
 
     QObject::disconnect(&m_localStorageManagerAsync,
                         QNSIGNAL(LocalStorageManagerAsync,listNotebooksComplete,LocalStorageManager::ListObjectsOptions,size_t,size_t,
-                                 LocalStorageManager::ListNotebooksOrder::type,LocalStorageManager::OrderDirection::type,QList<Notebook>,QString,QUuid),
+                                 LocalStorageManager::ListNotebooksOrder::type,LocalStorageManager::OrderDirection::type,QString,QList<Notebook>,QUuid),
                         this,
                         QNSLOT(SendLocalChangesManager,onListDirtyNotebooksCompleted,LocalStorageManager::ListObjectsOptions,size_t,size_t,
-                               LocalStorageManager::ListNotebooksOrder::type,LocalStorageManager::OrderDirection::type,QList<Notebook>,QString,QUuid));
+                               LocalStorageManager::ListNotebooksOrder::type,LocalStorageManager::OrderDirection::type,QString,QList<Notebook>,QUuid));
 
     QObject::disconnect(&m_localStorageManagerAsync,
                         QNSIGNAL(LocalStorageManagerAsync,listNotebooksFailed,LocalStorageManager::ListObjectsOptions,size_t,size_t,
