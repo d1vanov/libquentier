@@ -689,7 +689,8 @@ public:
     /**
      * @brief updateTag - updates passed in Tag in the local storage database. If tag has
      * "remote" Evernote service's guid set, it is identified in the database by this guid.
-     * Otherwise it is identified by local uid; may be changed as a result of the call,
+     * Otherwise it is identified by local uid; the failure to identify the tag by guid would also
+     * "fall back" to the identification by local uid; the passed in tag can be changed as a result of the call,
      * automatically filled with local uid if it was empty before the call
      * @param tag - Tag filled with values to be updated in the local storage database
      * @param errorDescription - error description if Tag could not be updated

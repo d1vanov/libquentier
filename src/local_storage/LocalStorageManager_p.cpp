@@ -2685,14 +2685,26 @@ bool LocalStorageManagerPrivate::updateTag(Tag & tag, ErrorString & errorDescrip
         uid = tag.localUid();
     }
 
-    if (shouldCheckTagExistence && !rowExists(QStringLiteral("Tags"), column, uid)) {
-        errorDescription.base() = errorPrefix.base();
-        errorDescription.appendBase(QT_TRANSLATE_NOOP("", "tag was not found in the local storage database"));
-        errorDescription.details() = column;
-        errorDescription.details() += QStringLiteral(" = ");
-        errorDescription.details() += uid;
-        QNWARNING(errorDescription);
-        return false;
+    if (shouldCheckTagExistence && !rowExists(QStringLiteral("Tags"), column, uid))
+    {
+        bool foundByOtherColumn = false;
+
+        if (tagHasGuid) {
+            QNDEBUG(QStringLiteral("Failed to find the tag by guid within the local storage, trying to find it by local uid"));
+            column = QStringLiteral("localUid");
+            uid = tag.localUid();
+            foundByOtherColumn = rowExists(QStringLiteral("Tags"), column, uid);
+        }
+
+        if (!foundByOtherColumn) {
+            errorDescription.base() = errorPrefix.base();
+            errorDescription.appendBase(QT_TRANSLATE_NOOP("", "tag was not found in the local storage database"));
+            errorDescription.details() = column;
+            errorDescription.details() += QStringLiteral(" = ");
+            errorDescription.details() += uid;
+            QNWARNING(errorDescription);
+            return false;
+        }
     }
 
     error.clear();
