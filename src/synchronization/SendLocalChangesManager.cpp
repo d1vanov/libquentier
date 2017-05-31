@@ -557,6 +557,7 @@ void SendLocalChangesManager::onUpdateTagCompleted(Tag tag, QUuid requestId)
     QNDEBUG(QStringLiteral("SendLocalChangesManager::onUpdateTagCompleted: tag = ") << tag << QStringLiteral("\nRequest id = ") << requestId);
     Q_UNUSED(m_updateTagRequestIds.erase(it));
 
+    checkSendLocalChangesAndDirtyFlagsRemovingUpdatesAndFinalize();
     CHECK_STOPPED();
 }
 
@@ -593,6 +594,7 @@ void SendLocalChangesManager::onUpdateSavedSearchCompleted(SavedSearch savedSear
             << QStringLiteral("\nRequest id = ") << requestId);
     Q_UNUSED(m_updateSavedSearchRequestIds.erase(it));
 
+    checkSendLocalChangesAndDirtyFlagsRemovingUpdatesAndFinalize();
     CHECK_STOPPED();
 }
 
@@ -629,6 +631,7 @@ void SendLocalChangesManager::onUpdateNotebookCompleted(Notebook notebook, QUuid
             << QStringLiteral("\nRequest id = ") << requestId);
     Q_UNUSED(m_updateNotebookRequestIds.erase(it));
 
+    checkSendLocalChangesAndDirtyFlagsRemovingUpdatesAndFinalize();
     CHECK_STOPPED();
 }
 
@@ -667,6 +670,7 @@ void SendLocalChangesManager::onUpdateNoteCompleted(Note note, bool updateResour
     QNDEBUG(QStringLiteral("SendLocalChangesManager::onUpdateNoteCompleted: note = ") << note << QStringLiteral("\nRequest id = ") << requestId);
     Q_UNUSED(m_updateNoteRequestIds.erase(it));
 
+    checkSendLocalChangesAndDirtyFlagsRemovingUpdatesAndFinalize();
     CHECK_STOPPED();
 }
 
@@ -828,12 +832,14 @@ void SendLocalChangesManager::createConnections()
                      QNSLOT(LocalStorageManagerAsync,onListLinkedNotebooksRequest,LocalStorageManager::ListObjectsOptions,size_t,size_t,
                             LocalStorageManager::ListLinkedNotebooksOrder::type,LocalStorageManager::OrderDirection::type,QUuid));
 
-    QObject::connect(this, QNSIGNAL(SendLocalChangesManager,updateTag,Tag,QUuid), &m_localStorageManagerAsync,
-                     QNSLOT(LocalStorageManagerAsync,onUpdateTagRequest,Tag,QUuid));
-    QObject::connect(this, QNSIGNAL(SendLocalChangesManager,updateSavedSearch,SavedSearch,QUuid), &m_localStorageManagerAsync,
-                     QNSLOT(LocalStorageManagerAsync,onUpdateSavedSearchRequest,SavedSearch,QUuid));
-    QObject::connect(this, QNSIGNAL(SendLocalChangesManager,updateNotebook,Notebook,QUuid), &m_localStorageManagerAsync,
-                     QNSLOT(LocalStorageManagerAsync,onUpdateNotebookRequest,Notebook,QUuid));
+    QObject::connect(this, QNSIGNAL(SendLocalChangesManager,updateTag,Tag,QUuid),
+                     &m_localStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,onUpdateTagRequest,Tag,QUuid));
+    QObject::connect(this, QNSIGNAL(SendLocalChangesManager,updateSavedSearch,SavedSearch,QUuid),
+                     &m_localStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,onUpdateSavedSearchRequest,SavedSearch,QUuid));
+    QObject::connect(this, QNSIGNAL(SendLocalChangesManager,updateNotebook,Notebook,QUuid),
+                     &m_localStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,onUpdateNotebookRequest,Notebook,QUuid));
+    QObject::connect(this, QNSIGNAL(SendLocalChangesManager,updateNote,Note,bool,bool,QUuid),
+                     &m_localStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,onUpdateNoteRequest,Note,bool,bool,QUuid));
 
     QObject::connect(this, QNSIGNAL(SendLocalChangesManager,findNotebook,Notebook,QUuid), &m_localStorageManagerAsync,
                      QNSLOT(LocalStorageManagerAsync,onFindNotebookRequest,Notebook,QUuid));
@@ -978,6 +984,8 @@ void SendLocalChangesManager::disconnectFromLocalStorage()
                         QNSLOT(LocalStorageManagerAsync,onUpdateSavedSearchRequest,SavedSearch,QUuid));
     QObject::disconnect(this, QNSIGNAL(SendLocalChangesManager,updateNotebook,Notebook,QUuid), &m_localStorageManagerAsync,
                         QNSLOT(LocalStorageManagerAsync,onUpdateNotebookRequest,Notebook,QUuid));
+    QObject::disconnect(this, QNSIGNAL(SendLocalChangesManager,updateNote,Note,bool,bool,QUuid),
+                        &m_localStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,onUpdateNoteRequest,Note,bool,bool,QUuid));
 
     QObject::disconnect(this, QNSIGNAL(SendLocalChangesManager,findNotebook,Notebook,QUuid), &m_localStorageManagerAsync,
                         QNSLOT(LocalStorageManagerAsync,onFindNotebookRequest,Notebook,QUuid));
@@ -1088,7 +1096,6 @@ void SendLocalChangesManager::requestStuffFromLocalStorage(const QString & linke
 
     bool emptyLinkedNotebookGuid = linkedNotebookGuid.isEmpty();
 
-    // WARNING: this flag assumes that all local-but-not-yet-synchronized objects would have dirty flag set!
     LocalStorageManager::ListObjectsOptions listDirtyObjectsFlag =
             LocalStorageManager::ListDirty | LocalStorageManager::ListNonLocal;
 
@@ -1232,7 +1239,7 @@ void SendLocalChangesManager::checkListLocalStorageObjectsCompletion()
         sendLocalChanges();
     }
     else {
-        QNINFO(QStringLiteral("No modified or new synchronizable objects were found in the local storage, nothing to send to the remote service"));
+        QNINFO(QStringLiteral("No modified or new synchronizable objects were found in the local storage, nothing to send to Evernote service"));
         finalize();
     }
 }
@@ -1385,6 +1392,15 @@ void SendLocalChangesManager::sendTags()
             return;
         }
 
+        QNDEBUG(QStringLiteral("Successfully sent the tag to Evernote"));
+
+        tag.setDirty(false);
+        QUuid updateTagRequestId = QUuid::createUuid();
+        Q_UNUSED(m_updateTagRequestIds.insert(updateTagRequestId))
+        QNTRACE(QStringLiteral("Emitting the request to update tag (remove dirty flag from it): request id = ")
+                << updateTagRequestId << QStringLiteral(", tag: ") << tag);
+        emit updateTag(tag, updateTagRequestId);
+
         if (!m_shouldRepeatIncrementalSync)
         {
             QNTRACE(QStringLiteral("Checking if we are still in sync with the remote service"));
@@ -1502,6 +1518,15 @@ void SendLocalChangesManager::sendSavedSearches()
             emit failure(error);
             return;
         }
+
+        QNDEBUG(QStringLiteral("Successfully sent the saved search to Evernote"));
+
+        search.setDirty(false);
+        QUuid updateSavedSearchRequestId = QUuid::createUuid();
+        Q_UNUSED(m_updateSavedSearchRequestIds.insert(updateSavedSearchRequestId))
+        QNTRACE(QStringLiteral("Emitting the request to update saved search (remove the dirty flag from it): request id = ")
+                << updateSavedSearchRequestId << QStringLiteral(", saved search: ") << search);
+        emit updateSavedSearch(search, updateSavedSearchRequestId);
 
         if (!m_shouldRepeatIncrementalSync)
         {
@@ -1651,6 +1676,15 @@ void SendLocalChangesManager::sendNotebooks()
             emit failure(error);
             return;
         }
+
+        QNDEBUG(QStringLiteral("Successfully sent the notebook to Evernote"));
+
+        notebook.setDirty(false);
+        QUuid updateNotebookRequestId = QUuid::createUuid();
+        Q_UNUSED(m_updateNotebookRequestIds.insert(updateNotebookRequestId))
+        QNTRACE(QStringLiteral("Emitting the request to update notebook (remove dirty flag from it): request id = ")
+                << updateNotebookRequestId << QStringLiteral(", notebook: ") << notebook);
+        emit updateNotebook(notebook, updateNotebookRequestId);
 
         if (!m_shouldRepeatIncrementalSync)
         {
@@ -1855,6 +1889,15 @@ void SendLocalChangesManager::sendNotes()
             return;
         }
 
+        QNDEBUG(QStringLiteral("Successfully sent the note to Evernote"));
+
+        note.setDirty(false);
+        QUuid updateNoteRequestId = QUuid::createUuid();
+        Q_UNUSED(m_updateNoteRequestIds.insert(updateNoteRequestId))
+        QNTRACE(QStringLiteral("Emitting the request to update note (remove the dirty flag from it): request id = ")
+                << updateNoteRequestId << QStringLiteral(", note: ") << note);
+        emit updateNote(note, /* update resources = */ false, /* update tags = */ false, updateNoteRequestId);
+
         if (!m_shouldRepeatIncrementalSync)
         {
             QNTRACE(QStringLiteral("Checking if we are still in sync with Evernote service"));
@@ -1902,9 +1945,12 @@ void SendLocalChangesManager::sendNotes()
         it = m_notes.erase(it);
     }
 
-    // If we got here, we are actually done
     QNINFO(QStringLiteral("Sent all locally added/updated notes back to the Evernote service"));
-    finalize();
+
+    // NOTE: as notes are sent the last, after sending them we must be done;
+    // the only possibly still pending transactions are those removing dirty flags
+    // from sent objects within the local storage
+    checkDirtyFlagRemovingUpdatesAndFinalize();
 }
 
 void SendLocalChangesManager::findNotebooksForNotes()
@@ -1985,8 +2031,54 @@ bool SendLocalChangesManager::hasPendingRequests() const
              !m_findNotebookRequestIds.isEmpty() );
 }
 
+void SendLocalChangesManager::checkSendLocalChangesAndDirtyFlagsRemovingUpdatesAndFinalize()
+{
+    QNDEBUG(QStringLiteral("SendLocalChangesManager::checkSendLocalChangesAndDirtyFlagsRemovingUpdatesAndFinalize"));
+
+    if (m_tags.isEmpty() && m_savedSearches.isEmpty() && m_notebooks.isEmpty() && m_notes.isEmpty()) {
+        checkDirtyFlagRemovingUpdatesAndFinalize();
+    }
+
+}
+
+void SendLocalChangesManager::checkDirtyFlagRemovingUpdatesAndFinalize()
+{
+    QNDEBUG(QStringLiteral("SendLocalChangesManager::checkDirtyFlagRemovingUpdatesAndFinalize"));
+
+    if (!m_updateTagRequestIds.isEmpty()) {
+        QNDEBUG(QStringLiteral("Still pending ") << m_updateTagRequestIds.size()
+                << QStringLiteral(" update tag requests"));
+        return;
+    }
+
+    if (!m_updateSavedSearchRequestIds.isEmpty()) {
+        QNDEBUG(QStringLiteral("Still pending ") << m_updateSavedSearchRequestIds.size()
+                << QStringLiteral(" update saved search requests"));
+        return;
+    }
+
+    if (!m_updateNotebookRequestIds.isEmpty()) {
+        QNDEBUG(QStringLiteral("Still pending ") << m_updateNotebookRequestIds.size()
+                << QStringLiteral(" update notebook requests"));
+        return;
+    }
+
+    if (!m_updateNoteRequestIds.isEmpty()) {
+        QNDEBUG(QStringLiteral("Still pending ") << m_updateNoteRequestIds.size()
+                << QStringLiteral(" update note requests"));
+        return;
+    }
+
+    QNDEBUG(QStringLiteral("Found no pending update requests"));
+    finalize();
+}
+
 void SendLocalChangesManager::finalize()
 {
+    QNDEBUG(QStringLiteral("SendLocalChangesManager::finalize: last update count = ")
+            << m_lastUpdateCount << QStringLiteral(", last update count by linked notebook guid = ")
+            << m_lastUpdateCountByLinkedNotebookGuid);
+
     emit finished(m_lastUpdateCount, m_lastUpdateCountByLinkedNotebookGuid);
     clear();
     disconnectFromLocalStorage();

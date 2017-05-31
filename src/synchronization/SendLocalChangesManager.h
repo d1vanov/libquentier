@@ -106,6 +106,7 @@ Q_SIGNALS:
     void updateTag(Tag tag, QUuid requestId);
     void updateSavedSearch(SavedSearch savedSearch, QUuid requestId);
     void updateNotebook(Notebook notebook, QUuid requestId);
+    void updateNote(Note note, bool updateResources, bool updateTags, QUuid requestId);
 
     void findNotebook(Notebook notebook, QUuid requestId);
 
@@ -209,6 +210,8 @@ private:
     bool rateLimitIsActive() const;
 
     bool hasPendingRequests() const;
+    void checkSendLocalChangesAndDirtyFlagsRemovingUpdatesAndFinalize();
+    void checkDirtyFlagRemovingUpdatesAndFinalize();
     void finalize();
     void clear();
     void killAllTimers();
