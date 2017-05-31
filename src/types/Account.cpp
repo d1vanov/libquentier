@@ -232,7 +232,7 @@ QTextStream & Account::print(QTextStream & strm) const
     }
     strm << QStringLiteral(";\n");
 
-    strm << QStringLiteral("    Evernote hsot = ") << d->m_evernoteHost << QStringLiteral(";\n");
+    strm << QStringLiteral("    Evernote host = ") << d->m_evernoteHost << QStringLiteral(";\n");
 
     strm << QStringLiteral("    mail limit daily = ") << d->m_mailLimitDaily << QStringLiteral(";\n");
     strm << QStringLiteral("    note size max = ") << d->m_noteSizeMax << QStringLiteral(";\n");
