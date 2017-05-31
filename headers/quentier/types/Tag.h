@@ -56,8 +56,8 @@ public:
     bool operator==(const Tag & other) const;
     bool operator!=(const Tag & other) const;
 
-    operator const qevercloud::Tag &() const;
-    operator qevercloud::Tag &();
+    const qevercloud::Tag & qevercloudTag() const;
+    qevercloud::Tag & qevercloudTag();
 
     virtual void clear() Q_DECL_OVERRIDE;
 

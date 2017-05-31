@@ -198,7 +198,9 @@ public:
      * @brief updateNotebook - updates the passed in Notebook in the local storage database
      *
      * If the notebook has "remote" Evernote service's guid set, it is identified by this guid
-     * in the local storage database. Otherwise it is identified by the local uid
+     * in the local storage database. If no notebook with such guid is found, the local uid is used
+     * to identify the notebook in the local storage database. If the notebook has no guid, the local uid
+     * is used to identify it in the local storage database.
      *
      * @param notebook - notebook to be updated in the local storage database; the object is passed by reference
      * and may be changed as a result of the call (filled with autocompleted fields like local uid if it was empty
@@ -500,6 +502,12 @@ public:
 
     /**
      * @brief updateNote - updates passed in Note in the local storage database
+     *
+     * If the note has "remote" Evernote service's guid set, it is identified by this guid
+     * in the local storage database. If no note with such guid is found, the local uid is used
+     * to identify the note in the local storage database. If the note has no guid, the local uid
+     * is used to identify it in the local storage database.
+     *
      * @param note - note to be updated in the local storage database; required to contain either "remote" notebook guid
      * or local notebook uid; may be changed as a result of the call, filled with fields like local uid or notebook guid or local uid
      * if any of these were empty before the call; bear in mind that after the call the note may not have the representative resources
@@ -687,12 +695,15 @@ public:
     bool addTag(Tag & tag, ErrorString & errorDescription);
 
     /**
-     * @brief updateTag - updates passed in Tag in the local storage database. If tag has
-     * "remote" Evernote service's guid set, it is identified in the database by this guid.
-     * Otherwise it is identified by local uid; the failure to identify the tag by guid would also
-     * "fall back" to the identification by local uid; the passed in tag can be changed as a result of the call,
-     * automatically filled with local uid if it was empty before the call
-     * @param tag - Tag filled with values to be updated in the local storage database
+     * @brief updateTag - updates passed in Tag in the local storage database.
+     *
+     * If the tag has "remote" Evernote service's guid set, it is identified by this guid
+     * in the local storage database. If no tag with such guid is found, the local uid is used
+     * to identify the tag in the local storage database. If the tag has no guid, the local uid
+     * is used to identify it in the local storage database.
+     *
+     * @param tag - Tag filled with values to be updated in the local storage database. Note that it can be changed
+     * as a result of the call: automatically filled with local uid if it was empty before the call
      * @param errorDescription - error description if Tag could not be updated
      * @return true if Tag was updated successfully, false otherwise
      */
@@ -829,7 +840,13 @@ public:
     bool addEnResource(Resource & resource, ErrorString & errorDescription);
 
     /**
-     * @brief updateEnResource - updates passed in resource in the local storage database
+     * @brief updateEnResource - updates passed in resource in the local storage database.
+     *
+     * If the resource has "remote" Evernote service's guid set, it is identified by this guid
+     * in the local storage database. If no resource with such guid is found, the local uid is used
+     * to identify the resource in the local storage database. If the resource has no guid, the local uid
+     * is used to identify it in the local storage database.
+     *
      * @param resource - resource to be updated; may be changed as a result of the call,
      * automatically filled with local uid and note local uid and/or guid if these were empty before the call
      * @param errorDescription - error description if resource could not be updated
@@ -883,8 +900,12 @@ public:
 
     /**
      * @brief updateSavedSearch - updates passed in SavedSearch in th local storage database.
+     *
      * If search has "remote" Evernote service's guid set, it is identified in the database
-     * by this guid. Otherwise it is identified by local uid
+     * by this guid. If no saved search with such guid is found, the local uid is used
+     * to identify the saved search in the local storage database. If the saved search has no guid,
+     * the local uid is used to identify it in the local storage database.
+     *
      * @param search - SavedSearch filled with values to be updated in the local storage database;
      * may be changed as a result of the call filled local uid if it was empty before the call
      * @param errorDescription - error description if SavedSearch could not be updated

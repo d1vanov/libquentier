@@ -751,13 +751,24 @@ bool LocalStorageManagerPrivate::updateNotebook(Notebook & notebook, ErrorString
 
     if (shouldCheckRowExistence && !rowExists(QStringLiteral("Notebooks"), column, uid))
     {
-        errorDescription.base() = errorPrefix.base();
-        errorDescription.appendBase(QT_TRANSLATE_NOOP("", "notebook to be updated was not found in local storage"));
-        errorDescription.details() = column;
-        errorDescription.details() += QStringLiteral(" = ");
-        errorDescription.details() += uid;
-        QNWARNING(errorDescription);
-        return false;
+        bool foundByOtherColumn = false;
+
+        if (notebookHasGuid) {
+            QNDEBUG(QStringLiteral("Failed to find the notebook by guid within the local storage, trying to find it by local uid"));
+            column = QStringLiteral("localUid");
+            uid = localUid;
+            foundByOtherColumn = rowExists(QStringLiteral("Notebooks"), column, uid);
+        }
+
+        if (!foundByOtherColumn) {
+            errorDescription.base() = errorPrefix.base();
+            errorDescription.appendBase(QT_TRANSLATE_NOOP("", "notebook to be updated was not found in local storage"));
+            errorDescription.details() = column;
+            errorDescription.details() += QStringLiteral(" = ");
+            errorDescription.details() += uid;
+            QNWARNING(errorDescription);
+            return false;
+        }
     }
 
     error.clear();
@@ -1122,7 +1133,7 @@ QList<qevercloud::SharedNotebook> LocalStorageManagerPrivate::listEnSharedNotebo
     qSort(sharedNotebooks.begin(), sharedNotebooks.end(), SharedNotebookCompareByIndex());
 
     for(auto it = sharedNotebooks.constBegin(), end = sharedNotebooks.constEnd(); it != end; ++it) {
-        qecSharedNotebooks << static_cast<const qevercloud::SharedNotebook>(*it);
+        qecSharedNotebooks << it->qevercloudSharedNotebook();
     }
 
     numSharedNotebooks = qecSharedNotebooks.size();
@@ -1763,13 +1774,24 @@ bool LocalStorageManagerPrivate::updateNote(Note & note, const bool updateResour
 
     if (shouldCheckNoteExistence && !rowExists(QStringLiteral("Notes"), column, uid))
     {
-        errorDescription.base() = errorPrefix.base();
-        errorDescription.appendBase(QT_TRANSLATE_NOOP("", "note was not found in the local storage database"));
-        errorDescription.details() = column;
-        errorDescription.details() += QStringLiteral(" = ");
-        errorDescription.details() += uid;
-        QNWARNING(errorDescription);
-        return false;
+        bool foundByOtherColumn = false;
+
+        if (noteHasGuid) {
+            QNDEBUG(QStringLiteral("Failed to find the note by guid within the local storage, trying to find it by local uid"));
+            column = QStringLiteral("localUid");
+            uid = localUid;
+            foundByOtherColumn = rowExists(QStringLiteral("Notes"), column, uid);
+        }
+
+        if (!foundByOtherColumn) {
+            errorDescription.base() = errorPrefix.base();
+            errorDescription.appendBase(QT_TRANSLATE_NOOP("", "note was not found in the local storage database"));
+            errorDescription.details() = column;
+            errorDescription.details() += QStringLiteral(" = ");
+            errorDescription.details() += uid;
+            QNWARNING(errorDescription);
+            return false;
+        }
     }
 
     return insertOrReplaceNote(note, updateResources, updateTags, errorDescription);
@@ -3416,15 +3438,28 @@ bool LocalStorageManagerPrivate::updateSavedSearch(SavedSearch & search, ErrorSt
         uid = search.localUid();
     }
 
-    if (shouldCheckSearchExistence && !rowExists(QStringLiteral("SavedSearches"), column, uid)) {
-        errorDescription.base() = errorPrefix.base();
-        errorDescription.appendBase(QT_TRANSLATE_NOOP("", "Saved search to be updated was not found "
-                                                      "in the local storage database"));
-        errorDescription.details() = column;
-        errorDescription.details() += QStringLiteral(" = ");
-        errorDescription.details() += uid;
-        QNWARNING(errorDescription);
-        return false;
+    if (shouldCheckSearchExistence && !rowExists(QStringLiteral("SavedSearches"), column, uid))
+    {
+        bool foundByOtherColumn = false;
+
+        if (searchHasGuid) {
+            QNDEBUG(QStringLiteral("Failed to find the saved search by guid within the local storage, "
+                                   "trying to find it by local uid"));
+            column = QStringLiteral("localUid");
+            uid = search.localUid();
+            foundByOtherColumn = rowExists(QStringLiteral("SavedSearches"), column, uid);
+        }
+
+        if (!foundByOtherColumn) {
+            errorDescription.base() = errorPrefix.base();
+            errorDescription.appendBase(QT_TRANSLATE_NOOP("", "Saved search to be updated was not found "
+                                                          "in the local storage database"));
+            errorDescription.details() = column;
+            errorDescription.details() += QStringLiteral(" = ");
+            errorDescription.details() += uid;
+            QNWARNING(errorDescription);
+            return false;
+        }
     }
 
     error.clear();
@@ -3855,14 +3890,25 @@ bool LocalStorageManagerPrivate::updateEnResource(Resource & resource, ErrorStri
 
     if (shouldCheckResourceExistence && !rowExists(QStringLiteral("Resources"), column, uid))
     {
-        errorDescription.base() = errorPrefix.base();
-        errorDescription.appendBase(QT_TRANSLATE_NOOP("", "resource to be updated was not found "
-                                                      "in the local storage database"));
-        errorDescription.details() = column;
-        errorDescription.details() += QStringLiteral(" = ");
-        errorDescription.details() += uid;
-        QNWARNING(errorDescription);
-        return false;
+        bool foundByOtherColumn = false;
+
+        if (resourceHasGuid) {
+            QNDEBUG(QStringLiteral("Failed to find the resource by guid within the local storage, trying to find it by local uid"));
+            column = QStringLiteral("resourceLocalUid");
+            uid = resource.localUid();
+            foundByOtherColumn = rowExists(QStringLiteral("Resources"), column, uid);
+        }
+
+        if (!foundByOtherColumn) {
+            errorDescription.base() = errorPrefix.base();
+            errorDescription.appendBase(QT_TRANSLATE_NOOP("", "resource to be updated was not found "
+                                                          "in the local storage database"));
+            errorDescription.details() = column;
+            errorDescription.details() += QStringLiteral(" = ");
+            errorDescription.details() += uid;
+            QNWARNING(errorDescription);
+            return false;
+        }
     }
 
     error.clear();

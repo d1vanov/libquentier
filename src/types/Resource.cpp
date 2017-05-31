@@ -88,12 +88,12 @@ bool Resource::operator!=(const Resource & other) const
     return !(*this == other);
 }
 
-Resource::operator const qevercloud::Resource &() const
+const qevercloud::Resource & Resource::qevercloudResource() const
 {
     return d->m_qecResource;
 }
 
-Resource::operator qevercloud::Resource &()
+qevercloud::Resource & Resource::qevercloudResource()
 {
     return d->m_qecResource;
 }

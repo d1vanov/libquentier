@@ -59,8 +59,8 @@ public:
     bool operator==(const Note & other) const;
     bool operator!=(const Note & other) const;
 
-    operator const qevercloud::Note&() const;
-    operator qevercloud::Note&();
+    const qevercloud::Note & qevercloudNote() const;
+    qevercloud::Note & qevercloudNote();
 
     virtual bool hasGuid() const Q_DECL_OVERRIDE;
     virtual const QString & guid() const Q_DECL_OVERRIDE;

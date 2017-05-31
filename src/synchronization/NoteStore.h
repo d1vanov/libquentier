@@ -150,12 +150,6 @@ private:
     void processEdamNotFoundException(const qevercloud::EDAMNotFoundException & notFoundException,
                                       ErrorString & errorDescription) const;
 
-    qint32 processEvernoteException(const qevercloud::EvernoteException & evernoteException,
-                                    ErrorString & errorDescription) const;
-
-    qint32 processEverCloudException(const qevercloud::EverCloudException & everCloudException,
-                                     ErrorString & errorDescription) const;
-
 private:
     Q_DISABLE_COPY(NoteStore)
 

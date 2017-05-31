@@ -537,10 +537,7 @@ void SynchronizationManagerPrivate::onRemoteToLocalSyncFinished(qint32 lastUpdat
                                                                 QHash<QString,qevercloud::Timestamp> lastSyncTimeByLinkedNotebookGuid)
 {
     QNDEBUG(QStringLiteral("SynchronizationManagerPrivate::onRemoteToLocalSyncFinished: lastUpdateCount = ")
-            << lastUpdateCount << QStringLiteral(", lastSyncTime = ") << lastSyncTime
-            << QStringLiteral(", last update count per linked notebook = ")
-            << lastUpdateCountByLinkedNotebookGuid << QStringLiteral("\nlastSyncTimeByLinkedNotebookGuid = ")
-            << lastSyncTimeByLinkedNotebookGuid);
+            << lastUpdateCount << QStringLiteral(", lastSyncTime = ") << printableDateTimeFromTimestamp(lastSyncTime));
 
     m_lastUpdateCount = lastUpdateCount;
     m_lastSyncTime = lastSyncTime;

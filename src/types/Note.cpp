@@ -97,12 +97,12 @@ bool Note::operator!=(const Note & other) const
     return !(*this == other);
 }
 
-Note::operator const qevercloud::Note &() const
+const qevercloud::Note & Note::qevercloudNote() const
 {
     return d->m_qecNote;
 }
 
-Note::operator qevercloud::Note &()
+qevercloud::Note & Note::qevercloudNote()
 {
     return d->m_qecNote;
 }
@@ -552,7 +552,7 @@ void Note::setResources(const QList<Resource> & resources)
         NoteData::ResourceAdditionalInfo info;
         for(auto it = resources.constBegin(); it != resources.constEnd(); ++it)
         {
-            d->m_qecNote.resources.ref() << static_cast<const qevercloud::Resource&>(*it);
+            d->m_qecNote.resources.ref() << it->qevercloudResource();
             info.localUid = it->localUid();
             info.isDirty = it->isDirty();
             d->m_resourcesAdditionalInfo.push_back(info);
@@ -572,12 +572,12 @@ void Note::addResource(const Resource & resource)
         d->m_qecNote.resources = QList<qevercloud::Resource>();
     }
 
-    if (d->m_qecNote.resources->contains(static_cast<const qevercloud::Resource&>(resource))) {
+    if (d->m_qecNote.resources->contains(resource.qevercloudResource())) {
         QNDEBUG(QStringLiteral("Can't add resource to note: this note already has this resource"));
         return;
     }
 
-    d->m_qecNote.resources.ref() << static_cast<const qevercloud::Resource&>(resource);
+    d->m_qecNote.resources.ref() << resource.qevercloudResource();
     NoteData::ResourceAdditionalInfo info;
     info.localUid = resource.localUid();
     info.isDirty = resource.isDirty();
@@ -607,7 +607,7 @@ bool Note::updateResource(const Resource & resource)
         return false;
     }
 
-    d->m_qecNote.resources.ref()[targetResourceIndex] = static_cast<const qevercloud::Resource&>(resource);
+    d->m_qecNote.resources.ref()[targetResourceIndex] = resource.qevercloudResource();
     d->m_resourcesAdditionalInfo[targetResourceIndex].isDirty = resource.isDirty();
     return true;
 }
@@ -620,7 +620,7 @@ bool Note::removeResource(const Resource & resource)
     }
 
     QList<qevercloud::Resource> & resources = d->m_qecNote.resources.ref();
-    int removed = resources.removeAll(static_cast<const qevercloud::Resource&>(resource));
+    int removed = resources.removeAll(resource.qevercloudResource());
     if (removed <= 0) {
         QNDEBUG(QStringLiteral("Haven't removed resource ") << resource << QStringLiteral(" because there was no such resource attached to the note"));
         return false;
@@ -702,8 +702,7 @@ void Note::setSharedNotes(const QList<SharedNote> & sharedNotes)
     internalSharedNotes.reserve(sortedSharedNotes.size());
 
     for(auto it = sortedSharedNotes.constBegin(), end = sortedSharedNotes.constEnd(); it != end; ++it) {
-        const qevercloud::SharedNote & qecSharedNote = static_cast<const qevercloud::SharedNote&>(*it);
-        internalSharedNotes << qecSharedNote;
+        internalSharedNotes << it->qevercloudSharedNote();
     }
 
     d->m_qecNote.sharedNotes = internalSharedNotes;
@@ -715,7 +714,7 @@ void Note::addSharedNote(const SharedNote & sharedNote)
         d->m_qecNote.sharedNotes = QList<qevercloud::SharedNote>();
     }
 
-    const qevercloud::SharedNote & qecSharedNote = static_cast<const qevercloud::SharedNote&>(sharedNote);
+    const qevercloud::SharedNote & qecSharedNote = sharedNote.qevercloudSharedNote();
 
     if (d->m_qecNote.sharedNotes->contains(qecSharedNote)) {
         QNDEBUG(QStringLiteral("Can't add shared note: this note already has this shared note"));
@@ -736,8 +735,7 @@ bool Note::updateSharedNote(const SharedNote & sharedNote)
         return false;
     }
 
-    const qevercloud::SharedNote & qecSharedNote = static_cast<const qevercloud::SharedNote&>(sharedNote);
-    d->m_qecNote.sharedNotes.ref()[index] = qecSharedNote;
+    d->m_qecNote.sharedNotes.ref()[index] = sharedNote.qevercloudSharedNote();
     return true;
 }
 
@@ -874,7 +872,7 @@ QTextStream & Note::print(QTextStream & strm) const
     strm << QStringLiteral("Note: { \n");
 
 #define INSERT_DELIMITER \
-    strm << QStringLiteral("; \n");
+    strm << QStringLiteral("; \n")
 
     const QString localUid_ = localUid();
     if (!localUid_.isEmpty()) {
@@ -1010,10 +1008,10 @@ QTextStream & Note::print(QTextStream & strm) const
     else {
         strm << QStringLiteral("tagLocalUids are not set");
     }
-    INSERT_DELIMITER
+    INSERT_DELIMITER;
 
     strm << QStringLiteral("thumbnail is ") << (d->m_thumbnail.isNull() ? QStringLiteral("null") : QStringLiteral("non-null"));
-    INSERT_DELIMITER
+    INSERT_DELIMITER;
 
     if (d->m_qecNote.resources.isSet())
     {

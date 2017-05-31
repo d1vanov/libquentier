@@ -50,8 +50,8 @@ public:
     bool operator==(const SharedNotebook & other) const;
     bool operator!=(const SharedNotebook & other) const;
 
-    operator const qevercloud::SharedNotebook&() const;
-    operator qevercloud::SharedNotebook&();
+    const qevercloud::SharedNotebook & qevercloudSharedNotebook() const;
+    qevercloud::SharedNotebook & qevercloudSharedNotebook();
 
     int indexInNotebook() const;
     void setIndexInNotebook(const int index);

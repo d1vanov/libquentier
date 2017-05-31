@@ -17,6 +17,7 @@
  */
 
 #include "UserStore.h"
+#include "ExceptionHandlingHelpers.h"
 #include <quentier/types/User.h>
 #include <quentier/logging/QuentierLogger.h>
 #include <quentier/utility/QuentierCheckPtr.h>
@@ -31,24 +32,6 @@ namespace quentier {
         errorDescription.details() += QString::number(thriftException.type()); \
         errorDescription.details() += QStringLiteral(": "); \
         errorDescription.details() += QString::fromUtf8(thriftException.what()); \
-        QNWARNING(errorDescription); \
-        return false; \
-    }
-
-#define CATCH_EVER_CLOUD_EXCEPTION() \
-    catch(const qevercloud::EverCloudException & everCloudException) \
-    { \
-        errorDescription.setBase(QT_TRANSLATE_NOOP("", "QEverCloud exception")); \
-        errorDescription.details() = QString::fromUtf8(everCloudException.what()); \
-        QNWARNING(errorDescription); \
-        return false; \
-    }
-
-#define CATCH_STD_EXCEPTION() \
-    catch(const std::exception & e) \
-    { \
-        errorDescription.setBase(QT_TRANSLATE_NOOP("", "std::exception")); \
-        errorDescription.details() = QString::fromUtf8(e.what()); \
         QNWARNING(errorDescription); \
         return false; \
     }
@@ -81,9 +64,7 @@ bool UserStore::checkVersion(const QString & clientName, qint16 edamVersionMajor
     {
         return m_pQecUserStore->checkVersion(clientName, edamVersionMajor, edamVersionMinor);
     }
-    CATCH_THRIFT_EXCEPTION()
-    CATCH_EVER_CLOUD_EXCEPTION()
-    CATCH_STD_EXCEPTION()
+    CATCH_GENERIC_EXCEPTIONS_NO_RET()
 
     return false;
 }
@@ -104,9 +85,7 @@ qint32 UserStore::getUser(User & user, ErrorString & errorDescription, qint32 & 
         return processEdamSystemException(systemException, errorDescription,
                                           rateLimitSeconds);
     }
-    CATCH_THRIFT_EXCEPTION()
-    CATCH_EVER_CLOUD_EXCEPTION()
-    CATCH_STD_EXCEPTION()
+    CATCH_GENERIC_EXCEPTIONS_NO_RET()
 
     return qevercloud::EDAMErrorCode::UNKNOWN;
 }
@@ -128,9 +107,7 @@ qint32 UserStore::getAccountLimits(const qevercloud::ServiceLevel::type serviceL
         return processEdamSystemException(systemException, errorDescription,
                                           rateLimitSeconds);
     }
-    CATCH_THRIFT_EXCEPTION()
-    CATCH_EVER_CLOUD_EXCEPTION()
-    CATCH_STD_EXCEPTION()
+    CATCH_GENERIC_EXCEPTIONS_NO_RET()
 
     return qevercloud::EDAMErrorCode::UNKNOWN;
 }

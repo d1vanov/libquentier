@@ -17,6 +17,7 @@
  */
 
 #include "NoteStore.h"
+#include "ExceptionHandlingHelpers.h"
 #include <quentier/types/Notebook.h>
 #include <quentier/types/Note.h>
 #include <quentier/types/Tag.h>
@@ -33,14 +34,6 @@ namespace quentier {
     if (!userException.exceptionData().isNull()) { \
         errorDescription.details() += QStringLiteral(": "); \
         errorDescription.details() += userException.exceptionData()->errorMessage; \
-    }
-
-#define CATCH_GENERIC_EXCEPTIONS() \
-    catch(const qevercloud::EvernoteException & evernoteException) { \
-        return processEvernoteException(evernoteException, errorDescription); \
-    } \
-    catch(const qevercloud::EverCloudException & everCloudException) { \
-        return processEverCloudException(everCloudException, errorDescription); \
     }
 
 NoteStore::NoteStore(QSharedPointer<qevercloud::NoteStore> pQecNoteStore, QObject * parent) :
@@ -81,7 +74,7 @@ qint32 NoteStore::createNotebook(Notebook & notebook, ErrorString & errorDescrip
 {
     try
     {
-        notebook = m_pQecNoteStore->createNotebook(notebook, linkedNotebookAuthToken);
+        notebook.qevercloudNotebook() = m_pQecNoteStore->createNotebook(notebook.qevercloudNotebook(), linkedNotebookAuthToken);
         return 0;
     }
     catch(const qevercloud::EDAMUserException & userException)
@@ -95,7 +88,7 @@ qint32 NoteStore::createNotebook(Notebook & notebook, ErrorString & errorDescrip
         return processEdamSystemException(systemException, errorDescription,
                                           rateLimitSeconds);
     }
-    CATCH_GENERIC_EXCEPTIONS()
+    CATCH_GENERIC_EXCEPTIONS_NO_RET()
 
     return qevercloud::EDAMErrorCode::UNKNOWN;
 }
@@ -105,7 +98,7 @@ qint32 NoteStore::updateNotebook(Notebook & notebook, ErrorString & errorDescrip
 {
     try
     {
-        qint32 usn = m_pQecNoteStore->updateNotebook(notebook, linkedNotebookAuthToken);
+        qint32 usn = m_pQecNoteStore->updateNotebook(notebook.qevercloudNotebook(), linkedNotebookAuthToken);
         notebook.setUpdateSequenceNumber(usn);
         return 0;
     }
@@ -124,7 +117,7 @@ qint32 NoteStore::updateNotebook(Notebook & notebook, ErrorString & errorDescrip
     {
         processEdamNotFoundException(notFoundException, errorDescription);
     }
-    CATCH_GENERIC_EXCEPTIONS()
+    CATCH_GENERIC_EXCEPTIONS_NO_RET()
 
     return qevercloud::EDAMErrorCode::UNKNOWN;
 }
@@ -133,7 +126,7 @@ qint32 NoteStore::createNote(Note & note, ErrorString & errorDescription, qint32
 {
     try
     {
-        note =  m_pQecNoteStore->createNote(note, linkedNotebookAuthToken);
+        note.qevercloudNote() =  m_pQecNoteStore->createNote(note.qevercloudNote(), linkedNotebookAuthToken);
         return 0;
     }
     catch(const qevercloud::EDAMUserException & userException)
@@ -146,7 +139,7 @@ qint32 NoteStore::createNote(Note & note, ErrorString & errorDescription, qint32
         return processEdamSystemException(systemException, errorDescription,
                                           rateLimitSeconds);
     }
-    CATCH_GENERIC_EXCEPTIONS()
+    CATCH_GENERIC_EXCEPTIONS_NO_RET()
 
     return qevercloud::EDAMErrorCode::UNKNOWN;
 }
@@ -155,7 +148,7 @@ qint32 NoteStore::updateNote(Note & note, ErrorString & errorDescription, qint32
 {
     try
     {
-        note = m_pQecNoteStore->updateNote(note, linkedNotebookAuthToken);
+        note.qevercloudNote() = m_pQecNoteStore->updateNote(note.qevercloudNote(), linkedNotebookAuthToken);
         return 0;
     }
     catch(const qevercloud::EDAMUserException & userException)
@@ -172,7 +165,7 @@ qint32 NoteStore::updateNote(Note & note, ErrorString & errorDescription, qint32
     {
         processEdamNotFoundException(notFoundException, errorDescription);
     }
-    CATCH_GENERIC_EXCEPTIONS()
+    CATCH_GENERIC_EXCEPTIONS_NO_RET()
 
     return qevercloud::EDAMErrorCode::UNKNOWN;
 }
@@ -181,7 +174,7 @@ qint32 NoteStore::createTag(Tag & tag, ErrorString & errorDescription, qint32 & 
 {
     try
     {
-        tag = m_pQecNoteStore->createTag(tag, linkedNotebookAuthToken);
+        tag.qevercloudTag() = m_pQecNoteStore->createTag(tag.qevercloudTag(), linkedNotebookAuthToken);
         return 0;
     }
     catch(const qevercloud::EDAMUserException & userException)
@@ -195,7 +188,7 @@ qint32 NoteStore::createTag(Tag & tag, ErrorString & errorDescription, qint32 & 
         return processEdamSystemException(systemException, errorDescription,
                                           rateLimitSeconds);
     }
-    CATCH_GENERIC_EXCEPTIONS()
+    CATCH_GENERIC_EXCEPTIONS_NO_RET()
 
     return qevercloud::EDAMErrorCode::UNKNOWN;
 }
@@ -204,7 +197,7 @@ qint32 NoteStore::updateTag(Tag & tag, ErrorString & errorDescription, qint32 & 
 {
     try
     {
-        qint32 usn = m_pQecNoteStore->updateTag(tag, linkedNotebookAuthToken);
+        qint32 usn = m_pQecNoteStore->updateTag(tag.qevercloudTag(), linkedNotebookAuthToken);
         tag.setUpdateSequenceNumber(usn);
         return 0;
     }
@@ -223,7 +216,7 @@ qint32 NoteStore::updateTag(Tag & tag, ErrorString & errorDescription, qint32 & 
     {
         processEdamNotFoundException(notFoundException, errorDescription);
     }
-    CATCH_GENERIC_EXCEPTIONS()
+    CATCH_GENERIC_EXCEPTIONS_NO_RET()
 
     return qevercloud::EDAMErrorCode::UNKNOWN;
 }
@@ -232,7 +225,7 @@ qint32 NoteStore::createSavedSearch(SavedSearch & savedSearch, ErrorString & err
 {
     try
     {
-        savedSearch = m_pQecNoteStore->createSearch(savedSearch);
+        savedSearch.qevercloudSavedSearch() = m_pQecNoteStore->createSearch(savedSearch.qevercloudSavedSearch());
         return 0;
     }
     catch(const qevercloud::EDAMUserException & userException)
@@ -246,7 +239,7 @@ qint32 NoteStore::createSavedSearch(SavedSearch & savedSearch, ErrorString & err
         return processEdamSystemException(systemException, errorDescription,
                                           rateLimitSeconds);
     }
-    CATCH_GENERIC_EXCEPTIONS()
+    CATCH_GENERIC_EXCEPTIONS_NO_RET()
 
     return qevercloud::EDAMErrorCode::UNKNOWN;
 }
@@ -255,7 +248,7 @@ qint32 NoteStore::updateSavedSearch(SavedSearch & savedSearch, ErrorString & err
 {
     try
     {
-        qint32 usn = m_pQecNoteStore->updateSearch(savedSearch);
+        qint32 usn = m_pQecNoteStore->updateSearch(savedSearch.qevercloudSavedSearch());
         savedSearch.setUpdateSequenceNumber(usn);
         return 0;
     }
@@ -274,7 +267,7 @@ qint32 NoteStore::updateSavedSearch(SavedSearch & savedSearch, ErrorString & err
     {
         processEdamNotFoundException(notFoundException, errorDescription);
     }
-    CATCH_GENERIC_EXCEPTIONS()
+    CATCH_GENERIC_EXCEPTIONS_NO_RET()
 
     return qevercloud::EDAMErrorCode::UNKNOWN;
 }
@@ -296,7 +289,7 @@ qint32 NoteStore::getSyncState(qevercloud::SyncState & syncState, ErrorString & 
     {
         return processEdamSystemException(systemException, errorDescription, rateLimitSeconds);
     }
-    CATCH_GENERIC_EXCEPTIONS()
+    CATCH_GENERIC_EXCEPTIONS_NO_RET()
 
     return qevercloud::EDAMErrorCode::UNKNOWN;
 }
@@ -321,7 +314,7 @@ qint32 NoteStore::getSyncChunk(const qint32 afterUSN, const qint32 maxEntries,
         return processEdamSystemException(systemException, errorDescription,
                                           rateLimitSeconds);
     }
-    CATCH_GENERIC_EXCEPTIONS()
+    CATCH_GENERIC_EXCEPTIONS_NO_RET()
 
     return qevercloud::EDAMErrorCode::UNKNOWN;
 }
@@ -354,7 +347,7 @@ qint32 NoteStore::getLinkedNotebookSyncState(const qevercloud::LinkedNotebook & 
     {
         return processEdamSystemException(systemException, errorDescription, rateLimitSeconds);
     }
-    CATCH_GENERIC_EXCEPTIONS()
+    CATCH_GENERIC_EXCEPTIONS_NO_RET()
 
     return qevercloud::EDAMErrorCode::UNKNOWN;
 }
@@ -408,7 +401,7 @@ qint32 NoteStore::getLinkedNotebookSyncChunk(const qevercloud::LinkedNotebook & 
     {
         return processEdamSystemException(systemException, errorDescription, rateLimitSeconds);
     }
-    CATCH_GENERIC_EXCEPTIONS()
+    CATCH_GENERIC_EXCEPTIONS_NO_RET()
 
     return qevercloud::EDAMErrorCode::UNKNOWN;
 }
@@ -424,8 +417,8 @@ qint32 NoteStore::getNote(const bool withContent, const bool withResourcesData,
 
     try
     {
-        note = m_pQecNoteStore->getNote(note.guid(), withContent, withResourcesData,
-                                        withResourcesRecognition, withResourceAlternateData);
+        note.qevercloudNote() = m_pQecNoteStore->getNote(note.guid(), withContent, withResourcesData,
+                                                         withResourcesRecognition, withResourceAlternateData);
         note.setLocal(false);
         note.setDirty(false);
         return 0;
@@ -442,7 +435,7 @@ qint32 NoteStore::getNote(const bool withContent, const bool withResourcesData,
     {
         return processEdamSystemException(systemException, errorDescription, rateLimitSeconds);
     }
-    CATCH_GENERIC_EXCEPTIONS()
+    CATCH_GENERIC_EXCEPTIONS_NO_RET()
 
     return qevercloud::EDAMErrorCode::UNKNOWN;
 }
@@ -519,7 +512,8 @@ qint32 NoteStore::authenticateToSharedNotebook(const QString & shareKey, qevercl
     }
     catch(const qevercloud::EDAMSystemException & systemException)
     {
-        if (systemException.errorCode == qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED) {
+        if (systemException.errorCode == qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED)
+        {
             if (!systemException.rateLimitDuration.isSet()) {
                 errorDescription.setBase(QT_TRANSLATE_NOOP("", "QEverCloud error: RATE_LIMIT_REACHED exception "
                                                            "was caught but rateLimitDuration is not set"));
@@ -528,13 +522,16 @@ qint32 NoteStore::authenticateToSharedNotebook(const QString & shareKey, qevercl
 
             rateLimitSeconds = systemException.rateLimitDuration;
         }
-        else if (systemException.errorCode == qevercloud::EDAMErrorCode::BAD_DATA_FORMAT) {
+        else if (systemException.errorCode == qevercloud::EDAMErrorCode::BAD_DATA_FORMAT)
+        {
             errorDescription.setBase(QT_TRANSLATE_NOOP("", "invalid share key"));
         }
-        else if (systemException.errorCode == qevercloud::EDAMErrorCode::INVALID_AUTH) {
+        else if (systemException.errorCode == qevercloud::EDAMErrorCode::INVALID_AUTH)
+        {
             errorDescription.setBase(QT_TRANSLATE_NOOP("", "bad signature of share key"));
         }
-        else {
+        else
+        {
             errorDescription.setBase(QT_TRANSLATE_NOOP("", "unexpected EDAM system exception"));
             errorDescription.details() = QStringLiteral("error code = ");
             errorDescription.details() += ToString(systemException.errorCode);
@@ -542,7 +539,7 @@ qint32 NoteStore::authenticateToSharedNotebook(const QString & shareKey, qevercl
 
         return systemException.errorCode;
     }
-    CATCH_GENERIC_EXCEPTIONS()
+    CATCH_GENERIC_EXCEPTIONS_NO_RET()
 
     return qevercloud::EDAMErrorCode::UNKNOWN;
 }
@@ -602,15 +599,7 @@ void NoteStore::onGetNoteAsyncFinished(QVariant result, QSharedPointer<EverCloud
         {
             errorCode = processEdamSystemException(systemException, errorDescription, rateLimitSeconds);
         }
-        catch(const qevercloud::EverCloudException & everCloudException)
-        {
-            errorDescription.setBase(QT_TRANSLATE_NOOP("", "Caught EverCloudException"));
-            if (!everCloudException.exceptionData().isNull()) {
-                errorDescription.details() = everCloudException.exceptionData()->errorMessage;
-            }
-
-            errorCode = qevercloud::EDAMErrorCode::UNKNOWN;
-        }
+        CATCH_GENERIC_EXCEPTIONS_IMPL(errorCode = qevercloud::EDAMErrorCode::UNKNOWN)
 
         emit getNoteAsyncFinished(errorCode, note, rateLimitSeconds, errorDescription);
         return;
@@ -651,7 +640,8 @@ qint32 NoteStore::processEdamUserExceptionForTag(const Tag & tag, const qeverclo
             return userException.errorCode;
         }
 
-        if (userException.parameter.ref() == QStringLiteral("Tag.name")) {
+        if (userException.parameter.ref() == QStringLiteral("Tag.name"))
+        {
             if (tag.hasName()) {
                 errorDescription.appendBase(QT_TRANSLATE_NOOP("", "invalid length or pattern of tag's name"));
                 errorDescription.details() = tag.name();
@@ -660,7 +650,8 @@ qint32 NoteStore::processEdamUserExceptionForTag(const Tag & tag, const qeverclo
                 errorDescription.appendBase(QT_TRANSLATE_NOOP("", "tag has no name"));
             }
         }
-        else if (userException.parameter.ref() == QStringLiteral("Tag.parentGuid")) {
+        else if (userException.parameter.ref() == QStringLiteral("Tag.parentGuid"))
+        {
             if (tag.hasParentGuid()) {
                 errorDescription.appendBase(QT_TRANSLATE_NOOP("", "malformed parent guid of tag"));
                 errorDescription.details() = tag.parentGuid();
@@ -669,7 +660,8 @@ qint32 NoteStore::processEdamUserExceptionForTag(const Tag & tag, const qeverclo
                 errorDescription.appendBase(QT_TRANSLATE_NOOP("", "error code indicates malformed parent guid but it is empty"));
             }
         }
-        else {
+        else
+        {
             errorDescription.appendBase(QT_TRANSLATE_NOOP("", "unexpected parameter"));
             errorDescription.details() = userException.parameter.ref();
         }
@@ -694,7 +686,8 @@ qint32 NoteStore::processEdamUserExceptionForTag(const Tag & tag, const qeverclo
             return userException.errorCode;
         }
 
-        if (userException.parameter.ref() == QStringLiteral("Tag.name")) {
+        if (userException.parameter.ref() == QStringLiteral("Tag.name"))
+        {
             if (tag.hasName()) {
                 errorDescription.appendBase(QT_TRANSLATE_NOOP("", "invalid length or pattern of tag's name"));
                 errorDescription.details() = tag.name();
@@ -704,7 +697,8 @@ qint32 NoteStore::processEdamUserExceptionForTag(const Tag & tag, const qeverclo
             }
         }
 
-        if (!thrownOnCreation && (userException.parameter.ref() == QStringLiteral("Tag.parentGuid"))) {
+        if (!thrownOnCreation && (userException.parameter.ref() == QStringLiteral("Tag.parentGuid")))
+        {
             if (tag.hasParentGuid()) {
                 errorDescription.appendBase(QT_TRANSLATE_NOOP("", "can't set parent for tag: circular "
                                                               "parent-child correlation detected"));
@@ -716,7 +710,8 @@ qint32 NoteStore::processEdamUserExceptionForTag(const Tag & tag, const qeverclo
                                                               "but tag's parent guid is empty"));
             }
         }
-        else {
+        else
+        {
             errorDescription.appendBase(QT_TRANSLATE_NOOP("", "unexpected parameter"));
             errorDescription.details() = userException.parameter.ref();
         }
@@ -737,7 +732,8 @@ qint32 NoteStore::processEdamUserExceptionForTag(const Tag & tag, const qeverclo
     {
         errorDescription.setBase(QT_TRANSLATE_NOOP("", "PERMISSION_DENIED exception during the attempt to update a tag"));
 
-        if (userException.parameter.isSet() && (userException.parameter.ref() == QStringLiteral("Tag"))) {
+        if (userException.parameter.isSet() && (userException.parameter.ref() == QStringLiteral("Tag")))
+        {
             errorDescription.appendBase(QT_TRANSLATE_NOOP("", "user doesn't own the tag, it can't be updated"));
             if (tag.hasName()) {
                 errorDescription.details() = tag.name();
@@ -777,7 +773,8 @@ qint32 NoteStore::processEdamUserExceptionForSavedSearch(const SavedSearch & sea
             return userException.errorCode;
         }
 
-        if (userException.parameter.ref() == QStringLiteral("SavedSearch.name")) {
+        if (userException.parameter.ref() == QStringLiteral("SavedSearch.name"))
+        {
             if (search.hasName()) {
                 errorDescription.appendBase(QT_TRANSLATE_NOOP("", "invalid length or pattern of saved search's name"));
                 errorDescription.details() = search.name();
@@ -786,7 +783,8 @@ qint32 NoteStore::processEdamUserExceptionForSavedSearch(const SavedSearch & sea
                 errorDescription.appendBase(QT_TRANSLATE_NOOP("", "saved search has no name"));
             }
         }
-        else if (userException.parameter.ref() == QStringLiteral("SavedSearch.query")) {
+        else if (userException.parameter.ref() == QStringLiteral("SavedSearch.query"))
+        {
             if (search.hasQuery()) {
                 errorDescription.appendBase(QT_TRANSLATE_NOOP("", "invalid length of saved search's query"));
                 errorDescription.details() = QString::number(search.query().length());
@@ -796,7 +794,8 @@ qint32 NoteStore::processEdamUserExceptionForSavedSearch(const SavedSearch & sea
                 errorDescription.appendBase(QT_TRANSLATE_NOOP("", "saved search has no query"));
             }
         }
-        else {
+        else
+        {
             errorDescription.appendBase(QT_TRANSLATE_NOOP("", "unexpected parameter"));
             errorDescription.details() = userException.parameter.ref();
         }
@@ -821,7 +820,8 @@ qint32 NoteStore::processEdamUserExceptionForSavedSearch(const SavedSearch & sea
             return userException.errorCode;
         }
 
-        if (userException.parameter.ref() == QStringLiteral("SavedSearch.name")) {
+        if (userException.parameter.ref() == QStringLiteral("SavedSearch.name"))
+        {
             if (search.hasName()) {
                 errorDescription.appendBase(QT_TRANSLATE_NOOP("", "saved search's name is already in use"));
                 errorDescription.details() = search.name();
@@ -830,7 +830,8 @@ qint32 NoteStore::processEdamUserExceptionForSavedSearch(const SavedSearch & sea
                 errorDescription.appendBase(QT_TRANSLATE_NOOP("", "saved search has no name"));
             }
         }
-        else {
+        else
+        {
             errorDescription.appendBase(QT_TRANSLATE_NOOP("", "unexpected parameter"));
             errorDescription.details() = userException.parameter.ref();
         }
@@ -987,7 +988,8 @@ qint32 NoteStore::processEdamUserExceptionForNotebook(const Notebook & notebook,
             return userException.errorCode;
         }
 
-        if (userException.parameter.ref() == QStringLiteral("Notebook.name")) {
+        if (userException.parameter.ref() == QStringLiteral("Notebook.name"))
+        {
             if (notebook.hasName()) {
                 errorDescription.appendBase(QT_TRANSLATE_NOOP("", "invalid length or pattern of notebook's name"));
                 errorDescription.details() = notebook.name();
@@ -996,7 +998,8 @@ qint32 NoteStore::processEdamUserExceptionForNotebook(const Notebook & notebook,
                 errorDescription.appendBase(QT_TRANSLATE_NOOP("", "notebook has no name"));
             }
         }
-        else if (userException.parameter.ref() == QStringLiteral("Notebook.stack")) {
+        else if (userException.parameter.ref() == QStringLiteral("Notebook.stack"))
+        {
             if (notebook.hasStack()) {
                 errorDescription.appendBase(QT_TRANSLATE_NOOP("", "invalid length or pattern of notebook's stack"));
                 errorDescription.details() = notebook.stack();
@@ -1005,7 +1008,8 @@ qint32 NoteStore::processEdamUserExceptionForNotebook(const Notebook & notebook,
                 errorDescription.appendBase(QT_TRANSLATE_NOOP("", "notebook has no stack"));
             }
         }
-        else if (userException.parameter.ref() == QStringLiteral("Publishing.uri")) {
+        else if (userException.parameter.ref() == QStringLiteral("Publishing.uri"))
+        {
             if (notebook.hasPublishingUri()) {
                 errorDescription.appendBase(QT_TRANSLATE_NOOP("", "invalid publishing uri for notebook"));
                 errorDescription.details() = notebook.publishingUri();
@@ -1024,7 +1028,8 @@ qint32 NoteStore::processEdamUserExceptionForNotebook(const Notebook & notebook,
                 errorDescription.appendBase(QT_TRANSLATE_NOOP("", "notebook has no public description"));
             }
         }
-        else {
+        else
+        {
             errorDescription.appendBase(QT_TRANSLATE_NOOP("", "unexpected parameter"));
             errorDescription.details() = userException.parameter.ref();
         }
@@ -1049,7 +1054,8 @@ qint32 NoteStore::processEdamUserExceptionForNotebook(const Notebook & notebook,
             return userException.errorCode;
         }
 
-        if (userException.parameter.ref() == QStringLiteral("Notebook.name")) {
+        if (userException.parameter.ref() == QStringLiteral("Notebook.name"))
+        {
             if (notebook.hasName()) {
                 errorDescription.appendBase(QT_TRANSLATE_NOOP("", "notebook's name is already in use"));
                 errorDescription.details() = notebook.name();
@@ -1058,7 +1064,8 @@ qint32 NoteStore::processEdamUserExceptionForNotebook(const Notebook & notebook,
                 errorDescription.appendBase(QT_TRANSLATE_NOOP("", "notebook has no name"));
             }
         }
-        else if (userException.parameter.ref() == QStringLiteral("Publishing.uri")) {
+        else if (userException.parameter.ref() == QStringLiteral("Publishing.uri"))
+        {
             if (notebook.hasPublishingUri()) {
                 errorDescription.appendBase(QT_TRANSLATE_NOOP("", "notebook's publishing uri is already in use"));
                 errorDescription.details() = notebook.publishingUri();
@@ -1067,7 +1074,8 @@ qint32 NoteStore::processEdamUserExceptionForNotebook(const Notebook & notebook,
                 errorDescription.appendBase(QT_TRANSLATE_NOOP("", "notebook has no publishing uri"));
             }
         }
-        else {
+        else
+        {
             errorDescription.appendBase(QT_TRANSLATE_NOOP("", "unexpected parameter"));
             errorDescription.details() = userException.parameter.ref();
         }
@@ -1115,7 +1123,8 @@ qint32 NoteStore::processEdamUserExceptionForNote(const Note & note, const qever
             return userException.errorCode;
         }
 
-        if (userException.parameter.ref() == QStringLiteral("Note.title")) {
+        if (userException.parameter.ref() == QStringLiteral("Note.title"))
+        {
             if (note.hasTitle()) {
                 errorDescription.appendBase(QT_TRANSLATE_NOOP("", "invalid length or pattetn of note's title"));
                 errorDescription.details() = note.title();
@@ -1124,7 +1133,8 @@ qint32 NoteStore::processEdamUserExceptionForNote(const Note & note, const qever
                 errorDescription.appendBase(QT_TRANSLATE_NOOP("", "note has no title"));
             }
         }
-        else if (userException.parameter.ref() == QStringLiteral("Note.content")) {
+        else if (userException.parameter.ref() == QStringLiteral("Note.content"))
+        {
             if (note.hasContent()) {
                 errorDescription.appendBase(QT_TRANSLATE_NOOP("", "invalid length for note's ENML content"));
                 errorDescription.details() = QString::number(note.content().length());
@@ -1134,7 +1144,8 @@ qint32 NoteStore::processEdamUserExceptionForNote(const Note & note, const qever
                 errorDescription.appendBase(QT_TRANSLATE_NOOP("", "note has no content"));
             }
         }
-        else if (userException.parameter.ref().startsWith(QStringLiteral("NoteAttributes."))) {
+        else if (userException.parameter.ref().startsWith(QStringLiteral("NoteAttributes.")))
+        {
             if (note.hasNoteAttributes()) {
                 errorDescription.appendBase(QT_TRANSLATE_NOOP("", "invalid note attributes"));
                 QNWARNING(errorDescription << QStringLiteral(": ") << note.noteAttributes());
@@ -1143,15 +1154,18 @@ qint32 NoteStore::processEdamUserExceptionForNote(const Note & note, const qever
                 errorDescription.appendBase(QT_TRANSLATE_NOOP("", "note has no attributes"));
             }
         }
-        else if (userException.parameter.ref().startsWith(QStringLiteral("ResourceAttributes."))) {
+        else if (userException.parameter.ref().startsWith(QStringLiteral("ResourceAttributes.")))
+        {
             errorDescription.appendBase(QT_TRANSLATE_NOOP("", "invalid resource attributes for some of note's resources"));
             QNWARNING(errorDescription << QStringLiteral(", note: ") << note);
         }
-        else if (userException.parameter.ref() == QStringLiteral("Resource.mime")) {
+        else if (userException.parameter.ref() == QStringLiteral("Resource.mime"))
+        {
             errorDescription.appendBase(QT_TRANSLATE_NOOP("", "invalid mime type for some of note's resources"));
             QNWARNING(errorDescription << QStringLiteral(", note: ") << note);
         }
-        else if (userException.parameter.ref() == QStringLiteral("Tag.name")) {
+        else if (userException.parameter.ref() == QStringLiteral("Tag.name"))
+        {
             errorDescription.appendBase(QT_TRANSLATE_NOOP("", "Note.tagNames was provided and one )"
                                                           "of the specified tags had an invalid "
                                                           "length or pattern"));
@@ -1244,38 +1258,47 @@ qint32 NoteStore::processEdamUserExceptionForNote(const Note & note, const qever
             return userException.errorCode;
         }
 
-        if (thrownOnCreation && (userException.parameter.ref() == QStringLiteral("Note"))) {
+        if (thrownOnCreation && (userException.parameter.ref() == QStringLiteral("Note")))
+        {
             errorDescription.appendBase(QT_TRANSLATE_NOOP("", "already at maximum number of notes per account"));
         }
-        else if (userException.parameter.ref() == QStringLiteral("Note.size")) {
+        else if (userException.parameter.ref() == QStringLiteral("Note.size"))
+        {
             errorDescription.appendBase(QT_TRANSLATE_NOOP("", "total note size is too large"));
         }
-        else if (userException.parameter.ref() == QStringLiteral("Note.resources")) {
+        else if (userException.parameter.ref() == QStringLiteral("Note.resources"))
+        {
             errorDescription.appendBase(QT_TRANSLATE_NOOP("", "too many resources on note"));
         }
-        else if (userException.parameter.ref() == QStringLiteral("Note.tagGuids")) {
+        else if (userException.parameter.ref() == QStringLiteral("Note.tagGuids"))
+        {
             errorDescription.appendBase(QT_TRANSLATE_NOOP("", "too many tags on note"));
         }
-        else if (userException.parameter.ref() == QStringLiteral("Resource.data.size")) {
+        else if (userException.parameter.ref() == QStringLiteral("Resource.data.size"))
+        {
             errorDescription.appendBase(QT_TRANSLATE_NOOP("", "one of note's resource's data is too large"));
         }
-        else if (userException.parameter.ref().startsWith(QStringLiteral("NoteAttribute."))) {
+        else if (userException.parameter.ref().startsWith(QStringLiteral("NoteAttribute.")))
+        {
             errorDescription.appendBase(QT_TRANSLATE_NOOP("", "note attributes string is too large"));
             if (note.hasNoteAttributes()) {
                 QNWARNING(errorDescription << QStringLiteral(", note attributes: ") << note.noteAttributes());
             }
         }
-        else if (userException.parameter.ref().startsWith(QStringLiteral("ResourceAttribute."))) {
+        else if (userException.parameter.ref().startsWith(QStringLiteral("ResourceAttribute.")))
+        {
             errorDescription.appendBase(QT_TRANSLATE_NOOP("", "one of note's resources has too "
                                                           "large resource attributes string"));
             QNWARNING(errorDescription << QStringLiteral(", note: ") << note);
         }
-        else if (userException.parameter.ref() == QStringLiteral("Tag")) {
+        else if (userException.parameter.ref() == QStringLiteral("Tag"))
+        {
             errorDescription.appendBase(QT_TRANSLATE_NOOP("", "Note.tagNames was provided, and the required new tags "
                                                           "would exceed the maximum number per account"));
             QNWARNING(errorDescription << QStringLiteral(", note: ") << note);
         }
-        else {
+        else
+        {
             errorDescription.appendBase(QT_TRANSLATE_NOOP("", "unexpected parameter"));
             errorDescription.details() = userException.parameter.ref();
         }
@@ -1300,16 +1323,19 @@ qint32 NoteStore::processEdamUserExceptionForNote(const Note & note, const qever
             return userException.errorCode;
         }
 
-        if (userException.parameter.ref() == QStringLiteral("Note.notebookGuid")) {
+        if (userException.parameter.ref() == QStringLiteral("Note.notebookGuid"))
+        {
             errorDescription.appendBase(QT_TRANSLATE_NOOP("", "note's notebook is not owned by user"));
             if (note.hasNotebookGuid()) {
                 QNWARNING(errorDescription << QStringLiteral(", notebook guid: ") << note.notebookGuid());
             }
         }
-        else if (!thrownOnCreation && (userException.parameter.ref() == QStringLiteral("Note"))) {
+        else if (!thrownOnCreation && (userException.parameter.ref() == QStringLiteral("Note")))
+        {
             errorDescription.appendBase(QT_TRANSLATE_NOOP("", "note is not owned by user"));
         }
-        else {
+        else
+        {
             errorDescription.appendBase(QT_TRANSLATE_NOOP("", "unexpected parameter"));
             errorDescription.details() = userException.parameter.ref();
         }
@@ -1365,11 +1391,13 @@ qint32 NoteStore::processEdamSystemException(const qevercloud::EDAMSystemExcepti
 
     if (systemException.errorCode == qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED)
     {
-        if (!systemException.rateLimitDuration.isSet()) {
+        if (!systemException.rateLimitDuration.isSet())
+        {
             errorDescription.setBase(QT_TRANSLATE_NOOP("", "Evernote API rate limit exceeded but no "
                                                        "rate limit duration is available"));
         }
-        else {
+        else
+        {
             errorDescription.setBase(QT_TRANSLATE_NOOP("", "Evernote API rate limit exceeded, retry in"));
             errorDescription.details() = QString::number(systemException.rateLimitDuration.ref());
             errorDescription.details() += QStringLiteral(" sec");
@@ -1403,36 +1431,6 @@ void NoteStore::processEdamNotFoundException(const qevercloud::EDAMNotFoundExcep
     if (notFoundException.key.isSet() && !notFoundException.key->isEmpty()) {
         errorDescription.details() = notFoundException.key.ref();
     }
-}
-
-qint32 NoteStore::processEvernoteException(const qevercloud::EvernoteException & evernoteException,
-                                           ErrorString & errorDescription) const
-{
-    errorDescription.setBase(QT_TRANSLATE_NOOP("", "Note store caught EvernoteException from QEverCloud"));
-
-    if (Q_UNLIKELY(evernoteException.exceptionData().isNull())) {
-        errorDescription.appendBase(QT_TRANSLATE_NOOP("", "exception data is null"));
-    }
-    else {
-        errorDescription.details() = evernoteException.exceptionData()->errorMessage;
-    }
-
-    return qevercloud::EDAMErrorCode::UNKNOWN;
-}
-
-qint32 NoteStore::processEverCloudException(const qevercloud::EverCloudException & everCloudException,
-                                            ErrorString & errorDescription) const
-{
-    errorDescription.setBase(QT_TRANSLATE_NOOP("", "Note store caught EverCloudException from QEverCloud"));
-
-    if (Q_UNLIKELY(everCloudException.exceptionData().isNull())) {
-        errorDescription.appendBase(QT_TRANSLATE_NOOP("", "exception data is null"));
-    }
-    else {
-        errorDescription.details() = everCloudException.exceptionData()->errorMessage;
-    }
-
-    return qevercloud::EDAMErrorCode::UNKNOWN;
 }
 
 } // namespace quentier

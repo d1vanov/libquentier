@@ -4256,8 +4256,8 @@ void RemoteToLocalSynchronizationManager::getLinkedNotebookSyncState(const Linke
 
     ErrorString errorDescription;
     qint32 rateLimitSeconds = 0;
-    qint32 errorCode = m_noteStore.getLinkedNotebookSyncState(linkedNotebook, authToken, syncState,
-                                                              errorDescription, rateLimitSeconds);
+    qint32 errorCode = m_noteStore.getLinkedNotebookSyncState(linkedNotebook.qevercloudLinkedNotebook(), authToken,
+                                                              syncState, errorDescription, rateLimitSeconds);
     if (errorCode == qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED)
     {
         if (rateLimitSeconds <= 0) {
@@ -4424,8 +4424,8 @@ bool RemoteToLocalSynchronizationManager::downloadLinkedNotebooksSyncChunks()
 
             ErrorString errorDescription;
             qint32 rateLimitSeconds = 0;
-            qint32 errorCode = m_noteStore.getLinkedNotebookSyncChunk(linkedNotebook, afterUsn,
-                                                                      m_maxSyncChunkEntries,
+            qint32 errorCode = m_noteStore.getLinkedNotebookSyncChunk(linkedNotebook.qevercloudLinkedNotebook(),
+                                                                      afterUsn, m_maxSyncChunkEntries,
                                                                       authToken, fullSyncOnly, *pSyncChunk,
                                                                       errorDescription, rateLimitSeconds);
             if (errorCode == qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED)
@@ -4890,7 +4890,7 @@ void RemoteToLocalSynchronizationManager::handleLinkedNotebookAdded(const Linked
     }
 
     auto it = std::find_if(m_allLinkedNotebooks.begin(), m_allLinkedNotebooks.end(),
-                           CompareItemByGuid<qevercloud::LinkedNotebook>(linkedNotebook.guid()));
+                           CompareItemByGuid<LinkedNotebook>(linkedNotebook.guid()));
     if (it != m_allLinkedNotebooks.end()) {
         QNINFO(QStringLiteral("Detected the addition of linked notebook to local storage, however such linked notebook is "
                               "already present within the list of all linked notebooks received previously from local storage"));
@@ -4915,7 +4915,7 @@ void RemoteToLocalSynchronizationManager::handleLinkedNotebookUpdated(const Link
     }
 
     auto it = std::find_if(m_allLinkedNotebooks.begin(), m_allLinkedNotebooks.end(),
-                           CompareItemByGuid<qevercloud::LinkedNotebook>(linkedNotebook.guid()));
+                           CompareItemByGuid<LinkedNotebook>(linkedNotebook.guid()));
     if (it == m_allLinkedNotebooks.end()) {
         QNINFO(QStringLiteral("Detected the update of linked notebook to local storage, however such linked notebook is "
                               "not present within the list of all linked notebooks received previously from local storage"));
@@ -4956,13 +4956,13 @@ void RemoteToLocalSynchronizationManager::timerEvent(QTimerEvent * pEvent)
 
         CIter notesToAddEnd = m_notesToAddPerAPICallPostponeTimerId.constEnd();
         for(CIter it = m_notesToAddPerAPICallPostponeTimerId.constBegin(); it != notesToAddEnd; ++it) {
-            m_notes.push_back(it.value());
+            m_notes.push_back(it.value().qevercloudNote());
         }
         m_notesToAddPerAPICallPostponeTimerId.clear();
 
         CIter notesToUpdateEnd = m_notesToUpdatePerAPICallPostponeTimerId.constEnd();
         for(CIter it = m_notesToUpdatePerAPICallPostponeTimerId.constBegin(); it != notesToUpdateEnd; ++it) {
-            m_notes.push_back(it.value());
+            m_notes.push_back(it.value().qevercloudNote());
         }
         m_notesToUpdatePerAPICallPostponeTimerId.clear();
 
@@ -6005,6 +6005,17 @@ bool RemoteToLocalSynchronizationManager::CompareItemByGuid<T>::operator()(const
 {
     if (item.guid.isSet()) {
         return (m_guid == item.guid.ref());
+    }
+    else {
+        return false;
+    }
+}
+
+template <>
+bool RemoteToLocalSynchronizationManager::CompareItemByGuid<LinkedNotebook>::operator()(const LinkedNotebook & item) const
+{
+    if (item.hasGuid()) {
+        return (m_guid == item.guid());
     }
     else {
         return false;

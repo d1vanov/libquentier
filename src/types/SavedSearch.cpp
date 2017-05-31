@@ -68,12 +68,12 @@ SavedSearch & SavedSearch::operator=(const SavedSearch & other)
 SavedSearch::~SavedSearch()
 {}
 
-SavedSearch::operator const qevercloud::SavedSearch & () const
+const qevercloud::SavedSearch & SavedSearch::qevercloudSavedSearch() const
 {
     return d->m_qecSearch;
 }
 
-SavedSearch::operator qevercloud::SavedSearch & ()
+qevercloud::SavedSearch & SavedSearch::qevercloudSavedSearch()
 {
     return d->m_qecSearch;
 }

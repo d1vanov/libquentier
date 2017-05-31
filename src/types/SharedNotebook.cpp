@@ -79,12 +79,12 @@ bool SharedNotebook::operator!=(const SharedNotebook & other) const
     return !(*this == other);
 }
 
-SharedNotebook::operator const qevercloud::SharedNotebook &() const
+const qevercloud::SharedNotebook & SharedNotebook::qevercloudSharedNotebook() const
 {
     return d->m_qecSharedNotebook;
 }
 
-SharedNotebook::operator qevercloud::SharedNotebook &()
+qevercloud::SharedNotebook & SharedNotebook::qevercloudSharedNotebook()
 {
     return d->m_qecSharedNotebook;
 }

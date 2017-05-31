@@ -57,8 +57,8 @@ public:
 
     virtual ~SavedSearch();
 
-    operator qevercloud::SavedSearch & ();
-    operator const qevercloud::SavedSearch & () const;
+    const qevercloud::SavedSearch & qevercloudSavedSearch() const;
+    qevercloud::SavedSearch & qevercloudSavedSearch();
 
     bool operator==(const SavedSearch & other) const;
     bool operator!=(const SavedSearch & other) const;

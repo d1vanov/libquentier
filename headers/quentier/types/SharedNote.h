@@ -51,8 +51,8 @@ public:
     bool operator==(const SharedNote & other) const;
     bool operator!=(const SharedNote & other) const;
 
-    operator const qevercloud::SharedNote&() const;
-    operator qevercloud::SharedNote&();
+    const qevercloud::SharedNote & qevercloudSharedNote() const;
+    qevercloud::SharedNote & qevercloudSharedNote();
 
     const QString & noteGuid() const;
     void setNoteGuid(const QString & noteGuid);

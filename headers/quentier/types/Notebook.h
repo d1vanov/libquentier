@@ -60,8 +60,8 @@ public:
     bool operator==(const Notebook & other) const;
     bool operator!=(const Notebook & other) const;
 
-    operator const qevercloud::Notebook&() const;
-    operator qevercloud::Notebook&();
+    const qevercloud::Notebook & qevercloudNotebook() const;
+    qevercloud::Notebook & qevercloudNotebook();
 
     virtual void clear() Q_DECL_OVERRIDE;
 

@@ -89,12 +89,12 @@ bool User::operator!=(const User & other) const
     return !(*this == other);
 }
 
-User::operator const qevercloud::User &() const
+const qevercloud::User & User::qevercloudUser() const
 {
     return d->m_qecUser;
 }
 
-User::operator qevercloud::User &()
+qevercloud::User & User::qevercloudUser()
 {
     return d->m_qecUser;
 }

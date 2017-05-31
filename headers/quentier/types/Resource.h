@@ -45,8 +45,8 @@ public:
     bool operator==(const Resource & other) const;
     bool operator!=(const Resource & other) const;
 
-    operator const qevercloud::Resource&() const;
-    operator qevercloud::Resource&();
+    const qevercloud::Resource & qevercloudResource() const;
+    qevercloud::Resource & qevercloudResource();
 
     virtual void clear() Q_DECL_OVERRIDE;
 

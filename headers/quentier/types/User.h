@@ -53,8 +53,8 @@ public:
     bool operator==(const User & other) const;
     bool operator!=(const User & other) const;
 
-    operator const qevercloud::User&() const;
-    operator qevercloud::User&();
+    const qevercloud::User & qevercloudUser() const;
+    qevercloud::User & qevercloudUser();
 
     void clear();
 

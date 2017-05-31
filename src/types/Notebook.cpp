@@ -107,12 +107,12 @@ bool Notebook::operator!=(const Notebook & other) const
     return !(*this == other);
 }
 
-Notebook::operator const qevercloud::Notebook &() const
+const qevercloud::Notebook & Notebook::qevercloudNotebook() const
 {
     return d->m_qecNotebook;
 }
 
-Notebook::operator qevercloud::Notebook&()
+qevercloud::Notebook & Notebook::qevercloudNotebook()
 {
     return d->m_qecNotebook;
 }
@@ -486,8 +486,7 @@ void Notebook::setSharedNotebooks(QList<SharedNotebook> && notebooks)
     d->m_qecNotebook.sharedNotebooks->clear();
     int numNotebooks = notebooks.size();
     for(int i = 0; i < numNotebooks; ++i) {
-        const SharedNotebook & sharedNotebook = notebooks[i];
-        d->m_qecNotebook.sharedNotebooks.ref() << static_cast<const qevercloud::SharedNotebook>(sharedNotebook);
+        d->m_qecNotebook.sharedNotebooks.ref() << notebooks[i].qevercloudSharedNotebook();
     }
 }
 
@@ -498,7 +497,7 @@ void Notebook::addSharedNotebook(const SharedNotebook & sharedNotebook)
     }
 
     QList<qevercloud::SharedNotebook> & sharedNotebooks = d->m_qecNotebook.sharedNotebooks;
-    const auto & enSharedNotebook = static_cast<const qevercloud::SharedNotebook&>(sharedNotebook);
+    const auto & enSharedNotebook = sharedNotebook.qevercloudSharedNotebook();
 
     if (sharedNotebooks.indexOf(enSharedNotebook) != -1) {
         QNDEBUG(QStringLiteral("Can't add shared notebook: this shared notebook already exists within the notebook"));
@@ -516,7 +515,7 @@ void Notebook::removeSharedNotebook(const SharedNotebook & sharedNotebook)
     }
 
     auto & sharedNotebooks = d->m_qecNotebook.sharedNotebooks;
-    const auto & enSharedNotebook = static_cast<const qevercloud::SharedNotebook>(sharedNotebook);
+    const auto & enSharedNotebook = sharedNotebook.qevercloudSharedNotebook();
 
     int index = sharedNotebooks->indexOf(enSharedNotebook);
     if (index == -1) {
@@ -622,7 +621,7 @@ void Notebook::setContact(const User & contact)
         return;
     }
 
-    d->m_qecNotebook.contact = static_cast<const qevercloud::User&>(contact);
+    d->m_qecNotebook.contact = contact.qevercloudUser();
 }
 
 bool Notebook::isLastUsed() const

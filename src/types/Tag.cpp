@@ -91,12 +91,12 @@ bool Tag::operator!=(const Tag & other) const
     return !(*this == other);
 }
 
-Tag::operator const qevercloud::Tag &() const
+const qevercloud::Tag & Tag::qevercloudTag() const
 {
     return d->m_qecTag;
 }
 
-Tag::operator qevercloud::Tag &()
+qevercloud::Tag & Tag::qevercloudTag()
 {
     return d->m_qecTag;
 }
@@ -271,55 +271,76 @@ QTextStream & Tag::print(QTextStream & strm) const
 {
     strm << QStringLiteral("Tag { \n");
 
-    strm << QStringLiteral("local uid: ") << d->m_localUid.toString() << QStringLiteral("; \n");
+#define INSERT_DELIMITER \
+    strm << QStringLiteral("; \n")
+
+    const QString localUid_ = localUid();
+    if (!localUid_.isEmpty()) {
+        strm << QStringLiteral("localUid: ") << localUid_;
+    }
+    else {
+        strm << QStringLiteral("localUid is not set");
+    }
+    INSERT_DELIMITER;
 
     if (d->m_parentLocalUid.isSet()) {
-        strm << QStringLiteral("parent local uid: ") << d->m_parentLocalUid.ref() << QStringLiteral("; \n");
+        strm << QStringLiteral("parent local uid: ") << d->m_parentLocalUid.ref();
     }
     else {
-        strm << QStringLiteral("parent local uid is not set; \n");
+        strm << QStringLiteral("parent local uid is not set");
     }
+    INSERT_DELIMITER;
 
     if (d->m_qecTag.guid.isSet()) {
-        strm << QStringLiteral("guid: ") << d->m_qecTag.guid << QStringLiteral("; \n");
+        strm << QStringLiteral("guid: ") << d->m_qecTag.guid;
     }
     else {
-        strm << QStringLiteral("guid is not set; \n");
+        strm << QStringLiteral("guid is not set");
     }
+    INSERT_DELIMITER;
 
     if (d->m_linkedNotebookGuid.isSet()) {
-        strm << QStringLiteral("linked notebook guid: ") << d->m_linkedNotebookGuid << QStringLiteral("; \n");
+        strm << QStringLiteral("linked notebook guid: ") << d->m_linkedNotebookGuid;
     }
     else {
-        strm << QStringLiteral("linked notebook guid is not set; \n");
+        strm << QStringLiteral("linked notebook guid is not set");
     }
+    INSERT_DELIMITER;
 
     if (d->m_qecTag.name.isSet()) {
-        strm << QStringLiteral("name: ") << d->m_qecTag.name << QStringLiteral("; \n");
+        strm << QStringLiteral("name: ") << d->m_qecTag.name;
     }
     else {
-        strm << QStringLiteral("name is not set; \n");
+        strm << QStringLiteral("name is not set");
     }
+    INSERT_DELIMITER;
 
     if (d->m_qecTag.parentGuid.isSet()) {
-        strm << QStringLiteral("parentGuid: ") << d->m_qecTag.parentGuid << QStringLiteral("; \n");
+        strm << QStringLiteral("parentGuid: ") << d->m_qecTag.parentGuid;
     }
     else {
-        strm << QStringLiteral("parentGuid is not set; \n");
+        strm << QStringLiteral("parentGuid is not set");
     }
+    INSERT_DELIMITER;
 
     if (d->m_qecTag.updateSequenceNum.isSet()) {
-        strm << QStringLiteral("updateSequenceNumber: ") << QString::number(d->m_qecTag.updateSequenceNum) << QStringLiteral("; \n");
+        strm << QStringLiteral("updateSequenceNumber: ") << QString::number(d->m_qecTag.updateSequenceNum);
     }
     else {
-        strm << QStringLiteral("updateSequenceNumber is not set; \n");
+        strm << QStringLiteral("updateSequenceNumber is not set");
     }
+    INSERT_DELIMITER;
 
-    strm << QStringLiteral("isDirty: ") << (isDirty() ? QStringLiteral("true") : QStringLiteral("false")) << QStringLiteral("; \n");
-    strm << QStringLiteral("isLocal: ") << (d->m_isLocal ? QStringLiteral("true") : QStringLiteral("false")) << QStringLiteral("; \n");
-    strm << QStringLiteral("isFavorited = ") << (isFavorited() ? QStringLiteral("true") : QStringLiteral("false")) << QStringLiteral("; \n");
+    strm << QStringLiteral("isDirty: ") << (isDirty() ? QStringLiteral("true") : QStringLiteral("false"));
+    INSERT_DELIMITER;
+
+    strm << QStringLiteral("isLocal: ") << (d->m_isLocal ? QStringLiteral("true") : QStringLiteral("false"));
+    INSERT_DELIMITER;
+
+    strm << QStringLiteral("isFavorited = ") << (isFavorited() ? QStringLiteral("true") : QStringLiteral("false"));
+    INSERT_DELIMITER;
+
     strm << QStringLiteral("}; \n");
-
     return strm;
 }
 
