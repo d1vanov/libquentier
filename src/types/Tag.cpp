@@ -271,6 +271,15 @@ QTextStream & Tag::print(QTextStream & strm) const
 {
     strm << QStringLiteral("Tag { \n");
 
+    strm << QStringLiteral("local uid: ") << d->m_localUid.toString() << QStringLiteral("; \n");
+
+    if (d->m_parentLocalUid.isSet()) {
+        strm << QStringLiteral("parent local uid: ") << d->m_parentLocalUid.ref() << QStringLiteral("; \n");
+    }
+    else {
+        strm << QStringLiteral("parent local uid is not set; \n");
+    }
+
     if (d->m_qecTag.guid.isSet()) {
         strm << QStringLiteral("guid: ") << d->m_qecTag.guid << QStringLiteral("; \n");
     }
