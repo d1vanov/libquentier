@@ -107,13 +107,13 @@ void EncryptionDialog::accept()
 
     if (passphrase.isEmpty()) {
         QNINFO(QStringLiteral("Attempted to press OK in EncryptionDialog without having a password set"));
-        ErrorString error(QT_TRANSLATE_NOOP("", "Please choose the encryption password"));
+        ErrorString error(QT_TR_NOOP("Please choose the encryption password"));
         setError(error);
         return;
     }
 
     if (passphrase != repeatedPassphrase) {
-        ErrorString error(QT_TRANSLATE_NOOP("", "Can't encrypt: password and repeated password do not match"));
+        ErrorString error(QT_TR_NOOP("Can't encrypt: password and repeated password do not match"));
         QNINFO(error);
         setError(error);
         return;

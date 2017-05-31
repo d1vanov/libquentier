@@ -123,8 +123,8 @@ void InsertHtmlDelegate::onResourceSavedToStorage(QUuid requestId, QByteArray da
     }
     else
     {
-        ErrorString error(QT_TRANSLATE_NOOP("", "Internal error: can't insert HTML containing images: source URL "
-                                            "was not found for resource local uid"));
+        ErrorString error(QT_TR_NOOP("Internal error: can't insert HTML containing images: source URL "
+                                     "was not found for resource local uid"));
         QNWARNING(error);
         emit notifyError(error);
         return;
@@ -144,7 +144,7 @@ void InsertHtmlDelegate::onHtmlInserted(const QVariant & responseData)
     {
         removeAddedResourcesFromNote();
 
-        ErrorString error(QT_TRANSLATE_NOOP("", "Internal error: can't parse the result of html insertion from JavaScript"));
+        ErrorString error(QT_TR_NOOP("Internal error: can't parse the result of html insertion from JavaScript"));
         QNWARNING(error);
         emit notifyError(error);
         return;
@@ -158,10 +158,10 @@ void InsertHtmlDelegate::onHtmlInserted(const QVariant & responseData)
         ErrorString error;
         auto errorIt = resultMap.find(QStringLiteral("error"));
         if (Q_UNLIKELY(errorIt == resultMap.end())) {
-            error.setBase(QT_TRANSLATE_NOOP("", "Internal error: can't parse the error of html insertion from JavaScript"));
+            error.setBase(QT_TR_NOOP("Internal error: can't parse the error of html insertion from JavaScript"));
         }
         else {
-            error.setBase(QT_TRANSLATE_NOOP("", "Internal error: can't insert html into the note editor"));
+            error.setBase(QT_TR_NOOP("Internal error: can't insert html into the note editor"));
             error.details() = errorIt.value().toString();
         }
 
@@ -226,7 +226,7 @@ void InsertHtmlDelegate::doStart()
     QNDEBUG(QStringLiteral("InsertHtmlDelegate::doStart"));
 
     if (Q_UNLIKELY(m_inputHtml.isEmpty())) {
-        ErrorString errorDescription(QT_TRANSLATE_NOOP("", "Can't insert HTML: the input html is empty"));
+        ErrorString errorDescription(QT_TR_NOOP("Can't insert HTML: the input html is empty"));
         QNWARNING(errorDescription);
         emit notifyError(errorDescription);
         return;
@@ -370,7 +370,7 @@ void InsertHtmlDelegate::doStart()
     }
 
     if (reader.hasError()) {
-        ErrorString errorDescription(QT_TRANSLATE_NOOP("", "Can't insert HTML: unable to analyze the HTML"));
+        ErrorString errorDescription(QT_TR_NOOP("Can't insert HTML: unable to analyze the HTML"));
         errorDescription.details() = reader.errorString();
         QNWARNING(QStringLiteral("Error reading html: ") << errorDescription
                   << QStringLiteral(", HTML: ") << m_cleanedUpHtml);
@@ -661,8 +661,8 @@ bool InsertHtmlDelegate::adjustImgTagsInHtml()
                 if (Q_UNLIKELY(resourceHtml.isEmpty()))
                 {
                     removeAddedResourcesFromNote();
-                    ErrorString errorDescription(QT_TRANSLATE_NOOP("", "Can't insert HTML: can't compose the HTML representation "
-                                                                   "of a resource that replaced the external image link"));
+                    ErrorString errorDescription(QT_TR_NOOP("Can't insert HTML: can't compose the HTML representation "
+                                                            "of a resource that replaced the external image link"));
                     QNWARNING(errorDescription << QStringLiteral("; resource: ") << imgData.m_resource);
                     emit notifyError(errorDescription);
                     return false;
@@ -696,7 +696,7 @@ bool InsertHtmlDelegate::adjustImgTagsInHtml()
                 }
 
                 if (resourceHtmlReader.hasError()) {
-                    ErrorString errorDescription(QT_TRANSLATE_NOOP("", "Can't insert HTML: failed to read the composed resource HTML"));
+                    ErrorString errorDescription(QT_TR_NOOP("Can't insert HTML: failed to read the composed resource HTML"));
                     errorDescription.details() = resourceHtmlReader.errorString();
                     QNWARNING(QStringLiteral("Error reading html: ") << errorDescription
                               << QStringLiteral(", HTML: ") << m_cleanedUpHtml);
@@ -742,7 +742,7 @@ bool InsertHtmlDelegate::adjustImgTagsInHtml()
     }
 
     if (reader.hasError()) {
-        ErrorString errorDescription(QT_TRANSLATE_NOOP("", "Can't insert HTML: failed to read and recompose the cleaned up HTML"));
+        ErrorString errorDescription(QT_TR_NOOP("Can't insert HTML: failed to read and recompose the cleaned up HTML"));
         errorDescription.details() = reader.errorString();
         QNWARNING(QStringLiteral("Error reading html: ") << errorDescription
                   << QStringLiteral(", HTML: ") << m_cleanedUpHtml);
@@ -761,7 +761,7 @@ void InsertHtmlDelegate::insertHtmlIntoEditor()
 
     NoteEditorPage * pPage = qobject_cast<NoteEditorPage*>(m_noteEditor.page());
     if (Q_UNLIKELY(!pPage)) {
-        ErrorString error(QT_TRANSLATE_NOOP("", "Can't insert HTML: no note editor page"));
+        ErrorString error(QT_TR_NOOP("Can't insert HTML: no note editor page"));
         QNWARNING(error);
         emit notifyError(error);
         return;

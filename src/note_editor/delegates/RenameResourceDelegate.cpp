@@ -30,7 +30,7 @@ namespace quentier {
 #define GET_PAGE() \
     NoteEditorPage * page = qobject_cast<NoteEditorPage*>(m_noteEditor.page()); \
     if (Q_UNLIKELY(!page)) { \
-        ErrorString error(QT_TRANSLATE_NOOP("", "can't rename the attachment: no note editor page")); \
+        ErrorString error(QT_TR_NOOP("Can't rename the attachment: no note editor page")); \
         QNWARNING(error); \
         emit notifyError(error); \
         return; \
@@ -95,7 +95,7 @@ void RenameResourceDelegate::onOriginalPageConvertedToNote(Note note)
 
 #define CHECK_NOTE_ACTUALITY() \
     if (m_noteEditor.notePtr() != m_pNote) { \
-        ErrorString error(QT_TRANSLATE_NOOP("", "the note set to the note editor was changed during the attachment renaming, the action was not completed")); \
+        ErrorString error(QT_TR_NOOP("The note set to the note editor was changed during the attachment renaming, the action was not completed")); \
         QNDEBUG(error); \
         emit notifyError(error); \
         return; \
@@ -108,7 +108,7 @@ void RenameResourceDelegate::doStart()
     CHECK_NOTE_ACTUALITY()
 
     if (Q_UNLIKELY(!m_resource.hasDataHash())) {
-        ErrorString error(QT_TRANSLATE_NOOP("", "can't rename the attachment: the data hash is missing"));
+        ErrorString error(QT_TR_NOOP("Can't rename the attachment: the data hash is missing"));
         QNWARNING(error);
         emit notifyError(error);
         return;
@@ -220,7 +220,7 @@ void RenameResourceDelegate::onGenericResourceImageWriterFinished(bool success, 
                         this, QNSLOT(RenameResourceDelegate,onGenericResourceImageWriterFinished,bool,QByteArray,QString,QString,QUuid));
 
     if (Q_UNLIKELY(!success)) {
-        ErrorString error(QT_TRANSLATE_NOOP("", "can't rename generic resource: can't write generic resource image to file"));
+        ErrorString error(QT_TR_NOOP("Can't rename generic resource: can't write generic resource image to file"));
         error.appendBase(errorDescription.base());
         error.appendBase(errorDescription.additionalBases());
         error.details() = errorDescription.details();

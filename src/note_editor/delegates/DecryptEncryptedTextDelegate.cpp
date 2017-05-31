@@ -41,7 +41,7 @@ namespace quentier {
 #define CHECK_ACCOUNT() \
     CHECK_NOTE_EDITOR() \
     if (Q_UNLIKELY(!m_pNoteEditor->accountPtr())) { \
-        ErrorString error(QT_TRANSLATE_NOOP("", "Can't decrypt the encrypted text: no account is set to the note editor")); \
+        ErrorString error(QT_TR_NOOP("Can't decrypt the encrypted text: no account is set to the note editor")); \
         QNWARNING(error); \
         emit notifyError(error); \
         return; \
@@ -51,7 +51,7 @@ namespace quentier {
     CHECK_NOTE_EDITOR() \
     NoteEditorPage * page = qobject_cast<NoteEditorPage*>(m_pNoteEditor->page()); \
     if (Q_UNLIKELY(!page)) { \
-        ErrorString error(QT_TRANSLATE_NOOP("", "Can't decrypt the encrypted text: no note editor page")); \
+        ErrorString error(QT_TR_NOOP("Can't decrypt the encrypted text: no note editor page")); \
         QNWARNING(error); \
         emit notifyError(error); \
         return; \
@@ -96,8 +96,8 @@ void DecryptEncryptedTextDelegate::start()
     CHECK_NOTE_EDITOR()
 
     if (Q_UNLIKELY(!m_length)) {
-        ErrorString errorDescription(QT_TRANSLATE_NOOP("", "can't decrypt the encrypted text: can't convert "
-                                                       "the encryption key length from string to number"));
+        ErrorString errorDescription(QT_TR_NOOP("Can't decrypt the encrypted text: can't convert "
+                                                "the encryption key length from string to number"));
         QNWARNING(errorDescription);
         emit notifyError(errorDescription);
         return;
@@ -193,7 +193,7 @@ void DecryptEncryptedTextDelegate::onDecryptionScriptFinished(const QVariant & d
 
     auto statusIt = resultMap.find(QStringLiteral("status"));
     if (Q_UNLIKELY(statusIt == resultMap.end())) {
-        ErrorString error(QT_TRANSLATE_NOOP("", "can't parse the result of text decryption script from JavaScript"));
+        ErrorString error(QT_TR_NOOP("Can't parse the result of text decryption script from JavaScript"));
         QNWARNING(error);
         emit notifyError(error);
         return;
@@ -206,10 +206,10 @@ void DecryptEncryptedTextDelegate::onDecryptionScriptFinished(const QVariant & d
 
         auto errorIt = resultMap.find(QStringLiteral("error"));
         if (Q_UNLIKELY(errorIt == resultMap.end())) {
-            error.setBase(QT_TRANSLATE_NOOP("", "can't parse the error of text decryption from JavaScript"));
+            error.setBase(QT_TR_NOOP("Can't parse the error of text decryption from JavaScript"));
         }
         else {
-            error.setBase(QT_TRANSLATE_NOOP("", "can't decrypt the encrypted text"));
+            error.setBase(QT_TR_NOOP("Can't decrypt the encrypted text"));
             error.details() = errorIt.value().toString();
         }
 

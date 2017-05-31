@@ -46,7 +46,7 @@ void FileIOProcessorAsyncPrivate::setIdleTimePeriod(const qint32 seconds)
     QNTRACE(QStringLiteral("FileIOProcessorAsyncPrivate: started timer with id ") << m_postOperationTimerId)
 
 void FileIOProcessorAsyncPrivate::onWriteFileRequest(QString absoluteFilePath, QByteArray data,
-                                                   QUuid requestId, bool append)
+                                                     QUuid requestId, bool append)
 {
     QNDEBUG(QStringLiteral("FileIOProcessorAsyncPrivate::onWriteFileRequest: file path = ") << absoluteFilePath
             << QStringLiteral(", request id = ") << requestId << QStringLiteral(", append = ")
@@ -58,7 +58,7 @@ void FileIOProcessorAsyncPrivate::onWriteFileRequest(QString absoluteFilePath, Q
     {
         bool madeFolder = folder.mkpath(folder.absolutePath());
         if (!madeFolder) {
-            ErrorString error(QT_TRANSLATE_NOOP("", "can't create folder to write file into"));
+            ErrorString error(QT_TR_NOOP("can't create folder to write file into"));
             error.details() = absoluteFilePath;
             QNWARNING(error);
             emit writeFileRequestProcessed(false, error, requestId);
@@ -79,7 +79,7 @@ void FileIOProcessorAsyncPrivate::onWriteFileRequest(QString absoluteFilePath, Q
 
     bool open = file.open(mode);
     if (Q_UNLIKELY(!open)) {
-        ErrorString error(QT_TRANSLATE_NOOP("", "can't open file for writing/appending"));
+        ErrorString error(QT_TR_NOOP("can't open file for writing/appending"));
         error.details() = absoluteFilePath;
         QNWARNING(error);
         emit writeFileRequestProcessed(false, error, requestId);
@@ -89,7 +89,7 @@ void FileIOProcessorAsyncPrivate::onWriteFileRequest(QString absoluteFilePath, Q
 
     qint64 writtenBytes = file.write(data);
     if (Q_UNLIKELY(writtenBytes < data.size())) {
-        ErrorString error(QT_TRANSLATE_NOOP("", "can't write the whole data to file"));
+        ErrorString error(QT_TR_NOOP("can't write the whole data to file"));
         error.details() = absoluteFilePath;
         QNWARNING(error);
         emit writeFileRequestProcessed(false, error, requestId);
@@ -118,7 +118,7 @@ void FileIOProcessorAsyncPrivate::onReadFileRequest(QString absoluteFilePath, QU
 
     bool open = file.open(QIODevice::ReadOnly);
     if (!open) {
-        ErrorString error(QT_TRANSLATE_NOOP("", "can't open file for reading"));
+        ErrorString error(QT_TR_NOOP("can't open file for reading"));
         error.details() = absoluteFilePath;
         QNDEBUG(error);
         emit readFileRequestProcessed(false, error, QByteArray(), requestId);

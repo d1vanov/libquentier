@@ -25,7 +25,7 @@ namespace quentier {
 #define GET_PAGE() \
     NoteEditorPage * page = qobject_cast<NoteEditorPage*>(m_noteEditor.page()); \
     if (Q_UNLIKELY(!page)) { \
-        ErrorString error(QT_TRANSLATE_NOOP("", "can't remove hyperlink: no note editor's page")); \
+        ErrorString error(QT_TR_NOOP("Can't remove hyperlink: no note editor's page")); \
         QNWARNING(error); \
         emit notifyError(error); \
         return; \
@@ -79,7 +79,7 @@ void RemoveHyperlinkDelegate::onHyperlinkIdFound(const QVariant & data)
 
     auto statusIt = resultMap.find(QStringLiteral("status"));
     if (Q_UNLIKELY(statusIt == resultMap.end())) {
-        ErrorString error(QT_TRANSLATE_NOOP("", "can't parse the result of hyperlink data request from JavaScript"));
+        ErrorString error(QT_TR_NOOP("Can't parse the result of hyperlink data request from JavaScript"));
         QNWARNING(error);
         emit notifyError(error);
         return;
@@ -92,10 +92,10 @@ void RemoveHyperlinkDelegate::onHyperlinkIdFound(const QVariant & data)
 
         auto errorIt = resultMap.find(QStringLiteral("error"));
         if (Q_UNLIKELY(errorIt == resultMap.end())) {
-            error.setBase(QT_TRANSLATE_NOOP("", "can't parse the error of hyperlink data request from JavaScript"));
+            error.setBase(QT_TR_NOOP("Can't parse the error of hyperlink data request from JavaScript"));
         }
         else {
-            error.setBase(QT_TRANSLATE_NOOP("", "can't get hyperlink data from JavaScript"));
+            error.setBase(QT_TR_NOOP("Can't get hyperlink data from JavaScript"));
             error.details() = errorIt.value().toString();
         }
 
@@ -106,7 +106,7 @@ void RemoveHyperlinkDelegate::onHyperlinkIdFound(const QVariant & data)
 
     auto dataIt = resultMap.find(QStringLiteral("data"));
     if (Q_UNLIKELY(dataIt == resultMap.end())) {
-        ErrorString error(QT_TRANSLATE_NOOP("", "no hyperlink data received from JavaScript"));
+        ErrorString error(QT_TR_NOOP("No hyperlink data received from JavaScript"));
         QNWARNING(error);
         emit notifyError(error);
         return;
@@ -117,7 +117,7 @@ void RemoveHyperlinkDelegate::onHyperlinkIdFound(const QVariant & data)
     bool conversionResult = false;
     quint64 hyperlinkId = dataStr.toULongLong(&conversionResult);
     if (!conversionResult) {
-        ErrorString error(QT_TRANSLATE_NOOP("", "can't remove hyperlink under cursor: can't convert hyperlink id to a number"));
+        ErrorString error(QT_TR_NOOP("Can't remove hyperlink under cursor: can't convert hyperlink id to a number"));
         QNWARNING(error << QStringLiteral(", data from JS: ") << data);
         emit notifyError(error);
         return;
@@ -144,7 +144,7 @@ void RemoveHyperlinkDelegate::onHyperlinkRemoved(const QVariant & data)
 
     auto statusIt = resultMap.find(QStringLiteral("status"));
     if (Q_UNLIKELY(statusIt == resultMap.end())) {
-        ErrorString error(QT_TRANSLATE_NOOP("", "can't parse the result of hyperlink removal from JavaScript"));
+        ErrorString error(QT_TR_NOOP("Can't parse the result of hyperlink removal from JavaScript"));
         QNWARNING(error);
         emit notifyError(error);
         return;
@@ -157,10 +157,10 @@ void RemoveHyperlinkDelegate::onHyperlinkRemoved(const QVariant & data)
 
         auto errorIt = resultMap.find(QStringLiteral("error"));
         if (Q_UNLIKELY(errorIt == resultMap.end())) {
-            error.setBase(QT_TRANSLATE_NOOP("", "can't parse the error of hyperlink removal from JavaScript"));
+            error.setBase(QT_TR_NOOP("Can't parse the error of hyperlink removal from JavaScript"));
         }
         else {
-            error.setBase(QT_TRANSLATE_NOOP("", "can't remove hyperlink, JavaScript error"));
+            error.setBase(QT_TR_NOOP("Can't remove hyperlink, JavaScript error"));
             error.details() = errorIt.value().toString();
         }
 

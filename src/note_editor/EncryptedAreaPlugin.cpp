@@ -66,20 +66,20 @@ bool EncryptedAreaPlugin::initialize(const QStringList & parameterNames, const Q
 
     int cipherIndex = parameterNames.indexOf(QStringLiteral("cipher"));
     if (numParameterValues <= cipherIndex) {
-        errorDescription.setBase(QT_TRANSLATE_NOOP("", "no value was found for cipher attribute"));
+        errorDescription.setBase(QT_TR_NOOP("No value was found for cipher attribute"));
         return false;
     }
 
     int encryptedTextIndex = parameterNames.indexOf(QStringLiteral("encrypted_text"));
     if (encryptedTextIndex < 0) {
-        errorDescription.setBase(QT_TRANSLATE_NOOP("", "encrypted text parameter was not found "
-                                                   "within the object with encrypted text"));
+        errorDescription.setBase(QT_TR_NOOP("Encrypted text parameter was not found "
+                                            "within the object with encrypted text"));
         return false;
     }
 
     int keyLengthIndex = parameterNames.indexOf(QStringLiteral("length"));
     if (numParameterValues <= keyLengthIndex) {
-        errorDescription.setBase(QT_TRANSLATE_NOOP("", "no value was found for length attribute"));
+        errorDescription.setBase(QT_TR_NOOP("No value was found for length attribute"));
         return false;
     }
 

@@ -41,7 +41,7 @@ namespace quentier {
 #define GET_PAGE() \
     NoteEditorPage * page = qobject_cast<NoteEditorPage*>(m_noteEditor.page()); \
     if (Q_UNLIKELY(!page)) { \
-        ErrorString error(QT_TRANSLATE_NOOP("", "can't add attachment: no note editor page")); \
+        ErrorString error(QT_TR_NOOP("Can't add attachment: no note editor page")); \
         QNWARNING(error); \
         emit notifyError(error); \
         return; \
@@ -136,7 +136,7 @@ void AddResourceDelegate::doStart()
 
     const Note * pNote = m_noteEditor.notePtr();
     if (Q_UNLIKELY(!pNote)) {
-        ErrorString error(QT_TRANSLATE_NOOP("", "Can't add attachment: no note is set to the editor"));
+        ErrorString error(QT_TR_NOOP("Can't add attachment: no note is set to the editor"));
         QNWARNING(error);
         emit notifyError(error);
         return;
@@ -144,15 +144,15 @@ void AddResourceDelegate::doStart()
 
     if (m_filePath.isEmpty() && m_data.isEmpty())
     {
-        ErrorString error(QT_TRANSLATE_NOOP("", "Can't add attachment: the file path of the data to be added is empty "
-                                            "and the raw data is empty as well"));
+        ErrorString error(QT_TR_NOOP("Can't add attachment: the file path of the data to be added is empty "
+                                     "and the raw data is empty as well"));
         QNWARNING(error);
         emit notifyError(error);
         return;
     }
     else if (m_filePath.isEmpty() && !m_resourceMimeType.isValid())
     {
-        ErrorString error(QT_TRANSLATE_NOOP("", "Can't add attachment: the mime type of the data to be added is invalid"));
+        ErrorString error(QT_TR_NOOP("Can't add attachment: the mime type of the data to be added is invalid"));
         QNWARNING(error);
         emit notifyError(error);
         return;
@@ -168,7 +168,7 @@ void AddResourceDelegate::doStart()
         const qevercloud::NoteLimits & limits = pNote->noteLimits();
         if (limits.noteResourceCountMax.isSet() && (limits.noteResourceCountMax.ref() == pNote->numResources()))
         {
-            ErrorString error(QT_TRANSLATE_NOOP("", "Can't add attachment: the note is already at max allowed number of attachments"));
+            ErrorString error(QT_TR_NOOP("Can't add attachment: the note is already at max allowed number of attachments"));
             error.details() = QString::number(pNote->numResources());
             emit notifyError(error);
             return;
@@ -181,7 +181,7 @@ void AddResourceDelegate::doStart()
         int numNoteResources = pNote->numResources();
         ++numNoteResources;
         if (numNoteResources > pAccount->noteResourceCountMax()) {
-            ErrorString error(QT_TRANSLATE_NOOP("", "Can't add attachment: the note is already at max allowed number of attachments"));
+            ErrorString error(QT_TR_NOOP("Can't add attachment: the note is already at max allowed number of attachments"));
             error.details() = QString::number(numNoteResources - 1);
             emit notifyError(error);
             return;
@@ -217,7 +217,7 @@ void AddResourceDelegate::doStartUsingFile()
 
     const Note * pNote = m_noteEditor.notePtr();
     if (Q_UNLIKELY(!pNote)) {
-        ErrorString error(QT_TRANSLATE_NOOP("", "Can't add attachment: no note is set to the editor"));
+        ErrorString error(QT_TR_NOOP("Can't add attachment: no note is set to the editor"));
         QNWARNING(error);
         emit notifyError(error);
         return;
@@ -232,7 +232,7 @@ void AddResourceDelegate::doStartUsingFile()
     QMimeDatabase mimeDatabase;
     m_resourceMimeType = mimeDatabase.mimeTypeForFile(fileInfo);
     if (Q_UNLIKELY(!m_resourceMimeType.isValid())) {
-        ErrorString error(QT_TRANSLATE_NOOP("", "Can't add attachment: the mime type of the resource file is invalid"));
+        ErrorString error(QT_TR_NOOP("Can't add attachment: the mime type of the resource file is invalid"));
         error.details() = QStringLiteral("file: ");
         error.details() += m_filePath;
         emit notifyError(error);
@@ -264,7 +264,7 @@ void AddResourceDelegate::onResourceFileRead(bool success, ErrorString errorDesc
                         this, QNSLOT(AddResourceDelegate,onResourceFileRead,bool,ErrorString,QByteArray,QUuid));
 
     if (Q_UNLIKELY(!success)) {
-        ErrorString error(QT_TRANSLATE_NOOP("", "can't read the contents of the attachment file"));
+        ErrorString error(QT_TR_NOOP("can't read the contents of the attachment file"));
         error.appendBase(errorDescription.base());
         error.appendBase(errorDescription.additionalBases());
         error.details() = errorDescription.details();
@@ -282,7 +282,7 @@ void AddResourceDelegate::doStartUsingData()
 
     const Note * pNote = m_noteEditor.notePtr();
     if (Q_UNLIKELY(!pNote)) {
-        ErrorString error(QT_TRANSLATE_NOOP("", "Can't add attachment: no note is set to the editor"));
+        ErrorString error(QT_TR_NOOP("Can't add attachment: no note is set to the editor"));
         QNWARNING(error);
         emit notifyError(error);
         return;
@@ -290,7 +290,7 @@ void AddResourceDelegate::doStartUsingData()
 
     if (Q_UNLIKELY(!m_resourceMimeType.isValid()))
     {
-        ErrorString error(QT_TRANSLATE_NOOP("", "Can't add attachment: bad mime type"));
+        ErrorString error(QT_TR_NOOP("Can't add attachment: bad mime type"));
 
         QString mimeTypeName = m_resourceMimeType.name();
         if (!mimeTypeName.isEmpty()) {
@@ -317,7 +317,7 @@ void AddResourceDelegate::doSaveResourceToStorage(const QByteArray & data, QStri
 
     const Note * pNote = m_noteEditor.notePtr();
     if (!pNote) {
-        ErrorString errorDescription(QT_TRANSLATE_NOOP("", "can't save the added resource to local file: no note is set to the editor"));
+        ErrorString errorDescription(QT_TR_NOOP("Can't save the added resource to local file: no note is set to the editor"));
         QNWARNING(errorDescription);
         emit notifyError(errorDescription);
         return;
@@ -392,7 +392,7 @@ void AddResourceDelegate::onResourceSavedToStorage(QUuid requestId, QByteArray d
                         this, QNSLOT(AddResourceDelegate,onResourceSavedToStorage,QUuid,QByteArray,QString,int,QString));
 
     if (Q_UNLIKELY(errorCode != 0)) {
-        ErrorString error(QT_TRANSLATE_NOOP("", "can't write the resource to local file"));
+        ErrorString error(QT_TR_NOOP("Can't write the resource to local file"));
         error.appendBase(errorDescription.base());
         error.appendBase(errorDescription.additionalBases());
         error.details() = errorDescription.details();
@@ -416,8 +416,8 @@ void AddResourceDelegate::onResourceSavedToStorage(QUuid requestId, QByteArray d
     // Otherwise need to build the image for the generic resource
     const Note * pNote = m_noteEditor.notePtr();
     if (!pNote) {
-        errorDescription.setBase(QT_TRANSLATE_NOOP("", "can't set up the image corresponding to the resource: "
-                                                   "no note is set to the editor"));
+        errorDescription.setBase(QT_TR_NOOP("Can't set up the image corresponding to the resource: "
+                                            "no note is set to the editor"));
         QNWARNING(errorDescription);
         emit notifyError(errorDescription);
         return;
@@ -468,7 +468,7 @@ void AddResourceDelegate::onGenericResourceImageSaved(bool success, QByteArray r
     Q_UNUSED(resourceImageDataHash);
 
     if (Q_UNLIKELY(!success)) {
-        ErrorString error(QT_TRANSLATE_NOOP("", "Can't write the image representing the resource to local file"));
+        ErrorString error(QT_TR_NOOP("Can't write the image representing the resource to local file"));
         error.appendBase(errorDescription.base());
         error.appendBase(errorDescription.additionalBases());
         error.details() = errorDescription.details();
@@ -488,7 +488,7 @@ void AddResourceDelegate::insertNewResourceHtml()
     ErrorString errorDescription;
     QString resourceHtml = ENMLConverter::resourceHtml(m_resource, errorDescription);
     if (Q_UNLIKELY(resourceHtml.isEmpty())) {
-        ErrorString error(QT_TRANSLATE_NOOP("", "can't compose the html representation of the attachment"));
+        ErrorString error(QT_TR_NOOP("Can't compose the html representation of the attachment"));
         error.appendBase(errorDescription.base());
         error.appendBase(errorDescription.additionalBases());
         error.details() = errorDescription.details();
@@ -513,7 +513,7 @@ void AddResourceDelegate::onNewResourceHtmlInserted(const QVariant & data)
 
     auto statusIt = resultMap.find(QStringLiteral("status"));
     if (Q_UNLIKELY(statusIt == resultMap.end())) {
-        ErrorString error(QT_TRANSLATE_NOOP("", "can't parse the result of new resource html insertion from JavaScript"));
+        ErrorString error(QT_TR_NOOP("Can't parse the result of new resource html insertion from JavaScript"));
         QNWARNING(error);
         emit notifyError(error);
         return;
@@ -526,10 +526,10 @@ void AddResourceDelegate::onNewResourceHtmlInserted(const QVariant & data)
 
         auto errorIt = resultMap.find(QStringLiteral("error"));
         if (Q_UNLIKELY(errorIt == resultMap.end())) {
-            error.setBase(QT_TRANSLATE_NOOP("", "can't parse the error of new resource html insertion from JavaScript"));
+            error.setBase(QT_TR_NOOP("Can't parse the error of new resource html insertion from JavaScript"));
         }
         else {
-            error.setBase(QT_TRANSLATE_NOOP("", "can't insert resource html into the note editor"));
+            error.setBase(QT_TR_NOOP("Can't insert resource html into the note editor"));
             error.details() = errorIt.value().toString();
         }
 
@@ -553,8 +553,8 @@ bool AddResourceDelegate::checkResourceDataSize(const Note & note, const Account
 
         if (Q_UNLIKELY(violatesNoteResourceSizeMax))
         {
-            ErrorString error(QT_TRANSLATE_NOOP("", "can't add attachment: the resource to be added "
-                                                "is too large, max resource size allowed is"));
+            ErrorString error(QT_TR_NOOP("Can't add attachment: the resource to be added "
+                                         "is too large, max resource size allowed is"));
             error.details() = humanReadableSize(static_cast<quint64>(note.noteLimits().resourceSizeMax.ref()));
             emit notifyError(error);
             return false;
@@ -564,8 +564,8 @@ bool AddResourceDelegate::checkResourceDataSize(const Note & note, const Account
         bool violatesNoteSizeMax = limits.noteSizeMax.isSet() && limits.noteSizeMax.ref() > (previousNoteSize + size);
         if (violatesNoteSizeMax)
         {
-            ErrorString error(QT_TRANSLATE_NOOP("", "can't add attachment: the addition of the resource "
-                                                "would violate the max resource size which is"));
+            ErrorString error(QT_TR_NOOP("Can't add attachment: the addition of the resource "
+                                         "would violate the max resource size which is"));
             error.details() = humanReadableSize(static_cast<quint64>(note.noteLimits().noteSizeMax.ref()));
             emit notifyError(error);
             return false;
@@ -577,8 +577,8 @@ bool AddResourceDelegate::checkResourceDataSize(const Note & note, const Account
 
         if (Q_UNLIKELY(violatesNoteResourceSizeMax))
         {
-            ErrorString error(QT_TRANSLATE_NOOP("", "can't add attachment: the resource is too large, "
-                                                "max resource size allowed is"));
+            ErrorString error(QT_TR_NOOP("Can't add attachment: the resource is too large, "
+                                         "max resource size allowed is"));
             error.details() = humanReadableSize(static_cast<quint64>(pAccount->resourceSizeMax()));
             emit notifyError(error);
             return false;

@@ -35,7 +35,7 @@ EditHyperlinkDelegate::EditHyperlinkDelegate(NoteEditorPrivate & noteEditor, con
 #define GET_PAGE() \
     NoteEditorPage * page = qobject_cast<NoteEditorPage*>(m_noteEditor.page()); \
     if (Q_UNLIKELY(!page)) { \
-        ErrorString error(QT_TRANSLATE_NOOP("", "can't edit hyperlink: no note editor page")); \
+        ErrorString error(QT_TR_NOOP("Can't edit hyperlink: no note editor page")); \
         QNWARNING(error); \
         emit notifyError(error); \
         return; \
@@ -75,7 +75,7 @@ void EditHyperlinkDelegate::onHyperlinkDataReceived(const QVariant & data)
 
     auto statusIt = resultMap.find(QStringLiteral("status"));
     if (Q_UNLIKELY(statusIt == resultMap.end())) {
-        ErrorString error(QT_TRANSLATE_NOOP("", "can't parse the result of hyperlink data request from JavaScript"));
+        ErrorString error(QT_TR_NOOP("Can't parse the result of hyperlink data request from JavaScript"));
         QNWARNING(error);
         emit notifyError(error);
         return;
@@ -88,10 +88,10 @@ void EditHyperlinkDelegate::onHyperlinkDataReceived(const QVariant & data)
 
         auto errorIt = resultMap.find(QStringLiteral("error"));
         if (Q_UNLIKELY(errorIt == resultMap.end())) {
-            error.setBase(QT_TRANSLATE_NOOP("", "can't parse the error of hyperlink data request from JavaScript"));
+            error.setBase(QT_TR_NOOP("Can't parse the error of hyperlink data request from JavaScript"));
         }
         else {
-            error.setBase(QT_TRANSLATE_NOOP("", "can't get hyperlink data from JavaScript"));
+            error.setBase(QT_TR_NOOP("Can't get hyperlink data from JavaScript"));
             error.details() = errorIt.value().toString();
         }
 
@@ -102,7 +102,7 @@ void EditHyperlinkDelegate::onHyperlinkDataReceived(const QVariant & data)
 
     auto dataIt = resultMap.find(QStringLiteral("data"));
     if (Q_UNLIKELY(dataIt == resultMap.end())) {
-        ErrorString error(QT_TRANSLATE_NOOP("", "no hyperlink data received from JavaScript"));
+        ErrorString error(QT_TR_NOOP("No hyperlink data received from JavaScript"));
         QNWARNING(error);
         emit notifyError(error);
         return;
@@ -110,13 +110,13 @@ void EditHyperlinkDelegate::onHyperlinkDataReceived(const QVariant & data)
 
     QStringList hyperlinkDataList = dataIt.value().toStringList();
     if (hyperlinkDataList.isEmpty()) {
-        ErrorString error(QT_TRANSLATE_NOOP("", "can't edit hyperlink: can't find hyperlink text and link"));
+        ErrorString error(QT_TR_NOOP("Can't edit hyperlink: can't find hyperlink text and link"));
         emit notifyError(error);
         return;
     }
 
     if (hyperlinkDataList.size() != 2) {
-        ErrorString error(QT_TRANSLATE_NOOP("", "can't edit hyperlink: can't parse hyperlink text and link"));
+        ErrorString error(QT_TR_NOOP("Can't edit hyperlink: can't parse hyperlink text and link"));
         QNWARNING(error << QStringLiteral("; hyperlink data: ") << hyperlinkDataList.join(QStringLiteral(",")));
         emit notifyError(error);
         return;
@@ -182,7 +182,7 @@ void EditHyperlinkDelegate::onHyperlinkModified(const QVariant & data)
 
     auto statusIt = resultMap.find(QStringLiteral("status"));
     if (Q_UNLIKELY(statusIt == resultMap.end())) {
-        ErrorString error(QT_TRANSLATE_NOOP("", "can't parse the result of hyperlink edit from JavaScript"));
+        ErrorString error(QT_TR_NOOP("Can't parse the result of hyperlink edit from JavaScript"));
         QNWARNING(error);
         emit notifyError(error);
         return;
@@ -195,10 +195,10 @@ void EditHyperlinkDelegate::onHyperlinkModified(const QVariant & data)
 
         auto errorIt = resultMap.find(QStringLiteral("error"));
         if (Q_UNLIKELY(errorIt == resultMap.end())) {
-            error.setBase(QT_TRANSLATE_NOOP("", "can't parse the error of hyperlink editing from JavaScript"));
+            error.setBase(QT_TR_NOOP("Can't parse the error of hyperlink editing from JavaScript"));
         }
         else {
-            error.setBase(QT_TRANSLATE_NOOP("", "can't edit hyperlink: "));
+            error.setBase(QT_TR_NOOP("Can't edit hyperlink: "));
             error.details() = errorIt.value().toString();
         }
 
