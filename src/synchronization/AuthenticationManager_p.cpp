@@ -70,7 +70,7 @@ void AuthenticationManagerPrivate::onAuthenticationRequest()
     }
     else
     {
-        ErrorString errorDescription(QT_TRANSLATE_NOOP("", "Authentication failed"));
+        ErrorString errorDescription(QT_TR_NOOP("Authentication failed"));
         errorDescription.details() = pDialog->oauthError();
         emit sendAuthenticationResult(/* success = */ false, qevercloud::UserID(-1), QString(),
                                       qevercloud::Timestamp(0), QString(), QString(), QString(),

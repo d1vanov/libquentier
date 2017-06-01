@@ -127,7 +127,7 @@ bool Notebook::validateName(const QString & name, ErrorString * pErrorDescriptio
     if (name != name.trimmed())
     {
         if (pErrorDescription) {
-            pErrorDescription->setBase(QT_TRANSLATE_NOOP("", "Notebook name cannot start or end with whitespace"));
+            pErrorDescription->setBase(QT_TR_NOOP("Notebook name cannot start or end with whitespace"));
         }
 
         return false;
@@ -137,7 +137,7 @@ bool Notebook::validateName(const QString & name, ErrorString * pErrorDescriptio
     if (len < qevercloud::EDAM_NOTEBOOK_NAME_LEN_MIN)
     {
         if (pErrorDescription) {
-            pErrorDescription->setBase(QT_TRANSLATE_NOOP("", "Notebook name's length is too small"));
+            pErrorDescription->setBase(QT_TR_NOOP("Notebook name's length is too small"));
             pErrorDescription->details() = name;
         }
 
@@ -146,7 +146,7 @@ bool Notebook::validateName(const QString & name, ErrorString * pErrorDescriptio
     else if (len > qevercloud::EDAM_NOTEBOOK_NAME_LEN_MAX)
     {
         if (pErrorDescription) {
-            pErrorDescription->setBase(QT_TRANSLATE_NOOP("", "Notebook name's length is too large"));
+            pErrorDescription->setBase(QT_TR_NOOP("Notebook name's length is too large"));
             pErrorDescription->details() = name;
         }
 
@@ -194,7 +194,7 @@ void Notebook::setUpdateSequenceNumber(const qint32 usn)
 bool Notebook::checkParameters(ErrorString & errorDescription) const
 {
     if (localUid().isEmpty() && !d->m_qecNotebook.guid.isSet()) {
-        errorDescription.setBase(QT_TRANSLATE_NOOP("", "Both notebook's local and remote guids are not set"));
+        errorDescription.setBase(QT_TR_NOOP("Both notebook's local and remote guids are not set"));
         return false;
     }
 

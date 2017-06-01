@@ -296,8 +296,8 @@ bool NoteSearchQueryData::parseQueryString(const QString & queryString, ErrorStr
 
     int notebookScopeModifierPosition = words.indexOf(notebookModifierRegex);
     if (notebookScopeModifierPosition > 0) {
-        error.setBase(QT_TRANSLATE_NOOP("", "Incorrect position of \"notebook:\" scope modifier in the search query: "
-                                        "when present in the query, it should be the first term in the search"));
+        error.setBase(QT_TR_NOOP("Incorrect position of \"notebook:\" scope modifier in the search query: "
+                                 "when present in the query, it should be the first term in the search"));
         return false;
     }
     else if (notebookScopeModifierPosition == 0)
@@ -406,8 +406,8 @@ bool NoteSearchQueryData::parseQueryString(const QString & queryString, ErrorStr
         if (searchTerm == negatedFinishedToDo)
         {
             if (m_hasFinishedToDo) {
-                error.setBase(QT_TRANSLATE_NOOP("", "Incorrect search query: both finished todo and "
-                                                "negated finished todo tags were found"));
+                error.setBase(QT_TR_NOOP("Incorrect search query: both finished todo and "
+                                         "negated finished todo tags were found"));
                 return false;
             }
             m_hasNegatedFinishedToDo = true;
@@ -415,24 +415,24 @@ bool NoteSearchQueryData::parseQueryString(const QString & queryString, ErrorStr
         else if (searchTerm == finishedToDo)
         {
             if (m_hasNegatedFinishedToDo) {
-                error.setBase(QT_TRANSLATE_NOOP("", "Incorrect search query: both negated finished todo "
-                                                "and finished todo tags were found"));
+                error.setBase(QT_TR_NOOP("Incorrect search query: both negated finished todo "
+                                         "and finished todo tags were found"));
                 return false;
             }
             m_hasFinishedToDo = true;
         }
         else if (searchTerm == negatedUnfinishedToDo) {
             if (m_hasUnfinishedToDo) {
-                error.setBase(QT_TRANSLATE_NOOP("", "Incorrect search query: both unfinished todo and "
-                                                "negated unfinished todo tags were found"));
+                error.setBase(QT_TR_NOOP("Incorrect search query: both unfinished todo and "
+                                         "negated unfinished todo tags were found"));
                 return false;
             }
             m_hasNegatedUnfinishedToDo = true;
         }
         else if (searchTerm == unfinishedToDo) {
             if (m_hasNegatedUnfinishedToDo) {
-                error.setBase(QT_TRANSLATE_NOOP("", "Incorrect search query: both negated unfinished todo "
-                                                                   "and unfinished todo tags were found"));
+                error.setBase(QT_TR_NOOP("Incorrect search query: both negated unfinished todo "
+                                         "and unfinished todo tags were found"));
                 return false;
             }
             m_hasUnfinishedToDo = true;
@@ -974,7 +974,7 @@ bool NoteSearchQueryData::parseIntValue(const QString & key, QStringList & words
             bool conversionResult = false;
             qint64 value = static_cast<qint64>(word.toLongLong(&conversionResult));
             if (!conversionResult) {
-                error.setBase(QT_TRANSLATE_NOOP("", "Invalid search query: cannot parse integer value for key"));
+                error.setBase(QT_TR_NOOP("Invalid search query: cannot parse integer value for key"));
                 error.details() = key;
                 error.details() += QStringLiteral(": ");
                 error.details() += word;
@@ -1059,7 +1059,7 @@ bool NoteSearchQueryData::parseDoubleValue(const QString & key, QStringList & wo
             bool conversionResult = false;
             double value = static_cast<double>(word.toDouble(&conversionResult));
             if (!conversionResult) {
-                error.setBase(QT_TRANSLATE_NOOP("", "Invalid search query: cannot parse double value for key"));
+                error.setBase(QT_TR_NOOP("Invalid search query: cannot parse double value for key"));
                 error.details() = key;
                 error.details() += QStringLiteral(": ");
                 error.details() += word;
@@ -1100,7 +1100,7 @@ bool NoteSearchQueryData::dateTimeStringToTimestamp(QString dateTimeString, qint
             bool conversionResult = false;
             int daysOffset = offsetSubstr.toInt(&conversionResult);
             if (!conversionResult) {
-                error.setBase(QT_TRANSLATE_NOOP("", "Invalid query string: unable to convert days offset to integer"));
+                error.setBase(QT_TR_NOOP("Invalid query string: unable to convert days offset to integer"));
                 return false;
             }
 
@@ -1120,7 +1120,7 @@ bool NoteSearchQueryData::dateTimeStringToTimestamp(QString dateTimeString, qint
             bool conversionResult = false;
             int weekOffset = offsetSubstr.toInt(&conversionResult);
             if (!conversionResult) {
-                error.setBase(QT_TRANSLATE_NOOP("", "Invalid query string: unable to convert weeks offset to integer"));
+                error.setBase(QT_TR_NOOP("Invalid query string: unable to convert weeks offset to integer"));
                 return false;
             }
 
@@ -1140,7 +1140,7 @@ bool NoteSearchQueryData::dateTimeStringToTimestamp(QString dateTimeString, qint
             bool conversionResult = false;
             int monthOffset = offsetSubstr.toInt(&conversionResult);
             if (!conversionResult) {
-                error.setBase(QT_TRANSLATE_NOOP("", "Invalid query string: unable to convert months offset to integer"));
+                error.setBase(QT_TR_NOOP("Invalid query string: unable to convert months offset to integer"));
                 return false;
             }
 
@@ -1163,7 +1163,7 @@ bool NoteSearchQueryData::dateTimeStringToTimestamp(QString dateTimeString, qint
             bool conversionResult = false;
             int yearsOffset = offsetSubstr.toInt(&conversionResult);
             if (!conversionResult) {
-                error.setBase(QT_TRANSLATE_NOOP("", "Invalid query string: unable to convert years offset to integer"));
+                error.setBase(QT_TR_NOOP("Invalid query string: unable to convert years offset to integer"));
                 return false;
             }
 
@@ -1174,7 +1174,7 @@ bool NoteSearchQueryData::dateTimeStringToTimestamp(QString dateTimeString, qint
     if (relativeDateArgumentFound)
     {
         if (!dateTime.isValid()) {
-            error.setBase(QT_TRANSLATE_NOOP("", "Datetime processed from query string is invalid"));
+            error.setBase(QT_TR_NOOP("Datetime processed from query string is invalid"));
             error.details() = dateTimeString;
             QNWARNING(error);
             return false;
@@ -1187,7 +1187,7 @@ bool NoteSearchQueryData::dateTimeStringToTimestamp(QString dateTimeString, qint
     // Getting here means the datetime in the string is actually a datetime in ISO 8601 compact profile
     dateTime = QDateTime::fromString(dateTimeString, Qt::ISODate);
     if (!dateTime.isValid()) {
-        error.setBase(QT_TRANSLATE_NOOP("", "Invalid query string: cannot parse datetime value"));
+        error.setBase(QT_TR_NOOP("Invalid query string: cannot parse datetime value"));
         error.details() = dateTimeString;
         QNDEBUG(error);
         return false;

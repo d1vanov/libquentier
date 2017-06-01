@@ -156,7 +156,7 @@ void SynchronizationManagerPrivate::synchronize()
     QNDEBUG(QStringLiteral("SynchronizationManagerPrivate::synchronize"));
 
     if (m_authenticationInProgress || m_writingAuthToken || m_writingShardId) {
-        ErrorString error(QT_TRANSLATE_NOOP("", "Authentication is not finished yet, please wait"));
+        ErrorString error(QT_TR_NOOP("Authentication is not finished yet, please wait"));
         QNDEBUG(error << QStringLiteral(", authentication in progress = ")
                 << (m_authenticationInProgress ? QStringLiteral("true") : QStringLiteral("false"))
                 << QStringLiteral(", writing OAuth token = ") << (m_writingAuthToken ? QStringLiteral("true") : QStringLiteral("false"))
@@ -174,7 +174,7 @@ void SynchronizationManagerPrivate::authenticate()
     QNDEBUG(QStringLiteral("SynchronizationManagerPrivate::authenticate"));
 
     if (m_authenticationInProgress || m_writingAuthToken || m_writingShardId) {
-        ErrorString error(QT_TRANSLATE_NOOP("", "Previous authentication is not finished yet, please wait"));
+        ErrorString error(QT_TR_NOOP("Previous authentication is not finished yet, please wait"));
         QNDEBUG(error << QStringLiteral(", authentication in progress = ")
                 << (m_authenticationInProgress ? QStringLiteral("true") : QStringLiteral("false"))
                 << QStringLiteral(", writing OAuth token = ") << (m_writingAuthToken ? QStringLiteral("true") : QStringLiteral("false"))
@@ -295,7 +295,7 @@ void SynchronizationManagerPrivate::onOAuthResult(bool success, qevercloud::User
         bool res = m_remoteToLocalSyncManager.syncUser(userId, error, authToken, /* write user data to local storage = */ false);
         if (Q_UNLIKELY(!res))
         {
-            errorDescription.setBase(QT_TRANSLATE_NOOP("", "Can't switch to new Evernote account: failed to sync user data"));
+            errorDescription.setBase(QT_TR_NOOP("Can't switch to new Evernote account: failed to sync user data"));
             errorDescription.appendBase(error.base());
             errorDescription.appendBase(error.additionalBases());
             errorDescription.details() = error.details();
@@ -310,7 +310,7 @@ void SynchronizationManagerPrivate::onOAuthResult(bool success, qevercloud::User
         const User & user = m_remoteToLocalSyncManager.user();
         if (Q_UNLIKELY(!user.hasUsername()))
         {
-            errorDescription.setBase(QT_TRANSLATE_NOOP("", "Can't switch to new Evernote account: the synched user data lacks username"));
+            errorDescription.setBase(QT_TR_NOOP("Can't switch to new Evernote account: the synched user data lacks username"));
             errorDescription.appendBase(error.base());
             errorDescription.appendBase(error.additionalBases());
             errorDescription.details() = error.details();
@@ -340,7 +340,7 @@ void SynchronizationManagerPrivate::onKeychainJobFinished(QKeychain::Job * job)
     QNDEBUG(QStringLiteral("SynchronizationManagerPrivate::onKeychainJobFinished"));
 
     if (!job) {
-        ErrorString error(QT_TRANSLATE_NOOP("", "qtkeychain error: null pointer to keychain job on finish"));
+        ErrorString error(QT_TR_NOOP("qtkeychain error: null pointer to keychain job on finish"));
         emit notifyError(error);
         return;
     }
@@ -378,7 +378,7 @@ void SynchronizationManagerPrivate::onKeychainJobFinished(QKeychain::Job * job)
             if (cachedJob.data() == job)
             {
                 if (job->error() != QKeychain::NoError) {
-                    ErrorString error(QT_TRANSLATE_NOOP("", "Error saving linked notebook's shard id to the keychain"));
+                    ErrorString error(QT_TR_NOOP("Error saving linked notebook's shard id to the keychain"));
                     error.details() = QStringLiteral("error = ");
                     error.details() += ToString(job->error());
                     error.details() += QStringLiteral(": ");
@@ -399,7 +399,7 @@ void SynchronizationManagerPrivate::onKeychainJobFinished(QKeychain::Job * job)
             if (cachedJob.data() == job)
             {
                 if (job->error() != QKeychain::NoError) {
-                    ErrorString error(QT_TRANSLATE_NOOP("", "Error saving linked notebook's authentication token to the keychain"));
+                    ErrorString error(QT_TR_NOOP("Error saving linked notebook's authentication token to the keychain"));
                     error.details() = QStringLiteral("error = ");
                     error.details() += ToString(job->error());
                     error.details() += QStringLiteral(": ");
@@ -433,7 +433,7 @@ void SynchronizationManagerPrivate::onKeychainJobFinished(QKeychain::Job * job)
                 }
                 else
                 {
-                    ErrorString error(QT_TRANSLATE_NOOP("", "Error reading linked notebook's authentication token from the keychain"));
+                    ErrorString error(QT_TR_NOOP("Error reading linked notebook's authentication token from the keychain"));
                     error.details() = QStringLiteral("error = ");
                     error.details() += ToString(job->error());
                     error.details() += QStringLiteral(": ");
@@ -472,7 +472,7 @@ void SynchronizationManagerPrivate::onKeychainJobFinished(QKeychain::Job * job)
                 }
                 else
                 {
-                    ErrorString error(QT_TRANSLATE_NOOP("", "Error reading linked notebook's shard id from the keychain"));
+                    ErrorString error(QT_TR_NOOP("Error reading linked notebook's shard id from the keychain"));
                     error.details() = QStringLiteral("error = ");
                     error.details() += ToString(job->error());
                     error.details() += QStringLiteral(": ");
@@ -491,7 +491,7 @@ void SynchronizationManagerPrivate::onKeychainJobFinished(QKeychain::Job * job)
             }
         }
 
-        ErrorString error(QT_TRANSLATE_NOOP("", "Unknown keychain job finished event"));
+        ErrorString error(QT_TR_NOOP("Unknown keychain job finished event"));
         QNWARNING(error);
         emit notifyError(error);
         return;
@@ -838,8 +838,8 @@ void SynchronizationManagerPrivate::authenticateImpl(const AuthContext::type aut
     bool conversionResult = false;
     qevercloud::Timestamp tokenExpirationTimestamp = tokenExpirationValue.toLongLong(&conversionResult);
     if (!conversionResult) {
-        ErrorString error(QT_TRANSLATE_NOOP("", "Internal error: failed to convert QVariant with authentication token "
-                                            "expiration timestamp to the actual timestamp"));
+        ErrorString error(QT_TR_NOOP("Internal error: failed to convert QVariant with authentication token "
+                                     "expiration timestamp to the actual timestamp"));
         QNWARNING(error);
         emit notifyError(error);
         return;
@@ -858,7 +858,7 @@ void SynchronizationManagerPrivate::authenticateImpl(const AuthContext::type aut
 
     QVariant noteStoreUrlValue = appSettings.value(keyGroup + NOTE_STORE_URL_KEY);
     if (noteStoreUrlValue.isNull()) {
-        ErrorString error(QT_TRANSLATE_NOOP("", "Failed to find the note store url within persistent application settings"));
+        ErrorString error(QT_TR_NOOP("Failed to find the note store url within persistent application settings"));
         QNWARNING(error);
         emit notifyError(error);
         return;
@@ -866,7 +866,7 @@ void SynchronizationManagerPrivate::authenticateImpl(const AuthContext::type aut
 
     QString noteStoreUrl = noteStoreUrlValue.toString();
     if (noteStoreUrl.isEmpty()) {
-        ErrorString error(QT_TRANSLATE_NOOP("", "Internal error: failed to convert the note store url from QVariant to QString"));
+        ErrorString error(QT_TR_NOOP("Internal error: failed to convert the note store url from QVariant to QString"));
         QNWARNING(error);
         emit notifyError(error);
         return;
@@ -878,7 +878,7 @@ void SynchronizationManagerPrivate::authenticateImpl(const AuthContext::type aut
 
     QVariant webApiUrlPrefixValue = appSettings.value(keyGroup + WEB_API_URL_PREFIX_KEY);
     if (webApiUrlPrefixValue.isNull()) {
-        ErrorString error(QT_TRANSLATE_NOOP("", "Failed to find the web API url prefix within persistent application settings"));
+        ErrorString error(QT_TR_NOOP("Failed to find the web API url prefix within persistent application settings"));
         QNWARNING(error);
         emit notifyError(error);
         return;
@@ -886,7 +886,7 @@ void SynchronizationManagerPrivate::authenticateImpl(const AuthContext::type aut
 
     QString webApiUrlPrefix = webApiUrlPrefixValue.toString();
     if (webApiUrlPrefix.isEmpty()) {
-        ErrorString error(QT_TRANSLATE_NOOP("", "Failed to convert the web api url prefix from QVariant to QString"));
+        ErrorString error(QT_TR_NOOP("Failed to convert the web api url prefix from QVariant to QString"));
         QNWARNING(error);
         emit notifyError(error);
         return;
@@ -1006,7 +1006,7 @@ void SynchronizationManagerPrivate::finalizeRevokeAuthentication()
     if ((errorCode != QKeychain::NoError) && (errorCode != QKeychain::EntryNotFound)) {
         QNWARNING(QStringLiteral("Attempt to delete the auth token returned with error: error code ")
                   << errorCode << QStringLiteral(", ") << m_deleteAuthTokenJob.errorString());
-        ErrorString error(QT_TRANSLATE_NOOP("", "Failed to delete authentication token from the keychain"));
+        ErrorString error(QT_TR_NOOP("Failed to delete authentication token from the keychain"));
         error.details() = m_deleteAuthTokenJob.errorString();
         emit authenticationRevoked(/* success = */ false, error, m_lastRevokedAuthenticationUserId);
         return;
@@ -1016,7 +1016,7 @@ void SynchronizationManagerPrivate::finalizeRevokeAuthentication()
     if ((errorCode != QKeychain::NoError) && (errorCode != QKeychain::EntryNotFound)) {
         QNWARNING(QStringLiteral("Attempt to delete the shard id returned with error: error code ")
                   << errorCode << QStringLiteral(", ") << m_deleteShardIdJob.errorString());
-        ErrorString error(QT_TRANSLATE_NOOP("", "Failed to delete shard id from the keychain"));
+        ErrorString error(QT_TR_NOOP("Failed to delete shard id from the keychain"));
         error.details() = m_deleteShardIdJob.errorString();
         emit authenticationRevoked(/* success = */ false, error, m_lastRevokedAuthenticationUserId);
         return;
@@ -1037,7 +1037,7 @@ void SynchronizationManagerPrivate::finalizeAuthentication()
     {
     case AuthContext::Blank:
     {
-        ErrorString error(QT_TRANSLATE_NOOP("", "Internal error: incorrect authentication context: blank"));
+        ErrorString error(QT_TR_NOOP("Internal error: incorrect authentication context: blank"));
         emit notifyError(error);
         break;
     }
@@ -1061,7 +1061,7 @@ void SynchronizationManagerPrivate::finalizeAuthentication()
         break;
     default:
     {
-        ErrorString error(QT_TRANSLATE_NOOP("", "Internal error: unknown authentication context"));
+        ErrorString error(QT_TR_NOOP("Internal error: unknown authentication context"));
         error.details() = ToString(m_authContext);
         emit notifyError(error);
         break;
@@ -1074,7 +1074,7 @@ void SynchronizationManagerPrivate::finalizeAuthentication()
 void SynchronizationManagerPrivate::timerEvent(QTimerEvent * pTimerEvent)
 {
     if (Q_UNLIKELY(!pTimerEvent)) {
-        ErrorString errorDescription(QT_TRANSLATE_NOOP("", "Qt error: detected null pointer to QTimerEvent"));
+        ErrorString errorDescription(QT_TR_NOOP("Qt error: detected null pointer to QTimerEvent"));
         QNWARNING(errorDescription);
         emit notifyError(errorDescription);
         return;
@@ -1165,7 +1165,7 @@ void SynchronizationManagerPrivate::authenticateToLinkedNotebooks()
     QNDEBUG(QStringLiteral("SynchronizationManagerPrivate::authenticateToLinkedNotebooks"));
 
     if (Q_UNLIKELY(m_OAuthResult.m_userId < 0)) {
-        ErrorString error(QT_TRANSLATE_NOOP("", "Detected attempt to authenticate to linked notebooks while there is no user id set to the synchronization manager"));
+        ErrorString error(QT_TR_NOOP("Detected attempt to authenticate to linked notebooks while there is no user id set to the synchronization manager"));
         QNWARNING(error);
         emit notifyError(error);
         return;
@@ -1299,7 +1299,7 @@ void SynchronizationManagerPrivate::authenticateToLinkedNotebooks()
         if (errorCode == qevercloud::EDAMErrorCode::AUTH_EXPIRED)
         {
             if (validAuthentication()) {
-                ErrorString error(QT_TRANSLATE_NOOP("", "Unexpected AUTH_EXPIRED error"));
+                ErrorString error(QT_TR_NOOP("Unexpected AUTH_EXPIRED error"));
                 error.additionalBases().append(errorDescription.base());
                 error.additionalBases().append(errorDescription.additionalBases());
                 error.details() = errorDescription.details();
@@ -1315,7 +1315,7 @@ void SynchronizationManagerPrivate::authenticateToLinkedNotebooks()
         else if (errorCode == qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED)
         {
             if (rateLimitSeconds <= 0) {
-                errorDescription.base() = QString::fromUtf8(QT_TRANSLATE_NOOP("", "Rate limit reached but the number of seconds to wait is incorrect"));
+                errorDescription.setBase(QT_TR_NOOP("Rate limit reached but the number of seconds to wait is incorrect"));
                 errorDescription.details() = QString::number(rateLimitSeconds);
                 emit notifyError(errorDescription);
                 return;
@@ -1405,7 +1405,7 @@ void SynchronizationManagerPrivate::onReadAuthTokenFinished()
     QKeychain::Error errorCode = m_readAuthTokenJob.error();
     if (errorCode == QKeychain::EntryNotFound)
     {
-        ErrorString error(QT_TRANSLATE_NOOP("", "Unexpectedly missing OAuth token in the keychain"));
+        ErrorString error(QT_TR_NOOP("Unexpectedly missing OAuth token in the keychain"));
         error.details() = m_readAuthTokenJob.errorString();
         QNWARNING(error);
         emit notifyError(error);
@@ -1414,7 +1414,7 @@ void SynchronizationManagerPrivate::onReadAuthTokenFinished()
     else if (errorCode != QKeychain::NoError) {
         QNWARNING(QStringLiteral("Attempt to read the authentication token returned with error: error code ")
                   << errorCode << QStringLiteral(", ") << m_readAuthTokenJob.errorString());
-        ErrorString error(QT_TRANSLATE_NOOP("", "Failed to read the stored authentication token from the keychain"));
+        ErrorString error(QT_TR_NOOP("Failed to read the stored authentication token from the keychain"));
         error.details() = m_readAuthTokenJob.errorString();
         emit notifyError(error);
         return;
@@ -1437,7 +1437,7 @@ void SynchronizationManagerPrivate::onReadShardIdFinished()
     QKeychain::Error errorCode = m_readShardIdJob.error();
     if (errorCode == QKeychain::EntryNotFound)
     {
-        ErrorString error(QT_TRANSLATE_NOOP("", "Unexpectedly missing OAuth shard id in the keychain"));
+        ErrorString error(QT_TR_NOOP("Unexpectedly missing OAuth shard id in the keychain"));
         error.details() = m_readShardIdJob.errorString();
         QNWARNING(error);
         emit notifyError(error);
@@ -1446,7 +1446,7 @@ void SynchronizationManagerPrivate::onReadShardIdFinished()
     else if (errorCode != QKeychain::NoError) {
         QNWARNING(QStringLiteral("Attempt to read the shard id returned with error: error code ")
                   << errorCode << QStringLiteral(", ") << m_readShardIdJob.errorString());
-        ErrorString error(QT_TRANSLATE_NOOP("", "Failed to read the stored shard id from the keychain"));
+        ErrorString error(QT_TR_NOOP("Failed to read the stored shard id from the keychain"));
         error.details() = m_readShardIdJob.errorString();
         emit notifyError(error);
         return;
@@ -1470,7 +1470,7 @@ void SynchronizationManagerPrivate::onWriteAuthTokenFinished()
     if (errorCode != QKeychain::NoError) {
         QNWARNING(QStringLiteral("Attempt to write the authentication token returned with error: error code ")
                   << errorCode << QStringLiteral(", ") << m_writeAuthTokenJob.errorString());
-        ErrorString error(QT_TRANSLATE_NOOP("", "Failed to write the oauth token to the keychain"));
+        ErrorString error(QT_TR_NOOP("Failed to write the oauth token to the keychain"));
         error.details() = m_writeAuthTokenJob.errorString();
         emit notifyError(error);
         return;
@@ -1493,7 +1493,7 @@ void SynchronizationManagerPrivate::onWriteShardIdFinished()
     if (errorCode != QKeychain::NoError) {
         QNWARNING(QStringLiteral("Attempt to write the shard id returned with error: error code ")
                   << errorCode << QStringLiteral(", ") << m_writeShardIdJob.errorString());
-        ErrorString error(QT_TRANSLATE_NOOP("", "Failed to write the oauth shard id to the keychain"));
+        ErrorString error(QT_TR_NOOP("Failed to write the oauth shard id to the keychain"));
         error.details() = m_writeShardIdJob.errorString();
         emit notifyError(error);
         return;

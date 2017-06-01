@@ -112,7 +112,7 @@ bool SavedSearch::validateName(const QString & name, ErrorString * pErrorDescrip
     if (name != name.trimmed())
     {
         if (pErrorDescription) {
-            pErrorDescription->setBase(QT_TRANSLATE_NOOP("", "Saved search name cannot start or end with whitespace"));
+            pErrorDescription->setBase(QT_TR_NOOP("Saved search name cannot start or end with whitespace"));
             pErrorDescription->details() = name;
         }
 
@@ -123,7 +123,7 @@ bool SavedSearch::validateName(const QString & name, ErrorString * pErrorDescrip
     if (len < qevercloud::EDAM_SAVED_SEARCH_NAME_LEN_MIN)
     {
         if (pErrorDescription) {
-            pErrorDescription->setBase(QT_TRANSLATE_NOOP("", "Saved search name's length is too small"));
+            pErrorDescription->setBase(QT_TR_NOOP("Saved search name's length is too small"));
             pErrorDescription->details() = name;
         }
 
@@ -133,7 +133,7 @@ bool SavedSearch::validateName(const QString & name, ErrorString * pErrorDescrip
     if (len > qevercloud::EDAM_SAVED_SEARCH_NAME_LEN_MAX)
     {
         if (pErrorDescription) {
-            pErrorDescription->setBase(QT_TRANSLATE_NOOP("", "Saved search's name length is too large"));
+            pErrorDescription->setBase(QT_TR_NOOP("Saved search's name length is too large"));
             pErrorDescription->details() = name;
         }
 
@@ -181,7 +181,7 @@ void SavedSearch::setUpdateSequenceNumber(const qint32 usn)
 bool SavedSearch::checkParameters(ErrorString & errorDescription) const
 {
     if (localUid().isEmpty() && !d->m_qecSearch.guid.isSet()) {
-        errorDescription.setBase(QT_TRANSLATE_NOOP("", "Both saved search's local and remote guids are empty"));
+        errorDescription.setBase(QT_TR_NOOP("Both saved search's local and remote guids are empty"));
         return false;
     }
 

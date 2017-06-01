@@ -84,7 +84,7 @@ void LocalStorageManagerAsync::init()
 
 #define CATCH_EXCEPTION \
     catch(const std::exception & e) { \
-        ErrorString error(QT_TRANSLATE_NOOP("", "Caught exception")); \
+        ErrorString error(QT_TR_NOOP("Caught exception")); \
         error.details() = QString::fromUtf8(e.what()); \
         error.details() += QStringLiteral(", backtrace: "); \
         SysInfo sysInfo; \
@@ -115,7 +115,7 @@ void LocalStorageManagerAsync::onSwitchUserRequest(Account account, bool startFr
         m_pLocalStorageManager->switchUser(account, startFromScratch);
     }
     catch(const std::exception & exception) {
-        ErrorString errorDescription(QT_TRANSLATE_NOOP("", "Failed to switch user"));
+        ErrorString errorDescription(QT_TR_NOOP("Failed to switch user"));
         errorDescription.details() = QString::fromUtf8(exception.what());
         emit switchUserFailed(account, errorDescription, requestId);
         return;

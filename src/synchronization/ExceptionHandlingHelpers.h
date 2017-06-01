@@ -27,7 +27,7 @@
 #define CATCH_THRIFT_EXCEPTION_IMPL(...) \
     catch(const qevercloud::ThriftException & thriftException) \
     { \
-        errorDescription.setBase(QT_TRANSLATE_NOOP("", "Thrift exception")); \
+        errorDescription.setBase(QT_TRANSLATE_NOOP("synchronization", "Thrift exception")); \
         errorDescription.details() = QStringLiteral("type = "); \
         errorDescription.details() += QString::number(thriftException.type()); \
         errorDescription.details() += QStringLiteral(": "); \
@@ -39,7 +39,7 @@
 #define CATCH_EVERNOTE_EXCEPTION_IMPL(...) \
     catch(const qevercloud::EvernoteException & evernoteException) \
     { \
-        errorDescription.setBase(QT_TRANSLATE_NOOP("", "QEverCloud Evernote exception")); \
+        errorDescription.setBase(QT_TRANSLATE_NOOP("synchronization", "QEverCloud Evernote exception")); \
         if (!evernoteException.exceptionData().isNull()) { \
             errorDescription.details() = evernoteException.exceptionData()->errorMessage; \
         } \
@@ -50,7 +50,7 @@
 #define CATCH_EVER_CLOUD_EXCEPTION_IMPL(...) \
     catch(const qevercloud::EverCloudException & everCloudException) \
     { \
-        errorDescription.setBase(QT_TRANSLATE_NOOP("", "QEverCloud exception")); \
+        errorDescription.setBase(QT_TRANSLATE_NOOP("synchronization", "QEverCloud exception")); \
         errorDescription.details() = QString::fromUtf8(everCloudException.what()); \
         QNWARNING(errorDescription); \
         __VA_ARGS__ ; \
@@ -59,7 +59,7 @@
 #define CATCH_STD_EXCEPTION_IMPL(...) \
     catch(const std::exception & e) \
     { \
-        errorDescription.setBase(QT_TRANSLATE_NOOP("", "std::exception")); \
+        errorDescription.setBase(QT_TRANSLATE_NOOP("synchronization", "std::exception")); \
         errorDescription.details() = QString::fromUtf8(e.what()); \
         QNWARNING(errorDescription); \
         __VA_ARGS__ ; \

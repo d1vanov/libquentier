@@ -253,7 +253,7 @@ void SendLocalChangesManager::onListDirtyTagsFailed(LocalStorageManager::ListObj
 
         CHECK_STOPPED();
 
-        ErrorString error(QT_TRANSLATE_NOOP("", "Error listing dirty tags from the local storage"));
+        ErrorString error(QT_TR_NOOP("Error listing dirty tags from the local storage"));
         error.additionalBases().append(errorDescription.base());
         error.additionalBases().append(errorDescription.additionalBases());
         error.details() = errorDescription.details();
@@ -309,7 +309,7 @@ void SendLocalChangesManager::onListDirtySavedSearchesFailed(LocalStorageManager
 
     CHECK_STOPPED();
 
-    ErrorString error(QT_TRANSLATE_NOOP("", "Error listing dirty saved searches from the local storage"));
+    ErrorString error(QT_TR_NOOP("Error listing dirty saved searches from the local storage"));
     error.additionalBases().append(errorDescription.base());
     error.additionalBases().append(errorDescription.additionalBases());
     error.details() = errorDescription.details();
@@ -383,7 +383,7 @@ void SendLocalChangesManager::onListDirtyNotebooksFailed(LocalStorageManager::Li
 
         CHECK_STOPPED();
 
-        ErrorString error(QT_TRANSLATE_NOOP("", "Error listing dirty notebooks from the local storage"));
+        ErrorString error(QT_TR_NOOP("Error listing dirty notebooks from the local storage"));
         error.additionalBases().append(errorDescription.base());
         error.additionalBases().append(errorDescription.additionalBases());
         error.details() = errorDescription.details();
@@ -461,7 +461,7 @@ void SendLocalChangesManager::onListDirtyNotesFailed(LocalStorageManager::ListOb
 
         CHECK_STOPPED();
 
-        ErrorString error(QT_TRANSLATE_NOOP("", "Error listing dirty notes from the local storage"));
+        ErrorString error(QT_TR_NOOP("Error listing dirty notes from the local storage"));
         error.additionalBases().append(errorDescription.base());
         error.additionalBases().append(errorDescription.additionalBases());
         error.details() = errorDescription.details();
@@ -495,7 +495,7 @@ void SendLocalChangesManager::onListLinkedNotebooksCompleted(LocalStorageManager
         const LinkedNotebook & linkedNotebook = linkedNotebooks[i];
         if (!linkedNotebook.hasGuid())
         {
-            ErrorString error(QT_TRANSLATE_NOOP("", "Internal error: found a linked notebook without guid"));
+            ErrorString error(QT_TR_NOOP("Internal error: found a linked notebook without guid"));
             if (linkedNotebook.hasUsername()) {
                 error.details() = linkedNotebook.username();
             }
@@ -538,7 +538,7 @@ void SendLocalChangesManager::onListLinkedNotebooksFailed(LocalStorageManager::L
     m_listLinkedNotebooksRequestId = QUuid();
     CHECK_STOPPED();
 
-    ErrorString error(QT_TRANSLATE_NOOP("", "Error listing linked notebooks from the local storage"));
+    ErrorString error(QT_TR_NOOP("Error listing linked notebooks from the local storage"));
     error.additionalBases().append(errorDescription.base());
     error.additionalBases().append(errorDescription.additionalBases());
     error.details() = errorDescription.details();
@@ -573,7 +573,7 @@ void SendLocalChangesManager::onUpdateTagFailed(Tag tag, ErrorString errorDescri
     Q_UNUSED(m_updateTagRequestIds.erase(it));
     CHECK_STOPPED();
 
-    ErrorString error(QT_TRANSLATE_NOOP("", "Failed to update a tag in the local storage"));
+    ErrorString error(QT_TR_NOOP("Failed to update a tag in the local storage"));
     error.additionalBases().append(errorDescription.base());
     error.additionalBases().append(errorDescription.additionalBases());
     error.details() = errorDescription.details();
@@ -610,7 +610,7 @@ void SendLocalChangesManager::onUpdateSavedSearchFailed(SavedSearch savedSearch,
     Q_UNUSED(m_updateSavedSearchRequestIds.erase(it));
     CHECK_STOPPED();
 
-    ErrorString error(QT_TRANSLATE_NOOP("", "Failed to update a saved search in the local storage"));
+    ErrorString error(QT_TR_NOOP("Failed to update a saved search in the local storage"));
     error.additionalBases().append(errorDescription.base());
     error.additionalBases().append(errorDescription.additionalBases());
     error.details() = errorDescription.details();
@@ -647,7 +647,7 @@ void SendLocalChangesManager::onUpdateNotebookFailed(Notebook notebook, ErrorStr
     Q_UNUSED(m_updateNotebookRequestIds.erase(it));
     CHECK_STOPPED();
 
-    ErrorString error(QT_TRANSLATE_NOOP("", "Failed to update a notebook in the local storage"));
+    ErrorString error(QT_TR_NOOP("Failed to update a notebook in the local storage"));
     error.additionalBases().append(errorDescription.base());
     error.additionalBases().append(errorDescription.additionalBases());
     error.details() = errorDescription.details();
@@ -690,7 +690,7 @@ void SendLocalChangesManager::onUpdateNoteFailed(Note note, bool updateResources
     Q_UNUSED(m_updateNoteRequestIds.erase(it));
     CHECK_STOPPED();
 
-    ErrorString error(QT_TRANSLATE_NOOP("", "Failed to update a note in the local storage"));
+    ErrorString error(QT_TR_NOOP("Failed to update a note in the local storage"));
     error.additionalBases().append(errorDescription.base());
     error.additionalBases().append(errorDescription.additionalBases());
     error.details() = errorDescription.details();
@@ -712,8 +712,8 @@ void SendLocalChangesManager::onFindNotebookCompleted(Notebook notebook, QUuid r
 
     if (!notebook.hasGuid())
     {
-        ErrorString errorDescription(QT_TRANSLATE_NOOP("", "Found a notebook without guid within the notebooks requested "
-                                                       "from local storage by guid"));
+        ErrorString errorDescription(QT_TR_NOOP("Found a notebook without guid within the notebooks requested "
+                                                "from local storage by guid"));
         if (notebook.hasName()) {
             errorDescription.details() = notebook.name();
         }
@@ -754,7 +754,7 @@ void SendLocalChangesManager::timerEvent(QTimerEvent * pEvent)
     QNDEBUG(QStringLiteral("SendLocalChangesManager::timerEvent"));
 
     if (Q_UNLIKELY(!pEvent)) {
-        ErrorString errorDescription(QT_TRANSLATE_NOOP("", "Qt error: detected null pointer to QTimerEvent"));
+        ErrorString errorDescription(QT_TR_NOOP("Qt error: detected null pointer to QTimerEvent"));
         QNWARNING(errorDescription);
         emit failure(errorDescription);
         return;
@@ -1296,9 +1296,9 @@ void SendLocalChangesManager::sendTags()
             }
             else
             {
-                errorDescription.setBase(QT_TRANSLATE_NOOP("", "Couldn't find the authentication token "
-                                                           "for a linked notebook when attempting "
-                                                           "to create or update a tag from it"));
+                errorDescription.setBase(QT_TR_NOOP("Couldn't find the authentication token "
+                                                    "for a linked notebook when attempting "
+                                                    "to create or update a tag from it"));
                 if (tag.hasName()) {
                     errorDescription.details() = tag.name();
                 }
@@ -1331,7 +1331,7 @@ void SendLocalChangesManager::sendTags()
         if (errorCode == qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED)
         {
             if (rateLimitSeconds <= 0) {
-                errorDescription.setBase(QT_TRANSLATE_NOOP("", "Rate limit reached but the number of seconds to wait is incorrect"));
+                errorDescription.setBase(QT_TR_NOOP("Rate limit reached but the number of seconds to wait is incorrect"));
                 errorDescription.details() = QString::number(rateLimitSeconds);
                 emit failure(errorDescription);
                 return;
@@ -1339,8 +1339,8 @@ void SendLocalChangesManager::sendTags()
 
             int timerId = startTimer(SEC_TO_MSEC(rateLimitSeconds));
             if (Q_UNLIKELY(timerId == 0)) {
-                errorDescription.setBase(QT_TRANSLATE_NOOP("", "Failed to start a timer to postpone "
-                                                           "the Evernote API call due to rate limit exceeding"));
+                errorDescription.setBase(QT_TR_NOOP("Failed to start a timer to postpone "
+                                                    "the Evernote API call due to rate limit exceeding"));
                 emit failure(errorDescription);
                 return;
             }
@@ -1360,14 +1360,14 @@ void SendLocalChangesManager::sendTags()
                 auto cit = m_authenticationTokenExpirationTimesByLinkedNotebookGuid.find(tag.linkedNotebookGuid());
                 if (cit == m_authenticationTokenExpirationTimesByLinkedNotebookGuid.end())
                 {
-                    errorDescription.setBase(QT_TRANSLATE_NOOP("", "Couldn't find the expiration time of "
-                                                               "a linked notebook's authentication token"));
+                    errorDescription.setBase(QT_TR_NOOP("Couldn't find the expiration time of "
+                                                        "a linked notebook's authentication token"));
                     QNWARNING(errorDescription << QStringLiteral(", linked notebook guid = ") << tag.linkedNotebookGuid());
                     emit failure(errorDescription);
                 }
                 else if (checkAndRequestAuthenticationTokensForLinkedNotebooks()) {
-                    errorDescription.setBase(QT_TRANSLATE_NOOP("", "Unexpected AUTH_EXPIRED error: authentication "
-                                                               "tokens for all linked notebooks are still valid"));
+                    errorDescription.setBase(QT_TR_NOOP("Unexpected AUTH_EXPIRED error: authentication "
+                                                        "tokens for all linked notebooks are still valid"));
                     QNWARNING(errorDescription << QStringLiteral(", linked notebook guid = ") << tag.linkedNotebookGuid());
                     emit failure(errorDescription);
                 }
@@ -1384,7 +1384,7 @@ void SendLocalChangesManager::sendTags()
             return;
         }
         else if (errorCode != 0) {
-            ErrorString error(QT_TRANSLATE_NOOP("", "Failed to send new and/or modified tags to Evernote service"));
+            ErrorString error(QT_TR_NOOP("Failed to send new and/or modified tags to Evernote service"));
             error.additionalBases().append(errorDescription.base());
             error.additionalBases().append(errorDescription.additionalBases());
             error.details() = errorDescription.details();
@@ -1406,8 +1406,8 @@ void SendLocalChangesManager::sendTags()
             QNTRACE(QStringLiteral("Checking if we are still in sync with the remote service"));
 
             if (!tag.hasUpdateSequenceNumber()) {
-                errorDescription.setBase(QT_TRANSLATE_NOOP("", "Tag's update sequence number is not set "
-                                                           "after it being sent to the service"));
+                errorDescription.setBase(QT_TR_NOOP("Tag's update sequence number is not set "
+                                                    "after it being sent to the service"));
                 emit failure(errorDescription);
                 return;
             }
@@ -1424,9 +1424,9 @@ void SendLocalChangesManager::sendTags()
 
                 auto lit = m_lastUpdateCountByLinkedNotebookGuid.find(tag.linkedNotebookGuid());
                 if (lit == m_lastUpdateCountByLinkedNotebookGuid.end()) {
-                    errorDescription.setBase(QT_TRANSLATE_NOOP("", "Can't find the update count per linked "
-                                                               "notebook guid on attempt to check "
-                                                               "the update count of tag sent to Evernote service"));
+                    errorDescription.setBase(QT_TR_NOOP("Can't find the update count per linked "
+                                                        "notebook guid on attempt to check "
+                                                        "the update count of tag sent to Evernote service"));
                     emit failure(errorDescription);
                     return;
                 }
@@ -1477,8 +1477,8 @@ void SendLocalChangesManager::sendSavedSearches()
         if (errorCode == qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED)
         {
             if (rateLimitSeconds <= 0) {
-                errorDescription.setBase(QT_TRANSLATE_NOOP("", "Rate limit reached but the number "
-                                                           "of seconds to wait is incorrect"));
+                errorDescription.setBase(QT_TR_NOOP("Rate limit reached but the number "
+                                                    "of seconds to wait is incorrect"));
                 errorDescription.details() = QString::number(rateLimitSeconds);
                 emit failure(errorDescription);
                 return;
@@ -1486,8 +1486,8 @@ void SendLocalChangesManager::sendSavedSearches()
 
             int timerId = startTimer(SEC_TO_MSEC(rateLimitSeconds));
             if (Q_UNLIKELY(timerId == 0)) {
-                errorDescription.setBase(QT_TRANSLATE_NOOP("", "Failed to start a timer to postpone "
-                                                           "the Evernote API call due to rate limit exceeding"));
+                errorDescription.setBase(QT_TR_NOOP("Failed to start a timer to postpone "
+                                                    "the Evernote API call due to rate limit exceeding"));
                 emit failure(errorDescription);
                 return;
             }
@@ -1511,7 +1511,7 @@ void SendLocalChangesManager::sendSavedSearches()
         }
         else if (errorCode != 0)
         {
-            ErrorString error(QT_TRANSLATE_NOOP("", "Failed to send new and/or modified tags to Evernote service"));
+            ErrorString error(QT_TR_NOOP("Failed to send new and/or modified tags to Evernote service"));
             error.additionalBases().append(errorDescription.base());
             error.additionalBases().append(errorDescription.additionalBases());
             error.details() = errorDescription.details();
@@ -1533,9 +1533,9 @@ void SendLocalChangesManager::sendSavedSearches()
             QNTRACE(QStringLiteral("Checking if we are still in sync with the remote service"));
 
             if (!search.hasUpdateSequenceNumber()) {
-                errorDescription.setBase(QT_TRANSLATE_NOOP("", "Internal error: saved search's update "
-                                                           "sequence number is not set after sending it "
-                                                           "to Evernote service"));
+                errorDescription.setBase(QT_TR_NOOP("Internal error: saved search's update "
+                                                    "sequence number is not set after sending it "
+                                                    "to Evernote service"));
                 emit failure(errorDescription);
                 return;
             }
@@ -1580,9 +1580,9 @@ void SendLocalChangesManager::sendNotebooks()
             }
             else
             {
-                errorDescription.setBase(QT_TRANSLATE_NOOP("", "Couldn't find the authentication token "
-                                                           "for a linked notebook when attempting "
-                                                           "to create or update a notebook"));
+                errorDescription.setBase(QT_TR_NOOP("Couldn't find the authentication token "
+                                                    "for a linked notebook when attempting "
+                                                    "to create or update a notebook"));
                 if (notebook.hasName()) {
                     errorDescription.details() = notebook.name();
                 }
@@ -1615,8 +1615,8 @@ void SendLocalChangesManager::sendNotebooks()
         if (errorCode == qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED)
         {
             if (rateLimitSeconds <= 0) {
-                errorDescription.setBase(QT_TRANSLATE_NOOP("", "Rate limit reached but the number "
-                                                           "of seconds to wait is incorrect"));
+                errorDescription.setBase(QT_TR_NOOP("Rate limit reached but the number "
+                                                    "of seconds to wait is incorrect"));
                 errorDescription.details() = QString::number(rateLimitSeconds);
                 emit failure(errorDescription);
                 return;
@@ -1624,8 +1624,8 @@ void SendLocalChangesManager::sendNotebooks()
 
             int timerId = startTimer(SEC_TO_MSEC(rateLimitSeconds));
             if (Q_UNLIKELY(timerId == 0)) {
-                errorDescription.setBase(QT_TRANSLATE_NOOP("", "Failed to start a timer to postpone "
-                                                           "the Evernote API call due to rate limit exceeding"));
+                errorDescription.setBase(QT_TR_NOOP("Failed to start a timer to postpone "
+                                                    "the Evernote API call due to rate limit exceeding"));
                 emit failure(errorDescription);
                 return;
             }
@@ -1644,14 +1644,14 @@ void SendLocalChangesManager::sendNotebooks()
                 auto cit = m_authenticationTokenExpirationTimesByLinkedNotebookGuid.find(notebook.linkedNotebookGuid());
                 if (cit == m_authenticationTokenExpirationTimesByLinkedNotebookGuid.end())
                 {
-                    errorDescription.setBase(QT_TRANSLATE_NOOP("", "Couldn't find the linked notebook "
-                                                               "auth token's expiration time"));
+                    errorDescription.setBase(QT_TR_NOOP("Couldn't find the linked notebook "
+                                                        "auth token's expiration time"));
                     QNWARNING(errorDescription << QStringLiteral(", linked notebook guid = ") << notebook.linkedNotebookGuid());
                     emit failure(errorDescription);
                 }
                 else if (checkAndRequestAuthenticationTokensForLinkedNotebooks()) {
-                    errorDescription.setBase(QT_TRANSLATE_NOOP("", "Unexpected AUTH_EXPIRED error: authentication "
-                                                               "tokens for all linked notebooks are still valid"));
+                    errorDescription.setBase(QT_TR_NOOP("Unexpected AUTH_EXPIRED error: authentication "
+                                                        "tokens for all linked notebooks are still valid"));
                     QNWARNING(errorDescription << QStringLiteral(", linked notebook guid = ") << notebook.linkedNotebookGuid());
                     emit failure(errorDescription);
                 }
@@ -1669,7 +1669,7 @@ void SendLocalChangesManager::sendNotebooks()
         }
         else if (errorCode != 0)
         {
-            ErrorString error(QT_TRANSLATE_NOOP("", "Failed to send new and/or mofidied notebooks to Evernote service"));
+            ErrorString error(QT_TR_NOOP("Failed to send new and/or mofidied notebooks to Evernote service"));
             error.additionalBases().append(errorDescription.base());
             error.additionalBases().append(errorDescription.additionalBases());
             error.details() = errorDescription.details();
@@ -1692,8 +1692,8 @@ void SendLocalChangesManager::sendNotebooks()
 
             if (!notebook.hasUpdateSequenceNumber())
             {
-                errorDescription.setBase(QT_TRANSLATE_NOOP("", "Notebook's update sequence number is not "
-                                                           "set after it was sent to Evernote service"));
+                errorDescription.setBase(QT_TR_NOOP("Notebook's update sequence number is not "
+                                                    "set after it was sent to Evernote service"));
                 if (notebook.hasName()) {
                     errorDescription.details() = notebook.name();
                 }
@@ -1714,9 +1714,9 @@ void SendLocalChangesManager::sendNotebooks()
 
                 auto lit = m_lastUpdateCountByLinkedNotebookGuid.find(notebook.linkedNotebookGuid());
                 if (lit == m_lastUpdateCountByLinkedNotebookGuid.end()) {
-                    errorDescription.setBase(QT_TRANSLATE_NOOP("", "Can't find the update count per linked "
-                                                               "notebook guid on attempt to check the update "
-                                                               "count of a notebook sent to Evernote service"));
+                    errorDescription.setBase(QT_TR_NOOP("Can't find the update count per linked "
+                                                        "notebook guid on attempt to check the update "
+                                                        "count of a notebook sent to Evernote service"));
                     emit failure(errorDescription);
                     return;
                 }
@@ -1765,7 +1765,7 @@ void SendLocalChangesManager::sendNotes()
 
         if (!note.hasNotebookGuid())
         {
-            errorDescription.setBase(QT_TRANSLATE_NOOP("", "Found a note without notebook guid"));
+            errorDescription.setBase(QT_TR_NOOP("Found a note without notebook guid"));
             APPEND_NOTE_DETAILS(errorDescription, note)
 
             QNWARNING(errorDescription << QStringLiteral(", note: ") << note);
@@ -1776,8 +1776,8 @@ void SendLocalChangesManager::sendNotes()
         auto nit = m_notebooksByGuidsCache.find(note.notebookGuid());
         if (nit == m_notebooksByGuidsCache.end())
         {
-            errorDescription.setBase(QT_TRANSLATE_NOOP("", "Can't find the notebook for one of notes "
-                                                       "about to be sent to Evernote service"));
+            errorDescription.setBase(QT_TR_NOOP("Can't find the notebook for one of notes "
+                                                "about to be sent to Evernote service"));
             APPEND_NOTE_DETAILS(errorDescription, note)
 
             QNWARNING(errorDescription << QStringLiteral(", note: ") << note);
@@ -1797,9 +1797,9 @@ void SendLocalChangesManager::sendNotes()
             }
             else
             {
-                errorDescription.setBase(QT_TRANSLATE_NOOP("", "Couldn't find the authenticaton token "
-                                                           "for a linked notebook when attempting "
-                                                           "to create or update a notebook"));
+                errorDescription.setBase(QT_TR_NOOP("Couldn't find the authenticaton token "
+                                                    "for a linked notebook when attempting "
+                                                    "to create or update a notebook"));
                 QNWARNING(errorDescription << QStringLiteral(", notebook: ") << notebook);
 
                 auto sit = std::find_if(m_linkedNotebookGuidsAndSharedNotebookGlobalIds.begin(),
@@ -1828,8 +1828,8 @@ void SendLocalChangesManager::sendNotes()
         if (errorCode == qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED)
         {
             if (rateLimitSeconds <= 0) {
-                errorDescription.setBase(QT_TRANSLATE_NOOP("", "Rate limit reached but the number "
-                                                           "of seconds to wait is incorrect"));
+                errorDescription.setBase(QT_TR_NOOP("Rate limit reached but the number "
+                                                    "of seconds to wait is incorrect"));
                 errorDescription.details() = QString::number(rateLimitSeconds);
                 emit failure(errorDescription);
                 return;
@@ -1837,8 +1837,8 @@ void SendLocalChangesManager::sendNotes()
 
             int timerId = startTimer(SEC_TO_MSEC(rateLimitSeconds));
             if (timerId == 0) {
-                errorDescription.setBase(QT_TRANSLATE_NOOP("", "Failed to start a timer to postpone "
-                                                           "the Evernote API call due to rate limit exceeding"));
+                errorDescription.setBase(QT_TR_NOOP("Failed to start a timer to postpone "
+                                                    "the Evernote API call due to rate limit exceeding"));
                 emit failure(errorDescription);
                 return;
             }
@@ -1857,13 +1857,13 @@ void SendLocalChangesManager::sendNotes()
                 auto cit = m_authenticationTokenExpirationTimesByLinkedNotebookGuid.find(notebook.linkedNotebookGuid());
                 if (cit == m_authenticationTokenExpirationTimesByLinkedNotebookGuid.end())
                 {
-                    errorDescription.setBase(QT_TRANSLATE_NOOP("", "Couldn't find the linked notebook auth token's expiration time"));
+                    errorDescription.setBase(QT_TR_NOOP("Couldn't find the linked notebook auth token's expiration time"));
                     QNWARNING(errorDescription << QStringLiteral(", linked notebook guid = ") << notebook.linkedNotebookGuid());
                     emit failure(errorDescription);
                 }
                 else if (checkAndRequestAuthenticationTokensForLinkedNotebooks()) {
-                    errorDescription.setBase(QT_TRANSLATE_NOOP("", "Unexpected AUTH_EXPIRED error: authentication "
-                                                               "tokens for all linked notebooks are still valid"));
+                    errorDescription.setBase(QT_TR_NOOP("Unexpected AUTH_EXPIRED error: authentication "
+                                                        "tokens for all linked notebooks are still valid"));
                     QNWARNING(errorDescription << QStringLiteral(", linked notebook guid = ") << notebook.linkedNotebookGuid());
                     emit failure(errorDescription);
                 }
@@ -1881,7 +1881,7 @@ void SendLocalChangesManager::sendNotes()
         }
         else if (errorCode != 0)
         {
-            ErrorString error(QT_TRANSLATE_NOOP("", "Failed to send new and/or mofidied notes to Evernote service"));
+            ErrorString error(QT_TR_NOOP("Failed to send new and/or mofidied notes to Evernote service"));
             error.additionalBases().append(errorDescription.base());
             error.additionalBases().append(errorDescription.additionalBases());
             error.details() = errorDescription.details();
@@ -1903,8 +1903,8 @@ void SendLocalChangesManager::sendNotes()
             QNTRACE(QStringLiteral("Checking if we are still in sync with Evernote service"));
 
             if (!note.hasUpdateSequenceNumber()) {
-                errorDescription.setBase(QT_TRANSLATE_NOOP("", "Note's update sequence number is not set "
-                                                           "after it was sent to Evernote service"));
+                errorDescription.setBase(QT_TR_NOOP("Note's update sequence number is not set "
+                                                    "after it was sent to Evernote service"));
                 emit failure(errorDescription);
                 return;
             }
@@ -1921,9 +1921,9 @@ void SendLocalChangesManager::sendNotes()
 
                 auto lit = m_lastUpdateCountByLinkedNotebookGuid.find(notebook.linkedNotebookGuid());
                 if (lit == m_lastUpdateCountByLinkedNotebookGuid.end()) {
-                    errorDescription.setBase(QT_TRANSLATE_NOOP("", "Failed to find the update count per linked "
-                                                               "notebook guid on attempt to check the update "
-                                                               "count of a notebook sent to Evernote service"));
+                    errorDescription.setBase(QT_TR_NOOP("Failed to find the update count per linked "
+                                                        "notebook guid on attempt to check the update "
+                                                        "count of a notebook sent to Evernote service"));
                     emit failure(errorDescription);
                     return;
                 }
@@ -2173,7 +2173,7 @@ bool SendLocalChangesManager::checkAndRequestAuthenticationTokensForLinkedNotebo
         const QPair<QString, QString> & guidAndShareKey = m_linkedNotebookGuidsAndSharedNotebookGlobalIds[i];
         const QString & guid = guidAndShareKey.first;
         if (guid.isEmpty()) {
-            ErrorString error(QT_TRANSLATE_NOOP("", "Found empty linked notebook guid within the list of linked notebook guids and shared notebook global ids"));
+            ErrorString error(QT_TR_NOOP("Found empty linked notebook guid within the list of linked notebook guids and shared notebook global ids"));
             QNWARNING(error);
             emit failure(error);
             return false;
@@ -2190,7 +2190,7 @@ bool SendLocalChangesManager::checkAndRequestAuthenticationTokensForLinkedNotebo
 
         auto eit = m_authenticationTokenExpirationTimesByLinkedNotebookGuid.find(guid);
         if (eit == m_authenticationTokenExpirationTimesByLinkedNotebookGuid.end()) {
-            ErrorString error(QT_TRANSLATE_NOOP("", "Can't find the cached expiration time of a linked notebook's authentication token"));
+            ErrorString error(QT_TR_NOOP("Can't find the cached expiration time of a linked notebook's authentication token"));
             QNWARNING(error << QStringLiteral(", linked notebook guid = ") << guid);
             emit failure(error);
             return false;

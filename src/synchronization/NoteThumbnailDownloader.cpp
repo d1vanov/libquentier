@@ -51,26 +51,26 @@ void NoteThumbnailDownloader::run()
     return
 
     if (Q_UNLIKELY(m_host.isEmpty())) {
-        SET_ERROR(QT_TRANSLATE_NOOP("", "host is empty"));
+        SET_ERROR(QT_TR_NOOP("host is empty"));
     }
 
     if (Q_UNLIKELY(m_noteGuid.isEmpty())) {
-        SET_ERROR(QT_TRANSLATE_NOOP("", "note guid is empty"));
+        SET_ERROR(QT_TR_NOOP("note guid is empty"));
     }
 
     if (Q_UNLIKELY(m_shardId.isEmpty())) {
-        SET_ERROR(QT_TRANSLATE_NOOP("", "shard id is empty"));
+        SET_ERROR(QT_TR_NOOP("shard id is empty"));
     }
 
     if (Q_UNLIKELY(!m_noteFromPublicLinkedNotebook && m_authToken.isEmpty())) {
-        SET_ERROR(QT_TRANSLATE_NOOP("", "authentication data is incomplete"));
+        SET_ERROR(QT_TR_NOOP("authentication data is incomplete"));
     }
 
     qevercloud::Thumbnail thumbnail(m_host, m_shardId, m_authToken);
     QByteArray thumbnailImageData = thumbnail.download(m_noteGuid, m_noteFromPublicLinkedNotebook,
                                                        /* is resource guid = */ false);
     if (Q_UNLIKELY(thumbnailImageData.isEmpty())) {
-        SET_ERROR(QT_TRANSLATE_NOOP("", "received empty note thumbnail data"));
+        SET_ERROR(QT_TR_NOOP("received empty note thumbnail data"));
     }
 
     emit finished(true, m_noteGuid, thumbnailImageData, ErrorString());
