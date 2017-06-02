@@ -126,7 +126,17 @@ qint32 NoteStore::createNote(Note & note, ErrorString & errorDescription, qint32
 {
     try
     {
-        note.qevercloudNote() =  m_pQecNoteStore->createNote(note.qevercloudNote(), linkedNotebookAuthToken);
+        qevercloud::Note noteMetadata = m_pQecNoteStore->createNote(note.qevercloudNote(), linkedNotebookAuthToken);
+        QNDEBUG(QStringLiteral("Note metadata returned from createNote method: ") << noteMetadata);
+
+        if (noteMetadata.guid.isSet()) {
+            note.setGuid(noteMetadata.guid.ref());
+        }
+
+        if (noteMetadata.updateSequenceNum.isSet()) {
+            note.setUpdateSequenceNumber(noteMetadata.updateSequenceNum);
+        }
+
         return 0;
     }
     catch(const qevercloud::EDAMUserException & userException)
@@ -148,7 +158,17 @@ qint32 NoteStore::updateNote(Note & note, ErrorString & errorDescription, qint32
 {
     try
     {
-        note.qevercloudNote() = m_pQecNoteStore->updateNote(note.qevercloudNote(), linkedNotebookAuthToken);
+        qevercloud::Note noteMetadata = m_pQecNoteStore->updateNote(note.qevercloudNote(), linkedNotebookAuthToken);
+        QNDEBUG(QStringLiteral("Note metadata returned from updateNote method: ") << noteMetadata);
+
+        if (noteMetadata.guid.isSet()) {
+            note.setGuid(noteMetadata.guid.ref());
+        }
+
+        if (noteMetadata.updateSequenceNum.isSet()) {
+            note.setUpdateSequenceNumber(noteMetadata.updateSequenceNum);
+        }
+
         return 0;
     }
     catch(const qevercloud::EDAMUserException & userException)
