@@ -2643,6 +2643,17 @@ bool LocalStorageManagerPrivate::addTag(Tag & tag, ErrorString & errorDescriptio
     }
 
     error.clear();
+    res = complementTagParentInfo(tag, error);
+    if (!res) {
+        errorDescription.base() = errorPrefix.base();
+        errorDescription.appendBase(error.base());
+        errorDescription.appendBase(error.additionalBases());
+        errorDescription.details() = error.details();
+        QNWARNING(errorDescription);
+        return false;
+    }
+
+    error.clear();
     res = insertOrReplaceTag(tag, error);
     if (!res) {
         errorDescription.base() = errorPrefix.base();
@@ -2724,6 +2735,17 @@ bool LocalStorageManagerPrivate::updateTag(Tag & tag, ErrorString & errorDescrip
             QNWARNING(errorDescription);
             return false;
         }
+    }
+
+    error.clear();
+    res = complementTagParentInfo(tag, error);
+    if (!res) {
+        errorDescription.base() = errorPrefix.base();
+        errorDescription.appendBase(error.base());
+        errorDescription.appendBase(error.additionalBases());
+        errorDescription.details() = error.details();
+        QNWARNING(errorDescription);
+        return false;
     }
 
     error.clear();
@@ -6830,6 +6852,52 @@ bool LocalStorageManagerPrivate::checkAndPrepareInsertOrReplaceTagQuery()
     }
 
     return res;
+}
+
+bool LocalStorageManagerPrivate::complementTagParentInfo(Tag & tag, ErrorString & errorDescription)
+{
+    QNDEBUG(QStringLiteral("LocalStorageManagerPrivate::complementTagParentInfo: ") << tag);
+
+    if (tag.hasParentGuid() && tag.hasParentLocalUid()) {
+        QNDEBUG(QStringLiteral("The tag has both parent guid and parent local uid, nothing to complement"));
+        return true;
+    }
+
+    if (!tag.hasParentGuid() && !tag.hasParentLocalUid()) {
+        QNDEBUG(QStringLiteral("The tag has neither parent guid nor parent local uid, nothing to complement"));
+        return true;
+    }
+
+    ErrorString errorPrefix(QT_TR_NOOP("can't complement the parent info for a tag"));
+
+    QString existingColumn = (tag.hasParentGuid() ? QStringLiteral("guid") : QStringLiteral("localUid"));
+    QString otherColumn = (tag.hasParentGuid() ? QStringLiteral("localUid") : QStringLiteral("guid"));
+    QString uid = (tag.hasParentGuid() ? tag.parentGuid() : tag.parentLocalUid());
+
+    QString queryString = QString::fromUtf8("SELECT %1 FROM Tags WHERE %2='%3'").arg(otherColumn, existingColumn, uid);
+    QNDEBUG(QStringLiteral("Query string = ") << queryString);
+
+    QSqlQuery query(m_sqlDatabase);
+    bool res = query.exec(queryString);
+    DATABASE_CHECK_AND_SET_ERROR();
+
+    res = query.next();
+    if (!res) {
+        SET_NO_DATA_FOUND();
+        return false;
+    }
+
+    QString otherUid = query.record().value(otherColumn).toString();
+    QNTRACE(QStringLiteral("Tag's parent ") << otherColumn << QStringLiteral(" was retrieved: ") << otherUid);
+
+    if (tag.hasParentGuid()) {
+        tag.setParentLocalUid(otherUid);
+    }
+    else {
+        tag.setParentGuid(otherUid);
+    }
+
+    return true;
 }
 
 bool LocalStorageManagerPrivate::insertOrReplaceResource(const Resource & resource, ErrorString & errorDescription,

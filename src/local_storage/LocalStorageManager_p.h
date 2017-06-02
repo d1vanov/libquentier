@@ -234,6 +234,7 @@ private:
     bool checkAndPrepareTagCountQuery() const;
     bool checkAndPrepareInsertOrReplaceTagQuery();
     bool checkAndPrepareDeleteTagQuery();
+    bool complementTagParentInfo(Tag & tag, ErrorString & errorDescription);
 
     bool insertOrReplaceResource(const Resource & resource, ErrorString & errorDescription,
                                  const bool useSeparateTransaction = true);
