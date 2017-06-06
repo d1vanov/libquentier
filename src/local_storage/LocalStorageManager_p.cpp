@@ -3648,6 +3648,125 @@ bool LocalStorageManagerPrivate::expungeSavedSearch(SavedSearch & search, ErrorS
     return true;
 }
 
+qint32 LocalStorageManagerPrivate::accountHighUsn(const QString & linkedNotebookGuid, ErrorString & errorDescription)
+{
+    QNDEBUG(QStringLiteral("LocalStorageManagerPrivate::accountHighUsn: linked notebook guid = ") << linkedNotebookGuid);
+
+    qint32 updateSequenceNumber = 0;
+
+    QVector<HighUsnRequestData> tablesAndUsnColumns;
+    if (linkedNotebookGuid.isEmpty()) {
+        tablesAndUsnColumns.reserve(6);
+    }
+    else {
+        tablesAndUsnColumns.reserve(4);
+    }
+
+    QString queryCondition = QStringLiteral("WHERE linkedNotebookGuid");
+    if (linkedNotebookGuid.isEmpty()) {
+        queryCondition += QStringLiteral(" IS NULL");
+    }
+    else {
+        queryCondition += QString::fromUtf8("='%1'").arg(sqlEscapeString(linkedNotebookGuid));
+    }
+
+#define ADD_TABLE_AND_USN_COLUMN(tableName, usnColumnName) \
+    tablesAndUsnColumns << HighUsnRequestData(tableName, usnColumnName, queryCondition)
+
+    ADD_TABLE_AND_USN_COLUMN(QStringLiteral("Notebooks"), QStringLiteral("updateSequenceNumber"));
+    ADD_TABLE_AND_USN_COLUMN(QStringLiteral("Tags"), QStringLiteral("updateSequenceNumber"));
+
+    // Separate query condition is required for notes table
+    queryCondition = QStringLiteral("WHERE notebookLocalUid IN (SELECT DISTINCT localUid FROM Notebooks WHERE linkedNotebookGuid");
+    if (linkedNotebookGuid.isEmpty()) {
+        queryCondition += QStringLiteral(" IS NULL)");
+    }
+    else {
+        queryCondition += QString::fromUtf8("='%1')").arg(sqlEscapeString(linkedNotebookGuid));
+    }
+    ADD_TABLE_AND_USN_COLUMN(QStringLiteral("Notes"), QStringLiteral("updateSequenceNumber"));
+
+    // Separate query condition is required for resources table
+    queryCondition = QStringLiteral("WHERE noteLocalUid IN (SELECT DISTINCT localUid FROM Notes WHERE notebookLocalUid IN ");
+    queryCondition += QStringLiteral("(SELECT DISTINCT localUid FROM Notebooks WHERE linkedNotebookGuid");
+    if (linkedNotebookGuid.isEmpty()) {
+        queryCondition += QStringLiteral(" IS NULL))");
+    }
+    else {
+        queryCondition += QString::fromUtf8("='%1'))").arg(sqlEscapeString(linkedNotebookGuid));
+    }
+    ADD_TABLE_AND_USN_COLUMN(QStringLiteral("Resources"), QStringLiteral("resourceUpdateSequenceNumber"));
+
+    // No query condition is required for linked notebooks and saved searches tables + only need to consider them
+    // for highest USN from user's own account, not from some linked notebook
+    if (linkedNotebookGuid.isEmpty()) {
+        queryCondition.clear();
+        ADD_TABLE_AND_USN_COLUMN(QStringLiteral("LinkedNotebooks"), QStringLiteral("updateSequenceNumber"));
+        ADD_TABLE_AND_USN_COLUMN(QStringLiteral("SavedSearches"), QStringLiteral("updateSequenceNumber"));
+    }
+
+#undef ADD_TABLE_AND_USN_COLUMN
+
+    for(auto it = tablesAndUsnColumns.constBegin(), end = tablesAndUsnColumns.constEnd(); it != end; ++it)
+    {
+        qint32 usn = 0;
+        bool res = updateSequenceNumberFromTable(it->m_tableName, it->m_usnColumnName,
+                                                 it->m_queryCondition, usn, errorDescription);
+        if (!res) {
+            return -1;
+        }
+
+        updateSequenceNumber = std::max(updateSequenceNumber, usn);
+
+        QNTRACE(QStringLiteral("Max update sequence number from table ") << it->m_tableName
+                << QStringLiteral(": ") << usn << QStringLiteral(", overall max USN so far: ")
+                << updateSequenceNumber);
+    }
+
+    QNDEBUG(QStringLiteral("Max USN = ") << updateSequenceNumber);
+    return updateSequenceNumber;
+}
+
+bool LocalStorageManagerPrivate::updateSequenceNumberFromTable(const QString & tableName, const QString & usnColumnName,
+                                                               const QString & queryCondition,
+                                                               qint32 & usn, ErrorString & errorDescription)
+{
+    QNDEBUG(QStringLiteral("LocalStorageManagerPrivate::updateSequenceNumberFromTable: ") << tableName
+            << QStringLiteral(", usn column name = ") << usnColumnName << QStringLiteral(", query condition = ")
+            << queryCondition);
+
+    ErrorString errorPrefix(QT_TR_NOOP("failed to get the update sequence number from one of local storage database tables"));
+
+    QString queryString = QStringLiteral("SELECT MAX(") + usnColumnName + QStringLiteral(") FROM ") + tableName;
+    if (!queryCondition.isEmpty()) {
+        queryString += QStringLiteral(" ") + queryCondition;
+    }
+
+    QSqlQuery query(m_sqlDatabase);
+    bool res = query.exec(queryString);
+    DATABASE_CHECK_AND_SET_ERROR();
+
+    if (!query.next()) {
+        QNDEBUG(QStringLiteral("No query result for table ") << tableName);
+        // NOTE: consider this the acceptable result, the table might be empty
+        usn = 0;
+        return true;
+    }
+
+    bool conversionResult = false;
+    usn = query.value(0).toInt(&conversionResult);
+    if (Q_UNLIKELY(!conversionResult)) {
+        errorDescription.base() = errorPrefix.base();
+        errorDescription.appendBase(QT_TR_NOOP("failed to convert the update sequence number to int"));
+        errorDescription.details() = tableName;
+        QNWARNING(errorDescription);
+        usn = -1;
+        return false;
+    }
+
+    return true;
+}
+
 void LocalStorageManagerPrivate::processPostTransactionException(ErrorString message, QSqlError error) const
 {
     QNCRITICAL(message << QStringLiteral(": ") << error);

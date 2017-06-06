@@ -151,6 +151,12 @@ public:
                                          const LocalStorageManager::OrderDirection::type & orderDirection) const;
     bool expungeSavedSearch(SavedSearch & search, ErrorString & errorDescription);
 
+    qint32 accountHighUsn(const QString & linkedNotebookGuid, ErrorString & errorDescription);
+
+    bool updateSequenceNumberFromTable(const QString & tableName, const QString & usnColumnName,
+                                       const QString & queryCondition,
+                                       qint32 & usn, ErrorString & errorDescription);
+
 public Q_SLOTS:
     void processPostTransactionException(ErrorString message, QSqlError error) const;
 
@@ -360,6 +366,27 @@ private:
     struct QStringIntPairCompareByInt
     {
         bool operator()(const QPair<QString, int> & lhs, const QPair<QString, int> & rhs) const;
+    };
+
+    struct HighUsnRequestData
+    {
+        HighUsnRequestData() :
+            m_tableName(),
+            m_usnColumnName(),
+            m_queryCondition()
+        {}
+
+        HighUsnRequestData(const QString & tableName,
+                           const QString & usnColumnName,
+                           const QString & queryCondition) :
+            m_tableName(tableName),
+            m_usnColumnName(usnColumnName),
+            m_queryCondition(queryCondition)
+        {}
+
+        QString     m_tableName;
+        QString     m_usnColumnName;
+        QString     m_queryCondition;
     };
 
     Account             m_currentAccount;

@@ -1432,4 +1432,21 @@ void LocalStorageManagerAsync::onExpungeSavedSearch(SavedSearch search, QUuid re
     CATCH_EXCEPTION
 }
 
+void LocalStorageManagerAsync::onAccountHighUsnRequest(QString linkedNotebookGuid, QUuid requestId)
+{
+    try
+    {
+        ErrorString errorDescription;
+
+        qint32 updateSequenceNumber = m_pLocalStorageManager->accountHighUsn(linkedNotebookGuid, errorDescription);
+        if (updateSequenceNumber < 0) {
+            emit accountHighUsnFailed(linkedNotebookGuid, errorDescription, requestId);
+            return;
+        }
+
+        emit accountHighUsnComplete(updateSequenceNumber, linkedNotebookGuid, requestId);
+    }
+    CATCH_EXCEPTION
+}
+
 } // namespace quentier

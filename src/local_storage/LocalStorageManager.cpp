@@ -440,4 +440,10 @@ bool LocalStorageManager::expungeSavedSearch(SavedSearch & search, ErrorString &
     return d->expungeSavedSearch(search, errorDescription);
 }
 
+qint32 LocalStorageManager::accountHighUsn(const QString & linkedNotebookGuid, ErrorString & errorDescription)
+{
+    Q_D(LocalStorageManager);
+    return d->accountHighUsn(linkedNotebookGuid, errorDescription);
+}
+
 } // namespace quentier

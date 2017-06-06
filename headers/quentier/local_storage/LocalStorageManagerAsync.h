@@ -273,6 +273,9 @@ Q_SIGNALS:
     void expungeSavedSearchComplete(SavedSearch search, QUuid requestId = QUuid());
     void expungeSavedSearchFailed(SavedSearch search, ErrorString errorDescription, QUuid requestId = QUuid());
 
+    void accountHighUsnComplete(qint32 usn, QString linkedNotebookGuid, QUuid requestId = QUuid());
+    void accountHighUsnFailed(QString linkedNotebookGuid, ErrorString errorDescription, QUuid requestId = QUuid());
+
 public Q_SLOTS:
     void init();
 
@@ -393,6 +396,8 @@ public Q_SLOTS:
                                     LocalStorageManager::OrderDirection::type orderDirection,
                                     QUuid requestId);
     void onExpungeSavedSearch(SavedSearch search, QUuid requestId);
+
+    void onAccountHighUsnRequest(QString linkedNotebookGuid, QUuid requestId);
 
 private:
     LocalStorageManagerAsync() Q_DECL_EQ_DELETE;

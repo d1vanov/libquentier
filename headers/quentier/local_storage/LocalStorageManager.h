@@ -985,6 +985,17 @@ public:
      */
     bool expungeSavedSearch(SavedSearch & search, ErrorString & errorDescription);
 
+    /**
+     * @brief accountHighUsn - returns the highest update sequence number within the data elements
+     * stored in the local storage database, either for user's own account or for some linked notebook
+     * @param linkedNotebookGuid - the guid of the linked notebook for which the highest update sequence number is
+     * requested; if null or empty, the highest update sequence number for user's own account is returned
+     * @param errorDescription - error description if account's highest update sequence number could not be returned
+     * @return either the highest update sequence number - a non-negative value - or a negative number
+     * in case of error
+     */
+    qint32 accountHighUsn(const QString & linkedNotebookGuid, ErrorString & errorDescription);
+
 private:
     LocalStorageManager() Q_DECL_EQ_DELETE;
     Q_DISABLE_COPY(LocalStorageManager)
