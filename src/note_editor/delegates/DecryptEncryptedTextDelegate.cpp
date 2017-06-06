@@ -17,7 +17,6 @@
  */
 
 #include "DecryptEncryptedTextDelegate.h"
-#include "ParsePageScrollData.h"
 #include "../NoteEditor_p.h"
 #include "../NoteEditorPage.h"
 #include "../dialogs/DecryptionDialog.h"
