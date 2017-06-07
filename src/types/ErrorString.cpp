@@ -195,7 +195,7 @@ QString ErrorString::nonLocalizedString() const
             continue;
         }
 
-        if (Q_LIKELY(it != d->m_additionalBases.constBegin()) && !result.isEmpty()) {
+        if (Q_LIKELY(!result.isEmpty())) {
             result += QStringLiteral(", ");
         }
 
