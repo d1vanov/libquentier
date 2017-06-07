@@ -28,6 +28,9 @@
 #include <quentier/types/SharedNotebook.h>
 #include <quentier/types/User.h>
 #include <quentier/utility/Utility.h>
+#include <quentier/utility/UidGenerator.h>
+#include <QCryptographicHash>
+#include <string>
 
 namespace quentier {
 namespace test {
@@ -1652,6 +1655,460 @@ bool TestSequentialUpdatesInLocalStorage(QString & errorDescription)
     if (foundResourceAttributes.applicationData.isSet()) {
         errorDescription = QStringLiteral("Resource from updated note has application data while it shouldn't have it");
         QNWARNING(errorDescription << QStringLiteral(", found resource: ") << foundResourceWrapper);
+        return false;
+    }
+
+    return true;
+}
+
+bool TestAccountHighUsnInLocalStorage(QString & errorDescription)
+{
+    // 1) ========== Create LocalStorageManager =============
+
+    const bool startFromScratch = true;
+    const bool overrideLock = false;
+    Account account(QStringLiteral("LocalStorageManagerAccountHighUsnTestFakeUser"), Account::Type::Evernote, 0);
+    LocalStorageManager localStorageManager(account, startFromScratch, overrideLock);
+
+    ErrorString error;
+
+    // 2) ========== Verify that account high USN is initially zero (since all tables are empty) ==========
+
+    error.clear();
+    qint32 initialUsn = localStorageManager.accountHighUsn(QString(), error);
+    if (initialUsn != 0) {
+        errorDescription = error.nonLocalizedString();
+        return false;
+    }
+
+    qint32 currentUsn = initialUsn;
+
+    // 3) ========== Create some user's own notebooks with different USNs ==========
+
+    Notebook firstNotebook;
+    firstNotebook.setGuid(UidGenerator::Generate());
+    firstNotebook.setUpdateSequenceNumber(currentUsn++);
+    firstNotebook.setName(QStringLiteral("First notebook"));
+    firstNotebook.setCreationTimestamp(QDateTime::currentMSecsSinceEpoch());
+    firstNotebook.setModificationTimestamp(firstNotebook.creationTimestamp());
+    firstNotebook.setDefaultNotebook(true);
+    firstNotebook.setLastUsed(false);
+
+    Notebook secondNotebook;
+    secondNotebook.setGuid(UidGenerator::Generate());
+    secondNotebook.setUpdateSequenceNumber(currentUsn++);
+    secondNotebook.setName(QStringLiteral("Second notebook"));
+    secondNotebook.setCreationTimestamp(QDateTime::currentMSecsSinceEpoch());
+    secondNotebook.setModificationTimestamp(secondNotebook.creationTimestamp());
+    secondNotebook.setDefaultNotebook(false);
+    secondNotebook.setLastUsed(false);
+
+    Notebook thirdNotebook;
+    thirdNotebook.setGuid(UidGenerator::Generate());
+    thirdNotebook.setUpdateSequenceNumber(currentUsn++);
+    thirdNotebook.setName(QStringLiteral("Third notebook"));
+    thirdNotebook.setCreationTimestamp(QDateTime::currentMSecsSinceEpoch());
+    thirdNotebook.setModificationTimestamp(thirdNotebook.creationTimestamp());
+    thirdNotebook.setDefaultNotebook(false);
+    thirdNotebook.setLastUsed(true);
+
+    error.clear();
+    bool res = localStorageManager.addNotebook(firstNotebook, error);
+    if (!res) {
+        errorDescription = error.nonLocalizedString();
+        return false;
+    }
+
+    error.clear();
+    res = localStorageManager.addNotebook(secondNotebook, error);
+    if (!res) {
+        errorDescription = error.nonLocalizedString();
+        return false;
+    }
+
+    error.clear();
+    res = localStorageManager.addNotebook(thirdNotebook, error);
+    if (!res) {
+        errorDescription = error.nonLocalizedString();
+        return false;
+    }
+
+    // 4) ========== Verify the current value of the account high USN ==========
+
+    error.clear();
+    qint32 accountHighUsn = localStorageManager.accountHighUsn(QString(), error);
+    if (accountHighUsn < 0) {
+        errorDescription = error.nonLocalizedString();
+        return false;
+    }
+    else if (accountHighUsn != thirdNotebook.updateSequenceNumber()) {
+        errorDescription = QStringLiteral("Wrong value of account high USN, expected ");
+        errorDescription += QString::number(thirdNotebook.updateSequenceNumber());
+        errorDescription += QStringLiteral(", got ");
+        errorDescription += QString::number(accountHighUsn);
+        return false;
+    }
+
+    // 5) ========== Create some user's own tags with different USNs ==========
+
+    Tag firstTag;
+    firstTag.setGuid(UidGenerator::Generate());
+    firstTag.setName(QStringLiteral("First tag"));
+    firstTag.setUpdateSequenceNumber(currentUsn++);
+
+    Tag secondTag;
+    secondTag.setGuid(UidGenerator::Generate());
+    secondTag.setName(QStringLiteral("Second tag"));
+    secondTag.setUpdateSequenceNumber(currentUsn++);
+
+    Tag thirdTag;
+    thirdTag.setGuid(UidGenerator::Generate());
+    thirdTag.setName(QStringLiteral("Third tag"));
+    thirdTag.setUpdateSequenceNumber(currentUsn++);
+    thirdTag.setParentGuid(secondTag.guid());
+    thirdTag.setParentLocalUid(secondTag.localUid());
+
+    error.clear();
+    res = localStorageManager.addTag(firstTag, error);
+    if (!res) {
+        errorDescription = error.nonLocalizedString();
+        return false;
+    }
+
+    error.clear();
+    res = localStorageManager.addTag(secondTag, error);
+    if (!res) {
+        errorDescription = error.nonLocalizedString();
+        return false;
+    }
+
+    error.clear();
+    res = localStorageManager.addTag(thirdTag, error);
+    if (!res) {
+        errorDescription = error.nonLocalizedString();
+        return false;
+    }
+
+    // 6) ========== Verify the current value of the account high USN ==========
+
+    error.clear();
+    accountHighUsn = localStorageManager.accountHighUsn(QString(), error);
+    if (accountHighUsn < 0) {
+        errorDescription = error.nonLocalizedString();
+        return false;
+    }
+    else if (accountHighUsn != thirdTag.updateSequenceNumber()) {
+        errorDescription = QStringLiteral("Wrong value of account high USN, expected ");
+        errorDescription += QString::number(thirdTag.updateSequenceNumber());
+        errorDescription += QStringLiteral(", got ");
+        errorDescription += QString::number(accountHighUsn);
+        return false;
+    }
+
+    // 7) ========== Create some user's own notes with different USNs ==========
+
+    Note firstNote;
+    firstNote.setGuid(UidGenerator::Generate());
+    firstNote.setTitle(QStringLiteral("First note"));
+    firstNote.setUpdateSequenceNumber(currentUsn++);
+    firstNote.setNotebookLocalUid(firstNotebook.localUid());
+    firstNote.setNotebookGuid(firstNotebook.guid());
+    firstNote.setCreationTimestamp(QDateTime::currentMSecsSinceEpoch());
+    firstNote.setModificationTimestamp(firstNote.creationTimestamp());
+
+    Note secondNote;
+    secondNote.setGuid(UidGenerator::Generate());
+    secondNote.setTitle(QStringLiteral("Second note"));
+    secondNote.setUpdateSequenceNumber(currentUsn++);
+    secondNote.setNotebookLocalUid(secondNotebook.localUid());
+    secondNote.setNotebookGuid(secondNotebook.guid());
+    secondNote.setCreationTimestamp(QDateTime::currentMSecsSinceEpoch());
+    secondNote.setModificationTimestamp(secondNote.creationTimestamp());
+
+    error.clear();
+    res = localStorageManager.addNote(firstNote, error);
+    if (!res) {
+        errorDescription = error.nonLocalizedString();
+        return false;
+    }
+
+    error.clear();
+    res = localStorageManager.addNote(secondNote, error);
+    if (!res) {
+        errorDescription = error.nonLocalizedString();
+        return false;
+    }
+
+    // 8) ========== Verify the current value of the account high USN ==========
+
+    error.clear();
+    accountHighUsn = localStorageManager.accountHighUsn(QString(), error);
+    if (accountHighUsn < 0) {
+        errorDescription = error.nonLocalizedString();
+        return false;
+    }
+    else if (accountHighUsn != secondNote.updateSequenceNumber()) {
+        errorDescription = QStringLiteral("Wrong value of account high USN, expected ");
+        errorDescription += QString::number(secondNote.updateSequenceNumber());
+        errorDescription += QStringLiteral(", got ");
+        errorDescription += QString::number(accountHighUsn);
+        return false;
+    }
+
+    // 9) ========== Create one more note, this time with a resource which USN is higher than the note's one ==========
+
+    Note thirdNote;
+    thirdNote.setGuid(UidGenerator::Generate());
+    thirdNote.setUpdateSequenceNumber(currentUsn++);
+    thirdNote.setTitle(QStringLiteral("Third note"));
+    thirdNote.setNotebookGuid(thirdNotebook.guid());
+    thirdNote.setNotebookLocalUid(thirdNotebook.localUid());
+    thirdNote.setCreationTimestamp(QDateTime::currentMSecsSinceEpoch());
+    thirdNote.setModificationTimestamp(thirdNote.creationTimestamp());
+
+    Resource thirdNoteResource;
+    thirdNoteResource.setGuid(UidGenerator::Generate());
+    thirdNoteResource.setNoteGuid(thirdNote.guid());
+    thirdNoteResource.setNoteLocalUid(thirdNote.localUid());
+    thirdNoteResource.setDataBody(QByteArray::fromStdString(std::string("Something")));
+    thirdNoteResource.setDataSize(thirdNoteResource.dataBody().size());
+    thirdNoteResource.setDataHash(QCryptographicHash::hash(thirdNoteResource.dataBody(), QCryptographicHash::Md5));
+    thirdNoteResource.setMime(QStringLiteral("text/plain"));
+    thirdNoteResource.setUpdateSequenceNumber(currentUsn++);
+
+    thirdNote.addResource(thirdNoteResource);
+
+    error.clear();
+    res = localStorageManager.addNote(thirdNote, error);
+    if (!res) {
+        errorDescription = error.nonLocalizedString();
+        return false;
+    }
+
+    // 10) ========== Verify the current value of the account high USN ==========
+
+    error.clear();
+    accountHighUsn = localStorageManager.accountHighUsn(QString(), error);
+    if (accountHighUsn < 0) {
+        errorDescription = error.nonLocalizedString();
+        return false;
+    }
+    else if (accountHighUsn != thirdNoteResource.updateSequenceNumber()) {
+        errorDescription = QStringLiteral("Wrong value of account high USN, expected ");
+        errorDescription += QString::number(thirdNoteResource.updateSequenceNumber());
+        errorDescription += QStringLiteral(", got ");
+        errorDescription += QString::number(accountHighUsn);
+        return false;
+    }
+
+    // 11) ========== Create some user's own saved sarches with different USNs ==========
+
+    SavedSearch firstSearch;
+    firstSearch.setGuid(UidGenerator::Generate());
+    firstSearch.setName(QStringLiteral("First search"));
+    firstSearch.setUpdateSequenceNumber(currentUsn++);
+    firstSearch.setQuery(QStringLiteral("First"));
+
+    SavedSearch secondSearch;
+    secondSearch.setGuid(UidGenerator::Generate());
+    secondSearch.setName(QStringLiteral("Second search"));
+    secondSearch.setUpdateSequenceNumber(currentUsn++);
+    secondSearch.setQuery(QStringLiteral("Second"));
+
+    SavedSearch thirdSearch;
+    thirdSearch.setGuid(UidGenerator::Generate());
+    thirdSearch.setName(QStringLiteral("Third search"));
+    thirdSearch.setUpdateSequenceNumber(currentUsn++);
+    thirdSearch.setQuery(QStringLiteral("Third"));
+
+    error.clear();
+    res = localStorageManager.addSavedSearch(firstSearch, error);
+    if (!res) {
+        errorDescription = error.nonLocalizedString();
+        return false;
+    }
+
+    error.clear();
+    res = localStorageManager.addSavedSearch(secondSearch, error);
+    if (!res) {
+        errorDescription = error.nonLocalizedString();
+        return false;
+    }
+
+    error.clear();
+    res = localStorageManager.addSavedSearch(thirdSearch, error);
+    if (!res) {
+        errorDescription = error.nonLocalizedString();
+        return false;
+    }
+
+    // 12) ========== Verify the current value of the account high USN ==========
+
+    error.clear();
+    accountHighUsn = localStorageManager.accountHighUsn(QString(), error);
+    if (accountHighUsn < 0) {
+        errorDescription = error.nonLocalizedString();
+        return false;
+    }
+    else if (accountHighUsn != thirdSearch.updateSequenceNumber()) {
+        errorDescription = QStringLiteral("Wrong value of account high USN, expected ");
+        errorDescription += QString::number(thirdSearch.updateSequenceNumber());
+        errorDescription += QStringLiteral(", got ");
+        errorDescription += QString::number(accountHighUsn);
+        return false;
+    }
+
+    // 13) ========== Create a linked notebook ==========
+
+    LinkedNotebook linkedNotebook;
+    linkedNotebook.setGuid(UidGenerator::Generate());
+    linkedNotebook.setUpdateSequenceNumber(currentUsn++);
+    linkedNotebook.setShareName(QStringLiteral("Share name"));
+    linkedNotebook.setUsername(QStringLiteral("Username"));
+    linkedNotebook.setShardId(UidGenerator::Generate());
+    linkedNotebook.setSharedNotebookGlobalId(UidGenerator::Generate());
+    linkedNotebook.setUri(UidGenerator::Generate());
+
+    error.clear();
+    res = localStorageManager.addLinkedNotebook(linkedNotebook, error);
+    if (!res) {
+        errorDescription = error.nonLocalizedString();
+        return false;
+    }
+
+    // 14) ========== Verify the current value of the account high USN ==========
+
+    error.clear();
+    accountHighUsn = localStorageManager.accountHighUsn(QString(), error);
+    if (accountHighUsn < 0) {
+        errorDescription = error.nonLocalizedString();
+        return false;
+    }
+    else if (accountHighUsn != linkedNotebook.updateSequenceNumber()) {
+        errorDescription = QStringLiteral("Wrong value of account high USN, expected ");
+        errorDescription += QString::number(linkedNotebook.updateSequenceNumber());
+        errorDescription += QStringLiteral(", got ");
+        errorDescription += QString::number(accountHighUsn);
+        return false;
+    }
+
+    // 15) ========== Add notebook and some tags and notes corresponding to the linked notebook ==========
+
+    Notebook notebookFromLinkedNotebook;
+    notebookFromLinkedNotebook.setGuid(linkedNotebook.sharedNotebookGlobalId());
+    notebookFromLinkedNotebook.setLinkedNotebookGuid(linkedNotebook.guid());
+    notebookFromLinkedNotebook.setUpdateSequenceNumber(currentUsn++);
+    notebookFromLinkedNotebook.setName(QStringLiteral("Notebook from linked notebook"));
+    notebookFromLinkedNotebook.setCreationTimestamp(QDateTime::currentMSecsSinceEpoch());
+    notebookFromLinkedNotebook.setModificationTimestamp(notebookFromLinkedNotebook.creationTimestamp());
+
+    Tag firstTagFromLinkedNotebook;
+    firstTagFromLinkedNotebook.setGuid(UidGenerator::Generate());
+    firstTagFromLinkedNotebook.setName(QStringLiteral("First tag from linked notebook"));
+    firstTagFromLinkedNotebook.setLinkedNotebookGuid(linkedNotebook.guid());
+    firstTagFromLinkedNotebook.setUpdateSequenceNumber(currentUsn++);
+
+    Tag secondTagFromLinkedNotebook;
+    secondTagFromLinkedNotebook.setGuid(UidGenerator::Generate());
+    secondTagFromLinkedNotebook.setName(QStringLiteral("Second tag from linked notebook"));
+    secondTagFromLinkedNotebook.setLinkedNotebookGuid(linkedNotebook.guid());
+    secondTagFromLinkedNotebook.setUpdateSequenceNumber(currentUsn++);
+
+    Note firstNoteFromLinkedNotebook;
+    firstNoteFromLinkedNotebook.setGuid(UidGenerator::Generate());
+    firstNoteFromLinkedNotebook.setUpdateSequenceNumber(currentUsn++);
+    firstNoteFromLinkedNotebook.setNotebookGuid(notebookFromLinkedNotebook.guid());
+    firstNoteFromLinkedNotebook.setNotebookLocalUid(notebookFromLinkedNotebook.localUid());
+    firstNoteFromLinkedNotebook.setTitle(QStringLiteral("First note from linked notebook"));
+    firstNoteFromLinkedNotebook.setCreationTimestamp(QDateTime::currentMSecsSinceEpoch());
+    firstNoteFromLinkedNotebook.setModificationTimestamp(firstNoteFromLinkedNotebook.creationTimestamp());
+    firstNoteFromLinkedNotebook.addTagLocalUid(firstTagFromLinkedNotebook.localUid());
+    firstNoteFromLinkedNotebook.addTagGuid(firstTagFromLinkedNotebook.guid());
+
+    Note secondNoteFromLinkedNotebook;
+    secondNoteFromLinkedNotebook.setGuid(UidGenerator::Generate());
+    secondNoteFromLinkedNotebook.setUpdateSequenceNumber(currentUsn++);
+    secondNoteFromLinkedNotebook.setNotebookGuid(notebookFromLinkedNotebook.guid());
+    secondNoteFromLinkedNotebook.setNotebookLocalUid(notebookFromLinkedNotebook.localUid());
+    secondNoteFromLinkedNotebook.setTitle(QStringLiteral("Second note from linked notebook"));
+    secondNoteFromLinkedNotebook.setCreationTimestamp(QDateTime::currentMSecsSinceEpoch());
+    secondNoteFromLinkedNotebook.setModificationTimestamp(secondNoteFromLinkedNotebook.creationTimestamp());
+
+    Resource secondNoteFromLinkedNotebookResource;
+    secondNoteFromLinkedNotebookResource.setGuid(UidGenerator::Generate());
+    secondNoteFromLinkedNotebookResource.setNoteGuid(secondNoteFromLinkedNotebook.guid());
+    secondNoteFromLinkedNotebookResource.setNoteLocalUid(secondNoteFromLinkedNotebook.localUid());
+    secondNoteFromLinkedNotebookResource.setDataBody(QByteArray::fromStdString(std::string("Other something")));
+    secondNoteFromLinkedNotebookResource.setDataSize(secondNoteFromLinkedNotebookResource.dataBody().size());
+    secondNoteFromLinkedNotebookResource.setDataHash(QCryptographicHash::hash(secondNoteFromLinkedNotebookResource.dataBody(), QCryptographicHash::Md5));
+    secondNoteFromLinkedNotebookResource.setUpdateSequenceNumber(currentUsn++);
+
+    secondNoteFromLinkedNotebook.addResource(secondNoteFromLinkedNotebookResource);
+
+    error.clear();
+    res = localStorageManager.addNotebook(notebookFromLinkedNotebook, error);
+    if (!res) {
+        errorDescription = error.nonLocalizedString();
+        return false;
+    }
+
+    error.clear();
+    res = localStorageManager.addTag(firstTagFromLinkedNotebook, error);
+    if (!res) {
+        errorDescription = error.nonLocalizedString();
+        return false;
+    }
+
+    error.clear();
+    res = localStorageManager.addTag(secondTagFromLinkedNotebook, error);
+    if (!res) {
+        errorDescription = error.nonLocalizedString();
+        return false;
+    }
+
+    error.clear();
+    res = localStorageManager.addNote(firstNoteFromLinkedNotebook, error);
+    if (!res) {
+        errorDescription = error.nonLocalizedString();
+        return false;
+    }
+
+    error.clear();
+    res = localStorageManager.addNote(secondNoteFromLinkedNotebook, error);
+    if (!res) {
+        errorDescription = error.nonLocalizedString();
+        return false;
+    }
+
+    // 16) ========== Verify the current value of the account high USN for user's own stuff ==========
+
+    error.clear();
+    accountHighUsn = localStorageManager.accountHighUsn(QString(), error);
+    if (accountHighUsn < 0) {
+        errorDescription = error.nonLocalizedString();
+        return false;
+    }
+    else if (accountHighUsn != linkedNotebook.updateSequenceNumber()) {
+        errorDescription = QStringLiteral("Wrong value of account high USN, expected ");
+        errorDescription += QString::number(linkedNotebook.updateSequenceNumber());
+        errorDescription += QStringLiteral(", got ");
+        errorDescription += QString::number(accountHighUsn);
+        return false;
+    }
+
+    // 17) ========== Verify the current value of the account high USN for the linked notebook ==========
+
+    error.clear();
+    accountHighUsn = localStorageManager.accountHighUsn(linkedNotebook.guid(), error);
+    if (accountHighUsn < 0) {
+        errorDescription = error.nonLocalizedString();
+        return false;
+    }
+    else if (accountHighUsn != secondNoteFromLinkedNotebookResource.updateSequenceNumber()) {
+        errorDescription = QStringLiteral("Wrong value of account high USN, expected ");
+        errorDescription += QString::number(secondNoteFromLinkedNotebookResource.updateSequenceNumber());
+        errorDescription += QStringLiteral(", got ");
+        errorDescription += QString::number(accountHighUsn);
         return false;
     }
 

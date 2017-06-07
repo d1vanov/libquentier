@@ -995,6 +995,17 @@ void CoreTester::localStorageManagerSequentialUpdatesTest()
     CATCH_EXCEPTION();
 }
 
+void CoreTester::localStorageManagerAccountHighUsnTest()
+{
+    try
+    {
+        QString error;
+        bool res = TestAccountHighUsnInLocalStorage(error);
+        QVERIFY2(res == true, qPrintable(error));
+    }
+    CATCH_EXCEPTION();
+}
+
 void CoreTester::localStorageManagerListSavedSearchesTest()
 {
     try

@@ -62,6 +62,8 @@ bool TestUserAddFindUpdateDeleteExpungeInLocalStorage(const User & user,
 
 bool TestSequentialUpdatesInLocalStorage(QString & errorDescription);
 
+bool TestAccountHighUsnInLocalStorage(QString & errorDescription);
+
 } // namespace test
 } // namespace quentier
 

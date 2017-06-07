@@ -3754,14 +3754,13 @@ bool LocalStorageManagerPrivate::updateSequenceNumberFromTable(const QString & t
     }
 
     bool conversionResult = false;
-    usn = query.value(0).toInt(&conversionResult);
+    QVariant value = query.value(0);
+    usn = value.toInt(&conversionResult);
     if (Q_UNLIKELY(!conversionResult)) {
-        errorDescription.base() = errorPrefix.base();
-        errorDescription.appendBase(QT_TR_NOOP("failed to convert the update sequence number to int"));
-        errorDescription.details() = tableName;
-        QNWARNING(errorDescription);
-        usn = -1;
-        return false;
+        QNDEBUG(QStringLiteral("Failed to convert the query result to int"));
+        // NOTE: surprising but this seems to happen when the table on which the query runs is empty,
+        // so need to handle it gently: don't return error, return zero instead
+        usn = 0;
     }
 
     return true;
