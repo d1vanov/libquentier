@@ -1870,7 +1870,11 @@ bool TestAccountHighUsnInLocalStorage(QString & errorDescription)
     thirdNoteResource.setGuid(UidGenerator::Generate());
     thirdNoteResource.setNoteGuid(thirdNote.guid());
     thirdNoteResource.setNoteLocalUid(thirdNote.localUid());
+#if QT_VERSION > QT_VERSION_CHECK(5, 4, 0)
     thirdNoteResource.setDataBody(QByteArray::fromStdString(std::string("Something")));
+#else
+    thirdNoteResource.setDataBody(QByteArray("Something"));
+#endif
     thirdNoteResource.setDataSize(thirdNoteResource.dataBody().size());
     thirdNoteResource.setDataHash(QCryptographicHash::hash(thirdNoteResource.dataBody(), QCryptographicHash::Md5));
     thirdNoteResource.setMime(QStringLiteral("text/plain"));
@@ -2038,7 +2042,11 @@ bool TestAccountHighUsnInLocalStorage(QString & errorDescription)
     secondNoteFromLinkedNotebookResource.setGuid(UidGenerator::Generate());
     secondNoteFromLinkedNotebookResource.setNoteGuid(secondNoteFromLinkedNotebook.guid());
     secondNoteFromLinkedNotebookResource.setNoteLocalUid(secondNoteFromLinkedNotebook.localUid());
+#if QT_VERSION > QT_VERSION_CHECK(5, 4, 0)
     secondNoteFromLinkedNotebookResource.setDataBody(QByteArray::fromStdString(std::string("Other something")));
+#else
+    secondNoteFromLinkedNotebookResource.setDataBody(QByteArray("Other something"));
+#endif
     secondNoteFromLinkedNotebookResource.setDataSize(secondNoteFromLinkedNotebookResource.dataBody().size());
     secondNoteFromLinkedNotebookResource.setDataHash(QCryptographicHash::hash(secondNoteFromLinkedNotebookResource.dataBody(), QCryptographicHash::Md5));
     secondNoteFromLinkedNotebookResource.setUpdateSequenceNumber(currentUsn++);
