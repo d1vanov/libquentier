@@ -626,6 +626,11 @@ void SynchronizationManagerPrivate::onSendLocalChangesStopped()
 void SynchronizationManagerPrivate::onRateLimitExceeded(qint32 secondsToWait)
 {
     QNDEBUG(QStringLiteral("SynchronizationManagerPrivate::onRateLimitExceeded"));
+
+    // TODO: get the current high usn for the user's own account and for each linked notebook + write this information into the synchronization persistence
+    // so that if the sync is interrupted now, it can continue from where it left off now, not from the same point as the current sync
+    // which was not completed due to rate limit exceeding
+
     emit rateLimitExceeded(secondsToWait);
 }
 

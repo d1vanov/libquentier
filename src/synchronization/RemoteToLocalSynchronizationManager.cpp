@@ -128,6 +128,7 @@ RemoteToLocalSynchronizationManager::RemoteToLocalSynchronizationManager(LocalSt
     m_allLinkedNotebooks(),
     m_listAllLinkedNotebooksRequestId(),
     m_allLinkedNotebooksListed(false),
+    m_collectHighUsnRequested(false),
     m_authenticationToken(),
     m_shardId(),
     m_authenticationTokenExpirationTime(0),
@@ -2320,6 +2321,12 @@ void RemoteToLocalSynchronizationManager::onListAllLinkedNotebooksCompleted(size
 
     m_allLinkedNotebooks = linkedNotebooks;
     m_allLinkedNotebooksListed = true;
+
+    if (m_collectHighUsnRequested) {
+        collectHighUpdateSequenceNumbers();
+        return;
+    }
+
     startLinkedNotebooksSync();
 }
 
@@ -2341,6 +2348,7 @@ void RemoteToLocalSynchronizationManager::onListAllLinkedNotebooksFailed(size_t 
               << requestId);
 
     m_allLinkedNotebooksListed = false;
+    m_collectHighUsnRequested = false;
 
     ErrorString error(QT_TR_NOOP("Failed to list all linked notebooks from the local storage"));
     error.additionalBases().append(errorDescription.base());
@@ -2710,6 +2718,20 @@ void RemoteToLocalSynchronizationManager::setInkNoteImagesStoragePath(const QStr
     appSettings.beginGroup(SYNC_SETTINGS_KEY_GROUP);
     appSettings.setValue(INK_NOTE_IMAGES_STORAGE_PATH_KEY, actualPath);
     appSettings.endGroup();
+}
+
+void RemoteToLocalSynchronizationManager::collectHighUpdateSequenceNumbers()
+{
+    QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::collectHighUpdateSequenceNumbers"));
+
+    m_collectHighUsnRequested = true;
+
+    if (!m_allLinkedNotebooksListed) {
+        requestAllLinkedNotebooks();
+        return;
+    }
+
+    // TODO: request account high USN for user's own account and for each linked notebook
 }
 
 void RemoteToLocalSynchronizationManager::onGetNoteAsyncFinished(qint32 errorCode, Note note, qint32 rateLimitSeconds,
@@ -4793,6 +4815,9 @@ void RemoteToLocalSynchronizationManager::clear()
     m_allLinkedNotebooks.clear();
     m_listAllLinkedNotebooksRequestId = QUuid();
     m_allLinkedNotebooksListed = false;
+
+    m_collectHighUsnRequested = false;
+
     m_pendingAuthenticationTokensForLinkedNotebooks = false;
 
     m_findUserRequestId = QUuid();

@@ -72,6 +72,8 @@ Q_SIGNALS:
     void finished(qint32 lastUpdateCount, qevercloud::Timestamp lastSyncTime, QHash<QString,qint32> lastUpdateCountByLinkedNotebookGuid,
                   QHash<QString,qevercloud::Timestamp> lastSyncTimeByLinkedNotebookGuid);
 
+    void collectedHighUpdateSequenceNumbers(qint32 ownHighUsn, QHash<QString,qint32> highUsnByLinkedNotebookGuid);
+
     // signal notifying that the Evernote API rate limit was exceeded so that the synchronization
     // needs to wait for the specified number of seconds before it proceeds (that would happen automatically,
     // there's no need to restart the synchronization manually)
@@ -109,6 +111,8 @@ public Q_SLOTS:
     void setDownloadNoteThumbnails(const bool flag);
     void setDownloadInkNoteImages(const bool flag);
     void setInkNoteImagesStoragePath(const QString & path);
+
+    void collectHighUpdateSequenceNumbers();
 
 // private signals
 Q_SIGNALS:
@@ -606,6 +610,8 @@ private:
     QList<LinkedNotebook>                   m_allLinkedNotebooks;
     QUuid                                   m_listAllLinkedNotebooksRequestId;
     bool                                    m_allLinkedNotebooksListed;
+
+    bool                                    m_collectHighUsnRequested;
 
     QString                                 m_authenticationToken;
     QString                                 m_shardId;
