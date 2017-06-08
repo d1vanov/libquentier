@@ -200,6 +200,9 @@ private:
     void onDeleteAuthTokenFinished();
     void onDeleteShardIdFinished();
 
+    void onAccountHighUpdateSequenceNumbersReceived(qint32 ownHighUsn, QHash<QString,qint32> highUsnByLinkedNotebookGuid);
+    void onAccountHighUpdateSequenceNumbersCollectionFailed(ErrorString errorDescription);
+
     void updatePersistentSyncSettings();
 
 private:
@@ -220,6 +223,7 @@ private:
     AuthContext::type                       m_authContext;
 
     int                                     m_launchSyncPostponeTimerId;
+    qint32                                  m_rateLimitSecondsToWait;
 
     AuthData                                m_OAuthResult;
     bool                                    m_authenticationInProgress;

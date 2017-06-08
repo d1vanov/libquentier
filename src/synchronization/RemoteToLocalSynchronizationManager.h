@@ -73,6 +73,7 @@ Q_SIGNALS:
                   QHash<QString,qevercloud::Timestamp> lastSyncTimeByLinkedNotebookGuid);
 
     void collectedHighUpdateSequenceNumbers(qint32 ownHighUsn, QHash<QString,qint32> highUsnByLinkedNotebookGuid);
+    void failedToCollectHighUpdateSequenceNumbers(ErrorString errorDescription);
 
     // signal notifying that the Evernote API rate limit was exceeded so that the synchronization
     // needs to wait for the specified number of seconds before it proceeds (that would happen automatically,
@@ -153,6 +154,8 @@ Q_SIGNALS:
     void findSavedSearch(SavedSearch savedSearch, QUuid requestId);
     void expungeSavedSearch(SavedSearch savedSearch, QUuid requestId);
 
+    void requestAccountHighUsn(QString linkedNotebookGuid, QUuid requestId);
+
 private Q_SLOTS:
     void onFindUserCompleted(User user, QUuid requestId);
     void onFindUserFailed(User user, ErrorString errorDescription, QUuid requestId);
@@ -224,6 +227,9 @@ private Q_SLOTS:
     void onUpdateResourceCompleted(Resource resource, QUuid requestId);
     void onUpdateResourceFailed(Resource resource, ErrorString errorDescription, QUuid requestId);
 
+    void onAccountHighUsnCompleted(qint32 usn, QString linkedNotebookGuid, QUuid requestId);
+    void onAccountHighUsnFailed(QString linkedNotebookGuid, ErrorString errorDescription, QUuid requestId);
+
     void onInkNoteImageDownloadFinished(bool status, QString resourceGuid, QString noteGuid, ErrorString errorDescription);
     void onNoteThumbnailDownloadingFinished(bool status, QString noteGuid, QByteArray downloadedThumbnailImageData,
                                             ErrorString errorDescription);
@@ -232,6 +238,8 @@ private Q_SLOTS:
 
 private:
     void createConnections();
+
+    void connectToLocalStorage();
     void disconnectFromLocalStorage();
 
     QString defaultInkNoteImageStoragePath() const;
@@ -258,6 +266,8 @@ private:
     bool syncingLinkedNotebooksContent() const;
 
     void checkAndIncrementNoteDownloadProgress(const QString & noteGuid);
+
+    void checkHighUsnCollectingCompletion();
 
     struct ContentSource
     {
@@ -429,7 +439,22 @@ private:
 
     bool checkAndRequestAuthenticationTokensForLinkedNotebooks();
     void requestAuthenticationTokensForAllLinkedNotebooks();
-    void requestAllLinkedNotebooks();
+
+    /**
+     * ListLinkedNotebooksContext - C++98-style scoped enum listing the potential goals
+     * of listing notebooks from the local storage - it can be either starting the sync
+     * of data from these linked notebooks or collecting the high USN from these linked notebooks
+     */
+    struct ListLinkedNotebooksContext
+    {
+        enum type
+        {
+            StartLinkedNotebooksSync = 0,
+            CollectLinkedNotebooksHighUsns
+        };
+    };
+
+    void requestAllLinkedNotebooks(const ListLinkedNotebooksContext::type context = ListLinkedNotebooksContext::StartLinkedNotebooksSync);
 
     void getLinkedNotebookSyncState(const LinkedNotebook & linkedNotebook,
                                     const QString & authToken, qevercloud::SyncState & syncState,
@@ -610,8 +635,13 @@ private:
     QList<LinkedNotebook>                   m_allLinkedNotebooks;
     QUuid                                   m_listAllLinkedNotebooksRequestId;
     bool                                    m_allLinkedNotebooksListed;
+    ListLinkedNotebooksContext::type        m_listAllLinkedNotebooksContext;
 
     bool                                    m_collectHighUsnRequested;
+    QUuid                                   m_accountHighUsnRequestId;
+    qint32                                  m_accountHighUsn;
+    QSet<QUuid>                             m_accountHighUsnForLinkedNotebookRequestIds;
+    QHash<QString,qint32>                   m_accountHighUsnForLinkedNotebooksByLinkedNotebookGuid;
 
     QString                                 m_authenticationToken;
     QString                                 m_shardId;
