@@ -993,9 +993,16 @@ QList<Notebook> LocalStorageManagerPrivate::listNotebooks(const LocalStorageMana
 {
     QNDEBUG(QStringLiteral("LocalStorageManagerPrivate::listNotebooks: flag = ") << flag);
 
-    QString linkedNotebookGuidSqlQueryCondition = (linkedNotebookGuid.isEmpty()
-                                                   ? QStringLiteral("linkedNotebookGuid IS NULL")
-                                                   : QString::fromUtf8("linkedNotebookGuid = '%1'").arg(sqlEscapeString(linkedNotebookGuid)));
+    QString linkedNotebookGuidSqlQueryCondition;
+    if (!linkedNotebookGuid.isNull())
+    {
+        if (linkedNotebookGuid.isEmpty()) {
+            linkedNotebookGuidSqlQueryCondition = QStringLiteral("linkedNotebookGuid IS NULL");
+        }
+        else {
+            linkedNotebookGuidSqlQueryCondition = QString::fromUtf8("linkedNotebookGuid = '%1'").arg(sqlEscapeString(linkedNotebookGuid));
+        }
+    }
 
     return listObjects<Notebook, LocalStorageManager::ListNotebooksOrder::type>(flag, errorDescription, limit,
                                                                                 offset, order, orderDirection,

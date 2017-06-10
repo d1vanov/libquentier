@@ -315,7 +315,8 @@ public:
      * @param order - allows to specify a particular ordering of notebooks in the result, NoOrder by default
      * @param orderDirection - specifies the direction of ordering, by defauls ascending direction is used;
      * this parameter has no meaning if order is equal to NoOrder
-     * @param linkedNotebookGuid - if it's empty, only the non-linked notebooks would be listed;
+     * @param linkedNotebookGuid - if it's null, the method would list the notebooks ignoring their belonging
+     * to the current account or to some linked notebook; if it's empty, only the non-linked notebooks  would be listed;
      * otherwise, the only one notebook from the corresponding linked notebook would be listed
      * @return either the list of notebooks within the account conforming to the filter or empty list
      * in cases of error or no notebooks conforming to the filter exist within the account
