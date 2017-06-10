@@ -27,6 +27,9 @@
 
 #ifdef Q_OS_WIN
 
+#define NOMINMAX
+#include <limits>
+
 #include <qwindowdefs.h>
 #include <QtGui/qwindowdefs_win.h>
 #include <windows.h>
