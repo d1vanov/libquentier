@@ -261,6 +261,7 @@ set(PRIVATE_HEADERS
     src/synchronization/RemoteToLocalSynchronizationManager.h
     src/synchronization/SendLocalChangesManager.h
     src/synchronization/SynchronizationManager_p.h
+    src/synchronization/NotebookSyncConflictResolutionCache.h
     src/utility/EncryptionManager_p.h
     src/utility/FileIOProcessorAsync_p.h
     src/utility/FileSystemWatcher_p.h
@@ -409,6 +410,7 @@ set(${PROJECT_NAME}_SOURCES
     src/synchronization/SynchronizationManager_p.cpp
     src/synchronization/RemoteToLocalSynchronizationManager.cpp
     src/synchronization/SendLocalChangesManager.cpp
+    src/synchronization/NotebookSyncConflictResolutionCache.cpp
     src/exception/ApplicationSettingsInitializationException.cpp
     src/exception/EmptyDataElementException.cpp
     src/exception/DatabaseLockedException.cpp
