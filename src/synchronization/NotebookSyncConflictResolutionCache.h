@@ -87,6 +87,8 @@ private:
     void disconnectFromLocalStorage();
 
     void requestNotebooksList();
+
+    void removeNotebook(const QString & notebookLocalUid);
     void processNotebook(const Notebook & notebook);
 
 private:

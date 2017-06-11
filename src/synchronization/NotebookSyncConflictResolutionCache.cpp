@@ -114,6 +114,7 @@ void NotebookSyncConflictResolutionCache::onUpdateNotebookComplete(Notebook note
     QNDEBUG(QStringLiteral("NotebookSyncConflictResolutionCache::onUpdateNotebookComplete: request id = ")
             << requestId << QStringLiteral(", notebook: ") << notebook);
 
+    removeNotebook(notebook.localUid());
     processNotebook(notebook);
 }
 
@@ -122,31 +123,7 @@ void NotebookSyncConflictResolutionCache::onExpungeNotebookComplete(Notebook not
     QNDEBUG(QStringLiteral("NotebookSyncConflictResolutionCache::onExpungeNotebookComplete: request id = ")
             << requestId << QStringLiteral(", notebook: ") << notebook);
 
-    auto localUidIt = m_notebookNameByLocalUid.find(notebook.localUid());
-    if (Q_UNLIKELY(localUidIt == m_notebookNameByLocalUid.end())) {
-        QNDEBUG(QStringLiteral("The notebook name was not found in the cache by local uid"));
-        return;
-    }
-
-    QString name = localUidIt.value();
-    Q_UNUSED(m_notebookNameByLocalUid.erase(localUidIt))
-
-    auto guidIt = m_notebookGuidByName.find(name);
-    if (Q_UNLIKELY(guidIt == m_notebookGuidByName.end())) {
-        QNDEBUG(QStringLiteral("The notebook guid was not found in the cache by name"));
-        return;
-    }
-
-    QString guid = guidIt.value();
-    Q_UNUSED(m_notebookGuidByName.erase(guidIt))
-
-    auto nameIt = m_notebookNameByGuid.find(guid);
-    if (Q_UNLIKELY(nameIt == m_notebookNameByGuid.end())) {
-        QNDEBUG(QStringLiteral("The notebook name was not found in the cache by guid"));
-        return;
-    }
-
-    Q_UNUSED(m_notebookNameByGuid.erase(nameIt))
+    removeNotebook(notebook.localUid());
 }
 
 void NotebookSyncConflictResolutionCache::connectToLocalStorage()
@@ -270,6 +247,37 @@ void NotebookSyncConflictResolutionCache::requestNotebooksList()
                        LocalStorageManager::OrderDirection::Ascending,
                        QString(), m_listNotebooksRequestId);
 
+}
+
+void NotebookSyncConflictResolutionCache::removeNotebook(const QString & notebookLocalUid)
+{
+    QNDEBUG(QStringLiteral("NotebookSyncConflictResolutionCache::removeNotebook: local uid = ") << notebookLocalUid);
+
+    auto localUidIt = m_notebookNameByLocalUid.find(notebookLocalUid);
+    if (Q_UNLIKELY(localUidIt == m_notebookNameByLocalUid.end())) {
+        QNDEBUG(QStringLiteral("The notebook name was not found in the cache by local uid"));
+        return;
+    }
+
+    QString name = localUidIt.value();
+    Q_UNUSED(m_notebookNameByLocalUid.erase(localUidIt))
+
+    auto guidIt = m_notebookGuidByName.find(name);
+    if (Q_UNLIKELY(guidIt == m_notebookGuidByName.end())) {
+        QNDEBUG(QStringLiteral("The notebook guid was not found in the cache by name"));
+        return;
+    }
+
+    QString guid = guidIt.value();
+    Q_UNUSED(m_notebookGuidByName.erase(guidIt))
+
+    auto nameIt = m_notebookNameByGuid.find(guid);
+    if (Q_UNLIKELY(nameIt == m_notebookNameByGuid.end())) {
+        QNDEBUG(QStringLiteral("The notebook name was not found in the cache by guid"));
+        return;
+    }
+
+    Q_UNUSED(m_notebookNameByGuid.erase(nameIt))
 }
 
 void NotebookSyncConflictResolutionCache::processNotebook(const Notebook & notebook)
