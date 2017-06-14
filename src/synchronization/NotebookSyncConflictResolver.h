@@ -45,7 +45,8 @@ public:
     explicit NotebookSyncConflictResolver(const qevercloud::Notebook & remoteNotebook,
                                           const Notebook & localConflict,
                                           NotebookSyncConflictResolutionCache & cache,
-                                          LocalStorageManagerAsync & localStorageManagerAsync);
+                                          LocalStorageManagerAsync & localStorageManagerAsync,
+                                          QObject * parent = Q_NULLPTR);
 
 Q_SIGNALS:
     void finished(qevercloud::Notebook remoteNotebook);
@@ -92,7 +93,6 @@ private:
 
     QUuid                       m_addNotebookRequestId;
     QUuid                       m_updateNotebookRequestId;
-    QUuid                       m_findNotebookRequestId;
 
     bool                        m_pendingCacheFilling;
 };

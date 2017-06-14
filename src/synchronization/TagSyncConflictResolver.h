@@ -45,7 +45,8 @@ public:
     explicit TagSyncConflictResolver(const qevercloud::Tag & remoteTag,
                                      const Tag & localConflict,
                                      TagSyncConflictResolutionCache & cache,
-                                     LocalStorageManagerAsync & localStorageManagerAsync);
+                                     LocalStorageManagerAsync & localStorageManagerAsync,
+                                     QObject * parent = Q_NULLPTR);
 
 Q_SIGNALS:
     void finished(qevercloud::Tag remoteTag);
@@ -92,7 +93,6 @@ private:
 
     QUuid                   m_addTagRequestId;
     QUuid                   m_updateTagRequestId;
-    QUuid                   m_findTagRequestId;
 
     bool                    m_pendingCacheFilling;
 };

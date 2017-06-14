@@ -265,6 +265,8 @@ set(PRIVATE_HEADERS
     src/synchronization/NotebookSyncConflictResolutionCache.h
     src/synchronization/TagSyncConflictResolver.h
     src/synchronization/TagSyncConflictResolutionCache.h
+    src/synchronization/SavedSearchSyncConflictResolver.h
+    src/synchronization/SavedSearchSyncConflictResolutionCache.h
     src/utility/EncryptionManager_p.h
     src/utility/FileIOProcessorAsync_p.h
     src/utility/FileSystemWatcher_p.h
@@ -417,6 +419,8 @@ set(${PROJECT_NAME}_SOURCES
     src/synchronization/NotebookSyncConflictResolutionCache.cpp
     src/synchronization/TagSyncConflictResolver.cpp
     src/synchronization/TagSyncConflictResolutionCache.cpp
+    src/synchronization/SavedSearchSyncConflictResolver.cpp
+    src/synchronization/SavedSearchSyncConflictResolutionCache.cpp
     src/exception/ApplicationSettingsInitializationException.cpp
     src/exception/EmptyDataElementException.cpp
     src/exception/DatabaseLockedException.cpp

@@ -26,14 +26,15 @@ namespace quentier {
 TagSyncConflictResolver::TagSyncConflictResolver(const qevercloud::Tag & remoteTag,
                                                  const Tag & localConflict,
                                                  TagSyncConflictResolutionCache & cache,
-                                                 LocalStorageManagerAsync & localStorageManagerAsync) :
+                                                 LocalStorageManagerAsync & localStorageManagerAsync,
+                                                 QObject * parent) :
+    QObject(parent),
     m_cache(cache),
     m_remoteTag(remoteTag),
     m_localConflict(localConflict),
     m_state(State::Undefined),
     m_addTagRequestId(),
     m_updateTagRequestId(),
-    m_findTagRequestId(),
     m_pendingCacheFilling(false)
 {
     if (Q_UNLIKELY(!remoteTag.guid.isSet())) {
@@ -46,8 +47,8 @@ TagSyncConflictResolver::TagSyncConflictResolver(const qevercloud::Tag & remoteT
 
     if (Q_UNLIKELY(!remoteTag.name.isSet())) {
         ErrorString error(QT_TR_NOOP("Can't resolve the conflict between remote and local tags: "
-                                     "the local conflicting tag has neither guid nor name set"));
-        QNWARNING(error << QStringLiteral(": ") << localConflict);
+                                     "the remote tag has no guid set"));
+        QNWARNING(error << QStringLiteral(": ") << remoteTag);
         emit failure(remoteTag, error);
         return;
     }
@@ -125,7 +126,7 @@ void TagSyncConflictResolver::onUpdateTagComplete(Tag tag, QUuid requestId)
     {
         QNDEBUG(QStringLiteral("Successfully renamed the local tag conflicting by name with the remote tag"));
 
-        // Not need to find the duplicate of the remote tag by guid:
+        // Now need to find the duplicate of the remote tag by guid:
         // 1) if one exists, update it from the remote changes - notwithstanding its "dirty" state
         // 2) if one doesn't exist, add it to the local storage
 
@@ -177,7 +178,7 @@ void TagSyncConflictResolver::onUpdateTagComplete(Tag tag, QUuid requestId)
     }
     else
     {
-        ErrorString error(QT_TR_NOOP("Internal error: wrong state on receiving the confirmation about the notebook update "
+        ErrorString error(QT_TR_NOOP("Internal error: wrong state on receiving the confirmation about the tag update "
                                      "from the local storage"));
         QNWARNING(error << QStringLiteral(", tag: ") << tag);
         emit failure(m_remoteTag, error);

@@ -26,14 +26,15 @@ namespace quentier {
 NotebookSyncConflictResolver::NotebookSyncConflictResolver(const qevercloud::Notebook & remoteNotebook,
                                                            const Notebook & localConflict,
                                                            NotebookSyncConflictResolutionCache & cache,
-                                                           LocalStorageManagerAsync & localStorageManagerAsync) :
+                                                           LocalStorageManagerAsync & localStorageManagerAsync,
+                                                           QObject * parent) :
+    QObject(parent),
     m_cache(cache),
     m_remoteNotebook(remoteNotebook),
     m_localConflict(localConflict),
     m_state(State::Undefined),
     m_addNotebookRequestId(),
     m_updateNotebookRequestId(),
-    m_findNotebookRequestId(),
     m_pendingCacheFilling(false)
 {
     if (Q_UNLIKELY(!remoteNotebook.guid.isSet())) {
