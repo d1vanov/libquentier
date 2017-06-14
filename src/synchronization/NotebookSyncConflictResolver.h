@@ -35,7 +35,7 @@ QT_FORWARD_DECLARE_CLASS(LocalStorageManagerAsync)
 
 /**
  * The NotebookSyncConflictResolver class resolves the conflict between two notebooks: the one downloaded
- * from the remote server and the local one changes somehow. The conflict resolution might involve
+ * from the remote server and the local one. The conflict resolution might involve
  * changes in other notebooks, seemingly unrelated to the currently conflicting ones
  */
 class NotebookSyncConflictResolver: public QObject

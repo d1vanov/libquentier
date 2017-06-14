@@ -1,3 +1,21 @@
+/*
+ * Copyright 2017 Dmitry Ivanov
+ *
+ * This file is part of libquentier
+ *
+ * libquentier is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, version 3 of the License.
+ *
+ * libquentier is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
+ */
+
 #include "NotebookSyncConflictResolver.h"
 #include "NotebookSyncConflictResolutionCache.h"
 #include <quentier/local_storage/LocalStorageManagerAsync.h>
@@ -70,7 +88,7 @@ void NotebookSyncConflictResolver::onAddNotebookComplete(Notebook notebook, QUui
     {
         ErrorString error(QT_TR_NOOP("Internal error: wrong state on receiving the confirmation about the notebook addition "
                                      "from the local storage"));
-        QNWARNING(error);
+        QNWARNING(error << QStringLiteral(", notebook: ") << notebook);
         emit failure(m_remoteNotebook, error);
     }
 }
@@ -126,7 +144,7 @@ void NotebookSyncConflictResolver::onUpdateNotebookComplete(Notebook notebook, Q
         auto it = nameByGuidHash.find(m_remoteNotebook.guid.ref());
         if (it == nameByGuidHash.end())
         {
-            QNDEBUG(QStringLiteral("Found no duplicate of the remote notebook by guid, adding the new notebook to the local storage"));
+            QNDEBUG(QStringLiteral("Found no duplicate of the remote notebook by guid, adding new notebook to the local storage"));
 
             Notebook notebook(m_remoteNotebook);
             notebook.setDirty(false);
@@ -140,7 +158,7 @@ void NotebookSyncConflictResolver::onUpdateNotebookComplete(Notebook notebook, Q
         else
         {
             QNDEBUG(QStringLiteral("The duplicate by guid exists in the local storage, updating it with the state "
-                                   "of remote notebook"));
+                                   "of the remote notebook"));
 
             Notebook notebook(m_remoteNotebook);
             notebook.setDirty(false);
@@ -161,7 +179,7 @@ void NotebookSyncConflictResolver::onUpdateNotebookComplete(Notebook notebook, Q
     {
         ErrorString error(QT_TR_NOOP("Internal error: wrong state on receiving the confirmation about the notebook update "
                                      "from the local storage"));
-        QNWARNING(error);
+        QNWARNING(error << QStringLiteral(", notebook: ") << notebook);
         emit failure(m_remoteNotebook, error);
     }
 }
