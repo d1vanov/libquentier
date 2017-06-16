@@ -61,21 +61,25 @@ Q_SIGNALS:
     void fillTagsCache();
     void addTag(Tag tag, QUuid requestId);
     void updateTag(Tag tag, QUuid requestId);
+    void findTag(Tag tag, QUuid requestId);
 
 private Q_SLOTS:
     void onAddTagComplete(Tag tag, QUuid requestId);
     void onAddTagFailed(Tag tag, ErrorString errorDescription, QUuid requestId);
     void onUpdateTagComplete(Tag tag, QUuid requestId);
     void onUpdateTagFailed(Tag tag, ErrorString errorDescription, QUuid requestId);
+    void onFindTagComplete(Tag tag, QUuid requestId);
+    void onFindTagFailed(Tag tag, ErrorString errorDescription, QUuid requestId);
 
     void onCacheFilled();
     void onCacheFailed(ErrorString errorDescription);
 
 private:
     void connectToLocalStorage();
-    void processTagsConflictByName();
+    void processTagsConflictByGuid();
+    void processTagsConflictByName(const Tag & localConflict);
     void overrideLocalChangesWithRemoteChanges();
-    void renameConflictingLocalTag();
+    void renameConflictingLocalTag(const Tag & localConflict);
 
     struct State
     {
@@ -95,10 +99,13 @@ private:
     qevercloud::Tag         m_remoteTag;
     Tag                     m_localConflict;
 
+    Tag                     m_tagToBeRenamed;
+
     State::type             m_state;
 
     QUuid                   m_addTagRequestId;
     QUuid                   m_updateTagRequestId;
+    QUuid                   m_findTagRequestId;
 
     bool                    m_started;
     bool                    m_pendingCacheFilling;
