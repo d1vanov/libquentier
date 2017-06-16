@@ -43,6 +43,11 @@ public:
                                              LocalStorageManagerAsync & localStorageManagerAsync,
                                              QObject * parent = Q_NULLPTR);
 
+    void start();
+
+    const qevercloud::SavedSearch & remoteSavedSearch() const { return m_remoteSavedSearch; }
+    const SavedSearch & localConflict() const { return m_localConflict; }
+
 Q_SIGNALS:
     void finished(qevercloud::SavedSearch remoteSavedSearch);
     void failure(qevercloud::SavedSearch remoteSavedSearch, ErrorString errorDescription);
@@ -62,7 +67,7 @@ private Q_SLOTS:
     void onCacheFailed(ErrorString errorDescription);
 
 private:
-    void connectToLocalStorage(LocalStorageManagerAsync & localStorageManagerAsync);
+    void connectToLocalStorage();
     void processSavedSearchesConflictByName();
     void overrideLocalChangesWithRemoteChanges();
     void renameConflictingLocalSavedSearch();
@@ -80,6 +85,7 @@ private:
 
 private:
     SavedSearchSyncConflictResolutionCache &    m_cache;
+    LocalStorageManagerAsync &                  m_localStorageManagerAsync;
 
     qevercloud::SavedSearch         m_remoteSavedSearch;
     SavedSearch                     m_localConflict;
@@ -89,6 +95,7 @@ private:
     QUuid                           m_addSavedSearchRequestId;
     QUuid                           m_updateSavedSearchRequestId;
 
+    bool                            m_started;
     bool                            m_pendingCacheFilling;
 };
 

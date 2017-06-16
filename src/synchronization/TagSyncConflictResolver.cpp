@@ -30,40 +30,54 @@ TagSyncConflictResolver::TagSyncConflictResolver(const qevercloud::Tag & remoteT
                                                  QObject * parent) :
     QObject(parent),
     m_cache(cache),
+    m_localStorageManagerAsync(localStorageManagerAsync),
     m_remoteTag(remoteTag),
     m_localConflict(localConflict),
     m_state(State::Undefined),
     m_addTagRequestId(),
     m_updateTagRequestId(),
+    m_started(false),
     m_pendingCacheFilling(false)
+{}
+
+void TagSyncConflictResolver::start()
 {
-    if (Q_UNLIKELY(!remoteTag.guid.isSet())) {
-        ErrorString error(QT_TR_NOOP("Can't resolve the conflict between remote and local tags: "
-                                     "the remote tag has no guid set"));
-        QNWARNING(error << QStringLiteral(": ") << remoteTag);
-        emit failure(remoteTag, error);
+    QNDEBUG(QStringLiteral("TagSyncConflictResolver::start"));
+
+    if (m_started) {
+        QNDEBUG(QStringLiteral("Already started"));
         return;
     }
 
-    if (Q_UNLIKELY(!remoteTag.name.isSet())) {
+    m_started = true;
+
+    if (Q_UNLIKELY(!m_remoteTag.guid.isSet())) {
         ErrorString error(QT_TR_NOOP("Can't resolve the conflict between remote and local tags: "
                                      "the remote tag has no guid set"));
-        QNWARNING(error << QStringLiteral(": ") << remoteTag);
-        emit failure(remoteTag, error);
+        QNWARNING(error << QStringLiteral(": ") << m_remoteTag);
+        emit failure(m_remoteTag, error);
         return;
     }
 
-    if (Q_UNLIKELY(!localConflict.hasGuid() && !localConflict.hasName())) {
+    if (Q_UNLIKELY(!m_remoteTag.name.isSet())) {
+        ErrorString error(QT_TR_NOOP("Can't resolve the conflict between remote and local tags: "
+                                     "the remote tag has no guid set"));
+        QNWARNING(error << QStringLiteral(": ") << m_remoteTag);
+        emit failure(m_remoteTag, error);
+        return;
+    }
+
+    if (Q_UNLIKELY(!m_localConflict.hasGuid() && !m_localConflict.hasName())) {
         ErrorString error(QT_TR_NOOP("Can't resolve the conflict between remote and local notebooks: "
                                      "the local conflicting tag has neither guid nor name set"));
-        QNWARNING(error << QStringLiteral(": ") << localConflict);
-        emit failure(remoteTag, error);
+        QNWARNING(error << QStringLiteral(": ") << m_localConflict);
+        emit failure(m_remoteTag, error);
         return;
     }
 
-    connectToLocalStorage(localStorageManagerAsync);
+    connectToLocalStorage();
 
-    if (localConflict.hasName() && (localConflict.name() == remoteTag.name.ref())) {
+    if (m_localConflict.hasName() && (m_localConflict.name() == m_remoteTag.name.ref())) {
         processTagsConflictByName();
     }
     else {
@@ -234,24 +248,24 @@ void TagSyncConflictResolver::onCacheFailed(ErrorString errorDescription)
     emit failure(m_remoteTag, errorDescription);
 }
 
-void TagSyncConflictResolver::connectToLocalStorage(LocalStorageManagerAsync & localStorageManagerAsync)
+void TagSyncConflictResolver::connectToLocalStorage()
 {
     QNDEBUG(QStringLiteral("TagSyncConflictResolver::connectToLocalStorage"));
 
     // Connect local signals to local storage manager async's slots
     QObject::connect(this, QNSIGNAL(TagSyncConflictResolver,addTag,Tag,QUuid),
-                     &localStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,onAddTagRequest,Tag,QUuid));
+                     &m_localStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,onAddTagRequest,Tag,QUuid));
     QObject::connect(this, QNSIGNAL(TagSyncConflictResolver,updateTag,Tag,QUuid),
-                     &localStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,onUpdateTagRequest,Tag,QUuid));
+                     &m_localStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,onUpdateTagRequest,Tag,QUuid));
 
     // Connect local storage manager async's signals to local slots
-    QObject::connect(&localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,addTagComplete,Tag,QUuid),
+    QObject::connect(&m_localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,addTagComplete,Tag,QUuid),
                      this, QNSLOT(TagSyncConflictResolver,onAddTagComplete,Tag,QUuid));
-    QObject::connect(&localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,addTagFailed,Tag,ErrorString,QUuid),
+    QObject::connect(&m_localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,addTagFailed,Tag,ErrorString,QUuid),
                      this, QNSLOT(TagSyncConflictResolver,onAddTagFailed,Tag,ErrorString,QUuid));
-    QObject::connect(&localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,updateTagComplete,Tag,QUuid),
+    QObject::connect(&m_localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,updateTagComplete,Tag,QUuid),
                      this, QNSLOT(TagSyncConflictResolver,onUpdateTagComplete,Tag,QUuid));
-    QObject::connect(&localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,updateTagFailed,Tag,ErrorString,QUuid),
+    QObject::connect(&m_localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,updateTagFailed,Tag,ErrorString,QUuid),
                      this, QNSLOT(TagSyncConflictResolver,onUpdateTagFailed,Tag,ErrorString,QUuid));
 }
 
@@ -298,14 +312,15 @@ void TagSyncConflictResolver::overrideLocalChangesWithRemoteChanges()
 
     m_state = State::OverrideLocalChangesWithRemoteChanges;
 
-    m_localConflict = m_remoteTag;
-    m_localConflict.setDirty(false);
-    m_localConflict.setLocal(false);
+    Tag tag(m_localConflict);
+    tag = m_remoteTag;
+    tag.setDirty(false);
+    tag.setLocal(false);
 
     m_updateTagRequestId = QUuid::createUuid();
     QNTRACE(QStringLiteral("Emitting the request to update tag: request id = ")
-            << m_updateTagRequestId << QStringLiteral(", tag: ") << m_localConflict);
-    emit updateTag(m_localConflict, m_updateTagRequestId);
+            << m_updateTagRequestId << QStringLiteral(", tag: ") << tag);
+    emit updateTag(tag, m_updateTagRequestId);
 }
 
 void TagSyncConflictResolver::renameConflictingLocalTag()
@@ -329,13 +344,14 @@ void TagSyncConflictResolver::renameConflictingLocalTag()
 
     conflictingName = currentName;
 
-    m_localConflict.setName(conflictingName);
-    m_localConflict.setDirty(true);
+    Tag tag(m_localConflict);
+    tag.setName(conflictingName);
+    tag.setDirty(true);
 
     m_updateTagRequestId = QUuid::createUuid();
     QNTRACE(QStringLiteral("Emitting the request to update tag: request id = ")
-            << m_updateTagRequestId << QStringLiteral(", tag: ") << m_localConflict);
-    emit updateTag(m_localConflict, m_updateTagRequestId);
+            << m_updateTagRequestId << QStringLiteral(", tag: ") << tag);
+    emit updateTag(tag, m_updateTagRequestId);
 }
 
 } // namespace quentier

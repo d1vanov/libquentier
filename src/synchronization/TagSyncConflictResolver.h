@@ -48,6 +48,11 @@ public:
                                      LocalStorageManagerAsync & localStorageManagerAsync,
                                      QObject * parent = Q_NULLPTR);
 
+    void start();
+
+    const qevercloud::Tag & remoteTag() const { return m_remoteTag; }
+    const Tag & localConflict() const { return m_localConflict; }
+
 Q_SIGNALS:
     void finished(qevercloud::Tag remoteTag);
     void failure(qevercloud::Tag remoteTag, ErrorString errorDescription);
@@ -67,7 +72,7 @@ private Q_SLOTS:
     void onCacheFailed(ErrorString errorDescription);
 
 private:
-    void connectToLocalStorage(LocalStorageManagerAsync & localStorageManagerAsync);
+    void connectToLocalStorage();
     void processTagsConflictByName();
     void overrideLocalChangesWithRemoteChanges();
     void renameConflictingLocalTag();
@@ -85,6 +90,7 @@ private:
 
 private:
     TagSyncConflictResolutionCache &    m_cache;
+    LocalStorageManagerAsync &          m_localStorageManagerAsync;
 
     qevercloud::Tag         m_remoteTag;
     Tag                     m_localConflict;
@@ -94,6 +100,7 @@ private:
     QUuid                   m_addTagRequestId;
     QUuid                   m_updateTagRequestId;
 
+    bool                    m_started;
     bool                    m_pendingCacheFilling;
 };
 

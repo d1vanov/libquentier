@@ -48,6 +48,11 @@ public:
                                           LocalStorageManagerAsync & localStorageManagerAsync,
                                           QObject * parent = Q_NULLPTR);
 
+    void start();
+
+    const qevercloud::Notebook & remoteNotebook() const { return m_remoteNotebook; }
+    const Notebook & localConflict() const { return m_localConflict; }
+
 Q_SIGNALS:
     void finished(qevercloud::Notebook remoteNotebook);
     void failure(qevercloud::Notebook remoteNotebook, ErrorString errorDescription);
@@ -67,7 +72,7 @@ private Q_SLOTS:
     void onCacheFailed(ErrorString errorDescription);
 
 private:
-    void connectToLocalStorage(LocalStorageManagerAsync & localStorageManagerAsync);
+    void connectToLocalStorage();
     void processNotebooksConflictByName();
     void overrideLocalChangesWithRemoteChanges();
     void renameConflictingLocalNotebook();
@@ -85,6 +90,7 @@ private:
 
 private:
     NotebookSyncConflictResolutionCache &   m_cache;
+    LocalStorageManagerAsync &  m_localStorageManagerAsync;
 
     qevercloud::Notebook        m_remoteNotebook;
     Notebook                    m_localConflict;
@@ -94,6 +100,7 @@ private:
     QUuid                       m_addNotebookRequestId;
     QUuid                       m_updateNotebookRequestId;
 
+    bool                        m_started;
     bool                        m_pendingCacheFilling;
 };
 

@@ -30,40 +30,54 @@ SavedSearchSyncConflictResolver::SavedSearchSyncConflictResolver(const qeverclou
                                                                  QObject * parent) :
     QObject(parent),
     m_cache(cache),
+    m_localStorageManagerAsync(localStorageManagerAsync),
     m_remoteSavedSearch(remoteSavedSearch),
     m_localConflict(localConflict),
     m_state(State::Undefined),
     m_addSavedSearchRequestId(),
     m_updateSavedSearchRequestId(),
+    m_started(false),
     m_pendingCacheFilling(false)
+{}
+
+void SavedSearchSyncConflictResolver::start()
 {
-    if (Q_UNLIKELY(!remoteSavedSearch.guid.isSet())) {
+    QNDEBUG(QStringLiteral("SavedSearchSyncConflictResolver::start"));
+
+    if (m_started) {
+        QNDEBUG(QStringLiteral("Already started"));
+        return;
+    }
+
+    m_started = true;
+
+    if (Q_UNLIKELY(!m_remoteSavedSearch.guid.isSet())) {
         ErrorString error(QT_TR_NOOP("Can't resolve the conflict between remote and local saved searches: "
                                      "the remote saved search has no guid set"));
-        QNWARNING(error << QStringLiteral(": ") << remoteSavedSearch);
-        emit failure(remoteSavedSearch, error);
+        QNWARNING(error << QStringLiteral(": ") << m_remoteSavedSearch);
+        emit failure(m_remoteSavedSearch, error);
         return;
     }
 
-    if (Q_UNLIKELY(!remoteSavedSearch.name.isSet())) {
+    if (Q_UNLIKELY(!m_remoteSavedSearch.name.isSet())) {
         ErrorString error(QT_TR_NOOP("Can't resolve the conflict between remote and local saved searches: "
                                      "the remote saved search has no name set"));
-        QNWARNING(error << QStringLiteral(": ") << remoteSavedSearch);
-        emit failure(remoteSavedSearch, error);
+        QNWARNING(error << QStringLiteral(": ") << m_remoteSavedSearch);
+        emit failure(m_remoteSavedSearch, error);
         return;
     }
 
-    if (Q_UNLIKELY(!localConflict.hasGuid() && !localConflict.hasName())) {
+    if (Q_UNLIKELY(!m_localConflict.hasGuid() && !m_localConflict.hasName())) {
         ErrorString error(QT_TR_NOOP("Can't resolve the conflict between remote and local saved searches: "
                                      "the local conflicting saved search has neither guid not name set"));
-        QNWARNING(error << QStringLiteral(": ") << localConflict);
-        emit failure(remoteSavedSearch, error);
+        QNWARNING(error << QStringLiteral(": ") << m_localConflict);
+        emit failure(m_remoteSavedSearch, error);
         return;
     }
 
-    connectToLocalStorage(localStorageManagerAsync);
+    connectToLocalStorage();
 
-    if (localConflict.hasName() && (localConflict.name() == remoteSavedSearch.name.ref())) {
+    if (m_localConflict.hasName() && (m_localConflict.name() == m_remoteSavedSearch.name.ref())) {
         processSavedSearchesConflictByName();
     }
     else {
@@ -234,24 +248,24 @@ void SavedSearchSyncConflictResolver::onCacheFailed(ErrorString errorDescription
     emit failure(m_remoteSavedSearch, errorDescription);
 }
 
-void SavedSearchSyncConflictResolver::connectToLocalStorage(LocalStorageManagerAsync & localStorageManagerAsync)
+void SavedSearchSyncConflictResolver::connectToLocalStorage()
 {
     QNDEBUG(QStringLiteral("SavedSearchSyncConflictResolver::connectToLocalStorage"));
 
     // Connect local signals to local storage manager async's slots
     QObject::connect(this, QNSIGNAL(SavedSearchSyncConflictResolver,addSavedSearch,SavedSearch,QUuid),
-                     &localStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,onAddSavedSearchRequest,SavedSearch,QUuid));
+                     &m_localStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,onAddSavedSearchRequest,SavedSearch,QUuid));
     QObject::connect(this, QNSIGNAL(SavedSearchSyncConflictResolver,updateSavedSearch,SavedSearch,QUuid),
-                     &localStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,onUpdateSavedSearchRequest,SavedSearch,QUuid));
+                     &m_localStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,onUpdateSavedSearchRequest,SavedSearch,QUuid));
 
     // Connect local storage manager async's signals to local slots
-    QObject::connect(&localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,addSavedSearchComplete,SavedSearch,QUuid),
+    QObject::connect(&m_localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,addSavedSearchComplete,SavedSearch,QUuid),
                      this, QNSLOT(SavedSearchSyncConflictResolver,onAddSavedSearchComplete,SavedSearch,QUuid));
-    QObject::connect(&localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,addSavedSearchFailed,SavedSearch,ErrorString,QUuid),
+    QObject::connect(&m_localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,addSavedSearchFailed,SavedSearch,ErrorString,QUuid),
                      this, QNSLOT(SavedSearchSyncConflictResolver,onAddSavedSearchFailed,SavedSearch,ErrorString,QUuid));
-    QObject::connect(&localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,updateSavedSearchComplete,SavedSearch,QUuid),
+    QObject::connect(&m_localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,updateSavedSearchComplete,SavedSearch,QUuid),
                      this, QNSLOT(SavedSearchSyncConflictResolver,onUpdateSavedSearchComplete,SavedSearch,QUuid));
-    QObject::connect(&localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,updateSavedSearchFailed,SavedSearch,ErrorString,QUuid),
+    QObject::connect(&m_localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,updateSavedSearchFailed,SavedSearch,ErrorString,QUuid),
                      this, QNSLOT(SavedSearchSyncConflictResolver,onUpdateSavedSearchFailed,SavedSearch,ErrorString,QUuid));
 }
 
@@ -298,14 +312,15 @@ void SavedSearchSyncConflictResolver::overrideLocalChangesWithRemoteChanges()
 
     m_state = State::OverrideLocalChangesWithRemoteChanges;
 
-    m_localConflict = m_remoteSavedSearch;
-    m_localConflict.setDirty(false);
-    m_localConflict.setLocal(false);
+    SavedSearch search(m_localConflict);
+    search = m_remoteSavedSearch;
+    search.setDirty(false);
+    search.setLocal(false);
 
     m_updateSavedSearchRequestId = QUuid::createUuid();
     QNTRACE(QStringLiteral("Emitting the request to update saved search: request id = ")
-            << m_updateSavedSearchRequestId << QStringLiteral(" saved search: ") << m_localConflict);
-    emit updateSavedSearch(m_localConflict, m_updateSavedSearchRequestId);
+            << m_updateSavedSearchRequestId << QStringLiteral(" saved search: ") << search);
+    emit updateSavedSearch(search, m_updateSavedSearchRequestId);
 }
 
 void SavedSearchSyncConflictResolver::renameConflictingLocalSavedSearch()
@@ -329,13 +344,14 @@ void SavedSearchSyncConflictResolver::renameConflictingLocalSavedSearch()
 
     conflictingName = currentName;
 
-    m_localConflict.setName(conflictingName);
-    m_localConflict.setDirty(true);
+    SavedSearch search(m_localConflict);
+    search.setName(conflictingName);
+    search.setDirty(true);
 
     m_updateSavedSearchRequestId = QUuid::createUuid();
     QNTRACE(QStringLiteral("Emitting the request to update saved search: request id = ")
-            << m_updateSavedSearchRequestId << QStringLiteral(", saved search: ") << m_localConflict);
-    emit updateSavedSearch(m_localConflict, m_updateSavedSearchRequestId);
+            << m_updateSavedSearchRequestId << QStringLiteral(", saved search: ") << search);
+    emit updateSavedSearch(search, m_updateSavedSearchRequestId);
 }
 
 } // namespace quentier

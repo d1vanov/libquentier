@@ -109,6 +109,7 @@ RemoteToLocalSynchronizationManager::RemoteToLocalSynchronizationManager(LocalSt
     m_addTagRequestIds(),
     m_updateTagRequestIds(),
     m_expungeTagRequestIds(),
+    m_tagSyncConflictResolutionCache(m_localStorageManagerAsync),
     m_linkedNotebookGuidsByTagGuids(),
     m_expungeNotelessTagsRequestId(),
     m_savedSearches(),
@@ -119,6 +120,7 @@ RemoteToLocalSynchronizationManager::RemoteToLocalSynchronizationManager(LocalSt
     m_addSavedSearchRequestIds(),
     m_updateSavedSearchRequestIds(),
     m_expungeSavedSearchRequestIds(),
+    m_savedSearchSyncConflictResolutionCache(m_localStorageManagerAsync),
     m_linkedNotebooks(),
     m_expungedLinkedNotebooks(),
     m_findLinkedNotebookRequestIds(),
@@ -157,6 +159,7 @@ RemoteToLocalSynchronizationManager::RemoteToLocalSynchronizationManager(LocalSt
     m_addNotebookRequestIds(),
     m_updateNotebookRequestIds(),
     m_expungeNotebookRequestIds(),
+    m_notebookSyncConflictResolutionCache(m_localStorageManagerAsync),
     m_linkedNotebookGuidsByNotebookGuids(),
     m_notes(),
     m_originalNumberOfNotes(0),
@@ -179,8 +182,6 @@ RemoteToLocalSynchronizationManager::RemoteToLocalSynchronizationManager(LocalSt
     m_notesPendingThumbnailDownloadByFindNotebookRequestId(),
     m_notesPendingThumbnailDownloadByGuid(),
     m_resourceFoundFlagPerFindResourceRequestId(),
-    m_resourceConflictedAndRemoteNotesPerNotebookGuid(),
-    m_findNotebookForNotesWithConflictedResourcesRequestIds(),
     m_localUidsOfElementsAlreadyAttemptedToFindByName(),
     m_guidsOfNotesPendingDownloadForAddingToLocalStorage(),
     m_guidsOfNotesPendingDownloadForUpdatingInLocalStorage(),
@@ -760,69 +761,6 @@ void RemoteToLocalSynchronizationManager::onFindNotebookCompleted(Notebook noteb
         return;
     }
 
-    QSet<QUuid>::iterator nit = m_findNotebookForNotesWithConflictedResourcesRequestIds.find(requestId);
-    if (nit != m_findNotebookForNotesWithConflictedResourcesRequestIds.end())
-    {
-        QNDEBUG(QStringLiteral("Found notebook for the synchronization of note with conflicted resources"));
-
-        Q_UNUSED(m_findNotebookForNotesWithConflictedResourcesRequestIds.erase(nit));
-
-        CHECK_STOPPED();
-
-        if (Q_UNLIKELY(!notebook.hasGuid())) {
-            ErrorString errorDescription(QT_TR_NOOP("Found a notebook for note with conflicted resources "
-                                                    "in the local storage but it doesn't have a guid"));
-            QNWARNING(errorDescription << QStringLiteral(", notebook: ") << notebook);
-            emit failure(errorDescription);
-            return;
-        }
-
-        QHash<QString,QPair<Note,Note> >::iterator notesPerNotebookGuidIt = m_resourceConflictedAndRemoteNotesPerNotebookGuid.find(notebook.guid());
-        if (Q_UNLIKELY(notesPerNotebookGuidIt == m_resourceConflictedAndRemoteNotesPerNotebookGuid.end())) {
-            ErrorString errorDescription(QT_TR_NOOP("Unable to find out for which notes the notebook was requested to be found"));
-            QNWARNING(errorDescription);
-            emit failure(errorDescription);
-            return;
-        }
-
-        const QPair<Note,Note> & notesPair = notesPerNotebookGuidIt.value();
-        const Note & conflictedNote = notesPair.first;
-        const Note & updatedNote = notesPair.second;
-
-        QString conflictedNoteLocalUid = conflictedNote.localUid();
-        QString updatedNoteLocalUid = updatedNote.localUid();
-
-        if (!conflictedNoteLocalUid.isEmpty() || conflictedNote.hasGuid()) {
-            QPair<QString,QString> key;
-            key.first = (conflictedNote.hasGuid() ? conflictedNote.guid() : QString());
-            key.second = conflictedNoteLocalUid;
-
-            m_notebooksPerNoteGuids[key] = notebook;
-        }
-
-        if (!updatedNoteLocalUid.isEmpty() || updatedNote.hasGuid()) {
-            QPair<QString,QString> key;
-            key.first = (updatedNote.hasGuid() ? updatedNote.guid() : QString());
-            key.second = updatedNoteLocalUid;
-
-            m_notebooksPerNoteGuids[key] = notebook;
-        }
-
-        QUuid updateNoteRequestId = QUuid::createUuid();
-        Q_UNUSED(m_updateNoteRequestIds.insert(updateNoteRequestId));
-        QNTRACE(QStringLiteral("Emitting the request to update note: request id = ") << updateNoteRequestId
-                << QStringLiteral(", note: ") << updatedNote);
-        emit updateNote(updatedNote, /* update resources = */ true, /* update tags = */ true, updateNoteRequestId);
-
-        QUuid addNoteRequestId = QUuid::createUuid();
-        Q_UNUSED(m_addNoteRequestIds.insert(addNoteRequestId));
-        QNTRACE(QStringLiteral("Emitting the request to add note: request id = ") << addNoteRequestId
-                << QStringLiteral(", note: ") << conflictedNote);
-        emit addNote(conflictedNote, addNoteRequestId);
-
-        return;
-    }
-
     auto iit = m_inkNoteResourceDataPerFindNotebookRequestId.find(requestId);
     if (iit != m_inkNoteResourceDataPerFindNotebookRequestId.end())
     {
@@ -915,20 +853,6 @@ void RemoteToLocalSynchronizationManager::onFindNotebookFailed(Notebook notebook
     {
         ErrorString errorDescription(QT_TR_NOOP("Failed to find the notebook for one of synchronized notes"));
         QNWARNING(errorDescription << QStringLiteral(": ") << notebook);
-        emit failure(errorDescription);
-        return;
-    }
-
-    QSet<QUuid>::iterator nit = m_findNotebookForNotesWithConflictedResourcesRequestIds.find(requestId);
-    if (nit != m_findNotebookForNotesWithConflictedResourcesRequestIds.end())
-    {
-        Q_UNUSED(m_findNotebookForNotesWithConflictedResourcesRequestIds.erase(nit));
-
-        CHECK_STOPPED();
-
-        ErrorString errorDescription(QT_TR_NOOP("Could not find the notebook for the update of note "
-                                                "which should resolve the conflict of individual resource"));
-        QNWARNING(errorDescription << QStringLiteral(", notebook attempted to be found: ") << notebook);
         emit failure(errorDescription);
         return;
     }
@@ -1141,27 +1065,19 @@ void RemoteToLocalSynchronizationManager::onFindNoteCompleted(Note note, bool wi
 
         if (!resource.isDirty()) {
             QNDEBUG(QStringLiteral("Found duplicate resource in local storage which is not marked dirty => "
-                                   "using the version from synchronization manager"));
+                                   "overriding it with the version received from the remote storage"));
             QUuid updateResourceRequestId = QUuid::createUuid();
             Q_UNUSED(m_updateResourceRequestIds.insert(updateResourceRequestId))
             emit updateResource(resource, updateResourceRequestId);
             return;
         }
 
-        QNDEBUG(QStringLiteral("Found duplicate resource in local storage which is marked dirty => will copy the whole note "
-                               "owning it to the conflict one"));
+        QNDEBUG(QStringLiteral("Found duplicate resource in local storage which is marked dirty => "
+                               "will treat it as a conflict of notes"));
 
-        Note conflictedNote(note);
-        setConflicted(QStringLiteral("Note"), conflictedNote);
-        QString conflictedNoteTitle = (conflictedNote.hasTitle()
-                                       ? (tr("Note") + QStringLiteral(" \"") + conflictedNote.title() + QStringLiteral("\" ") +
-                                          tr("containing conflicted resource"))
-                                       : (tr("Note containing conflicted resource")));
-        conflictedNoteTitle += QStringLiteral(" (") + QDateTime::currentDateTime().toString(Qt::ISODate) + QStringLiteral(")");
-        conflictedNote.setTitle(conflictedNoteTitle);
+        Note conflictingNote = createConflictingNote(note);
 
         Note updatedNote(note);
-        updatedNote.unsetLocalUid();
         bool hasResources = updatedNote.hasResources();
         QList<Resource> resources;
         if (hasResources) {
@@ -1190,60 +1106,7 @@ void RemoteToLocalSynchronizationManager::onFindNoteCompleted(Note note, bool wi
             updatedNote.setResources(noteResources);
         }
 
-        if (pNotebook)
-        {
-            updatedNote.setNotebookLocalUid(pNotebook->localUid());
-            if (pNotebook->hasGuid()) {
-                updatedNote.setNotebookGuid(pNotebook->guid());
-            }
-
-            QUuid updateNoteRequestId = QUuid::createUuid();
-            Q_UNUSED(m_updateNoteRequestIds.insert(updateNoteRequestId))
-            QNTRACE(QStringLiteral("Emitting the request to update note: request id = ") << updateNoteRequestId
-                    << QStringLiteral(", note: ") << updatedNote);
-            emit updateNote(updatedNote, /* update resources = */ true, /* update tags = */ true, updateNoteRequestId);
-
-            conflictedNote.setNotebookLocalUid(pNotebook->localUid());
-            if (pNotebook->hasGuid()) {
-                conflictedNote.setNotebookGuid(pNotebook->guid());
-            }
-
-            QUuid addNoteRequestId = QUuid::createUuid();
-            Q_UNUSED(m_addNoteRequestIds.insert(addNoteRequestId))
-            QNTRACE(QStringLiteral("Emitting the request to add conflicted note: request id = ") << addNoteRequestId
-                    << QStringLiteral(", note: ") << conflictedNote);
-            emit addNote(conflictedNote, addNoteRequestId);
-
-            return;
-        }
-
-        QNDEBUG(QStringLiteral("Notebook for note is not found yet, need to find it in order to resolve the notes "
-                               "with conflicted resources"));
-
-        if (Q_UNLIKELY(!note.hasNotebookGuid()))
-        {
-            ErrorString errorDescription(QT_TR_NOOP("The note containing the conflicted resource "
-                                                    "does not have a notebook guid"));
-            APPEND_NOTE_DETAILS(errorDescription, note)
-
-            QNWARNING(errorDescription << QStringLiteral(": ") << note);
-            emit failure(errorDescription);
-            return;
-        }
-
-        m_resourceConflictedAndRemoteNotesPerNotebookGuid[note.notebookGuid()] = QPair<Note,Note>(conflictedNote, updatedNote);
-
-        Notebook notebookToFind;
-        notebookToFind.unsetLocalUid();
-        notebookToFind.setGuid(note.notebookGuid());
-
-        QUuid findNotebookForNotesWithConflictedResourcesRequestId = QUuid::createUuid();
-        Q_UNUSED(m_findNotebookForNotesWithConflictedResourcesRequestIds.insert(findNotebookForNotesWithConflictedResourcesRequestId));
-        QNTRACE(QStringLiteral("Emitting the request to find notebook for note with conflicted resources: request id = ")
-                << findNotebookForNotesWithConflictedResourcesRequestId << ", notebook guid = "
-                << note.notebookGuid() << QStringLiteral(", note: ") << note);
-        emit findNotebook(notebookToFind, findNotebookForNotesWithConflictedResourcesRequestId);
-        return;
+        emitUpdateRequest(updatedNote, &conflictingNote);
     }
 }
 
@@ -1865,7 +1728,6 @@ void RemoteToLocalSynchronizationManager::performPostAddOrUpdateChecks<Resource>
 {
     if (m_addResourceRequestIds.empty() && m_updateResourceRequestIds.empty() &&
         m_resourcesWithFindRequestIdsPerFindNoteRequestId.empty() &&
-        m_findNotebookForNotesWithConflictedResourcesRequestIds.empty() &&
         m_inkNoteResourceDataPerFindNotebookRequestId.empty() &&
         m_resourceGuidsPendingInkNoteImageDownloadPerNoteGuid.empty() &&
         m_notesPendingInkNoteImagesDownloadByFindNotebookRequestId.empty() &&
@@ -3000,6 +2862,87 @@ void RemoteToLocalSynchronizationManager::onGetNoteAsyncFinished(qint32 errorCod
     QNTRACE(QStringLiteral("Emitting the request to update note in local storage: request id = ")
             << updateNoteRequestId << QStringLiteral(", note; ") << note);
     emit updateNote(note, /* update resources = */ true, /* update tags = */ true, updateNoteRequestId);
+}
+
+void RemoteToLocalSynchronizationManager::onNotebookSyncConflictResolverFinished(qevercloud::Notebook remoteNotebook)
+{
+    QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::onNotebookSyncConflictResolverFinished: ") << remoteNotebook);
+
+    NotebookSyncConflictResolver * pResolver = qobject_cast<NotebookSyncConflictResolver*>(sender());
+    if (pResolver) {
+        pResolver->setParent(Q_NULLPTR);
+        pResolver->deleteLater();
+    }
+
+    checkServerDataMergeCompletion();
+}
+
+void RemoteToLocalSynchronizationManager::onNotebookSyncConflictResolverFailure(qevercloud::Notebook remoteNotebook, ErrorString errorDescription)
+{
+    QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::onNotebookSyncConflictResolverFailure: error description = ")
+            << errorDescription << QStringLiteral(", remote notebook: ") << remoteNotebook);
+
+    NotebookSyncConflictResolver * pResolver = qobject_cast<NotebookSyncConflictResolver*>(sender());
+    if (pResolver) {
+        pResolver->setParent(Q_NULLPTR);
+        pResolver->deleteLater();
+    }
+
+    emit failure(errorDescription);
+}
+
+void RemoteToLocalSynchronizationManager::onTagSyncConflictResolverFinished(qevercloud::Tag remoteTag)
+{
+    QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::onTagSyncConflictResolverFinished: ") << remoteTag);
+
+    TagSyncConflictResolver * pResolver = qobject_cast<TagSyncConflictResolver*>(sender());
+    if (pResolver) {
+        pResolver->setParent(Q_NULLPTR);
+        pResolver->deleteLater();
+    }
+
+    checkServerDataMergeCompletion();
+}
+
+void RemoteToLocalSynchronizationManager::onTagSyncConflictResolverFailure(qevercloud::Tag remoteTag, ErrorString errorDescription)
+{
+    QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::onTagSyncConflictResolverFailure: error description = ")
+            << errorDescription << QStringLiteral(", remote tag: ") << remoteTag);
+
+    TagSyncConflictResolver * pResolver = qobject_cast<TagSyncConflictResolver*>(sender());
+    if (pResolver) {
+        pResolver->setParent(Q_NULLPTR);
+        pResolver->deleteLater();
+    }
+
+    emit failure(errorDescription);
+}
+
+void RemoteToLocalSynchronizationManager::onSavedSearchSyncConflictResolverFinished(qevercloud::SavedSearch remoteSavedSearch)
+{
+    QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::onSavedSearchSyncConflictResolverFinished: ") << remoteSavedSearch);
+
+    SavedSearchSyncConflictResolver * pResolver = qobject_cast<SavedSearchSyncConflictResolver*>(sender());
+    if (pResolver) {
+        pResolver->setParent(Q_NULLPTR);
+        pResolver->deleteLater();
+    }
+
+    checkServerDataMergeCompletion();
+}
+
+void RemoteToLocalSynchronizationManager::onSavedSearchSyncConflictResolverFailure(qevercloud::SavedSearch remoteSavedSearch, ErrorString errorDescription)
+{
+    QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::onSavedSearchSyncConflictResolverFailure: error description = ")
+            << errorDescription << QStringLiteral(", remote saved search: ") << remoteSavedSearch);
+
+    SavedSearchSyncConflictResolver * pResolver = qobject_cast<SavedSearchSyncConflictResolver*>(sender());
+    if (pResolver) {
+        pResolver->setParent(Q_NULLPTR);
+        pResolver->deleteLater();
+    }
+
+    emit failure(errorDescription);
 }
 
 void RemoteToLocalSynchronizationManager::createConnections()
@@ -4866,7 +4809,6 @@ void RemoteToLocalSynchronizationManager::checkServerDataMergeCompletion()
     {
         bool resourcesReady = m_findResourceByGuidRequestIds.empty() && m_updateResourceRequestIds.empty() &&
                               m_addResourceRequestIds.empty() && m_resourcesWithFindRequestIdsPerFindNoteRequestId.empty() &&
-                              m_findNotebookForNotesWithConflictedResourcesRequestIds.empty() &&
                               m_inkNoteResourceDataPerFindNotebookRequestId.empty() &&
                               m_resourceGuidsPendingInkNoteImageDownloadPerNoteGuid.empty();
         if (!resourcesReady)
@@ -4875,12 +4817,34 @@ void RemoteToLocalSynchronizationManager::checkServerDataMergeCompletion()
                     << QStringLiteral(" resource update requests and/or ") << m_addResourceRequestIds.size()
                     << QStringLiteral(" resource add requests and/or ") << m_resourcesWithFindRequestIdsPerFindNoteRequestId.size()
                     << QStringLiteral(" find resource by guid requests and/or ") << m_findResourceByGuidRequestIds.size()
-                    << QStringLiteral(" resource find note requests and/or ") << m_findNotebookForNotesWithConflictedResourcesRequestIds.size()
-                    << QStringLiteral(" resource find notebook requests and/or ") << m_inkNoteResourceDataPerFindNotebookRequestId.size()
+                    << QStringLiteral(" resource find note requests and/or ") << m_inkNoteResourceDataPerFindNotebookRequestId.size()
                     << QStringLiteral(" resource find notebook for ink note image download processing and/or ") << m_resourceGuidsPendingInkNoteImageDownloadPerNoteGuid.size()
                     << QStringLiteral(" pending ink note image downloads"));
             return;
         }
+    }
+
+    // Also need to check if we are still waiting for some sync conflict resolvers to finish
+
+    QList<NotebookSyncConflictResolver*> notebookSyncConflictResolvers = findChildren<NotebookSyncConflictResolver*>();
+    if (!notebookSyncConflictResolvers.isEmpty()) {
+        QNDEBUG(QStringLiteral("Still have ") << notebookSyncConflictResolvers.size()
+                << QStringLiteral(" pending notebook sync conflict resolutions"));
+        return;
+    }
+
+    QList<TagSyncConflictResolver*> tagSyncConflictResolvers = findChildren<TagSyncConflictResolver*>();
+    if (!tagSyncConflictResolvers.isEmpty()) {
+        QNDEBUG(QStringLiteral("Still have ") << tagSyncConflictResolvers.size()
+                << QStringLiteral(" pending tag sync conflict resolutions"));
+        return;
+    }
+
+    QList<SavedSearchSyncConflictResolver*> savedSearchSyncConflictResolvers = findChildren<SavedSearchSyncConflictResolver*>();
+    if (!savedSearchSyncConflictResolvers.isEmpty()) {
+        QNDEBUG(QStringLiteral("Still have ") << savedSearchSyncConflictResolvers.size()
+                << QStringLiteral(" pending saved search sync conflict resolutions"));
+        return;
     }
 
     if (syncingLinkedNotebooksContent())
@@ -5047,8 +5011,6 @@ void RemoteToLocalSynchronizationManager::clear()
     m_notesPendingThumbnailDownloadByFindNotebookRequestId.clear();
     m_notesPendingThumbnailDownloadByGuid.clear();
     m_resourceFoundFlagPerFindResourceRequestId.clear();
-    m_resourceConflictedAndRemoteNotesPerNotebookGuid.clear();
-    m_findNotebookForNotesWithConflictedResourcesRequestIds.clear();
 
     m_localUidsOfElementsAlreadyAttemptedToFindByName.clear();
 
@@ -5844,6 +5806,64 @@ QString RemoteToLocalSynchronizationManager::clientNameForProtocolVersionCheck()
     return clientName;
 }
 
+Note RemoteToLocalSynchronizationManager::createConflictingNote(const Note & originalNote) const
+{
+    QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::createConflictingNote: original note local uid = ")
+            << originalNote.localUid());
+
+    Note conflictingNote(originalNote);
+    conflictingNote.setLocalUid(UidGenerator::Generate());
+    conflictingNote.setGuid(QString());
+    conflictingNote.setDirty(true);
+    conflictingNote.setLocal(false);
+
+    if (conflictingNote.hasResources())
+    {
+        // Need to update the conflicting note's resources:
+        // 1) give each of them new local uid + unset guid
+        // 2) make each of them point to the conflicting note
+
+        QList<Resource> resources = conflictingNote.resources();
+
+        for(auto it = resources.begin(), end = resources.end(); it != end; ++it)
+        {
+            Resource & resource = *it;
+            resource.setLocalUid(UidGenerator::Generate());
+            resource.setGuid(QString());
+            resource.setDirty(true);
+            resource.setLocal(false);
+            resource.setNoteGuid(QString());
+            resource.setNoteLocalUid(conflictingNote.localUid());
+        }
+
+        conflictingNote.setResources(resources);
+    }
+
+    qint64 currentTimestamp = QDateTime::currentMSecsSinceEpoch();
+    conflictingNote.setCreationTimestamp(currentTimestamp);
+    conflictingNote.setModificationTimestamp(currentTimestamp);
+
+    QString conflictingNoteTitle;
+    if (conflictingNote.hasTitle())
+    {
+        conflictingNoteTitle = conflictingNote.title() + QStringLiteral(" - ") + tr("conflicting");
+    }
+    else
+    {
+        QString previewText = conflictingNote.plainText();
+        if (!previewText.isEmpty()) {
+            previewText.truncate(12);
+            conflictingNoteTitle = previewText + QStringLiteral("... - ") + tr("conflicting");
+        }
+        else {
+            conflictingNoteTitle = tr("Conflicting note");
+        }
+    }
+
+    conflictingNote.setTitle(conflictingNoteTitle);
+    return conflictingNote;
+}
+
 QTextStream & operator<<(QTextStream & strm, const RemoteToLocalSynchronizationManager::SyncMode::type & obj)
 {
     switch(obj)
@@ -6332,44 +6352,6 @@ void RemoteToLocalSynchronizationManager::extractExpungedElementsFromSyncChunk<L
     }
 }
 
-template <class ElementType>
-void setConflictedBase(const QString & typeName, ElementType & element)
-{
-    QString currentDateTime = QDateTime::currentDateTime().toString(Qt::ISODate);
-
-    element.setGuid(QString());
-    element.setName(RemoteToLocalSynchronizationManager::tr("Conflicted") + QStringLiteral(" ") + typeName +
-                    QStringLiteral(" ") + element.name() + QStringLiteral(" (") +
-                    currentDateTime + QStringLiteral(")"));
-    element.setDirty(true);
-}
-
-template <>
-void setConflictedBase<Note>(const QString & typeName, Note & note)
-{
-    QString currentDateTime = QDateTime::currentDateTime().toString(Qt::ISODate);
-
-    note.setGuid(QString());
-    note.setTitle(RemoteToLocalSynchronizationManager::tr("Conflicted") + QStringLiteral(" ") + typeName +
-                  QStringLiteral(" ") + (note.hasTitle() ? note.title() : QStringLiteral("note")) +
-                  QStringLiteral(" (") + currentDateTime + QStringLiteral(")"));
-    note.setDirty(true);
-    note.setLocal(true);
-}
-
-template <class ElementType>
-void RemoteToLocalSynchronizationManager::setConflicted(const QString & typeName, ElementType & element)
-{
-    setConflictedBase(typeName, element);
-}
-
-template <>
-void RemoteToLocalSynchronizationManager::setConflicted<Tag>(const QString & typeName, Tag & tag)
-{
-    setConflictedBase(typeName, tag);
-    tag.setLocal(true);
-}
-
 template <>
 void RemoteToLocalSynchronizationManager::emitFindByNameRequest<Tag>(const Tag & tag)
 {
@@ -6460,14 +6442,9 @@ bool RemoteToLocalSynchronizationManager::onFoundDuplicateByName(ElementType ele
         return true;
     }
 
-    ElementType remoteElementAdapter(remoteElement);
-    setNonLocalAndNonDirty(remoteElementAdapter);
-    checkAndAddLinkedNotebookBinding(element, remoteElementAdapter);
+    resolveSyncConflict(remoteElement, element);
 
-    checkUpdateSequenceNumbersAndProcessConflictedElements(remoteElementAdapter, typeName, element);
-
-    Q_UNUSED(container.erase(it));
-
+    Q_UNUSED(container.erase(it))
     return true;
 }
 
@@ -6506,12 +6483,9 @@ bool RemoteToLocalSynchronizationManager::onFoundDuplicateByGuid(ElementType ele
         return true;
     }
 
-    ElementType remoteElementAdapter(remoteElement);
-    setNonLocalAndNonDirty(remoteElementAdapter);
-    checkAndAddLinkedNotebookBinding(element, remoteElementAdapter);
+    resolveSyncConflict(remoteElement, element);
 
-    checkUpdateSequenceNumbersAndProcessConflictedElements(remoteElementAdapter, typeName, element);
-    Q_UNUSED(container.erase(it));
+    Q_UNUSED(container.erase(it))
     return true;
 }
 
@@ -6581,30 +6555,6 @@ bool RemoteToLocalSynchronizationManager::onNoDuplicateByName(ElementType elemen
 }
 
 template <class ElementType>
-void RemoteToLocalSynchronizationManager::processConflictedElement(const ElementType & remoteElement,
-                                                                   const QString & typeName, ElementType & element)
-{
-    setConflicted(typeName, element);
-    emitUpdateRequest(element, &remoteElement);
-}
-
-template <>
-void RemoteToLocalSynchronizationManager::processConflictedElement(const LinkedNotebook & remoteLinkedNotebook,
-                                                                   const QString &, LinkedNotebook & linkedNotebook)
-{
-    // Linked notebook itself is simply a pointer to another user's account;
-    // The data it points to would have a separate synchronization procedure
-    // including the synchronization for Notebook, Notes and Tags from another user's account
-    // The linked notebook as a pointer to all this data would simply be overridden
-    // by the server's version of it
-    linkedNotebook = remoteLinkedNotebook;
-
-    QUuid updateRequestId = QUuid::createUuid();
-    Q_UNUSED(m_updateLinkedNotebookRequestIds.insert(updateRequestId));
-    emit updateLinkedNotebook(linkedNotebook, updateRequestId);
-}
-
-template <class ElementType>
 void RemoteToLocalSynchronizationManager::checkAndAddLinkedNotebookBinding(const ElementType & sourceElement,
                                                                            ElementType & targetElement)
 {
@@ -6644,35 +6594,212 @@ void RemoteToLocalSynchronizationManager::checkAndAddLinkedNotebookBinding<Tag>(
     targetTag.setLinkedNotebookGuid(it.value());
 }
 
-template <class ElementType>
-void RemoteToLocalSynchronizationManager::checkUpdateSequenceNumbersAndProcessConflictedElements(const ElementType & remoteElement,
-                                                                                                 const QString & typeName,
-                                                                                                 ElementType & localElement)
+template <>
+void RemoteToLocalSynchronizationManager::resolveSyncConflict(const qevercloud::Notebook & remoteNotebook,
+                                                              const Notebook & localConflict)
 {
-    if ( !localElement.hasUpdateSequenceNumber() ||
-         (remoteElement.updateSequenceNumber() > localElement.updateSequenceNumber()) )
-    {
-        if (!localElement.isDirty())
-        {
-            // Remote element is more recent, need to update the element existing in local storage
-            ElementType elementToUpdate(remoteElement);
-            unsetLocalUid(elementToUpdate);
-            setNonLocalAndNonDirty(elementToUpdate);
+    QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::resolveSyncConflict<Notebook>: remote notebook = ")
+            << remoteNotebook << QStringLiteral("\nLocal conflicting notebook: ") << localConflict);
 
-            // NOTE: workarounding the stupidity of MSVC 2013
-            emitUpdateRequest<ElementType>(elementToUpdate, static_cast<const ElementType*>(Q_NULLPTR));
-        }
-        else
-        {
-            // Remote element is more recent but the local one has been modified;
-            // Evernote's synchronization protocol description suggests trying
-            // to do field-by-field merge but it's overcomplicated and error-prone;
-            // it's much easier to rename the existing local element to make it clear
-            // it has a conflict with its remote counterpart and mark it dirty so that
-            // it would be sent to the server along with other local changes
-            processConflictedElement(remoteElement, typeName, localElement);
-        }
+    if (Q_UNLIKELY(!remoteNotebook.guid.isSet())) {
+        ErrorString error(QT_TR_NOOP("Can't resolve the conflict between remote and local notebooks: the remote notebook has no guid"));
+        QNWARNING(error << QStringLiteral(", remote notebook: ") << remoteNotebook);
+        emit failure(error);
+        return;
     }
+
+    QList<NotebookSyncConflictResolver*> notebookSyncConflictResolvers = findChildren<NotebookSyncConflictResolver*>();
+
+    for(auto it = notebookSyncConflictResolvers.constBegin(),
+        end = notebookSyncConflictResolvers.constEnd(); it != end; ++it)
+    {
+        const NotebookSyncConflictResolver * pResolver = *it;
+        if (Q_UNLIKELY(!pResolver)) {
+            QNWARNING(QStringLiteral("Skipping the null pointer to notebook sync conflict resolver"));
+            continue;
+        }
+
+        const qevercloud::Notebook & resolverRemoteNotebook = pResolver->remoteNotebook();
+        if (Q_UNLIKELY(!resolverRemoteNotebook.guid.isSet())) {
+            QNWARNING(QStringLiteral("Skipping the resolver with remote notebook containing no guid: ") << resolverRemoteNotebook);
+            continue;
+        }
+
+        if (resolverRemoteNotebook.guid.ref() != remoteNotebook.guid.ref()) {
+            QNTRACE(QStringLiteral("Skipping the existing notebook sync conflict resolver processing remote notebook with another guid: ")
+                    << resolverRemoteNotebook);
+            continue;
+        }
+
+        const Notebook & resolverLocalConflict = pResolver->localConflict();
+        if (resolverLocalConflict.localUid() != localConflict.localUid()) {
+            QNTRACE(QStringLiteral("Skipping the existing notebook sync conflict resolver processing local conflict with another local uid: ")
+                    << resolverLocalConflict);
+            continue;
+        }
+
+        QNDEBUG(QStringLiteral("Found existing notebook sync conflict resolver for this pair of remote and local notebooks"));
+        return;
+    }
+
+    NotebookSyncConflictResolver * pResolver = new NotebookSyncConflictResolver(remoteNotebook, localConflict,
+                                                                                m_notebookSyncConflictResolutionCache,
+                                                                                m_localStorageManagerAsync, this);
+    QObject::connect(pResolver, QNSIGNAL(NotebookSyncConflictResolver,finished,qevercloud::Notebook),
+                     this, QNSLOT(RemoteToLocalSynchronizationManager,onNotebookSyncConflictResolverFinished,qevercloud::Notebook));
+    QObject::connect(pResolver, QNSIGNAL(NotebookSyncConflictResolver,failure,qevercloud::Notebook,ErrorString),
+                     this, QNSLOT(RemoteToLocalSynchronizationManager,onNotebookSyncConflictResolverFailure,qevercloud::Notebook,ErrorString));
+    pResolver->start();
 }
 
-} // namespace qute_not e
+template <>
+void RemoteToLocalSynchronizationManager::resolveSyncConflict(const qevercloud::Tag & remoteTag,
+                                                              const Tag & localConflict)
+{
+    QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::resolveSyncConflict<Tag>: remote tag = ")
+            << remoteTag << QStringLiteral("\nLocal conflicting tag: ") << localConflict);
+
+    if (Q_UNLIKELY(!remoteTag.guid.isSet())) {
+        ErrorString error(QT_TR_NOOP("Can't resolve the conflict between remote and local tags: the remote tag has no guid"));
+        QNWARNING(error << QStringLiteral(", remote tag: ") << remoteTag);
+        emit failure(error);
+        return;
+    }
+
+    QList<TagSyncConflictResolver*> tagSyncConflictResolvers = findChildren<TagSyncConflictResolver*>();
+
+    for(auto it = tagSyncConflictResolvers.constBegin(),
+        end = tagSyncConflictResolvers.constEnd(); it != end; ++it)
+    {
+        const TagSyncConflictResolver * pResolver = *it;
+        if (Q_UNLIKELY(!pResolver)) {
+            QNWARNING(QStringLiteral("Skipping the null pointer to tag sync conflict resolver"));
+            continue;
+        }
+
+        const qevercloud::Tag & resolverRemoteTag = pResolver->remoteTag();
+        if (Q_UNLIKELY(!resolverRemoteTag.guid.isSet())) {
+            QNWARNING(QStringLiteral("Skipping the resolver with remote tag containing no guid: ") << resolverRemoteTag);
+            continue;
+        }
+
+        if (resolverRemoteTag.guid.ref() != remoteTag.guid.ref()) {
+            QNTRACE(QStringLiteral("Skipping the existing tag sync conflict resolver processing remote tag with another guid: ")
+                    << resolverRemoteTag);
+            continue;
+        }
+
+        const Tag & resolverLocalConflict = pResolver->localConflict();
+        if (resolverLocalConflict.localUid() != localConflict.localUid()) {
+            QNTRACE(QStringLiteral("Skipping the existing tag sync conflict resolver processing local conflict with another local uid: ")
+                    << resolverLocalConflict);
+            continue;
+        }
+
+        QNDEBUG(QStringLiteral("Found existing tag sync conflict resolver for this pair of remote and local tags"));
+        return;
+    }
+
+    TagSyncConflictResolver * pResolver = new TagSyncConflictResolver(remoteTag, localConflict,
+                                                                      m_tagSyncConflictResolutionCache,
+                                                                      m_localStorageManagerAsync, this);
+    QObject::connect(pResolver, QNSIGNAL(TagSyncConflictResolver,finished,qevercloud::Tag),
+                     this, QNSLOT(RemoteToLocalSynchronizationManager,onTagSyncConflictResolverFinished,qevercloud::Tag));
+    QObject::connect(pResolver, QNSIGNAL(TagSyncConflictResolver,failure,qevercloud::Tag,ErrorString),
+                     this, QNSLOT(RemoteToLocalSynchronizationManager,onTagSyncConflictResolverFailure,qevercloud::Tag,ErrorString));
+    pResolver->start();
+}
+
+template <>
+void RemoteToLocalSynchronizationManager::resolveSyncConflict(const qevercloud::SavedSearch & remoteSavedSearch,
+                                                              const SavedSearch & localConflict)
+{
+    QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::resolveSyncConflict<SavedSearch>: remote saved search = ")
+            << remoteSavedSearch << QStringLiteral("\nLocal conflicting saved search: ") << localConflict);
+
+    if (Q_UNLIKELY(!remoteSavedSearch.guid.isSet())) {
+        ErrorString error(QT_TR_NOOP("Can't resolve the conflict between remote and local saved searches: the remote saved search has no guid"));
+        QNWARNING(error << QStringLiteral(", remote saved search: ") << remoteSavedSearch);
+        emit failure(error);
+        return;
+    }
+
+    QList<SavedSearchSyncConflictResolver*> savedSearchSyncConflictResolvers = findChildren<SavedSearchSyncConflictResolver*>();
+
+    for(auto it = savedSearchSyncConflictResolvers.constBegin(),
+        end = savedSearchSyncConflictResolvers.constEnd(); it != end; ++it)
+    {
+        const SavedSearchSyncConflictResolver * pResolver = *it;
+        if (Q_UNLIKELY(!pResolver)) {
+            QNWARNING(QStringLiteral("Skipping the null pointer to saved search sync conflict resolver"));
+            continue;
+        }
+
+        const qevercloud::SavedSearch & resolverRemoteSavedSearch = pResolver->remoteSavedSearch();
+        if (Q_UNLIKELY(!resolverRemoteSavedSearch.guid.isSet())) {
+            QNWARNING(QStringLiteral("Skipping the existing saved search sync conflict resolver processing remote saved search with another guid: ")
+                      << resolverRemoteSavedSearch);
+            continue;
+        }
+
+        if (resolverRemoteSavedSearch.guid.ref() != remoteSavedSearch.guid.ref()) {
+            QNTRACE(QStringLiteral("Skipping the existing saved search sync conflict resolver processing remote saved search with another guid: ")
+                    << resolverRemoteSavedSearch);
+            continue;
+        }
+
+        const SavedSearch & resolverLocalConflict = pResolver->localConflict();
+        if (resolverLocalConflict.localUid() != localConflict.localUid()) {
+            QNTRACE(QStringLiteral("Skipping the existing saved search sync conflict resolver processing local conflict with another local uid: ")
+                    << resolverLocalConflict);
+            continue;
+        }
+
+        QNDEBUG(QStringLiteral("Found existing saved search conflict resolver for this pair of remote and local saved searches"));
+        return;
+    }
+
+    SavedSearchSyncConflictResolver * pResolver = new SavedSearchSyncConflictResolver(remoteSavedSearch, localConflict,
+                                                                                      m_savedSearchSyncConflictResolutionCache,
+                                                                                      m_localStorageManagerAsync, this);
+    QObject::connect(pResolver, QNSIGNAL(SavedSearchSyncConflictResolver,finished,qevercloud::SavedSearch),
+                     this, QNSLOT(RemoteToLocalSynchronizationManager,onSavedSearchSyncConflictResolverFinished,qevercloud::SavedSearch));
+    QObject::connect(pResolver, QNSIGNAL(SavedSearchSyncConflictResolver,failure,qevercloud::SavedSearch,ErrorString),
+                     this, QNSLOT(RemoteToLocalSynchronizationManager,onSavedSearchSyncConflictResolverFailure,qevercloud::SavedSearch,ErrorString));
+    pResolver->start();
+}
+
+template <>
+void RemoteToLocalSynchronizationManager::resolveSyncConflict(const qevercloud::Note & remoteNote,
+                                                              const Note & localConflict)
+{
+    QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::resolveSyncConflict<Note>: remote note = ")
+            << remoteNote << QStringLiteral("\nLocal conflicting note: ") << localConflict);
+
+    Note conflictingNote = createConflictingNote(localConflict);
+
+    Note updatedNote(remoteNote);
+    updatedNote.unsetLocalUid();
+
+    emitUpdateRequest(updatedNote, &conflictingNote);
+}
+
+template <>
+void RemoteToLocalSynchronizationManager::resolveSyncConflict(const qevercloud::LinkedNotebook & remoteLinkedNotebook,
+                                                              const LinkedNotebook & localConflict)
+{
+    QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::resolveSyncConflict<LinkedNotebook>: remote linked notebook = ")
+            << remoteLinkedNotebook << QStringLiteral("\nLocal conflicting linked notebook: ") << localConflict);
+
+    // NOTE: since linked notebook is just a pointer to a notebook in another user's account, it makes little sense
+    // to even attempt to resolve any potential conflict in favor of local changes - the remote changes should always
+    // win
+
+    LinkedNotebook linkedNotebook(localConflict);
+    linkedNotebook = remoteLinkedNotebook;
+    linkedNotebook.setDirty(false);
+
+    emitUpdateRequest(linkedNotebook);
+}
+
+} // namespace quentier

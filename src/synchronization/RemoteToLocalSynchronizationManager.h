@@ -21,6 +21,12 @@
 
 #include "NoteStore.h"
 #include "UserStore.h"
+#include "NotebookSyncConflictResolver.h"
+#include "NotebookSyncConflictResolutionCache.h"
+#include "TagSyncConflictResolver.h"
+#include "TagSyncConflictResolutionCache.h"
+#include "SavedSearchSyncConflictResolver.h"
+#include "SavedSearchSyncConflictResolutionCache.h"
 #include <quentier/types/Account.h>
 #include <quentier/types/ErrorString.h>
 #include <quentier/utility/Macros.h>
@@ -236,6 +242,16 @@ private Q_SLOTS:
 
     void onGetNoteAsyncFinished(qint32 errorCode, Note note, qint32 rateLimitSeconds, ErrorString errorDescription);
 
+    // Slots for sync conflict resolvers
+    void onNotebookSyncConflictResolverFinished(qevercloud::Notebook remoteNotebook);
+    void onNotebookSyncConflictResolverFailure(qevercloud::Notebook remoteNotebook, ErrorString errorDescription);
+
+    void onTagSyncConflictResolverFinished(qevercloud::Tag remoteTag);
+    void onTagSyncConflictResolverFailure(qevercloud::Tag remoteTag, ErrorString errorDescription);
+
+    void onSavedSearchSyncConflictResolverFinished(qevercloud::SavedSearch remoteSavedSearch);
+    void onSavedSearchSyncConflictResolverFailure(qevercloud::SavedSearch remoteSavedSearch, ErrorString errorDescription);
+
 private:
     void createConnections();
 
@@ -290,19 +306,11 @@ private:
                                               QList<QString> & expungedElementGuids);
 
     template <class ElementType>
-    void setConflicted(const QString & typeName, ElementType & element);
-
-    template <class ElementType>
-    void processConflictedElement(const ElementType & remoteElement,
-                                  const QString & typeName, ElementType & element);
-
-    template <class ElementType>
     void checkAndAddLinkedNotebookBinding(const ElementType & sourceElement, ElementType & targetElement);
 
-    template <class ElementType>
-    void checkUpdateSequenceNumbersAndProcessConflictedElements(const ElementType & remoteElement,
-                                                                const QString & typeName,
-                                                                ElementType & localElement);
+    template <class RemoteElementType, class ElementType>
+    void resolveSyncConflict(const RemoteElementType & remoteElement,
+                             const ElementType & localConflict);
 
     template <class ContainerType>
     bool mapContainerElementsWithLinkedNotebookGuid(const QString & linkedNotebookGuid,
@@ -499,11 +507,9 @@ private:
     bool findNotebookForNoteThumbnailDownloading(const Note & note);
     bool setupNoteThumbnailDownloading(const Note & note, const Notebook & notebook);
 
-
     QString clientNameForProtocolVersionCheck() const;
 
-private:
-    RemoteToLocalSynchronizationManager() Q_DECL_EQ_DELETE;
+    Note createConflictingNote(const Note & originalNote) const;
 
 private:
     template <class T>
@@ -613,6 +619,8 @@ private:
     QSet<QUuid>                             m_updateTagRequestIds;
     QSet<QUuid>                             m_expungeTagRequestIds;
 
+    TagSyncConflictResolutionCache          m_tagSyncConflictResolutionCache;
+
     QHash<QString,QString>                  m_linkedNotebookGuidsByTagGuids;
     QUuid                                   m_expungeNotelessTagsRequestId;
 
@@ -624,6 +632,8 @@ private:
     QSet<QUuid>                             m_addSavedSearchRequestIds;
     QSet<QUuid>                             m_updateSavedSearchRequestIds;
     QSet<QUuid>                             m_expungeSavedSearchRequestIds;
+
+    SavedSearchSyncConflictResolutionCache  m_savedSearchSyncConflictResolutionCache;
 
     LinkedNotebooksList                     m_linkedNotebooks;
     QList<QString>                          m_expungedLinkedNotebooks;
@@ -671,6 +681,8 @@ private:
     QSet<QUuid>                             m_updateNotebookRequestIds;
     QSet<QUuid>                             m_expungeNotebookRequestIds;
 
+    NotebookSyncConflictResolutionCache     m_notebookSyncConflictResolutionCache;
+
     QHash<QString,QString>                  m_linkedNotebookGuidsByNotebookGuids;
 
     NotesList                               m_notes;
@@ -708,9 +720,6 @@ private:
     QSet<QUuid>                             m_updateNoteWithThumbnailRequestIds;
 
     QSet<QUuid>                             m_resourceFoundFlagPerFindResourceRequestId;
-
-    QHash<QString,QPair<Note,Note> >        m_resourceConflictedAndRemoteNotesPerNotebookGuid;
-    QSet<QUuid>                             m_findNotebookForNotesWithConflictedResourcesRequestIds;
 
     QSet<QString>                           m_localUidsOfElementsAlreadyAttemptedToFindByName;
 
