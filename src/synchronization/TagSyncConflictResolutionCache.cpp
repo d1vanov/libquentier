@@ -79,7 +79,7 @@ void TagSyncConflictResolutionCache::onListTagsComplete(LocalStorageManager::Lis
 
     m_listTagsRequestId = QUuid();
 
-    if (foundTags.size() != static_cast<int>(limit)) {
+    if (foundTags.size() == static_cast<int>(limit)) {
         QNTRACE(QStringLiteral("The number of found tags matches the limit, requesting more tags from the local storage"));
         m_offset += limit;
         requestTagsList();

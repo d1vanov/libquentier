@@ -79,7 +79,7 @@ void SavedSearchSyncConflictResolutionCache::onListSavedSearchesComplete(LocalSt
 
     m_listSavedSearchesRequestId = QUuid();
 
-    if (foundSearches.size() != static_cast<int>(limit)) {
+    if (foundSearches.size() == static_cast<int>(limit)) {
         QNTRACE(QStringLiteral("The number of found saved searches matches the limit, requesting more saved searches "
                                "from the local storage"));
         m_offset += limit;
