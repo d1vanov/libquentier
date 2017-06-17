@@ -319,7 +319,7 @@ void TagSyncConflictResolver::processTagsConflictByGuid()
     if (m_cache.isFilled())
     {
         const QHash<QString,QString> & guidByNameHash = m_cache.guidByNameHash();
-        auto it = guidByNameHash.find(m_remoteTag.name.ref());
+        auto it = guidByNameHash.find(m_remoteTag.name.ref().toLower());
         if (it == guidByNameHash.end()) {
             QNDEBUG(QStringLiteral("As deduced by the existing tag info cache, there is no local tag with the same name "
                                    "as the name from the new state of the remote tag, can safely override the local changes "
@@ -407,11 +407,11 @@ void TagSyncConflictResolver::renameConflictingLocalTag(const Tag & localConflic
 
     int suffix = 1;
     QString currentName = conflictingName;
-    auto it = guidByNameHash.find(currentName);
+    auto it = guidByNameHash.find(currentName.toLower());
     while(it != guidByNameHash.end()) {
         currentName = conflictingName + QStringLiteral(" (") + QString::number(suffix) + QStringLiteral(")");
         ++suffix;
-        it = guidByNameHash.find(currentName);
+        it = guidByNameHash.find(currentName.toLower());
     }
 
     conflictingName = currentName;

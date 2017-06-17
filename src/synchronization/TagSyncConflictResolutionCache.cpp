@@ -301,7 +301,7 @@ void TagSyncConflictResolutionCache::processTag(const Tag & tag)
         return;
     }
 
-    const QString & name = tag.name();
+    QString name = tag.name().toLower();
     m_tagNameByLocalUid[tag.localUid()] = name;
 
     if (!tag.hasGuid()) {

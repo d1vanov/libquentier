@@ -309,7 +309,7 @@ void SavedSearchSyncConflictResolutionCache::processSavedSearch(const SavedSearc
         return;
     }
 
-    const QString & name = search.name();
+    QString name = search.name().toLower();
     m_savedSearchNameByLocalUid[search.localUid()] = name;
 
     if (!search.hasGuid()) {

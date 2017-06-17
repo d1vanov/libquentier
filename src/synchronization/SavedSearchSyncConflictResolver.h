@@ -56,21 +56,25 @@ Q_SIGNALS:
     void fillSavedSearchesCache();
     void addSavedSearch(SavedSearch search, QUuid requestId);
     void updateSavedSearch(SavedSearch search, QUuid requestId);
+    void findSavedSearch(SavedSearch search, QUuid requestId);
 
 private Q_SLOTS:
     void onAddSavedSearchComplete(SavedSearch search, QUuid requestId);
     void onAddSavedSearchFailed(SavedSearch search, ErrorString errorDescription, QUuid requestId);
     void onUpdateSavedSearchComplete(SavedSearch search, QUuid requestId);
     void onUpdateSavedSearchFailed(SavedSearch search, ErrorString errorDescription, QUuid requestId);
+    void onFindSavedSearchComplete(SavedSearch search, QUuid requestId);
+    void onFindSavedSearchFailed(SavedSearch search, ErrorString errorDescription, QUuid requestId);
 
     void onCacheFilled();
     void onCacheFailed(ErrorString errorDescription);
 
 private:
     void connectToLocalStorage();
-    void processSavedSearchesConflictByName();
+    void processSavedSearchesConflictByGuid();
+    void processSavedSearchesConflictByName(const SavedSearch & localConflict);
     void overrideLocalChangesWithRemoteChanges();
-    void renameConflictingLocalSavedSearch();
+    void renameConflictingLocalSavedSearch(const SavedSearch & localConflict);
 
     struct State
     {
@@ -90,10 +94,13 @@ private:
     qevercloud::SavedSearch         m_remoteSavedSearch;
     SavedSearch                     m_localConflict;
 
+    SavedSearch                     m_savedSearchToBeRenamed;
+
     State::type                     m_state;
 
     QUuid                           m_addSavedSearchRequestId;
     QUuid                           m_updateSavedSearchRequestId;
+    QUuid                           m_findSavedSearchRequestId;
 
     bool                            m_started;
     bool                            m_pendingCacheFilling;

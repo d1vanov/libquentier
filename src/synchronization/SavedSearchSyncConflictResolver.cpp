@@ -33,9 +33,11 @@ SavedSearchSyncConflictResolver::SavedSearchSyncConflictResolver(const qeverclou
     m_localStorageManagerAsync(localStorageManagerAsync),
     m_remoteSavedSearch(remoteSavedSearch),
     m_localConflict(localConflict),
+    m_savedSearchToBeRenamed(),
     m_state(State::Undefined),
     m_addSavedSearchRequestId(),
     m_updateSavedSearchRequestId(),
+    m_findSavedSearchRequestId(),
     m_started(false),
     m_pendingCacheFilling(false)
 {}
@@ -78,10 +80,10 @@ void SavedSearchSyncConflictResolver::start()
     connectToLocalStorage();
 
     if (m_localConflict.hasName() && (m_localConflict.name() == m_remoteSavedSearch.name.ref())) {
-        processSavedSearchesConflictByName();
+        processSavedSearchesConflictByName(m_localConflict);
     }
     else {
-        overrideLocalChangesWithRemoteChanges();
+        processSavedSearchesConflictByGuid();
     }
 }
 
@@ -212,6 +214,37 @@ void SavedSearchSyncConflictResolver::onUpdateSavedSearchFailed(SavedSearch sear
     emit failure(m_remoteSavedSearch, errorDescription);
 }
 
+void SavedSearchSyncConflictResolver::onFindSavedSearchComplete(SavedSearch search, QUuid requestId)
+{
+    if (requestId != m_findSavedSearchRequestId) {
+        return;
+    }
+
+    QNDEBUG(QStringLiteral("SavedSearchSyncConflictResolver::onFindSavedSearchComplete: request id = ")
+            << requestId << QStringLiteral(", saved search: ") << search);
+
+    m_findSavedSearchRequestId = QUuid();
+
+    // Found the saved search duplicate by name
+    processSavedSearchesConflictByName(search);
+}
+
+void SavedSearchSyncConflictResolver::onFindSavedSearchFailed(SavedSearch search, ErrorString errorDescription, QUuid requestId)
+{
+    if (requestId != m_findSavedSearchRequestId) {
+        return;
+    }
+
+    QNDEBUG(QStringLiteral("SavedSearchSyncConflictResolver::onFindSavedSearchFailed: request id = ")
+            << requestId << QStringLiteral(", error description = ") << errorDescription
+            << QStringLiteral(", saved search: ") << search);
+
+    m_findSavedSearchRequestId = QUuid();
+
+    // Found no duplicate saved search by name, can override the local changes with the remote changes
+    overrideLocalChangesWithRemoteChanges();
+}
+
 void SavedSearchSyncConflictResolver::onCacheFilled()
 {
     QNDEBUG(QStringLiteral("SavedSearchSyncConflictResolver::onCacheFilled"));
@@ -225,7 +258,7 @@ void SavedSearchSyncConflictResolver::onCacheFilled()
 
     if (m_state == State::PendingConflictingSavedSearchRenaming)
     {
-        renameConflictingLocalSavedSearch();
+        renameConflictingLocalSavedSearch(m_savedSearchToBeRenamed);
     }
     else
     {
@@ -257,6 +290,8 @@ void SavedSearchSyncConflictResolver::connectToLocalStorage()
                      &m_localStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,onAddSavedSearchRequest,SavedSearch,QUuid));
     QObject::connect(this, QNSIGNAL(SavedSearchSyncConflictResolver,updateSavedSearch,SavedSearch,QUuid),
                      &m_localStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,onUpdateSavedSearchRequest,SavedSearch,QUuid));
+    QObject::connect(this, QNSIGNAL(SavedSearchSyncConflictResolver,findSavedSearch,SavedSearch,QUuid),
+                     &m_localStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,onFindSavedSearchRequest,SavedSearch,QUuid));
 
     // Connect local storage manager async's signals to local slots
     QObject::connect(&m_localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,addSavedSearchComplete,SavedSearch,QUuid),
@@ -267,13 +302,48 @@ void SavedSearchSyncConflictResolver::connectToLocalStorage()
                      this, QNSLOT(SavedSearchSyncConflictResolver,onUpdateSavedSearchComplete,SavedSearch,QUuid));
     QObject::connect(&m_localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,updateSavedSearchFailed,SavedSearch,ErrorString,QUuid),
                      this, QNSLOT(SavedSearchSyncConflictResolver,onUpdateSavedSearchFailed,SavedSearch,ErrorString,QUuid));
+    QObject::connect(&m_localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,findSavedSearchComplete,SavedSearch,QUuid),
+                     this, QNSLOT(SavedSearchSyncConflictResolver,onFindSavedSearchComplete,SavedSearch,QUuid));
+    QObject::connect(&m_localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,findSavedSearchFailed,SavedSearch,ErrorString,QUuid),
+                     this, QNSLOT(SavedSearchSyncConflictResolver,onFindSavedSearchFailed,SavedSearch,ErrorString,QUuid));
 }
 
-void SavedSearchSyncConflictResolver::processSavedSearchesConflictByName()
+void SavedSearchSyncConflictResolver::processSavedSearchesConflictByGuid()
 {
-    QNDEBUG(QStringLiteral("SavedSearchSyncConflictResolver::processSavedSearchesConflictByName"));
+    QNDEBUG(QStringLiteral("SavedSearchSyncConflictResolver::processSavedSearchesConflictByGuid"));
 
-    if (m_localConflict.hasGuid() && (m_localConflict.guid() == m_remoteSavedSearch.guid.ref())) {
+    // Need to understand whether there's a duplicate by name in the local storage for the new state
+    // of the remote saved search
+
+    if (m_cache.isFilled())
+    {
+        const QHash<QString,QString> & guidByNameHash = m_cache.guidByNameHash();
+        auto it = guidByNameHash.find(m_remoteSavedSearch.name.ref().toLower());
+        if (it == guidByNameHash.end()) {
+            QNDEBUG(QStringLiteral("As deduced by the existing tag info cache, there is no local tag with the same name "
+                                   "as the name from the new state of the remote tag, can safely override the local changes "
+                                   "with the remote changes: ") << m_remoteSavedSearch);
+            overrideLocalChangesWithRemoteChanges();
+            return;
+        }
+        // NOTE: no else block because even if we know the duplicate saved search by name exists, we still need to have its full
+        // state in order to rename it
+    }
+
+    SavedSearch dummySearch;
+    dummySearch.unsetLocalUid();
+    dummySearch.setName(m_remoteSavedSearch.name.ref());
+    m_findSavedSearchRequestId = QUuid::createUuid();
+    QNTRACE(QStringLiteral("Emitting the request to find saved search: request id = ") << m_findSavedSearchRequestId
+            << QStringLiteral(", saved search: ") << dummySearch);
+    emit findSavedSearch(dummySearch, m_findSavedSearchRequestId);
+}
+
+void SavedSearchSyncConflictResolver::processSavedSearchesConflictByName(const SavedSearch & localConflict)
+{
+    QNDEBUG(QStringLiteral("SavedSearchSyncConflictResolver::processSavedSearchesConflictByName: local conflict = ") << localConflict);
+
+    if (localConflict.hasGuid() && (localConflict.guid() == m_remoteSavedSearch.guid.ref())) {
         QNDEBUG(QStringLiteral("The conflicting saved searches match by name and guid => the changes from the remote "
                                "saved search should override the local changes"));
         overrideLocalChangesWithRemoteChanges();
@@ -297,13 +367,14 @@ void SavedSearchSyncConflictResolver::processSavedSearchesConflictByName()
                          &m_cache, QNSLOT(SavedSearchSyncConflictResolutionCache,fill));
 
         m_pendingCacheFilling = true;
+        m_savedSearchToBeRenamed = localConflict;
         QNTRACE(QStringLiteral("Emitting the request to fill the saved searches cache"));
         emit fillSavedSearchesCache();
         return;
     }
 
     QNDEBUG(QStringLiteral("The cache of saved search info has already been filled"));
-    renameConflictingLocalSavedSearch();
+    renameConflictingLocalSavedSearch(localConflict);
 }
 
 void SavedSearchSyncConflictResolver::overrideLocalChangesWithRemoteChanges()
@@ -313,7 +384,7 @@ void SavedSearchSyncConflictResolver::overrideLocalChangesWithRemoteChanges()
     m_state = State::OverrideLocalChangesWithRemoteChanges;
 
     SavedSearch search(m_localConflict);
-    search = m_remoteSavedSearch;
+    search.qevercloudSavedSearch() = m_remoteSavedSearch;
     search.setDirty(false);
     search.setLocal(false);
 
@@ -323,11 +394,11 @@ void SavedSearchSyncConflictResolver::overrideLocalChangesWithRemoteChanges()
     emit updateSavedSearch(search, m_updateSavedSearchRequestId);
 }
 
-void SavedSearchSyncConflictResolver::renameConflictingLocalSavedSearch()
+void SavedSearchSyncConflictResolver::renameConflictingLocalSavedSearch(const SavedSearch & localConflict)
 {
-    QNDEBUG(QStringLiteral("SavedSearchSyncConflictResolver::renameConflictingLocalSavedSearch"));
+    QNDEBUG(QStringLiteral("SavedSearchSyncConflictResolver::renameConflictingLocalSavedSearch: local conflict = ") << localConflict);
 
-    QString name = (m_localConflict.hasName() ? m_localConflict.name() : m_remoteSavedSearch.name.ref());
+    QString name = (localConflict.hasName() ? localConflict.name() : m_remoteSavedSearch.name.ref());
 
     const QHash<QString,QString> & guidByNameHash = m_cache.guidByNameHash();
 
@@ -335,16 +406,16 @@ void SavedSearchSyncConflictResolver::renameConflictingLocalSavedSearch()
 
     int suffix = 1;
     QString currentName = conflictingName;
-    auto it = guidByNameHash.find(currentName);
+    auto it = guidByNameHash.find(currentName.toLower());
     while(it != guidByNameHash.end()) {
         currentName = conflictingName + QStringLiteral(" (") + QString::number(suffix) + QStringLiteral(")");
         ++suffix;
-        it = guidByNameHash.find(currentName);
+        it = guidByNameHash.find(currentName.toLower());
     }
 
     conflictingName = currentName;
 
-    SavedSearch search(m_localConflict);
+    SavedSearch search(localConflict);
     search.setName(conflictingName);
     search.setDirty(true);
 

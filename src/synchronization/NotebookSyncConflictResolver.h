@@ -61,21 +61,25 @@ Q_SIGNALS:
     void fillNotebooksCache();
     void addNotebook(Notebook notebook, QUuid requestId);
     void updateNotebook(Notebook notebook, QUuid requestId);
+    void findNotebook(Notebook notebook, QUuid requestId);
 
 private Q_SLOTS:
     void onAddNotebookComplete(Notebook notebook, QUuid requestId);
     void onAddNotebookFailed(Notebook notebook, ErrorString errorDescription, QUuid requestId);
     void onUpdateNotebookComplete(Notebook notebook, QUuid requestId);
     void onUpdateNotebookFailed(Notebook notebook, ErrorString errorDescription, QUuid requestId);
+    void onFindNotebookComplete(Notebook notebook, QUuid requestId);
+    void onFindNotebookFailed(Notebook notebook, ErrorString errorDescription, QUuid requestId);
 
     void onCacheFilled();
     void onCacheFailed(ErrorString errorDescription);
 
 private:
     void connectToLocalStorage();
-    void processNotebooksConflictByName();
+    void processNotebooksConflictByGuid();
+    void processNotebooksConflictByName(const Notebook & localConflict);
     void overrideLocalChangesWithRemoteChanges();
-    void renameConflictingLocalNotebook();
+    void renameConflictingLocalNotebook(const Notebook & localConflict);
 
     struct State
     {
@@ -95,10 +99,13 @@ private:
     qevercloud::Notebook        m_remoteNotebook;
     Notebook                    m_localConflict;
 
+    Notebook                    m_notebookToBeRenamed;
+
     State::type                 m_state;
 
     QUuid                       m_addNotebookRequestId;
     QUuid                       m_updateNotebookRequestId;
+    QUuid                       m_findNotebookRequestId;
 
     bool                        m_started;
     bool                        m_pendingCacheFilling;

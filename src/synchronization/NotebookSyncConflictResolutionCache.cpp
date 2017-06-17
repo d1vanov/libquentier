@@ -308,7 +308,7 @@ void NotebookSyncConflictResolutionCache::processNotebook(const Notebook & noteb
         return;
     }
 
-    const QString & name = notebook.name();
+    QString name = notebook.name().toLower();
     m_notebookNameByLocalUid[notebook.localUid()] = name;
 
     if (!notebook.hasGuid()) {
