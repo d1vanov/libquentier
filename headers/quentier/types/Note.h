@@ -45,13 +45,13 @@ public:
     QN_DECLARE_LOCAL
 
 public:
-    Note();
+    explicit Note();
     Note(const Note & other);
     Note(Note && other);
     Note & operator=(const Note & other);
     Note & operator=(Note && other);
 
-    Note(const qevercloud::Note & other);
+    explicit Note(const qevercloud::Note & other);
     Note & operator=(const qevercloud::Note & other);
 
     virtual ~Note();

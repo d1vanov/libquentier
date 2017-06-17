@@ -42,14 +42,14 @@ public:
     QN_DECLARE_FAVORITED
 
 public:
-    Tag();
+    explicit Tag();
     Tag(const Tag & other);
     Tag(Tag && other);
     Tag & operator=(const Tag & other);
     Tag & operator=(Tag && other);
 
-    Tag(const qevercloud::Tag & other);
-    Tag(qevercloud::Tag && other);
+    explicit Tag(const qevercloud::Tag & other);
+    explicit Tag(qevercloud::Tag && other);
 
     virtual ~Tag();
 

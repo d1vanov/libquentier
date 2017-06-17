@@ -39,14 +39,14 @@ public:
     QN_DECLARE_DIRTY
 
 public:
-    LinkedNotebook();
+    explicit LinkedNotebook();
     LinkedNotebook(const LinkedNotebook & other);
     LinkedNotebook(LinkedNotebook && other);
     LinkedNotebook & operator=(const LinkedNotebook & other);
     LinkedNotebook & operator=(LinkedNotebook && other);
 
-    LinkedNotebook(const qevercloud::LinkedNotebook & linkedNotebook);
-    LinkedNotebook(qevercloud::LinkedNotebook && linkedNotebook);
+    explicit LinkedNotebook(const qevercloud::LinkedNotebook & linkedNotebook);
+    explicit LinkedNotebook(qevercloud::LinkedNotebook && linkedNotebook);
 
     virtual ~LinkedNotebook();
 

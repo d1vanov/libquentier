@@ -1073,7 +1073,7 @@ QList<SharedNotebook> LocalStorageManagerPrivate::listSharedNotebooksPerNotebook
     sharedNotebooks.reserve(qMax(enSharedNotebooks.size(), 0));
 
     for(auto it = enSharedNotebooks.constBegin(), end = enSharedNotebooks.constEnd(); it != end; ++it) {
-        sharedNotebooks << *it;
+        sharedNotebooks << SharedNotebook(*it);
     }
 
     return sharedNotebooks;

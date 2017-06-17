@@ -40,10 +40,10 @@ public:
     typedef qevercloud::ContactType::type ContactType;
 
 public:
-    SharedNote();
+    explicit SharedNote();
     SharedNote(const SharedNote & other);
     SharedNote(SharedNote && other);
-    SharedNote(const qevercloud::SharedNote & sharedNote);
+    explicit SharedNote(const qevercloud::SharedNote & sharedNote);
     SharedNote & operator=(const SharedNote & other);
     SharedNote & operator=(SharedNote && other);
     virtual ~SharedNote();

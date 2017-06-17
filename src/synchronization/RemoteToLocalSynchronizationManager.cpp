@@ -2685,10 +2685,9 @@ void RemoteToLocalSynchronizationManager::collectHighUpdateSequenceNumbers()
 
     for(auto it = m_linkedNotebooks.constBegin(), end = m_linkedNotebooks.constEnd(); it != end; ++it)
     {
-        const LinkedNotebook & linkedNotebook = *it;
+        LinkedNotebook linkedNotebook(*it);
         if (Q_UNLIKELY(!linkedNotebook.hasGuid())) {
-            QNWARNING(QStringLiteral("Detected a linked notebook without guid in the local storage: ")
-                      << linkedNotebook);
+            QNWARNING(QStringLiteral("Detected a linked notebook without guid: ") << linkedNotebook);
             continue;
         }
 
@@ -6796,7 +6795,7 @@ void RemoteToLocalSynchronizationManager::resolveSyncConflict(const qevercloud::
     // win
 
     LinkedNotebook linkedNotebook(localConflict);
-    linkedNotebook = remoteLinkedNotebook;
+    linkedNotebook.qevercloudLinkedNotebook() = remoteLinkedNotebook;
     linkedNotebook.setDirty(false);
 
     emitUpdateRequest(linkedNotebook);

@@ -39,10 +39,10 @@ public:
     typedef qevercloud::SharedNotebookPrivilegeLevel::type SharedNotebookPrivilegeLevel;
 
 public:
-    SharedNotebook();
+    explicit SharedNotebook();
     SharedNotebook(const SharedNotebook & other);
     SharedNotebook(SharedNotebook && other);
-    SharedNotebook(const qevercloud::SharedNotebook & qecSharedNotebook);
+    explicit SharedNotebook(const qevercloud::SharedNotebook & qecSharedNotebook);
     SharedNotebook & operator=(const SharedNotebook & other);
     SharedNotebook & operator=(SharedNotebook && other);
     virtual ~SharedNotebook();
