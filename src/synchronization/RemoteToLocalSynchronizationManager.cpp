@@ -649,10 +649,16 @@ void RemoteToLocalSynchronizationManager::emitUpdateRequest<Notebook>(const Note
 }
 
 template <>
-void RemoteToLocalSynchronizationManager::emitUpdateRequest<Note>(const Note & note, const Note *)
+void RemoteToLocalSynchronizationManager::emitUpdateRequest<Note>(const Note & note, const Note * pNoteToAdd)
 {
-    QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::emitUpdateRequest<Note>: note = ") << note);
+    QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::emitUpdateRequest<Note>: note = ") << note
+            << QStringLiteral("\nNote to add: ") << (pNoteToAdd ? pNoteToAdd->toString() : QStringLiteral("<null>")));
+
     getFullNoteDataAsyncAndUpdateInLocalStorage(note);
+
+    if (pNoteToAdd) {
+        emitAddRequest(*pNoteToAdd);
+    }
 }
 
 #define CHECK_PAUSED() \
@@ -2716,7 +2722,7 @@ void RemoteToLocalSynchronizationManager::onGetNoteAsyncFinished(qint32 errorCod
     QString noteGuid = note.guid();
 
     auto addIt = m_guidsOfNotesPendingDownloadForAddingToLocalStorage.find(noteGuid);
-    auto updateIt = ((addIt == m_guidsOfNotesPendingDownloadForUpdatingInLocalStorage.end())
+    auto updateIt = ((addIt == m_guidsOfNotesPendingDownloadForAddingToLocalStorage.end())
                      ? m_guidsOfNotesPendingDownloadForUpdatingInLocalStorage.find(noteGuid)
                      : m_guidsOfNotesPendingDownloadForUpdatingInLocalStorage.end());
 
@@ -2816,7 +2822,10 @@ void RemoteToLocalSynchronizationManager::onGetNoteAsyncFinished(qint32 errorCod
     {
         QNDEBUG(QStringLiteral("The added or updated note is the ink note, need to download the ink note image for it"));
 
-        pNotebook = getNotebookPerNote(note);
+        if (!pNotebook) {
+            pNotebook = getNotebookPerNote(note);
+        }
+
         if (pNotebook)
         {
             bool res = setupInkNoteImageDownloadingForNote(note, *pNotebook);
@@ -2841,20 +2850,6 @@ void RemoteToLocalSynchronizationManager::onGetNoteAsyncFinished(qint32 errorCod
         return;
     }
 
-    if (!pNotebook)
-    {
-        pNotebook = getNotebookPerNote(note);
-
-        if (Q_UNLIKELY(!pNotebook)) {
-            ErrorString errorDescription(QT_TR_NOOP("Detected attempt to update note in the local storage "
-                                                    "during the synchronization before the note's notebook was found"));
-            QNWARNING(errorDescription << QStringLiteral(": ") << note);
-            emit failure(errorDescription);
-            return;
-        }
-    }
-
-    note.setNotebookLocalUid(pNotebook->localUid());
     QUuid updateNoteRequestId = QUuid::createUuid();
     Q_UNUSED(m_updateNoteRequestIds.insert(updateNoteRequestId));
     QNTRACE(QStringLiteral("Emitting the request to update note in local storage: request id = ")
@@ -5681,7 +5676,15 @@ void RemoteToLocalSynchronizationManager::setupInkNoteImageDownloading(const QSt
                                                                       isPublicNotebook, storageFolderPath, this);
     QObject::connect(pDownloader, QNSIGNAL(InkNoteImageDownloader,finished,bool,QString,QString,ErrorString),
                      this, QNSLOT(RemoteToLocalSynchronizationManager,onInkNoteImageDownloadFinished,bool,QString,QString,ErrorString));
-    QThreadPool::globalInstance()->start(pDownloader);
+
+    // WARNING: it seems it's not possible to run ink note image downloading
+    // in a different thread, the error like this might appear: QObject: Cannot
+    // create children for a parent that is in a different thread.
+    // (Parent is QNetworkAccessManager(0x499b900), parent's thread is QThread(0x1b535b0), current thread is QThread(0x42ed270)
+
+    // QThreadPool::globalInstance()->start(pDownloader);
+
+    pDownloader->run();
 }
 
 bool RemoteToLocalSynchronizationManager::setupInkNoteImageDownloadingForNote(const Note & note, const Notebook & notebook)
@@ -5785,8 +5788,14 @@ bool RemoteToLocalSynchronizationManager::setupNoteThumbnailDownloading(const No
                                                                         isPublicNotebook, this);
     QObject::connect(pDownloader, QNSIGNAL(NoteThumbnailDownloader,finished,bool,QString,QByteArray,ErrorString),
                      this, QNSLOT(RemoteToLocalSynchronizationManager,onNoteThumbnailDownloadingFinished,bool,QString,QByteArray,ErrorString));
-    QThreadPool::globalInstance()->start(pDownloader);
+    // WARNING: it seems it's not possible to run note thumbnails downloading
+    // in a different thread, the error like this might appear: QObject: Cannot
+    // create children for a parent that is in a different thread.
+    // (Parent is QNetworkAccessManager(0x499b900), parent's thread is QThread(0x1b535b0), current thread is QThread(0x42ed270)
 
+    // QThreadPool::globalInstance()->start(pDownloader);
+
+    pDownloader->run();
     return true;
 }
 
@@ -5812,6 +5821,7 @@ Note RemoteToLocalSynchronizationManager::createConflictingNote(const Note & ori
     Note conflictingNote(originalNote);
     conflictingNote.setLocalUid(UidGenerator::Generate());
     conflictingNote.setGuid(QString());
+    conflictingNote.setUpdateSequenceNumber(-1);
     conflictingNote.setDirty(true);
     conflictingNote.setLocal(false);
 
