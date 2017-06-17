@@ -1792,7 +1792,6 @@ void RemoteToLocalSynchronizationManager::onExpungeDataElementCompleted(const El
     Q_UNUSED(expungeElementRequestIds.erase(it))
 
     performPostExpungeChecks<ElementType>();
-
     checkExpungesCompletion();
 }
 
@@ -1809,14 +1808,14 @@ void RemoteToLocalSynchronizationManager::onExpungeDataElementFailed(const Eleme
         return;
     }
 
+    QNDEBUG(QStringLiteral("Failed to expunge ") << typeName
+            << QStringLiteral(" from the local storage; won't panic since most likely the corresponding data element "
+                              "has never existed in the local storage in the first place. Error description: ")
+            << errorDescription);
     Q_UNUSED(expungeElementRequestIds.erase(it))
 
-    ErrorString error(QT_TR_NOOP("Failed to expunge the data item from the local storage"));
-    error.additionalBases().append(errorDescription.base());
-    error.additionalBases().append(errorDescription.additionalBases());
-    error.details() = errorDescription.details();
-    QNWARNING(error);
-    emit failure(error);
+    performPostExpungeChecks<ElementType>();
+    checkExpungesCompletion();
 }
 
 void RemoteToLocalSynchronizationManager::expungeTags()
