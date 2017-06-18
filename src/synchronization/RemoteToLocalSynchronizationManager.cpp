@@ -1451,7 +1451,7 @@ void RemoteToLocalSynchronizationManager::onAddDataElementFailed(const ElementTy
     if (it != addElementRequestIds.end())
     {
         QNWARNING(QStringLiteral("RemoteToLocalSynchronizationManager::onAddDataElementFailed<") << typeName
-                  << QStringLiteral(">: ") << typeName << QStringLiteral(" = ") << element << QStringLiteral(", error description = ")
+                  << QStringLiteral(">: ") << typeName << QStringLiteral(" = ") << element << QStringLiteral("\nError description = ")
                   << errorDescription << QStringLiteral(", requestId = ") << requestId);
 
         Q_UNUSED(addElementRequestIds.erase(it));
