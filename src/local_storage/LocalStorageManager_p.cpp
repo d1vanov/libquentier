@@ -1658,6 +1658,16 @@ bool LocalStorageManagerPrivate::addNote(Note & note, ErrorString & errorDescrip
             localUid = UidGenerator::Generate();
             note.setLocalUid(localUid);
             shouldCheckNoteExistence = false;
+
+            if (note.hasResources())
+            {
+                QList<Resource> resources = note.resources();
+                for(auto it = resources.begin(), end = resources.end(); it != end; ++it) {
+                    Resource & resource = *it;
+                    resource.setNoteLocalUid(localUid);
+                }
+                note.setResources(resources);
+            }
         }
     }
     else
