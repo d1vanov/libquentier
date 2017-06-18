@@ -31,9 +31,9 @@ QT_FORWARD_DECLARE_CLASS(ResourceRecognitionIndicesData)
 class QUENTIER_EXPORT ResourceRecognitionIndices: public Printable
 {
 public:
-    ResourceRecognitionIndices();
+    explicit ResourceRecognitionIndices();
     ResourceRecognitionIndices(const ResourceRecognitionIndices & other);
-    ResourceRecognitionIndices(const QByteArray & rawRecognitionIndicesData);
+    explicit ResourceRecognitionIndices(const QByteArray & rawRecognitionIndicesData);
     ResourceRecognitionIndices & operator=(const ResourceRecognitionIndices & other);
     virtual ~ResourceRecognitionIndices();
 

@@ -57,6 +57,11 @@ public:
 
     struct ResourceAdditionalInfo
     {
+        ResourceAdditionalInfo() :
+            localUid(),
+            isDirty(false)
+        {}
+
         QString  localUid;
         bool     isDirty;
 

@@ -44,14 +44,14 @@ public:
     QN_DECLARE_FAVORITED
 
 public:
-    Notebook();
+    explicit Notebook();
     Notebook(const Notebook & other);
     Notebook(Notebook && other);
     Notebook & operator=(const Notebook & other);
     Notebook & operator=(Notebook && other);
 
-    Notebook(const qevercloud::Notebook & other);
-    Notebook(qevercloud::Notebook && other);
+    explicit Notebook(const qevercloud::Notebook & other);
+    explicit Notebook(qevercloud::Notebook && other);
     Notebook & operator=(const qevercloud::Notebook & other);
     Notebook & operator=(qevercloud::Notebook && other);
 

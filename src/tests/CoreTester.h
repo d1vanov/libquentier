@@ -76,8 +76,8 @@ private slots:
     void localStorageManagedIndividualUserTest();
 
     void localStorageManagerSequentialUpdatesTest();
-
     void localStorageManagerAccountHighUsnTest();
+    void localStorageManagerAddNoteWithoutLocalUidTest();
 
     void localStorageManagerListSavedSearchesTest();
     void localStorageManagerListLinkedNotebooksTest();

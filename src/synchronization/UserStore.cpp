@@ -61,7 +61,7 @@ qint32 UserStore::getUser(User & user, ErrorString & errorDescription, qint32 & 
 {
     try
     {
-        user = m_pQecUserStore->getUser(m_pQecUserStore->authenticationToken());
+        user.qevercloudUser() = m_pQecUserStore->getUser(m_pQecUserStore->authenticationToken());
         return 0;
     }
     catch(const qevercloud::EDAMUserException & userException)

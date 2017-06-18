@@ -591,6 +591,7 @@ void NoteStore::onGetNoteAsyncFinished(QVariant result, QSharedPointer<EverCloud
     }
 
     Note note;
+    note.unsetLocalUid();
     note.setGuid(noteGuid);
 
     ErrorString errorDescription;
@@ -626,7 +627,7 @@ void NoteStore::onGetNoteAsyncFinished(QVariant result, QSharedPointer<EverCloud
 
     qevercloud::Note qecNote = result.value<qevercloud::Note>();
 
-    note = Note(qecNote);
+    note.qevercloudNote() = qecNote;
     note.setLocal(false);
     note.setDirty(false);
 

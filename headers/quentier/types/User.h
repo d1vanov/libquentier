@@ -41,9 +41,9 @@ public:
     typedef qevercloud::ServiceLevel::type      ServiceLevel;
 
 public:
-    User();
-    User(const qevercloud::User & user);
-    User(qevercloud::User && user);
+    explicit User();
+    explicit User(const qevercloud::User & user);
+    explicit User(qevercloud::User && user);
     User(const User & other);
     User(User && other);
     User & operator=(const User & other);

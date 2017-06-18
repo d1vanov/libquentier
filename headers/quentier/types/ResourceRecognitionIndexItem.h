@@ -31,7 +31,7 @@ QT_FORWARD_DECLARE_CLASS(ResourceRecognitionIndexItemData)
 class QUENTIER_EXPORT ResourceRecognitionIndexItem: public Printable
 {
 public:
-    ResourceRecognitionIndexItem();
+    explicit ResourceRecognitionIndexItem();
     ResourceRecognitionIndexItem(const ResourceRecognitionIndexItem & other);
     ResourceRecognitionIndexItem & operator=(const ResourceRecognitionIndexItem & other);
     virtual ~ResourceRecognitionIndexItem();

@@ -34,10 +34,10 @@ public:
     QN_DECLARE_LOCAL
 
 public:
-    Resource();
+    explicit Resource();
     Resource(const Resource & other);
     Resource(Resource && other);
-    Resource(const qevercloud::Resource & resource);
+    explicit Resource(const qevercloud::Resource & resource);
     Resource & operator=(const Resource & other);
     Resource & operator=(Resource && other);
     virtual ~Resource();

@@ -46,14 +46,14 @@ public:
     typedef qevercloud::SavedSearchScope  SavedSearchScope;
 
 public:
-    SavedSearch();
+    explicit SavedSearch();
     SavedSearch(const SavedSearch & other);
     SavedSearch(SavedSearch && other);
     SavedSearch & operator=(const SavedSearch & other);
     SavedSearch & operator=(SavedSearch && other);
 
-    SavedSearch(const qevercloud::SavedSearch & search);
-    SavedSearch(qevercloud::SavedSearch && search);
+    explicit SavedSearch(const qevercloud::SavedSearch & search);
+    explicit SavedSearch(qevercloud::SavedSearch && search);
 
     virtual ~SavedSearch();
 

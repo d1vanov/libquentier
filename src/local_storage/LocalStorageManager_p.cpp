@@ -993,9 +993,16 @@ QList<Notebook> LocalStorageManagerPrivate::listNotebooks(const LocalStorageMana
 {
     QNDEBUG(QStringLiteral("LocalStorageManagerPrivate::listNotebooks: flag = ") << flag);
 
-    QString linkedNotebookGuidSqlQueryCondition = (linkedNotebookGuid.isEmpty()
-                                                   ? QStringLiteral("linkedNotebookGuid IS NULL")
-                                                   : QString::fromUtf8("linkedNotebookGuid = '%1'").arg(sqlEscapeString(linkedNotebookGuid)));
+    QString linkedNotebookGuidSqlQueryCondition;
+    if (!linkedNotebookGuid.isNull())
+    {
+        if (linkedNotebookGuid.isEmpty()) {
+            linkedNotebookGuidSqlQueryCondition = QStringLiteral("linkedNotebookGuid IS NULL");
+        }
+        else {
+            linkedNotebookGuidSqlQueryCondition = QString::fromUtf8("linkedNotebookGuid = '%1'").arg(sqlEscapeString(linkedNotebookGuid));
+        }
+    }
 
     return listObjects<Notebook, LocalStorageManager::ListNotebooksOrder::type>(flag, errorDescription, limit,
                                                                                 offset, order, orderDirection,
@@ -1066,7 +1073,7 @@ QList<SharedNotebook> LocalStorageManagerPrivate::listSharedNotebooksPerNotebook
     sharedNotebooks.reserve(qMax(enSharedNotebooks.size(), 0));
 
     for(auto it = enSharedNotebooks.constBegin(), end = enSharedNotebooks.constEnd(); it != end; ++it) {
-        sharedNotebooks << *it;
+        sharedNotebooks << SharedNotebook(*it);
     }
 
     return sharedNotebooks;
@@ -1651,6 +1658,16 @@ bool LocalStorageManagerPrivate::addNote(Note & note, ErrorString & errorDescrip
             localUid = UidGenerator::Generate();
             note.setLocalUid(localUid);
             shouldCheckNoteExistence = false;
+
+            if (note.hasResources())
+            {
+                QList<Resource> resources = note.resources();
+                for(auto it = resources.begin(), end = resources.end(); it != end; ++it) {
+                    Resource & resource = *it;
+                    resource.setNoteLocalUid(localUid);
+                }
+                note.setResources(resources);
+            }
         }
     }
     else

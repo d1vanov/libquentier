@@ -1006,6 +1006,17 @@ void CoreTester::localStorageManagerAccountHighUsnTest()
     CATCH_EXCEPTION();
 }
 
+void CoreTester::localStorageManagerAddNoteWithoutLocalUidTest()
+{
+    try
+    {
+        QString error;
+        bool res = TestAddingNoteWithoutLocalUid(error);
+        QVERIFY2(res == true, qPrintable(error));
+    }
+    CATCH_EXCEPTION();
+}
+
 void CoreTester::localStorageManagerListSavedSearchesTest()
 {
     try
