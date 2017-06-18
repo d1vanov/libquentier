@@ -916,7 +916,7 @@ QTextStream & Note::print(QTextStream & strm) const
     INSERT_DELIMITER;
 
     if (d->m_qecNote.contentHash.isSet()) {
-        strm << QStringLiteral("contentHash: ") << d->m_qecNote.contentHash;
+        strm << QStringLiteral("contentHash: ") << d->m_qecNote.contentHash.ref().toHex();
     }
     else {
         strm << QStringLiteral("contentHash is not set");
