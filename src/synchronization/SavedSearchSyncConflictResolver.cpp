@@ -177,7 +177,8 @@ void SavedSearchSyncConflictResolver::onUpdateSavedSearchComplete(SavedSearch se
             QNDEBUG(QStringLiteral("The duplicate by guid exists in the local storage, updating it with the state "
                                    "of the remote saved search"));
 
-            SavedSearch search(m_remoteSavedSearch);
+            SavedSearch search(m_localConflict);
+            search.qevercloudSavedSearch() = m_remoteSavedSearch;
             search.setDirty(false);
             search.setLocal(false);
 
