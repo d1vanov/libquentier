@@ -2123,5 +2123,136 @@ bool TestAccountHighUsnInLocalStorage(QString & errorDescription)
     return true;
 }
 
+bool TestAddingNoteWithoutLocalUid(QString & errorDescription)
+{
+    // 1) ========== Create LocalStorageManager =============
+
+    const bool startFromScratch = true;
+    const bool overrideLock = false;
+    Account account(QStringLiteral("LocalStorageManagerAddNoteWithoutLocalUidTestFakeUser"), Account::Type::Evernote, 0);
+    LocalStorageManager localStorageManager(account, startFromScratch, overrideLock);
+
+    ErrorString error;
+
+    // 2) ========== Add a notebook in order to test adding notes ==========
+
+    Notebook notebook;
+    notebook.setGuid(UidGenerator::Generate());
+    notebook.setName(QStringLiteral("First notebook"));
+
+    bool res = localStorageManager.addNotebook(notebook, error);
+    if (!res) {
+        errorDescription = error.nonLocalizedString();
+        return false;
+    }
+
+    // 3) ========== Try to add a note without local uid without tags or resources ===========
+    Note firstNote;
+    firstNote.unsetLocalUid();
+    firstNote.setGuid(UidGenerator::Generate());
+    firstNote.setNotebookGuid(notebook.guid());
+    firstNote.setTitle(QStringLiteral("First note"));
+    firstNote.setContent(QStringLiteral("<en-note>first note</en-note>"));
+
+    error.clear();
+    res = localStorageManager.addNote(firstNote, error);
+    if (!res) {
+        errorDescription = error.nonLocalizedString();
+        return false;
+    }
+
+    if (firstNote.localUid().isEmpty()) {
+        errorDescription = QStringLiteral("Note local uid is empty after LocalStorageManager::addNote method returning");
+        return false;
+    }
+
+    // 4) ========== Add some tags in order to test adding notes with tags ==========
+    Tag firstTag;
+    firstTag.setGuid(UidGenerator::Generate());
+    firstTag.setName(QStringLiteral("First"));
+
+    Tag secondTag;
+    secondTag.setGuid(UidGenerator::Generate());
+    secondTag.setName(QStringLiteral("Second"));
+
+    Tag thirdTag;
+    thirdTag.setGuid(UidGenerator::Generate());
+    thirdTag.setName(QStringLiteral("Third"));
+
+    error.clear();
+    res = localStorageManager.addTag(firstTag, error);
+    if (!res) {
+        errorDescription = error.nonLocalizedString();
+        return false;
+    }
+
+    error.clear();
+    res = localStorageManager.addTag(secondTag, error);
+    if (!res) {
+        errorDescription = error.nonLocalizedString();
+        return false;
+    }
+
+    error.clear();
+    res = localStorageManager.addTag(thirdTag, error);
+    if (!res) {
+        errorDescription = error.nonLocalizedString();
+        return false;
+    }
+
+    // 5) ========== Try to add a note without local uid with tag guids  ==========
+    Note secondNote;
+    secondNote.unsetLocalUid();
+    secondNote.setGuid(UidGenerator::Generate());
+    secondNote.setNotebookGuid(notebook.guid());
+    secondNote.setTitle(QStringLiteral("Second note"));
+    secondNote.setContent(QStringLiteral("<en-note>second note</en-note>"));
+    secondNote.addTagGuid(firstTag.guid());
+    secondNote.addTagGuid(secondTag.guid());
+    secondNote.addTagGuid(thirdTag.guid());
+
+    error.clear();
+    res = localStorageManager.addNote(secondNote, error);
+    if (!res) {
+        errorDescription = error.nonLocalizedString();
+        return false;
+    }
+
+    // 6) ========== Try to add a note without local uid with tag guids and with resources ==========
+    Note thirdNote;
+    thirdNote.unsetLocalUid();
+    thirdNote.setGuid(UidGenerator::Generate());
+    thirdNote.setNotebookGuid(notebook.guid());
+    thirdNote.setTitle(QStringLiteral("Third note"));
+    thirdNote.setContent(QStringLiteral("<en-note>third note</en-note>"));
+    thirdNote.addTagGuid(firstTag.guid());
+    thirdNote.addTagGuid(secondTag.guid());
+    thirdNote.addTagGuid(thirdTag.guid());
+
+    Resource resource;
+    resource.setGuid(UidGenerator::Generate());
+    resource.setNoteGuid(thirdNote.guid());
+#if QT_VERSION > QT_VERSION_CHECK(5, 4, 0)
+    QByteArray dataBody = QByteArray::fromStdString(std::string("Data"));
+#else
+    QByteArray dataBody = QByteArray("Data");
+#endif
+    resource.setDataBody(dataBody);
+    resource.setDataSize(dataBody.size());
+    resource.setDataHash(QCryptographicHash::hash(dataBody, QCryptographicHash::Md5));
+    resource.setMime(QStringLiteral("text/plain"));
+
+    thirdNote.addResource(resource);
+
+    error.clear();
+    res = localStorageManager.addNote(thirdNote, error);
+    if (!res) {
+        errorDescription = error.nonLocalizedString();
+        return false;
+    }
+
+    return true;
+}
+
 } // namespace test
 } // namespace quentier
