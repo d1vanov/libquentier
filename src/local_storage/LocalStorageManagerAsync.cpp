@@ -814,17 +814,17 @@ void LocalStorageManagerAsync::onExpungeLinkedNotebookRequest(LinkedNotebook lin
     }
 }
 
-void LocalStorageManagerAsync::onNoteCountRequest(QUuid requestId)
+void LocalStorageManagerAsync::onGetNoteCountRequest(QUuid requestId)
 {
     try
     {
         ErrorString errorDescription;
         int count = m_pLocalStorageManager->noteCount(errorDescription);
         if (count < 0) {
-            emit noteCountFailed(errorDescription, requestId);
+            emit getNoteCountFailed(errorDescription, requestId);
         }
         else {
-            emit noteCountComplete(count, requestId);
+            emit getNoteCountComplete(count, requestId);
         }
     }
     catch(const std::exception & e)
@@ -833,21 +833,21 @@ void LocalStorageManagerAsync::onNoteCountRequest(QUuid requestId)
         error.details() = QString::fromUtf8(e.what());
         SysInfo sysInfo;
         QNCRITICAL(error << QStringLiteral("; backtrace: ") << sysInfo.stackTrace());
-        emit noteCountFailed(error, requestId);
+        emit getNoteCountFailed(error, requestId);
     }
 }
 
-void LocalStorageManagerAsync::onNoteCountPerNotebookRequest(Notebook notebook, QUuid requestId)
+void LocalStorageManagerAsync::onGetNoteCountPerNotebookRequest(Notebook notebook, QUuid requestId)
 {
     try
     {
         ErrorString errorDescription;
         int count = m_pLocalStorageManager->noteCountPerNotebook(notebook, errorDescription);
         if (count < 0) {
-            emit noteCountPerNotebookFailed(errorDescription, notebook, requestId);
+            emit getNoteCountPerNotebookFailed(errorDescription, notebook, requestId);
         }
         else {
-            emit noteCountPerNotebookComplete(count, notebook, requestId);
+            emit getNoteCountPerNotebookComplete(count, notebook, requestId);
         }
     }
     catch(const std::exception & e)
@@ -856,21 +856,21 @@ void LocalStorageManagerAsync::onNoteCountPerNotebookRequest(Notebook notebook, 
         error.details() = QString::fromUtf8(e.what());
         SysInfo sysInfo;
         QNCRITICAL(error << QStringLiteral("; backtrace: ") << sysInfo.stackTrace());
-        emit noteCountPerNotebookFailed(error, notebook, requestId);
+        emit getNoteCountPerNotebookFailed(error, notebook, requestId);
     }
 }
 
-void LocalStorageManagerAsync::onNoteCountPerTagRequest(Tag tag, QUuid requestId)
+void LocalStorageManagerAsync::onGetNoteCountPerTagRequest(Tag tag, QUuid requestId)
 {
     try
     {
         ErrorString errorDescription;
         int count = m_pLocalStorageManager->noteCountPerTag(tag, errorDescription);
         if (count < 0) {
-            emit noteCountPerTagFailed(errorDescription, tag, requestId);
+            emit getNoteCountPerTagFailed(errorDescription, tag, requestId);
         }
         else {
-            emit noteCountPerTagComplete(count, tag, requestId);
+            emit getNoteCountPerTagComplete(count, tag, requestId);
         }
     }
     catch(const std::exception & e)
@@ -879,7 +879,7 @@ void LocalStorageManagerAsync::onNoteCountPerTagRequest(Tag tag, QUuid requestId
         error.details() = QString::fromUtf8(e.what());
         SysInfo sysInfo;
         QNCRITICAL(error << QStringLiteral("; backtrace: ") << sysInfo.stackTrace());
-        emit noteCountPerTagFailed(error, tag, requestId);
+        emit getNoteCountPerTagFailed(error, tag, requestId);
     }
 }
 

@@ -140,12 +140,12 @@ Q_SIGNALS:
     void expungeLinkedNotebookFailed(LinkedNotebook linkedNotebook, ErrorString errorDescription, QUuid requestId = QUuid());
 
     // Note-related signals:
-    void noteCountComplete(int noteCount, QUuid requestId = QUuid());
-    void noteCountFailed(ErrorString errorDescription, QUuid requestId = QUuid());
-    void noteCountPerNotebookComplete(int noteCount, Notebook notebook, QUuid requestId = QUuid());
-    void noteCountPerNotebookFailed(ErrorString errorDescription, Notebook notebook, QUuid requestId = QUuid());
-    void noteCountPerTagComplete(int noteCount, Tag tag, QUuid requestId = QUuid());
-    void noteCountPerTagFailed(ErrorString errorDescription, Tag tag, QUuid requestId = QUuid());
+    void getNoteCountComplete(int noteCount, QUuid requestId = QUuid());
+    void getNoteCountFailed(ErrorString errorDescription, QUuid requestId = QUuid());
+    void getNoteCountPerNotebookComplete(int noteCount, Notebook notebook, QUuid requestId = QUuid());
+    void getNoteCountPerNotebookFailed(ErrorString errorDescription, Notebook notebook, QUuid requestId = QUuid());
+    void getNoteCountPerTagComplete(int noteCount, Tag tag, QUuid requestId = QUuid());
+    void getNoteCountPerTagFailed(ErrorString errorDescription, Tag tag, QUuid requestId = QUuid());
     void addNoteComplete(Note note, QUuid requestId = QUuid());
     void addNoteFailed(Note note, ErrorString errorDescription, QUuid requestId = QUuid());
     void updateNoteComplete(Note note, bool updateResources, bool updateTags, QUuid requestId = QUuid());
@@ -326,9 +326,9 @@ public Q_SLOTS:
     void onExpungeLinkedNotebookRequest(LinkedNotebook linkedNotebook, QUuid requestId);
 
     // Note-related slots:
-    void onNoteCountRequest(QUuid requestId);
-    void onNoteCountPerNotebookRequest(Notebook notebook, QUuid requestId);
-    void onNoteCountPerTagRequest(Tag tag, QUuid requestId);
+    void onGetNoteCountRequest(QUuid requestId);
+    void onGetNoteCountPerNotebookRequest(Notebook notebook, QUuid requestId);
+    void onGetNoteCountPerTagRequest(Tag tag, QUuid requestId);
     void onAddNoteRequest(Note note, QUuid requestId);
     void onUpdateNoteRequest(Note note, bool updateResources, bool updateTags, QUuid requestId);
     void onFindNoteRequest(Note note, bool withResourceBinaryData, QUuid requestId);
