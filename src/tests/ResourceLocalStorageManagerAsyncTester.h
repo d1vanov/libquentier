@@ -72,8 +72,6 @@ private Q_SLOTS:
     void onExpungeResourceCompleted(Resource resource, QUuid requestId);
     void onExpungeResourceFailed(Resource resource, ErrorString errorDescription, QUuid requestId);
 
-    void onFailure(ErrorString errorDescription);
-
 private:
     void createConnections();
     void clear();

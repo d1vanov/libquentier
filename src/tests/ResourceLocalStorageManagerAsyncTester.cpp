@@ -440,17 +440,8 @@ void ResourceLocalStorageManagerAsyncTester::onExpungeResourceFailed(Resource re
     emit failure(errorDescription.nonLocalizedString());
 }
 
-void ResourceLocalStorageManagerAsyncTester::onFailure(ErrorString errorDescription)
-{
-    QNWARNING(QStringLiteral("ResourceLocalStorageManagerAsyncTester::onFailure: ") << errorDescription);
-    emit failure(errorDescription.nonLocalizedString());
-}
-
 void ResourceLocalStorageManagerAsyncTester::createConnections()
 {
-    QObject::connect(m_pLocalStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,failure,ErrorString),
-                     this, QNSLOT(ResourceLocalStorageManagerAsyncTester,onFailure,ErrorString));
-
     QObject::connect(m_pLocalStorageManagerThread, QNSIGNAL(QThread,started),
                      m_pLocalStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,init));
     QObject::connect(m_pLocalStorageManagerThread, QNSIGNAL(QThread,finished),

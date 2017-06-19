@@ -48,9 +48,6 @@ public:
     const LocalStorageCacheManager * localStorageCacheManager() const;
 
 Q_SIGNALS:
-    // Generic failure signal
-    void failure(ErrorString errorDescription);
-
     // Sent when the initialization is complete
     void initialized();
 

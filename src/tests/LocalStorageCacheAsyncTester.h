@@ -98,8 +98,6 @@ private Q_SLOTS:
     void onUpdateSavedSearchCompleted(SavedSearch search, QUuid requestId);
     void onUpdateSavedSearchFailed(SavedSearch search, ErrorString errorDescription, QUuid requestId);
 
-    void onFailure(ErrorString errorDescription);
-
 private:
     void createConnections();
     void clear();

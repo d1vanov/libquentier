@@ -77,8 +77,6 @@ private Q_SLOTS:
     void onExpungeLinkedNotebookCompleted(LinkedNotebook notebook, QUuid requestId);
     void onExpungeLinkedNotebookFailed(LinkedNotebook notebook, ErrorString errorDescription, QUuid requestId);
 
-    void onFailure(ErrorString errorDescription);
-
 private:
     void createConnections();
     void clear();

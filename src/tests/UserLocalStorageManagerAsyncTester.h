@@ -67,8 +67,6 @@ private Q_SLOTS:
     void onExpungeUserCompleted(User user, QUuid requestId);
     void onExpungeUserFailed(User user, ErrorString errorDescription, QUuid requestId);
 
-    void onFailure(ErrorString errorDescription);
-
 private:
     void createConnections();
     void clear();

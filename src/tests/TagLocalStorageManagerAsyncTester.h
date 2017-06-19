@@ -73,8 +73,6 @@ private Q_SLOTS:
     void onExpungeTagCompleted(Tag tag, QStringList expungedChildTagLocalUids, QUuid requestId);
     void onExpungeTagFailed(Tag tag, ErrorString errorDescription, QUuid requestId);
 
-    void onFailure(ErrorString errorDescription);
-
 private:
     void createConnections();
     void clear();

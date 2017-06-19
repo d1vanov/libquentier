@@ -297,17 +297,8 @@ void UserLocalStorageManagerAsyncTester::onExpungeUserFailed(User user, ErrorStr
     emit failure(errorDescription.nonLocalizedString());
 }
 
-void UserLocalStorageManagerAsyncTester::onFailure(ErrorString errorDescription)
-{
-    QNWARNING("UserLocalStorageManagerAsyncTester::onFailure: " << errorDescription);
-    emit failure(errorDescription.nonLocalizedString());
-}
-
 void UserLocalStorageManagerAsyncTester::createConnections()
 {
-    QObject::connect(m_pLocalStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,failure,ErrorString),
-                     this, QNSLOT(UserLocalStorageManagerAsyncTester,onFailure,ErrorString));
-
     QObject::connect(m_pLocalStorageManagerThread, QNSIGNAL(QThread,started),
                      m_pLocalStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,init));
     QObject::connect(m_pLocalStorageManagerThread, QNSIGNAL(QThread,finished),

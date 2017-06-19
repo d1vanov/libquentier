@@ -371,17 +371,8 @@ void LinkedNotebookLocalStorageManagerAsyncTester::onExpungeLinkedNotebookFailed
     emit failure(errorDescription.nonLocalizedString());
 }
 
-void LinkedNotebookLocalStorageManagerAsyncTester::onFailure(ErrorString errorDescription)
-{
-    QNWARNING(QStringLiteral("LinkedNotebookLocalStorageManagerAsyncTester::onFailure: ") << errorDescription);
-    emit failure(errorDescription.nonLocalizedString());
-}
-
 void LinkedNotebookLocalStorageManagerAsyncTester::createConnections()
 {
-    QObject::connect(m_pLocalStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,failure,ErrorString),
-                     this, QNSLOT(LinkedNotebookLocalStorageManagerAsyncTester,onFailure,ErrorString));
-
     QObject::connect(m_pLocalStorageManagerThread, QNSIGNAL(QThread,started), m_pLocalStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,init));
     QObject::connect(m_pLocalStorageManagerThread, QNSIGNAL(QThread,finished), m_pLocalStorageManagerThread, QNSLOT(QThread,deleteLater));
 

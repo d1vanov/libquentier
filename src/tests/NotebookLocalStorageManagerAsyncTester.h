@@ -92,8 +92,6 @@ private Q_SLOTS:
     void onExpungeNotebookCompleted(Notebook notebook, QUuid requestId);
     void onExpungeNotebookFailed(Notebook notebook, ErrorString errorDescription, QUuid requestId);
 
-    void onFailure(ErrorString errorDescription);
-
 private:
     void createConnections();
     void clear();

@@ -678,17 +678,8 @@ void LocalStorageCacheAsyncTester::onUpdateSavedSearchFailed(SavedSearch search,
     emit failure(errorDescription.nonLocalizedString());
 }
 
-void LocalStorageCacheAsyncTester::onFailure(ErrorString errorDescription)
-{
-    QNWARNING(QStringLiteral("LocalStorageCacheAsyncTester::onFailure: ") << errorDescription);
-    emit failure(errorDescription.nonLocalizedString());
-}
-
 void LocalStorageCacheAsyncTester::createConnections()
 {
-    QObject::connect(m_pLocalStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,failure,ErrorString),
-                     this, QNSLOT(LocalStorageCacheAsyncTester,onFailure,ErrorString));
-
     QObject::connect(m_pLocalStorageManagerThread, QNSIGNAL(QThread,started),
                      m_pLocalStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,init));
     QObject::connect(m_pLocalStorageManagerThread, QNSIGNAL(QThread,finished),

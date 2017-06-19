@@ -76,8 +76,6 @@ private Q_SLOTS:
     void onExpungeSavedSearchCompleted(SavedSearch search, QUuid requestId);
     void onExpungeSavedSearchFailed(SavedSearch search, ErrorString errorDescription, QUuid requestId);
 
-    void onFailure(ErrorString errorDescription);
-
 private:
     void createConnections();
     void clear();

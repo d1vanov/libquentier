@@ -86,8 +86,6 @@ private Q_SLOTS:
     void onExpungeNoteCompleted(Note note, QUuid requestId);
     void onExpungeNoteFailed(Note note, ErrorString errorDescription, QUuid requestId);
 
-    void onFailure(ErrorString errorDescription);
-
 private:
     void createConnections();
     void clear();
