@@ -1799,7 +1799,7 @@ void LocalStorageManagerAsync::onListSavedSearchesRequest(LocalStorageManager::L
     }
 }
 
-void LocalStorageManagerAsync::onExpungeSavedSearch(SavedSearch search, QUuid requestId)
+void LocalStorageManagerAsync::onExpungeSavedSearchRequest(SavedSearch search, QUuid requestId)
 {
     try
     {

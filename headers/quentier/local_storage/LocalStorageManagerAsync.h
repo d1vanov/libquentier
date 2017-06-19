@@ -395,7 +395,7 @@ public Q_SLOTS:
                                     LocalStorageManager::ListSavedSearchesOrder::type order,
                                     LocalStorageManager::OrderDirection::type orderDirection,
                                     QUuid requestId);
-    void onExpungeSavedSearch(SavedSearch search, QUuid requestId);
+    void onExpungeSavedSearchRequest(SavedSearch search, QUuid requestId);
 
     void onAccountHighUsnRequest(QString linkedNotebookGuid, QUuid requestId);
 

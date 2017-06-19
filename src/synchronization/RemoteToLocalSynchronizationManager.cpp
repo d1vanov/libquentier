@@ -3025,7 +3025,7 @@ void RemoteToLocalSynchronizationManager::connectToLocalStorage()
     QObject::connect(this, QNSIGNAL(RemoteToLocalSynchronizationManager,findSavedSearch,SavedSearch,QUuid),
                      &m_localStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,onFindSavedSearchRequest,SavedSearch,QUuid));
     QObject::connect(this, QNSIGNAL(RemoteToLocalSynchronizationManager,expungeSavedSearch,SavedSearch,QUuid),
-                     &m_localStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,onExpungeSavedSearch,SavedSearch,QUuid));
+                     &m_localStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,onExpungeSavedSearchRequest,SavedSearch,QUuid));
     QObject::connect(this, QNSIGNAL(RemoteToLocalSynchronizationManager,requestAccountHighUsn,QString,QUuid),
                      &m_localStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,onAccountHighUsnRequest,QString,QUuid));
 
@@ -3264,7 +3264,7 @@ void RemoteToLocalSynchronizationManager::disconnectFromLocalStorage()
     QObject::disconnect(this, QNSIGNAL(RemoteToLocalSynchronizationManager,findSavedSearch,SavedSearch,QUuid),
                         &m_localStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,onFindSavedSearchRequest,SavedSearch,QUuid));
     QObject::disconnect(this, QNSIGNAL(RemoteToLocalSynchronizationManager,expungeSavedSearch,SavedSearch,QUuid),
-                        &m_localStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,onExpungeSavedSearch,SavedSearch,QUuid));
+                        &m_localStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,onExpungeSavedSearchRequest,SavedSearch,QUuid));
     QObject::disconnect(this, QNSIGNAL(RemoteToLocalSynchronizationManager,requestAccountHighUsn,QString,QUuid),
                         &m_localStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,onAccountHighUsnRequest,QString,QUuid));
 
