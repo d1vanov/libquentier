@@ -69,6 +69,9 @@ public:
                   const QString & authToken = QString(), const bool writeUserDataToLocalStorage = true);
     const User & user() const;
 
+    bool downloadedSyncChunks() const { return m_syncChunksDownloaded; }
+    bool downloadedLinkedNotebooksSyncChunks() const { return m_linkedNotebooksSyncChunksDownloaded; }
+
     bool shouldDownloadThumbnailsForNotes() const;
     bool shouldDownloadInkNoteImages() const;
     QString inkNoteImagesStoragePath() const;

@@ -663,22 +663,30 @@ void SynchronizationManagerPrivate::onRateLimitExceeded(qint32 secondsToWait)
 
     qevercloud::Timestamp lastSyncTime = QDateTime::currentMSecsSinceEpoch();
 
-    if (updateCount > 0)
+    bool shouldUpdatePersistentSyncSettings = false;
+
+    if ((updateCount > 0) && m_remoteToLocalSyncManager.downloadedSyncChunks())
     {
         m_lastUpdateCount = updateCount;
         m_lastSyncTime = lastSyncTime;
+        shouldUpdatePersistentSyncSettings = true;
     }
-    else if (!updateCountsByLinkedNotebookGuid.isEmpty())
+    else if (!updateCountsByLinkedNotebookGuid.isEmpty() &&
+             m_remoteToLocalSyncManager.downloadedLinkedNotebooksSyncChunks())
     {
         for(auto it = updateCountsByLinkedNotebookGuid.constBegin(),
             end = updateCountsByLinkedNotebookGuid.constEnd(); it != end; ++it)
         {
             m_cachedLinkedNotebookLastUpdateCountByGuid[it.key()] = it.value();
             m_cachedLinkedNotebookLastSyncTimeByGuid[it.key()] = lastSyncTime;
+            shouldUpdatePersistentSyncSettings = true;
         }
     }
 
-    updatePersistentSyncSettings();
+    if (shouldUpdatePersistentSyncSettings) {
+        updatePersistentSyncSettings();
+    }
+
     emit rateLimitExceeded(secondsToWait);
 }
 
