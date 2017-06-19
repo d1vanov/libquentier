@@ -129,6 +129,7 @@ private Q_SLOTS:
                                      QHash<QString,qevercloud::Timestamp> lastSyncTimeByLinkedNotebookGuid);
     void onRemoteToLocalSyncPaused(bool pendingAuthenticaton);
     void onRemoteToLocalSyncStopped();
+    void onRemoteToLocalSyncFailure(ErrorString errorDescription);
 
     void onShouldRepeatIncrementalSync();
     void onConflictDetectedDuringLocalChangesSending();
@@ -136,6 +137,7 @@ private Q_SLOTS:
     void onLocalChangesSent(qint32 lastUpdateCount, QHash<QString,qint32> lastUpdateCountByLinkedNotebookGuid);
     void onSendLocalChangesPaused(bool pendingAuthenticaton);
     void onSendLocalChangesStopped();
+    void onSendLocalChangesFailure(ErrorString errorDescription);
 
     void onRateLimitExceeded(qint32 secondsToWait);
 
@@ -200,9 +202,6 @@ private:
     void onDeleteAuthTokenFinished();
     void onDeleteShardIdFinished();
 
-    void onAccountHighUpdateSequenceNumbersReceived(qint32 ownHighUsn, QHash<QString,qint32> highUsnByLinkedNotebookGuid);
-    void onAccountHighUpdateSequenceNumbersCollectionFailed(ErrorString errorDescription);
-
     void updatePersistentSyncSettings();
 
 private:
@@ -223,7 +222,6 @@ private:
     AuthContext::type                       m_authContext;
 
     int                                     m_launchSyncPostponeTimerId;
-    qint32                                  m_rateLimitSecondsToWait;
 
     AuthData                                m_OAuthResult;
     bool                                    m_authenticationInProgress;

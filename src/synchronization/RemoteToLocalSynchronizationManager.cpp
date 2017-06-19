@@ -130,12 +130,6 @@ RemoteToLocalSynchronizationManager::RemoteToLocalSynchronizationManager(LocalSt
     m_allLinkedNotebooks(),
     m_listAllLinkedNotebooksRequestId(),
     m_allLinkedNotebooksListed(false),
-    m_listAllLinkedNotebooksContext(ListLinkedNotebooksContext::StartLinkedNotebooksSync),
-    m_collectHighUsnRequested(false),
-    m_accountHighUsnRequestId(),
-    m_accountHighUsn(-1),
-    m_accountHighUsnForLinkedNotebookRequestIds(),
-    m_accountHighUsnForLinkedNotebooksByLinkedNotebookGuid(),
     m_authenticationToken(),
     m_shardId(),
     m_authenticationTokenExpirationTime(0),
@@ -2194,13 +2188,7 @@ void RemoteToLocalSynchronizationManager::onListAllLinkedNotebooksCompleted(size
     m_allLinkedNotebooks = linkedNotebooks;
     m_allLinkedNotebooksListed = true;
 
-    if (m_listAllLinkedNotebooksContext == ListLinkedNotebooksContext::CollectLinkedNotebooksHighUsns) {
-        collectHighUpdateSequenceNumbers();
-        m_listAllLinkedNotebooksContext = ListLinkedNotebooksContext::StartLinkedNotebooksSync;
-    }
-    else {
-        startLinkedNotebooksSync();
-    }
+    startLinkedNotebooksSync();
 }
 
 void RemoteToLocalSynchronizationManager::onListAllLinkedNotebooksFailed(size_t limit, size_t offset,
@@ -2227,15 +2215,7 @@ void RemoteToLocalSynchronizationManager::onListAllLinkedNotebooksFailed(size_t 
     error.additionalBases().append(errorDescription.base());
     error.additionalBases().append(errorDescription.additionalBases());
     error.details() = errorDescription.details();
-
-    if (m_listAllLinkedNotebooksContext == ListLinkedNotebooksContext::StartLinkedNotebooksSync) {
-        emit failure(error);
-    }
-    else {
-        m_collectHighUsnRequested = false;
-        m_listAllLinkedNotebooksContext = ListLinkedNotebooksContext::StartLinkedNotebooksSync;
-        emit failedToCollectHighUpdateSequenceNumbers(error);
-    }
+    emit failure(error);
 }
 
 void RemoteToLocalSynchronizationManager::onAddNotebookCompleted(Notebook notebook, QUuid requestId)
@@ -2404,71 +2384,6 @@ void RemoteToLocalSynchronizationManager::onUpdateResourceFailed(Resource resour
         error.details() = errorDescription.details();
         emit failure(error);
     }
-}
-
-void RemoteToLocalSynchronizationManager::onAccountHighUsnCompleted(qint32 usn, QString linkedNotebookGuid, QUuid requestId)
-{
-    CHECK_PAUSED()
-    CHECK_STOPPED()
-
-    if (Q_UNLIKELY(!m_collectHighUsnRequested)) {
-        return;
-    }
-
-    auto it = m_accountHighUsnForLinkedNotebookRequestIds.end();
-    if (requestId != m_accountHighUsnRequestId)
-    {
-        it = m_accountHighUsnForLinkedNotebookRequestIds.find(requestId);
-        if (it == m_accountHighUsnForLinkedNotebookRequestIds.end()) {
-            return;
-        }
-    }
-
-    QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::onAccountHighUsnCompleted: USN = ")
-            << usn << QStringLiteral(", linked notebook guid = ") << linkedNotebookGuid
-            << QStringLiteral(", request id = ") << requestId);
-
-    if (requestId == m_accountHighUsnRequestId) {
-        m_accountHighUsn = usn;
-        m_accountHighUsnRequestId = QUuid();
-    }
-    else {
-        m_accountHighUsnForLinkedNotebooksByLinkedNotebookGuid[linkedNotebookGuid] = usn;
-        Q_UNUSED(m_accountHighUsnForLinkedNotebookRequestIds.erase(it))
-    }
-
-    checkHighUsnCollectingCompletion();
-}
-
-void RemoteToLocalSynchronizationManager::onAccountHighUsnFailed(QString linkedNotebookGuid, ErrorString errorDescription, QUuid requestId)
-{
-    CHECK_PAUSED()
-    CHECK_STOPPED()
-
-    if (Q_UNLIKELY(!m_collectHighUsnRequested)) {
-        return;
-    }
-
-    auto it = m_accountHighUsnForLinkedNotebookRequestIds.end();
-    if (requestId != m_accountHighUsnRequestId)
-    {
-        it = m_accountHighUsnForLinkedNotebookRequestIds.find(requestId);
-        if (it == m_accountHighUsnForLinkedNotebookRequestIds.end()) {
-            return;
-        }
-    }
-
-    QNWARNING(QStringLiteral("RemoteToLocalSynchronizationManager::onAccountHighUsnFailed: linked notebook guid = ")
-              << linkedNotebookGuid << QStringLiteral(", error description: ") << errorDescription
-              << QStringLiteral("; request id = ") << requestId);
-
-    emit failedToCollectHighUpdateSequenceNumbers(errorDescription);
-
-    m_accountHighUsn = -1;
-    m_accountHighUsnRequestId = QUuid();
-    m_accountHighUsnForLinkedNotebooksByLinkedNotebookGuid.clear();
-    m_accountHighUsnForLinkedNotebookRequestIds.clear();
-    m_collectHighUsnRequested = false;
 }
 
 void RemoteToLocalSynchronizationManager::onInkNoteImageDownloadFinished(bool status, QString resourceGuid,
@@ -2666,41 +2581,49 @@ void RemoteToLocalSynchronizationManager::setInkNoteImagesStoragePath(const QStr
     appSettings.endGroup();
 }
 
-void RemoteToLocalSynchronizationManager::collectHighUpdateSequenceNumbers()
+void RemoteToLocalSynchronizationManager::collectNonProcessedItemsSmallestUsns(qint32 & usn, QHash<QString,qint32> & usnByLinkedNotebookGuid)
 {
-    QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::collectHighUpdateSequenceNumbers"));
+    QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::collectNonProcessedItemsSmallestUsns"));
 
-    m_collectHighUsnRequested = true;
-    connectToLocalStorage();
+    usn = -1;
+    usnByLinkedNotebookGuid.clear();
 
-    if (!m_allLinkedNotebooksListed) {
-        requestAllLinkedNotebooks(ListLinkedNotebooksContext::CollectLinkedNotebooksHighUsns);
+    bool syncingLinkedNotebooks = syncingLinkedNotebooksContent();
+    QNTRACE(QStringLiteral("Syncing linked notebooks = ") << (syncingLinkedNotebooks ? QStringLiteral("true") : QStringLiteral("false")));
+
+    if (!syncingLinkedNotebooks)
+    {
+        qint32 smallestUsn = nonProcessedItemsSmallestUsn();
+        if (smallestUsn > 0) {
+            QNDEBUG(QStringLiteral("Found the smallest USN of non-processed items within the user's own account: ")
+                    << smallestUsn);
+            usn = smallestUsn - 1;  // NOTE: decrement this USN because that would give the USN *after which* the next sync should start
+        }
+
         return;
     }
 
-    m_accountHighUsn = -1;
-    m_accountHighUsnForLinkedNotebooksByLinkedNotebookGuid.clear();
-    m_accountHighUsnRequestId = QUuid();
-    m_accountHighUsnForLinkedNotebookRequestIds.clear();
+    if (!m_allLinkedNotebooksListed) {
+        QNDEBUG(QStringLiteral("Not all linked notebooks are listed"));
+        return;
+    }
 
-    m_accountHighUsnRequestId = QUuid::createUuid();
-    QNTRACE(QStringLiteral("Emitting the request to get user's own account's high update sequence number: request id = ")
-            << m_accountHighUsnRequestId);
-    emit requestAccountHighUsn(QString(), m_accountHighUsnRequestId);
-
-    for(auto it = m_linkedNotebooks.constBegin(), end = m_linkedNotebooks.constEnd(); it != end; ++it)
+    for(auto it = m_allLinkedNotebooks.constBegin(), end = m_allLinkedNotebooks.constEnd(); it != end; ++it)
     {
-        LinkedNotebook linkedNotebook(*it);
+        const LinkedNotebook & linkedNotebook = *it;
+
         if (Q_UNLIKELY(!linkedNotebook.hasGuid())) {
             QNWARNING(QStringLiteral("Detected a linked notebook without guid: ") << linkedNotebook);
             continue;
         }
 
-        QUuid requestId = QUuid::createUuid();
-        Q_UNUSED(m_accountHighUsnForLinkedNotebookRequestIds.insert(requestId))
-        QNTRACE(QStringLiteral("Emitting the request to get high update sequence number for a linked notebook: request id = ")
-                << requestId << QStringLiteral(", linked notebook: ") << linkedNotebook);
-        emit requestAccountHighUsn(linkedNotebook.guid(), requestId);
+        qint32 smallestUsn = nonProcessedItemsSmallestUsn(linkedNotebook.guid());
+        if (smallestUsn >= 0) {
+            QNDEBUG(QStringLiteral("Found the smallest USN of non-processed items within linked notebook with guid ")
+                    << linkedNotebook.guid() << QStringLiteral(": ") << smallestUsn);
+            usnByLinkedNotebookGuid[linkedNotebook.guid()] = (smallestUsn - 1);
+            continue;
+        }
     }
 }
 
@@ -3026,8 +2949,6 @@ void RemoteToLocalSynchronizationManager::connectToLocalStorage()
                      &m_localStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,onFindSavedSearchRequest,SavedSearch,QUuid));
     QObject::connect(this, QNSIGNAL(RemoteToLocalSynchronizationManager,expungeSavedSearch,SavedSearch,QUuid),
                      &m_localStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,onExpungeSavedSearchRequest,SavedSearch,QUuid));
-    QObject::connect(this, QNSIGNAL(RemoteToLocalSynchronizationManager,requestAccountHighUsn,QString,QUuid),
-                     &m_localStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,onAccountHighUsnRequest,QString,QUuid));
 
     // Connect localStorageManagerAsync's signals to local slots
     QObject::connect(&m_localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,findUserComplete,User,QUuid),
@@ -3178,11 +3099,6 @@ void RemoteToLocalSynchronizationManager::connectToLocalStorage()
     QObject::connect(&m_localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,updateResourceFailed,Resource,ErrorString,QUuid),
                      this, QNSLOT(RemoteToLocalSynchronizationManager,onUpdateResourceFailed,Resource,ErrorString,QUuid));
 
-    QObject::connect(&m_localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,accountHighUsnComplete,qint32,QString,QUuid),
-                     this, QNSLOT(RemoteToLocalSynchronizationManager,onAccountHighUsnCompleted,qint32,QString,QUuid));
-    QObject::connect(&m_localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,accountHighUsnFailed,QString,ErrorString,QUuid),
-                     this, QNSLOT(RemoteToLocalSynchronizationManager,onAccountHighUsnFailed,QString,ErrorString,QUuid));
-
     m_connectedToLocalStorage = true;
 }
 
@@ -3265,8 +3181,6 @@ void RemoteToLocalSynchronizationManager::disconnectFromLocalStorage()
                         &m_localStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,onFindSavedSearchRequest,SavedSearch,QUuid));
     QObject::disconnect(this, QNSIGNAL(RemoteToLocalSynchronizationManager,expungeSavedSearch,SavedSearch,QUuid),
                         &m_localStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,onExpungeSavedSearchRequest,SavedSearch,QUuid));
-    QObject::disconnect(this, QNSIGNAL(RemoteToLocalSynchronizationManager,requestAccountHighUsn,QString,QUuid),
-                        &m_localStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,onAccountHighUsnRequest,QString,QUuid));
 
     // Disconnect localStorageManagerThread's signals to local slots
     QObject::disconnect(&m_localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,findUserComplete,User,QUuid),
@@ -3407,11 +3321,6 @@ void RemoteToLocalSynchronizationManager::disconnectFromLocalStorage()
                         this, QNSLOT(RemoteToLocalSynchronizationManager,onUpdateResourceCompleted,Resource,QUuid));
     QObject::disconnect(&m_localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,updateResourceFailed,Resource,ErrorString,QUuid),
                         this, QNSLOT(RemoteToLocalSynchronizationManager,onUpdateResourceFailed,Resource,ErrorString,QUuid));
-
-    QObject::disconnect(&m_localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,accountHighUsnComplete,qint32,QString,QUuid),
-                        this, QNSLOT(RemoteToLocalSynchronizationManager,onAccountHighUsnCompleted,qint32,QString,QUuid));
-    QObject::disconnect(&m_localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,accountHighUsnFailed,QString,ErrorString,QUuid),
-                        this, QNSLOT(RemoteToLocalSynchronizationManager,onAccountHighUsnFailed,QString,ErrorString,QUuid));
 
     m_connectedToLocalStorage = false;
 
@@ -4029,48 +3938,6 @@ void RemoteToLocalSynchronizationManager::checkAndIncrementNoteDownloadProgress(
     }
 }
 
-void RemoteToLocalSynchronizationManager::checkHighUsnCollectingCompletion()
-{
-    QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::checkHighUsnCollectingCompletion"));
-
-    if (!m_collectHighUsnRequested) {
-        QNDEBUG(QStringLiteral("Not collecting high USNs at the moment"));
-        return;
-    }
-
-    if (!m_accountHighUsnRequestId.isNull()) {
-        QNDEBUG(QStringLiteral("Still pending the user's own account high USN"));
-        return;
-    }
-
-    if (!m_accountHighUsnForLinkedNotebookRequestIds.empty()) {
-        QNDEBUG(QStringLiteral("Still pending ") << m_accountHighUsnForLinkedNotebookRequestIds.size()
-                << QStringLiteral(" high USN requests for linked notebooks"));
-        return;
-    }
-
-    QNDEBUG(QStringLiteral("Finished collecting high USNs: user's own high USN = ") << m_accountHighUsn);
-
-    if (QuentierIsLogLevelActive(LogLevel::TraceLevel))
-    {
-        QTextStream strm;
-        strm << QStringLiteral("High USNs for linked notebooks:\n");
-        for(auto it = m_accountHighUsnForLinkedNotebooksByLinkedNotebookGuid.constBegin(),
-            end = m_accountHighUsnForLinkedNotebooksByLinkedNotebookGuid.constEnd(); it != end; ++it)
-        {
-            strm << QStringLiteral("[") << it.key() << QStringLiteral("]: ") << it.value() << QStringLiteral("\n");
-        }
-
-        QNTRACE(strm.readAll());
-    }
-
-    emit collectedHighUpdateSequenceNumbers(m_accountHighUsn, m_accountHighUsnForLinkedNotebooksByLinkedNotebookGuid);
-
-    m_accountHighUsn = -1;
-    m_accountHighUsnForLinkedNotebooksByLinkedNotebookGuid.clear();
-    m_collectHighUsnRequested = false;
-}
-
 QTextStream & operator<<(QTextStream & strm, const RemoteToLocalSynchronizationManager::ContentSource::type & obj)
 {
     switch(obj)
@@ -4250,7 +4117,7 @@ void RemoteToLocalSynchronizationManager::startLinkedNotebooksSync()
     QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::startLinkedNotebooksSync"));
 
     if (!m_allLinkedNotebooksListed) {
-        requestAllLinkedNotebooks(ListLinkedNotebooksContext::StartLinkedNotebooksSync);
+        requestAllLinkedNotebooks();
         return;
     }
 
@@ -4374,11 +4241,9 @@ void RemoteToLocalSynchronizationManager::requestAuthenticationTokensForAllLinke
     m_pendingAuthenticationTokensForLinkedNotebooks = true;
 }
 
-void RemoteToLocalSynchronizationManager::requestAllLinkedNotebooks(const ListLinkedNotebooksContext::type context)
+void RemoteToLocalSynchronizationManager::requestAllLinkedNotebooks()
 {
-    QNDEBUG("RemoteToLocalSynchronizationManager::requestAllLinkedNotebooks: context = " << context);
-
-    m_listAllLinkedNotebooksContext = context;
+    QNDEBUG("RemoteToLocalSynchronizationManager::requestAllLinkedNotebooks");
 
     size_t limit = 0, offset = 0;
     LocalStorageManager::ListLinkedNotebooksOrder::type order = LocalStorageManager::ListLinkedNotebooksOrder::NoOrder;
@@ -4943,24 +4808,18 @@ void RemoteToLocalSynchronizationManager::clear()
     m_findSavedSearchByGuidRequestIds.clear();
     m_addSavedSearchRequestIds.clear();
     m_updateSavedSearchRequestIds.clear();
+    m_expungeSavedSearchRequestIds.clear();
 
     m_linkedNotebooks.clear();
     m_expungedLinkedNotebooks.clear();
     m_findLinkedNotebookRequestIds.clear();
     m_addLinkedNotebookRequestIds.clear();
     m_updateLinkedNotebookRequestIds.clear();
-    m_expungeSavedSearchRequestIds.clear();
+    m_expungeLinkedNotebookRequestIds.clear();
 
     m_allLinkedNotebooks.clear();
     m_listAllLinkedNotebooksRequestId = QUuid();
     m_allLinkedNotebooksListed = false;
-    m_listAllLinkedNotebooksContext = ListLinkedNotebooksContext::StartLinkedNotebooksSync;
-
-    m_collectHighUsnRequested = false;
-    m_accountHighUsnRequestId = QUuid();
-    m_accountHighUsn = -1;
-    m_accountHighUsnForLinkedNotebookRequestIds.clear();
-    m_accountHighUsnForLinkedNotebooksByLinkedNotebookGuid.clear();
 
     m_pendingAuthenticationTokensForLinkedNotebooks = false;
 
@@ -4997,6 +4856,7 @@ void RemoteToLocalSynchronizationManager::clear()
     m_findResourceByGuidRequestIds.clear();
     m_addResourceRequestIds.clear();
     m_updateResourceRequestIds.clear();
+
     m_resourcesWithFindRequestIdsPerFindNoteRequestId.clear();
     m_inkNoteResourceDataPerFindNotebookRequestId.clear();
     m_resourceGuidsPendingInkNoteImageDownloadPerNoteGuid.clear();
@@ -5870,6 +5730,124 @@ Note RemoteToLocalSynchronizationManager::createConflictingNote(const Note & ori
 
     conflictingNote.setTitle(conflictingNoteTitle);
     return conflictingNote;
+}
+
+qint32 RemoteToLocalSynchronizationManager::nonProcessedItemsSmallestUsn(const QString & linkedNotebookGuid) const
+{
+    QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::nonProcessedItemsSmallestUsn: linked notebook guid = ")
+            << linkedNotebookGuid);
+
+    qint32 smallestUsn = -1;
+
+#define PROCESS_CONTAINER(container, linkedNotebookMapping) \
+    for(auto it = container.constBegin(), end = container.constEnd(); it != end; ++it) \
+    { \
+        const auto & item = *it; \
+        if (Q_UNLIKELY(!item.updateSequenceNum.isSet())) { \
+            QNWARNING(QStringLiteral("Skipping item with empty update sequence number: ") << item); \
+            continue; \
+        } \
+        \
+        if (!linkedNotebookGuid.isEmpty()) \
+        { \
+            if (Q_UNLIKELY(!item.guid.isSet())) { \
+                QNWARNING(QStringLiteral("Skipping item without guid: ") << item); \
+                continue; \
+            } \
+            \
+            auto linkedNotebookGuidIt = linkedNotebookMapping.find(item.guid.ref()); \
+            if (linkedNotebookGuidIt == linkedNotebookMapping.end()) { \
+                QNTRACE(QStringLiteral("Skipping item without linked notebook mapping: ") << item); \
+                continue; \
+            } \
+            \
+            if (linkedNotebookGuidIt.value() != linkedNotebookGuid) { \
+                QNTRACE(QStringLiteral("Skipping item corresponding to another linked notebook (") \
+                        << linkedNotebookGuidIt.value() << QStringLiteral("): ") << item); \
+                continue; \
+            } \
+        } \
+        \
+        if ((smallestUsn < 0) || (item.updateSequenceNum.ref() < smallestUsn)) { \
+            smallestUsn = item.updateSequenceNum.ref(); \
+        } \
+    }
+
+    QHash<QString,QString> dummyHash;
+
+    PROCESS_CONTAINER(m_tags, m_linkedNotebookGuidsByTagGuids)
+    PROCESS_CONTAINER(m_savedSearches, dummyHash)
+    PROCESS_CONTAINER(m_linkedNotebooks, dummyHash)
+    PROCESS_CONTAINER(m_notebooks, m_linkedNotebookGuidsByNotebookGuids)
+
+    if (linkedNotebookGuid.isEmpty())
+    {
+        PROCESS_CONTAINER(m_notes, dummyHash)
+        PROCESS_CONTAINER(m_resources, dummyHash)
+    }
+    else
+    {
+        // The mapping between linked notebook guids and note guids is implicit, through notebook guid;
+        // need to make it explicit here in order to reuse the macro
+        QHash<QString,QString> linkedNotebookGuidsByNoteGuids;
+
+        for(auto noteIt = m_notes.constBegin(), notesEnd = m_notes.constEnd(); noteIt != notesEnd; ++noteIt)
+        {
+            const qevercloud::Note & note = *noteIt;
+            if (Q_UNLIKELY(!note.guid.isSet())) {
+                QNWARNING(QStringLiteral("Skipping note without guid: ") << note);
+                continue;
+            }
+
+            if (!note.notebookGuid.isSet()) {
+                QNWARNING(QStringLiteral("Skipping note without notebook guid: ") << note);
+                continue;
+            }
+
+            auto linkedNotebookGuidIt = m_linkedNotebookGuidsByNotebookGuids.find(note.notebookGuid.ref());
+            if (linkedNotebookGuidIt == m_linkedNotebookGuidsByNotebookGuids.end()) {
+                QNTRACE(QStringLiteral("Skipping note without linked notebook mapping: ") << note);
+                continue;
+            }
+
+            linkedNotebookGuidsByNoteGuids[note.guid.ref()] = linkedNotebookGuidIt.value();
+        }
+
+        PROCESS_CONTAINER(m_notes, linkedNotebookGuidsByNoteGuids)
+
+        // The mapping between linked notebook guids and resource guids is implicit, now through note guid;
+        // need to make it explicit here in order to reuse the macro
+        QHash<QString,QString> linkedNotebookGuidsByResourceGuids;
+
+        for(auto resourceIt = m_resources.constBegin(), resourcesEnd = m_resources.constEnd();
+            resourceIt != resourcesEnd; ++resourceIt)
+        {
+            const qevercloud::Resource & resource = *resourceIt;
+            if (Q_UNLIKELY(!resource.guid.isSet())) {
+                QNWARNING(QStringLiteral("Skipping resource without guid: ") << resource);
+                continue;
+            }
+
+            if (Q_UNLIKELY(!resource.noteGuid.isSet())) {
+                QNWARNING(QStringLiteral("Skipping resource without note guid: ") << resource);
+                continue;
+            }
+
+            auto linkedNotebookGuidIt = linkedNotebookGuidsByNoteGuids.find(resource.noteGuid.ref());
+            if (linkedNotebookGuidIt == linkedNotebookGuidsByNoteGuids.end()) {
+                QNTRACE(QStringLiteral("Skipping resource without linked notebook mapping: ") << resource);
+                continue;
+            }
+
+            linkedNotebookGuidsByResourceGuids[resource.guid.ref()] = linkedNotebookGuidIt.value();
+        }
+
+        PROCESS_CONTAINER(m_resources, linkedNotebookGuidsByResourceGuids)
+    }
+
+#undef PROCESS_CONTAINER
+
+    return smallestUsn;
 }
 
 QTextStream & operator<<(QTextStream & strm, const RemoteToLocalSynchronizationManager::SyncMode::type & obj)

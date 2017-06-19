@@ -66,7 +66,6 @@ SynchronizationManagerPrivate::SynchronizationManagerPrivate(const QString & con
     m_userStore(QSharedPointer<qevercloud::UserStore>(new qevercloud::UserStore(m_host))),
     m_authContext(AuthContext::Blank),
     m_launchSyncPostponeTimerId(-1),
-    m_rateLimitSecondsToWait(-1),
     m_OAuthResult(),
     m_authenticationInProgress(false),
     m_remoteToLocalSyncManager(localStorageManagerAsync, m_host,
@@ -566,6 +565,14 @@ void SynchronizationManagerPrivate::onRemoteToLocalSyncStopped()
     emit remoteToLocalSyncStopped();
 }
 
+void SynchronizationManagerPrivate::onRemoteToLocalSyncFailure(ErrorString errorDescription)
+{
+    QNDEBUG(QStringLiteral("SynchronizationManagerPrivate::onRemoteToLocalSyncFailure: ") << errorDescription);
+
+    stop();
+    emit notifyError(errorDescription);
+}
+
 void SynchronizationManagerPrivate::onShouldRepeatIncrementalSync()
 {
     QNDEBUG(QStringLiteral("SynchronizationManagerPrivate::onShouldRepeatIncrementalSync"));
@@ -624,21 +631,55 @@ void SynchronizationManagerPrivate::onSendLocalChangesStopped()
     emit sendLocalChangesStopped();
 }
 
+void SynchronizationManagerPrivate::onSendLocalChangesFailure(ErrorString errorDescription)
+{
+    QNDEBUG(QStringLiteral("SynchronizationManagerPrivate::onSendLocalChangesFailure: ") << errorDescription);
+
+    stop();
+    emit notifyError(errorDescription);
+}
+
 void SynchronizationManagerPrivate::onRateLimitExceeded(qint32 secondsToWait)
 {
     QNDEBUG(QStringLiteral("SynchronizationManagerPrivate::onRateLimitExceeded"));
 
-    // Before re-sending this signal to the outside world, we'll attempt to collect the high USNs for user's own account
-    // and for each linked notebooks from the local storage - and use these USNs to update the persistent sync settings.
-    // So that if the sync ends now before it's automatically restarted after the required waiting time (for example,
-    // user quits the app now), the next time we'll request the sync chunks after USN which we have last added/updated
-    // within the local storage, either for user's own account or for linked notebooks
+    // Before re-sending this signal to the outside world will attempt to collect the update sequence numbers
+    // for the next sync, either for user's own account or for each linked notebook - depending on what has been
+    // synced right before the Evernote API rate limit was exceeded. The collected update sequence numbers would
+    // be used to update the persistent sync settings. So that if the sync ends now before it's automatically restarted
+    // after the required waiting time (for example, user quits the app now), the next time we'll request the sync chunks
+    // after the last properly processed USN, either for user's own account or for linked notebooks, so that we won't
+    // re-download the same stuff over and over again and hit the rate limit at the very same sync stage
 
-    // Since the retrieval of high USNs is asynchronous, need to remember the number of seconds to wait
-    // in order to use it later, when the high USNs are collected
-    m_rateLimitSecondsToWait = secondsToWait;
+    qint32 updateCount = -1;
+    QHash<QString,qint32> updateCountsByLinkedNotebookGuid;
+    m_remoteToLocalSyncManager.collectNonProcessedItemsSmallestUsns(updateCount, updateCountsByLinkedNotebookGuid);
 
-    m_remoteToLocalSyncManager.collectHighUpdateSequenceNumbers();
+    if ((updateCount < 0) && updateCountsByLinkedNotebookGuid.isEmpty()) {
+        QNDEBUG(QStringLiteral("Found no USNs for neither user's own account nor linked notebooks"));
+        emit rateLimitExceeded(secondsToWait);
+        return;
+    }
+
+    qevercloud::Timestamp lastSyncTime = QDateTime::currentMSecsSinceEpoch();
+
+    if (updateCount > 0)
+    {
+        m_lastUpdateCount = updateCount;
+        m_lastSyncTime = lastSyncTime;
+    }
+    else if (!updateCountsByLinkedNotebookGuid.isEmpty())
+    {
+        for(auto it = updateCountsByLinkedNotebookGuid.constBegin(),
+            end = updateCountsByLinkedNotebookGuid.constEnd(); it != end; ++it)
+        {
+            m_cachedLinkedNotebookLastUpdateCountByGuid[it.key()] = it.value();
+            m_cachedLinkedNotebookLastSyncTimeByGuid[it.key()] = lastSyncTime;
+        }
+    }
+
+    updatePersistentSyncSettings();
+    emit rateLimitExceeded(secondsToWait);
 }
 
 void SynchronizationManagerPrivate::createConnections(IAuthenticationManager & authenticationManager)
@@ -652,8 +693,6 @@ void SynchronizationManagerPrivate::createConnections(IAuthenticationManager & a
                                   QString,qevercloud::Timestamp,QString,QString,QString,ErrorString));
 
     // Connections with remote to local synchronization manager
-    QObject::connect(&m_remoteToLocalSyncManager, QNSIGNAL(RemoteToLocalSynchronizationManager,failure,ErrorString),
-                     this, QNSIGNAL(SynchronizationManagerPrivate,notifyError,ErrorString));
     QObject::connect(&m_remoteToLocalSyncManager, QNSIGNAL(RemoteToLocalSynchronizationManager,finished,qint32,qevercloud::Timestamp,QHash<QString,qint32>,
                                                            QHash<QString,qevercloud::Timestamp>),
                      this, QNSLOT(SynchronizationManagerPrivate,onRemoteToLocalSyncFinished,qint32,qevercloud::Timestamp,QHash<QString,qint32>,
@@ -668,6 +707,8 @@ void SynchronizationManagerPrivate::createConnections(IAuthenticationManager & a
                      this, QNSLOT(SynchronizationManagerPrivate,onRemoteToLocalSyncPaused,bool));
     QObject::connect(&m_remoteToLocalSyncManager, QNSIGNAL(RemoteToLocalSynchronizationManager,stopped),
                      this, QNSLOT(SynchronizationManagerPrivate,onRemoteToLocalSyncStopped));
+    QObject::connect(&m_remoteToLocalSyncManager, QNSIGNAL(RemoteToLocalSynchronizationManager,failure,ErrorString),
+                     this, QNSLOT(SynchronizationManagerPrivate,onRemoteToLocalSyncFailure,ErrorString));
     QObject::connect(&m_remoteToLocalSyncManager, QNSIGNAL(RemoteToLocalSynchronizationManager,requestLastSyncParameters),
                      this, QNSLOT(SynchronizationManagerPrivate,onRequestLastSyncParameters));
     QObject::connect(&m_remoteToLocalSyncManager, QNSIGNAL(RemoteToLocalSynchronizationManager,syncChunksDownloaded),
@@ -678,10 +719,6 @@ void SynchronizationManagerPrivate::createConnections(IAuthenticationManager & a
                      this, QNSIGNAL(SynchronizationManagerPrivate,linkedNotebooksSyncChunksDownloaded));
     QObject::connect(&m_remoteToLocalSyncManager, QNSIGNAL(RemoteToLocalSynchronizationManager,linkedNotebooksNotesDownloadProgress,quint32,quint32),
                      this, QNSIGNAL(SynchronizationManagerPrivate,linkedNotebooksNotesDownloadProgress,quint32,quint32));
-    QObject::connect(&m_remoteToLocalSyncManager, QNSIGNAL(RemoteToLocalSynchronizationManager,collectedHighUpdateSequenceNumbers,qint32,QHash<QString,qint32>),
-                     this, QNSLOT(SynchronizationManagerPrivate,onAccountHighUpdateSequenceNumbersReceived,qint32,QHash<QString,qint32>));
-    QObject::connect(&m_remoteToLocalSyncManager, QNSIGNAL(RemoteToLocalSynchronizationManager,failedToCollectHighUpdateSequenceNumbers,ErrorString),
-                     this, QNSLOT(SynchronizationManagerPrivate,onAccountHighUpdateSequenceNumbersCollectionFailed,ErrorString));
     QObject::connect(this, QNSIGNAL(SynchronizationManagerPrivate,pauseRemoteToLocalSync),
                      &m_remoteToLocalSyncManager, QNSLOT(RemoteToLocalSynchronizationManager,pause));
     QObject::connect(this, QNSIGNAL(SynchronizationManagerPrivate,resumeRemoteToLocalSync),
@@ -696,8 +733,6 @@ void SynchronizationManagerPrivate::createConnections(IAuthenticationManager & a
                      &m_remoteToLocalSyncManager, QNSLOT(RemoteToLocalSynchronizationManager,onLastSyncParametersReceived,qint32,qevercloud::Timestamp,QHash<QString,qint32>,QHash<QString,qevercloud::Timestamp>));
 
     // Connections with send local changes manager
-    QObject::connect(&m_sendLocalChangesManager, QNSIGNAL(SendLocalChangesManager,failure,ErrorString),
-                     this, QNSIGNAL(SynchronizationManagerPrivate,notifyError,ErrorString));
     QObject::connect(&m_sendLocalChangesManager, QNSIGNAL(SendLocalChangesManager,finished,qint32,QHash<QString,qint32>),
                      this, QNSLOT(SynchronizationManagerPrivate,onLocalChangesSent,qint32,QHash<QString,qint32>));
     QObject::connect(&m_sendLocalChangesManager, QNSIGNAL(SendLocalChangesManager,rateLimitExceeded,qint32),
@@ -714,6 +749,8 @@ void SynchronizationManagerPrivate::createConnections(IAuthenticationManager & a
                      this, QNSLOT(SynchronizationManagerPrivate,onSendLocalChangesPaused,bool));
     QObject::connect(&m_sendLocalChangesManager, QNSIGNAL(SendLocalChangesManager,stopped),
                      this, QNSLOT(SynchronizationManagerPrivate,onSendLocalChangesStopped));
+    QObject::connect(&m_sendLocalChangesManager, QNSIGNAL(SendLocalChangesManager,failure,ErrorString),
+                     this, QNSLOT(SynchronizationManagerPrivate,onSendLocalChangesFailure,ErrorString));
     QObject::connect(&m_sendLocalChangesManager, QNSIGNAL(SendLocalChangesManager,receivedUserAccountDirtyObjects),
                      this, QNSIGNAL(SynchronizationManagerPrivate,preparedDirtyObjectsForSending));
     QObject::connect(&m_sendLocalChangesManager, QNSIGNAL(SendLocalChangesManager,receivedAllDirtyObjects),
@@ -1128,7 +1165,6 @@ void SynchronizationManagerPrivate::clear()
     m_authContext = AuthContext::Blank;
 
     m_launchSyncPostponeTimerId = -1;
-    m_rateLimitSecondsToWait = -1;
 
     m_remoteToLocalSyncManager.stop();
     m_sendLocalChangesManager.stop();
@@ -1545,45 +1581,6 @@ void SynchronizationManagerPrivate::onDeleteShardIdFinished()
     if (!m_deletingAuthToken) {
         finalizeRevokeAuthentication();
     }
-}
-
-void SynchronizationManagerPrivate::onAccountHighUpdateSequenceNumbersReceived(qint32 ownHighUsn,
-                                                                               QHash<QString,qint32> highUsnByLinkedNotebookGuid)
-{
-    QNDEBUG(QStringLiteral("SynchronizationManagerPrivate::onAccountHighUpdateSequenceNumbersReceived"));
-
-    m_lastUpdateCount = ownHighUsn;
-    qevercloud::Timestamp lastSyncTime = QDateTime::currentMSecsSinceEpoch();
-    m_lastSyncTime = lastSyncTime;
-
-    for(auto it = highUsnByLinkedNotebookGuid.constBegin(), end = highUsnByLinkedNotebookGuid.constEnd(); it != end; ++it) {
-        m_cachedLinkedNotebookLastUpdateCountByGuid[it.key()] = it.value();
-        m_cachedLinkedNotebookLastSyncTimeByGuid[it.key()] = lastSyncTime;
-    }
-
-    updatePersistentSyncSettings();
-
-    // NOTE: the account high USNs are only collected from local storage
-    // when the sync is being paused due to rate limit exceeding
-
-    qint32 secondsToWait = m_rateLimitSecondsToWait;
-    m_rateLimitSecondsToWait = -1;
-    emit rateLimitExceeded(secondsToWait);
-}
-
-void SynchronizationManagerPrivate::onAccountHighUpdateSequenceNumbersCollectionFailed(ErrorString errorDescription)
-{
-    QNDEBUG(QStringLiteral("SynchronizationManagerPrivate::onAccountHighUpdateSequenceNumbersCollectionFailed: ")
-            << errorDescription);
-
-    // Uh, we hoped to update the persistent sync settings with high USNs retrieved from the local storage
-    // in order to not have to re-download the same stuff the next time (if the sync is totally stopped now i.e.
-    // user won't wait for the sync to automatically restart after the rate limit exceeding but instead just quit the
-    // app for now) but ok, since we failed we don't have much choice here
-
-    qint32 secondsToWait = m_rateLimitSecondsToWait;
-    m_rateLimitSecondsToWait = -1;
-    emit rateLimitExceeded(secondsToWait);
 }
 
 void SynchronizationManagerPrivate::updatePersistentSyncSettings()
