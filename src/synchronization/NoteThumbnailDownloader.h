@@ -22,32 +22,45 @@
 #include <quentier/utility/Macros.h>
 #include <quentier/types/ErrorString.h>
 #include <QObject>
-#include <QRunnable>
 #include <QString>
 #include <QByteArray>
 
+#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
+#include <qt5qevercloud/QEverCloudOAuth.h>
+#else
+#include <qt4qevercloud/QEverCloudOAuth.h>
+#endif
+
 namespace quentier {
 
-class NoteThumbnailDownloader: public QObject,
-                               public QRunnable
+class NoteThumbnailDownloader: public QObject
 {
     Q_OBJECT
 public:
     explicit NoteThumbnailDownloader(const QString & host, const QString & noteGuid,
                                      const QString & authToken, const QString & shardId,
                                      const bool noteFromPublicLinkedNotebook, QObject * parent = Q_NULLPTR);
+    virtual ~NoteThumbnailDownloader();
 
-    virtual void run() Q_DECL_OVERRIDE;
+    void start();
 
 Q_SIGNALS:
     void finished(bool success, QString noteGuid, QByteArray downloadedThumbnailData, ErrorString errorDescription);
 
 private:
-    QString     m_host;
-    QString     m_noteGuid;
-    QString     m_authToken;
-    QString     m_shardId;
-    bool        m_noteFromPublicLinkedNotebook;
+    typedef qevercloud::EverCloudExceptionData EverCloudExceptionData;
+
+private Q_SLOTS:
+    void onDownloadFinished(QVariant result, QSharedPointer<EverCloudExceptionData> error);
+
+private:
+    QString                     m_host;
+    QString                     m_noteGuid;
+    QString                     m_authToken;
+    QString                     m_shardId;
+    bool                        m_noteFromPublicLinkedNotebook;
+    qevercloud::AsyncResult *   m_pAsyncResult;
+    qevercloud::Thumbnail *     m_pThumbnail;
 };
 
 } // namespace quentier

@@ -5648,14 +5648,7 @@ bool RemoteToLocalSynchronizationManager::setupNoteThumbnailDownloading(const No
                                                                         isPublicNotebook, this);
     QObject::connect(pDownloader, QNSIGNAL(NoteThumbnailDownloader,finished,bool,QString,QByteArray,ErrorString),
                      this, QNSLOT(RemoteToLocalSynchronizationManager,onNoteThumbnailDownloadingFinished,bool,QString,QByteArray,ErrorString));
-    // WARNING: it seems it's not possible to run note thumbnails downloading
-    // in a different thread, the error like this might appear: QObject: Cannot
-    // create children for a parent that is in a different thread.
-    // (Parent is QNetworkAccessManager(0x499b900), parent's thread is QThread(0x1b535b0), current thread is QThread(0x42ed270)
-
-    // QThreadPool::globalInstance()->start(pDownloader);
-
-    pDownloader->run();
+    pDownloader->start();
     return true;
 }
 

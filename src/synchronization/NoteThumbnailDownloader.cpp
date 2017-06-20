@@ -35,12 +35,23 @@ NoteThumbnailDownloader::NoteThumbnailDownloader(const QString & host, const QSt
     m_noteGuid(noteGuid),
     m_authToken(authToken),
     m_shardId(shardId),
-    m_noteFromPublicLinkedNotebook(noteFromPublicLinkedNotebook)
+    m_noteFromPublicLinkedNotebook(noteFromPublicLinkedNotebook),
+    m_pAsyncResult(Q_NULLPTR),
+    m_pThumbnail(Q_NULLPTR)
 {}
 
-void NoteThumbnailDownloader::run()
+NoteThumbnailDownloader::~NoteThumbnailDownloader()
 {
-    QNDEBUG(QStringLiteral("NoteThumbnailDownloader::run: host = ") << m_host << QStringLiteral(", note guid = ")
+    delete m_pThumbnail;
+
+    if (m_pAsyncResult) {
+        m_pAsyncResult->deleteLater();
+    }
+}
+
+void NoteThumbnailDownloader::start()
+{
+    QNDEBUG(QStringLiteral("NoteThumbnailDownloader::start: host = ") << m_host << QStringLiteral(", note guid = ")
             << m_noteGuid << QStringLiteral(", is public = ")
             << (m_noteFromPublicLinkedNotebook ? QStringLiteral("true") : QStringLiteral("false")));
 
@@ -66,11 +77,50 @@ void NoteThumbnailDownloader::run()
         SET_ERROR(QT_TR_NOOP("authentication data is incomplete"));
     }
 
-    qevercloud::Thumbnail thumbnail(m_host, m_shardId, m_authToken);
-    QByteArray thumbnailImageData = thumbnail.download(m_noteGuid, m_noteFromPublicLinkedNotebook,
-                                                       /* is resource guid = */ false);
+    delete m_pThumbnail;
+    m_pThumbnail = Q_NULLPTR;
+
+    if (m_pAsyncResult) {
+        m_pAsyncResult->deleteLater();
+        m_pAsyncResult = Q_NULLPTR;
+    }
+
+    m_pThumbnail = new qevercloud::Thumbnail(m_host, m_shardId, m_authToken);
+    m_pAsyncResult = m_pThumbnail->downloadAsync(m_noteGuid, m_noteFromPublicLinkedNotebook,
+                                                 /* is resource guid = */ false);
+    if (Q_UNLIKELY(!m_pAsyncResult)) {
+        SET_ERROR(QT_TR_NOOP("failed to download the note thumbnail, QEverCloud returned null pointer to AsyncResult"));
+    }
+
+    QObject::connect(m_pAsyncResult,
+                     QNSIGNAL(qevercloud::AsyncResult,finished,QVariant,QSharedPointer<EverCloudExceptionData>),
+                     this,
+                     QNSLOT(NoteThumbnailDownloader,onDownloadFinished,QVariant,QSharedPointer<EverCloudExceptionData>));
+}
+
+void NoteThumbnailDownloader::onDownloadFinished(QVariant result, QSharedPointer<EverCloudExceptionData> error)
+{
+    QNDEBUG(QStringLiteral("NoteThumbnailDownloader::onDownloadFinished"));
+
+    if (!error.isNull()) {
+        ErrorString errorDescription(QT_TR_NOOP("failed to download the note thumbnail"));
+        errorDescription.details() = error->errorMessage;
+        QNDEBUG(errorDescription);
+        emit finished(false, m_noteGuid, QByteArray(), errorDescription);
+        return;
+    }
+
+    QByteArray thumbnailImageData = result.toByteArray();
     if (Q_UNLIKELY(thumbnailImageData.isEmpty())) {
         SET_ERROR(QT_TR_NOOP("received empty note thumbnail data"));
+    }
+
+    delete m_pThumbnail;
+    m_pThumbnail = Q_NULLPTR;
+
+    if (m_pAsyncResult) {
+        m_pAsyncResult->deleteLater();
+        m_pAsyncResult = Q_NULLPTR;
     }
 
     emit finished(true, m_noteGuid, thumbnailImageData, ErrorString());
