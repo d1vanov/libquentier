@@ -49,6 +49,7 @@ public:
 
 Q_SIGNALS:
     void notifyStart();
+    void notifyStop();
     void notifyError(ErrorString errorDescription);
     void notifyRemoteToLocalSyncDone();
     void notifyFinish(Account account);

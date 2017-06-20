@@ -164,6 +164,12 @@ Q_SIGNALS:
     void started();
 
     /**
+     * This signal is emitted in response to invoking the stop slot, whether it was invoked manually or from within
+     * the SynchronizationManager itself (due to sync failure, for example)
+     */
+    void stopped();
+
+    /**
      * This signal is emitted when the synchronization fails; at this moment there is no error code explaining the reason
      * of the failure programmatically so the only explanation available is the textual one for the end user
      */

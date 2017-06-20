@@ -563,6 +563,10 @@ void SynchronizationManagerPrivate::onRemoteToLocalSyncStopped()
 {
     QNDEBUG(QStringLiteral("SynchronizationManagerPrivate::onRemoteToLocalSyncStopped"));
     emit remoteToLocalSyncStopped();
+
+    if (!m_sendLocalChangesManager.active()) {
+        emit notifyStop();
+    }
 }
 
 void SynchronizationManagerPrivate::onRemoteToLocalSyncFailure(ErrorString errorDescription)
@@ -629,6 +633,10 @@ void SynchronizationManagerPrivate::onSendLocalChangesStopped()
 {
     QNDEBUG(QStringLiteral("SynchronizationManagerPrivate::onSendLocalChangesStopped"));
     emit sendLocalChangesStopped();
+
+    if (!m_remoteToLocalSyncManager.active()) {
+        emit notifyStop();
+    }
 }
 
 void SynchronizationManagerPrivate::onSendLocalChangesFailure(ErrorString errorDescription)
