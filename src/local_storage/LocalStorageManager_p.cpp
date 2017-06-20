@@ -1777,6 +1777,17 @@ bool LocalStorageManagerPrivate::updateNote(Note & note, const bool updateResour
             }
 
             note.setLocalUid(localUid);
+
+            if (note.hasResources())
+            {
+                QList<Resource> resources = note.resources();
+                for(auto it = resources.begin(), end = resources.end(); it != end; ++it) {
+                    Resource & resource = *it;
+                    resource.setNoteLocalUid(localUid);
+                }
+                note.setResources(resources);
+            }
+
             shouldCheckNoteExistence = false;
         }
     }
