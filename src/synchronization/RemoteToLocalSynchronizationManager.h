@@ -248,8 +248,6 @@ private Q_SLOTS:
     void onSavedSearchSyncConflictResolverFailure(qevercloud::SavedSearch remoteSavedSearch, ErrorString errorDescription);
 
 private:
-    void createConnections();
-
     void connectToLocalStorage();
     void disconnectFromLocalStorage();
 
@@ -459,6 +457,7 @@ private:
 
     void finalize();
     void clear();
+    void clearAll();
 
     void handleLinkedNotebookAdded(const LinkedNotebook & linkedNotebook);
     void handleLinkedNotebookUpdated(const LinkedNotebook & linkedNotebook);
@@ -567,7 +566,7 @@ private:
     NoteStore                               m_noteStore;
     UserStore                               m_userStore;
 
-    qint32                                  m_maxSyncChunkEntries;
+    qint32                                  m_maxSyncChunksPerOneDownload;
     SyncMode::type                          m_lastSyncMode;
     qevercloud::Timestamp                   m_lastSyncTime;
     qint32                                  m_lastUpdateCount;
@@ -584,7 +583,6 @@ private:
 
     bool                                    m_active;
     bool                                    m_paused;
-    bool                                    m_requestedToStop;
 
     bool                                    m_edamProtocolVersionChecked;
 
@@ -634,8 +632,8 @@ private:
     QString                                 m_shardId;
     qevercloud::Timestamp                   m_authenticationTokenExpirationTime;
     bool                                    m_pendingAuthenticationTokenAndShardId;
-    User                                    m_user;
 
+    User                                    m_user;
     QUuid                                   m_findUserRequestId;
     QUuid                                   m_addOrUpdateUserRequestId;
     bool                                    m_onceAddedOrUpdatedUserInLocalStorage;
@@ -674,7 +672,7 @@ private:
     typedef QHash<QUuid,QPair<Note,QUuid> > NoteDataPerFindNotebookRequestId;
     NoteDataPerFindNotebookRequestId        m_notesWithFindRequestIdsPerFindNotebookRequestId;
 
-    QHash<QPair<QString,QString>,Notebook>  m_notebooksPerNoteGuids;
+    QHash<QPair<QString,QString>,Notebook>  m_notebooksPerNoteIds;
 
     ResourcesList                           m_resources;
     QSet<QUuid>                             m_findResourceByGuidRequestIds;
@@ -701,7 +699,7 @@ private:
     QSet<QString>                           m_localUidsOfElementsAlreadyAttemptedToFindByName;
 
     QSet<QString>                           m_guidsOfNotesPendingDownloadForAddingToLocalStorage;
-    QSet<QString>                           m_guidsOfNotesPendingDownloadForUpdatingInLocalStorage;
+    QHash<QString,Note>                     m_notesPendingDownloadForUpdatingInLocalStorageByGuid;
 
     QHash<int,Note>                         m_notesToAddPerAPICallPostponeTimerId;
     QHash<int,Note>                         m_notesToUpdatePerAPICallPostponeTimerId;

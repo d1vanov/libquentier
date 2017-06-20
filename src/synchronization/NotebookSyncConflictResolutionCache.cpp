@@ -32,6 +32,20 @@ NotebookSyncConflictResolutionCache::NotebookSyncConflictResolutionCache(LocalSt
     m_offset(0)
 {}
 
+void NotebookSyncConflictResolutionCache::clear()
+{
+    QNDEBUG(QStringLiteral("NotebookSyncConflictResolutionCache::clear"));
+
+    disconnectFromLocalStorage();
+
+    m_notebookNameByLocalUid.clear();
+    m_notebookNameByGuid.clear();
+    m_notebookGuidByName.clear();
+
+    m_listNotebooksRequestId = QUuid();
+    m_offset = 0;
+}
+
 bool NotebookSyncConflictResolutionCache::isFilled() const
 {
     if (!m_connectedToLocalStorage) {

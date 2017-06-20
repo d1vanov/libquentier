@@ -66,7 +66,6 @@ private:
                                       ErrorString & errorDescription, qint32 & rateLimitSeconds) const;
 
 private:
-    UserStore() Q_DECL_EQ_DELETE;
     UserStore(const UserStore & other) Q_DECL_EQ_DELETE;
     UserStore & operator=(const UserStore & other) Q_DECL_EQ_DELETE;
 

@@ -44,6 +44,29 @@ NoteStore::NoteStore(QSharedPointer<qevercloud::NoteStore> pQecNoteStore, QObjec
     QUENTIER_CHECK_PTR(m_pQecNoteStore)
 }
 
+NoteStore::~NoteStore()
+{
+    stop();
+}
+
+void NoteStore::stop()
+{
+    QNDEBUG(QStringLiteral("NoteStore::stop"));
+
+    for(auto it = m_noteGuidByAsyncResultPtr.begin(), end = m_noteGuidByAsyncResultPtr.end(); it != end; ++it)
+    {
+        qevercloud::AsyncResult * pAsyncResult = it.key();
+        if (Q_UNLIKELY(!pAsyncResult)) {
+            continue;
+        }
+
+        QObject::disconnect(pAsyncResult, QNSIGNAL(qevercloud::AsyncResult,finished,QVariant,QSharedPointer<EverCloudExceptionData>),
+                            this, QNSLOT(NoteStore,onGetNoteAsyncFinished,QVariant,QSharedPointer<EverCloudExceptionData>));
+    }
+
+    m_noteGuidByAsyncResultPtr.clear();
+}
+
 QSharedPointer<qevercloud::NoteStore> NoteStore::getQecNoteStore()
 {
     return m_pQecNoteStore;
@@ -575,19 +598,18 @@ void NoteStore::onGetNoteAsyncFinished(QVariant result, QSharedPointer<EverCloud
         auto it = m_noteGuidByAsyncResultPtr.find(pAsyncResult);
         if (it != m_noteGuidByAsyncResultPtr.end()) {
             noteGuid = it.value();
+            Q_UNUSED(m_noteGuidByAsyncResultPtr.erase(it))
         }
         else {
-            QNDEBUG(QStringLiteral("Couldn't find the note guid by async result ptr, will clear the container "
-                                   "to prevent it leaking memory"));
-            m_noteGuidByAsyncResultPtr.clear();
+            QNDEBUG(QStringLiteral("Couldn't find the note guid by async result ptr"));
+            return;
         }
     }
     else
     {
         QNDEBUG(QStringLiteral("Couldn't get non-NULL pointer to AsyncResult, hence can't get the note guid "
-                               "to which the result corresponds, will clear the note guid by async result ptr "
-                               "container in order to prevent it leaking memory"));
-        m_noteGuidByAsyncResultPtr.clear();
+                               "to which the result corresponds"));
+        return;
     }
 
     Note note;

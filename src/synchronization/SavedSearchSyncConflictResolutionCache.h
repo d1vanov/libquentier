@@ -32,6 +32,8 @@ class SavedSearchSyncConflictResolutionCache: public QObject
 public:
     SavedSearchSyncConflictResolutionCache(LocalStorageManagerAsync & localStorageManagerAsync);
 
+    void clear();
+
     /**
      * @return True if the cache is already filled with up-to-moment data, false otherwise
      */

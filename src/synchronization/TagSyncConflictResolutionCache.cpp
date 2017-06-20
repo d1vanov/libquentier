@@ -32,6 +32,19 @@ TagSyncConflictResolutionCache::TagSyncConflictResolutionCache(LocalStorageManag
     m_offset(0)
 {}
 
+void TagSyncConflictResolutionCache::clear()
+{
+    QNDEBUG(QStringLiteral("TagSyncConflictResolutionCache::clear"));
+
+    disconnectFromLocalStorage();
+
+    m_tagNameByLocalUid.clear();
+    m_tagNameByGuid.clear();
+    m_tagGuidByName.clear();
+    m_listTagsRequestId = QUuid();
+    m_offset = 0;
+}
+
 bool TagSyncConflictResolutionCache::isFilled() const
 {
     if (!m_connectedToLocalStorage) {

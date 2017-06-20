@@ -32,6 +32,20 @@ SavedSearchSyncConflictResolutionCache::SavedSearchSyncConflictResolutionCache(L
     m_offset(0)
 {}
 
+void SavedSearchSyncConflictResolutionCache::clear()
+{
+    QNDEBUG(QStringLiteral("SavedSearchSyncConflictResolutionCache::clear"));
+
+    disconnectFromLocalStorage();
+
+    m_savedSearchNameByLocalUid.clear();
+    m_savedSearchNameByGuid.clear();
+    m_savedSearchGuidByName.clear();
+
+    m_listSavedSearchesRequestId = QUuid();
+    m_offset = 0;
+}
+
 bool SavedSearchSyncConflictResolutionCache::isFilled() const
 {
     if (!m_connectedToLocalStorage) {

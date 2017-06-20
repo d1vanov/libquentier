@@ -54,6 +54,9 @@ class NoteStore: public QObject
     Q_OBJECT
 public:
     explicit NoteStore(QSharedPointer<qevercloud::NoteStore> pQecNoteStore, QObject * parent = Q_NULLPTR);
+    virtual ~NoteStore();
+
+    void stop();
 
     QSharedPointer<qevercloud::NoteStore> getQecNoteStore();
 
