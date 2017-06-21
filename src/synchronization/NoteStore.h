@@ -108,7 +108,7 @@ public:
                                         ErrorString & errorDescription, qint32 & rateLimitSeconds);
 
 Q_SIGNALS:
-    void getNoteAsyncFinished(qint32 errorCode, Note note, qint32 rateLimitSeconds, ErrorString errorDescription);
+    void getNoteAsyncFinished(qint32 errorCode, qevercloud::Note note, qint32 rateLimitSeconds, ErrorString errorDescription);
 
 private:
     typedef qevercloud::EverCloudExceptionData EverCloudExceptionData;
@@ -141,7 +141,7 @@ private:
                                                    const qint32 afterUSN, const qint32 maxEntries,
                                                    ErrorString & errorDescription) const;
 
-    qint32 processEdamUserExceptionForGetNote(const Note & note, const qevercloud::EDAMUserException & userException,
+    qint32 processEdamUserExceptionForGetNote(const qevercloud::Note & note, const qevercloud::EDAMUserException & userException,
                                               ErrorString & errorDescription) const;
 
     qint32 processUnexpectedEdamUserException(const QString & typeName, const qevercloud::EDAMUserException & userException,

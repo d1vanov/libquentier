@@ -235,7 +235,7 @@ private Q_SLOTS:
     void onNoteThumbnailDownloadingFinished(bool status, QString noteGuid, QByteArray downloadedThumbnailImageData,
                                             ErrorString errorDescription);
 
-    void onGetNoteAsyncFinished(qint32 errorCode, Note note, qint32 rateLimitSeconds, ErrorString errorDescription);
+    void onGetNoteAsyncFinished(qint32 errorCode, qevercloud::Note qecNote, qint32 rateLimitSeconds, ErrorString errorDescription);
 
     // Slots for sync conflict resolvers
     void onNotebookSyncConflictResolverFinished(qevercloud::Notebook remoteNotebook);

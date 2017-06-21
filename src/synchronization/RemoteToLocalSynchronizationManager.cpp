@@ -188,8 +188,8 @@ RemoteToLocalSynchronizationManager::RemoteToLocalSynchronizationManager(LocalSt
     m_syncAccountLimitsPostponeTimerId(0),
     m_gotLastSyncParameters(false)
 {
-    QObject::connect(&m_noteStore, QNSIGNAL(NoteStore,getNoteAsyncFinished,qint32,Note,qint32,ErrorString),
-                     this, QNSLOT(RemoteToLocalSynchronizationManager,onGetNoteAsyncFinished,qint32,Note,qint32,ErrorString));
+    QObject::connect(&m_noteStore, QNSIGNAL(NoteStore,getNoteAsyncFinished,qint32,qevercloud::Note,qint32,ErrorString),
+                     this, QNSLOT(RemoteToLocalSynchronizationManager,onGetNoteAsyncFinished,qint32,qevercloud::Note,qint32,ErrorString));
 }
 
 bool RemoteToLocalSynchronizationManager::active() const
@@ -2566,22 +2566,22 @@ void RemoteToLocalSynchronizationManager::collectNonProcessedItemsSmallestUsns(q
     }
 }
 
-void RemoteToLocalSynchronizationManager::onGetNoteAsyncFinished(qint32 errorCode, Note note, qint32 rateLimitSeconds,
+void RemoteToLocalSynchronizationManager::onGetNoteAsyncFinished(qint32 errorCode, qevercloud::Note qecNote, qint32 rateLimitSeconds,
                                                                  ErrorString errorDescription)
 {
     QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::onGetNoteAsyncFinished: error code = ")
             << errorCode << QStringLiteral(", rate limit seconds = ") << rateLimitSeconds
             << QStringLiteral(", error description: ") << errorDescription
-            << QStringLiteral(", note: ") << note);
+            << QStringLiteral(", note: ") << qecNote);
 
-    if (Q_UNLIKELY(!note.hasGuid())) {
+    if (Q_UNLIKELY(!qecNote.guid.isSet())) {
         errorDescription.setBase(QT_TR_NOOP("Internal error: just downloaded note has no guid"));
-        QNWARNING(errorDescription << QStringLiteral(", note: ") << note);
+        QNWARNING(errorDescription << QStringLiteral(", note: ") << qecNote);
         emit failure(errorDescription);
         return;
     }
 
-    QString noteGuid = note.guid();
+    QString noteGuid = qecNote.guid.ref();
 
     auto addIt = m_guidsOfNotesPendingDownloadForAddingToLocalStorage.find(noteGuid);
     auto updateIt = ((addIt == m_guidsOfNotesPendingDownloadForAddingToLocalStorage.end())
@@ -2591,15 +2591,17 @@ void RemoteToLocalSynchronizationManager::onGetNoteAsyncFinished(qint32 errorCod
     bool needToAddNote = (addIt != m_guidsOfNotesPendingDownloadForAddingToLocalStorage.end());
     bool needToUpdateNote = (updateIt != m_notesPendingDownloadForUpdatingInLocalStorageByGuid.end());
 
-    Note originalNote;
+    Note note;
 
     if (needToAddNote) {
         Q_UNUSED(m_guidsOfNotesPendingDownloadForAddingToLocalStorage.erase(addIt))
     }
     else if (needToUpdateNote) {
-        originalNote = updateIt.value();
+        note = updateIt.value();
         Q_UNUSED(m_notesPendingDownloadForUpdatingInLocalStorageByGuid.erase(updateIt))
     }
+
+    note.qevercloudNote() = qecNote;
 
     if (Q_UNLIKELY(!needToAddNote && !needToUpdateNote)) {
         errorDescription.setBase(QT_TR_NOOP("Internal error: the downloaded note was not expected"));
@@ -2714,12 +2716,6 @@ void RemoteToLocalSynchronizationManager::onGetNoteAsyncFinished(qint32 errorCod
         emitAddRequest(note);
         return;
     }
-
-    // NOTE: if we are updating a note, we need to copy the original note
-    // and then overwrite the parts downloaded from Evernote - that would
-    // preserve things like resource local uid (and note local uid)
-    originalNote.qevercloudNote() = note.qevercloudNote();
-    note = originalNote;
 
     QUuid updateNoteRequestId = QUuid::createUuid();
     Q_UNUSED(m_updateNoteRequestIds.insert(updateNoteRequestId));

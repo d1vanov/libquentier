@@ -468,7 +468,7 @@ qint32 NoteStore::getNote(const bool withContent, const bool withResourcesData,
     }
     catch(const qevercloud::EDAMUserException & userException)
     {
-        return processEdamUserExceptionForGetNote(note, userException, errorDescription);
+        return processEdamUserExceptionForGetNote(note.qevercloudNote(), userException, errorDescription);
     }
     catch(const qevercloud::EDAMNotFoundException & notFoundException)
     {
@@ -612,9 +612,8 @@ void NoteStore::onGetNoteAsyncFinished(QVariant result, QSharedPointer<EverCloud
         return;
     }
 
-    Note note;
-    note.unsetLocalUid();
-    note.setGuid(noteGuid);
+    qevercloud::Note note;
+    note.guid = noteGuid;
 
     ErrorString errorDescription;
     qint32 errorCode = 0;
@@ -647,12 +646,7 @@ void NoteStore::onGetNoteAsyncFinished(QVariant result, QSharedPointer<EverCloud
         return;
     }
 
-    qevercloud::Note qecNote = result.value<qevercloud::Note>();
-
-    note.qevercloudNote() = qecNote;
-    note.setLocal(false);
-    note.setDirty(false);
-
+    note = result.value<qevercloud::Note>();
     emit getNoteAsyncFinished(errorCode, note, rateLimitSeconds, errorDescription);
 }
 
@@ -937,7 +931,7 @@ qint32 NoteStore::processEdamUserExceptionForGetSyncChunk(const qevercloud::EDAM
     return userException.errorCode;
 }
 
-qint32 NoteStore::processEdamUserExceptionForGetNote(const Note & note, const qevercloud::EDAMUserException & userException,
+qint32 NoteStore::processEdamUserExceptionForGetNote(const qevercloud::Note & note, const qevercloud::EDAMUserException & userException,
                                                      ErrorString & errorDescription) const
 {
     Q_UNUSED(note);     // Maybe it'd be actually used in future
