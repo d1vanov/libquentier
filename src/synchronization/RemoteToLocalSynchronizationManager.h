@@ -324,6 +324,7 @@ private:
     template <class ElementType, class ContainerType>
     bool onFoundDuplicateByGuid(ElementType element, const QUuid & requestId,
                                 const QString & typeName, ContainerType & container,
+                                ContainerType & pendingItemsContainer,
                                 QSet<QUuid> & findByGuidRequestIds);
 
     template <class ContainerType, class ElementType>
@@ -340,6 +341,7 @@ private:
     template <class ContainerType, class ElementType>
     bool onFoundDuplicateByName(ElementType element, const QUuid & requestId,
                                 const QString & typeName, ContainerType & container,
+                                ContainerType & pendingItemsContainer,
                                 QSet<QUuid> & findElementRequestIds);
 
     template <class ContainerType, class ElementType>
@@ -380,7 +382,7 @@ private:
                                    ElementsToAddByUuid & elementsToAddByRenameRequestId);
 
     template<class ElementType>
-    void performPostAddOrUpdateChecks();
+    void performPostAddOrUpdateChecks(const ElementType & element);
 
     template <class ElementType>
     void unsetLocalUid(ElementType & element);
@@ -494,6 +496,20 @@ private:
 
     qint32 nonProcessedItemsSmallestUsn(const QString & linkedNotebookGuid = QString()) const;
 
+    void registerTagPendingAddOrUpdate(const Tag & tag);
+    void registerSavedSearchPendingAddOrUpdate(const SavedSearch & search);
+    void registerLinkedNotebookPendingAddOrUpdate(const LinkedNotebook & linkedNotebook);
+    void registerNotebookPendingAddOrUpdate(const Notebook & notebook);
+    void registerNotePendingAddOrUpdate(const Note & note);
+    void registerResourcePendingAddOrUpdate(const Resource & resource);
+
+    void unregisterTagPendingAddOrUpdate(const Tag & tag);
+    void unregisterSavedSearchPendingAddOrUpdate(const SavedSearch & search);
+    void unregisterLinkedNotebookPendingAddOrUpdate(const LinkedNotebook & linkedNotebook);
+    void unregisterNotebookPendingAddOrUpdate(const Notebook & notebook);
+    void unregisterNotePendingAddOrUpdate(const Note & note);
+    void unregisterResourcePendingAddOrUpdate(const Resource & resource);
+
 private:
     template <class T>
     class CompareItemByName
@@ -593,6 +609,7 @@ private:
     qevercloud::AccountLimits               m_accountLimits;
 
     TagsList                                m_tags;
+    TagsList                                m_tagsPendingAddOrUpdate;
     QList<QString>                          m_expungedTags;
     QHash<QUuid,Tag>                        m_tagsToAddPerRequestId;
     QSet<QUuid>                             m_findTagByNameRequestIds;
@@ -607,6 +624,7 @@ private:
     QUuid                                   m_expungeNotelessTagsRequestId;
 
     SavedSearchesList                       m_savedSearches;
+    SavedSearchesList                       m_savedSearchesPendingAddOrUpdate;
     QList<QString>                          m_expungedSavedSearches;
     QHash<QUuid,SavedSearch>                m_savedSearchesToAddPerRequestId;
     QSet<QUuid>                             m_findSavedSearchByNameRequestIds;
@@ -618,6 +636,7 @@ private:
     SavedSearchSyncConflictResolutionCache  m_savedSearchSyncConflictResolutionCache;
 
     LinkedNotebooksList                     m_linkedNotebooks;
+    LinkedNotebooksList                     m_linkedNotebooksPendingAddOrUpdate;
     QList<QString>                          m_expungedLinkedNotebooks;
     QSet<QUuid>                             m_findLinkedNotebookRequestIds;
     QSet<QUuid>                             m_addLinkedNotebookRequestIds;
@@ -648,6 +667,7 @@ private:
     QHash<QString,qint32>                   m_lastUpdateCountByLinkedNotebookGuid;
 
     NotebooksList                           m_notebooks;
+    NotebooksList                           m_notebooksPendingAddOrUpdate;
     QList<QString>                          m_expungedNotebooks;
     QHash<QUuid,Notebook>                   m_notebooksToAddPerRequestId;
     QSet<QUuid>                             m_findNotebookByNameRequestIds;
@@ -661,6 +681,7 @@ private:
     QHash<QString,QString>                  m_linkedNotebookGuidsByNotebookGuids;
 
     NotesList                               m_notes;
+    NotesList                               m_notesPendingAddOrUpdate;
     quint32                                 m_originalNumberOfNotes;
     quint32                                 m_numNotesDownloaded;
     QList<QString>                          m_expungedNotes;
@@ -675,6 +696,7 @@ private:
     QHash<QPair<QString,QString>,Notebook>  m_notebooksPerNoteIds;
 
     ResourcesList                           m_resources;
+    ResourcesList                           m_resourcesPendingAddOrUpdate;
     QSet<QUuid>                             m_findResourceByGuidRequestIds;
     QSet<QUuid>                             m_addResourceRequestIds;
     QSet<QUuid>                             m_updateResourceRequestIds;
