@@ -602,44 +602,104 @@ QTextStream & operator<<(QTextStream & strm, const qevercloud::SyncChunk & syncC
          << QStringLiteral(";\n");
     strm << indent << QStringLiteral("updateCount = ") << syncChunk.updateCount << QStringLiteral(";\n");
 
+    if (syncChunk.notes.isSet())
+    {
+        for(auto it = syncChunk.notes->constBegin(), end = syncChunk.notes->constEnd(); it != end; ++it) {
+            strm << indent << QStringLiteral("note: guid = ") << (it->guid.isSet() ? it->guid.ref() : QStringLiteral("<empty>"))
+                 << QStringLiteral(", update sequence number = ")
+                 << (it->updateSequenceNum.isSet() ? QString::number(it->updateSequenceNum.ref()) : QStringLiteral("<empty>"))
+                 << QStringLiteral(";\n");
+        }
+    }
+
+    if (syncChunk.notebooks.isSet())
+    {
+        for(auto it = syncChunk.notebooks->constBegin(), end = syncChunk.notebooks->constEnd(); it != end; ++it) {
+            strm << indent << QStringLiteral("notebook: guid = ") << (it->guid.isSet() ? it->guid.ref() : QStringLiteral("<empty>"))
+                 << QStringLiteral(", update sequence number = ")
+                 << (it->updateSequenceNum.isSet() ? QString::number(it->updateSequenceNum.ref()) : QStringLiteral("<empty>"))
+                 << QStringLiteral(";\n");
+        }
+    }
+
+    if (syncChunk.tags.isSet())
+    {
+        for(auto it = syncChunk.tags->constBegin(), end = syncChunk.tags->constEnd(); it != end; ++it) {
+            strm << indent << QStringLiteral("tag: guid = ") << (it->guid.isSet() ? it->guid.ref() : QStringLiteral("<empty>"))
+                 << QStringLiteral(", update sequence number = ")
+                 << (it->updateSequenceNum.isSet() ? QString::number(it->updateSequenceNum.ref()) : QStringLiteral("<empty>"))
+                 << QStringLiteral(";\n");
+        }
+    }
+
+    if (syncChunk.searches.isSet())
+    {
+        for(auto it = syncChunk.searches->constBegin(), end = syncChunk.searches->constEnd(); it != end; ++it) {
+            strm << indent << QStringLiteral("saved search: guid = ") << (it->guid.isSet() ? it->guid.ref() : QStringLiteral("<empty>"))
+                 << QStringLiteral(", update sequence number = ")
+                 << (it->updateSequenceNum.isSet() ? QString::number(it->updateSequenceNum.ref()) : QStringLiteral("<empty>"))
+                 << QStringLiteral(";\n");
+        }
+    }
+
+    if (syncChunk.resources.isSet())
+    {
+        for(auto it = syncChunk.resources->constBegin(), end = syncChunk.resources->constEnd(); it != end; ++it) {
+            strm << indent << QStringLiteral("resource: guid = ") << (it->guid.isSet() ? it->guid.ref() : QStringLiteral("<empty>"))
+                 << QStringLiteral(", update sequence number = ")
+                 << (it->updateSequenceNum.isSet() ? QString::number(it->updateSequenceNum.ref()) : QStringLiteral("<empty>"))
+                 << QStringLiteral(";\n");
+        }
+    }
+
+    if (syncChunk.linkedNotebooks.isSet())
+    {
+        for(auto it = syncChunk.linkedNotebooks->constBegin(), end = syncChunk.linkedNotebooks->constEnd(); it != end; ++it) {
+            strm << indent << QStringLiteral("linked notebook: guid = ") << (it->guid.isSet() ? it->guid.ref() : QStringLiteral("<empty>"))
+                 << QStringLiteral(", update sequence number = ")
+                 << (it->updateSequenceNum.isSet() ? QString::number(it->updateSequenceNum.ref()) : QStringLiteral("<empty>"))
+                 << QStringLiteral(";\n");
+        }
+    }
+
     if (syncChunk.expungedLinkedNotebooks.isSet())
     {
-        for(auto it = syncChunk.expungedLinkedNotebooks->begin(), end = syncChunk.expungedLinkedNotebooks->end(); it != end; ++it) {
+        for(auto it = syncChunk.expungedLinkedNotebooks->constBegin(), end = syncChunk.expungedLinkedNotebooks->constEnd(); it != end; ++it) {
             strm << indent << QStringLiteral("expunged linked notebook guid = ") << *it << QStringLiteral(";\n");
         }
     }
 
     if (syncChunk.expungedNotebooks.isSet())
     {
-        for(auto it = syncChunk.expungedNotebooks->begin(), end = syncChunk.expungedNotebooks->end(); it != end; ++it) {
+        for(auto it = syncChunk.expungedNotebooks->constBegin(), end = syncChunk.expungedNotebooks->constEnd(); it != end; ++it) {
             strm << indent << QStringLiteral("expunged notebook guid = ") << *it << QStringLiteral(";\n");
         }
     }
 
     if (syncChunk.expungedNotes.isSet())
     {
-        for(auto it = syncChunk.expungedNotes->begin(), end = syncChunk.expungedNotes->end(); it != end; ++it) {
+        for(auto it = syncChunk.expungedNotes->constBegin(), end = syncChunk.expungedNotes->constEnd(); it != end; ++it) {
             strm << indent << QStringLiteral("expunged note guid = ") << *it << QStringLiteral(";\n");
         }
     }
 
     if (syncChunk.expungedSearches.isSet())
     {
-        for(auto it = syncChunk.expungedSearches->begin(), end = syncChunk.expungedSearches->end(); it != end; ++it) {
+        for(auto it = syncChunk.expungedSearches->constBegin(), end = syncChunk.expungedSearches->constEnd(); it != end; ++it) {
             strm << indent << QStringLiteral("expunged search guid = ") << *it << QStringLiteral(";\n");
         }
     }
 
     if (syncChunk.expungedTags.isSet())
     {
-        for(auto it = syncChunk.expungedTags->begin(), end = syncChunk.expungedTags->end(); it != end; ++it) {
+        for(auto it = syncChunk.expungedTags->constBegin(), end = syncChunk.expungedTags->constEnd(); it != end; ++it) {
             strm << indent << QStringLiteral("expunged tag guid = ") << *it << QStringLiteral(";\n");
         }
     }
 
     if (syncChunk.linkedNotebooks.isSet())
     {
-        for(auto it = syncChunk.linkedNotebooks->begin(), end = syncChunk.linkedNotebooks->end(); it != end; ++it) {
+        for(auto it = syncChunk.linkedNotebooks->constBegin(), end = syncChunk.linkedNotebooks->constEnd(); it != end; ++it) {
             strm << indent << QStringLiteral(", linked notebook: ") << *it << QStringLiteral(";\n");
         }
     }
