@@ -1588,16 +1588,10 @@ bool LocalStorageManagerPrivate::addNote(Note & note, ErrorString & errorDescrip
         return false;
     }
 
-    error.clear();
-    res = canAddNoteToNotebook(notebookLocalUid, error);
-    if (Q_UNLIKELY(!res)) {
-        errorDescription.base() = errorPrefix.base();
-        errorDescription.appendBase(error.base());
-        errorDescription.appendBase(error.additionalBases());
-        errorDescription.details() = error.details();
-        QNWARNING(errorDescription);
-        return false;
-    }
+    // NOTE: we might need to check if the notebook in which this note resides allows one
+    // to add the notes to it; however, there is no such check here because the request to update the note
+    // might come from the synchronization i.e. the note might have been updated via the official Evernote client
+    // which doesn't account for such minor issues as the notebooks' restriction to update the note
 
     note.setNotebookLocalUid(notebookLocalUid);
 
@@ -1707,16 +1701,10 @@ bool LocalStorageManagerPrivate::updateNote(Note & note, const bool updateResour
         return false;
     }
 
-    error.clear();
-    res = canUpdateNoteInNotebook(notebookLocalUid, error);
-    if (!res) {
-        errorDescription.base() = errorPrefix.base();
-        errorDescription.appendBase(error.base());
-        errorDescription.appendBase(error.additionalBases());
-        errorDescription.details() = error.details();
-        QNWARNING(errorDescription);
-        return false;
-    }
+    // NOTE: we might need to check if the notebook in which this note resides allows one
+    // to update the notes; however, there is no such check here because the request to update the note
+    // might come from the synchronization i.e. the note might have been updated via the official Evernote client
+    // which doesn't account for such minor issues as the notebooks' restriction to update the note
 
     note.setNotebookLocalUid(notebookLocalUid);
 
@@ -2325,16 +2313,11 @@ bool LocalStorageManagerPrivate::expungeNote(Note & note, ErrorString & errorDes
         return false;
     }
 
-    error.clear();
-    res = canExpungeNoteInNotebook(notebookLocalUid, error);
-    if (!res) {
-        errorDescription.base() = errorPrefix.base();
-        errorDescription.appendBase(error.base());
-        errorDescription.appendBase(error.additionalBases());
-        errorDescription.details() = error.details();
-        QNWARNING(errorDescription);
-        return false;
-    }
+    // NOTE: unfortunately, here we cannot check whether it's legitimate to expunge the note
+    // given its notebook's restrictions - the request to expunge the note might come
+    // from the synchronization algorithm and the note might have been expunged from
+    // the official Evernote client which doesn't account for such minor issues as notebook's
+    // restrictions for notes expunging
 
     note.setNotebookLocalUid(notebookLocalUid);
 
@@ -3235,31 +3218,11 @@ bool LocalStorageManagerPrivate::expungeEnResource(Resource & resource, ErrorStr
         return false;
     }
 
-    // Expunging the resource is essentially the update of note, so need to check if we're allowed to do that
-    error.clear();
-    QString notebookLocalUid;
-    Note dummyNote;
-    dummyNote.setLocalUid(noteLocalUid);
-    res = getNotebookLocalUidFromNote(dummyNote, notebookLocalUid, error);
-    if (Q_UNLIKELY(!res)) {
-        errorDescription.base() = errorPrefix.base();
-        errorDescription.appendBase(error.base());
-        errorDescription.appendBase(error.additionalBases());
-        errorDescription.details() = error.details();
-        QNWARNING(errorDescription);
-        return false;
-    }
-
-    error.clear();
-    res = canUpdateNoteInNotebook(notebookLocalUid, error);
-    if (!res) {
-        errorDescription.base() = errorPrefix.base();
-        errorDescription.appendBase(error.base());
-        errorDescription.appendBase(error.additionalBases());
-        errorDescription.details() = error.details();
-        QNWARNING(errorDescription);
-        return false;
-    }
+    // NOTE: since expunging the resource is essentially the update of a note containing the resource,
+    // we might need to check if the notebook in which this note resides allows one
+    // to update the notes; however, there is no such check here because the request to update the note
+    // might come from the synchronization i.e. the note might have been updated via the official Evernote client
+    // which doesn't account for such minor issues as the notebooks' restriction to update the note
 
     QString localUid = resource.localUid();
 
@@ -3824,41 +3787,15 @@ bool LocalStorageManagerPrivate::addEnResource(Resource & resource, ErrorString 
         return false;
     }
 
-    // Adding the resource is essentially the update of note, so need to check if we're allowed to do that
-    QString notebookLocalUid;
-    Note dummyNote;
-    if (resource.hasNoteGuid()) {
-        dummyNote.setGuid(resource.noteGuid());
-    }
-    else {
-        dummyNote.setLocalUid(resource.noteLocalUid());
-    }
-
-    error.clear();
-    bool res = getNotebookLocalUidFromNote(dummyNote, notebookLocalUid, error);
-    if (Q_UNLIKELY(!res)) {
-        errorDescription.base() = errorPrefix.base();
-        errorDescription.appendBase(error.base());
-        errorDescription.appendBase(error.additionalBases());
-        errorDescription.details() = error.details();
-        QNWARNING(errorDescription);
-        return false;
-    }
-
-    error.clear();
-    res = canUpdateNoteInNotebook(notebookLocalUid, error);
-    if (!res) {
-        errorDescription.base() = errorPrefix.base();
-        errorDescription.appendBase(error.base());
-        errorDescription.appendBase(error.additionalBases());
-        errorDescription.details() = error.details();
-        QNWARNING(errorDescription);
-        return false;
-    }
+    // NOTE: since adding the resource is essentially the update of a note containing the resource,
+    // we might need to check if the notebook in which this note resides allows one
+    // to update the notes; however, there is no such check here because the request to update the note
+    // might come from the synchronization i.e. the note might have been updated via the official Evernote client
+    // which doesn't account for such minor issues as the notebooks' restriction to update the note
 
     // Now can continue with adding the resource
     error.clear();
-    res = complementResourceNoteIds(resource, error);
+    bool res = complementResourceNoteIds(resource, error);
     if (!res) {
         return false;
     }
@@ -3970,41 +3907,15 @@ bool LocalStorageManagerPrivate::updateEnResource(Resource & resource, ErrorStri
         return false;
     }
 
-    // Updating the resource is essentially the update of note, so need to check if we're allowed to do that
-    QString notebookLocalUid;
-    Note dummyNote;
-    if (resource.hasNoteGuid()) {
-        dummyNote.setGuid(resource.noteGuid());
-    }
-    else {
-        dummyNote.setLocalUid(resource.noteLocalUid());
-    }
-
-    error.clear();
-    bool res = getNotebookLocalUidFromNote(dummyNote, notebookLocalUid, error);
-    if (Q_UNLIKELY(!res)) {
-        errorDescription.base() = errorPrefix.base();
-        errorDescription.appendBase(error.base());
-        errorDescription.appendBase(error.additionalBases());
-        errorDescription.details() = error.details();
-        QNWARNING(errorDescription);
-        return false;
-    }
-
-    error.clear();
-    res = canUpdateNoteInNotebook(notebookLocalUid, error);
-    if (!res) {
-        errorDescription.base() = errorPrefix.base();
-        errorDescription.appendBase(error.base());
-        errorDescription.appendBase(error.additionalBases());
-        errorDescription.details() = error.details();
-        QNWARNING(errorDescription);
-        return false;
-    }
+    // NOTE: since updating the resource is essentially the update of a note containing the resource,
+    // we might need to check if the notebook in which this note resides allows one
+    // to update the notes; however, there is no such check here because the request to update the note
+    // might come from the synchronization i.e. the note might have been updated via the official Evernote client
+    // which doesn't account for such minor issues as the notebooks' restriction to update the note
 
     // Now can continue with updating the resource
     error.clear();
-    res = complementResourceNoteIds(resource, error);
+    bool res = complementResourceNoteIds(resource, error);
     if (!res) {
         errorDescription.base() = errorPrefix.base();
         errorDescription.appendBase(error.base());
@@ -6635,91 +6546,6 @@ bool LocalStorageManagerPrivate::insertOrReplaceNoteLimits(const QString & noteL
     DATABASE_CHECK_AND_SET_ERROR();
 
     return true;
-}
-
-bool LocalStorageManagerPrivate::canAddNoteToNotebook(const QString & notebookLocalUid, ErrorString & errorDescription)
-{
-    QNDEBUG(QStringLiteral("LocalStorageManagerPrivate::canAddNoteToNotebook: notebook local uid = ") << notebookLocalUid);
-
-    ErrorString errorPrefix(QT_TR_NOOP("can't check whether some note can be added to the notebook"));
-
-    bool res = checkAndPrepareCanAddNoteToNotebookQuery();
-    QSqlQuery & query = m_canAddNoteToNotebookQuery;
-    DATABASE_CHECK_AND_SET_ERROR();
-
-    query.bindValue(QStringLiteral(":notebookLocalUid"), notebookLocalUid);
-    res = query.exec();
-    DATABASE_CHECK_AND_SET_ERROR();
-
-    if (!query.next()) {
-        QNDEBUG(QStringLiteral("Found no notebook restrictions for notebook with local uid ") << notebookLocalUid
-                << QStringLiteral(", assuming it's possible to add the note to this notebook"));
-        return true;
-    }
-
-    res = !(query.value(0).toBool());
-    if (!res) {
-        errorDescription.base() = errorPrefix.base();
-        errorDescription.appendBase(QT_TR_NOOP("notebook restrictions forbid adding the note to it"));
-    }
-
-    return res;
-}
-
-bool LocalStorageManagerPrivate::canUpdateNoteInNotebook(const QString & notebookLocalUid, ErrorString & errorDescription)
-{
-    QNDEBUG(QStringLiteral("LocalStorageManagerPrivate::canUpdateNoteInNotebook: notebook local uid = ") << notebookLocalUid);
-
-    ErrorString errorPrefix(QT_TR_NOOP("can't check whether some note in the notebook can be updated"));
-
-    bool res = checkAndPrepareCanUpdateNoteInNotebookQuery();
-    QSqlQuery & query = m_canUpdateNoteInNotebookQuery;
-    DATABASE_CHECK_AND_SET_ERROR();
-
-    query.bindValue(QStringLiteral(":notebookLocalUid"), notebookLocalUid);
-    res = query.exec();
-    DATABASE_CHECK_AND_SET_ERROR();
-
-    if (!query.next()) {
-        QNDEBUG(QStringLiteral("Found no notebook restrictions for notebook with local uid ") << notebookLocalUid
-                << QStringLiteral(", assuming it's possible to update the note in this notebook"));
-        return true;
-    }
-
-    res = !(query.value(0).toBool());
-    if (!res) {
-        errorDescription.setBase(QT_TR_NOOP("notebook restrictions forbid updating its notes"));
-    }
-
-    return res;
-}
-
-bool LocalStorageManagerPrivate::canExpungeNoteInNotebook(const QString & notebookLocalUid, ErrorString & errorDescription)
-{
-    QNDEBUG(QStringLiteral("LocalStorageManagerPrivate::canExpungeNoteInNotebook: notebook local uid = ") << notebookLocalUid);
-
-    ErrorString errorPrefix(QT_TR_NOOP("can't check whether some note can be expunged from the notebook"));
-
-    bool res = checkAndPrepareCanExpungeNoteInNotebookQuery();
-    QSqlQuery & query = m_canExpungeNoteInNotebookQuery;
-    DATABASE_CHECK_AND_SET_ERROR();
-
-    query.bindValue(QStringLiteral(":notebookLocalUid"), notebookLocalUid);
-    res = query.exec();
-    DATABASE_CHECK_AND_SET_ERROR();
-
-    if (!query.next()) {
-        QNDEBUG(QStringLiteral("Found no notebook restrictions for notebook with local uid ") << notebookLocalUid
-                << QStringLiteral(", assuming it's possible to expunge the note from this notebook"));
-        return true;
-    }
-
-    res = !(query.value(0).toBool());
-    if (!res) {
-        errorDescription.setBase(QT_TR_NOOP("notebook restrictions forbid expunging its notes"));
-    }
-
-    return res;
 }
 
 bool LocalStorageManagerPrivate::checkAndPrepareNoteCountQuery() const

@@ -222,9 +222,6 @@ private:
                                          ErrorString & errorDescription);
     bool insertOrReplaceNoteLimits(const QString & noteLocalUid, const qevercloud::NoteLimits & noteLimits,
                                    ErrorString & errorDescription);
-    bool canAddNoteToNotebook(const QString & notebookLocalUid, ErrorString & errorDescription);
-    bool canUpdateNoteInNotebook(const QString & notebookLocalUid, ErrorString & errorDescription);
-    bool canExpungeNoteInNotebook(const QString & notebookLocalUid, ErrorString & errorDescription);
 
     bool checkAndPrepareNoteCountQuery() const;
     bool checkAndPrepareInsertOrReplaceNoteQuery();
