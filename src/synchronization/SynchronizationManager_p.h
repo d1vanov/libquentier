@@ -143,10 +143,6 @@ private Q_SLOTS:
     void onRateLimitExceeded(qint32 secondsToWait);
 
 private:
-    SynchronizationManagerPrivate() Q_DECL_EQ_DELETE;
-    SynchronizationManagerPrivate(const SynchronizationManagerPrivate & other) Q_DECL_EQ_DELETE;
-    SynchronizationManagerPrivate & operator=(const SynchronizationManagerPrivate & other) Q_DECL_EQ_DELETE;
-
     void createConnections(IAuthenticationManager & authenticationManager);
 
     void readLastSyncParameters();
@@ -203,7 +199,11 @@ private:
     void onDeleteAuthTokenFinished();
     void onDeleteShardIdFinished();
 
+    void tryUpdateLastSyncStatus();
     void updatePersistentSyncSettings();
+
+private:
+    Q_DISABLE_COPY(SynchronizationManagerPrivate)
 
 private:
     QString                                 m_consumerKey;

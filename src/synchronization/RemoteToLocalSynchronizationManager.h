@@ -104,7 +104,9 @@ Q_SIGNALS:
 
 public Q_SLOTS:
     void start(qint32 afterUsn = 0);
+
     void stop();
+
     void pause();
     void resume();
 
@@ -251,6 +253,8 @@ private:
     void connectToLocalStorage();
     void disconnectFromLocalStorage();
 
+    void resetCurrentSyncState();
+
     QString defaultInkNoteImageStoragePath() const;
 
     void launchSync();
@@ -319,7 +323,7 @@ private:
     // ========= Find by guid helpers ===========
 
     template <class ElementType>
-    void emitFindByGuidRequest(const QString & guid);
+    void emitFindByGuidRequest(const ElementType & element);
 
     template <class ElementType, class ContainerType>
     bool onFoundDuplicateByGuid(ElementType element, const QUuid & requestId,
@@ -581,8 +585,9 @@ private:
 
     qint32                                  m_maxSyncChunksPerOneDownload;
     SyncMode::type                          m_lastSyncMode;
-    qevercloud::Timestamp                   m_lastSyncTime;
+
     qint32                                  m_lastUpdateCount;
+    qevercloud::Timestamp                   m_lastSyncTime;
 
     bool                                    m_onceSyncDone;
 
@@ -658,8 +663,9 @@ private:
 
     QHash<QString,qevercloud::SyncState>    m_syncStatesByLinkedNotebookGuid;
     QHash<QString,qint32>                   m_lastSynchronizedUsnByLinkedNotebookGuid;
-    QHash<QString,qevercloud::Timestamp>    m_lastSyncTimeByLinkedNotebookGuid;
+
     QHash<QString,qint32>                   m_lastUpdateCountByLinkedNotebookGuid;
+    QHash<QString,qevercloud::Timestamp>    m_lastSyncTimeByLinkedNotebookGuid;
 
     NotebooksList                           m_notebooks;
     NotebooksList                           m_notebooksPendingAddOrUpdate;

@@ -226,6 +226,8 @@ void SynchronizationManagerPrivate::stop()
 {
     QNDEBUG(QStringLiteral("SynchronizationManagerPrivate::stop"));
 
+    tryUpdateLastSyncStatus();
+
     emit stopRemoteToLocalSync();
     emit stopSendingLocalChanges();
 }
@@ -573,7 +575,8 @@ void SynchronizationManagerPrivate::onRemoteToLocalSyncFailure(ErrorString error
 {
     QNDEBUG(QStringLiteral("SynchronizationManagerPrivate::onRemoteToLocalSyncFailure: ") << errorDescription);
 
-    stop();
+    emit stopRemoteToLocalSync();
+    emit stopSendingLocalChanges();
     emit notifyError(errorDescription);
 }
 
@@ -659,42 +662,7 @@ void SynchronizationManagerPrivate::onRateLimitExceeded(qint32 secondsToWait)
     // after the last properly processed USN, either for user's own account or for linked notebooks, so that we won't
     // re-download the same stuff over and over again and hit the rate limit at the very same sync stage
 
-    qint32 updateCount = -1;
-    QHash<QString,qint32> updateCountsByLinkedNotebookGuid;
-    m_remoteToLocalSyncManager.collectNonProcessedItemsSmallestUsns(updateCount, updateCountsByLinkedNotebookGuid);
-
-    if ((updateCount < 0) && updateCountsByLinkedNotebookGuid.isEmpty()) {
-        QNDEBUG(QStringLiteral("Found no USNs for neither user's own account nor linked notebooks"));
-        emit rateLimitExceeded(secondsToWait);
-        return;
-    }
-
-    qevercloud::Timestamp lastSyncTime = QDateTime::currentMSecsSinceEpoch();
-
-    bool shouldUpdatePersistentSyncSettings = false;
-
-    if ((updateCount > 0) && m_remoteToLocalSyncManager.downloadedSyncChunks())
-    {
-        m_lastUpdateCount = updateCount;
-        m_lastSyncTime = lastSyncTime;
-        shouldUpdatePersistentSyncSettings = true;
-    }
-    else if (!updateCountsByLinkedNotebookGuid.isEmpty() &&
-             m_remoteToLocalSyncManager.downloadedLinkedNotebooksSyncChunks())
-    {
-        for(auto it = updateCountsByLinkedNotebookGuid.constBegin(),
-            end = updateCountsByLinkedNotebookGuid.constEnd(); it != end; ++it)
-        {
-            m_cachedLinkedNotebookLastUpdateCountByGuid[it.key()] = it.value();
-            m_cachedLinkedNotebookLastSyncTimeByGuid[it.key()] = lastSyncTime;
-            shouldUpdatePersistentSyncSettings = true;
-        }
-    }
-
-    if (shouldUpdatePersistentSyncSettings) {
-        updatePersistentSyncSettings();
-    }
-
+    tryUpdateLastSyncStatus();
     emit rateLimitExceeded(secondsToWait);
 }
 
@@ -1596,6 +1564,51 @@ void SynchronizationManagerPrivate::onDeleteShardIdFinished()
 
     if (!m_deletingAuthToken) {
         finalizeRevokeAuthentication();
+    }
+}
+
+void SynchronizationManagerPrivate::tryUpdateLastSyncStatus()
+{
+    QNDEBUG(QStringLiteral("SynchronizationManagerPrivate::tryUpdateLastSyncStatus"));
+
+    qint32 updateCount = -1;
+    QHash<QString,qint32> updateCountsByLinkedNotebookGuid;
+    m_remoteToLocalSyncManager.collectNonProcessedItemsSmallestUsns(updateCount, updateCountsByLinkedNotebookGuid);
+
+    if ((updateCount < 0) && updateCountsByLinkedNotebookGuid.isEmpty()) {
+        QNDEBUG(QStringLiteral("Found no USNs for neither user's own account nor linked notebooks"));
+        return;
+    }
+
+    qevercloud::Timestamp lastSyncTime = QDateTime::currentMSecsSinceEpoch();
+
+    bool shouldUpdatePersistentSyncSettings = false;
+
+    if ((updateCount > 0) && m_remoteToLocalSyncManager.downloadedSyncChunks())
+    {
+        m_lastUpdateCount = updateCount;
+        m_lastSyncTime = lastSyncTime;
+        QNDEBUG(QStringLiteral("Got updated sync state for user's own account: update count = ") << m_lastUpdateCount
+                << QStringLiteral(", last sync time = ") << printableDateTimeFromTimestamp(m_lastSyncTime));
+        shouldUpdatePersistentSyncSettings = true;
+    }
+    else if (!updateCountsByLinkedNotebookGuid.isEmpty() &&
+             m_remoteToLocalSyncManager.downloadedLinkedNotebooksSyncChunks())
+    {
+        for(auto it = updateCountsByLinkedNotebookGuid.constBegin(),
+            end = updateCountsByLinkedNotebookGuid.constEnd(); it != end; ++it)
+        {
+            m_cachedLinkedNotebookLastUpdateCountByGuid[it.key()] = it.value();
+            m_cachedLinkedNotebookLastSyncTimeByGuid[it.key()] = lastSyncTime;
+            QNDEBUG(QStringLiteral("Got updated sync state for linked notebook with guid ")
+                    << it.key() << QStringLiteral(", update count = ") << it.value()
+                    << QStringLiteral(", last sync time = ") << lastSyncTime);
+            shouldUpdatePersistentSyncSettings = true;
+        }
+    }
+
+    if (shouldUpdatePersistentSyncSettings) {
+        updatePersistentSyncSettings();
     }
 }
 
