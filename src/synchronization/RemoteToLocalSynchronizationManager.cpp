@@ -103,7 +103,6 @@ RemoteToLocalSynchronizationManager::RemoteToLocalSynchronizationManager(LocalSt
     m_tags(),
     m_tagsPendingAddOrUpdate(),
     m_expungedTags(),
-    m_tagsToAddPerRequestId(),
     m_findTagByNameRequestIds(),
     m_findTagByGuidRequestIds(),
     m_addTagRequestIds(),
@@ -115,7 +114,6 @@ RemoteToLocalSynchronizationManager::RemoteToLocalSynchronizationManager(LocalSt
     m_savedSearches(),
     m_savedSearchesPendingAddOrUpdate(),
     m_expungedSavedSearches(),
-    m_savedSearchesToAddPerRequestId(),
     m_findSavedSearchByNameRequestIds(),
     m_findSavedSearchByGuidRequestIds(),
     m_addSavedSearchRequestIds(),
@@ -150,7 +148,6 @@ RemoteToLocalSynchronizationManager::RemoteToLocalSynchronizationManager(LocalSt
     m_notebooks(),
     m_notebooksPendingAddOrUpdate(),
     m_expungedNotebooks(),
-    m_notebooksToAddPerRequestId(),
     m_findNotebookByNameRequestIds(),
     m_findNotebookByGuidRequestIds(),
     m_addNotebookRequestIds(),
@@ -601,46 +598,35 @@ void RemoteToLocalSynchronizationManager::emitAddRequest<Resource>(const Resourc
 }
 
 template <>
-void RemoteToLocalSynchronizationManager::emitUpdateRequest<Tag>(const Tag & tag,
-                                                                 const Tag * tagToAddLater)
+void RemoteToLocalSynchronizationManager::emitUpdateRequest<Tag>(const Tag & tag)
 {
-    QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::emitUpdateRequest<Tag>: tag = ")
-            << tag << QStringLiteral(", tagToAddLater = ") << (tagToAddLater ? tagToAddLater->toString() : QStringLiteral("<null>")));
+    QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::emitUpdateRequest<Tag>: tag = ") << tag);
 
     registerTagPendingAddOrUpdate(tag);
 
     QUuid updateTagRequestId = QUuid::createUuid();
     Q_UNUSED(m_updateTagRequestIds.insert(updateTagRequestId));
-
-    if (tagToAddLater) {
-        m_tagsToAddPerRequestId[updateTagRequestId] = *tagToAddLater;
-    }
-
+    QNTRACE(QStringLiteral("Emitting the request to update tag: request id = ") << updateTagRequestId
+            << QStringLiteral(", tag: ") << tag);
     emit updateTag(tag, updateTagRequestId);
 }
 
 template <>
-void RemoteToLocalSynchronizationManager::emitUpdateRequest<SavedSearch>(const SavedSearch & search,
-                                                                         const SavedSearch * searchToAddLater)
+void RemoteToLocalSynchronizationManager::emitUpdateRequest<SavedSearch>(const SavedSearch & search)
 {
-    QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::emitUpdateRequest<SavedSearch>: search = ")
-            << search << QStringLiteral(", searchToAddLater = ") << (searchToAddLater ? searchToAddLater->toString() : QStringLiteral("<null>")));
+    QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::emitUpdateRequest<SavedSearch>: search = ") << search);
 
     registerSavedSearchPendingAddOrUpdate(search);
 
     QUuid updateSavedSearchRequestId = QUuid::createUuid();
     Q_UNUSED(m_updateSavedSearchRequestIds.insert(updateSavedSearchRequestId));
-
-    if (searchToAddLater) {
-        m_savedSearchesToAddPerRequestId[updateSavedSearchRequestId] = *searchToAddLater;
-    }
-
+    QNTRACE(QStringLiteral("Emitting the request to update saved search: request id = ") << updateSavedSearchRequestId
+            << QStringLiteral(", saved search: ") << search);
     emit updateSavedSearch(search, updateSavedSearchRequestId);
 }
 
 template <>
-void RemoteToLocalSynchronizationManager::emitUpdateRequest<LinkedNotebook>(const LinkedNotebook & linkedNotebook,
-                                                                            const LinkedNotebook *)
+void RemoteToLocalSynchronizationManager::emitUpdateRequest<LinkedNotebook>(const LinkedNotebook & linkedNotebook)
 {
     QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::emitUpdateRequest<LinkedNotebook>: linked notebook = ")
             << linkedNotebook);
@@ -649,41 +635,32 @@ void RemoteToLocalSynchronizationManager::emitUpdateRequest<LinkedNotebook>(cons
 
     QUuid updateLinkedNotebookRequestId = QUuid::createUuid();
     Q_UNUSED(m_updateLinkedNotebookRequestIds.insert(updateLinkedNotebookRequestId));
+    QNTRACE(QStringLiteral("Emitting the request to update linked notebook: request id = ") << updateLinkedNotebookRequestId
+            << QStringLiteral(", linked notebook: ") << linkedNotebook);
     emit updateLinkedNotebook(linkedNotebook, updateLinkedNotebookRequestId);
 }
 
 template <>
-void RemoteToLocalSynchronizationManager::emitUpdateRequest<Notebook>(const Notebook & notebook,
-                                                                      const Notebook * notebookToAddLater)
+void RemoteToLocalSynchronizationManager::emitUpdateRequest<Notebook>(const Notebook & notebook)
 {
-    QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::emitUpdateRequest<Notebook>: notebook = ")
-            << notebook << QStringLiteral(", notebook to add later = ") << (notebookToAddLater ? notebookToAddLater->toString() : QStringLiteral("<null>")));
+    QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::emitUpdateRequest<Notebook>: notebook = ") << notebook);
 
     registerNotebookPendingAddOrUpdate(notebook);
 
     QUuid updateNotebookRequestId = QUuid::createUuid();
     Q_UNUSED(m_updateNotebookRequestIds.insert(updateNotebookRequestId));
-
-    if (notebookToAddLater) {
-        m_notebooksToAddPerRequestId[updateNotebookRequestId] = *notebookToAddLater;
-    }
-
+    QNTRACE(QStringLiteral("Emitting the request to update notebook: request id = ") << updateNotebookRequestId
+            << QStringLiteral(", notebook: ") << notebook);
     emit updateNotebook(notebook, updateNotebookRequestId);
 }
 
 template <>
-void RemoteToLocalSynchronizationManager::emitUpdateRequest<Note>(const Note & note, const Note * pNoteToAdd)
+void RemoteToLocalSynchronizationManager::emitUpdateRequest<Note>(const Note & note)
 {
-    QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::emitUpdateRequest<Note>: note = ") << note
-            << QStringLiteral("\nNote to add: ") << (pNoteToAdd ? pNoteToAdd->toString() : QStringLiteral("<null>")));
+    QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::emitUpdateRequest<Note>: note = ") << note);
 
     registerNotePendingAddOrUpdate(note);
-
     getFullNoteDataAsyncAndUpdateInLocalStorage(note);
-
-    if (pNoteToAdd) {
-        emitAddRequest(*pNoteToAdd);
-    }
 }
 
 #define CHECK_PAUSED() \
@@ -1108,7 +1085,8 @@ void RemoteToLocalSynchronizationManager::onFindNoteCompleted(Note note, bool wi
             updatedNote.setResources(noteResources);
         }
 
-        emitUpdateRequest(updatedNote, &conflictingNote);
+        emitUpdateRequest(updatedNote);
+        emitAddRequest(conflictingNote);
     }
 }
 
@@ -1493,11 +1471,10 @@ void RemoteToLocalSynchronizationManager::onUpdateUserFailed(User user, ErrorStr
     m_addOrUpdateUserRequestId = QUuid();
 }
 
-template <class ElementType, class ElementsToAddByUuid>
+template <class ElementType>
 void RemoteToLocalSynchronizationManager::onUpdateDataElementCompleted(const ElementType & element,
                                                                        const QUuid & requestId, const QString & typeName,
-                                                                       QSet<QUuid> & updateElementRequestIds,
-                                                                       ElementsToAddByUuid & elementsToAddByRenameRequestId)
+                                                                       QSet<QUuid> & updateElementRequestIds)
 {
     QSet<QUuid>::iterator rit = updateElementRequestIds.find(requestId);
     if (rit == updateElementRequestIds.end()) {
@@ -1509,63 +1486,26 @@ void RemoteToLocalSynchronizationManager::onUpdateDataElementCompleted(const Ele
 
     Q_UNUSED(updateElementRequestIds.erase(rit));
 
-    typename ElementsToAddByUuid::iterator addIt = elementsToAddByRenameRequestId.find(requestId);
-    if (addIt != elementsToAddByRenameRequestId.end())
-    {
-        ElementType & elementToAdd = addIt.value();
-        const QString localUid = elementToAdd.localUid();
-        if (localUid.isEmpty()) {
-            ErrorString errorDescription(QT_TR_NOOP("Internal error: detected a data item with empty local uid in the local storage"));
-            errorDescription.details() = QStringLiteral("item type = ");
-            errorDescription.details() += typeName;
-            QNWARNING(errorDescription << QStringLiteral(": ") << elementToAdd);
-            emit failure(errorDescription);
-            return;
-        }
-
-        QSet<QString>::iterator git = m_localUidsOfElementsAlreadyAttemptedToFindByName.find(localUid);
-        if (git == m_localUidsOfElementsAlreadyAttemptedToFindByName.end())
-        {
-            QNDEBUG(QStringLiteral("Checking whether ") << typeName << QStringLiteral(" with the same name already exists in local storage"));
-            Q_UNUSED(m_localUidsOfElementsAlreadyAttemptedToFindByName.insert(localUid));
-
-            elementToAdd.unsetLocalUid();
-            elementToAdd.setGuid(QStringLiteral(""));
-            emitFindByNameRequest(elementToAdd);
-        }
-        else
-        {
-            QNDEBUG(QStringLiteral("Adding ") << typeName << QStringLiteral(" to local storage"));
-            emitAddRequest(elementToAdd);
-        }
-
-        Q_UNUSED(elementsToAddByRenameRequestId.erase(addIt));
-    }
-    else
-    {
-        CHECK_PAUSED();
-        performPostAddOrUpdateChecks<ElementType>(element);
-    }
+    CHECK_PAUSED();
+    performPostAddOrUpdateChecks<ElementType>(element);
 
     checkServerDataMergeCompletion();
 }
 
 void RemoteToLocalSynchronizationManager::onUpdateTagCompleted(Tag tag, QUuid requestId)
 {
-    onUpdateDataElementCompleted(tag, requestId, QStringLiteral("Tag"), m_updateTagRequestIds, m_tagsToAddPerRequestId);
+    onUpdateDataElementCompleted(tag, requestId, QStringLiteral("Tag"), m_updateTagRequestIds);
 }
 
 void RemoteToLocalSynchronizationManager::onUpdateSavedSearchCompleted(SavedSearch search, QUuid requestId)
 {
-    onUpdateDataElementCompleted(search, requestId, QStringLiteral("SavedSearch"), m_updateSavedSearchRequestIds,
-                                 m_savedSearchesToAddPerRequestId);
+    onUpdateDataElementCompleted(search, requestId, QStringLiteral("SavedSearch"), m_updateSavedSearchRequestIds);
 }
 
-template <class ElementType, class ElementsToAddByUuid>
+template <class ElementType>
 void RemoteToLocalSynchronizationManager::onUpdateDataElementFailed(const ElementType & element, const QUuid & requestId,
                                                                     const ErrorString & errorDescription, const QString & typeName,
-                                                                    QSet<QUuid> & updateElementRequestIds,
-                                                                    ElementsToAddByUuid & elementsToAddByRenameRequestId)
+                                                                    QSet<QUuid> & updateElementRequestIds)
 {
     QSet<QUuid>::iterator it = updateElementRequestIds.find(requestId);
     if (it == updateElementRequestIds.end()) {
@@ -1578,16 +1518,7 @@ void RemoteToLocalSynchronizationManager::onUpdateDataElementFailed(const Elemen
 
     Q_UNUSED(updateElementRequestIds.erase(it));
 
-    ErrorString error;
-    typename ElementsToAddByUuid::iterator addIt = elementsToAddByRenameRequestId.find(requestId);
-    if (addIt != elementsToAddByRenameRequestId.end()) {
-        Q_UNUSED(elementsToAddByRenameRequestId.erase(addIt));
-        error.setBase(QT_TR_NOOP("Can't rename the local dirty duplicate item in the local storage"));
-    }
-    else {
-        error.setBase(QT_TR_NOOP("Can't update the item in the local storage"));
-    }
-
+    ErrorString error(QT_TR_NOOP("Can't update the item in the local storage"));
     error.additionalBases().append(errorDescription.base());
     error.additionalBases().append(errorDescription.additionalBases());
     error.details() = errorDescription.details();
@@ -1596,8 +1527,7 @@ void RemoteToLocalSynchronizationManager::onUpdateDataElementFailed(const Elemen
 
 void RemoteToLocalSynchronizationManager::onUpdateTagFailed(Tag tag, ErrorString errorDescription, QUuid requestId)
 {
-    onUpdateDataElementFailed(tag, requestId, errorDescription, QStringLiteral("Tag"), m_updateTagRequestIds,
-                              m_tagsToAddPerRequestId);
+    onUpdateDataElementFailed(tag, requestId, errorDescription, QStringLiteral("Tag"), m_updateTagRequestIds);
 }
 
 void RemoteToLocalSynchronizationManager::onExpungeTagCompleted(Tag tag, QStringList expungedChildTagLocalUids, QUuid requestId)
@@ -1641,8 +1571,7 @@ void RemoteToLocalSynchronizationManager::onExpungeNotelessTagsFromLinkedNoteboo
 void RemoteToLocalSynchronizationManager::onUpdateSavedSearchFailed(SavedSearch search, ErrorString errorDescription,
                                                                     QUuid requestId)
 {
-    onUpdateDataElementFailed(search, requestId, errorDescription, QStringLiteral("SavedSearch"), m_updateSavedSearchRequestIds,
-                              m_savedSearchesToAddPerRequestId);
+    onUpdateDataElementFailed(search, requestId, errorDescription, QStringLiteral("SavedSearch"), m_updateSavedSearchRequestIds);
 }
 
 void RemoteToLocalSynchronizationManager::onExpungeSavedSearchCompleted(SavedSearch search, QUuid requestId)
@@ -2211,15 +2140,13 @@ void RemoteToLocalSynchronizationManager::onAddNotebookFailed(Notebook notebook,
 
 void RemoteToLocalSynchronizationManager::onUpdateNotebookCompleted(Notebook notebook, QUuid requestId)
 {
-    onUpdateDataElementCompleted(notebook, requestId, QStringLiteral("Notebook"), m_updateNotebookRequestIds,
-                                 m_notebooksToAddPerRequestId);
+    onUpdateDataElementCompleted(notebook, requestId, QStringLiteral("Notebook"), m_updateNotebookRequestIds);
 }
 
 void RemoteToLocalSynchronizationManager::onUpdateNotebookFailed(Notebook notebook, ErrorString errorDescription,
                                                                  QUuid requestId)
 {
-    onUpdateDataElementFailed(notebook, requestId, errorDescription, QStringLiteral("Notebook"),
-                              m_updateNotebookRequestIds, m_notebooksToAddPerRequestId);
+    onUpdateDataElementFailed(notebook, requestId, errorDescription, QStringLiteral("Notebook"), m_updateNotebookRequestIds);
 }
 
 void RemoteToLocalSynchronizationManager::onExpungeNotebookCompleted(Notebook notebook, QUuid requestId)
@@ -4789,7 +4716,6 @@ void RemoteToLocalSynchronizationManager::clear()
 
     m_tags.clear();
     m_expungedTags.clear();
-    m_tagsToAddPerRequestId.clear();
     m_findTagByNameRequestIds.clear();
     m_findTagByGuidRequestIds.clear();
     m_addTagRequestIds.clear();
@@ -4816,7 +4742,6 @@ void RemoteToLocalSynchronizationManager::clear()
 
     m_savedSearches.clear();
     m_expungedSavedSearches.clear();
-    m_savedSearchesToAddPerRequestId.clear();
     m_findSavedSearchByNameRequestIds.clear();
     m_findSavedSearchByGuidRequestIds.clear();
     m_addSavedSearchRequestIds.clear();
@@ -4872,7 +4797,6 @@ void RemoteToLocalSynchronizationManager::clear()
 
     m_notebooks.clear();
     m_expungedNotebooks.clear();
-    m_notebooksToAddPerRequestId.clear();
     m_findNotebookByNameRequestIds.clear();
     m_findNotebookByGuidRequestIds.clear();
     m_addNotebookRequestIds.clear();
@@ -5134,33 +5058,25 @@ void RemoteToLocalSynchronizationManager::timerEvent(QTimerEvent * pEvent)
     }
 
     auto noteToAddIt = m_notesToAddPerAPICallPostponeTimerId.find(timerId);
-    if (noteToAddIt != m_notesToAddPerAPICallPostponeTimerId.end())
-    {
+    if (noteToAddIt != m_notesToAddPerAPICallPostponeTimerId.end()) {
         Note note = noteToAddIt.value();
         Q_UNUSED(m_notesToAddPerAPICallPostponeTimerId.erase(noteToAddIt));
-
         getFullNoteDataAsyncAndAddToLocalStorage(note);
         return;
     }
 
     auto noteToUpdateIt = m_notesToUpdatePerAPICallPostponeTimerId.find(timerId);
-    if (noteToUpdateIt != m_notesToUpdatePerAPICallPostponeTimerId.end())
-    {
+    if (noteToUpdateIt != m_notesToUpdatePerAPICallPostponeTimerId.end()) {
         Note noteToUpdate = noteToUpdateIt.value();
         Q_UNUSED(m_notesToUpdatePerAPICallPostponeTimerId.erase(noteToUpdateIt));
-
-        // NOTE: workarounding the stupidity of MSVC 2013
-        emitUpdateRequest(noteToUpdate, static_cast<const Note*>(Q_NULLPTR));
+        emitUpdateRequest(noteToUpdate);
         return;
     }
 
     auto afterUsnIt = m_afterUsnForSyncChunkPerAPICallPostponeTimerId.find(timerId);
-    if (afterUsnIt != m_afterUsnForSyncChunkPerAPICallPostponeTimerId.end())
-    {
+    if (afterUsnIt != m_afterUsnForSyncChunkPerAPICallPostponeTimerId.end()) {
         qint32 afterUsn = afterUsnIt.value();
-
         Q_UNUSED(m_afterUsnForSyncChunkPerAPICallPostponeTimerId.erase(afterUsnIt));
-
         downloadSyncChunksAndLaunchSync(afterUsn);
         return;
     }
@@ -7128,13 +7044,11 @@ void RemoteToLocalSynchronizationManager::resolveSyncConflict(const qevercloud::
     // would be different from those currently stored within the local storage
     Note updatedNote(localConflict);
     updatedNote.qevercloudNote() = remoteNote;
+    emitUpdateRequest(updatedNote);
 
     if (shouldCreateConflictingNote) {
         Note conflictingNote = createConflictingNote(localConflict);
-        emitUpdateRequest(updatedNote, &conflictingNote);
-    }
-    else {
-        emitUpdateRequest(updatedNote);
+        emitAddRequest(conflictingNote);
     }
 }
 

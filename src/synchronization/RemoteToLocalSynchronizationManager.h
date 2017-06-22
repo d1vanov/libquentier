@@ -367,19 +367,16 @@ private:
     // ========== Update helpers ===========
 
     template <class ElementType>
-    void emitUpdateRequest(const ElementType & elementToUpdate,
-                           const ElementType * elementToAddLater = Q_NULLPTR);
+    void emitUpdateRequest(const ElementType & elementToUpdate);
 
-    template <class ElementType, class ElementsToAddByUuid>
+    template <class ElementType>
     void onUpdateDataElementCompleted(const ElementType & element, const QUuid & requestId,
-                                      const QString & typeName, QSet<QUuid> & updateElementRequestIds,
-                                      ElementsToAddByUuid & elementsToAddByRenameRequestId);
+                                      const QString & typeName, QSet<QUuid> & updateElementRequestIds);
 
-    template <class ElementType, class ElementsToAddByUuid>
+    template <class ElementType>
     void onUpdateDataElementFailed(const ElementType & element, const QUuid & requestId,
                                    const ErrorString & errorDescription, const QString & typeName,
-                                   QSet<QUuid> & updateElementRequestIds,
-                                   ElementsToAddByUuid & elementsToAddByRenameRequestId);
+                                   QSet<QUuid> & updateElementRequestIds);
 
     template<class ElementType>
     void performPostAddOrUpdateChecks(const ElementType & element);
@@ -611,7 +608,6 @@ private:
     TagsList                                m_tags;
     TagsList                                m_tagsPendingAddOrUpdate;
     QList<QString>                          m_expungedTags;
-    QHash<QUuid,Tag>                        m_tagsToAddPerRequestId;
     QSet<QUuid>                             m_findTagByNameRequestIds;
     QSet<QUuid>                             m_findTagByGuidRequestIds;
     QSet<QUuid>                             m_addTagRequestIds;
@@ -626,7 +622,6 @@ private:
     SavedSearchesList                       m_savedSearches;
     SavedSearchesList                       m_savedSearchesPendingAddOrUpdate;
     QList<QString>                          m_expungedSavedSearches;
-    QHash<QUuid,SavedSearch>                m_savedSearchesToAddPerRequestId;
     QSet<QUuid>                             m_findSavedSearchByNameRequestIds;
     QSet<QUuid>                             m_findSavedSearchByGuidRequestIds;
     QSet<QUuid>                             m_addSavedSearchRequestIds;
@@ -669,7 +664,6 @@ private:
     NotebooksList                           m_notebooks;
     NotebooksList                           m_notebooksPendingAddOrUpdate;
     QList<QString>                          m_expungedNotebooks;
-    QHash<QUuid,Notebook>                   m_notebooksToAddPerRequestId;
     QSet<QUuid>                             m_findNotebookByNameRequestIds;
     QSet<QUuid>                             m_findNotebookByGuidRequestIds;
     QSet<QUuid>                             m_addNotebookRequestIds;
