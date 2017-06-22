@@ -280,7 +280,9 @@ private:
 
     void checkAndIncrementNoteDownloadProgress(const QString & noteGuid);
 
-    void checkHighUsnCollectingCompletion();
+    bool notebooksSyncInProgress() const;
+    bool tagsSyncInProgress() const;
+    bool notesSyncInProgress() const;
 
     struct ContentSource
     {
@@ -427,10 +429,10 @@ private:
                                                     const QString & typeName);
 
     // ========= Helpers launching the sync of dependent data elements ==========
-    void checkNotebooksAndTagsSyncAndLaunchNotesSync();
+    void checkNotebooksAndTagsSyncCompletionAndLaunchNotesSync();
     void launchNotesSync();
 
-    void checkNotesSyncAndLaunchResourcesSync();
+    void checkNotesSyncCompletionAndLaunchResourcesSync();
     void launchResourcesSync();
 
     // Helpers launching the sync of content from someone else's shared notebooks, to be used
