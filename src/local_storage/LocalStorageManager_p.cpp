@@ -3146,7 +3146,7 @@ int LocalStorageManagerPrivate::enResourceCount(ErrorString & errorDescription) 
 bool LocalStorageManagerPrivate::findEnResource(Resource & resource, ErrorString & errorDescription,
                                                 const bool withBinaryData) const
 {
-    QNDEBUG(QStringLiteral("LocalStorageManagerPrivate::findEnResource"));
+    QNDEBUG(QStringLiteral("LocalStorageManagerPrivate::findEnResource: ") << resource);
 
     ErrorString errorPrefix(QT_TR_NOOP("Can't find resource in the local storage database"));
 
@@ -3171,8 +3171,6 @@ bool LocalStorageManagerPrivate::findEnResource(Resource & resource, ErrorString
         uid = resource.localUid();
     }
 
-    resource.clear();
-
     QString resourcesTable = (withBinaryData
                               ? QStringLiteral("Resources")
                               : QStringLiteral("ResourcesWithoutBinaryData"));
@@ -3193,10 +3191,13 @@ bool LocalStorageManagerPrivate::findEnResource(Resource & resource, ErrorString
     bool res = query.exec(queryString);
     DATABASE_CHECK_AND_SET_ERROR();
 
+    Resource foundResource(resource);
+    foundResource.clear();
+
     size_t counter = 0;
     while(query.next()) {
         QSqlRecord rec = query.record();
-        fillResourceFromSqlRecord(rec, withBinaryData, resource);
+        fillResourceFromSqlRecord(rec, withBinaryData, foundResource);
         ++counter;
     }
 
@@ -3205,6 +3206,7 @@ bool LocalStorageManagerPrivate::findEnResource(Resource & resource, ErrorString
         return false;
     }
 
+    resource = foundResource;
     return true;
 }
 
