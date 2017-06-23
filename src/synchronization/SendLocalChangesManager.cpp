@@ -49,7 +49,6 @@ SendLocalChangesManager::SendLocalChangesManager(LocalStorageManagerAsync & loca
     m_lastUpdateCountByLinkedNotebookGuid(),
     m_shouldRepeatIncrementalSync(false),
     m_active(false),
-    m_paused(false),
     m_requestedToStop(false),
     m_connectedToLocalStorage(false),
     m_receivedDirtyLocalStorageObjectsFromUsersAccount(false),
@@ -94,27 +93,12 @@ void SendLocalChangesManager::start(const qint32 updateCount,
     QNDEBUG(QStringLiteral("SendLocalChangesManager::start: update count = ") << updateCount
             << QStringLiteral(", update count by linked notebook guid = ") << updateCountByLinkedNotebookGuid);
 
-    if (m_paused) {
-        m_lastUpdateCount = updateCount;
-        m_lastUpdateCountByLinkedNotebookGuid = updateCountByLinkedNotebookGuid;
-        resume();
-        return;
-    }
-
     clear();
     m_active = true;
     m_lastUpdateCount = updateCount;
     m_lastUpdateCountByLinkedNotebookGuid = updateCountByLinkedNotebookGuid;
 
     requestStuffFromLocalStorage();
-}
-
-void SendLocalChangesManager::pause()
-{
-    QNDEBUG(QStringLiteral("SendLocalChangesManager::pause"));
-    m_paused = true;
-    m_active = false;
-    emit paused(/* pending authentication = */ false);
 }
 
 void SendLocalChangesManager::stop()
@@ -129,28 +113,6 @@ void SendLocalChangesManager::stop()
     m_requestedToStop = true;
     m_active = false;
     emit stopped();
-}
-
-void SendLocalChangesManager::resume()
-{
-    QNDEBUG(QStringLiteral("SendLocalChangesManager::resume"));
-
-    if (!m_connectedToLocalStorage) {
-        createConnections();
-    }
-
-    if (m_paused)
-    {
-        m_active = true;
-        m_paused = false;
-
-        if (m_receivedAllDirtyLocalStorageObjects) {
-            sendLocalChanges();
-        }
-        else {
-            start(m_lastUpdateCount, m_lastUpdateCountByLinkedNotebookGuid);
-        }
-    }
 }
 
 void SendLocalChangesManager::onAuthenticationTokensForLinkedNotebooksReceived(QHash<QString,QPair<QString,QString> > authenticationTokensByLinkedNotebookGuid,
@@ -170,12 +132,6 @@ void SendLocalChangesManager::onAuthenticationTokensForLinkedNotebooksReceived(Q
     sendLocalChanges();
 }
 
-#define CHECK_PAUSED() \
-    if (m_paused && !m_requestedToStop) { \
-        QNDEBUG(QStringLiteral("SendLocalChangesManager is being paused, returning without any actions")); \
-        return; \
-    }
-
 #define CHECK_STOPPED() \
     if (m_requestedToStop && !hasPendingRequests()) { \
         QNDEBUG(QStringLiteral("SendLocalChangesManager is requested to stop and has no pending requests, finishing sending the local changes")); \
@@ -189,8 +145,6 @@ void SendLocalChangesManager::onListDirtyTagsCompleted(LocalStorageManager::List
                                                        LocalStorageManager::OrderDirection::type orderDirection,
                                                        QString linkedNotebookGuid, QList<Tag> tags, QUuid requestId)
 {
-    CHECK_PAUSED();
-
     bool userTagsListCompleted = (requestId == m_listDirtyTagsRequestId);
     auto it = m_listDirtyTagsFromLinkedNotebooksRequestIds.end();
     if (!userTagsListCompleted) {
@@ -228,8 +182,6 @@ void SendLocalChangesManager::onListDirtyTagsFailed(LocalStorageManager::ListObj
                                                     LocalStorageManager::OrderDirection::type orderDirection,
                                                     QString linkedNotebookGuid, ErrorString errorDescription, QUuid requestId)
 {
-    CHECK_PAUSED();
-
     bool userTagsListCompleted = (requestId == m_listDirtyTagsRequestId);
     auto it = m_listDirtyTagsFromLinkedNotebooksRequestIds.end();
     if (!userTagsListCompleted) {
@@ -267,8 +219,6 @@ void SendLocalChangesManager::onListDirtySavedSearchesCompleted(LocalStorageMana
                                                                 LocalStorageManager::OrderDirection::type orderDirection,
                                                                 QList<SavedSearch> savedSearches, QUuid requestId)
 {
-    CHECK_PAUSED();
-
     if (requestId != m_listDirtySavedSearchesRequestId) {
         return;
     }
@@ -291,8 +241,6 @@ void SendLocalChangesManager::onListDirtySavedSearchesFailed(LocalStorageManager
                                                              LocalStorageManager::OrderDirection::type orderDirection,
                                                              ErrorString errorDescription, QUuid requestId)
 {
-    CHECK_PAUSED();
-
     QNTRACE(QStringLiteral("SendLocalChangesManager::onListDirtySavedSearchesFailed: request id = ") << requestId
             << QStringLiteral(", error: ") << errorDescription);
 
@@ -322,8 +270,6 @@ void SendLocalChangesManager::onListDirtyNotebooksCompleted(LocalStorageManager:
                                                             LocalStorageManager::OrderDirection::type orderDirection,
                                                             QString linkedNotebookGuid, QList<Notebook> notebooks, QUuid requestId)
 {
-    CHECK_PAUSED();
-
     bool userNotebooksListCompleted = (requestId == m_listDirtyNotebooksRequestId);
     auto it = m_listDirtyNotebooksFromLinkedNotebooksRequestIds.end();
     if (!userNotebooksListCompleted) {
@@ -358,8 +304,6 @@ void SendLocalChangesManager::onListDirtyNotebooksFailed(LocalStorageManager::Li
                                                          LocalStorageManager::OrderDirection::type orderDirection,
                                                          QString linkedNotebookGuid, ErrorString errorDescription, QUuid requestId)
 {
-    CHECK_PAUSED();
-
     bool userNotebooksListCompleted = (requestId == m_listDirtyNotebooksRequestId);
     auto it = m_listDirtyNotebooksFromLinkedNotebooksRequestIds.end();
     if (!userNotebooksListCompleted) {
@@ -398,8 +342,6 @@ void SendLocalChangesManager::onListDirtyNotesCompleted(LocalStorageManager::Lis
                                                         LocalStorageManager::OrderDirection::type orderDirection,
                                                         QString linkedNotebookGuid, QList<Note> notes, QUuid requestId)
 {
-    CHECK_PAUSED();
-
     bool userNotesListCompleted = (requestId == m_listDirtyNotesRequestId);
     auto it = m_listDirtyNotesFromLinkedNotebooksRequestIds.end();
     if (!userNotesListCompleted) {
@@ -435,8 +377,6 @@ void SendLocalChangesManager::onListDirtyNotesFailed(LocalStorageManager::ListOb
                                                      LocalStorageManager::OrderDirection::type orderDirection,
                                                      QString linkedNotebookGuid, ErrorString errorDescription, QUuid requestId)
 {
-    CHECK_PAUSED();
-
     bool userNotesListCompleted = (requestId == m_listDirtyNotesRequestId);
     auto it = m_listDirtyNotesFromLinkedNotebooksRequestIds.end();
     if (!userNotesListCompleted) {
@@ -475,8 +415,6 @@ void SendLocalChangesManager::onListLinkedNotebooksCompleted(LocalStorageManager
                                                              LocalStorageManager::OrderDirection::type orderDirection,
                                                              QList<LinkedNotebook> linkedNotebooks, QUuid requestId)
 {
-    CHECK_PAUSED();
-
     if (requestId != m_listLinkedNotebooksRequestId) {
         return;
     }
@@ -524,8 +462,6 @@ void SendLocalChangesManager::onListLinkedNotebooksFailed(LocalStorageManager::L
                                                           LocalStorageManager::OrderDirection::type orderDirection,
                                                           ErrorString errorDescription, QUuid requestId)
 {
-    CHECK_PAUSED();
-
     if (requestId != m_listLinkedNotebooksRequestId) {
         return;
     }
@@ -547,8 +483,6 @@ void SendLocalChangesManager::onListLinkedNotebooksFailed(LocalStorageManager::L
 
 void SendLocalChangesManager::onUpdateTagCompleted(Tag tag, QUuid requestId)
 {
-    CHECK_PAUSED();
-
     auto it = m_updateTagRequestIds.find(requestId);
     if (it == m_updateTagRequestIds.end()) {
         return;
@@ -563,8 +497,6 @@ void SendLocalChangesManager::onUpdateTagCompleted(Tag tag, QUuid requestId)
 
 void SendLocalChangesManager::onUpdateTagFailed(Tag tag, ErrorString errorDescription, QUuid requestId)
 {
-    CHECK_PAUSED();
-
     auto it = m_updateTagRequestIds.find(requestId);
     if (it == m_updateTagRequestIds.end()) {
         return;
@@ -583,8 +515,6 @@ void SendLocalChangesManager::onUpdateTagFailed(Tag tag, ErrorString errorDescri
 
 void SendLocalChangesManager::onUpdateSavedSearchCompleted(SavedSearch savedSearch, QUuid requestId)
 {
-    CHECK_PAUSED();
-
     auto it = m_updateSavedSearchRequestIds.find(requestId);
     if (it == m_updateSavedSearchRequestIds.end()) {
         return;
@@ -600,8 +530,6 @@ void SendLocalChangesManager::onUpdateSavedSearchCompleted(SavedSearch savedSear
 
 void SendLocalChangesManager::onUpdateSavedSearchFailed(SavedSearch savedSearch, ErrorString errorDescription, QUuid requestId)
 {
-    CHECK_PAUSED();
-
     auto it = m_updateSavedSearchRequestIds.find(requestId);
     if (it == m_updateSavedSearchRequestIds.end()) {
         return;
@@ -620,8 +548,6 @@ void SendLocalChangesManager::onUpdateSavedSearchFailed(SavedSearch savedSearch,
 
 void SendLocalChangesManager::onUpdateNotebookCompleted(Notebook notebook, QUuid requestId)
 {
-    CHECK_PAUSED();
-
     auto it = m_updateNotebookRequestIds.find(requestId);
     if (it == m_updateNotebookRequestIds.end()) {
         return;
@@ -637,8 +563,6 @@ void SendLocalChangesManager::onUpdateNotebookCompleted(Notebook notebook, QUuid
 
 void SendLocalChangesManager::onUpdateNotebookFailed(Notebook notebook, ErrorString errorDescription, QUuid requestId)
 {
-    CHECK_PAUSED();
-
     auto it = m_updateNotebookRequestIds.find(requestId);
     if (it == m_updateNotebookRequestIds.end()) {
         return;
@@ -657,8 +581,6 @@ void SendLocalChangesManager::onUpdateNotebookFailed(Notebook notebook, ErrorStr
 
 void SendLocalChangesManager::onUpdateNoteCompleted(Note note, bool updateResources, bool updateTags, QUuid requestId)
 {
-    CHECK_PAUSED();
-
     Q_UNUSED(updateResources)
     Q_UNUSED(updateTags)
 
@@ -677,8 +599,6 @@ void SendLocalChangesManager::onUpdateNoteCompleted(Note note, bool updateResour
 void SendLocalChangesManager::onUpdateNoteFailed(Note note, bool updateResources, bool updateTags,
                                                  ErrorString errorDescription, QUuid requestId)
 {
-    CHECK_PAUSED();
-
     Q_UNUSED(updateResources)
     Q_UNUSED(updateTags)
 
@@ -700,8 +620,6 @@ void SendLocalChangesManager::onUpdateNoteFailed(Note note, bool updateResources
 
 void SendLocalChangesManager::onFindNotebookCompleted(Notebook notebook, QUuid requestId)
 {
-    CHECK_PAUSED();
-
     auto it = m_findNotebookRequestIds.find(requestId);
     if (it == m_findNotebookRequestIds.end()) {
         return;
@@ -735,8 +653,6 @@ void SendLocalChangesManager::onFindNotebookCompleted(Notebook notebook, QUuid r
 
 void SendLocalChangesManager::onFindNotebookFailed(Notebook notebook, ErrorString errorDescription, QUuid requestId)
 {
-    CHECK_PAUSED();
-
     auto it = m_findNotebookRequestIds.find(requestId);
     if (it == m_findNotebookRequestIds.end()) {
         return;
@@ -757,12 +673,6 @@ void SendLocalChangesManager::timerEvent(QTimerEvent * pEvent)
         ErrorString errorDescription(QT_TR_NOOP("Qt error: detected null pointer to QTimerEvent"));
         QNWARNING(errorDescription);
         emit failure(errorDescription);
-        return;
-    }
-
-    if (m_paused) {
-        QNDEBUG(QStringLiteral("SendLocalChangesManager is being paused"));
-        killAllTimers();
         return;
     }
 
@@ -1380,7 +1290,7 @@ void SendLocalChangesManager::sendTags()
             QNINFO(QStringLiteral("Encountered DATA_CONFLICT exception while trying to send new and/or modified tags, "
                                   "it means the incremental sync should be repeated before sending the changes to the service"));
             emit conflictDetected();
-            pause();
+            stop();
             return;
         }
         else if (errorCode != 0) {
@@ -1506,7 +1416,7 @@ void SendLocalChangesManager::sendSavedSearches()
             QNINFO(QStringLiteral("Encountered DATA_CONFLICT exception while trying to send new and/or modified saved searches, "
                                   "it means the incremental sync should be repeated before sending the changes to the service"));
             emit conflictDetected();
-            pause();
+            stop();
             return;
         }
         else if (errorCode != 0)
@@ -1664,7 +1574,7 @@ void SendLocalChangesManager::sendNotebooks()
             QNINFO(QStringLiteral("Encountered DATA_CONFLICT exception while trying to send new and/or modified notebooks, "
                                   "it means the incremental sync should be repeated before sending the changes to the service"));
             emit conflictDetected();
-            pause();
+            stop();
             return;
         }
         else if (errorCode != 0)
@@ -1876,7 +1786,7 @@ void SendLocalChangesManager::sendNotes()
             QNINFO(QStringLiteral("Encountered DATA_CONFLICT exception while trying to send new and/or modified notes, "
                                   "it means the incremental sync should be repeated before sending the changes to the service"));
             emit conflictDetected();
-            pause();
+            stop();
             return;
         }
         else if (errorCode != 0)
@@ -2093,7 +2003,6 @@ void SendLocalChangesManager::clear()
     m_lastUpdateCountByLinkedNotebookGuid.clear();
 
     m_shouldRepeatIncrementalSync = false;
-    m_paused = false;
     m_requestedToStop = false;
 
     m_receivedDirtyLocalStorageObjectsFromUsersAccount = false;
@@ -2217,9 +2126,7 @@ bool SendLocalChangesManager::checkAndRequestAuthenticationTokensForLinkedNotebo
 
 void SendLocalChangesManager::handleAuthExpiration()
 {
-    QNINFO(QStringLiteral("Got AUTH_EXPIRED error, pausing and requesting new authentication token"));
-    m_paused = true;
-    emit paused(/* pending authentication = */ true);
+    QNDEBUG(QStringLiteral("SendLocalChangesManager::handleAuthExpiration"));
     emit requestAuthenticationToken();
 }
 

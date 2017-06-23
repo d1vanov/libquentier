@@ -51,12 +51,8 @@ SynchronizationManager::SynchronizationManager(const QString & consumerKey, cons
                      this, QNSIGNAL(SynchronizationManager,authenticationFinished,bool,ErrorString,Account));
     QObject::connect(d_ptr, QNSIGNAL(SynchronizationManagerPrivate,authenticationRevoked,bool,ErrorString,qevercloud::UserID),
                      this, QNSIGNAL(SynchronizationManager,authenticationRevoked,bool,ErrorString,qevercloud::UserID));
-    QObject::connect(d_ptr, QNSIGNAL(SynchronizationManagerPrivate,remoteToLocalSyncPaused,bool),
-                     this, QNSIGNAL(SynchronizationManager,remoteToLocalSyncPaused,bool));
     QObject::connect(d_ptr, QNSIGNAL(SynchronizationManagerPrivate,remoteToLocalSyncStopped),
                      this, QNSIGNAL(SynchronizationManager,remoteToLocalSyncStopped));
-    QObject::connect(d_ptr, QNSIGNAL(SynchronizationManagerPrivate,sendLocalChangesPaused,bool),
-                     this, QNSIGNAL(SynchronizationManager,sendLocalChangesPaused,bool));
     QObject::connect(d_ptr, QNSIGNAL(SynchronizationManagerPrivate,sendLocalChangesStopped),
                      this, QNSIGNAL(SynchronizationManager,sendLocalChangesStopped));
     QObject::connect(d_ptr, QNSIGNAL(SynchronizationManagerPrivate,willRepeatRemoteToLocalSyncAfterSendingChanges),
@@ -78,12 +74,6 @@ bool SynchronizationManager::active() const
 {
     Q_D(const SynchronizationManager);
     return d->active();
-}
-
-bool SynchronizationManager::paused() const
-{
-    Q_D(const SynchronizationManager);
-    return d->paused();
 }
 
 bool SynchronizationManager::downloadNoteThumbnailsOption() const
@@ -110,18 +100,6 @@ void SynchronizationManager::synchronize()
 {
     Q_D(SynchronizationManager);
     d->synchronize();
-}
-
-void SynchronizationManager::pause()
-{
-    Q_D(SynchronizationManager);
-    d->pause();
-}
-
-void SynchronizationManager::resume()
-{
-    Q_D(SynchronizationManager);
-    d->resume();
 }
 
 void SynchronizationManager::stop()

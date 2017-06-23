@@ -60,11 +60,6 @@ public:
     bool active() const;
 
     /**
-     * @return true if the synchronization has been paused, false otherwise
-     */
-    bool paused() const;
-
-    /**
      * @return true or false depending on the option to download the thumbnails for notes containing resources
      * during sync; by default no thumbnails are downloaded
      */
@@ -96,18 +91,6 @@ public Q_SLOTS:
      * Use this slot to launch the synchronization of data
      */
     void synchronize();
-
-    /**
-     * Use this slot to pause the running synchronization; if no synchronization is running by the moment of this slot call,
-     * it has no effect
-     */
-    void pause();
-
-    /**
-     * Use this slot to resume the previously paused synchronization; if no synchronization was paused before the call of this slot,
-     * it has no effect
-     */
-    void resume();
 
     /**
      * Use this slot to stop the running synchronization; if no synchronization is running by the moment of this slot call,
@@ -201,22 +184,9 @@ Q_SIGNALS:
                                 Account account);
 
     /**
-     * This signal is emitted when the "remote to local" synchronization step is paused
-     * @param pendingAuthentication - true if the reason for pausing is the need
-     * for new authentication token(s), false otherwise
-     */
-    void remoteToLocalSyncPaused(bool pendingAuthenticaton);
-
-    /**
      * This signal is emitted when the "remote to local" synchronization step is stopped
      */
     void remoteToLocalSyncStopped();
-
-    /**
-     * This signal is emitted when the "send local changes" synchronization step is paused
-     * @param pendingAuthentication - true if the reason for pausing is the need for new authentication token(s), false otherwise
-     */
-    void sendLocalChangesPaused(bool pendingAuthenticaton);
 
     /**
      * This signal is emitted when the "send local changes" synchronization step is stopped

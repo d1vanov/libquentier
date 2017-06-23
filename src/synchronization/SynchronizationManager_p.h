@@ -44,7 +44,6 @@ public:
     virtual ~SynchronizationManagerPrivate();
 
     bool active() const;
-    bool paused() const;
     bool downloadNoteThumbnailsOption() const;
 
 Q_SIGNALS:
@@ -65,10 +64,7 @@ Q_SIGNALS:
     void preparedLinkedNotebooksDirtyObjectsForSending();
 
 // state signals
-    void remoteToLocalSyncPaused(bool pendingAuthenticaton);
     void remoteToLocalSyncStopped();
-
-    void sendLocalChangesPaused(bool pendingAuthenticaton);
     void sendLocalChangesStopped();
 
     void authenticationFinished(bool success, ErrorString errorDescription,
@@ -85,8 +81,6 @@ public Q_SLOTS:
     void setAccount(const Account & account);
     void synchronize();
     void authenticate();
-    void pause();
-    void resume();
     void stop();
 
     void revokeAuthentication(const qevercloud::UserID userId);
@@ -105,12 +99,7 @@ Q_SIGNALS:
                                 QHash<QString,qint32> lastUpdateCountByLinkedNotebookGuid,
                                 QHash<QString,qevercloud::Timestamp> lastSyncTimeByLinkedNotebookGuid);
 
-    void pauseRemoteToLocalSync();
-    void resumeRemoteToLocalSync();
     void stopRemoteToLocalSync();
-
-    void pauseSendingLocalChanges();
-    void resumeSendingLocalChanges();
     void stopSendingLocalChanges();
 
 private Q_SLOTS:
@@ -128,7 +117,6 @@ private Q_SLOTS:
     void onRemoteToLocalSyncFinished(qint32 lastUpdateCount, qevercloud::Timestamp lastSyncTime,
                                      QHash<QString,qint32> lastUpdateCountByLinkedNotebookGuid,
                                      QHash<QString,qevercloud::Timestamp> lastSyncTimeByLinkedNotebookGuid);
-    void onRemoteToLocalSyncPaused(bool pendingAuthenticaton);
     void onRemoteToLocalSyncStopped();
     void onRemoteToLocalSyncFailure(ErrorString errorDescription);
 
@@ -136,7 +124,6 @@ private Q_SLOTS:
     void onConflictDetectedDuringLocalChangesSending();
 
     void onLocalChangesSent(qint32 lastUpdateCount, QHash<QString,qint32> lastUpdateCountByLinkedNotebookGuid);
-    void onSendLocalChangesPaused(bool pendingAuthenticaton);
     void onSendLocalChangesStopped();
     void onSendLocalChangesFailure(ErrorString errorDescription);
 
@@ -261,9 +248,6 @@ private:
     QSet<QString>                           m_linkedNotebookGuidsWithoutLocalAuthData;
 
     bool                                    m_shouldRepeatIncrementalSyncAfterSendingChanges;
-
-    bool                                    m_paused;
-    bool                                    m_remoteToLocalSyncWasActiveOnLastPause;
 };
 
 } // namespace quentier

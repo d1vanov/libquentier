@@ -95,7 +95,6 @@ Q_SIGNALS:
 
     void expungedFromServerToClient();
 
-    void paused(bool pendingAuthenticaton);
     void stopped();
 
     void requestAuthenticationToken();
@@ -106,9 +105,6 @@ public Q_SLOTS:
     void start(qint32 afterUsn = 0);
 
     void stop();
-
-    void pause();
-    void resume();
 
     void onAuthenticationInfoReceived(QString authToken, QString shardId, qevercloud::Timestamp expirationTime);
     void onAuthenticationTokensForLinkedNotebooksReceived(QHash<QString,QPair<QString,QString> > authenticationTokensAndShardIdsByLinkedNotebookGuid,
@@ -602,7 +598,6 @@ private:
     bool                                    m_linkedNotebooksSyncChunksDownloaded;
 
     bool                                    m_active;
-    bool                                    m_paused;
 
     bool                                    m_edamProtocolVersionChecked;
 

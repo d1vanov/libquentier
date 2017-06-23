@@ -52,7 +52,6 @@ Q_SIGNALS:
     void conflictDetected();
     void shouldRepeatIncrementalSync();
 
-    void paused(bool pendingAuthenticaton);
     void stopped();
 
     void requestAuthenticationToken();
@@ -65,8 +64,6 @@ Q_SIGNALS:
 public Q_SLOTS:
     void start(qint32 updateCount, QHash<QString,qint32> updateCountByLinkedNotebookGuid);
     void stop();
-    void pause();
-    void resume();
 
     void onAuthenticationTokensForLinkedNotebooksReceived(QHash<QString,QPair<QString,QString> > authenticationTokensAndShardIdsByLinkedNotebookGuid,
                                                           QHash<QString,qevercloud::Timestamp> authenticationTokenExpirationTimesByLinkedNotebookGuid);
@@ -244,7 +241,6 @@ private:
     bool                                    m_shouldRepeatIncrementalSync;
 
     bool                                    m_active;
-    bool                                    m_paused;
     bool                                    m_requestedToStop;
 
     bool                                    m_connectedToLocalStorage;
