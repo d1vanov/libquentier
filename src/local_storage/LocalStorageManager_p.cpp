@@ -1350,8 +1350,6 @@ bool LocalStorageManagerPrivate::findLinkedNotebook(LinkedNotebook & linkedNoteb
         return false;
     }
 
-    linkedNotebook.clear();
-
     QSqlQuery query(m_sqlDatabase);
     query.prepare(QStringLiteral("SELECT guid, updateSequenceNumber, isDirty, shareName, username, shardId, "
                                  "sharedNotebookGlobalId, uri, noteStoreUrl, webApiUrlPrefix, stack, businessId "
@@ -1368,8 +1366,10 @@ bool LocalStorageManagerPrivate::findLinkedNotebook(LinkedNotebook & linkedNoteb
 
     QSqlRecord rec = query.record();
 
+    LinkedNotebook result;
+
     ErrorString error;
-    res = fillLinkedNotebookFromSqlRecord(rec, linkedNotebook, error);
+    res = fillLinkedNotebookFromSqlRecord(rec, result, error);
     if (!res) {
         errorDescription.base() = errorPrefix.base();
         errorDescription.appendBase(error.base());
@@ -1379,6 +1379,7 @@ bool LocalStorageManagerPrivate::findLinkedNotebook(LinkedNotebook & linkedNoteb
         return false;
     }
 
+    linkedNotebook = result;
     return true;
 }
 
