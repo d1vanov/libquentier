@@ -90,6 +90,8 @@ Q_SIGNALS:
     void syncChunksDownloaded();
     void notesDownloadProgress(quint32 notesDownloaded, quint32 totalNotesToDownload);
 
+    void synchronizedContentFromUsersOwnAccount(qint32 lastUpdateCount, qevercloud::Timestamp lastSyncTime);
+
     void linkedNotebooksSyncChunksDownloaded();
     void linkedNotebooksNotesDownloadProgress(quint32 notesDownloaded, quint32 totalNotesToDownload);
 

@@ -538,6 +538,18 @@ void SynchronizationManagerPrivate::onRemoteToLocalSyncFailure(ErrorString error
     emit notifyError(errorDescription);
 }
 
+void SynchronizationManagerPrivate::onRemoteToLocalSynchronizedContentFromUsersOwnAccount(qint32 lastUpdateCount,
+                                                                                          qevercloud::Timestamp lastSyncTime)
+{
+    QNDEBUG(QStringLiteral("SynchronizationManagerPrivate::onRemoteToLocalSynchronizedContentFromUsersOwnAccount: last update count = ")
+            << lastUpdateCount << QStringLiteral(", last sync time = ") << printableDateTimeFromTimestamp(lastSyncTime));
+
+    m_lastUpdateCount = lastUpdateCount;
+    m_lastSyncTime = lastSyncTime;
+
+    updatePersistentSyncSettings();
+}
+
 void SynchronizationManagerPrivate::onShouldRepeatIncrementalSync()
 {
     QNDEBUG(QStringLiteral("SynchronizationManagerPrivate::onShouldRepeatIncrementalSync"));
@@ -642,6 +654,8 @@ void SynchronizationManagerPrivate::createConnections(IAuthenticationManager & a
                      this, QNSLOT(SynchronizationManagerPrivate,onRemoteToLocalSyncStopped));
     QObject::connect(&m_remoteToLocalSyncManager, QNSIGNAL(RemoteToLocalSynchronizationManager,failure,ErrorString),
                      this, QNSLOT(SynchronizationManagerPrivate,onRemoteToLocalSyncFailure,ErrorString));
+    QObject::connect(&m_remoteToLocalSyncManager, QNSIGNAL(RemoteToLocalSynchronizationManager,synchronizedContentFromUsersOwnAccount,qint32,qevercloud::Timestamp),
+                     this, QNSLOT(SynchronizationManagerPrivate,onRemoteToLocalSynchronizedContentFromUsersOwnAccount,qint32,qevercloud::Timestamp));
     QObject::connect(&m_remoteToLocalSyncManager, QNSIGNAL(RemoteToLocalSynchronizationManager,requestLastSyncParameters),
                      this, QNSLOT(SynchronizationManagerPrivate,onRequestLastSyncParameters));
     QObject::connect(&m_remoteToLocalSyncManager, QNSIGNAL(RemoteToLocalSynchronizationManager,syncChunksDownloaded),

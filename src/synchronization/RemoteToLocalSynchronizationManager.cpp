@@ -4663,6 +4663,8 @@ void RemoteToLocalSynchronizationManager::checkServerDataMergeCompletion()
 
         m_fullNoteContentsDownloaded = true;
 
+        emit synchronizedContentFromUsersOwnAccount(m_lastUpdateCount, m_lastSyncTime);
+
         if (m_lastSyncMode == SyncMode::FullSync) {
             startLinkedNotebooksSync();
             return;

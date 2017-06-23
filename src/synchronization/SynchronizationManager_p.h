@@ -119,6 +119,7 @@ private Q_SLOTS:
                                      QHash<QString,qevercloud::Timestamp> lastSyncTimeByLinkedNotebookGuid);
     void onRemoteToLocalSyncStopped();
     void onRemoteToLocalSyncFailure(ErrorString errorDescription);
+    void onRemoteToLocalSynchronizedContentFromUsersOwnAccount(qint32 lastUpdateCount, qevercloud::Timestamp lastSyncTime);
 
     void onShouldRepeatIncrementalSync();
     void onConflictDetectedDuringLocalChangesSending();
