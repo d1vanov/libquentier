@@ -697,13 +697,6 @@ QTextStream & operator<<(QTextStream & strm, const qevercloud::SyncChunk & syncC
         }
     }
 
-    if (syncChunk.linkedNotebooks.isSet())
-    {
-        for(auto it = syncChunk.linkedNotebooks->constBegin(), end = syncChunk.linkedNotebooks->constEnd(); it != end; ++it) {
-            strm << indent << QStringLiteral(", linked notebook: ") << *it << QStringLiteral(";\n");
-        }
-    }
-
     return strm;
 }
 
