@@ -926,6 +926,9 @@ qint32 NoteStore::processEdamUserExceptionForGetSyncChunk(const qevercloud::EDAM
     else
     {
         errorDescription.setBase(QT_TR_NOOP("Unknown EDAM user exception on attempt to get filtered sync chunk"));
+        if (!exceptionData.isNull() && !exceptionData->errorMessage.isEmpty()) {
+            errorDescription.details() = exceptionData->errorMessage;
+        }
     }
 
     return userException.errorCode;
