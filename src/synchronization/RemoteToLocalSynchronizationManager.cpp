@@ -3915,9 +3915,20 @@ void RemoteToLocalSynchronizationManager::checkNotesSyncCompletionAndLaunchResou
 {
     QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::checkNotesSyncCompletionAndLaunchResourcesSync"));
 
-    if (m_lastSyncMode != SyncMode::IncrementalSync) {
-        // NOTE: during the full sync the individual resources are not synced,
-        // instead the full note contents including the resources are synced
+    if (m_lastSyncMode != SyncMode::IncrementalSync)
+    {
+        /**
+         * NOTE: during the full sync the individual resources are not synced,
+         * instead the full note contents including the resources are synced.
+         *
+         * That works both for the content from user's own account and for the stuff
+         * from linked notebooks: the sync of linked notebooks' content might be
+         * full while the last sync of user's own content is incremental
+         * but in this case there won't be resources within the synch chunk
+         * downloaded for that linked notebook so there's no real problem with us
+         * not getting inside this if block when syncing stuff from the linked
+         * notebooks
+         */
         return;
     }
 
@@ -4348,7 +4359,6 @@ bool RemoteToLocalSynchronizationManager::downloadLinkedNotebooksSyncChunks()
                 QNDEBUG(QStringLiteral("Linked notebook sync state says the time has come to do the full sync"));
                 afterUsn = 0;
                 fullSyncOnly = true;
-                m_lastSyncMode = SyncMode::FullSync;
             }
             else if (syncState.updateCount == lastUpdateCount)
             {
