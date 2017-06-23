@@ -17,6 +17,7 @@
  */
 
 #include "SendLocalChangesManager.h"
+#include "SynchronizationShared.h"
 #include <quentier/utility/Macros.h>
 #include <quentier/utility/Utility.h>
 #include <quentier/local_storage/LocalStorageManagerAsync.h>
@@ -2079,7 +2080,7 @@ bool SendLocalChangesManager::checkAndRequestAuthenticationTokensForLinkedNotebo
 
         const qevercloud::Timestamp & expirationTime = eit.value();
         const qevercloud::Timestamp currentTime = QDateTime::currentMSecsSinceEpoch();
-        if (currentTime - expirationTime < SIX_HOURS_IN_MSEC) {
+        if ((expirationTime - currentTime) < HALF_AN_HOUR_IN_MSEC) {
             QNDEBUG(QStringLiteral("Authentication token for linked notebook with guid ") << guid
                     << QStringLiteral(" is too close to expiration: its expiration time is ") << printableDateTimeFromTimestamp(expirationTime)
                     << QStringLiteral(", current time is ") << printableDateTimeFromTimestamp(currentTime)

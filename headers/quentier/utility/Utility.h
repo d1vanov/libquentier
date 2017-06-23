@@ -41,11 +41,6 @@
  */
 #define SEC_TO_MSEC(sec) (sec * 1000)
 
-/**
- * Convenience macro representing the number of milliseconds in 6 hours
- */
-#define SIX_HOURS_IN_MSEC 2160000
-
 namespace quentier {
 
 /**

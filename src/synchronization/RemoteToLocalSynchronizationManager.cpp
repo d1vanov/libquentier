@@ -17,7 +17,7 @@
  */
 
 #include "RemoteToLocalSynchronizationManager.h"
-#include "SynchronizationPersistenceName.h"
+#include "SynchronizationShared.h"
 #include "InkNoteImageDownloader.h"
 #include "NoteThumbnailDownloader.h"
 #include <quentier/utility/Utility.h>
@@ -1920,8 +1920,7 @@ void RemoteToLocalSynchronizationManager::emitFindByGuidRequest<qevercloud::Link
         return;
     }
 
-    LinkedNotebook linkedNotebook;
-    linkedNotebook.setGuid(qecLinkedNotebook.guid.ref());
+    LinkedNotebook linkedNotebook(qecLinkedNotebook);
 
     QUuid requestId = QUuid::createUuid();
     Q_UNUSED(m_findLinkedNotebookRequestIds.insert(requestId));
@@ -2352,7 +2351,7 @@ void RemoteToLocalSynchronizationManager::onAuthenticationInfoReceived(QString a
 void RemoteToLocalSynchronizationManager::onAuthenticationTokensForLinkedNotebooksReceived(QHash<QString, QPair<QString,QString> > authenticationTokensAndShardIdsByLinkedNotebookGuid,
                                                                                            QHash<QString, qevercloud::Timestamp> authenticationTokenExpirationTimesByLinkedNotebookGuid)
 {
-    QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::onAuthenticationTokensForLinkedNotebooksReceived:"));
+    QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::onAuthenticationTokensForLinkedNotebooksReceived"));
 
     bool wasPending = m_pendingAuthenticationTokensForLinkedNotebooks;
 
@@ -4118,7 +4117,7 @@ bool RemoteToLocalSynchronizationManager::checkAndRequestAuthenticationTokensFor
 
         const qevercloud::Timestamp & expirationTime = it.value();
         const qevercloud::Timestamp currentTime = QDateTime::currentMSecsSinceEpoch();
-        if (currentTime - expirationTime < SIX_HOURS_IN_MSEC) {
+        if ((expirationTime - currentTime) < HALF_AN_HOUR_IN_MSEC) {
             QNDEBUG(QStringLiteral("Authentication token for linked notebook with guid ") << linkedNotebook.guid()
                     << QStringLiteral(" is too close to expiration: its expiration time is ")
                     << printableDateTimeFromTimestamp(expirationTime) << QStringLiteral(", current time is ")
@@ -4175,8 +4174,8 @@ void RemoteToLocalSynchronizationManager::requestAuthenticationTokensForAllLinke
                                                                                 currentLinkedNotebook.sharedNotebookGlobalId());
     }
 
-    emit requestAuthenticationTokensForLinkedNotebooks(linkedNotebookGuidsAndSharedNotebookGlobalIds);
     m_pendingAuthenticationTokensForLinkedNotebooks = true;
+    emit requestAuthenticationTokensForLinkedNotebooks(linkedNotebookGuidsAndSharedNotebookGlobalIds);
 }
 
 void RemoteToLocalSynchronizationManager::requestAllLinkedNotebooks()
@@ -4258,9 +4257,9 @@ void RemoteToLocalSynchronizationManager::getLinkedNotebookSyncState(const Linke
 
 bool RemoteToLocalSynchronizationManager::downloadLinkedNotebooksSyncChunks()
 {
-    qevercloud::SyncChunk * pSyncChunk = Q_NULLPTR;
+    QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::downloadLinkedNotebooksSyncChunks"));
 
-    QNDEBUG(QStringLiteral("Downloading linked notebook sync chunks:"));
+    qevercloud::SyncChunk * pSyncChunk = Q_NULLPTR;
 
     const int numAllLinkedNotebooks = m_allLinkedNotebooks.size();
     for(int i = 0; i < numAllLinkedNotebooks; ++i)
@@ -4340,14 +4339,15 @@ bool RemoteToLocalSynchronizationManager::downloadLinkedNotebooksSyncChunks()
             }
 
             const qevercloud::SyncState & syncState = syncStateIter.value();
+            QNDEBUG(QStringLiteral("Sync state: ") << syncState
+                    << QStringLiteral("\nLast sync time = ") << printableDateTimeFromTimestamp(lastSyncTime)
+                    << QStringLiteral(", last update count = ") << lastUpdateCount);
 
             if (syncState.fullSyncBefore > lastSyncTime)
             {
                 QNDEBUG(QStringLiteral("Linked notebook sync state says the time has come to do the full sync"));
                 afterUsn = 0;
-                if (!m_onceSyncDone) {
-                    fullSyncOnly = true;
-                }
+                fullSyncOnly = true;
                 m_lastSyncMode = SyncMode::FullSync;
             }
             else if (syncState.updateCount == lastUpdateCount)
