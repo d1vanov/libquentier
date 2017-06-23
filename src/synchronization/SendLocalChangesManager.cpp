@@ -49,7 +49,6 @@ SendLocalChangesManager::SendLocalChangesManager(LocalStorageManagerAsync & loca
     m_lastUpdateCountByLinkedNotebookGuid(),
     m_shouldRepeatIncrementalSync(false),
     m_active(false),
-    m_requestedToStop(false),
     m_connectedToLocalStorage(false),
     m_receivedDirtyLocalStorageObjectsFromUsersAccount(false),
     m_receivedAllDirtyLocalStorageObjects(false),
@@ -110,7 +109,8 @@ void SendLocalChangesManager::stop()
         return;
     }
 
-    m_requestedToStop = true;
+    clear();
+
     m_active = false;
     emit stopped();
 }
@@ -131,13 +131,6 @@ void SendLocalChangesManager::onAuthenticationTokensForLinkedNotebooksReceived(Q
 
     sendLocalChanges();
 }
-
-#define CHECK_STOPPED() \
-    if (m_requestedToStop && !hasPendingRequests()) { \
-        QNDEBUG(QStringLiteral("SendLocalChangesManager is requested to stop and has no pending requests, finishing sending the local changes")); \
-        finalize(); \
-        return; \
-    }
 
 void SendLocalChangesManager::onListDirtyTagsCompleted(LocalStorageManager::ListObjectsOptions flag,
                                                        size_t limit, size_t offset,
@@ -170,8 +163,6 @@ void SendLocalChangesManager::onListDirtyTagsCompleted(LocalStorageManager::List
             Q_UNUSED(m_listDirtyTagsFromLinkedNotebooksRequestIds.erase(it));
         }
 
-        CHECK_STOPPED();
-
         checkListLocalStorageObjectsCompletion();
     }
 }
@@ -203,8 +194,6 @@ void SendLocalChangesManager::onListDirtyTagsFailed(LocalStorageManager::ListObj
             Q_UNUSED(m_listDirtyTagsFromLinkedNotebooksRequestIds.erase(it));
         }
 
-        CHECK_STOPPED();
-
         ErrorString error(QT_TR_NOOP("Error listing dirty tags from the local storage"));
         error.additionalBases().append(errorDescription.base());
         error.additionalBases().append(errorDescription.additionalBases());
@@ -230,8 +219,6 @@ void SendLocalChangesManager::onListDirtySavedSearchesCompleted(LocalStorageMana
     m_savedSearches << savedSearches;
     m_listDirtySavedSearchesRequestId = QUuid();
 
-    CHECK_STOPPED();
-
     checkListLocalStorageObjectsCompletion();
 }
 
@@ -254,8 +241,6 @@ void SendLocalChangesManager::onListDirtySavedSearchesFailed(LocalStorageManager
               << QStringLiteral(", errorDescription = ") << errorDescription << QStringLiteral(", requestId = ") << requestId);
 
     m_listDirtySavedSearchesRequestId = QUuid();
-
-    CHECK_STOPPED();
 
     ErrorString error(QT_TR_NOOP("Error listing dirty saved searches from the local storage"));
     error.additionalBases().append(errorDescription.base());
@@ -292,8 +277,6 @@ void SendLocalChangesManager::onListDirtyNotebooksCompleted(LocalStorageManager:
             Q_UNUSED(m_listDirtyNotebooksFromLinkedNotebooksRequestIds.erase(it));
         }
 
-        CHECK_STOPPED();
-
         checkListLocalStorageObjectsCompletion();
     }
 }
@@ -324,8 +307,6 @@ void SendLocalChangesManager::onListDirtyNotebooksFailed(LocalStorageManager::Li
         else {
             Q_UNUSED(m_listDirtyNotebooksFromLinkedNotebooksRequestIds.erase(it));
         }
-
-        CHECK_STOPPED();
 
         ErrorString error(QT_TR_NOOP("Error listing dirty notebooks from the local storage"));
         error.additionalBases().append(errorDescription.base());
@@ -365,8 +346,6 @@ void SendLocalChangesManager::onListDirtyNotesCompleted(LocalStorageManager::Lis
             Q_UNUSED(m_listDirtyNotesFromLinkedNotebooksRequestIds.erase(it));
         }
 
-        CHECK_STOPPED();
-
         checkListLocalStorageObjectsCompletion();
     }
 }
@@ -398,8 +377,6 @@ void SendLocalChangesManager::onListDirtyNotesFailed(LocalStorageManager::ListOb
         else {
             Q_UNUSED(m_listDirtyNotesFromLinkedNotebooksRequestIds.erase(it));
         }
-
-        CHECK_STOPPED();
 
         ErrorString error(QT_TR_NOOP("Error listing dirty notes from the local storage"));
         error.additionalBases().append(errorDescription.base());
@@ -452,7 +429,6 @@ void SendLocalChangesManager::onListLinkedNotebooksCompleted(LocalStorageManager
     }
 
     m_listLinkedNotebooksRequestId = QUuid();
-    CHECK_STOPPED();
     checkListLocalStorageObjectsCompletion();
 }
 
@@ -472,7 +448,6 @@ void SendLocalChangesManager::onListLinkedNotebooksFailed(LocalStorageManager::L
               << QStringLiteral(", errorDescription = ") << errorDescription << QStringLiteral(", requestId = ") << requestId);
 
     m_listLinkedNotebooksRequestId = QUuid();
-    CHECK_STOPPED();
 
     ErrorString error(QT_TR_NOOP("Error listing linked notebooks from the local storage"));
     error.additionalBases().append(errorDescription.base());
@@ -492,7 +467,6 @@ void SendLocalChangesManager::onUpdateTagCompleted(Tag tag, QUuid requestId)
     Q_UNUSED(m_updateTagRequestIds.erase(it));
 
     checkSendLocalChangesAndDirtyFlagsRemovingUpdatesAndFinalize();
-    CHECK_STOPPED();
 }
 
 void SendLocalChangesManager::onUpdateTagFailed(Tag tag, ErrorString errorDescription, QUuid requestId)
@@ -503,7 +477,6 @@ void SendLocalChangesManager::onUpdateTagFailed(Tag tag, ErrorString errorDescri
     }
 
     Q_UNUSED(m_updateTagRequestIds.erase(it));
-    CHECK_STOPPED();
 
     ErrorString error(QT_TR_NOOP("Failed to update a tag in the local storage"));
     error.additionalBases().append(errorDescription.base());
@@ -525,7 +498,6 @@ void SendLocalChangesManager::onUpdateSavedSearchCompleted(SavedSearch savedSear
     Q_UNUSED(m_updateSavedSearchRequestIds.erase(it));
 
     checkSendLocalChangesAndDirtyFlagsRemovingUpdatesAndFinalize();
-    CHECK_STOPPED();
 }
 
 void SendLocalChangesManager::onUpdateSavedSearchFailed(SavedSearch savedSearch, ErrorString errorDescription, QUuid requestId)
@@ -536,7 +508,6 @@ void SendLocalChangesManager::onUpdateSavedSearchFailed(SavedSearch savedSearch,
     }
 
     Q_UNUSED(m_updateSavedSearchRequestIds.erase(it));
-    CHECK_STOPPED();
 
     ErrorString error(QT_TR_NOOP("Failed to update a saved search in the local storage"));
     error.additionalBases().append(errorDescription.base());
@@ -558,7 +529,6 @@ void SendLocalChangesManager::onUpdateNotebookCompleted(Notebook notebook, QUuid
     Q_UNUSED(m_updateNotebookRequestIds.erase(it));
 
     checkSendLocalChangesAndDirtyFlagsRemovingUpdatesAndFinalize();
-    CHECK_STOPPED();
 }
 
 void SendLocalChangesManager::onUpdateNotebookFailed(Notebook notebook, ErrorString errorDescription, QUuid requestId)
@@ -569,7 +539,6 @@ void SendLocalChangesManager::onUpdateNotebookFailed(Notebook notebook, ErrorStr
     }
 
     Q_UNUSED(m_updateNotebookRequestIds.erase(it));
-    CHECK_STOPPED();
 
     ErrorString error(QT_TR_NOOP("Failed to update a notebook in the local storage"));
     error.additionalBases().append(errorDescription.base());
@@ -593,7 +562,6 @@ void SendLocalChangesManager::onUpdateNoteCompleted(Note note, bool updateResour
     Q_UNUSED(m_updateNoteRequestIds.erase(it));
 
     checkSendLocalChangesAndDirtyFlagsRemovingUpdatesAndFinalize();
-    CHECK_STOPPED();
 }
 
 void SendLocalChangesManager::onUpdateNoteFailed(Note note, bool updateResources, bool updateTags,
@@ -608,7 +576,6 @@ void SendLocalChangesManager::onUpdateNoteFailed(Note note, bool updateResources
     }
 
     Q_UNUSED(m_updateNoteRequestIds.erase(it));
-    CHECK_STOPPED();
 
     ErrorString error(QT_TR_NOOP("Failed to update a note in the local storage"));
     error.additionalBases().append(errorDescription.base());
@@ -644,8 +611,6 @@ void SendLocalChangesManager::onFindNotebookCompleted(Notebook notebook, QUuid r
     m_notebooksByGuidsCache[notebook.guid()] = notebook;
     Q_UNUSED(m_findNotebookRequestIds.erase(it));
 
-    CHECK_STOPPED();
-
     if (m_findNotebookRequestIds.isEmpty()) {
         checkAndSendNotes();
     }
@@ -659,7 +624,6 @@ void SendLocalChangesManager::onFindNotebookFailed(Notebook notebook, ErrorStrin
     }
 
     Q_UNUSED(m_findNotebookRequestIds.erase(it));
-    CHECK_STOPPED();
 
     QNWARNING(errorDescription << QStringLiteral("; notebook: ") << notebook);
     emit failure(errorDescription);
@@ -702,11 +666,16 @@ void SendLocalChangesManager::timerEvent(QTimerEvent * pEvent)
     }
 }
 
-void SendLocalChangesManager::createConnections()
+void SendLocalChangesManager::connectToLocalStorage()
 {
-    QNDEBUG(QStringLiteral("SendLocalChangesManager::createConnections"));
+    QNDEBUG(QStringLiteral("SendLocalChangesManager::connectToLocalStorage"));
 
-    // Connect local signals with localStorageManagerThread's slots
+    if (m_connectedToLocalStorage) {
+        QNDEBUG(QStringLiteral("Already connected to local storage"));
+        return;
+    }
+
+    // Connect local signals with localStorageManagerAsync's slots
     QObject::connect(this,
                      QNSIGNAL(SendLocalChangesManager,requestLocalUnsynchronizedTags,LocalStorageManager::ListObjectsOptions,size_t,size_t,
                               LocalStorageManager::ListTagsOrder::type,LocalStorageManager::OrderDirection::type,QString,QUuid),
@@ -851,6 +820,11 @@ void SendLocalChangesManager::createConnections()
 void SendLocalChangesManager::disconnectFromLocalStorage()
 {
     QNDEBUG(QStringLiteral("SendLocalChangesManager::disconnectFromLocalStorage"));
+
+    if (!m_connectedToLocalStorage) {
+        QNDEBUG(QStringLiteral("Not connected to local storage at the moment"));
+        return;
+    }
 
     // Disconnect local signals from localStorageManagerThread's slots
     QObject::disconnect(this,
@@ -1000,9 +974,7 @@ void SendLocalChangesManager::requestStuffFromLocalStorage(const QString & linke
 {
     QNDEBUG(QStringLiteral("SendLocalChangesManager::requestStuffFromLocalStorage: linked notebook guid = ") << linkedNotebookGuid);
 
-    if (!m_connectedToLocalStorage) {
-        createConnections();
-    }
+    connectToLocalStorage();
 
     bool emptyLinkedNotebookGuid = linkedNotebookGuid.isEmpty();
 
@@ -1991,7 +1963,6 @@ void SendLocalChangesManager::finalize()
 
     emit finished(m_lastUpdateCount, m_lastUpdateCountByLinkedNotebookGuid);
     clear();
-    disconnectFromLocalStorage();
     m_active = false;
 }
 
@@ -1999,11 +1970,12 @@ void SendLocalChangesManager::clear()
 {
     QNDEBUG(QStringLiteral("SendLocalChangesManager::clear"));
 
+    disconnectFromLocalStorage();
+
     m_lastUpdateCount = 0;
     m_lastUpdateCountByLinkedNotebookGuid.clear();
 
     m_shouldRepeatIncrementalSync = false;
-    m_requestedToStop = false;
 
     m_receivedDirtyLocalStorageObjectsFromUsersAccount = false;
     m_receivedAllDirtyLocalStorageObjects = false;

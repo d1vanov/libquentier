@@ -184,10 +184,7 @@ private:
     virtual void timerEvent(QTimerEvent * pEvent);
 
 private:
-    SendLocalChangesManager() Q_DECL_EQ_DELETE;
-
-private:
-    void createConnections();
+    void connectToLocalStorage();
     void disconnectFromLocalStorage();
 
     void requestStuffFromLocalStorage(const QString & linkedNotebookGuid = QString());
@@ -241,7 +238,6 @@ private:
     bool                                    m_shouldRepeatIncrementalSync;
 
     bool                                    m_active;
-    bool                                    m_requestedToStop;
 
     bool                                    m_connectedToLocalStorage;
     bool                                    m_receivedDirtyLocalStorageObjectsFromUsersAccount;
