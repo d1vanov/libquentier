@@ -253,7 +253,7 @@ set(PRIVATE_HEADERS
     src/local_storage/LocalStorageManager_p.h
     src/local_storage/NoteSearchQueryData.h
     src/synchronization/ExceptionHandlingHelpers.h
-    src/synchronization/SynchronizationPersistenceName.h
+    src/synchronization/SynchronizationShared.h
     src/synchronization/InkNoteImageDownloader.h
     src/synchronization/NoteStore.h
     src/synchronization/UserStore.h
