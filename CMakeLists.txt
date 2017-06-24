@@ -253,13 +253,13 @@ set(PRIVATE_HEADERS
     src/local_storage/LocalStorageManager_p.h
     src/local_storage/NoteSearchQueryData.h
     src/synchronization/ExceptionHandlingHelpers.h
-    src/synchronization/SynchronizationPersistenceName.h
     src/synchronization/InkNoteImageDownloader.h
     src/synchronization/NoteStore.h
     src/synchronization/UserStore.h
     src/synchronization/NoteThumbnailDownloader.h
     src/synchronization/RemoteToLocalSynchronizationManager.h
     src/synchronization/SendLocalChangesManager.h
+    src/synchronization/SynchronizationShared.h
     src/synchronization/SynchronizationManager_p.h
     src/synchronization/NotebookSyncConflictResolver.h
     src/synchronization/NotebookSyncConflictResolutionCache.h
@@ -411,6 +411,7 @@ set(${PROJECT_NAME}_SOURCES
     src/synchronization/NoteStore.cpp
     src/synchronization/UserStore.cpp
     src/synchronization/NoteThumbnailDownloader.cpp
+    src/synchronization/SynchronizationShared.cpp
     src/synchronization/SynchronizationManager.cpp
     src/synchronization/SynchronizationManager_p.cpp
     src/synchronization/RemoteToLocalSynchronizationManager.cpp

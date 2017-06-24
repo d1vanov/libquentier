@@ -486,7 +486,8 @@ qint32 NoteStore::getNote(const bool withContent, const bool withResourcesData,
 bool NoteStore::getNoteAsync(const bool withContent, const bool withResourceData, const bool withResourcesRecognition,
                              const bool withResourceAlternateData, const bool withSharedNotes,
                              const bool withNoteAppDataValues, const bool withResourceAppDataValues,
-                             const bool withNoteLimits, const QString & noteGuid, ErrorString & errorDescription)
+                             const bool withNoteLimits, const QString & noteGuid, const QString & authToken,
+                             ErrorString & errorDescription)
 {
     if (Q_UNLIKELY(noteGuid.isEmpty())) {
         errorDescription.setBase(QT_TR_NOOP("Detected the attempt to get full note's data for empty note guid"));
@@ -503,7 +504,7 @@ bool NoteStore::getNoteAsync(const bool withContent, const bool withResourceData
     noteResultSpec.includeResourceAppDataValues = withResourceAppDataValues;
     noteResultSpec.includeAccountLimits = withNoteLimits;
 
-    qevercloud::AsyncResult * pAsyncResult = m_pQecNoteStore->getNoteWithResultSpecAsync(noteGuid, noteResultSpec);
+    qevercloud::AsyncResult * pAsyncResult = m_pQecNoteStore->getNoteWithResultSpecAsync(noteGuid, noteResultSpec, authToken);
     if (Q_UNLIKELY(!pAsyncResult)) {
         errorDescription.setBase(QT_TR_NOOP("Can't get full note data: "
                                             "internal error, QEverCloud library returned "

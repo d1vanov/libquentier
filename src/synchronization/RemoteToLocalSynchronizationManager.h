@@ -27,6 +27,7 @@
 #include "TagSyncConflictResolutionCache.h"
 #include "SavedSearchSyncConflictResolver.h"
 #include "SavedSearchSyncConflictResolutionCache.h"
+#include "SynchronizationShared.h"
 #include <quentier/types/Account.h>
 #include <quentier/types/ErrorString.h>
 #include <quentier/utility/Macros.h>
@@ -55,10 +56,16 @@ class RemoteToLocalSynchronizationManager: public QObject
 {
     Q_OBJECT
 public:
-    explicit RemoteToLocalSynchronizationManager(LocalStorageManagerAsync & localStorageManagerAsync,
-                                                 const QString & host, QSharedPointer<qevercloud::NoteStore> pNoteStore,
-                                                 QSharedPointer<qevercloud::UserStore> pUserStore,
-                                                 QObject * parent = Q_NULLPTR);
+    class IManager
+    {
+    public:
+        virtual LocalStorageManagerAsync & localStorageManagerAsync() = 0;
+        virtual NoteStore & noteStore() = 0;
+        virtual UserStore & userStore() = 0;
+        virtual NoteStore * noteStoreForLinkedNotebookGuid(const QString & guid) = 0;
+    };
+
+    explicit RemoteToLocalSynchronizationManager(IManager & manager, const QString & host, QObject * parent = Q_NULLPTR);
 
     bool active() const;
 
@@ -66,7 +73,7 @@ public:
     Account account() const;
 
     bool syncUser(const qevercloud::UserID userId, ErrorString & errorDescription,
-                  const QString & authToken = QString(), const bool writeUserDataToLocalStorage = true);
+                  const bool writeUserDataToLocalStorage = true);
     const User & user() const;
 
     bool downloadedSyncChunks() const { return m_syncChunksDownloaded; }
@@ -100,7 +107,7 @@ Q_SIGNALS:
     void stopped();
 
     void requestAuthenticationToken();
-    void requestAuthenticationTokensForLinkedNotebooks(QVector<QPair<QString, QString> > linkedNotebookGuidsAndSharedNotebookGlobalIds);
+    void requestAuthenticationTokensForLinkedNotebooks(QVector<LinkedNotebookAuthData> linkedNotebookAuthData);
     void requestLastSyncParameters();
 
 public Q_SLOTS:
@@ -428,7 +435,7 @@ private:
 
     // ========= Helpers launching the sync of dependent data elements ==========
     void checkNotebooksAndTagsSyncCompletionAndLaunchNotesSync();
-    void launchNotesSync();
+    void launchNotesSync(const ContentSource::type & contentSource);
 
     void checkNotesSyncCompletionAndLaunchResourcesSync();
     void launchResourcesSync();
@@ -575,13 +582,10 @@ private:
     friend QTextStream & operator<<(QTextStream & strm, const SyncMode::type & obj);
 
 private:
-    LocalStorageManagerAsync &              m_localStorageManagerAsync;
+    IManager &                              m_manager;
     bool                                    m_connectedToLocalStorage;
 
     QString                                 m_host;
-
-    NoteStore                               m_noteStore;
-    UserStore                               m_userStore;
 
     qint32                                  m_maxSyncChunksPerOneDownload;
     SyncMode::type                          m_lastSyncMode;

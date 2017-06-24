@@ -20,6 +20,7 @@
 #define LIB_QUENTIER_SYNCHRONIZATION_SEND_LOCAL_CHANGES_MANAGER_H
 
 #include "NoteStore.h"
+#include "SynchronizationShared.h"
 #include <quentier/utility/Macros.h>
 #include <quentier/types/ErrorString.h>
 #include <quentier/local_storage/LocalStorageManager.h>
@@ -37,9 +38,15 @@ class SendLocalChangesManager: public QObject
 {
     Q_OBJECT
 public:
-    explicit SendLocalChangesManager(LocalStorageManagerAsync & localStorageManagerAsync,
-                                     QSharedPointer<qevercloud::NoteStore> pNoteStore,
-                                     QObject * parent = Q_NULLPTR);
+    class IManager
+    {
+    public:
+        virtual LocalStorageManagerAsync & localStorageManagerAsync() = 0;
+        virtual NoteStore & noteStore() = 0;
+        virtual NoteStore * noteStoreForLinkedNotebookGuid(const QString & guid) = 0;
+    };
+
+    explicit SendLocalChangesManager(IManager & manager, QObject * parent = Q_NULLPTR);
 
     bool active() const;
 
@@ -55,7 +62,7 @@ Q_SIGNALS:
     void stopped();
 
     void requestAuthenticationToken();
-    void requestAuthenticationTokensForLinkedNotebooks(QVector<QPair<QString, QString> > linkedNotebookGuidsAndSharedNotebookGlobalIds);
+    void requestAuthenticationTokensForLinkedNotebooks(QVector<LinkedNotebookAuthData> linkedNotebookGuidsAndSharedNotebookGlobalIds);
 
     // progress information
     void receivedUserAccountDirtyObjects();
@@ -215,14 +222,14 @@ private:
     void handleAuthExpiration();
 
 private:
-    class CompareGuidAndSharedNotebookGlobalIdByGuid
+    class CompareLinkedNotebookAuthDataByGuid
     {
     public:
-        CompareGuidAndSharedNotebookGlobalIdByGuid(const QString & guid) : m_guid(guid) {}
+        CompareLinkedNotebookAuthDataByGuid(const QString & guid) : m_guid(guid) {}
 
-        bool operator()(const QPair<QString, QString> & pair) const
+        bool operator()(const LinkedNotebookAuthData & authData) const
         {
-            return pair.first == m_guid;
+            return authData.m_guid == m_guid;
         }
 
     private:
@@ -230,8 +237,8 @@ private:
     };
 
 private:
-    LocalStorageManagerAsync     &          m_localStorageManagerAsync;
-    NoteStore                               m_noteStore;
+    IManager &                              m_manager;
+
     qint32                                  m_lastUpdateCount;
     QHash<QString,qint32>                   m_lastUpdateCountByLinkedNotebookGuid;
 
@@ -258,7 +265,7 @@ private:
     QList<Notebook>                         m_notebooks;
     QList<Note>                             m_notes;
 
-    QVector<QPair<QString, QString> >       m_linkedNotebookGuidsAndSharedNotebookGlobalIds;
+    QVector<LinkedNotebookAuthData>         m_linkedNotebookAuthData;
 
     int                                     m_lastProcessedLinkedNotebookGuidIndex;
     QHash<QString,QPair<QString,QString> >  m_authenticationTokensAndShardIdsByLinkedNotebookGuid;

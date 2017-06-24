@@ -50,6 +50,37 @@
 
 namespace quentier {
 
+class SynchronizationManagerPrivate::RemoteToLocalSynchronizationManagerController: public RemoteToLocalSynchronizationManager::IManager
+{
+public:
+    RemoteToLocalSynchronizationManagerController(LocalStorageManagerAsync & localStorageManagerAsync,
+                                                  SynchronizationManagerPrivate & syncManager);
+
+    virtual LocalStorageManagerAsync & localStorageManagerAsync() Q_DECL_OVERRIDE;
+    virtual NoteStore & noteStore() Q_DECL_OVERRIDE;
+    virtual UserStore & userStore() Q_DECL_OVERRIDE;
+    virtual NoteStore * noteStoreForLinkedNotebookGuid(const QString & guid) Q_DECL_OVERRIDE;
+
+private:
+    LocalStorageManagerAsync &          m_localStorageManagerAsync;
+    SynchronizationManagerPrivate &     m_syncManager;
+};
+
+class SynchronizationManagerPrivate::SendLocalChangesManagerController: public SendLocalChangesManager::IManager
+{
+public:
+    SendLocalChangesManagerController(LocalStorageManagerAsync & localStorageManagerAsync,
+                                      SynchronizationManagerPrivate & syncManager);
+
+    virtual LocalStorageManagerAsync & localStorageManagerAsync() Q_DECL_OVERRIDE;
+    virtual NoteStore & noteStore() Q_DECL_OVERRIDE;
+    virtual NoteStore * noteStoreForLinkedNotebookGuid(const QString & guid) Q_DECL_OVERRIDE;
+
+private:
+    LocalStorageManagerAsync &          m_localStorageManagerAsync;
+    SynchronizationManagerPrivate &     m_syncManager;
+};
+
 SynchronizationManagerPrivate::SynchronizationManagerPrivate(const QString & consumerKey, const QString & consumerSecret,
                                                              const QString & host, LocalStorageManagerAsync & localStorageManagerAsync,
                                                              IAuthenticationManager & authenticationManager) :
@@ -68,12 +99,14 @@ SynchronizationManagerPrivate::SynchronizationManagerPrivate(const QString & con
     m_launchSyncPostponeTimerId(-1),
     m_OAuthResult(),
     m_authenticationInProgress(false),
-    m_remoteToLocalSyncManager(localStorageManagerAsync, m_host,
-                               m_noteStore.getQecNoteStore(), m_userStore.getQecUserStore()),
-    m_sendLocalChangesManager(localStorageManagerAsync, m_noteStore.getQecNoteStore()),
+    m_pRemoteToLocalSyncManagerController(new RemoteToLocalSynchronizationManagerController(localStorageManagerAsync, *this)),
+    m_remoteToLocalSyncManager(*m_pRemoteToLocalSyncManagerController, m_host),
+    m_pSendLocalChangesManagerController(new SendLocalChangesManagerController(localStorageManagerAsync, *this)),
+    m_sendLocalChangesManager(*m_pSendLocalChangesManagerController),
     m_cachedLinkedNotebookAuthTokensAndShardIdsByGuid(),
     m_cachedLinkedNotebookAuthTokenExpirationTimeByGuid(),
-    m_linkedNotebookGuidsAndGlobalIdsWaitingForAuth(),
+    m_linkedNotebookAuthDataPendingAuthentication(),
+    m_noteStoresByLinkedNotebookGuids(),
     m_authenticateToLinkedNotebooksPostponeTimerId(-1),
     m_readAuthTokenJob(QApplication::applicationName() + AUTH_TOKEN_KEYCHAIN_KEY_PART),
     m_readShardIdJob(QApplication::applicationName() + SHARD_ID_KEYCHAIN_KEY_PART),
@@ -250,8 +283,10 @@ void SynchronizationManagerPrivate::onOAuthResult(bool success, qevercloud::User
         Account newAccount(QString(), Account::Type::Evernote, userId, Account::EvernoteAccountType::Free, m_host);
         m_remoteToLocalSyncManager.setAccount(newAccount);
 
+        m_userStore.setAuthenticationToken(authToken);
+
         ErrorString error;
-        bool res = m_remoteToLocalSyncManager.syncUser(userId, error, authToken, /* write user data to local storage = */ false);
+        bool res = m_remoteToLocalSyncManager.syncUser(userId, error, /* write user data to local storage = */ false);
         if (Q_UNLIKELY(!res))
         {
             errorDescription.setBase(QT_TR_NOOP("Can't switch to new Evernote account: failed to sync user data"));
@@ -478,10 +513,10 @@ void SynchronizationManagerPrivate::onRequestAuthenticationToken()
     authenticateImpl(AuthContext::SyncLaunch);
 }
 
-void SynchronizationManagerPrivate::onRequestAuthenticationTokensForLinkedNotebooks(QVector<QPair<QString,QString> > linkedNotebookGuidsAndShareKeys)
+void SynchronizationManagerPrivate::onRequestAuthenticationTokensForLinkedNotebooks(QVector<LinkedNotebookAuthData> linkedNotebookAuthData)
 {
     QNDEBUG(QStringLiteral("SynchronizationManagerPrivate::onRequestAuthenticationTokensForLinkedNotebooks"));
-    m_linkedNotebookGuidsAndGlobalIdsWaitingForAuth = linkedNotebookGuidsAndShareKeys;
+    m_linkedNotebookAuthDataPendingAuthentication = linkedNotebookAuthData;
     authenticateToLinkedNotebooks();
 }
 
@@ -648,8 +683,8 @@ void SynchronizationManagerPrivate::createConnections(IAuthenticationManager & a
                      this, QNSLOT(SynchronizationManagerPrivate,onRateLimitExceeded,qint32));
     QObject::connect(&m_remoteToLocalSyncManager, QNSIGNAL(RemoteToLocalSynchronizationManager,requestAuthenticationToken),
                      this, QNSLOT(SynchronizationManagerPrivate,onRequestAuthenticationToken));
-    QObject::connect(&m_remoteToLocalSyncManager, QNSIGNAL(RemoteToLocalSynchronizationManager,requestAuthenticationTokensForLinkedNotebooks,QVector<QPair<QString,QString> >),
-                     this, QNSLOT(SynchronizationManagerPrivate,onRequestAuthenticationTokensForLinkedNotebooks,QVector<QPair<QString,QString> >));
+    QObject::connect(&m_remoteToLocalSyncManager, QNSIGNAL(RemoteToLocalSynchronizationManager,requestAuthenticationTokensForLinkedNotebooks,QVector<LinkedNotebookAuthData>),
+                     this, QNSLOT(SynchronizationManagerPrivate,onRequestAuthenticationTokensForLinkedNotebooks,QVector<LinkedNotebookAuthData>));
     QObject::connect(&m_remoteToLocalSyncManager, QNSIGNAL(RemoteToLocalSynchronizationManager,stopped),
                      this, QNSLOT(SynchronizationManagerPrivate,onRemoteToLocalSyncStopped));
     QObject::connect(&m_remoteToLocalSyncManager, QNSIGNAL(RemoteToLocalSynchronizationManager,failure,ErrorString),
@@ -682,8 +717,8 @@ void SynchronizationManagerPrivate::createConnections(IAuthenticationManager & a
                      this, QNSLOT(SynchronizationManagerPrivate,onRateLimitExceeded,qint32));
     QObject::connect(&m_sendLocalChangesManager, QNSIGNAL(SendLocalChangesManager,requestAuthenticationToken),
                      this, QNSLOT(SynchronizationManagerPrivate,onRequestAuthenticationToken));
-    QObject::connect(&m_sendLocalChangesManager, QNSIGNAL(SendLocalChangesManager,requestAuthenticationTokensForLinkedNotebooks,QVector<QPair<QString,QString> >),
-                     this, QNSLOT(SynchronizationManagerPrivate,onRequestAuthenticationTokensForLinkedNotebooks,QVector<QPair<QString,QString> >));
+    QObject::connect(&m_sendLocalChangesManager, QNSIGNAL(SendLocalChangesManager,requestAuthenticationTokensForLinkedNotebooks,QVector<LinkedNotebookAuthData>),
+                     this, QNSLOT(SynchronizationManagerPrivate,onRequestAuthenticationTokensForLinkedNotebooks,QVector<LinkedNotebookAuthData>));
     QObject::connect(&m_sendLocalChangesManager, QNSIGNAL(SendLocalChangesManager,shouldRepeatIncrementalSync),
                      this, QNSLOT(SynchronizationManagerPrivate,onShouldRepeatIncrementalSync));
     QObject::connect(&m_sendLocalChangesManager, QNSIGNAL(SendLocalChangesManager,conflictDetected),
@@ -1084,7 +1119,7 @@ void SynchronizationManagerPrivate::timerEvent(QTimerEvent * pTimerEvent)
 
     if (timerId == m_authenticateToLinkedNotebooksPostponeTimerId)  {
         QNDEBUG(QStringLiteral("Re-attempting to authenticate to remaining linked (shared) notebooks"));
-        onRequestAuthenticationTokensForLinkedNotebooks(m_linkedNotebookGuidsAndGlobalIdsWaitingForAuth);
+        onRequestAuthenticationTokensForLinkedNotebooks(m_linkedNotebookAuthDataPendingAuthentication);
         return;
     }
 }
@@ -1103,10 +1138,23 @@ void SynchronizationManagerPrivate::clear()
 
     m_launchSyncPostponeTimerId = -1;
 
+    m_noteStore.stop();
+
+    for(auto it = m_noteStoresByLinkedNotebookGuids.begin(),
+        end = m_noteStoresByLinkedNotebookGuids.end(); it != end; ++it)
+    {
+        NoteStore * pNoteStore = it.value();
+        pNoteStore->stop();
+        pNoteStore->setParent(Q_NULLPTR);
+        pNoteStore->deleteLater();
+    }
+
+    m_noteStoresByLinkedNotebookGuids.clear();
+
     m_remoteToLocalSyncManager.stop();
     m_sendLocalChangesManager.stop();
 
-    m_linkedNotebookGuidsAndGlobalIdsWaitingForAuth.clear();
+    m_linkedNotebookAuthDataPendingAuthentication.clear();
     m_cachedLinkedNotebookAuthTokensAndShardIdsByGuid.clear();
     m_cachedLinkedNotebookAuthTokenExpirationTimeByGuid.clear();
 
@@ -1158,7 +1206,7 @@ void SynchronizationManagerPrivate::authenticateToLinkedNotebooks()
         return;
     }
 
-    const int numLinkedNotebooks = m_linkedNotebookGuidsAndGlobalIdsWaitingForAuth.size();
+    const int numLinkedNotebooks = m_linkedNotebookAuthDataPendingAuthentication.size();
     if (numLinkedNotebooks == 0) {
         QNDEBUG(QStringLiteral("No linked notebooks waiting for authentication, sending the cached auth tokens, shard ids and expiration times"));
         emit sendAuthenticationTokensForLinkedNotebooks(m_cachedLinkedNotebookAuthTokensAndShardIdsByGuid,
@@ -1176,13 +1224,19 @@ void SynchronizationManagerPrivate::authenticateToLinkedNotebooks()
     QString keyPrefix = QApplication::applicationName() + QStringLiteral("_") + m_host +
                         QStringLiteral("_") + QString::number(m_OAuthResult.m_userId);
 
-    for(auto it = m_linkedNotebookGuidsAndGlobalIdsWaitingForAuth.begin();
-        it != m_linkedNotebookGuidsAndGlobalIdsWaitingForAuth.end(); )
+    for(auto it = m_linkedNotebookAuthDataPendingAuthentication.begin();
+        it != m_linkedNotebookAuthDataPendingAuthentication.end(); )
     {
-        const QPair<QString,QString> & pair = *it;
+        const LinkedNotebookAuthData & authData = *it;
 
-        const QString & guid = pair.first;
-        const QString & sharedNotebookGlobalId = pair.second;
+        const QString & guid = authData.m_guid;
+        const QString & shardId = authData.m_shardId;
+        const QString & sharedNotebookGlobalId = authData.m_sharedNotebookGlobalId;
+        const QString & noteStoreUrl = authData.m_noteStoreUrl;
+        QNDEBUG(QStringLiteral("Processing linked notebook guid = ") << guid
+                << QStringLiteral(", shard id = ") << shardId
+                << QStringLiteral(", shared notebook global id = ") << sharedNotebookGlobalId
+                << QStringLiteral(", note store URL = ") << noteStoreUrl);
 
         bool forceRemoteAuth = false;
         auto linkedNotebookAuthTokenIt = m_cachedLinkedNotebookAuthTokensAndShardIdsByGuid.find(guid);
@@ -1256,7 +1310,7 @@ void SynchronizationManagerPrivate::authenticateToLinkedNotebooks()
             {
                 QNDEBUG(QStringLiteral("Found authentication data for linked notebook guid ") << guid
                         << QStringLiteral(" + verified its expiration timestamp"));
-                it = m_linkedNotebookGuidsAndGlobalIdsWaitingForAuth.erase(it);
+                it = m_linkedNotebookAuthDataPendingAuthentication.erase(it);
                 continue;
             }
         }
@@ -1283,7 +1337,18 @@ void SynchronizationManagerPrivate::authenticateToLinkedNotebooks()
         qevercloud::AuthenticationResult authResult;
         ErrorString errorDescription;
         qint32 rateLimitSeconds = 0;
-        qint32 errorCode = m_noteStore.authenticateToSharedNotebook(sharedNotebookGlobalId, authResult,
+
+        NoteStore * pNoteStore = noteStoreForLinkedNotebookGuid(guid);
+        if (Q_UNLIKELY(!pNoteStore)) {
+            ErrorString error(QT_TR_NOOP("Can't sync the linked notebook contents: can't find or create the note store for the linked notebook"));
+            emit notifyError(error);
+            return;
+        }
+
+        pNoteStore->setAuthenticationToken(m_OAuthResult.m_authToken);
+        pNoteStore->setNoteStoreUrl(noteStoreUrl);
+
+        qint32 errorCode = pNoteStore->authenticateToSharedNotebook(sharedNotebookGlobalId, authResult,
                                                                     errorDescription, rateLimitSeconds);
         if (errorCode == qevercloud::EDAMErrorCode::AUTH_EXPIRED)
         {
@@ -1317,6 +1382,8 @@ void SynchronizationManagerPrivate::authenticateToLinkedNotebooks()
         }
         else if (errorCode != 0)
         {
+            QNWARNING(QStringLiteral("Failed to authenticate to shared notebook: ") << errorDescription
+                      << QStringLiteral(" (error code = ") << errorCode << QStringLiteral(")"));
             emit notifyError(errorDescription);
             return;
         }
@@ -1327,16 +1394,6 @@ void SynchronizationManagerPrivate::authenticateToLinkedNotebooks()
                 << printableDateTimeFromTimestamp(authResult.expiration)
                 << QStringLiteral(", user: ") << (authResult.user.isSet() ? ToString(authResult.user.ref()) : QStringLiteral("<empty>")));
 
-        QString shardId;
-        if (authResult.user.isSet() && authResult.user->shardId.isSet()) {
-            shardId = authResult.user->shardId.ref();
-            QNDEBUG(QStringLiteral("Shard id (taken from received user associated with the linked notebook): ") << shardId);
-        }
-        else {
-            shardId = sharedNotebookGlobalId;
-            QNDEBUG(QStringLiteral("Shard id (taken from shared notebook global id): ") << shardId);
-        }
-
         m_cachedLinkedNotebookAuthTokensAndShardIdsByGuid[guid] = QPair<QString, QString>(authResult.authenticationToken, shardId);
         m_cachedLinkedNotebookAuthTokenExpirationTimeByGuid[guid] = authResult.expiration;
 
@@ -1346,10 +1403,10 @@ void SynchronizationManagerPrivate::authenticateToLinkedNotebooks()
 
         authTokenExpirationTimestampsToCacheByGuid[guid] = authResult.expiration;
 
-        it = m_linkedNotebookGuidsAndGlobalIdsWaitingForAuth.erase(it);
+        it = m_linkedNotebookAuthDataPendingAuthentication.erase(it);
     }
 
-    if (m_linkedNotebookGuidsAndGlobalIdsWaitingForAuth.empty()) {
+    if (m_linkedNotebookAuthDataPendingAuthentication.empty()) {
         QNDEBUG(QStringLiteral("Retrieved authentication data for all requested linked notebooks, sending the answer now"));
         emit sendAuthenticationTokensForLinkedNotebooks(m_cachedLinkedNotebookAuthTokensAndShardIdsByGuid,
                                                         m_cachedLinkedNotebookAuthTokenExpirationTimeByGuid);
@@ -1615,6 +1672,81 @@ void SynchronizationManagerPrivate::updatePersistentSyncSettings()
     appSettings.endArray();
 
     QNTRACE(QStringLiteral("Wrote ") << counter << QStringLiteral(" last sync params entries for linked notebooks"));
+}
+
+NoteStore * SynchronizationManagerPrivate::noteStoreForLinkedNotebookGuid(const QString & guid)
+{
+    QNDEBUG(QStringLiteral("SynchronizationManagerPrivate::noteStoreForLinkedNotebookGuid: guid = ") << guid);
+
+    if (Q_UNLIKELY(guid.isEmpty())) {
+        QNWARNING(QStringLiteral("Can't find or create the note store for empty linked notebook guid"));
+        return Q_NULLPTR;
+    }
+
+    auto it = m_noteStoresByLinkedNotebookGuids.find(guid);
+    if (it != m_noteStoresByLinkedNotebookGuids.end()) {
+        QNDEBUG(QStringLiteral("Found existing note store for linked notebook guid ") << guid);
+        return it.value();
+    }
+
+    QNDEBUG(QStringLiteral("Found no existing note store corresponding to linked notebook guid ") << guid);
+
+    if (m_authenticationInProgress) {
+        QNWARNING(QStringLiteral("Can't create the note store for a linked notebook: the authentication is in progress"));
+        return Q_NULLPTR;
+    }
+
+    QSharedPointer<qevercloud::NoteStore> pQecNoteStore(new qevercloud::NoteStore);
+    NoteStore * pNoteStore = new NoteStore(pQecNoteStore, this);
+    m_noteStoresByLinkedNotebookGuids[guid] = pNoteStore;
+    return pNoteStore;
+}
+
+SynchronizationManagerPrivate::RemoteToLocalSynchronizationManagerController::RemoteToLocalSynchronizationManagerController(LocalStorageManagerAsync & localStorageManagerAsync,
+                                                                                                                            SynchronizationManagerPrivate & syncManager) :
+    m_localStorageManagerAsync(localStorageManagerAsync),
+    m_syncManager(syncManager)
+{}
+
+LocalStorageManagerAsync & SynchronizationManagerPrivate::RemoteToLocalSynchronizationManagerController::localStorageManagerAsync()
+{
+    return m_localStorageManagerAsync;
+}
+
+NoteStore & SynchronizationManagerPrivate::RemoteToLocalSynchronizationManagerController::noteStore()
+{
+    return m_syncManager.m_noteStore;
+}
+
+UserStore & SynchronizationManagerPrivate::RemoteToLocalSynchronizationManagerController::userStore()
+{
+    return m_syncManager.m_userStore;
+}
+
+NoteStore * SynchronizationManagerPrivate::RemoteToLocalSynchronizationManagerController::noteStoreForLinkedNotebookGuid(const QString & guid)
+{
+    return m_syncManager.noteStoreForLinkedNotebookGuid(guid);
+}
+
+SynchronizationManagerPrivate::SendLocalChangesManagerController::SendLocalChangesManagerController(LocalStorageManagerAsync & localStorageManagerAsync,
+                                                                                                    SynchronizationManagerPrivate & syncManager) :
+    m_localStorageManagerAsync(localStorageManagerAsync),
+    m_syncManager(syncManager)
+{}
+
+LocalStorageManagerAsync & SynchronizationManagerPrivate::SendLocalChangesManagerController::localStorageManagerAsync()
+{
+    return m_localStorageManagerAsync;
+}
+
+NoteStore & SynchronizationManagerPrivate::SendLocalChangesManagerController::noteStore()
+{
+    return m_syncManager.m_noteStore;
+}
+
+NoteStore * SynchronizationManagerPrivate::SendLocalChangesManagerController::noteStoreForLinkedNotebookGuid(const QString & guid)
+{
+    return m_syncManager.noteStoreForLinkedNotebookGuid(guid);
 }
 
 QTextStream & SynchronizationManagerPrivate::AuthData::print(QTextStream & strm) const

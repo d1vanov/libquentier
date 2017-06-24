@@ -102,7 +102,8 @@ public:
     bool getNoteAsync(const bool withContent, const bool withResourceData, const bool withResourcesRecognition,
                       const bool withResourceAlternateData, const bool withSharedNotes,
                       const bool withNoteAppDataValues, const bool withResourceAppDataValues,
-                      const bool withNoteLimits, const QString & noteGuid, ErrorString & errorDescription);
+                      const bool withNoteLimits, const QString & noteGuid,
+                      const QString & authToken, ErrorString & errorDescription);
 
     qint32 authenticateToSharedNotebook(const QString & shareKey, qevercloud::AuthenticationResult & authResult,
                                         ErrorString & errorDescription, qint32 & rateLimitSeconds);

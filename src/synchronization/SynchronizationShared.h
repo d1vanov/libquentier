@@ -19,8 +19,33 @@
 #ifndef LIB_QUENTIER_SYNCHRONIZATION_SHARED_H
 #define LIB_QUENTIER_SYNCHRONIZATION_SHARED_H
 
+#include <quentier/utility/Printable.h>
+#include <QVector>
+#include <QString>
+
 #define SYNCHRONIZATION_PERSISTENCE_NAME QStringLiteral("SynchronizationPersistence")
 
 #define HALF_AN_HOUR_IN_MSEC (1800000)
+
+namespace quentier {
+
+class LinkedNotebookAuthData: public Printable
+{
+public:
+    LinkedNotebookAuthData();
+    LinkedNotebookAuthData(const QString & guid,
+                           const QString & shardId,
+                           const QString & sharedNotebookGlobalId,
+                           const QString & noteStoreUrl);
+
+    virtual QTextStream & print(QTextStream & strm) const Q_DECL_OVERRIDE;
+
+    QString     m_guid;
+    QString     m_shardId;
+    QString     m_sharedNotebookGlobalId;
+    QString     m_noteStoreUrl;
+};
+
+} // namespace quentier
 
 #endif // LIB_QUENTIER_SYNCHRONIZATION_SHARED_H

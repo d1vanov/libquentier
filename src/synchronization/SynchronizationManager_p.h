@@ -31,8 +31,11 @@
 #endif
 
 #include <QObject>
+#include <QScopedPointer>
 
 namespace quentier {
+
+QT_FORWARD_DECLARE_CLASS(NoteStore)
 
 class SynchronizationManagerPrivate: public QObject
 {
@@ -110,7 +113,7 @@ private Q_SLOTS:
     void onKeychainJobFinished(QKeychain::Job * job);
 
     void onRequestAuthenticationToken();
-    void onRequestAuthenticationTokensForLinkedNotebooks(QVector<QPair<QString,QString> > linkedNotebookGuidsAndShareKeys);
+    void onRequestAuthenticationTokensForLinkedNotebooks(QVector<LinkedNotebookAuthData> linkedNotebookAuthData);
 
     void onRequestLastSyncParameters();
 
@@ -190,6 +193,15 @@ private:
     void tryUpdateLastSyncStatus();
     void updatePersistentSyncSettings();
 
+    NoteStore * noteStoreForLinkedNotebookGuid(const QString & guid);
+
+private:
+    class SendLocalChangesManagerController;
+    friend class SendLocalChangesManagerController;
+
+    class RemoteToLocalSynchronizationManagerController;
+    friend class RemoteToLocalSynchronizationManagerController;
+
 private:
     Q_DISABLE_COPY(SynchronizationManagerPrivate)
 
@@ -215,12 +227,18 @@ private:
     AuthData                                m_OAuthResult;
     bool                                    m_authenticationInProgress;
 
+    QScopedPointer<RemoteToLocalSynchronizationManagerController>   m_pRemoteToLocalSyncManagerController;
     RemoteToLocalSynchronizationManager     m_remoteToLocalSyncManager;
+
+    QScopedPointer<SendLocalChangesManagerController>   m_pSendLocalChangesManagerController;
     SendLocalChangesManager                 m_sendLocalChangesManager;
 
     QHash<QString,QPair<QString,QString> >  m_cachedLinkedNotebookAuthTokensAndShardIdsByGuid;
     QHash<QString,qevercloud::Timestamp>    m_cachedLinkedNotebookAuthTokenExpirationTimeByGuid;
-    QVector<QPair<QString,QString> >        m_linkedNotebookGuidsAndGlobalIdsWaitingForAuth;
+
+    QVector<LinkedNotebookAuthData>         m_linkedNotebookAuthDataPendingAuthentication;
+
+    QHash<QString, NoteStore*>              m_noteStoresByLinkedNotebookGuids;
 
     int                                     m_authenticateToLinkedNotebooksPostponeTimerId;
 

@@ -17,7 +17,6 @@
  */
 
 #include "SendLocalChangesManager.h"
-#include "SynchronizationShared.h"
 #include <quentier/utility/Macros.h>
 #include <quentier/utility/Utility.h>
 #include <quentier/local_storage/LocalStorageManagerAsync.h>
@@ -40,12 +39,9 @@
 
 namespace quentier {
 
-SendLocalChangesManager::SendLocalChangesManager(LocalStorageManagerAsync & localStorageManagerAsync,
-                                                 QSharedPointer<qevercloud::NoteStore> pNoteStore,
-                                                 QObject * parent) :
+SendLocalChangesManager::SendLocalChangesManager(IManager & manager, QObject * parent) :
     QObject(parent),
-    m_localStorageManagerAsync(localStorageManagerAsync),
-    m_noteStore(pNoteStore),
+    m_manager(manager),
     m_lastUpdateCount(0),
     m_lastUpdateCountByLinkedNotebookGuid(),
     m_shouldRepeatIncrementalSync(false),
@@ -65,7 +61,7 @@ SendLocalChangesManager::SendLocalChangesManager(LocalStorageManagerAsync & loca
     m_savedSearches(),
     m_notebooks(),
     m_notes(),
-    m_linkedNotebookGuidsAndSharedNotebookGlobalIds(),
+    m_linkedNotebookAuthData(),
     m_lastProcessedLinkedNotebookGuidIndex(-1),
     m_authenticationTokensAndShardIdsByLinkedNotebookGuid(),
     m_authenticationTokenExpirationTimesByLinkedNotebookGuid(),
@@ -403,9 +399,11 @@ void SendLocalChangesManager::onListLinkedNotebooksCompleted(LocalStorageManager
             << QStringLiteral(", requestId = ") << requestId);
 
     const int numLinkedNotebooks = linkedNotebooks.size();
-    m_linkedNotebookGuidsAndSharedNotebookGlobalIds.reserve(std::max(numLinkedNotebooks, 0));
+    m_linkedNotebookAuthData.reserve(std::max(numLinkedNotebooks, 0));
 
+    QString shardId;
     QString sharedNotebookGlobalId;
+    QString noteStoreUrl;
     for(int i = 0; i < numLinkedNotebooks; ++i)
     {
         const LinkedNotebook & linkedNotebook = linkedNotebooks[i];
@@ -421,12 +419,23 @@ void SendLocalChangesManager::onListLinkedNotebooksCompleted(LocalStorageManager
             return;
         }
 
+        shardId.resize(0);
+        if (linkedNotebook.hasShardId()) {
+            shardId = linkedNotebook.shardId();
+        }
+
         sharedNotebookGlobalId.resize(0);
         if (linkedNotebook.hasSharedNotebookGlobalId()) {
             sharedNotebookGlobalId = linkedNotebook.sharedNotebookGlobalId();
         }
 
-        m_linkedNotebookGuidsAndSharedNotebookGlobalIds << QPair<QString, QString>(linkedNotebook.guid(), sharedNotebookGlobalId);
+        noteStoreUrl.resize(0);
+        if (linkedNotebook.hasNoteStoreUrl()) {
+            noteStoreUrl = linkedNotebook.noteStoreUrl();
+        }
+
+        m_linkedNotebookAuthData << LinkedNotebookAuthData(linkedNotebook.guid(), shardId,
+                                                           sharedNotebookGlobalId, noteStoreUrl);
     }
 
     m_listLinkedNotebooksRequestId = QUuid();
@@ -676,143 +685,145 @@ void SendLocalChangesManager::connectToLocalStorage()
         return;
     }
 
+    LocalStorageManagerAsync & localStorageManagerAsync = m_manager.localStorageManagerAsync();
+
     // Connect local signals with localStorageManagerAsync's slots
     QObject::connect(this,
                      QNSIGNAL(SendLocalChangesManager,requestLocalUnsynchronizedTags,LocalStorageManager::ListObjectsOptions,size_t,size_t,
                               LocalStorageManager::ListTagsOrder::type,LocalStorageManager::OrderDirection::type,QString,QUuid),
-                     &m_localStorageManagerAsync,
+                     &localStorageManagerAsync,
                      QNSLOT(LocalStorageManagerAsync,onListTagsRequest,LocalStorageManager::ListObjectsOptions,size_t,size_t,
                             LocalStorageManager::ListTagsOrder::type,LocalStorageManager::OrderDirection::type,QString,QUuid));
 
     QObject::connect(this,
                      QNSIGNAL(SendLocalChangesManager,requestLocalUnsynchronizedSavedSearches,LocalStorageManager::ListObjectsOptions,size_t,size_t,
                               LocalStorageManager::ListSavedSearchesOrder::type,LocalStorageManager::OrderDirection::type,QUuid),
-                     &m_localStorageManagerAsync,
+                     &localStorageManagerAsync,
                      QNSLOT(LocalStorageManagerAsync,onListSavedSearchesRequest,LocalStorageManager::ListObjectsOptions,size_t,size_t,
                             LocalStorageManager::ListSavedSearchesOrder::type,LocalStorageManager::OrderDirection::type,QUuid));
 
     QObject::connect(this,
                      QNSIGNAL(SendLocalChangesManager,requestLocalUnsynchronizedNotebooks,LocalStorageManager::ListObjectsOptions,size_t,size_t,
                               LocalStorageManager::ListNotebooksOrder::type,LocalStorageManager::OrderDirection::type,QString,QUuid),
-                     &m_localStorageManagerAsync,
+                     &localStorageManagerAsync,
                      QNSLOT(LocalStorageManagerAsync,onListNotebooksRequest,LocalStorageManager::ListObjectsOptions,size_t,size_t,
                             LocalStorageManager::ListNotebooksOrder::type,LocalStorageManager::OrderDirection::type,QString,QUuid));
 
     QObject::connect(this,
                      QNSIGNAL(SendLocalChangesManager,requestLocalUnsynchronizedNotes,LocalStorageManager::ListObjectsOptions,bool,size_t,size_t,
                               LocalStorageManager::ListNotesOrder::type,LocalStorageManager::OrderDirection::type,QString,QUuid),
-                     &m_localStorageManagerAsync,
+                     &localStorageManagerAsync,
                      QNSLOT(LocalStorageManagerAsync,onListNotesRequest,LocalStorageManager::ListObjectsOptions,bool,size_t,size_t,
                             LocalStorageManager::ListNotesOrder::type,LocalStorageManager::OrderDirection::type,QString,QUuid));
 
     QObject::connect(this,
                      QNSIGNAL(SendLocalChangesManager,requestLinkedNotebooksList,LocalStorageManager::ListObjectsOptions,size_t,size_t,
                               LocalStorageManager::ListLinkedNotebooksOrder::type,LocalStorageManager::OrderDirection::type,QUuid),
-                     &m_localStorageManagerAsync,
+                     &localStorageManagerAsync,
                      QNSLOT(LocalStorageManagerAsync,onListLinkedNotebooksRequest,LocalStorageManager::ListObjectsOptions,size_t,size_t,
                             LocalStorageManager::ListLinkedNotebooksOrder::type,LocalStorageManager::OrderDirection::type,QUuid));
 
     QObject::connect(this, QNSIGNAL(SendLocalChangesManager,updateTag,Tag,QUuid),
-                     &m_localStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,onUpdateTagRequest,Tag,QUuid));
+                     &localStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,onUpdateTagRequest,Tag,QUuid));
     QObject::connect(this, QNSIGNAL(SendLocalChangesManager,updateSavedSearch,SavedSearch,QUuid),
-                     &m_localStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,onUpdateSavedSearchRequest,SavedSearch,QUuid));
+                     &localStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,onUpdateSavedSearchRequest,SavedSearch,QUuid));
     QObject::connect(this, QNSIGNAL(SendLocalChangesManager,updateNotebook,Notebook,QUuid),
-                     &m_localStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,onUpdateNotebookRequest,Notebook,QUuid));
+                     &localStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,onUpdateNotebookRequest,Notebook,QUuid));
     QObject::connect(this, QNSIGNAL(SendLocalChangesManager,updateNote,Note,bool,bool,QUuid),
-                     &m_localStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,onUpdateNoteRequest,Note,bool,bool,QUuid));
+                     &localStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,onUpdateNoteRequest,Note,bool,bool,QUuid));
 
-    QObject::connect(this, QNSIGNAL(SendLocalChangesManager,findNotebook,Notebook,QUuid), &m_localStorageManagerAsync,
+    QObject::connect(this, QNSIGNAL(SendLocalChangesManager,findNotebook,Notebook,QUuid), &localStorageManagerAsync,
                      QNSLOT(LocalStorageManagerAsync,onFindNotebookRequest,Notebook,QUuid));
 
     // Connect localStorageManagerThread's signals to local slots
-    QObject::connect(&m_localStorageManagerAsync,
+    QObject::connect(&localStorageManagerAsync,
                      QNSIGNAL(LocalStorageManagerAsync,listTagsComplete,LocalStorageManager::ListObjectsOptions,size_t,size_t,
                               LocalStorageManager::ListTagsOrder::type,LocalStorageManager::OrderDirection::type,QString,QList<Tag>,QUuid),
                      this,
                      QNSLOT(SendLocalChangesManager,onListDirtyTagsCompleted,LocalStorageManager::ListObjectsOptions,size_t,size_t,
                             LocalStorageManager::ListTagsOrder::type,LocalStorageManager::OrderDirection::type,QString,QList<Tag>,QUuid));
 
-    QObject::connect(&m_localStorageManagerAsync,
+    QObject::connect(&localStorageManagerAsync,
                      QNSIGNAL(LocalStorageManagerAsync,listTagsFailed,LocalStorageManager::ListObjectsOptions,size_t,size_t,
                               LocalStorageManager::ListTagsOrder::type,LocalStorageManager::OrderDirection::type,QString,ErrorString,QUuid),
                      this,
                      QNSLOT(SendLocalChangesManager,onListDirtyTagsFailed,LocalStorageManager::ListObjectsOptions,size_t,size_t,
                             LocalStorageManager::ListTagsOrder::type,LocalStorageManager::OrderDirection::type,QString,ErrorString,QUuid));
 
-    QObject::connect(&m_localStorageManagerAsync,
+    QObject::connect(&localStorageManagerAsync,
                      QNSIGNAL(LocalStorageManagerAsync,listSavedSearchesComplete,LocalStorageManager::ListObjectsOptions,size_t,size_t,
                               LocalStorageManager::ListSavedSearchesOrder::type,LocalStorageManager::OrderDirection::type,QList<SavedSearch>,QUuid),
                      this,
                      QNSLOT(SendLocalChangesManager,onListDirtySavedSearchesCompleted,LocalStorageManager::ListObjectsOptions,size_t,size_t,
                             LocalStorageManager::ListSavedSearchesOrder::type,LocalStorageManager::OrderDirection::type,QList<SavedSearch>,QUuid));
 
-    QObject::connect(&m_localStorageManagerAsync,
+    QObject::connect(&localStorageManagerAsync,
                      QNSIGNAL(LocalStorageManagerAsync,listSavedSearchesFailed,LocalStorageManager::ListObjectsOptions,size_t,size_t,
                               LocalStorageManager::ListSavedSearchesOrder::type,LocalStorageManager::OrderDirection::type,ErrorString,QUuid),
                      this,
                      QNSLOT(SendLocalChangesManager,onListDirtySavedSearchesFailed,LocalStorageManager::ListObjectsOptions,size_t,size_t,
                             LocalStorageManager::ListSavedSearchesOrder::type,LocalStorageManager::OrderDirection::type,ErrorString,QUuid));
 
-    QObject::connect(&m_localStorageManagerAsync,
+    QObject::connect(&localStorageManagerAsync,
                      QNSIGNAL(LocalStorageManagerAsync,listNotebooksComplete,LocalStorageManager::ListObjectsOptions,size_t,size_t,
                               LocalStorageManager::ListNotebooksOrder::type,LocalStorageManager::OrderDirection::type,QString,QList<Notebook>,QUuid),
                      this,
                      QNSLOT(SendLocalChangesManager,onListDirtyNotebooksCompleted,LocalStorageManager::ListObjectsOptions,size_t,size_t,
                             LocalStorageManager::ListNotebooksOrder::type,LocalStorageManager::OrderDirection::type,QString,QList<Notebook>,QUuid));
 
-    QObject::connect(&m_localStorageManagerAsync,
+    QObject::connect(&localStorageManagerAsync,
                      QNSIGNAL(LocalStorageManagerAsync,listNotebooksFailed,LocalStorageManager::ListObjectsOptions,size_t,size_t,
                               LocalStorageManager::ListNotebooksOrder::type,LocalStorageManager::OrderDirection::type,QString,ErrorString,QUuid),
                      this,
                      QNSLOT(SendLocalChangesManager,onListDirtyNotebooksFailed,LocalStorageManager::ListObjectsOptions,size_t,size_t,
                             LocalStorageManager::ListNotebooksOrder::type,LocalStorageManager::OrderDirection::type,QString,ErrorString,QUuid));
 
-    QObject::connect(&m_localStorageManagerAsync,
+    QObject::connect(&localStorageManagerAsync,
                      QNSIGNAL(LocalStorageManagerAsync,listNotesComplete,LocalStorageManager::ListObjectsOptions,bool,size_t,size_t,
                               LocalStorageManager::ListNotesOrder::type,LocalStorageManager::OrderDirection::type,QString,QList<Note>,QUuid),
                      this,
                      QNSLOT(SendLocalChangesManager,onListDirtyNotesCompleted,LocalStorageManager::ListObjectsOptions,bool,size_t,size_t,
                             LocalStorageManager::ListNotesOrder::type,LocalStorageManager::OrderDirection::type,QString,QList<Note>,QUuid));
 
-    QObject::connect(&m_localStorageManagerAsync,
+    QObject::connect(&localStorageManagerAsync,
                      QNSIGNAL(LocalStorageManagerAsync,listNotesFailed,LocalStorageManager::ListObjectsOptions,bool,size_t,size_t,
                               LocalStorageManager::ListNotesOrder::type,LocalStorageManager::OrderDirection::type,QString,ErrorString,QUuid),
                      this,
                      QNSLOT(SendLocalChangesManager,onListDirtyNotesFailed,LocalStorageManager::ListObjectsOptions,bool,size_t,size_t,
                             LocalStorageManager::ListNotesOrder::type,LocalStorageManager::OrderDirection::type,QString,ErrorString,QUuid));
 
-    QObject::connect(&m_localStorageManagerAsync,
+    QObject::connect(&localStorageManagerAsync,
                      QNSIGNAL(LocalStorageManagerAsync,listLinkedNotebooksComplete,LocalStorageManager::ListObjectsOptions,size_t,size_t,
                               LocalStorageManager::ListLinkedNotebooksOrder::type, LocalStorageManager::OrderDirection::type,QList<LinkedNotebook>,QUuid),
                      this,
                      QNSLOT(SendLocalChangesManager,onListLinkedNotebooksCompleted,LocalStorageManager::ListObjectsOptions,size_t,size_t,
                             LocalStorageManager::ListLinkedNotebooksOrder::type,LocalStorageManager::OrderDirection::type,QList<LinkedNotebook>,QUuid));
 
-    QObject::connect(&m_localStorageManagerAsync,
+    QObject::connect(&localStorageManagerAsync,
                      QNSIGNAL(LocalStorageManagerAsync,listLinkedNotebooksFailed,LocalStorageManager::ListObjectsOptions,size_t,size_t,
                               LocalStorageManager::ListLinkedNotebooksOrder::type,LocalStorageManager::OrderDirection::type,ErrorString,QUuid),
                      this,
                      QNSLOT(SendLocalChangesManager,onListLinkedNotebooksFailed,LocalStorageManager::ListObjectsOptions,size_t,size_t,
                             LocalStorageManager::ListLinkedNotebooksOrder::type,LocalStorageManager::OrderDirection::type,ErrorString,QUuid));
 
-    QObject::connect(&m_localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,updateTagComplete,Tag,QUuid),
+    QObject::connect(&localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,updateTagComplete,Tag,QUuid),
                      this, QNSLOT(SendLocalChangesManager,onUpdateTagCompleted,Tag,QUuid));
-    QObject::connect(&m_localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,updateTagFailed,Tag,ErrorString,QUuid),
+    QObject::connect(&localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,updateTagFailed,Tag,ErrorString,QUuid),
                      this, QNSLOT(SendLocalChangesManager,onUpdateTagFailed,Tag,ErrorString,QUuid));
-    QObject::connect(&m_localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,updateSavedSearchComplete,SavedSearch,QUuid),
+    QObject::connect(&localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,updateSavedSearchComplete,SavedSearch,QUuid),
                      this, QNSLOT(SendLocalChangesManager,onUpdateSavedSearchCompleted,SavedSearch,QUuid));
-    QObject::connect(&m_localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,updateSavedSearchFailed,SavedSearch,ErrorString,QUuid),
+    QObject::connect(&localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,updateSavedSearchFailed,SavedSearch,ErrorString,QUuid),
                      this, QNSLOT(SendLocalChangesManager,onUpdateSavedSearchFailed,SavedSearch,ErrorString,QUuid));
-    QObject::connect(&m_localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,updateNotebookComplete,Notebook,QUuid),
+    QObject::connect(&localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,updateNotebookComplete,Notebook,QUuid),
                      this, QNSLOT(SendLocalChangesManager,onUpdateNotebookCompleted,Notebook,QUuid));
-    QObject::connect(&m_localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,updateNotebookFailed,Notebook,ErrorString,QUuid),
+    QObject::connect(&localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,updateNotebookFailed,Notebook,ErrorString,QUuid),
                      this, QNSLOT(SendLocalChangesManager,onUpdateNotebookFailed,Notebook,ErrorString,QUuid));
-    QObject::connect(&m_localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,updateNoteComplete,Note,bool,bool,QUuid),
+    QObject::connect(&localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,updateNoteComplete,Note,bool,bool,QUuid),
                      this, QNSLOT(SendLocalChangesManager,onUpdateNoteCompleted,Note,bool,bool,QUuid));
-    QObject::connect(&m_localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,updateNoteFailed,Note,bool,bool,ErrorString,QUuid),
+    QObject::connect(&localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,updateNoteFailed,Note,bool,bool,ErrorString,QUuid),
                      this, QNSLOT(SendLocalChangesManager,onUpdateNoteFailed,Note,bool,bool,ErrorString,QUuid));
 
-    QObject::connect(&m_localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,findNotebookComplete,Notebook,QUuid),
+    QObject::connect(&localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,findNotebookComplete,Notebook,QUuid),
                      this, QNSLOT(SendLocalChangesManager,onFindNotebookCompleted,Notebook,QUuid));
 
     m_connectedToLocalStorage = true;
@@ -827,145 +838,147 @@ void SendLocalChangesManager::disconnectFromLocalStorage()
         return;
     }
 
+    LocalStorageManagerAsync & localStorageManagerAsync = m_manager.localStorageManagerAsync();
+
     // Disconnect local signals from localStorageManagerThread's slots
     QObject::disconnect(this,
                         QNSIGNAL(SendLocalChangesManager,requestLocalUnsynchronizedTags,LocalStorageManager::ListObjectsOptions,size_t,size_t,
                                  LocalStorageManager::ListTagsOrder::type,LocalStorageManager::OrderDirection::type,QString,QUuid),
-                        &m_localStorageManagerAsync,
+                        &localStorageManagerAsync,
                         QNSLOT(LocalStorageManagerAsync,onListTagsRequest,LocalStorageManager::ListObjectsOptions,size_t,size_t,
                                LocalStorageManager::ListTagsOrder::type,LocalStorageManager::OrderDirection::type,QString,QUuid));
 
     QObject::disconnect(this,
                         QNSIGNAL(SendLocalChangesManager,requestLocalUnsynchronizedSavedSearches,LocalStorageManager::ListObjectsOptions,size_t,size_t,
                                  LocalStorageManager::ListSavedSearchesOrder::type,LocalStorageManager::OrderDirection::type,QUuid),
-                        &m_localStorageManagerAsync,
+                        &localStorageManagerAsync,
                         QNSLOT(LocalStorageManagerAsync,onListSavedSearchesRequest,LocalStorageManager::ListObjectsOptions,size_t,size_t,
                                LocalStorageManager::ListSavedSearchesOrder::type,LocalStorageManager::OrderDirection::type,QUuid));
 
     QObject::disconnect(this,
                         QNSIGNAL(SendLocalChangesManager,requestLocalUnsynchronizedNotebooks,LocalStorageManager::ListObjectsOptions,size_t,size_t,
                                  LocalStorageManager::ListNotebooksOrder::type,LocalStorageManager::OrderDirection::type,QString,QUuid),
-                        &m_localStorageManagerAsync,
+                        &localStorageManagerAsync,
                         QNSLOT(LocalStorageManagerAsync,onListNotebooksRequest,LocalStorageManager::ListObjectsOptions,size_t,size_t,
                                LocalStorageManager::ListNotebooksOrder::type,LocalStorageManager::OrderDirection::type,QString,QUuid));
 
     QObject::disconnect(this,
                         QNSIGNAL(SendLocalChangesManager,requestLocalUnsynchronizedNotes,LocalStorageManager::ListObjectsOptions,bool,size_t,size_t,
                                  LocalStorageManager::ListNotesOrder::type,LocalStorageManager::OrderDirection::type,QString,QUuid),
-                        &m_localStorageManagerAsync,
+                        &localStorageManagerAsync,
                         QNSLOT(LocalStorageManagerAsync,onListNotesRequest,LocalStorageManager::ListObjectsOptions,bool,size_t,size_t,
                                LocalStorageManager::ListNotesOrder::type,LocalStorageManager::OrderDirection::type,QString,QUuid));
 
     QObject::disconnect(this,
                         QNSIGNAL(SendLocalChangesManager,requestLinkedNotebooksList,LocalStorageManager::ListObjectsOptions,size_t,size_t,
                                  LocalStorageManager::ListLinkedNotebooksOrder::type,LocalStorageManager::OrderDirection::type,QUuid),
-                        &m_localStorageManagerAsync,
+                        &localStorageManagerAsync,
                         QNSLOT(LocalStorageManagerAsync,onListLinkedNotebooksRequest,LocalStorageManager::ListObjectsOptions,size_t,size_t,
                                LocalStorageManager::ListLinkedNotebooksOrder::type,LocalStorageManager::OrderDirection::type,QUuid));
 
-    QObject::disconnect(this, QNSIGNAL(SendLocalChangesManager,updateTag,Tag,QUuid), &m_localStorageManagerAsync,
+    QObject::disconnect(this, QNSIGNAL(SendLocalChangesManager,updateTag,Tag,QUuid), &localStorageManagerAsync,
                         QNSLOT(LocalStorageManagerAsync,onUpdateTagRequest,Tag,QUuid));
-    QObject::disconnect(this, QNSIGNAL(SendLocalChangesManager,updateSavedSearch,SavedSearch,QUuid), &m_localStorageManagerAsync,
+    QObject::disconnect(this, QNSIGNAL(SendLocalChangesManager,updateSavedSearch,SavedSearch,QUuid), &localStorageManagerAsync,
                         QNSLOT(LocalStorageManagerAsync,onUpdateSavedSearchRequest,SavedSearch,QUuid));
-    QObject::disconnect(this, QNSIGNAL(SendLocalChangesManager,updateNotebook,Notebook,QUuid), &m_localStorageManagerAsync,
+    QObject::disconnect(this, QNSIGNAL(SendLocalChangesManager,updateNotebook,Notebook,QUuid), &localStorageManagerAsync,
                         QNSLOT(LocalStorageManagerAsync,onUpdateNotebookRequest,Notebook,QUuid));
     QObject::disconnect(this, QNSIGNAL(SendLocalChangesManager,updateNote,Note,bool,bool,QUuid),
-                        &m_localStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,onUpdateNoteRequest,Note,bool,bool,QUuid));
+                        &localStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,onUpdateNoteRequest,Note,bool,bool,QUuid));
 
-    QObject::disconnect(this, QNSIGNAL(SendLocalChangesManager,findNotebook,Notebook,QUuid), &m_localStorageManagerAsync,
+    QObject::disconnect(this, QNSIGNAL(SendLocalChangesManager,findNotebook,Notebook,QUuid), &localStorageManagerAsync,
                         QNSLOT(LocalStorageManagerAsync,onFindNotebookRequest,Notebook,QUuid));
 
     // Disconnect localStorageManagerThread's signals from local slots
-    QObject::disconnect(&m_localStorageManagerAsync,
+    QObject::disconnect(&localStorageManagerAsync,
                         QNSIGNAL(LocalStorageManagerAsync,listTagsComplete,LocalStorageManager::ListObjectsOptions,size_t,size_t,
                                  LocalStorageManager::ListTagsOrder::type,LocalStorageManager::OrderDirection::type,QString,QList<Tag>,QUuid),
                         this,
                         QNSLOT(SendLocalChangesManager,onListDirtyTagsCompleted,LocalStorageManager::ListObjectsOptions,size_t,size_t,
                                LocalStorageManager::ListTagsOrder::type,LocalStorageManager::OrderDirection::type,QString,QList<Tag>,QUuid));
 
-    QObject::disconnect(&m_localStorageManagerAsync,
+    QObject::disconnect(&localStorageManagerAsync,
                         QNSIGNAL(LocalStorageManagerAsync,listTagsFailed,LocalStorageManager::ListObjectsOptions,size_t,size_t,
                                  LocalStorageManager::ListTagsOrder::type,LocalStorageManager::OrderDirection::type,QString,ErrorString,QUuid),
                         this,
                         QNSLOT(SendLocalChangesManager,onListDirtyTagsFailed,LocalStorageManager::ListObjectsOptions,size_t,size_t,
                                LocalStorageManager::ListTagsOrder::type,LocalStorageManager::OrderDirection::type,QString,ErrorString,QUuid));
 
-    QObject::disconnect(&m_localStorageManagerAsync,
+    QObject::disconnect(&localStorageManagerAsync,
                         QNSIGNAL(LocalStorageManagerAsync,listSavedSearchesComplete,LocalStorageManager::ListObjectsOptions,size_t,size_t,
                                  LocalStorageManager::ListSavedSearchesOrder::type,LocalStorageManager::OrderDirection::type,QList<SavedSearch>,QUuid),
                         this,
                         QNSLOT(SendLocalChangesManager,onListDirtySavedSearchesCompleted,LocalStorageManager::ListObjectsOptions,size_t,size_t,
                                LocalStorageManager::ListSavedSearchesOrder::type,LocalStorageManager::OrderDirection::type,QList<SavedSearch>,QUuid));
 
-    QObject::disconnect(&m_localStorageManagerAsync,
+    QObject::disconnect(&localStorageManagerAsync,
                         QNSIGNAL(LocalStorageManagerAsync,listSavedSearchesFailed,LocalStorageManager::ListObjectsOptions,size_t,size_t,
                                  LocalStorageManager::ListSavedSearchesOrder::type,LocalStorageManager::OrderDirection::type,ErrorString,QUuid),
                         this,
                         QNSLOT(SendLocalChangesManager,onListDirtySavedSearchesFailed,LocalStorageManager::ListObjectsOptions,size_t,size_t,
                                LocalStorageManager::ListSavedSearchesOrder::type,LocalStorageManager::OrderDirection::type,ErrorString,QUuid));
 
-    QObject::disconnect(&m_localStorageManagerAsync,
+    QObject::disconnect(&localStorageManagerAsync,
                         QNSIGNAL(LocalStorageManagerAsync,listNotebooksComplete,LocalStorageManager::ListObjectsOptions,size_t,size_t,
                                  LocalStorageManager::ListNotebooksOrder::type,LocalStorageManager::OrderDirection::type,QString,QList<Notebook>,QUuid),
                         this,
                         QNSLOT(SendLocalChangesManager,onListDirtyNotebooksCompleted,LocalStorageManager::ListObjectsOptions,size_t,size_t,
                                LocalStorageManager::ListNotebooksOrder::type,LocalStorageManager::OrderDirection::type,QString,QList<Notebook>,QUuid));
 
-    QObject::disconnect(&m_localStorageManagerAsync,
+    QObject::disconnect(&localStorageManagerAsync,
                         QNSIGNAL(LocalStorageManagerAsync,listNotebooksFailed,LocalStorageManager::ListObjectsOptions,size_t,size_t,
                                  LocalStorageManager::ListNotebooksOrder::type,LocalStorageManager::OrderDirection::type,QString,ErrorString,QUuid),
                         this,
                         QNSLOT(SendLocalChangesManager,onListDirtyNotebooksFailed,LocalStorageManager::ListObjectsOptions,size_t,size_t,
                                LocalStorageManager::ListNotebooksOrder::type,LocalStorageManager::OrderDirection::type,QString,ErrorString,QUuid));
 
-    QObject::disconnect(&m_localStorageManagerAsync,
+    QObject::disconnect(&localStorageManagerAsync,
                         QNSIGNAL(LocalStorageManagerAsync,listNotesComplete,LocalStorageManager::ListObjectsOptions,bool,size_t,size_t,
                                  LocalStorageManager::ListNotesOrder::type,LocalStorageManager::OrderDirection::type,QString,QList<Note>,QUuid),
                         this,
                         QNSLOT(SendLocalChangesManager,onListDirtyNotesCompleted,LocalStorageManager::ListObjectsOptions,bool,size_t,size_t,
                                LocalStorageManager::ListNotesOrder::type,LocalStorageManager::OrderDirection::type,QString,QList<Note>,QUuid));
 
-    QObject::disconnect(&m_localStorageManagerAsync,
+    QObject::disconnect(&localStorageManagerAsync,
                         QNSIGNAL(LocalStorageManagerAsync,listNotesFailed,LocalStorageManager::ListObjectsOptions,bool,size_t,size_t,
                                  LocalStorageManager::ListNotesOrder::type, LocalStorageManager::OrderDirection::type,QString,ErrorString,QUuid),
                         this,
                         QNSLOT(SendLocalChangesManager,onListDirtyNotesFailed,LocalStorageManager::ListObjectsOptions,bool,size_t,size_t,
                                LocalStorageManager::ListNotesOrder::type,LocalStorageManager::OrderDirection::type,QString,ErrorString,QUuid));
 
-    QObject::disconnect(&m_localStorageManagerAsync,
+    QObject::disconnect(&localStorageManagerAsync,
                         QNSIGNAL(LocalStorageManagerAsync,listLinkedNotebooksComplete,LocalStorageManager::ListObjectsOptions,size_t,size_t,
                                  LocalStorageManager::ListLinkedNotebooksOrder::type,LocalStorageManager::OrderDirection::type,QList<LinkedNotebook>,QUuid),
                         this,
                         QNSLOT(SendLocalChangesManager,onListLinkedNotebooksCompleted,LocalStorageManager::ListObjectsOptions,size_t,size_t,
                                LocalStorageManager::ListLinkedNotebooksOrder::type,LocalStorageManager::OrderDirection::type,QList<LinkedNotebook>,QUuid));
 
-    QObject::disconnect(&m_localStorageManagerAsync,
+    QObject::disconnect(&localStorageManagerAsync,
                         QNSIGNAL(LocalStorageManagerAsync,listLinkedNotebooksFailed,LocalStorageManager::ListObjectsOptions,size_t,size_t,
                                  LocalStorageManager::ListLinkedNotebooksOrder::type,LocalStorageManager::OrderDirection::type,ErrorString,QUuid),
                         this,
                         QNSLOT(SendLocalChangesManager,onListLinkedNotebooksFailed,LocalStorageManager::ListObjectsOptions,size_t,size_t,
                                LocalStorageManager::ListLinkedNotebooksOrder::type,LocalStorageManager::OrderDirection::type,ErrorString,QUuid));
 
-    QObject::disconnect(&m_localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,updateTagComplete,Tag,QUuid),
+    QObject::disconnect(&localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,updateTagComplete,Tag,QUuid),
                         this, QNSLOT(SendLocalChangesManager,onUpdateTagCompleted,Tag,QUuid));
-    QObject::disconnect(&m_localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,updateTagFailed,Tag,ErrorString,QUuid),
+    QObject::disconnect(&localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,updateTagFailed,Tag,ErrorString,QUuid),
                         this, QNSLOT(SendLocalChangesManager,onUpdateTagFailed,Tag,ErrorString,QUuid));
-    QObject::disconnect(&m_localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,updateSavedSearchComplete,SavedSearch,QUuid),
+    QObject::disconnect(&localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,updateSavedSearchComplete,SavedSearch,QUuid),
                         this, QNSLOT(SendLocalChangesManager,onUpdateSavedSearchCompleted,SavedSearch,QUuid));
-    QObject::disconnect(&m_localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,updateSavedSearchFailed,SavedSearch,ErrorString,QUuid),
+    QObject::disconnect(&localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,updateSavedSearchFailed,SavedSearch,ErrorString,QUuid),
                         this, QNSLOT(SendLocalChangesManager,onUpdateSavedSearchFailed,SavedSearch,ErrorString,QUuid));
-    QObject::disconnect(&m_localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,updateNotebookComplete,Notebook,QUuid),
+    QObject::disconnect(&localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,updateNotebookComplete,Notebook,QUuid),
                         this, QNSLOT(SendLocalChangesManager,onUpdateNotebookCompleted,Notebook,QUuid));
-    QObject::disconnect(&m_localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,updateNotebookFailed,Notebook,ErrorString,QUuid),
+    QObject::disconnect(&localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,updateNotebookFailed,Notebook,ErrorString,QUuid),
                         this, QNSLOT(SendLocalChangesManager,onUpdateNotebookFailed,Notebook,ErrorString,QUuid));
-    QObject::disconnect(&m_localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,updateNoteComplete,Note,bool,bool,QUuid),
+    QObject::disconnect(&localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,updateNoteComplete,Note,bool,bool,QUuid),
                         this, QNSLOT(SendLocalChangesManager,onUpdateNoteCompleted,Note,bool,bool,QUuid));
-    QObject::disconnect(&m_localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,updateNoteFailed,Note,bool,bool,ErrorString,QUuid),
+    QObject::disconnect(&localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,updateNoteFailed,Note,bool,bool,ErrorString,QUuid),
                         this, QNSLOT(SendLocalChangesManager,onUpdateNoteFailed,Note,bool,bool,ErrorString,QUuid));
 
-    QObject::disconnect(&m_localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,findNotebookComplete,Notebook,QUuid),
+    QObject::disconnect(&localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,findNotebookComplete,Notebook,QUuid),
                         this, QNSLOT(SendLocalChangesManager,onFindNotebookCompleted,Notebook,QUuid));
-    QObject::disconnect(&m_localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,findNotebookFailed,Notebook,ErrorString,QUuid),
+    QObject::disconnect(&localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,findNotebookFailed,Notebook,ErrorString,QUuid),
                         this, QNSLOT(SendLocalChangesManager,onFindNotebookFailed,Notebook,ErrorString,QUuid));
 
     m_connectedToLocalStorage = false;
@@ -1079,21 +1092,21 @@ void SendLocalChangesManager::checkListLocalStorageObjectsCompletion()
     QNTRACE(QStringLiteral("Received all dirty objects from user's own account from local storage"));
     emit receivedUserAccountDirtyObjects();
 
-    if ((m_lastProcessedLinkedNotebookGuidIndex < 0) && (m_linkedNotebookGuidsAndSharedNotebookGlobalIds.size() > 0))
+    if ((m_lastProcessedLinkedNotebookGuidIndex < 0) && (m_linkedNotebookAuthData.size() > 0))
     {
-        QNTRACE(QStringLiteral("There are ") << m_linkedNotebookGuidsAndSharedNotebookGlobalIds.size()
+        QNTRACE(QStringLiteral("There are ") << m_linkedNotebookAuthData.size()
                 << QStringLiteral(" linked notebook guids, need to receive the dirty objects from them as well"));
 
-        const int numLinkedNotebookGuids = m_linkedNotebookGuidsAndSharedNotebookGlobalIds.size();
+        const int numLinkedNotebookGuids = m_linkedNotebookAuthData.size();
         for(int i = 0; i < numLinkedNotebookGuids; ++i)
         {
-            const QPair<QString, QString> & guidAndShareKey = m_linkedNotebookGuidsAndSharedNotebookGlobalIds[i];
-            requestStuffFromLocalStorage(guidAndShareKey.first);
+            const LinkedNotebookAuthData & authData = m_linkedNotebookAuthData.at(i);
+            requestStuffFromLocalStorage(authData.m_guid);
         }
 
         return;
     }
-    else if (m_linkedNotebookGuidsAndSharedNotebookGlobalIds.size() > 0)
+    else if (m_linkedNotebookAuthData.size() > 0)
     {
         if (!m_listDirtyTagsFromLinkedNotebooksRequestIds.isEmpty()) {
             QNTRACE(QStringLiteral("There are pending requests to list tags from linked notebooks from local storage: ")
@@ -1188,10 +1201,10 @@ void SendLocalChangesManager::sendTags()
 
                 QNWARNING(errorDescription << QStringLiteral(", tag: ") << tag);
 
-                auto sit = std::find_if(m_linkedNotebookGuidsAndSharedNotebookGlobalIds.begin(),
-                                        m_linkedNotebookGuidsAndSharedNotebookGlobalIds.end(),
-                                        CompareGuidAndSharedNotebookGlobalIdByGuid(tag.linkedNotebookGuid()));
-                if (sit == m_linkedNotebookGuidsAndSharedNotebookGlobalIds.end()) {
+                auto sit = std::find_if(m_linkedNotebookAuthData.begin(),
+                                        m_linkedNotebookAuthData.end(),
+                                        CompareLinkedNotebookAuthDataByGuid(tag.linkedNotebookGuid()));
+                if (sit == m_linkedNotebookAuthData.end()) {
                     QNWARNING(QStringLiteral("The linked notebook the tag refers to was not found within the list of linked notebooks "
                                              "received from local storage!"));
                 }
@@ -1201,14 +1214,34 @@ void SendLocalChangesManager::sendTags()
             }
         }
 
+        NoteStore * pNoteStore = (tag.hasLinkedNotebookGuid()
+                                  ? m_manager.noteStoreForLinkedNotebookGuid(tag.linkedNotebookGuid())
+                                  : &(m_manager.noteStore()));
+        if (tag.hasLinkedNotebookGuid())
+        {
+            if (Q_UNLIKELY(!pNoteStore)) {
+                errorDescription.setBase(QT_TR_NOOP("Can't send new or modified tag: can't find or create a note store for the linked notebook"));
+                QNWARNING(errorDescription << QStringLiteral(", linked notebook guid = ") << tag.linkedNotebookGuid());
+                emit failure(errorDescription);
+                return;
+            }
+
+            if (Q_UNLIKELY(pNoteStore->noteStoreUrl().isEmpty())) {
+                ErrorString errorDescription(QT_TR_NOOP("Internal error: empty note store url for the linked notebook's note store"));
+                QNWARNING(errorDescription << QStringLiteral(", linked notebook guid = ") << tag.linkedNotebookGuid());
+                emit failure(errorDescription);
+                return;
+            }
+        }
+
         bool creatingTag = !tag.hasUpdateSequenceNumber();
         if (creatingTag) {
             QNTRACE(QStringLiteral("Sending new tag: ") << tag);
-            errorCode = m_noteStore.createTag(tag, errorDescription, rateLimitSeconds, linkedNotebookAuthToken);
+            errorCode = pNoteStore->createTag(tag, errorDescription, rateLimitSeconds, linkedNotebookAuthToken);
         }
         else {
             QNTRACE(QStringLiteral("Sending modified tag: ") << tag);
-            errorCode = m_noteStore.updateTag(tag, errorDescription, rateLimitSeconds, linkedNotebookAuthToken);
+            errorCode = pNoteStore->updateTag(tag, errorDescription, rateLimitSeconds, linkedNotebookAuthToken);
         }
 
         if (errorCode == qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED)
@@ -1337,6 +1370,7 @@ void SendLocalChangesManager::sendSavedSearches()
     QNDEBUG(QStringLiteral("SendLocalChangesManager::sendSavedSearches"));
 
     ErrorString errorDescription;
+    NoteStore & noteStore = m_manager.noteStore();
 
     typedef QList<SavedSearch>::iterator Iter;
     for(Iter it = m_savedSearches.begin(); it != m_savedSearches.end(); )
@@ -1350,11 +1384,11 @@ void SendLocalChangesManager::sendSavedSearches()
         bool creatingSearch = !search.hasUpdateSequenceNumber();
         if (creatingSearch) {
             QNTRACE(QStringLiteral("Sending new saved search: ") << search);
-            errorCode = m_noteStore.createSavedSearch(search, errorDescription, rateLimitSeconds);
+            errorCode = noteStore.createSavedSearch(search, errorDescription, rateLimitSeconds);
         }
         else {
             QNTRACE(QStringLiteral("Sending modified saved search: ") << search);
-            errorCode = m_noteStore.updateSavedSearch(search, errorDescription, rateLimitSeconds);
+            errorCode = noteStore.updateSavedSearch(search, errorDescription, rateLimitSeconds);
         }
 
         if (errorCode == qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED)
@@ -1472,10 +1506,10 @@ void SendLocalChangesManager::sendNotebooks()
 
                 QNWARNING(errorDescription << QStringLiteral(", notebook: ") << notebook);
 
-                auto sit = std::find_if(m_linkedNotebookGuidsAndSharedNotebookGlobalIds.begin(),
-                                        m_linkedNotebookGuidsAndSharedNotebookGlobalIds.end(),
-                                        CompareGuidAndSharedNotebookGlobalIdByGuid(notebook.linkedNotebookGuid()));
-                if (sit == m_linkedNotebookGuidsAndSharedNotebookGlobalIds.end()) {
+                auto sit = std::find_if(m_linkedNotebookAuthData.begin(),
+                                        m_linkedNotebookAuthData.end(),
+                                        CompareLinkedNotebookAuthDataByGuid(notebook.linkedNotebookGuid()));
+                if (sit == m_linkedNotebookAuthData.end()) {
                     QNWARNING(QStringLiteral("The linked notebook the notebook refers to was not found within the list of linked notebooks "
                                              "received from local storage"));
                 }
@@ -1485,14 +1519,34 @@ void SendLocalChangesManager::sendNotebooks()
             }
         }
 
+        NoteStore * pNoteStore = (notebook.hasLinkedNotebookGuid()
+                                  ? m_manager.noteStoreForLinkedNotebookGuid(notebook.linkedNotebookGuid())
+                                  : &(m_manager.noteStore()));
+        if (notebook.hasLinkedNotebookGuid())
+        {
+            if (Q_UNLIKELY(!pNoteStore)) {
+                errorDescription.setBase(QT_TR_NOOP("Can't send new or modified notebook: can't find or create a note store for the linked notebook"));
+                QNWARNING(errorDescription << QStringLiteral(", linked notebook guid = ") << notebook.linkedNotebookGuid());
+                emit failure(errorDescription);
+                return;
+            }
+
+            if (Q_UNLIKELY(pNoteStore->noteStoreUrl().isEmpty())) {
+                ErrorString errorDescription(QT_TR_NOOP("Internal error: empty note store url for the linked notebook's note store"));
+                QNWARNING(errorDescription << QStringLiteral(", linked notebook guid = ") << notebook.linkedNotebookGuid());
+                emit failure(errorDescription);
+                return;
+            }
+        }
+
         bool creatingNotebook = !notebook.hasUpdateSequenceNumber();
         if (creatingNotebook) {
             QNTRACE(QStringLiteral("Sending new notebook: ") << notebook);
-            errorCode = m_noteStore.createNotebook(notebook, errorDescription, rateLimitSeconds, linkedNotebookAuthToken);
+            errorCode = pNoteStore->createNotebook(notebook, errorDescription, rateLimitSeconds, linkedNotebookAuthToken);
         }
         else {
             QNTRACE(QStringLiteral("Sending modified notebook: ") << notebook);
-            errorCode = m_noteStore.updateNotebook(notebook, errorDescription, rateLimitSeconds, linkedNotebookAuthToken);
+            errorCode = pNoteStore->updateNotebook(notebook, errorDescription, rateLimitSeconds, linkedNotebookAuthToken);
         }
 
         if (errorCode == qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED)
@@ -1685,10 +1739,9 @@ void SendLocalChangesManager::sendNotes()
                                                     "to create or update a notebook"));
                 QNWARNING(errorDescription << QStringLiteral(", notebook: ") << notebook);
 
-                auto sit = std::find_if(m_linkedNotebookGuidsAndSharedNotebookGlobalIds.begin(),
-                                        m_linkedNotebookGuidsAndSharedNotebookGlobalIds.end(),
-                                        CompareGuidAndSharedNotebookGlobalIdByGuid(notebook.linkedNotebookGuid()));
-                if (sit == m_linkedNotebookGuidsAndSharedNotebookGlobalIds.end()) {
+                auto sit = std::find_if(m_linkedNotebookAuthData.begin(), m_linkedNotebookAuthData.end(),
+                                        CompareLinkedNotebookAuthDataByGuid(notebook.linkedNotebookGuid()));
+                if (sit == m_linkedNotebookAuthData.end()) {
                     QNWARNING("The linked notebook the notebook refers to was not found within the list of linked notebooks "
                               "received from local storage");
                 }
@@ -1698,14 +1751,34 @@ void SendLocalChangesManager::sendNotes()
             }
         }
 
+        NoteStore * pNoteStore = (notebook.hasLinkedNotebookGuid()
+                                  ? m_manager.noteStoreForLinkedNotebookGuid(notebook.linkedNotebookGuid())
+                                  : &(m_manager.noteStore()));
+        if (notebook.hasLinkedNotebookGuid())
+        {
+            if (Q_UNLIKELY(!pNoteStore)) {
+                errorDescription.setBase(QT_TR_NOOP("Can't send new or modified notebook: can't find or create a note store for the linked notebook"));
+                QNWARNING(errorDescription << QStringLiteral(", linked notebook guid = ") << notebook.linkedNotebookGuid());
+                emit failure(errorDescription);
+                return;
+            }
+
+            if (Q_UNLIKELY(pNoteStore->noteStoreUrl().isEmpty())) {
+                ErrorString errorDescription(QT_TR_NOOP("Internal error: empty note store url for the linked notebook's note store"));
+                QNWARNING(errorDescription << QStringLiteral(", linked notebook guid = ") << notebook.linkedNotebookGuid());
+                emit failure(errorDescription);
+                return;
+            }
+        }
+
         bool creatingNote = !note.hasUpdateSequenceNumber();
         if (creatingNote) {
             QNTRACE(QStringLiteral("Sending new note: ") << note);
-            errorCode = m_noteStore.createNote(note, errorDescription, rateLimitSeconds, linkedNotebookAuthToken);
+            errorCode = pNoteStore->createNote(note, errorDescription, rateLimitSeconds, linkedNotebookAuthToken);
         }
         else {
             QNTRACE(QStringLiteral("Sending modified note: ") << note);
-            errorCode = m_noteStore.updateNote(note, errorDescription, rateLimitSeconds, linkedNotebookAuthToken);
+            errorCode = pNoteStore->updateNote(note, errorDescription, rateLimitSeconds, linkedNotebookAuthToken);
         }
 
         if (errorCode == qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED)
@@ -1997,7 +2070,7 @@ void SendLocalChangesManager::clear()
     m_notebooks.clear();
     m_notes.clear();
 
-    m_linkedNotebookGuidsAndSharedNotebookGlobalIds.clear();
+    m_linkedNotebookAuthData.clear();
     m_lastProcessedLinkedNotebookGuidIndex = -1;
     m_pendingAuthenticationTokensForLinkedNotebooks = false;
 
@@ -2044,16 +2117,16 @@ bool SendLocalChangesManager::checkAndRequestAuthenticationTokensForLinkedNotebo
 {
     QNDEBUG(QStringLiteral("SendLocalChangesManager::checkAndRequestAuthenticationTokensForLinkedNotebooks"));
 
-    if (m_linkedNotebookGuidsAndSharedNotebookGlobalIds.isEmpty()) {
+    if (m_linkedNotebookAuthData.isEmpty()) {
         QNDEBUG(QStringLiteral("The list of linked notebook guids and share keys is empty"));
         return true;
     }
 
-    const int numLinkedNotebookGuids = m_linkedNotebookGuidsAndSharedNotebookGlobalIds.size();
+    const int numLinkedNotebookGuids = m_linkedNotebookAuthData.size();
     for(int i = 0; i < numLinkedNotebookGuids; ++i)
     {
-        const QPair<QString, QString> & guidAndShareKey = m_linkedNotebookGuidsAndSharedNotebookGlobalIds[i];
-        const QString & guid = guidAndShareKey.first;
+        const LinkedNotebookAuthData & authData = m_linkedNotebookAuthData.at(i);
+        const QString & guid = authData.m_guid;
         if (guid.isEmpty()) {
             ErrorString error(QT_TR_NOOP("Found empty linked notebook guid within the list of linked notebook guids and shared notebook global ids"));
             QNWARNING(error);
@@ -2065,7 +2138,7 @@ bool SendLocalChangesManager::checkAndRequestAuthenticationTokensForLinkedNotebo
         if (it == m_authenticationTokensAndShardIdsByLinkedNotebookGuid.end()) {
             QNDEBUG(QStringLiteral("Authentication token for linked notebook with guid ") << guid
                     << QStringLiteral(" was not found; will request authentication tokens for all linked notebooks at once"));
-            emit requestAuthenticationTokensForLinkedNotebooks(m_linkedNotebookGuidsAndSharedNotebookGlobalIds);
+            emit requestAuthenticationTokensForLinkedNotebooks(m_linkedNotebookAuthData);
             m_pendingAuthenticationTokensForLinkedNotebooks = true;
             return false;
         }
@@ -2085,7 +2158,7 @@ bool SendLocalChangesManager::checkAndRequestAuthenticationTokensForLinkedNotebo
                     << QStringLiteral(" is too close to expiration: its expiration time is ") << printableDateTimeFromTimestamp(expirationTime)
                     << QStringLiteral(", current time is ") << printableDateTimeFromTimestamp(currentTime)
                     << QStringLiteral("; will request new authentication tokens for all linked notebooks"));
-            emit requestAuthenticationTokensForLinkedNotebooks(m_linkedNotebookGuidsAndSharedNotebookGlobalIds);
+            emit requestAuthenticationTokensForLinkedNotebooks(m_linkedNotebookAuthData);
             m_pendingAuthenticationTokensForLinkedNotebooks = true;
             return false;
         }
