@@ -7006,6 +7006,8 @@ bool RemoteToLocalSynchronizationManager::onNoDuplicateByGuid(ElementType elemen
     // This element wasn't found in the local storage by guid, need to check whether
     // the element with similar name exists
     ElementType elementToFindByName(*it);
+    elementToFindByName.unsetLocalUid();
+    elementToFindByName.setGuid(QString());
     emitFindByNameRequest(elementToFindByName);
 
     return true;
@@ -7033,10 +7035,17 @@ bool RemoteToLocalSynchronizationManager::onNoDuplicateByName(ElementType elemen
         return true;
     }
 
+    if (Q_UNLIKELY(!it->guid.isSet())) {
+        ErrorString error(QT_TR_NOOP("Internal error: found data item without guid within those from the downloaded sync chunks"));
+        QNWARNING(error << QStringLiteral(": ") << *it);
+        emit failure(error);
+        return true;
+    }
+
     // This element wasn't found in the local storage by guid or name ==> it's new from remote storage, adding it
     ElementType newElement(*it);
     setNonLocalAndNonDirty(newElement);
-    checkAndAddLinkedNotebookBinding(element, newElement);
+    checkAndAddLinkedNotebookBinding(newElement);
 
     emitAddRequest(newElement);
 
@@ -7047,43 +7056,57 @@ bool RemoteToLocalSynchronizationManager::onNoDuplicateByName(ElementType elemen
 }
 
 template <class ElementType>
-void RemoteToLocalSynchronizationManager::checkAndAddLinkedNotebookBinding(const ElementType & sourceElement,
-                                                                           ElementType & targetElement)
+void RemoteToLocalSynchronizationManager::checkAndAddLinkedNotebookBinding(ElementType & element)
 {
-    Q_UNUSED(sourceElement);
-    Q_UNUSED(targetElement);
+    Q_UNUSED(element);
     // Do nothing in default instantiation, only tags and notebooks need to be processed specifically
 }
 
 template <>
-void RemoteToLocalSynchronizationManager::checkAndAddLinkedNotebookBinding<Notebook>(const Notebook & sourceNotebook,
-                                                                                     Notebook & targetNotebook)
+void RemoteToLocalSynchronizationManager::checkAndAddLinkedNotebookBinding<Notebook>(Notebook & notebook)
 {
-    if (!sourceNotebook.hasGuid()) {
+    QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::checkAndAddLinkedNotebookBinding<Notebook>: ") << notebook);
+
+    if (!notebook.hasGuid()) {
+        QNDEBUG(QStringLiteral("The notebook has no guid"));
         return;
     }
 
-    auto it = m_linkedNotebookGuidsByNotebookGuids.find(sourceNotebook.guid());
+    auto it = m_linkedNotebookGuidsByNotebookGuids.find(notebook.guid());
     if (it == m_linkedNotebookGuidsByNotebookGuids.end()) {
+        QNDEBUG(QStringLiteral("Found no linked notebook guid for notebook guid ") << notebook.guid());
         return;
     }
 
-    targetNotebook.setLinkedNotebookGuid(it.value());
+    notebook.setLinkedNotebookGuid(it.value());
+    QNDEBUG(QStringLiteral("Set linked notebook guid ") << it.value() << QStringLiteral(" to the notebook"));
+
+    // NOTE: the notebook coming from the linked notebook might be marked as
+    // default and/or last used which might not make much sense in the context
+    // ofthe user's own default and/or last used notebooks so removing these two
+    // properties
+    notebook.setLastUsed(false);
+    notebook.setDefaultNotebook(false);
 }
 
 template <>
-void RemoteToLocalSynchronizationManager::checkAndAddLinkedNotebookBinding<Tag>(const Tag & sourceTag, Tag & targetTag)
+void RemoteToLocalSynchronizationManager::checkAndAddLinkedNotebookBinding<Tag>(Tag & tag)
 {
-    if (!sourceTag.hasGuid()) {
+    QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::checkAndAddLinkedNotebookBinding<Tag>: ") << tag);
+
+    if (!tag.hasGuid()) {
+        QNDEBUG(QStringLiteral("The tag has no guid"));
         return;
     }
 
-    auto it = m_linkedNotebookGuidsByTagGuids.find(sourceTag.guid());
+    auto it = m_linkedNotebookGuidsByTagGuids.find(tag.guid());
+        QNDEBUG(QStringLiteral("Found no linked notebook guid for tag guid ") << tag.guid());
     if (it == m_linkedNotebookGuidsByTagGuids.end()) {
         return;
     }
 
-    targetTag.setLinkedNotebookGuid(it.value());
+    tag.setLinkedNotebookGuid(it.value());
+    QNDEBUG(QStringLiteral("Set linked notebook guid ") << it.value() << QStringLiteral(" to the tag"));
 }
 
 template <>

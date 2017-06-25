@@ -310,7 +310,7 @@ private:
                                               QList<QString> & expungedElementGuids);
 
     template <class ElementType>
-    void checkAndAddLinkedNotebookBinding(const ElementType & sourceElement, ElementType & targetElement);
+    void checkAndAddLinkedNotebookBinding(ElementType & targetElement);
 
     template <class RemoteElementType, class ElementType>
     void resolveSyncConflict(const RemoteElementType & remoteElement,
