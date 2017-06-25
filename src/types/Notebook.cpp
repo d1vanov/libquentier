@@ -213,11 +213,6 @@ const QString & Notebook::name() const
 
 void Notebook::setName(const QString & name)
 {
-    if (!canUpdateNotebook()) {
-        QNDEBUG("Can't set name for notebook: updating is forbidden");
-        return;
-    }
-
     if (!name.isEmpty()) {
         d->m_qecNotebook.name = name;
     }
@@ -233,11 +228,6 @@ bool Notebook::isDefaultNotebook() const
 
 void Notebook::setDefaultNotebook(const bool defaultNotebook)
 {
-    if (!canSetDefaultNotebook()) {
-        QNDEBUG("Can't set defaut notebook flag: setting default notebook is forbidden");
-        return;
-    }
-
     d->m_qecNotebook.defaultNotebook = defaultNotebook;
 }
 
@@ -288,11 +278,6 @@ qint64 Notebook::modificationTimestamp() const
 
 void Notebook::setModificationTimestamp(const qint64 timestamp)
 {
-    if (!canUpdateNotebook()) {
-        QNDEBUG("Can't set modification timestamp for notebook: updating is forbidden");
-        return;
-    }
-
     d->m_qecNotebook.serviceUpdated = timestamp;
 }
 
@@ -316,11 +301,6 @@ const QString & Notebook::publishingUri() const
 
 void Notebook::setPublishingUri(const QString & uri)
 {
-    if (!canUpdateNotebook()) {
-        QNDEBUG(QStringLiteral("Can't set publishing uri for notebook: update is forbidden"));
-        return;
-    }
-
     if (!uri.isEmpty()) {
         CHECK_AND_SET_PUBLISHING;
     }
@@ -340,11 +320,6 @@ qint8 Notebook::publishingOrder() const
 
 void Notebook::setPublishingOrder(const qint8 order)
 {
-    if (!canUpdateNotebook()) {
-        QNDEBUG(QStringLiteral("Can't set publishing order for notebook: update is forbidden"));
-        return;
-    }
-
     if (order <= static_cast<qint8>(qevercloud::NoteSortOrder::TITLE)) {
         CHECK_AND_SET_PUBLISHING;
         d->m_qecNotebook.publishing->order = static_cast<qevercloud::NoteSortOrder::type>(order);
@@ -366,11 +341,6 @@ bool Notebook::isPublishingAscending() const
 
 void Notebook::setPublishingAscending(const bool ascending)
 {
-    if (!canUpdateNotebook()) {
-        QNDEBUG(QStringLiteral("Can't set publishing ascending for notebook: update is forbidden"));
-        return;
-    }
-
     CHECK_AND_SET_PUBLISHING;
     d->m_qecNotebook.publishing->ascending = ascending;
 }
@@ -387,11 +357,6 @@ const QString & Notebook::publishingPublicDescription() const
 
 void Notebook::setPublishingPublicDescription(const QString & publicDescription)
 {
-    if (!canUpdateNotebook()) {
-        QNDEBUG(QStringLiteral("Can't set publishing public description for notebook: update is forbidden"));
-        return;
-    }
-
     if (!publicDescription.isEmpty()) {
         CHECK_AND_SET_PUBLISHING;
     }
@@ -413,11 +378,6 @@ bool Notebook::isPublished() const
 
 void Notebook::setPublished(const bool published)
 {
-    if (!canUpdateNotebook()) {
-        QNDEBUG(QStringLiteral("Can't set published flag for notebook: update is forbidden"));
-        return;
-    }
-
     d->m_qecNotebook.published = published;
 }
 
@@ -433,11 +393,6 @@ const QString & Notebook::stack() const
 
 void Notebook::setStack(const QString & stack)
 {
-    if (!canSetNotebookStack()) {
-        QNDEBUG(QStringLiteral("Can't set stack for notebook: setting stack is forbidden"));
-        return;
-    }
-
     if (!stack.isEmpty()) {
         d->m_qecNotebook.stack = stack;
     }
@@ -509,11 +464,6 @@ void Notebook::addSharedNotebook(const SharedNotebook & sharedNotebook)
 
 void Notebook::removeSharedNotebook(const SharedNotebook & sharedNotebook)
 {
-    if (!canUpdateNotebook()) {
-        QNDEBUG(QStringLiteral("Can't remove shared notebook from notebook: updating is forbidden"));
-        return;
-    }
-
     auto & sharedNotebooks = d->m_qecNotebook.sharedNotebooks;
     const auto & enSharedNotebook = sharedNotebook.qevercloudSharedNotebook();
 
@@ -543,11 +493,6 @@ const QString & Notebook::businessNotebookDescription() const
 
 void Notebook::setBusinessNotebookDescription(const QString & businessNotebookDescription)
 {
-    if (!canUpdateNotebook()) {
-        QNDEBUG(QStringLiteral("Can't set business notebook description for notebook: updating is forbidden"));
-        return;
-    }
-
     if (!businessNotebookDescription.isEmpty()) {
         CHECK_AND_SET_BUSINESS_NOTEBOOK;
     }
@@ -567,11 +512,6 @@ qint8 Notebook::businessNotebookPrivilegeLevel() const
 
 void Notebook::setBusinessNotebookPrivilegeLevel(const qint8 privilegeLevel)
 {
-    if (!canUpdateNotebook()) {
-        QNDEBUG(QStringLiteral("Can't set business notebook privilege level for notebook: updating is forbidden"));
-        return;
-    }
-
     if (privilegeLevel <= static_cast<qint8>(qevercloud::SharedNotebookPrivilegeLevel::BUSINESS_FULL_ACCESS)) {
         CHECK_AND_SET_BUSINESS_NOTEBOOK;
         d->m_qecNotebook.businessNotebook->privilege = static_cast<qevercloud::SharedNotebookPrivilegeLevel::type>(privilegeLevel);
@@ -593,11 +533,6 @@ bool Notebook::isBusinessNotebookRecommended() const
 
 void Notebook::setBusinessNotebookRecommended(const bool recommended)
 {
-    if (!canUpdateNotebook()) {
-        QNDEBUG(QStringLiteral("Can't set business notebook recommended flag for notebook: updating is forbidden"));
-        return;
-    }
-
     CHECK_AND_SET_BUSINESS_NOTEBOOK;
     d->m_qecNotebook.businessNotebook->recommended = recommended;
 }
@@ -616,11 +551,6 @@ const User Notebook::contact() const
 
 void Notebook::setContact(const User & contact)
 {
-    if (!canUpdateNotebook()) {
-        QNDEBUG(QStringLiteral("Can't set contact for notebook: updating is forbidden"));
-        return;
-    }
-
     d->m_qecNotebook.contact = contact.qevercloudUser();
 }
 
@@ -1056,17 +986,16 @@ QTextStream & Notebook::print(QTextStream & strm) const
     strm << QStringLiteral("Notebook {\n");
 
     strm << QStringLiteral("  local uid: ") << d->m_localUid.toString() << QStringLiteral(";\n");
-    strm << QStringLiteral("  is last used: ") << (d->m_isLastUsed ? QStringLiteral("true") : QStringLiteral("false"))
-         << QStringLiteral("  ;\n");
 
     strm << QStringLiteral("  linked notebook guid: ") << (d->m_linkedNotebookGuid.isSet()
                                                            ? d->m_linkedNotebookGuid.ref()
                                                            : QStringLiteral("<empty>")) << QStringLiteral(";\n");
 
-    strm << QStringLiteral("  dirty: ")     << (isDirty()     ? QStringLiteral("true") : QStringLiteral("false")) << QStringLiteral(";\n");
-    strm << QStringLiteral("  local: ")     << (isLocal()     ? QStringLiteral("true") : QStringLiteral("false")) << QStringLiteral(";\n");
-    strm << QStringLiteral("  last used: ") << (isLastUsed()  ? QStringLiteral("true") : QStringLiteral("false")) << QStringLiteral(";\n");
-    strm << QStringLiteral("  favorited: ") << (isFavorited() ? QStringLiteral("true") : QStringLiteral("false")) << QStringLiteral(";\n");
+    strm << QStringLiteral("  dirty: ")     << (isDirty()           ? QStringLiteral("true") : QStringLiteral("false")) << QStringLiteral(";\n");
+    strm << QStringLiteral("  local: ")     << (isLocal()           ? QStringLiteral("true") : QStringLiteral("false")) << QStringLiteral(";\n");
+    strm << QStringLiteral("  last used: ") << (isLastUsed()        ? QStringLiteral("true") : QStringLiteral("false")) << QStringLiteral(";\n");
+    strm << QStringLiteral("  default: ")   << (isDefaultNotebook() ? QStringLiteral("true") : QStringLiteral("false")) << QStringLiteral(";\n");
+    strm << QStringLiteral("  favorited: ") << (isFavorited()       ? QStringLiteral("true") : QStringLiteral("false")) << QStringLiteral(";\n");
 
     strm << d->m_qecNotebook;
 
