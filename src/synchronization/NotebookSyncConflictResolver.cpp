@@ -389,6 +389,16 @@ void NotebookSyncConflictResolver::overrideLocalChangesWithRemoteChanges()
     notebook.setDirty(false);
     notebook.setLocal(false);
 
+    if (notebook.hasLinkedNotebookGuid())
+    {
+        // NOTE: the notebook coming from the linked notebook might be marked as
+        // default and/or last used which might not make much sense in the context
+        // ofthe user's own default and/or last used notebooks so removing these two
+        // properties
+        notebook.setLastUsed(false);
+        notebook.setDefaultNotebook(false);
+    }
+
     m_updateNotebookRequestId = QUuid::createUuid();
     QNTRACE(QStringLiteral("Emitting the request to update notebook: request id = ")
             << m_updateNotebookRequestId << QStringLiteral(", notebook: ") << notebook);
