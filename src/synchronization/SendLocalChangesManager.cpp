@@ -2156,8 +2156,8 @@ bool SendLocalChangesManager::checkAndRequestAuthenticationTokensForLinkedNotebo
         if (it == m_authenticationTokensAndShardIdsByLinkedNotebookGuid.end()) {
             QNDEBUG(QStringLiteral("Authentication token for linked notebook with guid ") << guid
                     << QStringLiteral(" was not found; will request authentication tokens for all linked notebooks at once"));
-            emit requestAuthenticationTokensForLinkedNotebooks(m_linkedNotebookAuthData);
             m_pendingAuthenticationTokensForLinkedNotebooks = true;
+            emit requestAuthenticationTokensForLinkedNotebooks(m_linkedNotebookAuthData);
             return false;
         }
 
@@ -2176,8 +2176,8 @@ bool SendLocalChangesManager::checkAndRequestAuthenticationTokensForLinkedNotebo
                     << QStringLiteral(" is too close to expiration: its expiration time is ") << printableDateTimeFromTimestamp(expirationTime)
                     << QStringLiteral(", current time is ") << printableDateTimeFromTimestamp(currentTime)
                     << QStringLiteral("; will request new authentication tokens for all linked notebooks"));
-            emit requestAuthenticationTokensForLinkedNotebooks(m_linkedNotebookAuthData);
             m_pendingAuthenticationTokensForLinkedNotebooks = true;
+            emit requestAuthenticationTokensForLinkedNotebooks(m_linkedNotebookAuthData);
             return false;
         }
     }
