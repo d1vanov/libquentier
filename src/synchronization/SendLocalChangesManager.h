@@ -194,7 +194,7 @@ private:
     void connectToLocalStorage();
     void disconnectFromLocalStorage();
 
-    void requestStuffFromLocalStorage(const QString & linkedNotebookGuid = QString());
+    bool requestStuffFromLocalStorage(const QString & linkedNotebookGuid = QString());
 
     void checkListLocalStorageObjectsCompletion();
 
@@ -265,9 +265,10 @@ private:
     QList<Notebook>                         m_notebooks;
     QList<Note>                             m_notes;
 
+    QSet<QString>                           m_linkedNotebookGuidsForWhichStuffWasRequestedFromLocalStorage;
+
     QVector<LinkedNotebookAuthData>         m_linkedNotebookAuthData;
 
-    int                                     m_lastProcessedLinkedNotebookGuidIndex;
     QHash<QString,QPair<QString,QString> >  m_authenticationTokensAndShardIdsByLinkedNotebookGuid;
     QHash<QString,qevercloud::Timestamp>    m_authenticationTokenExpirationTimesByLinkedNotebookGuid;
     bool                                    m_pendingAuthenticationTokensForLinkedNotebooks;

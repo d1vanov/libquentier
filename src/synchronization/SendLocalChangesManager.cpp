@@ -61,8 +61,8 @@ SendLocalChangesManager::SendLocalChangesManager(IManager & manager, QObject * p
     m_savedSearches(),
     m_notebooks(),
     m_notes(),
+    m_linkedNotebookGuidsForWhichStuffWasRequestedFromLocalStorage(),
     m_linkedNotebookAuthData(),
-    m_lastProcessedLinkedNotebookGuidIndex(-1),
     m_authenticationTokensAndShardIdsByLinkedNotebookGuid(),
     m_authenticationTokenExpirationTimesByLinkedNotebookGuid(),
     m_pendingAuthenticationTokensForLinkedNotebooks(false),
@@ -984,13 +984,22 @@ void SendLocalChangesManager::disconnectFromLocalStorage()
     m_connectedToLocalStorage = false;
 }
 
-void SendLocalChangesManager::requestStuffFromLocalStorage(const QString & linkedNotebookGuid)
+bool SendLocalChangesManager::requestStuffFromLocalStorage(const QString & linkedNotebookGuid)
 {
     QNDEBUG(QStringLiteral("SendLocalChangesManager::requestStuffFromLocalStorage: linked notebook guid = ") << linkedNotebookGuid);
 
-    connectToLocalStorage();
-
     bool emptyLinkedNotebookGuid = linkedNotebookGuid.isEmpty();
+    if (!emptyLinkedNotebookGuid)
+    {
+        auto it = m_linkedNotebookGuidsForWhichStuffWasRequestedFromLocalStorage.find(linkedNotebookGuid);
+        if (it == m_linkedNotebookGuidsForWhichStuffWasRequestedFromLocalStorage.end()) {
+            QNDEBUG(QStringLiteral("The stuff has already been requested from local storage for linked notebook guid ")
+                    << linkedNotebookGuid);
+            return false;
+        }
+    }
+
+    connectToLocalStorage();
 
     LocalStorageManager::ListObjectsOptions listDirtyObjectsFlag =
             LocalStorageManager::ListDirty | LocalStorageManager::ListNonLocal;
@@ -1057,6 +1066,12 @@ void SendLocalChangesManager::requestStuffFromLocalStorage(const QString & linke
                 << m_listLinkedNotebooksRequestId);
         emit requestLinkedNotebooksList(linkedNotebooksListOption, limit, offset, linkedNotebooksOrder, orderDirection, m_listLinkedNotebooksRequestId);
     }
+
+    if (!emptyLinkedNotebookGuid) {
+        Q_UNUSED(m_linkedNotebookGuidsForWhichStuffWasRequestedFromLocalStorage.insert(linkedNotebookGuid))
+    }
+
+    return true;
 }
 
 void SendLocalChangesManager::checkListLocalStorageObjectsCompletion()
@@ -1092,22 +1107,24 @@ void SendLocalChangesManager::checkListLocalStorageObjectsCompletion()
     QNTRACE(QStringLiteral("Received all dirty objects from user's own account from local storage"));
     emit receivedUserAccountDirtyObjects();
 
-    if ((m_lastProcessedLinkedNotebookGuidIndex < 0) && (m_linkedNotebookAuthData.size() > 0))
+    if (!m_linkedNotebookAuthData.isEmpty())
     {
         QNTRACE(QStringLiteral("There are ") << m_linkedNotebookAuthData.size()
-                << QStringLiteral(" linked notebook guids, need to receive the dirty objects from them as well"));
+                << QStringLiteral(" linked notebook guids, need to check if there are those for which there is no pending request "
+                                  "to list stuff from local storage yet"));
 
-        const int numLinkedNotebookGuids = m_linkedNotebookAuthData.size();
-        for(int i = 0; i < numLinkedNotebookGuids; ++i)
-        {
-            const LinkedNotebookAuthData & authData = m_linkedNotebookAuthData.at(i);
-            requestStuffFromLocalStorage(authData.m_guid);
+        bool requestedStuffForSomeLinkedNotebook = false;
+
+        for(auto it = m_linkedNotebookAuthData.constBegin(), end = m_linkedNotebookAuthData.constEnd(); it != end; ++it) {
+            const LinkedNotebookAuthData & authData = *it;
+            requestedStuffForSomeLinkedNotebook |= requestStuffFromLocalStorage(authData.m_guid);
         }
 
-        return;
-    }
-    else if (m_linkedNotebookAuthData.size() > 0)
-    {
+        if (requestedStuffForSomeLinkedNotebook) {
+            QNDEBUG(QStringLiteral("Sent one or more list stuff from local storage request ids"));
+            return;
+        }
+
         if (!m_listDirtyTagsFromLinkedNotebooksRequestIds.isEmpty()) {
             QNTRACE(QStringLiteral("There are pending requests to list tags from linked notebooks from local storage: ")
                     << m_listDirtyTagsFromLinkedNotebooksRequestIds.size());
@@ -2070,8 +2087,9 @@ void SendLocalChangesManager::clear()
     m_notebooks.clear();
     m_notes.clear();
 
+    m_linkedNotebookGuidsForWhichStuffWasRequestedFromLocalStorage.clear();
+
     m_linkedNotebookAuthData.clear();
-    m_lastProcessedLinkedNotebookGuidIndex = -1;
     m_pendingAuthenticationTokensForLinkedNotebooks = false;
 
     // NOTE: don't clear auth tokens by linked notebook guid as well as their expiration timestamps, these might be useful later on
