@@ -276,7 +276,7 @@ void SavedSearchSyncConflictResolutionCache::requestSavedSearchesList()
 
     QNTRACE(QStringLiteral("Emitting the request to list saved searches: request id = ")
             << m_listSavedSearchesRequestId << QStringLiteral(", offset = ") << m_offset);
-    emit listSavedSearches(LocalStorageManager::ListObjectsOption::ListAll,
+    emit listSavedSearches(LocalStorageManager::ListAll,
                            m_limit, m_offset, LocalStorageManager::ListSavedSearchesOrder::NoOrder,
                            LocalStorageManager::OrderDirection::Ascending,
                            m_listSavedSearchesRequestId);

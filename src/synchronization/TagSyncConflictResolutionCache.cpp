@@ -268,7 +268,7 @@ void TagSyncConflictResolutionCache::requestTagsList()
 
     QNTRACE(QStringLiteral("Emitting the request to list tags: request id = ")
             << m_listTagsRequestId << QStringLiteral(", offset = ") << m_offset);
-    emit listTags(LocalStorageManager::ListObjectsOption::ListAll,
+    emit listTags(LocalStorageManager::ListAll,
                   m_limit, m_offset, LocalStorageManager::ListTagsOrder::NoOrder,
                   LocalStorageManager::OrderDirection::Ascending,
                   QString(), m_listTagsRequestId);

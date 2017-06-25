@@ -275,7 +275,7 @@ void NotebookSyncConflictResolutionCache::requestNotebooksList()
 
     QNTRACE(QStringLiteral("Emitting the request to list notebooks: request id = ")
             << m_listNotebooksRequestId << QStringLiteral(", offset = ") << m_offset);
-    emit listNotebooks(LocalStorageManager::ListObjectsOption::ListAll,
+    emit listNotebooks(LocalStorageManager::ListAll,
                        m_limit, m_offset, LocalStorageManager::ListNotebooksOrder::NoOrder,
                        LocalStorageManager::OrderDirection::Ascending,
                        QString(), m_listNotebooksRequestId);
