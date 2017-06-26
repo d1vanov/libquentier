@@ -19,11 +19,32 @@
 #include "NotebookSyncConflictResolutionCache.h"
 #include <quentier/logging/QuentierLogger.h>
 
+#define __NCLOG_BASE(message, level) \
+    if (m_linkedNotebookGuid.isEmpty()) { \
+        __QNLOG_BASE(message, level); \
+    } \
+    else { \
+        __QNLOG_BASE(QStringLiteral("[linked notebook ") << m_linkedNotebookGuid << QStringLiteral("]: ") << message, level); \
+    }
+
+#define NCTRACE(message) \
+    __NCLOG_BASE(message, Trace)
+
+#define NCDEBUG(message) \
+    __NCLOG_BASE(message, Debug)
+
+#define NCWARNING(message) \
+    __NCLOG_BASE(message, Warn)
+
 namespace quentier {
 
-NotebookSyncConflictResolutionCache::NotebookSyncConflictResolutionCache(LocalStorageManagerAsync & localStorageManagerAsync) :
+NotebookSyncConflictResolutionCache::NotebookSyncConflictResolutionCache(LocalStorageManagerAsync & localStorageManagerAsync,
+                                                                         const QString & linkedNotebookGuid,
+                                                                         QObject * parent) :
+    QObject(parent),
     m_localStorageManagerAsync(localStorageManagerAsync),
     m_connectedToLocalStorage(false),
+    m_linkedNotebookGuid(linkedNotebookGuid),
     m_notebookNameByLocalUid(),
     m_notebookNameByGuid(),
     m_notebookGuidByName(),
@@ -34,7 +55,7 @@ NotebookSyncConflictResolutionCache::NotebookSyncConflictResolutionCache(LocalSt
 
 void NotebookSyncConflictResolutionCache::clear()
 {
-    QNDEBUG(QStringLiteral("NotebookSyncConflictResolutionCache::clear"));
+    NCDEBUG(QStringLiteral("NotebookSyncConflictResolutionCache::clear"));
 
     disconnectFromLocalStorage();
 
@@ -61,10 +82,10 @@ bool NotebookSyncConflictResolutionCache::isFilled() const
 
 void NotebookSyncConflictResolutionCache::fill()
 {
-    QNDEBUG(QStringLiteral("NotebookSyncConflictResolutionCache::fill"));
+    NCDEBUG(QStringLiteral("NotebookSyncConflictResolutionCache::fill"));
 
     if (m_connectedToLocalStorage) {
-        QNDEBUG(QStringLiteral("Already connected to the local storage, no need to do anything"));
+        NCDEBUG(QStringLiteral("Already connected to the local storage, no need to do anything"));
         return;
     }
 
@@ -83,7 +104,7 @@ void NotebookSyncConflictResolutionCache::onListNotebooksComplete(LocalStorageMa
         return;
     }
 
-    QNDEBUG(QStringLiteral("NotebookSyncConflictResolutionCache::onListNotebooksComplete: flag = ")
+    NCDEBUG(QStringLiteral("NotebookSyncConflictResolutionCache::onListNotebooksComplete: flag = ")
             << flag << QStringLiteral(", limit = ") << limit << QStringLiteral(", offset = ")
             << offset << QStringLiteral(", order = ") << order << QStringLiteral(", order direction = ")
             << orderDirection << QStringLiteral(", linked notebook guid = ") << linkedNotebookGuid
@@ -96,7 +117,7 @@ void NotebookSyncConflictResolutionCache::onListNotebooksComplete(LocalStorageMa
     m_listNotebooksRequestId = QUuid();
 
     if (foundNotebooks.size() == static_cast<int>(limit)) {
-        QNTRACE(QStringLiteral("The number of found notebooks matches the limit, requesting more notebooks from the local storage"));
+        NCTRACE(QStringLiteral("The number of found notebooks matches the limit, requesting more notebooks from the local storage"));
         m_offset += limit;
         requestNotebooksList();
         return;
@@ -116,14 +137,14 @@ void NotebookSyncConflictResolutionCache::onListNotebooksFailed(LocalStorageMana
         return;
     }
 
-    QNDEBUG(QStringLiteral("NotebookSyncConflictResolutionCache::onListNotebooksFailed: flag = ")
+    NCDEBUG(QStringLiteral("NotebookSyncConflictResolutionCache::onListNotebooksFailed: flag = ")
             << flag << QStringLiteral(", limit = ") << limit << QStringLiteral(", offset = ")
             << offset << QStringLiteral(", order = ") << order << QStringLiteral(", order direction = ")
             << orderDirection << QStringLiteral(", linked notebook guid = ") << linkedNotebookGuid
             << QStringLiteral(", error description = ") << errorDescription
             << QStringLiteral(", request id = ") << requestId);
 
-    QNWARNING(QStringLiteral("Failed to cache the notebook information required for the sync conflicts resolution: ")
+    NCWARNING(QStringLiteral("Failed to cache the notebook information required for the sync conflicts resolution: ")
               << errorDescription);
 
     m_notebookNameByLocalUid.clear();
@@ -136,7 +157,7 @@ void NotebookSyncConflictResolutionCache::onListNotebooksFailed(LocalStorageMana
 
 void NotebookSyncConflictResolutionCache::onAddNotebookComplete(Notebook notebook, QUuid requestId)
 {
-    QNDEBUG(QStringLiteral("NotebookSyncConflictResolutionCache::onAddNotebookComplete: request id = ")
+    NCDEBUG(QStringLiteral("NotebookSyncConflictResolutionCache::onAddNotebookComplete: request id = ")
             << requestId << QStringLiteral(", notebook: ") << notebook);
 
     processNotebook(notebook);
@@ -144,7 +165,7 @@ void NotebookSyncConflictResolutionCache::onAddNotebookComplete(Notebook noteboo
 
 void NotebookSyncConflictResolutionCache::onUpdateNotebookComplete(Notebook notebook, QUuid requestId)
 {
-    QNDEBUG(QStringLiteral("NotebookSyncConflictResolutionCache::onUpdateNotebookComplete: request id = ")
+    NCDEBUG(QStringLiteral("NotebookSyncConflictResolutionCache::onUpdateNotebookComplete: request id = ")
             << requestId << QStringLiteral(", notebook: ") << notebook);
 
     removeNotebook(notebook.localUid());
@@ -153,7 +174,7 @@ void NotebookSyncConflictResolutionCache::onUpdateNotebookComplete(Notebook note
 
 void NotebookSyncConflictResolutionCache::onExpungeNotebookComplete(Notebook notebook, QUuid requestId)
 {
-    QNDEBUG(QStringLiteral("NotebookSyncConflictResolutionCache::onExpungeNotebookComplete: request id = ")
+    NCDEBUG(QStringLiteral("NotebookSyncConflictResolutionCache::onExpungeNotebookComplete: request id = ")
             << requestId << QStringLiteral(", notebook: ") << notebook);
 
     removeNotebook(notebook.localUid());
@@ -161,10 +182,10 @@ void NotebookSyncConflictResolutionCache::onExpungeNotebookComplete(Notebook not
 
 void NotebookSyncConflictResolutionCache::connectToLocalStorage()
 {
-    QNDEBUG(QStringLiteral("NotebookSyncConflictResolutionCache::connectToLocalStorage"));
+    NCDEBUG(QStringLiteral("NotebookSyncConflictResolutionCache::connectToLocalStorage"));
 
     if (m_connectedToLocalStorage) {
-        QNDEBUG(QStringLiteral("Already connected to the local storage"));
+        NCDEBUG(QStringLiteral("Already connected to the local storage"));
         return;
     }
 
@@ -215,10 +236,10 @@ void NotebookSyncConflictResolutionCache::connectToLocalStorage()
 
 void NotebookSyncConflictResolutionCache::disconnectFromLocalStorage()
 {
-    QNDEBUG(QStringLiteral("NotebookSyncConflictResolutionCache::disconnectFromLocalStorage"));
+    NCDEBUG(QStringLiteral("NotebookSyncConflictResolutionCache::disconnectFromLocalStorage"));
 
     if (!m_connectedToLocalStorage) {
-        QNDEBUG(QStringLiteral("Not connected to local storage at the moment"));
+        NCDEBUG(QStringLiteral("Not connected to local storage at the moment"));
         return;
     }
 
@@ -269,26 +290,26 @@ void NotebookSyncConflictResolutionCache::disconnectFromLocalStorage()
 
 void NotebookSyncConflictResolutionCache::requestNotebooksList()
 {
-    QNDEBUG(QStringLiteral("NotebookSyncConflictResolutionCache::requestNotebooksList"));
+    NCDEBUG(QStringLiteral("NotebookSyncConflictResolutionCache::requestNotebooksList"));
 
     m_listNotebooksRequestId = QUuid::createUuid();
 
-    QNTRACE(QStringLiteral("Emitting the request to list notebooks: request id = ")
+    NCTRACE(QStringLiteral("Emitting the request to list notebooks: request id = ")
             << m_listNotebooksRequestId << QStringLiteral(", offset = ") << m_offset);
     emit listNotebooks(LocalStorageManager::ListAll,
                        m_limit, m_offset, LocalStorageManager::ListNotebooksOrder::NoOrder,
                        LocalStorageManager::OrderDirection::Ascending,
-                       QString(), m_listNotebooksRequestId);
+                       m_linkedNotebookGuid, m_listNotebooksRequestId);
 
 }
 
 void NotebookSyncConflictResolutionCache::removeNotebook(const QString & notebookLocalUid)
 {
-    QNDEBUG(QStringLiteral("NotebookSyncConflictResolutionCache::removeNotebook: local uid = ") << notebookLocalUid);
+    NCDEBUG(QStringLiteral("NotebookSyncConflictResolutionCache::removeNotebook: local uid = ") << notebookLocalUid);
 
     auto localUidIt = m_notebookNameByLocalUid.find(notebookLocalUid);
     if (Q_UNLIKELY(localUidIt == m_notebookNameByLocalUid.end())) {
-        QNDEBUG(QStringLiteral("The notebook name was not found in the cache by local uid"));
+        NCDEBUG(QStringLiteral("The notebook name was not found in the cache by local uid"));
         return;
     }
 
@@ -297,7 +318,7 @@ void NotebookSyncConflictResolutionCache::removeNotebook(const QString & noteboo
 
     auto guidIt = m_notebookGuidByName.find(name);
     if (Q_UNLIKELY(guidIt == m_notebookGuidByName.end())) {
-        QNDEBUG(QStringLiteral("The notebook guid was not found in the cache by name"));
+        NCDEBUG(QStringLiteral("The notebook guid was not found in the cache by name"));
         return;
     }
 
@@ -306,7 +327,7 @@ void NotebookSyncConflictResolutionCache::removeNotebook(const QString & noteboo
 
     auto nameIt = m_notebookNameByGuid.find(guid);
     if (Q_UNLIKELY(nameIt == m_notebookNameByGuid.end())) {
-        QNDEBUG(QStringLiteral("The notebook name was not found in the cache by guid"));
+        NCDEBUG(QStringLiteral("The notebook name was not found in the cache by guid"));
         return;
     }
 
@@ -315,10 +336,10 @@ void NotebookSyncConflictResolutionCache::removeNotebook(const QString & noteboo
 
 void NotebookSyncConflictResolutionCache::processNotebook(const Notebook & notebook)
 {
-    QNDEBUG(QStringLiteral("NotebookSyncConflictResolutionCache::processNotebook: ") << notebook);
+    NCDEBUG(QStringLiteral("NotebookSyncConflictResolutionCache::processNotebook: ") << notebook);
 
     if (!notebook.hasName()) {
-        QNDEBUG(QStringLiteral("Skipping the notebook without a name"));
+        NCDEBUG(QStringLiteral("Skipping the notebook without a name"));
         return;
     }
 

@@ -146,7 +146,7 @@ RemoteToLocalSynchronizationManager::RemoteToLocalSynchronizationManager(IManage
     m_addNotebookRequestIds(),
     m_updateNotebookRequestIds(),
     m_expungeNotebookRequestIds(),
-    m_notebookSyncConflictResolutionCache(m_manager.localStorageManagerAsync()),
+    m_notebookSyncConflictResolutionCache(m_manager.localStorageManagerAsync(), QStringLiteral("")),
     m_linkedNotebookGuidsByNotebookGuids(),
     m_notes(),
     m_notesPendingAddOrUpdate(),

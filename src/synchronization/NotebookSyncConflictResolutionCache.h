@@ -36,7 +36,9 @@ class NotebookSyncConflictResolutionCache: public QObject
 {
     Q_OBJECT
 public:
-    NotebookSyncConflictResolutionCache(LocalStorageManagerAsync & localStorageManagerAsync);
+    NotebookSyncConflictResolutionCache(LocalStorageManagerAsync & localStorageManagerAsync,
+                                        const QString & linkedNotebookGuid,
+                                        QObject * parent = Q_NULLPTR);
 
     void clear();
 
@@ -96,6 +98,8 @@ private:
 private:
     LocalStorageManagerAsync &          m_localStorageManagerAsync;
     bool                                m_connectedToLocalStorage;
+
+    QString                             m_linkedNotebookGuid;
 
     QHash<QString,QString>              m_notebookNameByLocalUid;
     QHash<QString,QString>              m_notebookNameByGuid;
