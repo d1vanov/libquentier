@@ -4228,7 +4228,7 @@ bool LocalStorageManagerPrivate::createTables(ErrorString & errorDescription)
                                     "  recipientInMyList               INTEGER           DEFAULT NULL, "
                                     "  recipientStack                  TEXT              DEFAULT NULL, "
                                     "  UNIQUE(localUid, guid), "
-                                    "  UNIQUE(notebookNameUpper) "
+                                    "  UNIQUE(notebookNameUpper, linkedNotebookGuid) "
                                     ")"));
     errorPrefix.setBase(QT_TR_NOOP("Can't create Notebooks table"));
     DATABASE_CHECK_AND_SET_ERROR();
@@ -4581,7 +4581,7 @@ bool LocalStorageManagerPrivate::createTables(ErrorString & errorDescription)
                                     "  isLocal               INTEGER              NOT NULL, "
                                     "  isFavorited           INTEGER              NOT NULL, "
                                     "  UNIQUE(localUid, guid), "
-                                    "  UNIQUE(nameLower) "
+                                    "  UNIQUE(nameLower, linkedNotebookGuid) "
                                     ")"));
     errorPrefix.setBase(QT_TR_NOOP("Can't create Tags table"));
     DATABASE_CHECK_AND_SET_ERROR();
