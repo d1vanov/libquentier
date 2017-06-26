@@ -680,6 +680,7 @@ private:
     QSet<QUuid>                             m_expungeNotebookRequestIds;
 
     NotebookSyncConflictResolutionCache     m_notebookSyncConflictResolutionCache;
+    QMap<QString, NotebookSyncConflictResolutionCache*>  m_notebookSyncConflictResolutionCachesByLinkedNotebookGuids;
 
     QHash<QString,QString>                  m_linkedNotebookGuidsByNotebookGuids;
 
