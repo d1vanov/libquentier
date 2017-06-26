@@ -790,6 +790,8 @@ bool LocalStorageManagerPrivate::findNotebook(Notebook & notebook, ErrorString &
 
     ErrorString errorPrefix(QT_TR_NOOP("Can't find notebook in the local storage database"));
 
+    bool searchingByName = false;
+
     QString column, value;
     bool notebookHasGuid = notebook.hasGuid();
     if (notebookHasGuid)
@@ -815,6 +817,7 @@ bool LocalStorageManagerPrivate::findNotebook(Notebook & notebook, ErrorString &
 
         column = QStringLiteral("notebookNameUpper");
         value = notebook.name().toUpper();
+        searchingByName = true;
     }
     else
     {
@@ -836,12 +839,19 @@ bool LocalStorageManagerPrivate::findNotebook(Notebook & notebook, ErrorString &
                                             "LEFT OUTER JOIN BusinessUserInfo ON Notebooks.contactId = BusinessUserInfo.id "
                                             "WHERE (Notebooks.%1 = '%2'").arg(column,value);
 
-    if (notebook.hasLinkedNotebookGuid()) {
-        QString linkedNotebookGuid = sqlEscapeString(notebook.linkedNotebookGuid());
-        queryString += QString::fromUtf8(" AND Notebooks.linkedNotebookGuid = '%1')").arg(linkedNotebookGuid);
+    if (searchingByName)
+    {
+        if (notebook.hasLinkedNotebookGuid()) {
+            QString linkedNotebookGuid = sqlEscapeString(notebook.linkedNotebookGuid());
+            queryString += QString::fromUtf8(" AND Notebooks.linkedNotebookGuid = '%1')").arg(linkedNotebookGuid);
+        }
+        else {
+            queryString += QStringLiteral(" AND Notebooks.linkedNotebookGuid IS NULL)");
+        }
     }
-    else {
-        queryString += QStringLiteral(" AND Notebooks.linkedNotebookGuid IS NULL)");
+    else
+    {
+        queryString += QStringLiteral(")");
     }
 
     Notebook result;
@@ -2780,6 +2790,8 @@ bool LocalStorageManagerPrivate::findTag(Tag & tag, ErrorString & errorDescripti
 
     ErrorString errorPrefix(QT_TR_NOOP("Can't find tag in the local storage database"));
 
+    bool searchingByName = false;
+
     QString column, value;
     bool tagHasGuid = tag.hasGuid();
     if (tagHasGuid)
@@ -2806,6 +2818,7 @@ bool LocalStorageManagerPrivate::findTag(Tag & tag, ErrorString & errorDescripti
 
         column = QStringLiteral("nameLower");
         value = tag.name().toLower();
+        searchingByName = true;
     }
     else
     {
@@ -2819,11 +2832,18 @@ bool LocalStorageManagerPrivate::findTag(Tag & tag, ErrorString & errorDescripti
                                             "parentLocalUid, isDirty, isLocal, isLocal, isFavorited "
                                             "FROM Tags WHERE (%1 = '%2'").arg(column,value);
 
-    if (tag.hasLinkedNotebookGuid()) {
-        QString linkedNotebookGuid = tag.linkedNotebookGuid();
-        queryString += QString::fromUtf8(" AND linkedNotebookGuid = '%1')").arg(sqlEscapeString(linkedNotebookGuid));
+    if (searchingByName)
+    {
+        if (tag.hasLinkedNotebookGuid()) {
+            QString linkedNotebookGuid = tag.linkedNotebookGuid();
+            queryString += QString::fromUtf8(" AND linkedNotebookGuid = '%1')").arg(sqlEscapeString(linkedNotebookGuid));
+        }
+        else {
+            queryString += QStringLiteral(" AND linkedNotebookGuid IS NULL)");
+        }
     }
-    else {
+    else
+    {
         queryString += QStringLiteral(")");
     }
 

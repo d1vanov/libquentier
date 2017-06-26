@@ -217,11 +217,15 @@ public:
      * If "remote" Evernote service's guid for the notebook is set,
      * it is used to identify the notebook in the local storage database. Otherwise the notebook is
      * identified by its local uid. If it's empty, the search would attempt to find the notebook
-     * by its name (if it is set)
+     * by its name. If the name is also not set, the search would fail.
      *
-     * If linked notebook guid is set for notebook, the search would try to find
-     * the notebook corresponding to that linked notebook; otherwise, the search would consider only notebooks
-     * from user's own account
+     * Important! Due to the fact that the notebook name is only unique within
+     * the users's own account as well as within each linked notebook, the
+     * result of the search by name depends on the notebook's linked notebook
+     * guid: if it is not set, the search by name would only search for the notebook
+     * with the specified name within the user's own account. If it is set, the
+     * search would only consider the linked notebook with the corresponding
+     * guid.
      *
      * @param notebook - the notebook to be found. Must have either "remote" or local uid or name set
      * @param errorDescription - error description if the notebook could not be found
@@ -712,12 +716,20 @@ public:
 
     /**
      * @brief findTag - attempts to find and fill the fields of passed in tag object.
-     * If it would have "remote" Evernote service's guid set, it would be used to identify
+     *
+     * If "remote" Evernote service's guid for the tag is set, it would be used to identify
      * the tag in the local storage database. Otherwise the local uid would be used. If neither
-     * guid nor local uid are set, tag's name would be used.
-     * If tag has linked notebook guid set, the search for tag would consider only tags
-     * from that linked notebook; otherwise, if it's not set, the search for tag would consider
-     * both the tags from user's own account and those from linked notebooks
+     * guid nor local uid are set, tag's name would be used. If the name is also
+     * not set, the search would fail.
+     *
+     * Important! Due to the fact that the tag name is only unique within
+     * the users's own account as well as within each linked notebook, the
+     * result of the search by name depends on the tag's linked notebook
+     * guid: if it is not set, the search by name would only search for the tag
+     * with the specified name within the user's own account. If it is set, the
+     * search would only consider tags from a linked notebook with the corresponding
+     * guid.
+     *
      * @param tag - tag to be found in the local storage database; must have either guid, local uid or name set
      * @param errorDescription - error description in case tag could not be found
      * @return true if tag was found, false otherwise
