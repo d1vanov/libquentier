@@ -19,11 +19,32 @@
 #include "TagSyncConflictResolutionCache.h"
 #include <quentier/logging/QuentierLogger.h>
 
+#define __TCLOG_BASE(message, level) \
+    if (m_linkedNotebookGuid.isEmpty()) { \
+        __QNLOG_BASE(message, level); \
+    } \
+    else { \
+        __QNLOG_BASE(QStringLiteral("[linked notebook ") << m_linkedNotebookGuid << QStringLiteral("]: ") << message, level); \
+    }
+
+#define TCTRACE(message) \
+    __TCLOG_BASE(message, Trace)
+
+#define TCDEBUG(message) \
+    __TCLOG_BASE(message, Debug)
+
+#define TCWARNING(message) \
+    __TCLOG_BASE(message, Warn)
+
 namespace quentier {
 
-TagSyncConflictResolutionCache::TagSyncConflictResolutionCache(LocalStorageManagerAsync & localStorageManagerAsync) :
+TagSyncConflictResolutionCache::TagSyncConflictResolutionCache(LocalStorageManagerAsync & localStorageManagerAsync,
+                                                               const QString & linkedNotebookGuid,
+                                                               QObject * parent) :
+    QObject(parent),
     m_localStorageManagerAsync(localStorageManagerAsync),
     m_connectedToLocalStorage(false),
+    m_linkedNotebookGuid(linkedNotebookGuid),
     m_tagNameByLocalUid(),
     m_tagNameByGuid(),
     m_tagGuidByName(),
@@ -34,7 +55,7 @@ TagSyncConflictResolutionCache::TagSyncConflictResolutionCache(LocalStorageManag
 
 void TagSyncConflictResolutionCache::clear()
 {
-    QNDEBUG(QStringLiteral("TagSyncConflictResolutionCache::clear"));
+    TCDEBUG(QStringLiteral("TagSyncConflictResolutionCache::clear"));
 
     disconnectFromLocalStorage();
 
@@ -60,10 +81,10 @@ bool TagSyncConflictResolutionCache::isFilled() const
 
 void TagSyncConflictResolutionCache::fill()
 {
-    QNDEBUG(QStringLiteral("TagSyncConflictResolutionCache::fill"));
+    TCDEBUG(QStringLiteral("TagSyncConflictResolutionCache::fill"));
 
     if (m_connectedToLocalStorage) {
-        QNDEBUG(QStringLiteral("Already connected to the local storage, no need to do anything"));
+        TCDEBUG(QStringLiteral("Already connected to the local storage, no need to do anything"));
         return;
     }
 
@@ -80,7 +101,7 @@ void TagSyncConflictResolutionCache::onListTagsComplete(LocalStorageManager::Lis
         return;
     }
 
-    QNDEBUG(QStringLiteral("TagSyncConflictResolutionCache::onListTagsComplete: flag = ")
+    TCDEBUG(QStringLiteral("TagSyncConflictResolutionCache::onListTagsComplete: flag = ")
             << flag << QStringLiteral(", limit = ") << limit << QStringLiteral(", offset = ")
             << offset << QStringLiteral(", order = ") << order << QStringLiteral(", order direction = ")
             << orderDirection << QStringLiteral(", linked notebook guid = ") << linkedNotebookGuid
@@ -93,7 +114,7 @@ void TagSyncConflictResolutionCache::onListTagsComplete(LocalStorageManager::Lis
     m_listTagsRequestId = QUuid();
 
     if (foundTags.size() == static_cast<int>(limit)) {
-        QNTRACE(QStringLiteral("The number of found tags matches the limit, requesting more tags from the local storage"));
+        TCTRACE(QStringLiteral("The number of found tags matches the limit, requesting more tags from the local storage"));
         m_offset += limit;
         requestTagsList();
         return;
@@ -112,14 +133,14 @@ void TagSyncConflictResolutionCache::onListTagsFailed(LocalStorageManager::ListO
         return;
     }
 
-    QNDEBUG(QStringLiteral("TagSyncConflictResolutionCache::onListTagsFailed: flag = ")
+    TCDEBUG(QStringLiteral("TagSyncConflictResolutionCache::onListTagsFailed: flag = ")
             << flag << QStringLiteral(", limit = ") << limit << QStringLiteral(", offset = ")
             << offset << QStringLiteral(", order = ") << order << QStringLiteral(", order direction = ")
             << orderDirection << QStringLiteral(", linked notebook guid = ") << linkedNotebookGuid
             << QStringLiteral(", error description = ") << errorDescription
             << QStringLiteral(", request id = ") << requestId);
 
-    QNWARNING(QStringLiteral("Failed to cache the tag information required for the sync conflicts resolution: ")
+    TCWARNING(QStringLiteral("Failed to cache the tag information required for the sync conflicts resolution: ")
               << errorDescription);
 
     m_tagNameByLocalUid.clear();
@@ -132,7 +153,7 @@ void TagSyncConflictResolutionCache::onListTagsFailed(LocalStorageManager::ListO
 
 void TagSyncConflictResolutionCache::onAddTagComplete(Tag tag, QUuid requestId)
 {
-    QNDEBUG(QStringLiteral("TagSyncConflictResolutionCache::onAddTagComplete: request id = ")
+    TCDEBUG(QStringLiteral("TagSyncConflictResolutionCache::onAddTagComplete: request id = ")
             << requestId << QStringLiteral(", tag: ") << tag);
 
     processTag(tag);
@@ -140,7 +161,7 @@ void TagSyncConflictResolutionCache::onAddTagComplete(Tag tag, QUuid requestId)
 
 void TagSyncConflictResolutionCache::onUpdateTagComplete(Tag tag, QUuid requestId)
 {
-    QNDEBUG(QStringLiteral("TagSyncConflictResolutionCache::onUpdateTagComplete: request id = ")
+    TCDEBUG(QStringLiteral("TagSyncConflictResolutionCache::onUpdateTagComplete: request id = ")
             << requestId << QStringLiteral(", tag: ") << tag);
 
     removeTag(tag.localUid());
@@ -149,7 +170,7 @@ void TagSyncConflictResolutionCache::onUpdateTagComplete(Tag tag, QUuid requestI
 
 void TagSyncConflictResolutionCache::onExpungeTagComplete(Tag tag, QStringList expungedChildTagLocalUids, QUuid requestId)
 {
-    QNDEBUG(QStringLiteral("TagSyncConflictResolutionCache::onExpungeTagComplete: request id = ")
+    TCDEBUG(QStringLiteral("TagSyncConflictResolutionCache::onExpungeTagComplete: request id = ")
             << requestId << QStringLiteral(", expunged child tag local uids: ")
             << expungedChildTagLocalUids.join(QStringLiteral(", ")) << QStringLiteral(", tag: ") << tag);
 
@@ -162,10 +183,10 @@ void TagSyncConflictResolutionCache::onExpungeTagComplete(Tag tag, QStringList e
 
 void TagSyncConflictResolutionCache::connectToLocalStorage()
 {
-    QNDEBUG(QStringLiteral("TagSyncConflictResolutionCache::connectToLocalStorage"));
+    TCDEBUG(QStringLiteral("TagSyncConflictResolutionCache::connectToLocalStorage"));
 
     if (m_connectedToLocalStorage) {
-        QNDEBUG(QStringLiteral("Already connected to the local storage"));
+        TCDEBUG(QStringLiteral("Already connected to the local storage"));
         return;
     }
 
@@ -212,10 +233,10 @@ void TagSyncConflictResolutionCache::connectToLocalStorage()
 
 void TagSyncConflictResolutionCache::disconnectFromLocalStorage()
 {
-    QNDEBUG(QStringLiteral("TagSyncConflictResolutionCache::disconnectFromLocalStorage"));
+    TCDEBUG(QStringLiteral("TagSyncConflictResolutionCache::disconnectFromLocalStorage"));
 
     if (!m_connectedToLocalStorage) {
-        QNDEBUG(QStringLiteral("Not connected to local storage at the moment"));
+        TCDEBUG(QStringLiteral("Not connected to local storage at the moment"));
         return;
     }
 
@@ -262,25 +283,25 @@ void TagSyncConflictResolutionCache::disconnectFromLocalStorage()
 
 void TagSyncConflictResolutionCache::requestTagsList()
 {
-    QNDEBUG(QStringLiteral("TagSyncConflictResolutionCache::requestTagsList"));
+    TCDEBUG(QStringLiteral("TagSyncConflictResolutionCache::requestTagsList"));
 
     m_listTagsRequestId = QUuid::createUuid();
 
-    QNTRACE(QStringLiteral("Emitting the request to list tags: request id = ")
+    TCTRACE(QStringLiteral("Emitting the request to list tags: request id = ")
             << m_listTagsRequestId << QStringLiteral(", offset = ") << m_offset);
     emit listTags(LocalStorageManager::ListAll,
                   m_limit, m_offset, LocalStorageManager::ListTagsOrder::NoOrder,
                   LocalStorageManager::OrderDirection::Ascending,
-                  QString(), m_listTagsRequestId);
+                  m_linkedNotebookGuid, m_listTagsRequestId);
 }
 
 void TagSyncConflictResolutionCache::removeTag(const QString & tagLocalUid)
 {
-    QNDEBUG(QStringLiteral("TagSyncConflictResolutionCache::removeTag: local uid = ") << tagLocalUid);
+    TCDEBUG(QStringLiteral("TagSyncConflictResolutionCache::removeTag: local uid = ") << tagLocalUid);
 
     auto localUidIt = m_tagNameByLocalUid.find(tagLocalUid);
     if (Q_UNLIKELY(localUidIt == m_tagNameByLocalUid.end())) {
-        QNDEBUG(QStringLiteral("The tag name was not found in the cache by local uid"));
+        TCDEBUG(QStringLiteral("The tag name was not found in the cache by local uid"));
         return;
     }
 
@@ -289,7 +310,7 @@ void TagSyncConflictResolutionCache::removeTag(const QString & tagLocalUid)
 
     auto guidIt = m_tagGuidByName.find(name);
     if (Q_UNLIKELY(guidIt == m_tagGuidByName.end())) {
-        QNDEBUG(QStringLiteral("The tag guid was not found in the cache by name"));
+        TCDEBUG(QStringLiteral("The tag guid was not found in the cache by name"));
         return;
     }
 
@@ -298,7 +319,7 @@ void TagSyncConflictResolutionCache::removeTag(const QString & tagLocalUid)
 
     auto nameIt = m_tagNameByGuid.find(guid);
     if (Q_UNLIKELY(nameIt == m_tagNameByGuid.end())) {
-        QNDEBUG(QStringLiteral("The tag name was not found in the cache by guid"));
+        TCDEBUG(QStringLiteral("The tag name was not found in the cache by guid"));
         return;
     }
 
@@ -307,10 +328,10 @@ void TagSyncConflictResolutionCache::removeTag(const QString & tagLocalUid)
 
 void TagSyncConflictResolutionCache::processTag(const Tag & tag)
 {
-    QNDEBUG(QStringLiteral("TagSyncConflictResolutionCache::processTag: ") << tag);
+    TCDEBUG(QStringLiteral("TagSyncConflictResolutionCache::processTag: ") << tag);
 
     if (!tag.hasName()) {
-        QNDEBUG(QStringLiteral("Skipping the tag without a name"));
+        TCDEBUG(QStringLiteral("Skipping the tag without a name"));
         return;
     }
 

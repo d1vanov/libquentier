@@ -623,6 +623,7 @@ private:
     QSet<QUuid>                             m_expungeTagRequestIds;
 
     TagSyncConflictResolutionCache          m_tagSyncConflictResolutionCache;
+    QMap<QString, TagSyncConflictResolutionCache*>  m_tagSyncConflictResolutionCachesByLinkedNotebookGuids;
 
     QHash<QString,QString>                  m_linkedNotebookGuidsByTagGuids;
     QUuid                                   m_expungeNotelessTagsRequestId;
