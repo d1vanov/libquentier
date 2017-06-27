@@ -4045,8 +4045,14 @@ void RemoteToLocalSynchronizationManager::checkLinkedNotebooksNotebooksAndTagsSy
 
 void RemoteToLocalSynchronizationManager::launchLinkedNotebooksContentsSync()
 {
+    QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::launchLinkedNotebooksContentsSync"));
+
     launchLinkedNotebooksTagsSync();
     launchLinkedNotebooksNotebooksSync();
+
+    // NOTE: we might have received the only sync chunk without the actual data elements, need to check for such case
+    // and leave if there's nothing worth processing within the sync
+    checkServerDataMergeCompletion();
 }
 
 template <>
