@@ -1663,6 +1663,7 @@ void SynchronizationManagerPrivate::updatePersistentSyncSettings()
         }
 
         appSettings.setArrayIndex(counter);
+        appSettings.setValue(LINKED_NOTEBOOK_GUID_KEY, guid);
         appSettings.setValue(LINKED_NOTEBOOK_LAST_UPDATE_COUNT_KEY, updateCountIt.value());
         appSettings.setValue(LINKED_NOTEBOOK_LAST_SYNC_TIME_KEY, syncTimeIt.value());
 
