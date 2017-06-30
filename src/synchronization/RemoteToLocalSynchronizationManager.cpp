@@ -6436,6 +6436,7 @@ void RemoteToLocalSynchronizationManager::appendDataElementsFromSyncChunkToConta
         const auto & tags = syncChunk.tags.ref();
         QNDEBUG(QStringLiteral("Appending ") << tags.size() << QStringLiteral(" tags"));
         container.append(tags);
+        sortTagsByParentChildRelations(container);
     }
 
     if (syncChunk.expungedTags.isSet())
@@ -7425,6 +7426,17 @@ void RemoteToLocalSynchronizationManager::resolveSyncConflict(const qevercloud::
     linkedNotebook.setDirty(false);
 
     emitUpdateRequest(linkedNotebook);
+}
+
+void RemoteToLocalSynchronizationManager::sortTagsByParentChildRelations(TagsList & tagList) const
+{
+    QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::sortTagsByParentChildRelations"));
+
+    // The problem of sorting tags by parent-child relations can be viewed as a problem of doing
+    // a topological sort in a DAG if we "add" the invisible root tag to the "top-level" ones
+
+    // TODO: implement
+    Q_UNUSED(tagList)
 }
 
 } // namespace quentier

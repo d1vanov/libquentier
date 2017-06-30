@@ -548,6 +548,8 @@ private:
     typedef QList<qevercloud::Note> NotesList;
     typedef QList<qevercloud::Resource> ResourcesList;
 
+    void sortTagsByParentChildRelations(TagsList & tags) const;
+
     struct InkNoteResourceData
     {
         InkNoteResourceData() :
