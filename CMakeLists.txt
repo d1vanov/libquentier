@@ -160,6 +160,7 @@ set(UTILITY_HEADERS
     headers/quentier/utility/QuentierCheckPtr.h
     headers/quentier/utility/QuentierUndoCommand.h
     headers/quentier/utility/Macros.h
+    headers/quentier/utility/TagSortByParentChildRelations.h
     headers/quentier/utility/UidGenerator.h
     headers/quentier/utility/Utility.h)
 
@@ -267,6 +268,9 @@ set(PRIVATE_HEADERS
     src/synchronization/TagSyncConflictResolutionCache.h
     src/synchronization/SavedSearchSyncConflictResolver.h
     src/synchronization/SavedSearchSyncConflictResolutionCache.h
+    src/utility/tag_topological_sort/TagDirectedGraph.h
+    src/utility/tag_topological_sort/TagDirectedGraphDepthFirstSearch.h
+    src/utility/TagSortByParentChildRelations.cpp
     src/utility/EncryptionManager_p.h
     src/utility/FileIOProcessorAsync_p.h
     src/utility/FileSystemWatcher_p.h
@@ -434,6 +438,8 @@ set(${PROJECT_NAME}_SOURCES
     src/exception/NullPtrException.cpp
     src/exception/LocalStorageCacheManagerException.cpp
     src/exception/LoggerInitializationException.cpp
+    src/utility/tag_topological_sort/TagDirectedGraph.cpp
+    src/utility/tag_topological_sort/TagDirectedGraphDepthFirstSearch.cpp
     src/utility/ApplicationSettings.cpp
     src/utility/MessageBox.cpp
     src/utility/StandardPaths.cpp

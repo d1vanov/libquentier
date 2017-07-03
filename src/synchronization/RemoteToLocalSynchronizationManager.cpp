@@ -26,6 +26,7 @@
 #include <quentier/utility/ApplicationSettings.h>
 #include <quentier/utility/StandardPaths.h>
 #include <quentier/utility/SysInfo.h>
+#include <quentier/utility/TagSortByParentChildRelations.h>
 #include <quentier/logging/QuentierLogger.h>
 #include <QTimerEvent>
 #include <QThreadPool>
@@ -6432,11 +6433,14 @@ void RemoteToLocalSynchronizationManager::appendDataElementsFromSyncChunkToConta
 {
     QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::appendDataElementsFromSyncChunkToContainer: tags"));
 
-    if (syncChunk.tags.isSet()) {
+    if (syncChunk.tags.isSet())
+    {
         const auto & tags = syncChunk.tags.ref();
         QNDEBUG(QStringLiteral("Appending ") << tags.size() << QStringLiteral(" tags"));
         container.append(tags);
-        sortTagsByParentChildRelations(container);
+        if (!sortTagsByParentChildRelations(container)) {
+            return;
+        }
     }
 
     if (syncChunk.expungedTags.isSet())
@@ -7428,15 +7432,19 @@ void RemoteToLocalSynchronizationManager::resolveSyncConflict(const qevercloud::
     emitUpdateRequest(linkedNotebook);
 }
 
-void RemoteToLocalSynchronizationManager::sortTagsByParentChildRelations(TagsList & tagList) const
+bool RemoteToLocalSynchronizationManager::sortTagsByParentChildRelations(TagsList & tagList)
 {
     QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::sortTagsByParentChildRelations"));
 
-    // The problem of sorting tags by parent-child relations can be viewed as a problem of doing
-    // a topological sort in a DAG if we "add" the invisible root tag to the "top-level" ones
+    ErrorString errorDescription;
+    bool res = ::quentier::sortTagsByParentChildRelations(tagList, errorDescription);
+    if (!res) {
+        QNWARNING(errorDescription);
+        emit failure(errorDescription);
+        return false;
+    }
 
-    // TODO: implement
-    Q_UNUSED(tagList)
+    return true;
 }
 
 } // namespace quentier
