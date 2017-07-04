@@ -16,97 +16,25 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "TagSortByParentChildRelationsHelpers.hpp"
 #include "tag_topological_sort/TagDirectedGraphDepthFirstSearch.h"
-#include <quentier/utility/TagSortByParentChildRelations.h>
 #include <quentier/logging/QuentierLogger.h>
 
 namespace quentier {
-
-template <class T>
-bool tagHasGuid(const T & tag);
-
-template <>
-bool tagHasGuid(const qevercloud::Tag & tag)
-{
-    return tag.guid.isSet();
-}
-
-template <>
-bool tagHasGuid(const Tag & tag)
-{
-    return tag.hasGuid();
-}
-
-template <class T>
-QString tagGuid(const T & tag);
-
-template <>
-QString tagGuid(const qevercloud::Tag & tag)
-{
-    return tag.guid.ref();
-}
-
-template <>
-QString tagGuid(const Tag & tag)
-{
-    return tag.guid();
-}
-
-template <class T>
-QString tagParentGuid(const T & tag);
-
-template <>
-QString tagParentGuid(const qevercloud::Tag & tag)
-{
-    if (tag.parentGuid.isSet()) {
-        return tag.parentGuid.ref();
-    }
-
-    return QString();
-}
-
-template <>
-QString tagParentGuid(const Tag & tag)
-{
-    if (tag.hasParentGuid()) {
-        return tag.parentGuid();
-    }
-
-    return QString();
-}
-
-template <class T>
-class CompareItemByGuid
-{
-public:
-    CompareItemByGuid(const QString & guid) :
-        m_guid(guid)
-    {}
-
-    bool operator()(const T & tag) const
-    {
-        if (!tagHasGuid(tag)) {
-            return false;
-        }
-
-        return (m_guid == tagGuid(tag));
-    }
-
-private:
-    QString     m_guid;
-};
 
 template <class T>
 bool sortTagsByParentChildRelationsImpl(QList<T> & tagList, ErrorString & errorDescription)
 {
     if (QuentierIsLogLevelActive(LogLevel::TraceLevel))
     {
-        QTextStream strm;
+        QString log;
+        QTextStream strm(&log);
         strm << QStringLiteral("Tags list after performing the topological sort: ");
         for(auto it = tagList.constBegin(), end = tagList.constEnd(); it != end; ++it) {
             strm << *it << QStringLiteral(", ");
         }
-        QNTRACE(strm.readAll());
+        strm.flush();
+        QNTRACE(log);
     }
 
     // The problem of sorting tags by parent-child relations can be viewed as a problem of performing
@@ -165,12 +93,14 @@ bool sortTagsByParentChildRelationsImpl(QList<T> & tagList, ErrorString & errorD
 
     if (QuentierIsLogLevelActive(LogLevel::TraceLevel))
     {
-        QTextStream strm;
+        QString log;
+        QTextStream strm(&log);
         strm << QStringLiteral("Tags list after performing the topological sort: ");
         for(auto it = tagList.constBegin(), end = tagList.constEnd(); it != end; ++it) {
             strm << *it << QStringLiteral(", ");
         }
-        QNTRACE(strm.readAll());
+        strm.flush();
+        QNTRACE(log);
     }
 
     return true;

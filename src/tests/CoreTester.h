@@ -32,7 +32,7 @@ public:
     explicit CoreTester(QObject * parent = Q_NULLPTR);
     virtual ~CoreTester();
 
-private slots:
+private Q_SLOTS:
     void initTestCase();
 
     void noteContainsToDoTest();
@@ -61,6 +61,8 @@ private slots:
     void enexExportImportSingleNoteWithTagsButSkipTagsTest();
     void enexExportImportMultipleNotesWithTagsAndResourcesTest();
     void importRealWorldEnexTest();
+
+    void tagSortByParentChildRelationsTest();
 
     void resourceRecognitionIndicesParsingTest();
 

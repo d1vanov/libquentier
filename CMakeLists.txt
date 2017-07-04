@@ -270,7 +270,7 @@ set(PRIVATE_HEADERS
     src/synchronization/SavedSearchSyncConflictResolutionCache.h
     src/utility/tag_topological_sort/TagDirectedGraph.h
     src/utility/tag_topological_sort/TagDirectedGraphDepthFirstSearch.h
-    src/utility/TagSortByParentChildRelations.cpp
+    src/utility/TagSortByParentChildRelationsHelpers.hpp
     src/utility/EncryptionManager_p.h
     src/utility/FileIOProcessorAsync_p.h
     src/utility/FileSystemWatcher_p.h
@@ -459,6 +459,7 @@ set(${PROJECT_NAME}_SOURCES
     src/utility/StringUtils_p.cpp
     src/utility/SysInfo.cpp
     src/utility/Utility.cpp
+    src/utility/TagSortByParentChildRelations.cpp
     src/utility/UidGenerator.cpp)
 
 if(BUILD_WITH_AUTHENTICATION_MANAGER)
@@ -639,6 +640,7 @@ set(TEST_HEADERS
     src/tests/LocalStorageManagerTests.h
     src/tests/LocalStorageManagerNoteSearchQueryTest.h
     src/tests/ResourceRecognitionIndicesParsingTest.h
+    src/tests/TagSortByParentChildRelationsTest.h
     src/tests/CoreTester.h)
 
 set(TEST_SOURCES
@@ -657,6 +659,7 @@ set(TEST_SOURCES
     src/tests/LocalStorageManagerTests.cpp
     src/tests/LocalStorageManagerNoteSearchQueryTest.cpp
     src/tests/ResourceRecognitionIndicesParsingTest.cpp
+    src/tests/TagSortByParentChildRelationsTest.cpp
     src/tests/CoreTester.cpp
     src/tests/CoreTestMain.cpp)
 

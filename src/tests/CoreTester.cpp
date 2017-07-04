@@ -32,6 +32,7 @@
 #include "ENMLConverterTests.h"
 #include "EnexExportImportTests.h"
 #include "ResourceRecognitionIndicesParsingTest.h"
+#include "TagSortByParentChildRelationsTest.h"
 #include <quentier/exception/IQuentierException.h>
 #include <quentier/utility/EventLoopWithExitStatus.h>
 #include <quentier/local_storage/LocalStorageManager.h>
@@ -400,6 +401,17 @@ void CoreTester::importRealWorldEnexTest()
     {
         QString error;
         bool res = importRealWorldEnex(error);
+        QVERIFY2(res == true, qPrintable(error));
+    }
+    CATCH_EXCEPTION();
+}
+
+void CoreTester::tagSortByParentChildRelationsTest()
+{
+    try
+    {
+        QString error;
+        bool res = ::quentier::test::tagSortByParentChildRelationsTest(error);
         QVERIFY2(res == true, qPrintable(error));
     }
     CATCH_EXCEPTION();

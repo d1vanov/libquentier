@@ -43,7 +43,8 @@ bool QUENTIER_EXPORT sortTagsByParentChildRelations(QList<qevercloud::Tag> & tag
 
 /**
  * Sorts the tags within the passed in list in such a manner that all parent tags
- * go before their child tags
+ * go before their child tags. NOTE: the sorting logics uses guids and parent tag guids, not local uids and parent tag
+ * local uids!
  * @param tagList - the input-output list of tags to be sorted by parent-child relations
  * @param errorDescription - the textual description of the error if the sorting could not be performed
  * @return true if the sorting was performed successfully, false otherwise
