@@ -115,8 +115,17 @@ void LocalStorageManagerAsync::onSwitchUserRequest(Account account, bool startFr
     {
         ErrorString errorDescription(QT_TR_NOOP("Can't switch user in the local storage: caught exception"));
         errorDescription.details() = QString::fromUtf8(e.what());
+
+        if (m_useCache) {
+            m_pLocalStorageCacheManager->clear();
+        }
+
         emit switchUserFailed(account, errorDescription, requestId);
         return;
+    }
+
+    if (m_useCache) {
+        m_pLocalStorageCacheManager->clear();
     }
 
     emit switchUserComplete(account, requestId);
