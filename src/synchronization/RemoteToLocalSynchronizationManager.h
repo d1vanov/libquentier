@@ -305,6 +305,10 @@ private:
                                const QString & typeName, ContainerType & container,
                                QList<QString> & expungedElements);
 
+    template <class ContainerType, class LocalType>
+    void launchDataElementSyncCommon(const ContentSource::type contentSource,
+                                     ContainerType & container, QList<QString> & expungedElements);
+
     template <class ElementType>
     void extractExpungedElementsFromSyncChunk(const qevercloud::SyncChunk & syncChunk,
                                               QList<QString> & expungedElementGuids);
@@ -518,6 +522,8 @@ private:
     void unregisterNotePendingAddOrUpdate(const Note & note);
     void unregisterResourcePendingAddOrUpdate(const Resource & resource);
 
+    void syncNextTagPendingProcessing();
+
 private:
     template <class T>
     class CompareItemByName
@@ -616,6 +622,7 @@ private:
     qevercloud::AccountLimits               m_accountLimits;
 
     TagsList                                m_tags;
+    TagsList                                m_tagsPendingProcessing;
     TagsList                                m_tagsPendingAddOrUpdate;
     QList<QString>                          m_expungedTags;
     QSet<QUuid>                             m_findTagByNameRequestIds;
