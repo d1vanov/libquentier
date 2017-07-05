@@ -29,7 +29,7 @@ bool sortTagsByParentChildRelationsImpl(QList<T> & tagList, ErrorString & errorD
     {
         QString log;
         QTextStream strm(&log);
-        strm << QStringLiteral("Tags list after performing the topological sort: ");
+        strm << QStringLiteral("Tags list before performing the topological sort: ");
         for(auto it = tagList.constBegin(), end = tagList.constEnd(); it != end; ++it) {
             strm << *it << QStringLiteral(", ");
         }

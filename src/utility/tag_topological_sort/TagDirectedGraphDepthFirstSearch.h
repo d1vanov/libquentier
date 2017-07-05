@@ -20,9 +20,9 @@
 #define LIB_QUENTIER_UTILITY_TAG_TOPOLOGICAL_SORT_TAG_DIRECTED_GRAPH_DEPTH_FIRST_SEARCH_H
 
 #include "TagDirectedGraph.h"
-#include <QSet>
 #include <QStack>
 #include <QQueue>
+#include <set>
 
 namespace quentier {
 
@@ -32,7 +32,7 @@ public:
     TagDirectedGraphDepthFirstSearch(const TagDirectedGraph & graph);
 
     const TagDirectedGraph & graph() const;
-    bool marked(const QString & tagGuid) const;
+    bool reached(const QString & tagGuid) const;
 
     bool hasCycle() const;
     const QStack<QString> & cycle() const;
@@ -46,10 +46,10 @@ private:
 
 private:
     TagDirectedGraph            m_graph;
-    QSet<QString>               m_marked;
+    std::set<QString>           m_reachedTagGuids;
     QHash<QString, QString>     m_parentTagGuidByChildTagGuid;
     QStack<QString>             m_cycle;
-    QSet<QString>               m_onStack;
+    std::set<QString>           m_onStack;
 
     QQueue<QString>             m_tagGuidsInPreOrder;
     QQueue<QString>             m_tagGuidsInPostOrder;

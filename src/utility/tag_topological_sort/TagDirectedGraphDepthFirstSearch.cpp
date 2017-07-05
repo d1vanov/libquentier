@@ -22,7 +22,7 @@ namespace quentier {
 
 TagDirectedGraphDepthFirstSearch::TagDirectedGraphDepthFirstSearch(const TagDirectedGraph & graph) :
     m_graph(graph),
-    m_marked(),
+    m_reachedTagGuids(),
     m_parentTagGuidByChildTagGuid(),
     m_cycle(),
     m_onStack(),
@@ -33,7 +33,7 @@ TagDirectedGraphDepthFirstSearch::TagDirectedGraphDepthFirstSearch(const TagDire
     QStringList allTagGuids = m_graph.allTagGuids();
     for(auto it = allTagGuids.constBegin(), end = allTagGuids.constEnd(); it != end; ++it)
     {
-        if (!marked(*it)) {
+        if (!reached(*it)) {
             depthFirstSearch(*it);
         }
     }
@@ -44,9 +44,9 @@ const TagDirectedGraph & TagDirectedGraphDepthFirstSearch::graph() const
     return m_graph;
 }
 
-bool TagDirectedGraphDepthFirstSearch::marked(const QString & tagGuid) const
+bool TagDirectedGraphDepthFirstSearch::reached(const QString & tagGuid) const
 {
-    return (m_marked.find(tagGuid) != m_marked.end());
+    return (m_reachedTagGuids.find(tagGuid) != m_reachedTagGuids.end());
 }
 
 bool TagDirectedGraphDepthFirstSearch::hasCycle() const
@@ -61,10 +61,10 @@ const QStack<QString> & TagDirectedGraphDepthFirstSearch::cycle() const
 
 void TagDirectedGraphDepthFirstSearch::depthFirstSearch(const QString & sourceTagGuid)
 {
-    auto stackIt = m_onStack.insert(sourceTagGuid);
+    auto stackIt = m_onStack.insert(sourceTagGuid).first;
 
     m_tagGuidsInPreOrder.enqueue(sourceTagGuid);
-    Q_UNUSED(m_marked.insert(sourceTagGuid))
+    Q_UNUSED(m_reachedTagGuids.insert(sourceTagGuid))
 
     QStringList childTagGuids = m_graph.childTagGuids(sourceTagGuid);
     for(auto it = childTagGuids.constBegin(), end = childTagGuids.constEnd(); it != end; ++it)
@@ -73,11 +73,11 @@ void TagDirectedGraphDepthFirstSearch::depthFirstSearch(const QString & sourceTa
             return;
         }
 
-        if (!marked(*it)) {
+        if (!reached(*it)) {
             m_parentTagGuidByChildTagGuid[*it] = sourceTagGuid;
             depthFirstSearch(*it);
         }
-        else if (m_onStack.contains(*it))
+        else if (m_onStack.find(*it) != m_onStack.end())
         {
             QString cycledGuid = *it;
             while(true)
@@ -102,6 +102,7 @@ void TagDirectedGraphDepthFirstSearch::depthFirstSearch(const QString & sourceTa
 
     m_tagGuidsInPostOrder.enqueue(sourceTagGuid);
     m_tagGuidsInReversePostOrder.push(sourceTagGuid);
+
     Q_UNUSED(m_onStack.erase(stackIt))
 }
 
