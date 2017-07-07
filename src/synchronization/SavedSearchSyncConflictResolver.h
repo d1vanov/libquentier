@@ -30,7 +30,7 @@
 
 namespace quentier {
 
-QT_FORWARD_DECLARE_CLASS(SavedSearchSyncConflictResolutionCache)
+QT_FORWARD_DECLARE_CLASS(SavedSearchSyncCache)
 QT_FORWARD_DECLARE_CLASS(LocalStorageManagerAsync)
 
 class SavedSearchSyncConflictResolver: public QObject
@@ -39,7 +39,7 @@ class SavedSearchSyncConflictResolver: public QObject
 public:
     explicit SavedSearchSyncConflictResolver(const qevercloud::SavedSearch & remoteSavedSearch,
                                              const SavedSearch & localConflict,
-                                             SavedSearchSyncConflictResolutionCache & cache,
+                                             SavedSearchSyncCache & cache,
                                              LocalStorageManagerAsync & localStorageManagerAsync,
                                              QObject * parent = Q_NULLPTR);
 
@@ -88,8 +88,8 @@ private:
     };
 
 private:
-    SavedSearchSyncConflictResolutionCache &    m_cache;
-    LocalStorageManagerAsync &                  m_localStorageManagerAsync;
+    SavedSearchSyncCache &          m_cache;
+    LocalStorageManagerAsync &      m_localStorageManagerAsync;
 
     qevercloud::SavedSearch         m_remoteSavedSearch;
     SavedSearch                     m_localConflict;

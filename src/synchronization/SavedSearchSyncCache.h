@@ -16,8 +16,8 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LIB_QUENTIER_SYNCHRONIZATION_SAVED_SEARCH_SYNC_CONFLICT_RESOLUTION_CACHE_H
-#define LIB_QUENTIER_SYNCHRONIZATION_SAVED_SEARCH_SYNC_CONFLICT_RESOLUTION_CACHE_H
+#ifndef LIB_QUENTIER_SYNCHRONIZATION_SAVED_SEARCH_SYNC_CACHE_H
+#define LIB_QUENTIER_SYNCHRONIZATION_SAVED_SEARCH_SYNC_CACHE_H
 
 #include <quentier/local_storage/LocalStorageManagerAsync.h>
 #include <QObject>
@@ -26,11 +26,11 @@
 
 namespace quentier {
 
-class SavedSearchSyncConflictResolutionCache: public QObject
+class SavedSearchSyncCache: public QObject
 {
     Q_OBJECT
 public:
-    SavedSearchSyncConflictResolutionCache(LocalStorageManagerAsync & localStorageManagerAsync);
+    SavedSearchSyncCache(LocalStorageManagerAsync & localStorageManagerAsync);
 
     void clear();
 
@@ -102,4 +102,4 @@ private:
 
 } // namespace quentier
 
-#endif // LIB_QUENTIER_SYNCHRONIZATION_SAVED_SEARCH_SYNC_CONFLICT_RESOLUTION_CACHE_H
+#endif // LIB_QUENTIER_SYNCHRONIZATION_SAVED_SEARCH_SYNC_CACHE_H

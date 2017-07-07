@@ -17,7 +17,7 @@
  */
 
 #include "SavedSearchSyncConflictResolver.h"
-#include "SavedSearchSyncConflictResolutionCache.h"
+#include "SavedSearchSyncCache.h"
 #include <quentier/local_storage/LocalStorageManagerAsync.h>
 #include <quentier/logging/QuentierLogger.h>
 
@@ -25,7 +25,7 @@ namespace quentier {
 
 SavedSearchSyncConflictResolver::SavedSearchSyncConflictResolver(const qevercloud::SavedSearch & remoteSavedSearch,
                                                                  const SavedSearch & localConflict,
-                                                                 SavedSearchSyncConflictResolutionCache & cache,
+                                                                 SavedSearchSyncCache & cache,
                                                                  LocalStorageManagerAsync & localStorageManagerAsync,
                                                                  QObject * parent) :
     QObject(parent),
@@ -360,12 +360,12 @@ void SavedSearchSyncConflictResolver::processSavedSearchesConflictByName(const S
     {
         QNDEBUG(QStringLiteral("The cache of saved search info has not been filled yet"));
 
-        QObject::connect(&m_cache, QNSIGNAL(SavedSearchSyncConflictResolutionCache,filled),
+        QObject::connect(&m_cache, QNSIGNAL(SavedSearchSyncCache,filled),
                          this, QNSLOT(SavedSearchSyncConflictResolver,onCacheFilled));
-        QObject::connect(&m_cache, QNSIGNAL(SavedSearchSyncConflictResolutionCache,failure,ErrorString),
+        QObject::connect(&m_cache, QNSIGNAL(SavedSearchSyncCache,failure,ErrorString),
                          this, QNSLOT(SavedSearchSyncConflictResolver,onCacheFailed,ErrorString));
         QObject::connect(this, QNSIGNAL(SavedSearchSyncConflictResolver,fillSavedSearchesCache),
-                         &m_cache, QNSLOT(SavedSearchSyncConflictResolutionCache,fill));
+                         &m_cache, QNSLOT(SavedSearchSyncCache,fill));
 
         m_pendingCacheFilling = true;
         m_savedSearchToBeRenamed = localConflict;

@@ -140,7 +140,7 @@ RemoteToLocalSynchronizationManager::RemoteToLocalSynchronizationManager(IManage
     m_addSavedSearchRequestIds(),
     m_updateSavedSearchRequestIds(),
     m_expungeSavedSearchRequestIds(),
-    m_savedSearchSyncConflictResolutionCache(m_manager.localStorageManagerAsync()),
+    m_savedSearchSyncCache(m_manager.localStorageManagerAsync()),
     m_linkedNotebooks(),
     m_linkedNotebooksPendingAddOrUpdate(),
     m_expungedLinkedNotebooks(),
@@ -5048,7 +5048,7 @@ void RemoteToLocalSynchronizationManager::clear()
         pResolver->deleteLater();
     }
 
-    m_savedSearchSyncConflictResolutionCache.clear();
+    m_savedSearchSyncCache.clear();
 
     m_linkedNotebooks.clear();
     m_expungedLinkedNotebooks.clear();
@@ -7454,7 +7454,7 @@ void RemoteToLocalSynchronizationManager::resolveSyncConflict(const qevercloud::
     }
 
     SavedSearchSyncConflictResolver * pResolver = new SavedSearchSyncConflictResolver(remoteSavedSearch, localConflict,
-                                                                                      m_savedSearchSyncConflictResolutionCache,
+                                                                                      m_savedSearchSyncCache,
                                                                                       m_manager.localStorageManagerAsync(), this);
     QObject::connect(pResolver, QNSIGNAL(SavedSearchSyncConflictResolver,finished,qevercloud::SavedSearch),
                      this, QNSLOT(RemoteToLocalSynchronizationManager,onSavedSearchSyncConflictResolverFinished,qevercloud::SavedSearch));

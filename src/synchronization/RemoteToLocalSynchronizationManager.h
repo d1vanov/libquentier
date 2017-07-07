@@ -26,7 +26,7 @@
 #include "TagSyncConflictResolver.h"
 #include "TagSyncConflictResolutionCache.h"
 #include "SavedSearchSyncConflictResolver.h"
-#include "SavedSearchSyncConflictResolutionCache.h"
+#include "SavedSearchSyncCache.h"
 #include "SynchronizationShared.h"
 #include <quentier/types/Account.h>
 #include <quentier/types/ErrorString.h>
@@ -646,7 +646,7 @@ private:
     QSet<QUuid>                             m_updateSavedSearchRequestIds;
     QSet<QUuid>                             m_expungeSavedSearchRequestIds;
 
-    SavedSearchSyncConflictResolutionCache  m_savedSearchSyncConflictResolutionCache;
+    SavedSearchSyncCache                    m_savedSearchSyncCache;
 
     LinkedNotebooksList                     m_linkedNotebooks;
     LinkedNotebooksList                     m_linkedNotebooksPendingAddOrUpdate;
