@@ -265,7 +265,7 @@ set(PRIVATE_HEADERS
     src/synchronization/NotebookSyncConflictResolver.h
     src/synchronization/NotebookSyncCache.h
     src/synchronization/TagSyncConflictResolver.h
-    src/synchronization/TagSyncConflictResolutionCache.h
+    src/synchronization/TagSyncCache.h
     src/synchronization/SavedSearchSyncConflictResolver.h
     src/synchronization/SavedSearchSyncCache.h
     src/utility/tag_topological_sort/TagDirectedGraph.h
@@ -423,7 +423,7 @@ set(${PROJECT_NAME}_SOURCES
     src/synchronization/NotebookSyncConflictResolver.cpp
     src/synchronization/NotebookSyncCache.cpp
     src/synchronization/TagSyncConflictResolver.cpp
-    src/synchronization/TagSyncConflictResolutionCache.cpp
+    src/synchronization/TagSyncCache.cpp
     src/synchronization/SavedSearchSyncConflictResolver.cpp
     src/synchronization/SavedSearchSyncCache.cpp
     src/exception/ApplicationSettingsInitializationException.cpp

@@ -24,7 +24,7 @@
 #include "NotebookSyncConflictResolver.h"
 #include "NotebookSyncCache.h"
 #include "TagSyncConflictResolver.h"
-#include "TagSyncConflictResolutionCache.h"
+#include "TagSyncCache.h"
 #include "SavedSearchSyncConflictResolver.h"
 #include "SavedSearchSyncCache.h"
 #include "SynchronizationShared.h"
@@ -631,8 +631,8 @@ private:
     QSet<QUuid>                             m_updateTagRequestIds;
     QSet<QUuid>                             m_expungeTagRequestIds;
 
-    TagSyncConflictResolutionCache          m_tagSyncConflictResolutionCache;
-    QMap<QString, TagSyncConflictResolutionCache*>  m_tagSyncConflictResolutionCachesByLinkedNotebookGuids;
+    TagSyncCache                            m_tagSyncCache;
+    QMap<QString, TagSyncCache*>            m_tagSyncCachesByLinkedNotebookGuids;
 
     QHash<QString,QString>                  m_linkedNotebookGuidsByTagGuids;
     QUuid                                   m_expungeNotelessTagsRequestId;

@@ -30,7 +30,7 @@
 
 namespace quentier {
 
-QT_FORWARD_DECLARE_CLASS(TagSyncConflictResolutionCache)
+QT_FORWARD_DECLARE_CLASS(TagSyncCache)
 QT_FORWARD_DECLARE_CLASS(LocalStorageManagerAsync)
 
 /**
@@ -44,7 +44,7 @@ class TagSyncConflictResolver: public QObject
 public:
     explicit TagSyncConflictResolver(const qevercloud::Tag & remoteTag,
                                      const Tag & localConflict,
-                                     TagSyncConflictResolutionCache & cache,
+                                     TagSyncCache & cache,
                                      LocalStorageManagerAsync & localStorageManagerAsync,
                                      QObject * parent = Q_NULLPTR);
 
@@ -93,22 +93,22 @@ private:
     };
 
 private:
-    TagSyncConflictResolutionCache &    m_cache;
-    LocalStorageManagerAsync &          m_localStorageManagerAsync;
+    TagSyncCache &              m_cache;
+    LocalStorageManagerAsync &  m_localStorageManagerAsync;
 
-    qevercloud::Tag         m_remoteTag;
-    Tag                     m_localConflict;
+    qevercloud::Tag             m_remoteTag;
+    Tag                         m_localConflict;
 
-    Tag                     m_tagToBeRenamed;
+    Tag                         m_tagToBeRenamed;
 
-    State::type             m_state;
+    State::type                 m_state;
 
-    QUuid                   m_addTagRequestId;
-    QUuid                   m_updateTagRequestId;
-    QUuid                   m_findTagRequestId;
+    QUuid                       m_addTagRequestId;
+    QUuid                       m_updateTagRequestId;
+    QUuid                       m_findTagRequestId;
 
-    bool                    m_started;
-    bool                    m_pendingCacheFilling;
+    bool                        m_started;
+    bool                        m_pendingCacheFilling;
 };
 
 } // namespace quentier

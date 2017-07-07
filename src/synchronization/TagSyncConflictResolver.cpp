@@ -17,7 +17,7 @@
  */
 
 #include "TagSyncConflictResolver.h"
-#include "TagSyncConflictResolutionCache.h"
+#include "TagSyncCache.h"
 #include <quentier/local_storage/LocalStorageManagerAsync.h>
 #include <quentier/logging/QuentierLogger.h>
 
@@ -25,7 +25,7 @@ namespace quentier {
 
 TagSyncConflictResolver::TagSyncConflictResolver(const qevercloud::Tag & remoteTag,
                                                  const Tag & localConflict,
-                                                 TagSyncConflictResolutionCache & cache,
+                                                 TagSyncCache & cache,
                                                  LocalStorageManagerAsync & localStorageManagerAsync,
                                                  QObject * parent) :
     QObject(parent),
@@ -360,12 +360,12 @@ void TagSyncConflictResolver::processTagsConflictByName(const Tag & localConflic
     {
         QNDEBUG(QStringLiteral("The cache of tag info has not been filled yet"));
 
-        QObject::connect(&m_cache, QNSIGNAL(TagSyncConflictResolutionCache,filled),
+        QObject::connect(&m_cache, QNSIGNAL(TagSyncCache,filled),
                          this, QNSLOT(TagSyncConflictResolver,onCacheFilled));
-        QObject::connect(&m_cache, QNSIGNAL(TagSyncConflictResolutionCache,failure,ErrorString),
+        QObject::connect(&m_cache, QNSIGNAL(TagSyncCache,failure,ErrorString),
                          this, QNSLOT(TagSyncConflictResolver,onCacheFailed,ErrorString));
         QObject::connect(this, QNSIGNAL(TagSyncConflictResolver,fillTagsCache),
-                         &m_cache, QNSLOT(TagSyncConflictResolutionCache,fill));
+                         &m_cache, QNSLOT(TagSyncCache,fill));
 
         m_pendingCacheFilling = true;
         m_tagToBeRenamed = localConflict;

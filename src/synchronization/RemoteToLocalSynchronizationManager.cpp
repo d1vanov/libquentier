@@ -128,8 +128,8 @@ RemoteToLocalSynchronizationManager::RemoteToLocalSynchronizationManager(IManage
     m_addTagRequestIds(),
     m_updateTagRequestIds(),
     m_expungeTagRequestIds(),
-    m_tagSyncConflictResolutionCache(m_manager.localStorageManagerAsync(), QStringLiteral("")),
-    m_tagSyncConflictResolutionCachesByLinkedNotebookGuids(),
+    m_tagSyncCache(m_manager.localStorageManagerAsync(), QStringLiteral("")),
+    m_tagSyncCachesByLinkedNotebookGuids(),
     m_linkedNotebookGuidsByTagGuids(),
     m_expungeNotelessTagsRequestId(),
     m_savedSearches(),
@@ -5007,12 +5007,12 @@ void RemoteToLocalSynchronizationManager::clear()
         pResolver->deleteLater();
     }
 
-    m_tagSyncConflictResolutionCache.clear();
+    m_tagSyncCache.clear();
 
-    for(auto it = m_tagSyncConflictResolutionCachesByLinkedNotebookGuids.begin(),
-        end = m_tagSyncConflictResolutionCachesByLinkedNotebookGuids.end(); it != end; ++it)
+    for(auto it = m_tagSyncCachesByLinkedNotebookGuids.begin(),
+        end = m_tagSyncCachesByLinkedNotebookGuids.end(); it != end; ++it)
     {
-        TagSyncConflictResolutionCache * pCache = *it;
+        TagSyncCache * pCache = *it;
         if (Q_UNLIKELY(!pCache)) {
             continue;
         }
@@ -5022,7 +5022,7 @@ void RemoteToLocalSynchronizationManager::clear()
         pCache->deleteLater();
     }
 
-    m_tagSyncConflictResolutionCachesByLinkedNotebookGuids.clear();
+    m_tagSyncCachesByLinkedNotebookGuids.clear();
 
     m_linkedNotebookGuidsByTagGuids.clear();
     m_expungeNotelessTagsRequestId = QUuid();
@@ -7376,26 +7376,24 @@ void RemoteToLocalSynchronizationManager::resolveSyncConflict(const qevercloud::
         return;
     }
 
-    TagSyncConflictResolutionCache * pConflictResolutionCache = Q_NULLPTR;
+    TagSyncCache * pCache = Q_NULLPTR;
     if (localConflict.hasLinkedNotebookGuid())
     {
         const QString & linkedNotebookGuid = localConflict.linkedNotebookGuid();
-        auto it = m_tagSyncConflictResolutionCachesByLinkedNotebookGuids.find(linkedNotebookGuid);
-        if (it == m_tagSyncConflictResolutionCachesByLinkedNotebookGuids.end()) {
-            TagSyncConflictResolutionCache * pCache = new TagSyncConflictResolutionCache(m_manager.localStorageManagerAsync(),
-                                                                                         linkedNotebookGuid, this);
-            it = m_tagSyncConflictResolutionCachesByLinkedNotebookGuids.insert(linkedNotebookGuid, pCache);
+        auto it = m_tagSyncCachesByLinkedNotebookGuids.find(linkedNotebookGuid);
+        if (it == m_tagSyncCachesByLinkedNotebookGuids.end()) {
+            pCache = new TagSyncCache(m_manager.localStorageManagerAsync(), linkedNotebookGuid, this);
+            it = m_tagSyncCachesByLinkedNotebookGuids.insert(linkedNotebookGuid, pCache);
         }
 
-        pConflictResolutionCache = it.value();
+        pCache = it.value();
     }
     else
     {
-        pConflictResolutionCache = &m_tagSyncConflictResolutionCache;
+        pCache = &m_tagSyncCache;
     }
 
-    TagSyncConflictResolver * pResolver = new TagSyncConflictResolver(remoteTag, localConflict,
-                                                                      *pConflictResolutionCache,
+    TagSyncConflictResolver * pResolver = new TagSyncConflictResolver(remoteTag, localConflict, *pCache,
                                                                       m_manager.localStorageManagerAsync(), this);
     QObject::connect(pResolver, QNSIGNAL(TagSyncConflictResolver,finished,qevercloud::Tag),
                      this, QNSLOT(RemoteToLocalSynchronizationManager,onTagSyncConflictResolverFinished,qevercloud::Tag));

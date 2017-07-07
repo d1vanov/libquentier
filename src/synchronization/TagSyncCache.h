@@ -16,8 +16,8 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LIB_QUENTIER_SYNCHRONIZATION_TAG_SYNC_CONFLICT_RESOLUTION_CACHE_H
-#define LIB_QUENTIER_SYNCHRONIZATION_TAG_SYNC_CONFLICT_RESOLUTION_CACHE_H
+#ifndef LIB_QUENTIER_SYNCHRONIZATION_TAG_SYNC_CACHE_H
+#define LIB_QUENTIER_SYNCHRONIZATION_TAG_SYNC_CACHE_H
 
 #include <quentier/local_storage/LocalStorageManagerAsync.h>
 #include <QObject>
@@ -26,13 +26,12 @@
 
 namespace quentier {
 
-class TagSyncConflictResolutionCache: public QObject
+class TagSyncCache: public QObject
 {
     Q_OBJECT
 public:
-    TagSyncConflictResolutionCache(LocalStorageManagerAsync & localStorageManagerAsync,
-                                   const QString & linkedNotebookGuid,
-                                   QObject * parent = Q_NULLPTR);
+    TagSyncCache(LocalStorageManagerAsync & localStorageManagerAsync,
+                 const QString & linkedNotebookGuid, QObject * parent = Q_NULLPTR);
 
     void clear();
 
@@ -104,4 +103,4 @@ private:
 
 } // namespace quentier
 
-#endif // LIB_QUENTIER_SYNCHRONIZATION_TAG_SYNC_CONFLICT_RESOLUTION_CACHE_H
+#endif // LIB_QUENTIER_SYNCHRONIZATION_TAG_SYNC_CACHE_H
