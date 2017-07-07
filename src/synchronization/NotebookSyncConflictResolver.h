@@ -30,7 +30,7 @@
 
 namespace quentier {
 
-QT_FORWARD_DECLARE_CLASS(NotebookSyncConflictResolutionCache)
+QT_FORWARD_DECLARE_CLASS(NotebookSyncCache)
 QT_FORWARD_DECLARE_CLASS(LocalStorageManagerAsync)
 
 /**
@@ -44,7 +44,7 @@ class NotebookSyncConflictResolver: public QObject
 public:
     explicit NotebookSyncConflictResolver(const qevercloud::Notebook & remoteNotebook,
                                           const Notebook & localConflict,
-                                          NotebookSyncConflictResolutionCache & cache,
+                                          NotebookSyncCache & cache,
                                           LocalStorageManagerAsync & localStorageManagerAsync,
                                           QObject * parent = Q_NULLPTR);
 
@@ -93,7 +93,7 @@ private:
     };
 
 private:
-    NotebookSyncConflictResolutionCache &   m_cache;
+    NotebookSyncCache &         m_cache;
     LocalStorageManagerAsync &  m_localStorageManagerAsync;
 
     qevercloud::Notebook        m_remoteNotebook;

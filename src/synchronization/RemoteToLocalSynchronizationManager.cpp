@@ -174,8 +174,8 @@ RemoteToLocalSynchronizationManager::RemoteToLocalSynchronizationManager(IManage
     m_addNotebookRequestIds(),
     m_updateNotebookRequestIds(),
     m_expungeNotebookRequestIds(),
-    m_notebookSyncConflictResolutionCache(m_manager.localStorageManagerAsync(), QStringLiteral("")),
-    m_notebookSyncConflictResolutionCachesByLinkedNotebookGuids(),
+    m_notebookSyncCache(m_manager.localStorageManagerAsync(), QStringLiteral("")),
+    m_notebookSyncCachesByLinkedNotebookGuids(),
     m_linkedNotebookGuidsByNotebookGuids(),
     m_notes(),
     m_notesPendingAddOrUpdate(),
@@ -5103,12 +5103,12 @@ void RemoteToLocalSynchronizationManager::clear()
         pResolver->deleteLater();
     }
 
-    m_notebookSyncConflictResolutionCache.clear();
+    m_notebookSyncCache.clear();
 
-    for(auto it = m_notebookSyncConflictResolutionCachesByLinkedNotebookGuids.begin(),
-        end = m_notebookSyncConflictResolutionCachesByLinkedNotebookGuids.end(); it != end; ++it)
+    for(auto it = m_notebookSyncCachesByLinkedNotebookGuids.begin(),
+        end = m_notebookSyncCachesByLinkedNotebookGuids.end(); it != end; ++it)
     {
-        NotebookSyncConflictResolutionCache * pCache = *it;
+        NotebookSyncCache * pCache = *it;
         if (Q_UNLIKELY(!pCache)) {
             continue;
         }
@@ -5118,7 +5118,7 @@ void RemoteToLocalSynchronizationManager::clear()
         pCache->deleteLater();
     }
 
-    m_notebookSyncConflictResolutionCachesByLinkedNotebookGuids.clear();
+    m_notebookSyncCachesByLinkedNotebookGuids.clear();
 
     m_linkedNotebookGuidsByNotebookGuids.clear();
 
@@ -7301,26 +7301,25 @@ void RemoteToLocalSynchronizationManager::resolveSyncConflict(const qevercloud::
         return;
     }
 
-    NotebookSyncConflictResolutionCache * pConflictResolutionCache = Q_NULLPTR;
+    NotebookSyncCache * pCache = Q_NULLPTR;
     if (localConflict.hasLinkedNotebookGuid())
     {
         const QString & linkedNotebookGuid = localConflict.linkedNotebookGuid();
-        auto it = m_notebookSyncConflictResolutionCachesByLinkedNotebookGuids.find(linkedNotebookGuid);
-        if (it == m_notebookSyncConflictResolutionCachesByLinkedNotebookGuids.end()) {
-            NotebookSyncConflictResolutionCache * pCache = new NotebookSyncConflictResolutionCache(m_manager.localStorageManagerAsync(),
-                                                                                                   linkedNotebookGuid, this);
-            it = m_notebookSyncConflictResolutionCachesByLinkedNotebookGuids.insert(linkedNotebookGuid, pCache);
+        auto it = m_notebookSyncCachesByLinkedNotebookGuids.find(linkedNotebookGuid);
+        if (it == m_notebookSyncCachesByLinkedNotebookGuids.end()) {
+            pCache = new NotebookSyncCache(m_manager.localStorageManagerAsync(),
+                                           linkedNotebookGuid, this);
+            it = m_notebookSyncCachesByLinkedNotebookGuids.insert(linkedNotebookGuid, pCache);
         }
 
-        pConflictResolutionCache = it.value();
+        pCache = it.value();
     }
     else
     {
-        pConflictResolutionCache = &m_notebookSyncConflictResolutionCache;
+        pCache = &m_notebookSyncCache;
     }
 
-    NotebookSyncConflictResolver * pResolver = new NotebookSyncConflictResolver(remoteNotebook, localConflict,
-                                                                                *pConflictResolutionCache,
+    NotebookSyncConflictResolver * pResolver = new NotebookSyncConflictResolver(remoteNotebook, localConflict, *pCache,
                                                                                 m_manager.localStorageManagerAsync(), this);
     QObject::connect(pResolver, QNSIGNAL(NotebookSyncConflictResolver,finished,qevercloud::Notebook),
                      this, QNSLOT(RemoteToLocalSynchronizationManager,onNotebookSyncConflictResolverFinished,qevercloud::Notebook));

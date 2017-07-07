@@ -17,7 +17,7 @@
  */
 
 #include "NotebookSyncConflictResolver.h"
-#include "NotebookSyncConflictResolutionCache.h"
+#include "NotebookSyncCache.h"
 #include <quentier/local_storage/LocalStorageManagerAsync.h>
 #include <quentier/logging/QuentierLogger.h>
 
@@ -25,7 +25,7 @@ namespace quentier {
 
 NotebookSyncConflictResolver::NotebookSyncConflictResolver(const qevercloud::Notebook & remoteNotebook,
                                                            const Notebook & localConflict,
-                                                           NotebookSyncConflictResolutionCache & cache,
+                                                           NotebookSyncCache & cache,
                                                            LocalStorageManagerAsync & localStorageManagerAsync,
                                                            QObject * parent) :
     QObject(parent),
@@ -360,12 +360,12 @@ void NotebookSyncConflictResolver::processNotebooksConflictByName(const Notebook
     {
         QNDEBUG(QStringLiteral("The cache of notebook info has not been filled yet"));
 
-        QObject::connect(&m_cache, QNSIGNAL(NotebookSyncConflictResolutionCache,filled),
+        QObject::connect(&m_cache, QNSIGNAL(NotebookSyncCache,filled),
                          this, QNSLOT(NotebookSyncConflictResolver,onCacheFilled));
-        QObject::connect(&m_cache, QNSIGNAL(NotebookSyncConflictResolutionCache,failure,ErrorString),
+        QObject::connect(&m_cache, QNSIGNAL(NotebookSyncCache,failure,ErrorString),
                          this, QNSLOT(NotebookSyncConflictResolver,onCacheFailed,ErrorString));
         QObject::connect(this, QNSIGNAL(NotebookSyncConflictResolver,fillNotebooksCache),
-                         &m_cache, QNSLOT(NotebookSyncConflictResolutionCache,fill));
+                         &m_cache, QNSLOT(NotebookSyncCache,fill));
 
         m_pendingCacheFilling = true;
         m_notebookToBeRenamed = localConflict;

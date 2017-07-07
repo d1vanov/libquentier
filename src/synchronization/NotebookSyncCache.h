@@ -16,8 +16,8 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LIB_QUENTIER_SYNCHRONIZATION_NOTEBOOK_SYNC_CONFLICT_RESOLUTION_CACHE_H
-#define LIB_QUENTIER_SYNCHRONIZATION_NOTEBOOK_SYNC_CONFLICT_RESOLUTION_CACHE_H
+#ifndef LIB_QUENTIER_SYNCHRONIZATION_NOTEBOOK_SYNC_CACHE_H
+#define LIB_QUENTIER_SYNCHRONIZATION_NOTEBOOK_SYNC_CACHE_H
 
 #include <quentier/local_storage/LocalStorageManagerAsync.h>
 #include <QObject>
@@ -27,18 +27,19 @@
 namespace quentier {
 
 /**
- * The NotebookSyncConflictResolutionCache class is a lazy cache of notebook info required for the sync resolution:
- * map of local uid to name, map of guid to name and map of name to guid. The cache is lazy because initially it doesn't
- * contain any information, it only starts to collect it after the first request to do so hence saving the CPU and memory
- * in case it won't be needed (i.e. there won't be any conflicts detected during sync)
+ * The NotebookSyncCache class is a lazy cache of notebook info required for the sync conflicts resolution and
+ * possibly for expunging stale notebooks after the out of order full sync. The cache is lazy because initially
+ * it doesn't contain any information, it only starts to collect it after the first request to do so hence saving
+ * the CPU and memory in case it won't be needed (i.e. there won't be any conflicts detected during sync + there won't
+ * be the need to expunge stale notebooks after the full sync).
  */
-class NotebookSyncConflictResolutionCache: public QObject
+class NotebookSyncCache: public QObject
 {
     Q_OBJECT
 public:
-    NotebookSyncConflictResolutionCache(LocalStorageManagerAsync & localStorageManagerAsync,
-                                        const QString & linkedNotebookGuid,
-                                        QObject * parent = Q_NULLPTR);
+    NotebookSyncCache(LocalStorageManagerAsync & localStorageManagerAsync,
+                      const QString & linkedNotebookGuid,
+                      QObject * parent = Q_NULLPTR);
 
     void clear();
 
@@ -112,4 +113,4 @@ private:
 
 } // namespace quentier
 
-#endif // LIB_QUENTIER_SYNCHRONIZATION_NOTEBOOK_SYNC_CONFLICT_RESOLUTION_CACHE_H
+#endif // LIB_QUENTIER_SYNCHRONIZATION_NOTEBOOK_SYNC_CACHE_H

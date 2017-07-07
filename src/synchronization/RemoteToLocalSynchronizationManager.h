@@ -22,7 +22,7 @@
 #include "NoteStore.h"
 #include "UserStore.h"
 #include "NotebookSyncConflictResolver.h"
-#include "NotebookSyncConflictResolutionCache.h"
+#include "NotebookSyncCache.h"
 #include "TagSyncConflictResolver.h"
 #include "TagSyncConflictResolutionCache.h"
 #include "SavedSearchSyncConflictResolver.h"
@@ -689,8 +689,8 @@ private:
     QSet<QUuid>                             m_updateNotebookRequestIds;
     QSet<QUuid>                             m_expungeNotebookRequestIds;
 
-    NotebookSyncConflictResolutionCache     m_notebookSyncConflictResolutionCache;
-    QMap<QString, NotebookSyncConflictResolutionCache*>  m_notebookSyncConflictResolutionCachesByLinkedNotebookGuids;
+    NotebookSyncCache                       m_notebookSyncCache;
+    QMap<QString, NotebookSyncCache*>       m_notebookSyncCachesByLinkedNotebookGuids;
 
     QHash<QString,QString>                  m_linkedNotebookGuidsByNotebookGuids;
 
