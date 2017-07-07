@@ -47,6 +47,7 @@ NotebookSyncCache::NotebookSyncCache(LocalStorageManagerAsync & localStorageMana
     m_notebookNameByLocalUid(),
     m_notebookNameByGuid(),
     m_notebookGuidByName(),
+    m_dirtyNotebooksByGuid(),
     m_listNotebooksRequestId(),
     m_limit(20),
     m_offset(0)
@@ -61,6 +62,7 @@ void NotebookSyncCache::clear()
     m_notebookNameByLocalUid.clear();
     m_notebookNameByGuid.clear();
     m_notebookGuidByName.clear();
+    m_dirtyNotebooksByGuid.clear();
 
     m_listNotebooksRequestId = QUuid();
     m_offset = 0;
@@ -149,6 +151,7 @@ void NotebookSyncCache::onListNotebooksFailed(LocalStorageManager::ListObjectsOp
     m_notebookNameByLocalUid.clear();
     m_notebookNameByGuid.clear();
     m_notebookGuidByName.clear();
+    m_dirtyNotebooksByGuid.clear();
     disconnectFromLocalStorage();
 
     emit failure(errorDescription);
@@ -324,6 +327,11 @@ void NotebookSyncCache::removeNotebook(const QString & notebookLocalUid)
     QString guid = guidIt.value();
     Q_UNUSED(m_notebookGuidByName.erase(guidIt))
 
+    auto dirtyNotebookIt = m_dirtyNotebooksByGuid.find(guid);
+    if (dirtyNotebookIt != m_dirtyNotebooksByGuid.end()) {
+        Q_UNUSED(m_dirtyNotebooksByGuid.erase(dirtyNotebookIt))
+    }
+
     auto nameIt = m_notebookNameByGuid.find(guid);
     if (Q_UNLIKELY(nameIt == m_notebookNameByGuid.end())) {
         NCDEBUG(QStringLiteral("The notebook name was not found in the cache by guid"));
@@ -336,6 +344,21 @@ void NotebookSyncCache::removeNotebook(const QString & notebookLocalUid)
 void NotebookSyncCache::processNotebook(const Notebook & notebook)
 {
     NCDEBUG(QStringLiteral("NotebookSyncCache::processNotebook: ") << notebook);
+
+    if (notebook.hasGuid())
+    {
+        if (notebook.isDirty())
+        {
+            m_dirtyNotebooksByGuid[notebook.guid()] = notebook;
+        }
+        else
+        {
+            auto it = m_dirtyNotebooksByGuid.find(notebook.guid());
+            if (it != m_dirtyNotebooksByGuid.end()) {
+                Q_UNUSED(m_dirtyNotebooksByGuid.erase(it))
+            }
+        }
+    }
 
     if (!notebook.hasName()) {
         NCDEBUG(QStringLiteral("Skipping the notebook without a name"));

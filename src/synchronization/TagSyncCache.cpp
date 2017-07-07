@@ -47,6 +47,7 @@ TagSyncCache::TagSyncCache(LocalStorageManagerAsync & localStorageManagerAsync,
     m_tagNameByLocalUid(),
     m_tagNameByGuid(),
     m_tagGuidByName(),
+    m_dirtyTagsByGuid(),
     m_listTagsRequestId(),
     m_limit(50),
     m_offset(0)
@@ -61,6 +62,7 @@ void TagSyncCache::clear()
     m_tagNameByLocalUid.clear();
     m_tagNameByGuid.clear();
     m_tagGuidByName.clear();
+    m_dirtyTagsByGuid.clear();
     m_listTagsRequestId = QUuid();
     m_offset = 0;
 }
@@ -145,6 +147,7 @@ void TagSyncCache::onListTagsFailed(LocalStorageManager::ListObjectsOptions flag
     m_tagNameByLocalUid.clear();
     m_tagNameByGuid.clear();
     m_tagGuidByName.clear();
+    m_dirtyTagsByGuid.clear();
     disconnectFromLocalStorage();
 
     emit failure(errorDescription);
@@ -316,6 +319,11 @@ void TagSyncCache::removeTag(const QString & tagLocalUid)
     QString guid = guidIt.value();
     Q_UNUSED(m_tagGuidByName.erase(guidIt))
 
+    auto dirtyTagIt = m_dirtyTagsByGuid.find(guid);
+    if (dirtyTagIt != m_dirtyTagsByGuid.end()) {
+        Q_UNUSED(m_dirtyTagsByGuid.erase(dirtyTagIt))
+    }
+
     auto nameIt = m_tagNameByGuid.find(guid);
     if (Q_UNLIKELY(nameIt == m_tagNameByGuid.end())) {
         TCDEBUG(QStringLiteral("The tag name was not found in the cache by guid"));
@@ -328,6 +336,21 @@ void TagSyncCache::removeTag(const QString & tagLocalUid)
 void TagSyncCache::processTag(const Tag & tag)
 {
     TCDEBUG(QStringLiteral("TagSyncCache::processTag: ") << tag);
+
+    if (tag.hasGuid())
+    {
+        if (tag.isDirty())
+        {
+            m_dirtyTagsByGuid[tag.guid()] = tag;
+        }
+        else
+        {
+            auto it = m_dirtyTagsByGuid.find(tag.guid());
+            if (it != m_dirtyTagsByGuid.end()) {
+                Q_UNUSED(m_dirtyTagsByGuid.erase(it))
+            }
+        }
+    }
 
     if (!tag.hasName()) {
         TCDEBUG(QStringLiteral("Skipping the tag without a name"));

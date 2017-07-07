@@ -27,6 +27,7 @@ SavedSearchSyncCache::SavedSearchSyncCache(LocalStorageManagerAsync & localStora
     m_savedSearchNameByLocalUid(),
     m_savedSearchNameByGuid(),
     m_savedSearchGuidByName(),
+    m_dirtySavedSearchesByGuid(),
     m_listSavedSearchesRequestId(),
     m_limit(50),
     m_offset(0)
@@ -41,6 +42,7 @@ void SavedSearchSyncCache::clear()
     m_savedSearchNameByLocalUid.clear();
     m_savedSearchNameByGuid.clear();
     m_savedSearchGuidByName.clear();
+    m_dirtySavedSearchesByGuid.clear();
 
     m_listSavedSearchesRequestId = QUuid();
     m_offset = 0;
@@ -126,6 +128,7 @@ void SavedSearchSyncCache::onListSavedSearchesFailed(LocalStorageManager::ListOb
     m_savedSearchNameByLocalUid.clear();
     m_savedSearchNameByGuid.clear();
     m_savedSearchGuidByName.clear();
+    m_dirtySavedSearchesByGuid.clear();
     disconnectFromLocalStorage();
 
     emit failure(errorDescription);
@@ -305,6 +308,11 @@ void SavedSearchSyncCache::removeSavedSearch(const QString & savedSearchLocalUid
     QString guid = guidIt.value();
     Q_UNUSED(m_savedSearchNameByGuid.erase(guidIt))
 
+    auto dirtySavedSearchIt = m_dirtySavedSearchesByGuid.find(guid);
+    if (dirtySavedSearchIt != m_dirtySavedSearchesByGuid.end()) {
+        Q_UNUSED(m_dirtySavedSearchesByGuid.erase(dirtySavedSearchIt))
+    }
+
     auto nameIt = m_savedSearchNameByGuid.find(guid);
     if (Q_UNLIKELY(nameIt == m_savedSearchNameByGuid.end())) {
         QNDEBUG(QStringLiteral("The saved search name was not found in the cache by guid"));
@@ -317,6 +325,21 @@ void SavedSearchSyncCache::removeSavedSearch(const QString & savedSearchLocalUid
 void SavedSearchSyncCache::processSavedSearch(const SavedSearch & search)
 {
     QNDEBUG(QStringLiteral("SavedSearchSyncCache::processSavedSearch: ") << search);
+
+    if (search.hasGuid())
+    {
+        if (search.isDirty())
+        {
+            m_dirtySavedSearchesByGuid[search.guid()] = search;
+        }
+        else
+        {
+            auto it = m_dirtySavedSearchesByGuid.find(search.guid());
+            if (it != m_dirtySavedSearchesByGuid.end()) {
+                Q_UNUSED(m_dirtySavedSearchesByGuid.erase(it))
+            }
+        }
+    }
 
     if (!search.hasName()) {
         QNDEBUG(QStringLiteral("Skipping the saved search without a name"));

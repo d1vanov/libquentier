@@ -52,6 +52,8 @@ public:
     const QHash<QString,QString> & nameByGuidHash() const { return m_notebookNameByGuid; }
     const QHash<QString,QString> & guidByNameHash() const { return m_notebookGuidByName; }
 
+    const QHash<QString,Notebook> & dirtyNotebooksByGuidHash() const { return m_dirtyNotebooksByGuid; }
+
 Q_SIGNALS:
     void filled();
     void failure(ErrorString errorDescription);
@@ -105,6 +107,8 @@ private:
     QHash<QString,QString>              m_notebookNameByLocalUid;
     QHash<QString,QString>              m_notebookNameByGuid;
     QHash<QString,QString>              m_notebookGuidByName;
+
+    QHash<QString,Notebook>             m_dirtyNotebooksByGuid;
 
     QUuid                               m_listNotebooksRequestId;
     size_t                              m_limit;

@@ -43,6 +43,8 @@ public:
     const QHash<QString,QString> & nameByGuidHash() const { return m_savedSearchNameByGuid; }
     const QHash<QString,QString> & guidByNameHash() const { return m_savedSearchGuidByName; }
 
+    const QHash<QString,SavedSearch> & dirtySavedSearchesByGuid() const { return m_dirtySavedSearchesByGuid; }
+
 Q_SIGNALS:
     void filled();
     void failure(ErrorString errorDescription);
@@ -94,6 +96,8 @@ private:
     QHash<QString,QString>              m_savedSearchNameByLocalUid;
     QHash<QString,QString>              m_savedSearchNameByGuid;
     QHash<QString,QString>              m_savedSearchGuidByName;
+
+    QHash<QString,SavedSearch>          m_dirtySavedSearchesByGuid;
 
     QUuid                               m_listSavedSearchesRequestId;
     size_t                              m_limit;

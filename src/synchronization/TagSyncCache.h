@@ -44,6 +44,8 @@ public:
     const QHash<QString,QString> & nameByGuidHash() const { return m_tagNameByGuid; }
     const QHash<QString,QString> & guidByNameHash() const { return m_tagGuidByName; }
 
+    const QHash<QString,Tag> & dirtyTagsByGuidHash() const { return m_dirtyTagsByGuid; }
+
 Q_SIGNALS:
     void filled();
     void failure(ErrorString errorDescription);
@@ -95,6 +97,8 @@ private:
     QHash<QString,QString>              m_tagNameByLocalUid;
     QHash<QString,QString>              m_tagNameByGuid;
     QHash<QString,QString>              m_tagGuidByName;
+
+    QHash<QString,Tag>                  m_dirtyTagsByGuid;
 
     QUuid                               m_listTagsRequestId;
     size_t                              m_limit;
