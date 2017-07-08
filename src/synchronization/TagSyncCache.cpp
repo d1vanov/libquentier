@@ -141,8 +141,7 @@ void TagSyncCache::onListTagsFailed(LocalStorageManager::ListObjectsOptions flag
             << QStringLiteral(", error description = ") << errorDescription
             << QStringLiteral(", request id = ") << requestId);
 
-    TCWARNING(QStringLiteral("Failed to cache the tag information required for the sync conflicts resolution: ")
-              << errorDescription);
+    TCWARNING(QStringLiteral("Failed to cache the tag information required for the sync: ") << errorDescription);
 
     m_tagNameByLocalUid.clear();
     m_tagNameByGuid.clear();

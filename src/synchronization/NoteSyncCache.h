@@ -25,6 +25,11 @@
 #include <QSet>
 #include <QUuid>
 
+// NOTE: Workaround a bug in Qt4 which may prevent building with some boost versions
+#ifndef Q_MOC_RUN
+#include <boost/bimap.hpp>
+#endif
+
 namespace quentier {
 
 class NoteSyncCache: public QObject
@@ -40,7 +45,9 @@ public:
      */
     bool isFilled() const;
 
-    const QHash<QString,QString> & noteGuidsByLocalUid() const { return m_noteGuidsByLocalUid; }
+    typedef boost::bimap<QString, QString> NoteGuidToLocalUidBimap;
+
+    const NoteGuidToLocalUidBimap & noteGuidToLocalUidBimap() const { return m_noteGuidToLocalUidBimap; }
     const QHash<QString,Note> & dirtyNotesByGuid() const { return m_dirtyNotesByGuid; }
 
 Q_SIGNALS:
@@ -88,7 +95,7 @@ private:
     LocalStorageManagerAsync &          m_localStorageManagerAsync;
     bool                                m_connectedToLocalStorage;
 
-    QHash<QString,QString>              m_noteGuidsByLocalUid;
+    NoteGuidToLocalUidBimap             m_noteGuidToLocalUidBimap;
     QHash<QString,Note>                 m_dirtyNotesByGuid;
 
     QUuid                               m_listNotesRequestId;

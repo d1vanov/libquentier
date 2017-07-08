@@ -122,7 +122,7 @@ void SavedSearchSyncCache::onListSavedSearchesFailed(LocalStorageManager::ListOb
             << orderDirection << QStringLiteral(", error description = ") << errorDescription
             << QStringLiteral(", request id = ") << requestId);
 
-    QNWARNING(QStringLiteral("Failed to cache the saved search information required for the sync conflicts resolution: ")
+    QNWARNING(QStringLiteral("Failed to cache the saved search information required for the sync: ")
               << errorDescription);
 
     m_savedSearchNameByLocalUid.clear();

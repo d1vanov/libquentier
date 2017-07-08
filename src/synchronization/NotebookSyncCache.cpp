@@ -145,8 +145,7 @@ void NotebookSyncCache::onListNotebooksFailed(LocalStorageManager::ListObjectsOp
             << QStringLiteral(", error description = ") << errorDescription
             << QStringLiteral(", request id = ") << requestId);
 
-    NCWARNING(QStringLiteral("Failed to cache the notebook information required for the sync conflicts resolution: ")
-              << errorDescription);
+    NCWARNING(QStringLiteral("Failed to cache the notebook information required for the sync: ") << errorDescription);
 
     m_notebookNameByLocalUid.clear();
     m_notebookNameByGuid.clear();
