@@ -269,6 +269,7 @@ set(PRIVATE_HEADERS
     src/synchronization/SavedSearchSyncConflictResolver.h
     src/synchronization/SavedSearchSyncCache.h
     src/synchronization/NoteSyncCache.h
+    src/synchronization/FullSyncStaleDataItemsExpunger.h
     src/utility/tag_topological_sort/TagDirectedGraph.h
     src/utility/tag_topological_sort/TagDirectedGraphDepthFirstSearch.h
     src/utility/TagSortByParentChildRelationsHelpers.hpp
@@ -428,6 +429,7 @@ set(${PROJECT_NAME}_SOURCES
     src/synchronization/SavedSearchSyncConflictResolver.cpp
     src/synchronization/SavedSearchSyncCache.cpp
     src/synchronization/NoteSyncCache.cpp
+    src/synchronization/FullSyncStaleDataItemsExpunger.cpp
     src/exception/ApplicationSettingsInitializationException.cpp
     src/exception/EmptyDataElementException.cpp
     src/exception/DatabaseLockedException.cpp
