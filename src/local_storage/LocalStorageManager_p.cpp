@@ -425,7 +425,12 @@ void LocalStorageManagerPrivate::switchUser(const Account & account,
     m_sqlDatabase.close();
 
     QString sqlDatabaseConnectionName = QStringLiteral("quentier_sqlite_connection");
-    m_sqlDatabase = QSqlDatabase::addDatabase(sqlDriverName, sqlDatabaseConnectionName);
+    if (!QSqlDatabase::contains(sqlDatabaseConnectionName)) {
+        m_sqlDatabase = QSqlDatabase::addDatabase(sqlDriverName, sqlDatabaseConnectionName);
+    }
+    else {
+        m_sqlDatabase = QSqlDatabase::database(sqlDatabaseConnectionName);
+    }
 
     QString accountName = account.name();
     if (Q_UNLIKELY(accountName.isEmpty())) {
