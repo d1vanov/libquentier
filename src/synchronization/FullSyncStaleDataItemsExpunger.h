@@ -80,6 +80,7 @@ public:
 
 Q_SIGNALS:
     void finished();
+    void failure(ErrorString errorDescription);
 
 // private signals:
     void expungeNotebook(Notebook notebook, QUuid requestId);
@@ -101,6 +102,24 @@ private Q_SLOTS:
     void onSavedSearchCacheFilled();
     void onNoteCacheFilled();
 
+    void onExpungeNotebookComplete(Notebook notebook, QUuid requestId);
+    void onExpungeNotebookFailed(Notebook notebook, ErrorString errorDescription, QUuid requestId);
+    void onExpungeTagComplete(Tag tag, QStringList expungedChildTagLocalUids, QUuid requestId);
+    void onExpungeTagFailed(Tag tag, ErrorString errorDescription, QUuid requestId);
+    void onExpungeSavedSearchComplete(SavedSearch search, QUuid requestId);
+    void onExpungeSavedSearchFailed(SavedSearch search, ErrorString errorDescription, QUuid requestId);
+    void onExpungeNoteComplete(Note note, QUuid requestId);
+    void onExpungeNoteFailed(Note note, ErrorString errorDescription, QUuid requestId);
+
+    void onUpdateNotebookComplete(Notebook notebook, QUuid requestId);
+    void onUpdateNotebookFailed(Notebook notebook, ErrorString errorDescription, QUuid requestId);
+    void onUpdateTagComplete(Tag tag, QUuid requestId);
+    void onUpdateTagFailed(Tag tag, ErrorString errorDescription, QUuid requestId);
+    void onUpdateSavedSearchComplete(SavedSearch search, QUuid requestId);
+    void onUpdateSavedSearchFailed(SavedSearch search, ErrorString errorDescription, QUuid requestId);
+    void onUpdateNoteComplete(Note note, bool updateResources, bool updateTags, QUuid requestId);
+    void onUpdateNoteFailed(Note note, bool updateResources, bool updateTags, ErrorString errorDescription, QUuid requestId);
+
 private:
     void connectToLocalStorage();
     void disconnectFromLocalStorage();
@@ -109,6 +128,8 @@ private:
     bool pendingCachesFilling() const;
 
     void analyzeDataAndSendRequestsOrResult();
+
+    void checkRequestsCompletionAndSendResult();
 
 private:
     LocalStorageManagerAsync &      m_localStorageManagerAsync;

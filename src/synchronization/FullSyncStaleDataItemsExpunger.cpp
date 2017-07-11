@@ -3,6 +3,7 @@
 #include "TagSyncCache.h"
 #include "SavedSearchSyncCache.h"
 #include <quentier/logging/QuentierLogger.h>
+#include <QStringList>
 
 namespace quentier {
 
@@ -138,6 +139,228 @@ void FullSyncStaleDataItemsExpunger::onNoteCacheFilled()
     }
 }
 
+void FullSyncStaleDataItemsExpunger::onExpungeNotebookComplete(Notebook notebook, QUuid requestId)
+{
+    auto it = m_expungeNotebookRequestIds.find(requestId);
+    if (it == m_expungeNotebookRequestIds.end()) {
+        return;
+    }
+
+    QNDEBUG(QStringLiteral("FullSyncStaleDataItemsExpunger::onExpungeNotebookComplete: request id = ") << requestId
+            << QStringLiteral(", notebook: ") << notebook);
+
+    Q_UNUSED(m_expungeNotebookRequestIds.erase(it))
+    checkRequestsCompletionAndSendResult();
+}
+
+void FullSyncStaleDataItemsExpunger::onExpungeNotebookFailed(Notebook notebook, ErrorString errorDescription, QUuid requestId)
+{
+    auto it = m_expungeNotebookRequestIds.find(requestId);
+    if (it == m_expungeNotebookRequestIds.end()) {
+        return;
+    }
+
+    QNDEBUG(QStringLiteral("FullSyncStaleDataItemsExpunger::onExpungeNotebookFailed: request id = ") << requestId
+            << QStringLiteral(", error description = ") << errorDescription << QStringLiteral(", notebook: ") << notebook);
+
+    emit failure(errorDescription);
+}
+
+void FullSyncStaleDataItemsExpunger::onExpungeTagComplete(Tag tag, QStringList expungedChildTagLocalUids, QUuid requestId)
+{
+    auto it = m_expungeTagRequestIds.find(requestId);
+    if (it == m_expungeTagRequestIds.end()) {
+        return;
+    }
+
+    QNDEBUG(QStringLiteral("FullSyncStaleDataItemsExpunger::onExpungeTagComplete: request id = ") << requestId
+            << QStringLiteral(", tag: ") << tag << QStringLiteral("\nExpunged child tag local uids: ")
+            << expungedChildTagLocalUids.join(QStringLiteral(", ")));
+
+    Q_UNUSED(m_expungeTagRequestIds.erase(it))
+    checkRequestsCompletionAndSendResult();
+}
+
+void FullSyncStaleDataItemsExpunger::onExpungeTagFailed(Tag tag, ErrorString errorDescription, QUuid requestId)
+{
+    auto it = m_expungeTagRequestIds.find(requestId);
+    if (it == m_expungeTagRequestIds.end()) {
+        return;
+    }
+
+    QNDEBUG(QStringLiteral("FullSyncStaleDataItemsExpunger::onExpungeTagFailed: request id = ") << requestId
+            << QStringLiteral(", error description = ") << errorDescription << QStringLiteral(", tag: ") << tag);
+
+    emit failure(errorDescription);
+}
+
+void FullSyncStaleDataItemsExpunger::onExpungeSavedSearchComplete(SavedSearch search, QUuid requestId)
+{
+    auto it = m_expungeSavedSearchRequestIds.find(requestId);
+    if (it == m_expungeSavedSearchRequestIds.end()) {
+        return;
+    }
+
+    QNDEBUG(QStringLiteral("FullSyncStaleDataItemsExpunger::onExpungeSavedSearchComplete: request id = ") << requestId
+            << QStringLiteral(", saved search: ") << search);
+
+    Q_UNUSED(m_expungeSavedSearchRequestIds.erase(it))
+    checkRequestsCompletionAndSendResult();
+}
+
+void FullSyncStaleDataItemsExpunger::onExpungeSavedSearchFailed(SavedSearch search, ErrorString errorDescription, QUuid requestId)
+{
+    auto it = m_expungeSavedSearchRequestIds.find(requestId);
+    if (it == m_expungeSavedSearchRequestIds.end()) {
+        return;
+    }
+
+    QNDEBUG(QStringLiteral("FullSyncStaleDataItemsExpunger::onExpungeSavedSearchFailed: request id = ") << requestId
+            << QStringLiteral(", error description = ") << errorDescription << QStringLiteral(", search: ") << search);
+
+    emit failure(errorDescription);
+}
+
+void FullSyncStaleDataItemsExpunger::onExpungeNoteComplete(Note note, QUuid requestId)
+{
+    auto it = m_expungeNoteRequestIds.find(requestId);
+    if (it == m_expungeNoteRequestIds.end()) {
+        return;
+    }
+
+    QNDEBUG(QStringLiteral("FullSyncStaleDataItemsExpunger::onExpungeNoteComplete: request id = ") << requestId
+            << QStringLiteral(", note: ") << note);
+
+    Q_UNUSED(m_expungeNoteRequestIds.erase(it))
+    checkRequestsCompletionAndSendResult();
+}
+
+void FullSyncStaleDataItemsExpunger::onExpungeNoteFailed(Note note, ErrorString errorDescription, QUuid requestId)
+{
+    auto it = m_expungeNoteRequestIds.find(requestId);
+    if (it == m_expungeNoteRequestIds.end()) {
+        return;
+    }
+
+    QNDEBUG(QStringLiteral("FullSyncStaleDataItemsExpunger::onExpungeNoteFailed: request id = ") << requestId
+            << QStringLiteral(", error description = ") << errorDescription << QStringLiteral(", note: ") << note);
+
+    emit failure(errorDescription);
+}
+
+void FullSyncStaleDataItemsExpunger::onUpdateNotebookComplete(Notebook notebook, QUuid requestId)
+{
+    auto it = m_updateNotebookRequestId.find(requestId);
+    if (it == m_updateNotebookRequestId.end()) {
+        return;
+    }
+
+    QNDEBUG(QStringLiteral("FullSyncStaleDataItemsExpunger::onUpdateNotebookComplete: request id = ")
+            << requestId << QStringLiteral(", notebook: ") << notebook);
+
+    Q_UNUSED(m_updateNotebookRequestId.erase(it))
+    checkRequestsCompletionAndSendResult();
+}
+
+void FullSyncStaleDataItemsExpunger::onUpdateNotebookFailed(Notebook notebook, ErrorString errorDescription, QUuid requestId)
+{
+    auto it = m_updateNotebookRequestId.find(requestId);
+    if (it == m_updateNotebookRequestId.end()) {
+        return;
+    }
+
+    QNDEBUG(QStringLiteral("FullSyncStaleDataItemsExpunger::onUpdateNotebookFailed: request id = ") << requestId
+            << QStringLiteral(", error description = ") << errorDescription << QStringLiteral(", notebook: ") << notebook);
+
+    emit failure(errorDescription);
+}
+
+void FullSyncStaleDataItemsExpunger::onUpdateTagComplete(Tag tag, QUuid requestId)
+{
+    auto it = m_updateTagRequestIds.find(requestId);
+    if (it == m_updateTagRequestIds.end()) {
+        return;
+    }
+
+    QNDEBUG(QStringLiteral("FullSyncStaleDataItemsExpunger::onUpdateTagComplete: request id = ") << requestId
+            << QStringLiteral(", tag: ") << tag);
+
+    Q_UNUSED(m_updateTagRequestIds.erase(it))
+    checkRequestsCompletionAndSendResult();
+}
+
+void FullSyncStaleDataItemsExpunger::onUpdateTagFailed(Tag tag, ErrorString errorDescription, QUuid requestId)
+{
+    auto it = m_updateTagRequestIds.find(requestId);
+    if (it == m_updateTagRequestIds.end()) {
+        return;
+    }
+
+    QNDEBUG(QStringLiteral("FullSyncStaleDataItemsExpunger::onUpdateTagFailed: request id = ") << requestId
+            << QStringLiteral(", error description = ") << errorDescription << QStringLiteral(", tag: ") << tag);
+
+    emit failure(errorDescription);
+}
+
+void FullSyncStaleDataItemsExpunger::onUpdateSavedSearchComplete(SavedSearch search, QUuid requestId)
+{
+    auto it = m_updateSavedSearchRequestIds.find(requestId);
+    if (it == m_updateSavedSearchRequestIds.end()) {
+        return;
+    }
+
+    QNDEBUG(QStringLiteral("FullSyncStaleDataItemsExpunger::onUpdateSavedSearchComplete: request id = ") << requestId
+            << QStringLiteral(", saved search: ") << search);
+
+    Q_UNUSED(m_updateSavedSearchRequestIds.erase(it))
+    checkRequestsCompletionAndSendResult();
+}
+
+void FullSyncStaleDataItemsExpunger::onUpdateSavedSearchFailed(SavedSearch search, ErrorString errorDescription, QUuid requestId)
+{
+    auto it = m_updateSavedSearchRequestIds.find(requestId);
+    if (it == m_updateSavedSearchRequestIds.end()) {
+        return;
+    }
+
+    QNDEBUG(QStringLiteral("FullSyncStaleDataItemsExpunger::onUpdateSavedSearchFailed: request id = ") << requestId
+            << QStringLiteral(", error description = ") << errorDescription << QStringLiteral(", saved search: ") << search);
+
+    emit failure(errorDescription);
+}
+
+void FullSyncStaleDataItemsExpunger::onUpdateNoteComplete(Note note, bool updateResources, bool updateTags, QUuid requestId)
+{
+    auto it = m_updateNoteRequestIds.find(requestId);
+    if (it == m_updateNoteRequestIds.end()) {
+        return;
+    }
+
+    QNDEBUG(QStringLiteral("FullSyncStaleDataItemsExpunger::onUpdateNoteComplete: request id = ") << requestId
+            << QStringLiteral(", update resources = ") << (updateResources ? QStringLiteral("true") : QStringLiteral("false"))
+            << QStringLiteral(", update tags = ") << (updateTags ? QStringLiteral("true") : QStringLiteral("false"))
+            << QStringLiteral(", note: ") << note);
+
+    Q_UNUSED(m_updateNoteRequestIds.erase(it))
+    checkRequestsCompletionAndSendResult();
+}
+
+void FullSyncStaleDataItemsExpunger::onUpdateNoteFailed(Note note, bool updateResources, bool updateTags,
+                                                        ErrorString errorDescription, QUuid requestId)
+{
+    auto it = m_updateNoteRequestIds.find(requestId);
+    if (it == m_updateNoteRequestIds.end()) {
+        return;
+    }
+
+    QNDEBUG(QStringLiteral("FullSyncStaleDataItemsExpunger::onUpdateNoteFailed: request id = ") << requestId
+            << QStringLiteral(", update resources = ") << (updateResources ? QStringLiteral("true") : QStringLiteral("false"))
+            << QStringLiteral(", update tags = ") << (updateTags ? QStringLiteral("true") : QStringLiteral("false"))
+            << QStringLiteral(", error description = ") << errorDescription << QStringLiteral(", note: ") << note);
+
+    emit failure(errorDescription);
+}
+
 void FullSyncStaleDataItemsExpunger::connectToLocalStorage()
 {
     QNDEBUG(QStringLiteral("FullSyncStaleDataItemsExpunger::connectToLocalStorage"));
@@ -147,7 +370,55 @@ void FullSyncStaleDataItemsExpunger::connectToLocalStorage()
         return;
     }
 
-    // TODO: actually connect to the required signals/slots of the local storage
+    QObject::connect(this, QNSIGNAL(FullSyncStaleDataItemsExpunger,expungeNotebook,Notebook,QUuid),
+                     &m_localStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,onExpungeNotebookRequest,Notebook,QUuid));
+    QObject::connect(this, QNSIGNAL(FullSyncStaleDataItemsExpunger,expungeTag,Tag,QUuid),
+                     &m_localStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,onExpungeTagRequest,Tag,QUuid));
+    QObject::connect(this, QNSIGNAL(FullSyncStaleDataItemsExpunger,expungeSavedSearch,SavedSearch,QUuid),
+                     &m_localStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,onExpungeSavedSearchRequest,SavedSearch,QUuid));
+    QObject::connect(this, QNSIGNAL(FullSyncStaleDataItemsExpunger,expungeNote,Note,QUuid),
+                     &m_localStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,onExpungeNoteRequest,Note,QUuid));
+    QObject::connect(this, QNSIGNAL(FullSyncStaleDataItemsExpunger,updateNotebook,Notebook,QUuid),
+                     &m_localStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,onUpdateNotebookRequest,Notebook,QUuid));
+    QObject::connect(this, QNSIGNAL(FullSyncStaleDataItemsExpunger,updateTag,Tag,QUuid),
+                     &m_localStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,onUpdateTagRequest,Tag,QUuid));
+    QObject::connect(this, QNSIGNAL(FullSyncStaleDataItemsExpunger,updateSavedSearch,SavedSearch,QUuid),
+                     &m_localStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,onUpdateSavedSearchRequest,SavedSearch,QUuid));
+    QObject::connect(this, QNSIGNAL(FullSyncStaleDataItemsExpunger,updateNote,Note,bool,bool,QUuid),
+                     &m_localStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,onUpdateNoteRequest,Note,bool,bool,QUuid));
+
+    QObject::connect(&m_localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,expungeNotebookComplete,Notebook,QUuid),
+                     this, QNSLOT(FullSyncStaleDataItemsExpunger,onExpungeNotebookComplete,Notebook,QUuid));
+    QObject::connect(&m_localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,expungeNotebookFailed,Notebook,ErrorString,QUuid),
+                     this, QNSLOT(FullSyncStaleDataItemsExpunger,onExpungeNotebookFailed,Notebook,ErrorString,QUuid));
+    QObject::connect(&m_localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,expungeTagComplete,Tag,QStringList,QUuid),
+                     this, QNSLOT(FullSyncStaleDataItemsExpunger,onExpungeTagComplete,Tag,QStringList,QUuid));
+    QObject::connect(&m_localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,expungeTagFailed,Tag,ErrorString,QUuid),
+                     this, QNSLOT(FullSyncStaleDataItemsExpunger,onExpungeTagFailed,Tag,ErrorString,QUuid));
+    QObject::connect(&m_localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,expungeSavedSearchComplete,SavedSearch,QUuid),
+                     this, QNSLOT(FullSyncStaleDataItemsExpunger,onExpungeSavedSearchComplete,SavedSearch,QUuid));
+    QObject::connect(&m_localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,expungeSavedSearchFailed,SavedSearch,ErrorString,QUuid),
+                     this, QNSLOT(FullSyncStaleDataItemsExpunger,onExpungeSavedSearchFailed,SavedSearch,ErrorString,QUuid));
+    QObject::connect(&m_localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,expungeNoteComplete,Note,QUuid),
+                     this, QNSLOT(FullSyncStaleDataItemsExpunger,onExpungeNoteComplete,Note,QUuid));
+    QObject::connect(&m_localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,expungeNoteFailed,Note,ErrorString,QUuid),
+                     this, QNSLOT(FullSyncStaleDataItemsExpunger,onExpungeNoteFailed,Note,ErrorString,QUuid));
+    QObject::connect(&m_localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,updateNotebookComplete,Notebook,QUuid),
+                     this, QNSLOT(FullSyncStaleDataItemsExpunger,onUpdateNotebookComplete,Notebook,QUuid));
+    QObject::connect(&m_localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,updateNotebookFailed,Notebook,ErrorString,QUuid),
+                     this, QNSLOT(FullSyncStaleDataItemsExpunger,onUpdateNotebookFailed,Notebook,ErrorString,QUuid));
+    QObject::connect(&m_localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,updateTagComplete,Tag,QUuid),
+                     this, QNSLOT(FullSyncStaleDataItemsExpunger,onUpdateTagComplete,Tag,QUuid));
+    QObject::connect(&m_localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,updateTagFailed,Tag,ErrorString,QUuid),
+                     this, QNSLOT(FullSyncStaleDataItemsExpunger,onUpdateTagFailed,Tag,ErrorString,QUuid));
+    QObject::connect(&m_localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,updateSavedSearchComplete,SavedSearch,QUuid),
+                     this, QNSLOT(FullSyncStaleDataItemsExpunger,onUpdateSavedSearchComplete,SavedSearch,QUuid));
+    QObject::connect(&m_localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,updateSavedSearchFailed,SavedSearch,ErrorString,QUuid),
+                     this, QNSLOT(FullSyncStaleDataItemsExpunger,onUpdateSavedSearchFailed,SavedSearch,ErrorString,QUuid));
+    QObject::connect(&m_localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,updateNoteComplete,Note,bool,bool,QUuid),
+                     this, QNSLOT(FullSyncStaleDataItemsExpunger,onUpdateNoteComplete,Note,bool,bool,QUuid));
+    QObject::connect(&m_localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,updateNoteFailed,Note,bool,bool,ErrorString,QUuid),
+                     this, QNSLOT(FullSyncStaleDataItemsExpunger,onUpdateNoteFailed,Note,bool,bool,ErrorString,QUuid));
 
     m_connectedToLocalStorage = true;
 }
@@ -161,7 +432,55 @@ void FullSyncStaleDataItemsExpunger::disconnectFromLocalStorage()
         return;
     }
 
-    // TODO: actually disconnect from the local storage
+    QObject::disconnect(this, QNSIGNAL(FullSyncStaleDataItemsExpunger,expungeNotebook,Notebook,QUuid),
+                        &m_localStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,onExpungeNotebookRequest,Notebook,QUuid));
+    QObject::disconnect(this, QNSIGNAL(FullSyncStaleDataItemsExpunger,expungeTag,Tag,QUuid),
+                        &m_localStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,onExpungeTagRequest,Tag,QUuid));
+    QObject::disconnect(this, QNSIGNAL(FullSyncStaleDataItemsExpunger,expungeSavedSearch,SavedSearch,QUuid),
+                        &m_localStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,onExpungeSavedSearchRequest,SavedSearch,QUuid));
+    QObject::disconnect(this, QNSIGNAL(FullSyncStaleDataItemsExpunger,expungeNote,Note,QUuid),
+                        &m_localStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,onExpungeNoteRequest,Note,QUuid));
+    QObject::disconnect(this, QNSIGNAL(FullSyncStaleDataItemsExpunger,updateNotebook,Notebook,QUuid),
+                        &m_localStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,onUpdateNotebookRequest,Notebook,QUuid));
+    QObject::disconnect(this, QNSIGNAL(FullSyncStaleDataItemsExpunger,updateTag,Tag,QUuid),
+                        &m_localStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,onUpdateTagRequest,Tag,QUuid));
+    QObject::disconnect(this, QNSIGNAL(FullSyncStaleDataItemsExpunger,updateSavedSearch,SavedSearch,QUuid),
+                        &m_localStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,onUpdateSavedSearchRequest,SavedSearch,QUuid));
+    QObject::disconnect(this, QNSIGNAL(FullSyncStaleDataItemsExpunger,updateNote,Note,bool,bool,QUuid),
+                        &m_localStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,onUpdateNoteRequest,Note,bool,bool,QUuid));
+
+    QObject::disconnect(&m_localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,expungeNotebookComplete,Notebook,QUuid),
+                        this, QNSLOT(FullSyncStaleDataItemsExpunger,onExpungeNotebookComplete,Notebook,QUuid));
+    QObject::disconnect(&m_localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,expungeNotebookFailed,Notebook,ErrorString,QUuid),
+                        this, QNSLOT(FullSyncStaleDataItemsExpunger,onExpungeNotebookFailed,Notebook,ErrorString,QUuid));
+    QObject::disconnect(&m_localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,expungeTagComplete,Tag,QStringList,QUuid),
+                        this, QNSLOT(FullSyncStaleDataItemsExpunger,onExpungeTagComplete,Tag,QStringList,QUuid));
+    QObject::disconnect(&m_localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,expungeTagFailed,Tag,ErrorString,QUuid),
+                        this, QNSLOT(FullSyncStaleDataItemsExpunger,onExpungeTagFailed,Tag,ErrorString,QUuid));
+    QObject::disconnect(&m_localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,expungeSavedSearchComplete,SavedSearch,QUuid),
+                        this, QNSLOT(FullSyncStaleDataItemsExpunger,onExpungeSavedSearchComplete,SavedSearch,QUuid));
+    QObject::disconnect(&m_localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,expungeSavedSearchFailed,SavedSearch,ErrorString,QUuid),
+                        this, QNSLOT(FullSyncStaleDataItemsExpunger,onExpungeSavedSearchFailed,SavedSearch,ErrorString,QUuid));
+    QObject::disconnect(&m_localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,expungeNoteComplete,Note,QUuid),
+                        this, QNSLOT(FullSyncStaleDataItemsExpunger,onExpungeNoteComplete,Note,QUuid));
+    QObject::disconnect(&m_localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,expungeNoteFailed,Note,ErrorString,QUuid),
+                        this, QNSLOT(FullSyncStaleDataItemsExpunger,onExpungeNoteFailed,Note,ErrorString,QUuid));
+    QObject::disconnect(&m_localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,updateNotebookComplete,Notebook,QUuid),
+                        this, QNSLOT(FullSyncStaleDataItemsExpunger,onUpdateNotebookComplete,Notebook,QUuid));
+    QObject::disconnect(&m_localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,updateNotebookFailed,Notebook,ErrorString,QUuid),
+                        this, QNSLOT(FullSyncStaleDataItemsExpunger,onUpdateNotebookFailed,Notebook,ErrorString,QUuid));
+    QObject::disconnect(&m_localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,updateTagComplete,Tag,QUuid),
+                        this, QNSLOT(FullSyncStaleDataItemsExpunger,onUpdateTagComplete,Tag,QUuid));
+    QObject::disconnect(&m_localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,updateTagFailed,Tag,ErrorString,QUuid),
+                        this, QNSLOT(FullSyncStaleDataItemsExpunger,onUpdateTagFailed,Tag,ErrorString,QUuid));
+    QObject::disconnect(&m_localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,updateSavedSearchComplete,SavedSearch,QUuid),
+                        this, QNSLOT(FullSyncStaleDataItemsExpunger,onUpdateSavedSearchComplete,SavedSearch,QUuid));
+    QObject::disconnect(&m_localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,updateSavedSearchFailed,SavedSearch,ErrorString,QUuid),
+                        this, QNSLOT(FullSyncStaleDataItemsExpunger,onUpdateSavedSearchFailed,SavedSearch,ErrorString,QUuid));
+    QObject::disconnect(&m_localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,updateNoteComplete,Note,bool,bool,QUuid),
+                        this, QNSLOT(FullSyncStaleDataItemsExpunger,onUpdateNoteComplete,Note,bool,bool,QUuid));
+    QObject::disconnect(&m_localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,updateNoteFailed,Note,bool,bool,ErrorString,QUuid),
+                        this, QNSLOT(FullSyncStaleDataItemsExpunger,onUpdateNoteFailed,Note,bool,bool,ErrorString,QUuid));
 
     m_connectedToLocalStorage = false;
 }
@@ -404,6 +723,8 @@ void FullSyncStaleDataItemsExpunger::analyzeDataAndSendRequestsOrResult()
         return;
     }
 
+    connectToLocalStorage();
+
     for(auto it = notebookGuidsToExpunge.constBegin(), end = notebookGuidsToExpunge.constEnd(); it != end; ++it)
     {
         const QString & guid = *it;
@@ -503,7 +824,8 @@ void FullSyncStaleDataItemsExpunger::analyzeDataAndSendRequestsOrResult()
     {
         Note & note = *it;
         note.setGuid(QString());
-        note.setNotebookGuid(QString());    // NOTE: it is just in case one of notebooks stripped off the guid was this note's notebook
+        note.setNotebookGuid(QString());    // NOTE: it is just in case one of notebooks stripped off the guid was this note's notebook;
+                                            // it shouldn't be a problem since the note should have notebook local uid set as well
         note.setUpdateSequenceNumber(-1);
 
         QUuid requestId = QUuid::createUuid();
@@ -512,6 +834,65 @@ void FullSyncStaleDataItemsExpunger::analyzeDataAndSendRequestsOrResult()
                 << QStringLiteral(", note: ") << note);
         emit updateNote(note, /* update resources = */ false, /* update tags = */ false, requestId);
     }
+}
+
+void FullSyncStaleDataItemsExpunger::checkRequestsCompletionAndSendResult()
+{
+    QNDEBUG(QStringLiteral("FullSyncStaleDataItemsExpunger::checkRequestsCompletionAndSendResult"));
+
+    if (!m_expungeNotebookRequestIds.isEmpty()) {
+        QNDEBUG(QStringLiteral("Still pending ") << m_expungeNotebookRequestIds.size()
+                << QStringLiteral(" expunge notebook requests"));
+        return;
+    }
+
+    if (!m_expungeTagRequestIds.isEmpty()) {
+        QNDEBUG(QStringLiteral("Still pending ") << m_expungeTagRequestIds.size()
+                << QStringLiteral(" expunge tag requests"));
+        return;
+    }
+
+    if (!m_expungeNoteRequestIds.isEmpty()) {
+        QNDEBUG(QStringLiteral("Still pending ") << m_expungeNoteRequestIds.size()
+                << QStringLiteral(" expunge note requests"));
+        return;
+    }
+
+    if (!m_expungeSavedSearchRequestIds.isEmpty()) {
+        QNDEBUG(QStringLiteral("Still pending ") << m_expungeSavedSearchRequestIds.size()
+                << QStringLiteral(" expunge saved search requests"));
+        return;
+    }
+
+    if (!m_updateNotebookRequestId.isEmpty()) {
+        QNDEBUG(QStringLiteral("Still pending ") << m_updateNotebookRequestId.size()
+                << QStringLiteral(" update notebook requests"));
+        return;
+    }
+
+    if (!m_updateTagRequestIds.isEmpty()) {
+        QNDEBUG(QStringLiteral("Still pending ") << m_updateTagRequestIds.size()
+                << QStringLiteral(" update tag requests"));
+        return;
+    }
+
+    if (!m_updateNoteRequestIds.isEmpty()) {
+        QNDEBUG(QStringLiteral("Still pending ") << m_updateNoteRequestIds.size()
+                << QStringLiteral(" update note requests"));
+        return;
+    }
+
+    if (!m_updateSavedSearchRequestIds.isEmpty()) {
+        QNDEBUG(QStringLiteral("Still pending ") << m_updateSavedSearchRequestIds.size()
+                << QStringLiteral(" update saved search requests"));
+        return;
+    }
+
+    disconnectFromLocalStorage();
+    m_inProgress = false;
+
+    QNDEBUG(QStringLiteral("Emitting the finished signal"));
+    emit finished();
 }
 
 } // namespace quentier
