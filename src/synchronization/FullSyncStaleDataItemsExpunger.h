@@ -22,7 +22,6 @@
 #include "NoteSyncCache.h"
 #include <QPointer>
 #include <QSet>
-#include <QHash>
 #include <QUuid>
 
 namespace quentier {
@@ -82,26 +81,60 @@ public:
 Q_SIGNALS:
     void finished();
 
+// private signals:
+    void expungeNotebook(Notebook notebook, QUuid requestId);
+    void expungeTag(Tag tag, QUuid requestId);
+    void expungeSavedSearch(SavedSearch search, QUuid requestId);
+    void expungeNote(Note note, QUuid requestId);
+
+    void updateNotebook(Notebook notebook, QUuid requestId);
+    void updateTag(Tag tag, QUuid requestId);
+    void updateSavedSearch(SavedSearch search, QUuid requestId);
+    void updateNote(Note note, bool updateResources, bool updateTags, QUuid requestId);
+
+public Q_SLOTS:
+    void start();
+
+private Q_SLOTS:
+    void onNotebookCacheFilled();
+    void onTagCacheFilled();
+    void onSavedSearchCacheFilled();
+    void onNoteCacheFilled();
+
 private:
     void connectToLocalStorage();
     void disconnectFromLocalStorage();
+
+    void checkAndRequestCachesFilling();
+    bool pendingCachesFilling() const;
+
+    void analyzeDataAndSendRequestsOrResult();
 
 private:
     LocalStorageManagerAsync &      m_localStorageManagerAsync;
     bool                            m_connectedToLocalStorage;
 
+    bool                            m_inProgress;
+
     Caches                          m_caches;
+    NoteSyncCache                   m_noteSyncCache;
+
     SyncedGuids                     m_syncedGuids;
 
-    QHash<QUuid, QString>           m_notebookGuidsByExpungeRequestId;
-    QHash<QUuid, QString>           m_tagGuidsByExpungeRequestId;
-    QHash<QUuid, QString>           m_noteGuidsByExpungeRequestId;
-    QHash<QUuid, QString>           m_savedSearchGuidsByExpungeRequestId;
+    quint64                         m_numPendingNotebookSyncCaches;
+    quint64                         m_numPendingTagSyncCaches;
+    bool                            m_pendingSavedSearchSyncCache;
+    bool                            m_pendingNoteSyncCache;
 
-    QHash<QUuid, QString>           m_notebookGuidsByUpdateRequestId;
-    QHash<QUuid, QString>           m_tagGuidsByUpdateRequestId;
-    QHash<QUuid, QString>           m_noteGuidsByUpdateRequestId;
-    QHash<QUuid, QString>           m_savedSearchGuidByUpdateRequestId;
+    QSet<QUuid>                     m_expungeNotebookRequestIds;
+    QSet<QUuid>                     m_expungeTagRequestIds;
+    QSet<QUuid>                     m_expungeNoteRequestIds;
+    QSet<QUuid>                     m_expungeSavedSearchRequestIds;
+
+    QSet<QUuid>                     m_updateNotebookRequestId;
+    QSet<QUuid>                     m_updateTagRequestIds;
+    QSet<QUuid>                     m_updateNoteRequestIds;
+    QSet<QUuid>                     m_updateSavedSearchRequestIds;
 };
 
 } // namespace quentier

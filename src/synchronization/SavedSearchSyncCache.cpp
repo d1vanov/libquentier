@@ -21,7 +21,8 @@
 
 namespace quentier {
 
-SavedSearchSyncCache::SavedSearchSyncCache(LocalStorageManagerAsync & localStorageManagerAsync) :
+SavedSearchSyncCache::SavedSearchSyncCache(LocalStorageManagerAsync & localStorageManagerAsync, QObject * parent) :
+    QObject(parent),
     m_localStorageManagerAsync(localStorageManagerAsync),
     m_connectedToLocalStorage(false),
     m_savedSearchNameByLocalUid(),

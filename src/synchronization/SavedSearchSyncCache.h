@@ -30,7 +30,7 @@ class SavedSearchSyncCache: public QObject
 {
     Q_OBJECT
 public:
-    SavedSearchSyncCache(LocalStorageManagerAsync & localStorageManagerAsync);
+    SavedSearchSyncCache(LocalStorageManagerAsync & localStorageManagerAsync, QObject * parent = Q_NULLPTR);
 
     void clear();
 
