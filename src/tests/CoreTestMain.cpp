@@ -17,6 +17,7 @@
  */
 
 #include "CoreTester.h"
+#include "FullSyncStaleDataItemsExpungerTester.h"
 #include <quentier/logging/QuentierLogger.h>
 #include <quentier/utility/QuentierApplication.h>
 #include <QtTest/QtTest>
@@ -35,5 +36,15 @@ int main(int argc, char *argv[])
     QUENTIER_SET_MIN_LOG_LEVEL(Warn);
     QUENTIER_ADD_STDOUT_LOG_DESTINATION();
 
-    return QTest::qExec(new CoreTester);
+    int res = QTest::qExec(new CoreTester);
+    if (res != 0) {
+        return res;
+    }
+
+    res = QTest::qExec(new FullSyncStaleDataItemsExpungerTester);
+    if (res != 0) {
+        return res;
+    }
+
+    return 0;
 }

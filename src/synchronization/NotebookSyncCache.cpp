@@ -194,11 +194,11 @@ void NotebookSyncCache::connectToLocalStorage()
     QObject::connect(this,
                      QNSIGNAL(NotebookSyncCache,listNotebooks,LocalStorageManager::ListObjectsOptions,
                               size_t,size_t,LocalStorageManager::ListNotebooksOrder::type,
-                              LocalStorageManager::OrderDirection::type orderDirection,QString,QUuid),
+                              LocalStorageManager::OrderDirection::type,QString,QUuid),
                      &m_localStorageManagerAsync,
                      QNSLOT(LocalStorageManagerAsync,onListNotebooksRequest,LocalStorageManager::ListObjectsOptions,
                             size_t,size_t,LocalStorageManager::ListNotebooksOrder::type,
-                            LocalStorageManager::OrderDirection::type orderDirection,QString,QUuid));
+                            LocalStorageManager::OrderDirection::type,QString,QUuid));
 
     // Connect local storage manager async's signals to local slots
     QObject::connect(&m_localStorageManagerAsync,
@@ -248,11 +248,11 @@ void NotebookSyncCache::disconnectFromLocalStorage()
     QObject::disconnect(this,
                         QNSIGNAL(NotebookSyncCache,listNotebooks,LocalStorageManager::ListObjectsOptions,
                                  size_t,size_t,LocalStorageManager::ListNotebooksOrder::type,
-                                 LocalStorageManager::OrderDirection::type orderDirection,QString,QUuid),
+                                 LocalStorageManager::OrderDirection::type,QString,QUuid),
                         &m_localStorageManagerAsync,
                         QNSLOT(LocalStorageManagerAsync,onListNotebooksRequest,LocalStorageManager::ListObjectsOptions,
                                size_t,size_t,LocalStorageManager::ListNotebooksOrder::type,
-                               LocalStorageManager::OrderDirection::type orderDirection,QString,QUuid));
+                               LocalStorageManager::OrderDirection::type,QString,QUuid));
 
     // Connect local storage manager async's signals to local slots
     QObject::disconnect(&m_localStorageManagerAsync,

@@ -35,12 +35,21 @@ private Q_SLOTS:
     void init();
     void cleanup();
 
+    void testNoStaleDataItems();
+
 private:
     void setupBaseDataItems();
 
 private:
     Account                     m_testAccount;
     LocalStorageManagerAsync *  m_pLocalStorageManagerAsync;
+    FullSyncStaleDataItemsExpunger::SyncedGuids     m_syncedGuids;
+
+    QList<NotebookSyncCache*>     m_notebookSyncCaches;
+    QList<TagSyncCache*>          m_tagSyncCaches;
+    SavedSearchSyncCache *        m_pSavedSearchSyncCache;
+
+    bool    m_detectedTestFailure;
 };
 
 } // namespace test

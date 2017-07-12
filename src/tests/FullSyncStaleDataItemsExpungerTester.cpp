@@ -17,8 +17,16 @@
  */
 
 #include "FullSyncStaleDataItemsExpungerTester.h"
+#include "../synchronization/NotebookSyncCache.h"
+#include "../synchronization/TagSyncCache.h"
+#include "../synchronization/SavedSearchSyncCache.h"
 #include <quentier/utility/UidGenerator.h>
+#include <quentier/utility/EventLoopWithExitStatus.h>
 #include <QtTest/QTest>
+#include <QTimer>
+
+// 10 minutes should be enough
+#define MAX_ALLOWED_MILLISECONDS 600000
 
 namespace quentier {
 namespace test {
@@ -27,7 +35,11 @@ FullSyncStaleDataItemsExpungerTester::FullSyncStaleDataItemsExpungerTester(QObje
     QObject(parent),
     m_testAccount(QStringLiteral("FullSyncStaleDataItemsExpungerTesterFakeUser"),
                   Account::Type::Evernote, qevercloud::UserID(1)),
-    m_pLocalStorageManagerAsync(Q_NULLPTR)
+    m_pLocalStorageManagerAsync(Q_NULLPTR),
+    m_syncedGuids(),
+    m_notebookSyncCaches(),
+    m_tagSyncCaches(),
+    m_pSavedSearchSyncCache(Q_NULLPTR)
 {}
 
 FullSyncStaleDataItemsExpungerTester::~FullSyncStaleDataItemsExpungerTester()
@@ -39,6 +51,14 @@ void FullSyncStaleDataItemsExpungerTester::init()
     m_pLocalStorageManagerAsync = new LocalStorageManagerAsync(m_testAccount, /* start from scratch = */ true,
                                                                /* override lock = */ false, this);
     m_pLocalStorageManagerAsync->init();
+
+    NotebookSyncCache * pNotebookSyncCache = new NotebookSyncCache(*m_pLocalStorageManagerAsync, QString(), this);
+    m_notebookSyncCaches << pNotebookSyncCache;
+
+    TagSyncCache * pTagSyncCache = new TagSyncCache(*m_pLocalStorageManagerAsync, QString(), this);
+    m_tagSyncCaches << pTagSyncCache;
+
+    m_pSavedSearchSyncCache = new SavedSearchSyncCache(*m_pLocalStorageManagerAsync, this);
 }
 
 void FullSyncStaleDataItemsExpungerTester::cleanup()
@@ -47,6 +67,80 @@ void FullSyncStaleDataItemsExpungerTester::cleanup()
         m_pLocalStorageManagerAsync->deleteLater();
         m_pLocalStorageManagerAsync = Q_NULLPTR;
     }
+
+    for(auto it = m_notebookSyncCaches.begin(),
+        end = m_notebookSyncCaches.end(); it != end; ++it)
+    {
+        (*it)->deleteLater();
+    }
+
+    m_notebookSyncCaches.clear();
+
+    for(auto it = m_tagSyncCaches.begin(),
+        end = m_tagSyncCaches.end(); it != end; ++it)
+    {
+        (*it)->deleteLater();
+    }
+
+    m_tagSyncCaches.clear();
+
+    if (m_pSavedSearchSyncCache) {
+        m_pSavedSearchSyncCache->deleteLater();
+        m_pSavedSearchSyncCache = Q_NULLPTR;
+    }
+
+    m_syncedGuids.m_syncedNotebookGuids.clear();
+    m_syncedGuids.m_syncedTagGuids.clear();
+    m_syncedGuids.m_syncedNoteGuids.clear();
+    m_syncedGuids.m_syncedSavedSearchGuids.clear();
+}
+
+void FullSyncStaleDataItemsExpungerTester::testNoStaleDataItems()
+{
+    if (Q_UNLIKELY(!m_pLocalStorageManagerAsync)) {
+        QFAIL("Detected null pointer to LocalStorageManagerAsync");
+        return;
+    }
+
+    if (Q_UNLIKELY(!m_pSavedSearchSyncCache)) {
+        QFAIL("Detected null pointer to SavedSearchSyncCache");
+        return;
+    }
+
+    FullSyncStaleDataItemsExpunger::Caches caches(m_notebookSyncCaches, m_tagSyncCaches, *m_pSavedSearchSyncCache);
+    FullSyncStaleDataItemsExpunger expunger(*m_pLocalStorageManagerAsync, caches, m_syncedGuids);
+
+    int expungerTestResult = -1;
+    {
+        QTimer timer;
+        timer.setInterval(MAX_ALLOWED_MILLISECONDS);
+        timer.setSingleShot(true);
+
+        EventLoopWithExitStatus loop;
+        QObject::connect(&timer, QNSIGNAL(QTimer,timeout), &loop, QNSLOT(EventLoopWithExitStatus,exitAsTimeout));
+        QObject::connect(&expunger, QNSIGNAL(FullSyncStaleDataItemsExpunger,finished), &loop, QNSLOT(EventLoopWithExitStatus,exitAsSuccess));
+        QObject::connect(&expunger, SIGNAL(failure(ErrorString)), &loop, SLOT(exitAsFailure()));
+
+        QTimer slotInvokingTimer;
+        slotInvokingTimer.setInterval(500);
+        slotInvokingTimer.setSingleShot(true);
+
+        timer.start();
+        slotInvokingTimer.singleShot(0, &expunger, SLOT(start()));
+        expungerTestResult = loop.exec();
+    }
+
+    if (expungerTestResult == -1) {
+        QFAIL("Internal error: incorrect return status from FullSyncStaleDataItemsExpunger");
+    }
+    else if (expungerTestResult == EventLoopWithExitStatus::ExitStatus::Failure) {
+        QFAIL("Detected failure during the asynchronous loop processing in FullSyncStaleDataItemsExpunger");
+    }
+    else if (expungerTestResult == EventLoopWithExitStatus::ExitStatus::Timeout) {
+        QFAIL("FullSyncStaleDataItemsExpunger failed to finish in time");
+    }
+
+    // TODO: continue from here: verify that no items were actually expunged
 }
 
 void FullSyncStaleDataItemsExpungerTester::setupBaseDataItems()
@@ -240,6 +334,21 @@ void FullSyncStaleDataItemsExpungerTester::setupBaseDataItems()
     errorDescription.clear();
     res = pLocalStorageManager->addNote(fifthNote, errorDescription);
     QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
+
+    Q_UNUSED(m_syncedGuids.m_syncedNotebookGuids.insert(firstNotebook.guid()))
+    Q_UNUSED(m_syncedGuids.m_syncedNotebookGuids.insert(secondNotebook.guid()))
+    Q_UNUSED(m_syncedGuids.m_syncedNotebookGuids.insert(thirdNotebook.guid()))
+    Q_UNUSED(m_syncedGuids.m_syncedTagGuids.insert(firstTag.guid()))
+    Q_UNUSED(m_syncedGuids.m_syncedTagGuids.insert(secondTag.guid()))
+    Q_UNUSED(m_syncedGuids.m_syncedTagGuids.insert(thirdTag.guid()))
+    Q_UNUSED(m_syncedGuids.m_syncedTagGuids.insert(fourthTag.guid()))
+    Q_UNUSED(m_syncedGuids.m_syncedSavedSearchGuids.insert(firstSearch.guid()))
+    Q_UNUSED(m_syncedGuids.m_syncedSavedSearchGuids.insert(secondSearch.guid()))
+    Q_UNUSED(m_syncedGuids.m_syncedNoteGuids.insert(firstNote.guid()))
+    Q_UNUSED(m_syncedGuids.m_syncedNoteGuids.insert(secondNote.guid()))
+    Q_UNUSED(m_syncedGuids.m_syncedNoteGuids.insert(thirdNote.guid()))
+    Q_UNUSED(m_syncedGuids.m_syncedNoteGuids.insert(fourthNote.guid()))
+    Q_UNUSED(m_syncedGuids.m_syncedNoteGuids.insert(fifthNote.guid()))
 }
 
 } // namespace test
