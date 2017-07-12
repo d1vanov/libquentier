@@ -65,6 +65,16 @@ const LocalStorageCacheManager * LocalStorageManagerAsync::localStorageCacheMana
     }
 }
 
+const LocalStorageManager * LocalStorageManagerAsync::localStorageManager() const
+{
+    return m_pLocalStorageManager;
+}
+
+LocalStorageManager * LocalStorageManagerAsync::localStorageManager()
+{
+    return m_pLocalStorageManager;
+}
+
 void LocalStorageManagerAsync::init()
 {
     if (m_pLocalStorageManager) {

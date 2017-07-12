@@ -47,6 +47,9 @@ public:
 
     const LocalStorageCacheManager * localStorageCacheManager() const;
 
+    const LocalStorageManager * localStorageManager() const;
+    LocalStorageManager * localStorageManager();
+
 Q_SIGNALS:
     // Sent when the initialization is complete
     void initialized();

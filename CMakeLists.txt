@@ -645,6 +645,7 @@ set(TEST_HEADERS
     src/tests/LocalStorageManagerNoteSearchQueryTest.h
     src/tests/ResourceRecognitionIndicesParsingTest.h
     src/tests/TagSortByParentChildRelationsTest.h
+    src/tests/FullSyncStaleDataItemsExpungerTester.h
     src/tests/CoreTester.h)
 
 set(TEST_SOURCES
@@ -664,6 +665,7 @@ set(TEST_SOURCES
     src/tests/LocalStorageManagerNoteSearchQueryTest.cpp
     src/tests/ResourceRecognitionIndicesParsingTest.cpp
     src/tests/TagSortByParentChildRelationsTest.cpp
+    src/tests/FullSyncStaleDataItemsExpungerTester.cpp
     src/tests/CoreTester.cpp
     src/tests/CoreTestMain.cpp)
 
