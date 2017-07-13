@@ -35,10 +35,16 @@ private Q_SLOTS:
     void init();
     void cleanup();
 
-    void testNoStaleDataItems();
+    void testEmpty();
 
 private:
     void setupBaseDataItems();
+
+    void doTest(const bool useBaseDataItems,
+                const QList<Notebook> & extraNotebooks,
+                const QList<Tag> & extraTags,
+                const QList<SavedSearch> & extraSavedSearches,
+                const QList<Note> & extraNotes);
 
 private:
     Account                     m_testAccount;

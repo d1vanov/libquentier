@@ -31,6 +31,30 @@
 namespace quentier {
 namespace test {
 
+template <class T>
+struct CompareItemByLocalUid
+{
+    CompareItemByLocalUid(const QString & targetLocalUid) :
+        m_targetLocalUid(targetLocalUid)
+    {}
+
+    bool operator()(const T & item) const { return item.localUid() == m_targetLocalUid; }
+
+    QString     m_targetLocalUid;
+};
+
+template <class T>
+struct CompareItemByGuid
+{
+    CompareItemByGuid(const QString & targetGuid) :
+        m_targetGuid(targetGuid)
+    {}
+
+    bool operator()(const T & item) const { return (item.hasGuid() && (item.guid() == m_targetGuid)); }
+
+    QString     m_targetGuid;
+};
+
 FullSyncStaleDataItemsExpungerTester::FullSyncStaleDataItemsExpungerTester(QObject * parent) :
     QObject(parent),
     m_testAccount(QStringLiteral("FullSyncStaleDataItemsExpungerTesterFakeUser"),
@@ -95,52 +119,9 @@ void FullSyncStaleDataItemsExpungerTester::cleanup()
     m_syncedGuids.m_syncedSavedSearchGuids.clear();
 }
 
-void FullSyncStaleDataItemsExpungerTester::testNoStaleDataItems()
+void FullSyncStaleDataItemsExpungerTester::testEmpty()
 {
-    if (Q_UNLIKELY(!m_pLocalStorageManagerAsync)) {
-        QFAIL("Detected null pointer to LocalStorageManagerAsync");
-        return;
-    }
-
-    if (Q_UNLIKELY(!m_pSavedSearchSyncCache)) {
-        QFAIL("Detected null pointer to SavedSearchSyncCache");
-        return;
-    }
-
-    FullSyncStaleDataItemsExpunger::Caches caches(m_notebookSyncCaches, m_tagSyncCaches, *m_pSavedSearchSyncCache);
-    FullSyncStaleDataItemsExpunger expunger(*m_pLocalStorageManagerAsync, caches, m_syncedGuids);
-
-    int expungerTestResult = -1;
-    {
-        QTimer timer;
-        timer.setInterval(MAX_ALLOWED_MILLISECONDS);
-        timer.setSingleShot(true);
-
-        EventLoopWithExitStatus loop;
-        QObject::connect(&timer, QNSIGNAL(QTimer,timeout), &loop, QNSLOT(EventLoopWithExitStatus,exitAsTimeout));
-        QObject::connect(&expunger, QNSIGNAL(FullSyncStaleDataItemsExpunger,finished), &loop, QNSLOT(EventLoopWithExitStatus,exitAsSuccess));
-        QObject::connect(&expunger, SIGNAL(failure(ErrorString)), &loop, SLOT(exitAsFailure()));
-
-        QTimer slotInvokingTimer;
-        slotInvokingTimer.setInterval(500);
-        slotInvokingTimer.setSingleShot(true);
-
-        timer.start();
-        slotInvokingTimer.singleShot(0, &expunger, SLOT(start()));
-        expungerTestResult = loop.exec();
-    }
-
-    if (expungerTestResult == -1) {
-        QFAIL("Internal error: incorrect return status from FullSyncStaleDataItemsExpunger");
-    }
-    else if (expungerTestResult == EventLoopWithExitStatus::ExitStatus::Failure) {
-        QFAIL("Detected failure during the asynchronous loop processing in FullSyncStaleDataItemsExpunger");
-    }
-    else if (expungerTestResult == EventLoopWithExitStatus::ExitStatus::Timeout) {
-        QFAIL("FullSyncStaleDataItemsExpunger failed to finish in time");
-    }
-
-    // TODO: continue from here: verify that no items were actually expunged
+    doTest(/* use base data items = */ false, QList<Notebook>(), QList<Tag>(), QList<SavedSearch>(), QList<Note>());
 }
 
 void FullSyncStaleDataItemsExpungerTester::setupBaseDataItems()
@@ -349,6 +330,235 @@ void FullSyncStaleDataItemsExpungerTester::setupBaseDataItems()
     Q_UNUSED(m_syncedGuids.m_syncedNoteGuids.insert(thirdNote.guid()))
     Q_UNUSED(m_syncedGuids.m_syncedNoteGuids.insert(fourthNote.guid()))
     Q_UNUSED(m_syncedGuids.m_syncedNoteGuids.insert(fifthNote.guid()))
+}
+
+void FullSyncStaleDataItemsExpungerTester::doTest(const bool useBaseDataItems,
+                                                  const QList<Notebook> & extraNotebooks,
+                                                  const QList<Tag> & extraTags,
+                                                  const QList<SavedSearch> & extraSavedSearches,
+                                                  const QList<Note> & extraNotes)
+{
+    if (Q_UNLIKELY(!m_pLocalStorageManagerAsync)) {
+        QFAIL("Detected null pointer to LocalStorageManagerAsync");
+    }
+
+    LocalStorageManager * pLocalStorageManager = m_pLocalStorageManagerAsync->localStorageManager();
+    if (Q_UNLIKELY(!pLocalStorageManager)) {
+        QFAIL("Detected null pointer to LocalStorageManager");
+    }
+
+    if (Q_UNLIKELY(!m_pSavedSearchSyncCache)) {
+        QFAIL("Detected null pointer to SavedSearchSyncCache");
+    }
+
+    if (useBaseDataItems) {
+        setupBaseDataItems();
+    }
+
+    for(auto it = extraNotebooks.constBegin(), end = extraNotebooks.constEnd(); it != end; ++it)
+    {
+        Notebook notebook = *it;
+
+        ErrorString errorDescription;
+        bool res = pLocalStorageManager->addNotebook(notebook, errorDescription);
+        if (!res) {
+            QFAIL(qPrintable(errorDescription.nonLocalizedString()));
+        }
+    }
+
+    for(auto it = extraTags.constBegin(), end = extraTags.constEnd(); it != end; ++it)
+    {
+        Tag tag = *it;
+
+        ErrorString errorDescription;
+        bool res = pLocalStorageManager->addTag(tag, errorDescription);
+        if (!res) {
+            QFAIL(qPrintable(errorDescription.nonLocalizedString()));
+        }
+    }
+
+    for(auto it = extraSavedSearches.constBegin(), end = extraSavedSearches.constEnd(); it != end; ++it)
+    {
+        SavedSearch search = *it;
+
+        ErrorString errorDescription;
+        bool res = pLocalStorageManager->addSavedSearch(search, errorDescription);
+        if (!res) {
+            QFAIL(qPrintable(errorDescription.nonLocalizedString()));
+        }
+    }
+
+    for(auto it = extraNotes.constBegin(), end = extraNotes.constEnd(); it != end; ++it)
+    {
+        Note note = *it;
+
+        ErrorString errorDescription;
+        bool res = pLocalStorageManager->addNote(note, errorDescription);
+        if (!res) {
+            QFAIL(qPrintable(errorDescription.nonLocalizedString()));
+        }
+    }
+
+    FullSyncStaleDataItemsExpunger::Caches caches(m_notebookSyncCaches, m_tagSyncCaches, *m_pSavedSearchSyncCache);
+    FullSyncStaleDataItemsExpunger expunger(*m_pLocalStorageManagerAsync, caches, m_syncedGuids);
+
+    int expungerTestResult = -1;
+    {
+        QTimer timer;
+        timer.setInterval(MAX_ALLOWED_MILLISECONDS);
+        timer.setSingleShot(true);
+
+        EventLoopWithExitStatus loop;
+        QObject::connect(&timer, QNSIGNAL(QTimer,timeout), &loop, QNSLOT(EventLoopWithExitStatus,exitAsTimeout));
+        QObject::connect(&expunger, QNSIGNAL(FullSyncStaleDataItemsExpunger,finished), &loop, QNSLOT(EventLoopWithExitStatus,exitAsSuccess));
+        QObject::connect(&expunger, SIGNAL(failure(ErrorString)), &loop, SLOT(exitAsFailure()));
+
+        QTimer slotInvokingTimer;
+        slotInvokingTimer.setInterval(500);
+        slotInvokingTimer.setSingleShot(true);
+
+        timer.start();
+        slotInvokingTimer.singleShot(0, &expunger, SLOT(start()));
+        expungerTestResult = loop.exec();
+    }
+
+    if (expungerTestResult == -1) {
+        QFAIL("Internal error: incorrect return status from FullSyncStaleDataItemsExpunger");
+    }
+    else if (expungerTestResult == EventLoopWithExitStatus::ExitStatus::Failure) {
+        QFAIL("Detected failure during the asynchronous loop processing in FullSyncStaleDataItemsExpunger");
+    }
+    else if (expungerTestResult == EventLoopWithExitStatus::ExitStatus::Timeout) {
+        QFAIL("FullSyncStaleDataItemsExpunger failed to finish in time");
+    }
+
+    // ====== Check remaining notebooks, verify each of them was intended to be preserved + verify all of notebooks
+    // intended to be preserved were actually preserved ======
+
+    ErrorString errorDescription;
+    QList<Notebook> remainingNotebooks = pLocalStorageManager->listNotebooks(LocalStorageManager::ListAll, errorDescription);
+    if (remainingNotebooks.isEmpty() && !errorDescription.isEmpty()) {
+        QFAIL(qPrintable(errorDescription.nonLocalizedString()));
+    }
+
+    for(auto it = remainingNotebooks.constBegin(), end = remainingNotebooks.constEnd(); it != end; ++it)
+    {
+        const Notebook & notebook = *it;
+
+        if (notebook.hasGuid())
+        {
+            auto guidIt = m_syncedGuids.m_syncedNotebookGuids.find(notebook.guid());
+            if (guidIt != m_syncedGuids.m_syncedNotebookGuids.end()) {
+                continue;
+            }
+
+            QFAIL("Found a non-synced notebook which survived the purge performed by FullSyncStaleDataItemsExpunger and kept its guid");
+        }
+
+        if (!notebook.isDirty()) {
+            QFAIL("Found a non-synced and non-dirty notebook which survived the purge performed by FullSyncStaleDataItemsExpunger");
+        }
+
+        auto extraNotebookIt = std::find_if(extraNotebooks.constBegin(), extraNotebooks.constEnd(),
+                                            CompareItemByLocalUid<Notebook>(notebook.localUid()));
+        if (extraNotebookIt == extraNotebooks.constEnd()) {
+            QFAIL("Found a notebook which survived the purge performed by FullSyncStaleDataItemsExpunger but has no guid "
+                  "and is not contained within the list of extra notebooks");
+        }
+    }
+
+    for(auto it = extraNotebooks.constBegin(), end = extraNotebooks.constEnd(); it != end; ++it)
+    {
+        const Notebook & notebook = *it;
+
+        auto remainingNotebookIt = std::find_if(remainingNotebooks.constBegin(), remainingNotebooks.constEnd(),
+                                                CompareItemByLocalUid<Notebook>(notebook.localUid()));
+        if ((remainingNotebookIt == remainingNotebooks.constEnd()) && notebook.isDirty()) {
+            QFAIL("One of extra notebooks which was dirty has not survived the purge performed "
+                  "by FullSyncStaleDataItemsExpunger even though it was intended to be preserved");
+        }
+        else if ((remainingNotebookIt != remainingNotebooks.constEnd()) && !notebook.isDirty()) {
+            QFAIL("One of etxra notebooks which was not dirty has survived the purge performed "
+                  "by FullSyncStaleDataItemsExpunger even though it was intended to be expunged");
+        }
+    }
+
+    for(auto it = m_syncedGuids.m_syncedNotebookGuids.constBegin(),
+        end = m_syncedGuids.m_syncedNotebookGuids.constEnd(); it != end; ++it)
+    {
+        const QString & syncedGuid = *it;
+
+        auto remainingNotebookIt = std::find_if(remainingNotebooks.constBegin(), remainingNotebooks.constEnd(),
+                                                CompareItemByGuid<Notebook>(syncedGuid));
+        if (remainingNotebookIt == remainingNotebooks.constEnd()) {
+            QFAIL("Could not find a notebook within the remaining ones which guid was marked as synced");
+        }
+    }
+
+    // ====== Check remaining tags, verify each of them was intended to be preserved + verify all of tags intended
+    // to be preserved were actually preserved ======
+
+    errorDescription.clear();
+    QList<Tag> remainingTags = pLocalStorageManager->listTags(LocalStorageManager::ListAll, errorDescription);
+    if (remainingTags.isEmpty() && !errorDescription.isEmpty()) {
+        QFAIL(qPrintable(errorDescription.nonLocalizedString()));
+    }
+
+    for(auto it = remainingTags.constBegin(), end = remainingTags.constEnd(); it != end; ++it)
+    {
+        const Tag & tag = *it;
+
+        if (tag.hasGuid())
+        {
+            auto guidIt = m_syncedGuids.m_syncedTagGuids.find(tag.guid());
+            if (guidIt != m_syncedGuids.m_syncedTagGuids.end()) {
+                continue;
+            }
+
+            QFAIL("Found a non-synced tag which survived the purge performed by FullSyncStaleDataItemsExpunger and kept its guid");
+        }
+
+        if (!tag.isDirty()) {
+            QFAIL("Found a non-synced and non-dirty tag which survived the purge performed by FullSyncStaleDataItemsExpunger");
+        }
+
+        auto extraTagIt = std::find_if(extraTags.constBegin(), extraTags.constEnd(),
+                                       CompareItemByLocalUid<Tag>(tag.localUid()));
+        if (extraTagIt == extraTags.constEnd()) {
+            QFAIL("Found a tag which survived the purge performed by FullSyncStaleDataItemsExpunger but has no guid "
+                  "and is not contained within the list of extra tags");
+        }
+    }
+
+    for(auto it = extraTags.constBegin(), end = extraTags.constEnd(); it != end; ++it)
+    {
+        const Tag & tag = *it;
+
+        auto remainingTagIt = std::find_if(remainingTags.constBegin(), remainingTags.constEnd(),
+                                           CompareItemByLocalUid<Tag>(tag.localUid()));
+        if ((remainingTagIt == remainingTags.constEnd()) && tag.isDirty()) {
+            QFAIL("One of extra tags which was dirty has not survived the purge performed "
+                  "by FullSyncStaleDataItemsExpunger even though it was intended to be preserved");
+        }
+        else if ((remainingTagIt != remainingTags.constEnd()) && !tag.isDirty()) {
+            QFAIL("One of extra tags which was not dirty has survived the purge performed "
+                  "by FullSyncStaleDataItemsExpunger even though it was intended to be expunged");
+        }
+    }
+
+    for(auto it = m_syncedGuids.m_syncedTagGuids.constBegin(),
+        end = m_syncedGuids.m_syncedTagGuids.constEnd(); it != end; ++it)
+    {
+        const QString & syncedGuid = *it;
+
+        auto remainingTagIt = std::find_if(remainingTags.constBegin(), remainingTags.constEnd(),
+                                           CompareItemByGuid<Tag>(syncedGuid));
+        if (remainingTagIt == remainingTags.constEnd()) {
+            QFAIL("Could not find a tag within the remaining ones which guid was marked as synced");
+        }
+    }
+
+    // TODO: implement similar checks for saved searches and notes
 }
 
 } // namespace test
