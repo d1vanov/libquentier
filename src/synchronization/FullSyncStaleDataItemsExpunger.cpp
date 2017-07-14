@@ -371,54 +371,78 @@ void FullSyncStaleDataItemsExpunger::connectToLocalStorage()
     }
 
     QObject::connect(this, QNSIGNAL(FullSyncStaleDataItemsExpunger,expungeNotebook,Notebook,QUuid),
-                     &m_localStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,onExpungeNotebookRequest,Notebook,QUuid));
+                     &m_localStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,onExpungeNotebookRequest,Notebook,QUuid),
+                     Qt::QueuedConnection);
     QObject::connect(this, QNSIGNAL(FullSyncStaleDataItemsExpunger,expungeTag,Tag,QUuid),
-                     &m_localStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,onExpungeTagRequest,Tag,QUuid));
+                     &m_localStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,onExpungeTagRequest,Tag,QUuid),
+                     Qt::QueuedConnection);
     QObject::connect(this, QNSIGNAL(FullSyncStaleDataItemsExpunger,expungeSavedSearch,SavedSearch,QUuid),
-                     &m_localStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,onExpungeSavedSearchRequest,SavedSearch,QUuid));
+                     &m_localStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,onExpungeSavedSearchRequest,SavedSearch,QUuid),
+                     Qt::QueuedConnection);
     QObject::connect(this, QNSIGNAL(FullSyncStaleDataItemsExpunger,expungeNote,Note,QUuid),
-                     &m_localStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,onExpungeNoteRequest,Note,QUuid));
+                     &m_localStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,onExpungeNoteRequest,Note,QUuid),
+                     Qt::QueuedConnection);
     QObject::connect(this, QNSIGNAL(FullSyncStaleDataItemsExpunger,updateNotebook,Notebook,QUuid),
-                     &m_localStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,onUpdateNotebookRequest,Notebook,QUuid));
+                     &m_localStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,onUpdateNotebookRequest,Notebook,QUuid),
+                     Qt::QueuedConnection);
     QObject::connect(this, QNSIGNAL(FullSyncStaleDataItemsExpunger,updateTag,Tag,QUuid),
-                     &m_localStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,onUpdateTagRequest,Tag,QUuid));
+                     &m_localStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,onUpdateTagRequest,Tag,QUuid),
+                     Qt::QueuedConnection);
     QObject::connect(this, QNSIGNAL(FullSyncStaleDataItemsExpunger,updateSavedSearch,SavedSearch,QUuid),
-                     &m_localStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,onUpdateSavedSearchRequest,SavedSearch,QUuid));
+                     &m_localStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,onUpdateSavedSearchRequest,SavedSearch,QUuid),
+                     Qt::QueuedConnection);
     QObject::connect(this, QNSIGNAL(FullSyncStaleDataItemsExpunger,updateNote,Note,bool,bool,QUuid),
-                     &m_localStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,onUpdateNoteRequest,Note,bool,bool,QUuid));
+                     &m_localStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,onUpdateNoteRequest,Note,bool,bool,QUuid),
+                     Qt::QueuedConnection);
 
     QObject::connect(&m_localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,expungeNotebookComplete,Notebook,QUuid),
-                     this, QNSLOT(FullSyncStaleDataItemsExpunger,onExpungeNotebookComplete,Notebook,QUuid));
+                     this, QNSLOT(FullSyncStaleDataItemsExpunger,onExpungeNotebookComplete,Notebook,QUuid),
+                     Qt::QueuedConnection);
     QObject::connect(&m_localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,expungeNotebookFailed,Notebook,ErrorString,QUuid),
-                     this, QNSLOT(FullSyncStaleDataItemsExpunger,onExpungeNotebookFailed,Notebook,ErrorString,QUuid));
+                     this, QNSLOT(FullSyncStaleDataItemsExpunger,onExpungeNotebookFailed,Notebook,ErrorString,QUuid),
+                     Qt::QueuedConnection);
     QObject::connect(&m_localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,expungeTagComplete,Tag,QStringList,QUuid),
-                     this, QNSLOT(FullSyncStaleDataItemsExpunger,onExpungeTagComplete,Tag,QStringList,QUuid));
+                     this, QNSLOT(FullSyncStaleDataItemsExpunger,onExpungeTagComplete,Tag,QStringList,QUuid),
+                     Qt::QueuedConnection);
     QObject::connect(&m_localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,expungeTagFailed,Tag,ErrorString,QUuid),
-                     this, QNSLOT(FullSyncStaleDataItemsExpunger,onExpungeTagFailed,Tag,ErrorString,QUuid));
+                     this, QNSLOT(FullSyncStaleDataItemsExpunger,onExpungeTagFailed,Tag,ErrorString,QUuid),
+                     Qt::QueuedConnection);
     QObject::connect(&m_localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,expungeSavedSearchComplete,SavedSearch,QUuid),
-                     this, QNSLOT(FullSyncStaleDataItemsExpunger,onExpungeSavedSearchComplete,SavedSearch,QUuid));
+                     this, QNSLOT(FullSyncStaleDataItemsExpunger,onExpungeSavedSearchComplete,SavedSearch,QUuid),
+                     Qt::QueuedConnection);
     QObject::connect(&m_localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,expungeSavedSearchFailed,SavedSearch,ErrorString,QUuid),
-                     this, QNSLOT(FullSyncStaleDataItemsExpunger,onExpungeSavedSearchFailed,SavedSearch,ErrorString,QUuid));
+                     this, QNSLOT(FullSyncStaleDataItemsExpunger,onExpungeSavedSearchFailed,SavedSearch,ErrorString,QUuid),
+                     Qt::QueuedConnection);
     QObject::connect(&m_localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,expungeNoteComplete,Note,QUuid),
-                     this, QNSLOT(FullSyncStaleDataItemsExpunger,onExpungeNoteComplete,Note,QUuid));
+                     this, QNSLOT(FullSyncStaleDataItemsExpunger,onExpungeNoteComplete,Note,QUuid),
+                     Qt::QueuedConnection);
     QObject::connect(&m_localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,expungeNoteFailed,Note,ErrorString,QUuid),
-                     this, QNSLOT(FullSyncStaleDataItemsExpunger,onExpungeNoteFailed,Note,ErrorString,QUuid));
+                     this, QNSLOT(FullSyncStaleDataItemsExpunger,onExpungeNoteFailed,Note,ErrorString,QUuid),
+                     Qt::QueuedConnection);
     QObject::connect(&m_localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,updateNotebookComplete,Notebook,QUuid),
-                     this, QNSLOT(FullSyncStaleDataItemsExpunger,onUpdateNotebookComplete,Notebook,QUuid));
+                     this, QNSLOT(FullSyncStaleDataItemsExpunger,onUpdateNotebookComplete,Notebook,QUuid),
+                     Qt::QueuedConnection);
     QObject::connect(&m_localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,updateNotebookFailed,Notebook,ErrorString,QUuid),
-                     this, QNSLOT(FullSyncStaleDataItemsExpunger,onUpdateNotebookFailed,Notebook,ErrorString,QUuid));
+                     this, QNSLOT(FullSyncStaleDataItemsExpunger,onUpdateNotebookFailed,Notebook,ErrorString,QUuid),
+                     Qt::QueuedConnection);
     QObject::connect(&m_localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,updateTagComplete,Tag,QUuid),
-                     this, QNSLOT(FullSyncStaleDataItemsExpunger,onUpdateTagComplete,Tag,QUuid));
+                     this, QNSLOT(FullSyncStaleDataItemsExpunger,onUpdateTagComplete,Tag,QUuid),
+                     Qt::QueuedConnection);
     QObject::connect(&m_localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,updateTagFailed,Tag,ErrorString,QUuid),
-                     this, QNSLOT(FullSyncStaleDataItemsExpunger,onUpdateTagFailed,Tag,ErrorString,QUuid));
+                     this, QNSLOT(FullSyncStaleDataItemsExpunger,onUpdateTagFailed,Tag,ErrorString,QUuid),
+                     Qt::QueuedConnection);
     QObject::connect(&m_localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,updateSavedSearchComplete,SavedSearch,QUuid),
-                     this, QNSLOT(FullSyncStaleDataItemsExpunger,onUpdateSavedSearchComplete,SavedSearch,QUuid));
+                     this, QNSLOT(FullSyncStaleDataItemsExpunger,onUpdateSavedSearchComplete,SavedSearch,QUuid),
+                     Qt::QueuedConnection);
     QObject::connect(&m_localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,updateSavedSearchFailed,SavedSearch,ErrorString,QUuid),
-                     this, QNSLOT(FullSyncStaleDataItemsExpunger,onUpdateSavedSearchFailed,SavedSearch,ErrorString,QUuid));
+                     this, QNSLOT(FullSyncStaleDataItemsExpunger,onUpdateSavedSearchFailed,SavedSearch,ErrorString,QUuid),
+                     Qt::QueuedConnection);
     QObject::connect(&m_localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,updateNoteComplete,Note,bool,bool,QUuid),
-                     this, QNSLOT(FullSyncStaleDataItemsExpunger,onUpdateNoteComplete,Note,bool,bool,QUuid));
+                     this, QNSLOT(FullSyncStaleDataItemsExpunger,onUpdateNoteComplete,Note,bool,bool,QUuid),
+                     Qt::QueuedConnection);
     QObject::connect(&m_localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,updateNoteFailed,Note,bool,bool,ErrorString,QUuid),
-                     this, QNSLOT(FullSyncStaleDataItemsExpunger,onUpdateNoteFailed,Note,bool,bool,ErrorString,QUuid));
+                     this, QNSLOT(FullSyncStaleDataItemsExpunger,onUpdateNoteFailed,Note,bool,bool,ErrorString,QUuid),
+                     Qt::QueuedConnection);
 
     m_connectedToLocalStorage = true;
 }
@@ -503,7 +527,8 @@ void FullSyncStaleDataItemsExpunger::checkAndRequestCachesFilling()
         }
 
         QObject::connect(pNotebookSyncCache.data(), QNSIGNAL(NotebookSyncCache,filled),
-                         this, QNSLOT(FullSyncStaleDataItemsExpunger,onNotebookCacheFilled));
+                         this, QNSLOT(FullSyncStaleDataItemsExpunger,onNotebookCacheFilled),
+                         Qt::QueuedConnection);
         ++m_numPendingNotebookSyncCaches;
         pNotebookSyncCache->fill();
     }
@@ -522,7 +547,8 @@ void FullSyncStaleDataItemsExpunger::checkAndRequestCachesFilling()
         }
 
         QObject::connect(pTagSyncCache.data(), QNSIGNAL(TagSyncCache,filled),
-                         this, QNSLOT(FullSyncStaleDataItemsExpunger,onTagCacheFilled));
+                         this, QNSLOT(FullSyncStaleDataItemsExpunger,onTagCacheFilled),
+                         Qt::QueuedConnection);
         ++m_numPendingTagSyncCaches;
         pTagSyncCache->fill();
     }
@@ -534,14 +560,16 @@ void FullSyncStaleDataItemsExpunger::checkAndRequestCachesFilling()
 
     if (!m_caches.m_savedSearchSyncCache->isFilled()) {
         QObject::connect(m_caches.m_savedSearchSyncCache.data(), QNSIGNAL(SavedSearchSyncCache,filled),
-                         this, QNSLOT(FullSyncStaleDataItemsExpunger,onSavedSearchCacheFilled));
+                         this, QNSLOT(FullSyncStaleDataItemsExpunger,onSavedSearchCacheFilled),
+                         Qt::QueuedConnection);
         m_pendingSavedSearchSyncCache = true;
         m_caches.m_savedSearchSyncCache->fill();
     }
 
     if (!m_noteSyncCache.isFilled()) {
         QObject::connect(&m_noteSyncCache, QNSIGNAL(NoteSyncCache,filled),
-                         this, QNSLOT(FullSyncStaleDataItemsExpunger,onNoteCacheFilled));
+                         this, QNSLOT(FullSyncStaleDataItemsExpunger,onNoteCacheFilled),
+                         Qt::QueuedConnection);
         m_pendingNoteSyncCache = true;
         m_noteSyncCache.fill();
     }
