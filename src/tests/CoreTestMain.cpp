@@ -20,6 +20,7 @@
 #include "FullSyncStaleDataItemsExpungerTester.h"
 #include <quentier/logging/QuentierLogger.h>
 #include <quentier/utility/QuentierApplication.h>
+#include <quentier/utility/Utility.h>
 #include <QtTest/QtTest>
 #include <QDebug>
 #include <QSqlDatabase>
@@ -35,6 +36,8 @@ int main(int argc, char *argv[])
     QUENTIER_INITIALIZE_LOGGING();
     QUENTIER_SET_MIN_LOG_LEVEL(Warn);
     QUENTIER_ADD_STDOUT_LOG_DESTINATION();
+
+    quentier::initializeLibquentier();
 
     int res = QTest::qExec(new CoreTester);
     if (res != 0) {
