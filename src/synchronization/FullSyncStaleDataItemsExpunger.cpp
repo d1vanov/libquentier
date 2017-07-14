@@ -671,11 +671,13 @@ void FullSyncStaleDataItemsExpunger::analyzeDataAndSendRequestsOrResult()
             }
 
             auto dirtyTagIt = dirtyTagsByGuidHash.find(guid);
-            if (dirtyTagIt == dirtyTagsByGuidHash.end()) {
+            if (dirtyTagIt == dirtyTagsByGuidHash.end())
+            {
                 QNTRACE(QStringLiteral("Tag guid ") << guid << QStringLiteral(" doesn't appear within the list of dirty tags"));
                 Q_UNUSED(tagGuidsToExpunge.insert(guid))
             }
-            else {
+            else
+            {
                 QNTRACE(QStringLiteral("Tag guid ") << guid << QStringLiteral(" appears within the list of dirty tags"));
                 dirtyTagsToUpdate << dirtyTagIt.value();
             }
@@ -722,13 +724,58 @@ void FullSyncStaleDataItemsExpunger::analyzeDataAndSendRequestsOrResult()
         }
 
         auto dirtyNoteIt = dirtyNotesByGuid.find(guid);
-        if (dirtyNoteIt == dirtyNotesByGuid.end()) {
+        if (dirtyNoteIt == dirtyNotesByGuid.end())
+        {
             QNTRACE(QStringLiteral("Note guid ") << guid << QStringLiteral(" doesn't appear within the list of dirty notes"));
             Q_UNUSED(noteGuidsToExpunge.insert(guid))
         }
-        else {
-            QNTRACE(QStringLiteral("Note guid ") << guid << QStringLiteral(" appears within the list of dirty notes"));
-            dirtyNotesToUpdate << dirtyNoteIt.value();
+        else
+        {
+            const QHash<QString,QString> & notebookGuidByNoteGuid = m_noteSyncCache.notebookGuidByNoteGuid();
+            auto notebookGuidIt = notebookGuidByNoteGuid.find(guid);
+            if (Q_UNLIKELY(notebookGuidIt == notebookGuidByNoteGuid.end())) {
+                QNWARNING(QStringLiteral("Failed to find cached notebook guid for note guid ") << guid
+                          << QStringLiteral(", won't do anything with this note"));
+                continue;
+            }
+
+            const QString & notebookGuid = notebookGuidIt.value();
+            bool foundActualNotebook = false;
+
+            for(auto notebookCacheIt = m_caches.m_notebookSyncCaches.constBegin(),
+                notebookCacheEnd = m_caches.m_notebookSyncCaches.constEnd(); notebookCacheIt != notebookCacheEnd; ++notebookCacheIt)
+            {
+                const QPointer<NotebookSyncCache> & pNotebookSyncCache = *notebookCacheIt;
+                if (Q_UNLIKELY(pNotebookSyncCache.isNull())) {
+                    QNWARNING(QStringLiteral("Skipping the already expired notebook sync cache"));
+                    continue;
+                }
+
+                if (m_syncedGuids.m_syncedNotebookGuids.find(notebookGuid) != m_syncedGuids.m_syncedNotebookGuids.end()) {
+                    QNDEBUG(QStringLiteral("Found notebook for a dirty note: it is synced"));
+                    foundActualNotebook = true;
+                    break;
+                }
+
+                const QHash<QString,Notebook> & dirtyNotebooksByGuidHash = pNotebookSyncCache->dirtyNotebooksByGuidHash();
+                auto dirtyNotebookIt = dirtyNotebooksByGuidHash.find(notebookGuid);
+                if (dirtyNotebookIt != dirtyNotebooksByGuidHash.end()) {
+                    QNDEBUG(QStringLiteral("Found notebook for a dirty note: it is also marked dirty"));
+                    foundActualNotebook = true;
+                    break;
+                }
+            }
+
+            if (foundActualNotebook) {
+                // This means the notebook for the note won't be expunged and hence we should include the note
+                // into the list of those that need to be updated
+                QNTRACE(QStringLiteral("Note guid ") << guid << QStringLiteral(" appears within the list of dirty notes"));
+                dirtyNotesToUpdate << dirtyNoteIt.value();
+                continue;
+            }
+
+            QNDEBUG(QStringLiteral("Found no notebook for the note which should survive the purge; that means the note would be "
+                                   "expunged automatically so there's no need to do anything with it; note guid = ") << guid);
         }
     }
 
