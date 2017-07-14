@@ -49,6 +49,7 @@ public:
 
     const NoteGuidToLocalUidBimap & noteGuidToLocalUidBimap() const { return m_noteGuidToLocalUidBimap; }
     const QHash<QString,Note> & dirtyNotesByGuid() const { return m_dirtyNotesByGuid; }
+    const QHash<QString,QString> & notebookGuidByNoteGuid() const { return m_notebookGuidByNoteGuid; }
 
 Q_SIGNALS:
     void filled();
@@ -97,6 +98,7 @@ private:
 
     NoteGuidToLocalUidBimap             m_noteGuidToLocalUidBimap;
     QHash<QString,Note>                 m_dirtyNotesByGuid;
+    QHash<QString,QString>              m_notebookGuidByNoteGuid;
 
     QUuid                               m_listNotesRequestId;
     size_t                              m_limit;

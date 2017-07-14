@@ -27,6 +27,7 @@ NoteSyncCache::NoteSyncCache(LocalStorageManagerAsync & localStorageManagerAsync
     m_connectedToLocalStorage(false),
     m_noteGuidToLocalUidBimap(),
     m_dirtyNotesByGuid(),
+    m_notebookGuidByNoteGuid(),
     m_listNotesRequestId(),
     m_limit(40),
     m_offset(0)
@@ -40,6 +41,7 @@ void NoteSyncCache::clear()
 
     m_noteGuidToLocalUidBimap.clear();
     m_dirtyNotesByGuid.clear();
+    m_notebookGuidByNoteGuid.clear();
     m_listNotesRequestId = QUuid();
     m_offset = 0;
 }
@@ -122,6 +124,7 @@ void NoteSyncCache::onListNotesFailed(LocalStorageManager::ListObjectsOptions fl
 
     m_noteGuidToLocalUidBimap.clear();
     m_dirtyNotesByGuid.clear();
+    m_notebookGuidByNoteGuid.clear();
     disconnectFromLocalStorage();
 
     emit failure(errorDescription);
@@ -273,6 +276,11 @@ void NoteSyncCache::removeNote(const QString & noteLocalUid)
     if (dirtyNoteIt != m_dirtyNotesByGuid.end()) {
         Q_UNUSED(m_dirtyNotesByGuid.erase(dirtyNoteIt))
     }
+
+    auto notebookGuitIt = m_notebookGuidByNoteGuid.find(guid);
+    if (notebookGuitIt != m_notebookGuidByNoteGuid.end()) {
+        Q_UNUSED(m_notebookGuidByNoteGuid.erase(notebookGuitIt))
+    }
 }
 
 void NoteSyncCache::processNote(const Note & note)
@@ -302,6 +310,18 @@ void NoteSyncCache::processNote(const Note & note)
             auto it = m_dirtyNotesByGuid.find(note.guid());
             if (it != m_dirtyNotesByGuid.end()) {
                 Q_UNUSED(m_dirtyNotesByGuid.erase(it))
+            }
+        }
+
+        if (note.hasNotebookGuid())
+        {
+            m_notebookGuidByNoteGuid[note.guid()] = note.notebookGuid();
+        }
+        else
+        {
+            auto it = m_notebookGuidByNoteGuid.find(note.guid());
+            if (it != m_notebookGuidByNoteGuid.end()) {
+                Q_UNUSED(m_notebookGuidByNoteGuid.erase(it))
             }
         }
     }
