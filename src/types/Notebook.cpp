@@ -188,7 +188,12 @@ qint32 Notebook::updateSequenceNumber() const
 
 void Notebook::setUpdateSequenceNumber(const qint32 usn)
 {
-    d->m_qecNotebook.updateSequenceNum = usn;
+    if (usn >= 0) {
+        d->m_qecNotebook.updateSequenceNum = usn;
+    }
+    else {
+        d->m_qecNotebook.updateSequenceNum.clear();
+    }
 }
 
 bool Notebook::checkParameters(ErrorString & errorDescription) const

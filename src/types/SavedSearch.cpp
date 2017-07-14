@@ -175,7 +175,12 @@ qint32 SavedSearch::updateSequenceNumber() const
 
 void SavedSearch::setUpdateSequenceNumber(const qint32 usn)
 {
-    d->m_qecSearch.updateSequenceNum = usn;
+    if (usn >= 0) {
+        d->m_qecSearch.updateSequenceNum = usn;
+    }
+    else {
+        d->m_qecSearch.updateSequenceNum.clear();
+    }
 }
 
 bool SavedSearch::checkParameters(ErrorString & errorDescription) const

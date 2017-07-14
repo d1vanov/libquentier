@@ -136,9 +136,14 @@ qint32 Resource::updateSequenceNumber() const
     return d->m_qecResource.updateSequenceNum;
 }
 
-void Resource::setUpdateSequenceNumber(const qint32 updateSequenceNumber)
+void Resource::setUpdateSequenceNumber(const qint32 usn)
 {
-    d->m_qecResource.updateSequenceNum = updateSequenceNumber;
+    if (usn >= 0) {
+        d->m_qecResource.updateSequenceNum = usn;
+    }
+    else {
+        d->m_qecResource.updateSequenceNum.clear();
+    }
 }
 
 bool Resource::checkParameters(ErrorString & errorDescription) const

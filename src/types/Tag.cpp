@@ -174,7 +174,12 @@ qint32 Tag::updateSequenceNumber() const
 
 void Tag::setUpdateSequenceNumber(const qint32 usn)
 {
-    d->m_qecTag.updateSequenceNum = usn;
+    if (usn >= 0) {
+        d->m_qecTag.updateSequenceNum = usn;
+    }
+    else {
+        d->m_qecTag.updateSequenceNum.clear();
+    }
 }
 
 bool Tag::checkParameters(ErrorString & errorDescription) const
