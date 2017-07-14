@@ -775,6 +775,863 @@ void FullSyncStaleDataItemsExpungerTester::testOneDirtyItemOfEachKind()
     doTest(/* use base data items = */ true, nonSyncedNotebooks, nonSyncedTags, nonSyncedSavedSearches, nonSyncedNotes);
 }
 
+void FullSyncStaleDataItemsExpungerTester::testSeveralDirtyNotebooks()
+{
+    Notebook dirtyNotebook;
+    dirtyNotebook.setName(QStringLiteral("Dirty notebook"));
+    dirtyNotebook.setGuid(UidGenerator::Generate());
+    dirtyNotebook.setUpdateSequenceNumber(100);
+    dirtyNotebook.setLocal(false);
+    dirtyNotebook.setDirty(true);
+
+    Notebook secondDirtyNotebook;
+    secondDirtyNotebook.setName(QStringLiteral("Second dirty notebook"));
+    secondDirtyNotebook.setGuid(UidGenerator::Generate());
+    secondDirtyNotebook.setUpdateSequenceNumber(101);
+    secondDirtyNotebook.setLocal(false);
+    secondDirtyNotebook.setDirty(true);
+
+    Notebook thirdDirtyNotebook;
+    thirdDirtyNotebook.setName(QStringLiteral("Third dirty notebook"));
+    thirdDirtyNotebook.setGuid(UidGenerator::Generate());
+    thirdDirtyNotebook.setUpdateSequenceNumber(102);
+    thirdDirtyNotebook.setLocal(false);
+    thirdDirtyNotebook.setDirty(true);
+
+    QList<Notebook> nonSyncedNotebooks;
+    nonSyncedNotebooks.reserve(3);
+    nonSyncedNotebooks << dirtyNotebook;
+    nonSyncedNotebooks << secondDirtyNotebook;
+    nonSyncedNotebooks << thirdDirtyNotebook;
+
+    doTest(/* use base data items = */ true, nonSyncedNotebooks, QList<Tag>(), QList<SavedSearch>(), QList<Note>());
+}
+
+void FullSyncStaleDataItemsExpungerTester::testSeveralDirtyTags()
+{
+    Tag dirtyTag;
+    dirtyTag.setName(QStringLiteral("Dirty tag"));
+    dirtyTag.setGuid(UidGenerator::Generate());
+    dirtyTag.setUpdateSequenceNumber(100);
+    dirtyTag.setLocal(false);
+    dirtyTag.setDirty(true);
+
+    Tag secondDirtyTag;
+    secondDirtyTag.setName(QStringLiteral("Second dirty tag"));
+    secondDirtyTag.setGuid(UidGenerator::Generate());
+    secondDirtyTag.setUpdateSequenceNumber(101);
+    secondDirtyTag.setLocal(false);
+    secondDirtyTag.setDirty(true);
+
+    Tag thirdDirtyTag;
+    thirdDirtyTag.setName(QStringLiteral("Third dirty tag"));
+    thirdDirtyTag.setGuid(UidGenerator::Generate());
+    thirdDirtyTag.setUpdateSequenceNumber(102);
+    thirdDirtyTag.setLocal(false);
+    thirdDirtyTag.setDirty(true);
+
+    QList<Tag> nonSyncedTags;
+    nonSyncedTags.reserve(3);
+    nonSyncedTags << dirtyTag;
+    nonSyncedTags << secondDirtyTag;
+    nonSyncedTags << thirdDirtyTag;
+
+    doTest(/* use base data items = */ true, QList<Notebook>(), nonSyncedTags, QList<SavedSearch>(), QList<Note>());
+}
+
+void FullSyncStaleDataItemsExpungerTester::testSeveralDirtySavedSearches()
+{
+    SavedSearch dirtySavedSearch;
+    dirtySavedSearch.setName(QStringLiteral("Dirty saved search"));
+    dirtySavedSearch.setQuery(QStringLiteral("dirty"));
+    dirtySavedSearch.setGuid(UidGenerator::Generate());
+    dirtySavedSearch.setUpdateSequenceNumber(100);
+    dirtySavedSearch.setLocal(false);
+    dirtySavedSearch.setDirty(true);
+
+    SavedSearch secondDirtySavedSearch;
+    secondDirtySavedSearch.setName(QStringLiteral("Second dirty saved search"));
+    secondDirtySavedSearch.setQuery(QStringLiteral("dirty2"));
+    secondDirtySavedSearch.setGuid(UidGenerator::Generate());
+    secondDirtySavedSearch.setUpdateSequenceNumber(101);
+    secondDirtySavedSearch.setLocal(false);
+    secondDirtySavedSearch.setDirty(true);
+
+    SavedSearch thirdDirtySavedSearch;
+    thirdDirtySavedSearch.setName(QStringLiteral("Third dirty saved search"));
+    thirdDirtySavedSearch.setQuery(QStringLiteral("dirty3"));
+    thirdDirtySavedSearch.setGuid(UidGenerator::Generate());
+    thirdDirtySavedSearch.setUpdateSequenceNumber(102);
+    thirdDirtySavedSearch.setLocal(false);
+    thirdDirtySavedSearch.setDirty(true);
+
+    QList<SavedSearch> nonSyncedSavedSearches;
+    nonSyncedSavedSearches.reserve(3);
+    nonSyncedSavedSearches << dirtySavedSearch;
+    nonSyncedSavedSearches << secondDirtySavedSearch;
+    nonSyncedSavedSearches << thirdDirtySavedSearch;
+
+    doTest(/* use base data items = */ true, QList<Notebook>(), QList<Tag>(), nonSyncedSavedSearches, QList<Note>());
+}
+
+void FullSyncStaleDataItemsExpungerTester::testSeveralDirtyNotes()
+{
+    Note dirtyNote;
+    dirtyNote.setTitle(QStringLiteral("Dirty note"));
+    dirtyNote.setContent(QStringLiteral("<en-note><h1>Dirty note content</h1></en-note>"));
+    dirtyNote.setGuid(UidGenerator::Generate());
+    dirtyNote.setUpdateSequenceNumber(100);
+    dirtyNote.setNotebookLocalUid(FIRST_NOTEBOOK_LOCAL_UID);
+    dirtyNote.setLocal(false);
+    dirtyNote.setDirty(true);
+
+    Note secondDirtyNote;
+    secondDirtyNote.setTitle(QStringLiteral("Second dirty note"));
+    secondDirtyNote.setContent(QStringLiteral("<en-note><h1>Second dirty note content</h1></en-note>"));
+    secondDirtyNote.setGuid(UidGenerator::Generate());
+    secondDirtyNote.setUpdateSequenceNumber(101);
+    secondDirtyNote.setNotebookLocalUid(SECOND_NOTEBOOK_LOCAL_UID);
+    secondDirtyNote.setLocal(false);
+    secondDirtyNote.setDirty(true);
+
+    Note thirdDirtyNote;
+    thirdDirtyNote.setTitle(QStringLiteral("Third dirty note"));
+    thirdDirtyNote.setContent(QStringLiteral("<en-note><h1>Third dirty note content</h1></en-note>"));
+    thirdDirtyNote.setGuid(UidGenerator::Generate());
+    thirdDirtyNote.setUpdateSequenceNumber(102);
+    thirdDirtyNote.setNotebookLocalUid(THIRD_NOTEBOOK_LOCAL_UID);
+    thirdDirtyNote.setLocal(false);
+    thirdDirtyNote.setDirty(true);
+
+    QList<Note> nonSyncedNotes;
+    nonSyncedNotes.reserve(3);
+    nonSyncedNotes << dirtyNote;
+    nonSyncedNotes << secondDirtyNote;
+    nonSyncedNotes << thirdDirtyNote;
+
+    doTest(/* use base data items = */ true, QList<Notebook>(), QList<Tag>(), QList<SavedSearch>(), nonSyncedNotes);
+}
+
+void FullSyncStaleDataItemsExpungerTester::testSeveralDirtyItemsOfEachKind()
+{
+    Notebook dirtyNotebook;
+    dirtyNotebook.setName(QStringLiteral("Dirty notebook"));
+    dirtyNotebook.setGuid(UidGenerator::Generate());
+    dirtyNotebook.setUpdateSequenceNumber(100);
+    dirtyNotebook.setLocal(false);
+    dirtyNotebook.setDirty(true);
+
+    Notebook secondDirtyNotebook;
+    secondDirtyNotebook.setName(QStringLiteral("Second dirty notebook"));
+    secondDirtyNotebook.setGuid(UidGenerator::Generate());
+    secondDirtyNotebook.setUpdateSequenceNumber(101);
+    secondDirtyNotebook.setLocal(false);
+    secondDirtyNotebook.setDirty(true);
+
+    Notebook thirdDirtyNotebook;
+    thirdDirtyNotebook.setName(QStringLiteral("Third dirty notebook"));
+    thirdDirtyNotebook.setGuid(UidGenerator::Generate());
+    thirdDirtyNotebook.setUpdateSequenceNumber(102);
+    thirdDirtyNotebook.setLocal(false);
+    thirdDirtyNotebook.setDirty(true);
+
+    Tag dirtyTag;
+    dirtyTag.setName(QStringLiteral("Dirty tag"));
+    dirtyTag.setGuid(UidGenerator::Generate());
+    dirtyTag.setUpdateSequenceNumber(103);
+    dirtyTag.setLocal(false);
+    dirtyTag.setDirty(true);
+
+    Tag secondDirtyTag;
+    secondDirtyTag.setName(QStringLiteral("Second dirty tag"));
+    secondDirtyTag.setGuid(UidGenerator::Generate());
+    secondDirtyTag.setUpdateSequenceNumber(104);
+    secondDirtyTag.setLocal(false);
+    secondDirtyTag.setDirty(true);
+
+    Tag thirdDirtyTag;
+    thirdDirtyTag.setName(QStringLiteral("Third dirty tag"));
+    thirdDirtyTag.setGuid(UidGenerator::Generate());
+    thirdDirtyTag.setUpdateSequenceNumber(105);
+    thirdDirtyTag.setLocal(false);
+    thirdDirtyTag.setDirty(true);
+
+    SavedSearch dirtySavedSearch;
+    dirtySavedSearch.setName(QStringLiteral("Dirty saved search"));
+    dirtySavedSearch.setQuery(QStringLiteral("dirty"));
+    dirtySavedSearch.setGuid(UidGenerator::Generate());
+    dirtySavedSearch.setUpdateSequenceNumber(106);
+    dirtySavedSearch.setLocal(false);
+    dirtySavedSearch.setDirty(true);
+
+    SavedSearch secondDirtySavedSearch;
+    secondDirtySavedSearch.setName(QStringLiteral("Second dirty saved search"));
+    secondDirtySavedSearch.setQuery(QStringLiteral("dirty2"));
+    secondDirtySavedSearch.setGuid(UidGenerator::Generate());
+    secondDirtySavedSearch.setUpdateSequenceNumber(107);
+    secondDirtySavedSearch.setLocal(false);
+    secondDirtySavedSearch.setDirty(true);
+
+    SavedSearch thirdDirtySavedSearch;
+    thirdDirtySavedSearch.setName(QStringLiteral("Third dirty saved search"));
+    thirdDirtySavedSearch.setQuery(QStringLiteral("dirty3"));
+    thirdDirtySavedSearch.setGuid(UidGenerator::Generate());
+    thirdDirtySavedSearch.setUpdateSequenceNumber(108);
+    thirdDirtySavedSearch.setLocal(false);
+    thirdDirtySavedSearch.setDirty(true);
+
+    Note dirtyNote;
+    dirtyNote.setTitle(QStringLiteral("Dirty note"));
+    dirtyNote.setContent(QStringLiteral("<en-note><h1>Dirty note content</h1></en-note>"));
+    dirtyNote.setGuid(UidGenerator::Generate());
+    dirtyNote.setUpdateSequenceNumber(109);
+    dirtyNote.setNotebookLocalUid(FIRST_NOTEBOOK_LOCAL_UID);
+    dirtyNote.setLocal(false);
+    dirtyNote.setDirty(true);
+
+    Note secondDirtyNote;
+    secondDirtyNote.setTitle(QStringLiteral("Second dirty note"));
+    secondDirtyNote.setContent(QStringLiteral("<en-note><h1>Second dirty note content</h1></en-note>"));
+    secondDirtyNote.setGuid(UidGenerator::Generate());
+    secondDirtyNote.setUpdateSequenceNumber(110);
+    secondDirtyNote.setNotebookLocalUid(SECOND_NOTEBOOK_LOCAL_UID);
+    secondDirtyNote.setLocal(false);
+    secondDirtyNote.setDirty(true);
+
+    Note thirdDirtyNote;
+    thirdDirtyNote.setTitle(QStringLiteral("Third dirty note"));
+    thirdDirtyNote.setContent(QStringLiteral("<en-note><h1>Third dirty note content</h1></en-note>"));
+    thirdDirtyNote.setGuid(UidGenerator::Generate());
+    thirdDirtyNote.setUpdateSequenceNumber(111);
+    thirdDirtyNote.setNotebookLocalUid(THIRD_NOTEBOOK_LOCAL_UID);
+    thirdDirtyNote.setLocal(false);
+    thirdDirtyNote.setDirty(true);
+
+    QList<Notebook> nonSyncedNotebooks;
+    nonSyncedNotebooks.reserve(3);
+    nonSyncedNotebooks << dirtyNotebook;
+    nonSyncedNotebooks << secondDirtyNotebook;
+    nonSyncedNotebooks << thirdDirtyNotebook;
+
+    QList<Tag> nonSyncedTags;
+    nonSyncedTags.reserve(3);
+    nonSyncedTags << dirtyTag;
+    nonSyncedTags << secondDirtyTag;
+    nonSyncedTags << thirdDirtyTag;
+
+    QList<SavedSearch> nonSyncedSavedSearches;
+    nonSyncedSavedSearches.reserve(3);
+    nonSyncedSavedSearches << dirtySavedSearch;
+    nonSyncedSavedSearches << secondDirtySavedSearch;
+    nonSyncedSavedSearches << thirdDirtySavedSearch;
+
+    QList<Note> nonSyncedNotes;
+    nonSyncedNotes.reserve(3);
+    nonSyncedNotes << dirtyNote;
+    nonSyncedNotes << secondDirtyNote;
+    nonSyncedNotes << thirdDirtyNote;
+
+    doTest(/* use base data items = */ true, nonSyncedNotebooks, nonSyncedTags, nonSyncedSavedSearches, nonSyncedNotes);
+}
+
+void FullSyncStaleDataItemsExpungerTester::testOneStaleNotebookAndOneDirtyNotebook()
+{
+    Notebook staleNotebook;
+    staleNotebook.setName(QStringLiteral("Stale notebook"));
+    staleNotebook.setGuid(UidGenerator::Generate());
+    staleNotebook.setUpdateSequenceNumber(100);
+    staleNotebook.setLocal(false);
+    staleNotebook.setDirty(false);
+
+    Notebook dirtyNotebook;
+    dirtyNotebook.setName(QStringLiteral("Dirty notebook"));
+    dirtyNotebook.setGuid(UidGenerator::Generate());
+    dirtyNotebook.setUpdateSequenceNumber(101);
+    dirtyNotebook.setLocal(false);
+    dirtyNotebook.setDirty(true);
+
+    QList<Notebook> nonSyncedNotebooks;
+    nonSyncedNotebooks.reserve(2);
+    nonSyncedNotebooks << staleNotebook;
+    nonSyncedNotebooks << dirtyNotebook;
+
+    doTest(/* use base data items = */ true, nonSyncedNotebooks, QList<Tag>(), QList<SavedSearch>(), QList<Note>());
+}
+
+void FullSyncStaleDataItemsExpungerTester::testOneStaleTagAndOneDirtyTag()
+{
+    Tag staleTag;
+    staleTag.setName(QStringLiteral("Stale tag"));
+    staleTag.setGuid(UidGenerator::Generate());
+    staleTag.setUpdateSequenceNumber(100);
+    staleTag.setLocal(false);
+    staleTag.setDirty(false);
+
+    Tag dirtyTag;
+    dirtyTag.setName(QStringLiteral("Dirty tag"));
+    dirtyTag.setGuid(UidGenerator::Generate());
+    dirtyTag.setUpdateSequenceNumber(101);
+    dirtyTag.setLocal(false);
+    dirtyTag.setDirty(true);
+
+    QList<Tag> nonSyncedTags;
+    nonSyncedTags.reserve(2);
+    nonSyncedTags << staleTag;
+    nonSyncedTags << dirtyTag;
+
+    doTest(/* use base data items = */ true, QList<Notebook>(), nonSyncedTags, QList<SavedSearch>(), QList<Note>());
+}
+
+void FullSyncStaleDataItemsExpungerTester::testOneStaleSavedSearchAndOneDirtySavedSearch()
+{
+    SavedSearch staleSearch;
+    staleSearch.setName(QStringLiteral("Stale saved search"));
+    staleSearch.setQuery(QStringLiteral("stale"));
+    staleSearch.setGuid(UidGenerator::Generate());
+    staleSearch.setUpdateSequenceNumber(100);
+    staleSearch.setLocal(false);
+    staleSearch.setDirty(false);
+
+    SavedSearch dirtySavedSearch;
+    dirtySavedSearch.setName(QStringLiteral("Dirty saved search"));
+    dirtySavedSearch.setQuery(QStringLiteral("dirty"));
+    dirtySavedSearch.setGuid(UidGenerator::Generate());
+    dirtySavedSearch.setUpdateSequenceNumber(101);
+    dirtySavedSearch.setLocal(false);
+    dirtySavedSearch.setDirty(true);
+
+    QList<SavedSearch> nonSyncedSavedSearches;
+    nonSyncedSavedSearches.reserve(2);
+    nonSyncedSavedSearches << staleSearch;
+    nonSyncedSavedSearches << dirtySavedSearch;
+
+    doTest(/* use base data items = */ true, QList<Notebook>(), QList<Tag>(), nonSyncedSavedSearches, QList<Note>());
+}
+
+void FullSyncStaleDataItemsExpungerTester::testOneStaleNoteAndOneDirtyNote()
+{
+    Note staleNote;
+    staleNote.setTitle(QStringLiteral("Stale note"));
+    staleNote.setContent(QStringLiteral("<en-note><h1>Stale note content</h1></en-note>"));
+    staleNote.setGuid(UidGenerator::Generate());
+    staleNote.setUpdateSequenceNumber(100);
+    staleNote.setNotebookLocalUid(FIRST_NOTEBOOK_LOCAL_UID);
+    staleNote.setLocal(false);
+    staleNote.setDirty(false);
+
+    Note dirtyNote;
+    dirtyNote.setTitle(QStringLiteral("Dirty note"));
+    dirtyNote.setContent(QStringLiteral("<en-note><h1>Dirty note content</h1></en-note>"));
+    dirtyNote.setGuid(UidGenerator::Generate());
+    dirtyNote.setUpdateSequenceNumber(101);
+    dirtyNote.setNotebookLocalUid(FIRST_NOTEBOOK_LOCAL_UID);
+    dirtyNote.setLocal(false);
+    dirtyNote.setDirty(true);
+
+    QList<Note> nonSyncedNotes;
+    nonSyncedNotes.reserve(2);
+    nonSyncedNotes << staleNote;
+    nonSyncedNotes << dirtyNote;
+
+    doTest(/* use base data items = */ true, QList<Notebook>(), QList<Tag>(), QList<SavedSearch>(), nonSyncedNotes);
+}
+
+void FullSyncStaleDataItemsExpungerTester::testSeveralStaleNotebooksAndSeveralDirtyNotebooks()
+{
+    Notebook staleNotebook;
+    staleNotebook.setName(QStringLiteral("Stale notebook"));
+    staleNotebook.setGuid(UidGenerator::Generate());
+    staleNotebook.setUpdateSequenceNumber(100);
+    staleNotebook.setLocal(false);
+    staleNotebook.setDirty(false);
+
+    Notebook secondStaleNotebook;
+    secondStaleNotebook.setName(QStringLiteral("Second stale notebook"));
+    secondStaleNotebook.setGuid(UidGenerator::Generate());
+    secondStaleNotebook.setUpdateSequenceNumber(101);
+    secondStaleNotebook.setLocal(false);
+    secondStaleNotebook.setDirty(false);
+
+    Notebook thirdStaleNotebook;
+    thirdStaleNotebook.setName(QStringLiteral("Third stale notebook"));
+    thirdStaleNotebook.setGuid(UidGenerator::Generate());
+    thirdStaleNotebook.setUpdateSequenceNumber(102);
+    thirdStaleNotebook.setLocal(false);
+    thirdStaleNotebook.setDirty(false);
+
+    Notebook dirtyNotebook;
+    dirtyNotebook.setName(QStringLiteral("Dirty notebook"));
+    dirtyNotebook.setGuid(UidGenerator::Generate());
+    dirtyNotebook.setUpdateSequenceNumber(103);
+    dirtyNotebook.setLocal(false);
+    dirtyNotebook.setDirty(true);
+
+    Notebook secondDirtyNotebook;
+    secondDirtyNotebook.setName(QStringLiteral("Second dirty notebook"));
+    secondDirtyNotebook.setGuid(UidGenerator::Generate());
+    secondDirtyNotebook.setUpdateSequenceNumber(104);
+    secondDirtyNotebook.setLocal(false);
+    secondDirtyNotebook.setDirty(true);
+
+    Notebook thirdDirtyNotebook;
+    thirdDirtyNotebook.setName(QStringLiteral("Third dirty notebook"));
+    thirdDirtyNotebook.setGuid(UidGenerator::Generate());
+    thirdDirtyNotebook.setUpdateSequenceNumber(105);
+    thirdDirtyNotebook.setLocal(false);
+    thirdDirtyNotebook.setDirty(true);
+
+    QList<Notebook> nonSyncedNotebooks;
+    nonSyncedNotebooks.reserve(6);
+    nonSyncedNotebooks << staleNotebook;
+    nonSyncedNotebooks << secondStaleNotebook;
+    nonSyncedNotebooks << thirdStaleNotebook;
+    nonSyncedNotebooks << dirtyNotebook;
+    nonSyncedNotebooks << secondDirtyNotebook;
+    nonSyncedNotebooks << thirdDirtyNotebook;
+
+    doTest(/* use base data items = */ true, nonSyncedNotebooks, QList<Tag>(), QList<SavedSearch>(), QList<Note>());
+}
+
+void FullSyncStaleDataItemsExpungerTester::testSeveralStaleTagsAndSeveralDirtyTags()
+{
+    Tag staleTag;
+    staleTag.setName(QStringLiteral("Stale tag"));
+    staleTag.setGuid(UidGenerator::Generate());
+    staleTag.setUpdateSequenceNumber(100);
+    staleTag.setLocal(false);
+    staleTag.setDirty(false);
+
+    Tag secondStaleTag;
+    secondStaleTag.setName(QStringLiteral("Second stale tag"));
+    secondStaleTag.setGuid(UidGenerator::Generate());
+    secondStaleTag.setUpdateSequenceNumber(101);
+    secondStaleTag.setLocal(false);
+    secondStaleTag.setDirty(false);
+
+    Tag thirdStaleTag;
+    thirdStaleTag.setName(QStringLiteral("Third stale tag"));
+    thirdStaleTag.setGuid(UidGenerator::Generate());
+    thirdStaleTag.setUpdateSequenceNumber(102);
+    thirdStaleTag.setLocal(false);
+    thirdStaleTag.setDirty(false);
+
+    Tag dirtyTag;
+    dirtyTag.setName(QStringLiteral("Dirty tag"));
+    dirtyTag.setGuid(UidGenerator::Generate());
+    dirtyTag.setUpdateSequenceNumber(103);
+    dirtyTag.setLocal(false);
+    dirtyTag.setDirty(true);
+
+    Tag secondDirtyTag;
+    secondDirtyTag.setName(QStringLiteral("Second dirty tag"));
+    secondDirtyTag.setGuid(UidGenerator::Generate());
+    secondDirtyTag.setUpdateSequenceNumber(104);
+    secondDirtyTag.setLocal(false);
+    secondDirtyTag.setDirty(true);
+
+    Tag thirdDirtyTag;
+    thirdDirtyTag.setName(QStringLiteral("Third dirty tag"));
+    thirdDirtyTag.setGuid(UidGenerator::Generate());
+    thirdDirtyTag.setUpdateSequenceNumber(105);
+    thirdDirtyTag.setLocal(false);
+    thirdDirtyTag.setDirty(true);
+
+    QList<Tag> nonSyncedTags;
+    nonSyncedTags.reserve(6);
+    nonSyncedTags << staleTag;
+    nonSyncedTags << secondStaleTag;
+    nonSyncedTags << thirdStaleTag;
+    nonSyncedTags << dirtyTag;
+    nonSyncedTags << secondDirtyTag;
+    nonSyncedTags << thirdDirtyTag;
+
+    doTest(/* use base data items = */ true, QList<Notebook>(), nonSyncedTags, QList<SavedSearch>(), QList<Note>());
+}
+
+void FullSyncStaleDataItemsExpungerTester::testSeveralStaleSavedSearchesAndSeveralDirtySavedSearches()
+{
+    SavedSearch staleSearch;
+    staleSearch.setName(QStringLiteral("Stale saved search"));
+    staleSearch.setQuery(QStringLiteral("stale"));
+    staleSearch.setGuid(UidGenerator::Generate());
+    staleSearch.setUpdateSequenceNumber(100);
+    staleSearch.setLocal(false);
+    staleSearch.setDirty(false);
+
+    SavedSearch secondStaleSavedSearch;
+    secondStaleSavedSearch.setName(QStringLiteral("Second stale saved search"));
+    secondStaleSavedSearch.setQuery(QStringLiteral("stale2"));
+    secondStaleSavedSearch.setGuid(UidGenerator::Generate());
+    secondStaleSavedSearch.setUpdateSequenceNumber(101);
+    secondStaleSavedSearch.setLocal(false);
+    secondStaleSavedSearch.setDirty(false);
+
+    SavedSearch thirdStaleSavedSearch;
+    thirdStaleSavedSearch.setName(QStringLiteral("Third stale saved search"));
+    thirdStaleSavedSearch.setQuery(QStringLiteral("stale3"));
+    thirdStaleSavedSearch.setGuid(UidGenerator::Generate());
+    thirdStaleSavedSearch.setUpdateSequenceNumber(102);
+    thirdStaleSavedSearch.setLocal(false);
+    thirdStaleSavedSearch.setDirty(false);
+
+    SavedSearch dirtySavedSearch;
+    dirtySavedSearch.setName(QStringLiteral("Dirty saved search"));
+    dirtySavedSearch.setQuery(QStringLiteral("dirty"));
+    dirtySavedSearch.setGuid(UidGenerator::Generate());
+    dirtySavedSearch.setUpdateSequenceNumber(103);
+    dirtySavedSearch.setLocal(false);
+    dirtySavedSearch.setDirty(true);
+
+    SavedSearch secondDirtySavedSearch;
+    secondDirtySavedSearch.setName(QStringLiteral("Second dirty saved search"));
+    secondDirtySavedSearch.setQuery(QStringLiteral("dirty2"));
+    secondDirtySavedSearch.setGuid(UidGenerator::Generate());
+    secondDirtySavedSearch.setUpdateSequenceNumber(104);
+    secondDirtySavedSearch.setLocal(false);
+    secondDirtySavedSearch.setDirty(true);
+
+    SavedSearch thirdDirtySavedSearch;
+    thirdDirtySavedSearch.setName(QStringLiteral("Third dirty saved search"));
+    thirdDirtySavedSearch.setQuery(QStringLiteral("dirty3"));
+    thirdDirtySavedSearch.setGuid(UidGenerator::Generate());
+    thirdDirtySavedSearch.setUpdateSequenceNumber(105);
+    thirdDirtySavedSearch.setLocal(false);
+    thirdDirtySavedSearch.setDirty(true);
+
+    QList<SavedSearch> nonSyncedSavedSearches;
+    nonSyncedSavedSearches.reserve(6);
+    nonSyncedSavedSearches << staleSearch;
+    nonSyncedSavedSearches << secondStaleSavedSearch;
+    nonSyncedSavedSearches << thirdStaleSavedSearch;
+    nonSyncedSavedSearches << dirtySavedSearch;
+    nonSyncedSavedSearches << secondDirtySavedSearch;
+    nonSyncedSavedSearches << thirdDirtySavedSearch;
+
+    doTest(/* use base data items = */ true, QList<Notebook>(), QList<Tag>(), nonSyncedSavedSearches, QList<Note>());
+}
+
+void FullSyncStaleDataItemsExpungerTester::testSeveralStaleNotesAndSeveralDirtyNotes()
+{
+    Note staleNote;
+    staleNote.setTitle(QStringLiteral("Stale note"));
+    staleNote.setContent(QStringLiteral("<en-note><h1>Stale note content</h1></en-note>"));
+    staleNote.setGuid(UidGenerator::Generate());
+    staleNote.setUpdateSequenceNumber(100);
+    staleNote.setNotebookLocalUid(FIRST_NOTEBOOK_LOCAL_UID);
+    staleNote.setLocal(false);
+    staleNote.setDirty(false);
+
+    Note secondStaleNote;
+    secondStaleNote.setTitle(QStringLiteral("Second stale note"));
+    secondStaleNote.setContent(QStringLiteral("<en-note><h1>Second stale note content</h1></en-note>"));
+    secondStaleNote.setGuid(UidGenerator::Generate());
+    secondStaleNote.setUpdateSequenceNumber(101);
+    secondStaleNote.setNotebookLocalUid(SECOND_NOTEBOOK_LOCAL_UID);
+    secondStaleNote.setLocal(false);
+    secondStaleNote.setDirty(false);
+
+    Note thirdStaleNote;
+    thirdStaleNote.setTitle(QStringLiteral("Third stale note"));
+    thirdStaleNote.setContent(QStringLiteral("<en-note><h1>Third stale note content</h1></en-note>"));
+    thirdStaleNote.setGuid(UidGenerator::Generate());
+    thirdStaleNote.setUpdateSequenceNumber(103);
+    thirdStaleNote.setNotebookLocalUid(THIRD_NOTEBOOK_LOCAL_UID);
+    thirdStaleNote.setLocal(false);
+    thirdStaleNote.setDirty(false);
+
+    Note dirtyNote;
+    dirtyNote.setTitle(QStringLiteral("Dirty note"));
+    dirtyNote.setContent(QStringLiteral("<en-note><h1>Dirty note content</h1></en-note>"));
+    dirtyNote.setGuid(UidGenerator::Generate());
+    dirtyNote.setUpdateSequenceNumber(100);
+    dirtyNote.setNotebookLocalUid(FIRST_NOTEBOOK_LOCAL_UID);
+    dirtyNote.setLocal(false);
+    dirtyNote.setDirty(true);
+
+    Note secondDirtyNote;
+    secondDirtyNote.setTitle(QStringLiteral("Second dirty note"));
+    secondDirtyNote.setContent(QStringLiteral("<en-note><h1>Second dirty note content</h1></en-note>"));
+    secondDirtyNote.setGuid(UidGenerator::Generate());
+    secondDirtyNote.setUpdateSequenceNumber(101);
+    secondDirtyNote.setNotebookLocalUid(SECOND_NOTEBOOK_LOCAL_UID);
+    secondDirtyNote.setLocal(false);
+    secondDirtyNote.setDirty(true);
+
+    Note thirdDirtyNote;
+    thirdDirtyNote.setTitle(QStringLiteral("Third dirty note"));
+    thirdDirtyNote.setContent(QStringLiteral("<en-note><h1>Third dirty note content</h1></en-note>"));
+    thirdDirtyNote.setGuid(UidGenerator::Generate());
+    thirdDirtyNote.setUpdateSequenceNumber(102);
+    thirdDirtyNote.setNotebookLocalUid(THIRD_NOTEBOOK_LOCAL_UID);
+    thirdDirtyNote.setLocal(false);
+    thirdDirtyNote.setDirty(true);
+
+    QList<Note> nonSyncedNotes;
+    nonSyncedNotes.reserve(6);
+    nonSyncedNotes << staleNote;
+    nonSyncedNotes << secondStaleNote;
+    nonSyncedNotes << thirdStaleNote;
+    nonSyncedNotes << dirtyNote;
+    nonSyncedNotes << secondDirtyNote;
+    nonSyncedNotes << thirdDirtyNote;
+
+    doTest(/* use base data items = */ true, QList<Notebook>(), QList<Tag>(), QList<SavedSearch>(), nonSyncedNotes);
+}
+
+void FullSyncStaleDataItemsExpungerTester::testSeveralStaleAndDirtyItemsOfEachKind()
+{
+    Notebook staleNotebook;
+    staleNotebook.setName(QStringLiteral("Stale notebook"));
+    staleNotebook.setGuid(UidGenerator::Generate());
+    staleNotebook.setUpdateSequenceNumber(100);
+    staleNotebook.setLocal(false);
+    staleNotebook.setDirty(false);
+
+    Notebook secondStaleNotebook;
+    secondStaleNotebook.setName(QStringLiteral("Second stale notebook"));
+    secondStaleNotebook.setGuid(UidGenerator::Generate());
+    secondStaleNotebook.setUpdateSequenceNumber(101);
+    secondStaleNotebook.setLocal(false);
+    secondStaleNotebook.setDirty(false);
+
+    Notebook thirdStaleNotebook;
+    thirdStaleNotebook.setName(QStringLiteral("Third stale notebook"));
+    thirdStaleNotebook.setGuid(UidGenerator::Generate());
+    thirdStaleNotebook.setUpdateSequenceNumber(102);
+    thirdStaleNotebook.setLocal(false);
+    thirdStaleNotebook.setDirty(false);
+
+    Notebook dirtyNotebook;
+    dirtyNotebook.setName(QStringLiteral("Dirty notebook"));
+    dirtyNotebook.setGuid(UidGenerator::Generate());
+    dirtyNotebook.setUpdateSequenceNumber(103);
+    dirtyNotebook.setLocal(false);
+    dirtyNotebook.setDirty(true);
+
+    Notebook secondDirtyNotebook;
+    secondDirtyNotebook.setName(QStringLiteral("Second dirty notebook"));
+    secondDirtyNotebook.setGuid(UidGenerator::Generate());
+    secondDirtyNotebook.setUpdateSequenceNumber(104);
+    secondDirtyNotebook.setLocal(false);
+    secondDirtyNotebook.setDirty(true);
+
+    Notebook thirdDirtyNotebook;
+    thirdDirtyNotebook.setName(QStringLiteral("Third dirty notebook"));
+    thirdDirtyNotebook.setGuid(UidGenerator::Generate());
+    thirdDirtyNotebook.setUpdateSequenceNumber(105);
+    thirdDirtyNotebook.setLocal(false);
+    thirdDirtyNotebook.setDirty(true);
+
+    Tag staleTag;
+    staleTag.setName(QStringLiteral("Stale tag"));
+    staleTag.setGuid(UidGenerator::Generate());
+    staleTag.setUpdateSequenceNumber(106);
+    staleTag.setLocal(false);
+    staleTag.setDirty(false);
+
+    Tag secondStaleTag;
+    secondStaleTag.setName(QStringLiteral("Second stale tag"));
+    secondStaleTag.setGuid(UidGenerator::Generate());
+    secondStaleTag.setUpdateSequenceNumber(107);
+    secondStaleTag.setLocal(false);
+    secondStaleTag.setDirty(false);
+
+    Tag thirdStaleTag;
+    thirdStaleTag.setName(QStringLiteral("Third stale tag"));
+    thirdStaleTag.setGuid(UidGenerator::Generate());
+    thirdStaleTag.setUpdateSequenceNumber(108);
+    thirdStaleTag.setLocal(false);
+    thirdStaleTag.setDirty(false);
+
+    Tag dirtyTag;
+    dirtyTag.setName(QStringLiteral("Dirty tag"));
+    dirtyTag.setGuid(UidGenerator::Generate());
+    dirtyTag.setUpdateSequenceNumber(109);
+    dirtyTag.setLocal(false);
+    dirtyTag.setDirty(true);
+
+    Tag secondDirtyTag;
+    secondDirtyTag.setName(QStringLiteral("Second dirty tag"));
+    secondDirtyTag.setGuid(UidGenerator::Generate());
+    secondDirtyTag.setUpdateSequenceNumber(110);
+    secondDirtyTag.setLocal(false);
+    secondDirtyTag.setDirty(true);
+
+    Tag thirdDirtyTag;
+    thirdDirtyTag.setName(QStringLiteral("Third dirty tag"));
+    thirdDirtyTag.setGuid(UidGenerator::Generate());
+    thirdDirtyTag.setUpdateSequenceNumber(111);
+    thirdDirtyTag.setLocal(false);
+    thirdDirtyTag.setDirty(true);
+
+    SavedSearch staleSearch;
+    staleSearch.setName(QStringLiteral("Stale saved search"));
+    staleSearch.setQuery(QStringLiteral("stale"));
+    staleSearch.setGuid(UidGenerator::Generate());
+    staleSearch.setUpdateSequenceNumber(112);
+    staleSearch.setLocal(false);
+    staleSearch.setDirty(false);
+
+    SavedSearch secondStaleSavedSearch;
+    secondStaleSavedSearch.setName(QStringLiteral("Second stale saved search"));
+    secondStaleSavedSearch.setQuery(QStringLiteral("stale2"));
+    secondStaleSavedSearch.setGuid(UidGenerator::Generate());
+    secondStaleSavedSearch.setUpdateSequenceNumber(113);
+    secondStaleSavedSearch.setLocal(false);
+    secondStaleSavedSearch.setDirty(false);
+
+    SavedSearch thirdStaleSavedSearch;
+    thirdStaleSavedSearch.setName(QStringLiteral("Third stale saved search"));
+    thirdStaleSavedSearch.setQuery(QStringLiteral("stale3"));
+    thirdStaleSavedSearch.setGuid(UidGenerator::Generate());
+    thirdStaleSavedSearch.setUpdateSequenceNumber(114);
+    thirdStaleSavedSearch.setLocal(false);
+    thirdStaleSavedSearch.setDirty(false);
+
+    SavedSearch dirtySavedSearch;
+    dirtySavedSearch.setName(QStringLiteral("Dirty saved search"));
+    dirtySavedSearch.setQuery(QStringLiteral("dirty"));
+    dirtySavedSearch.setGuid(UidGenerator::Generate());
+    dirtySavedSearch.setUpdateSequenceNumber(115);
+    dirtySavedSearch.setLocal(false);
+    dirtySavedSearch.setDirty(true);
+
+    SavedSearch secondDirtySavedSearch;
+    secondDirtySavedSearch.setName(QStringLiteral("Second dirty saved search"));
+    secondDirtySavedSearch.setQuery(QStringLiteral("dirty2"));
+    secondDirtySavedSearch.setGuid(UidGenerator::Generate());
+    secondDirtySavedSearch.setUpdateSequenceNumber(116);
+    secondDirtySavedSearch.setLocal(false);
+    secondDirtySavedSearch.setDirty(true);
+
+    SavedSearch thirdDirtySavedSearch;
+    thirdDirtySavedSearch.setName(QStringLiteral("Third dirty saved search"));
+    thirdDirtySavedSearch.setQuery(QStringLiteral("dirty3"));
+    thirdDirtySavedSearch.setGuid(UidGenerator::Generate());
+    thirdDirtySavedSearch.setUpdateSequenceNumber(117);
+    thirdDirtySavedSearch.setLocal(false);
+    thirdDirtySavedSearch.setDirty(true);
+
+    Note staleNote;
+    staleNote.setTitle(QStringLiteral("Stale note"));
+    staleNote.setContent(QStringLiteral("<en-note><h1>Stale note content</h1></en-note>"));
+    staleNote.setGuid(UidGenerator::Generate());
+    staleNote.setUpdateSequenceNumber(118);
+    staleNote.setNotebookLocalUid(FIRST_NOTEBOOK_LOCAL_UID);
+    staleNote.setLocal(false);
+    staleNote.setDirty(false);
+
+    Note secondStaleNote;
+    secondStaleNote.setTitle(QStringLiteral("Second stale note"));
+    secondStaleNote.setContent(QStringLiteral("<en-note><h1>Second stale note content</h1></en-note>"));
+    secondStaleNote.setGuid(UidGenerator::Generate());
+    secondStaleNote.setUpdateSequenceNumber(119);
+    secondStaleNote.setNotebookLocalUid(SECOND_NOTEBOOK_LOCAL_UID);
+    secondStaleNote.setLocal(false);
+    secondStaleNote.setDirty(false);
+
+    Note thirdStaleNote;
+    thirdStaleNote.setTitle(QStringLiteral("Third stale note"));
+    thirdStaleNote.setContent(QStringLiteral("<en-note><h1>Third stale note content</h1></en-note>"));
+    thirdStaleNote.setGuid(UidGenerator::Generate());
+    thirdStaleNote.setUpdateSequenceNumber(120);
+    thirdStaleNote.setNotebookLocalUid(THIRD_NOTEBOOK_LOCAL_UID);
+    thirdStaleNote.setLocal(false);
+    thirdStaleNote.setDirty(false);
+
+    Note dirtyNote;
+    dirtyNote.setTitle(QStringLiteral("Dirty note"));
+    dirtyNote.setContent(QStringLiteral("<en-note><h1>Dirty note content</h1></en-note>"));
+    dirtyNote.setGuid(UidGenerator::Generate());
+    dirtyNote.setUpdateSequenceNumber(121);
+    dirtyNote.setNotebookLocalUid(FIRST_NOTEBOOK_LOCAL_UID);
+    dirtyNote.setLocal(false);
+    dirtyNote.setDirty(true);
+
+    Note secondDirtyNote;
+    secondDirtyNote.setTitle(QStringLiteral("Second dirty note"));
+    secondDirtyNote.setContent(QStringLiteral("<en-note><h1>Second dirty note content</h1></en-note>"));
+    secondDirtyNote.setGuid(UidGenerator::Generate());
+    secondDirtyNote.setUpdateSequenceNumber(122);
+    secondDirtyNote.setNotebookLocalUid(SECOND_NOTEBOOK_LOCAL_UID);
+    secondDirtyNote.setLocal(false);
+    secondDirtyNote.setDirty(true);
+
+    Note thirdDirtyNote;
+    thirdDirtyNote.setTitle(QStringLiteral("Third dirty note"));
+    thirdDirtyNote.setContent(QStringLiteral("<en-note><h1>Third dirty note content</h1></en-note>"));
+    thirdDirtyNote.setGuid(UidGenerator::Generate());
+    thirdDirtyNote.setUpdateSequenceNumber(123);
+    thirdDirtyNote.setNotebookLocalUid(THIRD_NOTEBOOK_LOCAL_UID);
+    thirdDirtyNote.setLocal(false);
+    thirdDirtyNote.setDirty(true);
+
+    QList<Notebook> nonSyncedNotebooks;
+    nonSyncedNotebooks.reserve(6);
+    nonSyncedNotebooks << staleNotebook;
+    nonSyncedNotebooks << secondStaleNotebook;
+    nonSyncedNotebooks << thirdStaleNotebook;
+    nonSyncedNotebooks << dirtyNotebook;
+    nonSyncedNotebooks << secondDirtyNotebook;
+    nonSyncedNotebooks << thirdDirtyNotebook;
+
+    QList<Tag> nonSyncedTags;
+    nonSyncedTags.reserve(6);
+    nonSyncedTags << staleTag;
+    nonSyncedTags << secondStaleTag;
+    nonSyncedTags << thirdStaleTag;
+    nonSyncedTags << dirtyTag;
+    nonSyncedTags << secondDirtyTag;
+    nonSyncedTags << thirdDirtyTag;
+
+    QList<SavedSearch> nonSyncedSavedSearches;
+    nonSyncedSavedSearches.reserve(6);
+    nonSyncedSavedSearches << staleSearch;
+    nonSyncedSavedSearches << secondStaleSavedSearch;
+    nonSyncedSavedSearches << thirdStaleSavedSearch;
+    nonSyncedSavedSearches << dirtySavedSearch;
+    nonSyncedSavedSearches << secondDirtySavedSearch;
+    nonSyncedSavedSearches << thirdDirtySavedSearch;
+
+    QList<Note> nonSyncedNotes;
+    nonSyncedNotes.reserve(6);
+    nonSyncedNotes << staleNote;
+    nonSyncedNotes << secondStaleNote;
+    nonSyncedNotes << thirdStaleNote;
+    nonSyncedNotes << dirtyNote;
+    nonSyncedNotes << secondDirtyNote;
+    nonSyncedNotes << thirdDirtyNote;
+
+    doTest(/* use base data items = */ true, nonSyncedNotebooks, nonSyncedTags, nonSyncedSavedSearches, nonSyncedNotes);
+}
+
+void FullSyncStaleDataItemsExpungerTester::testDirtyNoteWithStaleNotebook()
+{
+    Notebook staleNotebook;
+    staleNotebook.setName(QStringLiteral("Stale notebook"));
+    staleNotebook.setGuid(UidGenerator::Generate());
+    staleNotebook.setUpdateSequenceNumber(100);
+    staleNotebook.setLocal(false);
+    staleNotebook.setDirty(false);
+
+    Note dirtyNote;
+    dirtyNote.setTitle(QStringLiteral("Dirty note"));
+    dirtyNote.setContent(QStringLiteral("<en-note><h1>Dirty note content</h1></en-note>"));
+    dirtyNote.setGuid(UidGenerator::Generate());
+    dirtyNote.setUpdateSequenceNumber(100);
+    dirtyNote.setNotebookLocalUid(staleNotebook.localUid());
+    dirtyNote.setLocal(false);
+    dirtyNote.setDirty(true);
+
+    QList<Notebook> nonSyncedNotebooks;
+    nonSyncedNotebooks << staleNotebook;
+
+    QList<Note> nonSyncedNotes;
+    nonSyncedNotes << dirtyNote;
+
+    doTest(/* use base data items = */ true, nonSyncedNotebooks, QList<Tag>(), QList<SavedSearch>(), nonSyncedNotes);
+}
+
 void FullSyncStaleDataItemsExpungerTester::setupBaseDataItems()
 {
     if (Q_UNLIKELY(!m_pLocalStorageManagerAsync)) {
@@ -1282,6 +2139,24 @@ void FullSyncStaleDataItemsExpungerTester::doTest(const bool useBaseDataItems,
     {
         const Note & note = *it;
 
+        if (!note.hasNotebookGuid() && !note.hasNotebookLocalUid()) {
+            QFAIL("Found a note without notebook guid and notebook local uid");
+        }
+
+        auto remainingNotebookIt = remainingNotebooks.constEnd();
+        if (note.hasNotebookGuid()) {
+            remainingNotebookIt = std::find_if(remainingNotebooks.constBegin(), remainingNotebooks.constEnd(),
+                                               CompareItemByGuid<Notebook>(note.notebookGuid()));
+        }
+        else {
+            remainingNotebookIt = std::find_if(remainingNotebooks.constBegin(), remainingNotebooks.constEnd(),
+                                               CompareItemByLocalUid<Notebook>(note.notebookLocalUid()));
+        }
+
+        if (Q_UNLIKELY(remainingNotebookIt == remainingNotebooks.constEnd())) {
+            QFAIL("Found a note which corresponing notebook has been expunged but the note still exists within the local storage");
+        }
+
         if (note.hasGuid())
         {
             auto guidIt = m_syncedGuids.m_syncedNoteGuids.find(note.guid());
@@ -1301,13 +2176,30 @@ void FullSyncStaleDataItemsExpungerTester::doTest(const bool useBaseDataItems,
     {
         const Note & note = *it;
 
+        if (!note.hasNotebookGuid() && !note.hasNotebookLocalUid()) {
+            QFAIL("One of non-synced notes has no notebook guid and no notebook local uid");
+        }
+
+        auto remainingNotebookIt = remainingNotebooks.constEnd();
+        if (note.hasNotebookGuid()) {
+            remainingNotebookIt = std::find_if(remainingNotebooks.constBegin(), remainingNotebooks.constEnd(),
+                                               CompareItemByGuid<Notebook>(note.notebookGuid()));
+        }
+        else {
+            remainingNotebookIt = std::find_if(remainingNotebooks.constBegin(), remainingNotebooks.constEnd(),
+                                               CompareItemByLocalUid<Notebook>(note.notebookLocalUid()));
+        }
+
         auto remainingNoteIt = std::find_if(remainingNotes.constBegin(), remainingNotes.constEnd(),
                                             CompareItemByLocalUid<Note>(note.localUid()));
-        if ((remainingNoteIt == remainingNotes.constEnd()) && note.isDirty()) {
+        if ((remainingNoteIt == remainingNotes.constEnd()) && note.isDirty() &&
+            (remainingNotebookIt != remainingNotebooks.constEnd()))
+        {
             QFAIL("One of extra notes which was dirty has not survived the purge performed "
                   "by FullSyncStaleDataItemsExpunger even though it was intended to be preserved");
         }
-        else if ((remainingNoteIt != remainingNotes.constEnd()) && !note.isDirty()) {
+        else if ((remainingNoteIt != remainingNotes.constEnd()) && !note.isDirty())
+        {
             QFAIL("One of extra notes which was not dirty has survived the purge performed "
                   "by FullSyncStaleDataItemsExpunger even though it was intended to be expunged");
         }

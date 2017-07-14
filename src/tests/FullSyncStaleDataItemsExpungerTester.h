@@ -62,6 +62,24 @@ private Q_SLOTS:
     void testOneDirtyNote();
     void testOneDirtyItemOfEachKind();
 
+    void testSeveralDirtyNotebooks();
+    void testSeveralDirtyTags();
+    void testSeveralDirtySavedSearches();
+    void testSeveralDirtyNotes();
+    void testSeveralDirtyItemsOfEachKind();
+
+    void testOneStaleNotebookAndOneDirtyNotebook();
+    void testOneStaleTagAndOneDirtyTag();
+    void testOneStaleSavedSearchAndOneDirtySavedSearch();
+    void testOneStaleNoteAndOneDirtyNote();
+    void testSeveralStaleNotebooksAndSeveralDirtyNotebooks();
+    void testSeveralStaleTagsAndSeveralDirtyTags();
+    void testSeveralStaleSavedSearchesAndSeveralDirtySavedSearches();
+    void testSeveralStaleNotesAndSeveralDirtyNotes();
+    void testSeveralStaleAndDirtyItemsOfEachKind();
+
+    void testDirtyNoteWithStaleNotebook();
+
 private:
     void setupBaseDataItems();
 
