@@ -36,15 +36,40 @@ private Q_SLOTS:
     void cleanup();
 
     void testEmpty();
+    void testNoStaleOrDirtyItems();
+
+    void testOneStaleNotebook();
+    void testOneStaleTag();
+    void testOneStaleSavedSearch();
+    void testOneStaleNote();
+    void testOneStaleNotebookAndOneStaleTag();
+    void testOneStaleNotebookAndOneStaleSavedSearch();
+    void testOneStaleNotebookAndOneStaleNote();
+    void testOneStaleTagAndOneStaleSavedSearch();
+    void testOneStaleTagAndOneStaleNote();
+    void testOneStaleSavedSearchAndOneStaleNote();
+    void testOneStaleItemOfEachKind();
+
+    void testSeveralStaleNotebooks();
+    void testSeveralStaleTags();
+    void testSeveralStaleSavedSearches();
+    void testSeveralStaleNotes();
+    void testSeveralStaleItemsOfEachKind();
+
+    void testOneDirtyNotebook();
+    void testOneDirtyTag();
+    void testOneDirtySavedSearch();
+    void testOneDirtyNote();
+    void testOneDirtyItemOfEachKind();
 
 private:
     void setupBaseDataItems();
 
     void doTest(const bool useBaseDataItems,
-                const QList<Notebook> & extraNotebooks,
-                const QList<Tag> & extraTags,
-                const QList<SavedSearch> & extraSavedSearches,
-                const QList<Note> & extraNotes);
+                const QList<Notebook> & nonSyncedNotebooks,
+                const QList<Tag> & nonSyncedTags,
+                const QList<SavedSearch> & nonSyncedSavedSearches,
+                const QList<Note> & nonSyncedNotes);
 
 private:
     Account                     m_testAccount;
