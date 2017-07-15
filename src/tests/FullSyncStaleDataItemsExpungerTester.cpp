@@ -1632,6 +1632,32 @@ void FullSyncStaleDataItemsExpungerTester::testDirtyNoteWithStaleNotebook()
     doTest(/* use base data items = */ true, nonSyncedNotebooks, QList<Tag>(), QList<SavedSearch>(), nonSyncedNotes);
 }
 
+void FullSyncStaleDataItemsExpungerTester::testDirtyTagWithStaleParentTag()
+{
+    Tag staleTag;
+    staleTag.setName(QStringLiteral("Stale tag"));
+    staleTag.setGuid(UidGenerator::Generate());
+    staleTag.setUpdateSequenceNumber(100);
+    staleTag.setLocal(false);
+    staleTag.setDirty(false);
+
+    Tag dirtyTag;
+    dirtyTag.setName(QStringLiteral("Dirty tag"));
+    dirtyTag.setGuid(UidGenerator::Generate());
+    dirtyTag.setUpdateSequenceNumber(101);
+    dirtyTag.setLocal(false);
+    dirtyTag.setDirty(true);
+    dirtyTag.setParentGuid(staleTag.guid());
+    dirtyTag.setParentLocalUid(staleTag.localUid());
+
+    QList<Tag> nonSyncedTags;
+    nonSyncedTags.reserve(2);
+    nonSyncedTags << staleTag;
+    nonSyncedTags << dirtyTag;
+
+    doTest(/* use base data items = */ true, QList<Notebook>(), nonSyncedTags, QList<SavedSearch>(), QList<Note>());
+}
+
 void FullSyncStaleDataItemsExpungerTester::setupBaseDataItems()
 {
     if (Q_UNLIKELY(!m_pLocalStorageManagerAsync)) {

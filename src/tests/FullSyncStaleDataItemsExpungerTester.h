@@ -79,6 +79,7 @@ private Q_SLOTS:
     void testSeveralStaleAndDirtyItemsOfEachKind();
 
     void testDirtyNoteWithStaleNotebook();
+    void testDirtyTagWithStaleParentTag();
 
 private:
     void setupBaseDataItems();
