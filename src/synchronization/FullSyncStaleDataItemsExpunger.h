@@ -130,6 +130,7 @@ private:
     void analyzeDataAndSendRequestsOrResult();
 
     void checkRequestsCompletionAndSendResult();
+    void checkTagUpdatesCompletionAndSendExpungeTagRequests();
 
 private:
     LocalStorageManagerAsync &      m_localStorageManagerAsync;
@@ -146,6 +147,8 @@ private:
     quint64                         m_numPendingTagSyncCaches;
     bool                            m_pendingSavedSearchSyncCache;
     bool                            m_pendingNoteSyncCache;
+
+    QSet<QString>                   m_tagGuidsToExpunge;
 
     QSet<QUuid>                     m_expungeNotebookRequestIds;
     QSet<QUuid>                     m_expungeTagRequestIds;

@@ -286,6 +286,7 @@ void FullSyncStaleDataItemsExpunger::onUpdateTagComplete(Tag tag, QUuid requestI
             << QStringLiteral(", tag: ") << tag);
 
     Q_UNUSED(m_updateTagRequestIds.erase(it))
+    checkTagUpdatesCompletionAndSendExpungeTagRequests();
     checkRequestsCompletionAndSendResult();
 }
 
@@ -610,9 +611,9 @@ void FullSyncStaleDataItemsExpunger::analyzeDataAndSendRequestsOrResult()
     QNDEBUG(QStringLiteral("FullSyncStaleDataItemsExpunger::analyzeDataAndSendRequestsOrResult"));
 
     QSet<QString>   notebookGuidsToExpunge;
-    QSet<QString>   tagGuidsToExpunge;
     QSet<QString>   savedSearchGuidsToExpunge;
     QSet<QString>   noteGuidsToExpunge;
+    m_tagGuidsToExpunge.clear();
 
     QList<Notebook>     dirtyNotebooksToUpdate;
     QList<Tag>          dirtyTagsToUpdate;
@@ -674,7 +675,7 @@ void FullSyncStaleDataItemsExpunger::analyzeDataAndSendRequestsOrResult()
             if (dirtyTagIt == dirtyTagsByGuidHash.end())
             {
                 QNTRACE(QStringLiteral("Tag guid ") << guid << QStringLiteral(" doesn't appear within the list of dirty tags"));
-                Q_UNUSED(tagGuidsToExpunge.insert(guid))
+                Q_UNUSED(m_tagGuidsToExpunge.insert(guid))
             }
             else
             {
@@ -682,6 +683,27 @@ void FullSyncStaleDataItemsExpunger::analyzeDataAndSendRequestsOrResult()
                 dirtyTagsToUpdate << dirtyTagIt.value();
             }
         }
+    }
+
+    // Need to check if dirty tags to update have parent guids corresponding to tags which should be expunged;
+    // if they do, need to clear these parent guids from them because dirty tags need to be preserved
+    for(auto it = dirtyTagsToUpdate.begin(), end = dirtyTagsToUpdate.end(); it != end; ++it)
+    {
+        Tag & tag = *it;
+
+        if (!tag.hasParentGuid()) {
+            continue;
+        }
+
+        auto parentGuidIt = m_tagGuidsToExpunge.find(tag.parentGuid());
+        if (parentGuidIt == m_tagGuidsToExpunge.end()) {
+            continue;
+        }
+
+        QNTRACE(QStringLiteral("Clearing parent guid from dirty tag because the parent tag is going to be expunged: ") << tag);
+
+        tag.setParentGuid(QString());
+        tag.setParentLocalUid(QString());
     }
 
     if (!m_caches.m_savedSearchSyncCache.isNull())
@@ -780,7 +802,7 @@ void FullSyncStaleDataItemsExpunger::analyzeDataAndSendRequestsOrResult()
     }
 
     if (notebookGuidsToExpunge.isEmpty() &&
-        tagGuidsToExpunge.isEmpty() &&
+        m_tagGuidsToExpunge.isEmpty() &&
         savedSearchGuidsToExpunge.isEmpty() &&
         noteGuidsToExpunge.isEmpty() &&
         dirtyNotebooksToUpdate.isEmpty() &&
@@ -814,19 +836,9 @@ void FullSyncStaleDataItemsExpunger::analyzeDataAndSendRequestsOrResult()
         emit expungeNotebook(dummyNotebook, requestId);
     }
 
-    for(auto it = tagGuidsToExpunge.constBegin(), end = tagGuidsToExpunge.constEnd(); it != end; ++it)
-    {
-        const QString & guid = *it;
-        Tag dummyTag;
-        dummyTag.unsetLocalUid();
-        dummyTag.setGuid(guid);
-
-        QUuid requestId = QUuid::createUuid();
-        Q_UNUSED(m_expungeTagRequestIds.insert(requestId))
-        QNTRACE(QStringLiteral("Emitting the request to expunge tag: request id = ") << requestId
-                << QStringLiteral(", tag guid = ") << guid);
-        emit expungeTag(dummyTag, requestId);
-    }
+    // NOTE: won't expunge tags until the dirty ones are updated in order to prevent the automatic expunging
+    // of child tags along with their parents - updating the dirty tags would remove parents which are going
+    // to be expunged
 
     for(auto it = savedSearchGuidsToExpunge.constBegin(), end = savedSearchGuidsToExpunge.constEnd(); it != end; ++it)
     {
@@ -881,6 +893,8 @@ void FullSyncStaleDataItemsExpunger::analyzeDataAndSendRequestsOrResult()
                 << QStringLiteral(", tag: ") << tag);
         emit updateTag(tag, requestId);
     }
+
+    checkTagUpdatesCompletionAndSendExpungeTagRequests();
 
     for(auto it = dirtySavedSearchesToUpdate.begin(), end = dirtySavedSearchesToUpdate.end(); it != end; ++it)
     {
@@ -968,6 +982,40 @@ void FullSyncStaleDataItemsExpunger::checkRequestsCompletionAndSendResult()
 
     QNDEBUG(QStringLiteral("Emitting the finished signal"));
     emit finished();
+}
+
+void FullSyncStaleDataItemsExpunger::checkTagUpdatesCompletionAndSendExpungeTagRequests()
+{
+    QNDEBUG(QStringLiteral("FullSyncStaleDataItemsExpunger::checkTagUpdatesCompletionAndSendExpungeTagRequests"));
+
+    if (!m_updateTagRequestIds.isEmpty()) {
+        QNDEBUG(QStringLiteral("Still pending ") << m_updateTagRequestIds.size() << QStringLiteral(" tag update requests"));
+        return;
+    }
+
+    if (m_tagGuidsToExpunge.isEmpty()) {
+        QNDEBUG(QStringLiteral("Detected no pending tag update requests but there are no tags meant to be expunged - "
+                               "either there are no such ones or because expunge requests have already been sent"));
+        return;
+    }
+
+    QNDEBUG(QStringLiteral("Detected no pending tag update requests, expunging the tags meant to be expunged"));
+
+    for(auto it = m_tagGuidsToExpunge.constBegin(), end = m_tagGuidsToExpunge.constEnd(); it != end; ++it)
+    {
+        const QString & guid = *it;
+        Tag dummyTag;
+        dummyTag.unsetLocalUid();
+        dummyTag.setGuid(guid);
+
+        QUuid requestId = QUuid::createUuid();
+        Q_UNUSED(m_expungeTagRequestIds.insert(requestId))
+        QNTRACE(QStringLiteral("Emitting the request to expunge tag: request id = ") << requestId
+                << QStringLiteral(", tag guid = ") << guid);
+        emit expungeTag(dummyTag, requestId);
+    }
+
+    m_tagGuidsToExpunge.clear();
 }
 
 } // namespace quentier
