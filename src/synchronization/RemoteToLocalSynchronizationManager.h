@@ -254,6 +254,10 @@ private Q_SLOTS:
     void onSavedSearchSyncConflictResolverFinished(qevercloud::SavedSearch remoteSavedSearch);
     void onSavedSearchSyncConflictResolverFailure(qevercloud::SavedSearch remoteSavedSearch, ErrorString errorDescription);
 
+    // Slots for FullSyncStaleDataItemsExpunger signals
+    void onFullSyncStaleDataItemsExpungerFinished();
+    void onFullSyncStaleDataItemsExpungerFailure(ErrorString errorDescription);
+
 private:
     void connectToLocalStorage();
     void disconnectFromLocalStorage();
@@ -264,7 +268,7 @@ private:
 
     void launchSync();
 
-    // If any of these returns false, it is either due to error or due to API rate limit exceeding
+    // If any of these return false, it is either due to error or due to API rate limit exceeding
     bool checkProtocolVersion(ErrorString & errorDescription);
     bool syncUserImpl(const bool waitIfRateLimitReached, ErrorString & errorDescription,
                       const bool writeUserDataToLocalStorage = true);
@@ -280,6 +284,10 @@ private:
     void launchSavedSearchSync();
     void launchLinkedNotebookSync();
     void launchNotebookSync();
+
+    void launchFullSyncStaleDataItemsExpunger();
+
+    void launchExpungingOfNotelessTagsFromLinkedNotebooks();
 
     bool syncingLinkedNotebooksContent() const;
 
@@ -306,8 +314,8 @@ private:
                                QList<QString> & expungedElements);
 
     template <class ContainerType, class LocalType>
-    void launchDataElementSyncCommon(const ContentSource::type contentSource,
-                                     ContainerType & container, QList<QString> & expungedElements);
+    void launchDataElementSyncCommon(const ContentSource::type contentSource, ContainerType & container,
+                                     QList<QString> & expungedElements);
 
     template <class ElementType>
     void extractExpungedElementsFromSyncChunk(const qevercloud::SyncChunk & syncChunk,
