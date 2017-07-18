@@ -19,12 +19,31 @@
 #include "NoteSyncCache.h"
 #include <quentier/logging/QuentierLogger.h>
 
+#define __NSLOG_BASE(message, level) \
+    if (m_linkedNotebookGuid.isEmpty()) { \
+        __QNLOG_BASE(message, level); \
+    } \
+    else { \
+        __QNLOG_BASE(QStringLiteral("[linked notebook ") << m_linkedNotebookGuid << QStringLiteral("]: ") << message, level); \
+    }
+
+#define NSTRACE(message) \
+    __NSLOG_BASE(message, Trace)
+
+#define NSDEBUG(message) \
+    __NSLOG_BASE(message, Debug)
+
+#define NSWARNING(message) \
+    __NSLOG_BASE(message, Warn)
+
 namespace quentier {
 
-NoteSyncCache::NoteSyncCache(LocalStorageManagerAsync & localStorageManagerAsync, QObject * parent) :
+NoteSyncCache::NoteSyncCache(LocalStorageManagerAsync & localStorageManagerAsync,
+                             const QString & linkedNotebookGuid, QObject * parent) :
     QObject(parent),
     m_localStorageManagerAsync(localStorageManagerAsync),
     m_connectedToLocalStorage(false),
+    m_linkedNotebookGuid(linkedNotebookGuid),
     m_noteGuidToLocalUidBimap(),
     m_dirtyNotesByGuid(),
     m_notebookGuidByNoteGuid(),
@@ -35,7 +54,7 @@ NoteSyncCache::NoteSyncCache(LocalStorageManagerAsync & localStorageManagerAsync
 
 void NoteSyncCache::clear()
 {
-    QNDEBUG(QStringLiteral("NoteSyncCache::clear"));
+    NSDEBUG(QStringLiteral("NoteSyncCache::clear"));
 
     disconnectFromLocalStorage();
 
@@ -61,10 +80,10 @@ bool NoteSyncCache::isFilled() const
 
 void NoteSyncCache::fill()
 {
-    QNDEBUG(QStringLiteral("NoteSyncCache::fill"));
+    NSDEBUG(QStringLiteral("NoteSyncCache::fill"));
 
     if (m_connectedToLocalStorage) {
-        QNDEBUG(QStringLiteral("Already connected to the local storage, no need to do anything"));
+        NSDEBUG(QStringLiteral("Already connected to the local storage, no need to do anything"));
         return;
     }
 
@@ -81,7 +100,7 @@ void NoteSyncCache::onListNotesComplete(LocalStorageManager::ListObjectsOptions 
         return;
     }
 
-    QNDEBUG(QStringLiteral("NoteSyncCache::onListNotesComplete: flag = ") << flag << QStringLiteral(", with resource binary data = ")
+    NSDEBUG(QStringLiteral("NoteSyncCache::onListNotesComplete: flag = ") << flag << QStringLiteral(", with resource binary data = ")
             << (withResourceBinaryData ? QStringLiteral("true") : QStringLiteral("false"))
             << QStringLiteral(", limit = ") << limit << QStringLiteral(", offset = ") << offset
             << QStringLiteral(", order = ") << order << QStringLiteral(", order direction = ") << orderDirection
@@ -95,7 +114,7 @@ void NoteSyncCache::onListNotesComplete(LocalStorageManager::ListObjectsOptions 
     m_listNotesRequestId = QUuid();
 
     if (foundNotes.size() == static_cast<int>(limit)) {
-        QNTRACE(QStringLiteral("The number of found notes matches the limit, requesting more notes from the local storage"));
+        NSTRACE(QStringLiteral("The number of found notes matches the limit, requesting more notes from the local storage"));
         m_offset += limit;
         requestNotesList();
         return;
@@ -113,14 +132,14 @@ void NoteSyncCache::onListNotesFailed(LocalStorageManager::ListObjectsOptions fl
         return;
     }
 
-    QNDEBUG(QStringLiteral("NoteSyncCache::onListNotesFailed: flag = ") << flag << QStringLiteral(", with resource binary data = ")
+    NSDEBUG(QStringLiteral("NoteSyncCache::onListNotesFailed: flag = ") << flag << QStringLiteral(", with resource binary data = ")
             << (withResourceBinaryData ? QStringLiteral("true") : QStringLiteral("false")) << QStringLiteral(", limit = ")
             << limit << QStringLiteral(", offset = ") << offset << QStringLiteral(", order = ") << order
             << QStringLiteral(", order direction = ") << orderDirection << QStringLiteral(", linked notebook guid = ")
             << linkedNotebookGuid << QStringLiteral(", error description = ") << errorDescription << QStringLiteral(", request id = ")
             << requestId);
 
-    QNWARNING(QStringLiteral("Failed to cache the note information required for the sync: ") << errorDescription);
+    NSWARNING(QStringLiteral("Failed to cache the note information required for the sync: ") << errorDescription);
 
     m_noteGuidToLocalUidBimap.clear();
     m_dirtyNotesByGuid.clear();
@@ -132,7 +151,7 @@ void NoteSyncCache::onListNotesFailed(LocalStorageManager::ListObjectsOptions fl
 
 void NoteSyncCache::onAddNoteComplete(Note note, QUuid requestId)
 {
-    QNDEBUG(QStringLiteral("NoteSyncCache::onAddNoteComplete: request id = ") << requestId
+    NSDEBUG(QStringLiteral("NoteSyncCache::onAddNoteComplete: request id = ") << requestId
             << QStringLiteral(", note: ") << note);
 
     processNote(note);
@@ -140,7 +159,7 @@ void NoteSyncCache::onAddNoteComplete(Note note, QUuid requestId)
 
 void NoteSyncCache::onUpdateNoteComplete(Note note, bool updateResources, bool updateTags, QUuid requestId)
 {
-    QNDEBUG(QStringLiteral("NoteSyncCache::onUpdateNoteComplete: request id = ") << requestId
+    NSDEBUG(QStringLiteral("NoteSyncCache::onUpdateNoteComplete: request id = ") << requestId
             << QStringLiteral(", update resources = ") << (updateResources ? QStringLiteral("true") : QStringLiteral("false"))
             << QStringLiteral(", update tags = ") << (updateTags ? QStringLiteral("true") : QStringLiteral("false"))
             << QStringLiteral(", note: ") << note);
@@ -150,7 +169,7 @@ void NoteSyncCache::onUpdateNoteComplete(Note note, bool updateResources, bool u
 
 void NoteSyncCache::onExpungeNoteComplete(Note note, QUuid requestId)
 {
-    QNDEBUG(QStringLiteral("NoteSyncCache::onExpungeNoteComplete: request id = ") << requestId
+    NSDEBUG(QStringLiteral("NoteSyncCache::onExpungeNoteComplete: request id = ") << requestId
             << QStringLiteral(", note: ") << note);
 
     removeNote(note.localUid());
@@ -158,10 +177,10 @@ void NoteSyncCache::onExpungeNoteComplete(Note note, QUuid requestId)
 
 void NoteSyncCache::connectToLocalStorage()
 {
-    QNDEBUG(QStringLiteral("NoteSyncCache::connectToLocalStorage"));
+    NSDEBUG(QStringLiteral("NoteSyncCache::connectToLocalStorage"));
 
     if (m_connectedToLocalStorage) {
-        QNDEBUG(QStringLiteral("Already connected to the local storage"));
+        NSDEBUG(QStringLiteral("Already connected to the local storage"));
         return;
     }
 
@@ -203,10 +222,10 @@ void NoteSyncCache::connectToLocalStorage()
 
 void NoteSyncCache::disconnectFromLocalStorage()
 {
-    QNDEBUG(QStringLiteral("NoteSyncCache::disconnectFromLocalStorage"));
+    NSDEBUG(QStringLiteral("NoteSyncCache::disconnectFromLocalStorage"));
 
     if (!m_connectedToLocalStorage) {
-        QNDEBUG(QStringLiteral("Not connected to local storage at the moment"));
+        NSDEBUG(QStringLiteral("Not connected to local storage at the moment"));
         return;
     }
 
@@ -248,24 +267,26 @@ void NoteSyncCache::disconnectFromLocalStorage()
 
 void NoteSyncCache::requestNotesList()
 {
-    QNDEBUG(QStringLiteral("NoteSyncCache::requestNotesList"));
+    NSDEBUG(QStringLiteral("NoteSyncCache::requestNotesList"));
 
     m_listNotesRequestId = QUuid::createUuid();
 
-    QNTRACE(QStringLiteral("Emitting the request to list notes: request id = ")
+    NSTRACE(QStringLiteral("Emitting the request to list notes: request id = ")
             << m_listNotesRequestId << QStringLiteral(", offset = ") << m_offset);
     emit listNotes(LocalStorageManager::ListAll, /* with resource binary data = */ false,
                    m_limit, m_offset, LocalStorageManager::ListNotesOrder::NoOrder,
-                   LocalStorageManager::OrderDirection::Ascending, QString(), m_listNotesRequestId);
+                   LocalStorageManager::OrderDirection::Ascending,
+                   (m_linkedNotebookGuid.isEmpty() ? QStringLiteral("") : m_linkedNotebookGuid),
+                   m_listNotesRequestId);
 }
 
 void NoteSyncCache::removeNote(const QString & noteLocalUid)
 {
-    QNDEBUG(QStringLiteral("NoteSyncCache::removeNote: ") << noteLocalUid);
+    NSDEBUG(QStringLiteral("NoteSyncCache::removeNote: ") << noteLocalUid);
 
     auto localUidIt = m_noteGuidToLocalUidBimap.right.find(noteLocalUid);
     if (localUidIt == m_noteGuidToLocalUidBimap.right.end()) {
-        QNDEBUG(QStringLiteral("Found no cached note to remove"));
+        NSDEBUG(QStringLiteral("Found no cached note to remove"));
         return;
     }
 
@@ -285,7 +306,7 @@ void NoteSyncCache::removeNote(const QString & noteLocalUid)
 
 void NoteSyncCache::processNote(const Note & note)
 {
-    QNDEBUG(QStringLiteral("NoteSyncCache::processNote: ") << note);
+    NSDEBUG(QStringLiteral("NoteSyncCache::processNote: ") << note);
 
     if (note.hasGuid())
     {

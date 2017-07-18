@@ -95,9 +95,9 @@ private:
     LocalStorageManagerAsync *  m_pLocalStorageManagerAsync;
     FullSyncStaleDataItemsExpunger::SyncedGuids     m_syncedGuids;
 
-    QList<NotebookSyncCache*>     m_notebookSyncCaches;
-    QList<TagSyncCache*>          m_tagSyncCaches;
-    SavedSearchSyncCache *        m_pSavedSearchSyncCache;
+    NotebookSyncCache *         m_pNotebookSyncCache;
+    TagSyncCache *              m_pTagSyncCache;
+    SavedSearchSyncCache *      m_pSavedSearchSyncCache;
 
     bool    m_detectedTestFailure;
 };

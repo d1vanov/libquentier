@@ -36,9 +36,12 @@ class NoteSyncCache: public QObject
 {
     Q_OBJECT
 public:
-    NoteSyncCache(LocalStorageManagerAsync & localStorageManagerAsync, QObject * parent = Q_NULLPTR);
+    NoteSyncCache(LocalStorageManagerAsync & localStorageManagerAsync,
+                  const QString & linkedNotebookGuid, QObject * parent = Q_NULLPTR);
 
     void clear();
+
+    const QString & linkedNotebookGuid() const { return m_linkedNotebookGuid; }
 
     /**
      * @return True if the cache is already filled with up-to-moment data, false otherwise
@@ -95,6 +98,8 @@ private:
 private:
     LocalStorageManagerAsync &          m_localStorageManagerAsync;
     bool                                m_connectedToLocalStorage;
+
+    QString                             m_linkedNotebookGuid;
 
     NoteGuidToLocalUidBimap             m_noteGuidToLocalUidBimap;
     QHash<QString,Note>                 m_dirtyNotesByGuid;

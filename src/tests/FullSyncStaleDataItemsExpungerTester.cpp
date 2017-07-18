@@ -67,8 +67,8 @@ FullSyncStaleDataItemsExpungerTester::FullSyncStaleDataItemsExpungerTester(QObje
                   Account::Type::Evernote, qevercloud::UserID(1)),
     m_pLocalStorageManagerAsync(Q_NULLPTR),
     m_syncedGuids(),
-    m_notebookSyncCaches(),
-    m_tagSyncCaches(),
+    m_pNotebookSyncCache(Q_NULLPTR),
+    m_pTagSyncCache(Q_NULLPTR),
     m_pSavedSearchSyncCache(Q_NULLPTR)
 {}
 
@@ -82,42 +82,24 @@ void FullSyncStaleDataItemsExpungerTester::init()
                                                                /* override lock = */ false, this);
     m_pLocalStorageManagerAsync->init();
 
-    NotebookSyncCache * pNotebookSyncCache = new NotebookSyncCache(*m_pLocalStorageManagerAsync, QString(), this);
-    m_notebookSyncCaches << pNotebookSyncCache;
-
-    TagSyncCache * pTagSyncCache = new TagSyncCache(*m_pLocalStorageManagerAsync, QString(), this);
-    m_tagSyncCaches << pTagSyncCache;
-
+    m_pNotebookSyncCache = new NotebookSyncCache(*m_pLocalStorageManagerAsync, QString(), this);
+    m_pTagSyncCache = new TagSyncCache(*m_pLocalStorageManagerAsync, QString(), this);
     m_pSavedSearchSyncCache = new SavedSearchSyncCache(*m_pLocalStorageManagerAsync, this);
 }
 
 void FullSyncStaleDataItemsExpungerTester::cleanup()
 {
-    if (m_pLocalStorageManagerAsync) {
-        delete m_pLocalStorageManagerAsync;
-        m_pLocalStorageManagerAsync = Q_NULLPTR;
-    }
+    delete m_pLocalStorageManagerAsync;
+    m_pLocalStorageManagerAsync = Q_NULLPTR;
 
-    for(auto it = m_notebookSyncCaches.begin(),
-        end = m_notebookSyncCaches.end(); it != end; ++it)
-    {
-        delete *it;
-    }
+    delete m_pNotebookSyncCache;
+    m_pNotebookSyncCache = Q_NULLPTR;
 
-    m_notebookSyncCaches.clear();
+    delete m_pTagSyncCache;
+    m_pTagSyncCache = Q_NULLPTR;
 
-    for(auto it = m_tagSyncCaches.begin(),
-        end = m_tagSyncCaches.end(); it != end; ++it)
-    {
-        delete *it;
-    }
-
-    m_tagSyncCaches.clear();
-
-    if (m_pSavedSearchSyncCache) {
-        delete m_pSavedSearchSyncCache;
-        m_pSavedSearchSyncCache = Q_NULLPTR;
-    }
+    delete m_pSavedSearchSyncCache;
+    m_pSavedSearchSyncCache = Q_NULLPTR;
 
     m_syncedGuids.m_syncedNotebookGuids.clear();
     m_syncedGuids.m_syncedTagGuids.clear();
@@ -1936,8 +1918,8 @@ void FullSyncStaleDataItemsExpungerTester::doTest(const bool useBaseDataItems,
         }
     }
 
-    FullSyncStaleDataItemsExpunger::Caches caches(m_notebookSyncCaches, m_tagSyncCaches, *m_pSavedSearchSyncCache);
-    FullSyncStaleDataItemsExpunger expunger(*m_pLocalStorageManagerAsync, caches, m_syncedGuids);
+    FullSyncStaleDataItemsExpunger expunger(*m_pLocalStorageManagerAsync, *m_pNotebookSyncCache, *m_pTagSyncCache,
+                                            *m_pSavedSearchSyncCache, m_syncedGuids, QString());
 
     int expungerTestResult = -1;
     {

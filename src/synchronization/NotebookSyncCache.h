@@ -54,6 +54,8 @@ public:
 
     const QHash<QString,Notebook> & dirtyNotebooksByGuidHash() const { return m_dirtyNotebooksByGuid; }
 
+    const QString & linkedNotebookGuid() const { return m_linkedNotebookGuid; }
+
 Q_SIGNALS:
     void filled();
     void failure(ErrorString errorDescription);

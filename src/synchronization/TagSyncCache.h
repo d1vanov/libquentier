@@ -46,6 +46,8 @@ public:
 
     const QHash<QString,Tag> & dirtyTagsByGuidHash() const { return m_dirtyTagsByGuid; }
 
+    const QString & linkedNotebookGuid() const { return m_linkedNotebookGuid; }
+
 Q_SIGNALS:
     void filled();
     void failure(ErrorString errorDescription);

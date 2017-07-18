@@ -54,17 +54,6 @@ class FullSyncStaleDataItemsExpunger: public QObject
 {
     Q_OBJECT
 public:
-    struct Caches
-    {
-        Caches(const QList<NotebookSyncCache*> & notebookSyncCaches,
-               const QList<TagSyncCache*> & tagSyncCaches,
-               SavedSearchSyncCache & savedSearchSyncCache);
-
-        QList<QPointer<NotebookSyncCache> > m_notebookSyncCaches;
-        QList<QPointer<TagSyncCache> >      m_tagSyncCaches;
-        QPointer<SavedSearchSyncCache>      m_savedSearchSyncCache;
-    };
-
     struct SyncedGuids
     {
         QSet<QString>   m_syncedNotebookGuids;
@@ -75,8 +64,14 @@ public:
 
 public:
     explicit FullSyncStaleDataItemsExpunger(LocalStorageManagerAsync & localStorageManagerAsync,
-                                            const Caches & caches, const SyncedGuids & syncedGuids,
+                                            NotebookSyncCache & notebookSyncCache,
+                                            TagSyncCache & tagSyncCache,
+                                            SavedSearchSyncCache & savedSearchSyncCache,
+                                            const SyncedGuids & syncedGuids,
+                                            const QString & linkedNotebookGuid,
                                             QObject * parent = Q_NULLPTR);
+
+    const QString & linkedNotebookGuid() const { return m_linkedNotebookGuid; }
 
 Q_SIGNALS:
     void finished();
@@ -138,13 +133,17 @@ private:
 
     bool                            m_inProgress;
 
-    Caches                          m_caches;
+    QPointer<NotebookSyncCache>     m_pNotebookSyncCache;
+    QPointer<TagSyncCache>          m_pTagSyncCache;
+    QPointer<SavedSearchSyncCache>  m_pSavedSearchSyncCache;
     NoteSyncCache                   m_noteSyncCache;
 
     SyncedGuids                     m_syncedGuids;
 
-    quint64                         m_numPendingNotebookSyncCaches;
-    quint64                         m_numPendingTagSyncCaches;
+    QString                         m_linkedNotebookGuid;
+
+    bool                            m_pendingNotebookSyncCache;
+    bool                            m_pendingTagSyncCache;
     bool                            m_pendingSavedSearchSyncCache;
     bool                            m_pendingNoteSyncCache;
 
