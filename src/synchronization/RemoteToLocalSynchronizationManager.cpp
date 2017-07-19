@@ -167,6 +167,8 @@ RemoteToLocalSynchronizationManager::RemoteToLocalSynchronizationManager(IManage
     m_lastSynchronizedUsnByLinkedNotebookGuid(),
     m_lastUpdateCountByLinkedNotebookGuid(),
     m_lastSyncTimeByLinkedNotebookGuid(),
+    m_linkedNotebookGuidsForWhichFullSyncWasPerformed(),
+    m_linkedNotebookGuidsOnceFullySynced(),
     m_notebooks(),
     m_notebooksPendingAddOrUpdate(),
     m_expungedNotebooks(),
@@ -204,6 +206,8 @@ RemoteToLocalSynchronizationManager::RemoteToLocalSynchronizationManager(IManage
     m_localUidsOfElementsAlreadyAttemptedToFindByName(),
     m_guidsOfNotesPendingDownloadForAddingToLocalStorage(),
     m_notesPendingDownloadForUpdatingInLocalStorageByGuid(),
+    m_pFullSyncStaleDataItemsExpunger(Q_NULLPTR),
+    m_fullSyncStaleDataItemsExpungersByLinkedNotebookGuid(),
     m_notesToAddPerAPICallPostponeTimerId(),
     m_notesToUpdatePerAPICallPostponeTimerId(),
     m_afterUsnForSyncChunkPerAPICallPostponeTimerId(),
@@ -1530,6 +1534,8 @@ void RemoteToLocalSynchronizationManager::performPostAddOrUpdateChecks(const Ele
 template <>
 void RemoteToLocalSynchronizationManager::performPostAddOrUpdateChecks<Tag>(const Tag & tag)
 {
+    QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::performPostAddOrUpdateChecks<Tag>: ") << tag);
+
     unregisterTagPendingAddOrUpdate(tag);
     syncNextTagPendingProcessing();
     checkNotebooksAndTagsSyncCompletionAndLaunchNotesSync();
@@ -2513,6 +2519,16 @@ void RemoteToLocalSynchronizationManager::onLastSyncParametersReceived(qint32 la
         m_onceSyncDone = true;
     }
 
+    m_linkedNotebookGuidsOnceFullySynced.clear();
+    for(auto it = m_lastSyncTimeByLinkedNotebookGuid.constBegin(), end = m_lastSyncTimeByLinkedNotebookGuid.constEnd(); it != end; ++it)
+    {
+        const QString & linkedNotebookGuid = it.key();
+        qevercloud::Timestamp lastSyncTime = it.value();
+        if (lastSyncTime != 0) {
+            Q_UNUSED(m_linkedNotebookGuidsOnceFullySynced.insert(linkedNotebookGuid))
+        }
+    }
+
     start(m_lastUsnOnStart);
 }
 
@@ -2841,6 +2857,7 @@ void RemoteToLocalSynchronizationManager::onTagSyncConflictResolverFinished(qeve
         pResolver->deleteLater();
     }
 
+    syncNextTagPendingProcessing();
     checkNotebooksAndTagsSyncCompletionAndLaunchNotesSync();
     checkServerDataMergeCompletion();
 }
@@ -2896,12 +2913,20 @@ void RemoteToLocalSynchronizationManager::onFullSyncStaleDataItemsExpungerFinish
     if (pExpunger)
     {
         linkedNotebookGuid = pExpunger->linkedNotebookGuid();
-        QObject::disconnect(pExpunger, QNSIGNAL(FullSyncStaleDataItemsExpunger,finished),
-                            this, QNSLOT(RemoteToLocalSynchronizationManager,onFullSyncStaleDataItemsExpungerFinished));
-        QObject::disconnect(pExpunger, QNSIGNAL(FullSyncStaleDataItemsExpunger,failure,ErrorString),
-                            this, QNSLOT(RemoteToLocalSynchronizationManager,onFullSyncStaleDataItemsExpungerFailure,ErrorString));
-        pExpunger->setParent(Q_NULLPTR);
-        pExpunger->deleteLater();
+
+        if (m_pFullSyncStaleDataItemsExpunger == pExpunger)
+        {
+            m_pFullSyncStaleDataItemsExpunger = Q_NULLPTR;
+        }
+        else
+        {
+            auto it = m_fullSyncStaleDataItemsExpungersByLinkedNotebookGuid.find(linkedNotebookGuid);
+            if (it != m_fullSyncStaleDataItemsExpungersByLinkedNotebookGuid.end()) {
+                Q_UNUSED(m_fullSyncStaleDataItemsExpungersByLinkedNotebookGuid.erase(it))
+            }
+        }
+
+        junkFullSyncStaleDataItemsExpunger(*pExpunger);
     }
 
     if (linkedNotebookGuid.isEmpty())
@@ -2910,6 +2935,17 @@ void RemoteToLocalSynchronizationManager::onFullSyncStaleDataItemsExpungerFinish
 
         m_expungedFromServerToClient = true;
         startLinkedNotebooksSync();
+    }
+    else
+    {
+        if (!m_fullSyncStaleDataItemsExpungersByLinkedNotebookGuid.isEmpty()) {
+            QNDEBUG(QStringLiteral("Still pending the finish of ") << m_fullSyncStaleDataItemsExpungersByLinkedNotebookGuid.size()
+                    << QStringLiteral(" FullSyncStaleDataItemsExpungers for linked notebooks"));
+            return;
+        }
+
+        QNDEBUG(QStringLiteral("All FullSyncStaleDataItemsExpungers for linked notebooks finished"));
+        launchExpungingOfNotelessTagsFromLinkedNotebooks();
     }
 }
 
@@ -2923,12 +2959,20 @@ void RemoteToLocalSynchronizationManager::onFullSyncStaleDataItemsExpungerFailur
     if (pExpunger)
     {
         linkedNotebookGuid = pExpunger->linkedNotebookGuid();
-        QObject::disconnect(pExpunger, QNSIGNAL(FullSyncStaleDataItemsExpunger,finished),
-                            this, QNSLOT(RemoteToLocalSynchronizationManager,onFullSyncStaleDataItemsExpungerFinished));
-        QObject::disconnect(pExpunger, QNSIGNAL(FullSyncStaleDataItemsExpunger,failure,ErrorString),
-                            this, QNSLOT(RemoteToLocalSynchronizationManager,onFullSyncStaleDataItemsExpungerFailure,ErrorString));
-        pExpunger->setParent(Q_NULLPTR);
-        pExpunger->deleteLater();
+
+        if (m_pFullSyncStaleDataItemsExpunger == pExpunger)
+        {
+            m_pFullSyncStaleDataItemsExpunger = Q_NULLPTR;
+        }
+        else
+        {
+            auto it = m_fullSyncStaleDataItemsExpungersByLinkedNotebookGuid.find(linkedNotebookGuid);
+            if (it != m_fullSyncStaleDataItemsExpungersByLinkedNotebookGuid.end()) {
+                Q_UNUSED(m_fullSyncStaleDataItemsExpungersByLinkedNotebookGuid.erase(it))
+            }
+        }
+
+        junkFullSyncStaleDataItemsExpunger(*pExpunger);
     }
 
     QNWARNING(QStringLiteral("Failed to analyze and expunge stale stuff after the non-first full sync: ")
@@ -3405,6 +3449,8 @@ void RemoteToLocalSynchronizationManager::resetCurrentSyncState()
     m_lastSyncTime = 0;
     m_lastUpdateCountByLinkedNotebookGuid.clear();
     m_lastSyncTimeByLinkedNotebookGuid.clear();
+    m_linkedNotebookGuidsForWhichFullSyncWasPerformed.clear();
+    m_linkedNotebookGuidsOnceFullySynced.clear();
 
     m_gotLastSyncParameters = false;
 }
@@ -4032,8 +4078,7 @@ void RemoteToLocalSynchronizationManager::launchDataElementSync<RemoteToLocalSyn
     // before their children, otherwise the local database would have a constraint failure; by now the tags
     // are already sorted by parent-child relations but they need to be processed one by one
 
-    qevercloud::Tag frontTag = m_tagsPendingProcessing.takeFirst();
-    emitFindByGuidRequest(frontTag);
+    syncNextTagPendingProcessing();
 }
 
 void RemoteToLocalSynchronizationManager::launchTagsSync()
@@ -4104,15 +4149,118 @@ void RemoteToLocalSynchronizationManager::launchFullSyncStaleDataItemsExpunger()
         }
     }
 
-    FullSyncStaleDataItemsExpunger * pExpunger = new FullSyncStaleDataItemsExpunger(m_manager.localStorageManagerAsync(),
-                                                                                    m_notebookSyncCache, m_tagSyncCache,
-                                                                                    m_savedSearchSyncCache, syncedGuids,
-                                                                                    QString(), this);
-    QObject::connect(pExpunger, QNSIGNAL(FullSyncStaleDataItemsExpunger,finished),
+    if (m_pFullSyncStaleDataItemsExpunger) {
+        junkFullSyncStaleDataItemsExpunger(*m_pFullSyncStaleDataItemsExpunger);
+        m_pFullSyncStaleDataItemsExpunger = Q_NULLPTR;
+    }
+
+    m_pFullSyncStaleDataItemsExpunger = new FullSyncStaleDataItemsExpunger(m_manager.localStorageManagerAsync(),
+                                                                           m_notebookSyncCache, m_tagSyncCache,
+                                                                           m_savedSearchSyncCache, syncedGuids,
+                                                                           QString(), this);
+    QObject::connect(m_pFullSyncStaleDataItemsExpunger, QNSIGNAL(FullSyncStaleDataItemsExpunger,finished),
                      this, QNSLOT(RemoteToLocalSynchronizationManager,onFullSyncStaleDataItemsExpungerFinished));
-    QObject::connect(pExpunger, QNSIGNAL(FullSyncStaleDataItemsExpunger,failure,ErrorString),
+    QObject::connect(m_pFullSyncStaleDataItemsExpunger, QNSIGNAL(FullSyncStaleDataItemsExpunger,failure,ErrorString),
                      this, QNSLOT(RemoteToLocalSynchronizationManager,onFullSyncStaleDataItemsExpungerFailure,ErrorString));
-    pExpunger->start();
+    QNDEBUG(QStringLiteral("Starting FullSyncStaleDataItemsExpunger for user's own content"));
+    m_pFullSyncStaleDataItemsExpunger->start();
+}
+
+bool RemoteToLocalSynchronizationManager::launchFullSyncStaleDataItemsExpungersForLinkedNotebooks()
+{
+    QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::launchFullSyncStaleDataItemsExpungersForLinkedNotebooks"));
+
+    bool foundLinkedNotebookEligibleForFullSyncStaleDataItemsExpunging = false;
+
+    for(auto it = m_allLinkedNotebooks.constBegin(), end = m_allLinkedNotebooks.constEnd(); it != end; ++it)
+    {
+        const LinkedNotebook & linkedNotebook = *it;
+        if (Q_UNLIKELY(!linkedNotebook.hasGuid())) {
+            QNWARNING(QStringLiteral("Skipping linked notebook without guid: ") << linkedNotebook);
+            continue;
+        }
+
+        const QString & linkedNotebookGuid = linkedNotebook.guid();
+        QNTRACE(QStringLiteral("Examining linked notebook with guid ") << linkedNotebookGuid);
+
+        auto fullSyncIt = m_linkedNotebookGuidsForWhichFullSyncWasPerformed.find(linkedNotebookGuid);
+        if (fullSyncIt == m_linkedNotebookGuidsForWhichFullSyncWasPerformed.end()) {
+            QNTRACE(QStringLiteral("It doesn't appear that full sync was performed for linked notebook with guid ")
+                    << linkedNotebookGuid);
+            continue;
+        }
+
+        auto onceFullSyncIt = m_linkedNotebookGuidsOnceFullySynced.find(linkedNotebookGuid);
+        if (onceFullSyncIt == m_linkedNotebookGuidsOnceFullySynced.end()) {
+            QNTRACE(QStringLiteral("It appears the full sync was performed for the first time for linked notebook with guid ")
+                    << linkedNotebookGuid);
+            continue;
+        }
+
+        QNDEBUG(QStringLiteral("The contents of a linked notebook with guid ") << linkedNotebookGuid
+                << QStringLiteral(" were fully synced after being fully synced in the past, need to seek for stale data items and expunge them"));
+        foundLinkedNotebookEligibleForFullSyncStaleDataItemsExpunging = true;
+
+        FullSyncStaleDataItemsExpunger::SyncedGuids syncedGuids;
+
+        for(auto nit = m_linkedNotebookGuidsByNotebookGuids.constBegin(), nend = m_linkedNotebookGuidsByTagGuids.constEnd(); nit != nend; ++nit)
+        {
+            const QString & currentLinkedNotebookGuid = nit.value();
+            if (currentLinkedNotebookGuid != linkedNotebookGuid) {
+                continue;
+            }
+
+            const QString & notebookGuid = nit.key();
+            Q_UNUSED(syncedGuids.m_syncedNotebookGuids.insert(notebookGuid))
+
+            for(auto noteIt = m_notes.constBegin(), noteEnd = m_notes.constEnd(); noteIt != noteEnd; ++noteIt)
+            {
+                const qevercloud::Note & note = *noteIt;
+                if (note.guid.isSet() && note.notebookGuid.isSet() && (note.notebookGuid.ref() == notebookGuid)) {
+                    Q_UNUSED(syncedGuids.m_syncedNoteGuids.insert(note.guid.ref()))
+                }
+            }
+        }
+
+        for(auto tit = m_linkedNotebookGuidsByTagGuids.constBegin(), tend = m_linkedNotebookGuidsByTagGuids.constEnd(); tit != tend; ++tit)
+        {
+            const QString & currentLinkedNotebookGuid = tit.value();
+            if (currentLinkedNotebookGuid != linkedNotebookGuid) {
+                continue;
+            }
+
+            const QString & tagGuid = tit.key();
+            Q_UNUSED(syncedGuids.m_syncedTagGuids.insert(tagGuid))
+        }
+
+        auto notebookSyncCacheIt = m_notebookSyncCachesByLinkedNotebookGuids.find(linkedNotebookGuid);
+        if (notebookSyncCacheIt == m_notebookSyncCachesByLinkedNotebookGuids.end()) {
+            NotebookSyncCache * pNotebookSyncCache = new NotebookSyncCache(m_manager.localStorageManagerAsync(), linkedNotebookGuid, this);
+            notebookSyncCacheIt = m_notebookSyncCachesByLinkedNotebookGuids.insert(linkedNotebookGuid, pNotebookSyncCache);
+        }
+
+        auto tagSyncCacheIt = m_tagSyncCachesByLinkedNotebookGuids.find(linkedNotebookGuid);
+        if (tagSyncCacheIt == m_tagSyncCachesByLinkedNotebookGuids.end()) {
+            TagSyncCache * pTagSyncCache = new TagSyncCache(m_manager.localStorageManagerAsync(), linkedNotebookGuid, this);
+            tagSyncCacheIt = m_tagSyncCachesByLinkedNotebookGuids.insert(linkedNotebookGuid, pTagSyncCache);
+        }
+
+        FullSyncStaleDataItemsExpunger * pExpunger = new FullSyncStaleDataItemsExpunger(m_manager.localStorageManagerAsync(),
+                                                                                        *notebookSyncCacheIt.value(),
+                                                                                        *tagSyncCacheIt.value(),
+                                                                                        m_savedSearchSyncCache, syncedGuids,
+                                                                                        linkedNotebookGuid, this);
+        m_fullSyncStaleDataItemsExpungersByLinkedNotebookGuid[linkedNotebookGuid] = pExpunger;
+        QObject::connect(pExpunger, QNSIGNAL(FullSyncStaleDataItemsExpunger,finished),
+                         this, QNSLOT(RemoteToLocalSynchronizationManager,onFullSyncStaleDataItemsExpungerFinished));
+        QObject::connect(pExpunger, QNSIGNAL(FullSyncStaleDataItemsExpunger,failure,ErrorString),
+                         this, QNSLOT(RemoteToLocalSynchronizationManager,onFullSyncStaleDataItemsExpungerFailure,ErrorString));
+        QNDEBUG(QStringLiteral("Starting FullSyncStaleDataItemsExpunger for the content from linked notebook with guid ")
+                << linkedNotebookGuid);
+        pExpunger->start();
+    }
+
+    return foundLinkedNotebookEligibleForFullSyncStaleDataItemsExpunging;
 }
 
 void RemoteToLocalSynchronizationManager::launchExpungingOfNotelessTagsFromLinkedNotebooks()
@@ -4858,7 +5006,12 @@ bool RemoteToLocalSynchronizationManager::downloadLinkedNotebooksSyncChunks()
         lastSynchronizedUsnIt.value() = afterUsn;
         lastSyncTimeIt.value() = lastSyncTime;
         lastUpdateCountIt.value() = lastUpdateCount;
+
         Q_UNUSED(m_linkedNotebookGuidsForWhichSyncChunksWereDownloaded.insert(linkedNotebook.guid()));
+
+        if (fullSyncOnly) {
+            Q_UNUSED(m_linkedNotebookGuidsForWhichFullSyncWasPerformed.insert(linkedNotebook.guid()))
+        }
     }
 
     QNDEBUG(QStringLiteral("Done. Processing content pointed to by linked notebooks from buffered sync chunks"));
@@ -5049,6 +5202,10 @@ void RemoteToLocalSynchronizationManager::checkServerDataMergeCompletion()
             return;
         }
 
+        if (launchFullSyncStaleDataItemsExpungersForLinkedNotebooks()) {
+            return;
+        }
+
         launchExpungingOfNotelessTagsFromLinkedNotebooks();
     }
     else
@@ -5069,8 +5226,6 @@ void RemoteToLocalSynchronizationManager::checkServerDataMergeCompletion()
             }
 
             m_expungedFromServerToClient = true;
-            startLinkedNotebooksSync();
-            return;
         }
 
         if (m_expungedFromServerToClient) {
@@ -5307,6 +5462,22 @@ void RemoteToLocalSynchronizationManager::clear()
     m_guidsOfNotesPendingDownloadForAddingToLocalStorage.clear();
     m_notesPendingDownloadForUpdatingInLocalStorageByGuid.clear();
 
+    if (m_pFullSyncStaleDataItemsExpunger) {
+        junkFullSyncStaleDataItemsExpunger(*m_pFullSyncStaleDataItemsExpunger);
+        m_pFullSyncStaleDataItemsExpunger = Q_NULLPTR;
+    }
+
+    for(auto it = m_fullSyncStaleDataItemsExpungersByLinkedNotebookGuid.begin(),
+        end = m_fullSyncStaleDataItemsExpungersByLinkedNotebookGuid.end(); it != end; ++it)
+    {
+        FullSyncStaleDataItemsExpunger * pExpunger = it.value();
+        if (pExpunger) {
+            junkFullSyncStaleDataItemsExpunger(*pExpunger);
+        }
+    }
+
+    m_fullSyncStaleDataItemsExpungersByLinkedNotebookGuid.clear();
+
     auto notesToAddPerAPICallPostponeTimerIdEnd = m_notesToAddPerAPICallPostponeTimerId.end();
     for(auto it = m_notesToAddPerAPICallPostponeTimerId.begin(); it != notesToAddPerAPICallPostponeTimerIdEnd; ++it) {
         int key = it.key();
@@ -5382,18 +5553,6 @@ void RemoteToLocalSynchronizationManager::clear()
         pDownloader->setParent(Q_NULLPTR);
         pDownloader->deleteLater();
     }
-
-    QList<FullSyncStaleDataItemsExpunger*> fullSyncStaleDateItemsExpungers = findChildren<FullSyncStaleDataItemsExpunger*>();
-    for(auto it = fullSyncStaleDateItemsExpungers.begin(), end = fullSyncStaleDateItemsExpungers.end(); it != end; ++it)
-    {
-        FullSyncStaleDataItemsExpunger * pExpunger = *it;
-        QObject::disconnect(pExpunger, QNSIGNAL(FullSyncStaleDataItemsExpunger,finished),
-                            this, QNSLOT(RemoteToLocalSynchronizationManager,onFullSyncStaleDataItemsExpungerFinished));
-        QObject::disconnect(pExpunger, QNSIGNAL(FullSyncStaleDataItemsExpunger,failure,ErrorString),
-                            this, QNSLOT(RemoteToLocalSynchronizationManager,onFullSyncStaleDataItemsExpungerFailure,ErrorString));
-        pExpunger->setParent(Q_NULLPTR);
-        pExpunger->deleteLater();
-    }
 }
 
 void RemoteToLocalSynchronizationManager::clearAll()
@@ -5418,6 +5577,8 @@ void RemoteToLocalSynchronizationManager::clearAll()
     m_lastSynchronizedUsnByLinkedNotebookGuid.clear();
     m_lastSyncTimeByLinkedNotebookGuid.clear();
     m_lastUpdateCountByLinkedNotebookGuid.clear();
+    m_linkedNotebookGuidsForWhichFullSyncWasPerformed.clear();
+    m_linkedNotebookGuidsOnceFullySynced.clear();
 
     m_gotLastSyncParameters = false;
 }
@@ -6690,12 +6851,25 @@ void RemoteToLocalSynchronizationManager::syncNextTagPendingProcessing()
     QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::syncNextTagPendingProcessing"));
 
     if (m_tagsPendingProcessing.isEmpty()) {
-        QNDEBUG(QStringLiteral("No tags pendning for processing, nothing more to sync"));
+        QNDEBUG(QStringLiteral("No tags pending for processing, nothing more to sync"));
         return;
     }
 
     qevercloud::Tag frontTag = m_tagsPendingProcessing.takeFirst();
     emitFindByGuidRequest(frontTag);
+}
+
+void RemoteToLocalSynchronizationManager::junkFullSyncStaleDataItemsExpunger(FullSyncStaleDataItemsExpunger & expunger)
+{
+    QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::junkFullSyncStaleDataItemsExpunger: linked notebook guid = ")
+            << expunger.linkedNotebookGuid());
+
+    QObject::disconnect(&expunger, QNSIGNAL(FullSyncStaleDataItemsExpunger,finished),
+                        this, QNSLOT(RemoteToLocalSynchronizationManager,onFullSyncStaleDataItemsExpungerFinished));
+    QObject::disconnect(&expunger, QNSIGNAL(FullSyncStaleDataItemsExpunger,failure,ErrorString),
+                        this, QNSLOT(RemoteToLocalSynchronizationManager,onFullSyncStaleDataItemsExpungerFailure,ErrorString));
+    expunger.setParent(Q_NULLPTR);
+    expunger.deleteLater();
 }
 
 QTextStream & operator<<(QTextStream & strm, const RemoteToLocalSynchronizationManager::SyncMode::type & obj)

@@ -51,6 +51,7 @@
 namespace quentier {
 
 QT_FORWARD_DECLARE_CLASS(LocalStorageManagerAsync)
+QT_FORWARD_DECLARE_CLASS(FullSyncStaleDataItemsExpunger)
 
 class RemoteToLocalSynchronizationManager: public QObject
 {
@@ -286,6 +287,12 @@ private:
     void launchNotebookSync();
 
     void launchFullSyncStaleDataItemsExpunger();
+
+    // Returns true if full sync stale data items expunger was launched
+    // for at least one linked notebook i.e. if the last sync performed
+    // for at least one linked notebook was full and it was not the first sync
+    // of this linked notebook's contents
+    bool launchFullSyncStaleDataItemsExpungersForLinkedNotebooks();
 
     void launchExpungingOfNotelessTagsFromLinkedNotebooks();
 
@@ -532,6 +539,8 @@ private:
 
     void syncNextTagPendingProcessing();
 
+    void junkFullSyncStaleDataItemsExpunger(FullSyncStaleDataItemsExpunger & expunger);
+
 private:
     template <class T>
     class CompareItemByName
@@ -609,6 +618,7 @@ private:
     qint32                                  m_lastUpdateCount;
     qevercloud::Timestamp                   m_lastSyncTime;
 
+    // Denotes whether the full sync of stuff from user's own account had been performed at least once in the past
     bool                                    m_onceSyncDone;
 
     qint32                                  m_lastUsnOnStart;
@@ -687,6 +697,10 @@ private:
 
     QHash<QString,qint32>                   m_lastUpdateCountByLinkedNotebookGuid;
     QHash<QString,qevercloud::Timestamp>    m_lastSyncTimeByLinkedNotebookGuid;
+    QSet<QString>                           m_linkedNotebookGuidsForWhichFullSyncWasPerformed;
+
+    // Guids of linked notebooks for which full sync of stuff from these linked notebooks had been performed at least once in the past
+    QSet<QString>                           m_linkedNotebookGuidsOnceFullySynced;
 
     NotebooksList                           m_notebooks;
     NotebooksList                           m_notebooksPendingAddOrUpdate;
@@ -744,6 +758,9 @@ private:
 
     QSet<QString>                           m_guidsOfNotesPendingDownloadForAddingToLocalStorage;
     QHash<QString,Note>                     m_notesPendingDownloadForUpdatingInLocalStorageByGuid;
+
+    FullSyncStaleDataItemsExpunger *                m_pFullSyncStaleDataItemsExpunger;
+    QMap<QString, FullSyncStaleDataItemsExpunger*>  m_fullSyncStaleDataItemsExpungersByLinkedNotebookGuid;
 
     QHash<int,Note>                         m_notesToAddPerAPICallPostponeTimerId;
     QHash<int,Note>                         m_notesToUpdatePerAPICallPostponeTimerId;
