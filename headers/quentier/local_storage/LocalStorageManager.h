@@ -217,7 +217,9 @@ public:
      * If "remote" Evernote service's guid for the notebook is set,
      * it is used to identify the notebook in the local storage database. Otherwise the notebook is
      * identified by its local uid. If it's empty, the search would attempt to find the notebook
-     * by its name. If the name is also not set, the search would fail.
+     * by its name. If the name is also not set, the search would attempt to find the notebook by linked notebook guid
+     * assuming that no more than one notebook corresponds to the linked notebook guid. If linked notebook guid is also
+     * not set, the search would fail.
      *
      * Important! Due to the fact that the notebook name is only unique within
      * the users's own account as well as within each linked notebook, the

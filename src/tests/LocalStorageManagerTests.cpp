@@ -944,6 +944,27 @@ bool TestNotebookFindUpdateDeleteExpungeInLocalStorage(Notebook & notebook,
         return false;
     }
 
+    if (notebook.hasLinkedNotebookGuid())
+    {
+        // ========== Check Find by linked notebook guid ===========
+        Notebook foundByLinkedNotebookGuidNotebook;
+        foundByLinkedNotebookGuidNotebook.unsetLocalUid();
+        foundByLinkedNotebookGuidNotebook.setLinkedNotebookGuid(notebook.linkedNotebookGuid());
+
+        res = localStorageManager.findNotebook(foundByLinkedNotebookGuidNotebook, errorMessage);
+        if (!res) {
+            errorDescription = errorMessage.nonLocalizedString();
+            return false;
+        }
+
+        if (notebook != foundByLinkedNotebookGuidNotebook) {
+            errorDescription = QStringLiteral("Notebook found by linked notebook guid in local storage doesn't match the original notebook");
+            QNWARNING(errorDescription << QStringLiteral(": Notebook found by linked notebook guid: ") << foundByLinkedNotebookGuidNotebook
+                      << QStringLiteral("\nOriginal notebook: ") << notebook);
+            return false;
+        }
+    }
+
     // ========== Check FindDefaultNotebook =========
     Notebook defaultNotebook;
     res = localStorageManager.findDefaultNotebook(defaultNotebook, errorMessage);

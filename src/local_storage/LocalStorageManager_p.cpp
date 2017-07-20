@@ -808,23 +808,29 @@ bool LocalStorageManagerPrivate::findNotebook(Notebook & notebook, ErrorString &
             return false;
         }
     }
-    else if (notebook.localUid().isEmpty())
-    {
-        if (!notebook.hasName()) {
-            errorDescription.base() = errorPrefix.base();
-            errorDescription.appendBase(QT_TR_NOOP("need either guid or local uid or name as search criteria"));
-            QNWARNING(errorDescription);
-            return false;
-        }
-
-        column = QStringLiteral("notebookNameUpper");
-        value = notebook.name().toUpper();
-        searchingByName = true;
-    }
-    else
+    else if (!notebook.localUid().isEmpty())
     {
         column = QStringLiteral("localUid");
         value = notebook.localUid();
+    }
+    else if (notebook.hasName())
+    {
+        column = QStringLiteral("notebookNameUpper");
+        value = notebook.name().toUpper();
+        searchingByName = true;
+
+    }
+    else if (notebook.hasLinkedNotebookGuid())
+    {
+        column = QStringLiteral("linkedNotebookGuid");
+        value = notebook.linkedNotebookGuid();
+    }
+    else
+    {
+        errorDescription.base() = errorPrefix.base();
+        errorDescription.appendBase(QT_TR_NOOP("need either guid or local uid or name or linked notebook guid as search criteria"));
+        QNWARNING(errorDescription);
+        return false;
     }
 
     value = sqlEscapeString(value);
