@@ -107,6 +107,7 @@ Q_SIGNALS:
     void notifyError(ErrorString error) const;
 
     void inAppNoteLinkClicked(QString userId, QString shardId, QString noteGuid);
+    void inAppNoteLinkPasteRequested(QString url, QString userId, QString shardId, QString noteGuid);
 
     void convertedToNote(Note note);
     void cantConvertToNote(ErrorString error) const;
@@ -238,6 +239,8 @@ public Q_SLOTS:
     void onReplaceJavaScriptDone(const QVariant & data);
 
     virtual void insertToDoCheckbox() Q_DECL_OVERRIDE;
+    virtual void insertInAppNoteLink(const QString & userId, const QString & shardId,
+                                     const QString & noteGuid, const QString & linkText) Q_DECL_OVERRIDE;
     virtual void setSpellcheck(const bool enabled) Q_DECL_OVERRIDE;
     virtual bool spellCheckEnabled() const Q_DECL_OVERRIDE;
     virtual void setFont(const QFont & font) Q_DECL_OVERRIDE;
@@ -569,7 +572,8 @@ private:
 
     bool isNoteReadOnly() const;
 
-    void setupAddHyperlinkDelegate(const quint64 hyperlinkId, const QString & presetHyperlink = QString());
+    void setupAddHyperlinkDelegate(const quint64 hyperlinkId, const QString & presetHyperlink = QString(),
+                                   const QString & replacementLinkText = QString());
 
 #ifdef QUENTIER_USE_QT_WEB_ENGINE
     void onPageHtmlReceivedForPrinting(const QString & html,

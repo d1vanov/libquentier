@@ -225,6 +225,12 @@ void NoteEditor::insertToDoCheckbox()
     m_backend->insertToDoCheckbox();
 }
 
+void NoteEditor::insertInAppNoteLink(const QString & userId, const QString & shardId,
+                                     const QString & noteGuid, const QString & linkText)
+{
+    m_backend->insertInAppNoteLink(userId, shardId, noteGuid, linkText);
+}
+
 void NoteEditor::setSpellcheck(const bool enabled)
 {
     m_backend->setSpellcheck(enabled);

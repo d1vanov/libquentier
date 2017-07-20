@@ -87,6 +87,9 @@ public:
 
     virtual void insertToDoCheckbox() = 0;
 
+    virtual void insertInAppNoteLink(const QString & userId, const QString & shardId,
+                                     const QString & noteGuid, const QString & linkText) = 0;
+
     virtual void setSpellcheck(const bool enabled) = 0;
     virtual bool spellCheckEnabled() const = 0;
 

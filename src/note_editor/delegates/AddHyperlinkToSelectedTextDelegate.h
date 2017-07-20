@@ -42,7 +42,7 @@ class AddHyperlinkToSelectedTextDelegate: public QObject
 public:
     explicit AddHyperlinkToSelectedTextDelegate(NoteEditorPrivate & noteEditor, const quint64 hyperlinkIdToAdd);
     void start();
-    void startWithPresetHyperlink(const QString & presetHyperlink);
+    void startWithPresetHyperlink(const QString & presetHyperlink, const QString & replacementLinkText = QString());
 
 Q_SIGNALS:
     void finished();
@@ -71,8 +71,7 @@ private:
 
     bool                    m_shouldGetHyperlinkFromDialog;
     QString                 m_presetHyperlink;
-
-    bool                    m_initialTextWasEmpty;
+    QString                 m_replacementLinkText;
 
     const quint64           m_hyperlinkId;
 };

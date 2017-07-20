@@ -42,7 +42,7 @@ AddHyperlinkToSelectedTextDelegate::AddHyperlinkToSelectedTextDelegate(NoteEdito
     m_noteEditor(noteEditor),
     m_shouldGetHyperlinkFromDialog(true),
     m_presetHyperlink(),
-    m_initialTextWasEmpty(false),
+    m_replacementLinkText(),
     m_hyperlinkId(hyperlinkIdToAdd)
 {}
 
@@ -62,13 +62,15 @@ void AddHyperlinkToSelectedTextDelegate::start()
     }
 }
 
-void AddHyperlinkToSelectedTextDelegate::startWithPresetHyperlink(const QString & presetHyperlink)
+void AddHyperlinkToSelectedTextDelegate::startWithPresetHyperlink(const QString & presetHyperlink,
+                                                                  const QString & replacementLinkText)
 {
     QNDEBUG(QStringLiteral("AddHyperlinkToSelectedTextDelegate::startWithPresetHyperlink: preset hyperlink = ")
-            << presetHyperlink);
+            << presetHyperlink << QStringLiteral(", replacement link text = ") << replacementLinkText);
 
     m_shouldGetHyperlinkFromDialog = false;
     m_presetHyperlink = presetHyperlink;
+    m_replacementLinkText = replacementLinkText;
 
     start();
 }
@@ -89,9 +91,16 @@ void AddHyperlinkToSelectedTextDelegate::addHyperlinkToSelectedText()
 {
     QNDEBUG(QStringLiteral("AddHyperlinkToSelectedTextDelegate::addHyperlinkToSelectedText"));
 
-    QString javascript = QStringLiteral("getSelectionHtml();");
-    GET_PAGE()
-    page->executeJavaScript(javascript, JsCallback(*this, &AddHyperlinkToSelectedTextDelegate::onInitialHyperlinkDataReceived));
+    if (m_shouldGetHyperlinkFromDialog || m_replacementLinkText.isEmpty())
+    {
+        QString javascript = QStringLiteral("getSelectionHtml();");
+        GET_PAGE()
+        page->executeJavaScript(javascript, JsCallback(*this, &AddHyperlinkToSelectedTextDelegate::onInitialHyperlinkDataReceived));
+
+        return;
+    }
+
+    setHyperlinkToSelection(m_presetHyperlink, m_replacementLinkText);
 }
 
 void AddHyperlinkToSelectedTextDelegate::onInitialHyperlinkDataReceived(const QVariant & data)
@@ -99,13 +108,12 @@ void AddHyperlinkToSelectedTextDelegate::onInitialHyperlinkDataReceived(const QV
     QNDEBUG(QStringLiteral("AddHyperlinkToSelectedTextDelegate::onInitialHyperlinkDataReceived: ") << data);
 
     QString initialText = data.toString();
-    m_initialTextWasEmpty = initialText.isEmpty();
 
     if (m_shouldGetHyperlinkFromDialog) {
         raiseAddHyperlinkDialog(initialText);
     }
     else {
-        setHyperlinkToSelection(m_presetHyperlink, initialText);
+        setHyperlinkToSelection(m_presetHyperlink, (m_replacementLinkText.isEmpty() ? initialText : m_replacementLinkText));
     }
 }
 

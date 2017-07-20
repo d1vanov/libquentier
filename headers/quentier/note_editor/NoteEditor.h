@@ -135,6 +135,16 @@ Q_SIGNALS:
      */
     void inAppNoteLinkClicked(QString userId, QString shardId, QString noteGuid);
 
+    /**
+     * inAppNoteLinkPasteRequested signal is emitted when the note editor detects the attempt to paste
+     * the in-app note link into the note editor; the link would not be inserted right away, instead this signal
+     * would be emitted. Whatever party managing the note editor is expected to connect some slot to this signal
+     * and provide the optionally amended link information to the note editor by sending the signal connected to its
+     * insertInAppNoteLink slot - this slot accepts both the URL of the link and the link text and performs the actual
+     * link insertion into the note. If the link text is empty, the URL itself is used as the link text.
+     */
+    void inAppNoteLinkPasteRequested(QString url, QString userId, QString shardId, QString noteGuid);
+
     void convertedToNote(Note note);
     void cantConvertToNote(ErrorString error);
 
@@ -201,6 +211,8 @@ public Q_SLOTS:
     void replaceAll(const QString & textToReplace, const QString & replacementText, const bool matchCase);
 
     void insertToDoCheckbox();
+
+    void insertInAppNoteLink(const QString & userId, const QString & shardId, const QString & noteGuid, const QString & linkText);
 
     void setSpellcheck(const bool enabled);
     virtual bool spellCheckEnabled() const;

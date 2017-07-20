@@ -4235,6 +4235,8 @@ void NoteEditorPrivate::setupGeneralSignalSlotConnections()
                      q, QNSIGNAL(NoteEditor,notifyError,ErrorString));
     QObject::connect(this, QNSIGNAL(NoteEditorPrivate,inAppNoteLinkClicked,QString,QString,QString),
                      q, QNSIGNAL(NoteEditor,inAppNoteLinkClicked,QString,QString,QString));
+    QObject::connect(this, QNSIGNAL(NoteEditorPrivate,inAppNoteLinkPasteRequested,QString,QString,QString,QString),
+                     q, QNSIGNAL(NoteEditor,inAppNoteLinkPasteRequested,QString,QString,QString,QString));
     QObject::connect(this, QNSIGNAL(NoteEditorPrivate,convertedToNote,Note),
                      q, QNSIGNAL(NoteEditor,convertedToNote,Note));
     QObject::connect(this, QNSIGNAL(NoteEditorPrivate,cantConvertToNote,ErrorString),
@@ -5020,7 +5022,8 @@ bool NoteEditorPrivate::isNoteReadOnly() const
     return false;
 }
 
-void NoteEditorPrivate::setupAddHyperlinkDelegate(const quint64 hyperlinkId, const QString & presetHyperlink)
+void NoteEditorPrivate::setupAddHyperlinkDelegate(const quint64 hyperlinkId, const QString & presetHyperlink,
+                                                  const QString & replacementLinkText)
 {
     AddHyperlinkToSelectedTextDelegate * delegate = new AddHyperlinkToSelectedTextDelegate(*this, hyperlinkId);
 
@@ -5035,7 +5038,7 @@ void NoteEditorPrivate::setupAddHyperlinkDelegate(const quint64 hyperlinkId, con
         delegate->start();
     }
     else {
-        delegate->startWithPresetHyperlink(presetHyperlink);
+        delegate->startWithPresetHyperlink(presetHyperlink, replacementLinkText);
     }
 }
 
@@ -6610,6 +6613,8 @@ void NoteEditorPrivate::paste()
 
         QNTRACE(QStringLiteral("Parsed in-app note link: user id = ") << userId << QStringLiteral(", shard id = ")
                 << shardId << QStringLiteral(", note guid = ") << noteGuid);
+        emit inAppNoteLinkPasteRequested(textToPaste, userId, shardId, noteGuid);
+        return;
     }
 
 #if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
@@ -6861,6 +6866,19 @@ void NoteEditorPrivate::insertToDoCheckbox()
 
     page->executeJavaScript(javascript);
     setModified();
+}
+
+void NoteEditorPrivate::insertInAppNoteLink(const QString & userId, const QString & shardId,
+                                            const QString & noteGuid, const QString & linkText)
+{
+    QNDEBUG(QStringLiteral("NoteEditorPrivate::insertInAppNoteLink: user id = ") << userId
+            << QStringLiteral(", shard id = ") << shardId << QStringLiteral(", note guid = ") << noteGuid);
+
+    QString urlString = QStringLiteral("evernote:///view/") + userId + QStringLiteral("/") + shardId +
+                        QStringLiteral("/") + noteGuid + QStringLiteral("/") + noteGuid;
+
+    quint64 hyperlinkId = m_lastFreeHyperlinkIdNumber++;
+    setupAddHyperlinkDelegate(hyperlinkId, urlString, linkText);
 }
 
 void NoteEditorPrivate::setSpellcheck(const bool enabled)
