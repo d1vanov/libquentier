@@ -304,7 +304,12 @@ Account RemoteToLocalSynchronizationManager::account() const
         userId = m_user.id();
     }
 
-    Account account(name, Account::Type::Evernote, userId, accountEnType, m_host);
+    QString shardId;
+    if (m_user.hasShardId()) {
+        shardId = m_user.shardId();
+    }
+
+    Account account(name, Account::Type::Evernote, userId, accountEnType, m_host, shardId);
     account.setEvernoteAccountLimits(m_accountLimits);
     return account;
 }

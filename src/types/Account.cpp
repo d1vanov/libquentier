@@ -13,13 +13,15 @@ Account::Account() :
 Account::Account(const QString & name, const Type::type type,
                  const qevercloud::UserID userId,
                  const EvernoteAccountType::type evernoteAccountType,
-                 const QString & evernoteHost) :
+                 const QString & evernoteHost,
+                 const QString & shardId) :
     d(new AccountData)
 {
     d->m_name = name;
     d->m_accountType = type;
     d->m_userId = userId;
     d->m_evernoteHost = evernoteHost;
+    d->m_shardId = shardId;
     d->switchEvernoteAccountType(evernoteAccountType);
 }
 
@@ -52,6 +54,7 @@ bool Account::operator==(const Account & other) const
         (d->m_evernoteAccountType == other.d->m_evernoteAccountType) &&
         (d->m_userId == other.d->m_userId) &&
         (d->m_evernoteHost == other.d->m_evernoteHost) &&
+        (d->m_shardId == other.d->m_shardId) &&
         (d->m_mailLimitDaily == other.d->m_mailLimitDaily) &&
         (d->m_noteSizeMax == other.d->m_noteSizeMax) &&
         (d->m_resourceSizeMax == other.d->m_resourceSizeMax) &&
@@ -92,6 +95,11 @@ void Account::setEvernoteAccountType(const EvernoteAccountType::type evernoteAcc
 void Account::setEvernoteHost(const QString & evernoteHost)
 {
     d->m_evernoteHost = evernoteHost;
+}
+
+void Account::setShardId(const QString & shardId)
+{
+    d->m_shardId = shardId;
 }
 
 void Account::setEvernoteAccountLimits(const qevercloud::AccountLimits & limits)
@@ -137,6 +145,11 @@ Account::EvernoteAccountType::type Account::evernoteAccountType() const
 QString Account::evernoteHost() const
 {
     return d->m_evernoteHost;
+}
+
+QString Account::shardId() const
+{
+    return d->m_shardId;
 }
 
 qint32 Account::mailLimitDaily() const
@@ -233,7 +246,7 @@ QTextStream & Account::print(QTextStream & strm) const
     strm << QStringLiteral(";\n");
 
     strm << QStringLiteral("    Evernote host = ") << d->m_evernoteHost << QStringLiteral(";\n");
-
+    strm << QStringLiteral("    shard id = ") << d->m_shardId << QStringLiteral(";\n");
     strm << QStringLiteral("    mail limit daily = ") << d->m_mailLimitDaily << QStringLiteral(";\n");
     strm << QStringLiteral("    note size max = ") << d->m_noteSizeMax << QStringLiteral(";\n");
     strm << QStringLiteral("    resource size max = ") << d->m_resourceSizeMax << QStringLiteral(";\n");

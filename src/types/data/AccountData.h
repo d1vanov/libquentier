@@ -24,6 +24,7 @@ public:
     Account::EvernoteAccountType::type  m_evernoteAccountType;
     qevercloud::UserID                  m_userId;
     QString                             m_evernoteHost;
+    QString                             m_shardId;
     qint32                              m_mailLimitDaily;
     qint64                              m_noteSizeMax;
     qint64                              m_resourceSizeMax;

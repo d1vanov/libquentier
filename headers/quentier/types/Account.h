@@ -49,7 +49,8 @@ public:
     explicit Account(const QString & name, const Type::type type,
                      const qevercloud::UserID userId = -1,
                      const EvernoteAccountType::type evernoteAccountType = EvernoteAccountType::Free,
-                     const QString & evernoteHost = QString());
+                     const QString & evernoteHost = QString(),
+                     const QString & shardId = QString());
     Account(const Account & other);
     Account & operator=(const Account & other);
     virtual ~Account();
@@ -104,8 +105,14 @@ public:
      */
     QString evernoteHost() const;
 
+    /**
+     * @return shard id for Evernote accounts, empty string for local accounts (as the concept of shard id is not defined for local accounts)
+     */
+    QString shardId() const;
+
     void setEvernoteAccountType(const EvernoteAccountType::type evernoteAccountType);
     void setEvernoteHost(const QString & evernoteHost);
+    void setShardId(const QString & shardId);
 
     qint32 mailLimitDaily() const;
     qint64 noteSizeMax() const;
