@@ -130,6 +130,11 @@ Q_SIGNALS:
      */
     void notifyError(ErrorString error);
 
+    /**
+     * @brief inAppNoteLinkClicked signal is emitted when the in-app note link is clicked within the note editor
+     */
+    void inAppNoteLinkClicked(QString userId, QString shardId, QString noteGuid);
+
     void convertedToNote(Note note);
     void cantConvertToNote(ErrorString error);
 

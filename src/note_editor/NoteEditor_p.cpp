@@ -60,6 +60,7 @@
 #include <quentier/utility/ApplicationSettings.h>
 #include <quentier/utility/EventLoopWithExitStatus.h>
 #include <quentier/utility/StandardPaths.h>
+#include <quentier/utility/Utility.h>
 #include <quentier/note_editor/SpellChecker.h>
 
 #ifndef QUENTIER_USE_QT_WEB_ENGINE
@@ -893,7 +894,7 @@ void NoteEditorPrivate::onGenericResourceImageSaved(bool success, QByteArray res
 
 void NoteEditorPrivate::onHyperlinkClicked(QString url)
 {
-    openUrl(QUrl(url));
+    handleHyperlinkClicked(QUrl(url));
 }
 
 void NoteEditorPrivate::onWebSocketReady()
@@ -908,7 +909,7 @@ void NoteEditorPrivate::onWebSocketReady()
 
 void NoteEditorPrivate::onHyperlinkClicked(QUrl url)
 {
-    openUrl(url);
+    handleHyperlinkClicked(url);
 }
 
 #endif // QUENTIER_USE_QT_WEB_ENGINE
@@ -2380,6 +2381,71 @@ void NoteEditorPrivate::init()
 
     QString initialHtml = initialPageHtml();
     writeNotePageFile(initialHtml);
+}
+
+void NoteEditorPrivate::handleHyperlinkClicked(const QUrl & url)
+{
+    QString urlString = url.toString();
+    QNDEBUG(QStringLiteral("NoteEditorPrivate::handleHyperlinkClicked: ") << urlString);
+
+    if (urlString.startsWith(QStringLiteral("evernote:///"))) {
+        handleInAppLinkClicked(urlString);
+        return;
+    }
+
+    openUrl(url);
+}
+
+void NoteEditorPrivate::handleInAppLinkClicked(const QString & urlString)
+{
+    QNDEBUG(QStringLiteral("NoteEditorPrivate::handleInAppLinkClicked: ") << urlString);
+
+    QString userId, shardId, noteGuid;
+    ErrorString errorDescription;
+    bool res = parseInAppLink(urlString, userId, shardId, noteGuid, errorDescription);
+    if (!res) {
+        QNWARNING(errorDescription);
+        emit notifyError(errorDescription);
+        return;
+    }
+
+    QNTRACE(QStringLiteral("Parsed in-app note link: user id = ") << userId
+            << QStringLiteral(", shard id = ") << shardId
+            << QStringLiteral(", note guid = ") << noteGuid);
+    emit inAppNoteLinkClicked(userId, shardId, noteGuid);
+}
+
+bool NoteEditorPrivate::parseInAppLink(const QString & urlString, QString & userId, QString & shardId,
+                                       QString & noteGuid, ErrorString & errorDescription) const
+{
+    userId.resize(0);
+    shardId.resize(0);
+    noteGuid.resize(0);
+    errorDescription.clear();
+
+    QRegExp regex(QStringLiteral("evernote:///view/([^/]+)/([^/]+)/([^/]+)(/.*)?"));
+    int pos = regex.indexIn(urlString);
+    if (pos < 0) {
+        errorDescription.setBase(QT_TR_NOOP("Can't process the in-app note link: failed to parse the note guid from the link"));
+        errorDescription.details() = urlString;
+        return false;
+    }
+
+    QStringList capturedTexts = regex.capturedTexts();
+    if (capturedTexts.size() != 5)
+    {
+        errorDescription.setBase(QT_TR_NOOP("Can't process the in-app note link: wrong number of captured texts"));
+        errorDescription.details() = urlString;
+        if (!capturedTexts.isEmpty()) {
+           errorDescription.details() += QStringLiteral("; decoded: ") + capturedTexts.join(QStringLiteral(", "));
+        }
+        return false;
+    }
+
+    userId = capturedTexts.at(1);
+    shardId = capturedTexts.at(2);
+    noteGuid = capturedTexts.at(3);
+    return true;
 }
 
 bool NoteEditorPrivate::checkNoteSize(const QString & newNoteContent) const
@@ -4167,6 +4233,8 @@ void NoteEditorPrivate::setupGeneralSignalSlotConnections()
     Q_Q(NoteEditor);
     QObject::connect(this, QNSIGNAL(NoteEditorPrivate,notifyError,ErrorString),
                      q, QNSIGNAL(NoteEditor,notifyError,ErrorString));
+    QObject::connect(this, QNSIGNAL(NoteEditorPrivate,inAppNoteLinkClicked,QString,QString,QString),
+                     q, QNSIGNAL(NoteEditor,inAppNoteLinkClicked,QString,QString,QString));
     QObject::connect(this, QNSIGNAL(NoteEditorPrivate,convertedToNote,Note),
                      q, QNSIGNAL(NoteEditor,convertedToNote,Note));
     QObject::connect(this, QNSIGNAL(NoteEditorPrivate,cantConvertToNote,ErrorString),
@@ -6485,8 +6553,9 @@ void NoteEditorPrivate::paste()
                              textToPaste.startsWith(QStringLiteral("mailto:")) ||
                              textToPaste.startsWith(QStringLiteral("ftp://"));
     bool shouldBeAttachment = textToPaste.startsWith(QStringLiteral("file://"));
+    bool shouldBeInAppLink = textToPaste.startsWith(QStringLiteral("evernote://"));
 
-    if (!shouldBeHyperlink && !shouldBeAttachment) {
+    if (!shouldBeHyperlink && !shouldBeAttachment && !shouldBeInAppLink) {
         QNTRACE(QStringLiteral("The pasted text doesn't appear to be a url of hyperlink or attachment"));
         execJavascriptCommand(QStringLiteral("insertText"), textToPaste);
         return;
@@ -6519,6 +6588,29 @@ void NoteEditorPrivate::paste()
     }
 
     QNDEBUG(QStringLiteral("Was able to create the url from pasted text, inserting a hyperlink"));
+
+    if (shouldBeInAppLink)
+    {
+        QString userId, shardId, noteGuid;
+        ErrorString errorDescription;
+        bool res = parseInAppLink(textToPaste, userId, shardId, noteGuid, errorDescription);
+        if (!res) {
+            QNWARNING(errorDescription);
+            emit notifyError(errorDescription);
+            return;
+        }
+
+        if (Q_UNLIKELY(!checkGuid(noteGuid))) {
+            errorDescription.setBase(QT_TR_NOOP("Can't insert in-app note link: note guid is invalid"));
+            errorDescription.details() = noteGuid;
+            QNWARNING(errorDescription);
+            emit notifyError(errorDescription);
+            return;
+        }
+
+        QNTRACE(QStringLiteral("Parsed in-app note link: user id = ") << userId << QStringLiteral(", shard id = ")
+                << shardId << QStringLiteral(", note guid = ") << noteGuid);
+    }
 
 #if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
     textToPaste = url.toString(QUrl::FullyEncoded);

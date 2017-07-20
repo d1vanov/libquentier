@@ -106,6 +106,8 @@ Q_SIGNALS:
     void noteModified();
     void notifyError(ErrorString error) const;
 
+    void inAppNoteLinkClicked(QString userId, QString shardId, QString noteGuid);
+
     void convertedToNote(Note note);
     void cantConvertToNote(ErrorString error) const;
 
@@ -462,6 +464,11 @@ private Q_SLOTS:
 
 private:
     void init();
+
+    void handleHyperlinkClicked(const QUrl & url);
+    void handleInAppLinkClicked(const QString & urlString);
+    bool parseInAppLink(const QString & urlString, QString & userId,
+                        QString & shardId, QString & noteGuid, ErrorString & errorDescription) const;
 
     bool checkNoteSize(const QString & newNoteContent) const;
 

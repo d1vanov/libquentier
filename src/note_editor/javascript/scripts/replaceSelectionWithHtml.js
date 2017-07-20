@@ -26,11 +26,6 @@ function replaceSelectionWithHtml(html) {
 
     console.log("replaceSelectionWithHtml: rangeCount = " + selection.rangeCount);
 
-    if (selection.isCollapsed) {
-        console.log("replaceSelectionWithHtml: the selection is collapsed");
-        return false;
-    }
-
     document.execCommand("insertHTML", false, html);
     return true;
 }
