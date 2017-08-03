@@ -61,7 +61,8 @@ protected:
 private:
     IQuentierException() Q_DECL_EQ_DELETE;
 
-    ErrorString   m_message;
+    ErrorString     m_message;
+    char *          m_whatMessage;
 };
 
 } // namespace quentier

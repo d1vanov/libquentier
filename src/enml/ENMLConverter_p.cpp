@@ -315,7 +315,7 @@ bool ENMLConverterPrivate::htmlToNoteContent(const QString & html, const QVector
             // Erasing the forbidden attributes
             for(QXmlStreamAttributes::iterator it = lastElementAttributes.begin(); it != lastElementAttributes.end(); )
             {
-                const QStringRef attributeName = it->name();
+                QStringRef attributeName = it->name();
                 if (isForbiddenXhtmlAttribute(attributeName.toString())) {
                     QNTRACE(QStringLiteral("Erasing the forbidden attribute ") << attributeName);
                     it = lastElementAttributes.erase(it);
@@ -910,7 +910,7 @@ bool ENMLConverterPrivate::cleanupExternalHtml(const QString & inputHtml, QStrin
             // Erasing the forbidden attributes
             for(QXmlStreamAttributes::iterator it = lastElementAttributes.begin(); it != lastElementAttributes.end(); )
             {
-                const QStringRef attributeName = it->name();
+                QStringRef attributeName = it->name();
                 if (isForbiddenXhtmlAttribute(attributeName.toString())) {
                     QNTRACE(QStringLiteral("Erasing the forbidden attribute ") << attributeName);
                     it = lastElementAttributes.erase(it);

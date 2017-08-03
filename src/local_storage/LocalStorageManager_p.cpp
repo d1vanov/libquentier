@@ -5702,8 +5702,6 @@ bool LocalStorageManagerPrivate::checkAndPrepareInsertOrReplaceLinkedNotebookQue
 
     QNDEBUG(QStringLiteral("Preparing SQL query to insert or replace linked notebook"));
 
-    QSqlQuery query(m_sqlDatabase);
-
     m_insertOrReplaceLinkedNotebookQuery = QSqlQuery(m_sqlDatabase);
     bool res = m_insertOrReplaceLinkedNotebookQuery.prepare(QStringLiteral("INSERT OR REPLACE INTO LinkedNotebooks "
                                                                            "(guid, updateSequenceNumber, shareName, "
@@ -7751,6 +7749,7 @@ void LocalStorageManagerPrivate::fillNoteAttributesApplicationDataFullMapFromSql
 
     QString keysString = keys.toString();
     int keysLength = keysString.length();
+    keysList.reserve(keysLength / 2);   // NOTE: just a wild guess
     bool insideQuotedText = false;
     QString currentKey;
     QChar wordSep = QChar::fromLatin1('\'');
@@ -7780,6 +7779,7 @@ void LocalStorageManagerPrivate::fillNoteAttributesApplicationDataFullMapFromSql
 
     QString valuesString = values.toString();
     int valuesLength = valuesString.length();
+    valuesList.reserve(valuesLength / 2);   // NOTE: just a wild guess
     insideQuotedText = false;
     QString currentValue;
     for(int i = 0; i < (valuesLength - 1); ++i)
@@ -7849,6 +7849,7 @@ void LocalStorageManagerPrivate::fillNoteAttributesClassificationsFromSqlRecord(
 
     QString keysString = keys.toString();
     int keysLength = keysString.length();
+    keysList.reserve(keysLength / 2);   // NOTE: just a wild guess
     bool insideQuotedText = false;
     QString currentKey;
     QChar wordSep = QChar::fromLatin1('\'');
@@ -7874,6 +7875,7 @@ void LocalStorageManagerPrivate::fillNoteAttributesClassificationsFromSqlRecord(
 
     QString valuesString = values.toString();
     int valuesLength = valuesString.length();
+    valuesList.reserve(valuesLength / 2);   // NOTE: just a wild guess
     insideQuotedText = false;
     QString currentValue;
     for(int i = 0; i < (valuesLength - 1); ++i)

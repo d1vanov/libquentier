@@ -72,7 +72,7 @@ void LocalStorageManager::switchUser(const Account & account,
                                      const bool startFromScratch, const bool overrideLock)
 {
     Q_D(LocalStorageManager);
-    return d->switchUser(account, startFromScratch, overrideLock);
+    d->switchUser(account, startFromScratch, overrideLock);
 }
 
 int LocalStorageManager::userCount(ErrorString & errorDescription) const

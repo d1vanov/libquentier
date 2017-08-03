@@ -18,13 +18,27 @@
 
 #include <quentier/exception/IQuentierException.h>
 #include <ostream>
+#include <cstring>
 
 namespace quentier {
 
+#define INIT_WHAT_MESSAGE() \
+    QByteArray bytes = m_message.nonLocalizedString().toLocal8Bit(); \
+    int size = bytes.size(); \
+    if (size >= 0) { \
+        size_t usize = static_cast<size_t>(size); \
+        m_whatMessage = new char[usize + 1]; \
+        Q_UNUSED(strncpy(m_whatMessage, bytes.constData(), usize)) \
+        m_whatMessage[usize] = '\0'; \
+    }
+
 IQuentierException::IQuentierException(const ErrorString & message) :
     Printable(),
-    m_message(message)
-{}
+    m_message(message),
+    m_whatMessage(Q_NULLPTR)
+{
+    INIT_WHAT_MESSAGE()
+}
 
 #ifdef _MSC_VER
 IQuentierException::~IQuentierException()
@@ -33,7 +47,9 @@ IQuentierException::~IQuentierException() noexcept
 #else
 IQuentierException::~IQuentierException() throw()
 #endif
-{}
+{
+    delete[] m_whatMessage;
+}
 
 QString IQuentierException::localizedErrorMessage() const
 {
@@ -53,7 +69,7 @@ const char * IQuentierException::what() const noexcept
 const char * IQuentierException::what() const throw()
 #endif
 {
-    return qPrintable(m_message.nonLocalizedString());
+    return m_whatMessage;
 }
 
 QTextStream & IQuentierException::print(QTextStream & strm) const
@@ -65,13 +81,21 @@ QTextStream & IQuentierException::print(QTextStream & strm) const
 
 IQuentierException::IQuentierException(const IQuentierException & other) :
     Printable(other),
-    m_message(other.m_message)
-{}
+    m_message(other.m_message),
+    m_whatMessage(Q_NULLPTR)
+{
+    INIT_WHAT_MESSAGE()
+}
 
 IQuentierException & IQuentierException::operator =(const IQuentierException & other)
 {
-    if (this != &other) {
+    if (this != &other)
+    {
         m_message = other.m_message;
+
+        delete m_whatMessage;
+        m_whatMessage = Q_NULLPTR;
+        INIT_WHAT_MESSAGE()
     }
 
     return *this;

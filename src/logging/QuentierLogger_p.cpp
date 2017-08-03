@@ -207,7 +207,7 @@ QuentierLogger::QuentierLogger(QObject * parent) :
 
 void QuentierLogger::addLogWriter(IQuentierLogWriter * pLogWriter)
 {
-    for(auto it = m_pImpl->m_logWriterPtrs.begin(), end = m_pImpl->m_logWriterPtrs.end(); it != end; ++it)
+    for(auto it = m_pImpl->m_logWriterPtrs.constBegin(), end = m_pImpl->m_logWriterPtrs.constEnd(); it != end; ++it)
     {
         if (Q_UNLIKELY(it->data() == pLogWriter)) {
             return;

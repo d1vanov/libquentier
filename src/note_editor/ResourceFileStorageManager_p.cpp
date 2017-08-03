@@ -254,7 +254,7 @@ void ResourceFileStorageManagerPrivate::onCurrentNoteChanged(Note note)
         return;
     }
 
-    for(auto it = m_resourceLocalUidByFilePath.begin(), end = m_resourceLocalUidByFilePath.end(); it != end; ++it) {
+    for(auto it = m_resourceLocalUidByFilePath.constBegin(), end = m_resourceLocalUidByFilePath.constEnd(); it != end; ++it) {
         m_fileSystemWatcher.removePath(it.key());
         QNTRACE(QStringLiteral("Stopped watching for file ") << it.key());
     }
@@ -277,7 +277,7 @@ void ResourceFileStorageManagerPrivate::onRequestDiagnostics(QUuid requestId)
     QString diagnostics = QStringLiteral("ResourceFileStorageManager diagnostics: {\n");
 
     diagnostics += QStringLiteral("  Resource local uids by file paths: \n");
-    for(auto it = m_resourceLocalUidByFilePath.begin(), end = m_resourceLocalUidByFilePath.end(); it != end; ++it) {
+    for(auto it = m_resourceLocalUidByFilePath.constBegin(), end = m_resourceLocalUidByFilePath.constEnd(); it != end; ++it) {
         diagnostics += QStringLiteral("    [") + it.key() + QStringLiteral("]: ") + it.value() + QStringLiteral("\n");
     }
 

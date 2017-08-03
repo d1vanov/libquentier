@@ -201,7 +201,7 @@ void SpellCheckerPrivate::removeFromUserWordList(const QString & word)
     m_userDictionary.removeAll(word);
 
     QByteArray dataToWrite;
-    for(auto it = m_userDictionary.begin(), end = m_userDictionary.end(); it != end; ++it) {
+    for(auto it = m_userDictionary.constBegin(), end = m_userDictionary.constEnd(); it != end; ++it) {
         dataToWrite.append(QString(*it + QStringLiteral("\n")).toLocal8Bit());
     }
 
@@ -755,7 +755,9 @@ void SpellCheckerPrivate::checkUserDictionaryDataPendingWriting()
     }
 
     QByteArray dataToWrite;
-    for(auto it = m_userDictionaryPartPendingWriting.begin(), end = m_userDictionaryPartPendingWriting.end(); it != end; ++it) {
+    for(auto it = m_userDictionaryPartPendingWriting.constBegin(),
+        end = m_userDictionaryPartPendingWriting.constEnd(); it != end; ++it)
+    {
         m_userDictionary << *it;
         dataToWrite.append(QString(*it + QStringLiteral("\n")).toLocal8Bit());
     }
