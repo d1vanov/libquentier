@@ -21,6 +21,7 @@
 
 #include <quentier/utility/Macros.h>
 #include <quentier/utility/Linkage.h>
+#include <quentier/types/ErrorString.h>
 #include <QEventLoop>
 
 namespace quentier {
@@ -31,7 +32,8 @@ class QUENTIER_EXPORT EventLoopWithExitStatus : public QEventLoop
 public:
     explicit EventLoopWithExitStatus(QObject * parent = Q_NULLPTR);
 
-    struct ExitStatus {
+    struct ExitStatus
+    {
         enum type {
             Success,
             Failure,
@@ -39,11 +41,19 @@ public:
         };
     };
 
+    ExitStatus::type exitStatus() const;
+    const ErrorString & errorDescription() const;
+
 public Q_SLOTS:
     void exitAsSuccess();
     void exitAsFailure();
     void exitAsFailureWithError(QString errorDescription);
+    void exitAsFailureWithErrorString(ErrorString errorDescription);
     void exitAsTimeout();
+
+private:
+    ExitStatus::type    m_exitStatus;
+    ErrorString         m_errorDescription;
 };
 
 } // namespace quentier

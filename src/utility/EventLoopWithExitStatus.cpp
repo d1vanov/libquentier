@@ -21,29 +21,51 @@
 namespace quentier {
 
 EventLoopWithExitStatus::EventLoopWithExitStatus(QObject * parent) :
-    QEventLoop(parent)
+    QEventLoop(parent),
+    m_exitStatus(ExitStatus::Success),
+    m_errorDescription()
+{}
+
+EventLoopWithExitStatus::ExitStatus::type EventLoopWithExitStatus::exitStatus() const
 {
+    return m_exitStatus;
+}
+
+const ErrorString & EventLoopWithExitStatus::errorDescription() const
+{
+    return m_errorDescription;
 }
 
 void EventLoopWithExitStatus::exitAsSuccess()
 {
-    QEventLoop::exit(ExitStatus::Success);
+    m_exitStatus = ExitStatus::Success;
+    QEventLoop::exit(m_exitStatus);
 }
 
 void EventLoopWithExitStatus::exitAsFailure()
 {
-    QEventLoop::exit(ExitStatus::Failure);
+    m_exitStatus = ExitStatus::Failure;
+    QEventLoop::exit(m_exitStatus);
 }
 
 void EventLoopWithExitStatus::exitAsTimeout()
 {
-    QEventLoop::exit(ExitStatus::Timeout);
+    m_exitStatus = ExitStatus::Timeout;
+    QEventLoop::exit(m_exitStatus);
 }
 
 void EventLoopWithExitStatus::exitAsFailureWithError(QString errorDescription)
 {
-    Q_UNUSED(errorDescription)
-    QEventLoop::exit(ExitStatus::Failure);
+    m_errorDescription = ErrorString(errorDescription);
+    m_exitStatus = ExitStatus::Failure;
+    QEventLoop::exit(m_exitStatus);
+}
+
+void EventLoopWithExitStatus::exitAsFailureWithErrorString(ErrorString errorDescription)
+{
+    m_errorDescription = errorDescription;
+    m_exitStatus = ExitStatus::Failure;
+    QEventLoop::exit(m_exitStatus);
 }
 
 } // namespace quentier
