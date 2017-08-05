@@ -30,6 +30,7 @@
 #include <quentier/local_storage/LocalStorageManager.h>
 #include <quentier/local_storage/NoteSearchQuery.h>
 #include <QMetaType>
+#include <QSqlError>
 
 namespace quentier {
 
@@ -73,6 +74,7 @@ void registerMetatypes()
     qRegisterMetaType<NoteSearchQuery>("NoteSearchQuery");
 
     qRegisterMetaType<ErrorString>("ErrorString");
+    qRegisterMetaType<QSqlError>("QSqlError");
 }
 
 } // namespace quentier

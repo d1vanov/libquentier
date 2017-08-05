@@ -3788,7 +3788,7 @@ bool LocalStorageManagerPrivate::updateSequenceNumberFromTable(const QString & t
     return true;
 }
 
-void LocalStorageManagerPrivate::processPostTransactionException(ErrorString message, QSqlError error) const
+void LocalStorageManagerPrivate::processPostTransactionException(ErrorString message, QSqlError error)
 {
     QNCRITICAL(message << QStringLiteral(": ") << error);
     message.details() += error.text();

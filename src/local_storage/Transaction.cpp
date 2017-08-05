@@ -46,7 +46,7 @@ Transaction::~Transaction()
             ErrorString errorMessage(QT_TR_NOOP("Can't rollback the SQL transaction"));
             QSqlError error = query.lastError();
             QMetaObject::invokeMethod(const_cast<LocalStorageManagerPrivate*>(&m_localStorageManager),
-                                      "ProcessPostTransactionException", Qt::QueuedConnection,
+                                      "processPostTransactionException", Qt::QueuedConnection,
                                       Q_ARG(ErrorString, errorMessage), Q_ARG(QSqlError, error));
         }
     }
@@ -58,7 +58,7 @@ Transaction::~Transaction()
             ErrorString errorMessage(QT_TR_NOOP("Can't end the SQL transaction"));
             QSqlError error = query.lastError();
             QMetaObject::invokeMethod(const_cast<LocalStorageManagerPrivate*>(&m_localStorageManager),
-                                      "ProcessPostTransactionException", Qt::QueuedConnection,
+                                      "processPostTransactionException", Qt::QueuedConnection,
                                       Q_ARG(ErrorString, errorMessage), Q_ARG(QSqlError, error));
         }
     }

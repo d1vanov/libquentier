@@ -158,7 +158,7 @@ public:
                                        qint32 & usn, ErrorString & errorDescription);
 
 public Q_SLOTS:
-    void processPostTransactionException(ErrorString message, QSqlError error) const;
+    void processPostTransactionException(ErrorString message, QSqlError error);
 
 private:
     LocalStorageManagerPrivate() Q_DECL_EQ_DELETE;
