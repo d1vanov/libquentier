@@ -261,7 +261,13 @@ void QuentierLogger::setMinLogLevel(const LogLevel::type minLogLevel)
 
 LogLevel::type QuentierLogger::minLogLevel() const
 {
-    return static_cast<LogLevel::type>(static_cast<int>(m_pImpl->m_minLogLevel));
+    return static_cast<LogLevel::type>(
+#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
+                                       m_pImpl->m_minLogLevel.load()
+#else
+                                       static_cast<int>(m_pImpl->m_minLogLevel)
+#endif
+                                      );
 }
 
 QuentierLoggerImpl::QuentierLoggerImpl(QObject * parent) :
