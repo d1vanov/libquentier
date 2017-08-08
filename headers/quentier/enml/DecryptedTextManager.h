@@ -16,8 +16,8 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LIB_QUENTIER_NOTE_EDITOR_DECRYPTED_TEXT_MANAGER_H
-#define LIB_QUENTIER_NOTE_EDITOR_DECRYPTED_TEXT_MANAGER_H
+#ifndef LIB_QUENTIER_ENML_DECRYPTED_TEXT_MANAGER_H
+#define LIB_QUENTIER_ENML_DECRYPTED_TEXT_MANAGER_H
 
 #include <quentier/utility/Linkage.h>
 #include <QtGlobal>
@@ -55,4 +55,4 @@ private:
 
 } // namespace quentier
 
-#endif // LIB_QUENTIER_NOTE_EDITOR_DECRYPTED_TEXT_MANAGER_H
+#endif // LIB_QUENTIER_ENML_DECRYPTED_TEXT_MANAGER_H

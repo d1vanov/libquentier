@@ -18,7 +18,7 @@
 
 #include "ENMLConverterTests.h"
 #include <quentier/enml/ENMLConverter.h>
-#include <quentier/note_editor/DecryptedTextManager.h>
+#include <quentier/enml/DecryptedTextManager.h>
 #include <quentier/logging/QuentierLogger.h>
 #include <quentier/types/ErrorString.h>
 #include <QXmlStreamReader>

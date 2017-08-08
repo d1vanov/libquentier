@@ -23,6 +23,9 @@ set(PROJECT_DOMAIN_FIRST "quentier")
 set(PROJECT_DOMAIN_SECOND "org")
 set(PROJECT_DOMAIN "${PROJECT_DOMAIN_FIRST}.${PROJECT_DOMAIN_SECOND}")
 
+set(BUILD_WITH_AUTHENTICATION_MANAGER ON CACHE BOOL "If on, libquentier includes its own authentication manager, otherwise only the interface for it is included")
+set(BUILD_WITH_NOTE_EDITOR ON CACHE BOOL "If on, libquentier includes note editor UI component")
+
 include(LibquentierCompilerSettings)
 include(LibquentierAdditionalCompilerWarnings)
 include(LibquentierLinkerSettings)
@@ -72,16 +75,15 @@ if(LIBCPP)
   list(APPEND THIRDPARTY_LIB_DIRS ${LIBCPP_LIB_DIR})
 endif()
 
-set(BUILD_WITH_AUTHENTICATION_MANAGER ON CACHE BOOL "If on, libquentier includes its own authentication manager, otherwise only the interface for it is included")
-
 include_directories(headers)
 
-set(NOTE_EDITOR_HEADERS
-    headers/quentier/note_editor/DecryptedTextManager.h
-    headers/quentier/note_editor/NoteEditor.h
-    headers/quentier/note_editor/INoteEditorBackend.h
-    headers/quentier/note_editor/ResourceFileStorageManager.h
-    headers/quentier/note_editor/SpellChecker.h)
+if(BUILD_WITH_NOTE_EDITOR)
+  set(NOTE_EDITOR_HEADERS
+      headers/quentier/note_editor/NoteEditor.h
+      headers/quentier/note_editor/INoteEditorBackend.h
+      headers/quentier/note_editor/ResourceFileStorageManager.h
+      headers/quentier/note_editor/SpellChecker.h)
+endif()
 
 set(TYPES_HEADERS
     headers/quentier/types/Account.h
@@ -103,6 +105,7 @@ set(TYPES_HEADERS
     headers/quentier/types/RegisterMetatypes.h)
 
 set(ENML_HEADERS
+    headers/quentier/enml/DecryptedTextManager.h
     headers/quentier/enml/ENMLConverter.h
     headers/quentier/enml/HTMLCleaner.h)
 
@@ -176,63 +179,6 @@ list(APPEND PUBLIC_HEADERS ${UTILITY_HEADERS})
 set(PRIVATE_HEADERS
     src/local_storage/Transaction.h
     src/logging/QuentierLogger_p.h
-    src/note_editor/GenericResourceImageManager.h
-    src/note_editor/DecryptedTextManager_p.h
-    src/note_editor/NoteEditorSettingsName.h
-    src/note_editor/NoteEditorPage.h
-    src/note_editor/NoteEditor_p.h
-    src/note_editor/JavaScriptInOrderExecutor.h
-    src/note_editor/ResourceFileStorageManager_p.h
-    src/note_editor/ResourceInfo.h
-    src/note_editor/SpellChecker_p.h
-    src/note_editor/SpellCheckerDictionariesFinder.h
-    src/note_editor/dialogs/EncryptionDialog.h
-    src/note_editor/dialogs/DecryptionDialog.h
-    src/note_editor/dialogs/EditHyperlinkDialog.h
-    src/note_editor/dialogs/RenameResourceDialog.h
-    src/note_editor/delegates/JsResultCallbackFunctor.hpp
-    src/note_editor/delegates/HtmlCallbackFunctor.hpp
-    src/note_editor/delegates/InsertHtmlDelegate.h
-    src/note_editor/delegates/ImageResourceRotationDelegate.h
-    src/note_editor/delegates/AddResourceDelegate.h
-    src/note_editor/delegates/RemoveResourceDelegate.h
-    src/note_editor/delegates/EncryptSelectedTextDelegate.h
-    src/note_editor/delegates/DecryptEncryptedTextDelegate.h
-    src/note_editor/delegates/AddHyperlinkToSelectedTextDelegate.h
-    src/note_editor/delegates/EditHyperlinkDelegate.h
-    src/note_editor/delegates/RemoveHyperlinkDelegate.h
-    src/note_editor/delegates/RenameResourceDelegate.h
-    src/note_editor/javascript_glue/ResourceInfoJavaScriptHandler.h
-    src/note_editor/javascript_glue/ResizableImageJavaScriptHandler.h
-    src/note_editor/javascript_glue/TextCursorPositionJavaScriptHandler.h
-    src/note_editor/javascript_glue/ContextMenuEventJavaScriptHandler.h
-    src/note_editor/javascript_glue/PageMutationHandler.h
-    src/note_editor/javascript_glue/ToDoCheckboxOnClickHandler.h
-    src/note_editor/javascript_glue/TableResizeJavaScriptHandler.h
-    src/note_editor/javascript_glue/SpellCheckerDynamicHelper.h
-    src/note_editor/undo_stack/INoteEditorUndoCommand.h
-    src/note_editor/undo_stack/AddResourceUndoCommand.h
-    src/note_editor/undo_stack/RemoveResourceUndoCommand.h
-    src/note_editor/undo_stack/UpdateResourceUndoCommand.h
-    src/note_editor/undo_stack/RenameResourceUndoCommand.h
-    src/note_editor/undo_stack/InsertHtmlUndoCommand.h
-    src/note_editor/undo_stack/NoteEditorContentEditUndoCommand.h
-    src/note_editor/undo_stack/EncryptDecryptUndoCommandInfo.h
-    src/note_editor/undo_stack/EncryptUndoCommand.h
-    src/note_editor/undo_stack/DecryptUndoCommand.h
-    src/note_editor/undo_stack/AddHyperlinkUndoCommand.h
-    src/note_editor/undo_stack/RemoveHyperlinkUndoCommand.h
-    src/note_editor/undo_stack/EditHyperlinkUndoCommand.h
-    src/note_editor/undo_stack/ToDoCheckboxUndoCommand.h
-    src/note_editor/undo_stack/ImageResourceRotationUndoCommand.h
-    src/note_editor/undo_stack/ImageResizeUndoCommand.h
-    src/note_editor/undo_stack/ReplaceUndoCommand.h
-    src/note_editor/undo_stack/ReplaceAllUndoCommand.h
-    src/note_editor/undo_stack/SpellCorrectionUndoCommand.h
-    src/note_editor/undo_stack/SpellCheckIgnoreWordUndoCommand.h
-    src/note_editor/undo_stack/SpellCheckAddToUserWordListUndoCommand.h
-    src/note_editor/undo_stack/TableActionUndoCommand.h
-    src/note_editor/undo_stack/HideDecryptedTextUndoCommand.h
     src/types/data/AccountData.h
     src/types/data/ErrorStringData.h
     src/types/data/FavoritableDataElementData.h
@@ -250,6 +196,7 @@ set(PRIVATE_HEADERS
     src/types/data/ResourceRecognitionIndicesData.h
     src/types/data/UserData.h
     src/enml/ENMLConverter_p.h
+    src/enml/DecryptedTextManager_p.h
     src/local_storage/LocalStorageCacheManager_p.h
     src/local_storage/LocalStorageManager_p.h
     src/local_storage/NoteSearchQueryData.h
@@ -285,26 +232,86 @@ if(BUILD_WITH_AUTHENTICATION_MANAGER)
        src/synchronization/AuthenticationManager_p.h)
 endif()
 
+if(BUILD_WITH_NOTE_EDITOR)
+  list(APPEND PRIVATE_HEADERS
+       src/note_editor/GenericResourceImageManager.h
+       src/note_editor/NoteEditorSettingsName.h
+       src/note_editor/NoteEditorPage.h
+       src/note_editor/NoteEditor_p.h
+       src/note_editor/JavaScriptInOrderExecutor.h
+       src/note_editor/ResourceFileStorageManager_p.h
+       src/note_editor/ResourceInfo.h
+       src/note_editor/SpellChecker_p.h
+       src/note_editor/SpellCheckerDictionariesFinder.h
+       src/note_editor/dialogs/EncryptionDialog.h
+       src/note_editor/dialogs/DecryptionDialog.h
+       src/note_editor/dialogs/EditHyperlinkDialog.h
+       src/note_editor/dialogs/RenameResourceDialog.h
+       src/note_editor/delegates/JsResultCallbackFunctor.hpp
+       src/note_editor/delegates/HtmlCallbackFunctor.hpp
+       src/note_editor/delegates/InsertHtmlDelegate.h
+       src/note_editor/delegates/ImageResourceRotationDelegate.h
+       src/note_editor/delegates/AddResourceDelegate.h
+       src/note_editor/delegates/RemoveResourceDelegate.h
+       src/note_editor/delegates/EncryptSelectedTextDelegate.h
+       src/note_editor/delegates/DecryptEncryptedTextDelegate.h
+       src/note_editor/delegates/AddHyperlinkToSelectedTextDelegate.h
+       src/note_editor/delegates/EditHyperlinkDelegate.h
+       src/note_editor/delegates/RemoveHyperlinkDelegate.h
+       src/note_editor/delegates/RenameResourceDelegate.h
+       src/note_editor/javascript_glue/ResourceInfoJavaScriptHandler.h
+       src/note_editor/javascript_glue/ResizableImageJavaScriptHandler.h
+       src/note_editor/javascript_glue/TextCursorPositionJavaScriptHandler.h
+       src/note_editor/javascript_glue/ContextMenuEventJavaScriptHandler.h
+       src/note_editor/javascript_glue/PageMutationHandler.h
+       src/note_editor/javascript_glue/ToDoCheckboxOnClickHandler.h
+       src/note_editor/javascript_glue/TableResizeJavaScriptHandler.h
+       src/note_editor/javascript_glue/SpellCheckerDynamicHelper.h
+       src/note_editor/undo_stack/INoteEditorUndoCommand.h
+       src/note_editor/undo_stack/AddResourceUndoCommand.h
+       src/note_editor/undo_stack/RemoveResourceUndoCommand.h
+       src/note_editor/undo_stack/UpdateResourceUndoCommand.h
+       src/note_editor/undo_stack/RenameResourceUndoCommand.h
+       src/note_editor/undo_stack/InsertHtmlUndoCommand.h
+       src/note_editor/undo_stack/NoteEditorContentEditUndoCommand.h
+       src/note_editor/undo_stack/EncryptDecryptUndoCommandInfo.h
+       src/note_editor/undo_stack/EncryptUndoCommand.h
+       src/note_editor/undo_stack/DecryptUndoCommand.h
+       src/note_editor/undo_stack/AddHyperlinkUndoCommand.h
+       src/note_editor/undo_stack/RemoveHyperlinkUndoCommand.h
+       src/note_editor/undo_stack/EditHyperlinkUndoCommand.h
+       src/note_editor/undo_stack/ToDoCheckboxUndoCommand.h
+       src/note_editor/undo_stack/ImageResourceRotationUndoCommand.h
+       src/note_editor/undo_stack/ImageResizeUndoCommand.h
+       src/note_editor/undo_stack/ReplaceUndoCommand.h
+       src/note_editor/undo_stack/ReplaceAllUndoCommand.h
+       src/note_editor/undo_stack/SpellCorrectionUndoCommand.h
+       src/note_editor/undo_stack/SpellCheckIgnoreWordUndoCommand.h
+       src/note_editor/undo_stack/SpellCheckAddToUserWordListUndoCommand.h
+       src/note_editor/undo_stack/TableActionUndoCommand.h
+       src/note_editor/undo_stack/HideDecryptedTextUndoCommand.h)
+
+  if(NOT QUENTIER_USE_QT_WEB_ENGINE)
+    list(APPEND PRIVATE_HEADERS
+         src/note_editor/NoteEditorPluginFactory.h
+         src/note_editor/INoteEditorResourcePlugin.h
+         src/note_editor/EncryptedAreaPlugin.h
+         src/note_editor/GenericResourceDisplayWidget.h)
+  else()
+    list(APPEND PRIVATE_HEADERS
+         src/note_editor/javascript_glue/EnCryptElementOnClickHandler.h
+         src/note_editor/javascript_glue/GenericResourceOpenAndSaveButtonsOnClickHandler.h
+         src/note_editor/javascript_glue/GenericResourceImageJavaScriptHandler.h
+         src/note_editor/javascript_glue/HyperlinkClickJavaScriptHandler.h
+         src/note_editor/javascript_glue/WebSocketWaiter.h
+         src/note_editor/WebSocketClientWrapper.h
+         src/note_editor/WebSocketTransport.h)
+  endif()
+endif()
+
 if(NOT ${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
   list(APPEND PRIVATE_HEADERS
        src/utility/unix/StackTrace.h)
-endif()
-
-if(NOT QUENTIER_USE_QT_WEB_ENGINE)
-  list(APPEND PRIVATE_HEADERS
-       src/note_editor/NoteEditorPluginFactory.h
-       src/note_editor/INoteEditorResourcePlugin.h
-       src/note_editor/EncryptedAreaPlugin.h
-       src/note_editor/GenericResourceDisplayWidget.h)
-else()
-  list(APPEND PRIVATE_HEADERS
-       src/note_editor/javascript_glue/EnCryptElementOnClickHandler.h
-       src/note_editor/javascript_glue/GenericResourceOpenAndSaveButtonsOnClickHandler.h
-       src/note_editor/javascript_glue/GenericResourceImageJavaScriptHandler.h
-       src/note_editor/javascript_glue/HyperlinkClickJavaScriptHandler.h
-       src/note_editor/javascript_glue/WebSocketWaiter.h
-       src/note_editor/WebSocketClientWrapper.h
-       src/note_editor/WebSocketTransport.h)
 endif()
 
 set(${PROJECT_NAME}_HEADERS ${PUBLIC_HEADERS} ${PRIVATE_HEADERS})
@@ -312,64 +319,6 @@ set(${PROJECT_NAME}_HEADERS ${PUBLIC_HEADERS} ${PRIVATE_HEADERS})
 set(${PROJECT_NAME}_SOURCES
     src/logging/QuentierLogger.cpp
     src/logging/QuentierLogger_p.cpp
-    src/note_editor/GenericResourceImageManager.cpp
-    src/note_editor/DecryptedTextManager.cpp
-    src/note_editor/DecryptedTextManager_p.cpp
-    src/note_editor/NoteEditorPage.cpp
-    src/note_editor/NoteEditor.cpp
-    src/note_editor/INoteEditorBackend.cpp
-    src/note_editor/NoteEditor_p.cpp
-    src/note_editor/JavaScriptInOrderExecutor.cpp
-    src/note_editor/ResourceFileStorageManager.cpp
-    src/note_editor/ResourceFileStorageManager_p.cpp
-    src/note_editor/ResourceInfo.cpp
-    src/note_editor/SpellChecker.cpp
-    src/note_editor/SpellChecker_p.cpp
-    src/note_editor/SpellCheckerDictionariesFinder.cpp
-    src/note_editor/dialogs/EncryptionDialog.cpp
-    src/note_editor/dialogs/DecryptionDialog.cpp
-    src/note_editor/dialogs/EditHyperlinkDialog.cpp
-    src/note_editor/dialogs/RenameResourceDialog.cpp
-    src/note_editor/delegates/InsertHtmlDelegate.cpp
-    src/note_editor/delegates/ImageResourceRotationDelegate.cpp
-    src/note_editor/delegates/AddResourceDelegate.cpp
-    src/note_editor/delegates/RemoveResourceDelegate.cpp
-    src/note_editor/delegates/EncryptSelectedTextDelegate.cpp
-    src/note_editor/delegates/DecryptEncryptedTextDelegate.cpp
-    src/note_editor/delegates/AddHyperlinkToSelectedTextDelegate.cpp
-    src/note_editor/delegates/EditHyperlinkDelegate.cpp
-    src/note_editor/delegates/RemoveHyperlinkDelegate.cpp
-    src/note_editor/delegates/RenameResourceDelegate.cpp
-    src/note_editor/javascript_glue/ResourceInfoJavaScriptHandler.cpp
-    src/note_editor/javascript_glue/ResizableImageJavaScriptHandler.cpp
-    src/note_editor/javascript_glue/TextCursorPositionJavaScriptHandler.cpp
-    src/note_editor/javascript_glue/ContextMenuEventJavaScriptHandler.cpp
-    src/note_editor/javascript_glue/PageMutationHandler.cpp
-    src/note_editor/javascript_glue/ToDoCheckboxOnClickHandler.cpp
-    src/note_editor/javascript_glue/TableResizeJavaScriptHandler.cpp
-    src/note_editor/javascript_glue/SpellCheckerDynamicHelper.cpp
-    src/note_editor/undo_stack/INoteEditorUndoCommand.cpp
-    src/note_editor/undo_stack/AddResourceUndoCommand.cpp
-    src/note_editor/undo_stack/RemoveResourceUndoCommand.cpp
-    src/note_editor/undo_stack/RenameResourceUndoCommand.cpp
-    src/note_editor/undo_stack/UpdateResourceUndoCommand.cpp
-    src/note_editor/undo_stack/InsertHtmlUndoCommand.cpp
-    src/note_editor/undo_stack/NoteEditorContentEditUndoCommand.cpp
-    src/note_editor/undo_stack/EncryptUndoCommand.cpp
-    src/note_editor/undo_stack/DecryptUndoCommand.cpp
-    src/note_editor/undo_stack/AddHyperlinkUndoCommand.cpp
-    src/note_editor/undo_stack/RemoveHyperlinkUndoCommand.cpp
-    src/note_editor/undo_stack/EditHyperlinkUndoCommand.cpp
-    src/note_editor/undo_stack/ToDoCheckboxUndoCommand.cpp
-    src/note_editor/undo_stack/ImageResourceRotationUndoCommand.cpp
-    src/note_editor/undo_stack/ImageResizeUndoCommand.cpp
-    src/note_editor/undo_stack/ReplaceUndoCommand.cpp
-    src/note_editor/undo_stack/ReplaceAllUndoCommand.cpp
-    src/note_editor/undo_stack/SpellCorrectionUndoCommand.cpp
-    src/note_editor/undo_stack/SpellCheckIgnoreWordUndoCommand.cpp
-    src/note_editor/undo_stack/SpellCheckAddToUserWordListUndoCommand.cpp
-    src/note_editor/undo_stack/TableActionUndoCommand.cpp
-    src/note_editor/undo_stack/HideDecryptedTextUndoCommand.cpp
     src/types/Account.cpp
     src/types/ErrorString.cpp
     src/types/LinkedNotebook.cpp
@@ -402,6 +351,8 @@ set(${PROJECT_NAME}_SOURCES
     src/enml/ENMLConverter.cpp
     src/enml/ENMLConverter_p.cpp
     src/enml/HTMLCleaner.cpp
+    src/enml/DecryptedTextManager.cpp
+    src/enml/DecryptedTextManager_p.cpp
     src/local_storage/ILocalStorageCacheExpiryChecker.cpp
     src/local_storage/DefaultLocalStorageCacheExpiryChecker.cpp
     src/local_storage/LocalStorageManager.cpp
@@ -468,25 +419,84 @@ set(${PROJECT_NAME}_SOURCES
 
 if(BUILD_WITH_AUTHENTICATION_MANAGER)
   list(APPEND ${PROJECT_NAME}_SOURCES
-    src/synchronization/AuthenticationManager.cpp
-    src/synchronization/AuthenticationManager_p.cpp)
+       src/synchronization/AuthenticationManager.cpp
+       src/synchronization/AuthenticationManager_p.cpp)
 endif()
 
-if(NOT QUENTIER_USE_QT_WEB_ENGINE)
+if(BUILD_WITH_NOTE_EDITOR)
   list(APPEND ${PROJECT_NAME}_SOURCES
-    src/note_editor/EncryptedAreaPlugin.cpp
-    src/note_editor/GenericResourceDisplayWidget.cpp
-    src/note_editor/INoteEditorResourcePlugin.cpp
-    src/note_editor/NoteEditorPluginFactory.cpp)
-else()
-  list(APPEND ${PROJECT_NAME}_SOURCES
-    src/note_editor/javascript_glue/EnCryptElementOnClickHandler.cpp
-    src/note_editor/javascript_glue/GenericResourceOpenAndSaveButtonsOnClickHandler.cpp
-    src/note_editor/javascript_glue/GenericResourceImageJavaScriptHandler.cpp
-    src/note_editor/javascript_glue/HyperlinkClickJavaScriptHandler.cpp
-    src/note_editor/javascript_glue/WebSocketWaiter.cpp
-    src/note_editor/WebSocketTransport.cpp
-    src/note_editor/WebSocketClientWrapper.cpp)
+       src/note_editor/GenericResourceImageManager.cpp
+       src/note_editor/NoteEditorPage.cpp
+       src/note_editor/NoteEditor.cpp
+       src/note_editor/INoteEditorBackend.cpp
+       src/note_editor/NoteEditor_p.cpp
+       src/note_editor/JavaScriptInOrderExecutor.cpp
+       src/note_editor/ResourceFileStorageManager.cpp
+       src/note_editor/ResourceFileStorageManager_p.cpp
+       src/note_editor/ResourceInfo.cpp
+       src/note_editor/SpellChecker.cpp
+       src/note_editor/SpellChecker_p.cpp
+       src/note_editor/SpellCheckerDictionariesFinder.cpp
+       src/note_editor/dialogs/EncryptionDialog.cpp
+       src/note_editor/dialogs/DecryptionDialog.cpp
+       src/note_editor/dialogs/EditHyperlinkDialog.cpp
+       src/note_editor/dialogs/RenameResourceDialog.cpp
+       src/note_editor/delegates/InsertHtmlDelegate.cpp
+       src/note_editor/delegates/ImageResourceRotationDelegate.cpp
+       src/note_editor/delegates/AddResourceDelegate.cpp
+       src/note_editor/delegates/RemoveResourceDelegate.cpp
+       src/note_editor/delegates/EncryptSelectedTextDelegate.cpp
+       src/note_editor/delegates/DecryptEncryptedTextDelegate.cpp
+       src/note_editor/delegates/AddHyperlinkToSelectedTextDelegate.cpp
+       src/note_editor/delegates/EditHyperlinkDelegate.cpp
+       src/note_editor/delegates/RemoveHyperlinkDelegate.cpp
+       src/note_editor/delegates/RenameResourceDelegate.cpp
+       src/note_editor/javascript_glue/ResourceInfoJavaScriptHandler.cpp
+       src/note_editor/javascript_glue/ResizableImageJavaScriptHandler.cpp
+       src/note_editor/javascript_glue/TextCursorPositionJavaScriptHandler.cpp
+       src/note_editor/javascript_glue/ContextMenuEventJavaScriptHandler.cpp
+       src/note_editor/javascript_glue/PageMutationHandler.cpp
+       src/note_editor/javascript_glue/ToDoCheckboxOnClickHandler.cpp
+       src/note_editor/javascript_glue/TableResizeJavaScriptHandler.cpp
+       src/note_editor/javascript_glue/SpellCheckerDynamicHelper.cpp
+       src/note_editor/undo_stack/INoteEditorUndoCommand.cpp
+       src/note_editor/undo_stack/AddResourceUndoCommand.cpp
+       src/note_editor/undo_stack/RemoveResourceUndoCommand.cpp
+       src/note_editor/undo_stack/RenameResourceUndoCommand.cpp
+       src/note_editor/undo_stack/UpdateResourceUndoCommand.cpp
+       src/note_editor/undo_stack/InsertHtmlUndoCommand.cpp
+       src/note_editor/undo_stack/NoteEditorContentEditUndoCommand.cpp
+       src/note_editor/undo_stack/EncryptUndoCommand.cpp
+       src/note_editor/undo_stack/DecryptUndoCommand.cpp
+       src/note_editor/undo_stack/AddHyperlinkUndoCommand.cpp
+       src/note_editor/undo_stack/RemoveHyperlinkUndoCommand.cpp
+       src/note_editor/undo_stack/EditHyperlinkUndoCommand.cpp
+       src/note_editor/undo_stack/ToDoCheckboxUndoCommand.cpp
+       src/note_editor/undo_stack/ImageResourceRotationUndoCommand.cpp
+       src/note_editor/undo_stack/ImageResizeUndoCommand.cpp
+       src/note_editor/undo_stack/ReplaceUndoCommand.cpp
+       src/note_editor/undo_stack/ReplaceAllUndoCommand.cpp
+       src/note_editor/undo_stack/SpellCorrectionUndoCommand.cpp
+       src/note_editor/undo_stack/SpellCheckIgnoreWordUndoCommand.cpp
+       src/note_editor/undo_stack/SpellCheckAddToUserWordListUndoCommand.cpp
+       src/note_editor/undo_stack/TableActionUndoCommand.cpp
+       src/note_editor/undo_stack/HideDecryptedTextUndoCommand.cpp)
+  if(NOT QUENTIER_USE_QT_WEB_ENGINE)
+    list(APPEND ${PROJECT_NAME}_SOURCES
+         src/note_editor/EncryptedAreaPlugin.cpp
+         src/note_editor/GenericResourceDisplayWidget.cpp
+         src/note_editor/INoteEditorResourcePlugin.cpp
+         src/note_editor/NoteEditorPluginFactory.cpp)
+  else()
+    list(APPEND ${PROJECT_NAME}_SOURCES
+         src/note_editor/javascript_glue/EnCryptElementOnClickHandler.cpp
+         src/note_editor/javascript_glue/GenericResourceOpenAndSaveButtonsOnClickHandler.cpp
+         src/note_editor/javascript_glue/GenericResourceImageJavaScriptHandler.cpp
+         src/note_editor/javascript_glue/HyperlinkClickJavaScriptHandler.cpp
+         src/note_editor/javascript_glue/WebSocketWaiter.cpp
+         src/note_editor/WebSocketTransport.cpp
+         src/note_editor/WebSocketClientWrapper.cpp)
+  endif()
 endif()
 
 if(${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
@@ -514,6 +524,12 @@ else()
   set(LIB_QUENTIER_HAS_AUTHENTICATION_MANAGER_DEFINE "#define LIB_QUENTIER_HAS_AUTHENTICATION_MANAGER 0")
 endif()
 
+if(BUILD_WITH_NOTE_EDITOR)
+  set(LIB_QUENTIER_HAS_NOTE_EDITOR_DEFINE "#define LIB_QUENTIER_HAS_NOTE_EDITOR 1")
+else()
+  set(LIB_QUENTIER_HAS_NOTE_EDITOR_DEFINE "#define LIB_QUENTIER_HAS_NOTE_EDITOR 0")
+endif()
+
 set(LIBQUENTIER_LIBRARY_VERSION "${PROJECT_VERSION_MAJOR} * 10000 + ${PROJECT_VERSION_MINOR} * 100 + ${PROJECT_VERSION_PATCH}")
 
 configure_file(headers/quentier/utility/VersionInfo.h.in
@@ -523,34 +539,38 @@ list(APPEND UTILITY_HEADERS ${PROJECT_BINARY_DIR}/VersionInfo.h)
 list(APPEND PUBLIC_HEADERS ${PROJECT_BINARY_DIR}/VersionInfo.h)
 
 set(RESOURCES
-    src/note_editor/images/underline.qrc
-    src/note_editor/css/css.qrc
-    src/note_editor/images/icons/checkbox_icons/checkbox_icons.qrc
-    src/note_editor/images/icons/encrypted_area_icons/encrypted_area_icons.qrc
-    src/note_editor/images/icons/generic_resource_icons/generic_resource_icons.qrc
-    src/note_editor/javascript/jquery/jquery.qrc
-    src/note_editor/javascript/colResizable/colResizable.qrc
-    src/note_editor/javascript/debounce/debounce.qrc
-    src/note_editor/javascript/scripts/scripts.qrc
-    src/note_editor/javascript/hilitor/hilitor.qrc
-    src/note_editor/javascript/rangy/rangy.qrc
     src/enml/enml.qrc)
+
+if(BUILD_WITH_NOTE_EDITOR)
+  list(APPEND RESOURCES
+       src/note_editor/images/underline.qrc
+       src/note_editor/css/css.qrc
+       src/note_editor/images/icons/checkbox_icons/checkbox_icons.qrc
+       src/note_editor/images/icons/encrypted_area_icons/encrypted_area_icons.qrc
+       src/note_editor/images/icons/generic_resource_icons/generic_resource_icons.qrc
+       src/note_editor/javascript/jquery/jquery.qrc
+       src/note_editor/javascript/colResizable/colResizable.qrc
+       src/note_editor/javascript/debounce/debounce.qrc
+       src/note_editor/javascript/scripts/scripts.qrc
+       src/note_editor/javascript/hilitor/hilitor.qrc
+       src/note_editor/javascript/rangy/rangy.qrc)
+endif()
 
 qt_add_resources(${PROJECT_NAME}_RESOURCES_RCC ${RESOURCES})
 
-set(FORMS
-    src/note_editor/dialogs/DecryptionDialog.ui
-    src/note_editor/dialogs/EncryptionDialog.ui
-    src/note_editor/dialogs/EditHyperlinkDialog.ui
-    src/note_editor/dialogs/RenameResourceDialog.ui)
-
-if(NOT QUENTIER_USE_QT_WEB_ENGINE)
-  list(APPEND FORMS
-       src/note_editor/EncryptedAreaPlugin.ui
-       src/note_editor/GenericResourceDisplayWidget.ui)
+if(BUILD_WITH_NOTE_EDITOR)
+  set(FORMS
+      src/note_editor/dialogs/DecryptionDialog.ui
+      src/note_editor/dialogs/EncryptionDialog.ui
+      src/note_editor/dialogs/EditHyperlinkDialog.ui
+      src/note_editor/dialogs/RenameResourceDialog.ui)
+  if(NOT QUENTIER_USE_QT_WEB_ENGINE)
+    list(APPEND FORMS
+         src/note_editor/EncryptedAreaPlugin.ui
+         src/note_editor/GenericResourceDisplayWidget.ui)
+  endif()
+  qt_wrap_ui(${PROJECT_NAME}_FORMS_HEADERS ${FORMS})
 endif()
-
-qt_wrap_ui(${PROJECT_NAME}_FORMS_HEADERS ${FORMS})
 
 set(${PROJECT_NAME}_TR_SOURCES
     ${${PROJECT_NAME}_HEADERS}
@@ -709,6 +729,12 @@ else()
   set(LIB_QUENTIER_HAS_AUTHENTICATION_MANAGER_OPTION "set(LIBQUENTIER_HAS_AUTHENTICATION_MANAGER FALSE)")
 endif()
 
+if(BUILD_WITH_NOTE_EDITOR)
+  set(LIB_QUENTIER_HAS_NOTE_EDITOR_OPTION "set(LIB_QUENTIER_HAS_NOTE_EDITOR TRUE)")
+else()
+  set(LIB_QUENTIER_HAS_NOTE_EDITOR_OPTION "set(LIB_QUENTIER_HAS_NOTE_EDITOR FALSE)")
+endif()
+
 configure_file(cmake/modules/LibquentierBuildTreeSettings.cmake.in
                ${PROJECT_BINARY_DIR}/Libquentier-${LIBQUENTIER_QT_VERSION}BuildTreeSettings.cmake @ONLY)
 configure_file(cmake/modules/LibquentierConfig.cmake.in
@@ -717,21 +743,31 @@ configure_file(cmake/modules/LibquentierConfigVersion.cmake.in
                ${PROJECT_BINARY_DIR}/Libquentier-${LIBQUENTIER_QT_VERSION}ConfigVersion.cmake @ONLY)
 
 if(USE_QT5)
-  if(USE_QT5_WEBKIT OR (Qt5Core_VERSION VERSION_LESS "5.4.0"))
-    file(COPY cmake/modules/LibquentierFindQt5DependenciesWebKit.cmake DESTINATION ${PROJECT_BINARY_DIR})
-    file(RENAME ${PROJECT_BINARY_DIR}/LibquentierFindQt5DependenciesWebKit.cmake ${PROJECT_BINARY_DIR}/Libquentier-${LIBQUENTIER_QT_VERSION}FindQtDependencies.cmake)
-  elseif(Qt5Core_VERSION VERSION_LESS "5.6.0")
-    file(COPY cmake/modules/LibquentierFindQt5DependenciesWebEngineNoCore.cmake DESTINATION ${PROJECT_BINARY_DIR})
-    file(RENAME ${PROJECT_BINARY_DIR}/LibquentierFindQt5DependenciesWebEngineNoCore.cmake ${PROJECT_BINARY_DIR}/Libquentier-${LIBQUENTIER_QT_VERSION}FindQtDependencies.cmake)
+  if(BUILD_WITH_NOTE_EDITOR OR BUILD_WITH_AUTHENTICATION_MANAGER)
+    if(USE_QT5_WEBKIT OR (Qt5Core_VERSION VERSION_LESS "5.4.0"))
+      file(COPY cmake/modules/LibquentierFindQt5DependenciesWebKit.cmake DESTINATION ${PROJECT_BINARY_DIR})
+      file(RENAME ${PROJECT_BINARY_DIR}/LibquentierFindQt5DependenciesWebKit.cmake ${PROJECT_BINARY_DIR}/Libquentier-${LIBQUENTIER_QT_VERSION}FindQtDependencies.cmake)
+    elseif(Qt5Core_VERSION VERSION_LESS "5.6.0")
+      file(COPY cmake/modules/LibquentierFindQt5DependenciesWebEngineNoCore.cmake DESTINATION ${PROJECT_BINARY_DIR})
+      file(RENAME ${PROJECT_BINARY_DIR}/LibquentierFindQt5DependenciesWebEngineNoCore.cmake ${PROJECT_BINARY_DIR}/Libquentier-${LIBQUENTIER_QT_VERSION}FindQtDependencies.cmake)
+    else()
+      file(COPY cmake/modules/LibquentierFindQt5DependenciesWebEngineCore.cmake DESTINATION ${PROJECT_BINARY_DIR})
+      file(RENAME ${PROJECT_BINARY_DIR}/LibquentierFindQt5DependenciesWebEngineCore.cmake ${PROJECT_BINARY_DIR}/Libquentier-${LIBQUENTIER_QT_VERSION}FindQtDependencies.cmake)
+    endif()
   else()
-    file(COPY cmake/modules/LibquentierFindQt5DependenciesWebEngineCore.cmake DESTINATION ${PROJECT_BINARY_DIR})
-    file(RENAME ${PROJECT_BINARY_DIR}/LibquentierFindQt5DependenciesWebEngineCore.cmake ${PROJECT_BINARY_DIR}/Libquentier-${LIBQUENTIER_QT_VERSION}FindQtDependencies.cmake)
+    file(COPY cmake/modules/LibquentierFindQt5DependenciesBase.cmake DESTINATION ${PROJECT_BINARY_DIR})
+    file(RENAME ${PROJECT_BINARY_DIR}/LibquentierFindQt5DependenciesBase.cmake ${PROJECT_BINARY_DIR}/Libquentier-${LIBQUENTIER_QT_VERSION}FindQtDependencies.cmake)
   endif()
   file(COPY cmake/modules/LibquentierFindOtherDependenciesQt5.cmake DESTINATION ${PROJECT_BINARY_DIR})
   file(RENAME ${PROJECT_BINARY_DIR}/LibquentierFindOtherDependenciesQt5.cmake ${PROJECT_BINARY_DIR}/Libquentier-${LIBQUENTIER_QT_VERSION}FindOtherDependencies.cmake)
 else()
-  file(COPY cmake/modules/LibquentierFindQt4Dependencies.cmake DESTINATION ${PROJECT_BINARY_DIR})
-  file(RENAME ${PROJECT_BINARY_DIR}/LibquentierFindQt4Dependencies.cmake ${PROJECT_BINARY_DIR}/Libquentier-${LIBQUENTIER_QT_VERSION}FindQtDependencies.cmake)
+  if(BUILD_WITH_NOTE_EDITOR OR BUILD_WITH_AUTHENTICATION_MANAGER)
+    file(COPY cmake/modules/LibquentierFindQt4Dependencies.cmake DESTINATION ${PROJECT_BINARY_DIR})
+    file(RENAME ${PROJECT_BINARY_DIR}/LibquentierFindQt4Dependencies.cmake ${PROJECT_BINARY_DIR}/Libquentier-${LIBQUENTIER_QT_VERSION}FindQtDependencies.cmake)
+  else()
+    file(COPY cmake/modules/LibquentierFindQt4DependenciesWebKit.cmake DESTINATION ${PROJECT_BINARY_DIR})
+    file(RENAME ${PROJECT_BINARY_DIR}/LibquentierFindQt4DependenciesWebKit.cmake ${PROJECT_BINARY_DIR}/Libquentier-${LIBQUENTIER_QT_VERSION}FindQtDependencies.cmake)
+  endif()
   file(COPY cmake/modules/LibquentierFindOtherDependenciesQt4.cmake DESTINATION ${PROJECT_BINARY_DIR})
   file(RENAME ${PROJECT_BINARY_DIR}/LibquentierFindOtherDependenciesQt4.cmake ${PROJECT_BINARY_DIR}/Libquentier-${LIBQUENTIER_QT_VERSION}FindOtherDependencies.cmake)
 endif()
@@ -744,9 +780,11 @@ install(TARGETS ${LIBNAME}
         ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
 # install headers
-foreach(ITEM ${NOTE_EDITOR_HEADERS})
-  install(FILES ${ITEM} DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/quentier/note_editor)
-endforeach()
+if(BUILD_WITH_NOTE_EDITOR)
+  foreach(ITEM ${NOTE_EDITOR_HEADERS})
+    install(FILES ${ITEM} DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/quentier/note_editor)
+  endforeach()
+endif()
 
 foreach(ITEM ${TYPES_HEADERS})
   install(FILES ${ITEM} DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/quentier/types)

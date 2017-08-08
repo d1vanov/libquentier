@@ -4,12 +4,10 @@
 #include "EncryptDecryptUndoCommandInfo.h"
 #include "INoteEditorUndoCommand.h"
 #include "../NoteEditorPage.h"
-#include <quentier/note_editor/DecryptedTextManager.h>
+#include <quentier/enml/DecryptedTextManager.h>
 #include <QSharedPointer>
 
 namespace quentier {
-
-QT_FORWARD_DECLARE_CLASS(DecryptedTextManager)
 
 class DecryptUndoCommand: public INoteEditorUndoCommand
 {

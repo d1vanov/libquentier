@@ -1089,6 +1089,20 @@ QTextStream & operator<<(QTextStream & strm, const qevercloud::EDAMErrorCode::ty
     return strm;
 }
 
+QTextStream & operator<<(QTextStream & strm, const qevercloud::SyncState & syncState)
+{
+    strm << QStringLiteral("qevercloud::SyncState {\n")
+         << QStringLiteral("  current time = ") << quentier::printableDateTimeFromTimestamp(syncState.currentTime) << QStringLiteral(";\n")
+         << QStringLiteral("  full sync before = ") << quentier::printableDateTimeFromTimestamp(syncState.fullSyncBefore) << QStringLiteral(";\n")
+         << QStringLiteral("  update count = ") << QString::number(syncState.updateCount) << QStringLiteral(";\n")
+         << QStringLiteral("  uploaded = ") << QString::number(syncState.uploaded) << QStringLiteral(";\n")
+         << QStringLiteral("  user last updated = ") << quentier::printableDateTimeFromTimestamp(syncState.userLastUpdated) << QStringLiteral(";\n")
+         << QStringLiteral("};\n");
+
+    return strm;
+}
+
+#if QEVERCLOUD_HAS_OAUTH
 QTextStream & operator<<(QTextStream & strm, const qevercloud::EvernoteOAuthWebView::OAuthResult & result)
 {
     strm << QStringLiteral("qevercloud::EvernoteOAuthWebView::OAuthResult {\n");
@@ -1105,16 +1119,4 @@ QTextStream & operator<<(QTextStream & strm, const qevercloud::EvernoteOAuthWebV
     strm << QStringLiteral("};\n");
     return strm;
 }
-
-QTextStream & operator<<(QTextStream & strm, const qevercloud::SyncState & syncState)
-{
-    strm << QStringLiteral("qevercloud::SyncState {\n")
-         << QStringLiteral("  current time = ") << quentier::printableDateTimeFromTimestamp(syncState.currentTime) << QStringLiteral(";\n")
-         << QStringLiteral("  full sync before = ") << quentier::printableDateTimeFromTimestamp(syncState.fullSyncBefore) << QStringLiteral(";\n")
-         << QStringLiteral("  update count = ") << QString::number(syncState.updateCount) << QStringLiteral(";\n")
-         << QStringLiteral("  uploaded = ") << QString::number(syncState.uploaded) << QStringLiteral(";\n")
-         << QStringLiteral("  user last updated = ") << quentier::printableDateTimeFromTimestamp(syncState.userLastUpdated) << QStringLiteral(";\n")
-         << QStringLiteral("};\n");
-
-    return strm;
-}
+#endif

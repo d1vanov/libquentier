@@ -26,9 +26,9 @@
 #include <QByteArray>
 
 #if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
-#include <qt5qevercloud/QEverCloudOAuth.h>
+#include <qt5qevercloud/QEverCloud.h>
 #else
-#include <qt4qevercloud/QEverCloudOAuth.h>
+#include <qt4qevercloud/QEverCloud.h>
 #endif
 
 namespace quentier {

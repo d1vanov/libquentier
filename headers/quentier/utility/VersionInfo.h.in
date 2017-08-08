@@ -25,17 +25,23 @@
  */
 
 /**
- * This macro it set to true if libquentier uses QtWebEngine component;
+ * This macro is set to true if libquentier uses QtWebEngine component;
  * it requires specialized deployment, so this definition can tell whether
  * they are required for libquentier
  */
 @LIB_QUENTIER_QT_WEB_ENGINE_DEFINE@
 
 /**
- * This macro if set to true if libquentier was built with AuthenticationManager class
+ * This macro is set to true if libquentier was built with AuthenticationManager class
  * for OAuth handling
  */
 @LIB_QUENTIER_HAS_AUTHENTICATION_MANAGER_DEFINE@
+
+/**
+ * This macro is set to true if libquentier was built with NoteEditor and INoteEditorBackend classes
+ * (as well as their implementations)
+ */
+@LIB_QUENTIER_HAS_NOTE_EDITOR_DEFINE@
 
 namespace quentier {
 

@@ -28,12 +28,22 @@
 #include <QSet>
 
 #if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
+
 #include <qt5qevercloud/QEverCloud.h>
+
+#if QEVERCLOUD_HAS_OAUTH
 #include <qt5qevercloud/QEverCloudOAuth.h>
-#else
+#endif
+
+#else // Qt5
+
 #include <qt4qevercloud/QEverCloud.h>
+
+#if QEVERCLOUD_HAS_OAUTH
 #include <qt4qevercloud/QEverCloudOAuth.h>
 #endif
+
+#endif // Qt5
 
 namespace quentier {
 
@@ -144,7 +154,10 @@ QUENTIER_DECLARE_PRINTABLE(qevercloud::NoteRestrictions)
 QUENTIER_DECLARE_PRINTABLE(qevercloud::NoteLimits)
 QUENTIER_DECLARE_PRINTABLE(qevercloud::Note)
 QUENTIER_DECLARE_PRINTABLE(qevercloud::EDAMErrorCode::type)
-QUENTIER_DECLARE_PRINTABLE(qevercloud::EvernoteOAuthWebView::OAuthResult)
 QUENTIER_DECLARE_PRINTABLE(qevercloud::SyncState)
+
+#if QEVERCLOUD_HAS_OAUTH
+QUENTIER_DECLARE_PRINTABLE(qevercloud::EvernoteOAuthWebView::OAuthResult)
+#endif
 
 #endif // LIB_QUENTIER_UTILITY_PRINTABLE_H

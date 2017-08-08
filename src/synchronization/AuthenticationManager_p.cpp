@@ -21,8 +21,6 @@
 
 #if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
 
-#include <qt5qevercloud/VersionInfo.h>
-
 #if !QEVERCLOUD_HAS_OAUTH
 #error "The used QEverCloud library has no OAuth support"
 #endif
@@ -31,7 +29,6 @@
 
 #else // QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
 
-#include <qt4qevercloud/VersionInfo.h>
 #if !QEVERCLOUD_HAS_OAUTH
 #error "The used QEverCloud library has no OAuth support"
 #endif

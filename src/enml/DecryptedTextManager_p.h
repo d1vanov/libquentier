@@ -16,8 +16,8 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LIB_QUENTIER_NOTE_EDITOR_DECRYPTED_TEXT_MANAGER_P_H
-#define LIB_QUENTIER_NOTE_EDITOR_DECRYPTED_TEXT_MANAGER_P_H
+#ifndef LIB_QUENTIER_ENML_DECRYPTED_TEXT_MANAGER_P_H
+#define LIB_QUENTIER_ENML_DECRYPTED_TEXT_MANAGER_P_H
 
 #include <quentier/utility/EncryptionManager.h>
 #include <QtGlobal>
@@ -76,4 +76,4 @@ private:
 
 } // namespace quentier
 
-#endif // LIB_QUENTIER_NOTE_EDITOR_DECRYPTED_TEXT_MANAGER_P_H
+#endif // LIB_QUENTIER_ENML_DECRYPTED_TEXT_MANAGER_P_H

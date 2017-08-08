@@ -23,7 +23,7 @@
 #include <quentier/note_editor/ResourceFileStorageManager.h>
 #include <quentier/utility/FileIOProcessorAsync.h>
 #include <quentier/utility/EncryptionManager.h>
-#include <quentier/note_editor/DecryptedTextManager.h>
+#include <quentier/enml/DecryptedTextManager.h>
 #include <quentier/utility/QuentierCheckPtr.h>
 #include <quentier/utility/Utility.h>
 #include <quentier/utility/StandardPaths.h>

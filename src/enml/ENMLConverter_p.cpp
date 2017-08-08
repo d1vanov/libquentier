@@ -17,7 +17,7 @@
  */
 
 #include "ENMLConverter_p.h"
-#include <quentier/note_editor/DecryptedTextManager.h>
+#include <quentier/enml/DecryptedTextManager.h>
 #include <quentier/enml/HTMLCleaner.h>
 #include <quentier/types/Resource.h>
 #include <quentier/logging/QuentierLogger.h>

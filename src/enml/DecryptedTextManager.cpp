@@ -16,7 +16,7 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <quentier/note_editor/DecryptedTextManager.h>
+#include <quentier/enml/DecryptedTextManager.h>
 #include "DecryptedTextManager_p.h"
 
 namespace quentier {
