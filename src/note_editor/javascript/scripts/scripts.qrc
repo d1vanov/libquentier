@@ -5,6 +5,7 @@
         <file>tableManager.js</file>
         <file>resourceManager.js</file>
         <file>htmlInsertionManager.js</file>
+        <file>sourceCodeFormatter.js</file>
         <file>hyperlinkManager.js</file>
         <file>encryptDecryptManager.js</file>
         <file>selectionManager.js</file>

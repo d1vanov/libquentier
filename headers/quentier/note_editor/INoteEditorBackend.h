@@ -65,6 +65,8 @@ public:
     virtual void pasteUnformatted() = 0;
     virtual void selectAll() = 0;
 
+    virtual void formatSelectionAsSourceCode() = 0;
+
     virtual void fontMenu() = 0;
     virtual void textBold() = 0;
     virtual void textItalic() = 0;

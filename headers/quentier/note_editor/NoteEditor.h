@@ -190,6 +190,8 @@ public Q_SLOTS:
     void pasteUnformatted();
     void selectAll();
 
+    void formatSelectionAsSourceCode();
+
     void fontMenu();
     void textBold();
     void textItalic();

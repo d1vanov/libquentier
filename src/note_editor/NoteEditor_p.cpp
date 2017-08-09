@@ -192,6 +192,7 @@ NoteEditorPrivate::NoteEditorPrivate(NoteEditor & noteEditor) :
     m_tableManagerJs(),
     m_resourceManagerJs(),
     m_htmlInsertionManagerJs(),
+    m_sourceCodeFormatterJs(),
     m_hyperlinkManagerJs(),
     m_encryptDecryptManagerJs(),
     m_hilitorJs(),
@@ -475,6 +476,7 @@ void NoteEditorPrivate::onNoteLoadFinished(bool ok)
     page->executeJavaScript(m_tableManagerJs);
     page->executeJavaScript(m_resourceManagerJs);
     page->executeJavaScript(m_htmlInsertionManagerJs);
+    page->executeJavaScript(m_sourceCodeFormatterJs);
     page->executeJavaScript(m_hyperlinkManagerJs);
     page->executeJavaScript(m_encryptDecryptManagerJs);
     page->executeJavaScript(m_hilitorJs);
@@ -1359,6 +1361,50 @@ void NoteEditorPrivate::onWriteFileRequestProcessed(bool success, ErrorString er
         Q_UNUSED(m_manualSaveResourceToFileRequestIds.erase(manualSaveResourceIt));
         return;
     }
+}
+
+void NoteEditorPrivate::onSelectionFormatterAsSourceCode(const QVariant & response, const QVector<QPair<QString,QString> > & extraData)
+{
+    QNDEBUG(QStringLiteral("NoteEditorPrivate::onSelectionFormatterAsSourceCode"));
+
+    Q_UNUSED(extraData)
+    QMap<QString,QVariant> resultMap = response.toMap();
+
+    auto statusIt = resultMap.find(QStringLiteral("status"));
+    if (Q_UNLIKELY(statusIt == resultMap.end())) {
+        ErrorString error(QT_TR_NOOP("Can't find the status within the result of selection formatting as source code"));
+        QNWARNING(error);
+        emit notifyError(error);
+        return;
+    }
+
+    bool res = statusIt.value().toBool();
+    if (!res)
+    {
+        ErrorString error;
+        auto errorIt = resultMap.find(QStringLiteral("error"));
+        if (Q_UNLIKELY(errorIt == resultMap.end())) {
+            error.setBase(QT_TR_NOOP("Internal error: can't parse the error of selection formatting as source code from JavaScript"));
+        }
+        else {
+            error.setBase(QT_TR_NOOP("Internal error: can't format the selection as source code"));
+            error.details() = errorIt.value().toString();
+        }
+
+        QNWARNING(error);
+        emit notifyError(error);
+        return;
+    }
+
+    InsertHtmlUndoCommand * pCommand = new InsertHtmlUndoCommand(QList<Resource>(), QStringList(),
+                                                                 NoteEditorCallbackFunctor<QVariant>(this, &NoteEditorPrivate::onInsertHtmlUndoRedoFinished),
+                                                                 *this, m_resourceFileStoragePathsByResourceLocalUid,
+                                                                 m_resourceInfo);
+    QObject::connect(pCommand, QNSIGNAL(InsertHtmlUndoCommand,notifyError,ErrorString),
+                     this, QNSLOT(NoteEditorPrivate,onUndoCommandError,ErrorString));
+    m_pUndoStack->push(pCommand);
+
+    convertToNote();
 }
 
 void NoteEditorPrivate::onAddResourceDelegateFinished(Resource addedResource, QString resourceFileStoragePath)
@@ -4181,6 +4227,7 @@ void NoteEditorPrivate::setupScripts()
     SETUP_SCRIPT("javascript/scripts/tableManager.js", m_tableManagerJs);
     SETUP_SCRIPT("javascript/scripts/resourceManager.js", m_resourceManagerJs);
     SETUP_SCRIPT("javascript/scripts/htmlInsertionManager.js", m_htmlInsertionManagerJs);
+    SETUP_SCRIPT("javascript/scripts/sourceCodeFormatter.js", m_sourceCodeFormatterJs);
     SETUP_SCRIPT("javascript/scripts/hyperlinkManager.js", m_hyperlinkManagerJs);
     SETUP_SCRIPT("javascript/scripts/encryptDecryptManager.js", m_encryptDecryptManagerJs);
 
@@ -5043,10 +5090,16 @@ void NoteEditorPrivate::setupAddHyperlinkDelegate(const quint64 hyperlinkId, con
 }
 
 #define COMMAND_TO_JS(command) \
-    QString javascript = QString::fromUtf8("managedPageAction(\"%1\", null)").arg(command)
+    QString escapedCommand = command; \
+    ENMLConverter::escapeString(escapedCommand, false); \
+    QString javascript = QString::fromUtf8("managedPageAction(\"%1\", null)").arg(escapedCommand)
 
 #define COMMAND_WITH_ARGS_TO_JS(command, args) \
-    QString javascript = QString::fromUtf8("managedPageAction('%1', '%2')").arg(command,args)
+    QString escapedCommand = command; \
+    ENMLConverter::escapeString(escapedCommand, false); \
+    QString escapedArgs = args; \
+    ENMLConverter::escapeString(escapedArgs, false); \
+    QString javascript = QString::fromUtf8("managedPageAction('%1', '%2')").arg(escapedCommand,escapedArgs)
 
 #ifndef QUENTIER_USE_QT_WEB_ENGINE
 QVariant NoteEditorPrivate::execJavascriptCommandWithResult(const QString & command)
@@ -6655,6 +6708,14 @@ void NoteEditorPrivate::selectAll()
     QNDEBUG(QStringLiteral("NoteEditorPrivate::selectAll"));
     GET_PAGE()
     page->triggerAction(WebPage::SelectAll);
+}
+
+void NoteEditorPrivate::formatSelectionAsSourceCode()
+{
+    QNDEBUG(QStringLiteral("NoteEditorPrivate::formatSelectionAsSourceCode"));
+    GET_PAGE()
+    page->executeJavaScript(QStringLiteral("sourceCodeFormatter.format()"),
+                            NoteEditorCallbackFunctor<QVariant>(this, &NoteEditorPrivate::onSelectionFormatterAsSourceCode));
 }
 
 void NoteEditorPrivate::fontMenu()

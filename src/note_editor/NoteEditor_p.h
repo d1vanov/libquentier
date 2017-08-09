@@ -212,6 +212,7 @@ public Q_SLOTS:
     virtual void paste() Q_DECL_OVERRIDE;
     virtual void pasteUnformatted() Q_DECL_OVERRIDE;
     virtual void selectAll() Q_DECL_OVERRIDE;
+    virtual void formatSelectionAsSourceCode() Q_DECL_OVERRIDE;
     virtual void fontMenu() Q_DECL_OVERRIDE;
     virtual void textBold() Q_DECL_OVERRIDE;
     virtual void textItalic() Q_DECL_OVERRIDE;
@@ -403,6 +404,8 @@ private Q_SLOTS:
     void onSpellCheckerReady();
 
     void onImageResourceResized(bool pushUndoCommand);
+
+    void onSelectionFormatterAsSourceCode(const QVariant & response, const QVector<QPair<QString,QString> > & extraData);
 
     // Slots for delegates
     void onAddResourceDelegateFinished(Resource addedResource, QString resourceFileStoragePath);
@@ -746,6 +749,7 @@ private:
     QString     m_tableManagerJs;
     QString     m_resourceManagerJs;
     QString     m_htmlInsertionManagerJs;
+    QString     m_sourceCodeFormatterJs;
     QString     m_hyperlinkManagerJs;
     QString     m_encryptDecryptManagerJs;
     QString     m_hilitorJs;

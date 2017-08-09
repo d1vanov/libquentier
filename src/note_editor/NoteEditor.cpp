@@ -140,6 +140,11 @@ void NoteEditor::selectAll()
     m_backend->selectAll();
 }
 
+void NoteEditor::formatSelectionAsSourceCode()
+{
+    m_backend->formatSelectionAsSourceCode();
+}
+
 void NoteEditor::fontMenu()
 {
     m_backend->fontMenu();
