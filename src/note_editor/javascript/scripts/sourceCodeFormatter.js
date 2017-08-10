@@ -18,6 +18,9 @@
 
 function SourceCodeFormatter() {
     var lastError;
+    var formatStyle = "font-family: Monaco, Menlo, Consolas, 'Courier New', monospace; " +
+                      "font-size: 0.9em; border-radius: 4px; letter-spacing: 0.015em; padding: 1em; " +
+                      "border: 1px solid #cccccc; background-color: #f8f8f8; overflow-x: auto;"
 
     this.format = function()
     {
@@ -30,6 +33,13 @@ function SourceCodeFormatter() {
             return { status:false, error:lastError };
         }
 
+        var rangeCount = selection.rangeCount;
+        if (rangeCount != 1) {
+            lastError = "not exactly one range within the selection";
+            console.warn(lastError);
+            return { status:false, error:lastError };
+        }
+
         var anchorNode = selection.anchorNode;
         if (!anchorNode) {
             lastError = "selection anchor node is null";
@@ -37,7 +47,7 @@ function SourceCodeFormatter() {
             return { status:false, error:lastError };
         }
 
-        var element = anchorNode.parentNode;
+        var element = anchorNode;
         var insideSourceCodeBlock = false;
 
         while(element) {
@@ -51,32 +61,48 @@ function SourceCodeFormatter() {
             }
 
             if (element.nodeType == 1) {
-                console.log("Found element with nodeType == 1");
-                var enTag = element.getAttribute("en-tag");
-                if (enTag == "en-source-code-formatted") {
-                    console.log("Selection is inside source code formatted block");
-                    insideSourceCodeBlock = true;
-                    break;
+                if (element.nodeName == "PRE") {
+                    var elementStyle = element.getAttribute("style");
+                    if (elementStyle == formatStyle) {
+                        console.log("Selection is inside source code formatted block");
+                        insideSourceCodeBlock = true;
+                        break;
+                    }
                 }
             }
 
             element = element.parentNode;
         }
 
-        var selectionHtml;
         if (insideSourceCodeBlock) {
             // When already inside the source code block, need to remove the source code block formatting
-            selectionHtml = element.innerHTML;
+            var containedHtml = element.innerHTML;
+            console.log("Contained HTML: " + containedHtml);
+
             var div = element.parentNode;
             var divParent = div.parentNode;
+
+            var newSelectionNode = div.previousSibling;
+            while(newSelectionNode) {
+                if (newSelectionNode.nodeType != 1) {
+                    newSelectionNode = newSelectionNode.previousSibling;
+                }
+                else {
+                    break;
+                }
+            }
+
+            if (!newSelectionNode) {
+                newSelectionNode = div.parentNode;
+            }
 
             observer.stop();
             try {
                 divParent.removeChild(div);
 
                 var range = document.createRange();
-                range.selectNode(divParent);
-                range.collapse(true);
+                range.selectNode(newSelectionNode);
+                range.collapse();
 
                 selection.removeAllRanges();
                 selection.addRange(range);
@@ -84,25 +110,28 @@ function SourceCodeFormatter() {
             finally {
                 observer.start();
             }
-        }
-        else {
-            selectionHtml = getSelectionHtml();
+
+            var res = htmlInsertionManager.insertHtml(containedHtml);
+            console.log("After htmlInsertionManager::insertHtml: " + document.body.innerHTML);
+            return res;
         }
 
+        var selectionHtml = getSelectionHtml();
         if (!selectionHtml) {
             lastError = "selection is empty";
             console.log(lastError);
             return { status:false, error:lastError };
         }
 
-        var formattedHtml = "<div><pre style=\"font-family: Monaco, Menlo, Consolas, 'Courier New', monospace; " +
-                            "font-size: 0.9em; border-radius: 4px; letter-spacing: 0.015em; padding: 1em; " +
-                            "border: 1px solid #cccccc; background-color: #f8f8f8; overflow-x: auto;\" " +
-                            "en-tag=en-source-code-formatted>";
+        console.log("Selection html: " + selectionHtml);
+
+        var formattedHtml = "<div><pre style=\"" + formatStyle + "\">";
         formattedHtml += selectionHtml;
         formattedHtml += "</pre></div>";
 
-        return htmlInsertionManager.insertHtml(formattedHtml);
+        var res = htmlInsertionManager.insertHtml(formattedHtml);
+        console.log("After htmlInsertionManager::insertHtml: " + document.body.innerHTML);
+        return res;
     }
 }
 
