@@ -42,6 +42,7 @@
 #include "undo_stack/DecryptUndoCommand.h"
 #include "undo_stack/HideDecryptedTextUndoCommand.h"
 #include "undo_stack/AddHyperlinkUndoCommand.h"
+#include "undo_stack/SourceCodeFormatUndoCommand.h"
 #include "undo_stack/EditHyperlinkUndoCommand.h"
 #include "undo_stack/RemoveHyperlinkUndoCommand.h"
 #include "undo_stack/ToDoCheckboxUndoCommand.h"
@@ -172,6 +173,7 @@ NoteEditorPrivate::NoteEditorPrivate(NoteEditor & noteEditor) :
     m_rangyCoreJs(),
     m_rangySelectionSaveRestoreJs(),
     m_onTableResizeJs(),
+    m_nodeUndoRedoManagerJs(),
     m_selectionManagerJs(),
     m_textEditingUndoRedoManagerJs(),
     m_getSelectionHtmlJs(),
@@ -463,6 +465,7 @@ void NoteEditorPrivate::onNoteLoadFinished(bool ok)
     page->executeJavaScript(m_rangyCoreJs);
     page->executeJavaScript(m_rangySelectionSaveRestoreJs);
     page->executeJavaScript(m_onTableResizeJs);
+    page->executeJavaScript(m_nodeUndoRedoManagerJs);
     page->executeJavaScript(m_selectionManagerJs);
     page->executeJavaScript(m_textEditingUndoRedoManagerJs);
     page->executeJavaScript(m_snapSelectionToWordJs);
@@ -1396,11 +1399,10 @@ void NoteEditorPrivate::onSelectionFormatterAsSourceCode(const QVariant & respon
         return;
     }
 
-    InsertHtmlUndoCommand * pCommand = new InsertHtmlUndoCommand(QList<Resource>(), QStringList(),
-                                                                 NoteEditorCallbackFunctor<QVariant>(this, &NoteEditorPrivate::onInsertHtmlUndoRedoFinished),
-                                                                 *this, m_resourceFileStoragePathsByResourceLocalUid,
-                                                                 m_resourceInfo);
-    QObject::connect(pCommand, QNSIGNAL(InsertHtmlUndoCommand,notifyError,ErrorString),
+    SourceCodeFormatUndoCommand * pCommand =
+        new SourceCodeFormatUndoCommand(*this,
+                                        NoteEditorCallbackFunctor<QVariant>(this, &NoteEditorPrivate::onSourceCodeFormatUndoRedoFinished));
+    QObject::connect(pCommand, QNSIGNAL(SourceCodeFormatUndoCommand,notifyError,ErrorString),
                      this, QNSLOT(NoteEditorPrivate,onUndoCommandError,ErrorString));
     m_pUndoStack->push(pCommand);
 
@@ -2223,6 +2225,44 @@ void NoteEditorPrivate::onInsertHtmlUndoRedoFinished(const QVariant & data, cons
         }
         else {
             error.setBase(QT_TR_NOOP("Can't undo/redo the html insertion into the note editor"));
+            error.details() = errorIt.value().toString();
+        }
+
+        QNWARNING(error);
+        emit notifyError(error);
+        return;
+    }
+
+    convertToNote();
+}
+
+void NoteEditorPrivate::onSourceCodeFormatUndoRedoFinished(const QVariant & data, const QVector<QPair<QString,QString> > & extraData)
+{
+    QNDEBUG(QStringLiteral("NoteEditorPrivate::onSourceCodeFormatUndoRedoFinished: ") << data);
+
+    Q_UNUSED(extraData)
+
+    QMap<QString,QVariant> resultMap = data.toMap();
+
+    auto statusIt = resultMap.find(QStringLiteral("status"));
+    if (Q_UNLIKELY(statusIt == resultMap.end())) {
+        ErrorString error(QT_TR_NOOP("Can't parse the result of source code formatting undo/redo from JavaScript"));
+        QNWARNING(error);
+        emit notifyError(error);
+        return;
+    }
+
+    bool res = statusIt.value().toBool();
+    if (!res)
+    {
+        ErrorString error;
+
+        auto errorIt = resultMap.find(QStringLiteral("error"));
+        if (Q_UNLIKELY(errorIt == resultMap.end())) {
+            error.setBase(QT_TR_NOOP("Can't parse the error of source code formatting undo/redo from JavaScript"));
+        }
+        else {
+            error.setBase(QT_TR_NOOP("Can't undo/redo the source code formatting"));
             error.details() = errorIt.value().toString();
         }
 
@@ -4205,6 +4245,7 @@ void NoteEditorPrivate::setupScripts()
     SETUP_SCRIPT("javascript/hilitor/hilitor-utf8.js", m_hilitorJs);
     SETUP_SCRIPT("javascript/scripts/imageAreasHilitor.js", m_imageAreasHilitorJs);
     SETUP_SCRIPT("javascript/scripts/onTableResize.js", m_onTableResizeJs);
+    SETUP_SCRIPT("javascript/scripts/nodeUndoRedoManager.js", m_nodeUndoRedoManagerJs);
     SETUP_SCRIPT("javascript/scripts/selectionManager.js", m_selectionManagerJs);
     SETUP_SCRIPT("javascript/scripts/textEditingUndoRedoManager.js", m_textEditingUndoRedoManagerJs);
     SETUP_SCRIPT("javascript/scripts/getSelectionHtml.js", m_getSelectionHtmlJs);

@@ -459,6 +459,8 @@ private Q_SLOTS:
     void onInsertHtmlDelegateError(ErrorString error);
     void onInsertHtmlUndoRedoFinished(const QVariant & data, const QVector<QPair<QString,QString> > & extraData);
 
+    void onSourceCodeFormatUndoRedoFinished(const QVariant & data, const QVector<QPair<QString,QString> > & extraData);
+
     // Slots for undo command signals
     void onUndoCommandError(ErrorString error);
 
@@ -731,6 +733,7 @@ private:
     QString     m_rangyCoreJs;
     QString     m_rangySelectionSaveRestoreJs;
     QString     m_onTableResizeJs;
+    QString     m_nodeUndoRedoManagerJs;
     QString     m_selectionManagerJs;
     QString     m_textEditingUndoRedoManagerJs;
     QString     m_getSelectionHtmlJs;

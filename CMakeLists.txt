@@ -278,6 +278,7 @@ if(BUILD_WITH_NOTE_EDITOR)
        src/note_editor/undo_stack/EncryptUndoCommand.h
        src/note_editor/undo_stack/DecryptUndoCommand.h
        src/note_editor/undo_stack/AddHyperlinkUndoCommand.h
+       src/note_editor/undo_stack/SourceCodeFormatUndoCommand.h
        src/note_editor/undo_stack/RemoveHyperlinkUndoCommand.h
        src/note_editor/undo_stack/EditHyperlinkUndoCommand.h
        src/note_editor/undo_stack/ToDoCheckboxUndoCommand.h
@@ -469,6 +470,7 @@ if(BUILD_WITH_NOTE_EDITOR)
        src/note_editor/undo_stack/EncryptUndoCommand.cpp
        src/note_editor/undo_stack/DecryptUndoCommand.cpp
        src/note_editor/undo_stack/AddHyperlinkUndoCommand.cpp
+       src/note_editor/undo_stack/SourceCodeFormatUndoCommand.cpp
        src/note_editor/undo_stack/RemoveHyperlinkUndoCommand.cpp
        src/note_editor/undo_stack/EditHyperlinkUndoCommand.cpp
        src/note_editor/undo_stack/ToDoCheckboxUndoCommand.cpp

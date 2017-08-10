@@ -17,10 +17,12 @@
  */
 
 function SourceCodeFormatter() {
-    var lastError;
+    NodeUndoRedoManager.call(this);
+
     var formatStyle = "font-family: Monaco, Menlo, Consolas, 'Courier New', monospace; " +
                       "font-size: 0.9em; border-radius: 4px; letter-spacing: 0.015em; padding: 1em; " +
-                      "border: 1px solid #cccccc; background-color: #f8f8f8; overflow-x: auto;"
+                      "border: 1px solid #cccccc; background-color: #f8f8f8; overflow-x: auto;";
+    var lastError;
 
     this.format = function()
     {
@@ -60,14 +62,12 @@ function SourceCodeFormatter() {
                 }
             }
 
-            if (element.nodeType == 1) {
-                if (element.nodeName == "PRE") {
-                    var elementStyle = element.getAttribute("style");
-                    if (elementStyle == formatStyle) {
-                        console.log("Selection is inside source code formatted block");
-                        insideSourceCodeBlock = true;
-                        break;
-                    }
+            if ((element.nodeType == 1) && (element.nodeName == "PRE")) {
+                var elementStyle = element.getAttribute("style");
+                if (elementStyle == formatStyle) {
+                    console.log("Selection is inside source code formatted block");
+                    insideSourceCodeBlock = true;
+                    break;
                 }
             }
 
@@ -75,66 +75,93 @@ function SourceCodeFormatter() {
         }
 
         if (insideSourceCodeBlock) {
-            // When already inside the source code block, need to remove the source code block formatting
-            var containedHtml = element.innerHTML;
-            console.log("Contained HTML: " + containedHtml);
-
-            var div = element.parentNode;
-            var divParent = div.parentNode;
-
-            var newSelectionNode = div.previousSibling;
-            while(newSelectionNode) {
-                if (newSelectionNode.nodeType != 1) {
-                    newSelectionNode = newSelectionNode.previousSibling;
-                }
-                else {
-                    break;
-                }
-            }
-
-            if (!newSelectionNode) {
-                newSelectionNode = div.parentNode;
-            }
-
-            observer.stop();
-            try {
-                divParent.removeChild(div);
-
-                var range = document.createRange();
-                range.selectNode(newSelectionNode);
-                range.collapse();
-
-                selection.removeAllRanges();
-                selection.addRange(range);
-            }
-            finally {
-                observer.start();
-            }
-
-            var res = htmlInsertionManager.insertHtml(containedHtml);
-            console.log("After htmlInsertionManager::insertHtml: " + document.body.innerHTML);
-            return res;
+            return this.unwrap(element);
         }
 
-        var selectionHtml = getSelectionHtml();
-        if (!selectionHtml) {
-            lastError = "selection is empty";
+        var selectedText = selection.toString();
+        if (!selectedText) {
+            lastError = "Selected text is empty";
             console.log(lastError);
             return { status:false, error:lastError };
         }
 
-        console.log("Selection html: " + selectionHtml);
-
         var formattedHtml = "<div><pre style=\"" + formatStyle + "\">";
-        formattedHtml += selectionHtml;
+        formattedHtml += selectedText;
         formattedHtml += "</pre></div>";
 
-        var res = htmlInsertionManager.insertHtml(formattedHtml);
-        console.log("After htmlInsertionManager::insertHtml: " + document.body.innerHTML);
-        return res;
+        this.pushUndo(document.body, document.body.innerHTML);
+        return this.performAction('insertHtml', formattedHtml);
+    }
+
+    this.unwrap = function(element) {
+        // When already inside the source code block, need to remove the source code block formatting
+        var containedText = element.textContent;
+        console.log("Contained text: " + containedText);
+
+        var div = element.parentNode;
+        var divParent = div.parentNode;
+
+        var newSelectionNode = div.previousSibling;
+        while(newSelectionNode) {
+            if (newSelectionNode.nodeType != 1) {
+                newSelectionNode = newSelectionNode.previousSibling;
+            }
+            else {
+                break;
+            }
+        }
+
+        if (!newSelectionNode) {
+            newSelectionNode = div.parentNode;
+        }
+
+        this.pushUndo(document.body, document.body.innerHTML);
+
+        observer.stop();
+        try {
+            divParent.removeChild(div);
+
+            var range = document.createRange();
+            range.selectNode(newSelectionNode);
+            range.collapse();
+
+            var selection = window.getSelection();
+            selection.removeAllRanges();
+            selection.addRange(range);
+        }
+        finally {
+            observer.start();
+        }
+
+        return this.performAction('insertText', containedText);
+    }
+
+    this.performAction = function(action, arg) {
+        var gotError = false;
+
+        observer.stop();
+        try {
+            document.execCommand(action, false, arg);
+        }
+        catch(e) {
+            lastError = e.message;
+            console.warn("Caught exception: " + lastError);
+            gotError = true;
+        }
+        finally {
+            observer.start();
+        }
+
+        if (gotError) {
+            document.body = this.popUndo()[0];
+            return { status:false, error:lastError };
+        }
+
+        return { status:true, error:"" };
     }
 }
 
 (function() {
+    SourceCodeFormatter.prototype = Object.create(NodeUndoRedoManager.prototype);
     window.sourceCodeFormatter = new SourceCodeFormatter;
 })();
