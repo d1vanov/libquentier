@@ -23,6 +23,7 @@
 #include <quentier/logging/QuentierLogger.h>
 #include <QMessageBox>
 #include <QApplication>
+#include <QAction>
 
 namespace quentier {
 
@@ -33,6 +34,12 @@ NoteEditorPage::NoteEditorPage(NoteEditorPrivate & parent) :
     m_javaScriptAutoExecution(true)
 {
     QUENTIER_CHECK_PTR(m_parent);
+
+    QAction * pPasteAction = action(WebPage::Paste);
+    if (pPasteAction) {
+        pPasteAction->setEnabled(false);
+    }
+
     QObject::connect(this, QNSIGNAL(NoteEditorPage,noteLoadCancelled),
                      &parent, QNSLOT(NoteEditorPrivate,onNoteLoadCancelled));
     QObject::connect(m_pJavaScriptInOrderExecutor, QNSIGNAL(JavaScriptInOrderExecutor,finished),
