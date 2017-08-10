@@ -2618,8 +2618,8 @@ void NoteEditorPrivate::onManagedPageActionFinished(const QVariant & result, con
     }
 
     pushNoteContentEditUndoCommand();
-
     updateJavaScriptBindings();
+    convertToNote();
 }
 
 void NoteEditorPrivate::updateJavaScriptBindings()
@@ -2736,7 +2736,7 @@ void NoteEditorPrivate::findText(const QString & textToFind, const bool matchCas
 
 #ifdef QUENTIER_USE_QT_WEB_ENGINE
     QString escapedTextToFind = textToFind;
-    ENMLConverter::escapeString(escapedTextToFind);
+    escapeStringForJavaScript(escapedTextToFind);
 
     // The order of used parameters to window.find: text to find, match case (bool), search backwards (bool), wrap the search around (bool)
     QString javascript = QStringLiteral("window.find('") + escapedTextToFind + QStringLiteral("', ") +
@@ -2787,7 +2787,7 @@ void NoteEditorPrivate::setSearchHighlight(const QString & textToFind, const boo
     m_lastSearchHighlightedTextCaseSensitivity = matchCase;
 
     QString escapedTextToFind = textToFind;
-    ENMLConverter::escapeString(escapedTextToFind, /* simplify = */ false);
+    escapeStringForJavaScript(escapedTextToFind);
 
     GET_PAGE()
     page->executeJavaScript(QStringLiteral("findReplaceManager.setSearchHighlight('") + escapedTextToFind + QStringLiteral("', ") +
@@ -2809,7 +2809,7 @@ void NoteEditorPrivate::highlightRecognizedImageAreas(const QString & textToFind
     }
 
     QString escapedTextToFind = m_lastSearchHighlightedText;
-    ENMLConverter::escapeString(escapedTextToFind);
+    escapeStringForJavaScript(escapedTextToFind);
 
     if (escapedTextToFind.isEmpty()) {
         QNTRACE(QStringLiteral("Escaped search highlighted text is empty"));
@@ -3010,7 +3010,7 @@ void NoteEditorPrivate::inkNoteToEditorContent()
         }
 
         QString inkNoteImageFilePath = inkNoteImageFileInfo.absoluteFilePath();
-        ENMLConverter::escapeString(inkNoteImageFilePath);
+        escapeStringForJavaScript(inkNoteImageFilePath);
         if (Q_UNLIKELY(inkNoteImageFilePath.isEmpty())) {
             QNWARNING(QStringLiteral("Unable to escape the ink note image file path: ") << inkNoteImageFileInfo.absoluteFilePath());
             problemDetected = true;
@@ -5091,15 +5091,17 @@ void NoteEditorPrivate::setupAddHyperlinkDelegate(const quint64 hyperlinkId, con
 
 #define COMMAND_TO_JS(command) \
     QString escapedCommand = command; \
-    ENMLConverter::escapeString(escapedCommand, false); \
-    QString javascript = QString::fromUtf8("managedPageAction(\"%1\", null)").arg(escapedCommand)
+    escapeStringForJavaScript(escapedCommand); \
+    QString javascript = QString::fromUtf8("managedPageAction(\"%1\", null)").arg(escapedCommand); \
+    QNDEBUG(QStringLiteral("JS command: ") << javascript)
 
 #define COMMAND_WITH_ARGS_TO_JS(command, args) \
     QString escapedCommand = command; \
-    ENMLConverter::escapeString(escapedCommand, false); \
+    escapeStringForJavaScript(escapedCommand); \
     QString escapedArgs = args; \
-    ENMLConverter::escapeString(escapedArgs, false); \
-    QString javascript = QString::fromUtf8("managedPageAction('%1', '%2')").arg(escapedCommand,escapedArgs)
+    escapeStringForJavaScript(escapedArgs); \
+    QString javascript = QString::fromUtf8("managedPageAction('%1', '%2')").arg(escapedCommand,escapedArgs); \
+    QNDEBUG(QStringLiteral("JS command: ") << javascript)
 
 #ifndef QUENTIER_USE_QT_WEB_ENGINE
 QVariant NoteEditorPrivate::execJavascriptCommandWithResult(const QString & command)
@@ -6859,10 +6861,10 @@ void NoteEditorPrivate::replace(const QString & textToReplace, const QString & r
     CHECK_NOTE_EDITABLE(QT_TR_NOOP("Can't replace text"))
 
     QString escapedTextToReplace = textToReplace;
-    ENMLConverter::escapeString(escapedTextToReplace);
+    escapeStringForJavaScript(escapedTextToReplace);
 
     QString escapedReplacementText = replacementText;
-    ENMLConverter::escapeString(escapedReplacementText);
+    escapeStringForJavaScript(escapedReplacementText);
 
     QString javascript = QString::fromUtf8("findReplaceManager.replace('%1', '%2', %3);").arg(escapedTextToReplace, escapedReplacementText,
                                                                                               (matchCase ? QStringLiteral("true") : QStringLiteral("false")));
@@ -6886,10 +6888,10 @@ void NoteEditorPrivate::replaceAll(const QString & textToReplace, const QString 
     CHECK_NOTE_EDITABLE(QT_TR_NOOP("Can't replace all occurrences"))
 
     QString escapedTextToReplace = textToReplace;
-    ENMLConverter::escapeString(escapedTextToReplace);
+    escapeStringForJavaScript(escapedTextToReplace);
 
     QString escapedReplacementText = replacementText;
-    ENMLConverter::escapeString(escapedReplacementText);
+    escapeStringForJavaScript(escapedReplacementText);
 
     QString javascript = QString::fromUtf8("findReplaceManager.replaceAll('%1', '%2', %3);").arg(escapedTextToReplace,
                                                                                                  escapedReplacementText,
@@ -7810,7 +7812,7 @@ void NoteEditorPrivate::hideDecryptedText(QString encryptedText, QString decrypt
 
     quint64 enCryptIndex = m_lastFreeEnCryptIdNumber++;
     QString html = ENMLConverter::encryptedTextHtml(encryptedText, hint, cipher, keyLengthInt, enCryptIndex);
-    ENMLConverter::escapeString(html);
+    escapeStringForJavaScript(html);
 
     QString javascript = QStringLiteral("encryptDecryptManager.replaceDecryptedTextWithEncryptedText('") + id + QStringLiteral("', '") +
                          html + QStringLiteral("');");
@@ -7996,6 +7998,23 @@ void NoteEditorPrivate::pasteImageData(const QMimeData & mimeData)
                      this, QNSLOT(NoteEditorPrivate,onAddResourceDelegateError,ErrorString));
 
     delegate->start();
+}
+
+void NoteEditorPrivate::escapeStringForJavaScript(QString & str) const
+{
+    // Escape single and double quotes
+    ENMLConverter::escapeString(str, /* simplify = */ false);
+
+    // Escape all escape sequences to avoid syntax errors
+    str.replace(QStringLiteral("\\"), QStringLiteral("\\\\"));
+    str.replace(QStringLiteral("\a"), QStringLiteral("\\a"));
+    str.replace(QStringLiteral("\b"), QStringLiteral("\\b"));
+    str.replace(QStringLiteral("\f"), QStringLiteral("\\f"));
+    str.replace(QStringLiteral("\n"), QStringLiteral("\\n"));
+    str.replace(QStringLiteral("\r"), QStringLiteral("\\r"));
+    str.replace(QStringLiteral("\t"), QStringLiteral("\\t"));
+    str.replace(QStringLiteral("\v"), QStringLiteral("\\v"));
+    str.replace(QStringLiteral("\?"), QStringLiteral("\\?"));
 }
 
 } // namespace quentier

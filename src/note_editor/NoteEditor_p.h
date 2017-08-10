@@ -592,6 +592,8 @@ private:
 
     void pasteImageData(const QMimeData & mimeData);
 
+    void escapeStringForJavaScript(QString & str) const;
+
 private:
     template <class T>
     class NoteEditorCallbackFunctor
