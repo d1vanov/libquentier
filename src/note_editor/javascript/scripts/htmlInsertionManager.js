@@ -34,29 +34,8 @@ function HtmlInsertionManager() {
     {
         console.log("HtmlInsertionManager::insertHtml: " + inputHtml);
 
-        var selection = window.getSelection();
-        if (!selection) {
-            lastError = "selection is null";
-            console.warn(lastError);
-            return { status:false, error:lastError };
-        }
-
-        var anchorNode = selection.anchorNode;
-        if (!anchorNode) {
-            lastError = "selection.anchorNode is null";
-            console.warn(lastError);
-            return { status:false, error:lastError };
-        }
-
-        var parentNode = anchorNode.parentNode;
-        if (!parentNode) {
-            lastError = "selection.anchorNode.parentNode is null";
-            console.warn(lastError);
-            return { status:false, error:lastError };
-        }
-
-        undoNodes.push(parentNode);
-        undoNodeInnerHtmls.push(parentNode.innerHTML);
+        undoNodes.push(document.body);
+        undoNodeInnerHtmls.push(document.body.innerHTML);
 
         var gotError = false;
         var errorText = ""
@@ -94,7 +73,7 @@ function HtmlInsertionManager() {
 
     this.undoRedoImpl = function(sourceNodes, sourceNodeInnerHtmls,
                                  destNodes, destNodeInnerHtmls, performingUndo) {
-        console.log("ResourceManager::undoRedoImpl: performingUndo = " + (performingUndo ? "true" : "false"));
+        console.log("HtmlInsertionManager::undoRedoImpl: performingUndo = " + (performingUndo ? "true" : "false"));
 
         var actionString = (performingUndo ? "undo" : "redo");
 
