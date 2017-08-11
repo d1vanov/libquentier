@@ -4143,7 +4143,8 @@ void NoteEditorPrivate::setupActionShortcut(const int key, const QString & conte
     ShortcutManager shortcutManager;
     QKeySequence shortcut = shortcutManager.shortcut(key, *m_pAccount, context);
     if (!shortcut.isEmpty()) {
-        QNTRACE(QStringLiteral("Setting shortcut ") << shortcut << QStringLiteral(" for action ") << action.objectName());
+        QNTRACE(QStringLiteral("Setting shortcut ") << shortcut << QStringLiteral(" for action ") << action.objectName()
+                << QStringLiteral(" (") << action.text() << QStringLiteral(")"));
         action.setShortcut(shortcut);
     }
 }
