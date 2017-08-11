@@ -56,7 +56,10 @@ function managedPageAction(command, args) {
 
     observer.stop();
     try {
-        var savedSelection = selectionManager.saveSelection();
+        var savedSelection;
+        if ((command != 'insertText') && (command != 'cut')) {
+            savedSelection = selectionManager.saveSelection();
+        }
 
         if (command === 'cut') {
             // This command doesn't seem to really work so need to emulate
@@ -67,11 +70,8 @@ function managedPageAction(command, args) {
             document.execCommand(command, false, args);
         }
 
-        selectionManager.restoreSelection(savedSelection);
-
-        if (command === 'cut') {
-            var selection = window.getSelection();
-            selection.collapseToStart();
+        if ((command != 'insertText') && (command != 'cut')) {
+            selectionManager.restoreSelection(savedSelection);
         }
     }
     finally {
