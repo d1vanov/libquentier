@@ -40,6 +40,11 @@ NoteEditorPage::NoteEditorPage(NoteEditorPrivate & parent) :
         pPasteAction->setEnabled(false);
     }
 
+    QAction * pCutAction = action(WebPage::Cut);
+    if (pCutAction) {
+        pCutAction->setEnabled(false);
+    }
+
     QObject::connect(this, QNSIGNAL(NoteEditorPage,noteLoadCancelled),
                      &parent, QNSLOT(NoteEditorPrivate,onNoteLoadCancelled));
     QObject::connect(m_pJavaScriptInOrderExecutor, QNSIGNAL(JavaScriptInOrderExecutor,finished),
