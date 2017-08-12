@@ -42,5 +42,6 @@
         <file>setInitialCaretPosition.js</file>
         <file>disablePaste.js</file>
         <file>nodeUndoRedoManager.js</file>
+	<file>toDoCheckboxAutomaticInserter.js</file>
     </qresource>
 </RCC>

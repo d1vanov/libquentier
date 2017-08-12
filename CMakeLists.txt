@@ -264,6 +264,7 @@ if(BUILD_WITH_NOTE_EDITOR)
        src/note_editor/javascript_glue/TextCursorPositionJavaScriptHandler.h
        src/note_editor/javascript_glue/ContextMenuEventJavaScriptHandler.h
        src/note_editor/javascript_glue/PageMutationHandler.h
+       src/note_editor/javascript_glue/ToDoCheckboxAutomaticInsertionHandler.h
        src/note_editor/javascript_glue/ToDoCheckboxOnClickHandler.h
        src/note_editor/javascript_glue/TableResizeJavaScriptHandler.h
        src/note_editor/javascript_glue/SpellCheckerDynamicHelper.h
@@ -457,6 +458,7 @@ if(BUILD_WITH_NOTE_EDITOR)
        src/note_editor/javascript_glue/TextCursorPositionJavaScriptHandler.cpp
        src/note_editor/javascript_glue/ContextMenuEventJavaScriptHandler.cpp
        src/note_editor/javascript_glue/PageMutationHandler.cpp
+       src/note_editor/javascript_glue/ToDoCheckboxAutomaticInsertionHandler.cpp
        src/note_editor/javascript_glue/ToDoCheckboxOnClickHandler.cpp
        src/note_editor/javascript_glue/TableResizeJavaScriptHandler.cpp
        src/note_editor/javascript_glue/SpellCheckerDynamicHelper.cpp
