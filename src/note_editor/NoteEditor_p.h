@@ -71,6 +71,7 @@ QT_FORWARD_DECLARE_CLASS(ContextMenuEventJavaScriptHandler)
 QT_FORWARD_DECLARE_CLASS(TableResizeJavaScriptHandler)
 QT_FORWARD_DECLARE_CLASS(PageMutationHandler)
 QT_FORWARD_DECLARE_CLASS(ToDoCheckboxOnClickHandler)
+QT_FORWARD_DECLARE_CLASS(ToDoCheckboxAutomaticInsertionHandler)
 QT_FORWARD_DECLARE_CLASS(GenericResourceImageManager)
 QT_FORWARD_DECLARE_CLASS(RenameResourceDelegate)
 QT_FORWARD_DECLARE_CLASS(SpellChecker)
@@ -360,6 +361,9 @@ private Q_SLOTS:
 
     void onToDoCheckboxClicked(quint64 enToDoCheckboxId);
     void onToDoCheckboxClickHandlerError(ErrorString error);
+
+    void onToDoCheckboxAutomaticInsertion();
+    void onToDoCheckboxAutomaticInsertionUndoRedoFinished(const QVariant & data, const QVector<QPair<QString,QString> > & extraData);
 
     void onJavaScriptLoaded();
 
@@ -763,6 +767,7 @@ private:
     QString     m_spellCheckerJs;
     QString     m_managedPageActionJs;
     QString     m_setInitialCaretPositionJs;
+    QString     m_toDoCheckboxAutomaticInsertionJs;
     QString     m_disablePasteJs;
 
 #ifndef QUENTIER_USE_QT_WEB_ENGINE
@@ -791,12 +796,13 @@ private:
     quint16     m_webSocketServerPort;
 #endif
 
-    SpellCheckerDynamicHelper *         m_pSpellCheckerDynamicHandler;
-    TableResizeJavaScriptHandler *      m_pTableResizeJavaScriptHandler;
-    ResizableImageJavaScriptHandler *   m_pResizableImageJavaScriptHandler;
-    GenericResourceImageManager *       m_pGenericResourceImageManager;
-    ToDoCheckboxOnClickHandler *        m_pToDoCheckboxClickHandler;
-    PageMutationHandler *               m_pPageMutationHandler;
+    SpellCheckerDynamicHelper *             m_pSpellCheckerDynamicHandler;
+    TableResizeJavaScriptHandler *          m_pTableResizeJavaScriptHandler;
+    ResizableImageJavaScriptHandler *       m_pResizableImageJavaScriptHandler;
+    GenericResourceImageManager *           m_pGenericResourceImageManager;
+    ToDoCheckboxOnClickHandler *            m_pToDoCheckboxClickHandler;
+    ToDoCheckboxAutomaticInsertionHandler * m_pToDoCheckboxAutomaticInsertionHandler;
+    PageMutationHandler *                   m_pPageMutationHandler;
 
     QUndoStack * m_pUndoStack;
 

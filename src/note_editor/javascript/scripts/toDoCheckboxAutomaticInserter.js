@@ -161,6 +161,8 @@ function ToDoCheckboxAutomaticInserter() {
         if (!foundTextBetweenCheckboxAndSelection) {
             console.log("Found no text between checkbox and the cursor position, should remove the checkbox node");
 
+            this.pushUndo(lastElementNode.parentNode, lastElementNode.parentNode.innerHTML);
+
             observer.stop();
             try {
                 if (!lastElementNode.nextSibling || (lastElementNode.nextSibling.nodeType != 1) || (lastElementNode.nextSibling.nodeName != "BR")) {
@@ -187,11 +189,20 @@ function ToDoCheckboxAutomaticInserter() {
             }
         }
 
-        var htmlToInsert = "<br>";
+        console.log("Last element node previous sibling: " + this.nodeToString(lastElementNode.previousSibling));
+        console.log("Last element node parent: " + this.nodeToString(lastElementNode.parentNode));
+
+        var htmlToInsert = "";
+        if (lastElementNode.parentNode.nodeName != "DIV") {
+            htmlToInsert += "<br>";
+        }
+
         htmlToInsert += "<img src=\"qrc:/checkbox_icons/checkbox_no.png\" class=\"checkbox_unchecked\" ";
         htmlToInsert += "en-tag=\"en-todo\" en-todo-id=\"";
         htmlToInsert += (maxEnToDo + 1).toString();
         htmlToInsert += "\">";
+
+        this.pushUndo(lastElementNode.parentNode, lastElementNode.parentNode.innerHTML);
 
         observer.stop();
         try {
@@ -205,3 +216,9 @@ function ToDoCheckboxAutomaticInserter() {
         return false;
     }
 }
+
+(function() {
+    ToDoCheckboxAutomaticInserter.prototype = Object.create(NodeUndoRedoManager.prototype);
+    window.toDoCheckboxAutomaticInserter = new ToDoCheckboxAutomaticInserter;
+    document.body.onkeypress = function(e) { toDoCheckboxAutomaticInserter.checkKeypressAndInsertToDo(e); };
+})();

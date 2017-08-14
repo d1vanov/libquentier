@@ -35,6 +35,7 @@
 #include "javascript_glue/ContextMenuEventJavaScriptHandler.h"
 #include "javascript_glue/PageMutationHandler.h"
 #include "javascript_glue/ToDoCheckboxOnClickHandler.h"
+#include "javascript_glue/ToDoCheckboxAutomaticInsertionHandler.h"
 #include "javascript_glue/TableResizeJavaScriptHandler.h"
 #include "javascript_glue/SpellCheckerDynamicHelper.h"
 #include "undo_stack/NoteEditorContentEditUndoCommand.h"
@@ -46,6 +47,7 @@
 #include "undo_stack/EditHyperlinkUndoCommand.h"
 #include "undo_stack/RemoveHyperlinkUndoCommand.h"
 #include "undo_stack/ToDoCheckboxUndoCommand.h"
+#include "undo_stack/ToDoCheckboxAutomaticInsertionUndoCommand.h"
 #include "undo_stack/AddResourceUndoCommand.h"
 #include "undo_stack/RemoveResourceUndoCommand.h"
 #include "undo_stack/RenameResourceUndoCommand.h"
@@ -203,6 +205,7 @@ NoteEditorPrivate::NoteEditorPrivate(NoteEditor & noteEditor) :
     m_spellCheckerJs(),
     m_managedPageActionJs(),
     m_setInitialCaretPositionJs(),
+    m_toDoCheckboxAutomaticInsertionJs(),
     m_disablePasteJs(),
 #ifndef QUENTIER_USE_QT_WEB_ENGINE
     m_qWebKitSetupJs(),
@@ -232,6 +235,7 @@ NoteEditorPrivate::NoteEditorPrivate(NoteEditor & noteEditor) :
     m_pResizableImageJavaScriptHandler(new ResizableImageJavaScriptHandler(this)),
     m_pGenericResourceImageManager(Q_NULLPTR),
     m_pToDoCheckboxClickHandler(new ToDoCheckboxOnClickHandler(this)),
+    m_pToDoCheckboxAutomaticInsertionHandler(new ToDoCheckboxAutomaticInsertionHandler(this)),
     m_pPageMutationHandler(new PageMutationHandler(this)),
     m_pUndoStack(Q_NULLPTR),
     m_pAccount(),
@@ -427,6 +431,8 @@ void NoteEditorPrivate::onNoteLoadFinished(bool ok)
                                        OwnershipNamespace::QtOwnership);
     frame->addToJavaScriptWindowObject(QStringLiteral("toDoCheckboxClickHandler"), m_pToDoCheckboxClickHandler,
                                        OwnershipNamespace::QtOwnership);
+    frame->addToJavaScriptWindowObject(QStringLiteral("toDoCheckboxAutomaticInsertionHandler"), m_pToDoCheckboxAutomaticInsertionHandler,
+                                       OwnershipNamespace::QtOwnership);
     frame->addToJavaScriptWindowObject(QStringLiteral("tableResizeHandler"), m_pTableResizeJavaScriptHandler,
                                        OwnershipNamespace::QtOwnership);
     frame->addToJavaScriptWindowObject(QStringLiteral("resizableImageHandler"), m_pResizableImageJavaScriptHandler,
@@ -491,6 +497,7 @@ void NoteEditorPrivate::onNoteLoadFinished(bool ok)
         QNTRACE(QStringLiteral("Note page is editable"));
         page->executeJavaScript(m_setupEnToDoTagsJs);
         page->executeJavaScript(m_flipEnToDoCheckboxStateJs);
+        page->executeJavaScript(m_toDoCheckboxAutomaticInsertionJs);
     }
 
     updateColResizableTableBindings();
@@ -935,6 +942,59 @@ void NoteEditorPrivate::onToDoCheckboxClickHandlerError(ErrorString error)
 {
     QNDEBUG(QStringLiteral("NoteEditorPrivate::onToDoCheckboxClickHandlerError: ") << error);
     emit notifyError(error);
+}
+
+void NoteEditorPrivate::onToDoCheckboxAutomaticInsertion()
+{
+    QNDEBUG(QStringLiteral("NoteEditorPrivate::onToDoCheckboxAutomaticInsertion"));
+
+    ToDoCheckboxAutomaticInsertionUndoCommand * pCommand =
+        new ToDoCheckboxAutomaticInsertionUndoCommand(*this,
+                                                      NoteEditorCallbackFunctor<QVariant>(this, &NoteEditorPrivate::onToDoCheckboxAutomaticInsertionUndoRedoFinished));
+    QObject::connect(pCommand, QNSIGNAL(ToDoCheckboxAutomaticInsertionUndoCommand,notifyError,ErrorString),
+                     this, QNSLOT(NoteEditorPrivate,onUndoCommandError,ErrorString));
+    m_pUndoStack->push(pCommand);
+
+    ++m_lastFreeEnToDoIdNumber;
+    convertToNote();
+}
+
+void NoteEditorPrivate::onToDoCheckboxAutomaticInsertionUndoRedoFinished(const QVariant & data, const QVector<QPair<QString,QString> > & extraData)
+{
+    QNDEBUG(QStringLiteral("NoteEditorPrivate::onToDoCheckboxAutomaticInsertionUndoRedoFinished: ") << data);
+
+    Q_UNUSED(extraData)
+
+    QMap<QString,QVariant> resultMap = data.toMap();
+
+    auto statusIt = resultMap.find(QStringLiteral("status"));
+    if (Q_UNLIKELY(statusIt == resultMap.end())) {
+        ErrorString error(QT_TR_NOOP("Can't parse the result of ToDo checkbox automatic insertion undo/redo from JavaScript"));
+        QNWARNING(error);
+        emit notifyError(error);
+        return;
+    }
+
+    bool res = statusIt.value().toBool();
+    if (!res)
+    {
+        ErrorString error;
+
+        auto errorIt = resultMap.find(QStringLiteral("error"));
+        if (Q_UNLIKELY(errorIt == resultMap.end())) {
+            error.setBase(QT_TR_NOOP("Can't parse the error of ToDo checkbox automatic insertion undo/redo from JavaScript"));
+        }
+        else {
+            error.setBase(QT_TR_NOOP("Can't undo/redo the ToDo checkbox automatic insertion"));
+            error.details() = errorIt.value().toString();
+        }
+
+        QNWARNING(error);
+        emit notifyError(error);
+        return;
+    }
+
+    convertToNote();
 }
 
 void NoteEditorPrivate::onJavaScriptLoaded()
@@ -1937,7 +1997,6 @@ void NoteEditorPrivate::onAddHyperlinkToSelectedTextDelegateFinished()
         delegate->deleteLater();
     }
 
-    setModified();
     convertToNote();
 }
 
@@ -3820,6 +3879,7 @@ void NoteEditorPrivate::setupJavaScriptObjects()
     m_pWebChannel->registerObject(QStringLiteral("genericResourceImageHandler"), m_pGenericResoureImageJavaScriptHandler);
     m_pWebChannel->registerObject(QStringLiteral("hyperlinkClickHandler"), m_pHyperlinkClickJavaScriptHandler);
     m_pWebChannel->registerObject(QStringLiteral("toDoCheckboxClickHandler"), m_pToDoCheckboxClickHandler);
+    m_pWebChannel->registerObject(QStringLiteral("toDoCheckboxAutomaticInsertionHandler"), m_pToDoCheckboxAutomaticInsertionHandler);
     m_pWebChannel->registerObject(QStringLiteral("tableResizeHandler"), m_pTableResizeJavaScriptHandler);
     m_pWebChannel->registerObject(QStringLiteral("resizableImageHandler"), m_pResizableImageJavaScriptHandler);
     m_pWebChannel->registerObject(QStringLiteral("spellCheckerDynamicHelper"), m_pSpellCheckerDynamicHandler);
@@ -4256,6 +4316,7 @@ void NoteEditorPrivate::setupScripts()
     SETUP_SCRIPT("javascript/scripts/spellChecker.js", m_spellCheckerJs);
     SETUP_SCRIPT("javascript/scripts/managedPageAction.js", m_managedPageActionJs);
     SETUP_SCRIPT("javascript/scripts/setInitialCaretPosition.js", m_setInitialCaretPositionJs);
+    SETUP_SCRIPT("javascript/scripts/toDoCheckboxAutomaticInserter.js", m_toDoCheckboxAutomaticInsertionJs);
     SETUP_SCRIPT("javascript/scripts/disablePaste.js", m_disablePasteJs);
     SETUP_SCRIPT("javascript/scripts/replaceHyperlinkContent.js", m_replaceHyperlinkContentJs);
     SETUP_SCRIPT("javascript/scripts/updateResourceHash.js", m_updateResourceHashJs);
@@ -4308,6 +4369,8 @@ void NoteEditorPrivate::setupGeneralSignalSlotConnections()
                      this, QNSLOT(NoteEditorPrivate,onSpellCheckerDynamicHelperUpdate,QStringList));
     QObject::connect(m_pToDoCheckboxClickHandler, QNSIGNAL(ToDoCheckboxOnClickHandler,toDoCheckboxClicked,quint64),
                      this, QNSLOT(NoteEditorPrivate,onToDoCheckboxClicked,quint64));
+    QObject::connect(m_pToDoCheckboxAutomaticInsertionHandler, QNSIGNAL(ToDoCheckboxAutomaticInsertionHandler,notifyToDoCheckboxInsertedAutomatically),
+                     this, QNSLOT(NoteEditorPrivate,onToDoCheckboxAutomaticInsertion));
     QObject::connect(m_pToDoCheckboxClickHandler, QNSIGNAL(ToDoCheckboxOnClickHandler,notifyError,ErrorString),
                      this, QNSLOT(NoteEditorPrivate,onToDoCheckboxClickHandlerError,ErrorString));
     QObject::connect(m_pPageMutationHandler, QNSIGNAL(PageMutationHandler,contentsChanged),
@@ -4372,6 +4435,8 @@ void NoteEditorPrivate::setupNoteEditorPage()
     page->mainFrame()->addToJavaScriptWindowObject(QStringLiteral("contextMenuEventHandler"), m_pContextMenuEventJavaScriptHandler,
                                                    OwnershipNamespace::QtOwnership);
     page->mainFrame()->addToJavaScriptWindowObject(QStringLiteral("toDoCheckboxClickHandler"), m_pToDoCheckboxClickHandler,
+                                                   OwnershipNamespace::QtOwnership);
+    page->mainFrame()->addToJavaScriptWindowObject(QStringLiteral("toDoCheckboxAutomaticInsertionHandler"), m_pToDoCheckboxAutomaticInsertionHandler,
                                                    OwnershipNamespace::QtOwnership);
     page->mainFrame()->addToJavaScriptWindowObject(QStringLiteral("tableResizeHandler"), m_pTableResizeJavaScriptHandler,
                                                    OwnershipNamespace::QtOwnership);

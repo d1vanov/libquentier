@@ -49,6 +49,7 @@
             window.toDoCheckboxClickHandler = channel.objects.toDoCheckboxClickHandler;
             window.tableResizeHandler = channel.objects.tableResizeHandler;
             window.spellCheckerDynamicHelper = channel.objects.spellCheckerDynamicHelper;
+            window.toDoCheckboxAutomaticInsertionHandler = channel.objects.toDoCheckboxAutomaticInsertionHandler;
 
             window.webSocketWaiter = channel.objects.webSocketWaiter;
             window.webSocketWaiter.onReady();

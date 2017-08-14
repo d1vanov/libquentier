@@ -283,6 +283,7 @@ if(BUILD_WITH_NOTE_EDITOR)
        src/note_editor/undo_stack/RemoveHyperlinkUndoCommand.h
        src/note_editor/undo_stack/EditHyperlinkUndoCommand.h
        src/note_editor/undo_stack/ToDoCheckboxUndoCommand.h
+       src/note_editor/undo_stack/ToDoCheckboxAutomaticInsertionUndoCommand.h
        src/note_editor/undo_stack/ImageResourceRotationUndoCommand.h
        src/note_editor/undo_stack/ImageResizeUndoCommand.h
        src/note_editor/undo_stack/ReplaceUndoCommand.h
@@ -476,6 +477,7 @@ if(BUILD_WITH_NOTE_EDITOR)
        src/note_editor/undo_stack/RemoveHyperlinkUndoCommand.cpp
        src/note_editor/undo_stack/EditHyperlinkUndoCommand.cpp
        src/note_editor/undo_stack/ToDoCheckboxUndoCommand.cpp
+       src/note_editor/undo_stack/ToDoCheckboxAutomaticInsertionUndoCommand.cpp
        src/note_editor/undo_stack/ImageResourceRotationUndoCommand.cpp
        src/note_editor/undo_stack/ImageResizeUndoCommand.cpp
        src/note_editor/undo_stack/ReplaceUndoCommand.cpp
