@@ -944,6 +944,51 @@ void NoteEditorPrivate::onToDoCheckboxClickHandlerError(ErrorString error)
     emit notifyError(error);
 }
 
+void NoteEditorPrivate::onToDoCheckboxInserted(const QVariant & data, const QVector<QPair<QString,QString> > & extraData)
+{
+    QNDEBUG(QStringLiteral("NoteEditorPrivate::onToDoCheckboxInserted: ") << data);
+
+    Q_UNUSED(extraData)
+
+    QMap<QString,QVariant> resultMap = data.toMap();
+
+    auto statusIt = resultMap.find(QStringLiteral("status"));
+    if (Q_UNLIKELY(statusIt == resultMap.end())) {
+        ErrorString error(QT_TR_NOOP("Can't parse the result of ToDo checkbox insertion undo/redo from JavaScript"));
+        QNWARNING(error);
+        emit notifyError(error);
+        return;
+    }
+
+    bool res = statusIt.value().toBool();
+    if (!res)
+    {
+        ErrorString error;
+
+        auto errorIt = resultMap.find(QStringLiteral("error"));
+        if (Q_UNLIKELY(errorIt == resultMap.end())) {
+            error.setBase(QT_TR_NOOP("Can't parse the error of ToDo checkbox insertion undo/redo from JavaScript"));
+        }
+        else {
+            error.setBase(QT_TR_NOOP("Can't undo/redo the ToDo checkbox insertion"));
+            error.details() = errorIt.value().toString();
+        }
+
+        QNWARNING(error);
+        emit notifyError(error);
+        return;
+    }
+
+    ToDoCheckboxAutomaticInsertionUndoCommand * pCommand =
+        new ToDoCheckboxAutomaticInsertionUndoCommand(*this,
+                                                      NoteEditorCallbackFunctor<QVariant>(this, &NoteEditorPrivate::onToDoCheckboxAutomaticInsertionUndoRedoFinished));
+    QObject::connect(pCommand, QNSIGNAL(ToDoCheckboxAutomaticInsertionUndoCommand,notifyError,ErrorString),
+                     this, QNSLOT(NoteEditorPrivate,onUndoCommandError,ErrorString));
+    m_pUndoStack->push(pCommand);
+
+    setModified();
+}
+
 void NoteEditorPrivate::onToDoCheckboxAutomaticInsertion()
 {
     QNDEBUG(QStringLiteral("NoteEditorPrivate::onToDoCheckboxAutomaticInsertion"));
@@ -956,7 +1001,7 @@ void NoteEditorPrivate::onToDoCheckboxAutomaticInsertion()
     m_pUndoStack->push(pCommand);
 
     ++m_lastFreeEnToDoIdNumber;
-    convertToNote();
+    setModified();
 }
 
 void NoteEditorPrivate::onToDoCheckboxAutomaticInsertionUndoRedoFinished(const QVariant & data, const QVector<QPair<QString,QString> > & extraData)
@@ -994,7 +1039,7 @@ void NoteEditorPrivate::onToDoCheckboxAutomaticInsertionUndoRedoFinished(const Q
         return;
     }
 
-    convertToNote();
+    setModified();
 }
 
 void NoteEditorPrivate::onJavaScriptLoaded()
@@ -7030,12 +7075,8 @@ void NoteEditorPrivate::insertToDoCheckbox()
     GET_PAGE()
     CHECK_NOTE_EDITABLE(QT_TR_NOOP("Can't insert checkbox"))
 
-    QString html = ENMLConverter::toDoCheckboxHtml(/* checked = */ false, m_lastFreeEnToDoIdNumber++);
-    QString javascript = QString::fromUtf8("managedPageAction('insertHtml', '%1'); ").arg(html);
-    javascript += m_setupEnToDoTagsJs;
-
-    page->executeJavaScript(javascript);
-    setModified();
+    QString javascript = QString::fromUtf8("toDoCheckboxAutomaticInserter.insertToDo(%1);").arg(m_lastFreeEnToDoIdNumber++);
+    page->executeJavaScript(javascript, NoteEditorCallbackFunctor<QVariant>(this, &NoteEditorPrivate::onToDoCheckboxInserted));
 }
 
 void NoteEditorPrivate::insertInAppNoteLink(const QString & userId, const QString & shardId,

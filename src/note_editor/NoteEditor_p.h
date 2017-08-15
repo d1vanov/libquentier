@@ -362,6 +362,7 @@ private Q_SLOTS:
     void onToDoCheckboxClicked(quint64 enToDoCheckboxId);
     void onToDoCheckboxClickHandlerError(ErrorString error);
 
+    void onToDoCheckboxInserted(const QVariant & data, const QVector<QPair<QString,QString> > & extraData);
     void onToDoCheckboxAutomaticInsertion();
     void onToDoCheckboxAutomaticInsertionUndoRedoFinished(const QVariant & data, const QVector<QPair<QString,QString> > & extraData);
 

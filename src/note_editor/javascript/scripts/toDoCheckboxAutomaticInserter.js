@@ -66,6 +66,110 @@ function ToDoCheckboxAutomaticInserter() {
         return str;
     }
 
+    this.insertToDo = function(id) {
+        console.log("ToDoCheckboxAutomaticInserter::insertToDo: id = " + id);
+
+        var res = null;
+        observer.stop();
+        try {
+            res = this.insertToDoImpl(id);
+        }
+        finally {
+            observer.start();
+        }
+
+        return res;
+    }
+
+    this.insertToDoImpl = function(id) {
+        var selection = window.getSelection();
+        if (!selection) {
+            return { status:false, error:"No selection" };
+        }
+
+        var anchorNode = selection.anchorNode;
+        if (!anchorNode) {
+            return { status:false, error:"No anchor node within the selection" };
+        }
+
+        console.log("Original anchor node: " + this.nodeToString(anchorNode));
+
+        this.pushUndo(anchorNode.parentNode, anchorNode.parentNode.innerHTML);
+
+        if (!selection.isCollapsed) {
+            console.log("Collapsing the selection by inserting empty text");
+            document.execCommand('insertText', false, "");
+        }
+
+        anchorNode = selection.anchorNode;
+
+        if ((anchorNode.nodeType == 1) && selection.anchorOffset) {
+            anchorNode = anchorNode.childNodes[Math.min(selection.anchorOffset, anchorNode.childNodes.length-1)];
+            if (!anchorNode) {
+                return { status:false, error:"No innermost anchor node" };
+            }
+
+            while(anchorNode.childNodes.length) {
+                anchorNode = anchorNode.childNodes[anchorNode.childNodes.length-1];
+            }
+
+            console.log("Innermost found anchor node: " + this.nodeToString(anchorNode));
+        }
+
+        var newCheckbox = document.createElement("img");
+        newCheckbox.src = "qrc:/checkbox_icons/checkbox_no.png";
+        newCheckbox.className = "checkbox_unchecked";
+        newCheckbox.setAttribute("en-tag", "en-todo");
+        newCheckbox.setAttribute("en-todo-id", id);
+
+        if (anchorNode.nodeType == 3) {
+            var offset = selection.anchorOffset;
+            if (!offset) {
+                offset = 0;
+            }
+
+            var leftText = anchorNode.textContent.substring(0, offset);
+            var rightText = anchorNode.textContent.substring(offset, anchorNode.textContent.length);
+
+            console.log("Offset = " + offset + ", text content length = " + anchorNode.textContent.length);
+            console.log("Text content: " + anchorNode.textContent);
+            console.log("Left text: " + leftText);
+            console.log("Right text: " + rightText);
+
+            var anchorParentNode = anchorNode.parentNode;
+            console.log("Anchor parent node before: " + this.nodeToString(anchorParentNode));
+
+            if (leftText != "") {
+                var leftTextNode = document.createTextNode(leftText);
+                anchorParentNode.insertBefore(leftTextNode, anchorNode);
+            }
+
+            anchorParentNode.insertBefore(newCheckbox, anchorNode);
+
+            if (rightText != "") {
+                var rightTextNode = document.createTextNode(rightText);
+                anchorParentNode.insertBefore(rightTextNode, anchorNode);
+            }
+
+            anchorParentNode.removeChild(anchorNode);
+            console.log("Anchor parent node after: " + this.nodeToString(anchorParentNode));
+        }
+        else {
+            if (anchorNode.nodeType != 1) {
+                anchorNode = anchorNode.parentNode;
+            }
+
+            anchorNode.appendChild(newCheckbox);
+        }
+
+        var range = document.createRange();
+        range.selectNode(newCheckbox);
+        range.collapse(false);
+        selection.removeAllRanges();
+        selection.addRange(range);
+        return { status:true, error:"" };
+    }
+
     this.checkKeypressAndInsertToDo = function(e) {
         if (e.keyCode != 13) {
             return;
@@ -93,29 +197,28 @@ function ToDoCheckboxAutomaticInserter() {
             return;
         }
 
-        if ((currentNode.nodeType == 1) && selection.anchorOffset) {
-            currentNode = currentNode.childNodes[selection.anchorOffset];
-            if (!currentNode) {
-                console.log("No node at selection anchor offset of " + selection.anchorOffset);
-                return;
-            }
-
-            if (currentNode.nextSibling && !this.isLineBreakingNode(currentNode.nextSibling)) {
-                currentNode = currentNode.nextSibling;
-            }
-            else {
-                while(this.isLineBreakingNode(currentNode) && currentNode.previousSibling) {
-                    console.log("Shifting to the previous sibling of a line breaking node: " + this.nodeToString(currentNode));
-                    currentNode = currentNode.previousSibling;
+        if (currentNode.nodeType == 1) {
+            if (selection.anchorOffset) {
+                currentNode = currentNode.childNodes[Math.min(selection.anchorOffset, currentNode.childNodes.length-1)];
+                if (!currentNode) {
+                    console.log("No node at selection anchor offset of " + selection.anchorOffset);
+                    return;
                 }
             }
+
+            while(currentNode.childNodes.length) {
+                currentNode = currentNode.childNodes[currentNode.childNodes.length-1];
+            }
         }
+
+        console.log("Startup node: " + this.nodeToString(currentNode));
 
         var foundTextBetweenCheckboxAndSelection = false;
         var foundCheckboxAtLineBeginning = false;
         var lastElementNode = null;
 
         while (currentNode) {
+            console.log("Inspecting node: " + this.nodeToString(currentNode));
             if (currentNode.nodeType == 1) {
                 if (this.isLineBreakingNode(currentNode)) {
                     console.log("Found line breaking node: " + currentNode.outerHTML);
@@ -189,24 +292,36 @@ function ToDoCheckboxAutomaticInserter() {
             }
         }
 
-        console.log("Last element node previous sibling: " + this.nodeToString(lastElementNode.previousSibling));
-        console.log("Last element node parent: " + this.nodeToString(lastElementNode.parentNode));
-
-        var htmlToInsert = "";
-        if (lastElementNode.parentNode.nodeName != "DIV") {
-            htmlToInsert += "<br>";
-        }
-
-        htmlToInsert += "<img src=\"qrc:/checkbox_icons/checkbox_no.png\" class=\"checkbox_unchecked\" ";
-        htmlToInsert += "en-tag=\"en-todo\" en-todo-id=\"";
-        htmlToInsert += (maxEnToDo + 1).toString();
-        htmlToInsert += "\">";
-
-        this.pushUndo(lastElementNode.parentNode, lastElementNode.parentNode.innerHTML);
+        maxEnToDo++;
 
         observer.stop();
         try {
-            document.execCommand('insertHTML', false, htmlToInsert);
+            if (lastElementNode.parentNode.nodeName == "DIV") {
+                this.pushUndo(lastElementNode.parentNode.parentNode,
+                              lastElementNode.parentNode.parentNode.innerHTML);
+                var newDiv = document.createElement("div");
+                lastElementNode.parentNode.parentNode.appendChild(newDiv);
+                var newCheckbox = document.createElement("img");
+                newCheckbox.src = "qrc:/checkbox_icons/checkbox_no.png";
+                newCheckbox.className = "checkbox_unchecked";
+                newCheckbox.setAttribute("en-tag", "en-todo");
+                newCheckbox.setAttribute("en-todo-id", maxEnToDo.toString());
+                newDiv.appendChild(newCheckbox);
+                var newRange = document.createRange();
+                newRange.selectNode(newCheckbox);
+                newRange.collapse(false);
+                selection.removeAllRanges();
+                selection.addRange(newRange);
+            }
+            else {
+                var htmlToInsert = "<br>";
+                htmlToInsert += "<img src=\"qrc:/checkbox_icons/checkbox_no.png\" class=\"checkbox_unchecked\" ";
+                htmlToInsert += "en-tag=\"en-todo\" en-todo-id=\"";
+                htmlToInsert += (maxEnToDo + 1).toString();
+                htmlToInsert += "\">";
+                this.pushUndo(lastElementNode.parentNode, lastElementNode.parentNode.innerHTML);
+                document.execCommand('insertHTML', false, htmlToInsert);
+            }
         }
         finally {
             observer.start();
