@@ -1,0 +1,54 @@
+/*
+ * Copyright 2017 Dmitry Ivanov
+ *
+ * This file is part of libquentier
+ *
+ * libquentier is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, version 3 of the License.
+ *
+ * libquentier is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
+ */
+
+#ifndef LIB_QUENTIER_NOTE_EDITOR_JAVASCRIPT_GLUE_ACTIONS_WATCHER_H
+#define LIB_QUENTIER_NOTE_EDITOR_JAVASCRIPT_GLUE_ACTIONS_WATCHER_H
+
+#include <quentier/utility/Macros.h>
+#include <QObject>
+
+namespace quentier {
+
+/**
+ * @brief The ActionsWatcher class is a small class object of which is exposed to JavaScript
+ * in order to notify the C++ code of certain events, including 'cut' and 'paste' actions
+ *
+ * The signals from this class are only used with QtWebKit-based backend of the note editor:
+ * its behaviour relative to actions is to "eat" the action and don't let it propagate
+ * to parent widgets. QtWebEngine backend doesn't behave like that and hence no response
+ * to ActionsWatcher's signals is required for it - the actions are properly propagated and get toggled
+ * in "natural" way.
+ */
+class ActionsWatcher: public QObject
+{
+    Q_OBJECT
+public:
+    explicit ActionsWatcher(QObject * parent = Q_NULLPTR);
+
+Q_SIGNALS:
+    void cutActionToggled();
+    void pasteActionToggled();
+
+public Q_SLOTS:
+    void onCutActionToggled();
+    void onPasteActionToggled();
+};
+
+} // namespace quentier
+
+#endif // LIB_QUENTIER_NOTE_EDITOR_JAVASCRIPT_GLUE_ACTIONS_WATCHER_H

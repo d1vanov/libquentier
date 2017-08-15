@@ -67,6 +67,7 @@
 #include <quentier/note_editor/SpellChecker.h>
 
 #ifndef QUENTIER_USE_QT_WEB_ENGINE
+#include "javascript_glue/ActionsWatcher.h"
 #include <QWebFrame>
 #include <QWebPage>
 typedef QWebSettings WebSettings;
@@ -209,6 +210,7 @@ NoteEditorPrivate::NoteEditorPrivate(NoteEditor & noteEditor) :
     m_disablePasteJs(),
 #ifndef QUENTIER_USE_QT_WEB_ENGINE
     m_qWebKitSetupJs(),
+    m_pActionsWatcher(new ActionsWatcher(this)),
 #else
     m_provideSrcForGenericResourceImagesJs(),
     m_onGenericResourceImageReceivedJs(),
@@ -438,6 +440,8 @@ void NoteEditorPrivate::onNoteLoadFinished(bool ok)
     frame->addToJavaScriptWindowObject(QStringLiteral("resizableImageHandler"), m_pResizableImageJavaScriptHandler,
                                        OwnershipNamespace::QtOwnership);
     frame->addToJavaScriptWindowObject(QStringLiteral("spellCheckerDynamicHelper"), m_pSpellCheckerDynamicHandler,
+                                       OwnershipNamespace::QtOwnership);
+    frame->addToJavaScriptWindowObject(QStringLiteral("actionsWatcher"), m_pActionsWatcher,
                                        OwnershipNamespace::QtOwnership);
 
     page->executeJavaScript(m_onResourceInfoReceivedJs);
@@ -2745,22 +2749,6 @@ void NoteEditorPrivate::onManagedPageActionFinished(const QVariant & result, con
         return;
     }
 
-    auto commandIt = resultMap.find(QStringLiteral("command"));
-    if (commandIt != resultMap.end())
-    {
-        QString command = commandIt.value().toString();
-        if (command == QStringLiteral("cut"))
-        {
-            QClipboard * pClipboard = QApplication::clipboard();
-            auto extraDataIt = resultMap.find(QStringLiteral("extraData"));
-            if (pClipboard && (extraDataIt != resultMap.end())) {
-                QMimeData * pMimeData = new QMimeData();
-                pMimeData->setHtml(extraDataIt.value().toString());
-                pClipboard->setMimeData(pMimeData);
-            }
-        }
-    }
-
     pushNoteContentEditUndoCommand();
     updateJavaScriptBindings();
     convertToNote();
@@ -4427,6 +4415,13 @@ void NoteEditorPrivate::setupGeneralSignalSlotConnections()
     QObject::connect(m_pContextMenuEventJavaScriptHandler, QNSIGNAL(ContextMenuEventJavaScriptHandler,contextMenuEventReply,QString,QString,bool,QStringList,quint64),
                      this, QNSLOT(NoteEditorPrivate,onContextMenuEventReply,QString,QString,bool,QStringList,quint64));
 
+#ifndef QUENTIER_USE_QT_WEB_ENGINE
+    QObject::connect(m_pActionsWatcher, QNSIGNAL(ActionsWatcher,cutActionToggled),
+                     this, QNSLOT(NoteEditorPrivate,cut));
+    QObject::connect(m_pActionsWatcher, QNSIGNAL(ActionsWatcher,pasteActionToggled),
+                     this, QNSLOT(NoteEditorPrivate,paste));
+#endif
+
     Q_Q(NoteEditor);
     QObject::connect(this, QNSIGNAL(NoteEditorPrivate,notifyError,ErrorString),
                      q, QNSIGNAL(NoteEditor,notifyError,ErrorString));
@@ -4488,6 +4483,8 @@ void NoteEditorPrivate::setupNoteEditorPage()
     page->mainFrame()->addToJavaScriptWindowObject(QStringLiteral("resizableImageHandler"), m_pResizableImageJavaScriptHandler,
                                                    OwnershipNamespace::QtOwnership);
     page->mainFrame()->addToJavaScriptWindowObject(QStringLiteral("spellCheckerDynamicHelper"), m_pSpellCheckerDynamicHandler,
+                                                   OwnershipNamespace::QtOwnership);
+    page->mainFrame()->addToJavaScriptWindowObject(QStringLiteral("actionsWatcher"), m_pActionsWatcher,
                                                    OwnershipNamespace::QtOwnership);
 
     m_pPluginFactory = new NoteEditorPluginFactory(*this, *m_pResourceFileStorageManager, *m_pFileIOProcessorAsync, page);
@@ -6722,6 +6719,16 @@ void NoteEditorPrivate::paste()
     const QMimeData * pMimeData = pClipboard->mimeData(QClipboard::Clipboard);
     if (pMimeData)
     {
+        QNTRACE(QStringLiteral("Mime data to paste: ") << pMimeData
+                << QStringLiteral("\nMime data has html: ")
+                << (pMimeData->hasHtml() ? QStringLiteral("true") : QStringLiteral("false"))
+                << QStringLiteral(", html: ") << pMimeData->html()
+                << QStringLiteral(", mime data has text: ")
+                << (pMimeData->hasText() ? QStringLiteral("true") : QStringLiteral("false"))
+                << QStringLiteral(", text: ") << pMimeData->text()
+                << QStringLiteral(", mime data has image: ")
+                << (pMimeData->hasImage() ? QStringLiteral("true") : QStringLiteral("false")));
+
         if (pMimeData->hasImage()) {
             pasteImageData(*pMimeData);
             return;
@@ -6900,7 +6907,13 @@ void NoteEditorPrivate::fontMenu()
 void NoteEditorPrivate::cut()
 {
     QNDEBUG(QStringLiteral("NoteEditorPrivate::cut"));
+    GET_PAGE()
     CHECK_NOTE_EDITABLE(QT_TR_NOOP("Can't cut note content"))
+
+    // NOTE: managed action can't properly copy the current selection into the clipboard on all platforms,
+    // so triggering copy action first
+    page->triggerAction(WebPage::Copy);
+
     execJavascriptCommand(QStringLiteral("cut"));
     setModified();
 }

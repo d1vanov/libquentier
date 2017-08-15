@@ -35,6 +35,7 @@ NoteEditorPage::NoteEditorPage(NoteEditorPrivate & parent) :
 {
     QUENTIER_CHECK_PTR(m_parent);
 
+#ifdef QUENTIER_USE_QT_WEB_ENGINE
     QAction * pPasteAction = action(WebPage::Paste);
     if (pPasteAction) {
         pPasteAction->setEnabled(false);
@@ -44,6 +45,7 @@ NoteEditorPage::NoteEditorPage(NoteEditorPrivate & parent) :
     if (pCutAction) {
         pCutAction->setEnabled(false);
     }
+#endif
 
     QObject::connect(this, QNSIGNAL(NoteEditorPage,noteLoadCancelled),
                      &parent, QNSLOT(NoteEditorPrivate,onNoteLoadCancelled));

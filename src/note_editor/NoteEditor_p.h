@@ -84,6 +84,8 @@ QT_FORWARD_DECLARE_CLASS(GenericResourceOpenAndSaveButtonsOnClickHandler)
 QT_FORWARD_DECLARE_CLASS(GenericResourceImageJavaScriptHandler)
 QT_FORWARD_DECLARE_CLASS(HyperlinkClickJavaScriptHandler)
 QT_FORWARD_DECLARE_CLASS(WebSocketWaiter)
+#else
+QT_FORWARD_DECLARE_CLASS(ActionsWatcher)
 #endif
 
 class NoteEditorPrivate: public WebView,
@@ -773,6 +775,8 @@ private:
 
 #ifndef QUENTIER_USE_QT_WEB_ENGINE
     QString     m_qWebKitSetupJs;
+
+    ActionsWatcher * m_pActionsWatcher;
 #else
     QString     m_provideSrcForGenericResourceImagesJs;
     QString     m_onGenericResourceImageReceivedJs;

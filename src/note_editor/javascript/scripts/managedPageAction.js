@@ -52,8 +52,6 @@ function managedPageAction(command, args) {
     textEditingUndoRedoManager.pushNode(targetNode, targetNodeHtml);
     textEditingUndoRedoManager.pushNumMutations(1);
 
-    var extraData;
-
     observer.stop();
     try {
         var savedSelection;
@@ -63,7 +61,6 @@ function managedPageAction(command, args) {
 
         if (command === 'cut') {
             // This command doesn't seem to really work so need to emulate
-            extraData = getSelectionHtml();
             document.execCommand("insertHTML", false, "");
         }
         else {
@@ -78,5 +75,5 @@ function managedPageAction(command, args) {
         observer.start();
     }
 
-    return { status: true, error: "", command: command, extraData: extraData };
+    return { status: true, error: "" };
 }

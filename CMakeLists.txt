@@ -299,7 +299,8 @@ if(BUILD_WITH_NOTE_EDITOR)
          src/note_editor/NoteEditorPluginFactory.h
          src/note_editor/INoteEditorResourcePlugin.h
          src/note_editor/EncryptedAreaPlugin.h
-         src/note_editor/GenericResourceDisplayWidget.h)
+         src/note_editor/GenericResourceDisplayWidget.h
+         src/note_editor/javascript_glue/ActionsWatcher.h)
   else()
     list(APPEND PRIVATE_HEADERS
          src/note_editor/javascript_glue/EnCryptElementOnClickHandler.h
@@ -492,7 +493,8 @@ if(BUILD_WITH_NOTE_EDITOR)
          src/note_editor/EncryptedAreaPlugin.cpp
          src/note_editor/GenericResourceDisplayWidget.cpp
          src/note_editor/INoteEditorResourcePlugin.cpp
-         src/note_editor/NoteEditorPluginFactory.cpp)
+         src/note_editor/NoteEditorPluginFactory.cpp
+         src/note_editor/javascript_glue/ActionsWatcher.cpp)
   else()
     list(APPEND ${PROJECT_NAME}_SOURCES
          src/note_editor/javascript_glue/EnCryptElementOnClickHandler.cpp
