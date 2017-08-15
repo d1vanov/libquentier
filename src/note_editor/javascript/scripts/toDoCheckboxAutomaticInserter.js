@@ -156,9 +156,16 @@ function ToDoCheckboxAutomaticInserter() {
         }
         else {
             if (anchorNode.nodeType != 1) {
+                console.log("Going up from node with type " + anchorNode.nodeType);
                 anchorNode = anchorNode.parentNode;
             }
 
+            while(anchorNode.nodeName == "BR") {
+                console.log("Going up from BR node");
+                anchorNode = anchorNode.parentNode;
+            }
+
+            console.log("Using parent node for checkbox: " + this.nodeToString(anchorNode));
             anchorNode.appendChild(newCheckbox);
         }
 
@@ -319,7 +326,7 @@ function ToDoCheckboxAutomaticInserter() {
                 htmlToInsert += "en-tag=\"en-todo\" en-todo-id=\"";
                 htmlToInsert += (maxEnToDo + 1).toString();
                 htmlToInsert += "\">";
-                this.pushUndo(lastElementNode.parentNode, lastElementNode.parentNode.innerHTML);
+                this.pushUndo(lastElementNode.parentNode.parentNode, lastElementNode.parentNode.parentNode.innerHTML);
                 document.execCommand('insertHTML', false, htmlToInsert);
             }
         }
