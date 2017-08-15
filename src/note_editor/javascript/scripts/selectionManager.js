@@ -75,11 +75,13 @@ function SelectionManager() {
                 if (!foundStart && (savedSelection.start >= charIndex) && (savedSelection.start <= nextCharIndex)) {
                     range.setStart(node, savedSelection.start - charIndex);
                     foundStart = true;
+                    console.log("Found selection start");
                 }
 
                 if (foundStart && (savedSelection.end >= charIndex) && (savedSelection.end <= nextCharIndex)) {
                     range.setEnd(node, savedSelection.end - charIndex);
                     stop = true;
+                    console.log("Found selection end");
                 }
 
                 charIndex = nextCharIndex;
