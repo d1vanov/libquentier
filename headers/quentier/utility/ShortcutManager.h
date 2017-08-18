@@ -111,8 +111,37 @@ public:
         UnknownKey = 100000
     };
 
+    /**
+     * @return Active shortcut for the standard key - either the user defined shortcut (if present) or the default
+     * one (if present as well)
+     */
     QKeySequence shortcut(const int key, const Account & account, const QString & context = QString()) const;
+
+    /**
+     * @return Active shortcut for the non-standard key - either the user defined shortcut (if present) or the default
+     * one (if present as well)
+     */
     QKeySequence shortcut(const QString & nonStandardKey, const Account & account, const QString & context = QString()) const;
+
+    /**
+     * @return Default shortcut for the standard key if present, otherwise empty key sequence
+     */
+    QKeySequence defaultShortcut(const int key, const Account & account, const QString & context = QString()) const;
+
+    /**
+     * @return Default shortcut for the non-standard key if present, otherwise empty key sequence
+     */
+    QKeySequence defaultShortcut(const QString & nonStandardKey, const Account & account, const QString & context = QString()) const;
+
+    /**
+     * @return User defined shortcut for the standard key if present, otherwise empty key sequence
+     */
+    QKeySequence userShortcut(const int key, const Account & account, const QString & context = QString()) const;
+
+    /**
+     * @return User defined shortcut for the non-standard key if present, otherwise empty key sequence
+     */
+    QKeySequence userShortcut(const QString & nonStandardKey, const Account & account, const QString & context = QString()) const;
 
 Q_SIGNALS:
     void shortcutChanged(int key, QKeySequence shortcut, const Account & account, QString context);

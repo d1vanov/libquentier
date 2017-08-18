@@ -38,6 +38,30 @@ QKeySequence ShortcutManager::shortcut(const QString & nonStandardKey, const Acc
     return d->shortcut(nonStandardKey, account, context);
 }
 
+QKeySequence ShortcutManager::defaultShortcut(const int key, const Account & account, const QString & context) const
+{
+    Q_D(const ShortcutManager);
+    return d->defaultShortcut(key, account, context);
+}
+
+QKeySequence ShortcutManager::defaultShortcut(const QString & nonStandardKey, const Account & account, const QString & context) const
+{
+    Q_D(const ShortcutManager);
+    return d->defaultShortcut(nonStandardKey, account, context);
+}
+
+QKeySequence ShortcutManager::userShortcut(const int key, const Account & account, const QString & context) const
+{
+    Q_D(const ShortcutManager);
+    return d->userShortcut(key, account, context);
+}
+
+QKeySequence ShortcutManager::userShortcut(const QString & nonStandardKey, const Account & account, const QString & context) const
+{
+    Q_D(const ShortcutManager);
+    return d->userShortcut(nonStandardKey, account, context);
+}
+
 void ShortcutManager::setUserShortcut(int key, QKeySequence shortcut, const Account & account, QString context)
 {
     Q_D(ShortcutManager);

@@ -38,6 +38,13 @@ public:
     QKeySequence shortcut(const QString & nonStandardKey, const Account & account,
                           const QString & context) const;
 
+    QKeySequence defaultShortcut(const int key, const Account & account, const QString & context) const;
+    QKeySequence defaultShortcut(const QString & nonStandardKey, const Account & account,
+                                 const QString & context) const;
+
+    QKeySequence userShortcut(const int key, const Account & account, const QString & context) const;
+    QKeySequence userShortcut(const QString & nonStandardKey, const Account & account, const QString & context) const;
+
 Q_SIGNALS:
     void shortcutChanged(int key, QKeySequence shortcut, const Account & account, QString context);
     void nonStandardShortcutChanged(QString nonStandardKey, QKeySequence shortcut,
@@ -53,11 +60,6 @@ public Q_SLOTS:
                                        const Account & account, QString context);
 
 private:
-    QKeySequence defaultShortcut(const int key, const QString & keyString,
-                                 const Account & account, const QString & context) const;
-    QKeySequence defaultShortcut(const QString & nonStandardKey, const Account & account,
-                                 const QString & context) const;
-
     QString keyToString(const int key) const;
     QString shortcutGroupString(const QString & context, const bool defaultShortcut,
                                 const bool nonStandardShortcut) const;
