@@ -77,6 +77,7 @@ QT_FORWARD_DECLARE_CLASS(RenameResourceDelegate)
 QT_FORWARD_DECLARE_CLASS(SpellChecker)
 QT_FORWARD_DECLARE_CLASS(SpellCheckerDynamicHelper)
 QT_FORWARD_DECLARE_CLASS(ResizableImageJavaScriptHandler)
+QT_FORWARD_DECLARE_CLASS(ActionsWatcher)
 
 #ifdef QUENTIER_USE_QT_WEB_ENGINE
 QT_FORWARD_DECLARE_CLASS(EnCryptElementOnClickHandler)
@@ -84,8 +85,6 @@ QT_FORWARD_DECLARE_CLASS(GenericResourceOpenAndSaveButtonsOnClickHandler)
 QT_FORWARD_DECLARE_CLASS(GenericResourceImageJavaScriptHandler)
 QT_FORWARD_DECLARE_CLASS(HyperlinkClickJavaScriptHandler)
 QT_FORWARD_DECLARE_CLASS(WebSocketWaiter)
-#else
-QT_FORWARD_DECLARE_CLASS(ActionsWatcher)
 #endif
 
 class NoteEditorPrivate: public WebView,
@@ -331,6 +330,8 @@ Q_SIGNALS:
 #ifdef QUENTIER_USE_QT_WEB_ENGINE
     void htmlReadyForPrinting();
 #endif
+
+    void notePageLoadFinished();
 
 private Q_SLOTS:
     void onTableResized();
@@ -595,7 +596,6 @@ private:
 private:
     // Overrides for some Qt's virtual methods
     virtual void timerEvent(QTimerEvent * pEvent) Q_DECL_OVERRIDE;
-    virtual bool eventFilter(QObject * pWatched, QEvent * pEvent) Q_DECL_OVERRIDE;
     virtual void dragMoveEvent(QDragMoveEvent * pEvent) Q_DECL_OVERRIDE;
     virtual void dropEvent(QDropEvent * pEvent) Q_DECL_OVERRIDE;
 
@@ -775,8 +775,6 @@ private:
 
 #ifndef QUENTIER_USE_QT_WEB_ENGINE
     QString     m_qWebKitSetupJs;
-
-    ActionsWatcher * m_pActionsWatcher;
 #else
     QString     m_provideSrcForGenericResourceImagesJs;
     QString     m_onGenericResourceImageReceivedJs;
@@ -808,6 +806,7 @@ private:
     ToDoCheckboxOnClickHandler *            m_pToDoCheckboxClickHandler;
     ToDoCheckboxAutomaticInsertionHandler * m_pToDoCheckboxAutomaticInsertionHandler;
     PageMutationHandler *                   m_pPageMutationHandler;
+    ActionsWatcher *                        m_pActionsWatcher;
 
     QUndoStack * m_pUndoStack;
 
@@ -833,6 +832,8 @@ private:
     bool        m_pendingNotePageLoad;
     bool        m_pendingIndexHtmlWritingToFile;
     bool        m_pendingJavaScriptExecution;
+
+    QUrl        m_pendingNextPageUrl;
 
     bool        m_skipPushingUndoCommandOnNextContentChange;
 

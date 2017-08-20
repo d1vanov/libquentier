@@ -27,12 +27,6 @@ namespace quentier {
 /**
  * @brief The ActionsWatcher class is a small class object of which is exposed to JavaScript
  * in order to notify the C++ code of certain events, including 'cut' and 'paste' actions
- *
- * The signals from this class are only used with QtWebKit-based backend of the note editor:
- * its behaviour relative to actions is to "eat" the action and don't let it propagate
- * to parent widgets. QtWebEngine backend doesn't behave like that and hence no response
- * to ActionsWatcher's signals is required for it - the actions are properly propagated and get toggled
- * in "natural" way.
  */
 class ActionsWatcher: public QObject
 {

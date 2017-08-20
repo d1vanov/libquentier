@@ -41,6 +41,7 @@
             window.genericResourceImageHandler.genericResourceImageFound.connect(onGenericResourceImageReceived);
 
             window.pageMutationObserver = channel.objects.pageMutationObserver;
+            window.actionsWatcher = channel.objects.actionsWatcher;
             window.enCryptElementClickHandler = channel.objects.enCryptElementClickHandler;
             window.openAndSaveResourceButtonsHandler = channel.objects.openAndSaveResourceButtonsHandler;
             window.textCursorPositionHandler = channel.objects.textCursorPositionHandler;

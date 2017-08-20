@@ -1,17 +1,13 @@
 function disablePaste(e) {
     console.log("disablePaste");
     e.preventDefault();
-    if (actionsWatcher) {
-        actionsWatcher.onPasteActionToggled();
-    }
+    actionsWatcher.onPasteActionToggled();
 }
 
 function disableCut(e) {
     console.log("disableCut");
     e.preventDefault();
-    if (actionsWatcher) {
-        actionsWatcher.onCutActionToggled();
-    }
+    actionsWatcher.onCutActionToggled();
 }
 
 document.body.onpaste = disablePaste;

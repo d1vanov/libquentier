@@ -259,6 +259,7 @@ if(BUILD_WITH_NOTE_EDITOR)
        src/note_editor/delegates/EditHyperlinkDelegate.h
        src/note_editor/delegates/RemoveHyperlinkDelegate.h
        src/note_editor/delegates/RenameResourceDelegate.h
+       src/note_editor/javascript_glue/ActionsWatcher.h
        src/note_editor/javascript_glue/ResourceInfoJavaScriptHandler.h
        src/note_editor/javascript_glue/ResizableImageJavaScriptHandler.h
        src/note_editor/javascript_glue/TextCursorPositionJavaScriptHandler.h
@@ -299,8 +300,7 @@ if(BUILD_WITH_NOTE_EDITOR)
          src/note_editor/NoteEditorPluginFactory.h
          src/note_editor/INoteEditorResourcePlugin.h
          src/note_editor/EncryptedAreaPlugin.h
-         src/note_editor/GenericResourceDisplayWidget.h
-         src/note_editor/javascript_glue/ActionsWatcher.h)
+         src/note_editor/GenericResourceDisplayWidget.h)
   else()
     list(APPEND PRIVATE_HEADERS
          src/note_editor/javascript_glue/EnCryptElementOnClickHandler.h
@@ -455,6 +455,7 @@ if(BUILD_WITH_NOTE_EDITOR)
        src/note_editor/delegates/EditHyperlinkDelegate.cpp
        src/note_editor/delegates/RemoveHyperlinkDelegate.cpp
        src/note_editor/delegates/RenameResourceDelegate.cpp
+       src/note_editor/javascript_glue/ActionsWatcher.cpp
        src/note_editor/javascript_glue/ResourceInfoJavaScriptHandler.cpp
        src/note_editor/javascript_glue/ResizableImageJavaScriptHandler.cpp
        src/note_editor/javascript_glue/TextCursorPositionJavaScriptHandler.cpp
@@ -493,8 +494,7 @@ if(BUILD_WITH_NOTE_EDITOR)
          src/note_editor/EncryptedAreaPlugin.cpp
          src/note_editor/GenericResourceDisplayWidget.cpp
          src/note_editor/INoteEditorResourcePlugin.cpp
-         src/note_editor/NoteEditorPluginFactory.cpp
-         src/note_editor/javascript_glue/ActionsWatcher.cpp)
+         src/note_editor/NoteEditorPluginFactory.cpp)
   else()
     list(APPEND ${PROJECT_NAME}_SOURCES
          src/note_editor/javascript_glue/EnCryptElementOnClickHandler.cpp

@@ -29,6 +29,7 @@
 #include "delegates/AddHyperlinkToSelectedTextDelegate.h"
 #include "delegates/EditHyperlinkDelegate.h"
 #include "delegates/RemoveHyperlinkDelegate.h"
+#include "javascript_glue/ActionsWatcher.h"
 #include "javascript_glue/ResourceInfoJavaScriptHandler.h"
 #include "javascript_glue/ResizableImageJavaScriptHandler.h"
 #include "javascript_glue/TextCursorPositionJavaScriptHandler.h"
@@ -67,7 +68,6 @@
 #include <quentier/note_editor/SpellChecker.h>
 
 #ifndef QUENTIER_USE_QT_WEB_ENGINE
-#include "javascript_glue/ActionsWatcher.h"
 #include <QWebFrame>
 #include <QWebPage>
 typedef QWebSettings WebSettings;
@@ -210,7 +210,6 @@ NoteEditorPrivate::NoteEditorPrivate(NoteEditor & noteEditor) :
     m_disablePasteJs(),
 #ifndef QUENTIER_USE_QT_WEB_ENGINE
     m_qWebKitSetupJs(),
-    m_pActionsWatcher(new ActionsWatcher(this)),
 #else
     m_provideSrcForGenericResourceImagesJs(),
     m_onGenericResourceImageReceivedJs(),
@@ -239,6 +238,7 @@ NoteEditorPrivate::NoteEditorPrivate(NoteEditor & noteEditor) :
     m_pToDoCheckboxClickHandler(new ToDoCheckboxOnClickHandler(this)),
     m_pToDoCheckboxAutomaticInsertionHandler(new ToDoCheckboxAutomaticInsertionHandler(this)),
     m_pPageMutationHandler(new PageMutationHandler(this)),
+    m_pActionsWatcher(new ActionsWatcher(this)),
     m_pUndoStack(Q_NULLPTR),
     m_pAccount(),
     m_htmlForPrinting(),
@@ -255,6 +255,7 @@ NoteEditorPrivate::NoteEditorPrivate(NoteEditor & noteEditor) :
     m_pendingNotePageLoad(false),
     m_pendingIndexHtmlWritingToFile(false),
     m_pendingJavaScriptExecution(false),
+    m_pendingNextPageUrl(),
     m_skipPushingUndoCommandOnNextContentChange(false),
     m_pNote(),
     m_pNotebook(),
@@ -373,6 +374,9 @@ void NoteEditorPrivate::onNoteLoadFinished(bool ok)
         return;
     }
 
+    m_pendingNotePageLoad = false;
+    emit notePageLoadFinished();
+
     if (Q_UNLIKELY(!m_pNote))  {
         QNDEBUG(QStringLiteral("No note is set to the editor"));
         setPageEditable(false);
@@ -385,7 +389,6 @@ void NoteEditorPrivate::onNoteLoadFinished(bool ok)
         return;
     }
 
-    m_pendingNotePageLoad = false;
     m_pendingJavaScriptExecution = true;
 
     GET_PAGE()
@@ -1448,16 +1451,42 @@ void NoteEditorPrivate::onWriteFileRequestProcessed(bool success, ErrorString er
         }
 
         QUrl url = QUrl::fromLocalFile(noteEditorPagePath());
+        QNDEBUG(QStringLiteral("URL to use for page loading: ") << url);
 
+        if (m_pendingNotePageLoad) {
+            QNDEBUG(QStringLiteral("Already loading something into the editor, need to wait for the previous note load to complete"));
+            m_pendingNextPageUrl = url;
+            return;
+        }
+
+        m_pendingNotePageLoad = true;
+
+        QNDEBUG(QStringLiteral("Before starting to load the url into the page: ") << url)
 #ifdef QUENTIER_USE_QT_WEB_ENGINE
         page()->setUrl(url);
-        page()->load(url);
 #else
         page()->mainFrame()->setUrl(url);
-        page()->mainFrame()->load(url);
 #endif
-        QNTRACE(QStringLiteral("Loaded url: ") << url);
-        m_pendingNotePageLoad = true;
+        QNDEBUG(QStringLiteral("After having started to load the url into the page: ") << url);
+
+        while(!m_pendingNextPageUrl.isEmpty())
+        {
+            QNDEBUG(QStringLiteral("Setting the pending url: ") << m_pendingNextPageUrl);
+
+            url = m_pendingNextPageUrl;
+            QNDEBUG(QStringLiteral("Before starting to load the url into the page: ") << url)
+#ifdef QUENTIER_USE_QT_WEB_ENGINE
+            page()->setUrl(url);
+#else
+            page()->mainFrame()->setUrl(url);
+#endif
+            QNDEBUG(QStringLiteral("After having started to load the url into the page: ") << url);
+
+            if (url == m_pendingNextPageUrl) {
+                m_pendingNextPageUrl.clear();
+                break;
+            }
+        }
     }
 
     auto manualSaveResourceIt = m_manualSaveResourceToFileRequestIds.find(requestId);
@@ -2473,35 +2502,6 @@ void NoteEditorPrivate::timerEvent(QTimerEvent * pEvent)
         m_watchingForContentChange = false;
         m_contentChangedSinceWatchingStart = false;
     }
-}
-
-bool NoteEditorPrivate::eventFilter(QObject * pWatched, QEvent * pEvent)
-{
-    NoteEditorPage * pPage = qobject_cast<NoteEditorPage*>(pWatched);
-    if (!pPage) {
-        return WebView::eventFilter(pWatched, pEvent);
-    }
-
-    if (!pEvent || (pEvent->type() != QEvent::KeyRelease)) {
-        return WebView::eventFilter(pWatched, pEvent);
-    }
-
-    QKeyEvent * pKeyEvent = dynamic_cast<QKeyEvent*>(pEvent);
-    if (!pKeyEvent) {
-        return WebView::eventFilter(pWatched, pEvent);
-    }
-
-    Qt::KeyboardModifiers modifiers = pKeyEvent->modifiers();
-    if (!modifiers.testFlag(Qt::ControlModifier) &&
-        !modifiers.testFlag(Qt::AltModifier))
-    {
-        return WebView::eventFilter(pWatched, pEvent);
-    }
-
-    QNDEBUG(QStringLiteral("Stealing the keyboard shortcut from the web page"));
-    // Need to steal away the keyboard shortcuts from the page to ensure they would be propaged
-    // up in the widgets hierarchy - it would be up to the client to handle the keyboard shortcuts
-    return false;
 }
 
 void NoteEditorPrivate::dragMoveEvent(QDragMoveEvent * pEvent)
@@ -3903,6 +3903,7 @@ void NoteEditorPrivate::setupJavaScriptObjects()
                      this, &NoteEditorPrivate::onWebSocketReady);
 
     m_pWebChannel->registerObject(QStringLiteral("webSocketWaiter"), m_pWebSocketWaiter);
+    m_pWebChannel->registerObject(QStringLiteral("actionsWatcher"), m_pActionsWatcher);
     m_pWebChannel->registerObject(QStringLiteral("resourceCache"), m_pResourceInfoJavaScriptHandler);
     m_pWebChannel->registerObject(QStringLiteral("enCryptElementClickHandler"), m_pEnCryptElementClickHandler);
     m_pWebChannel->registerObject(QStringLiteral("pageMutationObserver"), m_pPageMutationHandler);
@@ -4414,13 +4415,10 @@ void NoteEditorPrivate::setupGeneralSignalSlotConnections()
                      this, QNSLOT(NoteEditorPrivate,onContentChanged));
     QObject::connect(m_pContextMenuEventJavaScriptHandler, QNSIGNAL(ContextMenuEventJavaScriptHandler,contextMenuEventReply,QString,QString,bool,QStringList,quint64),
                      this, QNSLOT(NoteEditorPrivate,onContextMenuEventReply,QString,QString,bool,QStringList,quint64));
-
-#ifndef QUENTIER_USE_QT_WEB_ENGINE
     QObject::connect(m_pActionsWatcher, QNSIGNAL(ActionsWatcher,cutActionToggled),
                      this, QNSLOT(NoteEditorPrivate,cut));
     QObject::connect(m_pActionsWatcher, QNSIGNAL(ActionsWatcher,pasteActionToggled),
                      this, QNSLOT(NoteEditorPrivate,paste));
-#endif
 
     Q_Q(NoteEditor);
     QObject::connect(this, QNSIGNAL(NoteEditorPrivate,notifyError,ErrorString),
@@ -4494,8 +4492,6 @@ void NoteEditorPrivate::setupNoteEditorPage()
 
     page->setPluginFactory(m_pPluginFactory);
 #endif
-
-    page->installEventFilter(this);
 
     setupNoteEditorPageConnections(page);
     setPage(page);
@@ -5609,6 +5605,10 @@ bool NoteEditorPrivate::print(QPrinter & printer, ErrorString & errorDescription
     QTimer::singleShot(0, this, SLOT(getHtmlForPrinting()));
 
     int result = eventLoop.exec(QEventLoop::ExcludeUserInputEvents);
+
+    pConversionTimer->deleteLater();
+    pConversionTimer = Q_NULLPTR;
+
     if (result == EventLoopWithExitStatus::ExitStatus::Timeout) {
         errorDescription.setBase(QT_TR_NOOP("Can't print note: failed to get the note editor page's HTML in time"));
         QNWARNING(errorDescription);
@@ -6114,7 +6114,10 @@ void NoteEditorPrivate::setModified()
 
 QString NoteEditorPrivate::noteEditorPagePath() const
 {
+    QNDEBUG(QStringLiteral("NoteEditorPrivate::noteEditorPagePath"));
+
     if (m_pNote.isNull()) {
+        QNDEBUG(QStringLiteral("No note is set to the editor"));
         return m_noteEditorPageFolderPath + QStringLiteral("/index.html");
     }
 
