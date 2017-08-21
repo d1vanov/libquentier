@@ -331,8 +331,6 @@ Q_SIGNALS:
     void htmlReadyForPrinting();
 #endif
 
-    void notePageLoadFinished();
-
 private Q_SLOTS:
     void onTableResized();
 
@@ -830,10 +828,31 @@ private:
     bool        m_isPageEditable;
     bool        m_pendingConversionToNote;
     bool        m_pendingNotePageLoad;
+
+    /**
+     * The two following variables deserve a special explanation. Since Qt 5.9 QWebEnginePage::load method started to behave
+     * really weirdly: it seems when it's called for the first time, the method blocks the event loop until the page is actually loaded.
+     * I.e. when the page got loaded, the execution of code after the call to QWebEnginePage::load (or QWebEnginePage::setUrl
+     * since it calls QWebEnginePage::load internally) continues.
+     *
+     * Why to give a damn, you ask? Well, things become more interesting if you attempt to call QWebEnginePage::load
+     * (or QWebEnginePage::setUrl) while there's still an event loop blocked inside QWebEnginePage::load. In particular,
+     * what seems to happen is that the second call to QWebEnginePage::load does not block; the page seems to be loaded
+     * successfully but then the original blocked call to QWebEnginePage::load returns. The net effect is the appearance
+     * of the first loaded URL within the page, not the second one.
+     *
+     * This behaviour has only been observed with Qt 5.9, not with any prior version. It is (of course) not documented
+     * or mentioned anywhere, you have to learn this on your own, the hard way. Thank you, Qt devs, you are the best... not.
+     *
+     * Working around this issue using the special boolean flag indicating whether the method is currently blocked
+     * in at least one event loop. If yes, won't attempt to call QWebEnginePage::load (or QWebEnginePage::setUrl)
+     * until the blocked method returns, instead will just save the next URL to load and will load it later
+     */
+    bool        m_pendingNotePageLoadMethodExit;
+    QUrl        m_pendingNextPageUrl;
+
     bool        m_pendingIndexHtmlWritingToFile;
     bool        m_pendingJavaScriptExecution;
-
-    QUrl        m_pendingNextPageUrl;
 
     bool        m_skipPushingUndoCommandOnNextContentChange;
 

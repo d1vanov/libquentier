@@ -253,9 +253,10 @@ NoteEditorPrivate::NoteEditorPrivate(NoteEditor & noteEditor) :
     m_isPageEditable(false),
     m_pendingConversionToNote(false),
     m_pendingNotePageLoad(false),
+    m_pendingNotePageLoadMethodExit(false),
+    m_pendingNextPageUrl(),
     m_pendingIndexHtmlWritingToFile(false),
     m_pendingJavaScriptExecution(false),
-    m_pendingNextPageUrl(),
     m_skipPushingUndoCommandOnNextContentChange(false),
     m_pNote(),
     m_pNotebook(),
@@ -375,7 +376,6 @@ void NoteEditorPrivate::onNoteLoadFinished(bool ok)
     }
 
     m_pendingNotePageLoad = false;
-    emit notePageLoadFinished();
 
     if (Q_UNLIKELY(!m_pNote))  {
         QNDEBUG(QStringLiteral("No note is set to the editor"));
@@ -1453,35 +1453,32 @@ void NoteEditorPrivate::onWriteFileRequestProcessed(bool success, ErrorString er
         QUrl url = QUrl::fromLocalFile(noteEditorPagePath());
         QNDEBUG(QStringLiteral("URL to use for page loading: ") << url);
 
-        if (m_pendingNotePageLoad) {
+        m_pendingNextPageUrl = url;
+
+        if (m_pendingNotePageLoad || m_pendingNotePageLoadMethodExit) {
             QNDEBUG(QStringLiteral("Already loading something into the editor, need to wait for the previous note load to complete"));
-            m_pendingNextPageUrl = url;
             return;
         }
-
-        m_pendingNotePageLoad = true;
-
-        QNDEBUG(QStringLiteral("Before starting to load the url into the page: ") << url)
-#ifdef QUENTIER_USE_QT_WEB_ENGINE
-        page()->setUrl(url);
-#else
-        page()->mainFrame()->setUrl(url);
-#endif
-        QNDEBUG(QStringLiteral("After having started to load the url into the page: ") << url);
 
         while(!m_pendingNextPageUrl.isEmpty())
         {
             QNDEBUG(QStringLiteral("Setting the pending url: ") << m_pendingNextPageUrl);
 
             url = m_pendingNextPageUrl;
-            QNDEBUG(QStringLiteral("Before starting to load the url into the page: ") << url)
+            QNDEBUG(QStringLiteral("Before starting to load the url into the page: ") << url);
+
+            m_pendingNotePageLoad = true;
+            m_pendingNotePageLoadMethodExit = true;
 #ifdef QUENTIER_USE_QT_WEB_ENGINE
             page()->setUrl(url);
 #else
             page()->mainFrame()->setUrl(url);
 #endif
+            m_pendingNotePageLoadMethodExit = false;
             QNDEBUG(QStringLiteral("After having started to load the url into the page: ") << url);
 
+            // Check that while we were within setUrl method, the next URL to be loaded has not changed;
+            // if so, just clear the member variable and exit from the loop; otherwise, repeat the loop
             if (url == m_pendingNextPageUrl) {
                 m_pendingNextPageUrl.clear();
                 break;
