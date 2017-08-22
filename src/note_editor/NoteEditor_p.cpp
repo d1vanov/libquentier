@@ -1455,7 +1455,7 @@ void NoteEditorPrivate::onWriteFileRequestProcessed(bool success, ErrorString er
 
         m_pendingNextPageUrl = url;
 
-        if (m_pendingNotePageLoad || m_pendingNotePageLoadMethodExit) {
+        if (m_pendingNotePageLoadMethodExit) {
             QNDEBUG(QStringLiteral("Already loading something into the editor, need to wait for the previous note load to complete"));
             return;
         }
@@ -4488,6 +4488,7 @@ void NoteEditorPrivate::setupNoteEditorPage()
     }
 
     page->setPluginFactory(m_pPluginFactory);
+
 #endif
 
     setupNoteEditorPageConnections(page);
@@ -4511,6 +4512,11 @@ void NoteEditorPrivate::setupNoteEditorPageConnections(NoteEditorPage * page)
 #else
     QObject::connect(page, QNSIGNAL(NoteEditorPage,loadFinished,bool), this, QNSLOT(NoteEditorPrivate,onNoteLoadFinished,bool));
 #endif
+
+    QObject::connect(page, QNSIGNAL(NoteEditorPage,undoActionRequested),
+                     this, QNSLOT(NoteEditorPrivate,undo));
+    QObject::connect(page, QNSIGNAL(NoteEditorPage,redoActionRequested),
+                     this, QNSLOT(NoteEditorPrivate,redo));
 }
 
 void NoteEditorPrivate::setupTextCursorPositionJavaScriptHandlerConnections()

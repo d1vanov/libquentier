@@ -35,18 +35,6 @@ NoteEditorPage::NoteEditorPage(NoteEditorPrivate & parent) :
 {
     QUENTIER_CHECK_PTR(m_parent);
 
-#ifdef QUENTIER_USE_QT_WEB_ENGINE
-    QAction * pPasteAction = action(WebPage::Paste);
-    if (pPasteAction) {
-        pPasteAction->setEnabled(false);
-    }
-
-    QAction * pCutAction = action(WebPage::Cut);
-    if (pCutAction) {
-        pCutAction->setEnabled(false);
-    }
-#endif
-
     QObject::connect(this, QNSIGNAL(NoteEditorPage,noteLoadCancelled),
                      &parent, QNSLOT(NoteEditorPrivate,onNoteLoadCancelled));
     QObject::connect(m_pJavaScriptInOrderExecutor, QNSIGNAL(JavaScriptInOrderExecutor,finished),
@@ -184,5 +172,33 @@ void NoteEditorPage::javaScriptConsoleMessage(QWebEnginePage::JavaScriptConsoleM
     QWebEnginePage::javaScriptConsoleMessage(level, message, lineNumber, sourceID);
 }
 #endif // QUENTIER_USE_QT_WEB_ENGINE
+
+void NoteEditorPage::triggerAction(WebPage::WebAction action, bool checked)
+{
+    QNDEBUG(QStringLiteral("NoteEditorPage::triggerAction: action = ") << action
+            << QStringLiteral(", checked = ") << (checked ? QStringLiteral("true") : QStringLiteral("false")));
+
+    if ( (action == WebPage::Paste) ||
+         (action == WebPage::Cut) ||
+         (action == WebPage::Back) )
+    {
+        QNDEBUG(QStringLiteral("Filtering the action away"));
+        return;
+    }
+
+    if (action == WebPage::Undo) {
+        QNDEBUG(QStringLiteral("Filtering undo action"));
+        emit undoActionRequested();
+        return;
+    }
+
+    if (action == WebPage::Redo) {
+        QNDEBUG(QStringLiteral("Filtering redo action"));
+        emit redoActionRequested();
+        return;
+    }
+
+    WebPage::triggerAction(action, checked);
+}
 
 } // namespace quentier

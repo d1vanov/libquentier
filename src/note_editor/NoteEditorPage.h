@@ -30,15 +30,16 @@
 
 namespace quentier {
 
+#ifndef QUENTIER_USE_QT_WEB_ENGINE
+typedef QWebPage WebPage;
+#else
+typedef QWebEnginePage WebPage;
+#endif
+
 QT_FORWARD_DECLARE_CLASS(NoteEditor)
 QT_FORWARD_DECLARE_CLASS(NoteEditorPrivate)
 
-class NoteEditorPage:
-#ifndef QUENTIER_USE_QT_WEB_ENGINE
-        public QWebPage
-#else
-        public QWebEnginePage
-#endif
+class NoteEditorPage: public WebPage
 {
     Q_OBJECT
 public:
@@ -67,9 +68,14 @@ public:
      */
     void startJavaScriptAutoExecution();
 
+    virtual void triggerAction(WebPage::WebAction action, bool checked = false) Q_DECL_OVERRIDE;
+
 Q_SIGNALS:
     void javaScriptLoaded();
     void noteLoadCancelled();
+
+    void undoActionRequested();
+    void redoActionRequested();
 
 public Q_SLOTS:
 #if (QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)) && !defined(QUENTIER_USE_QT_WEB_ENGINE)
