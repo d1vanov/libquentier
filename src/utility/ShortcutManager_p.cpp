@@ -275,7 +275,7 @@ void ShortcutManagerPrivate::setNonStandardDefaultShortcut(QString nonStandardKe
 
     ApplicationSettings settings(account, SHORTCUT_SETTINGS_NAME);
     settings.beginGroup(shortcutGroupString(context, /* default shortcut = */ true, /* non-standard shortcut = */ true));
-    settings.setValue(nonStandardKey, shortcut.operator QVariant());   // Need this esoteric syntax to make compilers happy with Qt4
+    settings.setValue(nonStandardKey, shortcut.toString(QKeySequence::PortableText));
     settings.endGroup();
 
     // Need to emit the notification is there's no user shortcut overriding the default one
