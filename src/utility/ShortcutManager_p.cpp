@@ -207,7 +207,12 @@ void ShortcutManagerPrivate::setUserShortcut(int key, QKeySequence shortcut, con
     settings.setValue(keyString, shortcut.toString(QKeySequence::PortableText));
     settings.endGroup();
 
-    emit shortcutChanged(key, shortcut, account, context);
+    QKeySequence actualShortcut = shortcut;
+    if (actualShortcut.isEmpty()) {
+        actualShortcut = defaultShortcut(key, account, context);
+    }
+
+    emit shortcutChanged(key, actualShortcut, account, context);
 }
 
 void ShortcutManagerPrivate::setNonStandardUserShortcut(QString nonStandardKey, QKeySequence shortcut,
@@ -226,7 +231,12 @@ void ShortcutManagerPrivate::setNonStandardUserShortcut(QString nonStandardKey, 
     settings.setValue(nonStandardKey, shortcut.toString(QKeySequence::PortableText));
     settings.endGroup();
 
-    emit nonStandardShortcutChanged(nonStandardKey, shortcut, account, context);
+    QKeySequence actualShortcut = shortcut;
+    if (actualShortcut.isEmpty()) {
+        actualShortcut = defaultShortcut(nonStandardKey, account, context);
+    }
+
+    emit nonStandardShortcutChanged(nonStandardKey, actualShortcut, account, context);
 }
 
 void ShortcutManagerPrivate::setDefaultShortcut(int key, QKeySequence shortcut, const Account & account, QString context)
