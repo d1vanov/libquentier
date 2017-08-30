@@ -77,4 +77,50 @@ cmake -DLIBXML2_INCLUDE_DIR=<...path to libxml2 include directory...> \
       -DCMAKE_INSTALL_PREFIX=<...where to install the built app...> ../
 ```
 
-TODO: continue from here, describe the available building options + continue with translation and installation steps
+As mentioned above, some Qt modules are listed as optional dependencies. These modules are required by default (i.e. the `cmake` step would fail if either of these modules is not found) but the build can be configured to exclude them as well as the pieces of libquentier's functionality for which these modules are required.
+These pieces of functionality include:
+ * Note editor - the widget encapsulating all the details of presenting the editable note with ENML-formatted text and resources (attachments)
+ * OAuth authentication - the library's built-in implementation of `IAuthenticationManager` interface using `QEverCloud`'s authentication facilities
+
+The `CMake` options allowing to configure the build to omit the listed libquentier's components and thus the need for `QtWebKit` or `QtWebEngine` are the following:
+ * `BUILD_WITH_NOTE_EDITOR`
+ * `BUILD_WITH_AUTHENTICATION_MANAGER`
+
+In order to force the build without `QtWebKit` or `QtWebEngine`, set both options to `NO`:
+```
+cmake -DBUILD_WITH_NOTE_EDITOR=NO -DBUILD_WITH_AUTHENTICATION_MANAGER=NO <...>
+```
+
+One other related option controls which of two Qt's web backends to use with Qt5: by default `QtWebEngine` is searched for for Qt >= 5.5. But one can force the use of `QtWebKit` instead of `QtWebEngine` with `CMake` option `USE_QT5_WEBKIT`:
+```
+cmake -DUSE_QT5_WEBKIT=YES <...>
+```
+
+The Qt version being searched by default is Qt4. If you have both Qt4 and Qt5 installed and want to force the use of Qt5, use `USE_QT5` `CMake` option:
+```
+cmake -DUSE_QT5=YES <...>
+```
+
+If you don't have the Qt4 installation but only Qt5, there's no need to use this option, the Qt5 installation would be found automatically given that it is installed into one of standard locations on your system. Otherwise you'd need to point `CMake` to your Qt installation with `CMAKE_PREFIX_PATH` option:
+```
+cmake -DCMAKE_PREFIX_PATH=<...path to Qt5 installation...> <...>
+```
+
+### Translation
+
+Note that files required for libquentier's translation are not built by default along with the library itself. In order to build
+the translation files one needs to execute two additional commands:
+```
+make lupdate
+make lrelease
+```
+The first one runs Qt's `lupdate` utility which extracts the strings requiring translation from the source code and updates
+the `.ts` files containing both non-localized and localized text. The second command runs Qt's `lrelease` utility which
+converts `.ts` files into installable `.qm` files. If during installation `.qm` files are present within the build directory,
+they would be installed along with the library.
+
+## Installation
+
+The last step of building as written above is `make install` i.e. the installation of the built libquentier library. It is important
+to actually install the library as some of its public headers contain code generated automatically during `cmake` step. These files
+need to be installed in order to be visible to the client code along with other headers.
