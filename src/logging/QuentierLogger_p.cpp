@@ -29,7 +29,7 @@ QuentierFileLogWriter::QuentierFileLogWriter(const MaxSizeBytes & maxSizeBytes,
     m_currentLogFileSize(0),
     m_currentOldLogFilesCount(0)
 {
-    QString logFileDirPath = applicationPersistentStoragePath() + QStringLiteral("/logs-quentier");
+    QString logFileDirPath = QuentierLogger::logFilesDirPath();
 
     QDir logFileDir(logFileDirPath);
     if (Q_UNLIKELY(!logFileDir.exists()))
@@ -203,6 +203,11 @@ QuentierLogger::QuentierLogger(QObject * parent) :
         m_pImpl = new QuentierLoggerImpl(this);
         addLogWriter(new QuentierFileLogWriter(MaxSizeBytes(104857600), MaxOldLogFilesCount(2)));
     }
+}
+
+QString QuentierLogger::logFilesDirPath()
+{
+    return applicationPersistentStoragePath() + QStringLiteral("/logs-quentier");
 }
 
 void QuentierLogger::addLogWriter(IQuentierLogWriter * pLogWriter)

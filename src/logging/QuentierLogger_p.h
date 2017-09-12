@@ -117,6 +117,8 @@ class QuentierLogger: public QObject
 public:
     static QuentierLogger & instance();
 
+    static QString logFilesDirPath();
+
     void addLogWriter(IQuentierLogWriter * pWriter);
     void removeLogWriter(IQuentierLogWriter * pWriter);
 

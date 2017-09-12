@@ -33,4 +33,9 @@ void QuentierAddStdOutLogDestination()
     logger.addLogWriter(new QuentierConsoleLogWriter);
 }
 
+QString QuentierLogFilesDirPath()
+{
+    return QuentierLogger::logFilesDirPath();
+}
+
 } // namespace quentier
