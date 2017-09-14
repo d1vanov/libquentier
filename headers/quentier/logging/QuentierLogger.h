@@ -44,6 +44,8 @@ void QUENTIER_EXPORT QuentierInitializeLogging();
 
 void QUENTIER_EXPORT QuentierAddLogEntry(const QString & message, const LogLevel::type logLevel);
 
+LogLevel::type QUENTIER_EXPORT QuentierMinLogLevel();
+
 void QUENTIER_EXPORT QuentierSetMinLogLevel(const LogLevel::type logLevel);
 
 void QUENTIER_EXPORT QuentierAddStdOutLogDestination();
