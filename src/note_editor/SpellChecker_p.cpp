@@ -287,10 +287,6 @@ void SpellCheckerPrivate::onDictionariesFound(SpellCheckerDictionariesFinder::Di
     ApplicationSettings settings;
     settings.beginGroup(SPELL_CHECKER_FOUND_DICTIONARIES_GROUP);
 
-    // Removing any previously existing array
-    settings.setValue(SPELL_CHECKER_FOUND_DICTIONARIES_ARRAY, QVariant(QStringList()));
-    // TODO: verify that actually works as expected
-
     settings.beginWriteArray(SPELL_CHECKER_FOUND_DICTIONARIES_ARRAY);
     int index = 0;
     for(auto it = files.constBegin(), end = files.constEnd(); it != end; ++it)
@@ -493,10 +489,6 @@ void SpellCheckerPrivate::scanSystemDictionaries()
         ApplicationSettings settings;
         settings.beginGroup(SPELL_CHECKER_FOUND_DICTIONARIES_GROUP);
 
-        // Removing any previously existing array
-        settings.setValue(SPELL_CHECKER_FOUND_DICTIONARIES_ARRAY, QVariant(QStringList()));
-        // TODO: verify that actually works as expected
-
         settings.beginWriteArray(SPELL_CHECKER_FOUND_DICTIONARIES_ARRAY);
         int index = 0;
         for(auto it = m_systemDictionaries.constBegin(), end = m_systemDictionaries.constEnd(); it != end; ++it)
@@ -507,7 +499,8 @@ void SpellCheckerPrivate::scanSystemDictionaries()
             settings.setValue(SPELL_CHECKER_FOUND_DICTIONARIES_LANGUAGE_KEY, dictionaryName);
 
             const Dictionary & dictionary = it.value();
-            QString dicFilePath = dictionary.m_dictionaryPath + QStringLiteral("/") + dictionaryName;
+            QFileInfo dicFileInfo(dictionary.m_dictionaryPath);
+            QString dicFilePath = dicFileInfo.absolutePath() + QStringLiteral("/") + dictionaryName;
             settings.setValue(SPELL_CHECKER_FOUND_DICTIONARIES_DIC_FILE_ITEM, dicFilePath + QStringLiteral(".dic"));
             settings.setValue(SPELL_CHECKER_FOUND_DICTIONARIES_AFF_FILE_ITEM, dicFilePath + QStringLiteral(".aff"));
 
