@@ -71,13 +71,14 @@ QString QUENTIER_EXPORT QuentierLogFilesDirPath();
         QDebug __quentierLogStrm(&__quentierLogEntry); \
         __QNLOG_SETUP_HELPER(__quentierLogStrm); \
         QString __quentierLogRelativeFileName(QStringLiteral(__FILE__)); \
-        int prefixIndex = __quentierLogRelativeFileName.indexOf(QStringLiteral("libquentier"), Qt::CaseInsensitive); \
+        QString __quentierLogRelativeFileNameLower = __quentierLogRelativeFileName.toLower(); \
+        int prefixIndex = __quentierLogRelativeFileNameLower.indexOf(QStringLiteral("libquentier"), Qt::CaseInsensitive); \
         if (prefixIndex >= 0) { \
             __quentierLogRelativeFileName.remove(0, prefixIndex); \
         } \
         else { \
             QString __quentierAppName = QApplication::applicationName().toLower(); \
-            prefixIndex = __quentierLogRelativeFileName.indexOf(__quentierAppName, Qt::CaseInsensitive); \
+            prefixIndex = __quentierLogRelativeFileNameLower.indexOf(__quentierAppName, Qt::CaseInsensitive); \
             if (prefixIndex >= 0) { \
                 __quentierLogRelativeFileName.remove(0, prefixIndex + __quentierAppName.size() + 1); \
             } \
