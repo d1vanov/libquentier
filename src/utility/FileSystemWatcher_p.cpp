@@ -108,8 +108,6 @@ void FileSystemWatcherPrivate::removePaths(const QStringList & paths)
 
 void FileSystemWatcherPrivate::onFileChanged(const QString & path)
 {
-    QNTRACE("FileSystemWatcherPrivate::onFileChanged: " << path);
-
     auto fileIt = m_watchedFiles.find(path);
     if (Q_UNLIKELY(fileIt == m_watchedFiles.end())) {
         QNWARNING("Received file changed event for file not listed as watched");
