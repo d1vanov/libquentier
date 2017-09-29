@@ -2654,12 +2654,15 @@ bool NoteEditorPrivate::checkNoteSize(const QString & newNoteContent) const
     qint64 noteSize = noteResourcesSize();
     noteSize += newNoteContent.size();
 
+    QNTRACE(QStringLiteral("New note content size = ") << newNoteContent.size()
+            << QStringLiteral(", total note size = ") << noteSize);
+
     if (m_pNote->hasNoteLimits())
     {
-        QNTRACE(QStringLiteral("Note has its own limits, will use them to check the note size"));
-
         const qevercloud::NoteLimits & noteLimits = m_pNote->noteLimits();
-        if (noteLimits.noteSizeMax.isSet() && (Q_UNLIKELY(noteLimits.noteSizeMax.ref() > noteSize))) {
+        QNTRACE(QStringLiteral("Note has its own limits, will use them to check the note size: ") << noteLimits);
+
+        if (noteLimits.noteSizeMax.isSet() && (Q_UNLIKELY(noteLimits.noteSizeMax.ref() < noteSize))) {
             ErrorString error(QT_TR_NOOP("Can't save note: note size (text + resources) exceeds the allowed maximum"));
             error.details() = humanReadableSize(static_cast<quint64>(noteLimits.noteSizeMax.ref()));
             QNINFO(error);
@@ -6423,11 +6426,15 @@ void NoteEditorPrivate::flipEnToDoCheckboxState(const quint64 enToDoIdNumber)
 
 qint64 NoteEditorPrivate::noteResourcesSize() const
 {
+    QNTRACE(QStringLiteral("NoteEditorPrivate::noteResourcesSize"));
+
     if (Q_UNLIKELY(!m_pNote)) {
+        QNTRACE(QStringLiteral("No note - returning zero"));
         return qint64(0);
     }
 
     if (Q_UNLIKELY(!m_pNote->hasResources())) {
+        QNTRACE(QStringLiteral("Note has no resources - returning zero"));
         return qint64(0);
     }
 
@@ -6436,6 +6443,7 @@ qint64 NoteEditorPrivate::noteResourcesSize() const
     for(auto it = resources.constBegin(), end = resources.constEnd(); it != end; ++it)
     {
         const Resource & resource = *it;
+        QNTRACE(QStringLiteral("Computing size contributions for resource: ") << resource);
 
         if (resource.hasDataSize()) {
             size += resource.dataSize();
@@ -6450,6 +6458,7 @@ qint64 NoteEditorPrivate::noteResourcesSize() const
         }
     }
 
+    QNTRACE(QStringLiteral("Computed note resources size: ") << size);
     return size;
 }
 
