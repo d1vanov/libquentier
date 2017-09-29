@@ -6559,7 +6559,7 @@ bool LocalStorageManagerPrivate::insertOrReplaceNoteLimits(const QString & noteL
     query.bindValue(QStringLiteral(":noteLocalUid"), noteLocalUid);
 
 #define BIND_LIMIT(limit) \
-    query.bindValue(QStringLiteral(":" #limit), (noteLimits.limit.isSet() ? (noteLimits.limit.ref() ? 1 : 0) : nullValue))
+    query.bindValue(QStringLiteral(":" #limit), (noteLimits.limit.isSet() ? noteLimits.limit.ref() : nullValue))
 
     BIND_LIMIT(noteResourceCountMax);
     BIND_LIMIT(uploadLimit);

@@ -681,6 +681,13 @@ void CoreTester::localStorageManagedIndividualNoteTest()
         noteAttributes.sourceApplication = QStringLiteral("source application");
         noteAttributes.shareDate = 2;
 
+        qevercloud::NoteLimits & noteLimits = note.noteLimits();
+        noteLimits.noteResourceCountMax = 50;
+        noteLimits.uploadLimit = 268435456;
+        noteLimits.resourceSizeMax = 268435456;
+        noteLimits.noteSizeMax = 268435456;
+        noteLimits.uploaded = 100;
+
         note.unsetLocalUid();
 
         errorMessage.clear();
