@@ -766,6 +766,10 @@ const qevercloud::NoteRestrictions & Note::noteRestrictions() const
 
 qevercloud::NoteRestrictions & Note::noteRestrictions()
 {
+    if (!d->m_qecNote.restrictions.isSet()) {
+        d->m_qecNote.restrictions = qevercloud::NoteRestrictions();
+    }
+
     return d->m_qecNote.restrictions.ref();
 }
 
@@ -786,6 +790,10 @@ const qevercloud::NoteLimits & Note::noteLimits() const
 
 qevercloud::NoteLimits & Note::noteLimits()
 {
+    if (!d->m_qecNote.limits.isSet()) {
+        d->m_qecNote.limits = qevercloud::NoteLimits();
+    }
+
     return d->m_qecNote.limits.ref();
 }
 
