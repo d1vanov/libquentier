@@ -1102,6 +1102,94 @@ QTextStream & operator<<(QTextStream & strm, const qevercloud::SyncState & syncS
     return strm;
 }
 
+QTextStream & operator<<(QTextStream & strm, const qevercloud::SyncChunkFilter & filter)
+{
+    strm << QStringLiteral("qevercloud::SyncChunkFilter {\n")
+         << QStringLiteral("  include notes = ") << (filter.includeNotes.isSet()
+                                                     ? (filter.includeNotes.ref()
+                                                        ? QStringLiteral("true")
+                                                        : QStringLiteral("false"))
+                                                     : QStringLiteral("<not set>")) << QStringLiteral(";\n")
+         << QStringLiteral("  include note resources = ") << (filter.includeNoteResources.isSet()
+                                                              ? (filter.includeNoteResources.ref()
+                                                                 ? QStringLiteral("true")
+                                                                 : QStringLiteral("false"))
+                                                              : QStringLiteral("<not set>")) << QStringLiteral(";\n")
+         << QStringLiteral("  include note attributes = ") << (filter.includeNoteAttributes.isSet()
+                                                               ? (filter.includeNoteAttributes.ref()
+                                                                  ? QStringLiteral("true")
+                                                                  : QStringLiteral("false"))
+                                                               : QStringLiteral("<not set>")) << QStringLiteral(";\n")
+         << QStringLiteral("  include notebooks = ") << (filter.includeNotebooks.isSet()
+                                                         ? (filter.includeNotebooks.ref()
+                                                            ? QStringLiteral("true")
+                                                            : QStringLiteral("false"))
+                                                         : QStringLiteral("<not set>")) << QStringLiteral(";\n")
+         << QStringLiteral("  include tags = ") << (filter.includeTags.isSet()
+                                                    ? (filter.includeTags.ref()
+                                                       ? QStringLiteral("true")
+                                                       : QStringLiteral("false"))
+                                                    : QStringLiteral("<not set>")) << QStringLiteral(";\n")
+         << QStringLiteral("  include saved searches = ") << (filter.includeSearches.isSet()
+                                                              ? (filter.includeSearches.ref()
+                                                                 ? QStringLiteral("true")
+                                                                 : QStringLiteral("false"))
+                                                              : QStringLiteral("<not set>")) << QStringLiteral(";\n")
+         << QStringLiteral("  include resources = ") << (filter.includeResources.isSet()
+                                                         ? (filter.includeResources.ref()
+                                                            ? QStringLiteral("true")
+                                                            : QStringLiteral("false"))
+                                                         : QStringLiteral("<not set>")) << QStringLiteral(";\n")
+         << QStringLiteral("  include linked notebooks = ") << (filter.includeLinkedNotebooks.isSet()
+                                                                ? (filter.includeLinkedNotebooks.ref()
+                                                                   ? QStringLiteral("true")
+                                                                   : QStringLiteral("false"))
+                                                                : QStringLiteral("<not set>")) << QStringLiteral(";\n")
+         << QStringLiteral("  include expunged = ") << (filter.includeExpunged.isSet()
+                                                        ? (filter.includeExpunged.ref()
+                                                           ? QStringLiteral("true")
+                                                           : QStringLiteral("false"))
+                                                        : QStringLiteral("<not set>")) << QStringLiteral(";\n")
+         << QStringLiteral("  include note application data full map = ") << (filter.includeNoteApplicationDataFullMap.isSet()
+                                                                              ? (filter.includeNoteApplicationDataFullMap.ref()
+                                                                                 ? QStringLiteral("true")
+                                                                                 : QStringLiteral("false"))
+                                                                              : QStringLiteral("<not set>")) << QStringLiteral(";\n")
+         << QStringLiteral("  include resource application data full map = ") << (filter.includeResourceApplicationDataFullMap.isSet()
+                                                                                  ? (filter.includeResourceApplicationDataFullMap.ref()
+                                                                                     ? QStringLiteral("true")
+                                                                                     : QStringLiteral("false"))
+                                                                                  : QStringLiteral("<not set>")) << QStringLiteral(";\n")
+         << QStringLiteral("  include shared notes = ") << (filter.includeSharedNotes.isSet()
+                                                            ? (filter.includeSharedNotes.ref()
+                                                               ? QStringLiteral("true")
+                                                               : QStringLiteral("false"))
+                                                            : QStringLiteral("<not set>")) << QStringLiteral(";\n")
+         << QStringLiteral("  omit shared notebooks = ") << (filter.omitSharedNotebooks.isSet()
+                                                             ? (filter.omitSharedNotebooks.ref()
+                                                                ? QStringLiteral("true")
+                                                                : QStringLiteral("false"))
+                                                            : QStringLiteral("<not set>")) << QStringLiteral(";\n")
+         << QStringLiteral("  require note content class = ") << (filter.requireNoteContentClass.isSet()
+                                                                  ? filter.requireNoteContentClass.ref()
+                                                                  : QStringLiteral("<not set>")) << QStringLiteral(";\n");
+
+    strm << QStringLiteral("  notebook guids: ");
+    if (filter.notebookGuids.isSet())
+    {
+        strm << QStringLiteral("\n");
+        for(auto it = filter.notebookGuids->constBegin(), end = filter.notebookGuids->constEnd(); it != end; ++it) {
+            strm << QStringLiteral("    ") << *it << QStringLiteral("\n");
+        }
+    }
+    else
+    {
+        strm << QStringLiteral("<not set>;\n");
+    }
+
+    return strm;
+}
+
 #if QEVERCLOUD_HAS_OAUTH
 QTextStream & operator<<(QTextStream & strm, const qevercloud::EvernoteOAuthWebView::OAuthResult & result)
 {

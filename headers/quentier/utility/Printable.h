@@ -155,6 +155,7 @@ QUENTIER_DECLARE_PRINTABLE(qevercloud::NoteLimits)
 QUENTIER_DECLARE_PRINTABLE(qevercloud::Note)
 QUENTIER_DECLARE_PRINTABLE(qevercloud::EDAMErrorCode::type)
 QUENTIER_DECLARE_PRINTABLE(qevercloud::SyncState)
+QUENTIER_DECLARE_PRINTABLE(qevercloud::SyncChunkFilter)
 
 #if QEVERCLOUD_HAS_OAUTH
 QUENTIER_DECLARE_PRINTABLE(qevercloud::EvernoteOAuthWebView::OAuthResult)
