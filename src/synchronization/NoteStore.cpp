@@ -342,6 +342,10 @@ qint32 NoteStore::getSyncChunk(const qint32 afterUSN, const qint32 maxEntries,
                                qevercloud::SyncChunk & syncChunk,
                                ErrorString & errorDescription, qint32 & rateLimitSeconds)
 {
+    QNDEBUG(QStringLiteral("NoteStore::getSyncChunk: after USN = ") << afterUSN
+            << QStringLiteral(", max entries = ") << maxEntries
+            << QStringLiteral(", sync chunk filter = ") << filter);
+
     try
     {
         syncChunk = m_pQecNoteStore->getFilteredSyncChunk(afterUSN, maxEntries, filter);
@@ -401,6 +405,10 @@ qint32 NoteStore::getLinkedNotebookSyncChunk(const qevercloud::LinkedNotebook & 
                                              const bool fullSyncOnly, qevercloud::SyncChunk & syncChunk,
                                              ErrorString & errorDescription, qint32 & rateLimitSeconds)
 {
+    QNDEBUG(QStringLiteral("NoteStore::getLinkedNotebookSyncChunk: linked notebook: ") << linkedNotebook
+            << QStringLiteral("\nAfter USN = ") << afterUSN << QStringLiteral(", max entries = ") << maxEntries
+            << QStringLiteral(", full sync only = ") << (fullSyncOnly ? QStringLiteral("true") : QStringLiteral("false")));
+
     try
     {
         syncChunk = m_pQecNoteStore->getLinkedNotebookSyncChunk(linkedNotebook, afterUSN,

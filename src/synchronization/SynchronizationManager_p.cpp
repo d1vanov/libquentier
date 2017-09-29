@@ -1666,6 +1666,9 @@ void SynchronizationManagerPrivate::updatePersistentSyncSettings()
         appSettings.setValue(LINKED_NOTEBOOK_GUID_KEY, guid);
         appSettings.setValue(LINKED_NOTEBOOK_LAST_UPDATE_COUNT_KEY, updateCountIt.value());
         appSettings.setValue(LINKED_NOTEBOOK_LAST_SYNC_TIME_KEY, syncTimeIt.value());
+        QNTRACE(QStringLiteral("Persisted last sync parameters for a linked notebook: guid = ") << guid
+                << QStringLiteral(", update count = ") << updateCountIt.value()
+                << QStringLiteral(", sync time = ") << printableDateTimeFromTimestamp(syncTimeIt.value()));
 
         ++counter;
     }

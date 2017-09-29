@@ -164,7 +164,6 @@ RemoteToLocalSynchronizationManager::RemoteToLocalSynchronizationManager(IManage
     m_authenticationTokenExpirationTimesByLinkedNotebookGuid(),
     m_pendingAuthenticationTokensForLinkedNotebooks(false),
     m_syncStatesByLinkedNotebookGuid(),
-    m_lastSynchronizedUsnByLinkedNotebookGuid(),
     m_lastUpdateCountByLinkedNotebookGuid(),
     m_lastSyncTimeByLinkedNotebookGuid(),
     m_linkedNotebookGuidsForWhichFullSyncWasPerformed(),
@@ -4833,13 +4832,6 @@ bool RemoteToLocalSynchronizationManager::downloadLinkedNotebooksSyncChunks()
 
         bool fullSyncOnly = false;
 
-        auto lastSynchronizedUsnIt = m_lastSynchronizedUsnByLinkedNotebookGuid.find(linkedNotebookGuid);
-        if (lastSynchronizedUsnIt == m_lastSynchronizedUsnByLinkedNotebookGuid.end()) {
-            lastSynchronizedUsnIt = m_lastSynchronizedUsnByLinkedNotebookGuid.insert(linkedNotebookGuid, 0);
-            fullSyncOnly = true;
-        }
-        qint32 afterUsn = lastSynchronizedUsnIt.value();
-
         auto lastSyncTimeIt = m_lastSyncTimeByLinkedNotebookGuid.find(linkedNotebookGuid);
         if (lastSyncTimeIt == m_lastSyncTimeByLinkedNotebookGuid.end()) {
             lastSyncTimeIt = m_lastSyncTimeByLinkedNotebookGuid.insert(linkedNotebookGuid, 0);
@@ -4858,16 +4850,23 @@ bool RemoteToLocalSynchronizationManager::downloadLinkedNotebooksSyncChunks()
             continue;
         }
 
+        qint32 afterUsn = lastUpdateCount;
+
         if (m_onceSyncDone || (afterUsn != 0))
         {
             auto syncStateIter = m_syncStatesByLinkedNotebookGuid.find(linkedNotebookGuid);
             if (syncStateIter == m_syncStatesByLinkedNotebookGuid.end())
             {
+                QNTRACE(QStringLiteral("Found no cached sync state for linked notebook guid ") << linkedNotebookGuid
+                        << QStringLiteral(", will try to receive it from the remote service"));
+
                 qevercloud::SyncState syncState;
                 bool error = false;
                 bool asyncWait = false;
                 getLinkedNotebookSyncState(linkedNotebook, m_authenticationToken, syncState, asyncWait, error);
                 if (asyncWait || error) {
+                    QNTRACE(QStringLiteral("Async wait = ") << (asyncWait ? QStringLiteral("true") : QStringLiteral("false"))
+                            << QStringLiteral(", error = ") << (error ? QStringLiteral("true") : QStringLiteral("false")));
                     return false;
                 }
 
@@ -5008,7 +5007,6 @@ bool RemoteToLocalSynchronizationManager::downloadLinkedNotebooksSyncChunks()
             }
         }
 
-        lastSynchronizedUsnIt.value() = afterUsn;
         lastSyncTimeIt.value() = lastSyncTime;
         lastUpdateCountIt.value() = lastUpdateCount;
 
@@ -5579,7 +5577,6 @@ void RemoteToLocalSynchronizationManager::clearAll()
     m_authenticationTokensAndShardIdsByLinkedNotebookGuid.clear();
     m_authenticationTokenExpirationTimesByLinkedNotebookGuid.clear();
 
-    m_lastSynchronizedUsnByLinkedNotebookGuid.clear();
     m_lastSyncTimeByLinkedNotebookGuid.clear();
     m_lastUpdateCountByLinkedNotebookGuid.clear();
     m_linkedNotebookGuidsForWhichFullSyncWasPerformed.clear();
@@ -7850,7 +7847,6 @@ void RemoteToLocalSynchronizationManager::resolveSyncConflict(const qevercloud::
         return;
     }
 
-
     bool shouldCreateConflictingNote = true;
     if (localConflict.hasGuid() && (localConflict.guid() == remoteNote.guid.ref()))
     {
@@ -7859,6 +7855,10 @@ void RemoteToLocalSynchronizationManager::resolveSyncConflict(const qevercloud::
         if (!localConflict.isDirty()) {
             QNDEBUG(QStringLiteral("The local note is not dirty, can just override it with remote changes"));
             shouldCreateConflictingNote = false;
+        }
+        else if (localConflict.hasUpdateSequenceNumber() && (localConflict.updateSequenceNumber() == remoteNote.updateSequenceNum.ref())) {
+            QNDEBUG(QStringLiteral("The notes match by update sequence number but the local note is dirty => local note should override the remote changes"));
+            return;
         }
     }
 
