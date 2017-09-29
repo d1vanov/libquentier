@@ -193,6 +193,7 @@ private:
     void tryUpdateLastSyncStatus();
     void updatePersistentSyncSettings();
 
+    NoteStore * noteStoreForLinkedNotebook(const LinkedNotebook & linkedNotebook);
     NoteStore * noteStoreForLinkedNotebookGuid(const QString & guid);
 
 private:

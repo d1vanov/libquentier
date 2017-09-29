@@ -4208,7 +4208,7 @@ bool RemoteToLocalSynchronizationManager::launchFullSyncStaleDataItemsExpungersF
 
         FullSyncStaleDataItemsExpunger::SyncedGuids syncedGuids;
 
-        for(auto nit = m_linkedNotebookGuidsByNotebookGuids.constBegin(), nend = m_linkedNotebookGuidsByTagGuids.constEnd(); nit != nend; ++nit)
+        for(auto nit = m_linkedNotebookGuidsByNotebookGuids.constBegin(), nend = m_linkedNotebookGuidsByNotebookGuids.constEnd(); nit != nend; ++nit)
         {
             const QString & currentLinkedNotebookGuid = nit.value();
             if (currentLinkedNotebookGuid != linkedNotebookGuid) {
@@ -4737,7 +4737,7 @@ void RemoteToLocalSynchronizationManager::getLinkedNotebookSyncState(const Linke
         return;
     }
 
-    NoteStore * pNoteStore = m_manager.noteStoreForLinkedNotebookGuid(linkedNotebook.guid());
+    NoteStore * pNoteStore = m_manager.noteStoreForLinkedNotebook(linkedNotebook);
     if (Q_UNLIKELY(!pNoteStore)) {
         errorDescription.setBase(QT_TR_NOOP("Can't find or create note store for the linked notebook"));
         emit failure(errorDescription);
@@ -4893,7 +4893,7 @@ bool RemoteToLocalSynchronizationManager::downloadLinkedNotebooksSyncChunks()
             }
         }
 
-        NoteStore * pNoteStore = m_manager.noteStoreForLinkedNotebookGuid(linkedNotebookGuid);
+        NoteStore * pNoteStore = m_manager.noteStoreForLinkedNotebook(linkedNotebook);
         if (Q_UNLIKELY(!pNoteStore)) {
             ErrorString error(QT_TR_NOOP("Can't find or create note store for the linked notebook"));
             emit failure(error);
@@ -5754,14 +5754,40 @@ void RemoteToLocalSynchronizationManager::getFullNoteDataAsync(const Note & note
             ErrorString errorDescription(QT_TR_NOOP("Can't find the authentication token corresponding to the linked notebook"));
             APPEND_NOTE_DETAILS(errorDescription, note)
             QNWARNING(errorDescription << QStringLiteral(": ") << note);
+            emit failure(errorDescription);
             return;
         }
 
-        pNoteStore = m_manager.noteStoreForLinkedNotebookGuid(linkedNotebookGuid);
+        authToken = authTokenIt.value().first;
+        const QString & linkedNotebookShardId = authTokenIt.value().second;
+
+        QString linkedNotebookNoteStoreUrl;
+        for(auto it = m_allLinkedNotebooks.constBegin(), end = m_allLinkedNotebooks.constEnd(); it != end; ++it)
+        {
+            if (it->hasGuid() && (it->guid() == linkedNotebookGuid) && it->hasNoteStoreUrl()) {
+                linkedNotebookNoteStoreUrl = it->noteStoreUrl();
+                break;
+            }
+        }
+
+        if (linkedNotebookNoteStoreUrl.isEmpty()) {
+            ErrorString errorDescription(QT_TR_NOOP("Can't find the note store URL corresponding to the linked notebook"));
+            APPEND_NOTE_DETAILS(errorDescription, note)
+            QNWARNING(errorDescription << QStringLiteral(": ") << note);
+            emit failure(errorDescription);
+            return;
+        }
+
+        LinkedNotebook linkedNotebook;
+        linkedNotebook.setGuid(linkedNotebookGuid);
+        linkedNotebook.setShardId(linkedNotebookShardId);
+        linkedNotebook.setNoteStoreUrl(linkedNotebookNoteStoreUrl);
+        pNoteStore = m_manager.noteStoreForLinkedNotebook(linkedNotebook);
         if (Q_UNLIKELY(!pNoteStore)) {
             ErrorString errorDescription(QT_TR_NOOP("Can't find or create note store for "));
             APPEND_NOTE_DETAILS(errorDescription, note)
             QNWARNING(errorDescription << QStringLiteral(": ") << note);
+            emit failure(errorDescription);
             return;
         }
 
@@ -5769,10 +5795,9 @@ void RemoteToLocalSynchronizationManager::getFullNoteDataAsync(const Note & note
             ErrorString errorDescription(QT_TR_NOOP("Internal error: empty note store url for the linked notebook's note store"));
             APPEND_NOTE_DETAILS(errorDescription, note)
             QNWARNING(errorDescription << QStringLiteral(": ") << note);
+            emit failure(errorDescription);
             return;
         }
-
-        authToken = authTokenIt.value().first;
 
         QObject::connect(pNoteStore, QNSIGNAL(NoteStore,getNoteAsyncFinished,qint32,qevercloud::Note,qint32,ErrorString),
                          this, QNSLOT(RemoteToLocalSynchronizationManager,onGetNoteAsyncFinished,qint32,qevercloud::Note,qint32,ErrorString),

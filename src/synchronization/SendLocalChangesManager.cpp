@@ -1200,12 +1200,16 @@ void SendLocalChangesManager::sendTags()
         qint32 errorCode = qevercloud::EDAMErrorCode::UNKNOWN;
 
         QString linkedNotebookAuthToken;
+        QString linkedNotebookShardId;
+        QString linkedNotebookNoteStoreUrl;
+
         if (tag.hasLinkedNotebookGuid())
         {
             auto cit = m_authenticationTokensAndShardIdsByLinkedNotebookGuid.find(tag.linkedNotebookGuid());
             if (cit != m_authenticationTokensAndShardIdsByLinkedNotebookGuid.end())
             {
                 linkedNotebookAuthToken = cit.value().first;
+                linkedNotebookShardId = cit.value().second;
             }
             else
             {
@@ -1229,13 +1233,39 @@ void SendLocalChangesManager::sendTags()
                 emit failure(errorDescription);
                 return;
             }
+
+            auto sit = std::find_if(m_linkedNotebookAuthData.begin(),
+                                    m_linkedNotebookAuthData.end(),
+                                    CompareLinkedNotebookAuthDataByGuid(tag.linkedNotebookGuid()));
+            if (sit != m_linkedNotebookAuthData.end())
+            {
+                linkedNotebookNoteStoreUrl = sit->m_noteStoreUrl;
+            }
+            else
+            {
+                errorDescription.setBase(QT_TR_NOOP("Couldn't find the note store URL "
+                                                    "for a linked notebook when attempting "
+                                                    "to create or update a tag from it"));
+                if (tag.hasName()) {
+                    errorDescription.details() = tag.name();
+                }
+
+                QNWARNING(errorDescription << QStringLiteral(", tag: ") << tag);
+
+                emit failure(errorDescription);
+                return;
+            }
         }
 
-        NoteStore * pNoteStore = (tag.hasLinkedNotebookGuid()
-                                  ? m_manager.noteStoreForLinkedNotebookGuid(tag.linkedNotebookGuid())
-                                  : &(m_manager.noteStore()));
+        NoteStore * pNoteStore = Q_NULLPTR;
         if (tag.hasLinkedNotebookGuid())
         {
+            LinkedNotebook linkedNotebook;
+            linkedNotebook.setGuid(tag.linkedNotebookGuid());
+            linkedNotebook.setShardId(linkedNotebookShardId);
+            linkedNotebook.setNoteStoreUrl(linkedNotebookNoteStoreUrl);
+            pNoteStore = m_manager.noteStoreForLinkedNotebook(linkedNotebook);
+
             if (Q_UNLIKELY(!pNoteStore)) {
                 errorDescription.setBase(QT_TR_NOOP("Can't send new or modified tag: can't find or create a note store for the linked notebook"));
                 QNWARNING(errorDescription << QStringLiteral(", linked notebook guid = ") << tag.linkedNotebookGuid());
@@ -1249,6 +1279,10 @@ void SendLocalChangesManager::sendTags()
                 emit failure(errorDescription);
                 return;
             }
+        }
+        else
+        {
+            pNoteStore = &(m_manager.noteStore());
         }
 
         bool creatingTag = !tag.hasUpdateSequenceNumber();
@@ -1505,12 +1539,16 @@ void SendLocalChangesManager::sendNotebooks()
         qint32 errorCode = qevercloud::EDAMErrorCode::UNKNOWN;
 
         QString linkedNotebookAuthToken;
+        QString linkedNotebookShardId;
+        QString linkedNotebookNoteStoreUrl;
+
         if (notebook.hasLinkedNotebookGuid())
         {
             auto cit = m_authenticationTokensAndShardIdsByLinkedNotebookGuid.find(notebook.linkedNotebookGuid());
             if (cit != m_authenticationTokensAndShardIdsByLinkedNotebookGuid.end())
             {
                 linkedNotebookAuthToken = cit.value().first;
+                linkedNotebookShardId = cit.value().second;
             }
             else
             {
@@ -1534,13 +1572,38 @@ void SendLocalChangesManager::sendNotebooks()
                 emit failure(errorDescription);
                 return;
             }
+
+            auto sit = std::find_if(m_linkedNotebookAuthData.begin(),
+                                    m_linkedNotebookAuthData.end(),
+                                    CompareLinkedNotebookAuthDataByGuid(notebook.linkedNotebookGuid()));
+            if (sit != m_linkedNotebookAuthData.end())
+            {
+                linkedNotebookNoteStoreUrl = sit->m_noteStoreUrl;
+            }
+            else
+            {
+                errorDescription.setBase(QT_TR_NOOP("Couldn't find the note store URL "
+                                                    "for a linked notebook when attempting "
+                                                    "to create or update a notebook from it"));
+                if (notebook.hasName()) {
+                    errorDescription.details() = notebook.name();
+                }
+
+                QNWARNING(errorDescription << QStringLiteral(", notebook: ") << notebook);
+
+                emit failure(errorDescription);
+                return;
+            }
         }
 
-        NoteStore * pNoteStore = (notebook.hasLinkedNotebookGuid()
-                                  ? m_manager.noteStoreForLinkedNotebookGuid(notebook.linkedNotebookGuid())
-                                  : &(m_manager.noteStore()));
+        NoteStore * pNoteStore = Q_NULLPTR;
         if (notebook.hasLinkedNotebookGuid())
         {
+            LinkedNotebook linkedNotebook;
+            linkedNotebook.setGuid(notebook.linkedNotebookGuid());
+            linkedNotebook.setShardId(linkedNotebookShardId);
+            linkedNotebook.setNoteStoreUrl(linkedNotebookNoteStoreUrl);
+            pNoteStore = m_manager.noteStoreForLinkedNotebook(linkedNotebook);
             if (Q_UNLIKELY(!pNoteStore)) {
                 errorDescription.setBase(QT_TR_NOOP("Can't send new or modified notebook: can't find or create a note store for the linked notebook"));
                 QNWARNING(errorDescription << QStringLiteral(", linked notebook guid = ") << notebook.linkedNotebookGuid());
@@ -1554,6 +1617,10 @@ void SendLocalChangesManager::sendNotebooks()
                 emit failure(errorDescription);
                 return;
             }
+        }
+        else
+        {
+            pNoteStore = &(m_manager.noteStore());
         }
 
         bool creatingNotebook = !notebook.hasUpdateSequenceNumber();
@@ -1742,18 +1809,22 @@ void SendLocalChangesManager::sendNotes()
         const Notebook & notebook = nit.value();
 
         QString linkedNotebookAuthToken;
+        QString linkedNotebookShardId;
+        QString linkedNotebookNoteStoreUrl;
+
         if (notebook.hasLinkedNotebookGuid())
         {
             auto cit = m_authenticationTokensAndShardIdsByLinkedNotebookGuid.find(notebook.linkedNotebookGuid());
             if (cit != m_authenticationTokensAndShardIdsByLinkedNotebookGuid.end())
             {
                 linkedNotebookAuthToken = cit.value().first;
+                linkedNotebookShardId = cit.value().second;
             }
             else
             {
                 errorDescription.setBase(QT_TR_NOOP("Couldn't find the authenticaton token "
                                                     "for a linked notebook when attempting "
-                                                    "to create or update a notebook"));
+                                                    "to create or update a note from that notebook"));
                 QNWARNING(errorDescription << QStringLiteral(", notebook: ") << notebook);
 
                 auto sit = std::find_if(m_linkedNotebookAuthData.begin(), m_linkedNotebookAuthData.end(),
@@ -1766,15 +1837,40 @@ void SendLocalChangesManager::sendNotes()
                 emit failure(errorDescription);
                 return;
             }
+
+            auto sit = std::find_if(m_linkedNotebookAuthData.begin(), m_linkedNotebookAuthData.end(),
+                                    CompareLinkedNotebookAuthDataByGuid(notebook.linkedNotebookGuid()));
+            if (sit != m_linkedNotebookAuthData.end())
+            {
+                linkedNotebookNoteStoreUrl = sit->m_noteStoreUrl;
+            }
+            else
+            {
+                errorDescription.setBase(QT_TR_NOOP("Couldn't find the note store URL "
+                                                    "for a linked notebook when attempting "
+                                                    "to create or update a note from it"));
+                if (notebook.hasName()) {
+                    errorDescription.details() = notebook.name();
+                }
+
+                QNWARNING(errorDescription << QStringLiteral(", notebook: ") << notebook);
+
+                emit failure(errorDescription);
+                return;
+            }
         }
 
-        NoteStore * pNoteStore = (notebook.hasLinkedNotebookGuid()
-                                  ? m_manager.noteStoreForLinkedNotebookGuid(notebook.linkedNotebookGuid())
-                                  : &(m_manager.noteStore()));
+        NoteStore * pNoteStore = Q_NULLPTR;
         if (notebook.hasLinkedNotebookGuid())
         {
+            LinkedNotebook linkedNotebook;
+            linkedNotebook.setGuid(notebook.linkedNotebookGuid());
+            linkedNotebook.setShardId(linkedNotebookShardId);
+            linkedNotebook.setNoteStoreUrl(linkedNotebookNoteStoreUrl);
+            pNoteStore = m_manager.noteStoreForLinkedNotebook(linkedNotebook);
+
             if (Q_UNLIKELY(!pNoteStore)) {
-                errorDescription.setBase(QT_TR_NOOP("Can't send new or modified notebook: can't find or create a note store for the linked notebook"));
+                errorDescription.setBase(QT_TR_NOOP("Can't send new or modified note: can't find or create a note store for the linked notebook"));
                 QNWARNING(errorDescription << QStringLiteral(", linked notebook guid = ") << notebook.linkedNotebookGuid());
                 emit failure(errorDescription);
                 return;
@@ -1786,6 +1882,10 @@ void SendLocalChangesManager::sendNotes()
                 emit failure(errorDescription);
                 return;
             }
+        }
+        else
+        {
+            pNoteStore = &(m_manager.noteStore());
         }
 
         bool creatingNote = !note.hasUpdateSequenceNumber();

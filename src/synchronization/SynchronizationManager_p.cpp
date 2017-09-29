@@ -59,7 +59,7 @@ public:
     virtual LocalStorageManagerAsync & localStorageManagerAsync() Q_DECL_OVERRIDE;
     virtual NoteStore & noteStore() Q_DECL_OVERRIDE;
     virtual UserStore & userStore() Q_DECL_OVERRIDE;
-    virtual NoteStore * noteStoreForLinkedNotebookGuid(const QString & guid) Q_DECL_OVERRIDE;
+    virtual NoteStore * noteStoreForLinkedNotebook(const LinkedNotebook & linkedNotebook) Q_DECL_OVERRIDE;
 
 private:
     LocalStorageManagerAsync &          m_localStorageManagerAsync;
@@ -74,7 +74,7 @@ public:
 
     virtual LocalStorageManagerAsync & localStorageManagerAsync() Q_DECL_OVERRIDE;
     virtual NoteStore & noteStore() Q_DECL_OVERRIDE;
-    virtual NoteStore * noteStoreForLinkedNotebookGuid(const QString & guid) Q_DECL_OVERRIDE;
+    virtual NoteStore * noteStoreForLinkedNotebook(const LinkedNotebook & linkedNotebook) Q_DECL_OVERRIDE;
 
 private:
     LocalStorageManagerAsync &          m_localStorageManagerAsync;
@@ -1675,6 +1675,30 @@ void SynchronizationManagerPrivate::updatePersistentSyncSettings()
     QNTRACE(QStringLiteral("Wrote ") << counter << QStringLiteral(" last sync params entries for linked notebooks"));
 }
 
+NoteStore * SynchronizationManagerPrivate::noteStoreForLinkedNotebook(const LinkedNotebook & linkedNotebook)
+{
+    QNTRACE(QStringLiteral("SynchronizationManagerPrivate::noteStoreForLinkedNotebook: ")
+            << linkedNotebook);
+
+    if (Q_UNLIKELY(!linkedNotebook.hasGuid())) {
+        QNTRACE(QStringLiteral("Linked notebook has no guid, can't find or create note store for it"));
+        return Q_NULLPTR;
+    }
+
+    NoteStore * pNoteStore = noteStoreForLinkedNotebookGuid(linkedNotebook.guid());
+    if (Q_UNLIKELY(!pNoteStore)) {
+        return Q_NULLPTR;
+    }
+
+    if (linkedNotebook.hasNoteStoreUrl()) {
+        QNTRACE(QStringLiteral("Setting note store URL to the created and/or found note store: ")
+                << linkedNotebook.noteStoreUrl());
+        pNoteStore->setNoteStoreUrl(linkedNotebook.noteStoreUrl());
+    }
+
+    return pNoteStore;
+}
+
 NoteStore * SynchronizationManagerPrivate::noteStoreForLinkedNotebookGuid(const QString & guid)
 {
     QNDEBUG(QStringLiteral("SynchronizationManagerPrivate::noteStoreForLinkedNotebookGuid: guid = ") << guid);
@@ -1699,6 +1723,7 @@ NoteStore * SynchronizationManagerPrivate::noteStoreForLinkedNotebookGuid(const 
 
     QSharedPointer<qevercloud::NoteStore> pQecNoteStore(new qevercloud::NoteStore);
     NoteStore * pNoteStore = new NoteStore(pQecNoteStore, this);
+    pNoteStore->setAuthenticationToken(m_OAuthResult.m_authToken);
     m_noteStoresByLinkedNotebookGuids[guid] = pNoteStore;
     return pNoteStore;
 }
@@ -1724,9 +1749,9 @@ UserStore & SynchronizationManagerPrivate::RemoteToLocalSynchronizationManagerCo
     return m_syncManager.m_userStore;
 }
 
-NoteStore * SynchronizationManagerPrivate::RemoteToLocalSynchronizationManagerController::noteStoreForLinkedNotebookGuid(const QString & guid)
+NoteStore * SynchronizationManagerPrivate::RemoteToLocalSynchronizationManagerController::noteStoreForLinkedNotebook(const LinkedNotebook & linkedNotebook)
 {
-    return m_syncManager.noteStoreForLinkedNotebookGuid(guid);
+    return m_syncManager.noteStoreForLinkedNotebook(linkedNotebook);
 }
 
 SynchronizationManagerPrivate::SendLocalChangesManagerController::SendLocalChangesManagerController(LocalStorageManagerAsync & localStorageManagerAsync,
@@ -1745,9 +1770,9 @@ NoteStore & SynchronizationManagerPrivate::SendLocalChangesManagerController::no
     return m_syncManager.m_noteStore;
 }
 
-NoteStore * SynchronizationManagerPrivate::SendLocalChangesManagerController::noteStoreForLinkedNotebookGuid(const QString & guid)
+NoteStore * SynchronizationManagerPrivate::SendLocalChangesManagerController::noteStoreForLinkedNotebook(const LinkedNotebook & linkedNotebook)
 {
-    return m_syncManager.noteStoreForLinkedNotebookGuid(guid);
+    return m_syncManager.noteStoreForLinkedNotebook(linkedNotebook);
 }
 
 QTextStream & SynchronizationManagerPrivate::AuthData::print(QTextStream & strm) const
