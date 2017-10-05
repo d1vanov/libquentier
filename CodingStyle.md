@@ -160,7 +160,7 @@ Try to stick with the following layout of class contents:
 
 ## Signal/slot signatures
 
-- Use `Q_SIGNALS` macro instead of `signals` and `Q_SLOTS` instead of `slots`, especially in the public interfaces of libquentier. The reason is that there are 3rdparty libraries which use `signals` and `slots` keyword in their own code and interfaces and the name clashing can create problems for library users.
+- Use `Q_SIGNALS` macro instead of `signals`, `Q_SLOTS` instead of `slots` and `Q_EMIT` instead of `emit`, especially in the public interfaces of libquentier. The reason is that there are 3rdparty libraries which use `signals`, `slots` and `emit` keywords in their own code and interfaces and the name clashing can create problems for library users.
 - Pass signal/slot parameters by value, not by const reference, unless you are certain that the objects interacting via the particular signals/slots would live in the same thread. The power and convenience of Qt’s signals/slots comes from their flexibility to the thread affinity of the connected objects but unless you pass parameters by value in signals/slots, it would be your job to provide the proper thread safety guarantees. There’s no reason to do this yourself when Qt can do it for you.
 
 ## C++11/14/17 features and Qt4 support
