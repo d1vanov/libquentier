@@ -26,7 +26,7 @@ TableResizeJavaScriptHandler::TableResizeJavaScriptHandler(QObject * parent) :
 
 void TableResizeJavaScriptHandler::onTableResize()
 {
-    emit tableResized();
+    Q_EMIT tableResized();
 }
 
 } // namespace quentier

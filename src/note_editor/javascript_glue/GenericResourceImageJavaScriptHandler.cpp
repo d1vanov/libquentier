@@ -34,7 +34,7 @@ void GenericResourceImageJavaScriptHandler::findGenericResourceImage(QByteArray 
     auto it = m_cache.find(QByteArray::fromHex(resourceHash));
     if (it != m_cache.end()) {
         QNTRACE(QStringLiteral("Found generic resouce image, path is ") << it.value());
-        emit genericResourceImageFound(resourceHash, it.value());
+        Q_EMIT genericResourceImageFound(resourceHash, it.value());
     }
     else {
         QNINFO(QStringLiteral("Can't find generic resource image for hash ") << resourceHash);

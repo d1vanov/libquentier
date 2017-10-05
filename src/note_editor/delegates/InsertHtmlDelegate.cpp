@@ -126,7 +126,7 @@ void InsertHtmlDelegate::onResourceSavedToStorage(QUuid requestId, QByteArray da
         ErrorString error(QT_TR_NOOP("Internal error: can't insert HTML containing images: source URL "
                                      "was not found for resource local uid"));
         QNWARNING(error);
-        emit notifyError(error);
+        Q_EMIT notifyError(error);
         return;
     }
 
@@ -146,7 +146,7 @@ void InsertHtmlDelegate::onHtmlInserted(const QVariant & responseData)
 
         ErrorString error(QT_TR_NOOP("Internal error: can't parse the result of html insertion from JavaScript"));
         QNWARNING(error);
-        emit notifyError(error);
+        Q_EMIT notifyError(error);
         return;
     }
 
@@ -166,7 +166,7 @@ void InsertHtmlDelegate::onHtmlInserted(const QVariant & responseData)
         }
 
         QNWARNING(error);
-        emit notifyError(error);
+        Q_EMIT notifyError(error);
         return;
     }
 
@@ -218,7 +218,7 @@ void InsertHtmlDelegate::onHtmlInserted(const QVariant & responseData)
     }
 
     QNDEBUG(QStringLiteral("Finished the html insertion, number of added image resources: ") << resources.size());
-    emit finished(resources, resourceFileStoragePaths);
+    Q_EMIT finished(resources, resourceFileStoragePaths);
 }
 
 void InsertHtmlDelegate::doStart()
@@ -228,7 +228,7 @@ void InsertHtmlDelegate::doStart()
     if (Q_UNLIKELY(m_inputHtml.isEmpty())) {
         ErrorString errorDescription(QT_TR_NOOP("Can't insert HTML: the input html is empty"));
         QNWARNING(errorDescription);
-        emit notifyError(errorDescription);
+        Q_EMIT notifyError(errorDescription);
         return;
     }
 
@@ -236,7 +236,7 @@ void InsertHtmlDelegate::doStart()
     ErrorString errorDescription;
     bool res = m_enmlConverter.cleanupExternalHtml(m_inputHtml, m_cleanedUpHtml, errorDescription);
     if (!res) {
-        emit notifyError(errorDescription);
+        Q_EMIT notifyError(errorDescription);
         return;
     }
 
@@ -374,7 +374,7 @@ void InsertHtmlDelegate::doStart()
         errorDescription.details() = reader.errorString();
         QNWARNING(QStringLiteral("Error reading html: ") << errorDescription
                   << QStringLiteral(", HTML: ") << m_cleanedUpHtml);
-        emit notifyError(errorDescription);
+        Q_EMIT notifyError(errorDescription);
         return;
     }
 
@@ -664,7 +664,7 @@ bool InsertHtmlDelegate::adjustImgTagsInHtml()
                     ErrorString errorDescription(QT_TR_NOOP("Can't insert HTML: can't compose the HTML representation "
                                                             "of a resource that replaced the external image link"));
                     QNWARNING(errorDescription << QStringLiteral("; resource: ") << imgData.m_resource);
-                    emit notifyError(errorDescription);
+                    Q_EMIT notifyError(errorDescription);
                     return false;
                 }
 
@@ -700,7 +700,7 @@ bool InsertHtmlDelegate::adjustImgTagsInHtml()
                     errorDescription.details() = resourceHtmlReader.errorString();
                     QNWARNING(QStringLiteral("Error reading html: ") << errorDescription
                               << QStringLiteral(", HTML: ") << m_cleanedUpHtml);
-                    emit notifyError(errorDescription);
+                    Q_EMIT notifyError(errorDescription);
                     return false;
                 }
 
@@ -746,7 +746,7 @@ bool InsertHtmlDelegate::adjustImgTagsInHtml()
         errorDescription.details() = reader.errorString();
         QNWARNING(QStringLiteral("Error reading html: ") << errorDescription
                   << QStringLiteral(", HTML: ") << m_cleanedUpHtml);
-        emit notifyError(errorDescription);
+        Q_EMIT notifyError(errorDescription);
         return false;
     }
 
@@ -763,7 +763,7 @@ void InsertHtmlDelegate::insertHtmlIntoEditor()
     if (Q_UNLIKELY(!pPage)) {
         ErrorString error(QT_TR_NOOP("Can't insert HTML: no note editor page"));
         QNWARNING(error);
-        emit notifyError(error);
+        Q_EMIT notifyError(error);
         return;
     }
 
@@ -858,8 +858,8 @@ bool InsertHtmlDelegate::addResource(const QByteArray & resourceData, const QUrl
             << requestId << ", resource local uid = " << resource.localUid() << QStringLiteral(", data hash = ")
             << dataHash.toHex() << QStringLiteral(", mime type name = ") << mimeType.name()
             << QStringLiteral(", file suffix = ") << resourceFileSuffix);
-    emit saveResourceToStorage(pNote->localUid(), resource.localUid(), resourceData, dataHash,
-                               resourceFileSuffix, requestId, /* is image = */ true);
+    Q_EMIT saveResourceToStorage(pNote->localUid(), resource.localUid(), resourceData, dataHash,
+                                 resourceFileSuffix, requestId, /* is image = */ true);
     return true;
 }
 

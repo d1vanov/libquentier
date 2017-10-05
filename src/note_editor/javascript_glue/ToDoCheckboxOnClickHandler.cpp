@@ -34,11 +34,11 @@ void ToDoCheckboxOnClickHandler::onToDoCheckboxClicked(QString enToDoCheckboxId)
     if (Q_UNLIKELY(!conversionResult)) {
         ErrorString error(QT_TR_NOOP("Error handling todo checkbox click event: can't convert id from string to number"));
         QNWARNING(error);
-        emit notifyError(error);
+        Q_EMIT notifyError(error);
         return;
     }
 
-    emit toDoCheckboxClicked(id);
+    Q_EMIT toDoCheckboxClicked(id);
 }
 
 } // namespace quentier

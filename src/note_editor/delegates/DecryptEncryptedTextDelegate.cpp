@@ -42,7 +42,7 @@ namespace quentier {
     if (Q_UNLIKELY(!m_pNoteEditor->accountPtr())) { \
         ErrorString error(QT_TR_NOOP("Can't decrypt the encrypted text: no account is set to the note editor")); \
         QNWARNING(error); \
-        emit notifyError(error); \
+        Q_EMIT notifyError(error); \
         return; \
     }
 
@@ -52,7 +52,7 @@ namespace quentier {
     if (Q_UNLIKELY(!page)) { \
         ErrorString error(QT_TR_NOOP("Can't decrypt the encrypted text: no note editor page")); \
         QNWARNING(error); \
-        emit notifyError(error); \
+        Q_EMIT notifyError(error); \
         return; \
     }
 
@@ -98,7 +98,7 @@ void DecryptEncryptedTextDelegate::start()
         ErrorString errorDescription(QT_TR_NOOP("Can't decrypt the encrypted text: can't convert "
                                                 "the encryption key length from string to number"));
         QNWARNING(errorDescription);
-        emit notifyError(errorDescription);
+        Q_EMIT notifyError(errorDescription);
         return;
     }
 
@@ -145,7 +145,7 @@ void DecryptEncryptedTextDelegate::raiseDecryptionDialog()
     QNTRACE(QStringLiteral("Will exec decryption dialog now"));
     int res = pDecryptionDialog->exec();
     if (res == QDialog::Rejected) {
-        emit cancelled();
+        Q_EMIT cancelled();
         return;
     }
 }
@@ -194,7 +194,7 @@ void DecryptEncryptedTextDelegate::onDecryptionScriptFinished(const QVariant & d
     if (Q_UNLIKELY(statusIt == resultMap.end())) {
         ErrorString error(QT_TR_NOOP("Can't parse the result of text decryption script from JavaScript"));
         QNWARNING(error);
-        emit notifyError(error);
+        Q_EMIT notifyError(error);
         return;
     }
 
@@ -213,12 +213,12 @@ void DecryptEncryptedTextDelegate::onDecryptionScriptFinished(const QVariant & d
         }
 
         QNWARNING(error);
-        emit notifyError(error);
+        Q_EMIT notifyError(error);
         return;
     }
 
-    emit finished(m_encryptedText, m_cipher, m_length, m_hint, m_decryptedText, m_passphrase,
-                  m_rememberForSession, m_decryptPermanently);
+    Q_EMIT finished(m_encryptedText, m_cipher, m_length, m_hint, m_decryptedText, m_passphrase,
+                    m_rememberForSession, m_decryptPermanently);
 }
 
 } // namespace quentier

@@ -104,7 +104,7 @@ void SavedSearchSyncCache::onListSavedSearchesComplete(LocalStorageManager::List
         return;
     }
 
-    emit filled();
+    Q_EMIT filled();
 }
 
 void SavedSearchSyncCache::onListSavedSearchesFailed(LocalStorageManager::ListObjectsOptions flag,
@@ -132,7 +132,7 @@ void SavedSearchSyncCache::onListSavedSearchesFailed(LocalStorageManager::ListOb
     m_dirtySavedSearchesByGuid.clear();
     disconnectFromLocalStorage();
 
-    emit failure(errorDescription);
+    Q_EMIT failure(errorDescription);
 }
 
 void SavedSearchSyncCache::onAddSavedSearchComplete(SavedSearch search, QUuid requestId)
@@ -280,7 +280,7 @@ void SavedSearchSyncCache::requestSavedSearchesList()
 
     QNTRACE(QStringLiteral("Emitting the request to list saved searches: request id = ")
             << m_listSavedSearchesRequestId << QStringLiteral(", offset = ") << m_offset);
-    emit listSavedSearches(LocalStorageManager::ListAll,
+    Q_EMIT listSavedSearches(LocalStorageManager::ListAll,
                            m_limit, m_offset, LocalStorageManager::ListSavedSearchesOrder::NoOrder,
                            LocalStorageManager::OrderDirection::Ascending,
                            m_listSavedSearchesRequestId);

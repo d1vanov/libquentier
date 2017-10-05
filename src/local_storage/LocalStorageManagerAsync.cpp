@@ -89,7 +89,7 @@ void LocalStorageManagerAsync::init()
 
     m_pLocalStorageCacheManager = new LocalStorageCacheManager();
 
-    emit initialized();
+    Q_EMIT initialized();
 }
 
 void LocalStorageManagerAsync::onGetUserCountRequest(QUuid requestId)
@@ -99,10 +99,10 @@ void LocalStorageManagerAsync::onGetUserCountRequest(QUuid requestId)
         ErrorString errorDescription;
         int count = m_pLocalStorageManager->userCount(errorDescription);
         if (count < 0) {
-            emit getUserCountFailed(errorDescription, requestId);
+            Q_EMIT getUserCountFailed(errorDescription, requestId);
         }
         else {
-            emit getUserCountComplete(count, requestId);
+            Q_EMIT getUserCountComplete(count, requestId);
         }
     }
     catch(const std::exception & e)
@@ -111,7 +111,7 @@ void LocalStorageManagerAsync::onGetUserCountRequest(QUuid requestId)
         error.details() = QString::fromUtf8(e.what());
         SysInfo sysInfo;
         QNCRITICAL(error << QStringLiteral("; backtrace: ") << sysInfo.stackTrace());
-        emit getUserCountFailed(error, requestId);
+        Q_EMIT getUserCountFailed(error, requestId);
     }
 }
 
@@ -130,7 +130,7 @@ void LocalStorageManagerAsync::onSwitchUserRequest(Account account, bool startFr
             m_pLocalStorageCacheManager->clear();
         }
 
-        emit switchUserFailed(account, errorDescription, requestId);
+        Q_EMIT switchUserFailed(account, errorDescription, requestId);
         return;
     }
 
@@ -138,7 +138,7 @@ void LocalStorageManagerAsync::onSwitchUserRequest(Account account, bool startFr
         m_pLocalStorageCacheManager->clear();
     }
 
-    emit switchUserComplete(account, requestId);
+    Q_EMIT switchUserComplete(account, requestId);
 }
 
 void LocalStorageManagerAsync::onAddUserRequest(User user, QUuid requestId)
@@ -149,11 +149,11 @@ void LocalStorageManagerAsync::onAddUserRequest(User user, QUuid requestId)
 
         bool res = m_pLocalStorageManager->addUser(user, errorDescription);
         if (!res) {
-            emit addUserFailed(user, errorDescription, requestId);
+            Q_EMIT addUserFailed(user, errorDescription, requestId);
             return;
         }
 
-        emit addUserComplete(user, requestId);
+        Q_EMIT addUserComplete(user, requestId);
     }
     catch(const std::exception & e)
     {
@@ -161,7 +161,7 @@ void LocalStorageManagerAsync::onAddUserRequest(User user, QUuid requestId)
         error.details() = QString::fromUtf8(e.what());
         SysInfo sysInfo;
         QNCRITICAL(error << QStringLiteral("; backtrace: ") << sysInfo.stackTrace());
-        emit addUserFailed(user, error, requestId);
+        Q_EMIT addUserFailed(user, error, requestId);
     }
 }
 
@@ -173,11 +173,11 @@ void LocalStorageManagerAsync::onUpdateUserRequest(User user, QUuid requestId)
 
         bool res = m_pLocalStorageManager->updateUser(user, errorDescription);
         if (!res) {
-            emit updateUserFailed(user, errorDescription, requestId);
+            Q_EMIT updateUserFailed(user, errorDescription, requestId);
             return;
         }
 
-        emit updateUserComplete(user, requestId);
+        Q_EMIT updateUserComplete(user, requestId);
     }
     catch(const std::exception & e)
     {
@@ -185,7 +185,7 @@ void LocalStorageManagerAsync::onUpdateUserRequest(User user, QUuid requestId)
         error.details() = QString::fromUtf8(e.what());
         SysInfo sysInfo;
         QNCRITICAL(error << QStringLiteral("; backtrace: ") << sysInfo.stackTrace());
-        emit updateUserFailed(user, error, requestId);
+        Q_EMIT updateUserFailed(user, error, requestId);
     }
 }
 
@@ -197,11 +197,11 @@ void LocalStorageManagerAsync::onFindUserRequest(User user, QUuid requestId)
 
         bool res = m_pLocalStorageManager->findUser(user, errorDescription);
         if (!res) {
-            emit findUserFailed(user, errorDescription, requestId);
+            Q_EMIT findUserFailed(user, errorDescription, requestId);
             return;
         }
 
-        emit findUserComplete(user, requestId);
+        Q_EMIT findUserComplete(user, requestId);
     }
     catch(const std::exception & e)
     {
@@ -209,7 +209,7 @@ void LocalStorageManagerAsync::onFindUserRequest(User user, QUuid requestId)
         error.details() = QString::fromUtf8(e.what());
         SysInfo sysInfo;
         QNCRITICAL(error << QStringLiteral("; backtrace: ") << sysInfo.stackTrace());
-        emit findUserFailed(user, error, requestId);
+        Q_EMIT findUserFailed(user, error, requestId);
     }
 }
 
@@ -221,11 +221,11 @@ void LocalStorageManagerAsync::onDeleteUserRequest(User user, QUuid requestId)
 
         bool res = m_pLocalStorageManager->deleteUser(user, errorDescription);
         if (!res) {
-            emit deleteUserFailed(user, errorDescription, requestId);
+            Q_EMIT deleteUserFailed(user, errorDescription, requestId);
             return;
         }
 
-        emit deleteUserComplete(user, requestId);
+        Q_EMIT deleteUserComplete(user, requestId);
     }
     catch(const std::exception & e)
     {
@@ -233,7 +233,7 @@ void LocalStorageManagerAsync::onDeleteUserRequest(User user, QUuid requestId)
         error.details() = QString::fromUtf8(e.what());
         SysInfo sysInfo;
         QNCRITICAL(error << QStringLiteral("; backtrace: ") << sysInfo.stackTrace());
-        emit deleteUserFailed(user, error, requestId);
+        Q_EMIT deleteUserFailed(user, error, requestId);
     }
 }
 
@@ -245,11 +245,11 @@ void LocalStorageManagerAsync::onExpungeUserRequest(User user, QUuid requestId)
 
         bool res = m_pLocalStorageManager->expungeUser(user, errorDescription);
         if (!res) {
-            emit expungeUserFailed(user, errorDescription, requestId);
+            Q_EMIT expungeUserFailed(user, errorDescription, requestId);
             return;
         }
 
-        emit expungeUserComplete(user, requestId);
+        Q_EMIT expungeUserComplete(user, requestId);
     }
     catch(const std::exception & e)
     {
@@ -257,7 +257,7 @@ void LocalStorageManagerAsync::onExpungeUserRequest(User user, QUuid requestId)
         error.details() = QString::fromUtf8(e.what());
         SysInfo sysInfo;
         QNCRITICAL(error << QStringLiteral("; backtrace: ") << sysInfo.stackTrace());
-        emit expungeUserFailed(user, error, requestId);
+        Q_EMIT expungeUserFailed(user, error, requestId);
     }
 }
 
@@ -268,10 +268,10 @@ void LocalStorageManagerAsync::onGetNotebookCountRequest(QUuid requestId)
         ErrorString errorDescription;
         int count = m_pLocalStorageManager->notebookCount(errorDescription);
         if (count < 0) {
-            emit getNotebookCountFailed(errorDescription, requestId);
+            Q_EMIT getNotebookCountFailed(errorDescription, requestId);
         }
         else {
-            emit getNotebookCountComplete(count, requestId);
+            Q_EMIT getNotebookCountComplete(count, requestId);
         }
     }
     catch(const std::exception & e)
@@ -280,7 +280,7 @@ void LocalStorageManagerAsync::onGetNotebookCountRequest(QUuid requestId)
         error.details() = QString::fromUtf8(e.what());
         SysInfo sysInfo;
         QNCRITICAL(error << QStringLiteral("; backtrace: ") << sysInfo.stackTrace());
-        emit getNotebookCountFailed(error, requestId);
+        Q_EMIT getNotebookCountFailed(error, requestId);
     }
 }
 
@@ -292,7 +292,7 @@ void LocalStorageManagerAsync::onAddNotebookRequest(Notebook notebook, QUuid req
 
         bool res = m_pLocalStorageManager->addNotebook(notebook, errorDescription);
         if (!res) {
-            emit addNotebookFailed(notebook, errorDescription, requestId);
+            Q_EMIT addNotebookFailed(notebook, errorDescription, requestId);
             return;
         }
 
@@ -300,7 +300,7 @@ void LocalStorageManagerAsync::onAddNotebookRequest(Notebook notebook, QUuid req
             m_pLocalStorageCacheManager->cacheNotebook(notebook);
         }
 
-        emit addNotebookComplete(notebook, requestId);
+        Q_EMIT addNotebookComplete(notebook, requestId);
     }
     catch(const std::exception & e)
     {
@@ -308,7 +308,7 @@ void LocalStorageManagerAsync::onAddNotebookRequest(Notebook notebook, QUuid req
         error.details() = QString::fromUtf8(e.what());
         SysInfo sysInfo;
         QNCRITICAL(error << QStringLiteral("; backtrace: ") << sysInfo.stackTrace());
-        emit addNotebookFailed(notebook, error, requestId);
+        Q_EMIT addNotebookFailed(notebook, error, requestId);
     }
 }
 
@@ -320,7 +320,7 @@ void LocalStorageManagerAsync::onUpdateNotebookRequest(Notebook notebook, QUuid 
 
         bool res = m_pLocalStorageManager->updateNotebook(notebook, errorDescription);
         if (!res) {
-            emit updateNotebookFailed(notebook, errorDescription, requestId);
+            Q_EMIT updateNotebookFailed(notebook, errorDescription, requestId);
             return;
         }
 
@@ -328,7 +328,7 @@ void LocalStorageManagerAsync::onUpdateNotebookRequest(Notebook notebook, QUuid 
             m_pLocalStorageCacheManager->cacheNotebook(notebook);
         }
 
-        emit updateNotebookComplete(notebook, requestId);
+        Q_EMIT updateNotebookComplete(notebook, requestId);
     }
     catch(const std::exception & e)
     {
@@ -336,7 +336,7 @@ void LocalStorageManagerAsync::onUpdateNotebookRequest(Notebook notebook, QUuid 
         error.details() = QString::fromUtf8(e.what());
         SysInfo sysInfo;
         QNCRITICAL(error << QStringLiteral("; backtrace: ") << sysInfo.stackTrace());
-        emit updateNotebookFailed(notebook, error, requestId);
+        Q_EMIT updateNotebookFailed(notebook, error, requestId);
     }
 }
 
@@ -376,12 +376,12 @@ void LocalStorageManagerAsync::onFindNotebookRequest(Notebook notebook, QUuid re
         {
             bool res = m_pLocalStorageManager->findNotebook(notebook, errorDescription);
             if (!res) {
-                emit findNotebookFailed(notebook, errorDescription, requestId);
+                Q_EMIT findNotebookFailed(notebook, errorDescription, requestId);
                 return;
             }
         }
 
-        emit findNotebookComplete(notebook, requestId);
+        Q_EMIT findNotebookComplete(notebook, requestId);
     }
     catch(const std::exception & e)
     {
@@ -389,7 +389,7 @@ void LocalStorageManagerAsync::onFindNotebookRequest(Notebook notebook, QUuid re
         error.details() = QString::fromUtf8(e.what());
         SysInfo sysInfo;
         QNCRITICAL(error << QStringLiteral("; backtrace: ") << sysInfo.stackTrace());
-        emit findNotebookFailed(notebook, error, requestId);
+        Q_EMIT findNotebookFailed(notebook, error, requestId);
     }
 }
 
@@ -401,11 +401,11 @@ void LocalStorageManagerAsync::onFindDefaultNotebookRequest(Notebook notebook, Q
 
         bool res = m_pLocalStorageManager->findDefaultNotebook(notebook, errorDescription);
         if (!res) {
-            emit findDefaultNotebookFailed(notebook, errorDescription, requestId);
+            Q_EMIT findDefaultNotebookFailed(notebook, errorDescription, requestId);
             return;
         }
 
-        emit findDefaultNotebookComplete(notebook, requestId);
+        Q_EMIT findDefaultNotebookComplete(notebook, requestId);
     }
     catch(const std::exception & e)
     {
@@ -413,7 +413,7 @@ void LocalStorageManagerAsync::onFindDefaultNotebookRequest(Notebook notebook, Q
         error.details() = QString::fromUtf8(e.what());
         SysInfo sysInfo;
         QNCRITICAL(error << QStringLiteral("; backtrace: ") << sysInfo.stackTrace());
-        emit findDefaultNotebookFailed(notebook, error, requestId);
+        Q_EMIT findDefaultNotebookFailed(notebook, error, requestId);
     }
 }
 
@@ -425,11 +425,11 @@ void LocalStorageManagerAsync::onFindLastUsedNotebookRequest(Notebook notebook, 
 
         bool res = m_pLocalStorageManager->findLastUsedNotebook(notebook, errorDescription);
         if (!res) {
-            emit findLastUsedNotebookFailed(notebook, errorDescription, requestId);
+            Q_EMIT findLastUsedNotebookFailed(notebook, errorDescription, requestId);
             return;
         }
 
-        emit findLastUsedNotebookComplete(notebook, requestId);
+        Q_EMIT findLastUsedNotebookComplete(notebook, requestId);
     }
     catch(const std::exception & e)
     {
@@ -437,7 +437,7 @@ void LocalStorageManagerAsync::onFindLastUsedNotebookRequest(Notebook notebook, 
         error.details() = QString::fromUtf8(e.what());
         SysInfo sysInfo;
         QNCRITICAL(error << QStringLiteral("; backtrace: ") << sysInfo.stackTrace());
-        emit findLastUsedNotebookFailed(notebook, error, requestId);
+        Q_EMIT findLastUsedNotebookFailed(notebook, error, requestId);
     }
 }
 
@@ -449,11 +449,11 @@ void LocalStorageManagerAsync::onFindDefaultOrLastUsedNotebookRequest(Notebook n
 
         bool res = m_pLocalStorageManager->findDefaultOrLastUsedNotebook(notebook, errorDescription);
         if (!res) {
-            emit findDefaultOrLastUsedNotebookFailed(notebook, errorDescription, requestId);
+            Q_EMIT findDefaultOrLastUsedNotebookFailed(notebook, errorDescription, requestId);
             return;
         }
 
-        emit findDefaultOrLastUsedNotebookComplete(notebook, requestId);
+        Q_EMIT findDefaultOrLastUsedNotebookComplete(notebook, requestId);
     }
     catch(const std::exception & e)
     {
@@ -461,7 +461,7 @@ void LocalStorageManagerAsync::onFindDefaultOrLastUsedNotebookRequest(Notebook n
         error.details() = QString::fromUtf8(e.what());
         SysInfo sysInfo;
         QNCRITICAL(error << QStringLiteral("; backtrace: ") << sysInfo.stackTrace());
-        emit findDefaultOrLastUsedNotebookFailed(notebook, error, requestId);
+        Q_EMIT findDefaultOrLastUsedNotebookFailed(notebook, error, requestId);
     }
 }
 
@@ -476,7 +476,7 @@ void LocalStorageManagerAsync::onListAllNotebooksRequest(size_t limit, size_t of
         QList<Notebook> notebooks = m_pLocalStorageManager->listAllNotebooks(errorDescription, limit, offset, order,
                                                                              orderDirection, linkedNotebookGuid);
         if (notebooks.isEmpty() && !errorDescription.isEmpty()) {
-            emit listAllNotebooksFailed(limit, offset, order, orderDirection, linkedNotebookGuid,
+            Q_EMIT listAllNotebooksFailed(limit, offset, order, orderDirection, linkedNotebookGuid,
                                         errorDescription, requestId);
             return;
         }
@@ -490,7 +490,7 @@ void LocalStorageManagerAsync::onListAllNotebooksRequest(size_t limit, size_t of
             }
         }
 
-        emit listAllNotebooksComplete(limit, offset, order, orderDirection, linkedNotebookGuid, notebooks, requestId);
+        Q_EMIT listAllNotebooksComplete(limit, offset, order, orderDirection, linkedNotebookGuid, notebooks, requestId);
     }
     catch(const std::exception & e)
     {
@@ -498,8 +498,8 @@ void LocalStorageManagerAsync::onListAllNotebooksRequest(size_t limit, size_t of
         error.details() = QString::fromUtf8(e.what());
         SysInfo sysInfo;
         QNCRITICAL(error << QStringLiteral("; backtrace: ") << sysInfo.stackTrace());
-        emit listAllNotebooksFailed(limit, offset, order, orderDirection, linkedNotebookGuid,
-                                    error, requestId);
+        Q_EMIT listAllNotebooksFailed(limit, offset, order, orderDirection, linkedNotebookGuid,
+                                      error, requestId);
     }
 }
 
@@ -510,11 +510,11 @@ void LocalStorageManagerAsync::onListAllSharedNotebooksRequest(QUuid requestId)
         ErrorString errorDescription;
         QList<SharedNotebook> sharedNotebooks = m_pLocalStorageManager->listAllSharedNotebooks(errorDescription);
         if (sharedNotebooks.isEmpty() && !errorDescription.isEmpty()) {
-            emit listAllSharedNotebooksFailed(errorDescription, requestId);
+            Q_EMIT listAllSharedNotebooksFailed(errorDescription, requestId);
             return;
         }
 
-        emit listAllSharedNotebooksComplete(sharedNotebooks, requestId);
+        Q_EMIT listAllSharedNotebooksComplete(sharedNotebooks, requestId);
     }
     catch(const std::exception & e)
     {
@@ -522,7 +522,7 @@ void LocalStorageManagerAsync::onListAllSharedNotebooksRequest(QUuid requestId)
         error.details() = QString::fromUtf8(e.what());
         SysInfo sysInfo;
         QNCRITICAL(error << QStringLiteral("; backtrace: ") << sysInfo.stackTrace());
-        emit listAllSharedNotebooksFailed(error, requestId);
+        Q_EMIT listAllSharedNotebooksFailed(error, requestId);
     }
 }
 
@@ -539,7 +539,8 @@ void LocalStorageManagerAsync::onListNotebooksRequest(LocalStorageManager::ListO
                                                                           offset, order, orderDirection,
                                                                           linkedNotebookGuid);
         if (notebooks.isEmpty() && !errorDescription.isEmpty()) {
-            emit listNotebooksFailed(flag, limit, offset, order, orderDirection, linkedNotebookGuid, errorDescription, requestId);
+            Q_EMIT listNotebooksFailed(flag, limit, offset, order, orderDirection, linkedNotebookGuid,
+                                       errorDescription, requestId);
             return;
         }
 
@@ -552,7 +553,7 @@ void LocalStorageManagerAsync::onListNotebooksRequest(LocalStorageManager::ListO
             }
         }
 
-        emit listNotebooksComplete(flag, limit, offset, order, orderDirection, linkedNotebookGuid, notebooks, requestId);
+        Q_EMIT listNotebooksComplete(flag, limit, offset, order, orderDirection, linkedNotebookGuid, notebooks, requestId);
     }
     catch(const std::exception & e)
     {
@@ -560,7 +561,7 @@ void LocalStorageManagerAsync::onListNotebooksRequest(LocalStorageManager::ListO
         error.details() = QString::fromUtf8(e.what());
         SysInfo sysInfo;
         QNCRITICAL(error << QStringLiteral("; backtrace: ") << sysInfo.stackTrace());
-        emit listNotebooksFailed(flag, limit, offset, order, orderDirection, linkedNotebookGuid, error, requestId);
+        Q_EMIT listNotebooksFailed(flag, limit, offset, order, orderDirection, linkedNotebookGuid, error, requestId);
     }
 }
 
@@ -571,11 +572,11 @@ void LocalStorageManagerAsync::onListSharedNotebooksPerNotebookGuidRequest(QStri
         ErrorString errorDescription;
         QList<SharedNotebook> sharedNotebooks = m_pLocalStorageManager->listSharedNotebooksPerNotebookGuid(notebookGuid, errorDescription);
         if (sharedNotebooks.isEmpty() && !errorDescription.isEmpty()) {
-            emit listSharedNotebooksPerNotebookGuidFailed(notebookGuid, errorDescription, requestId);
+            Q_EMIT listSharedNotebooksPerNotebookGuidFailed(notebookGuid, errorDescription, requestId);
             return;
         }
 
-        emit listSharedNotebooksPerNotebookGuidComplete(notebookGuid, sharedNotebooks, requestId);
+        Q_EMIT listSharedNotebooksPerNotebookGuidComplete(notebookGuid, sharedNotebooks, requestId);
     }
     catch(const std::exception & e)
     {
@@ -583,7 +584,7 @@ void LocalStorageManagerAsync::onListSharedNotebooksPerNotebookGuidRequest(QStri
         error.details() = QString::fromUtf8(e.what());
         SysInfo sysInfo;
         QNCRITICAL(error << QStringLiteral("; backtrace: ") << sysInfo.stackTrace());
-        emit listSharedNotebooksPerNotebookGuidFailed(notebookGuid, error, requestId);
+        Q_EMIT listSharedNotebooksPerNotebookGuidFailed(notebookGuid, error, requestId);
     }
 }
 
@@ -595,7 +596,7 @@ void LocalStorageManagerAsync::onExpungeNotebookRequest(Notebook notebook, QUuid
 
         bool res = m_pLocalStorageManager->expungeNotebook(notebook, errorDescription);
         if (!res) {
-            emit expungeNotebookFailed(notebook, errorDescription, requestId);
+            Q_EMIT expungeNotebookFailed(notebook, errorDescription, requestId);
             return;
         }
 
@@ -603,7 +604,7 @@ void LocalStorageManagerAsync::onExpungeNotebookRequest(Notebook notebook, QUuid
             m_pLocalStorageCacheManager->expungeNotebook(notebook);
         }
 
-        emit expungeNotebookComplete(notebook, requestId);
+        Q_EMIT expungeNotebookComplete(notebook, requestId);
     }
     catch(const std::exception & e)
     {
@@ -611,7 +612,7 @@ void LocalStorageManagerAsync::onExpungeNotebookRequest(Notebook notebook, QUuid
         error.details() = QString::fromUtf8(e.what());
         SysInfo sysInfo;
         QNCRITICAL(error << QStringLiteral("; backtrace: ") << sysInfo.stackTrace());
-        emit expungeNotebookFailed(notebook, error, requestId);
+        Q_EMIT expungeNotebookFailed(notebook, error, requestId);
     }
 }
 
@@ -622,10 +623,10 @@ void LocalStorageManagerAsync::onGetLinkedNotebookCountRequest(QUuid requestId)
         ErrorString errorDescription;
         int count = m_pLocalStorageManager->linkedNotebookCount(errorDescription);
         if (count < 0) {
-            emit getLinkedNotebookCountFailed(errorDescription, requestId);
+            Q_EMIT getLinkedNotebookCountFailed(errorDescription, requestId);
         }
         else {
-            emit getLinkedNotebookCountComplete(count, requestId);
+            Q_EMIT getLinkedNotebookCountComplete(count, requestId);
         }
     }
     catch(const std::exception & e)
@@ -634,7 +635,7 @@ void LocalStorageManagerAsync::onGetLinkedNotebookCountRequest(QUuid requestId)
         error.details() = QString::fromUtf8(e.what());
         SysInfo sysInfo;
         QNCRITICAL(error << QStringLiteral("; backtrace: ") << sysInfo.stackTrace());
-        emit getLinkedNotebookCountFailed(error, requestId);
+        Q_EMIT getLinkedNotebookCountFailed(error, requestId);
     }
 }
 
@@ -646,7 +647,7 @@ void LocalStorageManagerAsync::onAddLinkedNotebookRequest(LinkedNotebook linkedN
 
         bool res = m_pLocalStorageManager->addLinkedNotebook(linkedNotebook, errorDescription);
         if (!res) {
-            emit addLinkedNotebookFailed(linkedNotebook, errorDescription, requestId);
+            Q_EMIT addLinkedNotebookFailed(linkedNotebook, errorDescription, requestId);
             return;
         }
 
@@ -654,7 +655,7 @@ void LocalStorageManagerAsync::onAddLinkedNotebookRequest(LinkedNotebook linkedN
             m_pLocalStorageCacheManager->cacheLinkedNotebook(linkedNotebook);
         }
 
-        emit addLinkedNotebookComplete(linkedNotebook, requestId);
+        Q_EMIT addLinkedNotebookComplete(linkedNotebook, requestId);
     }
     catch(const std::exception & e)
     {
@@ -662,7 +663,7 @@ void LocalStorageManagerAsync::onAddLinkedNotebookRequest(LinkedNotebook linkedN
         error.details() = QString::fromUtf8(e.what());
         SysInfo sysInfo;
         QNCRITICAL(error << QStringLiteral("; backtrace: ") << sysInfo.stackTrace());
-        emit addLinkedNotebookFailed(linkedNotebook, error, requestId);
+        Q_EMIT addLinkedNotebookFailed(linkedNotebook, error, requestId);
     }
 }
 
@@ -674,7 +675,7 @@ void LocalStorageManagerAsync::onUpdateLinkedNotebookRequest(LinkedNotebook link
 
         bool res = m_pLocalStorageManager->updateLinkedNotebook(linkedNotebook, errorDescription);
         if (!res) {
-            emit updateLinkedNotebookFailed(linkedNotebook, errorDescription, requestId);
+            Q_EMIT updateLinkedNotebookFailed(linkedNotebook, errorDescription, requestId);
             return;
         }
 
@@ -682,7 +683,7 @@ void LocalStorageManagerAsync::onUpdateLinkedNotebookRequest(LinkedNotebook link
             m_pLocalStorageCacheManager->cacheLinkedNotebook(linkedNotebook);
         }
 
-        emit updateLinkedNotebookComplete(linkedNotebook, requestId);
+        Q_EMIT updateLinkedNotebookComplete(linkedNotebook, requestId);
     }
     catch(const std::exception & e)
     {
@@ -690,7 +691,7 @@ void LocalStorageManagerAsync::onUpdateLinkedNotebookRequest(LinkedNotebook link
         error.details() = QString::fromUtf8(e.what());
         SysInfo sysInfo;
         QNCRITICAL(error << QStringLiteral("; backtrace: ") << sysInfo.stackTrace());
-        emit updateLinkedNotebookFailed(linkedNotebook, error, requestId);
+        Q_EMIT updateLinkedNotebookFailed(linkedNotebook, error, requestId);
     }
 }
 
@@ -715,12 +716,12 @@ void LocalStorageManagerAsync::onFindLinkedNotebookRequest(LinkedNotebook linked
         {
             bool res = m_pLocalStorageManager->findLinkedNotebook(linkedNotebook, errorDescription);
             if (!res) {
-                emit findLinkedNotebookFailed(linkedNotebook, errorDescription, requestId);
+                Q_EMIT findLinkedNotebookFailed(linkedNotebook, errorDescription, requestId);
                 return;
             }
         }
 
-        emit findLinkedNotebookComplete(linkedNotebook, requestId);
+        Q_EMIT findLinkedNotebookComplete(linkedNotebook, requestId);
     }
     catch(const std::exception & e)
     {
@@ -728,7 +729,7 @@ void LocalStorageManagerAsync::onFindLinkedNotebookRequest(LinkedNotebook linked
         error.details() = QString::fromUtf8(e.what());
         SysInfo sysInfo;
         QNCRITICAL(error << QStringLiteral("; backtrace: ") << sysInfo.stackTrace());
-        emit findLinkedNotebookFailed(linkedNotebook, error, requestId);
+        Q_EMIT findLinkedNotebookFailed(linkedNotebook, error, requestId);
     }
 }
 
@@ -743,7 +744,7 @@ void LocalStorageManagerAsync::onListAllLinkedNotebooksRequest(size_t limit, siz
         QList<LinkedNotebook> linkedNotebooks = m_pLocalStorageManager->listAllLinkedNotebooks(errorDescription, limit,
                                                                                                offset, order, orderDirection);
         if (linkedNotebooks.isEmpty() && !errorDescription.isEmpty()) {
-            emit listAllLinkedNotebooksFailed(limit, offset, order, orderDirection, errorDescription, requestId);
+            Q_EMIT listAllLinkedNotebooksFailed(limit, offset, order, orderDirection, errorDescription, requestId);
             return;
         }
 
@@ -756,7 +757,7 @@ void LocalStorageManagerAsync::onListAllLinkedNotebooksRequest(size_t limit, siz
             }
         }
 
-        emit listAllLinkedNotebooksComplete(limit, offset, order, orderDirection, linkedNotebooks, requestId);
+        Q_EMIT listAllLinkedNotebooksComplete(limit, offset, order, orderDirection, linkedNotebooks, requestId);
     }
     catch(const std::exception & e)
     {
@@ -764,7 +765,7 @@ void LocalStorageManagerAsync::onListAllLinkedNotebooksRequest(size_t limit, siz
         error.details() = QString::fromUtf8(e.what());
         SysInfo sysInfo;
         QNCRITICAL(error << QStringLiteral("; backtrace: ") << sysInfo.stackTrace());
-        emit listAllLinkedNotebooksFailed(limit, offset, order, orderDirection, error, requestId);
+        Q_EMIT listAllLinkedNotebooksFailed(limit, offset, order, orderDirection, error, requestId);
     }
 }
 
@@ -780,7 +781,7 @@ void LocalStorageManagerAsync::onListLinkedNotebooksRequest(LocalStorageManager:
         QList<LinkedNotebook> linkedNotebooks = m_pLocalStorageManager->listLinkedNotebooks(flag, errorDescription, limit,
                                                                                             offset, order, orderDirection);
         if (linkedNotebooks.isEmpty() && !errorDescription.isEmpty()) {
-            emit listLinkedNotebooksFailed(flag, limit, offset, order, orderDirection, errorDescription, requestId);
+            Q_EMIT listLinkedNotebooksFailed(flag, limit, offset, order, orderDirection, errorDescription, requestId);
             return;
         }
 
@@ -793,7 +794,7 @@ void LocalStorageManagerAsync::onListLinkedNotebooksRequest(LocalStorageManager:
             }
         }
 
-        emit listLinkedNotebooksComplete(flag, limit, offset, order, orderDirection, linkedNotebooks, requestId);
+        Q_EMIT listLinkedNotebooksComplete(flag, limit, offset, order, orderDirection, linkedNotebooks, requestId);
     }
     catch(const std::exception & e)
     {
@@ -801,7 +802,7 @@ void LocalStorageManagerAsync::onListLinkedNotebooksRequest(LocalStorageManager:
         error.details() = QString::fromUtf8(e.what());
         SysInfo sysInfo;
         QNCRITICAL(error << QStringLiteral("; backtrace: ") << sysInfo.stackTrace());
-        emit listLinkedNotebooksFailed(flag, limit, offset, order, orderDirection, error, requestId);
+        Q_EMIT listLinkedNotebooksFailed(flag, limit, offset, order, orderDirection, error, requestId);
     }
 }
 
@@ -813,7 +814,7 @@ void LocalStorageManagerAsync::onExpungeLinkedNotebookRequest(LinkedNotebook lin
 
         bool res = m_pLocalStorageManager->expungeLinkedNotebook(linkedNotebook, errorDescription);
         if (!res) {
-            emit expungeLinkedNotebookFailed(linkedNotebook, errorDescription, requestId);
+            Q_EMIT expungeLinkedNotebookFailed(linkedNotebook, errorDescription, requestId);
             return;
         }
 
@@ -821,7 +822,7 @@ void LocalStorageManagerAsync::onExpungeLinkedNotebookRequest(LinkedNotebook lin
             m_pLocalStorageCacheManager->expungeLinkedNotebook(linkedNotebook);
         }
 
-        emit expungeLinkedNotebookComplete(linkedNotebook, requestId);
+        Q_EMIT expungeLinkedNotebookComplete(linkedNotebook, requestId);
     }
     catch(const std::exception & e)
     {
@@ -829,7 +830,7 @@ void LocalStorageManagerAsync::onExpungeLinkedNotebookRequest(LinkedNotebook lin
         error.details() = QString::fromUtf8(e.what());
         SysInfo sysInfo;
         QNCRITICAL(error << QStringLiteral("; backtrace: ") << sysInfo.stackTrace());
-        emit expungeLinkedNotebookFailed(linkedNotebook, error, requestId);
+        Q_EMIT expungeLinkedNotebookFailed(linkedNotebook, error, requestId);
     }
 }
 
@@ -840,10 +841,10 @@ void LocalStorageManagerAsync::onGetNoteCountRequest(QUuid requestId)
         ErrorString errorDescription;
         int count = m_pLocalStorageManager->noteCount(errorDescription);
         if (count < 0) {
-            emit getNoteCountFailed(errorDescription, requestId);
+            Q_EMIT getNoteCountFailed(errorDescription, requestId);
         }
         else {
-            emit getNoteCountComplete(count, requestId);
+            Q_EMIT getNoteCountComplete(count, requestId);
         }
     }
     catch(const std::exception & e)
@@ -852,7 +853,7 @@ void LocalStorageManagerAsync::onGetNoteCountRequest(QUuid requestId)
         error.details() = QString::fromUtf8(e.what());
         SysInfo sysInfo;
         QNCRITICAL(error << QStringLiteral("; backtrace: ") << sysInfo.stackTrace());
-        emit getNoteCountFailed(error, requestId);
+        Q_EMIT getNoteCountFailed(error, requestId);
     }
 }
 
@@ -863,10 +864,10 @@ void LocalStorageManagerAsync::onGetNoteCountPerNotebookRequest(Notebook noteboo
         ErrorString errorDescription;
         int count = m_pLocalStorageManager->noteCountPerNotebook(notebook, errorDescription);
         if (count < 0) {
-            emit getNoteCountPerNotebookFailed(errorDescription, notebook, requestId);
+            Q_EMIT getNoteCountPerNotebookFailed(errorDescription, notebook, requestId);
         }
         else {
-            emit getNoteCountPerNotebookComplete(count, notebook, requestId);
+            Q_EMIT getNoteCountPerNotebookComplete(count, notebook, requestId);
         }
     }
     catch(const std::exception & e)
@@ -875,7 +876,7 @@ void LocalStorageManagerAsync::onGetNoteCountPerNotebookRequest(Notebook noteboo
         error.details() = QString::fromUtf8(e.what());
         SysInfo sysInfo;
         QNCRITICAL(error << QStringLiteral("; backtrace: ") << sysInfo.stackTrace());
-        emit getNoteCountPerNotebookFailed(error, notebook, requestId);
+        Q_EMIT getNoteCountPerNotebookFailed(error, notebook, requestId);
     }
 }
 
@@ -886,10 +887,10 @@ void LocalStorageManagerAsync::onGetNoteCountPerTagRequest(Tag tag, QUuid reques
         ErrorString errorDescription;
         int count = m_pLocalStorageManager->noteCountPerTag(tag, errorDescription);
         if (count < 0) {
-            emit getNoteCountPerTagFailed(errorDescription, tag, requestId);
+            Q_EMIT getNoteCountPerTagFailed(errorDescription, tag, requestId);
         }
         else {
-            emit getNoteCountPerTagComplete(count, tag, requestId);
+            Q_EMIT getNoteCountPerTagComplete(count, tag, requestId);
         }
     }
     catch(const std::exception & e)
@@ -898,7 +899,7 @@ void LocalStorageManagerAsync::onGetNoteCountPerTagRequest(Tag tag, QUuid reques
         error.details() = QString::fromUtf8(e.what());
         SysInfo sysInfo;
         QNCRITICAL(error << QStringLiteral("; backtrace: ") << sysInfo.stackTrace());
-        emit getNoteCountPerTagFailed(error, tag, requestId);
+        Q_EMIT getNoteCountPerTagFailed(error, tag, requestId);
     }
 }
 
@@ -910,7 +911,7 @@ void LocalStorageManagerAsync::onAddNoteRequest(Note note, QUuid requestId)
 
         bool res = m_pLocalStorageManager->addNote(note, errorDescription);
         if (!res) {
-            emit addNoteFailed(note, errorDescription, requestId);
+            Q_EMIT addNoteFailed(note, errorDescription, requestId);
             return;
         }
 
@@ -918,7 +919,7 @@ void LocalStorageManagerAsync::onAddNoteRequest(Note note, QUuid requestId)
             m_pLocalStorageCacheManager->cacheNote(note);
         }
 
-        emit addNoteComplete(note, requestId);
+        Q_EMIT addNoteComplete(note, requestId);
     }
     catch(const std::exception & e)
     {
@@ -926,7 +927,7 @@ void LocalStorageManagerAsync::onAddNoteRequest(Note note, QUuid requestId)
         error.details() = QString::fromUtf8(e.what());
         SysInfo sysInfo;
         QNCRITICAL(error << QStringLiteral("; backtrace: ") << sysInfo.stackTrace());
-        emit addNoteFailed(note, error, requestId);
+        Q_EMIT addNoteFailed(note, error, requestId);
     }
 }
 
@@ -939,7 +940,7 @@ void LocalStorageManagerAsync::onUpdateNoteRequest(Note note, bool updateResourc
 
         bool res = m_pLocalStorageManager->updateNote(note, updateResources, updateTags, errorDescription);
         if (!res) {
-            emit updateNoteFailed(note, updateResources, updateTags, errorDescription, requestId);
+            Q_EMIT updateNoteFailed(note, updateResources, updateTags, errorDescription, requestId);
             return;
         }
 
@@ -955,7 +956,7 @@ void LocalStorageManagerAsync::onUpdateNoteRequest(Note note, bool updateResourc
             }
         }
 
-        emit updateNoteComplete(note, updateResources, updateTags, requestId);
+        Q_EMIT updateNoteComplete(note, updateResources, updateTags, requestId);
     }
     catch(const std::exception & e)
     {
@@ -963,7 +964,7 @@ void LocalStorageManagerAsync::onUpdateNoteRequest(Note note, bool updateResourc
         error.details() = QString::fromUtf8(e.what());
         SysInfo sysInfo;
         QNCRITICAL(error << QStringLiteral("; backtrace: ") << sysInfo.stackTrace());
-        emit updateNoteFailed(note, updateResources, updateTags, error, requestId);
+        Q_EMIT updateNoteFailed(note, updateResources, updateTags, error, requestId);
     }
 }
 
@@ -991,7 +992,7 @@ void LocalStorageManagerAsync::onFindNoteRequest(Note note, bool withResourceBin
         {
             bool res = m_pLocalStorageManager->findNote(note, errorDescription, withResourceBinaryData);
             if (!res) {
-                emit findNoteFailed(note, withResourceBinaryData, errorDescription, requestId);
+                Q_EMIT findNoteFailed(note, withResourceBinaryData, errorDescription, requestId);
                 return;
             }
         }
@@ -1000,7 +1001,7 @@ void LocalStorageManagerAsync::onFindNoteRequest(Note note, bool withResourceBin
             m_pLocalStorageCacheManager->cacheNote(note);
         }
 
-        emit findNoteComplete(note, withResourceBinaryData, requestId);
+        Q_EMIT findNoteComplete(note, withResourceBinaryData, requestId);
     }
     catch(const std::exception & e)
     {
@@ -1008,7 +1009,7 @@ void LocalStorageManagerAsync::onFindNoteRequest(Note note, bool withResourceBin
         error.details() = QString::fromUtf8(e.what());
         SysInfo sysInfo;
         QNCRITICAL(error << QStringLiteral("; backtrace: ") << sysInfo.stackTrace());
-        emit findNoteFailed(note, withResourceBinaryData, error, requestId);
+        Q_EMIT findNoteFailed(note, withResourceBinaryData, error, requestId);
     }
 }
 
@@ -1027,8 +1028,8 @@ void LocalStorageManagerAsync::onListNotesPerNotebookRequest(Notebook notebook, 
                                                                          withResourceBinaryData, flag,
                                                                          limit, offset, order, orderDirection);
         if (notes.isEmpty() && !errorDescription.isEmpty()) {
-            emit listNotesPerNotebookFailed(notebook, withResourceBinaryData, flag, limit, offset,
-                                            order, orderDirection, errorDescription, requestId);
+            Q_EMIT listNotesPerNotebookFailed(notebook, withResourceBinaryData, flag, limit, offset,
+                                              order, orderDirection, errorDescription, requestId);
             return;
         }
 
@@ -1041,8 +1042,8 @@ void LocalStorageManagerAsync::onListNotesPerNotebookRequest(Notebook notebook, 
             }
         }
 
-        emit listNotesPerNotebookComplete(notebook, withResourceBinaryData, flag, limit,
-                                          offset, order, orderDirection, notes, requestId);
+        Q_EMIT listNotesPerNotebookComplete(notebook, withResourceBinaryData, flag, limit,
+                                            offset, order, orderDirection, notes, requestId);
     }
     catch(const std::exception & e)
     {
@@ -1050,8 +1051,8 @@ void LocalStorageManagerAsync::onListNotesPerNotebookRequest(Notebook notebook, 
         error.details() = QString::fromUtf8(e.what());
         SysInfo sysInfo;
         QNCRITICAL(error << QStringLiteral("; backtrace: ") << sysInfo.stackTrace());
-        emit listNotesPerNotebookFailed(notebook, withResourceBinaryData, flag, limit, offset,
-                                        order, orderDirection, error, requestId);
+        Q_EMIT listNotesPerNotebookFailed(notebook, withResourceBinaryData, flag, limit, offset,
+                                          order, orderDirection, error, requestId);
     }
 }
 
@@ -1070,8 +1071,8 @@ void LocalStorageManagerAsync::onListNotesPerTagRequest(Tag tag, bool withResour
                                                                     withResourceBinaryData, flag,
                                                                     limit, offset, order, orderDirection);
         if (notes.isEmpty() && !errorDescription.isEmpty()) {
-            emit listNotesPerTagFailed(tag, withResourceBinaryData, flag, limit, offset,
-                                       order, orderDirection, errorDescription, requestId);
+            Q_EMIT listNotesPerTagFailed(tag, withResourceBinaryData, flag, limit, offset,
+                                         order, orderDirection, errorDescription, requestId);
             return;
         }
 
@@ -1084,8 +1085,8 @@ void LocalStorageManagerAsync::onListNotesPerTagRequest(Tag tag, bool withResour
             }
         }
 
-        emit listNotesPerTagComplete(tag, withResourceBinaryData, flag, limit,
-                                     offset, order, orderDirection, notes, requestId);
+        Q_EMIT listNotesPerTagComplete(tag, withResourceBinaryData, flag, limit,
+                                       offset, order, orderDirection, notes, requestId);
     }
     catch(const std::exception & e)
     {
@@ -1093,8 +1094,8 @@ void LocalStorageManagerAsync::onListNotesPerTagRequest(Tag tag, bool withResour
         error.details() = QString::fromUtf8(e.what());
         SysInfo sysInfo;
         QNCRITICAL(error << QStringLiteral("; backtrace: ") << sysInfo.stackTrace());
-        emit listNotesPerTagFailed(tag, withResourceBinaryData, flag, limit, offset,
-                                   order, orderDirection, error, requestId);
+        Q_EMIT listNotesPerTagFailed(tag, withResourceBinaryData, flag, limit, offset,
+                                     order, orderDirection, error, requestId);
     }
 }
 
@@ -1109,8 +1110,8 @@ void LocalStorageManagerAsync::onListNotesRequest(LocalStorageManager::ListObjec
         QList<Note> notes = m_pLocalStorageManager->listNotes(flag, errorDescription, withResourceBinaryData,
                                                               limit, offset, order, orderDirection, linkedNotebookGuid);
         if (notes.isEmpty() && !errorDescription.isEmpty()) {
-            emit listNotesFailed(flag, withResourceBinaryData, limit, offset, order,
-                                 orderDirection, linkedNotebookGuid, errorDescription, requestId);
+            Q_EMIT listNotesFailed(flag, withResourceBinaryData, limit, offset, order,
+                                   orderDirection, linkedNotebookGuid, errorDescription, requestId);
             return;
         }
 
@@ -1123,8 +1124,8 @@ void LocalStorageManagerAsync::onListNotesRequest(LocalStorageManager::ListObjec
             }
         }
 
-        emit listNotesComplete(flag, withResourceBinaryData, limit, offset, order,
-                               orderDirection, linkedNotebookGuid, notes, requestId);
+        Q_EMIT listNotesComplete(flag, withResourceBinaryData, limit, offset, order,
+                                 orderDirection, linkedNotebookGuid, notes, requestId);
     }
     catch(const std::exception & e)
     {
@@ -1132,8 +1133,8 @@ void LocalStorageManagerAsync::onListNotesRequest(LocalStorageManager::ListObjec
         error.details() = QString::fromUtf8(e.what());
         SysInfo sysInfo;
         QNCRITICAL(error << QStringLiteral("; backtrace: ") << sysInfo.stackTrace());
-        emit listNotesFailed(flag, withResourceBinaryData, limit, offset,
-                             order, orderDirection, linkedNotebookGuid, error, requestId);
+        Q_EMIT listNotesFailed(flag, withResourceBinaryData, limit, offset,
+                               order, orderDirection, linkedNotebookGuid, error, requestId);
     }
 }
 
@@ -1145,11 +1146,11 @@ void LocalStorageManagerAsync::onFindNoteLocalUidsWithSearchQuery(NoteSearchQuer
         QStringList noteLocalUids = m_pLocalStorageManager->findNoteLocalUidsWithSearchQuery(noteSearchQuery,
                                                                                              errorDescription);
         if (noteLocalUids.isEmpty() && !errorDescription.isEmpty()) {
-            emit findNoteLocalUidsWithSearchQueryFailed(noteSearchQuery, errorDescription, requestId);
+            Q_EMIT findNoteLocalUidsWithSearchQueryFailed(noteSearchQuery, errorDescription, requestId);
             return;
         }
 
-        emit findNoteLocalUidsWithSearchQueryComplete(noteLocalUids, noteSearchQuery, requestId);
+        Q_EMIT findNoteLocalUidsWithSearchQueryComplete(noteLocalUids, noteSearchQuery, requestId);
     }
     catch(const std::exception & e)
     {
@@ -1157,7 +1158,7 @@ void LocalStorageManagerAsync::onFindNoteLocalUidsWithSearchQuery(NoteSearchQuer
         error.details() = QString::fromUtf8(e.what());
         SysInfo sysInfo;
         QNCRITICAL(error << QStringLiteral("; backtrace: ") << sysInfo.stackTrace());
-        emit findNoteLocalUidsWithSearchQueryFailed(noteSearchQuery, error, requestId);
+        Q_EMIT findNoteLocalUidsWithSearchQueryFailed(noteSearchQuery, error, requestId);
     }
 }
 
@@ -1169,7 +1170,7 @@ void LocalStorageManagerAsync::onExpungeNoteRequest(Note note, QUuid requestId)
 
         bool res = m_pLocalStorageManager->expungeNote(note, errorDescription);
         if (!res) {
-            emit expungeNoteFailed(note, errorDescription, requestId);
+            Q_EMIT expungeNoteFailed(note, errorDescription, requestId);
             return;
         }
 
@@ -1177,7 +1178,7 @@ void LocalStorageManagerAsync::onExpungeNoteRequest(Note note, QUuid requestId)
             m_pLocalStorageCacheManager->expungeNote(note);
         }
 
-        emit expungeNoteComplete(note, requestId);
+        Q_EMIT expungeNoteComplete(note, requestId);
     }
     catch(const std::exception & e)
     {
@@ -1185,7 +1186,7 @@ void LocalStorageManagerAsync::onExpungeNoteRequest(Note note, QUuid requestId)
         error.details() = QString::fromUtf8(e.what());
         SysInfo sysInfo;
         QNCRITICAL(error << QStringLiteral("; backtrace: ") << sysInfo.stackTrace());
-        emit expungeNoteFailed(note, error, requestId);
+        Q_EMIT expungeNoteFailed(note, error, requestId);
     }
 }
 
@@ -1196,10 +1197,10 @@ void LocalStorageManagerAsync::onGetTagCountRequest(QUuid requestId)
         ErrorString errorDescription;
         int count = m_pLocalStorageManager->tagCount(errorDescription);
         if (count < 0) {
-            emit getTagCountFailed(errorDescription, requestId);
+            Q_EMIT getTagCountFailed(errorDescription, requestId);
         }
         else {
-            emit getTagCountComplete(count, requestId);
+            Q_EMIT getTagCountComplete(count, requestId);
         }
     }
     catch(const std::exception & e)
@@ -1208,7 +1209,7 @@ void LocalStorageManagerAsync::onGetTagCountRequest(QUuid requestId)
         error.details() = QString::fromUtf8(e.what());
         SysInfo sysInfo;
         QNCRITICAL(error << QStringLiteral("; backtrace: ") << sysInfo.stackTrace());
-        emit getTagCountFailed(error, requestId);
+        Q_EMIT getTagCountFailed(error, requestId);
     }
 }
 
@@ -1220,7 +1221,7 @@ void LocalStorageManagerAsync::onAddTagRequest(Tag tag, QUuid requestId)
 
         bool res = m_pLocalStorageManager->addTag(tag, errorDescription);
         if (!res) {
-            emit addTagFailed(tag, errorDescription, requestId);
+            Q_EMIT addTagFailed(tag, errorDescription, requestId);
             return;
         }
 
@@ -1228,7 +1229,7 @@ void LocalStorageManagerAsync::onAddTagRequest(Tag tag, QUuid requestId)
             m_pLocalStorageCacheManager->cacheTag(tag);
         }
 
-        emit addTagComplete(tag, requestId);
+        Q_EMIT addTagComplete(tag, requestId);
     }
     catch(const std::exception & e)
     {
@@ -1236,7 +1237,7 @@ void LocalStorageManagerAsync::onAddTagRequest(Tag tag, QUuid requestId)
         error.details() = QString::fromUtf8(e.what());
         SysInfo sysInfo;
         QNCRITICAL(error << QStringLiteral("; backtrace: ") << sysInfo.stackTrace());
-        emit addTagFailed(tag, error, requestId);
+        Q_EMIT addTagFailed(tag, error, requestId);
     }
 }
 
@@ -1248,7 +1249,7 @@ void LocalStorageManagerAsync::onUpdateTagRequest(Tag tag, QUuid requestId)
 
         bool res = m_pLocalStorageManager->updateTag(tag, errorDescription);
         if (!res) {
-            emit updateTagFailed(tag, errorDescription, requestId);
+            Q_EMIT updateTagFailed(tag, errorDescription, requestId);
             return;
         }
 
@@ -1256,7 +1257,7 @@ void LocalStorageManagerAsync::onUpdateTagRequest(Tag tag, QUuid requestId)
             m_pLocalStorageCacheManager->cacheTag(tag);
         }
 
-        emit updateTagComplete(tag, requestId);
+        Q_EMIT updateTagComplete(tag, requestId);
     }
     catch(const std::exception & e)
     {
@@ -1264,7 +1265,7 @@ void LocalStorageManagerAsync::onUpdateTagRequest(Tag tag, QUuid requestId)
         error.details() = QString::fromUtf8(e.what());
         SysInfo sysInfo;
         QNCRITICAL(error << QStringLiteral("; backtrace: ") << sysInfo.stackTrace());
-        emit updateTagFailed(tag, error, requestId);
+        Q_EMIT updateTagFailed(tag, error, requestId);
     }
 }
 
@@ -1304,12 +1305,12 @@ void LocalStorageManagerAsync::onFindTagRequest(Tag tag, QUuid requestId)
         {
             bool res = m_pLocalStorageManager->findTag(tag, errorDescription);
             if (!res) {
-                emit findTagFailed(tag, errorDescription, requestId);
+                Q_EMIT findTagFailed(tag, errorDescription, requestId);
                 return;
             }
         }
 
-        emit findTagComplete(tag, requestId);
+        Q_EMIT findTagComplete(tag, requestId);
     }
     catch(const std::exception & e)
     {
@@ -1317,7 +1318,7 @@ void LocalStorageManagerAsync::onFindTagRequest(Tag tag, QUuid requestId)
         error.details() = QString::fromUtf8(e.what());
         SysInfo sysInfo;
         QNCRITICAL(error << QStringLiteral("; backtrace: ") << sysInfo.stackTrace());
-        emit findTagFailed(tag, error, requestId);
+        Q_EMIT findTagFailed(tag, error, requestId);
     }
 }
 
@@ -1334,7 +1335,7 @@ void LocalStorageManagerAsync::onListAllTagsPerNoteRequest(Note note, LocalStora
         QList<Tag> tags = m_pLocalStorageManager->listAllTagsPerNote(note, errorDescription, flag, limit,
                                                                      offset, order, orderDirection);
         if (tags.isEmpty() && !errorDescription.isEmpty()) {
-            emit listAllTagsPerNoteFailed(note, flag, limit, offset, order,
+            Q_EMIT listAllTagsPerNoteFailed(note, flag, limit, offset, order,
                                           orderDirection, errorDescription, requestId);
             return;
         }
@@ -1346,7 +1347,7 @@ void LocalStorageManagerAsync::onListAllTagsPerNoteRequest(Note note, LocalStora
             }
         }
 
-        emit listAllTagsPerNoteComplete(tags, note, flag, limit, offset, order, orderDirection, requestId);
+        Q_EMIT listAllTagsPerNoteComplete(tags, note, flag, limit, offset, order, orderDirection, requestId);
     }
     catch(const std::exception & e)
     {
@@ -1354,8 +1355,8 @@ void LocalStorageManagerAsync::onListAllTagsPerNoteRequest(Note note, LocalStora
         error.details() = QString::fromUtf8(e.what());
         SysInfo sysInfo;
         QNCRITICAL(error << QStringLiteral("; backtrace: ") << sysInfo.stackTrace());
-        emit listAllTagsPerNoteFailed(note, flag, limit, offset,
-                                      order, orderDirection, error, requestId);
+        Q_EMIT listAllTagsPerNoteFailed(note, flag, limit, offset,
+                                        order, orderDirection, error, requestId);
     }
 }
 
@@ -1371,7 +1372,7 @@ void LocalStorageManagerAsync::onListAllTagsRequest(size_t limit, size_t offset,
         QList<Tag> tags = m_pLocalStorageManager->listAllTags(errorDescription, limit, offset,
                                                               order, orderDirection, linkedNotebookGuid);
         if (tags.isEmpty() && !errorDescription.isEmpty()) {
-            emit listAllTagsFailed(limit, offset, order, orderDirection, linkedNotebookGuid, errorDescription, requestId);
+            Q_EMIT listAllTagsFailed(limit, offset, order, orderDirection, linkedNotebookGuid, errorDescription, requestId);
             return;
         }
 
@@ -1384,7 +1385,7 @@ void LocalStorageManagerAsync::onListAllTagsRequest(size_t limit, size_t offset,
             }
         }
 
-        emit listAllTagsComplete(limit, offset, order, orderDirection, linkedNotebookGuid, tags, requestId);
+        Q_EMIT listAllTagsComplete(limit, offset, order, orderDirection, linkedNotebookGuid, tags, requestId);
     }
     catch(const std::exception & e)
     {
@@ -1392,7 +1393,7 @@ void LocalStorageManagerAsync::onListAllTagsRequest(size_t limit, size_t offset,
         error.details() = QString::fromUtf8(e.what());
         SysInfo sysInfo;
         QNCRITICAL(error << QStringLiteral("; backtrace: ") << sysInfo.stackTrace());
-        emit listAllTagsFailed(limit, offset, order, orderDirection, linkedNotebookGuid, error, requestId);
+        Q_EMIT listAllTagsFailed(limit, offset, order, orderDirection, linkedNotebookGuid, error, requestId);
     }
 }
 
@@ -1408,7 +1409,7 @@ void LocalStorageManagerAsync::onListTagsRequest(LocalStorageManager::ListObject
         QList<Tag> tags = m_pLocalStorageManager->listTags(flag, errorDescription, limit, offset, order,
                                                            orderDirection, linkedNotebookGuid);
         if (tags.isEmpty() && !errorDescription.isEmpty()) {
-            emit listTagsFailed(flag, limit, offset, order, orderDirection, linkedNotebookGuid, errorDescription, requestId);
+            Q_EMIT listTagsFailed(flag, limit, offset, order, orderDirection, linkedNotebookGuid, errorDescription, requestId);
         }
 
         if (m_useCache)
@@ -1420,7 +1421,7 @@ void LocalStorageManagerAsync::onListTagsRequest(LocalStorageManager::ListObject
             }
         }
 
-        emit listTagsComplete(flag, limit, offset, order, orderDirection, linkedNotebookGuid, tags, requestId);
+        Q_EMIT listTagsComplete(flag, limit, offset, order, orderDirection, linkedNotebookGuid, tags, requestId);
     }
     catch(const std::exception & e)
     {
@@ -1428,7 +1429,7 @@ void LocalStorageManagerAsync::onListTagsRequest(LocalStorageManager::ListObject
         error.details() = QString::fromUtf8(e.what());
         SysInfo sysInfo;
         QNCRITICAL(error << QStringLiteral("; backtrace: ") << sysInfo.stackTrace());
-        emit listTagsFailed(flag, limit, offset, order, orderDirection, linkedNotebookGuid, error, requestId);
+        Q_EMIT listTagsFailed(flag, limit, offset, order, orderDirection, linkedNotebookGuid, error, requestId);
     }
 }
 
@@ -1441,7 +1442,7 @@ void LocalStorageManagerAsync::onExpungeTagRequest(Tag tag, QUuid requestId)
         QStringList expungedChildTagLocalUids;
         bool res = m_pLocalStorageManager->expungeTag(tag, expungedChildTagLocalUids, errorDescription);
         if (!res) {
-            emit expungeTagFailed(tag, errorDescription, requestId);
+            Q_EMIT expungeTagFailed(tag, errorDescription, requestId);
             return;
         }
 
@@ -1456,7 +1457,7 @@ void LocalStorageManagerAsync::onExpungeTagRequest(Tag tag, QUuid requestId)
             }
         }
 
-        emit expungeTagComplete(tag, expungedChildTagLocalUids, requestId);
+        Q_EMIT expungeTagComplete(tag, expungedChildTagLocalUids, requestId);
     }
     catch(const std::exception & e)
     {
@@ -1464,7 +1465,7 @@ void LocalStorageManagerAsync::onExpungeTagRequest(Tag tag, QUuid requestId)
         error.details() = QString::fromUtf8(e.what());
         SysInfo sysInfo;
         QNCRITICAL(error << QStringLiteral("; backtrace: ") << sysInfo.stackTrace());
-        emit expungeTagFailed(tag, error, requestId);
+        Q_EMIT expungeTagFailed(tag, error, requestId);
     }
 }
 
@@ -1475,10 +1476,10 @@ void LocalStorageManagerAsync::onExpungeNotelessTagsFromLinkedNotebooksRequest(Q
         ErrorString errorDescription;
         bool res = m_pLocalStorageManager->expungeNotelessTagsFromLinkedNotebooks(errorDescription);
         if (!res) {
-            emit expungeNotelessTagsFromLinkedNotebooksFailed(errorDescription, requestId);
+            Q_EMIT expungeNotelessTagsFromLinkedNotebooksFailed(errorDescription, requestId);
         }
         else {
-            emit expungeNotelessTagsFromLinkedNotebooksComplete(requestId);
+            Q_EMIT expungeNotelessTagsFromLinkedNotebooksComplete(requestId);
         }
     }
     catch(const std::exception & e)
@@ -1487,7 +1488,7 @@ void LocalStorageManagerAsync::onExpungeNotelessTagsFromLinkedNotebooksRequest(Q
         error.details() = QString::fromUtf8(e.what());
         SysInfo sysInfo;
         QNCRITICAL(error << QStringLiteral("; backtrace: ") << sysInfo.stackTrace());
-        emit expungeNotelessTagsFromLinkedNotebooksFailed(error, requestId);
+        Q_EMIT expungeNotelessTagsFromLinkedNotebooksFailed(error, requestId);
     }
 }
 
@@ -1498,10 +1499,10 @@ void LocalStorageManagerAsync::onGetResourceCountRequest(QUuid requestId)
         ErrorString errorDescription;
         int count = m_pLocalStorageManager->enResourceCount(errorDescription);
         if (count < 0) {
-            emit getResourceCountFailed(errorDescription, requestId);
+            Q_EMIT getResourceCountFailed(errorDescription, requestId);
         }
         else {
-            emit getResourceCountComplete(count, requestId);
+            Q_EMIT getResourceCountComplete(count, requestId);
         }
     }
     catch(const std::exception & e)
@@ -1510,7 +1511,7 @@ void LocalStorageManagerAsync::onGetResourceCountRequest(QUuid requestId)
         error.details() = QString::fromUtf8(e.what());
         SysInfo sysInfo;
         QNCRITICAL(error << QStringLiteral("; backtrace: ") << sysInfo.stackTrace());
-        emit getResourceCountFailed(error, requestId);
+        Q_EMIT getResourceCountFailed(error, requestId);
     }
 }
 
@@ -1522,11 +1523,11 @@ void LocalStorageManagerAsync::onAddResourceRequest(Resource resource, QUuid req
 
         bool res = m_pLocalStorageManager->addEnResource(resource, errorDescription);
         if (!res) {
-            emit addResourceFailed(resource, errorDescription, requestId);
+            Q_EMIT addResourceFailed(resource, errorDescription, requestId);
             return;
         }
 
-        emit addResourceComplete(resource, requestId);
+        Q_EMIT addResourceComplete(resource, requestId);
     }
     catch(const std::exception & e)
     {
@@ -1534,7 +1535,7 @@ void LocalStorageManagerAsync::onAddResourceRequest(Resource resource, QUuid req
         error.details() = QString::fromUtf8(e.what());
         SysInfo sysInfo;
         QNCRITICAL(error << QStringLiteral("; backtrace: ") << sysInfo.stackTrace());
-        emit addResourceFailed(resource, error, requestId);
+        Q_EMIT addResourceFailed(resource, error, requestId);
     }
 }
 
@@ -1546,11 +1547,11 @@ void LocalStorageManagerAsync::onUpdateResourceRequest(Resource resource, QUuid 
 
         bool res = m_pLocalStorageManager->updateEnResource(resource, errorDescription);
         if (!res) {
-            emit updateResourceFailed(resource, errorDescription, requestId);
+            Q_EMIT updateResourceFailed(resource, errorDescription, requestId);
             return;
         }
 
-        emit updateResourceComplete(resource, requestId);
+        Q_EMIT updateResourceComplete(resource, requestId);
     }
     catch(const std::exception & e)
     {
@@ -1558,7 +1559,7 @@ void LocalStorageManagerAsync::onUpdateResourceRequest(Resource resource, QUuid 
         error.details() = QString::fromUtf8(e.what());
         SysInfo sysInfo;
         QNCRITICAL(error << QStringLiteral("; backtrace: ") << sysInfo.stackTrace());
-        emit updateResourceFailed(resource, error, requestId);
+        Q_EMIT updateResourceFailed(resource, error, requestId);
     }
 }
 
@@ -1570,11 +1571,11 @@ void LocalStorageManagerAsync::onFindResourceRequest(Resource resource, bool wit
 
         bool res = m_pLocalStorageManager->findEnResource(resource, errorDescription, withBinaryData);
         if (!res) {
-            emit findResourceFailed(resource, withBinaryData, errorDescription, requestId);
+            Q_EMIT findResourceFailed(resource, withBinaryData, errorDescription, requestId);
             return;
         }
 
-        emit findResourceComplete(resource, withBinaryData, requestId);
+        Q_EMIT findResourceComplete(resource, withBinaryData, requestId);
     }
     catch(const std::exception & e)
     {
@@ -1582,7 +1583,7 @@ void LocalStorageManagerAsync::onFindResourceRequest(Resource resource, bool wit
         error.details() = QString::fromUtf8(e.what());
         SysInfo sysInfo;
         QNCRITICAL(error << QStringLiteral("; backtrace: ") << sysInfo.stackTrace());
-        emit findResourceFailed(resource, withBinaryData, error, requestId);
+        Q_EMIT findResourceFailed(resource, withBinaryData, error, requestId);
     }
 }
 
@@ -1594,11 +1595,11 @@ void LocalStorageManagerAsync::onExpungeResourceRequest(Resource resource, QUuid
 
         bool res = m_pLocalStorageManager->expungeEnResource(resource, errorDescription);
         if (!res) {
-            emit expungeResourceFailed(resource, errorDescription, requestId);
+            Q_EMIT expungeResourceFailed(resource, errorDescription, requestId);
             return;
         }
 
-        emit expungeResourceComplete(resource, requestId);
+        Q_EMIT expungeResourceComplete(resource, requestId);
     }
     catch(const std::exception & e)
     {
@@ -1606,7 +1607,7 @@ void LocalStorageManagerAsync::onExpungeResourceRequest(Resource resource, QUuid
         error.details() = QString::fromUtf8(e.what());
         SysInfo sysInfo;
         QNCRITICAL(error << QStringLiteral("; backtrace: ") << sysInfo.stackTrace());
-        emit expungeResourceFailed(resource, error, requestId);
+        Q_EMIT expungeResourceFailed(resource, error, requestId);
     }
 }
 
@@ -1617,10 +1618,10 @@ void LocalStorageManagerAsync::onGetSavedSearchCountRequest(QUuid requestId)
         ErrorString errorDescription;
         int count = m_pLocalStorageManager->savedSearchCount(errorDescription);
         if (count < 0) {
-            emit getSavedSearchCountFailed(errorDescription, requestId);
+            Q_EMIT getSavedSearchCountFailed(errorDescription, requestId);
         }
         else {
-            emit getSavedSearchCountComplete(count, requestId);
+            Q_EMIT getSavedSearchCountComplete(count, requestId);
         }
     }
     catch(const std::exception & e)
@@ -1629,7 +1630,7 @@ void LocalStorageManagerAsync::onGetSavedSearchCountRequest(QUuid requestId)
         error.details() = QString::fromUtf8(e.what());
         SysInfo sysInfo;
         QNCRITICAL(error << QStringLiteral("; backtrace: ") << sysInfo.stackTrace());
-        emit getSavedSearchCountFailed(error, requestId);
+        Q_EMIT getSavedSearchCountFailed(error, requestId);
     }
 }
 
@@ -1641,7 +1642,7 @@ void LocalStorageManagerAsync::onAddSavedSearchRequest(SavedSearch search, QUuid
 
         bool res = m_pLocalStorageManager->addSavedSearch(search, errorDescription);
         if (!res) {
-            emit addSavedSearchFailed(search, errorDescription, requestId);
+            Q_EMIT addSavedSearchFailed(search, errorDescription, requestId);
             return;
         }
 
@@ -1649,7 +1650,7 @@ void LocalStorageManagerAsync::onAddSavedSearchRequest(SavedSearch search, QUuid
             m_pLocalStorageCacheManager->cacheSavedSearch(search);
         }
 
-        emit addSavedSearchComplete(search, requestId);
+        Q_EMIT addSavedSearchComplete(search, requestId);
     }
     catch(const std::exception & e)
     {
@@ -1657,7 +1658,7 @@ void LocalStorageManagerAsync::onAddSavedSearchRequest(SavedSearch search, QUuid
         error.details() = QString::fromUtf8(e.what());
         SysInfo sysInfo;
         QNCRITICAL(error << QStringLiteral("; backtrace: ") << sysInfo.stackTrace());
-        emit addSavedSearchFailed(search, error, requestId);
+        Q_EMIT addSavedSearchFailed(search, error, requestId);
     }
 }
 
@@ -1669,7 +1670,7 @@ void LocalStorageManagerAsync::onUpdateSavedSearchRequest(SavedSearch search, QU
 
         bool res = m_pLocalStorageManager->updateSavedSearch(search, errorDescription);
         if (!res) {
-            emit updateSavedSearchFailed(search, errorDescription, requestId);
+            Q_EMIT updateSavedSearchFailed(search, errorDescription, requestId);
             return;
         }
 
@@ -1677,7 +1678,7 @@ void LocalStorageManagerAsync::onUpdateSavedSearchRequest(SavedSearch search, QU
             m_pLocalStorageCacheManager->cacheSavedSearch(search);
         }
 
-        emit updateSavedSearchComplete(search, requestId);
+        Q_EMIT updateSavedSearchComplete(search, requestId);
     }
     catch(const std::exception & e)
     {
@@ -1685,7 +1686,7 @@ void LocalStorageManagerAsync::onUpdateSavedSearchRequest(SavedSearch search, QU
         error.details() = QString::fromUtf8(e.what());
         SysInfo sysInfo;
         QNCRITICAL(error << QStringLiteral("; backtrace: ") << sysInfo.stackTrace());
-        emit updateSavedSearchFailed(search, error, requestId);
+        Q_EMIT updateSavedSearchFailed(search, error, requestId);
     }
 }
 
@@ -1725,12 +1726,12 @@ void LocalStorageManagerAsync::onFindSavedSearchRequest(SavedSearch search, QUui
         {
             bool res = m_pLocalStorageManager->findSavedSearch(search, errorDescription);
             if (!res) {
-                emit findSavedSearchFailed(search, errorDescription, requestId);
+                Q_EMIT findSavedSearchFailed(search, errorDescription, requestId);
                 return;
             }
         }
 
-        emit findSavedSearchComplete(search, requestId);
+        Q_EMIT findSavedSearchComplete(search, requestId);
     }
     catch(const std::exception & e)
     {
@@ -1738,7 +1739,7 @@ void LocalStorageManagerAsync::onFindSavedSearchRequest(SavedSearch search, QUui
         error.details() = QString::fromUtf8(e.what());
         SysInfo sysInfo;
         QNCRITICAL(error << QStringLiteral("; backtrace: ") << sysInfo.stackTrace());
-        emit findSavedSearchFailed(search, error, requestId);
+        Q_EMIT findSavedSearchFailed(search, error, requestId);
     }
 }
 
@@ -1753,7 +1754,7 @@ void LocalStorageManagerAsync::onListAllSavedSearchesRequest(size_t limit, size_
         QList<SavedSearch> savedSearches = m_pLocalStorageManager->listAllSavedSearches(errorDescription, limit, offset,
                                                                                    order, orderDirection);
         if (savedSearches.isEmpty() && !errorDescription.isEmpty()) {
-            emit listAllSavedSearchesFailed(limit, offset, order, orderDirection,
+            Q_EMIT listAllSavedSearchesFailed(limit, offset, order, orderDirection,
                                             errorDescription, requestId);
             return;
         }
@@ -1767,7 +1768,7 @@ void LocalStorageManagerAsync::onListAllSavedSearchesRequest(size_t limit, size_
             }
         }
 
-        emit listAllSavedSearchesComplete(limit, offset, order, orderDirection, savedSearches, requestId);
+        Q_EMIT listAllSavedSearchesComplete(limit, offset, order, orderDirection, savedSearches, requestId);
     }
     catch(const std::exception & e)
     {
@@ -1775,7 +1776,7 @@ void LocalStorageManagerAsync::onListAllSavedSearchesRequest(size_t limit, size_
         error.details() = QString::fromUtf8(e.what());
         SysInfo sysInfo;
         QNCRITICAL(error << QStringLiteral("; backtrace: ") << sysInfo.stackTrace());
-        emit listAllSavedSearchesFailed(limit, offset, order, orderDirection, error, requestId);
+        Q_EMIT listAllSavedSearchesFailed(limit, offset, order, orderDirection, error, requestId);
     }
 }
 
@@ -1792,8 +1793,8 @@ void LocalStorageManagerAsync::onListSavedSearchesRequest(LocalStorageManager::L
                                                                                      offset, order, orderDirection);
         if (savedSearches.isEmpty() && !errorDescription.isEmpty()) {
             QNTRACE(QStringLiteral("Failed: ") << errorDescription);
-            emit listSavedSearchesFailed(flag, limit, offset, order, orderDirection,
-                                         errorDescription, requestId);
+            Q_EMIT listSavedSearchesFailed(flag, limit, offset, order, orderDirection,
+                                           errorDescription, requestId);
             return;
         }
 
@@ -1806,7 +1807,7 @@ void LocalStorageManagerAsync::onListSavedSearchesRequest(LocalStorageManager::L
             }
         }
 
-        emit listSavedSearchesComplete(flag, limit, offset, order, orderDirection, savedSearches, requestId);
+        Q_EMIT listSavedSearchesComplete(flag, limit, offset, order, orderDirection, savedSearches, requestId);
     }
     catch(const std::exception & e)
     {
@@ -1814,7 +1815,7 @@ void LocalStorageManagerAsync::onListSavedSearchesRequest(LocalStorageManager::L
         error.details() = QString::fromUtf8(e.what());
         SysInfo sysInfo;
         QNCRITICAL(error << QStringLiteral("; backtrace: ") << sysInfo.stackTrace());
-        emit listSavedSearchesFailed(flag, limit, offset, order, orderDirection, error, requestId);
+        Q_EMIT listSavedSearchesFailed(flag, limit, offset, order, orderDirection, error, requestId);
     }
 }
 
@@ -1826,7 +1827,7 @@ void LocalStorageManagerAsync::onExpungeSavedSearchRequest(SavedSearch search, Q
 
         bool res = m_pLocalStorageManager->expungeSavedSearch(search, errorDescription);
         if (!res) {
-            emit expungeSavedSearchFailed(search, errorDescription, requestId);
+            Q_EMIT expungeSavedSearchFailed(search, errorDescription, requestId);
             return;
         }
 
@@ -1834,7 +1835,7 @@ void LocalStorageManagerAsync::onExpungeSavedSearchRequest(SavedSearch search, Q
             m_pLocalStorageCacheManager->expungeSavedSearch(search);
         }
 
-        emit expungeSavedSearchComplete(search, requestId);
+        Q_EMIT expungeSavedSearchComplete(search, requestId);
     }
     catch(const std::exception & e)
     {
@@ -1842,7 +1843,7 @@ void LocalStorageManagerAsync::onExpungeSavedSearchRequest(SavedSearch search, Q
         error.details() = QString::fromUtf8(e.what());
         SysInfo sysInfo;
         QNCRITICAL(error << QStringLiteral("; backtrace: ") << sysInfo.stackTrace());
-        emit expungeSavedSearchFailed(search, error, requestId);
+        Q_EMIT expungeSavedSearchFailed(search, error, requestId);
     }
 }
 
@@ -1854,11 +1855,11 @@ void LocalStorageManagerAsync::onAccountHighUsnRequest(QString linkedNotebookGui
 
         qint32 updateSequenceNumber = m_pLocalStorageManager->accountHighUsn(linkedNotebookGuid, errorDescription);
         if (updateSequenceNumber < 0) {
-            emit accountHighUsnFailed(linkedNotebookGuid, errorDescription, requestId);
+            Q_EMIT accountHighUsnFailed(linkedNotebookGuid, errorDescription, requestId);
             return;
         }
 
-        emit accountHighUsnComplete(updateSequenceNumber, linkedNotebookGuid, requestId);
+        Q_EMIT accountHighUsnComplete(updateSequenceNumber, linkedNotebookGuid, requestId);
     }
     catch(const std::exception & e)
     {
@@ -1866,7 +1867,7 @@ void LocalStorageManagerAsync::onAccountHighUsnRequest(QString linkedNotebookGui
         error.details() = QString::fromUtf8(e.what());
         SysInfo sysInfo;
         QNCRITICAL(error << QStringLiteral("; backtrace: ") << sysInfo.stackTrace());
-        emit accountHighUsnFailed(linkedNotebookGuid, error, requestId);
+        Q_EMIT accountHighUsnFailed(linkedNotebookGuid, error, requestId);
     }
 }
 

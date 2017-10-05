@@ -61,17 +61,17 @@ void AuthenticationManagerPrivate::onAuthenticationRequest()
     if (res == QDialog::Accepted)
     {
         qevercloud::EvernoteOAuthDialog::OAuthResult result = pDialog->oauthResult();
-        emit sendAuthenticationResult(/* success = */ true, result.userId, result.authenticationToken,
-                                      result.expires, result.shardId, result.noteStoreUrl,
-                                      result.webApiUrlPrefix, ErrorString());
+        Q_EMIT sendAuthenticationResult(/* success = */ true, result.userId, result.authenticationToken,
+                                        result.expires, result.shardId, result.noteStoreUrl,
+                                        result.webApiUrlPrefix, ErrorString());
     }
     else
     {
         ErrorString errorDescription(QT_TR_NOOP("Authentication failed"));
         errorDescription.details() = pDialog->oauthError();
-        emit sendAuthenticationResult(/* success = */ false, qevercloud::UserID(-1), QString(),
-                                      qevercloud::Timestamp(0), QString(), QString(), QString(),
-                                      errorDescription);
+        Q_EMIT sendAuthenticationResult(/* success = */ false, qevercloud::UserID(-1), QString(),
+                                        qevercloud::Timestamp(0), QString(), QString(), QString(),
+                                        errorDescription);
     }
 }
 

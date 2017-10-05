@@ -60,7 +60,7 @@ void InkNoteImageDownloader::run()
 
 #define SET_ERROR(error) \
     ErrorString errorDescription(error); \
-    emit finished(false, m_resourceGuid, m_noteGuid, errorDescription); \
+    Q_EMIT finished(false, m_resourceGuid, m_noteGuid, errorDescription); \
     return
 
     if (Q_UNLIKELY(m_host.isEmpty())) {
@@ -111,7 +111,7 @@ void InkNoteImageDownloader::run()
     file.write(inkNoteImageData);
     file.close();
 
-    emit finished(true, m_resourceGuid, m_noteGuid, ErrorString());
+    Q_EMIT finished(true, m_resourceGuid, m_noteGuid, ErrorString());
 }
 
 } // namespace quentier

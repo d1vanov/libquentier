@@ -33,7 +33,7 @@ namespace quentier {
     if (Q_UNLIKELY(!page)) { \
         ErrorString error(QT_TR_NOOP("Can't add hyperlink to the selected text: no note editor page")); \
         QNWARNING(error); \
-        emit notifyError(error); \
+        Q_EMIT notifyError(error); \
         return; \
     }
 
@@ -129,7 +129,7 @@ void AddHyperlinkToSelectedTextDelegate::raiseAddHyperlinkDialog(const QString &
     int res = pEditHyperlinkDialog->exec();
     if (res == QDialog::Rejected) {
         QNTRACE(QStringLiteral("Cancelled add hyperlink dialog"));
-        emit cancelled();
+        Q_EMIT cancelled();
     }
 }
 
@@ -173,7 +173,7 @@ void AddHyperlinkToSelectedTextDelegate::onHyperlinkSetToSelection(const QVarian
     if (Q_UNLIKELY(statusIt == resultMap.end())) {
         ErrorString error(QT_TR_NOOP("Can't parse the result of the attempt to set the hyperlink to selection from JavaScript"));
         QNWARNING(error);
-        emit notifyError(error);
+        Q_EMIT notifyError(error);
         return;
     }
 
@@ -192,11 +192,11 @@ void AddHyperlinkToSelectedTextDelegate::onHyperlinkSetToSelection(const QVarian
         }
 
         QNWARNING(error);
-        emit notifyError(error);
+        Q_EMIT notifyError(error);
         return;
     }
 
-    emit finished();
+    Q_EMIT finished();
 }
 
 } // namespace quentier

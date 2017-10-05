@@ -120,7 +120,7 @@ void FileSystemWatcherPrivate::onFileChanged(const QString & path)
     }
     else {
         m_watcher.addPath(path);
-        emit fileChanged(path);
+        Q_EMIT fileChanged(path);
     }
 }
 
@@ -137,7 +137,7 @@ void FileSystemWatcherPrivate::onDirectoryChanged(const QString & path)
         }
         else {
             m_watcher.addPath(path);
-            emit directoryChanged(path);
+            Q_EMIT directoryChanged(path);
         }
     }
 }
@@ -213,7 +213,7 @@ void FileSystemWatcherPrivate::timerEvent(QTimerEvent * pEvent)
             auto it = m_watchedFiles.find(filePath);
             if (it != m_watchedFiles.end()) {
                 Q_UNUSED(m_watchedFiles.erase(it));
-                emit fileRemoved(filePath);
+                Q_EMIT fileRemoved(filePath);
             }
         }
         else
@@ -222,7 +222,7 @@ void FileSystemWatcherPrivate::timerEvent(QTimerEvent * pEvent)
             auto it = m_watchedFiles.find(filePath);
             if (it != m_watchedFiles.end()) {
                 m_watcher.addPath(filePath);
-                emit fileChanged(filePath);
+                Q_EMIT fileChanged(filePath);
             }
         }
 
@@ -242,7 +242,7 @@ void FileSystemWatcherPrivate::timerEvent(QTimerEvent * pEvent)
             auto it = m_watchedDirectories.find(directoryPath);
             if (it != m_watchedDirectories.end()) {
                 Q_UNUSED(m_watchedDirectories.erase(it));
-                emit directoryRemoved(directoryPath);
+                Q_EMIT directoryRemoved(directoryPath);
             }
         }
         else
@@ -251,7 +251,7 @@ void FileSystemWatcherPrivate::timerEvent(QTimerEvent * pEvent)
             auto it = m_watchedDirectories.find(directoryPath);
             if (it != m_watchedDirectories.end()) {
                 m_watcher.addPath(directoryPath);
-                emit directoryChanged(directoryPath);
+                Q_EMIT directoryChanged(directoryPath);
             }
         }
 

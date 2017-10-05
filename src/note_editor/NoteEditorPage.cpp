@@ -104,7 +104,7 @@ bool NoteEditorPage::shouldInterruptJavaScript()
                                                               QMessageBox::No);
     if (reply == QMessageBox::Yes) {
         QNINFO(QStringLiteral("Note load was cancelled due to too long javascript evaluation"));
-        emit noteLoadCancelled();
+        Q_EMIT noteLoadCancelled();
         return true;
     }
     else {
@@ -129,7 +129,7 @@ void NoteEditorPage::executeJavaScript(const QString & script, Callback callback
 void NoteEditorPage::onJavaScriptQueueEmpty()
 {
     QNDEBUG(QStringLiteral("NoteEditorPage::onJavaScriptQueueEmpty"));
-    emit javaScriptLoaded();
+    Q_EMIT javaScriptLoaded();
 }
 
 #ifndef QUENTIER_USE_QT_WEB_ENGINE
@@ -188,13 +188,13 @@ void NoteEditorPage::triggerAction(WebPage::WebAction action, bool checked)
 
     if (action == WebPage::Undo) {
         QNDEBUG(QStringLiteral("Filtering undo action"));
-        emit undoActionRequested();
+        Q_EMIT undoActionRequested();
         return;
     }
 
     if (action == WebPage::Redo) {
         QNDEBUG(QStringLiteral("Filtering redo action"));
-        emit redoActionRequested();
+        Q_EMIT redoActionRequested();
         return;
     }
 

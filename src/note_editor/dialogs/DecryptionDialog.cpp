@@ -167,8 +167,8 @@ void DecryptionDialog::accept()
             << QStringLiteral("; remember for session = ") << (rememberForSession ? QStringLiteral("true") : QStringLiteral("false"))
             << QStringLiteral("; decrypt permanently = ") << (decryptPermanently ? QStringLiteral("true") : QStringLiteral("false")));
 
-    emit accepted(m_cipher, m_keyLength, m_encryptedText, passphrase,  m_cachedDecryptedText,
-                  rememberForSession, decryptPermanently);
+    Q_EMIT accepted(m_cipher, m_keyLength, m_encryptedText, passphrase,  m_cachedDecryptedText,
+                    rememberForSession, decryptPermanently);
     QDialog::accept();
 }
 

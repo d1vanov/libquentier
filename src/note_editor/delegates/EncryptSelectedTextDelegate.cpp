@@ -34,7 +34,7 @@ namespace quentier {
     if (Q_UNLIKELY(!m_pNoteEditor->accountPtr())) { \
         ErrorString error(QT_TR_NOOP("Can't encrypt the selected text: no account is set to the note editor")); \
         QNWARNING(error); \
-        emit notifyError(error); \
+        Q_EMIT notifyError(error); \
         return; \
     }
 
@@ -44,7 +44,7 @@ namespace quentier {
     if (Q_UNLIKELY(!page)) { \
         ErrorString error(QT_TR_NOOP("Can't encrypt the selected text: no note editor page")); \
         QNWARNING(error); \
-        emit notifyError(error); \
+        Q_EMIT notifyError(error); \
         return; \
     }
 
@@ -72,7 +72,7 @@ void EncryptSelectedTextDelegate::start(const QString & selectionHtml)
 
     if (Q_UNLIKELY(selectionHtml.isEmpty())) {
         QNDEBUG(QStringLiteral("No selection html, nothing to encrypt"));
-        emit cancelled();
+        Q_EMIT cancelled();
         return;
     }
 
@@ -96,7 +96,7 @@ void EncryptSelectedTextDelegate::raiseEncryptionDialog()
     int res = pEncryptionDialog->exec();
     QNTRACE(QStringLiteral("Executed encryption dialog: ") << (res == QDialog::Accepted ? QStringLiteral("accepted") : QStringLiteral("rejected")));
     if (res == QDialog::Rejected) {
-        emit cancelled();
+        Q_EMIT cancelled();
         return;
     }
 }
@@ -192,7 +192,7 @@ void EncryptSelectedTextDelegate::onEncryptionScriptDone(const QVariant & data)
     if (Q_UNLIKELY(statusIt == resultMap.end())) {
         ErrorString error(QT_TR_NOOP("Can't parse the result of text encryption script from JavaScript"));
         QNWARNING(error);
-        emit notifyError(error);
+        Q_EMIT notifyError(error);
         return;
     }
 
@@ -211,11 +211,11 @@ void EncryptSelectedTextDelegate::onEncryptionScriptDone(const QVariant & data)
         }
 
         QNWARNING(error);
-        emit notifyError(error);
+        Q_EMIT notifyError(error);
         return;
     }
 
-    emit finished();
+    Q_EMIT finished();
 }
 
 } // namespace quentier

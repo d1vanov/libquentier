@@ -51,8 +51,8 @@ void GenericResourceImageManager::onGenericResourceImageWriteRequest(QString not
 #define RETURN_WITH_ERROR(message) \
     ErrorString errorDescription(message); \
     QNWARNING(errorDescription); \
-    emit genericResourceImageWriteReply(/* success = */ false, QByteArray(), QString(), \
-                                        errorDescription, requestId); \
+    Q_EMIT genericResourceImageWriteReply(/* success = */ false, QByteArray(), QString(), \
+                                          errorDescription, requestId); \
     return
 
     if (Q_UNLIKELY(m_storageFolderPath.isEmpty())) {
@@ -145,9 +145,9 @@ void GenericResourceImageManager::onGenericResourceImageWriteRequest(QString not
     if (!resourceHashChanged && !resourceDisplayNameChanged && !existingResourceImageFileInfos.isEmpty())
     {
         QNDEBUG(QStringLiteral("resource hash and display name haven't changed, won't rewrite the resource's image"));
-        emit genericResourceImageWriteReply(/* success = */ true, resourceActualHash,
-                                            existingResourceImageFileInfos.front().absoluteFilePath(),
-                                            ErrorString(), requestId);
+        Q_EMIT genericResourceImageWriteReply(/* success = */ true, resourceActualHash,
+                                              existingResourceImageFileInfos.front().absoluteFilePath(),
+                                              ErrorString(), requestId);
         return;
     }
 
@@ -179,8 +179,8 @@ void GenericResourceImageManager::onGenericResourceImageWriteRequest(QString not
 
     QNTRACE(QStringLiteral("Successfully wrote resource image file and helper files with hash and display name for request ") << requestId
             << QStringLiteral(", resource image file path = ") << resourceImageFilePath);
-    emit genericResourceImageWriteReply(/* success = */ true, resourceActualHash,
-                                        resourceImageFilePath, ErrorString(), requestId);
+    Q_EMIT genericResourceImageWriteReply(/* success = */ true, resourceActualHash,
+                                          resourceImageFilePath, ErrorString(), requestId);
 
     if (!existingResourceImageFileInfos.isEmpty())
     {

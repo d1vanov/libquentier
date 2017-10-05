@@ -44,7 +44,7 @@ void WebSocketTransport::textMessageReceived(const QString & messageData)
     QByteArray messageRawData = messageData.toUtf8();
     QJsonObject object;
     if (parseMessage(messageRawData, object)) {
-        emit messageReceived(object, this);
+        Q_EMIT messageReceived(object, this);
     }
 }
 

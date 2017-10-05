@@ -163,7 +163,7 @@ void FullSyncStaleDataItemsExpunger::onExpungeNotebookFailed(Notebook notebook, 
     FEDEBUG(QStringLiteral("FullSyncStaleDataItemsExpunger::onExpungeNotebookFailed: request id = ") << requestId
             << QStringLiteral(", error description = ") << errorDescription << QStringLiteral(", notebook: ") << notebook);
 
-    emit failure(errorDescription);
+    Q_EMIT failure(errorDescription);
 }
 
 void FullSyncStaleDataItemsExpunger::onExpungeTagComplete(Tag tag, QStringList expungedChildTagLocalUids, QUuid requestId)
@@ -191,7 +191,7 @@ void FullSyncStaleDataItemsExpunger::onExpungeTagFailed(Tag tag, ErrorString err
     FEDEBUG(QStringLiteral("FullSyncStaleDataItemsExpunger::onExpungeTagFailed: request id = ") << requestId
             << QStringLiteral(", error description = ") << errorDescription << QStringLiteral(", tag: ") << tag);
 
-    emit failure(errorDescription);
+    Q_EMIT failure(errorDescription);
 }
 
 void FullSyncStaleDataItemsExpunger::onExpungeSavedSearchComplete(SavedSearch search, QUuid requestId)
@@ -218,7 +218,7 @@ void FullSyncStaleDataItemsExpunger::onExpungeSavedSearchFailed(SavedSearch sear
     FEDEBUG(QStringLiteral("FullSyncStaleDataItemsExpunger::onExpungeSavedSearchFailed: request id = ") << requestId
             << QStringLiteral(", error description = ") << errorDescription << QStringLiteral(", search: ") << search);
 
-    emit failure(errorDescription);
+    Q_EMIT failure(errorDescription);
 }
 
 void FullSyncStaleDataItemsExpunger::onExpungeNoteComplete(Note note, QUuid requestId)
@@ -245,7 +245,7 @@ void FullSyncStaleDataItemsExpunger::onExpungeNoteFailed(Note note, ErrorString 
     FEDEBUG(QStringLiteral("FullSyncStaleDataItemsExpunger::onExpungeNoteFailed: request id = ") << requestId
             << QStringLiteral(", error description = ") << errorDescription << QStringLiteral(", note: ") << note);
 
-    emit failure(errorDescription);
+    Q_EMIT failure(errorDescription);
 }
 
 void FullSyncStaleDataItemsExpunger::onUpdateNotebookComplete(Notebook notebook, QUuid requestId)
@@ -272,7 +272,7 @@ void FullSyncStaleDataItemsExpunger::onUpdateNotebookFailed(Notebook notebook, E
     FEDEBUG(QStringLiteral("FullSyncStaleDataItemsExpunger::onUpdateNotebookFailed: request id = ") << requestId
             << QStringLiteral(", error description = ") << errorDescription << QStringLiteral(", notebook: ") << notebook);
 
-    emit failure(errorDescription);
+    Q_EMIT failure(errorDescription);
 }
 
 void FullSyncStaleDataItemsExpunger::onUpdateTagComplete(Tag tag, QUuid requestId)
@@ -300,7 +300,7 @@ void FullSyncStaleDataItemsExpunger::onUpdateTagFailed(Tag tag, ErrorString erro
     FEDEBUG(QStringLiteral("FullSyncStaleDataItemsExpunger::onUpdateTagFailed: request id = ") << requestId
             << QStringLiteral(", error description = ") << errorDescription << QStringLiteral(", tag: ") << tag);
 
-    emit failure(errorDescription);
+    Q_EMIT failure(errorDescription);
 }
 
 void FullSyncStaleDataItemsExpunger::onUpdateSavedSearchComplete(SavedSearch search, QUuid requestId)
@@ -327,7 +327,7 @@ void FullSyncStaleDataItemsExpunger::onUpdateSavedSearchFailed(SavedSearch searc
     FEDEBUG(QStringLiteral("FullSyncStaleDataItemsExpunger::onUpdateSavedSearchFailed: request id = ") << requestId
             << QStringLiteral(", error description = ") << errorDescription << QStringLiteral(", saved search: ") << search);
 
-    emit failure(errorDescription);
+    Q_EMIT failure(errorDescription);
 }
 
 void FullSyncStaleDataItemsExpunger::onUpdateNoteComplete(Note note, bool updateResources, bool updateTags, QUuid requestId)
@@ -359,7 +359,7 @@ void FullSyncStaleDataItemsExpunger::onUpdateNoteFailed(Note note, bool updateRe
             << QStringLiteral(", update tags = ") << (updateTags ? QStringLiteral("true") : QStringLiteral("false"))
             << QStringLiteral(", error description = ") << errorDescription << QStringLiteral(", note: ") << note);
 
-    emit failure(errorDescription);
+    Q_EMIT failure(errorDescription);
 }
 
 void FullSyncStaleDataItemsExpunger::connectToLocalStorage()
@@ -814,7 +814,7 @@ void FullSyncStaleDataItemsExpunger::analyzeDataAndSendRequestsOrResult()
         m_inProgress = false;
 
         FEDEBUG(QStringLiteral("Emitting the finished signal"));
-        emit finished();
+        Q_EMIT finished();
 
         return;
     }
@@ -832,7 +832,7 @@ void FullSyncStaleDataItemsExpunger::analyzeDataAndSendRequestsOrResult()
         Q_UNUSED(m_expungeNotebookRequestIds.insert(requestId))
         FETRACE(QStringLiteral("Emitting the request to expunge notebook: request id = ") << requestId
                 << QStringLiteral(", notebook guid = ") << guid);
-        emit expungeNotebook(dummyNotebook, requestId);
+        Q_EMIT expungeNotebook(dummyNotebook, requestId);
     }
 
     // NOTE: won't expunge tags until the dirty ones are updated in order to prevent the automatic expunging
@@ -850,7 +850,7 @@ void FullSyncStaleDataItemsExpunger::analyzeDataAndSendRequestsOrResult()
         Q_UNUSED(m_expungeSavedSearchRequestIds.insert(requestId))
         FETRACE(QStringLiteral("Emitting the request to expunge saved search: request id = ") << requestId
                 << QStringLiteral(", saved search guid = ") << guid);
-        emit expungeSavedSearch(dummySearch, requestId);
+        Q_EMIT expungeSavedSearch(dummySearch, requestId);
     }
 
     for(auto it = noteGuidsToExpunge.constBegin(), end = noteGuidsToExpunge.constEnd(); it != end; ++it)
@@ -864,7 +864,7 @@ void FullSyncStaleDataItemsExpunger::analyzeDataAndSendRequestsOrResult()
         Q_UNUSED(m_expungeNoteRequestIds.insert(requestId))
         FETRACE(QStringLiteral("Emitting the request to expunge note: request id = ") << requestId
                 << QStringLiteral(", note guid = ") << guid);
-        emit expungeNote(dummyNote, requestId);
+        Q_EMIT expungeNote(dummyNote, requestId);
     }
 
     for(auto it = dirtyNotebooksToUpdate.begin(), end = dirtyNotebooksToUpdate.end(); it != end; ++it)
@@ -877,7 +877,7 @@ void FullSyncStaleDataItemsExpunger::analyzeDataAndSendRequestsOrResult()
         Q_UNUSED(m_updateNotebookRequestId.insert(requestId))
         FETRACE(QStringLiteral("Emitting the request to update notebook: request id = ") << requestId
                 << QStringLiteral(", notebook: ") << notebook);
-        emit updateNotebook(notebook, requestId);
+        Q_EMIT updateNotebook(notebook, requestId);
     }
 
     for(auto it = dirtyTagsToUpdate.begin(), end = dirtyTagsToUpdate.end(); it != end; ++it)
@@ -890,7 +890,7 @@ void FullSyncStaleDataItemsExpunger::analyzeDataAndSendRequestsOrResult()
         Q_UNUSED(m_updateTagRequestIds.insert(requestId))
         FETRACE(QStringLiteral("Emitting the request to update tag: request id = ") << requestId
                 << QStringLiteral(", tag: ") << tag);
-        emit updateTag(tag, requestId);
+        Q_EMIT updateTag(tag, requestId);
     }
 
     checkTagUpdatesCompletionAndSendExpungeTagRequests();
@@ -905,7 +905,7 @@ void FullSyncStaleDataItemsExpunger::analyzeDataAndSendRequestsOrResult()
         Q_UNUSED(m_updateSavedSearchRequestIds.insert(requestId))
         FETRACE(QStringLiteral("Emitting the request to update saved search: request id = ") << requestId
                 << QStringLiteral(", saved search: ") << search);
-        emit updateSavedSearch(search, requestId);
+        Q_EMIT updateSavedSearch(search, requestId);
     }
 
     for(auto it = dirtyNotesToUpdate.begin(), end = dirtyNotesToUpdate.end(); it != end; ++it)
@@ -920,7 +920,7 @@ void FullSyncStaleDataItemsExpunger::analyzeDataAndSendRequestsOrResult()
         Q_UNUSED(m_updateNoteRequestIds.insert(requestId))
         FETRACE(QStringLiteral("Emitting the request to update note: request id = ") << requestId
                 << QStringLiteral(", note: ") << note);
-        emit updateNote(note, /* update resources = */ false, /* update tags = */ false, requestId);
+        Q_EMIT updateNote(note, /* update resources = */ false, /* update tags = */ false, requestId);
     }
 }
 
@@ -980,7 +980,7 @@ void FullSyncStaleDataItemsExpunger::checkRequestsCompletionAndSendResult()
     m_inProgress = false;
 
     FEDEBUG(QStringLiteral("Emitting the finished signal"));
-    emit finished();
+    Q_EMIT finished();
 }
 
 void FullSyncStaleDataItemsExpunger::checkTagUpdatesCompletionAndSendExpungeTagRequests()
@@ -1011,7 +1011,7 @@ void FullSyncStaleDataItemsExpunger::checkTagUpdatesCompletionAndSendExpungeTagR
         Q_UNUSED(m_expungeTagRequestIds.insert(requestId))
         FETRACE(QStringLiteral("Emitting the request to expunge tag: request id = ") << requestId
                 << QStringLiteral(", tag guid = ") << guid);
-        emit expungeTag(dummyTag, requestId);
+        Q_EMIT expungeTag(dummyTag, requestId);
     }
 
     m_tagGuidsToExpunge.clear();

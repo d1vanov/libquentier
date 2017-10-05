@@ -37,7 +37,7 @@ EditHyperlinkDelegate::EditHyperlinkDelegate(NoteEditorPrivate & noteEditor, con
     if (Q_UNLIKELY(!page)) { \
         ErrorString error(QT_TR_NOOP("Can't edit hyperlink: no note editor page")); \
         QNWARNING(error); \
-        emit notifyError(error); \
+        Q_EMIT notifyError(error); \
         return; \
     }
 
@@ -77,7 +77,7 @@ void EditHyperlinkDelegate::onHyperlinkDataReceived(const QVariant & data)
     if (Q_UNLIKELY(statusIt == resultMap.end())) {
         ErrorString error(QT_TR_NOOP("Can't parse the result of hyperlink data request from JavaScript"));
         QNWARNING(error);
-        emit notifyError(error);
+        Q_EMIT notifyError(error);
         return;
     }
 
@@ -96,7 +96,7 @@ void EditHyperlinkDelegate::onHyperlinkDataReceived(const QVariant & data)
         }
 
         QNWARNING(error);
-        emit notifyError(error);
+        Q_EMIT notifyError(error);
         return;
     }
 
@@ -104,21 +104,21 @@ void EditHyperlinkDelegate::onHyperlinkDataReceived(const QVariant & data)
     if (Q_UNLIKELY(dataIt == resultMap.end())) {
         ErrorString error(QT_TR_NOOP("No hyperlink data received from JavaScript"));
         QNWARNING(error);
-        emit notifyError(error);
+        Q_EMIT notifyError(error);
         return;
     }
 
     QStringList hyperlinkDataList = dataIt.value().toStringList();
     if (hyperlinkDataList.isEmpty()) {
         ErrorString error(QT_TR_NOOP("Can't edit hyperlink: can't find hyperlink text and link"));
-        emit notifyError(error);
+        Q_EMIT notifyError(error);
         return;
     }
 
     if (hyperlinkDataList.size() != 2) {
         ErrorString error(QT_TR_NOOP("Can't edit hyperlink: can't parse hyperlink text and link"));
         QNWARNING(error << QStringLiteral("; hyperlink data: ") << hyperlinkDataList.join(QStringLiteral(",")));
-        emit notifyError(error);
+        Q_EMIT notifyError(error);
         return;
     }
 
@@ -148,7 +148,7 @@ void EditHyperlinkDelegate::raiseEditHyperlinkDialog(const QString & startupHype
     int res = pEditHyperlinkDialog->exec();
     if (res == QDialog::Rejected) {
         QNTRACE(QStringLiteral("Cancelled editing the hyperlink"));
-        emit cancelled();
+        Q_EMIT cancelled();
         return;
     }
 }
@@ -184,7 +184,7 @@ void EditHyperlinkDelegate::onHyperlinkModified(const QVariant & data)
     if (Q_UNLIKELY(statusIt == resultMap.end())) {
         ErrorString error(QT_TR_NOOP("Can't parse the result of hyperlink edit from JavaScript"));
         QNWARNING(error);
-        emit notifyError(error);
+        Q_EMIT notifyError(error);
         return;
     }
 
@@ -203,11 +203,11 @@ void EditHyperlinkDelegate::onHyperlinkModified(const QVariant & data)
         }
 
         QNWARNING(error);
-        emit notifyError(error);
+        Q_EMIT notifyError(error);
         return;
     }
 
-    emit finished();
+    Q_EMIT finished();
 }
 
 } // namespace quentier

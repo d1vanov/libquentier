@@ -28,13 +28,13 @@ ActionsWatcher::ActionsWatcher(QObject * parent) :
 void ActionsWatcher::onCutActionToggled()
 {
     QNDEBUG(QStringLiteral("ActionsWatcher::onCutActionToggled"));
-    emit cutActionToggled();
+    Q_EMIT cutActionToggled();
 }
 
 void ActionsWatcher::onPasteActionToggled()
 {
     QNDEBUG(QStringLiteral("ActionsWatcher::onPasteActionToggled"));
-    emit pasteActionToggled();
+    Q_EMIT pasteActionToggled();
 }
 
 } // namespace quentier

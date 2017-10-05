@@ -26,7 +26,7 @@ ResizableImageJavaScriptHandler::ResizableImageJavaScriptHandler(QObject * paren
 
 void ResizableImageJavaScriptHandler::notifyImageResourceResized(bool pushUndoCommand)
 {
-    emit imageResourceResized(pushUndoCommand);
+    Q_EMIT imageResourceResized(pushUndoCommand);
 }
 
 } // namespace quentier

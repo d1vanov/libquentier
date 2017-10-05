@@ -124,7 +124,7 @@ void NotebookSyncCache::onListNotebooksComplete(LocalStorageManager::ListObjects
         return;
     }
 
-    emit filled();
+    Q_EMIT filled();
 }
 
 void NotebookSyncCache::onListNotebooksFailed(LocalStorageManager::ListObjectsOptions flag,
@@ -153,7 +153,7 @@ void NotebookSyncCache::onListNotebooksFailed(LocalStorageManager::ListObjectsOp
     m_dirtyNotebooksByGuid.clear();
     disconnectFromLocalStorage();
 
-    emit failure(errorDescription);
+    Q_EMIT failure(errorDescription);
 }
 
 void NotebookSyncCache::onAddNotebookComplete(Notebook notebook, QUuid requestId)
@@ -297,7 +297,7 @@ void NotebookSyncCache::requestNotebooksList()
 
     NCTRACE(QStringLiteral("Emitting the request to list notebooks: request id = ")
             << m_listNotebooksRequestId << QStringLiteral(", offset = ") << m_offset);
-    emit listNotebooks(LocalStorageManager::ListAll,
+    Q_EMIT listNotebooks(LocalStorageManager::ListAll,
                        m_limit, m_offset, LocalStorageManager::ListNotebooksOrder::NoOrder,
                        LocalStorageManager::OrderDirection::Ascending,
                        m_linkedNotebookGuid, m_listNotebooksRequestId);

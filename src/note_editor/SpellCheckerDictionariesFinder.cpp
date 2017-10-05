@@ -111,7 +111,7 @@ void SpellCheckerDictionariesFinder::run()
     }
 
     QNDEBUG(QStringLiteral("Found ") << m_files.size() << QStringLiteral(" valid dictionaries"));
-    emit foundDictionaries(m_files);
+    Q_EMIT foundDictionaries(m_files);
 }
 
 } // namespace quentier

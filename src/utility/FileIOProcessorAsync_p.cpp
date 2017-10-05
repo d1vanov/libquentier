@@ -61,7 +61,7 @@ void FileIOProcessorAsyncPrivate::onWriteFileRequest(QString absoluteFilePath, Q
             ErrorString error(QT_TR_NOOP("can't create folder to write file into"));
             error.details() = absoluteFilePath;
             QNWARNING(error);
-            emit writeFileRequestProcessed(false, error, requestId);
+            Q_EMIT writeFileRequestProcessed(false, error, requestId);
             RESTART_TIMER();
             return;
         }
@@ -82,7 +82,7 @@ void FileIOProcessorAsyncPrivate::onWriteFileRequest(QString absoluteFilePath, Q
         ErrorString error(QT_TR_NOOP("can't open file for writing/appending"));
         error.details() = absoluteFilePath;
         QNWARNING(error);
-        emit writeFileRequestProcessed(false, error, requestId);
+        Q_EMIT writeFileRequestProcessed(false, error, requestId);
         RESTART_TIMER();
         return;
     }
@@ -92,14 +92,14 @@ void FileIOProcessorAsyncPrivate::onWriteFileRequest(QString absoluteFilePath, Q
         ErrorString error(QT_TR_NOOP("can't write the whole data to file"));
         error.details() = absoluteFilePath;
         QNWARNING(error);
-        emit writeFileRequestProcessed(false, error, requestId);
+        Q_EMIT writeFileRequestProcessed(false, error, requestId);
         RESTART_TIMER();
         return;
     }
 
     file.close();
     QNDEBUG(QStringLiteral("Successfully wrote the file ") + absoluteFilePath);
-    emit writeFileRequestProcessed(true, ErrorString(), requestId);
+    Q_EMIT writeFileRequestProcessed(true, ErrorString(), requestId);
     RESTART_TIMER();
 }
 
@@ -111,7 +111,7 @@ void FileIOProcessorAsyncPrivate::onReadFileRequest(QString absoluteFilePath, QU
     QFile file(absoluteFilePath);
     if (!file.exists()) {
         QNTRACE(QStringLiteral("The file to read does not exist, sending empty data in return"));
-        emit readFileRequestProcessed(true, ErrorString(), QByteArray(), requestId);
+        Q_EMIT readFileRequestProcessed(true, ErrorString(), QByteArray(), requestId);
         RESTART_TIMER();
         return;
     }
@@ -121,13 +121,13 @@ void FileIOProcessorAsyncPrivate::onReadFileRequest(QString absoluteFilePath, QU
         ErrorString error(QT_TR_NOOP("can't open file for reading"));
         error.details() = absoluteFilePath;
         QNDEBUG(error);
-        emit readFileRequestProcessed(false, error, QByteArray(), requestId);
+        Q_EMIT readFileRequestProcessed(false, error, QByteArray(), requestId);
         RESTART_TIMER();
         return;
     }
 
     QByteArray data = file.readAll();
-    emit readFileRequestProcessed(true, ErrorString(), data, requestId);
+    Q_EMIT readFileRequestProcessed(true, ErrorString(), data, requestId);
     RESTART_TIMER();
 }
 
@@ -148,7 +148,7 @@ void FileIOProcessorAsyncPrivate::timerEvent(QTimerEvent * pEvent)
     killTimer(timerId);
     m_postOperationTimerId = 0;
 
-    emit readyForIO();
+    Q_EMIT readyForIO();
 }
 
 } // namespace quentier

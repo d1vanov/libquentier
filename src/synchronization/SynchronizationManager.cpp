@@ -87,7 +87,7 @@ void SynchronizationManager::setAccount(Account account)
     Q_D(SynchronizationManager);
     d->setAccount(account);
 
-    emit setAccountDone(account);
+    Q_EMIT setAccountDone(account);
 }
 
 void SynchronizationManager::authenticate()
@@ -119,7 +119,7 @@ void SynchronizationManager::setDownloadNoteThumbnails(bool flag)
     Q_D(SynchronizationManager);
     d->setDownloadNoteThumbnails(flag);
 
-    emit setDownloadNoteThumbnailsDone(flag);
+    Q_EMIT setDownloadNoteThumbnailsDone(flag);
 }
 
 void SynchronizationManager::setDownloadInkNoteImages(bool flag)
@@ -127,7 +127,7 @@ void SynchronizationManager::setDownloadInkNoteImages(bool flag)
     Q_D(SynchronizationManager);
     d->setDownloadInkNoteImages(flag);
 
-    emit setDownloadInkNoteImagesDone(flag);
+    Q_EMIT setDownloadInkNoteImagesDone(flag);
 }
 
 void SynchronizationManager::setInkNoteImagesStoragePath(QString path)
@@ -135,7 +135,7 @@ void SynchronizationManager::setInkNoteImagesStoragePath(QString path)
     Q_D(SynchronizationManager);
     d->setInkNoteImagesStoragePath(path);
 
-    emit setInkNoteImagesStoragePathDone(path);
+    Q_EMIT setInkNoteImagesStoragePathDone(path);
 }
 
 } // namespace quentier

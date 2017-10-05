@@ -120,7 +120,7 @@ void NoteSyncCache::onListNotesComplete(LocalStorageManager::ListObjectsOptions 
         return;
     }
 
-    emit filled();
+    Q_EMIT filled();
 }
 
 void NoteSyncCache::onListNotesFailed(LocalStorageManager::ListObjectsOptions flag, bool withResourceBinaryData,
@@ -146,7 +146,7 @@ void NoteSyncCache::onListNotesFailed(LocalStorageManager::ListObjectsOptions fl
     m_notebookGuidByNoteGuid.clear();
     disconnectFromLocalStorage();
 
-    emit failure(errorDescription);
+    Q_EMIT failure(errorDescription);
 }
 
 void NoteSyncCache::onAddNoteComplete(Note note, QUuid requestId)
@@ -273,11 +273,11 @@ void NoteSyncCache::requestNotesList()
 
     NSTRACE(QStringLiteral("Emitting the request to list notes: request id = ")
             << m_listNotesRequestId << QStringLiteral(", offset = ") << m_offset);
-    emit listNotes(LocalStorageManager::ListAll, /* with resource binary data = */ false,
-                   m_limit, m_offset, LocalStorageManager::ListNotesOrder::NoOrder,
-                   LocalStorageManager::OrderDirection::Ascending,
-                   (m_linkedNotebookGuid.isEmpty() ? QStringLiteral("") : m_linkedNotebookGuid),
-                   m_listNotesRequestId);
+    Q_EMIT listNotes(LocalStorageManager::ListAll, /* with resource binary data = */ false,
+                     m_limit, m_offset, LocalStorageManager::ListNotesOrder::NoOrder,
+                     LocalStorageManager::OrderDirection::Ascending,
+                     (m_linkedNotebookGuid.isEmpty() ? QStringLiteral("") : m_linkedNotebookGuid),
+                     m_listNotesRequestId);
 }
 
 void NoteSyncCache::removeNote(const QString & noteLocalUid)

@@ -36,7 +36,7 @@ void ResourceInfoJavaScriptHandler::findResourceInfo(const QString & resourceHas
     bool found = m_resourceInfo.findResourceInfo(QByteArray::fromHex(resourceHash.toLocal8Bit()),
                                                  resourceDisplayName, resourceDisplaySize, resourceLocalFilePath);
     if (found) {
-        emit notifyResourceInfo(resourceHash, resourceLocalFilePath, resourceDisplayName, resourceDisplaySize);
+        Q_EMIT notifyResourceInfo(resourceHash, resourceLocalFilePath, resourceDisplayName, resourceDisplaySize);
     }
 }
 

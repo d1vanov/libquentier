@@ -212,7 +212,7 @@ void ShortcutManagerPrivate::setUserShortcut(int key, QKeySequence shortcut, con
         actualShortcut = defaultShortcut(key, account, context);
     }
 
-    emit shortcutChanged(key, actualShortcut, account, context);
+    Q_EMIT shortcutChanged(key, actualShortcut, account, context);
 }
 
 void ShortcutManagerPrivate::setNonStandardUserShortcut(QString nonStandardKey, QKeySequence shortcut,
@@ -236,7 +236,7 @@ void ShortcutManagerPrivate::setNonStandardUserShortcut(QString nonStandardKey, 
         actualShortcut = defaultShortcut(nonStandardKey, account, context);
     }
 
-    emit nonStandardShortcutChanged(nonStandardKey, actualShortcut, account, context);
+    Q_EMIT nonStandardShortcutChanged(nonStandardKey, actualShortcut, account, context);
 }
 
 void ShortcutManagerPrivate::setDefaultShortcut(int key, QKeySequence shortcut, const Account & account, QString context)
@@ -256,7 +256,7 @@ void ShortcutManagerPrivate::setDefaultShortcut(int key, QKeySequence shortcut, 
     settings.setValue(keyString, shortcut.toString(QKeySequence::PortableText));
     settings.endGroup();
 
-    // Need to emit the notification is there's no user shortcut overriding the default one
+    // Need to Q_EMIT the notification is there's no user shortcut overriding the default one
     settings.beginGroup(shortcutGroupString(context, /* default shortcut = */ false, /* non-standard shortcut = */ false));
     QVariant userShortcut = settings.value(keyString);
     settings.endGroup();
@@ -268,7 +268,7 @@ void ShortcutManagerPrivate::setDefaultShortcut(int key, QKeySequence shortcut, 
 
     if (userKeySequence.isEmpty()) {
         QNTRACE(QStringLiteral("Found no user shortcut overriding the default one"));
-        emit shortcutChanged(key, shortcut, account, context);
+        Q_EMIT shortcutChanged(key, shortcut, account, context);
     }
 }
 
@@ -288,7 +288,7 @@ void ShortcutManagerPrivate::setNonStandardDefaultShortcut(QString nonStandardKe
     settings.setValue(nonStandardKey, shortcut.toString(QKeySequence::PortableText));
     settings.endGroup();
 
-    // Need to emit the notification is there's no user shortcut overriding the default one
+    // Need to Q_EMIT the notification is there's no user shortcut overriding the default one
     settings.beginGroup(shortcutGroupString(context, /* default shortcut = */ false, /* non-standard shortcut = */ true));
     QVariant userShortcut = settings.value(nonStandardKey);
     settings.endGroup();
@@ -300,7 +300,7 @@ void ShortcutManagerPrivate::setNonStandardDefaultShortcut(QString nonStandardKe
 
     if (userKeySequence.isEmpty()) {
         QNTRACE(QStringLiteral("Found no user shortcut overriding the default one"));
-        emit nonStandardShortcutChanged(nonStandardKey, shortcut, account, context);
+        Q_EMIT nonStandardShortcutChanged(nonStandardKey, shortcut, account, context);
     }
 }
 

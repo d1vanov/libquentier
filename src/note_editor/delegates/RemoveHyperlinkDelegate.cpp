@@ -27,7 +27,7 @@ namespace quentier {
     if (Q_UNLIKELY(!page)) { \
         ErrorString error(QT_TR_NOOP("Can't remove hyperlink: no note editor's page")); \
         QNWARNING(error); \
-        emit notifyError(error); \
+        Q_EMIT notifyError(error); \
         return; \
     }
 
@@ -81,7 +81,7 @@ void RemoveHyperlinkDelegate::onHyperlinkIdFound(const QVariant & data)
     if (Q_UNLIKELY(statusIt == resultMap.end())) {
         ErrorString error(QT_TR_NOOP("Can't parse the result of hyperlink data request from JavaScript"));
         QNWARNING(error);
-        emit notifyError(error);
+        Q_EMIT notifyError(error);
         return;
     }
 
@@ -100,7 +100,7 @@ void RemoveHyperlinkDelegate::onHyperlinkIdFound(const QVariant & data)
         }
 
         QNWARNING(error);
-        emit notifyError(error);
+        Q_EMIT notifyError(error);
         return;
     }
 
@@ -108,7 +108,7 @@ void RemoveHyperlinkDelegate::onHyperlinkIdFound(const QVariant & data)
     if (Q_UNLIKELY(dataIt == resultMap.end())) {
         ErrorString error(QT_TR_NOOP("No hyperlink data received from JavaScript"));
         QNWARNING(error);
-        emit notifyError(error);
+        Q_EMIT notifyError(error);
         return;
     }
 
@@ -119,7 +119,7 @@ void RemoveHyperlinkDelegate::onHyperlinkIdFound(const QVariant & data)
     if (!conversionResult) {
         ErrorString error(QT_TR_NOOP("Can't remove hyperlink under cursor: can't convert hyperlink id to a number"));
         QNWARNING(error << QStringLiteral(", data from JS: ") << data);
-        emit notifyError(error);
+        Q_EMIT notifyError(error);
         return;
     }
 
@@ -146,7 +146,7 @@ void RemoveHyperlinkDelegate::onHyperlinkRemoved(const QVariant & data)
     if (Q_UNLIKELY(statusIt == resultMap.end())) {
         ErrorString error(QT_TR_NOOP("Can't parse the result of hyperlink removal from JavaScript"));
         QNWARNING(error);
-        emit notifyError(error);
+        Q_EMIT notifyError(error);
         return;
     }
 
@@ -165,11 +165,11 @@ void RemoveHyperlinkDelegate::onHyperlinkRemoved(const QVariant & data)
         }
 
         QNWARNING(error);
-        emit notifyError(error);
+        Q_EMIT notifyError(error);
         return;
     }
 
-    emit finished();
+    Q_EMIT finished();
 }
 
 } // namespace quentier

@@ -51,7 +51,7 @@ void EncryptionManager::onDecryptTextRequest(QString encryptedText, QString pass
     QString decrypted;
     ErrorString errorDescription;
     bool res = decrypt(encryptedText, passphrase, cipher, keyLength, decrypted, errorDescription);
-    emit decryptedText(decrypted, res, errorDescription, requestId);
+    Q_EMIT decryptedText(decrypted, res, errorDescription, requestId);
 }
 
 void EncryptionManager::onEncryptTextRequest(QString textToEncrypt, QString passphrase,
@@ -60,7 +60,7 @@ void EncryptionManager::onEncryptTextRequest(QString textToEncrypt, QString pass
     QString encrypted;
     ErrorString errorDescription;
     bool res = encrypt(textToEncrypt, passphrase, cipher, keyLength, encrypted, errorDescription);
-    emit encryptedText(encrypted, res, errorDescription, requestId);
+    Q_EMIT encryptedText(encrypted, res, errorDescription, requestId);
 }
 
 } // namespace quentier

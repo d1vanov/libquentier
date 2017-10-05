@@ -57,7 +57,7 @@ void SavedSearchSyncConflictResolver::start()
         ErrorString error(QT_TR_NOOP("Can't resolve the conflict between remote and local saved searches: "
                                      "the remote saved search has no guid set"));
         QNWARNING(error << QStringLiteral(": ") << m_remoteSavedSearch);
-        emit failure(m_remoteSavedSearch, error);
+        Q_EMIT failure(m_remoteSavedSearch, error);
         return;
     }
 
@@ -65,7 +65,7 @@ void SavedSearchSyncConflictResolver::start()
         ErrorString error(QT_TR_NOOP("Can't resolve the conflict between remote and local saved searches: "
                                      "the remote saved search has no name set"));
         QNWARNING(error << QStringLiteral(": ") << m_remoteSavedSearch);
-        emit failure(m_remoteSavedSearch, error);
+        Q_EMIT failure(m_remoteSavedSearch, error);
         return;
     }
 
@@ -73,7 +73,7 @@ void SavedSearchSyncConflictResolver::start()
         ErrorString error(QT_TR_NOOP("Can't resolve the conflict between remote and local saved searches: "
                                      "the local conflicting saved search has neither guid not name set"));
         QNWARNING(error << QStringLiteral(": ") << m_localConflict);
-        emit failure(m_remoteSavedSearch, error);
+        Q_EMIT failure(m_remoteSavedSearch, error);
         return;
     }
 
@@ -99,14 +99,14 @@ void SavedSearchSyncConflictResolver::onAddSavedSearchComplete(SavedSearch searc
     if (m_state == State::PendingRemoteSavedSearchAdoptionInLocalStorage)
     {
         QNDEBUG(QStringLiteral("Successfully added the remote saved search to the local storage"));
-        emit finished(m_remoteSavedSearch);
+        Q_EMIT finished(m_remoteSavedSearch);
     }
     else
     {
         ErrorString error(QT_TR_NOOP("Internal error: wrong state on receiving the confirmation about the saved search addition "
                                      "from the local storage"));
         QNWARNING(error << QStringLiteral(", saved search: ") << search);
-        emit failure(m_remoteSavedSearch, error);
+        Q_EMIT failure(m_remoteSavedSearch, error);
     }
 }
 
@@ -120,7 +120,7 @@ void SavedSearchSyncConflictResolver::onAddSavedSearchFailed(SavedSearch search,
             << requestId << QStringLiteral(", error description = ") << errorDescription
             << QStringLiteral("; saved search: ") << search);
 
-    emit failure(m_remoteSavedSearch, errorDescription);
+    Q_EMIT failure(m_remoteSavedSearch, errorDescription);
 }
 
 void SavedSearchSyncConflictResolver::onUpdateSavedSearchComplete(SavedSearch search, QUuid requestId)
@@ -135,7 +135,7 @@ void SavedSearchSyncConflictResolver::onUpdateSavedSearchComplete(SavedSearch se
     if (m_state == State::OverrideLocalChangesWithRemoteChanges)
     {
         QNDEBUG(QStringLiteral("Successfully overridden the local changes with remote changes"));
-        emit finished(m_remoteSavedSearch);
+        Q_EMIT finished(m_remoteSavedSearch);
         return;
     }
     else if (m_state == State::PendingConflictingSavedSearchRenaming)
@@ -151,7 +151,7 @@ void SavedSearchSyncConflictResolver::onUpdateSavedSearchComplete(SavedSearch se
         if (Q_UNLIKELY(!m_cache.isFilled())) {
             ErrorString error(QT_TR_NOOP("Internal error: the cache of saved search info is not filled while it should have been"));
             QNWARNING(error);
-            emit failure(m_remoteSavedSearch, error);
+            Q_EMIT failure(m_remoteSavedSearch, error);
             return;
         }
 
@@ -170,7 +170,7 @@ void SavedSearchSyncConflictResolver::onUpdateSavedSearchComplete(SavedSearch se
             m_addSavedSearchRequestId = QUuid::createUuid();
             QNTRACE(QStringLiteral("Emitting the request to add saved search: request id = ") << m_addSavedSearchRequestId
                     << QStringLiteral(", saved search: ") << search);
-            emit addSavedSearch(search, m_addSavedSearchRequestId);
+            Q_EMIT addSavedSearch(search, m_addSavedSearchRequestId);
         }
         else
         {
@@ -185,20 +185,20 @@ void SavedSearchSyncConflictResolver::onUpdateSavedSearchComplete(SavedSearch se
             m_updateSavedSearchRequestId = QUuid::createUuid();
             QNTRACE(QStringLiteral("Emitting the request to update saved search: request id = ") << m_updateSavedSearchRequestId
                     << QStringLiteral(", saved search: ") << search);
-            emit updateSavedSearch(search, m_updateSavedSearchRequestId);
+            Q_EMIT updateSavedSearch(search, m_updateSavedSearchRequestId);
         }
     }
     else if (m_state == State::PendingRemoteSavedSearchAdoptionInLocalStorage)
     {
         QNDEBUG(QStringLiteral("Successfully finalized the sequence of actions required for resolving the conflict of saved searches"));
-        emit finished(m_remoteSavedSearch);
+        Q_EMIT finished(m_remoteSavedSearch);
     }
     else
     {
         ErrorString error(QT_TR_NOOP("Internal eerror: wrong state on receiving the confirmation about the saved search update "
                                      "from the local storage"));
         QNWARNING(error << QStringLiteral(", saved search: ") << search);
-        emit failure(m_remoteSavedSearch, error);
+        Q_EMIT failure(m_remoteSavedSearch, error);
     }
 }
 
@@ -212,7 +212,7 @@ void SavedSearchSyncConflictResolver::onUpdateSavedSearchFailed(SavedSearch sear
             << requestId << QStringLiteral(", error description = ") << errorDescription
             << QStringLiteral(" saved search: ") << search);
 
-    emit failure(m_remoteSavedSearch, errorDescription);
+    Q_EMIT failure(m_remoteSavedSearch, errorDescription);
 }
 
 void SavedSearchSyncConflictResolver::onFindSavedSearchComplete(SavedSearch search, QUuid requestId)
@@ -265,7 +265,7 @@ void SavedSearchSyncConflictResolver::onCacheFilled()
     {
         ErrorString error(QT_TR_NOOP("Internal error: wrong state on receiving the saved search info cache filling notification"));
         QNWARNING(error << QStringLiteral(", state = ") << m_state);
-        emit failure(m_remoteSavedSearch, error);
+        Q_EMIT failure(m_remoteSavedSearch, error);
     }
 }
 
@@ -279,7 +279,7 @@ void SavedSearchSyncConflictResolver::onCacheFailed(ErrorString errorDescription
     }
 
     m_pendingCacheFilling = false;
-    emit failure(m_remoteSavedSearch, errorDescription);
+    Q_EMIT failure(m_remoteSavedSearch, errorDescription);
 }
 
 void SavedSearchSyncConflictResolver::connectToLocalStorage()
@@ -337,7 +337,7 @@ void SavedSearchSyncConflictResolver::processSavedSearchesConflictByGuid()
     m_findSavedSearchRequestId = QUuid::createUuid();
     QNTRACE(QStringLiteral("Emitting the request to find saved search: request id = ") << m_findSavedSearchRequestId
             << QStringLiteral(", saved search: ") << dummySearch);
-    emit findSavedSearch(dummySearch, m_findSavedSearchRequestId);
+    Q_EMIT findSavedSearch(dummySearch, m_findSavedSearchRequestId);
 }
 
 void SavedSearchSyncConflictResolver::processSavedSearchesConflictByName(const SavedSearch & localConflict)
@@ -370,7 +370,7 @@ void SavedSearchSyncConflictResolver::processSavedSearchesConflictByName(const S
         m_pendingCacheFilling = true;
         m_savedSearchToBeRenamed = localConflict;
         QNTRACE(QStringLiteral("Emitting the request to fill the saved searches cache"));
-        emit fillSavedSearchesCache();
+        Q_EMIT fillSavedSearchesCache();
         return;
     }
 
@@ -392,7 +392,7 @@ void SavedSearchSyncConflictResolver::overrideLocalChangesWithRemoteChanges()
     m_updateSavedSearchRequestId = QUuid::createUuid();
     QNTRACE(QStringLiteral("Emitting the request to update saved search: request id = ")
             << m_updateSavedSearchRequestId << QStringLiteral(" saved search: ") << search);
-    emit updateSavedSearch(search, m_updateSavedSearchRequestId);
+    Q_EMIT updateSavedSearch(search, m_updateSavedSearchRequestId);
 }
 
 void SavedSearchSyncConflictResolver::renameConflictingLocalSavedSearch(const SavedSearch & localConflict)
@@ -423,7 +423,7 @@ void SavedSearchSyncConflictResolver::renameConflictingLocalSavedSearch(const Sa
     m_updateSavedSearchRequestId = QUuid::createUuid();
     QNTRACE(QStringLiteral("Emitting the request to update saved search: request id = ")
             << m_updateSavedSearchRequestId << QStringLiteral(", saved search: ") << search);
-    emit updateSavedSearch(search, m_updateSavedSearchRequestId);
+    Q_EMIT updateSavedSearch(search, m_updateSavedSearchRequestId);
 }
 
 } // namespace quentier

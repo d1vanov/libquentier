@@ -10,7 +10,7 @@ WebSocketWaiter::WebSocketWaiter(QObject * parent) :
 void WebSocketWaiter::onReady()
 {
     QNDEBUG(QStringLiteral("WebSocketWaiter::onReady"));
-    emit ready();
+    Q_EMIT ready();
 }
 
 } // namespace quentier

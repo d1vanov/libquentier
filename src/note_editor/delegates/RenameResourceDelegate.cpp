@@ -32,7 +32,7 @@ namespace quentier {
     if (Q_UNLIKELY(!page)) { \
         ErrorString error(QT_TR_NOOP("Can't rename the attachment: no note editor page")); \
         QNWARNING(error); \
-        emit notifyError(error); \
+        Q_EMIT notifyError(error); \
         return; \
     }
 
@@ -97,7 +97,7 @@ void RenameResourceDelegate::onOriginalPageConvertedToNote(Note note)
     if (m_noteEditor.notePtr() != m_pNote) { \
         ErrorString error(QT_TR_NOOP("The note set to the note editor was changed during the attachment renaming, the action was not completed")); \
         QNDEBUG(error); \
-        emit notifyError(error); \
+        Q_EMIT notifyError(error); \
         return; \
     }
 
@@ -110,7 +110,7 @@ void RenameResourceDelegate::doStart()
     if (Q_UNLIKELY(!m_resource.hasDataHash())) {
         ErrorString error(QT_TR_NOOP("Can't rename the attachment: the data hash is missing"));
         QNWARNING(error);
-        emit notifyError(error);
+        Q_EMIT notifyError(error);
         return;
     }
 
@@ -125,7 +125,7 @@ void RenameResourceDelegate::doStart()
 #ifdef QUENTIER_USE_QT_WEB_ENGINE
         buildAndSaveGenericResourceImage();
 #else
-        emit finished(m_oldResourceName, m_newResourceName, m_resource, m_performingUndo);
+        Q_EMIT finished(m_oldResourceName, m_newResourceName, m_resource, m_performingUndo);
 #endif
     }
 }
@@ -142,7 +142,7 @@ void RenameResourceDelegate::raiseRenameResourceDialog()
     int res = pRenameResourceDialog->exec();
     if (res == QDialog::Rejected) {
         QNTRACE(QStringLiteral("Cancelled renaming the resource"));
-        emit cancelled();
+        Q_EMIT cancelled();
     }
 }
 
@@ -152,13 +152,13 @@ void RenameResourceDelegate::onRenameResourceDialogFinished(QString newResourceN
 
     if (newResourceName.isEmpty()) {
         QNTRACE(QStringLiteral("New resource name is empty, treating it as cancellation"));
-        emit cancelled();
+        Q_EMIT cancelled();
         return;
     }
 
     if (newResourceName == m_oldResourceName) {
         QNTRACE(QStringLiteral("The new resource name is equal to the old one, treating it as cancellation"));
-        emit cancelled();
+        Q_EMIT cancelled();
         return;
     }
 
@@ -169,7 +169,7 @@ void RenameResourceDelegate::onRenameResourceDialogFinished(QString newResourceN
 #ifdef QUENTIER_USE_QT_WEB_ENGINE
     buildAndSaveGenericResourceImage();
 #else
-    emit finished(m_oldResourceName, m_newResourceName, m_resource, m_performingUndo);
+    Q_EMIT finished(m_oldResourceName, m_newResourceName, m_resource, m_performingUndo);
 #endif
 }
 
@@ -198,8 +198,8 @@ void RenameResourceDelegate::buildAndSaveGenericResourceImage()
     QObject::connect(m_pGenericResourceImageManager, QNSIGNAL(GenericResourceImageManager,genericResourceImageWriteReply,bool,QByteArray,QString,ErrorString,QUuid),
                      this, QNSLOT(RenameResourceDelegate,onGenericResourceImageWriterFinished,bool,QByteArray,QString,ErrorString,QUuid));
 
-    emit saveGenericResourceImageToFile(m_pNote->localUid(), m_resource.localUid(), imageData, QStringLiteral("png"),
-                                        m_resource.dataHash(), m_resource.displayName(), m_genericResourceImageWriterRequestId);
+    Q_EMIT saveGenericResourceImageToFile(m_pNote->localUid(), m_resource.localUid(), imageData, QStringLiteral("png"),
+                                          m_resource.dataHash(), m_resource.displayName(), m_genericResourceImageWriterRequestId);
 }
 
 void RenameResourceDelegate::onGenericResourceImageWriterFinished(bool success, QByteArray resourceHash, QString filePath,
@@ -225,7 +225,7 @@ void RenameResourceDelegate::onGenericResourceImageWriterFinished(bool success, 
         error.appendBase(errorDescription.additionalBases());
         error.details() = errorDescription.details();
         QNWARNING(error);
-        emit notifyError(error);
+        Q_EMIT notifyError(error);
         return;
     }
 
@@ -244,7 +244,7 @@ void RenameResourceDelegate::onGenericResourceImageUpdated(const QVariant & data
 
     Q_UNUSED(data)
 
-    emit finished(m_oldResourceName, m_newResourceName, m_resource, m_performingUndo);
+    Q_EMIT finished(m_oldResourceName, m_newResourceName, m_resource, m_performingUndo);
 }
 
 #endif // QUENTIER_USE_QT_WEB_ENGINE

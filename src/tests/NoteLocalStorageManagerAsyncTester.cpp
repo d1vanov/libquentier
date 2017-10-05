@@ -87,12 +87,12 @@ void NoteLocalStorageManagerAsyncTester::onWorkerInitialized()
     ErrorString errorDescription;
     if (!m_notebook.checkParameters(errorDescription)) {
         QNWARNING(QStringLiteral("Found invalid notebook: ") << m_notebook << QStringLiteral(", error: ") << errorDescription);
-        emit failure(errorDescription.nonLocalizedString());
+        Q_EMIT failure(errorDescription.nonLocalizedString());
         return;
     }
 
     m_state = STATE_SENT_ADD_NOTEBOOK_REQUEST;
-    emit addNotebookRequest(m_notebook);
+    Q_EMIT addNotebookRequest(m_notebook);
 }
 
 void NoteLocalStorageManagerAsyncTester::onAddNotebookCompleted(Notebook notebook, QUuid requestId)
@@ -105,7 +105,7 @@ void NoteLocalStorageManagerAsyncTester::onAddNotebookCompleted(Notebook noteboo
     else { \
         errorDescription.setBase("Internal error in NoteLocalStorageManagerAsyncTester: found wrong state"); \
         QNWARNING(errorDescription << ": " << m_state); \
-        emit failure(errorDescription.nonLocalizedString()); \
+        Q_EMIT failure(errorDescription.nonLocalizedString()); \
     }
 
     if (m_state == STATE_SENT_ADD_NOTEBOOK_REQUEST)
@@ -115,7 +115,7 @@ void NoteLocalStorageManagerAsyncTester::onAddNotebookCompleted(Notebook noteboo
                                      "notebook in onAddNotebookCompleted slot doesn't match "
                                      "the original Notebook");
             QNWARNING(errorDescription);
-            emit failure(errorDescription.nonLocalizedString());
+            Q_EMIT failure(errorDescription.nonLocalizedString());
             return;
         }
 
@@ -131,7 +131,7 @@ void NoteLocalStorageManagerAsyncTester::onAddNotebookCompleted(Notebook noteboo
         m_initialNote.setActive(true);
 
         m_state = STATE_SENT_ADD_REQUEST;
-        emit addNoteRequest(m_initialNote);
+        Q_EMIT addNoteRequest(m_initialNote);
     }
     else if (m_state == STATE_SENT_ADD_EXTRA_NOTEBOOK_REQUEST)
     {
@@ -147,7 +147,7 @@ void NoteLocalStorageManagerAsyncTester::onAddNotebookCompleted(Notebook noteboo
         extraNote.setTitle(QStringLiteral("Fake note title three"));
 
         m_state = STATE_SENT_ADD_EXTRA_NOTE_THREE_REQUEST;
-        emit addNoteRequest(extraNote);
+        Q_EMIT addNoteRequest(extraNote);
     }
     HANDLE_WRONG_STATE();
 }
@@ -155,7 +155,7 @@ void NoteLocalStorageManagerAsyncTester::onAddNotebookCompleted(Notebook noteboo
 void NoteLocalStorageManagerAsyncTester::onAddNotebookFailed(Notebook notebook, ErrorString errorDescription, QUuid requestId)
 {
     QNWARNING(errorDescription << QStringLiteral(", requestId = ") << requestId << QStringLiteral(", Notebook: ") << notebook);
-    emit failure(errorDescription.nonLocalizedString());
+    Q_EMIT failure(errorDescription.nonLocalizedString());
 }
 
 void NoteLocalStorageManagerAsyncTester::onGetNoteCountCompleted(int count, QUuid requestId)
@@ -170,7 +170,7 @@ void NoteLocalStorageManagerAsyncTester::onGetNoteCountCompleted(int count, QUui
             errorDescription.setBase("GetNoteCount returned result different from the expected one (1)");
             errorDescription.details() = QString::number(count);
             QNWARNING(errorDescription);
-            emit failure(errorDescription.nonLocalizedString());
+            Q_EMIT failure(errorDescription.nonLocalizedString());
             return;
         }
 
@@ -178,7 +178,7 @@ void NoteLocalStorageManagerAsyncTester::onGetNoteCountCompleted(int count, QUui
         m_modifiedNote.setActive(false);
         m_modifiedNote.setDeletionTimestamp(3);
         m_state = STATE_SENT_DELETE_REQUEST;
-        emit updateNoteRequest(m_modifiedNote, /* update resources = */ false, /* update tags = */ false);
+        Q_EMIT updateNoteRequest(m_modifiedNote, /* update resources = */ false, /* update tags = */ false);
     }
     else if (m_state == STATE_SENT_GET_COUNT_AFTER_EXPUNGE_REQUEST)
     {
@@ -186,7 +186,7 @@ void NoteLocalStorageManagerAsyncTester::onGetNoteCountCompleted(int count, QUui
             errorDescription.setBase("GetNoteCount returned result different from the expected one (0)");
             errorDescription.details() = QString::number(count);
             QNWARNING(errorDescription);
-            emit failure(errorDescription.nonLocalizedString());
+            Q_EMIT failure(errorDescription.nonLocalizedString());
             return;
         }
 
@@ -237,7 +237,7 @@ void NoteLocalStorageManagerAsyncTester::onGetNoteCountCompleted(int count, QUui
         noteAttributes.sourceApplication = QStringLiteral("tester");
 
         m_state = STATE_SENT_ADD_EXTRA_NOTE_ONE_REQUEST;
-        emit addNoteRequest(extraNote);
+        Q_EMIT addNoteRequest(extraNote);
     }
     HANDLE_WRONG_STATE();
 }
@@ -245,7 +245,7 @@ void NoteLocalStorageManagerAsyncTester::onGetNoteCountCompleted(int count, QUui
 void NoteLocalStorageManagerAsyncTester::onGetNoteCountFailed(ErrorString errorDescription, QUuid requestId)
 {
     QNWARNING(errorDescription << QStringLiteral(", requestId = ") << requestId);
-    emit failure(errorDescription.nonLocalizedString());
+    Q_EMIT failure(errorDescription.nonLocalizedString());
 }
 
 void NoteLocalStorageManagerAsyncTester::onAddNoteCompleted(Note note, QUuid requestId)
@@ -260,7 +260,7 @@ void NoteLocalStorageManagerAsyncTester::onAddNoteCompleted(Note note, QUuid req
             errorDescription.setBase("Internal error in NoteLocalStorageManagerAsyncTester: "
                                      "note in onAddNoteCompleted slot doesn't match the original Note");
             QNWARNING(errorDescription);
-            emit failure(errorDescription.nonLocalizedString());
+            Q_EMIT failure(errorDescription.nonLocalizedString());
             return;
         }
 
@@ -269,7 +269,7 @@ void NoteLocalStorageManagerAsyncTester::onAddNoteCompleted(Note note, QUuid req
 
         m_state = STATE_SENT_FIND_AFTER_ADD_REQUEST;
         bool withResourceBinaryData = true;
-        emit findNoteRequest(m_foundNote, withResourceBinaryData);
+        Q_EMIT findNoteRequest(m_foundNote, withResourceBinaryData);
     }
     else if (m_state == STATE_SENT_ADD_EXTRA_NOTE_ONE_REQUEST)
     {
@@ -287,7 +287,7 @@ void NoteLocalStorageManagerAsyncTester::onAddNoteCompleted(Note note, QUuid req
         extraNote.setTitle(QStringLiteral("Fake note title two"));
 
         m_state = STATE_SENT_ADD_EXTRA_NOTE_TWO_REQUEST;
-        emit addNoteRequest(extraNote);
+        Q_EMIT addNoteRequest(extraNote);
     }
     else if (m_state == STATE_SENT_ADD_EXTRA_NOTE_TWO_REQUEST)
     {
@@ -303,7 +303,7 @@ void NoteLocalStorageManagerAsyncTester::onAddNoteCompleted(Note note, QUuid req
         m_extraNotebook.setLastUsed(true);
 
         m_state = STATE_SENT_ADD_EXTRA_NOTEBOOK_REQUEST;
-        emit addNotebookRequest(m_extraNotebook);
+        Q_EMIT addNotebookRequest(m_extraNotebook);
     }
     else if (m_state == STATE_SENT_ADD_EXTRA_NOTE_THREE_REQUEST)
     {
@@ -315,8 +315,8 @@ void NoteLocalStorageManagerAsyncTester::onAddNoteCompleted(Note note, QUuid req
         size_t limit = 0, offset = 0;
         LocalStorageManager::ListNotesOrder::type order = LocalStorageManager::ListNotesOrder::NoOrder;
         LocalStorageManager::OrderDirection::type orderDirection = LocalStorageManager::OrderDirection::Ascending;
-        emit listNotesPerNotebookRequest(m_notebook, withResourceBinaryData, flag,
-                                         limit, offset, order, orderDirection);
+        Q_EMIT listNotesPerNotebookRequest(m_notebook, withResourceBinaryData, flag,
+                                           limit, offset, order, orderDirection);
     }
     HANDLE_WRONG_STATE();
 }
@@ -324,7 +324,7 @@ void NoteLocalStorageManagerAsyncTester::onAddNoteCompleted(Note note, QUuid req
 void NoteLocalStorageManagerAsyncTester::onAddNoteFailed(Note note, ErrorString errorDescription, QUuid requestId)
 {
     QNWARNING(errorDescription << QStringLiteral(", requestId = ") << requestId << QStringLiteral(", note: ") << note);
-    emit failure(errorDescription.nonLocalizedString());
+    Q_EMIT failure(errorDescription.nonLocalizedString());
 }
 
 void NoteLocalStorageManagerAsyncTester::onUpdateNoteCompleted(Note note, bool updateResources,
@@ -343,13 +343,13 @@ void NoteLocalStorageManagerAsyncTester::onUpdateNoteCompleted(Note note, bool u
                                      "note in onUpdateNoteCompleted slot doesn't match "
                                      "the original updated Note");
             QNWARNING(errorDescription);
-            emit failure(errorDescription.nonLocalizedString());
+            Q_EMIT failure(errorDescription.nonLocalizedString());
             return;
         }
 
         m_state = STATE_SENT_FIND_AFTER_UPDATE_REQUEST;
         bool withResourceBinaryData = true;
-        emit findNoteRequest(m_foundNote, withResourceBinaryData);
+        Q_EMIT findNoteRequest(m_foundNote, withResourceBinaryData);
     }
     else if (m_state == STATE_SENT_DELETE_REQUEST)
     {
@@ -360,13 +360,13 @@ void NoteLocalStorageManagerAsyncTester::onUpdateNoteCompleted(Note note, bool u
                                      "note in onUpdateNoteCompleted slot after the deletion update doesn't match "
                                      "the original deleted Note");
             QNWARNING(errorDescription);
-            emit failure(errorDescription.nonLocalizedString());
+            Q_EMIT failure(errorDescription.nonLocalizedString());
             return;
         }
 
         m_modifiedNote.setLocal(true);
         m_state = STATE_SENT_EXPUNGE_REQUEST;
-        emit expungeNoteRequest(m_modifiedNote);
+        Q_EMIT expungeNoteRequest(m_modifiedNote);
     }
     HANDLE_WRONG_STATE();
 }
@@ -378,7 +378,7 @@ void NoteLocalStorageManagerAsyncTester::onUpdateNoteFailed(Note note, bool upda
     Q_UNUSED(updateTags)
 
     QNWARNING(errorDescription << QStringLiteral(", requestId = ") << requestId << QStringLiteral(", note: ") << note);
-    emit failure(errorDescription.nonLocalizedString());
+    Q_EMIT failure(errorDescription.nonLocalizedString());
 }
 
 void NoteLocalStorageManagerAsyncTester::onFindNoteCompleted(Note note, bool withResourceBinaryData, QUuid requestId)
@@ -395,7 +395,7 @@ void NoteLocalStorageManagerAsyncTester::onFindNoteCompleted(Note note, bool wit
                                      "note in onFindNoteCompleted slot doesn't match the original Note");
             QNWARNING(errorDescription << QStringLiteral("; original note: ") << m_initialNote
                       << QStringLiteral("\nFound note: ") << note);
-            emit failure(errorDescription.nonLocalizedString());
+            Q_EMIT failure(errorDescription.nonLocalizedString());
             return;
         }
 
@@ -405,7 +405,7 @@ void NoteLocalStorageManagerAsyncTester::onFindNoteCompleted(Note note, bool wit
         m_modifiedNote.setTitle(m_initialNote.title() + QStringLiteral("_modified"));
 
         m_state = STATE_SENT_UPDATE_REQUEST;
-        emit updateNoteRequest(m_modifiedNote, /* update resources = */ true, /* update tags = */ true);
+        Q_EMIT updateNoteRequest(m_modifiedNote, /* update resources = */ true, /* update tags = */ true);
     }
     else if (m_state == STATE_SENT_FIND_AFTER_UPDATE_REQUEST)
     {
@@ -414,21 +414,21 @@ void NoteLocalStorageManagerAsyncTester::onFindNoteCompleted(Note note, bool wit
                                      "not in onFindNoteCompleted slot doesn't match "
                                      "the original modified Note");
             QNWARNING(errorDescription);
-            emit failure(errorDescription.nonLocalizedString());
+            Q_EMIT failure(errorDescription.nonLocalizedString());
             return;
         }
 
         m_modifiedNote = note;
 
         m_state = STATE_SENT_GET_COUNT_AFTER_UPDATE_REQUEST;
-        emit getNoteCountRequest();
+        Q_EMIT getNoteCountRequest();
     }
     else if (m_state == STATE_SENT_FIND_AFTER_EXPUNGE_REQUEST)
     {
         errorDescription.setBase("Found note which should have been expunged from local storage");
         QNWARNING(errorDescription << QStringLiteral(": Note expunged from LocalStorageManager: ") << m_modifiedNote
                   << QStringLiteral("\nNote found in LocalStorageManager: ") << m_foundNote);
-        emit failure(errorDescription.nonLocalizedString());
+        Q_EMIT failure(errorDescription.nonLocalizedString());
         return;
     }
     HANDLE_WRONG_STATE();
@@ -438,13 +438,13 @@ void NoteLocalStorageManagerAsyncTester::onFindNoteFailed(Note note, bool withRe
 {
     if (m_state == STATE_SENT_FIND_AFTER_EXPUNGE_REQUEST) {
         m_state = STATE_SENT_GET_COUNT_AFTER_EXPUNGE_REQUEST;
-        emit getNoteCountRequest();
+        Q_EMIT getNoteCountRequest();
         return;
     }
 
     QNWARNING(errorDescription << QStringLiteral(", requestId = ") << requestId << QStringLiteral(", note: ") << note
               << QStringLiteral(", withResourceBinaryData = ") << (withResourceBinaryData ? QStringLiteral("true") : QStringLiteral("false")));
-    emit failure(errorDescription.nonLocalizedString());
+    Q_EMIT failure(errorDescription.nonLocalizedString());
 }
 
 void NoteLocalStorageManagerAsyncTester::onListNotesPerNotebookCompleted(Notebook notebook, bool withResourceBinaryData,
@@ -472,7 +472,7 @@ void NoteLocalStorageManagerAsyncTester::onListNotesPerNotebookCompleted(Noteboo
             if (!m_initialNotes.contains(note)) {
                 errorDescription.setBase("One of found notes was not found within initial notes");
                 QNWARNING(errorDescription << QStringLiteral(", unfound note: ") << note);
-                emit failure(errorDescription.nonLocalizedString());
+                Q_EMIT failure(errorDescription.nonLocalizedString());
                 return;
             }
 
@@ -483,7 +483,7 @@ void NoteLocalStorageManagerAsyncTester::onListNotesPerNotebookCompleted(Noteboo
                 errorDescription.details() += QStringLiteral(", found: ");
                 errorDescription.details() += note.notebookGuid();
                 QNWARNING(errorDescription);
-                emit failure(errorDescription.nonLocalizedString());
+                Q_EMIT failure(errorDescription.nonLocalizedString());
                 return;
             }
         }
@@ -495,7 +495,7 @@ void NoteLocalStorageManagerAsyncTester::onListNotesPerNotebookCompleted(Noteboo
             if (!m_initialNotes.contains(note)) {
                 errorDescription.setBase("One of found notes was not found within initial notes");
                 QNWARNING(errorDescription);
-                emit failure(errorDescription.nonLocalizedString());
+                Q_EMIT failure(errorDescription.nonLocalizedString());
                 return;
             }
 
@@ -506,14 +506,14 @@ void NoteLocalStorageManagerAsyncTester::onListNotesPerNotebookCompleted(Noteboo
                 errorDescription.details() += QStringLiteral(", found: ");
                 errorDescription.details() += note.notebookGuid();
                 QNWARNING(errorDescription);
-                emit failure(errorDescription.nonLocalizedString());
+                Q_EMIT failure(errorDescription.nonLocalizedString());
                 return;
             }
         }
     }
     HANDLE_WRONG_STATE();
 
-    emit success();
+    Q_EMIT success();
 }
 
 void NoteLocalStorageManagerAsyncTester::onListNotesPerNotebookFailed(Notebook notebook, bool withResourceBinaryData,
@@ -531,7 +531,7 @@ void NoteLocalStorageManagerAsyncTester::onListNotesPerNotebookFailed(Notebook n
 
     QNWARNING(errorDescription << QStringLiteral(", requestId = ") << requestId << QStringLiteral(", notebook: ") << notebook
               << QStringLiteral(", withResourceBinaryData = ") << (withResourceBinaryData ? QStringLiteral("true") : QStringLiteral("false")));
-    emit failure(errorDescription.nonLocalizedString());
+    Q_EMIT failure(errorDescription.nonLocalizedString());
 }
 
 void NoteLocalStorageManagerAsyncTester::onExpungeNoteCompleted(Note note, QUuid requestId)
@@ -545,19 +545,19 @@ void NoteLocalStorageManagerAsyncTester::onExpungeNoteCompleted(Note note, QUuid
                                  "note in onExpungeNoteCompleted slot doesn't match "
                                  "the original expunged Note");
         QNWARNING(errorDescription);
-        emit failure(errorDescription.nonLocalizedString());
+        Q_EMIT failure(errorDescription.nonLocalizedString());
         return;
     }
 
     m_state = STATE_SENT_FIND_AFTER_EXPUNGE_REQUEST;
     bool withResourceBinaryData = true;
-    emit findNoteRequest(m_foundNote, withResourceBinaryData);
+    Q_EMIT findNoteRequest(m_foundNote, withResourceBinaryData);
 }
 
 void NoteLocalStorageManagerAsyncTester::onExpungeNoteFailed(Note note, ErrorString errorDescription, QUuid requestId)
 {
     QNWARNING(errorDescription << QStringLiteral(", requestId = ") << requestId << QStringLiteral(", note: ") << note);
-    emit failure(errorDescription.nonLocalizedString());
+    Q_EMIT failure(errorDescription.nonLocalizedString());
 }
 
 void NoteLocalStorageManagerAsyncTester::createConnections()

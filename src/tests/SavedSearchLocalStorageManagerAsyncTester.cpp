@@ -74,12 +74,12 @@ void SavedSearchLocalStorageManagerAsyncTester::onWorkerInitialized()
     ErrorString errorDescription;
     if (!m_initialSavedSearch.checkParameters(errorDescription)) {
         QNWARNING(QStringLiteral("Found invalid SavedSearch: ") << m_initialSavedSearch << QStringLiteral(", error: ") << errorDescription);
-        emit failure(errorDescription.nonLocalizedString());
+        Q_EMIT failure(errorDescription.nonLocalizedString());
         return;
     }
 
     m_state = STATE_SENT_ADD_REQUEST;
-    emit addSavedSearchRequest(m_initialSavedSearch);
+    Q_EMIT addSavedSearchRequest(m_initialSavedSearch);
 }
 
 void SavedSearchLocalStorageManagerAsyncTester::onGetSavedSearchCountCompleted(int count, QUuid requestId)
@@ -91,7 +91,7 @@ void SavedSearchLocalStorageManagerAsyncTester::onGetSavedSearchCountCompleted(i
 #define HANDLE_WRONG_STATE() \
     else { \
         errorDescription.setBase("Internal error in SavedSearchLocalStorageManagerAsyncTester: found wrong state"); \
-        emit failure(errorDescription.nonLocalizedString()); \
+        Q_EMIT failure(errorDescription.nonLocalizedString()); \
         return; \
     }
 
@@ -100,19 +100,19 @@ void SavedSearchLocalStorageManagerAsyncTester::onGetSavedSearchCountCompleted(i
         if (count != 1) {
             errorDescription.setBase("GetSavedSearchCount returned result different from the expected one (1)");
             errorDescription.details() = QString::number(count);
-            emit failure(errorDescription.nonLocalizedString());
+            Q_EMIT failure(errorDescription.nonLocalizedString());
             return;
         }
 
         m_state = STATE_SENT_EXPUNGE_REQUEST;
-        emit expungeSavedSearchRequest(m_modifiedSavedSearch);
+        Q_EMIT expungeSavedSearchRequest(m_modifiedSavedSearch);
     }
     else if (m_state == STATE_SENT_GET_COUNT_AFTER_EXPUNGE_REQUEST)
     {
         if (count != 0) {
             errorDescription.setBase("GetSavedSearchCount returned result different from the expected one (0)");
             errorDescription.details() = QString::number(count);
-            emit failure(errorDescription.nonLocalizedString());
+            Q_EMIT failure(errorDescription.nonLocalizedString());
             return;
         }
 
@@ -127,7 +127,7 @@ void SavedSearchLocalStorageManagerAsyncTester::onGetSavedSearchCountCompleted(i
         extraSavedSearch.setIncludePersonalLinkedNotebooks(true);
 
         m_state = STATE_SENT_ADD_EXTRA_SAVED_SEARCH_ONE_REQUEST;
-        emit addSavedSearchRequest(extraSavedSearch);
+        Q_EMIT addSavedSearchRequest(extraSavedSearch);
     }
     HANDLE_WRONG_STATE();
 }
@@ -135,7 +135,7 @@ void SavedSearchLocalStorageManagerAsyncTester::onGetSavedSearchCountCompleted(i
 void SavedSearchLocalStorageManagerAsyncTester::onGetSavedSearchCountFailed(ErrorString errorDescription, QUuid requestId)
 {
     QNWARNING(errorDescription << QStringLiteral(", requestId = ") << requestId);
-    emit failure(errorDescription.nonLocalizedString());
+    Q_EMIT failure(errorDescription.nonLocalizedString());
 }
 
 void SavedSearchLocalStorageManagerAsyncTester::onAddSavedSearchCompleted(SavedSearch search, QUuid requestId)
@@ -150,7 +150,7 @@ void SavedSearchLocalStorageManagerAsyncTester::onAddSavedSearchCompleted(SavedS
             errorDescription.setBase("Internal error in SavedSearchLocalStorageManagerAsyncTester: "
                                      "search in onAddSavedSearchCompleted slot doesn't match the original SavedSearch");
             QNWARNING(errorDescription);
-            emit failure(errorDescription.nonLocalizedString());
+            Q_EMIT failure(errorDescription.nonLocalizedString());
             return;
         }
 
@@ -158,7 +158,7 @@ void SavedSearchLocalStorageManagerAsyncTester::onAddSavedSearchCompleted(SavedS
         m_foundSavedSearch.setLocalUid(search.localUid());
 
         m_state = STATE_SENT_FIND_AFTER_ADD_REQUEST;
-        emit findSavedSearchRequest(m_foundSavedSearch);
+        Q_EMIT findSavedSearchRequest(m_foundSavedSearch);
     }
     else if (m_state == STATE_SENT_ADD_EXTRA_SAVED_SEARCH_ONE_REQUEST)
     {
@@ -175,7 +175,7 @@ void SavedSearchLocalStorageManagerAsyncTester::onAddSavedSearchCompleted(SavedS
         extraSavedSearch.setIncludePersonalLinkedNotebooks(true);
 
         m_state = STATE_SENT_ADD_EXTRA_SAVED_SEARCH_TWO_REQUEST;
-        emit addSavedSearchRequest(extraSavedSearch);
+        Q_EMIT addSavedSearchRequest(extraSavedSearch);
     }
     else if (m_state == STATE_SENT_ADD_EXTRA_SAVED_SEARCH_TWO_REQUEST)
     {
@@ -185,7 +185,7 @@ void SavedSearchLocalStorageManagerAsyncTester::onAddSavedSearchCompleted(SavedS
         size_t limit = 0, offset = 0;
         LocalStorageManager::ListSavedSearchesOrder::type order = LocalStorageManager::ListSavedSearchesOrder::NoOrder;
         LocalStorageManager::OrderDirection::type orderDirection = LocalStorageManager::OrderDirection::Ascending;
-        emit listAllSavedSearchesRequest(limit, offset, order, orderDirection);
+        Q_EMIT listAllSavedSearchesRequest(limit, offset, order, orderDirection);
     }
     HANDLE_WRONG_STATE();
 }
@@ -193,7 +193,7 @@ void SavedSearchLocalStorageManagerAsyncTester::onAddSavedSearchCompleted(SavedS
 void SavedSearchLocalStorageManagerAsyncTester::onAddSavedSearchFailed(SavedSearch search, ErrorString errorDescription, QUuid requestId)
 {
     QNWARNING(errorDescription << QStringLiteral(", requestId = ") << requestId << QStringLiteral(", saved search: ") << search);
-    emit failure(errorDescription.nonLocalizedString());
+    Q_EMIT failure(errorDescription.nonLocalizedString());
 }
 
 void SavedSearchLocalStorageManagerAsyncTester::onUpdateSavedSearchCompleted(SavedSearch search, QUuid requestId)
@@ -209,7 +209,7 @@ void SavedSearchLocalStorageManagerAsyncTester::onUpdateSavedSearchCompleted(Sav
                                      "search in onUpdateSavedSearchCompleted slot doesn't match "
                                      "the original modified SavedSearch");
             QNWARNING(errorDescription);
-            emit failure(errorDescription.nonLocalizedString());
+            Q_EMIT failure(errorDescription.nonLocalizedString());
             return;
         }
 
@@ -217,7 +217,7 @@ void SavedSearchLocalStorageManagerAsyncTester::onUpdateSavedSearchCompleted(Sav
         m_foundSavedSearch.setLocalUid(search.localUid());
 
         m_state = STATE_SENT_FIND_AFTER_UPDATE_REQUEST;
-        emit findSavedSearchRequest(m_foundSavedSearch);
+        Q_EMIT findSavedSearchRequest(m_foundSavedSearch);
     }
     HANDLE_WRONG_STATE();
 }
@@ -225,7 +225,7 @@ void SavedSearchLocalStorageManagerAsyncTester::onUpdateSavedSearchCompleted(Sav
 void SavedSearchLocalStorageManagerAsyncTester::onUpdateSavedSearchFailed(SavedSearch search, ErrorString errorDescription, QUuid requestId)
 {
     QNWARNING(errorDescription << QStringLiteral(", requestId = ") << requestId << QStringLiteral(", saved search: ") << search);
-    emit failure(errorDescription.nonLocalizedString());
+    Q_EMIT failure(errorDescription.nonLocalizedString());
 }
 
 void SavedSearchLocalStorageManagerAsyncTester::onFindSavedSearchCompleted(SavedSearch search, QUuid requestId)
@@ -240,7 +240,7 @@ void SavedSearchLocalStorageManagerAsyncTester::onFindSavedSearchCompleted(Saved
             errorDescription.setBase("Added and found saved searches in local storage don't match");
             QNWARNING(errorDescription << QStringLiteral(": SavedSearch added to LocalStorageManager: ") << m_initialSavedSearch
                       << QStringLiteral("\nSavedSearch found in LocalStorageManager: ") << search);
-            emit failure(errorDescription.nonLocalizedString());
+            Q_EMIT failure(errorDescription.nonLocalizedString());
             return;
         }
 
@@ -250,7 +250,7 @@ void SavedSearchLocalStorageManagerAsyncTester::onFindSavedSearchCompleted(Saved
         searchToFindByName.setName(search.name());
 
         m_state = STATE_SENT_FIND_BY_NAME_AFTER_ADD_REQUEST;
-        emit findSavedSearchRequest(searchToFindByName);
+        Q_EMIT findSavedSearchRequest(searchToFindByName);
     }
     else if (m_state == STATE_SENT_FIND_BY_NAME_AFTER_ADD_REQUEST)
     {
@@ -258,7 +258,7 @@ void SavedSearchLocalStorageManagerAsyncTester::onFindSavedSearchCompleted(Saved
             errorDescription.setBase("Added and found by name saved searches in local storage don't match");
             QNWARNING(errorDescription << QStringLiteral(": SavedSearch added to LocalStorageManager: ") << m_initialSavedSearch
                       << QStringLiteral("\nSavedSearch found by name in LocalStorageManager: ") << search);
-            emit failure(errorDescription.nonLocalizedString());
+            Q_EMIT failure(errorDescription.nonLocalizedString());
             return;
         }
 
@@ -269,7 +269,7 @@ void SavedSearchLocalStorageManagerAsyncTester::onFindSavedSearchCompleted(Saved
         m_modifiedSavedSearch.setQuery(m_initialSavedSearch.query() + QStringLiteral("_modified"));
 
         m_state = STATE_SENT_UPDATE_REQUEST;
-        emit updateSavedSearchRequest(m_modifiedSavedSearch);
+        Q_EMIT updateSavedSearchRequest(m_modifiedSavedSearch);
     }
     else if (m_state == STATE_SENT_FIND_AFTER_UPDATE_REQUEST)
     {
@@ -277,19 +277,19 @@ void SavedSearchLocalStorageManagerAsyncTester::onFindSavedSearchCompleted(Saved
             errorDescription.setBase("Updated and found saved searches in local storage don't match");
             QNWARNING(errorDescription << QStringLiteral(": SavedSearch updated in LocalStorageManager: ") << m_modifiedSavedSearch
                       << QStringLiteral("\nSavedSearch found in LocalStorageManager: ") << search);
-            emit failure(errorDescription.nonLocalizedString());
+            Q_EMIT failure(errorDescription.nonLocalizedString());
             return;
         }
 
         m_state = STATE_SENT_GET_COUNT_AFTER_UPDATE_REQUEST;
-        emit getSavedSearchCountRequest();
+        Q_EMIT getSavedSearchCountRequest();
     }
     else if (m_state == STATE_SENT_FIND_AFTER_EXPUNGE_REQUEST)
     {
         errorDescription.setBase("Error: found saved search which should have been expunged from local storage");
         QNWARNING(errorDescription << QStringLiteral(": SavedSearch expunged from LocalStorageManager: ") << m_modifiedSavedSearch
                   << QStringLiteral("\nSavedSearch found in LocalStorageManager: ") << search);
-        emit failure(errorDescription.nonLocalizedString());
+        Q_EMIT failure(errorDescription.nonLocalizedString());
         return;
     }
     HANDLE_WRONG_STATE();
@@ -299,12 +299,12 @@ void SavedSearchLocalStorageManagerAsyncTester::onFindSavedSearchFailed(SavedSea
 {
     if (m_state == STATE_SENT_FIND_AFTER_EXPUNGE_REQUEST) {
         m_state = STATE_SENT_GET_COUNT_AFTER_EXPUNGE_REQUEST;
-        emit getSavedSearchCountRequest();
+        Q_EMIT getSavedSearchCountRequest();
         return;
     }
 
     QNWARNING(errorDescription << QStringLiteral(", requestId = ") << requestId << QStringLiteral(", saved search: ") << search);
-    emit failure(errorDescription.nonLocalizedString());
+    Q_EMIT failure(errorDescription.nonLocalizedString());
 }
 
 void SavedSearchLocalStorageManagerAsyncTester::onListAllSavedSearchesCompleted(size_t limit, size_t offset,
@@ -327,7 +327,7 @@ void SavedSearchLocalStorageManagerAsyncTester::onListAllSavedSearchesCompleted(
         errorDescription.setBase("Number of found saved searches does not correspond "
                                  "to the number of original added saved searches");
         QNWARNING(errorDescription);
-        emit failure(errorDescription.nonLocalizedString());
+        Q_EMIT failure(errorDescription.nonLocalizedString());
         return;
     }
 
@@ -336,12 +336,12 @@ void SavedSearchLocalStorageManagerAsyncTester::onListAllSavedSearchesCompleted(
         if (!searches.contains(search)) {
             errorDescription.setBase("One of initial saved searches was not found within found saved searches");
             QNWARNING(errorDescription);
-            emit failure(errorDescription.nonLocalizedString());
+            Q_EMIT failure(errorDescription.nonLocalizedString());
             return;
         }
     }
 
-    emit success();
+    Q_EMIT success();
 }
 
 void SavedSearchLocalStorageManagerAsyncTester::onListAllSavedSearchedFailed(size_t limit, size_t offset,
@@ -355,7 +355,7 @@ void SavedSearchLocalStorageManagerAsyncTester::onListAllSavedSearchedFailed(siz
     Q_UNUSED(orderDirection)
 
     QNWARNING(errorDescription << QStringLiteral(", requestId = ") << requestId);
-    emit failure(errorDescription.nonLocalizedString());
+    Q_EMIT failure(errorDescription.nonLocalizedString());
 }
 
 void SavedSearchLocalStorageManagerAsyncTester::onExpungeSavedSearchCompleted(SavedSearch search, QUuid requestId)
@@ -367,7 +367,7 @@ void SavedSearchLocalStorageManagerAsyncTester::onExpungeSavedSearchCompleted(Sa
                                  "search in onExpungeSavedSearchCompleted slot doesn't match "
                                  "the original expunged SavedSearch");
         QNWARNING(errorDescription << QStringLiteral(", requestId = ") << requestId);
-        emit failure(errorDescription.nonLocalizedString());
+        Q_EMIT failure(errorDescription.nonLocalizedString());
         return;
     }
 
@@ -375,14 +375,14 @@ void SavedSearchLocalStorageManagerAsyncTester::onExpungeSavedSearchCompleted(Sa
     m_foundSavedSearch.setLocalUid(search.localUid());
 
     m_state = STATE_SENT_FIND_AFTER_EXPUNGE_REQUEST;
-    emit findSavedSearchRequest(m_foundSavedSearch);
+    Q_EMIT findSavedSearchRequest(m_foundSavedSearch);
 }
 
 void SavedSearchLocalStorageManagerAsyncTester::onExpungeSavedSearchFailed(SavedSearch search,
                                                                            ErrorString errorDescription, QUuid requestId)
 {
     QNWARNING(errorDescription << QStringLiteral(", requestId = ") << requestId << QStringLiteral(", saved search: ") << search);
-    emit failure(errorDescription.nonLocalizedString());
+    Q_EMIT failure(errorDescription.nonLocalizedString());
 }
 
 void SavedSearchLocalStorageManagerAsyncTester::createConnections()

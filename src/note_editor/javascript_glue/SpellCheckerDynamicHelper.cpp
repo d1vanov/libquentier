@@ -31,7 +31,7 @@ void SpellCheckerDynamicHelper::setLastEnteredWords(QVariant words)
     QNDEBUG(QStringLiteral("SpellCheckerDynamicHelper::setLastEnteredWords: ") << words);
 
     QStringList wordsList = words.toStringList();
-    emit lastEnteredWords(wordsList);
+    Q_EMIT lastEnteredWords(wordsList);
 }
 #else
 void SpellCheckerDynamicHelper::setLastEnteredWords(QVariantList words)
@@ -43,7 +43,7 @@ void SpellCheckerDynamicHelper::setLastEnteredWords(QVariantList words)
         const QVariant & word = *it;
         wordsList << word.toString();
     }
-    emit lastEnteredWords(wordsList);
+    Q_EMIT lastEnteredWords(wordsList);
 }
 #endif
 

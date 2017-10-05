@@ -58,7 +58,7 @@ void NoteThumbnailDownloader::start()
 #define SET_ERROR(error) \
     ErrorString errorDescription(error); \
     QNDEBUG(errorDescription); \
-    emit finished(false, m_noteGuid, QByteArray(), errorDescription); \
+    Q_EMIT finished(false, m_noteGuid, QByteArray(), errorDescription); \
     return
 
     if (Q_UNLIKELY(m_host.isEmpty())) {
@@ -106,7 +106,7 @@ void NoteThumbnailDownloader::onDownloadFinished(QVariant result, QSharedPointer
         ErrorString errorDescription(QT_TR_NOOP("failed to download the note thumbnail"));
         errorDescription.details() = error->errorMessage;
         QNDEBUG(errorDescription);
-        emit finished(false, m_noteGuid, QByteArray(), errorDescription);
+        Q_EMIT finished(false, m_noteGuid, QByteArray(), errorDescription);
         return;
     }
 
@@ -123,7 +123,7 @@ void NoteThumbnailDownloader::onDownloadFinished(QVariant result, QSharedPointer
         m_pAsyncResult = Q_NULLPTR;
     }
 
-    emit finished(true, m_noteGuid, thumbnailImageData, ErrorString());
+    Q_EMIT finished(true, m_noteGuid, thumbnailImageData, ErrorString());
 }
 
 } // namespace quentier

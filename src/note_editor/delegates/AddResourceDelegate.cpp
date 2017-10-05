@@ -43,7 +43,7 @@ namespace quentier {
     if (Q_UNLIKELY(!page)) { \
         ErrorString error(QT_TR_NOOP("Can't add attachment: no note editor page")); \
         QNWARNING(error); \
-        emit notifyError(error); \
+        Q_EMIT notifyError(error); \
         return; \
     }
 
@@ -138,7 +138,7 @@ void AddResourceDelegate::doStart()
     if (Q_UNLIKELY(!pNote)) {
         ErrorString error(QT_TR_NOOP("Can't add attachment: no note is set to the editor"));
         QNWARNING(error);
-        emit notifyError(error);
+        Q_EMIT notifyError(error);
         return;
     }
 
@@ -147,14 +147,14 @@ void AddResourceDelegate::doStart()
         ErrorString error(QT_TR_NOOP("Can't add attachment: the file path of the data to be added is empty "
                                      "and the raw data is empty as well"));
         QNWARNING(error);
-        emit notifyError(error);
+        Q_EMIT notifyError(error);
         return;
     }
     else if (m_filePath.isEmpty() && !m_resourceMimeType.isValid())
     {
         ErrorString error(QT_TR_NOOP("Can't add attachment: the mime type of the data to be added is invalid"));
         QNWARNING(error);
-        emit notifyError(error);
+        Q_EMIT notifyError(error);
         return;
     }
 
@@ -170,7 +170,7 @@ void AddResourceDelegate::doStart()
         {
             ErrorString error(QT_TR_NOOP("Can't add attachment: the note is already at max allowed number of attachments"));
             error.details() = QString::number(pNote->numResources());
-            emit notifyError(error);
+            Q_EMIT notifyError(error);
             return;
         }
     }
@@ -183,7 +183,7 @@ void AddResourceDelegate::doStart()
         if (numNoteResources > pAccount->noteResourceCountMax()) {
             ErrorString error(QT_TR_NOOP("Can't add attachment: the note is already at max allowed number of attachments"));
             error.details() = QString::number(numNoteResources - 1);
-            emit notifyError(error);
+            Q_EMIT notifyError(error);
             return;
         }
     }
@@ -219,7 +219,7 @@ void AddResourceDelegate::doStartUsingFile()
     if (Q_UNLIKELY(!pNote)) {
         ErrorString error(QT_TR_NOOP("Can't add attachment: no note is set to the editor"));
         QNWARNING(error);
-        emit notifyError(error);
+        Q_EMIT notifyError(error);
         return;
     }
 
@@ -235,7 +235,7 @@ void AddResourceDelegate::doStartUsingFile()
         ErrorString error(QT_TR_NOOP("Can't add attachment: the mime type of the resource file is invalid"));
         error.details() = QStringLiteral("file: ");
         error.details() += m_filePath;
-        emit notifyError(error);
+        Q_EMIT notifyError(error);
         return;
     }
 
@@ -246,7 +246,7 @@ void AddResourceDelegate::doStartUsingFile()
     QObject::connect(m_pFileIOProcessorAsync, QNSIGNAL(FileIOProcessorAsync,readFileRequestProcessed,bool,ErrorString,QByteArray,QUuid),
                      this, QNSLOT(AddResourceDelegate,onResourceFileRead,bool,ErrorString,QByteArray,QUuid));
 
-    emit readFileData(m_filePath, m_readResourceFileRequestId);
+    Q_EMIT readFileData(m_filePath, m_readResourceFileRequestId);
 }
 
 void AddResourceDelegate::onResourceFileRead(bool success, ErrorString errorDescription, QByteArray data, QUuid requestId)
@@ -268,7 +268,7 @@ void AddResourceDelegate::onResourceFileRead(bool success, ErrorString errorDesc
         error.appendBase(errorDescription.base());
         error.appendBase(errorDescription.additionalBases());
         error.details() = errorDescription.details();
-        emit notifyError(error);
+        Q_EMIT notifyError(error);
         return;
     }
 
@@ -284,7 +284,7 @@ void AddResourceDelegate::doStartUsingData()
     if (Q_UNLIKELY(!pNote)) {
         ErrorString error(QT_TR_NOOP("Can't add attachment: no note is set to the editor"));
         QNWARNING(error);
-        emit notifyError(error);
+        Q_EMIT notifyError(error);
         return;
     }
 
@@ -299,7 +299,7 @@ void AddResourceDelegate::doStartUsingData()
         }
 
         QNWARNING(error);
-        emit notifyError(error);
+        Q_EMIT notifyError(error);
         return;
     }
 
@@ -319,7 +319,7 @@ void AddResourceDelegate::doSaveResourceToStorage(const QByteArray & data, QStri
     if (!pNote) {
         ErrorString errorDescription(QT_TR_NOOP("Can't save the added resource to local file: no note is set to the editor"));
         QNWARNING(errorDescription);
-        emit notifyError(errorDescription);
+        Q_EMIT notifyError(errorDescription);
         return;
     }
 
@@ -368,8 +368,8 @@ void AddResourceDelegate::doSaveResourceToStorage(const QByteArray & data, QStri
     QNTRACE(QStringLiteral("Emitting the request to save the dropped/pasted resource to local file storage: generated local uid = ")
             << resourceLocalUid << QStringLiteral(", data hash = ") << dataHash.toHex() << QStringLiteral(", request id = ")
             << m_saveResourceToStorageRequestId << QStringLiteral(", mime type name = ") << m_resourceMimeType.name());
-    emit saveResourceToStorage(pNote->localUid(), resourceLocalUid, data, dataHash, fileInfoSuffix,
-                               m_saveResourceToStorageRequestId, isImage);
+    Q_EMIT saveResourceToStorage(pNote->localUid(), resourceLocalUid, data, dataHash, fileInfoSuffix,
+                                 m_saveResourceToStorageRequestId, isImage);
 }
 
 void AddResourceDelegate::onResourceSavedToStorage(QUuid requestId, QByteArray dataHash,
@@ -398,7 +398,7 @@ void AddResourceDelegate::onResourceSavedToStorage(QUuid requestId, QByteArray d
         error.details() = errorDescription.details();
         QNWARNING(error);
         m_noteEditor.removeResourceFromNote(m_resource);
-        emit notifyError(error);
+        Q_EMIT notifyError(error);
         return;
     }
 
@@ -419,7 +419,7 @@ void AddResourceDelegate::onResourceSavedToStorage(QUuid requestId, QByteArray d
         errorDescription.setBase(QT_TR_NOOP("Can't set up the image corresponding to the resource: "
                                             "no note is set to the editor"));
         QNWARNING(errorDescription);
-        emit notifyError(errorDescription);
+        Q_EMIT notifyError(errorDescription);
         return;
     }
 
@@ -440,8 +440,8 @@ void AddResourceDelegate::onResourceSavedToStorage(QUuid requestId, QByteArray d
     QNDEBUG(QStringLiteral("Emitting request to write generic resource image for new resource with local uid ")
             << m_resource.localUid() << QStringLiteral(", request id ") << m_saveResourceImageRequestId
             << QStringLiteral(", note local uid = ") << pNote->localUid());
-    emit saveGenericResourceImageToFile(pNote->localUid(), m_resource.localUid(), resourceImageData, QStringLiteral("png"),
-                                        dataHash, m_resourceFileStoragePath, m_saveResourceImageRequestId);
+    Q_EMIT saveGenericResourceImageToFile(pNote->localUid(), m_resource.localUid(), resourceImageData, QStringLiteral("png"),
+                                          dataHash, m_resourceFileStoragePath, m_saveResourceImageRequestId);
 }
 
 void AddResourceDelegate::onGenericResourceImageSaved(bool success, QByteArray resourceImageDataHash,
@@ -474,7 +474,7 @@ void AddResourceDelegate::onGenericResourceImageSaved(bool success, QByteArray r
         error.details() = errorDescription.details();
         QNWARNING(error);
         m_noteEditor.removeResourceFromNote(m_resource);
-        emit notifyError(error);
+        Q_EMIT notifyError(error);
         return;
     }
 
@@ -494,7 +494,7 @@ void AddResourceDelegate::insertNewResourceHtml()
         error.details() = errorDescription.details();
         QNWARNING(error);
         m_noteEditor.removeResourceFromNote(m_resource);
-        emit notifyError(error);
+        Q_EMIT notifyError(error);
         return;
     }
 
@@ -515,7 +515,7 @@ void AddResourceDelegate::onNewResourceHtmlInserted(const QVariant & data)
     if (Q_UNLIKELY(statusIt == resultMap.end())) {
         ErrorString error(QT_TR_NOOP("Can't parse the result of new resource html insertion from JavaScript"));
         QNWARNING(error);
-        emit notifyError(error);
+        Q_EMIT notifyError(error);
         return;
     }
 
@@ -534,11 +534,11 @@ void AddResourceDelegate::onNewResourceHtmlInserted(const QVariant & data)
         }
 
         QNWARNING(error);
-        emit notifyError(error);
+        Q_EMIT notifyError(error);
         return;
     }
 
-    emit finished(m_resource, m_resourceFileStoragePath);
+    Q_EMIT finished(m_resource, m_resourceFileStoragePath);
 }
 
 bool AddResourceDelegate::checkResourceDataSize(const Note & note, const Account * pAccount, const qint64 size)
@@ -556,7 +556,7 @@ bool AddResourceDelegate::checkResourceDataSize(const Note & note, const Account
             ErrorString error(QT_TR_NOOP("Can't add attachment: the resource to be added "
                                          "is too large, max resource size allowed is"));
             error.details() = humanReadableSize(static_cast<quint64>(note.noteLimits().resourceSizeMax.ref()));
-            emit notifyError(error);
+            Q_EMIT notifyError(error);
             return false;
         }
 
@@ -567,7 +567,7 @@ bool AddResourceDelegate::checkResourceDataSize(const Note & note, const Account
             ErrorString error(QT_TR_NOOP("Can't add attachment: the addition of the resource "
                                          "would violate the max resource size which is"));
             error.details() = humanReadableSize(static_cast<quint64>(note.noteLimits().noteSizeMax.ref()));
-            emit notifyError(error);
+            Q_EMIT notifyError(error);
             return false;
         }
     }
@@ -580,7 +580,7 @@ bool AddResourceDelegate::checkResourceDataSize(const Note & note, const Account
             ErrorString error(QT_TR_NOOP("Can't add attachment: the resource is too large, "
                                          "max resource size allowed is"));
             error.details() = humanReadableSize(static_cast<quint64>(pAccount->resourceSizeMax()));
-            emit notifyError(error);
+            Q_EMIT notifyError(error);
             return false;
         }
     }

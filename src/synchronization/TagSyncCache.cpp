@@ -121,7 +121,7 @@ void TagSyncCache::onListTagsComplete(LocalStorageManager::ListObjectsOptions fl
         return;
     }
 
-    emit filled();
+    Q_EMIT filled();
 }
 
 void TagSyncCache::onListTagsFailed(LocalStorageManager::ListObjectsOptions flag,
@@ -149,7 +149,7 @@ void TagSyncCache::onListTagsFailed(LocalStorageManager::ListObjectsOptions flag
     m_dirtyTagsByGuid.clear();
     disconnectFromLocalStorage();
 
-    emit failure(errorDescription);
+    Q_EMIT failure(errorDescription);
 }
 
 void TagSyncCache::onAddTagComplete(Tag tag, QUuid requestId)
@@ -290,10 +290,10 @@ void TagSyncCache::requestTagsList()
 
     TCTRACE(QStringLiteral("Emitting the request to list tags: request id = ")
             << m_listTagsRequestId << QStringLiteral(", offset = ") << m_offset);
-    emit listTags(LocalStorageManager::ListAll,
-                  m_limit, m_offset, LocalStorageManager::ListTagsOrder::NoOrder,
-                  LocalStorageManager::OrderDirection::Ascending,
-                  m_linkedNotebookGuid, m_listTagsRequestId);
+    Q_EMIT listTags(LocalStorageManager::ListAll,
+                    m_limit, m_offset, LocalStorageManager::ListTagsOrder::NoOrder,
+                    LocalStorageManager::OrderDirection::Ascending,
+                    m_linkedNotebookGuid, m_listTagsRequestId);
 }
 
 void TagSyncCache::removeTag(const QString & tagLocalUid)

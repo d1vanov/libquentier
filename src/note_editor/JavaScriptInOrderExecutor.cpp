@@ -71,7 +71,7 @@ void JavaScriptInOrderExecutor::next(const QVariant & data)
     if (m_javaScriptsQueue.empty()) {
         QNTRACE(QStringLiteral("JavaScriptInOrderExecutor: done"));
         m_inProgress = false;
-        emit finished();
+        Q_EMIT finished();
         return;
     }
 

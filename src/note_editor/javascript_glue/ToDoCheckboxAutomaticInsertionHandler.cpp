@@ -26,7 +26,7 @@ ToDoCheckboxAutomaticInsertionHandler::ToDoCheckboxAutomaticInsertionHandler(QOb
 
 void ToDoCheckboxAutomaticInsertionHandler::onToDoCheckboxInsertedAutomatically()
 {
-    emit notifyToDoCheckboxInsertedAutomatically();
+    Q_EMIT notifyToDoCheckboxInsertedAutomatically();
 }
 
 } // namespace quentier

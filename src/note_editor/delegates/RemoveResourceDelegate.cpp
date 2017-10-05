@@ -27,7 +27,7 @@ namespace quentier {
     if (Q_UNLIKELY(!page)) { \
         ErrorString error(QT_TR_NOOP("Can't remove the attachment: no note editor page")); \
         QNWARNING(error); \
-        emit notifyError(error); \
+        Q_EMIT notifyError(error); \
         return; \
     }
 
@@ -69,7 +69,7 @@ void RemoveResourceDelegate::doStart()
     if (Q_UNLIKELY(!m_resource.hasDataHash())) {
         ErrorString error(QT_TR_NOOP("Can't remove the attachment: the data hash is missing"));
         QNWARNING(error);
-        emit notifyError(error);
+        Q_EMIT notifyError(error);
         return;
     }
 
@@ -91,7 +91,7 @@ void RemoveResourceDelegate::onResourceReferenceRemovedFromNoteContent(const QVa
     if (Q_UNLIKELY(statusIt == resultMap.end())) {
         ErrorString error(QT_TR_NOOP("Can't parse the result of attachment reference removal from JavaScript"));
         QNWARNING(error);
-        emit notifyError(error);
+        Q_EMIT notifyError(error);
         return;
     }
 
@@ -110,13 +110,13 @@ void RemoveResourceDelegate::onResourceReferenceRemovedFromNoteContent(const QVa
         }
 
         QNWARNING(error);
-        emit notifyError(error);
+        Q_EMIT notifyError(error);
         return;
     }
 
     m_noteEditor.removeResourceFromNote(m_resource);
 
-    emit finished(m_resource);
+    Q_EMIT finished(m_resource);
 }
 
 } // namespace quentier

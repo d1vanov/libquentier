@@ -28,7 +28,7 @@ void ContextMenuEventJavaScriptHandler::setContextMenuContent(QString contentTyp
                                                               bool insideDecryptedTextFragment,
                                                               QStringList extraData, quint64 sequenceNumber)
 {
-    emit contextMenuEventReply(contentType, selectedHtml, insideDecryptedTextFragment, extraData, sequenceNumber);
+    Q_EMIT contextMenuEventReply(contentType, selectedHtml, insideDecryptedTextFragment, extraData, sequenceNumber);
 }
 
 } // namespace quentier

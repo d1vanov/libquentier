@@ -30,5 +30,5 @@ WebSocketClientWrapper::WebSocketClientWrapper(QWebSocketServer * server, QObjec
 
 void WebSocketClientWrapper::handleNewConnection()
 {
-    emit clientConnected(new WebSocketTransport(m_server->nextPendingConnection()));
+    Q_EMIT clientConnected(new WebSocketTransport(m_server->nextPendingConnection()));
 }

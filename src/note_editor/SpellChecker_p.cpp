@@ -211,7 +211,7 @@ void SpellCheckerPrivate::removeFromUserWordList(const QString & word)
                      this, QNSLOT(SpellCheckerPrivate,onWriteFileRequestProcessed,bool,ErrorString,QUuid));
 
     m_updateUserDictionaryFileRequestId = QUuid::createUuid();
-    emit writeFile(m_userDictionaryPath, dataToWrite, m_updateUserDictionaryFileRequestId, /* append = */ false);
+    Q_EMIT writeFile(m_userDictionaryPath, dataToWrite, m_updateUserDictionaryFileRequestId, /* append = */ false);
     QNTRACE(QStringLiteral("Sent the request to update the user dictionary: ")
             << m_updateUserDictionaryFileRequestId);
 }
@@ -303,7 +303,7 @@ void SpellCheckerPrivate::onDictionariesFound(SpellCheckerDictionariesFinder::Di
 
     m_systemDictionariesReady = true;
     if (isReady()) {
-        emit ready();
+        Q_EMIT ready();
     }
 }
 
@@ -511,7 +511,7 @@ void SpellCheckerPrivate::scanSystemDictionaries()
 
         m_systemDictionariesReady = true;
         if (isReady()) {
-            emit ready();
+            Q_EMIT ready();
         }
 
         return;
@@ -690,7 +690,7 @@ void SpellCheckerPrivate::initializeUserDictionary(const QString & userDictionar
                          this, QNSLOT(SpellCheckerPrivate,onReadFileRequestProcessed,bool,ErrorString,QByteArray,QUuid));
 
         m_readUserDictionaryRequestId = QUuid::createUuid();
-        emit readFile(m_userDictionaryPath, m_readUserDictionaryRequestId);
+        Q_EMIT readFile(m_userDictionaryPath, m_readUserDictionaryRequestId);
         QNTRACE(QStringLiteral("Sent the request to read the user dictionary file: id = ") << m_readUserDictionaryRequestId);
     }
     else
@@ -763,7 +763,7 @@ void SpellCheckerPrivate::checkUserDictionaryDataPendingWriting()
                          this, QNSLOT(SpellCheckerPrivate,onWriteFileRequestProcessed,bool,ErrorString,QUuid));
 
         m_appendUserDictionaryPartToFileRequestId = QUuid::createUuid();
-        emit writeFile(m_userDictionaryPath, dataToWrite, m_appendUserDictionaryPartToFileRequestId, /* append = */ true);
+        Q_EMIT writeFile(m_userDictionaryPath, dataToWrite, m_appendUserDictionaryPartToFileRequestId, /* append = */ true);
         QNTRACE(QStringLiteral("Sent the request to append the data pending writing to user dictionary, id = ")
                 << m_appendUserDictionaryPartToFileRequestId);
     }
@@ -895,7 +895,7 @@ void SpellCheckerPrivate::onReadFileRequestProcessed(bool success, ErrorString e
 
     m_userDictionaryReady = true;
     if (isReady()) {
-        emit ready();
+        Q_EMIT ready();
     }
 }
 

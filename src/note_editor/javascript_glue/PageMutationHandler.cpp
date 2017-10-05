@@ -26,7 +26,7 @@ PageMutationHandler::PageMutationHandler(QObject * parent) :
 
 void PageMutationHandler::onPageMutation()
 {
-    emit contentsChanged();
+    Q_EMIT contentsChanged();
 }
 
 } // namespace quentier

@@ -651,12 +651,12 @@ void NoteStore::onGetNoteAsyncFinished(QVariant result, QSharedPointer<EverCloud
         }
         CATCH_GENERIC_EXCEPTIONS_IMPL(errorCode = qevercloud::EDAMErrorCode::UNKNOWN)
 
-        emit getNoteAsyncFinished(errorCode, note, rateLimitSeconds, errorDescription);
+        Q_EMIT getNoteAsyncFinished(errorCode, note, rateLimitSeconds, errorDescription);
         return;
     }
 
     note = result.value<qevercloud::Note>();
-    emit getNoteAsyncFinished(errorCode, note, rateLimitSeconds, errorDescription);
+    Q_EMIT getNoteAsyncFinished(errorCode, note, rateLimitSeconds, errorDescription);
 }
 
 qint32 NoteStore::processEdamUserExceptionForTag(const Tag & tag, const qevercloud::EDAMUserException & userException,

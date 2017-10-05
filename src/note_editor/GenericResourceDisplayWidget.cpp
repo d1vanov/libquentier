@@ -142,8 +142,8 @@ void GenericResourceDisplayWidget::initialize(const QIcon & icon, const QString 
 
     QNTRACE(QStringLiteral("Emitting the request to save the attachment to own file storage location, request id = ")
             << m_saveResourceToStorageRequestId << QStringLiteral(", resource local uid = ") << m_pResource->localUid());
-    emit saveResourceToStorage(m_pResource->noteLocalUid(), m_pResource->localUid(), data, *dataHash,
-                               preferredFileSuffix, m_saveResourceToStorageRequestId, isImage);
+    Q_EMIT saveResourceToStorage(m_pResource->noteLocalUid(), m_pResource->localUid(), data, *dataHash,
+                                 preferredFileSuffix, m_saveResourceToStorageRequestId, isImage);
 }
 
 QString GenericResourceDisplayWidget::resourceLocalUid() const
@@ -265,7 +265,7 @@ void GenericResourceDisplayWidget::onSaveAsButtonPressed()
     }
 
     m_saveResourceToFileRequestId = QUuid::createUuid();
-    emit saveResourceToFile(fileName, data, m_saveResourceToFileRequestId, /* append = */ false);
+    Q_EMIT saveResourceToFile(fileName, data, m_saveResourceToFileRequestId, /* append = */ false);
     QNDEBUG(QStringLiteral("Sent request to save resource to file, request id = ") << m_saveResourceToFileRequestId);
 }
 
@@ -313,7 +313,7 @@ void GenericResourceDisplayWidget::onSaveResourceToFileRequestProcessed(bool suc
     {
         if (success) {
             QNDEBUG(QStringLiteral("Successfully saved resource to file, request id = ") << requestId);
-            emit savedResourceToFile();
+            Q_EMIT savedResourceToFile();
         }
         else {
             QNWARNING(QStringLiteral("Could not save resource to file: ") << errorDescription << QStringLiteral("; request id = ") << requestId);
@@ -341,7 +341,7 @@ void GenericResourceDisplayWidget::setPendingMode(const bool pendingMode)
 void GenericResourceDisplayWidget::openResource()
 {
     QNDEBUG(QStringLiteral("GenericResourceDisplayWidget::openResource: hash = ") << m_resourceHash.toHex());
-    emit openResourceRequest(m_resourceHash);
+    Q_EMIT openResourceRequest(m_resourceHash);
 }
 
 void GenericResourceDisplayWidget::setupFilterString(const QString & defaultFilterString)

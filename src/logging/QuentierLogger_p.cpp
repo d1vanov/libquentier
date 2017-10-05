@@ -256,7 +256,7 @@ void QuentierLogger::removeLogWriter(IQuentierLogWriter * pLogWriter)
 
 void QuentierLogger::write(QString message)
 {
-    emit sendLogMessage(message);
+    Q_EMIT sendLogMessage(message);
 }
 
 void QuentierLogger::setMinLogLevel(const LogLevel::type minLogLevel)

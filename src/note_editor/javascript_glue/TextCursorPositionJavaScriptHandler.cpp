@@ -26,87 +26,87 @@ TextCursorPositionJavaScriptHandler::TextCursorPositionJavaScriptHandler(QObject
 
 void TextCursorPositionJavaScriptHandler::onTextCursorPositionChange()
 {
-    emit textCursorPositionChanged();
+    Q_EMIT textCursorPositionChanged();
 }
 
 void TextCursorPositionJavaScriptHandler::setOnImageResourceState(bool state, QString resourceHash)
 {
-    emit textCursorPositionOnImageResourceState(state, QByteArray::fromHex(resourceHash.toLocal8Bit()));
+    Q_EMIT textCursorPositionOnImageResourceState(state, QByteArray::fromHex(resourceHash.toLocal8Bit()));
 }
 
 void TextCursorPositionJavaScriptHandler::setOnNonImageResourceState(bool state, QString resourceHash)
 {
-    emit textCursorPositionOnNonImageResourceState(state, QByteArray::fromHex(resourceHash.toLocal8Bit()));
+    Q_EMIT textCursorPositionOnNonImageResourceState(state, QByteArray::fromHex(resourceHash.toLocal8Bit()));
 }
 
 void TextCursorPositionJavaScriptHandler::setOnEnCryptTagState(bool state, QString encryptedText, QString cipher, QString length)
 {
-    emit textCursorPositionOnEnCryptTagState(state, encryptedText, cipher, length);
+    Q_EMIT textCursorPositionOnEnCryptTagState(state, encryptedText, cipher, length);
 }
 
 void TextCursorPositionJavaScriptHandler::setTextCursorPositionBoldState(bool bold)
 {
-    emit textCursorPositionBoldState(bold);
+    Q_EMIT textCursorPositionBoldState(bold);
 }
 
 void TextCursorPositionJavaScriptHandler::setTextCursorPositionItalicState(bool italic)
 {
-    emit textCursorPositionItalicState(italic);
+    Q_EMIT textCursorPositionItalicState(italic);
 }
 
 void TextCursorPositionJavaScriptHandler::setTextCursorPositionUnderlineState(bool underline)
 {
-    emit textCursorPositionUnderlineState(underline);
+    Q_EMIT textCursorPositionUnderlineState(underline);
 }
 
 void TextCursorPositionJavaScriptHandler::setTextCursorPositionStrikethroughState(bool strikethrough)
 {
-    emit textCursorPositionStrikethroughState(strikethrough);
+    Q_EMIT textCursorPositionStrikethroughState(strikethrough);
 }
 
 void TextCursorPositionJavaScriptHandler::setTextCursorPositionAlignLeftState(bool state)
 {
-    emit textCursorPositionAlignLeftState(state);
+    Q_EMIT textCursorPositionAlignLeftState(state);
 }
 
 void TextCursorPositionJavaScriptHandler::setTextCursorPositionAlignCenterState(bool state)
 {
-    emit textCursorPositionAlignCenterState(state);
+    Q_EMIT textCursorPositionAlignCenterState(state);
 }
 
 void TextCursorPositionJavaScriptHandler::setTextCursorPositionAlignRightState(bool state)
 {
-    emit textCursorPositionAlignRightState(state);
+    Q_EMIT textCursorPositionAlignRightState(state);
 }
 
 void TextCursorPositionJavaScriptHandler::setTextCursorPositionAlignFullState(bool state)
 {
-    emit textCursorPositionAlignFullState(state);
+    Q_EMIT textCursorPositionAlignFullState(state);
 }
 
 void TextCursorPositionJavaScriptHandler::setTextCursorPositionInsideOrderedListState(bool insideOrderedList)
 {
-    emit textCursorPositionInsideOrderedListState(insideOrderedList);
+    Q_EMIT textCursorPositionInsideOrderedListState(insideOrderedList);
 }
 
 void TextCursorPositionJavaScriptHandler::setTextCursorPositionInsideUnorderedListState(bool insideUnorderedList)
 {
-    emit textCursorPositionInsideUnorderedListState(insideUnorderedList);
+    Q_EMIT textCursorPositionInsideUnorderedListState(insideUnorderedList);
 }
 
 void TextCursorPositionJavaScriptHandler::setTextCursorPositionInsideTableState(bool insideTable)
 {
-    emit textCursorPositionInsideTableState(insideTable);
+    Q_EMIT textCursorPositionInsideTableState(insideTable);
 }
 
 void TextCursorPositionJavaScriptHandler::setTextCursorPositionFontName(QString fontSize)
 {
-    emit textCursorPositionFontName(fontSize);
+    Q_EMIT textCursorPositionFontName(fontSize);
 }
 
 void TextCursorPositionJavaScriptHandler::setTextCursorPositionFontSize(int fontSize)
 {
-    emit textCursorPositionFontSize(fontSize);
+    Q_EMIT textCursorPositionFontSize(fontSize);
 }
 
 } // namespace quentier
