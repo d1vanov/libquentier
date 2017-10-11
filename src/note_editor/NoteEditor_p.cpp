@@ -4157,8 +4157,9 @@ void NoteEditorPrivate::setupImageResourceContextMenu(const QByteArray & resourc
     ADD_ACTION_WITH_SHORTCUT(ShortcutManager::CopyAttachment, tr("Copy"), m_pImageResourceContextMenu,
                              copyAttachmentUnderCursor, enabled);
 
+    bool canRemoveResource = m_isPageEditable && (m_pAccount ? (m_pAccount->type() != Account::Type::Evernote) : false);
     ADD_ACTION_WITH_SHORTCUT(ShortcutManager::RemoveAttachment, tr("Remove"), m_pImageResourceContextMenu,
-                             removeAttachmentUnderCursor, m_isPageEditable);
+                             removeAttachmentUnderCursor, canRemoveResource);
 
     Q_UNUSED(m_pImageResourceContextMenu->addSeparator());
 
@@ -4189,8 +4190,11 @@ void NoteEditorPrivate::setupNonImageResourceContextMenu(const QByteArray & reso
     bool enabled = true;
 
     ADD_ACTION_WITH_SHORTCUT(QKeySequence::Copy, tr("Copy"), m_pNonImageResourceContextMenu, copy, enabled);
+
+    bool canRemoveResource = m_isPageEditable && (m_pAccount ? (m_pAccount->type() != Account::Type::Evernote) : false);
     ADD_ACTION_WITH_SHORTCUT(ShortcutManager::RemoveAttachment, tr("Remove"), m_pNonImageResourceContextMenu,
-                             removeAttachmentUnderCursor, m_isPageEditable);
+                             removeAttachmentUnderCursor, canRemoveResource);
+
     ADD_ACTION_WITH_SHORTCUT(ShortcutManager::RenameAttachment, tr("Rename"), m_pNonImageResourceContextMenu,
                              renameAttachmentUnderCursor, m_isPageEditable);
 
