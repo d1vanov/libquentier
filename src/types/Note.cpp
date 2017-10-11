@@ -620,18 +620,26 @@ bool Note::removeResource(const Resource & resource)
     }
 
     QList<qevercloud::Resource> & resources = d->m_qecNote.resources.ref();
-    int removed = resources.removeAll(resource.qevercloudResource());
-    if (removed <= 0) {
-        QNDEBUG(QStringLiteral("Haven't removed resource ") << resource << QStringLiteral(" because there was no such resource attached to the note"));
+    const int numResources = resources.size();
+
+    int targetResourceIndex = -1;
+    for(int i = 0; i < numResources; ++i)
+    {
+        if (d->m_resourcesAdditionalInfo[i].localUid == resource.localUid()) {
+            targetResourceIndex = i;
+            break;
+        }
+    }
+
+    if (targetResourceIndex < 0) {
+        QNDEBUG(QStringLiteral("Can't remove resource from note: can't find resource to remove"));
         return false;
     }
 
-    QNDEBUG(QStringLiteral("Removed resource ") << resource << QStringLiteral(" from note (") << removed << QStringLiteral(") occurences"));
-    NoteData::ResourceAdditionalInfo info;
-    info.localUid = resource.localUid();
-    info.isDirty = resource.isDirty();
-    d->m_resourcesAdditionalInfo.removeAll(info);
+    resources.removeAt(targetResourceIndex);
+    d->m_resourcesAdditionalInfo.removeAt(targetResourceIndex);
 
+    QNDEBUG(QStringLiteral("Removed resource from note: ") << resource);
     return true;
 }
 
