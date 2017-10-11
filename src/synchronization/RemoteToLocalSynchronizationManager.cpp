@@ -1095,8 +1095,11 @@ void RemoteToLocalSynchronizationManager::onFindNoteFailed(Note note, bool withR
 
         Q_UNUSED(m_resourcesWithFindRequestIdsPerFindNoteRequestId.erase(rit));
 
-        ErrorString errorDescription(QT_TR_NOOP("Can't find a note containing the synchronized resource in the local storage"));
+        ErrorString errorDescription(QT_TR_NOOP("Can't find note containing the synchronized resource in the local storage"));
         APPEND_NOTE_DETAILS(errorDescription, note)
+
+        // FIXME: need to look through the list of notes pending download, if note's guid is in the list,
+        // there's nothing to worry about, the updated resource would be downloaded along with the note
 
         QNWARNING(errorDescription << QStringLiteral(", note attempted to be found: ") << note);
         Q_EMIT failure(errorDescription);
@@ -2687,20 +2690,7 @@ void RemoteToLocalSynchronizationManager::onGetNoteAsyncFinished(qint32 errorCod
         Q_UNUSED(m_notesPendingDownloadForUpdatingInLocalStorageByGuid.erase(updateIt))
     }
 
-    note.setDirty(false);
-    note.setLocal(false);
-    note.qevercloudNote() = qecNote;
-
-    // Ensure all note's resources have note local uid
-    if (note.hasResources())
-    {
-        QList<Resource> resources = note.resources();
-        for(auto it = resources.begin(), end = resources.end(); it != end; ++it) {
-            Resource & resource = *it;
-            resource.setNoteLocalUid(note.localUid());
-        }
-        note.setResources(resources);
-    }
+    overrideLocalNoteWithRemoteNote(note, qecNote);
 
     if (Q_UNLIKELY(!needToAddNote && !needToUpdateNote)) {
         errorDescription.setBase(QT_TR_NOOP("Internal error: the downloaded note was not expected"));
@@ -6873,6 +6863,96 @@ void RemoteToLocalSynchronizationManager::unregisterResourcePendingAddOrUpdate(c
     }
 }
 
+void RemoteToLocalSynchronizationManager::overrideLocalNoteWithRemoteNote(Note & localNote, const qevercloud::Note & remoteNote) const
+{
+    QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::overrideLocalNoteWithRemoteNote: local note = ")
+            << localNote << QStringLiteral("\nRemote note: ") << remoteNote);
+
+    // NOTE: dealing with resources is tricky: need to not screw up the local uids of note's resources
+    QList<Resource> resources;
+    if (localNote.hasResources()) {
+        resources = localNote.resources();
+    }
+
+    localNote.qevercloudNote() = remoteNote;
+    localNote.setDirty(false);
+    localNote.setLocal(false);
+
+    QList<qevercloud::Resource> updatedResources;
+    if (remoteNote.resources.isSet()) {
+        updatedResources = remoteNote.resources.ref();
+    }
+
+    QList<Resource> amendedResources;
+    amendedResources.reserve(updatedResources.size());
+
+    // First update those resources which were within the local note already
+    for(auto it = resources.begin(), end = resources.end(); it != end; ++it)
+    {
+        Resource & resource = *it;
+        if (!resource.hasGuid()) {
+            continue;
+        }
+
+        bool foundResource = false;
+        for(auto uit = updatedResources.constBegin(), uend = updatedResources.constEnd(); uit != uend; ++uit)
+        {
+            const qevercloud::Resource & updatedResource = *uit;
+            if (!updatedResource.guid.isSet()) {
+                continue;
+            }
+
+            if (updatedResource.guid.ref() == resource.guid()) {
+                resource.qevercloudResource() = updatedResource;
+                // NOTE: need to not forget to reset the dirty flag since we are
+                // resetting the state of the local resource here
+                resource.setDirty(false);
+                resource.setLocal(false);
+                foundResource = true;
+                break;
+            }
+        }
+
+        if (foundResource) {
+            amendedResources << resource;
+        }
+    }
+
+    // Then account for new resources
+    for(auto uit = updatedResources.constBegin(), uend = updatedResources.constEnd(); uit != uend; ++uit)
+    {
+        const qevercloud::Resource & updatedResource = *uit;
+        if (Q_UNLIKELY(!updatedResource.guid.isSet())) {
+            QNWARNING(QStringLiteral("Skipping resource from remote note without guid: ") << updatedResource);
+            continue;
+        }
+
+        const Resource * pExistingResource = Q_NULLPTR;
+        for(auto it = resources.constBegin(), end = resources.constEnd(); it != end; ++it)
+        {
+            const Resource & resource = *it;
+            if (resource.hasGuid() && (resource.guid() == updatedResource.guid.ref())) {
+                pExistingResource = &resource;
+                break;
+            }
+        }
+
+        if (pExistingResource) {
+            continue;
+        }
+
+        Resource newResource;
+        newResource.qevercloudResource() = updatedResource;
+        newResource.setDirty(false);
+        newResource.setLocal(false);
+        newResource.setNoteLocalUid(localNote.localUid());
+        amendedResources << newResource;
+    }
+
+    localNote.setResources(amendedResources);
+    QNTRACE(QStringLiteral("Local note after overriding: ") << localNote);
+}
+
 void RemoteToLocalSynchronizationManager::syncNextTagPendingProcessing()
 {
     QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::syncNextTagPendingProcessing"));
@@ -7166,6 +7246,9 @@ void RemoteToLocalSynchronizationManager::appendDataElementsFromSyncChunkToConta
     if (syncChunk.resources.isSet()) {
         const auto & resources = syncChunk.resources.ref();
         QNDEBUG(QStringLiteral("Appending ") << resources.size() << QStringLiteral(" resources"));
+        // FIXME: probably should go through the list of resources and filter
+        // out those which correspond to note guids which would be downloaded
+        // anyway, along with their resources
         container.append(resources);
     }
 }
@@ -7866,9 +7949,8 @@ void RemoteToLocalSynchronizationManager::resolveSyncConflict(const qevercloud::
     // in order to preserve stuff like e.g. resource local uids which otherwise
     // would be different from those currently stored within the local storage
     Note updatedNote(localConflict);
-    updatedNote.setDirty(false);
-    updatedNote.setLocal(false);
-    updatedNote.qevercloudNote() = remoteNote;
+    overrideLocalNoteWithRemoteNote(updatedNote, remoteNote);
+
     emitUpdateRequest(updatedNote);
 
     if (shouldCreateConflictingNote) {

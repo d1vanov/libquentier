@@ -537,6 +537,8 @@ private:
     void unregisterNotePendingAddOrUpdate(const Note & note);
     void unregisterResourcePendingAddOrUpdate(const Resource & resource);
 
+    void overrideLocalNoteWithRemoteNote(Note & localNote, const qevercloud::Note & remoteNote) const;
+
     void syncNextTagPendingProcessing();
 
     void junkFullSyncStaleDataItemsExpunger(FullSyncStaleDataItemsExpunger & expunger);
