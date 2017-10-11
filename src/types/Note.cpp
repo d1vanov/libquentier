@@ -1033,8 +1033,20 @@ QTextStream & Note::print(QTextStream & strm) const
     {
         strm << QStringLiteral("resources: { \n");
         const QList<qevercloud::Resource> resources = d->m_qecNote.resources.ref();
-        for(auto it = resources.constBegin(), end = resources.constEnd(); it != end; ++it) {
+        int resourceIndex = 0;
+        int resourcesAdditionalInfoSize = d->m_resourcesAdditionalInfo.size();
+        for(auto it = resources.constBegin(), end = resources.constEnd(); it != end; ++it)
+        {
             strm << *it << QStringLiteral("; \n");
+
+            if (resourceIndex < resourcesAdditionalInfoSize) {
+                const NoteData::ResourceAdditionalInfo & info = d->m_resourcesAdditionalInfo.at(resourceIndex);
+                strm << QStringLiteral("Resource additional info: local uid = ")
+                     << info.localUid << QStringLiteral(", dirty = ") << (info.isDirty ? QStringLiteral("true") : QStringLiteral("false"))
+                     << QStringLiteral("; \n");
+            }
+
+            ++resourceIndex;
         }
         strm << QStringLiteral("}");
     }
