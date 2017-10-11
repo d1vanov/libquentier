@@ -648,6 +648,7 @@ QTextStream & operator<<(QTextStream & strm, const qevercloud::SyncChunk & syncC
             strm << indent << QStringLiteral("resource: guid = ") << (it->guid.isSet() ? it->guid.ref() : QStringLiteral("<empty>"))
                  << QStringLiteral(", update sequence number = ")
                  << (it->updateSequenceNum.isSet() ? QString::number(it->updateSequenceNum.ref()) : QStringLiteral("<empty>"))
+                 << QStringLiteral(", note guid = ") << (it->noteGuid.isSet() ? it->noteGuid.ref() : QStringLiteral("<empty>"))
                  << QStringLiteral(";\n");
         }
     }
