@@ -497,6 +497,16 @@ bool NoteStore::getNoteAsync(const bool withContent, const bool withResourceData
                              const bool withNoteLimits, const QString & noteGuid, const QString & authToken,
                              ErrorString & errorDescription)
 {
+    QNDEBUG(QStringLiteral("NoteStore::getNoteAsync: with content = ") << (withContent ? QStringLiteral("true") : QStringLiteral("false"))
+            << QStringLiteral(", with resource data = ") << (withResourceData ? QStringLiteral("true") : QStringLiteral("false"))
+            << QStringLiteral(", with resource recognition = ") << (withResourcesRecognition ? QStringLiteral("true") : QStringLiteral("false"))
+            << QStringLiteral(", with resource alternate data = ") << (withResourceAlternateData ? QStringLiteral("true") : QStringLiteral("false"))
+            << QStringLiteral(", with shared notes = ") << (withSharedNotes ? QStringLiteral("true") : QStringLiteral("false"))
+            << QStringLiteral(", with note app data values = ") << (withNoteAppDataValues ? QStringLiteral("true") : QStringLiteral("false"))
+            << QStringLiteral(", with resource app data values = ") << (withResourceAppDataValues ? QStringLiteral("true") : QStringLiteral("false"))
+            << QStringLiteral(", with note limits = ") << (withNoteLimits ? QStringLiteral("true") : QStringLiteral("false"))
+            << QStringLiteral(", note guid = ") << noteGuid);
+
     if (Q_UNLIKELY(noteGuid.isEmpty())) {
         errorDescription.setBase(QT_TR_NOOP("Detected the attempt to get full note's data for empty note guid"));
         return false;
@@ -511,6 +521,7 @@ bool NoteStore::getNoteAsync(const bool withContent, const bool withResourceData
     noteResultSpec.includeNoteAppDataValues = withNoteAppDataValues;
     noteResultSpec.includeResourceAppDataValues = withResourceAppDataValues;
     noteResultSpec.includeAccountLimits = withNoteLimits;
+    QNTRACE(QStringLiteral("Note result spec: ") << noteResultSpec);
 
     qevercloud::AsyncResult * pAsyncResult = m_pQecNoteStore->getNoteWithResultSpecAsync(noteGuid, noteResultSpec, authToken);
     if (Q_UNLIKELY(!pAsyncResult)) {
