@@ -87,8 +87,8 @@ QT_FORWARD_DECLARE_CLASS(HyperlinkClickJavaScriptHandler)
 QT_FORWARD_DECLARE_CLASS(WebSocketWaiter)
 #endif
 
-class NoteEditorPrivate: public WebView,
-                         public INoteEditorBackend
+class Q_DECL_HIDDEN NoteEditorPrivate: public WebView,
+                                       public INoteEditorBackend
 {
     Q_OBJECT
 public:
@@ -628,7 +628,7 @@ private:
     friend class NoteEditorCallbackFunctor<QString>;
     friend class NoteEditorCallbackFunctor<QVariant>;
 
-    class ReplaceCallback
+    class Q_DECL_HIDDEN ReplaceCallback
     {
     public:
         ReplaceCallback(NoteEditorPrivate * pNoteEditor) : m_pNoteEditor(pNoteEditor) {}
@@ -639,7 +639,7 @@ private:
         QPointer<NoteEditorPrivate>     m_pNoteEditor;
     };
 
-    struct Alignment
+    struct Q_DECL_HIDDEN Alignment
     {
         enum type {
             Left = 0,
@@ -649,7 +649,7 @@ private:
         };
     };
 
-    struct TextFormattingState
+    struct Q_DECL_HIDDEN TextFormattingState
     {
         TextFormattingState() :
             m_bold(false),
@@ -692,7 +692,7 @@ private:
 
     // Holds some data required for certain context menu actions, like the encrypted text data for its decryption,
     // the hash of the resource under cursor for which the action is toggled etc.
-    class CurrentContextMenuExtraData
+    class Q_DECL_HIDDEN CurrentContextMenuExtraData
     {
     public:
         CurrentContextMenuExtraData() :
@@ -891,10 +891,10 @@ private:
     NoteEditorPluginFactory *               m_pPluginFactory;
 #endif
 
-    QMenu *                                 m_pGenericTextContextMenu;
-    QMenu *                                 m_pImageResourceContextMenu;
-    QMenu *                                 m_pNonImageResourceContextMenu;
-    QMenu *                                 m_pEncryptedTextContextMenu;
+    QMenu *             m_pGenericTextContextMenu;
+    QMenu *             m_pImageResourceContextMenu;
+    QMenu *             m_pNonImageResourceContextMenu;
+    QMenu *             m_pEncryptedTextContextMenu;
 
     SpellChecker *      m_pSpellChecker;
     bool                m_spellCheckerEnabled;

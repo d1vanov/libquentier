@@ -24,7 +24,7 @@
 
 QT_FORWARD_DECLARE_CLASS(QWebSocket)
 
-class WebSocketTransport: public QWebChannelAbstractTransport
+class Q_DECL_HIDDEN WebSocketTransport: public QWebChannelAbstractTransport
 {
     Q_OBJECT
 public:

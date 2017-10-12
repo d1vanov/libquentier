@@ -47,7 +47,7 @@ QT_FORWARD_DECLARE_CLASS(GenericResourceDisplayWidget)
 /**
  * @brief The NoteEditorPluginFactory class allows one to install and uninstall custom plugins to/from NoteEditor
  */
-class NoteEditorPluginFactory: public QWebPluginFactory
+class Q_DECL_HIDDEN NoteEditorPluginFactory: public QWebPluginFactory
 {
     Q_OBJECT
 public:

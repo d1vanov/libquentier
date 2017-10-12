@@ -34,7 +34,7 @@ QT_FORWARD_DECLARE_CLASS(NoteEditorPluginFactory)
  * built in the note. For example, such plugin could represent the embedded pdf viewer,
  * embedded video viewer etc.
  */
-class INoteEditorResourcePlugin: public QWidget
+class Q_DECL_HIDDEN INoteEditorResourcePlugin: public QWidget
 {
     Q_OBJECT
 protected:

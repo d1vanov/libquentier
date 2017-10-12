@@ -37,7 +37,7 @@ namespace quentier {
 
 QT_FORWARD_DECLARE_CLASS(FileIOProcessorAsync)
 
-class SpellCheckerPrivate: public QObject
+class Q_DECL_HIDDEN SpellCheckerPrivate: public QObject
 {
     Q_OBJECT
 public:
@@ -93,7 +93,7 @@ private Q_SLOTS:
     void onWriteFileRequestProcessed(bool success, ErrorString errorDescription, QUuid requestId);
 
 private:
-    class Dictionary
+    class Q_DECL_HIDDEN Dictionary
     {
     public:
         Dictionary();

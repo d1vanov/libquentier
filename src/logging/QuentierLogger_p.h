@@ -24,7 +24,7 @@ namespace quentier {
  * Typically a particular log writer writes the log messages to some particular logging destination,
  * like file or stderr or just something which can serve as a logging destination
  */
-class IQuentierLogWriter: public QObject
+class Q_DECL_HIDDEN IQuentierLogWriter: public QObject
 {
     Q_OBJECT
 public:
@@ -39,7 +39,7 @@ public Q_SLOTS:
 /**
  * Type-safe max allowed size of a log file in bytes
  */
-class MaxSizeBytes
+class Q_DECL_HIDDEN MaxSizeBytes
 {
 public:
     MaxSizeBytes(const qint64 size) :
@@ -55,7 +55,7 @@ private:
 /**
  * Type-safe max number of old log files to keep around
  */
-class MaxOldLogFilesCount
+class Q_DECL_HIDDEN MaxOldLogFilesCount
 {
 public:
     MaxOldLogFilesCount(const int count) :
@@ -74,7 +74,7 @@ private:
  * It features the automatic rotation of the log file by its max size and ensures not more than just a handful
  * of previous log files are stored around
  */
-class QuentierFileLogWriter: public IQuentierLogWriter
+class Q_DECL_HIDDEN QuentierFileLogWriter: public IQuentierLogWriter
 {
     Q_OBJECT
 public:
@@ -99,7 +99,7 @@ private:
     int         m_currentOldLogFilesCount;
 };
 
-class QuentierConsoleLogWriter: public IQuentierLogWriter
+class Q_DECL_HIDDEN QuentierConsoleLogWriter: public IQuentierLogWriter
 {
     Q_OBJECT
 public:
@@ -111,7 +111,7 @@ public Q_SLOTS:
 
 QT_FORWARD_DECLARE_CLASS(QuentierLoggerImpl)
 
-class QuentierLogger: public QObject
+class Q_DECL_HIDDEN QuentierLogger: public QObject
 {
     Q_OBJECT
 public:
@@ -142,7 +142,7 @@ private:
 #endif
 };
 
-class QuentierLoggerImpl: public QObject
+class Q_DECL_HIDDEN QuentierLoggerImpl: public QObject
 {
     Q_OBJECT
 public:

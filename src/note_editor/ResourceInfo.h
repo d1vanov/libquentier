@@ -24,7 +24,7 @@
 
 namespace quentier {
 
-class ResourceInfo
+class Q_DECL_HIDDEN ResourceInfo
 {
 public:
     void cacheResourceInfo(const QByteArray & resourceHash,
@@ -44,7 +44,7 @@ public:
     void clear();
 
 private:
-    struct Info
+    struct Q_DECL_HIDDEN Info
     {
         QString m_resourceDisplayName;
         QString m_resourceDisplaySize;

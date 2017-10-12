@@ -32,7 +32,7 @@ namespace quentier {
 QT_FORWARD_DECLARE_CLASS(NoteEditorPrivate)
 QT_FORWARD_DECLARE_CLASS(NoteEditorPluginFactory)
 
-class EncryptedAreaPlugin: public QWidget
+class Q_DECL_HIDDEN EncryptedAreaPlugin: public QWidget
 {
     Q_OBJECT
 public:

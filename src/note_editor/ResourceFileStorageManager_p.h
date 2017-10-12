@@ -34,7 +34,7 @@ namespace quentier {
 QT_FORWARD_DECLARE_CLASS(Note)
 QT_FORWARD_DECLARE_CLASS(ResourceFileStorageManager)
 
-class ResourceFileStorageManagerPrivate: public QObject
+class Q_DECL_HIDDEN ResourceFileStorageManagerPrivate: public QObject
 {
     Q_OBJECT
 public:

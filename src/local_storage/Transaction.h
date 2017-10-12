@@ -8,7 +8,7 @@ namespace quentier {
 
 QT_FORWARD_DECLARE_CLASS(LocalStorageManagerPrivate)
 
-class Transaction
+class Q_DECL_HIDDEN Transaction
 {
 public:
     enum TransactionType

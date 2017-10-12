@@ -38,7 +38,7 @@ QT_FORWARD_DECLARE_CLASS(ResourceFileStorageManager)
 QT_FORWARD_DECLARE_CLASS(FileIOProcessorAsync)
 QT_FORWARD_DECLARE_CLASS(Resource)
 
-class GenericResourceDisplayWidget: public QWidget
+class Q_DECL_HIDDEN GenericResourceDisplayWidget: public QWidget
 {
     Q_OBJECT
 public:

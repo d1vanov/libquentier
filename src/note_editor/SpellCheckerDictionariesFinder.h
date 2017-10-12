@@ -28,8 +28,8 @@
 
 namespace quentier {
 
-class SpellCheckerDictionariesFinder: public QObject,
-                                      public QRunnable
+class Q_DECL_HIDDEN SpellCheckerDictionariesFinder: public QObject,
+                                                    public QRunnable
 {
     Q_OBJECT
 public:
