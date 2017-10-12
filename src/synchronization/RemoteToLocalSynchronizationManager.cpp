@@ -188,6 +188,7 @@ RemoteToLocalSynchronizationManager::RemoteToLocalSynchronizationManager(IManage
     m_addNoteRequestIds(),
     m_updateNoteRequestIds(),
     m_expungeNoteRequestIds(),
+    m_guidsOfProcessedNonExpungedNotes(),
     m_notesWithFindRequestIdsPerFindNotebookRequestId(),
     m_notebooksPerNoteIds(),
     m_resources(),
@@ -1081,7 +1082,11 @@ void RemoteToLocalSynchronizationManager::onFindNoteFailed(Note note, bool withR
         }
 
         // Removing the note from the list of notes waiting for processing
+        // but also remembering it for further reference
         Q_UNUSED(m_notes.erase(it));
+        if (note.hasGuid()) {
+            Q_UNUSED(m_guidsOfProcessedNonExpungedNotes.insert(note.guid()))
+        }
 
         getFullNoteDataAsyncAndAddToLocalStorage(note);
         return;
@@ -1564,7 +1569,6 @@ void RemoteToLocalSynchronizationManager::performPostAddOrUpdateChecks<Note>(con
 {
     unregisterNotePendingAddOrUpdate(note);
     checkNotesSyncCompletionAndLaunchResourcesSync();
-
 
     if (m_findNoteByGuidRequestIds.empty() && m_guidsOfNotesPendingDownloadForAddingToLocalStorage.empty() &&
         m_notesPendingDownloadForUpdatingInLocalStorageByGuid.empty() &&
@@ -3495,7 +3499,9 @@ void RemoteToLocalSynchronizationManager::launchSync()
         return;
     }
 
-    launchResourcesSync();
+    if (!notesSyncInProgress()) {
+        launchResourcesSync();
+    }
 
     // NOTE: we might have received the only sync chunk without the actual data elements, need to check for such case
     // and leave if there's nothing worth processing within the sync
@@ -4126,12 +4132,12 @@ void RemoteToLocalSynchronizationManager::launchFullSyncStaleDataItemsExpunger()
     }
 
     syncedGuids.m_syncedNoteGuids.reserve(m_notes.size());
-    for(auto it = m_notes.constBegin(), end = m_notes.constEnd(); it != end; ++it)
+    // NOTE: should use m_guidsOfProcessedNonExpungedNotes instead of m_notes
+    // as items are removed from m_notes container as the sync progresses
+    for(auto it = m_guidsOfProcessedNonExpungedNotes.constBegin(),
+        end = m_guidsOfProcessedNonExpungedNotes.constEnd(); it != end; ++it)
     {
-        const qevercloud::Note & note = *it;
-        if (note.guid.isSet()) {
-            Q_UNUSED(syncedGuids.m_syncedNoteGuids.insert(note.guid.ref()))
-        }
+        Q_UNUSED(syncedGuids.m_syncedNoteGuids.insert(*it))
     }
 
     syncedGuids.m_syncedSavedSearchGuids.reserve(m_savedSearches.size());
@@ -5430,6 +5436,7 @@ void RemoteToLocalSynchronizationManager::clear()
     m_addNoteRequestIds.clear();
     m_updateNoteRequestIds.clear();
     m_expungeNoteRequestIds.clear();
+    m_guidsOfProcessedNonExpungedNotes.clear();
 
     m_notesWithFindRequestIdsPerFindNotebookRequestId.clear();
     m_notebooksPerNoteIds.clear();
@@ -7255,7 +7262,7 @@ void RemoteToLocalSynchronizationManager::appendDataElementsFromSyncChunkToConta
     QNDEBUG(QStringLiteral("Appending ") << resources.size() << QStringLiteral(" resources"));
 
     // Need to filter out those resources which belong to the notes which will be downloaded
-    // along with their whole content, resources included
+    // along with their whole content, resources included or to the notes which have already been downloaded
     QList<qevercloud::Resource> filteredResources;
     filteredResources.reserve(resources.size());
 
@@ -7267,8 +7274,15 @@ void RemoteToLocalSynchronizationManager::appendDataElementsFromSyncChunkToConta
             continue;
         }
 
-        QNTRACE(QStringLiteral("Checking whether resource belongs to a note pending downloading: ")
+        QNTRACE(QStringLiteral("Checking whether resource belongs to a note pending downloading or already downloaded one: ")
                 << resource);
+
+        auto ngit = m_guidsOfProcessedNonExpungedNotes.find(resource.noteGuid.ref());
+        if (ngit != m_guidsOfProcessedNonExpungedNotes.end()) {
+            QNTRACE(QStringLiteral("Skipping resource as it belongs to the note which while content has already been downloaded: ")
+                    << resource);
+            continue;
+        }
 
         bool foundNote = false;
         for(auto nit = m_notes.constBegin(), nend = m_notes.constEnd(); nit != nend; ++nit)

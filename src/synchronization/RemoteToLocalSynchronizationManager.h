@@ -726,6 +726,7 @@ private:
     QSet<QUuid>                             m_addNoteRequestIds;
     QSet<QUuid>                             m_updateNoteRequestIds;
     QSet<QUuid>                             m_expungeNoteRequestIds;
+    QSet<QString>                           m_guidsOfProcessedNonExpungedNotes;
 
     typedef QHash<QUuid,QPair<Note,QUuid> > NoteDataPerFindNotebookRequestId;
     NoteDataPerFindNotebookRequestId        m_notesWithFindRequestIdsPerFindNotebookRequestId;
