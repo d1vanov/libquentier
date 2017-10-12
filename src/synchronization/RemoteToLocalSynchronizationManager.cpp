@@ -6868,6 +6868,10 @@ void RemoteToLocalSynchronizationManager::overrideLocalNoteWithRemoteNote(Note &
     QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::overrideLocalNoteWithRemoteNote: local note = ")
             << localNote << QStringLiteral("\nRemote note: ") << remoteNote);
 
+    // Need to clear out the tag local uids from the local note so that the local storage uses tag guids list
+    // from the remote note instead
+    localNote.setTagLocalUids(QStringList());
+
     // NOTE: dealing with resources is tricky: need to not screw up the local uids of note's resources
     QList<Resource> resources;
     if (localNote.hasResources()) {
@@ -7243,14 +7247,58 @@ void RemoteToLocalSynchronizationManager::appendDataElementsFromSyncChunkToConta
 {
     QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::appendDataElementsFromSyncChunkToContainer: resources"));
 
-    if (syncChunk.resources.isSet()) {
-        const auto & resources = syncChunk.resources.ref();
-        QNDEBUG(QStringLiteral("Appending ") << resources.size() << QStringLiteral(" resources"));
-        // FIXME: probably should go through the list of resources and filter
-        // out those which correspond to note guids which would be downloaded
-        // anyway, along with their resources
-        container.append(resources);
+    if (!syncChunk.resources.isSet()) {
+        return;
     }
+
+    const QList<qevercloud::Resource> & resources = syncChunk.resources.ref();
+    QNDEBUG(QStringLiteral("Appending ") << resources.size() << QStringLiteral(" resources"));
+
+    // Need to filter out those resources which belong to the notes which will be downloaded
+    // along with their whole content, resources included
+    QList<qevercloud::Resource> filteredResources;
+    filteredResources.reserve(resources.size());
+
+    for(auto it = resources.constBegin(), end = resources.constEnd(); it != end; ++it)
+    {
+        const qevercloud::Resource & resource = *it;
+        if (Q_UNLIKELY(!resource.noteGuid.isSet())) {
+            QNWARNING(QStringLiteral("Skipping resource without note guid: ") << resource);
+            continue;
+        }
+
+        QNTRACE(QStringLiteral("Checking whether resource belongs to a note pending downloading: ")
+                << resource);
+
+        bool foundNote = false;
+        for(auto nit = m_notes.constBegin(), nend = m_notes.constEnd(); nit != nend; ++nit)
+        {
+            const qevercloud::Note & note = *nit;
+            QNTRACE(QStringLiteral("Checking note: ") << note);
+
+            if (Q_UNLIKELY(!note.guid.isSet())) {
+                continue;
+            }
+
+            if (note.guid.ref() == resource.noteGuid.ref()) {
+                QNTRACE(QStringLiteral("Resource belongs to a note pending downloading: ") << note);
+                foundNote = true;
+                break;
+            }
+        }
+
+        if (foundNote) {
+            QNTRACE(QStringLiteral("Skipping resource as it belongs to the note which while content would be downloaded "
+                                   "a bit later: ") << resource);
+            continue;
+        }
+
+        QNTRACE(QStringLiteral("Appending the resource which does not belong to any note pending downloading"));
+        filteredResources << resource;
+    }
+
+    QNTRACE(QStringLiteral("Will append ") << filteredResources.size() << QStringLiteral(" resources"));
+    container.append(filteredResources);
 }
 
 template <class ContainerType, class ElementType>
