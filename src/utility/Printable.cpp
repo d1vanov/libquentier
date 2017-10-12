@@ -1191,6 +1191,45 @@ QTextStream & operator<<(QTextStream & strm, const qevercloud::SyncChunkFilter &
     return strm;
 }
 
+QTextStream & operator<<(QTextStream & strm, const qevercloud::NoteResultSpec & spec)
+{
+    strm << QStringLiteral("qevercloud::NoteResultSpec: {\n")
+         << QStringLiteral("  include content = ")
+         << (spec.includeContent.isSet()
+             ? (spec.includeContent.ref() ? QStringLiteral("true") : QStringLiteral("false"))
+             : QStringLiteral("<not set>"))
+         << QStringLiteral("\n  include resources data = ")
+         << (spec.includeResourcesData.isSet()
+             ? (spec.includeResourcesData.ref() ? QStringLiteral("true") : QStringLiteral("false"))
+             : QStringLiteral("<not set>"))
+         << QStringLiteral("\n  include resources recognition = ")
+         << (spec.includeResourcesRecognition.isSet()
+             ? (spec.includeResourcesRecognition.ref() ? QStringLiteral("true") : QStringLiteral("false"))
+             : QStringLiteral("<not set>"))
+         << QStringLiteral("\n  include resources alternate data = ")
+         << (spec.includeResourcesAlternateData.isSet()
+             ? (spec.includeResourcesAlternateData.ref() ? QStringLiteral("true") : QStringLiteral("false"))
+             : QStringLiteral("<not set>"))
+         << QStringLiteral("\n  include shared notes = ")
+         << (spec.includeSharedNotes.isSet()
+             ? (spec.includeSharedNotes.ref() ? QStringLiteral("true") : QStringLiteral("false"))
+             : QStringLiteral("<not set>"))
+         << QStringLiteral("\n  include note app data values = ")
+         << (spec.includeNoteAppDataValues.isSet()
+             ? (spec.includeNoteAppDataValues.ref() ? QStringLiteral("true") : QStringLiteral("false"))
+             : QStringLiteral("<not set>"))
+         << QStringLiteral("\n  include resource app data values = ")
+         << (spec.includeResourceAppDataValues.isSet()
+             ? (spec.includeResourceAppDataValues.ref() ? QStringLiteral("true") : QStringLiteral("false"))
+             : QStringLiteral("<not set>"))
+         << QStringLiteral("\n  include account limits = ")
+         << (spec.includeAccountLimits.isSet()
+             ? (spec.includeAccountLimits.ref() ? QStringLiteral("true") : QStringLiteral("false"))
+             : QStringLiteral("<not set>"))
+         << QStringLiteral("\n};\n");
+    return strm;
+}
+
 #if QEVERCLOUD_HAS_OAUTH
 QTextStream & operator<<(QTextStream & strm, const qevercloud::EvernoteOAuthWebView::OAuthResult & result)
 {
