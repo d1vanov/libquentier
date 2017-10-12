@@ -25,7 +25,7 @@
 
 namespace quentier {
 
-class DecryptedTextManagerPrivate
+class Q_DECL_HIDDEN DecryptedTextManagerPrivate
 {
 public:
     DecryptedTextManagerPrivate();

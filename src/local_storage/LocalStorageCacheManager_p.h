@@ -19,7 +19,7 @@
 
 namespace quentier {
 
-class LocalStorageCacheManagerPrivate: public Printable
+class Q_DECL_HIDDEN LocalStorageCacheManagerPrivate: public Printable
 {
     Q_DECLARE_PUBLIC(LocalStorageCacheManager)
 public:

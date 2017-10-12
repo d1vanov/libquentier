@@ -37,7 +37,7 @@ QT_FORWARD_DECLARE_CLASS(Resource)
 QT_FORWARD_DECLARE_CLASS(DecryptedTextManager)
 QT_FORWARD_DECLARE_CLASS(HTMLCleaner)
 
-class ENMLConverterPrivate
+class Q_DECL_HIDDEN ENMLConverterPrivate
 {
 public:
     ENMLConverterPrivate();
