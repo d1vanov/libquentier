@@ -24,7 +24,7 @@
 
 namespace quentier {
 
-class ReplaceAllUndoCommand: public INoteEditorUndoCommand
+class Q_DECL_HIDDEN ReplaceAllUndoCommand: public INoteEditorUndoCommand
 {
     Q_OBJECT
     typedef NoteEditorPage::Callback Callback;

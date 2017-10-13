@@ -53,11 +53,11 @@ namespace quentier {
 QT_FORWARD_DECLARE_CLASS(LocalStorageManagerAsync)
 QT_FORWARD_DECLARE_CLASS(FullSyncStaleDataItemsExpunger)
 
-class RemoteToLocalSynchronizationManager: public QObject
+class Q_DECL_HIDDEN RemoteToLocalSynchronizationManager: public QObject
 {
     Q_OBJECT
 public:
-    class IManager
+    class Q_DECL_HIDDEN IManager
     {
     public:
         virtual LocalStorageManagerAsync & localStorageManagerAsync() = 0;
@@ -545,7 +545,7 @@ private:
 
 private:
     template <class T>
-    class CompareItemByName
+    class Q_DECL_HIDDEN CompareItemByName
     {
     public:
         CompareItemByName(const QString & name) : m_name(name) {}
@@ -556,7 +556,7 @@ private:
     };
 
     template <class T>
-    class CompareItemByGuid
+    class Q_DECL_HIDDEN CompareItemByGuid
     {
     public:
         CompareItemByGuid(const QString & guid) : m_guid(guid) {}

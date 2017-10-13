@@ -23,7 +23,7 @@
 
 namespace quentier {
 
-class AuthenticationManagerPrivate: public QObject
+class Q_DECL_HIDDEN AuthenticationManagerPrivate: public QObject
 {
     Q_OBJECT
 public:

@@ -32,7 +32,7 @@
 
 namespace quentier {
 
-class NoteData: public FavoritableDataElementData
+class Q_DECL_HIDDEN NoteData: public FavoritableDataElementData
 {
 public:
     NoteData();
@@ -55,7 +55,7 @@ public:
 
     qevercloud::Note m_qecNote;
 
-    struct ResourceAdditionalInfo
+    struct Q_DECL_HIDDEN ResourceAdditionalInfo
     {
         ResourceAdditionalInfo() :
             localUid(),

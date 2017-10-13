@@ -25,7 +25,7 @@
 
 namespace quentier {
 
-class TagDirectedGraph
+class Q_DECL_HIDDEN TagDirectedGraph
 {
 public:
     explicit TagDirectedGraph();

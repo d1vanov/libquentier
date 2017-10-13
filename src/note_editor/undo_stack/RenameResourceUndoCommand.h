@@ -27,7 +27,7 @@ namespace quentier {
 
 QT_FORWARD_DECLARE_CLASS(GenericResourceImageManager)
 
-class RenameResourceUndoCommand: public INoteEditorUndoCommand
+class Q_DECL_HIDDEN RenameResourceUndoCommand: public INoteEditorUndoCommand
 {
     Q_OBJECT
 public:

@@ -41,7 +41,7 @@ QT_FORWARD_DECLARE_CLASS(GenericResourceImageManager)
 /**
  * The AddResourceDelegate class wraps a series of asynchronous actions required for adding a resource to the note
  */
-class AddResourceDelegate: public QObject
+class Q_DECL_HIDDEN AddResourceDelegate: public QObject
 {
     Q_OBJECT
 public:

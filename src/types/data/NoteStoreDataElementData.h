@@ -23,7 +23,7 @@
 
 namespace quentier {
 
-class NoteStoreDataElementData : public LocalStorageDataElementData
+class Q_DECL_HIDDEN NoteStoreDataElementData : public LocalStorageDataElementData
 {
 public:
     NoteStoreDataElementData();

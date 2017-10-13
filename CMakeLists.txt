@@ -674,7 +674,12 @@ set(TEST_HEADERS
     src/tests/ResourceRecognitionIndicesParsingTest.h
     src/tests/TagSortByParentChildRelationsTest.h
     src/tests/FullSyncStaleDataItemsExpungerTester.h
-    src/tests/CoreTester.h)
+    src/tests/CoreTester.h
+    src/synchronization/FullSyncStaleDataItemsExpunger.h
+    src/synchronization/TagSyncCache.h
+    src/synchronization/SavedSearchSyncCache.h
+    src/synchronization/NoteSyncCache.h
+    src/synchronization/NotebookSyncCache.h)
 
 set(TEST_SOURCES
     src/tests/EncryptionManagerTests.cpp
@@ -695,7 +700,12 @@ set(TEST_SOURCES
     src/tests/TagSortByParentChildRelationsTest.cpp
     src/tests/FullSyncStaleDataItemsExpungerTester.cpp
     src/tests/CoreTester.cpp
-    src/tests/CoreTestMain.cpp)
+    src/tests/CoreTestMain.cpp
+    src/synchronization/FullSyncStaleDataItemsExpunger.cpp
+    src/synchronization/TagSyncCache.cpp
+    src/synchronization/SavedSearchSyncCache.cpp
+    src/synchronization/NoteSyncCache.cpp
+    src/synchronization/NotebookSyncCache.cpp)
 
 set(TEST_RESOURCES
     src/tests/test_resources.qrc)

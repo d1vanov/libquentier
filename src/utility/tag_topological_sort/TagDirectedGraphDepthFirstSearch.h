@@ -26,7 +26,7 @@
 
 namespace quentier {
 
-class TagDirectedGraphDepthFirstSearch
+class Q_DECL_HIDDEN TagDirectedGraphDepthFirstSearch
 {
 public:
     TagDirectedGraphDepthFirstSearch(const TagDirectedGraph & graph);

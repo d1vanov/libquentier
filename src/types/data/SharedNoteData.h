@@ -31,7 +31,7 @@
 
 namespace quentier {
 
-class SharedNoteData: public QSharedData
+class Q_DECL_HIDDEN SharedNoteData: public QSharedData
 {
 public:
     SharedNoteData();

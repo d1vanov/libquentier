@@ -5,7 +5,7 @@
 
 namespace quentier {
 
-class SysInfoPrivate
+class Q_DECL_HIDDEN SysInfoPrivate
 {
 public:
     SysInfoPrivate() :

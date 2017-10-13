@@ -50,7 +50,7 @@ QT_FORWARD_DECLARE_CLASS(SavedSearchSyncCache)
  * their guid and update sequence number are wiped out so that they are presented as new data items to the service.
  * That happens during sending the local changes to Evernote service.
  */
-class FullSyncStaleDataItemsExpunger: public QObject
+class Q_DECL_HIDDEN FullSyncStaleDataItemsExpunger: public QObject
 {
     Q_OBJECT
 public:

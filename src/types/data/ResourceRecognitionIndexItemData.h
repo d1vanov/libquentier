@@ -25,7 +25,7 @@
 #include <QString>
 
 namespace quentier {
-class ResourceRecognitionIndexItemData: public QSharedData
+class Q_DECL_HIDDEN ResourceRecognitionIndexItemData: public QSharedData
 {
 public:
     ResourceRecognitionIndexItemData();

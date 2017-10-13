@@ -38,7 +38,7 @@ QT_FORWARD_DECLARE_CLASS(LocalStorageManagerAsync)
  * from the remote server and the local one. The conflict resolution might involve
  * changes in other tags, seemingly unrelated to the currently conflicting ones
  */
-class TagSyncConflictResolver: public QObject
+class Q_DECL_HIDDEN TagSyncConflictResolver: public QObject
 {
     Q_OBJECT
 public:

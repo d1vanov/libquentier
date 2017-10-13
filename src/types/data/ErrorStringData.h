@@ -24,7 +24,7 @@
 
 namespace quentier {
 
-class ErrorStringData: public QSharedData
+class Q_DECL_HIDDEN ErrorStringData: public QSharedData
 {
 public:
     QString     m_base;

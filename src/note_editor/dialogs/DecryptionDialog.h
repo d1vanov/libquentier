@@ -34,7 +34,7 @@ namespace quentier {
 
 QT_FORWARD_DECLARE_CLASS(DecryptedTextManager)
 
-class DecryptionDialog: public QDialog
+class Q_DECL_HIDDEN DecryptionDialog: public QDialog
 {
     Q_OBJECT
 public:

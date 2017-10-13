@@ -24,40 +24,40 @@
 namespace quentier {
 
 template <class T>
-bool tagHasGuid(const T & tag);
+bool Q_DECL_HIDDEN tagHasGuid(const T & tag);
 
 template <>
-bool tagHasGuid(const qevercloud::Tag & tag)
+bool Q_DECL_HIDDEN tagHasGuid(const qevercloud::Tag & tag)
 {
     return tag.guid.isSet();
 }
 
 template <>
-bool tagHasGuid(const Tag & tag)
+bool Q_DECL_HIDDEN tagHasGuid(const Tag & tag)
 {
     return tag.hasGuid();
 }
 
 template <class T>
-QString tagGuid(const T & tag);
+QString Q_DECL_HIDDEN tagGuid(const T & tag);
 
 template <>
-QString tagGuid(const qevercloud::Tag & tag)
+QString Q_DECL_HIDDEN tagGuid(const qevercloud::Tag & tag)
 {
     return tag.guid.ref();
 }
 
 template <>
-QString tagGuid(const Tag & tag)
+QString Q_DECL_HIDDEN tagGuid(const Tag & tag)
 {
     return tag.guid();
 }
 
 template <class T>
-QString tagParentGuid(const T & tag);
+QString Q_DECL_HIDDEN tagParentGuid(const T & tag);
 
 template <>
-QString tagParentGuid(const qevercloud::Tag & tag)
+QString Q_DECL_HIDDEN tagParentGuid(const qevercloud::Tag & tag)
 {
     if (tag.parentGuid.isSet()) {
         return tag.parentGuid.ref();
@@ -67,7 +67,7 @@ QString tagParentGuid(const qevercloud::Tag & tag)
 }
 
 template <>
-QString tagParentGuid(const Tag & tag)
+QString Q_DECL_HIDDEN tagParentGuid(const Tag & tag)
 {
     if (tag.hasParentGuid()) {
         return tag.parentGuid();
@@ -77,7 +77,7 @@ QString tagParentGuid(const Tag & tag)
 }
 
 template <class T>
-class CompareItemByGuid
+class Q_DECL_HIDDEN CompareItemByGuid
 {
 public:
     CompareItemByGuid(const QString & guid) :

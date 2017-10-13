@@ -25,7 +25,7 @@
 
 namespace quentier {
 
-class ImageResourceRotationDelegate: public QObject
+class Q_DECL_HIDDEN ImageResourceRotationDelegate: public QObject
 {
     Q_OBJECT
 public:

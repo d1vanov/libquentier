@@ -30,7 +30,7 @@
 
 namespace quentier {
 
-class TagData : public FavoritableDataElementData
+class Q_DECL_HIDDEN TagData : public FavoritableDataElementData
 {
 public:
     TagData();

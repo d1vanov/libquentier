@@ -25,7 +25,7 @@ namespace quentier {
 
 QT_FORWARD_DECLARE_CLASS(NoteEditorPrivate)
 
-class INoteEditorUndoCommand: public QuentierUndoCommand
+class Q_DECL_HIDDEN INoteEditorUndoCommand: public QuentierUndoCommand
 {
     Q_OBJECT
 public:

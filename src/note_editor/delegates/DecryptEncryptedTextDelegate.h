@@ -36,7 +36,7 @@ QT_FORWARD_DECLARE_CLASS(DecryptedTextManager)
  * required for proper implementation of decryption for encrypted text
  * considering the details of wrapping this action around the undo stack
  */
-class DecryptEncryptedTextDelegate: public QObject
+class Q_DECL_HIDDEN DecryptEncryptedTextDelegate: public QObject
 {
     Q_OBJECT
 public:

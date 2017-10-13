@@ -25,7 +25,7 @@
 
 namespace quentier {
 
-class LocalStorageDataElementData: public QSharedData
+class Q_DECL_HIDDEN LocalStorageDataElementData: public QSharedData
 {
 public:
     LocalStorageDataElementData();

@@ -30,7 +30,7 @@
 
 namespace quentier {
 
-class FileSystemWatcherPrivate: public QObject
+class Q_DECL_HIDDEN FileSystemWatcherPrivate: public QObject
 {
     Q_OBJECT
 public:

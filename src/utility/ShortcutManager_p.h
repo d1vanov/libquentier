@@ -28,7 +28,7 @@ namespace quentier {
 
 QT_FORWARD_DECLARE_CLASS(ShortcutManager)
 
-class ShortcutManagerPrivate: public QObject
+class Q_DECL_HIDDEN ShortcutManagerPrivate: public QObject
 {
     Q_OBJECT
 public:

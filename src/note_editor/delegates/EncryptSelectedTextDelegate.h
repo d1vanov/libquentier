@@ -36,7 +36,7 @@ QT_FORWARD_DECLARE_CLASS(DecryptedTextManager)
  * required for proper implementation of currently selected text encryption
  * considering the details of wrapping this action around the undo stack
  */
-class EncryptSelectedTextDelegate: public QObject
+class Q_DECL_HIDDEN EncryptSelectedTextDelegate: public QObject
 {
     Q_OBJECT
 public:

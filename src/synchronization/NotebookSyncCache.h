@@ -33,7 +33,7 @@ namespace quentier {
  * the CPU and memory in case it won't be needed (i.e. there won't be any conflicts detected during sync + there won't
  * be the need to expunge stale notebooks after the full sync).
  */
-class NotebookSyncCache: public QObject
+class Q_DECL_HIDDEN NotebookSyncCache: public QObject
 {
     Q_OBJECT
 public:

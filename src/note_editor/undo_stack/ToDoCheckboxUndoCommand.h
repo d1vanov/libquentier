@@ -23,7 +23,7 @@
 
 namespace quentier {
 
-class ToDoCheckboxUndoCommand: public INoteEditorUndoCommand
+class Q_DECL_HIDDEN ToDoCheckboxUndoCommand: public INoteEditorUndoCommand
 {
     Q_OBJECT
 public:

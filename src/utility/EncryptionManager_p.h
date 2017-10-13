@@ -33,7 +33,7 @@
 
 namespace quentier {
 
-class EncryptionManagerPrivate
+class Q_DECL_HIDDEN EncryptionManagerPrivate
 {
 public:
     EncryptionManagerPrivate();
@@ -49,7 +49,7 @@ public:
 
 private:
     // AES encryption/decryption routines
-    struct SaltKind
+    struct Q_DECL_HIDDEN SaltKind
     {
         enum type {
             SALT = 0,

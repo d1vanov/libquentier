@@ -37,7 +37,7 @@ namespace quentier {
 
 QT_FORWARD_DECLARE_CLASS(NoteStore)
 
-class SynchronizationManagerPrivate: public QObject
+class Q_DECL_HIDDEN SynchronizationManagerPrivate: public QObject
 {
     Q_OBJECT
 public:

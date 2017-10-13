@@ -5,7 +5,7 @@
 
 namespace quentier {
 
-struct EncryptDecryptUndoCommandInfo
+struct Q_DECL_HIDDEN EncryptDecryptUndoCommandInfo
 {
     QString     m_encryptedText;
     QString     m_decryptedText;

@@ -26,7 +26,7 @@
 
 namespace quentier {
 
-class RemoveResourceUndoCommand: public INoteEditorUndoCommand
+class Q_DECL_HIDDEN RemoveResourceUndoCommand: public INoteEditorUndoCommand
 {
     Q_OBJECT
     typedef NoteEditorPage::Callback Callback;

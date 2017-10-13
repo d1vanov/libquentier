@@ -24,7 +24,7 @@
 namespace quentier {
 
 template <class T>
-class JsResultCallbackFunctor
+class Q_DECL_HIDDEN JsResultCallbackFunctor
 {
 public:
     typedef void (T::*Method)(const QVariant &);

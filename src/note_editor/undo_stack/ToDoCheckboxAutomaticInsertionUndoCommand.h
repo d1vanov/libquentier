@@ -24,7 +24,7 @@
 
 namespace quentier {
 
-class ToDoCheckboxAutomaticInsertionUndoCommand: public INoteEditorUndoCommand
+class Q_DECL_HIDDEN ToDoCheckboxAutomaticInsertionUndoCommand: public INoteEditorUndoCommand
 {
     Q_OBJECT
     typedef NoteEditorPage::Callback Callback;

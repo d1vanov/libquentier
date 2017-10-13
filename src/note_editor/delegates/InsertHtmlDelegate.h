@@ -22,7 +22,7 @@ QT_FORWARD_DECLARE_CLASS(ENMLConverter)
 QT_FORWARD_DECLARE_CLASS(ResourceFileStorageManager)
 QT_FORWARD_DECLARE_CLASS(ResourceInfo)
 
-class InsertHtmlDelegate: public QObject
+class Q_DECL_HIDDEN InsertHtmlDelegate: public QObject
 {
     Q_OBJECT
 public:
@@ -84,7 +84,7 @@ private:
     QHash<QString, QUrl>            m_sourceUrlByResourceLocalUid;
     QHash<QUrl, QUrl>               m_urlToRedirectUrl;
 
-    struct ImgData
+    struct Q_DECL_HIDDEN ImgData
     {
         Resource    m_resource;
         QString     m_resourceFileStoragePath;

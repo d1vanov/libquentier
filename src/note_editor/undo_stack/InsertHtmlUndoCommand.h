@@ -30,7 +30,7 @@ namespace quentier {
 
 QT_FORWARD_DECLARE_CLASS(ResourceInfo)
 
-class InsertHtmlUndoCommand: public INoteEditorUndoCommand
+class Q_DECL_HIDDEN InsertHtmlUndoCommand: public INoteEditorUndoCommand
 {
     Q_OBJECT
     typedef NoteEditorPage::Callback Callback;

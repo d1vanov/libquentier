@@ -46,10 +46,10 @@ QT_FORWARD_DECLARE_CLASS(SavedSearch)
  * simply redirect the requests to methods of QEverCloud's NoteStore but catch the "expected" exceptions,
  * "parse" their internal error flags and return the textual representation of the error.
  *
- * Quentier at the moment uses only several methods from those available in QEverCloud's NoteStore
+ * libquentier at the moment uses only several methods from those available in QEverCloud's NoteStore
  * so only the small subset of original NoteStore's API is wrapped here at the moment.
  */
-class NoteStore: public QObject
+class Q_DECL_HIDDEN NoteStore: public QObject
 {
     Q_OBJECT
 public:

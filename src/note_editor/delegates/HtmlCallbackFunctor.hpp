@@ -24,7 +24,7 @@
 namespace qute_note {
 
 template <class T>
-class HtmlCallbackFunctor
+class Q_DECL_HIDDEN HtmlCallbackFunctor
 {
 public:
     typedef void (T::*Method)(const QString &);

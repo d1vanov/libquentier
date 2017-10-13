@@ -25,7 +25,7 @@
 
 namespace quentier {
 
-class StringUtilsPrivate
+class Q_DECL_HIDDEN StringUtilsPrivate
 {
 public:
     StringUtilsPrivate();

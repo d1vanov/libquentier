@@ -30,7 +30,7 @@ namespace quentier {
 
 QT_FORWARD_DECLARE_CLASS(NoteEditorPrivate)
 
-class RemoveResourceDelegate: public QObject
+class Q_DECL_HIDDEN RemoveResourceDelegate: public QObject
 {
     Q_OBJECT
 public:

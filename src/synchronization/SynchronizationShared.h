@@ -29,7 +29,7 @@
 
 namespace quentier {
 
-class LinkedNotebookAuthData: public Printable
+class Q_DECL_HIDDEN LinkedNotebookAuthData: public Printable
 {
 public:
     LinkedNotebookAuthData();

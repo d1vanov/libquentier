@@ -26,7 +26,7 @@ namespace quentier {
 
 QT_FORWARD_DECLARE_CLASS(SpellChecker)
 
-class SpellCheckAddToUserWordListUndoCommand: public INoteEditorUndoCommand
+class Q_DECL_HIDDEN SpellCheckAddToUserWordListUndoCommand: public INoteEditorUndoCommand
 {
     Q_OBJECT
 public:

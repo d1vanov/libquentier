@@ -30,7 +30,7 @@
 
 namespace quentier {
 
-class NotebookData: public FavoritableDataElementData
+class Q_DECL_HIDDEN NotebookData: public FavoritableDataElementData
 {
 public:
     NotebookData();

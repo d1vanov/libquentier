@@ -32,7 +32,7 @@
 
 namespace quentier {
 
-class NoteSyncCache: public QObject
+class Q_DECL_HIDDEN NoteSyncCache: public QObject
 {
     Q_OBJECT
 public:

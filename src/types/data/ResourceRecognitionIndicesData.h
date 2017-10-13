@@ -29,7 +29,7 @@ QT_FORWARD_DECLARE_CLASS(QXmlStreamAttributes)
 
 namespace quentier {
 
-class ResourceRecognitionIndicesData: public QSharedData
+class Q_DECL_HIDDEN ResourceRecognitionIndicesData: public QSharedData
 {
 public:
     ResourceRecognitionIndicesData();

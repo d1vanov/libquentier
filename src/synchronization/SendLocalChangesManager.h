@@ -34,11 +34,11 @@ namespace quentier {
 
 QT_FORWARD_DECLARE_CLASS(LocalStorageManagerAsync)
 
-class SendLocalChangesManager: public QObject
+class Q_DECL_HIDDEN SendLocalChangesManager: public QObject
 {
     Q_OBJECT
 public:
-    class IManager
+    class Q_DECL_HIDDEN IManager
     {
     public:
         virtual LocalStorageManagerAsync & localStorageManagerAsync() = 0;
@@ -222,7 +222,7 @@ private:
     void handleAuthExpiration();
 
 private:
-    class CompareLinkedNotebookAuthDataByGuid
+    class Q_DECL_HIDDEN CompareLinkedNotebookAuthDataByGuid
     {
     public:
         CompareLinkedNotebookAuthDataByGuid(const QString & guid) : m_guid(guid) {}

@@ -30,7 +30,7 @@ namespace quentier {
 QT_FORWARD_DECLARE_CLASS(NoteEditorPrivate)
 QT_FORWARD_DECLARE_CLASS(NoteEditorPage)
 
-class EditHyperlinkDelegate: public QObject
+class Q_DECL_HIDDEN EditHyperlinkDelegate: public QObject
 {
     Q_OBJECT
 public:

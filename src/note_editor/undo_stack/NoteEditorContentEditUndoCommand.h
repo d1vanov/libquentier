@@ -25,7 +25,7 @@
 
 namespace quentier {
 
-class NoteEditorContentEditUndoCommand: public INoteEditorUndoCommand
+class Q_DECL_HIDDEN NoteEditorContentEditUndoCommand: public INoteEditorUndoCommand
 {
     Q_OBJECT
 public:

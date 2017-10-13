@@ -29,7 +29,7 @@
 
 namespace quentier {
 
-class ResourceData: public NoteStoreDataElementData
+class Q_DECL_HIDDEN ResourceData: public NoteStoreDataElementData
 {
 public:
     ResourceData();

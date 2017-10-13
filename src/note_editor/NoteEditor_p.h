@@ -603,7 +603,7 @@ private:
 
 private:
     template <class T>
-    class NoteEditorCallbackFunctor
+    class Q_DECL_HIDDEN NoteEditorCallbackFunctor
     {
     public:
         NoteEditorCallbackFunctor(NoteEditorPrivate * pNoteEditor,

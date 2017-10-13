@@ -6,7 +6,7 @@
 
 namespace quentier {
 
-class AccountData: public QSharedData
+class Q_DECL_HIDDEN AccountData: public QSharedData
 {
 public:
     explicit AccountData();

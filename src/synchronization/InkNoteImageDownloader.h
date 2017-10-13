@@ -26,8 +26,8 @@
 
 namespace quentier {
 
-class InkNoteImageDownloader: public QObject,
-                              public QRunnable
+class Q_DECL_HIDDEN InkNoteImageDownloader: public QObject,
+                                            public QRunnable
 {
     Q_OBJECT
 public:

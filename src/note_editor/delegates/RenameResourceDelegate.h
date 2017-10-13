@@ -38,7 +38,7 @@ QT_FORWARD_DECLARE_CLASS(GenericResourceImageManager)
  * for proper implementation of renaming a resource displayed on the note editor's page
  * considering the details of wrapping this action around undo stack
  */
-class RenameResourceDelegate: public QObject
+class Q_DECL_HIDDEN RenameResourceDelegate: public QObject
 {
     Q_OBJECT
 public:

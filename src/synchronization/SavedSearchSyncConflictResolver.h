@@ -33,7 +33,7 @@ namespace quentier {
 QT_FORWARD_DECLARE_CLASS(SavedSearchSyncCache)
 QT_FORWARD_DECLARE_CLASS(LocalStorageManagerAsync)
 
-class SavedSearchSyncConflictResolver: public QObject
+class Q_DECL_HIDDEN SavedSearchSyncConflictResolver: public QObject
 {
     Q_OBJECT
 public:

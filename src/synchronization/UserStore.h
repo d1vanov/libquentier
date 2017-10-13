@@ -39,10 +39,10 @@ QT_FORWARD_DECLARE_CLASS(User)
  * simply redirect the requests to methods of QEverCloud's UserStore but catch the "expected" exceptions,
  * "parse" their internal error flags and return the textual representation of the error.
  *
- * Quentier at the moment uses only several methods from those available in QEverCloud's UserStore
+ * libquentier at the moment uses only several methods from those available in QEverCloud's UserStore
  * so only the small subset of original UserStore's API is wrapped at the moment.
  */
-class UserStore
+class Q_DECL_HIDDEN UserStore
 {
 public:
     UserStore(QSharedPointer<qevercloud::UserStore> pQecUserStore);

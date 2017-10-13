@@ -25,7 +25,7 @@
 
 namespace quentier {
 
-class ImageResourceRotationUndoCommand: public INoteEditorUndoCommand
+class Q_DECL_HIDDEN ImageResourceRotationUndoCommand: public INoteEditorUndoCommand
 {
     Q_OBJECT
 public:

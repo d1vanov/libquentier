@@ -33,7 +33,7 @@
 
 namespace quentier {
 
-class NoteThumbnailDownloader: public QObject
+class Q_DECL_HIDDEN NoteThumbnailDownloader: public QObject
 {
     Q_OBJECT
 public:

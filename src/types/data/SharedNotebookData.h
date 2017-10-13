@@ -29,7 +29,7 @@
 
 namespace quentier {
 
-class SharedNotebookData : public QSharedData
+class Q_DECL_HIDDEN SharedNotebookData : public QSharedData
 {
 public:
     SharedNotebookData();
