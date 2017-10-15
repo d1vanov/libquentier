@@ -4031,6 +4031,7 @@ void LocalStorageManagerPrivate::unlockDatabaseFile()
 {
     QNDEBUG(QStringLiteral("LocalStorageManagerPrivate::unlockDatabaseFile: ") << m_databaseFilePath);
 
+#ifndef Q_OS_WIN
     if (m_databaseFilePath.isEmpty()) {
         QNDEBUG(QStringLiteral("No database file, nothing to do"));
         return;
@@ -4044,6 +4045,7 @@ void LocalStorageManagerPrivate::unlockDatabaseFile()
                   << exc.get_error_code() << QStringLiteral(", error message = ") << exc.what()
                   << QStringLiteral("; native error = ") << exc.get_native_error());
     }
+#endif
 }
 
 QString LocalStorageManagerPrivate::sqlEscapeString(const QString & str) const
