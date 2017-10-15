@@ -477,6 +477,18 @@ QTextStream & operator <<(QTextStream & strm, const qevercloud::PrivilegeLevel::
     return strm;
 }
 
+QTextStream & operator <<(QTextStream & strm, const qevercloud::SharedNotebookPrivilegeLevel::type & level)
+{
+    strm << sharedNotebookPrivilegeLevelToString(level);
+    return strm;
+}
+
+QTextStream & operator <<(QTextStream & strm, const qevercloud::NoteSortOrder::type & noteSortOrder)
+{
+    strm << noteSortOrderToString(noteSortOrder);
+    return strm;
+}
+
 QTextStream & operator <<(QTextStream & strm, const qevercloud::NotebookRestrictions & restrictions)
 {
     strm << QStringLiteral("NotebookRestrictions: {\n");
@@ -507,6 +519,12 @@ QTextStream & operator <<(QTextStream & strm, const qevercloud::NotebookRestrict
 
     strm << QStringLiteral("};\n");
 
+    return strm;
+}
+
+QTextStream & operator<<(QTextStream & strm, const qevercloud::SharedNotebookInstanceRestrictions::type & restrictions)
+{
+    strm << sharedNotebookInstanceRestrictionsToString(restrictions);
     return strm;
 }
 
