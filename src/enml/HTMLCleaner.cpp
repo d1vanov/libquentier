@@ -20,6 +20,7 @@
 #include <quentier/logging/QuentierLogger.h>
 #include <QXmlStreamReader>
 #include <QXmlStreamWriter>
+#include <QBuffer>
 #include <tidy.h>
 #include <tidyenum.h>
 #include <tidybuffio.h>
@@ -217,14 +218,35 @@ bool HTMLCleaner::Impl::convertHtml(const QString & html, const TidyOptionId out
     output.append(QString::fromLocal8Bit(QByteArray(reinterpret_cast<const char*>(m_tidyOutput.bp),
                                                     static_cast<int>(m_tidyOutput.size))));
 
-    // Prepend the nbsp entity declaration
-    output.prepend(QStringLiteral("<!DOCTYPE doctypeName [<!ENTITY nbsp \"&#160;\">]>"));
+    QString nbspEntityDeclaration = QStringLiteral("<!DOCTYPE doctypeName [<!ENTITY nbsp \"&#160;\">]>");
+    bool insertedNbspEntityDeclaration = false;
+
+    if (output.startsWith(QStringLiteral("<?xml version")))
+    {
+        int firstEnclosingBracketIndex = output.indexOf(QChar::fromLatin1('>'));
+        if (firstEnclosingBracketIndex > 0) {
+            output.insert(firstEnclosingBracketIndex + 1, nbspEntityDeclaration);
+            insertedNbspEntityDeclaration = true;
+        }
+    }
+
+    if (!insertedNbspEntityDeclaration) {
+        // Prepend the nbsp entity declaration
+        output.prepend(nbspEntityDeclaration);
+    }
 
     // Now need to clean up after tidy: it inserts spurious \n characters in some places
     QXmlStreamReader reader(output);
 
-    QString fixedUpOutput;
-    QXmlStreamWriter writer(&fixedUpOutput);
+    QBuffer fixedUpOutputBuffer;
+    bool res = fixedUpOutputBuffer.open(QIODevice::WriteOnly);
+    if (Q_UNLIKELY(!res)) {
+        errorDescription = QStringLiteral("Failed to open the buffer to write the fixed up output: ");
+        errorDescription += fixedUpOutputBuffer.errorString();
+        return false;
+    }
+
+    QXmlStreamWriter writer(&fixedUpOutputBuffer);
     writer.setAutoFormatting(false);
     writer.setCodec("UTF-8");
     writer.writeStartDocument();
@@ -293,7 +315,7 @@ bool HTMLCleaner::Impl::convertHtml(const QString & html, const TidyOptionId out
         return false;
     }
 
-    output = fixedUpOutput;
+    output = QString::fromUtf8(fixedUpOutputBuffer.buffer());
     return true;
 }
 

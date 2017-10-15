@@ -40,6 +40,7 @@
 #include <QPen>
 #include <QThread>
 #include <QApplication>
+#include <QBuffer>
 
 // 25 Mb in bytes
 #define ENEX_MAX_RESOURCE_DATA_SIZE (26214400)
@@ -114,7 +115,15 @@ bool ENMLConverterPrivate::htmlToNoteContent(const QString & html, const QVector
     QXmlStreamReader reader(m_cachedConvertedXml);
 
     noteContent.resize(0);
-    QXmlStreamWriter writer(&noteContent);
+    QBuffer noteContentBuffer;
+    res = noteContentBuffer.open(QIODevice::WriteOnly);
+    if (Q_UNLIKELY(!res)) {
+        errorDescription.setBase(QT_TR_NOOP("Failed to open the buffer to write the converted note content into"));
+        errorDescription.details() = noteContentBuffer.errorString();
+        return false;
+    }
+
+    QXmlStreamWriter writer(&noteContentBuffer);
     writer.setAutoFormatting(false);
     writer.setCodec("UTF-8");
     writer.writeStartDocument();
@@ -400,6 +409,7 @@ bool ENMLConverterPrivate::htmlToNoteContent(const QString & html, const QVector
         return false;
     }
 
+    noteContent = QString::fromUtf8(noteContentBuffer.buffer());
     QNTRACE(QStringLiteral("Converted ENML: ") << noteContent);
 
     ErrorString validationError;
@@ -435,8 +445,15 @@ bool ENMLConverterPrivate::htmlToQTextDocument(const QString & html, QTextDocume
 
     QXmlStreamReader reader(m_cachedConvertedXml);
 
-    QString simplifiedHtml;
-    QXmlStreamWriter writer(&simplifiedHtml);
+    QBuffer simplifiedHtmlBuffer;
+    res = simplifiedHtmlBuffer.open(QIODevice::WriteOnly);
+    if (Q_UNLIKELY(!res)) {
+        errorDescription.setBase(QT_TR_NOOP("Failed to open the buffer to write the simplified html into"));
+        errorDescription.details() = simplifiedHtmlBuffer.errorString();
+        return false;
+    }
+
+    QXmlStreamWriter writer(&simplifiedHtmlBuffer);
     writer.setAutoFormatting(false);
     writer.setCodec("UTF-8");
     writer.writeDTD(QStringLiteral("<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01//EN\" \"http://www.w3.org/TR/html4/strict.dtd\">"));
@@ -825,6 +842,8 @@ bool ENMLConverterPrivate::htmlToQTextDocument(const QString & html, QTextDocume
         return false;
     }
 
+    QString simplifiedHtml = QString::fromUtf8(simplifiedHtmlBuffer.buffer());
+
     doc.setHtml(simplifiedHtml);
     if (Q_UNLIKELY(doc.isEmpty())) {
         errorDescription.setBase(QT_TR_NOOP("Can't convert the note's html to QTextDocument: the document "
@@ -862,8 +881,15 @@ bool ENMLConverterPrivate::cleanupExternalHtml(const QString & inputHtml, QStrin
 
     QXmlStreamReader reader(m_cachedConvertedXml);
 
-    QString outputSupplementedHtml;
-    QXmlStreamWriter writer(&outputSupplementedHtml);
+    QBuffer outputSupplementedHtmlBuffer;
+    res = outputSupplementedHtmlBuffer.open(QIODevice::WriteOnly);
+    if (Q_UNLIKELY(!res)) {
+        errorDescription.setBase(QT_TR_NOOP("Failed to open the buffer to write the cleaned up html into"));
+        errorDescription.details() = outputSupplementedHtmlBuffer.errorString();
+        return false;
+    }
+
+    QXmlStreamWriter writer(&outputSupplementedHtmlBuffer);
     writer.setAutoFormatting(false);
     writer.setCodec("UTF-8");
 
@@ -961,7 +987,7 @@ bool ENMLConverterPrivate::cleanupExternalHtml(const QString & inputHtml, QStrin
         return false;
     }
 
-    cleanedUpHtml = outputSupplementedHtml;
+    cleanedUpHtml = QString::fromUtf8(outputSupplementedHtmlBuffer.buffer());
     QNDEBUG(QStringLiteral("Cleaned up HTML: ") << cleanedUpHtml);
 
     return true;
@@ -981,11 +1007,19 @@ bool ENMLConverterPrivate::noteContentToHtml(const QString & noteContent, QStrin
 
     html.resize(0);
     errorDescription.clear();
+    QBuffer htmlBuffer;
+    bool res = htmlBuffer.open(QIODevice::WriteOnly);
+    if (Q_UNLIKELY(!res)) {
+        errorDescription.setBase(QT_TR_NOOP("Failed to open the buffer to write the html into"));
+        errorDescription.details() = htmlBuffer.errorString();
+        return false;
+    }
 
     QXmlStreamReader reader(noteContent);
 
-    QXmlStreamWriter writer(&html);
+    QXmlStreamWriter writer(&htmlBuffer);
     writer.setAutoFormatting(false);
+    writer.setCodec("UTF-8");
     int writeElementCounter = 0;
 
     bool insideEnCryptTag = false;
@@ -1100,6 +1134,7 @@ bool ENMLConverterPrivate::noteContentToHtml(const QString & noteContent, QStrin
         return false;
     }
 
+    html = QString::fromUtf8(htmlBuffer.buffer());
     return true;
 }
 
@@ -1188,10 +1223,15 @@ bool ENMLConverterPrivate::validateAndFixupEnml(QString & enml, ErrorString & er
         }
     }
 
-    QXmlStreamReader reader(enml);
+    QBuffer fixedUpEnmlBuffer;
+    res = fixedUpEnmlBuffer.open(QIODevice::WriteOnly);
+    if (Q_UNLIKELY(!res)) {
+        errorDescription.setBase(QT_TR_NOOP("Failed to open the buffer to write the fixed up note content into"));
+        errorDescription.details() = fixedUpEnmlBuffer.errorString();
+        return false;
+    }
 
-    QString fixedUpEnml;
-    QXmlStreamWriter writer(&fixedUpEnml);
+    QXmlStreamWriter writer(&fixedUpEnmlBuffer);
     writer.setAutoFormatting(false);
     writer.setCodec("UTF-8");
     writer.writeStartDocument();
@@ -1200,6 +1240,7 @@ bool ENMLConverterPrivate::validateAndFixupEnml(QString & enml, ErrorString & er
     QString lastElementName;
     QXmlStreamAttributes lastElementAttributes;
 
+    QXmlStreamReader reader(enml);
     while(!reader.atEnd())
     {
         Q_UNUSED(reader.readNext());
@@ -1273,8 +1314,8 @@ bool ENMLConverterPrivate::validateAndFixupEnml(QString & enml, ErrorString & er
         return false;
     }
 
-    QNTRACE(QStringLiteral("ENML after fixing up: ") << fixedUpEnml);
-    enml = fixedUpEnml;
+    enml = QString::fromUtf8(fixedUpEnmlBuffer.buffer());
+    QNTRACE(QStringLiteral("ENML after fixing up: ") << enml);
 
     return validateEnml(enml, errorDescription);
 }
@@ -1455,17 +1496,24 @@ QString ENMLConverterPrivate::resourceHtml(const Resource & resource, ErrorStrin
     attributes.append(QStringLiteral("hash"), QString::fromLocal8Bit(resource.dataHash().toHex()));
     attributes.append(QStringLiteral("type"), resource.mime());
 
-    QString html;
-    QXmlStreamWriter writer(&html);
+    QBuffer htmlBuffer;
+    bool res = htmlBuffer.open(QIODevice::WriteOnly);
+    if (Q_UNLIKELY(!res)) {
+        errorDescription.setBase(QT_TR_NOOP("Can't compose the resource's html representation: can't open the buffer to write the html into"));
+        errorDescription.details() = htmlBuffer.errorString();
+        return QString();
+    }
 
-    bool res = resourceInfoToHtml(attributes, writer, errorDescription);
+    QXmlStreamWriter writer(&htmlBuffer);
+
+    res = resourceInfoToHtml(attributes, writer, errorDescription);
     if (Q_UNLIKELY(!res)) {
         QNWARNING(errorDescription << QStringLiteral(", resource: ") << resource);
         return QString();
     }
 
     writer.writeEndElement();
-    return html;
+    return QString::fromUtf8(htmlBuffer.buffer());
 }
 
 void ENMLConverterPrivate::escapeString(QString & string, const bool simplify)
@@ -1516,7 +1564,16 @@ bool ENMLConverterPrivate::exportNotesToEnex(const QVector<Note> & notes, const 
         return false;
     }
 
-    QXmlStreamWriter writer(&enex);
+    QBuffer enexBuffer;
+    bool res = enexBuffer.open(QIODevice::WriteOnly);
+    if (Q_UNLIKELY(!res)) {
+        errorDescription.setBase(QT_TR_NOOP("Cn't export note(s) to ENEX: can't open the buffer to write the ENEX into"));
+        errorDescription.details() = enexBuffer.errorString();
+        QNWARNING(errorDescription);
+        return false;
+    }
+
+    QXmlStreamWriter writer(&enexBuffer);
     writer.setAutoFormatting(false);
     writer.setCodec("UTF-8");
     writer.writeStartDocument();
@@ -1777,7 +1834,7 @@ bool ENMLConverterPrivate::exportNotesToEnex(const QVector<Note> & notes, const 
                     const QByteArray & recognitionData = resource.recognitionDataBody();
 
                     ErrorString error;
-                    bool res = validateRecoIndex(QString::fromLocal8Bit(recognitionData), error);
+                    bool res = validateRecoIndex(QString::fromUtf8(recognitionData), error);
                     if (Q_UNLIKELY(!res)) {
                         errorDescription.setBase(QT_TR_NOOP("Can't export note(s) to ENEX: found invalid "
                                                             "resource recognition index at one of notes"));
@@ -1789,7 +1846,7 @@ bool ENMLConverterPrivate::exportNotesToEnex(const QVector<Note> & notes, const 
                     }
 
                     writer.writeStartElement(QStringLiteral("recognition"));
-                    writer.writeCDATA(QString::fromLocal8Bit(recognitionData));
+                    writer.writeCDATA(QString::fromUtf8(recognitionData));
                     writer.writeEndElement();  // recognition
                 }
 
@@ -1898,7 +1955,9 @@ bool ENMLConverterPrivate::exportNotesToEnex(const QVector<Note> & notes, const 
     writer.writeEndElement();   // en-export
     writer.writeEndDocument();
 
-    bool res = validateEnex(enex, errorDescription);
+    enex = QString::fromUtf8(enexBuffer.buffer());
+
+    res = validateEnex(enex, errorDescription);
     if (!res) {
         ErrorString error(QT_TR_NOOP("Can't export note(s) to ENEX"));
         error.appendBase(errorDescription.base());
@@ -3339,7 +3398,7 @@ bool ENMLConverterPrivate::validateAgainstDtd(const QString & input, const QStri
 
     errorDescription.clear();
 
-    QByteArray inputBuffer = input.toLocal8Bit();
+    QByteArray inputBuffer = input.toUtf8();
     xmlDocPtr pDoc = xmlParseMemory(inputBuffer.constData(), inputBuffer.size());
     if (!pDoc) {
         errorDescription.setBase(QT_TR_NOOP("Could not validate document, can't parse the input into xml doc"));

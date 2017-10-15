@@ -644,7 +644,9 @@ bool compareNoteContents(const Note & lhs, const Note & rhs, QString & error)
                 return false;
             }
 
-            if (leftResource.hasRecognitionDataBody() && (leftResource.recognitionDataBody() != rightResource.recognitionDataBody())) {
+            if (leftResource.hasRecognitionDataBody() &&
+                (QString::fromUtf8(leftResource.recognitionDataBody()).simplified() != QString::fromUtf8(rightResource.recognitionDataBody()).simplified()))
+            {
                 error = QStringLiteral("left and right resources' recognition data bodies don't match");
                 return false;
             }
