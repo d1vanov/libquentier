@@ -73,7 +73,7 @@ protected:
 // printing operators for existing classes not inheriting from Printable
 
 template <class T>
-const QString QUENTIER_EXPORT ToString(const T & object)
+const QString ToString(const T & object)
 {
     QString str;
     QTextStream strm(&str, QIODevice::WriteOnly);
@@ -82,7 +82,7 @@ const QString QUENTIER_EXPORT ToString(const T & object)
 }
 
 template <class TKey, class TValue>
-const QString QUENTIER_EXPORT ToString(const QHash<TKey, TValue> & object)
+const QString ToString(const QHash<TKey, TValue> & object)
 {
     QString str;
     QTextStream strm(&str, QIODevice::WriteOnly);
@@ -97,7 +97,7 @@ const QString QUENTIER_EXPORT ToString(const QHash<TKey, TValue> & object)
 }
 
 template <class T>
-const QString QUENTIER_EXPORT ToString(const QSet<T> & object)
+const QString ToString(const QSet<T> & object)
 {
     QString str;
     QTextStream strm(&str, QIODevice::WriteOnly);
