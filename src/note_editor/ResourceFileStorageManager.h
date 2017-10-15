@@ -20,17 +20,19 @@
 #define LIB_QUENTIER_NOTE_EDITOR_RESOURCE_FILES_STORAGE_MANAGER_H
 
 #include <quentier/utility/Macros.h>
-#include <quentier/utility/Linkage.h>
+#include <quentier/utility/FileSystemWatcher.h>
 #include <quentier/types/ErrorString.h>
 #include <QObject>
 #include <QUuid>
+#include <QStringList>
+#include <QHash>
+#include <QScopedPointer>
 
 QT_FORWARD_DECLARE_CLASS(QWidget)
 
 namespace quentier {
 
 QT_FORWARD_DECLARE_CLASS(Note)
-QT_FORWARD_DECLARE_CLASS(ResourceFileStorageManagerPrivate)
 
 /**
  * @brief The ResourceFileStorageManager class is intended to provide the service of
@@ -38,7 +40,7 @@ QT_FORWARD_DECLARE_CLASS(ResourceFileStorageManagerPrivate)
  * a separate class for that is to encapsulate the logics around the checks for resource
  * files actuality and also to make it possible to move all the resource file IO into a separate thread.
  */
-class QUENTIER_EXPORT ResourceFileStorageManager: public QObject
+class Q_DECL_HIDDEN ResourceFileStorageManager: public QObject
 {
     Q_OBJECT
 public:
@@ -114,9 +116,31 @@ public Q_SLOTS:
      */
     void onRequestDiagnostics(QUuid requestId);
 
+private Q_SLOTS:
+    void onFileChanged(const QString & path);
+    void onFileRemoved(const QString & path);
+
 private:
-    ResourceFileStorageManagerPrivate * const d_ptr;
-    Q_DECLARE_PRIVATE(ResourceFileStorageManager)
+    void createConnections();
+    QByteArray calculateHash(const QByteArray & data) const;
+    bool checkIfResourceFileExistsAndIsActual(const QString & noteLocalUid, const QString & resourceLocalUid,
+                                              const QString & fileStoragePath, const QByteArray & dataHash) const;
+
+    bool updateResourceHash(const QString & resourceLocalUid, const QByteArray & dataHash,
+                            const QString & storageFolderPath, int & errorCode, ErrorString & errorDescription);
+    void watchResourceFileForChanges(const QString & resourceLocalUid, const QString & fileStoragePath);
+    void stopWatchingResourceFile(const QString & filePath);
+
+    void removeStaleResourceFilesFromCurrentNote();
+
+private:
+    QString     m_nonImageResourceFileStorageLocation;
+    QString     m_imageResourceFileStorageLocation;
+
+    QScopedPointer<Note>                m_pCurrentNote;
+
+    QHash<QString, QString>             m_resourceLocalUidByFilePath;
+    FileSystemWatcher                   m_fileSystemWatcher;
 };
 
 } // namespace quentier

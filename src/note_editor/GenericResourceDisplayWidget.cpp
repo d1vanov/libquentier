@@ -19,7 +19,7 @@
 #include "GenericResourceDisplayWidget.h"
 #include "ui_GenericResourceDisplayWidget.h"
 #include "NoteEditorSettingsName.h"
-#include <quentier/note_editor/ResourceFileStorageManager.h>
+#include "ResourceFileStorageManager.h"
 #include <quentier/utility/FileIOProcessorAsync.h>
 #include <quentier/utility/QuentierCheckPtr.h>
 #include <quentier/utility/Utility.h>

@@ -20,7 +20,7 @@
 #include "GenericResourceDisplayWidget.h"
 #include "EncryptedAreaPlugin.h"
 #include "NoteEditor_p.h"
-#include <quentier/note_editor/ResourceFileStorageManager.h>
+#include "ResourceFileStorageManager.h"
 #include <quentier/utility/FileIOProcessorAsync.h>
 #include <quentier/utility/EncryptionManager.h>
 #include <quentier/enml/DecryptedTextManager.h>

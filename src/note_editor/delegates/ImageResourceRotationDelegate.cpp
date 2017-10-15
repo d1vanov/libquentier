@@ -17,7 +17,7 @@
  */
 
 #include "ImageResourceRotationDelegate.h"
-#include <quentier/note_editor/ResourceFileStorageManager.h>
+#include "../ResourceFileStorageManager.h"
 #include <quentier/types/Note.h>
 #include <quentier/types/Resource.h>
 #include <quentier/logging/QuentierLogger.h>

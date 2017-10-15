@@ -1,10 +1,10 @@
 #include "InsertHtmlDelegate.h"
 #include "../NoteEditor_p.h"
 #include "../NoteEditorPage.h"
+#include "../ResourceFileStorageManager.h"
 #include <quentier/enml/ENMLConverter.h>
 #include <quentier/types/Account.h>
 #include <quentier/types/Note.h>
-#include <quentier/note_editor/ResourceFileStorageManager.h>
 #include <quentier/utility/ApplicationSettings.h>
 #include <quentier/utility/Utility.h>
 #include <quentier/logging/QuentierLogger.h>

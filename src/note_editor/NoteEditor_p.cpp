@@ -19,6 +19,7 @@
 #include "NoteEditor_p.h"
 #include "GenericResourceImageManager.h"
 #include "NoteEditorSettingsName.h"
+#include "ResourceFileStorageManager.h"
 #include "delegates/AddResourceDelegate.h"
 #include "delegates/RemoveResourceDelegate.h"
 #include "delegates/RenameResourceDelegate.h"
@@ -98,7 +99,6 @@ typedef QWebSettings WebSettings;
 typedef QWebEngineSettings WebSettings;
 #endif // QUENTIER_USE_QT_WEB_ENGINE
 
-#include <quentier/note_editor/ResourceFileStorageManager.h>
 #include <quentier/exception/NoteEditorInitializationException.h>
 #include <quentier/exception/NoteEditorPluginInitializationException.h>
 #include <quentier/types/Note.h>

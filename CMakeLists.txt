@@ -81,7 +81,6 @@ if(BUILD_WITH_NOTE_EDITOR)
   set(NOTE_EDITOR_HEADERS
       headers/quentier/note_editor/NoteEditor.h
       headers/quentier/note_editor/INoteEditorBackend.h
-      headers/quentier/note_editor/ResourceFileStorageManager.h
       headers/quentier/note_editor/SpellChecker.h)
 endif()
 
@@ -239,7 +238,7 @@ if(BUILD_WITH_NOTE_EDITOR)
        src/note_editor/NoteEditorPage.h
        src/note_editor/NoteEditor_p.h
        src/note_editor/JavaScriptInOrderExecutor.h
-       src/note_editor/ResourceFileStorageManager_p.h
+       src/note_editor/ResourceFileStorageManager.h
        src/note_editor/ResourceInfo.h
        src/note_editor/SpellChecker_p.h
        src/note_editor/SpellCheckerDictionariesFinder.h
@@ -436,7 +435,6 @@ if(BUILD_WITH_NOTE_EDITOR)
        src/note_editor/NoteEditor_p.cpp
        src/note_editor/JavaScriptInOrderExecutor.cpp
        src/note_editor/ResourceFileStorageManager.cpp
-       src/note_editor/ResourceFileStorageManager_p.cpp
        src/note_editor/ResourceInfo.cpp
        src/note_editor/SpellChecker.cpp
        src/note_editor/SpellChecker_p.cpp
