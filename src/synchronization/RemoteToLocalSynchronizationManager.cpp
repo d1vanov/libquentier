@@ -944,7 +944,7 @@ void RemoteToLocalSynchronizationManager::onFindNoteCompleted(Note note, bool wi
             auto noteThumbnailDownloadIt = m_notesPendingThumbnailDownloadByGuid.find(note.guid());
             if (noteThumbnailDownloadIt == m_notesPendingThumbnailDownloadByGuid.end())
             {
-                QNDEBUG(QStringLiteral("Need to downloading the thumbnail for the note with added or updated resource"));
+                QNDEBUG(QStringLiteral("Need to download the thumbnail for the note with added or updated resource"));
 
                 // NOTE: don't care whether was capable to start downloading the note thumnail,
                 // if not, this error is simply ignored
@@ -1102,9 +1102,6 @@ void RemoteToLocalSynchronizationManager::onFindNoteFailed(Note note, bool withR
 
         ErrorString errorDescription(QT_TR_NOOP("Can't find note containing the synchronized resource in the local storage"));
         APPEND_NOTE_DETAILS(errorDescription, note)
-
-        // FIXME: need to look through the list of notes pending download, if note's guid is in the list,
-        // there's nothing to worry about, the updated resource would be downloaded along with the note
 
         QNWARNING(errorDescription << QStringLiteral(", note attempted to be found: ") << note);
         Q_EMIT failure(errorDescription);
