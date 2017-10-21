@@ -105,17 +105,23 @@ public:
                       const bool withNoteLimits, const QString & noteGuid,
                       const QString & authToken, ErrorString & errorDescription);
 
+    bool getResourceAsync(const bool withDataBody, const bool withRecognitionDataBody,
+                          const bool withAlternateDataBody, const bool withAttributes, const QString & resourceGuid,
+                          const QString & authToken, ErrorString & errorDescription);
+
     qint32 authenticateToSharedNotebook(const QString & shareKey, qevercloud::AuthenticationResult & authResult,
                                         ErrorString & errorDescription, qint32 & rateLimitSeconds);
 
 Q_SIGNALS:
     void getNoteAsyncFinished(qint32 errorCode, qevercloud::Note note, qint32 rateLimitSeconds, ErrorString errorDescription);
+    void getResourceAsyncFinished(qint32 errorCode, qevercloud::Resource resource, qint32 rateLimitSeconds, ErrorString errorDescription);
 
 private:
     typedef qevercloud::EverCloudExceptionData EverCloudExceptionData;
 
 private Q_SLOTS:
     void onGetNoteAsyncFinished(QVariant result, QSharedPointer<EverCloudExceptionData> exceptionData);
+    void onGetResourceAsyncFinished(QVariant result, QSharedPointer<EverCloudExceptionData> exceptionData);
 
 private:
     struct UserExceptionSource
@@ -145,6 +151,9 @@ private:
     qint32 processEdamUserExceptionForGetNote(const qevercloud::Note & note, const qevercloud::EDAMUserException & userException,
                                               ErrorString & errorDescription) const;
 
+    qint32 processEdamUserExceptionForGetResource(const qevercloud::Resource & resource, const qevercloud::EDAMUserException & userException,
+                                                  ErrorString & errorDescription) const;
+
     qint32 processUnexpectedEdamUserException(const QString & typeName, const qevercloud::EDAMUserException & userException,
                                               const UserExceptionSource::type & source, ErrorString & errorDescription) const;
 
@@ -160,6 +169,7 @@ private:
 private:
     QSharedPointer<qevercloud::NoteStore>       m_pQecNoteStore;
     QHash<qevercloud::AsyncResult*, QString>    m_noteGuidByAsyncResultPtr;
+    QHash<qevercloud::AsyncResult*, QString>    m_resourceGuidByAsyncResultPtr;
 };
 
 } // namespace quentier

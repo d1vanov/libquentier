@@ -7308,7 +7308,11 @@ void RemoteToLocalSynchronizationManager::appendDataElementsFromSyncChunkToConta
         filteredResources << resource;
     }
 
-    QNTRACE(QStringLiteral("Will append ") << filteredResources.size() << QStringLiteral(" resources"));
+    QNTRACE(QStringLiteral("Will download data of " ) << filteredResources.size()
+            << QStringLiteral(" resources and append them to the container"));
+
+    // TODO: actually download the resources data
+
     container.append(filteredResources);
 }
 

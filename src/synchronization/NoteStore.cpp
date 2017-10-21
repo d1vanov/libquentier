@@ -538,6 +538,36 @@ bool NoteStore::getNoteAsync(const bool withContent, const bool withResourceData
     return true;
 }
 
+bool NoteStore::getResourceAsync(const bool withDataBody, const bool withRecognitionDataBody,
+                                 const bool withAlternateDataBody, const bool withAttributes,
+                                 const QString & resourceGuid, const QString & authToken, ErrorString & errorDescription)
+{
+    QNDEBUG(QStringLiteral("NoteStore::getResourceAsync: with data body = ") << (withDataBody ? QStringLiteral("true") : QStringLiteral("false"))
+            << QStringLiteral(", with recognition data body = ") << (withRecognitionDataBody ? QStringLiteral("true") : QStringLiteral("false"))
+            << QStringLiteral(", with alternate data body = ") << (withAlternateDataBody ? QStringLiteral("true") : QStringLiteral("false"))
+            << QStringLiteral(", with attributes = ") << (withAttributes ? QStringLiteral("true") : QStringLiteral("false"))
+            << QStringLiteral(", resource guid = ") << resourceGuid);
+
+    if (Q_UNLIKELY(resourceGuid.isEmpty())) {
+        errorDescription.setBase(QT_TR_NOOP("Detected the attempt to get full resource's data for empty resource guid"));
+        return false;
+    }
+
+    qevercloud::AsyncResult * pAsyncResult = m_pQecNoteStore->getResourceAsync(resourceGuid, withDataBody, withRecognitionDataBody,
+                                                                               withAttributes, withAlternateDataBody, authToken);
+    if (Q_UNLIKELY(!pAsyncResult)) {
+        errorDescription.setBase(QT_TR_NOOP("Can't get full resource data: internal error, QEverCloud library returned "
+                                            "null pointer to asynchronous result object"));
+        return false;
+    }
+
+    m_resourceGuidByAsyncResultPtr[pAsyncResult] = resourceGuid;
+
+    QObject::connect(pAsyncResult, QNSIGNAL(qevercloud::AsyncResult,finished,QVariant,QSharedPointer<EverCloudExceptionData>),
+                     this, QNSLOT(NoteStore,onGetResourceAsyncFinished,QVariant,QSharedPointer<EverCloudExceptionData>));
+    return true;
+}
+
 qint32 NoteStore::authenticateToSharedNotebook(const QString & shareKey, qevercloud::AuthenticationResult & authResult,
                                                ErrorString & errorDescription, qint32 & rateLimitSeconds)
 {
@@ -668,6 +698,70 @@ void NoteStore::onGetNoteAsyncFinished(QVariant result, QSharedPointer<EverCloud
 
     note = result.value<qevercloud::Note>();
     Q_EMIT getNoteAsyncFinished(errorCode, note, rateLimitSeconds, errorDescription);
+}
+
+void NoteStore::onGetResourceAsyncFinished(QVariant result, QSharedPointer<EverCloudExceptionData> exceptionData)
+{
+    QNDEBUG(QStringLiteral("NoteStore::onGetResourceAsyncFinished"));
+
+    QString resourceGuid;
+
+    qevercloud::AsyncResult * pAsyncResult = qobject_cast<qevercloud::AsyncResult*>(sender());
+    if (pAsyncResult)
+    {
+        auto it = m_resourceGuidByAsyncResultPtr.find(pAsyncResult);
+        if (it != m_resourceGuidByAsyncResultPtr.end()) {
+            resourceGuid = it.value();
+            Q_UNUSED(m_resourceGuidByAsyncResultPtr.erase(it))
+        }
+        else {
+            QNDEBUG(QStringLiteral("Couldn't find the resource guid by async result ptr"));
+            return;
+        }
+    }
+    else
+    {
+        QNDEBUG(QStringLiteral("Couldn't get non-NULL pointer to AsyncResult, hence can't get the resource guid "
+                               "to which the result corresponds"));
+        return;
+    }
+
+    qevercloud::Resource resource;
+    resource.guid = resourceGuid;
+
+    ErrorString errorDescription;
+    qint32 errorCode = 0;
+    qint32 rateLimitSeconds = -1;
+
+    if (!exceptionData.isNull())
+    {
+        QNDEBUG(QStringLiteral("Error: ") << exceptionData->errorMessage);
+
+        try
+        {
+            exceptionData->throwException();
+        }
+        catch(const qevercloud::EDAMUserException & userException)
+        {
+            errorCode = processEdamUserExceptionForGetResource(resource, userException, errorDescription);
+        }
+        catch(const qevercloud::EDAMNotFoundException & notFoundException)
+        {
+            processEdamNotFoundException(notFoundException, errorDescription);
+            errorCode = qevercloud::EDAMErrorCode::UNKNOWN;
+        }
+        catch(const qevercloud::EDAMSystemException & systemException)
+        {
+            errorCode = processEdamSystemException(systemException, errorDescription, rateLimitSeconds);
+        }
+        CATCH_GENERIC_EXCEPTIONS_IMPL(errorCode = qevercloud::EDAMErrorCode::UNKNOWN)
+
+        Q_EMIT getResourceAsyncFinished(errorCode, resource, rateLimitSeconds, errorDescription);
+        return;
+    }
+
+    resource = result.value<qevercloud::Resource>();
+    Q_EMIT getResourceAsyncFinished(errorCode, resource, rateLimitSeconds, errorDescription);
 }
 
 qint32 NoteStore::processEdamUserExceptionForTag(const Tag & tag, const qevercloud::EDAMUserException & userException,
@@ -957,7 +1051,7 @@ qint32 NoteStore::processEdamUserExceptionForGetSyncChunk(const qevercloud::EDAM
 qint32 NoteStore::processEdamUserExceptionForGetNote(const qevercloud::Note & note, const qevercloud::EDAMUserException & userException,
                                                      ErrorString & errorDescription) const
 {
-    Q_UNUSED(note);     // Maybe it'd be actually used in future
+    Q_UNUSED(note)  // Maybe it'd be actually used in future
 
     const auto exceptionData = userException.exceptionData();
 
@@ -1009,6 +1103,73 @@ qint32 NoteStore::processEdamUserExceptionForGetNote(const qevercloud::Note & no
     }
 
     errorDescription.setBase(QT_TR_NOOP("Unexpected EDAM user exception on attempt to get note"));
+    errorDescription.details() = QStringLiteral("error code = ");
+    errorDescription.details() += ToString(userException.errorCode);
+
+    if (userException.parameter.isSet()) {
+        errorDescription.details() += QStringLiteral("; parameter: ");
+        errorDescription.details() += userException.parameter.ref();
+    }
+
+    return userException.errorCode;
+}
+
+qint32 NoteStore::processEdamUserExceptionForGetResource(const qevercloud::Resource & resource,
+                                                         const qevercloud::EDAMUserException & userException,
+                                                         ErrorString & errorDescription) const
+{
+    Q_UNUSED(resource)  // Maybe it'd be actually used in future
+
+    const auto exceptionData = userException.exceptionData();
+
+    if (userException.errorCode == qevercloud::EDAMErrorCode::BAD_DATA_FORMAT)
+    {
+        errorDescription.setBase(QT_TR_NOOP("BAD_DATA_FORMAT exception during the attempt to get resource"));
+
+        if (!userException.parameter.isSet())
+        {
+            if (!exceptionData.isNull() && !exceptionData->errorMessage.isEmpty()) {
+                errorDescription.details() = exceptionData->errorMessage;
+            }
+
+            return userException.errorCode;
+        }
+
+        if (userException.parameter.ref() == QStringLiteral("Resource.guid")) {
+            errorDescription.appendBase(QT_TR_NOOP("resource's guid is missing"));
+        }
+        else {
+            errorDescription.appendBase(QT_TR_NOOP("unexpected parameter"));
+            errorDescription.details() = userException.parameter.ref();
+        }
+
+        return userException.errorCode;
+    }
+    else if (userException.errorCode == qevercloud::EDAMErrorCode::PERMISSION_DENIED)
+    {
+        errorDescription.setBase(QT_TR_NOOP("PERMISSION_DENIED exception during the attempt to get resource"));
+
+        if (!userException.parameter.isSet())
+        {
+            if (!exceptionData.isNull() && !exceptionData->errorMessage.isEmpty()) {
+                errorDescription.details() = exceptionData->errorMessage;
+            }
+
+            return userException.errorCode;
+        }
+
+        if (userException.parameter.ref() == QStringLiteral("Resource")) {
+            errorDescription.appendBase(QT_TR_NOOP("resource is not owned by user"));
+        }
+        else {
+            errorDescription.appendBase(QT_TR_NOOP("unexpected parameter"));
+            errorDescription.details() = userException.parameter.ref();
+        }
+
+        return userException.errorCode;
+    }
+
+    errorDescription.setBase(QT_TR_NOOP("Unexpected EDAM user exception on attempt to get resource"));
     errorDescription.details() = QStringLiteral("error code = ");
     errorDescription.details() += ToString(userException.errorCode);
 
