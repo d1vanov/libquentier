@@ -497,6 +497,10 @@ private:
     void getFullNoteDataAsyncAndAddToLocalStorage(const Note & note);
     void getFullNoteDataAsyncAndUpdateInLocalStorage(const Note & note);
 
+    void getFullResourceDataAsync(const Resource & resource, const Note & resourceOwningNote);
+    void getFullResourceDataAsyncAndAddToLocalStorage(const Resource & resource, const Note & resourceOwningNote);
+    void getFullResourceDataAsyncAndUpdateInLocalStorage(const Resource & resource, const Note & resourceOwningNote);
+
     void downloadSyncChunksAndLaunchSync(qint32 afterUsn);
 
     const Notebook * getNotebookPerNote(const Note & note) const;

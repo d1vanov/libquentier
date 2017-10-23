@@ -5880,6 +5880,138 @@ void RemoteToLocalSynchronizationManager::getFullNoteDataAsyncAndUpdateInLocalSt
     getFullNoteDataAsync(note);
 }
 
+void RemoteToLocalSynchronizationManager::getFullResourceDataAsync(const Resource & resource,
+                                                                   const Note & resourceOwningNote)
+{
+    QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::getFullResourceDataAsync: resource = ") << resource
+            << QStringLiteral("\nResource owning note: ") << resourceOwningNote);
+
+    if (!resource.hasGuid()) {
+        ErrorString errorDescription(QT_TR_NOOP("Detected the attempt to get full resource's data for a resource without guid"));
+        QNWARNING(errorDescription << QStringLiteral("; resource: ") << resource
+                  << QStringLiteral("\nResource owning note: ") << resourceOwningNote);
+        Q_EMIT failure(errorDescription);
+        return;
+    }
+
+    if (!resourceOwningNote.hasNotebookGuid()) {
+        ErrorString errorDescription(QT_TR_NOOP("Detected the attempt to get full resource's data for a resource which owning note "
+                                                "has no notebook guid set"));
+        APPEND_NOTE_DETAILS(errorDescription, resourceOwningNote)
+        QNWARNING(errorDescription << QStringLiteral("; resource: ") << resource
+                  << QStringLiteral("\nResource owning note: ") << resourceOwningNote);
+        Q_EMIT failure(errorDescription);
+    }
+
+    // Need to find out which note store is required - the one for user's own
+    // account or the one for the stuff from some linked notebook
+
+    QString authToken;
+    NoteStore * pNoteStore = Q_NULLPTR;
+    auto linkedNotebookGuidIt = m_linkedNotebookGuidsByNotebookGuids.find(resourceOwningNote.notebookGuid());
+    if (linkedNotebookGuidIt == m_linkedNotebookGuidsByNotebookGuids.end())
+    {
+        QNDEBUG(QStringLiteral("Found no linked notebook corresponding to notebook guid ") << resourceOwningNote.notebookGuid()
+                << QStringLiteral(", using the note store for the user's own account"));
+        pNoteStore = &(m_manager.noteStore());
+        authToken = m_authenticationToken;
+    }
+    else
+    {
+        const QString & linkedNotebookGuid = linkedNotebookGuidIt.value();
+
+        auto authTokenIt = m_authenticationTokensAndShardIdsByLinkedNotebookGuid.find(linkedNotebookGuid);
+        if (Q_UNLIKELY(authTokenIt == m_authenticationTokensAndShardIdsByLinkedNotebookGuid.end())) {
+            ErrorString errorDescription(QT_TR_NOOP("Can't find the authentication token corresponding to the linked notebook"));
+            APPEND_NOTE_DETAILS(errorDescription, resourceOwningNote)
+            QNWARNING(errorDescription << QStringLiteral("; resource: ") << resource
+                      << QStringLiteral("\nResource owning note: ") << resourceOwningNote);
+            Q_EMIT failure(errorDescription);
+            return;
+        }
+
+        authToken = authTokenIt.value().first;
+        const QString & linkedNotebookShardId = authTokenIt.value().second;
+
+        QString linkedNotebookNoteStoreUrl;
+        for(auto it = m_allLinkedNotebooks.constBegin(), end = m_allLinkedNotebooks.constEnd(); it != end; ++it)
+        {
+            if (it->hasGuid() && (it->guid() == linkedNotebookGuid) && it->hasNoteStoreUrl()) {
+                linkedNotebookNoteStoreUrl = it->noteStoreUrl();
+                break;
+            }
+        }
+
+        if (linkedNotebookNoteStoreUrl.isEmpty()) {
+            ErrorString errorDescription(QT_TR_NOOP("Can't find the note store URL corresponding to the linked notebook"));
+            APPEND_NOTE_DETAILS(errorDescription, resourceOwningNote)
+            QNWARNING(errorDescription << QStringLiteral("; resource: ") << resource
+                      << QStringLiteral("\nResource owning note: ") << resourceOwningNote);
+            Q_EMIT failure(errorDescription);
+            return;
+        }
+
+        LinkedNotebook linkedNotebook;
+        linkedNotebook.setGuid(linkedNotebookGuid);
+        linkedNotebook.setShardId(linkedNotebookShardId);
+        linkedNotebook.setNoteStoreUrl(linkedNotebookNoteStoreUrl);
+        pNoteStore = m_manager.noteStoreForLinkedNotebook(linkedNotebook);
+        if (Q_UNLIKELY(!pNoteStore)) {
+            ErrorString errorDescription(QT_TR_NOOP("Can't find or create note store for "));
+            APPEND_NOTE_DETAILS(errorDescription, resourceOwningNote)
+            QNWARNING(errorDescription << QStringLiteral("; resource: ") << resource
+                      << QStringLiteral("\nResource owning note: ") << resourceOwningNote);
+            Q_EMIT failure(errorDescription);
+            return;
+        }
+
+        if (Q_UNLIKELY(pNoteStore->noteStoreUrl().isEmpty())) {
+            ErrorString errorDescription(QT_TR_NOOP("Internal error: empty note store url for the linked notebook's note store"));
+            APPEND_NOTE_DETAILS(errorDescription, resourceOwningNote)
+            QNWARNING(errorDescription << QStringLiteral("; resource: ") << resource
+                      << QStringLiteral("\nResource owning note: ") << resourceOwningNote);
+            Q_EMIT failure(errorDescription);
+            return;
+        }
+
+        QObject::connect(pNoteStore, QNSIGNAL(NoteStore,getNoteAsyncFinished,qint32,qevercloud::Note,qint32,ErrorString),
+                         this, QNSLOT(RemoteToLocalSynchronizationManager,onGetNoteAsyncFinished,qint32,qevercloud::Note,qint32,ErrorString),
+                         Qt::ConnectionType(Qt::AutoConnection | Qt::UniqueConnection));
+
+        QNDEBUG(QStringLiteral("Using NoteStore corresponding to linked notebook with guid ")
+                << linkedNotebookGuid << QStringLiteral(", note store url = ") << pNoteStore->noteStoreUrl());
+    }
+
+    ErrorString errorDescription;
+    bool res = pNoteStore->getResourceAsync(/* with data body = */ true, /* with recognition data body = */ true,
+                                            /* with alternate data body = */ true, /* with attributes = */ true,
+                                            resource.guid(), authToken, errorDescription);
+    if (!res) {
+        APPEND_NOTE_DETAILS(errorDescription, resourceOwningNote);
+        QNWARNING(errorDescription << QStringLiteral("; resource: ") << resource
+                  << QStringLiteral("\nResource owning note: ") << resourceOwningNote);
+        Q_EMIT failure(errorDescription);
+    }
+}
+
+void RemoteToLocalSynchronizationManager::getFullResourceDataAsyncAndAddToLocalStorage(const Resource & resource,
+                                                                                       const Note & resourceOwningNote)
+{
+    QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::getFullResourceDataAsyncAndAddToLocalStorage: resource = ")
+            << resource << QStringLiteral("\nResource owning note: ") << resourceOwningNote);
+
+    // TODO: implement
+}
+
+void RemoteToLocalSynchronizationManager::getFullResourceDataAsyncAndUpdateInLocalStorage(const Resource & resource,
+                                                                                          const Note & resourceOwningNote)
+{
+    QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::getFullResourceDataAsyncAndUpdateInLocalStorage: resource = ")
+            << resource << QStringLiteral("\nResource owning note: ") << resourceOwningNote);
+
+    // TODO: implement
+}
+
 void RemoteToLocalSynchronizationManager::downloadSyncChunksAndLaunchSync(qint32 afterUsn)
 {
     QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::downloadSyncChunksAndLaunchSync: after USN = ") << afterUsn);
