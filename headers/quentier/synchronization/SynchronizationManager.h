@@ -254,6 +254,26 @@ Q_SIGNALS:
     void linkedNotebooksNotesDownloadProgress(quint32 notesDownloaded, quint32 totalNotesToDownload);
 
     /**
+     * This signal is emitted on each successful doenload of full resource data
+     * from user's own account during the incremental sync (as individual resources are
+     * downloaded along with their notes during full sync)
+     * @param resourcesDownloaded is the number of resources downloaded by the moment
+     * @param totalResourcesToDownload is the total number of resources that
+     * need to be downloaded
+     */
+    void resourcesDownloadProgress(quint32 resourcesDownloaded, quint32 totalResourcesToDownload);
+
+    /**
+     * This signal is emitted on each successful download of full resource data
+     * from linked notebooks during the incremental sync (as individual resources are
+     * downloaded along with their notes during full sync)
+     * @param resourcesDownloaded is the number of resources downloaded by the moment
+     * @param totalResourcesToDownload is the total number of resources that
+     * need to be downloaded
+     */
+    void linkedNotebooksResourcesDownloadProgress(quint32 resourcesDownloaded, quint32 totalResourcesToDownload);
+
+    /**
      * This signal is emitted during "send local changes" synchronization step when all the relevant
      * data elements from user's own account were prepared for sending to the Evernote service
      */

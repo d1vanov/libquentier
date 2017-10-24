@@ -47,6 +47,7 @@
 #endif
 
 #include <QMultiHash>
+#include <utility>
 
 namespace quentier {
 
@@ -97,11 +98,13 @@ Q_SIGNALS:
     // signals notifying about the progress of synchronization
     void syncChunksDownloaded();
     void notesDownloadProgress(quint32 notesDownloaded, quint32 totalNotesToDownload);
+    void resourcesDownloadProgress(quint32 resourcesDownloaded, quint32 totalResourcesToDownload);
 
     void synchronizedContentFromUsersOwnAccount(qint32 lastUpdateCount, qevercloud::Timestamp lastSyncTime);
 
     void linkedNotebooksSyncChunksDownloaded();
     void linkedNotebooksNotesDownloadProgress(quint32 notesDownloaded, quint32 totalNotesToDownload);
+    void linkedNotebooksResourcesDownloadProgress(quint32 resourcesDownloaded, quint32 totalResourcesToDownload);
 
     void expungedFromServerToClient();
 
@@ -244,6 +247,7 @@ private Q_SLOTS:
                                             ErrorString errorDescription);
 
     void onGetNoteAsyncFinished(qint32 errorCode, qevercloud::Note qecNote, qint32 rateLimitSeconds, ErrorString errorDescription);
+    void onGetResourceAsyncFinished(qint32 errorCode, qevercloud::Resource qecResource, qint32 rateLimitSeconds, ErrorString errorDescription);
 
     // Slots for sync conflict resolvers
     void onNotebookSyncConflictResolverFinished(qevercloud::Notebook remoteNotebook);
@@ -299,6 +303,7 @@ private:
     bool syncingLinkedNotebooksContent() const;
 
     void checkAndIncrementNoteDownloadProgress(const QString & noteGuid);
+    void checkAndIncrementResourceDownloadProgress(const QString & resourceGuid);
 
     bool notebooksSyncInProgress() const;
     bool tagsSyncInProgress() const;
@@ -739,6 +744,8 @@ private:
 
     ResourcesList                           m_resources;
     ResourcesList                           m_resourcesPendingAddOrUpdate;
+    quint32                                 m_originalNumberOfResources;
+    quint32                                 m_numResourcesDownloaded;
     QSet<QUuid>                             m_findResourceByGuidRequestIds;
     QSet<QUuid>                             m_addResourceRequestIds;
     QSet<QUuid>                             m_updateResourceRequestIds;
@@ -765,12 +772,20 @@ private:
     QSet<QString>                           m_guidsOfNotesPendingDownloadForAddingToLocalStorage;
     QHash<QString,Note>                     m_notesPendingDownloadForUpdatingInLocalStorageByGuid;
 
+    QHash<QString,Note>                         m_notesOwningResourcesPendingDownloadForAddingToLocalStorageByResourceGuid;
+    QHash<QString,std::pair<Resource,Note> >    m_resourcesPendingDownloadForUpdatingInLocalStorageWithNotesByResourceGuid;
+
     FullSyncStaleDataItemsExpunger *                m_pFullSyncStaleDataItemsExpunger;
     QMap<QString, FullSyncStaleDataItemsExpunger*>  m_fullSyncStaleDataItemsExpungersByLinkedNotebookGuid;
 
     QHash<int,Note>                         m_notesToAddPerAPICallPostponeTimerId;
     QHash<int,Note>                         m_notesToUpdatePerAPICallPostponeTimerId;
+
+    QHash<int,std::pair<Resource,Note> >    m_resourcesToAddWithNotesPerAPICallPostponeTimerId;
+    QHash<int,std::pair<Resource,Note> >    m_resourcesToUpdateWithNotesPerAPICallPostponeTimerId;
+
     QHash<int,qint32>                       m_afterUsnForSyncChunkPerAPICallPostponeTimerId;
+
     int                                     m_getLinkedNotebookSyncStateBeforeStartAPICallPostponeTimerId;
     int                                     m_downloadLinkedNotebookSyncChunkAPICallPostponeTimerId;
     int                                     m_getSyncStateBeforeStartAPICallPostponeTimerId;

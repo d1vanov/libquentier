@@ -699,6 +699,10 @@ void SynchronizationManagerPrivate::createConnections(IAuthenticationManager & a
                      this, QNSIGNAL(SynchronizationManagerPrivate,notesDownloadProgress,quint32,quint32));
     QObject::connect(&m_remoteToLocalSyncManager, QNSIGNAL(RemoteToLocalSynchronizationManager,linkedNotebooksSyncChunksDownloaded),
                      this, QNSIGNAL(SynchronizationManagerPrivate,linkedNotebooksSyncChunksDownloaded));
+    QObject::connect(&m_remoteToLocalSyncManager, QNSIGNAL(RemoteToLocalSynchronizationManager,resourcesDownloadProgress,quint32,quint32),
+                     this, QNSIGNAL(SynchronizationManagerPrivate,resourcesDownloadProgress,quint32,quint32));
+    QObject::connect(&m_remoteToLocalSyncManager, QNSIGNAL(RemoteToLocalSynchronizationManager,linkedNotebooksResourcesDownloadProgress,quint32,quint32),
+                     this, QNSIGNAL(SynchronizationManagerPrivate,linkedNotebooksResourcesDownloadProgress,quint32,quint32));
     QObject::connect(&m_remoteToLocalSyncManager, QNSIGNAL(RemoteToLocalSynchronizationManager,linkedNotebooksNotesDownloadProgress,quint32,quint32),
                      this, QNSIGNAL(SynchronizationManagerPrivate,linkedNotebooksNotesDownloadProgress,quint32,quint32));
     QObject::connect(this, QNSIGNAL(SynchronizationManagerPrivate,stopRemoteToLocalSync),

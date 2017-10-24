@@ -43,6 +43,10 @@ SynchronizationManager::SynchronizationManager(const QString & consumerKey, cons
                      this, QNSIGNAL(SynchronizationManager,notesDownloadProgress,quint32,quint32));
     QObject::connect(d_ptr, QNSIGNAL(SynchronizationManagerPrivate,linkedNotebooksNotesDownloadProgress,quint32,quint32),
                      this, QNSIGNAL(SynchronizationManager,linkedNotebooksNotesDownloadProgress,quint32,quint32));
+    QObject::connect(d_ptr, QNSIGNAL(SynchronizationManagerPrivate,resourcesDownloadProgress,quint32,quint32),
+                     this, QNSIGNAL(SynchronizationManager,resourcesDownloadProgress,quint32,quint32));
+    QObject::connect(d_ptr, QNSIGNAL(SynchronizationManagerPrivate,linkedNotebooksResourcesDownloadProgress,quint32,quint32),
+                     this, QNSIGNAL(SynchronizationManager,linkedNotebooksResourcesDownloadProgress,quint32,quint32));
     QObject::connect(d_ptr, QNSIGNAL(SynchronizationManagerPrivate,preparedDirtyObjectsForSending),
                      this, QNSIGNAL(SynchronizationManager,preparedDirtyObjectsForSending));
     QObject::connect(d_ptr, QNSIGNAL(SynchronizationManagerPrivate,preparedLinkedNotebooksDirtyObjectsForSending),

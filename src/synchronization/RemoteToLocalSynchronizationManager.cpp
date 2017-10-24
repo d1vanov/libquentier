@@ -193,6 +193,8 @@ RemoteToLocalSynchronizationManager::RemoteToLocalSynchronizationManager(IManage
     m_notebooksPerNoteIds(),
     m_resources(),
     m_resourcesPendingAddOrUpdate(),
+    m_originalNumberOfResources(0),
+    m_numResourcesDownloaded(0),
     m_findResourceByGuidRequestIds(),
     m_addResourceRequestIds(),
     m_updateResourceRequestIds(),
@@ -206,10 +208,14 @@ RemoteToLocalSynchronizationManager::RemoteToLocalSynchronizationManager(IManage
     m_localUidsOfElementsAlreadyAttemptedToFindByName(),
     m_guidsOfNotesPendingDownloadForAddingToLocalStorage(),
     m_notesPendingDownloadForUpdatingInLocalStorageByGuid(),
+    m_notesOwningResourcesPendingDownloadForAddingToLocalStorageByResourceGuid(),
+    m_resourcesPendingDownloadForUpdatingInLocalStorageWithNotesByResourceGuid(),
     m_pFullSyncStaleDataItemsExpunger(Q_NULLPTR),
     m_fullSyncStaleDataItemsExpungersByLinkedNotebookGuid(),
     m_notesToAddPerAPICallPostponeTimerId(),
     m_notesToUpdatePerAPICallPostponeTimerId(),
+    m_resourcesToAddWithNotesPerAPICallPostponeTimerId(),
+    m_resourcesToUpdateWithNotesPerAPICallPostponeTimerId(),
     m_afterUsnForSyncChunkPerAPICallPostponeTimerId(),
     m_getLinkedNotebookSyncStateBeforeStartAPICallPostponeTimerId(),
     m_downloadLinkedNotebookSyncChunkAPICallPostponeTimerId(),
@@ -220,6 +226,8 @@ RemoteToLocalSynchronizationManager::RemoteToLocalSynchronizationManager(IManage
 {
     QObject::connect(&(m_manager.noteStore()), QNSIGNAL(NoteStore,getNoteAsyncFinished,qint32,qevercloud::Note,qint32,ErrorString),
                      this, QNSLOT(RemoteToLocalSynchronizationManager,onGetNoteAsyncFinished,qint32,qevercloud::Note,qint32,ErrorString));
+    QObject::connect(&(m_manager.noteStore()), QNSIGNAL(NoteStore,getResourceAsyncFinished,qint32,qevercloud::Resource,qint32,ErrorString),
+                     this, QNSLOT(RemoteToLocalSynchronizationManager,onGetResourceAsyncFinished,qint32,qevercloud::Resource,qint32,ErrorString));
 }
 
 bool RemoteToLocalSynchronizationManager::active() const
@@ -1005,23 +1013,22 @@ void RemoteToLocalSynchronizationManager::onFindNoteCompleted(Note note, bool wi
         if (resourceFoundIt == m_resourceFoundFlagPerFindResourceRequestId.end()) {
             QNWARNING(QStringLiteral("Duplicate of synchronized resource was not found in the local storage database! "
                                      "Attempting to add it to local storage"));
-            emitAddRequest(resource);
+            getFullResourceDataAsyncAndAddToLocalStorage(resource, note);
             return;
         }
 
         if (!resource.isDirty()) {
             QNDEBUG(QStringLiteral("Found duplicate resource in local storage which is not marked dirty => "
                                    "overriding it with the version received from the remote storage"));
-            QUuid updateResourceRequestId = QUuid::createUuid();
-            Q_UNUSED(m_updateResourceRequestIds.insert(updateResourceRequestId))
-            QNTRACE(QStringLiteral("Emitting the request to update resource: request id = ") << updateResourceRequestId
-                    << QStringLiteral(", resource: ") << resource);
-            Q_EMIT updateResource(resource, updateResourceRequestId);
+            getFullResourceDataAsyncAndUpdateInLocalStorage(resource, note);
             return;
         }
 
         QNDEBUG(QStringLiteral("Found duplicate resource in local storage which is marked dirty => "
                                "will treat it as a conflict of notes"));
+
+        // FIXME: should download the full resource data before creating the
+        // conflicting note
 
         Note conflictingNote = createConflictingNote(note);
 
@@ -1572,7 +1579,12 @@ void RemoteToLocalSynchronizationManager::performPostAddOrUpdateChecks<Note>(con
         m_addNoteRequestIds.empty() && m_updateNoteRequestIds.empty() &&
         m_notesToAddPerAPICallPostponeTimerId.empty() && m_notesToUpdatePerAPICallPostponeTimerId.empty())
     {
-        if (!m_resources.empty()) {
+        if (!m_resources.empty() ||
+            !m_notesOwningResourcesPendingDownloadForAddingToLocalStorageByResourceGuid.empty() ||
+            !m_resourcesPendingDownloadForUpdatingInLocalStorageWithNotesByResourceGuid.empty() ||
+            !m_resourcesToAddWithNotesPerAPICallPostponeTimerId.empty() ||
+            !m_resourcesToUpdateWithNotesPerAPICallPostponeTimerId.empty())
+        {
             return;
         }
 
@@ -2712,8 +2724,8 @@ void RemoteToLocalSynchronizationManager::onGetNoteAsyncFinished(qint32 errorCod
 
         int timerId = startTimer(SEC_TO_MSEC(rateLimitSeconds));
         if (Q_UNLIKELY(timerId == 0)) {
-            ErrorString errorDescription(QT_TR_NOOP("Failed to start a timer to postpone the Evernote API call "
-                                                    "due to rate limit exceeding"));
+            errorDescription.setBase(QT_TR_NOOP("Failed to start a timer to postpone the Evernote API call "
+                                                "due to rate limit exceeding"));
             Q_EMIT failure(errorDescription);
             return;
         }
@@ -2812,6 +2824,105 @@ void RemoteToLocalSynchronizationManager::onGetNoteAsyncFinished(qint32 errorCod
     QNTRACE(QStringLiteral("Emitting the request to update note in local storage: request id = ")
             << updateNoteRequestId << QStringLiteral(", note; ") << note);
     Q_EMIT updateNote(note, /* update resources = */ true, /* update tags = */ true, updateNoteRequestId);
+}
+
+void RemoteToLocalSynchronizationManager::onGetResourceAsyncFinished(qint32 errorCode, qevercloud::Resource qecResource,
+                                                                     qint32 rateLimitSeconds, ErrorString errorDescription)
+{
+    QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::onGetResourceAsyncFinished: error code = ")
+            << errorCode << QStringLiteral(", rate limit seconds = ") << rateLimitSeconds
+            << QStringLiteral(", error description: ") << errorDescription
+            << QStringLiteral(", resource: ") << qecResource);
+
+    if (Q_UNLIKELY(!qecResource.guid.isSet())) {
+        errorDescription.setBase(QT_TR_NOOP("Internal error: just downloaded resource has no guid"));
+        QNWARNING(errorDescription << QStringLiteral(", resource: ") << qecResource);
+        Q_EMIT failure(errorDescription);
+        return;
+    }
+
+    QString resourceGuid = qecResource.guid.ref();
+
+    auto addIt = m_notesOwningResourcesPendingDownloadForAddingToLocalStorageByResourceGuid.find(resourceGuid);
+    auto updateIt = ((addIt == m_notesOwningResourcesPendingDownloadForAddingToLocalStorageByResourceGuid.end())
+                     ? m_resourcesPendingDownloadForUpdatingInLocalStorageWithNotesByResourceGuid.find(resourceGuid)
+                     : m_resourcesPendingDownloadForUpdatingInLocalStorageWithNotesByResourceGuid.end());
+
+    bool needToAddResource = (addIt != m_notesOwningResourcesPendingDownloadForAddingToLocalStorageByResourceGuid.end());
+    bool needToUpdateResource = (updateIt != m_resourcesPendingDownloadForUpdatingInLocalStorageWithNotesByResourceGuid.end());
+
+    Resource resource;
+    Note note;
+
+    if (needToAddResource) {
+        note = addIt.value();
+        Q_UNUSED(m_notesOwningResourcesPendingDownloadForAddingToLocalStorageByResourceGuid.erase(addIt))
+    }
+    else if (needToUpdateResource) {
+        resource = updateIt.value().first;
+        note = updateIt.value().second;
+        Q_UNUSED(m_resourcesPendingDownloadForUpdatingInLocalStorageWithNotesByResourceGuid.erase(updateIt))
+    }
+
+    resource.qevercloudResource() = qecResource;
+
+    if (Q_UNLIKELY(!needToAddResource && !needToUpdateResource)) {
+        errorDescription.setBase(QT_TR_NOOP("Internal error: the downloaded resource was not expected"));
+        QNWARNING(errorDescription << QStringLiteral(", resource: ") << resource);
+        Q_EMIT failure(errorDescription);
+        return;
+    }
+
+    if (errorCode == qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED)
+    {
+        if (rateLimitSeconds <= 0) {
+            errorDescription.setBase(QT_TR_NOOP("QEverCloud or Evernote protocol error: caught RATE_LIMIT_REACHED "
+                                                "exception but the number of seconds to wait is zero or negative"));
+            errorDescription.details() = QString::number(rateLimitSeconds);
+            Q_EMIT failure(errorDescription);
+            return;
+        }
+
+        int timerId = startTimer(SEC_TO_MSEC(rateLimitSeconds));
+        if (Q_UNLIKELY(timerId == 0)) {
+            errorDescription.setBase(QT_TR_NOOP("Failed to start a timer to postpone the Evernote API call "
+                                                "due to rate limit exceeding"));
+            Q_EMIT failure(errorDescription);
+            return;
+        }
+
+        if (needToAddResource) {
+            m_resourcesToAddWithNotesPerAPICallPostponeTimerId[timerId] = std::pair<Resource,Note>(resource, note);
+        }
+        else if (needToUpdateResource) {
+            m_resourcesToUpdateWithNotesPerAPICallPostponeTimerId[timerId] = std::pair<Resource,Note>(resource, note);
+        }
+
+        Q_EMIT rateLimitExceeded(rateLimitSeconds);
+        return;
+    }
+    else if (errorCode == qevercloud::EDAMErrorCode::AUTH_EXPIRED)
+    {
+        handleAuthExpiration();
+        return;
+    }
+    else if (errorCode != 0) {
+        Q_EMIT failure(errorDescription);
+        return;
+    }
+
+    checkAndIncrementResourceDownloadProgress(resourceGuid);
+
+    if (needToAddResource) {
+        emitAddRequest(resource);
+        return;
+    }
+
+    QUuid updateResourceRequestId = QUuid::createUuid();
+    Q_UNUSED(m_updateResourceRequestIds.insert(updateResourceRequestId))
+    QNTRACE(QStringLiteral("Emitting the request to update resource: request id = ") << updateResourceRequestId
+            << QStringLiteral(", resource: ") << resource);
+    Q_EMIT updateResource(resource, updateResourceRequestId);
 }
 
 void RemoteToLocalSynchronizationManager::onNotebookSyncConflictResolverFinished(qevercloud::Notebook remoteNotebook)
@@ -4037,6 +4148,10 @@ void RemoteToLocalSynchronizationManager::launchDataElementSync(const ContentSou
         m_originalNumberOfNotes = static_cast<quint32>(std::max(numElements, 0));
         m_numNotesDownloaded = static_cast<quint32>(0);
     }
+    else if (typeName == QStringLiteral("Resource")) {
+        m_originalNumberOfResources = static_cast<quint32>(std::max(numElements, 0));
+        m_numResourcesDownloaded = static_cast<quint32>(0);
+    }
 
     for(int i = 0; i < numElements; ++i)
     {
@@ -4299,6 +4414,13 @@ void RemoteToLocalSynchronizationManager::checkAndIncrementNoteDownloadProgress(
         return;
     }
 
+    if (Q_UNLIKELY(m_numNotesDownloaded == m_originalNumberOfNotes)) {
+        QNWARNING(QStringLiteral("The count of downloaded notes (") << m_numNotesDownloaded
+                  << QStringLiteral(") is already equal to the original number of notes (")
+                  << m_originalNumberOfNotes << QStringLiteral("(, won't increment it further"));
+        return;
+    }
+
     ++m_numNotesDownloaded;
     QNTRACE(QStringLiteral("Incremented the number of downloaded notes to ")
             << m_numNotesDownloaded << QStringLiteral(", the total number of notes to download = ")
@@ -4309,6 +4431,31 @@ void RemoteToLocalSynchronizationManager::checkAndIncrementNoteDownloadProgress(
     }
     else {
         Q_EMIT notesDownloadProgress(m_numNotesDownloaded, m_originalNumberOfNotes);
+    }
+}
+
+void RemoteToLocalSynchronizationManager::checkAndIncrementResourceDownloadProgress(const QString & resourceGuid)
+{
+    QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::checkAndIncrementResourceDownloadProgress: resource guid = ")
+            << resourceGuid);
+
+    if (Q_UNLIKELY(m_numResourcesDownloaded == m_originalNumberOfResources)) {
+        QNWARNING(QStringLiteral("The count of downloaded resources (") << m_numResourcesDownloaded
+                  << QStringLiteral(") is already equal to the original number of resources (")
+                  << m_originalNumberOfResources << QStringLiteral("(, won't increment it further"));
+        return;
+    }
+
+    ++m_numResourcesDownloaded;
+    QNTRACE(QStringLiteral("Incremented the number of downloaded resources to ")
+            << m_numResourcesDownloaded << QStringLiteral(", the total number of resources to download = ")
+            << m_originalNumberOfResources);
+
+    if (syncingLinkedNotebooksContent()) {
+        Q_EMIT linkedNotebooksResourcesDownloadProgress(m_numResourcesDownloaded, m_originalNumberOfResources);
+    }
+    else {
+        Q_EMIT resourcesDownloadProgress(m_numResourcesDownloaded, m_originalNumberOfResources);
     }
 }
 
@@ -5152,7 +5299,11 @@ void RemoteToLocalSynchronizationManager::checkServerDataMergeCompletion()
         bool resourcesReady = m_findResourceByGuidRequestIds.empty() && m_updateResourceRequestIds.empty() &&
                               m_addResourceRequestIds.empty() && m_resourcesWithFindRequestIdsPerFindNoteRequestId.empty() &&
                               m_inkNoteResourceDataPerFindNotebookRequestId.empty() &&
-                              m_resourceGuidsPendingInkNoteImageDownloadPerNoteGuid.empty();
+                              m_resourceGuidsPendingInkNoteImageDownloadPerNoteGuid.empty() &&
+                              m_notesOwningResourcesPendingDownloadForAddingToLocalStorageByResourceGuid.empty() &&
+                              m_resourcesPendingDownloadForUpdatingInLocalStorageWithNotesByResourceGuid.empty() &&
+                              m_resourcesToAddWithNotesPerAPICallPostponeTimerId.empty() &&
+                              m_resourcesToUpdateWithNotesPerAPICallPostponeTimerId.empty();
         if (!resourcesReady)
         {
             QNDEBUG(QStringLiteral("Resources are not ready, pending response for ") << m_updateResourceRequestIds.size()
@@ -5161,7 +5312,11 @@ void RemoteToLocalSynchronizationManager::checkServerDataMergeCompletion()
                     << QStringLiteral(" find resource by guid requests and/or ") << m_findResourceByGuidRequestIds.size()
                     << QStringLiteral(" resource find note requests and/or ") << m_inkNoteResourceDataPerFindNotebookRequestId.size()
                     << QStringLiteral(" resource find notebook for ink note image download processing and/or ") << m_resourceGuidsPendingInkNoteImageDownloadPerNoteGuid.size()
-                    << QStringLiteral(" pending ink note image downloads"));
+                    << QStringLiteral(" pending ink note image downloads and/or ") << m_notesOwningResourcesPendingDownloadForAddingToLocalStorageByResourceGuid.size()
+                    << QStringLiteral(" async full new resource data downloads and/or ") << m_resourcesPendingDownloadForUpdatingInLocalStorageWithNotesByResourceGuid.size()
+                    << QStringLiteral(" async full existing resource data downloads and/or ") << m_resourcesToAddWithNotesPerAPICallPostponeTimerId.size()
+                    << QStringLiteral(" postponed resource add requests and/or ") << m_resourcesToUpdateWithNotesPerAPICallPostponeTimerId.size()
+                    << QStringLiteral(" postponed resource update requests"));
             return;
         }
     }
@@ -5439,6 +5594,8 @@ void RemoteToLocalSynchronizationManager::clear()
     m_notebooksPerNoteIds.clear();
 
     m_resources.clear();
+    m_originalNumberOfResources = 0;
+    m_numResourcesDownloaded = 0;
     m_findResourceByGuidRequestIds.clear();
     m_addResourceRequestIds.clear();
     m_updateResourceRequestIds.clear();
@@ -5458,6 +5615,9 @@ void RemoteToLocalSynchronizationManager::clear()
 
     m_guidsOfNotesPendingDownloadForAddingToLocalStorage.clear();
     m_notesPendingDownloadForUpdatingInLocalStorageByGuid.clear();
+
+    m_notesOwningResourcesPendingDownloadForAddingToLocalStorageByResourceGuid.clear();
+    m_resourcesPendingDownloadForUpdatingInLocalStorageWithNotesByResourceGuid.clear();
 
     if (m_pFullSyncStaleDataItemsExpunger) {
         junkFullSyncStaleDataItemsExpunger(*m_pFullSyncStaleDataItemsExpunger);
@@ -5488,6 +5648,24 @@ void RemoteToLocalSynchronizationManager::clear()
         killTimer(key);
     }
     m_notesToUpdatePerAPICallPostponeTimerId.clear();
+
+    auto resourcesToAddWithNotesPerAPICallPostponeTimerIdEnd = m_resourcesToAddWithNotesPerAPICallPostponeTimerId.end();
+    for(auto it = m_resourcesToAddWithNotesPerAPICallPostponeTimerId.begin();
+        it != resourcesToAddWithNotesPerAPICallPostponeTimerIdEnd; ++it)
+    {
+        int key = it.key();
+        killTimer(key);
+    }
+    m_resourcesToAddWithNotesPerAPICallPostponeTimerId.clear();
+
+    auto resourcesToUpdateWithNotesPerAPICallPostponeTimerIdEnd = m_resourcesToUpdateWithNotesPerAPICallPostponeTimerId.end();
+    for(auto it = m_resourcesToUpdateWithNotesPerAPICallPostponeTimerId.begin();
+        it != resourcesToUpdateWithNotesPerAPICallPostponeTimerIdEnd; ++it)
+    {
+        int key = it.key();
+        killTimer(key);
+    }
+    m_resourcesToUpdateWithNotesPerAPICallPostponeTimerId.clear();
 
     auto afterUsnForSyncChunkPerAPICallPostponeTimerIdEnd = m_afterUsnForSyncChunkPerAPICallPostponeTimerId.end();
     for(auto it = m_afterUsnForSyncChunkPerAPICallPostponeTimerId.begin(); it != afterUsnForSyncChunkPerAPICallPostponeTimerIdEnd; ++it) {
@@ -5661,6 +5839,22 @@ void RemoteToLocalSynchronizationManager::timerEvent(QTimerEvent * pEvent)
         Note noteToUpdate = noteToUpdateIt.value();
         Q_UNUSED(m_notesToUpdatePerAPICallPostponeTimerId.erase(noteToUpdateIt));
         emitUpdateRequest(noteToUpdate);
+        return;
+    }
+
+    auto resourceToAddIt = m_resourcesToAddWithNotesPerAPICallPostponeTimerId.find(timerId);
+    if (resourceToAddIt != m_resourcesToAddWithNotesPerAPICallPostponeTimerId.end()) {
+        std::pair<Resource,Note> pair = resourceToAddIt.value();
+        Q_UNUSED(m_resourcesToAddWithNotesPerAPICallPostponeTimerId.erase(resourceToAddIt))
+        getFullResourceDataAsyncAndAddToLocalStorage(pair.first, pair.second);
+        return;
+    }
+
+    auto resourceToUpdateIt = m_resourcesToUpdateWithNotesPerAPICallPostponeTimerId.find(timerId);
+    if (resourceToUpdateIt != m_resourcesToUpdateWithNotesPerAPICallPostponeTimerId.end()) {
+        std::pair<Resource,Note> pair = resourceToAddIt.value();
+        Q_UNUSED(m_resourcesToAddWithNotesPerAPICallPostponeTimerId.erase(resourceToAddIt))
+        getFullResourceDataAsyncAndUpdateInLocalStorage(pair.first, pair.second);
         return;
     }
 
@@ -5974,8 +6168,8 @@ void RemoteToLocalSynchronizationManager::getFullResourceDataAsync(const Resourc
             return;
         }
 
-        QObject::connect(pNoteStore, QNSIGNAL(NoteStore,getNoteAsyncFinished,qint32,qevercloud::Note,qint32,ErrorString),
-                         this, QNSLOT(RemoteToLocalSynchronizationManager,onGetNoteAsyncFinished,qint32,qevercloud::Note,qint32,ErrorString),
+        QObject::connect(pNoteStore, QNSIGNAL(NoteStore,getResourceAsyncFinished,qint32,qevercloud::Resource,qint32,ErrorString),
+                         this, QNSLOT(RemoteToLocalSynchronizationManager,onGetResourceAsyncFinished,qint32,qevercloud::Note,qint32,ErrorString),
                          Qt::ConnectionType(Qt::AutoConnection | Qt::UniqueConnection));
 
         QNDEBUG(QStringLiteral("Using NoteStore corresponding to linked notebook with guid ")
@@ -6000,7 +6194,29 @@ void RemoteToLocalSynchronizationManager::getFullResourceDataAsyncAndAddToLocalS
     QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::getFullResourceDataAsyncAndAddToLocalStorage: resource = ")
             << resource << QStringLiteral("\nResource owning note: ") << resourceOwningNote);
 
-    // TODO: implement
+    if (Q_UNLIKELY(!resource.hasGuid()))
+    {
+        ErrorString errorDescription(QT_TR_NOOP("Internal error: the synced resource to be added "
+                                                "to the local storage has no guid"));
+        QNWARNING(errorDescription << QStringLiteral(", resource: ") << resource
+                  << QStringLiteral("\nResource owning note: ") << resourceOwningNote);
+        Q_EMIT failure(errorDescription);
+        return;
+    }
+
+    QString resourceGuid = resource.guid();
+
+    auto it = m_notesOwningResourcesPendingDownloadForAddingToLocalStorageByResourceGuid.find(resourceGuid);
+    if (Q_UNLIKELY(it != m_notesOwningResourcesPendingDownloadForAddingToLocalStorageByResourceGuid.end())) {
+        QNDEBUG(QStringLiteral("Resource with guid ") << resourceGuid << QStringLiteral(" is already being downloaded"));
+        return;
+    }
+
+    QNTRACE(QStringLiteral("Adding resource guid into the list of those pending download for adding to the local storage: ")
+            << resourceGuid);
+    m_notesOwningResourcesPendingDownloadForAddingToLocalStorageByResourceGuid[resourceGuid] = resourceOwningNote;
+
+    getFullResourceDataAsync(resource, resourceOwningNote);
 }
 
 void RemoteToLocalSynchronizationManager::getFullResourceDataAsyncAndUpdateInLocalStorage(const Resource & resource,
@@ -6009,7 +6225,29 @@ void RemoteToLocalSynchronizationManager::getFullResourceDataAsyncAndUpdateInLoc
     QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::getFullResourceDataAsyncAndUpdateInLocalStorage: resource = ")
             << resource << QStringLiteral("\nResource owning note: ") << resourceOwningNote);
 
-    // TODO: implement
+    if (Q_UNLIKELY(!resource.hasGuid()))
+    {
+        ErrorString errorDescription(QT_TR_NOOP("Internal error: the synced resource to be updated "
+                                                "in the local storage has no guid"));
+        QNWARNING(errorDescription << QStringLiteral(", resource: ") << resource
+                  << QStringLiteral("\nResource owning note: ") << resourceOwningNote);
+        Q_EMIT failure(errorDescription);
+        return;
+    }
+
+    QString resourceGuid = resource.guid();
+
+    auto it = m_resourcesPendingDownloadForUpdatingInLocalStorageWithNotesByResourceGuid.find(resourceGuid);
+    if (Q_UNLIKELY(it != m_resourcesPendingDownloadForUpdatingInLocalStorageWithNotesByResourceGuid.end())) {
+        QNDEBUG(QStringLiteral("Resource with guid ") << resourceGuid << QStringLiteral(" is already being downloaded"));
+        return;
+    }
+
+    QNTRACE(QStringLiteral("Adding resource guid into the list of those pending download for update in the local storage: ")
+            << resourceGuid);
+    m_resourcesPendingDownloadForUpdatingInLocalStorageWithNotesByResourceGuid[resourceGuid] = std::pair<Resource,Note>(resource, resourceOwningNote);
+
+    getFullResourceDataAsync(resource, resourceOwningNote);
 }
 
 void RemoteToLocalSynchronizationManager::downloadSyncChunksAndLaunchSync(qint32 afterUsn)
@@ -7440,11 +7678,7 @@ void RemoteToLocalSynchronizationManager::appendDataElementsFromSyncChunkToConta
         filteredResources << resource;
     }
 
-    QNTRACE(QStringLiteral("Will download data of " ) << filteredResources.size()
-            << QStringLiteral(" resources and append them to the container"));
-
-    // TODO: actually download the resources data
-
+    QNTRACE(QStringLiteral("Will append " ) << filteredResources.size() << QStringLiteral(" resources to the container"));
     container.append(filteredResources);
 }
 

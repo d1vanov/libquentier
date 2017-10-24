@@ -63,6 +63,9 @@ Q_SIGNALS:
     void notesDownloadProgress(quint32 notesDownloaded, quint32 totalNotesToDownload);
     void linkedNotebooksNotesDownloadProgress(quint32 notesDownloaded, quint32 totalNotesToDownload);
 
+    void resourcesDownloadProgress(quint32 resourcesDownloaded, quint32 totalResourcesToDownload);
+    void linkedNotebooksResourcesDownloadProgress(quint32 resourcesDownloaded, quint32 totalResourcesToDownload);
+
     void preparedDirtyObjectsForSending();
     void preparedLinkedNotebooksDirtyObjectsForSending();
 
