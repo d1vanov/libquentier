@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Dmitry Ivanov
+ * Copyright 2017 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -20,6 +20,7 @@
 #include "ExceptionHandlingHelpers.h"
 #include <quentier/types/Notebook.h>
 #include <quentier/types/Note.h>
+#include <quentier/types/Resource.h>
 #include <quentier/types/Tag.h>
 #include <quentier/types/SavedSearch.h>
 #include <quentier/logging/QuentierLogger.h>
@@ -461,6 +462,11 @@ qint32 NoteStore::getNote(const bool withContent, const bool withResourcesData,
                           const bool withResourcesRecognition, const bool withResourceAlternateData,
                           Note & note, ErrorString & errorDescription, qint32 & rateLimitSeconds)
 {
+    QNDEBUG(QStringLiteral("NoteStore::getNote: with content = ") << (withContent ? QStringLiteral("true") : QStringLiteral("false"))
+            << QStringLiteral(", with resources data = ") << (withResourcesData ? QStringLiteral("true") : QStringLiteral("false"))
+            << QStringLiteral(", with resources recognition = ") << (withResourcesRecognition ? QStringLiteral("true") : QStringLiteral("false"))
+            << QStringLiteral(", with resources alternate data = ") << (withResourceAlternateData ? QStringLiteral("true") : QStringLiteral("false")));
+
     if (!note.hasGuid()) {
         errorDescription.setBase(QT_TR_NOOP("can't get note: note's guid is empty"));
         return qevercloud::EDAMErrorCode::UNKNOWN;
@@ -536,6 +542,47 @@ bool NoteStore::getNoteAsync(const bool withContent, const bool withResourceData
     QObject::connect(pAsyncResult, QNSIGNAL(qevercloud::AsyncResult,finished,QVariant,QSharedPointer<EverCloudExceptionData>),
                      this, QNSLOT(NoteStore,onGetNoteAsyncFinished,QVariant,QSharedPointer<EverCloudExceptionData>));
     return true;
+}
+
+qint32 NoteStore::getResource(const bool withDataBody, const bool withRecognitionDataBody,
+                              const bool withAlternateDataBody, const bool withAttributes,
+                              const QString & authToken, Resource & resource, ErrorString & errorDescription,
+                              qint32 & rateLimitSeconds)
+{
+    QNDEBUG(QStringLiteral("NoteStore::getResource: with data body = ") << (withDataBody ? QStringLiteral("true") : QStringLiteral("false"))
+            << QStringLiteral(", with recognition data body = ") << (withRecognitionDataBody ? QStringLiteral("true") : QStringLiteral("false"))
+            << QStringLiteral(", with alternate data body = ") << (withAlternateDataBody ? QStringLiteral("true") : QStringLiteral("false"))
+            << QStringLiteral(", with attributes = ") << (withAttributes ? QStringLiteral("true") : QStringLiteral("false"))
+            << QStringLiteral(", resource guid = ") << (resource.hasGuid() ? resource.guid() : QStringLiteral("<not set>")));
+
+    if (!resource.hasGuid()) {
+        errorDescription.setBase(QT_TR_NOOP("can't get resource: resource's guid is empty"));
+        return qevercloud::EDAMErrorCode::UNKNOWN;
+    }
+
+    try
+    {
+        resource.qevercloudResource() = m_pQecNoteStore->getResource(resource.guid(), withDataBody, withRecognitionDataBody,
+                                                                     withAttributes, withAlternateDataBody, authToken);
+        resource.setLocal(false);
+        resource.setDirty(false);
+        return 0;
+    }
+    catch(const qevercloud::EDAMUserException & userException)
+    {
+        return processEdamUserExceptionForGetResource(resource.qevercloudResource(), userException, errorDescription);
+    }
+    catch(const qevercloud::EDAMNotFoundException & notFoundException)
+    {
+        processEdamNotFoundException(notFoundException, errorDescription);
+    }
+    catch(const qevercloud::EDAMSystemException & systemException)
+    {
+        return processEdamSystemException(systemException, errorDescription, rateLimitSeconds);
+    }
+    CATCH_GENERIC_EXCEPTIONS_NO_RET()
+
+    return qevercloud::EDAMErrorCode::UNKNOWN;
 }
 
 bool NoteStore::getResourceAsync(const bool withDataBody, const bool withRecognitionDataBody,

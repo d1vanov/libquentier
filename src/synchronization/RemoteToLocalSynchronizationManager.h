@@ -547,10 +547,14 @@ private:
     void unregisterResourcePendingAddOrUpdate(const Resource & resource);
 
     void overrideLocalNoteWithRemoteNote(Note & localNote, const qevercloud::Note & remoteNote) const;
+    void processResourceConflictAsNoteConflict(Note & remoteNote, const Note & localConflictingNote,
+                                               Resource & remoteNoteResource);
 
     void syncNextTagPendingProcessing();
 
     void junkFullSyncStaleDataItemsExpunger(FullSyncStaleDataItemsExpunger & expunger);
+
+    NoteStore * noteStoreForNote(const Note & note, QString & authToken, ErrorString & errorDescription) const;
 
 private:
     template <class T>
@@ -604,6 +608,27 @@ private:
         QString     m_noteGuid;
         int         m_resourceHeight;
         int         m_resourceWidth;
+    };
+
+    /**
+     * @brief The PostponedConflictingResourceData class encapsulates several data pieces
+     * required to be stored when there's a conflict during the sync of some individual resource
+     * but the attempt to download the full resource data causes the rate limit exceeding.
+     *
+     * The conflict of the individual resource is treated as the conflict of note owning that resource;
+     * so we need to preserve the "remote" version of the note (with the resource in question downloaded
+     * from Evernote service) + the local conflicting note (with local version of conflicting resource)
+     * and the resource (without full data as its downloading failed). So when the time comes, we can try to download
+     * the full resource data and if it works out, resolve the resource sync conflict.
+     */
+    class PostponedConflictingResourceData: public Printable
+    {
+    public:
+        Note        m_remoteNote;
+        Note        m_localConflictingNote;
+        Resource    m_remoteNoteResourceWithoutFullData;
+
+        virtual QTextStream & print(QTextStream & strm) const Q_DECL_OVERRIDE;
     };
 
     struct SyncMode
@@ -783,6 +808,8 @@ private:
 
     QHash<int,std::pair<Resource,Note> >    m_resourcesToAddWithNotesPerAPICallPostponeTimerId;
     QHash<int,std::pair<Resource,Note> >    m_resourcesToUpdateWithNotesPerAPICallPostponeTimerId;
+
+    QHash<int,PostponedConflictingResourceData> m_postponedConflictingResourceDataPerAPICallPostponeTimerId;
 
     QHash<int,qint32>                       m_afterUsnForSyncChunkPerAPICallPostponeTimerId;
 

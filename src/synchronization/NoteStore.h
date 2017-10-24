@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Dmitry Ivanov
+ * Copyright 2017 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -35,6 +35,7 @@ namespace quentier {
 
 QT_FORWARD_DECLARE_CLASS(Notebook)
 QT_FORWARD_DECLARE_CLASS(Note)
+QT_FORWARD_DECLARE_CLASS(Resource)
 QT_FORWARD_DECLARE_CLASS(Tag)
 QT_FORWARD_DECLARE_CLASS(SavedSearch)
 
@@ -104,6 +105,11 @@ public:
                       const bool withNoteAppDataValues, const bool withResourceAppDataValues,
                       const bool withNoteLimits, const QString & noteGuid,
                       const QString & authToken, ErrorString & errorDescription);
+
+    qint32 getResource(const bool withDataBody, const bool withRecognitionDataBody,
+                       const bool withAlternateDataBody, const bool withAttributes,
+                       const QString & authToken, Resource & resource, ErrorString & errorDescription,
+                       qint32 & rateLimitSeconds);
 
     bool getResourceAsync(const bool withDataBody, const bool withRecognitionDataBody,
                           const bool withAlternateDataBody, const bool withAttributes, const QString & resourceGuid,

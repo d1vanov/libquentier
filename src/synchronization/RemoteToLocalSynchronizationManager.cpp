@@ -216,6 +216,7 @@ RemoteToLocalSynchronizationManager::RemoteToLocalSynchronizationManager(IManage
     m_notesToUpdatePerAPICallPostponeTimerId(),
     m_resourcesToAddWithNotesPerAPICallPostponeTimerId(),
     m_resourcesToUpdateWithNotesPerAPICallPostponeTimerId(),
+    m_postponedConflictingResourceDataPerAPICallPostponeTimerId(),
     m_afterUsnForSyncChunkPerAPICallPostponeTimerId(),
     m_getLinkedNotebookSyncStateBeforeStartAPICallPostponeTimerId(),
     m_downloadLinkedNotebookSyncChunkAPICallPostponeTimerId(),
@@ -944,7 +945,7 @@ void RemoteToLocalSynchronizationManager::onFindNoteCompleted(Note note, bool wi
 
         const Notebook * pNotebook = getNotebookPerNote(note);
 
-        const Resource & resource = resourceWithFindRequestId.first;
+        Resource & resource = resourceWithFindRequestId.first;
         const QUuid & findResourceRequestId = resourceWithFindRequestId.second;
 
         if (shouldDownloadThumbnailsForNotes())
@@ -1027,45 +1028,13 @@ void RemoteToLocalSynchronizationManager::onFindNoteCompleted(Note note, bool wi
         QNDEBUG(QStringLiteral("Found duplicate resource in local storage which is marked dirty => "
                                "will treat it as a conflict of notes"));
 
-        // FIXME: should download the full resource data before creating the
-        // conflicting note
-
         Note conflictingNote = createConflictingNote(note);
 
         Note updatedNote(note);
         updatedNote.setDirty(false);
         updatedNote.setLocal(false);
 
-        bool hasResources = updatedNote.hasResources();
-        QList<Resource> resources;
-        if (hasResources) {
-            resources = updatedNote.resources();
-        }
-
-        int numResources = resources.size();
-        int resourceIndex = -1;
-        for(int i = 0; i < numResources; ++i)
-        {
-            const Resource & existingResource = resources[i];
-            if (existingResource.hasGuid() && (existingResource.guid() == resource.guid())) {
-                resourceIndex = i;
-                break;
-            }
-        }
-
-        if (resourceIndex < 0)
-        {
-            updatedNote.addResource(resource);
-        }
-        else
-        {
-            QList<Resource> noteResources = updatedNote.resources();
-            noteResources[resourceIndex] = resource;
-            updatedNote.setResources(noteResources);
-        }
-
-        emitUpdateRequest(updatedNote);
-        emitAddRequest(conflictingNote);
+        processResourceConflictAsNoteConflict(updatedNote, conflictingNote, resource);
     }
 }
 
@@ -1583,7 +1552,8 @@ void RemoteToLocalSynchronizationManager::performPostAddOrUpdateChecks<Note>(con
             !m_notesOwningResourcesPendingDownloadForAddingToLocalStorageByResourceGuid.empty() ||
             !m_resourcesPendingDownloadForUpdatingInLocalStorageWithNotesByResourceGuid.empty() ||
             !m_resourcesToAddWithNotesPerAPICallPostponeTimerId.empty() ||
-            !m_resourcesToUpdateWithNotesPerAPICallPostponeTimerId.empty())
+            !m_resourcesToUpdateWithNotesPerAPICallPostponeTimerId.empty() ||
+            !m_postponedConflictingResourceDataPerAPICallPostponeTimerId.empty())
         {
             return;
         }
@@ -4404,6 +4374,11 @@ void RemoteToLocalSynchronizationManager::checkAndIncrementNoteDownloadProgress(
 {
     QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::checkAndIncrementNoteDownloadProgress: note guid = ") << noteGuid);
 
+    if (m_originalNumberOfNotes == 0) {
+        QNDEBUG(QStringLiteral("No notes to download"));
+        return;
+    }
+
     if (m_resourceGuidsPendingInkNoteImageDownloadPerNoteGuid.contains(noteGuid)) {
         QNDEBUG(QStringLiteral("Found still pending ink note image download(s) for this note guid, won't increment the note download progress"));
         return;
@@ -4417,7 +4392,7 @@ void RemoteToLocalSynchronizationManager::checkAndIncrementNoteDownloadProgress(
     if (Q_UNLIKELY(m_numNotesDownloaded == m_originalNumberOfNotes)) {
         QNWARNING(QStringLiteral("The count of downloaded notes (") << m_numNotesDownloaded
                   << QStringLiteral(") is already equal to the original number of notes (")
-                  << m_originalNumberOfNotes << QStringLiteral("(, won't increment it further"));
+                  << m_originalNumberOfNotes << QStringLiteral("), won't increment it further"));
         return;
     }
 
@@ -4438,6 +4413,11 @@ void RemoteToLocalSynchronizationManager::checkAndIncrementResourceDownloadProgr
 {
     QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::checkAndIncrementResourceDownloadProgress: resource guid = ")
             << resourceGuid);
+
+    if (m_originalNumberOfResources == 0) {
+        QNDEBUG(QStringLiteral("No resources to download"));
+        return;
+    }
 
     if (Q_UNLIKELY(m_numResourcesDownloaded == m_originalNumberOfResources)) {
         QNWARNING(QStringLiteral("The count of downloaded resources (") << m_numResourcesDownloaded
@@ -5303,7 +5283,8 @@ void RemoteToLocalSynchronizationManager::checkServerDataMergeCompletion()
                               m_notesOwningResourcesPendingDownloadForAddingToLocalStorageByResourceGuid.empty() &&
                               m_resourcesPendingDownloadForUpdatingInLocalStorageWithNotesByResourceGuid.empty() &&
                               m_resourcesToAddWithNotesPerAPICallPostponeTimerId.empty() &&
-                              m_resourcesToUpdateWithNotesPerAPICallPostponeTimerId.empty();
+                              m_resourcesToUpdateWithNotesPerAPICallPostponeTimerId.empty() &&
+                              m_postponedConflictingResourceDataPerAPICallPostponeTimerId.empty();
         if (!resourcesReady)
         {
             QNDEBUG(QStringLiteral("Resources are not ready, pending response for ") << m_updateResourceRequestIds.size()
@@ -5316,7 +5297,8 @@ void RemoteToLocalSynchronizationManager::checkServerDataMergeCompletion()
                     << QStringLiteral(" async full new resource data downloads and/or ") << m_resourcesPendingDownloadForUpdatingInLocalStorageWithNotesByResourceGuid.size()
                     << QStringLiteral(" async full existing resource data downloads and/or ") << m_resourcesToAddWithNotesPerAPICallPostponeTimerId.size()
                     << QStringLiteral(" postponed resource add requests and/or ") << m_resourcesToUpdateWithNotesPerAPICallPostponeTimerId.size()
-                    << QStringLiteral(" postponed resource update requests"));
+                    << QStringLiteral(" postponed resource update requests and/or ") << m_postponedConflictingResourceDataPerAPICallPostponeTimerId.size()
+                    << QStringLiteral(" postponed resource conflict resolutions"));
             return;
         }
     }
@@ -5667,6 +5649,15 @@ void RemoteToLocalSynchronizationManager::clear()
     }
     m_resourcesToUpdateWithNotesPerAPICallPostponeTimerId.clear();
 
+    auto postponedConflictingResourceDataPerAPICallPostponeTimerIdEnd = m_postponedConflictingResourceDataPerAPICallPostponeTimerId.end();
+    for(auto it = m_postponedConflictingResourceDataPerAPICallPostponeTimerId.begin();
+        it != postponedConflictingResourceDataPerAPICallPostponeTimerIdEnd; ++it)
+    {
+        int key = it.key();
+        killTimer(key);
+    }
+    m_postponedConflictingResourceDataPerAPICallPostponeTimerId.clear();
+
     auto afterUsnForSyncChunkPerAPICallPostponeTimerIdEnd = m_afterUsnForSyncChunkPerAPICallPostponeTimerId.end();
     for(auto it = m_afterUsnForSyncChunkPerAPICallPostponeTimerId.begin(); it != afterUsnForSyncChunkPerAPICallPostponeTimerIdEnd; ++it) {
         int key = it.key();
@@ -5858,6 +5849,14 @@ void RemoteToLocalSynchronizationManager::timerEvent(QTimerEvent * pEvent)
         return;
     }
 
+    auto conflictingResourceDataIt = m_postponedConflictingResourceDataPerAPICallPostponeTimerId.find(timerId);
+    if (conflictingResourceDataIt != m_postponedConflictingResourceDataPerAPICallPostponeTimerId.end()) {
+        PostponedConflictingResourceData data = conflictingResourceDataIt.value();
+        Q_UNUSED(m_postponedConflictingResourceDataPerAPICallPostponeTimerId.erase(conflictingResourceDataIt))
+        processResourceConflictAsNoteConflict(data.m_remoteNote, data.m_localConflictingNote, data.m_remoteNoteResourceWithoutFullData);
+        return;
+    }
+
     auto afterUsnIt = m_afterUsnForSyncChunkPerAPICallPostponeTimerId.find(timerId);
     if (afterUsnIt != m_afterUsnForSyncChunkPerAPICallPostponeTimerId.end()) {
         qint32 afterUsn = afterUsnIt.value();
@@ -5866,13 +5865,13 @@ void RemoteToLocalSynchronizationManager::timerEvent(QTimerEvent * pEvent)
         return;
     }
 
-    if (timerId == m_getLinkedNotebookSyncStateBeforeStartAPICallPostponeTimerId) {
+    if (m_getLinkedNotebookSyncStateBeforeStartAPICallPostponeTimerId == timerId) {
         m_getLinkedNotebookSyncStateBeforeStartAPICallPostponeTimerId = 0;
         startLinkedNotebooksSync();
         return;
     }
 
-    if (timerId == m_downloadLinkedNotebookSyncChunkAPICallPostponeTimerId) {
+    if (m_downloadLinkedNotebookSyncChunkAPICallPostponeTimerId == timerId) {
         m_downloadLinkedNotebookSyncChunkAPICallPostponeTimerId = 0;
         startLinkedNotebooksSync();
         return;
@@ -5917,79 +5916,12 @@ void RemoteToLocalSynchronizationManager::getFullNoteDataAsync(const Note & note
         return;
     }
 
-    // Need to find out which note store is required - the one for user's own
-    // account or the one for the stuff from some linked notebook
-
     QString authToken;
-    NoteStore * pNoteStore = Q_NULLPTR;
-    auto linkedNotebookGuidIt = m_linkedNotebookGuidsByNotebookGuids.find(note.notebookGuid());
-    if (linkedNotebookGuidIt == m_linkedNotebookGuidsByNotebookGuids.end())
-    {
-        QNDEBUG(QStringLiteral("Found no linked notebook corresponding to notebook guid ") << note.notebookGuid()
-                << QStringLiteral(", using the note store for the user's own account"));
-        pNoteStore = &(m_manager.noteStore());
-        authToken = m_authenticationToken;
-    }
-    else
-    {
-        const QString & linkedNotebookGuid = linkedNotebookGuidIt.value();
-
-        auto authTokenIt = m_authenticationTokensAndShardIdsByLinkedNotebookGuid.find(linkedNotebookGuid);
-        if (Q_UNLIKELY(authTokenIt == m_authenticationTokensAndShardIdsByLinkedNotebookGuid.end())) {
-            ErrorString errorDescription(QT_TR_NOOP("Can't find the authentication token corresponding to the linked notebook"));
-            APPEND_NOTE_DETAILS(errorDescription, note)
-            QNWARNING(errorDescription << QStringLiteral(": ") << note);
-            Q_EMIT failure(errorDescription);
-            return;
-        }
-
-        authToken = authTokenIt.value().first;
-        const QString & linkedNotebookShardId = authTokenIt.value().second;
-
-        QString linkedNotebookNoteStoreUrl;
-        for(auto it = m_allLinkedNotebooks.constBegin(), end = m_allLinkedNotebooks.constEnd(); it != end; ++it)
-        {
-            if (it->hasGuid() && (it->guid() == linkedNotebookGuid) && it->hasNoteStoreUrl()) {
-                linkedNotebookNoteStoreUrl = it->noteStoreUrl();
-                break;
-            }
-        }
-
-        if (linkedNotebookNoteStoreUrl.isEmpty()) {
-            ErrorString errorDescription(QT_TR_NOOP("Can't find the note store URL corresponding to the linked notebook"));
-            APPEND_NOTE_DETAILS(errorDescription, note)
-            QNWARNING(errorDescription << QStringLiteral(": ") << note);
-            Q_EMIT failure(errorDescription);
-            return;
-        }
-
-        LinkedNotebook linkedNotebook;
-        linkedNotebook.setGuid(linkedNotebookGuid);
-        linkedNotebook.setShardId(linkedNotebookShardId);
-        linkedNotebook.setNoteStoreUrl(linkedNotebookNoteStoreUrl);
-        pNoteStore = m_manager.noteStoreForLinkedNotebook(linkedNotebook);
-        if (Q_UNLIKELY(!pNoteStore)) {
-            ErrorString errorDescription(QT_TR_NOOP("Can't find or create note store for "));
-            APPEND_NOTE_DETAILS(errorDescription, note)
-            QNWARNING(errorDescription << QStringLiteral(": ") << note);
-            Q_EMIT failure(errorDescription);
-            return;
-        }
-
-        if (Q_UNLIKELY(pNoteStore->noteStoreUrl().isEmpty())) {
-            ErrorString errorDescription(QT_TR_NOOP("Internal error: empty note store url for the linked notebook's note store"));
-            APPEND_NOTE_DETAILS(errorDescription, note)
-            QNWARNING(errorDescription << QStringLiteral(": ") << note);
-            Q_EMIT failure(errorDescription);
-            return;
-        }
-
-        QObject::connect(pNoteStore, QNSIGNAL(NoteStore,getNoteAsyncFinished,qint32,qevercloud::Note,qint32,ErrorString),
-                         this, QNSLOT(RemoteToLocalSynchronizationManager,onGetNoteAsyncFinished,qint32,qevercloud::Note,qint32,ErrorString),
-                         Qt::ConnectionType(Qt::AutoConnection | Qt::UniqueConnection));
-
-        QNDEBUG(QStringLiteral("Using NoteStore corresponding to linked notebook with guid ")
-                << linkedNotebookGuid << QStringLiteral(", note store url = ") << pNoteStore->noteStoreUrl());
+    ErrorString errorDescription;
+    NoteStore * pNoteStore = noteStoreForNote(note, authToken, errorDescription);
+    if (Q_UNLIKELY(!pNoteStore)) {
+        Q_EMIT failure(errorDescription);
+        return;
     }
 
     bool withContent = true;
@@ -6000,8 +5932,7 @@ void RemoteToLocalSynchronizationManager::getFullNoteDataAsync(const Note & note
     bool withNoteAppDataValues = true;
     bool withResourceAppDataValues = true;
     bool withNoteLimits = syncingLinkedNotebooksContent();
-
-    ErrorString errorDescription;
+    errorDescription.clear();
     bool res = pNoteStore->getNoteAsync(withContent, withResourceData, withResourceRecognition,
                                         withResourceAlternateData, withSharedNotes,
                                         withNoteAppDataValues, withResourceAppDataValues,
@@ -6292,6 +6223,7 @@ void RemoteToLocalSynchronizationManager::downloadSyncChunksAndLaunchSync(qint32
             if (rateLimitSeconds <= 0) {
                 errorDescription.setBase(QT_TR_NOOP("Rate limit reached but the number of seconds to wait is incorrect"));
                 errorDescription.details() = QString::number(rateLimitSeconds);
+                QNWARNING(errorDescription);
                 Q_EMIT failure(errorDescription);
                 return;
             }
@@ -6302,6 +6234,7 @@ void RemoteToLocalSynchronizationManager::downloadSyncChunksAndLaunchSync(qint32
             if (Q_UNLIKELY(timerId == 0)) {
                 ErrorString errorDescription(QT_TR_NOOP("Failed to start a timer to postpone the Evernote API call "
                                                         "due to rate limit exceeding"));
+                QNWARNING(errorDescription);
                 Q_EMIT failure(errorDescription);
                 return;
             }
@@ -7331,6 +7264,99 @@ void RemoteToLocalSynchronizationManager::overrideLocalNoteWithRemoteNote(Note &
     QNTRACE(QStringLiteral("Local note after overriding: ") << localNote);
 }
 
+void RemoteToLocalSynchronizationManager::processResourceConflictAsNoteConflict(Note & remoteNote, const Note & localConflictingNote,
+                                                                                Resource & remoteNoteResource)
+{
+    QString authToken;
+    ErrorString errorDescription;
+    NoteStore * pNoteStore = noteStoreForNote(remoteNote, authToken, errorDescription);
+    if (Q_UNLIKELY(!pNoteStore)) {
+        Q_EMIT failure(errorDescription);
+        return;
+    }
+
+    bool withDataBody = true;
+    bool withRecognitionDataBody = true;
+    bool withAlternateDataBody = true;
+    bool withAttributes = true;
+    errorDescription.clear();
+    qint32 rateLimitSeconds = 0;
+    qint32 errorCode = pNoteStore->getResource(withDataBody, withRecognitionDataBody, withAlternateDataBody,
+                                               withAttributes, authToken, remoteNoteResource, errorDescription,
+                                               rateLimitSeconds);
+    if (errorCode == qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED)
+    {
+        if (Q_UNLIKELY(rateLimitSeconds <= 0)) {
+            errorDescription.setBase(QT_TR_NOOP("Rate limit reached but the number of seconds to wait is incorrect"));
+            errorDescription.details() = QString::number(rateLimitSeconds);
+            Q_EMIT failure(errorDescription);
+            return;
+        }
+
+        int timerId = startTimer(SEC_TO_MSEC(rateLimitSeconds));
+        if (Q_UNLIKELY(timerId == 0)) {
+            errorDescription.setBase(QT_TR_NOOP("Failed to start a timer to postpone the Evernote API call "
+                                                "due to rate limit exceeding"));
+            Q_EMIT failure(errorDescription);
+            return;
+        }
+
+        PostponedConflictingResourceData data;
+        data.m_remoteNote = remoteNote;
+        data.m_localConflictingNote = localConflictingNote;
+        data.m_remoteNoteResourceWithoutFullData = remoteNoteResource;
+        m_postponedConflictingResourceDataPerAPICallPostponeTimerId[timerId] = data;
+
+        Q_EMIT rateLimitExceeded(rateLimitSeconds);
+        return;
+    }
+    else if (errorCode == qevercloud::EDAMErrorCode::AUTH_EXPIRED)
+    {
+        handleAuthExpiration();
+        return;
+    }
+    else if (errorCode != 0)
+    {
+        ErrorString errorMessage(QT_TR_NOOP("Failed to download full resource data"));
+        errorMessage.additionalBases().append(errorDescription.base());
+        errorMessage.additionalBases().append(errorDescription.additionalBases());
+        errorMessage.details() = errorDescription.details();
+        Q_EMIT failure(errorMessage);
+        return;
+    }
+
+    bool hasResources = remoteNote.hasResources();
+    QList<Resource> resources;
+    if (hasResources) {
+        resources = remoteNote.resources();
+    }
+
+    int numResources = resources.size();
+    int resourceIndex = -1;
+    for(int i = 0; i < numResources; ++i)
+    {
+        const Resource & existingResource = resources[i];
+        if (existingResource.hasGuid() && (existingResource.guid() == remoteNoteResource.guid())) {
+            resourceIndex = i;
+            break;
+        }
+    }
+
+    if (resourceIndex < 0)
+    {
+        remoteNote.addResource(remoteNoteResource);
+    }
+    else
+    {
+        QList<Resource> noteResources = remoteNote.resources();
+        noteResources[resourceIndex] = remoteNoteResource;
+        remoteNote.setResources(noteResources);
+    }
+
+    emitUpdateRequest(remoteNote);
+    emitAddRequest(localConflictingNote);
+}
+
 void RemoteToLocalSynchronizationManager::syncNextTagPendingProcessing()
 {
     QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::syncNextTagPendingProcessing"));
@@ -7355,6 +7381,94 @@ void RemoteToLocalSynchronizationManager::junkFullSyncStaleDataItemsExpunger(Ful
                         this, QNSLOT(RemoteToLocalSynchronizationManager,onFullSyncStaleDataItemsExpungerFailure,ErrorString));
     expunger.setParent(Q_NULLPTR);
     expunger.deleteLater();
+}
+
+NoteStore * RemoteToLocalSynchronizationManager::noteStoreForNote(const Note & note, QString & authToken, ErrorString & errorDescription) const
+{
+    authToken.resize(0);
+
+    if (!note.hasGuid()) {
+        errorDescription.setBase(QT_TR_NOOP("Detected the attempt to get full note's data for a note without guid"));
+        APPEND_NOTE_DETAILS(errorDescription, note)
+        QNWARNING(errorDescription << QStringLiteral(": ") << note);
+        return Q_NULLPTR;
+    }
+
+    if (!note.hasNotebookGuid()) {
+        errorDescription.setBase(QT_TR_NOOP("Detected the attempt to get full note's data for a note without notebook guid"));
+        APPEND_NOTE_DETAILS(errorDescription, note)
+        QNWARNING(errorDescription << QStringLiteral(": ") << note);
+        return Q_NULLPTR;
+    }
+
+    // Need to find out which note store is required - the one for user's own
+    // account or the one for the stuff from some linked notebook
+
+    NoteStore * pNoteStore = Q_NULLPTR;
+    auto linkedNotebookGuidIt = m_linkedNotebookGuidsByNotebookGuids.find(note.notebookGuid());
+    if (linkedNotebookGuidIt == m_linkedNotebookGuidsByNotebookGuids.end()) {
+        QNDEBUG(QStringLiteral("Found no linked notebook corresponding to notebook guid ") << note.notebookGuid()
+                << QStringLiteral(", using the note store for the user's own account"));
+        pNoteStore = &(m_manager.noteStore());
+        authToken = m_authenticationToken;
+        return pNoteStore;
+    }
+
+    const QString & linkedNotebookGuid = linkedNotebookGuidIt.value();
+
+    auto authTokenIt = m_authenticationTokensAndShardIdsByLinkedNotebookGuid.find(linkedNotebookGuid);
+    if (Q_UNLIKELY(authTokenIt == m_authenticationTokensAndShardIdsByLinkedNotebookGuid.end())) {
+        errorDescription.setBase(QT_TR_NOOP("Can't find the authentication token corresponding to the linked notebook"));
+        APPEND_NOTE_DETAILS(errorDescription, note)
+        QNWARNING(errorDescription << QStringLiteral(": ") << note);
+        return Q_NULLPTR;
+    }
+
+    authToken = authTokenIt.value().first;
+    const QString & linkedNotebookShardId = authTokenIt.value().second;
+
+    QString linkedNotebookNoteStoreUrl;
+    for(auto it = m_allLinkedNotebooks.constBegin(), end = m_allLinkedNotebooks.constEnd(); it != end; ++it)
+    {
+        if (it->hasGuid() && (it->guid() == linkedNotebookGuid) && it->hasNoteStoreUrl()) {
+            linkedNotebookNoteStoreUrl = it->noteStoreUrl();
+            break;
+        }
+    }
+
+    if (linkedNotebookNoteStoreUrl.isEmpty()) {
+        errorDescription.setBase(QT_TR_NOOP("Can't find the note store URL corresponding to the linked notebook"));
+        APPEND_NOTE_DETAILS(errorDescription, note)
+        QNWARNING(errorDescription << QStringLiteral(": ") << note);
+        return Q_NULLPTR;
+    }
+
+    LinkedNotebook linkedNotebook;
+    linkedNotebook.setGuid(linkedNotebookGuid);
+    linkedNotebook.setShardId(linkedNotebookShardId);
+    linkedNotebook.setNoteStoreUrl(linkedNotebookNoteStoreUrl);
+    pNoteStore = m_manager.noteStoreForLinkedNotebook(linkedNotebook);
+    if (Q_UNLIKELY(!pNoteStore)) {
+        errorDescription.setBase(QT_TR_NOOP("Can't find or create note store for "));
+        APPEND_NOTE_DETAILS(errorDescription, note)
+        QNWARNING(errorDescription << QStringLiteral(": ") << note);
+        return Q_NULLPTR;
+    }
+
+    if (Q_UNLIKELY(pNoteStore->noteStoreUrl().isEmpty())) {
+        errorDescription.setBase(QT_TR_NOOP("Internal error: empty note store url for the linked notebook's note store"));
+        APPEND_NOTE_DETAILS(errorDescription, note)
+        QNWARNING(errorDescription << QStringLiteral(": ") << note);
+        return Q_NULLPTR;
+    }
+
+    QObject::connect(pNoteStore, QNSIGNAL(NoteStore,getNoteAsyncFinished,qint32,qevercloud::Note,qint32,ErrorString),
+                     this, QNSLOT(RemoteToLocalSynchronizationManager,onGetNoteAsyncFinished,qint32,qevercloud::Note,qint32,ErrorString),
+                     Qt::ConnectionType(Qt::AutoConnection | Qt::UniqueConnection));
+
+    QNDEBUG(QStringLiteral("Using NoteStore corresponding to linked notebook with guid ")
+            << linkedNotebookGuid << QStringLiteral(", note store url = ") << pNoteStore->noteStoreUrl());
+    return pNoteStore;
 }
 
 QTextStream & operator<<(QTextStream & strm, const RemoteToLocalSynchronizationManager::SyncMode::type & obj)
@@ -8419,6 +8533,15 @@ bool RemoteToLocalSynchronizationManager::sortTagsByParentChildRelations(TagsLis
     }
 
     return true;
+}
+
+QTextStream & RemoteToLocalSynchronizationManager::PostponedConflictingResourceData::print(QTextStream & strm) const
+{
+    strm << QStringLiteral("PostponedConflictingResourceData: {\n  Remote note:\n")
+         << m_remoteNote << QStringLiteral("\n\n  Local conflicting note:\n")
+         << m_localConflictingNote << QStringLiteral("\n\n  Remote note's resource without full data:\n")
+         << m_remoteNoteResourceWithoutFullData << QStringLiteral("\n};\n");
+    return strm;
 }
 
 } // namespace quentier
