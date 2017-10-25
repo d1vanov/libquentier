@@ -2274,6 +2274,7 @@ void RemoteToLocalSynchronizationManager::onUpdateNoteCompleted(Note note, bool 
 
         Q_UNUSED(m_updateNoteRequestIds.erase(it));
 
+        performPostAddOrUpdateChecks(note);
         checkServerDataMergeCompletion();
         return;
     }
@@ -2287,6 +2288,7 @@ void RemoteToLocalSynchronizationManager::onUpdateNoteCompleted(Note note, bool 
         Q_UNUSED(m_updateNoteWithThumbnailRequestIds.erase(tit))
 
         checkAndIncrementNoteDownloadProgress(note.hasGuid() ? note.guid() : QString());
+        performPostAddOrUpdateChecks(note);
         checkServerDataMergeCompletion();
         return;
     }
@@ -3577,7 +3579,7 @@ void RemoteToLocalSynchronizationManager::launchSync()
         return;
     }
 
-    if (!notesSyncInProgress()) {
+    if (!notesSyncInProgress() && !resourcesSyncInProgress()) {
         launchResourcesSync();
     }
 
@@ -4479,7 +4481,25 @@ bool RemoteToLocalSynchronizationManager::notesSyncInProgress() const
             !m_notesToAddPerAPICallPostponeTimerId.isEmpty() ||
             !m_notesToUpdatePerAPICallPostponeTimerId.isEmpty() ||
             !m_guidsOfNotesPendingDownloadForAddingToLocalStorage.isEmpty() ||
-            !m_notesPendingDownloadForUpdatingInLocalStorageByGuid.isEmpty());
+            !m_notesPendingDownloadForUpdatingInLocalStorageByGuid.isEmpty() ||
+            !m_notesPendingInkNoteImagesDownloadByFindNotebookRequestId.isEmpty() ||
+            !m_notesPendingThumbnailDownloadByFindNotebookRequestId.isEmpty() ||
+            !m_notesPendingThumbnailDownloadByGuid.isEmpty() ||
+            !m_updateNoteWithThumbnailRequestIds.isEmpty());
+}
+
+bool RemoteToLocalSynchronizationManager::resourcesSyncInProgress() const
+{
+    return (!m_findResourceByGuidRequestIds.isEmpty() ||
+            !m_addResourceRequestIds.isEmpty() ||
+            !m_updateResourceRequestIds.isEmpty() ||
+            !m_resourcesWithFindRequestIdsPerFindNoteRequestId.isEmpty() ||
+            !m_inkNoteResourceDataPerFindNotebookRequestId.isEmpty() ||
+            !m_notesOwningResourcesPendingDownloadForAddingToLocalStorageByResourceGuid.isEmpty() ||
+            !m_resourcesPendingDownloadForUpdatingInLocalStorageWithNotesByResourceGuid.isEmpty() ||
+            !m_resourcesToAddWithNotesPerAPICallPostponeTimerId.isEmpty() ||
+            !m_resourcesToUpdateWithNotesPerAPICallPostponeTimerId.isEmpty() ||
+            !m_postponedConflictingResourceDataPerAPICallPostponeTimerId.isEmpty());
 }
 
 QTextStream & operator<<(QTextStream & strm, const RemoteToLocalSynchronizationManager::ContentSource::type & obj)
@@ -4538,7 +4558,7 @@ void RemoteToLocalSynchronizationManager::checkNotesSyncCompletionAndLaunchResou
         return;
     }
 
-    if (!notesSyncInProgress()) {
+    if (!notesSyncInProgress() && !resourcesSyncInProgress()) {
         launchResourcesSync();
     }
 }
@@ -5279,7 +5299,6 @@ void RemoteToLocalSynchronizationManager::checkServerDataMergeCompletion()
         bool resourcesReady = m_findResourceByGuidRequestIds.empty() && m_updateResourceRequestIds.empty() &&
                               m_addResourceRequestIds.empty() && m_resourcesWithFindRequestIdsPerFindNoteRequestId.empty() &&
                               m_inkNoteResourceDataPerFindNotebookRequestId.empty() &&
-                              m_resourceGuidsPendingInkNoteImageDownloadPerNoteGuid.empty() &&
                               m_notesOwningResourcesPendingDownloadForAddingToLocalStorageByResourceGuid.empty() &&
                               m_resourcesPendingDownloadForUpdatingInLocalStorageWithNotesByResourceGuid.empty() &&
                               m_resourcesToAddWithNotesPerAPICallPostponeTimerId.empty() &&
@@ -5292,9 +5311,10 @@ void RemoteToLocalSynchronizationManager::checkServerDataMergeCompletion()
                     << QStringLiteral(" resource add requests and/or ") << m_resourcesWithFindRequestIdsPerFindNoteRequestId.size()
                     << QStringLiteral(" find resource by guid requests and/or ") << m_findResourceByGuidRequestIds.size()
                     << QStringLiteral(" resource find note requests and/or ") << m_inkNoteResourceDataPerFindNotebookRequestId.size()
-                    << QStringLiteral(" resource find notebook for ink note image download processing and/or ") << m_resourceGuidsPendingInkNoteImageDownloadPerNoteGuid.size()
-                    << QStringLiteral(" pending ink note image downloads and/or ") << m_notesOwningResourcesPendingDownloadForAddingToLocalStorageByResourceGuid.size()
-                    << QStringLiteral(" async full new resource data downloads and/or ") << m_resourcesPendingDownloadForUpdatingInLocalStorageWithNotesByResourceGuid.size()
+                    << QStringLiteral(" resource find notebook for ink note image download processing and/or ")
+                    << m_notesOwningResourcesPendingDownloadForAddingToLocalStorageByResourceGuid.size()
+                    << QStringLiteral(" async full new resource data downloads and/or ")
+                    << m_resourcesPendingDownloadForUpdatingInLocalStorageWithNotesByResourceGuid.size()
                     << QStringLiteral(" async full existing resource data downloads and/or ") << m_resourcesToAddWithNotesPerAPICallPostponeTimerId.size()
                     << QStringLiteral(" postponed resource add requests and/or ") << m_resourcesToUpdateWithNotesPerAPICallPostponeTimerId.size()
                     << QStringLiteral(" postponed resource update requests and/or ") << m_postponedConflictingResourceDataPerAPICallPostponeTimerId.size()
@@ -6855,9 +6875,6 @@ qint32 RemoteToLocalSynchronizationManager::nonProcessedItemsSmallestUsn(const Q
         bool syncingNotes = notesSyncInProgress();
         if (syncingNotebooks || syncingTags || syncingNotes)
         {
-            // The sync of either notes or resources or both hasn't started yet so need to precompute the mapping
-            // of note guid to linked notebook guid and possibly the mapping of resource guid to linked notebook guid
-
             NotesList localNotesList;
             if (syncingNotebooks || syncingTags)
             {

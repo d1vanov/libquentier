@@ -308,6 +308,7 @@ private:
     bool notebooksSyncInProgress() const;
     bool tagsSyncInProgress() const;
     bool notesSyncInProgress() const;
+    bool resourcesSyncInProgress() const;
 
     struct ContentSource
     {
