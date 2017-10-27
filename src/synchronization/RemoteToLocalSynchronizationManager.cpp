@@ -571,90 +571,6 @@ void RemoteToLocalSynchronizationManager::emitAddRequest<Note>(const Note & note
     Q_EMIT addNote(note, addNoteRequestId);
 }
 
-template <>
-void RemoteToLocalSynchronizationManager::emitAddRequest<Resource>(const Resource & resource)
-{
-    QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::emitAddRequest<Resource>: ") << resource);
-
-    registerResourcePendingAddOrUpdate(resource);
-
-    QString resourceGuid = (resource.hasGuid() ? resource.guid() : QString());
-    QString resourceLocalUid = resource.localUid();
-    QPair<QString,QString> key(resourceGuid, resourceLocalUid);
-
-    QUuid addResourceRequestId = QUuid::createUuid();
-    Q_UNUSED(m_addResourceRequestIds.insert(addResourceRequestId));
-    QNTRACE(QStringLiteral("Emitting the request to add resource to local storage: request id = ")
-            << addResourceRequestId << QStringLiteral(", resource: ") << resource);
-    Q_EMIT addResource(resource, addResourceRequestId);
-}
-
-template <>
-void RemoteToLocalSynchronizationManager::emitUpdateRequest<Tag>(const Tag & tag)
-{
-    QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::emitUpdateRequest<Tag>: tag = ") << tag);
-
-    registerTagPendingAddOrUpdate(tag);
-
-    QUuid updateTagRequestId = QUuid::createUuid();
-    Q_UNUSED(m_updateTagRequestIds.insert(updateTagRequestId));
-    QNTRACE(QStringLiteral("Emitting the request to update tag: request id = ") << updateTagRequestId
-            << QStringLiteral(", tag: ") << tag);
-    Q_EMIT updateTag(tag, updateTagRequestId);
-}
-
-template <>
-void RemoteToLocalSynchronizationManager::emitUpdateRequest<SavedSearch>(const SavedSearch & search)
-{
-    QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::emitUpdateRequest<SavedSearch>: search = ") << search);
-
-    registerSavedSearchPendingAddOrUpdate(search);
-
-    QUuid updateSavedSearchRequestId = QUuid::createUuid();
-    Q_UNUSED(m_updateSavedSearchRequestIds.insert(updateSavedSearchRequestId));
-    QNTRACE(QStringLiteral("Emitting the request to update saved search: request id = ") << updateSavedSearchRequestId
-            << QStringLiteral(", saved search: ") << search);
-    Q_EMIT updateSavedSearch(search, updateSavedSearchRequestId);
-}
-
-template <>
-void RemoteToLocalSynchronizationManager::emitUpdateRequest<LinkedNotebook>(const LinkedNotebook & linkedNotebook)
-{
-    QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::emitUpdateRequest<LinkedNotebook>: linked notebook = ")
-            << linkedNotebook);
-
-    registerLinkedNotebookPendingAddOrUpdate(linkedNotebook);
-
-    QUuid updateLinkedNotebookRequestId = QUuid::createUuid();
-    Q_UNUSED(m_updateLinkedNotebookRequestIds.insert(updateLinkedNotebookRequestId));
-    QNTRACE(QStringLiteral("Emitting the request to update linked notebook: request id = ") << updateLinkedNotebookRequestId
-            << QStringLiteral(", linked notebook: ") << linkedNotebook);
-    Q_EMIT updateLinkedNotebook(linkedNotebook, updateLinkedNotebookRequestId);
-}
-
-template <>
-void RemoteToLocalSynchronizationManager::emitUpdateRequest<Notebook>(const Notebook & notebook)
-{
-    QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::emitUpdateRequest<Notebook>: notebook = ") << notebook);
-
-    registerNotebookPendingAddOrUpdate(notebook);
-
-    QUuid updateNotebookRequestId = QUuid::createUuid();
-    Q_UNUSED(m_updateNotebookRequestIds.insert(updateNotebookRequestId));
-    QNTRACE(QStringLiteral("Emitting the request to update notebook: request id = ") << updateNotebookRequestId
-            << QStringLiteral(", notebook: ") << notebook);
-    Q_EMIT updateNotebook(notebook, updateNotebookRequestId);
-}
-
-template <>
-void RemoteToLocalSynchronizationManager::emitUpdateRequest<Note>(const Note & note)
-{
-    QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::emitUpdateRequest<Note>: note = ") << note);
-
-    registerNotePendingAddOrUpdate(note);
-    getFullNoteDataAsyncAndUpdateInLocalStorage(note);
-}
-
 void RemoteToLocalSynchronizationManager::onFindUserCompleted(User user, QUuid requestId)
 {
     if (requestId != m_findUserRequestId) {
@@ -1014,6 +930,7 @@ void RemoteToLocalSynchronizationManager::onFindNoteCompleted(Note note, bool wi
         if (resourceFoundIt == m_resourceFoundFlagPerFindResourceRequestId.end()) {
             QNWARNING(QStringLiteral("Duplicate of synchronized resource was not found in the local storage database! "
                                      "Attempting to add it to local storage"));
+            registerResourcePendingAddOrUpdate(resource);
             getFullResourceDataAsyncAndAddToLocalStorage(resource, note);
             return;
         }
@@ -1021,6 +938,7 @@ void RemoteToLocalSynchronizationManager::onFindNoteCompleted(Note note, bool wi
         if (!resource.isDirty()) {
             QNDEBUG(QStringLiteral("Found duplicate resource in local storage which is not marked dirty => "
                                    "overriding it with the version received from the remote storage"));
+            registerResourcePendingAddOrUpdate(resource);
             getFullResourceDataAsyncAndUpdateInLocalStorage(resource, note);
             return;
         }
@@ -1575,13 +1493,19 @@ void RemoteToLocalSynchronizationManager::performPostAddOrUpdateChecks<Resource>
 {
     unregisterResourcePendingAddOrUpdate(resource);
 
-    if (m_addResourceRequestIds.empty() && m_updateResourceRequestIds.empty() &&
-        m_resourcesWithFindRequestIdsPerFindNoteRequestId.empty() &&
-        m_inkNoteResourceDataPerFindNotebookRequestId.empty() &&
-        m_resourceGuidsPendingInkNoteImageDownloadPerNoteGuid.empty() &&
-        m_notesPendingInkNoteImagesDownloadByFindNotebookRequestId.empty() &&
-        m_notesPendingThumbnailDownloadByFindNotebookRequestId.empty() &&
-        m_notesPendingThumbnailDownloadByGuid.empty())
+    if (m_findResourceByGuidRequestIds.isEmpty() && m_addResourceRequestIds.isEmpty() &&
+        m_updateResourceRequestIds.isEmpty() &&
+        m_resourcesWithFindRequestIdsPerFindNoteRequestId.isEmpty() &&
+        m_inkNoteResourceDataPerFindNotebookRequestId.isEmpty() &&
+        m_resourceGuidsPendingInkNoteImageDownloadPerNoteGuid.isEmpty() &&
+        m_notesPendingInkNoteImagesDownloadByFindNotebookRequestId.isEmpty() &&
+        m_notesPendingThumbnailDownloadByFindNotebookRequestId.isEmpty() &&
+        m_notesPendingThumbnailDownloadByGuid.isEmpty() &&
+        m_notesOwningResourcesPendingDownloadForAddingToLocalStorageByResourceGuid.isEmpty() &&
+        m_resourcesPendingDownloadForUpdatingInLocalStorageWithNotesByResourceGuid.isEmpty() &&
+        m_resourcesToAddWithNotesPerAPICallPostponeTimerId.isEmpty() &&
+        m_resourcesToUpdateWithNotesPerAPICallPostponeTimerId.isEmpty() &&
+        m_postponedConflictingResourceDataPerAPICallPostponeTimerId.isEmpty())
     {
         if (!m_expungedNotes.empty()) {
             expungeNotes();
@@ -2358,16 +2282,7 @@ void RemoteToLocalSynchronizationManager::onAddResourceFailed(Resource resource,
 
 void RemoteToLocalSynchronizationManager::onUpdateResourceCompleted(Resource resource, QUuid requestId)
 {
-    auto it = m_updateResourceRequestIds.find(requestId);
-    if (it != m_updateResourceRequestIds.end())
-    {
-        QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::onUpdateResourceCompleted: resource = ")
-                << resource << QStringLiteral("\nrequestId = ") << requestId);
-
-        Q_UNUSED(m_updateResourceRequestIds.erase(it));
-
-        checkServerDataMergeCompletion();
-    }
+    onUpdateDataElementCompleted<Resource>(resource, requestId, QStringLiteral("Resource"), m_updateResourceRequestIds);
 }
 
 void RemoteToLocalSynchronizationManager::onUpdateResourceFailed(Resource resource, ErrorString errorDescription, QUuid requestId)
@@ -2885,8 +2800,18 @@ void RemoteToLocalSynchronizationManager::onGetResourceAsyncFinished(qint32 erro
 
     checkAndIncrementResourceDownloadProgress(resourceGuid);
 
-    if (needToAddResource) {
-        emitAddRequest(resource);
+    if (needToAddResource)
+    {
+        QString resourceGuid = (resource.hasGuid() ? resource.guid() : QString());
+        QString resourceLocalUid = resource.localUid();
+        QPair<QString,QString> key(resourceGuid, resourceLocalUid);
+
+        QUuid addResourceRequestId = QUuid::createUuid();
+        Q_UNUSED(m_addResourceRequestIds.insert(addResourceRequestId));
+        QNTRACE(QStringLiteral("Emitting the request to add resource to local storage: request id = ")
+                << addResourceRequestId << QStringLiteral(", resource: ") << resource);
+        Q_EMIT addResource(resource, addResourceRequestId);
+
         return;
     }
 
@@ -5849,7 +5774,8 @@ void RemoteToLocalSynchronizationManager::timerEvent(QTimerEvent * pEvent)
     if (noteToUpdateIt != m_notesToUpdatePerAPICallPostponeTimerId.end()) {
         Note noteToUpdate = noteToUpdateIt.value();
         Q_UNUSED(m_notesToUpdatePerAPICallPostponeTimerId.erase(noteToUpdateIt));
-        emitUpdateRequest(noteToUpdate);
+        registerNotePendingAddOrUpdate(noteToUpdate);
+        getFullNoteDataAsyncAndUpdateInLocalStorage(noteToUpdate);
         return;
     }
 
@@ -7370,7 +7296,15 @@ void RemoteToLocalSynchronizationManager::processResourceConflictAsNoteConflict(
         remoteNote.setResources(noteResources);
     }
 
-    emitUpdateRequest(remoteNote);
+    // Update remote note
+    registerNotePendingAddOrUpdate(remoteNote);
+    QUuid updateNoteRequestId = QUuid::createUuid();
+    Q_UNUSED(m_updateNoteRequestIds.insert(updateNoteRequestId));
+    QNTRACE(QStringLiteral("Emitting the request to update the remote note in local storage: request id = ")
+            << updateNoteRequestId << QStringLiteral(", note; ") << remoteNote);
+    Q_EMIT updateNote(remoteNote, /* update resources = */ true, /* update tags = */ true, updateNoteRequestId);
+
+    // Add local conflicting note
     emitAddRequest(localConflictingNote);
 }
 
@@ -8511,7 +8445,8 @@ void RemoteToLocalSynchronizationManager::resolveSyncConflict(const qevercloud::
     Note updatedNote(localConflict);
     overrideLocalNoteWithRemoteNote(updatedNote, remoteNote);
 
-    emitUpdateRequest(updatedNote);
+    registerNotePendingAddOrUpdate(updatedNote);
+    getFullNoteDataAsyncAndUpdateInLocalStorage(updatedNote);
 
     if (shouldCreateConflictingNote) {
         Note conflictingNote = createConflictingNote(localConflict);
@@ -8534,7 +8469,13 @@ void RemoteToLocalSynchronizationManager::resolveSyncConflict(const qevercloud::
     linkedNotebook.qevercloudLinkedNotebook() = remoteLinkedNotebook;
     linkedNotebook.setDirty(false);
 
-    emitUpdateRequest(linkedNotebook);
+    registerLinkedNotebookPendingAddOrUpdate(linkedNotebook);
+
+    QUuid updateLinkedNotebookRequestId = QUuid::createUuid();
+    Q_UNUSED(m_updateLinkedNotebookRequestIds.insert(updateLinkedNotebookRequestId));
+    QNTRACE(QStringLiteral("Emitting the request to update linked notebook: request id = ") << updateLinkedNotebookRequestId
+            << QStringLiteral(", linked notebook: ") << linkedNotebook);
+    Q_EMIT updateLinkedNotebook(linkedNotebook, updateLinkedNotebookRequestId);
 }
 
 bool RemoteToLocalSynchronizationManager::sortTagsByParentChildRelations(TagsList & tagList)

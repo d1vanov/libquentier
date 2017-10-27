@@ -403,9 +403,6 @@ private:
     // ========== Update helpers ===========
 
     template <class ElementType>
-    void emitUpdateRequest(const ElementType & elementToUpdate);
-
-    template <class ElementType>
     void onUpdateDataElementCompleted(const ElementType & element, const QUuid & requestId,
                                       const QString & typeName, QSet<QUuid> & updateElementRequestIds);
 
