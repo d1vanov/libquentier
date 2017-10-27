@@ -204,17 +204,23 @@ function ToDoCheckboxAutomaticInserter() {
             return;
         }
 
+        console.log("Initial selection anchor node: " + this.nodeToString(currentNode));
+
         if (currentNode.nodeType == 1) {
             if (selection.anchorOffset) {
+                console.log("Selection anchor offset = " + selection.anchorOffset + ", selection anchor node has " +
+                            currentNode.childNodes.length + " child nodes");
                 currentNode = currentNode.childNodes[Math.min(selection.anchorOffset, currentNode.childNodes.length-1)];
                 if (!currentNode) {
                     console.log("No node at selection anchor offset of " + selection.anchorOffset);
                     return;
                 }
+                console.log("Current node after processing the anchor offset: " + this.nodeToString(currentNode));
             }
 
             while(currentNode.childNodes.length) {
                 currentNode = currentNode.childNodes[currentNode.childNodes.length-1];
+                console.log("Moved to the last child node: " + this.nodeToString(currentNode));
             }
         }
 
@@ -251,8 +257,11 @@ function ToDoCheckboxAutomaticInserter() {
             var parentNode = currentNode.parentNode;
 
             currentNode = currentNode.previousSibling;
+            console.log("Previous sibling node: " + this.nodeToString(currentNode));
+
             if (!currentNode) {
                 currentNode = parentNode;
+                console.log("No previous sibling node, moved to parent node: " + this.nodeToString(currentNode));
             }
         }
 
@@ -304,10 +313,16 @@ function ToDoCheckboxAutomaticInserter() {
         observer.stop();
         try {
             if (lastElementNode.parentNode.nodeName == "DIV") {
+                console.log("Last element node's parent node is DIV");
                 this.pushUndo(lastElementNode.parentNode.parentNode,
                               lastElementNode.parentNode.parentNode.innerHTML);
                 var newDiv = document.createElement("div");
-                lastElementNode.parentNode.parentNode.appendChild(newDiv);
+                if (lastElementNode.parentNode.nextSibling) {
+                    lastElementNode.parentNode.parentNode.insertBefore(newDiv, lastElementNode.parentNode.nextSibling);
+                }
+                else {
+                    lastElementNode.parentNode.parentNode.appendChild(newDiv);
+                }
                 var newCheckbox = document.createElement("img");
                 newCheckbox.src = "qrc:/checkbox_icons/checkbox_no.png";
                 newCheckbox.className = "checkbox_unchecked";
@@ -321,6 +336,7 @@ function ToDoCheckboxAutomaticInserter() {
                 selection.addRange(newRange);
             }
             else {
+                console.log("Last element node's parent node is not DIV");
                 var htmlToInsert = "<br>";
                 htmlToInsert += "<img src=\"qrc:/checkbox_icons/checkbox_no.png\" class=\"checkbox_unchecked\" ";
                 htmlToInsert += "en-tag=\"en-todo\" en-todo-id=\"";
