@@ -1461,25 +1461,25 @@ void RemoteToLocalSynchronizationManager::performPostAddOrUpdateChecks<Note>(con
     unregisterNotePendingAddOrUpdate(note);
     checkNotesSyncCompletionAndLaunchResourcesSync();
 
-    if (m_findNoteByGuidRequestIds.empty() && m_guidsOfNotesPendingDownloadForAddingToLocalStorage.empty() &&
-        m_notesPendingDownloadForUpdatingInLocalStorageByGuid.empty() &&
-        m_addNoteRequestIds.empty() && m_updateNoteRequestIds.empty() &&
-        m_notesToAddPerAPICallPostponeTimerId.empty() && m_notesToUpdatePerAPICallPostponeTimerId.empty())
+    if (m_findNoteByGuidRequestIds.isEmpty() && m_guidsOfNotesPendingDownloadForAddingToLocalStorage.isEmpty() &&
+        m_notesPendingDownloadForUpdatingInLocalStorageByGuid.isEmpty() &&
+        m_addNoteRequestIds.isEmpty() && m_updateNoteRequestIds.isEmpty() &&
+        m_notesToAddPerAPICallPostponeTimerId.isEmpty() && m_notesToUpdatePerAPICallPostponeTimerId.isEmpty())
     {
-        if (!m_resources.empty() ||
-            !m_notesOwningResourcesPendingDownloadForAddingToLocalStorageByResourceGuid.empty() ||
-            !m_resourcesPendingDownloadForUpdatingInLocalStorageWithNotesByResourceGuid.empty() ||
-            !m_resourcesToAddWithNotesPerAPICallPostponeTimerId.empty() ||
-            !m_resourcesToUpdateWithNotesPerAPICallPostponeTimerId.empty() ||
-            !m_postponedConflictingResourceDataPerAPICallPostponeTimerId.empty())
+        if (!m_resources.isEmpty() ||
+            !m_notesOwningResourcesPendingDownloadForAddingToLocalStorageByResourceGuid.isEmpty() ||
+            !m_resourcesPendingDownloadForUpdatingInLocalStorageWithNotesByResourceGuid.isEmpty() ||
+            !m_resourcesToAddWithNotesPerAPICallPostponeTimerId.isEmpty() ||
+            !m_resourcesToUpdateWithNotesPerAPICallPostponeTimerId.isEmpty() ||
+            !m_postponedConflictingResourceDataPerAPICallPostponeTimerId.isEmpty())
         {
             return;
         }
 
-        if (!m_expungedNotes.empty()) {
+        if (!m_expungedNotes.isEmpty()) {
             expungeNotes();
         }
-        else if (!m_expungedNotebooks.empty()) {
+        else if (!m_expungedNotebooks.isEmpty()) {
             expungeNotebooks();
         }
         else {
@@ -1507,10 +1507,10 @@ void RemoteToLocalSynchronizationManager::performPostAddOrUpdateChecks<Resource>
         m_resourcesToUpdateWithNotesPerAPICallPostponeTimerId.isEmpty() &&
         m_postponedConflictingResourceDataPerAPICallPostponeTimerId.isEmpty())
     {
-        if (!m_expungedNotes.empty()) {
+        if (!m_expungedNotes.isEmpty()) {
             expungeNotes();
         }
-        else if (!m_expungedNotebooks.empty()) {
+        else if (!m_expungedNotebooks.isEmpty()) {
             expungeNotebooks();
         }
         else {
@@ -1523,7 +1523,7 @@ template <>
 void RemoteToLocalSynchronizationManager::performPostAddOrUpdateChecks<SavedSearch>(const SavedSearch & search)
 {
     unregisterSavedSearchPendingAddOrUpdate(search);
-    if (m_addSavedSearchRequestIds.empty() && m_updateSavedSearchRequestIds.empty()) {
+    if (m_addSavedSearchRequestIds.isEmpty() && m_updateSavedSearchRequestIds.isEmpty()) {
         expungeSavedSearches();
     }
 }
@@ -1594,7 +1594,7 @@ void RemoteToLocalSynchronizationManager::onExpungeDataElementFailed(const Eleme
 
 void RemoteToLocalSynchronizationManager::expungeTags()
 {
-    if (m_expungedTags.empty()) {
+    if (m_expungedTags.isEmpty()) {
         return;
     }
 
@@ -1617,7 +1617,7 @@ void RemoteToLocalSynchronizationManager::expungeTags()
 
 void RemoteToLocalSynchronizationManager::expungeSavedSearches()
 {
-    if (m_expungedSavedSearches.empty()) {
+    if (m_expungedSavedSearches.isEmpty()) {
         return;
     }
 
@@ -1640,7 +1640,7 @@ void RemoteToLocalSynchronizationManager::expungeSavedSearches()
 
 void RemoteToLocalSynchronizationManager::expungeLinkedNotebooks()
 {
-    if (m_expungedLinkedNotebooks.empty()) {
+    if (m_expungedLinkedNotebooks.isEmpty()) {
         return;
     }
 
@@ -1662,7 +1662,7 @@ void RemoteToLocalSynchronizationManager::expungeLinkedNotebooks()
 
 void RemoteToLocalSynchronizationManager::expungeNotebooks()
 {
-    if (m_expungedNotebooks.empty()) {
+    if (m_expungedNotebooks.isEmpty()) {
         return;
     }
 
@@ -1685,7 +1685,7 @@ void RemoteToLocalSynchronizationManager::expungeNotebooks()
 
 void RemoteToLocalSynchronizationManager::expungeNotes()
 {
-    if (m_expungedNotes.empty()) {
+    if (m_expungedNotes.isEmpty()) {
         return;
     }
 
@@ -3479,7 +3479,7 @@ void RemoteToLocalSynchronizationManager::launchSync()
     launchTagsSync();
     launchNotebookSync();
 
-    if (!m_tags.empty() || !m_expungedTags.isEmpty() || !m_notebooks.empty() || !m_expungedNotebooks.isEmpty()) {
+    if (!m_tags.isEmpty() || !m_expungedTags.isEmpty() || !m_notebooks.isEmpty() || !m_expungedNotebooks.isEmpty()) {
         // NOTE: the sync of notes and, if need be, individual resouces would be launched asynchronously when the
         // notebooks and tags are synced
         return;
@@ -4034,7 +4034,7 @@ void RemoteToLocalSynchronizationManager::launchDataElementSync(const ContentSou
 
     launchDataElementSyncCommon<ContainerType, ElementType>(contentSource, container, expungedElements);
 
-    if (container.empty()) {
+    if (container.isEmpty()) {
         QNDEBUG(QStringLiteral("No data items within the container"));
         return;
     }
@@ -4071,7 +4071,7 @@ void RemoteToLocalSynchronizationManager::launchDataElementSync<RemoteToLocalSyn
 
     launchDataElementSyncCommon<RemoteToLocalSynchronizationManager::TagsList, Tag>(contentSource, container, expungedElements);
 
-    if (container.empty()) {
+    if (container.isEmpty()) {
         QNDEBUG(QStringLiteral("No data items within the container"));
         return;
     }
@@ -4499,7 +4499,7 @@ void RemoteToLocalSynchronizationManager::checkLinkedNotebooksSyncAndLaunchLinke
 {
     QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::checkLinkedNotebooksSyncAndLaunchLinkedNotebookContentSync"));
 
-    if (m_updateLinkedNotebookRequestIds.empty() && m_addLinkedNotebookRequestIds.empty()) {
+    if (m_updateLinkedNotebookRequestIds.isEmpty() && m_addLinkedNotebookRequestIds.isEmpty()) {
         // All remote linked notebooks were already updated in the local storage or added there
         startLinkedNotebooksSync();
     }
@@ -4509,8 +4509,8 @@ void RemoteToLocalSynchronizationManager::checkLinkedNotebooksNotebooksAndTagsSy
 {
     QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::checkLinkedNotebooksNotebooksAndTagsSyncAndLaunchLinkedNotebookNotesSync"));
 
-    if (m_updateNotebookRequestIds.empty() && m_addNotebookRequestIds.empty() &&
-        m_updateTagRequestIds.empty() && m_addTagRequestIds.empty())
+    if (m_updateNotebookRequestIds.isEmpty() && m_addNotebookRequestIds.isEmpty() &&
+        m_updateTagRequestIds.isEmpty() && m_addTagRequestIds.isEmpty())
     {
         // All remote notebooks and tags from linked notebooks were already either updated in the local storage or added there
         launchLinkedNotebooksNotesSync();
@@ -5114,33 +5114,33 @@ void RemoteToLocalSynchronizationManager::launchLinkedNotebooksNotesSync()
 
 bool RemoteToLocalSynchronizationManager::hasPendingRequests() const
 {
-    return !(m_findTagByNameRequestIds.empty() &&
-             m_findTagByGuidRequestIds.empty() &&
-             m_addTagRequestIds.empty() &&
-             m_updateTagRequestIds.empty() &&
-             m_expungeTagRequestIds.empty() &&
+    return !(m_findTagByNameRequestIds.isEmpty() &&
+             m_findTagByGuidRequestIds.isEmpty() &&
+             m_addTagRequestIds.isEmpty() &&
+             m_updateTagRequestIds.isEmpty() &&
+             m_expungeTagRequestIds.isEmpty() &&
              m_expungeNotelessTagsRequestId.isNull() &&
-             m_findSavedSearchByNameRequestIds.empty() &&
-             m_findSavedSearchByGuidRequestIds.empty() &&
-             m_addSavedSearchRequestIds.empty() &&
-             m_updateSavedSearchRequestIds.empty() &&
-             m_expungeSavedSearchRequestIds.empty() &&
-             m_findLinkedNotebookRequestIds.empty() &&
-             m_addLinkedNotebookRequestIds.empty() &&
-             m_updateLinkedNotebookRequestIds.empty() &&
-             m_expungeLinkedNotebookRequestIds.empty() &&
-             m_findNotebookByNameRequestIds.empty() &&
-             m_findNotebookByGuidRequestIds.empty() &&
-             m_addNotebookRequestIds.empty() &&
-             m_updateNotebookRequestIds.empty() &&
-             m_expungeNotebookRequestIds.empty() &&
-             m_findNoteByGuidRequestIds.empty() &&
-             m_addNoteRequestIds.empty() &&
-             m_updateNoteRequestIds.empty() &&
-             m_expungeNoteRequestIds.empty() &&
-             m_findResourceByGuidRequestIds.empty() &&
-             m_addResourceRequestIds.empty() &&
-             m_updateResourceRequestIds.empty());
+             m_findSavedSearchByNameRequestIds.isEmpty() &&
+             m_findSavedSearchByGuidRequestIds.isEmpty() &&
+             m_addSavedSearchRequestIds.isEmpty() &&
+             m_updateSavedSearchRequestIds.isEmpty() &&
+             m_expungeSavedSearchRequestIds.isEmpty() &&
+             m_findLinkedNotebookRequestIds.isEmpty() &&
+             m_addLinkedNotebookRequestIds.isEmpty() &&
+             m_updateLinkedNotebookRequestIds.isEmpty() &&
+             m_expungeLinkedNotebookRequestIds.isEmpty() &&
+             m_findNotebookByNameRequestIds.isEmpty() &&
+             m_findNotebookByGuidRequestIds.isEmpty() &&
+             m_addNotebookRequestIds.isEmpty() &&
+             m_updateNotebookRequestIds.isEmpty() &&
+             m_expungeNotebookRequestIds.isEmpty() &&
+             m_findNoteByGuidRequestIds.isEmpty() &&
+             m_addNoteRequestIds.isEmpty() &&
+             m_updateNoteRequestIds.isEmpty() &&
+             m_expungeNoteRequestIds.isEmpty() &&
+             m_findResourceByGuidRequestIds.isEmpty() &&
+             m_addResourceRequestIds.isEmpty() &&
+             m_updateResourceRequestIds.isEmpty());
 }
 
 void RemoteToLocalSynchronizationManager::checkServerDataMergeCompletion()
@@ -5160,8 +5160,8 @@ void RemoteToLocalSynchronizationManager::checkServerDataMergeCompletion()
         return;
     }
 
-    bool searchesReady = m_findSavedSearchByGuidRequestIds.empty() && m_findSavedSearchByNameRequestIds.empty() &&
-                         m_updateSavedSearchRequestIds.empty() && m_addSavedSearchRequestIds.empty();
+    bool searchesReady = m_findSavedSearchByGuidRequestIds.isEmpty() && m_findSavedSearchByNameRequestIds.isEmpty() &&
+                         m_updateSavedSearchRequestIds.isEmpty() && m_addSavedSearchRequestIds.isEmpty();
     if (!searchesReady) {
         QNDEBUG(QStringLiteral("Saved searches are not ready, pending response for ") << m_updateSavedSearchRequestIds.size()
                 << QStringLiteral(" saved search update requests and/or ") << m_addSavedSearchRequestIds.size()
@@ -5171,8 +5171,8 @@ void RemoteToLocalSynchronizationManager::checkServerDataMergeCompletion()
         return;
     }
 
-    bool linkedNotebooksReady = m_findLinkedNotebookRequestIds.empty() && m_updateLinkedNotebookRequestIds.empty() &&
-                                m_addLinkedNotebookRequestIds.empty();
+    bool linkedNotebooksReady = m_findLinkedNotebookRequestIds.isEmpty() && m_updateLinkedNotebookRequestIds.isEmpty() &&
+                                m_addLinkedNotebookRequestIds.isEmpty();
     if (!linkedNotebooksReady) {
         QNDEBUG(QStringLiteral("Linked notebooks are not ready, pending response for ") << m_updateLinkedNotebookRequestIds.size()
                 << QStringLiteral(" linked notebook update requests and/or ") << m_addLinkedNotebookRequestIds.size()
@@ -5181,8 +5181,8 @@ void RemoteToLocalSynchronizationManager::checkServerDataMergeCompletion()
         return;
     }
 
-    bool notebooksReady = m_findNotebookByGuidRequestIds.empty() && m_findNotebookByNameRequestIds.empty() &&
-                          m_updateNotebookRequestIds.empty() && m_addNotebookRequestIds.empty();
+    bool notebooksReady = m_findNotebookByGuidRequestIds.isEmpty() && m_findNotebookByNameRequestIds.isEmpty() &&
+                          m_updateNotebookRequestIds.isEmpty() && m_addNotebookRequestIds.isEmpty();
     if (!notebooksReady) {
         QNDEBUG(QStringLiteral("Notebooks are not ready, pending response for ") << m_updateNotebookRequestIds.size()
                 << QStringLiteral(" notebook update requests and/or ") << m_addNotebookRequestIds.size()
@@ -5192,15 +5192,15 @@ void RemoteToLocalSynchronizationManager::checkServerDataMergeCompletion()
         return;
     }
 
-    bool notesReady = m_findNoteByGuidRequestIds.empty() && m_updateNoteRequestIds.empty() && m_addNoteRequestIds.empty() &&
-                      m_guidsOfNotesPendingDownloadForAddingToLocalStorage.empty() &&
-                      m_notesPendingDownloadForUpdatingInLocalStorageByGuid.empty() &&
-                      m_notesToAddPerAPICallPostponeTimerId.empty() && m_notesToUpdatePerAPICallPostponeTimerId.empty() &&
-                      m_resourceGuidsPendingInkNoteImageDownloadPerNoteGuid.empty() &&
-                      m_notesPendingInkNoteImagesDownloadByFindNotebookRequestId.empty() &&
-                      m_notesPendingThumbnailDownloadByFindNotebookRequestId.empty() &&
-                      m_notesPendingThumbnailDownloadByGuid.empty() &&
-                      m_updateNoteWithThumbnailRequestIds.empty();
+    bool notesReady = m_findNoteByGuidRequestIds.isEmpty() && m_updateNoteRequestIds.isEmpty() && m_addNoteRequestIds.isEmpty() &&
+                      m_guidsOfNotesPendingDownloadForAddingToLocalStorage.isEmpty() &&
+                      m_notesPendingDownloadForUpdatingInLocalStorageByGuid.isEmpty() &&
+                      m_notesToAddPerAPICallPostponeTimerId.isEmpty() && m_notesToUpdatePerAPICallPostponeTimerId.isEmpty() &&
+                      m_resourceGuidsPendingInkNoteImageDownloadPerNoteGuid.isEmpty() &&
+                      m_notesPendingInkNoteImagesDownloadByFindNotebookRequestId.isEmpty() &&
+                      m_notesPendingThumbnailDownloadByFindNotebookRequestId.isEmpty() &&
+                      m_notesPendingThumbnailDownloadByGuid.isEmpty() &&
+                      m_updateNoteWithThumbnailRequestIds.isEmpty();
     if (!notesReady)
     {
         QNDEBUG(QStringLiteral("Notes are not ready, pending response for ") << m_updateNoteRequestIds.size()
@@ -5221,14 +5221,14 @@ void RemoteToLocalSynchronizationManager::checkServerDataMergeCompletion()
 
     if (m_lastSyncMode == SyncMode::IncrementalSync)
     {
-        bool resourcesReady = m_findResourceByGuidRequestIds.empty() && m_updateResourceRequestIds.empty() &&
-                              m_addResourceRequestIds.empty() && m_resourcesWithFindRequestIdsPerFindNoteRequestId.empty() &&
-                              m_inkNoteResourceDataPerFindNotebookRequestId.empty() &&
-                              m_notesOwningResourcesPendingDownloadForAddingToLocalStorageByResourceGuid.empty() &&
-                              m_resourcesPendingDownloadForUpdatingInLocalStorageWithNotesByResourceGuid.empty() &&
-                              m_resourcesToAddWithNotesPerAPICallPostponeTimerId.empty() &&
-                              m_resourcesToUpdateWithNotesPerAPICallPostponeTimerId.empty() &&
-                              m_postponedConflictingResourceDataPerAPICallPostponeTimerId.empty();
+        bool resourcesReady = m_findResourceByGuidRequestIds.isEmpty() && m_updateResourceRequestIds.isEmpty() &&
+                              m_addResourceRequestIds.isEmpty() && m_resourcesWithFindRequestIdsPerFindNoteRequestId.isEmpty() &&
+                              m_inkNoteResourceDataPerFindNotebookRequestId.isEmpty() &&
+                              m_notesOwningResourcesPendingDownloadForAddingToLocalStorageByResourceGuid.isEmpty() &&
+                              m_resourcesPendingDownloadForUpdatingInLocalStorageWithNotesByResourceGuid.isEmpty() &&
+                              m_resourcesToAddWithNotesPerAPICallPostponeTimerId.isEmpty() &&
+                              m_resourcesToUpdateWithNotesPerAPICallPostponeTimerId.isEmpty() &&
+                              m_postponedConflictingResourceDataPerAPICallPostponeTimerId.isEmpty();
         if (!resourcesReady)
         {
             QNDEBUG(QStringLiteral("Resources are not ready, pending response for ") << m_updateResourceRequestIds.size()
@@ -6334,7 +6334,7 @@ bool RemoteToLocalSynchronizationManager::checkLinkedNotebooksSyncStates(bool & 
         return false;
     }
 
-    if (m_allLinkedNotebooks.empty()) {
+    if (m_allLinkedNotebooks.isEmpty()) {
         QNTRACE(QStringLiteral("The list of all linked notebooks is empty, nothing to check sync states for"));
         return false;
     }
@@ -7762,7 +7762,7 @@ typename ContainerType::iterator RemoteToLocalSynchronizationManager::findItemBy
         return container.end();
     }
 
-    if (container.empty()) {
+    if (container.isEmpty()) {
         SET_EMPTY_PENDING_LIST_ERROR();
         Q_EMIT failure(errorDescription);
         return container.end();
@@ -7800,7 +7800,7 @@ RemoteToLocalSynchronizationManager::NotesList::iterator RemoteToLocalSynchroniz
         return container.end();
     }
 
-    if (container.empty()) {
+    if (container.isEmpty()) {
         SET_EMPTY_PENDING_LIST_ERROR();
         Q_EMIT failure(errorDescription);
         return container.end();
@@ -7838,7 +7838,7 @@ typename ContainerType::iterator RemoteToLocalSynchronizationManager::findItemBy
         return container.end();
     }
 
-    if (container.empty()) {
+    if (container.isEmpty()) {
         SET_EMPTY_PENDING_LIST_ERROR();
         Q_EMIT failure(errorDescription);
         return container.end();

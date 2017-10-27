@@ -1410,7 +1410,7 @@ void SynchronizationManagerPrivate::authenticateToLinkedNotebooks()
         it = m_linkedNotebookAuthDataPendingAuthentication.erase(it);
     }
 
-    if (m_linkedNotebookAuthDataPendingAuthentication.empty()) {
+    if (m_linkedNotebookAuthDataPendingAuthentication.isEmpty()) {
         QNDEBUG(QStringLiteral("Retrieved authentication data for all requested linked notebooks, sending the answer now"));
         Q_EMIT sendAuthenticationTokensForLinkedNotebooks(m_cachedLinkedNotebookAuthTokensAndShardIdsByGuid,
                                                           m_cachedLinkedNotebookAuthTokenExpirationTimeByGuid);
