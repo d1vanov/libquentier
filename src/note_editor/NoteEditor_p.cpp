@@ -331,12 +331,6 @@ NoteEditorPrivate::NoteEditorPrivate(NoteEditor & noteEditor) :
     q_ptr(&noteEditor)
 {
     setupSkipRulesForHtmlToEnmlConversion();
-
-#ifdef QUENTIER_USE_QT_WEB_ENGINE
-    setupWebSocketServer();
-    setupJavaScriptObjects();
-#endif
-
     setupTextCursorPositionJavaScriptHandlerConnections();
     setupGeneralSignalSlotConnections();
     setupScripts();
@@ -3858,6 +3852,12 @@ void NoteEditorPrivate::setupWebSocketServer()
 {
     QNDEBUG(QStringLiteral("NoteEditorPrivate::setupWebSocketServer"));
 
+    if (m_pWebSocketServer->isListening()) {
+        m_pWebSocketServer->close();
+        QNDEBUG(QStringLiteral("Closed the already established web socket server"));
+        m_webSocketReady = false;
+    }
+
     if (!m_pWebSocketServer->listen(QHostAddress::LocalHost, 0)) {
         ErrorString error(QT_TR_NOOP("Can't open web socket server"));
         error.details() = m_pWebSocketServer->errorString();
@@ -5862,6 +5862,10 @@ void NoteEditorPrivate::setNoteAndNotebook(const Note & note, const Notebook & n
 
 #ifdef QUENTIER_USE_QT_WEB_ENGINE
     m_localUidsOfResourcesWantedToBeSaved.clear();
+
+    setupWebSocketServer();
+    setupJavaScriptObjects();
+
 #else
     NoteEditorPage * pNoteEditorPage = qobject_cast<NoteEditorPage*>(page());
     if (Q_LIKELY(pNoteEditorPage))
@@ -5880,6 +5884,7 @@ void NoteEditorPrivate::setNoteAndNotebook(const Note & note, const Notebook & n
 #endif
 
     m_resourceLocalUidAndFileStoragePathByReadResourceRequestIds.clear();
+
     Q_EMIT currentNoteChanged(*m_pNote);
 
     noteToEditorContent();
