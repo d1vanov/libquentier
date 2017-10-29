@@ -198,6 +198,7 @@ RemoteToLocalSynchronizationManager::RemoteToLocalSynchronizationManager(IManage
     m_findResourceByGuidRequestIds(),
     m_addResourceRequestIds(),
     m_updateResourceRequestIds(),
+    m_resourcesByMarkNoteOwningResourceDirtyRequestIds(),
     m_resourcesWithFindRequestIdsPerFindNoteRequestId(),
     m_inkNoteResourceDataPerFindNotebookRequestId(),
     m_resourceGuidsPendingInkNoteImageDownloadPerNoteGuid(),
@@ -1495,6 +1496,7 @@ void RemoteToLocalSynchronizationManager::performPostAddOrUpdateChecks<Resource>
 
     if (m_findResourceByGuidRequestIds.isEmpty() && m_addResourceRequestIds.isEmpty() &&
         m_updateResourceRequestIds.isEmpty() &&
+        m_resourcesByMarkNoteOwningResourceDirtyRequestIds.isEmpty() &&
         m_resourcesWithFindRequestIdsPerFindNoteRequestId.isEmpty() &&
         m_inkNoteResourceDataPerFindNotebookRequestId.isEmpty() &&
         m_resourceGuidsPendingInkNoteImageDownloadPerNoteGuid.isEmpty() &&
@@ -2216,6 +2218,19 @@ void RemoteToLocalSynchronizationManager::onUpdateNoteCompleted(Note note, bool 
         checkServerDataMergeCompletion();
         return;
     }
+
+    auto mdit = m_resourcesByMarkNoteOwningResourceDirtyRequestIds.find(requestId);
+    if (mdit != m_resourcesByMarkNoteOwningResourceDirtyRequestIds.end())
+    {
+        QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::onUpdateNoteCompleted: note owning added or updated resource ")
+                << QStringLiteral("was marked as dirty: request id = ") << requestId << QStringLiteral(", note: ") << note);
+
+        Resource resource = mdit.value();
+        Q_UNUSED(m_resourcesByMarkNoteOwningResourceDirtyRequestIds.erase(mdit))
+        performPostAddOrUpdateChecks(resource);
+        checkServerDataMergeCompletion();
+        return;
+    }
 }
 
 void RemoteToLocalSynchronizationManager::onUpdateNoteFailed(Note note, bool updateResources, bool updateTags,
@@ -2256,6 +2271,25 @@ void RemoteToLocalSynchronizationManager::onUpdateNoteFailed(Note note, bool upd
 
         checkAndIncrementNoteDownloadProgress(note.hasGuid() ? note.guid() : QString());
         checkServerDataMergeCompletion();
+        return;
+    }
+
+    auto mdit = m_resourcesByMarkNoteOwningResourceDirtyRequestIds.find(requestId);
+    if (mdit != m_resourcesByMarkNoteOwningResourceDirtyRequestIds.end())
+    {
+        QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::onUpdateNoteFailed: failed to mark the resource owning note as dirty: ")
+                << errorDescription << QStringLiteral(", request id = ") << requestId << QStringLiteral(", note: ")
+                << note);
+
+        Q_UNUSED(m_resourcesByMarkNoteOwningResourceDirtyRequestIds.erase(mdit))
+
+        ErrorString error(QT_TR_NOOP("Failed to mark the resource owning note dirty in the local storage"));
+        error.additionalBases().append(errorDescription.base());
+        error.additionalBases().append(errorDescription.additionalBases());
+        error.details() = errorDescription.details();
+        QNWARNING(error);
+
+        Q_EMIT failure(error);
         return;
     }
 }
@@ -2752,6 +2786,7 @@ void RemoteToLocalSynchronizationManager::onGetResourceAsyncFinished(qint32 erro
     }
 
     resource.qevercloudResource() = qecResource;
+    resource.setDirty(false);
 
     if (Q_UNLIKELY(!needToAddResource && !needToUpdateResource)) {
         errorDescription.setBase(QT_TR_NOOP("Internal error: the downloaded resource was not expected"));
@@ -2811,15 +2846,22 @@ void RemoteToLocalSynchronizationManager::onGetResourceAsyncFinished(qint32 erro
         QNTRACE(QStringLiteral("Emitting the request to add resource to local storage: request id = ")
                 << addResourceRequestId << QStringLiteral(", resource: ") << resource);
         Q_EMIT addResource(resource, addResourceRequestId);
-
-        return;
+    }
+    else
+    {
+        QUuid updateResourceRequestId = QUuid::createUuid();
+        Q_UNUSED(m_updateResourceRequestIds.insert(updateResourceRequestId))
+        QNTRACE(QStringLiteral("Emitting the request to update resource: request id = ") << updateResourceRequestId
+                << QStringLiteral(", resource: ") << resource);
+        Q_EMIT updateResource(resource, updateResourceRequestId);
     }
 
-    QUuid updateResourceRequestId = QUuid::createUuid();
-    Q_UNUSED(m_updateResourceRequestIds.insert(updateResourceRequestId))
-    QNTRACE(QStringLiteral("Emitting the request to update resource: request id = ") << updateResourceRequestId
-            << QStringLiteral(", resource: ") << resource);
-    Q_EMIT updateResource(resource, updateResourceRequestId);
+    note.setDirty(true);
+    QUuid markNoteDirtyRequestId = QUuid::createUuid();
+    m_resourcesByMarkNoteOwningResourceDirtyRequestIds[markNoteDirtyRequestId] = resource;
+    QNTRACE(QStringLiteral("Emitting the request to mark the resource owning note as the dirty one: request id = ")
+            << markNoteDirtyRequestId << QStringLiteral(", resource: ") << resource);
+    Q_EMIT updateNote(note, /* update resources = */ false, /* update tags = */ false, markNoteDirtyRequestId);
 }
 
 void RemoteToLocalSynchronizationManager::onNotebookSyncConflictResolverFinished(qevercloud::Notebook remoteNotebook)
@@ -4418,6 +4460,7 @@ bool RemoteToLocalSynchronizationManager::resourcesSyncInProgress() const
     return (!m_findResourceByGuidRequestIds.isEmpty() ||
             !m_addResourceRequestIds.isEmpty() ||
             !m_updateResourceRequestIds.isEmpty() ||
+            !m_resourcesByMarkNoteOwningResourceDirtyRequestIds.isEmpty() ||
             !m_resourcesWithFindRequestIdsPerFindNoteRequestId.isEmpty() ||
             !m_inkNoteResourceDataPerFindNotebookRequestId.isEmpty() ||
             !m_notesOwningResourcesPendingDownloadForAddingToLocalStorageByResourceGuid.isEmpty() ||
@@ -5140,7 +5183,8 @@ bool RemoteToLocalSynchronizationManager::hasPendingRequests() const
              m_expungeNoteRequestIds.isEmpty() &&
              m_findResourceByGuidRequestIds.isEmpty() &&
              m_addResourceRequestIds.isEmpty() &&
-             m_updateResourceRequestIds.isEmpty());
+             m_updateResourceRequestIds.isEmpty() &&
+             m_resourcesByMarkNoteOwningResourceDirtyRequestIds.isEmpty());
 }
 
 void RemoteToLocalSynchronizationManager::checkServerDataMergeCompletion()
@@ -5222,6 +5266,7 @@ void RemoteToLocalSynchronizationManager::checkServerDataMergeCompletion()
     if (m_lastSyncMode == SyncMode::IncrementalSync)
     {
         bool resourcesReady = m_findResourceByGuidRequestIds.isEmpty() && m_updateResourceRequestIds.isEmpty() &&
+                              m_resourcesByMarkNoteOwningResourceDirtyRequestIds.isEmpty() &&
                               m_addResourceRequestIds.isEmpty() && m_resourcesWithFindRequestIdsPerFindNoteRequestId.isEmpty() &&
                               m_inkNoteResourceDataPerFindNotebookRequestId.isEmpty() &&
                               m_notesOwningResourcesPendingDownloadForAddingToLocalStorageByResourceGuid.isEmpty() &&
@@ -5232,7 +5277,8 @@ void RemoteToLocalSynchronizationManager::checkServerDataMergeCompletion()
         if (!resourcesReady)
         {
             QNDEBUG(QStringLiteral("Resources are not ready, pending response for ") << m_updateResourceRequestIds.size()
-                    << QStringLiteral(" resource update requests and/or ") << m_addResourceRequestIds.size()
+                    << QStringLiteral(" resource update requests and/or ") << m_resourcesByMarkNoteOwningResourceDirtyRequestIds.size()
+                    << QStringLiteral(" mark note owning resource as dirty requests and/or ") << m_addResourceRequestIds.size()
                     << QStringLiteral(" resource add requests and/or ") << m_resourcesWithFindRequestIdsPerFindNoteRequestId.size()
                     << QStringLiteral(" find resource by guid requests and/or ") << m_findResourceByGuidRequestIds.size()
                     << QStringLiteral(" resource find note requests and/or ") << m_inkNoteResourceDataPerFindNotebookRequestId.size()
@@ -5526,6 +5572,7 @@ void RemoteToLocalSynchronizationManager::clear()
     m_findResourceByGuidRequestIds.clear();
     m_addResourceRequestIds.clear();
     m_updateResourceRequestIds.clear();
+    m_resourcesByMarkNoteOwningResourceDirtyRequestIds.clear();
 
     m_resourcesWithFindRequestIdsPerFindNoteRequestId.clear();
     m_inkNoteResourceDataPerFindNotebookRequestId.clear();

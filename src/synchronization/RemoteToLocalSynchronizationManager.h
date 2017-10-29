@@ -772,6 +772,7 @@ private:
     QSet<QUuid>                             m_findResourceByGuidRequestIds;
     QSet<QUuid>                             m_addResourceRequestIds;
     QSet<QUuid>                             m_updateResourceRequestIds;
+    QHash<QUuid, Resource>                  m_resourcesByMarkNoteOwningResourceDirtyRequestIds;
 
     typedef QHash<QUuid,QPair<Resource,QUuid> > ResourceDataPerFindNoteRequestId;
     ResourceDataPerFindNoteRequestId        m_resourcesWithFindRequestIdsPerFindNoteRequestId;
