@@ -538,6 +538,49 @@ endif()
 
 set(LIBQUENTIER_LIBRARY_VERSION "${PROJECT_VERSION_MAJOR} * 10000 + ${PROJECT_VERSION_MINOR} * 100 + ${PROJECT_VERSION_PATCH}")
 
+find_package(Git)
+if(GIT_FOUND)
+  message(STATUS "Git found: ${GIT_EXECUTABLE}")
+
+  # Get git branch
+  execute_process(COMMAND ${GIT_EXECUTABLE} rev-parse --abbrev-ref HEAD
+                  WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+                  OUTPUT_VARIABLE LIBQUENTIER_GIT_BRANCH
+                  RESULT_VARIABLE LIBQUENTIER_GIT_BRANCH_RETURN_CODE
+                  OUTPUT_STRIP_TRAILING_WHITESPACE)
+  if(NOT "${LIBQUENTIER_GIT_BRANCH_RETURN_CODE}" STREQUAL "0")
+    message(AUTHOR_WARNING "Failed to determine the current git branch, return code ${LIBQUENTIER_GIT_BRANCH_RETURN_CODE}")
+    set(LIBQUENTIER_GIT_BRANCH "unknown branch")
+  else()
+    message(STATUS "Git branch: ${LIBQUENTIER_GIT_BRANCH}")
+  endif()
+
+  # Get last commit short hash
+  execute_process(COMMAND ${GIT_EXECUTABLE} rev-parse --short HEAD
+                  WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+                  OUTPUT_VARIABLE LIBQUENTIER_GIT_REVISION
+                  RESULT_VARIABLE LIBQUENTIER_GIT_REVISION_RETURN_CODE
+                  OUTPUT_STRIP_TRAILING_WHITESPACE)
+  if(NOT "${LIBQUENTIER_GIT_REVISION_RETURN_CODE}" STREQUAL "0")
+    message(AUTHOR_WARNING "Failed to determine the current git revision")
+    set(LIBQUENTIER_GIT_REVISION "unknown revision")
+  else()
+    message(STATUS "Last commit short hash: ${LIBQUENTIER_GIT_REVISION}")
+  endif()
+
+  # Check for uncommitted changes
+  execute_process(COMMAND ${GIT_EXECUTABLE} diff-index --quiet HEAD --
+                  WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+                  RESULT_VARIABLE LIBQUENTIER_GIT_DIRTY_STATE)
+  if(NOT "${LIBQUENTIER_GIT_DIRTY_STATE}" STREQUAL "0")
+    string(CONCAT LIBQUENTIER_GIT_REVISION "${LIBQUENTIER_GIT_REVISION}" ", with uncommitted changes")
+  endif()
+
+  set(LIB_QUENTIER_BUILD_INFO "#define LIB_QUENTIER_BUILD_INFO \"${LIBQUENTIER_GIT_BRANCH}, ${LIBQUENTIER_GIT_REVISION}\"")
+else()
+  set(LIB_QUENTIER_BUILD_INFO "#define LIB_QUENTIER_BUILD_INFO \"unknown\"")
+endif()
+
 configure_file(headers/quentier/utility/VersionInfo.h.in
                ${PROJECT_BINARY_DIR}/VersionInfo.h @ONLY)
 

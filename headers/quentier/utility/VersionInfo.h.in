@@ -43,6 +43,11 @@
  */
 @LIB_QUENTIER_HAS_NOTE_EDITOR_DEFINE@
 
+/**
+ * This macro is set to a string holding the information about the current libquentier build
+ */
+@LIB_QUENTIER_BUILD_INFO@
+
 namespace quentier {
 
 inline int libraryVersion() { return @LIBQUENTIER_LIBRARY_VERSION@; }
