@@ -446,7 +446,6 @@ void RemoteToLocalSynchronizationManager::start(qint32 afterUsn)
         if (m_syncAccountLimitsPostponeTimerId == 0) {
             // Not a "rate limit exceeded" error
             Q_EMIT failure(errorDescription);
-
         }
 
         return;
@@ -2153,7 +2152,6 @@ void RemoteToLocalSynchronizationManager::onListAllLinkedNotebooksFailed(size_t 
 
     m_allLinkedNotebooksListed = false;
 
-
     ErrorString error(QT_TR_NOOP("Failed to list all linked notebooks from the local storage"));
     error.additionalBases().append(errorDescription.base());
     error.additionalBases().append(errorDescription.additionalBases());
@@ -2270,8 +2268,8 @@ void RemoteToLocalSynchronizationManager::onUpdateNoteFailed(Note note, bool upd
         error.additionalBases().append(errorDescription.additionalBases());
         error.details() = errorDescription.details();
         QNWARNING(error);
-        Q_EMIT failure(error);
 
+        Q_EMIT failure(error);
         return;
     }
 
@@ -4556,7 +4554,8 @@ void RemoteToLocalSynchronizationManager::checkNotebooksAndTagsSyncCompletionAnd
 {
     QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::checkNotebooksAndTagsSyncCompletionAndLaunchNotesSync"));
 
-    if (!notebooksSyncInProgress() && !tagsSyncInProgress())
+    if (!m_pendingNotebooksSyncStart && !notebooksSyncInProgress() &&
+        !m_pendingTagsSyncStart && !tagsSyncInProgress())
     {
         launchNotesSync(syncingLinkedNotebooksContent()
                         ? ContentSource::LinkedNotebook
@@ -6109,6 +6108,7 @@ void RemoteToLocalSynchronizationManager::getFullResourceDataAsync(const Resourc
         QNWARNING(errorDescription << QStringLiteral("; resource: ") << resource
                   << QStringLiteral("\nResource owning note: ") << resourceOwningNote);
         Q_EMIT failure(errorDescription);
+        return;
     }
 
     // Need to find out which note store is required - the one for user's own
@@ -6882,8 +6882,8 @@ qint32 RemoteToLocalSynchronizationManager::nonProcessedItemsSmallestUsn(const Q
     PROCESS_CONTAINER(m_notebooks, m_linkedNotebookGuidsByNotebookGuids)
     PROCESS_CONTAINER(m_notebooksPendingAddOrUpdate, m_linkedNotebookGuidsByNotebookGuids)
 
-    bool syncingNotebooks = notebooksSyncInProgress();
-    bool syncingTags = tagsSyncInProgress();
+    bool syncingNotebooks = m_pendingNotebooksSyncStart || notebooksSyncInProgress();
+    bool syncingTags = m_pendingTagsSyncStart || tagsSyncInProgress();
 
     if (linkedNotebookGuid.isEmpty())
     {
@@ -8126,6 +8126,7 @@ void RemoteToLocalSynchronizationManager::emitFindByNameRequest<SavedSearch>(con
                                                 "searched by name in the local storage but it has no name set"));
         QNWARNING(errorDescription << QStringLiteral(": ") << search);
         Q_EMIT failure(errorDescription);
+        return;
     }
 
     QUuid findElementRequestId = QUuid::createUuid();
@@ -8145,6 +8146,7 @@ void RemoteToLocalSynchronizationManager::emitFindByNameRequest<Notebook>(const 
                                                 "searched by name in the local storage but it has no name set"));
         QNWARNING(errorDescription << QStringLiteral(": ") << notebook);
         Q_EMIT failure(errorDescription);
+        return;
     }
 
     QUuid findElementRequestId = QUuid::createUuid();
