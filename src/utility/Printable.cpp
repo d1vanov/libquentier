@@ -987,7 +987,7 @@ QTextStream & operator<<(QTextStream & strm, const qevercloud::Note & note)
     PRINT_FIELD(note, guid);
     PRINT_FIELD(note, title);
     PRINT_FIELD(note, content);
-    PRINT_FIELD(note, contentHash, QString::fromLocal8Bit);
+    PRINT_FIELD(note, contentHash, byteArrayToHex);
     PRINT_FIELD(note, created, quentier::printableDateTimeFromTimestamp);
     PRINT_FIELD(note, updated, quentier::printableDateTimeFromTimestamp);
     PRINT_FIELD(note, deleted, quentier::printableDateTimeFromTimestamp);
