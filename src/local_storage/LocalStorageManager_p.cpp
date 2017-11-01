@@ -351,7 +351,7 @@ bool LocalStorageManagerPrivate::expungeUser(const User & user, ErrorString & er
 #define SET_NO_DATA_FOUND() \
     errorDescription.base() = errorPrefix.base(); \
     errorDescription.appendBase(QT_TR_NOOP("no data found")); \
-    QNWARNING(errorDescription)
+    QNDEBUG(errorDescription)
 
 int LocalStorageManagerPrivate::notebookCount(ErrorString & errorDescription) const
 {
@@ -2328,7 +2328,7 @@ bool LocalStorageManagerPrivate::expungeNote(Note & note, ErrorString & errorDes
         errorDescription.appendBase(error.base());
         errorDescription.appendBase(error.additionalBases());
         errorDescription.details() = error.details();
-        QNWARNING(errorDescription);
+        QNDEBUG(errorDescription);
         return false;
     }
 
