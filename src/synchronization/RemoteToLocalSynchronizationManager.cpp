@@ -152,6 +152,7 @@ RemoteToLocalSynchronizationManager::RemoteToLocalSynchronizationManager(IManage
     m_addLinkedNotebookRequestIds(),
     m_updateLinkedNotebookRequestIds(),
     m_expungeLinkedNotebookRequestIds(),
+    m_pendingLinkedNotebooksSyncStart(false),
     m_allLinkedNotebooks(),
     m_listAllLinkedNotebooksRequestId(),
     m_allLinkedNotebooksListed(false),
@@ -3537,6 +3538,7 @@ void RemoteToLocalSynchronizationManager::launchSync()
     }
 
     m_pendingTagsSyncStart = true;
+    m_pendingLinkedNotebooksSyncStart = true;
 
     launchSavedSearchSync();
     launchLinkedNotebookSync();
@@ -4179,6 +4181,7 @@ void RemoteToLocalSynchronizationManager::launchSavedSearchSync()
 void RemoteToLocalSynchronizationManager::launchLinkedNotebookSync()
 {
     QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::launchLinkedNotebookSync"));
+    m_pendingLinkedNotebooksSyncStart = false;
     launchDataElementSync<LinkedNotebooksList, LinkedNotebook>(ContentSource::UserAccount, QStringLiteral("Linked notebook"),
                                                                m_linkedNotebooks, m_expungedLinkedNotebooks);
 }
@@ -5253,11 +5256,15 @@ void RemoteToLocalSynchronizationManager::checkServerDataMergeCompletion()
         return;
     }
 
-    bool linkedNotebooksReady = (m_numProcessedNonExpungedLinkedNotebooks == m_linkedNotebooks.size()) && m_linkedNotebooksPendingAddOrUpdate.isEmpty() &&
+    bool linkedNotebooksReady = !m_pendingLinkedNotebooksSyncStart &&
+                                (m_numProcessedNonExpungedLinkedNotebooks == m_linkedNotebooks.size()) &&
+                                m_linkedNotebooksPendingAddOrUpdate.isEmpty() &&
                                 m_findLinkedNotebookRequestIds.isEmpty() && m_updateLinkedNotebookRequestIds.isEmpty() &&
                                 m_addLinkedNotebookRequestIds.isEmpty();
     if (!linkedNotebooksReady) {
-        QNDEBUG(QStringLiteral("Linked notebooks are not ready, there are ") << (m_linkedNotebooks.size() - m_numProcessedNonExpungedLinkedNotebooks)
+        QNDEBUG(QStringLiteral("Linked notebooks are not ready, pending linked notebooks sync start = ")
+                << (m_pendingLinkedNotebooksSyncStart ? QStringLiteral("true") : QStringLiteral("false"))
+                << QStringLiteral("; there are ") << (m_linkedNotebooks.size() - m_numProcessedNonExpungedLinkedNotebooks)
                 << QStringLiteral(" linked notebooks pending processing and/or ") << m_linkedNotebooksPendingAddOrUpdate.size()
                 << QStringLiteral(" linked notebooks pending add or update within the local storage: pending response for ")
                 << m_updateLinkedNotebookRequestIds.size()
@@ -5546,6 +5553,7 @@ void RemoteToLocalSynchronizationManager::clear()
     m_addLinkedNotebookRequestIds.clear();
     m_updateLinkedNotebookRequestIds.clear();
     m_expungeLinkedNotebookRequestIds.clear();
+    m_pendingLinkedNotebooksSyncStart = false;
 
     m_allLinkedNotebooks.clear();
     m_listAllLinkedNotebooksRequestId = QUuid();

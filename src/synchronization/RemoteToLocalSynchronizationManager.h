@@ -711,6 +711,7 @@ private:
     QSet<QUuid>                             m_addLinkedNotebookRequestIds;
     QSet<QUuid>                             m_updateLinkedNotebookRequestIds;
     QSet<QUuid>                             m_expungeLinkedNotebookRequestIds;
+    bool                                    m_pendingLinkedNotebooksSyncStart;
 
     QList<LinkedNotebook>                   m_allLinkedNotebooks;
     QUuid                                   m_listAllLinkedNotebooksRequestId;
