@@ -182,6 +182,7 @@ RemoteToLocalSynchronizationManager::RemoteToLocalSynchronizationManager(IManage
     m_addNotebookRequestIds(),
     m_updateNotebookRequestIds(),
     m_expungeNotebookRequestIds(),
+    m_pendingNotebooksSyncStart(false),
     m_notebookSyncCache(m_manager.localStorageManagerAsync(), QStringLiteral("")),
     m_notebookSyncCachesByLinkedNotebookGuids(),
     m_linkedNotebookGuidsByNotebookGuids(),
@@ -3539,6 +3540,7 @@ void RemoteToLocalSynchronizationManager::launchSync()
 
     m_pendingTagsSyncStart = true;
     m_pendingLinkedNotebooksSyncStart = true;
+    m_pendingNotebooksSyncStart = true;
 
     launchSavedSearchSync();
     launchLinkedNotebookSync();
@@ -4189,6 +4191,7 @@ void RemoteToLocalSynchronizationManager::launchLinkedNotebookSync()
 void RemoteToLocalSynchronizationManager::launchNotebookSync()
 {
     QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::launchNotebookSync"));
+    m_pendingNotebooksSyncStart = false;
     launchDataElementSync<NotebooksList, Notebook>(ContentSource::UserAccount, QStringLiteral("Notebook"), m_notebooks, m_expungedNotebooks);
 }
 
@@ -4453,15 +4456,18 @@ void RemoteToLocalSynchronizationManager::checkAndIncrementResourceDownloadProgr
 
 bool RemoteToLocalSynchronizationManager::notebooksSyncInProgress() const
 {
-    if (!m_notebooksPendingAddOrUpdate.isEmpty() ||
-        (m_numProcessedNonExpungedNotebooks != m_originalNumberOfNotebooks) ||
-        !m_findNotebookByGuidRequestIds.isEmpty() ||
-        !m_findNotebookByNameRequestIds.isEmpty() ||
-        !m_addNotebookRequestIds.isEmpty() ||
-        !m_updateNotebookRequestIds.isEmpty() ||
-        !m_expungeNotebookRequestIds.isEmpty())
+    if (!m_pendingNotebooksSyncStart &&
+        (!m_notebooksPendingAddOrUpdate.isEmpty() ||
+         (m_numProcessedNonExpungedNotebooks != m_originalNumberOfNotebooks) ||
+         !m_findNotebookByGuidRequestIds.isEmpty() ||
+         !m_findNotebookByNameRequestIds.isEmpty() ||
+         !m_addNotebookRequestIds.isEmpty() ||
+         !m_updateNotebookRequestIds.isEmpty() ||
+         !m_expungeNotebookRequestIds.isEmpty()))
     {
-        QNDEBUG(QStringLiteral("Notebooks sync is in progress: there are ") << m_notebooksPendingAddOrUpdate.size()
+        QNDEBUG(QStringLiteral("Notebooks sync is in progress: pending notebooks sync start = ")
+                << (m_pendingNotebooksSyncStart ? QStringLiteral("true") : QStringLiteral("false"))
+                << QStringLiteral("; there are ") << m_notebooksPendingAddOrUpdate.size()
                 << QStringLiteral(" notebooks pending add or update within the local storage: pending ")
                 << m_addNotebookRequestIds.size() << QStringLiteral(" add notebook requests and/or ")
                 << m_updateNotebookRequestIds.size() << QStringLiteral(" update notebook request ids; so far ")
@@ -4479,14 +4485,14 @@ bool RemoteToLocalSynchronizationManager::notebooksSyncInProgress() const
 
 bool RemoteToLocalSynchronizationManager::tagsSyncInProgress() const
 {
-    if (!m_pendingTagsSyncStart ||
-        !m_tagsPendingProcessing.isEmpty() ||
-        !m_tagsPendingAddOrUpdate.isEmpty() ||
-        !m_findTagByGuidRequestIds.isEmpty() ||
-        !m_findTagByNameRequestIds.isEmpty() ||
-        !m_addTagRequestIds.isEmpty() ||
-        !m_updateTagRequestIds.isEmpty() ||
-        !m_expungeTagRequestIds.isEmpty())
+    if (!m_pendingTagsSyncStart &&
+        (!m_tagsPendingProcessing.isEmpty() ||
+         !m_tagsPendingAddOrUpdate.isEmpty() ||
+         !m_findTagByGuidRequestIds.isEmpty() ||
+         !m_findTagByNameRequestIds.isEmpty() ||
+         !m_addTagRequestIds.isEmpty() ||
+         !m_updateTagRequestIds.isEmpty() ||
+         !m_expungeTagRequestIds.isEmpty()))
     {
         return true;
     }
@@ -4623,6 +4629,7 @@ void RemoteToLocalSynchronizationManager::launchLinkedNotebooksContentsSync()
     QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::launchLinkedNotebooksContentsSync"));
 
     m_pendingTagsSyncStart = true;
+    m_pendingNotebooksSyncStart = true;
 
     launchLinkedNotebooksTagsSync();
     launchLinkedNotebooksNotebooksSync();
@@ -5210,6 +5217,8 @@ void RemoteToLocalSynchronizationManager::launchLinkedNotebooksNotebooksSync()
     m_originalNumberOfNotebooks = 0;
     m_numProcessedNonExpungedNotebooks = 0;
 
+    m_pendingNotebooksSyncStart = false;
+
     QList<QString> dummyList;
     launchDataElementSync<NotebooksList, Notebook>(ContentSource::LinkedNotebook, QStringLiteral("Notebook"), m_notebooks, dummyList);
 }
@@ -5274,11 +5283,15 @@ void RemoteToLocalSynchronizationManager::checkServerDataMergeCompletion()
         return;
     }
 
-    bool notebooksReady = (m_numProcessedNonExpungedNotebooks == m_originalNumberOfNotebooks) && m_notebooksPendingAddOrUpdate.isEmpty() &&
+    bool notebooksReady = !m_pendingNotebooksSyncStart &&
+                          (m_numProcessedNonExpungedNotebooks == m_originalNumberOfNotebooks) &&
+                          m_notebooksPendingAddOrUpdate.isEmpty() &&
                           m_findNotebookByGuidRequestIds.isEmpty() && m_findNotebookByNameRequestIds.isEmpty() &&
                           m_updateNotebookRequestIds.isEmpty() && m_addNotebookRequestIds.isEmpty();
     if (!notebooksReady) {
-        QNDEBUG(QStringLiteral("Notebooks are not ready, there are ") << (m_originalNumberOfNotebooks - m_numProcessedNonExpungedNotebooks)
+        QNDEBUG(QStringLiteral("Notebooks are not ready, pending notebooks sync start = ")
+                << (m_pendingNotebooksSyncStart ? QStringLiteral("true") : QStringLiteral("false"))
+                << QStringLiteral("; there are ") << (m_originalNumberOfNotebooks - m_numProcessedNonExpungedNotebooks)
                 << QStringLiteral(" notebooks pending processing and/or ") << m_notebooksPendingAddOrUpdate.size()
                 << QStringLiteral(" notebooks pending add or update within the local storage: pending response for ")
                 << m_updateNotebookRequestIds.size()
@@ -5590,6 +5603,7 @@ void RemoteToLocalSynchronizationManager::clear()
     m_addNotebookRequestIds.clear();
     m_updateNotebookRequestIds.clear();
     m_expungeNotebookRequestIds.clear();
+    m_pendingNotebooksSyncStart = false;
 
     QList<NotebookSyncConflictResolver*> notebookSyncConflictResolvers = findChildren<NotebookSyncConflictResolver*>();
     for(auto it = notebookSyncConflictResolvers.begin(), end = notebookSyncConflictResolvers.end(); it != end; ++it)

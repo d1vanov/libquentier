@@ -750,6 +750,7 @@ private:
     QSet<QUuid>                             m_addNotebookRequestIds;
     QSet<QUuid>                             m_updateNotebookRequestIds;
     QSet<QUuid>                             m_expungeNotebookRequestIds;
+    bool                                    m_pendingNotebooksSyncStart;
 
     NotebookSyncCache                       m_notebookSyncCache;
     QMap<QString, NotebookSyncCache*>       m_notebookSyncCachesByLinkedNotebookGuids;
