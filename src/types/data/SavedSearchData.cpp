@@ -76,7 +76,7 @@ bool SavedSearchData::checkParameters(ErrorString & errorDescription) const
 
     if (m_qecSearch.query.isSet())
     {
-        const QString & query = m_qecSearch.query;
+        const QString & query = m_qecSearch.query.ref();
         int querySize = query.size();
 
         if ( (querySize < qevercloud::EDAM_SEARCH_QUERY_LEN_MIN) ||
