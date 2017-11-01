@@ -485,7 +485,6 @@ private:
     void launchLinkedNotebooksNotebooksSync();
     void launchLinkedNotebooksNotesSync();
 
-    bool hasPendingRequests() const;
     void checkServerDataMergeCompletion();
 
     void finalize();
@@ -683,6 +682,7 @@ private:
     QSet<QUuid>                             m_addTagRequestIds;
     QSet<QUuid>                             m_updateTagRequestIds;
     QSet<QUuid>                             m_expungeTagRequestIds;
+    bool                                    m_pendingTagsSyncStart;
 
     TagSyncCache                            m_tagSyncCache;
     QMap<QString, TagSyncCache*>            m_tagSyncCachesByLinkedNotebookGuids;

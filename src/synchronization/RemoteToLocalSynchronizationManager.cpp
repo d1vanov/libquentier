@@ -128,6 +128,7 @@ RemoteToLocalSynchronizationManager::RemoteToLocalSynchronizationManager(IManage
     m_addTagRequestIds(),
     m_updateTagRequestIds(),
     m_expungeTagRequestIds(),
+    m_pendingTagsSyncStart(false),
     m_tagSyncCache(m_manager.localStorageManagerAsync(), QStringLiteral("")),
     m_tagSyncCachesByLinkedNotebookGuids(),
     m_linkedNotebookGuidsByTagGuids(),
@@ -3535,6 +3536,8 @@ void RemoteToLocalSynchronizationManager::launchSync()
         collectSyncedGuidsForFullSyncStaleDataItemsExpunger();
     }
 
+    m_pendingTagsSyncStart = true;
+
     launchSavedSearchSync();
     launchLinkedNotebookSync();
 
@@ -4162,6 +4165,7 @@ void RemoteToLocalSynchronizationManager::launchDataElementSync<RemoteToLocalSyn
 void RemoteToLocalSynchronizationManager::launchTagsSync()
 {
     QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::launchTagsSync"));
+    m_pendingTagsSyncStart = false;
     launchDataElementSync<TagsList, Tag>(ContentSource::UserAccount, QStringLiteral("Tag"), m_tags, m_expungedTags);
 }
 
@@ -4472,7 +4476,8 @@ bool RemoteToLocalSynchronizationManager::notebooksSyncInProgress() const
 
 bool RemoteToLocalSynchronizationManager::tagsSyncInProgress() const
 {
-    if (!m_tagsPendingProcessing.isEmpty() ||
+    if (!m_pendingTagsSyncStart ||
+        !m_tagsPendingProcessing.isEmpty() ||
         !m_tagsPendingAddOrUpdate.isEmpty() ||
         !m_findTagByGuidRequestIds.isEmpty() ||
         !m_findTagByNameRequestIds.isEmpty() ||
@@ -4613,6 +4618,8 @@ void RemoteToLocalSynchronizationManager::checkLinkedNotebooksNotebooksAndTagsSy
 void RemoteToLocalSynchronizationManager::launchLinkedNotebooksContentsSync()
 {
     QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::launchLinkedNotebooksContentsSync"));
+
+    m_pendingTagsSyncStart = true;
 
     launchLinkedNotebooksTagsSync();
     launchLinkedNotebooksNotebooksSync();
@@ -5188,6 +5195,7 @@ bool RemoteToLocalSynchronizationManager::downloadLinkedNotebooksSyncChunks()
 void RemoteToLocalSynchronizationManager::launchLinkedNotebooksTagsSync()
 {
     QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::launchLinkedNotebooksTagsSync"));
+    m_pendingTagsSyncStart = false;
     QList<QString> dummyList;
     launchDataElementSync<TagsList, Tag>(ContentSource::LinkedNotebook, QStringLiteral("Tag"), m_tags, dummyList);
 }
@@ -5209,52 +5217,23 @@ void RemoteToLocalSynchronizationManager::launchLinkedNotebooksNotesSync()
     launchDataElementSync<NotesList, Note>(ContentSource::LinkedNotebook, QStringLiteral("Note"), m_notes, m_expungedNotes);
 }
 
-bool RemoteToLocalSynchronizationManager::hasPendingRequests() const
-{
-    return !(m_findTagByNameRequestIds.isEmpty() &&
-             m_findTagByGuidRequestIds.isEmpty() &&
-             m_addTagRequestIds.isEmpty() &&
-             m_updateTagRequestIds.isEmpty() &&
-             m_expungeTagRequestIds.isEmpty() &&
-             m_expungeNotelessTagsRequestId.isNull() &&
-             m_findSavedSearchByNameRequestIds.isEmpty() &&
-             m_findSavedSearchByGuidRequestIds.isEmpty() &&
-             m_addSavedSearchRequestIds.isEmpty() &&
-             m_updateSavedSearchRequestIds.isEmpty() &&
-             m_expungeSavedSearchRequestIds.isEmpty() &&
-             m_findLinkedNotebookRequestIds.isEmpty() &&
-             m_addLinkedNotebookRequestIds.isEmpty() &&
-             m_updateLinkedNotebookRequestIds.isEmpty() &&
-             m_expungeLinkedNotebookRequestIds.isEmpty() &&
-             m_findNotebookByNameRequestIds.isEmpty() &&
-             m_findNotebookByGuidRequestIds.isEmpty() &&
-             m_addNotebookRequestIds.isEmpty() &&
-             m_updateNotebookRequestIds.isEmpty() &&
-             m_expungeNotebookRequestIds.isEmpty() &&
-             m_findNoteByGuidRequestIds.isEmpty() &&
-             m_addNoteRequestIds.isEmpty() &&
-             m_updateNoteRequestIds.isEmpty() &&
-             m_expungeNoteRequestIds.isEmpty() &&
-             m_findResourceByGuidRequestIds.isEmpty() &&
-             m_addResourceRequestIds.isEmpty() &&
-             m_updateResourceRequestIds.isEmpty() &&
-             m_resourcesByMarkNoteOwningResourceDirtyRequestIds.isEmpty());
-}
-
 void RemoteToLocalSynchronizationManager::checkServerDataMergeCompletion()
 {
     QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::checkServerDataMergeCompletion"));
 
     // Need to check whether we are still waiting for the response from some add or update request
-    bool tagsReady = m_tagsPendingProcessing.isEmpty() && m_tagsPendingAddOrUpdate.isEmpty() &&
+    bool tagsReady = !m_pendingTagsSyncStart && m_tagsPendingProcessing.isEmpty() && m_tagsPendingAddOrUpdate.isEmpty() &&
                      m_findTagByGuidRequestIds.isEmpty() &&
                      m_findTagByNameRequestIds.isEmpty() && m_updateTagRequestIds.isEmpty() &&
                      m_addTagRequestIds.isEmpty();
     if (!tagsReady) {
-        QNDEBUG(QStringLiteral("Tags are not ready, there are ") << m_tagsPendingProcessing.size()
+        QNDEBUG(QStringLiteral("Tags are not ready, pending tags sync start = ")
+                << (m_pendingTagsSyncStart ? QStringLiteral("true") : QStringLiteral("false"))
+                << QStringLiteral("; there are ") << m_tagsPendingProcessing.size()
                 << QStringLiteral(" tags pending processing and/or ") << m_tagsPendingAddOrUpdate.size()
-                << QStringLiteral(" tags pending add or update within the local storage: pending response for ") << m_updateTagRequestIds.size()
-                << QStringLiteral(" tag update requests and/or ") << m_addTagRequestIds.size() << QStringLiteral(" tag add requests and/or ")
+                << QStringLiteral(" tags pending add or update within the local storage: pending response for ")
+                << m_updateTagRequestIds.size() << QStringLiteral(" tag update requests and/or ")
+                << m_addTagRequestIds.size() << QStringLiteral(" tag add requests and/or ")
                 << m_findTagByGuidRequestIds.size() << QStringLiteral(" find tag by guid requests and/or ")
                 << m_findTagByNameRequestIds.size() << QStringLiteral(" find tag by name requests"));
         return;
@@ -5498,6 +5477,7 @@ void RemoteToLocalSynchronizationManager::clear()
     m_addTagRequestIds.clear();
     m_updateTagRequestIds.clear();
     m_expungeTagRequestIds.clear();
+    m_pendingTagsSyncStart = false;
 
     QList<TagSyncConflictResolver*> tagSyncConflictResolvers = findChildren<TagSyncConflictResolver*>();
     for(auto it = tagSyncConflictResolvers.begin(), end = tagSyncConflictResolvers.end(); it != end; ++it)
