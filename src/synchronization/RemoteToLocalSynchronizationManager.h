@@ -19,6 +19,7 @@
 #ifndef LIB_QUENTIER_SYNCHRONIZATION_REMOTE_TO_LOCAL_SYNCHRONIZATION_MANAGER_H
 #define LIB_QUENTIER_SYNCHRONIZATION_REMOTE_TO_LOCAL_SYNCHRONIZATION_MANAGER_H
 
+#include "FullSyncStaleDataItemsExpunger.h"
 #include "NoteStore.h"
 #include "UserStore.h"
 #include "NotebookSyncConflictResolver.h"
@@ -52,7 +53,6 @@
 namespace quentier {
 
 QT_FORWARD_DECLARE_CLASS(LocalStorageManagerAsync)
-QT_FORWARD_DECLARE_CLASS(FullSyncStaleDataItemsExpunger)
 
 class Q_DECL_HIDDEN RemoteToLocalSynchronizationManager: public QObject
 {
@@ -290,6 +290,7 @@ private:
     void launchLinkedNotebookSync();
     void launchNotebookSync();
 
+    void collectSyncedGuidsForFullSyncStaleDataItemsExpunger();
     void launchFullSyncStaleDataItemsExpunger();
 
     // Returns true if full sync stale data items expunger was launched
@@ -690,6 +691,8 @@ private:
     QUuid                                   m_expungeNotelessTagsRequestId;
 
     SavedSearchesList                       m_savedSearches;
+    int                                     m_numProcessedNonExpungedSavedSearches;
+    int                                     m_originalNumberOfSavedSearches;
     SavedSearchesList                       m_savedSearchesPendingAddOrUpdate;
     QList<QString>                          m_expungedSavedSearches;
     QSet<QUuid>                             m_findSavedSearchByNameRequestIds;
@@ -701,6 +704,7 @@ private:
     SavedSearchSyncCache                    m_savedSearchSyncCache;
 
     LinkedNotebooksList                     m_linkedNotebooks;
+    int                                     m_numProcessedNonExpungedLinkedNotebooks;
     LinkedNotebooksList                     m_linkedNotebooksPendingAddOrUpdate;
     QList<QString>                          m_expungedLinkedNotebooks;
     QSet<QUuid>                             m_findLinkedNotebookRequestIds;
@@ -736,6 +740,8 @@ private:
     QSet<QString>                           m_linkedNotebookGuidsOnceFullySynced;
 
     NotebooksList                           m_notebooks;
+    int                                     m_numProcessedNonExpungedNotebooks;
+    int                                     m_originalNumberOfNotebooks;
     NotebooksList                           m_notebooksPendingAddOrUpdate;
     QList<QString>                          m_expungedNotebooks;
     QSet<QUuid>                             m_findNotebookByNameRequestIds;
@@ -799,6 +805,7 @@ private:
     QHash<QString,Note>                         m_notesOwningResourcesPendingDownloadForAddingToLocalStorageByResourceGuid;
     QHash<QString,std::pair<Resource,Note> >    m_resourcesPendingDownloadForUpdatingInLocalStorageWithNotesByResourceGuid;
 
+    FullSyncStaleDataItemsExpunger::SyncedGuids     m_fullSyncStaleDataItemsSyncedGuids;
     FullSyncStaleDataItemsExpunger *                m_pFullSyncStaleDataItemsExpunger;
     QMap<QString, FullSyncStaleDataItemsExpunger*>  m_fullSyncStaleDataItemsExpungersByLinkedNotebookGuid;
 
