@@ -749,13 +749,23 @@ QTextStream & operator<<(QTextStream & strm, const qevercloud::SavedSearch & sav
     {
         strm << QStringLiteral("{\n");
         strm << indent << indent << QStringLiteral("includeAccount = ")
-             << (savedSearch.scope->includeAccount ? QStringLiteral("true") : QStringLiteral("false")) << QStringLiteral(";\n");
+             << (savedSearch.scope->includeAccount.isSet()
+                 ? (savedSearch.scope->includeAccount.ref()
+                    ? QStringLiteral("true")
+                    : QStringLiteral("false"))
+                 : QStringLiteral("<empty>")) << QStringLiteral(";\n");
         strm << indent << indent << QStringLiteral("includePersonalLinkedNotebooks = ")
-             << (savedSearch.scope->includePersonalLinkedNotebooks ? QStringLiteral("true") : QStringLiteral("false"))
-             << QStringLiteral(";\n");
+             << (savedSearch.scope->includePersonalLinkedNotebooks.isSet()
+                 ? (savedSearch.scope->includePersonalLinkedNotebooks.ref()
+                    ? QStringLiteral("true")
+                    : QStringLiteral("false"))
+                 : QStringLiteral("<empty>")) << QStringLiteral(";\n");
         strm << indent << indent << QStringLiteral("includeBusinessLinkedNotebooks = ")
-             << (savedSearch.scope->includeBusinessLinkedNotebooks ? QStringLiteral("true") : QStringLiteral("false"))
-             << QStringLiteral(";\n");
+             << (savedSearch.scope->includeBusinessLinkedNotebooks.isSet()
+                 ? (savedSearch.scope->includeBusinessLinkedNotebooks.ref()
+                    ? QStringLiteral("true")
+                    : QStringLiteral("false"))
+                 : QStringLiteral("<empty>")) << QStringLiteral(";\n");
         strm << indent << QStringLiteral("};\n");
     }
     else
