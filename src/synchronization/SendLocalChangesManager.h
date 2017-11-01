@@ -210,7 +210,6 @@ private:
 
     bool rateLimitIsActive() const;
 
-    bool hasPendingRequests() const;
     void checkSendLocalChangesAndDirtyFlagsRemovingUpdatesAndFinalize();
     void checkDirtyFlagRemovingUpdatesAndFinalize();
     void finalize();

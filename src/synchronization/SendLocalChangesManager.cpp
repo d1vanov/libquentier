@@ -152,7 +152,7 @@ void SendLocalChangesManager::onListDirtyTagsCompleted(LocalStorageManager::List
         m_tags << tags;
 
         if (userTagsListCompleted) {
-            QNTRACE(QStringLiteral("User's tags list is completed"));
+            QNTRACE(QStringLiteral("User's tags list is completed: ") << m_tags.size() << QStringLiteral(" tags"));
             m_listDirtyTagsRequestId = QUuid();
         }
         else {
@@ -214,6 +214,8 @@ void SendLocalChangesManager::onListDirtySavedSearchesCompleted(LocalStorageMana
             << order << QStringLiteral(", orderDirection = ") << orderDirection << QStringLiteral(", requestId = ") << requestId);
 
     m_savedSearches << savedSearches;
+    QNTRACE(QStringLiteral("Total ") << m_savedSearches.size() << QStringLiteral(" dirty saved searches"));
+
     m_listDirtySavedSearchesRequestId = QUuid();
 
     checkListLocalStorageObjectsCompletion();
@@ -268,6 +270,7 @@ void SendLocalChangesManager::onListDirtyNotebooksCompleted(LocalStorageManager:
         m_notebooks << notebooks;
 
         if (userNotebooksListCompleted) {
+            QNTRACE(QStringLiteral("User's notebooks list is completed: ") << m_notebooks.size() << QStringLiteral(" notebooks"));
             m_listDirtyNotebooksRequestId = QUuid();
         }
         else {
@@ -2084,24 +2087,6 @@ bool SendLocalChangesManager::rateLimitIsActive() const
              (m_sendSavedSearchesPostponeTimerId > 0) ||
              (m_sendNotebooksPostponeTimerId > 0) ||
              (m_sendNotesPostponeTimerId > 0) );
-}
-
-bool SendLocalChangesManager::hasPendingRequests() const
-{
-    QUuid emptyId;
-    return ( (m_listDirtyTagsRequestId != emptyId) ||
-             (m_listDirtySavedSearchesRequestId != emptyId) ||
-             (m_listDirtyNotebooksRequestId != emptyId) ||
-             (m_listDirtyNotesRequestId != emptyId) ||
-             (m_listLinkedNotebooksRequestId != emptyId) ||
-             !m_listDirtyTagsFromLinkedNotebooksRequestIds.isEmpty() ||
-             !m_listDirtyNotebooksFromLinkedNotebooksRequestIds.isEmpty() ||
-             !m_listDirtyNotesFromLinkedNotebooksRequestIds.isEmpty() ||
-             !m_updateTagRequestIds.isEmpty() ||
-             !m_updateSavedSearchRequestIds.isEmpty() ||
-             !m_updateNotebookRequestIds.isEmpty() ||
-             !m_updateNoteRequestIds.isEmpty() ||
-             !m_findNotebookRequestIds.isEmpty() );
 }
 
 void SendLocalChangesManager::checkSendLocalChangesAndDirtyFlagsRemovingUpdatesAndFinalize()
