@@ -6783,6 +6783,14 @@ Note RemoteToLocalSynchronizationManager::createConflictingNote(const Note & ori
     conflictingNote.setDirty(true);
     conflictingNote.setLocal(false);
 
+    if (originalNote.hasGuid())
+    {
+        qevercloud::NoteAttributes & attributes = conflictingNote.noteAttributes();
+        if (!attributes.conflictSourceNoteGuid.isSet()) {
+            attributes.conflictSourceNoteGuid = originalNote.guid();
+        }
+    }
+
     if (conflictingNote.hasResources())
     {
         // Need to update the conflicting note's resources:
