@@ -1635,7 +1635,8 @@ bool LocalStorageManagerPrivate::addNote(Note & note, ErrorString & errorDescrip
         errorDescription.appendBase(error.base());
         errorDescription.appendBase(error.additionalBases());
         errorDescription.details() = error.details();
-        QNWARNING(QStringLiteral("Found invalid note: ") << note);
+        QNWARNING(QStringLiteral("Found invalid note: ") << errorDescription
+                  << QStringLiteral("; note: ") << note);
         return false;
     }
 
