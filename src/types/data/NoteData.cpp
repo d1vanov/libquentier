@@ -315,21 +315,6 @@ bool NoteData::checkParameters(ErrorString & errorDescription) const
                 }
             }
         }
-
-        if (attributes.classifications.isSet())
-        {
-            const QMap<QString, QString> & classifications = attributes.classifications;
-            for(QMap<QString, QString>::const_iterator it = classifications.constBegin();
-                it != classifications.constEnd(); ++it)
-            {
-                const QString & value = it.value();
-                if (!value.startsWith(QStringLiteral("CLASSIFICATION_"))) {
-                    errorDescription.setBase(QT_TR_NOOP("Note's attributes classifications has invalid classification value"));
-                    errorDescription.details() = value;
-                    return false;
-                }
-            }
-        }
     }
 
     return true;
