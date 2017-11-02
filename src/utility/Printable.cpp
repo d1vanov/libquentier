@@ -339,6 +339,9 @@ QTextStream & operator <<(QTextStream & strm, const qevercloud::NoteAttributes &
     PRINT_FIELD(attributes, lastEditedBy);
     PRINT_FIELD(attributes, creatorId, QString::number);
     PRINT_FIELD(attributes, lastEditorId, QString::number);
+    PRINT_FIELD(attributes, sharedWithBusiness, QString::number);
+    PRINT_FIELD(attributes, conflictSourceNoteGuid);
+    PRINT_FIELD(attributes, noteTitleQuality, QString::number);
 
     PRINT_APPLICATION_DATA(attributes)
 
