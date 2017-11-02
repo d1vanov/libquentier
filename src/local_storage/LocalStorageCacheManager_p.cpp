@@ -20,6 +20,7 @@
 #include <quentier/local_storage/DefaultLocalStorageCacheExpiryChecker.h>
 #include <quentier/exception/LocalStorageCacheManagerException.h>
 #include <quentier/utility/QuentierCheckPtr.h>
+#include <quentier/utility/Utility.h>
 #include <quentier/logging/QuentierLogger.h>
 #include <QDateTime>
 
@@ -297,39 +298,38 @@ GET_GUID(SavedSearch, savedSearch)
 
 QTextStream & LocalStorageCacheManagerPrivate::NoteHolder::print(QTextStream & strm) const
 {
-    strm << QStringLiteral("NoteHolder: note = ") << m_note << QStringLiteral("last access timestamp = ") << m_lastAccessTimestamp
-         << QStringLiteral(" (") << QDateTime::fromMSecsSinceEpoch(m_lastAccessTimestamp).toString(Qt::ISODate) << QStringLiteral("); \n");
+    strm << QStringLiteral("NoteHolder: note = ") << m_note << QStringLiteral("last access timestamp = ")
+         << printableDateTimeFromTimestamp(m_lastAccessTimestamp) << QStringLiteral("\n");
     return strm;
 }
 
 QTextStream & LocalStorageCacheManagerPrivate::NotebookHolder::print(QTextStream & strm) const
 {
-    strm << QStringLiteral("NotebookHolder: notebook = ") << m_notebook
-         << QStringLiteral("last access timestamp = ") << m_lastAccessTimestamp
-            << QStringLiteral(" (") << QDateTime::fromMSecsSinceEpoch(m_lastAccessTimestamp).toString(Qt::ISODate) << QStringLiteral("); \n");
+    strm << QStringLiteral("NotebookHolder: notebook = ") << m_notebook << QStringLiteral("last access timestamp = ")
+         << printableDateTimeFromTimestamp(m_lastAccessTimestamp) << QStringLiteral("\n");
     return strm;
 }
 
 QTextStream & LocalStorageCacheManagerPrivate::TagHolder::print(QTextStream & strm) const
 {
-    strm << QStringLiteral("TagHolder: tag = ") << m_tag << QStringLiteral("last access timestamp = ") << m_lastAccessTimestamp
-         << QStringLiteral(" (") << QDateTime::fromMSecsSinceEpoch(m_lastAccessTimestamp).toString(Qt::ISODate) << QStringLiteral("); \n");
+    strm << QStringLiteral("TagHolder: tag = ") << m_tag << QStringLiteral("last access timestamp = ")
+         << printableDateTimeFromTimestamp(m_lastAccessTimestamp) << QStringLiteral("\n");
     return strm;
 }
 
 QTextStream & LocalStorageCacheManagerPrivate::LinkedNotebookHolder::print(QTextStream & strm) const
 {
     strm << QStringLiteral("LinkedNotebookHolder: linked notebook = ") << m_linkedNotebook
-         << QStringLiteral("last access timestamp = ") << m_lastAccessTimestamp << QStringLiteral(" (")
-         << QDateTime::fromMSecsSinceEpoch(m_lastAccessTimestamp).toString(Qt::ISODate) << QStringLiteral("); \n");
+         << QStringLiteral("last access timestamp = ") << printableDateTimeFromTimestamp(m_lastAccessTimestamp)
+         << QStringLiteral("\n");
     return strm;
 }
 
 QTextStream & LocalStorageCacheManagerPrivate::SavedSearchHolder::print(QTextStream & strm) const
 {
     strm << QStringLiteral("SavedSearchHolder: saved search = ") << m_savedSearch
-         << QStringLiteral("last access timestamp = ") << m_lastAccessTimestamp
-         << QStringLiteral("( ") << QDateTime::fromMSecsSinceEpoch(m_lastAccessTimestamp).toString(Qt::ISODate) << QStringLiteral("); \n");
+         << QStringLiteral("last access timestamp = ") << printableDateTimeFromTimestamp(m_lastAccessTimestamp)
+         << QStringLiteral("\n");
     return strm;
 }
 

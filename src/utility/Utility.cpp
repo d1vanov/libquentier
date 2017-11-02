@@ -19,7 +19,6 @@
 #include <quentier/utility/Utility.h>
 #include <quentier/logging/QuentierLogger.h>
 #include <quentier/types/RegisterMetatypes.h>
-#include <QDateTime>
 #include <QStyleFactory>
 #include <QApplication>
 #include <QScopedPointer>
@@ -64,6 +63,8 @@
 #include <QFile>
 
 #include <limits>
+#include <ctime>
+#include <time.h>
 
 namespace quentier {
 
@@ -79,12 +80,57 @@ bool checkUpdateSequenceNumber(const int32_t updateSequenceNumber)
               (updateSequenceNumber == std::numeric_limits<int32_t>::max()) );
 }
 
-const QString printableDateTimeFromTimestamp(const qint64 timestamp)
+const QString printableDateTimeFromTimestamp(const qint64 timestamp, const bool withTimestampItself,
+                                             const char * customFormat)
 {
-    QString result = QString::number(timestamp);
-    result += QStringLiteral(" (");
-    result += QDateTime::fromMSecsSinceEpoch(timestamp).toString(Qt::ISODate);
-    result += QStringLiteral(")");
+    QString result;
+
+    if (withTimestampItself) {
+        result += QString::number(timestamp);
+        result += QStringLiteral(" (");
+    }
+
+    // NOTE: deliberately avoiding the use of QDateTime here as this function
+    // would be potentially called from several threads and QDateTime::toString
+    // has the potential to randomly crash in such environments, see e.g.
+    // https://bugreports.qt.io/browse/QTBUG-49473
+
+    std::time_t t(timestamp / 1000);
+    std::tm localTm;
+    std::tm * tm = Q_NULLPTR;
+
+#ifdef _MSC_VER
+#if _MSC_VER >= 1400
+    // MSVC's localtime is thread-safe since MSVC 2005
+    tm = std::localtime(&t);
+#else
+#error "Too old MSVC version to reliably build libquentier
+#endif
+#else // POSIX
+    tm = &localTm;
+    Q_UNUSED(localtime_r(&t, tm))
+#endif
+
+    const size_t maxBufSize = 100;
+    char buffer[maxBufSize];
+    const char * format = "%d-%m-%Y %H:%M:%S";
+    size_t size = strftime(buffer, maxBufSize, (customFormat ? customFormat : format) , tm);
+
+    result += QString::fromLocal8Bit(buffer, static_cast<int>(size));
+
+    qint64 msecPart = timestamp - t * 1000;
+    result += QStringLiteral(".");
+    result += QString::number(msecPart);
+
+    const char * timezone = tm->tm_zone;
+    if (timezone) {
+        result += QStringLiteral(" ");
+        result += QString::fromLocal8Bit(timezone);
+    }
+
+    if (withTimestampItself) {
+        result += QStringLiteral(")");
+    }
 
     return result;
 }

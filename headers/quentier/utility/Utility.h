@@ -81,9 +81,15 @@ bool QUENTIER_EXPORT checkUpdateSequenceNumber(const int32_t updateSequenceNumbe
 
 /**
  * printableDateTimeFromTimestamp - converts the passed in timestamp into a human readable datetime string
+ * @param timestamp             The timestamp to be translated to a human readable string
+ * @param withTimestampItself   The boolean flag denoting whether to prepend the output string with the numeric representation of the timestamp
+ * @param customFormat          The custom format string; internally, if not null, if would be passed to strftime function
+ *                              declared in <ctime> header of the C++ standard library
+ *
  * @return      Human readable datetime string corresponding to the passed in timestamp
  */
-const QString QUENTIER_EXPORT printableDateTimeFromTimestamp(const qint64 timestamp);
+const QString QUENTIER_EXPORT printableDateTimeFromTimestamp(const qint64 timestamp, const bool withTimestampItself = true,
+                                                             const char * customFormat = Q_NULLPTR);
 
 /**
  * applicationStyle - provides the current style of the application
