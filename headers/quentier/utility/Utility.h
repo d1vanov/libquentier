@@ -80,15 +80,48 @@ bool checkGuid(const T & guid)
 bool QUENTIER_EXPORT checkUpdateSequenceNumber(const int32_t updateSequenceNumber);
 
 /**
+ * @brief The DateTimePrint class simply wraps the enum containing datetime printing options
+ */
+class QUENTIER_EXPORT DateTimePrint
+{
+public:
+    /**
+     * Available printing options for datetime
+     */
+    enum Option {
+        /**
+         * Include the numeric representation of the timestamp into the printed string
+         */
+        IncludeNumericTimestamp = 1 << 1,
+        /**
+         * Include milliseconds into the printed string
+         */
+        IncludeMilliseconds = 1 << 2,
+        /**
+         * Include timezone into the printed string
+         */
+        IncludeTimezone = 1 << 3
+    };
+    Q_DECLARE_FLAGS(Options, Option)
+};
+
+Q_DECLARE_OPERATORS_FOR_FLAGS(DateTimePrint::Options)
+
+/**
  * printableDateTimeFromTimestamp - converts the passed in timestamp into a human readable datetime string
  * @param timestamp             The timestamp to be translated to a human readable string
- * @param withTimestampItself   The boolean flag denoting whether to prepend the output string with the numeric representation of the timestamp
+ * @param options               Datetime printing options
  * @param customFormat          The custom format string; internally, if not null, if would be passed to strftime function
- *                              declared in <ctime> header of the C++ standard library
+ *                              declared in <ctime> header of the C++ standard library; but beware that the length
+ *                              of the printed string is limited by 100 characters regardless of the format string
  *
  * @return      Human readable datetime string corresponding to the passed in timestamp
  */
-const QString QUENTIER_EXPORT printableDateTimeFromTimestamp(const qint64 timestamp, const bool withTimestampItself = true,
+const QString QUENTIER_EXPORT printableDateTimeFromTimestamp(const qint64 timestamp,
+                                                             DateTimePrint::Options options =
+                                                             DateTimePrint::Options(DateTimePrint::IncludeNumericTimestamp |
+                                                                                    DateTimePrint::IncludeMilliseconds |
+                                                                                    DateTimePrint::IncludeTimezone),
                                                              const char * customFormat = Q_NULLPTR);
 
 /**

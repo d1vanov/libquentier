@@ -80,12 +80,12 @@ bool checkUpdateSequenceNumber(const int32_t updateSequenceNumber)
               (updateSequenceNumber == std::numeric_limits<int32_t>::max()) );
 }
 
-const QString printableDateTimeFromTimestamp(const qint64 timestamp, const bool withTimestampItself,
+const QString printableDateTimeFromTimestamp(const qint64 timestamp, const DateTimePrint::Options options,
                                              const char * customFormat)
 {
     QString result;
 
-    if (withTimestampItself) {
+    if (options & DateTimePrint::IncludeNumericTimestamp) {
         result += QString::number(timestamp);
         result += QStringLiteral(" (");
     }
@@ -113,22 +113,26 @@ const QString printableDateTimeFromTimestamp(const qint64 timestamp, const bool 
 
     const size_t maxBufSize = 100;
     char buffer[maxBufSize];
-    const char * format = "%d-%m-%Y %H:%M:%S";
+    const char * format = "%Y-%m-%d %H:%M:%S";
     size_t size = strftime(buffer, maxBufSize, (customFormat ? customFormat : format) , tm);
 
     result += QString::fromLocal8Bit(buffer, static_cast<int>(size));
 
-    qint64 msecPart = timestamp - t * 1000;
-    result += QStringLiteral(".");
-    result += QString::number(msecPart);
-
-    const char * timezone = tm->tm_zone;
-    if (timezone) {
-        result += QStringLiteral(" ");
-        result += QString::fromLocal8Bit(timezone);
+    if (options & DateTimePrint::IncludeMilliseconds) {
+        qint64 msecPart = timestamp - t * 1000;
+        result += QStringLiteral(".");
+        result += QString::fromUtf8("%1").arg(msecPart, 3, 10, QChar::fromLatin1('0'));
     }
 
-    if (withTimestampItself) {
+    if (options & DateTimePrint::IncludeTimezone) {
+        const char * timezone = tm->tm_zone;
+        if (timezone) {
+            result += QStringLiteral(" ");
+            result += QString::fromLocal8Bit(timezone);
+        }
+    }
+
+    if (options & DateTimePrint::IncludeNumericTimestamp) {
         result += QStringLiteral(")");
     }
 

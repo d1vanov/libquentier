@@ -22,6 +22,7 @@
 #include <quentier/types/Resource.h>
 #include <quentier/logging/QuentierLogger.h>
 #include <quentier/utility/UidGenerator.h>
+#include <quentier/utility/Utility.h>
 #include <libxml/xmlreader.h>
 #include <QString>
 #include <QXmlStreamReader>
@@ -46,6 +47,7 @@
 #define ENEX_MAX_RESOURCE_DATA_SIZE (26214400)
 
 #define ENEX_DATE_TIME_FORMAT (QStringLiteral("yyyyMMdd'T'HHmmss'Z'"))
+#define ENEX_DATE_TIME_FORMAT_STRFTIME "%Y%m%dT%H%M%SZ"
 
 namespace quentier {
 
@@ -1582,11 +1584,11 @@ bool ENMLConverterPrivate::exportNotesToEnex(const QVector<Note> & notes, const 
     writer.writeStartElement(QStringLiteral("en-export"));
     QXmlStreamAttributes enExportAttributes;
 
-    const QString dateTimeFormat = ENEX_DATE_TIME_FORMAT;
+    DateTimePrint::Options dateTimePrintOptions(0);
 
-    QDateTime currentDateTime = QDateTime::currentDateTimeUtc();
-    QString currentDateTimeString = currentDateTime.toString(dateTimeFormat);
-    enExportAttributes.append(QStringLiteral("export-date"), currentDateTimeString);
+    qint64 currentTimestamp = QDateTime::currentMSecsSinceEpoch();
+    enExportAttributes.append(QStringLiteral("export-date"),
+                              printableDateTimeFromTimestamp(currentTimestamp, dateTimePrintOptions, ENEX_DATE_TIME_FORMAT_STRFTIME));
 
     enExportAttributes.append(QStringLiteral("application"), QApplication::applicationName());
     enExportAttributes.append(QStringLiteral("version"), version);
@@ -1621,17 +1623,15 @@ bool ENMLConverterPrivate::exportNotesToEnex(const QVector<Note> & notes, const 
 
         if (note.hasCreationTimestamp()) {
             writer.writeStartElement(QStringLiteral("created"));
-            QDateTime creationDateTime = QDateTime::fromMSecsSinceEpoch(note.creationTimestamp());
-            QString creationDateTimeString = creationDateTime.toString(dateTimeFormat);
-            writer.writeCharacters(creationDateTimeString);
+            writer.writeCharacters(printableDateTimeFromTimestamp(note.creationTimestamp(),
+                                                                  dateTimePrintOptions, ENEX_DATE_TIME_FORMAT_STRFTIME));
             writer.writeEndElement();   // created
         }
 
         if (note.hasModificationTimestamp()) {
             writer.writeStartElement(QStringLiteral("updated"));
-            QDateTime modificationDateTime = QDateTime::fromMSecsSinceEpoch(note.modificationTimestamp());
-            QString modificationDateTimeString = modificationDateTime.toString(dateTimeFormat);
-            writer.writeCharacters(modificationDateTimeString);
+            writer.writeCharacters(printableDateTimeFromTimestamp(note.modificationTimestamp(),
+                                                                  dateTimePrintOptions, ENEX_DATE_TIME_FORMAT_STRFTIME));
             writer.writeEndElement();   // updated
         }
 
@@ -1678,9 +1678,8 @@ bool ENMLConverterPrivate::exportNotesToEnex(const QVector<Note> & notes, const 
 
                 if (noteAttributes.subjectDate.isSet()) {
                     writer.writeStartElement(QStringLiteral("subject-date"));
-                    QDateTime subjectDateTime = QDateTime::fromMSecsSinceEpoch(noteAttributes.subjectDate.ref());
-                    QString subjectDateString = subjectDateTime.toString(dateTimeFormat);
-                    writer.writeCharacters(subjectDateString);
+                    writer.writeCharacters(printableDateTimeFromTimestamp(noteAttributes.subjectDate.ref(),
+                                                                          dateTimePrintOptions, ENEX_DATE_TIME_FORMAT_STRFTIME));
                     writer.writeEndElement();
                 }
 
@@ -1735,18 +1734,16 @@ bool ENMLConverterPrivate::exportNotesToEnex(const QVector<Note> & notes, const 
                 if (noteAttributes.reminderTime.isSet())
                 {
                     writer.writeStartElement(QStringLiteral("reminder-time"));
-                    QDateTime reminderTime = QDateTime::fromMSecsSinceEpoch(noteAttributes.reminderTime.ref());
-                    QString reminderTimeString = reminderTime.toString(dateTimeFormat);
-                    writer.writeCharacters(reminderTimeString);
+                    writer.writeCharacters(printableDateTimeFromTimestamp(noteAttributes.reminderTime.ref(),
+                                                                          dateTimePrintOptions, ENEX_DATE_TIME_FORMAT_STRFTIME));
                     writer.writeEndElement();
                 }
 
                 if (noteAttributes.reminderDoneTime.isSet())
                 {
                     writer.writeStartElement(QStringLiteral("reminder-done-time"));
-                    QDateTime reminderDoneTime = QDateTime::fromMSecsSinceEpoch(noteAttributes.reminderDoneTime.ref());
-                    QString reminderDoneTimeString = reminderDoneTime.toString(dateTimeFormat);
-                    writer.writeCharacters(reminderDoneTimeString);
+                    writer.writeCharacters(printableDateTimeFromTimestamp(noteAttributes.reminderDoneTime.ref(),
+                                                                          dateTimePrintOptions, ENEX_DATE_TIME_FORMAT_STRFTIME));
                     writer.writeEndElement();
                 }
 
@@ -1870,9 +1867,8 @@ bool ENMLConverterPrivate::exportNotesToEnex(const QVector<Note> & notes, const 
 
                         if (resourceAttributes.timestamp.isSet()) {
                             writer.writeStartElement(QStringLiteral("timestamp"));
-                            QDateTime resourceTimestamp = QDateTime::fromMSecsSinceEpoch(resourceAttributes.timestamp.ref());
-                            QString resourceTimestampString = resourceTimestamp.toString(dateTimeFormat);
-                            writer.writeCharacters(resourceTimestampString);
+                            writer.writeCharacters(printableDateTimeFromTimestamp(resourceAttributes.timestamp.ref(),
+                                                                                  dateTimePrintOptions, ENEX_DATE_TIME_FORMAT_STRFTIME));
                             writer.writeEndElement();
                         }
 
