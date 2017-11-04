@@ -6076,11 +6076,11 @@ bool LocalStorageManagerPrivate::insertOrReplaceNote(const Note & note, const bo
         query.bindValue(QStringLiteral(":title"), (note.hasTitle() ? note.title() : nullValue));
         query.bindValue(QStringLiteral(":titleNormalized"), (titleNormalized.isEmpty() ? nullValue : titleNormalized));
         query.bindValue(QStringLiteral(":content"), (note.hasContent() ? note.content() : nullValue));
-        query.bindValue(QStringLiteral(":contentContainsUnfinishedToDo"), (note.containsUncheckedTodo() ? 1 : nullValue));
-        query.bindValue(QStringLiteral(":contentContainsFinishedToDo"), (note.containsCheckedTodo() ? 1 : nullValue));
-        query.bindValue(QStringLiteral(":contentContainsEncryption"), (note.containsEncryption() ? 1 : nullValue));
         query.bindValue(QStringLiteral(":contentLength"), (note.hasContentLength() ? note.contentLength() : nullValue));
         query.bindValue(QStringLiteral(":contentHash"), (note.hasContentHash() ? note.contentHash() : nullValue));
+        query.bindValue(QStringLiteral(":contentContainsFinishedToDo"), (note.containsCheckedTodo() ? 1 : nullValue));
+        query.bindValue(QStringLiteral(":contentContainsUnfinishedToDo"), (note.containsUncheckedTodo() ? 1 : nullValue));
+        query.bindValue(QStringLiteral(":contentContainsEncryption"), (note.containsEncryption() ? 1 : nullValue));
 
         if (note.hasContent())
         {
@@ -6105,7 +6105,8 @@ bool LocalStorageManagerPrivate::insertOrReplaceNote(const Note & note, const bo
             query.bindValue(QStringLiteral(":contentPlainText"), (plainTextAndListOfWords.first.isEmpty() ? nullValue : plainTextAndListOfWords.first));
             query.bindValue(QStringLiteral(":contentListOfWords"), (listOfWords.isEmpty() ? nullValue : listOfWords));
         }
-        else {
+        else
+        {
             query.bindValue(QStringLiteral(":contentPlainText"), nullValue);
             query.bindValue(QStringLiteral(":contentListOfWords"), nullValue);
         }
