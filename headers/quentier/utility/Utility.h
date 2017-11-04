@@ -99,6 +99,7 @@ public:
         IncludeMilliseconds = 1 << 2,
         /**
          * Include timezone into the printed string
+         * WARNING: currently this option has no effect on Windows platform, the timezone is not included anyway.
          */
         IncludeTimezone = 1 << 3
     };

@@ -103,6 +103,7 @@ const QString printableDateTimeFromTimestamp(const qint64 timestamp, const DateT
 #if _MSC_VER >= 1400
     // MSVC's localtime is thread-safe since MSVC 2005
     tm = std::localtime(&t);
+    Q_UNUSED(localTm);
 #else
 #error "Too old MSVC version to reliably build libquentier
 #endif
@@ -124,6 +125,7 @@ const QString printableDateTimeFromTimestamp(const qint64 timestamp, const DateT
         result += QString::fromUtf8("%1").arg(msecPart, 3, 10, QChar::fromLatin1('0'));
     }
 
+#ifndef _MSC_VER
     if (options & DateTimePrint::IncludeTimezone) {
         const char * timezone = tm->tm_zone;
         if (timezone) {
@@ -131,6 +133,7 @@ const QString printableDateTimeFromTimestamp(const qint64 timestamp, const DateT
             result += QString::fromLocal8Bit(timezone);
         }
     }
+#endif
 
     if (options & DateTimePrint::IncludeNumericTimestamp) {
         result += QStringLiteral(")");
