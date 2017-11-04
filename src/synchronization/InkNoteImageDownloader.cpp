@@ -80,7 +80,36 @@ void InkNoteImageDownloader::run()
     }
 
     qevercloud::InkNoteImageDownloader downloader(m_host, m_authToken, m_shardId, m_height, m_width);
-    QByteArray inkNoteImageData = downloader.download(m_resourceGuid, m_noteFromPublicLinkedNotebook);
+    QByteArray inkNoteImageData;
+    try
+    {
+        inkNoteImageData = downloader.download(m_resourceGuid, m_noteFromPublicLinkedNotebook);
+    }
+    catch(const qevercloud::EverCloudException & everCloudException)
+    {
+        ErrorString errorDescription(QT_TR_NOOP("Caught EverCloudException on attempt to download the ink note image data"));
+        auto exceptionData = everCloudException.exceptionData();
+        if (!exceptionData.isNull()) {
+            errorDescription.details() = exceptionData->errorMessage;
+        }
+
+        Q_EMIT finished(false, m_resourceGuid, m_noteGuid, errorDescription);
+        return;
+    }
+    catch(const std::exception & stdException)
+    {
+        ErrorString errorDescription(QT_TR_NOOP("Caught std::exception on attempt to download the ink note image data"));
+        errorDescription.details() = QString::fromUtf8(stdException.what());
+        Q_EMIT finished(false, m_resourceGuid, m_noteGuid, errorDescription);
+        return;
+    }
+    catch(...)
+    {
+        ErrorString errorDescription(QT_TR_NOOP("Caught unknown exception on attempt to download the ink note image data"));
+        Q_EMIT finished(false, m_resourceGuid, m_noteGuid, errorDescription);
+        return;
+    }
+
     if (Q_UNLIKELY(inkNoteImageData.isEmpty())) {
         SET_ERROR(QT_TR_NOOP("received empty note thumbnail data"));
     }
@@ -96,7 +125,7 @@ void InkNoteImageDownloader::run()
     }
     else if (Q_UNLIKELY(!folderPathInfo.isDir())) {
         SET_ERROR(QT_TR_NOOP("can't create a folder to store the ink note images in: "
-                                    "a file with similar name and path already exists"));
+                             "a file with similar name and path already exists"));
     }
     else if (Q_UNLIKELY(!folderPathInfo.isWritable())) {
         SET_ERROR(QT_TR_NOOP("the folder for ink note images storage is not writable"));
