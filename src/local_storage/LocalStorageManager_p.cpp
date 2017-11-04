@@ -6654,15 +6654,50 @@ bool LocalStorageManagerPrivate::checkAndPrepareInsertOrReplaceSharedNoteQuery()
     QNTRACE(QStringLiteral("Preparing SQL query to insert or replace the shared note"));
 
     m_insertOrReplaceSharedNoteQuery = QSqlQuery(m_sqlDatabase);
-    bool res = m_insertOrReplaceSharedNoteQuery.prepare(QStringLiteral("INSERT OR REPLACE INTO SharedNotes "
-                                                                       "(sharedNoteNoteGuid, sharedNoteSharerUserId, "
-                                                                       "sharedNoteRecipientIdentityId, sharedNotePrivilegeLevel, "
-                                                                       "sharedNoteCreationTimestamp, sharedNoteModificationTimestamp, "
-                                                                       "sharedNoteAssignmentTimestamp, indexInNote) "
-                                                                       "VALUES(:sharedNoteNoteGuid, :sharedNoteSharerUserId, "
-                                                                       ":sharedNoteRecipientIdentityId, :sharedNotePrivilegeLevel, "
-                                                                       ":sharedNoteCreationTimestamp, :sharedNoteModificationTimestamp, "
-                                                                       ":sharedNoteAssignmentTimestamp, :indexInNote)"));
+    bool res = m_insertOrReplaceSharedNoteQuery.prepare(QStringLiteral("INSERT OR REPLACE INTO SharedNotes ("
+                                                                       "sharedNoteNoteGuid, "
+                                                                       "sharedNoteSharerUserId, "
+                                                                       "sharedNoteRecipientIdentityId, "
+                                                                       "sharedNoteRecipientContactName, "
+                                                                       "sharedNoteRecipientContactId, "
+                                                                       "sharedNoteRecipientContactType, "
+                                                                       "sharedNoteRecipientContactPhotoUrl, "
+                                                                       "sharedNoteRecipientContactPhotoLastUpdated, "
+                                                                       "sharedNoteRecipientContactMessagingPermit, "
+                                                                       "sharedNoteRecipientContactMessagingPermitExpires, "
+                                                                       "sharedNoteRecipientUserId, "
+                                                                       "sharedNoteRecipientDeactivated, "
+                                                                       "sharedNoteRecipientSameBusiness, "
+                                                                       "sharedNoteRecipientBlocked, "
+                                                                       "sharedNoteRecipientUserConnected, "
+                                                                       "sharedNoteRecipientEventId, "
+                                                                       "sharedNotePrivilegeLevel, "
+                                                                       "sharedNoteCreationTimestamp, "
+                                                                       "sharedNoteModificationTimestamp, "
+                                                                       "sharedNoteAssignmentTimestamp, "
+                                                                       "indexInNote) "
+                                                                       "VALUES("
+                                                                       ":sharedNoteNoteGuid, "
+                                                                       ":sharedNoteSharerUserId, "
+                                                                       ":sharedNoteRecipientIdentityId, "
+                                                                       ":sharedNoteRecipientContactName, "
+                                                                       ":sharedNoteRecipientContactId, "
+                                                                       ":sharedNoteRecipientContactType, "
+                                                                       ":sharedNoteRecipientContactPhotoUrl, "
+                                                                       ":sharedNoteRecipientContactPhotoLastUpdated, "
+                                                                       ":sharedNoteRecipientContactMessagingPermit, "
+                                                                       ":sharedNoteRecipientContactMessagingPermitExpires, "
+                                                                       ":sharedNoteRecipientUserId, "
+                                                                       ":sharedNoteRecipientDeactivated, "
+                                                                       ":sharedNoteRecipientSameBusiness, "
+                                                                       ":sharedNoteRecipientBlocked, "
+                                                                       ":sharedNoteRecipientUserConnected, "
+                                                                       ":sharedNoteRecipientEventId, "
+                                                                       ":sharedNotePrivilegeLevel, "
+                                                                       ":sharedNoteCreationTimestamp, "
+                                                                       ":sharedNoteModificationTimestamp, "
+                                                                       ":sharedNoteAssignmentTimestamp, "
+                                                                       ":indexInNote)"));
     if (res) {
         m_insertOrReplaceSharedNoteQueryPrepared = true;
     }
@@ -8323,7 +8358,7 @@ bool LocalStorageManagerPrivate::fillSharedNoteFromSqlRecord(const QSqlRecord & 
     CHECK_AND_SET_SHARED_NOTE_PROPERTY(sharedNoteRecipientBlocked, int, bool, setRecipientIdentityBlocked)
     CHECK_AND_SET_SHARED_NOTE_PROPERTY(sharedNoteRecipientUserConnected, int, bool, setRecipientIdentityUserConnected)
     CHECK_AND_SET_SHARED_NOTE_PROPERTY(sharedNoteRecipientEventId, qint64, qint64, setRecipientIdentityEventId)
-    CHECK_AND_SET_SHARED_NOTE_PROPERTY(sharedNotePrivileveLevel, qint8, qint8, setPrivilegeLevel)
+    CHECK_AND_SET_SHARED_NOTE_PROPERTY(sharedNotePrivilegeLevel, qint8, qint8, setPrivilegeLevel)
     CHECK_AND_SET_SHARED_NOTE_PROPERTY(sharedNoteCreationTimestamp, qint64, qint64, setCreationTimestamp)
     CHECK_AND_SET_SHARED_NOTE_PROPERTY(sharedNoteModificationTimestamp, qint64, qint64, setModificationTimestamp)
     CHECK_AND_SET_SHARED_NOTE_PROPERTY(sharedNoteAssignmentTimestamp, qint64, qint64, setAssignmentTimestamp)

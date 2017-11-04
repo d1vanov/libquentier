@@ -40,6 +40,8 @@
 #include <quentier/types/LinkedNotebook.h>
 #include <quentier/types/Tag.h>
 #include <quentier/types/Resource.h>
+#include <quentier/types/Note.h>
+#include <quentier/types/SharedNote.h>
 #include <quentier/types/Notebook.h>
 #include <quentier/types/SharedNotebook.h>
 #include <quentier/types/User.h>
@@ -689,6 +691,29 @@ void CoreTester::localStorageManagedIndividualNoteTest()
         noteLimits.uploaded = 100;
 
         note.unsetLocalUid();
+
+        SharedNote sharedNote;
+        sharedNote.setNoteGuid(note.guid());
+        sharedNote.setSharerUserId(1);
+        sharedNote.setRecipientIdentityId(qint64(2));
+        sharedNote.setRecipientIdentityContactName(QStringLiteral("Contact"));
+        sharedNote.setRecipientIdentityContactId(QStringLiteral("Contact id"));
+        sharedNote.setRecipientIdentityContactType(qevercloud::ContactType::EVERNOTE);
+        sharedNote.setRecipientIdentityContactPhotoUrl(QStringLiteral("url"));
+        sharedNote.setRecipientIdentityContactPhotoLastUpdated(qint64(50));
+        sharedNote.setRecipientIdentityContactMessagingPermit(QByteArray("aaa"));
+        sharedNote.setRecipientIdentityContactMessagingPermitExpires(qint64(1));
+        sharedNote.setRecipientIdentityUserId(3);
+        sharedNote.setRecipientIdentityDeactivated(false);
+        sharedNote.setRecipientIdentitySameBusiness(true);
+        sharedNote.setRecipientIdentityBlocked(true);
+        sharedNote.setRecipientIdentityUserConnected(true);
+        sharedNote.setRecipientIdentityEventId(qint64(5));
+        sharedNote.setPrivilegeLevel(qevercloud::SharedNotePrivilegeLevel::FULL_ACCESS);
+        sharedNote.setCreationTimestamp(6);
+        sharedNote.setModificationTimestamp(7);
+        sharedNote.setAssignmentTimestamp(8);
+        note.addSharedNote(sharedNote);
 
         errorMessage.clear();
         res = localStorageManager.addNote(note, errorMessage);
