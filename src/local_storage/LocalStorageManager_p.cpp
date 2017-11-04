@@ -1603,7 +1603,7 @@ bool LocalStorageManagerPrivate::addNote(Note & note, ErrorString & errorDescrip
         errorDescription.appendBase(error.base());
         errorDescription.appendBase(error.additionalBases());
         errorDescription.details() = error.details();
-        QNWARNING(errorDescription);
+        QNWARNING(errorDescription << QStringLiteral(", note: ") << note);
         return false;
     }
 
@@ -1622,7 +1622,7 @@ bool LocalStorageManagerPrivate::addNote(Note & note, ErrorString & errorDescrip
         errorDescription.appendBase(error.base());
         errorDescription.appendBase(error.additionalBases());
         errorDescription.details() = error.details();
-        QNWARNING(errorDescription);
+        QNWARNING(errorDescription << QStringLiteral(", note: ") << note);
         return false;
     }
 
@@ -1654,7 +1654,7 @@ bool LocalStorageManagerPrivate::addNote(Note & note, ErrorString & errorDescrip
         if (!checkGuid(uid)) {
             errorDescription.base() = errorPrefix.base();
             errorDescription.appendBase(QT_TR_NOOP("note's guid is invalid"));
-            QNWARNING(errorDescription);
+            QNWARNING(errorDescription << QStringLiteral(", note: ") << note);
             return false;
         }
 
@@ -1697,7 +1697,7 @@ bool LocalStorageManagerPrivate::addNote(Note & note, ErrorString & errorDescrip
         errorDescription.details() = column;
         errorDescription.details() += QStringLiteral(" = ");
         errorDescription.details() += uid;
-        QNWARNING(errorDescription);
+        QNWARNING(errorDescription << QStringLiteral(", note: ") << note);
         return false;
     }
 
@@ -6093,7 +6093,7 @@ bool LocalStorageManagerPrivate::insertOrReplaceNote(const Note & note, const bo
                 errorDescription.appendBase(error.base());
                 errorDescription.appendBase(error.additionalBases());
                 errorDescription.details() = error.details();
-                QNWARNING(errorDescription);
+                QNWARNING(errorDescription << QStringLiteral(", note: ") << note);
                 return false;
             }
 
@@ -6302,6 +6302,7 @@ bool LocalStorageManagerPrivate::insertOrReplaceNote(const Note & note, const bo
         const qevercloud::NoteRestrictions & restrictions = note.noteRestrictions();
         bool res = insertOrReplaceNoteRestrictions(localUid, restrictions, errorDescription);
         if (!res) {
+            QNWARNING(QStringLiteral("Note: ") << note);
             return false;
         }
     }
@@ -6318,6 +6319,7 @@ bool LocalStorageManagerPrivate::insertOrReplaceNote(const Note & note, const bo
         const qevercloud::NoteLimits & limits = note.noteLimits();
         bool res = insertOrReplaceNoteLimits(localUid, limits, errorDescription);
         if (!res) {
+            QNWARNING(QStringLiteral("Note: ") << note);
             return false;
         }
     }
@@ -6347,6 +6349,7 @@ bool LocalStorageManagerPrivate::insertOrReplaceNote(const Note & note, const bo
             {
                 bool res = insertOrReplaceSharedNote(*it, errorDescription);
                 if (!res) {
+                    QNWARNING(QStringLiteral("Note: ") << note);
                     return false;
                 }
             }
@@ -6407,7 +6410,7 @@ bool LocalStorageManagerPrivate::insertOrReplaceNote(const Note & note, const bo
                     errorDescription.appendBase(error.base());
                     errorDescription.appendBase(error.additionalBases());
                     errorDescription.details() = error.details();
-                    QNWARNING(errorDescription);
+                    QNWARNING(errorDescription << QStringLiteral(", note: ") << note);
                     return false;
                 }
 
@@ -6510,6 +6513,7 @@ bool LocalStorageManagerPrivate::insertOrReplaceSharedNote(const SharedNote & sh
     query.bindValue(QStringLiteral(":sharedNoteCreationTimestamp"), (sharedNote.hasCreationTimestamp() ? sharedNote.creationTimestamp() : nullValue));
     query.bindValue(QStringLiteral(":sharedNoteModificationTimestamp"), (sharedNote.hasModificationTimestamp() ? sharedNote.modificationTimestamp() : nullValue));
     query.bindValue(QStringLiteral(":sharedNoteAssignmentTimestamp"), (sharedNote.hasAssignmentTimestamp() ? sharedNote.assignmentTimestamp() : nullValue));
+    query.bindValue(QStringLiteral(":indexInNote"), (sharedNote.indexInNote() >= 0 ? sharedNote.indexInNote() : nullValue));
 
     res = query.exec();
     DATABASE_CHECK_AND_SET_ERROR();
@@ -6652,13 +6656,13 @@ bool LocalStorageManagerPrivate::checkAndPrepareInsertOrReplaceSharedNoteQuery()
     m_insertOrReplaceSharedNoteQuery = QSqlQuery(m_sqlDatabase);
     bool res = m_insertOrReplaceSharedNoteQuery.prepare(QStringLiteral("INSERT OR REPLACE INTO SharedNotes "
                                                                        "(sharedNoteNoteGuid, sharedNoteSharerUserId, "
-                                                                       "sharedNoteRecipientIdentity, sharedNotePrivilegeLevel, "
+                                                                       "sharedNoteRecipientIdentityId, sharedNotePrivilegeLevel, "
                                                                        "sharedNoteCreationTimestamp, sharedNoteModificationTimestamp, "
-                                                                       "sharedNoteAssignmentTimestamp) "
+                                                                       "sharedNoteAssignmentTimestamp, indexInNote) "
                                                                        "VALUES(:sharedNoteNoteGuid, :sharedNoteSharerUserId, "
-                                                                       ":sharedNoteRecipientIdentity, :sharedNotePrivilegeLevel, "
+                                                                       ":sharedNoteRecipientIdentityId, :sharedNotePrivilegeLevel, "
                                                                        ":sharedNoteCreationTimestamp, :sharedNoteModificationTimestamp, "
-                                                                       ":sharedNoteAssignmentTimestamp)"));
+                                                                       ":sharedNoteAssignmentTimestamp, :indexInNote)"));
     if (res) {
         m_insertOrReplaceSharedNoteQueryPrepared = true;
     }
@@ -10008,7 +10012,8 @@ bool LocalStorageManagerPrivate::partialUpdateNoteResources(const QString & note
             errorDescription.base() = errorPrefix.base();
             errorDescription.appendBase(QT_TR_NOOP("can't retrieve the resource "
                                                    "local uid from the query result"));
-            QNWARNING(errorDescription);
+            QNWARNING(errorDescription << QStringLiteral(", note local uid = ") << noteLocalUid
+                      << QStringLiteral(", note resources: ") << updatedNoteResources);
             return false;
         }
 
@@ -10123,7 +10128,7 @@ bool LocalStorageManagerPrivate::partialUpdateNoteResources(const QString & note
             errorDescription.appendBase(error.base());
             errorDescription.appendBase(error.additionalBases());
             errorDescription.details() = error.details();
-            QNWARNING(errorDescription);
+            QNWARNING(errorDescription << QStringLiteral(", resource: ") << resource);
             return false;
         }
 
@@ -10135,7 +10140,7 @@ bool LocalStorageManagerPrivate::partialUpdateNoteResources(const QString & note
             errorDescription.appendBase(error.base());
             errorDescription.appendBase(error.additionalBases());
             errorDescription.details() = error.details();
-            QNWARNING(errorDescription);
+            QNWARNING(errorDescription << QStringLiteral(", resource: ") << resource);
             return false;
         }
     }
