@@ -1063,6 +1063,21 @@ QTextStream & Note::print(QTextStream & strm) const
     }
     INSERT_DELIMITER;
 
+    if (d->m_qecNote.sharedNotes.isSet())
+    {
+        strm << QStringLiteral("shared notes:\n");
+        for(auto it = d->m_qecNote.sharedNotes.ref().constBegin(),
+            end = d->m_qecNote.sharedNotes.ref().constEnd(); it != end; ++it)
+        {
+            strm << *it << QStringLiteral("\n");
+        }
+    }
+    else
+    {
+        strm << QStringLiteral("shared notes are not set");
+    }
+    INSERT_DELIMITER;
+
     strm << QStringLiteral("isDirty: ") << (isDirty() ? QStringLiteral("true") : QStringLiteral("false"));
     INSERT_DELIMITER;
 
