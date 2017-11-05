@@ -37,6 +37,11 @@ bool sortTagsByParentChildRelationsImpl(QList<T> & tagList, ErrorString & errorD
         QNTRACE(log);
     }
 
+    if (tagList.isEmpty() || (tagList.size() == 1)) {
+        // Don't need to process the single item list in any way
+        return true;
+    }
+
     // The problem of sorting tags by parent-child relations can be viewed as a problem of performing
     // a topological sort in a directed acyclic graph; for parentless tags we can consider their parent guid
     // to be just an empty string i.e. the parent of parentless tags has empty guid
@@ -73,15 +78,39 @@ bool sortTagsByParentChildRelationsImpl(QList<T> & tagList, ErrorString & errorD
     resultList.reserve(tagList.size());
     while(!order.isEmpty())
     {
-        QString tagGuid = order.pop();
-        if (tagGuid.isEmpty()) {
+        QString guid = order.pop();
+        if (guid.isEmpty()) {
             continue;
         }
 
-        auto it = std::find_if(tagList.begin(), tagList.end(), CompareItemByGuid<T>(tagGuid));
-        if (Q_UNLIKELY(it == tagList.end())) {
+        auto it = std::find_if(tagList.begin(), tagList.end(), CompareItemByGuid<T>(guid));
+        if (Q_UNLIKELY(it == tagList.end()))
+        {
             errorDescription.setBase(QT_TR_NOOP("Can't synchronize tags: internal error while sorting tags "
                                                 "by parent-child relations"));
+
+            QString details;
+            QTextStream strm(&details);
+
+            strm << QStringLiteral("original tags: ");
+            for(auto iit = tagList.constBegin(), iend = tagList.constEnd(); iit != iend; ++iit) {
+                strm << QStringLiteral("guid = ") << tagGuid(*iit) << QStringLiteral(", parent guid = ")
+                     << tagParentGuid(*iit) << QStringLiteral(", ");
+            }
+
+            strm << QStringLiteral("tag guid from ordered set not found within the original list: ") << *it
+                 << QStringLiteral(", other guids from ordered set: ");
+            int counter = 0;
+            while(!order.isEmpty()) {
+                strm << order.pop();
+                if (counter > 0) {
+                    strm << QStringLiteral(", ");
+                }
+                ++counter;
+            }
+
+            strm.flush();
+            QNWARNING(details);
             return false;
         }
 
