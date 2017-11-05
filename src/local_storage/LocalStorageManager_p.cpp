@@ -1701,7 +1701,12 @@ bool LocalStorageManagerPrivate::addNote(Note & note, ErrorString & errorDescrip
         return false;
     }
 
-    return insertOrReplaceNote(note, /* update resources = */ true, /* update tags = */ true, errorDescription);
+    res = insertOrReplaceNote(note, /* update resources = */ true, /* update tags = */ true, errorDescription);
+    if (!res) {
+        QNWARNING(QStringLiteral("Note which produced the error: ") << note);
+    }
+
+    return res;
 }
 
 bool LocalStorageManagerPrivate::updateNote(Note & note, const bool updateResources, const bool updateTags,
@@ -1827,7 +1832,12 @@ bool LocalStorageManagerPrivate::updateNote(Note & note, const bool updateResour
         }
     }
 
-    return insertOrReplaceNote(note, updateResources, updateTags, errorDescription);
+    res = insertOrReplaceNote(note, updateResources, updateTags, errorDescription);
+    if (!res) {
+        QNWARNING(QStringLiteral("Note which produced the error: ") << note);
+    }
+
+    return res;
 }
 
 bool LocalStorageManagerPrivate::findNote(Note & note, ErrorString & errorDescription,
