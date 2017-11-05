@@ -406,6 +406,7 @@ void SendLocalChangesManager::onListLinkedNotebooksCompleted(LocalStorageManager
 
     QString shardId;
     QString sharedNotebookGlobalId;
+    QString uri;
     QString noteStoreUrl;
     for(int i = 0; i < numLinkedNotebooks; ++i)
     {
@@ -432,13 +433,18 @@ void SendLocalChangesManager::onListLinkedNotebooksCompleted(LocalStorageManager
             sharedNotebookGlobalId = linkedNotebook.sharedNotebookGlobalId();
         }
 
+        uri.resize(0);
+        if (linkedNotebook.hasUri()) {
+            uri = linkedNotebook.uri();
+        }
+
         noteStoreUrl.resize(0);
         if (linkedNotebook.hasNoteStoreUrl()) {
             noteStoreUrl = linkedNotebook.noteStoreUrl();
         }
 
         m_linkedNotebookAuthData << LinkedNotebookAuthData(linkedNotebook.guid(), shardId,
-                                                           sharedNotebookGlobalId, noteStoreUrl);
+                                                           sharedNotebookGlobalId, uri, noteStoreUrl);
     }
 
     m_listLinkedNotebooksRequestId = QUuid();

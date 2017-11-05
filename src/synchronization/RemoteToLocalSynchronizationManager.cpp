@@ -4847,9 +4847,9 @@ void RemoteToLocalSynchronizationManager::requestAuthenticationTokensForAllLinke
             return;
         }
 
-        if (!currentLinkedNotebook.hasSharedNotebookGlobalId())
+        if (!currentLinkedNotebook.hasSharedNotebookGlobalId() && !currentLinkedNotebook.hasUri())
         {
-            ErrorString error(QT_TR_NOOP("Internal error: found linked notebook without shared notebook global id"));
+            ErrorString error(QT_TR_NOOP("Internal error: found linked notebook without either shared notebook global id or uri"));
             if (currentLinkedNotebook.hasUsername()) {
                 error.details() = currentLinkedNotebook.username();
             }
@@ -4872,7 +4872,12 @@ void RemoteToLocalSynchronizationManager::requestAuthenticationTokensForAllLinke
         }
 
         linkedNotebookAuthData << LinkedNotebookAuthData(currentLinkedNotebook.guid(), currentLinkedNotebook.shardId(),
-                                                         currentLinkedNotebook.sharedNotebookGlobalId(),
+                                                         (currentLinkedNotebook.hasSharedNotebookGlobalId()
+                                                          ? currentLinkedNotebook.sharedNotebookGlobalId()
+                                                          : QString()),
+                                                         (currentLinkedNotebook.hasUri()
+                                                          ? currentLinkedNotebook.uri()
+                                                          : QString()),
                                                          currentLinkedNotebook.noteStoreUrl());
     }
 

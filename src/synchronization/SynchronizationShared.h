@@ -36,6 +36,7 @@ public:
     LinkedNotebookAuthData(const QString & guid,
                            const QString & shardId,
                            const QString & sharedNotebookGlobalId,
+                           const QString & uri,
                            const QString & noteStoreUrl);
 
     virtual QTextStream & print(QTextStream & strm) const Q_DECL_OVERRIDE;
@@ -43,6 +44,7 @@ public:
     QString     m_guid;
     QString     m_shardId;
     QString     m_sharedNotebookGlobalId;
+    QString     m_uri;
     QString     m_noteStoreUrl;
 };
 

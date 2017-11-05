@@ -25,6 +25,7 @@
 #include <quentier/utility/QuentierCheckPtr.h>
 #include <quentier/utility/Printable.h>
 #include <QApplication>
+#include <limits>
 
 #define EXPIRATION_TIMESTAMP_KEY QStringLiteral("ExpirationTimestamp")
 #define LINKED_NOTEBOOK_EXPIRATION_TIMESTAMP_KEY_PREFIX QStringLiteral("LinkedNotebookExpirationTimestamp_")
@@ -1236,11 +1237,25 @@ void SynchronizationManagerPrivate::authenticateToLinkedNotebooks()
         const QString & guid = authData.m_guid;
         const QString & shardId = authData.m_shardId;
         const QString & sharedNotebookGlobalId = authData.m_sharedNotebookGlobalId;
+        const QString & uri = authData.m_uri;
         const QString & noteStoreUrl = authData.m_noteStoreUrl;
         QNDEBUG(QStringLiteral("Processing linked notebook guid = ") << guid
                 << QStringLiteral(", shard id = ") << shardId
                 << QStringLiteral(", shared notebook global id = ") << sharedNotebookGlobalId
+                << QStringLiteral(", uri = ") << uri
                 << QStringLiteral(", note store URL = ") << noteStoreUrl);
+
+        if (sharedNotebookGlobalId.isEmpty() && !uri.isEmpty()) {
+            // This appears to be a public notebook and per the official
+            // documentation from Evernote (dev.evernote.com/media/pdf/edam-sync.pdf)
+            // it doesn't need the authentication token at all so will use the
+            // special string for its authentication token
+            m_cachedLinkedNotebookAuthTokensAndShardIdsByGuid[guid] = QPair<QString, QString>(QStringLiteral("Public notebook auth token"), shardId);
+            m_cachedLinkedNotebookAuthTokenExpirationTimeByGuid[guid] = std::numeric_limits<qint64>::max();
+
+            it = m_linkedNotebookAuthDataPendingAuthentication.erase(it);
+            continue;
+        }
 
         bool forceRemoteAuth = false;
         auto linkedNotebookAuthTokenIt = m_cachedLinkedNotebookAuthTokensAndShardIdsByGuid.find(guid);
