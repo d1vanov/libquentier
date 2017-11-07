@@ -1441,10 +1441,7 @@ void RemoteToLocalSynchronizationManager::performPostAddOrUpdateChecks<Tag>(cons
     unregisterTagPendingAddOrUpdate(tag);
     syncNextTagPendingProcessing();
     checkNotebooksAndTagsSyncCompletionAndLaunchNotesSync();
-
-    if (m_tagsPendingProcessing.isEmpty() && m_addTagRequestIds.isEmpty() && m_updateTagRequestIds.isEmpty()) {
-        expungeTags();
-    }
+    checkServerDataMergeCompletion();
 }
 
 template <>
@@ -1452,6 +1449,7 @@ void RemoteToLocalSynchronizationManager::performPostAddOrUpdateChecks<Notebook>
 {
     unregisterNotebookPendingAddOrUpdate(notebook);
     checkNotebooksAndTagsSyncCompletionAndLaunchNotesSync();
+    checkServerDataMergeCompletion();
 }
 
 template <>
@@ -1459,74 +1457,21 @@ void RemoteToLocalSynchronizationManager::performPostAddOrUpdateChecks<Note>(con
 {
     unregisterNotePendingAddOrUpdate(note);
     checkNotesSyncCompletionAndLaunchResourcesSync();
-
-    if (m_findNoteByGuidRequestIds.isEmpty() && m_guidsOfNotesPendingDownloadForAddingToLocalStorage.isEmpty() &&
-        m_notesPendingDownloadForUpdatingInLocalStorageByGuid.isEmpty() &&
-        m_addNoteRequestIds.isEmpty() && m_updateNoteRequestIds.isEmpty() &&
-        m_notesToAddPerAPICallPostponeTimerId.isEmpty() && m_notesToUpdatePerAPICallPostponeTimerId.isEmpty())
-    {
-        if (!m_resources.isEmpty() ||
-            !m_notesOwningResourcesPendingDownloadForAddingToLocalStorageByResourceGuid.isEmpty() ||
-            !m_resourcesPendingDownloadForUpdatingInLocalStorageWithNotesByResourceGuid.isEmpty() ||
-            !m_resourcesToAddWithNotesPerAPICallPostponeTimerId.isEmpty() ||
-            !m_resourcesToUpdateWithNotesPerAPICallPostponeTimerId.isEmpty() ||
-            !m_postponedConflictingResourceDataPerAPICallPostponeTimerId.isEmpty())
-        {
-            return;
-        }
-
-        if (!m_expungedNotes.isEmpty()) {
-            expungeNotes();
-        }
-        else if (!m_expungedNotebooks.isEmpty()) {
-            expungeNotebooks();
-        }
-        else {
-            expungeLinkedNotebooks();
-        }
-    }
+    checkServerDataMergeCompletion();
 }
 
 template <>
 void RemoteToLocalSynchronizationManager::performPostAddOrUpdateChecks<Resource>(const Resource & resource)
 {
     unregisterResourcePendingAddOrUpdate(resource);
-
-    if (m_findResourceByGuidRequestIds.isEmpty() && m_addResourceRequestIds.isEmpty() &&
-        m_updateResourceRequestIds.isEmpty() &&
-        m_resourcesByMarkNoteOwningResourceDirtyRequestIds.isEmpty() &&
-        m_resourcesWithFindRequestIdsPerFindNoteRequestId.isEmpty() &&
-        m_inkNoteResourceDataPerFindNotebookRequestId.isEmpty() &&
-        m_resourceGuidsPendingInkNoteImageDownloadPerNoteGuid.isEmpty() &&
-        m_notesPendingInkNoteImagesDownloadByFindNotebookRequestId.isEmpty() &&
-        m_notesPendingThumbnailDownloadByFindNotebookRequestId.isEmpty() &&
-        m_notesPendingThumbnailDownloadByGuid.isEmpty() &&
-        m_notesOwningResourcesPendingDownloadForAddingToLocalStorageByResourceGuid.isEmpty() &&
-        m_resourcesPendingDownloadForUpdatingInLocalStorageWithNotesByResourceGuid.isEmpty() &&
-        m_resourcesToAddWithNotesPerAPICallPostponeTimerId.isEmpty() &&
-        m_resourcesToUpdateWithNotesPerAPICallPostponeTimerId.isEmpty() &&
-        m_postponedConflictingResourceDataPerAPICallPostponeTimerId.isEmpty())
-    {
-        if (!m_expungedNotes.isEmpty()) {
-            expungeNotes();
-        }
-        else if (!m_expungedNotebooks.isEmpty()) {
-            expungeNotebooks();
-        }
-        else {
-            expungeLinkedNotebooks();
-        }
-    }
+    checkServerDataMergeCompletion();
 }
 
 template <>
 void RemoteToLocalSynchronizationManager::performPostAddOrUpdateChecks<SavedSearch>(const SavedSearch & search)
 {
     unregisterSavedSearchPendingAddOrUpdate(search);
-
-    if (m_addSavedSearchRequestIds.isEmpty() && m_updateSavedSearchRequestIds.isEmpty()) {
-        expungeSavedSearches();
-    }
+    checkServerDataMergeCompletion();
 }
 
 template <class ElementType>
@@ -8213,8 +8158,7 @@ template <class ElementType, class ContainerType>
 bool RemoteToLocalSynchronizationManager::onFoundDuplicateByGuid(ElementType element, const QUuid & requestId,
                                                                  const QString & typeName, ContainerType & container,
                                                                  ContainerType & pendingItemsContainer,
-                                                                 QSet<QUuid> & findByGuidRequestIds,
-                                                                 const bool removeItemFromOriginalContainer)
+                                                                 QSet<QUuid> & findByGuidRequestIds)
 {
     typename QSet<QUuid>::iterator rit = findByGuidRequestIds.find(requestId);
     if (rit == findByGuidRequestIds.end()) {
@@ -8255,10 +8199,7 @@ bool RemoteToLocalSynchronizationManager::onFoundDuplicateByGuid(ElementType ele
         pendingItemsContainer << remoteElement;
     }
 
-    if (removeItemFromOriginalContainer) {
-        Q_UNUSED(container.erase(it))
-    }
-
+    Q_UNUSED(container.erase(it))
     return true;
 }
 

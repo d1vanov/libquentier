@@ -362,8 +362,7 @@ private:
     bool onFoundDuplicateByGuid(ElementType element, const QUuid & requestId,
                                 const QString & typeName, ContainerType & container,
                                 ContainerType & pendingItemsContainer,
-                                QSet<QUuid> & findByGuidRequestIds,
-                                const bool removeItemFromOriginalContainer = true);
+                                QSet<QUuid> & findByGuidRequestIds);
 
     template <class ContainerType, class ElementType>
     bool onNoDuplicateByGuid(ElementType element, const QUuid & requestId,
