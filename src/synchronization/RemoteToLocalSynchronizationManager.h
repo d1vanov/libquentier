@@ -362,7 +362,8 @@ private:
     bool onFoundDuplicateByGuid(ElementType element, const QUuid & requestId,
                                 const QString & typeName, ContainerType & container,
                                 ContainerType & pendingItemsContainer,
-                                QSet<QUuid> & findByGuidRequestIds);
+                                QSet<QUuid> & findByGuidRequestIds,
+                                const bool removeItemFromOriginalContainer = true);
 
     template <class ContainerType, class ElementType>
     bool onNoDuplicateByGuid(ElementType element, const QUuid & requestId,
@@ -691,8 +692,6 @@ private:
     QUuid                                   m_expungeNotelessTagsRequestId;
 
     SavedSearchesList                       m_savedSearches;
-    int                                     m_numProcessedNonExpungedSavedSearches;
-    int                                     m_originalNumberOfSavedSearches;
     SavedSearchesList                       m_savedSearchesPendingAddOrUpdate;
     QList<QString>                          m_expungedSavedSearches;
     QSet<QUuid>                             m_findSavedSearchByNameRequestIds;
@@ -704,7 +703,6 @@ private:
     SavedSearchSyncCache                    m_savedSearchSyncCache;
 
     LinkedNotebooksList                     m_linkedNotebooks;
-    int                                     m_numProcessedNonExpungedLinkedNotebooks;
     LinkedNotebooksList                     m_linkedNotebooksPendingAddOrUpdate;
     QList<QString>                          m_expungedLinkedNotebooks;
     QSet<QUuid>                             m_findLinkedNotebookRequestIds;
@@ -741,8 +739,6 @@ private:
     QSet<QString>                           m_linkedNotebookGuidsOnceFullySynced;
 
     NotebooksList                           m_notebooks;
-    int                                     m_numProcessedNonExpungedNotebooks;
-    int                                     m_originalNumberOfNotebooks;
     NotebooksList                           m_notebooksPendingAddOrUpdate;
     QList<QString>                          m_expungedNotebooks;
     QSet<QUuid>                             m_findNotebookByNameRequestIds;
