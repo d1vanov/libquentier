@@ -19,6 +19,7 @@
 #include "SendLocalChangesManager.h"
 #include <quentier/utility/Macros.h>
 #include <quentier/utility/Utility.h>
+#include <quentier/utility/TagSortByParentChildRelations.h>
 #include <quentier/local_storage/LocalStorageManagerAsync.h>
 #include <quentier/logging/QuentierLogger.h>
 #include <QTimerEvent>
@@ -1198,6 +1199,12 @@ void SendLocalChangesManager::sendTags()
     QNDEBUG(QStringLiteral("SendLocalChangesManager::sendTags"));
 
     ErrorString errorDescription;
+    bool res = sortTagsByParentChildRelations(m_tags, errorDescription);
+    if (Q_UNLIKELY(!res)) {
+        QNWARNING(errorDescription);
+        Q_EMIT failure(errorDescription);
+        return;
+    }
 
     typedef QList<Tag>::iterator Iter;
     for(Iter it = m_tags.begin(); it != m_tags.end(); )
@@ -1369,6 +1376,29 @@ void SendLocalChangesManager::sendTags()
         }
 
         QNDEBUG(QStringLiteral("Successfully sent the tag to Evernote"));
+
+        // Now the tag should have obtained guid, need to set this guid as parent tag guid
+        // for child tags
+
+        if (!tag.hasGuid())
+        {
+            ErrorString error(QT_TR_NOOP("The tag just sent to Evernote has no guid"));
+            if (tag.hasName()) {
+                error.details() = tag.name();
+            }
+            Q_EMIT failure(error);
+            return;
+        }
+
+        auto nextTagIt = it;
+        ++nextTagIt;
+        for(auto nit = nextTagIt; nit != m_tags.end(); ++nit)
+        {
+            Tag & otherTag = *nit;
+            if (otherTag.hasParentLocalUid() && (otherTag.parentLocalUid() == tag.localUid())) {
+                otherTag.setParentGuid(tag.guid());
+            }
+        }
 
         tag.setDirty(false);
         QUuid updateTagRequestId = QUuid::createUuid();
