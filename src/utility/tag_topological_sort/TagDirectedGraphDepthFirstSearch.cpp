@@ -22,16 +22,16 @@ namespace quentier {
 
 TagDirectedGraphDepthFirstSearch::TagDirectedGraphDepthFirstSearch(const TagDirectedGraph & graph) :
     m_graph(graph),
-    m_reachedTagGuids(),
-    m_parentTagGuidByChildTagGuid(),
+    m_reachedTagIds(),
+    m_parentTagIdByChildTagId(),
     m_cycle(),
     m_onStack(),
-    m_tagGuidsInPreOrder(),
-    m_tagGuidsInPostOrder(),
-    m_tagGuidsInReversePostOrder()
+    m_tagIdsInPreOrder(),
+    m_tagIdsInPostOrder(),
+    m_tagIdsInReversePostOrder()
 {
-    QStringList allTagGuids = m_graph.allTagGuids();
-    for(auto it = allTagGuids.constBegin(), end = allTagGuids.constEnd(); it != end; ++it)
+    QStringList allTagIds = m_graph.allTagIds();
+    for(auto it = allTagIds.constBegin(), end = allTagIds.constEnd(); it != end; ++it)
     {
         if (!reached(*it)) {
             depthFirstSearch(*it);
@@ -44,9 +44,9 @@ const TagDirectedGraph & TagDirectedGraphDepthFirstSearch::graph() const
     return m_graph;
 }
 
-bool TagDirectedGraphDepthFirstSearch::reached(const QString & tagGuid) const
+bool TagDirectedGraphDepthFirstSearch::reached(const QString & tagId) const
 {
-    return (m_reachedTagGuids.find(tagGuid) != m_reachedTagGuids.end());
+    return (m_reachedTagIds.find(tagId) != m_reachedTagIds.end());
 }
 
 bool TagDirectedGraphDepthFirstSearch::hasCycle() const
@@ -59,49 +59,49 @@ const QStack<QString> & TagDirectedGraphDepthFirstSearch::cycle() const
     return m_cycle;
 }
 
-void TagDirectedGraphDepthFirstSearch::depthFirstSearch(const QString & sourceTagGuid)
+void TagDirectedGraphDepthFirstSearch::depthFirstSearch(const QString & sourceTagId)
 {
-    auto stackIt = m_onStack.insert(sourceTagGuid).first;
+    auto stackIt = m_onStack.insert(sourceTagId).first;
 
-    m_tagGuidsInPreOrder.enqueue(sourceTagGuid);
-    Q_UNUSED(m_reachedTagGuids.insert(sourceTagGuid))
+    m_tagIdsInPreOrder.enqueue(sourceTagId);
+    Q_UNUSED(m_reachedTagIds.insert(sourceTagId))
 
-    QStringList childTagGuids = m_graph.childTagGuids(sourceTagGuid);
-    for(auto it = childTagGuids.constBegin(), end = childTagGuids.constEnd(); it != end; ++it)
+    QStringList childTagIds = m_graph.childTagIds(sourceTagId);
+    for(auto it = childTagIds.constBegin(), end = childTagIds.constEnd(); it != end; ++it)
     {
         if (hasCycle()) {
             return;
         }
 
         if (!reached(*it)) {
-            m_parentTagGuidByChildTagGuid[*it] = sourceTagGuid;
+            m_parentTagIdByChildTagId[*it] = sourceTagId;
             depthFirstSearch(*it);
         }
         else if (m_onStack.find(*it) != m_onStack.end())
         {
-            QString cycledGuid = *it;
+            QString cycledId = *it;
             while(true)
             {
-                if (cycledGuid == sourceTagGuid) {
+                if (cycledId == sourceTagId) {
                     break;
                 }
 
-                m_cycle.push(cycledGuid);
+                m_cycle.push(cycledId);
 
-                auto pit = m_parentTagGuidByChildTagGuid.find(cycledGuid);
-                if (pit == m_parentTagGuidByChildTagGuid.end()) {
+                auto pit = m_parentTagIdByChildTagId.find(cycledId);
+                if (pit == m_parentTagIdByChildTagId.end()) {
                     break;
                 }
 
-                cycledGuid = pit.value();
+                cycledId = pit.value();
             }
-            m_cycle.push(sourceTagGuid);
+            m_cycle.push(sourceTagId);
             m_cycle.push(*it);
         }
     }
 
-    m_tagGuidsInPostOrder.enqueue(sourceTagGuid);
-    m_tagGuidsInReversePostOrder.push(sourceTagGuid);
+    m_tagIdsInPostOrder.enqueue(sourceTagId);
+    m_tagIdsInReversePostOrder.push(sourceTagId);
 
     Q_UNUSED(m_onStack.erase(stackIt))
 }

@@ -21,53 +21,53 @@
 namespace quentier {
 
 TagDirectedGraph::TagDirectedGraph() :
-    m_childTagGuidsByParentTagGuid()
+    m_childTagIdsByParentTagId()
 {}
 
 bool TagDirectedGraph::isEmpty() const
 {
-    return m_childTagGuidsByParentTagGuid.isEmpty();
+    return m_childTagIdsByParentTagId.isEmpty();
 }
 
 bool TagDirectedGraph::empty() const
 {
-    return m_childTagGuidsByParentTagGuid.empty();
+    return m_childTagIdsByParentTagId.empty();
 }
 
 void TagDirectedGraph::clear()
 {
-    m_childTagGuidsByParentTagGuid.clear();
+    m_childTagIdsByParentTagId.clear();
 }
 
-void TagDirectedGraph::addChild(const QString & parentTagGuid, const QString & childTagGuid)
+void TagDirectedGraph::addChild(const QString & parentTagId, const QString & childTagId)
 {
-    QStringList & childTagGuids = m_childTagGuidsByParentTagGuid[parentTagGuid];
-    if (!childTagGuids.contains(childTagGuid)) {
-        childTagGuids << childTagGuid;
+    QStringList & childTagIds = m_childTagIdsByParentTagId[parentTagId];
+    if (!childTagIds.contains(childTagId)) {
+        childTagIds << childTagId;
     }
 }
 
-QStringList TagDirectedGraph::childTagGuids(const QString & parentTagGuid) const
+QStringList TagDirectedGraph::childTagIds(const QString & parentTagId) const
 {
-    auto it = m_childTagGuidsByParentTagGuid.find(parentTagGuid);
-    if (it != m_childTagGuidsByParentTagGuid.end()) {
+    auto it = m_childTagIdsByParentTagId.find(parentTagId);
+    if (it != m_childTagIdsByParentTagId.end()) {
         return it.value();
     }
 
     return QStringList();
 }
 
-QStringList TagDirectedGraph::allTagGuids() const
+QStringList TagDirectedGraph::allTagIds() const
 {
     QStringList result;
 
-    for(auto it = m_childTagGuidsByParentTagGuid.constBegin(),
-        end = m_childTagGuidsByParentTagGuid.constEnd(); it != end; ++it)
+    for(auto it = m_childTagIdsByParentTagId.constBegin(),
+        end = m_childTagIdsByParentTagId.constEnd(); it != end; ++it)
     {
         result << it.key();
 
-        const QStringList & childTagGuids = it.value();
-        for(auto sit = childTagGuids.constBegin(), send = childTagGuids.constEnd(); sit != send; ++sit) {
+        const QStringList & childTagIds = it.value();
+        for(auto sit = childTagIds.constBegin(), send = childTagIds.constEnd(); sit != send; ++sit) {
             result << *sit;
         }
     }

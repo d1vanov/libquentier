@@ -49,14 +49,19 @@ bool sortTagsByParentChildRelationsImpl(QList<T> & tagList, ErrorString & errorD
     TagDirectedGraph graph;
     for(auto it = tagList.constBegin(), end = tagList.constEnd(); it != end; ++it)
     {
-        if (!tagHasGuid(*it)) {
-            QNDEBUG(QStringLiteral("Skipping tag without guid: ") << *it);
-            continue;
+        if (tagHasGuid(*it)) {
+            QString guid = tagGuid(*it);
+            QString parentTagGuid = tagParentGuid(*it);
+            graph.addChild(parentTagGuid, guid);
         }
-
-        QString guid = tagGuid(*it);
-        QString parentTagGuid = tagParentGuid(*it);
-        graph.addChild(parentTagGuid, guid);
+        else if (tagHasLocalUid(*it)) {
+            QString localUid = tagLocalUid(*it);
+            QString parentTagLocalUid = tagParentLocalUid(*it);
+            graph.addChild(parentTagLocalUid, localUid);
+        }
+        else {
+            QNTRACE(QStringLiteral("Skipping tag without either guid or local uid: ") << *it);
+        }
     }
 
     TagDirectedGraphDepthFirstSearch dfs(graph);
@@ -73,17 +78,17 @@ bool sortTagsByParentChildRelationsImpl(QList<T> & tagList, ErrorString & errorD
         return false;
     }
 
-    QStack<QString> order = dfs.tagGuidsInReversePostOrder();
+    QStack<QString> order = dfs.tagIdsInReversePostOrder();
     QList<T> resultList;
     resultList.reserve(tagList.size());
     while(!order.isEmpty())
     {
-        QString guid = order.pop();
-        if (guid.isEmpty()) {
+        QString id = order.pop();
+        if (id.isEmpty()) {
             continue;
         }
 
-        auto it = std::find_if(tagList.begin(), tagList.end(), CompareItemByGuid<T>(guid));
+        auto it = std::find_if(tagList.begin(), tagList.end(), CompareItemByGuidOrLocalUid<T>(id));
         if (Q_UNLIKELY(it == tagList.end()))
         {
             errorDescription.setBase(QT_TR_NOOP("Can't synchronize tags: internal error while sorting tags "
@@ -95,11 +100,13 @@ bool sortTagsByParentChildRelationsImpl(QList<T> & tagList, ErrorString & errorD
             strm << QStringLiteral("original tags: ");
             for(auto iit = tagList.constBegin(), iend = tagList.constEnd(); iit != iend; ++iit) {
                 strm << QStringLiteral("guid = ") << tagGuid(*iit) << QStringLiteral(", parent guid = ")
-                     << tagParentGuid(*iit) << QStringLiteral(", ");
+                     << tagParentGuid(*iit) << QStringLiteral(", local uid = ") << tagLocalUid(*iit)
+                     << QStringLiteral(", parent local uid = ") << tagParentLocalUid(*iit)
+                     << QStringLiteral(", ");
             }
 
-            strm << QStringLiteral("tag guid from ordered set not found within the original list: ") << *it
-                 << QStringLiteral(", other guids from ordered set: ");
+            strm << QStringLiteral("tag guid (or local uid) from ordered set not found within the original list: ") << *it
+                 << QStringLiteral(", other guids (or local uids) from ordered set: ");
             int counter = 0;
             while(!order.isEmpty()) {
                 strm << order.pop();

@@ -77,24 +77,79 @@ QString Q_DECL_HIDDEN tagParentGuid(const Tag & tag)
 }
 
 template <class T>
-class Q_DECL_HIDDEN CompareItemByGuid
+bool Q_DECL_HIDDEN tagHasLocalUid(const T & tag);
+
+template <>
+bool Q_DECL_HIDDEN tagHasLocalUid(const qevercloud::Tag & tag)
+{
+    Q_UNUSED(tag)
+    return false;
+}
+
+template <>
+bool Q_DECL_HIDDEN tagHasLocalUid(const Tag & tag)
+{
+    return !tag.localUid().isEmpty();
+}
+
+template <class T>
+QString Q_DECL_HIDDEN tagLocalUid(const T & tag);
+
+template <>
+QString Q_DECL_HIDDEN tagLocalUid(const qevercloud::Tag & tag)
+{
+    Q_UNUSED(tag)
+    return QString();
+}
+
+template <>
+QString Q_DECL_HIDDEN tagLocalUid(const Tag & tag)
+{
+    return tag.localUid();
+}
+
+template <class T>
+QString Q_DECL_HIDDEN tagParentLocalUid(const T & tag);
+
+template <>
+QString Q_DECL_HIDDEN tagParentLocalUid(const qevercloud::Tag & tag)
+{
+    Q_UNUSED(tag)
+    return QString();
+}
+
+template <>
+QString Q_DECL_HIDDEN tagParentLocalUid(const Tag & tag)
+{
+    if (tag.hasParentLocalUid()) {
+        return tag.parentLocalUid();
+    }
+
+    return QString();
+}
+
+template <class T>
+class Q_DECL_HIDDEN CompareItemByGuidOrLocalUid
 {
 public:
-    CompareItemByGuid(const QString & guid) :
-        m_guid(guid)
+    CompareItemByGuidOrLocalUid(const QString & id) :
+        m_id(id)
     {}
 
     bool operator()(const T & tag) const
     {
-        if (!tagHasGuid(tag)) {
-            return false;
+        if (tagHasGuid(tag)) {
+            return (m_id == tagGuid(tag));
+        }
+        else if (tagHasLocalUid(tag)) {
+            return (m_id == tagLocalUid(tag));
         }
 
-        return (m_guid == tagGuid(tag));
+        return false;
     }
 
 private:
-    QString     m_guid;
+    QString     m_id;
 };
 
 } // namespace quentier

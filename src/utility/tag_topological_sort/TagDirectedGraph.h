@@ -35,14 +35,14 @@ public:
 
     void clear();
 
-    void addChild(const QString & parentTagGuid, const QString & childTagGuid);
+    void addChild(const QString & parentTagId, const QString & childTagId);
 
-    QStringList childTagGuids(const QString & parentTagGuid) const;
+    QStringList childTagIds(const QString & parentTagId) const;
 
-    QStringList allTagGuids() const;
+    QStringList allTagIds() const;
 
 private:
-    QHash<QString,QStringList>  m_childTagGuidsByParentTagGuid;
+    QHash<QString,QStringList>  m_childTagIdsByParentTagId;
 };
 
 } // namespace quentier

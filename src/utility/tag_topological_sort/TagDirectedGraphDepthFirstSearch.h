@@ -32,28 +32,28 @@ public:
     TagDirectedGraphDepthFirstSearch(const TagDirectedGraph & graph);
 
     const TagDirectedGraph & graph() const;
-    bool reached(const QString & tagGuid) const;
+    bool reached(const QString & tagId) const;
 
     bool hasCycle() const;
     const QStack<QString> & cycle() const;
 
-    const QQueue<QString> & tagGuidsInPreOrder() const { return m_tagGuidsInPreOrder; }
-    const QQueue<QString> & tagGuidsInPostOrder() const { return m_tagGuidsInPostOrder; }
-    const QStack<QString> & tagGuidsInReversePostOrder() const { return m_tagGuidsInReversePostOrder; }
+    const QQueue<QString> & tagIdsInPreOrder() const { return m_tagIdsInPreOrder; }
+    const QQueue<QString> & tagIdsInPostOrder() const { return m_tagIdsInPostOrder; }
+    const QStack<QString> & tagIdsInReversePostOrder() const { return m_tagIdsInReversePostOrder; }
 
 private:
     void depthFirstSearch(const QString & sourceTagGuid);
 
 private:
     TagDirectedGraph            m_graph;
-    std::set<QString>           m_reachedTagGuids;
-    QHash<QString, QString>     m_parentTagGuidByChildTagGuid;
+    std::set<QString>           m_reachedTagIds;
+    QHash<QString, QString>     m_parentTagIdByChildTagId;
     QStack<QString>             m_cycle;
     std::set<QString>           m_onStack;
 
-    QQueue<QString>             m_tagGuidsInPreOrder;
-    QQueue<QString>             m_tagGuidsInPostOrder;
-    QStack<QString>             m_tagGuidsInReversePostOrder;
+    QQueue<QString>             m_tagIdsInPreOrder;
+    QQueue<QString>             m_tagIdsInPostOrder;
+    QStack<QString>             m_tagIdsInReversePostOrder;
 };
 
 } // namespace quentier
