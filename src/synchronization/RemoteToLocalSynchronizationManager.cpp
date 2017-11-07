@@ -1156,6 +1156,8 @@ void RemoteToLocalSynchronizationManager::onFindLinkedNotebookFailed(LinkedNoteb
         return;
     }
 
+    Q_UNUSED(m_linkedNotebooks.erase(it))
+
     // This linked notebook was not found in the local storage by guid, adding it there
     emitAddRequest(linkedNotebook);
 }
@@ -2067,6 +2069,7 @@ void RemoteToLocalSynchronizationManager::onListAllLinkedNotebooksCompleted(size
             << QStringLiteral(", offset = ") << offset << QStringLiteral(", order = ") << order
             << QStringLiteral(", order direction = ") << orderDirection << QStringLiteral(", requestId = ") << requestId);
 
+    m_listAllLinkedNotebooksRequestId = QUuid();
     m_allLinkedNotebooks = linkedNotebooks;
     m_allLinkedNotebooksListed = true;
 
@@ -5331,6 +5334,11 @@ void RemoteToLocalSynchronizationManager::checkServerDataMergeCompletion()
 
     if (syncingLinkedNotebooksContent())
     {
+        if (!m_listAllLinkedNotebooksRequestId.isNull()) {
+            QNDEBUG(QStringLiteral("Pending list of all linked notebooks to actually start the linked notebooks sync"));
+            return;
+        }
+
         QNDEBUG(QStringLiteral("Synchronized the whole contents from linked notebooks"));
 
         if (!m_expungedNotes.isEmpty()) {
