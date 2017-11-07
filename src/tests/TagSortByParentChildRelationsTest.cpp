@@ -182,7 +182,7 @@ bool tagSortByParentChildRelationsTest(QString & error)
         return false;
     }
 
-    // Check the already sorted list works as well
+    // Check the already sorted list
     errorDescription.clear();
     res = sortTagsByParentChildRelations(tags, errorDescription);
     if (!res) {
@@ -207,11 +207,131 @@ bool tagSortByParentChildRelationsTest(QString & error)
         return false;
     }
 
-    // Check that the list of parentless tags doesn't cause any problems as well
+    // Check the list of parentless tags
     tags.clear();
     tags << firstTag;
     tags << secondTag;
     tags << thirdTag;
+
+    tagListToQEverCloudTagList(tags, qecTags);
+
+    errorDescription.clear();
+    res = sortTagsByParentChildRelations(tags, errorDescription);
+    if (!res) {
+        error = errorDescription.nonLocalizedString();
+        return false;
+    }
+
+    res = checkTagsOrder(tags, error);
+    if (!res) {
+        return false;
+    }
+
+    errorDescription.clear();
+    res = sortTagsByParentChildRelations(qecTags, errorDescription);
+    if (!res) {
+        error = errorDescription.nonLocalizedString();
+        return false;
+    }
+
+    res = checkTagsOrder(qecTags, error);
+    if (!res) {
+        return false;
+    }
+
+    // Check the empty list of tags
+    tags.clear();
+    tagListToQEverCloudTagList(tags, qecTags);
+
+    errorDescription.clear();
+    res = sortTagsByParentChildRelations(tags, errorDescription);
+    if (!res) {
+        error = errorDescription.nonLocalizedString();
+        return false;
+    }
+
+    res = checkTagsOrder(tags, error);
+    if (!res) {
+        return false;
+    }
+
+    errorDescription.clear();
+    res = sortTagsByParentChildRelations(qecTags, errorDescription);
+    if (!res) {
+        error = errorDescription.nonLocalizedString();
+        return false;
+    }
+
+    res = checkTagsOrder(qecTags, error);
+    if (!res) {
+        return false;
+    }
+
+    // Check the single tag list
+    tags.clear();
+    tags << firstTag;
+
+    tagListToQEverCloudTagList(tags, qecTags);
+
+    errorDescription.clear();
+    res = sortTagsByParentChildRelations(tags, errorDescription);
+    if (!res) {
+        error = errorDescription.nonLocalizedString();
+        return false;
+    }
+
+    res = checkTagsOrder(tags, error);
+    if (!res) {
+        return false;
+    }
+
+    errorDescription.clear();
+    res = sortTagsByParentChildRelations(qecTags, errorDescription);
+    if (!res) {
+        error = errorDescription.nonLocalizedString();
+        return false;
+    }
+
+    res = checkTagsOrder(qecTags, error);
+    if (!res) {
+        return false;
+    }
+
+    // Check the list consisting of a two parentless tags
+    tags.clear();
+    tags << firstTag;
+    tags << secondTag;
+
+    tagListToQEverCloudTagList(tags, qecTags);
+
+    errorDescription.clear();
+    res = sortTagsByParentChildRelations(tags, errorDescription);
+    if (!res) {
+        error = errorDescription.nonLocalizedString();
+        return false;
+    }
+
+    res = checkTagsOrder(tags, error);
+    if (!res) {
+        return false;
+    }
+
+    errorDescription.clear();
+    res = sortTagsByParentChildRelations(qecTags, errorDescription);
+    if (!res) {
+        error = errorDescription.nonLocalizedString();
+        return false;
+    }
+
+    res = checkTagsOrder(qecTags, error);
+    if (!res) {
+        return false;
+    }
+
+    // Check the list of two tags of which one is a parent and the other one - child
+    tags.clear();
+    tags << firstTag;
+    tags << fourthTag;
 
     tagListToQEverCloudTagList(tags, qecTags);
 
