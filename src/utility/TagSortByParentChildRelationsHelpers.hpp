@@ -129,28 +129,47 @@ QString Q_DECL_HIDDEN tagParentLocalUid(const Tag & tag)
 }
 
 template <class T>
-class Q_DECL_HIDDEN CompareItemByGuidOrLocalUid
+class Q_DECL_HIDDEN CompareItemByGuid
 {
 public:
-    CompareItemByGuidOrLocalUid(const QString & id) :
-        m_id(id)
+    CompareItemByGuid(const QString & guid) :
+        m_guid(guid)
     {}
 
     bool operator()(const T & tag) const
     {
         if (tagHasGuid(tag)) {
-            return (m_id == tagGuid(tag));
-        }
-        else if (tagHasLocalUid(tag)) {
-            return (m_id == tagLocalUid(tag));
+            return (m_guid == tagGuid(tag));
         }
 
         return false;
     }
 
 private:
-    QString     m_id;
+    QString     m_guid;
 };
+
+template <class T>
+class Q_DECL_HIDDEN CompareItemByLocalUid
+{
+public:
+    CompareItemByLocalUid(const QString & localUid) :
+        m_localUid(localUid)
+    {}
+
+    bool operator()(const T & tag) const
+    {
+        if (tagHasLocalUid(tag)) {
+            return (m_localUid == tagLocalUid(tag));
+        }
+
+        return false;
+    }
+
+private:
+    QString     m_localUid;
+};
+
 
 } // namespace quentier
 
