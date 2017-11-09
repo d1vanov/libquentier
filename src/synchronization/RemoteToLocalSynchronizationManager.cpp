@@ -201,13 +201,13 @@ RemoteToLocalSynchronizationManager::RemoteToLocalSynchronizationManager(IManage
     m_addResourceRequestIds(),
     m_updateResourceRequestIds(),
     m_resourcesByMarkNoteOwningResourceDirtyRequestIds(),
-    m_resourcesWithFindRequestIdsPerFindNoteRequestId(),
+    m_resourcesByFindNoteRequestIds(),
     m_inkNoteResourceDataPerFindNotebookRequestId(),
     m_resourceGuidsPendingInkNoteImageDownloadPerNoteGuid(),
     m_notesPendingInkNoteImagesDownloadByFindNotebookRequestId(),
     m_notesPendingThumbnailDownloadByFindNotebookRequestId(),
     m_notesPendingThumbnailDownloadByGuid(),
-    m_resourceFoundFlagPerFindResourceRequestId(),
+    m_guidsOfResourcesFoundWithinTheLocalStorage(),
     m_localUidsOfElementsAlreadyAttemptedToFindByName(),
     m_guidsOfNotesPendingDownloadForAddingToLocalStorage(),
     m_notesPendingDownloadForUpdatingInLocalStorageByGuid(),
@@ -646,7 +646,7 @@ void RemoteToLocalSynchronizationManager::onFindNotebookCompleted(Notebook noteb
         QPair<QString,QString> key(noteGuid, noteLocalUid);
 
         // NOTE: notebook for notes is only required for its pair of guid + local uid,
-        // it shouldn't prohibit the creation or update of the notes during the synchronization procedure
+        // it shouldn't prohibit the creation or update of notes during the synchronization procedure
         notebook.setCanCreateNotes(true);
         notebook.setCanUpdateNotes(true);
 
@@ -654,6 +654,7 @@ void RemoteToLocalSynchronizationManager::onFindNotebookCompleted(Notebook noteb
 
         Q_UNUSED(onFoundDuplicateByGuid(note, findNoteRequestId, QStringLiteral("Note"),
                                         m_notes, m_notesPendingAddOrUpdate, m_findNoteByGuidRequestIds));
+        Q_UNUSED(m_notesWithFindRequestIdsPerFindNotebookRequestId.erase(rit))
         return;
     }
 
@@ -811,7 +812,7 @@ void RemoteToLocalSynchronizationManager::onFindNoteCompleted(Note note, bool wi
 {
     Q_UNUSED(withResourceBinaryData);
 
-    QSet<QUuid>::iterator it = m_findNoteByGuidRequestIds.find(requestId);
+    auto it = m_findNoteByGuidRequestIds.find(requestId);
     if (it != m_findNoteByGuidRequestIds.end())
     {
         QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::onFindNoteCompleted: note = ")
@@ -821,7 +822,7 @@ void RemoteToLocalSynchronizationManager::onFindNoteCompleted(Note note, bool wi
         Q_UNUSED(m_findNoteByGuidRequestIds.erase(it));
 
         // Need to find Notebook corresponding to the note in order to proceed
-        if (!note.hasNotebookGuid())
+        if (Q_UNLIKELY(!note.hasNotebookGuid()))
         {
             ErrorString errorDescription(QT_TR_NOOP("Found duplicate note in the local storage which doesn't have "
                                                     "a notebook guid"));
@@ -846,27 +847,22 @@ void RemoteToLocalSynchronizationManager::onFindNoteCompleted(Note note, bool wi
         return;
     }
 
-    ResourceDataPerFindNoteRequestId::iterator rit = m_resourcesWithFindRequestIdsPerFindNoteRequestId.find(requestId);
-    if (rit != m_resourcesWithFindRequestIdsPerFindNoteRequestId.end())
+    auto rit = m_resourcesByFindNoteRequestIds.find(requestId);
+    if (rit != m_resourcesByFindNoteRequestIds.end())
     {
-        QPair<Resource,QUuid> resourceWithFindRequestId = rit.value();
-
-        Q_UNUSED(m_resourcesWithFindRequestIdsPerFindNoteRequestId.erase(rit))
+        Resource resource = rit.value();
+        Q_UNUSED(m_resourcesByFindNoteRequestIds.erase(rit))
 
         if (Q_UNLIKELY(!note.hasGuid())) {
             ErrorString errorDescription(QT_TR_NOOP("Found the note necessary for the resource synchronization "
                                                     "but it doesn't have a guid"));
             APPEND_NOTE_DETAILS(errorDescription, note)
-
             QNWARNING(errorDescription << QStringLiteral(": ") << note);
             Q_EMIT failure(errorDescription);
             return;
         }
 
         const Notebook * pNotebook = getNotebookPerNote(note);
-
-        Resource & resource = resourceWithFindRequestId.first;
-        const QUuid & findResourceRequestId = resourceWithFindRequestId.second;
 
         if (shouldDownloadThumbnailsForNotes())
         {
@@ -886,7 +882,7 @@ void RemoteToLocalSynchronizationManager::onFindNoteCompleted(Note note, bool wi
             }
         }
 
-        if (resource.hasGuid() && resource.hasMime() && resource.hasWidth() && resource.hasHeight() &&
+        if (resource.hasMime() && resource.hasWidth() && resource.hasHeight() &&
             (resource.mime() == QStringLiteral("application/vnd.evernote.ink")))
         {
             QNDEBUG(QStringLiteral("The resource appears to be the one for the ink note, need to download the image for it; "
@@ -930,8 +926,8 @@ void RemoteToLocalSynchronizationManager::onFindNoteCompleted(Note note, bool wi
             }
         }
 
-        auto resourceFoundIt = m_resourceFoundFlagPerFindResourceRequestId.find(findResourceRequestId);
-        if (resourceFoundIt == m_resourceFoundFlagPerFindResourceRequestId.end()) {
+        auto resourceFoundIt = m_guidsOfResourcesFoundWithinTheLocalStorage.find(resource.guid());
+        if (resourceFoundIt == m_guidsOfResourcesFoundWithinTheLocalStorage.end()) {
             QNWARNING(QStringLiteral("Duplicate of synchronized resource was not found in the local storage database! "
                                      "Attempting to add it to local storage"));
             registerResourcePendingAddOrUpdate(resource);
@@ -991,13 +987,13 @@ void RemoteToLocalSynchronizationManager::onFindNoteFailed(Note note, bool withR
         return;
     }
 
-    ResourceDataPerFindNoteRequestId::iterator rit = m_resourcesWithFindRequestIdsPerFindNoteRequestId.find(requestId);
-    if (rit != m_resourcesWithFindRequestIdsPerFindNoteRequestId.end())
+    auto rit = m_resourcesByFindNoteRequestIds.find(requestId);
+    if (rit != m_resourcesByFindNoteRequestIds.end())
     {
         QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::onFindNoteFailed: note = ") << note
                 << QStringLiteral(", requestId = ") << requestId);
 
-        Q_UNUSED(m_resourcesWithFindRequestIdsPerFindNoteRequestId.erase(rit));
+        Q_UNUSED(m_resourcesByFindNoteRequestIds.erase(rit));
 
         ErrorString errorDescription(QT_TR_NOOP("Can't find note containing the synchronized resource in the local storage"));
         APPEND_NOTE_DETAILS(errorDescription, note)
@@ -1068,11 +1064,10 @@ void RemoteToLocalSynchronizationManager::onFindResourceCompleted(Resource resou
             return;
         }
 
-        Q_UNUSED(m_resourceFoundFlagPerFindResourceRequestId.insert(requestId))
+        Q_UNUSED(m_guidsOfResourcesFoundWithinTheLocalStorage.insert(resource.guid()))
 
         QUuid findNotePerResourceRequestId = QUuid::createUuid();
-        m_resourcesWithFindRequestIdsPerFindNoteRequestId[findNotePerResourceRequestId] =
-            QPair<Resource,QUuid>(resource, requestId);
+        m_resourcesByFindNoteRequestIds[findNotePerResourceRequestId] = resource;
 
         Note noteToFind;
         noteToFind.unsetLocalUid();
@@ -1116,8 +1111,7 @@ void RemoteToLocalSynchronizationManager::onFindResourceFailed(Resource resource
         }
 
         QUuid findNotePerResourceRequestId = QUuid::createUuid();
-        m_resourcesWithFindRequestIdsPerFindNoteRequestId[findNotePerResourceRequestId] =
-            QPair<Resource,QUuid>(resource, requestId);
+        m_resourcesByFindNoteRequestIds[findNotePerResourceRequestId] = resource;
 
         Note noteToFind;
         noteToFind.unsetLocalUid();
@@ -2319,13 +2313,6 @@ void RemoteToLocalSynchronizationManager::onNoteThumbnailDownloadingFinished(boo
             << (status ? QStringLiteral("true") : QStringLiteral("false")) << QStringLiteral(", note guid = ")
             << noteGuid << QStringLiteral(", error description = ") << errorDescription);
 
-    if (!status) {
-        QNWARNING(errorDescription);
-        checkAndIncrementNoteDownloadProgress(noteGuid);
-        checkServerDataMergeCompletion();
-        return;
-    }
-
     auto it = m_notesPendingThumbnailDownloadByGuid.find(noteGuid);
     if (Q_UNLIKELY(it == m_notesPendingThumbnailDownloadByGuid.end())) {
         QNDEBUG(QStringLiteral("Received note thumbnail downloaded event for note which was not pending it; "
@@ -2335,6 +2322,13 @@ void RemoteToLocalSynchronizationManager::onNoteThumbnailDownloadingFinished(boo
 
     Note note = it.value();
     Q_UNUSED(m_notesPendingThumbnailDownloadByGuid.erase(it))
+
+    if (!status) {
+        QNWARNING(errorDescription);
+        checkAndIncrementNoteDownloadProgress(noteGuid);
+        checkServerDataMergeCompletion();
+        return;
+    }
 
     QImage thumbnailImage;
     bool res = thumbnailImage.loadFromData(downloadedThumbnailImageData, "PNG");
@@ -2659,8 +2653,8 @@ void RemoteToLocalSynchronizationManager::onGetNoteAsyncFinished(qint32 errorCod
     }
 
     // NOTE: ink note images are also downloaded separately per each corresponding note's resource
-    // and furthermore, the ink note images are not a part of integral note data type. For these reasons
-    // and for better error tolerance the failure to download the ink note image is not considered a failure
+    // and, furthermore, the ink note images are not a part of integral note data type. For these reasons
+    // and for better error tolerance the failure to download any ink note image is not considered a failure
     // of the synchronization procedure
 
     if (shouldDownloadInkNoteImages() && note.hasResources() && note.isInkNote())
@@ -3524,10 +3518,8 @@ void RemoteToLocalSynchronizationManager::launchSync()
         }
     }
 
-    // If we got here and there's something to expunge, do it
-    expungeFromServerToClient();
-
-    // Just in case need to check if the sync chunk we received contained no actual data elements and hence there's nothing to sync
+    // If there's nothing to sync for user's own account, check if something needs to be expunged, if yes, do it,
+    // otherwirse launch the linked notebooks sync
     checkServerDataMergeCompletion();
 }
 
@@ -4465,7 +4457,7 @@ bool RemoteToLocalSynchronizationManager::resourcesSyncInProgress() const
             !m_addResourceRequestIds.isEmpty() ||
             !m_updateResourceRequestIds.isEmpty() ||
             !m_resourcesByMarkNoteOwningResourceDirtyRequestIds.isEmpty() ||
-            !m_resourcesWithFindRequestIdsPerFindNoteRequestId.isEmpty() ||
+            !m_resourcesByFindNoteRequestIds.isEmpty() ||
             !m_inkNoteResourceDataPerFindNotebookRequestId.isEmpty() ||
             !m_notesOwningResourcesPendingDownloadForAddingToLocalStorageByResourceGuid.isEmpty() ||
             !m_resourcesPendingDownloadForUpdatingInLocalStorageWithNotesByResourceGuid.isEmpty() ||
@@ -5211,7 +5203,8 @@ void RemoteToLocalSynchronizationManager::checkServerDataMergeCompletion()
     bool linkedNotebooksReady = !m_pendingLinkedNotebooksSyncStart &&
                                 m_linkedNotebooks.isEmpty() &&
                                 m_linkedNotebooksPendingAddOrUpdate.isEmpty() &&
-                                m_findLinkedNotebookRequestIds.isEmpty() && m_updateLinkedNotebookRequestIds.isEmpty() &&
+                                m_findLinkedNotebookRequestIds.isEmpty() &&
+                                m_updateLinkedNotebookRequestIds.isEmpty() &&
                                 m_addLinkedNotebookRequestIds.isEmpty();
     if (!linkedNotebooksReady) {
         QNDEBUG(QStringLiteral("Linked notebooks are not ready, pending linked notebooks sync start = ")
@@ -5280,7 +5273,7 @@ void RemoteToLocalSynchronizationManager::checkServerDataMergeCompletion()
         bool resourcesReady = m_resources.isEmpty() && m_resourcesPendingAddOrUpdate.isEmpty() &&
                               m_findResourceByGuidRequestIds.isEmpty() && m_updateResourceRequestIds.isEmpty() &&
                               m_resourcesByMarkNoteOwningResourceDirtyRequestIds.isEmpty() &&
-                              m_addResourceRequestIds.isEmpty() && m_resourcesWithFindRequestIdsPerFindNoteRequestId.isEmpty() &&
+                              m_addResourceRequestIds.isEmpty() && m_resourcesByFindNoteRequestIds.isEmpty() &&
                               m_inkNoteResourceDataPerFindNotebookRequestId.isEmpty() &&
                               m_notesOwningResourcesPendingDownloadForAddingToLocalStorageByResourceGuid.isEmpty() &&
                               m_resourcesPendingDownloadForUpdatingInLocalStorageWithNotesByResourceGuid.isEmpty() &&
@@ -5294,9 +5287,9 @@ void RemoteToLocalSynchronizationManager::checkServerDataMergeCompletion()
                     << QStringLiteral(" resources pending add or update within the local storage: pending response for ") << m_updateResourceRequestIds.size()
                     << QStringLiteral(" resource update requests and/or ") << m_resourcesByMarkNoteOwningResourceDirtyRequestIds.size()
                     << QStringLiteral(" mark note owning resource as dirty requests and/or ") << m_addResourceRequestIds.size()
-                    << QStringLiteral(" resource add requests and/or ") << m_resourcesWithFindRequestIdsPerFindNoteRequestId.size()
-                    << QStringLiteral(" find resource by guid requests and/or ") << m_findResourceByGuidRequestIds.size()
-                    << QStringLiteral(" resource find note requests and/or ") << m_inkNoteResourceDataPerFindNotebookRequestId.size()
+                    << QStringLiteral(" resource add requests and/or ") << m_resourcesByFindNoteRequestIds.size()
+                    << QStringLiteral(" find note for resource requests and/or ") << m_findResourceByGuidRequestIds.size()
+                    << QStringLiteral(" find resource requests and/or ") << m_inkNoteResourceDataPerFindNotebookRequestId.size()
                     << QStringLiteral(" resource find notebook for ink note image download processing and/or ")
                     << m_notesOwningResourcesPendingDownloadForAddingToLocalStorageByResourceGuid.size()
                     << QStringLiteral(" async full new resource data downloads and/or ")
@@ -5602,7 +5595,7 @@ void RemoteToLocalSynchronizationManager::clear()
     m_updateResourceRequestIds.clear();
     m_resourcesByMarkNoteOwningResourceDirtyRequestIds.clear();
 
-    m_resourcesWithFindRequestIdsPerFindNoteRequestId.clear();
+    m_resourcesByFindNoteRequestIds.clear();
     m_inkNoteResourceDataPerFindNotebookRequestId.clear();
     m_resourceGuidsPendingInkNoteImageDownloadPerNoteGuid.clear();
 
@@ -5611,8 +5604,7 @@ void RemoteToLocalSynchronizationManager::clear()
     m_notesPendingThumbnailDownloadByGuid.clear();
     m_updateNoteWithThumbnailRequestIds.clear();
 
-    m_resourceFoundFlagPerFindResourceRequestId.clear();
-
+    m_guidsOfResourcesFoundWithinTheLocalStorage.clear();
     m_localUidsOfElementsAlreadyAttemptedToFindByName.clear();
 
     m_guidsOfNotesPendingDownloadForAddingToLocalStorage.clear();
@@ -6313,12 +6305,12 @@ const Notebook * RemoteToLocalSynchronizationManager::getNotebookPerNote(const N
     QString noteLocalUid = note.localUid();
 
     QPair<QString,QString> key(noteGuid, noteLocalUid);
-    QHash<QPair<QString,QString>,Notebook>::const_iterator cit = m_notebooksPerNoteIds.find(key);
-    if (cit == m_notebooksPerNoteIds.end()) {
+    auto it = m_notebooksPerNoteIds.find(key);
+    if (it == m_notebooksPerNoteIds.end()) {
         return Q_NULLPTR;
     }
     else {
-        return &(cit.value());
+        return &(it.value());
     }
 }
 
@@ -6573,10 +6565,13 @@ void RemoteToLocalSynchronizationManager::setupInkNoteImageDownloading(const QSt
     bool isPublicNotebook = false;
     authenticationInfoForNotebook(notebook, authToken, shardId, isPublicNotebook);
 
-    if (!m_resourceGuidsPendingInkNoteImageDownloadPerNoteGuid.contains(noteGuid, resourceGuid)) {
-        m_resourceGuidsPendingInkNoteImageDownloadPerNoteGuid.insert(noteGuid, resourceGuid);
+    if (m_resourceGuidsPendingInkNoteImageDownloadPerNoteGuid.contains(noteGuid, resourceGuid)) {
+        QNDEBUG(QStringLiteral("Already downloading the ink note image for note guid ")
+                << noteGuid << QStringLiteral(" and resource guid ") << resourceGuid);
+        return;
     }
 
+    Q_UNUSED(m_resourceGuidsPendingInkNoteImageDownloadPerNoteGuid.insert(noteGuid, resourceGuid))
     QString storageFolderPath = inkNoteImagesStoragePath();
 
     InkNoteImageDownloader * pDownloader = new InkNoteImageDownloader(m_host, resourceGuid, noteGuid, authToken,
@@ -7800,7 +7795,7 @@ void RemoteToLocalSynchronizationManager::appendDataElementsFromSyncChunkToConta
 
         auto ngit = m_guidsOfProcessedNonExpungedNotes.find(resource.noteGuid.ref());
         if (ngit != m_guidsOfProcessedNonExpungedNotes.end()) {
-            QNTRACE(QStringLiteral("Skipping resource as it belongs to the note which while content has already been downloaded: ")
+            QNTRACE(QStringLiteral("Skipping resource as it belongs to the note which whole content has already been downloaded: ")
                     << resource);
             continue;
         }

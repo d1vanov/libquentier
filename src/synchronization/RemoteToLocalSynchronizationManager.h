@@ -776,9 +776,7 @@ private:
     QSet<QUuid>                             m_addResourceRequestIds;
     QSet<QUuid>                             m_updateResourceRequestIds;
     QHash<QUuid, Resource>                  m_resourcesByMarkNoteOwningResourceDirtyRequestIds;
-
-    typedef QHash<QUuid,QPair<Resource,QUuid> > ResourceDataPerFindNoteRequestId;
-    ResourceDataPerFindNoteRequestId        m_resourcesWithFindRequestIdsPerFindNoteRequestId;
+    QHash<QUuid, Resource>                  m_resourcesByFindNoteRequestIds;
 
     typedef QHash<QUuid,InkNoteResourceData> InkNoteResourceDataPerFindNotebookRequestId;
     InkNoteResourceDataPerFindNotebookRequestId             m_inkNoteResourceDataPerFindNotebookRequestId;
@@ -792,7 +790,10 @@ private:
     QHash<QString,Note>                     m_notesPendingThumbnailDownloadByGuid;
     QSet<QUuid>                             m_updateNoteWithThumbnailRequestIds;
 
-    QSet<QUuid>                             m_resourceFoundFlagPerFindResourceRequestId;
+    // This set contains the guids of resources found existing within the local storage;
+    // it is used in the series of async resource processing to judge whether it should be added
+    // to the local storage or updated within it
+    QSet<QString>                           m_guidsOfResourcesFoundWithinTheLocalStorage;
 
     QSet<QString>                           m_localUidsOfElementsAlreadyAttemptedToFindByName;
 
