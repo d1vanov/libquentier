@@ -1175,8 +1175,6 @@ void SendLocalChangesManager::sendLocalChanges()
         return;
     }
 
-    // TODO: consider checking the expiration time of user's own authentication token here
-
 #define CHECK_RATE_LIMIT() \
     if (rateLimitIsActive()) { \
         return; \
@@ -1206,8 +1204,10 @@ void SendLocalChangesManager::sendTags()
         return;
     }
 
-    typedef QList<Tag>::iterator Iter;
-    for(Iter it = m_tags.begin(); it != m_tags.end(); )
+    QHash<QString, QString> tagGuidsByLocalUid;
+    tagGuidsByLocalUid.reserve(m_tags.size());
+
+    for(auto it = m_tags.begin(); it != m_tags.end(); )
     {
         Tag & tag = *it;
 
@@ -1380,7 +1380,7 @@ void SendLocalChangesManager::sendTags()
         // Now the tag should have obtained guid, need to set this guid as parent tag guid
         // for child tags
 
-        if (!tag.hasGuid())
+        if (Q_UNLIKELY(!tag.hasGuid()))
         {
             ErrorString error(QT_TR_NOOP("The tag just sent to Evernote has no guid"));
             if (tag.hasName()) {
@@ -1399,6 +1399,8 @@ void SendLocalChangesManager::sendTags()
                 otherTag.setParentGuid(tag.guid());
             }
         }
+
+        tagGuidsByLocalUid[tag.localUid()] = tag.guid();
 
         tag.setDirty(false);
         QUuid updateTagRequestId = QUuid::createUuid();
@@ -1452,6 +1454,36 @@ void SendLocalChangesManager::sendTags()
         }
 
         it = m_tags.erase(it);
+    }
+
+    // Need to set tag guids for all dirty notes which have the corresponding tags local uids
+    for(auto nit = m_notes.begin(), end = m_notes.end(); nit != end; ++nit)
+    {
+        Note & note = *nit;
+        if (!note.hasTagLocalUids()) {
+            continue;
+        }
+
+        QStringList noteTagGuids;
+        if (note.hasTagGuids()) {
+            noteTagGuids = note.tagGuids();
+        }
+
+        const QStringList & tagLocalUids = note.tagLocalUids();
+        for(auto tit = tagLocalUids.constBegin(), tend = tagLocalUids.constEnd(); tit != tend; ++tit)
+        {
+            auto git = tagGuidsByLocalUid.find(*tit);
+            if (git == tagGuidsByLocalUid.constEnd()) {
+                continue;
+            }
+
+            const QString & tagGuid = git.value();
+            if (noteTagGuids.contains(tagGuid)) {
+                continue;
+            }
+
+            note.addTagGuid(tagGuid);
+        }
     }
 }
 
@@ -1568,8 +1600,10 @@ void SendLocalChangesManager::sendNotebooks()
 
     ErrorString errorDescription;
 
-    typedef QList<Notebook>::iterator Iter;
-    for(Iter it = m_notebooks.begin(); it != m_notebooks.end(); )
+    QHash<QString, QString> notebookGuidsByLocalUid;
+    notebookGuidsByLocalUid.reserve(m_notebooks.size());
+
+    for(auto it = m_notebooks.begin(); it != m_notebooks.end(); )
     {
         Notebook & notebook = *it;
 
@@ -1739,6 +1773,18 @@ void SendLocalChangesManager::sendNotebooks()
 
         QNDEBUG(QStringLiteral("Successfully sent the notebook to Evernote"));
 
+        if (Q_UNLIKELY(!notebook.hasGuid()))
+        {
+            ErrorString error(QT_TR_NOOP("The notebook just sent to Evernote has no guid"));
+            if (notebook.hasName()) {
+                error.details() = notebook.name();
+            }
+            Q_EMIT failure(error);
+            return;
+        }
+
+        notebookGuidsByLocalUid[notebook.localUid()] = notebook.guid();
+
         notebook.setDirty(false);
         QUuid updateNotebookRequestId = QUuid::createUuid();
         Q_UNUSED(m_updateNotebookRequestIds.insert(updateNotebookRequestId))
@@ -1797,6 +1843,37 @@ void SendLocalChangesManager::sendNotebooks()
 
         it = m_notebooks.erase(it);
     }
+
+    // Need to set notebook guids for all dirty notes which have the
+    // corresponding notebook local uids
+    for(auto nit = m_notes.begin(), end = m_notes.end(); nit != end; ++nit)
+    {
+        Note & note = *nit;
+        if (note.hasNotebookGuid()) {
+            QNDEBUG(QStringLiteral("Dirty note with local uid ") << note.localUid() << QStringLiteral(" already has notebook guid: ")
+                    << note.notebookGuid());
+            continue;
+        }
+
+        if (Q_UNLIKELY(!note.hasNotebookLocalUid())) {
+            ErrorString error(QT_TR_NOOP("Detected note which doesn't have neither notebook guid not notebook local uid"));
+            APPEND_NOTE_DETAILS(error, note);
+            QNWARNING(errorDescription << QStringLiteral(", note: ") << note);
+            Q_EMIT failure(errorDescription);
+            return;
+        }
+
+        auto git = notebookGuidsByLocalUid.find(note.notebookLocalUid());
+        if (Q_UNLIKELY(git == notebookGuidsByLocalUid.end())) {
+            ErrorString error(QT_TR_NOOP("Can't find the notebook guid for one of notes"));
+            APPEND_NOTE_DETAILS(error, note);
+            QNWARNING(errorDescription << QStringLiteral(", note: ") << note);
+            Q_EMIT failure(errorDescription);
+            return;
+        }
+
+        note.setNotebookGuid(git.value());
+    }
 }
 
 void SendLocalChangesManager::checkAndSendNotes()
@@ -1823,11 +1900,9 @@ void SendLocalChangesManager::sendNotes()
         qint32 rateLimitSeconds = 0;
         qint32 errorCode = qevercloud::EDAMErrorCode::UNKNOWN;
 
-        if (!note.hasNotebookGuid())
-        {
+        if (!note.hasNotebookGuid()) {
             errorDescription.setBase(QT_TR_NOOP("Found a note without notebook guid"));
             APPEND_NOTE_DETAILS(errorDescription, note)
-
             QNWARNING(errorDescription << QStringLiteral(", note: ") << note);
             Q_EMIT failure(errorDescription);
             return;
@@ -2072,23 +2147,16 @@ void SendLocalChangesManager::findNotebooksForNotes()
     m_findNotebookRequestIds.clear();
     QSet<QString> notebookGuids;
 
-    // NOTE: enforce limited scope for CIter typedef
+    for(auto it = m_notes.constBegin(), end = m_notes.constEnd(); it != end; ++it)
     {
-        auto notebooksByGuidsCacheEnd = m_notebooksByGuidsCache.end();
+        const Note & note = *it;
+        if (!note.hasNotebookGuid()) {
+            continue;
+        }
 
-        typedef QList<Note>::const_iterator CIter;
-        CIter notesEnd = m_notes.end();
-        for(CIter it = m_notes.begin(); it != notesEnd; ++it)
-        {
-            const Note & note = *it;
-            if (!note.hasNotebookGuid()) {
-                continue;
-            }
-
-            auto nit = m_notebooksByGuidsCache.find(note.notebookGuid());
-            if (nit == notebooksByGuidsCacheEnd) {
-                Q_UNUSED(notebookGuids.insert(note.notebookGuid()));
-            }
+        QHash<QString, Notebook>::const_iterator nit = m_notebooksByGuidsCache.find(note.notebookGuid());
+        if (nit == m_notebooksByGuidsCache.constEnd()) {
+            Q_UNUSED(notebookGuids.insert(note.notebookGuid()));
         }
     }
 
@@ -2097,9 +2165,7 @@ void SendLocalChangesManager::findNotebooksForNotes()
         Notebook dummyNotebook;
         dummyNotebook.unsetLocalUid();
 
-        typedef QSet<QString>::const_iterator CIter;
-        CIter notebookGuidsEnd = notebookGuids.end();
-        for(CIter it = notebookGuids.begin(); it != notebookGuidsEnd; ++it)
+        for(auto it = notebookGuids.constBegin(), end = notebookGuids.constEnd(); it != end; ++it)
         {
             const QString & notebookGuid = *it;
             dummyNotebook.setGuid(notebookGuid);
