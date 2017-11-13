@@ -1166,6 +1166,8 @@ QList<qevercloud::SharedNotebook> LocalStorageManagerPrivate::listEnSharedNotebo
 
 bool LocalStorageManagerPrivate::expungeNotebook(Notebook & notebook, ErrorString & errorDescription)
 {
+    QNDEBUG(QStringLiteral("LocalStorageManagerPrivate::expungeNotebook: notebook = ") << notebook);
+
     ErrorString errorPrefix(QT_TR_NOOP("Can't expunge notebook from the local storage database"));
 
     QString localUid = notebook.localUid();
@@ -1421,6 +1423,8 @@ QList<LinkedNotebook> LocalStorageManagerPrivate::listLinkedNotebooks(const Loca
 bool LocalStorageManagerPrivate::expungeLinkedNotebook(const LinkedNotebook & linkedNotebook,
                                                        ErrorString & errorDescription)
 {
+    QNDEBUG(QStringLiteral("LocalStorageManagerPrivate::expungeLinkedNotebook: linked notebook = ") << linkedNotebook);
+
     ErrorString errorPrefix(QT_TR_NOOP("Can't expunge linked notebook from the local storage database"));
 
     if (!linkedNotebook.hasGuid()) {
@@ -2329,6 +2333,8 @@ QList<Note> LocalStorageManagerPrivate::listNotes(const LocalStorageManager::Lis
 
 bool LocalStorageManagerPrivate::expungeNote(Note & note, ErrorString & errorDescription)
 {
+    QNDEBUG(QStringLiteral("LocalStorageManagerPrivate::expungeNote: note = ") << note);
+
     ErrorString errorPrefix(QT_TR_NOOP("Can't expunge note from the local storage database"));
 
     ErrorString error;
@@ -3017,6 +3023,8 @@ QList<Tag> LocalStorageManagerPrivate::listTags(const LocalStorageManager::ListO
 
 bool LocalStorageManagerPrivate::expungeTag(Tag & tag, QStringList & expungedChildTagLocalUids, ErrorString & errorDescription)
 {
+    QNDEBUG(QStringLiteral("LocalStorageManagerPrivate::expungeTag: ") << tag);
+
     ErrorString errorPrefix(QT_TR_NOOP("Can't expunge tag from the local storage database"));
 
     expungedChildTagLocalUids.clear();
@@ -3611,6 +3619,8 @@ QList<SavedSearch> LocalStorageManagerPrivate::listSavedSearches(const LocalStor
 
 bool LocalStorageManagerPrivate::expungeSavedSearch(SavedSearch & search, ErrorString & errorDescription)
 {
+    QNDEBUG(QStringLiteral("LocalStorageManagerPrivate::expungeSavedSearch: saved search = ") << search);
+
     ErrorString errorPrefix(QT_TR_NOOP("Can't expunge saved search from the local storage database"));
 
     ErrorString error;

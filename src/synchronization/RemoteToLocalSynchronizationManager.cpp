@@ -34,7 +34,7 @@
 #include <QDir>
 #include <algorithm>
 
-#define ACCOUNT_LIMITS_KEY_GROUP QStringLiteral("account_limits/")
+#define ACCOUNT_LIMITS_KEY_GROUP QStringLiteral("AccountLimits/")
 #define ACCOUNT_LIMITS_LAST_SYNC_TIME_KEY QStringLiteral("last_sync_time")
 #define ACCOUNT_LIMITS_SERVICE_LEVEL_KEY QStringLiteral("service_level")
 #define ACCOUNT_LIMITS_USER_MAIL_LIMIT_DAILY_KEY QStringLiteral("user_mail_limit_daily")
@@ -1536,6 +1536,9 @@ void RemoteToLocalSynchronizationManager::onExpungeDataElementFailed(const Eleme
 
 void RemoteToLocalSynchronizationManager::expungeTags()
 {
+    QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::expungeTags: ")
+            << m_expungedTags.size());
+
     if (m_expungedTags.isEmpty()) {
         return;
     }
@@ -1551,6 +1554,8 @@ void RemoteToLocalSynchronizationManager::expungeTags()
 
         QUuid expungeTagRequestId = QUuid::createUuid();
         Q_UNUSED(m_expungeTagRequestIds.insert(expungeTagRequestId));
+        QNTRACE(QStringLiteral("Emitting the request to expunge tag: guid = ")
+                << expungedTagGuid << QStringLiteral(", request id = ") << expungeTagRequestId);
         Q_EMIT expungeTag(tagToExpunge, expungeTagRequestId);
     }
 
@@ -1559,6 +1564,9 @@ void RemoteToLocalSynchronizationManager::expungeTags()
 
 void RemoteToLocalSynchronizationManager::expungeSavedSearches()
 {
+    QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::expungeSavedSearches: ")
+            << m_expungedSavedSearches.size());
+
     if (m_expungedSavedSearches.isEmpty()) {
         return;
     }
@@ -1574,6 +1582,9 @@ void RemoteToLocalSynchronizationManager::expungeSavedSearches()
 
         QUuid expungeSavedSearchRequestId = QUuid::createUuid();
         Q_UNUSED(m_expungeSavedSearchRequestIds.insert(expungeSavedSearchRequestId));
+        QNTRACE(QStringLiteral("Emitting the request to expunge saved search: guid = ")
+                << expungedSavedSerchGuid << QStringLiteral(", request id = ")
+                << expungeSavedSearchRequestId);
         Q_EMIT expungeSavedSearch(searchToExpunge, expungeSavedSearchRequestId);
     }
 
@@ -1582,6 +1593,9 @@ void RemoteToLocalSynchronizationManager::expungeSavedSearches()
 
 void RemoteToLocalSynchronizationManager::expungeLinkedNotebooks()
 {
+    QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::expungeLinkedNotebooks: ")
+            << m_expungedLinkedNotebooks.size());
+
     if (m_expungedLinkedNotebooks.isEmpty()) {
         return;
     }
@@ -1596,6 +1610,9 @@ void RemoteToLocalSynchronizationManager::expungeLinkedNotebooks()
 
         QUuid expungeLinkedNotebookRequestId = QUuid::createUuid();
         Q_UNUSED(m_expungeLinkedNotebookRequestIds.insert(expungeLinkedNotebookRequestId));
+        QNTRACE(QStringLiteral("Emitting the request to expunge linked notebook: guid = ")
+                << expungedLinkedNotebookGuid << QStringLiteral(", request id = ")
+                << expungeLinkedNotebookRequestId);
         Q_EMIT expungeLinkedNotebook(linkedNotebookToExpunge, expungeLinkedNotebookRequestId);
     }
 
@@ -1604,6 +1621,9 @@ void RemoteToLocalSynchronizationManager::expungeLinkedNotebooks()
 
 void RemoteToLocalSynchronizationManager::expungeNotebooks()
 {
+    QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::expungeNotebooks: ")
+            << m_expungedNotebooks.size());
+
     if (m_expungedNotebooks.isEmpty()) {
         return;
     }
@@ -1619,6 +1639,8 @@ void RemoteToLocalSynchronizationManager::expungeNotebooks()
 
         QUuid expungeNotebookRequestId = QUuid::createUuid();
         Q_UNUSED(m_expungeNotebookRequestIds.insert(expungeNotebookRequestId));
+        QNTRACE(QStringLiteral("Emitting the request to expunge notebook: notebook guid = ")
+                << expungedNotebookGuid << QStringLiteral(", request id = ") << expungeNotebookRequestId);
         Q_EMIT expungeNotebook(notebookToExpunge, expungeNotebookRequestId);
     }
 
@@ -1627,6 +1649,9 @@ void RemoteToLocalSynchronizationManager::expungeNotebooks()
 
 void RemoteToLocalSynchronizationManager::expungeNotes()
 {
+    QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::expungeNotes: ")
+            << m_expungedNotes.size());
+
     if (m_expungedNotes.isEmpty()) {
         return;
     }
@@ -1642,6 +1667,8 @@ void RemoteToLocalSynchronizationManager::expungeNotes()
 
         QUuid expungeNoteRequestId = QUuid::createUuid();
         Q_UNUSED(m_expungeNoteRequestIds.insert(expungeNoteRequestId));
+        QNTRACE(QStringLiteral("Emitting the request to expunge note: guid = ") << expungedNoteGuid
+                << QStringLiteral(", request id = ") << expungeNoteRequestId);
         Q_EMIT expungeNote(noteToExpunge, expungeNoteRequestId);
     }
 
@@ -1722,6 +1749,20 @@ void RemoteToLocalSynchronizationManager::checkExpungesCompletion()
 
             startLinkedNotebooksSync();
         }
+    }
+    else
+    {
+        QNDEBUG(QStringLiteral("Expunges not complete yet: still have ") << m_expungedTags.size()
+                << QStringLiteral(" tags pending expunging, ") << m_expungeTagRequestIds.size()
+                << QStringLiteral(" expunge tag requests, ") << m_expungedNotebooks.size()
+                << QStringLiteral(" notebooks pending expunging, ") << m_expungeNotebookRequestIds.size()
+                << QStringLiteral(" expunge notebook requests, ") << m_expungedSavedSearches.size()
+                << QStringLiteral(" saved searches pending expunging, ") << m_expungeSavedSearchRequestIds.size()
+                << QStringLiteral(" expunge saved search requests, ") << m_expungedLinkedNotebooks.size()
+                << QStringLiteral(" linked notebooks pending expunging, ") << m_expungeLinkedNotebookRequestIds.size()
+                << QStringLiteral(" expunge linked notebook requests, ") << m_expungedNotes.size()
+                << QStringLiteral(" notes pendinig expunging, ") << m_expungeNoteRequestIds.size()
+                << QStringLiteral(" expunge note requests"));
     }
 }
 
