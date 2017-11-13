@@ -389,6 +389,11 @@ void TagSyncConflictResolver::overrideLocalChangesWithRemoteChanges()
     tag.setDirty(false);
     tag.setLocal(false);
 
+    // Clearing the parent local uid info: if this tag has parent guid,
+    // the parent local uid would be complemented by the local storage;
+    // otherwise the parent would be removed from this tag
+    tag.setParentLocalUid(QString());
+
     m_updateTagRequestId = QUuid::createUuid();
     QNTRACE(QStringLiteral("Emitting the request to update tag: request id = ")
             << m_updateTagRequestId << QStringLiteral(", tag: ") << tag);
