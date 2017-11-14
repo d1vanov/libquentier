@@ -45,7 +45,7 @@ class QUENTIER_EXPORT NoteEditor: public QWidget
     Q_OBJECT
 public:
     explicit NoteEditor(QWidget * parent = Q_NULLPTR, Qt::WindowFlags flags = 0);
-    virtual ~NoteEditor();
+    virtual ~NoteEditor() Q_DECL_OVERRIDE;
 
     /**
      * NoteEditor requires FileIOProcessorAsync, SpellChecker and Account for its work but due to the particularities of Qt's .ui
@@ -111,6 +111,16 @@ public:
      * Sets the focus to the backend note editor widget
      */
     void setFocus();
+
+    QString selectedText() const;
+    bool hasSelection() const;
+
+    bool spellCheckEnabled() const;
+
+    bool print(QPrinter & printer, ErrorString & errorDescription);
+    bool exportToPdf(const QString & absoluteFilePath, ErrorString & errorDescription);
+    bool exportToEnex(const QStringList & tagNames,
+                      QString & enex, ErrorString & errorDescription);
 
 Q_SIGNALS:
     /**
@@ -204,9 +214,6 @@ public Q_SLOTS:
     void alignRight();
     void alignFull();
 
-    QString selectedText() const;
-    bool hasSelection() const;
-
     void findNext(const QString & text, const bool matchCase) const;
     void findPrevious(const QString & text, const bool matchCase) const;
     void replace(const QString & textToReplace, const QString & replacementText, const bool matchCase);
@@ -217,7 +224,6 @@ public Q_SLOTS:
     void insertInAppNoteLink(const QString & userId, const QString & shardId, const QString & noteGuid, const QString & linkText);
 
     void setSpellcheck(const bool enabled);
-    virtual bool spellCheckEnabled() const;
 
     void setFont(const QFont & font);
     void setFontHeight(const int height);
@@ -259,11 +265,6 @@ public Q_SLOTS:
     void removeHyperlink();
 
     void onNoteLoadCancelled();
-
-    bool print(QPrinter & printer, ErrorString & errorDescription);
-    bool exportToPdf(const QString & absoluteFilePath, ErrorString & errorDescription);
-    bool exportToEnex(const QStringList & tagNames,
-                      QString & enex, ErrorString & errorDescription);
 
 protected:
     virtual void dragMoveEvent(QDragMoveEvent * pEvent) Q_DECL_OVERRIDE;

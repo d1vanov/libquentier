@@ -2633,7 +2633,7 @@ bool NoteEditorPrivate::parseInAppLink(const QString & urlString, QString & user
     return true;
 }
 
-bool NoteEditorPrivate::checkNoteSize(const QString & newNoteContent) const
+bool NoteEditorPrivate::checkNoteSize(const QString & newNoteContent)
 {
     QNDEBUG(QStringLiteral("NoteEditorPrivate::checkNoteSize"));
 

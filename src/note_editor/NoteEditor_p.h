@@ -106,13 +106,13 @@ public:
 Q_SIGNALS:
     void contentChanged();
     void noteModified();
-    void notifyError(ErrorString error) const;
+    void notifyError(ErrorString error);
 
     void inAppNoteLinkClicked(QString userId, QString shardId, QString noteGuid);
     void inAppNoteLinkPasteRequested(QString url, QString userId, QString shardId, QString noteGuid);
 
     void convertedToNote(Note note);
-    void cantConvertToNote(ErrorString error) const;
+    void cantConvertToNote(ErrorString error);
 
     void noteEditorHtmlUpdated(QString html);
 
@@ -194,6 +194,23 @@ public:
     void enableDynamicSpellCheck();
     void disableDynamicSpellCheck();
 
+    virtual bool isNoteLoaded() const Q_DECL_OVERRIDE;
+
+    virtual QString selectedText() const Q_DECL_OVERRIDE;
+    virtual bool hasSelection() const Q_DECL_OVERRIDE;
+
+    bool searchHighlightEnabled() const;
+    void setSearchHighlight(const QString & textToFind, const bool matchCase, const bool force = false) const;
+    void highlightRecognizedImageAreas(const QString & textToFind, const bool matchCase) const;
+
+    virtual bool spellCheckEnabled() const Q_DECL_OVERRIDE;
+
+    virtual bool isModified() const Q_DECL_OVERRIDE;
+
+    qint64 noteResourcesSize() const;
+    qint64 noteContentSize() const;
+    qint64 noteSize() const;
+
 public Q_SLOTS:
     virtual void initialize(FileIOProcessorAsync & fileIOProcessorAsync,
                             SpellChecker & spellChecker,
@@ -204,8 +221,6 @@ public Q_SLOTS:
     virtual void setUndoStack(QUndoStack * pUndoStack) Q_DECL_OVERRIDE;
 
     virtual void setBlankPageHtml(const QString & html) Q_DECL_OVERRIDE;
-
-    virtual bool isNoteLoaded() const Q_DECL_OVERRIDE;
 
     virtual void undo() Q_DECL_OVERRIDE;
     virtual void redo() Q_DECL_OVERRIDE;
@@ -226,15 +241,8 @@ public Q_SLOTS:
     virtual void alignRight() Q_DECL_OVERRIDE;
     virtual void alignFull() Q_DECL_OVERRIDE;
 
-    virtual QString selectedText() const Q_DECL_OVERRIDE;
-    virtual bool hasSelection() const Q_DECL_OVERRIDE;
-
     virtual void findNext(const QString & text, const bool matchCase) const Q_DECL_OVERRIDE;
     virtual void findPrevious(const QString & text, const bool matchCase) const Q_DECL_OVERRIDE;
-
-    bool searchHighlightEnabled() const;
-    void setSearchHighlight(const QString & textToFind, const bool matchCase, const bool force = false) const;
-    void highlightRecognizedImageAreas(const QString & textToFind, const bool matchCase) const;
 
     virtual void replace(const QString & textToReplace, const QString & replacementText, const bool matchCase) Q_DECL_OVERRIDE;
     virtual void replaceAll(const QString & textToReplace, const QString & replacementText, const bool matchCase) Q_DECL_OVERRIDE;
@@ -245,7 +253,6 @@ public Q_SLOTS:
     virtual void insertInAppNoteLink(const QString & userId, const QString & shardId,
                                      const QString & noteGuid, const QString & linkText) Q_DECL_OVERRIDE;
     virtual void setSpellcheck(const bool enabled) Q_DECL_OVERRIDE;
-    virtual bool spellCheckEnabled() const Q_DECL_OVERRIDE;
     virtual void setFont(const QFont & font) Q_DECL_OVERRIDE;
     virtual void setFontHeight(const int height) Q_DECL_OVERRIDE;
     virtual void setFontColor(const QColor & color) Q_DECL_OVERRIDE;
@@ -302,7 +309,6 @@ public Q_SLOTS:
 
     virtual void setNoteAndNotebook(const Note & note, const Notebook & notebook) Q_DECL_OVERRIDE;
     virtual void clear() Q_DECL_OVERRIDE;
-    virtual bool isModified() const Q_DECL_OVERRIDE;
     virtual void setFocusToEditor() Q_DECL_OVERRIDE;
     virtual void convertToNote() Q_DECL_OVERRIDE;
 
@@ -310,10 +316,6 @@ public Q_SLOTS:
     void redoPageAction();
 
     void flipEnToDoCheckboxState(const quint64 enToDoIdNumber);
-
-    qint64 noteResourcesSize() const;
-    qint64 noteContentSize() const;
-    qint64 noteSize() const;
 
 // private signals:
 Q_SIGNALS:
@@ -484,7 +486,7 @@ private:
     bool parseInAppLink(const QString & urlString, QString & userId,
                         QString & shardId, QString & noteGuid, ErrorString & errorDescription) const;
 
-    bool checkNoteSize(const QString & newNoteContent) const;
+    bool checkNoteSize(const QString & newNoteContent);
 
     void pushNoteContentEditUndoCommand();
     void pushTableActionUndoCommand(const QString & name, NoteEditorPage::Callback callback);
