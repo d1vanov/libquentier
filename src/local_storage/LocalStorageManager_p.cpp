@@ -1546,7 +1546,7 @@ int LocalStorageManagerPrivate::noteCountPerNotebook(const Notebook & notebook, 
 
 int LocalStorageManagerPrivate::noteCountPerTag(const Tag & tag, ErrorString & errorDescription) const
 {
-    ErrorString errorPrefix(QT_TR_NOOP("Can't get number of notes per tag in the local storage database"));
+    ErrorString errorPrefix(QT_TR_NOOP("Can't get the number of notes per tag in the local storage database"));
 
     ErrorString error;
     bool res = tag.checkParameters(error);
@@ -1593,6 +1593,71 @@ int LocalStorageManagerPrivate::noteCountPerTag(const Tag & tag, ErrorString & e
     }
 
     return count;
+}
+
+bool LocalStorageManagerPrivate::noteCountsPerAllTags(QHash<QString, int> & noteCountsPerTagLocalUid, ErrorString & errorDescription) const
+{
+    ErrorString errorPrefix(QT_TR_NOOP("Can't get note counts for all tags in the local storage database"));
+    noteCountsPerTagLocalUid.clear();
+
+    QString queryString = QStringLiteral("SELECT localTag, COUNT(localTag) AS noteCount FROM NoteTags LEFT OUTER JOIN Notes "
+                                         "ON NoteTags.localNote = Notes.localUid WHERE Notes.deletionTimestamp IS NULL "
+                                         "GROUP BY localTag");
+    QSqlQuery query(m_sqlDatabase);
+    bool res = query.exec(queryString);
+    if (!res) {
+        SET_ERROR();
+        return false;
+    }
+
+    while(query.next())
+    {
+        QSqlRecord rec = query.record();
+
+        int tagLocalUidIndex = rec.indexOf(QStringLiteral("localTag"));
+        if (Q_UNLIKELY(tagLocalUidIndex < 0)) {
+            errorDescription.base() = errorPrefix.base();
+            errorDescription.appendBase(QT_TR_NOOP("can't find the local uid of tag in the result of SQL query"));
+            QNWARNING(errorDescription);
+            return false;
+        }
+
+        QString tagLocalUid = rec.value(tagLocalUidIndex).toString();
+        if (Q_UNLIKELY(tagLocalUid.isEmpty())) {
+            errorDescription.base() = errorPrefix.base();
+            errorDescription.appendBase(QT_TR_NOOP("the local uid of tag from the result of SQL query is empty"));
+            QNWARNING(errorDescription);
+            return false;
+        }
+
+        int noteCountIndex = rec.indexOf(QStringLiteral("noteCount"));
+        if (Q_UNLIKELY(noteCountIndex < 0)) {
+            errorDescription.base() = errorPrefix.base();
+            errorDescription.appendBase(QT_TR_NOOP("can't find the note count for tag in the result of SQL query"));
+            QNWARNING(errorDescription);
+            return false;
+        }
+
+        bool conversionResult = false;
+        int noteCount = rec.value(noteCountIndex).toInt(&conversionResult);
+        if (Q_UNLIKELY(!conversionResult)) {
+            errorDescription.base() = errorPrefix.base();
+            errorDescription.appendBase(QT_TR_NOOP("failed to convert note count for tag from the result of SQL query to int"));
+            QNWARNING(errorDescription);
+            return false;
+        }
+
+        if (Q_UNLIKELY(noteCount < 0)) {
+            errorDescription.base() = errorPrefix.base();
+            errorDescription.appendBase(QT_TR_NOOP("the note count for tag from the result of SQL query is negative"));
+            QNWARNING(errorDescription);
+            return false;
+        }
+
+        noteCountsPerTagLocalUid[tagLocalUid] = noteCount;
+    }
+
+    return true;
 }
 
 bool LocalStorageManagerPrivate::addNote(Note & note, ErrorString & errorDescription)

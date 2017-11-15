@@ -28,6 +28,7 @@
 #include <QString>
 #include <QScopedPointer>
 #include <QSharedPointer>
+#include <QHash>
 #include <cstdint>
 
 namespace qevercloud {
@@ -496,6 +497,15 @@ public:
      * @return either non-negative value with the number of notes per given tag or -1 which means some error occured
      */
     int noteCountPerTag(const Tag & tag, ErrorString & errorDescription) const;
+
+    /**
+     * @brief noteCountsPerAllTags returns the number of non-deleted notes currently stored in local storage database labeled
+     * with each tag stored in the local storage database
+     * @param noteCountsPerTagLocalUid - the result hash: note counts by tag local uids
+     * @param errorDescription - error description if the number of notes per all tags could not be returned
+     * @return true if note counts for all tags were computed successfully, false otherwise
+     */
+    bool noteCountsPerAllTags(QHash<QString, int> & noteCountsPerTagLocalUid, ErrorString & errorDescription) const;
 
     /**
      * @brief addNote - adds passed in Note to the local storage database.

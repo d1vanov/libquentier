@@ -83,6 +83,7 @@ public:
     int noteCount(ErrorString & errorDescription) const;
     int noteCountPerNotebook(const Notebook & notebook, ErrorString & errorDescription) const;
     int noteCountPerTag(const Tag & tag, ErrorString & errorDescription) const;
+    bool noteCountsPerAllTags(QHash<QString, int> & noteCountsPerTagLocalUid, ErrorString & errorDescription) const;
     bool addNote(Note & note, ErrorString & errorDescription);
     bool updateNote(Note & note, const bool updateResources, const bool updateTags, ErrorString & errorDescription);
     bool findNote(Note & note, ErrorString & errorDescription,

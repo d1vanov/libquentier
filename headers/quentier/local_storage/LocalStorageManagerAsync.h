@@ -146,6 +146,8 @@ Q_SIGNALS:
     void getNoteCountPerNotebookFailed(ErrorString errorDescription, Notebook notebook, QUuid requestId = QUuid());
     void getNoteCountPerTagComplete(int noteCount, Tag tag, QUuid requestId = QUuid());
     void getNoteCountPerTagFailed(ErrorString errorDescription, Tag tag, QUuid requestId = QUuid());
+    void getNoteCountsPerAllTagsComplete(QHash<QString, int> noteCountsPerTagLocalUid, QUuid requestId = QUuid());
+    void getNoteCountsPerAllTagsFailed(ErrorString errorDescription, QUuid requestId = QUuid());
     void addNoteComplete(Note note, QUuid requestId = QUuid());
     void addNoteFailed(Note note, ErrorString errorDescription, QUuid requestId = QUuid());
     void updateNoteComplete(Note note, bool updateResources, bool updateTags, QUuid requestId = QUuid());
@@ -329,6 +331,7 @@ public Q_SLOTS:
     void onGetNoteCountRequest(QUuid requestId);
     void onGetNoteCountPerNotebookRequest(Notebook notebook, QUuid requestId);
     void onGetNoteCountPerTagRequest(Tag tag, QUuid requestId);
+    void onGetNoteCountsPerAllTagsRequest(QUuid requestId);
     void onAddNoteRequest(Note note, QUuid requestId);
     void onUpdateNoteRequest(Note note, bool updateResources, bool updateTags, QUuid requestId);
     void onFindNoteRequest(Note note, bool withResourceBinaryData, QUuid requestId);

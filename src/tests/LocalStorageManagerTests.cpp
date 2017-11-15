@@ -586,15 +586,160 @@ bool TestResourceAddFindUpdateExpungeInLocalStorage(Resource & resource, LocalSt
     return true;
 }
 
-bool TestNoteFindUpdateDeleteExpungeInLocalStorage(Note & note, const Notebook & notebook,
-                                                   LocalStorageManager & localStorageManager,
-                                                   QString & errorDescription)
+bool TestNoteFindUpdateDeleteExpungeInLocalStorage(QString & errorDescription)
 {
-    ErrorString errorMessage;
+    const bool startFromScratch = true;
+    const bool overrideLock = false;
+    Account account(QStringLiteral("CoreTesterFakeUser"), Account::Type::Local);
+    LocalStorageManager localStorageManager(account, startFromScratch, overrideLock);
 
-    if (!note.checkParameters(errorMessage)) {
+    Notebook notebook;
+    notebook.setGuid(QStringLiteral("00000000-0000-0000-c000-000000000047"));
+    notebook.setUpdateSequenceNumber(1);
+    notebook.setName(QStringLiteral("Fake notebook name"));
+    notebook.setCreationTimestamp(1);
+    notebook.setModificationTimestamp(1);
+
+    ErrorString errorMessage;
+    bool res = localStorageManager.addNotebook(notebook, errorMessage);
+    if (!res) {
         errorDescription = errorMessage.nonLocalizedString();
-        QNWARNING(QStringLiteral("Found invalid Note: ") << note);
+        return false;
+    }
+
+    Note note;
+    note.setGuid(QStringLiteral("00000000-0000-0000-c000-000000000046"));
+    note.setUpdateSequenceNumber(1);
+    note.setTitle(QStringLiteral("Fake note title"));
+    note.setContent(QStringLiteral("<en-note><h1>Hello, world</h1></en-note>"));
+    note.setCreationTimestamp(1);
+    note.setModificationTimestamp(1);
+    note.setActive(true);
+    note.setNotebookGuid(notebook.guid());
+    note.setNotebookLocalUid(notebook.localUid());
+
+    qevercloud::NoteAttributes & noteAttributes = note.noteAttributes();
+    noteAttributes.subjectDate = 1;
+    noteAttributes.latitude = 1.0;
+    noteAttributes.longitude = 1.0;
+    noteAttributes.altitude = 1.0;
+    noteAttributes.author = QStringLiteral("author");
+    noteAttributes.source = QStringLiteral("source");
+    noteAttributes.sourceURL = QStringLiteral("source URL");
+    noteAttributes.sourceApplication = QStringLiteral("source application");
+    noteAttributes.shareDate = 2;
+
+    qevercloud::NoteLimits & noteLimits = note.noteLimits();
+    noteLimits.noteResourceCountMax = 50;
+    noteLimits.uploadLimit = 268435456;
+    noteLimits.resourceSizeMax = 268435456;
+    noteLimits.noteSizeMax = 268435456;
+    noteLimits.uploaded = 100;
+
+    note.unsetLocalUid();
+
+    SharedNote sharedNote;
+    sharedNote.setNoteGuid(note.guid());
+    sharedNote.setSharerUserId(1);
+    sharedNote.setRecipientIdentityId(qint64(2));
+    sharedNote.setRecipientIdentityContactName(QStringLiteral("Contact"));
+    sharedNote.setRecipientIdentityContactId(QStringLiteral("Contact id"));
+    sharedNote.setRecipientIdentityContactType(qevercloud::ContactType::EVERNOTE);
+    sharedNote.setRecipientIdentityContactPhotoUrl(QStringLiteral("url"));
+    sharedNote.setRecipientIdentityContactPhotoLastUpdated(qint64(50));
+    sharedNote.setRecipientIdentityContactMessagingPermit(QByteArray("aaa"));
+    sharedNote.setRecipientIdentityContactMessagingPermitExpires(qint64(1));
+    sharedNote.setRecipientIdentityUserId(3);
+    sharedNote.setRecipientIdentityDeactivated(false);
+    sharedNote.setRecipientIdentitySameBusiness(true);
+    sharedNote.setRecipientIdentityBlocked(true);
+    sharedNote.setRecipientIdentityUserConnected(true);
+    sharedNote.setRecipientIdentityEventId(qint64(5));
+    sharedNote.setPrivilegeLevel(qevercloud::SharedNotePrivilegeLevel::FULL_ACCESS);
+    sharedNote.setCreationTimestamp(6);
+    sharedNote.setModificationTimestamp(7);
+    sharedNote.setAssignmentTimestamp(8);
+    note.addSharedNote(sharedNote);
+
+    errorMessage.clear();
+    res = localStorageManager.addNote(note, errorMessage);
+    if (!res) {
+        errorDescription = errorMessage.nonLocalizedString();
+        return false;
+    }
+
+    Tag tag;
+    tag.setGuid(QStringLiteral("00000000-0000-0000-c000-000000000048"));
+    tag.setUpdateSequenceNumber(1);
+    tag.setName(QStringLiteral("Fake tag name"));
+
+    errorMessage.clear();
+    res = localStorageManager.addTag(tag, errorMessage);
+    if (!res) {
+        errorDescription = errorMessage.nonLocalizedString();
+        return false;
+    }
+
+    note.addTagGuid(tag.guid());
+    note.addTagLocalUid(tag.localUid());
+
+    errorMessage.clear();
+    res = localStorageManager.updateNote(note, /* updateResources = */ false, /* updateTags = */ true, errorMessage);
+    if (!res) {
+        errorDescription = errorMessage.nonLocalizedString();
+        return false;
+    }
+
+    Resource resource;
+    resource.setGuid(QStringLiteral("00000000-0000-0000-c000-000000000049"));
+    resource.setUpdateSequenceNumber(1);
+    resource.setNoteGuid(note.guid());
+    resource.setDataBody(QByteArray("Fake resource data body"));
+    resource.setDataSize(resource.dataBody().size());
+    resource.setDataHash(QByteArray("Fake hash      1"));
+    resource.setMime(QStringLiteral("text/plain"));
+    resource.setWidth(1);
+    resource.setHeight(1);
+    resource.setRecognitionDataBody(QByteArray("<recoIndex docType=\"handwritten\" objType=\"image\" objID=\"fc83e58282d8059be17debabb69be900\" "
+                                               "engineVersion=\"5.5.22.7\" recoType=\"service\" lang=\"en\" objWidth=\"2398\" objHeight=\"1798\"> "
+                                               "<item x=\"437\" y=\"589\" w=\"1415\" h=\"190\">"
+                                               "<t w=\"87\">EVER ?</t>"
+                                               "<t w=\"83\">EVER NOTE</t>"
+                                               "<t w=\"82\">EVERNOTE</t>"
+                                               "<t w=\"71\">EVER NaTE</t>"
+                                               "<t w=\"67\">EVER nine</t>"
+                                               "<t w=\"67\">EVER none</t>"
+                                               "<t w=\"66\">EVER not</t>"
+                                               "<t w=\"62\">over NOTE</t>"
+                                               "<t w=\"62\">even NOTE</t>"
+                                               "<t w=\"61\">EVER nose</t>"
+                                               "<t w=\"50\">EV£RNoTE</t>"
+                                               "</item>"
+                                               "<item x=\"1850\" y=\"1465\" w=\"14\" h=\"12\">"
+                                               "<t w=\"11\">et</t>"
+                                               "<t w=\"10\">TQ</t>"
+                                               "</item>"
+                                               "</recoIndex>"));
+    resource.setRecognitionDataSize(resource.recognitionDataBody().size());
+    resource.setRecognitionDataHash(QByteArray("Fake hash      2"));
+
+    qevercloud::ResourceAttributes & resourceAttributes = resource.resourceAttributes();
+
+    resourceAttributes.sourceURL = QStringLiteral("Fake resource source URL");
+    resourceAttributes.timestamp = 1;
+    resourceAttributes.latitude = 0.0;
+    resourceAttributes.longitude = 0.0;
+    resourceAttributes.altitude = 0.0;
+    resourceAttributes.cameraMake = QStringLiteral("Fake resource camera make");
+    resourceAttributes.cameraModel = QStringLiteral("Fake resource camera model");
+
+    note.addResource(resource);
+
+    errorMessage.clear();
+    res = localStorageManager.updateNote(note, /* update resources = */ true,
+                                         /* update tags = */ true, errorMessage);
+    if (!res) {
+        errorDescription = errorMessage.nonLocalizedString();
         return false;
     }
 
@@ -602,8 +747,8 @@ bool TestNoteFindUpdateDeleteExpungeInLocalStorage(Note & note, const Notebook &
     const QString initialResourceGuid = QStringLiteral("00000000-0000-0000-c000-000000000049");
     Resource foundResource;
     foundResource.setGuid(initialResourceGuid);
-    bool res = localStorageManager.findEnResource(foundResource, errorMessage,
-                                                  /* withBinaryData = */ true);
+    res = localStorageManager.findEnResource(foundResource, errorMessage,
+                                             /* withBinaryData = */ true);
     if (!res) {
         errorDescription = errorMessage.nonLocalizedString();
         return false;
@@ -641,17 +786,17 @@ bool TestNoteFindUpdateDeleteExpungeInLocalStorage(Note & note, const Notebook &
     modifiedNote.setModificationTimestamp(note.modificationTimestamp() + 1);
     modifiedNote.setFavorited(true);
 
-    qevercloud::NoteAttributes & noteAttributes = modifiedNote.noteAttributes();
+    qevercloud::NoteAttributes & modifiedNoteAttributes = modifiedNote.noteAttributes();
 
-    noteAttributes.subjectDate = 2;
-    noteAttributes.latitude = 2.0;
-    noteAttributes.longitude = 2.0;
-    noteAttributes.altitude = 2.0;
-    noteAttributes.author = QStringLiteral("modified author");
-    noteAttributes.source = QStringLiteral("modified source");
-    noteAttributes.sourceURL = QStringLiteral("modified source URL");
-    noteAttributes.sourceApplication = QStringLiteral("modified source application");
-    noteAttributes.shareDate = 2;
+    modifiedNoteAttributes.subjectDate = 2;
+    modifiedNoteAttributes.latitude = 2.0;
+    modifiedNoteAttributes.longitude = 2.0;
+    modifiedNoteAttributes.altitude = 2.0;
+    modifiedNoteAttributes.author = QStringLiteral("modified author");
+    modifiedNoteAttributes.source = QStringLiteral("modified source");
+    modifiedNoteAttributes.sourceURL = QStringLiteral("modified source URL");
+    modifiedNoteAttributes.sourceApplication = QStringLiteral("modified source application");
+    modifiedNoteAttributes.shareDate = 2;
 
     Tag newTag;
     newTag.setGuid(QStringLiteral("00000000-0000-0000-c000-000000000050"));
@@ -701,25 +846,25 @@ bool TestNoteFindUpdateDeleteExpungeInLocalStorage(Note & note, const Notebook &
     newResource.setRecognitionDataSize(newResource.recognitionDataBody().size());
     newResource.setRecognitionDataHash(QByteArray("Fake hash      4"));
 
-    qevercloud::ResourceAttributes & resourceAttributes = newResource.resourceAttributes();
+    qevercloud::ResourceAttributes & newResourceAttributes = newResource.resourceAttributes();
 
-    resourceAttributes.sourceURL = QStringLiteral("Fake resource source URL");
-    resourceAttributes.timestamp = 1;
-    resourceAttributes.latitude = 0.0;
-    resourceAttributes.longitude = 0.0;
-    resourceAttributes.altitude = 0.0;
-    resourceAttributes.cameraMake = QStringLiteral("Fake resource camera make");
-    resourceAttributes.cameraModel = QStringLiteral("Fake resource camera model");
+    newResourceAttributes.sourceURL = QStringLiteral("Fake resource source URL");
+    newResourceAttributes.timestamp = 1;
+    newResourceAttributes.latitude = 0.0;
+    newResourceAttributes.longitude = 0.0;
+    newResourceAttributes.altitude = 0.0;
+    newResourceAttributes.cameraMake = QStringLiteral("Fake resource camera make");
+    newResourceAttributes.cameraModel = QStringLiteral("Fake resource camera model");
 
-    resourceAttributes.applicationData = qevercloud::LazyMap();
+    newResourceAttributes.applicationData = qevercloud::LazyMap();
 
-    resourceAttributes.applicationData->keysOnly = QSet<QString>();
-    auto & keysOnly = resourceAttributes.applicationData->keysOnly.ref();
+    newResourceAttributes.applicationData->keysOnly = QSet<QString>();
+    auto & keysOnly = newResourceAttributes.applicationData->keysOnly.ref();
     keysOnly.reserve(1);
     keysOnly.insert(QStringLiteral("key 1"));
 
-    resourceAttributes.applicationData->fullMap = QMap<QString, QString>();
-    auto & fullMap = resourceAttributes.applicationData->fullMap.ref();
+    newResourceAttributes.applicationData->fullMap = QMap<QString, QString>();
+    auto & fullMap = newResourceAttributes.applicationData->fullMap.ref();
     fullMap[QStringLiteral("key 1 map")] = QStringLiteral("value 1");
 
     modifiedNote.addResource(newResource);
@@ -775,31 +920,43 @@ bool TestNoteFindUpdateDeleteExpungeInLocalStorage(Note & note, const Notebook &
         return false;
     }
 
-    // ========== noteCount to return 1 ============
+    Note newNote;
+    newNote.setNotebookGuid(notebook.guid());
+    newNote.setTitle(QStringLiteral("New note"));
+    newNote.addTagGuid(tag.guid());
+    newNote.addTagLocalUid(tag.localUid());
+
+    res = localStorageManager.addNote(newNote, errorMessage);
+    if (!res) {
+        errorDescription = errorMessage.nonLocalizedString();
+        return false;
+    }
+
+    // ========== noteCount to return 2 ============
     int count = localStorageManager.noteCount(errorMessage);
     if (count < 0) {
         errorDescription = errorMessage.nonLocalizedString();
         return false;
     }
-    else if (count != 1) {
-        errorDescription = QStringLiteral("noteCount returned result different from the expected one (1): ");
+    else if (count != 2) {
+        errorDescription = QStringLiteral("noteCount returned result different from the expected one (2): ");
         errorDescription += QString::number(count);
         return false;
     }
 
-    // ========== noteCountPerNotebook to return 1 ===========
+    // ========== noteCountPerNotebook to return 2 ===========
     count = localStorageManager.noteCountPerNotebook(notebook, errorMessage);
     if (count < 0) {
         errorDescription = errorMessage.nonLocalizedString();
         return false;
     }
-    else if (count != 1) {
-        errorDescription = QStringLiteral("noteCountPerNotebook returned result different from the expected one (1): ");
+    else if (count != 2) {
+        errorDescription = QStringLiteral("noteCountPerNotebook returned result different from the expected one (2): ");
         errorDescription += QString::number(count);
         return false;
     }
 
-    // ========== noteCountPerTag to return 1 ==========
+    // ========== noteCountPerTag to return 1 for new tag ==========
     count = localStorageManager.noteCountPerTag(newTag, errorMessage);
     if (count < 0) {
         errorDescription = errorMessage.nonLocalizedString();
@@ -808,6 +965,56 @@ bool TestNoteFindUpdateDeleteExpungeInLocalStorage(Note & note, const Notebook &
     else if (count != 1) {
         errorDescription = QStringLiteral("noteCountPerTag returned result different from the expected one (1): ");
         errorDescription += QString::number(count);
+        return false;
+    }
+
+    // ========== noteCountPerTag to return 2 for old tag ==========
+    count = localStorageManager.noteCountPerTag(tag, errorMessage);
+    if (count < 0) {
+        errorDescription = errorMessage.nonLocalizedString();
+        return false;
+    }
+    else if (count != 2) {
+        errorDescription = QStringLiteral("noteCountPerTag returned result different from the expected one (2): ");
+        errorDescription += QString::number(count);
+        return false;
+    }
+
+    // ========== Note count per all tags to return 2 and 1 for first and second tags ============
+    QHash<QString, int> noteCountsPerTagLocalUid;
+    res = localStorageManager.noteCountsPerAllTags(noteCountsPerTagLocalUid, errorMessage);
+    if (!res) {
+        errorDescription = errorMessage.nonLocalizedString();
+        return false;
+    }
+
+    if (noteCountsPerTagLocalUid.size() != 2) {
+        errorDescription = QStringLiteral("Unexpected amount of tag local uids within the hash of note counts by tag local uid: expected 2, got ");
+        errorDescription += QString::number(noteCountsPerTagLocalUid.size());
+        return false;
+    }
+
+    auto firstTagNoteCountIt = noteCountsPerTagLocalUid.find(tag.localUid());
+    if (Q_UNLIKELY(firstTagNoteCountIt == noteCountsPerTagLocalUid.end())) {
+        errorDescription = QStringLiteral("Can't find the note count for first tag's local uid");
+        return false;
+    }
+
+    if (firstTagNoteCountIt.value() != 2) {
+        errorDescription = QStringLiteral("Unexpected note count for the first tag: expected 2, got ");
+        errorDescription += QString::number(firstTagNoteCountIt.value());
+        return false;
+    }
+
+    auto secondTagNoteCountIt = noteCountsPerTagLocalUid.find(newTag.localUid());
+    if (Q_UNLIKELY(secondTagNoteCountIt == noteCountsPerTagLocalUid.end())) {
+        errorDescription = QStringLiteral("Can;t find the note count for second tag's local uid");
+        return false;
+    }
+
+    if (secondTagNoteCountIt.value() != 1) {
+        errorDescription = QStringLiteral("Unexpected note count for the second tag: expected 1, got ");
+        errorDescription += QString::number(secondTagNoteCountIt.value());
         return false;
     }
 
@@ -836,14 +1043,14 @@ bool TestNoteFindUpdateDeleteExpungeInLocalStorage(Note & note, const Notebook &
         return false;
     }
 
-    // ========== noteCount to return 0 ============
+    // ========== noteCount to return 1 ============
     count = localStorageManager.noteCount(errorMessage);
     if (count < 0) {
         errorDescription = errorMessage.nonLocalizedString();
         return false;
     }
-    else if (count != 0) {
-        errorDescription = QStringLiteral("noteCount returned result different from the expected one (0): ");
+    else if (count != 1) {
+        errorDescription = QStringLiteral("noteCount returned result different from the expected one (1): ");
         errorDescription += QString::number(count);
         return false;
     }

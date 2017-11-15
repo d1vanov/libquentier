@@ -223,6 +223,12 @@ int LocalStorageManager::noteCountPerTag(const Tag & tag, ErrorString & errorDes
     return d->noteCountPerTag(tag, errorDescription);
 }
 
+bool LocalStorageManager::noteCountsPerAllTags(QHash<QString, int> & noteCountsPerTagLocalUid, ErrorString & errorDescription) const
+{
+    Q_D(const LocalStorageManager);
+    return d->noteCountsPerAllTags(noteCountsPerTagLocalUid, errorDescription);
+}
+
 bool LocalStorageManager::addNote(Note & note, ErrorString & errorDescription)
 {
     Q_D(LocalStorageManager);

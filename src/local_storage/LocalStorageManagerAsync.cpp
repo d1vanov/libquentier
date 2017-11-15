@@ -903,6 +903,30 @@ void LocalStorageManagerAsync::onGetNoteCountPerTagRequest(Tag tag, QUuid reques
     }
 }
 
+void LocalStorageManagerAsync::onGetNoteCountsPerAllTagsRequest(QUuid requestId)
+{
+    try
+    {
+        ErrorString errorDescription;
+        QHash<QString, int> noteCountsPerTagLocalUid;
+        bool res = m_pLocalStorageManager->noteCountsPerAllTags(noteCountsPerTagLocalUid, errorDescription);
+        if (!res) {
+            Q_EMIT getNoteCountsPerAllTagsFailed(errorDescription, requestId);
+        }
+        else {
+            Q_EMIT getNoteCountsPerAllTagsComplete(noteCountsPerTagLocalUid, requestId);
+        }
+    }
+    catch(const std::exception & e)
+    {
+        ErrorString error(QT_TR_NOOP("Can't get note counts per all tags from the local storage: caught exception"));
+        error.details() = QString::fromUtf8(e.what());
+        SysInfo sysInfo;
+        QNCRITICAL(error << QStringLiteral("; backtrace: ") << sysInfo.stackTrace());
+        Q_EMIT getNoteCountsPerAllTagsFailed(error, requestId);
+    }
+}
+
 void LocalStorageManagerAsync::onAddNoteRequest(Note note, QUuid requestId)
 {
     try
