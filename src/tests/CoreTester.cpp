@@ -480,36 +480,8 @@ void CoreTester::localStorageManagerIndividualTagTest()
 {
     try
     {
-        const bool startFromScratch = true;
-        const bool overrideLock = false;
-        Account account(QStringLiteral("CoreTesterFakeUser"), Account::Type::Local);
-        LocalStorageManager localStorageManager(account, startFromScratch, overrideLock);
-
-        LinkedNotebook linkedNotebook;
-        linkedNotebook.setGuid(QStringLiteral("00000000-0000-0000-c000-000000000001"));
-        linkedNotebook.setUpdateSequenceNumber(1);
-        linkedNotebook.setShareName(QStringLiteral("Linked notebook share name"));
-        linkedNotebook.setUsername(QStringLiteral("Linked notebook username"));
-        linkedNotebook.setShardId(QStringLiteral("Linked notebook shard id"));
-        linkedNotebook.setSharedNotebookGlobalId(QStringLiteral("Linked notebook shared notebook global id"));
-        linkedNotebook.setUri(QStringLiteral("Linked notebook uri"));
-        linkedNotebook.setNoteStoreUrl(QStringLiteral("Linked notebook note store url"));
-        linkedNotebook.setWebApiUrlPrefix(QStringLiteral("Linked notebook web api url prefix"));
-        linkedNotebook.setStack(QStringLiteral("Linked notebook stack"));
-        linkedNotebook.setBusinessId(1);
-
-        Tag tag;
-        tag.setGuid(QStringLiteral("00000000-0000-0000-c000-000000000046"));
-        tag.setLinkedNotebookGuid(linkedNotebook.guid());
-        tag.setUpdateSequenceNumber(1);
-        tag.setName(QStringLiteral("Fake tag name"));
-
-        ErrorString errorMessage;
-        bool res = localStorageManager.addLinkedNotebook(linkedNotebook, errorMessage);
-        QVERIFY2(res == true, qPrintable(errorMessage.nonLocalizedString()));
-
         QString error;
-        res = TestTagAddFindUpdateExpungeInLocalStorage(tag, localStorageManager, error);
+        bool res = TestTagAddFindUpdateExpungeInLocalStorage(error);
         QVERIFY2(res == true, qPrintable(error));
     }
     CATCH_EXCEPTION();

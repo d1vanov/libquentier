@@ -298,11 +298,38 @@ bool TestLinkedNotebookAddFindUpdateExpungeInLocalStorage(QString & errorDescrip
     return true;
 }
 
-bool TestTagAddFindUpdateExpungeInLocalStorage(Tag & tag,
-                                               LocalStorageManager & localStorageManager,
-                                               QString & errorDescription)
+bool TestTagAddFindUpdateExpungeInLocalStorage(QString & errorDescription)
 {
+    const bool startFromScratch = true;
+    const bool overrideLock = false;
+    Account account(QStringLiteral("CoreTesterFakeUser"), Account::Type::Local);
+    LocalStorageManager localStorageManager(account, startFromScratch, overrideLock);
+
+    LinkedNotebook linkedNotebook;
+    linkedNotebook.setGuid(QStringLiteral("00000000-0000-0000-c000-000000000001"));
+    linkedNotebook.setUpdateSequenceNumber(1);
+    linkedNotebook.setShareName(QStringLiteral("Linked notebook share name"));
+    linkedNotebook.setUsername(QStringLiteral("Linked notebook username"));
+    linkedNotebook.setShardId(QStringLiteral("Linked notebook shard id"));
+    linkedNotebook.setSharedNotebookGlobalId(QStringLiteral("Linked notebook shared notebook global id"));
+    linkedNotebook.setUri(QStringLiteral("Linked notebook uri"));
+    linkedNotebook.setNoteStoreUrl(QStringLiteral("Linked notebook note store url"));
+    linkedNotebook.setWebApiUrlPrefix(QStringLiteral("Linked notebook web api url prefix"));
+    linkedNotebook.setStack(QStringLiteral("Linked notebook stack"));
+    linkedNotebook.setBusinessId(1);
+
     ErrorString errorMessage;
+    bool res = localStorageManager.addLinkedNotebook(linkedNotebook, errorMessage);
+    if (!res) {
+        errorDescription = errorMessage.nonLocalizedString();
+        return false;
+    }
+
+    Tag tag;
+    tag.setGuid(QStringLiteral("00000000-0000-0000-c000-000000000046"));
+    tag.setLinkedNotebookGuid(linkedNotebook.guid());
+    tag.setUpdateSequenceNumber(1);
+    tag.setName(QStringLiteral("Fake tag name"));
 
     if (!tag.checkParameters(errorMessage)) {
         errorDescription = errorMessage.nonLocalizedString();
@@ -311,7 +338,7 @@ bool TestTagAddFindUpdateExpungeInLocalStorage(Tag & tag,
     }
 
     // ========== Check Add + Find ==========
-    bool res = localStorageManager.addTag(tag, errorMessage);
+    res = localStorageManager.addTag(tag, errorMessage);
     if (!res) {
         errorDescription = errorMessage.nonLocalizedString();
         return false;
