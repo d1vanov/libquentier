@@ -1229,11 +1229,138 @@ bool TestNoteFindUpdateDeleteExpungeInLocalStorage(QString & errorDescription)
     return true;
 }
 
-bool TestNotebookFindUpdateDeleteExpungeInLocalStorage(Notebook & notebook,
-                                                       LocalStorageManager & localStorageManager,
-                                                       QString & errorDescription)
+bool TestNotebookFindUpdateDeleteExpungeInLocalStorage(QString & errorDescription)
 {
+    const bool startFromScratch = true;
+    const bool overrideLock = false;
+    Account account(QStringLiteral("CoreTesterFakeUser"), Account::Type::Local);
+    LocalStorageManager localStorageManager(account, startFromScratch, overrideLock);
+
+    LinkedNotebook linkedNotebook;
+    linkedNotebook.setGuid(QStringLiteral("00000000-0000-0000-c000-000000000001"));
+    linkedNotebook.setUpdateSequenceNumber(1);
+    linkedNotebook.setShareName(QStringLiteral("Linked notebook share name"));
+    linkedNotebook.setUsername(QStringLiteral("Linked notebook username"));
+    linkedNotebook.setShardId(QStringLiteral("Linked notebook shard id"));
+    linkedNotebook.setSharedNotebookGlobalId(QStringLiteral("Linked notebook shared notebook global id"));
+    linkedNotebook.setUri(QStringLiteral("Linked notebook uri"));
+    linkedNotebook.setNoteStoreUrl(QStringLiteral("Linked notebook note store url"));
+    linkedNotebook.setWebApiUrlPrefix(QStringLiteral("Linked notebook web api url prefix"));
+    linkedNotebook.setStack(QStringLiteral("Linked notebook stack"));
+    linkedNotebook.setBusinessId(1);
+
+    Notebook notebook;
+    notebook.setGuid(QStringLiteral("00000000-0000-0000-c000-000000000047"));
+    notebook.setUpdateSequenceNumber(1);
+    notebook.setLinkedNotebookGuid(linkedNotebook.guid());
+    notebook.setName(QStringLiteral("Fake notebook name"));
+    notebook.setCreationTimestamp(1);
+    notebook.setModificationTimestamp(1);
+    notebook.setDefaultNotebook(true);
+    notebook.setLastUsed(false);
+    notebook.setPublishingUri(QStringLiteral("Fake publishing uri"));
+    notebook.setPublishingOrder(1);
+    notebook.setPublishingAscending(true);
+    notebook.setPublishingPublicDescription(QStringLiteral("Fake public description"));
+    notebook.setPublished(true);
+    notebook.setStack(QStringLiteral("Fake notebook stack"));
+    notebook.setBusinessNotebookDescription(QStringLiteral("Fake business notebook description"));
+    notebook.setBusinessNotebookPrivilegeLevel(1);
+    notebook.setBusinessNotebookRecommended(true);
+
+    // NotebookRestrictions
+    notebook.setCanReadNotes(true);
+    notebook.setCanCreateNotes(true);
+    notebook.setCanUpdateNotes(true);
+    notebook.setCanExpungeNotes(false);
+    notebook.setCanShareNotes(true);
+    notebook.setCanEmailNotes(true);
+    notebook.setCanSendMessageToRecipients(true);
+    notebook.setCanUpdateNotebook(true);
+    notebook.setCanExpungeNotebook(false);
+    notebook.setCanSetDefaultNotebook(true);
+    notebook.setCanSetNotebookStack(true);
+    notebook.setCanPublishToPublic(true);
+    notebook.setCanPublishToBusinessLibrary(false);
+    notebook.setCanCreateTags(true);
+    notebook.setCanUpdateTags(true);
+    notebook.setCanExpungeTags(false);
+    notebook.setCanSetParentTag(true);
+    notebook.setCanCreateSharedNotebooks(true);
+    notebook.setCanCreateSharedNotebooks(true);
+    notebook.setCanUpdateNotebook(true);
+    notebook.setUpdateWhichSharedNotebookRestrictions(1);
+    notebook.setExpungeWhichSharedNotebookRestrictions(1);
+
+    SharedNotebook sharedNotebook;
+    sharedNotebook.setId(1);
+    sharedNotebook.setUserId(1);
+    sharedNotebook.setNotebookGuid(notebook.guid());
+    sharedNotebook.setEmail(QStringLiteral("Fake shared notebook email"));
+    sharedNotebook.setCreationTimestamp(1);
+    sharedNotebook.setModificationTimestamp(1);
+    sharedNotebook.setGlobalId(QStringLiteral("Fake shared notebook global id"));
+    sharedNotebook.setUsername(QStringLiteral("Fake shared notebook username"));
+    sharedNotebook.setPrivilegeLevel(1);
+    sharedNotebook.setReminderNotifyEmail(true);
+    sharedNotebook.setReminderNotifyApp(false);
+
+    notebook.addSharedNotebook(sharedNotebook);
+
     ErrorString errorMessage;
+    bool res = localStorageManager.addLinkedNotebook(linkedNotebook, errorMessage);
+    if (!res) {
+        errorDescription = errorMessage.nonLocalizedString();
+        return false;
+    }
+
+    errorMessage.clear();
+    res = localStorageManager.addNotebook(notebook, errorMessage);
+    if (!res) {
+        errorDescription = errorMessage.nonLocalizedString();
+        return false;
+    }
+
+    Note note;
+    note.setGuid(QStringLiteral("00000000-0000-0000-c000-000000000049"));
+    note.setUpdateSequenceNumber(1);
+    note.setTitle(QStringLiteral("Fake note title"));
+    note.setContent(QStringLiteral("<en-note><h1>Hello, world</h1></en-note>"));
+    note.setCreationTimestamp(1);
+    note.setModificationTimestamp(1);
+    note.setActive(true);
+    note.setNotebookGuid(notebook.guid());
+    note.setNotebookLocalUid(notebook.localUid());
+
+    errorMessage.clear();
+    res = localStorageManager.addNote(note, errorMessage);
+    if (!res) {
+        errorDescription = errorMessage.nonLocalizedString();
+        return false;
+    }
+
+    Tag tag;
+    tag.setGuid(QStringLiteral("00000000-0000-0000-c000-000000000048"));
+    tag.setUpdateSequenceNumber(1);
+    tag.setName(QStringLiteral("Fake tag name"));
+
+    errorMessage.clear();
+    res = localStorageManager.addTag(tag, errorMessage);
+    if (!res) {
+        errorDescription = errorMessage.nonLocalizedString();
+        return false;
+    }
+
+    note.addTagGuid(tag.guid());
+    note.addTagLocalUid(tag.localUid());
+
+    errorMessage.clear();
+    res = localStorageManager.updateNote(note, /* updateResources = */ false,
+                                         /* update tags = */ true, errorMessage);
+    if (!res) {
+        errorDescription = errorMessage.nonLocalizedString();
+        return false;
+    }
 
     if (!notebook.checkParameters(errorMessage)) {
         errorDescription = errorMessage.nonLocalizedString();
@@ -1245,8 +1372,8 @@ bool TestNotebookFindUpdateDeleteExpungeInLocalStorage(Notebook & notebook,
     const QString initialNoteGuid = QStringLiteral("00000000-0000-0000-c000-000000000049");
     Note foundNote;
     foundNote.setGuid(initialNoteGuid);
-    bool res = localStorageManager.findNote(foundNote, errorMessage,
-                                            /* withResourceBinaryData = */ true);
+    res = localStorageManager.findNote(foundNote, errorMessage,
+                                       /* withResourceBinaryData = */ true);
     if (!res) {
         errorDescription = errorMessage.nonLocalizedString();
         return false;
