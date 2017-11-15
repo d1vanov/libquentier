@@ -173,10 +173,26 @@ bool TestSavedSearchAddFindUpdateExpungeInLocalStorage(QString & errorDescriptio
     return true;
 }
 
-bool TestLinkedNotebookAddFindUpdateExpungeInLocalStorage(const LinkedNotebook & linkedNotebook,
-                                                          LocalStorageManager & localStorageManager,
-                                                          QString & errorDescription)
+bool TestLinkedNotebookAddFindUpdateExpungeInLocalStorage(QString & errorDescription)
 {
+    const bool startFromScratch = true;
+    const bool overrideLock = false;
+    Account account(QStringLiteral("CoreTesterFakeUser"), Account::Type::Local);
+    LocalStorageManager localStorageManager(account, startFromScratch, overrideLock);
+
+    LinkedNotebook linkedNotebook;
+    linkedNotebook.setGuid(QStringLiteral("00000000-0000-0000-c000-000000000046"));
+    linkedNotebook.setUpdateSequenceNumber(1);
+    linkedNotebook.setShareName(QStringLiteral("Fake linked notebook share name"));
+    linkedNotebook.setUsername(QStringLiteral("Fake linked notebook username"));
+    linkedNotebook.setShardId(QStringLiteral("Fake linked notebook shard id"));
+    linkedNotebook.setSharedNotebookGlobalId(QStringLiteral("Fake linked notebook shared notebook global id"));
+    linkedNotebook.setUri(QStringLiteral("Fake linked notebook uri"));
+    linkedNotebook.setNoteStoreUrl(QStringLiteral("Fake linked notebook note store url"));
+    linkedNotebook.setWebApiUrlPrefix(QStringLiteral("Fake linked notebook web api url prefix"));
+    linkedNotebook.setStack(QStringLiteral("Fake linked notebook stack"));
+    linkedNotebook.setBusinessId(1);
+
     ErrorString errorMessage;
 
     if (!linkedNotebook.checkParameters(errorMessage)) {

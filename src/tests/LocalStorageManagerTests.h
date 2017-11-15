@@ -36,9 +36,7 @@ namespace test {
 
 bool TestSavedSearchAddFindUpdateExpungeInLocalStorage(QString & errorDescription);
 
-bool TestLinkedNotebookAddFindUpdateExpungeInLocalStorage(const LinkedNotebook & linkedNotebook,
-                                                          LocalStorageManager & localStorageManager,
-                                                          QString & errorDescription);
+bool TestLinkedNotebookAddFindUpdateExpungeInLocalStorage(QString & errorDescription);
 
 bool TestTagAddFindUpdateExpungeInLocalStorage(Tag & tag, LocalStorageManager & localStorageManager,
                                                QString & errorDescription);
