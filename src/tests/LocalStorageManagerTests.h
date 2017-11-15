@@ -46,9 +46,7 @@ bool TestNoteFindUpdateDeleteExpungeInLocalStorage(QString & errorDescription);
 
 bool TestNotebookFindUpdateDeleteExpungeInLocalStorage(QString & errorDescription);
 
-bool TestUserAddFindUpdateDeleteExpungeInLocalStorage(const User & user,
-                                                      LocalStorageManager & localStorageManager,
-                                                      QString & errorDescription);
+bool TestUserAddFindUpdateDeleteExpungeInLocalStorage(QString & errorDescription);
 
 bool TestSequentialUpdatesInLocalStorage(QString & errorDescription);
 
