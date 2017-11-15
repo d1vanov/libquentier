@@ -34,9 +34,7 @@ QT_FORWARD_DECLARE_CLASS(User)
 
 namespace test {
 
-bool TestSavedSearchAddFindUpdateExpungeInLocalStorage(SavedSearch & search,
-                                                       LocalStorageManager & localStorageManager,
-                                                       QString & errorDescription);
+bool TestSavedSearchAddFindUpdateExpungeInLocalStorage(QString & errorDescription);
 
 bool TestLinkedNotebookAddFindUpdateExpungeInLocalStorage(const LinkedNotebook & linkedNotebook,
                                                           LocalStorageManager & localStorageManager,

@@ -458,23 +458,8 @@ void CoreTester::localStorageManagerIndividualSavedSearchTest()
 {
     try
     {
-        const bool startFromScratch = true;
-        const bool overrideLock = false;
-        Account account(QStringLiteral("CoreTesterFakeUser"), Account::Type::Local);
-        LocalStorageManager localStorageManager(account, startFromScratch, overrideLock);
-
-        SavedSearch search;
-        search.setGuid(QStringLiteral("00000000-0000-0000-c000-000000000046"));
-        search.setUpdateSequenceNumber(1);
-        search.setName(QStringLiteral("Fake saved search name"));
-        search.setQuery(QStringLiteral("Fake saved search query"));
-        search.setQueryFormat(1);
-        search.setIncludeAccount(true);
-        search.setIncludeBusinessLinkedNotebooks(false);
-        search.setIncludePersonalLinkedNotebooks(true);
-
         QString error;
-        bool res = TestSavedSearchAddFindUpdateExpungeInLocalStorage(search, localStorageManager, error);
+        bool res = TestSavedSearchAddFindUpdateExpungeInLocalStorage(error);
         QVERIFY2(res == true, qPrintable(error));
     }
     CATCH_EXCEPTION();
