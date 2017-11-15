@@ -476,10 +476,95 @@ bool TestTagAddFindUpdateExpungeInLocalStorage(QString & errorDescription)
     return true;
 }
 
-bool TestResourceAddFindUpdateExpungeInLocalStorage(Resource & resource, LocalStorageManager & localStorageManager,
-                                                    QString & errorDescription)
+bool TestResourceAddFindUpdateExpungeInLocalStorage(QString & errorDescription)
 {
+    const bool startFromScratch = true;
+    const bool overrideLock = false;
+    Account account(QStringLiteral("CoreTesterFakeUser"), Account::Type::Local);
+    LocalStorageManager localStorageManager(account, startFromScratch, overrideLock);
+
+    Notebook notebook;
+    notebook.setGuid(QStringLiteral("00000000-0000-0000-c000-000000000047"));
+    notebook.setUpdateSequenceNumber(1);
+    notebook.setName(QStringLiteral("Fake notebook name"));
+    notebook.setCreationTimestamp(1);
+    notebook.setModificationTimestamp(1);
+
     ErrorString errorMessage;
+    bool res = localStorageManager.addNotebook(notebook, errorMessage);
+    if (!res) {
+        errorDescription = errorMessage.nonLocalizedString();
+        return false;
+    }
+
+    Note note;
+    note.setGuid(QStringLiteral("00000000-0000-0000-c000-000000000046"));
+    note.setUpdateSequenceNumber(1);
+    note.setTitle(QStringLiteral("Fake note title"));
+    note.setContent(QStringLiteral("<en-note><h1>Hello, world</h1></en-note>"));
+    note.setCreationTimestamp(1);
+    note.setModificationTimestamp(1);
+    note.setActive(true);
+    note.setNotebookGuid(notebook.guid());
+    note.setNotebookLocalUid(notebook.localUid());
+
+    errorMessage.clear();
+    res = localStorageManager.addNote(note, errorMessage);
+    if (!res) {
+        errorDescription = errorMessage.nonLocalizedString();
+        return false;
+    }
+
+    Resource resource;
+    resource.setGuid(QStringLiteral("00000000-0000-0000-c000-000000000046"));
+    resource.setUpdateSequenceNumber(1);
+    resource.setNoteGuid(note.guid());
+    resource.setDataBody(QByteArray("Fake resource data body"));
+    resource.setDataSize(resource.dataBody().size());
+    resource.setDataHash(QByteArray("Fake hash      1"));
+
+    resource.setRecognitionDataBody(QByteArray("<recoIndex docType=\"handwritten\" objType=\"image\" objID=\"fc83e58282d8059be17debabb69be900\" "
+                                               "engineVersion=\"5.5.22.7\" recoType=\"service\" lang=\"en\" objWidth=\"2398\" objHeight=\"1798\"> "
+                                               "<item x=\"437\" y=\"589\" w=\"1415\" h=\"190\">"
+                                               "<t w=\"87\">EVER ?</t>"
+                                               "<t w=\"83\">EVER NOTE</t>"
+                                               "<t w=\"82\">EVERNOTE</t>"
+                                               "<t w=\"71\">EVER NaTE</t>"
+                                               "<t w=\"67\">EVER nine</t>"
+                                               "<t w=\"67\">EVER none</t>"
+                                               "<t w=\"66\">EVER not</t>"
+                                               "<t w=\"62\">over NOTE</t>"
+                                               "<t w=\"62\">even NOTE</t>"
+                                               "<t w=\"61\">EVER nose</t>"
+                                               "<t w=\"50\">EV£RNoTE</t>"
+                                               "</item>"
+                                               "<item x=\"1850\" y=\"1465\" w=\"14\" h=\"12\">"
+                                               "<t w=\"11\">et</t>"
+                                               "<t w=\"10\">TQ</t>"
+                                               "</item>"
+                                               "</recoIndex>"));
+    resource.setRecognitionDataSize(resource.recognitionDataBody().size());
+    resource.setRecognitionDataHash(QByteArray("Fake hash      2"));
+
+    resource.setAlternateDataBody(QByteArray("Fake alternate data body"));
+    resource.setAlternateDataSize(resource.alternateDataBody().size());
+    resource.setAlternateDataHash(QByteArray("Fake hash      3"));
+
+    resource.setMime(QStringLiteral("text/plain"));
+    resource.setWidth(1);
+    resource.setHeight(1);
+
+    qevercloud::ResourceAttributes & resourceAttributes = resource.resourceAttributes();
+
+    resourceAttributes.sourceURL = QStringLiteral("Fake resource source URL");
+    resourceAttributes.timestamp = 1;
+    resourceAttributes.latitude = 0.0;
+    resourceAttributes.longitude = 0.0;
+    resourceAttributes.altitude = 0.0;
+    resourceAttributes.cameraMake = QStringLiteral("Fake resource camera make");
+    resourceAttributes.cameraModel = QStringLiteral("Fake resource camera model");
+
+    note.unsetLocalUid();
 
     if (!resource.checkParameters(errorMessage)) {
         errorDescription = errorMessage.nonLocalizedString();
@@ -488,7 +573,7 @@ bool TestResourceAddFindUpdateExpungeInLocalStorage(Resource & resource, LocalSt
     }
 
     // ========== Check Add + Find ==========
-    bool res = localStorageManager.addEnResource(resource, errorMessage);
+    res = localStorageManager.addEnResource(resource, errorMessage);
     if (!res) {
         errorDescription = errorMessage.nonLocalizedString();
         return false;
@@ -546,15 +631,15 @@ bool TestResourceAddFindUpdateExpungeInLocalStorage(Resource & resource, LocalSt
     modifiedResource.setAlternateDataSize(modifiedResource.alternateDataBody().size());
     modifiedResource.setAlternateDataHash(QByteArray("Fake hash      5"));
 
-    qevercloud::ResourceAttributes & resourceAttributes = modifiedResource.resourceAttributes();
+    qevercloud::ResourceAttributes & modifiedResourceAttributes = modifiedResource.resourceAttributes();
 
-    resourceAttributes.sourceURL = QStringLiteral("Modified source URL");
-    resourceAttributes.timestamp += 1;
-    resourceAttributes.latitude = 2.0;
-    resourceAttributes.longitude = 2.0;
-    resourceAttributes.altitude = 2.0;
-    resourceAttributes.cameraMake = QStringLiteral("Modified camera make");
-    resourceAttributes.cameraModel = QStringLiteral("Modified camera model");
+    modifiedResourceAttributes.sourceURL = QStringLiteral("Modified source URL");
+    modifiedResourceAttributes.timestamp += 1;
+    modifiedResourceAttributes.latitude = 2.0;
+    modifiedResourceAttributes.longitude = 2.0;
+    modifiedResourceAttributes.altitude = 2.0;
+    modifiedResourceAttributes.cameraMake = QStringLiteral("Modified camera make");
+    modifiedResourceAttributes.cameraModel = QStringLiteral("Modified camera model");
 
     modifiedResource.unsetLocalUid();
 

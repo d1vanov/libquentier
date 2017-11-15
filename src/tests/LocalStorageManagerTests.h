@@ -40,8 +40,7 @@ bool TestLinkedNotebookAddFindUpdateExpungeInLocalStorage(QString & errorDescrip
 
 bool TestTagAddFindUpdateExpungeInLocalStorage(QString & errorDescription);
 
-bool TestResourceAddFindUpdateExpungeInLocalStorage(Resource & resource, LocalStorageManager & localStorageManager,
-                                                    QString & errorDescription);
+bool TestResourceAddFindUpdateExpungeInLocalStorage(QString & errorDescription);
 
 bool TestNoteFindUpdateDeleteExpungeInLocalStorage(QString & errorDescription);
 
