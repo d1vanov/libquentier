@@ -6751,7 +6751,8 @@ QString RemoteToLocalSynchronizationManager::clientNameForProtocolVersionCheck()
     return clientName;
 }
 
-Note RemoteToLocalSynchronizationManager::createConflictingNote(const Note & originalNote) const
+Note RemoteToLocalSynchronizationManager::createConflictingNote(const Note & originalNote,
+                                                                const qevercloud::Note * pRemoteNote) const
 {
     QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::createConflictingNote: original note local uid = ")
             << originalNote.localUid());
@@ -6815,6 +6816,23 @@ Note RemoteToLocalSynchronizationManager::createConflictingNote(const Note & ori
     }
 
     conflictingNote.setTitle(conflictingNoteTitle);
+
+    if (pRemoteNote && pRemoteNote->notebookGuid.isSet() && conflictingNote.hasNotebookGuid() &&
+        (pRemoteNote->notebookGuid.ref() != conflictingNote.notebookGuid()))
+    {
+        // Check if the conflicting note's notebook is about to be expunged;
+        // if so, put the note into the remote note's notebook
+        auto notebookIt = std::find(m_expungedNotebooks.constBegin(), m_expungedNotebooks.constEnd(),
+                                    conflictingNote.notebookGuid());
+        if (notebookIt != m_expungedNotebooks.constEnd()) {
+            QNDEBUG(QStringLiteral("Conflicting note's original notebook is about to be expunged (guid = ")
+                    << conflictingNote.notebookGuid() << QStringLiteral("), using the remote note's notebook (guid = ")
+                    << pRemoteNote->notebookGuid.ref() << QStringLiteral(")"));
+            conflictingNote.setNotebookLocalUid(QString());
+            conflictingNote.setNotebookGuid(pRemoteNote->notebookGuid.ref());
+        }
+    }
+
     return conflictingNote;
 }
 
@@ -8576,7 +8594,7 @@ void RemoteToLocalSynchronizationManager::resolveSyncConflict(const qevercloud::
     getFullNoteDataAsyncAndUpdateInLocalStorage(updatedNote);
 
     if (shouldCreateConflictingNote) {
-        Note conflictingNote = createConflictingNote(localConflict);
+        Note conflictingNote = createConflictingNote(localConflict, &remoteNote);
         emitAddRequest(conflictingNote);
     }
 }

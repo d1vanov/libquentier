@@ -526,7 +526,7 @@ private:
 
     QString clientNameForProtocolVersionCheck() const;
 
-    Note createConflictingNote(const Note & originalNote) const;
+    Note createConflictingNote(const Note & originalNote, const qevercloud::Note * pRemoteNote = Q_NULLPTR) const;
 
     qint32 nonProcessedItemsSmallestUsn(const QString & linkedNotebookGuid = QString()) const;
 
