@@ -79,7 +79,7 @@ void InkNoteImageDownloader::run()
         SET_ERROR(QT_TR_NOOP("the authentication data is incomplete"));
     }
 
-    qevercloud::InkNoteImageDownloader downloader(m_host, m_authToken, m_shardId, m_height, m_width);
+    qevercloud::InkNoteImageDownloader downloader(m_host, m_shardId, m_authToken, m_width, m_height);
     QByteArray inkNoteImageData;
     try
     {
