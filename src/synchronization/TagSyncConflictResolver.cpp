@@ -24,8 +24,8 @@
 namespace quentier {
 
 TagSyncConflictResolver::TagSyncConflictResolver(const qevercloud::Tag & remoteTag,
-                                                 const Tag & localConflict,
-                                                 TagSyncCache & cache,
+                                                 const QString & remoteTagLinkedNotebookGuid,
+                                                 const Tag & localConflict, TagSyncCache & cache,
                                                  LocalStorageManagerAsync & localStorageManagerAsync,
                                                  QObject * parent) :
     QObject(parent),
@@ -33,6 +33,7 @@ TagSyncConflictResolver::TagSyncConflictResolver(const qevercloud::Tag & remoteT
     m_localStorageManagerAsync(localStorageManagerAsync),
     m_remoteTag(remoteTag),
     m_localConflict(localConflict),
+    m_remoteTagLinkedNotebookGuid(remoteTagLinkedNotebookGuid),
     m_tagToBeRenamed(),
     m_state(State::Undefined),
     m_addTagRequestId(),
@@ -164,6 +165,7 @@ void TagSyncConflictResolver::onUpdateTagComplete(Tag tag, QUuid requestId)
             QNDEBUG(QStringLiteral("Found no duplicate of the remote tag by guid, adding new tag to the local storage"));
 
             Tag tag(m_remoteTag);
+            tag.setLinkedNotebookGuid(m_remoteTagLinkedNotebookGuid);
             tag.setDirty(false);
             tag.setLocal(false);
 
@@ -179,6 +181,7 @@ void TagSyncConflictResolver::onUpdateTagComplete(Tag tag, QUuid requestId)
 
             Tag tag(m_localConflict);
             tag.qevercloudTag() = m_remoteTag;
+            tag.setLinkedNotebookGuid(m_remoteTagLinkedNotebookGuid);
             tag.setDirty(false);
             tag.setLocal(false);
 
@@ -351,8 +354,35 @@ void TagSyncConflictResolver::processTagsConflictByName(const Tag & localConflic
         return;
     }
 
-    QNDEBUG(QStringLiteral("The conflicting tags match by name but not by guid => should rename "
-                           "the local conflicting tag to \"free\" the name it occupies"));
+    QNDEBUG(QStringLiteral("The conflicting tags match by name but not by guid"));
+
+    QString localConflictLinkedNotebookGuid;
+    if (localConflict.hasLinkedNotebookGuid()) {
+        localConflictLinkedNotebookGuid = localConflict.linkedNotebookGuid();
+    }
+
+    if (localConflictLinkedNotebookGuid != m_remoteTagLinkedNotebookGuid)
+    {
+        QNDEBUG(QStringLiteral("The tags conflicting by name don't have matching linked notebook guids => "
+                               "they are either from user's own account and a linked notebook or from two different "
+                               "linked notebooks => can just add the remote tag to the local storage"));
+
+        m_state = State::PendingRemoteTagAdoptionInLocalStorage;
+
+        Tag tag(m_remoteTag);
+        tag.setLinkedNotebookGuid(m_remoteTagLinkedNotebookGuid);
+        tag.setDirty(false);
+        tag.setLocal(false);
+
+        m_addTagRequestId = QUuid::createUuid();
+        QNTRACE(QStringLiteral("Emitting the request to add tag: request id = ") << m_addTagRequestId
+                << QStringLiteral(", tag: ") << tag);
+        Q_EMIT addTag(tag, m_addTagRequestId);
+        return;
+    }
+
+    QNDEBUG(QStringLiteral("Both conflicting tags are either from user's own account or from the same linked notebook "
+                           "=> should rename the local conflicting tag to \"free\" the name it occupies"));
 
     m_state = State::PendingConflictingTagRenaming;
 
@@ -386,6 +416,7 @@ void TagSyncConflictResolver::overrideLocalChangesWithRemoteChanges()
 
     Tag tag(m_localConflict);
     tag.qevercloudTag() = m_remoteTag;
+    tag.setLinkedNotebookGuid(m_remoteTagLinkedNotebookGuid);
     tag.setDirty(false);
     tag.setLocal(false);
 

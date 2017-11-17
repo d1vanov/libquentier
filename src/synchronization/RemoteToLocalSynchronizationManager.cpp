@@ -8406,7 +8406,14 @@ void RemoteToLocalSynchronizationManager::resolveSyncConflict(const qevercloud::
         pCache = &m_notebookSyncCache;
     }
 
-    NotebookSyncConflictResolver * pResolver = new NotebookSyncConflictResolver(remoteNotebook, localConflict, *pCache,
+    QString remoteNotebookLinkedNotebookGuid;
+    auto it = m_linkedNotebookGuidsByNotebookGuids.find(remoteNotebook.guid.ref());
+    if (it != m_linkedNotebookGuidsByNotebookGuids.end()) {
+        remoteNotebookLinkedNotebookGuid = it.value();
+    }
+
+    NotebookSyncConflictResolver * pResolver = new NotebookSyncConflictResolver(remoteNotebook, remoteNotebookLinkedNotebookGuid,
+                                                                                localConflict, *pCache,
                                                                                 m_manager.localStorageManagerAsync(), this);
     QObject::connect(pResolver, QNSIGNAL(NotebookSyncConflictResolver,finished,qevercloud::Notebook),
                      this, QNSLOT(RemoteToLocalSynchronizationManager,onNotebookSyncConflictResolverFinished,qevercloud::Notebook));
@@ -8480,7 +8487,14 @@ void RemoteToLocalSynchronizationManager::resolveSyncConflict(const qevercloud::
         pCache = &m_tagSyncCache;
     }
 
-    TagSyncConflictResolver * pResolver = new TagSyncConflictResolver(remoteTag, localConflict, *pCache,
+    QString remoteTagLinkedNotebookGuid;
+    auto it = m_linkedNotebookGuidsByTagGuids.find(remoteTag.guid.ref());
+    if (it != m_linkedNotebookGuidsByTagGuids.end()) {
+        remoteTagLinkedNotebookGuid = it.value();
+    }
+
+    TagSyncConflictResolver * pResolver = new TagSyncConflictResolver(remoteTag, remoteTagLinkedNotebookGuid,
+                                                                      localConflict, *pCache,
                                                                       m_manager.localStorageManagerAsync(), this);
     QObject::connect(pResolver, QNSIGNAL(TagSyncConflictResolver,finished,qevercloud::Tag),
                      this, QNSLOT(RemoteToLocalSynchronizationManager,onTagSyncConflictResolverFinished,qevercloud::Tag));

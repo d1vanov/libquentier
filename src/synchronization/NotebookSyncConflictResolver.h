@@ -43,6 +43,7 @@ class Q_DECL_HIDDEN NotebookSyncConflictResolver: public QObject
     Q_OBJECT
 public:
     explicit NotebookSyncConflictResolver(const qevercloud::Notebook & remoteNotebook,
+                                          const QString & remoteNotebookLinkedNotebookGuid,
                                           const Notebook & localConflict,
                                           NotebookSyncCache & cache,
                                           LocalStorageManagerAsync & localStorageManagerAsync,
@@ -98,6 +99,8 @@ private:
 
     qevercloud::Notebook        m_remoteNotebook;
     Notebook                    m_localConflict;
+
+    QString                     m_remoteNotebookLinkedNotebookGuid;
 
     Notebook                    m_notebookToBeRenamed;
 

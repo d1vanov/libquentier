@@ -43,8 +43,8 @@ class Q_DECL_HIDDEN TagSyncConflictResolver: public QObject
     Q_OBJECT
 public:
     explicit TagSyncConflictResolver(const qevercloud::Tag & remoteTag,
-                                     const Tag & localConflict,
-                                     TagSyncCache & cache,
+                                     const QString & remoteTagLinkedNotebookGuid,
+                                     const Tag & localConflict, TagSyncCache & cache,
                                      LocalStorageManagerAsync & localStorageManagerAsync,
                                      QObject * parent = Q_NULLPTR);
 
@@ -98,6 +98,8 @@ private:
 
     qevercloud::Tag             m_remoteTag;
     Tag                         m_localConflict;
+
+    QString                     m_remoteTagLinkedNotebookGuid;
 
     Tag                         m_tagToBeRenamed;
 

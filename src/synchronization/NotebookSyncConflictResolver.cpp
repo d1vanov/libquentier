@@ -24,6 +24,7 @@
 namespace quentier {
 
 NotebookSyncConflictResolver::NotebookSyncConflictResolver(const qevercloud::Notebook & remoteNotebook,
+                                                           const QString & remoteNotebookLinkedNotebookGuid,
                                                            const Notebook & localConflict,
                                                            NotebookSyncCache & cache,
                                                            LocalStorageManagerAsync & localStorageManagerAsync,
@@ -33,6 +34,7 @@ NotebookSyncConflictResolver::NotebookSyncConflictResolver(const qevercloud::Not
     m_localStorageManagerAsync(localStorageManagerAsync),
     m_remoteNotebook(remoteNotebook),
     m_localConflict(localConflict),
+    m_remoteNotebookLinkedNotebookGuid(remoteNotebookLinkedNotebookGuid),
     m_notebookToBeRenamed(),
     m_state(State::Undefined),
     m_addNotebookRequestId(),
@@ -164,6 +166,7 @@ void NotebookSyncConflictResolver::onUpdateNotebookComplete(Notebook notebook, Q
             QNDEBUG(QStringLiteral("Found no duplicate of the remote notebook by guid, adding new notebook to the local storage"));
 
             Notebook notebook(m_remoteNotebook);
+            notebook.setLinkedNotebookGuid(m_remoteNotebookLinkedNotebookGuid);
             notebook.setDirty(false);
             notebook.setLocal(false);
 
@@ -179,6 +182,7 @@ void NotebookSyncConflictResolver::onUpdateNotebookComplete(Notebook notebook, Q
 
             Notebook notebook(m_localConflict);
             notebook.qevercloudNotebook() = m_remoteNotebook;
+            notebook.setLinkedNotebookGuid(m_remoteNotebookLinkedNotebookGuid);
             notebook.setDirty(false);
             notebook.setLocal(false);
 
@@ -351,8 +355,39 @@ void NotebookSyncConflictResolver::processNotebooksConflictByName(const Notebook
         return;
     }
 
-    QNDEBUG(QStringLiteral("The conflicting notebooks match by name but not by guid => should rename "
-                           "the local conflicting notebook to \"free\" the name it occupies"));
+    QNDEBUG(QStringLiteral("The conflicting notebooks match by name but not by guid"));
+
+    QString localConflictLinkedNotebookGuid;
+    if (localConflict.hasLinkedNotebookGuid()) {
+        localConflictLinkedNotebookGuid = localConflict.linkedNotebookGuid();
+    }
+
+    if (localConflictLinkedNotebookGuid != m_remoteNotebookLinkedNotebookGuid)
+    {
+        QNDEBUG(QStringLiteral("The notebooks conflicting by name don't have matching linked notebook guids => "
+                               "they are either from user's own account and a linked notebook or from two different "
+                               "linked notebooks => can just add the remote linked notebook to the local storage"));
+
+        m_state = State::PendingRemoteNotebookAdoptionInLocalStorage;
+
+        Notebook notebook(m_remoteNotebook);
+        notebook.setLinkedNotebookGuid(m_remoteNotebookLinkedNotebookGuid);
+        notebook.setDirty(false);
+        notebook.setLocal(false);
+
+        m_addNotebookRequestId = QUuid::createUuid();
+        QNTRACE(QStringLiteral("Emitting the request to add notebook: request id = ") << m_addNotebookRequestId
+                << QStringLiteral(", notebook: ") << notebook);
+        Q_EMIT addNotebook(notebook, m_addNotebookRequestId);
+        return;
+    }
+
+    // NOTE: in theory one linked notebook should correspond to exactly one notebook, however, there is no such constraint
+    // within the local storage, so won't implement it here; who knows, maybe some day Evernote would actually allow to map
+    // two notebooks to a single linked notebook
+
+    QNDEBUG(QStringLiteral("Both conflicting notebooks are from user's own account or from the same linked notebook "
+                           "=> should rename the local conflicting notebook to \"free\" the name it occupies"));
 
     m_state = State::PendingConflictingNotebookRenaming;
 
@@ -386,6 +421,7 @@ void NotebookSyncConflictResolver::overrideLocalChangesWithRemoteChanges()
 
     Notebook notebook(m_localConflict);
     notebook.qevercloudNotebook() = m_remoteNotebook;
+    notebook.setLinkedNotebookGuid(m_remoteNotebookLinkedNotebookGuid);
     notebook.setDirty(false);
     notebook.setLocal(false);
 
