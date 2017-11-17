@@ -2705,7 +2705,8 @@ bool LocalStorageManagerPrivate::addTag(Tag & tag, ErrorString & errorDescriptio
         errorDescription.appendBase(error.base());
         errorDescription.appendBase(error.additionalBases());
         errorDescription.details() = error.details();
-        QNWARNING(QStringLiteral("Found invalid tag: ") << tag);
+        QNWARNING(QStringLiteral("Found invalid tag: ") << errorDescription
+                  << QStringLiteral(", tag: ") << tag);
         return false;
     }
 
@@ -2729,7 +2730,7 @@ bool LocalStorageManagerPrivate::addTag(Tag & tag, ErrorString & errorDescriptio
                 errorDescription.appendBase(QT_TR_NOOP("found already existing tag"));
                 errorDescription.details() = QStringLiteral("guid = ");
                 errorDescription.details() += uid;
-                QNWARNING(errorDescription);
+                QNWARNING(errorDescription << QStringLiteral(", tag: ") << tag);
                 return false;
             }
 
@@ -2750,7 +2751,7 @@ bool LocalStorageManagerPrivate::addTag(Tag & tag, ErrorString & errorDescriptio
         errorDescription.details() = column;
         errorDescription.details() += QStringLiteral(" = ");
         errorDescription.details() += uid;
-        QNWARNING(errorDescription);
+        QNWARNING(errorDescription << QStringLiteral(", tag: ") << tag);
         return false;
     }
 
@@ -2761,7 +2762,7 @@ bool LocalStorageManagerPrivate::addTag(Tag & tag, ErrorString & errorDescriptio
         errorDescription.appendBase(error.base());
         errorDescription.appendBase(error.additionalBases());
         errorDescription.details() = error.details();
-        QNWARNING(errorDescription);
+        QNWARNING(errorDescription << QStringLiteral(", tag: ") << tag);
         return false;
     }
 
@@ -2772,7 +2773,7 @@ bool LocalStorageManagerPrivate::addTag(Tag & tag, ErrorString & errorDescriptio
         errorDescription.appendBase(error.base());
         errorDescription.appendBase(error.additionalBases());
         errorDescription.details() = error.details();
-        QNWARNING(errorDescription);
+        QNWARNING(errorDescription << QStringLiteral(", tag: ") << tag);
         return false;
     }
 
@@ -2790,7 +2791,8 @@ bool LocalStorageManagerPrivate::updateTag(Tag & tag, ErrorString & errorDescrip
         errorDescription.appendBase(error.base());
         errorDescription.appendBase(error.additionalBases());
         errorDescription.details() = error.details();
-        QNWARNING(QStringLiteral("Found invalid tag: ") << tag);
+        QNWARNING(QStringLiteral("Found invalid tag: ") << errorDescription
+                  << QStringLiteral(", tag: ") << tag);
         return false;
     }
 
@@ -2814,6 +2816,7 @@ bool LocalStorageManagerPrivate::updateTag(Tag & tag, ErrorString & errorDescrip
                 errorDescription.appendBase(error.base());
                 errorDescription.appendBase(error.additionalBases());
                 errorDescription.details() = error.details();
+                QNWARNING(errorDescription << QStringLiteral(", tag: ") << tag);
                 return false;
             }
 
@@ -2844,7 +2847,7 @@ bool LocalStorageManagerPrivate::updateTag(Tag & tag, ErrorString & errorDescrip
             errorDescription.details() = column;
             errorDescription.details() += QStringLiteral(" = ");
             errorDescription.details() += uid;
-            QNWARNING(errorDescription);
+            QNWARNING(errorDescription << QStringLiteral(", tag: ") << tag);
             return false;
         }
     }
@@ -2856,7 +2859,7 @@ bool LocalStorageManagerPrivate::updateTag(Tag & tag, ErrorString & errorDescrip
         errorDescription.appendBase(error.base());
         errorDescription.appendBase(error.additionalBases());
         errorDescription.details() = error.details();
-        QNWARNING(errorDescription);
+        QNWARNING(errorDescription << QStringLiteral(", tag: ") << tag);
         return false;
     }
 
@@ -2867,7 +2870,7 @@ bool LocalStorageManagerPrivate::updateTag(Tag & tag, ErrorString & errorDescrip
         errorDescription.appendBase(error.base());
         errorDescription.appendBase(error.additionalBases());
         errorDescription.details() = error.details();
-        QNWARNING(errorDescription);
+        QNWARNING(errorDescription << QStringLiteral(", tag: ") << tag);
         return false;
     }
 
@@ -2893,7 +2896,7 @@ bool LocalStorageManagerPrivate::findTag(Tag & tag, ErrorString & errorDescripti
             errorDescription.base() = errorPrefix.base();
             errorDescription.appendBase(QT_TR_NOOP("tag's guid is invalid"));
             errorDescription.details() = value;
-            QNWARNING(errorDescription);
+            QNWARNING(errorDescription << QStringLiteral(", tag: ") << tag);
             return false;
         }
     }
@@ -2956,7 +2959,7 @@ bool LocalStorageManagerPrivate::findTag(Tag & tag, ErrorString & errorDescripti
         errorDescription.appendBase(error.base());
         errorDescription.appendBase(error.additionalBases());
         errorDescription.details() = error.details();
-        QNWARNING(errorDescription);
+        QNWARNING(errorDescription << QStringLiteral(", tag: ") << tag);
         return false;
     }
 
