@@ -358,10 +358,10 @@ private:
     template <class ElementType>
     void emitFindByGuidRequest(const ElementType & element);
 
-    template <class ElementType, class ContainerType>
+    template <class ElementType, class ContainerType, class PendingContainerType>
     bool onFoundDuplicateByGuid(ElementType element, const QUuid & requestId,
                                 const QString & typeName, ContainerType & container,
-                                ContainerType & pendingItemsContainer,
+                                PendingContainerType & pendingItemsContainer,
                                 QSet<QUuid> & findByGuidRequestIds);
 
     template <class ContainerType, class ElementType>
@@ -375,10 +375,10 @@ private:
     template <class ElementType>
     void emitFindByNameRequest(const ElementType & elementToFind);
 
-    template <class ContainerType, class ElementType>
+    template <class ContainerType, class PendingContainerType, class ElementType>
     bool onFoundDuplicateByName(ElementType element, const QUuid & requestId,
                                 const QString & typeName, ContainerType & container,
-                                ContainerType & pendingItemsContainer,
+                                PendingContainerType & pendingItemsContainer,
                                 QSet<QUuid> & findElementRequestIds);
 
     template <class ContainerType, class ElementType>
@@ -673,7 +673,7 @@ private:
 
     qevercloud::AccountLimits               m_accountLimits;
 
-    TagsList                                m_tags;
+    TagsContainer                           m_tags;
     TagsList                                m_tagsPendingProcessing;
     TagsList                                m_tagsPendingAddOrUpdate;
     QList<QString>                          m_expungedTags;
