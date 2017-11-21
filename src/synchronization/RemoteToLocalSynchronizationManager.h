@@ -249,6 +249,10 @@ private Q_SLOTS:
     void onGetNoteAsyncFinished(qint32 errorCode, qevercloud::Note qecNote, qint32 rateLimitSeconds, ErrorString errorDescription);
     void onGetResourceAsyncFinished(qint32 errorCode, qevercloud::Resource qecResource, qint32 rateLimitSeconds, ErrorString errorDescription);
 
+    // Slots for TagSyncCache
+    void onTagSyncCacheFilled();
+    void onTagSyncCacheFailure(ErrorString errorDescription);
+
     // Slots for sync conflict resolvers
     void onNotebookSyncConflictResolverFinished(qevercloud::Notebook remoteNotebook);
     void onNotebookSyncConflictResolverFailure(qevercloud::Notebook remoteNotebook, ErrorString errorDescription);
@@ -554,6 +558,11 @@ private:
 
     NoteStore * noteStoreForNote(const Note & note, QString & authToken, ErrorString & errorDescription) const;
 
+    void checkAndRemoveInaccessibleParentTagGuidsForTagsFromLinkedNotebook(const QString & linkedNotebookGuid,
+                                                                           const TagSyncCache & tagSyncCache);
+
+    void startFeedingDownloadedTagsToLocalStorageOneByOne(const TagsContainer & container);
+
 private:
     template <class T>
     class Q_DECL_HIDDEN CompareItemByName
@@ -686,6 +695,7 @@ private:
 
     TagSyncCache                            m_tagSyncCache;
     QMap<QString, TagSyncCache*>            m_tagSyncCachesByLinkedNotebookGuids;
+    QSet<QString>                           m_linkedNotebookGuidsPendingTagSyncCachesFill;
 
     QHash<QString,QString>                  m_linkedNotebookGuidsByTagGuids;
     QUuid                                   m_expungeNotelessTagsRequestId;

@@ -131,6 +131,7 @@ RemoteToLocalSynchronizationManager::RemoteToLocalSynchronizationManager(IManage
     m_pendingTagsSyncStart(false),
     m_tagSyncCache(m_manager.localStorageManagerAsync(), QStringLiteral("")),
     m_tagSyncCachesByLinkedNotebookGuids(),
+    m_linkedNotebookGuidsPendingTagSyncCachesFill(),
     m_linkedNotebookGuidsByTagGuids(),
     m_expungeNotelessTagsRequestId(),
     m_savedSearches(),
@@ -2082,6 +2083,11 @@ void RemoteToLocalSynchronizationManager::onExpungeLinkedNotebookCompleted(Linke
 
         Q_UNUSED(m_tagSyncCachesByLinkedNotebookGuids.erase(tagSyncCacheIt))
     }
+
+    auto linkedNotebookGuidPendingTagSyncCacheIt = m_linkedNotebookGuidsPendingTagSyncCachesFill.find(linkedNotebookGuid);
+    if (linkedNotebookGuidPendingTagSyncCacheIt != m_linkedNotebookGuidsPendingTagSyncCachesFill.end()) {
+        Q_UNUSED(m_linkedNotebookGuidsPendingTagSyncCachesFill.erase(linkedNotebookGuidPendingTagSyncCacheIt))
+    }
 }
 
 void RemoteToLocalSynchronizationManager::onExpungeLinkedNotebookFailed(LinkedNotebook linkedNotebook, ErrorString errorDescription,
@@ -2852,6 +2858,47 @@ void RemoteToLocalSynchronizationManager::onGetResourceAsyncFinished(qint32 erro
     QNTRACE(QStringLiteral("Emitting the request to mark the resource owning note as the dirty one: request id = ")
             << markNoteDirtyRequestId << QStringLiteral(", resource: ") << resource);
     Q_EMIT updateNote(note, /* update resources = */ false, /* update tags = */ false, markNoteDirtyRequestId);
+}
+
+void RemoteToLocalSynchronizationManager::onTagSyncCacheFilled()
+{
+    QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::onTagSyncCacheFilled"));
+
+    TagSyncCache * pTagSyncCache = qobject_cast<TagSyncCache*>(sender());
+    if (Q_UNLIKELY(!pTagSyncCache)) {
+        ErrorString errorDescription(QT_TR_NOOP("Internal error: can't cast the slot invoker to TagSyncCache"));
+        QNWARNING(errorDescription);
+        Q_EMIT failure(errorDescription);
+        return;
+    }
+
+    const QString & linkedNotebookGuid = pTagSyncCache->linkedNotebookGuid();
+    auto it = m_linkedNotebookGuidsPendingTagSyncCachesFill.find(linkedNotebookGuid);
+    if (Q_UNLIKELY(it == m_linkedNotebookGuidsPendingTagSyncCachesFill.end())) {
+        ErrorString errorDescription(QT_TR_NOOP("Received TagSyncCache fill event for unexpected linked notebook guid"));
+        errorDescription.details() = linkedNotebookGuid;
+        QNWARNING(errorDescription);
+        Q_EMIT failure(errorDescription);
+        return;
+    }
+
+    checkAndRemoveInaccessibleParentTagGuidsForTagsFromLinkedNotebook(linkedNotebookGuid, *pTagSyncCache);
+
+    Q_UNUSED(m_linkedNotebookGuidsPendingTagSyncCachesFill.erase(it))
+    if (m_linkedNotebookGuidsPendingTagSyncCachesFill.isEmpty()) {
+        QNDEBUG(QStringLiteral("No more linked notebook guids pending tag sync caches fill"));
+        startFeedingDownloadedTagsToLocalStorageOneByOne(m_tags);
+    }
+    else {
+        QNDEBUG(QStringLiteral("Still have ") << m_linkedNotebookGuidsPendingTagSyncCachesFill.size()
+                << QStringLiteral(" linked notebook guids pending tag sync caches fill"));
+    }
+}
+
+void RemoteToLocalSynchronizationManager::onTagSyncCacheFailure(ErrorString errorDescription)
+{
+    QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::onTagSyncCacheFailure: ") << errorDescription);
+    Q_EMIT failure(errorDescription);
 }
 
 void RemoteToLocalSynchronizationManager::onNotebookSyncConflictResolverFinished(qevercloud::Notebook remoteNotebook)
@@ -4130,22 +4177,90 @@ void RemoteToLocalSynchronizationManager::launchDataElementSync<TagsContainer, T
         return;
     }
 
-    m_tagsPendingProcessing.reserve(static_cast<int>(container.size()));
-    const auto & tagIndexByGuid = m_tags.get<ByGuid>();
-    for(auto it = tagIndexByGuid.begin(), end = tagIndexByGuid.end(); it != end; ++it) {
-        m_tagsPendingProcessing << *it;
+    if (syncingLinkedNotebooksContent())
+    {
+        // NOTE: tags from linked notebooks can have parent tag guids referring to tags from linked notebook's owner account;
+        // these parent tags might be unaccessible because no notes from the currently linked notebook are labeled with those
+        // parent tags; the local storage would reject the attempts to insert tags without existing parents
+        // so need to manually remove parent tag guids referring to inaccessible tags from the tags being synced;
+
+        // First try to find all parent tags within the list of downloaded tags: if that succeeds, there's no need
+        // to try finding the parent tags within the local storage asynchronously
+
+        std::set<QString> guidsOfTagsWithMissingParentTag;
+        const auto & tagIndexByGuid = container.get<ByGuid>();
+        for(auto it = tagIndexByGuid.begin(), end = tagIndexByGuid.end(); it != end; ++it)
+        {
+            const qevercloud::Tag & tag = *it;
+            if (Q_UNLIKELY(!tag.guid.isSet())) {
+                continue;
+            }
+
+            if (!tag.parentGuid.isSet()) {
+                continue;
+            }
+
+            auto parentTagIt = tagIndexByGuid.find(tag.parentGuid.ref());
+            if (parentTagIt != tagIndexByGuid.end()) {
+                continue;
+            }
+
+            Q_UNUSED(guidsOfTagsWithMissingParentTag.insert(tag.guid.ref()))
+            QNDEBUG(QStringLiteral("Detected tag which parent is not within the list of downloaded tags: ") << tag);
+        }
+
+        if (!guidsOfTagsWithMissingParentTag.empty())
+        {
+            // Ok, let's fill the tag sync caches for all linked notebooks which tags have parent tag guids
+            // referring to inaccessible parent tags
+            std::set<QString> affectedLinkedNotebookGuids;
+            for(auto it = guidsOfTagsWithMissingParentTag.begin(), end = guidsOfTagsWithMissingParentTag.end(); it != end; ++it)
+            {
+                auto linkedNotebookGuidIt = m_linkedNotebookGuidsByTagGuids.find(*it);
+                if (linkedNotebookGuidIt != m_linkedNotebookGuidsByTagGuids.end())
+                {
+                    auto insertResult = affectedLinkedNotebookGuids.insert(linkedNotebookGuidIt.value());
+                    if (insertResult.second) {
+                        QNDEBUG(QStringLiteral("Guid of linked notebook for which TagSyncCache is required to ensure there are no inaccessible parent tags: ")
+                                << linkedNotebookGuidIt.value());
+                    }
+                }
+            }
+
+            for(auto it = affectedLinkedNotebookGuids.begin(), end = affectedLinkedNotebookGuids.end(); it != end; ++it)
+            {
+                const QString & linkedNotebookGuid = *it;
+
+                auto tagSyncCacheIt = m_tagSyncCachesByLinkedNotebookGuids.find(linkedNotebookGuid);
+                if (tagSyncCacheIt == m_tagSyncCachesByLinkedNotebookGuids.end()) {
+                    TagSyncCache * pTagSyncCache = new TagSyncCache(m_manager.localStorageManagerAsync(), linkedNotebookGuid, this);
+                    tagSyncCacheIt = m_tagSyncCachesByLinkedNotebookGuids.insert(linkedNotebookGuid, pTagSyncCache);
+                }
+
+                TagSyncCache * pTagSyncCache = tagSyncCacheIt.value();
+                if (pTagSyncCache->isFilled()) {
+                    checkAndRemoveInaccessibleParentTagGuidsForTagsFromLinkedNotebook(linkedNotebookGuid, *pTagSyncCache);
+                }
+                else {
+                    Q_UNUSED(m_linkedNotebookGuidsPendingTagSyncCachesFill.insert(linkedNotebookGuid))
+                    QObject::connect(pTagSyncCache, QNSIGNAL(TagSyncCache,filled),
+                                     this, QNSLOT(RemoteToLocalSynchronizationManager,onTagSyncCacheFilled));
+                    QObject::connect(pTagSyncCache, QNSIGNAL(TagSyncCache,failure,ErrorString),
+                                     this, QNSLOT(RemoteToLocalSynchronizationManager,onTagSyncCacheFailure,ErrorString));
+                    pTagSyncCache->fill();
+                }
+            }
+
+            if (!m_linkedNotebookGuidsPendingTagSyncCachesFill.isEmpty()) {
+                QNDEBUG(QStringLiteral("Pending TagSyncCaches filling for ")
+                        << m_linkedNotebookGuidsPendingTagSyncCachesFill.size()
+                        << QStringLiteral(" linked notebook guids"));
+                return;
+            }
+        }
     }
 
-    if (!sortTagsByParentChildRelations(m_tagsPendingProcessing)) {
-        return;
-    }
-
-    // NOTE: the whole point behind the explicit specialization of this template method for tags
-    // is due to the parent-child relations between them: parent tags need to be added to the local storage
-    // before their children, otherwise the local database would have a constraint failure; by now the tags
-    // are already sorted by parent-child relations but they need to be processed one by one
-
-    syncNextTagPendingProcessing();
+    startFeedingDownloadedTagsToLocalStorageOneByOne(container);
 }
 
 void RemoteToLocalSynchronizationManager::launchTagsSync()
@@ -5379,6 +5494,12 @@ void RemoteToLocalSynchronizationManager::checkServerDataMergeCompletion()
             return;
         }
 
+        if (!m_linkedNotebookGuidsPendingTagSyncCachesFill.isEmpty()) {
+            QNDEBUG(QStringLiteral("Pending TagSyncCache fill for some linked notebooks to actually start "
+                                   "the sync of tags from linked notebooks"));
+            return;
+        }
+
         QNDEBUG(QStringLiteral("Synchronized the whole contents from linked notebooks"));
 
         if (!m_expungedNotes.isEmpty()) {
@@ -5516,6 +5637,7 @@ void RemoteToLocalSynchronizationManager::clear()
     }
 
     m_tagSyncCachesByLinkedNotebookGuids.clear();
+    m_linkedNotebookGuidsPendingTagSyncCachesFill.clear();
 
     m_linkedNotebookGuidsByTagGuids.clear();
     m_expungeNotelessTagsRequestId = QUuid();
@@ -7571,6 +7693,71 @@ NoteStore * RemoteToLocalSynchronizationManager::noteStoreForNote(const Note & n
     return pNoteStore;
 }
 
+void RemoteToLocalSynchronizationManager::checkAndRemoveInaccessibleParentTagGuidsForTagsFromLinkedNotebook(const QString & linkedNotebookGuid,
+                                                                                                            const TagSyncCache & tagSyncCache)
+{
+    QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::checkAndRemoveInaccessibleParentTagGuidsForTagsFromLinkedNotebook: linked notebook guid = ")
+            << linkedNotebookGuid);
+
+    const QHash<QString, QString> & nameByGuidHash = tagSyncCache.nameByGuidHash();
+
+    auto & tagIndexByGuid = m_tags.get<ByGuid>();
+    for(auto it = tagIndexByGuid.begin(), end = tagIndexByGuid.end(); it != end; ++it)
+    {
+        const qevercloud::Tag & tag = *it;
+        if (Q_UNLIKELY(!tag.guid.isSet())) {
+            continue;
+        }
+
+        if (!tag.parentGuid.isSet()) {
+            continue;
+        }
+
+        auto linkedNotebookGuidIt = m_linkedNotebookGuidsByTagGuids.find(tag.guid.ref());
+        if (linkedNotebookGuidIt == m_linkedNotebookGuidsByTagGuids.end()) {
+            continue;
+        }
+
+        if (linkedNotebookGuidIt.value() != linkedNotebookGuid) {
+            continue;
+        }
+
+        auto nameIt = nameByGuidHash.find(tag.parentGuid.ref());
+        if (nameIt != nameByGuidHash.end()) {
+            continue;
+        }
+
+        QNDEBUG(QStringLiteral("Tag with guid ") << tag.parentGuid.ref()
+                << QStringLiteral(" was not found within the tag sync cache, removing it as parent guid from tag: ")
+                << tag);
+
+        qevercloud::Tag tagCopy(tag);
+        tagCopy.parentGuid.clear();
+        tagIndexByGuid.replace(it, tagCopy);
+    }
+}
+
+void RemoteToLocalSynchronizationManager::startFeedingDownloadedTagsToLocalStorageOneByOne(const TagsContainer & container)
+{
+    QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::startFeedingDownloadedTagsToLocalStorageOneByOne"));
+
+    m_tagsPendingProcessing.reserve(static_cast<int>(container.size()));
+    const auto & tagIndexByGuid = container.get<ByGuid>();
+    for(auto it = tagIndexByGuid.begin(), end = tagIndexByGuid.end(); it != end; ++it) {
+        m_tagsPendingProcessing << *it;
+    }
+
+    if (!sortTagsByParentChildRelations(m_tagsPendingProcessing)) {
+        return;
+    }
+
+    // NOTE: parent tags need to be added to the local storage before their children, otherwise
+    // the local storage database would have a constraint failure; by now the tags
+    // are already sorted by parent-child relations but they need to be processed one by one
+
+    syncNextTagPendingProcessing();
+}
+
 QTextStream & operator<<(QTextStream & strm, const RemoteToLocalSynchronizationManager::SyncMode::type & obj)
 {
     switch(obj)
@@ -7966,14 +8153,49 @@ TagsContainer::iterator RemoteToLocalSynchronizationManager::findItemByName<Tags
         return tagsContainer.end();
     }
 
-    TagsContainer::iterator it = tagsContainer.project<0>(range.first);
-    if (it == tagsContainer.end()) {
+    QString targetTagLinkedNotebookGuid;
+    if (element.hasGuid())
+    {
+        auto it = m_linkedNotebookGuidsByTagGuids.find(element.guid());
+        if (it != m_linkedNotebookGuidsByTagGuids.end()) {
+            targetTagLinkedNotebookGuid = it.value();
+        }
+    }
+
+    bool foundMatchingTag = false;
+    auto it = range.first;
+    for(; it != range.second; ++it)
+    {
+        const qevercloud::Tag & tag = *it;
+        if (Q_UNLIKELY(!tag.guid.isSet())) {
+            continue;
+        }
+
+        auto linkedNotebookGuidIt = m_linkedNotebookGuidsByTagGuids.find(tag.guid.ref());
+        if ( ((linkedNotebookGuidIt == m_linkedNotebookGuidsByTagGuids.end()) &&
+              targetTagLinkedNotebookGuid.isEmpty()) ||
+             ((linkedNotebookGuidIt != m_linkedNotebookGuidsByTagGuids.end()) &&
+              (linkedNotebookGuidIt.value() == targetTagLinkedNotebookGuid)) )
+        {
+            foundMatchingTag = true;
+            break;
+        }
+    }
+
+    if (Q_UNLIKELY(!foundMatchingTag)) {
         SET_CANT_FIND_BY_NAME_ERROR();
         Q_EMIT failure(errorDescription);
         return tagsContainer.end();
     }
 
-    return it;
+    TagsContainer::iterator cit = tagsContainer.project<0>(it);
+    if (cit == tagsContainer.end()) {
+        SET_CANT_FIND_BY_NAME_ERROR();
+        Q_EMIT failure(errorDescription);
+        return tagsContainer.end();
+    }
+
+    return cit;
 }
 
 template<>
