@@ -1248,9 +1248,9 @@ void SynchronizationManagerPrivate::authenticateToLinkedNotebooks()
         if (sharedNotebookGlobalId.isEmpty() && !uri.isEmpty()) {
             // This appears to be a public notebook and per the official
             // documentation from Evernote (dev.evernote.com/media/pdf/edam-sync.pdf)
-            // it doesn't need the authentication token at all so will use the
-            // special string for its authentication token
-            m_cachedLinkedNotebookAuthTokensAndShardIdsByGuid[guid] = QPair<QString, QString>(QStringLiteral("Public notebook auth token"), shardId);
+            // it doesn't need the authentication token at all so will use
+            // empty string for its authentication token
+            m_cachedLinkedNotebookAuthTokensAndShardIdsByGuid[guid] = QPair<QString, QString>(QString(), shardId);
             m_cachedLinkedNotebookAuthTokenExpirationTimeByGuid[guid] = std::numeric_limits<qint64>::max();
 
             it = m_linkedNotebookAuthDataPendingAuthentication.erase(it);

@@ -339,8 +339,9 @@ private:
     void extractExpungedElementsFromSyncChunk(const qevercloud::SyncChunk & syncChunk,
                                               QList<QString> & expungedElementGuids);
 
+    // Returns binded linked notebook guid or empty string if no linked notebook guid was bound
     template <class ElementType>
-    void checkAndAddLinkedNotebookBinding(ElementType & targetElement);
+    QString checkAndAddLinkedNotebookBinding(ElementType & targetElement);
 
     template <class RemoteElementType, class ElementType>
     void resolveSyncConflict(const RemoteElementType & remoteElement,
@@ -377,7 +378,7 @@ private:
     // ========= Find by name helpers ===========
 
     template <class ElementType>
-    void emitFindByNameRequest(const ElementType & elementToFind);
+    void emitFindByNameRequest(const ElementType & elementToFind, const QString & linkedNotebookGuid);
 
     template <class ContainerType, class PendingContainerType, class ElementType>
     bool onFoundDuplicateByName(ElementType element, const QUuid & requestId,
@@ -453,6 +454,7 @@ private:
     template <class ContainerType, class ElementType>
     typename ContainerType::iterator findItemByName(ContainerType & container,
                                                     const ElementType & element,
+                                                    const QString & targetLinkedNotebookGuid,
                                                     const QString & typeName);
 
     template <class ContainerType, class ElementType>
@@ -687,6 +689,7 @@ private:
     TagsList                                m_tagsPendingAddOrUpdate;
     QList<QString>                          m_expungedTags;
     QSet<QUuid>                             m_findTagByNameRequestIds;
+    QHash<QUuid, QString>                   m_linkedNotebookGuidsByFindTagByNameRequestIds;
     QSet<QUuid>                             m_findTagByGuidRequestIds;
     QSet<QUuid>                             m_addTagRequestIds;
     QSet<QUuid>                             m_updateTagRequestIds;
@@ -751,6 +754,7 @@ private:
     NotebooksList                           m_notebooksPendingAddOrUpdate;
     QList<QString>                          m_expungedNotebooks;
     QSet<QUuid>                             m_findNotebookByNameRequestIds;
+    QHash<QUuid, QString>                   m_linkedNotebookGuidsByFindNotebookByNameRequestIds;
     QSet<QUuid>                             m_findNotebookByGuidRequestIds;
     QSet<QUuid>                             m_addNotebookRequestIds;
     QSet<QUuid>                             m_updateNotebookRequestIds;

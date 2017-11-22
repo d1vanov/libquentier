@@ -124,6 +124,7 @@ RemoteToLocalSynchronizationManager::RemoteToLocalSynchronizationManager(IManage
     m_tagsPendingAddOrUpdate(),
     m_expungedTags(),
     m_findTagByNameRequestIds(),
+    m_linkedNotebookGuidsByFindTagByNameRequestIds(),
     m_findTagByGuidRequestIds(),
     m_addTagRequestIds(),
     m_updateTagRequestIds(),
@@ -174,6 +175,7 @@ RemoteToLocalSynchronizationManager::RemoteToLocalSynchronizationManager(IManage
     m_notebooksPendingAddOrUpdate(),
     m_expungedNotebooks(),
     m_findNotebookByNameRequestIds(),
+    m_linkedNotebookGuidsByFindNotebookByNameRequestIds(),
     m_findNotebookByGuidRequestIds(),
     m_addNotebookRequestIds(),
     m_updateNotebookRequestIds(),
@@ -1768,26 +1770,27 @@ void RemoteToLocalSynchronizationManager::checkExpungesCompletion()
 }
 
 template <class ElementType>
-void RemoteToLocalSynchronizationManager::checkAndAddLinkedNotebookBinding(ElementType & element)
+QString RemoteToLocalSynchronizationManager::checkAndAddLinkedNotebookBinding(ElementType & element)
 {
     Q_UNUSED(element);
     // Do nothing in default instantiation, only tags and notebooks need to be processed specifically
+    return QString();
 }
 
 template <>
-void RemoteToLocalSynchronizationManager::checkAndAddLinkedNotebookBinding<Notebook>(Notebook & notebook)
+QString RemoteToLocalSynchronizationManager::checkAndAddLinkedNotebookBinding<Notebook>(Notebook & notebook)
 {
     QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::checkAndAddLinkedNotebookBinding<Notebook>: ") << notebook);
 
     if (!notebook.hasGuid()) {
         QNDEBUG(QStringLiteral("The notebook has no guid"));
-        return;
+        return QString();
     }
 
     auto it = m_linkedNotebookGuidsByNotebookGuids.find(notebook.guid());
     if (it == m_linkedNotebookGuidsByNotebookGuids.end()) {
         QNDEBUG(QStringLiteral("Found no linked notebook guid for notebook guid ") << notebook.guid());
-        return;
+        return QString();
     }
 
     notebook.setLinkedNotebookGuid(it.value());
@@ -1795,30 +1798,34 @@ void RemoteToLocalSynchronizationManager::checkAndAddLinkedNotebookBinding<Noteb
 
     // NOTE: the notebook coming from the linked notebook might be marked as
     // default and/or last used which might not make much sense in the context
-    // ofthe user's own default and/or last used notebooks so removing these two
+    // of the user's own default and/or last used notebooks so removing these two
     // properties
     notebook.setLastUsed(false);
     notebook.setDefaultNotebook(false);
+
+    return it.value();
 }
 
 template <>
-void RemoteToLocalSynchronizationManager::checkAndAddLinkedNotebookBinding<Tag>(Tag & tag)
+QString RemoteToLocalSynchronizationManager::checkAndAddLinkedNotebookBinding<Tag>(Tag & tag)
 {
     QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::checkAndAddLinkedNotebookBinding<Tag>: ") << tag);
 
     if (!tag.hasGuid()) {
         QNDEBUG(QStringLiteral("The tag has no guid"));
-        return;
+        return QString();
     }
 
     auto it = m_linkedNotebookGuidsByTagGuids.find(tag.guid());
     if (it == m_linkedNotebookGuidsByTagGuids.end()) {
         QNDEBUG(QStringLiteral("Found no linked notebook guid for tag guid ") << tag.guid());
-        return;
+        return QString();
     }
 
     tag.setLinkedNotebookGuid(it.value());
     QNDEBUG(QStringLiteral("Set linked notebook guid ") << it.value() << QStringLiteral(" to the tag"));
+
+    return it.value();
 }
 
 template <>
@@ -5602,6 +5609,7 @@ void RemoteToLocalSynchronizationManager::clear()
     m_tagsPendingAddOrUpdate.clear();
     m_expungedTags.clear();
     m_findTagByNameRequestIds.clear();
+    m_linkedNotebookGuidsByFindTagByNameRequestIds.clear();
     m_findTagByGuidRequestIds.clear();
     m_addTagRequestIds.clear();
     m_updateTagRequestIds.clear();
@@ -5704,6 +5712,7 @@ void RemoteToLocalSynchronizationManager::clear()
     m_notebooksPendingAddOrUpdate.clear();
     m_expungedNotebooks.clear();
     m_findNotebookByNameRequestIds.clear();
+    m_linkedNotebookGuidsByFindNotebookByNameRequestIds.clear();
     m_findNotebookByGuidRequestIds.clear();
     m_addNotebookRequestIds.clear();
     m_updateNotebookRequestIds.clear();
@@ -6109,6 +6118,16 @@ void RemoteToLocalSynchronizationManager::getFullNoteDataAsync(const Note & note
     if (Q_UNLIKELY(!pNoteStore)) {
         Q_EMIT failure(errorDescription);
         return;
+    }
+
+    if (authToken.isEmpty()) {
+        // Empty authentication tokens should correspond to public linked notebooks;
+        // the official Evernote documentation (dev.evernote.com/media/pdf/edam-sync.pdf)
+        // says in this case the authentication token is not required, however, that is a lie,
+        // with empty authentication token EDAMUserException is thrown with PERMISSION_DENIED
+        // error code; instead for public notebooks the authentication token from the primary account
+        // should be used
+        authToken = m_authenticationToken;
     }
 
     bool withContent = true;
@@ -8091,12 +8110,11 @@ void RemoteToLocalSynchronizationManager::appendDataElementsFromSyncChunkToConta
 template <class ContainerType, class ElementType>
 typename ContainerType::iterator RemoteToLocalSynchronizationManager::findItemByName(ContainerType & container,
                                                                                      const ElementType & element,
+                                                                                     const QString & /* targetLinkedNotebookGuid */,
                                                                                      const QString & typeName)
 {
     QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::findItemByName<") << typeName << QStringLiteral(">"));
 
-    // Attempt to find this data element by name within the list of elements waiting for processing;
-    // first simply try the front element from the list to avoid the costly lookup
     if (!element.hasName()) {
         SET_CANT_FIND_BY_NAME_ERROR();
         Q_EMIT failure(errorDescription);
@@ -8109,18 +8127,12 @@ typename ContainerType::iterator RemoteToLocalSynchronizationManager::findItemBy
         return container.end();
     }
 
-    // Try the front element first, in most cases it should be it
-    const auto & frontItem = container.front();
-    typename ContainerType::iterator it = container.begin();
-    if (!frontItem.name.isSet() || (frontItem.name.ref() != element.name()))
-    {
-        it = std::find_if(container.begin(), container.end(),
-                          CompareItemByName<typename ContainerType::value_type>(element.name()));
-        if (it == container.end()) {
-            SET_CANT_FIND_IN_PENDING_LIST_ERROR();
-            Q_EMIT failure(errorDescription);
-            return container.end();
-        }
+    auto it = std::find_if(container.begin(), container.end(),
+                           CompareItemByName<typename ContainerType::value_type>(element.name()));
+    if (it == container.end()) {
+        SET_CANT_FIND_IN_PENDING_LIST_ERROR();
+        Q_EMIT failure(errorDescription);
+        return container.end();
     }
 
     return it;
@@ -8129,8 +8141,11 @@ typename ContainerType::iterator RemoteToLocalSynchronizationManager::findItemBy
 template<>
 TagsContainer::iterator RemoteToLocalSynchronizationManager::findItemByName<TagsContainer, Tag>(TagsContainer & tagsContainer,
                                                                                                 const Tag & element,
+                                                                                                const QString & targetLinkedNotebookGuid,
                                                                                                 const QString & typeName)
 {
+    QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::findItemByName<Tag>"));
+
     if (!element.hasName()) {
         SET_CANT_FIND_BY_NAME_ERROR();
         Q_EMIT failure(errorDescription);
@@ -8153,15 +8168,6 @@ TagsContainer::iterator RemoteToLocalSynchronizationManager::findItemByName<Tags
         return tagsContainer.end();
     }
 
-    QString targetTagLinkedNotebookGuid;
-    if (element.hasGuid())
-    {
-        auto it = m_linkedNotebookGuidsByTagGuids.find(element.guid());
-        if (it != m_linkedNotebookGuidsByTagGuids.end()) {
-            targetTagLinkedNotebookGuid = it.value();
-        }
-    }
-
     bool foundMatchingTag = false;
     auto it = range.first;
     for(; it != range.second; ++it)
@@ -8173,9 +8179,9 @@ TagsContainer::iterator RemoteToLocalSynchronizationManager::findItemByName<Tags
 
         auto linkedNotebookGuidIt = m_linkedNotebookGuidsByTagGuids.find(tag.guid.ref());
         if ( ((linkedNotebookGuidIt == m_linkedNotebookGuidsByTagGuids.end()) &&
-              targetTagLinkedNotebookGuid.isEmpty()) ||
+              targetLinkedNotebookGuid.isEmpty()) ||
              ((linkedNotebookGuidIt != m_linkedNotebookGuidsByTagGuids.end()) &&
-              (linkedNotebookGuidIt.value() == targetTagLinkedNotebookGuid)) )
+              (linkedNotebookGuidIt.value() == targetLinkedNotebookGuid)) )
         {
             foundMatchingTag = true;
             break;
@@ -8199,15 +8205,16 @@ TagsContainer::iterator RemoteToLocalSynchronizationManager::findItemByName<Tags
 }
 
 template<>
-RemoteToLocalSynchronizationManager::NotesList::iterator RemoteToLocalSynchronizationManager::findItemByName<RemoteToLocalSynchronizationManager::NotesList, Note>(NotesList & container,
-                                                                                                                                                                   const Note & element,
-                                                                                                                                                                   const QString & typeName)
+RemoteToLocalSynchronizationManager::NotebooksList::iterator RemoteToLocalSynchronizationManager::findItemByName<RemoteToLocalSynchronizationManager::NotebooksList, Notebook>(NotebooksList & container,
+                                                                                                                                                                               const Notebook & element,
+                                                                                                                                                                               const QString & targetLinkedNotebookGuid,
+                                                                                                                                                                               const QString & typeName)
 {
-    QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::findItemByName<") << typeName << QStringLiteral(">"));
+    QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::findItemByName<Notebook>"));
 
     // Attempt to find this data element by name within the list of elements waiting for processing;
     // first simply try the front element from the list to avoid the costly lookup
-    if (!element.hasTitle()) {
+    if (!element.hasName()) {
         SET_CANT_FIND_BY_NAME_ERROR();
         Q_EMIT failure(errorDescription);
         return container.end();
@@ -8219,18 +8226,41 @@ RemoteToLocalSynchronizationManager::NotesList::iterator RemoteToLocalSynchroniz
         return container.end();
     }
 
-    // Try the front element first, in most cases it should be it
-    const auto & frontItem = container.front();
-    NotesList::iterator it = container.begin();
-    if (!frontItem.title.isSet() || (frontItem.title.ref() != element.title()))
+    auto it = container.begin();
+    for(auto end = container.end(); it != end; ++it)
     {
-        it = std::find_if(container.begin(), container.end(),
-                          CompareItemByName<qevercloud::Note>(element.title()));
-        if (it == container.end()) {
-            SET_CANT_FIND_IN_PENDING_LIST_ERROR();
-            Q_EMIT failure(errorDescription);
-            return container.end();
+        const qevercloud::Notebook & notebook = *it;
+        if (!notebook.name.isSet()) {
+            continue;
         }
+
+        if (notebook.name.ref().toUpper() != element.name().toUpper()) {
+            continue;
+        }
+
+        if (!targetLinkedNotebookGuid.isEmpty())
+        {
+            // If we got here, we are syncing notebooks from linked notebooks
+            // As notebook name is unique only within user's own account or within a single linked notebooks,
+            // there can be name collisions between linked notebooks
+            // So need to ensure the linked notebook guid corresponding to current notebook
+            // is the same as the target linked notebook guid
+
+            if (!notebook.guid.isSet()) {
+                continue;
+            }
+
+            auto linkedNotebookGuidIt = m_linkedNotebookGuidsByNotebookGuids.find(notebook.guid.ref());
+            if (linkedNotebookGuidIt == m_linkedNotebookGuidsByNotebookGuids.end()) {
+                continue;
+            }
+
+            if (linkedNotebookGuidIt.value() != targetLinkedNotebookGuid) {
+                continue;
+            }
+        }
+
+        break;
     }
 
     return it;
@@ -8243,8 +8273,6 @@ typename ContainerType::iterator RemoteToLocalSynchronizationManager::findItemBy
 {
     QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::findItemByGuid<") << typeName << QStringLiteral(">"));
 
-    // Attempt to find this data element by guid within the list of elements waiting for processing;
-    // first simply try the front element from the list to avoid the costly lookup
     if (!element.hasGuid()) {
         SET_CANT_FIND_BY_GUID_ERROR();
         Q_EMIT failure(errorDescription);
@@ -8257,18 +8285,12 @@ typename ContainerType::iterator RemoteToLocalSynchronizationManager::findItemBy
         return container.end();
     }
 
-    // Try the front element first, in most cases it should be it
-    const auto & frontItem = container.front();
-    typename ContainerType::iterator it = container.begin();
-    if (!frontItem.guid.isSet() || (frontItem.guid.ref() != element.guid()))
-    {
-        it = std::find_if(container.begin(), container.end(),
-                          CompareItemByGuid<typename ContainerType::value_type>(element.guid()));
-        if (it == container.end()) {
-            SET_CANT_FIND_IN_PENDING_LIST_ERROR();
-            Q_EMIT failure(errorDescription);
-            return container.end();
-        }
+    auto it = std::find_if(container.begin(), container.end(),
+                           CompareItemByGuid<typename ContainerType::value_type>(element.guid()));
+    if (it == container.end()) {
+        SET_CANT_FIND_IN_PENDING_LIST_ERROR();
+        Q_EMIT failure(errorDescription);
+        return container.end();
     }
 
     return it;
@@ -8409,9 +8431,10 @@ void RemoteToLocalSynchronizationManager::extractExpungedElementsFromSyncChunk<L
 }
 
 template <>
-void RemoteToLocalSynchronizationManager::emitFindByNameRequest<Tag>(const Tag & tag)
+void RemoteToLocalSynchronizationManager::emitFindByNameRequest<Tag>(const Tag & tag, const QString & linkedNotebookGuid)
 {
-    QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::emitFindByNameRequest<Tag>: ") << tag);
+    QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::emitFindByNameRequest<Tag>: ") << tag
+            << QStringLiteral("\nLinked notebook guid = ") << linkedNotebookGuid);
 
     if (!tag.hasName()) {
         ErrorString errorDescription(QT_TR_NOOP("Detected tag from remote storage which needs "
@@ -8424,13 +8447,15 @@ void RemoteToLocalSynchronizationManager::emitFindByNameRequest<Tag>(const Tag &
 
     QUuid findElementRequestId = QUuid::createUuid();
     Q_UNUSED(m_findTagByNameRequestIds.insert(findElementRequestId));
+    m_linkedNotebookGuidsByFindTagByNameRequestIds[findElementRequestId] = linkedNotebookGuid;
     QNTRACE(QStringLiteral("Emitting the request to find tag in the local storage: request id = ")
             << findElementRequestId << QStringLiteral(", tag: ") << tag);
     Q_EMIT findTag(tag, findElementRequestId);
 }
 
 template <>
-void RemoteToLocalSynchronizationManager::emitFindByNameRequest<SavedSearch>(const SavedSearch & search)
+void RemoteToLocalSynchronizationManager::emitFindByNameRequest<SavedSearch>(const SavedSearch & search,
+                                                                             const QString & /* linked notebook guid */)
 {
     QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::emitFindByNameRequest<SavedSearch>: ") << search);
 
@@ -8450,9 +8475,11 @@ void RemoteToLocalSynchronizationManager::emitFindByNameRequest<SavedSearch>(con
 }
 
 template <>
-void RemoteToLocalSynchronizationManager::emitFindByNameRequest<Notebook>(const Notebook & notebook)
+void RemoteToLocalSynchronizationManager::emitFindByNameRequest<Notebook>(const Notebook & notebook,
+                                                                          const QString & linkedNotebookGuid)
 {
-    QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::emitFindByNameRequest<Notebook>: ") << notebook);
+    QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::emitFindByNameRequest<Notebook>: ") << notebook
+            << QStringLiteral("\nLinked notebook guid = ") << linkedNotebookGuid);
 
     if (!notebook.hasName()) {
         ErrorString errorDescription(QT_TR_NOOP("Detected notebook from remote storage which needs to be "
@@ -8464,6 +8491,7 @@ void RemoteToLocalSynchronizationManager::emitFindByNameRequest<Notebook>(const 
 
     QUuid findElementRequestId = QUuid::createUuid();
     Q_UNUSED(m_findNotebookByNameRequestIds.insert(findElementRequestId));
+    m_linkedNotebookGuidsByFindNotebookByNameRequestIds[findElementRequestId] = linkedNotebookGuid;
     QNTRACE(QStringLiteral("Emitting the request to find notebook in the local storage by name: request id = ")
             << findElementRequestId << QStringLiteral(", notebook: ") << notebook);
     Q_EMIT findNotebook(notebook, findElementRequestId);
@@ -8485,7 +8513,25 @@ bool RemoteToLocalSynchronizationManager::onFoundDuplicateByName(ElementType ele
 
     Q_UNUSED(findElementRequestIds.erase(rit));
 
-    typename ContainerType::iterator it = findItemByName(container, element, typeName);
+    QString targetLinkedNotebookGuid;
+    if (typeName == QStringLiteral("Tag"))
+    {
+        auto it = m_linkedNotebookGuidsByFindTagByNameRequestIds.find(requestId);
+        if (it != m_linkedNotebookGuidsByFindTagByNameRequestIds.end()) {
+            targetLinkedNotebookGuid = it.value();
+            Q_UNUSED(m_linkedNotebookGuidsByFindTagByNameRequestIds.erase(it))
+        }
+    }
+    else if (typeName == QStringLiteral("Notebook"))
+    {
+        auto it = m_linkedNotebookGuidsByFindNotebookByNameRequestIds.find(requestId);
+        if (it != m_linkedNotebookGuidsByFindNotebookByNameRequestIds.end()) {
+            targetLinkedNotebookGuid = it.value();
+            Q_UNUSED(m_linkedNotebookGuidsByFindNotebookByNameRequestIds.erase(it))
+        }
+    }
+
+    typename ContainerType::iterator it = findItemByName(container, element, targetLinkedNotebookGuid, typeName);
     if (it == container.end()) {
         return true;
     }
@@ -8598,9 +8644,9 @@ bool RemoteToLocalSynchronizationManager::onNoDuplicateByGuid(ElementType elemen
     // the element with similar name exists
     ElementType elementToFindByName(*it);
     elementToFindByName.unsetLocalUid();
-    checkAndAddLinkedNotebookBinding(elementToFindByName);
+    QString linkedNotebookGuid = checkAndAddLinkedNotebookBinding(elementToFindByName);
     elementToFindByName.setGuid(QString());
-    emitFindByNameRequest(elementToFindByName);
+    emitFindByNameRequest(elementToFindByName, linkedNotebookGuid);
 
     return true;
 }
@@ -8622,7 +8668,25 @@ bool RemoteToLocalSynchronizationManager::onNoDuplicateByName(ElementType elemen
 
     Q_UNUSED(findElementRequestIds.erase(rit));
 
-    typename ContainerType::iterator it = findItemByName(container, element, typeName);
+    QString targetLinkedNotebookGuid;
+    if (typeName == QStringLiteral("Tag"))
+    {
+        auto it = m_linkedNotebookGuidsByFindTagByNameRequestIds.find(requestId);
+        if (it != m_linkedNotebookGuidsByFindTagByNameRequestIds.end()) {
+            targetLinkedNotebookGuid = it.value();
+            Q_UNUSED(m_linkedNotebookGuidsByFindTagByNameRequestIds.erase(it))
+        }
+    }
+    else if (typeName == QStringLiteral("Notebook"))
+    {
+        auto it = m_linkedNotebookGuidsByFindNotebookByNameRequestIds.find(requestId);
+        if (it != m_linkedNotebookGuidsByFindNotebookByNameRequestIds.end()) {
+            targetLinkedNotebookGuid = it.value();
+            Q_UNUSED(m_linkedNotebookGuidsByFindNotebookByNameRequestIds.erase(it))
+        }
+    }
+
+    typename ContainerType::iterator it = findItemByName(container, element, targetLinkedNotebookGuid, typeName);
     if (it == container.end()) {
         return true;
     }
