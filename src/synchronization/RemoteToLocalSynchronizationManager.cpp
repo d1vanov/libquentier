@@ -207,6 +207,7 @@ RemoteToLocalSynchronizationManager::RemoteToLocalSynchronizationManager(IManage
     m_resourcesByFindNoteRequestIds(),
     m_inkNoteResourceDataPerFindNotebookRequestId(),
     m_resourceGuidsPendingInkNoteImageDownloadPerNoteGuid(),
+    m_resourceGuidsPendingFindNotebookForInkNoteImageDownloadPerNoteGuid(),
     m_notesPendingInkNoteImagesDownloadByFindNotebookRequestId(),
     m_notesPendingThumbnailDownloadByFindNotebookRequestId(),
     m_notesPendingThumbnailDownloadByGuid(),
@@ -669,6 +670,11 @@ void RemoteToLocalSynchronizationManager::onFindNotebookCompleted(Notebook noteb
         InkNoteResourceData resourceData = iit.value();
         Q_UNUSED(m_inkNoteResourceDataPerFindNotebookRequestId.erase(iit))
 
+        auto git = m_resourceGuidsPendingFindNotebookForInkNoteImageDownloadPerNoteGuid.find(resourceData.m_noteGuid, resourceData.m_resourceGuid);
+        if (git != m_resourceGuidsPendingFindNotebookForInkNoteImageDownloadPerNoteGuid.end()) {
+            Q_UNUSED(m_resourceGuidsPendingFindNotebookForInkNoteImageDownloadPerNoteGuid.erase(git))
+        }
+
         setupInkNoteImageDownloading(resourceData.m_resourceGuid, resourceData.m_resourceHeight,
                                      resourceData.m_resourceWidth, resourceData.m_noteGuid, notebook);
         return;
@@ -747,9 +753,25 @@ void RemoteToLocalSynchronizationManager::onFindNotebookFailed(Notebook notebook
     }
 
     auto iit = m_inkNoteResourceDataPerFindNotebookRequestId.find(requestId);
-    if (iit != m_inkNoteResourceDataPerFindNotebookRequestId.end()) {
+    if (iit != m_inkNoteResourceDataPerFindNotebookRequestId.end())
+    {
+        InkNoteResourceData resourceData = iit.value();
         Q_UNUSED(m_inkNoteResourceDataPerFindNotebookRequestId.erase(iit))
+
+        auto git = m_resourceGuidsPendingFindNotebookForInkNoteImageDownloadPerNoteGuid.find(resourceData.m_noteGuid, resourceData.m_resourceGuid);
+        if (git != m_resourceGuidsPendingFindNotebookForInkNoteImageDownloadPerNoteGuid.end()) {
+            Q_UNUSED(m_resourceGuidsPendingFindNotebookForInkNoteImageDownloadPerNoteGuid.erase(git))
+        }
+
         QNWARNING(QStringLiteral("Can't find the notebook for the purpose of setting up the ink note image downloading"));
+
+        checkAndIncrementResourceDownloadProgress(resourceData.m_resourceGuid);
+
+        // NOTE: handle the failure to download the ink note image as a recoverable error
+        // i.e. consider the resource successfully downloaded anyway - hence, need to check if that
+        // was the last resource pending its downloading events sequence
+        checkServerDataMergeCompletion();
+
         return;
     }
 
@@ -912,6 +934,8 @@ void RemoteToLocalSynchronizationManager::onFindNoteCompleted(Note note, bool wi
                     dummyNotebook.setLocalUid(QString());
                     dummyNotebook.setGuid(note.notebookGuid());
                 }
+
+                Q_UNUSED(m_resourceGuidsPendingFindNotebookForInkNoteImageDownloadPerNoteGuid.insert(note.guid(), resource.guid()))
 
                 QUuid findNotebookForInkNoteSetupRequestId = QUuid::createUuid();
                 m_inkNoteResourceDataPerFindNotebookRequestId[findNotebookForInkNoteSetupRequestId] = resourceData;
@@ -4538,6 +4562,15 @@ void RemoteToLocalSynchronizationManager::checkAndIncrementResourceDownloadProgr
         return;
     }
 
+    for(auto it = m_resourceGuidsPendingFindNotebookForInkNoteImageDownloadPerNoteGuid.constBegin(),
+        end = m_resourceGuidsPendingFindNotebookForInkNoteImageDownloadPerNoteGuid.constEnd(); it != end; ++it)
+    {
+        if (it.value() == resourceGuid) {
+            QNDEBUG(QStringLiteral("The resource is still pending finding notebook for ink note image downloading"));
+            return;
+        }
+    }
+
     if (Q_UNLIKELY(m_numResourcesDownloaded == m_originalNumberOfResources)) {
         QNWARNING(QStringLiteral("The count of downloaded resources (") << m_numResourcesDownloaded
                   << QStringLiteral(") is already equal to the original number of resources (")
@@ -5776,6 +5809,7 @@ void RemoteToLocalSynchronizationManager::clear()
     m_resourcesByFindNoteRequestIds.clear();
     m_inkNoteResourceDataPerFindNotebookRequestId.clear();
     m_resourceGuidsPendingInkNoteImageDownloadPerNoteGuid.clear();
+    m_resourceGuidsPendingFindNotebookForInkNoteImageDownloadPerNoteGuid.clear();
 
     m_notesPendingInkNoteImagesDownloadByFindNotebookRequestId.clear();
     m_notesPendingThumbnailDownloadByFindNotebookRequestId.clear();

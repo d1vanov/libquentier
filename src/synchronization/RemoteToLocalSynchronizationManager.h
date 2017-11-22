@@ -798,6 +798,8 @@ private:
     typedef QMultiHash<QString,QString> ResourceGuidsPendingInkNoteImageDownloadPerNoteGuid;
     ResourceGuidsPendingInkNoteImageDownloadPerNoteGuid     m_resourceGuidsPendingInkNoteImageDownloadPerNoteGuid;
 
+    ResourceGuidsPendingInkNoteImageDownloadPerNoteGuid     m_resourceGuidsPendingFindNotebookForInkNoteImageDownloadPerNoteGuid;
+
     QHash<QUuid,Note>                       m_notesPendingInkNoteImagesDownloadByFindNotebookRequestId;
     QHash<QUuid,Note>                       m_notesPendingThumbnailDownloadByFindNotebookRequestId;
 
