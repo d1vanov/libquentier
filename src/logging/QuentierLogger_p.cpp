@@ -2,7 +2,7 @@
 #include <quentier/exception/LoggerInitializationException.h>
 #include <quentier/utility/StandardPaths.h>
 #include <quentier/utility/Utility.h>
-#include <QApplication>
+#include <QCoreApplication>
 #include <QFileInfo>
 #include <QTextCodec>
 #include <QDir>
@@ -41,7 +41,7 @@ QuentierFileLogWriter::QuentierFileLogWriter(const MaxSizeBytes & maxSizeBytes,
         }
     }
 
-    QString logFileName = logFileDirPath + QStringLiteral("/") + QApplication::applicationName() +
+    QString logFileName = logFileDirPath + QStringLiteral("/") + QCoreApplication::applicationName() +
                           QStringLiteral("-log.txt");
     m_logFile.setFileName(logFileName);
 
@@ -62,7 +62,7 @@ QuentierFileLogWriter::QuentierFileLogWriter(const MaxSizeBytes & maxSizeBytes,
     // Seek for old log files with indices from 1 to m_maxOldLogFilesCount, count the existing ones
     for(int i = 1; i < m_maxOldLogFilesCount; ++i)
     {
-        const QString previousLogFilePath = logFileDirPath + QStringLiteral("/") + QApplication::applicationName() +
+        const QString previousLogFilePath = logFileDirPath + QStringLiteral("/") + QCoreApplication::applicationName() +
                                             QStringLiteral("-log.") + QString::number(i) + QStringLiteral(".txt");
         if (QFile::exists(previousLogFilePath)) {
             ++m_currentOldLogFilesCount;
@@ -99,14 +99,14 @@ void QuentierFileLogWriter::rotate()
     // 1) Rename all the existing old log files
     for(int i = m_currentOldLogFilesCount; i >= 1; --i)
     {
-        const QString previousLogFilePath = logFileDirPath + QStringLiteral("/") + QApplication::applicationName() +
+        const QString previousLogFilePath = logFileDirPath + QStringLiteral("/") + QCoreApplication::applicationName() +
                                             QStringLiteral("-log.") + QString::number(i) + QStringLiteral(".txt");
         QFile previousLogFile(previousLogFilePath);
         if (Q_UNLIKELY(!previousLogFile.exists())) {
             continue;
         }
 
-        const QString newLogFilePath = logFileDirPath + QStringLiteral("/") + QApplication::applicationName() +
+        const QString newLogFilePath = logFileDirPath + QStringLiteral("/") + QCoreApplication::applicationName() +
                                        QStringLiteral("-log.") + QString::number(i+1) + QStringLiteral(".txt");
 
         // Just-in-case check, shouldn't really do anything in normal circumstances
@@ -123,7 +123,7 @@ void QuentierFileLogWriter::rotate()
     // 2) Rename the current log file
     m_stream.setDevice(Q_NULLPTR);
     m_logFile.close();
-    bool res = m_logFile.rename(logFileDirPath + QStringLiteral("/") + QApplication::applicationName() + QStringLiteral("-log.1.txt"));
+    bool res = m_logFile.rename(logFileDirPath + QStringLiteral("/") + QCoreApplication::applicationName() + QStringLiteral("-log.1.txt"));
     if (Q_UNLIKELY(!res)) {
         std::cerr << "Can't rename the current libquentier log file for log file rotation, error: " << qPrintable(m_logFile.errorString())
                       << " (error code " << qPrintable(QString::number(m_logFile.error())) << ")\n";
@@ -131,7 +131,7 @@ void QuentierFileLogWriter::rotate()
     }
 
     // 3) Open the new file
-    m_logFile.setFileName(logFileDirPath + QStringLiteral("/") + QApplication::applicationName() + QStringLiteral("-log.txt"));
+    m_logFile.setFileName(logFileDirPath + QStringLiteral("/") + QCoreApplication::applicationName() + QStringLiteral("-log.txt"));
     bool opened = m_logFile.open(QIODevice::WriteOnly | QIODevice::Append | QIODevice::Unbuffered | QIODevice::Text);
     if (Q_UNLIKELY(!opened)) {
         std::cerr << "Can't open the renamed/rotated libquentier log file, error: " << qPrintable(m_logFile.errorString())
@@ -152,7 +152,7 @@ void QuentierFileLogWriter::rotate()
     }
 
     // 5) If got here, there are too many old log files, need to remove the oldest one
-    QString oldestLogFilePath = logFileDirPath + QStringLiteral("/") + QApplication::applicationName() + QStringLiteral("-log.") +
+    QString oldestLogFilePath = logFileDirPath + QStringLiteral("/") + QCoreApplication::applicationName() + QStringLiteral("-log.") +
                                 QString::number(m_currentOldLogFilesCount) + QStringLiteral(".txt");
     res = QFile::remove(oldestLogFilePath);
     if (Q_UNLIKELY(!res)) {
@@ -278,6 +278,7 @@ QuentierLoggerImpl::QuentierLoggerImpl(QObject * parent) :
 {
     QObject::connect(m_pLogWriteThread, QNSIGNAL(QThread,finished), m_pLogWriteThread, QNSLOT(QThread,deleteLater));
     QObject::connect(this, QNSIGNAL(QuentierLoggerImpl,destroyed), m_pLogWriteThread, QNSLOT(QThread,quit));
+    m_pLogWriteThread->setObjectName(QStringLiteral("Logger thread"));
     m_pLogWriteThread->start(QThread::LowPriority);
 }
 

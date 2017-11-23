@@ -1590,7 +1590,7 @@ bool ENMLConverterPrivate::exportNotesToEnex(const QVector<Note> & notes, const 
     enExportAttributes.append(QStringLiteral("export-date"),
                               printableDateTimeFromTimestamp(currentTimestamp, dateTimePrintOptions, ENEX_DATE_TIME_FORMAT_STRFTIME));
 
-    enExportAttributes.append(QStringLiteral("application"), QApplication::applicationName());
+    enExportAttributes.append(QStringLiteral("application"), QCoreApplication::applicationName());
     enExportAttributes.append(QStringLiteral("version"), version);
 
     writer.writeAttributes(enExportAttributes);

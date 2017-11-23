@@ -24,7 +24,7 @@
 #include <quentier/utility/ApplicationSettings.h>
 #include <quentier/utility/QuentierCheckPtr.h>
 #include <quentier/utility/Printable.h>
-#include <QApplication>
+#include <QCoreApplication>
 #include <limits>
 
 #define EXPIRATION_TIMESTAMP_KEY QStringLiteral("ExpirationTimestamp")
@@ -109,16 +109,16 @@ SynchronizationManagerPrivate::SynchronizationManagerPrivate(const QString & con
     m_linkedNotebookAuthDataPendingAuthentication(),
     m_noteStoresByLinkedNotebookGuids(),
     m_authenticateToLinkedNotebooksPostponeTimerId(-1),
-    m_readAuthTokenJob(QApplication::applicationName() + AUTH_TOKEN_KEYCHAIN_KEY_PART),
-    m_readShardIdJob(QApplication::applicationName() + SHARD_ID_KEYCHAIN_KEY_PART),
+    m_readAuthTokenJob(QCoreApplication::applicationName() + AUTH_TOKEN_KEYCHAIN_KEY_PART),
+    m_readShardIdJob(QCoreApplication::applicationName() + SHARD_ID_KEYCHAIN_KEY_PART),
     m_readingAuthToken(false),
     m_readingShardId(false),
-    m_writeAuthTokenJob(QApplication::applicationName() + AUTH_TOKEN_KEYCHAIN_KEY_PART),
-    m_writeShardIdJob(QApplication::applicationName() + SHARD_ID_KEYCHAIN_KEY_PART),
+    m_writeAuthTokenJob(QCoreApplication::applicationName() + AUTH_TOKEN_KEYCHAIN_KEY_PART),
+    m_writeShardIdJob(QCoreApplication::applicationName() + SHARD_ID_KEYCHAIN_KEY_PART),
     m_writingAuthToken(false),
     m_writingShardId(false),
-    m_deleteAuthTokenJob(QApplication::applicationName() + AUTH_TOKEN_KEYCHAIN_KEY_PART),
-    m_deleteShardIdJob(QApplication::applicationName() + SHARD_ID_KEYCHAIN_KEY_PART),
+    m_deleteAuthTokenJob(QCoreApplication::applicationName() + AUTH_TOKEN_KEYCHAIN_KEY_PART),
+    m_deleteShardIdJob(QCoreApplication::applicationName() + SHARD_ID_KEYCHAIN_KEY_PART),
     m_deletingAuthToken(false),
     m_deletingShardId(false),
     m_lastRevokedAuthenticationUserId(-1),
@@ -230,12 +230,12 @@ void SynchronizationManagerPrivate::revokeAuthentication(const qevercloud::UserI
 
     m_lastRevokedAuthenticationUserId = userId;
 
-    m_deleteAuthTokenJob.setKey(QApplication::applicationName() + QStringLiteral("_") +
+    m_deleteAuthTokenJob.setKey(QCoreApplication::applicationName() + QStringLiteral("_") +
                                 m_host + QStringLiteral("_") + QString::number(m_lastRevokedAuthenticationUserId));
     m_deletingAuthToken = true;
     m_deleteAuthTokenJob.start();
 
-    m_deleteShardIdJob.setKey(QApplication::applicationName() + QStringLiteral("_") +
+    m_deleteShardIdJob.setKey(QCoreApplication::applicationName() + QStringLiteral("_") +
                               m_host + QStringLiteral("_") + QString::number(m_lastRevokedAuthenticationUserId));
     m_deletingShardId = true;
     m_deleteShardIdJob.start();
@@ -930,12 +930,12 @@ void SynchronizationManagerPrivate::authenticateImpl(const AuthContext::type aut
 
     QNDEBUG(QStringLiteral("Trying to restore the authentication token and the shard id from the keychain"));
 
-    m_readAuthTokenJob.setKey(QApplication::applicationName() + QStringLiteral("_auth_token_") +
+    m_readAuthTokenJob.setKey(QCoreApplication::applicationName() + QStringLiteral("_auth_token_") +
                               m_host + QStringLiteral("_") + QString::number(m_OAuthResult.m_userId));
     m_readingAuthToken = true;
     m_readAuthTokenJob.start();
 
-    m_readShardIdJob.setKey(QApplication::applicationName() + QStringLiteral("_shard_id_") +
+    m_readShardIdJob.setKey(QCoreApplication::applicationName() + QStringLiteral("_shard_id_") +
                             m_host + QStringLiteral("_") + QString::number(m_OAuthResult.m_userId));
     m_readingShardId = true;
     m_readShardIdJob.start();
@@ -997,13 +997,13 @@ void SynchronizationManagerPrivate::launchStoreOAuthResult(const AuthData & resu
 {
     m_writtenOAuthResult = result;
 
-    m_writeAuthTokenJob.setKey(QApplication::applicationName() + QStringLiteral("_auth_token_") +
+    m_writeAuthTokenJob.setKey(QCoreApplication::applicationName() + QStringLiteral("_auth_token_") +
                                m_host + QStringLiteral("_") + QString::number(result.m_userId));
     m_writeAuthTokenJob.setTextData(result.m_authToken);
     m_writingAuthToken = true;
     m_writeAuthTokenJob.start();
 
-    m_writeShardIdJob.setKey(QApplication::applicationName() + QStringLiteral("_shard_id_") +
+    m_writeShardIdJob.setKey(QCoreApplication::applicationName() + QStringLiteral("_shard_id_") +
                              m_host + QStringLiteral("_") + QString::number(result.m_userId));
     m_writeShardIdJob.setTextData(result.m_shardId);
     m_writingShardId = true;
@@ -1230,7 +1230,7 @@ void SynchronizationManagerPrivate::authenticateToLinkedNotebooks()
     QHash<QString,QPair<QString,QString> >  authTokensAndShardIdsToCacheByGuid;
     QHash<QString,qevercloud::Timestamp>    authTokenExpirationTimestampsToCacheByGuid;
 
-    QString keyPrefix = QApplication::applicationName() + QStringLiteral("_") + m_host +
+    QString keyPrefix = QCoreApplication::applicationName() + QStringLiteral("_") + m_host +
                         QStringLiteral("_") + QString::number(m_OAuthResult.m_userId);
 
     for(auto it = m_linkedNotebookAuthDataPendingAuthentication.begin();

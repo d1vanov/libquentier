@@ -26,6 +26,7 @@
 #include <QHash>
 #include <QCryptographicHash>
 #include <QFile>
+#include <QCoreApplication>
 #include <cmath>
 
 namespace quentier {
@@ -821,7 +822,7 @@ void setupSampleNoteV2(Note & note)
     noteAttributes.author = QStringLiteral("The creator");
     noteAttributes.source = QStringLiteral("Brain");
     noteAttributes.sourceURL = QStringLiteral("https://www.google.com");
-    noteAttributes.sourceApplication = QApplication::applicationName();
+    noteAttributes.sourceApplication = QCoreApplication::applicationName();
     noteAttributes.reminderOrder = 2;
     noteAttributes.reminderTime = timestamp + 2000;
     noteAttributes.reminderDoneTime = timestamp + 3000;

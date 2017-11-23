@@ -32,6 +32,7 @@
 #include <QThreadPool>
 #include <QFileInfo>
 #include <QDir>
+#include <QCoreApplication>
 #include <algorithm>
 
 #define ACCOUNT_LIMITS_KEY_GROUP QStringLiteral("AccountLimits/")

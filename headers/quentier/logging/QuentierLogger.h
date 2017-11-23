@@ -21,9 +21,8 @@
 
 #include <quentier/utility/Linkage.h>
 #include <quentier/utility/Macros.h>
-#include <QDebug>
 #include <QString>
-#include <QApplication>
+#include <QDebug>
 
 namespace quentier {
 
@@ -42,7 +41,8 @@ public:
 
 void QUENTIER_EXPORT QuentierInitializeLogging();
 
-void QUENTIER_EXPORT QuentierAddLogEntry(const QString & message, const LogLevel::type logLevel);
+void QUENTIER_EXPORT QuentierAddLogEntry(const QString & sourceFileName, const int sourceFileLineNumber,
+                                         const QString & message, const LogLevel::type logLevel);
 
 LogLevel::type QUENTIER_EXPORT QuentierMinLogLevel();
 
@@ -57,36 +57,21 @@ QString QUENTIER_EXPORT QuentierLogFilesDirPath();
 } // namespace quentier
 
 #if QT_VERSION >= QT_VERSION_CHECK(5, 4, 0)
-#define __QNLOG_SETUP_HELPER(debug) \
-    debug.nospace(); \
-    debug.noquote()
+#define __QNLOG_QDEBUG_HELPER() \
+    dbg.nospace(); \
+    dbg.noquote()
 #else
-#define __QNLOG_SETUP_HELPER(debug) \
-    debug.nospace()
+#define __QNLOG_QDEBUG_HELPER() \
+    dbg.nospace()
 #endif
 
 #define __QNLOG_BASE(message, level) \
     if (quentier::QuentierIsLogLevelActive(quentier::LogLevel::level##Level)) { \
-        QString __quentierLogEntry; \
-        QDebug __quentierLogStrm(&__quentierLogEntry); \
-        __QNLOG_SETUP_HELPER(__quentierLogStrm); \
-        QString __quentierLogRelativeFileName(QStringLiteral(__FILE__)); \
-        QString __quentierLogRelativeFileNameLower = __quentierLogRelativeFileName.toLower(); \
-        int prefixIndex = __quentierLogRelativeFileNameLower.indexOf(QStringLiteral("libquentier"), Qt::CaseInsensitive); \
-        if (prefixIndex >= 0) { \
-            __quentierLogRelativeFileName.remove(0, prefixIndex); \
-        } \
-        else { \
-            QString __quentierAppName = QApplication::applicationName().toLower(); \
-            prefixIndex = __quentierLogRelativeFileNameLower.indexOf(__quentierAppName, Qt::CaseInsensitive); \
-            if (prefixIndex >= 0) { \
-                __quentierLogRelativeFileName.remove(0, prefixIndex + __quentierAppName.size() + 1); \
-            } \
-        } \
-        __quentierLogStrm << __quentierLogRelativeFileName.toUtf8().data() << " @ " \
-                          << QString::number(__LINE__).toUtf8().data() \
-                          << " [" << #level << "]: " << message; \
-        quentier::QuentierAddLogEntry(__quentierLogEntry, quentier::LogLevel::level##Level); \
+        QString msg; \
+        QDebug dbg(&msg); \
+        __QNLOG_QDEBUG_HELPER(); \
+        dbg << message; \
+        quentier::QuentierAddLogEntry(QStringLiteral(__FILE__), __LINE__, msg, quentier::LogLevel::level##Level); \
     }
 
 #define QNTRACE(message) \

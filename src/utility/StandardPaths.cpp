@@ -24,6 +24,7 @@
 #endif
 
 #include <QDesktopServices>
+#include <QCoreApplication>
 
 namespace quentier {
 
@@ -59,7 +60,7 @@ const QString applicationPersistentStoragePath(bool * pNonStandardLocation)
 #else
     storagePath = QDesktopServices::storageLocation(QDesktopServices::HomeLocation);
 #endif
-    storagePath += QStringLiteral("/.") + QApplication::applicationName().toLower();
+    storagePath += QStringLiteral("/.") + QCoreApplication::applicationName().toLower();
     return storagePath;
 #endif // Q_OS_<smth>
 }
