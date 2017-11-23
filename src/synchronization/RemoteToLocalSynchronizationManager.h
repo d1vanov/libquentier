@@ -96,12 +96,15 @@ Q_SIGNALS:
     void rateLimitExceeded(qint32 secondsToWait);
 
     // signals notifying about the progress of synchronization
+    void syncChunksDownloadProgress(qint32 highestDownloadedUsn, qint32 highestServerUsn, qint32 lastPreviousUsn);
     void syncChunksDownloaded();
     void notesDownloadProgress(quint32 notesDownloaded, quint32 totalNotesToDownload);
     void resourcesDownloadProgress(quint32 resourcesDownloaded, quint32 totalResourcesToDownload);
 
     void synchronizedContentFromUsersOwnAccount(qint32 lastUpdateCount, qevercloud::Timestamp lastSyncTime);
 
+    void linkedNotebookSyncChunksDownloadProgress(qint32 highestDownloadedUsn, qint32 highestServerUsn,
+                                                  qint32 lastPreviousUsn, LinkedNotebook linkedNotebook);
     void linkedNotebooksSyncChunksDownloaded();
     void linkedNotebooksNotesDownloadProgress(quint32 notesDownloaded, quint32 totalNotesToDownload);
     void linkedNotebooksResourcesDownloadProgress(quint32 resourcesDownloaded, quint32 totalResourcesToDownload);

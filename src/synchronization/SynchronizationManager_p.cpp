@@ -694,10 +694,14 @@ void SynchronizationManagerPrivate::createConnections(IAuthenticationManager & a
                      this, QNSLOT(SynchronizationManagerPrivate,onRemoteToLocalSynchronizedContentFromUsersOwnAccount,qint32,qevercloud::Timestamp));
     QObject::connect(&m_remoteToLocalSyncManager, QNSIGNAL(RemoteToLocalSynchronizationManager,requestLastSyncParameters),
                      this, QNSLOT(SynchronizationManagerPrivate,onRequestLastSyncParameters));
+    QObject::connect(&m_remoteToLocalSyncManager, QNSIGNAL(RemoteToLocalSynchronizationManager,syncChunksDownloadProgress,qint32,qint32,qint32),
+                     this, QNSIGNAL(SynchronizationManagerPrivate,syncChunksDownloadProgress,qint32,qint32,qint32));
     QObject::connect(&m_remoteToLocalSyncManager, QNSIGNAL(RemoteToLocalSynchronizationManager,syncChunksDownloaded),
                      this, QNSIGNAL(SynchronizationManagerPrivate,syncChunksDownloaded));
     QObject::connect(&m_remoteToLocalSyncManager, QNSIGNAL(RemoteToLocalSynchronizationManager,notesDownloadProgress,quint32,quint32),
                      this, QNSIGNAL(SynchronizationManagerPrivate,notesDownloadProgress,quint32,quint32));
+    QObject::connect(&m_remoteToLocalSyncManager, QNSIGNAL(RemoteToLocalSynchronizationManager,linkedNotebookSyncChunksDownloadProgress,qint32,qint32,qint32,LinkedNotebook),
+                     this, QNSIGNAL(SynchronizationManagerPrivate,linkedNotebookSyncChunksDownloadProgress,qint32,qint32,qint32,LinkedNotebook));
     QObject::connect(&m_remoteToLocalSyncManager, QNSIGNAL(RemoteToLocalSynchronizationManager,linkedNotebooksSyncChunksDownloaded),
                      this, QNSIGNAL(SynchronizationManagerPrivate,linkedNotebooksSyncChunksDownloaded));
     QObject::connect(&m_remoteToLocalSyncManager, QNSIGNAL(RemoteToLocalSynchronizationManager,resourcesDownloadProgress,quint32,quint32),

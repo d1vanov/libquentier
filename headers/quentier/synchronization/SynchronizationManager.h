@@ -21,9 +21,10 @@
 
 #include <quentier/synchronization/IAuthenticationManager.h>
 #include <quentier/types/Account.h>
+#include <quentier/types/ErrorString.h>
+#include <quentier/types/LinkedNotebook.h>
 #include <quentier/utility/Linkage.h>
 #include <quentier/utility/Macros.h>
-#include <quentier/types/ErrorString.h>
 #include <QObject>
 
 namespace quentier {
@@ -228,10 +229,40 @@ Q_SIGNALS:
     void remoteToLocalSyncDone();
 
     /**
+     * This signal is emitted during user own account's sync chunks downloading and denotes the progress of that step. The percentage
+     * of completeness can be computed roughly as
+     * (highestDownloadedUsn - lastPreviousUsn) / (highestServerUsn - lastPreviousUsn) * 100%
+     *
+     * @param highestDownloadedUsn denotes the highest update sequence number within data items from sync chunks
+     * downloaded so far
+     * @param highestServerUsn denotes the current highest update sequence number within the account
+     * @param lastPreviousUsn denotes the last update sequence number from previous sync; if current sync is the first one,
+     * this value is zero
+     */
+    void syncChunksDownloadProgress(qint32 highestDownloadedUsn, qint32 highestServerUsn, qint32 lastPreviousUsn);
+
+    /**
      * This signal is emitted when the sync chunks for the stuff from user's own account are downloaded
      * during "remote to local" synchronization step
      */
     void syncChunksDownloaded();
+
+    /**
+     * This signal is emitted during linked notebooks sync chunks downloading and denotes the progress of that step,
+     * individually for each linked notebook. The percentage of completeness can be computed roughly as
+     * (highestDownloadedUsn - lastPreviousUsn) / (highestServerUsn - lastPreviousUsn) * 100%.
+     * The sync chunks for each linked notebook are downloaded sequentially so the signals for one linked notebook
+     * should not intermix with signals for other linked notebooks, however, it is within hands of Qt's slot schedulers
+     *
+     * @param highestDownloadedUsn denotes the highest update sequence number within data items from linked notebook
+     * sync chunks downloaded so far
+     * @param highestServerUsn denotes the current highest update sequence number within the linked notebook
+     * @param lastPreviousUsn denotes the last update sequence number from previous sync of the given linked notebook;
+     * if current sync is the first one, this value is zero
+     * @param linkedNotebook denotes the linked notebook which sync chunks download progress is reported
+     */
+    void linkedNotebookSyncChunksDownloadProgress(qint32 highestDownloadedUsn, qint32 highestServerUsn, qint32 lastPreviousUsn,
+                                                  LinkedNotebook linkedNotebook);
 
     /**
      * This signal is emitted when the sync chunks for the stuff from linked notebooks are downloaded

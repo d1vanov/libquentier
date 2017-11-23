@@ -57,7 +57,10 @@ Q_SIGNALS:
     void notifyFinish(Account account);
 
 // progress signals
+    void syncChunksDownloadProgress(qint32 highestDownloadedUsn, qint32 highestServerUsn, qint32 lastPreviousUsn);
     void syncChunksDownloaded();
+    void linkedNotebookSyncChunksDownloadProgress(qint32 highestDownloadedUsn, qint32 highestServerUsn,
+                                                  qint32 lastPreviousUsn, LinkedNotebook linkedNotebook);
     void linkedNotebooksSyncChunksDownloaded();
 
     void notesDownloadProgress(quint32 notesDownloaded, quint32 totalNotesToDownload);

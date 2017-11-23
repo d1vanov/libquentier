@@ -5166,6 +5166,10 @@ bool RemoteToLocalSynchronizationManager::downloadLinkedNotebooksSyncChunks()
         }
 
         qint32 afterUsn = lastUpdateCount;
+        qint32 lastPreviousUsn = std::max(lastUpdateCount, 0);
+        QNDEBUG(QStringLiteral("Last previous USN for current linked notebook = ") << lastPreviousUsn
+                << QStringLiteral(" (linked notebook guid = ") << linkedNotebookGuid
+                << QStringLiteral(")"));
 
         if (m_onceSyncDone || (afterUsn != 0))
         {
@@ -5296,6 +5300,9 @@ bool RemoteToLocalSynchronizationManager::downloadLinkedNotebooksSyncChunks()
                     << QStringLiteral(", last sync time = ") << printableDateTimeFromTimestamp(lastSyncTime)
                     << QStringLiteral(", sync chunk update count = ") << pSyncChunk->updateCount
                     << QStringLiteral(", last update count = ") << lastUpdateCount);
+
+            Q_EMIT linkedNotebookSyncChunksDownloadProgress(pSyncChunk->chunkHighUSN, pSyncChunk->updateCount,
+                                                            lastPreviousUsn, linkedNotebook);
 
             if (pSyncChunk->tags.isSet())
             {
@@ -6429,6 +6436,9 @@ void RemoteToLocalSynchronizationManager::downloadSyncChunksAndLaunchSync(qint32
     NoteStore & noteStore = m_manager.noteStore();
     qevercloud::SyncChunk * pSyncChunk = Q_NULLPTR;
 
+    qint32 lastPreviousUsn = std::max(m_lastUpdateCount, 0);
+    QNDEBUG(QStringLiteral("Last previous USN: ") << lastPreviousUsn);
+
     while(!pSyncChunk || (pSyncChunk->chunkHighUSN < pSyncChunk->updateCount))
     {
         if (pSyncChunk) {
@@ -6506,8 +6516,11 @@ void RemoteToLocalSynchronizationManager::downloadSyncChunksAndLaunchSync(qint32
 
         QNTRACE(QStringLiteral("Sync chunk current time: ") << printableDateTimeFromTimestamp(pSyncChunk->currentTime)
                 << QStringLiteral(", last sync time = ") << printableDateTimeFromTimestamp(m_lastSyncTime)
+                << QStringLiteral(", sync chunk high USN = ") << pSyncChunk->chunkHighUSN
                 << QStringLiteral(", sync chunk update count = ") << pSyncChunk->updateCount << QStringLiteral(", last update count = ")
                 << m_lastUpdateCount);
+
+        Q_EMIT syncChunksDownloadProgress(pSyncChunk->chunkHighUSN, pSyncChunk->updateCount, lastPreviousUsn);
     }
 
     QNDEBUG(QStringLiteral("Done. Processing tags, saved searches, linked notebooks and notebooks from buffered sync chunks"));
