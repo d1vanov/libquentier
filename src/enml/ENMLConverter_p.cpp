@@ -1115,17 +1115,26 @@ bool ENMLConverterPrivate::noteContentToHtml(const QString & noteContent, QStrin
                 continue;
             }
 
+            QString data = reader.text().toString();
+
             if (reader.isCDATA()) {
-                writer.writeCDATA(reader.text().toString());
-                QNTRACE(QStringLiteral("Wrote CDATA: ") << reader.text().toString());
+                writer.writeCDATA(data);
+                QNTRACE(QStringLiteral("Wrote CDATA: ") << data);
             }
             else {
-                writer.writeCharacters(reader.text().toString());
-                QNTRACE(QStringLiteral("Wrote characters: ") << reader.text().toString());
+                writer.writeCharacters(data);
+                QNTRACE(QStringLiteral("Wrote characters: ") << data);
             }
         }
 
-        if ((writeElementCounter > 0) && reader.isEndElement()) {
+        if ((writeElementCounter > 0) && reader.isEndElement())
+        {
+            if (lastElementName != QStringLiteral("br")) {
+                // NOTE: the following trick seems to prevent the occurrence of self-closing empty XML tags
+                // which are sometimes misinterpreted by web engines as unclosed tags
+                writer.writeCharacters(QStringLiteral(""));
+            }
+
             writer.writeEndElement();
             --writeElementCounter;
         }
