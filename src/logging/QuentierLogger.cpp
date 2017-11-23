@@ -13,7 +13,7 @@ void QuentierInitializeLogging()
 void QuentierAddLogEntry(const QString & sourceFileName, const int sourceFileLineNumber,
                          const QString & message, const LogLevel::type logLevel)
 {
-    QString relativeSourceFileName = sourceFileName.toLower();
+    QString relativeSourceFileName = sourceFileName;
     int prefixIndex = relativeSourceFileName.indexOf(QStringLiteral("libquentier"), Qt::CaseInsensitive);
     if (prefixIndex >= 0) {
         relativeSourceFileName.remove(0, prefixIndex);
