@@ -131,7 +131,7 @@ void InkNoteImageDownloader::run()
         SET_ERROR(QT_TR_NOOP("the folder for ink note images storage is not writable"));
     }
 
-    QString filePath = m_storageFolderPath + QStringLiteral("/") + m_resourceGuid;
+    QString filePath = m_storageFolderPath + QStringLiteral("/") + m_resourceGuid + QStringLiteral(".png");
     QFile file(filePath);
     if (Q_UNLIKELY(!file.open(QIODevice::WriteOnly))) {
         SET_ERROR(QT_TR_NOOP("can't open the ink note image file for writing"));
