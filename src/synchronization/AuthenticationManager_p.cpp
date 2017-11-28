@@ -67,7 +67,7 @@ void AuthenticationManagerPrivate::onAuthenticationRequest()
     }
     else
     {
-        ErrorString errorDescription(QT_TR_NOOP("Authentication failed"));
+        ErrorString errorDescription(QT_TR_NOOP("Can't authenticate to Evernote"));
         errorDescription.details() = pDialog->oauthError();
         Q_EMIT sendAuthenticationResult(/* success = */ false, qevercloud::UserID(-1), QString(),
                                         qevercloud::Timestamp(0), QString(), QString(), QString(),
