@@ -27,8 +27,9 @@ namespace quentier {
 #define WRAP(x) \
     << QStringLiteral(x).toUpper()
 
-SpellCheckerDictionariesFinder::SpellCheckerDictionariesFinder(QObject * parent) :
+SpellCheckerDictionariesFinder::SpellCheckerDictionariesFinder(const QSharedPointer<QAtomicInt> & pStopFlag, QObject * parent) :
     QObject(parent),
+    m_pStopFlag(pStopFlag),
     m_files(),
     m_localeList(QSet<QString>()
 #include "localeList.inl"
@@ -45,10 +46,26 @@ void SpellCheckerDictionariesFinder::run()
     QStringList fileFilters;
     fileFilters << QStringLiteral("*.dic") << QStringLiteral("*.aff");
 
+#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
+#define CHECK_AND_STOP() \
+    if (!m_pStopFlag.isNull() && (m_pStopFlag->load() != 0)) { \
+        QNDEBUG(QStringLiteral("Aborting the operation as stop flag is non-zero")); \
+        return; \
+    }
+#else
+#define CHECK_AND_STOP() \
+    if (!m_pStopFlag.isNull() && (int(*m_pStopFlag) != 0)) { \
+        QNDEBUG(QStringLiteral("Aborting the operation as stop flag is non-zero")); \
+        return; \
+    }
+#endif
+
     QFileInfoList rootDirs = QDir::drives();
     const int numRootDirs = rootDirs.size();
     for(int i = 0; i < numRootDirs; ++i)
     {
+        CHECK_AND_STOP()
+
         const QFileInfo & rootDirInfo = rootDirs[i];
 
         if (Q_UNLIKELY(!rootDirInfo.isDir())) {
@@ -59,6 +76,8 @@ void SpellCheckerDictionariesFinder::run()
         QDirIterator it(rootDirInfo.absolutePath(), fileFilters, QDir::Files, QDirIterator::Subdirectories);
         while(it.hasNext())
         {
+            CHECK_AND_STOP()
+
             QString nextDirName = it.next();
             QNTRACE(QStringLiteral("Next dir name = ") << nextDirName);
 

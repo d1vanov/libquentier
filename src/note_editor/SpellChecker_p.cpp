@@ -45,6 +45,7 @@ SpellCheckerPrivate::SpellCheckerPrivate(FileIOProcessorAsync * pFileIOProcessor
     QObject(parent),
     m_pFileIOProcessorAsync(pFileIOProcessorAsync),
     m_currentAccount(account),
+    m_pDictionariesFinderStopFlag(new QAtomicInt),
     m_systemDictionaries(),
     m_systemDictionariesReady(false),
     m_readUserDictionaryRequestId(),
@@ -57,6 +58,11 @@ SpellCheckerPrivate::SpellCheckerPrivate(FileIOProcessorAsync * pFileIOProcessor
 {
     initializeUserDictionary(userDictionaryPath);
     checkAndScanSystemDictionaries();
+}
+
+SpellCheckerPrivate::~SpellCheckerPrivate()
+{
+    Q_UNUSED(m_pDictionariesFinderStopFlag->ref())
 }
 
 QVector<QPair<QString,bool> > SpellCheckerPrivate::listAvailableDictionaries() const
@@ -565,7 +571,7 @@ void SpellCheckerPrivate::scanSystemDictionaries()
     QNDEBUG(QStringLiteral("Still can't find any valid hunspell dictionaries, trying the full recursive search "
                            "across the entire system, just to find something"));
 
-    SpellCheckerDictionariesFinder * pFinder = new SpellCheckerDictionariesFinder;
+    SpellCheckerDictionariesFinder * pFinder = new SpellCheckerDictionariesFinder(m_pDictionariesFinderStopFlag);
     QThreadPool::globalInstance()->start(pFinder);
     QObject::connect(pFinder, QNSIGNAL(SpellCheckerDictionariesFinder,foundDictionaries,SpellCheckerDictionariesFinder::DicAndAffFilesByDictionaryName),
                      this, QNSLOT(SpellCheckerPrivate,onDictionariesFound,SpellCheckerDictionariesFinder::DicAndAffFilesByDictionaryName), Qt::QueuedConnection);

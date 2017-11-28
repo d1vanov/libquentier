@@ -25,6 +25,8 @@
 #include <QHash>
 #include <QSet>
 #include <QString>
+#include <QAtomicInt>
+#include <QSharedPointer>
 
 namespace quentier {
 
@@ -36,7 +38,7 @@ public:
     typedef QHash<QString, QPair<QString, QString> > DicAndAffFilesByDictionaryName;
 
 public:
-    SpellCheckerDictionariesFinder(QObject * parent = Q_NULLPTR);
+    SpellCheckerDictionariesFinder(const QSharedPointer<QAtomicInt> & pStopFlag, QObject * parent = Q_NULLPTR);
 
     virtual void run() Q_DECL_OVERRIDE;
 
@@ -44,6 +46,7 @@ Q_SIGNALS:
     void foundDictionaries(DicAndAffFilesByDictionaryName docAndAffFilesByDictionaryName);
 
 private:
+    QSharedPointer<QAtomicInt>      m_pStopFlag;
     DicAndAffFilesByDictionaryName  m_files;
     const QSet<QString>             m_localeList;
 };

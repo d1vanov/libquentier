@@ -30,6 +30,7 @@
 #include <QSharedPointer>
 #include <QUuid>
 #include <QHash>
+#include <QAtomicInt>
 
 QT_FORWARD_DECLARE_CLASS(Hunspell)
 
@@ -44,6 +45,7 @@ public:
     SpellCheckerPrivate(FileIOProcessorAsync * pFileIOProcessorAsync,
                         const Account & account, QObject * parent = Q_NULLPTR,
                         const QString & userDictionaryPath = QString());
+    ~SpellCheckerPrivate();
 
     // The second bool in the pair indicates whether the dictionary is enabled or disabled
     QVector<QPair<QString,bool> > listAvailableDictionaries() const;
@@ -110,6 +112,8 @@ private:
     FileIOProcessorAsync *      m_pFileIOProcessorAsync;
 
     Account                     m_currentAccount;
+
+    QSharedPointer<QAtomicInt>  m_pDictionariesFinderStopFlag;
 
     // Hashed by the language code
     QHash<QString, Dictionary>  m_systemDictionaries;
