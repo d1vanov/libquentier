@@ -118,6 +118,8 @@ void SpellCheckerDictionariesFinder::run()
     // Filter out any incomplete pair of dic & aff files
     for(auto it = m_files.begin(); it != m_files.end(); )
     {
+        CHECK_AND_STOP()
+
         const QPair<QString, QString> & pair = it.value();
         if (pair.first.isEmpty() || pair.second.isEmpty()) {
             QNTRACE(QStringLiteral("Skipping the incomplete pair of dic/aff files: dic file path = ")
