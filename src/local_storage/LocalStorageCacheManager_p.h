@@ -14,6 +14,7 @@
 #include <boost/multi_index/member.hpp>
 #include <boost/multi_index/mem_fun.hpp>
 #include <boost/multi_index/ordered_index.hpp>
+#include <boost/multi_index/hashed_index.hpp>
 #include <boost/multi_index/sequenced_index.hpp>
 #endif
 
@@ -110,12 +111,12 @@ private:
                 boost::multi_index::tag<NoteHolder::ByLastAccessTimestamp>,
                 boost::multi_index::member<NoteHolder,qint64,&NoteHolder::m_lastAccessTimestamp>
             >,
-            boost::multi_index::ordered_unique<
+            boost::multi_index::hashed_unique<
                 boost::multi_index::tag<NoteHolder::ByLocalUid>,
                 boost::multi_index::const_mem_fun<NoteHolder,const QString,&NoteHolder::localUid>
             >,
             /* NOTE: non-unique for proper support of empty guids */
-            boost::multi_index::ordered_non_unique<
+            boost::multi_index::hashed_non_unique<
                 boost::multi_index::tag<NoteHolder::ByGuid>,
                 boost::multi_index::const_mem_fun<NoteHolder,const QString,&NoteHolder::guid>
             >
@@ -151,17 +152,17 @@ private:
                 boost::multi_index::tag<NotebookHolder::ByLastAccessTimestamp>,
                 boost::multi_index::member<NotebookHolder,qint64,&NotebookHolder::m_lastAccessTimestamp>
             >,
-            boost::multi_index::ordered_unique<
+            boost::multi_index::hashed_unique<
                 boost::multi_index::tag<NotebookHolder::ByLocalUid>,
                 boost::multi_index::const_mem_fun<NotebookHolder,const QString,&NotebookHolder::localUid>
             >,
             /* NOTE: non-unique for proper support of empty guids */
-            boost::multi_index::ordered_non_unique<
+            boost::multi_index::hashed_non_unique<
                 boost::multi_index::tag<NotebookHolder::ByGuid>,
                 boost::multi_index::const_mem_fun<NotebookHolder,const QString,&NotebookHolder::guid>
             >,
-            /* NOTE: non-unique for proper support of empty names */
-            boost::multi_index::ordered_non_unique<
+            /* NOTE: non-unique for proper support of empty names and possible name collisions due to linked notebooks */
+            boost::multi_index::hashed_non_unique<
                 boost::multi_index::tag<NotebookHolder::ByName>,
                 boost::multi_index::const_mem_fun<NotebookHolder,const QString,&NotebookHolder::nameUpper>
             >
@@ -197,17 +198,17 @@ private:
                 boost::multi_index::tag<TagHolder::ByLastAccessTimestamp>,
                 boost::multi_index::member<TagHolder,qint64,&TagHolder::m_lastAccessTimestamp>
             >,
-            boost::multi_index::ordered_unique<
+            boost::multi_index::hashed_unique<
                 boost::multi_index::tag<TagHolder::ByLocalUid>,
                 boost::multi_index::const_mem_fun<TagHolder,const QString,&TagHolder::localUid>
             >,
             /* NOTE: non-unique for proper support of empty guids */
-            boost::multi_index::ordered_non_unique<
+            boost::multi_index::hashed_non_unique<
                 boost::multi_index::tag<TagHolder::ByGuid>,
                 boost::multi_index::const_mem_fun<TagHolder,const QString,&TagHolder::guid>
             >,
-            /* NOTE: non-unique for proper support of empty names */
-            boost::multi_index::ordered_non_unique<
+            /* NOTE: non-unique for proper support of empty names and possible name collisions due to linked notebooks */
+            boost::multi_index::hashed_non_unique<
                 boost::multi_index::tag<TagHolder::ByName>,
                 boost::multi_index::const_mem_fun<TagHolder,const QString,&TagHolder::nameUpper>
             >
@@ -237,7 +238,7 @@ private:
                 boost::multi_index::tag<LinkedNotebookHolder::ByLastAccessTimestamp>,
                 boost::multi_index::member<LinkedNotebookHolder,qint64,&LinkedNotebookHolder::m_lastAccessTimestamp>
             >,
-            boost::multi_index::ordered_unique<
+            boost::multi_index::hashed_unique<
                 boost::multi_index::tag<LinkedNotebookHolder::ByGuid>,
                 boost::multi_index::const_mem_fun<LinkedNotebookHolder,const QString,&LinkedNotebookHolder::guid>
             >
@@ -273,17 +274,17 @@ private:
                 boost::multi_index::tag<SavedSearchHolder::ByLastAccessTimestamp>,
                 boost::multi_index::member<SavedSearchHolder,qint64,&SavedSearchHolder::m_lastAccessTimestamp>
             >,
-            boost::multi_index::ordered_unique<
+            boost::multi_index::hashed_unique<
                 boost::multi_index::tag<SavedSearchHolder::ByLocalUid>,
                 boost::multi_index::const_mem_fun<SavedSearchHolder,const QString,&SavedSearchHolder::localUid>
             >,
             /* NOTE: non-unique for proper support of empty guids */
-            boost::multi_index::ordered_non_unique<
+            boost::multi_index::hashed_non_unique<
                 boost::multi_index::tag<SavedSearchHolder::ByGuid>,
                 boost::multi_index::const_mem_fun<SavedSearchHolder,const QString,&SavedSearchHolder::guid>
             >,
             /* NOTE: non-unique for proper support of empty names */
-            boost::multi_index::ordered_non_unique<
+            boost::multi_index::hashed_non_unique<
                 boost::multi_index::tag<SavedSearchHolder::ByName>,
                 boost::multi_index::const_mem_fun<SavedSearchHolder,const QString,&SavedSearchHolder::nameUpper>
             >
@@ -300,5 +301,7 @@ private:
 };
 
 } // namespace quentier
+
+inline std::size_t hash_value(QString x) { return qHash(x); }
 
 #endif // LIB_QUENTIER_LOCAL_STORAGE_LOCAL_STORAGE_CACHE_MANAGER_PRIVATE_H
