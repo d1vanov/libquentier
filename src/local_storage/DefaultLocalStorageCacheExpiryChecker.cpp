@@ -18,6 +18,7 @@
 
 #include <quentier/local_storage/DefaultLocalStorageCacheExpiryChecker.h>
 #include <quentier/local_storage/LocalStorageCacheManager.h>
+#include "DefaultLocalStorageCacheExpiryCheckerConfig.h"
 
 namespace quentier {
 

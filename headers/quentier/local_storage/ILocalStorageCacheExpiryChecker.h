@@ -25,6 +25,11 @@ namespace quentier {
 
 QT_FORWARD_DECLARE_CLASS(LocalStorageCacheManager)
 
+/**
+ * @brief The ILocalStorageCacheExpiryChecker class represents the interface for cache expiry checker
+ * used by LocalStorageCacheManager to see whether particular caches (of notes, notebooks, tags, linked notebooks
+ * and/or saved searches) need to be shrinked
+ */
 class QUENTIER_EXPORT ILocalStorageCacheExpiryChecker: public Printable
 {
 protected:
@@ -34,14 +39,39 @@ protected:
 public:
     virtual ~ILocalStorageCacheExpiryChecker();
 
+    /**
+     * @return a pointer to the newly allocated copy of a particular ILocalStorageCacheExpiryChecker implementation
+     */
     virtual ILocalStorageCacheExpiryChecker * clone() const = 0;
 
+    /**
+     * @return true if the cache of notes needs to be shrinked (due to its size or whatever other reason), false otherwise
+     */
     virtual bool checkNotes() const = 0;
+
+    /**
+     * @return true if the cache of notebooks needs to be shrinked (due to its size or whatever other reason), false otherwise
+     */
     virtual bool checkNotebooks() const = 0;
+
+    /**
+     * @return true if the cache of tags needs to be shrinked (due to its size or whatever other reason), false otherwise
+     */
     virtual bool checkTags() const = 0;
+
+    /**
+     * @return true if the cache of linked notebooks needs to be shrinked (due to its size or whatever other reason), false otherwise
+     */
     virtual bool checkLinkedNotebooks() const = 0;
+
+    /**
+     * @return true if the cache of saved searches needs to be shrinked (due to its size or whatever other reason), false otherwise
+     */
     virtual bool checkSavedSearches() const = 0;
 
+    /**
+     * @brief print the internal information about ILocalStorageCacheExpiryChecker implementation instance to the text stream
+     */
     virtual QTextStream & print(QTextStream & strm) const = 0;
 
 private:

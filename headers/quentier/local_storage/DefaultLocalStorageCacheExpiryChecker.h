@@ -21,28 +21,53 @@
 
 #include <quentier/local_storage/ILocalStorageCacheExpiryChecker.h>
 
-#define MAX_NOTES_TO_STORE 100
-#define MAX_NOTEBOOKS_TO_STORE 20
-#define MAX_TAGS_TO_STORE 200
-#define MAX_LINKED_NOTEBOOKS_TO_STORE 20
-#define MAX_SAVED_SEARCHES_TO_STORE 20
-
 namespace quentier {
 
+/**
+ * brief The DefaultLocalStorageCacheExpiryChecker class is the implementation of
+ * ILocalStorageCacheExpiryChecker interface used by LocalStorageCacheManager by default,
+ * if no another implementation of ILocalStorageCacheExpiryChecker is set to be used by
+ * LocalStorageCacheManager
+ */
 class QUENTIER_EXPORT DefaultLocalStorageCacheExpiryChecker: public ILocalStorageCacheExpiryChecker
 {
 public:
     DefaultLocalStorageCacheExpiryChecker(const LocalStorageCacheManager & cacheManager);
     virtual ~DefaultLocalStorageCacheExpiryChecker();
 
+    /**
+     * @return a pointer to the newly allocated copy of the current DefaultLocalStorageCacheExpiryChecker
+     */
     virtual DefaultLocalStorageCacheExpiryChecker * clone() const Q_DECL_OVERRIDE;
 
+    /**
+     * @return true if the current number of cached notes is higher than a reasonable limit, false otherwise
+     */
     virtual bool checkNotes() const Q_DECL_OVERRIDE;
+
+    /**
+     * @return true if the current number of cached notebooks is higher than a reasonable limit, false otherwise
+     */
     virtual bool checkNotebooks() const Q_DECL_OVERRIDE;
+
+    /**
+     * @return true if the current number of cached tags is higher than a reasonable limit, false otherwise
+     */
     virtual bool checkTags() const Q_DECL_OVERRIDE;
+
+    /**
+     * @return true if the current number of cached linked notebooks is higher than a reasonable limit, false otherwise
+     */
     virtual bool checkLinkedNotebooks() const Q_DECL_OVERRIDE;
+
+    /**
+     * @return true if the current number of cached saved searches is higher than a reasonable limit, false otherwise
+     */
     virtual bool checkSavedSearches() const Q_DECL_OVERRIDE;
 
+    /**
+     * @brief print the internal information about the current DefaultLocalStorageCacheExpiryChecker instance to the text stream
+     */
     virtual QTextStream & print(QTextStream & strm) const Q_DECL_OVERRIDE;
 
 private:
