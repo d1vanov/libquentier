@@ -80,6 +80,7 @@ private Q_SLOTS:
     void localStorageManagerSequentialUpdatesTest();
     void localStorageManagerAccountHighUsnTest();
     void localStorageManagerAddNoteWithoutLocalUidTest();
+    void localStorageManagerNoteTagIdsComplementTest();
 
     void localStorageManagerListSavedSearchesTest();
     void localStorageManagerListLinkedNotebooksTest();

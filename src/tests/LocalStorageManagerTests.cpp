@@ -2849,5 +2849,199 @@ bool TestAddingNoteWithoutLocalUid(QString & errorDescription)
     return true;
 }
 
+bool TestNoteTagIdsComplementWhenAddingAndUpdatingNote(QString & errorDescription)
+{
+    // 1) ========== Create LocalStorageManager =============
+
+    const bool startFromScratch = true;
+    const bool overrideLock = false;
+    Account account(QStringLiteral("LocalStorageManagerAddNoteWithoutLocalUidTestFakeUser"), Account::Type::Evernote, 0);
+    LocalStorageManager localStorageManager(account, startFromScratch, overrideLock);
+
+    ErrorString error;
+
+    // 2) ========== Add a notebook in order to test adding notes ==========
+
+    Notebook notebook;
+    notebook.setGuid(UidGenerator::Generate());
+    notebook.setName(QStringLiteral("First notebook"));
+
+    bool res = localStorageManager.addNotebook(notebook, error);
+    if (!res) {
+        errorDescription = error.nonLocalizedString();
+        return false;
+    }
+
+    // 3) ========== Add some tags ==========
+    Tag firstTag;
+    firstTag.setGuid(UidGenerator::Generate());
+    firstTag.setName(QStringLiteral("First"));
+
+    Tag secondTag;
+    secondTag.setGuid(UidGenerator::Generate());
+    secondTag.setName(QStringLiteral("Second"));
+
+    Tag thirdTag;
+    thirdTag.setGuid(UidGenerator::Generate());
+    thirdTag.setName(QStringLiteral("Third"));
+
+    error.clear();
+    res = localStorageManager.addTag(firstTag, error);
+    if (!res) {
+        errorDescription = error.nonLocalizedString();
+        return false;
+    }
+
+    error.clear();
+    res = localStorageManager.addTag(secondTag, error);
+    if (!res) {
+        errorDescription = error.nonLocalizedString();
+        return false;
+    }
+
+    error.clear();
+    res = localStorageManager.addTag(thirdTag, error);
+    if (!res) {
+        errorDescription = error.nonLocalizedString();
+        return false;
+    }
+
+    // 4) ========== Add a note without tag local uids but with tag guids ===========
+    Note firstNote;
+    firstNote.setGuid(UidGenerator::Generate());
+    firstNote.setNotebookGuid(notebook.guid());
+    firstNote.setTitle(QStringLiteral("First note"));
+    firstNote.setContent(QStringLiteral("<en-note>first note</en-note>"));
+
+    firstNote.addTagGuid(firstTag.guid());
+    firstNote.addTagGuid(secondTag.guid());
+    firstNote.addTagGuid(thirdTag.guid());
+
+    error.clear();
+    res = localStorageManager.addNote(firstNote, error);
+    if (!res) {
+        errorDescription = error.nonLocalizedString();
+        return false;
+    }
+
+    if (!firstNote.hasTagLocalUids()) {
+        errorDescription = QStringLiteral("Note has no tag local uids after LocalStorageManager::addNote method returning");
+        return false;
+    }
+
+    const QStringList & tagLocalUids = firstNote.tagLocalUids();
+    if (tagLocalUids.size() != 3) {
+        errorDescription = QStringLiteral("Note's tag local uids have improper size not matching the number of tag guids "
+                                          "after LocalStorageManager::addNote method returning");
+        return false;
+    }
+
+    if (!tagLocalUids.contains(firstTag.localUid()) ||
+        !tagLocalUids.contains(secondTag.localUid()) ||
+        !tagLocalUids.contains(thirdTag.localUid()))
+    {
+        errorDescription = QStringLiteral("Note doesn't have one of tag local uids it should have after LocalStorageManager::addNote method returning");
+        return false;
+    }
+
+    // 5) ========== Add a note without tag guids but with tag local uids ===========
+    Note secondNote;
+    secondNote.setGuid(UidGenerator::Generate());
+    secondNote.setNotebookGuid(notebook.guid());
+    secondNote.setTitle(QStringLiteral("Second note"));
+    secondNote.setContent(QStringLiteral("<en-note>second note</en-note>"));
+
+    secondNote.addTagLocalUid(firstTag.localUid());
+    secondNote.addTagLocalUid(secondTag.localUid());
+    secondNote.addTagLocalUid(thirdTag.localUid());
+
+    error.clear();
+    res = localStorageManager.addNote(secondNote, error);
+    if (!res) {
+        errorDescription = error.nonLocalizedString();
+        return false;
+    }
+
+    if (!secondNote.hasTagGuids()) {
+        errorDescription = QStringLiteral("Note has no tag guids after LocalStorageManager::addNote method returning");
+        return false;
+    }
+
+    const QStringList & tagGuids = secondNote.tagGuids();
+    if (tagGuids.size() != 3) {
+        errorDescription = QStringLiteral("Note's tag guids have improper size not matching the number of tag local uids "
+                                          "after LocalStorageManager::addNote method returning");
+        return false;
+    }
+
+    if (!tagGuids.contains(firstTag.guid()) ||
+        !tagGuids.contains(secondTag.guid()) ||
+        !tagGuids.contains(thirdTag.guid()))
+    {
+        errorDescription = QStringLiteral("Note doesn't have one of tag guids it should have after LocalStorageManager::addNote method returning");
+        return false;
+    }
+
+    // 6) ========== Update note with tag guids ===========
+    firstNote.setTitle(QStringLiteral("Updated first note"));
+    firstNote.setTagLocalUids(QStringList());
+    firstNote.setTagGuids(QStringList() << firstTag.guid() << secondTag.guid());
+
+    error.clear();
+    res = localStorageManager.updateNote(firstNote, /* update resources = */ false, /* update tags = */ true, error);
+    if (!res) {
+        errorDescription = error.nonLocalizedString();
+        return false;
+    }
+
+    if (!firstNote.hasTagLocalUids()) {
+        errorDescription = QStringLiteral("Note has no tag local uids after LocalStorageManager::updateNote method returning");
+        return false;
+    }
+
+    const QStringList & updatedTagLocalUids = firstNote.tagLocalUids();
+    if (updatedTagLocalUids.size() != 2) {
+        errorDescription = QStringLiteral("Note's tag local uids have improper size not matching the number of tag guids "
+                                          "after LocalStorageManager::updateNote method returning");
+        return false;
+    }
+
+    if (!updatedTagLocalUids.contains(firstTag.localUid()) || !updatedTagLocalUids.contains(secondTag.localUid())) {
+        errorDescription = QStringLiteral("Note doesn't have one of tag local uids it should have after LocalStorageManager::updateNote method returning");
+        return false;
+    }
+
+    // 7) ========== Update note with tag guids ===========
+    secondNote.setTitle(QStringLiteral("Updated second note"));
+    secondNote.setTagGuids(QStringList());
+    secondNote.setTagLocalUids(QStringList() << firstTag.localUid() << secondTag.localUid());
+
+    error.clear();
+    res = localStorageManager.updateNote(secondNote, /* update resources = */ false, /* update tags = */ true, error);
+    if (!res) {
+        errorDescription = error.nonLocalizedString();
+        return false;
+    }
+
+    if (!secondNote.hasTagGuids()) {
+        errorDescription = QStringLiteral("Note has no tag guids after LocalStorageManager::updateNote method returning");
+        return false;
+    }
+
+    const QStringList & updatedTagGuids = secondNote.tagGuids();
+    if (updatedTagGuids.size() != 2) {
+        errorDescription = QStringLiteral("Note's tag guids have improper size not matching the number of tag local uids "
+                                          "after LocalStorageManager::updateNote method returning");
+        return false;
+    }
+
+    if (!updatedTagGuids.contains(firstTag.guid()) || !updatedTagGuids.contains(secondTag.guid())) {
+        errorDescription = QStringLiteral("Note doesn't have one of tag guids it should have after LocalStorageManager::updateNote method returning");
+        return false;
+    }
+
+    return true;
+}
+
 } // namespace test
 } // namespace quentier

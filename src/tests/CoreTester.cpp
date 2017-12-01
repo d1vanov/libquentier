@@ -564,6 +564,17 @@ void CoreTester::localStorageManagerAddNoteWithoutLocalUidTest()
     CATCH_EXCEPTION();
 }
 
+void CoreTester::localStorageManagerNoteTagIdsComplementTest()
+{
+    try
+    {
+        QString error;
+        bool res = TestNoteTagIdsComplementWhenAddingAndUpdatingNote(error);
+        QVERIFY2(res == true, qPrintable(error));
+    }
+    CATCH_EXCEPTION();
+}
+
 void CoreTester::localStorageManagerListSavedSearchesTest()
 {
     try

@@ -6129,7 +6129,7 @@ bool LocalStorageManagerPrivate::getSavedSearchLocalUidForGuid(const QString & s
     return true;
 }
 
-bool LocalStorageManagerPrivate::insertOrReplaceNote(const Note & note, const bool updateResources,
+bool LocalStorageManagerPrivate::insertOrReplaceNote(Note & note, const bool updateResources,
                                                      const bool updateTags, ErrorString & errorDescription)
 {
     // NOTE: this method expects to be called after the note is already checked
@@ -6470,6 +6470,9 @@ bool LocalStorageManagerPrivate::insertOrReplaceNote(const Note & note, const bo
 
             int numTagIds = tagIds.size();
 
+            QStringList tagComplementedIds;
+            tagComplementedIds.reserve(numTagIds);
+
             bool res = checkAndPrepareInsertOrReplaceNoteIntoNoteTagsQuery();
             QSqlQuery & query = m_insertOrReplaceNoteIntoNoteTagsQuery;
             DATABASE_CHECK_AND_SET_ERROR();
@@ -6503,6 +6506,17 @@ bool LocalStorageManagerPrivate::insertOrReplaceNote(const Note & note, const bo
                     return false;
                 }
 
+                if (hasTagLocalUids)
+                {
+                    if (tag.hasGuid()) {
+                        tagComplementedIds << tag.guid();
+                    }
+                }
+                else
+                {
+                    tagComplementedIds << tag.localUid();
+                }
+
                 query.bindValue(QStringLiteral(":localNote"), localUid);
                 query.bindValue(QStringLiteral(":note"), (note.hasGuid() ? note.guid() : nullValue));
                 query.bindValue(QStringLiteral(":localTag"), tag.localUid());
@@ -6511,6 +6525,13 @@ bool LocalStorageManagerPrivate::insertOrReplaceNote(const Note & note, const bo
 
                 res = query.exec();
                 DATABASE_CHECK_AND_SET_ERROR();
+            }
+
+            if (hasTagLocalUids) {
+                note.setTagGuids(tagComplementedIds);
+            }
+            else {
+                note.setTagLocalUids(tagComplementedIds);
             }
         }
 

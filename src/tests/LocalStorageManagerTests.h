@@ -54,6 +54,8 @@ bool TestAccountHighUsnInLocalStorage(QString & errorDescription);
 
 bool TestAddingNoteWithoutLocalUid(QString & errorDescription);
 
+bool TestNoteTagIdsComplementWhenAddingAndUpdatingNote(QString & errorDescription);
+
 } // namespace test
 } // namespace quentier
 

@@ -217,7 +217,7 @@ private:
     bool getResourceLocalUidForGuid(const QString & resourceGuid, QString & resourceLocalUid, ErrorString & errorDescription);
     bool getSavedSearchLocalUidForGuid(const QString & savedSearchGuid, QString & savedSearchLocalUid, ErrorString & errorDescription);
 
-    bool insertOrReplaceNote(const Note & note, const bool updateResources, const bool updateTags, ErrorString & errorDescription);
+    bool insertOrReplaceNote(Note & note, const bool updateResources, const bool updateTags, ErrorString & errorDescription);
     bool insertOrReplaceSharedNote(const SharedNote & sharedNote, ErrorString & errorDescription);
     bool insertOrReplaceNoteRestrictions(const QString & noteLocalUid, const qevercloud::NoteRestrictions & noteRestrictions,
                                          ErrorString & errorDescription);
