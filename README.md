@@ -13,6 +13,8 @@ The most important and useful components of the library are the following:
 
 The library is based on the lower level functionality provided by [QEverCloud](https://github.com/d1vanov/QEverCloud) library.
 
+### WARNING: libquentier is in alpha state right now, neither API nor ABI can be considered stable yet!
+
 ## How to build/install
 
 Please see the [building/installation guide](INSTALL.md).
