@@ -70,6 +70,7 @@ void registerMetatypes()
     qRegisterMetaType<QHash<QString,QString> >("QHash<QString,QString>");
     qRegisterMetaType<QHash<QString,qevercloud::Timestamp> >("QHash<QString,qevercloud::Timestamp>");
     qRegisterMetaType<QHash<QString,qint32> >("QHash<QString,qint32>");
+    qRegisterMetaType<QHash<QString,int> >("QHash<QString,int>");
 
     qRegisterMetaType<NoteSearchQuery>("NoteSearchQuery");
 
