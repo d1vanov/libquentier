@@ -23,6 +23,7 @@
 #include <quentier/types/ErrorString.h>
 #include <quentier/local_storage/LocalStorageManager.h>
 #include <quentier/local_storage/LocalStorageCacheManager.h>
+#include <quentier/local_storage/ILocalStorageCacheExpiryChecker.h>
 #include <quentier/types/User.h>
 #include <quentier/types/Notebook.h>
 #include <quentier/types/SharedNotebook.h>
@@ -46,6 +47,7 @@ public:
     void setUseCache(const bool useCache);
 
     const LocalStorageCacheManager * localStorageCacheManager() const;
+    bool installCacheExpiryFunction(const ILocalStorageCacheExpiryChecker & checker);
 
     const LocalStorageManager * localStorageManager() const;
     LocalStorageManager * localStorageManager();

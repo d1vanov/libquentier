@@ -65,6 +65,16 @@ const LocalStorageCacheManager * LocalStorageManagerAsync::localStorageCacheMana
     }
 }
 
+bool LocalStorageManagerAsync::installCacheExpiryFunction(const ILocalStorageCacheExpiryChecker & checker)
+{
+    if (m_useCache && m_pLocalStorageCacheManager) {
+        m_pLocalStorageCacheManager->installCacheExpiryFunction(checker);
+        return true;
+    }
+
+    return false;
+}
+
 const LocalStorageManager * LocalStorageManagerAsync::localStorageManager() const
 {
     return m_pLocalStorageManager;
