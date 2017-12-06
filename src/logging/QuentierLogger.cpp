@@ -48,9 +48,6 @@ void QuentierAddLogEntry(const QString & sourceFileName, const int sourceFileLin
     case LogLevel::ErrorLevel:
         logEntry += QStringLiteral("Error]: ");
         break;
-    case LogLevel::FatalLevel:
-        logEntry += QStringLiteral("Fatal]: ");
-        break;
     default:
         logEntry += QStringLiteral("Unknown log level: ") + QString::number(logLevel) + QStringLiteral("]: ");
         break;

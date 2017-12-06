@@ -34,8 +34,7 @@ public:
         DebugLevel,
         InfoLevel,
         WarnLevel,
-        ErrorLevel,
-        FatalLevel
+        ErrorLevel
     };
 };
 
@@ -86,11 +85,8 @@ QString QUENTIER_EXPORT QuentierLogFilesDirPath();
 #define QNWARNING(message) \
     __QNLOG_BASE(message, Warn)
 
-#define QNCRITICAL(message) \
+#define QNERROR(message) \
     __QNLOG_BASE(message, Error)
-
-#define QNFATAL(message) \
-    __QNLOG_BASE(message, Fatal)
 
 #define QUENTIER_SET_MIN_LOG_LEVEL(level) \
     quentier::QuentierSetMinLogLevel(quentier::LogLevel::level##Level)

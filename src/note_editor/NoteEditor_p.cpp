@@ -137,7 +137,7 @@ typedef QWebEngineSettings WebSettings;
 #define GET_PAGE() \
     NoteEditorPage * page = qobject_cast<NoteEditorPage*>(this->page()); \
     if (Q_UNLIKELY(!page)) { \
-        QNFATAL(QStringLiteral("Can't get access to note editor's underlying page!")); \
+        QNERROR(QStringLiteral("Can't get access to note editor's underlying page!")); \
         return; \
     }
 
@@ -3861,7 +3861,7 @@ void NoteEditorPrivate::setupWebSocketServer()
     if (!m_pWebSocketServer->listen(QHostAddress::LocalHost, 0)) {
         ErrorString error(QT_TR_NOOP("Can't open web socket server"));
         error.details() = m_pWebSocketServer->errorString();
-        QNFATAL(error);
+        QNERROR(error);
         throw NoteEditorInitializationException(error);
     }
 

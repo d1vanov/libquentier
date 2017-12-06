@@ -310,7 +310,7 @@ QObject * NoteEditorPluginFactory::create(const QString & pluginType, const QUrl
             << argumentValues.join(QStringLiteral(", ")));
 
     if (!m_pCurrentNote) {
-        QNFATAL(QStringLiteral("Can't create note editor plugin: no note specified"));
+        QNERROR(QStringLiteral("Can't create note editor plugin: no note specified"));
         return Q_NULLPTR;
     }
 
@@ -333,19 +333,19 @@ QObject * NoteEditorPluginFactory::createResourcePlugin(const QStringList & argu
 
     const Account * pAccount = m_noteEditor.accountPtr();
     if (Q_UNLIKELY(!pAccount)) {
-        QNFATAL(QStringLiteral("Can't create note editor resource plugin: no account is set to the note editor"));
+        QNERROR(QStringLiteral("Can't create note editor resource plugin: no account is set to the note editor"));
         return Q_NULLPTR;
     }
 
     int resourceHashIndex = argumentNames.indexOf(QStringLiteral("hash"));
     if (resourceHashIndex < 0) {
-        QNFATAL(QStringLiteral("Can't create note editor resource plugin: hash argument was not found"));
+        QNERROR(QStringLiteral("Can't create note editor resource plugin: hash argument was not found"));
         return Q_NULLPTR;
     }
 
     int resourceMimeTypeIndex = argumentNames.indexOf(QStringLiteral("resource-mime-type"));
     if (resourceMimeTypeIndex < 0) {
-        QNFATAL(QStringLiteral("Can't create note editor resource plugin: resource-mime-type argument not found"));
+        QNERROR(QStringLiteral("Can't create note editor resource plugin: resource-mime-type argument not found"));
         return Q_NULLPTR;
     }
 
@@ -371,8 +371,8 @@ QObject * NoteEditorPluginFactory::createResourcePlugin(const QStringList & argu
     }
 
     if (!pCurrentResource) {
-        QNFATAL(QStringLiteral("Can't find resource in note by data hash: ") << resourceHash.toHex()
-                << QStringLiteral(", note: ") << *m_pCurrentNote);
+        QNWARNING(QStringLiteral("Can't find resource in note by data hash: ") << resourceHash.toHex()
+                  << QStringLiteral(", note: ") << *m_pCurrentNote);
         return Q_NULLPTR;
     }
 

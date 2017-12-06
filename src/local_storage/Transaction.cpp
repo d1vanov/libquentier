@@ -118,7 +118,7 @@ void Transaction::init()
     QSqlQuery query(m_db);
     bool res = query.exec(queryString);
     if (!res) {
-        QNCRITICAL(QStringLiteral("Error beginning the SQL transaction: ") << query.lastError());
+        QNERROR(QStringLiteral("Error beginning the SQL transaction: ") << query.lastError());
         ErrorString errorDescription(QT_TR_NOOP("Can't begin the SQL transaction"));
         errorDescription.details() = query.lastError().text();
         throw DatabaseSqlErrorException(errorDescription);

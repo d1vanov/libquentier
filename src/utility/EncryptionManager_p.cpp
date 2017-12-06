@@ -185,7 +185,7 @@ bool EncryptionManagerPrivate::generateSalt(const EncryptionManagerPrivate::Salt
     default:
         {
             errorDescription.setBase(QT_TR_NOOP("detected incorrect salt kind for cryptographic key generation"));
-            QNCRITICAL(errorDescription);
+            QNERROR(errorDescription);
             return false;
         }
     }
@@ -712,8 +712,8 @@ qint32 EncryptionManagerPrivate::crc32(const QString & str) const
         bool conversionResult = false;
         x = static_cast<qint32>(x_str.toUInt(&conversionResult, 16));
         if (Q_UNLIKELY(!conversionResult)) {
-            QNCRITICAL(QStringLiteral("Can't convert string representation of hex number ")
-                       << x_str << QStringLiteral(" to unsigned int!"));
+            QNERROR(QStringLiteral("Can't convert string representation of hex number ")
+                    << x_str << QStringLiteral(" to unsigned int!"));
             crc = 0;
             return crc;
         }

@@ -144,7 +144,7 @@ LocalStorageManagerPrivate::~LocalStorageManagerPrivate()
     if (!res) { \
         errorDescription.base() = errorPrefix.base(); \
         errorDescription.details() = query.lastError().text(); \
-        QNCRITICAL(errorDescription << QStringLiteral(", last executed query: ") << lastExecutedQuery(query)); \
+        QNERROR(errorDescription << QStringLiteral(", last executed query: ") << lastExecutedQuery(query)); \
         return false; \
     }
 
@@ -341,12 +341,12 @@ bool LocalStorageManagerPrivate::expungeUser(const User & user, ErrorString & er
 #define SET_ERROR() \
     errorDescription.base() = errorPrefix.base(); \
     errorDescription.details() = query.lastError().text(); \
-    QNCRITICAL(errorDescription << QStringLiteral(", last query: ") << lastExecutedQuery(query))
+    QNERROR(errorDescription << QStringLiteral(", last query: ") << lastExecutedQuery(query))
 
 #define SET_INT_CONVERSION_ERROR() \
     errorDescription.base() = errorPrefix.base(); \
     errorDescription.appendBase(QT_TR_NOOP("can't convert the fetched data to int")); \
-    QNCRITICAL(errorDescription << QStringLiteral(": ") << query.value(0))
+    QNERROR(errorDescription << QStringLiteral(": ") << query.value(0))
 
 #define SET_NO_DATA_FOUND() \
     errorDescription.base() = errorPrefix.base(); \
@@ -1038,8 +1038,8 @@ QList<SharedNotebook> LocalStorageManagerPrivate::listAllSharedNotebooks(ErrorSt
     bool res = query.exec(QStringLiteral("SELECT * FROM SharedNotebooks"));
     if (!res) {
         errorDescription.base() = errorPrefix.base();
-        QNCRITICAL(errorDescription << QStringLiteral("last error = ") << query.lastError()
-                   << QStringLiteral(", last query = ") << query.lastQuery());
+        QNERROR(errorDescription << QStringLiteral("last error = ") << query.lastError()
+                << QStringLiteral(", last query = ") << query.lastQuery());
         errorDescription.details() += query.lastError().text();
         return sharedNotebooks;
     }
@@ -3368,7 +3368,7 @@ bool LocalStorageManagerPrivate::expungeEnResource(Resource & resource, ErrorStr
                 errorDescription.appendBase(QT_TR_NOOP("resource to be updated was not found in the local storage database"));
                 errorDescription.details() = QStringLiteral("guid = ");
                 errorDescription.details() += uid;
-                QNCRITICAL(errorDescription);
+                QNERROR(errorDescription);
                 return false;
             }
 
@@ -3879,7 +3879,7 @@ bool LocalStorageManagerPrivate::updateSequenceNumberFromTable(const QString & t
 
 void LocalStorageManagerPrivate::processPostTransactionException(ErrorString message, QSqlError error)
 {
-    QNCRITICAL(message << QStringLiteral(": ") << error);
+    QNERROR(message << QStringLiteral(": ") << error);
     message.details() += error.text();
     throw DatabaseSqlErrorException(message);
 }
@@ -8078,7 +8078,7 @@ bool LocalStorageManagerPrivate::fillUserFromSqlRecord(const QSqlRecord & rec, U
         if (!valueFound && isRequired) { \
             errorDescription.setBase(QT_TR_NOOP("missing field in the result of SQL query")); \
             errorDescription.details() = QStringLiteral(#column); \
-            QNCRITICAL(errorDescription); \
+            QNERROR(errorDescription); \
             return false; \
         } \
     }
@@ -8485,7 +8485,7 @@ bool LocalStorageManagerPrivate::fillSharedNoteFromSqlRecord(const QSqlRecord & 
             int indexInNote = value.toInt(&conversionResult);
             if (!conversionResult) {
                 errorDescription.setBase(QT_TR_NOOP("can't convert shared note's index in note to int"));
-                QNCRITICAL(errorDescription);
+                QNERROR(errorDescription);
                 return false;
             }
             sharedNote.setIndexInNote(indexInNote);
@@ -8742,7 +8742,7 @@ bool LocalStorageManagerPrivate::fillSharedNotebookFromSqlRecord(const QSqlRecor
             int indexInNotebook = value.toInt(&conversionResult);
             if (!conversionResult) {
                 errorDescription.setBase(QT_TR_NOOP("can't convert shared notebook's index in notebook to int"));
-                QNCRITICAL(errorDescription);
+                QNERROR(errorDescription);
                 return false;
             }
             sharedNotebook.setIndexInNotebook(indexInNotebook);
@@ -8771,7 +8771,7 @@ bool LocalStorageManagerPrivate::fillLinkedNotebookFromSqlRecord(const QSqlRecor
         if (!valueFound && isRequired) { \
             errorDescription.setBase(QT_TR_NOOP("missing field in the result of SQL query")); \
             errorDescription.details() = QStringLiteral(#property); \
-            QNCRITICAL(errorDescription); \
+            QNERROR(errorDescription); \
             return false; \
         } \
     }
@@ -8821,7 +8821,7 @@ bool LocalStorageManagerPrivate::fillSavedSearchFromSqlRecord(const QSqlRecord &
         if (!valueFound && isRequired) { \
             errorDescription.setBase(QT_TR_NOOP("missing field in the result of SQL query")); \
             errorDescription.details() = QStringLiteral(#property); \
-            QNCRITICAL(errorDescription); \
+            QNERROR(errorDescription); \
             return false; \
         } \
     }
@@ -8869,7 +8869,7 @@ bool LocalStorageManagerPrivate::fillTagFromSqlRecord(const QSqlRecord & rec, Ta
         if (!valueFound && isRequired) { \
             errorDescription.setBase(QT_TR_NOOP("missing field in the result of SQL query")); \
             errorDescription.details() = QStringLiteral(#property); \
-            QNCRITICAL(errorDescription); \
+            QNERROR(errorDescription); \
             return false; \
         } \
     }
@@ -10875,8 +10875,8 @@ QList<T> LocalStorageManagerPrivate::listObjects(const LocalStorageManager::List
     bool res = query.exec(queryString);
     if (!res) {
         errorDescription.base() = errorPrefix.base();
-        QNCRITICAL(errorDescription << QStringLiteral(", last query = ") << query.lastQuery()
-                   << QStringLiteral(", last error = ") << query.lastError());
+        QNERROR(errorDescription << QStringLiteral(", last query = ") << query.lastQuery()
+                << QStringLiteral(", last error = ") << query.lastError());
         errorDescription.details() = query.lastError().text();
         return objects;
     }
