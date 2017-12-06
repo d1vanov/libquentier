@@ -32,7 +32,7 @@ NoteData::NoteData() :
     m_resourcesAdditionalInfo(),
     m_notebookLocalUid(),
     m_tagLocalUids(),
-    m_thumbnail()
+    m_thumbnailData()
 {}
 
 NoteData::NoteData(const NoteData & other) :
@@ -41,7 +41,7 @@ NoteData::NoteData(const NoteData & other) :
     m_resourcesAdditionalInfo(other.m_resourcesAdditionalInfo),
     m_notebookLocalUid(other.m_notebookLocalUid),
     m_tagLocalUids(other.m_tagLocalUids),
-    m_thumbnail(other.m_thumbnail)
+    m_thumbnailData(other.m_thumbnailData)
 {}
 
 NoteData::NoteData(NoteData && other) :
@@ -50,7 +50,7 @@ NoteData::NoteData(NoteData && other) :
     m_resourcesAdditionalInfo(std::move(other.m_resourcesAdditionalInfo)),
     m_notebookLocalUid(std::move(other.m_notebookLocalUid)),
     m_tagLocalUids(std::move(other.m_tagLocalUids)),
-    m_thumbnail(std::move(other.m_thumbnail))
+    m_thumbnailData(std::move(other.m_thumbnailData))
 {}
 
 NoteData::~NoteData()
@@ -62,7 +62,7 @@ NoteData::NoteData(const qevercloud::Note & other) :
     m_resourcesAdditionalInfo(),
     m_notebookLocalUid(),
     m_tagLocalUids(),
-    m_thumbnail()
+    m_thumbnailData()
 {
     if (m_qecNote.resources.isSet())
     {
@@ -148,7 +148,7 @@ void NoteData::clear()
     m_resourcesAdditionalInfo.clear();
     m_notebookLocalUid.clear();
     m_tagLocalUids.clear();
-    m_thumbnail = QImage();
+    m_thumbnailData.clear();
 }
 
 bool NoteData::checkParameters(ErrorString & errorDescription) const

@@ -810,14 +810,14 @@ void Note::setNoteLimits(qevercloud::NoteLimits && limits)
     d->m_qecNote.limits = std::move(limits);
 }
 
-QImage Note::thumbnail() const
+QByteArray Note::thumbnailData() const
 {
-    return d->m_thumbnail;
+    return d->m_thumbnailData;
 }
 
-void Note::setThumbnail(const QImage & thumbnail)
+void Note::setThumbnailData(const QByteArray & thumbnailData)
 {
-    d->m_thumbnail = thumbnail;
+    d->m_thumbnailData = thumbnailData;
 }
 
 bool Note::isInkNote() const
@@ -1026,7 +1026,7 @@ QTextStream & Note::print(QTextStream & strm) const
     }
     INSERT_DELIMITER;
 
-    strm << QStringLiteral("thumbnail is ") << (d->m_thumbnail.isNull() ? QStringLiteral("null") : QStringLiteral("non-null"));
+    strm << QStringLiteral("thumbnail is ") << (d->m_thumbnailData.isEmpty() ? QStringLiteral("null") : QStringLiteral("non-null"));
     INSERT_DELIMITER;
 
     if (d->m_qecNote.resources.isSet())

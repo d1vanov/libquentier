@@ -28,7 +28,7 @@
 #include <qt4qevercloud/QEverCloud.h>
 #endif
 
-#include <QImage>
+#include <QByteArray>
 
 namespace quentier {
 
@@ -71,7 +71,7 @@ public:
     QList<ResourceAdditionalInfo>   m_resourcesAdditionalInfo;
     qevercloud::Optional<QString>   m_notebookLocalUid;
     QStringList                     m_tagLocalUids;
-    QImage                          m_thumbnail;
+    QByteArray                      m_thumbnailData;
 
 private:
     NoteData & operator=(const NoteData & other) Q_DECL_EQ_DELETE;

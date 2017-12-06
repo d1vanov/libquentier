@@ -28,7 +28,6 @@
 #include <qt4qevercloud/QEverCloud.h>
 #endif
 
-#include <QImage>
 #include <QSharedDataPointer>
 
 namespace quentier {
@@ -160,8 +159,8 @@ public:
     qevercloud::NoteLimits & noteLimits();
     void setNoteLimits(qevercloud::NoteLimits && limits);
 
-    QImage thumbnail() const;
-    void setThumbnail(const QImage & thumbnail);
+    QByteArray thumbnailData() const;
+    void setThumbnailData(const QByteArray & thumbnailData);
 
     bool isInkNote() const;
 

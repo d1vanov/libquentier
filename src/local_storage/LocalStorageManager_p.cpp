@@ -6205,29 +6205,9 @@ bool LocalStorageManagerPrivate::insertOrReplaceNote(Note & note, const bool upd
         query.bindValue(QStringLiteral(":isActive"), (note.hasActive() ? (note.active() ? 1 : 0) : nullValue));
         query.bindValue(QStringLiteral(":hasAttributes"), (note.hasNoteAttributes() ? 1 : 0));
 
-        QImage thumbnail = note.thumbnail();
-        bool thumbnailIsNull = thumbnail.isNull();
-        QByteArray thumbnailData;
+        QByteArray thumbnailData = note.thumbnailData();
+        query.bindValue(QStringLiteral(":thumbnail"), (thumbnailData.isEmpty() ? nullValue : thumbnailData));
 
-        if (!thumbnailIsNull)
-        {
-            QBuffer buf(&thumbnailData);
-            if (buf.open(QIODevice::WriteOnly))
-            {
-                bool res = thumbnail.save(&buf, "PNG");
-                if (!res) {
-                    QNDEBUG(QStringLiteral("Failed to save the thumbnail as PNG image"));
-                    thumbnailIsNull = true;
-                }
-            }
-            else
-            {
-                QNWARNING(QStringLiteral("Failed to open QBuffer for writing"));
-                thumbnailIsNull = true;
-            }
-        }
-
-        query.bindValue(QStringLiteral(":thumbnail"), (thumbnailIsNull ? nullValue : thumbnailData));
         query.bindValue(QStringLiteral(":notebookLocalUid"), (notebookLocalUid.isEmpty() ? nullValue : notebookLocalUid));
         query.bindValue(QStringLiteral(":notebookGuid"), (note.hasNotebookGuid() ? note.notebookGuid() : nullValue));
 
@@ -8340,16 +8320,9 @@ bool LocalStorageManagerPrivate::fillNoteFromSqlRecord(const QSqlRecord & rec, N
         QNTRACE(QStringLiteral("Found thumbnail data for note within the SQL record"));
 
         QVariant thumbnailValue = rec.value(indexOfThumbnail);
-        if (!thumbnailValue.isNull())
-        {
+        if (!thumbnailValue.isNull()) {
             QByteArray thumbnailData = thumbnailValue.toByteArray();
-
-            QImage thumbnail;
-            bool res = thumbnail.loadFromData(thumbnailData, "PNG");
-            QNTRACE(QStringLiteral("Loading thumbnail image from PNG binary data: ")
-                    << (res ? QStringLiteral("successful") : QStringLiteral("failed")));
-
-            note.setThumbnail(thumbnail);
+            note.setThumbnailData(thumbnailData);
         }
     }
 

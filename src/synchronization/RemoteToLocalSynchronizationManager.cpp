@@ -2409,16 +2409,7 @@ void RemoteToLocalSynchronizationManager::onNoteThumbnailDownloadingFinished(boo
         return;
     }
 
-    QImage thumbnailImage;
-    bool res = thumbnailImage.loadFromData(downloadedThumbnailImageData, "PNG");
-    if (Q_UNLIKELY(!res)) {
-        QNWARNING("Wasn't able to load the thumbnail image from the downloaded data");
-        checkAndIncrementNoteDownloadProgress(noteGuid);
-        checkServerDataMergeCompletion();
-        return;
-    }
-
-    note.setThumbnail(thumbnailImage);
+    note.setThumbnailData(downloadedThumbnailImageData);
 
     QUuid updateNoteRequestId = QUuid::createUuid();
     Q_UNUSED(m_updateNoteWithThumbnailRequestIds.insert(updateNoteRequestId))
