@@ -125,7 +125,7 @@ before_script:
       fi
       ;
       make &&
-      make install &&
+      sudo make install &&
       cd ../..
     - mkdir tidy-html5 &&
       git clone https://github.com/htacg/tidy-html5.git tidy-html5 &&
