@@ -101,17 +101,17 @@ install:
 before_script:
     - export LIBQUENTIER_DIR=$(pwd)
     - cmake --version
-    - if [ "${TRAVIS_OS_NAME}" = "linux" ]; then
+    - |
+      if [ "${TRAVIS_OS_NAME}" = "linux" ]; then
         if [ "${QT_BASE}" = "55" ]; then
           source /opt/qt55/bin/qt55-env.sh
           ;
-        elif [ "${QT_BASE"} = "593" ]; then
+        elif [ "${QT_BASE}" = "593" ]; then
           source /opt/qt59/bin/qt59-env.sh
           ;
         fi
         ;
       fi
-      ;
     - cd ..
     - mkdir qtkeychain && 
       git clone https://github.com/frankosterfeld/qtkeychain.git qtkeychain &&
