@@ -13,7 +13,7 @@ matrix:
           env: QT_BASE=48 COMPILER=g++-4.6 CMAKE_BUILD_TYPE=Debug
 
         - os: linux
-          env: QT_BASE=48 COMPILER=clang++
+          env: QT_BASE=48 COMPILER=clang++ CMAKE_BUILD_TYPE=Debug
 
         - os: linux
           env: QT_BASE=551 COMPILER=g++-4.9 CMAKE_BUILD_TYPE=Debug
@@ -22,16 +22,18 @@ matrix:
           env: QT_BASE=551 COMPILER=clang++ CMAKE_BUILD_TYPE=Debug
 
         - os: linux
-          env: QT_BASE=593 COMPILER=g++-7 CMAKE_BUILD_TYPE=Release
+          env: QT_BASE=593 COMPILER=g++-7 CMAKE_BUILD_TYPE=RelWithDebInfo
 
         - os: linux
           env: QT_BASE=593 COMPILER=clang++ CMAKE_BUILD_TYPE=Debug
 
         - os: osx
+          env: CMAKE_BUILD_TYPE=Debug
           compiler: clang
 
 install:
-    - if [ "${TRAVIS_OS_NAME}" = "linux" ]; then
+    - |
+      if [ "${TRAVIS_OS_NAME}" = "linux" ]; then
         export DISPLAY=:99.0 &&
         sh -e /etc/init.d/xvfb start &&
         wget http://www.cmake.org/files/v3.2/cmake-3.2.0-Linux-x86_64.tar.gz &&
@@ -40,51 +42,44 @@ install:
         sudo apt-get -qq install libxml2-dev libboost-dev libssl-dev libhunspell-dev &&
         sudo apt-add-repository -y ppa:ubuntu-toolchain-r/test &&
         if [ "${QT_BASE}" = "551" ]; then
+          echo "Building for Qt 5.5.1" &&
           sudo apt-add-repository -y ppa:beineri/opt-qt551-trusty &&
           sudo apt-get -qq update &&
           if [ "${COMPILER}" = "g++-4.9" ]; then
             sudo apt-get -qq install g++-4.9 gcc-4.9 qt55tools qt55base qt55webchannel qt55webengine qt55websockets qt55xmlpatterns &&
             export CXX="g++-4.9" &&
             export CC="gcc-4.9"
-            ;
           else
             sudo apt-get -qq install qt55tools qt55base qt55webchannel qt55webengine qt55websockets qt55xmlpatterns &&
             export CXX="clang++" &&
             export CC="clang"
-            ;
           fi
-          ;
         elif [ "${QT_BASE}" = "593" ]; then
+          echo "Building for Qt 5.9.3" &&
           sudo apt-add-repository -y ppa:beineri/opt-qt593-trusty &&
           sudo apt-get -qq update &&
           if [ "${COMPILER}" = "g++-7" ]; then
             sudo apt-get -qq install g++-7 gcc-7 qt59tools qt59base qt59webchannel qt59webengine qt59websockets qt59xmlpatterns &&
             export CXX="g++-7" &&
             export CC="gcc-7"
-            ;
           else
             sudo apt-get -qq install qt59tools qt59base qt59webchannel qt59webengine qt59websockets qt59xmlpatterns &&
             export CXX="clang++" &&
             export CC="clang"
-            ;
           fi
-          ;
         else
+          echo "Building for Qt 4.8" &&
           sudo apt-get -qq update &&
           if [ "${COMPILER}" = "g++-4.6" ]; then
             sudo apt-get -qq install g++-4.6 gcc-4.6 libqt4-dev libqt4-dev-bin libqt4-network libqt4-xml libqt4-xmlpatterns libqt4-sql libqt4-sql-sqlite libqt4-test libqt4-dbus libqt4-webkit &&
             export CXX="g++-4.6" &&
             export CC="gcc-4.6"
-            ;
           else
             sudo apt-get -qq install libqt4-dev libqt4-dev-bin libqt4-network libqt4-xml libqt4-xmlpatterns libqt4-sql libqt4-sql-sqlite libqt4-test libqt4-dbus libqt4-webkit &&
             export CXX="clang++" &&
             export CC="clang"
-            ;
           fi
-          ;
         fi
-        ;
       else
         brew update &&
         brew unlink cmake &&
@@ -93,14 +88,15 @@ install:
         brew install qt5 &&
         chmod -R 755 /usr/local/opt/qt5/* &&
         brew install openssl &&
-        brew install boost
-        ;
+        brew install boost &&
+        brew install hunspell
       fi
     - export LIBQUENTIER_DIR=$(pwd) &&
       echo "LIBQUENTIER_DIR = $LIBQUENTIER_DIR"
     - cmake --version
     - cd ..
     - |
+      echo "Building qtkeychain" &&
       mkdir qtkeychain &&
       git clone https://github.com/frankosterfeld/qtkeychain.git qtkeychain &&
       cd qtkeychain &&
@@ -110,53 +106,45 @@ install:
       if [ "${TRAVIS_OS_NAME}" = "linux" ]; then
         if [ "${QT_BASE}" = "593" ];then
           source /opt/qt59/bin/qt59-env.sh &&
-          if [ "${COMPILER}" = "g++-7" ]; then
-            cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$(pwd)/installdir -DCMAKE_PREFIX_PATH=/opt/qt59 ..
-          else
-            cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_INSTALL_PREFIX=$(pwd)/installdir -DCMAKE_PREFIX_PATH=/opt/qt59 ..
-          fi
+          cmake -DCMAKE_INSTALL_PREFIX=$(pwd)/installdir -DCMAKE_PREFIX_PATH=/opt/qt59 ..
         elif [ "${QT_BASE}" = "55" ]; then
           source /opt/qt55/bin/qt55-env.sh &&
-          cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_INSTALL_PREFIX=$(pwd)/installdir -DCMAKE_PREFIX_PATH=/opt/qt55 ..
+          cmake -DCMAKE_INSTALL_PREFIX=$(pwd)/installdir -DCMAKE_PREFIX_PATH=/opt/qt55 ..
         else
-          cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_INSTALL_PREFIX=$(pwd)/installdir -DBUILD_WITH_QT4=1 ..
+          cmake -DCMAKE_INSTALL_PREFIX=$(pwd)/installdir -DBUILD_WITH_QT4=1 ..
         fi
       else
-        cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$(pwd)/installdir -DCMAKE_PREFIX_PATH=/usr/local/opt/qt5 ..
+        cmake -DCMAKE_INSTALL_PREFIX=$(pwd)/installdir -DCMAKE_PREFIX_PATH=/usr/local/opt/qt5 ..
       fi
       make &&
       sudo make install &&
       cd ../..
-    - mkdir tidy-html5 &&
+    - echo "Building tidy-html5" &&
+      mkdir tidy-html5 &&
       git clone https://github.com/htacg/tidy-html5.git tidy-html5 &&
       cd tidy-html5 &&
       git checkout 5.6.0 &&
       mkdir build-tidy &&
       cd build-tidy &&
-      if [ "${QT_BASE}" = "593" ] && [ "${COMPILER}" = "g++-7" ]; then
-        cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$(pwd)/installdir ..
-        ;
-      else
-        cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_INSTALL_PREFIX=$(pwd)/installdir ..
-        ;
-      fi
-      ;
+      cmake -DCMAKE_INSTALL_PREFIX=$(pwd)/installdir .. &&
       make &&
       make install &&
       cd ../..
     - if [ "${QT_BASE}" = "48" ]; then
+        echo "Building qt4-mimetypes" &&
         mkdir qt4-mimetypes &&
         git clone https://github.com/d1vanov/qt4-mimetypes.git qt4-mimetypes &&
         cd qt4-mimetypes &&
         mkdir build &&
         cd build &&
-        cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_INSTALL_PREFIX=$(pwd)/installdir .. &&
+        cmake -DCMAKE_INSTALL_PREFIX=$(pwd)/installdir .. &&
         make &&
         make install &&
         cd ../..
         ;
       fi
     - |
+      echo "Building QEverCloud" &&
       mkdir QEverCloud &&
       git clone https://github.com/d1vanov/QEverCloud.git QEverCloud &&
       cd QEverCloud &&
@@ -164,19 +152,19 @@ install:
       mkdir build &&
       cd build &&
       if [ "${TRAVIS_OS_NAME}" = "linux" ]; then
-        if [ "${QT_BASE}" = "593" ] && [ "${COMPILER}" = "g++-7" ]; then
+        if [ "${QT_BASE}" = "593" ]; then
           source /opt/qt59/bin/qt59-env.sh &&
-          cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$(pwd)/installdir -DCMAKE_PREFIX_PATH=/opt/qt59 -DUSE_QT5=1 .. &&
-          export LD_LIBRARY_PATH=/opt/qt59/lib
+          export LD_LIBRARY_PATH=/opt/qt59/lib &&
+          cmake -DCMAKE_INSTALL_PREFIX=$(pwd)/installdir -DCMAKE_PREFIX_PATH=/opt/qt59 -DUSE_QT5=1 ..
         elif [ "${QT_BASE}" = "551" ]; then
           source /opt/qt55/bin/qt55-env.sh &&
-          cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_INSTALL_PREFIX=$(pwd)/installdir -DCMAKE_PREFIX_PATH=/opt/qt55 -DUSE_QT5=1 .. &&
           export LD_LIBRARY_PATH=/opt/qt55/lib
+          cmake -DCMAKE_INSTALL_PREFIX=$(pwd)/installdir -DCMAKE_PREFIX_PATH=/opt/qt55 -DUSE_QT5=1 ..
         else
-          cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_INSTALL_PREFIX=$(pwd)/installdir ..
+          cmake -DCMAKE_INSTALL_PREFIX=$(pwd)/installdir ..
         fi
       else
-        cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_INSTALL_PREFIX=$(pwd)/installdir -DCMAKE_PREFIX_PATH=/usr/local/opt/qt5 -DUSE_QT5=1 ..
+        cmake -DCMAKE_INSTALL_PREFIX=$(pwd)/installdir -DCMAKE_PREFIX_PATH=/usr/local/opt/qt5 -DUSE_QT5=1 ..
       fi
       make &&
       make check &&
@@ -185,6 +173,7 @@ install:
 
 script:
     - |
+      echo "Building libquentier" &&
       cd $LIBQUENTIER_DIR &&
       mkdir build &&
       cd build &&
@@ -192,32 +181,23 @@ script:
         if [ "${QT_BASE}" = "593" ]; then
           source /opt/qt59/bin/qt59-env.sh &&
           export LD_LIBRARY_PATH=/opt/qt59/lib &&
-          if [ "${COMPILER}" = "g++-7" ]; then
-            cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$(pwd)/installdir \
-                  -DQt5Keychain_DIR=$(pwd)/../../qtkeychain/build/installdir/lib/x86_64-linux-gnu/cmake/Qt5Keychain \
-                  -DQEverCloud-qt5_DIR=$(pwd)/../../QEverCloud/build/installdir/lib/cmake/QEverCloud-qt5 \
-                  -DTIDY_HTML5_INCLUDE_PATH=$(pwd)/../../tidy-html5/build-tidy/installdir/include \
-                  -DTIDY_HTML5_LIB=$(pwd)/../../tidy-html5/build-tidy/installdir/lib/libtidy.so \
-                  -DCMAKE_VERBOSE_MAKEFILE=ON -DCMAKE_PREFIX_PATH=/opt/qt59 -DUSE_QT5=1 ..
-          else
-            cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_INSTALL_PREFIX=$(pwd)/installdir \
-                  -DQt5Keychain_DIR=$(pwd)/../../qtkeychain/build/installdir/lib/x86_64-linux-gnu/cmake/Qt5Keychain \
-                  -DQEverCloud-qt5_DIR=$(pwd)/../../QEverCloud/build/installdir/lib/cmake/QEverCloud-qt5 \
-                  -DTIDY_HTML5_INCLUDE_PATH=$(pwd)/../../tidy-html5/build-tidy/installdir/include \
-                  -DTIDY_HTML5_LIB=$(pwd)/../../tidy-html5/build-tidy/installdir/lib/libtidy.so \
-                  -DCMAKE_VERBOSE_MAKEFILE=ON -DCMAKE_PREFIX_PATH=/opt/qt59 -DUSE_QT5=1 ..
-          fi
+          cmake -DCMAKE_INSTALL_PREFIX=$(pwd)/installdir \
+                -DQt5Keychain_DIR=$(pwd)/../../qtkeychain/build/installdir/lib/x86_64-linux-gnu/cmake/Qt5Keychain \
+                -DQEverCloud-qt5_DIR=$(pwd)/../../QEverCloud/build/installdir/lib/cmake/QEverCloud-qt5 \
+                -DTIDY_HTML5_INCLUDE_PATH=$(pwd)/../../tidy-html5/build-tidy/installdir/include \
+                -DTIDY_HTML5_LIB=$(pwd)/../../tidy-html5/build-tidy/installdir/lib/libtidy.so \
+                -DCMAKE_VERBOSE_MAKEFILE=ON -DCMAKE_PREFIX_PATH=/opt/qt59 -DUSE_QT5=1 ..
         elif [ "${QT_BASE}" = "551" ]; then
           source /opt/qt55/bin/qt55-env.sh &&
           export LD_LIBRARY_PATH=/opt/qt55/lib &&
-          cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_INSTALL_PREFIX=$(pwd)/installdir \
+          cmake -DCMAKE_INSTALL_PREFIX=$(pwd)/installdir \
                 -DQt5Keychain_DIR=$(pwd)/../../qtkeychain/build/installdir/lib/x86_64-linux-gnu/cmake/Qt5Keychain \
                 -DQEverCloud-qt5_DIR=$(pwd)/../../QEverCloud/build/installdir/lib/cmake/QEverCloud-qt5 \
                 -DTIDY_HTML5_INCLUDE_PATH=$(pwd)/../../tidy-html5/build-tidy/installdir/include \
                 -DTIDY_HTML5_LIB=$(pwd)/../../tidy-html5/build-tidy/installdir/lib/libtidy.so \
                 -DCMAKE_VERBOSE_MAKEFILE=ON -DCMAKE_PREFIX_PATH=/opt/qt55 -DUSE_QT5=1 ..
         else
-          cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_INSTALL_PREFIX=$(pwd)/installdir \
+          cmake -DCMAKE_INSTALL_PREFIX=$(pwd)/installdir \
                 -DQtKeychain_DIR=$(pwd)/../../qtkeychain/build/installdir/lib/x86_64-linux-gnu/cmake/QtKeychain \
                 -DQEverCloud-qt4_DIR=$(pwd)/../../QEverCloud/build/installdir/lib/cmake/QEverCloud-qt4 \
                 -DTIDY_HTML5_INCLUDE_PATH=$(pwd)/../../tidy-html5/build-tidy/installdir/include \
@@ -233,7 +213,7 @@ script:
         fi
         echo "LD_LIBRARY_PATH = $LD_LIBRARY_PATH"
       else
-        cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_INSTALL_PREFIX=$(pwd)/installdir \
+        cmake -DCMAKE_INSTALL_PREFIX=$(pwd)/installdir \
               -DCMAKE_PREFIX_PATH=/usr/local/opt/qt5 \
               -DOPENSSL_ROOT_DIR=/usr/local/opt/openssl \
               -DQt5Keychain_DIR=$(pwd)/../../qtkeychain/build/installdir/lib/x86_64-linux-gnu/cmake/Qt5Keychain \
