@@ -125,8 +125,8 @@ bool HTMLCleaner::Impl::convertHtml(const QString & html, const TidyOptionId out
     }
 
     if (ok) {
-        ok = tidyOptSetBool(m_tidyDoc, TidyIndentContent, no);
-        QNTRACE(QStringLiteral("tidyOptSetBool: indent content = no: ok = ") << (ok ? QStringLiteral("true") : QStringLiteral("false")));
+        ok = tidyOptSetInt(m_tidyDoc, TidyIndentContent, TidyNoState);
+        QNTRACE(QStringLiteral("tidyOptSetInt: indent content = no: ok = ") << (ok ? QStringLiteral("true") : QStringLiteral("false")));
     }
 
     if (ok) {
@@ -140,7 +140,7 @@ bool HTMLCleaner::Impl::convertHtml(const QString & html, const TidyOptionId out
     }
 
     if (ok) {
-        rc = tidyOptSetBool(m_tidyDoc, TidyVertSpace, no);
+        rc = tidyOptSetInt(m_tidyDoc, TidyVertSpace, TidyNoState);
         QNTRACE(QStringLiteral("tidyOptSetBool: vert space = no: ok = ") << (ok ? QStringLiteral("true") : QStringLiteral("false")));
     }
 
@@ -150,7 +150,7 @@ bool HTMLCleaner::Impl::convertHtml(const QString & html, const TidyOptionId out
     }
 
     if (ok) {
-        rc = tidyOptSetBool(m_tidyDoc, TidyBodyOnly, yes);
+        rc = tidyOptSetInt(m_tidyDoc, TidyBodyOnly, TidyYesState);
         QNTRACE(QStringLiteral("tidyOptSetBool: tidy body only = yes: ok = ") << (ok ? QStringLiteral("true") : QStringLiteral("false")));
     }
 
