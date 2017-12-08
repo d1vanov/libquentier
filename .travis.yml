@@ -108,9 +108,13 @@ install:
       mkdir build &&
       cd build &&
       if [ "${TRAVIS_OS_NAME}" = "linux" ]; then
-        if [ "${QT_BASE}" = "593" ] && [ "${COMPILER}" = "g++-7" ]; then
+        if [ "${QT_BASE}" = "593" ];then
           source /opt/qt59/bin/qt59-env.sh &&
-          cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$(pwd)/installdir -DCMAKE_PREFIX_PATH=/opt/qt59 ..
+          if [ "${COMPILER}" = "g++-7" ]; then
+            cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$(pwd)/installdir -DCMAKE_PREFIX_PATH=/opt/qt59 ..
+          else
+            cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_INSTALL_PREFIX=$(pwd)/installdir -DCMAKE_PREFIX_PATH=/opt/qt59 ..
+          fi
         elif [ "${QT_BASE}" = "55" ]; then
           source /opt/qt55/bin/qt55-env.sh &&
           cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_INSTALL_PREFIX=$(pwd)/installdir -DCMAKE_PREFIX_PATH=/opt/qt55 ..
