@@ -39,7 +39,7 @@ install:
         sudo cp -fR cmake-3.2.0-Linux-x86_64/* /usr &&
         sudo apt-get -qq install libxml2-dev libboost-dev libssl-dev libhunspell-dev &&
         sudo apt-add-repository -y ppa:ubuntu-toolchain-r/test &&
-        if [ "${QT_BASE}" = 551]; then
+        if [ "${QT_BASE}" = "551" ]; then
           sudo apt-add-repository -y ppa:beineri/opt-qt551-trusty &&
           sudo apt-get -qq update &&
           if [ "${COMPILER}" = "g++-4.9" ]; then
@@ -184,36 +184,36 @@ install:
         if [ "${QT_BASE}" = "593" ] && [ "${COMPILER}" = "g++-7" ]; then
           source /opt/qt59/bin/qt59-env.sh &&
           cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$(pwd)/installdir \
-                -DQt5Keychain_DIR=../../qtkeychain/build/installdir/lib/x86_64-linux-gnu/cmake/Qt5Keychain \
-                -DQEverCloud-qt5_DIR=../../QEverCloud/build/installdir/lib/cmake/QEverCloud-qt5 \
-                -DTIDY_HTML5_INCLUDE_PATH=../../tidy-html5/build-tidy/installdir/include \
-                -DTIDY_HTML5_LIB=../../tidy-html5/build-tidy/installdir/lib/libtidy.so \
+                -DQt5Keychain_DIR=$(pwd)/../../qtkeychain/build/installdir/lib/x86_64-linux-gnu/cmake/Qt5Keychain \
+                -DQEverCloud-qt5_DIR=$(pwd)/../../QEverCloud/build/installdir/lib/cmake/QEverCloud-qt5 \
+                -DTIDY_HTML5_INCLUDE_PATH=$(pwd)/../../tidy-html5/build-tidy/installdir/include \
+                -DTIDY_HTML5_LIB=$(pwd)/../../tidy-html5/build-tidy/installdir/lib/libtidy.so \
                 -DCMAKE_VERBOSE_MAKEFILE=ON -DCMAKE_PREFIX_PATH=/opt/qt59 -DUSE_QT5=1 ..
         elif [ "${QT_BASE}" = "48" ]; then
           cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_INSTALL_PREFIX=$(pwd)/installdir \
-                -DQtKeychain_DIR=../../qtkeychain/build/installdir/lib/x86_64-linux-gnu/cmake/QtKeychain \
-                -DQEverCloud-qt4_DIR=../../QEverCloud/build/installdir/lib/cmake/QEverCloud-qt4 \
-                -DTIDY_HTML5_INCLUDE_PATH=../../tidy-html5/build-tidy/installdir/include \
-                -DTIDY_HTML5_LIB=../../tidy-html5/build-tidy/installdir/lib/libtidy.so \
-                -Dqt4-mimetypes_DIR=../../qt4-mimetypes/build/installdir/lib/cmake/qt4-mimetypes \
+                -DQtKeychain_DIR=$(pwd)/../../qtkeychain/build/installdir/lib/x86_64-linux-gnu/cmake/QtKeychain \
+                -DQEverCloud-qt4_DIR=$(pwd)/../../QEverCloud/build/installdir/lib/cmake/QEverCloud-qt4 \
+                -DTIDY_HTML5_INCLUDE_PATH=$(pwd)/../../tidy-html5/build-tidy/installdir/include \
+                -DTIDY_HTML5_LIB=$(pwd)/../../tidy-html5/build-tidy/installdir/lib/libtidy.so \
+                -Dqt4-mimetypes_DIR=$(pwd)/../../qt4-mimetypes/build/installdir/lib/cmake/qt4-mimetypes \
                 -DCMAKE_VERBOSE_MAKEFILE=ON ..
         else
           source /opt/qt55/bin/qt55-env.sh &&
           cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_INSTALL_PREFIX=$(pwd)/installdir \
-                -DQt5Keychain_DIR=../../qtkeychain/build/installdir/lib/x86_64-linux-gnu/cmake/Qt5Keychain \
-                -DQEverCloud-qt5_DIR=../../QEverCloud/build/installdir/lib/cmake/QEverCloud-qt5 \
-                -DTIDY_HTML5_INCLUDE_PATH=../../tidy-html5/build-tidy/installdir/include \
-                -DTIDY_HTML5_LIB=../../tidy-html5/build-tidy/installdir/lib/libtidy.so \
+                -DQt5Keychain_DIR=$(pwd)/../../qtkeychain/build/installdir/lib/x86_64-linux-gnu/cmake/Qt5Keychain \
+                -DQEverCloud-qt5_DIR=$(pwd)/../../QEverCloud/build/installdir/lib/cmake/QEverCloud-qt5 \
+                -DTIDY_HTML5_INCLUDE_PATH=$(pwd)/../../tidy-html5/build-tidy/installdir/include \
+                -DTIDY_HTML5_LIB=$(pwd)/../../tidy-html5/build-tidy/installdir/lib/libtidy.so \
                 -DCMAKE_VERBOSE_MAKEFILE=ON -DCMAKE_PREFIX_PATH=/opt/qt55 -DUSE_QT5=1 ..
         fi
       else
         cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_INSTALL_PREFIX=$(pwd)/installdir \
               -DCMAKE_PREFIX_PATH=/usr/local/opt/qt5 \
               -DOPENSSL_ROOT_DIR=/usr/local/opt/openssl \
-              -DQt5Keychain_DIR=../../qtkeychain/build/installdir/lib/x86_64-linux-gnu/cmake/Qt5Keychain \
-              -DQEverCloud-qt5_DIR=../../QEverCloud/build/installdir/lib/cmake/QEverCloud-qt5 \
-              -DTIDY_HTML5_INCLUDE_PATH=../../tidy-html5/build-tidy/installdir/include \
-              -DTIDY_HTML5_LIB=../../tidy-html5/build-tidy/installdir/lib/libtidy.so \
+              -DQt5Keychain_DIR=$(pwd)/../../qtkeychain/build/installdir/lib/x86_64-linux-gnu/cmake/Qt5Keychain \
+              -DQEverCloud-qt5_DIR=$(pwd)/../../QEverCloud/build/installdir/lib/cmake/QEverCloud-qt5 \
+              -DTIDY_HTML5_INCLUDE_PATH=$(pwd)/../../tidy-html5/build-tidy/installdir/include \
+              -DTIDY_HTML5_LIB=$(pwd)/../../tidy-html5/build-tidy/installdir/lib/libtidy.so \
               -DCMAKE_VERBOSE_MAKEFILE=ON -DUSE_QT5=1 ..
       fi
 
