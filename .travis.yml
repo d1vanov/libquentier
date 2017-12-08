@@ -100,14 +100,6 @@ install:
 before_script:
     - export LIBQUENTIER_DIR=$(pwd)
     - cmake --version
-    - |
-      if [ "${TRAVIS_OS_NAME}" = "linux" ]; then
-        if [ "${QT_BASE}" = "55" ]; then
-          source /opt/qt55/bin/qt55-env.sh
-        elif [ "${QT_BASE}" = "593" ]; then
-          source /opt/qt59/bin/qt59-env.sh
-        fi
-      fi
     - cd ..
     - |
       mkdir qtkeychain &&
@@ -118,10 +110,10 @@ before_script:
       cd build &&
       if [ "${TRAVIS_OS_NAME}" = "linux" ]; then
         if [ "${QT_BASE}" = "593" && "${COMPILER}" = "g++-7" ]; then
-          source /opt/qt59/bin/qt59-env.sh
+          source /opt/qt59/bin/qt59-env.sh &&
           cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$(pwd)/installdir -DCMAKE_PREFIX_PATH=/opt/qt59 ..
         elif [ "${QT_BASE}" = "55" ]; then
-          source /opt/qt55/bin/qt55-env.sh
+          source /opt/qt55/bin/qt55-env.sh &&
           cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_INSTALL_PREFIX=$(pwd)/installdir -DCMAKE_PREFIX_PATH=/opt/qt55 ..
         else
           cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_INSTALL_PREFIX=$(pwd)/installdir -DBUILD_WITH_QT4=1 ..
@@ -170,10 +162,10 @@ before_script:
       cd build &&
       if [ "${TRAVIS_OS_NAME}" = "linux" ]; then
         if [ "${QT_BASE}" = "593" && "${COMPILER}" = "g++-7" ]; then
-          source /opt/qt59/bin/qt59-env.sh
+          source /opt/qt59/bin/qt59-env.sh &&
           cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$(pwd)/installdir -DCMAKE_PREFIX_PATH=/opt/qt59 -DUSE_QT5=1 ..
         elif [ "${QT_BASE}" = "551" ]; then
-          source /opt/qt55/bin/qt55-env.sh
+          source /opt/qt55/bin/qt55-env.sh &&
           cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_INSTALL_PREFIX=$(pwd)/installdir -DCMAKE_PREFIX_PATH=/opt/qt55 -DUSE_QT5=1 ..
         else
           cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_INSTALL_PREFIX=$(pwd)/installdir ..
@@ -191,7 +183,7 @@ before_script:
       cd build &&
       if [ "${TRAVIS_OS_NAME}" = "linux" ]; then
         if [ "${QT_BASE}" = "593" && "${COMPILER}" = "g++-7" ]; then
-          source /opt/qt59/bin/qt59-env.sh
+          source /opt/qt59/bin/qt59-env.sh &&
           cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$(pwd)/installdir
                 -DQt5Keychain_DIR=../../qtkeychain/build/installdir/lib/x86_64-linux-gnu/cmake/Qt5Keychain
                 -DQEverCloud-qt5_DIR=../../QEverCloud/build/installdir/lib/cmake/QEverCloud-qt5
@@ -207,7 +199,7 @@ before_script:
                 -Dqt4-mimetypes_DIR=../../qt4-mimetypes/build/installdir/lib/cmake/qt4-mimetypes
                 -DCMAKE_VERBOSE_MAKEFILE=ON ..
         else
-          source /opt/qt55/bin/qt55-env.sh
+          source /opt/qt55/bin/qt55-env.sh &&
           cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_INSTALL_PREFIX=$(pwd)/installdir
                 -DQt5Keychain_DIR=../../qtkeychain/build/installdir/lib/x86_64-linux-gnu/cmake/Qt5Keychain
                 -DQEverCloud-qt5_DIR=../../QEverCloud/build/installdir/lib/cmake/QEverCloud-qt5
