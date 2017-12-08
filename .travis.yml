@@ -33,7 +33,7 @@ matrix:
 
 install:
     - if [ "${TRAVIS_OS_NAME}" = "linux" ]; then
-        wget http://www.cmake.org/files/v3.2/cmake-3.2.0-Linux-x86_64.tar.gz	 &&
+        wget http://www.cmake.org/files/v3.2/cmake-3.2.0-Linux-x86_64.tar.gz &&
         tar -xzf cmake-3.2.0-Linux-x86_64.tar.gz &&
         sudo cp -fR cmake-3.2.0-Linux-x86_64/* /usr &&
         sudo apt-add-repository -y ppa:ubuntu-toolchain-r/test &&
@@ -69,7 +69,7 @@ install:
             ;
           fi
           ;
-        else # Qt 4.8
+        else
           export DISPLAY=:99.0 &&
           sh -e /etc/init.d/xvfb start &&
           sudo apt-get -qq update &&
@@ -90,7 +90,7 @@ install:
         fi
         ;
         sudo apt-get -qq install libxml2-dev libboost-dev libssl-dev libhunspell-dev
-      else # macOS
+      else
         brew update &&
         brew unlink cmake &&
         brew install cmake &&
@@ -202,7 +202,7 @@ before_script:
                 -Dqt4-mimetypes_DIR=../../qt4-mimetypes/build/installdir/lib/cmake/qt4-mimetypes \
                 -DCMAKE_VERBOSE_MAKEFILE=ON ..
                 ;
-        else # Qt 5.5.1
+        else
           cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_INSTALL_PREFIX=$(pwd)/installdir \
                 -DQt5Keychain_DIR=../../qtkeychain/build/installdir/lib/x86_64-linux-gnu/cmake/Qt5Keychain \
                 -DQEverCloud-qt5_DIR=../../QEverCloud/build/installdir/lib/cmake/QEverCloud-qt5 \
@@ -210,7 +210,7 @@ before_script:
                 -DTIDY_HTML5_LIB=../../tidy-html5/build/installdir/lib/libtidy.so \
                 -DCMAKE_VERBOSE_MAKEFILE=ON -DUSE_QT5=1 ..
           ;
-      else # macOS
+      else
           cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_INSTALL_PREFIX=$(pwd)/installdir \
                 -DCMAKE_PREFIX_PATH=/usr/local/opt/qt5 \
                 -DOPENSSL_ROOT_DIR=/usr/local/opt/openssl \
@@ -222,4 +222,4 @@ before_script:
       fi
 
 script: make && make check
-# dummy change to trigger branch update and rebuild
+# dummy change to trigger branch update and rebuild, attempt 2
