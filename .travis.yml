@@ -41,8 +41,7 @@ install:
           sudo apt-add-repository -y ppa:beineri/opt-qt551-trusty &&
           sudo apt-get -qq update &&
           if [ "${COMPILER}" = "g++-4.9" ]; then
-            sudo apt-get -qq install g++-4.9 gcc-4.9 \
-              qt55tools qt55base qt55webchannel qt55webengine qt55websockets qt55xmlpatterns &&
+            sudo apt-get -qq install g++-4.9 gcc-4.9 qt55tools qt55base qt55webchannel qt55webengine qt55websockets qt55xmlpatterns &&
             export CXX="g++-4.9" &&
             export CC="gcc-4.9"
             ;
@@ -57,8 +56,7 @@ install:
           sudo apt-add-repository -y ppa:beineri/opt-qt593-trusty &&
           sudo apt-get -qq update &&
           if [ "${COMPILER}" = "g++-7" ]; then
-            sudo apt-get -qq install g++-7 gcc-7 qt59tools qt59base qt59webchannel \
-              qt59webengine qt59websockets qt59xmlpatterns &&
+            sudo apt-get -qq install g++-7 gcc-7 qt59tools qt59base qt59webchannel qt59webengine qt59websockets qt59xmlpatterns &&
             export CXX="g++-7" &&
             export CC="gcc-7"
             ;
@@ -74,14 +72,12 @@ install:
           sh -e /etc/init.d/xvfb start &&
           sudo apt-get -qq update &&
           if [ "${COMPILER}" = "g++-4.6" ]; then
-            sudo apt-get -qq install g++-4.6 gcc-4.6 libqt4-dev libqt4-dev-bin libqt4-network \
-              libqt4-xml libqt4-xmlpatterns libqt4-sql libqt4-sql-sqlite libqt4-test libqt4-dbus libqt4-webkit &&
+            sudo apt-get -qq install g++-4.6 gcc-4.6 libqt4-dev libqt4-dev-bin libqt4-network libqt4-xml libqt4-xmlpatterns libqt4-sql libqt4-sql-sqlite libqt4-test libqt4-dbus libqt4-webkit &&
             export CXX="g++-4.6" &&
             export CC="gcc-4.6"
             ;
           else
-            sudo apt-get -qq install libqt4-dev libqt4-dev-bin libqt4-network \
-              libqt4-xml libqt4-xmlpatterns libqt4-sql libqt4-sql-sqlite libqt4-test libqt4-dbus libqt4-webkit &&
+            sudo apt-get -qq install libqt4-dev libqt4-dev-bin libqt4-network libqt4-xml libqt4-xmlpatterns libqt4-sql libqt4-sql-sqlite libqt4-test libqt4-dbus libqt4-webkit &&
             export CXX="clang++" &&
             export CC="clang"
             ;
@@ -181,45 +177,45 @@ before_script:
       make test &&
       make install &&
       cd ../..
-    - cd $LIBQUENTIER_DIR &&
+    - |
+      cd $LIBQUENTIER_DIR &&
       mkdir build &&
       cd build &&
       if [ "${TRAVIS_OS_NAME}" = "linux" ]; then
         if [ "${QT_BASE}" = "593" && "${COMPILER}" = "g++-7" ]; then
-          cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$(pwd)/installdir \
-                -DQt5Keychain_DIR=../../qtkeychain/build/installdir/lib/x86_64-linux-gnu/cmake/Qt5Keychain \
-                -DQEverCloud-qt5_DIR=../../QEverCloud/build/installdir/lib/cmake/QEverCloud-qt5 \
-                -DTIDY_HTML5_INCLUDE_PATH=../../tidy-html5/build/installdir/include \
-                -DTIDY_HTML5_LIB=../../tidy-html5/build/installdir/lib/libtidy.so \
+          cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$(pwd)/installdir
+                -DQt5Keychain_DIR=../../qtkeychain/build/installdir/lib/x86_64-linux-gnu/cmake/Qt5Keychain
+                -DQEverCloud-qt5_DIR=../../QEverCloud/build/installdir/lib/cmake/QEverCloud-qt5
+                -DTIDY_HTML5_INCLUDE_PATH=../../tidy-html5/build/installdir/include
+                -DTIDY_HTML5_LIB=../../tidy-html5/build/installdir/lib/libtidy.so
                 -DCMAKE_VERBOSE_MAKEFILE=ON -DUSE_QT5=1 ..
           ;
         elif [ "${QT_BASE}" = "48" ]; then
-          cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_INSTALL_PREFIX=$(pwd)/installdir \
-                -DQtKeychain_DIR=../../qtkeychain/build/installdir/lib/x86_64-linux-gnu/cmake/QtKeychain \
-                -DQEverCloud-qt4_DIR=../../QEverCloud/build/installdir/lib/cmake/QEverCloud-qt4 \
-                -DTIDY_HTML5_INCLUDE_PATH=../../tidy-html5/build/installdir/include \
-                -DTIDY_HTML5_LIB=../../tidy-html5/build/installdir/lib/libtidy.so \
-                -Dqt4-mimetypes_DIR=../../qt4-mimetypes/build/installdir/lib/cmake/qt4-mimetypes \
+          cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_INSTALL_PREFIX=$(pwd)/installdir
+                -DQtKeychain_DIR=../../qtkeychain/build/installdir/lib/x86_64-linux-gnu/cmake/QtKeychain
+                -DQEverCloud-qt4_DIR=../../QEverCloud/build/installdir/lib/cmake/QEverCloud-qt4
+                -DTIDY_HTML5_INCLUDE_PATH=../../tidy-html5/build/installdir/include
+                -DTIDY_HTML5_LIB=../../tidy-html5/build/installdir/lib/libtidy.so
+                -Dqt4-mimetypes_DIR=../../qt4-mimetypes/build/installdir/lib/cmake/qt4-mimetypes
                 -DCMAKE_VERBOSE_MAKEFILE=ON ..
                 ;
         else
-          cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_INSTALL_PREFIX=$(pwd)/installdir \
-                -DQt5Keychain_DIR=../../qtkeychain/build/installdir/lib/x86_64-linux-gnu/cmake/Qt5Keychain \
-                -DQEverCloud-qt5_DIR=../../QEverCloud/build/installdir/lib/cmake/QEverCloud-qt5 \
-                -DTIDY_HTML5_INCLUDE_PATH=../../tidy-html5/build/installdir/include \
-                -DTIDY_HTML5_LIB=../../tidy-html5/build/installdir/lib/libtidy.so \
+          cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_INSTALL_PREFIX=$(pwd)/installdir
+                -DQt5Keychain_DIR=../../qtkeychain/build/installdir/lib/x86_64-linux-gnu/cmake/Qt5Keychain
+                -DQEverCloud-qt5_DIR=../../QEverCloud/build/installdir/lib/cmake/QEverCloud-qt5
+                -DTIDY_HTML5_INCLUDE_PATH=../../tidy-html5/build/installdir/include
+                -DTIDY_HTML5_LIB=../../tidy-html5/build/installdir/lib/libtidy.so
                 -DCMAKE_VERBOSE_MAKEFILE=ON -DUSE_QT5=1 ..
           ;
       else
-          cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_INSTALL_PREFIX=$(pwd)/installdir \
-                -DCMAKE_PREFIX_PATH=/usr/local/opt/qt5 \
-                -DOPENSSL_ROOT_DIR=/usr/local/opt/openssl \
-                -DQt5Keychain_DIR=../../qtkeychain/build/installdir/lib/x86_64-linux-gnu/cmake/Qt5Keychain \
-                -DQEverCloud-qt5_DIR=../../QEverCloud/build/installdir/lib/cmake/QEverCloud-qt5 \
-                -DTIDY_HTML5_INCLUDE_PATH=../../tidy-html5/build/installdir/include \
-                -DTIDY_HTML5_LIB=../../tidy-html5/build/installdir/lib/libtidy.so \
+          cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_INSTALL_PREFIX=$(pwd)/installdir
+                -DCMAKE_PREFIX_PATH=/usr/local/opt/qt5
+                -DOPENSSL_ROOT_DIR=/usr/local/opt/openssl
+                -DQt5Keychain_DIR=../../qtkeychain/build/installdir/lib/x86_64-linux-gnu/cmake/Qt5Keychain
+                -DQEverCloud-qt5_DIR=../../QEverCloud/build/installdir/lib/cmake/QEverCloud-qt5
+                -DTIDY_HTML5_INCLUDE_PATH=../../tidy-html5/build/installdir/include
+                -DTIDY_HTML5_LIB=../../tidy-html5/build/installdir/lib/libtidy.so
                 -DCMAKE_VERBOSE_MAKEFILE=ON -DUSE_QT5=1 ..
       fi
 
 script: make && make check
-# dummy change to trigger branch update and rebuild, attempt 2
