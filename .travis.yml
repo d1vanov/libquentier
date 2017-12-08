@@ -32,6 +32,8 @@ matrix:
 
 install:
     - if [ "${TRAVIS_OS_NAME}" = "linux" ]; then
+        export DISPLAY=:99.0 &&
+        sh -e /etc/init.d/xvfb start &&
         wget http://www.cmake.org/files/v3.2/cmake-3.2.0-Linux-x86_64.tar.gz &&
         tar -xzf cmake-3.2.0-Linux-x86_64.tar.gz &&
         sudo cp -fR cmake-3.2.0-Linux-x86_64/* /usr &&
@@ -68,8 +70,6 @@ install:
           fi
           ;
         else
-          export DISPLAY=:99.0 &&
-          sh -e /etc/init.d/xvfb start &&
           sudo apt-get -qq update &&
           if [ "${COMPILER}" = "g++-4.6" ]; then
             sudo apt-get -qq install g++-4.6 gcc-4.6 libqt4-dev libqt4-dev-bin libqt4-network libqt4-xml libqt4-xmlpatterns libqt4-sql libqt4-sql-sqlite libqt4-test libqt4-dbus libqt4-webkit &&
@@ -96,9 +96,8 @@ install:
         brew install boost
         ;
       fi
-
-before_script:
-    - export LIBQUENTIER_DIR=$(pwd)
+    - export LIBQUENTIER_DIR=$(pwd) &&
+      echo "LIBQUENTIER_DIR = $LIBQUENTIER_DIR"
     - cmake --version
     - cd ..
     - |
