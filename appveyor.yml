@@ -70,11 +70,10 @@ init:
   - git checkout v1.6.2
   - set INCLUDE=%INCLUDE%;%cd%\src\hunspell
   - echo "Building hunspell"
-  - if not %platform%==mingw where msbuild
-  - if %platform%==amd64_x86 msbuild msvc\Hunspell.sln /p:Configuration="Release_dll" /p:Platform="Win32"
-  - if %platform%==amd64 msbuild msvc\Hunspell.sln /p:Configuration="Release_dll" /p:Platform="x64"
+  - if not %platform%==mingw where MSbuild
+  - if %platform%==amd64_x86 MSBuild %cd%\msvc\Hunspell.sln /p:Configuration="Release_dll" /p:Platform="Win32"
+  - if %platform%==amd64 MSBuild %cd%\msvc\Hunspell.sln /p:Configuration="Release_dll" /p:Platform="x64"
   - if not %platform%==mingw dir msvc
-  - if not %platform%==mingw dir msvc\Release_dll
   - if not %platform%==mingw set PATH=%PATH%;%cd%\msvc\Release_dll\libhunspell
   - if not %platform%==mingw set LIB=%LIB%;%cd%\msvc\Release_dll\libhunspell
   - if %platform%==mingw C:\msys64\usr\bin\bash -lc "cd /c/dev/hunspell && autoreconf -i && ./configure && make && make check && make install"
