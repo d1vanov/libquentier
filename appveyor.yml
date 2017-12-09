@@ -21,19 +21,19 @@ environment:
 clone_folder: c:\dev\libquentier
 
 init:
-  - if %platform%=="amd64" echo "Building with Visual Studio 2017"
-  - if %platform%=="amd64_x86" echo "Building with Visual Studio 2015"
-  - if %platform%=="mingw" echo "Building with MinGW"
-  - if not %platform%=="mingw" set PATH=C:\Qt\5.9.2\%qt%\bin;%PATH%
-  - if %platform%=="mingw" set PATH=C:\Qt\5.5\%qt%\bin;%PATH%
+  - if %platform%==amd64 echo "Building with Visual Studio 2017"
+  - if %platform%==amd4_x86 echo "Building with Visual Studio 2015"
+  - if %platform%==mingw echo "Building with MinGW"
+  - if not %platform%==mingw set PATH=C:\Qt\5.9.2\%qt%\bin;%PATH%
+  - if %platform%==mingw set PATH=C:\Qt\5.5\%qt%\bin;%PATH%
   - set ORIGPATH=%PATH%
-  - if %platform%=="mingw" set DEPLOYMENT_TARGET=libquentier-qt592-%qt%-%APPVEYOR_BUILD_VERSION%_%APPVEYOR_REPO_COMMIT:~0,7%.zip
-  - if not %platform%=="mingw" set DEPLOYMENT_TARGET=libquentier-qt55-%qt%-%APPVEYOR_BUILD_VERSION%_%APPVEYOR_REPO_COMMIT:~0,7%.zip
-  - if %platform%=="amd64" call "C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvars64.bat"
-  - if %platform%=="amd64_x86" call "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" %platform%
-  - if not %platform%=="mingw" (set makefiles="NMake Makefiles") else (set makefiles="MinGW Makefiles")
-  - if %platform%=="mingw" (set use_webkit=1) else (set use_webkit=0)
-  - if %platform%=="mingw" set PATH=C:\Qt\5.5\%qt%\bin;C:\MinGW\bin;C:\Program Files (x86)\CMake\bin
+  - if %platform%==mingw set DEPLOYMENT_TARGET=libquentier-qt592-%qt%-%APPVEYOR_BUILD_VERSION%_%APPVEYOR_REPO_COMMIT:~0,7%.zip
+  - if not %platform%==mingw set DEPLOYMENT_TARGET=libquentier-qt55-%qt%-%APPVEYOR_BUILD_VERSION%_%APPVEYOR_REPO_COMMIT:~0,7%.zip
+  - if %platform%==amd64 call "C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvars64.bat"
+  - if %platform%==amd64_x86 call "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" %platform%
+  - if not %platform%==mingw (set makefiles="NMake Makefiles") else (set makefiles="MinGW Makefiles")
+  - if %platform%==mingw (set use_webkit=1) else (set use_webkit=0)
+  - if %platform%==mingw set PATH=C:\Qt\5.5\%qt%\bin;C:\MinGW\bin;C:\Program Files (x86)\CMake\bin
 
 before_build:
   - if not %platform%==amd_64 set OPENSSL_ROOT_DIR=C:\OpenSSL-Win32 else set OPENSSL_ROOT_DIR=C:\OpenSSL-Win64
@@ -41,26 +41,26 @@ before_build:
   - echo "Downloading iconv"
   - md c:\dev\iconv
   - cd c:\dev\iconv
-  - if %platform%=="amd64_x86" appveyor DownloadFile ftp://ftp.zlatkovic.com/libxml/64bit/iconv-1.14-win32-x86.7z
-  - if %platform%=="amd64_x86" 7z x iconv-1.14-win32-x86.7z
-  - if %platform%=="amd64" appveyor DownloadFile ftp://ftp.zlatkovic.com/libxml/64bit/iconv-1.14-win32-x86_64.7z
-  - if %platform%=="amd64_x86" 7z x iconv-1.14-win32-x86_64.7z
-  - if %platform%=="mingw" appveyor DownloadFile ftp://ftp.zlatkovic.com/libxml/iconv-1.9.2.win32.zip
-  - if %platform%=="mingw" 7z x iconv-1.9.2.win32.zip
-  - if %platform%=="mingw" cd iconv-1.9.2.win32
+  - if %platform%==amd64_x86 appveyor DownloadFile ftp://ftp.zlatkovic.com/libxml/64bit/iconv-1.14-win32-x86.7z
+  - if %platform%==amd64_x86 7z x iconv-1.14-win32-x86.7z
+  - if %platform%==amd64 appveyor DownloadFile ftp://ftp.zlatkovic.com/libxml/64bit/iconv-1.14-win32-x86_64.7z
+  - if %platform%==amd64_x86 7z x iconv-1.14-win32-x86_64.7z
+  - if %platform%==mingw appveyor DownloadFile ftp://ftp.zlatkovic.com/libxml/iconv-1.9.2.win32.zip
+  - if %platform%==mingw 7z x iconv-1.9.2.win32.zip
+  - if %platform%==mingw cd iconv-1.9.2.win32
   - set PATH=%PATH%;%cd%\bin
   - set LIB=%LIB%;%cd%\lib
   - set INCLUDE=%LIB%;%cd%\include
   - echo "Downloading libxml2"
   - md c:\dev\libxml2
   - cd c:\dev\libxml2
-  - if %platform%=="amd64_x86" appveyor DownloadFile ftp://ftp.zlatkovic.com/libxml/64bit/libxml2-2.9.3-win32-x86.7z
-  - if %platform%=="amd64_x86" 7z x libxml2-2.9.3-win32-x86.7z
-  - if %platform%=="amd64" appveyor DownloadFile ftp://ftp.zlatkovic.com/libxml/64bit/libxml2-2.9.3-win32-x86_64.7z
-  - if %platform%=="amd64" 7z x libxml2-2.9.3-win32-x86_64.7z
-  - if %platform%=="mingw" appveyor DownloadFile ftp://ftp.zlatkovic.com/libxml/libxml2-2.7.8.win32.zip
-  - if %platform%=="mingw" 7z x libxml2-2.7.8.win32.zip
-  - if %platform%=="mingw" cd libxml2-2.7.8.win32
+  - if %platform%==amd64_x86 appveyor DownloadFile ftp://ftp.zlatkovic.com/libxml/64bit/libxml2-2.9.3-win32-x86.7z
+  - if %platform%==amd64_x86 7z x libxml2-2.9.3-win32-x86.7z
+  - if %platform%==amd64 appveyor DownloadFile ftp://ftp.zlatkovic.com/libxml/64bit/libxml2-2.9.3-win32-x86_64.7z
+  - if %platform%==amd64 7z x libxml2-2.9.3-win32-x86_64.7z
+  - if %platform%==mingw appveyor DownloadFile ftp://ftp.zlatkovic.com/libxml/libxml2-2.7.8.win32.zip
+  - if %platform%==mingw 7z x libxml2-2.7.8.win32.zip
+  - if %platform%==mingw cd libxml2-2.7.8.win32
   - set PATH=%PATH%;%cd%\bin
   - set LIB=%LIB%;%cd%\lib
   - set INCLUDE=%LIB%;%cd%\include
@@ -71,11 +71,11 @@ before_build:
   - cd c:\dev\hunspell
   - set INCLUDE=%INCLUDE%;%cd%\src\hunspell
   - echo "Building hunspell"
-  - if %platform%=="amd64_x86" msbuild /p:Configuration=Release_dll /p:Platform=Win32 msvc\Hunspell.sln
-  - if %platform%=="amd64" msbuild /p:Configuration=Release_dll /p:Platform=x64 msvc\Hunspell.sln
-  - if not %platform%=="mingw" set PATH=%PATH%;%cd%\msvc\Release_dll\libhunspell
-  - if not %platform%=="mingw" set LIB=%LIB%;%cd%\msvc\Release_dll\libhunspell
-  - if %platform%=="mingw" C:\msys64\usr\bin\bash -lc "cd /c/dev/hunspell && autoreconf -i && ./configure && make && make check && make install"
+  - if %platform%==amd64_x86 msbuild /p:Configuration=Release_dll /p:Platform=Win32 msvc\Hunspell.sln
+  - if %platform%==amd64 msbuild /p:Configuration=Release_dll /p:Platform=x64 msvc\Hunspell.sln
+  - if not %platform%==mingw set PATH=%PATH%;%cd%\msvc\Release_dll\libhunspell
+  - if not %platform%==mingw set LIB=%LIB%;%cd%\msvc\Release_dll\libhunspell
+  - if %platform%==mingw C:\msys64\usr\bin\bash -lc "cd /c/dev/hunspell && autoreconf -i && ./configure && make && make check && make install"
   - echo "Downloading qtkeychain"
   - md c:\dev\qtkeychain
   - cd c:\dev
@@ -84,8 +84,8 @@ before_build:
   - cd c:\dev\qtkeychain
   - md build
   - cd build
-  - if not %platform%=="mingw" cmake .. -G %makefiles% -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX="c:\dev\qtkeychain\build\installdir" -DCMAKE_PREFIX_PATH="C:/Qt/5.9.2/%qt%
-  - if %platform%=="mingw" cmake .. -G %makefiles% -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX="c:\dev\qtkeychain\build\installdir" -DCMAKE_PREFIX_PATH="C:/Qt/5.5/%qt%
+  - if not %platform%==mingw cmake .. -G %makefiles% -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX="c:\dev\qtkeychain\build\installdir" -DCMAKE_PREFIX_PATH="C:/Qt/5.9.2/%qt%
+  - if %platform%==mingw cmake .. -G %makefiles% -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX="c:\dev\qtkeychain\build\installdir" -DCMAKE_PREFIX_PATH="C:/Qt/5.5/%qt%
   - cmake --build . --target all
   - cmake --build . --target install
   - set PATH=%PATH%;%cd%\installdir\bin
@@ -100,8 +100,8 @@ before_build:
   - if %APPVEYOR_REPO_BRANCH%=="development" git checkout development
   - md build
   - cd build
-  - if not %platform%=="mingw" cmake .. -G %makefiles% -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX="c:\dev\qtkeychain\build\installdir" -DUSE_QT5=1 -DCMAKE_PREFIX_PATH="C:/Qt/5.9.2/%qt%
-  - if %platform%=="mingw" cmake .. -G %makefiles% -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX="c:\dev\qtkeychain\build\installdir" -DUSE_QT5=1 -DUSE_QT5_WEBKIT=1 -DCMAKE_PREFIX_PATH="C:/Qt/5.5/%qt%
+  - if not %platform%==mingw cmake .. -G %makefiles% -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX="c:\dev\qtkeychain\build\installdir" -DUSE_QT5=1 -DCMAKE_PREFIX_PATH="C:/Qt/5.9.2/%qt%
+  - if %platform%==mingw cmake .. -G %makefiles% -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX="c:\dev\qtkeychain\build\installdir" -DUSE_QT5=1 -DUSE_QT5_WEBKIT=1 -DCMAKE_PREFIX_PATH="C:/Qt/5.5/%qt%
   - cmake --build . --target all
   - cmake --build . --target check
   - cmake --build . --target install
@@ -127,12 +127,12 @@ before_build:
 
 build_script:
   - cd build
-  - if not %platform%=="mingw" cmake .. -G %makefiles% -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX="c:/dev/install" -DUSE_QT5=1 -DCMAKE_PREFIX_PATH="C:/Qt/5.9.2/%qt%"
-  - if %platform%=="mingw" cmake .. -G %makefiles% -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX="c:/dev/install" -DUSE_QT5=1 -DCMAKE_PREFIX_PATH="C:/Qt/5.5/%qt%"
+  - if not %platform%==mingw cmake .. -G %makefiles% -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX="c:/dev/install" -DUSE_QT5=1 -DCMAKE_PREFIX_PATH="C:/Qt/5.9.2/%qt%"
+  - if %platform%==mingw cmake .. -G %makefiles% -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX="c:/dev/install" -DUSE_QT5=1 -DCMAKE_PREFIX_PATH="C:/Qt/5.5/%qt%"
   - cmake --build . --target all
   - cmake --build . --target check
   - cmake --build . --target install
-  - if %platform%=="mingw" set PATH=%ORIGPATH%
+  - if %platform%==mingw set PATH=%ORIGPATH%
 
 after_build:
   - cd c:\dev
