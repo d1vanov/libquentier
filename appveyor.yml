@@ -22,7 +22,7 @@ clone_folder: c:\dev\libquentier
 
 init:
   - if %platform%==amd64 echo "Building with Visual Studio 2017"
-  - if %platform%==amd4_x86 echo "Building with Visual Studio 2015"
+  - if %platform%==amd64_x86 echo "Building with Visual Studio 2015"
   - if %platform%==mingw echo "Building with MinGW"
   - if not %platform%==mingw set PATH=C:\Qt\5.9.2\%qt%\bin;%PATH%
   - if %platform%==mingw set PATH=C:\Qt\5.5\%qt%\bin;%PATH%
