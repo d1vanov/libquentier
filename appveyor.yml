@@ -6,8 +6,7 @@ branches:
 
 environment:
   matrix:
-    - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
-      name: win32
+    - name: win32
       platform: amd64_x86
       qt: msvc2015
     - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
@@ -21,6 +20,7 @@ environment:
 clone_folder: c:\dev\libquentier
 
 init:
+  - echo "Platform = %platform%, name = %name%, qt = %qt%"
   - if %platform%==amd64 echo "Building with Visual Studio 2017"
   - if %platform%==amd64_x86 echo "Building with Visual Studio 2015"
   - if %platform%==mingw echo "Building with MinGW"
