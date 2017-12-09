@@ -5,7 +5,8 @@ dist: trusty
 
 branches:
     only:
-        - feature/Issue-36-integrate-Travis-CI
+        - master
+        - development
 
 matrix:
     include:
