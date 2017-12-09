@@ -2,8 +2,7 @@ version: '0.4.0-{build}'
 
 branches:
   only:
-    - development
-    - master
+    - feature/Issue-37-integrate-AppVeyor-CI
 
 environment:
   matrix:
@@ -31,19 +30,105 @@ init:
   - if %platform%==amd64_x86 call "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" %platform%
   - if not %platform%==mingw (set makefiles="NMake Makefiles") else (set makefiles="MinGW Makefiles")
   - if %platform%==mingw (set use_webkit=1) else (set use_webkit=0)
+  - if %platform%==mingw set PATH=C:\Qt\5.5\%qt%\bin;C:\MinGW\bin;C:\Program Files (x86)\CMake\bin
 
 before_build:
-  # TODO: install all the dependencies
+  - if not %platform%==amd_64 set OPENSSL_ROOT_DIR=C:\OpenSSL-Win32 else set OPENSSL_ROOT_DIR=C:\OpenSSL-Win64
+  - set BOOST_ROOT=C:\Libraries\boost_1_63_0
+  - echo "Downloading iconv"
+  - md c:\dev\iconv
+  - cd c:\dev\iconv
+  - if %platform%==amd64_x86 appveyor DownloadFile ftp://ftp.zlatkovic.com/libxml/64bit/iconv-1.14-win32-x86.7z
+  - if %platform%==amd64_x86 7z x iconv-1.14-win32-x86.7z
+  - if %platform%==amd64 appveyor DownloadFile ftp://ftp.zlatkovic.com/libxml/64bit/iconv-1.14-win32-x86_64.7z
+  - if %platform%==amd64_x86 7z x iconv-1.14-win32-x86_64.7z
+  - if %platform%==mingw appveyor DownloadFile ftp://ftp.zlatkovic.com/libxml/iconv-1.9.2.win32.zip
+  - if %platform%==mingw 7z x iconv-1.9.2.win32.zip
+  - if %platform%==mingw cd iconv-1.9.2.win32
+  - set PATH=%PATH%;%cd%\bin
+  - set LIB=%LIB%;%cd%\lib
+  - set INCLUDE=%LIB%;%cd%\include
+  - echo "Downloading libxml2"
+  - md c:\dev\libxml2
+  - cd c:\dev\libxml2
+  - if %platform%==amd64_x86 appveyor DownloadFile ftp://ftp.zlatkovic.com/libxml/64bit/libxml2-2.9.3-win32-x86.7z
+  - if %platform%==amd64_x86 7z x libxml2-2.9.3-win32-x86.7z
+  - if %platform%==amd64 appveyor DownloadFile ftp://ftp.zlatkovic.com/libxml/64bit/libxml2-2.9.3-win32-x86_64.7z
+  - if %platform%==amd64 7z x libxml2-2.9.3-win32-x86_64.7z
+  - if %platform%==mingw appveyor DownloadFile ftp://ftp.zlatkovic.com/libxml/libxml2-2.7.8.win32.zip
+  - if %platform%==mingw 7z x libxml2-2.7.8.win32.zip
+  - if %platform%==mingw cd libxml2-2.7.8.win32
+  - set PATH=%PATH%;%cd%\bin
+  - set LIB=%LIB%;%cd%\lib
+  - set INCLUDE=%LIB%;%cd%\include
+  - echo "Downloading hunspell"
+  - md c:\dev\hunspell
+  - cd c:\dev
+  - git clone https://github.com/hunspell/hunspell.git
+  - cd c:\dev\hunspell
+  - set INCLUDE=%INCLUDE%;%cd%\src\hunspell
+  - echo "Building hunspell"
+  - if %platform%==amd64_x86 msbuild /p:Configuration=Release_dll /p:Platform=Win32 msvc\Hunspell.sln
+  - if %platform%==amd64 msbuild /p:Configuration=Release_dll /p:Platform=x64 msvc\Hunspell.sln
+  - if not %platform%==mingw set PATH=%PATH%;%cd%\msvc\Release_dll\libhunspell
+  - if not %platform%==mingw set LIB=%LIB%;%cd%\msvc\Release_dll\libhunspell
+  - if %platform%==mingw C:\msys64\usr\bin\bash -lc "cd /c/dev/hunspell && autoreconf -i && ./configure && make && make check && make install"
+  - echo "Downloading qtkeychain"
+  - md c:\dev\qtkeychain
+  - cd c:\dev
+  - git clone https://github.com/frankosterfeld/qtkeychain.git qtkeychain
+  - echo "Building qtkeychain"
+  - cd c:\dev\qtkeychain
+  - md build
+  - cd build
+  - if not %platform%==mingw cmake .. -G %makefiles% -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX="c:\dev\qtkeychain\build\installdir" -DCMAKE_PREFIX_PATH="C:/Qt/5.9.2/%qt%
+  - if %platform%==mingw cmake .. -G %makefiles% -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX="c:\dev\qtkeychain\build\installdir" -DCMAKE_PREFIX_PATH="C:/Qt/5.5/%qt%
+  - cmake --build . --target=all
+  - cmake --build . --target=install
+  - set PATH=%PATH%;%cd%\installdir\bin
+  - set LIB=%LIB%;%cd%\installdir\lib
+  - set INCLUDE=%INCLUDE%;%cd%\installdir\include
+  - echo "Downloading QEverCloud"
+  - md c:\dev\qevercloud
+  - cd c:\dev
+  - git clone https://github.com/d1vanov/QEverCloud.git qevercloud
+  - echo "Building QEverCloud"
+  - cd c:\dev\qevercloud
+  - if %APPVEYOR_REPO_BRANCH%=="development" git checkout development
+  - md build
+  - cd build
+  - if not %platform%==mingw cmake .. -G %makefiles% -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX="c:\dev\qtkeychain\build\installdir" -DUSE_QT5=1 -DCMAKE_PREFIX_PATH="C:/Qt/5.9.2/%qt%
+  - if %platform%==mingw cmake .. -G %makefiles% -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX="c:\dev\qtkeychain\build\installdir" -DUSE_QT5=1 -DUSE_QT5_WEBKIT=1 -DCMAKE_PREFIX_PATH="C:/Qt/5.5/%qt%
+  - cmake --build . --target=all
+  - cmake --build . --target=check
+  - cmake --build . --target=install
+  - set PATH=%PATH%;%cd%\installdir\bin
+  - set LIB=%LIB%;%cd%\installdir\lib
+  - set INCLUDE=%INCLUDE%;%cd%\installdir\include
+  - echo "Downloading tidy-html5"
+  - md c:\dev\tidy-html5
+  - cd c:\dev
+  - git clone https://github.com/htacg/tidy-html5.git tidy-html5
+  - echo "Building tidy-html5"
+  - cd tidy-html5
+  - md build-tidy
+  - cd build-tidy
+  - cmake .. -G %makefiles% -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX="c:\dev\tidy-html5\build-tidy\installdir"
+  - cmake --build . --target=all
+  - cmake --build . --target=install
+  - set PATH=%PATH%;%cd%\installdir\bin
+  - set LIB=%LIB%;%cd%\installdir\lib
+  - set INCLUDE=%INCLUDE%;%cd%\installdir\include
   - cd c:\dev\libquentier
   - md build
 
 build_script:
-  - if %platform%==mingw set PATH=C:\Qt\5.5\%qt%\bin;C:\MinGW\bin;C:\Program Files (x86)\CMake\bin
   - cd build
-  - if %platform%==mingw cmake .. -G %makefiles% -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX="c:/dev/install" -DUSE_QT5_WEBKIT=%use_webkit% -DCMAKE_PREFIX_PATH="C:/Qt/5.5/mingw492_32"
-  - if not %platform%==mingw cmake .. -G %makefiles% -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX="c:/dev/install" -DUSE_QT5_WEBKIT=%use_webkit% -DCMAKE_PREFIX_PATH="C:/Qt/5.9.2/%platform%"
-  - if not %platform%==mingw (nmake) else (mingw32-make)
-  - if not %platform%==mingw (nmake install) else (mingw32-make install)
+  - if not %platform%==mingw cmake .. -G %makefiles% -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX="c:/dev/install" -DUSE_QT5=1 -DCMAKE_PREFIX_PATH="C:/Qt/5.9.2/%qt%"
+  - if %platform%==mingw cmake .. -G %makefiles% -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX="c:/dev/install" -DUSE_QT5=1 -DCMAKE_PREFIX_PATH="C:/Qt/5.5/%qt%"
+  - cmake --build . --target=all
+  - cmake --build . --target=check
+  - cmake --build . --target=install
   - if %platform%==mingw set PATH=%ORIGPATH%
 
 after_build:
@@ -70,4 +155,3 @@ test_script:
 
 matrix:
   fast_finish: true
-
