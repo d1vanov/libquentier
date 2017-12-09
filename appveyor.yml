@@ -48,7 +48,7 @@ init:
   - if %platform%==mingw cd iconv-1.9.2.win32
   - set PATH=%PATH%;%cd%\bin
   - set LIB=%LIB%;%cd%\lib
-  - set INCLUDE=%LIB%;%cd%\include
+  - set INCLUDE=%INCLUDE%;%cd%\include
   - echo "Downloading libxml2"
   - md c:\dev\libxml2
   - cd c:\dev\libxml2
@@ -61,7 +61,7 @@ init:
   - if %platform%==mingw cd libxml2-2.7.8.win32
   - set PATH=%PATH%;%cd%\bin
   - set LIB=%LIB%;%cd%\lib
-  - set INCLUDE=%LIB%;%cd%\include
+  - set INCLUDE=%INCLUDE%;%cd%\include
   - echo "Downloading hunspell"
   - md c:\dev\hunspell
   - cd c:\dev
