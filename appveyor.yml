@@ -65,10 +65,12 @@ init:
   - echo "Downloading hunspell"
   - md c:\dev\hunspell
   - cd c:\dev
-  - git clone https://github.com/hunspell/hunspell.git
+  - git clone https://github.com/hunspell/hunspell.git hunspell
   - cd c:\dev\hunspell
+  - git checkout v1.6.2
   - set INCLUDE=%INCLUDE%;%cd%\src\hunspell
   - echo "Building hunspell"
+  - if not %platform%==mingw where msbuild
   - if %platform%==amd64_x86 msbuild /p:Configuration=Release_dll /p:Platform=Win32 msvc\Hunspell.sln
   - if %platform%==amd64 msbuild /p:Configuration=Release_dll /p:Platform=x64 msvc\Hunspell.sln
   - if not %platform%==mingw set PATH=%PATH%;%cd%\msvc\Release_dll\libhunspell
