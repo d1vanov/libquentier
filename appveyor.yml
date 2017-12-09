@@ -155,3 +155,5 @@ test_script:
 
 matrix:
   fast_finish: true
+
+# dummy change to trigger build on AppVeyor"
