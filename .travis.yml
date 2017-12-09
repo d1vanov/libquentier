@@ -107,7 +107,7 @@ install:
         if [ "${QT_BASE}" = "592" ];then
           source /opt/qt59/bin/qt59-env.sh &&
           cmake -DCMAKE_INSTALL_PREFIX=$(pwd)/installdir -DCMAKE_PREFIX_PATH=/opt/qt59 ..
-        elif [ "${QT_BASE}" = "55" ]; then
+        elif [ "${QT_BASE}" = "551" ]; then
           source /opt/qt55/bin/qt55-env.sh &&
           cmake -DCMAKE_INSTALL_PREFIX=$(pwd)/installdir -DCMAKE_PREFIX_PATH=/opt/qt55 ..
         else
