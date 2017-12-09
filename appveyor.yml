@@ -123,13 +123,14 @@ init:
   - set PATH=%PATH%;%cd%\installdir\bin
   - set LIB=%LIB%;%cd%\installdir\lib
   - set INCLUDE=%INCLUDE%;%cd%\installdir\include
+  - cd c:\dev
 
 before_build:
   - cd c:\dev\libquentier
   - md build
 
 build_script:
-  - cd build
+  - cd c:\dev\libquentier\build
   - if not %platform%==mingw cmake .. -G %makefiles% -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX="c:/dev/install" -DUSE_QT5=1 -DCMAKE_PREFIX_PATH="C:/Qt/5.9.2/%qt%"
   - if %platform%==mingw cmake .. -G %makefiles% -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX="c:/dev/install" -DUSE_QT5=1 -DCMAKE_PREFIX_PATH="C:/Qt/5.5/%qt%"
   - cmake --build . --target all
