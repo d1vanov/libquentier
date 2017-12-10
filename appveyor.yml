@@ -35,7 +35,8 @@ init:
   - if %platform%==mingw (set use_webkit=1) else (set use_webkit=0)
   - if %platform%==mingw set PATH=C:\Qt\5.5\%qt%\bin;C:\MinGW\bin;C:\Program Files (x86)\CMake\bin
   - if not %name%==win64 set OPENSSL_ROOT_DIR=C:\OpenSSL-Win32 else set OPENSSL_ROOT_DIR=C:\OpenSSL-Win64
-  - set BOOST_ROOT=C:\Libraries\boost_1_63_0
+  - if not %qt%==msvc2017_64 set BOOST_ROOT=C:\Libraries\boost_1_63_0
+  - if %qt%==msvc2017_64 set BOOST_ROOT=C:\Libraries\boost_1_65_1
   - if %qt%==msvc2017_64 set PATH="C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\MSBuild\15.0\Bin";%PATH%
   - if %qt%==msvc2015 set PATH="C:\Program Files (x86)\MSBuild\14.0\Bin";%PATH%
   
