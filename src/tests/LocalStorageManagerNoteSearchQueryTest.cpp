@@ -74,7 +74,7 @@ bool CheckQueryString(const QString & queryString, const QVector<Note> & notes,
 
         for(int i = 0; i < numOriginalNotes; ++i)
         {
-            errorDescription.details() = QStringLiteral("foundNotes.contains(notes[");
+            errorDescription.details() += QStringLiteral("foundNotes.contains(notes[");
             errorDescription.details() += QString::number(i);
             errorDescription.details() += QStringLiteral("]) = ");
             errorDescription.details() += (foundNotes.contains(notes[i]) ? QStringLiteral("true") : QStringLiteral("false"));
