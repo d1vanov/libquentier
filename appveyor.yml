@@ -81,11 +81,11 @@ install:
   - if not %qt%==mingw492_32 md installdir
   - if not %qt%==mingw492_32 md installdir\bin
   - if not %qt%==mingw492_32 md installdir\lib
-  - if %qt%==msvc2015 copy Release\zlib.dll installdir\bin\zlib.dll
-  - if %qt%==msvc2015 copy Release\zlib.lib installdir\lib\zlib.lib
-  - if %qt%==msvc2017 copy x64\Release\zlib.dll installdir\bin\zlib.dll
-  - if %qt%==msvc2017 copy x64\Release\zlib.lib installdir\lib\zlib.lib
-  - if not %qt%==mingw492_32 set ZLIB_LIBRARIES=%cd%\installdir\lib\zlib.lib
+  - if %qt%==msvc2015 copy Release\libz.dll installdir\bin\libz.dll
+  - if %qt%==msvc2015 copy Release\libz.lib installdir\lib\libz.lib
+  - if %qt%==msvc2017 copy x64\Release\libz.dll installdir\bin\libz.dll
+  - if %qt%==msvc2017 copy x64\Release\libz.lib installdir\lib\libz.lib
+  - if not %qt%==mingw492_32 set ZLIB_LIBRARIES=%cd%\installdir\lib\libz.lib
   - if not %qt%==mingw492_32 set ZLIB_INCLUDE_DIRS=%cd%\..
   - if not %qt%==mingw492_32 set PATH=%cd%\installdir\bin;%PATH%
   - if not %qt%==mingw492_32 set LIB=%cd%\installdir\lib;%LIB%
