@@ -181,6 +181,7 @@ install:
   - git clone https://github.com/htacg/tidy-html5.git tidy-html5
   - echo "Building tidy-html5"
   - cd tidy-html5
+  - git checkout 5.6.0
   - md build-tidy
   - cd build-tidy
   - cmake .. -G %makefiles% -DCMAKE_BUILD_TYPE=RelWithDebInfo -DBUILD_SHARED_LIB=ON -DCMAKE_INSTALL_PREFIX="c:\dev\tidy-html5\build-tidy\installdir"
