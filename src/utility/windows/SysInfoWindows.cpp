@@ -72,9 +72,9 @@ QString SysInfo::stackTrace()
 
 QString SysInfo::platformName()
 {
-    OSVERSIONINFOA info;
-    ZeroMemory(&info, sizeof(OSVERSIONINFOA));
-    info.dwOSVersionInfoSize = sizeof(OSVERSIONINFOA);
+    OSVERSIONINFOW info;
+    ZeroMemory(&info, sizeof(OSVERSIONINFOW));
+    info.dwOSVersionInfoSize = sizeof(OSVERSIONINFOW);
     GetVersionEx(&info);
 
     QString result = QStringLiteral("Windows/");
