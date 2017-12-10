@@ -38,6 +38,7 @@ init:
   - set BOOST_ROOT=C:\Libraries\boost_1_63_0
   
 install:
+  - echo "platform = %platform%, qt = %qt%, name = %name%"
   - echo "Downloading iconv"
   - md c:\dev\iconv
   - cd c:\dev\iconv
@@ -71,7 +72,7 @@ install:
   - cd c:\dev\hunspell
   - git checkout v1.6.2
   - set INCLUDE=%INCLUDE%;%cd%\src\hunspell
-  - echo "Building hunspell"
+  - echo "Building hunspell, platform = %platform%, qt = %qt%, name = %name%"
   - if not %platform%==mingw where MSbuild
   - if %platform%==amd64_x86 MSBuild %cd%\msvc\Hunspell.sln /p:Configuration="Release_dll" /p:Platform="Win32"
   - if %platform%==amd64 MSBuild %cd%\msvc\Hunspell.sln /p:Configuration="Release_dll" /p:Platform="x64"
