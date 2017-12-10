@@ -36,6 +36,8 @@ init:
   - if %platform%==mingw set PATH=C:\Qt\5.5\%qt%\bin;C:\MinGW\bin;C:\Program Files (x86)\CMake\bin
   - if not %platform%==amd_64 set OPENSSL_ROOT_DIR=C:\OpenSSL-Win32 else set OPENSSL_ROOT_DIR=C:\OpenSSL-Win64
   - set BOOST_ROOT=C:\Libraries\boost_1_63_0
+  
+install:
   - echo "Downloading iconv"
   - md c:\dev\iconv
   - cd c:\dev\iconv
