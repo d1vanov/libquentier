@@ -34,7 +34,7 @@ init:
   - if not %platform%==mingw (set makefiles="NMake Makefiles") else (set makefiles="MinGW Makefiles")
   - if %platform%==mingw (set use_webkit=1) else (set use_webkit=0)
   - if %platform%==mingw set PATH=C:\Qt\5.5\%qt%\bin;C:\MinGW\bin;C:\Program Files (x86)\CMake\bin
-  - if not %platform%==amd_64 set OPENSSL_ROOT_DIR=C:\OpenSSL-Win32 else set OPENSSL_ROOT_DIR=C:\OpenSSL-Win64
+  - if not %name%==win64 set OPENSSL_ROOT_DIR=C:\OpenSSL-Win32 else set OPENSSL_ROOT_DIR=C:\OpenSSL-Win64
   - set BOOST_ROOT=C:\Libraries\boost_1_63_0
   
 install:
@@ -42,26 +42,26 @@ install:
   - echo "Downloading iconv"
   - md c:\dev\iconv
   - cd c:\dev\iconv
-  - if %platform%==amd64_x86 curl -fsSL ftp://ftp.zlatkovic.com/libxml/64bit/iconv-1.14-win32-x86.7z -o iconv-1.14-win32-x86.7z
-  - if %platform%==amd64_x86 7z x iconv-1.14-win32-x86.7z
-  - if %platform%==amd64 curl -fsSL ftp://ftp.zlatkovic.com/libxml/64bit/iconv-1.14-win32-x86_64.7z -o iconv-1.14-win32-x86_64.7z
-  - if %platform%==amd64_x86 7z x iconv-1.14-win32-x86_64.7z
-  - if %platform%==mingw curl -fsSL ftp://ftp.zlatkovic.com/libxml/iconv-1.9.2.win32.zip -o iconv-1.9.2.win32.zip
-  - if %platform%==mingw 7z x iconv-1.9.2.win32.zip
-  - if %platform%==mingw cd iconv-1.9.2.win32
+  - if %qt%==msvc2015 curl -fsSL ftp://ftp.zlatkovic.com/libxml/64bit/iconv-1.14-win32-x86.7z -o iconv-1.14-win32-x86.7z
+  - if %qt%==msvc2015 7z x iconv-1.14-win32-x86.7z
+  - if %qt%==msvc2017_64 curl -fsSL ftp://ftp.zlatkovic.com/libxml/64bit/iconv-1.14-win32-x86_64.7z -o iconv-1.14-win32-x86_64.7z
+  - if %qt%==msvc2017_64 7z x iconv-1.14-win32-x86_64.7z
+  - if %qt%==mingw492_32 curl -fsSL ftp://ftp.zlatkovic.com/libxml/iconv-1.9.2.win32.zip -o iconv-1.9.2.win32.zip
+  - if %qt%==mingw492_32 7z x iconv-1.9.2.win32.zip
+  - if %qt%==mingw492_32 cd iconv-1.9.2.win32
   - set PATH=%PATH%;%cd%\bin
   - set LIB=%LIB%;%cd%\lib
   - set INCLUDE=%INCLUDE%;%cd%\include
   - echo "Downloading libxml2"
   - md c:\dev\libxml2
   - cd c:\dev\libxml2
-  - if %platform%==amd64_x86 curl -fsSL ftp://ftp.zlatkovic.com/libxml/64bit/libxml2-2.9.3-win32-x86.7z -o libxml2-2.9.3-win32-x86.7z
-  - if %platform%==amd64_x86 7z x libxml2-2.9.3-win32-x86.7z
-  - if %platform%==amd64 curl -fsSL ftp://ftp.zlatkovic.com/libxml/64bit/libxml2-2.9.3-win32-x86_64.7z -o libxml2-2.9.3-win32-x86_64.7z
-  - if %platform%==amd64 7z x libxml2-2.9.3-win32-x86_64.7z
-  - if %platform%==mingw curl -fsSL ftp://ftp.zlatkovic.com/libxml/libxml2-2.7.8.win32.zip -o libxml2-2.7.8.win32.zip
-  - if %platform%==mingw 7z x libxml2-2.7.8.win32.zip
-  - if %platform%==mingw cd libxml2-2.7.8.win32
+  - if %qt%==msvc2015 curl -fsSL ftp://ftp.zlatkovic.com/libxml/64bit/libxml2-2.9.3-win32-x86.7z -o libxml2-2.9.3-win32-x86.7z
+  - if %qt%==msvc2015 7z x libxml2-2.9.3-win32-x86.7z
+  - if %qt%==msvc2017_64 curl -fsSL ftp://ftp.zlatkovic.com/libxml/64bit/libxml2-2.9.3-win32-x86_64.7z -o libxml2-2.9.3-win32-x86_64.7z
+  - if %qt%==msvc2017_64 7z x libxml2-2.9.3-win32-x86_64.7z
+  - if %qt%==mingw492_32 curl -fsSL ftp://ftp.zlatkovic.com/libxml/libxml2-2.7.8.win32.zip -o libxml2-2.7.8.win32.zip
+  - if %qt%==mingw492_32 7z x libxml2-2.7.8.win32.zip
+  - if %qt%==mingw492_32 cd libxml2-2.7.8.win32
   - set PATH=%PATH%;%cd%\bin
   - set LIB=%LIB%;%cd%\lib
   - set INCLUDE=%INCLUDE%;%cd%\include
@@ -73,13 +73,11 @@ install:
   - git checkout v1.6.2
   - set INCLUDE=%INCLUDE%;%cd%\src\hunspell
   - echo "Building hunspell, platform = %platform%, qt = %qt%, name = %name%"
-  - if not %platform%==mingw where MSbuild
-  - if %platform%==amd64_x86 MSBuild %cd%\msvc\Hunspell.sln /p:Configuration="Release_dll" /p:Platform="Win32"
-  - if %platform%==amd64 MSBuild %cd%\msvc\Hunspell.sln /p:Configuration="Release_dll" /p:Platform="x64"
-  - if not %platform%==mingw dir msvc
-  - if not %platform%==mingw set PATH=%PATH%;%cd%\msvc\Release_dll\libhunspell
-  - if not %platform%==mingw set LIB=%LIB%;%cd%\msvc\Release_dll\libhunspell
-  - if %platform%==mingw C:\msys64\usr\bin\bash -lc "cd /c/dev/hunspell && autoreconf -i && ./configure && make && make check && make install"
+  - if %qt%==msvc2015 MSBuild %cd%\msvc\Hunspell.sln /p:Configuration="Release_dll" /p:Platform="Win32"
+  - if %qt%==msvc2017_64 MSBuild %cd%\msvc\Hunspell.sln /p:Configuration="Release_dll" /p:Platform="x64"
+  - if not %qt%==mingw492_32 set PATH=%PATH%;%cd%\msvc\Release_dll\libhunspell
+  - if not %qt%==mingw492_32 set LIB=%LIB%;%cd%\msvc\Release_dll\libhunspell
+  - if %qt%==mingw492_32 C:\msys64\usr\bin\bash -lc "cd /c/dev/hunspell && autoreconf -i && ./configure && make && make check && make install"
   - echo "Downloading qtkeychain"
   - md c:\dev\qtkeychain
   - cd c:\dev
@@ -88,8 +86,8 @@ install:
   - cd c:\dev\qtkeychain
   - md build
   - cd build
-  - if not %platform%==mingw cmake .. -G %makefiles% -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX="c:\dev\qtkeychain\build\installdir" -DCMAKE_PREFIX_PATH="C:/Qt/5.9.2/%qt%
-  - if %platform%==mingw cmake .. -G %makefiles% -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX="c:\dev\qtkeychain\build\installdir" -DCMAKE_PREFIX_PATH="C:/Qt/5.5/%qt%
+  - if not %qt%==mingw492_32 cmake .. -G %makefiles% -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX="c:\dev\qtkeychain\build\installdir" -DCMAKE_PREFIX_PATH="C:/Qt/5.9.2/%qt%
+  - if %qt%==mingw492_32 cmake .. -G %makefiles% -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX="c:\dev\qtkeychain\build\installdir" -DCMAKE_PREFIX_PATH="C:/Qt/5.5/%qt%
   - cmake --build . --target all
   - cmake --build . --target install
   - set PATH=%PATH%;%cd%\installdir\bin
@@ -104,8 +102,8 @@ install:
   - if %APPVEYOR_REPO_BRANCH%=="development" git checkout development
   - md build
   - cd build
-  - if not %platform%==mingw cmake .. -G %makefiles% -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX="c:\dev\qevercloud\build\installdir" -DUSE_QT5=1 -DCMAKE_PREFIX_PATH="C:/Qt/5.9.2/%qt%
-  - if %platform%==mingw cmake .. -G %makefiles% -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX="c:\dev\qevercloud\build\installdir" -DUSE_QT5=1 -DUSE_QT5_WEBKIT=1 -DCMAKE_PREFIX_PATH="C:/Qt/5.5/%qt%
+  - if not %qt%==mingw492_32 cmake .. -G %makefiles% -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX="c:\dev\qevercloud\build\installdir" -DUSE_QT5=1 -DCMAKE_PREFIX_PATH="C:/Qt/5.9.2/%qt%
+  - if %qt%==mingw492_32 cmake .. -G %makefiles% -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX="c:\dev\qevercloud\build\installdir" -DUSE_QT5=1 -DUSE_QT5_WEBKIT=1 -DCMAKE_PREFIX_PATH="C:/Qt/5.5/%qt%
   - cmake --build . --target all
   - cmake --build . --target check
   - cmake --build . --target install
@@ -134,12 +132,12 @@ before_build:
 
 build_script:
   - cd c:\dev\libquentier\build
-  - if not %platform%==mingw cmake .. -G %makefiles% -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX="c:/dev/install" -DUSE_QT5=1 -DCMAKE_PREFIX_PATH="C:/Qt/5.9.2/%qt%"
-  - if %platform%==mingw cmake .. -G %makefiles% -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX="c:/dev/install" -DUSE_QT5=1 -DCMAKE_PREFIX_PATH="C:/Qt/5.5/%qt%"
+  - if not %qt%==mingw492_32 cmake .. -G %makefiles% -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX="c:/dev/install" -DUSE_QT5=1 -DCMAKE_PREFIX_PATH="C:/Qt/5.9.2/%qt%"
+  - if %qt%==mingw492_32 cmake .. -G %makefiles% -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX="c:/dev/install" -DUSE_QT5=1 -DCMAKE_PREFIX_PATH="C:/Qt/5.5/%qt%"
   - cmake --build . --target all
   - cmake --build . --target check
   - cmake --build . --target install
-  - if %platform%==mingw set PATH=%ORIGPATH%
+  - if %qt%==mingw492_32 set PATH=%ORIGPATH%
 
 after_build:
   - cd c:\dev
