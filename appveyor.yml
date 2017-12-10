@@ -48,9 +48,9 @@ install:
   - if not %qt%==mingw492-32 echo "Building libiconv"
   - if not %qt%==mingw492-32 cd libiconv-win-build
   - if %qt%==msvc2015 cd build-VS2015
-  - if %qt%==msvc2015 msbuild libiconv.sln /p:Configuration="Release" /p:Platform="Win32" /:clp:ErrorsOnly
+  - if %qt%==msvc2015 msbuild libiconv.sln /p:Configuration="Release" /p:Platform="Win32" /clp:ErrorsOnly
   - if %qt%==msvc2017_64 cd build-VS2017
-  - if %qt%==msvc2017_64 msbuild libiconv.sln /p:Configuration="Release" /p:Platform="x64" /:clp:ErrorsOnly
+  - if %qt%==msvc2017_64 msbuild libiconv.sln /p:Configuration="Release" /p:Platform="x64" /clp:ErrorsOnly
   - if not %qt%==mingw492_32 md installdir
   - if not %qt%==mingw492_32 md installdir\bin
   - if not %qt%==mingw492_32 md installdir\lib
