@@ -58,9 +58,9 @@ install:
   - if %qt%==msvc2015 copy Release\libiconv.lib installdir\lib\libiconv.lib
   - if %qt%==msvc2017 copy x64\Release\libiconv.dll installdir\bin\libiconv.dll
   - if %qt%==msvc2017 copy x64\Release\libiconv.lib installdir\bin\libiconv.lib
-  - if not %qt%==mingw492_32 set PATH=%cd%\installdir\bin
-  - if not %qt%==mingw492_32 set LIB=%cd%\installdir\lib
-  - if not %qt%==mingw492_32 set INCLUDE=%cd%\..\include
+  - if not %qt%==mingw492_32 set PATH=%cd%\installdir\bin;%PATH%
+  - if not %qt%==mingw492_32 set LIB=%cd%\installdir\lib;%LIB%
+  - if not %qt%==mingw492_32 set INCLUDE=%cd%\..\include;%INCLUDE%
   - if %qt%==mingw492_32 cd libiconv-win-build
   - if %qt%==mingw492_32 curl -fsSL ftp://ftp.zlatkovic.com/libxml/64bit/iconv-1.14-win32-x86.7z -o iconv-1.14-win32-x86.7z
   - if %qt%==mingw492_32 7z x iconv-1.14-win32-x86.7z
@@ -87,9 +87,9 @@ install:
   - if %qt%==msvc2017 copy x64\Release\zlib.lib installdir\lib\zlib.lib
   - if not %qt%==mingw492_32 set ZLIB_LIBRARIES=%cd%\installdir\lib\zlib.lib
   - if not %qt%==mingw492_32 set ZLIB_INCLUDE_DIRS=%cd%\..
-  - if not %qt%==mingw492_32 set PATH=%cd%\installdir\bin
-  - if not %qt%==mingw492_32 set LIB=%cd%\installdir\lib
-  - if not %qt%==mingw492_32 set INCLUDE=%cd%\..
+  - if not %qt%==mingw492_32 set PATH=%cd%\installdir\bin;%PATH%
+  - if not %qt%==mingw492_32 set LIB=%cd%\installdir\lib;%LIB%
+  - if not %qt%==mingw492_32 set INCLUDE=%cd%\..;%INCLUDE%
   - if %qt%==mingw492_32 cd zlib-win-build
   - if %qt%==mingw492_32 curl -fsSL ftp://ftp.zlatkovic.com/libxml/64bit/zlib-1.2.8-win32-x86.7z -o zlib-1.2.8-win32-x86.7z
   - if %qt%==mingw492_32 7z x zlib-1.2.8-win32-x86.7z
@@ -118,9 +118,9 @@ install:
   - if %qt%==msvc2017 copy x64\Release\libxml2.lib installdir\lib\libxml2.lib
   - if not %qt%==mingw492_32 set LIBXML2_LIBRARIES=%cd%\installdir\lib\libxml2.lib
   - if not %qt%==mingw492_32 set LIBXML2_INCLUDE_DIR=%cd%\..\include
-  - if not %qt%==mingw492_32 set PATH=%cd%\installdir\bin
-  - if not %qt%==mingw492_32 set LIB=%cd%\installdir\lib
-  - if not %qt%==mingw492_32 set INCLUDE=%cd%\..\include
+  - if not %qt%==mingw492_32 set PATH=%cd%\installdir\bin;%PATH%
+  - if not %qt%==mingw492_32 set LIB=%cd%\installdir\lib;%LIB%
+  - if not %qt%==mingw492_32 set INCLUDE=%cd%\..\include;%INCLUDE%
   - if %qt%==mingw492_32 cd libxml2-win-build
   - if %qt%==mingw492_32 curl -fsSL ftp://ftp.zlatkovic.com/libxml/64bit/libxml2-2.9.3-win32-x86.7z -o libxml2-2.9.3-win32-x86.7z
   - if %qt%==mingw492_32 7z x libxml2-2.9.3-win32-x86.7z
