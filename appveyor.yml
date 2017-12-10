@@ -38,7 +38,7 @@ init:
   - set BOOST_ROOT=C:\Libraries\boost_1_63_0
   
 install:
-  - echo "platform = %platform%, qt = %qt%, name = %name%"
+  - echo "Platform = %platform%, qt = %qt%, name = %name%"
   - echo "Downloading iconv"
   - md c:\dev\iconv
   - cd c:\dev\iconv
@@ -49,6 +49,10 @@ install:
   - if %qt%==mingw492_32 curl -fsSL ftp://ftp.zlatkovic.com/libxml/iconv-1.9.2.win32.zip -o iconv-1.9.2.win32.zip
   - if %qt%==mingw492_32 7z x iconv-1.9.2.win32.zip
   - if %qt%==mingw492_32 cd iconv-1.9.2.win32
+  - dir
+  - dir bin
+  - dir lib
+  - dir include
   - set PATH=%PATH%;%cd%\bin
   - set LIB=%LIB%;%cd%\lib
   - set INCLUDE=%INCLUDE%;%cd%\include
@@ -62,6 +66,10 @@ install:
   - if %qt%==mingw492_32 curl -fsSL ftp://ftp.zlatkovic.com/libxml/libxml2-2.7.8.win32.zip -o libxml2-2.7.8.win32.zip
   - if %qt%==mingw492_32 7z x libxml2-2.7.8.win32.zip
   - if %qt%==mingw492_32 cd libxml2-2.7.8.win32
+  - dir
+  - dir bin
+  - dir lib
+  - dir include
   - set PATH=%PATH%;%cd%\bin
   - set LIB=%LIB%;%cd%\lib
   - set INCLUDE=%INCLUDE%;%cd%\include
@@ -118,7 +126,7 @@ install:
   - cd tidy-html5
   - md build-tidy
   - cd build-tidy
-  - cmake .. -G %makefiles% -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX="c:\dev\tidy-html5\build-tidy\installdir"
+  - cmake .. -G %makefiles% -DCMAKE_BUILD_TYPE=RelWithDebInfo -DBUILD_SHARED_LIB=ON -DCMAKE_INSTALL_PREFIX="c:\dev\tidy-html5\build-tidy\installdir"
   - cmake --build . --target all
   - cmake --build . --target install
   - set PATH=%PATH%;%cd%\installdir\bin
@@ -132,6 +140,7 @@ before_build:
 
 build_script:
   - cd c:\dev\libquentier\build
+  - echo "PATH = %PATH%, LIB = %LIB%, INCLUDE = %INCLUDE%"
   - if not %qt%==mingw492_32 cmake .. -G %makefiles% -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX="c:/dev/install" -DUSE_QT5=1 -DCMAKE_PREFIX_PATH="C:/Qt/5.9.2/%qt%"
   - if %qt%==mingw492_32 cmake .. -G %makefiles% -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX="c:/dev/install" -DUSE_QT5=1 -DCMAKE_PREFIX_PATH="C:/Qt/5.5/%qt%"
   - cmake --build . --target all
