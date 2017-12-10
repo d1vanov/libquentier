@@ -51,12 +51,11 @@ install:
   - if %qt%==msvc2015 msbuild libiconv.sln /p:Configuration="Release" /p:Platform="Win32" /clp:ErrorsOnly
   - if %qt%==msvc2017_64 cd build-VS2017
   - if %qt%==msvc2017_64 msbuild libiconv.sln /p:Configuration="Release" /p:Platform="x64" /clp:ErrorsOnly
-  - if not %qt%==mingw492_32 dir /s
   - if not %qt%==mingw492_32 md installdir
   - if not %qt%==mingw492_32 md installdir\bin
   - if not %qt%==mingw492_32 md installdir\lib
-  - if %qt%==msvc2015 copy x86\Release\libiconv.dll installdir\bin\libiconv.dll
-  - if %qt%==msvc2015 copy x86\Release\libiconv.lib installdir\lib\libiconv.lib
+  - if %qt%==msvc2015 copy Release\libiconv.dll installdir\bin\libiconv.dll
+  - if %qt%==msvc2015 copy Release\libiconv.lib installdir\lib\libiconv.lib
   - if %qt%==msvc2017 copy x64\Release\libiconv.dll installdir\bin\libiconv.dll
   - if %qt%==msvc2017 copy x64\Release\libiconv.lib installdir\bin\libiconv.lib
   - if not %qt%==mingw492_32 set PATH=%cd%\installdir\bin
@@ -79,12 +78,11 @@ install:
   - if %qt%==msvc2015 msbuild zlib.sln /p:Configuration="Release" /p:Platform="Win32" /clp:ErrorsOnly
   - if %qt%==msvc2017_64 cd build-VS2017
   - if %qt%==msvc2017_64 msbuild zlib.sln /p:Configuration="Release" /p:Platform="x64" /clp:ErrorsOnly
-  - if not %qt%==mingw492_32 dir /s
   - if not %qt%==mingw492_32 md installdir
   - if not %qt%==mingw492_32 md installdir\bin
   - if not %qt%==mingw492_32 md installdir\lib
-  - if %qt%==msvc2015 copy x86\Release\zlib.dll installdir\bin\zlib.dll
-  - if %qt%==msvc2015 copy x86\Release\zlib.lib installdir\lib\zlib.lib
+  - if %qt%==msvc2015 copy Release\zlib.dll installdir\bin\zlib.dll
+  - if %qt%==msvc2015 copy Release\zlib.lib installdir\lib\zlib.lib
   - if %qt%==msvc2017 copy x64\Release\zlib.dll installdir\bin\zlib.dll
   - if %qt%==msvc2017 copy x64\Release\zlib.lib installdir\lib\zlib.lib
   - if not %qt%==mingw492_32 set ZLIB_LIBRARIES=%cd%\installdir\lib\zlib.lib
@@ -111,12 +109,11 @@ install:
   - if %qt%==msvc2015 msbuild libxml2.sln /p:Configuration="Release" /p:Platform="Win32" /clp:ErrorsOnly
   - if %qt%==msvc2017_64 cd build-VS2017
   - if %qt%==msvc2017_64 msbuild libxml2.sln /p:Configuration="Release" /p:Platform="x64" /clp:ErrorsOnly
-  - if not %qt%==mingw492_32 dir /s
   - if not %qt%==mingw492_32 md installdir
   - if not %qt%==mingw492_32 md installdir\bin
   - if not %qt%==mingw492_32 md installdir\lib
-  - if %qt%==msvc2015 copy x86\Release\libxml2.dll installdir\bin\libxml2.dll
-  - if %qt%==msvc2015 copy x86\Release\libxml2.lib installdir\lib\libxml2.lib
+  - if %qt%==msvc2015 copy Release\libxml2.dll installdir\bin\libxml2.dll
+  - if %qt%==msvc2015 copy Release\libxml2.lib installdir\lib\libxml2.lib
   - if %qt%==msvc2017 copy x64\Release\libxml2.dll installdir\bin\libxml2.dll
   - if %qt%==msvc2017 copy x64\Release\libxml2.lib installdir\lib\libxml2.lib
   - if not %qt%==mingw492_32 set LIBXML2_LIBRARIES=%cd%\installdir\lib\libxml2.lib
