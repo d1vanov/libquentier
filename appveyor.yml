@@ -36,43 +36,100 @@ init:
   - if %platform%==mingw set PATH=C:\Qt\5.5\%qt%\bin;C:\MinGW\bin;C:\Program Files (x86)\CMake\bin
   - if not %name%==win64 set OPENSSL_ROOT_DIR=C:\OpenSSL-Win32 else set OPENSSL_ROOT_DIR=C:\OpenSSL-Win64
   - set BOOST_ROOT=C:\Libraries\boost_1_63_0
+  - if %qt%==msvc2017_64 set PATH="C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\MSBuild\15.0\Bin";%PATH%
+  - if %qt%==msvc2015 set PATH="C:\Program Files (x86)\MSBuild\14.0\Bin";%PATH%
   
 install:
   - echo "Platform = %platform%, qt = %qt%, name = %name%"
-  - echo "Downloading iconv"
-  - md c:\dev\iconv
-  - cd c:\dev\iconv
-  - if %qt%==msvc2015 curl -fsSL ftp://ftp.zlatkovic.com/libxml/64bit/iconv-1.14-win32-x86.7z -o iconv-1.14-win32-x86.7z
-  - if %qt%==msvc2015 7z x iconv-1.14-win32-x86.7z
-  - if %qt%==msvc2017_64 curl -fsSL ftp://ftp.zlatkovic.com/libxml/64bit/iconv-1.14-win32-x86_64.7z -o iconv-1.14-win32-x86_64.7z
-  - if %qt%==msvc2017_64 7z x iconv-1.14-win32-x86_64.7z
-  - if %qt%==mingw492_32 curl -fsSL ftp://ftp.zlatkovic.com/libxml/iconv-1.9.2.win32.zip -o iconv-1.9.2.win32.zip
-  - if %qt%==mingw492_32 7z x iconv-1.9.2.win32.zip
-  - if %qt%==mingw492_32 cd iconv-1.9.2.win32
-  - dir
-  - dir bin
-  - dir lib
-  - dir include
-  - set PATH=%PATH%;%cd%\bin
-  - set LIB=%LIB%;%cd%\lib
-  - set INCLUDE=%INCLUDE%;%cd%\include
+  - echo "Downloading libiconv"
+  - md c:\dev\libiconv-win-build
+  - cd c:\dev
+  - if not %qt%==mingw492-32 git clone https://github.com/kiyolee/libiconv-win-build.git libiconv-win-build
+  - if not %qt%==mingw492-32 echo "Building libiconv"
+  - if not %qt%==mingw492-32 cd libiconv-win-build
+  - if %qt%==msvc2015 cd build-VS2015
+  - if %qt%==msvc2015 msbuild libiconv.sln /p:Configuration="Release" /p:Platform="Win32" /:clp:ErrorsOnly
+  - if %qt%==msvc2017_64 cd build-VS2017
+  - if %qt%==msvc2017_64 msbuild libiconv.sln /p:Configuration="Release" /p:Platform="x64" /:clp:ErrorsOnly
+  - if not %qt%==mingw492_32 md installdir
+  - if not %qt%==mingw492_32 md installdir\bin
+  - if not %qt%==mingw492_32 md installdir\lib
+  - if %qt%==msvc2015 copy Win32\Release\libiconv.dll installdir\bin\libiconv.dll
+  - if %qt%==msvc2015 copy Win32\Release\libiconv.lib installdir\lib\libiconv.lib
+  - if %qt%==msvc2017 copy x64\Release\libiconv.dll installdir\bin\libiconv.dll
+  - if %qt%==msvc2017 copy x64\Release\libiconv.lib installdir\bin\libiconv.lib
+  - if not %qt%==mingw492_32 set PATH=%cd%\installdir\bin
+  - if not %qt%==mingw492_32 set LIB=%cd%\installdir\lib
+  - if not %qt%==mingw492_32 set INCLUDE=%cd%\..\include
+  - if %qt%==mingw492_32 cd libiconv-win-build
+  - if %qt%==mingw492_32 curl -fsSL ftp://ftp.zlatkovic.com/libxml/64bit/iconv-1.14-win32-x86.7z -o iconv-1.14-win32-x86.7z
+  - if %qt%==mingw492_32 7z x iconv-1.14-win32-x86.7z
+  - if %qt%==mingw492_32 mv bin\libiconv-2.dll bin\libiconv.dll
+  - if %qt%==mingw492_32 set PATH=%cd%\bin;%PATH%
+  - if %qt%==mingw492_32 set LIB=%cd%\lib;%LIB%
+  - if %qt%==mingw492_32 set INCLUDE=%cd%\include;%INCLUDE%
+  - echo "Downloading zlib"
+  - md c:\dev\zlib-win-build
+  - cd c:\dev
+  - if not %qt%==mingw492_32 git clone https://github.com/kiyolee/zlib-win-build.git zlib-win-build
+  - if not %qt%==mingw492-32 echo "Building zlib"
+  - if not %qt%==mingw492-32 cd zlib-win-build
+  - if %qt%==msvc2015 cd build-VS2015
+  - if %qt%==msvc2015 msbuild zlib.sln /p:Configuration="Release" /p:Platform="Win32" /clp:ErrorsOnly
+  - if %qt%==msvc2017_64 cd build-VS2017
+  - if %qt%==msvc2017_64 msbuild zlib.sln /p:Configuration="Release" /p:Platform="x64" /clp:ErrorsOnly
+  - if not %qt%==mingw492_32 md installdir
+  - if not %qt%==mingw492_32 md installdir\bin
+  - if not %qt%==mingw492_32 md installdir\lib
+  - if %qt%==msvc2015 copy Win32\Release\zlib.dll installdir\bin\zlib.dll
+  - if %qt%==msvc2015 copy Win32\Release\zlib.lib installdir\lib\zlib.lib
+  - if %qt%==msvc2017 copy x64\Release\zlib.dll installdir\bin\zlib.dll
+  - if %qt%==msvc2017 copy x64\Release\zlib.lib installdir\lib\zlib.lib
+  - if not %qt%==mingw492_32 set ZLIB_LIBRARIES=%cd%\installdir\lib\zlib.lib
+  - if not %qt%==mingw492_32 set ZLIB_INCLUDE_DIRS=%cd%\..
+  - if not %qt%==mingw492_32 set PATH=%cd%\installdir\bin
+  - if not %qt%==mingw492_32 set LIB=%cd%\installdir\lib
+  - if not %qt%==mingw492_32 set INCLUDE=%cd%\..
+  - if %qt%==mingw492_32 cd zlib-win-build
+  - if %qt%==mingw492_32 curl -fsSL ftp://ftp.zlatkovic.com/libxml/64bit/zlib-1.2.8-win32-x86.7z -o zlib-1.2.8-win32-x86.7z
+  - if %qt%==mingw492_32 7z x zlib-1.2.8-win32-x86.7z
+  - if %qt%==mingw492_32 mv bin\zlib1.dll bin\zlib.dll
+  - if %qt%==mingw492_32 set ZLIB_INCLUDE_DIRS=%cd%\include
+  - if %qt%==mingw492_32 set ZLIB_LIBRARIES=%cd%\bin\zlib.dll
+  - if %qt%==mingw492_32 set PATH=%cd%\bin;%PATH%
+  - if %qt%==mingw492_32 set LIB=%cd%\lib;%LIB%
+  - if %qt%==mingw492_32 set INCLUDE=%cd%\include;%INCLUDE%
   - echo "Downloading libxml2"
-  - md c:\dev\libxml2
-  - cd c:\dev\libxml2
-  - if %qt%==msvc2015 curl -fsSL ftp://ftp.zlatkovic.com/libxml/64bit/libxml2-2.9.3-win32-x86.7z -o libxml2-2.9.3-win32-x86.7z
-  - if %qt%==msvc2015 7z x libxml2-2.9.3-win32-x86.7z
-  - if %qt%==msvc2017_64 curl -fsSL ftp://ftp.zlatkovic.com/libxml/64bit/libxml2-2.9.3-win32-x86_64.7z -o libxml2-2.9.3-win32-x86_64.7z
-  - if %qt%==msvc2017_64 7z x libxml2-2.9.3-win32-x86_64.7z
-  - if %qt%==mingw492_32 curl -fsSL ftp://ftp.zlatkovic.com/libxml/libxml2-2.7.8.win32.zip -o libxml2-2.7.8.win32.zip
-  - if %qt%==mingw492_32 7z x libxml2-2.7.8.win32.zip
-  - if %qt%==mingw492_32 cd libxml2-2.7.8.win32
-  - dir
-  - dir bin
-  - dir lib
-  - dir include
-  - set PATH=%PATH%;%cd%\bin
-  - set LIB=%LIB%;%cd%\lib
-  - set INCLUDE=%INCLUDE%;%cd%\include
+  - md c:\dev\libxml2-win-build
+  - cd c:\dev
+  - if not %qt%==mingw492-32 git clone https://github.com/kiyolee/libxml2-win-build.git libxml2-win-build
+  - if not %qt%==mingw492-32 echo "Building libxml2"
+  - if not %qt%==mingw492-32 cd libxml2-win-build
+  - if %qt%==msvc2015 cd build-VS2015
+  - if %qt%==msvc2015 msbuild libxml2.sln /p:Configuration="Release" /p:Platform="Win32" /clp:ErrorsOnly
+  - if %qt%==msvc2017_64 cd build-VS2017
+  - if %qt%==msvc2017_64 msbuild libxml2.sln /p:Configuration="Release" /p:Platform="x64" /clp:ErrorsOnly
+  - if not %qt%==mingw492_32 md installdir
+  - if not %qt%==mingw492_32 md installdir\bin
+  - if not %qt%==mingw492_32 md installdir\lib
+  - if %qt%==msvc2015 copy Win32\Release\libxml2.dll installdir\bin\libxml2.dll
+  - if %qt%==msvc2015 copy Win32\Release\libxml2.lib installdir\lib\libxml2.lib
+  - if %qt%==msvc2017 copy x64\Release\libxml2.dll installdir\bin\libxml2.dll
+  - if %qt%==msvc2017 copy x64\Release\libxml2.lib installdir\lib\libxml2.lib
+  - if not %qt%==mingw492_32 set LIBXML2_LIBRARIES=%cd%\installdir\lib\libxml2.lib
+  - if not %qt%==mingw492_32 set LIBXML2_INCLUDE_DIR=%cd%\..\include
+  - if not %qt%==mingw492_32 set PATH=%cd%\installdir\bin
+  - if not %qt%==mingw492_32 set LIB=%cd%\installdir\lib
+  - if not %qt%==mingw492_32 set INCLUDE=%cd%\..\include
+  - if %qt%==mingw492_32 cd libxml2-win-build
+  - if %qt%==mingw492_32 curl -fsSL ftp://ftp.zlatkovic.com/libxml/64bit/libxml2-2.9.3-win32-x86.7z -o libxml2-2.9.3-win32-x86.7z
+  - if %qt%==mingw492_32 7z x libxml2-2.9.3-win32-x86.7z
+  - if %qt%==mingw492_32 mv bin\libxml-2.dll bin\libxml2.dll
+  - if %qt%==mingw492_32 set LIBXML2_INCLUDE_DIRS=%cd%\include
+  - if %qt%==mingw492_32 set LIBXML2_LIBRARIES=%cd%\bin\libxml2.dll
+  - if %qt%==mingw492_32 set PATH=%cd%\bin;%PATH%
+  - if %qt%==mingw492_32 set LIB=%cd%\lib;%LIB%
+  - if %qt%==mingw492_32 set INCLUDE=%cd%\include;%INCLUDE%
   - echo "Downloading hunspell"
   - md c:\dev\hunspell
   - cd c:\dev
