@@ -34,6 +34,7 @@
 #include <QDir>
 #include <QCoreApplication>
 #include <algorithm>
+#include <set>
 
 #define ACCOUNT_LIMITS_KEY_GROUP QStringLiteral("AccountLimits/")
 #define ACCOUNT_LIMITS_LAST_SYNC_TIME_KEY QStringLiteral("last_sync_time")
