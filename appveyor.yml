@@ -56,8 +56,8 @@ install:
   - if not %qt%==mingw492_32 md installdir\lib
   - if %qt%==msvc2015 copy Release\libiconv.dll installdir\bin\libiconv.dll
   - if %qt%==msvc2015 copy Release\libiconv.lib installdir\lib\libiconv.lib
-  - if %qt%==msvc2017 copy x64\Release\libiconv.dll installdir\bin\libiconv.dll
-  - if %qt%==msvc2017 copy x64\Release\libiconv.lib installdir\bin\libiconv.lib
+  - if %qt%==msvc2017_64 copy x64\Release\libiconv.dll installdir\bin\libiconv.dll
+  - if %qt%==msvc2017_64 copy x64\Release\libiconv.lib installdir\bin\libiconv.lib
   - if not %qt%==mingw492_32 set PATH=%cd%\installdir\bin;%PATH%
   - if not %qt%==mingw492_32 set LIB=%cd%\installdir\lib;%LIB%
   - if not %qt%==mingw492_32 set INCLUDE=%cd%\..\include;%INCLUDE%
@@ -83,8 +83,8 @@ install:
   - if not %qt%==mingw492_32 md installdir\lib
   - if %qt%==msvc2015 copy Release\libz.dll installdir\bin\libz.dll
   - if %qt%==msvc2015 copy Release\libz.lib installdir\lib\libz.lib
-  - if %qt%==msvc2017 copy x64\Release\libz.dll installdir\bin\libz.dll
-  - if %qt%==msvc2017 copy x64\Release\libz.lib installdir\lib\libz.lib
+  - if %qt%==msvc2017_64 copy x64\Release\libz.dll installdir\bin\libz.dll
+  - if %qt%==msvc2017_64 copy x64\Release\libz.lib installdir\lib\libz.lib
   - if not %qt%==mingw492_32 set ZLIB_LIBRARIES=%cd%\installdir\lib\libz.lib
   - if not %qt%==mingw492_32 set ZLIB_INCLUDE_DIRS=%cd%\..
   - if not %qt%==mingw492_32 set PATH=%cd%\installdir\bin;%PATH%
@@ -114,8 +114,8 @@ install:
   - if not %qt%==mingw492_32 md installdir\lib
   - if %qt%==msvc2015 copy Release\libxml2.dll installdir\bin\libxml2.dll
   - if %qt%==msvc2015 copy Release\libxml2.lib installdir\lib\libxml2.lib
-  - if %qt%==msvc2017 copy x64\Release\libxml2.dll installdir\bin\libxml2.dll
-  - if %qt%==msvc2017 copy x64\Release\libxml2.lib installdir\lib\libxml2.lib
+  - if %qt%==msvc2017_64 copy x64\Release\libxml2.dll installdir\bin\libxml2.dll
+  - if %qt%==msvc2017_64 copy x64\Release\libxml2.lib installdir\lib\libxml2.lib
   - if not %qt%==mingw492_32 set LIBXML2_LIBRARIES=%cd%\installdir\lib\libxml2.lib
   - if not %qt%==mingw492_32 set LIBXML2_INCLUDE_DIR=%cd%\..\include
   - if not %qt%==mingw492_32 set PATH=%cd%\installdir\bin;%PATH%
