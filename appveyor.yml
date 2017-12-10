@@ -136,7 +136,7 @@ install:
   - git clone https://github.com/hunspell/hunspell.git hunspell
   - cd c:\dev\hunspell
   - git checkout v1.6.2
-  - set INCLUDE=%INCLUDE%;%cd%\src\hunspell
+  - set INCLUDE=%INCLUDE%;%cd%\src
   - echo "Building hunspell, platform = %platform%, qt = %qt%, name = %name%"
   - if %qt%==msvc2015 MSBuild %cd%\msvc\Hunspell.sln /p:Configuration="Release_dll" /p:Platform="Win32" /clp:ErrorsOnly
   - if %qt%==msvc2017_64 MSBuild %cd%\msvc\Hunspell.sln /p:Configuration="Release_dll" /p:Platform="x64" /clp:ErrorsOnly
