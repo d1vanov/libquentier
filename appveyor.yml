@@ -138,8 +138,8 @@ install:
   - git checkout v1.6.2
   - set INCLUDE=%INCLUDE%;%cd%\src\hunspell
   - echo "Building hunspell, platform = %platform%, qt = %qt%, name = %name%"
-  - if %qt%==msvc2015 MSBuild %cd%\msvc\Hunspell.sln /p:Configuration="Release_dll" /p:Platform="Win32"
-  - if %qt%==msvc2017_64 MSBuild %cd%\msvc\Hunspell.sln /p:Configuration="Release_dll" /p:Platform="x64"
+  - if %qt%==msvc2015 MSBuild %cd%\msvc\Hunspell.sln /p:Configuration="Release_dll" /p:Platform="Win32" /clp:ErrorsOnly
+  - if %qt%==msvc2017_64 MSBuild %cd%\msvc\Hunspell.sln /p:Configuration="Release_dll" /p:Platform="x64" /clp:ErrorsOnly
   - if not %qt%==mingw492_32 set PATH=%PATH%;%cd%\msvc\Release_dll\libhunspell
   - if not %qt%==mingw492_32 set LIB=%LIB%;%cd%\msvc\Release_dll\libhunspell
   - if %qt%==mingw492_32 C:\msys64\usr\bin\bash -lc "cd /c/dev/hunspell && autoreconf -i && ./configure && make && make check && make install"
