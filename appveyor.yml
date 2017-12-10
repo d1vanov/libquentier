@@ -54,8 +54,8 @@ install:
   - if not %qt%==mingw492_32 md installdir
   - if not %qt%==mingw492_32 md installdir\bin
   - if not %qt%==mingw492_32 md installdir\lib
-  - if %qt%==msvc2015 copy Win32\Release\libiconv.dll installdir\bin\libiconv.dll
-  - if %qt%==msvc2015 copy Win32\Release\libiconv.lib installdir\lib\libiconv.lib
+  - if %qt%==msvc2015 copy x86\Release\libiconv.dll installdir\bin\libiconv.dll
+  - if %qt%==msvc2015 copy x86\Release\libiconv.lib installdir\lib\libiconv.lib
   - if %qt%==msvc2017 copy x64\Release\libiconv.dll installdir\bin\libiconv.dll
   - if %qt%==msvc2017 copy x64\Release\libiconv.lib installdir\bin\libiconv.lib
   - if not %qt%==mingw492_32 set PATH=%cd%\installdir\bin
@@ -81,8 +81,8 @@ install:
   - if not %qt%==mingw492_32 md installdir
   - if not %qt%==mingw492_32 md installdir\bin
   - if not %qt%==mingw492_32 md installdir\lib
-  - if %qt%==msvc2015 copy Win32\Release\zlib.dll installdir\bin\zlib.dll
-  - if %qt%==msvc2015 copy Win32\Release\zlib.lib installdir\lib\zlib.lib
+  - if %qt%==msvc2015 copy x86\Release\zlib.dll installdir\bin\zlib.dll
+  - if %qt%==msvc2015 copy x86\Release\zlib.lib installdir\lib\zlib.lib
   - if %qt%==msvc2017 copy x64\Release\zlib.dll installdir\bin\zlib.dll
   - if %qt%==msvc2017 copy x64\Release\zlib.lib installdir\lib\zlib.lib
   - if not %qt%==mingw492_32 set ZLIB_LIBRARIES=%cd%\installdir\lib\zlib.lib
@@ -112,8 +112,8 @@ install:
   - if not %qt%==mingw492_32 md installdir
   - if not %qt%==mingw492_32 md installdir\bin
   - if not %qt%==mingw492_32 md installdir\lib
-  - if %qt%==msvc2015 copy Win32\Release\libxml2.dll installdir\bin\libxml2.dll
-  - if %qt%==msvc2015 copy Win32\Release\libxml2.lib installdir\lib\libxml2.lib
+  - if %qt%==msvc2015 copy x86\Release\libxml2.dll installdir\bin\libxml2.dll
+  - if %qt%==msvc2015 copy x86\Release\libxml2.lib installdir\lib\libxml2.lib
   - if %qt%==msvc2017 copy x64\Release\libxml2.dll installdir\bin\libxml2.dll
   - if %qt%==msvc2017 copy x64\Release\libxml2.lib installdir\lib\libxml2.lib
   - if not %qt%==mingw492_32 set LIBXML2_LIBRARIES=%cd%\installdir\lib\libxml2.lib
