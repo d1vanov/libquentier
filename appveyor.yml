@@ -41,8 +41,6 @@ init:
   - if %qt%==msvc2015 set PATH="C:\Program Files (x86)\MSBuild\14.0\Bin";%PATH%
   
 install:
-  - if %qt%==mingw492_32 cd C:\MinGW
-  - if %qt%==mingw492_32 dir /s
   - echo "Platform = %platform%, qt = %qt%, name = %name%"
   - echo "Downloading libiconv"
   - md c:\dev\libiconv-win-build
@@ -158,7 +156,7 @@ install:
   - cd build
   - if %qt%==mingw492_32 set PATH=%PATH:C:\Program Files\Git\usr\bin;=%
   - if not %qt%==mingw492_32 cmake .. -G %makefiles% -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX="c:\dev\qtkeychain\build\installdir" -DCMAKE_PREFIX_PATH="C:/Qt/5.9.2/%qt%
-  - if %qt%==mingw492_32 cmake .. -G %makefiles% -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX="c:\dev\qtkeychain\build\installdir" -DCMAKE_PREFIX_PATH="C:/Qt/5.5/%qt%
+  - if %qt%==mingw492_32 cmake .. -G %makefiles% -DCMAKE_BUILD_TYPE=RelWithDebInfo -DUSE_CREDENTIAL_STORE=OFF -DCMAKE_INSTALL_PREFIX="c:\dev\qtkeychain\build\installdir" -DCMAKE_PREFIX_PATH="C:/Qt/5.5/%qt%
   - cmake --build . --target all
   - cmake --build . --target install
   - if %qt%==mingw492_32 set PATH=%PATH%;C:\Program Files\Git\usr\bin
