@@ -45,9 +45,9 @@ install:
   - echo "Downloading libiconv"
   - md c:\dev\libiconv-win-build
   - cd c:\dev
-  - if not %qt%==mingw492-32 git clone https://github.com/kiyolee/libiconv-win-build.git libiconv-win-build
-  - if not %qt%==mingw492-32 echo "Building libiconv"
-  - if not %qt%==mingw492-32 cd libiconv-win-build
+  - if not %qt%==mingw492_32 git clone https://github.com/kiyolee/libiconv-win-build.git libiconv-win-build
+  - if not %qt%==mingw492_32 echo "Building libiconv"
+  - if not %qt%==mingw492_32 cd libiconv-win-build
   - if %qt%==msvc2015 cd build-VS2015
   - if %qt%==msvc2015 msbuild libiconv.sln /p:Configuration="Release" /p:Platform="Win32" /clp:ErrorsOnly
   - if %qt%==msvc2017_64 cd build-VS2017
@@ -73,8 +73,8 @@ install:
   - md c:\dev\zlib-win-build
   - cd c:\dev
   - if not %qt%==mingw492_32 git clone https://github.com/kiyolee/zlib-win-build.git zlib-win-build
-  - if not %qt%==mingw492-32 echo "Building zlib"
-  - if not %qt%==mingw492-32 cd zlib-win-build
+  - if not %qt%==mingw492_32 echo "Building zlib"
+  - if not %qt%==mingw492_32 cd zlib-win-build
   - if %qt%==msvc2015 cd build-VS2015
   - if %qt%==msvc2015 msbuild zlib.sln /p:Configuration="Release" /p:Platform="Win32" /clp:ErrorsOnly
   - if %qt%==msvc2017_64 cd build-VS2017
@@ -103,9 +103,9 @@ install:
   - echo "Downloading libxml2"
   - md c:\dev\libxml2-win-build
   - cd c:\dev
-  - if not %qt%==mingw492-32 git clone https://github.com/kiyolee/libxml2-win-build.git libxml2-win-build
-  - if not %qt%==mingw492-32 echo "Building libxml2"
-  - if not %qt%==mingw492-32 cd libxml2-win-build
+  - if not %qt%==mingw492_32 git clone https://github.com/kiyolee/libxml2-win-build.git libxml2-win-build
+  - if not %qt%==mingw492_32 echo "Building libxml2"
+  - if not %qt%==mingw492_32 cd libxml2-win-build
   - if %qt%==msvc2015 cd build-VS2015
   - if %qt%==msvc2015 msbuild libxml2.sln /p:Configuration="Release" /p:Platform="x86" /clp:ErrorsOnly
   - if %qt%==msvc2017_64 cd build-VS2017
