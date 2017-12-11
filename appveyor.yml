@@ -141,11 +141,10 @@ install:
   - echo "Building hunspell, platform = %platform%, qt = %qt%, name = %name%"
   - if %qt%==msvc2015 MSBuild %cd%\msvc\Hunspell.sln /p:Configuration="Release_dll" /p:Platform="Win32" /clp:ErrorsOnly
   - if %qt%==msvc2017_64 MSBuild %cd%\msvc\Hunspell.sln /p:Configuration="Release_dll" /p:Platform="x64" /clp:ErrorsOnly
-  - if %qt%==msvc2017_64 dir /s
   - if %qt%==msvc2015 set PATH=%PATH%;%cd%\msvc\Release_dll\libhunspell
   - if %qt%==msvc2015 set LIB=%LIB%;%cd%\msvc\Release_dll\libhunspell
-  - if %qt%==msvc2017_64 set PATH=%PATH%;%cd%\msvc\x64\Release_dll\libhunspell
-  - if %qt%==msvc2017_64 set LIB=%LIB%;%cd%\msvc\x64\Release_dll\libhunspell
+  - if %qt%==msvc2017_64 set PATH=%PATH%;%cd%\msvc\x64\Release_dll
+  - if %qt%==msvc2017_64 set LIB=%LIB%;%cd%\msvc\x64\Release_dll
   - if %qt%==mingw492_32 C:\msys64\usr\bin\bash -lc "cd /c/dev/hunspell && autoreconf -i && ./configure && make && make check && make install"
   - echo "Downloading qtkeychain"
   - md c:\dev\qtkeychain
