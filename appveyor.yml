@@ -125,7 +125,7 @@ install:
   - if %qt%==mingw492_32 cd libxml2-win-build
   - if %qt%==mingw492_32 curl -fsSL ftp://ftp.zlatkovic.com/libxml/64bit/libxml2-2.9.3-win32-x86.7z -o libxml2-2.9.3-win32-x86.7z
   - if %qt%==mingw492_32 7z x libxml2-2.9.3-win32-x86.7z
-  - if %qt%==mingw492_32 mv bin\libxml-2.dll bin\libxml2.dll
+  - if %qt%==mingw492_32 mv bin\libxml2-2.dll bin\libxml2.dll
   - if %qt%==mingw492_32 set LIBXML2_INCLUDE_DIRS=%cd%\include
   - if %qt%==mingw492_32 set LIBXML2_LIBRARIES=%cd%\bin\libxml2.dll
   - if %qt%==mingw492_32 set PATH=%cd%\bin;%PATH%
