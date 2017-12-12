@@ -174,13 +174,17 @@ install:
   - if %APPVEYOR_REPO_BRANCH%=="development" git checkout development
   - md build
   - cd build
-  - if %qt%==mingw492_32 echo "Path before excluding git's sh: %PATH%"
+  - if %qt%==mingw492_32 echo "Path before excluding git sh"
+  - if %qt%==mingw492_32 echo %PATH%
   - if %qt%==mingw492_32 set PATH=%PATH:C:\Program Files\Git\usr\bin;=%
-  - if %qt%==mingw492_32 echo "Path after excluding git's sh: %PATH%"
+  - if %qt%==mingw492_32 echo "Path after excluding git sh"
+  - if %qt%==mingw492_32 echo %PATH%
   - if %qt%==mingw492_32 set PATH=C:\Qt\5.5\%qt%\bin;%PATH%
-  - if %qt%==mingw492_32 echo "Path after ensuring Qt libs are in position: %PATH%"
+  - if %qt%==mingw492_32 echo "Path after ensuring Qt libs are in position"
+  - if %qt%==mingw492_32 echo %PATH%
   - if %qt%==mingw492_32 set PATH=C:\MinGW\bin;%PATH%
-  - if %qt%==mingw492_32 echo "Path after ensuring MinGW runtime libs are in position: %PATH%"
+  - if %qt%==mingw492_32 echo "Path after ensuring MinGW runtime libs are in position"
+  - if %qt%==mingw492_32 echo %PATH%
   - if not %qt%==mingw492_32 cmake .. -G %makefiles% -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX="c:\dev\qevercloud\build\installdir" -DUSE_QT5=1 -DCMAKE_PREFIX_PATH="C:/Qt/5.9.2/%qt%
   - if %qt%==mingw492_32 cmake .. -G %makefiles% -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX="c:\dev\qevercloud\build\installdir" -DUSE_QT5=1 -DUSE_QT5_WEBKIT=1 -DCMAKE_PREFIX_PATH="C:/Qt/5.5/%qt%
   - cmake --build . --target all
@@ -246,5 +250,3 @@ test_script:
 
 matrix:
   fast_finish: true
-
-# dummy change to trigger build on AppVeyor"
