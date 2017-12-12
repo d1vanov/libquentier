@@ -60,6 +60,9 @@ endif()
 if(MSVC)
   list(APPEND THIRDPARTY_LIBS secur32.lib)
 endif()
+if(MINGW
+  list(APPEND THIRDPARTY_LIBS secur32)
+endif()  
 
 set(THIRDPARTY_LIB_DIRS ${QEVERCLOUD_LIB_DIR})
 list(APPEND THIRDPARTY_LIB_DIRS ${TIDY_LIB_DIR})
