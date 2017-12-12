@@ -153,7 +153,7 @@ install:
   - echo "Building qtkeychain"
   - cd c:\dev\qtkeychain
   - if %qt%==mingw492_32 C:\msys64\usr\bin\bash -lc "cd /c/dev/qtkeychain && sed -i s/SecureZeroMemory/ZeroMemory/g keychain_win.cpp"
-  - if %qt%==mingw492_32 C:\msys64\usr\bin\bash -lc "cd /c/dev/qtkeychain && sed -i s/\!USE_CREDENTIAL_STORE/NOT USE_CREDENTIAL_STORE/g CMakeLists.txt"
+  - if %qt%==mingw492_32 C:\msys64\usr\bin\bash -lc "cd /c/dev/qtkeychain && sed -i -e 's/\!USE_CREDENTIAL_STORE/NOT USE_CREDENTIAL_STORE/g' CMakeLists.txt"
   - md build
   - cd build
   - if %qt%==mingw492_32 set PATH=%PATH:C:\Program Files\Git\usr\bin;=%
