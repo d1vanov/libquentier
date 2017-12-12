@@ -6,13 +6,13 @@ branches:
 
 environment:
   matrix:
-    - name: win32
-      platform: amd64_x86
-      qt: msvc2015
-    - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
-      name: win64
-      platform: amd64
-      qt: msvc2017_64
+      #    - name: win32
+      #      platform: amd64_x86
+      #      qt: msvc2015
+      #    - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
+      #      name: win64
+      #      platform: amd64
+      #      qt: msvc2017_64
     - name: win32
       platform: mingw
       qt: mingw492_32
