@@ -60,7 +60,7 @@ endif()
 if(MSVC)
   list(APPEND THIRDPARTY_LIBS secur32.lib)
 endif()
-if(MINGW
+if(MINGW)
   list(APPEND THIRDPARTY_LIBS secur32)
 endif()  
 
