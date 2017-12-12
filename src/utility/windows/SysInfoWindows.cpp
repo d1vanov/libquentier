@@ -16,12 +16,19 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#ifdef __MINGW32__
+#define _WIN32_WINNT 0x0501
+#endif
+
 #include <quentier/utility/SysInfo.h>
 #include "../SysInfo_p.h"
 #include <QMutexLocker>
 #include <QString>
 
+#ifndef NOMINMAX
 #define NOMINMAX
+#endif
+
 #include <windows.h>
 
 namespace quentier {
