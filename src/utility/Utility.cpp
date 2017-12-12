@@ -26,7 +26,10 @@
 
 #ifdef Q_OS_WIN
 
+#ifndef NOMINMAX
 #define NOMINMAX
+#endif
+
 #include <limits>
 
 #include <qwindowdefs.h>
@@ -105,12 +108,18 @@ const QString printableDateTimeFromTimestamp(const qint64 timestamp, const DateT
     tm = std::localtime(&t);
     Q_UNUSED(localTm);
 #else
-#error "Too old MSVC version to reliably build libquentier
+#error "Too old MSVC version to reliably build libquentier"
 #endif
+#else // ifdef _MSC_VER
+#ifdef __MINGW32__
+    // MinGW lacks localtime_r but uses MS's localtime instead which is told to be thread-safe but it's still not re-entrant
+    // So, can at best hope it won't cause problems too often
+    tm = localtime(&t);
 #else // POSIX
     tm = &localTm;
     Q_UNUSED(localtime_r(&t, tm))
 #endif
+#endif // ifdef _MSC_VER
 
     const size_t maxBufSize = 100;
     char buffer[maxBufSize];
@@ -125,7 +134,7 @@ const QString printableDateTimeFromTimestamp(const qint64 timestamp, const DateT
         result += QString::fromUtf8("%1").arg(msecPart, 3, 10, QChar::fromLatin1('0'));
     }
 
-#ifndef _MSC_VER
+#if !defined(_MSC_VER) && !defined(__MINGW32__)
     if (options & DateTimePrint::IncludeTimezone) {
         const char * timezone = tm->tm_zone;
         if (timezone) {
