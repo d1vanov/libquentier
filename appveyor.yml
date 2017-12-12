@@ -152,6 +152,7 @@ install:
   - git clone https://github.com/frankosterfeld/qtkeychain.git qtkeychain
   - echo "Building qtkeychain"
   - cd c:\dev\qtkeychain
+  - if %qt%==mingw492_32 C:\msys64\usr\bin\bash -lc "cd /c/dev/qtkeychain && sed -i s/SecureZeroMemory/ZeroMemory/g keychain_win.cpp"
   - md build
   - cd build
   - if %qt%==mingw492_32 set PATH=%PATH:C:\Program Files\Git\usr\bin;=%
