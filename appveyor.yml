@@ -145,7 +145,7 @@ install:
   - if %qt%==msvc2015 set LIB=%LIB%;%cd%\msvc\Release_dll\libhunspell
   - if %qt%==msvc2017_64 set PATH=%PATH%;%cd%\msvc\x64\Release_dll
   - if %qt%==msvc2017_64 set LIB=%LIB%;%cd%\msvc\x64\Release_dll
-  - if %qt%==mingw492_32 C:\msys64\usr\bin\bash -lc "cd /c/dev/hunspell && autoreconf -i && ./configure --prefix=$(pwd)/installdir && make && make check && make install"
+  - if %qt%==mingw492_32 C:\msys64\usr\bin\bash -lc "cd /c/dev/hunspell && autoreconf -i && CC=C:/MinGW/bin/gcc CXX=C:/MinGW/bin/g++ ./configure --prefix=$(pwd)/installdir --host=i386-unknown-mingw32 && make && make check && make install"
   - if %qt%==mingw492_32 set PATH=C:\dev\hunspell\installdir\bin;%PATH%
   - if %qt%==mingw492_32 set LIB=C:\dev\hunspell\installdir\lib;%LIB%
   - if %qt%==mingw492_32 set INCLUDE=C:\dev\hunspell\installdir\include;%INCLUDE%
