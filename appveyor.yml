@@ -225,21 +225,21 @@ after_build:
   - 7z a %DEPLOYMENT_TARGET% c:\dev\install\*
   - cp %DEPLOYMENT_TARGET% %APPVEYOR_BUILD_FOLDER%
   - cd c:\dev\libiconv-win-build
-  - if %qt%==msvc2015 7z a libiconv-msvc2015-x86.7z installdir\*
+  - if %qt%==msvc2015 7z a libiconv-msvc2015-x86.7z build-VS2015\installdir\*
   - if %qt%==msvc2015 cp libiconv-msvc2015-x86.7z %APPVEYOR_BUILD_FOLDER%
-  - if %qt%==msvc2017_64 7z a libiconv-msvc2017-x64.7z installdir\*
+  - if %qt%==msvc2017_64 7z a libiconv-msvc2017-x64.7z build-VS2017\installdir\*
   - if %qt%==msvc2017_64 cp libiconv-msvc2017-x64.7z %APPVEYOR_BUILD_FOLDER%
   - if %qt%==mingw492_32 cp iconv-1.14-win32-x86.7z %APPVEYOR_BUILD_FOLDER%
   - cd c:\dev\zlib-win-build
-  - if %qt%==msvc2015 7z a zlib-msvc2015-x86.7z installdir\*
+  - if %qt%==msvc2015 7z a zlib-msvc2015-x86.7z build-VS2015\installdir\*
   - if %qt%==msvc2015 cp zlib-msvc2015-x86.7z %APPVEYOR_BUILD_FOLDER%
-  - if %qt%==msvc2017_64 7z a zlib-msvc2017-x64.7z installdir\*
+  - if %qt%==msvc2017_64 7z a zlib-msvc2017-x64.7z build-VS2017\installdir\*
   - if %qt%==msvc2017_64 cp zlib-msvc2017-x64.7z %APPVEYOR_BUILD_FOLDER%
   - if %qt%==mingw492_32 cp zlib-1.2.8-win32-x86.7z %APPVEYOR_BUILD_FOLDER%
   - cd c:\dev\libxml2-win-build
-  - if %qt%==msvc2015 7z a libxml2-msvc2015-x86.7z installdir\*
+  - if %qt%==msvc2015 7z a libxml2-msvc2015-x86.7z build-VS2015\installdir\*
   - if %qt%==msvc2015 cp libxml2-msvc2015-x86.7z %APPVEYOR_BUILD_FOLDER%
-  - if %qt%==msvc2017_64 7z a libxml2-msvc2017-x64 installdir\*
+  - if %qt%==msvc2017_64 7z a libxml2-msvc2017-x64 build-VS2017\installdir\*
   - if %qt%==msvc2017_64 cp libxml2-msvc2017-x64 %APPVEYOR_BUILD_FOLDER%
   - if %qt%==mingw492_32 cp libxml2-2.9.3-win32-x86.7z %APPVEYOR_BUILD_FOLDER%
   - cd c:\dev\hunspell
