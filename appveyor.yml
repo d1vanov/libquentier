@@ -27,7 +27,7 @@ init:
   - if not %platform%==mingw set PATH=C:\Qt\5.9.2\%qt%\bin;%PATH%
   - if %platform%==mingw set PATH=C:\Qt\5.5\%qt%\bin;%PATH%
   - set ORIGPATH=%PATH%
-  - if %platform%==mingw set DEPLOYMENT_TARGET=libquentier-qt592-%qt%-%APPVEYOR_BUILD_VERSION%_%APPVEYOR_REPO_COMMIT:~0,7%.zip
+  - if %platform%==mingw set DEPLOYMENT_TARGET=libquentier-qt55-%qt%-%APPVEYOR_BUILD_VERSION%_%APPVEYOR_REPO_COMMIT:~0,7%.zip
   - if not %platform%==mingw set DEPLOYMENT_TARGET=libquentier-qt55-%qt%-%APPVEYOR_BUILD_VERSION%_%APPVEYOR_REPO_COMMIT:~0,7%.zip
   - if %platform%==amd64 call "C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvars64.bat"
   - if %platform%==amd64_x86 call "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" %platform%
@@ -216,9 +216,6 @@ build_script:
   - if not %qt%==mingw492_32 cmake .. -G %makefiles% -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX="c:/dev/install" -DUSE_QT5=1 -DCMAKE_PREFIX_PATH="C:/Qt/5.9.2/%qt%"
   - if %qt%==mingw492_32 cmake .. -G %makefiles% -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_VERBOSE_MAKEFILE=ON -DCMAKE_INSTALL_PREFIX="c:/dev/install" -DUSE_QT5=1 -DUSE_QT5_WEBKIT=1 -DCMAKE_PREFIX_PATH="C:/Qt/5.5/%qt%"
   - cmake --build . --target all
-  - if %qt%==mingw492_32 set PATH=%cd%;%PATH%
-  - if %qt%==mingw492_32 echo "Path before invoking check target"
-  - if %qt%==mingw492_32 echo %PATH%
   - cmake --build . --target check
   - cmake --build . --target install
   - if %qt%==mingw492_32 set PATH=%ORIGPATH%
