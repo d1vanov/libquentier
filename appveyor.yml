@@ -224,10 +224,51 @@ after_build:
   - cd c:\dev
   - 7z a %DEPLOYMENT_TARGET% c:\dev\install\*
   - cp %DEPLOYMENT_TARGET% %APPVEYOR_BUILD_FOLDER%
+  - cd c:\dev\libiconv-win-build
+  - if %qt%==msvc2015 7z a libiconv-msvc2015-x86.7z installdir\*
+  - if %qt%==msvc2015 cp libiconv-msvc2015-x86.7z %APPVEYOR_BUILD_FOLDER%
+  - if %qt%==msvc2017_64 7z a libiconv-msvc2017-x64.7z installdir\*
+  - if %qt%==msvc2017_64 cp libiconv-msvc2017-x64.7z %APPVEYOR_BUILD_FOLDER%
+  - if %qt%==mingw492_32 cp iconv-1.14-win32-x86.7z %APPVEYOR_BUILD_FOLDER%
+  - cd c:\dev\zlib-win-build
+  - if %qt%==msvc2015 7z a zlib-msvc2015-x86.7z installdir\*
+  - if %qt%==msvc2015 cp zlib-msvc2015-x86.7z %APPVEYOR_BUILD_FOLDER%
+  - if %qt%==msvc2017_64 7z a zlib-msvc2017-x64.7z installdir\*
+  - if %qt%==msvc2017_64 cp zlib-msvc2017-x64.7z %APPVEYOR_BUILD_FOLDER%
+  - if %qt%==mingw492_32 cp zlib-1.2.8-win32-x86.7z %APPVEYOR_BUILD_FOLDER%
+  - cd c:\dev\libxml2-win-build
+  - if %qt%==msvc2015 7z a libxml2-msvc2015-x86.7z installdir\*
+  - if %qt%==msvc2015 cp libxml2-msvc2015-x86.7z %APPVEYOR_BUILD_FOLDER%
+  - if %qt%==msvc2017_64 7z a libxml2-msvc2017-x64 installdir\*
+  - if %qt%==msvc2017_64 cp libxml2-msvc2017-x64 %APPVEYOR_BUILD_FOLDER%
+  - if %qt%==mingw492_32 cp libxml2-2.9.3-win32-x86.7z %APPVEYOR_BUILD_FOLDER%
+  - cd c:\dev\hunspell
+  - if %qt%==msvc2015 7z a libhunspell-msvc2015-x86.7z msvc\Release_dll\libhunspell\libhunspell.lib msvc\Release_dll\libhunspell\libhunspell.dll
+  - if %qt%==msvc2015 cp libhunspell-msvc2015-x86.7z %APPVEYOR_BUILD_FOLDER%
+  - if %qt%==msvc2017_64 7z a libhunspell-msvc2017-x64.7z msvc\x64\Release_dll\libhunspell.lib msvc\x64\Release_dll\libhunspell.dll
+  - if %qt%==msvc2017_64 cp libhunspell-msvc2017-x64.7z %APPVEYOR_BUILD_FOLDER%
+  - if %qt%==mingw492_32 7z a libhunspell-mingw492-x86.7z installdir\*
+  - if %qt%==mingw492_32 cp libhunspell-mingw492-x86.7z %APPVEYOR_BUILD_FOLDER%
+  - cd c:\dev\qtkeychain
+  - if %qt%==msvc2015 7z a qtkeychain-msvc2015-x86.7z build\installdir\*
+  - if %qt%==msvc2015 cp qtkeychain-msvc2015-x86.7z %APPVEYOR_BUILD_FOLDER%
+  - if %qt%==msvc2017_64 7z a qtkeychain-msvc2017-x64.7z build\installdir\*
+  - if %qt%==msvc2017_64 cp qtkeychain-msvc2017-x64.7z %APPVEYOR_BUILD_FOLDER%
+  - if %qt%==mingw492_32 7z a qtkeychain-mingw492-x86.7z build\installdir\*
+  - if %qt%==mingw492_32 cp qtkeychain-mingw492-x86.7z %APPVEYOR_BUILD_FOLDER%
+  - cd c:\dev\tidy-html5
+  - if %qt%==msvc2015 7z a tidy-html5-msvc2015-x86.7z build-tidy\installdir\*
+  - if %qt%==msvc2015 cp tidy-html5-msvc2015-x86.7z %APPVEYOR_BUILD_FOLDER%
+  - if %qt%==msvc2017_64 7z a tidy-html5-msvc2017-x64.7z build-tidy\installdir\*
+  - if %qt%==msvc2017_64 cp tidy-html5-msvc2017-x64.7z %APPVEYOR_BUILD_FOLDER%
+  - if %qt%==mingw492_32 7z a tidy-html5-mingw492-x86.7z build-tidy\installdir\*
+  - if %qt%==mingw492_32 cp tidy-html5-mingw492-x86.7z %APPVEYOR_BUILD_FOLDER%
 
 artifacts:
   - path: '*.zip'
     name: archive
+  - path: '*.7z'
+    name: dependencies
 
 deploy:
   - provider: GitHub
