@@ -218,6 +218,9 @@ build_script:
   - if not %qt%==mingw492_32 cmake .. -G %makefiles% -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX="c:/dev/install" -DUSE_QT5=1 -DCMAKE_PREFIX_PATH="C:/Qt/5.9.2/%qt%"
   - if %qt%==mingw492_32 cmake .. -G %makefiles% -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_VERBOSE_MAKEFILE=ON -DCMAKE_INSTALL_PREFIX="c:/dev/install" -DUSE_QT5=1 -DUSE_QT5_WEBKIT=1 -DCMAKE_PREFIX_PATH="C:/Qt/5.5/%qt%"
   - cmake --build . --target all
+  - if %qt%==mingw492_32 set PATH=%cd%;%PATH%
+  - if %qt%==mingw492_32 echo "Path before invoking check target"
+  - if %qt%==mingw492_32 echo %PATH%
   - cmake --build . --target check
   - cmake --build . --target install
   - if %qt%==mingw492_32 set PATH=%ORIGPATH%
@@ -239,10 +242,6 @@ deploy:
     on:
       branch: master                # release from master branch only
       appveyor_repo_tag: true       # deploy on tag push only
-
-test_script:
-  - cd c:\dev\install\bin
-  - ..\..\libquentier\build\test_libquentier.exe
 
 matrix:
   fast_finish: true
