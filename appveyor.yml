@@ -231,8 +231,8 @@ after_build:
   - cd c:\dev\libxml2-win-build
   - if %qt%==msvc2015 7z a libxml2-msvc2015-x86.7z build-VS2015\installdir\*
   - if %qt%==msvc2015 cp libxml2-msvc2015-x86.7z %APPVEYOR_BUILD_FOLDER%
-  - if %qt%==msvc2017_64 7z a libxml2-msvc2017-x64 build-VS2017\installdir\*
-  - if %qt%==msvc2017_64 cp libxml2-msvc2017-x64 %APPVEYOR_BUILD_FOLDER%
+  - if %qt%==msvc2017_64 7z a libxml2-msvc2017-x64.7z build-VS2017\installdir\*
+  - if %qt%==msvc2017_64 cp libxml2-msvc2017-x64.7z %APPVEYOR_BUILD_FOLDER%
   - if %qt%==mingw492_32 cp libxml2-2.9.3-win32-x86.7z %APPVEYOR_BUILD_FOLDER%
   - cd c:\dev\hunspell
   - if %qt%==msvc2015 7z a libhunspell-msvc2015-x86.7z msvc\Release_dll\libhunspell\libhunspell.lib msvc\Release_dll\libhunspell\libhunspell.dll
