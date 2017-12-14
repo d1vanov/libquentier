@@ -2,7 +2,8 @@ version: '0.4.0-{build}'
 
 branches:
   only:
-    - feature/Issue-37-integrate-AppVeyor-CI
+    - master
+    - development
 
 environment:
   matrix:
