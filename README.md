@@ -5,6 +5,8 @@ libquentier
 
 Travis CI (Linux, OS X): [![Build Status](https://travis-ci.org/d1vanov/libquentier.svg?branch=master)](https://travis-ci.org/d1vanov/libquentier)
 
+AppVeyor CI (Windows): [![Build status](https://ci.appveyor.com/api/projects/status/24k9pidhi8g8slb0/branch/master?svg=true)](https://ci.appveyor.com/project/d1vanov/libquentier/branch/master)
+
 ## What's this
 
 This library presents a set of Qt/C++ APIs useful for applications working as feature rich desktop clients for Evernote service.
