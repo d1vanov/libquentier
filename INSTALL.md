@@ -60,8 +60,8 @@ cmake -Dqt4-mimetypes_DIR=<...path to qt4-mimetypes installation folder...>/lib/
       -DBOOST_ROOT=<...path to boost installation prefix...> \
       -DQtKeychain_DIR=<...path to QtKeychain cmake dir within the installation prefix...> \
       -DQEverCloud-qt4_DIR=<...path to Qt4 QEverCloud installation...>/lib/cmake/QEverCloud-qt4 \
-      -DCMAKE_INCLUDE_PATH=<...path to tidy-html5 include directory...> \
-      -DCMAKE_LIBRARY_PATH=<...path to tidy-html5 libraries directory...> \
+      -DTIDY_HTML5_INCLUDE_PATH=<...path to tidy-html5 include directory...> \
+      -DTIDY_HTML5_LIB=<...path to tidy-html5 library...> \
       -DCMAKE_INSTALL_PREFIX=<...where to install the built library...> ../
 ```
 For Qt5:
@@ -72,8 +72,8 @@ cmake -DLIBXML2_INCLUDE_DIR=<...path to libxml2 include directory...> \
       -DBOOST_ROOT=<...path to boost installation prefix...> \
       -DQt5Keychain_DIR=<...path to QtKeychain cmake dir within the installation prefix...> \
       -DQEverCloud-qt5_DIR=<...path to Qt5 QEverCloud installation...>/lib/cmake/QEverCloud-qt5 \
-      -DCMAKE_INCLUDE_PATH=<...path to tidy-html5 include directory...> \
-      -DCMAKE_LIBRARY_PATH=<...path to tidy-html5 libraries directory...> \
+      -DTIDY_HTML5_INCLUDE_PATH=<...path to tidy-html5 include directory...> \
+      -DTIDY_HTML5_LIB=<...path to tidy-html5 library...> \
       -DCMAKE_INSTALL_PREFIX=<...where to install the built app...> ../
 ```
 
