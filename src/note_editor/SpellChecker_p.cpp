@@ -182,6 +182,8 @@ QStringList SpellCheckerPrivate::spellCorrectionSuggestions(const QString & misS
 
             free(rawCorrectionSuggestions[i]);
         }
+
+        free(rawCorrectionSuggestions);
     }
 
     return result;
