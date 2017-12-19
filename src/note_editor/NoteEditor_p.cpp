@@ -5126,6 +5126,11 @@ void NoteEditorPrivate::applySpellCheck(const bool applyToSelection)
     QNDEBUG(QStringLiteral("NoteEditorPrivate::applySpellCheck: apply to selection = ")
             << (applyToSelection ? QStringLiteral("true") : QStringLiteral("false")));
 
+    if (m_currentNoteMisSpelledWords.isEmpty()) {
+        QNDEBUG(QStringLiteral("The list of current note misspelled words is empty, nothing to apply"));
+        return;
+    }
+
     QString javascript = QStringLiteral("if (window.hasOwnProperty('spellChecker')) { spellChecker.apply");
 
     if (applyToSelection) {
