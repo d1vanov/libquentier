@@ -255,6 +255,11 @@ function SpellChecker(id, tag) {
             return;
         }
 
+        if (regs[1].trim().length == 0) {
+            console.log("Trimmed regs[1] is empty: regs[1] = " + regs[1]);
+            return;
+        }
+
         console.log("Found misspelled word(s) within the text: " + nv + "; regs.length = " + regs.length +
                     ", regs[0] = " + regs[0] + ", regs[1] = " + regs[1] + ", regs.index = " + regs.index +
                     ", matchRegex.lastIndex = " + matchRegex.lastIndex);
