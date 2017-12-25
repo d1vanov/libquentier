@@ -18,7 +18,7 @@ matrix:
           env: QT_BASE=48 COMPILER=clang++ CMAKE_BUILD_TYPE=Debug
 
         - os: linux
-          env: QT_BASE=551 COMPILER=g++-4.9 CMAKE_BUILD_TYPE=Debug
+          env: QT_BASE=551 COMPILER=g++-4.8 CMAKE_BUILD_TYPE=RelWithDebInfo
 
         - os: linux
           env: QT_BASE=551 COMPILER=clang++ CMAKE_BUILD_TYPE=Debug
@@ -47,12 +47,8 @@ install:
           echo "Building for Qt 5.5.1" &&
           sudo apt-add-repository -y ppa:beineri/opt-qt551-trusty &&
           sudo apt-get -qq update &&
-          if [ "${COMPILER}" = "g++-4.9" ]; then
-            sudo apt-get -qq install g++-4.9 gcc-4.9 qt55tools qt55base qt55webchannel qt55webengine qt55websockets qt55xmlpatterns &&
-            export CXX="g++-4.9" &&
-            export CC="gcc-4.9"
-          else
-            sudo apt-get -qq install qt55tools qt55base qt55webchannel qt55webengine qt55websockets qt55xmlpatterns &&
+          sudo apt-get -qq install qt55tools qt55base qt55webchannel qt55webengine qt55websockets qt55xmlpatterns &&
+          if [ "${COMPILER}" = "clang++" ]; then
             export CXX="clang++" &&
             export CC="clang"
           fi
@@ -60,10 +56,8 @@ install:
           echo "Building for Qt 5.9.2" &&
           sudo apt-add-repository -y ppa:beineri/opt-qt592-trusty &&
           sudo apt-get -qq update &&
-          if [ "${COMPILER}" = "g++-4.8" ]; then
-            sudo apt-get -qq install qt59tools qt59base qt59webchannel qt59webengine qt59websockets qt59xmlpatterns
-          else
-            sudo apt-get -qq install qt59tools qt59base qt59webchannel qt59webengine qt59websockets qt59xmlpatterns &&
+          sudo apt-get -qq install qt59tools qt59base qt59webchannel qt59webengine qt59websockets qt59xmlpatterns &&
+          if [ "${COMPILER}" = "clang++" ]; then
             export CXX="clang++" &&
             export CC="clang"
           fi
@@ -241,10 +235,10 @@ after_success:
       elif [ "${TRAVIS_OS_NAME}" = "osx" ]; then
         if [ "${TRAVIS_BRANCH}" = "master" ] || [ "${TRAVIS_BRANCH}" = "development" ]; then
           cd $LIBQUENTIER_DIR/build/installdir &&
-          7z a libquentier_mac_qt_${QT_BASE}_x86_64.zip * &&
+          7z a libquentier_mac_x86_64.zip * &&
           wget https://github.com/d1vanov/ciuploadtool/releases/download/continuous-master/ciuploadtool_mac.zip &&
           unzip ciuploadtool_mac.zip &&
           chmod 755 ciuploadtool &&
-          ./ciuploadtool -suffix="$TRAVIS_BRANCH" libquentier_mac_qt_${QT_BASE}_x86_64.zip
+          ./ciuploadtool -suffix="$TRAVIS_BRANCH" libquentier_mac_x86_64.zip
         fi
       fi
