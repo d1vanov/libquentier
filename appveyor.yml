@@ -54,7 +54,7 @@ install:
   - cd c:\dev\ciuploadtool
   - curl -fsSL https://github.com/d1vanov/ciuploadtool/releases/download/continuous-master/ciuploadtool_windows_x86.zip -o ciuploadtool_windows_x86.zip
   - 7z x ciuploadtool_windows_x86.zip
-  - if %prepare_mode%==YES c:\ciuploadtool\ciuploadtool.exe -preponly -suffix="%APPVEYOR_REPO_BRANCH%"
+  - if %prepare_mode%==YES c:\dev\ciuploadtool\ciuploadtool.exe -preponly -suffix="%APPVEYOR_REPO_BRANCH%"
   - ps: if ($env:prepare_mode -eq "YES") { throw "Failing in order to stop the current build matrix job early" }
   - echo "Downloading libiconv"
   - md c:\dev\libiconv
