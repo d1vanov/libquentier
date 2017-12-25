@@ -8,7 +8,7 @@ branches:
 
 environment:
   auth_token:
-    secure: bFPozfVngJ8Gonjmldc8N5leBx7PxwwYIqnK/bpSsPVUYqEYHafBBQRwrtdL+oc9
+    secure: rLuHhO0prerqoGCYmfOoyxqcwwamCXtuZtl4Jzqeu3aGgflk0mnX1fogLq68YcRW
   matrix:
     - prepare_mode: YES
       name: win32-prepare
