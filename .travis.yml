@@ -224,7 +224,8 @@ script:
               -DCMAKE_VERBOSE_MAKEFILE=ON -DUSE_QT5=1 ..
       fi
       make &&
-      make check
+      make check &&
+      make install
 
 after_success:
     - |
