@@ -158,7 +158,7 @@ build_script:
   - cd c:\dev\libquentier\build
   - if %qt%==mingw492_32 set PATH=%PATH:C:\Program Files\Git\usr\bin;=%
   - if %qt%==mingw492_32 set PATH=C:\MinGW\bin;C:\Qt\5.5\%qt%\bin;%PATH%
-  - if not %qt%==mingw492_32 C:\msys64\usr\bin\bash -lc "cd /c/dev/libquentier && echo 'install(FILES $<TARGET_PDB_FILE:${PROJECT_NAME}> DESTINATION bin OPTIONAL)' >> CMakeLists.txt"
+  - if not %qt%==mingw492_32 C:\msys64\usr\bin\bash -lc "cd /c/dev/libquentier && echo 'install(FILES $<TARGET_PDB_FILE:${LIBNAME}> DESTINATION bin OPTIONAL)' >> CMakeLists.txt"
   - if %qt%==mingw492_32 cmake .. -G %makefiles% -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX="c:/dev/install" -DUSE_QT5=1 -DUSE_QT5_WEBKIT=1 -DCMAKE_PREFIX_PATH="C:/Qt/5.5/%qt%"
   - if not %qt%==mingw492_32 cmake .. -G %makefiles% -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX="c:/dev/install" -DUSE_QT5=1 -DCMAKE_PREFIX_PATH="C:/Qt/5.9.2/%qt%"
   - cmake --build . --target all
