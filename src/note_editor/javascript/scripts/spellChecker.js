@@ -28,7 +28,7 @@ function SpellChecker(id, tag) {
     var dynamicModeOn = false;
 
     var targetNode = document.getElementById(id) || document.body;
-    var misspellTag = tag || "EM";
+    var misspellTag = tag || "SPAN";
     var skipTags = new RegExp("^(?:" + misspellTag + "|SCRIPT|FORM)$");
     var matchRegex = "";
     var misspellTagClassName = "misspell";

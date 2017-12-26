@@ -179,7 +179,7 @@ function FindReplaceManager() {
     this.clearHighlightTags = function(html) {
         var highlightOpenTagStart = 0;
         while(true) {
-            highlightOpenTagStart = html.indexOf("<em", highlightOpenTagStart);
+            highlightOpenTagStart = html.indexOf("<span", highlightOpenTagStart);
             if (highlightOpenTagStart < 0) {
                 break;
             }
@@ -189,7 +189,7 @@ function FindReplaceManager() {
                 break;
             }
 
-            var highlightCloseTagStart = html.indexOf("</em>", highlightOpenTagEnd);
+            var highlightCloseTagStart = html.indexOf("</span>", highlightOpenTagEnd);
             if (highlightCloseTagStart < 0) {
                 break;
             }
