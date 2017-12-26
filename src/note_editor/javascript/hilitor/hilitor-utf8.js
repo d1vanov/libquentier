@@ -7,7 +7,7 @@ function Hilitor2(id, tag)
 {
 
   var targetNode = document.getElementById(id) || document.body;
-  var hiliteTag = tag || "EM";
+  var hiliteTag = tag || "SPAN";
   var skipTags = new RegExp("^(?:" + hiliteTag + "|SCRIPT|FORM)$");
   var color = "#ff6";
   var wordColor = [];
