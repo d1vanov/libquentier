@@ -2431,11 +2431,14 @@ void NoteEditorPrivate::onSpellCheckerDictionaryEnabledOrDisabled(bool checked)
         return;
     }
 
+    QString dictionaryName = pAction->text();
+    dictionaryName.remove(QStringLiteral("&"));
+
     if (checked) {
-        m_pSpellChecker->enableDictionary(pAction->text());
+        m_pSpellChecker->enableDictionary(dictionaryName);
     }
     else {
-        m_pSpellChecker->disableDictionary(pAction->text());
+        m_pSpellChecker->disableDictionary(dictionaryName);
     }
 
     if (!m_spellCheckerEnabled) {
@@ -6503,19 +6506,21 @@ void NoteEditorPrivate::onSpellCheckCorrectionAction()
         return;
     }
 
-    QAction * action = qobject_cast<QAction*>(sender());
-    if (Q_UNLIKELY(!action)) {
+    QAction * pAction = qobject_cast<QAction*>(sender());
+    if (Q_UNLIKELY(!pAction)) {
         ErrorString error(QT_TR_NOOP("Can't get the action which has toggled the spelling correction"));
         QNWARNING(error);
         Q_EMIT notifyError(error);
         return;
     }
 
-    const QString & correction = action->text();
+    QString correction = pAction->text();
     if (Q_UNLIKELY(correction.isEmpty())) {
         QNWARNING(QStringLiteral("No correction specified"));
         return;
     }
+
+    correction.remove(QStringLiteral("&"));
 
     GET_PAGE()
     page->executeJavaScript(QStringLiteral("spellChecker.correctSpelling('") + correction + QStringLiteral("');"),
