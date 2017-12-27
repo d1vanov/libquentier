@@ -1495,9 +1495,9 @@ void NoteEditorPrivate::onWriteFileRequestProcessed(bool success, ErrorString er
     }
 }
 
-void NoteEditorPrivate::onSelectionFormatterAsSourceCode(const QVariant & response, const QVector<QPair<QString,QString> > & extraData)
+void NoteEditorPrivate::onSelectionFormattedAsSourceCode(const QVariant & response, const QVector<QPair<QString,QString> > & extraData)
 {
-    QNDEBUG(QStringLiteral("NoteEditorPrivate::onSelectionFormatterAsSourceCode"));
+    QNDEBUG(QStringLiteral("NoteEditorPrivate::onSelectionFormattedAsSourceCode"));
 
     Q_UNUSED(extraData)
     QMap<QString,QVariant> resultMap = response.toMap();
@@ -1515,16 +1515,39 @@ void NoteEditorPrivate::onSelectionFormatterAsSourceCode(const QVariant & respon
     {
         ErrorString error;
         auto errorIt = resultMap.find(QStringLiteral("error"));
-        if (Q_UNLIKELY(errorIt == resultMap.end())) {
+        if (Q_UNLIKELY(errorIt == resultMap.end()))
+        {
             error.setBase(QT_TR_NOOP("Internal error: can't parse the error of selection formatting as source code from JavaScript"));
         }
-        else {
-            error.setBase(QT_TR_NOOP("Internal error: can't format the selection as source code"));
-            error.details() = errorIt.value().toString();
+        else
+        {
+            QString errorValue = errorIt.value().toString();
+            if (!errorValue.isEmpty())
+            {
+                error.setBase(QT_TR_NOOP("Internal error: can't format the selection as source code"));
+                error.details() = errorValue;
+                QNWARNING(error);
+                Q_EMIT notifyError(error);
+            }
+            else
+            {
+                QString feedback;
+                auto feedbackIt = resultMap.find(QStringLiteral("feedback"));
+                if (feedbackIt != resultMap.end()) {
+                    feedback = feedbackIt.value().toString();
+                }
+
+                if (Q_UNLIKELY(feedback.isEmpty())) {
+                    error.setBase(QT_TR_NOOP("Internal error: can't format the selection as source code, unknown error"));
+                    QNWARNING(error);
+                    Q_EMIT notifyError(error);
+                }
+                else {
+                    QNDEBUG(feedback);
+                }
+            }
         }
 
-        QNWARNING(error);
-        Q_EMIT notifyError(error);
         return;
     }
 
@@ -6910,7 +6933,7 @@ void NoteEditorPrivate::formatSelectionAsSourceCode()
     QNDEBUG(QStringLiteral("NoteEditorPrivate::formatSelectionAsSourceCode"));
     GET_PAGE()
     page->executeJavaScript(QStringLiteral("sourceCodeFormatter.format()"),
-                            NoteEditorCallbackFunctor<QVariant>(this, &NoteEditorPrivate::onSelectionFormatterAsSourceCode));
+                            NoteEditorCallbackFunctor<QVariant>(this, &NoteEditorPrivate::onSelectionFormattedAsSourceCode));
 }
 
 void NoteEditorPrivate::fontMenu()

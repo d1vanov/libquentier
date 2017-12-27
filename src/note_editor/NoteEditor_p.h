@@ -413,7 +413,7 @@ private Q_SLOTS:
 
     void onImageResourceResized(bool pushUndoCommand);
 
-    void onSelectionFormatterAsSourceCode(const QVariant & response, const QVector<QPair<QString,QString> > & extraData);
+    void onSelectionFormattedAsSourceCode(const QVariant & response, const QVector<QPair<QString,QString> > & extraData);
 
     // Slots for delegates
     void onAddResourceDelegateFinished(Resource addedResource, QString resourceFileStoragePath);

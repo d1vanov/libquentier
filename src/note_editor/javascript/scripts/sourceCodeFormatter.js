@@ -23,6 +23,7 @@ function SourceCodeFormatter() {
                       "font-size: 0.9em; border-radius: 4px; letter-spacing: 0.015em; padding: 1em; " +
                       "border: 1px solid #cccccc; background-color: #f8f8f8; overflow-x: auto;";
     var lastError;
+    var lastFeedback;
 
     this.format = function()
     {
@@ -31,22 +32,25 @@ function SourceCodeFormatter() {
         var selection = window.getSelection();
         if (!selection) {
             lastError = "selection is null";
+            lastFeedback = "";
             console.log(lastError);
-            return { status:false, error:lastError };
+            return { status:false, error:lastError, feedback:lastFeedback };
         }
 
         var rangeCount = selection.rangeCount;
         if (rangeCount != 1) {
-            lastError = "not exactly one range within the selection";
-            console.warn(lastError);
-            return { status:false, error:lastError };
+            lastError = "";
+            lastFeedback = "not exactly one range within the selection";
+            console.log(lastFeedback);
+            return { status:false, error:lastError, feedback:lastFeedback };
         }
 
         var anchorNode = selection.anchorNode;
         if (!anchorNode) {
-            lastError = "selection anchor node is null";
-            console.log(lastError);
-            return { status:false, error:lastError };
+            lastError = "";
+            lastFeedback = "no anchor node within the selection";
+            console.log(lastFeedback);
+            return { status:false, error:lastError, feedback:lastFeedback };
         }
 
         var element = anchorNode;
@@ -80,9 +84,10 @@ function SourceCodeFormatter() {
 
         var selectedText = selection.toString();
         if (!selectedText) {
-            lastError = "Selected text is empty";
-            console.log(lastError);
-            return { status:false, error:lastError };
+            lastError = "";
+            lastFeedback = "Selected text is empty";
+            console.log(lastFeedback);
+            return { status:false, error:lastError, feedback:lastFeedback };
         }
 
         var formattedHtml = "<div><pre style=\"" + formatStyle + "\">";
@@ -145,6 +150,7 @@ function SourceCodeFormatter() {
         }
         catch(e) {
             lastError = e.message;
+            lastFeedback = "";
             console.warn("Caught exception: " + lastError);
             gotError = true;
         }
@@ -154,10 +160,10 @@ function SourceCodeFormatter() {
 
         if (gotError) {
             document.body = this.popUndo()[0];
-            return { status:false, error:lastError };
+            return { status:false, error:lastError, feedback:lastFeedback };
         }
 
-        return { status:true, error:"" };
+        return { status:true, error:"", lastFeedback:"" };
     }
 }
 
