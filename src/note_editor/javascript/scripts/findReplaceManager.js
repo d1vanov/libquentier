@@ -195,7 +195,7 @@ function FindReplaceManager() {
             }
 
             var classAttributeValueStart = html.indexOf("hilitorHelper");
-            if ((classAttributeValueStart <= highlightOpenTagStart) && (classAttributeValueStart >= highlightOpenTagEnd)) {
+            if ((classAttributeValueStart <= highlightOpenTagStart) || (classAttributeValueStart >= highlightOpenTagEnd)) {
                 continue;
             }
 
