@@ -13,7 +13,7 @@ if(EXISTS "${LIBQUENTIER_CMAKE_DIR}/CMakeCache.txt")
   # in build tree
   include("${LIBQUENTIER_CMAKE_DIR}/Libquentier-@LIBQUENTIER_QT_VERSION@BuildTreeSettings.cmake")
 else()
-  set(LIBQUENTIER_INCLUDE_DIRS "@CMAKE_INSTALL_INCLUDEDIR@")
+  set(LIBQUENTIER_INCLUDE_DIRS "@CMAKE_INSTALL_PREFIX@/@CMAKE_INSTALL_INCLUDEDIR@")
 endif()
 
 # Find the libquentier's Qt dependencies

@@ -657,24 +657,24 @@ add_library(${LIBNAME} SHARED
 
 # installation settings, needed for target properties
 if(NOT CMAKE_INSTALL_LIBDIR)
-  set(CMAKE_INSTALL_LIBDIR "${CMAKE_INSTALL_PREFIX}/lib")
+  set(CMAKE_INSTALL_LIBDIR "lib")
 endif()
 
 if(NOT CMAKE_INSTALL_BINDIR)
-  set(CMAKE_INSTALL_BINDIR "${CMAKE_INSTALL_PREFIX}/bin")
+  set(CMAKE_INSTALL_BINDIR "bin")
 endif()
 
 if(NOT CMAKE_INSTALL_INCLUDEDIR)
-  set(CMAKE_INSTALL_INCLUDEDIR "${CMAKE_INSTALL_PREFIX}/include")
+  set(CMAKE_INSTALL_INCLUDEDIR "include")
 endif()
 
 if(NOT CMAKE_INSTALL_TRANSLATIONSDIR)
-  set(CMAKE_INSTALL_TRANSLATIONSDIR "${CMAKE_INSTALL_PREFIX}/share/${PROJECT_NAME}/translations")
+  set(CMAKE_INSTALL_TRANSLATIONSDIR "share/${PROJECT_NAME}/translations")
 endif()
 
 if(NOT INSTALL_CMAKE_DIR)
   if(WIN32 AND NOT CYGWIN)
-    set(DEF_INSTALL_CMAKE_DIR "${CMAKE_INSTALL_PREFIX}/CMake")
+    set(DEF_INSTALL_CMAKE_DIR "CMake")
   else()
     set(DEF_INSTALL_CMAKE_DIR "${CMAKE_INSTALL_LIBDIR}/cmake/Libquentier-${LIBQUENTIER_QT_VERSION}")
   endif()
@@ -687,7 +687,7 @@ set_target_properties(${LIBNAME} PROPERTIES
                       VERSION "${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}.${PROJECT_VERSION_PATCH}"
                       SOVERSION "${PROJECT_VERSION_MAJOR}"
                       MACOSX_RPATH 1
-                      INSTALL_NAME_DIR "${CMAKE_INSTALL_LIBDIR}")
+                      INSTALL_NAME_DIR "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}")
 
 target_link_libraries(${LIBNAME} ${QT_LIBRARIES} ${THIRDPARTY_LIBS})
 
@@ -878,7 +878,7 @@ endforeach()
 foreach(QM_FILE ${${PROJECT_NAME}_QM_FILES})
   install(CODE "set(QM_FILE \"${QM_FILE})\")
                 if(EXISTS \"${QM_FILE}\")
-                  set(CMAKE_INSTALL_TRANSLATIONSDIR \"${CMAKE_INSTALL_TRANSLATIONSDIR}\")
+                  set(CMAKE_INSTALL_TRANSLATIONSDIR \"${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_TRANSLATIONSDIR}\")
                   message(STATUS \"Installing: ${QM_FILE}\")
                   file(COPY ${QM_FILE} DESTINATION ${CMAKE_INSTALL_TRANSLATIONSDIR})
                 endif()")
