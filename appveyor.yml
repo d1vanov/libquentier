@@ -169,7 +169,7 @@ build_script:
   - if %qt%==mingw492_32 set PATH=%ORIGPATH%
 
 after_build:
-  - cd c:\dev\libquentier\installdir
+  - cd c:\dev\libquentier\build\installdir
   - 7z a %DEPLOYMENT_TARGET% *
   - cp %DEPLOYMENT_TARGET% %APPVEYOR_BUILD_FOLDER%
   - cd %APPVEYOR_BUILD_FOLDER%
