@@ -128,6 +128,10 @@ NoteSearchQueryData::NoteSearchQueryData(const NoteSearchQueryData & other) :
     m_negatedCreationTimestamps(other.m_negatedCreationTimestamps),
     m_hasAnyCreationTimestamp(other.m_hasAnyCreationTimestamp),
     m_hasNegatedAnyCreationTimestamp(other.m_hasNegatedAnyCreationTimestamp),
+    m_modificationTimestamps(other.m_modificationTimestamps),
+    m_negatedModificationTimestamps(other.m_negatedModificationTimestamps),
+    m_hasAnyModificationTimestamp(other.m_hasAnyModificationTimestamp),
+    m_hasNegatedAnyModificationTimestamp(other.m_hasNegatedAnyModificationTimestamp),
     m_resourceMimeTypes(other.m_resourceMimeTypes),
     m_negatedResourceMimeTypes(other.m_negatedResourceMimeTypes),
     m_hasAnyResourceMimeType(other.m_hasAnyResourceMimeType),
@@ -808,10 +812,7 @@ QStringList NoteSearchQueryData::splitSearchQueryString(const QString & searchQu
             }
             else
             {
-                if (!insideQuotedText) {
-                    insideQuotedText = true;
-                }
-
+                insideQuotedText = true;
                 continue;
             }
         }
@@ -855,7 +856,7 @@ void NoteSearchQueryData::parseStringValue(const QString & key, QStringList & wo
 
     while(keyIndex >= 0)
     {
-        keyIndex = words.indexOf(regexp, (keyIndex >= 0 ? keyIndex : 0));
+        keyIndex = words.indexOf(regexp, keyIndex);
         if (keyIndex < 0) {
             break;
         }
@@ -927,7 +928,7 @@ bool NoteSearchQueryData::parseIntValue(const QString & key, QStringList & words
 
     while(keyIndex >= 0)
     {
-        keyIndex = words.indexOf(regexp, (keyIndex >= 0 ? keyIndex : 0));
+        keyIndex = words.indexOf(regexp, keyIndex);
         if (keyIndex < 0) {
             break;
         }
@@ -1012,7 +1013,7 @@ bool NoteSearchQueryData::parseDoubleValue(const QString & key, QStringList & wo
 
     while(keyIndex >= 0)
     {
-        keyIndex = words.indexOf(regexp, (keyIndex >= 0 ? keyIndex : 0));
+        keyIndex = words.indexOf(regexp, keyIndex);
         if (keyIndex < 0) {
             break;
         }
