@@ -4932,8 +4932,12 @@ bool LocalStorageManagerPrivate::rowExists(const QString & tableName, const QStr
         return false;
     }
 
-    while(query.next() && query.isValid()) {
-        int count = query.value(0).toInt();
+    if (query.next() && query.isValid()) {
+        bool conversionResult = false;
+        int count = query.value(0).toInt(&conversionResult);
+        if (!conversionResult) {
+            return false;
+        }
         return (count != 0);
     }
 
