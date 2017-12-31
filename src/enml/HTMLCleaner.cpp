@@ -140,27 +140,27 @@ bool HTMLCleaner::Impl::convertHtml(const QString & html, const TidyOptionId out
     }
 
     if (ok) {
-        rc = tidyOptSetInt(m_tidyDoc, TidyVertSpace, TidyNoState);
+        ok = tidyOptSetInt(m_tidyDoc, TidyVertSpace, TidyNoState);
         QNTRACE(QStringLiteral("tidyOptSetBool: vert space = no: ok = ") << (ok ? QStringLiteral("true") : QStringLiteral("false")));
     }
 
     if (ok) {
-        rc = tidyOptSetBool(m_tidyDoc, TidyMark, no);
+        ok = tidyOptSetBool(m_tidyDoc, TidyMark, no);
         QNTRACE(QStringLiteral("tidyOptSetBool: tidy mark = no: ok = ") << (ok ? QStringLiteral("true") : QStringLiteral("false")));
     }
 
     if (ok) {
-        rc = tidyOptSetInt(m_tidyDoc, TidyBodyOnly, TidyYesState);
+        ok = tidyOptSetInt(m_tidyDoc, TidyBodyOnly, TidyYesState);
         QNTRACE(QStringLiteral("tidyOptSetBool: tidy body only = yes: ok = ") << (ok ? QStringLiteral("true") : QStringLiteral("false")));
     }
 
     if (ok) {
-        rc = tidyOptSetInt(m_tidyDoc, TidyWrapLen, 0);
+        ok = tidyOptSetInt(m_tidyDoc, TidyWrapLen, 0);
         QNTRACE(QStringLiteral("tidyOptSetInt: wrap len = 0: ok = ") << (ok ? QStringLiteral("true") : QStringLiteral("false")));
     }
 
     if (ok) {
-        rc = tidyOptSetValue(m_tidyDoc, TidyDoctype, "omit");
+        ok = tidyOptSetValue(m_tidyDoc, TidyDoctype, "omit");
         QNTRACE(QStringLiteral("tidyOptSetBool: doctype = omit: ok = ") << (ok ? QStringLiteral("true") : QStringLiteral("false")));
     }
 
