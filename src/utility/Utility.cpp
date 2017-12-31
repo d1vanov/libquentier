@@ -100,6 +100,7 @@ const QString printableDateTimeFromTimestamp(const qint64 timestamp, const DateT
 
     std::time_t t(timestamp / 1000);
     std::tm localTm;
+    Q_UNUSED(localTm)
     std::tm * tm = Q_NULLPTR;
 
 #ifdef _MSC_VER
