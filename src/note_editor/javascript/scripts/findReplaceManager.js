@@ -210,15 +210,29 @@ function FindReplaceManager() {
         console.log("replaceAll: text to replace = " + textToReplace +
                     "; replacement text = " + replacementText + "; match case = " + matchCase);
 
+        if (matchCase && (textToReplace === replacementText)) {
+            return;
+        }
+        else if (!matchCase && (textToReplace.toUpperCase() === replacementText.toUpperCase())) {
+            return;
+        }
+
         observer.stop();
 
         try {
-            var counter = 0;
-            while(this.replace(textToReplace, replacementText, matchCase)) {
-                ++counter;
+            //var counter = 0;
+            var flags = "g";
+            if (!matchCase) {
+                flags += "i";
             }
 
-            undoReplaceAllCounters.push(counter);
+            var re = new RegExp(textToReplace, flags);
+            findAndReplaceDOMText(document.body, {
+                find: re,
+                replace: replacementText
+            });
+
+            //undoReplaceAllCounters.push(counter);
         }
         finally {
             observer.start();
