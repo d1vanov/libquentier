@@ -208,6 +208,7 @@ NoteEditorPrivate::NoteEditorPrivate(NoteEditor & noteEditor) :
     m_setInitialCaretPositionJs(),
     m_toDoCheckboxAutomaticInsertionJs(),
     m_disablePasteJs(),
+    m_findAndReplaceDOMTextJs(),
 #ifndef QUENTIER_USE_QT_WEB_ENGINE
     m_qWebKitSetupJs(),
 #else
@@ -493,6 +494,7 @@ void NoteEditorPrivate::onNoteLoadFinished(bool ok)
     page->executeJavaScript(m_imageAreasHilitorJs);
     page->executeJavaScript(m_spellCheckerJs);
     page->executeJavaScript(m_managedPageActionJs);
+    page->executeJavaScript(m_findAndReplaceDOMTextJs);
 
     if (m_isPageEditable) {
         QNTRACE(QStringLiteral("Note page is editable"));
@@ -4397,6 +4399,7 @@ void NoteEditorPrivate::setupScripts()
     SETUP_SCRIPT("javascript/scripts/sourceCodeFormatter.js", m_sourceCodeFormatterJs);
     SETUP_SCRIPT("javascript/scripts/hyperlinkManager.js", m_hyperlinkManagerJs);
     SETUP_SCRIPT("javascript/scripts/encryptDecryptManager.js", m_encryptDecryptManagerJs);
+    SETUP_SCRIPT("javascript/scripts/findAndReplaceDOMText.js", m_findAndReplaceDOMTextJs);
 
 #ifndef QUENTIER_USE_QT_WEB_ENGINE
     SETUP_SCRIPT("javascript/scripts/qWebKitSetup.js", m_qWebKitSetupJs);

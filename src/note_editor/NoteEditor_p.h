@@ -772,6 +772,7 @@ private:
     QString     m_setInitialCaretPositionJs;
     QString     m_toDoCheckboxAutomaticInsertionJs;
     QString     m_disablePasteJs;
+    QString     m_findAndReplaceDOMTextJs;
 
 #ifndef QUENTIER_USE_QT_WEB_ENGINE
     QString     m_qWebKitSetupJs;

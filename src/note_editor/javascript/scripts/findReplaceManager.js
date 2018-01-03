@@ -200,7 +200,7 @@ function FindReplaceManager() {
             }
 
             var highlightedText = html.substring(highlightOpenTagEnd + 1, highlightCloseTagStart);
-            html = html.substring(0, highlightOpenTagStart) + highlightedText + html.substring(highlightCloseTagStart + 5, html.length);
+            html = html.substring(0, highlightOpenTagStart) + highlightedText + html.substring(highlightCloseTagStart + 7, html.length);
         }
 
         return html;
@@ -210,15 +210,41 @@ function FindReplaceManager() {
         console.log("replaceAll: text to replace = " + textToReplace +
                     "; replacement text = " + replacementText + "; match case = " + matchCase);
 
+        if (matchCase && (textToReplace === replacementText)) {
+            return;
+        }
+        else if (!matchCase && (textToReplace.toUpperCase() === replacementText.toUpperCase())) {
+            return;
+        }
+
+        var flags = "g";
+        if (!matchCase) {
+            flags += "i";
+        }
+
+        var re = new RegExp(textToReplace.replace(/'([.*+?^=!:${}()|[\]\/\\])/g, '\\$1'), flags);
+
         observer.stop();
 
         try {
-            var counter = 0;
-            while(this.replace(textToReplace, replacementText, matchCase)) {
-                ++counter;
-            }
+            // clear highlight tags using jQuery
+            $(".hilitorHelper").contents().unwrap();
 
+            var undoHtml = document.body.innerHTML;
+            var result = findAndReplaceDOMText(document.body, {
+                find: re,
+                replace: replacementText
+            });
+
+            var counter = result.reverts.length;
+            console.log("replaceAll: replacements count = " + counter);
             undoReplaceAllCounters.push(counter);
+
+            if (counter > 0) {
+                undoNodes.push(document.body);
+                undoNodeInnerHtmls.push(undoHtml);
+                console.log("replaceAll: pushed html to undo stack: " + undoHtml);
+            }
         }
         finally {
             observer.start();
@@ -232,7 +258,7 @@ function FindReplaceManager() {
 
         try {
             var counter = undoReplaceAllCounters.pop();
-            for(var i = 0; i < counter; ++i) {
+            if (counter > 0) {
                 this.undo();
             }
 
@@ -250,7 +276,7 @@ function FindReplaceManager() {
 
         try {
             var counter = redoReplaceAllCounters.pop();
-            for(var i = 0; i < counter; ++i) {
+            if (counter > 0) {
                 this.redo();
             }
 
