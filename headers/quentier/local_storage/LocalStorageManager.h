@@ -298,7 +298,7 @@ public:
      * @param limit - the limit for the max number of notebooks in the result, zero by default which means no limit is set
      * @param offset - the number of notebooks to skip in the beginning of the result, zero by default
      * @param order - allows to specify a particular ordering of notebooks in the result, NoOrder by default
-     * @param orderDirection - specifies the direction of ordering, by defauls ascending direction is used;
+     * @param orderDirection - specifies the direction of ordering, by default ascending direction is used;
      * this parameter has no meaning if order is equal to NoOrder
      * @param linkedNotebookGuid - if it's null, the method would list the notebooks ignoring their belonging
      * to the current account or to some linked notebook; if it's empty, only the non-linked notebooks  would be listed;
@@ -320,7 +320,7 @@ public:
      * @param limit - the limit for the max number of notebooks in the result, zero by default which means no limit is set
      * @param offset - the number of notebooks to skip in the beginning of the result, zero by default
      * @param order - allows to specify a particular ordering of notebooks in the result, NoOrder by default
-     * @param orderDirection - specifies the direction of ordering, by defauls ascending direction is used;
+     * @param orderDirection - specifies the direction of ordering, by default ascending direction is used;
      * this parameter has no meaning if order is equal to NoOrder
      * @param linkedNotebookGuid - if it's null, the method would list the notebooks ignoring their belonging
      * to the current account or to some linked notebook; if it's empty, only the non-linked notebooks  would be listed;
@@ -375,7 +375,7 @@ public:
     /**
      * @brief linkedNotebookCount - returns the number of linked notebooks stored in the local storage database
      * @param errorDescription - error description if the number of linked notebooks count not be returned
-     * @return either non-negative number of linked notebooks or -1 if some error has occured
+     * @return either non-negative number of linked notebooks or -1 if some error has occurred
      */
     int linkedNotebookCount(ErrorString & errorDescription) const;
 
@@ -433,7 +433,7 @@ public:
      * @param limit - limit for the max number of linked notebooks in the result, zero by default which means no limit is set
      * @param offset - number of linked notebooks to skip in the beginning of the result, zero by default
      * @param order - allows to specify particular ordering of linked notebooks in the result, NoOrder by default
-     * @param orderDirection - specifies the direction of ordering, by defauls ascending direction is used;
+     * @param orderDirection - specifies the direction of ordering, by default ascending direction is used;
      * this parameter has no meaning if order is equal to NoOrder
      * @return either list of all linked notebooks or empty list in case of error or
      * no linked notebooks presence within the account
@@ -451,7 +451,7 @@ public:
      * @param limit - limit for the max number of linked notebooks in the result, zero by default which means no limit is set
      * @param offset - number of linked notebooks to skip in the beginning of the result, zero by default
      * @param order - allows to specify particular ordering of linked notebooks in the result, NoOrder by default
-     * @param orderDirection - specifies the direction of ordering, by defauls ascending direction is used;
+     * @param orderDirection - specifies the direction of ordering, by default ascending direction is used;
      * this parameter has no meaning if order is equal to NoOrder
      * @return either list of linked notebooks within the account conforming to the filter or empty list
      * in cases of error or no linked notebooks conforming to the filter exist within the account
@@ -476,7 +476,7 @@ public:
     /**
      * @brief noteCount returns the number of non-deleted notes currently stored in local storage database
      * @param errorDescription - error description if the number of notes could not be returned
-     * @return either non-negative value with the number of notes or -1 which means some error occured
+     * @return either non-negative value with the number of notes or -1 which means some error occurred
      */
     int noteCount(ErrorString & errorDescription) const;
 
@@ -485,7 +485,7 @@ public:
      * @param notebook - notebook for which the number of notes is requested. If its guid is set, it is used to identify the notebook,
      * otherwise its local uid is used
      * @param errorDescription - error description if the number of notes per given notebook could not be returned
-     * @return either non-negative value with the number of notes per given notebook or -1 which means some error occured
+     * @return either non-negative value with the number of notes per given notebook or -1 which means some error occurred
      */
     int noteCountPerNotebook(const Notebook & notebook, ErrorString & errorDescription) const;
 
@@ -494,7 +494,7 @@ public:
      * @param tag - tag for which the number of notes labeled with it is requested. If its guid is set, it is used to identify the tag,
      * otherwise its local uid is used
      * @param errorDescription - error description if the number of notes per given tag could not be returned
-     * @return either non-negative value with the number of notes per given tag or -1 which means some error occured
+     * @return either non-negative value with the number of notes per given tag or -1 which means some error occurred
      */
     int noteCountPerTag(const Tag & tag, ErrorString & errorDescription) const;
 
@@ -643,7 +643,7 @@ public:
      * @param limit - limit for the max number of notes in the result, zero by default which means no limit is set
      * @param offset - number of notes to skip in the beginning of the result, zero by default
      * @param order - allows to specify particular ordering of notes in the result, NoOrder by default
-     * @param orderDirection - specifies the direction of ordering, by defauls ascending direction is used;
+     * @param orderDirection - specifies the direction of ordering, by default ascending direction is used;
      * this parameter has no meaning if order is equal to NoOrder
      * @param linkedNotebookGuid - if it's null, notes from both user's own notebooks and linked notebooks would be listed;
      * if it's empty, only the notes from non-linked notebooks would be listed;
@@ -699,7 +699,7 @@ public:
     /**
      * @brief tagCount returns the number of non-deleted tags currently stored in local storage database
      * @param errorDescription - error description if the number of tags could not be returned
-     * @return either non-negative value with the number of tags or -1 which means some error occured
+     * @return either non-negative value with the number of tags or -1 which means some error occurred
      */
     int tagCount(ErrorString & errorDescription) const;
 
@@ -792,7 +792,7 @@ public:
      * @param limit - limit for the max number of tags in the result, zero by default which means no limit is set
      * @param offset - number of tags to skip in the beginning of the result, zero by default
      * @param order - allows to specify particular ordering of tags in the result, NoOrder by default
-     * @param orderDirection - specifies the direction of ordering, by defauls ascending direction is used;
+     * @param orderDirection - specifies the direction of ordering, by default ascending direction is used;
      * this parameter has no meaning if order is equal to NoOrder
      * @param linkedNotebookGuid - if it's null, the method would list tags ignoring their belonging to the current account
      * or to some linked notebook; if it's empty, only the tags from user's own account would be listed;
@@ -812,7 +812,7 @@ public:
      * @param limit - limit for the max number of tags in the result, zero by default which means no limit is set
      * @param offset - number of tags to skip in the beginning of the result, zero by default
      * @param order - allows to specify particular ordering of tags in the result, NoOrder by default
-     * @param orderDirection - specifies the direction of ordering, by defauls ascending direction is used;
+     * @param orderDirection - specifies the direction of ordering, by default ascending direction is used;
      * this parameter has no meaning if order is equal to NoOrder
      * @param linkedNotebookGuid - if it's null, the method would list tags ignoring their belonging to the current account
      * or to some linked notebook; if it's empty, only the tags from user's own account would be listed;
@@ -853,7 +853,7 @@ public:
      * @brief enResourceCount (the name is not Resource to prevent problems with Resource macro defined
      * on some versions of Windows) returns the number of resources currently stored in local storage database
      * @param errorDescription - error description if the number of resources could not be returned
-     * @return either non-negative value with the number of resources or -1 which means some error occured
+     * @return either non-negative value with the number of resources or -1 which means some error occurred
      */
     int enResourceCount(ErrorString & errorDescription) const;
 
@@ -911,7 +911,7 @@ public:
     /**
      * @brief savedSearchCount returns the number of saved seacrhes currently stored in local storage database
      * @param errorDescription - error description if the number of saved seacrhes could not be returned
-     * @return either non-negative value with the number of saved seacrhes or -1 which means some error occured
+     * @return either non-negative value with the number of saved seacrhes or -1 which means some error occurred
      */
     int savedSearchCount(ErrorString & errorDescription) const;
 
@@ -973,7 +973,7 @@ public:
      * @param limit - limit for the max number of saved searches in the result, zero by default which means no limit is set
      * @param offset - number of saved searches to skip in the beginning of the result, zero by default
      * @param order - allows to specify particular ordering of saved searches in the result, NoOrder by default
-     * @param orderDirection - specifies the direction of ordering, by defauls ascending direction is used;
+     * @param orderDirection - specifies the direction of ordering, by default ascending direction is used;
      * this parameter has no meaning if order is equal to NoOrder
      * @return either the list of all saved searches within the account or empty list
      * in case of error or if there are no saved searches within the account
@@ -991,7 +991,7 @@ public:
      * @param limit - limit for the max number of saved searches in the result, zero by default which means no limit is set
      * @param offset - number of saved searches to skip in the beginning of the result, zero by default
      * @param order - allows to specify particular ordering of saved searches in the result, NoOrder by default
-     * @param orderDirection - specifies the direction of ordering, by defauls ascending direction is used;
+     * @param orderDirection - specifies the direction of ordering, by default ascending direction is used;
      * this parameter has no meaning if order is equal to NoOrder
      * @return either list of saved searches within the account conforming to the filter or empty list
      * in cases of error or no saved searches conforming to the filter exist within the account
@@ -1009,7 +1009,7 @@ public:
      * @param search - saved search to be expunged; may be changed as a result of the call filled local uid
      * if it was empty before the call
      * @param errorDescription - error description if saved search could not be expunged
-     * @return true if saved search was expunged succesfully, false otherwise
+     * @return true if saved search was expunged successfully, false otherwise
      */
     bool expungeSavedSearch(SavedSearch & search, ErrorString & errorDescription);
 

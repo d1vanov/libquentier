@@ -119,7 +119,7 @@ void SendLocalChangesManager::onAuthenticationTokensForLinkedNotebooksReceived(Q
     QNDEBUG(QStringLiteral("SendLocalChangesManager::onAuthenticationTokensForLinkedNotebooksReceived"));
 
     if (!m_pendingAuthenticationTokensForLinkedNotebooks) {
-        QNDEBUG(QStringLiteral("Authenticaton tokens for linked notebooks were not requested by this object, won't do anything"));
+        QNDEBUG(QStringLiteral("Authentication tokens for linked notebooks were not requested by this object, won't do anything"));
         return;
     }
 
@@ -1936,7 +1936,7 @@ void SendLocalChangesManager::sendNotes()
             }
             else
             {
-                errorDescription.setBase(QT_TR_NOOP("Couldn't find the authenticaton token "
+                errorDescription.setBase(QT_TR_NOOP("Couldn't find the authentication token "
                                                     "for a linked notebook when attempting "
                                                     "to create or update a note from that notebook"));
                 QNWARNING(errorDescription << QStringLiteral(", notebook: ") << notebook);

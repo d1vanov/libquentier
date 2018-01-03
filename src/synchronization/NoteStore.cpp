@@ -1351,7 +1351,7 @@ qint32 NoteStore::processEdamUserExceptionForNotebook(const Notebook & notebook,
     }
     else if (thrownOnCreation && (userException.errorCode == qevercloud::EDAMErrorCode::LIMIT_REACHED))
     {
-        errorDescription.setBase(QT_TR_NOOP("LIMIT_REACHED exception durig the attempt to create notebook"));
+        errorDescription.setBase(QT_TR_NOOP("LIMIT_REACHED exception during the attempt to create notebook"));
 
         if (userException.parameter.isSet() && (userException.parameter.ref() == QStringLiteral("Notebook"))) {
             errorDescription.appendBase(QT_TR_NOOP("already at max number of notebooks, please remove some of them"));
