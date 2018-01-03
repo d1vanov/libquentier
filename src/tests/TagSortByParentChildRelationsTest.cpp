@@ -117,7 +117,7 @@ bool tagSortByParentChildRelationsTest(QString & error)
     eighthTag.setParentLocalUid(thirdTag.localUid());
 
     Tag ninethTag;
-    ninethTag.setName(QStringLiteral("Nineth tag"));
+    ninethTag.setName(QStringLiteral("Ninth tag"));
     ninethTag.setGuid(UidGenerator::Generate());
     ninethTag.setParentGuid(fourthTag.guid());
     ninethTag.setParentLocalUid(fourthTag.localUid());

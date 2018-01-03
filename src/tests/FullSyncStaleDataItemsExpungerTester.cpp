@@ -2162,7 +2162,7 @@ void FullSyncStaleDataItemsExpungerTester::doTest(const bool useBaseDataItems,
         }
 
         if (Q_UNLIKELY(remainingNotebookIt == remainingNotebooks.constEnd())) {
-            QFAIL("Found a note which corresponing notebook has been expunged but the note still exists within the local storage");
+            QFAIL("Found a note which corresponding notebook has been expunged but the note still exists within the local storage");
         }
 
         if (note.hasGuid())

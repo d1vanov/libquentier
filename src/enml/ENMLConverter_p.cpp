@@ -162,7 +162,7 @@ bool ENMLConverterPrivate::htmlToNoteContent(const QString & html, const QVector
         if (reader.isStartElement())
         {
             if (skippedElementNestingCounter) {
-                QNTRACE(QStringLiteral("Skipping everyting inside element skipped together with its contents by the rules"));
+                QNTRACE(QStringLiteral("Skipping everything inside element skipped together with its contents by the rules"));
                 ++skippedElementNestingCounter;
                 continue;
             }
@@ -486,7 +486,7 @@ bool ENMLConverterPrivate::htmlToQTextDocument(const QString & html, QTextDocume
         if (reader.isStartElement())
         {
             if (skippedElementNestingCounter) {
-                QNTRACE(QStringLiteral("Skipping everyting inside element skipped together with its contents"));
+                QNTRACE(QStringLiteral("Skipping everything inside element skipped together with its contents"));
                 ++skippedElementNestingCounter;
                 continue;
             }

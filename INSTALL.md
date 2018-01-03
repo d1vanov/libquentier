@@ -18,7 +18,7 @@ Dependencies include the following Qt components:
 The dependency on QtWebKit or QtWebEngine for Qt4 and Qt5 is enabled by default but can be disabled by passing special arguments to `CMake`, see the details below.
 
 Non-Qt dependendencies of libquentier are the following:
- * libxml2 - for validation of Evernote notes ENML againts the DTD
+ * libxml2 - for validation of Evernote notes ENML against the DTD
  * OpenSSL - for encryption and decryption of note fragments. Note that OpenSSL version shipped with OS X / macOS by Apple doesn't contain the required encryption/decryption API and is therefore not suitable for libquentier - you would encounter build errors if you try to use that OpenSSL version. The OpenSSL from homebrew or macports would be suitable.
  * Boost (some header-only libraries)
  * libhunspell

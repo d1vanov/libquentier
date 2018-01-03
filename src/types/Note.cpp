@@ -447,7 +447,7 @@ void Note::removeTagGuid(const QString & guid)
     QList<qevercloud::Guid> & tagGuids = d->m_qecNote.tagGuids.ref();
     int removed = tagGuids.removeAll(guid);
     if (removed > 0) {
-        QNDEBUG(QStringLiteral("Removed tag guid ") << guid << QStringLiteral(" (") << removed << QStringLiteral(") occurences"));
+        QNDEBUG(QStringLiteral("Removed tag guid ") << guid << QStringLiteral(" (") << removed << QStringLiteral(") occurrences"));
     }
     else {
         QNDEBUG(QStringLiteral("Haven't removed tag guid ") << guid << QStringLiteral(" because there was no such guid within the note's tag guids"));
