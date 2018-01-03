@@ -188,7 +188,7 @@ function SpellChecker(id, tag) {
 
     this.setRegex = function(input) {
         input = input.replace(/\\([^u]|$)/g, "$1");
-        input = input.replace(/[^\w\\\s']+/g, "");
+        input = input.replace(/'([.*+?^=!:${}()|[\]\/\\])/g, "\\$1");
         input = input.trim();
         input = input.replace(/\s+/g, "|");
         var re = "(?:^|[\\b\\s.,;:-=+-_><])" + "(" + input + ")" + "(?:[\\b\\s.,;:-=+-_><]|$)";
