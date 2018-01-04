@@ -91,7 +91,7 @@ QKeySequence ShortcutManagerPrivate::defaultShortcut(const int key, const Accoun
     {
         QNTRACE(QStringLiteral("Can't find default shortcut in app settings"));
 
-        if (key >= 0) {
+        if ((key >= 0) && (key < QKeySequence::UnknownKey)) {
             QNTRACE(QStringLiteral("Returning the platform-specific default from QKeySequence"));
             return QKeySequence(key);
         }
