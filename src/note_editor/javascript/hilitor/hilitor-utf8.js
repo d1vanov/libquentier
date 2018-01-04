@@ -61,7 +61,7 @@ function Hilitor2(id, tag)
   this.setRegex = function(input)
   {
     input = input.replace(/\\([^u]|$)/g, "$1");
-    input = input.replace(/[^\w\\\s']+/g, "");
+    input = input.replace(/'([.*+?^=!:${}()|[\]\/\\])/g, "\\$1");
     if (fullWord) {
         input = input.replace(/\s+/g, "|");
     }
@@ -141,7 +141,6 @@ function Hilitor2(id, tag)
   {
     this.remove();
     if(input === undefined) return;
-    input = convertCharStr2jEsc(input);
     this.setRegex(input);
     this.hiliteWords(targetNode);
   };
