@@ -8223,12 +8223,8 @@ void NoteEditorPrivate::pasteImageData(const QMimeData & mimeData)
 
 void NoteEditorPrivate::escapeStringForJavaScript(QString & str) const
 {
-    // Escape single and double quotes
-    ENMLConverter::escapeString(str, /* simplify = */ false);
-
     // Escape all escape sequences to avoid syntax errors
     str.replace(QStringLiteral("\\"), QStringLiteral("\\\\"));
-    str.replace(QStringLiteral("\a"), QStringLiteral("\\a"));
     str.replace(QStringLiteral("\b"), QStringLiteral("\\b"));
     str.replace(QStringLiteral("\f"), QStringLiteral("\\f"));
     str.replace(QStringLiteral("\n"), QStringLiteral("\\n"));
@@ -8236,6 +8232,9 @@ void NoteEditorPrivate::escapeStringForJavaScript(QString & str) const
     str.replace(QStringLiteral("\t"), QStringLiteral("\\t"));
     str.replace(QStringLiteral("\v"), QStringLiteral("\\v"));
     str.replace(QStringLiteral("\?"), QStringLiteral("\\?"));
+
+    // Escape single and double quotes
+    ENMLConverter::escapeString(str, /* simplify = */ false);
 }
 
 } // namespace quentier
