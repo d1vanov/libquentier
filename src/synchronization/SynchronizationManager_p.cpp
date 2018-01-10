@@ -122,10 +122,12 @@ SynchronizationManagerPrivate::SynchronizationManagerPrivate(const QString & con
     m_deletingAuthToken(false),
     m_deletingShardId(false),
     m_lastRevokedAuthenticationUserId(-1),
-    m_readLinkedNotebookAuthTokenJobsByGuid(),
-    m_readLinkedNotebookShardIdJobsByGuid(),
-    m_writeLinkedNotebookAuthTokenJobsByGuid(),
-    m_writeLinkedNotebookShardIdJobsByGuid(),
+    m_readLinkedNotebookAuthTokenJobsByGuidKey(),
+    m_readLinkedNotebookShardIdJobsByGuidKey(),
+    m_writeLinkedNotebookAuthTokenJobsByGuidKey(),
+    m_writeLinkedNotebookShardIdJobsByGuidKey(),
+    m_linkedNotebookAuthTokensPendingWritingByGuidKey(),
+    m_linkedNotebookShardIdsPendingWritingByGuidKey(),
     m_linkedNotebookGuidsWithoutLocalAuthData(),
     m_shouldRepeatIncrementalSyncAfterSendingChanges(false)
 {
@@ -366,57 +368,94 @@ void SynchronizationManagerPrivate::onKeychainJobFinished(QKeychain::Job * job)
     }
     else
     {
-        for(auto it = m_writeLinkedNotebookShardIdJobsByGuid.begin(), end = m_writeLinkedNotebookShardIdJobsByGuid.end();
-            it != end; ++it)
+        for(auto it = m_writeLinkedNotebookShardIdJobsByGuidKey.begin(),
+            end = m_writeLinkedNotebookShardIdJobsByGuidKey.end(); it != end; ++it)
         {
-            const auto & cachedJob = it.value();
-            if (cachedJob.data() == job)
+            const QKeychain::WritePasswordJob * pCachedJob = it.value();
+            if (pCachedJob == job)
             {
                 QNDEBUG(QStringLiteral("Write linked notebook shard id job finished"));
 
-                if (job->error() != QKeychain::NoError) {
-                    ErrorString error(QT_TR_NOOP("Error saving linked notebook's shard id to the keychain"));
-                    error.details() = QStringLiteral("error = ");
-                    error.details() += ToString(job->error());
-                    error.details() += QStringLiteral(": ");
-                    error.details() += job->errorString();
-                    QNWARNING(error);
-                    Q_EMIT notifyError(error);
+                QString key = it.key();
+                QKeychain::Error error = job->error();
+                QString errorString = job->errorString();
+
+                Q_UNUSED(m_writeLinkedNotebookShardIdJobsByGuidKey.erase(it))
+                QObject::disconnect(job, QNSIGNAL(QKeychain::WritePasswordJob,finished,QKeychain::Job*),
+                                    this, QNSLOT(SynchronizationManagerPrivate,onKeychainJobFinished,QKeychain::Job*));
+                job->deleteLater();
+
+                auto pendingItemIt = m_linkedNotebookShardIdsPendingWritingByGuidKey.find(key);
+                if (pendingItemIt != m_linkedNotebookShardIdsPendingWritingByGuidKey.end())
+                {
+                    // NOTE: ignore the status of previous write job for this key, it doesn't matter
+                    // if we need to write another shard id
+                    QString shardId = pendingItemIt.value();
+                    Q_UNUSED(m_linkedNotebookShardIdsPendingWritingByGuidKey.erase(pendingItemIt))
+                    QNDEBUG(QStringLiteral("Writing postponed shard id ") << shardId << QStringLiteral(" for linked notebook key ") << key);
+                    launchStoreLinkedNotebookShardId(key, shardId);
+                }
+                else if (error != QKeychain::NoError) {
+                    ErrorString errorDescription(QT_TR_NOOP("Error saving linked notebook's shard id to the keychain"));
+                    errorDescription.details() = QStringLiteral("error = ");
+                    errorDescription.details() += ToString(error);
+                    errorDescription.details() += QStringLiteral(": ");
+                    errorDescription.details() += errorString;
+                    QNWARNING(errorDescription);
+                    Q_EMIT notifyError(errorDescription);
                 }
 
-                Q_UNUSED(m_writeLinkedNotebookShardIdJobsByGuid.erase(it))
                 return;
             }
         }
 
-        for(auto it = m_writeLinkedNotebookAuthTokenJobsByGuid.begin(), end = m_writeLinkedNotebookAuthTokenJobsByGuid.end();
-            it != end; ++it)
+        for(auto it = m_writeLinkedNotebookAuthTokenJobsByGuidKey.begin(),
+            end = m_writeLinkedNotebookAuthTokenJobsByGuidKey.end(); it != end; ++it)
         {
-            const auto & cachedJob = it.value();
-            if (cachedJob.data() == job)
+            const QKeychain::WritePasswordJob * pCachedJob = it.value();
+            if (pCachedJob == job)
             {
                 QNDEBUG(QStringLiteral("Write linked notebook auth token job finished"));
 
-                if (job->error() != QKeychain::NoError) {
-                    ErrorString error(QT_TR_NOOP("Error saving linked notebook's authentication token to the keychain"));
-                    error.details() = QStringLiteral("error = ");
-                    error.details() += ToString(job->error());
-                    error.details() += QStringLiteral(": ");
-                    error.details() += job->errorString();
-                    QNWARNING(error);
-                    Q_EMIT notifyError(error);
+                QString key = it.key();
+                QKeychain::Error error = job->error();
+                QString errorString = job->errorString();
+
+                Q_UNUSED(m_writeLinkedNotebookAuthTokenJobsByGuidKey.erase(it))
+                QObject::disconnect(job, QNSIGNAL(QKeychain::WritePasswordJob,finished,QKeychain::Job*),
+                                    this, QNSLOT(SynchronizationManagerPrivate,onKeychainJobFinished,QKeychain::Job*));
+                job->deleteLater();
+
+                auto pendingItemIt = m_linkedNotebookAuthTokensPendingWritingByGuidKey.find(key);
+                if (pendingItemIt != m_linkedNotebookAuthTokensPendingWritingByGuidKey.end())
+                {
+                    // NOTE: ignore the status of previous write job for this key, it doesn't matter
+                    // if we need to write another token
+                    QString token = pendingItemIt.value();
+                    Q_UNUSED(m_linkedNotebookAuthTokensPendingWritingByGuidKey.erase(pendingItemIt))
+                    QNDEBUG(QStringLiteral("Writing postponed auth token for linked notebook key ") << key);
+                    launchStoreLinkedNotebookAuthToken(key, token);
+                }
+                else if (error != QKeychain::NoError)
+                {
+                    ErrorString errorDescription(QT_TR_NOOP("Error saving linked notebook's authentication token to the keychain"));
+                    errorDescription.details() = QStringLiteral("error = ");
+                    errorDescription.details() += ToString(error);
+                    errorDescription.details() += QStringLiteral(": ");
+                    errorDescription.details() += errorString;
+                    QNWARNING(errorDescription);
+                    Q_EMIT notifyError(errorDescription);
                 }
 
-                Q_UNUSED(m_writeLinkedNotebookAuthTokenJobsByGuid.erase(it))
                 return;
             }
         }
 
-        for(auto it = m_readLinkedNotebookAuthTokenJobsByGuid.begin(), end = m_readLinkedNotebookAuthTokenJobsByGuid.end();
-            it != end; ++it)
+        for(auto it = m_readLinkedNotebookAuthTokenJobsByGuidKey.begin(),
+            end = m_readLinkedNotebookAuthTokenJobsByGuidKey.end(); it != end; ++it)
         {
-            const auto & cachedJob = it.value();
-            if (cachedJob.data() == job)
+            const QKeychain::ReadPasswordJob * pCachedJob = it.value();
+            if (pCachedJob == job)
             {
                 QNDEBUG(QStringLiteral("Read linked notebook auth token job finished"));
 
@@ -424,7 +463,7 @@ void SynchronizationManagerPrivate::onKeychainJobFinished(QKeychain::Job * job)
                 {
                     QNDEBUG(QStringLiteral("Successfully read the authentication token for linked notebook from the keychain: "
                                            "linked notebook guid: ") << it.key());
-                    m_cachedLinkedNotebookAuthTokensAndShardIdsByGuid[it.key()].first = cachedJob->textData();
+                    m_cachedLinkedNotebookAuthTokensAndShardIdsByGuid[it.key()].first = pCachedJob->textData();
                 }
                 else if (job->error() == QKeychain::EntryNotFound)
                 {
@@ -448,16 +487,19 @@ void SynchronizationManagerPrivate::onKeychainJobFinished(QKeychain::Job * job)
                 }
 
                 authenticateToLinkedNotebooks();
-                Q_UNUSED(m_readLinkedNotebookAuthTokenJobsByGuid.erase(it))
+                Q_UNUSED(m_readLinkedNotebookAuthTokenJobsByGuidKey.erase(it))
+                QObject::disconnect(job, QNSIGNAL(QKeychain::ReadPasswordJob,finished,QKeychain::Job*),
+                                    this, QNSLOT(SynchronizationManagerPrivate,onKeychainJobFinished,QKeychain::Job*));
+                job->deleteLater();
                 return;
             }
         }
 
-        for(auto it = m_readLinkedNotebookShardIdJobsByGuid.begin(), end = m_readLinkedNotebookShardIdJobsByGuid.end();
-            it != end; ++it)
+        for(auto it = m_readLinkedNotebookShardIdJobsByGuidKey.begin(),
+            end = m_readLinkedNotebookShardIdJobsByGuidKey.end(); it != end; ++it)
         {
-            const auto & cachedJob = it.value();
-            if (cachedJob.data() == job)
+            const QKeychain::ReadPasswordJob * pCachedJob = it.value();
+            if (pCachedJob == job)
             {
                 QNDEBUG(QStringLiteral("Read linked notebook shard id job finished"));
 
@@ -465,7 +507,7 @@ void SynchronizationManagerPrivate::onKeychainJobFinished(QKeychain::Job * job)
                 {
                     QNDEBUG(QStringLiteral("Successfully read the shard id for linked notebook from the keychain: "
                                            "linked notebook guid: ") << it.key());
-                    m_cachedLinkedNotebookAuthTokensAndShardIdsByGuid[it.key()].second = cachedJob->textData();
+                    m_cachedLinkedNotebookAuthTokensAndShardIdsByGuid[it.key()].second = pCachedJob->textData();
                 }
                 else if (job->error() == QKeychain::EntryNotFound)
                 {
@@ -489,7 +531,10 @@ void SynchronizationManagerPrivate::onKeychainJobFinished(QKeychain::Job * job)
                 }
 
                 authenticateToLinkedNotebooks();
-                Q_UNUSED(m_readLinkedNotebookShardIdJobsByGuid.erase(it))
+                Q_UNUSED(m_readLinkedNotebookShardIdJobsByGuidKey.erase(it))
+                QObject::disconnect(job, QNSIGNAL(QKeychain::ReadPasswordJob,finished,QKeychain::Job*),
+                                    this, QNSLOT(SynchronizationManagerPrivate,onKeychainJobFinished,QKeychain::Job*));
+                job->deleteLater();
                 return;
             }
         }
@@ -1169,10 +1214,47 @@ void SynchronizationManagerPrivate::clear()
 
     m_authenticateToLinkedNotebooksPostponeTimerId = -1;
 
-    m_readLinkedNotebookAuthTokenJobsByGuid.clear();
-    m_readLinkedNotebookShardIdJobsByGuid.clear();
-    m_writeLinkedNotebookAuthTokenJobsByGuid.clear();
-    m_writeLinkedNotebookShardIdJobsByGuid.clear();
+    for(auto it = m_readLinkedNotebookAuthTokenJobsByGuidKey.begin(),
+        end = m_readLinkedNotebookAuthTokenJobsByGuidKey.end(); it != end; ++it)
+    {
+        QKeychain::ReadPasswordJob * pJob = it.value();
+        QObject::disconnect(pJob, QNSIGNAL(QKeychain::ReadPasswordJob,finished,QKeychain::Job*),
+                            this, QNSLOT(SynchronizationManagerPrivate,onKeychainJobFinished,QKeychain::Job*));
+        pJob->deleteLater();
+    }
+    m_readLinkedNotebookAuthTokenJobsByGuidKey.clear();
+
+    for(auto it = m_readLinkedNotebookShardIdJobsByGuidKey.begin(),
+        end = m_readLinkedNotebookShardIdJobsByGuidKey.end(); it != end; ++it)
+    {
+        QKeychain::ReadPasswordJob * pJob = it.value();
+        QObject::disconnect(pJob, QNSIGNAL(QKeychain::ReadPasswordJob,finished,QKeychain::Job*),
+                            this, QNSLOT(SynchronizationManagerPrivate,onKeychainJobFinished,QKeychain::Job*));
+        pJob->deleteLater();
+    }
+    m_readLinkedNotebookShardIdJobsByGuidKey.clear();
+
+    for(auto it = m_writeLinkedNotebookAuthTokenJobsByGuidKey.begin(),
+        end = m_writeLinkedNotebookAuthTokenJobsByGuidKey.end(); it != end; ++it)
+    {
+        QKeychain::WritePasswordJob * pJob = it.value();
+        QObject::disconnect(pJob, QNSIGNAL(QKeychain::WritePasswordJob,finished,QKeychain::Job*),
+                            this, QNSLOT(SynchronizationManagerPrivate,onKeychainJobFinished,QKeychain::Job*));
+        pJob->deleteLater();
+    }
+    m_writeLinkedNotebookAuthTokenJobsByGuidKey.clear();
+    m_linkedNotebookAuthTokensPendingWritingByGuidKey.clear();
+
+    for(auto it = m_writeLinkedNotebookShardIdJobsByGuidKey.begin(),
+        end = m_writeLinkedNotebookShardIdJobsByGuidKey.end(); it != end; ++it)
+    {
+        QKeychain::WritePasswordJob * pJob = it.value();
+        QObject::disconnect(pJob, QNSIGNAL(QKeychain::WritePasswordJob,finished,QKeychain::Job*),
+                            this, QNSLOT(SynchronizationManagerPrivate,onKeychainJobFinished,QKeychain::Job*));
+        pJob->deleteLater();
+    }
+    m_writeLinkedNotebookShardIdJobsByGuidKey.clear();
+    m_linkedNotebookShardIdsPendingWritingByGuidKey.clear();
 
     m_linkedNotebookGuidsWithoutLocalAuthData.clear();
 
@@ -1277,29 +1359,30 @@ void SynchronizationManagerPrivate::authenticateToLinkedNotebooks()
                         << QStringLiteral(" in the local cache, will try to read them from the keychain"));
 
                 // 1) Set up the job of reading the authentication token
-                auto readAuthTokenJobIt = m_readLinkedNotebookAuthTokenJobsByGuid.find(guid);
-                if (readAuthTokenJobIt == m_readLinkedNotebookAuthTokenJobsByGuid.end())
+                auto readAuthTokenJobIt = m_readLinkedNotebookAuthTokenJobsByGuidKey.find(guid);
+                if (readAuthTokenJobIt == m_readLinkedNotebookAuthTokenJobsByGuidKey.end())
                 {
-                    QSharedPointer<QKeychain::ReadPasswordJob> pReadAuthTokenJob(new QKeychain::ReadPasswordJob(READ_LINKED_NOTEBOOK_AUTH_TOKEN_JOB));
+                    QKeychain::ReadPasswordJob * pReadAuthTokenJob = new QKeychain::ReadPasswordJob(READ_LINKED_NOTEBOOK_AUTH_TOKEN_JOB);
                     pReadAuthTokenJob->setAutoDelete(false);
                     pReadAuthTokenJob->setKey(keyPrefix + LINKED_NOTEBOOK_AUTH_TOKEN_KEY_PART + guid);
-                    QObject::connect(pReadAuthTokenJob.data(), QNSIGNAL(QKeychain::ReadPasswordJob,finished,QKeychain::Job*),
-                                     this, QNSLOT(SynchronizationManagerPrivate,onKeychainJobFinished,QKeychain::Job*));
+                    QObject::connect(pReadAuthTokenJob, QNSIGNAL(QKeychain::ReadPasswordJob,finished,QKeychain::Job*),
+                                     this, QNSLOT(SynchronizationManagerPrivate,onKeychainJobFinished,QKeychain::Job*),
+                                     Qt::ConnectionType(Qt::AutoConnection | Qt::UniqueConnection));
+                    m_readLinkedNotebookAuthTokenJobsByGuidKey[guid] = pReadAuthTokenJob;
                     pReadAuthTokenJob->start();
-                    Q_UNUSED(m_readLinkedNotebookAuthTokenJobsByGuid.insert(guid, pReadAuthTokenJob))
                 }
 
                 // 2) Set up the job reading the shard id
-                auto readShardIdJobIt = m_readLinkedNotebookShardIdJobsByGuid.find(guid);
-                if (readShardIdJobIt == m_readLinkedNotebookShardIdJobsByGuid.end())
+                auto readShardIdJobIt = m_readLinkedNotebookShardIdJobsByGuidKey.find(guid);
+                if (readShardIdJobIt == m_readLinkedNotebookShardIdJobsByGuidKey.end())
                 {
-                    QSharedPointer<QKeychain::ReadPasswordJob> pReadShardIdJob(new QKeychain::ReadPasswordJob(READ_LINKED_NOTEBOOK_SHARD_ID_JOB));
+                    QKeychain::ReadPasswordJob * pReadShardIdJob = new QKeychain::ReadPasswordJob(READ_LINKED_NOTEBOOK_SHARD_ID_JOB);
                     pReadShardIdJob->setAutoDelete(false);
                     pReadShardIdJob->setKey(keyPrefix + LINKED_NOTEBOOK_SHARD_ID_KEY_PART + guid);
-                    QObject::connect(pReadShardIdJob.data(), QNSIGNAL(QKeychain::ReadPasswordJob,finished,QKeychain::Job*),
+                    QObject::connect(pReadShardIdJob, QNSIGNAL(QKeychain::ReadPasswordJob,finished,QKeychain::Job*),
                                      this, QNSLOT(SynchronizationManagerPrivate,onKeychainJobFinished,QKeychain::Job*));
+                    m_readLinkedNotebookShardIdJobsByGuidKey[guid] = pReadShardIdJob;
                     pReadShardIdJob->start();
-                    Q_UNUSED(m_readLinkedNotebookShardIdJobsByGuid.insert(guid, pReadShardIdJob))
                 }
 
                 ++it;
@@ -1456,25 +1539,23 @@ void SynchronizationManagerPrivate::authenticateToLinkedNotebooks()
 
         // 1) Set up the job writing the auth token to the keychain
         QString key = keyPrefix + LINKED_NOTEBOOK_AUTH_TOKEN_KEY_PART + guid;
-        QSharedPointer<QKeychain::WritePasswordJob> pWriteAuthTokenJob(new QKeychain::WritePasswordJob(WRITE_LINKED_NOTEBOOK_AUTH_TOKEN_JOB));
-        pWriteAuthTokenJob->setAutoDelete(false);
-        Q_UNUSED(m_writeLinkedNotebookAuthTokenJobsByGuid.insert(key, pWriteAuthTokenJob))
-        pWriteAuthTokenJob->setKey(key);
-        pWriteAuthTokenJob->setTextData(token);
-        QObject::connect(pWriteAuthTokenJob.data(), QNSIGNAL(QKeychain::WritePasswordJob,finished,QKeychain::Job*),
-                         this, QNSLOT(SynchronizationManagerPrivate,onKeychainJobFinished,QKeychain::Job*));
-        pWriteAuthTokenJob->start();
+        auto jobIt = m_writeLinkedNotebookAuthTokenJobsByGuidKey.find(key);
+        if (jobIt == m_writeLinkedNotebookAuthTokenJobsByGuidKey.end()) {
+            launchStoreLinkedNotebookAuthToken(key, token);
+        }
+        else {
+            postponeStoreLinkedNotebookAuthToken(key, token);
+        }
 
         // 2) Set up the job writing the shard id to the keychain
         key = keyPrefix + LINKED_NOTEBOOK_SHARD_ID_KEY_PART + guid;
-        QSharedPointer<QKeychain::WritePasswordJob> pWriteShardIdJob(new QKeychain::WritePasswordJob(WRITE_LINKED_NOTEBOOK_SHARD_ID_JOB));
-        pWriteShardIdJob->setAutoDelete(false);
-        Q_UNUSED(m_writeLinkedNotebookShardIdJobsByGuid.insert(key, pWriteShardIdJob))
-        pWriteShardIdJob->setKey(key);
-        pWriteShardIdJob->setTextData(shardId);
-        QObject::connect(pWriteShardIdJob.data(), QNSIGNAL(QKeychain::WritePasswordJob,finished,QKeychain::Job*),
-                         this, QNSLOT(SynchronizationManagerPrivate,onKeychainJobFinished,QKeychain::Job*));
-        pWriteShardIdJob->start();
+        jobIt = m_writeLinkedNotebookShardIdJobsByGuidKey.find(key);
+        if (jobIt == m_writeLinkedNotebookShardIdJobsByGuidKey.end()) {
+            launchStoreLinkedNotebookShardId(key, shardId);
+        }
+        else {
+            postponeStoreLinkedNotebookShardId(key, shardId);
+        }
     }
 }
 
@@ -1752,6 +1833,42 @@ NoteStore * SynchronizationManagerPrivate::noteStoreForLinkedNotebookGuid(const 
     pNoteStore->setAuthenticationToken(m_OAuthResult.m_authToken);
     m_noteStoresByLinkedNotebookGuids[guid] = pNoteStore;
     return pNoteStore;
+}
+
+void SynchronizationManagerPrivate::launchStoreLinkedNotebookAuthToken(const QString & key, const QString & authToken)
+{
+    QKeychain::WritePasswordJob * pWriteAuthTokenJob = new QKeychain::WritePasswordJob(WRITE_LINKED_NOTEBOOK_AUTH_TOKEN_JOB);
+    pWriteAuthTokenJob->setAutoDelete(false);
+    pWriteAuthTokenJob->setKey(key);
+    pWriteAuthTokenJob->setTextData(authToken);
+    QObject::connect(pWriteAuthTokenJob, QNSIGNAL(QKeychain::WritePasswordJob,finished,QKeychain::Job*),
+                     this, QNSLOT(SynchronizationManagerPrivate,onKeychainJobFinished,QKeychain::Job*),
+                     Qt::ConnectionType(Qt::AutoConnection | Qt::UniqueConnection));
+    m_writeLinkedNotebookAuthTokenJobsByGuidKey[key] = pWriteAuthTokenJob;
+    pWriteAuthTokenJob->start();
+}
+
+void SynchronizationManagerPrivate::postponeStoreLinkedNotebookAuthToken(const QString & key, const QString & authToken)
+{
+    m_linkedNotebookAuthTokensPendingWritingByGuidKey[key] = authToken;
+}
+
+void SynchronizationManagerPrivate::launchStoreLinkedNotebookShardId(const QString & key, const QString & shardId)
+{
+    QKeychain::WritePasswordJob * pWriteShardIdJob = new QKeychain::WritePasswordJob(WRITE_LINKED_NOTEBOOK_SHARD_ID_JOB);
+    pWriteShardIdJob->setAutoDelete(false);
+    pWriteShardIdJob->setKey(key);
+    pWriteShardIdJob->setTextData(shardId);
+    QObject::connect(pWriteShardIdJob, QNSIGNAL(QKeychain::WritePasswordJob,finished,QKeychain::Job*),
+                     this, QNSLOT(SynchronizationManagerPrivate,onKeychainJobFinished,QKeychain::Job*),
+                     Qt::ConnectionType(Qt::AutoConnection | Qt::UniqueConnection));
+    m_writeLinkedNotebookShardIdJobsByGuidKey[key] = pWriteShardIdJob;
+    pWriteShardIdJob->start();
+}
+
+void SynchronizationManagerPrivate::postponeStoreLinkedNotebookShardId(const QString & key, const QString & shardId)
+{
+    m_linkedNotebookShardIdsPendingWritingByGuidKey[key] = shardId;
 }
 
 SynchronizationManagerPrivate::RemoteToLocalSynchronizationManagerController::RemoteToLocalSynchronizationManagerController(LocalStorageManagerAsync & localStorageManagerAsync,

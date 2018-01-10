@@ -202,6 +202,12 @@ private:
     NoteStore * noteStoreForLinkedNotebook(const LinkedNotebook & linkedNotebook);
     NoteStore * noteStoreForLinkedNotebookGuid(const QString & guid);
 
+    void launchStoreLinkedNotebookAuthToken(const QString & key, const QString & authToken);
+    void postponeStoreLinkedNotebookAuthToken(const QString & key, const QString & authToken);
+
+    void launchStoreLinkedNotebookShardId(const QString & key, const QString & shardId);
+    void postponeStoreLinkedNotebookShardId(const QString & key, const QString & shardId);
+
 private:
     class SendLocalChangesManagerController;
     friend class SendLocalChangesManagerController;
@@ -266,10 +272,13 @@ private:
     bool                                    m_deletingShardId;
     qevercloud::UserID                      m_lastRevokedAuthenticationUserId;
 
-    QHash<QString,QSharedPointer<QKeychain::ReadPasswordJob> >      m_readLinkedNotebookAuthTokenJobsByGuid;
-    QHash<QString,QSharedPointer<QKeychain::ReadPasswordJob> >      m_readLinkedNotebookShardIdJobsByGuid;
-    QHash<QString,QSharedPointer<QKeychain::WritePasswordJob> >     m_writeLinkedNotebookAuthTokenJobsByGuid;
-    QHash<QString,QSharedPointer<QKeychain::WritePasswordJob> >     m_writeLinkedNotebookShardIdJobsByGuid;
+    QHash<QString,QKeychain::ReadPasswordJob*>      m_readLinkedNotebookAuthTokenJobsByGuidKey;
+    QHash<QString,QKeychain::ReadPasswordJob*>      m_readLinkedNotebookShardIdJobsByGuidKey;
+    QHash<QString,QKeychain::WritePasswordJob*>     m_writeLinkedNotebookAuthTokenJobsByGuidKey;
+    QHash<QString,QKeychain::WritePasswordJob*>     m_writeLinkedNotebookShardIdJobsByGuidKey;
+
+    QHash<QString,QString>                  m_linkedNotebookAuthTokensPendingWritingByGuidKey;
+    QHash<QString,QString>                  m_linkedNotebookShardIdsPendingWritingByGuidKey;
 
     QSet<QString>                           m_linkedNotebookGuidsWithoutLocalAuthData;
 
