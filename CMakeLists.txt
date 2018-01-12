@@ -546,7 +546,7 @@ if(GIT_FOUND)
   message(STATUS "Git found: ${GIT_EXECUTABLE}")
 
   # Get git branch
-  execute_process(COMMAND ${GIT_EXECUTABLE} rev-parse --abbrev-ref HEAD
+  execute_process(COMMAND ${GIT_EXECUTABLE} symbolic-ref --short HEAD
                   WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
                   OUTPUT_VARIABLE LIBQUENTIER_GIT_BRANCH
                   RESULT_VARIABLE LIBQUENTIER_GIT_BRANCH_RETURN_CODE
