@@ -546,7 +546,7 @@ if(GIT_FOUND)
   message(STATUS "Git found: ${GIT_EXECUTABLE}")
 
   # Get git branch
-  execute_process(COMMAND ${GIT_EXECUTABLE} symbolic-ref --short HEAD
+  execute_process(COMMAND ${GIT_EXECUTABLE} rev-parse --abbrev-ref HEAD
                   WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
                   OUTPUT_VARIABLE LIBQUENTIER_GIT_BRANCH
                   RESULT_VARIABLE LIBQUENTIER_GIT_BRANCH_RETURN_CODE
@@ -555,6 +555,16 @@ if(GIT_FOUND)
     message(AUTHOR_WARNING "Failed to determine the current git branch, return code ${LIBQUENTIER_GIT_BRANCH_RETURN_CODE}")
     set(LIBQUENTIER_GIT_BRANCH "unknown branch")
   else()
+    if(${LIBQUENTIER_GIT_BRANCH} STREQUAL "HEAD")
+      # Can happen if running on detached HEAD, can happen in CI jobs; workaround: try to get the current branch from environment variables
+      set(APPVEYOR_REPO_BRANCH "$ENV{APPVEYOR_REPO_BRANCH}")
+      set(TRAVIS_BRANCH "$ENV{TRAVIS_BRANCH}")
+      if(NOT "${APPVEYOR_REPO_BRANCH}" STREQUAL "")
+        set(LIBQUENTIER_GIT_BRANCH "${APPVEYOR_REPO_BRANCH}")
+      elseif(NOT "${TRAVIS_BRANCH}" STREQUAL "")
+        set(LIBQUENTIER_GIT_BRANCH "${TRAVIS_BRANCH}")
+      endif()
+    endif()
     message(STATUS "Git branch: ${LIBQUENTIER_GIT_BRANCH}")
   endif()
 
