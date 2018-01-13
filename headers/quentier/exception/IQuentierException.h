@@ -25,6 +25,14 @@
 
 namespace quentier {
 
+/**
+ * @brief The IQuentierException class represents the interface for exceptions
+ * specific to libquentier and applications based on it.
+ *
+ * In addition to standard exception features inherited from std::exception,
+ * IQuentierException based exceptions can provide both localized and non-localized
+ * error messages.
+ */
 class QUENTIER_EXPORT IQuentierException: public Printable,
                                           public std::exception
 {

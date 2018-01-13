@@ -23,6 +23,10 @@
 
 namespace quentier {
 
+/**
+ * @brief The ApplicationSettingsInitializationException can be throws from methods of
+ * ApplicationSettings class if it's unable to locate the file with persistent settings
+ */
 class QUENTIER_EXPORT ApplicationSettingsInitializationException: public IQuentierException
 {
 public:

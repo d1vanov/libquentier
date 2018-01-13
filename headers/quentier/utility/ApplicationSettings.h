@@ -24,6 +24,10 @@
 
 namespace quentier {
 
+/**
+ * @brief The ApplicationSettings class enhances the functionality of QSettings,
+ * in particular it simplifies the way of working with either application-wide or account-specific settings
+ */
 class QUENTIER_EXPORT ApplicationSettings: public QSettings,
                                            public Printable
 {
