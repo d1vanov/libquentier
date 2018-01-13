@@ -1,0 +1,11 @@
+<map id="quentier::INoteStoreDataElement" name="quentier::INoteStoreDataElement">
+<area shape="rect" id="node4" href="$classquentier_1_1IFavoritableDataElement.html" title="quentier::IFavoritableData\lElement" alt="" coords="198,187,369,229"/>
+<area shape="rect" id="node9" href="$classquentier_1_1LinkedNotebook.html" title="quentier::LinkedNotebook" alt="" coords="395,195,565,221"/>
+<area shape="rect" id="node10" href="$classquentier_1_1Resource.html" title="quentier::Resource" alt="" coords="590,195,721,221"/>
+<area shape="rect" id="node2" href="$classquentier_1_1ILocalStorageDataElement.html" title="quentier::ILocalStorageData\lElement" alt="" coords="299,6,483,47"/>
+<area shape="rect" id="node3" href="$classquentier_1_1Printable.html" title="The Printable class is the interface for Quentier&#39;s internal classes which should be able to write th..." alt="" coords="507,13,633,40"/>
+<area shape="rect" id="node5" href="$classquentier_1_1Note.html" title="quentier::Note" alt="" coords="5,277,109,304"/>
+<area shape="rect" id="node6" href="$classquentier_1_1Notebook.html" title="quentier::Notebook" alt="" coords="134,277,265,304"/>
+<area shape="rect" id="node7" href="$classquentier_1_1SavedSearch.html" title="quentier::SavedSearch" alt="" coords="291,277,444,304"/>
+<area shape="rect" id="node8" href="$classquentier_1_1Tag.html" title="quentier::Tag" alt="" coords="469,277,568,304"/>
+</map>

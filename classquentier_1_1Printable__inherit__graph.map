@@ -1,0 +1,35 @@
+<map id="quentier::Printable" name="quentier::Printable">
+<area shape="rect" id="node2" href="$classquentier_1_1Account.html" title="The Account class encapsulates some details about the account: its name, whether it is local or synch..." alt="" coords="221,95,345,121"/>
+<area shape="rect" id="node3" href="$classquentier_1_1ApplicationSettings.html" title="quentier::ApplicationSettings" alt="" coords="189,145,377,172"/>
+<area shape="rect" id="node4" href="$classquentier_1_1ENMLConverter_1_1SkipHtmlElementRule.html" title="The SkipHtmlElementRule class describes the set of rules for HTML &#45;&gt; ENML conversion about the HTML e..." alt="" coords="197,197,368,238"/>
+<area shape="rect" id="node5" href="$classquentier_1_1ErrorString.html" title="The ErrorString class encapsulates two (or more) strings which are meant to contain translatable (bas..." alt="" coords="213,263,352,289"/>
+<area shape="rect" id="node6" href="$classquentier_1_1ILocalStorageCacheExpiryChecker.html" title="The ILocalStorageCacheExpiryChecker class represents the interface for cache expiry checker used by L..." alt="" coords="185,314,380,355"/>
+<area shape="rect" id="node8" href="$classquentier_1_1INoteStoreDataElement.html" title="quentier::INoteStoreData\lElement" alt="" coords="199,379,366,421"/>
+<area shape="rect" id="node16" href="$classquentier_1_1IQuentierException.html" title="quentier::IQuentierException" alt="" coords="189,445,376,472"/>
+<area shape="rect" id="node28" href="$classquentier_1_1LocalStorageCacheManager.html" title="quentier::LocalStorageCache\lManager" alt="" coords="187,497,378,538"/>
+<area shape="rect" id="node29" href="$classquentier_1_1NoteSearchQuery.html" title="quentier::NoteSearchQuery" alt="" coords="193,563,373,589"/>
+<area shape="rect" id="node30" href="$classquentier_1_1ResourceRecognitionIndexItem.html" title="quentier::ResourceRecognition\lIndexItem" alt="" coords="182,614,383,655"/>
+<area shape="rect" id="node31" href="$classquentier_1_1ResourceRecognitionIndices.html" title="quentier::ResourceRecognition\lIndices" alt="" coords="182,679,383,721"/>
+<area shape="rect" id="node32" href="$classquentier_1_1SharedNote.html" title="quentier::SharedNote" alt="" coords="210,745,355,772"/>
+<area shape="rect" id="node33" href="$classquentier_1_1SharedNotebook.html" title="quentier::SharedNotebook" alt="" coords="196,796,369,823"/>
+<area shape="rect" id="node34" href="$classquentier_1_1User.html" title="quentier::User" alt="" coords="231,847,335,873"/>
+<area shape="rect" id="node7" href="$classquentier_1_1DefaultLocalStorageCacheExpiryChecker.html" title="quentier::DefaultLocalStorage\lCacheExpiryChecker" alt="" coords="439,9,633,50"/>
+<area shape="rect" id="node9" href="$classquentier_1_1IFavoritableDataElement.html" title="quentier::IFavoritableData\lElement" alt="" coords="450,74,622,115"/>
+<area shape="rect" id="node14" href="$classquentier_1_1LinkedNotebook.html" title="quentier::LinkedNotebook" alt="" coords="451,140,621,167"/>
+<area shape="rect" id="node15" href="$classquentier_1_1Resource.html" title="quentier::Resource" alt="" coords="470,191,602,217"/>
+<area shape="rect" id="node10" href="$classquentier_1_1Note.html" title="quentier::Note" alt="" coords="713,5,817,32"/>
+<area shape="rect" id="node11" href="$classquentier_1_1Notebook.html" title="quentier::Notebook" alt="" coords="699,56,831,83"/>
+<area shape="rect" id="node12" href="$classquentier_1_1SavedSearch.html" title="quentier::SavedSearch" alt="" coords="688,107,843,133"/>
+<area shape="rect" id="node13" href="$classquentier_1_1Tag.html" title="quentier::Tag" alt="" coords="716,157,815,184"/>
+<area shape="rect" id="node17" href="$classquentier_1_1ApplicationSettingsInitializationException.html" title="quentier::ApplicationSettings\lInitializationException" alt="" coords="442,242,630,283"/>
+<area shape="rect" id="node18" href="$classquentier_1_1DatabaseLockedException.html" title="quentier::DatabaseLocked\lException" alt="" coords="449,307,623,349"/>
+<area shape="rect" id="node19" href="$classquentier_1_1DatabaseLockFailedException.html" title="quentier::DatabaseLockFailed\lException" alt="" coords="439,373,633,414"/>
+<area shape="rect" id="node20" href="$classquentier_1_1DatabaseOpeningException.html" title="quentier::DatabaseOpening\lException" alt="" coords="446,438,626,479"/>
+<area shape="rect" id="node21" href="$classquentier_1_1DatabaseSqlErrorException.html" title="quentier::DatabaseSqlError\lException" alt="" coords="447,503,625,545"/>
+<area shape="rect" id="node22" href="$classquentier_1_1EmptyDataElementException.html" title="quentier::EmptyDataElement\lException" alt="" coords="441,569,631,610"/>
+<area shape="rect" id="node23" href="$classquentier_1_1LocalStorageCacheManagerException.html" title="quentier::LocalStorageCache\lManagerException" alt="" coords="441,634,631,675"/>
+<area shape="rect" id="node24" href="$classquentier_1_1LoggerInitializationException.html" title="quentier::LoggerInitialization\lException" alt="" coords="444,699,628,741"/>
+<area shape="rect" id="node25" href="$classquentier_1_1NoteEditorInitializationException.html" title="quentier::NoteEditorInitialization\lException" alt="" coords="433,765,639,806"/>
+<area shape="rect" id="node26" href="$classquentier_1_1NoteEditorPluginInitializationException.html" title="quentier::NoteEditorPlugin\lInitializationException" alt="" coords="449,830,623,871"/>
+<area shape="rect" id="node27" href="$classquentier_1_1NullPtrException.html" title="quentier::NullPtrException" alt="" coords="449,896,623,923"/>
+</map>

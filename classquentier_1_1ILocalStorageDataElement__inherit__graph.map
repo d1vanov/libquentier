@@ -1,0 +1,10 @@
+<map id="quentier::ILocalStorageDataElement" name="quentier::ILocalStorageDataElement">
+<area shape="rect" id="node2" href="$classquentier_1_1INoteStoreDataElement.html" title="quentier::INoteStoreData\lElement" alt="" coords="397,97,563,138"/>
+<area shape="rect" id="node3" href="$classquentier_1_1IFavoritableDataElement.html" title="quentier::IFavoritableData\lElement" alt="" coords="198,187,369,229"/>
+<area shape="rect" id="node8" href="$classquentier_1_1LinkedNotebook.html" title="quentier::LinkedNotebook" alt="" coords="395,195,565,221"/>
+<area shape="rect" id="node9" href="$classquentier_1_1Resource.html" title="quentier::Resource" alt="" coords="590,195,721,221"/>
+<area shape="rect" id="node4" href="$classquentier_1_1Note.html" title="quentier::Note" alt="" coords="5,277,109,304"/>
+<area shape="rect" id="node5" href="$classquentier_1_1Notebook.html" title="quentier::Notebook" alt="" coords="134,277,265,304"/>
+<area shape="rect" id="node6" href="$classquentier_1_1SavedSearch.html" title="quentier::SavedSearch" alt="" coords="291,277,444,304"/>
+<area shape="rect" id="node7" href="$classquentier_1_1Tag.html" title="quentier::Tag" alt="" coords="469,277,568,304"/>
+</map>

@@ -1,7 +1,0 @@
-<RCC>
-    <qresource prefix="/">
-        <file>enml2.dtd</file>
-        <file>evernote-export3.dtd</file>
-        <file>recoIndex.dtd</file>
-    </qresource>
-</RCC>

@@ -1,0 +1,14 @@
+<map id="quentier::IQuentierException" name="quentier::IQuentierException">
+<area shape="rect" id="node4" href="$classquentier_1_1ApplicationSettingsInitializationException.html" title="quentier::ApplicationSettings\lInitializationException" alt="" coords="426,5,614,46"/>
+<area shape="rect" id="node5" href="$classquentier_1_1DatabaseLockedException.html" title="quentier::DatabaseLocked\lException" alt="" coords="433,70,607,111"/>
+<area shape="rect" id="node6" href="$classquentier_1_1DatabaseLockFailedException.html" title="quentier::DatabaseLockFailed\lException" alt="" coords="423,135,617,177"/>
+<area shape="rect" id="node7" href="$classquentier_1_1DatabaseOpeningException.html" title="quentier::DatabaseOpening\lException" alt="" coords="430,201,610,242"/>
+<area shape="rect" id="node8" href="$classquentier_1_1DatabaseSqlErrorException.html" title="quentier::DatabaseSqlError\lException" alt="" coords="431,266,609,307"/>
+<area shape="rect" id="node9" href="$classquentier_1_1EmptyDataElementException.html" title="quentier::EmptyDataElement\lException" alt="" coords="425,331,615,373"/>
+<area shape="rect" id="node10" href="$classquentier_1_1LocalStorageCacheManagerException.html" title="quentier::LocalStorageCache\lManagerException" alt="" coords="425,397,615,438"/>
+<area shape="rect" id="node11" href="$classquentier_1_1LoggerInitializationException.html" title="quentier::LoggerInitialization\lException" alt="" coords="428,462,612,503"/>
+<area shape="rect" id="node12" href="$classquentier_1_1NoteEditorInitializationException.html" title="quentier::NoteEditorInitialization\lException" alt="" coords="417,527,623,569"/>
+<area shape="rect" id="node13" href="$classquentier_1_1NoteEditorPluginInitializationException.html" title="quentier::NoteEditorPlugin\lInitializationException" alt="" coords="433,593,607,634"/>
+<area shape="rect" id="node14" href="$classquentier_1_1NullPtrException.html" title="quentier::NullPtrException" alt="" coords="433,659,607,685"/>
+<area shape="rect" id="node2" href="$classquentier_1_1Printable.html" title="The Printable class is the interface for Quentier&#39;s internal classes which should be able to write th..." alt="" coords="6,313,133,340"/>
+</map>

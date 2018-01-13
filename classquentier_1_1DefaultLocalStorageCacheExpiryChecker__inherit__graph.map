@@ -1,0 +1,4 @@
+<map id="quentier::DefaultLocalStorageCacheExpiryChecker" name="quentier::DefaultLocalStorageCacheExpiryChecker">
+<area shape="rect" id="node2" href="$classquentier_1_1ILocalStorageCacheExpiryChecker.html" title="The ILocalStorageCacheExpiryChecker class represents the interface for cache expiry checker used by L..." alt="" coords="5,81,200,122"/>
+<area shape="rect" id="node3" href="$classquentier_1_1Printable.html" title="The Printable class is the interface for Quentier&#39;s internal classes which should be able to write th..." alt="" coords="39,5,165,32"/>
+</map>

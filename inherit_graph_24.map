@@ -1,0 +1,13 @@
+<map id="Graphical Class Hierarchy" name="Graphical Class Hierarchy">
+<area shape="rect" id="node2" href="$classquentier_1_1EncryptionManager.html" title="The EncryptionManager class provides both synchronous methods to encrypt or decrypt given text with p..." alt="" coords="190,5,378,32"/>
+<area shape="rect" id="node3" href="$classquentier_1_1FileIOProcessorAsync.html" title="The FileIOProcessorAsync class is a wrapper under simple file IO operations, it is meant to be used f..." alt="" coords="199,57,369,98"/>
+<area shape="rect" id="node4" href="$classquentier_1_1FileSystemWatcher.html" title="quentier::FileSystemWatcher" alt="" coords="189,123,379,149"/>
+<area shape="rect" id="node5" href="$classquentier_1_1IAuthenticationManager.html" title="quentier::IAuthentication\lManager" alt="" coords="203,174,365,215"/>
+<area shape="rect" id="node7" href="$classquentier_1_1LocalStorageManager.html" title="quentier::LocalStorageManager" alt="" coords="183,240,385,267"/>
+<area shape="rect" id="node8" href="$classquentier_1_1LocalStorageManagerAsync.html" title="quentier::LocalStorageManager\lAsync" alt="" coords="183,291,385,333"/>
+<area shape="rect" id="node9" href="$classquentier_1_1QuentierUndoCommand.html" title="The QuentierUndoCommand class has the sole purpose of working around one quirky aspect of Qt&#39;s undo/r..." alt="" coords="176,525,392,552"/>
+<area shape="rect" id="node10" href="$classquentier_1_1ShortcutManager.html" title="quentier::ShortcutManager" alt="" coords="197,357,371,384"/>
+<area shape="rect" id="node11" href="$classquentier_1_1SpellChecker.html" title="quentier::SpellChecker" alt="" coords="207,408,361,435"/>
+<area shape="rect" id="node12" href="$classquentier_1_1SynchronizationManager.html" title="The SynchronizationManager class encapsulates methods and signals &amp; slots required to perform the ful..." alt="" coords="199,459,369,501"/>
+<area shape="rect" id="node6" href="$classquentier_1_1AuthenticationManager.html" title="quentier::Authentication\lManager" alt="" coords="441,174,599,215"/>
+</map>
