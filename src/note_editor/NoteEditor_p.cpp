@@ -4840,8 +4840,8 @@ void NoteEditorPrivate::writeNotePageFile(const QString & html)
     m_pendingIndexHtmlWritingToFile = true;
     QString pagePath = noteEditorPagePath();
     QNTRACE(QStringLiteral("Emitting the request to write the note html to file: request id = ") << m_writeNoteHtmlToFileRequestId);
-    Q_EMIT writeNoteHtmlToFile(pagePath, html.toLocal8Bit(),
-                             m_writeNoteHtmlToFileRequestId, /* append = */ false);
+    Q_EMIT writeNoteHtmlToFile(pagePath, html.toUtf8(),
+                               m_writeNoteHtmlToFileRequestId, /* append = */ false);
 }
 
 bool NoteEditorPrivate::parseEncryptedTextContextMenuExtraData(const QStringList & extraData, QString & encryptedText,
