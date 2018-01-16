@@ -134,7 +134,7 @@ QTextStream & operator <<(QTextStream & strm, const qevercloud::Contact & contac
     PRINT_FIELD(contact, type, contactTypeToString);
     PRINT_FIELD(contact, photoUrl);
     PRINT_FIELD(contact, photoLastUpdated, quentier::printableDateTimeFromTimestamp);
-    PRINT_FIELD(contact, messagingPermit, QString::fromLocal8Bit);
+    PRINT_FIELD(contact, messagingPermit, QString::fromUtf8);
     PRINT_FIELD(contact, messagingPermitExpires, quentier::printableDateTimeFromTimestamp);
 
     strm << QStringLiteral("}; \n");
@@ -585,7 +585,7 @@ QTextStream & operator <<(QTextStream & strm, const qevercloud::Resource & resou
 
         PRINT_FIELD(resource.recognition.ref(), size, QString::number);
         PRINT_FIELD(resource.recognition.ref(), bodyHash, byteArrayToHex);
-        PRINT_FIELD(resource.recognition.ref(), body, QString::fromLocal8Bit);
+        PRINT_FIELD(resource.recognition.ref(), body, QString::fromUtf8);
 
         strm << indent << QStringLiteral("};\n");
     }

@@ -170,7 +170,7 @@ bool HTMLCleaner::Impl::convertHtml(const QString & html, const TidyOptionId out
     }
 
     if (rc >= 0) {
-        rc = tidyParseString(m_tidyDoc, html.toLocal8Bit().constData());
+        rc = tidyParseString(m_tidyDoc, html.toUtf8().constData());
         QNTRACE(QStringLiteral("tidyParseString: rc = ") << rc);
     }
 
@@ -215,8 +215,8 @@ bool HTMLCleaner::Impl::convertHtml(const QString & html, const TidyOptionId out
     }
 
     output.resize(0);
-    output.append(QString::fromLocal8Bit(QByteArray(reinterpret_cast<const char*>(m_tidyOutput.bp),
-                                                    static_cast<int>(m_tidyOutput.size))));
+    output.append(QString::fromUtf8(QByteArray(reinterpret_cast<const char*>(m_tidyOutput.bp),
+                                               static_cast<int>(m_tidyOutput.size))));
 
     QString nbspEntityDeclaration = QStringLiteral("<!DOCTYPE doctypeName [<!ENTITY nbsp \"&#160;\">]>");
     bool insertedNbspEntityDeclaration = false;

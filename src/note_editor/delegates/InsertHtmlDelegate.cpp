@@ -468,7 +468,7 @@ void InsertHtmlDelegate::onImageDataDownloadFinished(QNetworkReply * pReply)
         int dotIndex = urlString.lastIndexOf(QStringLiteral("."), -1, Qt::CaseInsensitive);
         if (dotIndex >= 0) {
             format = urlString.mid(dotIndex + 1, urlString.size() - dotIndex - 1);
-            QNTRACE(QStringLiteral("Trying to load the image with format ") << format.toUpper().toLocal8Bit().constData());
+            QNTRACE(QStringLiteral("Trying to load the image with format ") << format);
             res = image.loadFromData(downloadedData, format.toUpper().toLocal8Bit().constData());
         }
         else {
@@ -496,8 +496,7 @@ void InsertHtmlDelegate::onImageDataDownloadFinished(QNetworkReply * pReply)
                 {
                     res = image.load(file.fileName(), format.toUpper().toLocal8Bit().constData());
                     if (!res) {
-                        QNTRACE(QStringLiteral("Could not load the image from temporary file with the format specification too: ")
-                                << format.toUpper().toLocal8Bit().constData());
+                        QNTRACE(QStringLiteral("Could not load the image from temporary file with the format specification too: ") << format);
                     }
                 }
             }

@@ -75,7 +75,7 @@ bool EncryptionManagerPrivate::decrypt(const QString & encryptedText, const QStr
             return false;
         }
 
-        QByteArray decryptedByteArray = decryptedText.toLocal8Bit();
+        QByteArray decryptedByteArray = decryptedText.toUtf8();
         decryptedText = QString::fromUtf8(decryptedByteArray.constData(), decryptedByteArray.size());
         return true;
     }
@@ -93,7 +93,7 @@ bool EncryptionManagerPrivate::decrypt(const QString & encryptedText, const QStr
             return false;
         }
 
-        decryptedText = QString::fromLocal8Bit(decryptedByteArray);
+        decryptedText = QString::fromUtf8(decryptedByteArray);
         return true;
     }
     else
@@ -135,14 +135,14 @@ bool EncryptionManagerPrivate::encrypt(const QString & textToEncrypt, const QStr
     encryptedTextData.append(reinterpret_cast<const char*>(m_saltmac), EN_AES_KEYSIZE);
     encryptedTextData.append(reinterpret_cast<const char*>(m_iv), EN_AES_KEYSIZE);
 
-    QByteArray passphraseData = passphrase.toLocal8Bit();
+    QByteArray passphraseData = passphrase.toUtf8();
 
     res = generateKey(passphraseData, m_salt, EN_AES_KEYSIZE, errorDescription);
     if (!res) {
         return false;
     }
 
-    QByteArray textToEncryptData = textToEncrypt.toLocal8Bit();
+    QByteArray textToEncryptData = textToEncrypt.toUtf8();
 
     res = encyptWithAes(textToEncryptData, encryptedTextData, errorDescription);
     if (!res) {
@@ -156,7 +156,7 @@ bool EncryptionManagerPrivate::encrypt(const QString & textToEncrypt, const QStr
 
     encryptedTextData.append(reinterpret_cast<const char*>(m_hmac), EN_AES_HMACSIZE);
 
-    encryptedText = QString::fromLocal8Bit(encryptedTextData.toBase64());
+    encryptedText = QString::fromUtf8(encryptedTextData.toBase64());
     cipher = QStringLiteral("AES");
     keyLength = 128;
     return true;
@@ -309,7 +309,7 @@ bool EncryptionManagerPrivate::decryptAes(const QString & encryptedText, const Q
         return false;
     }
 
-    QByteArray passphraseData = passphrase.toLocal8Bit();
+    QByteArray passphraseData = passphrase.toUtf8();
 
     // Validate HMAC
     QNTRACE(QStringLiteral("Validating hmac..."));
@@ -319,7 +319,7 @@ bool EncryptionManagerPrivate::decryptAes(const QString & encryptedText, const Q
         parsedHmac[i] = m_hmac[i];
     }
 
-    QByteArray saltWithCipherText = QByteArray::fromBase64(encryptedText.toLocal8Bit());
+    QByteArray saltWithCipherText = QByteArray::fromBase64(encryptedText.toUtf8());
     saltWithCipherText.remove(saltWithCipherText.size() - EN_AES_HMACSIZE, EN_AES_HMACSIZE);
 
     bres = calculateHmac(passphraseData, m_saltmac, saltWithCipherText, EN_AES_KEYSIZE, errorDescription);
@@ -404,7 +404,7 @@ bool EncryptionManagerPrivate::splitEncryptedData(const QString & encryptedData,
                                                   const size_t hmacSize, QByteArray & encryptedText,
                                                   ErrorString & errorDescription)
 {
-    QByteArray decodedEncryptedData = QByteArray::fromBase64(encryptedData.toLocal8Bit());
+    QByteArray decodedEncryptedData = QByteArray::fromBase64(encryptedData.toUtf8());
 
     const int minLength = static_cast<int>(4 + 3 * saltSize + hmacSize);
 
@@ -453,7 +453,7 @@ bool EncryptionManagerPrivate::splitEncryptedData(const QString & encryptedData,
 bool EncryptionManagerPrivate::decryptRc2(const QString & encryptedText, const QString & passphrase,
                                           QString & decryptedText, ErrorString & errorDescription)
 {
-    QByteArray encryptedTextData = QByteArray::fromBase64(encryptedText.toLocal8Bit());
+    QByteArray encryptedTextData = QByteArray::fromBase64(encryptedText.toUtf8());
     decryptedText.resize(0);
 
     rc2KeyCodesFromPassphrase(passphrase);
@@ -621,7 +621,7 @@ QString EncryptionManagerPrivate::decryptRc2Chunk(const QByteArray & inputCharCo
 
 #undef APPEND_UNICODE_CHAR
 
-    QByteArray outData = m_rc2_chunk_out.toLocal8Bit();
+    QByteArray outData = m_rc2_chunk_out.toUtf8();
     QString out = QString::fromUtf8(outData.constData(), outData.size());
     return out;
 }
@@ -690,7 +690,7 @@ qint32 EncryptionManagerPrivate::crc32(const QString & str) const
 
     crc ^= (-1);
 
-    const QByteArray strData = str.toLocal8Bit();
+    const QByteArray strData = str.toUtf8();
     const int size = strData.size();
 
     QVector<int> convertedCharCodes;

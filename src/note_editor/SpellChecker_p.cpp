@@ -210,7 +210,7 @@ void SpellCheckerPrivate::removeFromUserWordList(const QString & word)
 
     QByteArray dataToWrite;
     for(auto it = m_userDictionary.constBegin(), end = m_userDictionary.constEnd(); it != end; ++it) {
-        dataToWrite.append(QString(*it + QStringLiteral("\n")).toLocal8Bit());
+        dataToWrite.append(QString(*it + QStringLiteral("\n")).toUtf8());
     }
 
     QObject::connect(this, QNSIGNAL(SpellCheckerPrivate,writeFile,QString,QByteArray,QUuid,bool),
@@ -760,7 +760,7 @@ void SpellCheckerPrivate::checkUserDictionaryDataPendingWriting()
         end = m_userDictionaryPartPendingWriting.constEnd(); it != end; ++it)
     {
         m_userDictionary << *it;
-        dataToWrite.append(QString(*it + QStringLiteral("\n")).toLocal8Bit());
+        dataToWrite.append(QString(*it + QStringLiteral("\n")).toUtf8());
     }
 
     if (!dataToWrite.isEmpty())
@@ -878,6 +878,7 @@ void SpellCheckerPrivate::onReadFileRequestProcessed(bool success, ErrorString e
         if (Q_LIKELY(res))
         {
             QTextStream stream(&buffer);
+            stream.setCodec("UTF-8");
             QString word;
             while(true)
             {
