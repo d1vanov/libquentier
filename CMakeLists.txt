@@ -639,7 +639,7 @@ set(${PROJECT_NAME}_TR_SOURCES
     ${${PROJECT_NAME}_SOURCES})
 
 set(${PROJECT_NAME}_TR_FILES
-    translations/libquentier_ru.ts)
+    translations/libquentier_ru_RU.ts)
 
 set(${PROJECT_NAME}_QM_FILES "")
 update_translation("${${PROJECT_NAME}_TR_SOURCES}" "${FORMS}" "${${PROJECT_NAME}_TR_FILES}")
