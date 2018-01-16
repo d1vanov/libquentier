@@ -886,12 +886,14 @@ endforeach()
 
 # install translations
 foreach(QM_FILE ${${PROJECT_NAME}_QM_FILES})
-  install(CODE "set(QM_FILE \"${QM_FILE})\")
-                if(EXISTS \"${QM_FILE}\")
-                  set(CMAKE_INSTALL_TRANSLATIONSDIR \"${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_TRANSLATIONSDIR}\")
-                  message(STATUS \"Installing: ${QM_FILE}\")
-                  file(COPY ${QM_FILE} DESTINATION ${CMAKE_INSTALL_TRANSLATIONSDIR})
-                endif()")
+  install(CODE "
+          set(QM_FILE \"${QM_FILE})\")
+          if(EXISTS \"${QM_FILE}\")
+            get_filename_component(QM_FILE_BASE_NAME \"${QM_FILE}\" NAME)
+            message(STATUS \"Installing: ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_TRANSLATIONSDIR}/\${QM_FILE_BASE_NAME}\")
+            file(COPY \"${QM_FILE}\" DESTINATION \"${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_TRANSLATIONSDIR}\")
+          endif()
+          " COMPONENT Runtime)
 endforeach()
 
 # install cmake files
