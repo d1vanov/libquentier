@@ -45,7 +45,7 @@ macro(update_translation SOURCES FORMS TRANSLATIONS)
     set(LRELEASE ${QT_BIN_DIR}/lrelease)
   endif()
 
-  add_custom_target(lupdate COMMAND ${LUPDATE} -verbose \"${fake_pro_file}\" DEPENDS ${fake_pro_file})
+  add_custom_target(lupdate COMMAND ${LUPDATE} -verbose -noobsolete \"${fake_pro_file}\" DEPENDS ${fake_pro_file})
 
   add_custom_target(lrelease)
   file(MAKE_DIRECTORY "${PROJECT_BINARY_DIR}/translations")
