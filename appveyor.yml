@@ -217,6 +217,8 @@ build_script:
   - if not %qt%==mingw492_32 cmake .. -G %makefiles% -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX="c:/dev/libquentier/build/installdir" -DUSE_QT5=1 -DCMAKE_PREFIX_PATH="C:/Qt/5.9.2/%qt%" -DOPENSSL_ROOT_DIR="c:/dev/openssl" -DBOOST_ROOT="c:/dev/boost"
   - cmake --build . --target all
   - cmake --build . --target check
+  - cmake --build . --target lupdate
+  - cmake --build . --target lrelease
   - cmake --build . --target install
   - if %qt%==mingw492_32 set PATH=%ORIGPATH%
 

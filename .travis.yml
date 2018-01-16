@@ -47,7 +47,7 @@ install:
           echo "Building for Qt 5.5.1" &&
           sudo apt-add-repository -y ppa:beineri/opt-qt551-trusty &&
           sudo apt-get -qq update &&
-          sudo apt-get -qq install qt55tools qt55base qt55webchannel qt55webengine qt55websockets qt55xmlpatterns &&
+          sudo apt-get -qq install qt55tools qt55base qt55webchannel qt55webengine qt55websockets qt55xmlpatterns qt55translations &&
           if [ "${COMPILER}" = "clang++" ]; then
             export CXX="clang++" &&
             export CC="clang"
@@ -56,7 +56,7 @@ install:
           echo "Building for Qt 5.9.2" &&
           sudo apt-add-repository -y ppa:beineri/opt-qt592-trusty &&
           sudo apt-get -qq update &&
-          sudo apt-get -qq install qt59tools qt59base qt59webchannel qt59webengine qt59websockets qt59xmlpatterns &&
+          sudo apt-get -qq install qt59tools qt59base qt59webchannel qt59webengine qt59websockets qt59xmlpatterns qt59translations &&
           if [ "${COMPILER}" = "clang++" ]; then
             export CXX="clang++" &&
             export CC="clang"
@@ -219,6 +219,8 @@ script:
       fi
       make &&
       make check &&
+      make lupdate &&
+      make lrelease &&
       make install
 
 after_success:
