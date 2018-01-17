@@ -16,6 +16,7 @@ The most important and useful components of the library are the following:
 * Note editor - the UI component capable for notes displaying and editing
 
 The library is based on the lower level functionality provided by [QEverCloud](https://github.com/d1vanov/QEverCloud) library.
+It also serves as the functional core of [Quentier](https://github.com/d1vanov/quentier) application.
 
 ### WARNING: libquentier is in alpha state right now, neither API nor ABI can be considered stable yet!
 
