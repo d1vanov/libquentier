@@ -358,5 +358,5 @@ function ToDoCheckboxAutomaticInserter() {
 (function() {
     ToDoCheckboxAutomaticInserter.prototype = Object.create(NodeUndoRedoManager.prototype);
     window.toDoCheckboxAutomaticInserter = new ToDoCheckboxAutomaticInserter;
-    document.body.onkeypress = function(e) { toDoCheckboxAutomaticInserter.checkKeypressAndInsertToDo(e); };
+    document.body.addEventListener("keypress", function(e) { toDoCheckboxAutomaticInserter.checkKeypressAndInsertToDo(e); }, false);
 })();
