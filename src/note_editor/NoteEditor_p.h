@@ -746,7 +746,6 @@ private:
     QString     m_getSelectionHtmlJs;
     QString     m_snapSelectionToWordJs;
     QString     m_replaceSelectionWithHtmlJs;
-    QString     m_replaceHyperlinkContentJs;
     QString     m_updateResourceHashJs;
     QString     m_updateImageResourceSrcJs;
     QString     m_provideSrcForResourceImgTagsJs;

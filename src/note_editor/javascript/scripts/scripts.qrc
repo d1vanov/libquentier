@@ -32,7 +32,6 @@
         <file>genericResourceOnClickHandler.js</file>
         <file>setupGenericResourceOnClickHandler.js</file>
         <file>changeFontSizeForSelection.js</file>
-        <file>replaceHyperlinkContent.js</file>
         <file>flipEnToDoCheckboxState.js</file>
         <file>setupTextCursorPositionTracking.js</file>
         <file>clickInterceptor.js</file>

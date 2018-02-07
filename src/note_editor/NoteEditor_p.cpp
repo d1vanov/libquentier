@@ -182,7 +182,6 @@ NoteEditorPrivate::NoteEditorPrivate(NoteEditor & noteEditor) :
     m_getSelectionHtmlJs(),
     m_snapSelectionToWordJs(),
     m_replaceSelectionWithHtmlJs(),
-    m_replaceHyperlinkContentJs(),
     m_updateResourceHashJs(),
     m_updateImageResourceSrcJs(),
     m_provideSrcForResourceImgTagsJs(),
@@ -478,7 +477,6 @@ void NoteEditorPrivate::onNoteLoadFinished(bool ok)
     page->executeJavaScript(m_selectionManagerJs);
     page->executeJavaScript(m_textEditingUndoRedoManagerJs);
     page->executeJavaScript(m_snapSelectionToWordJs);
-    page->executeJavaScript(m_replaceHyperlinkContentJs);
     page->executeJavaScript(m_updateResourceHashJs);
     page->executeJavaScript(m_updateImageResourceSrcJs);
     page->executeJavaScript(m_provideSrcForResourceImgTagsJs);
@@ -4386,7 +4384,6 @@ void NoteEditorPrivate::setupScripts()
     SETUP_SCRIPT("javascript/scripts/setInitialCaretPosition.js", m_setInitialCaretPositionJs);
     SETUP_SCRIPT("javascript/scripts/toDoCheckboxAutomaticInserter.js", m_toDoCheckboxAutomaticInsertionJs);
     SETUP_SCRIPT("javascript/scripts/disablePaste.js", m_disablePasteJs);
-    SETUP_SCRIPT("javascript/scripts/replaceHyperlinkContent.js", m_replaceHyperlinkContentJs);
     SETUP_SCRIPT("javascript/scripts/updateResourceHash.js", m_updateResourceHashJs);
     SETUP_SCRIPT("javascript/scripts/updateImageResourceSrc.js", m_updateImageResourceSrcJs);
     SETUP_SCRIPT("javascript/scripts/provideSrcForResourceImgTags.js", m_provideSrcForResourceImgTagsJs);
@@ -8147,7 +8144,8 @@ void NoteEditorPrivate::onFoundSelectedHyperlinkId(const QVariant & hyperlinkDat
     EditHyperlinkDelegate * delegate = new EditHyperlinkDelegate(*this, hyperlinkId);
     QObject::connect(delegate, QNSIGNAL(EditHyperlinkDelegate,finished),
                      this, QNSLOT(NoteEditorPrivate,onEditHyperlinkDelegateFinished));
-    QObject::connect(delegate, QNSIGNAL(EditHyperlinkDelegate,cancelled), this, QNSLOT(NoteEditorPrivate,onEditHyperlinkDelegateCancelled));
+    QObject::connect(delegate, QNSIGNAL(EditHyperlinkDelegate,cancelled),
+                     this, QNSLOT(NoteEditorPrivate,onEditHyperlinkDelegateCancelled));
     QObject::connect(delegate, QNSIGNAL(EditHyperlinkDelegate,notifyError,ErrorString),
                      this, QNSLOT(NoteEditorPrivate,onEditHyperlinkDelegateError,ErrorString));
     delegate->start();
