@@ -85,6 +85,7 @@ private Q_SLOTS:
     void localStorageManagerListSavedSearchesTest();
     void localStorageManagerListLinkedNotebooksTest();
     void localStorageManagerListTagsTest();
+    void localStorageManagerListTagsWithNoteLocalUidsTest();
     void localStorageManagerListAllSharedNotebooksTest();
     void localStorageManagerListAllTagsPerNoteTest();
     void localStorageManagerListNotesTest();

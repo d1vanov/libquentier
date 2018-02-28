@@ -230,6 +230,14 @@ Q_SIGNALS:
                         size_t limit, size_t offset, LocalStorageManager::ListTagsOrder::type order,
                         LocalStorageManager::OrderDirection::type orderDirection, QString linkedNotebookGuid,
                         ErrorString errorDescription, QUuid requestId = QUuid());
+    void listTagsWithNoteLocalUidsComplete(LocalStorageManager::ListObjectsOptions flag,
+                                           size_t limit, size_t offset, LocalStorageManager::ListTagsOrder::type order,
+                                           LocalStorageManager::OrderDirection::type orderDirection, QString linkedNotebookGuid,
+                                           QList<std::pair<Tag, QStringList> > foundTags, QUuid requestId = QUuid());
+    void listTagsWithNoteLocalUidsFailed(LocalStorageManager::ListObjectsOptions flag,
+                                         size_t limit, size_t offset, LocalStorageManager::ListTagsOrder::type order,
+                                         LocalStorageManager::OrderDirection::type orderDirection, QString linkedNotebookGuid,
+                                         ErrorString errorDescription, QUuid requestId = QUuid());
     void expungeTagComplete(Tag tag, QStringList expungedChildTagLocalUids, QUuid requestId = QUuid());
     void expungeTagFailed(Tag tag, ErrorString errorDescription, QUuid requestId = QUuid());
     void expungeNotelessTagsFromLinkedNotebooksComplete(QUuid requestId = QUuid());
@@ -376,6 +384,11 @@ public Q_SLOTS:
                            LocalStorageManager::ListTagsOrder::type order,
                            LocalStorageManager::OrderDirection::type orderDirection,
                            QString linkedNotebookGuid, QUuid requestId);
+    void onListTagsWithNoteLocalUidsRequest(LocalStorageManager::ListObjectsOptions flag,
+                                            size_t limit, size_t offset,
+                                            LocalStorageManager::ListTagsOrder::type order,
+                                            LocalStorageManager::OrderDirection::type orderDirection,
+                                            QString linkedNotebookGuid, QUuid requestId);
     void onExpungeTagRequest(Tag tag, QUuid requestId);
     void onExpungeNotelessTagsFromLinkedNotebooksRequest(QUuid requestId);
 

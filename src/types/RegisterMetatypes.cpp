@@ -76,6 +76,8 @@ void registerMetatypes()
 
     qRegisterMetaType<ErrorString>("ErrorString");
     qRegisterMetaType<QSqlError>("QSqlError");
+
+    qRegisterMetaType<QList<std::pair<Tag, QStringList> > >("QList<std::pair<Tag, QStringList> >");
 }
 
 } // namespace quentier

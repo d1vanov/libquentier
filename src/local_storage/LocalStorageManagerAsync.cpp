@@ -1448,9 +1448,8 @@ void LocalStorageManagerAsync::onListTagsRequest(LocalStorageManager::ListObject
 
         if (m_useCache)
         {
-            const int numTags = tags.size();
-            for(int i = 0; i < numTags; ++i) {
-                const Tag & tag = tags[i];
+            for(auto it = tags.constBegin(), end = tags.constEnd(); it != end; ++it) {
+                const Tag & tag = *it;
                 m_pLocalStorageCacheManager->cacheTag(tag);
             }
         }
@@ -1464,6 +1463,42 @@ void LocalStorageManagerAsync::onListTagsRequest(LocalStorageManager::ListObject
         SysInfo sysInfo;
         QNERROR(error << QStringLiteral("; backtrace: ") << sysInfo.stackTrace());
         Q_EMIT listTagsFailed(flag, limit, offset, order, orderDirection, linkedNotebookGuid, error, requestId);
+    }
+}
+
+void LocalStorageManagerAsync::onListTagsWithNoteLocalUidsRequest(LocalStorageManager::ListObjectsOptions flag,
+                                                                  size_t limit, size_t offset,
+                                                                  LocalStorageManager::ListTagsOrder::type order,
+                                                                  LocalStorageManager::OrderDirection::type orderDirection,
+                                                                  QString linkedNotebookGuid, QUuid requestId)
+{
+    try
+    {
+        ErrorString errorDescription;
+        QList<std::pair<Tag, QStringList> > tagsWithNoteLocalUids = m_pLocalStorageManager->listTagsWithNoteLocalUids(flag, errorDescription,
+                                                                                                                      limit, offset, order,
+                                                                                                                      orderDirection, linkedNotebookGuid);
+        if (tagsWithNoteLocalUids.isEmpty() && !errorDescription.isEmpty()) {
+            Q_EMIT listTagsWithNoteLocalUidsFailed(flag, limit, offset, order, orderDirection, linkedNotebookGuid, errorDescription, requestId);
+        }
+
+        if (m_useCache)
+        {
+            for(auto it = tagsWithNoteLocalUids.constBegin(), end = tagsWithNoteLocalUids.constEnd(); it != end; ++it) {
+                const Tag & tag = it->first;
+                m_pLocalStorageCacheManager->cacheTag(tag);
+            }
+        }
+
+        Q_EMIT listTagsWithNoteLocalUidsComplete(flag, limit, offset, order, orderDirection, linkedNotebookGuid, tagsWithNoteLocalUids, requestId);
+    }
+    catch(const std::exception & e)
+    {
+        ErrorString error(QT_TR_NOOP("Can't list tags with note local uids from the local storage: caught exception"));
+        error.details() = QString::fromUtf8(e.what());
+        SysInfo sysInfo;
+        QNERROR(error << QStringLiteral("; backtrace: ") << sysInfo.stackTrace());
+        Q_EMIT listTagsWithNoteLocalUidsFailed(flag, limit, offset, order, orderDirection, linkedNotebookGuid, error, requestId);
     }
 }
 

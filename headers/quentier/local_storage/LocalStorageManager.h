@@ -30,6 +30,7 @@
 #include <QSharedPointer>
 #include <QHash>
 #include <cstdint>
+#include <utility>
 
 namespace qevercloud {
 QT_FORWARD_DECLARE_STRUCT(ResourceAttributes)
@@ -825,6 +826,33 @@ public:
                         const ListTagsOrder::type & order = ListTagsOrder::NoOrder,
                         const OrderDirection::type orderDirection = OrderDirection::Ascending,
                         const QString & linkedNotebookGuid = QString()) const;
+
+    /**
+     * @brief listTagsWithNoteLocalUids - attempts to list tags and their corresponding local uids within the account
+     * according to the specified input flag
+     *
+     * The method is very similar to listTags only for each listed tag it returns the list of note local uids corresponding
+     * to notes labeled with the respective tag.
+     *
+     * @param flag - input parameter used to set the filter for the desired tags to be listed
+     * @param errorDescription - error description if notes within the account could not be listed;
+     * if no error happens, this parameter is untouched
+     * @param limit - limit for the max number of tags in the result, zero by default which means no limit is set
+     * @param offset - number of tags to skip in the beginning of the result, zero by default
+     * @param order - allows to specify particular ordering of tags in the result, NoOrder by default
+     * @param orderDirection - specifies the direction of ordering, by default ascending direction is used;
+     * this parameter has no meaning if order is equal to NoOrder
+     * @param linkedNotebookGuid - if it's null, the method would list tags ignoring their belonging to the current account
+     * or to some linked notebook; if it's empty, only the tags from user's own account would be listed;
+     * otherwise, only the tags corresponding to the certain linked notebook would be listed
+     * @return either list of tags and note local uids within the account conforming to the filter or empty list
+     * in cases of error or no tags conforming to the filter exist within the account
+     */
+    QList<std::pair<Tag, QStringList> > listTagsWithNoteLocalUids(const ListObjectsOptions flag, ErrorString & errorDescription,
+                                                                  const size_t limit = 0, const size_t offset = 0,
+                                                                  const ListTagsOrder::type & order = ListTagsOrder::NoOrder,
+                                                                  const OrderDirection::type orderDirection = OrderDirection::Ascending,
+                                                                  const QString & linkedNotebookGuid = QString()) const;
 
     /**
      * @brief expungeTag - permanently deletes tag from local storage.

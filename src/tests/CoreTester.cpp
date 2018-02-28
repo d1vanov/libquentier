@@ -928,6 +928,222 @@ void CoreTester::localStorageManagerListTagsTest()
         // 7) Test method listing local favorited tags
         CHECK_LIST_TAGS_BY_FLAG(LocalStorageManager::ListLocal | LocalStorageManager::ListFavoritedElements,
                                 "local, favorited", i == 0, i != 0);
+
+#undef CHECK_LIST_TAGS_BY_FLAG
+    }
+    CATCH_EXCEPTION();
+}
+
+void CoreTester::localStorageManagerListTagsWithNoteLocalUidsTest()
+{
+    try
+    {
+        const bool startFromScratch = true;
+        const bool overrideLock = false;
+        Account account(QStringLiteral("CoreTesterFakeUser"), Account::Type::Local);
+        LocalStorageManager localStorageManager(account, startFromScratch, overrideLock);
+
+        ErrorString errorMessage;
+
+        int nTags = 5;
+        QVector<Tag> tags;
+        tags.reserve(nTags);
+        for(int i = 0; i < nTags; ++i)
+        {
+            tags.push_back(Tag());
+            Tag & tag = tags.back();
+
+            if (i > 1) {
+                tag.setGuid(QStringLiteral("00000000-0000-0000-c000-00000000000") + QString::number(i+1));
+            }
+
+            tag.setUpdateSequenceNumber(i);
+            tag.setName(QStringLiteral("Tag name #") + QString::number(i));
+
+            if (i > 2) {
+                tag.setParentGuid(tags.at(i-1).guid());
+            }
+
+            if (i > 2) {
+                tag.setDirty(true);
+            }
+            else {
+                tag.setDirty(false);
+            }
+
+            if (i < 3) {
+                tag.setLocal(true);
+            }
+            else {
+                tag.setLocal(false);
+            }
+
+            if ((i == 0) || (i == 4)) {
+                tag.setFavorited(true);
+            }
+            else {
+                tag.setFavorited(false);
+            }
+
+            bool res = localStorageManager.addTag(tag, errorMessage);
+            QVERIFY2(res == true, qPrintable(errorMessage.nonLocalizedString()));
+        }
+
+        // Now add some notebooks and notes using the just created tags
+        Notebook notebook;
+        notebook.setGuid(QStringLiteral("00000000-0000-0000-c000-000000000047"));
+        notebook.setUpdateSequenceNumber(1);
+        notebook.setName(QStringLiteral("Fake notebook name"));
+        notebook.setCreationTimestamp(1);
+        notebook.setModificationTimestamp(1);
+
+        errorMessage.clear();
+        bool res = localStorageManager.addNotebook(notebook, errorMessage);
+        QVERIFY2(res == true, qPrintable(errorMessage.nonLocalizedString()));
+
+        QMap<QString, QStringList> noteLocalUidsByTagLocalUid;
+
+        int numNotes = 5;
+        QList<Note> notes;
+        notes.reserve(numNotes);
+        for(int i = 0; i < numNotes; ++i)
+        {
+            notes << Note();
+            Note & note = notes.back();
+
+            if (i > 1) {
+                note.setGuid(QStringLiteral("00000000-0000-0000-c000-00000000000") + QString::number(i+1));
+            }
+
+            if (i > 2) {
+                note.setDirty(true);
+            }
+            else {
+                note.setDirty(false);
+            }
+
+            if (i < 3) {
+                note.setLocal(true);
+            }
+            else {
+                note.setLocal(false);
+            }
+
+            if ((i == 0) || (i == 4)) {
+                note.setFavorited(true);
+            }
+            else {
+                note.setFavorited(false);
+            }
+
+#define APPEND_TAG_TO_NOTE(tagNum) \
+            note.addTagLocalUid(tags[tagNum].localUid()); \
+            noteLocalUidsByTagLocalUid[tags[tagNum].localUid()] << note.localUid()
+
+            if (i == 0) {
+                APPEND_TAG_TO_NOTE(1);
+                APPEND_TAG_TO_NOTE(2);
+                APPEND_TAG_TO_NOTE(3);
+            }
+            else if (i == 3) {
+                APPEND_TAG_TO_NOTE(1);
+                APPEND_TAG_TO_NOTE(4);
+            }
+            else if (i == 4) {
+                APPEND_TAG_TO_NOTE(2);
+            }
+
+#undef APPEND_TAG_TO_NOTE
+
+            note.setUpdateSequenceNumber(i+1);
+            note.setTitle(QStringLiteral("Fake note title #") + QString::number(i));
+            note.setContent(QStringLiteral("<en-note><h1>Hello, world #") + QString::number(i) + QStringLiteral("</h1></en-note>"));
+            note.setCreationTimestamp(i+1);
+            note.setModificationTimestamp(i+1);
+            note.setActive(true);
+            note.setNotebookGuid(notebook.guid());
+            note.setNotebookLocalUid(notebook.localUid());
+
+            res = localStorageManager.addNote(note, errorMessage);
+            QVERIFY2(res == true, qPrintable(errorMessage.nonLocalizedString()));
+        }
+
+        QList<std::pair<Tag, QStringList> > foundTagsWithNoteLocalUids;
+
+#define CHECK_LIST_TAGS_BY_FLAG(flag, flag_name, true_condition, false_condition) \
+        errorMessage.clear(); \
+        foundTagsWithNoteLocalUids = localStorageManager.listTagsWithNoteLocalUids(flag, errorMessage); \
+        QVERIFY2(errorMessage.isEmpty(), qPrintable(errorMessage.nonLocalizedString())); \
+        \
+        for(int i = 0; i < nTags; ++i) \
+        { \
+            const Tag & tag = tags.at(i); \
+            int tagIndex = 0; \
+            bool res = false; \
+            for(int size = foundTagsWithNoteLocalUids.size(); tagIndex < size; ++tagIndex) { \
+                if (foundTagsWithNoteLocalUids[tagIndex].first == tag) { \
+                    res = true; \
+                    break; \
+                } \
+            } \
+            if ((true_condition) && !res) { \
+                QNWARNING(QStringLiteral("Not found tag: ") << tag); \
+                QFAIL("One of " flag_name " Tags was not found by LocalStorageManager::ListTags"); \
+            } \
+            else if ((false_condition) && res) { \
+                QNWARNING(QStringLiteral("Found irrelevant tag: ") << tag); \
+                QFAIL("LocalStorageManager::ListTags with flag " flag_name " returned incorrect tag"); \
+            } \
+            else if (res) { \
+                auto noteIt = noteLocalUidsByTagLocalUid.find(tag.localUid()); \
+                if (noteIt == noteLocalUidsByTagLocalUid.end() && !foundTagsWithNoteLocalUids[tagIndex].second.isEmpty()) { \
+                    QNWARNING(QStringLiteral("Found irrelevant list of note local uids for a tag: ") << foundTagsWithNoteLocalUids[tagIndex].second.join(QStringLiteral(", "))); \
+                    QFAIL("LocalStorageManager::ListTags with flag " flag_name " returned redundant note local uids"); \
+                } \
+                else if (noteIt != noteLocalUidsByTagLocalUid.end()) { \
+                    if (foundTagsWithNoteLocalUids[tagIndex].second.isEmpty()) { \
+                        QNWARNING(QStringLiteral("Found empty list of note local uids for a tag for which they were expected: ") << noteIt.value().join(QStringLiteral(", "))); \
+                        QFAIL("LocalStorageManager::ListTags with flag " flag_name " did not return proper note local uids"); \
+                    } \
+                    else if (foundTagsWithNoteLocalUids[tagIndex].second.size() != noteIt.value().size()) { \
+                        QNWARNING(QStringLiteral("Found list of note local uids for a tag with incorrect list size: ") << foundTagsWithNoteLocalUids[tagIndex].second.join(QStringLiteral(", "))); \
+                        QFAIL("LocalStorageManager::ListTags with flag " flag_name " did not return proper number of note local uids"); \
+                    } \
+                    else { \
+                        for(int j = 0; j < foundTagsWithNoteLocalUids[tagIndex].second.size(); ++j) { \
+                            if (!noteIt.value().contains(foundTagsWithNoteLocalUids[tagIndex].second[j])) { \
+                                QNWARNING(QStringLiteral("Found incorrect list of note local uids for a tag: ") << foundTagsWithNoteLocalUids[tagIndex].second.join(QStringLiteral(", "))); \
+                                QFAIL("LocalStorageManager::ListTags with flag " flag_name " did not return correct set of note local uids"); \
+                            } \
+                        } \
+                    } \
+                } \
+            } \
+        }
+
+        // 1) Test method listing all tags with note local uids
+        CHECK_LIST_TAGS_BY_FLAG(LocalStorageManager::ListAll, "all", true, false);
+
+        // 2) Test method listing only dirty tags
+        CHECK_LIST_TAGS_BY_FLAG(LocalStorageManager::ListDirty, "dirty", i > 2, i <= 2);
+
+        // 3) Test method listing only local tags
+        CHECK_LIST_TAGS_BY_FLAG(LocalStorageManager::ListLocal, "local", i < 3, i >= 3);
+
+        // 4) Test method listing only tags without guid
+        CHECK_LIST_TAGS_BY_FLAG(LocalStorageManager::ListElementsWithoutGuid, "guidless", i <= 1, i > 1);
+
+        // 5) Test method listing only favorited tags
+        CHECK_LIST_TAGS_BY_FLAG(LocalStorageManager::ListFavoritedElements, "favorited", (i == 0) || (i == 4), (i != 0) && (i != 4));
+
+        // 6) Test method listing dirty favorited tags with guid
+        CHECK_LIST_TAGS_BY_FLAG(LocalStorageManager::ListDirty | LocalStorageManager::ListElementsWithGuid | LocalStorageManager::ListFavoritedElements,
+                                "dirty, favorited, having guid", i == 4, i != 4);
+
+        // 7) Test method listing local favorited tags
+        CHECK_LIST_TAGS_BY_FLAG(LocalStorageManager::ListLocal | LocalStorageManager::ListFavoritedElements,
+                                "local, favorited", i == 0, i != 0);
+#undef CHECK_LIST_TAGS_BY_FLAG
     }
     CATCH_EXCEPTION();
 }

@@ -356,6 +356,17 @@ QList<Tag> LocalStorageManager::listTags(const ListObjectsOptions flag, ErrorStr
     return d->listTags(flag, errorDescription, limit, offset, order, orderDirection, linkedNotebookGuid);
 }
 
+QList<std::pair<Tag, QStringList> > LocalStorageManager::listTagsWithNoteLocalUids(const ListObjectsOptions flag,
+                                                                                   ErrorString & errorDescription,
+                                                                                   const size_t limit, const size_t offset,
+                                                                                   const ListTagsOrder::type & order,
+                                                                                   const OrderDirection::type orderDirection,
+                                                                                   const QString & linkedNotebookGuid) const
+{
+    Q_D(const LocalStorageManager);
+    return d->listTagsWithNoteLocalUids(flag, errorDescription, limit, offset, order, orderDirection, linkedNotebookGuid);
+}
+
 bool LocalStorageManager::expungeTag(Tag & tag, QStringList & expungedChildTagLocalUids, ErrorString & errorDescription)
 {
     Q_D(LocalStorageManager);
