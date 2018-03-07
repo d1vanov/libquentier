@@ -7642,6 +7642,74 @@ bool LocalStorageManagerPrivate::checkAndPrepareGetSavedSearchCountQuery() const
     return res;
 }
 
+bool LocalStorageManagerPrivate::complementTagsWithNoteLocalUids(QList<std::pair<Tag, QStringList> > & tagsWithNoteLocalUids,
+                                                                 ErrorString & errorDescription) const
+{
+    if (tagsWithNoteLocalUids.isEmpty()) {
+        return true;
+    }
+
+    ErrorString errorPrefix(QT_TR_NOOP("Can't list tags along with their corresponding note local uids"));
+
+    QString queryString = QStringLiteral("SELECT localTag, localNote FROM NoteTags WHERE localTag IN ('");
+    for(auto it = tagsWithNoteLocalUids.constBegin(), end = tagsWithNoteLocalUids.constEnd(); it != end; ++it) {
+        queryString += it->first.localUid();
+        queryString += QStringLiteral("', '");
+    }
+    queryString.chop(3);    // remove trailing comma, whitespace and single quotation mark
+
+    queryString += QStringLiteral(")");
+
+    QSqlQuery query(m_sqlDatabase);
+    bool res = query.exec(queryString);
+    DATABASE_CHECK_AND_SET_ERROR();
+
+    QMap<QString, QSet<QString> > noteLocalUidsByTagLocalUid;
+    while(query.next())
+    {
+        QSqlRecord rec = query.record();
+
+        int localTagIndex = rec.indexOf(QStringLiteral("localTag"));
+        if (Q_UNLIKELY(localTagIndex < 0)) {
+            errorDescription.setBase(QT_TR_NOOP("failed to list tag's note local uids - no tag column within the result of SQL query"));
+            return false;
+        }
+
+        QString tagLocalUid = rec.value(localTagIndex).toString();
+        if (Q_UNLIKELY(tagLocalUid.isEmpty())) {
+            errorDescription.setBase(QT_TR_NOOP("failed to list tag's note local uids - tag local uid is empty within the result of SQL query"));
+            return false;
+        }
+
+        int localNoteIndex = rec.indexOf(QStringLiteral("localNote"));
+        if (localNoteIndex >= 0)
+        {
+            QString noteLocalUid = rec.value(localNoteIndex).toString();
+            if (!noteLocalUid.isEmpty()) {
+                Q_UNUSED(noteLocalUidsByTagLocalUid[tagLocalUid].insert(noteLocalUid))
+            }
+        }
+    }
+
+    for(auto it = tagsWithNoteLocalUids.begin(), end = tagsWithNoteLocalUids.end(); it != end; ++it)
+    {
+        const QString tagLocalUid = it->first.localUid();
+        auto nit = noteLocalUidsByTagLocalUid.find(tagLocalUid);
+        if (nit == noteLocalUidsByTagLocalUid.end()) {
+            continue;
+        }
+
+        const QSet<QString> & noteLocalUids = nit.value();
+        QStringList & targetNoteLocalUids = it->second;
+        targetNoteLocalUids.reserve(noteLocalUids.size());
+        for(auto lit = noteLocalUids.constBegin(), lend = noteLocalUids.constEnd(); lit != lend; ++lit) {
+            targetNoteLocalUids << *lit;
+        }
+    }
+
+    return true;
+}
+
 void LocalStorageManagerPrivate::fillResourceFromSqlRecord(const QSqlRecord & rec, const bool withBinaryData,
                                                            Resource & resource) const
 {
@@ -10474,8 +10542,7 @@ QString LocalStorageManagerPrivate::listObjectsGenericSqlQuery<Tag>() const
 template <>
 QString LocalStorageManagerPrivate::listObjectsGenericSqlQuery<std::pair<Tag, QStringList> >() const
 {
-    QString result = QStringLiteral("SELECT * FROM Tags LEFT OUTER JOIN NoteTags "
-                                    "ON Tags.localUid = NoteTags.localTag");
+    QString result = QStringLiteral("SELECT * FROM Tags");
     return result;
 }
 
@@ -10670,77 +10737,6 @@ bool LocalStorageManagerPrivate::fillObjectsFromSqlQuery(QSqlQuery query, QList<
 }
 
 template <>
-bool LocalStorageManagerPrivate::fillObjectsFromSqlQuery(QSqlQuery query, QList<std::pair<Tag, QStringList> > & tagsWithNoteLocalUids,
-                                                         ErrorString & errorDescription) const
-{
-    // The records within the query contain many duplicate entries for each tag
-    // because the query was left outer join of Tags and NoteTags tables on Tags.localUid = NoteTags.localTag
-    // so for each tag there are many rows containing different values from NoteTags.localNote column
-    //
-    // For this reason will collect the information about tags into the temporary map by tag local uid
-    // which then will be converted to the list
-    QMap<QString, std::pair<Tag, QSet<QString> > > tagsMap;
-
-    while(query.next())
-    {
-        QSqlRecord rec = query.record();
-
-        int tagLocalUidIndex = rec.indexOf(QStringLiteral("localUid"));
-        if (Q_UNLIKELY(tagLocalUidIndex < 0)) {
-            errorDescription.setBase(QT_TR_NOOP("missing tag local uid in the result of SQL query"));
-            return false;
-        }
-
-        QString tagLocalUid = rec.value(tagLocalUidIndex).toString();
-        if (Q_UNLIKELY(tagLocalUid.isEmpty())) {
-            errorDescription.setBase(QT_TR_NOOP("empty tag local uid in the result of SQL query"));
-            return false;
-        }
-
-        auto tagIt = tagsMap.find(tagLocalUid);
-        if (tagIt == tagsMap.end())
-        {
-            Tag tag;
-            bool res = fillTagFromSqlRecord(rec, tag, errorDescription);
-            if (!res) {
-                return false;
-            }
-
-            tagIt = tagsMap.insert(tagLocalUid, std::pair<Tag, QSet<QString> >(tag, QSet<QString>()));
-        }
-
-        int noteLocalUidIndex = rec.indexOf(QStringLiteral("localNote"));
-        if (noteLocalUidIndex >= 0)
-        {
-            QString noteLocalUid = rec.value(noteLocalUidIndex).toString();
-            if (!noteLocalUid.isEmpty()) {
-                QSet<QString> & noteLocalUids = tagIt.value().second;
-                Q_UNUSED(noteLocalUids.insert(noteLocalUid))
-            }
-        }
-    }
-
-    // Now converting the collected results into QList
-    tagsWithNoteLocalUids.reserve(tagsMap.size());
-    QStringList noteLocalUids;
-    for(auto it = tagsMap.constBegin(), end = tagsMap.constEnd(); it != end; ++it)
-    {
-        const std::pair<Tag, QSet<QString> > & tagInfo = it.value();
-
-        noteLocalUids.clear();
-        noteLocalUids.reserve(tagInfo.second.size());
-        for(auto nit = tagInfo.second.constBegin(), nend = tagInfo.second.constEnd(); nit != nend; ++nit) {
-            noteLocalUids << *nit;
-        }
-
-        std::pair<Tag, QStringList> tagWithNoteLocalUids(tagInfo.first, noteLocalUids);
-        tagsWithNoteLocalUids << tagWithNoteLocalUids;
-    }
-
-    return true;
-}
-
-template <>
 bool LocalStorageManagerPrivate::fillObjectsFromSqlQuery(QSqlQuery query, QList<Note> & notes,
                                                          ErrorString & errorDescription) const
 {
@@ -10876,6 +10872,29 @@ bool LocalStorageManagerPrivate::fillObjectFromSqlRecord<Note>(const QSqlRecord 
     sortSharedNotes(note);
     return true;
 }
+
+template <>
+bool LocalStorageManagerPrivate::fillObjectsFromSqlQuery(QSqlQuery query, QList<std::pair<Tag, QStringList> > & tagsWithNoteLocalUids,
+                                                         ErrorString & errorDescription) const
+{
+    tagsWithNoteLocalUids.reserve(std::max(query.size(), 0));
+
+    while(query.next())
+    {
+        QSqlRecord rec = query.record();
+
+        tagsWithNoteLocalUids << std::pair<Tag, QStringList>();
+        std::pair<Tag, QStringList> & pair = tagsWithNoteLocalUids.back();
+
+        bool res = fillObjectFromSqlRecord<Tag>(rec, pair.first, errorDescription);
+        if (!res) {
+            return false;
+        }
+    }
+
+    return complementTagsWithNoteLocalUids(tagsWithNoteLocalUids, errorDescription);
+}
+
 
 template <class T, class TOrderBy>
 QList<T> LocalStorageManagerPrivate::listObjects(const LocalStorageManager::ListObjectsOptions & flag,
