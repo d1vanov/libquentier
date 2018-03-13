@@ -48,6 +48,7 @@ init:
   - if %qt%==msvc2015 set PATH="C:\Program Files (x86)\MSBuild\14.0\Bin";%PATH%
   
 install:
+  - echo %APPVEYOR_REPO_BRANCH%
   - echo "Downloading ciuploadtool"
   - md c:\dev\ciuploadtool
   - cd c:\dev\ciuploadtool
@@ -186,6 +187,7 @@ install:
   - if %QEVERCLOUD_DOWNLOADED%==1 set INCLUDE=%cd%\lib;%INCLUDE%
 # In case of failure clone the QEverCloud repo and build the library from sources
   - if not %QEVERCLOUD_DOWNLOADED%==1 cd c:\dev
+  - if not %QEVERCLOUD_DOWNLOADED%==1 rd /s /q qevercloud
   - if not %QEVERCLOUD_DOWNLOADED%==1 git clone https://github.com/d1vanov/QEverCloud.git qevercloud
   - if not %QEVERCLOUD_DOWNLOADED%==1 cd c:\dev\qevercloud
   - if not %QEVERCLOUD_DOWNLOADED%==1 echo "Building QEverCloud"
