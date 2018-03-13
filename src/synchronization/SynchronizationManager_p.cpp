@@ -587,6 +587,9 @@ void SynchronizationManagerPrivate::onRemoteToLocalSyncFinished(qint32 lastUpdat
     QNDEBUG(QStringLiteral("SynchronizationManagerPrivate::onRemoteToLocalSyncFinished: lastUpdateCount = ")
             << lastUpdateCount << QStringLiteral(", lastSyncTime = ") << printableDateTimeFromTimestamp(lastSyncTime));
 
+    bool somethingDownloaded = (m_lastUpdateCount != lastUpdateCount) ||
+                               (m_cachedLinkedNotebookLastUpdateCountByGuid != lastUpdateCountByLinkedNotebookGuid);
+
     m_lastUpdateCount = lastUpdateCount;
     m_lastSyncTime = lastSyncTime;
     m_cachedLinkedNotebookLastUpdateCountByGuid = lastUpdateCountByLinkedNotebookGuid;
@@ -595,7 +598,8 @@ void SynchronizationManagerPrivate::onRemoteToLocalSyncFinished(qint32 lastUpdat
     updatePersistentSyncSettings();
 
     m_onceReadLastSyncParams = true;
-    Q_EMIT notifyRemoteToLocalSyncDone();
+    m_somethingDownloaded = somethingDownloaded;
+    Q_EMIT notifyRemoteToLocalSyncDone(m_somethingDownloaded);
 
     sendChanges();
 }
@@ -660,6 +664,9 @@ void SynchronizationManagerPrivate::onLocalChangesSent(qint32 lastUpdateCount, Q
     QNDEBUG(QStringLiteral("SynchronizationManagerPrivate::onLocalChangesSent: last update count = ") << lastUpdateCount
             << QStringLiteral(", last update count per linked notebook guid: ") << lastUpdateCountByLinkedNotebookGuid);
 
+    bool somethingSent = (m_lastUpdateCount != lastUpdateCount) ||
+                         (m_cachedLinkedNotebookLastUpdateCountByGuid != lastUpdateCountByLinkedNotebookGuid);
+
     m_lastUpdateCount = lastUpdateCount;
     m_cachedLinkedNotebookLastUpdateCountByGuid = lastUpdateCountByLinkedNotebookGuid;
 
@@ -673,7 +680,11 @@ void SynchronizationManagerPrivate::onLocalChangesSent(qint32 lastUpdateCount, Q
     }
 
     QNINFO(QStringLiteral("Finished the whole synchronization procedure!"));
-    Q_EMIT notifyFinish(m_remoteToLocalSyncManager.account());
+
+    bool somethingDownloaded = m_somethingDownloaded;
+    m_somethingDownloaded = false;
+
+    Q_EMIT notifyFinish(m_remoteToLocalSyncManager.account(), somethingDownloaded, somethingSent);
 }
 
 void SynchronizationManagerPrivate::onSendLocalChangesStopped()
@@ -1022,6 +1033,8 @@ void SynchronizationManagerPrivate::launchSync()
 void SynchronizationManagerPrivate::launchFullSync()
 {
     QNDEBUG(QStringLiteral("SynchronizationManagerPrivate::launchFullSync"));
+
+    m_somethingDownloaded = false;
     m_remoteToLocalSyncManager.start();
 }
 
@@ -1029,6 +1042,8 @@ void SynchronizationManagerPrivate::launchIncrementalSync()
 {
     QNDEBUG(QStringLiteral("SynchronizationManagerPrivate::launchIncrementalSync: m_lastUpdateCount = ")
             << m_lastUpdateCount);
+
+    m_somethingDownloaded = false;
     m_remoteToLocalSyncManager.start(m_lastUpdateCount);
 }
 
@@ -1206,6 +1221,8 @@ void SynchronizationManagerPrivate::clear()
     m_noteStoresByLinkedNotebookGuids.clear();
 
     m_remoteToLocalSyncManager.stop();
+    m_somethingDownloaded = false;
+
     m_sendLocalChangesManager.stop();
 
     m_linkedNotebookAuthDataPendingAuthentication.clear();
