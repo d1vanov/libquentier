@@ -38,7 +38,7 @@ init:
   - if %qt%==msvc2015 set tool=VS2015_x86
   - if %qt%==mingw492_32 set tool=MinGW_x86
   - if %platform%==mingw set DEPLOYMENT_TARGET=libquentier-windows-qt55-%tool%.zip
-  - if not %platform%==mingw set DEPLOYMENT_TARGET=libquentier-windows-qt5100-%tool%.zip
+  - if not %platform%==mingw set DEPLOYMENT_TARGET=libquentier-windows-qt510-%tool%.zip
   - if %platform%==amd64 call "C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvars64.bat"
   - if %platform%==amd64_x86 call "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" %platform%
   - if not %platform%==mingw (set makefiles="NMake Makefiles") else (set makefiles="MinGW Makefiles")
@@ -169,17 +169,17 @@ install:
   - md build\installdir
   - cd build\installdir
   - set QEVERCLOUD_DOWNLOADED=0
-  - if %qt%==msvc2015 if %APPVEYOR_REPO_BRANCH%=="development" curl -fsSL https://github.com/d1vanov/QEverCloud/releases/download/continuous-development/qevercloud-windows-qt5100-VS2015_x86.zip -o qevercloud-windows-qt5100-VS2015_x86.zip & set errorlevel=0
-  - if %qt%==msvc2015 if not %APPVEYOR_REPO_BRANCH%=="development" curl -fsSL https://github.com/d1vanov/QEverCloud/releases/download/continuous-master/qevercloud-windows-qt5100-VS2015_x86.zip -o qevercloud-windows-qt5100-VS2015_x86.zip & set errorlevel=0
-  - if %qt%==msvc2017_64 if %APPVEYOR_REPO_BRANCH%=="development" curl -fsSL https://github.com/d1vanov/QEverCloud/releases/download/continuous-development/qevercloud-windows-qt5100-VS2017_x64.zip -o qevercloud-windows-qt5100-VS2017_x64.zip & set errorlevel=0
-  - if %qt%==msvc2017_64 if not %APPVEYOR_REPO_BRANCH%=="development" curl -fsSL https://github.com/d1vanov/QEverCloud/releases/download/continuous-master/qevercloud-windows-qt5100-VS2017_x64.zip -o qevercloud-windows-qt5100-VS2017_x64.zip & set errorlevel=0
+  - if %qt%==msvc2015 if %APPVEYOR_REPO_BRANCH%=="development" curl -fsSL https://github.com/d1vanov/QEverCloud/releases/download/continuous-development/qevercloud-windows-qt510-VS2015_x86.zip -o qevercloud-windows-qt510-VS2015_x86.zip & set errorlevel=0
+  - if %qt%==msvc2015 if not %APPVEYOR_REPO_BRANCH%=="development" curl -fsSL https://github.com/d1vanov/QEverCloud/releases/download/continuous-master/qevercloud-windows-qt510-VS2015_x86.zip -o qevercloud-windows-qt510-VS2015_x86.zip & set errorlevel=0
+  - if %qt%==msvc2017_64 if %APPVEYOR_REPO_BRANCH%=="development" curl -fsSL https://github.com/d1vanov/QEverCloud/releases/download/continuous-development/qevercloud-windows-qt510-VS2017_x64.zip -o qevercloud-windows-qt510-VS2017_x64.zip & set errorlevel=0
+  - if %qt%==msvc2017_64 if not %APPVEYOR_REPO_BRANCH%=="development" curl -fsSL https://github.com/d1vanov/QEverCloud/releases/download/continuous-master/qevercloud-windows-qt510-VS2017_x64.zip -o qevercloud-windows-qt510-VS2017_x64.zip & set errorlevel=0
   - if %qt%==mingw492_32 if %APPVEYOR_REPO_BRANCH%=="development" curl -fsSL https://github.com/d1vanov/QEverCloud/releases/download/continuous-development/qevercloud-windows-qt55-MinGW_x86.zip -o qevercloud-windows-qt55-MinGW_x86.zip & set errorlevel=0
   - if %qt%==mingw492_32 if not %APPVEYOR_REPO_BRANCH%=="development" curl -fsSL https://github.com/d1vanov/QEverCloud/releases/download/continuous-master/qevercloud-windows-qt55-MinGW_x86.zip -o qevercloud-windows-qt55-MinGW_x86.zip & set errorlevel=0
-  - if %qt%==msvc2015 if exist qevercloud-windows-qt5100-VS2015_x86.zip set QEVERCLOUD_DOWNLOADED=1
-  - if %qt%==msvc2017_64 if exist qevercloud-windows-qt5100-VS2017_x64.zip set QEVERCLOUD_DOWNLOADED=1
+  - if %qt%==msvc2015 if exist qevercloud-windows-qt510-VS2015_x86.zip set QEVERCLOUD_DOWNLOADED=1
+  - if %qt%==msvc2017_64 if exist qevercloud-windows-qt510-VS2017_x64.zip set QEVERCLOUD_DOWNLOADED=1
   - if %qt%==mingw492_32 if exist qevercloud-windows-qt55-MinGW_x86.zip set QEVERCLOUD_DOWNLOADED=1
-  - if %qt%==msvc2015 if %QEVERCLOUD_DOWNLOADED%==1 7z x qevercloud-windows-qt5100-VS2015_x86.zip
-  - if %qt%==msvc2017_64 if %QEVERCLOUD_DOWNLOADED%==1 7z x qevercloud-windows-qt5100-VS2017_x64.zip
+  - if %qt%==msvc2015 if %QEVERCLOUD_DOWNLOADED%==1 7z x qevercloud-windows-qt510-VS2015_x86.zip
+  - if %qt%==msvc2017_64 if %QEVERCLOUD_DOWNLOADED%==1 7z x qevercloud-windows-qt510-VS2017_x64.zip
   - if %qt%==mingw492_32 if %QEVERCLOUD_DOWNLOADED%==1 7z x qevercloud-windows-qt55-MinGW_x86.zip
   - if %QEVERCLOUD_DOWNLOADED%==1 set PATH=%cd%\bin;%PATH%
   - if %QEVERCLOUD_DOWNLOADED%==1 set LIB=%cd%\lib;%LIB%
