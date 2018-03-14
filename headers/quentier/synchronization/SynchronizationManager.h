@@ -162,8 +162,14 @@ Q_SIGNALS:
     /**
      * This signal is emitted when the synchronization is finished
      * @param account - represents the latest version of @link Account @endlink structure filled during the synchronization procedure
+     * @param somethingDownloaded - boolean parameter telling the receiver whether any data items were actually downloaded
+     * during remote to local synchronization step; if there was nothing to sync up from the remote storage, this boolean
+     * would be false, otherwise it would be true
+     * @param somethingSent - boolean parameter telling the receiver whether any dat items were actually sent
+     * during the send local changes synchronization step; if there was nothing to send to the remote storage,
+     * this boolean would be false, otherwise it would be true
      */
-    void finished(Account account);
+    void finished(Account account, bool somethingDownloaded, bool somethingSent);
 
     /**
      * This signal is emitted in response to the attempt to revoke the authentication for a given user ID
@@ -225,8 +231,12 @@ Q_SIGNALS:
     /**
      * This signal is emitted when the "remote to local" synchronization step is finished; once that step is done,
      * the algorithn switches to sending the local changes back to the Evernote service
+     *
+     * @param somethingDownloaded - boolean parameter telling the receiver whether any data items were actually downloaded
+     * during remote to local synchronization step; if there was nothing to sync up from the remote storage, this boolean
+     * would be false, otherwise it would be true
      */
-    void remoteToLocalSyncDone();
+    void remoteToLocalSyncDone(bool somethingDownloaded);
 
     /**
      * This signal is emitted during user own account's sync chunks downloading and denotes the progress of that step. The percentage

@@ -53,8 +53,8 @@ Q_SIGNALS:
     void notifyStart();
     void notifyStop();
     void notifyError(ErrorString errorDescription);
-    void notifyRemoteToLocalSyncDone();
-    void notifyFinish(Account account);
+    void notifyRemoteToLocalSyncDone(bool somethingDownloaded);
+    void notifyFinish(Account account, bool somethingDownloaded, bool somethingSent);
 
 // progress signals
     void syncChunksDownloadProgress(qint32 highestDownloadedUsn, qint32 highestServerUsn, qint32 lastPreviousUsn);
@@ -242,6 +242,10 @@ private:
 
     QScopedPointer<RemoteToLocalSynchronizationManagerController>   m_pRemoteToLocalSyncManagerController;
     RemoteToLocalSynchronizationManager     m_remoteToLocalSyncManager;
+
+    // The flag coming from RemoteToLocalSynchronizationManager and telling whether something was downloaded
+    // during the last remote to local sync
+    bool                                    m_somethingDownloaded;
 
     QScopedPointer<SendLocalChangesManagerController>   m_pSendLocalChangesManagerController;
     SendLocalChangesManager                 m_sendLocalChangesManager;
