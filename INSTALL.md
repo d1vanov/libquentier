@@ -2,6 +2,38 @@
 
 Libquentier is intended to be built and shipped as s shared i.e. dynamically linked library. Dll export/import symbols necessary for Windows platform are supported.
 
+## Downloads
+
+Prebuilt versions of the library can be downloaded from the following locations:
+
+ * Stable version:
+   * Windows binaries:
+     * [MSVC 2015 32 bit Qt 5.10](https://github.com/d1vanov/libquentier/releases/download/continuous-master/libquentier-windows-qt510-VS2015_x86.zip)
+     * [MSVC 2017 64 bit Qt 5.10](https://github.com/d1vanov/libquentier/releases/download/continuous-master/libquentier-windows-qt510-VS2017_x64.zip)
+     * [MinGW 32 bit Qt 5.5](https://github.com/d1vanov/libquentier/releases/download/continuous-master/libquentier-windows-qt55-MinGW_x86.zip)
+   * [Mac binary](https://github.com/d1vanov/libquentier/releases/download/continuous-master/libquentier_mac_x86_64.zip) built with latest Qt from Homebrew
+   * [Linux binary](https://github.com/d1vanov/libquentier/releases/download/continuous-master/libquentier_linux_qt_592_x86_64.zip) built on Ubuntu 14.04 with Qt 5.9.2
+ * Unstable version:
+   * Windows binaries:
+     * [MSVC 2015 32 bit Qt 5.10](https://github.com/d1vanov/libquentier/releases/download/continuous-development/libquentier-windows-qt510-VS2015_x86.zip)
+     * [MSVC 2017 64 bit Qt 5.10](https://github.com/d1vanov/libquentier/releases/download/continuous-development/libquentier-windows-qt510-VS2017_x64.zip)
+     * [MinGW 32 bit Qt 5.5](https://github.com/d1vanov/libquentier/releases/download/continuous-development/libquentier-windows-qt55-MinGW_x86.zip)
+   * [Mac binary](https://github.com/d1vanov/libquentier/releases/download/continuous-development/libquentier_mac_x86_64.zip) built with latest Qt from Homebrew
+   * [Linux binary](https://github.com/d1vanov/libquentier/releases/download/continuous-development/libquentier_linux_qt_592_x86_64.zip) built on Ubuntu 14.04 with Qt 5.9.2
+
+There are also repositories from which libquentier can be installed conveniently for several Linux distributions:
+
+ * Stable version:
+   * See [this page](https://software.opensuse.org//download.html?project=home%3Ad1vanov%3Aquentier-master&package=libquentier) for Fedora 26, Fedora 27, OpenSUSE Leap 42.3, OpenSUSE Tumbleweed, OpenSUSE Leap 15.0 and Arch Linux repositories
+   * See [this page](https://software.opensuse.org//download.html?project=home%3Ad1vanov%3Aquentier-master&package=libqt5quentier0) for Debian 9.0 repositories
+   * See [this PPA](https://launchpad.net/~d1vanov/+archive/ubuntu/quentier-stable) for repositories of multiple Ubuntu versions
+ * Unstable version:
+   * See [this page](https://software.opensuse.org//download.html?project=home%3Ad1vanov%3Aquentier-development&package=libquentier) for Fedora 26, Fedora 27, OpenSUSE Leap 42.3, OpenSUSE Tumbleweed, OpenSUSE Leap 15.0 and Arch Linux repositories
+   * See [this page](https://software.opensuse.org//download.html?project=home%3Ad1vanov%3Aquentier-development&package=libqt5quentier0) for Debian 9.0 repositories
+   * See [this PPA](https://launchpad.net/~d1vanov/+archive/ubuntu/quentier-development) for repositories of multiple Ubuntu versions
+
+Note that you need to pick **either** stable or unstable version and not intermix the two! Stable version corresponds to latest version from `master` branch, unstable version corresponds to `development` branch.
+
 ## Compatibility
 
 Libquentier works on Linux, OS X / macOS and Windows. It can be built with virtually any version of Qt framework,
