@@ -125,7 +125,8 @@ set(LOCAL_STORAGE_HEADERS
 
 set(SYNCHRONIZATION_HEADERS
     headers/quentier/synchronization/SynchronizationManager.h
-    headers/quentier/synchronization/IAuthenticationManager.h)
+    headers/quentier/synchronization/IAuthenticationManager.h
+    headers/quentier/synchronization/INoteStore.h)
 
 if(BUILD_WITH_AUTHENTICATION_MANAGER)
   list(APPEND SYNCHRONIZATION_HEADERS
@@ -374,6 +375,7 @@ set(${PROJECT_NAME}_SOURCES
     src/local_storage/Transaction.cpp
     src/synchronization/IAuthenticationManager.cpp
     src/synchronization/InkNoteImageDownloader.cpp
+    src/synchronization/INoteStore.cpp
     src/synchronization/NoteStore.cpp
     src/synchronization/UserStore.cpp
     src/synchronization/NoteThumbnailDownloader.cpp

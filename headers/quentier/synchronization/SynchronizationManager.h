@@ -19,6 +19,7 @@
 #ifndef LIB_QUENTIER_SYNCHRONIZATION_SYNCHRONIZATION_MANAGER_H
 #define LIB_QUENTIER_SYNCHRONIZATION_SYNCHRONIZATION_MANAGER_H
 
+#include <quentier/synchronization/INoteStore.h>
 #include <quentier/synchronization/IAuthenticationManager.h>
 #include <quentier/types/Account.h>
 #include <quentier/types/ErrorString.h>
@@ -48,10 +49,13 @@ public:
      *               but could be sandbox.evernote.com or some other one
      * @param localStorageManagerAsync - local storage manager
      * @param authenticationManager - authentication manager (particular implementation of IAuthenticationManager abstract class)
+     * @param pNoteStore - note store to be used by SynchronizationManager; if nullptr, the default private implementation is used;
+     *                     if not null, SynchronizationManager takes ownership of the passed in pointer
      */
     SynchronizationManager(const QString & consumerKey, const QString & consumerSecret,
                            const QString & host, LocalStorageManagerAsync & localStorageManagerAsync,
-                           IAuthenticationManager & authenticationManager);
+                           IAuthenticationManager & authenticationManager,
+                           INoteStore * pNoteStore = Q_NULLPTR);
 
     virtual ~SynchronizationManager();
 
