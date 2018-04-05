@@ -235,9 +235,9 @@ RemoteToLocalSynchronizationManager::RemoteToLocalSynchronizationManager(IManage
     m_syncAccountLimitsPostponeTimerId(0),
     m_gotLastSyncParameters(false)
 {
-    QObject::connect(&(m_manager.noteStore()), QNSIGNAL(NoteStore,getNoteAsyncFinished,qint32,qevercloud::Note,qint32,ErrorString),
+    QObject::connect(&(m_manager.noteStore()), QNSIGNAL(INoteStore,getNoteAsyncFinished,qint32,qevercloud::Note,qint32,ErrorString),
                      this, QNSLOT(RemoteToLocalSynchronizationManager,onGetNoteAsyncFinished,qint32,qevercloud::Note,qint32,ErrorString));
-    QObject::connect(&(m_manager.noteStore()), QNSIGNAL(NoteStore,getResourceAsyncFinished,qint32,qevercloud::Resource,qint32,ErrorString),
+    QObject::connect(&(m_manager.noteStore()), QNSIGNAL(INoteStore,getResourceAsyncFinished,qint32,qevercloud::Resource,qint32,ErrorString),
                      this, QNSLOT(RemoteToLocalSynchronizationManager,onGetResourceAsyncFinished,qint32,qevercloud::Resource,qint32,ErrorString));
 }
 
@@ -5044,7 +5044,7 @@ void RemoteToLocalSynchronizationManager::getLinkedNotebookSyncState(const Linke
         return;
     }
 
-    NoteStore * pNoteStore = m_manager.noteStoreForLinkedNotebook(linkedNotebook);
+    INoteStore * pNoteStore = m_manager.noteStoreForLinkedNotebook(linkedNotebook);
     if (Q_UNLIKELY(!pNoteStore)) {
         errorDescription.setBase(QT_TR_NOOP("Can't find or create note store for the linked notebook"));
         Q_EMIT failure(errorDescription);
@@ -5204,7 +5204,7 @@ bool RemoteToLocalSynchronizationManager::downloadLinkedNotebooksSyncChunks()
             }
         }
 
-        NoteStore * pNoteStore = m_manager.noteStoreForLinkedNotebook(linkedNotebook);
+        INoteStore * pNoteStore = m_manager.noteStoreForLinkedNotebook(linkedNotebook);
         if (Q_UNLIKELY(!pNoteStore)) {
             ErrorString error(QT_TR_NOOP("Can't find or create note store for the linked notebook"));
             Q_EMIT failure(error);
@@ -6150,7 +6150,7 @@ void RemoteToLocalSynchronizationManager::getFullNoteDataAsync(const Note & note
 
     QString authToken;
     ErrorString errorDescription;
-    NoteStore * pNoteStore = noteStoreForNote(note, authToken, errorDescription);
+    INoteStore * pNoteStore = noteStoreForNote(note, authToken, errorDescription);
     if (Q_UNLIKELY(!pNoteStore)) {
         Q_EMIT failure(errorDescription);
         return;
@@ -6275,7 +6275,7 @@ void RemoteToLocalSynchronizationManager::getFullResourceDataAsync(const Resourc
     // account or the one for the stuff from some linked notebook
 
     QString authToken;
-    NoteStore * pNoteStore = Q_NULLPTR;
+    INoteStore * pNoteStore = Q_NULLPTR;
     auto linkedNotebookGuidIt = m_linkedNotebookGuidsByNotebookGuids.find(resourceOwningNote.notebookGuid());
     if (linkedNotebookGuidIt == m_linkedNotebookGuidsByNotebookGuids.end())
     {
@@ -6342,11 +6342,11 @@ void RemoteToLocalSynchronizationManager::getFullResourceDataAsync(const Resourc
             return;
         }
 
-        QObject::connect(pNoteStore, QNSIGNAL(NoteStore,getResourceAsyncFinished,qint32,qevercloud::Resource,qint32,ErrorString),
+        QObject::connect(pNoteStore, QNSIGNAL(INoteStore,getResourceAsyncFinished,qint32,qevercloud::Resource,qint32,ErrorString),
                          this, QNSLOT(RemoteToLocalSynchronizationManager,onGetResourceAsyncFinished,qint32,qevercloud::Note,qint32,ErrorString),
                          Qt::ConnectionType(Qt::AutoConnection | Qt::UniqueConnection));
 
-        QNDEBUG(QStringLiteral("Using NoteStore corresponding to linked notebook with guid ")
+        QNDEBUG(QStringLiteral("Using INoteStore corresponding to linked notebook with guid ")
                 << linkedNotebookGuid << QStringLiteral(", note store url = ") << pNoteStore->noteStoreUrl());
     }
 
@@ -6428,7 +6428,7 @@ void RemoteToLocalSynchronizationManager::downloadSyncChunksAndLaunchSync(qint32
 {
     QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::downloadSyncChunksAndLaunchSync: after USN = ") << afterUsn);
 
-    NoteStore & noteStore = m_manager.noteStore();
+    INoteStore & noteStore = m_manager.noteStore();
     qevercloud::SyncChunk * pSyncChunk = Q_NULLPTR;
 
     qint32 lastPreviousUsn = std::max(m_lastUpdateCount, 0);
@@ -7544,7 +7544,7 @@ void RemoteToLocalSynchronizationManager::processResourceConflictAsNoteConflict(
 {
     QString authToken;
     ErrorString errorDescription;
-    NoteStore * pNoteStore = noteStoreForNote(remoteNote, authToken, errorDescription);
+    INoteStore * pNoteStore = noteStoreForNote(remoteNote, authToken, errorDescription);
     if (Q_UNLIKELY(!pNoteStore)) {
         Q_EMIT failure(errorDescription);
         return;
@@ -7666,7 +7666,7 @@ void RemoteToLocalSynchronizationManager::junkFullSyncStaleDataItemsExpunger(Ful
     expunger.deleteLater();
 }
 
-NoteStore * RemoteToLocalSynchronizationManager::noteStoreForNote(const Note & note, QString & authToken, ErrorString & errorDescription) const
+INoteStore * RemoteToLocalSynchronizationManager::noteStoreForNote(const Note & note, QString & authToken, ErrorString & errorDescription) const
 {
     authToken.resize(0);
 
@@ -7687,7 +7687,7 @@ NoteStore * RemoteToLocalSynchronizationManager::noteStoreForNote(const Note & n
     // Need to find out which note store is required - the one for user's own
     // account or the one for the stuff from some linked notebook
 
-    NoteStore * pNoteStore = Q_NULLPTR;
+    INoteStore * pNoteStore = Q_NULLPTR;
     auto linkedNotebookGuidIt = m_linkedNotebookGuidsByNotebookGuids.find(note.notebookGuid());
     if (linkedNotebookGuidIt == m_linkedNotebookGuidsByNotebookGuids.end()) {
         QNDEBUG(QStringLiteral("Found no linked notebook corresponding to notebook guid ") << note.notebookGuid()
@@ -7745,11 +7745,11 @@ NoteStore * RemoteToLocalSynchronizationManager::noteStoreForNote(const Note & n
         return Q_NULLPTR;
     }
 
-    QObject::connect(pNoteStore, QNSIGNAL(NoteStore,getNoteAsyncFinished,qint32,qevercloud::Note,qint32,ErrorString),
+    QObject::connect(pNoteStore, QNSIGNAL(INoteStore,getNoteAsyncFinished,qint32,qevercloud::Note,qint32,ErrorString),
                      this, QNSLOT(RemoteToLocalSynchronizationManager,onGetNoteAsyncFinished,qint32,qevercloud::Note,qint32,ErrorString),
                      Qt::ConnectionType(Qt::AutoConnection | Qt::UniqueConnection));
 
-    QNDEBUG(QStringLiteral("Using NoteStore corresponding to linked notebook with guid ")
+    QNDEBUG(QStringLiteral("Using INoteStore corresponding to linked notebook with guid ")
             << linkedNotebookGuid << QStringLiteral(", note store url = ") << pNoteStore->noteStoreUrl());
     return pNoteStore;
 }

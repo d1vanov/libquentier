@@ -18,6 +18,7 @@
 
 #include "SynchronizationManager_p.h"
 #include "SynchronizationShared.h"
+#include "NoteStore.h"
 #include <quentier/utility/Utility.h>
 #include <quentier/local_storage/LocalStorageManagerAsync.h>
 #include <quentier/logging/QuentierLogger.h>
@@ -58,9 +59,9 @@ public:
                                                   SynchronizationManagerPrivate & syncManager);
 
     virtual LocalStorageManagerAsync & localStorageManagerAsync() Q_DECL_OVERRIDE;
-    virtual NoteStore & noteStore() Q_DECL_OVERRIDE;
+    virtual INoteStore & noteStore() Q_DECL_OVERRIDE;
     virtual UserStore & userStore() Q_DECL_OVERRIDE;
-    virtual NoteStore * noteStoreForLinkedNotebook(const LinkedNotebook & linkedNotebook) Q_DECL_OVERRIDE;
+    virtual INoteStore * noteStoreForLinkedNotebook(const LinkedNotebook & linkedNotebook) Q_DECL_OVERRIDE;
 
 private:
     LocalStorageManagerAsync &          m_localStorageManagerAsync;
@@ -74,8 +75,8 @@ public:
                                       SynchronizationManagerPrivate & syncManager);
 
     virtual LocalStorageManagerAsync & localStorageManagerAsync() Q_DECL_OVERRIDE;
-    virtual NoteStore & noteStore() Q_DECL_OVERRIDE;
-    virtual NoteStore * noteStoreForLinkedNotebook(const LinkedNotebook & linkedNotebook) Q_DECL_OVERRIDE;
+    virtual INoteStore & noteStore() Q_DECL_OVERRIDE;
+    virtual INoteStore * noteStoreForLinkedNotebook(const LinkedNotebook & linkedNotebook) Q_DECL_OVERRIDE;
 
 private:
     LocalStorageManagerAsync &          m_localStorageManagerAsync;
@@ -84,7 +85,8 @@ private:
 
 SynchronizationManagerPrivate::SynchronizationManagerPrivate(const QString & consumerKey, const QString & consumerSecret,
                                                              const QString & host, LocalStorageManagerAsync & localStorageManagerAsync,
-                                                             IAuthenticationManager & authenticationManager) :
+                                                             IAuthenticationManager & authenticationManager,
+                                                             INoteStore * pNoteStore) :
     m_consumerKey(consumerKey),
     m_consumerSecret(consumerSecret),
     m_host(host),
@@ -94,7 +96,7 @@ SynchronizationManagerPrivate::SynchronizationManagerPrivate(const QString & con
     m_cachedLinkedNotebookLastUpdateCountByGuid(),
     m_cachedLinkedNotebookLastSyncTimeByGuid(),
     m_onceReadLastSyncParams(false),
-    m_noteStore(QSharedPointer<qevercloud::NoteStore>(new qevercloud::NoteStore)),
+    m_pNoteStore(Q_NULLPTR),
     m_userStore(QSharedPointer<qevercloud::UserStore>(new qevercloud::UserStore(m_host))),
     m_authContext(AuthContext::Blank),
     m_launchSyncPostponeTimerId(-1),
@@ -139,6 +141,14 @@ SynchronizationManagerPrivate::SynchronizationManagerPrivate(const QString & con
     m_writeShardIdJob.setAutoDelete(false);
     m_deleteAuthTokenJob.setAutoDelete(false);
     m_deleteShardIdJob.setAutoDelete(false);
+
+    if (pNoteStore) {
+        m_pNoteStore = pNoteStore;
+        m_pNoteStore->setParent(this);
+    }
+    else {
+        m_pNoteStore = new NoteStore(QSharedPointer<qevercloud::NoteStore>(new qevercloud::NoteStore), this);
+    }
 
     createConnections(authenticationManager);
 }
@@ -1015,8 +1025,8 @@ void SynchronizationManagerPrivate::launchSync()
 
     Q_EMIT notifyStart();
 
-    m_noteStore.setNoteStoreUrl(m_OAuthResult.m_noteStoreUrl);
-    m_noteStore.setAuthenticationToken(m_OAuthResult.m_authToken);
+    m_pNoteStore->setNoteStoreUrl(m_OAuthResult.m_noteStoreUrl);
+    m_pNoteStore->setAuthenticationToken(m_OAuthResult.m_authToken);
     m_userStore.setAuthenticationToken(m_OAuthResult.m_authToken);
 
     if (m_lastUpdateCount <= 0) {
@@ -1207,12 +1217,12 @@ void SynchronizationManagerPrivate::clear()
 
     m_launchSyncPostponeTimerId = -1;
 
-    m_noteStore.stop();
+    m_pNoteStore->stop();
 
     for(auto it = m_noteStoresByLinkedNotebookGuids.begin(),
         end = m_noteStoresByLinkedNotebookGuids.end(); it != end; ++it)
     {
-        NoteStore * pNoteStore = it.value();
+        INoteStore * pNoteStore = it.value();
         pNoteStore->stop();
         pNoteStore->setParent(Q_NULLPTR);
         pNoteStore->deleteLater();
@@ -1461,7 +1471,7 @@ void SynchronizationManagerPrivate::authenticateToLinkedNotebooks()
         ErrorString errorDescription;
         qint32 rateLimitSeconds = 0;
 
-        NoteStore * pNoteStore = noteStoreForLinkedNotebookGuid(guid);
+        INoteStore * pNoteStore = noteStoreForLinkedNotebookGuid(guid);
         if (Q_UNLIKELY(!pNoteStore)) {
             ErrorString error(QT_TR_NOOP("Can't sync the linked notebook contents: can't find or create the note store for the linked notebook"));
             Q_EMIT notifyError(error);
@@ -1799,7 +1809,7 @@ void SynchronizationManagerPrivate::updatePersistentSyncSettings()
     QNTRACE(QStringLiteral("Wrote ") << counter << QStringLiteral(" last sync params entries for linked notebooks"));
 }
 
-NoteStore * SynchronizationManagerPrivate::noteStoreForLinkedNotebook(const LinkedNotebook & linkedNotebook)
+INoteStore * SynchronizationManagerPrivate::noteStoreForLinkedNotebook(const LinkedNotebook & linkedNotebook)
 {
     QNTRACE(QStringLiteral("SynchronizationManagerPrivate::noteStoreForLinkedNotebook: ")
             << linkedNotebook);
@@ -1809,7 +1819,7 @@ NoteStore * SynchronizationManagerPrivate::noteStoreForLinkedNotebook(const Link
         return Q_NULLPTR;
     }
 
-    NoteStore * pNoteStore = noteStoreForLinkedNotebookGuid(linkedNotebook.guid());
+    INoteStore * pNoteStore = noteStoreForLinkedNotebookGuid(linkedNotebook.guid());
     if (Q_UNLIKELY(!pNoteStore)) {
         return Q_NULLPTR;
     }
@@ -1823,7 +1833,7 @@ NoteStore * SynchronizationManagerPrivate::noteStoreForLinkedNotebook(const Link
     return pNoteStore;
 }
 
-NoteStore * SynchronizationManagerPrivate::noteStoreForLinkedNotebookGuid(const QString & guid)
+INoteStore * SynchronizationManagerPrivate::noteStoreForLinkedNotebookGuid(const QString & guid)
 {
     QNDEBUG(QStringLiteral("SynchronizationManagerPrivate::noteStoreForLinkedNotebookGuid: guid = ") << guid);
 
@@ -1845,8 +1855,9 @@ NoteStore * SynchronizationManagerPrivate::noteStoreForLinkedNotebookGuid(const 
         return Q_NULLPTR;
     }
 
-    QSharedPointer<qevercloud::NoteStore> pQecNoteStore(new qevercloud::NoteStore);
-    NoteStore * pNoteStore = new NoteStore(pQecNoteStore, this);
+    INoteStore * pNoteStore = m_pNoteStore->create();
+    pNoteStore->setParent(this);
+
     pNoteStore->setAuthenticationToken(m_OAuthResult.m_authToken);
     m_noteStoresByLinkedNotebookGuids[guid] = pNoteStore;
     return pNoteStore;
@@ -1899,9 +1910,9 @@ LocalStorageManagerAsync & SynchronizationManagerPrivate::RemoteToLocalSynchroni
     return m_localStorageManagerAsync;
 }
 
-NoteStore & SynchronizationManagerPrivate::RemoteToLocalSynchronizationManagerController::noteStore()
+INoteStore & SynchronizationManagerPrivate::RemoteToLocalSynchronizationManagerController::noteStore()
 {
-    return m_syncManager.m_noteStore;
+    return *m_syncManager.m_pNoteStore;
 }
 
 UserStore & SynchronizationManagerPrivate::RemoteToLocalSynchronizationManagerController::userStore()
@@ -1909,7 +1920,7 @@ UserStore & SynchronizationManagerPrivate::RemoteToLocalSynchronizationManagerCo
     return m_syncManager.m_userStore;
 }
 
-NoteStore * SynchronizationManagerPrivate::RemoteToLocalSynchronizationManagerController::noteStoreForLinkedNotebook(const LinkedNotebook & linkedNotebook)
+INoteStore * SynchronizationManagerPrivate::RemoteToLocalSynchronizationManagerController::noteStoreForLinkedNotebook(const LinkedNotebook & linkedNotebook)
 {
     return m_syncManager.noteStoreForLinkedNotebook(linkedNotebook);
 }
@@ -1925,12 +1936,12 @@ LocalStorageManagerAsync & SynchronizationManagerPrivate::SendLocalChangesManage
     return m_localStorageManagerAsync;
 }
 
-NoteStore & SynchronizationManagerPrivate::SendLocalChangesManagerController::noteStore()
+INoteStore & SynchronizationManagerPrivate::SendLocalChangesManagerController::noteStore()
 {
-    return m_syncManager.m_noteStore;
+    return *m_syncManager.m_pNoteStore;
 }
 
-NoteStore * SynchronizationManagerPrivate::SendLocalChangesManagerController::noteStoreForLinkedNotebook(const LinkedNotebook & linkedNotebook)
+INoteStore * SynchronizationManagerPrivate::SendLocalChangesManagerController::noteStoreForLinkedNotebook(const LinkedNotebook & linkedNotebook)
 {
     return m_syncManager.noteStoreForLinkedNotebook(linkedNotebook);
 }

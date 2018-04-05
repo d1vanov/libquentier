@@ -35,7 +35,7 @@
 
 namespace quentier {
 
-QT_FORWARD_DECLARE_CLASS(NoteStore)
+QT_FORWARD_DECLARE_CLASS(INoteStore)
 
 class Q_DECL_HIDDEN SynchronizationManagerPrivate: public QObject
 {
@@ -43,7 +43,8 @@ class Q_DECL_HIDDEN SynchronizationManagerPrivate: public QObject
 public:
     SynchronizationManagerPrivate(const QString & consumerKey, const QString & consumerSecret,
                                   const QString & host, LocalStorageManagerAsync & localStorageManagerAsync,
-                                  IAuthenticationManager & authenticationManager);
+                                  IAuthenticationManager & authenticationManager,
+                                  INoteStore * pNoteStore);
     virtual ~SynchronizationManagerPrivate();
 
     bool active() const;
@@ -199,8 +200,8 @@ private:
     void tryUpdateLastSyncStatus();
     void updatePersistentSyncSettings();
 
-    NoteStore * noteStoreForLinkedNotebook(const LinkedNotebook & linkedNotebook);
-    NoteStore * noteStoreForLinkedNotebookGuid(const QString & guid);
+    INoteStore * noteStoreForLinkedNotebook(const LinkedNotebook & linkedNotebook);
+    INoteStore * noteStoreForLinkedNotebookGuid(const QString & guid);
 
     void launchStoreLinkedNotebookAuthToken(const QString & key, const QString & authToken);
     void postponeStoreLinkedNotebookAuthToken(const QString & key, const QString & authToken);
@@ -231,7 +232,7 @@ private:
     QHash<QString,qevercloud::Timestamp>    m_cachedLinkedNotebookLastSyncTimeByGuid;
     bool                                    m_onceReadLastSyncParams;
 
-    NoteStore                               m_noteStore;
+    INoteStore *                            m_pNoteStore;
     UserStore                               m_userStore;
     AuthContext::type                       m_authContext;
 
@@ -255,7 +256,7 @@ private:
 
     QVector<LinkedNotebookAuthData>         m_linkedNotebookAuthDataPendingAuthentication;
 
-    QHash<QString, NoteStore*>              m_noteStoresByLinkedNotebookGuids;
+    QHash<QString, INoteStore*>             m_noteStoresByLinkedNotebookGuids;
 
     int                                     m_authenticateToLinkedNotebooksPostponeTimerId;
 

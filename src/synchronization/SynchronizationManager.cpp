@@ -26,11 +26,8 @@ SynchronizationManager::SynchronizationManager(const QString & consumerKey, cons
                                                const QString & host, LocalStorageManagerAsync & localStorageManagerAsync,
                                                IAuthenticationManager & authenticationManager,
                                                INoteStore * pNoteStore) :
-    d_ptr(new SynchronizationManagerPrivate(consumerKey, consumerSecret, host, localStorageManagerAsync, authenticationManager))
+    d_ptr(new SynchronizationManagerPrivate(consumerKey, consumerSecret, host, localStorageManagerAsync, authenticationManager, pNoteStore))
 {
-    // FIXME: start actually using it
-    Q_UNUSED(pNoteStore)
-
     QObject::connect(d_ptr, QNSIGNAL(SynchronizationManagerPrivate,notifyStart),
                      this, QNSIGNAL(SynchronizationManager,started));
     QObject::connect(d_ptr, QNSIGNAL(SynchronizationManagerPrivate,notifyStop),

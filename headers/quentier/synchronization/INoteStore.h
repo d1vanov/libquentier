@@ -53,12 +53,13 @@ class QUENTIER_EXPORT INoteStore: public QObject
 {
     Q_OBJECT
 protected:
-    explicit INoteStore(QSharedPointer<qevercloud::NoteStore> pQecNoteStore, QObject * parent = Q_NULLPTR);
+    explicit INoteStore(const QSharedPointer<qevercloud::NoteStore> & pQecNoteStore, QObject * parent = Q_NULLPTR);
 
 public:
     virtual ~INoteStore();
 
     QSharedPointer<qevercloud::NoteStore> getQecNoteStore();
+    void setQecNoteStore(const QSharedPointer<qevercloud::NoteStore> & pQecNoteStore);
 
     QString noteStoreUrl() const;
     void setNoteStoreUrl(const QString & noteStoreUrl);
@@ -67,6 +68,11 @@ public:
     void setAuthenticationToken(const QString & authToken);
 
 public:
+    /**
+     * Factory method, create a new INoteStore subclass object
+     */
+    virtual INoteStore * create() const = 0;
+
     virtual void stop() = 0;
 
     virtual qint32 createNotebook(Notebook & notebook, ErrorString & errorDescription, qint32 & rateLimitSeconds, const QString & linkedNotebookAuthToken = QString()) = 0;

@@ -20,7 +20,6 @@
 #define LIB_QUENTIER_SYNCHRONIZATION_REMOTE_TO_LOCAL_SYNCHRONIZATION_MANAGER_H
 
 #include "FullSyncStaleDataItemsExpunger.h"
-#include "NoteStore.h"
 #include "UserStore.h"
 #include "NotebookSyncConflictResolver.h"
 #include "NotebookSyncCache.h"
@@ -40,6 +39,7 @@
 #include <quentier/types/Resource.h>
 #include <quentier/types/LinkedNotebook.h>
 #include <quentier/types/SavedSearch.h>
+#include <quentier/synchronization/INoteStore.h>
 
 #if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
 #include <qt5qevercloud/QEverCloud.h>
@@ -62,9 +62,9 @@ public:
     {
     public:
         virtual LocalStorageManagerAsync & localStorageManagerAsync() = 0;
-        virtual NoteStore & noteStore() = 0;
+        virtual INoteStore & noteStore() = 0;
         virtual UserStore & userStore() = 0;
-        virtual NoteStore * noteStoreForLinkedNotebook(const LinkedNotebook & linkedNotebook) = 0;
+        virtual INoteStore * noteStoreForLinkedNotebook(const LinkedNotebook & linkedNotebook) = 0;
     };
 
     explicit RemoteToLocalSynchronizationManager(IManager & manager, const QString & host, QObject * parent = Q_NULLPTR);
@@ -561,7 +561,7 @@ private:
 
     void junkFullSyncStaleDataItemsExpunger(FullSyncStaleDataItemsExpunger & expunger);
 
-    NoteStore * noteStoreForNote(const Note & note, QString & authToken, ErrorString & errorDescription) const;
+    INoteStore * noteStoreForNote(const Note & note, QString & authToken, ErrorString & errorDescription) const;
 
     void checkAndRemoveInaccessibleParentTagGuidsForTagsFromLinkedNotebook(const QString & linkedNotebookGuid,
                                                                            const TagSyncCache & tagSyncCache);

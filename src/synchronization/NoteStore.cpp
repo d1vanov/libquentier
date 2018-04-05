@@ -37,7 +37,7 @@ namespace quentier {
         errorDescription.details() += userException.exceptionData()->errorMessage; \
     }
 
-NoteStore::NoteStore(QSharedPointer<qevercloud::NoteStore> pQecNoteStore, QObject * parent) :
+NoteStore::NoteStore(const QSharedPointer<qevercloud::NoteStore> & pQecNoteStore, QObject * parent) :
     INoteStore(pQecNoteStore, parent),
     m_noteGuidByAsyncResultPtr()
 {
@@ -47,6 +47,11 @@ NoteStore::NoteStore(QSharedPointer<qevercloud::NoteStore> pQecNoteStore, QObjec
 NoteStore::~NoteStore()
 {
     stop();
+}
+
+INoteStore * NoteStore::create() const
+{
+    return new NoteStore(QSharedPointer<qevercloud::NoteStore>(new qevercloud::NoteStore));
 }
 
 void NoteStore::stop()

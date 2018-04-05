@@ -1273,7 +1273,7 @@ void SendLocalChangesManager::sendTags()
             }
         }
 
-        NoteStore * pNoteStore = Q_NULLPTR;
+        INoteStore * pNoteStore = Q_NULLPTR;
         if (tag.hasLinkedNotebookGuid())
         {
             LinkedNotebook linkedNotebook;
@@ -1492,7 +1492,7 @@ void SendLocalChangesManager::sendSavedSearches()
     QNDEBUG(QStringLiteral("SendLocalChangesManager::sendSavedSearches"));
 
     ErrorString errorDescription;
-    NoteStore & noteStore = m_manager.noteStore();
+    INoteStore & noteStore = m_manager.noteStore();
 
     typedef QList<SavedSearch>::iterator Iter;
     for(Iter it = m_savedSearches.begin(); it != m_savedSearches.end(); )
@@ -1669,7 +1669,7 @@ void SendLocalChangesManager::sendNotebooks()
             }
         }
 
-        NoteStore * pNoteStore = Q_NULLPTR;
+        INoteStore * pNoteStore = Q_NULLPTR;
         if (notebook.hasLinkedNotebookGuid())
         {
             LinkedNotebook linkedNotebook;
@@ -1974,7 +1974,7 @@ void SendLocalChangesManager::sendNotes()
             }
         }
 
-        NoteStore * pNoteStore = Q_NULLPTR;
+        INoteStore * pNoteStore = Q_NULLPTR;
         if (notebook.hasLinkedNotebookGuid())
         {
             LinkedNotebook linkedNotebook;

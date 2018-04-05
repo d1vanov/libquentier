@@ -19,7 +19,6 @@
 #ifndef LIB_QUENTIER_SYNCHRONIZATION_SEND_LOCAL_CHANGES_MANAGER_H
 #define LIB_QUENTIER_SYNCHRONIZATION_SEND_LOCAL_CHANGES_MANAGER_H
 
-#include "NoteStore.h"
 #include "SynchronizationShared.h"
 #include <quentier/utility/Macros.h>
 #include <quentier/types/ErrorString.h>
@@ -28,6 +27,7 @@
 #include <quentier/types/SavedSearch.h>
 #include <quentier/types/Notebook.h>
 #include <quentier/types/Note.h>
+#include <quentier/synchronization/INoteStore.h>
 #include <QObject>
 
 namespace quentier {
@@ -42,8 +42,8 @@ public:
     {
     public:
         virtual LocalStorageManagerAsync & localStorageManagerAsync() = 0;
-        virtual NoteStore & noteStore() = 0;
-        virtual NoteStore * noteStoreForLinkedNotebook(const LinkedNotebook & linkedNotebook) = 0;
+        virtual INoteStore & noteStore() = 0;
+        virtual INoteStore * noteStoreForLinkedNotebook(const LinkedNotebook & linkedNotebook) = 0;
     };
 
     explicit SendLocalChangesManager(IManager & manager, QObject * parent = Q_NULLPTR);

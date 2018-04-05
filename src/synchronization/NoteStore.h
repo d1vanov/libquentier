@@ -55,8 +55,10 @@ class Q_DECL_HIDDEN NoteStore: public INoteStore
 {
     Q_OBJECT
 public:
-    explicit NoteStore(QSharedPointer<qevercloud::NoteStore> pQecNoteStore, QObject * parent = Q_NULLPTR);
+    explicit NoteStore(const QSharedPointer<qevercloud::NoteStore> & pQecNoteStore, QObject * parent = Q_NULLPTR);
     virtual ~NoteStore();
+
+    virtual INoteStore * create() const Q_DECL_OVERRIDE;
 
     virtual void stop() Q_DECL_OVERRIDE;
 
