@@ -24,25 +24,15 @@
 
 namespace quentier {
 
-UserStore::UserStore(QSharedPointer<qevercloud::UserStore> pQecUserStore) :
-    m_pQecUserStore(pQecUserStore)
+UserStore::UserStore(const QSharedPointer<qevercloud::UserStore> & pQecUserStore) :
+    IUserStore(pQecUserStore)
 {
     QUENTIER_CHECK_PTR(m_pQecUserStore)
 }
 
-QSharedPointer<qevercloud::UserStore> UserStore::getQecUserStore()
+IUserStore * UserStore::create(const QString & host) const
 {
-    return m_pQecUserStore;
-}
-
-QString UserStore::authenticationToken() const
-{
-    return m_pQecUserStore->authenticationToken();
-}
-
-void UserStore::setAuthenticationToken(const QString & authToken)
-{
-    m_pQecUserStore->setAuthenticationToken(authToken);
+    return new UserStore(QSharedPointer<qevercloud::UserStore>(new qevercloud::UserStore(host)));
 }
 
 bool UserStore::checkVersion(const QString & clientName, qint16 edamVersionMajor, qint16 edamVersionMinor,

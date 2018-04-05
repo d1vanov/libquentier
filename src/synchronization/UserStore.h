@@ -18,18 +18,10 @@
 #ifndef LIB_QUENTIER_SYNCHRONIZATION_USER_STORE_H
 #define LIB_QUENTIER_SYNCHRONIZATION_USER_STORE_H
 
-#include <quentier/types/ErrorString.h>
-#include <QSharedPointer>
-
-#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
-#include <qt5qevercloud/QEverCloud.h>
-#else
-#include <qt4qevercloud/QEverCloud.h>
-#endif
+#include <quentier/synchronization/IUserStore.h>
+#include <quentier/utility/Macros.h>
 
 namespace quentier {
-
-QT_FORWARD_DECLARE_CLASS(User)
 
 /**
  * @brief The UserStore class in quentier namespace is a wrapper under UserStore from QEverCloud.
@@ -42,23 +34,20 @@ QT_FORWARD_DECLARE_CLASS(User)
  * libquentier at the moment uses only several methods from those available in QEverCloud's UserStore
  * so only the small subset of original UserStore's API is wrapped at the moment.
  */
-class Q_DECL_HIDDEN UserStore
+class Q_DECL_HIDDEN UserStore: public IUserStore
 {
 public:
-    UserStore(QSharedPointer<qevercloud::UserStore> pQecUserStore);
+    UserStore(const QSharedPointer<qevercloud::UserStore> & pQecUserStore);
 
-    QSharedPointer<qevercloud::UserStore> getQecUserStore();
+    virtual IUserStore * create(const QString & host) const Q_DECL_OVERRIDE;
 
-    QString authenticationToken() const;
-    void setAuthenticationToken(const QString & authToken);
+    virtual bool checkVersion(const QString & clientName, qint16 edamVersionMajor, qint16 edamVersionMinor,
+                              ErrorString & errorDescription) Q_DECL_OVERRIDE;
 
-    bool checkVersion(const QString & clientName, qint16 edamVersionMajor, qint16 edamVersionMinor,
-                      ErrorString & errorDescription);
+    virtual qint32 getUser(User & user, ErrorString & errorDescription, qint32 & rateLimitSeconds) Q_DECL_OVERRIDE;
 
-    qint32 getUser(User & user, ErrorString & errorDescription, qint32 & rateLimitSeconds);
-
-    qint32 getAccountLimits(const qevercloud::ServiceLevel::type serviceLevel, qevercloud::AccountLimits & limits,
-                            ErrorString & errorDescription, qint32 & rateLimitSeconds);
+    virtual qint32 getAccountLimits(const qevercloud::ServiceLevel::type serviceLevel, qevercloud::AccountLimits & limits,
+                                    ErrorString & errorDescription, qint32 & rateLimitSeconds) Q_DECL_OVERRIDE;
 
 private:
     qint32 processEdamUserException(const qevercloud::EDAMUserException & userException, ErrorString & errorDescription) const;

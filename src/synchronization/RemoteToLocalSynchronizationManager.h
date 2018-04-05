@@ -20,7 +20,6 @@
 #define LIB_QUENTIER_SYNCHRONIZATION_REMOTE_TO_LOCAL_SYNCHRONIZATION_MANAGER_H
 
 #include "FullSyncStaleDataItemsExpunger.h"
-#include "UserStore.h"
 #include "NotebookSyncConflictResolver.h"
 #include "NotebookSyncCache.h"
 #include "TagSyncConflictResolver.h"
@@ -40,6 +39,7 @@
 #include <quentier/types/LinkedNotebook.h>
 #include <quentier/types/SavedSearch.h>
 #include <quentier/synchronization/INoteStore.h>
+#include <quentier/synchronization/IUserStore.h>
 
 #if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
 #include <qt5qevercloud/QEverCloud.h>
@@ -63,7 +63,7 @@ public:
     public:
         virtual LocalStorageManagerAsync & localStorageManagerAsync() = 0;
         virtual INoteStore & noteStore() = 0;
-        virtual UserStore & userStore() = 0;
+        virtual IUserStore & userStore() = 0;
         virtual INoteStore * noteStoreForLinkedNotebook(const LinkedNotebook & linkedNotebook) = 0;
     };
 

@@ -19,6 +19,7 @@
 #include "SynchronizationManager_p.h"
 #include "SynchronizationShared.h"
 #include "NoteStore.h"
+#include "UserStore.h"
 #include <quentier/utility/Utility.h>
 #include <quentier/local_storage/LocalStorageManagerAsync.h>
 #include <quentier/logging/QuentierLogger.h>
@@ -60,7 +61,7 @@ public:
 
     virtual LocalStorageManagerAsync & localStorageManagerAsync() Q_DECL_OVERRIDE;
     virtual INoteStore & noteStore() Q_DECL_OVERRIDE;
-    virtual UserStore & userStore() Q_DECL_OVERRIDE;
+    virtual IUserStore & userStore() Q_DECL_OVERRIDE;
     virtual INoteStore * noteStoreForLinkedNotebook(const LinkedNotebook & linkedNotebook) Q_DECL_OVERRIDE;
 
 private:
@@ -86,7 +87,7 @@ private:
 SynchronizationManagerPrivate::SynchronizationManagerPrivate(const QString & consumerKey, const QString & consumerSecret,
                                                              const QString & host, LocalStorageManagerAsync & localStorageManagerAsync,
                                                              IAuthenticationManager & authenticationManager,
-                                                             INoteStore * pNoteStore) :
+                                                             INoteStore * pNoteStore, IUserStore * pUserStore) :
     m_consumerKey(consumerKey),
     m_consumerSecret(consumerSecret),
     m_host(host),
@@ -97,7 +98,7 @@ SynchronizationManagerPrivate::SynchronizationManagerPrivate(const QString & con
     m_cachedLinkedNotebookLastSyncTimeByGuid(),
     m_onceReadLastSyncParams(false),
     m_pNoteStore(Q_NULLPTR),
-    m_userStore(QSharedPointer<qevercloud::UserStore>(new qevercloud::UserStore(m_host))),
+    m_pUserStore(Q_NULLPTR),
     m_authContext(AuthContext::Blank),
     m_launchSyncPostponeTimerId(-1),
     m_OAuthResult(),
@@ -148,6 +149,13 @@ SynchronizationManagerPrivate::SynchronizationManagerPrivate(const QString & con
     }
     else {
         m_pNoteStore = new NoteStore(QSharedPointer<qevercloud::NoteStore>(new qevercloud::NoteStore), this);
+    }
+
+    if (pUserStore) {
+        m_pUserStore.reset(pUserStore);
+    }
+    else {
+        m_pUserStore.reset(new UserStore(QSharedPointer<qevercloud::UserStore>(new qevercloud::UserStore(m_host))));
     }
 
     createConnections(authenticationManager);
@@ -296,7 +304,7 @@ void SynchronizationManagerPrivate::onOAuthResult(bool success, qevercloud::User
         Account newAccount(QString(), Account::Type::Evernote, userId, Account::EvernoteAccountType::Free, m_host);
         m_remoteToLocalSyncManager.setAccount(newAccount);
 
-        m_userStore.setAuthenticationToken(authToken);
+        m_pUserStore->setAuthenticationToken(authToken);
 
         ErrorString error;
         bool res = m_remoteToLocalSyncManager.syncUser(userId, error, /* write user data to local storage = */ false);
@@ -1027,7 +1035,7 @@ void SynchronizationManagerPrivate::launchSync()
 
     m_pNoteStore->setNoteStoreUrl(m_OAuthResult.m_noteStoreUrl);
     m_pNoteStore->setAuthenticationToken(m_OAuthResult.m_authToken);
-    m_userStore.setAuthenticationToken(m_OAuthResult.m_authToken);
+    m_pUserStore->setAuthenticationToken(m_OAuthResult.m_authToken);
 
     if (m_lastUpdateCount <= 0) {
         QNDEBUG(QStringLiteral("The client has never synchronized with the remote service, "
@@ -1915,9 +1923,9 @@ INoteStore & SynchronizationManagerPrivate::RemoteToLocalSynchronizationManagerC
     return *m_syncManager.m_pNoteStore;
 }
 
-UserStore & SynchronizationManagerPrivate::RemoteToLocalSynchronizationManagerController::userStore()
+IUserStore & SynchronizationManagerPrivate::RemoteToLocalSynchronizationManagerController::userStore()
 {
-    return m_syncManager.m_userStore;
+    return *m_syncManager.m_pUserStore;
 }
 
 INoteStore * SynchronizationManagerPrivate::RemoteToLocalSynchronizationManagerController::noteStoreForLinkedNotebook(const LinkedNotebook & linkedNotebook)

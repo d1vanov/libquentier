@@ -36,6 +36,7 @@
 namespace quentier {
 
 QT_FORWARD_DECLARE_CLASS(INoteStore)
+QT_FORWARD_DECLARE_CLASS(IUserStore)
 
 class Q_DECL_HIDDEN SynchronizationManagerPrivate: public QObject
 {
@@ -44,7 +45,7 @@ public:
     SynchronizationManagerPrivate(const QString & consumerKey, const QString & consumerSecret,
                                   const QString & host, LocalStorageManagerAsync & localStorageManagerAsync,
                                   IAuthenticationManager & authenticationManager,
-                                  INoteStore * pNoteStore);
+                                  INoteStore * pNoteStore, IUserStore * pUserStore);
     virtual ~SynchronizationManagerPrivate();
 
     bool active() const;
@@ -233,7 +234,8 @@ private:
     bool                                    m_onceReadLastSyncParams;
 
     INoteStore *                            m_pNoteStore;
-    UserStore                               m_userStore;
+    QScopedPointer<IUserStore>              m_pUserStore;
+
     AuthContext::type                       m_authContext;
 
     int                                     m_launchSyncPostponeTimerId;

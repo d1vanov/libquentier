@@ -25,8 +25,8 @@ namespace quentier {
 SynchronizationManager::SynchronizationManager(const QString & consumerKey, const QString & consumerSecret,
                                                const QString & host, LocalStorageManagerAsync & localStorageManagerAsync,
                                                IAuthenticationManager & authenticationManager,
-                                               INoteStore * pNoteStore) :
-    d_ptr(new SynchronizationManagerPrivate(consumerKey, consumerSecret, host, localStorageManagerAsync, authenticationManager, pNoteStore))
+                                               INoteStore * pNoteStore, IUserStore * pUserStore) :
+    d_ptr(new SynchronizationManagerPrivate(consumerKey, consumerSecret, host, localStorageManagerAsync, authenticationManager, pNoteStore, pUserStore))
 {
     QObject::connect(d_ptr, QNSIGNAL(SynchronizationManagerPrivate,notifyStart),
                      this, QNSIGNAL(SynchronizationManager,started));
