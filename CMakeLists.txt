@@ -716,6 +716,7 @@ if(USE_QT5)
 endif()
 
 set(TEST_HEADERS
+    src/tests/FakeUserStore.h
     src/tests/EncryptionManagerTests.h
     src/tests/EnexExportImportTests.h
     src/tests/ENMLConverterTests.h
@@ -741,6 +742,7 @@ set(TEST_HEADERS
     src/synchronization/NotebookSyncCache.h)
 
 set(TEST_SOURCES
+    src/tests/FakeUserStore.cpp
     src/tests/EncryptionManagerTests.cpp
     src/tests/EnexExportImportTests.cpp
     src/tests/ENMLConverterTests.cpp
