@@ -90,7 +90,8 @@ public:
      *                                  otherwise the notebook would be created in user's own account
      * @return error code, 0 in case of successful notebook creation, other values corresponding to qevercloud::EDAMErrorCode::type enumeration instead
      */
-    virtual qint32 createNotebook(Notebook & notebook, ErrorString & errorDescription, qint32 & rateLimitSeconds, const QString & linkedNotebookAuthToken = QString()) = 0;
+    virtual qint32 createNotebook(Notebook & notebook, ErrorString & errorDescription, qint32 & rateLimitSeconds,
+                                  const QString & linkedNotebookAuthToken = QString()) = 0;
 
     /**
      * Update notebook
@@ -104,7 +105,8 @@ public:
      *                                  otherwise the notebook would be updated within user's own account
      * @return error code, 0 in case of successful notebook update, other values corresponding to qevercloud::EDAMErrorCode::type enumeration instead
      */
-    virtual qint32 updateNotebook(Notebook & notebook, ErrorString & errorDescription, qint32 & rateLimitSeconds, const QString & linkedNotebookAuthToken = QString()) = 0;
+    virtual qint32 updateNotebook(Notebook & notebook, ErrorString & errorDescription, qint32 & rateLimitSeconds,
+                                  const QString & linkedNotebookAuthToken = QString()) = 0;
 
     /**
      * Create note
@@ -118,7 +120,8 @@ public:
      *                                  otherwise the note would be created in user's own account
      * @return error code, 0 in case of successful note creation, other values corresponding to qevercloud::EDAMErrorCode::type enumeration instead
      */
-    virtual qint32 createNote(Note & note, ErrorString & errorDescription, qint32 & rateLimitSeconds, const QString & linkedNotebookAuthToken = QString()) = 0;
+    virtual qint32 createNote(Note & note, ErrorString & errorDescription, qint32 & rateLimitSeconds,
+                              const QString & linkedNotebookAuthToken = QString()) = 0;
 
     /**
      * Update note
@@ -132,7 +135,8 @@ public:
      *                                  otherwise the note would be updated within user's own account
      * @return error code, 0 in case of successful note update, other values corresponding to qevercloud::EDAMErrorCode::type enumeration instead
      */
-    virtual qint32 updateNote(Note & note, ErrorString & errorDescription, qint32 & rateLimitSeconds, const QString & linkedNotebookAuthToken = QString()) = 0;
+    virtual qint32 updateNote(Note & note, ErrorString & errorDescription, qint32 & rateLimitSeconds,
+                              const QString & linkedNotebookAuthToken = QString()) = 0;
 
     /**
      * Create tag
@@ -146,7 +150,8 @@ public:
      *                                  otherwise the tag would be created in user's own account
      * @return error code, 0 in case of successful tag creation, other values corresponding to qevercloud::EDAMErrorCode::type enumeration instead
      */
-    virtual qint32 createTag(Tag & tag, ErrorString & errorDescription, qint32 & rateLimitSeconds, const QString & linkedNotebookAuthToken = QString()) = 0;
+    virtual qint32 createTag(Tag & tag, ErrorString & errorDescription, qint32 & rateLimitSeconds,
+                             const QString & linkedNotebookAuthToken = QString()) = 0;
 
     /**
      * Update tag
@@ -160,7 +165,8 @@ public:
      *                                  otherwise the tag would be updated within user's own account
      * @return error code, 0 in case of successful tag update, other values corresponding to qevercloud::EDAMErrorCode::type enumeration instead
      */
-    virtual qint32 updateTag(Tag & tag, ErrorString & errorDescription, qint32 & rateLimitSeconds, const QString & linkedNotebookAuthToken = QString()) = 0;
+    virtual qint32 updateTag(Tag & tag, ErrorString & errorDescription, qint32 & rateLimitSeconds,
+                             const QString & linkedNotebookAuthToken = QString()) = 0;
 
     /**
      * Create saved search
