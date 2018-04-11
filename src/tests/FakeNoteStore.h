@@ -55,7 +55,7 @@ public:
     bool removeSavedSearch(const QString & guid);
 
     void setExpungedSavedSearchGuid(const QString & guid);
-    bool containsExpungedSavedSearchGuid(const QString & guid);
+    bool containsExpungedSavedSearchGuid(const QString & guid) const;
     bool removeExpungedSavedSearchGuid(const QString & guid);
 
     // Tags
@@ -66,29 +66,29 @@ public:
     bool removeTag(const QString & guid);
 
     void setExpungedTagGuid(const QString & guid);
-    bool containsExpungedTagGuid(const QString & guid);
+    bool containsExpungedTagGuid(const QString & guid) const;
     bool removeExpungedTagGuid(const QString & guid);
 
     // Notebooks
     QHash<QString,qevercloud::Notebook> notebooks() const;
 
     bool setNotebook(Notebook & notebook, ErrorString & errorDescription);
-    const Notebook * findNotebook(const QString & guid);
+    const Notebook * findNotebook(const QString & guid) const;
     bool removeNotebook(const QString & guid);
 
     void setExpungedNotebookGuid(const QString & guid);
-    bool containsExpungedNotebookGuid(const QString & guid);
+    bool containsExpungedNotebookGuid(const QString & guid) const;
     bool removeExpungedNotebookGuid(const QString & guid);
 
     // Notes
     QHash<QString,qevercloud::Note> notes() const;
 
     bool setNote(Note & note, ErrorString & errorDescription);
-    const Note * findNote(const QString & guid);
+    const Note * findNote(const QString & guid) const;
     bool removeNote(const QString & guid);
 
     void setExpungedNoteGuid(const QString & guid);
-    bool containsExpungedNoteGuid(const QString & guid);
+    bool containsExpungedNoteGuid(const QString & guid) const;
     bool removeExpungedNoteGuid(const QString & guid);
 
 public:
@@ -242,5 +242,7 @@ private:
 };
 
 } // namespace quentier
+
+inline size_t hash_value(const QString & str) { return qHash(str); }
 
 #endif // LIB_QUENTIER_TESTS_FAKE_NOTE_STORE_H
