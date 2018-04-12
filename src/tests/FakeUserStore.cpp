@@ -86,13 +86,16 @@ bool FakeUserStore::checkVersion(const QString & clientName, qint16 edamVersionM
     return true;
 }
 
+#define CHECK_API_RATE_LIMIT() \
+    if (m_shouldTriggerRateLimitReachOnNextCall) { \
+        rateLimitSeconds = 0; \
+        m_shouldTriggerRateLimitReachOnNextCall = false; \
+        return qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED; \
+    }
+
 qint32 FakeUserStore::getUser(User & user, ErrorString & errorDescription, qint32 & rateLimitSeconds)
 {
-    if (m_shouldTriggerRateLimitReachOnNextCall) {
-        rateLimitSeconds = 0;
-        m_shouldTriggerRateLimitReachOnNextCall = false;
-        return qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED;
-    }
+    CHECK_API_RATE_LIMIT()
 
     if (!user.hasId()) {
         errorDescription.setBase(QStringLiteral("User has no id"));
@@ -112,11 +115,7 @@ qint32 FakeUserStore::getUser(User & user, ErrorString & errorDescription, qint3
 qint32 FakeUserStore::getAccountLimits(const qevercloud::ServiceLevel::type serviceLevel, qevercloud::AccountLimits & limits,
                                        ErrorString & errorDescription, qint32 & rateLimitSeconds)
 {
-    if (m_shouldTriggerRateLimitReachOnNextCall) {
-        rateLimitSeconds = 0;
-        m_shouldTriggerRateLimitReachOnNextCall = false;
-        return qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED;
-    }
+    CHECK_API_RATE_LIMIT()
 
     auto it = m_accountLimits.find(serviceLevel);
     if (it == m_accountLimits.end()) {

@@ -33,6 +33,7 @@
 #include <boost/multi_index/mem_fun.hpp>
 #include <boost/multi_index/random_access_index.hpp>
 #include <boost/multi_index/hashed_index.hpp>
+#include <boost/multi_index/global_fun.hpp>
 #include <boost/bimap.hpp>
 #endif
 
@@ -91,6 +92,33 @@ public:
     bool containsExpungedNoteGuid(const QString & guid) const;
     bool removeExpungedNoteGuid(const QString & guid);
 
+    // Other
+    void triggerRateLimitReachOnNextCall();
+
+    quint32 maxNumSavedSearches() const;
+    void setMaxNumSavedSearches(const quint32 maxNumSavedSearches);
+
+    quint32 maxNumTags() const;
+    void setMaxNumTags(const quint32 maxNumTags);
+
+    quint32 maxNumNotebooks() const;
+    void setMaxNumNotebooks(const quint32 maxNumNotebooks);
+
+    quint32 maxNumNotes() const;
+    void setMaxNumNotes(const quint32 maxNumNotes);
+
+    quint64 maxNoteSize() const;
+    void setMaxNoteSize(const quint64 maxNoteSize);
+
+    quint32 maxNumResourcesPerNote() const;
+    void setMaxNumResourcesPerNote(const quint32 maxNumResourcesPerNote);
+
+    quint32 maxNumTagsPerNote() const;
+    void setMaxNumTagsPerNote(const quint32 maxNumTagsPerNote);
+
+    quint64 maxResourceSize() const;
+    void setMaxResourceSize(const quint64 maxResourceSize);
+
 public:
     // INoteStore interface
     virtual INoteStore * create() const Q_DECL_OVERRIDE;
@@ -140,12 +168,31 @@ public:
                                                 ErrorString & errorDescription, qint32 & rateLimitSeconds) Q_DECL_OVERRIDE;
 
 private:
+    virtual void timerEvent(QTimerEvent * event) Q_DECL_OVERRIDE;
+
+private:
     qint32 currentMaxUsn() const;
+    qint32 checkNotebookFields(const Notebook & notebook, ErrorString & errorDescription) const;
+    qint32 checkNoteFields(const Note & note, ErrorString & errorDescription) const;
+    qint32 checkResourceFields(const Resource & resource, ErrorString & errorDescription) const;
 
 private:
     // Saved searches store
     struct SavedSearchByGuid{};
     struct SavedSearchByUSN{};
+    struct SavedSearchByNameUpper{};
+
+    struct SavedSearchNameUpperExtractor
+    {
+        static QString nameUpper(const SavedSearch & search)
+        {
+            if (!search.hasName()) {
+                return QString();
+            }
+
+            return search.name().toUpper();
+        }
+    };
 
     typedef boost::multi_index_container<
         SavedSearch,
@@ -157,16 +204,34 @@ private:
             boost::multi_index::ordered_unique<
                 boost::multi_index::tag<SavedSearchByUSN>,
                 boost::multi_index::const_mem_fun<SavedSearch,qint32,&SavedSearch::updateSequenceNumber>
+            >,
+            boost::multi_index::hashed_unique<
+                boost::multi_index::tag<SavedSearchByNameUpper>,
+                boost::multi_index::global_fun<const SavedSearch&,QString,&SavedSearchNameUpperExtractor::nameUpper>
             >
         >
     > SavedSearchData;
 
     typedef SavedSearchData::index<SavedSearchByGuid>::type SavedSearchDataByGuid;
     typedef SavedSearchData::index<SavedSearchByUSN>::type SavedSearchDataByUSN;
+    typedef SavedSearchData::index<SavedSearchByNameUpper>::type SavedSearchDataByNameUpper;
 
     // Tag store
     struct TagByGuid{};
     struct TagByUSN{};
+    struct TagByNameUpper{};
+
+    struct TagNameUpperExtractor
+    {
+        static QString nameUpper(const Tag & tag)
+        {
+            if (!tag.hasName()) {
+                return QString();
+            }
+
+            return tag.name().toUpper();
+        }
+    };
 
     typedef boost::multi_index_container<
         Tag,
@@ -178,16 +243,34 @@ private:
             boost::multi_index::ordered_unique<
                 boost::multi_index::tag<TagByUSN>,
                 boost::multi_index::const_mem_fun<Tag,qint32,&Tag::updateSequenceNumber>
+            >,
+            boost::multi_index::hashed_unique<
+                boost::multi_index::tag<TagByNameUpper>,
+                boost::multi_index::global_fun<const Tag&,QString,&TagNameUpperExtractor::nameUpper>
             >
         >
     > TagData;
 
     typedef TagData::index<TagByGuid>::type TagDataByGuid;
     typedef TagData::index<TagByUSN>::type TagDataByUSN;
+    typedef TagData::index<TagByNameUpper>::type TagDataByNameUpper;
 
     // Notebook store
     struct NotebookByGuid{};
     struct NotebookByUSN{};
+    struct NotebookByNameUpper{};
+
+    struct NotebookNameUpperExtractor
+    {
+        static QString nameUpper(const Notebook & notebook)
+        {
+            if (!notebook.hasName()) {
+                return QString();
+            }
+
+            return notebook.name().toUpper();
+        }
+    };
 
     typedef boost::multi_index_container<
         Notebook,
@@ -199,12 +282,17 @@ private:
             boost::multi_index::ordered_unique<
                 boost::multi_index::tag<NotebookByUSN>,
                 boost::multi_index::const_mem_fun<Notebook,qint32,&Notebook::updateSequenceNumber>
+            >,
+            boost::multi_index::hashed_unique<
+                boost::multi_index::tag<NotebookByNameUpper>,
+                boost::multi_index::global_fun<const Notebook&,QString,&NotebookNameUpperExtractor::nameUpper>
             >
         >
     > NotebookData;
 
     typedef NotebookData::index<NotebookByGuid>::type NotebookDataByGuid;
     typedef NotebookData::index<NotebookByUSN>::type NotebookDataByUSN;
+    typedef NotebookData::index<NotebookByNameUpper>::type NotebookDataByNameUpper;
 
     // Note store
     struct NoteByGuid{};
@@ -239,6 +327,21 @@ private:
 
     NoteData            m_notes;
     QSet<QString>       m_expungedNoteGuids;
+
+    bool                m_shouldTriggerRateLimitReachOnNextCall;
+
+    QSet<int>           m_getNoteAsyncDelayTimerIds;
+    QSet<int>           m_getResourceAsyncDelayTimerIds;
+
+    quint32             m_maxNumSavedSearches;
+    quint32             m_maxNumTags;
+    quint32             m_maxNumNotebooks;
+    quint32             m_maxNumNotes;
+
+    quint64             m_maxNoteSize;
+    quint32             m_maxNumResourcesPerNote;
+    quint32             m_maxNumTagsPerNote;
+    quint64             m_maxResourceSize;
 };
 
 } // namespace quentier
