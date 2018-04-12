@@ -499,11 +499,21 @@ qint32 FakeNoteStore::createNote(Note & note, ErrorString & errorDescription, qi
 {
     CHECK_API_RATE_LIMIT()
 
-    // TODO: implement
-    Q_UNUSED(note)
-    Q_UNUSED(errorDescription)
-    Q_UNUSED(rateLimitSeconds)
+    if (m_notes.size() + 1 > m_maxNumNotes) {
+        errorDescription.setBase(QStringLiteral("Already at max number of notes"));
+        return qevercloud::EDAMErrorCode::LIMIT_REACHED;
+    }
+
+    qint32 checkRes = checkNoteFields(note, errorDescription);
+    if (checkRes != 0) {
+        return checkRes;
+    }
+
+    // TODO: check notebook guid vs linked notebook auth token
     Q_UNUSED(linkedNotebookAuthToken)
+
+    note.setGuid(UidGenerator::Generate());
+    Q_UNUSED(m_notes.insert(note))
     return 0;
 }
 
@@ -512,11 +522,27 @@ qint32 FakeNoteStore::updateNote(Note & note, ErrorString & errorDescription, qi
 {
     CHECK_API_RATE_LIMIT()
 
-    // TODO: implement
-    Q_UNUSED(note)
-    Q_UNUSED(errorDescription)
-    Q_UNUSED(rateLimitSeconds)
+    if (!note.hasGuid()) {
+        errorDescription.setBase(QStringLiteral("Note.guid"));
+        return qevercloud::EDAMErrorCode::UNKNOWN;
+    }
+
+    qint32 checkRes = checkNoteFields(note, errorDescription);
+    if (checkRes != 0) {
+        return checkRes;
+    }
+
+    NoteDataByGuid & index = m_notes.get<NoteByGuid>();
+    auto it = index.find(note.guid());
+    if (it == index.end()) {
+        errorDescription.setBase(QStringLiteral("Note with the specified guid doesn't exist"));
+        return qevercloud::EDAMErrorCode::DATA_CONFLICT;
+    }
+
+    // TODO: check notebook guid vs linked notebook auth token
     Q_UNUSED(linkedNotebookAuthToken)
+
+    Q_UNUSED(index.replace(it, note))
     return 0;
 }
 
@@ -939,7 +965,39 @@ qint32 FakeNoteStore::checkNoteFields(const Note & note, ErrorString & errorDesc
         }
     }
 
-    // TODO: continue here
+    if (note.hasNoteAttributes())
+    {
+        const qevercloud::NoteAttributes & attributes = note.noteAttributes();
+
+#define CHECK_STRING_ATTRIBUTE(attr) \
+        if (attributes.attr.isSet()) \
+        { \
+            if (attributes.attr.ref().size() < qevercloud::EDAM_ATTRIBUTE_LEN_MIN) { \
+                errorDescription.setBase(QStringLiteral("Attribute length is too small: ") + QString::fromUtf8( #attr )); \
+                return qevercloud::EDAMErrorCode::BAD_DATA_FORMAT; \
+            } \
+            \
+            if (attributes.attr.ref().size() < qevercloud::EDAM_ATTRIBUTE_LEN_MAX) { \
+                errorDescription.setBase(QStringLiteral("Attribute length is too large: ") + QString::fromUtf8( #attr )); \
+                return qevercloud::EDAMErrorCode::BAD_DATA_FORMAT; \
+            } \
+        }
+
+        CHECK_STRING_ATTRIBUTE(author)
+        CHECK_STRING_ATTRIBUTE(source)
+        CHECK_STRING_ATTRIBUTE(sourceURL)
+        CHECK_STRING_ATTRIBUTE(sourceApplication)
+        CHECK_STRING_ATTRIBUTE(placeName)
+        CHECK_STRING_ATTRIBUTE(contentClass)
+
+        if (attributes.applicationData.isSet())
+        {
+            qint32 res = checkAppData(attributes.applicationData.ref(), errorDescription);
+            if (res != 0) {
+                return res;
+            }
+        }
+    }
 
     return 0;
 }
@@ -971,32 +1029,88 @@ qint32 FakeNoteStore::checkResourceFields(const Resource & resource, ErrorString
     {
         const qevercloud::ResourceAttributes & attributes = resource.resourceAttributes();
 
-#define CHECK_RESOURCE_STRING_ATTRIBUTE(attr) \
-        if (attributes.attr.isSet()) \
-        { \
-            if (attributes.attr.ref().size() < qevercloud::EDAM_ATTRIBUTE_LEN_MIN) { \
-                errorDescription.setBase(QStringLiteral("Note's resource attribute length is too small: ") + QString::fromUtf8( #attr )); \
-                return qevercloud::EDAMErrorCode::BAD_DATA_FORMAT; \
-            } \
-            \
-            if (attributes.attr.ref().size() < qevercloud::EDAM_ATTRIBUTE_LEN_MAX) { \
-                errorDescription.setBase(QStringLiteral("Note's resource attribute length is too large: ") + QString::fromUtf8( #attr )); \
-                return qevercloud::EDAMErrorCode::BAD_DATA_FORMAT; \
-            } \
-        }
-
-        CHECK_RESOURCE_STRING_ATTRIBUTE(sourceURL)
-        CHECK_RESOURCE_STRING_ATTRIBUTE(cameraMake)
-        CHECK_RESOURCE_STRING_ATTRIBUTE(cameraModel)
-
-#undef CHECK_RESOURCE_STRING_ATTRIBUTE
+        CHECK_STRING_ATTRIBUTE(sourceURL)
+        CHECK_STRING_ATTRIBUTE(cameraMake)
+        CHECK_STRING_ATTRIBUTE(cameraModel)
 
         if (attributes.applicationData.isSet())
         {
-            // const qevercloud::LazyMap & appData = attributes.applicationData.ref();
-
-            // TODO: continue here
+            qint32 res = checkAppData(attributes.applicationData.ref(), errorDescription);
+            if (res != 0) {
+                return res;
+            }
         }
+    }
+
+    return 0;
+}
+
+qint32 FakeNoteStore::checkAppData(const qevercloud::LazyMap & appData, ErrorString & errorDescription) const
+{
+    QRegExp keyRegExp(qevercloud::EDAM_APPLICATIONDATA_NAME_REGEX);
+    QRegExp valueRegExp(qevercloud::EDAM_APPLICATIONDATA_VALUE_REGEX);
+
+    if (appData.keysOnly.isSet())
+    {
+        for(auto it = appData.keysOnly.ref().constBegin(),
+            end = appData.keysOnly.ref().constEnd(); it != end; ++it)
+        {
+            const QString & key = *it;
+            qint32 res = checkAppDataKey(key, keyRegExp, errorDescription);
+            if (res != 0) {
+                return res;
+            }
+        }
+    }
+
+    if (appData.fullMap.isSet())
+    {
+        for(auto it = appData.fullMap.ref().constBegin(),
+            end = appData.fullMap.ref().constEnd(); it != end; ++it)
+        {
+            const QString & key = it.key();
+            qint32 res = checkAppDataKey(key, keyRegExp, errorDescription);
+            if (res != 0) {
+                return res;
+            }
+
+            const QString & value = it.value();
+
+            if (value.size() < qevercloud::EDAM_APPLICATIONDATA_VALUE_LEN_MIN) {
+                errorDescription.setBase(QStringLiteral("Resource app data value length is too small: ") + value);
+                return qevercloud::EDAMErrorCode::BAD_DATA_FORMAT;
+            }
+
+            if (value.size() > qevercloud::EDAM_APPLICATIONDATA_VALUE_LEN_MAX) {
+                errorDescription.setBase(QStringLiteral("Resource app data value length is too large: ") + value);
+                return qevercloud::EDAMErrorCode::BAD_DATA_FORMAT;
+            }
+
+            if (!valueRegExp.exactMatch(value)) {
+                errorDescription.setBase(QStringLiteral("Resource app data value doesn't match the mandatory regex"));
+                return qevercloud::EDAMErrorCode::BAD_DATA_FORMAT;
+            }
+        }
+    }
+
+    return 0;
+}
+
+qint32 FakeNoteStore::checkAppDataKey(const QString & key, const QRegExp & keyRegExp, ErrorString & errorDescription) const
+{
+    if (key.size() < qevercloud::EDAM_APPLICATIONDATA_NAME_LEN_MIN) {
+        errorDescription.setBase(QStringLiteral("Resource app data key length is too small: ") + key);
+        return qevercloud::EDAMErrorCode::BAD_DATA_FORMAT;
+    }
+
+    if (key.size() > qevercloud::EDAM_APPLICATIONDATA_NAME_LEN_MAX) {
+        errorDescription.setBase(QStringLiteral("Resource app data key length is too large: ") + key);
+        return qevercloud::EDAMErrorCode::BAD_DATA_FORMAT;
+    }
+
+    if (!keyRegExp.exactMatch(key)) {
+        errorDescription.setBase(QStringLiteral("Resource app data key doesn't match the mandatory regex"));
+        return qevercloud::EDAMErrorCode::BAD_DATA_FORMAT;
     }
 
     return 0;
