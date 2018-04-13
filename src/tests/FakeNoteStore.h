@@ -176,7 +176,17 @@ private:
 private:
     qint32 currentMaxUsn() const;
     qint32 checkNotebookFields(const Notebook & notebook, ErrorString & errorDescription) const;
-    qint32 checkNoteFields(const Note & note, ErrorString & errorDescription) const;
+
+    struct CheckNoteFieldsPurpose
+    {
+        enum type
+        {
+            CreateNote = 0,
+            UpdateNote
+        };
+    };
+
+    qint32 checkNoteFields(const Note & note, const CheckNoteFieldsPurpose::type purpose, ErrorString & errorDescription) const;
     qint32 checkResourceFields(const Resource & resource, ErrorString & errorDescription) const;
 
     qint32 checkAppData(const qevercloud::LazyMap & appData, ErrorString & errorDescription) const;

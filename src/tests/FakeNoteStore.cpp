@@ -516,6 +516,12 @@ qint32 FakeNoteStore::updateNotebook(Notebook & notebook, ErrorString & errorDes
         return qevercloud::EDAMErrorCode::DATA_CONFLICT;
     }
 
+    const Notebook & originalNotebook = *it;
+    if (!originalNotebook.canUpdateNotebook()) {
+        errorDescription.setBase(QStringLiteral("No permission to update the notebook"));
+        return qevercloud::EDAMErrorCode::PERMISSION_DENIED;
+    }
+
     Q_UNUSED(index.replace(it, notebook))
     return 0;
 }
@@ -530,7 +536,7 @@ qint32 FakeNoteStore::createNote(Note & note, ErrorString & errorDescription, qi
         return qevercloud::EDAMErrorCode::LIMIT_REACHED;
     }
 
-    qint32 checkRes = checkNoteFields(note, errorDescription);
+    qint32 checkRes = checkNoteFields(note, CheckNoteFieldsPurpose::CreateNote, errorDescription);
     if (checkRes != 0) {
         return checkRes;
     }
@@ -555,7 +561,7 @@ qint32 FakeNoteStore::updateNote(Note & note, ErrorString & errorDescription, qi
         return qevercloud::EDAMErrorCode::UNKNOWN;
     }
 
-    qint32 checkRes = checkNoteFields(note, errorDescription);
+    qint32 checkRes = checkNoteFields(note, CheckNoteFieldsPurpose::UpdateNote, errorDescription);
     if (checkRes != 0) {
         return checkRes;
     }
@@ -944,7 +950,7 @@ qint32 FakeNoteStore::checkNotebookFields(const Notebook & notebook, ErrorString
     return 0;
 }
 
-qint32 FakeNoteStore::checkNoteFields(const Note & note, ErrorString & errorDescription) const
+qint32 FakeNoteStore::checkNoteFields(const Note & note, const CheckNoteFieldsPurpose::type purpose, ErrorString & errorDescription) const
 {
     if (!note.hasNotebookGuid()) {
         errorDescription.setBase(QStringLiteral("Note has no notebook guid set"));
@@ -956,6 +962,22 @@ qint32 FakeNoteStore::checkNoteFields(const Note & note, ErrorString & errorDesc
     if (notebookIt == notebookIndex.end()) {
         errorDescription.setBase(QStringLiteral("Note.notebookGuid"));
         return qevercloud::EDAMErrorCode::UNKNOWN;
+    }
+
+    const Notebook & notebook = *notebookIt;
+    if (purpose == CheckNoteFieldsPurpose::CreateNote)
+    {
+        if (!notebook.canCreateNotes()) {
+            errorDescription.setBase(QStringLiteral("No permission to create notes within this notebook"));
+            return qevercloud::EDAMErrorCode::PERMISSION_DENIED;
+        }
+    }
+    else if (purpose == CheckNoteFieldsPurpose::UpdateNote)
+    {
+        if (!notebook.canUpdateNotes()) {
+            errorDescription.setBase(QStringLiteral("No permission to update notes within this notebook"));
+            return qevercloud::EDAMErrorCode::PERMISSION_DENIED;
+        }
     }
 
     if (note.hasTitle())
