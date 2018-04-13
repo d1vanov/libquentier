@@ -490,7 +490,7 @@ qint32 FakeNoteStore::updateNotebook(Notebook & notebook, ErrorString & errorDes
     CHECK_API_RATE_LIMIT()
 
     if (!notebook.hasGuid()) {
-        errorDescription.setBase(QStringLiteral("Notebook.guid"));
+        errorDescription.setBase(QStringLiteral("Notebook guid is not set"));
         return qevercloud::EDAMErrorCode::UNKNOWN;
     }
 
@@ -520,6 +520,16 @@ qint32 FakeNoteStore::updateNotebook(Notebook & notebook, ErrorString & errorDes
     if (!originalNotebook.canUpdateNotebook()) {
         errorDescription.setBase(QStringLiteral("No permission to update the notebook"));
         return qevercloud::EDAMErrorCode::PERMISSION_DENIED;
+    }
+
+    if (originalNotebook.name().toUpper() != notebook.name().toUpper())
+    {
+        NotebookDataByNameUpper & nameIndex = m_notebooks.get<NotebookByNameUpper>();
+        auto nameIt = nameIndex.find(notebook.name().toUpper());
+        if (nameIt != nameIndex.end()) {
+            errorDescription.setBase(QStringLiteral("Notebook with the specified name already exists"));
+            return qevercloud::EDAMErrorCode::DATA_CONFLICT;
+        }
     }
 
     Q_UNUSED(index.replace(it, notebook))
@@ -587,11 +597,31 @@ qint32 FakeNoteStore::createTag(Tag & tag, ErrorString & errorDescription, qint3
 {
     CHECK_API_RATE_LIMIT()
 
-    // TODO: implement
-    Q_UNUSED(tag)
-    Q_UNUSED(errorDescription)
-    Q_UNUSED(rateLimitSeconds)
-    Q_UNUSED(linkedNotebookAuthToken)
+    if (m_tags.size() + 1 > m_maxNumTags) {
+        errorDescription.setBase(QStringLiteral("Already at max number of tags"));
+        return qevercloud::EDAMErrorCode::LIMIT_REACHED;
+    }
+
+    qint32 checkRes = checkTagFields(tag, errorDescription);
+    if (checkRes != 0) {
+        return checkRes;
+    }
+
+    checkRes = checkLinkedNotebookAuthTokenForTag(tag, linkedNotebookAuthToken, errorDescription);
+    if (checkRes != 0) {
+        return checkRes;
+    }
+
+    TagDataByNameUpper & nameIndex = m_tags.get<TagByNameUpper>();
+    auto it = nameIndex.find(tag.name().toUpper());
+    if (it != nameIndex.end()) {
+        errorDescription.setBase(QStringLiteral("Tag name is already in use"));
+        return qevercloud::EDAMErrorCode::DATA_CONFLICT;
+    }
+
+    tag.setGuid(UidGenerator::Generate());
+    Q_UNUSED(m_tags.insert(tag))
+
     return 0;
 }
 
@@ -600,11 +630,40 @@ qint32 FakeNoteStore::updateTag(Tag & tag, ErrorString & errorDescription, qint3
 {
     CHECK_API_RATE_LIMIT()
 
-    // TODO: implement
-    Q_UNUSED(tag)
-    Q_UNUSED(errorDescription)
-    Q_UNUSED(rateLimitSeconds)
-    Q_UNUSED(linkedNotebookAuthToken)
+    if (!tag.hasGuid()) {
+        errorDescription.setBase(QStringLiteral("Tag guid is not set"));
+        return qevercloud::EDAMErrorCode::UNKNOWN;
+    }
+
+    qint32 checkRes = checkTagFields(tag, errorDescription);
+    if (checkRes != 0) {
+        return checkRes;
+    }
+
+    checkRes = checkLinkedNotebookAuthTokenForTag(tag, linkedNotebookAuthToken, errorDescription);
+    if (checkRes != 0) {
+        return checkRes;
+    }
+
+    TagDataByGuid & index = m_tags.get<TagByGuid>();
+    auto it = index.find(tag.guid());
+    if (it == index.end()) {
+        errorDescription.setBase(QStringLiteral("Tag with the specified guid doesn't exist"));
+        return qevercloud::EDAMErrorCode::DATA_CONFLICT;
+    }
+
+    const Tag & originalTag = *it;
+    if (originalTag.name().toUpper() != tag.name().toUpper())
+    {
+        TagDataByNameUpper & nameIndex = m_tags.get<TagByNameUpper>();
+        auto nameIt = nameIndex.find(tag.name().toUpper());
+        if (nameIt != nameIndex.end()) {
+            errorDescription.setBase(QStringLiteral("Tag with the specified name already exists"));
+            return qevercloud::EDAMErrorCode::DATA_CONFLICT;
+        }
+    }
+
+    Q_UNUSED(index.replace(it, tag))
     return 0;
 }
 
@@ -869,8 +928,8 @@ qint32 FakeNoteStore::checkNotebookFields(const Notebook & notebook, ErrorString
         return qevercloud::EDAMErrorCode::BAD_DATA_FORMAT;
     }
 
-    QRegExp notebookRegExp(qevercloud::EDAM_NOTEBOOK_NAME_REGEX);
-    if (!notebookRegExp.exactMatch(notebookName)) {
+    QRegExp notebookNameRegExp(qevercloud::EDAM_NOTEBOOK_NAME_REGEX);
+    if (!notebookNameRegExp.exactMatch(notebookName)) {
         errorDescription.setBase(QStringLiteral("Notebook name doesn't match the mandatory regex"));
         return qevercloud::EDAMErrorCode::BAD_DATA_FORMAT;
     }
@@ -1109,6 +1168,43 @@ qint32 FakeNoteStore::checkResourceFields(const Resource & resource, ErrorString
     return 0;
 }
 
+qint32 FakeNoteStore::checkTagFields(const Tag & tag, ErrorString & errorDescription) const
+{
+    if (!tag.hasName()) {
+        errorDescription.setBase(QStringLiteral("Tag.name"));
+        return qevercloud::EDAMErrorCode::BAD_DATA_FORMAT;
+    }
+
+    const QString & tagName = tag.name();
+    if (tagName.size() < qevercloud::EDAM_TAG_NAME_LEN_MIN) {
+        errorDescription.setBase(QStringLiteral("Tag name length is too small"));
+        return qevercloud::EDAMErrorCode::BAD_DATA_FORMAT;
+    }
+
+    if (tagName.size() > qevercloud::EDAM_TAG_NAME_LEN_MAX) {
+        errorDescription.setBase(QStringLiteral("Tag name length is too large"));
+        return qevercloud::EDAMErrorCode::BAD_DATA_FORMAT;
+    }
+
+    QRegExp tagNameRegExp(qevercloud::EDAM_TAG_NAME_REGEX);
+    if (!tagNameRegExp.exactMatch(tagName)) {
+        errorDescription.setBase(QStringLiteral("Tag name doesn't match the mandatory regex"));
+        return qevercloud::EDAMErrorCode::BAD_DATA_FORMAT;
+    }
+
+    if (tag.hasParentGuid())
+    {
+        const TagDataByGuid & index = m_tags.get<TagByGuid>();
+        auto it = index.find(tag.parentGuid());
+        if (it == index.end()) {
+            errorDescription.setBase(QStringLiteral("Parent tag doesn't exist"));
+            return qevercloud::EDAMErrorCode::UNKNOWN;
+        }
+    }
+
+    return 0;
+}
+
 qint32 FakeNoteStore::checkAppData(const qevercloud::LazyMap & appData, ErrorString & errorDescription) const
 {
     QRegExp keyRegExp(qevercloud::EDAM_APPLICATIONDATA_NAME_REGEX);
@@ -1192,6 +1288,45 @@ qint32 FakeNoteStore::checkLinkedNotebookAuthToken(const QString & notebookGuid,
     if (linkedNotebookAuthToken != expectedLinkedNotebookAuthToken) {
         errorDescription.setBase(QStringLiteral("Wrong linked notebook auth token"));
         return qevercloud::EDAMErrorCode::PERMISSION_DENIED;
+    }
+
+    return 0;
+}
+
+qint32 FakeNoteStore::checkLinkedNotebookAuthTokenForTag(const Tag & tag, const QString & linkedNotebookAuthToken,
+                                                         ErrorString & errorDescription) const
+{
+    if (!linkedNotebookAuthToken.isEmpty() && !tag.hasLinkedNotebookGuid()) {
+        errorDescription.setBase(QStringLiteral("Excess linked notebook auth token"));
+        return qevercloud::EDAMErrorCode::PERMISSION_DENIED;
+    }
+
+    if (tag.hasLinkedNotebookGuid())
+    {
+        if (linkedNotebookAuthToken.isEmpty()) {
+            errorDescription.setBase(QStringLiteral("Tag belongs to a linked notebook but linked notebook auth token is empty"));
+            return qevercloud::EDAMErrorCode::PERMISSION_DENIED;
+        }
+
+        bool foundAuthToken = false;
+        const NotebookDataByLinkedNotebookGuid & linkedNotebookGuidIndex = m_notebooks.get<NotebookByLinkedNotebookGuid>();
+        auto range = linkedNotebookGuidIndex.equal_range(tag.linkedNotebookGuid());
+        for(auto it = range.first; it != range.second; ++it)
+        {
+            const Notebook & notebook = *it;
+            auto authTokenIt = m_linkedNotebookAuthTokensByNotebookGuid.find(notebook.guid());
+            if ( (authTokenIt != m_linkedNotebookAuthTokensByNotebookGuid.end()) &&
+                 (authTokenIt.value() == linkedNotebookAuthToken) )
+            {
+                foundAuthToken = true;
+                break;
+            }
+        }
+
+        if (!foundAuthToken) {
+            errorDescription.setBase(QStringLiteral("Matching linked notebook auth token was not found"));
+            return qevercloud::EDAMErrorCode::PERMISSION_DENIED;
+        }
     }
 
     return 0;

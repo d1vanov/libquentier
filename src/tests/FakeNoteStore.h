@@ -188,12 +188,15 @@ private:
 
     qint32 checkNoteFields(const Note & note, const CheckNoteFieldsPurpose::type purpose, ErrorString & errorDescription) const;
     qint32 checkResourceFields(const Resource & resource, ErrorString & errorDescription) const;
+    qint32 checkTagFields(const Tag & tag, ErrorString & errorDescription) const;
 
     qint32 checkAppData(const qevercloud::LazyMap & appData, ErrorString & errorDescription) const;
     qint32 checkAppDataKey(const QString & key, const QRegExp & keyRegExp, ErrorString & errorDescription) const;
 
     qint32 checkLinkedNotebookAuthToken(const QString & notebookGuid, const QString & linkedNotebookAuthToken,
                                         ErrorString & errorDescription) const;
+    qint32 checkLinkedNotebookAuthTokenForTag(const Tag & tag, const QString & linkedNotebookAuthToken,
+                                              ErrorString & errorDescription) const;
 
 private:
     // Saved searches store
@@ -278,6 +281,7 @@ private:
     struct NotebookByGuid{};
     struct NotebookByUSN{};
     struct NotebookByNameUpper{};
+    struct NotebookByLinkedNotebookGuid{};
 
     struct NotebookNameUpperExtractor
     {
@@ -288,6 +292,18 @@ private:
             }
 
             return notebook.name().toUpper();
+        }
+    };
+
+    struct NotebookLinkedNotebookGuidExtractor
+    {
+        static QString linkedNotebookGuid(const Notebook & notebook)
+        {
+            if (!notebook.hasLinkedNotebookGuid()) {
+                return QString();
+            }
+
+            return notebook.linkedNotebookGuid();
         }
     };
 
@@ -305,6 +321,10 @@ private:
             boost::multi_index::hashed_unique<
                 boost::multi_index::tag<NotebookByNameUpper>,
                 boost::multi_index::global_fun<const Notebook&,QString,&NotebookNameUpperExtractor::nameUpper>
+            >,
+            boost::multi_index::hashed_non_unique<
+                boost::multi_index::tag<NotebookByLinkedNotebookGuid>,
+                boost::multi_index::global_fun<const Notebook&,QString,&NotebookLinkedNotebookGuidExtractor::linkedNotebookGuid>
             >
         >
     > NotebookData;
@@ -312,6 +332,7 @@ private:
     typedef NotebookData::index<NotebookByGuid>::type NotebookDataByGuid;
     typedef NotebookData::index<NotebookByUSN>::type NotebookDataByUSN;
     typedef NotebookData::index<NotebookByNameUpper>::type NotebookDataByNameUpper;
+    typedef NotebookData::index<NotebookByLinkedNotebookGuid>::type NotebookDataByLinkedNotebookGuid;
 
     // Note store
     struct NoteByGuid{};
