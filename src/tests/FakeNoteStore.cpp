@@ -26,7 +26,8 @@ FakeNoteStore::FakeNoteStore(QObject * parent) :
     m_maxNoteSize(static_cast<quint64>(qevercloud::EDAM_NOTE_SIZE_MAX_FREE)),
     m_maxNumResourcesPerNote(static_cast<quint32>(qevercloud::EDAM_NOTE_RESOURCES_MAX)),
     m_maxNumTagsPerNote(static_cast<quint32>(qevercloud::EDAM_NOTE_TAGS_MAX)),
-    m_maxResourceSize(static_cast<quint64>(qevercloud::EDAM_RESOURCE_SIZE_MAX_FREE))
+    m_maxResourceSize(static_cast<quint64>(qevercloud::EDAM_RESOURCE_SIZE_MAX_FREE)),
+    m_linkedNotebookAuthTokensByNotebookGuid()
 {}
 
 QHash<QString,qevercloud::SavedSearch> FakeNoteStore::savedSearches() const
@@ -406,6 +407,21 @@ void FakeNoteStore::setMaxResourceSize(const quint64 maxResourceSize)
     m_maxResourceSize = maxResourceSize;
 }
 
+QString FakeNoteStore::linkedNotebookAuthTokenForNotebook(const QString & notebookGuid) const
+{
+    auto it = m_linkedNotebookAuthTokensByNotebookGuid.find(notebookGuid);
+    if (it == m_linkedNotebookAuthTokensByNotebookGuid.end()) {
+        return QString();
+    }
+
+    return it.value();
+}
+
+void FakeNoteStore::setLinkedNotebookAuthTokenForNotebook(const QString & notebookGuid, const QString & linkedNotebookAuthToken)
+{
+    m_linkedNotebookAuthTokensByNotebookGuid[notebookGuid] = linkedNotebookAuthToken;
+}
+
 INoteStore * FakeNoteStore::create() const
 {
     return new FakeNoteStore;
@@ -446,6 +462,11 @@ qint32 FakeNoteStore::createNotebook(Notebook & notebook, ErrorString & errorDes
         return checkRes;
     }
 
+    checkRes = checkLinkedNotebookAuthToken(notebook.guid(), linkedNotebookAuthToken, errorDescription);
+    if (checkRes != 0) {
+        return checkRes;
+    }
+
     if (!linkedNotebookAuthToken.isEmpty() && notebook.isDefaultNotebook()) {
         errorDescription.setBase(QStringLiteral("Linked notebook cannot be set as default notebook"));
         return qevercloud::EDAMErrorCode::PERMISSION_DENIED;
@@ -474,6 +495,11 @@ qint32 FakeNoteStore::updateNotebook(Notebook & notebook, ErrorString & errorDes
     }
 
     qint32 checkRes = checkNotebookFields(notebook, errorDescription);
+    if (checkRes != 0) {
+        return checkRes;
+    }
+
+    checkRes = checkLinkedNotebookAuthToken(notebook.guid(), linkedNotebookAuthToken, errorDescription);
     if (checkRes != 0) {
         return checkRes;
     }
@@ -509,8 +535,10 @@ qint32 FakeNoteStore::createNote(Note & note, ErrorString & errorDescription, qi
         return checkRes;
     }
 
-    // TODO: check notebook guid vs linked notebook auth token
-    Q_UNUSED(linkedNotebookAuthToken)
+    checkRes = checkLinkedNotebookAuthToken(note.notebookGuid(), linkedNotebookAuthToken, errorDescription);
+    if (checkRes != 0) {
+        return checkRes;
+    }
 
     note.setGuid(UidGenerator::Generate());
     Q_UNUSED(m_notes.insert(note))
@@ -539,8 +567,10 @@ qint32 FakeNoteStore::updateNote(Note & note, ErrorString & errorDescription, qi
         return qevercloud::EDAMErrorCode::DATA_CONFLICT;
     }
 
-    // TODO: check notebook guid vs linked notebook auth token
-    Q_UNUSED(linkedNotebookAuthToken)
+    checkRes = checkLinkedNotebookAuthToken(note.notebookGuid(), linkedNotebookAuthToken, errorDescription);
+    if (checkRes != 0) {
+        return checkRes;
+    }
 
     Q_UNUSED(index.replace(it, note))
     return 0;
@@ -916,6 +946,18 @@ qint32 FakeNoteStore::checkNotebookFields(const Notebook & notebook, ErrorString
 
 qint32 FakeNoteStore::checkNoteFields(const Note & note, ErrorString & errorDescription) const
 {
+    if (!note.hasNotebookGuid()) {
+        errorDescription.setBase(QStringLiteral("Note has no notebook guid set"));
+        return qevercloud::EDAMErrorCode::BAD_DATA_FORMAT;
+    }
+
+    const NotebookDataByGuid & notebookIndex = m_notebooks.get<NotebookByGuid>();
+    auto notebookIt = notebookIndex.find(note.notebookGuid());
+    if (notebookIt == notebookIndex.end()) {
+        errorDescription.setBase(QStringLiteral("Note.notebookGuid"));
+        return qevercloud::EDAMErrorCode::UNKNOWN;
+    }
+
     if (note.hasTitle())
     {
         const QString & title = note.title();
@@ -1111,6 +1153,23 @@ qint32 FakeNoteStore::checkAppDataKey(const QString & key, const QRegExp & keyRe
     if (!keyRegExp.exactMatch(key)) {
         errorDescription.setBase(QStringLiteral("Resource app data key doesn't match the mandatory regex"));
         return qevercloud::EDAMErrorCode::BAD_DATA_FORMAT;
+    }
+
+    return 0;
+}
+
+qint32 FakeNoteStore::checkLinkedNotebookAuthToken(const QString & notebookGuid, const QString & linkedNotebookAuthToken,
+                                                   ErrorString & errorDescription) const
+{
+    QString expectedLinkedNotebookAuthToken;
+    auto linkedNotebookAuthTokenIt = m_linkedNotebookAuthTokensByNotebookGuid.find(notebookGuid);
+    if (linkedNotebookAuthTokenIt != m_linkedNotebookAuthTokensByNotebookGuid.end()) {
+        expectedLinkedNotebookAuthToken = linkedNotebookAuthTokenIt.value();
+    }
+
+    if (linkedNotebookAuthToken != expectedLinkedNotebookAuthToken) {
+        errorDescription.setBase(QStringLiteral("Wrong linked notebook auth token"));
+        return qevercloud::EDAMErrorCode::PERMISSION_DENIED;
     }
 
     return 0;

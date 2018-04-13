@@ -119,6 +119,9 @@ public:
     quint64 maxResourceSize() const;
     void setMaxResourceSize(const quint64 maxResourceSize);
 
+    QString linkedNotebookAuthTokenForNotebook(const QString & notebookGuid) const;
+    void setLinkedNotebookAuthTokenForNotebook(const QString & notebookGuid, const QString & linkedNotebookAuthToken);
+
 public:
     // INoteStore interface
     virtual INoteStore * create() const Q_DECL_OVERRIDE;
@@ -178,6 +181,9 @@ private:
 
     qint32 checkAppData(const qevercloud::LazyMap & appData, ErrorString & errorDescription) const;
     qint32 checkAppDataKey(const QString & key, const QRegExp & keyRegExp, ErrorString & errorDescription) const;
+
+    qint32 checkLinkedNotebookAuthToken(const QString & notebookGuid, const QString & linkedNotebookAuthToken,
+                                        ErrorString & errorDescription) const;
 
 private:
     // Saved searches store
@@ -345,6 +351,8 @@ private:
     quint32             m_maxNumResourcesPerNote;
     quint32             m_maxNumTagsPerNote;
     quint64             m_maxResourceSize;
+
+    QHash<QString,QString>  m_linkedNotebookAuthTokensByNotebookGuid;
 };
 
 } // namespace quentier
