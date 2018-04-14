@@ -57,9 +57,6 @@ private:
 private:
     UserStore(const UserStore & other) Q_DECL_EQ_DELETE;
     UserStore & operator=(const UserStore & other) Q_DECL_EQ_DELETE;
-
-private:
-    QSharedPointer<qevercloud::UserStore> m_pQecUserStore;
 };
 
 } // namespace quentier
