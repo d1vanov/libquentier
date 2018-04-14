@@ -671,10 +671,26 @@ qint32 FakeNoteStore::createSavedSearch(SavedSearch & savedSearch, ErrorString &
 {
     CHECK_API_RATE_LIMIT()
 
-    // TODO: implement
-    Q_UNUSED(savedSearch)
-    Q_UNUSED(errorDescription)
-    Q_UNUSED(rateLimitSeconds)
+    if (m_savedSearches.size() + 1 > m_maxNumSavedSearches) {
+        errorDescription.setBase(QStringLiteral("Already at max number of saved searches"));
+        return qevercloud::EDAMErrorCode::LIMIT_REACHED;
+    }
+
+    qint32 checkRes = checkSavedSearchFields(savedSearch, errorDescription);
+    if (checkRes != 0) {
+        return checkRes;
+    }
+
+    SavedSearchDataByNameUpper & nameIndex = m_savedSearches.get<SavedSearchByNameUpper>();
+    auto it = nameIndex.find(savedSearch.name().toUpper());
+    if (it != nameIndex.end()) {
+        errorDescription.setBase(QStringLiteral("Saved search name is already in use"));
+        return qevercloud::EDAMErrorCode::DATA_CONFLICT;
+    }
+
+    savedSearch.setGuid(UidGenerator::Generate());
+    Q_UNUSED(m_savedSearches.insert(savedSearch))
+
     return 0;
 }
 
@@ -682,10 +698,35 @@ qint32 FakeNoteStore::updateSavedSearch(SavedSearch & savedSearch, ErrorString &
 {
     CHECK_API_RATE_LIMIT()
 
-    // TODO: implement
-    Q_UNUSED(savedSearch)
-    Q_UNUSED(errorDescription)
-    Q_UNUSED(rateLimitSeconds)
+    if (!savedSearch.hasGuid()) {
+        errorDescription.setBase(QStringLiteral("Saved search guid is not set"));
+        return qevercloud::EDAMErrorCode::UNKNOWN;
+    }
+
+    qint32 checkRes = checkSavedSearchFields(savedSearch, errorDescription);
+    if (checkRes != 0) {
+        return checkRes;
+    }
+
+    SavedSearchDataByGuid & index = m_savedSearches.get<SavedSearchByGuid>();
+    auto it = index.find(savedSearch.guid());
+    if (it == index.end()) {
+        errorDescription.setBase(QStringLiteral("Saved search with the specified guid doesn't exist"));
+        return qevercloud::EDAMErrorCode::DATA_CONFLICT;
+    }
+
+    const SavedSearch & originalSavedSearch = *it;
+    if (originalSavedSearch.name().toUpper() != savedSearch.name().toUpper())
+    {
+        const SavedSearchDataByNameUpper & nameIndex = m_savedSearches.get<SavedSearchByNameUpper>();
+        auto nameIt = nameIndex.find(savedSearch.name().toUpper());
+        if (nameIt != nameIndex.end()) {
+            errorDescription.setBase(QStringLiteral("Saved search with the specified name already exists"));
+            return qevercloud::EDAMErrorCode::DATA_CONFLICT;
+        }
+    }
+
+    Q_UNUSED(index.replace(it, savedSearch))
     return 0;
 }
 
@@ -1171,7 +1212,7 @@ qint32 FakeNoteStore::checkResourceFields(const Resource & resource, ErrorString
 qint32 FakeNoteStore::checkTagFields(const Tag & tag, ErrorString & errorDescription) const
 {
     if (!tag.hasName()) {
-        errorDescription.setBase(QStringLiteral("Tag.name"));
+        errorDescription.setBase(QStringLiteral("Tag name is not set"));
         return qevercloud::EDAMErrorCode::BAD_DATA_FORMAT;
     }
 
@@ -1200,6 +1241,55 @@ qint32 FakeNoteStore::checkTagFields(const Tag & tag, ErrorString & errorDescrip
             errorDescription.setBase(QStringLiteral("Parent tag doesn't exist"));
             return qevercloud::EDAMErrorCode::UNKNOWN;
         }
+    }
+
+    return 0;
+}
+
+qint32 FakeNoteStore::checkSavedSearchFields(const SavedSearch & savedSearch, ErrorString & errorDescription) const
+{
+    if (!savedSearch.hasName()) {
+        errorDescription.setBase(QStringLiteral("Saved search name is not set"));
+        return qevercloud::EDAMErrorCode::BAD_DATA_FORMAT;
+    }
+
+    if (!savedSearch.hasQuery()) {
+        errorDescription.setBase(QStringLiteral("Saved search query is not set"));
+        return qevercloud::EDAMErrorCode::BAD_DATA_FORMAT;
+    }
+
+    const QString & savedSearchName = savedSearch.name();
+    if (savedSearchName.size() < qevercloud::EDAM_SAVED_SEARCH_NAME_LEN_MIN) {
+        errorDescription.setBase(QStringLiteral("Saved search name length is too small"));
+        return qevercloud::EDAMErrorCode::BAD_DATA_FORMAT;
+    }
+
+    if (savedSearchName.size() > qevercloud::EDAM_SAVED_SEARCH_NAME_LEN_MAX) {
+        errorDescription.setBase(QStringLiteral("Saved search name length is too large"));
+        return qevercloud::EDAMErrorCode::BAD_DATA_FORMAT;
+    }
+
+    QRegExp savedSearchNameRegExp(qevercloud::EDAM_SAVED_SEARCH_NAME_REGEX);
+    if (!savedSearchNameRegExp.exactMatch(savedSearchName)) {
+        errorDescription.setBase(QStringLiteral("Saved search name doesn't match the mandatory regex"));
+        return qevercloud::EDAMErrorCode::BAD_DATA_FORMAT;
+    }
+
+    const QString & savedSearchQuery = savedSearch.query();
+    if (savedSearchQuery.size() < qevercloud::EDAM_SEARCH_QUERY_LEN_MIN) {
+        errorDescription.setBase(QStringLiteral("Saved search query length is too small"));
+        return qevercloud::EDAMErrorCode::BAD_DATA_FORMAT;
+    }
+
+    if (savedSearchQuery.size() > qevercloud::EDAM_SEARCH_QUERY_LEN_MAX) {
+        errorDescription.setBase(QStringLiteral("Saved search query length is too large"));
+        return qevercloud::EDAMErrorCode::BAD_DATA_FORMAT;
+    }
+
+    QRegExp savedSearchQueryRegExp(qevercloud::EDAM_SEARCH_QUERY_REGEX);
+    if (!savedSearchQueryRegExp.exactMatch(savedSearchQuery)) {
+        errorDescription.setBase(QStringLiteral("Saved search query doesn't match the mandatory refex"));
+        return qevercloud::EDAMErrorCode::BAD_DATA_FORMAT;
     }
 
     return 0;

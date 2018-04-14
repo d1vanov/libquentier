@@ -189,6 +189,7 @@ private:
     qint32 checkNoteFields(const Note & note, const CheckNoteFieldsPurpose::type purpose, ErrorString & errorDescription) const;
     qint32 checkResourceFields(const Resource & resource, ErrorString & errorDescription) const;
     qint32 checkTagFields(const Tag & tag, ErrorString & errorDescription) const;
+    qint32 checkSavedSearchFields(const SavedSearch & savedSearch, ErrorString & errorDescription) const;
 
     qint32 checkAppData(const qevercloud::LazyMap & appData, ErrorString & errorDescription) const;
     qint32 checkAppDataKey(const QString & key, const QRegExp & keyRegExp, ErrorString & errorDescription) const;
