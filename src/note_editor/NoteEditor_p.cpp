@@ -293,6 +293,7 @@ NoteEditorPrivate::NoteEditorPrivate(NoteEditor & noteEditor) :
                                 "<link rel=\"stylesheet\" type=\"text/css\" href=\"qrc:/css/en-todo.css\">"
                                 "<link rel=\"stylesheet\" type=\"text/css\" href=\"qrc:/css/link.css\">"
                                 "<link rel=\"stylesheet\" type=\"text/css\" href=\"qrc:/css/misspell.css\">"
+                                "<link rel=\"stylesheet\" type=\"text/css\" href=\"qrc:/css/edit_cursor_trick.css\">"
                                 "<title></title></head>")),
     m_lastSelectedHtml(),
     m_lastSelectedHtmlForEncryption(),

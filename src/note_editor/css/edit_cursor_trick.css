@@ -1,0 +1,34 @@
+/*
+ * Copyright 2018 Dmitry Ivanov
+ *
+ * This file is part of libquentier
+ *
+ * libquentier is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, version 3 of the License.
+ *
+ * libquentier is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
+ */
+
+/**
+ * The below CSS is a trick to enable the display of text edit cursor in contenteditable body
+ * which is initially empty - it is so when the new note is created.
+ * Reference: https://stackoverflow.com/a/20250367/1217285
+ *
+ * 97% is the ad-hoc value which seems to work well enough; 100% causes the new note's editor page
+ * to appear like it's slightly slided down
+ */
+
+html {
+height: 97%;
+}
+
+body {
+height: 97%;
+}

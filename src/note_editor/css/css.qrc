@@ -10,5 +10,6 @@
         <file>link.css</file>
         <file>misspell.css</file>
         <file>jquery-ui.min.css</file>
+        <file>edit_cursor_trick.css</file>
     </qresource>
 </RCC>
