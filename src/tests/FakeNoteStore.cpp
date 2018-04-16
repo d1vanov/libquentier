@@ -3,6 +3,7 @@
 #include <quentier/types/Resource.h>
 #include <QTimerEvent>
 #include <QRegExp>
+#include <algorithm>
 
 namespace quentier {
 
@@ -16,6 +17,8 @@ FakeNoteStore::FakeNoteStore(QObject * parent) :
     m_expungedNotebookGuids(),
     m_notes(),
     m_expungedNoteGuids(),
+    m_linkedNotebooks(),
+    m_expungedLinkedNotebookGuids(),
     m_shouldTriggerRateLimitReachOnNextCall(false),
     m_getNoteAsyncDelayTimerIds(),
     m_getResourceAsyncDelayTimerIds(),
@@ -27,7 +30,8 @@ FakeNoteStore::FakeNoteStore(QObject * parent) :
     m_maxNumResourcesPerNote(static_cast<quint32>(qevercloud::EDAM_NOTE_RESOURCES_MAX)),
     m_maxNumTagsPerNote(static_cast<quint32>(qevercloud::EDAM_NOTE_TAGS_MAX)),
     m_maxResourceSize(static_cast<quint64>(qevercloud::EDAM_RESOURCE_SIZE_MAX_FREE)),
-    m_linkedNotebookAuthTokensByNotebookGuid()
+    m_linkedNotebookAuthTokensByNotebookGuid(),
+    m_syncState()
 {}
 
 QHash<QString,qevercloud::SavedSearch> FakeNoteStore::savedSearches() const
@@ -48,6 +52,24 @@ bool FakeNoteStore::setSavedSearch(SavedSearch & search, ErrorString & errorDesc
     if (!search.hasGuid()) {
         errorDescription.setBase(QStringLiteral("Can't set saved search without guid"));
         return false;
+    }
+
+    if (!search.hasName()) {
+        errorDescription.setBase(QStringLiteral("Can't set saved search without name"));
+        return false;
+    }
+
+    SavedSearchDataByNameUpper & nameIndex = m_savedSearches.get<SavedSearchByNameUpper>();
+    auto nameIt = nameIndex.find(search.name().toUpper());
+    while(nameIt != nameIndex.end())
+    {
+        if (nameIt->guid() == search.guid()) {
+            break;
+        }
+
+        QString name = nextName(search.name());
+        search.setName(name);
+        nameIt = nameIndex.find(name.toUpper());
     }
 
     qint32 maxUsn = currentMaxUsn();
@@ -123,6 +145,24 @@ bool FakeNoteStore::setTag(Tag & tag, ErrorString & errorDescription)
         return false;
     }
 
+    if (!tag.hasName()) {
+        errorDescription.setBase(QStringLiteral("Can't set tag without name"));
+        return false;
+    }
+
+    TagDataByNameUpper & nameIndex = m_tags.get<TagByNameUpper>();
+    auto nameIt = nameIndex.find(tag.name().toUpper());
+    while(nameIt != nameIndex.end())
+    {
+        if (nameIt->guid() == tag.guid()) {
+            break;
+        }
+
+        QString name = nextName(tag.name());
+        tag.setName(name);
+        nameIt = nameIndex.find(name.toUpper());
+    }
+
     qint32 maxUsn = currentMaxUsn();
     ++maxUsn;
     tag.setUpdateSequenceNumber(maxUsn);
@@ -194,6 +234,24 @@ bool FakeNoteStore::setNotebook(Notebook & notebook, ErrorString & errorDescript
     if (!notebook.hasGuid()) {
         errorDescription.setBase(QStringLiteral("Can't set notebook without guid"));
         return false;
+    }
+
+    if (!notebook.hasName()) {
+        errorDescription.setBase(QStringLiteral("Can't set notebook without name"));
+        return false;
+    }
+
+    NotebookDataByNameUpper & nameIndex = m_notebooks.get<NotebookByNameUpper>();
+    auto nameIt = nameIndex.find(notebook.name().toUpper());
+    while(nameIt != nameIndex.end())
+    {
+        if (nameIt->guid() == notebook.guid()) {
+            break;
+        }
+
+        QString name = nextName(notebook.name());
+        notebook.setName(name);
+        nameIt = nameIndex.find(name.toUpper());
     }
 
     qint32 maxUsn = currentMaxUsn();
@@ -322,6 +380,92 @@ bool FakeNoteStore::removeExpungedNoteGuid(const QString & guid)
     return true;
 }
 
+QHash<QString,qevercloud::LinkedNotebook> FakeNoteStore::linkedNotebooks() const
+{
+    QHash<QString,qevercloud::LinkedNotebook> result;
+    result.reserve(static_cast<int>(m_linkedNotebooks.size()));
+
+    const LinkedNotebookDataByGuid & linkedNotebookDataByGuid = m_linkedNotebooks.get<LinkedNotebookByGuid>();
+    for(auto it = linkedNotebookDataByGuid.begin(), end = linkedNotebookDataByGuid.end(); it != end; ++it) {
+        result[it->guid()] = it->qevercloudLinkedNotebook();
+    }
+
+    return result;
+}
+
+bool FakeNoteStore::setLinkedNotebook(LinkedNotebook & linkedNotebook, ErrorString & errorDescription)
+{
+    if (!linkedNotebook.hasGuid()) {
+        errorDescription.setBase(QStringLiteral("Can't set notebook without guid"));
+        return false;
+    }
+
+    if (!linkedNotebook.hasShardId())
+    {
+        linkedNotebook.setShardId(UidGenerator::Generate());
+    }
+    else
+    {
+        LinkedNotebookDataByShardId & shardIdIndex = m_linkedNotebooks.get<LinkedNotebookByShardId>();
+        auto it = shardIdIndex.find(linkedNotebook.shardId());
+        if ((it != shardIdIndex.end()) && (it->guid() != linkedNotebook.guid())) {
+            linkedNotebook.setShardId(UidGenerator::Generate());
+        }
+    }
+
+    qint32 maxUsn = currentMaxUsn();
+    ++maxUsn;
+    linkedNotebook.setUpdateSequenceNumber(maxUsn);
+
+    Q_UNUSED(m_linkedNotebooks.insert(linkedNotebook));
+    return true;
+}
+
+const LinkedNotebook * FakeNoteStore::findLinkedNotebook(const QString & guid) const
+{
+    const LinkedNotebookDataByGuid & index = m_linkedNotebooks.get<LinkedNotebookByGuid>();
+    auto it = index.find(guid);
+    if (it == index.end()) {
+        return Q_NULLPTR;
+    }
+
+    const LinkedNotebook & linkedNotebook = *it;
+    return &linkedNotebook;
+}
+
+bool FakeNoteStore::removeLinkedNotebook(const QString & guid)
+{
+    LinkedNotebookDataByGuid & index = m_linkedNotebooks.get<LinkedNotebookByGuid>();
+    auto it = index.find(guid);
+    if (it == index.end()) {
+        return false;
+    }
+
+    Q_UNUSED(index.erase(it))
+    return true;
+}
+
+void FakeNoteStore::setExpungedLinkedNotebookGuid(const QString & guid)
+{
+    Q_UNUSED(m_expungedLinkedNotebookGuids.insert(guid))
+}
+
+bool FakeNoteStore::containsExpungedLinkedNotebookGuid(const QString & guid) const
+{
+    return m_expungedLinkedNotebookGuids.contains(guid);
+}
+
+bool FakeNoteStore::removeExpungedLinkedNotebookGuid(const QString & guid)
+{
+    auto it = m_expungedLinkedNotebookGuids.find(guid);
+    if (it == m_expungedLinkedNotebookGuids.end()) {
+        return false;
+    }
+
+    Q_UNUSED(m_expungedLinkedNotebookGuids.erase(it))
+    return true;
+}
+
 void FakeNoteStore::triggerRateLimitReachOnNextCall()
 {
     m_shouldTriggerRateLimitReachOnNextCall = true;
@@ -420,6 +564,16 @@ QString FakeNoteStore::linkedNotebookAuthTokenForNotebook(const QString & notebo
 void FakeNoteStore::setLinkedNotebookAuthTokenForNotebook(const QString & notebookGuid, const QString & linkedNotebookAuthToken)
 {
     m_linkedNotebookAuthTokensByNotebookGuid[notebookGuid] = linkedNotebookAuthToken;
+}
+
+qevercloud::SyncState FakeNoteStore::syncState() const
+{
+    return m_syncState;
+}
+
+void FakeNoteStore::setSyncState(const qevercloud::SyncState & syncState)
+{
+    m_syncState = syncState;
 }
 
 INoteStore * FakeNoteStore::create() const
@@ -733,10 +887,8 @@ qint32 FakeNoteStore::updateSavedSearch(SavedSearch & savedSearch, ErrorString &
 qint32 FakeNoteStore::getSyncState(qevercloud::SyncState & syncState, ErrorString & errorDescription, qint32 & rateLimitSeconds)
 {
     CHECK_API_RATE_LIMIT()
-
-    Q_UNUSED(syncState)
+    syncState = m_syncState;
     Q_UNUSED(errorDescription)
-    Q_UNUSED(rateLimitSeconds)
     return 0;
 }
 
@@ -746,13 +898,80 @@ qint32 FakeNoteStore::getSyncChunk(const qint32 afterUSN, const qint32 maxEntrie
 {
     CHECK_API_RATE_LIMIT()
 
-    // TODO: implement
-    Q_UNUSED(afterUSN)
-    Q_UNUSED(maxEntries)
-    Q_UNUSED(filter)
-    Q_UNUSED(syncChunk)
-    Q_UNUSED(errorDescription)
-    Q_UNUSED(rateLimitSeconds)
+    if (afterUSN < 0) {
+        errorDescription.setBase(QStringLiteral("After USN is negative"));
+        return qevercloud::EDAMErrorCode::BAD_DATA_FORMAT;
+    }
+
+    if (maxEntries < 1) {
+        errorDescription.setBase(QStringLiteral("Max entries is less than 1"));
+        return qevercloud::EDAMErrorCode::BAD_DATA_FORMAT;
+    }
+
+    syncChunk = qevercloud::SyncChunk();
+
+    if (filter.notebookGuids.isSet() && !filter.notebookGuids.ref().isEmpty() &&
+        filter.includeExpunged.isSet() && filter.includeExpunged.ref())
+    {
+        errorDescription.setBase(QStringLiteral("Can't set notebook guids along with include expunged"));
+        return qevercloud::EDAMErrorCode::DATA_CONFLICT;
+    }
+
+    if (filter.includeSearches.isSet() && filter.includeSearches.ref())
+    {
+        const SavedSearchDataByUSN & usnIndex = m_savedSearches.get<SavedSearchByUSN>();
+        auto it = std::upper_bound(usnIndex.begin(), usnIndex.end(), afterUSN, CompareByUSN<SavedSearch>());
+        for(auto end = usnIndex.end(); it != end; ++it)
+        {
+            if (!syncChunk.searches.isSet()) {
+                syncChunk.searches = QList<qevercloud::SavedSearch>();
+            }
+
+            syncChunk.searches->append(it->qevercloudSavedSearch());
+            if (syncChunk.searches->size() == maxEntries) {
+                return 0;
+            }
+        }
+    }
+
+    if (filter.includeTags.isSet() && filter.includeTags.ref())
+    {
+        const TagDataByUSN & usnIndex = m_tags.get<TagByUSN>();
+        auto it = std::upper_bound(usnIndex.begin(), usnIndex.end(), afterUSN, CompareByUSN<Tag>());
+        for(auto end = usnIndex.end(); it != end; ++it)
+        {
+            if (!syncChunk.tags.isSet()) {
+                syncChunk.tags = QList<qevercloud::Tag>();
+            }
+
+            syncChunk.tags->append(it->qevercloudTag());
+            if ((syncChunk.tags->size() + (syncChunk.searches.isSet() ? syncChunk.searches->size() : 0)) == maxEntries) {
+                return 0;
+            }
+        }
+    }
+
+    if (filter.includeNotebooks.isSet() && filter.includeNotebooks.ref())
+    {
+        const NotebookDataByUSN & usnIndex = m_notebooks.get<NotebookByUSN>();
+        auto it = std::upper_bound(usnIndex.begin(), usnIndex.end(), afterUSN, CompareByUSN<Notebook>());
+        for(auto end = usnIndex.end(); it != end; ++it)
+        {
+            if (!syncChunk.notebooks.isSet()) {
+                syncChunk.notebooks = QList<qevercloud::Notebook>();
+            }
+
+            syncChunk.notebooks->append(it->qevercloudNotebook());
+            if ((syncChunk.notebooks->size() +
+                 (syncChunk.tags.isSet() ? syncChunk.tags->size() : 0) +
+                 (syncChunk.searches.isSet() ? syncChunk.searches->size() : 0)) == maxEntries)
+            {
+                return 0;
+            }
+        }
+    }
+
+    // TODO: continue from here
     return 0;
 }
 
@@ -940,6 +1159,16 @@ qint32 FakeNoteStore::currentMaxUsn() const
         --lastNoteIt;
         if (lastNoteIt->updateSequenceNumber() > maxUsn) {
             maxUsn = lastNoteIt->updateSequenceNumber();
+        }
+    }
+
+    const LinkedNotebookDataByUSN & linkedNotebookUsnIndex = m_linkedNotebooks.get<LinkedNotebookByUSN>();
+    if (!linkedNotebookUsnIndex.empty())
+    {
+        auto lastLinkedNotebookIt = linkedNotebookUsnIndex.end();
+        --lastLinkedNotebookIt;
+        if (lastLinkedNotebookIt->updateSequenceNumber() > maxUsn) {
+            maxUsn = lastLinkedNotebookIt->updateSequenceNumber();
         }
     }
 
@@ -1420,6 +1649,26 @@ qint32 FakeNoteStore::checkLinkedNotebookAuthTokenForTag(const Tag & tag, const 
     }
 
     return 0;
+}
+
+QString FakeNoteStore::nextName(const QString & name) const
+{
+    int lastIndex = name.lastIndexOf(QStringLiteral("_"));
+    if (lastIndex >= 0)
+    {
+        QString numStr = name.mid(lastIndex, name.size() - lastIndex - 1);
+        bool conversionResult = false;
+        int num = numStr.toInt(&conversionResult);
+        if (conversionResult) {
+            QString result = name.left(lastIndex);
+            result.append(QStringLiteral("_") + QString::number(num + 1));
+            return result;
+        }
+    }
+
+    QString result = name;
+    result.append(QStringLiteral("_") + QString::number(2));
+    return result;
 }
 
 } // namespace quentier

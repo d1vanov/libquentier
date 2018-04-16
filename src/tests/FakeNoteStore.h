@@ -24,6 +24,7 @@
 #include <quentier/types/Tag.h>
 #include <quentier/types/Notebook.h>
 #include <quentier/types/Note.h>
+#include <quentier/types/LinkedNotebook.h>
 #include <quentier/utility/Macros.h>
 
 // NOTE: Workaround a bug in Qt4 which may prevent building with some boost versions
@@ -92,6 +93,17 @@ public:
     bool containsExpungedNoteGuid(const QString & guid) const;
     bool removeExpungedNoteGuid(const QString & guid);
 
+    // Linked notebooks
+    QHash<QString,qevercloud::LinkedNotebook> linkedNotebooks() const;
+
+    bool setLinkedNotebook(LinkedNotebook & linkedNotebook, ErrorString & errorDescription);
+    const LinkedNotebook * findLinkedNotebook(const QString & guid) const;
+    bool removeLinkedNotebook(const QString & guid);
+
+    void setExpungedLinkedNotebookGuid(const QString & guid);
+    bool containsExpungedLinkedNotebookGuid(const QString & guid) const;
+    bool removeExpungedLinkedNotebookGuid(const QString & guid);
+
     // Other
     void triggerRateLimitReachOnNextCall();
 
@@ -121,6 +133,9 @@ public:
 
     QString linkedNotebookAuthTokenForNotebook(const QString & notebookGuid) const;
     void setLinkedNotebookAuthTokenForNotebook(const QString & notebookGuid, const QString & linkedNotebookAuthToken);
+
+    qevercloud::SyncState syncState() const;
+    void setSyncState(const qevercloud::SyncState & syncState);
 
 public:
     // INoteStore interface
@@ -199,6 +214,13 @@ private:
     qint32 checkLinkedNotebookAuthTokenForTag(const Tag & tag, const QString & linkedNotebookAuthToken,
                                               ErrorString & errorDescription) const;
 
+    /**
+     * Generates next presumably unoccupied name by appending _ and number to
+     * the end of the original name or increasing the number if it's already
+     * there
+     */
+    QString nextName(const QString & name) const;
+
 private:
     // Saved searches store
     struct SavedSearchByGuid{};
@@ -209,10 +231,6 @@ private:
     {
         static QString nameUpper(const SavedSearch & search)
         {
-            if (!search.hasName()) {
-                return QString();
-            }
-
             return search.name().toUpper();
         }
     };
@@ -248,10 +266,6 @@ private:
     {
         static QString nameUpper(const Tag & tag)
         {
-            if (!tag.hasName()) {
-                return QString();
-            }
-
             return tag.name().toUpper();
         }
     };
@@ -288,10 +302,6 @@ private:
     {
         static QString nameUpper(const Notebook & notebook)
         {
-            if (!notebook.hasName()) {
-                return QString();
-            }
-
             return notebook.name().toUpper();
         }
     };
@@ -356,6 +366,43 @@ private:
     typedef NoteData::index<NoteByGuid>::type NoteDataByGuid;
     typedef NoteData::index<NoteByUSN>::type NoteDataByUSN;
 
+    // Linked notebook store
+    struct LinkedNotebookByGuid{};
+    struct LinkedNotebookByUSN{};
+    struct LinkedNotebookByShardId{};
+
+    typedef boost::multi_index_container<
+        LinkedNotebook,
+        boost::multi_index::indexed_by<
+            boost::multi_index::hashed_unique<
+                boost::multi_index::tag<LinkedNotebookByGuid>,
+                boost::multi_index::const_mem_fun<LinkedNotebook,const QString&,&LinkedNotebook::guid>
+            >,
+            boost::multi_index::hashed_unique<
+                boost::multi_index::tag<LinkedNotebookByShardId>,
+                boost::multi_index::const_mem_fun<LinkedNotebook,const QString&,&LinkedNotebook::shardId>
+            >,
+            boost::multi_index::ordered_unique<
+                boost::multi_index::tag<LinkedNotebookByUSN>,
+                boost::multi_index::const_mem_fun<LinkedNotebook,qint32,&LinkedNotebook::updateSequenceNumber>
+            >
+        >
+    > LinkedNotebookData;
+
+    typedef LinkedNotebookData::index<LinkedNotebookByGuid>::type LinkedNotebookDataByGuid;
+    typedef LinkedNotebookData::index<LinkedNotebookByUSN>::type LinkedNotebookDataByUSN;
+    typedef LinkedNotebookData::index<LinkedNotebookByShardId>::type LinkedNotebookDataByShardId;
+
+    template <class T>
+    class CompareByUSN
+    {
+    public:
+        bool operator()(const qint32 usn, const T & item) const
+        {
+            return usn < item.updateSequenceNumber();
+        }
+    };
+
 private:
     SavedSearchData     m_savedSearches;
     QSet<QString>       m_expungedSavedSearchGuids;
@@ -368,6 +415,9 @@ private:
 
     NoteData            m_notes;
     QSet<QString>       m_expungedNoteGuids;
+
+    LinkedNotebookData  m_linkedNotebooks;
+    QSet<QString>       m_expungedLinkedNotebookGuids;
 
     bool                m_shouldTriggerRateLimitReachOnNextCall;
 
@@ -385,6 +435,8 @@ private:
     quint64             m_maxResourceSize;
 
     QHash<QString,QString>  m_linkedNotebookAuthTokensByNotebookGuid;
+
+    qevercloud::SyncState   m_syncState;
 };
 
 } // namespace quentier
