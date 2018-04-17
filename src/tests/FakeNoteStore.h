@@ -403,6 +403,22 @@ private:
         }
     };
 
+    // C++98 style scoped enum used to help maintain the bookkeeping
+    // on which kind of item should be the next one inserted into
+    // the sync chunk
+    struct NextItemType
+    {
+        enum type
+        {
+            None = 0,
+            SavedSearch,
+            Tag,
+            Notebook,
+            Note,
+            LinkedNotebook
+        };
+    };
+
 private:
     SavedSearchData     m_savedSearches;
     QSet<QString>       m_expungedSavedSearchGuids;

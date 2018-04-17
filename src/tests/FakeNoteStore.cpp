@@ -1,9 +1,12 @@
 #include "FakeNoteStore.h"
 #include <quentier/utility/UidGenerator.h>
 #include <quentier/types/Resource.h>
+#include <quentier/logging/QuentierLogger.h>
 #include <QTimerEvent>
 #include <QRegExp>
+#include <QDateTime>
 #include <algorithm>
+#include <limits>
 
 namespace quentier {
 
@@ -76,6 +79,7 @@ bool FakeNoteStore::setSavedSearch(SavedSearch & search, ErrorString & errorDesc
     ++maxUsn;
     search.setUpdateSequenceNumber(maxUsn);
 
+    Q_UNUSED(removeExpungedSavedSearchGuid(search.guid()))
     Q_UNUSED(m_savedSearches.insert(search))
     return true;
 }
@@ -106,6 +110,7 @@ bool FakeNoteStore::removeSavedSearch(const QString & guid)
 
 void FakeNoteStore::setExpungedSavedSearchGuid(const QString & guid)
 {
+    Q_UNUSED(removeSavedSearch(guid))
     Q_UNUSED(m_expungedSavedSearchGuids.insert(guid))
 }
 
@@ -150,6 +155,18 @@ bool FakeNoteStore::setTag(Tag & tag, ErrorString & errorDescription)
         return false;
     }
 
+    if (tag.hasLinkedNotebookGuid())
+    {
+        const QString & linkedNotebookGuid = tag.linkedNotebookGuid();
+
+        const LinkedNotebookDataByGuid & index = m_linkedNotebooks.get<LinkedNotebookByGuid>();
+        auto it = index.find(linkedNotebookGuid);
+        if (it == index.end()) {
+            errorDescription.setBase(QStringLiteral("Can't set tag with linked notebook guid corresponding to no existing linked notebook"));
+            return false;
+        }
+    }
+
     TagDataByNameUpper & nameIndex = m_tags.get<TagByNameUpper>();
     auto nameIt = nameIndex.find(tag.name().toUpper());
     while(nameIt != nameIndex.end())
@@ -167,6 +184,7 @@ bool FakeNoteStore::setTag(Tag & tag, ErrorString & errorDescription)
     ++maxUsn;
     tag.setUpdateSequenceNumber(maxUsn);
 
+    Q_UNUSED(removeExpungedTagGuid(tag.guid()))
     Q_UNUSED(m_tags.insert(tag))
     return true;
 }
@@ -197,6 +215,7 @@ bool FakeNoteStore::removeTag(const QString & guid)
 
 void FakeNoteStore::setExpungedTagGuid(const QString & guid)
 {
+    Q_UNUSED(removeTag(guid))
     Q_UNUSED(m_expungedTagGuids.insert(guid))
 }
 
@@ -241,6 +260,18 @@ bool FakeNoteStore::setNotebook(Notebook & notebook, ErrorString & errorDescript
         return false;
     }
 
+    if (notebook.hasLinkedNotebookGuid())
+    {
+        const QString & linkedNotebookGuid = notebook.linkedNotebookGuid();
+
+        const LinkedNotebookDataByGuid & index = m_linkedNotebooks.get<LinkedNotebookByGuid>();
+        auto it = index.find(linkedNotebookGuid);
+        if (it == index.end()) {
+            errorDescription.setBase(QStringLiteral("Can't set notebook with linked notebook guid corresponding to no existing linked notebook"));
+            return false;
+        }
+    }
+
     NotebookDataByNameUpper & nameIndex = m_notebooks.get<NotebookByNameUpper>();
     auto nameIt = nameIndex.find(notebook.name().toUpper());
     while(nameIt != nameIndex.end())
@@ -258,6 +289,7 @@ bool FakeNoteStore::setNotebook(Notebook & notebook, ErrorString & errorDescript
     ++maxUsn;
     notebook.setUpdateSequenceNumber(maxUsn);
 
+    Q_UNUSED(removeExpungedNotebookGuid(notebook.guid()))
     Q_UNUSED(m_notebooks.insert(notebook))
     return true;
 }
@@ -288,6 +320,7 @@ bool FakeNoteStore::removeNotebook(const QString & guid)
 
 void FakeNoteStore::setExpungedNotebookGuid(const QString & guid)
 {
+    Q_UNUSED(removeNotebook(guid))
     Q_UNUSED(m_expungedNotebookGuids.insert(guid))
 }
 
@@ -327,10 +360,23 @@ bool FakeNoteStore::setNote(Note & note, ErrorString & errorDescription)
         return false;
     }
 
+    if (!note.hasNotebookGuid()) {
+        errorDescription.setBase(QStringLiteral("Can't set note without notebook guid"));
+        return false;
+    }
+
+    const NotebookDataByGuid & notebookGuidIndex = m_notebooks.get<NotebookByGuid>();
+    auto notebookIt = notebookGuidIndex.find(note.notebookGuid());
+    if (notebookIt == notebookGuidIndex.end()) {
+        errorDescription.setBase(QStringLiteral("Can't set note: no notebook was found for it by guid"));
+        return false;
+    }
+
     qint32 maxUsn = currentMaxUsn();
     ++maxUsn;
     note.setUpdateSequenceNumber(maxUsn);
 
+    Q_UNUSED(removeExpungedNoteGuid(note.guid()))
     Q_UNUSED(m_notes.insert(note))
     return true;
 }
@@ -361,6 +407,7 @@ bool FakeNoteStore::removeNote(const QString & guid)
 
 void FakeNoteStore::setExpungedNoteGuid(const QString & guid)
 {
+    Q_UNUSED(removeNote(guid))
     Q_UNUSED(m_expungedNoteGuids.insert(guid))
 }
 
@@ -417,6 +464,7 @@ bool FakeNoteStore::setLinkedNotebook(LinkedNotebook & linkedNotebook, ErrorStri
     ++maxUsn;
     linkedNotebook.setUpdateSequenceNumber(maxUsn);
 
+    Q_UNUSED(removeExpungedLinkedNotebookGuid(linkedNotebook.guid()))
     Q_UNUSED(m_linkedNotebooks.insert(linkedNotebook));
     return true;
 }
@@ -447,6 +495,7 @@ bool FakeNoteStore::removeLinkedNotebook(const QString & guid)
 
 void FakeNoteStore::setExpungedLinkedNotebookGuid(const QString & guid)
 {
+    Q_UNUSED(removeLinkedNotebook(guid))
     Q_UNUSED(m_expungedLinkedNotebookGuids.insert(guid))
 }
 
@@ -909,6 +958,7 @@ qint32 FakeNoteStore::getSyncChunk(const qint32 afterUSN, const qint32 maxEntrie
     }
 
     syncChunk = qevercloud::SyncChunk();
+    syncChunk.currentTime = QDateTime::currentMSecsSinceEpoch();
 
     if (filter.notebookGuids.isSet() && !filter.notebookGuids.ref().isEmpty() &&
         filter.includeExpunged.isSet() && filter.includeExpunged.ref())
@@ -917,61 +967,336 @@ qint32 FakeNoteStore::getSyncChunk(const qint32 afterUSN, const qint32 maxEntrie
         return qevercloud::EDAMErrorCode::DATA_CONFLICT;
     }
 
-    if (filter.includeSearches.isSet() && filter.includeSearches.ref())
-    {
-        const SavedSearchDataByUSN & usnIndex = m_savedSearches.get<SavedSearchByUSN>();
-        auto it = std::upper_bound(usnIndex.begin(), usnIndex.end(), afterUSN, CompareByUSN<SavedSearch>());
-        for(auto end = usnIndex.end(); it != end; ++it)
-        {
-            if (!syncChunk.searches.isSet()) {
-                syncChunk.searches = QList<qevercloud::SavedSearch>();
-            }
+    const SavedSearchDataByUSN & savedSearchUsnIndex = m_savedSearches.get<SavedSearchByUSN>();
+    const TagDataByUSN & tagUsnIndex = m_tags.get<TagByUSN>();
+    const NotebookDataByUSN & notebookUsnIndex = m_notebooks.get<NotebookByUSN>();
+    const NoteDataByUSN & noteUsnIndex = m_notes.get<NoteByUSN>();
+    const LinkedNotebookDataByUSN & linkedNotebookUsnIndex = m_linkedNotebooks.get<LinkedNotebookByUSN>();
 
-            syncChunk.searches->append(it->qevercloudSavedSearch());
-            if (syncChunk.searches->size() == maxEntries) {
-                return 0;
-            }
-        }
+    syncChunk.updateCount = currentMaxUsn();
+
+    auto savedSearchIt = savedSearchUsnIndex.end();
+    if (filter.includeSearches.isSet() && filter.includeSearches.ref()) {
+        savedSearchIt = std::upper_bound(savedSearchUsnIndex.begin(), savedSearchUsnIndex.end(), afterUSN, CompareByUSN<SavedSearch>());
     }
 
+    auto tagIt = tagUsnIndex.end();
     if (filter.includeTags.isSet() && filter.includeTags.ref())
     {
-        const TagDataByUSN & usnIndex = m_tags.get<TagByUSN>();
-        auto it = std::upper_bound(usnIndex.begin(), usnIndex.end(), afterUSN, CompareByUSN<Tag>());
-        for(auto end = usnIndex.end(); it != end; ++it)
-        {
-            if (!syncChunk.tags.isSet()) {
-                syncChunk.tags = QList<qevercloud::Tag>();
-            }
-
-            syncChunk.tags->append(it->qevercloudTag());
-            if ((syncChunk.tags->size() + (syncChunk.searches.isSet() ? syncChunk.searches->size() : 0)) == maxEntries) {
-                return 0;
-            }
+        tagIt = std::upper_bound(tagUsnIndex.begin(), tagUsnIndex.end(), afterUSN, CompareByUSN<Tag>());
+        while((tagIt != tagUsnIndex.end()) && tagIt->hasLinkedNotebookGuid()) {
+            ++tagIt;
         }
     }
 
+    auto notebookIt = notebookUsnIndex.end();
     if (filter.includeNotebooks.isSet() && filter.includeNotebooks.ref())
     {
-        const NotebookDataByUSN & usnIndex = m_notebooks.get<NotebookByUSN>();
-        auto it = std::upper_bound(usnIndex.begin(), usnIndex.end(), afterUSN, CompareByUSN<Notebook>());
-        for(auto end = usnIndex.end(); it != end; ++it)
-        {
-            if (!syncChunk.notebooks.isSet()) {
-                syncChunk.notebooks = QList<qevercloud::Notebook>();
-            }
-
-            syncChunk.notebooks->append(it->qevercloudNotebook());
-            if ((syncChunk.notebooks->size() +
-                 (syncChunk.tags.isSet() ? syncChunk.tags->size() : 0) +
-                 (syncChunk.searches.isSet() ? syncChunk.searches->size() : 0)) == maxEntries)
-            {
-                return 0;
-            }
+        notebookIt = std::upper_bound(notebookUsnIndex.begin(), notebookUsnIndex.end(), afterUSN, CompareByUSN<Notebook>());
+        while((notebookIt != notebookUsnIndex.end()) && notebookIt->hasLinkedNotebookGuid()) {
+            ++notebookIt;
         }
     }
 
-    // TODO: continue from here
+    auto noteIt = noteUsnIndex.end();
+    if (filter.includeNotes.isSet() && filter.includeNotes.ref())
+    {
+        noteIt = std::upper_bound(noteUsnIndex.begin(), noteUsnIndex.end(), afterUSN, CompareByUSN<Note>());
+
+        const NotebookDataByGuid & notebookGuidIndex = m_notebooks.get<NotebookByGuid>();
+
+        while(noteIt != noteUsnIndex.end())
+        {
+            const QString & notebookGuid = noteIt->notebookGuid();
+            auto noteNotebookIt = notebookGuidIndex.find(notebookGuid);
+            if (Q_UNLIKELY(noteNotebookIt == notebookGuidIndex.end())) {
+                QNWARNING(QStringLiteral("Found note which notebook guid doesn't correspond to any existing notebook: ") << *noteIt);
+                ++noteIt;
+                continue;
+            }
+
+            const Notebook & notebook = *noteNotebookIt;
+            if (notebook.hasLinkedNotebookGuid()) {
+                ++noteIt;
+                continue;
+            }
+
+            break;
+        }
+    }
+
+    auto linkedNotebookIt = linkedNotebookUsnIndex.end();
+    if (filter.includeLinkedNotebooks.isSet() && filter.includeLinkedNotebooks.ref()) {
+        linkedNotebookIt = std::upper_bound(linkedNotebookUsnIndex.begin(), linkedNotebookUsnIndex.end(), afterUSN, CompareByUSN<LinkedNotebook>());
+    }
+
+    while(true)
+    {
+        NextItemType::type nextItemType = NextItemType::None;
+        qint32 lastItemUsn = std::numeric_limits<qint32>::max();
+
+        if (savedSearchIt != savedSearchUsnIndex.end())
+        {
+            const SavedSearch & nextSearch = *savedSearchIt;
+            qint32 usn = nextSearch.updateSequenceNumber();
+            if (usn < lastItemUsn) {
+                lastItemUsn = usn;
+                nextItemType = NextItemType::SavedSearch;
+            }
+        }
+
+        if (tagIt != tagUsnIndex.end())
+        {
+            const Tag & nextTag = *tagIt;
+            qint32 usn = nextTag.updateSequenceNumber();
+            if (usn < lastItemUsn) {
+                lastItemUsn = usn;
+                nextItemType = NextItemType::Tag;
+            }
+        }
+
+        if (notebookIt != notebookUsnIndex.end())
+        {
+            const Notebook & nextNotebook = *notebookIt;
+            qint32 usn = nextNotebook.updateSequenceNumber();
+            if (usn < lastItemUsn) {
+                lastItemUsn = usn;
+                nextItemType = NextItemType::Notebook;
+            }
+        }
+
+        if (linkedNotebookIt != linkedNotebookUsnIndex.end())
+        {
+            const LinkedNotebook & nextLinkedNotebook = *linkedNotebookIt;
+            qint32 usn = nextLinkedNotebook.updateSequenceNumber();
+            if (usn < lastItemUsn) {
+                lastItemUsn = usn;
+                nextItemType = NextItemType::LinkedNotebook;
+            }
+        }
+
+        if (nextItemType == NextItemType::None) {
+            break;
+        }
+
+        switch(nextItemType)
+        {
+        case NextItemType::SavedSearch:
+            {
+                if (!syncChunk.searches.isSet()) {
+                    syncChunk.searches = QList<qevercloud::SavedSearch>();
+                }
+
+                syncChunk.searches->append(savedSearchIt->qevercloudSavedSearch());
+                syncChunk.chunkHighUSN = savedSearchIt->updateSequenceNumber();
+                ++savedSearchIt;
+            }
+            break;
+        case NextItemType::Tag:
+            {
+                if (!syncChunk.tags.isSet()) {
+                    syncChunk.tags = QList<qevercloud::Tag>();
+                }
+
+                syncChunk.tags->append(tagIt->qevercloudTag());
+                syncChunk.chunkHighUSN = tagIt->updateSequenceNumber();
+
+                ++tagIt;
+                while((tagIt != tagUsnIndex.end()) && tagIt->hasLinkedNotebookGuid()) {
+                    ++tagIt;
+                }
+            }
+            break;
+        case NextItemType::Notebook:
+            {
+                if (!syncChunk.notebooks.isSet()) {
+                    syncChunk.notebooks = QList<qevercloud::Notebook>();
+                }
+
+                syncChunk.notebooks->append(notebookIt->qevercloudNotebook());
+                syncChunk.chunkHighUSN = notebookIt->updateSequenceNumber();
+                ++notebookIt;
+                while((notebookIt != notebookUsnIndex.end()) && notebookIt->hasLinkedNotebookGuid()) {
+                    ++notebookIt;
+                }
+            }
+            break;
+        case NextItemType::Note:
+            {
+                if (!syncChunk.notes.isSet()) {
+                    syncChunk.notes = QList<qevercloud::Note>();
+                }
+
+                qevercloud::Note qecNote = noteIt->qevercloudNote();
+
+                if (!filter.includeNoteResources.isSet() || !filter.includeNoteResources.ref()) {
+                    qecNote.resources.clear();
+                }
+
+                if (!filter.includeNoteAttributes.isSet() || !filter.includeNoteAttributes.ref())
+                {
+                    qecNote.attributes.clear();
+                }
+                else
+                {
+                    if ( (!filter.includeNoteApplicationDataFullMap.isSet() || !filter.includeNoteApplicationDataFullMap.ref()) &&
+                         qecNote.attributes.isSet() && qecNote.attributes->applicationData.isSet() )
+                    {
+                        qecNote.attributes->applicationData->fullMap.clear();
+                    }
+
+                    if ( (!filter.includeNoteResourceApplicationDataFullMap.isSet() || !filter.includeNoteResourceApplicationDataFullMap.ref()) &&
+                         qecNote.resources.isSet() )
+                    {
+                        for(auto it = qecNote.resources->begin(), end = qecNote.resources->end(); it != end; ++it)
+                        {
+                            qevercloud::Resource & resource = *it;
+                            if (resource.attributes.isSet() && resource.attributes->applicationData.isSet()) {
+                                resource.attributes->applicationData->fullMap.clear();
+                            }
+                        }
+                    }
+                }
+
+                if (!filter.includeSharedNotes.isSet() || !filter.includeSharedNotes.ref()) {
+                    qecNote.sharedNotes.clear();
+                }
+
+                // Notes within the sync chunks should include only note
+                // metadata bt no content, resource content, resource
+                // recognition data or resource alternate data
+                qecNote.content.clear();
+                if (qecNote.resources.isSet())
+                {
+                    for(auto it = qecNote.resources->begin(), end = qecNote.resources->end(); it != end; ++it)
+                    {
+                        qevercloud::Resource & resource = *it;
+                        if (resource.data.isSet()) {
+                            resource.data->body.clear();
+                        }
+                        if (resource.recognition.isSet()) {
+                            resource.recognition->body.clear();
+                        }
+                        if (resource.alternateData.isSet()) {
+                            resource.alternateData->body.clear();
+                        }
+                    }
+                }
+
+                syncChunk.notes->append(qecNote);
+                syncChunk.chunkHighUSN = noteIt->updateSequenceNumber();
+                ++noteIt;
+
+                const NotebookDataByGuid & notebookGuidIndex = m_notebooks.get<NotebookByGuid>();
+                while(noteIt != noteUsnIndex.end())
+                {
+                    const QString & notebookGuid = noteIt->notebookGuid();
+                    auto noteNotebookIt = notebookGuidIndex.find(notebookGuid);
+                    if (Q_UNLIKELY(noteNotebookIt == notebookGuidIndex.end())) {
+                        QNWARNING(QStringLiteral("Found note which notebook guid doesn't correspond to any existing notebook: ") << *noteIt);
+                        ++noteIt;
+                        continue;
+                    }
+
+                    const Notebook & notebook = *noteNotebookIt;
+                    if (notebook.hasLinkedNotebookGuid()) {
+                        ++noteIt;
+                        continue;
+                    }
+
+                    break;
+                }
+            }
+            break;
+        case NextItemType::LinkedNotebook:
+            {
+                if (!syncChunk.linkedNotebooks.isSet()) {
+                    syncChunk.linkedNotebooks = QList<qevercloud::LinkedNotebook>();
+                }
+
+                syncChunk.linkedNotebooks->append(linkedNotebookIt->qevercloudLinkedNotebook());
+                syncChunk.chunkHighUSN = linkedNotebookIt->updateSequenceNumber();
+                ++linkedNotebookIt;
+            }
+            break;
+        default:
+            QNWARNING(QStringLiteral("Unexpected next item type: ") << nextItemType);
+            break;
+        }
+    }
+
+    if (!m_expungedSavedSearchGuids.isEmpty())
+    {
+        if (!syncChunk.expungedSearches.isSet()) {
+            syncChunk.expungedSearches = QList<qevercloud::Guid>();
+        }
+
+        syncChunk.expungedSearches->reserve(m_expungedSavedSearchGuids.size());
+
+        for(auto it = m_expungedSavedSearchGuids.constBegin(),
+            end = m_expungedSavedSearchGuids.constEnd(); it != end; ++it)
+        {
+            syncChunk.expungedSearches->append(*it);
+        }
+    }
+
+    if (!m_expungedTagGuids.isEmpty())
+    {
+        if (!syncChunk.expungedTags.isSet()) {
+            syncChunk.expungedTags = QList<qevercloud::Guid>();
+        }
+
+        syncChunk.expungedTags->reserve(m_expungedTagGuids.size());
+
+        for(auto it = m_expungedTagGuids.constBegin(),
+            end = m_expungedTagGuids.constEnd(); it != end; ++it)
+        {
+            syncChunk.expungedTags->append(*it);
+        }
+    }
+
+    if (!m_expungedNotebookGuids.isEmpty())
+    {
+        if (!syncChunk.expungedNotebooks.isSet()) {
+            syncChunk.expungedNotebooks = QList<qevercloud::Guid>();
+        }
+
+        syncChunk.expungedNotebooks->reserve(m_expungedNotebookGuids.size());
+        for(auto it = m_expungedNotebookGuids.constBegin(),
+            end = m_expungedNotebookGuids.constEnd(); it != end; ++it)
+        {
+            syncChunk.expungedNotebooks->append(*it);
+        }
+    }
+
+    if (!m_expungedNoteGuids.isEmpty())
+    {
+        if (!syncChunk.expungedNotes.isSet()) {
+            syncChunk.expungedNotes = QList<qevercloud::Guid>();
+        }
+
+        syncChunk.expungedNotes->reserve(m_expungedNoteGuids.size());
+        for(auto it = m_expungedNoteGuids.constBegin(),
+            end = m_expungedNoteGuids.constEnd(); it != end; ++it)
+        {
+            syncChunk.expungedNotes->append(*it);
+        }
+    }
+
+    if (!m_expungedLinkedNotebookGuids.isEmpty())
+    {
+        if (!syncChunk.expungedLinkedNotebooks.isSet()) {
+            syncChunk.expungedLinkedNotebooks = QList<qevercloud::Guid>();
+        }
+
+        syncChunk.expungedLinkedNotebooks->reserve(m_expungedLinkedNotebookGuids.size());
+        for(auto it = m_expungedLinkedNotebookGuids.constBegin(),
+            end = m_expungedLinkedNotebookGuids.constEnd(); it != end; ++it)
+        {
+            syncChunk.expungedLinkedNotebooks->append(*it);
+        }
+    }
+
     return 0;
 }
 
