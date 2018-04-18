@@ -24,6 +24,7 @@
 #include <quentier/types/Tag.h>
 #include <quentier/types/Notebook.h>
 #include <quentier/types/Note.h>
+#include <quentier/types/Resource.h>
 #include <quentier/types/LinkedNotebook.h>
 #include <quentier/utility/Macros.h>
 
@@ -92,6 +93,13 @@ public:
     void setExpungedNoteGuid(const QString & guid);
     bool containsExpungedNoteGuid(const QString & guid) const;
     bool removeExpungedNoteGuid(const QString & guid);
+
+    // Resources
+    QHash<QString,qevercloud::Resource> resources() const;
+
+    bool setResource(Resource & resource, ErrorString & errorDescription);
+    const Resource * findResource(const QString & guid) const;
+    bool removeResource(const QString & guid);
 
     // Linked notebooks
     QHash<QString,qevercloud::LinkedNotebook> linkedNotebooks() const;
@@ -348,6 +356,7 @@ private:
     // Note store
     struct NoteByGuid{};
     struct NoteByUSN{};
+    struct NoteByNotebookGuid{};
 
     typedef boost::multi_index_container<
         Note,
@@ -359,12 +368,44 @@ private:
             boost::multi_index::ordered_unique<
                 boost::multi_index::tag<NoteByUSN>,
                 boost::multi_index::const_mem_fun<Note,qint32,&Note::updateSequenceNumber>
+            >,
+            boost::multi_index::hashed_non_unique<
+                boost::multi_index::tag<NoteByNotebookGuid>,
+                boost::multi_index::const_mem_fun<Note,const QString&,&Note::notebookGuid>
             >
         >
     > NoteData;
 
     typedef NoteData::index<NoteByGuid>::type NoteDataByGuid;
     typedef NoteData::index<NoteByUSN>::type NoteDataByUSN;
+    typedef NoteData::index<NoteByNotebookGuid>::type NoteDataByNotebookGuid;
+
+    // Resource store
+    struct ResourceByGuid{};
+    struct ResourceByUSN{};
+    struct ResourceByNoteGuid{};
+
+    typedef boost::multi_index_container<
+        Resource,
+        boost::multi_index::indexed_by<
+            boost::multi_index::hashed_unique<
+                boost::multi_index::tag<ResourceByGuid>,
+                boost::multi_index::const_mem_fun<Resource,const QString&,&Resource::guid>
+            >,
+            boost::multi_index::ordered_unique<
+                boost::multi_index::tag<ResourceByUSN>,
+                boost::multi_index::const_mem_fun<Resource,qint32,&Resource::updateSequenceNumber>
+            >,
+            boost::multi_index::hashed_non_unique<
+                boost::multi_index::tag<ResourceByNoteGuid>,
+                boost::multi_index::const_mem_fun<Resource,const QString&,&Resource::noteGuid>
+            >
+        >
+    > ResourceData;
+
+    typedef ResourceData::index<ResourceByGuid>::type ResourceDataByGuid;
+    typedef ResourceData::index<ResourceByUSN>::type ResourceDataByUSN;
+    typedef ResourceData::index<ResourceByNoteGuid>::type ResourceDataByNoteGuid;
 
     // Linked notebook store
     struct LinkedNotebookByGuid{};
@@ -415,6 +456,7 @@ private:
             Tag,
             Notebook,
             Note,
+            Resource,
             LinkedNotebook
         };
     };
@@ -431,6 +473,8 @@ private:
 
     NoteData            m_notes;
     QSet<QString>       m_expungedNoteGuids;
+
+    ResourceData        m_resources;
 
     LinkedNotebookData  m_linkedNotebooks;
     QSet<QString>       m_expungedLinkedNotebookGuids;

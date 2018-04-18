@@ -20,6 +20,7 @@ FakeNoteStore::FakeNoteStore(QObject * parent) :
     m_expungedNotebookGuids(),
     m_notes(),
     m_expungedNoteGuids(),
+    m_resources(),
     m_linkedNotebooks(),
     m_expungedLinkedNotebookGuids(),
     m_shouldTriggerRateLimitReachOnNextCall(false),
@@ -209,6 +210,8 @@ bool FakeNoteStore::removeTag(const QString & guid)
         return false;
     }
 
+    // TODO: need to also remove all the child tags
+
     Q_UNUSED(index.erase(it))
     return true;
 }
@@ -309,12 +312,24 @@ const Notebook * FakeNoteStore::findNotebook(const QString & guid) const
 bool FakeNoteStore::removeNotebook(const QString & guid)
 {
     NotebookDataByGuid & index = m_notebooks.get<NotebookByGuid>();
-    auto it = index.find(guid);
-    if (it == index.end()) {
+    auto notebookIt = index.find(guid);
+    if (notebookIt == index.end()) {
         return false;
     }
 
-    Q_UNUSED(index.erase(it))
+    const NoteDataByNotebookGuid & noteDataByNotebookGuid = m_notes.get<NoteByNotebookGuid>();
+    QStringList noteGuids;
+    noteGuids.reserve(static_cast<int>(noteDataByNotebookGuid.size()));
+    auto range = noteDataByNotebookGuid.equal_range(guid);
+    for(auto it = range.first; it != range.second; ++it) {
+        noteGuids << it->guid();
+    }
+
+    for(auto it = noteGuids.constBegin(), end = noteGuids.constEnd(); it != end; ++it) {
+        removeNote(*it);
+    }
+
+    Q_UNUSED(index.erase(notebookIt))
     return true;
 }
 
@@ -377,7 +392,40 @@ bool FakeNoteStore::setNote(Note & note, ErrorString & errorDescription)
     note.setUpdateSequenceNumber(maxUsn);
 
     Q_UNUSED(removeExpungedNoteGuid(note.guid()))
-    Q_UNUSED(m_notes.insert(note))
+    auto insertResult = m_notes.insert(note);
+    auto noteIt = insertResult.first;
+
+    if (note.hasResources())
+    {
+        QList<Resource> resources = note.resources();
+        for(auto it = resources.begin(), end = resources.end(); it != end; ++it)
+        {
+            Resource & resource = *it;
+
+            if (!resource.hasGuid()) {
+                resource.setGuid(UidGenerator::Generate());
+            }
+
+            if (!resource.hasNoteGuid()) {
+                resource.setNoteGuid(note.guid());
+            }
+
+            resource.setUpdateSequenceNumber(++maxUsn);
+
+            if (!setResource(resource, errorDescription)) {
+                return false;
+            }
+
+            // Won't store resource binary data along with notes
+            resource.setDataBody(QByteArray());
+            resource.setRecognitionDataBody(QByteArray());
+            resource.setAlternateDataBody(QByteArray());
+        }
+
+        note.setResources(resources);
+        Q_UNUSED(m_notes.replace(noteIt, note))
+    }
+
     return true;
 }
 
@@ -399,6 +447,15 @@ bool FakeNoteStore::removeNote(const QString & guid)
     auto it = index.find(guid);
     if (it == index.end()) {
         return false;
+    }
+
+    const Note & note = *it;
+    if (note.hasResources())
+    {
+        QList<Resource> resources = note.resources();
+        for(auto resIt = resources.constBegin(), resEnd = resources.constEnd(); resIt != resEnd; ++resIt) {
+            removeResource(resIt->guid());
+        }
     }
 
     Q_UNUSED(index.erase(it))
@@ -424,6 +481,72 @@ bool FakeNoteStore::removeExpungedNoteGuid(const QString & guid)
     }
 
     Q_UNUSED(m_expungedNoteGuids.erase(it))
+    return true;
+}
+
+QHash<QString,qevercloud::Resource> FakeNoteStore::resources() const
+{
+    QHash<QString,qevercloud::Resource> result;
+    result.reserve(static_cast<int>(m_resources.size()));
+
+    const ResourceDataByGuid & resourceDataByGuid = m_resources.get<ResourceByGuid>();
+    for(auto it = resourceDataByGuid.begin(), end = resourceDataByGuid.end(); it != end; ++it) {
+        result[it->guid()] = it->qevercloudResource();
+    }
+
+    return result;
+}
+
+bool FakeNoteStore::setResource(Resource & resource, ErrorString & errorDescription)
+{
+    if (!resource.hasGuid()) {
+        errorDescription.setBase(QStringLiteral("Can't set resource without guid"));
+        return false;
+    }
+
+    if (!resource.hasNoteGuid()) {
+        errorDescription.setBase(QStringLiteral("Can't set resource without note guid"));
+        return false;
+    }
+
+    const NoteDataByGuid & noteGuidIndex = m_notes.get<NoteByGuid>();
+    auto noteIt = noteGuidIndex.find(resource.noteGuid());
+    if (noteIt == noteGuidIndex.end()) {
+        errorDescription.setBase(QStringLiteral("Can't set resource: no note was found for it by guid"));
+        return false;
+    }
+
+    qint32 maxUsn = currentMaxUsn();
+    ++maxUsn;
+    resource.setUpdateSequenceNumber(maxUsn);
+
+    Q_UNUSED(m_resources.insert(resource))
+    return true;
+}
+
+const Resource * FakeNoteStore::findResource(const QString & guid) const
+{
+    const ResourceDataByGuid & index = m_resources.get<ResourceByGuid>();
+    auto it = index.find(guid);
+    if (it == index.end()) {
+        return Q_NULLPTR;
+    }
+
+    const Resource & resource = *it;
+    return &resource;
+}
+
+bool FakeNoteStore::removeResource(const QString & guid)
+{
+    ResourceDataByGuid & index = m_resources.get<ResourceByGuid>();
+    auto it = index.find(guid);
+    if (it == index.end()) {
+        return false;
+    }
+
+    // TODO: must also update the metadata record of the note containing this resource
+
+    Q_UNUSED(index.erase(it))
     return true;
 }
 
@@ -971,6 +1094,7 @@ qint32 FakeNoteStore::getSyncChunk(const qint32 afterUSN, const qint32 maxEntrie
     const TagDataByUSN & tagUsnIndex = m_tags.get<TagByUSN>();
     const NotebookDataByUSN & notebookUsnIndex = m_notebooks.get<NotebookByUSN>();
     const NoteDataByUSN & noteUsnIndex = m_notes.get<NoteByUSN>();
+    const ResourceDataByUSN & resourceUsnIndex = m_resources.get<ResourceByUSN>();
     const LinkedNotebookDataByUSN & linkedNotebookUsnIndex = m_linkedNotebooks.get<LinkedNotebookByUSN>();
 
     syncChunk.updateCount = currentMaxUsn();
@@ -1025,6 +1149,44 @@ qint32 FakeNoteStore::getSyncChunk(const qint32 afterUSN, const qint32 maxEntrie
         }
     }
 
+    auto resourceIt = resourceUsnIndex.end();
+    if ((afterUSN > 0) && filter.includeResources.isSet() && filter.includeResources.ref())
+    {
+        resourceIt = std::upper_bound(resourceUsnIndex.begin(), resourceUsnIndex.end(), afterUSN, CompareByUSN<Resource>());
+
+        const NoteDataByGuid & noteGuidIndex = m_notes.get<NoteByGuid>();
+        const NotebookDataByGuid & notebookGuidIndex = m_notebooks.get<NotebookByGuid>();
+
+        while(resourceIt != resourceUsnIndex.end())
+        {
+            const QString & noteGuid = resourceIt->noteGuid();
+
+            auto resourceNoteIt = noteGuidIndex.find(noteGuid);
+            if (Q_UNLIKELY(resourceNoteIt == noteGuidIndex.end())) {
+                QNWARNING(QStringLiteral("Found resource which note guid doesn't correspond to any existing note: ") << *resourceIt);
+                ++resourceIt;
+                continue;
+            }
+
+            const Note & note = *resourceNoteIt;
+            const QString & notebookGuid = note.notebookGuid();
+            auto noteNotebookIt = notebookGuidIndex.find(notebookGuid);
+            if (Q_UNLIKELY(noteNotebookIt == notebookGuidIndex.end())) {
+                QNWARNING(QStringLiteral("Found note which notebook guid doesn't correspond to any existing notebook: ") << note);
+                ++resourceIt;
+                continue;
+            }
+
+            const Notebook & notebook = *noteNotebookIt;
+            if (notebook.hasLinkedNotebookGuid()) {
+                ++resourceIt;
+                continue;
+            }
+
+            break;
+        }
+    }
+
     auto linkedNotebookIt = linkedNotebookUsnIndex.end();
     if (filter.includeLinkedNotebooks.isSet() && filter.includeLinkedNotebooks.ref()) {
         linkedNotebookIt = std::upper_bound(linkedNotebookUsnIndex.begin(), linkedNotebookUsnIndex.end(), afterUSN, CompareByUSN<LinkedNotebook>());
@@ -1062,6 +1224,26 @@ qint32 FakeNoteStore::getSyncChunk(const qint32 afterUSN, const qint32 maxEntrie
             if (usn < lastItemUsn) {
                 lastItemUsn = usn;
                 nextItemType = NextItemType::Notebook;
+            }
+        }
+
+        if (noteIt != noteUsnIndex.end())
+        {
+            const Note & nextNote = *noteIt;
+            qint32 usn = nextNote.updateSequenceNumber();
+            if (usn < lastItemUsn) {
+                lastItemUsn = usn;
+                nextItemType = NextItemType::Note;
+            }
+        }
+
+        if (resourceIt != resourceUsnIndex.end())
+        {
+            const Resource & nextResource = *resourceIt;
+            qint32 usn = nextResource.updateSequenceNumber();
+            if (usn < lastItemUsn) {
+                lastItemUsn = usn;
+                nextItemType = NextItemType::Resource;
             }
         }
 
@@ -1208,6 +1390,70 @@ qint32 FakeNoteStore::getSyncChunk(const qint32 afterUSN, const qint32 maxEntrie
                 }
             }
             break;
+        case NextItemType::Resource:
+            {
+                if (!syncChunk.resources.isSet()) {
+                    syncChunk.resources = QList<qevercloud::Resource>();
+                }
+
+                qevercloud::Resource qecResource = resourceIt->qevercloudResource();
+
+                if ( (!filter.includeResourceApplicationDataFullMap.isSet() || !filter.includeResourceApplicationDataFullMap.ref()) &&
+                     qecResource.attributes.isSet() && qecResource.attributes->applicationData.isSet() )
+                {
+                    qecResource.attributes->applicationData->fullMap.clear();
+                }
+
+                // Resources within the sync chunks should not include data,
+                // recognition data or alternate data
+                if (qecResource.data.isSet()) {
+                    qecResource.data->body.clear();
+                }
+
+                if (qecResource.recognition.isSet()) {
+                    qecResource.recognition->body.clear();
+                }
+
+                if (qecResource.alternateData.isSet()) {
+                    qecResource.alternateData->body.clear();
+                }
+
+                syncChunk.resources->append(qecResource);
+                syncChunk.chunkHighUSN = resourceIt->updateSequenceNumber();
+                ++resourceIt;
+
+                const NoteDataByGuid & noteGuidIndex = m_notes.get<NoteByGuid>();
+                const NotebookDataByGuid & notebookGuidIndex = m_notebooks.get<NotebookByGuid>();
+                while(resourceIt != resourceUsnIndex.end())
+                {
+                    const QString & noteGuid = resourceIt->noteGuid();
+
+                    auto resourceNoteIt = noteGuidIndex.find(noteGuid);
+                    if (Q_UNLIKELY(resourceNoteIt == noteGuidIndex.end())) {
+                        QNWARNING(QStringLiteral("Found resource which note guid doesn't correspond to any existing note: ") << *resourceIt);
+                        ++resourceIt;
+                        continue;
+                    }
+
+                    const Note & note = *resourceNoteIt;
+                    const QString & notebookGuid = note.notebookGuid();
+                    auto noteNotebookIt = notebookGuidIndex.find(notebookGuid);
+                    if (Q_UNLIKELY(noteNotebookIt == notebookGuidIndex.end())) {
+                        QNWARNING(QStringLiteral("Found note which notebook guid doesn't correspond to any existing notebook: ") << note);
+                        ++resourceIt;
+                        continue;
+                    }
+
+                    const Notebook & notebook = *noteNotebookIt;
+                    if (notebook.hasLinkedNotebookGuid()) {
+                        ++resourceIt;
+                        continue;
+                    }
+
+                    break;
+                }
+            }
+            break;
         case NextItemType::LinkedNotebook:
             {
                 if (!syncChunk.linkedNotebooks.isSet()) {
@@ -1223,6 +1469,12 @@ qint32 FakeNoteStore::getSyncChunk(const qint32 afterUSN, const qint32 maxEntrie
             QNWARNING(QStringLiteral("Unexpected next item type: ") << nextItemType);
             break;
         }
+    }
+
+    if (afterUSN == 0) {
+        // No need to insert the information about expunged data items
+        // when doing full sync
+        return 0;
     }
 
     if (!m_expungedSavedSearchGuids.isEmpty())
@@ -1484,6 +1736,16 @@ qint32 FakeNoteStore::currentMaxUsn() const
         --lastNoteIt;
         if (lastNoteIt->updateSequenceNumber() > maxUsn) {
             maxUsn = lastNoteIt->updateSequenceNumber();
+        }
+    }
+
+    const ResourceDataByUSN & resourceUsnIndex = m_resources.get<ResourceByUSN>();
+    if (!resourceUsnIndex.empty())
+    {
+        auto lastResourceIt = resourceUsnIndex.end();
+        --lastResourceIt;
+        if (lastResourceIt->updateSequenceNumber() > maxUsn) {
+            maxUsn = lastResourceIt->updateSequenceNumber();
         }
     }
 
