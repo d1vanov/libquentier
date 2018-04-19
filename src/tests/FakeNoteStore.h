@@ -227,8 +227,10 @@ private:
     qint32 checkAppData(const qevercloud::LazyMap & appData, ErrorString & errorDescription) const;
     qint32 checkAppDataKey(const QString & key, const QRegExp & keyRegExp, ErrorString & errorDescription) const;
 
-    qint32 checkLinkedNotebookAuthToken(const QString & notebookGuid, const QString & linkedNotebookAuthToken,
+    qint32 checkLinkedNotebookAuthToken(const LinkedNotebook & linkedNotebook, const QString & linkedNotebookAuthToken,
                                         ErrorString & errorDescription) const;
+    qint32 checkLinkedNotebookAuthTokenForNotebook(const QString & notebookGuid, const QString & linkedNotebookAuthToken,
+                                                   ErrorString & errorDescription) const;
     qint32 checkLinkedNotebookAuthTokenForTag(const Tag & tag, const QString & linkedNotebookAuthToken,
                                               ErrorString & errorDescription) const;
 
