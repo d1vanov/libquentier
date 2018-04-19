@@ -145,6 +145,14 @@ public:
     qevercloud::SyncState syncState() const;
     void setSyncState(const qevercloud::SyncState & syncState);
 
+    const qevercloud::SyncState * findLinkedNotebookSyncState(const QString & linkedNotebookOwner) const;
+    void setLinkedNotebookSyncState(const QString & linkedNotebookOwner, const qevercloud::SyncState & syncState);
+    bool removeLinkedNotebookSyncState(const QString & linkedNotebookOwner);
+
+    QString linkedNotebookAuthToken(const QString & linkedNotebookOwner) const;
+    void setLinkedNotebookAuthToken(const QString & linkedNotebookOwner, const QString & linkedNotebookAuthToken);
+    bool removeLinkedNotebookAuthToken(const QString & linkedNotebookOwner);
+
 public:
     // INoteStore interface
     virtual INoteStore * create() const Q_DECL_OVERRIDE;
@@ -213,6 +221,8 @@ private:
     qint32 checkResourceFields(const Resource & resource, ErrorString & errorDescription) const;
     qint32 checkTagFields(const Tag & tag, ErrorString & errorDescription) const;
     qint32 checkSavedSearchFields(const SavedSearch & savedSearch, ErrorString & errorDescription) const;
+
+    qint32 checkLinkedNotebookFields(const qevercloud::LinkedNotebook & linkedNotebook, ErrorString & errorDescription) const;
 
     qint32 checkAppData(const qevercloud::LazyMap & appData, ErrorString & errorDescription) const;
     qint32 checkAppDataKey(const QString & key, const QRegExp & keyRegExp, ErrorString & errorDescription) const;
@@ -429,6 +439,32 @@ private:
     struct LinkedNotebookByGuid{};
     struct LinkedNotebookByUSN{};
     struct LinkedNotebookByShardId{};
+    struct LinkedNotebookByUri{};
+    struct LinkedNotebookByUsername{};
+
+    struct LinkedNotebookShardIdExtractor
+    {
+        static QString shardId(const LinkedNotebook & linkedNotebook)
+        {
+            if (!linkedNotebook.hasShardId()) {
+                return QString();
+            }
+
+            return linkedNotebook.shardId();
+        }
+    };
+
+    struct LinkedNotebookUriExtractor
+    {
+        static QString uri(const LinkedNotebook & linkedNotebook)
+        {
+            if (!linkedNotebook.hasUri()) {
+                return QString();
+            }
+
+            return linkedNotebook.uri();
+        }
+    };
 
     typedef boost::multi_index_container<
         LinkedNotebook,
@@ -437,9 +473,17 @@ private:
                 boost::multi_index::tag<LinkedNotebookByGuid>,
                 boost::multi_index::const_mem_fun<LinkedNotebook,const QString&,&LinkedNotebook::guid>
             >,
-            boost::multi_index::hashed_unique<
+            boost::multi_index::hashed_non_unique<
                 boost::multi_index::tag<LinkedNotebookByShardId>,
-                boost::multi_index::const_mem_fun<LinkedNotebook,const QString&,&LinkedNotebook::shardId>
+                boost::multi_index::global_fun<const LinkedNotebook&,QString,&LinkedNotebookShardIdExtractor::shardId>
+            >,
+            boost::multi_index::hashed_non_unique<
+                boost::multi_index::tag<LinkedNotebookByUri>,
+                boost::multi_index::global_fun<const LinkedNotebook&,QString,&LinkedNotebookUriExtractor::uri>
+            >,
+            boost::multi_index::hashed_unique<
+                boost::multi_index::tag<LinkedNotebookByUsername>,
+                boost::multi_index::const_mem_fun<LinkedNotebook,const QString&,&LinkedNotebook::username>
             >,
             boost::multi_index::ordered_unique<
                 boost::multi_index::tag<LinkedNotebookByUSN>,
@@ -451,6 +495,8 @@ private:
     typedef LinkedNotebookData::index<LinkedNotebookByGuid>::type LinkedNotebookDataByGuid;
     typedef LinkedNotebookData::index<LinkedNotebookByUSN>::type LinkedNotebookDataByUSN;
     typedef LinkedNotebookData::index<LinkedNotebookByShardId>::type LinkedNotebookDataByShardId;
+    typedef LinkedNotebookData::index<LinkedNotebookByUri>::type LinkedNotebookDataByUri;
+    typedef LinkedNotebookData::index<LinkedNotebookByUsername>::type LinkedNotebookDataByUsername;
 
     template <class T>
     class CompareByUSN
@@ -518,9 +564,10 @@ private:
     quint32             m_maxNumTagsPerNote;
     quint64             m_maxResourceSize;
 
-    QHash<QString,QString>  m_linkedNotebookAuthTokensByNotebookGuid;
-
     qevercloud::SyncState   m_syncState;
+    QHash<QString,qevercloud::SyncState>    m_linkedNotebookSyncStates;
+
+    QHash<QString,QString>  m_linkedNotebookAuthTokens;
 };
 
 } // namespace quentier
