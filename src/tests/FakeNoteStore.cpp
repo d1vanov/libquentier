@@ -205,14 +205,37 @@ const Tag * FakeNoteStore::findTag(const QString & guid) const
 bool FakeNoteStore::removeTag(const QString & guid)
 {
     TagDataByGuid & index = m_tags.get<TagByGuid>();
-    auto it = index.find(guid);
-    if (it == index.end()) {
+    auto tagIt = index.find(guid);
+    if (tagIt == index.end()) {
         return false;
     }
 
-    // TODO: need to also remove all the child tags
+    const TagDataByParentTagGuid & parentTagGuidIndex = m_tags.get<TagByParentTagGuid>();
+    auto range = parentTagGuidIndex.equal_range(guid);
+    QStringList childTagGuids;
+    childTagGuids.reserve(static_cast<int>(std::distance(range.first, range.second)));
+    for(auto it = range.first; it != range.second; ++it) {
+        childTagGuids << it->guid();
+    }
 
-    Q_UNUSED(index.erase(it))
+    bool removedChildTags = false;
+    for(auto it = childTagGuids.constBegin(), end = childTagGuids.constEnd(); it != end; ++it) {
+        removedChildTags |= removeTag(*it);
+    }
+
+    // NOTE: have to once again evaluate the iterator if we deleted any child tags
+    // since the deletion of child tags could cause the invalidation of the previously
+    // found iterator
+    if (removedChildTags)
+    {
+        tagIt = index.find(guid);
+        if (Q_UNLIKELY(tagIt == index.end())) {
+            QNWARNING(QStringLiteral("Tag to be removed is not not found after the removal of its child tags: guid = ") << guid);
+            return false;
+        }
+    }
+
+    Q_UNUSED(index.erase(tagIt))
     return true;
 }
 
@@ -318,9 +341,9 @@ bool FakeNoteStore::removeNotebook(const QString & guid)
     }
 
     const NoteDataByNotebookGuid & noteDataByNotebookGuid = m_notes.get<NoteByNotebookGuid>();
-    QStringList noteGuids;
-    noteGuids.reserve(static_cast<int>(noteDataByNotebookGuid.size()));
     auto range = noteDataByNotebookGuid.equal_range(guid);
+    QStringList noteGuids;
+    noteGuids.reserve(static_cast<int>(std::distance(range.first, range.second)));
     for(auto it = range.first; it != range.second; ++it) {
         noteGuids << it->guid();
     }
@@ -544,7 +567,17 @@ bool FakeNoteStore::removeResource(const QString & guid)
         return false;
     }
 
-    // TODO: must also update the metadata record of the note containing this resource
+    const QString & noteGuid = it->noteGuid();
+    NoteDataByGuid & noteGuidIndex = m_notes.get<NoteByGuid>();
+    auto noteIt = noteGuidIndex.find(noteGuid);
+    if (noteIt != noteGuidIndex.end()) {
+        Note note = *noteIt;
+        note.removeResource(*it);
+        Q_UNUSED(noteGuidIndex.replace(noteIt, note))
+    }
+    else {
+        QNWARNING(QStringLiteral("Found no note corresponding to the removed resource: ") << *it);
+    }
 
     Q_UNUSED(index.erase(it))
     return true;
@@ -1123,68 +1156,15 @@ qint32 FakeNoteStore::getSyncChunk(const qint32 afterUSN, const qint32 maxEntrie
     }
 
     auto noteIt = noteUsnIndex.end();
-    if (filter.includeNotes.isSet() && filter.includeNotes.ref())
-    {
+    if (filter.includeNotes.isSet() && filter.includeNotes.ref()) {
         noteIt = std::upper_bound(noteUsnIndex.begin(), noteUsnIndex.end(), afterUSN, CompareByUSN<Note>());
-
-        const NotebookDataByGuid & notebookGuidIndex = m_notebooks.get<NotebookByGuid>();
-
-        while(noteIt != noteUsnIndex.end())
-        {
-            const QString & notebookGuid = noteIt->notebookGuid();
-            auto noteNotebookIt = notebookGuidIndex.find(notebookGuid);
-            if (Q_UNLIKELY(noteNotebookIt == notebookGuidIndex.end())) {
-                QNWARNING(QStringLiteral("Found note which notebook guid doesn't correspond to any existing notebook: ") << *noteIt);
-                ++noteIt;
-                continue;
-            }
-
-            const Notebook & notebook = *noteNotebookIt;
-            if (notebook.hasLinkedNotebookGuid()) {
-                ++noteIt;
-                continue;
-            }
-
-            break;
-        }
+        noteIt = nextNoteByUsnIterator(noteIt);
     }
 
     auto resourceIt = resourceUsnIndex.end();
-    if ((afterUSN > 0) && filter.includeResources.isSet() && filter.includeResources.ref())
-    {
+    if ((afterUSN > 0) && filter.includeResources.isSet() && filter.includeResources.ref()) {
         resourceIt = std::upper_bound(resourceUsnIndex.begin(), resourceUsnIndex.end(), afterUSN, CompareByUSN<Resource>());
-
-        const NoteDataByGuid & noteGuidIndex = m_notes.get<NoteByGuid>();
-        const NotebookDataByGuid & notebookGuidIndex = m_notebooks.get<NotebookByGuid>();
-
-        while(resourceIt != resourceUsnIndex.end())
-        {
-            const QString & noteGuid = resourceIt->noteGuid();
-
-            auto resourceNoteIt = noteGuidIndex.find(noteGuid);
-            if (Q_UNLIKELY(resourceNoteIt == noteGuidIndex.end())) {
-                QNWARNING(QStringLiteral("Found resource which note guid doesn't correspond to any existing note: ") << *resourceIt);
-                ++resourceIt;
-                continue;
-            }
-
-            const Note & note = *resourceNoteIt;
-            const QString & notebookGuid = note.notebookGuid();
-            auto noteNotebookIt = notebookGuidIndex.find(notebookGuid);
-            if (Q_UNLIKELY(noteNotebookIt == notebookGuidIndex.end())) {
-                QNWARNING(QStringLiteral("Found note which notebook guid doesn't correspond to any existing notebook: ") << note);
-                ++resourceIt;
-                continue;
-            }
-
-            const Notebook & notebook = *noteNotebookIt;
-            if (notebook.hasLinkedNotebookGuid()) {
-                ++resourceIt;
-                continue;
-            }
-
-            break;
-        }
+        resourceIt = nextResourceByUsnIterator(resourceIt);
     }
 
     auto linkedNotebookIt = linkedNotebookUsnIndex.end();
@@ -1368,26 +1348,8 @@ qint32 FakeNoteStore::getSyncChunk(const qint32 afterUSN, const qint32 maxEntrie
                 syncChunk.notes->append(qecNote);
                 syncChunk.chunkHighUSN = noteIt->updateSequenceNumber();
                 ++noteIt;
+                noteIt = nextNoteByUsnIterator(noteIt);
 
-                const NotebookDataByGuid & notebookGuidIndex = m_notebooks.get<NotebookByGuid>();
-                while(noteIt != noteUsnIndex.end())
-                {
-                    const QString & notebookGuid = noteIt->notebookGuid();
-                    auto noteNotebookIt = notebookGuidIndex.find(notebookGuid);
-                    if (Q_UNLIKELY(noteNotebookIt == notebookGuidIndex.end())) {
-                        QNWARNING(QStringLiteral("Found note which notebook guid doesn't correspond to any existing notebook: ") << *noteIt);
-                        ++noteIt;
-                        continue;
-                    }
-
-                    const Notebook & notebook = *noteNotebookIt;
-                    if (notebook.hasLinkedNotebookGuid()) {
-                        ++noteIt;
-                        continue;
-                    }
-
-                    break;
-                }
             }
             break;
         case NextItemType::Resource:
@@ -1421,37 +1383,7 @@ qint32 FakeNoteStore::getSyncChunk(const qint32 afterUSN, const qint32 maxEntrie
                 syncChunk.resources->append(qecResource);
                 syncChunk.chunkHighUSN = resourceIt->updateSequenceNumber();
                 ++resourceIt;
-
-                const NoteDataByGuid & noteGuidIndex = m_notes.get<NoteByGuid>();
-                const NotebookDataByGuid & notebookGuidIndex = m_notebooks.get<NotebookByGuid>();
-                while(resourceIt != resourceUsnIndex.end())
-                {
-                    const QString & noteGuid = resourceIt->noteGuid();
-
-                    auto resourceNoteIt = noteGuidIndex.find(noteGuid);
-                    if (Q_UNLIKELY(resourceNoteIt == noteGuidIndex.end())) {
-                        QNWARNING(QStringLiteral("Found resource which note guid doesn't correspond to any existing note: ") << *resourceIt);
-                        ++resourceIt;
-                        continue;
-                    }
-
-                    const Note & note = *resourceNoteIt;
-                    const QString & notebookGuid = note.notebookGuid();
-                    auto noteNotebookIt = notebookGuidIndex.find(notebookGuid);
-                    if (Q_UNLIKELY(noteNotebookIt == notebookGuidIndex.end())) {
-                        QNWARNING(QStringLiteral("Found note which notebook guid doesn't correspond to any existing notebook: ") << note);
-                        ++resourceIt;
-                        continue;
-                    }
-
-                    const Notebook & notebook = *noteNotebookIt;
-                    if (notebook.hasLinkedNotebookGuid()) {
-                        ++resourceIt;
-                        continue;
-                    }
-
-                    break;
-                }
+                resourceIt = nextResourceByUsnIterator(resourceIt);
             }
             break;
         case NextItemType::LinkedNotebook:
@@ -2256,6 +2188,86 @@ QString FakeNoteStore::nextName(const QString & name) const
     QString result = name;
     result.append(QStringLiteral("_") + QString::number(2));
     return result;
+}
+
+FakeNoteStore::NoteDataByUSN::const_iterator FakeNoteStore::nextNoteByUsnIterator(NoteDataByUSN::const_iterator it,
+                                                                                  const QString & targetLinkedNotebookGuid) const
+{
+    const NoteDataByUSN & noteUsnIndex = m_notes.get<NoteByUSN>();
+    const NotebookDataByGuid & notebookGuidIndex = m_notebooks.get<NotebookByGuid>();
+
+    while(it != noteUsnIndex.end())
+    {
+        const QString & notebookGuid = it->notebookGuid();
+        auto noteNotebookIt = notebookGuidIndex.find(notebookGuid);
+        if (Q_UNLIKELY(noteNotebookIt == notebookGuidIndex.end())) {
+            QNWARNING(QStringLiteral("Found note which notebook guid doesn't correspond to any existing notebook: ") << *it);
+            ++it;
+            continue;
+        }
+
+        const Notebook & notebook = *noteNotebookIt;
+        if (notebook.hasLinkedNotebookGuid() &&
+            (targetLinkedNotebookGuid.isEmpty() || (notebook.linkedNotebookGuid() != targetLinkedNotebookGuid)))
+        {
+            ++it;
+            continue;
+        }
+        else if (!notebook.hasLinkedNotebookGuid() && !targetLinkedNotebookGuid.isEmpty())
+        {
+            ++it;
+            continue;
+        }
+
+        break;
+    }
+
+    return it;
+}
+
+FakeNoteStore::ResourceDataByUSN::const_iterator FakeNoteStore::nextResourceByUsnIterator(ResourceDataByUSN::const_iterator it,
+                                                                                          const QString & targetLinkedNotebookGuid) const
+{
+    const ResourceDataByUSN & resourceUsnIndex = m_resources.get<ResourceByUSN>();
+    const NoteDataByGuid & noteGuidIndex = m_notes.get<NoteByGuid>();
+    const NotebookDataByGuid & notebookGuidIndex = m_notebooks.get<NotebookByGuid>();
+    while(it != resourceUsnIndex.end())
+    {
+        const QString & noteGuid = it->noteGuid();
+
+        auto resourceNoteIt = noteGuidIndex.find(noteGuid);
+        if (Q_UNLIKELY(resourceNoteIt == noteGuidIndex.end())) {
+            QNWARNING(QStringLiteral("Found resource which note guid doesn't correspond to any existing note: ") << *it);
+            ++it;
+            continue;
+        }
+
+        const Note & note = *resourceNoteIt;
+        const QString & notebookGuid = note.notebookGuid();
+        auto noteNotebookIt = notebookGuidIndex.find(notebookGuid);
+        if (Q_UNLIKELY(noteNotebookIt == notebookGuidIndex.end())) {
+            QNWARNING(QStringLiteral("Found note which notebook guid doesn't correspond to any existing notebook: ") << note);
+            ++it;
+            continue;
+        }
+
+        const Notebook & notebook = *noteNotebookIt;
+        if (notebook.hasLinkedNotebookGuid() &&
+            (targetLinkedNotebookGuid.isEmpty() || (notebook.linkedNotebookGuid() != targetLinkedNotebookGuid)))
+        {
+            ++it;
+            continue;
+        }
+        else if (!notebook.hasLinkedNotebookGuid() && !targetLinkedNotebookGuid.isEmpty())
+        {
+            ++it;
+            continue;
+        }
+
+        break;
+    }
+
+    return it;
 }
 
 } // namespace quentier

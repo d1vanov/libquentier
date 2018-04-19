@@ -269,12 +269,25 @@ private:
     struct TagByGuid{};
     struct TagByUSN{};
     struct TagByNameUpper{};
+    struct TagByParentTagGuid{};
 
     struct TagNameUpperExtractor
     {
         static QString nameUpper(const Tag & tag)
         {
             return tag.name().toUpper();
+        }
+    };
+
+    struct TagParentTagGuidExtractor
+    {
+        static QString parentTagGuid(const Tag & tag)
+        {
+            if (!tag.hasParentGuid()) {
+                return QString();
+            }
+
+            return tag.parentGuid();
         }
     };
 
@@ -292,6 +305,10 @@ private:
             boost::multi_index::hashed_unique<
                 boost::multi_index::tag<TagByNameUpper>,
                 boost::multi_index::global_fun<const Tag&,QString,&TagNameUpperExtractor::nameUpper>
+            >,
+            boost::multi_index::hashed_non_unique<
+                boost::multi_index::tag<TagByParentTagGuid>,
+                boost::multi_index::global_fun<const Tag&,QString,&TagParentTagGuidExtractor::parentTagGuid>
             >
         >
     > TagData;
@@ -299,6 +316,7 @@ private:
     typedef TagData::index<TagByGuid>::type TagDataByGuid;
     typedef TagData::index<TagByUSN>::type TagDataByUSN;
     typedef TagData::index<TagByNameUpper>::type TagDataByNameUpper;
+    typedef TagData::index<TagByParentTagGuid>::type TagDataByParentTagGuid;
 
     // Notebook store
     struct NotebookByGuid{};
@@ -460,6 +478,12 @@ private:
             LinkedNotebook
         };
     };
+
+private:
+    NoteDataByUSN::const_iterator nextNoteByUsnIterator(NoteDataByUSN::const_iterator it,
+                                                        const QString & targetLinkedNotebookGuid = QString()) const;
+    ResourceDataByUSN::const_iterator nextResourceByUsnIterator(ResourceDataByUSN::const_iterator it,
+                                                                const QString & targetLinkedNotebookGuid = QString()) const;
 
 private:
     SavedSearchData     m_savedSearches;
