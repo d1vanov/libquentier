@@ -1209,14 +1209,62 @@ qint32 FakeNoteStore::getNote(const bool withContent, const bool withResourcesDa
 {
     CHECK_API_RATE_LIMIT()
 
-    // TODO: implement
-    Q_UNUSED(withContent)
-    Q_UNUSED(withResourcesData)
-    Q_UNUSED(withResourcesRecognition)
-    Q_UNUSED(withResourceAlternateData)
-    Q_UNUSED(note)
-    Q_UNUSED(errorDescription)
-    Q_UNUSED(rateLimitSeconds)
+    if (!note.hasGuid()) {
+        errorDescription.setBase(QStringLiteral("Note has no guid"));
+        return qevercloud::EDAMErrorCode::UNKNOWN;
+    }
+
+    const NoteDataByGuid & noteGuidIndex = m_notes.get<NoteByGuid>();
+    auto noteIt = noteGuidIndex.find(note.guid());
+    if (noteIt == noteGuidIndex.end()) {
+        errorDescription.setBase(QStringLiteral("Note was not found"));
+        return qevercloud::EDAMErrorCode::UNKNOWN;
+    }
+
+    note = *noteIt;
+
+    if (!withContent) {
+        note.setContent(QString());
+    }
+
+    if (note.hasResources())
+    {
+        const ResourceDataByGuid & resourceGuidIndex = m_resources.get<ResourceByGuid>();
+        QList<Resource> resources = note.resources();
+        for(auto it = resources.begin(); it != resources.end(); )
+        {
+            Resource & resource = *it;
+            if (Q_UNLIKELY(!resource.hasGuid())) {
+                it = resources.erase(it);
+                continue;
+            }
+
+            auto resourceIt = resourceGuidIndex.find(resource.guid());
+            if (Q_UNLIKELY(resourceIt == resourceGuidIndex.end())) {
+                it = resources.erase(it);
+                continue;
+            }
+
+            resource = *resourceIt;
+
+            if (!withResourcesData) {
+                resource.setDataBody(QByteArray());
+            }
+
+            if (!withResourcesRecognition) {
+                resource.setRecognitionDataBody(QByteArray());
+            }
+
+            if (!withResourceAlternateData) {
+                resource.setAlternateDataBody(QByteArray());
+            }
+
+            ++it;
+        }
+
+        note.setResources(resources);
+    }
+
     return 0;
 }
 
@@ -1248,15 +1296,70 @@ qint32 FakeNoteStore::getResource(const bool withDataBody, const bool withRecogn
 {
     CHECK_API_RATE_LIMIT()
 
-    // TODO: implement
-    Q_UNUSED(withDataBody)
-    Q_UNUSED(withRecognitionDataBody)
-    Q_UNUSED(withAlternateDataBody)
-    Q_UNUSED(withAttributes)
-    Q_UNUSED(authToken)
-    Q_UNUSED(resource)
-    Q_UNUSED(errorDescription)
-    Q_UNUSED(rateLimitSeconds)
+    if (!resource.hasGuid()) {
+        errorDescription.setBase(QStringLiteral("Resource has no guid"));
+        return qevercloud::EDAMErrorCode::UNKNOWN;
+    }
+
+    const ResourceDataByGuid & resourceGuidIndex = m_resources.get<ResourceByGuid>();
+    auto resourceIt = resourceGuidIndex.find(resource.guid());
+    if (resourceIt == resourceGuidIndex.end()) {
+        errorDescription.setBase(QStringLiteral("Resource was not found"));
+        return qevercloud::EDAMErrorCode::UNKNOWN;
+    }
+
+    if (Q_UNLIKELY(!resourceIt->hasNoteGuid())) {
+        errorDescription.setBase(QStringLiteral("Found resource has no note guid"));
+        return qevercloud::EDAMErrorCode::INTERNAL_ERROR;
+    }
+
+    const QString & noteGuid = resource.noteGuid();
+    const NoteDataByGuid & noteGuidIndex = m_notes.get<NoteByGuid>();
+    auto noteIt = noteGuidIndex.find(noteGuid);
+    if (Q_UNLIKELY(noteIt == noteGuidIndex.end())) {
+        errorDescription.setBase(QStringLiteral("Found no note containing the resource"));
+        return qevercloud::EDAMErrorCode::INTERNAL_ERROR;
+    }
+
+    if (Q_UNLIKELY(!noteIt->hasNotebookGuid())) {
+        errorDescription.setBase(QStringLiteral("Found note has no notebook guid"));
+        return qevercloud::EDAMErrorCode::INTERNAL_ERROR;
+    }
+
+    const QString & notebookGuid = noteIt->notebookGuid();
+    const NotebookDataByGuid & notebookGuidIndex = m_notebooks.get<NotebookByGuid>();
+    auto notebookIt = notebookGuidIndex.find(notebookGuid);
+    if (Q_UNLIKELY(notebookIt == notebookGuidIndex.end())) {
+        errorDescription.setBase(QStringLiteral("Found no notebook containing the note with the resource"));
+        return qevercloud::EDAMErrorCode::INTERNAL_ERROR;
+    }
+
+    if (notebookIt->hasLinkedNotebookGuid())
+    {
+        qint32 checkRes = checkLinkedNotebookAuthTokenForNotebook(notebookGuid, authToken, errorDescription);
+        if (checkRes != 0) {
+            return checkRes;
+        }
+    }
+
+    resource = *resourceIt;
+
+    if (!withDataBody) {
+        resource.setDataBody(QByteArray());
+    }
+
+    if (!withRecognitionDataBody) {
+        resource.setRecognitionDataBody(QByteArray());
+    }
+
+    if (!withAlternateDataBody) {
+        resource.setAlternateDataBody(QByteArray());
+    }
+
+    if (!withAttributes) {
+        resource.setResourceAttributes(qevercloud::ResourceAttributes());
+    }
+
     return 0;
 }
 
