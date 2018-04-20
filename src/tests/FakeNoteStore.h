@@ -241,6 +241,19 @@ private:
      */
     QString nextName(const QString & name) const;
 
+    qint32 getSyncChunkImpl(const qint32 afterUSN, const qint32 maxEntries,
+                            const bool fullSyncOnly, const QString & linkedNotebookGuid,
+                            const qevercloud::SyncChunkFilter & filter,
+                            qevercloud::SyncChunk & syncChunk, ErrorString & errorDescription,
+                            qint32 & rateLimitSeconds);
+
+    /**
+     * Helper method to advance the iterator of UsnIndex to the next item
+     * with larger usn and with the same linked notebook belonging as the source item
+     */
+    template <class ConstIterator, class UsnIndex>
+    ConstIterator advanceIterator(ConstIterator it, const UsnIndex & index, const QString & linkedNotebookGuid) const;
+
 private:
     // Saved searches store
     struct SavedSearchByGuid{};
