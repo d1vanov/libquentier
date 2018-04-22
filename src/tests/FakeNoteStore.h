@@ -41,6 +41,7 @@
 
 #include <QSet>
 #include <QHash>
+#include <QQueue>
 
 namespace quentier {
 
@@ -184,9 +185,9 @@ public:
                                               qevercloud::SyncChunk & syncChunk, ErrorString & errorDescription,
                                               qint32 & rateLimitSeconds) Q_DECL_OVERRIDE;
     virtual qint32 getNote(const bool withContent, const bool withResourcesData,
-                           const bool withResourcesRecognition, const bool withResourceAlternateData,
+                           const bool withResourcesRecognition, const bool withResourcesAlternateData,
                            Note & note, ErrorString & errorDescription, qint32 & rateLimitSeconds) Q_DECL_OVERRIDE;
-    virtual bool getNoteAsync(const bool withContent, const bool withResourceData, const bool withResourcesRecognition,
+    virtual bool getNoteAsync(const bool withContent, const bool withResourcesData, const bool withResourcesRecognition,
                               const bool withResourceAlternateData, const bool withSharedNotes,
                               const bool withNoteAppDataValues, const bool withResourceAppDataValues,
                               const bool withNoteLimits, const QString & noteGuid,
@@ -540,6 +541,53 @@ private:
         };
     };
 
+    // Struct encapsulating parameters required for a single async getNote request
+    struct GetNoteAsyncRequest
+    {
+        GetNoteAsyncRequest() :
+            m_withContent(false),
+            m_withResourcesData(false),
+            m_withResourcesRecognition(false),
+            m_withResourcesAlternateData(false),
+            m_withSharedNotes(false),
+            m_withNoteAppDataValues(false),
+            m_withResourceAppDataValues(false),
+            m_withNoteLimits(false),
+            m_noteGuid(),
+            m_authToken()
+        {}
+
+        bool    m_withContent;
+        bool    m_withResourcesData;
+        bool    m_withResourcesRecognition;
+        bool    m_withResourcesAlternateData;
+        bool    m_withSharedNotes;
+        bool    m_withNoteAppDataValues;
+        bool    m_withResourceAppDataValues;
+        bool    m_withNoteLimits;
+        QString m_noteGuid;
+        QString m_authToken;
+    };
+
+    struct GetResourceAsyncRequest
+    {
+        GetResourceAsyncRequest() :
+            m_withDataBody(false),
+            m_withRecognitionDataBody(false),
+            m_withAlternateDataBody(false),
+            m_withAttributes(false),
+            m_resourceGuid(),
+            m_authToken()
+        {}
+
+        bool    m_withDataBody;
+        bool    m_withRecognitionDataBody;
+        bool    m_withAlternateDataBody;
+        bool    m_withAttributes;
+        QString m_resourceGuid;
+        QString m_authToken;
+    };
+
 private:
     NoteDataByUSN::const_iterator nextNoteByUsnIterator(NoteDataByUSN::const_iterator it,
                                                         const QString & targetLinkedNotebookGuid = QString()) const;
@@ -583,6 +631,9 @@ private:
     QHash<QString,qevercloud::SyncState>    m_linkedNotebookSyncStates;
 
     QHash<QString,QString>  m_linkedNotebookAuthTokens;
+
+    QQueue<GetNoteAsyncRequest>     m_getNoteAsyncRequests;
+    QQueue<GetResourceAsyncRequest> m_getResourceAsyncRequests;
 };
 
 } // namespace quentier

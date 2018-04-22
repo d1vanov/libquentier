@@ -35,7 +35,10 @@ FakeNoteStore::FakeNoteStore(QObject * parent) :
     m_maxNumTagsPerNote(static_cast<quint32>(qevercloud::EDAM_NOTE_TAGS_MAX)),
     m_maxResourceSize(static_cast<quint64>(qevercloud::EDAM_RESOURCE_SIZE_MAX_FREE)),
     m_syncState(),
-    m_linkedNotebookSyncStates()
+    m_linkedNotebookSyncStates(),
+    m_linkedNotebookAuthTokens(),
+    m_getNoteAsyncRequests(),
+    m_getResourceAsyncRequests()
 {}
 
 QHash<QString,qevercloud::SavedSearch> FakeNoteStore::savedSearches() const
@@ -1204,7 +1207,7 @@ qint32 FakeNoteStore::getLinkedNotebookSyncChunk(const qevercloud::LinkedNoteboo
 }
 
 qint32 FakeNoteStore::getNote(const bool withContent, const bool withResourcesData,
-                              const bool withResourcesRecognition, const bool withResourceAlternateData,
+                              const bool withResourcesRecognition, const bool withResourcesAlternateData,
                               Note & note, ErrorString & errorDescription, qint32 & rateLimitSeconds)
 {
     CHECK_API_RATE_LIMIT()
@@ -1255,7 +1258,7 @@ qint32 FakeNoteStore::getNote(const bool withContent, const bool withResourcesDa
                 resource.setRecognitionDataBody(QByteArray());
             }
 
-            if (!withResourceAlternateData) {
+            if (!withResourcesAlternateData) {
                 resource.setAlternateDataBody(QByteArray());
             }
 
@@ -1268,25 +1271,36 @@ qint32 FakeNoteStore::getNote(const bool withContent, const bool withResourcesDa
     return 0;
 }
 
-bool FakeNoteStore::getNoteAsync(const bool withContent, const bool withResourceData, const bool withResourcesRecognition,
-                                 const bool withResourceAlternateData, const bool withSharedNotes,
+bool FakeNoteStore::getNoteAsync(const bool withContent, const bool withResourcesData, const bool withResourcesRecognition,
+                                 const bool withResourcesAlternateData, const bool withSharedNotes,
                                  const bool withNoteAppDataValues, const bool withResourceAppDataValues,
                                  const bool withNoteLimits, const QString & noteGuid,
                                  const QString & authToken, ErrorString & errorDescription)
 {
-    // TODO: implement
-    Q_UNUSED(withContent)
-    Q_UNUSED(withResourceData)
-    Q_UNUSED(withResourcesRecognition)
-    Q_UNUSED(withResourceAlternateData)
-    Q_UNUSED(withSharedNotes)
-    Q_UNUSED(withNoteAppDataValues)
-    Q_UNUSED(withResourceAppDataValues)
-    Q_UNUSED(withNoteLimits)
-    Q_UNUSED(noteGuid)
-    Q_UNUSED(authToken)
-    Q_UNUSED(errorDescription)
-    return false;
+    if (Q_UNLIKELY(noteGuid.isEmpty())) {
+        errorDescription.setBase(QStringLiteral("Note guid is empty"));
+        return false;
+    }
+
+    GetNoteAsyncRequest request;
+    request.m_withContent = withContent;
+    request.m_withResourcesData = withResourcesData;
+    request.m_withResourcesRecognition = withResourcesRecognition;
+    request.m_withResourcesAlternateData = withResourcesAlternateData;
+    request.m_withSharedNotes = withSharedNotes;
+    request.m_withNoteAppDataValues = withNoteAppDataValues;
+    request.m_withResourceAppDataValues = withResourceAppDataValues;
+    request.m_withNoteLimits = withNoteLimits;
+    request.m_noteGuid = noteGuid;
+    request.m_authToken = authToken;
+
+    m_getNoteAsyncRequests.enqueue(request);
+
+    int timerId = startTimer(0);
+    QNDEBUG(QStringLiteral("Started timer to postpone the get note result, timer id = ") << timerId);
+
+    Q_UNUSED(m_getNoteAsyncDelayTimerIds.insert(timerId))
+    return true;
 }
 
 qint32 FakeNoteStore::getResource(const bool withDataBody, const bool withRecognitionDataBody,
@@ -1367,15 +1381,25 @@ bool FakeNoteStore::getResourceAsync(const bool withDataBody, const bool withRec
                                      const bool withAlternateDataBody, const bool withAttributes, const QString & resourceGuid,
                                      const QString & authToken, ErrorString & errorDescription)
 {
-    // TODO: implement
-    Q_UNUSED(withDataBody)
-    Q_UNUSED(withRecognitionDataBody)
-    Q_UNUSED(withAlternateDataBody)
-    Q_UNUSED(withAttributes)
-    Q_UNUSED(resourceGuid)
-    Q_UNUSED(authToken)
-    Q_UNUSED(errorDescription)
-    return false;
+    if (Q_UNLIKELY(resourceGuid.isEmpty())) {
+        errorDescription.setBase(QStringLiteral("Resource guid is empty"));
+        return false;
+    }
+
+    GetResourceAsyncRequest request;
+    request.m_withDataBody = withDataBody;
+    request.m_withRecognitionDataBody = withRecognitionDataBody;
+    request.m_withAlternateDataBody = withAlternateDataBody;
+    request.m_withAttributes = withAttributes;
+    request.m_resourceGuid = resourceGuid;
+    request.m_authToken = authToken;
+
+    m_getResourceAsyncRequests.enqueue(request);
+    int timerId = startTimer(0);
+    QNDEBUG(QStringLiteral("Started timer to postpone the get resource result, timer id = ") << timerId);
+
+    Q_UNUSED(m_getResourceAsyncDelayTimerIds.insert(timerId))
+    return true;
 }
 
 qint32 FakeNoteStore::authenticateToSharedNotebook(const QString & shareKey, qevercloud::AuthenticationResult & authResult,
@@ -1400,14 +1424,52 @@ void FakeNoteStore::timerEvent(QTimerEvent * pEvent)
     auto noteIt = m_getNoteAsyncDelayTimerIds.find(pEvent->timerId());
     if (noteIt != m_getNoteAsyncDelayTimerIds.end())
     {
-        // TODO: get note and emit the corresponding signal
+        QNDEBUG(QStringLiteral("getNoteAsync delay timer event, timer id = ") << pEvent->timerId());
+
+        killTimer(pEvent->timerId());
+
+        if (!m_getNoteAsyncRequests.isEmpty())
+        {
+            GetNoteAsyncRequest request = m_getNoteAsyncRequests.dequeue();
+
+            qint32 rateLimitSeconds = 0;
+            ErrorString errorDescription;
+            Note note;
+            note.setGuid(request.m_noteGuid);
+            qint32 res = getNote(request.m_withContent, request.m_withResourcesData,
+                                 request.m_withResourcesRecognition, request.m_withResourcesAlternateData,
+                                 note, errorDescription, rateLimitSeconds);
+            if ((res == 0) && (note.hasNotebookGuid())) {
+                res = checkLinkedNotebookAuthTokenForNotebook(note.notebookGuid(), request.m_authToken, errorDescription);
+            }
+
+            Q_EMIT getNoteAsyncFinished(res, note.qevercloudNote(), rateLimitSeconds, errorDescription);
+        }
+
         return;
     }
 
     auto resourceIt = m_getResourceAsyncDelayTimerIds.find(pEvent->timerId());
     if (resourceIt != m_getResourceAsyncDelayTimerIds.end())
     {
-        // TODO: get resource and emit the corresponding signal
+        QNDEBUG(QStringLiteral("getResourceAsync delay timer event, timer id = ") << pEvent->timerId());
+
+        killTimer(pEvent->timerId());
+
+        if (!m_getResourceAsyncRequests.isEmpty())
+        {
+            GetResourceAsyncRequest request = m_getResourceAsyncRequests.dequeue();
+
+            qint32 rateLimitSeconds = 0;
+            ErrorString errorDescription;
+            Resource resource;
+            resource.setGuid(request.m_resourceGuid);
+            qint32 res = getResource(request.m_withDataBody, request.m_withRecognitionDataBody,
+                                     request.m_withAlternateDataBody, request.m_withAttributes,
+                                     request.m_authToken, resource, errorDescription, rateLimitSeconds);
+            Q_EMIT getResourceAsyncFinished(res, resource.qevercloudResource(), rateLimitSeconds, errorDescription);
+        }
+
         return;
     }
 
