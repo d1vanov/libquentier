@@ -457,6 +457,7 @@ private:
     struct LinkedNotebookByShardId{};
     struct LinkedNotebookByUri{};
     struct LinkedNotebookByUsername{};
+    struct LinkedNotebookBySharedNotebookGlobalId{};
 
     struct LinkedNotebookShardIdExtractor
     {
@@ -504,6 +505,10 @@ private:
             boost::multi_index::ordered_unique<
                 boost::multi_index::tag<LinkedNotebookByUSN>,
                 boost::multi_index::const_mem_fun<LinkedNotebook,qint32,&LinkedNotebook::updateSequenceNumber>
+            >,
+            boost::multi_index::hashed_unique<
+                boost::multi_index::tag<LinkedNotebookBySharedNotebookGlobalId>,
+                boost::multi_index::const_mem_fun<LinkedNotebook,const QString&,&LinkedNotebook::sharedNotebookGlobalId>
             >
         >
     > LinkedNotebookData;
@@ -513,6 +518,7 @@ private:
     typedef LinkedNotebookData::index<LinkedNotebookByShardId>::type LinkedNotebookDataByShardId;
     typedef LinkedNotebookData::index<LinkedNotebookByUri>::type LinkedNotebookDataByUri;
     typedef LinkedNotebookData::index<LinkedNotebookByUsername>::type LinkedNotebookDataByUsername;
+    typedef LinkedNotebookData::index<LinkedNotebookBySharedNotebookGlobalId>::type LinkedNotebookDataBySharedNotebookGlobalId;
 
     template <class T>
     class CompareByUSN
@@ -569,6 +575,7 @@ private:
         QString m_authToken;
     };
 
+    // Struct encapsulating parameters required for a single async getResource request
     struct GetResourceAsyncRequest
     {
         GetResourceAsyncRequest() :

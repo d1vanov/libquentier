@@ -616,6 +616,10 @@ bool FakeNoteStore::setLinkedNotebook(LinkedNotebook & linkedNotebook, ErrorStri
         return false;
     }
 
+    if (!linkedNotebook.hasSharedNotebookGlobalId()) {
+        linkedNotebook.setSharedNotebookGlobalId(UidGenerator::Generate());
+    }
+
     qint32 maxUsn = currentMaxUsn();
     ++maxUsn;
     linkedNotebook.setUpdateSequenceNumber(maxUsn);
@@ -1407,11 +1411,25 @@ qint32 FakeNoteStore::authenticateToSharedNotebook(const QString & shareKey, qev
 {
     CHECK_API_RATE_LIMIT()
 
-    // TODO: implement
-    Q_UNUSED(shareKey)
-    Q_UNUSED(authResult)
-    Q_UNUSED(errorDescription)
-    Q_UNUSED(rateLimitSeconds)
+    const LinkedNotebookDataBySharedNotebookGlobalId & index = m_linkedNotebooks.get<LinkedNotebookBySharedNotebookGlobalId>();
+    auto it = index.find(shareKey);
+    if (it == index.end()) {
+        errorDescription.setBase("Found no linked notebook corresponding to share key");
+        return qevercloud::EDAMErrorCode::INVALID_AUTH;
+    }
+
+    const LinkedNotebook & linkedNotebook = *it;
+    auto authTokenIt = m_linkedNotebookAuthTokens.find(linkedNotebook.guid());
+    if (authTokenIt == m_linkedNotebookAuthTokens.end()) {
+        errorDescription.setBase(QStringLiteral("No valid authentication token was provided"));
+        return qevercloud::EDAMErrorCode::INVALID_AUTH;
+    }
+
+    authResult.authenticationToken = authTokenIt.value();
+    authResult.currentTime = QDateTime::currentMSecsSinceEpoch();
+    authResult.expiration = QDateTime::currentDateTime().addYears(1).toMSecsSinceEpoch();
+    authResult.noteStoreUrl = QStringLiteral("Fake note store URL");
+    authResult.webApiUrlPrefix = QStringLiteral("Fake web API url prefix");
     return 0;
 }
 
