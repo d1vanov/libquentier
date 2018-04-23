@@ -27,7 +27,7 @@
 #include <quentier/types/SavedSearch.h>
 #include <quentier/types/Notebook.h>
 #include <quentier/types/Note.h>
-#include <quentier/synchronization/INoteStore.h>
+#include <quentier_private/synchronization/INoteStore.h>
 #include <QObject>
 
 namespace quentier {

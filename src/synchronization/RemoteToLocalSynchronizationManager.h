@@ -38,8 +38,8 @@
 #include <quentier/types/Resource.h>
 #include <quentier/types/LinkedNotebook.h>
 #include <quentier/types/SavedSearch.h>
-#include <quentier/synchronization/INoteStore.h>
-#include <quentier/synchronization/IUserStore.h>
+#include <quentier_private/synchronization/INoteStore.h>
+#include <quentier_private/synchronization/IUserStore.h>
 
 #if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
 #include <qt5qevercloud/QEverCloud.h>

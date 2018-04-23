@@ -19,6 +19,8 @@
 #include <quentier/synchronization/SynchronizationManager.h>
 #include "SynchronizationManager_p.h"
 #include <quentier/local_storage/LocalStorageManagerAsync.h>
+#include <quentier_private/synchronization/INoteStore.h>
+#include <quentier_private/synchronization/IUserStore.h>
 
 namespace quentier {
 

@@ -125,9 +125,7 @@ set(LOCAL_STORAGE_HEADERS
 
 set(SYNCHRONIZATION_HEADERS
     headers/quentier/synchronization/SynchronizationManager.h
-    headers/quentier/synchronization/IAuthenticationManager.h
-    headers/quentier/synchronization/INoteStore.h
-    headers/quentier/synchronization/IUserStore.h)
+    headers/quentier/synchronization/IAuthenticationManager.h)
 
 if(BUILD_WITH_AUTHENTICATION_MANAGER)
   list(APPEND SYNCHRONIZATION_HEADERS
@@ -184,6 +182,8 @@ list(APPEND PUBLIC_HEADERS ${EXCEPTION_HEADERS})
 list(APPEND PUBLIC_HEADERS ${UTILITY_HEADERS})
 
 set(PRIVATE_HEADERS
+    headers/quentier_private/synchronization/INoteStore.h
+    headers/quentier_private/synchronization/IUserStore.h
     src/local_storage/Transaction.h
     src/logging/QuentierLogger_p.h
     src/types/data/AccountData.h

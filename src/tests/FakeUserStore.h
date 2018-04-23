@@ -19,7 +19,7 @@
 #ifndef LIB_QUENTIER_TESTS_FAKE_USER_STORE_H
 #define LIB_QUENTIER_TESTS_FAKE_USER_STORE_H
 
-#include <quentier/synchronization/IUserStore.h>
+#include <quentier_private/synchronization/IUserStore.h>
 #include <quentier/types/User.h>
 #include <quentier/utility/Macros.h>
 #include <QHash>

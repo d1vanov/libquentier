@@ -19,7 +19,7 @@
 #ifndef LIB_QUENTIER_TESTS_FAKE_NOTE_STORE_H
 #define LIB_QUENTIER_TESTS_FAKE_NOTE_STORE_H
 
-#include <quentier/synchronization/INoteStore.h>
+#include <quentier_private/synchronization/INoteStore.h>
 #include <quentier/types/SavedSearch.h>
 #include <quentier/types/Tag.h>
 #include <quentier/types/Notebook.h>
