@@ -732,12 +732,13 @@ set(TEST_HEADERS
     src/tests/local_storage/TagLocalStorageManagerAsyncTester.h
     src/tests/local_storage/UserLocalStorageManagerAsyncTester.h
     src/tests/types/ResourceRecognitionIndicesParsingTest.h
+    src/tests/types/TypesTester.h
     src/tests/synchronization/FakeNoteStore.h
     src/tests/synchronization/FakeUserStore.h
     src/tests/synchronization/FullSyncStaleDataItemsExpungerTester.h
     src/tests/utility/EncryptionManagerTests.h
     src/tests/utility/TagSortByParentChildRelationsTest.h
-    src/tests/CoreTester.h
+    src/tests/utility/UtilityTester.h
     src/synchronization/FullSyncStaleDataItemsExpunger.h
     src/synchronization/TagSyncCache.h
     src/synchronization/SavedSearchSyncCache.h
@@ -761,12 +762,13 @@ set(TEST_SOURCES
     src/tests/local_storage/TagLocalStorageManagerAsyncTester.cpp
     src/tests/local_storage/UserLocalStorageManagerAsyncTester.cpp
     src/tests/types/ResourceRecognitionIndicesParsingTest.cpp
+    src/tests/types/TypesTester.cpp
     src/tests/synchronization/FakeNoteStore.cpp
     src/tests/synchronization/FakeUserStore.cpp
     src/tests/synchronization/FullSyncStaleDataItemsExpungerTester.cpp
     src/tests/utility/EncryptionManagerTests.cpp
     src/tests/utility/TagSortByParentChildRelationsTest.cpp
-    src/tests/CoreTester.cpp
+    src/tests/utility/UtilityTester.cpp
     src/tests/TestMain.cpp
     src/synchronization/FullSyncStaleDataItemsExpunger.cpp
     src/synchronization/TagSyncCache.cpp

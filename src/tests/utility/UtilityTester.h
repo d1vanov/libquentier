@@ -16,8 +16,8 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LIB_QUENTIER_TESTS_CORE_TESTER_H
-#define LIB_QUENTIER_TESTS_CORE_TESTER_H
+#ifndef LIB_QUENTIER_TESTS_UTILITY_UTILITY_TESTER_H
+#define LIB_QUENTIER_TESTS_UTILITY_UTILITY_TESTER_H
 
 #include <quentier/utility/Macros.h>
 #include <QObject>
@@ -25,18 +25,15 @@
 namespace quentier {
 namespace test {
 
-class CoreTester: public QObject
+class UtilityTester: public QObject
 {
     Q_OBJECT
 public:
-    explicit CoreTester(QObject * parent = Q_NULLPTR);
-    virtual ~CoreTester();
+    explicit UtilityTester(QObject * parent = Q_NULLPTR);
+    virtual ~UtilityTester();
 
 private Q_SLOTS:
-    void initTestCase();
-
-    void noteContainsToDoTest();
-    void noteContainsEncryptionTest();
+    void init();
 
     void encryptDecryptNoteTest();
     void decryptNoteAesTest();
@@ -44,15 +41,13 @@ private Q_SLOTS:
 
     void tagSortByParentChildRelationsTest();
 
-    void resourceRecognitionIndicesParsingTest();
-
 private:
-    CoreTester(const CoreTester & other) Q_DECL_EQ_DELETE;
-    CoreTester & operator=(const CoreTester & other) Q_DECL_EQ_DELETE;
+    UtilityTester(const UtilityTester & other) Q_DECL_EQ_DELETE;
+    UtilityTester & operator=(const UtilityTester & other) Q_DECL_EQ_DELETE;
 
 };
 
 } // namespace test
 } // namespace quentier
 
-#endif // LIB_QUENTIER_TESTS_CORE_TESTER_H
+#endif // LIB_QUENTIER_TESTS_UTILITY_UTILITY_TESTER_H

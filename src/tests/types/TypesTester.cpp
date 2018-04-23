@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Dmitry Ivanov
+ * Copyright 2018 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,41 +16,23 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "CoreTester.h"
-#include "types/ResourceRecognitionIndicesParsingTest.h"
-#include "utility/EncryptionManagerTests.h"
-#include "utility/TagSortByParentChildRelationsTest.h"
-#include <quentier/exception/IQuentierException.h>
-#include <quentier/utility/EventLoopWithExitStatus.h>
-#include <quentier/types/SavedSearch.h>
-#include <quentier/types/LinkedNotebook.h>
-#include <quentier/types/Tag.h>
+#include "TypesTester.h"
+#include "ResourceRecognitionIndicesParsingTest.h"
 #include <quentier/types/Resource.h>
 #include <quentier/types/Note.h>
-#include <quentier/types/SharedNote.h>
-#include <quentier/types/Notebook.h>
-#include <quentier/types/SharedNotebook.h>
-#include <quentier/types/User.h>
 #include <quentier/types/RegisterMetatypes.h>
 #include <quentier/logging/QuentierLogger.h>
 #include <quentier/utility/SysInfo.h>
 #include <QApplication>
 #include <QTextStream>
 #include <QtTest/QTest>
-#include <QTimer>
 
-// 10 minutes should be enough
-#define MAX_ALLOWED_MILLISECONDS 600000
-
-namespace quentier {
-namespace test {
-
-CoreTester::CoreTester(QObject * parent) :
-    QObject(parent)
-{}
-
-CoreTester::~CoreTester()
-{}
+#define CATCH_EXCEPTION() \
+    catch(const std::exception & exception) { \
+        SysInfo sysInfo; \
+        QFAIL(qPrintable(QStringLiteral("Caught exception: ") + QString::fromUtf8(exception.what()) + \
+                         QStringLiteral(", backtrace: ") + sysInfo.stackTrace())); \
+    }
 
 #if QT_VERSION >= 0x050000
 inline void nullMessageHandler(QtMsgType type, const QMessageLogContext &, const QString & message) {
@@ -66,7 +48,17 @@ inline void nullMessageHandler(QtMsgType type, const char * message) {
 }
 #endif
 
-void CoreTester::initTestCase()
+namespace quentier {
+namespace test {
+
+TypesTester::TypesTester(QObject * parent) :
+    QObject(parent)
+{}
+
+TypesTester::~TypesTester()
+{}
+
+void TypesTester::init()
 {
     registerMetatypes();
 
@@ -77,15 +69,7 @@ void CoreTester::initTestCase()
 #endif
 }
 
-#define CATCH_EXCEPTION() \
-    catch(const std::exception & exception) { \
-        SysInfo sysInfo; \
-        QFAIL(qPrintable(QStringLiteral("Caught exception: ") + QString::fromUtf8(exception.what()) + \
-                         QStringLiteral(", backtrace: ") + sysInfo.stackTrace())); \
-    }
-
-
-void CoreTester::noteContainsToDoTest()
+void TypesTester::noteContainsToDoTest()
 {
     try
     {
@@ -131,7 +115,7 @@ void CoreTester::noteContainsToDoTest()
     CATCH_EXCEPTION();
 }
 
-void CoreTester::noteContainsEncryptionTest()
+void TypesTester::noteContainsEncryptionTest()
 {
     try
     {
@@ -163,51 +147,7 @@ void CoreTester::noteContainsEncryptionTest()
     CATCH_EXCEPTION();
 }
 
-void CoreTester::encryptDecryptNoteTest()
-{
-    try
-    {
-        QString error;
-        bool res = encryptDecryptTest(error);
-        QVERIFY2(res == true, qPrintable(error));
-    }
-    CATCH_EXCEPTION();
-}
-
-void CoreTester::decryptNoteAesTest()
-{
-    try
-    {
-        QString error;
-        bool res = decryptAesTest(error);
-        QVERIFY2(res == true, qPrintable(error));
-    }
-    CATCH_EXCEPTION();
-}
-
-void CoreTester::decryptNoteRc2Test()
-{
-    try
-    {
-        QString error;
-        bool res = decryptRc2Test(error);
-        QVERIFY2(res == true, qPrintable(error));
-    }
-    CATCH_EXCEPTION();
-}
-
-void CoreTester::tagSortByParentChildRelationsTest()
-{
-    try
-    {
-        QString error;
-        bool res = ::quentier::test::tagSortByParentChildRelationsTest(error);
-        QVERIFY2(res == true, qPrintable(error));
-    }
-    CATCH_EXCEPTION();
-}
-
-void CoreTester::resourceRecognitionIndicesParsingTest()
+void TypesTester::resourceRecognitionIndicesParsingTest()
 {
     try
     {
@@ -217,8 +157,6 @@ void CoreTester::resourceRecognitionIndicesParsingTest()
     }
     CATCH_EXCEPTION();
 }
-
-#undef CATCH_EXCEPTION
 
 } // namespace test
 } // namespace quentier
