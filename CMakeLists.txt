@@ -718,6 +718,7 @@ endif()
 set(TEST_HEADERS
     src/tests/enml/EnexExportImportTests.h
     src/tests/enml/ENMLConverterTests.h
+    src/tests/enml/ENMLTester.h
     src/tests/local_storage/LocalStorageCacheAsyncTester.h
     src/tests/local_storage/LocalStorageManagerTester.h
     src/tests/local_storage/LocalStorageManagerTests.h
@@ -746,6 +747,7 @@ set(TEST_HEADERS
 set(TEST_SOURCES
     src/tests/enml/EnexExportImportTests.cpp
     src/tests/enml/ENMLConverterTests.cpp
+    src/tests/enml/ENMLTester.cpp
     src/tests/local_storage/LocalStorageCacheAsyncTester.cpp
     src/tests/local_storage/LocalStorageManagerTester.cpp
     src/tests/local_storage/LocalStorageManagerTests.cpp

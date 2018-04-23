@@ -17,8 +17,6 @@
  */
 
 #include "CoreTester.h"
-#include "enml/ENMLConverterTests.h"
-#include "enml/EnexExportImportTests.h"
 #include "types/ResourceRecognitionIndicesParsingTest.h"
 #include "utility/EncryptionManagerTests.h"
 #include "utility/TagSortByParentChildRelationsTest.h"
@@ -55,13 +53,13 @@ CoreTester::~CoreTester()
 {}
 
 #if QT_VERSION >= 0x050000
-void nullMessageHandler(QtMsgType type, const QMessageLogContext &, const QString & message) {
+inline void nullMessageHandler(QtMsgType type, const QMessageLogContext &, const QString & message) {
     if (type != QtDebugMsg) {
         QTextStream(stdout) << message << QStringLiteral("\n");
     }
 }
 #else
-void nullMessageHandler(QtMsgType type, const char * message) {
+inline void nullMessageHandler(QtMsgType type, const char * message) {
     if (type != QtDebugMsg) {
         QTextStream(stdout) << message << QStringLiteral("\n");
     }
@@ -193,204 +191,6 @@ void CoreTester::decryptNoteRc2Test()
     {
         QString error;
         bool res = decryptRc2Test(error);
-        QVERIFY2(res == true, qPrintable(error));
-    }
-    CATCH_EXCEPTION();
-}
-
-void CoreTester::enmlConverterSimpleTest()
-{
-    try
-    {
-        QString error;
-        bool res = convertSimpleNoteToHtmlAndBack(error);
-        QVERIFY2(res == true, qPrintable(error));
-    }
-    CATCH_EXCEPTION();
-}
-
-void CoreTester::enmlConverterToDoTest()
-{
-    try
-    {
-        QString error;
-        bool res = convertNoteWithToDoTagsToHtmlAndBack(error);
-        QVERIFY2(res == true, qPrintable(error));
-    }
-    CATCH_EXCEPTION();
-}
-
-void CoreTester::enmlConverterEnCryptTest()
-{
-    try
-    {
-        QString error;
-        bool res = convertNoteWithEncryptionToHtmlAndBack(error);
-        QVERIFY2(res == true, qPrintable(error));
-    }
-    CATCH_EXCEPTION();
-}
-
-void CoreTester::enmlConverterEnCryptWithModifiedDecryptedTextTest()
-{
-    try
-    {
-        QString error;
-        bool res = convertHtmlWithModifiedDecryptedTextToEnml(error);
-        QVERIFY2(res == true, qPrintable(error));
-    }
-    CATCH_EXCEPTION();
-}
-
-void CoreTester::enmlConverterEnMediaTest()
-{
-    try
-    {
-        QString error;
-        bool res = convertNoteWithResourcesToHtmlAndBack(error);
-        QVERIFY2(res == true, qPrintable(error));
-    }
-    CATCH_EXCEPTION();
-}
-
-void CoreTester::enmlConverterComplexTest()
-{
-    try
-    {
-        QString error;
-        bool res = convertComplexNoteToHtmlAndBack(error);
-        QVERIFY2(res == true, qPrintable(error));
-    }
-    CATCH_EXCEPTION();
-}
-
-void CoreTester::enmlConverterComplexTest2()
-{
-    try
-    {
-        QString error;
-        bool res = convertComplexNote2ToHtmlAndBack(error);
-        QVERIFY2(res == true, qPrintable(error));
-    }
-    CATCH_EXCEPTION();
-}
-
-void CoreTester::enmlConverterComplexTest3()
-{
-    try
-    {
-        QString error;
-        bool res = convertComplexNote3ToHtmlAndBack(error);
-        QVERIFY2(res == true, qPrintable(error));
-    }
-    CATCH_EXCEPTION();
-}
-
-void CoreTester::enmlConverterComplexTest4()
-{
-    try
-    {
-        QString error;
-        bool res = convertComplexNote4ToHtmlAndBack(error);
-        QVERIFY2(res == true, qPrintable(error));
-    }
-    CATCH_EXCEPTION();
-}
-
-void CoreTester::enmlConverterHtmlWithTableHelperTags()
-{
-    try
-    {
-        QString error;
-        bool res = convertHtmlWithTableHelperTagsToEnml(error);
-        QVERIFY2(res == true, qPrintable(error));
-    }
-    CATCH_EXCEPTION();
-}
-
-void CoreTester::enmlConverterHtmlWithTableAndHilitorHelperTags()
-{
-    try
-    {
-        QString error;
-        bool res = convertHtmlWithTableAndHilitorHelperTagsToEnml(error);
-        QVERIFY2(res == true, qPrintable(error));
-    }
-    CATCH_EXCEPTION();
-}
-
-void CoreTester::enexExportImportSingleSimpleNoteTest()
-{
-    try
-    {
-        QString error;
-        bool res = exportSingleNoteWithoutTagsAndResourcesToEnexAndImportBack(error);
-        QVERIFY2(res == true, qPrintable(error));
-    }
-    CATCH_EXCEPTION();
-}
-
-void CoreTester::enexExportImportSingleNoteWithTagsTest()
-{
-    try
-    {
-        QString error;
-        bool res = exportSingleNoteWithTagsButNoResourcesToEnexAndImportBack(error);
-        QVERIFY2(res == true, qPrintable(error));
-    }
-    CATCH_EXCEPTION();
-}
-
-void CoreTester::enexExportImportSingleNoteWithResourcesTest()
-{
-    try
-    {
-        QString error;
-        bool res = exportSingleNoteWithResourcesButNoTagsToEnexAndImportBack(error);
-        QVERIFY2(res == true, qPrintable(error));
-    }
-    CATCH_EXCEPTION();
-}
-
-void CoreTester::enexExportImportSingleNoteWithTagsAndResourcesTest()
-{
-    try
-    {
-        QString error;
-        bool res = exportSingleNoteWithTagsAndResourcesToEnexAndImportBack(error);
-        QVERIFY2(res == true, qPrintable(error));
-    }
-    CATCH_EXCEPTION();
-}
-
-void CoreTester::enexExportImportSingleNoteWithTagsButSkipTagsTest()
-{
-    try
-    {
-        QString error;
-        bool res = exportSingleNoteWithTagsToEnexButSkipTagsAndImportBack(error);
-        QVERIFY2(res == true, qPrintable(error));
-    }
-    CATCH_EXCEPTION();
-}
-
-void CoreTester::enexExportImportMultipleNotesWithTagsAndResourcesTest()
-{
-    try
-    {
-        QString error;
-        bool res = exportMultipleNotesWithTagsAndResourcesAndImportBack(error);
-        QVERIFY2(res == true, qPrintable(error));
-    }
-    CATCH_EXCEPTION();
-}
-
-void CoreTester::importRealWorldEnexTest()
-{
-    try
-    {
-        QString error;
-        bool res = importRealWorldEnex(error);
         QVERIFY2(res == true, qPrintable(error));
     }
     CATCH_EXCEPTION();

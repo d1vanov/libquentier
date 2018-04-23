@@ -42,26 +42,6 @@ private Q_SLOTS:
     void decryptNoteAesTest();
     void decryptNoteRc2Test();
 
-    void enmlConverterSimpleTest();
-    void enmlConverterToDoTest();
-    void enmlConverterEnCryptTest();
-    void enmlConverterEnCryptWithModifiedDecryptedTextTest();
-    void enmlConverterEnMediaTest();
-    void enmlConverterComplexTest();
-    void enmlConverterComplexTest2();
-    void enmlConverterComplexTest3();
-    void enmlConverterComplexTest4();
-    void enmlConverterHtmlWithTableHelperTags();
-    void enmlConverterHtmlWithTableAndHilitorHelperTags();
-
-    void enexExportImportSingleSimpleNoteTest();
-    void enexExportImportSingleNoteWithTagsTest();
-    void enexExportImportSingleNoteWithResourcesTest();
-    void enexExportImportSingleNoteWithTagsAndResourcesTest();
-    void enexExportImportSingleNoteWithTagsButSkipTagsTest();
-    void enexExportImportMultipleNotesWithTagsAndResourcesTest();
-    void importRealWorldEnexTest();
-
     void tagSortByParentChildRelationsTest();
 
     void resourceRecognitionIndicesParsingTest();

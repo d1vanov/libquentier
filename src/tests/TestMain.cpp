@@ -17,6 +17,7 @@
  */
 
 #include "CoreTester.h"
+#include "enml/ENMLTester.h"
 #include "local_storage/LocalStorageManagerTester.h"
 #include "synchronization/FullSyncStaleDataItemsExpungerTester.h"
 #include <quentier/logging/QuentierLogger.h>
@@ -41,6 +42,11 @@ int main(int argc, char *argv[])
     quentier::initializeLibquentier();
 
     int res = QTest::qExec(new CoreTester);
+    if (res != 0) {
+        return res;
+    }
+
+    res = QTest::qExec(new ENMLTester);
     if (res != 0) {
         return res;
     }
