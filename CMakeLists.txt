@@ -716,25 +716,26 @@ if(USE_QT5)
 endif()
 
 set(TEST_HEADERS
-    src/tests/FakeUserStore.h
-    src/tests/FakeNoteStore.h
-    src/tests/EncryptionManagerTests.h
-    src/tests/EnexExportImportTests.h
-    src/tests/ENMLConverterTests.h
-    src/tests/LocalStorageCacheAsyncTester.h
-    src/tests/LinkedNotebookLocalStorageManagerAsyncTester.h
-    src/tests/NotebookLocalStorageManagerAsyncTester.h
-    src/tests/NoteLocalStorageManagerAsyncTester.h
-    src/tests/NoteSearchQueryTest.h
-    src/tests/ResourceLocalStorageManagerAsyncTester.h
-    src/tests/TagLocalStorageManagerAsyncTester.h
-    src/tests/SavedSearchLocalStorageManagerAsyncTester.h
-    src/tests/UserLocalStorageManagerAsyncTester.h
-    src/tests/LocalStorageManagerTests.h
-    src/tests/LocalStorageManagerNoteSearchQueryTest.h
-    src/tests/ResourceRecognitionIndicesParsingTest.h
-    src/tests/TagSortByParentChildRelationsTest.h
-    src/tests/FullSyncStaleDataItemsExpungerTester.h
+    src/tests/enml/EnexExportImportTests.h
+    src/tests/enml/ENMLConverterTests.h
+    src/tests/local_storage/LocalStorageCacheAsyncTester.h
+    src/tests/local_storage/LocalStorageManagerTester.h
+    src/tests/local_storage/LocalStorageManagerTests.h
+    src/tests/local_storage/LocalStorageManagerNoteSearchQueryTest.h
+    src/tests/local_storage/LinkedNotebookLocalStorageManagerAsyncTester.h
+    src/tests/local_storage/NotebookLocalStorageManagerAsyncTester.h
+    src/tests/local_storage/NoteLocalStorageManagerAsyncTester.h
+    src/tests/local_storage/NoteSearchQueryTest.h
+    src/tests/local_storage/ResourceLocalStorageManagerAsyncTester.h
+    src/tests/local_storage/SavedSearchLocalStorageManagerAsyncTester.h
+    src/tests/local_storage/TagLocalStorageManagerAsyncTester.h
+    src/tests/local_storage/UserLocalStorageManagerAsyncTester.h
+    src/tests/types/ResourceRecognitionIndicesParsingTest.h
+    src/tests/synchronization/FakeNoteStore.h
+    src/tests/synchronization/FakeUserStore.h
+    src/tests/synchronization/FullSyncStaleDataItemsExpungerTester.h
+    src/tests/utility/EncryptionManagerTests.h
+    src/tests/utility/TagSortByParentChildRelationsTest.h
     src/tests/CoreTester.h
     src/synchronization/FullSyncStaleDataItemsExpunger.h
     src/synchronization/TagSyncCache.h
@@ -743,27 +744,28 @@ set(TEST_HEADERS
     src/synchronization/NotebookSyncCache.h)
 
 set(TEST_SOURCES
-    src/tests/FakeUserStore.cpp
-    src/tests/FakeNoteStore.cpp
-    src/tests/EncryptionManagerTests.cpp
-    src/tests/EnexExportImportTests.cpp
-    src/tests/ENMLConverterTests.cpp
-    src/tests/LocalStorageCacheAsyncTester.cpp
-    src/tests/LinkedNotebookLocalStorageManagerAsyncTester.cpp
-    src/tests/NotebookLocalStorageManagerAsyncTester.cpp
-    src/tests/NoteLocalStorageManagerAsyncTester.cpp
-    src/tests/NoteSearchQueryTest.cpp
-    src/tests/ResourceLocalStorageManagerAsyncTester.cpp
-    src/tests/TagLocalStorageManagerAsyncTester.cpp
-    src/tests/SavedSearchLocalStorageManagerAsyncTester.cpp
-    src/tests/UserLocalStorageManagerAsyncTester.cpp
-    src/tests/LocalStorageManagerTests.cpp
-    src/tests/LocalStorageManagerNoteSearchQueryTest.cpp
-    src/tests/ResourceRecognitionIndicesParsingTest.cpp
-    src/tests/TagSortByParentChildRelationsTest.cpp
-    src/tests/FullSyncStaleDataItemsExpungerTester.cpp
+    src/tests/enml/EnexExportImportTests.cpp
+    src/tests/enml/ENMLConverterTests.cpp
+    src/tests/local_storage/LocalStorageCacheAsyncTester.cpp
+    src/tests/local_storage/LocalStorageManagerTester.cpp
+    src/tests/local_storage/LocalStorageManagerTests.cpp
+    src/tests/local_storage/LocalStorageManagerNoteSearchQueryTest.cpp
+    src/tests/local_storage/LinkedNotebookLocalStorageManagerAsyncTester.cpp
+    src/tests/local_storage/NotebookLocalStorageManagerAsyncTester.cpp
+    src/tests/local_storage/NoteLocalStorageManagerAsyncTester.cpp
+    src/tests/local_storage/NoteSearchQueryTest.cpp
+    src/tests/local_storage/ResourceLocalStorageManagerAsyncTester.cpp
+    src/tests/local_storage/SavedSearchLocalStorageManagerAsyncTester.cpp
+    src/tests/local_storage/TagLocalStorageManagerAsyncTester.cpp
+    src/tests/local_storage/UserLocalStorageManagerAsyncTester.cpp
+    src/tests/types/ResourceRecognitionIndicesParsingTest.cpp
+    src/tests/synchronization/FakeNoteStore.cpp
+    src/tests/synchronization/FakeUserStore.cpp
+    src/tests/synchronization/FullSyncStaleDataItemsExpungerTester.cpp
+    src/tests/utility/EncryptionManagerTests.cpp
+    src/tests/utility/TagSortByParentChildRelationsTest.cpp
     src/tests/CoreTester.cpp
-    src/tests/CoreTestMain.cpp
+    src/tests/TestMain.cpp
     src/synchronization/FullSyncStaleDataItemsExpunger.cpp
     src/synchronization/TagSyncCache.cpp
     src/synchronization/SavedSearchSyncCache.cpp
@@ -771,7 +773,7 @@ set(TEST_SOURCES
     src/synchronization/NotebookSyncCache.cpp)
 
 set(TEST_RESOURCES
-    src/tests/test_resources.qrc)
+    src/tests/resources/test_resources.qrc)
 
 qt_add_resources(${PROJECT_NAME}_TEST_RESOURCES_RCC ${TEST_RESOURCES})
 

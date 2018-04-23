@@ -17,7 +17,7 @@
  */
 
 #include "TagSortByParentChildRelationsTest.h"
-#include "../utility/TagSortByParentChildRelationsHelpers.hpp"
+#include "../../utility/TagSortByParentChildRelationsHelpers.hpp"
 #include <quentier/utility/UidGenerator.h>
 #include <QSet>
 #include <QTextStream>

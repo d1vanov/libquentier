@@ -16,10 +16,10 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LIB_QUENTIER_TESTS_FULL_SYNC_STALE_DATA_ITEMS_EXPUNGER_TESTER_H
-#define LIB_QUENTIER_TESTS_FULL_SYNC_STALE_DATA_ITEMS_EXPUNGER_TESTER_H
+#ifndef LIB_QUENTIER_TESTS_SYNCHRONIZATION_FULL_SYNC_STALE_DATA_ITEMS_EXPUNGER_TESTER_H
+#define LIB_QUENTIER_TESTS_SYNCHRONIZATION_FULL_SYNC_STALE_DATA_ITEMS_EXPUNGER_TESTER_H
 
-#include "../synchronization/FullSyncStaleDataItemsExpunger.h"
+#include "../../synchronization/FullSyncStaleDataItemsExpunger.h"
 
 namespace quentier {
 namespace test {
@@ -105,4 +105,4 @@ private:
 } // namespace test
 } // namespace quentier
 
-#endif // LIB_QUENTIER_TESTS_FULL_SYNC_STALE_DATA_ITEMS_EXPUNGER_TESTER_H
+#endif // LIB_QUENTIER_TESTS_SYNCHRONIZATION_FULL_SYNC_STALE_DATA_ITEMS_EXPUNGER_TESTER_H

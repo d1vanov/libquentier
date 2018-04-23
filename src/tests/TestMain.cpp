@@ -17,7 +17,8 @@
  */
 
 #include "CoreTester.h"
-#include "FullSyncStaleDataItemsExpungerTester.h"
+#include "local_storage/LocalStorageManagerTester.h"
+#include "synchronization/FullSyncStaleDataItemsExpungerTester.h"
 #include <quentier/logging/QuentierLogger.h>
 #include <quentier/utility/QuentierApplication.h>
 #include <quentier/utility/Utility.h>
@@ -40,6 +41,11 @@ int main(int argc, char *argv[])
     quentier::initializeLibquentier();
 
     int res = QTest::qExec(new CoreTester);
+    if (res != 0) {
+        return res;
+    }
+
+    res = QTest::qExec(new LocalStorageManagerTester);
     if (res != 0) {
         return res;
     }

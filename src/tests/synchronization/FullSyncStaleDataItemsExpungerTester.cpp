@@ -17,9 +17,9 @@
  */
 
 #include "FullSyncStaleDataItemsExpungerTester.h"
-#include "../synchronization/NotebookSyncCache.h"
-#include "../synchronization/TagSyncCache.h"
-#include "../synchronization/SavedSearchSyncCache.h"
+#include "../../synchronization/NotebookSyncCache.h"
+#include "../../synchronization/TagSyncCache.h"
+#include "../../synchronization/SavedSearchSyncCache.h"
 #include <quentier/utility/UidGenerator.h>
 #include <quentier/utility/EventLoopWithExitStatus.h>
 #include <QtTest/QTest>

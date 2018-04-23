@@ -66,43 +66,6 @@ private Q_SLOTS:
 
     void resourceRecognitionIndicesParsingTest();
 
-    void noteSearchQueryTest();
-    void localStorageManagerNoteSearchQueryTest();
-
-    void localStorageManagerIndividualSavedSearchTest();
-    void localStorageManagerIndividualLinkedNotebookTest();
-    void localStorageManagerIndividualTagTest();
-    void localStorageManagerIndividualResourceTest();
-    void localStorageManagedIndividualNoteTest();
-    void localStorageManagerIndividualNotebookTest();
-    void localStorageManagedIndividualUserTest();
-
-    void localStorageManagerSequentialUpdatesTest();
-    void localStorageManagerAccountHighUsnTest();
-    void localStorageManagerAddNoteWithoutLocalUidTest();
-    void localStorageManagerNoteTagIdsComplementTest();
-
-    void localStorageManagerListSavedSearchesTest();
-    void localStorageManagerListLinkedNotebooksTest();
-    void localStorageManagerListTagsTest();
-    void localStorageManagerListTagsWithNoteLocalUidsTest();
-    void localStorageManagerListAllSharedNotebooksTest();
-    void localStorageManagerListAllTagsPerNoteTest();
-    void localStorageManagerListNotesTest();
-    void localStorageManagerListNotebooksTest();
-
-    void localStorageManagerExpungeNotelessTagsFromLinkedNotebooksTest();
-
-    void localStorageManagerAsyncSavedSearchesTest();
-    void localStorageManagerAsyncLinkedNotebooksTest();
-    void localStorageManagerAsyncTagsTest();
-    void localStorageManagerAsyncUsersTest();
-    void localStorageManagerAsyncNotebooksTest();
-    void localStorageManagerAsyncNotesTest();
-    void localStorageManagerAsyncResourceTest();
-
-    void localStorageCacheManagerTest();
-
 private:
     CoreTester(const CoreTester & other) Q_DECL_EQ_DELETE;
     CoreTester & operator=(const CoreTester & other) Q_DECL_EQ_DELETE;
