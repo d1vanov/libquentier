@@ -16,8 +16,8 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LIB_QUENTIER_TESTS_FAKE_NOTE_STORE_H
-#define LIB_QUENTIER_TESTS_FAKE_NOTE_STORE_H
+#ifndef LIB_QUENTIER_TESTS_SYNCHRONIZATION_FAKE_NOTE_STORE_H
+#define LIB_QUENTIER_TESTS_SYNCHRONIZATION_FAKE_NOTE_STORE_H
 
 #include <quentier_private/synchronization/INoteStore.h>
 #include <quentier/types/SavedSearch.h>
@@ -647,4 +647,4 @@ private:
 
 inline size_t hash_value(const QString & str) { return qHash(str); }
 
-#endif // LIB_QUENTIER_TESTS_FAKE_NOTE_STORE_H
+#endif // LIB_QUENTIER_TESTS_SYNCHRONIZATION_FAKE_NOTE_STORE_H

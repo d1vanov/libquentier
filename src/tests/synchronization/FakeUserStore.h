@@ -16,8 +16,8 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LIB_QUENTIER_TESTS_FAKE_USER_STORE_H
-#define LIB_QUENTIER_TESTS_FAKE_USER_STORE_H
+#ifndef LIB_QUENTIER_TESTS_SYNCHRONIZATION_FAKE_USER_STORE_H
+#define LIB_QUENTIER_TESTS_SYNCHRONIZATION_FAKE_USER_STORE_H
 
 #include <quentier_private/synchronization/IUserStore.h>
 #include <quentier/types/User.h>
@@ -70,4 +70,4 @@ private:
 
 } // namespace quentier
 
-#endif // LIB_QUENTIER_TESTS_FAKE_USER_STORE_H
+#endif // LIB_QUENTIER_TESTS_SYNCHRONIZATION_FAKE_USER_STORE_H
