@@ -42,8 +42,7 @@ class Q_DECL_HIDDEN SynchronizationManagerPrivate: public QObject
 {
     Q_OBJECT
 public:
-    SynchronizationManagerPrivate(const QString & consumerKey, const QString & consumerSecret,
-                                  const QString & host, LocalStorageManagerAsync & localStorageManagerAsync,
+    SynchronizationManagerPrivate(const QString & host, LocalStorageManagerAsync & localStorageManagerAsync,
                                   IAuthenticationManager & authenticationManager,
                                   INoteStore * pNoteStore, IUserStore * pUserStore);
     virtual ~SynchronizationManagerPrivate();
@@ -221,8 +220,6 @@ private:
     Q_DISABLE_COPY(SynchronizationManagerPrivate)
 
 private:
-    QString                                 m_consumerKey;
-    QString                                 m_consumerSecret;
     QString                                 m_host;
 
     qint32                                  m_maxSyncChunkEntries;

@@ -44,8 +44,6 @@ class QUENTIER_EXPORT SynchronizationManager: public QObject
     Q_OBJECT
 public:
     /**
-     * @param consumerKey - consumer key for your application obtained from the Evernote service
-     * @param consumerSecret - consumer secret for your application obtained from the Evernote service
      * @param host - the host to use for the connection with the Evernote service - typically www.evernote.com
      *               but could be sandbox.evernote.com or some other one
      * @param localStorageManagerAsync - local storage manager
@@ -57,8 +55,7 @@ public:
      *                     private API so for users of the library this pointer should stay nullptr. Within libquentier
      *                     IUserStore and this pointer are used for testing of synchronization logic
      */
-    SynchronizationManager(const QString & consumerKey, const QString & consumerSecret,
-                           const QString & host, LocalStorageManagerAsync & localStorageManagerAsync,
+    SynchronizationManager(const QString & host, LocalStorageManagerAsync & localStorageManagerAsync,
                            IAuthenticationManager & authenticationManager,
                            INoteStore * pNoteStore = Q_NULLPTR, IUserStore * pUserStore = Q_NULLPTR);
 

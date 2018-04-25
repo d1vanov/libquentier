@@ -28,7 +28,6 @@
 // 10 minutes should be enough
 #define MAX_ALLOWED_MILLISECONDS 600000
 
-
 // Local uids of base data items' notebooks
 #define FIRST_NOTEBOOK_LOCAL_UID QStringLiteral("68b6df59-5e35-4850-a972-b5493dfead8a")
 #define SECOND_NOTEBOOK_LOCAL_UID QStringLiteral("b5f6eb38-428b-4964-b4ca-b72007e11c4f")

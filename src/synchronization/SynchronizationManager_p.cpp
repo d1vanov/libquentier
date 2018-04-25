@@ -84,12 +84,9 @@ private:
     SynchronizationManagerPrivate &     m_syncManager;
 };
 
-SynchronizationManagerPrivate::SynchronizationManagerPrivate(const QString & consumerKey, const QString & consumerSecret,
-                                                             const QString & host, LocalStorageManagerAsync & localStorageManagerAsync,
+SynchronizationManagerPrivate::SynchronizationManagerPrivate(const QString & host, LocalStorageManagerAsync & localStorageManagerAsync,
                                                              IAuthenticationManager & authenticationManager,
                                                              INoteStore * pNoteStore, IUserStore * pUserStore) :
-    m_consumerKey(consumerKey),
-    m_consumerSecret(consumerSecret),
     m_host(host),
     m_maxSyncChunkEntries(50),
     m_lastUpdateCount(-1),
