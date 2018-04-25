@@ -733,9 +733,11 @@ set(TEST_HEADERS
     src/tests/local_storage/UserLocalStorageManagerAsyncTester.h
     src/tests/types/ResourceRecognitionIndicesParsingTest.h
     src/tests/types/TypesTester.h
+    src/tests/synchronization/FakeAuthenticationManager.h
     src/tests/synchronization/FakeNoteStore.h
     src/tests/synchronization/FakeUserStore.h
     src/tests/synchronization/FullSyncStaleDataItemsExpungerTester.h
+    src/tests/synchronization/SynchronizationTester.h
     src/tests/synchronization/Utility.h
     src/tests/utility/EncryptionManagerTests.h
     src/tests/utility/TagSortByParentChildRelationsTest.h
@@ -764,9 +766,11 @@ set(TEST_SOURCES
     src/tests/local_storage/UserLocalStorageManagerAsyncTester.cpp
     src/tests/types/ResourceRecognitionIndicesParsingTest.cpp
     src/tests/types/TypesTester.cpp
+    src/tests/synchronization/FakeAuthenticationManager.cpp
     src/tests/synchronization/FakeNoteStore.cpp
     src/tests/synchronization/FakeUserStore.cpp
     src/tests/synchronization/FullSyncStaleDataItemsExpungerTester.cpp
+    src/tests/synchronization/SynchronizationTester.cpp
     src/tests/synchronization/Utility.cpp
     src/tests/utility/EncryptionManagerTests.cpp
     src/tests/utility/TagSortByParentChildRelationsTest.cpp
