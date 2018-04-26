@@ -44,6 +44,9 @@ private Q_SLOTS:
     void cleanup();
 
 private:
+    void setUserOwnItemsToRemoteStorage();
+
+private:
     Account                         m_testAccount;
     LocalStorageManagerAsync *      m_pLocalStorageManagerAsync;
     FakeNoteStore *                 m_pFakeNoteStore;

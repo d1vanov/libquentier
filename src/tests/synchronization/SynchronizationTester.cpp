@@ -17,6 +17,8 @@
  */
 
 #include "SynchronizationTester.h"
+#include <QtTest/QtTest>
+#include <QCryptographicHash>
 
 namespace quentier {
 namespace test {
@@ -73,6 +75,107 @@ void SynchronizationTester::cleanup()
     m_pLocalStorageManagerAsync->disconnect();
     m_pLocalStorageManagerAsync->deleteLater();
     m_pLocalStorageManagerAsync = Q_NULLPTR;
+}
+
+void SynchronizationTester::setUserOwnItemsToRemoteStorage()
+{
+    ErrorString errorDescription;
+    bool res = false;
+
+    SavedSearch firstSearch;
+    firstSearch.setGuid(UidGenerator::Generate());
+    firstSearch.setName(QStringLiteral("First saved search"));
+    firstSearch.setQuery(QStringLiteral("First saved search query"));
+    res = m_pFakeNoteStore->setSavedSearch(firstSearch, errorDescription);
+    QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
+
+    SavedSearch secondSearch;
+    secondSearch.setGuid(UidGenerator::Generate());
+    secondSearch.setName(QStringLiteral("Second saved search"));
+    secondSearch.setQuery(QStringLiteral("Second saved search query"));
+    res = m_pFakeNoteStore->setSavedSearch(secondSearch, errorDescription);
+    QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
+
+    SavedSearch thirdSearch;
+    thirdSearch.setGuid(UidGenerator::Generate());
+    thirdSearch.setName(QStringLiteral("Third saved search"));
+    thirdSearch.setQuery(QStringLiteral("Third saved search query"));
+    res = m_pFakeNoteStore->setSavedSearch(thirdSearch, errorDescription);
+    QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
+
+    Tag firstTag;
+    firstTag.setGuid(UidGenerator::Generate());
+    firstTag.setName(QStringLiteral("First tag"));
+    res = m_pFakeNoteStore->setTag(firstTag, errorDescription);
+    QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
+
+    Tag secondTag;
+    secondTag.setGuid(UidGenerator::Generate());
+    secondTag.setName(QStringLiteral("Second tag"));
+    res = m_pFakeNoteStore->setTag(secondTag, errorDescription);
+    QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
+
+    Tag thirdTag;
+    thirdTag.setGuid(UidGenerator::Generate());
+    thirdTag.setParentGuid(secondTag.guid());
+    thirdTag.setName(QStringLiteral("Third tag"));
+    res = m_pFakeNoteStore->setTag(thirdTag, errorDescription);
+    QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
+
+    Notebook firstNotebook;
+    firstNotebook.setGuid(UidGenerator::Generate());
+    firstNotebook.setName(QStringLiteral("First notebook"));
+    res = m_pFakeNoteStore->setNotebook(firstNotebook, errorDescription);
+    QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
+
+    Notebook secondNotebook;
+    secondNotebook.setGuid(UidGenerator::Generate());
+    secondNotebook.setName(QStringLiteral("Second notebook"));
+    res = m_pFakeNoteStore->setNotebook(secondNotebook, errorDescription);
+    QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
+
+    Notebook thirdNotebook;
+    thirdNotebook.setGuid(UidGenerator::Generate());
+    thirdNotebook.setName(QStringLiteral("Third notebook"));
+    res = m_pFakeNoteStore->setNotebook(thirdNotebook, errorDescription);
+    QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
+
+    Note firstNote;
+    firstNote.setGuid(UidGenerator::Generate());
+    firstNote.setNotebookGuid(firstNotebook.guid());
+    firstNote.setTitle(QStringLiteral("First note"));
+    firstNote.setContent(QStringLiteral("<en-note><div>First note</div></en-note>"));
+    res = m_pFakeNoteStore->setNote(firstNote, errorDescription);
+    QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
+
+    Note secondNote;
+    secondNote.setGuid(UidGenerator::Generate());
+    secondNote.setNotebookGuid(firstNotebook.guid());
+    secondNote.setTitle(QStringLiteral("Second note"));
+    secondNote.setContent(QStringLiteral("<en-note><div>Second note</div></en-note>"));
+    secondNote.addTagGuid(firstTag.guid());
+    secondNote.addTagGuid(secondTag.guid());
+    res = m_pFakeNoteStore->setNote(secondNote, errorDescription);
+    QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
+
+    Note thirdNote;
+    thirdNote.setGuid(UidGenerator::Generate());
+    thirdNote.setNotebookGuid(firstNotebook.guid());
+    thirdNote.setTitle(QStringLiteral("Third note"));
+    thirdNote.setContent(QStringLiteral("<en-note><div>Third note</div></en-note>"));
+    thirdNote.addTagGuid(thirdTag.guid());
+
+    Resource thirdNoteFirstResource;
+    thirdNoteFirstResource.setGuid(UidGenerator::Generate());
+    thirdNoteFirstResource.setNoteGuid(thirdNote.guid());
+    thirdNoteFirstResource.setMime(QStringLiteral("text/plain"));
+    thirdNoteFirstResource.setDataBody(QByteArray("Third note first resource data body"));
+    thirdNoteFirstResource.setDataSize(thirdNoteFirstResource.dataBody().size());
+    thirdNoteFirstResource.setDataHash(QCryptographicHash::hash(thirdNoteFirstResource.dataBody(), QCryptographicHash::Md5));
+    thirdNote.addResource(thirdNoteFirstResource);
+
+    res = m_pFakeNoteStore->setNote(thirdNote, errorDescription);
+    QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
 }
 
 } // namespace test
