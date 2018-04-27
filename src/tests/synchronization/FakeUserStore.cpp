@@ -75,6 +75,11 @@ const User * FakeUserStore::findUser(const qint32 id) const
     return Q_NULLPTR;
 }
 
+void FakeUserStore::setUser(const qint32 id, const User & user)
+{
+    m_users[id] = user;
+}
+
 void FakeUserStore::triggerRateLimitReachOnNextCall()
 {
     m_shouldTriggerRateLimitReachOnNextCall = true;

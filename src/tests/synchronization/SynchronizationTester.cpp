@@ -17,8 +17,10 @@
  */
 
 #include "SynchronizationTester.h"
+#include <quentier/utility/EventLoopWithExitStatus.h>
 #include <QtTest/QtTest>
 #include <QCryptographicHash>
+#include <QDateTime>
 
 namespace quentier {
 namespace test {
@@ -27,6 +29,7 @@ SynchronizationTester::SynchronizationTester(QObject * parent) :
     QObject(parent),
     m_testAccount(QStringLiteral("SynchronizationTesterFakeUser"),
                   Account::Type::Evernote, qevercloud::UserID(1)),
+    m_pLocalStorageManagerThread(Q_NULLPTR),
     m_pLocalStorageManagerAsync(Q_NULLPTR),
     m_pFakeNoteStore(Q_NULLPTR),
     m_pFakeUserStore(Q_NULLPTR),
@@ -44,9 +47,24 @@ void SynchronizationTester::init()
     m_pLocalStorageManagerAsync = new LocalStorageManagerAsync(m_testAccount, /* start from scratch = */ true,
                                                                /* override lock = */ false, this);
     m_pLocalStorageManagerAsync->init();
+    m_pLocalStorageManagerAsync->moveToThread(m_pLocalStorageManagerThread);
+
+    m_pFakeUserStore = new FakeUserStore;
+    m_pFakeUserStore->setEdamVersionMajor(qevercloud::EDAM_VERSION_MAJOR);
+    m_pFakeUserStore->setEdamVersionMinor(qevercloud::EDAM_VERSION_MINOR);
+
+    User user;
+    user.setId(m_testAccount.id());
+    user.setUsername(m_testAccount.name());
+    user.setName(m_testAccount.displayName());
+    user.setCreationTimestamp(QDateTime::currentMSecsSinceEpoch());
+    user.setModificationTimestamp(user.creationTimestamp());
+    m_pFakeUserStore->setUser(m_testAccount.id(), user);
+
+    qevercloud::AccountLimits limits;
+    m_pFakeUserStore->setAccountLimits(qevercloud::ServiceLevel::BASIC, limits);
 
     m_pFakeNoteStore = new FakeNoteStore(this);
-    m_pFakeUserStore = new FakeUserStore;
     m_pFakeAuthenticationManager = new FakeAuthenticationManager(this);
 
     m_pSynchronizationManager = new SynchronizationManager(QStringLiteral("https://www.evernote.com"),
@@ -75,6 +93,32 @@ void SynchronizationTester::cleanup()
     m_pLocalStorageManagerAsync->disconnect();
     m_pLocalStorageManagerAsync->deleteLater();
     m_pLocalStorageManagerAsync = Q_NULLPTR;
+}
+
+void SynchronizationTester::initTestCase()
+{
+    m_pLocalStorageManagerThread = new QThread;
+    m_pLocalStorageManagerThread->start();
+}
+
+void SynchronizationTester::cleanupTestCase()
+{
+    if (!m_pLocalStorageManagerThread->isFinished()) {
+        QObject::connect(m_pLocalStorageManagerThread, QNSIGNAL(QThread,finished),
+                         m_pLocalStorageManagerThread, QNSLOT(QThread,deleteLater));
+    }
+    else {
+        delete m_pLocalStorageManagerThread;
+    }
+
+    m_pLocalStorageManagerThread = Q_NULLPTR;
+}
+
+void SynchronizationTester::testSimpleRemoteToLocalFullSync()
+{
+    setUserOwnItemsToRemoteStorage();
+
+    // TODO: continue here
 }
 
 void SynchronizationTester::setUserOwnItemsToRemoteStorage()
@@ -145,6 +189,10 @@ void SynchronizationTester::setUserOwnItemsToRemoteStorage()
     firstNote.setNotebookGuid(firstNotebook.guid());
     firstNote.setTitle(QStringLiteral("First note"));
     firstNote.setContent(QStringLiteral("<en-note><div>First note</div></en-note>"));
+    firstNote.setContentLength(firstNote.content().size());
+    firstNote.setContentHash(QCryptographicHash::hash(firstNote.content().toUtf8(), QCryptographicHash::Md5));
+    firstNote.setCreationTimestamp(QDateTime::currentMSecsSinceEpoch());
+    firstNote.setModificationTimestamp(firstNote.creationTimestamp());
     res = m_pFakeNoteStore->setNote(firstNote, errorDescription);
     QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
 
@@ -153,6 +201,10 @@ void SynchronizationTester::setUserOwnItemsToRemoteStorage()
     secondNote.setNotebookGuid(firstNotebook.guid());
     secondNote.setTitle(QStringLiteral("Second note"));
     secondNote.setContent(QStringLiteral("<en-note><div>Second note</div></en-note>"));
+    secondNote.setContentLength(secondNote.content().size());
+    secondNote.setContentHash(QCryptographicHash::hash(secondNote.content().toUtf8(), QCryptographicHash::Md5));
+    secondNote.setCreationTimestamp(QDateTime::currentMSecsSinceEpoch());
+    secondNote.setModificationTimestamp(secondNote.creationTimestamp());
     secondNote.addTagGuid(firstTag.guid());
     secondNote.addTagGuid(secondTag.guid());
     res = m_pFakeNoteStore->setNote(secondNote, errorDescription);
@@ -163,6 +215,10 @@ void SynchronizationTester::setUserOwnItemsToRemoteStorage()
     thirdNote.setNotebookGuid(firstNotebook.guid());
     thirdNote.setTitle(QStringLiteral("Third note"));
     thirdNote.setContent(QStringLiteral("<en-note><div>Third note</div></en-note>"));
+    thirdNote.setContentLength(thirdNote.content().size());
+    thirdNote.setContentHash(QCryptographicHash::hash(thirdNote.content().toUtf8(), QCryptographicHash::Md5));
+    thirdNote.setCreationTimestamp(QDateTime::currentMSecsSinceEpoch());
+    thirdNote.setModificationTimestamp(thirdNote.creationTimestamp());
     thirdNote.addTagGuid(thirdTag.guid());
 
     Resource thirdNoteFirstResource;
@@ -175,6 +231,30 @@ void SynchronizationTester::setUserOwnItemsToRemoteStorage()
     thirdNote.addResource(thirdNoteFirstResource);
 
     res = m_pFakeNoteStore->setNote(thirdNote, errorDescription);
+    QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
+
+    Note fourthNote;
+    fourthNote.setGuid(UidGenerator::Generate());
+    fourthNote.setNotebookGuid(secondNotebook.guid());
+    fourthNote.setTitle(QStringLiteral("Fourth note"));
+    fourthNote.setContent(QStringLiteral("<en-note><div>Fourth note</div></en-note>"));
+    fourthNote.setContentLength(fourthNote.content().size());
+    fourthNote.setContentHash(QCryptographicHash::hash(fourthNote.content().toUtf8(), QCryptographicHash::Md5));
+    fourthNote.setCreationTimestamp(QDateTime::currentMSecsSinceEpoch());
+    fourthNote.setModificationTimestamp(fourthNote.creationTimestamp());
+    res = m_pFakeNoteStore->setNote(fourthNote, errorDescription);
+    QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
+
+    Note fifthNote;
+    fifthNote.setGuid(UidGenerator::Generate());
+    fifthNote.setNotebookGuid(thirdNotebook.guid());
+    fifthNote.setTitle(QStringLiteral("Fifth note"));
+    fifthNote.setContent(QStringLiteral("<en-note><div>Fifth note</div></en-note>"));
+    fifthNote.setContentLength(fifthNote.content().size());
+    fifthNote.setContentHash(QCryptographicHash::hash(fifthNote.content().toUtf8(), QCryptographicHash::Md5));
+    fifthNote.setCreationTimestamp(QDateTime::currentMSecsSinceEpoch());
+    fifthNote.setModificationTimestamp(fifthNote.creationTimestamp());
+    res = m_pFakeNoteStore->setNote(fifthNote, errorDescription);
     QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
 }
 

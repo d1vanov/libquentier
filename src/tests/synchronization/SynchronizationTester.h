@@ -28,6 +28,7 @@
 #include <quentier/synchronization/SynchronizationManager.h>
 #include <QObject>
 #include <QScopedPointer>
+#include <QThread>
 
 namespace quentier {
 namespace test {
@@ -43,11 +44,17 @@ private Q_SLOTS:
     void init();
     void cleanup();
 
+    void initTestCase();
+    void cleanupTestCase();
+
+    void testSimpleRemoteToLocalFullSync();
+
 private:
     void setUserOwnItemsToRemoteStorage();
 
 private:
     Account                         m_testAccount;
+    QThread *                       m_pLocalStorageManagerThread;
     LocalStorageManagerAsync *      m_pLocalStorageManagerAsync;
     FakeNoteStore *                 m_pFakeNoteStore;
     FakeUserStore *                 m_pFakeUserStore;
