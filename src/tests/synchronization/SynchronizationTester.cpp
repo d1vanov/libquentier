@@ -214,8 +214,7 @@ void SynchronizationTester::testSimpleRemoteToLocalFullSync()
     CHECK_UNEXPECTED(receivedPreparedLinkedNotebookDirtyObjectsForSending)
 
     checkEventsOrder(catcher);
-
-    // TODO: continue here: check the coincidence of items from remote and local storages
+    checkIdentityOfLocalAndRemoteItems();
 }
 
 void SynchronizationTester::setUserOwnItemsToRemoteStorage()
@@ -386,6 +385,65 @@ void SynchronizationTester::checkEventsOrder(const SynchronizationManagerSignals
     if (!catcher.checkLinkedNotebookResourceDownloadProgressOrder(errorDescription)) {
         QFAIL(qPrintable(QString::fromUtf8("Wrong linked notebook resource download progress order: ") + errorDescription.nonLocalizedString()));
     }
+}
+
+void SynchronizationTester::checkIdentityOfLocalAndRemoteItems()
+{
+    // List stuff from local storage
+
+    QHash<QString, qevercloud::SavedSearch> localSavedSearches;
+    listSavedSearchesFromLocalStorage(0, localSavedSearches);
+
+    QHash<QString, qevercloud::LinkedNotebook> localLinkedNotebooks;
+    listLinkedNotebooksFromLocalStorage(0, localLinkedNotebooks);
+
+    QStringList linkedNotebookGuids;
+    linkedNotebookGuids.reserve(localLinkedNotebooks.size() + 1);
+    linkedNotebookGuids << QString();
+    for(auto it = localLinkedNotebooks.constBegin(), end = localLinkedNotebooks.constEnd(); it != end; ++it) {
+        linkedNotebookGuids << it->guid.ref();
+    }
+
+    QHash<QString, qevercloud::Tag> localTags;
+    QHash<QString, qevercloud::Notebook> localNotebooks;
+    QHash<QString, qevercloud::Note> localNotes;
+    for(auto it = linkedNotebookGuids.constBegin(), end = linkedNotebookGuids.constEnd(); it != end; ++it)
+    {
+        QHash<QString, qevercloud::Tag> currentLocalTags;
+        listTagsFromLocalStorage(0, *it, currentLocalTags);
+        for(auto cit = currentLocalTags.constBegin(), cend = currentLocalTags.constEnd(); cit != cend; ++cit) {
+            localTags[cit.key()] = cit.value();
+        }
+
+        QHash<QString, qevercloud::Notebook> currentLocalNotebooks;
+        listNotebooksFromLocalStorage(0, *it, currentLocalNotebooks);
+        for(auto cit = currentLocalNotebooks.constBegin(), cend = currentLocalNotebooks.constEnd(); cit != cend; ++cit) {
+            localNotebooks[cit.key()] = cit.value();
+        }
+
+        QHash<QString, qevercloud::Note> currentLocalNotes;
+        listNotesFromLocalStorage(0, *it, currentLocalNotes);
+        for(auto cit = currentLocalNotes.constBegin(), cend = currentLocalNotes.constEnd(); cit != cend; ++cit) {
+            localNotes[cit.key()] = cit.value();
+        }
+    }
+
+    // List stuff from remote storage
+
+    QHash<QString,qevercloud::SavedSearch> remoteSavedSearches = m_pFakeNoteStore->savedSearches();
+    QHash<QString,qevercloud::Tag> remoteTags = m_pFakeNoteStore->tags();
+    QHash<QString,qevercloud::Notebook> remoteNotebooks = m_pFakeNoteStore->notebooks();
+    QHash<QString,qevercloud::Note> remoteNotes = m_pFakeNoteStore->notes();
+
+    QVERIFY2(localSavedSearches.size() == remoteSavedSearches.size(),
+             "The number of saved searches in local and remote storages doesn't match");
+    for(auto it = localSavedSearches.constBegin(), end = localSavedSearches.constEnd(); it != end; ++it) {
+        auto rit = remoteSavedSearches.find(it.key());
+        QVERIFY2(rit != remoteSavedSearches.end(), "Couldn't find one of local saved searches within the remote storage");
+        QVERIFY2(rit.value() == it.value(), "Found mismatch between local and remote saved searches");
+    }
+
+    // TODO: check tags, notebooks and notes in a similar way
 }
 
 void SynchronizationTester::listSavedSearchesFromLocalStorage(const qint32 afterUSN,

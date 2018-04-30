@@ -55,6 +55,7 @@ private Q_SLOTS:
 private:
     void setUserOwnItemsToRemoteStorage();
     void checkEventsOrder(const SynchronizationManagerSignalsCatcher & catcher);
+    void checkIdentityOfLocalAndRemoteItems();
 
     void listSavedSearchesFromLocalStorage(const qint32 afterUSN,
                                            QHash<QString, qevercloud::SavedSearch> & savedSearches) const;
