@@ -17,13 +17,82 @@
  */
 
 #include "SynchronizationTester.h"
+#include "SynchronizationManagerSignalsCatcher.h"
 #include <quentier/utility/EventLoopWithExitStatus.h>
 #include <QtTest/QtTest>
 #include <QCryptographicHash>
 #include <QDateTime>
+#include <QTimer>
+
+// 10 minutes should be enough
+#define MAX_ALLOWED_TEST_DURATION_MSEC 600000
+
+#define CATCH_EXCEPTION() \
+    catch(const std::exception & exception) { \
+        SysInfo sysInfo; \
+        QFAIL(qPrintable(QStringLiteral("Caught exception: ") + QString::fromUtf8(exception.what()) + \
+                         QStringLiteral(", backtrace: ") + sysInfo.stackTrace())); \
+    }
+
+#if QT_VERSION >= 0x050000
+inline void nullMessageHandler(QtMsgType type, const QMessageLogContext &, const QString & message) {
+    if (type != QtDebugMsg) {
+        QTextStream(stdout) << message << QStringLiteral("\n");
+    }
+}
+#else
+inline void nullMessageHandler(QtMsgType type, const char * message) {
+    if (type != QtDebugMsg) {
+        QTextStream(stdout) << message << QStringLiteral("\n");
+    }
+}
+#endif
+
+#define CHECK_EXPECTED(expected) \
+    if (!catcher.expected()) { \
+        QFAIL("SynchronizationManagerSignalsCatcher::expected unexpectedly returned false"); \
+    }
+
+#define CHECK_UNEXPECTED(unexpected) \
+    if (catcher.unexpected()) { \
+        QFAIL("SynchronizationManagerSignalsCatcher::unexpected unexpectedly returned true"); \
+    }
 
 namespace quentier {
 namespace test {
+
+void checkOrder(const SynchronizationManagerSignalsCatcher & catcher)
+{
+    ErrorString errorDescription;
+    if (!catcher.checkSyncChunkDownloadProgressOrder(errorDescription)) {
+        QFAIL(qPrintable(QString::fromUtf8("Wrong sync chunk download progress order: ") + errorDescription.nonLocalizedString()));
+    }
+
+    errorDescription.clear();
+    if (!catcher.checkLinkedNotebookSyncChunkDownloadProgressOrder(errorDescription)) {
+        QFAIL(qPrintable(QString::fromUtf8("Wrong linked notebook sync chunk download progress order: ") + errorDescription.nonLocalizedString()));
+    }
+
+    errorDescription.clear();
+    if (!catcher.checkNoteDownloadProgressOrder(errorDescription)) {
+        QFAIL(qPrintable(QString::fromUtf8("Wrong note download progress order: ") + errorDescription.nonLocalizedString()));
+    }
+
+    errorDescription.clear();
+    if (!catcher.checkLinkedNotebookNoteDownloadProgressOrder(errorDescription)) {
+        QFAIL(qPrintable(QString::fromUtf8("Wrong linked notebook note download progress order: ") + errorDescription.nonLocalizedString()));
+    }
+
+    errorDescription.clear();
+    if (!catcher.checkResourceDownloadProgressOrder(errorDescription)) {
+        QFAIL(qPrintable(QString::fromUtf8("Wrong resource download progress order: ") + errorDescription.nonLocalizedString()));
+    }
+
+    errorDescription.clear();
+    if (!catcher.checkLinkedNotebookResourceDownloadProgressOrder(errorDescription)) {
+        QFAIL(qPrintable(QString::fromUtf8("Wrong linked notebook resource download progress order: ") + errorDescription.nonLocalizedString()));
+    }
+}
 
 SynchronizationTester::SynchronizationTester(QObject * parent) :
     QObject(parent),
@@ -71,6 +140,7 @@ void SynchronizationTester::init()
                                                            *m_pLocalStorageManagerAsync,
                                                            *m_pFakeAuthenticationManager,
                                                            m_pFakeNoteStore, m_pFakeUserStore);
+    m_pSynchronizationManager->setAccount(m_testAccount);
 }
 
 void SynchronizationTester::cleanup()
@@ -99,6 +169,12 @@ void SynchronizationTester::initTestCase()
 {
     m_pLocalStorageManagerThread = new QThread;
     m_pLocalStorageManagerThread->start();
+
+#if QT_VERSION >= 0x050000
+    qInstallMessageHandler(nullMessageHandler);
+#else
+    qInstallMsgHandler(nullMessageHandler);
+#endif
 }
 
 void SynchronizationTester::cleanupTestCase()
@@ -118,7 +194,61 @@ void SynchronizationTester::testSimpleRemoteToLocalFullSync()
 {
     setUserOwnItemsToRemoteStorage();
 
-    // TODO: continue here
+    int testAsyncResult = -1;
+    SynchronizationManagerSignalsCatcher catcher(*m_pSynchronizationManager);
+    {
+        QTimer timer;
+        timer.setInterval(MAX_ALLOWED_TEST_DURATION_MSEC);
+        timer.setSingleShot(true);
+
+        EventLoopWithExitStatus loop;
+        QObject::connect(&timer, QNSIGNAL(QTimer,timeout), &loop, QNSLOT(EventLoopWithExitStatus,exitAsTimeout));
+        QObject::connect(&catcher, QNSIGNAL(SynchronizationManagerSignalsCatcher,ready), &loop, QNSLOT(EventLoopWithExitStatus,exitAsSuccess));
+
+        QTimer slotInvokingTimer;
+        slotInvokingTimer.setInterval(500);
+        slotInvokingTimer.setSingleShot(true);
+
+        timer.start();
+        slotInvokingTimer.singleShot(0, m_pSynchronizationManager, QNSLOT(SynchronizationManager,synchronize));
+        testAsyncResult = loop.exec();
+    }
+
+    if (testAsyncResult == EventLoopWithExitStatus::ExitStatus::Timeout) {
+        QFAIL("Synchronization test failed to finish in time");
+    }
+    else if (testAsyncResult != EventLoopWithExitStatus::ExitStatus::Success) {
+        QFAIL("Internal error: incorrect return status from synchronization test");
+    }
+
+    if (catcher.receivedFailedSignal()) {
+        QFAIL(qPrintable(QString::fromUtf8("Detected failure during the asynchronous synchronization loop: ") +
+                         catcher.failureErrorDescription().nonLocalizedString()));
+    }
+
+    CHECK_EXPECTED(receivedStartedSignal)
+    CHECK_EXPECTED(receivedFinishedSignal)
+    CHECK_EXPECTED(finishedSomethingDownloaded)
+    CHECK_EXPECTED(receivedAuthenticationFinishedSignal)
+    CHECK_EXPECTED(receivedRemoteToLocalSyncDone)
+    CHECK_EXPECTED(remoteToLocalSyncDoneSomethingDownloaded)
+    CHECK_EXPECTED(receivedSyncChunksDownloaded)
+
+    CHECK_UNEXPECTED(receivedStoppedSignal)
+    CHECK_UNEXPECTED(finishedSomethingSent)
+    CHECK_UNEXPECTED(receivedAuthenticationRevokedSignal)
+    CHECK_UNEXPECTED(receivedRemoteToLocalSyncStopped)
+    CHECK_UNEXPECTED(receivedSendLocalChangedStopped)
+    CHECK_UNEXPECTED(receivedWillRepeatRemoteToLocalSyncAfterSendingChanges)
+    CHECK_UNEXPECTED(receivedDetectedConflictDuringLocalChangesSending)
+    CHECK_UNEXPECTED(receivedRateLimitExceeded)
+    CHECK_UNEXPECTED(receivedLinkedNotebookSyncChunksDownloaded)
+    CHECK_UNEXPECTED(receivedPreparedDirtyObjectsForSending)
+    CHECK_UNEXPECTED(receivedPreparedLinkedNotebookDirtyObjectsForSending)
+
+    checkOrder(catcher);
+
+    // TODO: continue here: check the coincidence of items from remote and local storages
 }
 
 void SynchronizationTester::setUserOwnItemsToRemoteStorage()
