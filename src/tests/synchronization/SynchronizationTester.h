@@ -31,6 +31,9 @@
 #include <QThread>
 
 namespace quentier {
+
+QT_FORWARD_DECLARE_CLASS(SynchronizationManagerSignalsCatcher)
+
 namespace test {
 
 class SynchronizationTester: public QObject
@@ -51,6 +54,22 @@ private Q_SLOTS:
 
 private:
     void setUserOwnItemsToRemoteStorage();
+    void checkEventsOrder(const SynchronizationManagerSignalsCatcher & catcher);
+
+    void listSavedSearchesFromLocalStorage(const qint32 afterUSN,
+                                           QHash<QString, qevercloud::SavedSearch> & savedSearches) const;
+
+    void listTagsFromLocalStorage(const qint32 afterUSN, const QString & linkedNotebookGuid,
+                                  QHash<QString, qevercloud::Tag> & tags) const;
+
+    void listNotebooksFromLocalStorage(const qint32 afterUSN, const QString & linkedNotebookGuid,
+                                       QHash<QString, qevercloud::Notebook> & notebooks) const;
+
+    void listNotesFromLocalStorage(const qint32 afterUSN, const QString & linkedNotebookGuid,
+                                   QHash<QString, qevercloud::Note> & notes) const;
+
+    void listLinkedNotebooksFromLocalStorage(const qint32 afterUSN,
+                                             QHash<QString, qevercloud::LinkedNotebook> & linkedNotebooks) const;
 
 private:
     Account                         m_testAccount;

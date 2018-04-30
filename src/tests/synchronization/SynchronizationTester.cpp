@@ -61,39 +61,6 @@ inline void nullMessageHandler(QtMsgType type, const char * message) {
 namespace quentier {
 namespace test {
 
-void checkOrder(const SynchronizationManagerSignalsCatcher & catcher)
-{
-    ErrorString errorDescription;
-    if (!catcher.checkSyncChunkDownloadProgressOrder(errorDescription)) {
-        QFAIL(qPrintable(QString::fromUtf8("Wrong sync chunk download progress order: ") + errorDescription.nonLocalizedString()));
-    }
-
-    errorDescription.clear();
-    if (!catcher.checkLinkedNotebookSyncChunkDownloadProgressOrder(errorDescription)) {
-        QFAIL(qPrintable(QString::fromUtf8("Wrong linked notebook sync chunk download progress order: ") + errorDescription.nonLocalizedString()));
-    }
-
-    errorDescription.clear();
-    if (!catcher.checkNoteDownloadProgressOrder(errorDescription)) {
-        QFAIL(qPrintable(QString::fromUtf8("Wrong note download progress order: ") + errorDescription.nonLocalizedString()));
-    }
-
-    errorDescription.clear();
-    if (!catcher.checkLinkedNotebookNoteDownloadProgressOrder(errorDescription)) {
-        QFAIL(qPrintable(QString::fromUtf8("Wrong linked notebook note download progress order: ") + errorDescription.nonLocalizedString()));
-    }
-
-    errorDescription.clear();
-    if (!catcher.checkResourceDownloadProgressOrder(errorDescription)) {
-        QFAIL(qPrintable(QString::fromUtf8("Wrong resource download progress order: ") + errorDescription.nonLocalizedString()));
-    }
-
-    errorDescription.clear();
-    if (!catcher.checkLinkedNotebookResourceDownloadProgressOrder(errorDescription)) {
-        QFAIL(qPrintable(QString::fromUtf8("Wrong linked notebook resource download progress order: ") + errorDescription.nonLocalizedString()));
-    }
-}
-
 SynchronizationTester::SynchronizationTester(QObject * parent) :
     QObject(parent),
     m_testAccount(QStringLiteral("SynchronizationTesterFakeUser"),
@@ -246,7 +213,7 @@ void SynchronizationTester::testSimpleRemoteToLocalFullSync()
     CHECK_UNEXPECTED(receivedPreparedDirtyObjectsForSending)
     CHECK_UNEXPECTED(receivedPreparedLinkedNotebookDirtyObjectsForSending)
 
-    checkOrder(catcher);
+    checkEventsOrder(catcher);
 
     // TODO: continue here: check the coincidence of items from remote and local storages
 }
@@ -386,6 +353,225 @@ void SynchronizationTester::setUserOwnItemsToRemoteStorage()
     fifthNote.setModificationTimestamp(fifthNote.creationTimestamp());
     res = m_pFakeNoteStore->setNote(fifthNote, errorDescription);
     QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
+}
+
+void SynchronizationTester::checkEventsOrder(const SynchronizationManagerSignalsCatcher & catcher)
+{
+    ErrorString errorDescription;
+    if (!catcher.checkSyncChunkDownloadProgressOrder(errorDescription)) {
+        QFAIL(qPrintable(QString::fromUtf8("Wrong sync chunk download progress order: ") + errorDescription.nonLocalizedString()));
+    }
+
+    errorDescription.clear();
+    if (!catcher.checkLinkedNotebookSyncChunkDownloadProgressOrder(errorDescription)) {
+        QFAIL(qPrintable(QString::fromUtf8("Wrong linked notebook sync chunk download progress order: ") + errorDescription.nonLocalizedString()));
+    }
+
+    errorDescription.clear();
+    if (!catcher.checkNoteDownloadProgressOrder(errorDescription)) {
+        QFAIL(qPrintable(QString::fromUtf8("Wrong note download progress order: ") + errorDescription.nonLocalizedString()));
+    }
+
+    errorDescription.clear();
+    if (!catcher.checkLinkedNotebookNoteDownloadProgressOrder(errorDescription)) {
+        QFAIL(qPrintable(QString::fromUtf8("Wrong linked notebook note download progress order: ") + errorDescription.nonLocalizedString()));
+    }
+
+    errorDescription.clear();
+    if (!catcher.checkResourceDownloadProgressOrder(errorDescription)) {
+        QFAIL(qPrintable(QString::fromUtf8("Wrong resource download progress order: ") + errorDescription.nonLocalizedString()));
+    }
+
+    errorDescription.clear();
+    if (!catcher.checkLinkedNotebookResourceDownloadProgressOrder(errorDescription)) {
+        QFAIL(qPrintable(QString::fromUtf8("Wrong linked notebook resource download progress order: ") + errorDescription.nonLocalizedString()));
+    }
+}
+
+void SynchronizationTester::listSavedSearchesFromLocalStorage(const qint32 afterUSN,
+                                                              QHash<QString, qevercloud::SavedSearch> & savedSearches) const
+{
+    savedSearches.clear();
+
+    const LocalStorageManager * pLocalStorageManager = m_pLocalStorageManagerAsync->localStorageManager();
+    if (Q_UNLIKELY(!pLocalStorageManager)) {
+        QFAIL("Local storage manager is null");
+    }
+
+    ErrorString errorDescription;
+    QList<SavedSearch> searches = pLocalStorageManager->listSavedSearches(LocalStorageManager::ListAll, errorDescription);
+    if (searches.isEmpty() && !errorDescription.isEmpty()) {
+        QFAIL(qPrintable(errorDescription.nonLocalizedString()));
+    }
+
+    savedSearches.reserve(searches.size());
+    for(auto it = searches.constBegin(), end = searches.constEnd(); it != end; ++it)
+    {
+        const SavedSearch & search = *it;
+        if (Q_UNLIKELY(!search.hasGuid())) {
+            continue;
+        }
+
+        if ((afterUSN > 0) && (!search.hasUpdateSequenceNumber() || (search.updateSequenceNumber() <= afterUSN))) {
+            continue;
+        }
+
+        savedSearches[search.guid()] = search.qevercloudSavedSearch();
+    }
+}
+
+void SynchronizationTester::listTagsFromLocalStorage(const qint32 afterUSN, const QString & linkedNotebookGuid,
+                                                     QHash<QString, qevercloud::Tag> & tags) const
+{
+    tags.clear();
+
+    const LocalStorageManager * pLocalStorageManager = m_pLocalStorageManagerAsync->localStorageManager();
+    if (Q_UNLIKELY(!pLocalStorageManager)) {
+        QFAIL("Local storage manager is null");
+    }
+
+    QString localLinkedNotebookGuid = QStringLiteral("");
+    if (!linkedNotebookGuid.isEmpty()) {
+        localLinkedNotebookGuid = linkedNotebookGuid;
+    }
+
+    ErrorString errorDescription;
+    QList<Tag> localTags = pLocalStorageManager->listTags(LocalStorageManager::ListAll,
+                                                          errorDescription, 0, 0, LocalStorageManager::ListTagsOrder::NoOrder,
+                                                          LocalStorageManager::OrderDirection::Ascending,
+                                                          localLinkedNotebookGuid);
+    if (localTags.isEmpty() && !errorDescription.isEmpty()) {
+        QFAIL(qPrintable(errorDescription.nonLocalizedString()));
+    }
+
+    tags.reserve(localTags.size());
+    for(auto it = localTags.constBegin(), end = localTags.constEnd(); it != end; ++it)
+    {
+        const Tag & tag = *it;
+        if (Q_UNLIKELY(!tag.hasGuid())) {
+            continue;
+        }
+
+        if ((afterUSN > 0) && (!tag.hasUpdateSequenceNumber() || (tag.updateSequenceNumber() <= afterUSN))) {
+            continue;
+        }
+
+        tags[tag.guid()] = tag.qevercloudTag();
+    }
+}
+
+void SynchronizationTester::listNotebooksFromLocalStorage(const qint32 afterUSN, const QString & linkedNotebookGuid,
+                                                          QHash<QString, qevercloud::Notebook> & notebooks) const
+{
+    notebooks.clear();
+
+    const LocalStorageManager * pLocalStorageManager = m_pLocalStorageManagerAsync->localStorageManager();
+    if (Q_UNLIKELY(!pLocalStorageManager)) {
+        QFAIL("Local storage manager is null");
+    }
+
+    QString localLinkedNotebookGuid = QStringLiteral("");
+    if (!linkedNotebookGuid.isEmpty()) {
+        localLinkedNotebookGuid = linkedNotebookGuid;
+    }
+
+    ErrorString errorDescription;
+    QList<Notebook> localNotebooks = pLocalStorageManager->listNotebooks(LocalStorageManager::ListAll,
+                                                                         errorDescription, 0, 0, LocalStorageManager::ListNotebooksOrder::NoOrder,
+                                                                         LocalStorageManager::OrderDirection::Ascending,
+                                                                         localLinkedNotebookGuid);
+    if (localNotebooks.isEmpty() && !errorDescription.isEmpty()) {
+        QFAIL(qPrintable(errorDescription.nonLocalizedString()));
+    }
+
+    notebooks.reserve(localNotebooks.size());
+    for(auto it = localNotebooks.constBegin(), end = localNotebooks.constEnd(); it != end; ++it)
+    {
+        const Notebook & notebook = *it;
+        if (Q_UNLIKELY(!notebook.hasGuid())) {
+            continue;
+        }
+
+        if ((afterUSN > 0) && (!notebook.hasUpdateSequenceNumber() || (notebook.updateSequenceNumber() <= afterUSN))) {
+            continue;
+        }
+
+        notebooks[notebook.guid()] = notebook.qevercloudNotebook();
+    }
+}
+
+void SynchronizationTester::listNotesFromLocalStorage(const qint32 afterUSN, const QString & linkedNotebookGuid,
+                                                      QHash<QString, qevercloud::Note> & notes) const
+{
+    notes.clear();
+
+    const LocalStorageManager * pLocalStorageManager = m_pLocalStorageManagerAsync->localStorageManager();
+    if (Q_UNLIKELY(!pLocalStorageManager)) {
+        QFAIL("Local storage manager is null");
+    }
+
+    QString localLinkedNotebookGuid = QStringLiteral("");
+    if (!linkedNotebookGuid.isEmpty()) {
+        localLinkedNotebookGuid = linkedNotebookGuid;
+    }
+
+    ErrorString errorDescription;
+    QList<Note> localNotes = pLocalStorageManager->listNotes(LocalStorageManager::ListAll,
+                                                             errorDescription, true, 0, 0, LocalStorageManager::ListNotesOrder::NoOrder,
+                                                             LocalStorageManager::OrderDirection::Ascending,
+                                                             localLinkedNotebookGuid);
+    if (localNotes.isEmpty() && !errorDescription.isEmpty()) {
+        QFAIL(qPrintable(errorDescription.nonLocalizedString()));
+    }
+
+    notes.reserve(localNotes.size());
+    for(auto it = localNotes.constBegin(), end = localNotes.constEnd(); it != end; ++it)
+    {
+        const Note & note = *it;
+        if (Q_UNLIKELY(!note.hasGuid())) {
+            continue;
+        }
+
+        if ((afterUSN > 0) && (!note.hasUpdateSequenceNumber() || (note.updateSequenceNumber() <= afterUSN))) {
+            continue;
+        }
+
+        notes[note.guid()] = note.qevercloudNote();
+    }
+}
+
+void SynchronizationTester::listLinkedNotebooksFromLocalStorage(const qint32 afterUSN,
+                                                                QHash<QString, qevercloud::LinkedNotebook> & linkedNotebooks) const
+{
+    linkedNotebooks.clear();
+
+    const LocalStorageManager * pLocalStorageManager = m_pLocalStorageManagerAsync->localStorageManager();
+    if (Q_UNLIKELY(!pLocalStorageManager)) {
+        QFAIL("Local storage manager is null");
+    }
+
+    ErrorString errorDescription;
+    QList<LinkedNotebook> localLinkedNotebooks = pLocalStorageManager->listLinkedNotebooks(LocalStorageManager::ListAll,
+                                                                                           errorDescription, 0, 0, LocalStorageManager::ListLinkedNotebooksOrder::NoOrder,
+                                                                                           LocalStorageManager::OrderDirection::Ascending);
+    if (localLinkedNotebooks.isEmpty() && !errorDescription.isEmpty()) {
+        QFAIL(qPrintable(errorDescription.nonLocalizedString()));
+    }
+
+    linkedNotebooks.reserve(localLinkedNotebooks.size());
+    for(auto it = localLinkedNotebooks.constBegin(), end = localLinkedNotebooks.constEnd(); it != end; ++it)
+    {
+        const LinkedNotebook & linkedNotebook = *it;
+        if (Q_UNLIKELY(!linkedNotebook.hasGuid())) {
+            continue;
+        }
+
+        if ((afterUSN > 0) && (!linkedNotebook.hasUpdateSequenceNumber() || (linkedNotebook.updateSequenceNumber() <= afterUSN))) {
+            continue;
+        }
+
+        linkedNotebooks[linkedNotebook.guid()] = linkedNotebook.qevercloudLinkedNotebook();
+    }
 }
 
 } // namespace test
