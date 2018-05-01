@@ -54,6 +54,7 @@ FakeNoteStore::FakeNoteStore(QObject * parent) :
     m_maxResourceSize(static_cast<quint64>(qevercloud::EDAM_RESOURCE_SIZE_MAX_FREE)),
     m_syncState(),
     m_linkedNotebookSyncStates(),
+    m_authenticationToken(),
     m_linkedNotebookAuthTokens(),
     m_getNoteAsyncRequests(),
     m_getResourceAsyncRequests()
@@ -809,6 +810,16 @@ bool FakeNoteStore::removeLinkedNotebookSyncState(const QString & linkedNotebook
     return false;
 }
 
+const QString & FakeNoteStore::authToken() const
+{
+    return m_authenticationToken;
+}
+
+void FakeNoteStore::setAuthToken(const QString & authToken)
+{
+    m_authenticationToken = authToken;
+}
+
 QString FakeNoteStore::linkedNotebookAuthToken(const QString & linkedNotebookOwner) const
 {
     auto it = m_linkedNotebookAuthTokens.find(linkedNotebookOwner);
@@ -875,9 +886,17 @@ qint32 FakeNoteStore::createNotebook(Notebook & notebook, ErrorString & errorDes
         return checkRes;
     }
 
-    checkRes = checkLinkedNotebookAuthTokenForNotebook(notebook.guid(), linkedNotebookAuthToken, errorDescription);
-    if (checkRes != 0) {
-        return checkRes;
+    if (notebook.hasLinkedNotebookGuid())
+    {
+        checkRes = checkLinkedNotebookAuthTokenForNotebook(notebook.guid(), linkedNotebookAuthToken, errorDescription);
+        if (checkRes != 0) {
+            return checkRes;
+        }
+    }
+    else if (!linkedNotebookAuthToken.isEmpty() && (linkedNotebookAuthToken != m_authenticationToken))
+    {
+        errorDescription.setBase(QStringLiteral("Notebook doesn't belong to a linked notebook but linked notebook auth token is not empty"));
+        return qevercloud::EDAMErrorCode::INVALID_AUTH;
     }
 
     if (!linkedNotebookAuthToken.isEmpty() && notebook.isDefaultNotebook()) {
@@ -912,9 +931,17 @@ qint32 FakeNoteStore::updateNotebook(Notebook & notebook, ErrorString & errorDes
         return checkRes;
     }
 
-    checkRes = checkLinkedNotebookAuthTokenForNotebook(notebook.guid(), linkedNotebookAuthToken, errorDescription);
-    if (checkRes != 0) {
-        return checkRes;
+    if (notebook.hasLinkedNotebookGuid())
+    {
+        checkRes = checkLinkedNotebookAuthTokenForNotebook(notebook.guid(), linkedNotebookAuthToken, errorDescription);
+        if (checkRes != 0) {
+            return checkRes;
+        }
+    }
+    else if (!linkedNotebookAuthToken.isEmpty() && (linkedNotebookAuthToken != m_authenticationToken))
+    {
+        errorDescription.setBase(QStringLiteral("Notebook doesn't belong to a linked notebook but linked notebook auth token is not empty"));
+        return qevercloud::EDAMErrorCode::INVALID_AUTH;
     }
 
     if (!linkedNotebookAuthToken.isEmpty() && notebook.isDefaultNotebook()) {
@@ -964,9 +991,23 @@ qint32 FakeNoteStore::createNote(Note & note, ErrorString & errorDescription, qi
         return checkRes;
     }
 
-    checkRes = checkLinkedNotebookAuthTokenForNotebook(note.notebookGuid(), linkedNotebookAuthToken, errorDescription);
-    if (checkRes != 0) {
-        return checkRes;
+    const Notebook * pNotebook = findNotebook(note.notebookGuid());
+    if (Q_UNLIKELY(!pNotebook)) {
+        errorDescription.setBase(QStringLiteral("No notebook was found for note"));
+        return qevercloud::EDAMErrorCode::DATA_CONFLICT;
+    }
+
+    if (pNotebook->hasLinkedNotebookGuid())
+    {
+        checkRes = checkLinkedNotebookAuthTokenForNotebook(note.notebookGuid(), linkedNotebookAuthToken, errorDescription);
+        if (checkRes != 0) {
+            return checkRes;
+        }
+    }
+    else if (!linkedNotebookAuthToken.isEmpty() && (linkedNotebookAuthToken != m_authenticationToken))
+    {
+        errorDescription.setBase(QStringLiteral("Note's notebook doesn't belong to a linked notebook but linked notebook auth token is not empty"));
+        return qevercloud::EDAMErrorCode::INVALID_AUTH;
     }
 
     note.setGuid(UidGenerator::Generate());
@@ -996,9 +1037,23 @@ qint32 FakeNoteStore::updateNote(Note & note, ErrorString & errorDescription, qi
         return qevercloud::EDAMErrorCode::DATA_CONFLICT;
     }
 
-    checkRes = checkLinkedNotebookAuthTokenForNotebook(note.notebookGuid(), linkedNotebookAuthToken, errorDescription);
-    if (checkRes != 0) {
-        return checkRes;
+    const Notebook * pNotebook = findNotebook(note.notebookGuid());
+    if (Q_UNLIKELY(!pNotebook)) {
+        errorDescription.setBase(QStringLiteral("No notebook was found for note"));
+        return qevercloud::EDAMErrorCode::DATA_CONFLICT;
+    }
+
+    if (pNotebook->hasLinkedNotebookGuid())
+    {
+        checkRes = checkLinkedNotebookAuthTokenForNotebook(note.notebookGuid(), linkedNotebookAuthToken, errorDescription);
+        if (checkRes != 0) {
+            return checkRes;
+        }
+    }
+    else if (!linkedNotebookAuthToken.isEmpty() && (linkedNotebookAuthToken != m_authenticationToken))
+    {
+        errorDescription.setBase(QStringLiteral("Note's notebook doesn't belong to a linked notebook but linked notebook auth token is not empty"));
+        return qevercloud::EDAMErrorCode::INVALID_AUTH;
     }
 
     Q_UNUSED(index.replace(it, note))
@@ -1020,9 +1075,17 @@ qint32 FakeNoteStore::createTag(Tag & tag, ErrorString & errorDescription, qint3
         return checkRes;
     }
 
-    checkRes = checkLinkedNotebookAuthTokenForTag(tag, linkedNotebookAuthToken, errorDescription);
-    if (checkRes != 0) {
-        return checkRes;
+    if (tag.hasLinkedNotebookGuid())
+    {
+        checkRes = checkLinkedNotebookAuthTokenForTag(tag, linkedNotebookAuthToken, errorDescription);
+        if (checkRes != 0) {
+            return checkRes;
+        }
+    }
+    else if (!linkedNotebookAuthToken.isEmpty() && (linkedNotebookAuthToken != m_authenticationToken))
+    {
+        errorDescription.setBase(QStringLiteral("Tag doesn't belong to a linked notebook but linked notebook auth token is not empty"));
+        return qevercloud::EDAMErrorCode::INVALID_AUTH;
     }
 
     TagDataByNameUpper & nameIndex = m_tags.get<TagByNameUpper>();
@@ -1053,9 +1116,17 @@ qint32 FakeNoteStore::updateTag(Tag & tag, ErrorString & errorDescription, qint3
         return checkRes;
     }
 
-    checkRes = checkLinkedNotebookAuthTokenForTag(tag, linkedNotebookAuthToken, errorDescription);
-    if (checkRes != 0) {
-        return checkRes;
+    if (tag.hasLinkedNotebookGuid())
+    {
+        checkRes = checkLinkedNotebookAuthTokenForTag(tag, linkedNotebookAuthToken, errorDescription);
+        if (checkRes != 0) {
+            return checkRes;
+        }
+    }
+    else if (!linkedNotebookAuthToken.isEmpty() && (linkedNotebookAuthToken != m_authenticationToken))
+    {
+        errorDescription.setBase(QStringLiteral("Tag doesn't belong to a linked notebook but linked notebook auth token is not empty"));
+        return qevercloud::EDAMErrorCode::INVALID_AUTH;
     }
 
     TagDataByGuid & index = m_tags.get<TagByGuid>();
@@ -1475,8 +1546,22 @@ void FakeNoteStore::timerEvent(QTimerEvent * pEvent)
             qint32 res = getNote(request.m_withContent, request.m_withResourcesData,
                                  request.m_withResourcesRecognition, request.m_withResourcesAlternateData,
                                  note, errorDescription, rateLimitSeconds);
-            if ((res == 0) && (note.hasNotebookGuid())) {
-                res = checkLinkedNotebookAuthTokenForNotebook(note.notebookGuid(), request.m_authToken, errorDescription);
+            if ((res == 0) && (note.hasNotebookGuid()))
+            {
+                const Notebook * pNotebook = findNotebook(note.notebookGuid());
+                if (Q_UNLIKELY(!pNotebook)) {
+                    errorDescription.setBase(QStringLiteral("No notebook was found for note"));
+                    res = qevercloud::EDAMErrorCode::DATA_CONFLICT;
+                }
+                else if (pNotebook->hasLinkedNotebookGuid())
+                {
+                    res = checkLinkedNotebookAuthTokenForNotebook(note.notebookGuid(), request.m_authToken, errorDescription);
+                }
+                else if (!request.m_authToken.isEmpty() && (request.m_authToken != m_authenticationToken))
+                {
+                    errorDescription.setBase(QStringLiteral("Note's notebook doesn't belong to a linked notebook but linked notebook auth token is not empty"));
+                    res = qevercloud::EDAMErrorCode::INVALID_AUTH;
+                }
             }
 
             Q_EMIT getNoteAsyncFinished(res, note.qevercloudNote(), rateLimitSeconds, errorDescription);

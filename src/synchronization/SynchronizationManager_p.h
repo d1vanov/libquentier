@@ -224,6 +224,7 @@ private:
 
     qint32                                  m_maxSyncChunkEntries;
 
+    qint32                                  m_previousUpdateCount;
     qint32                                  m_lastUpdateCount;
     qevercloud::Timestamp                   m_lastSyncTime;
     QHash<QString,qint32>                   m_cachedLinkedNotebookLastUpdateCountByGuid;

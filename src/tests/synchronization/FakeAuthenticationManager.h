@@ -30,6 +30,9 @@ public:
     FakeAuthenticationManager(QObject * parent = Q_NULLPTR);
     virtual ~FakeAuthenticationManager();
 
+    const QString & authToken() const;
+    void setAuthToken(const QString & authToken);
+
     qevercloud::UserID userId() const;
     void setUserId(const qevercloud::UserID userId);
 
@@ -40,6 +43,7 @@ public Q_SLOTS:
 
 private:
     qevercloud::UserID  m_userId;
+    QString             m_authToken;
     bool                m_failNextRequest;
 };
 

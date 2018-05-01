@@ -19,13 +19,16 @@
 #include "enml/ENMLTester.h"
 #include "local_storage/LocalStorageManagerTester.h"
 #include "synchronization/FullSyncStaleDataItemsExpungerTester.h"
+#include "synchronization/SynchronizationTester.h"
 #include "types/TypesTester.h"
 #include "utility/UtilityTester.h"
 #include <quentier/logging/QuentierLogger.h>
 #include <quentier/utility/QuentierApplication.h>
 #include <quentier/utility/Utility.h>
+#include <quentier/utility/StandardPaths.h>
 #include <QtTest/QtTest>
 #include <QDebug>
+#include <QFileInfo>
 #include <QSqlDatabase>
 
 using namespace quentier::test;
@@ -34,7 +37,7 @@ int main(int argc, char *argv[])
 {
     quentier::QuentierApplication app(argc, argv);
     app.setOrganizationName(QStringLiteral("d1vanov"));
-    app.setApplicationName(QStringLiteral("QuentierCoreTests"));
+    app.setApplicationName(QStringLiteral("LibquentierTests"));
 
     QUENTIER_INITIALIZE_LOGGING();
     QUENTIER_SET_MIN_LOG_LEVEL(Warn);
@@ -42,30 +45,44 @@ int main(int argc, char *argv[])
 
     quentier::initializeLibquentier();
 
-    int res = QTest::qExec(new TypesTester);
-    if (res != 0) {
-        return res;
+    // Remove any persistence left after the previous run of tests
+    QString libquentierTestsPersistencePath = quentier::applicationPersistentStoragePath();
+    QFileInfo libquentierTestsPersistencePathInfo(libquentierTestsPersistencePath);
+    if (libquentierTestsPersistencePathInfo.exists())
+    {
+        if (libquentierTestsPersistencePathInfo.isDir())
+        {
+            if (!quentier::removeDir(libquentierTestsPersistencePath)) {
+                qWarning() << "Failed to delete the directory with libquentier tests persistence: "
+                           << QDir::toNativeSeparators(libquentierTestsPersistencePath);
+                return 1;
+            }
+        }
+        else
+        {
+            if (!quentier::removeFile(libquentierTestsPersistencePath)) {
+                qWarning() << "Failed to delete the file corresponding to the path where libquentier's tests "
+                           << "persistence need to be stored: "
+                           << QDir::toNativeSeparators(libquentierTestsPersistencePath);
+                return 1;
+            }
+        }
     }
 
-    res = QTest::qExec(new ENMLTester);
-    if (res != 0) {
-        return res;
+    int res = 0;
+
+#define RUN_TESTS(tester) \
+    res = QTest::qExec(new tester); \
+    if (res != 0) { \
+        return res; \
     }
 
-    res = QTest::qExec(new UtilityTester);
-    if (res != 0) {
-        return res;
-    }
-
-    res = QTest::qExec(new LocalStorageManagerTester);
-    if (res != 0) {
-        return res;
-    }
-
-    res = QTest::qExec(new FullSyncStaleDataItemsExpungerTester);
-    if (res != 0) {
-        return res;
-    }
+    RUN_TESTS(TypesTester)
+    RUN_TESTS(ENMLTester)
+    RUN_TESTS(UtilityTester)
+    RUN_TESTS(LocalStorageManagerTester)
+    RUN_TESTS(FullSyncStaleDataItemsExpungerTester)
+    RUN_TESTS(SynchronizationTester)
 
     return 0;
 }

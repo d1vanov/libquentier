@@ -185,6 +185,15 @@ void QUENTIER_EXPORT openUrl(const QUrl & url);
  */
 bool QUENTIER_EXPORT removeFile(const QString & filePath);
 
+/**
+ * removeDir - removes the directory specified by path recursively, with all its contents; in case of dir removal error
+ * prints warning into the log; workarounds the lack of QDir::removeRecursively in Qt 4.
+ *
+ * @param dirPath       The path to the directory which needs to be removed
+ * @return              True if the directory was removed successfully, false otherwise
+ */
+bool QUENTIER_EXPORT removeDir(const QString & dirPath);
+
 } // namespace quentier
 
 #endif // LIB_QUENTIER_UTILITY_UTILITY_H

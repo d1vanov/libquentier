@@ -89,13 +89,18 @@ SynchronizationManagerPrivate::SynchronizationManagerPrivate(const QString & hos
                                                              INoteStore * pNoteStore, IUserStore * pUserStore) :
     m_host(host),
     m_maxSyncChunkEntries(50),
+    m_previousUpdateCount(-1),
     m_lastUpdateCount(-1),
     m_lastSyncTime(-1),
     m_cachedLinkedNotebookLastUpdateCountByGuid(),
     m_cachedLinkedNotebookLastSyncTimeByGuid(),
     m_onceReadLastSyncParams(false),
-    m_pNoteStore(Q_NULLPTR),
-    m_pUserStore(Q_NULLPTR),
+    m_pNoteStore(pNoteStore
+                 ? pNoteStore
+                 : (new NoteStore(QSharedPointer<qevercloud::NoteStore>(new qevercloud::NoteStore), this))),
+    m_pUserStore(pUserStore
+                 ? pUserStore
+                 : (new UserStore(QSharedPointer<qevercloud::UserStore>(new qevercloud::UserStore(m_host))))),
     m_authContext(AuthContext::Blank),
     m_launchSyncPostponeTimerId(-1),
     m_OAuthResult(),
@@ -141,18 +146,7 @@ SynchronizationManagerPrivate::SynchronizationManagerPrivate(const QString & hos
     m_deleteShardIdJob.setAutoDelete(false);
 
     if (pNoteStore) {
-        m_pNoteStore = pNoteStore;
         m_pNoteStore->setParent(this);
-    }
-    else {
-        m_pNoteStore = new NoteStore(QSharedPointer<qevercloud::NoteStore>(new qevercloud::NoteStore), this);
-    }
-
-    if (pUserStore) {
-        m_pUserStore.reset(pUserStore);
-    }
-    else {
-        m_pUserStore.reset(new UserStore(QSharedPointer<qevercloud::UserStore>(new qevercloud::UserStore(m_host))));
     }
 
     createConnections(authenticationManager);
@@ -603,9 +597,11 @@ void SynchronizationManagerPrivate::onRemoteToLocalSyncFinished(qint32 lastUpdat
             << lastUpdateCount << QStringLiteral(", lastSyncTime = ") << printableDateTimeFromTimestamp(lastSyncTime));
 
     bool somethingDownloaded = (m_lastUpdateCount != lastUpdateCount) ||
+                               (m_lastUpdateCount != m_previousUpdateCount) ||
                                (m_cachedLinkedNotebookLastUpdateCountByGuid != lastUpdateCountByLinkedNotebookGuid);
 
     m_lastUpdateCount = lastUpdateCount;
+    m_previousUpdateCount = lastUpdateCount;
     m_lastSyncTime = lastSyncTime;
     m_cachedLinkedNotebookLastUpdateCountByGuid = lastUpdateCountByLinkedNotebookGuid;
     m_cachedLinkedNotebookLastSyncTimeByGuid = lastSyncTimeByLinkedNotebookGuid;
@@ -837,6 +833,7 @@ void SynchronizationManagerPrivate::readLastSyncParameters()
 
     m_lastSyncTime = 0;
     m_lastUpdateCount = 0;
+    m_previousUpdateCount = 0;
     m_cachedLinkedNotebookLastUpdateCountByGuid.clear();
     m_cachedLinkedNotebookLastSyncTimeByGuid.clear();
 
@@ -854,6 +851,7 @@ void SynchronizationManagerPrivate::readLastSyncParameters()
             QNWARNING(QStringLiteral("Couldn't read last update count from persistent application settings"));
             m_lastUpdateCount = 0;
         }
+        m_previousUpdateCount = m_lastUpdateCount;
     }
 
     QVariant lastSyncTimeVar = appSettings.value(keyGroup + LAST_SYNC_TIME_KEY);
@@ -1213,6 +1211,7 @@ void SynchronizationManagerPrivate::clear()
     QNDEBUG(QStringLiteral("SynchronizationManagerPrivate::clear"));
 
     m_lastUpdateCount = -1;
+    m_previousUpdateCount = -1;
     m_lastSyncTime = -1;
     m_cachedLinkedNotebookLastUpdateCountByGuid.clear();
     m_cachedLinkedNotebookLastSyncTimeByGuid.clear();

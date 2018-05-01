@@ -1115,7 +1115,10 @@ void SendLocalChangesManager::checkListLocalStorageObjectsCompletion()
 
     m_receivedDirtyLocalStorageObjectsFromUsersAccount = true;
     QNTRACE(QStringLiteral("Received all dirty objects from user's own account from local storage"));
-    Q_EMIT receivedUserAccountDirtyObjects();
+
+    if (!m_tags.isEmpty() || !m_savedSearches.isEmpty() || !m_notebooks.isEmpty() || !m_notes.isEmpty()) {
+        Q_EMIT receivedUserAccountDirtyObjects();
+    }
 
     if (!m_linkedNotebookAuthData.isEmpty())
     {
@@ -1156,9 +1159,9 @@ void SendLocalChangesManager::checkListLocalStorageObjectsCompletion()
 
     m_receivedAllDirtyLocalStorageObjects = true;
     QNTRACE(QStringLiteral("All relevant objects from local storage have been listed"));
-    Q_EMIT receivedAllDirtyObjects();
 
     if (!m_tags.isEmpty() || !m_savedSearches.isEmpty() || !m_notebooks.isEmpty() || !m_notes.isEmpty()) {
+        Q_EMIT receivedAllDirtyObjects();
         sendLocalChanges();
     }
     else {

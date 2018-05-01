@@ -23,6 +23,8 @@
 #include <QApplication>
 #include <QScopedPointer>
 #include <QUrl>
+#include <QDir>
+#include <QFileInfoList>
 
 #ifdef Q_OS_WIN
 
@@ -358,6 +360,41 @@ bool removeFile(const QString & filePath)
     QNWARNING(QStringLiteral("Cannot remove file ") << filePath << QStringLiteral(": ") << file.errorString()
               << QStringLiteral(", error code ") << file.error());
     return false;
+}
+
+bool removeDirImpl(const QString & dirPath)
+{
+    bool result = true;
+    QDir dir(dirPath);
+
+    if (dir.exists())
+    {
+        QFileInfoList dirContents = dir.entryInfoList(QDir::NoDotAndDotDot | QDir::System | QDir::Hidden |
+                                                      QDir::AllDirs | QDir::Files, QDir::DirsFirst);
+        for(auto it = dirContents.constBegin(), end = dirContents.constEnd(); it != end; ++it)
+        {
+            const QFileInfo & info = *it;
+            if (info.isDir()) {
+                result = removeDirImpl(info.absoluteFilePath());
+            }
+            else {
+                result = removeFile(info.absoluteFilePath());
+            }
+
+            if (!result) {
+                return result;
+            }
+        }
+
+        result = QDir().rmdir(dirPath);
+    }
+
+    return result;
+}
+
+bool removeDir(const QString & dirPath)
+{
+    return removeDirImpl(dirPath);
 }
 
 } // namespace quentier

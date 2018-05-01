@@ -19,6 +19,7 @@
 #include "SynchronizationTester.h"
 #include "SynchronizationManagerSignalsCatcher.h"
 #include <quentier/utility/EventLoopWithExitStatus.h>
+#include <quentier/logging/QuentierLogger.h>
 #include <QtTest/QtTest>
 #include <QCryptographicHash>
 #include <QDateTime>
@@ -50,12 +51,16 @@ inline void nullMessageHandler(QtMsgType type, const char * message) {
 
 #define CHECK_EXPECTED(expected) \
     if (!catcher.expected()) { \
-        QFAIL("SynchronizationManagerSignalsCatcher::expected unexpectedly returned false"); \
+        QFAIL(qPrintable(QString::fromUtf8("SynchronizationManagerSignalsCatcher::") + \
+                         QString::fromUtf8(#expected) + \
+                         QString::fromUtf8(" unexpectedly returned false"))); \
     }
 
 #define CHECK_UNEXPECTED(unexpected) \
     if (catcher.unexpected()) { \
-        QFAIL("SynchronizationManagerSignalsCatcher::unexpected unexpectedly returned true"); \
+        QFAIL(qPrintable(QString::fromUtf8("SynchronizationManagerSignalsCatcher::") + \
+                         QString::fromUtf8(#unexpected) + \
+                         QString::fromUtf8(" unexpectedly returned true"))); \
     }
 
 namespace quentier {
@@ -81,7 +86,7 @@ void SynchronizationTester::init()
 {
     m_testAccount = Account(m_testAccount.name(), Account::Type::Evernote, m_testAccount.id() + 1);
     m_pLocalStorageManagerAsync = new LocalStorageManagerAsync(m_testAccount, /* start from scratch = */ true,
-                                                               /* override lock = */ false, this);
+                                                               /* override lock = */ false);
     m_pLocalStorageManagerAsync->init();
     m_pLocalStorageManagerAsync->moveToThread(m_pLocalStorageManagerThread);
 
@@ -95,13 +100,20 @@ void SynchronizationTester::init()
     user.setName(m_testAccount.displayName());
     user.setCreationTimestamp(QDateTime::currentMSecsSinceEpoch());
     user.setModificationTimestamp(user.creationTimestamp());
+    user.setServiceLevel(qevercloud::ServiceLevel::BASIC);
     m_pFakeUserStore->setUser(m_testAccount.id(), user);
 
     qevercloud::AccountLimits limits;
     m_pFakeUserStore->setAccountLimits(qevercloud::ServiceLevel::BASIC, limits);
 
+    QString authToken = UidGenerator::Generate();
+
     m_pFakeNoteStore = new FakeNoteStore(this);
+    m_pFakeNoteStore->setAuthToken(authToken);
+
     m_pFakeAuthenticationManager = new FakeAuthenticationManager(this);
+    m_pFakeAuthenticationManager->setUserId(m_testAccount.id());
+    m_pFakeAuthenticationManager->setAuthToken(authToken);
 
     m_pSynchronizationManager = new SynchronizationManager(QStringLiteral("https://www.evernote.com"),
                                                            *m_pLocalStorageManagerAsync,
@@ -196,11 +208,11 @@ void SynchronizationTester::testSimpleRemoteToLocalFullSync()
     CHECK_EXPECTED(receivedStartedSignal)
     CHECK_EXPECTED(receivedFinishedSignal)
     CHECK_EXPECTED(finishedSomethingDownloaded)
-    CHECK_EXPECTED(receivedAuthenticationFinishedSignal)
     CHECK_EXPECTED(receivedRemoteToLocalSyncDone)
     CHECK_EXPECTED(remoteToLocalSyncDoneSomethingDownloaded)
     CHECK_EXPECTED(receivedSyncChunksDownloaded)
 
+    CHECK_UNEXPECTED(receivedAuthenticationFinishedSignal)
     CHECK_UNEXPECTED(receivedStoppedSignal)
     CHECK_UNEXPECTED(finishedSomethingSent)
     CHECK_UNEXPECTED(receivedAuthenticationRevokedSignal)
@@ -265,18 +277,21 @@ void SynchronizationTester::setUserOwnItemsToRemoteStorage()
     Notebook firstNotebook;
     firstNotebook.setGuid(UidGenerator::Generate());
     firstNotebook.setName(QStringLiteral("First notebook"));
+    firstNotebook.setDefaultNotebook(true);
     res = m_pFakeNoteStore->setNotebook(firstNotebook, errorDescription);
     QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
 
     Notebook secondNotebook;
     secondNotebook.setGuid(UidGenerator::Generate());
     secondNotebook.setName(QStringLiteral("Second notebook"));
+    secondNotebook.setDefaultNotebook(false);
     res = m_pFakeNoteStore->setNotebook(secondNotebook, errorDescription);
     QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
 
     Notebook thirdNotebook;
     thirdNotebook.setGuid(UidGenerator::Generate());
     thirdNotebook.setName(QStringLiteral("Third notebook"));
+    thirdNotebook.setDefaultNotebook(false);
     res = m_pFakeNoteStore->setNotebook(thirdNotebook, errorDescription);
     QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
 
@@ -431,19 +446,110 @@ void SynchronizationTester::checkIdentityOfLocalAndRemoteItems()
     // List stuff from remote storage
 
     QHash<QString,qevercloud::SavedSearch> remoteSavedSearches = m_pFakeNoteStore->savedSearches();
+    QHash<QString,qevercloud::LinkedNotebook> remoteLinkedNotebooks = m_pFakeNoteStore->linkedNotebooks();
     QHash<QString,qevercloud::Tag> remoteTags = m_pFakeNoteStore->tags();
     QHash<QString,qevercloud::Notebook> remoteNotebooks = m_pFakeNoteStore->notebooks();
     QHash<QString,qevercloud::Note> remoteNotes = m_pFakeNoteStore->notes();
 
     QVERIFY2(localSavedSearches.size() == remoteSavedSearches.size(),
-             "The number of saved searches in local and remote storages doesn't match");
-    for(auto it = localSavedSearches.constBegin(), end = localSavedSearches.constEnd(); it != end; ++it) {
+             qPrintable(QString::fromUtf8("The number of saved searches in local and remote storages doesn't match: ") +
+                        QString::number(localSavedSearches.size()) + QString::fromUtf8(" local ones vs ") +
+                        QString::number(remoteSavedSearches.size()) + QString::fromUtf8(" remote ones")));
+    for(auto it = localSavedSearches.constBegin(), end = localSavedSearches.constEnd(); it != end; ++it)
+    {
         auto rit = remoteSavedSearches.find(it.key());
-        QVERIFY2(rit != remoteSavedSearches.end(), "Couldn't find one of local saved searches within the remote storage");
-        QVERIFY2(rit.value() == it.value(), "Found mismatch between local and remote saved searches");
+        QVERIFY2(rit != remoteSavedSearches.end(),
+                 qPrintable(QString::fromUtf8("Couldn't find one of local saved searches within the remote storage: ") +
+                            ToString(it.value())));
+        QVERIFY2(rit.value() == it.value(),
+                 qPrintable(QString::fromUtf8("Found mismatch between local and remote saved searches: local one: ") +
+                            ToString(it.value()) + QString::fromUtf8("\nRemote one: ") + ToString(rit.value())));
     }
 
-    // TODO: check tags, notebooks and notes in a similar way
+    QVERIFY2(localLinkedNotebooks.size() == remoteLinkedNotebooks.size(),
+             qPrintable(QString::fromUtf8("The number of linked notebooks in local and remote storages doesn't match: ") +
+                        QString::number(localLinkedNotebooks.size()) + QString::fromUtf8(" local ones vs ") +
+                        QString::number(remoteLinkedNotebooks.size()) + QString::fromUtf8(" remote ones")));
+    for(auto it = localLinkedNotebooks.constBegin(), end = localLinkedNotebooks.constEnd(); it != end; ++it)
+    {
+        auto rit = remoteLinkedNotebooks.find(it.key());
+        QVERIFY2(rit != remoteLinkedNotebooks.end(),
+                 qPrintable(QString::fromUtf8("Couldn't find one of local linked notebooks within the remote storage: ") +
+                            ToString(it.value())));
+        QVERIFY2(rit.value() == it.value(),
+                 qPrintable(QString::fromUtf8("Found mismatch between local and remote linked notebooks: local one: ") +
+                            ToString(it.value()) + QString::fromUtf8("\nRemote one: ") + ToString(rit.value())));
+    }
+
+    QVERIFY2(localTags.size() == remoteTags.size(),
+             qPrintable(QString::fromUtf8("The number of tags in local and remote storages doesn't match: ") +
+                        QString::number(localTags.size()) + QString::fromUtf8(" local ones vs ") +
+                        QString::number(remoteTags.size()) + QString::fromUtf8(" remote ones")));
+    for(auto it = localTags.constBegin(), end = localTags.constEnd(); it != end; ++it)
+    {
+        auto rit = remoteTags.find(it.key());
+        QVERIFY2(rit != remoteTags.end(),
+                 qPrintable(QString::fromUtf8("Couldn't find one of local tags within the remote storage: ") +
+                            ToString(it.value())));
+        QVERIFY2(rit.value() == it.value(),
+                 qPrintable(QString::fromUtf8("Found mismatch between local and remote tags: local one: ") +
+                            ToString(it.value()) + QString::fromUtf8("\nRemote one: ") + ToString(rit.value())));
+    }
+
+    QVERIFY2(localNotebooks.size() == remoteNotebooks.size(),
+             qPrintable(QString::fromUtf8("The number of notebooks in local and remote storages doesn't match: ") +
+                        QString::number(localNotebooks.size()) + QString::fromUtf8(" local ones vs ") +
+                        QString::number(remoteNotebooks.size()) + QString::fromUtf8(" remote ones")));
+    for(auto it = localNotebooks.constBegin(), end = localNotebooks.constEnd(); it != end; ++it)
+    {
+        auto rit = remoteNotebooks.find(it.key());
+        QVERIFY2(rit != remoteNotebooks.end(),
+                 qPrintable(QString::fromUtf8("Couldn't find one of local notebooks within the remote storage: ") +
+                            ToString(it.value())));
+        QVERIFY2(rit.value() == it.value(),
+                 qPrintable(QString::fromUtf8("Found mismatch between local and remote notebooks: local one: ") +
+                            ToString(it.value()) + QString::fromUtf8("\nRemote one: ") + ToString(rit.value())));
+    }
+
+    QVERIFY2(localNotes.size() == remoteNotes.size(),
+             qPrintable(QString::fromUtf8("The number of notes in local and remote storages doesn't match: ") +
+                        QString::number(localNotes.size()) + QString::fromUtf8(" local ones vs ") +
+                        QString::number(remoteNotes.size()) + QString::fromUtf8(" remote ones")));
+    for(auto it = localNotes.constBegin(), end = localNotes.constEnd(); it != end; ++it)
+    {
+        auto rit = remoteNotes.find(it.key());
+        QVERIFY2(rit != remoteNotes.end(),
+                 qPrintable(QString::fromUtf8("Couldn't find one of local notes within the remote storage: ") +
+                            ToString(it.value())));
+
+        // NOTE: remote notes lack resource bodies, need to set these manually
+        qevercloud::Note & remoteNote = rit.value();
+        if (remoteNote.resources.isSet())
+        {
+            QList<qevercloud::Resource> resources = remoteNote.resources.ref();
+            for(auto resIt = resources.begin(), resEnd = resources.end(); resIt != resEnd; ++resIt)
+            {
+                QString resourceGuid = resIt->guid.ref();
+                const Resource * pResource = m_pFakeNoteStore->findResource(resourceGuid);
+                QVERIFY2(pResource != Q_NULLPTR, "One of remote note's resources was not found");
+                if (resIt->data.isSet()) {
+                    resIt->data->body = pResource->dataBody();
+                }
+                if (resIt->recognition.isSet()) {
+                    resIt->recognition->body = pResource->recognitionDataBody();
+                }
+                if (resIt->alternateData.isSet()) {
+                    resIt->alternateData->body = pResource->alternateDataBody();
+                }
+            }
+
+            remoteNote.resources = resources;
+        }
+
+        QVERIFY2(rit.value() == it.value(),
+                 qPrintable(QString::fromUtf8("Found mismatch between local and remote notes: local one: ") +
+                            ToString(it.value()) + QString::fromUtf8("\nRemote one: ") + ToString(rit.value())));
+    }
 }
 
 void SynchronizationTester::listSavedSearchesFromLocalStorage(const qint32 afterUSN,

@@ -187,8 +187,10 @@ Q_SIGNALS:
                                qevercloud::UserID userId);
 
     /**
-     * This signal is emitted in response to the attempt to authenticate the new user of the client app to synchronize
-     * with the Evernote service
+     * This signal is emitted in response to the explicit attempt to authenticate the new user
+     * of the client app to the Evernote service. NOTE: this signal is not emitted
+     * if the authentication was requested automatically during sync attempt, it is only
+     * emitted in response to the explicit invokation of authenticate slot.
      * @param success - true if the authentication was successful, false otherwise
      * @param errorDescription - the textual explanation of the failure to authenticate the new user
      * @param account - the account of the authenticated user

@@ -150,6 +150,9 @@ public:
     void setLinkedNotebookSyncState(const QString & linkedNotebookOwner, const qevercloud::SyncState & syncState);
     bool removeLinkedNotebookSyncState(const QString & linkedNotebookOwner);
 
+    const QString & authToken() const;
+    void setAuthToken(const QString & authToken);
+
     QString linkedNotebookAuthToken(const QString & linkedNotebookOwner) const;
     void setLinkedNotebookAuthToken(const QString & linkedNotebookOwner, const QString & linkedNotebookAuthToken);
     bool removeLinkedNotebookAuthToken(const QString & linkedNotebookOwner);
@@ -637,6 +640,7 @@ private:
     qevercloud::SyncState   m_syncState;
     QHash<QString,qevercloud::SyncState>    m_linkedNotebookSyncStates;
 
+    QString                 m_authenticationToken;
     QHash<QString,QString>  m_linkedNotebookAuthTokens;
 
     QQueue<GetNoteAsyncRequest>     m_getNoteAsyncRequests;
