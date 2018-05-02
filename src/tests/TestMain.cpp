@@ -47,25 +47,23 @@ int main(int argc, char *argv[])
 
     // Remove any persistence left after the previous run of tests
     QString libquentierTestsPersistencePath = quentier::applicationPersistentStoragePath();
-    QFileInfo libquentierTestsPersistencePathInfo(libquentierTestsPersistencePath);
-    if (libquentierTestsPersistencePathInfo.exists())
+    QDir libquentierTestsPersistenceDir(libquentierTestsPersistencePath);
+    if (libquentierTestsPersistenceDir.exists())
     {
-        if (libquentierTestsPersistencePathInfo.isDir())
-        {
-            if (!quentier::removeDir(libquentierTestsPersistencePath)) {
-                qWarning() << "Failed to delete the directory with libquentier tests persistence: "
-                           << QDir::toNativeSeparators(libquentierTestsPersistencePath);
-                return 1;
-            }
+        QString evernoteAccountsPath = libquentierTestsPersistencePath + QStringLiteral("/EvernoteAccounts");
+        QDir evernoteAccountsDir(evernoteAccountsPath);
+        if (evernoteAccountsDir.exists() && !quentier::removeDir(evernoteAccountsPath)) {
+            qWarning() << "Failed to delete the directory with libquentier tests persistence for Evernote accounts: "
+                       << QDir::toNativeSeparators(evernoteAccountsPath);
+            return 1;
         }
-        else
-        {
-            if (!quentier::removeFile(libquentierTestsPersistencePath)) {
-                qWarning() << "Failed to delete the file corresponding to the path where libquentier's tests "
-                           << "persistence need to be stored: "
-                           << QDir::toNativeSeparators(libquentierTestsPersistencePath);
-                return 1;
-            }
+
+        QString localAccountsPath = libquentierTestsPersistencePath + QStringLiteral("/LocalAccounts");
+        QDir localAccountsDir(localAccountsPath);
+        if (localAccountsDir.exists() && !quentier::removeDir(localAccountsPath)) {
+            qWarning() << "Failed to delete the directory with libquentier tests persistence for local accounts: "
+                       << QDir::toNativeSeparators(evernoteAccountsPath);
+            return 1;
         }
     }
 

@@ -386,7 +386,30 @@ bool removeDirImpl(const QString & dirPath)
             }
         }
 
-        result = QDir().rmdir(dirPath);
+        result = dir.rmpath(dirPath);
+        if (!result)
+        {
+            // NOTE: QDir::rmpath seems to occasionally return failure on Windows while in reality the method works
+            if (!dir.exists())
+            {
+                result = true;
+            }
+            else
+            {
+                // Ok, it truly didn't work, let's try a hack then
+                QFile dirFile(dirPath);
+                QFile::Permissions originalPermissions = dirFile.permissions();
+                dirFile.setPermissions(QFile::WriteOther);
+                result = dir.rmpath(dirPath);
+                if (!result && !dir.exists()) {
+                    // If still failure, revert the original permissions
+                    dirFile.setPermissions(originalPermissions);
+                }
+                else if (!dir.exists()) {
+                    result = true;
+                }
+            }
+        }
     }
 
     return result;
