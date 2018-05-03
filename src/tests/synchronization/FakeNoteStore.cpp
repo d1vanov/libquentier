@@ -2528,6 +2528,10 @@ qint32 FakeNoteStore::getSyncChunkImpl(const qint32 afterUSN, const qint32 maxEn
         }
     }
 
+    if (!syncChunk.chunkHighUSN.isSet()) {
+        syncChunk.chunkHighUSN = syncChunk.updateCount;
+    }
+
     if (fullSyncOnly) {
         // No need to insert the information about expunged data items
         // when doing full sync

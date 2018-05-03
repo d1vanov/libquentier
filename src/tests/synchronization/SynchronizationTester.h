@@ -52,8 +52,13 @@ private Q_SLOTS:
 
     void testSimpleRemoteToLocalFullSync();
 
+private:    // FIXME: make it a slot when ready
+    void testRemoteToLocalFullSyncWithLinkedNotebooks();
+
 private:
     void setUserOwnItemsToRemoteStorage();
+    void setLinkedNotebookItemsToRemoteStorage();
+
     void checkEventsOrder(const SynchronizationManagerSignalsCatcher & catcher);
     void checkIdentityOfLocalAndRemoteItems();
 
