@@ -435,12 +435,11 @@ void SynchronizationTester::setLinkedNotebookItemsToRemoteStorage()
     firstLinkedNotebook.setShareName(QStringLiteral("First linked notebook share name"));
     firstLinkedNotebook.setShardId(UidGenerator::Generate());
     firstLinkedNotebook.setSharedNotebookGlobalId(UidGenerator::Generate());
-    firstLinkedNotebook.setUri(QStringLiteral("First linked notebook fake uri"));
     firstLinkedNotebook.setNoteStoreUrl(QStringLiteral("First linked notebook fake note store URL"));
     firstLinkedNotebook.setWebApiUrlPrefix(QStringLiteral("First linked notebook fake web API URL prefix"));
     res = m_pFakeNoteStore->setLinkedNotebook(firstLinkedNotebook, errorDescription);
     QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
-    m_pFakeNoteStore->setLinkedNotebookAuthToken(firstLinkedNotebook.guid(), UidGenerator::Generate());
+    m_pFakeNoteStore->setLinkedNotebookAuthToken(firstLinkedNotebook.username(), UidGenerator::Generate());
 
     LinkedNotebook secondLinkedNotebook;
     secondLinkedNotebook.setGuid(UidGenerator::Generate());
@@ -448,12 +447,11 @@ void SynchronizationTester::setLinkedNotebookItemsToRemoteStorage()
     secondLinkedNotebook.setShareName(QStringLiteral("Second linked notebook share name"));
     secondLinkedNotebook.setShardId(UidGenerator::Generate());
     secondLinkedNotebook.setSharedNotebookGlobalId(UidGenerator::Generate());
-    secondLinkedNotebook.setUri(QStringLiteral("Second linked notebook fake uri"));
     secondLinkedNotebook.setNoteStoreUrl(QStringLiteral("Second linked notebook fake note store URL"));
     secondLinkedNotebook.setWebApiUrlPrefix(QStringLiteral("Second linked notebook fake web API URL prefix"));
     res = m_pFakeNoteStore->setLinkedNotebook(secondLinkedNotebook, errorDescription);
     QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
-    m_pFakeNoteStore->setLinkedNotebookAuthToken(secondLinkedNotebook.guid(), UidGenerator::Generate());
+    m_pFakeNoteStore->setLinkedNotebookAuthToken(secondLinkedNotebook.username(), UidGenerator::Generate());
 
     LinkedNotebook thirdLinkedNotebook;
     thirdLinkedNotebook.setGuid(UidGenerator::Generate());
@@ -461,12 +459,11 @@ void SynchronizationTester::setLinkedNotebookItemsToRemoteStorage()
     thirdLinkedNotebook.setShareName(QStringLiteral("Third linked notebook share name"));
     thirdLinkedNotebook.setShardId(UidGenerator::Generate());
     thirdLinkedNotebook.setSharedNotebookGlobalId(UidGenerator::Generate());
-    thirdLinkedNotebook.setUri(QStringLiteral("Third linked notebook fake uri"));
     thirdLinkedNotebook.setNoteStoreUrl(QStringLiteral("Third linked notebook fake note store URL"));
     thirdLinkedNotebook.setWebApiUrlPrefix(QStringLiteral("Third linked notebook fake web API URL prefix"));
     res = m_pFakeNoteStore->setLinkedNotebook(thirdLinkedNotebook, errorDescription);
     QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
-    m_pFakeNoteStore->setLinkedNotebookAuthToken(thirdLinkedNotebook.guid(), UidGenerator::Generate());
+    m_pFakeNoteStore->setLinkedNotebookAuthToken(thirdLinkedNotebook.username(), UidGenerator::Generate());
 
     Tag firstLinkedNotebookFirstTag;
     firstLinkedNotebookFirstTag.setGuid(UidGenerator::Generate());

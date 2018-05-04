@@ -848,7 +848,11 @@ bool FakeNoteStore::removeLinkedNotebookAuthToken(const QString & linkedNotebook
 
 INoteStore * FakeNoteStore::create() const
 {
-    return new FakeNoteStore;
+    FakeNoteStore * pNoteStore = new FakeNoteStore;
+    pNoteStore->m_linkedNotebookAuthTokens = m_linkedNotebookAuthTokens;
+    pNoteStore->m_linkedNotebooks = m_linkedNotebooks;
+    pNoteStore->m_authenticationToken = m_authenticationToken;
+    return pNoteStore;
 }
 
 void FakeNoteStore::stop()
@@ -1276,9 +1280,9 @@ qint32 FakeNoteStore::getLinkedNotebookSyncChunk(const qevercloud::LinkedNoteboo
         return qevercloud::EDAMErrorCode::UNKNOWN;
     }
 
-    checkRes = checkLinkedNotebookAuthToken(*linkedNotebookIt, linkedNotebookAuthToken, errorDescription);
-    if (checkRes != 0) {
-        return checkRes;
+    if (linkedNotebookAuthToken != m_authenticationToken) {
+        errorDescription.setBase(QStringLiteral("Wrong authentication token"));
+        return qevercloud::EDAMErrorCode::PERMISSION_DENIED;
     }
 
     qevercloud::SyncChunkFilter filter;
@@ -1508,7 +1512,7 @@ qint32 FakeNoteStore::authenticateToSharedNotebook(const QString & shareKey, qev
     }
 
     const LinkedNotebook & linkedNotebook = *it;
-    auto authTokenIt = m_linkedNotebookAuthTokens.find(linkedNotebook.guid());
+    auto authTokenIt = m_linkedNotebookAuthTokens.find(linkedNotebook.username());
     if (authTokenIt == m_linkedNotebookAuthTokens.end()) {
         errorDescription.setBase(QStringLiteral("No valid authentication token was provided"));
         return qevercloud::EDAMErrorCode::INVALID_AUTH;

@@ -51,8 +51,6 @@ private Q_SLOTS:
     void cleanupTestCase();
 
     void testSimpleRemoteToLocalFullSync();
-
-private:    // FIXME: make it a slot when ready
     void testRemoteToLocalFullSyncWithLinkedNotebooks();
 
 private:
