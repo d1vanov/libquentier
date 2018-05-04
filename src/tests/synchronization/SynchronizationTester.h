@@ -56,6 +56,7 @@ private Q_SLOTS:
 private:
     void setUserOwnItemsToRemoteStorage();
     void setLinkedNotebookItemsToRemoteStorage();
+    void setNewItemsToLocalStorage();
 
     void checkEventsOrder(const SynchronizationManagerSignalsCatcher & catcher);
     void checkIdentityOfLocalAndRemoteItems();

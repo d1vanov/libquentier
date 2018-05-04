@@ -606,6 +606,126 @@ void SynchronizationTester::setLinkedNotebookItemsToRemoteStorage()
     QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
 }
 
+void SynchronizationTester::setNewItemsToLocalStorage()
+{
+    ErrorString errorDescription;
+    bool res = false;
+
+    SavedSearch firstLocalSavedSearch;
+    firstLocalSavedSearch.setName(QStringLiteral("First local saved search"));
+    firstLocalSavedSearch.setQuery(QStringLiteral("First local saved search query"));
+    firstLocalSavedSearch.setDirty(true);
+    res = m_pLocalStorageManagerAsync->localStorageManager()->addSavedSearch(firstLocalSavedSearch, errorDescription);
+    QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
+
+    SavedSearch secondLocalSavedSearch;
+    secondLocalSavedSearch.setName(QStringLiteral("Second local saved search"));
+    secondLocalSavedSearch.setQuery(QStringLiteral("Second local saved search query"));
+    secondLocalSavedSearch.setDirty(true);
+    res = m_pLocalStorageManagerAsync->localStorageManager()->addSavedSearch(secondLocalSavedSearch, errorDescription);
+    QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
+
+    SavedSearch thirdLocalSavedSearch;
+    thirdLocalSavedSearch.setName(QStringLiteral("Third local saved search"));
+    thirdLocalSavedSearch.setQuery(QStringLiteral("Third local saved searcg query"));
+    thirdLocalSavedSearch.setDirty(true);
+    res = m_pLocalStorageManagerAsync->localStorageManager()->addSavedSearch(secondLocalSavedSearch, errorDescription);
+    QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
+
+    Tag firstLocalTag;
+    firstLocalTag.setName(QStringLiteral("First local tag"));
+    firstLocalTag.setDirty(true);
+    res = m_pLocalStorageManagerAsync->localStorageManager()->addTag(firstLocalTag, errorDescription);
+    QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
+
+    Tag secondLocalTag;
+    secondLocalTag.setName(QStringLiteral("Second local tag"));
+    secondLocalTag.setParentLocalUid(firstLocalTag.localUid());
+    secondLocalTag.setDirty(true);
+    res = m_pLocalStorageManagerAsync->localStorageManager()->addTag(secondLocalTag, errorDescription);
+    QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
+
+    Tag thirdLocalTag;
+    thirdLocalTag.setName(QStringLiteral("Third local tag"));
+    thirdLocalTag.setParentLocalUid(secondLocalTag.localUid());
+    thirdLocalTag.setDirty(true);
+    res = m_pLocalStorageManagerAsync->localStorageManager()->addTag(thirdLocalTag, errorDescription);
+    QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
+
+    Notebook firstLocalNotebook;
+    firstLocalNotebook.setName(QStringLiteral("First local notebook"));
+    firstLocalNotebook.setDefaultNotebook(false);
+    firstLocalNotebook.setDirty(true);
+    res = m_pLocalStorageManagerAsync->localStorageManager()->addNotebook(firstLocalNotebook, errorDescription);
+    QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
+
+    Notebook secondLocalNotebook;
+    secondLocalNotebook.setName(QStringLiteral("Second local notebook"));
+    secondLocalNotebook.setDefaultNotebook(false);
+    secondLocalNotebook.setDirty(true);
+    res = m_pLocalStorageManagerAsync->localStorageManager()->addNotebook(secondLocalNotebook, errorDescription);
+    QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
+
+    Notebook thirdLocalNotebook;
+    thirdLocalNotebook.setName(QStringLiteral("Third local notebook"));
+    thirdLocalNotebook.setDefaultNotebook(false);
+    thirdLocalNotebook.setDirty(true);
+    res = m_pLocalStorageManagerAsync->localStorageManager()->addNotebook(thirdLocalNotebook, errorDescription);
+    QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
+
+    Note firstLocalNote;
+    firstLocalNote.setNotebookLocalUid(firstLocalNotebook.localUid());
+    firstLocalNote.setTitle(QStringLiteral("First local note"));
+    firstLocalNote.setContent(QStringLiteral("<en-note><div>First local note</div></en-note>"));
+    firstLocalNote.setCreationTimestamp(QDateTime::currentMSecsSinceEpoch());
+    firstLocalNote.setModificationTimestamp(firstLocalNote.modificationTimestamp());
+    firstLocalNote.setDirty(true);
+    res = m_pLocalStorageManagerAsync->localStorageManager()->addNote(firstLocalNote, errorDescription);
+    QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
+
+    Note secondLocalNote;
+    secondLocalNote.setNotebookLocalUid(firstLocalNotebook.localUid());
+    secondLocalNote.setTitle(QStringLiteral("Second local note"));
+    secondLocalNote.setContent(QStringLiteral("<en-note><div>Second local note</div></en-note>"));
+    secondLocalNote.setCreationTimestamp(QDateTime::currentMSecsSinceEpoch());
+    secondLocalNote.setModificationTimestamp(secondLocalNote.creationTimestamp());
+    secondLocalNote.addTagLocalUid(firstLocalTag.localUid());
+    secondLocalNote.addTagLocalUid(secondLocalTag.localUid());
+    secondLocalNote.setDirty(true);
+    res = m_pLocalStorageManagerAsync->localStorageManager()->addNote(secondLocalNote, errorDescription);
+    QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
+
+    Note thirdLocalNote;
+    thirdLocalNote.setNotebookLocalUid(secondLocalNotebook.localUid());
+    thirdLocalNote.setTitle(QStringLiteral("Third local note"));
+    thirdLocalNote.setContent(QStringLiteral("<en-note><div>Third local note</div></en-note>"));
+    thirdLocalNote.setCreationTimestamp(QDateTime::currentMSecsSinceEpoch());
+    thirdLocalNote.setModificationTimestamp(thirdLocalNote.creationTimestamp());
+    thirdLocalNote.addTagLocalUid(thirdLocalTag.localUid());
+    thirdLocalNote.setDirty(true);
+
+    Resource thirdLocalNoteResource;
+    thirdLocalNoteResource.setNoteLocalUid(thirdLocalNote.localUid());
+    thirdLocalNoteResource.setMime(QStringLiteral("text/plain"));
+    thirdLocalNoteResource.setDataBody(QByteArray("Third note first resource data body"));
+    thirdLocalNote.addResource(thirdLocalNoteResource);
+
+    res = m_pLocalStorageManagerAsync->localStorageManager()->addNote(thirdLocalNote, errorDescription);
+    QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
+
+    Note fourthLocalNote;
+    fourthLocalNote.setNotebookLocalUid(thirdLocalNotebook.localUid());
+    fourthLocalNote.setTitle(QStringLiteral("Fourth local note"));
+    fourthLocalNote.setContent(QStringLiteral("<en-note><div>Fourth local note</div></en-note>"));
+    fourthLocalNote.setCreationTimestamp(QDateTime::currentMSecsSinceEpoch());
+    fourthLocalNote.setModificationTimestamp(fourthLocalNote.creationTimestamp());
+    fourthLocalNote.addTagLocalUid(secondLocalTag.localUid());
+    fourthLocalNote.addTagLocalUid(thirdLocalTag.localUid());
+    fourthLocalNote.setDirty(true);
+    res = m_pLocalStorageManagerAsync->localStorageManager()->addNote(fourthLocalNote, errorDescription);
+    QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
+}
+
 void SynchronizationTester::checkEventsOrder(const SynchronizationManagerSignalsCatcher & catcher)
 {
     ErrorString errorDescription;
