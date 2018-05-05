@@ -209,7 +209,7 @@ private:
     virtual void timerEvent(QTimerEvent * event) Q_DECL_OVERRIDE;
 
 private:
-    qint32 currentMaxUsn() const;
+    qint32 currentMaxUsn(const QString & linkedNotebookGuid = QString()) const;
     qint32 checkNotebookFields(const Notebook & notebook, ErrorString & errorDescription) const;
 
     struct CheckNoteFieldsPurpose
@@ -299,6 +299,7 @@ private:
     struct TagByUSN{};
     struct TagByNameUpper{};
     struct TagByParentTagGuid{};
+    struct TagByLinkedNotebookGuid{};
 
     struct TagNameUpperExtractor
     {
@@ -320,6 +321,18 @@ private:
         }
     };
 
+    struct TagLinkedNotebookGuidExtractor
+    {
+        static QString linkedNotebookGuid(const Tag & tag)
+        {
+            if (!tag.hasLinkedNotebookGuid()) {
+                return QString();
+            }
+
+            return tag.linkedNotebookGuid();
+        }
+    };
+
     typedef boost::multi_index_container<
         Tag,
         boost::multi_index::indexed_by<
@@ -327,7 +340,7 @@ private:
                 boost::multi_index::tag<TagByGuid>,
                 boost::multi_index::const_mem_fun<Tag,const QString&,&Tag::guid>
             >,
-            boost::multi_index::ordered_unique<
+            boost::multi_index::ordered_non_unique<
                 boost::multi_index::tag<TagByUSN>,
                 boost::multi_index::const_mem_fun<Tag,qint32,&Tag::updateSequenceNumber>
             >,
@@ -338,6 +351,10 @@ private:
             boost::multi_index::hashed_non_unique<
                 boost::multi_index::tag<TagByParentTagGuid>,
                 boost::multi_index::global_fun<const Tag&,QString,&TagParentTagGuidExtractor::parentTagGuid>
+            >,
+            boost::multi_index::hashed_non_unique<
+                boost::multi_index::tag<TagByLinkedNotebookGuid>,
+                boost::multi_index::global_fun<const Tag&,QString,&TagLinkedNotebookGuidExtractor::linkedNotebookGuid>
             >
         >
     > TagData;
@@ -346,6 +363,7 @@ private:
     typedef TagData::index<TagByUSN>::type TagDataByUSN;
     typedef TagData::index<TagByNameUpper>::type TagDataByNameUpper;
     typedef TagData::index<TagByParentTagGuid>::type TagDataByParentTagGuid;
+    typedef TagData::index<TagByLinkedNotebookGuid>::type TagDataByLinkedNotebookGuid;
 
     // Notebook store
     struct NotebookByGuid{};
@@ -380,7 +398,7 @@ private:
                 boost::multi_index::tag<NotebookByGuid>,
                 boost::multi_index::const_mem_fun<Notebook,const QString&,&Notebook::guid>
             >,
-            boost::multi_index::ordered_unique<
+            boost::multi_index::ordered_non_unique<
                 boost::multi_index::tag<NotebookByUSN>,
                 boost::multi_index::const_mem_fun<Notebook,qint32,&Notebook::updateSequenceNumber>
             >,
@@ -412,7 +430,7 @@ private:
                 boost::multi_index::tag<NoteByGuid>,
                 boost::multi_index::const_mem_fun<Note,const QString&,&Note::guid>
             >,
-            boost::multi_index::ordered_unique<
+            boost::multi_index::ordered_non_unique<
                 boost::multi_index::tag<NoteByUSN>,
                 boost::multi_index::const_mem_fun<Note,qint32,&Note::updateSequenceNumber>
             >,
@@ -439,7 +457,7 @@ private:
                 boost::multi_index::tag<ResourceByGuid>,
                 boost::multi_index::const_mem_fun<Resource,const QString&,&Resource::guid>
             >,
-            boost::multi_index::ordered_unique<
+            boost::multi_index::ordered_non_unique<
                 boost::multi_index::tag<ResourceByUSN>,
                 boost::multi_index::const_mem_fun<Resource,qint32,&Resource::updateSequenceNumber>
             >,
@@ -605,37 +623,37 @@ private:
                                                                 const QString & targetLinkedNotebookGuid = QString()) const;
 
 private:
-    SavedSearchData     m_savedSearches;
-    QSet<QString>       m_expungedSavedSearchGuids;
+    SavedSearchData         m_savedSearches;
+    QSet<QString>           m_expungedSavedSearchGuids;
 
-    TagData             m_tags;
-    QSet<QString>       m_expungedTagGuids;
+    TagData                 m_tags;
+    QSet<QString>           m_expungedTagGuids;
 
-    NotebookData        m_notebooks;
-    QSet<QString>       m_expungedNotebookGuids;
+    NotebookData            m_notebooks;
+    QSet<QString>           m_expungedNotebookGuids;
 
-    NoteData            m_notes;
-    QSet<QString>       m_expungedNoteGuids;
+    NoteData                m_notes;
+    QSet<QString>           m_expungedNoteGuids;
 
-    ResourceData        m_resources;
+    ResourceData            m_resources;
 
-    LinkedNotebookData  m_linkedNotebooks;
-    QSet<QString>       m_expungedLinkedNotebookGuids;
+    LinkedNotebookData      m_linkedNotebooks;
+    QSet<QString>           m_expungedLinkedNotebookGuids;
 
-    bool                m_shouldTriggerRateLimitReachOnNextCall;
+    bool                    m_shouldTriggerRateLimitReachOnNextCall;
 
-    QSet<int>           m_getNoteAsyncDelayTimerIds;
-    QSet<int>           m_getResourceAsyncDelayTimerIds;
+    QSet<int>               m_getNoteAsyncDelayTimerIds;
+    QSet<int>               m_getResourceAsyncDelayTimerIds;
 
-    quint32             m_maxNumSavedSearches;
-    quint32             m_maxNumTags;
-    quint32             m_maxNumNotebooks;
-    quint32             m_maxNumNotes;
+    quint32                 m_maxNumSavedSearches;
+    quint32                 m_maxNumTags;
+    quint32                 m_maxNumNotebooks;
+    quint32                 m_maxNumNotes;
 
-    quint64             m_maxNoteSize;
-    quint32             m_maxNumResourcesPerNote;
-    quint32             m_maxNumTagsPerNote;
-    quint64             m_maxResourceSize;
+    quint64                 m_maxNoteSize;
+    quint32                 m_maxNumResourcesPerNote;
+    quint32                 m_maxNumTagsPerNote;
+    quint64                 m_maxResourceSize;
 
     qevercloud::SyncState   m_syncState;
     QHash<QString,qevercloud::SyncState>    m_linkedNotebookSyncStates;

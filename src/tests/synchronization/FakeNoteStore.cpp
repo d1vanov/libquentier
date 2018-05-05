@@ -203,11 +203,14 @@ bool FakeNoteStore::setTag(Tag & tag, ErrorString & errorDescription)
         nameIt = nameIndex.find(name.toUpper());
     }
 
-    qint32 maxUsn = currentMaxUsn();
+    qint32 maxUsn = currentMaxUsn(tag.hasLinkedNotebookGuid() ? tag.linkedNotebookGuid() : QString());
     ++maxUsn;
     tag.setUpdateSequenceNumber(maxUsn);
 
-    Q_UNUSED(removeExpungedTagGuid(tag.guid()))
+    if (!tag.hasLinkedNotebookGuid()) {
+        Q_UNUSED(removeExpungedTagGuid(tag.guid()))
+    }
+
     Q_UNUSED(m_tags.insert(tag))
     return true;
 }
@@ -216,12 +219,11 @@ const Tag * FakeNoteStore::findTag(const QString & guid) const
 {
     const TagDataByGuid & index = m_tags.get<TagByGuid>();
     auto it = index.find(guid);
-    if (it == index.end()) {
-        return Q_NULLPTR;
+    if (it != index.end()) {
+        return &(*it);
     }
 
-    const Tag & tag = *it;
-    return &tag;
+    return Q_NULLPTR;
 }
 
 bool FakeNoteStore::removeTag(const QString & guid)
@@ -333,11 +335,14 @@ bool FakeNoteStore::setNotebook(Notebook & notebook, ErrorString & errorDescript
         nameIt = nameIndex.find(name.toUpper());
     }
 
-    qint32 maxUsn = currentMaxUsn();
+    qint32 maxUsn = currentMaxUsn(notebook.hasLinkedNotebookGuid() ? notebook.linkedNotebookGuid() : QString());
     ++maxUsn;
     notebook.setUpdateSequenceNumber(maxUsn);
 
-    Q_UNUSED(removeExpungedNotebookGuid(notebook.guid()))
+    if (!notebook.hasLinkedNotebookGuid()) {
+        Q_UNUSED(removeExpungedNotebookGuid(notebook.guid()))
+    }
+
     Q_UNUSED(m_notebooks.insert(notebook))
     return true;
 }
@@ -432,11 +437,14 @@ bool FakeNoteStore::setNote(Note & note, ErrorString & errorDescription)
         return false;
     }
 
-    qint32 maxUsn = currentMaxUsn();
+    qint32 maxUsn = currentMaxUsn(notebookIt->hasLinkedNotebookGuid() ? notebookIt->linkedNotebookGuid() : QString());
     ++maxUsn;
     note.setUpdateSequenceNumber(maxUsn);
 
-    Q_UNUSED(removeExpungedNoteGuid(note.guid()))
+    if (!notebookIt->hasLinkedNotebookGuid()) {
+        Q_UNUSED(removeExpungedNoteGuid(note.guid()))
+    }
+
     auto insertResult = m_notes.insert(note);
     auto noteIt = insertResult.first;
 
@@ -1601,12 +1609,12 @@ void FakeNoteStore::timerEvent(QTimerEvent * pEvent)
     INoteStore::timerEvent(pEvent);
 }
 
-qint32 FakeNoteStore::currentMaxUsn() const
+qint32 FakeNoteStore::currentMaxUsn(const QString & linkedNotebookGuid) const
 {
     qint32 maxUsn = 0;
 
     const SavedSearchDataByUSN & savedSearchUsnIndex = m_savedSearches.get<SavedSearchByUSN>();
-    if (!savedSearchUsnIndex.empty())
+    if (linkedNotebookGuid.isEmpty() && !savedSearchUsnIndex.empty())
     {
         auto lastSavedSearchIt = savedSearchUsnIndex.end();
         --lastSavedSearchIt;
@@ -1620,7 +1628,14 @@ qint32 FakeNoteStore::currentMaxUsn() const
     {
         auto lastTagIt = tagUsnIndex.end();
         --lastTagIt;
-        if (lastTagIt->updateSequenceNumber() > maxUsn) {
+        bool matchesByLinkedNotebook = ( ( !linkedNotebookGuid.isEmpty() &&
+                                           lastTagIt->hasLinkedNotebookGuid() &&
+                                           (lastTagIt->linkedNotebookGuid() == linkedNotebookGuid) )
+                                         ||
+                                         (linkedNotebookGuid.isEmpty() &&
+                                          !lastTagIt->hasLinkedNotebookGuid()) );
+
+        if (matchesByLinkedNotebook && (lastTagIt->updateSequenceNumber() > maxUsn)) {
             maxUsn = lastTagIt->updateSequenceNumber();
         }
     }
@@ -1630,7 +1645,14 @@ qint32 FakeNoteStore::currentMaxUsn() const
     {
         auto lastNotebookIt = notebookUsnIndex.end();
         --lastNotebookIt;
-        if (lastNotebookIt->updateSequenceNumber() > maxUsn) {
+        bool matchesByLinkedNotebook = ( ( !linkedNotebookGuid.isEmpty() &&
+                                           lastNotebookIt->hasLinkedNotebookGuid() &&
+                                           (lastNotebookIt->linkedNotebookGuid() == linkedNotebookGuid) )
+                                         ||
+                                         (linkedNotebookGuid.isEmpty() &&
+                                          !lastNotebookIt->hasLinkedNotebookGuid()) );
+
+        if (matchesByLinkedNotebook && (lastNotebookIt->updateSequenceNumber() > maxUsn)) {
             maxUsn = lastNotebookIt->updateSequenceNumber();
         }
     }
@@ -1638,9 +1660,24 @@ qint32 FakeNoteStore::currentMaxUsn() const
     const NoteDataByUSN & noteUsnIndex = m_notes.get<NoteByUSN>();
     if (!noteUsnIndex.empty())
     {
+        const NotebookDataByGuid & notebookGuidIndex = m_notebooks.get<NotebookByGuid>();
+
         auto lastNoteIt = noteUsnIndex.end();
         --lastNoteIt;
-        if (lastNoteIt->updateSequenceNumber() > maxUsn) {
+
+        bool matchesByLinkedNotebook = false;
+        auto notebookIt = notebookGuidIndex.find(lastNoteIt->notebookGuid());
+        if (notebookIt != notebookGuidIndex.end())
+        {
+            matchesByLinkedNotebook = ( ( !linkedNotebookGuid.isEmpty() &&
+                                           notebookIt->hasLinkedNotebookGuid() &&
+                                           (notebookIt->linkedNotebookGuid() == linkedNotebookGuid) )
+                                         ||
+                                         (linkedNotebookGuid.isEmpty() &&
+                                          !notebookIt->hasLinkedNotebookGuid()) );
+        }
+
+        if (matchesByLinkedNotebook && (lastNoteIt->updateSequenceNumber() > maxUsn)) {
             maxUsn = lastNoteIt->updateSequenceNumber();
         }
     }
@@ -1648,15 +1685,35 @@ qint32 FakeNoteStore::currentMaxUsn() const
     const ResourceDataByUSN & resourceUsnIndex = m_resources.get<ResourceByUSN>();
     if (!resourceUsnIndex.empty())
     {
+        const NotebookDataByGuid & notebookGuidIndex = m_notebooks.get<NotebookByGuid>();
+        const NoteDataByGuid & noteGuidIndex = m_notes.get<NoteByGuid>();
+
         auto lastResourceIt = resourceUsnIndex.end();
         --lastResourceIt;
-        if (lastResourceIt->updateSequenceNumber() > maxUsn) {
+
+        bool matchesByLinkedNotebook = false;
+        auto noteIt = noteGuidIndex.find(lastResourceIt->noteGuid());
+        if (noteIt != noteGuidIndex.end())
+        {
+            auto notebookIt = notebookGuidIndex.find(noteIt->notebookGuid());
+            if (notebookIt != notebookGuidIndex.end())
+            {
+                matchesByLinkedNotebook = ( ( !linkedNotebookGuid.isEmpty() &&
+                                              notebookIt->hasLinkedNotebookGuid() &&
+                                              (notebookIt->linkedNotebookGuid() == linkedNotebookGuid) )
+                                            ||
+                                            (linkedNotebookGuid.isEmpty() &&
+                                             !notebookIt->hasLinkedNotebookGuid()) );
+            }
+        }
+
+        if (matchesByLinkedNotebook && (lastResourceIt->updateSequenceNumber() > maxUsn)) {
             maxUsn = lastResourceIt->updateSequenceNumber();
         }
     }
 
     const LinkedNotebookDataByUSN & linkedNotebookUsnIndex = m_linkedNotebooks.get<LinkedNotebookByUSN>();
-    if (!linkedNotebookUsnIndex.empty())
+    if (linkedNotebookGuid.isEmpty() && !linkedNotebookUsnIndex.empty())
     {
         auto lastLinkedNotebookIt = linkedNotebookUsnIndex.end();
         --lastLinkedNotebookIt;
@@ -2292,13 +2349,13 @@ qint32 FakeNoteStore::getSyncChunkImpl(const qint32 afterUSN, const qint32 maxEn
     auto noteIt = noteUsnIndex.end();
     if (filter.includeNotes.isSet() && filter.includeNotes.ref()) {
         noteIt = std::upper_bound(noteUsnIndex.begin(), noteUsnIndex.end(), afterUSN, CompareByUSN<Note>());
-        noteIt = nextNoteByUsnIterator(noteIt);
+        noteIt = nextNoteByUsnIterator(noteIt, linkedNotebookGuid);
     }
 
     auto resourceIt = resourceUsnIndex.end();
     if (!fullSyncOnly && filter.includeResources.isSet() && filter.includeResources.ref()) {
         resourceIt = std::upper_bound(resourceUsnIndex.begin(), resourceUsnIndex.end(), afterUSN, CompareByUSN<Resource>());
-        resourceIt = nextResourceByUsnIterator(resourceIt);
+        resourceIt = nextResourceByUsnIterator(resourceIt, linkedNotebookGuid);
     }
 
     auto linkedNotebookIt = linkedNotebookUsnIndex.end();
@@ -2478,7 +2535,7 @@ qint32 FakeNoteStore::getSyncChunkImpl(const qint32 afterUSN, const qint32 maxEn
                 syncChunk.notes->append(qecNote);
                 syncChunk.chunkHighUSN = noteIt->updateSequenceNumber();
                 ++noteIt;
-                noteIt = nextNoteByUsnIterator(noteIt);
+                noteIt = nextNoteByUsnIterator(noteIt, linkedNotebookGuid);
             }
             break;
         case NextItemType::Resource:
@@ -2512,7 +2569,7 @@ qint32 FakeNoteStore::getSyncChunkImpl(const qint32 afterUSN, const qint32 maxEn
                 syncChunk.resources->append(qecResource);
                 syncChunk.chunkHighUSN = resourceIt->updateSequenceNumber();
                 ++resourceIt;
-                resourceIt = nextResourceByUsnIterator(resourceIt);
+                resourceIt = nextResourceByUsnIterator(resourceIt, linkedNotebookGuid);
             }
             break;
         case NextItemType::LinkedNotebook:
@@ -2542,7 +2599,7 @@ qint32 FakeNoteStore::getSyncChunkImpl(const qint32 afterUSN, const qint32 maxEn
         return 0;
     }
 
-    if (!m_expungedSavedSearchGuids.isEmpty())
+    if (linkedNotebookGuid.isEmpty() && !m_expungedSavedSearchGuids.isEmpty())
     {
         if (!syncChunk.expungedSearches.isSet()) {
             syncChunk.expungedSearches = QList<qevercloud::Guid>();
@@ -2557,7 +2614,7 @@ qint32 FakeNoteStore::getSyncChunkImpl(const qint32 afterUSN, const qint32 maxEn
         }
     }
 
-    if (!m_expungedTagGuids.isEmpty())
+    if (linkedNotebookGuid.isEmpty() && !m_expungedTagGuids.isEmpty())
     {
         if (!syncChunk.expungedTags.isSet()) {
             syncChunk.expungedTags = QList<qevercloud::Guid>();
@@ -2600,7 +2657,7 @@ qint32 FakeNoteStore::getSyncChunkImpl(const qint32 afterUSN, const qint32 maxEn
         }
     }
 
-    if (!m_expungedLinkedNotebookGuids.isEmpty())
+    if (linkedNotebookGuid.isEmpty() && !m_expungedLinkedNotebookGuids.isEmpty())
     {
         if (!syncChunk.expungedLinkedNotebooks.isSet()) {
             syncChunk.expungedLinkedNotebooks = QList<qevercloud::Guid>();
