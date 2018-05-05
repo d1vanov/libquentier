@@ -726,6 +726,224 @@ void SynchronizationTester::setNewItemsToLocalStorage()
     QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
 }
 
+void SynchronizationTester::setModifiedRemoteItemsToLocalStorage()
+{
+    ErrorString errorDescription;
+    bool res = false;
+
+    // ====== Saved searches ======
+
+    QHash<QString,qevercloud::SavedSearch> searches = m_pFakeNoteStore->savedSearches();
+    QVERIFY2(!searches.isEmpty(), "Expected non-empty list of remote saved searches");
+    size_t numSavedSearchesToModify = 2;
+    size_t modifiedSavedSearches = 0;
+    auto savedSearchIt = searches.constEnd();
+    while(modifiedSavedSearches < numSavedSearchesToModify)
+    {
+        QVERIFY2(savedSearchIt != searches.constEnd(), "Encountered the end of saved searches prematurately");
+        SavedSearch modifiedSavedSearch(savedSearchIt.value());
+        modifiedSavedSearch.setName(modifiedSavedSearch.name() + QStringLiteral(" (modified)"));
+        modifiedSavedSearch.setDirty(true);
+        res = m_pLocalStorageManagerAsync->localStorageManager()->updateSavedSearch(modifiedSavedSearch, errorDescription);
+        QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
+        ++savedSearchIt;
+        ++modifiedSavedSearches;
+    }
+
+    // ====== Tags ======
+
+    QHash<QString,qevercloud::Tag> tags = m_pFakeNoteStore->tags();
+    QVERIFY2(!tags.isEmpty(), "Expected non-empty list of remote tags");
+    auto tagIt = tags.constBegin();
+
+    auto usersOwnTagIt = tagIt;
+    while(usersOwnTagIt != tags.constEnd())
+    {
+        const Tag * pTag = m_pFakeNoteStore->findTag(usersOwnTagIt->guid.ref());
+        if (!pTag || pTag->hasLinkedNotebookGuid()) {
+            ++usersOwnTagIt;
+            continue;
+        }
+
+        break;
+    }
+    QVERIFY2(usersOwnTagIt != tags.constEnd(), "Couldn't find user's own tag to modify");
+
+    auto linkedNotebookTagIt = tagIt;
+    while(linkedNotebookTagIt != tags.constEnd())
+    {
+        const Tag * pTag = m_pFakeNoteStore->findTag(usersOwnTagIt->guid.ref());
+        if (!pTag || !pTag->hasLinkedNotebookGuid()) {
+            ++usersOwnTagIt;
+            continue;
+        }
+
+        break;
+    }
+    QVERIFY2(linkedNotebookTagIt != tags.constEnd(), "Couldn't find tag from linked notebook to modify");
+
+    QList<QHash<QString,qevercloud::Tag>::const_iterator> tagsToModify;
+    tagsToModify.reserve(2);
+    tagsToModify << usersOwnTagIt;
+    tagsToModify << linkedNotebookTagIt;
+    for(auto it = tagsToModify.constBegin(), end = tagsToModify.constEnd(); it != end; ++it) {
+        Tag modifiedTag(it->value());
+        modifiedTag.setName(modifiedTag.name() + QStringLiteral(" (modified)"));
+        modifiedTag.setDirty(true);
+        modifiedTag.setLocalUid(QString());
+        res = m_pLocalStorageManagerAsync->localStorageManager()->updateTag(modifiedTag, errorDescription);
+        QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
+    }
+
+    // ====== Notebooks ======
+
+    QHash<QString,qevercloud::Notebook> notebooks = m_pFakeNoteStore->notebooks();
+    QVERIFY2(!notebooks.isEmpty(), "Expected non-empty list of remote notebooks");
+    auto notebookIt = notebooks.constBegin();
+
+    auto usersOwnNotebookIt = notebookIt;
+    while(usersOwnNotebookIt != notebooks.constEnd())
+    {
+        const Notebook * pNotebook = m_pFakeNoteStore->findNotebook(usersOwnNotebookIt->guid.ref());
+        if (!pNotebook || pNotebook->hasLinkedNotebookGuid()) {
+            ++usersOwnNotebookIt;
+            continue;
+        }
+
+        break;
+    }
+    QVERIFY2(usersOwnNotebookIt != notebooks.constEnd(), "Couldn't find user's own notebook to modify");
+
+    auto linkedNotebookNotebookIt = notebookIt;
+    while(linkedNotebookNotebookIt != notebooks.constEnd())
+    {
+        const Notebook * pNotebook = m_pFakeNoteStore->findNotebook(linkedNotebookNotebookIt->guid.ref());
+        if (!pNotebook || !pNotebook->hasLinkedNotebookGuid()) {
+            ++linkedNotebookNotebookIt;
+            continue;
+        }
+
+        break;
+    }
+    QVERIFY2(linkedNotebookNotebookIt != notebooks.constEnd(), "Couldn't find notebook from linked notebook to modify");
+
+    QList<QHash<QString,qevercloud::Notebook>::const_iterator> notebooksToModify;
+    notebooksToModify.reserve(2);
+    notebooksToModify << usersOwnNotebookIt;
+    notebooksToModify << linkedNotebookNotebookIt;
+    for(auto it = notebooksToModify.constBegin(), end = notebooksToModify.constEnd(); it != end; ++it) {
+        Notebook modifiedNotebook(it->value());
+        modifiedNotebook.setName(modifiedNotebook.name() + QStringLiteral(" (modified)"));
+        modifiedNotebook.setDirty(true);
+        modifiedNotebook.setLocalUid(QString());
+        res = m_pLocalStorageManagerAsync->localStorageManager()->updateNotebook(modifiedNotebook, errorDescription);
+        QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
+    }
+
+    // ====== Notes ======
+
+    QHash<QString,qevercloud::Note> notes = m_pFakeNoteStore->notes();
+    QVERIFY2(!notes.isEmpty(), "Expected non-empty list of remote notes");
+    auto noteIt = notes.constBegin();
+
+    auto usersOwnNoteIt = noteIt;
+    while(usersOwnNoteIt != notes.constEnd())
+    {
+        const Notebook * pNotebook = m_pFakeNoteStore->findNotebook(usersOwnNoteIt->notebookGuid.ref());
+        if (!pNotebook || pNotebook->hasLinkedNotebookGuid()) {
+            ++usersOwnNoteIt;
+            continue;
+        }
+
+        break;
+    }
+    QVERIFY2(usersOwnNoteIt != notes.constEnd(), "Couldn't find user's own note to modify");
+
+    auto linkedNotebookNoteIt = noteIt;
+    while(linkedNotebookNoteIt != notes.constEnd())
+    {
+        const Notebook * pNotebook = m_pFakeNoteStore->findNotebook(usersOwnNoteIt->notebookGuid.ref());
+        if (!pNotebook || !pNotebook->hasLinkedNotebookGuid()) {
+            ++linkedNotebookNoteIt;
+            continue;
+        }
+
+        break;
+    }
+    QVERIFY2(linkedNotebookNoteIt != notes.constEnd(), "Couldn't find note from linked notebook to modify");
+
+    QList<QHash<QString,qevercloud::Note>::const_iterator> notesToModify;
+    notesToModify.reserve(2);
+    notesToModify << usersOwnNoteIt;
+    notesToModify << linkedNotebookNoteIt;
+    for(auto it = notesToModify.constBegin(), end = notesToModify.constEnd(); it != end; ++it) {
+        Note modifiedNote(it->value());
+        modifiedNote.setTitle(modifiedNote.title() + QStringLiteral(" (modified)"));
+        modifiedNote.setDirty(true);
+        modifiedNote.setLocalUid(QString());
+        modifiedNote.setNotebookLocalUid(QString());
+        modifiedNote.setTagLocalUids(QStringList());
+        res = m_pLocalStorageManagerAsync->localStorageManager()->updateNote(modifiedNote, false, false, errorDescription);
+        QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
+    }
+
+    // ====== Resources ======
+
+    QHash<QString,qevercloud::Resource> resources = m_pFakeNoteStore->resources();
+    QVERIFY2(!resources.isEmpty(), "Expected non-empty list of remote resources");
+    auto resourceIt = resources.constBegin();
+
+    auto usersOwnResourceIt = resourceIt;
+    while(usersOwnResourceIt != resources.constEnd())
+    {
+        const Note * pNote = m_pFakeNoteStore->findNote(usersOwnResourceIt->noteGuid.ref());
+        if (!pNote) {
+            continue;
+        }
+
+        const Notebook * pNotebook = m_pFakeNoteStore->findNotebook(pNote->notebookGuid());
+        if (!pNotebook || pNotebook->hasLinkedNotebookGuid()) {
+            ++usersOwnResourceIt;
+            continue;
+        }
+
+        break;
+    }
+    QVERIFY2(usersOwnResourceIt != resources.constEnd(), "Couldn't find user's own resource to modify");
+
+    auto linkedNotebookResourceIt = resourceIt;
+    while(linkedNotebookResourceIt != resources.constEnd())
+    {
+        const Note * pNote = m_pFakeNoteStore->findNote(linkedNotebookResourceIt->noteGuid.ref());
+        if (!pNote) {
+            continue;
+        }
+
+        const Notebook * pNotebook = m_pFakeNoteStore->findNotebook(pNote->notebookGuid());
+        if (!pNotebook || !pNotebook->hasLinkedNotebookGuid()) {
+            ++linkedNotebookResourceIt;
+            continue;
+        }
+
+        break;
+    }
+    QVERIFY2(linkedNotebookResourceIt != resources.constEnd(), "Couldn't find resource from linked notebook to modify");
+
+    QList<QHash<QString,qevercloud::Resource>::const_iterator> resourcesToModify;
+    resourcesToModify.reserve(2);
+    resourcesToModify << usersOwnResourceIt;
+    resourcesToModify << linkedNotebookResourceIt;
+    for(auto it = resourcesToModify.constBegin(), end = resourcesToModify.constEnd(); it != end; ++it) {
+        Resource modifiedResource(it->value());
+        modifiedResource.setDataBody(QByteArray("Modified resource data body"));
+        modifiedResource.setDataHash(QCryptographicHash::hash(modifiedResource.dataBody(), QCryptographicHash::Md5));
+        modifiedResource.setDataSize(modifiedResource.dataBody().size());
+        modifiedResource.setNoteLocalUid(QString());
+        res = m_pLocalStorageManagerAsync->localStorageManager()->updateEnResource(modifiedResource, errorDescription);
+        QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
+    }
+}
+
 void SynchronizationTester::checkEventsOrder(const SynchronizationManagerSignalsCatcher & catcher)
 {
     ErrorString errorDescription;
