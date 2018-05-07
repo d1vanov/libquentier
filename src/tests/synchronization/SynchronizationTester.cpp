@@ -19,6 +19,7 @@
 #include "SynchronizationTester.h"
 #include "SynchronizationManagerSignalsCatcher.h"
 #include <quentier/utility/EventLoopWithExitStatus.h>
+#include <quentier/utility/TagSortByParentChildRelations.h>
 #include <quentier/logging/QuentierLogger.h>
 #include <QtTest/QtTest>
 #include <QCryptographicHash>
@@ -940,6 +941,97 @@ void SynchronizationTester::setModifiedRemoteItemsToLocalStorage()
         modifiedResource.setDataSize(modifiedResource.dataBody().size());
         modifiedResource.setNoteLocalUid(QString());
         res = m_pLocalStorageManagerAsync->localStorageManager()->updateEnResource(modifiedResource, errorDescription);
+        QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
+    }
+}
+
+void SynchronizationTester::copyRemoteItemsToLocalStorage()
+{
+    ErrorString errorDescription;
+    bool res = false;
+
+    // ====== Saved searches ======
+    QHash<QString,qevercloud::SavedSearch> searches = m_pFakeNoteStore->savedSearches();
+    for(auto it = searches.constBegin(), end = searches.constEnd(); it != end; ++it) {
+        SavedSearch search(it.value());
+        search.setDirty(false);
+        search.setLocal(false);
+        res = m_pLocalStorageManagerAsync->localStorageManager()->addSavedSearch(search, errorDescription);
+        QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
+    }
+
+    // ====== Linked notebooks ======
+    QHash<QString,qevercloud::LinkedNotebook> linkedNotebooks = m_pFakeNoteStore->linkedNotebooks();
+    for(auto it = linkedNotebooks.constBegin(), end = linkedNotebooks.constEnd(); it != end; ++it) {
+        LinkedNotebook linkedNotebook(it.value());
+        linkedNotebook.setDirty(false);
+        res = m_pLocalStorageManagerAsync->localStorageManager()->addLinkedNotebook(linkedNotebook, errorDescription);
+        QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
+    }
+
+    // ====== Tags ======
+    QHash<QString,qevercloud::Tag> tags = m_pFakeNoteStore->tags();
+    QList<qevercloud::Tag> tagsList;
+    tagsList.reserve(tags.size());
+    for(auto it = tags.constBegin(), end = tags.constEnd(); it != end; ++it) {
+        tagsList << it.value();
+    }
+    res = sortTagsByParentChildRelations(tagsList, errorDescription);
+    QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
+    for(auto it = tagsList.constBegin(), end = tagsList.constEnd(); it != end; ++it)
+    {
+        Tag tag(*it);
+        tag.setDirty(false);
+        tag.setLocal(false);
+
+        const Tag * pRemoteTag = m_pFakeNoteStore->findTag(it->guid.ref());
+        if (pRemoteTag && pRemoteTag->hasLinkedNotebookGuid()) {
+            tag.setLinkedNotebookGuid(pRemoteTag->linkedNotebookGuid());
+        }
+
+        res = m_pLocalStorageManagerAsync->localStorageManager()->addTag(tag, errorDescription);
+        QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
+    }
+
+    // ====== Notebooks ======
+    QHash<QString,qevercloud::Notebook> notebooks = m_pFakeNoteStore->notebooks();
+    for(auto it = notebooks.constBegin(), end = notebooks.constEnd(); it != end; ++it)
+    {
+        Notebook notebook(it.value());
+        notebook.setDirty(false);
+        notebook.setLocal(false);
+
+        const Notebook * pRemoteNotebook = m_pFakeNoteStore->findNotebook(it.value().guid.ref());
+        if (pRemoteNotebook && pRemoteNotebook->hasLinkedNotebookGuid()) {
+            notebook.setLinkedNotebookGuid(pRemoteNotebook->linkedNotebookGuid());
+        }
+
+        res = m_pLocalStorageManagerAsync->localStorageManager()->addNotebook(notebook, errorDescription);
+        QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
+    }
+
+    // ====== Notes ======
+    QHash<QString,qevercloud::Note> notes = m_pFakeNoteStore->notes();
+    for(auto it = notes.constBegin(), end = notes.constEnd(); it != end; ++it)
+    {
+        Note note(it.value());
+        note.setDirty(false);
+        note.setLocal(false);
+
+        if (note.hasResources())
+        {
+            QList<Resource> resources = note.resources();
+            for(auto rit = resources.begin(), rend = resources.end(); rit != rend; ++rit)
+            {
+                const Resource * pRemoteResource = m_pFakeNoteStore->findResource(rit->guid());
+                if (pRemoteResource) {
+                    *rit = *pRemoteResource;
+                }
+            }
+            note.setResources(resources);
+        }
+
+        res = m_pLocalStorageManagerAsync->localStorageManager()->addNote(note, errorDescription);
         QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
     }
 }

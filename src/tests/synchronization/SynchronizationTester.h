@@ -58,6 +58,7 @@ private:
     void setLinkedNotebookItemsToRemoteStorage();
     void setNewItemsToLocalStorage();
     void setModifiedRemoteItemsToLocalStorage();
+    void copyRemoteItemsToLocalStorage();
 
     void checkEventsOrder(const SynchronizationManagerSignalsCatcher & catcher);
     void checkIdentityOfLocalAndRemoteItems();
