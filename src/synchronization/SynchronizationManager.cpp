@@ -19,15 +19,14 @@
 #include <quentier/synchronization/SynchronizationManager.h>
 #include "SynchronizationManager_p.h"
 #include <quentier/local_storage/LocalStorageManagerAsync.h>
-#include <quentier_private/synchronization/INoteStore.h>
-#include <quentier_private/synchronization/IUserStore.h>
+#include <quentier_private/synchronization/SynchronizationManagerDependencyInjector.h>
 
 namespace quentier {
 
 SynchronizationManager::SynchronizationManager(const QString & host, LocalStorageManagerAsync & localStorageManagerAsync,
                                                IAuthenticationManager & authenticationManager,
-                                               INoteStore * pNoteStore, IUserStore * pUserStore) :
-    d_ptr(new SynchronizationManagerPrivate(host, localStorageManagerAsync, authenticationManager, pNoteStore, pUserStore))
+                                               SynchronizationManagerDependencyInjector * pInjector) :
+    d_ptr(new SynchronizationManagerPrivate(host, localStorageManagerAsync, authenticationManager, pInjector))
 {
     QObject::connect(d_ptr, QNSIGNAL(SynchronizationManagerPrivate,notifyStart),
                      this, QNSIGNAL(SynchronizationManager,started));

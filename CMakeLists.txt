@@ -184,6 +184,8 @@ list(APPEND PUBLIC_HEADERS ${UTILITY_HEADERS})
 set(PRIVATE_HEADERS
     headers/quentier_private/synchronization/INoteStore.h
     headers/quentier_private/synchronization/IUserStore.h
+    headers/quentier_private/synchronization/SynchronizationManagerDependencyInjector.h
+    headers/quentier_private/utility/IKeychainService.h
     src/local_storage/Transaction.h
     src/logging/QuentierLogger_p.h
     src/types/data/AccountData.h
@@ -230,6 +232,7 @@ set(PRIVATE_HEADERS
     src/utility/EncryptionManager_p.h
     src/utility/FileIOProcessorAsync_p.h
     src/utility/FileSystemWatcher_p.h
+    src/utility/KeychainService.h
     src/utility/ShortcutManager_p.h
     src/utility/SysInfo_p.h
     src/utility/StringUtils_p.h)
@@ -418,6 +421,7 @@ set(${PROJECT_NAME}_SOURCES
     src/utility/FileIOProcessorAsync_p.cpp
     src/utility/FileSystemWatcher.cpp
     src/utility/FileSystemWatcher_p.cpp
+    src/utility/KeychainService.cpp
     src/utility/Printable.cpp
     src/utility/QuentierApplication.cpp
     src/utility/QuentierUndoCommand.cpp

@@ -16,8 +16,8 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LIB_QUENTIER_SYNCHRONIZATION_I_USER_STORE_H
-#define LIB_QUENTIER_SYNCHRONIZATION_I_USER_STORE_H
+#ifndef LIB_QUENTIER_PRIVATE_SYNCHRONIZATION_I_USER_STORE_H
+#define LIB_QUENTIER_PRIVATE_SYNCHRONIZATION_I_USER_STORE_H
 
 #include <quentier/types/ErrorString.h>
 #include <quentier/utility/Linkage.h>
@@ -110,4 +110,4 @@ protected:
 
 } // namespace quentier
 
-#endif // LIB_QUENTIER_SYNCHRONIZATION_I_USER_STORE_H
+#endif // LIB_QUENTIER_PRIVATE_SYNCHRONIZATION_I_USER_STORE_H

@@ -30,8 +30,10 @@
 namespace quentier {
 
 QT_FORWARD_DECLARE_CLASS(LocalStorageManagerAsync)
+QT_FORWARD_DECLARE_CLASS(SynchronizationManagerDependencyInjector)
 QT_FORWARD_DECLARE_CLASS(INoteStore)
 QT_FORWARD_DECLARE_CLASS(IUserStore)
+QT_FORWARD_DECLARE_CLASS(IKeychainService)
 QT_FORWARD_DECLARE_CLASS(SynchronizationManagerPrivate)
 
 /**
@@ -48,16 +50,12 @@ public:
      *               but could be sandbox.evernote.com or some other one
      * @param localStorageManagerAsync - local storage manager
      * @param authenticationManager - authentication manager (particular implementation of IAuthenticationManager abstract class)
-     * @param pNoteStore - note store to be used by SynchronizationManager. INoteStore interface is a part of libquentier's
-     *                     private API so for users of the library this pointer should stay nullptr. Within libquentier
-     *                     INoteStore and this pointer are used for testing of synchronization logic
-     * @param pUserStore - user store to be used by SynchronizationManager. IUserStore interface is a part of libquentier's
-     *                     private API so for users of the library this pointer should stay nullptr. Within libquentier
-     *                     IUserStore and this pointer are used for testing of synchronization logic
+     * @param pInjector - opaque pointer to the internal class which is a part of libquentier's private API and which is
+     *                    used for testing of SynchronizationManager; for clients of the library this pointer should stay nullptr
      */
     SynchronizationManager(const QString & host, LocalStorageManagerAsync & localStorageManagerAsync,
                            IAuthenticationManager & authenticationManager,
-                           INoteStore * pNoteStore = Q_NULLPTR, IUserStore * pUserStore = Q_NULLPTR);
+                           SynchronizationManagerDependencyInjector * pInjector = Q_NULLPTR);
 
     virtual ~SynchronizationManager();
 

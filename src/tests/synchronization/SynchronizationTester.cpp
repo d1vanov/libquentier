@@ -21,6 +21,7 @@
 #include <quentier/utility/EventLoopWithExitStatus.h>
 #include <quentier/utility/TagSortByParentChildRelations.h>
 #include <quentier/logging/QuentierLogger.h>
+#include <quentier_private/synchronization/SynchronizationManagerDependencyInjector.h>
 #include <QtTest/QtTest>
 #include <QCryptographicHash>
 #include <QDateTime>
@@ -119,10 +120,14 @@ void SynchronizationTester::init()
     m_pFakeAuthenticationManager->setUserId(m_testAccount.id());
     m_pFakeAuthenticationManager->setAuthToken(authToken);
 
+    SynchronizationManagerDependencyInjector injector;
+    injector.m_pNoteStore = m_pFakeNoteStore;
+    injector.m_pUserStore = m_pFakeUserStore;
+
     m_pSynchronizationManager = new SynchronizationManager(QStringLiteral("www.evernote.com"),
                                                            *m_pLocalStorageManagerAsync,
                                                            *m_pFakeAuthenticationManager,
-                                                           m_pFakeNoteStore, m_pFakeUserStore);
+                                                           &injector);
     m_pSynchronizationManager->setAccount(m_testAccount);
 }
 

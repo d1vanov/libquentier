@@ -35,8 +35,10 @@
 
 namespace quentier {
 
+QT_FORWARD_DECLARE_CLASS(SynchronizationManagerDependencyInjector)
 QT_FORWARD_DECLARE_CLASS(INoteStore)
 QT_FORWARD_DECLARE_CLASS(IUserStore)
+QT_FORWARD_DECLARE_CLASS(IKeychainService)
 
 class Q_DECL_HIDDEN SynchronizationManagerPrivate: public QObject
 {
@@ -44,7 +46,7 @@ class Q_DECL_HIDDEN SynchronizationManagerPrivate: public QObject
 public:
     SynchronizationManagerPrivate(const QString & host, LocalStorageManagerAsync & localStorageManagerAsync,
                                   IAuthenticationManager & authenticationManager,
-                                  INoteStore * pNoteStore, IUserStore * pUserStore);
+                                  SynchronizationManagerDependencyInjector * pInjector);
     virtual ~SynchronizationManagerPrivate();
 
     bool active() const;
@@ -117,6 +119,10 @@ private Q_SLOTS:
                        qevercloud::Timestamp authTokenExpirationTime, QString shardId,
                        QString noteStoreUrl, QString webApiUrlPrefix, ErrorString errorDescription);
 
+    void onWritePasswordJobFinished(QUuid jobId, bool status, ErrorString errorDescription);
+    void onReadPasswordJobFinished(QUuid jobId, bool status, ErrorString errorDescription, QString password);
+    void onDeletePasswordJobFinished(QUuid jobId, bool status, ErrorString errorDescription);
+
     void onKeychainJobFinished(QKeychain::Job * job);
 
     void onRequestAuthenticationToken();
@@ -175,8 +181,6 @@ private:
     void launchStoreOAuthResult(const AuthData & result);
     void finalizeStoreOAuthResult();
 
-    void finalizeRevokeAuthentication();
-
     void launchSync();
     void launchFullSync();
     void launchIncrementalSync();
@@ -190,12 +194,12 @@ private:
     bool checkIfTimestampIsAboutToExpireSoon(const qevercloud::Timestamp timestamp) const;
     void authenticateToLinkedNotebooks();
 
-    void onReadAuthTokenFinished();
-    void onReadShardIdFinished();
-    void onWriteAuthTokenFinished();
-    void onWriteShardIdFinished();
-    void onDeleteAuthTokenFinished();
-    void onDeleteShardIdFinished();
+    void onReadAuthTokenFinished(const bool status, const ErrorString & errorDescription, const QString & password);
+    void onReadShardIdFinished(const bool status, const ErrorString & errorDescription, const QString & password);
+    void onWriteAuthTokenFinished(const bool status, const ErrorString & errorDescription);
+    void onWriteShardIdFinished(const bool status, const ErrorString & errorDescription);
+    void onDeleteAuthTokenFinished(const bool status, const ErrorString & errorDescription);
+    void onDeleteShardIdFinished(const bool status, const ErrorString & errorDescription);
 
     void tryUpdateLastSyncStatus();
     void updatePersistentSyncSettings();
@@ -260,19 +264,21 @@ private:
 
     int                                     m_authenticateToLinkedNotebooksPostponeTimerId;
 
-    QKeychain::ReadPasswordJob              m_readAuthTokenJob;
-    QKeychain::ReadPasswordJob              m_readShardIdJob;
+    IKeychainService *                      m_pKeychainService;
+
+    QUuid                                   m_readAuthTokenJobId;
+    QUuid                                   m_readShardIdJobId;
     bool                                    m_readingAuthToken;
     bool                                    m_readingShardId;
 
-    QKeychain::WritePasswordJob             m_writeAuthTokenJob;
-    QKeychain::WritePasswordJob             m_writeShardIdJob;
+    QUuid                                   m_writeAuthTokenJobId;
+    QUuid                                   m_writeShardIdJobId;
     bool                                    m_writingAuthToken;
     bool                                    m_writingShardId;
     AuthData                                m_writtenOAuthResult;
 
-    QKeychain::DeletePasswordJob            m_deleteAuthTokenJob;
-    QKeychain::DeletePasswordJob            m_deleteShardIdJob;
+    QUuid                                   m_deleteAuthTokenJobId;
+    QUuid                                   m_deleteShardIdJobId;
     bool                                    m_deletingAuthToken;
     bool                                    m_deletingShardId;
     qevercloud::UserID                      m_lastRevokedAuthenticationUserId;
