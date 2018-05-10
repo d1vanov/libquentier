@@ -77,6 +77,7 @@ SynchronizationTester::SynchronizationTester(QObject * parent) :
     m_pFakeNoteStore(Q_NULLPTR),
     m_pFakeUserStore(Q_NULLPTR),
     m_pFakeAuthenticationManager(Q_NULLPTR),
+    m_pFakeKeychainService(Q_NULLPTR),
     m_pSynchronizationManager(Q_NULLPTR),
     m_detectedTestFailure(false)
 {}
@@ -120,9 +121,12 @@ void SynchronizationTester::init()
     m_pFakeAuthenticationManager->setUserId(m_testAccount.id());
     m_pFakeAuthenticationManager->setAuthToken(authToken);
 
+    m_pFakeKeychainService = new FakeKeychainService(this);
+
     SynchronizationManagerDependencyInjector injector;
     injector.m_pNoteStore = m_pFakeNoteStore;
     injector.m_pUserStore = m_pFakeUserStore;
+    injector.m_pKeychainService = m_pFakeKeychainService;
 
     m_pSynchronizationManager = new SynchronizationManager(QStringLiteral("www.evernote.com"),
                                                            *m_pLocalStorageManagerAsync,
@@ -147,6 +151,9 @@ void SynchronizationTester::cleanup()
     m_pFakeAuthenticationManager->disconnect();
     m_pFakeAuthenticationManager->deleteLater();
     m_pFakeAuthenticationManager = Q_NULLPTR;
+
+    // NOTE: not deleting FakeKeychainService intentionally, it is owned by SynchronizationManager
+    m_pFakeKeychainService = Q_NULLPTR;
 
     if (!m_pLocalStorageManagerThread->isFinished()) {
         m_pLocalStorageManagerThread->quit();

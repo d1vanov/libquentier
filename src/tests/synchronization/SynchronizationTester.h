@@ -22,6 +22,7 @@
 #include "FakeNoteStore.h"
 #include "FakeUserStore.h"
 #include "FakeAuthenticationManager.h"
+#include "FakeKeychainService.h"
 #include <quentier/utility/Macros.h>
 #include <quentier/types/Account.h>
 #include <quentier/local_storage/LocalStorageManagerAsync.h>
@@ -85,6 +86,7 @@ private:
     FakeNoteStore *                 m_pFakeNoteStore;
     FakeUserStore *                 m_pFakeUserStore;
     FakeAuthenticationManager *     m_pFakeAuthenticationManager;
+    FakeKeychainService *           m_pFakeKeychainService;
     SynchronizationManager *        m_pSynchronizationManager;
     bool                            m_detectedTestFailure;
 };
