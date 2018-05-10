@@ -47,6 +47,9 @@ private Q_SLOTS:
     void onDeletePasswordJobFinished(QKeychain::Job * pJob);
 
 private:
+    ErrorCode::type translateErrorCode(const QKeychain::Error errorCode) const;
+
+private:
     QHash<QKeychain::ReadPasswordJob*, QUuid>   m_readPasswordJobs;
     QHash<QKeychain::WritePasswordJob*, QUuid>  m_writePasswordJobs;
     QHash<QKeychain::DeletePasswordJob*, QUuid> m_deletePasswordJobs;

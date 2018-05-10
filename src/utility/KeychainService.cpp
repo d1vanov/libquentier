@@ -104,7 +104,7 @@ void KeychainService::onWritePasswordJobFinished(QKeychain::Job * pJob)
     }
 
     QUuid jobId = it.value();
-    bool status = (pWritePasswordJob->error() == QKeychain::NoError);
+    ErrorCode::type errorCode = translateErrorCode(pWritePasswordJob->error());
     ErrorString errorDescription(pWritePasswordJob->errorString());
 
     QObject::disconnect(pWritePasswordJob, QNSIGNAL(QKeychain::WritePasswordJob,finished,QKeychain::Job*),
@@ -113,9 +113,9 @@ void KeychainService::onWritePasswordJobFinished(QKeychain::Job * pJob)
     m_writePasswordJobs.erase(it);
 
     QNDEBUG(QStringLiteral("Finished write password job with id ") << jobId
-            << QStringLiteral(", status = ") << (status ? QStringLiteral("true") : QStringLiteral("false"))
+            << QStringLiteral(", error code = ") << errorCode
             << QStringLiteral(", error description = ") << errorDescription);
-    Q_EMIT writePasswordJobFinished(jobId, status, errorDescription);
+    Q_EMIT writePasswordJobFinished(jobId, errorCode, errorDescription);
 }
 
 void KeychainService::onReadPasswordJobFinished(QKeychain::Job * pJob)
@@ -130,7 +130,7 @@ void KeychainService::onReadPasswordJobFinished(QKeychain::Job * pJob)
     }
 
     QUuid jobId = it.value();
-    bool status = (pReadPasswordJob->error() == QKeychain::NoError);
+    ErrorCode::type errorCode = translateErrorCode(pReadPasswordJob->error());
 
     ErrorString errorDescription;
     if (pReadPasswordJob->error() == QKeychain::EntryNotFound) {
@@ -141,7 +141,6 @@ void KeychainService::onReadPasswordJobFinished(QKeychain::Job * pJob)
         errorDescription.setBase(pReadPasswordJob->errorString());
     }
     
-    (pReadPasswordJob->errorString());
     QString password = pReadPasswordJob->textData();
 
     QObject::disconnect(pReadPasswordJob, QNSIGNAL(QKeychain::ReadPasswordJob,finished,QKeychain::Job*),
@@ -150,9 +149,9 @@ void KeychainService::onReadPasswordJobFinished(QKeychain::Job * pJob)
     m_readPasswordJobs.erase(it);
 
     QNDEBUG(QStringLiteral("Finished read password job with id ") << jobId
-            << QStringLiteral(", status = ") << (status ? QStringLiteral("true") : QStringLiteral("false"))
+            << QStringLiteral(", error code = ") << errorCode
             << QStringLiteral(", error description = ") << errorDescription);
-    Q_EMIT readPasswordJobFinished(jobId, status, errorDescription, password);
+    Q_EMIT readPasswordJobFinished(jobId, errorCode, errorDescription, password);
 }
 
 void KeychainService::onDeletePasswordJobFinished(QKeychain::Job * pJob)
@@ -167,7 +166,7 @@ void KeychainService::onDeletePasswordJobFinished(QKeychain::Job * pJob)
     }
 
     QUuid jobId = it.value();
-    bool status = (pDeletePasswordJob->error() == QKeychain::NoError);
+    ErrorCode::type errorCode = translateErrorCode(pDeletePasswordJob->error());
     ErrorString errorDescription(pDeletePasswordJob->errorString());
 
     QObject::disconnect(pDeletePasswordJob, QNSIGNAL(QKeychain::DeletePasswordJob,finished,QKeychain::Job*),
@@ -176,9 +175,33 @@ void KeychainService::onDeletePasswordJobFinished(QKeychain::Job * pJob)
     m_deletePasswordJobs.erase(it);
 
     QNDEBUG(QStringLiteral("Finished delete password job with id ") << jobId
-            << QStringLiteral(", status = ") << (status ? QStringLiteral("true") : QStringLiteral("false"))
+            << QStringLiteral(", error code = ") << errorCode
             << QStringLiteral(", error description = ") << errorDescription);
-    Q_EMIT deletePasswordJobFinished(jobId, status, errorDescription);
+    Q_EMIT deletePasswordJobFinished(jobId, errorCode, errorDescription);
+}
+
+IKeychainService::ErrorCode::type KeychainService::translateErrorCode(const QKeychain::Error errorCode) const
+{
+    switch(errorCode)
+    {
+    case QKeychain::NoError:
+        return ErrorCode::NoError;
+    case QKeychain::EntryNotFound:
+        return ErrorCode::EntryNotFound;
+    case QKeychain::CouldNotDeleteEntry:
+        return ErrorCode::CouldNotDeleteEntry;
+    case QKeychain::AccessDeniedByUser:
+        return ErrorCode::AccessDeniedByUser;
+    case QKeychain::AccessDenied:
+        return ErrorCode::AccessDenied;
+    case QKeychain::NoBackendAvailable:
+        return ErrorCode::NoBackendAvailable;
+    case QKeychain::NotImplemented:
+        return ErrorCode::NotImplemented;
+    case QKeychain::OtherError:
+    default:
+        return ErrorCode::OtherError;
+    }
 }
 
 } // namespace quentier

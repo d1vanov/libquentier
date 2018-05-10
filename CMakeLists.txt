@@ -421,6 +421,7 @@ set(${PROJECT_NAME}_SOURCES
     src/utility/FileIOProcessorAsync_p.cpp
     src/utility/FileSystemWatcher.cpp
     src/utility/FileSystemWatcher_p.cpp
+    src/utility/IKeychainService.cpp
     src/utility/KeychainService.cpp
     src/utility/Printable.cpp
     src/utility/QuentierApplication.cpp

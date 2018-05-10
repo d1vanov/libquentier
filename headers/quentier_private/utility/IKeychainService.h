@@ -36,15 +36,58 @@ protected:
 public:
     virtual ~IKeychainService() {}
 
+    /**
+     * C++98 style scoped enum determining the error codes from keychain service
+     */
+    struct ErrorCode
+    {
+        enum type {
+            /**
+             * No error occurred, operation was successful
+             */
+            NoError = 0,
+            /**
+             * For the given key no data was found
+             */
+            EntryNotFound,
+            /**
+             * Could not delete existing secret data
+             */
+            CouldNotDeleteEntry,
+            /**
+             * User denied access to keychain
+             */
+            AccessDeniedByUser,
+            /**
+             * Access denied for other reasons
+             */
+            AccessDenied,
+            /**
+             * No platform-specific keychain service available
+             */
+            NoBackendAvailable,
+            /**
+             * Not implemented on platform
+             */
+            NotImplemented,
+            /**
+             * Something else went wrong, the textual error description
+             */
+            OtherError
+        };
+    };
+
+    friend QTextStream & operator<<(QTextStream & strm, const ErrorCode::type errorCode);
+
 public:
     virtual QUuid startWritePasswordJob(const QString & service, const QString & key, const QString & password) = 0;
     virtual QUuid startReadPasswordJob(const QString & service, const QString & key) = 0;
     virtual QUuid startDeletePasswordJob(const QString & service, const QString & key) = 0;
 
 Q_SIGNALS:
-    void writePasswordJobFinished(QUuid requestId, bool status, ErrorString errorDescription);
-    void readPasswordJobFinished(QUuid requestId, bool status, ErrorString errorDescription, QString password);
-    void deletePasswordJobFinished(QUuid requestId, bool status, ErrorString errorDescription);
+    void writePasswordJobFinished(QUuid requestId, ErrorCode::type errorCode, ErrorString errorDescription);
+    void readPasswordJobFinished(QUuid requestId, ErrorCode::type errorCode, ErrorString errorDescription, QString password);
+    void deletePasswordJobFinished(QUuid requestId, ErrorCode::type errorCode, ErrorString errorDescription);
 
 private:
     Q_DISABLE_COPY(IKeychainService);

@@ -23,11 +23,11 @@
 #include "SendLocalChangesManager.h"
 #include <quentier/synchronization/IAuthenticationManager.h>
 #include <quentier/types/Account.h>
+#include <quentier_private/utility/IKeychainService.h>
 
-#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
-#include <qt5keychain/keychain.h>
-#else
-#include <qtkeychain/keychain.h>
+// NOTE: Workaround a bug in Qt4 which may prevent building with some boost versions
+#ifndef Q_MOC_RUN
+#include <boost/bimap.hpp>
 #endif
 
 #include <QObject>
@@ -38,7 +38,6 @@ namespace quentier {
 QT_FORWARD_DECLARE_CLASS(SynchronizationManagerDependencyInjector)
 QT_FORWARD_DECLARE_CLASS(INoteStore)
 QT_FORWARD_DECLARE_CLASS(IUserStore)
-QT_FORWARD_DECLARE_CLASS(IKeychainService)
 
 class Q_DECL_HIDDEN SynchronizationManagerPrivate: public QObject
 {
@@ -119,11 +118,9 @@ private Q_SLOTS:
                        qevercloud::Timestamp authTokenExpirationTime, QString shardId,
                        QString noteStoreUrl, QString webApiUrlPrefix, ErrorString errorDescription);
 
-    void onWritePasswordJobFinished(QUuid jobId, bool status, ErrorString errorDescription);
-    void onReadPasswordJobFinished(QUuid jobId, bool status, ErrorString errorDescription, QString password);
-    void onDeletePasswordJobFinished(QUuid jobId, bool status, ErrorString errorDescription);
-
-    void onKeychainJobFinished(QKeychain::Job * job);
+    void onWritePasswordJobFinished(QUuid jobId, IKeychainService::ErrorCode::type errorCode, ErrorString errorDescription);
+    void onReadPasswordJobFinished(QUuid jobId, IKeychainService::ErrorCode::type errorCode, ErrorString errorDescription, QString password);
+    void onDeletePasswordJobFinished(QUuid jobId, IKeychainService::ErrorCode::type errorCode, ErrorString errorDescription);
 
     void onRequestAuthenticationToken();
     void onRequestAuthenticationTokensForLinkedNotebooks(QVector<LinkedNotebookAuthData> linkedNotebookAuthData);
@@ -194,24 +191,20 @@ private:
     bool checkIfTimestampIsAboutToExpireSoon(const qevercloud::Timestamp timestamp) const;
     void authenticateToLinkedNotebooks();
 
-    void onReadAuthTokenFinished(const bool status, const ErrorString & errorDescription, const QString & password);
-    void onReadShardIdFinished(const bool status, const ErrorString & errorDescription, const QString & password);
-    void onWriteAuthTokenFinished(const bool status, const ErrorString & errorDescription);
-    void onWriteShardIdFinished(const bool status, const ErrorString & errorDescription);
-    void onDeleteAuthTokenFinished(const bool status, const ErrorString & errorDescription);
-    void onDeleteShardIdFinished(const bool status, const ErrorString & errorDescription);
+    void onReadAuthTokenFinished(const IKeychainService::ErrorCode::type errorCode,
+                                 const ErrorString & errorDescription, const QString & password);
+    void onReadShardIdFinished(const IKeychainService::ErrorCode::type errorCode,
+                               const ErrorString & errorDescription, const QString & password);
+    void onWriteAuthTokenFinished(const IKeychainService::ErrorCode::type errorCode, const ErrorString & errorDescription);
+    void onWriteShardIdFinished(const IKeychainService::ErrorCode::type errorCode, const ErrorString & errorDescription);
+    void onDeleteAuthTokenFinished(const IKeychainService::ErrorCode::type errorCode, const ErrorString & errorDescription);
+    void onDeleteShardIdFinished(const IKeychainService::ErrorCode::type errorCode, const ErrorString & errorDescription);
 
     void tryUpdateLastSyncStatus();
     void updatePersistentSyncSettings();
 
     INoteStore * noteStoreForLinkedNotebook(const LinkedNotebook & linkedNotebook);
     INoteStore * noteStoreForLinkedNotebookGuid(const QString & guid);
-
-    void launchStoreLinkedNotebookAuthToken(const QString & key, const QString & authToken);
-    void postponeStoreLinkedNotebookAuthToken(const QString & key, const QString & authToken);
-
-    void launchStoreLinkedNotebookShardId(const QString & key, const QString & shardId);
-    void postponeStoreLinkedNotebookShardId(const QString & key, const QString & shardId);
 
 private:
     class SendLocalChangesManagerController;
@@ -283,13 +276,15 @@ private:
     bool                                    m_deletingShardId;
     qevercloud::UserID                      m_lastRevokedAuthenticationUserId;
 
-    QHash<QString,QKeychain::ReadPasswordJob*>      m_readLinkedNotebookAuthTokenJobsByGuidKey;
-    QHash<QString,QKeychain::ReadPasswordJob*>      m_readLinkedNotebookShardIdJobsByGuidKey;
-    QHash<QString,QKeychain::WritePasswordJob*>     m_writeLinkedNotebookAuthTokenJobsByGuidKey;
-    QHash<QString,QKeychain::WritePasswordJob*>     m_writeLinkedNotebookShardIdJobsByGuidKey;
+    typedef boost::bimap<QString,QUuid> JobIdWithGuidBimap;
 
-    QHash<QString,QString>                  m_linkedNotebookAuthTokensPendingWritingByGuidKey;
-    QHash<QString,QString>                  m_linkedNotebookShardIdsPendingWritingByGuidKey;
+    JobIdWithGuidBimap                      m_readLinkedNotebookAuthTokenJobIdsWithLinkedNotebookGuids;
+    JobIdWithGuidBimap                      m_readLinkedNotebookShardIdJobIdsWithLinkedNotebookGuids;
+    JobIdWithGuidBimap                      m_writeLinkedNotebookAuthTokenJobIdsWithLinkedNotebookGuids;
+    JobIdWithGuidBimap                      m_writeLinkedNotebookShardIdJobIdsWithLinkedNotebookGuids;
+
+    QHash<QString,QString>                  m_linkedNotebookAuthTokensPendingWritingByGuid;
+    QHash<QString,QString>                  m_linkedNotebookShardIdsPendingWritingByGuid;
 
     QSet<QString>                           m_linkedNotebookGuidsWithoutLocalAuthData;
 
