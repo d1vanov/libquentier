@@ -750,12 +750,12 @@ void SynchronizationManagerPrivate::createConnections(IAuthenticationManager & a
                                   QString,qevercloud::Timestamp,QString,QString,QString,ErrorString));
 
     // Connections with keychain service
-    QObject::connect(m_pKeychainService, QNSIGNAL(IKeychainService,writePasswordJobFinished,QUuid,IKeychainService::ErrorCode::type,ErrorString),
-                     this, QNSLOT(SynchronizationManagerPrivate,onWritePasswordJobFinished,QUuid,IKeychainService::ErrorCode::type,ErrorString));
-    QObject::connect(m_pKeychainService, QNSIGNAL(IKeychainService,readPasswordJobFinished,QUuid,IKeychainService::ErrorCode::type,ErrorString,QString),
-                     this, QNSLOT(SynchronizationManagerPrivate,onReadPasswordJobFinished,QUuid,IKeychainService::ErrorCode::type,ErrorString,QString));
-    QObject::connect(m_pKeychainService, QNSIGNAL(IKeychainService,deletePasswordJobFinished,QUuid,IKeychainService::ErrorCode::type,ErrorString),
-                     this, QNSLOT(SynchronizationManagerPrivate,onDeletePasswordJobFinished,QUuid,IKeychainService::ErrorCode::type,ErrorString));
+    QObject::connect(m_pKeychainService, QNSIGNAL(IKeychainService,writePasswordJobFinished,QUuid,ErrorCode::type,ErrorString),
+                     this, QNSLOT(SynchronizationManagerPrivate,onWritePasswordJobFinished,QUuid,ErrorCode::type,ErrorString));
+    QObject::connect(m_pKeychainService, QNSIGNAL(IKeychainService,readPasswordJobFinished,QUuid,ErrorCode::type,ErrorString,QString),
+                     this, QNSLOT(SynchronizationManagerPrivate,onReadPasswordJobFinished,QUuid,ErrorCode::type,ErrorString,QString));
+    QObject::connect(m_pKeychainService, QNSIGNAL(IKeychainService,deletePasswordJobFinished,QUuid,ErrorCode::type,ErrorString),
+                     this, QNSLOT(SynchronizationManagerPrivate,onDeletePasswordJobFinished,QUuid,ErrorCode::type,ErrorString));
 
     // Connections with remote to local synchronization manager
     QObject::connect(&m_remoteToLocalSyncManager, QNSIGNAL(RemoteToLocalSynchronizationManager,finished,qint32,qevercloud::Timestamp,QHash<QString,qint32>,

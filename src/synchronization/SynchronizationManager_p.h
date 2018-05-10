@@ -113,14 +113,18 @@ Q_SIGNALS:
     void stopRemoteToLocalSync();
     void stopSendingLocalChanges();
 
+private:
+    // NOTE: this is required for Qt4 connection syntax, it won't properly understand IKeychainService::ErrorCode::type
+    typedef IKeychainService::ErrorCode ErrorCode;
+
 private Q_SLOTS:
     void onOAuthResult(bool success, qevercloud::UserID userId, QString authToken,
                        qevercloud::Timestamp authTokenExpirationTime, QString shardId,
                        QString noteStoreUrl, QString webApiUrlPrefix, ErrorString errorDescription);
 
-    void onWritePasswordJobFinished(QUuid jobId, IKeychainService::ErrorCode::type errorCode, ErrorString errorDescription);
-    void onReadPasswordJobFinished(QUuid jobId, IKeychainService::ErrorCode::type errorCode, ErrorString errorDescription, QString password);
-    void onDeletePasswordJobFinished(QUuid jobId, IKeychainService::ErrorCode::type errorCode, ErrorString errorDescription);
+    void onWritePasswordJobFinished(QUuid jobId, ErrorCode::type errorCode, ErrorString errorDescription);
+    void onReadPasswordJobFinished(QUuid jobId, ErrorCode::type errorCode, ErrorString errorDescription, QString password);
+    void onDeletePasswordJobFinished(QUuid jobId, ErrorCode::type errorCode, ErrorString errorDescription);
 
     void onRequestAuthenticationToken();
     void onRequestAuthenticationTokensForLinkedNotebooks(QVector<LinkedNotebookAuthData> linkedNotebookAuthData);
