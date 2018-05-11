@@ -18,8 +18,10 @@
 
 #include "SynchronizationTester.h"
 #include "SynchronizationManagerSignalsCatcher.h"
+#include "../../synchronization/SynchronizationShared.h"
 #include <quentier/utility/EventLoopWithExitStatus.h>
 #include <quentier/utility/TagSortByParentChildRelations.h>
+#include <quentier/utility/ApplicationSettings.h>
 #include <quentier/logging/QuentierLogger.h>
 #include <quentier_private/synchronization/SynchronizationManagerDependencyInjector.h>
 #include <QtTest/QtTest>
@@ -295,6 +297,136 @@ void SynchronizationTester::testRemoteToLocalFullSyncWithLinkedNotebooks()
     CHECK_UNEXPECTED(receivedRateLimitExceeded)
     CHECK_UNEXPECTED(receivedPreparedDirtyObjectsForSending)
     CHECK_UNEXPECTED(receivedPreparedLinkedNotebookDirtyObjectsForSending)
+
+    checkEventsOrder(catcher);
+    checkIdentityOfLocalAndRemoteItems();
+}
+
+void SynchronizationTester::testSimpleIncrementalSyncWithNewRemoteItems()
+{
+    setUserOwnItemsToRemoteStorage();
+    copyRemoteItemsToLocalStorage();
+    setRemoteStorageSyncStateToPersistentSyncSettings();
+    setNewUserOwnItemsToRemoteStorage();
+
+    int testAsyncResult = -1;
+    SynchronizationManagerSignalsCatcher catcher(*m_pSynchronizationManager);
+    {
+        QTimer timer;
+        timer.setInterval(MAX_ALLOWED_TEST_DURATION_MSEC);
+        timer.setSingleShot(true);
+
+        EventLoopWithExitStatus loop;
+        QObject::connect(&timer, QNSIGNAL(QTimer,timeout), &loop, QNSLOT(EventLoopWithExitStatus,exitAsTimeout));
+        QObject::connect(&catcher, QNSIGNAL(SynchronizationManagerSignalsCatcher,ready), &loop, QNSLOT(EventLoopWithExitStatus,exitAsSuccess));
+
+        QTimer slotInvokingTimer;
+        slotInvokingTimer.setInterval(500);
+        slotInvokingTimer.setSingleShot(true);
+
+        timer.start();
+        slotInvokingTimer.singleShot(0, m_pSynchronizationManager, QNSLOT(SynchronizationManager,synchronize));
+        testAsyncResult = loop.exec();
+    }
+
+    if (testAsyncResult == EventLoopWithExitStatus::ExitStatus::Timeout) {
+        QFAIL("Synchronization test failed to finish in time");
+    }
+    else if (testAsyncResult != EventLoopWithExitStatus::ExitStatus::Success) {
+        QFAIL("Internal error: incorrect return status from synchronization test");
+    }
+
+    if (catcher.receivedFailedSignal()) {
+        QFAIL(qPrintable(QString::fromUtf8("Detected failure during the asynchronous synchronization loop: ") +
+                         catcher.failureErrorDescription().nonLocalizedString()));
+    }
+
+    CHECK_EXPECTED(receivedStartedSignal)
+    CHECK_EXPECTED(receivedFinishedSignal)
+    CHECK_EXPECTED(finishedSomethingDownloaded)
+    CHECK_EXPECTED(receivedRemoteToLocalSyncDone)
+    CHECK_EXPECTED(remoteToLocalSyncDoneSomethingDownloaded)
+    CHECK_EXPECTED(receivedSyncChunksDownloaded)
+
+    CHECK_UNEXPECTED(receivedAuthenticationFinishedSignal)
+    CHECK_UNEXPECTED(receivedStoppedSignal)
+    CHECK_UNEXPECTED(finishedSomethingSent)
+    CHECK_UNEXPECTED(receivedAuthenticationRevokedSignal)
+    CHECK_UNEXPECTED(receivedRemoteToLocalSyncStopped)
+    CHECK_UNEXPECTED(receivedSendLocalChangedStopped)
+    CHECK_UNEXPECTED(receivedWillRepeatRemoteToLocalSyncAfterSendingChanges)
+    CHECK_UNEXPECTED(receivedDetectedConflictDuringLocalChangesSending)
+    CHECK_UNEXPECTED(receivedRateLimitExceeded)
+    CHECK_UNEXPECTED(receivedLinkedNotebookSyncChunksDownloaded)
+    CHECK_UNEXPECTED(receivedPreparedDirtyObjectsForSending)
+    CHECK_UNEXPECTED(receivedPreparedLinkedNotebookDirtyObjectsForSending)
+
+    checkEventsOrder(catcher);
+    checkIdentityOfLocalAndRemoteItems();
+}
+
+void SynchronizationTester::testIncrementalSyncWithNewRemoteItemsWithLinkedNotebooks()
+{
+    setUserOwnItemsToRemoteStorage();
+    copyRemoteItemsToLocalStorage();
+    setRemoteStorageSyncStateToPersistentSyncSettings();
+    setNewUserOwnItemsToRemoteStorage();
+    setNewLinkedNotebookItemsToRemoteStorage();
+
+    int testAsyncResult = -1;
+    SynchronizationManagerSignalsCatcher catcher(*m_pSynchronizationManager);
+    {
+        QTimer timer;
+        timer.setInterval(MAX_ALLOWED_TEST_DURATION_MSEC);
+        timer.setSingleShot(true);
+
+        EventLoopWithExitStatus loop;
+        QObject::connect(&timer, QNSIGNAL(QTimer,timeout), &loop, QNSLOT(EventLoopWithExitStatus,exitAsTimeout));
+        QObject::connect(&catcher, QNSIGNAL(SynchronizationManagerSignalsCatcher,ready), &loop, QNSLOT(EventLoopWithExitStatus,exitAsSuccess));
+
+        QTimer slotInvokingTimer;
+        slotInvokingTimer.setInterval(500);
+        slotInvokingTimer.setSingleShot(true);
+
+        timer.start();
+        slotInvokingTimer.singleShot(0, m_pSynchronizationManager, QNSLOT(SynchronizationManager,synchronize));
+        testAsyncResult = loop.exec();
+    }
+
+    if (testAsyncResult == EventLoopWithExitStatus::ExitStatus::Timeout) {
+        QFAIL("Synchronization test failed to finish in time");
+    }
+    else if (testAsyncResult != EventLoopWithExitStatus::ExitStatus::Success) {
+        QFAIL("Internal error: incorrect return status from synchronization test");
+    }
+
+    if (catcher.receivedFailedSignal()) {
+        QFAIL(qPrintable(QString::fromUtf8("Detected failure during the asynchronous synchronization loop: ") +
+                         catcher.failureErrorDescription().nonLocalizedString()));
+    }
+
+    CHECK_EXPECTED(receivedStartedSignal)
+    CHECK_EXPECTED(receivedFinishedSignal)
+    CHECK_EXPECTED(finishedSomethingDownloaded)
+    CHECK_EXPECTED(receivedRemoteToLocalSyncDone)
+    CHECK_EXPECTED(remoteToLocalSyncDoneSomethingDownloaded)
+    CHECK_EXPECTED(receivedSyncChunksDownloaded)
+    CHECK_EXPECTED(receivedLinkedNotebookSyncChunksDownloaded)
+
+    CHECK_UNEXPECTED(receivedAuthenticationFinishedSignal)
+    CHECK_UNEXPECTED(receivedStoppedSignal)
+    CHECK_UNEXPECTED(finishedSomethingSent)
+    CHECK_UNEXPECTED(receivedAuthenticationRevokedSignal)
+    CHECK_UNEXPECTED(receivedRemoteToLocalSyncStopped)
+    CHECK_UNEXPECTED(receivedSendLocalChangedStopped)
+    CHECK_UNEXPECTED(receivedWillRepeatRemoteToLocalSyncAfterSendingChanges)
+    CHECK_UNEXPECTED(receivedDetectedConflictDuringLocalChangesSending)
+    CHECK_UNEXPECTED(receivedRateLimitExceeded)
+    CHECK_UNEXPECTED(receivedPreparedDirtyObjectsForSending)
+    CHECK_UNEXPECTED(receivedPreparedLinkedNotebookDirtyObjectsForSending)
+
+    checkEventsOrder(catcher);
+    checkIdentityOfLocalAndRemoteItems();
 }
 
 void SynchronizationTester::setUserOwnItemsToRemoteStorage()
@@ -568,6 +700,7 @@ void SynchronizationTester::setLinkedNotebookItemsToRemoteStorage()
     secondNote.setModificationTimestamp(secondNote.creationTimestamp());
     secondNote.addTagGuid(firstLinkedNotebookFirstTag.guid());
     secondNote.addTagGuid(firstLinkedNotebookSecondTag.guid());
+    secondNote.addTagGuid(firstLinkedNotebookThirdTag.guid());
     res = m_pFakeNoteStore->setNote(secondNote, errorDescription);
     QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
 
@@ -581,6 +714,7 @@ void SynchronizationTester::setLinkedNotebookItemsToRemoteStorage()
     thirdNote.setCreationTimestamp(QDateTime::currentMSecsSinceEpoch());
     thirdNote.setModificationTimestamp(thirdNote.creationTimestamp());
     thirdNote.addTagGuid(secondLinkedNotebookFirstTag.guid());
+    thirdNote.addTagGuid(secondLinkedNotebookSecondTag.guid());
 
     Resource thirdNoteFirstResource;
     thirdNoteFirstResource.setGuid(UidGenerator::Generate());
@@ -615,6 +749,7 @@ void SynchronizationTester::setLinkedNotebookItemsToRemoteStorage()
     fifthNote.setContentHash(QCryptographicHash::hash(fifthNote.content().toUtf8(), QCryptographicHash::Md5));
     fifthNote.setCreationTimestamp(QDateTime::currentMSecsSinceEpoch());
     fifthNote.setModificationTimestamp(fifthNote.creationTimestamp());
+    fifthNote.addTagGuid(thirdLinkedNotebookFirstTag.guid());
     res = m_pFakeNoteStore->setNote(fifthNote, errorDescription);
     QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
 }
@@ -736,6 +871,180 @@ void SynchronizationTester::setNewItemsToLocalStorage()
     fourthLocalNote.addTagLocalUid(thirdLocalTag.localUid());
     fourthLocalNote.setDirty(true);
     res = m_pLocalStorageManagerAsync->localStorageManager()->addNote(fourthLocalNote, errorDescription);
+    QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
+}
+
+void SynchronizationTester::setNewUserOwnItemsToRemoteStorage()
+{
+    ErrorString errorDescription;
+    bool res = false;
+
+    SavedSearch fourthSearch;
+    fourthSearch.setGuid(UidGenerator::Generate());
+    fourthSearch.setName(QStringLiteral("Fourth saved search"));
+    fourthSearch.setQuery(QStringLiteral("Fourth saved search query"));
+    res = m_pFakeNoteStore->setSavedSearch(fourthSearch, errorDescription);
+    QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
+
+    Tag fourthTag;
+    fourthTag.setGuid(UidGenerator::Generate());
+    fourthTag.setName(QStringLiteral("Fourth tag"));
+    res = m_pFakeNoteStore->setTag(fourthTag, errorDescription);
+    QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
+
+    Notebook fourthNotebook;
+    fourthNotebook.setGuid(UidGenerator::Generate());
+    fourthNotebook.setName(QStringLiteral("Fourth notebook"));
+    fourthNotebook.setDefaultNotebook(false);
+    res = m_pFakeNoteStore->setNotebook(fourthNotebook, errorDescription);
+    QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
+
+    Note sixthNote;
+    sixthNote.setGuid(UidGenerator::Generate());
+    sixthNote.setNotebookGuid(fourthNotebook.guid());
+    sixthNote.setTitle(QStringLiteral("Sixth note"));
+    sixthNote.setContent(QStringLiteral("<en-note><div>Sixth note</div></en-note>"));
+    sixthNote.setContentLength(sixthNote.content().size());
+    sixthNote.setContentHash(QCryptographicHash::hash(sixthNote.content().toUtf8(), QCryptographicHash::Md5));
+    sixthNote.setCreationTimestamp(QDateTime::currentMSecsSinceEpoch());
+    sixthNote.setModificationTimestamp(sixthNote.creationTimestamp());
+    res = m_pFakeNoteStore->setNote(sixthNote, errorDescription);
+    QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
+
+    Note seventhNote;
+    seventhNote.setGuid(UidGenerator::Generate());
+    seventhNote.setNotebookGuid(fourthNotebook.guid());
+    seventhNote.setTitle(QStringLiteral("Seventh note"));
+    seventhNote.setContent(QStringLiteral("<en-note><div>Seventh note</div></en-note>"));
+    seventhNote.setContentLength(seventhNote.content().size());
+    seventhNote.setContentHash(QCryptographicHash::hash(seventhNote.content().toUtf8(), QCryptographicHash::Md5));
+    seventhNote.setCreationTimestamp(QDateTime::currentMSecsSinceEpoch());
+    seventhNote.setModificationTimestamp(seventhNote.creationTimestamp());
+    seventhNote.addTagGuid(fourthTag.guid());
+
+    Resource seventhNoteFirstResource;
+    seventhNoteFirstResource.setGuid(UidGenerator::Generate());
+    seventhNoteFirstResource.setNoteGuid(seventhNote.guid());
+    seventhNoteFirstResource.setMime(QStringLiteral("text/plain"));
+    seventhNoteFirstResource.setDataBody(QByteArray("Seventh note first resource data body"));
+    seventhNoteFirstResource.setDataSize(seventhNoteFirstResource.dataBody().size());
+    seventhNoteFirstResource.setDataHash(QCryptographicHash::hash(seventhNoteFirstResource.dataBody(), QCryptographicHash::Md5));
+    seventhNote.addResource(seventhNoteFirstResource);
+
+    res = m_pFakeNoteStore->setNote(seventhNote, errorDescription);
+    QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
+}
+
+void SynchronizationTester::setNewLinkedNotebookItemsToRemoteStorage()
+{
+    ErrorString errorDescription;
+    bool res = false;
+
+    QHash<QString,qevercloud::LinkedNotebook> existingLinkedNotebooks = m_pFakeNoteStore->linkedNotebooks();
+    for(auto it = existingLinkedNotebooks.constBegin(), end = existingLinkedNotebooks.constEnd(); it != end; ++it)
+    {
+        const QString & linkedNotebookGuid = it.key();
+
+        QList<const Notebook*> notebooks = m_pFakeNoteStore->findNotebooksForLinkedNotebookGuid(linkedNotebookGuid);
+        QVERIFY2(notebooks.size() == 1, "Unexpected number of notebooks per linked notebook guid");
+        const Notebook * pNotebook = *(notebooks.constBegin());
+
+        Tag newTag;
+        newTag.setGuid(UidGenerator::Generate());
+        newTag.setName(QStringLiteral("New tag for linked notebook with guid ") + linkedNotebookGuid);
+        newTag.setLinkedNotebookGuid(linkedNotebookGuid);
+        res = m_pFakeNoteStore->setTag(newTag, errorDescription);
+        QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
+
+        Note newNote;
+        newNote.setGuid(UidGenerator::Generate());
+        newNote.setNotebookGuid(pNotebook->guid());
+        newNote.setTitle(QStringLiteral("New note for linked notebook with guid ") + linkedNotebookGuid);
+        newNote.setContent(QStringLiteral("<en-note><div>New linked notebook note content</div></en-note>"));
+        newNote.setContentLength(newNote.content().size());
+        newNote.setContentHash(QCryptographicHash::hash(newNote.content().toUtf8(), QCryptographicHash::Md5));
+        newNote.setCreationTimestamp(QDateTime::currentMSecsSinceEpoch());
+        newNote.setModificationTimestamp(newNote.creationTimestamp());
+        newNote.addTagGuid(newTag.guid());
+
+        Resource newNoteResource;
+        newNoteResource.setGuid(UidGenerator::Generate());
+        newNoteResource.setNoteGuid(newNote.guid());
+        newNoteResource.setMime(QStringLiteral("text/plain"));
+        newNoteResource.setDataBody(QByteArray("New note resource data body"));
+        newNoteResource.setDataSize(newNoteResource.dataBody().size());
+        newNoteResource.setDataHash(QCryptographicHash::hash(newNoteResource.dataBody(), QCryptographicHash::Md5));
+        newNote.addResource(newNoteResource);
+
+        res = m_pFakeNoteStore->setNote(newNote, errorDescription);
+        QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
+    }
+
+    LinkedNotebook fourthLinkedNotebook;
+    fourthLinkedNotebook.setGuid(UidGenerator::Generate());
+    fourthLinkedNotebook.setUsername(QStringLiteral("Fourth linked notebook owner"));
+    fourthLinkedNotebook.setShareName(QStringLiteral("Fourth linked notebook share name"));
+    fourthLinkedNotebook.setShardId(UidGenerator::Generate());
+    fourthLinkedNotebook.setSharedNotebookGlobalId(UidGenerator::Generate());
+    fourthLinkedNotebook.setNoteStoreUrl(QStringLiteral("Fourth linked notebook fake note store URL"));
+    fourthLinkedNotebook.setWebApiUrlPrefix(QStringLiteral("Fourth linked notebook fake web API URL prefix"));
+    res = m_pFakeNoteStore->setLinkedNotebook(fourthLinkedNotebook, errorDescription);
+    QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
+    m_pFakeNoteStore->setLinkedNotebookAuthToken(fourthLinkedNotebook.username(), UidGenerator::Generate());
+
+    Tag fourthLinkedNotebookFirstTag;
+    fourthLinkedNotebookFirstTag.setGuid(UidGenerator::Generate());
+    fourthLinkedNotebookFirstTag.setName(QStringLiteral("Fourth linked notebook first tag"));
+    fourthLinkedNotebookFirstTag.setLinkedNotebookGuid(fourthLinkedNotebook.guid());
+    res = m_pFakeNoteStore->setTag(fourthLinkedNotebookFirstTag, errorDescription);
+    QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
+
+    Tag fourthLinkedNotebookSecondTag;
+    fourthLinkedNotebookSecondTag.setGuid(UidGenerator::Generate());
+    fourthLinkedNotebookSecondTag.setName(QStringLiteral("Fourth linked notebook second tag"));
+    fourthLinkedNotebookSecondTag.setParentGuid(fourthLinkedNotebookFirstTag.guid());
+    fourthLinkedNotebookSecondTag.setLinkedNotebookGuid(fourthLinkedNotebook.guid());
+    res = m_pFakeNoteStore->setTag(fourthLinkedNotebookSecondTag, errorDescription);
+    QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
+
+    Tag fourthLinkedNotebookThirdTag;
+    fourthLinkedNotebookThirdTag.setGuid(UidGenerator::Generate());
+    fourthLinkedNotebookThirdTag.setName(QStringLiteral("Fourth linked notebook third tag"));
+    fourthLinkedNotebookThirdTag.setParentGuid(fourthLinkedNotebookSecondTag.guid());
+    fourthLinkedNotebookThirdTag.setLinkedNotebookGuid(fourthLinkedNotebook.guid());
+    res = m_pFakeNoteStore->setTag(fourthLinkedNotebookThirdTag, errorDescription);
+    QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
+
+    Notebook notebook;
+    notebook.setGuid(UidGenerator::Generate());
+    notebook.setName(QStringLiteral("Fourth linked notebook's notebook"));
+    notebook.setDefaultNotebook(false);
+    notebook.setLinkedNotebookGuid(fourthLinkedNotebook.guid());
+    res = m_pFakeNoteStore->setNotebook(notebook, errorDescription);
+    QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
+
+    Note note;
+    note.setGuid(UidGenerator::Generate());
+    note.setNotebookGuid(notebook.guid());
+    note.setTitle(QStringLiteral("First note for linked notebook with guid ") + fourthLinkedNotebook.guid());
+    note.setContent(QStringLiteral("<en-note><div>Fourth linked notebook's first note content</div></en-note>"));
+    note.setContentLength(note.content().size());
+    note.setContentHash(QCryptographicHash::hash(note.content().toUtf8(), QCryptographicHash::Md5));
+    note.setCreationTimestamp(QDateTime::currentMSecsSinceEpoch());
+    note.setModificationTimestamp(note.creationTimestamp());
+    note.addTagGuid(fourthLinkedNotebookFirstTag.guid());
+    note.addTagGuid(fourthLinkedNotebookSecondTag.guid());
+    note.addTagGuid(fourthLinkedNotebookThirdTag.guid());
+
+    Resource resource;
+    resource.setGuid(UidGenerator::Generate());
+    resource.setNoteGuid(note.guid());
+    resource.setMime(QStringLiteral("text/plain"));
+    resource.setDataBody(QByteArray("Note resource data body"));
+    resource.setDataSize(resource.dataBody().size());
+    resource.setDataHash(QCryptographicHash::hash(resource.dataBody(), QCryptographicHash::Md5));
+    note.addResource(resource);
+    res = m_pFakeNoteStore->setNote(note, errorDescription);
     QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
 }
 
@@ -1046,6 +1355,34 @@ void SynchronizationTester::copyRemoteItemsToLocalStorage()
         res = m_pLocalStorageManagerAsync->localStorageManager()->addNote(note, errorDescription);
         QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
     }
+}
+
+void SynchronizationTester::setRemoteStorageSyncStateToPersistentSyncSettings()
+{
+    qint32 usersOwnMaxUsn = m_pFakeNoteStore->currentMaxUsn();
+    qevercloud::Timestamp timestamp = QDateTime::currentMSecsSinceEpoch();
+
+    ApplicationSettings appSettings(m_testAccount, SYNCHRONIZATION_PERSISTENCE_NAME);
+    const QString keyGroup = QStringLiteral("Synchronization/www.evernote.com/") +
+                             QString::number(m_testAccount.id()) + QStringLiteral("/") +
+                             LAST_SYNC_PARAMS_KEY_GROUP + QStringLiteral("/");
+    appSettings.setValue(keyGroup + LAST_SYNC_UPDATE_COUNT_KEY, usersOwnMaxUsn);
+    appSettings.setValue(keyGroup + LAST_SYNC_TIME_KEY, timestamp);
+
+    QHash<QString,qevercloud::LinkedNotebook> linkedNotebooks = m_pFakeNoteStore->linkedNotebooks();
+
+    appSettings.beginWriteArray(keyGroup + LAST_SYNC_LINKED_NOTEBOOKS_PARAMS, linkedNotebooks.size());
+    int counter = 0;
+    for(auto it = linkedNotebooks.constBegin(), end = linkedNotebooks.constEnd(); it != end; ++it, ++counter)
+    {
+        appSettings.setArrayIndex(counter);
+        appSettings.setValue(LINKED_NOTEBOOK_GUID_KEY, it.key());
+
+        qint32 linkedNotebookMaxUsn = m_pFakeNoteStore->currentMaxUsn(it.key());
+        appSettings.setValue(LINKED_NOTEBOOK_LAST_UPDATE_COUNT_KEY, linkedNotebookMaxUsn);
+        appSettings.setValue(LINKED_NOTEBOOK_LAST_SYNC_TIME_KEY, timestamp);
+    }
+    appSettings.endArray();
 }
 
 void SynchronizationTester::checkEventsOrder(const SynchronizationManagerSignalsCatcher & catcher)

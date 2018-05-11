@@ -116,6 +116,11 @@ void SynchronizationManagerSignalsCatcher::onFailure(ErrorString errorDescriptio
     m_receivedFailedSignal = true;
     m_failureErrorDescription = errorDescription;
 
+    SynchronizationManager * pSyncManager = qobject_cast<SynchronizationManager*>(sender());
+    if (pSyncManager) {
+        pSyncManager->stop();
+    }
+
     Q_EMIT ready();
 }
 
