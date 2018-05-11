@@ -80,6 +80,8 @@ public:
     const Notebook * findNotebook(const QString & guid) const;
     bool removeNotebook(const QString & guid);
 
+    QList<const Notebook*> findNotebooksForLinkedNotebookGuid(const QString & linkedNotebookGuid) const;
+
     void setExpungedNotebookGuid(const QString & guid);
     bool containsExpungedNotebookGuid(const QString & guid) const;
     bool removeExpungedNotebookGuid(const QString & guid);
@@ -157,6 +159,8 @@ public:
     void setLinkedNotebookAuthToken(const QString & linkedNotebookOwner, const QString & linkedNotebookAuthToken);
     bool removeLinkedNotebookAuthToken(const QString & linkedNotebookOwner);
 
+    qint32 currentMaxUsn(const QString & linkedNotebookGuid = QString()) const;
+
 public:
     // INoteStore interface
     virtual INoteStore * create() const Q_DECL_OVERRIDE;
@@ -209,7 +213,6 @@ private:
     virtual void timerEvent(QTimerEvent * event) Q_DECL_OVERRIDE;
 
 private:
-    qint32 currentMaxUsn(const QString & linkedNotebookGuid = QString()) const;
     qint32 checkNotebookFields(const Notebook & notebook, ErrorString & errorDescription) const;
 
     struct CheckNoteFieldsPurpose
