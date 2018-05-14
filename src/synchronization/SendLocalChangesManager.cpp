@@ -1065,7 +1065,7 @@ bool SendLocalChangesManager::requestStuffFromLocalStorage(const QString & linke
     QNTRACE(QStringLiteral("Emitting the request to fetch unsynchronized notes from local storage: request id = ")
             << listDirtyNotesRequestId);
     Q_EMIT requestLocalUnsynchronizedNotes(listDirtyObjectsFlag, /* with resource binary data = */ true,
-                                         limit, offset, notesOrder, orderDirection, linkedNotebookGuid, listDirtyNotesRequestId);
+                                           limit, offset, notesOrder, orderDirection, linkedNotebookGuid, listDirtyNotesRequestId);
 
     if (emptyLinkedNotebookGuid)
     {
@@ -1160,11 +1160,16 @@ void SendLocalChangesManager::checkListLocalStorageObjectsCompletion()
     m_receivedAllDirtyLocalStorageObjects = true;
     QNTRACE(QStringLiteral("All relevant objects from local storage have been listed"));
 
-    if (!m_tags.isEmpty() || !m_savedSearches.isEmpty() || !m_notebooks.isEmpty() || !m_notes.isEmpty()) {
-        Q_EMIT receivedAllDirtyObjects();
+    if (!m_tags.isEmpty() || !m_savedSearches.isEmpty() || !m_notebooks.isEmpty() || !m_notes.isEmpty())
+    {
+        if (!m_linkedNotebookAuthData.isEmpty()) {
+            Q_EMIT receivedDirtyObjectsFromLinkedNotebooks();
+        }
+
         sendLocalChanges();
     }
-    else {
+    else
+    {
         QNINFO(QStringLiteral("No modified or new synchronizable objects were found in the local storage, nothing to send to Evernote service"));
         finalize();
     }
@@ -1553,7 +1558,7 @@ void SendLocalChangesManager::sendSavedSearches()
         }
         else if (errorCode != 0)
         {
-            ErrorString error(QT_TR_NOOP("Failed to send new and/or modified tags to Evernote service"));
+            ErrorString error(QT_TR_NOOP("Failed to send new and/or modified saved searches to Evernote service"));
             error.additionalBases().append(errorDescription.base());
             error.additionalBases().append(errorDescription.additionalBases());
             error.details() = errorDescription.details();
@@ -2086,7 +2091,12 @@ void SendLocalChangesManager::sendNotes()
         Q_UNUSED(m_updateNoteRequestIds.insert(updateNoteRequestId))
         QNTRACE(QStringLiteral("Emitting the request to update note (remove the dirty flag from it): request id = ")
                 << updateNoteRequestId << QStringLiteral(", note: ") << note);
-        Q_EMIT updateNote(note, /* update resources = */ false, /* update tags = */ false, updateNoteRequestId);
+
+        // NOTE: update of resources and tags is required here because otherwise we might end up with note
+        // which has only tag/resource local uids but no tag/resource guids (if the note's tags were local
+        // i.e. newly created tags/resources before the sync was launched) or, in case of resources, with the list
+        // of resources lacking USN values set
+        Q_EMIT updateNote(note, /* update resources = */ true, /* update tags = */ true, updateNoteRequestId);
 
         if (!m_shouldRepeatIncrementalSync)
         {
@@ -2103,7 +2113,7 @@ void SendLocalChangesManager::sendNotes()
             if (!notebook.hasLinkedNotebookGuid())
             {
                 pLastUpdateCount = &m_lastUpdateCount;
-                QNTRACE(QStringLiteral("Current note does not belong to linked notebook"));
+                QNTRACE(QStringLiteral("Current note does not belong to any linked notebook"));
             }
             else
             {
@@ -2128,7 +2138,9 @@ void SendLocalChangesManager::sendNotes()
             else {
                 m_shouldRepeatIncrementalSync = true;
                 Q_EMIT shouldRepeatIncrementalSync();
-                QNTRACE(QStringLiteral("The client is not in sync with the service"));
+                QNTRACE(QStringLiteral("The client is not in sync with the service: last update count = ") << *pLastUpdateCount
+                        << QStringLiteral(", note's update sequence number is ") << note.updateSequenceNumber()
+                        << QStringLiteral(", whole note: ") << note);
             }
         }
 

@@ -584,6 +584,10 @@ void SynchronizationManagerPrivate::onRemoteToLocalSyncFinished(qint32 lastUpdat
     bool somethingDownloaded = (m_lastUpdateCount != lastUpdateCount) ||
                                (m_lastUpdateCount != m_previousUpdateCount) ||
                                (m_cachedLinkedNotebookLastUpdateCountByGuid != lastUpdateCountByLinkedNotebookGuid);
+    QNTRACE(QStringLiteral("Something downloaded = ") << (somethingDownloaded ? QStringLiteral("true") : QStringLiteral("false"))
+            << QStringLiteral(", m_lastUpdateCount = ") << m_lastUpdateCount << QStringLiteral(", m_previousUpdateCount = ")
+            << m_previousUpdateCount << QStringLiteral(", m_cachedLinkedNotebookLastUpdateCountByGuid = ")
+            << m_cachedLinkedNotebookLastUpdateCountByGuid);
 
     m_lastUpdateCount = lastUpdateCount;
     m_previousUpdateCount = lastUpdateCount;
@@ -798,7 +802,7 @@ void SynchronizationManagerPrivate::createConnections(IAuthenticationManager & a
                      this, QNSLOT(SynchronizationManagerPrivate,onSendLocalChangesFailure,ErrorString));
     QObject::connect(&m_sendLocalChangesManager, QNSIGNAL(SendLocalChangesManager,receivedUserAccountDirtyObjects),
                      this, QNSIGNAL(SynchronizationManagerPrivate,preparedDirtyObjectsForSending));
-    QObject::connect(&m_sendLocalChangesManager, QNSIGNAL(SendLocalChangesManager,receivedAllDirtyObjects),
+    QObject::connect(&m_sendLocalChangesManager, QNSIGNAL(SendLocalChangesManager,receivedDirtyObjectsFromLinkedNotebooks),
                      this, QNSIGNAL(SynchronizationManagerPrivate,preparedLinkedNotebooksDirtyObjectsForSending));
     QObject::connect(this, QNSIGNAL(SynchronizationManagerPrivate,sendAuthenticationTokensForLinkedNotebooks,QHash<QString,QPair<QString,QString> >,QHash<QString,qevercloud::Timestamp>),
                      &m_sendLocalChangesManager, QNSLOT(SendLocalChangesManager,onAuthenticationTokensForLinkedNotebooksReceived,QHash<QString,QPair<QString,QString> >,QHash<QString,qevercloud::Timestamp>));

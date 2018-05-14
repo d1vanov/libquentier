@@ -66,7 +66,7 @@ Q_SIGNALS:
 
     // progress information
     void receivedUserAccountDirtyObjects();
-    void receivedAllDirtyObjects();
+    void receivedDirtyObjectsFromLinkedNotebooks();
 
 public Q_SLOTS:
     void start(qint32 updateCount, QHash<QString,qint32> updateCountByLinkedNotebookGuid);
