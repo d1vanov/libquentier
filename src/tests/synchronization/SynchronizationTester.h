@@ -51,13 +51,13 @@ private Q_SLOTS:
     void initTestCase();
     void cleanupTestCase();
 
-    void testSimpleRemoteToLocalFullSync();
+    void testRemoteToLocalFullSyncWithUserOwnDataOnly();
     void testRemoteToLocalFullSyncWithLinkedNotebooks();
-    void testSimpleIncrementalSyncWithNewRemoteItems();
+    void testIncrementalSyncWithNewRemoteItemsWithUserOwnDataOnly();
     void testIncrementalSyncWithNewRemoteItemsWithLinkedNotebooks();
-    void testSimpleIncrementalSyncWithModifiedRemoteItems();
+    void testIncrementalSyncWithModifiedRemoteItemsWithUserOwnDataOnly();
     void testIncrementalSyncWithModifiedRemoteItemsWithLinkedNotebooks();
-    void testSimpleIncrementalSyncWithModifiedAndNewRemoteItems();
+    void testIncrementalSyncWithModifiedAndNewRemoteItemsWithUserOwnDataOnly();
     void testIncrementalSyncWithModifiedAndNewRemoteItemsWithLinkedNotebooks();
 
 private:

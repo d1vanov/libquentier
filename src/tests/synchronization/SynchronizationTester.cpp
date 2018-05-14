@@ -181,7 +181,7 @@ void SynchronizationTester::cleanupTestCase()
 {
 }
 
-void SynchronizationTester::testSimpleRemoteToLocalFullSync()
+void SynchronizationTester::testRemoteToLocalFullSyncWithUserOwnDataOnly()
 {
     setUserOwnItemsToRemoteStorage();
 
@@ -302,7 +302,7 @@ void SynchronizationTester::testRemoteToLocalFullSyncWithLinkedNotebooks()
     checkIdentityOfLocalAndRemoteItems();
 }
 
-void SynchronizationTester::testSimpleIncrementalSyncWithNewRemoteItems()
+void SynchronizationTester::testIncrementalSyncWithNewRemoteItemsWithUserOwnDataOnly()
 {
     setUserOwnItemsToRemoteStorage();
     copyRemoteItemsToLocalStorage();
@@ -432,7 +432,7 @@ void SynchronizationTester::testIncrementalSyncWithNewRemoteItemsWithLinkedNoteb
     checkIdentityOfLocalAndRemoteItems();
 }
 
-void SynchronizationTester::testSimpleIncrementalSyncWithModifiedRemoteItems()
+void SynchronizationTester::testIncrementalSyncWithModifiedRemoteItemsWithUserOwnDataOnly()
 {
     setUserOwnItemsToRemoteStorage();
     copyRemoteItemsToLocalStorage();
@@ -562,7 +562,7 @@ void SynchronizationTester::testIncrementalSyncWithModifiedRemoteItemsWithLinked
     checkIdentityOfLocalAndRemoteItems();
 }
 
-void SynchronizationTester::testSimpleIncrementalSyncWithModifiedAndNewRemoteItems()
+void SynchronizationTester::testIncrementalSyncWithModifiedAndNewRemoteItemsWithUserOwnDataOnly()
 {
     setUserOwnItemsToRemoteStorage();
     copyRemoteItemsToLocalStorage();
