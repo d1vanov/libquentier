@@ -562,6 +562,139 @@ void SynchronizationTester::testIncrementalSyncWithModifiedRemoteItemsWithLinked
     checkIdentityOfLocalAndRemoteItems();
 }
 
+void SynchronizationTester::testSimpleIncrementalSyncWithModifiedAndNewRemoteItems()
+{
+    setUserOwnItemsToRemoteStorage();
+    copyRemoteItemsToLocalStorage();
+    setRemoteStorageSyncStateToPersistentSyncSettings();
+
+    setModifiedUserOwnItemsToRemoteStorage();
+    setNewUserOwnItemsToRemoteStorage();
+
+    int testAsyncResult = -1;
+    SynchronizationManagerSignalsCatcher catcher(*m_pSynchronizationManager);
+    {
+        QTimer timer;
+        timer.setInterval(MAX_ALLOWED_TEST_DURATION_MSEC);
+        timer.setSingleShot(true);
+
+        EventLoopWithExitStatus loop;
+        QObject::connect(&timer, QNSIGNAL(QTimer,timeout), &loop, QNSLOT(EventLoopWithExitStatus,exitAsTimeout));
+        QObject::connect(&catcher, QNSIGNAL(SynchronizationManagerSignalsCatcher,ready), &loop, QNSLOT(EventLoopWithExitStatus,exitAsSuccess));
+
+        QTimer slotInvokingTimer;
+        slotInvokingTimer.setInterval(500);
+        slotInvokingTimer.setSingleShot(true);
+
+        timer.start();
+        slotInvokingTimer.singleShot(0, m_pSynchronizationManager, QNSLOT(SynchronizationManager,synchronize));
+        testAsyncResult = loop.exec();
+    }
+
+    if (testAsyncResult == EventLoopWithExitStatus::ExitStatus::Timeout) {
+        QFAIL("Synchronization test failed to finish in time");
+    }
+    else if (testAsyncResult != EventLoopWithExitStatus::ExitStatus::Success) {
+        QFAIL("Internal error: incorrect return status from synchronization test");
+    }
+
+    if (catcher.receivedFailedSignal()) {
+        QFAIL(qPrintable(QString::fromUtf8("Detected failure during the asynchronous synchronization loop: ") +
+                         catcher.failureErrorDescription().nonLocalizedString()));
+    }
+
+    CHECK_EXPECTED(receivedStartedSignal)
+    CHECK_EXPECTED(receivedFinishedSignal)
+    CHECK_EXPECTED(finishedSomethingDownloaded)
+    CHECK_EXPECTED(receivedRemoteToLocalSyncDone)
+    CHECK_EXPECTED(remoteToLocalSyncDoneSomethingDownloaded)
+    CHECK_EXPECTED(receivedSyncChunksDownloaded)
+
+    CHECK_UNEXPECTED(receivedAuthenticationFinishedSignal)
+    CHECK_UNEXPECTED(receivedStoppedSignal)
+    CHECK_UNEXPECTED(finishedSomethingSent)
+    CHECK_UNEXPECTED(receivedAuthenticationRevokedSignal)
+    CHECK_UNEXPECTED(receivedRemoteToLocalSyncStopped)
+    CHECK_UNEXPECTED(receivedSendLocalChangedStopped)
+    CHECK_UNEXPECTED(receivedWillRepeatRemoteToLocalSyncAfterSendingChanges)
+    CHECK_UNEXPECTED(receivedDetectedConflictDuringLocalChangesSending)
+    CHECK_UNEXPECTED(receivedRateLimitExceeded)
+    CHECK_UNEXPECTED(receivedLinkedNotebookSyncChunksDownloaded)
+    CHECK_UNEXPECTED(receivedPreparedDirtyObjectsForSending)
+    CHECK_UNEXPECTED(receivedPreparedLinkedNotebookDirtyObjectsForSending)
+
+    checkEventsOrder(catcher);
+    checkIdentityOfLocalAndRemoteItems();
+}
+
+void SynchronizationTester::testIncrementalSyncWithModifiedAndNewRemoteItemsWithLinkedNotebooks()
+{
+    setUserOwnItemsToRemoteStorage();
+    setLinkedNotebookItemsToRemoteStorage();
+    copyRemoteItemsToLocalStorage();
+    setRemoteStorageSyncStateToPersistentSyncSettings();
+
+    setModifiedUserOwnItemsToRemoteStorage();
+    setModifiedLinkedNotebookItemsToRemoteStorage();
+    setNewUserOwnItemsToRemoteStorage();
+    setNewLinkedNotebookItemsToRemoteStorage();
+
+    int testAsyncResult = -1;
+    SynchronizationManagerSignalsCatcher catcher(*m_pSynchronizationManager);
+    {
+        QTimer timer;
+        timer.setInterval(MAX_ALLOWED_TEST_DURATION_MSEC);
+        timer.setSingleShot(true);
+
+        EventLoopWithExitStatus loop;
+        QObject::connect(&timer, QNSIGNAL(QTimer,timeout), &loop, QNSLOT(EventLoopWithExitStatus,exitAsTimeout));
+        QObject::connect(&catcher, QNSIGNAL(SynchronizationManagerSignalsCatcher,ready), &loop, QNSLOT(EventLoopWithExitStatus,exitAsSuccess));
+
+        QTimer slotInvokingTimer;
+        slotInvokingTimer.setInterval(500);
+        slotInvokingTimer.setSingleShot(true);
+
+        timer.start();
+        slotInvokingTimer.singleShot(0, m_pSynchronizationManager, QNSLOT(SynchronizationManager,synchronize));
+        testAsyncResult = loop.exec();
+    }
+
+    if (testAsyncResult == EventLoopWithExitStatus::ExitStatus::Timeout) {
+        QFAIL("Synchronization test failed to finish in time");
+    }
+    else if (testAsyncResult != EventLoopWithExitStatus::ExitStatus::Success) {
+        QFAIL("Internal error: incorrect return status from synchronization test");
+    }
+
+    if (catcher.receivedFailedSignal()) {
+        QFAIL(qPrintable(QString::fromUtf8("Detected failure during the asynchronous synchronization loop: ") +
+                         catcher.failureErrorDescription().nonLocalizedString()));
+    }
+
+    CHECK_EXPECTED(receivedStartedSignal)
+    CHECK_EXPECTED(receivedFinishedSignal)
+    CHECK_EXPECTED(finishedSomethingDownloaded)
+    CHECK_EXPECTED(receivedRemoteToLocalSyncDone)
+    CHECK_EXPECTED(remoteToLocalSyncDoneSomethingDownloaded)
+    CHECK_EXPECTED(receivedSyncChunksDownloaded)
+    CHECK_EXPECTED(receivedLinkedNotebookSyncChunksDownloaded)
+
+    CHECK_UNEXPECTED(receivedAuthenticationFinishedSignal)
+    CHECK_UNEXPECTED(receivedStoppedSignal)
+    CHECK_UNEXPECTED(finishedSomethingSent)
+    CHECK_UNEXPECTED(receivedAuthenticationRevokedSignal)
+    CHECK_UNEXPECTED(receivedRemoteToLocalSyncStopped)
+    CHECK_UNEXPECTED(receivedSendLocalChangedStopped)
+    CHECK_UNEXPECTED(receivedWillRepeatRemoteToLocalSyncAfterSendingChanges)
+    CHECK_UNEXPECTED(receivedDetectedConflictDuringLocalChangesSending)
+    CHECK_UNEXPECTED(receivedRateLimitExceeded)
+    CHECK_UNEXPECTED(receivedPreparedDirtyObjectsForSending)
+    CHECK_UNEXPECTED(receivedPreparedLinkedNotebookDirtyObjectsForSending)
+
+    checkEventsOrder(catcher);
+    checkIdentityOfLocalAndRemoteItems();
+}
+
 void SynchronizationTester::setUserOwnItemsToRemoteStorage()
 {
     ErrorString errorDescription;
