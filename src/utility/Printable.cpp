@@ -1127,8 +1127,14 @@ QTextStream & operator<<(QTextStream & strm, const qevercloud::SyncState & syncS
          << QStringLiteral("  current time = ") << quentier::printableDateTimeFromTimestamp(syncState.currentTime) << QStringLiteral(";\n")
          << QStringLiteral("  full sync before = ") << quentier::printableDateTimeFromTimestamp(syncState.fullSyncBefore) << QStringLiteral(";\n")
          << QStringLiteral("  update count = ") << QString::number(syncState.updateCount) << QStringLiteral(";\n")
-         << QStringLiteral("  uploaded = ") << QString::number(syncState.uploaded) << QStringLiteral(";\n")
-         << QStringLiteral("  user last updated = ") << quentier::printableDateTimeFromTimestamp(syncState.userLastUpdated) << QStringLiteral(";\n")
+         << QStringLiteral("  uploaded = ") << (syncState.uploaded.isSet()
+                                                ? QString::number(syncState.uploaded.ref())
+                                                : QStringLiteral("<not set>"))
+         << QStringLiteral(";\n")
+         << QStringLiteral("  user last updated = ") << (syncState.userLastUpdated.isSet()
+                                                         ? quentier::printableDateTimeFromTimestamp(syncState.userLastUpdated)
+                                                         : QStringLiteral("<not set>"))
+         << QStringLiteral(";\n")
          << QStringLiteral("};\n");
 
     return strm;
