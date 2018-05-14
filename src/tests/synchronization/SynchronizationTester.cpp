@@ -307,6 +307,7 @@ void SynchronizationTester::testSimpleIncrementalSyncWithNewRemoteItems()
     setUserOwnItemsToRemoteStorage();
     copyRemoteItemsToLocalStorage();
     setRemoteStorageSyncStateToPersistentSyncSettings();
+
     setNewUserOwnItemsToRemoteStorage();
 
     int testAsyncResult = -1;
@@ -368,10 +369,142 @@ void SynchronizationTester::testSimpleIncrementalSyncWithNewRemoteItems()
 void SynchronizationTester::testIncrementalSyncWithNewRemoteItemsWithLinkedNotebooks()
 {
     setUserOwnItemsToRemoteStorage();
+    setLinkedNotebookItemsToRemoteStorage();
     copyRemoteItemsToLocalStorage();
     setRemoteStorageSyncStateToPersistentSyncSettings();
+
     setNewUserOwnItemsToRemoteStorage();
     setNewLinkedNotebookItemsToRemoteStorage();
+
+    int testAsyncResult = -1;
+    SynchronizationManagerSignalsCatcher catcher(*m_pSynchronizationManager);
+    {
+        QTimer timer;
+        timer.setInterval(MAX_ALLOWED_TEST_DURATION_MSEC);
+        timer.setSingleShot(true);
+
+        EventLoopWithExitStatus loop;
+        QObject::connect(&timer, QNSIGNAL(QTimer,timeout), &loop, QNSLOT(EventLoopWithExitStatus,exitAsTimeout));
+        QObject::connect(&catcher, QNSIGNAL(SynchronizationManagerSignalsCatcher,ready), &loop, QNSLOT(EventLoopWithExitStatus,exitAsSuccess));
+
+        QTimer slotInvokingTimer;
+        slotInvokingTimer.setInterval(500);
+        slotInvokingTimer.setSingleShot(true);
+
+        timer.start();
+        slotInvokingTimer.singleShot(0, m_pSynchronizationManager, QNSLOT(SynchronizationManager,synchronize));
+        testAsyncResult = loop.exec();
+    }
+
+    if (testAsyncResult == EventLoopWithExitStatus::ExitStatus::Timeout) {
+        QFAIL("Synchronization test failed to finish in time");
+    }
+    else if (testAsyncResult != EventLoopWithExitStatus::ExitStatus::Success) {
+        QFAIL("Internal error: incorrect return status from synchronization test");
+    }
+
+    if (catcher.receivedFailedSignal()) {
+        QFAIL(qPrintable(QString::fromUtf8("Detected failure during the asynchronous synchronization loop: ") +
+                         catcher.failureErrorDescription().nonLocalizedString()));
+    }
+
+    CHECK_EXPECTED(receivedStartedSignal)
+    CHECK_EXPECTED(receivedFinishedSignal)
+    CHECK_EXPECTED(finishedSomethingDownloaded)
+    CHECK_EXPECTED(receivedRemoteToLocalSyncDone)
+    CHECK_EXPECTED(remoteToLocalSyncDoneSomethingDownloaded)
+    CHECK_EXPECTED(receivedSyncChunksDownloaded)
+    CHECK_EXPECTED(receivedLinkedNotebookSyncChunksDownloaded)
+
+    CHECK_UNEXPECTED(receivedAuthenticationFinishedSignal)
+    CHECK_UNEXPECTED(receivedStoppedSignal)
+    CHECK_UNEXPECTED(finishedSomethingSent)
+    CHECK_UNEXPECTED(receivedAuthenticationRevokedSignal)
+    CHECK_UNEXPECTED(receivedRemoteToLocalSyncStopped)
+    CHECK_UNEXPECTED(receivedSendLocalChangedStopped)
+    CHECK_UNEXPECTED(receivedWillRepeatRemoteToLocalSyncAfterSendingChanges)
+    CHECK_UNEXPECTED(receivedDetectedConflictDuringLocalChangesSending)
+    CHECK_UNEXPECTED(receivedRateLimitExceeded)
+    CHECK_UNEXPECTED(receivedPreparedDirtyObjectsForSending)
+    CHECK_UNEXPECTED(receivedPreparedLinkedNotebookDirtyObjectsForSending)
+
+    checkEventsOrder(catcher);
+    checkIdentityOfLocalAndRemoteItems();
+}
+
+void SynchronizationTester::testSimpleIncrementalSyncWithModifiedRemoteItems()
+{
+    setUserOwnItemsToRemoteStorage();
+    copyRemoteItemsToLocalStorage();
+    setRemoteStorageSyncStateToPersistentSyncSettings();
+
+    setModifiedUserOwnItemsToRemoteStorage();
+
+    int testAsyncResult = -1;
+    SynchronizationManagerSignalsCatcher catcher(*m_pSynchronizationManager);
+    {
+        QTimer timer;
+        timer.setInterval(MAX_ALLOWED_TEST_DURATION_MSEC);
+        timer.setSingleShot(true);
+
+        EventLoopWithExitStatus loop;
+        QObject::connect(&timer, QNSIGNAL(QTimer,timeout), &loop, QNSLOT(EventLoopWithExitStatus,exitAsTimeout));
+        QObject::connect(&catcher, QNSIGNAL(SynchronizationManagerSignalsCatcher,ready), &loop, QNSLOT(EventLoopWithExitStatus,exitAsSuccess));
+
+        QTimer slotInvokingTimer;
+        slotInvokingTimer.setInterval(500);
+        slotInvokingTimer.setSingleShot(true);
+
+        timer.start();
+        slotInvokingTimer.singleShot(0, m_pSynchronizationManager, QNSLOT(SynchronizationManager,synchronize));
+        testAsyncResult = loop.exec();
+    }
+
+    if (testAsyncResult == EventLoopWithExitStatus::ExitStatus::Timeout) {
+        QFAIL("Synchronization test failed to finish in time");
+    }
+    else if (testAsyncResult != EventLoopWithExitStatus::ExitStatus::Success) {
+        QFAIL("Internal error: incorrect return status from synchronization test");
+    }
+
+    if (catcher.receivedFailedSignal()) {
+        QFAIL(qPrintable(QString::fromUtf8("Detected failure during the asynchronous synchronization loop: ") +
+                         catcher.failureErrorDescription().nonLocalizedString()));
+    }
+
+    CHECK_EXPECTED(receivedStartedSignal)
+    CHECK_EXPECTED(receivedFinishedSignal)
+    CHECK_EXPECTED(finishedSomethingDownloaded)
+    CHECK_EXPECTED(receivedRemoteToLocalSyncDone)
+    CHECK_EXPECTED(remoteToLocalSyncDoneSomethingDownloaded)
+    CHECK_EXPECTED(receivedSyncChunksDownloaded)
+
+    CHECK_UNEXPECTED(receivedAuthenticationFinishedSignal)
+    CHECK_UNEXPECTED(receivedStoppedSignal)
+    CHECK_UNEXPECTED(finishedSomethingSent)
+    CHECK_UNEXPECTED(receivedAuthenticationRevokedSignal)
+    CHECK_UNEXPECTED(receivedRemoteToLocalSyncStopped)
+    CHECK_UNEXPECTED(receivedSendLocalChangedStopped)
+    CHECK_UNEXPECTED(receivedWillRepeatRemoteToLocalSyncAfterSendingChanges)
+    CHECK_UNEXPECTED(receivedDetectedConflictDuringLocalChangesSending)
+    CHECK_UNEXPECTED(receivedRateLimitExceeded)
+    CHECK_UNEXPECTED(receivedLinkedNotebookSyncChunksDownloaded)
+    CHECK_UNEXPECTED(receivedPreparedDirtyObjectsForSending)
+    CHECK_UNEXPECTED(receivedPreparedLinkedNotebookDirtyObjectsForSending)
+
+    checkEventsOrder(catcher);
+    checkIdentityOfLocalAndRemoteItems();
+}
+
+void SynchronizationTester::testIncrementalSyncWithModifiedRemoteItemsWithLinkedNotebooks()
+{
+    setUserOwnItemsToRemoteStorage();
+    setLinkedNotebookItemsToRemoteStorage();
+    copyRemoteItemsToLocalStorage();
+    setRemoteStorageSyncStateToPersistentSyncSettings();
+
+    setModifiedUserOwnItemsToRemoteStorage();
+    setModifiedLinkedNotebookItemsToRemoteStorage();
 
     int testAsyncResult = -1;
     SynchronizationManagerSignalsCatcher catcher(*m_pSynchronizationManager);
@@ -752,6 +885,230 @@ void SynchronizationTester::setLinkedNotebookItemsToRemoteStorage()
     fifthNote.addTagGuid(thirdLinkedNotebookFirstTag.guid());
     res = m_pFakeNoteStore->setNote(fifthNote, errorDescription);
     QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
+}
+
+void SynchronizationTester::setModifiedUserOwnItemsToRemoteStorage()
+{
+    ErrorString errorDescription;
+    bool res = false;
+
+    QHash<QString,qevercloud::SavedSearch> savedSearches = m_pFakeNoteStore->savedSearches();
+    auto savedSearchesBegin = savedSearches.begin();
+    auto savedSearchesEnd = savedSearches.end();
+    auto savedSearchesMid = savedSearchesBegin + static_cast<int>(std::distance(savedSearchesBegin, savedSearchesEnd)) / 2;
+    for(auto it = savedSearchesBegin; it != savedSearchesMid; ++it) {
+        it.value().name.ref() += QStringLiteral("_modified_remotely");
+        SavedSearch search(it.value());
+        res = m_pFakeNoteStore->setSavedSearch(search, errorDescription);
+        QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
+    }
+
+    QHash<QString,qevercloud::LinkedNotebook> linkedNotebooks = m_pFakeNoteStore->linkedNotebooks();
+    auto linkedNotebooksBegin = linkedNotebooks.begin();
+    auto linkedNotebooksEnd = linkedNotebooks.end();
+    auto linkedNotebooksMid = linkedNotebooksBegin + static_cast<int>(std::distance(linkedNotebooksBegin, linkedNotebooksEnd) / 2);
+    for(auto it = linkedNotebooksBegin; it != linkedNotebooksMid; ++it) {
+        it.value().shareName.ref() += QStringLiteral("_modified_remotely");
+        LinkedNotebook linkedNotebook(it.value());
+        res = m_pFakeNoteStore->setLinkedNotebook(linkedNotebook, errorDescription);
+        QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
+    }
+
+    QHash<QString,qevercloud::Tag> tags = m_pFakeNoteStore->tags();
+    size_t tagsToModify = 2;
+    for(auto it = tags.begin(), end = tags.end(); it != end; ++it)
+    {
+        const Tag * pTag = m_pFakeNoteStore->findTag(it.value().guid.ref());
+        QVERIFY2(pTag != Q_NULLPTR, "Unexpected null pointer to tag in FakeNoteStore");
+
+        if (pTag->hasLinkedNotebookGuid()) {
+            continue;
+        }
+
+        it.value().name.ref() += QStringLiteral("_modified_remotely");
+        Tag tag(it.value());
+        res = m_pFakeNoteStore->setTag(tag, errorDescription);
+        QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
+        --tagsToModify;
+        if (tagsToModify == 0) {
+            break;
+        }
+    }
+    QVERIFY2(tagsToModify == 0, "Wasn't able to modify as many tags as required");
+
+    QHash<QString,qevercloud::Notebook> notebooks = m_pFakeNoteStore->notebooks();
+    size_t notebooksToModify = 2;
+    for(auto it = notebooks.begin(), end = notebooks.end(); it != end; ++it)
+    {
+        const Notebook * pNotebook = m_pFakeNoteStore->findNotebook(it.value().guid.ref());
+        QVERIFY2(pNotebook != Q_NULLPTR, "Unexpected null pointer to notebook in FakeNoteStore");
+
+        if (pNotebook->hasLinkedNotebookGuid()) {
+            continue;
+        }
+
+        it.value().name.ref() += QStringLiteral("_modified_remotely");
+        Notebook notebook(it.value());
+        res = m_pFakeNoteStore->setNotebook(notebook, errorDescription);
+        QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
+        --notebooksToModify;
+        if (notebooksToModify == 0) {
+            break;
+        }
+    }
+    QVERIFY2(notebooksToModify == 0, "Wasn't able to modify as many notebooks as required");
+
+    QHash<QString,qevercloud::Note> notes = m_pFakeNoteStore->notes();
+    size_t notesToModify = 2;
+    for(auto it = notes.begin(), end = notes.end(); it != end; ++it)
+    {
+        const Notebook * pNotebook = m_pFakeNoteStore->findNotebook(it.value().notebookGuid.ref());
+        QVERIFY2(pNotebook != Q_NULLPTR, "Unexpected null pointer to notebook in FakeNoteStore");
+
+        if (pNotebook->hasLinkedNotebookGuid()) {
+            continue;
+        }
+
+        it.value().title.ref() += QStringLiteral("_modified_remotely");
+        Note note(it.value());
+        res = m_pFakeNoteStore->setNote(note, errorDescription);
+        QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
+        --notesToModify;
+        if (notesToModify == 0) {
+            break;
+        }
+    }
+    QVERIFY2(notesToModify == 0, "Wasn't able to modify as many notes as required");
+
+    QHash<QString,qevercloud::Resource> resources = m_pFakeNoteStore->resources();
+    size_t resourcesToModify = 1;
+    for(auto it = resources.begin(), end = resources.end(); it != end; ++it)
+    {
+        const Note * pNote = m_pFakeNoteStore->findNote(it.value().noteGuid.ref());
+        QVERIFY2(pNote != Q_NULLPTR, "Unexpected null pointer to note in FakeNoteStore");
+
+        const Notebook * pNotebook = m_pFakeNoteStore->findNotebook(pNote->notebookGuid());
+        QVERIFY2(pNotebook != Q_NULLPTR, "Unexpected null pointer to notebook in FakeNoteStore");
+
+        if (pNotebook->hasLinkedNotebookGuid()) {
+            continue;
+        }
+
+        it.value().data->body.ref() += QByteArray("_modified_remotely");
+        it.value().data->size = it.value().data->body->size();
+        it.value().data->bodyHash = QCryptographicHash::hash(it.value().data->body.ref(), QCryptographicHash::Md5);
+        Resource resource(it.value());
+
+        res = m_pFakeNoteStore->setResource(resource, errorDescription);
+        QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
+        --resourcesToModify;
+        if (resourcesToModify == 0) {
+            break;
+        }
+    }
+    QVERIFY2(resourcesToModify == 0, "Wasn't able to modify as many resources as required");
+}
+
+void SynchronizationTester::setModifiedLinkedNotebookItemsToRemoteStorage()
+{
+    ErrorString errorDescription;
+    bool res = false;
+
+    QHash<QString,qevercloud::Tag> tags = m_pFakeNoteStore->tags();
+    size_t tagsToModify = 2;
+    for(auto it = tags.begin(), end = tags.end(); it != end; ++it)
+    {
+        const Tag * pTag = m_pFakeNoteStore->findTag(it.value().guid.ref());
+        QVERIFY2(pTag != Q_NULLPTR, "Unexpected null pointer to tag in FakeNoteStore");
+
+        if (!pTag->hasLinkedNotebookGuid()) {
+            continue;
+        }
+
+        it.value().name.ref() += QStringLiteral("_modified_remotely");
+        Tag tag(it.value());
+        tag.setLinkedNotebookGuid(pTag->linkedNotebookGuid());
+        res = m_pFakeNoteStore->setTag(tag, errorDescription);
+        QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
+        --tagsToModify;
+        if (tagsToModify == 0) {
+            break;
+        }
+    }
+    QVERIFY2(tagsToModify == 0, "Wasn't able to modify as many tags as required");
+
+    QHash<QString,qevercloud::Notebook> notebooks = m_pFakeNoteStore->notebooks();
+    size_t notebooksToModify = 2;
+    for(auto it = notebooks.begin(), end = notebooks.end(); it != end; ++it)
+    {
+        const Notebook * pNotebook = m_pFakeNoteStore->findNotebook(it.value().guid.ref());
+        QVERIFY2(pNotebook != Q_NULLPTR, "Unexpected null pointer to notebook in FakeNoteStore");
+
+        if (!pNotebook->hasLinkedNotebookGuid()) {
+            continue;
+        }
+
+        it.value().name.ref() += QStringLiteral("_modified_remotely");
+        Notebook notebook(it.value());
+        notebook.setLinkedNotebookGuid(pNotebook->linkedNotebookGuid());
+        res = m_pFakeNoteStore->setNotebook(notebook, errorDescription);
+        QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
+        --notebooksToModify;
+        if (notebooksToModify == 0) {
+            break;
+        }
+    }
+    QVERIFY2(notebooksToModify == 0, "Wasn't able to modify as many notebooks as required");
+
+    QHash<QString,qevercloud::Note> notes = m_pFakeNoteStore->notes();
+    size_t notesToModify = 2;
+    for(auto it = notes.begin(), end = notes.end(); it != end; ++it)
+    {
+        const Notebook * pNotebook = m_pFakeNoteStore->findNotebook(it.value().notebookGuid.ref());
+        QVERIFY2(pNotebook != Q_NULLPTR, "Unexpected null pointer to notebook in FakeNoteStore");
+
+        if (!pNotebook->hasLinkedNotebookGuid()) {
+            continue;
+        }
+
+        it.value().title.ref() += QStringLiteral("_modified_remotely");
+        Note note(it.value());
+        res = m_pFakeNoteStore->setNote(note, errorDescription);
+        QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
+        --notesToModify;
+        if (notesToModify == 0) {
+            break;
+        }
+    }
+    QVERIFY2(notesToModify == 0, "Wasn't able to modify as many notes as required");
+
+    QHash<QString,qevercloud::Resource> resources = m_pFakeNoteStore->resources();
+    size_t resourcesToModify = 1;
+    for(auto it = resources.begin(), end = resources.end(); it != end; ++it)
+    {
+        const Note * pNote = m_pFakeNoteStore->findNote(it.value().noteGuid.ref());
+        QVERIFY2(pNote != Q_NULLPTR, "Unexpected null pointer to note in FakeNoteStore");
+
+        const Notebook * pNotebook = m_pFakeNoteStore->findNotebook(pNote->notebookGuid());
+        QVERIFY2(pNotebook != Q_NULLPTR, "Unexpected null pointer to notebook in FakeNoteStore");
+
+        if (!pNotebook->hasLinkedNotebookGuid()) {
+            continue;
+        }
+
+        it.value().data->body.ref() += QByteArray("_modified_remotely");
+        it.value().data->size = it.value().data->body->size();
+        it.value().data->bodyHash = QCryptographicHash::hash(it.value().data->body.ref(), QCryptographicHash::Md5);
+        Resource resource(it.value());
+
+        res = m_pFakeNoteStore->setResource(resource, errorDescription);
+        QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
+        --resourcesToModify;
+        if (resourcesToModify == 0) {
+            break;
+        }
+    }
+    QVERIFY2(resourcesToModify == 0, "Wasn't able to modify as many resources as required");
 }
 
 void SynchronizationTester::setNewItemsToLocalStorage()
@@ -1557,6 +1914,7 @@ void SynchronizationTester::checkIdentityOfLocalAndRemoteItems()
                 if (resIt->alternateData.isSet()) {
                     resIt->alternateData->body = pResource->alternateDataBody();
                 }
+                resIt->updateSequenceNum = pResource->updateSequenceNumber();
             }
 
             remoteNote.resources = resources;

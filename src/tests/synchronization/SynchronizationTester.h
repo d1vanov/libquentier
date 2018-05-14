@@ -55,17 +55,21 @@ private Q_SLOTS:
     void testRemoteToLocalFullSyncWithLinkedNotebooks();
     void testSimpleIncrementalSyncWithNewRemoteItems();
     void testIncrementalSyncWithNewRemoteItemsWithLinkedNotebooks();
+    void testSimpleIncrementalSyncWithModifiedRemoteItems();
+    void testIncrementalSyncWithModifiedRemoteItemsWithLinkedNotebooks();
 
 private:
     void setUserOwnItemsToRemoteStorage();
     void setLinkedNotebookItemsToRemoteStorage();
     void setNewUserOwnItemsToRemoteStorage();
     void setNewLinkedNotebookItemsToRemoteStorage();
+    void setModifiedUserOwnItemsToRemoteStorage();
+    void setModifiedLinkedNotebookItemsToRemoteStorage();
 
     void setNewItemsToLocalStorage();
-
     void setModifiedRemoteItemsToLocalStorage();
     void copyRemoteItemsToLocalStorage();
+
     void setRemoteStorageSyncStateToPersistentSyncSettings();
 
     void checkEventsOrder(const SynchronizationManagerSignalsCatcher & catcher);
