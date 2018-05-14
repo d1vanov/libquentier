@@ -475,7 +475,6 @@ private:
     // Helpers launching the sync of content from someone else's shared notebooks, to be used
     // when LinkedNotebook representing pointers to content from someone else's account are in sync
     void checkLinkedNotebooksSyncAndLaunchLinkedNotebookContentSync();
-    void checkLinkedNotebooksNotebooksAndTagsSyncAndLaunchLinkedNotebookNotesSync();
 
     void launchLinkedNotebooksContentsSync();
     void startLinkedNotebooksSync();
@@ -492,7 +491,6 @@ private:
 
     void launchLinkedNotebooksTagsSync();
     void launchLinkedNotebooksNotebooksSync();
-    void launchLinkedNotebooksNotesSync();
 
     void checkServerDataMergeCompletion();
 

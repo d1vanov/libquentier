@@ -4740,18 +4740,6 @@ void RemoteToLocalSynchronizationManager::checkLinkedNotebooksSyncAndLaunchLinke
     }
 }
 
-void RemoteToLocalSynchronizationManager::checkLinkedNotebooksNotebooksAndTagsSyncAndLaunchLinkedNotebookNotesSync()
-{
-    QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::checkLinkedNotebooksNotebooksAndTagsSyncAndLaunchLinkedNotebookNotesSync"));
-
-    if (m_updateNotebookRequestIds.isEmpty() && m_addNotebookRequestIds.isEmpty() &&
-        m_updateTagRequestIds.isEmpty() && m_addTagRequestIds.isEmpty())
-    {
-        // All remote notebooks and tags from linked notebooks were already either updated in the local storage or added there
-        launchLinkedNotebooksNotesSync();
-    }
-}
-
 void RemoteToLocalSynchronizationManager::launchLinkedNotebooksContentsSync()
 {
     QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::launchLinkedNotebooksContentsSync"));
@@ -4762,6 +4750,8 @@ void RemoteToLocalSynchronizationManager::launchLinkedNotebooksContentsSync()
     launchLinkedNotebooksTagsSync();
     launchLinkedNotebooksNotebooksSync();
 
+    checkNotebooksAndTagsSyncCompletionAndLaunchNotesSync();
+
     // NOTE: we might have received the only sync chunk without the actual data elements, need to check for such case
     // and leave if there's nothing worth processing within the sync
     checkServerDataMergeCompletion();
@@ -4771,10 +4761,9 @@ template <>
 bool RemoteToLocalSynchronizationManager::mapContainerElementsWithLinkedNotebookGuid<RemoteToLocalSynchronizationManager::TagsList>(const QString & linkedNotebookGuid,
                                                                                                                                     const RemoteToLocalSynchronizationManager::TagsList & tags)
 {
-    const int numTags = tags.size();
-    for(int i = 0; i < numTags; ++i)
+    for(auto it = tags.constBegin(), end = tags.constEnd(); it != end; ++it)
     {
-        const qevercloud::Tag & tag = tags[i];
+        const qevercloud::Tag & tag = *it;
         if (!tag.guid.isSet())
         {
             ErrorString error(QT_TR_NOOP("Detected the attempt to map the linked notebook guid to a tag without guid"));
@@ -4797,10 +4786,9 @@ template <>
 bool RemoteToLocalSynchronizationManager::mapContainerElementsWithLinkedNotebookGuid<RemoteToLocalSynchronizationManager::NotebooksList>(const QString & linkedNotebookGuid,
                                                                                                                                          const RemoteToLocalSynchronizationManager::NotebooksList & notebooks)
 {
-    const int numNotebooks = notebooks.size();
-    for(int i = 0; i < numNotebooks; ++i)
+    for(auto it = notebooks.constBegin(), end = notebooks.constEnd(); it != end; ++it)
     {
-        const qevercloud::Notebook & notebook = notebooks[i];
+        const qevercloud::Notebook & notebook = *it;
         if (!notebook.guid.isSet())
         {
             ErrorString error(QT_TR_NOOP("Detected the attempt to map the linked notebook guid to a notebook without guid"));
@@ -4814,6 +4802,31 @@ bool RemoteToLocalSynchronizationManager::mapContainerElementsWithLinkedNotebook
         }
 
         m_linkedNotebookGuidsByNotebookGuids[notebook.guid.ref()] = linkedNotebookGuid;
+    }
+
+    return true;
+}
+
+template <>
+bool RemoteToLocalSynchronizationManager::mapContainerElementsWithLinkedNotebookGuid<RemoteToLocalSynchronizationManager::NotesList>(const QString & linkedNotebookGuid,
+                                                                                                                                     const RemoteToLocalSynchronizationManager::NotesList & notes)
+{
+    for(auto it = notes.constBegin(), end = notes.constEnd(); it != end; ++it)
+    {
+        const qevercloud::Note & note = *it;
+        if (!note.notebookGuid.isSet())
+        {
+            ErrorString error(QT_TR_NOOP("Can't map note to a linked notebook: note has no notebook guid"));
+            if (note.title.isSet()) {
+                error.details() = note.title.ref();
+            }
+
+            QNWARNING(error << QStringLiteral(", note; ") << note);
+            Q_EMIT failure(error);
+            return false;
+        }
+
+        m_linkedNotebookGuidsByNotebookGuids[note.notebookGuid.ref()] = linkedNotebookGuid;
     }
 
     return true;
@@ -5313,6 +5326,14 @@ bool RemoteToLocalSynchronizationManager::downloadLinkedNotebooksSyncChunks()
                 }
             }
 
+            if (pSyncChunk->notes.isSet())
+            {
+                bool res = mapContainerElementsWithLinkedNotebookGuid<NotesList>(linkedNotebookGuid, pSyncChunk->notes.ref());
+                if (!res) {
+                    return false;
+                }
+            }
+
             if (pSyncChunk->expungedTags.isSet()) {
                 unmapContainerElementsFromLinkedNotebookGuid<qevercloud::Tag>(pSyncChunk->expungedTags.ref());
             }
@@ -5360,12 +5381,6 @@ void RemoteToLocalSynchronizationManager::launchLinkedNotebooksNotebooksSync()
 
     QList<QString> dummyList;
     launchDataElementSync<NotebooksList, Notebook>(ContentSource::LinkedNotebook, QStringLiteral("Notebook"), m_notebooks, dummyList);
-}
-
-void RemoteToLocalSynchronizationManager::launchLinkedNotebooksNotesSync()
-{
-    QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::launchLinkedNotebooksNotesSync"));
-    launchDataElementSync<NotesList, Note>(ContentSource::LinkedNotebook, QStringLiteral("Note"), m_notes, m_expungedNotes);
 }
 
 void RemoteToLocalSynchronizationManager::checkServerDataMergeCompletion()
@@ -6163,6 +6178,7 @@ void RemoteToLocalSynchronizationManager::getFullNoteDataAsync(const Note & note
         // with empty authentication token EDAMUserException is thrown with PERMISSION_DENIED
         // error code; instead for public notebooks the authentication token from the primary account
         // should be used
+        QNDEBUG(QStringLiteral("No auth token for public linked notebook, will use the account's default auth token"));
         authToken = m_authenticationToken;
     }
 
