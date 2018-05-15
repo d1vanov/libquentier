@@ -466,7 +466,7 @@ private:
                                                     const QString & typeName);
 
     // ========= Helpers launching the sync of dependent data elements ==========
-    void checkNotebooksAndTagsSyncCompletionAndLaunchNotesSync();
+    void checkNotebooksAndTagsSyncCompletionAndLaunchNotesAndResourcesSync();
     void launchNotesSync(const ContentSource::type & contentSource);
 
     void checkNotesSyncCompletionAndLaunchResourcesSync();

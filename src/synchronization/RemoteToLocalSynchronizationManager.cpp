@@ -1465,21 +1465,25 @@ void RemoteToLocalSynchronizationManager::performPostAddOrUpdateChecks<Tag>(cons
 
     unregisterTagPendingAddOrUpdate(tag);
     syncNextTagPendingProcessing();
-    checkNotebooksAndTagsSyncCompletionAndLaunchNotesSync();
+    checkNotebooksAndTagsSyncCompletionAndLaunchNotesAndResourcesSync();
     checkServerDataMergeCompletion();
 }
 
 template <>
 void RemoteToLocalSynchronizationManager::performPostAddOrUpdateChecks<Notebook>(const Notebook & notebook)
 {
+    QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::performPostAddOrUpdateChecks<Notebook>: ") << notebook);
+
     unregisterNotebookPendingAddOrUpdate(notebook);
-    checkNotebooksAndTagsSyncCompletionAndLaunchNotesSync();
+    checkNotebooksAndTagsSyncCompletionAndLaunchNotesAndResourcesSync();
     checkServerDataMergeCompletion();
 }
 
 template <>
 void RemoteToLocalSynchronizationManager::performPostAddOrUpdateChecks<Note>(const Note & note)
 {
+    QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::performPostAddOrUpdateChecks<Note>: ") << note);
+
     unregisterNotePendingAddOrUpdate(note);
     checkNotesSyncCompletionAndLaunchResourcesSync();
     checkServerDataMergeCompletion();
@@ -1488,6 +1492,8 @@ void RemoteToLocalSynchronizationManager::performPostAddOrUpdateChecks<Note>(con
 template <>
 void RemoteToLocalSynchronizationManager::performPostAddOrUpdateChecks<Resource>(const Resource & resource)
 {
+    QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::performPostAddOrUpdateChecks<Resource>: ") << resource);
+
     unregisterResourcePendingAddOrUpdate(resource);
     checkServerDataMergeCompletion();
 }
@@ -1495,6 +1501,8 @@ void RemoteToLocalSynchronizationManager::performPostAddOrUpdateChecks<Resource>
 template <>
 void RemoteToLocalSynchronizationManager::performPostAddOrUpdateChecks<SavedSearch>(const SavedSearch & search)
 {
+    QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::performPostAddOrUpdateChecks<SavedSearch>: ") << search);
+
     unregisterSavedSearchPendingAddOrUpdate(search);
     checkServerDataMergeCompletion();
 }
@@ -2937,7 +2945,7 @@ void RemoteToLocalSynchronizationManager::onNotebookSyncConflictResolverFinished
 
     unregisterNotebookPendingAddOrUpdate(Notebook(remoteNotebook));
 
-    checkNotebooksAndTagsSyncCompletionAndLaunchNotesSync();
+    checkNotebooksAndTagsSyncCompletionAndLaunchNotesAndResourcesSync();
     checkServerDataMergeCompletion();
 }
 
@@ -2967,7 +2975,7 @@ void RemoteToLocalSynchronizationManager::onTagSyncConflictResolverFinished(qeve
 
     unregisterTagPendingAddOrUpdate(Tag(remoteTag));
     syncNextTagPendingProcessing();
-    checkNotebooksAndTagsSyncCompletionAndLaunchNotesSync();
+    checkNotebooksAndTagsSyncCompletionAndLaunchNotesAndResourcesSync();
     checkServerDataMergeCompletion();
 }
 
@@ -4679,9 +4687,9 @@ QTextStream & operator<<(QTextStream & strm, const RemoteToLocalSynchronizationM
     return strm;
 }
 
-void RemoteToLocalSynchronizationManager::checkNotebooksAndTagsSyncCompletionAndLaunchNotesSync()
+void RemoteToLocalSynchronizationManager::checkNotebooksAndTagsSyncCompletionAndLaunchNotesAndResourcesSync()
 {
-    QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::checkNotebooksAndTagsSyncCompletionAndLaunchNotesSync"));
+    QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::checkNotebooksAndTagsSyncCompletionAndLaunchNotesAndResourcesSync"));
 
     if (!m_pendingNotebooksSyncStart && !notebooksSyncInProgress() &&
         !m_pendingTagsSyncStart && !tagsSyncInProgress())
@@ -4689,6 +4697,33 @@ void RemoteToLocalSynchronizationManager::checkNotebooksAndTagsSyncCompletionAnd
         launchNotesSync(syncingLinkedNotebooksContent()
                         ? ContentSource::LinkedNotebook
                         : ContentSource::UserAccount);
+
+        if (notesSyncInProgress()) {
+            return;
+        }
+
+        // If we got here, there are no notes to sync but there might be resources to sync
+
+        if (m_lastSyncMode != SyncMode::IncrementalSync)
+        {
+            /**
+             * NOTE: during the full sync the individual resources are not synced,
+             * instead the full note contents including the resources are synced.
+             *
+             * That works both for the content from user's own account and for the stuff
+             * from linked notebooks: the sync of linked notebooks' content might be
+             * full while the last sync of user's own content is incremental
+             * but in this case there won't be resources within the synch chunk
+             * downloaded for that linked notebook so there's no real problem with us
+             * not getting inside this if block when syncing stuff from the linked
+             * notebooks
+             */
+            return;
+        }
+
+        if (!resourcesSyncInProgress()) {
+            launchResourcesSync();
+        }
     }
 }
 
@@ -4718,7 +4753,10 @@ void RemoteToLocalSynchronizationManager::checkNotesSyncCompletionAndLaunchResou
         return;
     }
 
-    if (!notesSyncInProgress() && !resourcesSyncInProgress()) {
+    if (!m_pendingNotebooksSyncStart && !notebooksSyncInProgress() &&
+        !m_pendingTagsSyncStart && !tagsSyncInProgress() &&
+        !notesSyncInProgress() && !resourcesSyncInProgress())
+    {
         launchResourcesSync();
     }
 }
@@ -4750,7 +4788,7 @@ void RemoteToLocalSynchronizationManager::launchLinkedNotebooksContentsSync()
     launchLinkedNotebooksTagsSync();
     launchLinkedNotebooksNotebooksSync();
 
-    checkNotebooksAndTagsSyncCompletionAndLaunchNotesSync();
+    checkNotebooksAndTagsSyncCompletionAndLaunchNotesAndResourcesSync();
 
     // NOTE: we might have received the only sync chunk without the actual data elements, need to check for such case
     // and leave if there's nothing worth processing within the sync
