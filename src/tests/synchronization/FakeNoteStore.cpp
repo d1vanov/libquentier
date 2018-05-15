@@ -478,9 +478,11 @@ bool FakeNoteStore::setNote(Note & note, ErrorString & errorDescription)
         return false;
     }
 
-    qint32 maxUsn = currentMaxUsn(notebookIt->hasLinkedNotebookGuid() ? notebookIt->linkedNotebookGuid() : QString());
-    ++maxUsn;
-    note.setUpdateSequenceNumber(maxUsn);
+    if (!note.hasUpdateSequenceNumber()) {
+        qint32 maxUsn = currentMaxUsn(notebookIt->hasLinkedNotebookGuid() ? notebookIt->linkedNotebookGuid() : QString());
+        ++maxUsn;
+        note.setUpdateSequenceNumber(maxUsn);
+    }
 
     if (!notebookIt->hasLinkedNotebookGuid()) {
         Q_UNUSED(removeExpungedNoteGuid(note.guid()))
