@@ -1177,6 +1177,29 @@ void SynchronizationTester::setModifiedUserOwnItemsToRemoteStorage()
         it.value().title.ref() += QStringLiteral("_modified_remotely");
         Note note(it.value());
         note.setDirty(true);
+
+        if (note.hasResources())
+        {
+            // Notes are stored in fake note store without resource binary data.
+            // However, when setNote is called on FakeNoteStore, it expects the note
+            // to contain full resource information, so need to put it into the note manually
+
+            QList<Resource> resources = note.resources();
+            for(auto resIt = resources.begin(), resEnd = resources.end(); resIt != resEnd; ++resIt)
+            {
+                Resource & resource = *resIt;
+
+                const Resource * pResource = m_pFakeNoteStore->findResource(resource.guid());
+                QVERIFY(pResource != Q_NULLPTR);
+
+                resource.setDataBody(pResource->dataBody());
+                resource.setDataSize(pResource->dataSize());
+                resource.setDataHash(pResource->dataHash());
+            }
+
+            note.setResources(resources);
+        }
+
         res = m_pFakeNoteStore->setNote(note, errorDescription);
         QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
         --notesToModify;
@@ -1200,17 +1223,25 @@ void SynchronizationTester::setModifiedUserOwnItemsToRemoteStorage()
             continue;
         }
 
-        if (!it.value().data.isSet() || !it.value().data->body.isSet()) {
-            continue;
-        }
-
         it.value().data->body.ref() += QByteArray("_modified_remotely");
         it.value().data->size = it.value().data->body->size();
         it.value().data->bodyHash = QCryptographicHash::hash(it.value().data->body.ref(), QCryptographicHash::Md5);
         Resource resource(it.value());
         resource.setDirty(true);
+        resource.setUpdateSequenceNumber(-1);   // Clear USN to force the assignment of a new one by FakeNoteStore
 
-        res = m_pFakeNoteStore->setResource(resource, errorDescription);
+        Note note(*pNote);
+        QList<Resource> noteResources = note.resources();
+        for(auto resIt = noteResources.begin(), resEnd = noteResources.end(); resIt != resEnd; ++resIt)
+        {
+            if (resIt->guid() == resource.guid()) {
+                *resIt = resource;
+                break;
+            }
+        }
+        note.setResources(noteResources);
+
+        res = m_pFakeNoteStore->setNote(note, errorDescription);
         QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
         --resourcesToModify;
         if (resourcesToModify == 0) {
@@ -2026,6 +2057,8 @@ void SynchronizationTester::copyRemoteItemsToLocalStorage()
                 if (pRemoteResource) {
                     *rit = *pRemoteResource;
                 }
+                rit->setDirty(false);
+                rit->setLocal(false);
             }
             note.setResources(resources);
         }
