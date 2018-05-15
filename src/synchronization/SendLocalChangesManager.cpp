@@ -148,7 +148,8 @@ void SendLocalChangesManager::onListDirtyTagsCompleted(LocalStorageManager::List
                 << QStringLiteral(", limit = ") << limit << QStringLiteral(", offset = ") << offset
                 << QStringLiteral(", order = ") << order << QStringLiteral(", orderDirection = ")
                 << orderDirection << QStringLiteral(", linked notebook guid = ") << linkedNotebookGuid
-                << QStringLiteral(", requestId = ") << requestId);
+                << QStringLiteral(", requestId = ") << requestId << QStringLiteral(", ") << tags.size()
+                << QStringLiteral(" tags listed"));
 
         m_tags << tags;
 
@@ -212,7 +213,8 @@ void SendLocalChangesManager::onListDirtySavedSearchesCompleted(LocalStorageMana
 
     QNDEBUG(QStringLiteral("SendLocalChangesManager::onListDirtySavedSearchesCompleted: flag = ") << flag
             << QStringLiteral(", limit = ") << limit << QStringLiteral(", offset = ") << offset << QStringLiteral(", order = ")
-            << order << QStringLiteral(", orderDirection = ") << orderDirection << QStringLiteral(", requestId = ") << requestId);
+            << order << QStringLiteral(", orderDirection = ") << orderDirection << QStringLiteral(", requestId = ") << requestId
+            << QStringLiteral(", ") << savedSearches.size() << QStringLiteral(" saved searches listed"));
 
     m_savedSearches << savedSearches;
     QNTRACE(QStringLiteral("Total ") << m_savedSearches.size() << QStringLiteral(" dirty saved searches"));
@@ -266,7 +268,8 @@ void SendLocalChangesManager::onListDirtyNotebooksCompleted(LocalStorageManager:
         QNDEBUG(QStringLiteral("SendLocalChangesManager::onListDirtyNotebooksCompleted: flag = ") << flag
                 << QStringLiteral(", limit = ") << limit << QStringLiteral(", offset = ") << offset
                 << QStringLiteral(", order = ") << order << QStringLiteral(", orderDirection = ") << orderDirection
-                << QStringLiteral(", linkedNotebookGuid = ") << linkedNotebookGuid << QStringLiteral(", requestId = ") << requestId);
+                << QStringLiteral(", linkedNotebookGuid = ") << linkedNotebookGuid << QStringLiteral(", requestId = ")
+                << requestId << QStringLiteral(", ") << notebooks.size() << QStringLiteral(" notebooks listed"));
 
         m_notebooks << notebooks;
 
@@ -336,7 +339,8 @@ void SendLocalChangesManager::onListDirtyNotesCompleted(LocalStorageManager::Lis
                 << QStringLiteral(", withResourceBinaryData = ") << (withResourceBinaryData ? QStringLiteral("true") : QStringLiteral("false"))
                 << QStringLiteral(", limit = ") << limit << QStringLiteral(", offset = ") << offset << QStringLiteral(", order = ") << order
                 << QStringLiteral(", orderDirection = ") << orderDirection << QStringLiteral(", linked notebook guid = ")
-                << linkedNotebookGuid << QStringLiteral(", requestId = ") << requestId);
+                << linkedNotebookGuid << QStringLiteral(", requestId = ") << requestId << QStringLiteral(", ")
+                << notes.size() << QStringLiteral(" notes listed"));
 
         m_notes << notes;
 
@@ -400,7 +404,8 @@ void SendLocalChangesManager::onListLinkedNotebooksCompleted(LocalStorageManager
     QNDEBUG(QStringLiteral("SendLocalChangesManager::onListLinkedNotebooksCompleted: flag = ") << flag
             << QStringLiteral(", limit = ") << limit << QStringLiteral(", offset = ") << offset
             << QStringLiteral(", order = ") << order << QStringLiteral(", orderDirection = ") << orderDirection
-            << QStringLiteral(", requestId = ") << requestId);
+            << QStringLiteral(", requestId = ") << requestId << QStringLiteral(", ")
+            << QStringLiteral(" linked notebooks listed"));
 
     const int numLinkedNotebooks = linkedNotebooks.size();
     m_linkedNotebookAuthData.reserve(std::max(numLinkedNotebooks, 0));
@@ -1114,7 +1119,9 @@ void SendLocalChangesManager::checkListLocalStorageObjectsCompletion()
     }
 
     m_receivedDirtyLocalStorageObjectsFromUsersAccount = true;
-    QNTRACE(QStringLiteral("Received all dirty objects from user's own account from local storage"));
+    QNTRACE(QStringLiteral("Received all dirty objects from user's own account from local storage: ")
+            << m_tags.size() << QStringLiteral(" tags, ") << m_savedSearches.size() << QStringLiteral(" saved searches, ")
+            << m_notebooks.size() << QStringLiteral(" notebooks and ") << m_notes.size() << QStringLiteral(" notes"));
 
     if (!m_tags.isEmpty() || !m_savedSearches.isEmpty() || !m_notebooks.isEmpty() || !m_notes.isEmpty()) {
         Q_EMIT receivedUserAccountDirtyObjects();
