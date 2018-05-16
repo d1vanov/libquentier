@@ -931,6 +931,7 @@ const QString & FakeNoteStore::authToken() const
 
 void FakeNoteStore::setAuthToken(const QString & authToken)
 {
+    QNDEBUG(QStringLiteral("FakeNoteStore::setAuthToken: ") << authToken);
     m_data->m_authenticationToken = authToken;
 }
 
