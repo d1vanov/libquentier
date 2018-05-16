@@ -98,9 +98,11 @@ bool FakeNoteStore::setSavedSearch(SavedSearch & search, ErrorString & errorDesc
         nameIt = nameIndex.find(name.toUpper());
     }
 
-    qint32 maxUsn = currentMaxUsn();
-    ++maxUsn;
-    search.setUpdateSequenceNumber(maxUsn);
+    if (!search.hasUpdateSequenceNumber()) {
+        qint32 maxUsn = currentMaxUsn();
+        ++maxUsn;
+        search.setUpdateSequenceNumber(maxUsn);
+    }
 
     Q_UNUSED(removeExpungedSavedSearchGuid(search.guid()))
 
@@ -214,9 +216,11 @@ bool FakeNoteStore::setTag(Tag & tag, ErrorString & errorDescription)
         nameIt = nameIndex.find(name.toUpper());
     }
 
-    qint32 maxUsn = currentMaxUsn(tag.hasLinkedNotebookGuid() ? tag.linkedNotebookGuid() : QString());
-    ++maxUsn;
-    tag.setUpdateSequenceNumber(maxUsn);
+    if (!tag.hasUpdateSequenceNumber()) {
+        qint32 maxUsn = currentMaxUsn(tag.hasLinkedNotebookGuid() ? tag.linkedNotebookGuid() : QString());
+        ++maxUsn;
+        tag.setUpdateSequenceNumber(maxUsn);
+    }
 
     if (!tag.hasLinkedNotebookGuid()) {
         Q_UNUSED(removeExpungedTagGuid(tag.guid()))
@@ -355,9 +359,11 @@ bool FakeNoteStore::setNotebook(Notebook & notebook, ErrorString & errorDescript
         nameIt = nameIndex.find(name.toUpper());
     }
 
-    qint32 maxUsn = currentMaxUsn(notebook.hasLinkedNotebookGuid() ? notebook.linkedNotebookGuid() : QString());
-    ++maxUsn;
-    notebook.setUpdateSequenceNumber(maxUsn);
+    if (!notebook.hasUpdateSequenceNumber()) {
+        qint32 maxUsn = currentMaxUsn(notebook.hasLinkedNotebookGuid() ? notebook.linkedNotebookGuid() : QString());
+        ++maxUsn;
+        notebook.setUpdateSequenceNumber(maxUsn);
+    }
 
     if (!notebook.hasLinkedNotebookGuid()) {
         Q_UNUSED(removeExpungedNotebookGuid(notebook.guid()))
@@ -958,20 +964,19 @@ qint32 FakeNoteStore::currentMaxUsn(const QString & linkedNotebookGuid) const
     {
         auto lastSavedSearchIt = savedSearchUsnIndex.end();
         --lastSavedSearchIt;
+        QNTRACE(QStringLiteral("Examing saved search ") << *lastSavedSearchIt);
         if (lastSavedSearchIt->updateSequenceNumber() > maxUsn) {
             maxUsn = lastSavedSearchIt->updateSequenceNumber();
+            QNTRACE(QStringLiteral("Updated max USN to ") << maxUsn << QStringLiteral(" from saved search: ") << *lastSavedSearchIt);
         }
     }
 
     const TagDataByUSN & tagUsnIndex = m_tags.get<TagByUSN>();
     if (!tagUsnIndex.empty())
     {
-        auto lastTagIt = tagUsnIndex.end();
-        --lastTagIt;
-        auto preBeginTagIt = tagUsnIndex.begin();
-        --preBeginTagIt;
-        auto tagIt = lastTagIt;
-        while(tagIt != preBeginTagIt)
+        auto tagIt = tagUsnIndex.end();
+        --tagIt;
+        for(size_t tagCounter = 0, numTags = tagUsnIndex.size(); tagCounter < numTags; ++tagCounter, --tagIt)
         {
             QNTRACE(QStringLiteral("Examing tag: ") << *tagIt);
 
@@ -983,7 +988,6 @@ qint32 FakeNoteStore::currentMaxUsn(const QString & linkedNotebookGuid) const
                                               !tagIt->hasLinkedNotebookGuid()) );
             if (!matchesByLinkedNotebook) {
                 QNTRACE(QStringLiteral("Skipping tag ") << *tagIt << QStringLiteral("\nAs it doesn't match by linked notebook"));
-                --tagIt;
                 continue;
             }
 
@@ -994,22 +998,18 @@ qint32 FakeNoteStore::currentMaxUsn(const QString & linkedNotebookGuid) const
             else {
                 QNTRACE(QStringLiteral("Skipping tag ") << *tagIt << QStringLiteral("\nAs its USN is no greater than max USN ") << maxUsn);
             }
-
-            --tagIt;
-            // break;
         }
     }
 
     const NotebookDataByUSN & notebookUsnIndex = m_notebooks.get<NotebookByUSN>();
     if (!notebookUsnIndex.empty())
     {
-        auto lastNotebookIt = notebookUsnIndex.end();
-        --lastNotebookIt;
-        auto preBeginNotebookIt = notebookUsnIndex.begin();
-        --preBeginNotebookIt;
-        auto notebookIt = lastNotebookIt;
-        while(notebookIt != preBeginNotebookIt)
+        auto notebookIt = notebookUsnIndex.end();
+        --notebookIt;
+        for(size_t notebookCounter = 0, numNotebooks = notebookUsnIndex.size(); notebookCounter < numNotebooks; ++notebookCounter, --notebookIt)
         {
+            QNTRACE(QStringLiteral("Examing notebook: ") << *notebookIt);
+
             bool matchesByLinkedNotebook = ( ( !linkedNotebookGuid.isEmpty() &&
                                                notebookIt->hasLinkedNotebookGuid() &&
                                                (notebookIt->linkedNotebookGuid() == linkedNotebookGuid) )
@@ -1018,20 +1018,16 @@ qint32 FakeNoteStore::currentMaxUsn(const QString & linkedNotebookGuid) const
                                               !notebookIt->hasLinkedNotebookGuid()) );
             if (!matchesByLinkedNotebook) {
                 QNTRACE(QStringLiteral("Skipping notebook ") << *notebookIt << QStringLiteral("\nAs it doesn't match by linked notebook"));
-                --notebookIt;
                 continue;
             }
 
             if (notebookIt->updateSequenceNumber() > maxUsn) {
                 maxUsn = notebookIt->updateSequenceNumber();
-                QNTRACE(QStringLiteral("Updated max USN to ") << maxUsn);
+                QNTRACE(QStringLiteral("Updated max USN to ") << maxUsn << QStringLiteral(" from notebook: ") << *notebookIt);
             }
             else {
                 QNTRACE(QStringLiteral("Skipping notebook ") << *notebookIt << QStringLiteral("\nAs its USN is no greater than max USN ") << maxUsn);
             }
-
-            --notebookIt;
-            // break;
         }
     }
 
@@ -1040,13 +1036,12 @@ qint32 FakeNoteStore::currentMaxUsn(const QString & linkedNotebookGuid) const
     {
         const NotebookDataByGuid & notebookGuidIndex = m_notebooks.get<NotebookByGuid>();
 
-        auto lastNoteIt = noteUsnIndex.end();
-        --lastNoteIt;
-        auto preBeginNoteIt = noteUsnIndex.begin();
-        --preBeginNoteIt;
-        auto noteIt = lastNoteIt;
-        while(noteIt != preBeginNoteIt)
+        auto noteIt = noteUsnIndex.end();
+        --noteIt;
+        for(size_t noteCounter = 0, numNotes = noteUsnIndex.size(); noteCounter < numNotes; ++noteCounter, --noteIt)
         {
+            QNTRACE(QStringLiteral("Examing note: ") << *noteIt);
+
             bool matchesByLinkedNotebook = false;
 
             auto notebookIt = notebookGuidIndex.find(noteIt->notebookGuid());
@@ -1062,37 +1057,33 @@ qint32 FakeNoteStore::currentMaxUsn(const QString & linkedNotebookGuid) const
 
             if (!matchesByLinkedNotebook) {
                 QNTRACE(QStringLiteral("Skipping note ") << *noteIt << QStringLiteral("\nAs it doesn't match by linked notebook"));
-                --noteIt;
                 continue;
             }
 
             if (noteIt->updateSequenceNumber() > maxUsn) {
                 maxUsn = noteIt->updateSequenceNumber();
-                QNTRACE(QStringLiteral("Updated max USN to ") << maxUsn);
+                QNTRACE(QStringLiteral("Updated max USN to ") << maxUsn << QStringLiteral(" from note: ") << *noteIt);
             }
             else {
                 QNTRACE(QStringLiteral("Skipping note ") << *noteIt << QStringLiteral("\nAs its USN is no greater than max USN ") << maxUsn);
             }
-
-            --noteIt;
-            // break;
         }
     }
 
     const ResourceDataByUSN & resourceUsnIndex = m_resources.get<ResourceByUSN>();
+
     if (!resourceUsnIndex.empty())
     {
         const NotebookDataByGuid & notebookGuidIndex = m_notebooks.get<NotebookByGuid>();
         const NoteDataByGuid & noteGuidIndex = m_notes.get<NoteByGuid>();
 
-        auto lastResourceIt = resourceUsnIndex.end();
-        --lastResourceIt;
-        auto preBeginResourceIt = resourceUsnIndex.begin();
-        --preBeginResourceIt;
-        auto resourceIt = lastResourceIt;
+        auto resourceIt = resourceUsnIndex.end();
+        --resourceIt;
 
-        while(resourceIt != preBeginResourceIt)
+        for(size_t resourceCounter = 0, numResources = resourceUsnIndex.size(); resourceCounter < numResources; ++resourceCounter, --resourceIt)
         {
+            QNTRACE(QStringLiteral("Examing resource: ") << *resourceIt);
+
             bool matchesByLinkedNotebook = false;
             auto noteIt = noteGuidIndex.find(resourceIt->noteGuid());
             if (noteIt != noteGuidIndex.end())
@@ -1111,20 +1102,16 @@ qint32 FakeNoteStore::currentMaxUsn(const QString & linkedNotebookGuid) const
 
             if (!matchesByLinkedNotebook) {
                 QNTRACE(QStringLiteral("Skipping resource ") << *resourceIt << QStringLiteral("\nAs it doesn't match by linked notebook"));
-                --resourceIt;
                 continue;
             }
 
             if (resourceIt->updateSequenceNumber() > maxUsn) {
                 maxUsn = resourceIt->updateSequenceNumber();
-                QNTRACE(QStringLiteral("Updated max USN to ") << maxUsn);
+                QNTRACE(QStringLiteral("Updated max USN to ") << maxUsn << QStringLiteral(" from resource: ") << *resourceIt);
             }
             else {
                 QNTRACE(QStringLiteral("Skipping resource ") << *resourceIt << QStringLiteral("\nAs its USN is no greater than max USN ") << maxUsn);
             }
-
-            --resourceIt;
-            // break;
         }
     }
 
@@ -1133,6 +1120,7 @@ qint32 FakeNoteStore::currentMaxUsn(const QString & linkedNotebookGuid) const
     {
         auto lastLinkedNotebookIt = linkedNotebookUsnIndex.end();
         --lastLinkedNotebookIt;
+        QNTRACE(QStringLiteral("Examing linked notebook ") << *lastLinkedNotebookIt);
         if (lastLinkedNotebookIt->updateSequenceNumber() > maxUsn) {
             maxUsn = lastLinkedNotebookIt->updateSequenceNumber();
             QNTRACE(QStringLiteral("Updated max USN from linked notebook to ") << maxUsn);
@@ -1664,6 +1652,9 @@ qint32 FakeNoteStore::getSyncChunk(const qint32 afterUSN, const qint32 maxEntrie
                                    qevercloud::SyncChunk & syncChunk, ErrorString & errorDescription,
                                    qint32 & rateLimitSeconds)
 {
+    QNDEBUG(QStringLiteral("FakeNoteStore::getSyncChunk: after USN = ") << afterUSN << QStringLiteral(", max entries = ")
+            << maxEntries << QStringLiteral(", filter = ") << filter);
+
     return getSyncChunkImpl(afterUSN, maxEntries, (afterUSN == 0), QString(), filter,
                             syncChunk, errorDescription, rateLimitSeconds);
 }
@@ -1704,6 +1695,7 @@ qint32 FakeNoteStore::getLinkedNotebookSyncChunk(const qevercloud::LinkedNoteboo
 {
     QNDEBUG(QStringLiteral("FakeNoteStore::getLinkedNotebookSyncChunk: linked notebook = ") << linkedNotebook
             << QStringLiteral("\nAfter USN = ") << afterUSN << QStringLiteral(", max entries = ") << maxEntries
+            << QStringLiteral(", linked notebook auth token = ") << linkedNotebookAuthToken
             << QStringLiteral(", full sync only = ") << (fullSyncOnly ? QStringLiteral("true") : QStringLiteral("false")));
 
     CHECK_API_RATE_LIMIT()
