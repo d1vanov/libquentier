@@ -18,6 +18,7 @@
 
 #include "SynchronizationManagerSignalsCatcher.h"
 #include <quentier/synchronization/SynchronizationManager.h>
+#include <quentier/logging/QuentierLogger.h>
 #include <QtTest/QtTest>
 
 namespace quentier {
@@ -198,6 +199,10 @@ void SynchronizationManagerSignalsCatcher::onSyncChunkDownloadProgress(qint32 hi
                                                                        qint32 highestServerUsn,
                                                                        qint32 lastPreviousUsn)
 {
+    QNDEBUG(QStringLiteral("SynchronizationManagerSignalsCatcher::onSyncChunkDownloadProgress: highest downloaded USN = ")
+            << highestDownloadedUsn << QStringLiteral(", highest server USN = ") << highestServerUsn
+            << QStringLiteral(", last previous USN = ") << lastPreviousUsn);
+
     SyncChunkDownloadProgress progress;
     progress.m_highestDownloadedUsn = highestDownloadedUsn;
     progress.m_highestServerUsn = highestServerUsn;
@@ -209,6 +214,11 @@ void SynchronizationManagerSignalsCatcher::onSyncChunkDownloadProgress(qint32 hi
 void SynchronizationManagerSignalsCatcher::onLinkedNotebookSyncChunkDownloadProgress(qint32 highestDownloadedUsn, qint32 highestServerUsn,
                                                                                      qint32 lastPreviousUsn, LinkedNotebook linkedNotebook)
 {
+    QNDEBUG(QStringLiteral("SynchronizationManagerSignalsCatcher::onLinkedNotebookSyncChunkDownloadProgress: highest downloaded USN = ")
+            << highestDownloadedUsn << QStringLiteral(", highest server USN = ") << highestServerUsn
+            << QStringLiteral(", last previous USN = ") << lastPreviousUsn << QStringLiteral(", linked notebook: ")
+            << linkedNotebook);
+
     QVERIFY2(linkedNotebook.hasGuid(), "Detected sync chunk download progress for a linked notebook without guid");
 
     SyncChunkDownloadProgress progress;

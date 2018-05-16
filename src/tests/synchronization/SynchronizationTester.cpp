@@ -434,7 +434,6 @@ void SynchronizationTester::testIncrementalSyncWithNewRemoteItemsWithLinkedNoteb
     checkIdentityOfLocalAndRemoteItems();
 }
 
-/*
 void SynchronizationTester::testIncrementalSyncWithModifiedRemoteItemsWithUserOwnDataOnly()
 {
     setUserOwnItemsToRemoteStorage();
@@ -478,13 +477,20 @@ void SynchronizationTester::testIncrementalSyncWithModifiedRemoteItemsWithUserOw
     CHECK_EXPECTED(receivedStartedSignal)
     CHECK_EXPECTED(receivedFinishedSignal)
     CHECK_EXPECTED(finishedSomethingDownloaded)
+
+    // NOTE: these are expected because the updates of remote resources intentionally
+    // trigger marking the notes owning these updated resources as dirty ones
+    // because otherwise it's kinda incosistent that resource was added or updated
+    // but its note still has old information about it
+    CHECK_EXPECTED(finishedSomethingSent)
+    CHECK_EXPECTED(receivedPreparedDirtyObjectsForSending)
+
     CHECK_EXPECTED(receivedRemoteToLocalSyncDone)
     CHECK_EXPECTED(remoteToLocalSyncDoneSomethingDownloaded)
     CHECK_EXPECTED(receivedSyncChunksDownloaded)
 
     CHECK_UNEXPECTED(receivedAuthenticationFinishedSignal)
     CHECK_UNEXPECTED(receivedStoppedSignal)
-    CHECK_UNEXPECTED(finishedSomethingSent)
     CHECK_UNEXPECTED(receivedAuthenticationRevokedSignal)
     CHECK_UNEXPECTED(receivedRemoteToLocalSyncStopped)
     CHECK_UNEXPECTED(receivedSendLocalChangedStopped)
@@ -492,13 +498,13 @@ void SynchronizationTester::testIncrementalSyncWithModifiedRemoteItemsWithUserOw
     CHECK_UNEXPECTED(receivedDetectedConflictDuringLocalChangesSending)
     CHECK_UNEXPECTED(receivedRateLimitExceeded)
     CHECK_UNEXPECTED(receivedLinkedNotebookSyncChunksDownloaded)
-    CHECK_UNEXPECTED(receivedPreparedDirtyObjectsForSending)
     CHECK_UNEXPECTED(receivedPreparedLinkedNotebookDirtyObjectsForSending)
 
     checkEventsOrder(catcher);
     checkIdentityOfLocalAndRemoteItems();
 }
 
+/*
 void SynchronizationTester::testIncrementalSyncWithModifiedRemoteItemsWithLinkedNotebooks()
 {
     setUserOwnItemsToRemoteStorage();
@@ -1097,10 +1103,15 @@ void SynchronizationTester::setModifiedUserOwnItemsToRemoteStorage()
     auto savedSearchesBegin = savedSearches.begin();
     auto savedSearchesEnd = savedSearches.end();
     auto savedSearchesMid = savedSearchesBegin + static_cast<int>(std::distance(savedSearchesBegin, savedSearchesEnd)) / 2;
-    for(auto it = savedSearchesBegin; it != savedSearchesMid; ++it) {
+    for(auto it = savedSearchesBegin; it != savedSearchesMid; ++it)
+    {
         it.value().name.ref() += QStringLiteral("_modified_remotely");
+
         SavedSearch search(it.value());
         search.setDirty(true);
+        search.setLocal(false);
+        search.setUpdateSequenceNumber(-1);
+
         res = m_pFakeNoteStore->setSavedSearch(search, errorDescription);
         QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
     }
@@ -1109,10 +1120,14 @@ void SynchronizationTester::setModifiedUserOwnItemsToRemoteStorage()
     auto linkedNotebooksBegin = linkedNotebooks.begin();
     auto linkedNotebooksEnd = linkedNotebooks.end();
     auto linkedNotebooksMid = linkedNotebooksBegin + static_cast<int>(std::distance(linkedNotebooksBegin, linkedNotebooksEnd) / 2);
-    for(auto it = linkedNotebooksBegin; it != linkedNotebooksMid; ++it) {
+    for(auto it = linkedNotebooksBegin; it != linkedNotebooksMid; ++it)
+    {
         it.value().shareName.ref() += QStringLiteral("_modified_remotely");
+
         LinkedNotebook linkedNotebook(it.value());
         linkedNotebook.setDirty(true);
+        linkedNotebook.setUpdateSequenceNumber(-1);
+
         res = m_pFakeNoteStore->setLinkedNotebook(linkedNotebook, errorDescription);
         QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
     }
@@ -1129,10 +1144,15 @@ void SynchronizationTester::setModifiedUserOwnItemsToRemoteStorage()
         }
 
         it.value().name.ref() += QStringLiteral("_modified_remotely");
+
         Tag tag(it.value());
         tag.setDirty(true);
+        tag.setLocal(false);
+        tag.setUpdateSequenceNumber(-1);
+
         res = m_pFakeNoteStore->setTag(tag, errorDescription);
         QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
+
         --tagsToModify;
         if (tagsToModify == 0) {
             break;
@@ -1154,8 +1174,12 @@ void SynchronizationTester::setModifiedUserOwnItemsToRemoteStorage()
         it.value().name.ref() += QStringLiteral("_modified_remotely");
         Notebook notebook(it.value());
         notebook.setDirty(true);
+        notebook.setLocal(false);
+        notebook.setUpdateSequenceNumber(-1);
+
         res = m_pFakeNoteStore->setNotebook(notebook, errorDescription);
         QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
+
         --notebooksToModify;
         if (notebooksToModify == 0) {
             break;
@@ -1174,34 +1198,20 @@ void SynchronizationTester::setModifiedUserOwnItemsToRemoteStorage()
             continue;
         }
 
+        if (it.value().resources.isSet()) {
+            continue;
+        }
+
         it.value().title.ref() += QStringLiteral("_modified_remotely");
+
         Note note(it.value());
         note.setDirty(true);
-
-        if (note.hasResources())
-        {
-            // Notes are stored in fake note store without resource binary data.
-            // However, when setNote is called on FakeNoteStore, it expects the note
-            // to contain full resource information, so need to put it into the note manually
-
-            QList<Resource> resources = note.resources();
-            for(auto resIt = resources.begin(), resEnd = resources.end(); resIt != resEnd; ++resIt)
-            {
-                Resource & resource = *resIt;
-
-                const Resource * pResource = m_pFakeNoteStore->findResource(resource.guid());
-                QVERIFY(pResource != Q_NULLPTR);
-
-                resource.setDataBody(pResource->dataBody());
-                resource.setDataSize(pResource->dataSize());
-                resource.setDataHash(pResource->dataHash());
-            }
-
-            note.setResources(resources);
-        }
+        note.setLocal(false);
+        note.setUpdateSequenceNumber(-1);
 
         res = m_pFakeNoteStore->setNote(note, errorDescription);
         QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
+
         --notesToModify;
         if (notesToModify == 0) {
             break;
@@ -1226,8 +1236,10 @@ void SynchronizationTester::setModifiedUserOwnItemsToRemoteStorage()
         it.value().data->body.ref() += QByteArray("_modified_remotely");
         it.value().data->size = it.value().data->body->size();
         it.value().data->bodyHash = QCryptographicHash::hash(it.value().data->body.ref(), QCryptographicHash::Md5);
+
         Resource resource(it.value());
         resource.setDirty(true);
+        resource.setLocal(false);
         resource.setUpdateSequenceNumber(-1);   // Clear USN to force the assignment of a new one by FakeNoteStore
 
         Note note(*pNote);
@@ -1240,6 +1252,9 @@ void SynchronizationTester::setModifiedUserOwnItemsToRemoteStorage()
             }
         }
         note.setResources(noteResources);
+        note.setDirty(false);
+        note.setLocal(false);
+        // NOTE: intentionally leaving the update sequence number to stay as it is within note
 
         res = m_pFakeNoteStore->setNote(note, errorDescription);
         QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));

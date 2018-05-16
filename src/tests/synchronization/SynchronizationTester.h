@@ -55,8 +55,8 @@ private Q_SLOTS:
     void testRemoteToLocalFullSyncWithLinkedNotebooks();
     void testIncrementalSyncWithNewRemoteItemsWithUserOwnDataOnly();
     void testIncrementalSyncWithNewRemoteItemsWithLinkedNotebooks();
-    /*
     void testIncrementalSyncWithModifiedRemoteItemsWithUserOwnDataOnly();
+    /*
     void testIncrementalSyncWithModifiedRemoteItemsWithLinkedNotebooks();
     void testIncrementalSyncWithModifiedAndNewRemoteItemsWithUserOwnDataOnly();
     void testIncrementalSyncWithModifiedAndNewRemoteItemsWithLinkedNotebooks();
