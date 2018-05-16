@@ -6451,7 +6451,7 @@ void RemoteToLocalSynchronizationManager::getFullResourceDataAsync(const Resourc
         }
 
         QObject::connect(pNoteStore, QNSIGNAL(INoteStore,getResourceAsyncFinished,qint32,qevercloud::Resource,qint32,ErrorString),
-                         this, QNSLOT(RemoteToLocalSynchronizationManager,onGetResourceAsyncFinished,qint32,qevercloud::Note,qint32,ErrorString),
+                         this, QNSLOT(RemoteToLocalSynchronizationManager,onGetResourceAsyncFinished,qint32,qevercloud::Resource,qint32,ErrorString),
                          Qt::ConnectionType(Qt::AutoConnection | Qt::UniqueConnection));
 
         QNDEBUG(QStringLiteral("Using INoteStore corresponding to linked notebook with guid ")
