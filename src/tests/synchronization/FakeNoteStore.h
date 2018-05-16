@@ -39,6 +39,7 @@
 #include <boost/bimap.hpp>
 #endif
 
+#include <QSharedPointer>
 #include <QSet>
 #include <QHash>
 #include <QQueue>
@@ -626,46 +627,55 @@ private:
                                                                 const QString & targetLinkedNotebookGuid = QString()) const;
 
 private:
-    SavedSearchData         m_savedSearches;
-    QSet<QString>           m_expungedSavedSearchGuids;
+    struct Data
+    {
+        Data();
 
-    TagData                 m_tags;
-    QSet<QString>           m_expungedTagGuids;
+        SavedSearchData         m_savedSearches;
+        QSet<QString>           m_expungedSavedSearchGuids;
 
-    NotebookData            m_notebooks;
-    QSet<QString>           m_expungedNotebookGuids;
+        TagData                 m_tags;
+        QSet<QString>           m_expungedTagGuids;
 
-    NoteData                m_notes;
-    QSet<QString>           m_expungedNoteGuids;
+        NotebookData            m_notebooks;
+        QSet<QString>           m_expungedNotebookGuids;
 
-    ResourceData            m_resources;
+        NoteData                m_notes;
+        QSet<QString>           m_expungedNoteGuids;
 
-    LinkedNotebookData      m_linkedNotebooks;
-    QSet<QString>           m_expungedLinkedNotebookGuids;
+        ResourceData            m_resources;
 
-    bool                    m_shouldTriggerRateLimitReachOnNextCall;
+        LinkedNotebookData      m_linkedNotebooks;
+        QSet<QString>           m_expungedLinkedNotebookGuids;
 
-    QSet<int>               m_getNoteAsyncDelayTimerIds;
-    QSet<int>               m_getResourceAsyncDelayTimerIds;
+        bool                    m_shouldTriggerRateLimitReachOnNextCall;
 
-    quint32                 m_maxNumSavedSearches;
-    quint32                 m_maxNumTags;
-    quint32                 m_maxNumNotebooks;
-    quint32                 m_maxNumNotes;
+        QSet<int>               m_getNoteAsyncDelayTimerIds;
+        QSet<int>               m_getResourceAsyncDelayTimerIds;
 
-    quint64                 m_maxNoteSize;
-    quint32                 m_maxNumResourcesPerNote;
-    quint32                 m_maxNumTagsPerNote;
-    quint64                 m_maxResourceSize;
+        quint32                 m_maxNumSavedSearches;
+        quint32                 m_maxNumTags;
+        quint32                 m_maxNumNotebooks;
+        quint32                 m_maxNumNotes;
 
-    qevercloud::SyncState   m_syncState;
-    QHash<QString,qevercloud::SyncState>    m_linkedNotebookSyncStates;
+        quint64                 m_maxNoteSize;
+        quint32                 m_maxNumResourcesPerNote;
+        quint32                 m_maxNumTagsPerNote;
+        quint64                 m_maxResourceSize;
 
-    QString                 m_authenticationToken;
-    QHash<QString,QString>  m_linkedNotebookAuthTokens;
+        qevercloud::SyncState   m_syncState;
+        QHash<QString,qevercloud::SyncState>    m_linkedNotebookSyncStates;
 
-    QQueue<GetNoteAsyncRequest>     m_getNoteAsyncRequests;
-    QQueue<GetResourceAsyncRequest> m_getResourceAsyncRequests;
+        QString                 m_authenticationToken;
+        QHash<QString,QString>  m_linkedNotebookAuthTokens;
+
+        QQueue<GetNoteAsyncRequest>     m_getNoteAsyncRequests;
+        QQueue<GetResourceAsyncRequest> m_getResourceAsyncRequests;
+    };
+
+    FakeNoteStore(const QSharedPointer<Data> & data);
+
+    QSharedPointer<Data>    m_data;
 };
 
 } // namespace quentier
