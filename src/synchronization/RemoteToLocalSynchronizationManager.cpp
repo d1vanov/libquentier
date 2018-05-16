@@ -3630,7 +3630,7 @@ void RemoteToLocalSynchronizationManager::launchSync()
 
     if (!resourcesSyncInProgress())
     {
-        launchResourcesSync();
+        launchResourcesSync(ContentSource::UserAccount);
 
         if (!m_resources.isEmpty() || resourcesSyncInProgress()) {
             QNDEBUG(QStringLiteral("Resources sync in progress"));
@@ -4607,7 +4607,7 @@ bool RemoteToLocalSynchronizationManager::notebooksSyncInProgress() const
                 << m_notebooks.size() << QStringLiteral(" notebooks pending processing and/or ")
                 << m_notebooksPendingAddOrUpdate.size() << QStringLiteral(" notebooks pending add or update within the local storage: pending ")
                 << m_addNotebookRequestIds.size() << QStringLiteral(" add notebook requests and/or ")
-                << m_updateNotebookRequestIds.size() << QStringLiteral(" update notebook request ids; ")
+                << m_updateNotebookRequestIds.size() << QStringLiteral(" update notebook requests and/or ")
                 << m_findNotebookByGuidRequestIds.size() << QStringLiteral(" find notebook by guid requests and/or ")
                 << m_findNotebookByNameRequestIds.size() << QStringLiteral(" find notebook by name requests and/or ")
                 << m_expungeNotebookRequestIds.size() << QStringLiteral(" expunge notebook requests"));
@@ -4615,7 +4615,13 @@ bool RemoteToLocalSynchronizationManager::notebooksSyncInProgress() const
     }
 
     QList<NotebookSyncConflictResolver*> notebookSyncConflictResolvers = findChildren<NotebookSyncConflictResolver*>();
-    return !notebookSyncConflictResolvers.isEmpty();
+    if (!notebookSyncConflictResolvers.isEmpty()) {
+        QNDEBUG(QStringLiteral("Notebooks sync is in progress: there are ") << notebookSyncConflictResolvers.size()
+                << QStringLiteral(" active notebook sync conflict resolvers"));
+        return true;
+    }
+
+    return false;
 }
 
 bool RemoteToLocalSynchronizationManager::tagsSyncInProgress() const
@@ -4629,28 +4635,60 @@ bool RemoteToLocalSynchronizationManager::tagsSyncInProgress() const
          !m_updateTagRequestIds.isEmpty() ||
          !m_expungeTagRequestIds.isEmpty()))
     {
+        QNDEBUG(QStringLiteral("Tags sync is in progress: there are ")
+                << m_tagsPendingProcessing.size() << QStringLiteral(" tags pending processing and/or ")
+                << m_tagsPendingAddOrUpdate.size() << QStringLiteral(" tags pending add or update within the local storage: pending ")
+                << m_addTagRequestIds.size() << QStringLiteral(" add tag requests and/or ")
+                << m_updateTagRequestIds.size() << QStringLiteral(" update tag requests and/or ")
+                << m_findTagByGuidRequestIds.size() << QStringLiteral(" find tag by guid requests and/or ")
+                << m_findTagByNameRequestIds.size() << QStringLiteral(" find tag by name requests and/or ")
+                << m_expungeTagRequestIds.size() << QStringLiteral(" expunge tag requests"));
         return true;
     }
 
     QList<TagSyncConflictResolver*> tagSyncConflictResolvers = findChildren<TagSyncConflictResolver*>();
-    return !tagSyncConflictResolvers.isEmpty();
+    if (!tagSyncConflictResolvers.isEmpty()) {
+        QNDEBUG(QStringLiteral("Tags sync is in progress: there are ") << tagSyncConflictResolvers.size()
+                << QStringLiteral(" active tag sync conflict resolvers"));
+        return true;
+    }
+
+    return false;
 }
 
 bool RemoteToLocalSynchronizationManager::notesSyncInProgress() const
 {
-    return (!m_notesPendingAddOrUpdate.isEmpty() ||
-            !m_findNoteByGuidRequestIds.isEmpty() ||
-            !m_addNoteRequestIds.isEmpty() ||
-            !m_updateNoteRequestIds.isEmpty() ||
-            !m_expungeNoteRequestIds.isEmpty() ||
-            !m_notesToAddPerAPICallPostponeTimerId.isEmpty() ||
-            !m_notesToUpdatePerAPICallPostponeTimerId.isEmpty() ||
-            !m_guidsOfNotesPendingDownloadForAddingToLocalStorage.isEmpty() ||
-            !m_notesPendingDownloadForUpdatingInLocalStorageByGuid.isEmpty() ||
-            !m_notesPendingInkNoteImagesDownloadByFindNotebookRequestId.isEmpty() ||
-            !m_notesPendingThumbnailDownloadByFindNotebookRequestId.isEmpty() ||
-            !m_notesPendingThumbnailDownloadByGuid.isEmpty() ||
-            !m_updateNoteWithThumbnailRequestIds.isEmpty());
+    if (!m_notesPendingAddOrUpdate.isEmpty() ||
+        !m_findNoteByGuidRequestIds.isEmpty() ||
+        !m_addNoteRequestIds.isEmpty() ||
+        !m_updateNoteRequestIds.isEmpty() ||
+        !m_expungeNoteRequestIds.isEmpty() ||
+        !m_notesToAddPerAPICallPostponeTimerId.isEmpty() ||
+        !m_notesToUpdatePerAPICallPostponeTimerId.isEmpty() ||
+        !m_guidsOfNotesPendingDownloadForAddingToLocalStorage.isEmpty() ||
+        !m_notesPendingDownloadForUpdatingInLocalStorageByGuid.isEmpty() ||
+        !m_notesPendingInkNoteImagesDownloadByFindNotebookRequestId.isEmpty() ||
+        !m_notesPendingThumbnailDownloadByFindNotebookRequestId.isEmpty() ||
+        !m_notesPendingThumbnailDownloadByGuid.isEmpty() ||
+        !m_updateNoteWithThumbnailRequestIds.isEmpty())
+    {
+        QNDEBUG(QStringLiteral("Notes sync is in progress: there are ")
+                << m_notesPendingAddOrUpdate.size() << QStringLiteral(" notes pending add or update within the local storage: pending ")
+                << m_addNoteRequestIds.size() << QStringLiteral(" add note requests and/or ")
+                << m_updateNoteRequestIds.size() << QStringLiteral(" update note requests and/or ")
+                << m_findNoteByGuidRequestIds.size() << QStringLiteral(" find note by guid requests and/or ")
+                << m_notesToAddPerAPICallPostponeTimerId.size() << QStringLiteral(" notes pending addition due to rate API limits and/or ")
+                << m_notesToUpdatePerAPICallPostponeTimerId.size() << QStringLiteral(" notes pending update due to rate API limits and/or ")
+                << m_guidsOfNotesPendingDownloadForAddingToLocalStorage.size() << QStringLiteral(" notes pending download for adding to the local storage and/or ")
+                << m_notesPendingDownloadForUpdatingInLocalStorageByGuid.size() << QStringLiteral(" notes pending download for updating in the local stroage and/or ")
+                << m_notesPendingInkNoteImagesDownloadByFindNotebookRequestId.size() << QStringLiteral(" notes pending ink note image download and/or ")
+                << (m_notesPendingThumbnailDownloadByFindNotebookRequestId.size() + m_notesPendingThumbnailDownloadByGuid.size())
+                << QStringLiteral(" notes pending thumbnail download and/or ")
+                << m_updateNoteWithThumbnailRequestIds.size() << QStringLiteral(" update note with thumbnail requests"));
+        return true;
+    }
+
+    return false;
 }
 
 bool RemoteToLocalSynchronizationManager::resourcesSyncInProgress() const
@@ -4691,39 +4729,52 @@ void RemoteToLocalSynchronizationManager::checkNotebooksAndTagsSyncCompletionAnd
 {
     QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::checkNotebooksAndTagsSyncCompletionAndLaunchNotesAndResourcesSync"));
 
-    if (!m_pendingNotebooksSyncStart && !notebooksSyncInProgress() &&
-        !m_pendingTagsSyncStart && !tagsSyncInProgress())
+    if (m_pendingNotebooksSyncStart) {
+        QNDEBUG(QStringLiteral("Still pending notebook sync start"));
+        return;
+    }
+
+    if (m_pendingTagsSyncStart) {
+        QNDEBUG(QStringLiteral("Still pending tags sync start"));
+        return;
+    }
+
+    if (notebooksSyncInProgress() || tagsSyncInProgress()) {
+        return;
+    }
+
+    ContentSource::type contentSource = (syncingLinkedNotebooksContent()
+                                         ? ContentSource::LinkedNotebook
+                                         : ContentSource::UserAccount);
+
+    launchNotesSync(contentSource);
+
+    if (notesSyncInProgress()) {
+        return;
+    }
+
+    // If we got here, there are no notes to sync but there might be resources to sync
+
+    if (m_lastSyncMode != SyncMode::IncrementalSync)
     {
-        launchNotesSync(syncingLinkedNotebooksContent()
-                        ? ContentSource::LinkedNotebook
-                        : ContentSource::UserAccount);
+        /**
+         * NOTE: during the full sync the individual resources are not synced,
+         * instead the full note contents including the resources are synced.
+         *
+         * That works both for the content from user's own account and for the stuff
+         * from linked notebooks: the sync of linked notebooks' content might be
+         * full while the last sync of user's own content is incremental
+         * but in this case there won't be resources within the synch chunk
+         * downloaded for that linked notebook so there's no real problem with us
+         * not getting inside this if block when syncing stuff from the linked
+         * notebooks
+         */
+        QNDEBUG(QStringLiteral("The last sync mode is not incremental, won't launch the sync of resources"));
+        return;
+    }
 
-        if (notesSyncInProgress()) {
-            return;
-        }
-
-        // If we got here, there are no notes to sync but there might be resources to sync
-
-        if (m_lastSyncMode != SyncMode::IncrementalSync)
-        {
-            /**
-             * NOTE: during the full sync the individual resources are not synced,
-             * instead the full note contents including the resources are synced.
-             *
-             * That works both for the content from user's own account and for the stuff
-             * from linked notebooks: the sync of linked notebooks' content might be
-             * full while the last sync of user's own content is incremental
-             * but in this case there won't be resources within the synch chunk
-             * downloaded for that linked notebook so there's no real problem with us
-             * not getting inside this if block when syncing stuff from the linked
-             * notebooks
-             */
-            return;
-        }
-
-        if (!resourcesSyncInProgress()) {
-            launchResourcesSync();
-        }
+    if (!resourcesSyncInProgress()) {
+        launchResourcesSync(contentSource);
     }
 }
 
@@ -4750,6 +4801,7 @@ void RemoteToLocalSynchronizationManager::checkNotesSyncCompletionAndLaunchResou
          * not getting inside this if block when syncing stuff from the linked
          * notebooks
          */
+        QNDEBUG(QStringLiteral("Sync is not incremental, won't launch resources sync"));
         return;
     }
 
@@ -4757,15 +4809,17 @@ void RemoteToLocalSynchronizationManager::checkNotesSyncCompletionAndLaunchResou
         !m_pendingTagsSyncStart && !tagsSyncInProgress() &&
         !notesSyncInProgress() && !resourcesSyncInProgress())
     {
-        launchResourcesSync();
+        launchResourcesSync(syncingLinkedNotebooksContent()
+                            ? ContentSource::LinkedNotebook
+                            : ContentSource::UserAccount);
     }
 }
 
-void RemoteToLocalSynchronizationManager::launchResourcesSync()
+void RemoteToLocalSynchronizationManager::launchResourcesSync(const ContentSource::type & contentSource)
 {
-    QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::launchResourcesSync"));
+    QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::launchResourcesSync: content source = ") << contentSource);
     QList<QString> dummyList;
-    launchDataElementSync<ResourcesList, Resource>(ContentSource::UserAccount, QStringLiteral("Resource"), m_resources, dummyList);
+    launchDataElementSync<ResourcesList, Resource>(contentSource, QStringLiteral("Resource"), m_resources, dummyList);
 }
 
 void RemoteToLocalSynchronizationManager::checkLinkedNotebooksSyncAndLaunchLinkedNotebookContentSync()

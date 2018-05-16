@@ -470,7 +470,7 @@ private:
     void launchNotesSync(const ContentSource::type & contentSource);
 
     void checkNotesSyncCompletionAndLaunchResourcesSync();
-    void launchResourcesSync();
+    void launchResourcesSync(const ContentSource::type & contentSource);
 
     // Helpers launching the sync of content from someone else's shared notebooks, to be used
     // when LinkedNotebook representing pointers to content from someone else's account are in sync
