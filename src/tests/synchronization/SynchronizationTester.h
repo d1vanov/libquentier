@@ -114,6 +114,26 @@ private:
     FakeKeychainService *           m_pFakeKeychainService;
     SynchronizationManager *        m_pSynchronizationManager;
     bool                            m_detectedTestFailure;
+
+    /**
+     * Struct containing a collection of guids of data items (remote or local)
+     * which are to be used in incremental sync tests checking how the sync
+     * handles modifications of exisging data items on local or remote side.
+     * Using the particular set of items to modify is important for making
+     * the tests reproducible.
+     */
+    struct GuidsOfItemsToModifyForSyncTest
+    {
+        QStringList     m_savedSearchGuids;
+        QStringList     m_linkedNotebookGuids;
+        QStringList     m_tagGuids;
+        QStringList     m_notebookGuids;
+        QStringList     m_noteGuids;
+        QStringList     m_resourceGuids;
+    };
+
+    GuidsOfItemsToModifyForSyncTest     m_guidsOfUsersOwnRemoteItemsToModify;
+    GuidsOfItemsToModifyForSyncTest     m_guidsOfLinkedNotebookRemoteItemsToModify;
 };
 
 } // namespace test

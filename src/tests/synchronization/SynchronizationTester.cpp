@@ -82,7 +82,9 @@ SynchronizationTester::SynchronizationTester(QObject * parent) :
     m_pFakeAuthenticationManager(Q_NULLPTR),
     m_pFakeKeychainService(Q_NULLPTR),
     m_pSynchronizationManager(Q_NULLPTR),
-    m_detectedTestFailure(false)
+    m_detectedTestFailure(false),
+    m_guidsOfUsersOwnRemoteItemsToModify(),
+    m_guidsOfLinkedNotebookRemoteItemsToModify()
 {}
 
 SynchronizationTester::~SynchronizationTester()
@@ -787,6 +789,8 @@ void SynchronizationTester::setUserOwnItemsToRemoteStorage()
     ErrorString errorDescription;
     bool res = false;
 
+    m_guidsOfUsersOwnRemoteItemsToModify = GuidsOfItemsToModifyForSyncTest();
+
     SavedSearch firstSearch;
     firstSearch.setGuid(UidGenerator::Generate());
     firstSearch.setName(QStringLiteral("First saved search"));
@@ -808,6 +812,9 @@ void SynchronizationTester::setUserOwnItemsToRemoteStorage()
     res = m_pFakeNoteStore->setSavedSearch(thirdSearch, errorDescription);
     QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
 
+    m_guidsOfUsersOwnRemoteItemsToModify.m_savedSearchGuids << firstSearch.guid();
+    m_guidsOfUsersOwnRemoteItemsToModify.m_savedSearchGuids << secondSearch.guid();
+
     Tag firstTag;
     firstTag.setGuid(UidGenerator::Generate());
     firstTag.setName(QStringLiteral("First tag"));
@@ -826,6 +833,9 @@ void SynchronizationTester::setUserOwnItemsToRemoteStorage()
     thirdTag.setName(QStringLiteral("Third tag"));
     res = m_pFakeNoteStore->setTag(thirdTag, errorDescription);
     QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
+
+    m_guidsOfUsersOwnRemoteItemsToModify.m_tagGuids << firstTag.guid();
+    m_guidsOfUsersOwnRemoteItemsToModify.m_tagGuids << secondTag.guid();
 
     Notebook firstNotebook;
     firstNotebook.setGuid(UidGenerator::Generate());
@@ -847,6 +857,9 @@ void SynchronizationTester::setUserOwnItemsToRemoteStorage()
     thirdNotebook.setDefaultNotebook(false);
     res = m_pFakeNoteStore->setNotebook(thirdNotebook, errorDescription);
     QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
+
+    m_guidsOfUsersOwnRemoteItemsToModify.m_notebookGuids << firstNotebook.guid();
+    m_guidsOfUsersOwnRemoteItemsToModify.m_notebookGuids << secondNotebook.guid();
 
     Note firstNote;
     firstNote.setGuid(UidGenerator::Generate());
@@ -894,6 +907,8 @@ void SynchronizationTester::setUserOwnItemsToRemoteStorage()
     thirdNoteFirstResource.setDataHash(QCryptographicHash::hash(thirdNoteFirstResource.dataBody(), QCryptographicHash::Md5));
     thirdNote.addResource(thirdNoteFirstResource);
 
+    m_guidsOfUsersOwnRemoteItemsToModify.m_resourceGuids << thirdNoteFirstResource.guid();
+
     res = m_pFakeNoteStore->setNote(thirdNote, errorDescription);
     QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
 
@@ -920,12 +935,17 @@ void SynchronizationTester::setUserOwnItemsToRemoteStorage()
     fifthNote.setModificationTimestamp(fifthNote.creationTimestamp());
     res = m_pFakeNoteStore->setNote(fifthNote, errorDescription);
     QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
+
+    m_guidsOfUsersOwnRemoteItemsToModify.m_noteGuids << firstNote.guid();
+    m_guidsOfUsersOwnRemoteItemsToModify.m_noteGuids << secondNote.guid();
 }
 
 void SynchronizationTester::setLinkedNotebookItemsToRemoteStorage()
 {
     ErrorString errorDescription;
     bool res = false;
+
+    m_guidsOfLinkedNotebookRemoteItemsToModify = GuidsOfItemsToModifyForSyncTest();
 
     LinkedNotebook firstLinkedNotebook;
     firstLinkedNotebook.setGuid(UidGenerator::Generate());
@@ -962,6 +982,9 @@ void SynchronizationTester::setLinkedNotebookItemsToRemoteStorage()
     res = m_pFakeNoteStore->setLinkedNotebook(thirdLinkedNotebook, errorDescription);
     QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
     m_pFakeNoteStore->setLinkedNotebookAuthToken(thirdLinkedNotebook.username(), UidGenerator::Generate());
+
+    m_guidsOfLinkedNotebookRemoteItemsToModify.m_linkedNotebookGuids << firstLinkedNotebook.guid();
+    m_guidsOfLinkedNotebookRemoteItemsToModify.m_linkedNotebookGuids << secondLinkedNotebook.guid();
 
     Tag firstLinkedNotebookFirstTag;
     firstLinkedNotebookFirstTag.setGuid(UidGenerator::Generate());
@@ -1006,6 +1029,9 @@ void SynchronizationTester::setLinkedNotebookItemsToRemoteStorage()
     res = m_pFakeNoteStore->setTag(thirdLinkedNotebookFirstTag, errorDescription);
     QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
 
+    m_guidsOfLinkedNotebookRemoteItemsToModify.m_tagGuids << firstLinkedNotebookFirstTag.guid();
+    m_guidsOfLinkedNotebookRemoteItemsToModify.m_tagGuids << firstLinkedNotebookSecondTag.guid();
+
     Notebook firstNotebook;
     firstNotebook.setGuid(UidGenerator::Generate());
     firstNotebook.setName(QStringLiteral("First linked notebook"));
@@ -1029,6 +1055,9 @@ void SynchronizationTester::setLinkedNotebookItemsToRemoteStorage()
     thirdNotebook.setLinkedNotebookGuid(thirdLinkedNotebook.guid());
     res = m_pFakeNoteStore->setNotebook(thirdNotebook, errorDescription);
     QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
+
+    m_guidsOfLinkedNotebookRemoteItemsToModify.m_notebookGuids << firstNotebook.guid();
+    m_guidsOfLinkedNotebookRemoteItemsToModify.m_notebookGuids << secondNotebook.guid();
 
     Note firstNote;
     firstNote.setGuid(UidGenerator::Generate());
@@ -1078,6 +1107,8 @@ void SynchronizationTester::setLinkedNotebookItemsToRemoteStorage()
     thirdNoteFirstResource.setDataHash(QCryptographicHash::hash(thirdNoteFirstResource.dataBody(), QCryptographicHash::Md5));
     thirdNote.addResource(thirdNoteFirstResource);
 
+    m_guidsOfLinkedNotebookRemoteItemsToModify.m_resourceGuids << thirdNoteFirstResource.guid();
+
     res = m_pFakeNoteStore->setNote(thirdNote, errorDescription);
     QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
 
@@ -1105,6 +1136,9 @@ void SynchronizationTester::setLinkedNotebookItemsToRemoteStorage()
     fifthNote.addTagGuid(thirdLinkedNotebookFirstTag.guid());
     res = m_pFakeNoteStore->setNote(fifthNote, errorDescription);
     QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
+
+    m_guidsOfLinkedNotebookRemoteItemsToModify.m_noteGuids << firstNote.guid();
+    m_guidsOfLinkedNotebookRemoteItemsToModify.m_noteGuids << fourthNote.guid();
 }
 
 void SynchronizationTester::setModifiedUserOwnItemsToRemoteStorage()
