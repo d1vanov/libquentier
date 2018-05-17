@@ -504,7 +504,6 @@ void SynchronizationTester::testIncrementalSyncWithModifiedRemoteItemsWithUserOw
     checkIdentityOfLocalAndRemoteItems();
 }
 
-/*
 void SynchronizationTester::testIncrementalSyncWithModifiedRemoteItemsWithLinkedNotebooks()
 {
     setUserOwnItemsToRemoteStorage();
@@ -576,6 +575,7 @@ void SynchronizationTester::testIncrementalSyncWithModifiedRemoteItemsWithLinked
     checkIdentityOfLocalAndRemoteItems();
 }
 
+/*
 void SynchronizationTester::testIncrementalSyncWithModifiedAndNewRemoteItemsWithUserOwnDataOnly()
 {
     setUserOwnItemsToRemoteStorage();
