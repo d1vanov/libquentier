@@ -239,7 +239,7 @@ void SynchronizationTester::testRemoteToLocalFullSyncWithUserOwnDataOnly()
     CHECK_UNEXPECTED(receivedPreparedDirtyObjectsForSending)
     CHECK_UNEXPECTED(receivedPreparedLinkedNotebookDirtyObjectsForSending)
 
-    checkEventsOrder(catcher);
+    checkProgressNotificationsOrder(catcher);
     checkIdentityOfLocalAndRemoteItems();
 }
 
@@ -300,7 +300,7 @@ void SynchronizationTester::testRemoteToLocalFullSyncWithLinkedNotebooks()
     CHECK_UNEXPECTED(receivedPreparedDirtyObjectsForSending)
     CHECK_UNEXPECTED(receivedPreparedLinkedNotebookDirtyObjectsForSending)
 
-    checkEventsOrder(catcher);
+    checkProgressNotificationsOrder(catcher);
     checkIdentityOfLocalAndRemoteItems();
 }
 
@@ -364,7 +364,7 @@ void SynchronizationTester::testIncrementalSyncWithNewRemoteItemsWithUserOwnData
     CHECK_UNEXPECTED(receivedPreparedDirtyObjectsForSending)
     CHECK_UNEXPECTED(receivedPreparedLinkedNotebookDirtyObjectsForSending)
 
-    checkEventsOrder(catcher);
+    checkProgressNotificationsOrder(catcher);
     checkIdentityOfLocalAndRemoteItems();
 }
 
@@ -430,7 +430,7 @@ void SynchronizationTester::testIncrementalSyncWithNewRemoteItemsWithLinkedNoteb
     CHECK_UNEXPECTED(receivedPreparedDirtyObjectsForSending)
     CHECK_UNEXPECTED(receivedPreparedLinkedNotebookDirtyObjectsForSending)
 
-    checkEventsOrder(catcher);
+    checkProgressNotificationsOrder(catcher);
     checkIdentityOfLocalAndRemoteItems();
 }
 
@@ -500,7 +500,7 @@ void SynchronizationTester::testIncrementalSyncWithModifiedRemoteItemsWithUserOw
     CHECK_UNEXPECTED(receivedLinkedNotebookSyncChunksDownloaded)
     CHECK_UNEXPECTED(receivedPreparedLinkedNotebookDirtyObjectsForSending)
 
-    checkEventsOrder(catcher);
+    checkProgressNotificationsOrder(catcher);
     checkIdentityOfLocalAndRemoteItems();
 }
 
@@ -571,7 +571,7 @@ void SynchronizationTester::testIncrementalSyncWithModifiedRemoteItemsWithLinked
     CHECK_UNEXPECTED(receivedDetectedConflictDuringLocalChangesSending)
     CHECK_UNEXPECTED(receivedRateLimitExceeded)
 
-    checkEventsOrder(catcher);
+    checkProgressNotificationsOrder(catcher);
     checkIdentityOfLocalAndRemoteItems();
 }
 
@@ -641,7 +641,7 @@ void SynchronizationTester::testIncrementalSyncWithModifiedAndNewRemoteItemsWith
     CHECK_UNEXPECTED(receivedLinkedNotebookSyncChunksDownloaded)
     CHECK_UNEXPECTED(receivedPreparedLinkedNotebookDirtyObjectsForSending)
 
-    checkEventsOrder(catcher);
+    checkProgressNotificationsOrder(catcher);
     checkIdentityOfLocalAndRemoteItems();
 }
 
@@ -714,7 +714,7 @@ void SynchronizationTester::testIncrementalSyncWithModifiedAndNewRemoteItemsWith
     CHECK_UNEXPECTED(receivedDetectedConflictDuringLocalChangesSending)
     CHECK_UNEXPECTED(receivedRateLimitExceeded)
 
-    checkEventsOrder(catcher);
+    checkProgressNotificationsOrder(catcher);
     checkIdentityOfLocalAndRemoteItems();
 }
 
@@ -778,7 +778,7 @@ void SynchronizationTester::testIncrementalSyncWithNewLocalItemsWithUserOwnDataO
     CHECK_UNEXPECTED(receivedLinkedNotebookSyncChunksDownloaded)
     CHECK_UNEXPECTED(receivedPreparedLinkedNotebookDirtyObjectsForSending)
 
-    checkEventsOrder(catcher);
+    checkProgressNotificationsOrder(catcher);
     checkIdentityOfLocalAndRemoteItems();
 }
 
@@ -2160,7 +2160,7 @@ void SynchronizationTester::setRemoteStorageSyncStateToPersistentSyncSettings()
     appSettings.endArray();
 }
 
-void SynchronizationTester::checkEventsOrder(const SynchronizationManagerSignalsCatcher & catcher)
+void SynchronizationTester::checkProgressNotificationsOrder(const SynchronizationManagerSignalsCatcher & catcher)
 {
     ErrorString errorDescription;
     if (!catcher.checkSyncChunkDownloadProgressOrder(errorDescription)) {

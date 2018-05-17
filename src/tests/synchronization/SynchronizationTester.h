@@ -86,7 +86,7 @@ private:
 
     void setRemoteStorageSyncStateToPersistentSyncSettings();
 
-    void checkEventsOrder(const SynchronizationManagerSignalsCatcher & catcher);
+    void checkProgressNotificationsOrder(const SynchronizationManagerSignalsCatcher & catcher);
     void checkIdentityOfLocalAndRemoteItems();
 
     void listSavedSearchesFromLocalStorage(const qint32 afterUSN,
