@@ -575,7 +575,6 @@ void SynchronizationTester::testIncrementalSyncWithModifiedRemoteItemsWithLinked
     checkIdentityOfLocalAndRemoteItems();
 }
 
-/*
 void SynchronizationTester::testIncrementalSyncWithModifiedAndNewRemoteItemsWithUserOwnDataOnly()
 {
     setUserOwnItemsToRemoteStorage();
@@ -624,9 +623,15 @@ void SynchronizationTester::testIncrementalSyncWithModifiedAndNewRemoteItemsWith
     CHECK_EXPECTED(remoteToLocalSyncDoneSomethingDownloaded)
     CHECK_EXPECTED(receivedSyncChunksDownloaded)
 
+    // NOTE: these are expected because the updates of remote resources intentionally
+    // trigger marking the notes owning these updated resources as dirty ones
+    // because otherwise it's kinda incosistent that resource was added or updated
+    // but its note still has old information about it
+    CHECK_EXPECTED(finishedSomethingSent)
+    CHECK_EXPECTED(receivedPreparedDirtyObjectsForSending)
+
     CHECK_UNEXPECTED(receivedAuthenticationFinishedSignal)
     CHECK_UNEXPECTED(receivedStoppedSignal)
-    CHECK_UNEXPECTED(finishedSomethingSent)
     CHECK_UNEXPECTED(receivedAuthenticationRevokedSignal)
     CHECK_UNEXPECTED(receivedRemoteToLocalSyncStopped)
     CHECK_UNEXPECTED(receivedSendLocalChangedStopped)
@@ -634,7 +639,6 @@ void SynchronizationTester::testIncrementalSyncWithModifiedAndNewRemoteItemsWith
     CHECK_UNEXPECTED(receivedDetectedConflictDuringLocalChangesSending)
     CHECK_UNEXPECTED(receivedRateLimitExceeded)
     CHECK_UNEXPECTED(receivedLinkedNotebookSyncChunksDownloaded)
-    CHECK_UNEXPECTED(receivedPreparedDirtyObjectsForSending)
     CHECK_UNEXPECTED(receivedPreparedLinkedNotebookDirtyObjectsForSending)
 
     checkEventsOrder(catcher);
@@ -693,22 +697,28 @@ void SynchronizationTester::testIncrementalSyncWithModifiedAndNewRemoteItemsWith
     CHECK_EXPECTED(receivedSyncChunksDownloaded)
     CHECK_EXPECTED(receivedLinkedNotebookSyncChunksDownloaded)
 
+    // NOTE: these are expected because the updates of remote resources intentionally
+    // trigger marking the notes owning these updated resources as dirty ones
+    // because otherwise it's kinda incosistent that resource was added or updated
+    // but its note still has old information about it
+    CHECK_EXPECTED(finishedSomethingSent)
+    CHECK_EXPECTED(receivedPreparedDirtyObjectsForSending)
+    CHECK_EXPECTED(receivedPreparedLinkedNotebookDirtyObjectsForSending)
+
     CHECK_UNEXPECTED(receivedAuthenticationFinishedSignal)
     CHECK_UNEXPECTED(receivedStoppedSignal)
-    CHECK_UNEXPECTED(finishedSomethingSent)
     CHECK_UNEXPECTED(receivedAuthenticationRevokedSignal)
     CHECK_UNEXPECTED(receivedRemoteToLocalSyncStopped)
     CHECK_UNEXPECTED(receivedSendLocalChangedStopped)
     CHECK_UNEXPECTED(receivedWillRepeatRemoteToLocalSyncAfterSendingChanges)
     CHECK_UNEXPECTED(receivedDetectedConflictDuringLocalChangesSending)
     CHECK_UNEXPECTED(receivedRateLimitExceeded)
-    CHECK_UNEXPECTED(receivedPreparedDirtyObjectsForSending)
-    CHECK_UNEXPECTED(receivedPreparedLinkedNotebookDirtyObjectsForSending)
 
     checkEventsOrder(catcher);
     checkIdentityOfLocalAndRemoteItems();
 }
 
+/*
 void SynchronizationTester::testIncrementalSyncWithNewLocalItemsWithUserOwnDataOnly()
 {
     setUserOwnItemsToRemoteStorage();
