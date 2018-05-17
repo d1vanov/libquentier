@@ -718,7 +718,6 @@ void SynchronizationTester::testIncrementalSyncWithModifiedAndNewRemoteItemsWith
     checkIdentityOfLocalAndRemoteItems();
 }
 
-/*
 void SynchronizationTester::testIncrementalSyncWithNewLocalItemsWithUserOwnDataOnly()
 {
     setUserOwnItemsToRemoteStorage();
@@ -782,7 +781,6 @@ void SynchronizationTester::testIncrementalSyncWithNewLocalItemsWithUserOwnDataO
     checkEventsOrder(catcher);
     checkIdentityOfLocalAndRemoteItems();
 }
-*/
 
 void SynchronizationTester::setUserOwnItemsToRemoteStorage()
 {
