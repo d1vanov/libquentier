@@ -186,6 +186,7 @@ RemoteToLocalSynchronizationManager::RemoteToLocalSynchronizationManager(IManage
     m_notebookSyncCache(m_manager.localStorageManagerAsync(), QStringLiteral("")),
     m_notebookSyncCachesByLinkedNotebookGuids(),
     m_linkedNotebookGuidsByNotebookGuids(),
+    m_linkedNotebookGuidsByResourceGuids(),
     m_notes(),
     m_notesPendingAddOrUpdate(),
     m_originalNumberOfNotes(0),
@@ -4925,6 +4926,26 @@ bool RemoteToLocalSynchronizationManager::mapContainerElementsWithLinkedNotebook
 }
 
 template <>
+bool RemoteToLocalSynchronizationManager::mapContainerElementsWithLinkedNotebookGuid<RemoteToLocalSynchronizationManager::ResourcesList>(const QString & linkedNotebookGuid,
+                                                                                                                                         const RemoteToLocalSynchronizationManager::ResourcesList & resources)
+{
+    for(auto it = resources.constBegin(), end = resources.constEnd(); it != end; ++it)
+    {
+        const qevercloud::Resource & resource = *it;
+        if (!resource.guid.isSet()) {
+            ErrorString error(QT_TR_NOOP("Can't map resource to a linked notebook: resource has no guid"));
+            QNWARNING(error << QStringLiteral(", resource: ") << resource);
+            Q_EMIT failure(error);
+            return false;
+        }
+
+        m_linkedNotebookGuidsByResourceGuids[resource.guid.ref()] = linkedNotebookGuid;
+    }
+
+    return true;
+}
+
+template <>
 void RemoteToLocalSynchronizationManager::unmapContainerElementsFromLinkedNotebookGuid<qevercloud::Tag>(const QList<QString> & tagGuids)
 {
     typedef QList<QString>::const_iterator CIter;
@@ -5426,6 +5447,14 @@ bool RemoteToLocalSynchronizationManager::downloadLinkedNotebooksSyncChunks()
                 }
             }
 
+            if (pSyncChunk->resources.isSet())
+            {
+                bool res = mapContainerElementsWithLinkedNotebookGuid<ResourcesList>(linkedNotebookGuid, pSyncChunk->resources.ref());
+                if (!res) {
+                    return false;
+                }
+            }
+
             if (pSyncChunk->expungedTags.isSet()) {
                 unmapContainerElementsFromLinkedNotebookGuid<qevercloud::Tag>(pSyncChunk->expungedTags.ref());
             }
@@ -5892,6 +5921,7 @@ void RemoteToLocalSynchronizationManager::clear()
     m_notebookSyncCachesByLinkedNotebookGuids.clear();
 
     m_linkedNotebookGuidsByNotebookGuids.clear();
+    m_linkedNotebookGuidsByResourceGuids.clear();
 
     m_notes.clear();
     m_originalNumberOfNotes = 0;
@@ -6363,17 +6393,8 @@ void RemoteToLocalSynchronizationManager::getFullResourceDataAsync(const Resourc
 
     if (!resource.hasGuid()) {
         ErrorString errorDescription(QT_TR_NOOP("Detected the attempt to get full resource's data for a resource without guid"));
-        QNWARNING(errorDescription << QStringLiteral("; resource: ") << resource
-                  << QStringLiteral("\nResource owning note: ") << resourceOwningNote);
-        Q_EMIT failure(errorDescription);
-        return;
-    }
-
-    if (!resourceOwningNote.hasNotebookGuid()) {
-        ErrorString errorDescription(QT_TR_NOOP("Detected the attempt to get full resource's data for a resource which owning note "
-                                                "has no notebook guid set"));
-        APPEND_NOTE_DETAILS(errorDescription, resourceOwningNote)
-        QNWARNING(errorDescription << QStringLiteral("; resource: ") << resource
+        APPEND_NOTE_DETAILS(errorDescription, resourceOwningNote);
+        QNWARNING(errorDescription << QStringLiteral("\nResource: ") << resource
                   << QStringLiteral("\nResource owning note: ") << resourceOwningNote);
         Q_EMIT failure(errorDescription);
         return;
@@ -6384,10 +6405,10 @@ void RemoteToLocalSynchronizationManager::getFullResourceDataAsync(const Resourc
 
     QString authToken;
     INoteStore * pNoteStore = Q_NULLPTR;
-    auto linkedNotebookGuidIt = m_linkedNotebookGuidsByNotebookGuids.find(resourceOwningNote.notebookGuid());
-    if (linkedNotebookGuidIt == m_linkedNotebookGuidsByNotebookGuids.end())
+    auto linkedNotebookGuidIt = m_linkedNotebookGuidsByResourceGuids.find(resource.guid());
+    if (linkedNotebookGuidIt == m_linkedNotebookGuidsByResourceGuids.end())
     {
-        QNDEBUG(QStringLiteral("Found no linked notebook corresponding to notebook guid ") << resourceOwningNote.notebookGuid()
+        QNDEBUG(QStringLiteral("Found no linked notebook corresponding to resource with guid ") << resource.guid()
                 << QStringLiteral(", using the note store for the user's own account"));
         pNoteStore = &(m_manager.noteStore());
         authToken = m_authenticationToken;
@@ -7234,10 +7255,6 @@ qint32 RemoteToLocalSynchronizationManager::nonProcessedItemsSmallestUsn(const Q
         // need to make it explicit here in order to reuse the macro
         QHash<QString,QString> linkedNotebookGuidsByNoteGuids;
 
-        // The mapping between linked notebook guids and resource guids is implicit, now through note guid;
-        // need to make it explicit here in order to reuse the macro
-        QHash<QString,QString> linkedNotebookGuidsByResourceGuids;
-
         bool syncingNotes = notesSyncInProgress();
         if (syncingNotebooks || syncingTags || syncingNotes)
         {
@@ -7283,50 +7300,6 @@ qint32 RemoteToLocalSynchronizationManager::nonProcessedItemsSmallestUsn(const Q
 
                 linkedNotebookGuidsByNoteGuids[note.guid.ref()] = linkedNotebookGuidIt.value();
             }
-
-            ResourcesList localResourcesList;
-            if (syncingNotes)
-            {
-                // That means the sync of resources hasn't started yet so the resources are still within the sync chunks
-                for(auto it = m_linkedNotebookSyncChunks.constBegin(), end = m_linkedNotebookSyncChunks.constEnd(); it != end; ++it)
-                {
-                    const qevercloud::SyncChunk & syncChunk = *it;
-                    if (!syncChunk.resources.isSet()) {
-                        continue;
-                    }
-
-                    localResourcesList << syncChunk.resources.ref();
-                }
-            }
-            else
-            {
-                // The sync of resources has already started so the pending resources are in either of two containers
-                localResourcesList << m_resources;
-                localResourcesList << m_resourcesPendingAddOrUpdate;
-            }
-
-            for(auto resourceIt = localResourcesList.constBegin(), resourcesEnd = localResourcesList.constEnd();
-                resourceIt != resourcesEnd; ++resourceIt)
-            {
-                const qevercloud::Resource & resource = *resourceIt;
-                if (Q_UNLIKELY(!resource.guid.isSet())) {
-                    QNWARNING(QStringLiteral("Skipping resource without guid: ") << resource);
-                    continue;
-                }
-
-                if (Q_UNLIKELY(!resource.noteGuid.isSet())) {
-                    QNWARNING(QStringLiteral("Skipping resource without note guid: ") << resource);
-                    continue;
-                }
-
-                auto linkedNotebookGuidIt = linkedNotebookGuidsByNoteGuids.find(resource.noteGuid.ref());
-                if (linkedNotebookGuidIt == linkedNotebookGuidsByNoteGuids.end()) {
-                    QNTRACE(QStringLiteral("Skipping resource without linked notebook mapping: ") << resource);
-                    continue;
-                }
-
-                linkedNotebookGuidsByResourceGuids[resource.guid.ref()] = linkedNotebookGuidIt.value();
-            }
         }
 
         if (syncingNotebooks || syncingTags)
@@ -7358,13 +7331,13 @@ qint32 RemoteToLocalSynchronizationManager::nonProcessedItemsSmallestUsn(const Q
                     continue;
                 }
 
-                PROCESS_CONTAINER(syncChunk.resources.ref(), linkedNotebookGuidsByResourceGuids)
+                PROCESS_CONTAINER(syncChunk.resources.ref(), m_linkedNotebookGuidsByResourceGuids)
             }
         }
         else
         {
-            PROCESS_CONTAINER(m_resources, linkedNotebookGuidsByResourceGuids)
-            PROCESS_CONTAINER(m_resourcesPendingAddOrUpdate, linkedNotebookGuidsByResourceGuids)
+            PROCESS_CONTAINER(m_resources, m_linkedNotebookGuidsByResourceGuids)
+            PROCESS_CONTAINER(m_resourcesPendingAddOrUpdate, m_linkedNotebookGuidsByResourceGuids)
         }
     }
 

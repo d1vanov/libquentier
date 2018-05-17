@@ -766,6 +766,7 @@ private:
     QMap<QString, NotebookSyncCache*>       m_notebookSyncCachesByLinkedNotebookGuids;
 
     QHash<QString,QString>                  m_linkedNotebookGuidsByNotebookGuids;
+    QHash<QString,QString>                  m_linkedNotebookGuidsByResourceGuids;
 
     NotesList                               m_notes;
     NotesList                               m_notesPendingAddOrUpdate;
