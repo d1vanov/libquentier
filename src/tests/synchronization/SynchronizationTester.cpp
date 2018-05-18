@@ -1146,171 +1146,126 @@ void SynchronizationTester::setModifiedUserOwnItemsToRemoteStorage()
     ErrorString errorDescription;
     bool res = false;
 
-    QHash<QString,qevercloud::SavedSearch> savedSearches = m_pFakeNoteStore->savedSearches();
-    auto savedSearchesBegin = savedSearches.begin();
-    auto savedSearchesEnd = savedSearches.end();
-    auto savedSearchesMid = savedSearchesBegin + static_cast<int>(std::distance(savedSearchesBegin, savedSearchesEnd)) / 2;
-    for(auto it = savedSearchesBegin; it != savedSearchesMid; ++it)
+    QVERIFY(!m_guidsOfUsersOwnRemoteItemsToModify.m_savedSearchGuids.isEmpty());
+    for(auto it = m_guidsOfUsersOwnRemoteItemsToModify.m_savedSearchGuids.constBegin(),
+        end = m_guidsOfUsersOwnRemoteItemsToModify.m_savedSearchGuids.constEnd(); it != end; ++it)
     {
-        it.value().name.ref() += QStringLiteral("_modified_remotely");
+        const SavedSearch * pSavedSearch = m_pFakeNoteStore->findSavedSearch(*it);
+        QVERIFY2(pSavedSearch != Q_NULLPTR, "Detected unexpectedly missing saved search in fake note store");
 
-        SavedSearch search(it.value());
-        search.setDirty(true);
-        search.setLocal(false);
-        search.setUpdateSequenceNumber(-1);
+        SavedSearch modifiedSavedSearch(*pSavedSearch);
+        modifiedSavedSearch.setName(modifiedSavedSearch.name() + QStringLiteral("_modified_remotely"));
+        modifiedSavedSearch.setDirty(true);
+        modifiedSavedSearch.setLocal(false);
+        modifiedSavedSearch.setUpdateSequenceNumber(-1);
 
-        res = m_pFakeNoteStore->setSavedSearch(search, errorDescription);
+        res = m_pFakeNoteStore->setSavedSearch(modifiedSavedSearch, errorDescription);
         QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
     }
 
-    QHash<QString,qevercloud::LinkedNotebook> linkedNotebooks = m_pFakeNoteStore->linkedNotebooks();
-    auto linkedNotebooksBegin = linkedNotebooks.begin();
-    auto linkedNotebooksEnd = linkedNotebooks.end();
-    auto linkedNotebooksMid = linkedNotebooksBegin + static_cast<int>(std::distance(linkedNotebooksBegin, linkedNotebooksEnd) / 2);
-    for(auto it = linkedNotebooksBegin; it != linkedNotebooksMid; ++it)
+    QVERIFY(!m_guidsOfUsersOwnRemoteItemsToModify.m_tagGuids.isEmpty());
+    for(auto it = m_guidsOfUsersOwnRemoteItemsToModify.m_tagGuids.constBegin(),
+        end = m_guidsOfUsersOwnRemoteItemsToModify.m_tagGuids.constEnd(); it != end; ++it)
     {
-        it.value().shareName.ref() += QStringLiteral("_modified_remotely");
+        const Tag * pTag = m_pFakeNoteStore->findTag(*it);
+        QVERIFY2(pTag != Q_NULLPTR, "Detected unexpectedly missing tag in fake note store");
+        QVERIFY2(!pTag->hasLinkedNotebookGuid(), "Detected broken test condition - the tag was supposed to be user's own one has linked notebook guid");
 
-        LinkedNotebook linkedNotebook(it.value());
-        linkedNotebook.setDirty(true);
-        linkedNotebook.setUpdateSequenceNumber(-1);
+        Tag modifiedTag(*pTag);
+        modifiedTag.setName(modifiedTag.name() + QStringLiteral("_modified_remotely"));
+        modifiedTag.setDirty(true);
+        modifiedTag.setLocal(false);
+        modifiedTag.setUpdateSequenceNumber(-1);
 
-        res = m_pFakeNoteStore->setLinkedNotebook(linkedNotebook, errorDescription);
+        res = m_pFakeNoteStore->setTag(modifiedTag, errorDescription);
         QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
     }
 
-    QHash<QString,qevercloud::Tag> tags = m_pFakeNoteStore->tags();
-    size_t tagsToModify = 2;
-    for(auto it = tags.begin(), end = tags.end(); it != end; ++it)
+    QVERIFY(!m_guidsOfUsersOwnRemoteItemsToModify.m_notebookGuids.isEmpty());
+    for(auto it = m_guidsOfUsersOwnRemoteItemsToModify.m_notebookGuids.constBegin(),
+        end = m_guidsOfUsersOwnRemoteItemsToModify.m_notebookGuids.constEnd(); it != end; ++it)
     {
-        const Tag * pTag = m_pFakeNoteStore->findTag(it.value().guid.ref());
-        QVERIFY2(pTag != Q_NULLPTR, "Unexpected null pointer to tag in FakeNoteStore");
+        const Notebook * pNotebook = m_pFakeNoteStore->findNotebook(*it);
+        QVERIFY2(pNotebook != Q_NULLPTR, "Detected unexpectedly missing notebook in fake note store");
+        QVERIFY2(!pNotebook->hasLinkedNotebookGuid(), "Detected broken test condition - the notebook was supposed to be user's own has linked notebook guid");
 
-        if (pTag->hasLinkedNotebookGuid()) {
-            continue;
-        }
+        Notebook modifiedNotebook(*pNotebook);
+        modifiedNotebook.setName(modifiedNotebook.name() + QStringLiteral("_modified_remotely"));
+        modifiedNotebook.setDirty(true);
+        modifiedNotebook.setLocal(false);
+        modifiedNotebook.setUpdateSequenceNumber(-1);
 
-        it.value().name.ref() += QStringLiteral("_modified_remotely");
-
-        Tag tag(it.value());
-        tag.setDirty(true);
-        tag.setLocal(false);
-        tag.setUpdateSequenceNumber(-1);
-
-        res = m_pFakeNoteStore->setTag(tag, errorDescription);
+        res = m_pFakeNoteStore->setNotebook(modifiedNotebook, errorDescription);
         QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
-
-        --tagsToModify;
-        if (tagsToModify == 0) {
-            break;
-        }
     }
-    QVERIFY2(tagsToModify == 0, "Wasn't able to modify as many tags as required");
 
-    QHash<QString,qevercloud::Notebook> notebooks = m_pFakeNoteStore->notebooks();
-    size_t notebooksToModify = 2;
-    for(auto it = notebooks.begin(), end = notebooks.end(); it != end; ++it)
+    QVERIFY(!m_guidsOfUsersOwnRemoteItemsToModify.m_noteGuids.isEmpty());
+    for(auto it = m_guidsOfUsersOwnRemoteItemsToModify.m_noteGuids.constBegin(),
+        end = m_guidsOfUsersOwnRemoteItemsToModify.m_noteGuids.constEnd(); it != end; ++it)
     {
-        const Notebook * pNotebook = m_pFakeNoteStore->findNotebook(it.value().guid.ref());
-        QVERIFY2(pNotebook != Q_NULLPTR, "Unexpected null pointer to notebook in FakeNoteStore");
-
-        if (pNotebook->hasLinkedNotebookGuid()) {
-            continue;
-        }
-
-        it.value().name.ref() += QStringLiteral("_modified_remotely");
-        Notebook notebook(it.value());
-        notebook.setDirty(true);
-        notebook.setLocal(false);
-        notebook.setUpdateSequenceNumber(-1);
-
-        res = m_pFakeNoteStore->setNotebook(notebook, errorDescription);
-        QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
-
-        --notebooksToModify;
-        if (notebooksToModify == 0) {
-            break;
-        }
-    }
-    QVERIFY2(notebooksToModify == 0, "Wasn't able to modify as many notebooks as required");
-
-    QHash<QString,qevercloud::Note> notes = m_pFakeNoteStore->notes();
-    size_t notesToModify = 2;
-    for(auto it = notes.begin(), end = notes.end(); it != end; ++it)
-    {
-        const Notebook * pNotebook = m_pFakeNoteStore->findNotebook(it.value().notebookGuid.ref());
-        QVERIFY2(pNotebook != Q_NULLPTR, "Unexpected null pointer to notebook in FakeNoteStore");
-
-        if (pNotebook->hasLinkedNotebookGuid()) {
-            continue;
-        }
-
-        if (it.value().resources.isSet()) {
-            continue;
-        }
-
-        it.value().title.ref() += QStringLiteral("_modified_remotely");
-
-        Note note(it.value());
-        note.setDirty(true);
-        note.setLocal(false);
-        note.setUpdateSequenceNumber(-1);
-
-        res = m_pFakeNoteStore->setNote(note, errorDescription);
-        QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
-
-        --notesToModify;
-        if (notesToModify == 0) {
-            break;
-        }
-    }
-    QVERIFY2(notesToModify == 0, "Wasn't able to modify as many notes as required");
-
-    QHash<QString,qevercloud::Resource> resources = m_pFakeNoteStore->resources();
-    size_t resourcesToModify = 1;
-    for(auto it = resources.begin(), end = resources.end(); it != end; ++it)
-    {
-        const Note * pNote = m_pFakeNoteStore->findNote(it.value().noteGuid.ref());
-        QVERIFY2(pNote != Q_NULLPTR, "Unexpected null pointer to note in FakeNoteStore");
+        const Note * pNote = m_pFakeNoteStore->findNote(*it);
+        QVERIFY2(pNote != Q_NULLPTR, "Detected unexpectedly missing note in fake note store");
+        QVERIFY2(pNote->hasNotebookGuid(), "Detected note without notebook guid in fake note store");
+        QVERIFY2(!pNote->hasResources(), "Detected broken test condition - the note to be modified is not supposed to contain resources");
+        QVERIFY2(pNote->hasTitle(), "Detected note without title in fake note store");
 
         const Notebook * pNotebook = m_pFakeNoteStore->findNotebook(pNote->notebookGuid());
-        QVERIFY2(pNotebook != Q_NULLPTR, "Unexpected null pointer to notebook in FakeNoteStore");
+        QVERIFY2(pNotebook != Q_NULLPTR, "Detected unexpectedly mising notebook in fake note store");
+        QVERIFY2(!pNotebook->hasLinkedNotebookGuid(), "Detected broken test condition - the note was supposed to be user's own belongs to a notebook which has linked notebook guid");
 
-        if (pNotebook->hasLinkedNotebookGuid()) {
-            continue;
-        }
+        Note modifiedNote(*pNote);
+        modifiedNote.setTitle(modifiedNote.title() + QStringLiteral("_modified_remotely"));
+        modifiedNote.setDirty(true);
+        modifiedNote.setLocal(false);
+        modifiedNote.setUpdateSequenceNumber(-1);
 
-        it.value().data->body.ref() += QByteArray("_modified_remotely");
-        it.value().data->size = it.value().data->body->size();
-        it.value().data->bodyHash = QCryptographicHash::hash(it.value().data->body.ref(), QCryptographicHash::Md5);
+        res = m_pFakeNoteStore->setNote(modifiedNote, errorDescription);
+        QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
+    }
 
-        Resource resource(it.value());
-        resource.setDirty(true);
-        resource.setLocal(false);
-        resource.setUpdateSequenceNumber(-1);
+    QVERIFY(!m_guidsOfUsersOwnRemoteItemsToModify.m_resourceGuids.isEmpty());
+    for(auto it = m_guidsOfUsersOwnRemoteItemsToModify.m_resourceGuids.constBegin(),
+        end = m_guidsOfUsersOwnRemoteItemsToModify.m_resourceGuids.constEnd(); it != end; ++it)
+    {
+        const Resource * pResource = m_pFakeNoteStore->findResource(*it);
+        QVERIFY2(pResource != Q_NULLPTR, "Detected unexpectedly missing resource in fake note store");
+        QVERIFY2(pResource->hasNoteGuid(), "Detected resource without note guid in fake note store");
+        QVERIFY2(pResource->hasDataBody(), "Detected resource without data body in fake note store");
 
-        Note note(*pNote);
-        QList<Resource> noteResources = note.resources();
+        const Note * pNote = m_pFakeNoteStore->findNote(pResource->noteGuid());
+        QVERIFY2(pNote != Q_NULLPTR, "Detected unexpectedly missing note in fake note store");
+        QVERIFY2(pNote->hasNotebookGuid(), "Detected note without notebook guid in fake note store");
+        QVERIFY2(pNote->hasResources(), "Detected broken test condition - the resource's note doesn't have resources in fake note store");
+
+        const Notebook * pNotebook = m_pFakeNoteStore->findNotebook(pNote->notebookGuid());
+        QVERIFY2(pNotebook != Q_NULLPTR, "Detected unexpectedly mising notebook in fake note store");
+        QVERIFY2(!pNotebook->hasLinkedNotebookGuid(), "Detected broken test condition - the note was supposed to be user's own belongs to a notebook which has linked notebook guid");
+
+        Resource modifiedResource(*pResource);
+        modifiedResource.setDataBody(modifiedResource.dataBody() + QByteArray("_modified_remotely"));
+        modifiedResource.setDataSize(modifiedResource.dataBody().size());
+        modifiedResource.setDataHash(QCryptographicHash::hash(modifiedResource.dataBody(), QCryptographicHash::Md5));
+        modifiedResource.setDirty(true);
+        modifiedResource.setLocal(false);
+        modifiedResource.setUpdateSequenceNumber(-1);
+
+        Note modifiedNote(*pNote);
+        QList<Resource> noteResources = modifiedNote.resources();
         for(auto resIt = noteResources.begin(), resEnd = noteResources.end(); resIt != resEnd; ++resIt)
         {
-            if (resIt->guid() == resource.guid()) {
-                *resIt = resource;
+            if (resIt->guid() == modifiedResource.guid()) {
+                *resIt = modifiedResource;
                 break;
             }
         }
-        note.setResources(noteResources);
-        note.setDirty(false);
-        note.setLocal(false);
+        modifiedNote.setResources(noteResources);
+        modifiedNote.setDirty(true);
+        modifiedNote.setLocal(false);
         // NOTE: intentionally leaving the update sequence number to stay as it is within note
 
-        res = m_pFakeNoteStore->setNote(note, errorDescription);
+        res = m_pFakeNoteStore->setNote(modifiedNote, errorDescription);
         QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
-        --resourcesToModify;
-        if (resourcesToModify == 0) {
-            break;
-        }
     }
-    QVERIFY2(resourcesToModify == 0, "Wasn't able to modify as many resources as required");
 }
 
 void SynchronizationTester::setModifiedLinkedNotebookItemsToRemoteStorage()
@@ -1318,26 +1273,38 @@ void SynchronizationTester::setModifiedLinkedNotebookItemsToRemoteStorage()
     ErrorString errorDescription;
     bool res = false;
 
-    QHash<QString,qevercloud::Tag> tags = m_pFakeNoteStore->tags();
-    size_t tagsToModify = 2;
-    for(auto it = tags.begin(), end = tags.end(); it != end; ++it)
+    QVERIFY(!m_guidsOfLinkedNotebookRemoteItemsToModify.m_linkedNotebookGuids.isEmpty());
+    for(auto it = m_guidsOfLinkedNotebookRemoteItemsToModify.m_linkedNotebookGuids.constBegin(),
+        end = m_guidsOfLinkedNotebookRemoteItemsToModify.m_linkedNotebookGuids.constEnd(); it != end; ++it)
     {
-        const Tag * pTag = m_pFakeNoteStore->findTag(it.value().guid.ref());
-        QVERIFY2(pTag != Q_NULLPTR, "Unexpected null pointer to tag in FakeNoteStore");
+        const LinkedNotebook * pLinkedNotebook = m_pFakeNoteStore->findLinkedNotebook(*it);
+        QVERIFY2(pLinkedNotebook != Q_NULLPTR, "Detected unexpectedly missing linked notebook in fake note store");
+        QVERIFY2(pLinkedNotebook->hasShareName(), "Detected linked notebook without share name in fake note store");
 
-        if (!pTag->hasLinkedNotebookGuid()) {
-            continue;
-        }
+        LinkedNotebook modifiedLinkedNotebook(*pLinkedNotebook);
+        modifiedLinkedNotebook.setShareName(modifiedLinkedNotebook.shareName() + QStringLiteral("_modified_remotely"));
+        modifiedLinkedNotebook.setDirty(true);
+        modifiedLinkedNotebook.setUpdateSequenceNumber(-1);
 
-        it.value().name.ref() += QStringLiteral("_modified_remotely");
+        res = m_pFakeNoteStore->setLinkedNotebook(modifiedLinkedNotebook, errorDescription);
+        QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
+    }
 
-        Tag tag(it.value());
-        tag.setDirty(true);
-        tag.setLocal(false);
-        tag.setLinkedNotebookGuid(pTag->linkedNotebookGuid());
-        tag.setUpdateSequenceNumber(-1);
+    QVERIFY(!m_guidsOfLinkedNotebookRemoteItemsToModify.m_tagGuids.isEmpty());
+    for(auto it = m_guidsOfLinkedNotebookRemoteItemsToModify.m_tagGuids.constBegin(),
+        end = m_guidsOfLinkedNotebookRemoteItemsToModify.m_tagGuids.constEnd(); it != end; ++it)
+    {
+        const Tag * pTag = m_pFakeNoteStore->findTag(*it);
+        QVERIFY2(pTag != Q_NULLPTR, "Detected unexpectedly missing linked notebook's tag in fake note store");
+        QVERIFY2(pTag->hasLinkedNotebookGuid(), "Detected broken test condition - the tag was supposed to belong to a linked notebook but it doesn't");
 
-        res = m_pFakeNoteStore->setTag(tag, errorDescription);
+        Tag modifiedTag(*pTag);
+        modifiedTag.setName(modifiedTag.name() + QStringLiteral("_modified_remotely"));
+        modifiedTag.setDirty(true);
+        modifiedTag.setLocal(false);
+        modifiedTag.setUpdateSequenceNumber(-1);
+
+        res = m_pFakeNoteStore->setTag(modifiedTag, errorDescription);
         QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
 
         // Need to update the linked notebook's sync state
@@ -1350,34 +1317,23 @@ void SynchronizationTester::setModifiedLinkedNotebookItemsToRemoteStorage()
         const LinkedNotebook * pLinkedNotebook = m_pFakeNoteStore->findLinkedNotebook(pTag->linkedNotebookGuid());
         QVERIFY(pLinkedNotebook != Q_NULLPTR);
         m_pFakeNoteStore->setLinkedNotebookSyncState(pLinkedNotebook->username(), syncState);
-
-        --tagsToModify;
-        if (tagsToModify == 0) {
-            break;
-        }
     }
-    QVERIFY2(tagsToModify == 0, "Wasn't able to modify as many tags as required");
 
-    QHash<QString,qevercloud::Notebook> notebooks = m_pFakeNoteStore->notebooks();
-    size_t notebooksToModify = 2;
-    for(auto it = notebooks.begin(), end = notebooks.end(); it != end; ++it)
+    QVERIFY(!m_guidsOfLinkedNotebookRemoteItemsToModify.m_notebookGuids.isEmpty());
+    for(auto it = m_guidsOfLinkedNotebookRemoteItemsToModify.m_notebookGuids.constBegin(),
+        end = m_guidsOfLinkedNotebookRemoteItemsToModify.m_notebookGuids.constEnd(); it != end; ++it)
     {
-        const Notebook * pNotebook = m_pFakeNoteStore->findNotebook(it.value().guid.ref());
-        QVERIFY2(pNotebook != Q_NULLPTR, "Unexpected null pointer to notebook in FakeNoteStore");
+        const Notebook * pNotebook = m_pFakeNoteStore->findNotebook(*it);
+        QVERIFY2(pNotebook != Q_NULLPTR, "Detected unexpectedly missing linked notebook's notebook in fake note store");
+        QVERIFY2(pNotebook->hasLinkedNotebookGuid(), "Detected broken test condition - the notebook supposed to belong to a linked notebook but it doesn't");
 
-        if (!pNotebook->hasLinkedNotebookGuid()) {
-            continue;
-        }
+        Notebook modifiedNotebook(*pNotebook);
+        modifiedNotebook.setName(modifiedNotebook.name() + QStringLiteral("_modified_remotely"));
+        modifiedNotebook.setDirty(true);
+        modifiedNotebook.setLocal(false);
+        modifiedNotebook.setUpdateSequenceNumber(-1);
 
-        it.value().name.ref() += QStringLiteral("_modified_remotely");
-
-        Notebook notebook(it.value());
-        notebook.setDirty(true);
-        notebook.setLocal(false);
-        notebook.setLinkedNotebookGuid(pNotebook->linkedNotebookGuid());
-        notebook.setUpdateSequenceNumber(-1);
-
-        res = m_pFakeNoteStore->setNotebook(notebook, errorDescription);
+        res = m_pFakeNoteStore->setNotebook(modifiedNotebook, errorDescription);
         QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
 
         // Need to update the linked notebook's sync state
@@ -1390,95 +1346,84 @@ void SynchronizationTester::setModifiedLinkedNotebookItemsToRemoteStorage()
         const LinkedNotebook * pLinkedNotebook = m_pFakeNoteStore->findLinkedNotebook(pNotebook->linkedNotebookGuid());
         QVERIFY(pLinkedNotebook != Q_NULLPTR);
         m_pFakeNoteStore->setLinkedNotebookSyncState(pLinkedNotebook->username(), syncState);
-
-        --notebooksToModify;
-        if (notebooksToModify == 0) {
-            break;
-        }
     }
-    QVERIFY2(notebooksToModify == 0, "Wasn't able to modify as many notebooks as required");
 
-    QHash<QString,qevercloud::Note> notes = m_pFakeNoteStore->notes();
-    size_t notesToModify = 2;
-    for(auto it = notes.begin(), end = notes.end(); it != end; ++it)
+    QVERIFY(!m_guidsOfLinkedNotebookRemoteItemsToModify.m_noteGuids.isEmpty());
+    for(auto it = m_guidsOfLinkedNotebookRemoteItemsToModify.m_noteGuids.constBegin(),
+        end = m_guidsOfLinkedNotebookRemoteItemsToModify.m_noteGuids.constEnd(); it != end; ++it)
     {
-        const Notebook * pNotebook = m_pFakeNoteStore->findNotebook(it.value().notebookGuid.ref());
-        QVERIFY2(pNotebook != Q_NULLPTR, "Unexpected null pointer to notebook in FakeNoteStore");
-
-        if (!pNotebook->hasLinkedNotebookGuid()) {
-            continue;
-        }
-
-        if (it.value().resources.isSet()) {
-            continue;
-        }
-
-        it.value().title.ref() += QStringLiteral("_modified_remotely");
-
-        Note note(it.value());
-        note.setDirty(true);
-        note.setLocal(false);
-        note.setUpdateSequenceNumber(-1);
-
-        res = m_pFakeNoteStore->setNote(note, errorDescription);
-        QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
-
-        // Need to update the linked notebook's sync state
-        qevercloud::SyncState syncState;
-        syncState.currentTime = QDateTime::currentMSecsSinceEpoch();
-        syncState.fullSyncBefore = QDateTime::currentDateTime().addMonths(-1).toMSecsSinceEpoch();
-        syncState.uploaded = 42;
-        syncState.updateCount = m_pFakeNoteStore->currentMaxUsn(pNotebook->linkedNotebookGuid());
-
-        const LinkedNotebook * pLinkedNotebook = m_pFakeNoteStore->findLinkedNotebook(pNotebook->linkedNotebookGuid());
-        QVERIFY(pLinkedNotebook != Q_NULLPTR);
-        m_pFakeNoteStore->setLinkedNotebookSyncState(pLinkedNotebook->username(), syncState);
-
-        --notesToModify;
-        if (notesToModify == 0) {
-            break;
-        }
-    }
-    QVERIFY2(notesToModify == 0, "Wasn't able to modify as many notes as required");
-
-    QHash<QString,qevercloud::Resource> resources = m_pFakeNoteStore->resources();
-    size_t resourcesToModify = 1;
-    for(auto it = resources.begin(), end = resources.end(); it != end; ++it)
-    {
-        const Note * pNote = m_pFakeNoteStore->findNote(it.value().noteGuid.ref());
-        QVERIFY2(pNote != Q_NULLPTR, "Unexpected null pointer to note in FakeNoteStore");
+        const Note * pNote = m_pFakeNoteStore->findNote(*it);
+        QVERIFY2(pNote != Q_NULLPTR, "Detected unexpectedly missing linked notebook's note in fake note store");
+        QVERIFY2(pNote->hasNotebookGuid(), "Detected note without notebook guid in fake note store");
+        QVERIFY2(!pNote->hasResources(), "Detected broken test condition - the note to be modified was not supposed to contain resources");
+        QVERIFY2(pNote->hasTitle(), "Detected note without title in fake note store");
 
         const Notebook * pNotebook = m_pFakeNoteStore->findNotebook(pNote->notebookGuid());
-        QVERIFY2(pNotebook != Q_NULLPTR, "Unexpected null pointer to notebook in FakeNoteStore");
+        QVERIFY2(pNotebook != Q_NULLPTR, "Detected unexpectedly missing linked notebook's note's notebook in fake note store");
+        QVERIFY2(pNotebook->hasLinkedNotebookGuid(), "Detected broken test condition - the note was supposed to belong to a linked notebook but it doesn't");
 
-        if (!pNotebook->hasLinkedNotebookGuid()) {
-            continue;
-        }
+        Note modifiedNote(*pNote);
+        modifiedNote.setTitle(modifiedNote.title() + QStringLiteral("_modified_remotely"));
+        modifiedNote.setDirty(true);
+        modifiedNote.setLocal(false);
+        modifiedNote.setUpdateSequenceNumber(-1);
 
-        it.value().data->body.ref() += QByteArray("_modified_remotely");
-        it.value().data->size = it.value().data->body->size();
-        it.value().data->bodyHash = QCryptographicHash::hash(it.value().data->body.ref(), QCryptographicHash::Md5);
+        res = m_pFakeNoteStore->setNote(modifiedNote, errorDescription);
+        QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
 
-        Resource resource(it.value());
-        resource.setDirty(true);
-        resource.setLocal(false);
-        resource.setUpdateSequenceNumber(-1);
+        // Need to update the linked notebook's sync state
+        qevercloud::SyncState syncState;
+        syncState.currentTime = QDateTime::currentMSecsSinceEpoch();
+        syncState.fullSyncBefore = QDateTime::currentDateTime().addMonths(-1).toMSecsSinceEpoch();
+        syncState.uploaded = 42;
+        syncState.updateCount = m_pFakeNoteStore->currentMaxUsn(pNotebook->linkedNotebookGuid());
 
-        Note note(*pNote);
-        QList<Resource> noteResources = note.resources();
+        const LinkedNotebook * pLinkedNotebook = m_pFakeNoteStore->findLinkedNotebook(pNotebook->linkedNotebookGuid());
+        QVERIFY(pLinkedNotebook != Q_NULLPTR);
+        m_pFakeNoteStore->setLinkedNotebookSyncState(pLinkedNotebook->username(), syncState);
+    }
+
+    QVERIFY(!m_guidsOfLinkedNotebookRemoteItemsToModify.m_resourceGuids.isEmpty());
+    for(auto it = m_guidsOfLinkedNotebookRemoteItemsToModify.m_resourceGuids.constBegin(),
+        end = m_guidsOfLinkedNotebookRemoteItemsToModify.m_resourceGuids.constEnd(); it != end; ++it)
+    {
+        const Resource * pResource = m_pFakeNoteStore->findResource(*it);
+        QVERIFY2(pResource != Q_NULLPTR, "Detected unexpectedly missing linked notebook's resource in fake note store");
+        QVERIFY2(pResource->hasNoteGuid(), "Detected resource without note guid in fake note store");
+        QVERIFY2(pResource->hasDataBody(), "Detected resource without data body in fake note store");
+
+        const Note * pNote = m_pFakeNoteStore->findNote(pResource->noteGuid());
+        QVERIFY2(pNote != Q_NULLPTR, "Detected unexpectedly missing linked notebook's note in fake note store");
+        QVERIFY2(pNote->hasNotebookGuid(), "Detected note without notebook guid in fake note store");
+        QVERIFY2(pNote->hasResources(), "Detected broken test condition - the resource's note has no resources");
+
+        const Notebook * pNotebook = m_pFakeNoteStore->findNotebook(pNote->notebookGuid());
+        QVERIFY2(pNotebook != Q_NULLPTR, "Detected unexpectedly missing linked notebook's note's notebook in fake note store");
+        QVERIFY2(pNotebook->hasLinkedNotebookGuid(), "Detected broken test condition - the note was supposed to belong to a linked notebook but it doesn't");
+
+        Resource modifiedResource(*pResource);
+        modifiedResource.setDataBody(modifiedResource.dataBody() + QByteArray("_modified_remotely"));
+        modifiedResource.setDataSize(modifiedResource.dataBody().size());
+        modifiedResource.setDataHash(QCryptographicHash::hash(modifiedResource.dataBody(), QCryptographicHash::Md5));
+        modifiedResource.setDirty(true);
+        modifiedResource.setLocal(false);
+        modifiedResource.setUpdateSequenceNumber(-1);
+
+        Note modifiedNote(*pNote);
+        QList<Resource> noteResources = modifiedNote.resources();
         for(auto resIt = noteResources.begin(), resEnd = noteResources.end(); resIt != resEnd; ++resIt)
         {
-            if (resIt->guid() == resource.guid()) {
-                *resIt = resource;
+            if (resIt->guid() == modifiedResource.guid()) {
+                *resIt = modifiedResource;
                 break;
             }
         }
-        note.setResources(noteResources);
-        note.setDirty(false);
-        note.setLocal(false);
+        modifiedNote.setResources(noteResources);
+        modifiedNote.setDirty(false);
+        modifiedNote.setLocal(false);
         // NOTE: intentionally leaving the update sequence number to stay as it is within note
 
-        res = m_pFakeNoteStore->setNote(note, errorDescription);
+        res = m_pFakeNoteStore->setNote(modifiedNote, errorDescription);
         QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
 
         // Need to update the linked notebook's sync state
@@ -1491,13 +1436,7 @@ void SynchronizationTester::setModifiedLinkedNotebookItemsToRemoteStorage()
         const LinkedNotebook * pLinkedNotebook = m_pFakeNoteStore->findLinkedNotebook(pNotebook->linkedNotebookGuid());
         QVERIFY(pLinkedNotebook != Q_NULLPTR);
         m_pFakeNoteStore->setLinkedNotebookSyncState(pLinkedNotebook->username(), syncState);
-
-        --resourcesToModify;
-        if (resourcesToModify == 0) {
-            break;
-        }
     }
-    QVERIFY2(resourcesToModify == 0, "Wasn't able to modify as many resources as required");
 }
 
 void SynchronizationTester::setNewItemsToLocalStorage()
