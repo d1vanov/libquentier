@@ -189,37 +189,8 @@ void SynchronizationTester::testRemoteToLocalFullSyncWithUserOwnDataOnly()
 {
     setUserOwnItemsToRemoteStorage();
 
-    int testAsyncResult = -1;
     SynchronizationManagerSignalsCatcher catcher(*m_pSynchronizationManager);
-    {
-        QTimer timer;
-        timer.setInterval(MAX_ALLOWED_TEST_DURATION_MSEC);
-        timer.setSingleShot(true);
-
-        EventLoopWithExitStatus loop;
-        QObject::connect(&timer, QNSIGNAL(QTimer,timeout), &loop, QNSLOT(EventLoopWithExitStatus,exitAsTimeout));
-        QObject::connect(&catcher, QNSIGNAL(SynchronizationManagerSignalsCatcher,ready), &loop, QNSLOT(EventLoopWithExitStatus,exitAsSuccess));
-
-        QTimer slotInvokingTimer;
-        slotInvokingTimer.setInterval(500);
-        slotInvokingTimer.setSingleShot(true);
-
-        timer.start();
-        slotInvokingTimer.singleShot(0, m_pSynchronizationManager, QNSLOT(SynchronizationManager,synchronize));
-        testAsyncResult = loop.exec();
-    }
-
-    if (testAsyncResult == EventLoopWithExitStatus::ExitStatus::Timeout) {
-        QFAIL("Synchronization test failed to finish in time");
-    }
-    else if (testAsyncResult != EventLoopWithExitStatus::ExitStatus::Success) {
-        QFAIL("Internal error: incorrect return status from synchronization test");
-    }
-
-    if (catcher.receivedFailedSignal()) {
-        QFAIL(qPrintable(QString::fromUtf8("Detected failure during the asynchronous synchronization loop: ") +
-                         catcher.failureErrorDescription().nonLocalizedString()));
-    }
+    runTest(catcher);
 
     CHECK_EXPECTED(receivedStartedSignal)
     CHECK_EXPECTED(receivedFinishedSignal)
@@ -250,37 +221,8 @@ void SynchronizationTester::testRemoteToLocalFullSyncWithLinkedNotebooks()
     setUserOwnItemsToRemoteStorage();
     setLinkedNotebookItemsToRemoteStorage();
 
-    int testAsyncResult = -1;
     SynchronizationManagerSignalsCatcher catcher(*m_pSynchronizationManager);
-    {
-        QTimer timer;
-        timer.setInterval(MAX_ALLOWED_TEST_DURATION_MSEC);
-        timer.setSingleShot(true);
-
-        EventLoopWithExitStatus loop;
-        QObject::connect(&timer, QNSIGNAL(QTimer,timeout), &loop, QNSLOT(EventLoopWithExitStatus,exitAsTimeout));
-        QObject::connect(&catcher, QNSIGNAL(SynchronizationManagerSignalsCatcher,ready), &loop, QNSLOT(EventLoopWithExitStatus,exitAsSuccess));
-
-        QTimer slotInvokingTimer;
-        slotInvokingTimer.setInterval(500);
-        slotInvokingTimer.setSingleShot(true);
-
-        timer.start();
-        slotInvokingTimer.singleShot(0, m_pSynchronizationManager, QNSLOT(SynchronizationManager,synchronize));
-        testAsyncResult = loop.exec();
-    }
-
-    if (testAsyncResult == EventLoopWithExitStatus::ExitStatus::Timeout) {
-        QFAIL("Synchronization test failed to finish in time");
-    }
-    else if (testAsyncResult != EventLoopWithExitStatus::ExitStatus::Success) {
-        QFAIL("Internal error: incorrect return status from synchronization test");
-    }
-
-    if (catcher.receivedFailedSignal()) {
-        QFAIL(qPrintable(QString::fromUtf8("Detected failure during the asynchronous synchronization loop: ") +
-                         catcher.failureErrorDescription().nonLocalizedString()));
-    }
+    runTest(catcher);
 
     CHECK_EXPECTED(receivedStartedSignal)
     CHECK_EXPECTED(receivedFinishedSignal)
@@ -314,37 +256,8 @@ void SynchronizationTester::testIncrementalSyncWithNewRemoteItemsWithUserOwnData
 
     setNewUserOwnItemsToRemoteStorage();
 
-    int testAsyncResult = -1;
     SynchronizationManagerSignalsCatcher catcher(*m_pSynchronizationManager);
-    {
-        QTimer timer;
-        timer.setInterval(MAX_ALLOWED_TEST_DURATION_MSEC);
-        timer.setSingleShot(true);
-
-        EventLoopWithExitStatus loop;
-        QObject::connect(&timer, QNSIGNAL(QTimer,timeout), &loop, QNSLOT(EventLoopWithExitStatus,exitAsTimeout));
-        QObject::connect(&catcher, QNSIGNAL(SynchronizationManagerSignalsCatcher,ready), &loop, QNSLOT(EventLoopWithExitStatus,exitAsSuccess));
-
-        QTimer slotInvokingTimer;
-        slotInvokingTimer.setInterval(500);
-        slotInvokingTimer.setSingleShot(true);
-
-        timer.start();
-        slotInvokingTimer.singleShot(0, m_pSynchronizationManager, QNSLOT(SynchronizationManager,synchronize));
-        testAsyncResult = loop.exec();
-    }
-
-    if (testAsyncResult == EventLoopWithExitStatus::ExitStatus::Timeout) {
-        QFAIL("Synchronization test failed to finish in time");
-    }
-    else if (testAsyncResult != EventLoopWithExitStatus::ExitStatus::Success) {
-        QFAIL("Internal error: incorrect return status from synchronization test");
-    }
-
-    if (catcher.receivedFailedSignal()) {
-        QFAIL(qPrintable(QString::fromUtf8("Detected failure during the asynchronous synchronization loop: ") +
-                         catcher.failureErrorDescription().nonLocalizedString()));
-    }
+    runTest(catcher);
 
     CHECK_EXPECTED(receivedStartedSignal)
     CHECK_EXPECTED(receivedFinishedSignal)
@@ -380,37 +293,8 @@ void SynchronizationTester::testIncrementalSyncWithNewRemoteItemsWithLinkedNoteb
     setNewUserOwnItemsToRemoteStorage();
     setNewLinkedNotebookItemsToRemoteStorage();
 
-    int testAsyncResult = -1;
     SynchronizationManagerSignalsCatcher catcher(*m_pSynchronizationManager);
-    {
-        QTimer timer;
-        timer.setInterval(MAX_ALLOWED_TEST_DURATION_MSEC);
-        timer.setSingleShot(true);
-
-        EventLoopWithExitStatus loop;
-        QObject::connect(&timer, QNSIGNAL(QTimer,timeout), &loop, QNSLOT(EventLoopWithExitStatus,exitAsTimeout));
-        QObject::connect(&catcher, QNSIGNAL(SynchronizationManagerSignalsCatcher,ready), &loop, QNSLOT(EventLoopWithExitStatus,exitAsSuccess));
-
-        QTimer slotInvokingTimer;
-        slotInvokingTimer.setInterval(500);
-        slotInvokingTimer.setSingleShot(true);
-
-        timer.start();
-        slotInvokingTimer.singleShot(0, m_pSynchronizationManager, QNSLOT(SynchronizationManager,synchronize));
-        testAsyncResult = loop.exec();
-    }
-
-    if (testAsyncResult == EventLoopWithExitStatus::ExitStatus::Timeout) {
-        QFAIL("Synchronization test failed to finish in time");
-    }
-    else if (testAsyncResult != EventLoopWithExitStatus::ExitStatus::Success) {
-        QFAIL("Internal error: incorrect return status from synchronization test");
-    }
-
-    if (catcher.receivedFailedSignal()) {
-        QFAIL(qPrintable(QString::fromUtf8("Detected failure during the asynchronous synchronization loop: ") +
-                         catcher.failureErrorDescription().nonLocalizedString()));
-    }
+    runTest(catcher);
 
     CHECK_EXPECTED(receivedStartedSignal)
     CHECK_EXPECTED(receivedFinishedSignal)
@@ -444,37 +328,8 @@ void SynchronizationTester::testIncrementalSyncWithModifiedRemoteItemsWithUserOw
 
     setModifiedUserOwnItemsToRemoteStorage();
 
-    int testAsyncResult = -1;
     SynchronizationManagerSignalsCatcher catcher(*m_pSynchronizationManager);
-    {
-        QTimer timer;
-        timer.setInterval(MAX_ALLOWED_TEST_DURATION_MSEC);
-        timer.setSingleShot(true);
-
-        EventLoopWithExitStatus loop;
-        QObject::connect(&timer, QNSIGNAL(QTimer,timeout), &loop, QNSLOT(EventLoopWithExitStatus,exitAsTimeout));
-        QObject::connect(&catcher, QNSIGNAL(SynchronizationManagerSignalsCatcher,ready), &loop, QNSLOT(EventLoopWithExitStatus,exitAsSuccess));
-
-        QTimer slotInvokingTimer;
-        slotInvokingTimer.setInterval(500);
-        slotInvokingTimer.setSingleShot(true);
-
-        timer.start();
-        slotInvokingTimer.singleShot(0, m_pSynchronizationManager, QNSLOT(SynchronizationManager,synchronize));
-        testAsyncResult = loop.exec();
-    }
-
-    if (testAsyncResult == EventLoopWithExitStatus::ExitStatus::Timeout) {
-        QFAIL("Synchronization test failed to finish in time");
-    }
-    else if (testAsyncResult != EventLoopWithExitStatus::ExitStatus::Success) {
-        QFAIL("Internal error: incorrect return status from synchronization test");
-    }
-
-    if (catcher.receivedFailedSignal()) {
-        QFAIL(qPrintable(QString::fromUtf8("Detected failure during the asynchronous synchronization loop: ") +
-                         catcher.failureErrorDescription().nonLocalizedString()));
-    }
+    runTest(catcher);
 
     CHECK_EXPECTED(receivedStartedSignal)
     CHECK_EXPECTED(receivedFinishedSignal)
@@ -516,37 +371,8 @@ void SynchronizationTester::testIncrementalSyncWithModifiedRemoteItemsWithLinked
     setModifiedUserOwnItemsToRemoteStorage();
     setModifiedLinkedNotebookItemsToRemoteStorage();
 
-    int testAsyncResult = -1;
     SynchronizationManagerSignalsCatcher catcher(*m_pSynchronizationManager);
-    {
-        QTimer timer;
-        timer.setInterval(MAX_ALLOWED_TEST_DURATION_MSEC);
-        timer.setSingleShot(true);
-
-        EventLoopWithExitStatus loop;
-        QObject::connect(&timer, QNSIGNAL(QTimer,timeout), &loop, QNSLOT(EventLoopWithExitStatus,exitAsTimeout));
-        QObject::connect(&catcher, QNSIGNAL(SynchronizationManagerSignalsCatcher,ready), &loop, QNSLOT(EventLoopWithExitStatus,exitAsSuccess));
-
-        QTimer slotInvokingTimer;
-        slotInvokingTimer.setInterval(500);
-        slotInvokingTimer.setSingleShot(true);
-
-        timer.start();
-        slotInvokingTimer.singleShot(0, m_pSynchronizationManager, QNSLOT(SynchronizationManager,synchronize));
-        testAsyncResult = loop.exec();
-    }
-
-    if (testAsyncResult == EventLoopWithExitStatus::ExitStatus::Timeout) {
-        QFAIL("Synchronization test failed to finish in time");
-    }
-    else if (testAsyncResult != EventLoopWithExitStatus::ExitStatus::Success) {
-        QFAIL("Internal error: incorrect return status from synchronization test");
-    }
-
-    if (catcher.receivedFailedSignal()) {
-        QFAIL(qPrintable(QString::fromUtf8("Detected failure during the asynchronous synchronization loop: ") +
-                         catcher.failureErrorDescription().nonLocalizedString()));
-    }
+    runTest(catcher);
 
     CHECK_EXPECTED(receivedStartedSignal)
     CHECK_EXPECTED(receivedFinishedSignal)
@@ -586,37 +412,8 @@ void SynchronizationTester::testIncrementalSyncWithModifiedAndNewRemoteItemsWith
     setModifiedUserOwnItemsToRemoteStorage();
     setNewUserOwnItemsToRemoteStorage();
 
-    int testAsyncResult = -1;
     SynchronizationManagerSignalsCatcher catcher(*m_pSynchronizationManager);
-    {
-        QTimer timer;
-        timer.setInterval(MAX_ALLOWED_TEST_DURATION_MSEC);
-        timer.setSingleShot(true);
-
-        EventLoopWithExitStatus loop;
-        QObject::connect(&timer, QNSIGNAL(QTimer,timeout), &loop, QNSLOT(EventLoopWithExitStatus,exitAsTimeout));
-        QObject::connect(&catcher, QNSIGNAL(SynchronizationManagerSignalsCatcher,ready), &loop, QNSLOT(EventLoopWithExitStatus,exitAsSuccess));
-
-        QTimer slotInvokingTimer;
-        slotInvokingTimer.setInterval(500);
-        slotInvokingTimer.setSingleShot(true);
-
-        timer.start();
-        slotInvokingTimer.singleShot(0, m_pSynchronizationManager, QNSLOT(SynchronizationManager,synchronize));
-        testAsyncResult = loop.exec();
-    }
-
-    if (testAsyncResult == EventLoopWithExitStatus::ExitStatus::Timeout) {
-        QFAIL("Synchronization test failed to finish in time");
-    }
-    else if (testAsyncResult != EventLoopWithExitStatus::ExitStatus::Success) {
-        QFAIL("Internal error: incorrect return status from synchronization test");
-    }
-
-    if (catcher.receivedFailedSignal()) {
-        QFAIL(qPrintable(QString::fromUtf8("Detected failure during the asynchronous synchronization loop: ") +
-                         catcher.failureErrorDescription().nonLocalizedString()));
-    }
+    runTest(catcher);
 
     CHECK_EXPECTED(receivedStartedSignal)
     CHECK_EXPECTED(receivedFinishedSignal)
@@ -659,37 +456,8 @@ void SynchronizationTester::testIncrementalSyncWithModifiedAndNewRemoteItemsWith
     setNewUserOwnItemsToRemoteStorage();
     setNewLinkedNotebookItemsToRemoteStorage();
 
-    int testAsyncResult = -1;
     SynchronizationManagerSignalsCatcher catcher(*m_pSynchronizationManager);
-    {
-        QTimer timer;
-        timer.setInterval(MAX_ALLOWED_TEST_DURATION_MSEC);
-        timer.setSingleShot(true);
-
-        EventLoopWithExitStatus loop;
-        QObject::connect(&timer, QNSIGNAL(QTimer,timeout), &loop, QNSLOT(EventLoopWithExitStatus,exitAsTimeout));
-        QObject::connect(&catcher, QNSIGNAL(SynchronizationManagerSignalsCatcher,ready), &loop, QNSLOT(EventLoopWithExitStatus,exitAsSuccess));
-
-        QTimer slotInvokingTimer;
-        slotInvokingTimer.setInterval(500);
-        slotInvokingTimer.setSingleShot(true);
-
-        timer.start();
-        slotInvokingTimer.singleShot(0, m_pSynchronizationManager, QNSLOT(SynchronizationManager,synchronize));
-        testAsyncResult = loop.exec();
-    }
-
-    if (testAsyncResult == EventLoopWithExitStatus::ExitStatus::Timeout) {
-        QFAIL("Synchronization test failed to finish in time");
-    }
-    else if (testAsyncResult != EventLoopWithExitStatus::ExitStatus::Success) {
-        QFAIL("Internal error: incorrect return status from synchronization test");
-    }
-
-    if (catcher.receivedFailedSignal()) {
-        QFAIL(qPrintable(QString::fromUtf8("Detected failure during the asynchronous synchronization loop: ") +
-                         catcher.failureErrorDescription().nonLocalizedString()));
-    }
+    runTest(catcher);
 
     CHECK_EXPECTED(receivedStartedSignal)
     CHECK_EXPECTED(receivedFinishedSignal)
@@ -726,39 +494,10 @@ void SynchronizationTester::testIncrementalSyncWithNewLocalItemsWithUserOwnDataO
     copyRemoteItemsToLocalStorage();
     setRemoteStorageSyncStateToPersistentSyncSettings();
 
-    setNewItemsToLocalStorage();
+    setNewUserOwnItemsToLocalStorage();
 
-    int testAsyncResult = -1;
     SynchronizationManagerSignalsCatcher catcher(*m_pSynchronizationManager);
-    {
-        QTimer timer;
-        timer.setInterval(MAX_ALLOWED_TEST_DURATION_MSEC);
-        timer.setSingleShot(true);
-
-        EventLoopWithExitStatus loop;
-        QObject::connect(&timer, QNSIGNAL(QTimer,timeout), &loop, QNSLOT(EventLoopWithExitStatus,exitAsTimeout));
-        QObject::connect(&catcher, QNSIGNAL(SynchronizationManagerSignalsCatcher,ready), &loop, QNSLOT(EventLoopWithExitStatus,exitAsSuccess));
-
-        QTimer slotInvokingTimer;
-        slotInvokingTimer.setInterval(500);
-        slotInvokingTimer.setSingleShot(true);
-
-        timer.start();
-        slotInvokingTimer.singleShot(0, m_pSynchronizationManager, QNSLOT(SynchronizationManager,synchronize));
-        testAsyncResult = loop.exec();
-    }
-
-    if (testAsyncResult == EventLoopWithExitStatus::ExitStatus::Timeout) {
-        QFAIL("Synchronization test failed to finish in time");
-    }
-    else if (testAsyncResult != EventLoopWithExitStatus::ExitStatus::Success) {
-        QFAIL("Internal error: incorrect return status from synchronization test");
-    }
-
-    if (catcher.receivedFailedSignal()) {
-        QFAIL(qPrintable(QString::fromUtf8("Detected failure during the asynchronous synchronization loop: ") +
-                         catcher.failureErrorDescription().nonLocalizedString()));
-    }
+    runTest(catcher);
 
     CHECK_EXPECTED(receivedStartedSignal)
     CHECK_EXPECTED(receivedFinishedSignal)
@@ -779,6 +518,43 @@ void SynchronizationTester::testIncrementalSyncWithNewLocalItemsWithUserOwnDataO
     CHECK_UNEXPECTED(receivedRateLimitExceeded)
     CHECK_UNEXPECTED(receivedLinkedNotebookSyncChunksDownloaded)
     CHECK_UNEXPECTED(receivedPreparedLinkedNotebookDirtyObjectsForSending)
+
+    checkProgressNotificationsOrder(catcher);
+    checkIdentityOfLocalAndRemoteItems();
+}
+
+void SynchronizationTester::testIncrementalSyncWithNewLocalItemsWithLinkedNotebooks()
+{
+    setUserOwnItemsToRemoteStorage();
+    setLinkedNotebookItemsToRemoteStorage();
+    copyRemoteItemsToLocalStorage();
+    setRemoteStorageSyncStateToPersistentSyncSettings();
+
+    setNewUserOwnItemsToLocalStorage();
+    setNewLinkedNotebookItemsToLocalStorage();
+
+    SynchronizationManagerSignalsCatcher catcher(*m_pSynchronizationManager);
+    runTest(catcher);
+
+    CHECK_EXPECTED(receivedStartedSignal)
+    CHECK_EXPECTED(receivedFinishedSignal)
+    CHECK_EXPECTED(receivedRemoteToLocalSyncDone)
+    CHECK_EXPECTED(receivedSyncChunksDownloaded)
+    CHECK_EXPECTED(receivedLinkedNotebookSyncChunksDownloaded)
+    CHECK_EXPECTED(finishedSomethingSent)
+    CHECK_EXPECTED(receivedPreparedDirtyObjectsForSending)
+    CHECK_EXPECTED(receivedPreparedLinkedNotebookDirtyObjectsForSending)
+
+    CHECK_UNEXPECTED(finishedSomethingDownloaded)
+    CHECK_UNEXPECTED(remoteToLocalSyncDoneSomethingDownloaded)
+    CHECK_UNEXPECTED(receivedAuthenticationFinishedSignal)
+    CHECK_UNEXPECTED(receivedStoppedSignal)
+    CHECK_UNEXPECTED(receivedAuthenticationRevokedSignal)
+    CHECK_UNEXPECTED(receivedRemoteToLocalSyncStopped)
+    CHECK_UNEXPECTED(receivedSendLocalChangedStopped)
+    CHECK_UNEXPECTED(receivedWillRepeatRemoteToLocalSyncAfterSendingChanges)
+    CHECK_UNEXPECTED(receivedDetectedConflictDuringLocalChangesSending)
+    CHECK_UNEXPECTED(receivedRateLimitExceeded)
 
     checkProgressNotificationsOrder(catcher);
     checkIdentityOfLocalAndRemoteItems();
@@ -1439,7 +1215,7 @@ void SynchronizationTester::setModifiedLinkedNotebookItemsToRemoteStorage()
     }
 }
 
-void SynchronizationTester::setNewItemsToLocalStorage()
+void SynchronizationTester::setNewUserOwnItemsToLocalStorage()
 {
     ErrorString errorDescription;
     bool res = false;
@@ -1448,6 +1224,7 @@ void SynchronizationTester::setNewItemsToLocalStorage()
     firstLocalSavedSearch.setName(QStringLiteral("First local saved search"));
     firstLocalSavedSearch.setQuery(QStringLiteral("First local saved search query"));
     firstLocalSavedSearch.setDirty(true);
+    firstLocalSavedSearch.setLocal(false);
     res = m_pLocalStorageManagerAsync->localStorageManager()->addSavedSearch(firstLocalSavedSearch, errorDescription);
     QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
 
@@ -1455,6 +1232,7 @@ void SynchronizationTester::setNewItemsToLocalStorage()
     secondLocalSavedSearch.setName(QStringLiteral("Second local saved search"));
     secondLocalSavedSearch.setQuery(QStringLiteral("Second local saved search query"));
     secondLocalSavedSearch.setDirty(true);
+    secondLocalSavedSearch.setLocal(false);
     res = m_pLocalStorageManagerAsync->localStorageManager()->addSavedSearch(secondLocalSavedSearch, errorDescription);
     QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
 
@@ -1462,12 +1240,14 @@ void SynchronizationTester::setNewItemsToLocalStorage()
     thirdLocalSavedSearch.setName(QStringLiteral("Third local saved search"));
     thirdLocalSavedSearch.setQuery(QStringLiteral("Third local saved searcg query"));
     thirdLocalSavedSearch.setDirty(true);
+    thirdLocalSavedSearch.setLocal(false);
     res = m_pLocalStorageManagerAsync->localStorageManager()->addSavedSearch(thirdLocalSavedSearch, errorDescription);
     QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
 
     Tag firstLocalTag;
     firstLocalTag.setName(QStringLiteral("First local tag"));
     firstLocalTag.setDirty(true);
+    firstLocalTag.setLocal(false);
     res = m_pLocalStorageManagerAsync->localStorageManager()->addTag(firstLocalTag, errorDescription);
     QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
 
@@ -1475,6 +1255,7 @@ void SynchronizationTester::setNewItemsToLocalStorage()
     secondLocalTag.setName(QStringLiteral("Second local tag"));
     secondLocalTag.setParentLocalUid(firstLocalTag.localUid());
     secondLocalTag.setDirty(true);
+    secondLocalTag.setLocal(false);
     res = m_pLocalStorageManagerAsync->localStorageManager()->addTag(secondLocalTag, errorDescription);
     QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
 
@@ -1482,6 +1263,7 @@ void SynchronizationTester::setNewItemsToLocalStorage()
     thirdLocalTag.setName(QStringLiteral("Third local tag"));
     thirdLocalTag.setParentLocalUid(secondLocalTag.localUid());
     thirdLocalTag.setDirty(true);
+    thirdLocalTag.setLocal(false);
     res = m_pLocalStorageManagerAsync->localStorageManager()->addTag(thirdLocalTag, errorDescription);
     QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
 
@@ -1489,6 +1271,7 @@ void SynchronizationTester::setNewItemsToLocalStorage()
     firstLocalNotebook.setName(QStringLiteral("First local notebook"));
     firstLocalNotebook.setDefaultNotebook(false);
     firstLocalNotebook.setDirty(true);
+    firstLocalNotebook.setLocal(false);
     res = m_pLocalStorageManagerAsync->localStorageManager()->addNotebook(firstLocalNotebook, errorDescription);
     QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
 
@@ -1496,6 +1279,7 @@ void SynchronizationTester::setNewItemsToLocalStorage()
     secondLocalNotebook.setName(QStringLiteral("Second local notebook"));
     secondLocalNotebook.setDefaultNotebook(false);
     secondLocalNotebook.setDirty(true);
+    secondLocalNotebook.setLocal(false);
     res = m_pLocalStorageManagerAsync->localStorageManager()->addNotebook(secondLocalNotebook, errorDescription);
     QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
 
@@ -1503,6 +1287,7 @@ void SynchronizationTester::setNewItemsToLocalStorage()
     thirdLocalNotebook.setName(QStringLiteral("Third local notebook"));
     thirdLocalNotebook.setDefaultNotebook(false);
     thirdLocalNotebook.setDirty(true);
+    thirdLocalNotebook.setLocal(false);
     res = m_pLocalStorageManagerAsync->localStorageManager()->addNotebook(thirdLocalNotebook, errorDescription);
     QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
 
@@ -1513,6 +1298,7 @@ void SynchronizationTester::setNewItemsToLocalStorage()
     firstLocalNote.setCreationTimestamp(QDateTime::currentMSecsSinceEpoch());
     firstLocalNote.setModificationTimestamp(firstLocalNote.creationTimestamp());
     firstLocalNote.setDirty(true);
+    firstLocalNote.setLocal(false);
     res = m_pLocalStorageManagerAsync->localStorageManager()->addNote(firstLocalNote, errorDescription);
     QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
 
@@ -1525,6 +1311,7 @@ void SynchronizationTester::setNewItemsToLocalStorage()
     secondLocalNote.addTagLocalUid(firstLocalTag.localUid());
     secondLocalNote.addTagLocalUid(secondLocalTag.localUid());
     secondLocalNote.setDirty(true);
+    secondLocalNote.setLocal(false);
     res = m_pLocalStorageManagerAsync->localStorageManager()->addNote(secondLocalNote, errorDescription);
     QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
 
@@ -1536,6 +1323,7 @@ void SynchronizationTester::setNewItemsToLocalStorage()
     thirdLocalNote.setModificationTimestamp(thirdLocalNote.creationTimestamp());
     thirdLocalNote.addTagLocalUid(thirdLocalTag.localUid());
     thirdLocalNote.setDirty(true);
+    thirdLocalNote.setLocal(false);
 
     Resource thirdLocalNoteResource;
     thirdLocalNoteResource.setNoteLocalUid(thirdLocalNote.localUid());
@@ -1543,6 +1331,8 @@ void SynchronizationTester::setNewItemsToLocalStorage()
     thirdLocalNoteResource.setDataBody(QByteArray("Third note first resource data body"));
     thirdLocalNoteResource.setDataSize(thirdLocalNoteResource.dataBody().size());
     thirdLocalNoteResource.setDataHash(QCryptographicHash::hash(thirdLocalNoteResource.dataBody(), QCryptographicHash::Md5));
+    thirdLocalNoteResource.setDirty(true);
+    thirdLocalNoteResource.setLocal(false);
     thirdLocalNote.addResource(thirdLocalNoteResource);
 
     res = m_pLocalStorageManagerAsync->localStorageManager()->addNote(thirdLocalNote, errorDescription);
@@ -1557,6 +1347,134 @@ void SynchronizationTester::setNewItemsToLocalStorage()
     fourthLocalNote.addTagLocalUid(secondLocalTag.localUid());
     fourthLocalNote.addTagLocalUid(thirdLocalTag.localUid());
     fourthLocalNote.setDirty(true);
+    fourthLocalNote.setLocal(false);
+    res = m_pLocalStorageManagerAsync->localStorageManager()->addNote(fourthLocalNote, errorDescription);
+    QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
+}
+
+void SynchronizationTester::setNewLinkedNotebookItemsToLocalStorage()
+{
+    ErrorString errorDescription;
+    bool res = false;
+
+    QList<LinkedNotebook> linkedNotebooks = m_pLocalStorageManagerAsync->localStorageManager()->listAllLinkedNotebooks(errorDescription);
+    QVERIFY2(!linkedNotebooks.isEmpty(), qPrintable(errorDescription.nonLocalizedString()));
+    QVERIFY2(linkedNotebooks.size() == 3, qPrintable(QString::fromUtf8("Expected to find 3 linked notebooks in the local storage, instead found ") +
+                                                     QString::number(linkedNotebooks.size())));
+
+    Tag firstLocalTag;
+    firstLocalTag.setName(QStringLiteral("First local tag in a linked notebook"));
+    firstLocalTag.setDirty(true);
+    firstLocalTag.setLocal(false);
+    firstLocalTag.setLinkedNotebookGuid(linkedNotebooks[0].guid());
+    res = m_pLocalStorageManagerAsync->localStorageManager()->addTag(firstLocalTag, errorDescription);
+    QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
+
+    Tag secondLocalTag;
+    secondLocalTag.setName(QStringLiteral("Second local tag in a linked notebook"));
+    secondLocalTag.setDirty(true);
+    secondLocalTag.setLocal(false);
+    secondLocalTag.setLinkedNotebookGuid(linkedNotebooks[0].guid());
+    res = m_pLocalStorageManagerAsync->localStorageManager()->addTag(secondLocalTag, errorDescription);
+    QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
+
+    Tag thirdLocalTag;
+    thirdLocalTag.setName(QStringLiteral("Third local tag in a linked notebook"));
+    thirdLocalTag.setDirty(true);
+    thirdLocalTag.setLocal(false);
+    thirdLocalTag.setLinkedNotebookGuid(linkedNotebooks[1].guid());
+    res = m_pLocalStorageManagerAsync->localStorageManager()->addTag(thirdLocalTag, errorDescription);
+    QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
+
+    QString firstNotebookGuid;
+    QString secondNotebookGuid;
+    QString thirdNotebookGuid;
+    QList<Notebook> notebooks = m_pLocalStorageManagerAsync->localStorageManager()->listAllNotebooks(errorDescription);
+    QVERIFY2(!notebooks.isEmpty(), qPrintable(errorDescription.nonLocalizedString()));
+    for(auto it = notebooks.constBegin(), end = notebooks.constEnd(); it != end; ++it)
+    {
+        const Notebook & notebook = *it;
+        if (!notebook.hasGuid() || !notebook.hasLinkedNotebookGuid()) {
+            continue;
+        }
+
+        const QString & linkedNotebookGuid = notebook.linkedNotebookGuid();
+        if (linkedNotebookGuid == linkedNotebooks[0].guid()) {
+            firstNotebookGuid = notebook.guid();
+        }
+        else if (linkedNotebookGuid == linkedNotebooks[1].guid()) {
+            secondNotebookGuid = notebook.guid();
+        }
+        else if (linkedNotebookGuid == linkedNotebooks[2].guid()) {
+            thirdNotebookGuid = notebook.guid();
+        }
+
+        if (!firstNotebookGuid.isEmpty() && !secondNotebookGuid.isEmpty() && !thirdNotebookGuid.isEmpty()) {
+            break;
+        }
+    }
+
+    QVERIFY2(!firstNotebookGuid.isEmpty(), "Wasn't able to find the guid of the notebook corresponding to the first linked notebook");
+    QVERIFY2(!secondNotebookGuid.isEmpty(), "Wasn't able to find the guid of the notebook corresponding to the second linked notebook");
+    QVERIFY2(!thirdNotebookGuid.isEmpty(), "Wasn't able to tinf the guid of the notebook corresponding to the third linked notebook");
+
+    Note firstLocalNote;
+    firstLocalNote.setNotebookGuid(firstNotebookGuid);
+    firstLocalNote.setTitle(QStringLiteral("First local note in a linked notebook"));
+    firstLocalNote.setContent(QStringLiteral("<en-note><div>First local note in a linked notebook</div></en-note>"));
+    firstLocalNote.setCreationTimestamp(QDateTime::currentMSecsSinceEpoch());
+    firstLocalNote.setModificationTimestamp(firstLocalNote.creationTimestamp());
+    firstLocalNote.setDirty(true);
+    firstLocalNote.setLocal(false);
+    res = m_pLocalStorageManagerAsync->localStorageManager()->addNote(firstLocalNote, errorDescription);
+    QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
+
+    Note secondLocalNote;
+    secondLocalNote.setNotebookGuid(secondNotebookGuid);
+    secondLocalNote.setTitle(QStringLiteral("Second local note in a linked notebook"));
+    secondLocalNote.setContent(QStringLiteral("<en-note><div>Second local note in a linked notebook</div></en-note>"));
+    secondLocalNote.setCreationTimestamp(QDateTime::currentMSecsSinceEpoch());
+    secondLocalNote.setModificationTimestamp(secondLocalNote.creationTimestamp());
+    secondLocalNote.addTagLocalUid(firstLocalTag.localUid());
+    secondLocalNote.addTagLocalUid(secondLocalTag.localUid());
+    secondLocalNote.setDirty(true);
+    secondLocalNote.setLocal(false);
+    res = m_pLocalStorageManagerAsync->localStorageManager()->addNote(secondLocalNote, errorDescription);
+    QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
+
+    Note thirdLocalNote;
+    thirdLocalNote.setNotebookGuid(thirdNotebookGuid);
+    thirdLocalNote.setTitle(QStringLiteral("Third local note in a linked notebook"));
+    thirdLocalNote.setContent(QStringLiteral("<en-note><div>Third local note in a linked notebook</div></en-note>"));
+    thirdLocalNote.setCreationTimestamp(QDateTime::currentMSecsSinceEpoch());
+    thirdLocalNote.setModificationTimestamp(thirdLocalNote.creationTimestamp());
+    thirdLocalNote.addTagLocalUid(thirdLocalTag.localUid());
+    thirdLocalNote.setDirty(true);
+    thirdLocalNote.setLocal(false);
+
+    Resource thirdLocalNoteResource;
+    thirdLocalNoteResource.setNoteLocalUid(thirdLocalNote.localUid());
+    thirdLocalNoteResource.setMime(QStringLiteral("text/plain"));
+    thirdLocalNoteResource.setDataBody(QByteArray("Third linked notebook's note's first resource data body"));
+    thirdLocalNoteResource.setDataSize(thirdLocalNoteResource.dataBody().size());
+    thirdLocalNoteResource.setDataHash(QCryptographicHash::hash(thirdLocalNoteResource.dataBody(), QCryptographicHash::Md5));
+    thirdLocalNoteResource.setDirty(true);
+    thirdLocalNoteResource.setLocal(false);
+    thirdLocalNote.addResource(thirdLocalNoteResource);
+
+    res = m_pLocalStorageManagerAsync->localStorageManager()->addNote(thirdLocalNote, errorDescription);
+    QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
+
+    Note fourthLocalNote;
+    fourthLocalNote.setNotebookGuid(thirdNotebookGuid);
+    fourthLocalNote.setTitle(QStringLiteral("Fourth local note in a linked notebook"));
+    fourthLocalNote.setContent(QStringLiteral("<en-note><div>Fourth local note in a linked notebook</div></en-note>"));
+    fourthLocalNote.setCreationTimestamp(QDateTime::currentMSecsSinceEpoch());
+    fourthLocalNote.setModificationTimestamp(fourthLocalNote.creationTimestamp());
+    fourthLocalNote.addTagLocalUid(secondLocalTag.localUid());
+    fourthLocalNote.addTagLocalUid(thirdLocalTag.localUid());
+    fourthLocalNote.setDirty(true);
+    fourthLocalNote.setLocal(false);
     res = m_pLocalStorageManagerAsync->localStorageManager()->addNote(fourthLocalNote, errorDescription);
     QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
 }
@@ -2524,6 +2442,40 @@ void SynchronizationTester::listLinkedNotebooksFromLocalStorage(const qint32 aft
         }
 
         linkedNotebooks[linkedNotebook.guid()] = linkedNotebook.qevercloudLinkedNotebook();
+    }
+}
+
+void SynchronizationTester::runTest(SynchronizationManagerSignalsCatcher & catcher)
+{
+    int testAsyncResult = -1;
+    {
+        QTimer timer;
+        timer.setInterval(MAX_ALLOWED_TEST_DURATION_MSEC);
+        timer.setSingleShot(true);
+
+        EventLoopWithExitStatus loop;
+        QObject::connect(&timer, QNSIGNAL(QTimer,timeout), &loop, QNSLOT(EventLoopWithExitStatus,exitAsTimeout));
+        QObject::connect(&catcher, QNSIGNAL(SynchronizationManagerSignalsCatcher,ready), &loop, QNSLOT(EventLoopWithExitStatus,exitAsSuccess));
+
+        QTimer slotInvokingTimer;
+        slotInvokingTimer.setInterval(500);
+        slotInvokingTimer.setSingleShot(true);
+
+        timer.start();
+        slotInvokingTimer.singleShot(0, m_pSynchronizationManager, QNSLOT(SynchronizationManager,synchronize));
+        testAsyncResult = loop.exec();
+    }
+
+    if (testAsyncResult == EventLoopWithExitStatus::ExitStatus::Timeout) {
+        QFAIL("Synchronization test failed to finish in time");
+    }
+    else if (testAsyncResult != EventLoopWithExitStatus::ExitStatus::Success) {
+        QFAIL("Internal error: incorrect return status from synchronization test");
+    }
+
+    if (catcher.receivedFailedSignal()) {
+        QFAIL(qPrintable(QString::fromUtf8("Detected failure during the asynchronous synchronization loop: ") +
+                         catcher.failureErrorDescription().nonLocalizedString()));
     }
 }
 

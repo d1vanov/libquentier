@@ -60,6 +60,7 @@ private Q_SLOTS:
     void testIncrementalSyncWithModifiedAndNewRemoteItemsWithUserOwnDataOnly();
     void testIncrementalSyncWithModifiedAndNewRemoteItemsWithLinkedNotebooks();
     void testIncrementalSyncWithNewLocalItemsWithUserOwnDataOnly();
+    void testIncrementalSyncWithNewLocalItemsWithLinkedNotebooks();
 
 private:
     void setUserOwnItemsToRemoteStorage();
@@ -69,7 +70,8 @@ private:
     void setModifiedUserOwnItemsToRemoteStorage();
     void setModifiedLinkedNotebookItemsToRemoteStorage();
 
-    void setNewItemsToLocalStorage();
+    void setNewUserOwnItemsToLocalStorage();
+    void setNewLinkedNotebookItemsToLocalStorage();
 
     struct DataConflictsOption
     {
@@ -103,6 +105,8 @@ private:
 
     void listLinkedNotebooksFromLocalStorage(const qint32 afterUSN,
                                              QHash<QString, qevercloud::LinkedNotebook> & linkedNotebooks) const;
+
+    void runTest(SynchronizationManagerSignalsCatcher & catcher);
 
 private:
     Account                         m_testAccount;
