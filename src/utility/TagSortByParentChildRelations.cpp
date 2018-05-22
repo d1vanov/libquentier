@@ -145,7 +145,7 @@ bool sortTagsByParentChildRelationsImpl(QList<T> & tagList, ErrorString & errorD
         QTextStream strm(&log);
         strm << QStringLiteral("Tags list after performing the topological sort: ");
         for(auto it = tagList.constBegin(), end = tagList.constEnd(); it != end; ++it) {
-            strm << *it << QStringLiteral(", ");
+            strm << *it << QStringLiteral("\n");
         }
         strm.flush();
         QNTRACE(log);
