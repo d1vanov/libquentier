@@ -84,7 +84,9 @@ SynchronizationTester::SynchronizationTester(QObject * parent) :
     m_pSynchronizationManager(Q_NULLPTR),
     m_detectedTestFailure(false),
     m_guidsOfUsersOwnRemoteItemsToModify(),
-    m_guidsOfLinkedNotebookRemoteItemsToModify()
+    m_guidsOfLinkedNotebookRemoteItemsToModify(),
+    m_guidsOfUserOwnLocalItemsToModify(),
+    m_guidsOfLinkedNotebookLocalItemsToModify()
 {}
 
 SynchronizationTester::~SynchronizationTester()
@@ -560,12 +562,48 @@ void SynchronizationTester::testIncrementalSyncWithNewLocalItemsWithLinkedNotebo
     checkIdentityOfLocalAndRemoteItems();
 }
 
+void SynchronizationTester::testIncrementalSyncWithModifiedLocalItemsWithUserOwnDataOnly()
+{
+    setUserOwnItemsToRemoteStorage();
+    copyRemoteItemsToLocalStorage();
+    setRemoteStorageSyncStateToPersistentSyncSettings();
+
+    setModifiedUserOwnItemsToLocalStorage();
+
+    SynchronizationManagerSignalsCatcher catcher(*m_pSynchronizationManager);
+    runTest(catcher);
+
+    CHECK_EXPECTED(receivedStartedSignal)
+    CHECK_EXPECTED(receivedFinishedSignal)
+    CHECK_EXPECTED(receivedRemoteToLocalSyncDone)
+    CHECK_EXPECTED(receivedSyncChunksDownloaded)
+    CHECK_EXPECTED(finishedSomethingSent)
+    CHECK_EXPECTED(receivedPreparedDirtyObjectsForSending)
+
+    CHECK_UNEXPECTED(finishedSomethingDownloaded)
+    CHECK_UNEXPECTED(remoteToLocalSyncDoneSomethingDownloaded)
+    CHECK_UNEXPECTED(receivedAuthenticationFinishedSignal)
+    CHECK_UNEXPECTED(receivedStoppedSignal)
+    CHECK_UNEXPECTED(receivedAuthenticationRevokedSignal)
+    CHECK_UNEXPECTED(receivedRemoteToLocalSyncStopped)
+    CHECK_UNEXPECTED(receivedSendLocalChangedStopped)
+    CHECK_UNEXPECTED(receivedWillRepeatRemoteToLocalSyncAfterSendingChanges)
+    CHECK_UNEXPECTED(receivedDetectedConflictDuringLocalChangesSending)
+    CHECK_UNEXPECTED(receivedRateLimitExceeded)
+    CHECK_UNEXPECTED(receivedLinkedNotebookSyncChunksDownloaded)
+    CHECK_UNEXPECTED(receivedPreparedLinkedNotebookDirtyObjectsForSending)
+
+    checkProgressNotificationsOrder(catcher);
+    checkIdentityOfLocalAndRemoteItems();
+}
+
 void SynchronizationTester::setUserOwnItemsToRemoteStorage()
 {
     ErrorString errorDescription;
     bool res = false;
 
     m_guidsOfUsersOwnRemoteItemsToModify = GuidsOfItemsToModifyForSyncTest();
+    m_guidsOfUserOwnLocalItemsToModify = GuidsOfItemsToModifyForSyncTest();
 
     SavedSearch firstSearch;
     firstSearch.setGuid(UidGenerator::Generate());
@@ -588,8 +626,17 @@ void SynchronizationTester::setUserOwnItemsToRemoteStorage()
     res = m_pFakeNoteStore->setSavedSearch(thirdSearch, errorDescription);
     QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
 
+    SavedSearch fourthSearch;
+    fourthSearch.setGuid(UidGenerator::Generate());
+    fourthSearch.setName(QStringLiteral("Fourth saved search"));
+    fourthSearch.setQuery(QStringLiteral("Fourth saved search query"));
+    res = m_pFakeNoteStore->setSavedSearch(fourthSearch, errorDescription);
+    QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
+
     m_guidsOfUsersOwnRemoteItemsToModify.m_savedSearchGuids << firstSearch.guid();
     m_guidsOfUsersOwnRemoteItemsToModify.m_savedSearchGuids << secondSearch.guid();
+    m_guidsOfUserOwnLocalItemsToModify.m_savedSearchGuids << thirdSearch.guid();
+    m_guidsOfUserOwnLocalItemsToModify.m_savedSearchGuids << fourthSearch.guid();
 
     Tag firstTag;
     firstTag.setGuid(UidGenerator::Generate());
@@ -610,8 +657,17 @@ void SynchronizationTester::setUserOwnItemsToRemoteStorage()
     res = m_pFakeNoteStore->setTag(thirdTag, errorDescription);
     QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
 
+    Tag fourthTag;
+    fourthTag.setGuid(UidGenerator::Generate());
+    fourthTag.setParentGuid(thirdTag.guid());
+    fourthTag.setName(QStringLiteral("Fourth tag"));
+    res = m_pFakeNoteStore->setTag(fourthTag, errorDescription);
+    QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
+
     m_guidsOfUsersOwnRemoteItemsToModify.m_tagGuids << firstTag.guid();
     m_guidsOfUsersOwnRemoteItemsToModify.m_tagGuids << secondTag.guid();
+    m_guidsOfUserOwnLocalItemsToModify.m_tagGuids << thirdTag.guid();
+    m_guidsOfUserOwnLocalItemsToModify.m_tagGuids << fourthTag.guid();
 
     Notebook firstNotebook;
     firstNotebook.setGuid(UidGenerator::Generate());
@@ -634,8 +690,17 @@ void SynchronizationTester::setUserOwnItemsToRemoteStorage()
     res = m_pFakeNoteStore->setNotebook(thirdNotebook, errorDescription);
     QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
 
+    Notebook fourthNotebook;
+    fourthNotebook.setGuid(UidGenerator::Generate());
+    fourthNotebook.setName(QStringLiteral("Fourth notebook"));
+    fourthNotebook.setDefaultNotebook(false);
+    res = m_pFakeNoteStore->setNotebook(fourthNotebook, errorDescription);
+    QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
+
     m_guidsOfUsersOwnRemoteItemsToModify.m_notebookGuids << firstNotebook.guid();
     m_guidsOfUsersOwnRemoteItemsToModify.m_notebookGuids << secondNotebook.guid();
+    m_guidsOfUserOwnLocalItemsToModify.m_notebookGuids << thirdNotebook.guid();
+    m_guidsOfUserOwnLocalItemsToModify.m_notebookGuids << fourthNotebook.guid();
 
     Note firstNote;
     firstNote.setGuid(UidGenerator::Generate());
@@ -712,8 +777,34 @@ void SynchronizationTester::setUserOwnItemsToRemoteStorage()
     res = m_pFakeNoteStore->setNote(fifthNote, errorDescription);
     QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
 
+    Note sixthNote;
+    sixthNote.setGuid(UidGenerator::Generate());
+    sixthNote.setNotebookGuid(fourthNotebook.guid());
+    sixthNote.setTitle(QStringLiteral("Sixth note"));
+    sixthNote.setContent(QStringLiteral("<en-note><div>Sixth note</div></en-note>"));
+    sixthNote.setContentLength(sixthNote.content().size());
+    sixthNote.setContentHash(QCryptographicHash::hash(sixthNote.content().toUtf8(), QCryptographicHash::Md5));
+    sixthNote.setCreationTimestamp(QDateTime::currentMSecsSinceEpoch());
+    sixthNote.setModificationTimestamp(sixthNote.creationTimestamp());
+    res = m_pFakeNoteStore->setNote(sixthNote, errorDescription);
+    QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
+
+    Note seventhNote;
+    seventhNote.setGuid(UidGenerator::Generate());
+    seventhNote.setNotebookGuid(fourthNotebook.guid());
+    seventhNote.setTitle(QStringLiteral("Sixth note"));
+    seventhNote.setContent(QStringLiteral("<en-note><div>Sixth note</div></en-note>"));
+    seventhNote.setContentLength(sixthNote.content().size());
+    seventhNote.setContentHash(QCryptographicHash::hash(sixthNote.content().toUtf8(), QCryptographicHash::Md5));
+    seventhNote.setCreationTimestamp(QDateTime::currentMSecsSinceEpoch());
+    seventhNote.setModificationTimestamp(sixthNote.creationTimestamp());
+    res = m_pFakeNoteStore->setNote(seventhNote, errorDescription);
+    QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
+
     m_guidsOfUsersOwnRemoteItemsToModify.m_noteGuids << firstNote.guid();
     m_guidsOfUsersOwnRemoteItemsToModify.m_noteGuids << secondNote.guid();
+    m_guidsOfUserOwnLocalItemsToModify.m_noteGuids << fifthNote.guid();
+    m_guidsOfUserOwnLocalItemsToModify.m_noteGuids << sixthNote.guid();
 }
 
 void SynchronizationTester::setLinkedNotebookItemsToRemoteStorage()
@@ -722,6 +813,7 @@ void SynchronizationTester::setLinkedNotebookItemsToRemoteStorage()
     bool res = false;
 
     m_guidsOfLinkedNotebookRemoteItemsToModify = GuidsOfItemsToModifyForSyncTest();
+    m_guidsOfLinkedNotebookLocalItemsToModify = GuidsOfItemsToModifyForSyncTest();
 
     LinkedNotebook firstLinkedNotebook;
     firstLinkedNotebook.setGuid(UidGenerator::Generate());
@@ -798,6 +890,13 @@ void SynchronizationTester::setLinkedNotebookItemsToRemoteStorage()
     res = m_pFakeNoteStore->setTag(secondLinkedNotebookSecondTag, errorDescription);
     QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
 
+    Tag secondLinkedNotebookThirdTag;
+    secondLinkedNotebookThirdTag.setGuid(UidGenerator::Generate());
+    secondLinkedNotebookThirdTag.setName(QStringLiteral("Second linked notebook third tag"));
+    secondLinkedNotebookThirdTag.setLinkedNotebookGuid(secondLinkedNotebook.guid());
+    res = m_pFakeNoteStore->setTag(secondLinkedNotebookThirdTag, errorDescription);
+    QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
+
     Tag thirdLinkedNotebookFirstTag;
     thirdLinkedNotebookFirstTag.setGuid(UidGenerator::Generate());
     thirdLinkedNotebookFirstTag.setName(QStringLiteral("Third linked notebook first tag"));
@@ -807,6 +906,8 @@ void SynchronizationTester::setLinkedNotebookItemsToRemoteStorage()
 
     m_guidsOfLinkedNotebookRemoteItemsToModify.m_tagGuids << firstLinkedNotebookFirstTag.guid();
     m_guidsOfLinkedNotebookRemoteItemsToModify.m_tagGuids << firstLinkedNotebookSecondTag.guid();
+    m_guidsOfLinkedNotebookLocalItemsToModify.m_tagGuids << secondLinkedNotebookThirdTag.guid();
+    m_guidsOfLinkedNotebookLocalItemsToModify.m_tagGuids << thirdLinkedNotebookFirstTag.guid();
 
     Notebook firstNotebook;
     firstNotebook.setGuid(UidGenerator::Generate());
@@ -834,6 +935,7 @@ void SynchronizationTester::setLinkedNotebookItemsToRemoteStorage()
 
     m_guidsOfLinkedNotebookRemoteItemsToModify.m_notebookGuids << firstNotebook.guid();
     m_guidsOfLinkedNotebookRemoteItemsToModify.m_notebookGuids << secondNotebook.guid();
+    m_guidsOfLinkedNotebookLocalItemsToModify.m_notebookGuids << thirdNotebook.guid();
 
     Note firstNote;
     firstNote.setGuid(UidGenerator::Generate());
@@ -897,6 +999,7 @@ void SynchronizationTester::setLinkedNotebookItemsToRemoteStorage()
     fourthNote.setContentHash(QCryptographicHash::hash(fourthNote.content().toUtf8(), QCryptographicHash::Md5));
     fourthNote.setCreationTimestamp(QDateTime::currentMSecsSinceEpoch());
     fourthNote.setModificationTimestamp(fourthNote.creationTimestamp());
+    fourthNote.addTagGuid(secondLinkedNotebookThirdTag.guid());
     res = m_pFakeNoteStore->setNote(fourthNote, errorDescription);
     QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
 
@@ -913,8 +1016,23 @@ void SynchronizationTester::setLinkedNotebookItemsToRemoteStorage()
     res = m_pFakeNoteStore->setNote(fifthNote, errorDescription);
     QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
 
+    Note sixthNote;
+    sixthNote.setGuid(UidGenerator::Generate());
+    sixthNote.setNotebookGuid(thirdNotebook.guid());
+    sixthNote.setTitle(QStringLiteral("Third linked notebook second note"));
+    sixthNote.setContent(QStringLiteral("<en-note><div>Third linked notebook second note</div></en-note>"));
+    sixthNote.setContentLength(sixthNote.content().size());
+    sixthNote.setContentHash(QCryptographicHash::hash(sixthNote.content().toUtf8(), QCryptographicHash::Md5));
+    sixthNote.setCreationTimestamp(QDateTime::currentMSecsSinceEpoch());
+    sixthNote.setModificationTimestamp(sixthNote.creationTimestamp());
+    sixthNote.addTagGuid(thirdLinkedNotebookFirstTag.guid());
+    res = m_pFakeNoteStore->setNote(sixthNote, errorDescription);
+    QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
+
     m_guidsOfLinkedNotebookRemoteItemsToModify.m_noteGuids << firstNote.guid();
     m_guidsOfLinkedNotebookRemoteItemsToModify.m_noteGuids << fourthNote.guid();
+    m_guidsOfLinkedNotebookLocalItemsToModify.m_noteGuids << secondNote.guid();
+    m_guidsOfLinkedNotebookLocalItemsToModify.m_noteGuids << sixthNote.guid();
 }
 
 void SynchronizationTester::setModifiedUserOwnItemsToRemoteStorage()
@@ -1670,255 +1788,78 @@ void SynchronizationTester::setNewLinkedNotebookItemsToRemoteStorage()
     m_pFakeNoteStore->setLinkedNotebookSyncState(fourthLinkedNotebook.username(), syncState);
 }
 
-void SynchronizationTester::setModifiedRemoteItemsToLocalStorage(const DataConflictsOption::type dataConflictsOption)
+void SynchronizationTester::setModifiedUserOwnItemsToLocalStorage()
 {
     ErrorString errorDescription;
     bool res = false;
 
-    // ====== Saved searches ======
-
-    QHash<QString,qevercloud::SavedSearch> searches = m_pFakeNoteStore->savedSearches();
-    QVERIFY2(!searches.isEmpty(), "Expected non-empty list of remote saved searches");
-    size_t numSavedSearchesToModify = 2;
-    size_t modifiedSavedSearches = 0;
-    auto savedSearchIt = searches.constEnd();
-    while(modifiedSavedSearches < numSavedSearchesToModify)
+    QVERIFY(!m_guidsOfUserOwnLocalItemsToModify.m_savedSearchGuids.isEmpty());
+    for(auto it = m_guidsOfUserOwnLocalItemsToModify.m_savedSearchGuids.constBegin(),
+        end = m_guidsOfUserOwnLocalItemsToModify.m_savedSearchGuids.constEnd(); it != end; ++it)
     {
-        QVERIFY2(savedSearchIt != searches.constEnd(), "Encountered the end of saved searches prematurately");
+        SavedSearch savedSearch;
+        savedSearch.setGuid(*it);
+        res = m_pLocalStorageManagerAsync->localStorageManager()->findSavedSearch(savedSearch, errorDescription);
+        QVERIFY2(res == true, "Detected unexpectedly missing saved search in local storage");
+        QVERIFY2(savedSearch.hasName(), "Detected saved search without a name in local storage");
 
-        const SavedSearch * pRemoteSearch = m_pFakeNoteStore->findSavedSearch(savedSearchIt.key());
-        QVERIFY(pRemoteSearch != Q_NULLPTR);
+        savedSearch.setName(savedSearch.name() + QStringLiteral("_modified_locally"));
+        savedSearch.setDirty(true);
 
-        if ( ((dataConflictsOption == DataConflictsOption::DisallowConflict) && pRemoteSearch->isDirty()) ||
-             ((dataConflictsOption == DataConflictsOption::EnsureConflict) && !pRemoteSearch->isDirty()) )
-        {
-            ++savedSearchIt;
-            continue;
-        }
-
-        SavedSearch modifiedSavedSearch(savedSearchIt.value());
-        modifiedSavedSearch.setName(modifiedSavedSearch.name() + QStringLiteral(" (modified)"));
-        modifiedSavedSearch.setDirty(true);
-        res = m_pLocalStorageManagerAsync->localStorageManager()->updateSavedSearch(modifiedSavedSearch, errorDescription);
-        QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
-        ++savedSearchIt;
-        ++modifiedSavedSearches;
-    }
-
-    // ====== Tags ======
-
-    QHash<QString,qevercloud::Tag> tags = m_pFakeNoteStore->tags();
-    QVERIFY2(!tags.isEmpty(), "Expected non-empty list of remote tags");
-    auto tagIt = tags.constBegin();
-
-    auto usersOwnTagIt = tagIt;
-    while(usersOwnTagIt != tags.constEnd())
-    {
-        const Tag * pTag = m_pFakeNoteStore->findTag(usersOwnTagIt->guid.ref());
-        if (!pTag || pTag->hasLinkedNotebookGuid() ||
-            ((dataConflictsOption == DataConflictsOption::DisallowConflict) && pTag->isDirty()) ||
-            ((dataConflictsOption == DataConflictsOption::EnsureConflict) && !pTag->isDirty()))
-        {
-            ++usersOwnTagIt;
-            continue;
-        }
-
-        break;
-    }
-    QVERIFY2(usersOwnTagIt != tags.constEnd(), "Couldn't find user's own tag to modify");
-
-    auto linkedNotebookTagIt = tagIt;
-    while(linkedNotebookTagIt != tags.constEnd())
-    {
-        const Tag * pTag = m_pFakeNoteStore->findTag(usersOwnTagIt->guid.ref());
-        if (!pTag || !pTag->hasLinkedNotebookGuid() ||
-            ((dataConflictsOption == DataConflictsOption::DisallowConflict) && pTag->isDirty()) ||
-            ((dataConflictsOption == DataConflictsOption::EnsureConflict) && !pTag->isDirty()))
-        {
-            ++usersOwnTagIt;
-            continue;
-        }
-
-        break;
-    }
-    QVERIFY2(linkedNotebookTagIt != tags.constEnd(), "Couldn't find tag from linked notebook to modify");
-
-    QList<QHash<QString,qevercloud::Tag>::const_iterator> tagsToModify;
-    tagsToModify.reserve(2);
-    tagsToModify << usersOwnTagIt;
-    tagsToModify << linkedNotebookTagIt;
-    for(auto it = tagsToModify.constBegin(), end = tagsToModify.constEnd(); it != end; ++it) {
-        Tag modifiedTag(it->value());
-        modifiedTag.setName(modifiedTag.name() + QStringLiteral(" (modified)"));
-        modifiedTag.setDirty(true);
-        modifiedTag.setLocalUid(QString());
-        res = m_pLocalStorageManagerAsync->localStorageManager()->updateTag(modifiedTag, errorDescription);
+        res = m_pLocalStorageManagerAsync->localStorageManager()->updateSavedSearch(savedSearch, errorDescription);
         QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
     }
 
-    // ====== Notebooks ======
-
-    QHash<QString,qevercloud::Notebook> notebooks = m_pFakeNoteStore->notebooks();
-    QVERIFY2(!notebooks.isEmpty(), "Expected non-empty list of remote notebooks");
-    auto notebookIt = notebooks.constBegin();
-
-    auto usersOwnNotebookIt = notebookIt;
-    while(usersOwnNotebookIt != notebooks.constEnd())
+    QVERIFY(!m_guidsOfUserOwnLocalItemsToModify.m_tagGuids.isEmpty());
+    for(auto it = m_guidsOfUserOwnLocalItemsToModify.m_tagGuids.constBegin(),
+        end = m_guidsOfUserOwnLocalItemsToModify.m_tagGuids.constEnd(); it != end; ++it)
     {
-        const Notebook * pNotebook = m_pFakeNoteStore->findNotebook(usersOwnNotebookIt->guid.ref());
-        if (!pNotebook || pNotebook->hasLinkedNotebookGuid() ||
-            ((dataConflictsOption == DataConflictsOption::DisallowConflict) && pNotebook->isDirty()) ||
-            ((dataConflictsOption == DataConflictsOption::EnsureConflict) && !pNotebook->isDirty()))
-        {
-            ++usersOwnNotebookIt;
-            continue;
-        }
+        Tag tag;
+        tag.setGuid(*it);
+        res = m_pLocalStorageManagerAsync->localStorageManager()->findTag(tag, errorDescription);
+        QVERIFY2(res == true, "Detected unexpectedly missing tag in local storage");
+        QVERIFY2(tag.hasName(), "Detected tag without a name in local storage");
 
-        break;
-    }
-    QVERIFY2(usersOwnNotebookIt != notebooks.constEnd(), "Couldn't find user's own notebook to modify");
+        tag.setName(tag.name() + QStringLiteral("_modified_locally"));
+        tag.setDirty(true);
 
-    auto linkedNotebookNotebookIt = notebookIt;
-    while(linkedNotebookNotebookIt != notebooks.constEnd())
-    {
-        const Notebook * pNotebook = m_pFakeNoteStore->findNotebook(linkedNotebookNotebookIt->guid.ref());
-        if (!pNotebook || !pNotebook->hasLinkedNotebookGuid() ||
-            ((dataConflictsOption == DataConflictsOption::DisallowConflict) && pNotebook->isDirty()) ||
-            ((dataConflictsOption == DataConflictsOption::EnsureConflict) && !pNotebook->isDirty()))
-        {
-            ++linkedNotebookNotebookIt;
-            continue;
-        }
-
-        break;
-    }
-    QVERIFY2(linkedNotebookNotebookIt != notebooks.constEnd(), "Couldn't find notebook from linked notebook to modify");
-
-    QList<QHash<QString,qevercloud::Notebook>::const_iterator> notebooksToModify;
-    notebooksToModify.reserve(2);
-    notebooksToModify << usersOwnNotebookIt;
-    notebooksToModify << linkedNotebookNotebookIt;
-    for(auto it = notebooksToModify.constBegin(), end = notebooksToModify.constEnd(); it != end; ++it) {
-        Notebook modifiedNotebook(it->value());
-        modifiedNotebook.setName(modifiedNotebook.name() + QStringLiteral(" (modified)"));
-        modifiedNotebook.setDirty(true);
-        modifiedNotebook.setLocalUid(QString());
-        res = m_pLocalStorageManagerAsync->localStorageManager()->updateNotebook(modifiedNotebook, errorDescription);
+        res = m_pLocalStorageManagerAsync->localStorageManager()->updateTag(tag, errorDescription);
         QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
     }
 
-    // ====== Notes ======
-
-    QHash<QString,qevercloud::Note> notes = m_pFakeNoteStore->notes();
-    QVERIFY2(!notes.isEmpty(), "Expected non-empty list of remote notes");
-    auto noteIt = notes.constBegin();
-
-    auto usersOwnNoteIt = noteIt;
-    while(usersOwnNoteIt != notes.constEnd())
+    QVERIFY(!m_guidsOfUserOwnLocalItemsToModify.m_notebookGuids.isEmpty());
+    for(auto it = m_guidsOfUserOwnLocalItemsToModify.m_notebookGuids.constBegin(),
+        end = m_guidsOfUserOwnLocalItemsToModify.m_notebookGuids.constEnd(); it != end; ++it)
     {
-        const Notebook * pNotebook = m_pFakeNoteStore->findNotebook(usersOwnNoteIt->notebookGuid.ref());
-        if (!pNotebook || pNotebook->hasLinkedNotebookGuid() ||
-            ((dataConflictsOption == DataConflictsOption::DisallowConflict) && pNotebook->isDirty()) ||
-            ((dataConflictsOption == DataConflictsOption::EnsureConflict) && !pNotebook->isDirty()))
-        {
-            ++usersOwnNoteIt;
-            continue;
-        }
+        Notebook notebook;
+        notebook.setGuid(*it);
+        res = m_pLocalStorageManagerAsync->localStorageManager()->findNotebook(notebook, errorDescription);
+        QVERIFY2(res == true, "Detected unexpectedly missing notebook in local storage");
+        QVERIFY2(notebook.hasName(), "Detected notebook without a name in local storage");
 
-        break;
-    }
-    QVERIFY2(usersOwnNoteIt != notes.constEnd(), "Couldn't find user's own note to modify");
+        notebook.setName(notebook.name() + QStringLiteral("_modified_locally"));
+        notebook.setDirty(true);
 
-    auto linkedNotebookNoteIt = noteIt;
-    while(linkedNotebookNoteIt != notes.constEnd())
-    {
-        const Notebook * pNotebook = m_pFakeNoteStore->findNotebook(usersOwnNoteIt->notebookGuid.ref());
-        if (!pNotebook || !pNotebook->hasLinkedNotebookGuid() ||
-            ((dataConflictsOption == DataConflictsOption::DisallowConflict) && pNotebook->isDirty()) ||
-            ((dataConflictsOption == DataConflictsOption::EnsureConflict) && !pNotebook->isDirty()))
-        {
-            ++linkedNotebookNoteIt;
-            continue;
-        }
-
-        break;
-    }
-    QVERIFY2(linkedNotebookNoteIt != notes.constEnd(), "Couldn't find note from linked notebook to modify");
-
-    QList<QHash<QString,qevercloud::Note>::const_iterator> notesToModify;
-    notesToModify.reserve(2);
-    notesToModify << usersOwnNoteIt;
-    notesToModify << linkedNotebookNoteIt;
-    for(auto it = notesToModify.constBegin(), end = notesToModify.constEnd(); it != end; ++it) {
-        Note modifiedNote(it->value());
-        modifiedNote.setTitle(modifiedNote.title() + QStringLiteral(" (modified)"));
-        modifiedNote.setDirty(true);
-        modifiedNote.setLocalUid(QString());
-        modifiedNote.setNotebookLocalUid(QString());
-        modifiedNote.setTagLocalUids(QStringList());
-        res = m_pLocalStorageManagerAsync->localStorageManager()->updateNote(modifiedNote, false, false, errorDescription);
+        res = m_pLocalStorageManagerAsync->localStorageManager()->updateNotebook(notebook, errorDescription);
         QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
     }
 
-    // ====== Resources ======
-
-    QHash<QString,qevercloud::Resource> resources = m_pFakeNoteStore->resources();
-    QVERIFY2(!resources.isEmpty(), "Expected non-empty list of remote resources");
-    auto resourceIt = resources.constBegin();
-
-    auto usersOwnResourceIt = resourceIt;
-    while(usersOwnResourceIt != resources.constEnd())
+    QVERIFY(!m_guidsOfUserOwnLocalItemsToModify.m_noteGuids.isEmpty());
+    for(auto it = m_guidsOfUserOwnLocalItemsToModify.m_noteGuids.constBegin(),
+        end = m_guidsOfUserOwnLocalItemsToModify.m_noteGuids.constEnd(); it != end; ++it)
     {
-        const Note * pNote = m_pFakeNoteStore->findNote(usersOwnResourceIt->noteGuid.ref());
-        if (!pNote ||
-            ((dataConflictsOption == DataConflictsOption::DisallowConflict) && pNote->isDirty()) ||
-            ((dataConflictsOption == DataConflictsOption::EnsureConflict) && !pNote->isDirty()))
-        {
-            continue;
-        }
+        Note note;
+        note.setGuid(*it);
+        res = m_pLocalStorageManagerAsync->localStorageManager()->findNote(note, errorDescription, /* with resource binary data = */ false);
+        QVERIFY2(res == true, "Detected unexpectedly missing note in local storage");
+        QVERIFY2(note.hasTitle(), "Detected note without title in local storage");
 
-        const Notebook * pNotebook = m_pFakeNoteStore->findNotebook(pNote->notebookGuid());
-        if (!pNotebook || pNotebook->hasLinkedNotebookGuid()) {
-            ++usersOwnResourceIt;
-            continue;
-        }
+        note.setTitle(note.title() + QStringLiteral("_modified_locally"));
+        note.setDirty(true);
 
-        break;
-    }
-    QVERIFY2(usersOwnResourceIt != resources.constEnd(), "Couldn't find user's own resource to modify");
-
-    auto linkedNotebookResourceIt = resourceIt;
-    while(linkedNotebookResourceIt != resources.constEnd())
-    {
-        const Note * pNote = m_pFakeNoteStore->findNote(linkedNotebookResourceIt->noteGuid.ref());
-        if (!pNote ||
-            ((dataConflictsOption == DataConflictsOption::DisallowConflict) && pNote->isDirty()) ||
-            ((dataConflictsOption == DataConflictsOption::EnsureConflict) && !pNote->isDirty()))
-        {
-            continue;
-        }
-
-        const Notebook * pNotebook = m_pFakeNoteStore->findNotebook(pNote->notebookGuid());
-        if (!pNotebook || !pNotebook->hasLinkedNotebookGuid()) {
-            ++linkedNotebookResourceIt;
-            continue;
-        }
-
-        break;
-    }
-    QVERIFY2(linkedNotebookResourceIt != resources.constEnd(), "Couldn't find resource from linked notebook to modify");
-
-    QList<QHash<QString,qevercloud::Resource>::const_iterator> resourcesToModify;
-    resourcesToModify.reserve(2);
-    resourcesToModify << usersOwnResourceIt;
-    resourcesToModify << linkedNotebookResourceIt;
-    for(auto it = resourcesToModify.constBegin(), end = resourcesToModify.constEnd(); it != end; ++it) {
-        Resource modifiedResource(it->value());
-        modifiedResource.setDataBody(QByteArray("Modified resource data body"));
-        modifiedResource.setDataHash(QCryptographicHash::hash(modifiedResource.dataBody(), QCryptographicHash::Md5));
-        modifiedResource.setDataSize(modifiedResource.dataBody().size());
-        modifiedResource.setNoteLocalUid(QString());
-        res = m_pLocalStorageManagerAsync->localStorageManager()->updateEnResource(modifiedResource, errorDescription);
+        res = m_pLocalStorageManagerAsync->localStorageManager()->updateNote(note, /* update tags = */ false,
+                                                                             /* update resources = */ false,
+                                                                             errorDescription);
         QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
     }
 }

@@ -61,6 +61,7 @@ private Q_SLOTS:
     void testIncrementalSyncWithModifiedAndNewRemoteItemsWithLinkedNotebooks();
     void testIncrementalSyncWithNewLocalItemsWithUserOwnDataOnly();
     void testIncrementalSyncWithNewLocalItemsWithLinkedNotebooks();
+    void testIncrementalSyncWithModifiedLocalItemsWithUserOwnDataOnly();
 
 private:
     void setUserOwnItemsToRemoteStorage();
@@ -72,18 +73,8 @@ private:
 
     void setNewUserOwnItemsToLocalStorage();
     void setNewLinkedNotebookItemsToLocalStorage();
+    void setModifiedUserOwnItemsToLocalStorage();
 
-    struct DataConflictsOption
-    {
-        enum type
-        {
-            DisallowConflict = 0,
-            IgnoreConflict,
-            EnsureConflict
-        };
-    };
-
-    void setModifiedRemoteItemsToLocalStorage(const DataConflictsOption::type dataConflictsOption);
     void copyRemoteItemsToLocalStorage();
 
     void setRemoteStorageSyncStateToPersistentSyncSettings();
@@ -138,6 +129,9 @@ private:
 
     GuidsOfItemsToModifyForSyncTest     m_guidsOfUsersOwnRemoteItemsToModify;
     GuidsOfItemsToModifyForSyncTest     m_guidsOfLinkedNotebookRemoteItemsToModify;
+
+    GuidsOfItemsToModifyForSyncTest     m_guidsOfUserOwnLocalItemsToModify;
+    GuidsOfItemsToModifyForSyncTest     m_guidsOfLinkedNotebookLocalItemsToModify;
 };
 
 } // namespace test
