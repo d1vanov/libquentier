@@ -22,6 +22,7 @@
 #include <quentier/utility/EventLoopWithExitStatus.h>
 #include <quentier/utility/TagSortByParentChildRelations.h>
 #include <quentier/utility/ApplicationSettings.h>
+#include <quentier/utility/Utility.h>
 #include <quentier/logging/QuentierLogger.h>
 #include <quentier_private/synchronization/SynchronizationManagerDependencyInjector.h>
 #include <QtTest/QtTest>
@@ -3045,6 +3046,64 @@ void SynchronizationTester::checkIdentityOfLocalAndRemoteItems()
                  qPrintable(QString::fromUtf8("Found mismatch between local and remote notes: local one: ") +
                             ToString(it.value()) + QString::fromUtf8("\nRemote one: ") + ToString(rit.value())));
     }
+}
+
+void SynchronizationTester::checkPersistentSyncState()
+{
+    ApplicationSettings appSettings(m_testAccount, SYNCHRONIZATION_PERSISTENCE_NAME);
+    const QString keyGroup = QStringLiteral("Synchronization/www.evernote.com/") +
+                             QString::number(m_testAccount.id()) + QStringLiteral("/") +
+                             LAST_SYNC_PARAMS_KEY_GROUP + QStringLiteral("/");
+
+    QVariant persistentUserOwnUpdateCountData = appSettings.value(keyGroup + LAST_SYNC_UPDATE_COUNT_KEY);
+    bool conversionResult = false;
+    qint32 persistentUserOwnUpdateCount = persistentUserOwnUpdateCountData.toInt(&conversionResult);
+    QVERIFY2(conversionResult == true, "Failed to convert persistent user's own update count to int");
+
+    qint32 usersOwnMaxUsn = m_pFakeNoteStore->currentMaxUsn();
+    if (Q_UNLIKELY(persistentUserOwnUpdateCount != usersOwnMaxUsn)) {
+        QString error = QStringLiteral("Persistent user's own update count (") +
+                        QString::number(persistentUserOwnUpdateCount) +
+                        QStringLiteral(") is not equal to fake note store's user's own max USN (") +
+                        QString::number(usersOwnMaxUsn) + QStringLiteral(")");
+        QFAIL(qPrintable(error));
+    }
+
+    qevercloud::Timestamp currentTimestamp = QDateTime::currentMSecsSinceEpoch();
+
+    QVariant lastUserOwnDataSyncTimestampData = appSettings.value(keyGroup + LAST_SYNC_TIME_KEY);
+    conversionResult = false;
+    qevercloud::Timestamp lastUserOwnDataSyncTimestamp = lastUserOwnDataSyncTimestampData.toLongLong(&conversionResult);
+    QVERIFY2(conversionResult == true, "Failed to convert persistent user's own last sync timestamp to int64");
+
+    if (Q_UNLIKELY(lastUserOwnDataSyncTimestamp >= currentTimestamp)) {
+        QString error = QStringLiteral("Last user's own data sync timestamp is greater than the current timestamp: ");
+        error += printableDateTimeFromTimestamp(lastUserOwnDataSyncTimestamp);
+        error += QStringLiteral(" vs ");
+        error += printableDateTimeFromTimestamp(currentTimestamp);
+        QFAIL(qPrintable(error));
+    }
+
+    qint64 timestampSpan = currentTimestamp - lastUserOwnDataSyncTimestamp;
+    QVERIFY2(timestampSpan < 3*MAX_ALLOWED_TEST_DURATION_MSEC, "The difference between the current datetime and user's own exceeds half an hour");
+
+    QHash<QString,qevercloud::LinkedNotebook> linkedNotebooks = m_pFakeNoteStore->linkedNotebooks();
+    int numLinkedNotebookSyncEntries = appSettings.beginReadArray(keyGroup + LAST_SYNC_LINKED_NOTEBOOKS_PARAMS);
+    if (Q_UNLIKELY(numLinkedNotebookSyncEntries != linkedNotebooks.size())) {
+        QString error = QStringLiteral("The number of persistent linked notebook sync entries doesn't match the number of linked notebooks: ");
+        error += QString::number(numLinkedNotebookSyncEntries);
+        error += QStringLiteral(" vs ");
+        error += QString::number(linkedNotebooks.size());
+        QFAIL(qPrintable(error));
+    }
+
+    for(int i = 0; i < numLinkedNotebookSyncEntries; ++i)
+    {
+        appSettings.setArrayIndex(i);
+
+        // TODO: continue from here
+    }
+    appSettings.endArray();
 }
 
 void SynchronizationTester::listSavedSearchesFromLocalStorage(const qint32 afterUSN,
