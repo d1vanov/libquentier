@@ -1001,13 +1001,17 @@ void SendLocalChangesManager::disconnectFromLocalStorage()
 
 bool SendLocalChangesManager::requestStuffFromLocalStorage(const QString & linkedNotebookGuid)
 {
-    QNDEBUG(QStringLiteral("SendLocalChangesManager::requestStuffFromLocalStorage: linked notebook guid = ") << linkedNotebookGuid);
+    QNDEBUG(QStringLiteral("SendLocalChangesManager::requestStuffFromLocalStorage: linked notebook guid = ")
+            << linkedNotebookGuid << QStringLiteral(" (empty = ")
+            << (linkedNotebookGuid.isEmpty() ? QStringLiteral("true") : QStringLiteral("false"))
+            << QStringLiteral(", null = ") << (linkedNotebookGuid.isNull() ? QStringLiteral("true") : QStringLiteral("false"))
+            << QStringLiteral(")"));
 
     bool emptyLinkedNotebookGuid = linkedNotebookGuid.isEmpty();
     if (!emptyLinkedNotebookGuid)
     {
         auto it = m_linkedNotebookGuidsForWhichStuffWasRequestedFromLocalStorage.find(linkedNotebookGuid);
-        if (it == m_linkedNotebookGuidsForWhichStuffWasRequestedFromLocalStorage.end()) {
+        if (it != m_linkedNotebookGuidsForWhichStuffWasRequestedFromLocalStorage.end()) {
             QNDEBUG(QStringLiteral("The stuff has already been requested from local storage for linked notebook guid ")
                     << linkedNotebookGuid);
             return false;
@@ -1033,7 +1037,7 @@ bool SendLocalChangesManager::requestStuffFromLocalStorage(const QString & linke
     QNTRACE(QStringLiteral("Emitting the request to fetch unsynchronized tags from local storage: request id = ")
             << listDirtyTagsRequestId);
     Q_EMIT requestLocalUnsynchronizedTags(listDirtyObjectsFlag, limit, offset, tagsOrder,
-                                        orderDirection, linkedNotebookGuid, listDirtyTagsRequestId);
+                                          orderDirection, linkedNotebookGuid, listDirtyTagsRequestId);
 
     if (emptyLinkedNotebookGuid)
     {
@@ -1042,7 +1046,7 @@ bool SendLocalChangesManager::requestStuffFromLocalStorage(const QString & linke
         QNTRACE(QStringLiteral("Emitting the request to fetch unsynchronized saved searches from local storage: request id = ")
                 << m_listDirtySavedSearchesRequestId);
         Q_EMIT requestLocalUnsynchronizedSavedSearches(listDirtyObjectsFlag, limit, offset, savedSearchesOrder,
-                                                     orderDirection, m_listDirtySavedSearchesRequestId);
+                                                       orderDirection, m_listDirtySavedSearchesRequestId);
     }
 
     LocalStorageManager::ListNotebooksOrder::type notebooksOrder = LocalStorageManager::ListNotebooksOrder::NoOrder;
@@ -1057,7 +1061,7 @@ bool SendLocalChangesManager::requestStuffFromLocalStorage(const QString & linke
     QNTRACE(QStringLiteral("Emitting the request to fetch unsynchronized notebooks from local storage: request id = ")
             << listDirtyNotebooksRequestId);
     Q_EMIT requestLocalUnsynchronizedNotebooks(listDirtyObjectsFlag, limit, offset, notebooksOrder,
-                                             orderDirection, linkedNotebookGuid, listDirtyNotebooksRequestId);
+                                               orderDirection, linkedNotebookGuid, listDirtyNotebooksRequestId);
 
     LocalStorageManager::ListNotesOrder::type notesOrder = LocalStorageManager::ListNotesOrder::NoOrder;
     QUuid listDirtyNotesRequestId = QUuid::createUuid();
@@ -1118,13 +1122,16 @@ void SendLocalChangesManager::checkListLocalStorageObjectsCompletion()
         return;
     }
 
-    m_receivedDirtyLocalStorageObjectsFromUsersAccount = true;
-    QNTRACE(QStringLiteral("Received all dirty objects from user's own account from local storage: ")
-            << m_tags.size() << QStringLiteral(" tags, ") << m_savedSearches.size() << QStringLiteral(" saved searches, ")
-            << m_notebooks.size() << QStringLiteral(" notebooks and ") << m_notes.size() << QStringLiteral(" notes"));
+    if (!m_receivedDirtyLocalStorageObjectsFromUsersAccount)
+    {
+        m_receivedDirtyLocalStorageObjectsFromUsersAccount = true;
+        QNTRACE(QStringLiteral("Received all dirty objects from user's own account from local storage: ")
+                << m_tags.size() << QStringLiteral(" tags, ") << m_savedSearches.size() << QStringLiteral(" saved searches, ")
+                << m_notebooks.size() << QStringLiteral(" notebooks and ") << m_notes.size() << QStringLiteral(" notes"));
 
-    if (!m_tags.isEmpty() || !m_savedSearches.isEmpty() || !m_notebooks.isEmpty() || !m_notes.isEmpty()) {
-        Q_EMIT receivedUserAccountDirtyObjects();
+        if (!m_tags.isEmpty() || !m_savedSearches.isEmpty() || !m_notebooks.isEmpty() || !m_notes.isEmpty()) {
+            Q_EMIT receivedUserAccountDirtyObjects();
+        }
     }
 
     if (!m_linkedNotebookAuthData.isEmpty())
@@ -1141,7 +1148,7 @@ void SendLocalChangesManager::checkListLocalStorageObjectsCompletion()
         }
 
         if (requestedStuffForSomeLinkedNotebook) {
-            QNDEBUG(QStringLiteral("Sent one or more list stuff from local storage request ids"));
+            QNDEBUG(QStringLiteral("Sent one or more list stuff from linked notebooks from local storage request ids"));
             return;
         }
 
