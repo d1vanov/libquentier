@@ -250,7 +250,7 @@ void SynchronizationTester::testRemoteToLocalFullSyncWithLinkedNotebooks()
     checkIdentityOfLocalAndRemoteItems();
 }
 
-void SynchronizationTester::testIncrementalSyncWithNewRemoteItemsWithUserOwnDataOnly()
+void SynchronizationTester::testIncrementalSyncWithNewRemoteItemsFromUserOwnDataOnly()
 {
     setUserOwnItemsToRemoteStorage();
     copyRemoteItemsToLocalStorage();
@@ -285,7 +285,43 @@ void SynchronizationTester::testIncrementalSyncWithNewRemoteItemsWithUserOwnData
     checkIdentityOfLocalAndRemoteItems();
 }
 
-void SynchronizationTester::testIncrementalSyncWithNewRemoteItemsWithLinkedNotebooks()
+void SynchronizationTester::testIncrementalSyncWithNewRemoteItemsFromLinkedNotebooksOnly()
+{
+    setUserOwnItemsToRemoteStorage();
+    setLinkedNotebookItemsToRemoteStorage();
+    copyRemoteItemsToLocalStorage();
+    setRemoteStorageSyncStateToPersistentSyncSettings();
+
+    setNewLinkedNotebookItemsToRemoteStorage();
+
+    SynchronizationManagerSignalsCatcher catcher(*m_pSynchronizationManager);
+    runTest(catcher);
+
+    CHECK_EXPECTED(receivedStartedSignal)
+    CHECK_EXPECTED(receivedFinishedSignal)
+    CHECK_EXPECTED(finishedSomethingDownloaded)
+    CHECK_EXPECTED(receivedRemoteToLocalSyncDone)
+    CHECK_EXPECTED(remoteToLocalSyncDoneSomethingDownloaded)
+    CHECK_EXPECTED(receivedSyncChunksDownloaded)
+    CHECK_EXPECTED(receivedLinkedNotebookSyncChunksDownloaded)
+
+    CHECK_UNEXPECTED(receivedAuthenticationFinishedSignal)
+    CHECK_UNEXPECTED(receivedStoppedSignal)
+    CHECK_UNEXPECTED(finishedSomethingSent)
+    CHECK_UNEXPECTED(receivedAuthenticationRevokedSignal)
+    CHECK_UNEXPECTED(receivedRemoteToLocalSyncStopped)
+    CHECK_UNEXPECTED(receivedSendLocalChangedStopped)
+    CHECK_UNEXPECTED(receivedWillRepeatRemoteToLocalSyncAfterSendingChanges)
+    CHECK_UNEXPECTED(receivedDetectedConflictDuringLocalChangesSending)
+    CHECK_UNEXPECTED(receivedRateLimitExceeded)
+    CHECK_UNEXPECTED(receivedPreparedDirtyObjectsForSending)
+    CHECK_UNEXPECTED(receivedPreparedLinkedNotebookDirtyObjectsForSending)
+
+    checkProgressNotificationsOrder(catcher);
+    checkIdentityOfLocalAndRemoteItems();
+}
+
+void SynchronizationTester::testIncrementalSyncWithNewRemoteItemsFromUserOwnDataAndLinkedNotebooks()
 {
     setUserOwnItemsToRemoteStorage();
     setLinkedNotebookItemsToRemoteStorage();
@@ -322,7 +358,7 @@ void SynchronizationTester::testIncrementalSyncWithNewRemoteItemsWithLinkedNoteb
     checkIdentityOfLocalAndRemoteItems();
 }
 
-void SynchronizationTester::testIncrementalSyncWithModifiedRemoteItemsWithUserOwnDataOnly()
+void SynchronizationTester::testIncrementalSyncWithModifiedRemoteItemsFromUserOwnDataOnly()
 {
     setUserOwnItemsToRemoteStorage();
     copyRemoteItemsToLocalStorage();
@@ -363,7 +399,48 @@ void SynchronizationTester::testIncrementalSyncWithModifiedRemoteItemsWithUserOw
     checkIdentityOfLocalAndRemoteItems();
 }
 
-void SynchronizationTester::testIncrementalSyncWithModifiedRemoteItemsWithLinkedNotebooks()
+void SynchronizationTester::testIncrementalSyncWithModifiedRemoteItemsFromLinkedNotebooksOnly()
+{
+    setUserOwnItemsToRemoteStorage();
+    setLinkedNotebookItemsToRemoteStorage();
+    copyRemoteItemsToLocalStorage();
+    setRemoteStorageSyncStateToPersistentSyncSettings();
+
+    setModifiedLinkedNotebookItemsToRemoteStorage();
+
+    SynchronizationManagerSignalsCatcher catcher(*m_pSynchronizationManager);
+    runTest(catcher);
+
+    CHECK_EXPECTED(receivedStartedSignal)
+    CHECK_EXPECTED(receivedFinishedSignal)
+    CHECK_EXPECTED(finishedSomethingDownloaded)
+    CHECK_EXPECTED(receivedRemoteToLocalSyncDone)
+    CHECK_EXPECTED(remoteToLocalSyncDoneSomethingDownloaded)
+    CHECK_EXPECTED(receivedSyncChunksDownloaded)
+    CHECK_EXPECTED(receivedLinkedNotebookSyncChunksDownloaded)
+
+    // NOTE: these are expected because the updates of remote resources intentionally
+    // trigger marking the notes owning these updated resources as dirty ones
+    // because otherwise it's kinda incosistent that resource was added or updated
+    // but its note still has old information about it
+    CHECK_EXPECTED(finishedSomethingSent)
+    CHECK_EXPECTED(receivedPreparedLinkedNotebookDirtyObjectsForSending)
+
+    CHECK_UNEXPECTED(receivedPreparedDirtyObjectsForSending)
+    CHECK_UNEXPECTED(receivedAuthenticationFinishedSignal)
+    CHECK_UNEXPECTED(receivedStoppedSignal)
+    CHECK_UNEXPECTED(receivedAuthenticationRevokedSignal)
+    CHECK_UNEXPECTED(receivedRemoteToLocalSyncStopped)
+    CHECK_UNEXPECTED(receivedSendLocalChangedStopped)
+    CHECK_UNEXPECTED(receivedWillRepeatRemoteToLocalSyncAfterSendingChanges)
+    CHECK_UNEXPECTED(receivedDetectedConflictDuringLocalChangesSending)
+    CHECK_UNEXPECTED(receivedRateLimitExceeded)
+
+    checkProgressNotificationsOrder(catcher);
+    checkIdentityOfLocalAndRemoteItems();
+}
+
+void SynchronizationTester::testIncrementalSyncWithModifiedRemoteItemsFromUserOwnDataAndLinkedNotebooks()
 {
     setUserOwnItemsToRemoteStorage();
     setLinkedNotebookItemsToRemoteStorage();
@@ -405,7 +482,7 @@ void SynchronizationTester::testIncrementalSyncWithModifiedRemoteItemsWithLinked
     checkIdentityOfLocalAndRemoteItems();
 }
 
-void SynchronizationTester::testIncrementalSyncWithModifiedAndNewRemoteItemsWithUserOwnDataOnly()
+void SynchronizationTester::testIncrementalSyncWithModifiedAndNewRemoteItemsFromUserOwnDataOnly()
 {
     setUserOwnItemsToRemoteStorage();
     copyRemoteItemsToLocalStorage();
@@ -446,7 +523,49 @@ void SynchronizationTester::testIncrementalSyncWithModifiedAndNewRemoteItemsWith
     checkIdentityOfLocalAndRemoteItems();
 }
 
-void SynchronizationTester::testIncrementalSyncWithModifiedAndNewRemoteItemsWithLinkedNotebooks()
+void SynchronizationTester::testIncrementalSyncWithModifiedAndNewRemoteItemsFromLinkedNotebooksOnly()
+{
+    setUserOwnItemsToRemoteStorage();
+    setLinkedNotebookItemsToRemoteStorage();
+    copyRemoteItemsToLocalStorage();
+    setRemoteStorageSyncStateToPersistentSyncSettings();
+
+    setModifiedLinkedNotebookItemsToRemoteStorage();
+    setNewLinkedNotebookItemsToRemoteStorage();
+
+    SynchronizationManagerSignalsCatcher catcher(*m_pSynchronizationManager);
+    runTest(catcher);
+
+    CHECK_EXPECTED(receivedStartedSignal)
+    CHECK_EXPECTED(receivedFinishedSignal)
+    CHECK_EXPECTED(finishedSomethingDownloaded)
+    CHECK_EXPECTED(receivedRemoteToLocalSyncDone)
+    CHECK_EXPECTED(remoteToLocalSyncDoneSomethingDownloaded)
+    CHECK_EXPECTED(receivedSyncChunksDownloaded)
+    CHECK_EXPECTED(receivedLinkedNotebookSyncChunksDownloaded)
+
+    // NOTE: these are expected because the updates of remote resources intentionally
+    // trigger marking the notes owning these updated resources as dirty ones
+    // because otherwise it's kinda incosistent that resource was added or updated
+    // but its note still has old information about it
+    CHECK_EXPECTED(finishedSomethingSent)
+    CHECK_EXPECTED(receivedPreparedLinkedNotebookDirtyObjectsForSending)
+
+    CHECK_UNEXPECTED(receivedPreparedDirtyObjectsForSending)
+    CHECK_UNEXPECTED(receivedAuthenticationFinishedSignal)
+    CHECK_UNEXPECTED(receivedStoppedSignal)
+    CHECK_UNEXPECTED(receivedAuthenticationRevokedSignal)
+    CHECK_UNEXPECTED(receivedRemoteToLocalSyncStopped)
+    CHECK_UNEXPECTED(receivedSendLocalChangedStopped)
+    CHECK_UNEXPECTED(receivedWillRepeatRemoteToLocalSyncAfterSendingChanges)
+    CHECK_UNEXPECTED(receivedDetectedConflictDuringLocalChangesSending)
+    CHECK_UNEXPECTED(receivedRateLimitExceeded)
+
+    checkProgressNotificationsOrder(catcher);
+    checkIdentityOfLocalAndRemoteItems();
+}
+
+void SynchronizationTester::testIncrementalSyncWithModifiedAndNewRemoteItemsFromUserOwnDataAndLinkedNotebooks()
 {
     setUserOwnItemsToRemoteStorage();
     setLinkedNotebookItemsToRemoteStorage();
@@ -490,7 +609,7 @@ void SynchronizationTester::testIncrementalSyncWithModifiedAndNewRemoteItemsWith
     checkIdentityOfLocalAndRemoteItems();
 }
 
-void SynchronizationTester::testIncrementalSyncWithNewLocalItemsWithUserOwnDataOnly()
+void SynchronizationTester::testIncrementalSyncWithNewLocalItemsFromUserOwnDataOnly()
 {
     setUserOwnItemsToRemoteStorage();
     copyRemoteItemsToLocalStorage();
@@ -525,7 +644,43 @@ void SynchronizationTester::testIncrementalSyncWithNewLocalItemsWithUserOwnDataO
     checkIdentityOfLocalAndRemoteItems();
 }
 
-void SynchronizationTester::testIncrementalSyncWithNewLocalItemsWithLinkedNotebooks()
+void SynchronizationTester::testIncrementalSyncWithNewLocalItemsFromLinkedNotebooksOnly()
+{
+    setUserOwnItemsToRemoteStorage();
+    setLinkedNotebookItemsToRemoteStorage();
+    copyRemoteItemsToLocalStorage();
+    setRemoteStorageSyncStateToPersistentSyncSettings();
+
+    setNewLinkedNotebookItemsToLocalStorage();
+
+    SynchronizationManagerSignalsCatcher catcher(*m_pSynchronizationManager);
+    runTest(catcher);
+
+    CHECK_EXPECTED(receivedStartedSignal)
+    CHECK_EXPECTED(receivedFinishedSignal)
+    CHECK_EXPECTED(receivedRemoteToLocalSyncDone)
+    CHECK_EXPECTED(receivedSyncChunksDownloaded)
+    CHECK_EXPECTED(receivedLinkedNotebookSyncChunksDownloaded)
+    CHECK_EXPECTED(finishedSomethingSent)
+    CHECK_EXPECTED(receivedPreparedLinkedNotebookDirtyObjectsForSending)
+
+    CHECK_UNEXPECTED(receivedPreparedDirtyObjectsForSending)
+    CHECK_UNEXPECTED(finishedSomethingDownloaded)
+    CHECK_UNEXPECTED(remoteToLocalSyncDoneSomethingDownloaded)
+    CHECK_UNEXPECTED(receivedAuthenticationFinishedSignal)
+    CHECK_UNEXPECTED(receivedStoppedSignal)
+    CHECK_UNEXPECTED(receivedAuthenticationRevokedSignal)
+    CHECK_UNEXPECTED(receivedRemoteToLocalSyncStopped)
+    CHECK_UNEXPECTED(receivedSendLocalChangedStopped)
+    CHECK_UNEXPECTED(receivedWillRepeatRemoteToLocalSyncAfterSendingChanges)
+    CHECK_UNEXPECTED(receivedDetectedConflictDuringLocalChangesSending)
+    CHECK_UNEXPECTED(receivedRateLimitExceeded)
+
+    checkProgressNotificationsOrder(catcher);
+    checkIdentityOfLocalAndRemoteItems();
+}
+
+void SynchronizationTester::testIncrementalSyncWithNewLocalItemsFromUserOwnDataAndLinkedNotebooks()
 {
     setUserOwnItemsToRemoteStorage();
     setLinkedNotebookItemsToRemoteStorage();
@@ -562,7 +717,7 @@ void SynchronizationTester::testIncrementalSyncWithNewLocalItemsWithLinkedNotebo
     checkIdentityOfLocalAndRemoteItems();
 }
 
-void SynchronizationTester::testIncrementalSyncWithModifiedLocalItemsWithUserOwnDataOnly()
+void SynchronizationTester::testIncrementalSyncWithModifiedLocalItemsFromUserOwnDataOnly()
 {
     setUserOwnItemsToRemoteStorage();
     copyRemoteItemsToLocalStorage();
@@ -592,6 +747,639 @@ void SynchronizationTester::testIncrementalSyncWithModifiedLocalItemsWithUserOwn
     CHECK_UNEXPECTED(receivedRateLimitExceeded)
     CHECK_UNEXPECTED(receivedLinkedNotebookSyncChunksDownloaded)
     CHECK_UNEXPECTED(receivedPreparedLinkedNotebookDirtyObjectsForSending)
+
+    checkProgressNotificationsOrder(catcher);
+    checkIdentityOfLocalAndRemoteItems();
+}
+
+void SynchronizationTester::testIncrementalSyncWithModifiedLocalItemsFromLinkedNotebooksOnly()
+{
+    setUserOwnItemsToRemoteStorage();
+    setLinkedNotebookItemsToRemoteStorage();
+    copyRemoteItemsToLocalStorage();
+    setRemoteStorageSyncStateToPersistentSyncSettings();
+
+    setModifiedLinkedNotebookItemsToLocalStorage();
+
+    SynchronizationManagerSignalsCatcher catcher(*m_pSynchronizationManager);
+    runTest(catcher);
+
+    CHECK_EXPECTED(receivedStartedSignal)
+    CHECK_EXPECTED(receivedFinishedSignal)
+    CHECK_EXPECTED(receivedRemoteToLocalSyncDone)
+    CHECK_EXPECTED(receivedSyncChunksDownloaded)
+    CHECK_EXPECTED(receivedLinkedNotebookSyncChunksDownloaded)
+    CHECK_EXPECTED(finishedSomethingSent)
+    CHECK_EXPECTED(receivedPreparedLinkedNotebookDirtyObjectsForSending)
+
+    CHECK_UNEXPECTED(receivedPreparedDirtyObjectsForSending)
+    CHECK_UNEXPECTED(finishedSomethingDownloaded)
+    CHECK_UNEXPECTED(remoteToLocalSyncDoneSomethingDownloaded)
+    CHECK_UNEXPECTED(receivedAuthenticationFinishedSignal)
+    CHECK_UNEXPECTED(receivedStoppedSignal)
+    CHECK_UNEXPECTED(receivedAuthenticationRevokedSignal)
+    CHECK_UNEXPECTED(receivedRemoteToLocalSyncStopped)
+    CHECK_UNEXPECTED(receivedSendLocalChangedStopped)
+    CHECK_UNEXPECTED(receivedWillRepeatRemoteToLocalSyncAfterSendingChanges)
+    CHECK_UNEXPECTED(receivedDetectedConflictDuringLocalChangesSending)
+    CHECK_UNEXPECTED(receivedRateLimitExceeded)
+
+    checkProgressNotificationsOrder(catcher);
+    checkIdentityOfLocalAndRemoteItems();
+}
+
+void SynchronizationTester::testIncrementalSyncWithModifiedLocalItemsFromUserOwnDataAndLinkedNotebooks()
+{
+    setUserOwnItemsToRemoteStorage();
+    setLinkedNotebookItemsToRemoteStorage();
+    copyRemoteItemsToLocalStorage();
+    setRemoteStorageSyncStateToPersistentSyncSettings();
+
+    setModifiedUserOwnItemsToLocalStorage();
+    setModifiedLinkedNotebookItemsToLocalStorage();
+
+    SynchronizationManagerSignalsCatcher catcher(*m_pSynchronizationManager);
+    runTest(catcher);
+
+    CHECK_EXPECTED(receivedStartedSignal)
+    CHECK_EXPECTED(receivedFinishedSignal)
+    CHECK_EXPECTED(receivedRemoteToLocalSyncDone)
+    CHECK_EXPECTED(receivedSyncChunksDownloaded)
+    CHECK_EXPECTED(receivedLinkedNotebookSyncChunksDownloaded)
+    CHECK_EXPECTED(finishedSomethingSent)
+    CHECK_EXPECTED(receivedPreparedDirtyObjectsForSending)
+    CHECK_EXPECTED(receivedPreparedLinkedNotebookDirtyObjectsForSending)
+
+    CHECK_UNEXPECTED(finishedSomethingDownloaded)
+    CHECK_UNEXPECTED(remoteToLocalSyncDoneSomethingDownloaded)
+    CHECK_UNEXPECTED(receivedAuthenticationFinishedSignal)
+    CHECK_UNEXPECTED(receivedStoppedSignal)
+    CHECK_UNEXPECTED(receivedAuthenticationRevokedSignal)
+    CHECK_UNEXPECTED(receivedRemoteToLocalSyncStopped)
+    CHECK_UNEXPECTED(receivedSendLocalChangedStopped)
+    CHECK_UNEXPECTED(receivedWillRepeatRemoteToLocalSyncAfterSendingChanges)
+    CHECK_UNEXPECTED(receivedDetectedConflictDuringLocalChangesSending)
+    CHECK_UNEXPECTED(receivedRateLimitExceeded)
+
+    checkProgressNotificationsOrder(catcher);
+    checkIdentityOfLocalAndRemoteItems();
+}
+
+void SynchronizationTester::testIncrementalSyncWithNewAndModifiedLocalItemsFromUserOwnDataOnly()
+{
+    setUserOwnItemsToRemoteStorage();
+    copyRemoteItemsToLocalStorage();
+    setRemoteStorageSyncStateToPersistentSyncSettings();
+
+    setModifiedUserOwnItemsToLocalStorage();
+    setNewUserOwnItemsToLocalStorage();
+
+    SynchronizationManagerSignalsCatcher catcher(*m_pSynchronizationManager);
+    runTest(catcher);
+
+    CHECK_EXPECTED(receivedStartedSignal)
+    CHECK_EXPECTED(receivedFinishedSignal)
+    CHECK_EXPECTED(receivedRemoteToLocalSyncDone)
+    CHECK_EXPECTED(receivedSyncChunksDownloaded)
+    CHECK_EXPECTED(finishedSomethingSent)
+    CHECK_EXPECTED(receivedPreparedDirtyObjectsForSending)
+
+    CHECK_UNEXPECTED(finishedSomethingDownloaded)
+    CHECK_UNEXPECTED(remoteToLocalSyncDoneSomethingDownloaded)
+    CHECK_UNEXPECTED(receivedAuthenticationFinishedSignal)
+    CHECK_UNEXPECTED(receivedStoppedSignal)
+    CHECK_UNEXPECTED(receivedAuthenticationRevokedSignal)
+    CHECK_UNEXPECTED(receivedRemoteToLocalSyncStopped)
+    CHECK_UNEXPECTED(receivedSendLocalChangedStopped)
+    CHECK_UNEXPECTED(receivedWillRepeatRemoteToLocalSyncAfterSendingChanges)
+    CHECK_UNEXPECTED(receivedDetectedConflictDuringLocalChangesSending)
+    CHECK_UNEXPECTED(receivedRateLimitExceeded)
+    CHECK_UNEXPECTED(receivedLinkedNotebookSyncChunksDownloaded)
+    CHECK_UNEXPECTED(receivedPreparedLinkedNotebookDirtyObjectsForSending)
+
+    checkProgressNotificationsOrder(catcher);
+    checkIdentityOfLocalAndRemoteItems();
+}
+
+void SynchronizationTester::testIncrementalSyncWithNewAndModifiedLocalItemsFromLinkedNotebooksOnly()
+{
+    setUserOwnItemsToRemoteStorage();
+    setLinkedNotebookItemsToRemoteStorage();
+    copyRemoteItemsToLocalStorage();
+    setRemoteStorageSyncStateToPersistentSyncSettings();
+
+    setModifiedLinkedNotebookItemsToLocalStorage();
+    setNewLinkedNotebookItemsToLocalStorage();
+
+    SynchronizationManagerSignalsCatcher catcher(*m_pSynchronizationManager);
+    runTest(catcher);
+
+    CHECK_EXPECTED(receivedStartedSignal)
+    CHECK_EXPECTED(receivedFinishedSignal)
+    CHECK_EXPECTED(receivedRemoteToLocalSyncDone)
+    CHECK_EXPECTED(receivedSyncChunksDownloaded)
+    CHECK_EXPECTED(receivedLinkedNotebookSyncChunksDownloaded)
+    CHECK_EXPECTED(finishedSomethingSent)
+    CHECK_EXPECTED(receivedPreparedLinkedNotebookDirtyObjectsForSending)
+
+    CHECK_UNEXPECTED(receivedPreparedDirtyObjectsForSending)
+    CHECK_UNEXPECTED(finishedSomethingDownloaded)
+    CHECK_UNEXPECTED(remoteToLocalSyncDoneSomethingDownloaded)
+    CHECK_UNEXPECTED(receivedAuthenticationFinishedSignal)
+    CHECK_UNEXPECTED(receivedStoppedSignal)
+    CHECK_UNEXPECTED(receivedAuthenticationRevokedSignal)
+    CHECK_UNEXPECTED(receivedRemoteToLocalSyncStopped)
+    CHECK_UNEXPECTED(receivedSendLocalChangedStopped)
+    CHECK_UNEXPECTED(receivedWillRepeatRemoteToLocalSyncAfterSendingChanges)
+    CHECK_UNEXPECTED(receivedDetectedConflictDuringLocalChangesSending)
+    CHECK_UNEXPECTED(receivedRateLimitExceeded)
+
+    checkProgressNotificationsOrder(catcher);
+    checkIdentityOfLocalAndRemoteItems();
+}
+
+void SynchronizationTester::testIncrementalSyncWithNewAndModifiedLocalItemsFromUserOwnDataAndLinkedNotebooks()
+{
+    setUserOwnItemsToRemoteStorage();
+    setLinkedNotebookItemsToRemoteStorage();
+    copyRemoteItemsToLocalStorage();
+    setRemoteStorageSyncStateToPersistentSyncSettings();
+
+    setModifiedUserOwnItemsToLocalStorage();
+    setModifiedLinkedNotebookItemsToLocalStorage();
+    setNewUserOwnItemsToLocalStorage();
+    setNewLinkedNotebookItemsToLocalStorage();
+
+    SynchronizationManagerSignalsCatcher catcher(*m_pSynchronizationManager);
+    runTest(catcher);
+
+    CHECK_EXPECTED(receivedStartedSignal)
+    CHECK_EXPECTED(receivedFinishedSignal)
+    CHECK_EXPECTED(receivedRemoteToLocalSyncDone)
+    CHECK_EXPECTED(receivedSyncChunksDownloaded)
+    CHECK_EXPECTED(receivedLinkedNotebookSyncChunksDownloaded)
+    CHECK_EXPECTED(finishedSomethingSent)
+    CHECK_EXPECTED(receivedPreparedDirtyObjectsForSending)
+    CHECK_EXPECTED(receivedPreparedLinkedNotebookDirtyObjectsForSending)
+
+    CHECK_UNEXPECTED(finishedSomethingDownloaded)
+    CHECK_UNEXPECTED(remoteToLocalSyncDoneSomethingDownloaded)
+    CHECK_UNEXPECTED(receivedAuthenticationFinishedSignal)
+    CHECK_UNEXPECTED(receivedStoppedSignal)
+    CHECK_UNEXPECTED(receivedAuthenticationRevokedSignal)
+    CHECK_UNEXPECTED(receivedRemoteToLocalSyncStopped)
+    CHECK_UNEXPECTED(receivedSendLocalChangedStopped)
+    CHECK_UNEXPECTED(receivedWillRepeatRemoteToLocalSyncAfterSendingChanges)
+    CHECK_UNEXPECTED(receivedDetectedConflictDuringLocalChangesSending)
+    CHECK_UNEXPECTED(receivedRateLimitExceeded)
+
+    checkProgressNotificationsOrder(catcher);
+    checkIdentityOfLocalAndRemoteItems();
+}
+
+void SynchronizationTester::testIncrementalSyncWithNewLocalAndNewRemoteItemsFromUsersOwnDataOnly()
+{
+    setUserOwnItemsToRemoteStorage();
+    copyRemoteItemsToLocalStorage();
+    setRemoteStorageSyncStateToPersistentSyncSettings();
+
+    setNewUserOwnItemsToLocalStorage();
+    setNewUserOwnItemsToRemoteStorage();
+
+    SynchronizationManagerSignalsCatcher catcher(*m_pSynchronizationManager);
+    runTest(catcher);
+
+    CHECK_EXPECTED(receivedStartedSignal)
+    CHECK_EXPECTED(receivedFinishedSignal)
+    CHECK_EXPECTED(receivedRemoteToLocalSyncDone)
+    CHECK_EXPECTED(receivedSyncChunksDownloaded)
+    CHECK_EXPECTED(finishedSomethingDownloaded)
+    CHECK_EXPECTED(finishedSomethingSent)
+    CHECK_EXPECTED(remoteToLocalSyncDoneSomethingDownloaded)
+    CHECK_EXPECTED(receivedPreparedDirtyObjectsForSending)
+
+    CHECK_UNEXPECTED(receivedAuthenticationFinishedSignal)
+    CHECK_UNEXPECTED(receivedStoppedSignal)
+    CHECK_UNEXPECTED(receivedAuthenticationRevokedSignal)
+    CHECK_UNEXPECTED(receivedRemoteToLocalSyncStopped)
+    CHECK_UNEXPECTED(receivedSendLocalChangedStopped)
+    CHECK_UNEXPECTED(receivedWillRepeatRemoteToLocalSyncAfterSendingChanges)
+    CHECK_UNEXPECTED(receivedDetectedConflictDuringLocalChangesSending)
+    CHECK_UNEXPECTED(receivedRateLimitExceeded)
+    CHECK_UNEXPECTED(receivedLinkedNotebookSyncChunksDownloaded)
+    CHECK_UNEXPECTED(receivedPreparedLinkedNotebookDirtyObjectsForSending)
+
+    checkProgressNotificationsOrder(catcher);
+    checkIdentityOfLocalAndRemoteItems();
+}
+
+void SynchronizationTester::testIncrementalSyncWithNewLocalAndNewRemoteItemsFromLinkedNotebooksOnly()
+{
+    setUserOwnItemsToRemoteStorage();
+    setLinkedNotebookItemsToRemoteStorage();
+    copyRemoteItemsToLocalStorage();
+    setRemoteStorageSyncStateToPersistentSyncSettings();
+
+    setNewLinkedNotebookItemsToLocalStorage();
+    setNewLinkedNotebookItemsToRemoteStorage();
+
+    SynchronizationManagerSignalsCatcher catcher(*m_pSynchronizationManager);
+    runTest(catcher);
+
+    CHECK_EXPECTED(receivedStartedSignal)
+    CHECK_EXPECTED(receivedFinishedSignal)
+    CHECK_EXPECTED(receivedRemoteToLocalSyncDone)
+    CHECK_EXPECTED(receivedSyncChunksDownloaded)
+    CHECK_EXPECTED(receivedLinkedNotebookSyncChunksDownloaded)
+    CHECK_EXPECTED(finishedSomethingDownloaded)
+    CHECK_EXPECTED(remoteToLocalSyncDoneSomethingDownloaded)
+    CHECK_EXPECTED(finishedSomethingSent)
+    CHECK_EXPECTED(receivedPreparedLinkedNotebookDirtyObjectsForSending)
+
+    CHECK_UNEXPECTED(receivedPreparedDirtyObjectsForSending)
+    CHECK_UNEXPECTED(receivedAuthenticationFinishedSignal)
+    CHECK_UNEXPECTED(receivedStoppedSignal)
+    CHECK_UNEXPECTED(receivedAuthenticationRevokedSignal)
+    CHECK_UNEXPECTED(receivedRemoteToLocalSyncStopped)
+    CHECK_UNEXPECTED(receivedSendLocalChangedStopped)
+    CHECK_UNEXPECTED(receivedWillRepeatRemoteToLocalSyncAfterSendingChanges)
+    CHECK_UNEXPECTED(receivedDetectedConflictDuringLocalChangesSending)
+    CHECK_UNEXPECTED(receivedRateLimitExceeded)
+
+    checkProgressNotificationsOrder(catcher);
+    checkIdentityOfLocalAndRemoteItems();
+}
+
+void SynchronizationTester::testIncrementalSyncWithNewLocalAndNewRemoteItemsFromUserOwnDataAndLinkedNotebooks()
+{
+    setUserOwnItemsToRemoteStorage();
+    setLinkedNotebookItemsToRemoteStorage();
+    copyRemoteItemsToLocalStorage();
+    setRemoteStorageSyncStateToPersistentSyncSettings();
+
+    setNewUserOwnItemsToLocalStorage();
+    setNewLinkedNotebookItemsToLocalStorage();
+    setNewUserOwnItemsToRemoteStorage();
+    setNewLinkedNotebookItemsToRemoteStorage();
+
+    SynchronizationManagerSignalsCatcher catcher(*m_pSynchronizationManager);
+    runTest(catcher);
+
+    CHECK_EXPECTED(receivedStartedSignal)
+    CHECK_EXPECTED(receivedFinishedSignal)
+    CHECK_EXPECTED(receivedRemoteToLocalSyncDone)
+    CHECK_EXPECTED(receivedSyncChunksDownloaded)
+    CHECK_EXPECTED(receivedLinkedNotebookSyncChunksDownloaded)
+    CHECK_EXPECTED(finishedSomethingDownloaded)
+    CHECK_EXPECTED(remoteToLocalSyncDoneSomethingDownloaded)
+    CHECK_EXPECTED(finishedSomethingSent)
+    CHECK_EXPECTED(receivedPreparedDirtyObjectsForSending)
+    CHECK_EXPECTED(receivedPreparedLinkedNotebookDirtyObjectsForSending)
+
+    CHECK_UNEXPECTED(receivedAuthenticationFinishedSignal)
+    CHECK_UNEXPECTED(receivedStoppedSignal)
+    CHECK_UNEXPECTED(receivedAuthenticationRevokedSignal)
+    CHECK_UNEXPECTED(receivedRemoteToLocalSyncStopped)
+    CHECK_UNEXPECTED(receivedSendLocalChangedStopped)
+    CHECK_UNEXPECTED(receivedWillRepeatRemoteToLocalSyncAfterSendingChanges)
+    CHECK_UNEXPECTED(receivedDetectedConflictDuringLocalChangesSending)
+    CHECK_UNEXPECTED(receivedRateLimitExceeded)
+
+    checkProgressNotificationsOrder(catcher);
+    checkIdentityOfLocalAndRemoteItems();
+}
+
+void SynchronizationTester::testIncrementalSyncWithNewLocalAndModifiedRemoteItemsFromUsersOwnDataOnly()
+{
+    setUserOwnItemsToRemoteStorage();
+    copyRemoteItemsToLocalStorage();
+    setRemoteStorageSyncStateToPersistentSyncSettings();
+
+    setNewUserOwnItemsToLocalStorage();
+    setModifiedUserOwnItemsToRemoteStorage();
+
+    SynchronizationManagerSignalsCatcher catcher(*m_pSynchronizationManager);
+    runTest(catcher);
+
+    CHECK_EXPECTED(receivedStartedSignal)
+    CHECK_EXPECTED(receivedFinishedSignal)
+    CHECK_EXPECTED(receivedRemoteToLocalSyncDone)
+    CHECK_EXPECTED(receivedSyncChunksDownloaded)
+    CHECK_EXPECTED(finishedSomethingDownloaded)
+    CHECK_EXPECTED(finishedSomethingSent)
+    CHECK_EXPECTED(remoteToLocalSyncDoneSomethingDownloaded)
+    CHECK_EXPECTED(receivedPreparedDirtyObjectsForSending)
+
+    CHECK_UNEXPECTED(receivedAuthenticationFinishedSignal)
+    CHECK_UNEXPECTED(receivedStoppedSignal)
+    CHECK_UNEXPECTED(receivedAuthenticationRevokedSignal)
+    CHECK_UNEXPECTED(receivedRemoteToLocalSyncStopped)
+    CHECK_UNEXPECTED(receivedSendLocalChangedStopped)
+    CHECK_UNEXPECTED(receivedWillRepeatRemoteToLocalSyncAfterSendingChanges)
+    CHECK_UNEXPECTED(receivedDetectedConflictDuringLocalChangesSending)
+    CHECK_UNEXPECTED(receivedRateLimitExceeded)
+    CHECK_UNEXPECTED(receivedLinkedNotebookSyncChunksDownloaded)
+    CHECK_UNEXPECTED(receivedPreparedLinkedNotebookDirtyObjectsForSending)
+
+    checkProgressNotificationsOrder(catcher);
+    checkIdentityOfLocalAndRemoteItems();
+}
+
+void SynchronizationTester::testIncrementalSyncWithNewLocalAndModifiedRemoteItemsFromLinkedNotebooksOnly()
+{
+    setUserOwnItemsToRemoteStorage();
+    setLinkedNotebookItemsToRemoteStorage();
+    copyRemoteItemsToLocalStorage();
+    setRemoteStorageSyncStateToPersistentSyncSettings();
+
+    setNewLinkedNotebookItemsToLocalStorage();
+    setModifiedLinkedNotebookItemsToRemoteStorage();
+
+    SynchronizationManagerSignalsCatcher catcher(*m_pSynchronizationManager);
+    runTest(catcher);
+
+    CHECK_EXPECTED(receivedStartedSignal)
+    CHECK_EXPECTED(receivedFinishedSignal)
+    CHECK_EXPECTED(receivedRemoteToLocalSyncDone)
+    CHECK_EXPECTED(receivedSyncChunksDownloaded)
+    CHECK_EXPECTED(receivedLinkedNotebookSyncChunksDownloaded)
+    CHECK_EXPECTED(finishedSomethingDownloaded)
+    CHECK_EXPECTED(remoteToLocalSyncDoneSomethingDownloaded)
+    CHECK_EXPECTED(finishedSomethingSent)
+    CHECK_EXPECTED(receivedPreparedLinkedNotebookDirtyObjectsForSending)
+
+    CHECK_UNEXPECTED(receivedPreparedDirtyObjectsForSending)
+    CHECK_UNEXPECTED(receivedAuthenticationFinishedSignal)
+    CHECK_UNEXPECTED(receivedStoppedSignal)
+    CHECK_UNEXPECTED(receivedAuthenticationRevokedSignal)
+    CHECK_UNEXPECTED(receivedRemoteToLocalSyncStopped)
+    CHECK_UNEXPECTED(receivedSendLocalChangedStopped)
+    CHECK_UNEXPECTED(receivedWillRepeatRemoteToLocalSyncAfterSendingChanges)
+    CHECK_UNEXPECTED(receivedDetectedConflictDuringLocalChangesSending)
+    CHECK_UNEXPECTED(receivedRateLimitExceeded)
+
+    checkProgressNotificationsOrder(catcher);
+    checkIdentityOfLocalAndRemoteItems();
+}
+
+void SynchronizationTester::testIncrementalSyncWithNewLocalAndModifiedRemoteItemsFromUsersOwnDataAndLinkedNotebooks()
+{
+    setUserOwnItemsToRemoteStorage();
+    setLinkedNotebookItemsToRemoteStorage();
+    copyRemoteItemsToLocalStorage();
+    setRemoteStorageSyncStateToPersistentSyncSettings();
+
+    setNewUserOwnItemsToLocalStorage();
+    setNewLinkedNotebookItemsToLocalStorage();
+    setModifiedUserOwnItemsToRemoteStorage();
+    setModifiedLinkedNotebookItemsToRemoteStorage();
+
+    SynchronizationManagerSignalsCatcher catcher(*m_pSynchronizationManager);
+    runTest(catcher);
+
+    CHECK_EXPECTED(receivedStartedSignal)
+    CHECK_EXPECTED(receivedFinishedSignal)
+    CHECK_EXPECTED(receivedRemoteToLocalSyncDone)
+    CHECK_EXPECTED(receivedSyncChunksDownloaded)
+    CHECK_EXPECTED(receivedLinkedNotebookSyncChunksDownloaded)
+    CHECK_EXPECTED(finishedSomethingDownloaded)
+    CHECK_EXPECTED(remoteToLocalSyncDoneSomethingDownloaded)
+    CHECK_EXPECTED(finishedSomethingSent)
+    CHECK_EXPECTED(receivedPreparedDirtyObjectsForSending)
+    CHECK_EXPECTED(receivedPreparedLinkedNotebookDirtyObjectsForSending)
+
+    CHECK_UNEXPECTED(receivedAuthenticationFinishedSignal)
+    CHECK_UNEXPECTED(receivedStoppedSignal)
+    CHECK_UNEXPECTED(receivedAuthenticationRevokedSignal)
+    CHECK_UNEXPECTED(receivedRemoteToLocalSyncStopped)
+    CHECK_UNEXPECTED(receivedSendLocalChangedStopped)
+    CHECK_UNEXPECTED(receivedWillRepeatRemoteToLocalSyncAfterSendingChanges)
+    CHECK_UNEXPECTED(receivedDetectedConflictDuringLocalChangesSending)
+    CHECK_UNEXPECTED(receivedRateLimitExceeded)
+
+    checkProgressNotificationsOrder(catcher);
+    checkIdentityOfLocalAndRemoteItems();
+}
+
+void SynchronizationTester::testIncrementalSyncWithModifiedLocalAndNewRemoteItemsFromUsersOwnDataOnly()
+{
+    setUserOwnItemsToRemoteStorage();
+    copyRemoteItemsToLocalStorage();
+    setRemoteStorageSyncStateToPersistentSyncSettings();
+
+    setModifiedUserOwnItemsToLocalStorage();
+    setNewUserOwnItemsToRemoteStorage();
+
+    SynchronizationManagerSignalsCatcher catcher(*m_pSynchronizationManager);
+    runTest(catcher);
+
+    CHECK_EXPECTED(receivedStartedSignal)
+    CHECK_EXPECTED(receivedFinishedSignal)
+    CHECK_EXPECTED(receivedRemoteToLocalSyncDone)
+    CHECK_EXPECTED(receivedSyncChunksDownloaded)
+    CHECK_EXPECTED(finishedSomethingDownloaded)
+    CHECK_EXPECTED(finishedSomethingSent)
+    CHECK_EXPECTED(remoteToLocalSyncDoneSomethingDownloaded)
+    CHECK_EXPECTED(receivedPreparedDirtyObjectsForSending)
+
+    CHECK_UNEXPECTED(receivedAuthenticationFinishedSignal)
+    CHECK_UNEXPECTED(receivedStoppedSignal)
+    CHECK_UNEXPECTED(receivedAuthenticationRevokedSignal)
+    CHECK_UNEXPECTED(receivedRemoteToLocalSyncStopped)
+    CHECK_UNEXPECTED(receivedSendLocalChangedStopped)
+    CHECK_UNEXPECTED(receivedWillRepeatRemoteToLocalSyncAfterSendingChanges)
+    CHECK_UNEXPECTED(receivedDetectedConflictDuringLocalChangesSending)
+    CHECK_UNEXPECTED(receivedRateLimitExceeded)
+    CHECK_UNEXPECTED(receivedLinkedNotebookSyncChunksDownloaded)
+    CHECK_UNEXPECTED(receivedPreparedLinkedNotebookDirtyObjectsForSending)
+
+    checkProgressNotificationsOrder(catcher);
+    checkIdentityOfLocalAndRemoteItems();
+}
+
+void SynchronizationTester::testIncrementalSyncWithModifiedLocalAndNewRemoteItemsFromLinkedNotebooksOnly()
+{
+    setUserOwnItemsToRemoteStorage();
+    setLinkedNotebookItemsToRemoteStorage();
+    copyRemoteItemsToLocalStorage();
+    setRemoteStorageSyncStateToPersistentSyncSettings();
+
+    setModifiedLinkedNotebookItemsToLocalStorage();
+    setNewLinkedNotebookItemsToRemoteStorage();
+
+    SynchronizationManagerSignalsCatcher catcher(*m_pSynchronizationManager);
+    runTest(catcher);
+
+    CHECK_EXPECTED(receivedStartedSignal)
+    CHECK_EXPECTED(receivedFinishedSignal)
+    CHECK_EXPECTED(receivedRemoteToLocalSyncDone)
+    CHECK_EXPECTED(receivedSyncChunksDownloaded)
+    CHECK_EXPECTED(receivedLinkedNotebookSyncChunksDownloaded)
+    CHECK_EXPECTED(finishedSomethingDownloaded)
+    CHECK_EXPECTED(remoteToLocalSyncDoneSomethingDownloaded)
+    CHECK_EXPECTED(finishedSomethingSent)
+    CHECK_EXPECTED(receivedPreparedLinkedNotebookDirtyObjectsForSending)
+
+    CHECK_UNEXPECTED(receivedPreparedDirtyObjectsForSending)
+    CHECK_UNEXPECTED(receivedAuthenticationFinishedSignal)
+    CHECK_UNEXPECTED(receivedStoppedSignal)
+    CHECK_UNEXPECTED(receivedAuthenticationRevokedSignal)
+    CHECK_UNEXPECTED(receivedRemoteToLocalSyncStopped)
+    CHECK_UNEXPECTED(receivedSendLocalChangedStopped)
+    CHECK_UNEXPECTED(receivedWillRepeatRemoteToLocalSyncAfterSendingChanges)
+    CHECK_UNEXPECTED(receivedDetectedConflictDuringLocalChangesSending)
+    CHECK_UNEXPECTED(receivedRateLimitExceeded)
+
+    checkProgressNotificationsOrder(catcher);
+    checkIdentityOfLocalAndRemoteItems();
+}
+
+void SynchronizationTester::testIncrementalSyncWithModifiedLocalAndNewRemoteItemsFromUsersOwnDataAndLinkedNotebooks()
+{
+    setUserOwnItemsToRemoteStorage();
+    setLinkedNotebookItemsToRemoteStorage();
+    copyRemoteItemsToLocalStorage();
+    setRemoteStorageSyncStateToPersistentSyncSettings();
+
+    setModifiedUserOwnItemsToLocalStorage();
+    setModifiedLinkedNotebookItemsToLocalStorage();
+    setNewUserOwnItemsToRemoteStorage();
+    setNewLinkedNotebookItemsToRemoteStorage();
+
+    SynchronizationManagerSignalsCatcher catcher(*m_pSynchronizationManager);
+    runTest(catcher);
+
+    CHECK_EXPECTED(receivedStartedSignal)
+    CHECK_EXPECTED(receivedFinishedSignal)
+    CHECK_EXPECTED(receivedRemoteToLocalSyncDone)
+    CHECK_EXPECTED(receivedSyncChunksDownloaded)
+    CHECK_EXPECTED(receivedLinkedNotebookSyncChunksDownloaded)
+    CHECK_EXPECTED(finishedSomethingDownloaded)
+    CHECK_EXPECTED(remoteToLocalSyncDoneSomethingDownloaded)
+    CHECK_EXPECTED(finishedSomethingSent)
+    CHECK_EXPECTED(receivedPreparedDirtyObjectsForSending)
+    CHECK_EXPECTED(receivedPreparedLinkedNotebookDirtyObjectsForSending)
+
+    CHECK_UNEXPECTED(receivedAuthenticationFinishedSignal)
+    CHECK_UNEXPECTED(receivedStoppedSignal)
+    CHECK_UNEXPECTED(receivedAuthenticationRevokedSignal)
+    CHECK_UNEXPECTED(receivedRemoteToLocalSyncStopped)
+    CHECK_UNEXPECTED(receivedSendLocalChangedStopped)
+    CHECK_UNEXPECTED(receivedWillRepeatRemoteToLocalSyncAfterSendingChanges)
+    CHECK_UNEXPECTED(receivedDetectedConflictDuringLocalChangesSending)
+    CHECK_UNEXPECTED(receivedRateLimitExceeded)
+
+    checkProgressNotificationsOrder(catcher);
+    checkIdentityOfLocalAndRemoteItems();
+}
+
+void SynchronizationTester::testIncrementalSyncWithModifiedLocalAndModifiedRemoteItemsWithoutConflictsFromUsersOwnDataOnly()
+{
+    setUserOwnItemsToRemoteStorage();
+    copyRemoteItemsToLocalStorage();
+    setRemoteStorageSyncStateToPersistentSyncSettings();
+
+    setModifiedUserOwnItemsToLocalStorage();
+    setModifiedUserOwnItemsToRemoteStorage();
+
+    SynchronizationManagerSignalsCatcher catcher(*m_pSynchronizationManager);
+    runTest(catcher);
+
+    CHECK_EXPECTED(receivedStartedSignal)
+    CHECK_EXPECTED(receivedFinishedSignal)
+    CHECK_EXPECTED(receivedRemoteToLocalSyncDone)
+    CHECK_EXPECTED(receivedSyncChunksDownloaded)
+    CHECK_EXPECTED(finishedSomethingDownloaded)
+    CHECK_EXPECTED(finishedSomethingSent)
+    CHECK_EXPECTED(remoteToLocalSyncDoneSomethingDownloaded)
+    CHECK_EXPECTED(receivedPreparedDirtyObjectsForSending)
+
+    CHECK_UNEXPECTED(receivedAuthenticationFinishedSignal)
+    CHECK_UNEXPECTED(receivedStoppedSignal)
+    CHECK_UNEXPECTED(receivedAuthenticationRevokedSignal)
+    CHECK_UNEXPECTED(receivedRemoteToLocalSyncStopped)
+    CHECK_UNEXPECTED(receivedSendLocalChangedStopped)
+    CHECK_UNEXPECTED(receivedWillRepeatRemoteToLocalSyncAfterSendingChanges)
+    CHECK_UNEXPECTED(receivedDetectedConflictDuringLocalChangesSending)
+    CHECK_UNEXPECTED(receivedRateLimitExceeded)
+    CHECK_UNEXPECTED(receivedLinkedNotebookSyncChunksDownloaded)
+    CHECK_UNEXPECTED(receivedPreparedLinkedNotebookDirtyObjectsForSending)
+
+    checkProgressNotificationsOrder(catcher);
+    checkIdentityOfLocalAndRemoteItems();
+}
+
+void SynchronizationTester::testIncrementalSyncWithModifiedLocalAndModifiedRemoteItemsWithoutConflictsFromLinkedNotebooksOnly()
+{
+    setUserOwnItemsToRemoteStorage();
+    setLinkedNotebookItemsToRemoteStorage();
+    copyRemoteItemsToLocalStorage();
+    setRemoteStorageSyncStateToPersistentSyncSettings();
+
+    setModifiedLinkedNotebookItemsToLocalStorage();
+    setModifiedLinkedNotebookItemsToRemoteStorage();
+
+    SynchronizationManagerSignalsCatcher catcher(*m_pSynchronizationManager);
+    runTest(catcher);
+
+    CHECK_EXPECTED(receivedStartedSignal)
+    CHECK_EXPECTED(receivedFinishedSignal)
+    CHECK_EXPECTED(receivedRemoteToLocalSyncDone)
+    CHECK_EXPECTED(receivedSyncChunksDownloaded)
+    CHECK_EXPECTED(receivedLinkedNotebookSyncChunksDownloaded)
+    CHECK_EXPECTED(finishedSomethingDownloaded)
+    CHECK_EXPECTED(remoteToLocalSyncDoneSomethingDownloaded)
+    CHECK_EXPECTED(finishedSomethingSent)
+    CHECK_EXPECTED(receivedPreparedLinkedNotebookDirtyObjectsForSending)
+
+    CHECK_UNEXPECTED(receivedPreparedDirtyObjectsForSending)
+    CHECK_UNEXPECTED(receivedAuthenticationFinishedSignal)
+    CHECK_UNEXPECTED(receivedStoppedSignal)
+    CHECK_UNEXPECTED(receivedAuthenticationRevokedSignal)
+    CHECK_UNEXPECTED(receivedRemoteToLocalSyncStopped)
+    CHECK_UNEXPECTED(receivedSendLocalChangedStopped)
+    CHECK_UNEXPECTED(receivedWillRepeatRemoteToLocalSyncAfterSendingChanges)
+    CHECK_UNEXPECTED(receivedDetectedConflictDuringLocalChangesSending)
+    CHECK_UNEXPECTED(receivedRateLimitExceeded)
+
+    checkProgressNotificationsOrder(catcher);
+    checkIdentityOfLocalAndRemoteItems();
+}
+
+void SynchronizationTester::testIncrementalSyncWithModifiedLocalAndModifiedRemoteItemsWithoutConflictsFromUsersOwnDataAndLinkedNotebooks()
+{
+    setUserOwnItemsToRemoteStorage();
+    setLinkedNotebookItemsToRemoteStorage();
+    copyRemoteItemsToLocalStorage();
+    setRemoteStorageSyncStateToPersistentSyncSettings();
+
+    setModifiedUserOwnItemsToLocalStorage();
+    setModifiedLinkedNotebookItemsToLocalStorage();
+    setModifiedUserOwnItemsToRemoteStorage();
+    setModifiedLinkedNotebookItemsToRemoteStorage();
+
+    SynchronizationManagerSignalsCatcher catcher(*m_pSynchronizationManager);
+    runTest(catcher);
+
+    CHECK_EXPECTED(receivedStartedSignal)
+    CHECK_EXPECTED(receivedFinishedSignal)
+    CHECK_EXPECTED(receivedRemoteToLocalSyncDone)
+    CHECK_EXPECTED(receivedSyncChunksDownloaded)
+    CHECK_EXPECTED(receivedLinkedNotebookSyncChunksDownloaded)
+    CHECK_EXPECTED(finishedSomethingDownloaded)
+    CHECK_EXPECTED(remoteToLocalSyncDoneSomethingDownloaded)
+    CHECK_EXPECTED(finishedSomethingSent)
+    CHECK_EXPECTED(receivedPreparedDirtyObjectsForSending)
+    CHECK_EXPECTED(receivedPreparedLinkedNotebookDirtyObjectsForSending)
+
+    CHECK_UNEXPECTED(receivedAuthenticationFinishedSignal)
+    CHECK_UNEXPECTED(receivedStoppedSignal)
+    CHECK_UNEXPECTED(receivedAuthenticationRevokedSignal)
+    CHECK_UNEXPECTED(receivedRemoteToLocalSyncStopped)
+    CHECK_UNEXPECTED(receivedSendLocalChangedStopped)
+    CHECK_UNEXPECTED(receivedWillRepeatRemoteToLocalSyncAfterSendingChanges)
+    CHECK_UNEXPECTED(receivedDetectedConflictDuringLocalChangesSending)
+    CHECK_UNEXPECTED(receivedRateLimitExceeded)
 
     checkProgressNotificationsOrder(catcher);
     checkIdentityOfLocalAndRemoteItems();
@@ -1847,6 +2635,65 @@ void SynchronizationTester::setModifiedUserOwnItemsToLocalStorage()
     QVERIFY(!m_guidsOfUserOwnLocalItemsToModify.m_noteGuids.isEmpty());
     for(auto it = m_guidsOfUserOwnLocalItemsToModify.m_noteGuids.constBegin(),
         end = m_guidsOfUserOwnLocalItemsToModify.m_noteGuids.constEnd(); it != end; ++it)
+    {
+        Note note;
+        note.setGuid(*it);
+        res = m_pLocalStorageManagerAsync->localStorageManager()->findNote(note, errorDescription, /* with resource binary data = */ false);
+        QVERIFY2(res == true, "Detected unexpectedly missing note in local storage");
+        QVERIFY2(note.hasTitle(), "Detected note without title in local storage");
+
+        note.setTitle(note.title() + QStringLiteral("_modified_locally"));
+        note.setDirty(true);
+
+        res = m_pLocalStorageManagerAsync->localStorageManager()->updateNote(note, /* update tags = */ false,
+                                                                             /* update resources = */ false,
+                                                                             errorDescription);
+        QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
+    }
+}
+
+void SynchronizationTester::setModifiedLinkedNotebookItemsToLocalStorage()
+{
+    ErrorString errorDescription;
+    bool res = false;
+
+    QVERIFY(!m_guidsOfLinkedNotebookLocalItemsToModify.m_tagGuids.isEmpty());
+    for(auto it = m_guidsOfLinkedNotebookLocalItemsToModify.m_tagGuids.constBegin(),
+        end = m_guidsOfLinkedNotebookLocalItemsToModify.m_tagGuids.constEnd(); it != end; ++it)
+    {
+        Tag tag;
+        tag.setGuid(*it);
+        res = m_pLocalStorageManagerAsync->localStorageManager()->findTag(tag, errorDescription);
+        QVERIFY2(res == true, "Detected unexpectedly missing tag in local storage");
+        QVERIFY2(tag.hasName(), "Detected tag without a name in local storage");
+
+        tag.setName(tag.name() + QStringLiteral("_modified_locally"));
+        tag.setDirty(true);
+
+        res = m_pLocalStorageManagerAsync->localStorageManager()->updateTag(tag, errorDescription);
+        QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
+    }
+
+    QVERIFY(!m_guidsOfLinkedNotebookLocalItemsToModify.m_notebookGuids.isEmpty());
+    for(auto it = m_guidsOfLinkedNotebookLocalItemsToModify.m_notebookGuids.constBegin(),
+        end = m_guidsOfLinkedNotebookLocalItemsToModify.m_notebookGuids.constEnd(); it != end; ++it)
+    {
+        Notebook notebook;
+        notebook.setGuid(*it);
+        res = m_pLocalStorageManagerAsync->localStorageManager()->findNotebook(notebook, errorDescription);
+        QVERIFY2(res == true, "Detected unexpectedly missing notebook in local storage");
+        QVERIFY2(notebook.hasName(), "Detected notebook without a name in local storage");
+
+        notebook.setName(notebook.name() + QStringLiteral("_modified_locally"));
+        notebook.setDirty(true);
+
+        res = m_pLocalStorageManagerAsync->localStorageManager()->updateNotebook(notebook, errorDescription);
+        QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
+    }
+
+    QVERIFY(!m_guidsOfLinkedNotebookLocalItemsToModify.m_noteGuids.isEmpty());
+    for(auto it = m_guidsOfLinkedNotebookLocalItemsToModify.m_noteGuids.constBegin(),
+        end = m_guidsOfLinkedNotebookLocalItemsToModify.m_noteGuids.constEnd(); it != end; ++it)
     {
         Note note;
         note.setGuid(*it);

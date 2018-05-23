@@ -53,15 +53,42 @@ private Q_SLOTS:
 
     void testRemoteToLocalFullSyncWithUserOwnDataOnly();
     void testRemoteToLocalFullSyncWithLinkedNotebooks();
-    void testIncrementalSyncWithNewRemoteItemsWithUserOwnDataOnly();
-    void testIncrementalSyncWithNewRemoteItemsWithLinkedNotebooks();
-    void testIncrementalSyncWithModifiedRemoteItemsWithUserOwnDataOnly();
-    void testIncrementalSyncWithModifiedRemoteItemsWithLinkedNotebooks();
-    void testIncrementalSyncWithModifiedAndNewRemoteItemsWithUserOwnDataOnly();
-    void testIncrementalSyncWithModifiedAndNewRemoteItemsWithLinkedNotebooks();
-    void testIncrementalSyncWithNewLocalItemsWithUserOwnDataOnly();
-    void testIncrementalSyncWithNewLocalItemsWithLinkedNotebooks();
-    void testIncrementalSyncWithModifiedLocalItemsWithUserOwnDataOnly();
+
+    void testIncrementalSyncWithNewRemoteItemsFromUserOwnDataOnly();
+    void testIncrementalSyncWithNewRemoteItemsFromLinkedNotebooksOnly();
+    void testIncrementalSyncWithNewRemoteItemsFromUserOwnDataAndLinkedNotebooks();
+    void testIncrementalSyncWithModifiedRemoteItemsFromUserOwnDataOnly();
+    void testIncrementalSyncWithModifiedRemoteItemsFromLinkedNotebooksOnly();
+    void testIncrementalSyncWithModifiedRemoteItemsFromUserOwnDataAndLinkedNotebooks();
+    void testIncrementalSyncWithModifiedAndNewRemoteItemsFromUserOwnDataOnly();
+    void testIncrementalSyncWithModifiedAndNewRemoteItemsFromLinkedNotebooksOnly();
+    void testIncrementalSyncWithModifiedAndNewRemoteItemsFromUserOwnDataAndLinkedNotebooks();
+
+    void testIncrementalSyncWithNewLocalItemsFromUserOwnDataOnly();
+    void testIncrementalSyncWithNewLocalItemsFromLinkedNotebooksOnly();
+    void testIncrementalSyncWithNewLocalItemsFromUserOwnDataAndLinkedNotebooks();
+    void testIncrementalSyncWithModifiedLocalItemsFromUserOwnDataOnly();
+    void testIncrementalSyncWithModifiedLocalItemsFromLinkedNotebooksOnly();
+    void testIncrementalSyncWithModifiedLocalItemsFromUserOwnDataAndLinkedNotebooks();
+    void testIncrementalSyncWithNewAndModifiedLocalItemsFromUserOwnDataOnly();
+    void testIncrementalSyncWithNewAndModifiedLocalItemsFromLinkedNotebooksOnly();
+    void testIncrementalSyncWithNewAndModifiedLocalItemsFromUserOwnDataAndLinkedNotebooks();
+
+    void testIncrementalSyncWithNewLocalAndNewRemoteItemsFromUsersOwnDataOnly();
+    void testIncrementalSyncWithNewLocalAndNewRemoteItemsFromLinkedNotebooksOnly();
+    void testIncrementalSyncWithNewLocalAndNewRemoteItemsFromUserOwnDataAndLinkedNotebooks();
+
+    void testIncrementalSyncWithNewLocalAndModifiedRemoteItemsFromUsersOwnDataOnly();
+    void testIncrementalSyncWithNewLocalAndModifiedRemoteItemsFromLinkedNotebooksOnly();
+    void testIncrementalSyncWithNewLocalAndModifiedRemoteItemsFromUsersOwnDataAndLinkedNotebooks();
+
+    void testIncrementalSyncWithModifiedLocalAndNewRemoteItemsFromUsersOwnDataOnly();
+    void testIncrementalSyncWithModifiedLocalAndNewRemoteItemsFromLinkedNotebooksOnly();
+    void testIncrementalSyncWithModifiedLocalAndNewRemoteItemsFromUsersOwnDataAndLinkedNotebooks();
+
+    void testIncrementalSyncWithModifiedLocalAndModifiedRemoteItemsWithoutConflictsFromUsersOwnDataOnly();
+    void testIncrementalSyncWithModifiedLocalAndModifiedRemoteItemsWithoutConflictsFromLinkedNotebooksOnly();
+    void testIncrementalSyncWithModifiedLocalAndModifiedRemoteItemsWithoutConflictsFromUsersOwnDataAndLinkedNotebooks();
 
 private:
     void setUserOwnItemsToRemoteStorage();
@@ -74,6 +101,7 @@ private:
     void setNewUserOwnItemsToLocalStorage();
     void setNewLinkedNotebookItemsToLocalStorage();
     void setModifiedUserOwnItemsToLocalStorage();
+    void setModifiedLinkedNotebookItemsToLocalStorage();
 
     void copyRemoteItemsToLocalStorage();
 
