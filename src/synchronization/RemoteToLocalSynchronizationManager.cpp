@@ -2889,7 +2889,8 @@ void RemoteToLocalSynchronizationManager::onGetResourceAsyncFinished(qint32 erro
     QUuid markNoteDirtyRequestId = QUuid::createUuid();
     m_resourcesByMarkNoteOwningResourceDirtyRequestIds[markNoteDirtyRequestId] = resource;
     QNTRACE(QStringLiteral("Emitting the request to mark the resource owning note as the dirty one: request id = ")
-            << markNoteDirtyRequestId << QStringLiteral(", resource: ") << resource);
+            << markNoteDirtyRequestId << QStringLiteral(", resource: ") << resource
+            << QStringLiteral("\nNote: ") << note);
     Q_EMIT updateNote(note, /* update resources = */ false, /* update tags = */ false, markNoteDirtyRequestId);
 }
 
