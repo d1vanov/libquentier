@@ -51,9 +51,11 @@ void UserLocalStorageManagerAsyncTester::onInitTestCase()
     m_pLocalStorageManagerThread = new QThread(this);
     Account account(username, Account::Type::Evernote, m_userId);
     m_pLocalStorageManagerAsync = new LocalStorageManagerAsync(account, startFromScratch, overrideLock);
-    m_pLocalStorageManagerAsync->moveToThread(m_pLocalStorageManagerThread);
 
     createConnections();
+
+    m_pLocalStorageManagerAsync->init();
+    m_pLocalStorageManagerAsync->moveToThread(m_pLocalStorageManagerThread);
 
     m_pLocalStorageManagerThread->start();
 }
@@ -299,8 +301,6 @@ void UserLocalStorageManagerAsyncTester::onExpungeUserFailed(User user, ErrorStr
 
 void UserLocalStorageManagerAsyncTester::createConnections()
 {
-    QObject::connect(m_pLocalStorageManagerThread, QNSIGNAL(QThread,started),
-                     m_pLocalStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,init));
     QObject::connect(m_pLocalStorageManagerThread, QNSIGNAL(QThread,finished),
                      m_pLocalStorageManagerThread, QNSLOT(QThread,deleteLater));
 
