@@ -217,6 +217,7 @@ void SynchronizationTester::testRemoteToLocalFullSyncWithUserOwnDataOnly()
 
     checkProgressNotificationsOrder(catcher);
     checkIdentityOfLocalAndRemoteItems();
+    checkPersistentSyncState();
 }
 
 void SynchronizationTester::testRemoteToLocalFullSyncWithLinkedNotebooks()
@@ -249,6 +250,7 @@ void SynchronizationTester::testRemoteToLocalFullSyncWithLinkedNotebooks()
 
     checkProgressNotificationsOrder(catcher);
     checkIdentityOfLocalAndRemoteItems();
+    checkPersistentSyncState();
 }
 
 void SynchronizationTester::testIncrementalSyncWithNewRemoteItemsFromUserOwnDataOnly()
@@ -284,6 +286,7 @@ void SynchronizationTester::testIncrementalSyncWithNewRemoteItemsFromUserOwnData
 
     checkProgressNotificationsOrder(catcher);
     checkIdentityOfLocalAndRemoteItems();
+    checkPersistentSyncState();
 }
 
 void SynchronizationTester::testIncrementalSyncWithNewRemoteItemsFromLinkedNotebooksOnly()
@@ -320,6 +323,7 @@ void SynchronizationTester::testIncrementalSyncWithNewRemoteItemsFromLinkedNoteb
 
     checkProgressNotificationsOrder(catcher);
     checkIdentityOfLocalAndRemoteItems();
+    checkPersistentSyncState();
 }
 
 void SynchronizationTester::testIncrementalSyncWithNewRemoteItemsFromUserOwnDataAndLinkedNotebooks()
@@ -357,6 +361,7 @@ void SynchronizationTester::testIncrementalSyncWithNewRemoteItemsFromUserOwnData
 
     checkProgressNotificationsOrder(catcher);
     checkIdentityOfLocalAndRemoteItems();
+    checkPersistentSyncState();
 }
 
 void SynchronizationTester::testIncrementalSyncWithModifiedRemoteItemsFromUserOwnDataOnly()
@@ -398,6 +403,7 @@ void SynchronizationTester::testIncrementalSyncWithModifiedRemoteItemsFromUserOw
 
     checkProgressNotificationsOrder(catcher);
     checkIdentityOfLocalAndRemoteItems();
+    checkPersistentSyncState();
 }
 
 void SynchronizationTester::testIncrementalSyncWithModifiedRemoteItemsFromLinkedNotebooksOnly()
@@ -439,6 +445,7 @@ void SynchronizationTester::testIncrementalSyncWithModifiedRemoteItemsFromLinked
 
     checkProgressNotificationsOrder(catcher);
     checkIdentityOfLocalAndRemoteItems();
+    checkPersistentSyncState();
 }
 
 void SynchronizationTester::testIncrementalSyncWithModifiedRemoteItemsFromUserOwnDataAndLinkedNotebooks()
@@ -481,6 +488,7 @@ void SynchronizationTester::testIncrementalSyncWithModifiedRemoteItemsFromUserOw
 
     checkProgressNotificationsOrder(catcher);
     checkIdentityOfLocalAndRemoteItems();
+    checkPersistentSyncState();
 }
 
 void SynchronizationTester::testIncrementalSyncWithModifiedAndNewRemoteItemsFromUserOwnDataOnly()
@@ -522,6 +530,7 @@ void SynchronizationTester::testIncrementalSyncWithModifiedAndNewRemoteItemsFrom
 
     checkProgressNotificationsOrder(catcher);
     checkIdentityOfLocalAndRemoteItems();
+    checkPersistentSyncState();
 }
 
 void SynchronizationTester::testIncrementalSyncWithModifiedAndNewRemoteItemsFromLinkedNotebooksOnly()
@@ -564,6 +573,7 @@ void SynchronizationTester::testIncrementalSyncWithModifiedAndNewRemoteItemsFrom
 
     checkProgressNotificationsOrder(catcher);
     checkIdentityOfLocalAndRemoteItems();
+    checkPersistentSyncState();
 }
 
 void SynchronizationTester::testIncrementalSyncWithModifiedAndNewRemoteItemsFromUserOwnDataAndLinkedNotebooks()
@@ -608,6 +618,7 @@ void SynchronizationTester::testIncrementalSyncWithModifiedAndNewRemoteItemsFrom
 
     checkProgressNotificationsOrder(catcher);
     checkIdentityOfLocalAndRemoteItems();
+    checkPersistentSyncState();
 }
 
 void SynchronizationTester::testIncrementalSyncWithNewLocalItemsFromUserOwnDataOnly()
@@ -643,6 +654,7 @@ void SynchronizationTester::testIncrementalSyncWithNewLocalItemsFromUserOwnDataO
 
     checkProgressNotificationsOrder(catcher);
     checkIdentityOfLocalAndRemoteItems();
+    checkPersistentSyncState();
 }
 
 void SynchronizationTester::testIncrementalSyncWithNewLocalItemsFromLinkedNotebooksOnly()
@@ -679,6 +691,7 @@ void SynchronizationTester::testIncrementalSyncWithNewLocalItemsFromLinkedNotebo
 
     checkProgressNotificationsOrder(catcher);
     checkIdentityOfLocalAndRemoteItems();
+    checkPersistentSyncState();
 }
 
 void SynchronizationTester::testIncrementalSyncWithNewLocalItemsFromUserOwnDataAndLinkedNotebooks()
@@ -716,6 +729,7 @@ void SynchronizationTester::testIncrementalSyncWithNewLocalItemsFromUserOwnDataA
 
     checkProgressNotificationsOrder(catcher);
     checkIdentityOfLocalAndRemoteItems();
+    checkPersistentSyncState();
 }
 
 void SynchronizationTester::testIncrementalSyncWithModifiedLocalItemsFromUserOwnDataOnly()
@@ -751,6 +765,7 @@ void SynchronizationTester::testIncrementalSyncWithModifiedLocalItemsFromUserOwn
 
     checkProgressNotificationsOrder(catcher);
     checkIdentityOfLocalAndRemoteItems();
+    checkPersistentSyncState();
 }
 
 void SynchronizationTester::testIncrementalSyncWithModifiedLocalItemsFromLinkedNotebooksOnly()
@@ -787,6 +802,7 @@ void SynchronizationTester::testIncrementalSyncWithModifiedLocalItemsFromLinkedN
 
     checkProgressNotificationsOrder(catcher);
     checkIdentityOfLocalAndRemoteItems();
+    checkPersistentSyncState();
 }
 
 void SynchronizationTester::testIncrementalSyncWithModifiedLocalItemsFromUserOwnDataAndLinkedNotebooks()
@@ -824,6 +840,7 @@ void SynchronizationTester::testIncrementalSyncWithModifiedLocalItemsFromUserOwn
 
     checkProgressNotificationsOrder(catcher);
     checkIdentityOfLocalAndRemoteItems();
+    checkPersistentSyncState();
 }
 
 void SynchronizationTester::testIncrementalSyncWithNewAndModifiedLocalItemsFromUserOwnDataOnly()
@@ -860,6 +877,7 @@ void SynchronizationTester::testIncrementalSyncWithNewAndModifiedLocalItemsFromU
 
     checkProgressNotificationsOrder(catcher);
     checkIdentityOfLocalAndRemoteItems();
+    checkPersistentSyncState();
 }
 
 void SynchronizationTester::testIncrementalSyncWithNewAndModifiedLocalItemsFromLinkedNotebooksOnly()
@@ -897,6 +915,7 @@ void SynchronizationTester::testIncrementalSyncWithNewAndModifiedLocalItemsFromL
 
     checkProgressNotificationsOrder(catcher);
     checkIdentityOfLocalAndRemoteItems();
+    checkPersistentSyncState();
 }
 
 void SynchronizationTester::testIncrementalSyncWithNewAndModifiedLocalItemsFromUserOwnDataAndLinkedNotebooks()
@@ -936,6 +955,7 @@ void SynchronizationTester::testIncrementalSyncWithNewAndModifiedLocalItemsFromU
 
     checkProgressNotificationsOrder(catcher);
     checkIdentityOfLocalAndRemoteItems();
+    checkPersistentSyncState();
 }
 
 void SynchronizationTester::testIncrementalSyncWithNewLocalAndNewRemoteItemsFromUsersOwnDataOnly()
@@ -972,6 +992,7 @@ void SynchronizationTester::testIncrementalSyncWithNewLocalAndNewRemoteItemsFrom
 
     checkProgressNotificationsOrder(catcher);
     checkIdentityOfLocalAndRemoteItems();
+    checkPersistentSyncState();
 }
 
 void SynchronizationTester::testIncrementalSyncWithNewLocalAndNewRemoteItemsFromLinkedNotebooksOnly()
@@ -1009,6 +1030,7 @@ void SynchronizationTester::testIncrementalSyncWithNewLocalAndNewRemoteItemsFrom
 
     checkProgressNotificationsOrder(catcher);
     checkIdentityOfLocalAndRemoteItems();
+    checkPersistentSyncState();
 }
 
 void SynchronizationTester::testIncrementalSyncWithNewLocalAndNewRemoteItemsFromUserOwnDataAndLinkedNotebooks()
@@ -1048,6 +1070,7 @@ void SynchronizationTester::testIncrementalSyncWithNewLocalAndNewRemoteItemsFrom
 
     checkProgressNotificationsOrder(catcher);
     checkIdentityOfLocalAndRemoteItems();
+    checkPersistentSyncState();
 }
 
 void SynchronizationTester::testIncrementalSyncWithNewLocalAndModifiedRemoteItemsFromUsersOwnDataOnly()
@@ -1084,6 +1107,7 @@ void SynchronizationTester::testIncrementalSyncWithNewLocalAndModifiedRemoteItem
 
     checkProgressNotificationsOrder(catcher);
     checkIdentityOfLocalAndRemoteItems();
+    checkPersistentSyncState();
 }
 
 void SynchronizationTester::testIncrementalSyncWithNewLocalAndModifiedRemoteItemsFromLinkedNotebooksOnly()
@@ -1121,6 +1145,7 @@ void SynchronizationTester::testIncrementalSyncWithNewLocalAndModifiedRemoteItem
 
     checkProgressNotificationsOrder(catcher);
     checkIdentityOfLocalAndRemoteItems();
+    checkPersistentSyncState();
 }
 
 void SynchronizationTester::testIncrementalSyncWithNewLocalAndModifiedRemoteItemsFromUsersOwnDataAndLinkedNotebooks()
@@ -1160,6 +1185,7 @@ void SynchronizationTester::testIncrementalSyncWithNewLocalAndModifiedRemoteItem
 
     checkProgressNotificationsOrder(catcher);
     checkIdentityOfLocalAndRemoteItems();
+    checkPersistentSyncState();
 }
 
 void SynchronizationTester::testIncrementalSyncWithModifiedLocalAndNewRemoteItemsFromUsersOwnDataOnly()
@@ -1196,6 +1222,7 @@ void SynchronizationTester::testIncrementalSyncWithModifiedLocalAndNewRemoteItem
 
     checkProgressNotificationsOrder(catcher);
     checkIdentityOfLocalAndRemoteItems();
+    checkPersistentSyncState();
 }
 
 void SynchronizationTester::testIncrementalSyncWithModifiedLocalAndNewRemoteItemsFromLinkedNotebooksOnly()
@@ -1233,6 +1260,7 @@ void SynchronizationTester::testIncrementalSyncWithModifiedLocalAndNewRemoteItem
 
     checkProgressNotificationsOrder(catcher);
     checkIdentityOfLocalAndRemoteItems();
+    checkPersistentSyncState();
 }
 
 void SynchronizationTester::testIncrementalSyncWithModifiedLocalAndNewRemoteItemsFromUsersOwnDataAndLinkedNotebooks()
@@ -1272,6 +1300,7 @@ void SynchronizationTester::testIncrementalSyncWithModifiedLocalAndNewRemoteItem
 
     checkProgressNotificationsOrder(catcher);
     checkIdentityOfLocalAndRemoteItems();
+    checkPersistentSyncState();
 }
 
 void SynchronizationTester::testIncrementalSyncWithModifiedLocalAndModifiedRemoteItemsWithoutConflictsFromUsersOwnDataOnly()
@@ -1308,6 +1337,7 @@ void SynchronizationTester::testIncrementalSyncWithModifiedLocalAndModifiedRemot
 
     checkProgressNotificationsOrder(catcher);
     checkIdentityOfLocalAndRemoteItems();
+    checkPersistentSyncState();
 }
 
 void SynchronizationTester::testIncrementalSyncWithModifiedLocalAndModifiedRemoteItemsWithoutConflictsFromLinkedNotebooksOnly()
@@ -1345,6 +1375,7 @@ void SynchronizationTester::testIncrementalSyncWithModifiedLocalAndModifiedRemot
 
     checkProgressNotificationsOrder(catcher);
     checkIdentityOfLocalAndRemoteItems();
+    checkPersistentSyncState();
 }
 
 void SynchronizationTester::testIncrementalSyncWithModifiedLocalAndModifiedRemoteItemsWithoutConflictsFromUsersOwnDataAndLinkedNotebooks()
@@ -1384,6 +1415,7 @@ void SynchronizationTester::testIncrementalSyncWithModifiedLocalAndModifiedRemot
 
     checkProgressNotificationsOrder(catcher);
     checkIdentityOfLocalAndRemoteItems();
+    checkPersistentSyncState();
 }
 
 void SynchronizationTester::setUserOwnItemsToRemoteStorage()
@@ -3085,7 +3117,7 @@ void SynchronizationTester::checkPersistentSyncState()
     }
 
     qint64 timestampSpan = currentTimestamp - lastUserOwnDataSyncTimestamp;
-    QVERIFY2(timestampSpan < 3*MAX_ALLOWED_TEST_DURATION_MSEC, "The difference between the current datetime and user's own exceeds half an hour");
+    QVERIFY2(timestampSpan < 3*MAX_ALLOWED_TEST_DURATION_MSEC, "The difference between the current datetime and last user's own data sync timestamp exceeds half an hour");
 
     QHash<QString,qevercloud::LinkedNotebook> linkedNotebooks = m_pFakeNoteStore->linkedNotebooks();
     int numLinkedNotebookSyncEntries = appSettings.beginReadArray(keyGroup + LAST_SYNC_LINKED_NOTEBOOKS_PARAMS);
@@ -3101,7 +3133,39 @@ void SynchronizationTester::checkPersistentSyncState()
     {
         appSettings.setArrayIndex(i);
 
-        // TODO: continue from here
+        QString linkedNotebookGuid = appSettings.value(LINKED_NOTEBOOK_GUID_KEY).toString();
+        auto linkedNotebookIt = linkedNotebooks.find(linkedNotebookGuid);
+        QVERIFY2(linkedNotebookIt != linkedNotebooks.end(), "Found synchronization persistence for unidentified linked notebook");
+
+        QVariant linkedNotebookUpdateCountData = appSettings.value(LINKED_NOTEBOOK_LAST_UPDATE_COUNT_KEY);
+        conversionResult = false;
+        qint32 linkedNotebookUpdateCount = linkedNotebookUpdateCountData.toInt(&conversionResult);
+        QVERIFY2(conversionResult == true, "Failed to convert linked notebook update count from synchronization persistence to int");
+
+        qint32 linkedNotebookMaxUsn = m_pFakeNoteStore->currentMaxUsn(linkedNotebookGuid);
+        if (Q_UNLIKELY(linkedNotebookUpdateCount != linkedNotebookMaxUsn)) {
+            QString error = QStringLiteral("Persistent linked notebook update count (") +
+                            QString::number(linkedNotebookUpdateCount) +
+                            QStringLiteral(") is not equal to fake note store's max USN for this linked notebook (") +
+                            QString::number(linkedNotebookMaxUsn) + QStringLiteral(")");
+            QFAIL(qPrintable(error));
+        }
+
+        QVariant lastLinkedNotebookSyncTimestampData = appSettings.value(LINKED_NOTEBOOK_LAST_SYNC_TIME_KEY);
+        conversionResult = false;
+        qevercloud::Timestamp lastLinkedNotebookSyncTimestamp = lastLinkedNotebookSyncTimestampData.toLongLong(&conversionResult);
+        QVERIFY2(conversionResult == true, "Failed to convert persistent linked notebook last sync timestamp to int64");
+
+        if (Q_UNLIKELY(lastLinkedNotebookSyncTimestamp >= currentTimestamp)) {
+            QString error = QStringLiteral("Last linked notebook sync timestamp is greater than the current timestamp: ");
+            error += printableDateTimeFromTimestamp(lastLinkedNotebookSyncTimestamp);
+            error += QStringLiteral(" vs ");
+            error += printableDateTimeFromTimestamp(currentTimestamp);
+            QFAIL(qPrintable(error));
+        }
+
+        timestampSpan = currentTimestamp - lastLinkedNotebookSyncTimestamp;
+        QVERIFY2(timestampSpan < 3*MAX_ALLOWED_TEST_DURATION_MSEC, "The difference between the current datetime and last linked notebook sync timestamp exceeds half an hour");
     }
     appSettings.endArray();
 }
