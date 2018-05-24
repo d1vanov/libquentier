@@ -51,6 +51,8 @@ protected:
     IUserStore(const QSharedPointer<qevercloud::UserStore> & pQecUserStore);
 
 public:
+    virtual ~IUserStore() {}
+
     QSharedPointer<qevercloud::UserStore> getQecUserStore() const;
     void setQecUserStore(const QSharedPointer<qevercloud::UserStore> & pQecUserStore);
 

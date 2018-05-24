@@ -65,6 +65,7 @@ public:
         virtual INoteStore & noteStore() = 0;
         virtual IUserStore & userStore() = 0;
         virtual INoteStore * noteStoreForLinkedNotebook(const LinkedNotebook & linkedNotebook) = 0;
+        virtual ~IManager() {}
     };
 
     explicit RemoteToLocalSynchronizationManager(IManager & manager, const QString & host, QObject * parent = Q_NULLPTR);
