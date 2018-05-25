@@ -292,6 +292,24 @@ bool FakeNoteStore::removeTag(const QString & guid)
         }
     }
 
+    NoteDataByGuid & noteGuidIndex = m_data->m_notes.get<NoteByGuid>();
+    for(auto noteIt = noteGuidIndex.begin(); noteIt != noteGuidIndex.end(); ++noteIt)
+    {
+        const Note & note = *noteIt;
+        if (!note.hasTagGuids()) {
+            continue;
+        }
+
+        QStringList tagGuids = note.tagGuids();
+        int tagGuidIndex = tagGuids.indexOf(guid);
+        if (tagGuidIndex >= 0) {
+            tagGuids.removeAt(tagGuidIndex);
+            Note noteCopy = note;
+            noteCopy.setTagGuids(tagGuids);
+            noteGuidIndex.replace(noteIt, noteCopy);
+        }
+    }
+
     Q_UNUSED(index.erase(tagIt))
     return true;
 }
