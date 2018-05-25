@@ -90,6 +90,10 @@ private Q_SLOTS:
     void testIncrementalSyncWithModifiedLocalAndModifiedRemoteItemsWithoutConflictsFromLinkedNotebooksOnly();
     void testIncrementalSyncWithModifiedLocalAndModifiedRemoteItemsWithoutConflictsFromUsersOwnDataAndLinkedNotebooks();
 
+    void testIncrementalSyncWithExpungedRemoteItemsFromUsersOwnDataOnly();
+    void testIncrementalSyncWithExpungedRemoteItemsFromLinkedNotebooksOnly();
+    void testIncrementalSyncWithExpungedRemoteItemsFromUsersOwnDataAndLinkedNotebooks();
+
 private:
     void setUserOwnItemsToRemoteStorage();
     void setLinkedNotebookItemsToRemoteStorage();
@@ -97,6 +101,8 @@ private:
     void setNewLinkedNotebookItemsToRemoteStorage();
     void setModifiedUserOwnItemsToRemoteStorage();
     void setModifiedLinkedNotebookItemsToRemoteStorage();
+    void setExpungedUserOwnItemsToRemoteStorage();
+    void setExpungedLinkedNotebookItemsToRemoteStorage();
 
     void setNewUserOwnItemsToLocalStorage();
     void setNewLinkedNotebookItemsToLocalStorage();
@@ -142,11 +148,11 @@ private:
     /**
      * Struct containing a collection of guids of data items (remote or local)
      * which are to be used in incremental sync tests checking how the sync
-     * handles modifications of exisging data items on local or remote side.
-     * Using the particular set of items to modify is important for making
+     * handles modifications or expunging of existing data items on local or remote side.
+     * Using the particular set of items to modify/expunge is important for making
      * the tests reproducible.
      */
-    struct GuidsOfItemsToModifyForSyncTest
+    struct GuidsOfItemsUsedForSyncTest
     {
         QStringList     m_savedSearchGuids;
         QStringList     m_linkedNotebookGuids;
@@ -156,11 +162,14 @@ private:
         QStringList     m_resourceGuids;
     };
 
-    GuidsOfItemsToModifyForSyncTest     m_guidsOfUsersOwnRemoteItemsToModify;
-    GuidsOfItemsToModifyForSyncTest     m_guidsOfLinkedNotebookRemoteItemsToModify;
+    GuidsOfItemsUsedForSyncTest     m_guidsOfUsersOwnRemoteItemsToModify;
+    GuidsOfItemsUsedForSyncTest     m_guidsOfLinkedNotebookRemoteItemsToModify;
 
-    GuidsOfItemsToModifyForSyncTest     m_guidsOfUserOwnLocalItemsToModify;
-    GuidsOfItemsToModifyForSyncTest     m_guidsOfLinkedNotebookLocalItemsToModify;
+    GuidsOfItemsUsedForSyncTest     m_guidsOfUserOwnLocalItemsToModify;
+    GuidsOfItemsUsedForSyncTest     m_guidsOfLinkedNotebookLocalItemsToModify;
+
+    GuidsOfItemsUsedForSyncTest     m_guidsOfUserOwnRemoteItemsToExpunge;
+    GuidsOfItemsUsedForSyncTest     m_guidsOfLinkedNotebookRemoteItemsToExpunge;
 };
 
 } // namespace test
