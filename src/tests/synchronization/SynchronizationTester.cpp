@@ -34,6 +34,9 @@
 // 10 minutes should be enough
 #define MAX_ALLOWED_TEST_DURATION_MSEC 600000
 
+#define MODIFIED_LOCALLY_SUFFIX QStringLiteral("_modified_locally")
+#define MODIFIED_REMOTELY_SUFFIX QStringLiteral("_modified_remotely")
+
 #define CATCH_EXCEPTION() \
     catch(const std::exception & exception) { \
         SysInfo sysInfo; \
@@ -89,7 +92,11 @@ SynchronizationTester::SynchronizationTester(QObject * parent) :
     m_guidsOfUserOwnLocalItemsToModify(),
     m_guidsOfLinkedNotebookLocalItemsToModify(),
     m_guidsOfUserOwnRemoteItemsToExpunge(),
-    m_guidsOfLinkedNotebookRemoteItemsToExpunge()
+    m_guidsOfLinkedNotebookRemoteItemsToExpunge(),
+    m_expectedSavedSearchNamesByGuid(),
+    m_expectedTagNamesByGuid(),
+    m_expectedNotebookNamesByGuid(),
+    m_expectedNoteTitlesByGuid()
 {}
 
 SynchronizationTester::~SynchronizationTester()
@@ -2163,7 +2170,7 @@ void SynchronizationTester::setModifiedUserOwnItemsToRemoteStorage()
         QVERIFY2(pSavedSearch != Q_NULLPTR, "Detected unexpectedly missing saved search in fake note store");
 
         SavedSearch modifiedSavedSearch(*pSavedSearch);
-        modifiedSavedSearch.setName(modifiedSavedSearch.name() + QStringLiteral("_modified_remotely"));
+        modifiedSavedSearch.setName(modifiedSavedSearch.name() + MODIFIED_REMOTELY_SUFFIX);
         modifiedSavedSearch.setDirty(true);
         modifiedSavedSearch.setLocal(false);
         modifiedSavedSearch.setUpdateSequenceNumber(-1);
@@ -2181,7 +2188,7 @@ void SynchronizationTester::setModifiedUserOwnItemsToRemoteStorage()
         QVERIFY2(!pTag->hasLinkedNotebookGuid(), "Detected broken test condition - the tag was supposed to be user's own one has linked notebook guid");
 
         Tag modifiedTag(*pTag);
-        modifiedTag.setName(modifiedTag.name() + QStringLiteral("_modified_remotely"));
+        modifiedTag.setName(modifiedTag.name() + MODIFIED_REMOTELY_SUFFIX);
         modifiedTag.setDirty(true);
         modifiedTag.setLocal(false);
         modifiedTag.setUpdateSequenceNumber(-1);
@@ -2199,7 +2206,7 @@ void SynchronizationTester::setModifiedUserOwnItemsToRemoteStorage()
         QVERIFY2(!pNotebook->hasLinkedNotebookGuid(), "Detected broken test condition - the notebook was supposed to be user's own has linked notebook guid");
 
         Notebook modifiedNotebook(*pNotebook);
-        modifiedNotebook.setName(modifiedNotebook.name() + QStringLiteral("_modified_remotely"));
+        modifiedNotebook.setName(modifiedNotebook.name() + MODIFIED_REMOTELY_SUFFIX);
         modifiedNotebook.setDirty(true);
         modifiedNotebook.setLocal(false);
         modifiedNotebook.setUpdateSequenceNumber(-1);
@@ -2223,7 +2230,7 @@ void SynchronizationTester::setModifiedUserOwnItemsToRemoteStorage()
         QVERIFY2(!pNotebook->hasLinkedNotebookGuid(), "Detected broken test condition - the note was supposed to be user's own belongs to a notebook which has linked notebook guid");
 
         Note modifiedNote(*pNote);
-        modifiedNote.setTitle(modifiedNote.title() + QStringLiteral("_modified_remotely"));
+        modifiedNote.setTitle(modifiedNote.title() + MODIFIED_REMOTELY_SUFFIX);
         modifiedNote.setDirty(true);
         modifiedNote.setLocal(false);
         modifiedNote.setUpdateSequenceNumber(-1);
@@ -2291,7 +2298,7 @@ void SynchronizationTester::setModifiedLinkedNotebookItemsToRemoteStorage()
         QVERIFY2(pLinkedNotebook->hasShareName(), "Detected linked notebook without share name in fake note store");
 
         LinkedNotebook modifiedLinkedNotebook(*pLinkedNotebook);
-        modifiedLinkedNotebook.setShareName(modifiedLinkedNotebook.shareName() + QStringLiteral("_modified_remotely"));
+        modifiedLinkedNotebook.setShareName(modifiedLinkedNotebook.shareName() + MODIFIED_REMOTELY_SUFFIX);
         modifiedLinkedNotebook.setDirty(true);
         modifiedLinkedNotebook.setUpdateSequenceNumber(-1);
 
@@ -2308,7 +2315,7 @@ void SynchronizationTester::setModifiedLinkedNotebookItemsToRemoteStorage()
         QVERIFY2(pTag->hasLinkedNotebookGuid(), "Detected broken test condition - the tag was supposed to belong to a linked notebook but it doesn't");
 
         Tag modifiedTag(*pTag);
-        modifiedTag.setName(modifiedTag.name() + QStringLiteral("_modified_remotely"));
+        modifiedTag.setName(modifiedTag.name() + MODIFIED_REMOTELY_SUFFIX);
         modifiedTag.setDirty(true);
         modifiedTag.setLocal(false);
         modifiedTag.setUpdateSequenceNumber(-1);
@@ -2337,7 +2344,7 @@ void SynchronizationTester::setModifiedLinkedNotebookItemsToRemoteStorage()
         QVERIFY2(pNotebook->hasLinkedNotebookGuid(), "Detected broken test condition - the notebook supposed to belong to a linked notebook but it doesn't");
 
         Notebook modifiedNotebook(*pNotebook);
-        modifiedNotebook.setName(modifiedNotebook.name() + QStringLiteral("_modified_remotely"));
+        modifiedNotebook.setName(modifiedNotebook.name() + MODIFIED_REMOTELY_SUFFIX);
         modifiedNotebook.setDirty(true);
         modifiedNotebook.setLocal(false);
         modifiedNotebook.setUpdateSequenceNumber(-1);
@@ -2372,7 +2379,7 @@ void SynchronizationTester::setModifiedLinkedNotebookItemsToRemoteStorage()
         QVERIFY2(pNotebook->hasLinkedNotebookGuid(), "Detected broken test condition - the note was supposed to belong to a linked notebook but it doesn't");
 
         Note modifiedNote(*pNote);
-        modifiedNote.setTitle(modifiedNote.title() + QStringLiteral("_modified_remotely"));
+        modifiedNote.setTitle(modifiedNote.title() + MODIFIED_REMOTELY_SUFFIX);
         modifiedNote.setDirty(true);
         modifiedNote.setLocal(false);
         modifiedNote.setUpdateSequenceNumber(-1);
@@ -2966,7 +2973,7 @@ void SynchronizationTester::setModifiedUserOwnItemsToLocalStorage()
         QVERIFY2(res == true, "Detected unexpectedly missing saved search in local storage");
         QVERIFY2(savedSearch.hasName(), "Detected saved search without a name in local storage");
 
-        savedSearch.setName(savedSearch.name() + QStringLiteral("_modified_locally"));
+        savedSearch.setName(savedSearch.name() + MODIFIED_LOCALLY_SUFFIX);
         savedSearch.setDirty(true);
 
         res = m_pLocalStorageManagerAsync->localStorageManager()->updateSavedSearch(savedSearch, errorDescription);
@@ -2983,7 +2990,7 @@ void SynchronizationTester::setModifiedUserOwnItemsToLocalStorage()
         QVERIFY2(res == true, "Detected unexpectedly missing tag in local storage");
         QVERIFY2(tag.hasName(), "Detected tag without a name in local storage");
 
-        tag.setName(tag.name() + QStringLiteral("_modified_locally"));
+        tag.setName(tag.name() + MODIFIED_LOCALLY_SUFFIX);
         tag.setDirty(true);
 
         res = m_pLocalStorageManagerAsync->localStorageManager()->updateTag(tag, errorDescription);
@@ -3000,7 +3007,7 @@ void SynchronizationTester::setModifiedUserOwnItemsToLocalStorage()
         QVERIFY2(res == true, "Detected unexpectedly missing notebook in local storage");
         QVERIFY2(notebook.hasName(), "Detected notebook without a name in local storage");
 
-        notebook.setName(notebook.name() + QStringLiteral("_modified_locally"));
+        notebook.setName(notebook.name() + MODIFIED_LOCALLY_SUFFIX);
         notebook.setDirty(true);
 
         res = m_pLocalStorageManagerAsync->localStorageManager()->updateNotebook(notebook, errorDescription);
@@ -3017,7 +3024,7 @@ void SynchronizationTester::setModifiedUserOwnItemsToLocalStorage()
         QVERIFY2(res == true, "Detected unexpectedly missing note in local storage");
         QVERIFY2(note.hasTitle(), "Detected note without title in local storage");
 
-        note.setTitle(note.title() + QStringLiteral("_modified_locally"));
+        note.setTitle(note.title() + MODIFIED_LOCALLY_SUFFIX);
         note.setDirty(true);
 
         res = m_pLocalStorageManagerAsync->localStorageManager()->updateNote(note, /* update tags = */ false,
@@ -3042,7 +3049,7 @@ void SynchronizationTester::setModifiedLinkedNotebookItemsToLocalStorage()
         QVERIFY2(res == true, "Detected unexpectedly missing tag in local storage");
         QVERIFY2(tag.hasName(), "Detected tag without a name in local storage");
 
-        tag.setName(tag.name() + QStringLiteral("_modified_locally"));
+        tag.setName(tag.name() + MODIFIED_LOCALLY_SUFFIX);
         tag.setDirty(true);
 
         res = m_pLocalStorageManagerAsync->localStorageManager()->updateTag(tag, errorDescription);
@@ -3059,7 +3066,7 @@ void SynchronizationTester::setModifiedLinkedNotebookItemsToLocalStorage()
         QVERIFY2(res == true, "Detected unexpectedly missing notebook in local storage");
         QVERIFY2(notebook.hasName(), "Detected notebook without a name in local storage");
 
-        notebook.setName(notebook.name() + QStringLiteral("_modified_locally"));
+        notebook.setName(notebook.name() + MODIFIED_LOCALLY_SUFFIX);
         notebook.setDirty(true);
 
         res = m_pLocalStorageManagerAsync->localStorageManager()->updateNotebook(notebook, errorDescription);
@@ -3076,12 +3083,133 @@ void SynchronizationTester::setModifiedLinkedNotebookItemsToLocalStorage()
         QVERIFY2(res == true, "Detected unexpectedly missing note in local storage");
         QVERIFY2(note.hasTitle(), "Detected note without title in local storage");
 
-        note.setTitle(note.title() + QStringLiteral("_modified_locally"));
+        note.setTitle(note.title() + MODIFIED_LOCALLY_SUFFIX);
         note.setDirty(true);
 
         res = m_pLocalStorageManagerAsync->localStorageManager()->updateNote(note, /* update tags = */ false,
                                                                              /* update resources = */ false,
                                                                              errorDescription);
+        QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
+    }
+}
+
+void SynchronizationTester::setConflictingSavedSearchesToLocalAndRemoteStorages()
+{
+    m_expectedSavedSearchNamesByGuid.clear();
+    QVERIFY(!m_guidsOfUserOwnLocalItemsToModify.m_savedSearchGuids.isEmpty());
+    for(auto it = m_guidsOfUserOwnLocalItemsToModify.m_savedSearchGuids.constBegin(),
+        end = m_guidsOfUserOwnLocalItemsToModify.m_savedSearchGuids.constEnd(); it != end; ++it)
+    {
+        const SavedSearch * pSavedSearch = m_pFakeNoteStore->findSavedSearch(*it);
+        QVERIFY2(pSavedSearch != Q_NULLPTR, "Detected unexpectedly missing saved search in fake note store");
+
+        QString originalName = pSavedSearch->name();
+
+        SavedSearch modifiedSavedSearch(*pSavedSearch);
+        modifiedSavedSearch.setName(originalName + MODIFIED_REMOTELY_SUFFIX);
+        modifiedSavedSearch.setDirty(true);
+        modifiedSavedSearch.setLocal(false);
+        modifiedSavedSearch.setUpdateSequenceNumber(-1);
+
+        ErrorString errorDescription;
+        bool res = m_pFakeNoteStore->setSavedSearch(modifiedSavedSearch, errorDescription);
+        QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
+
+        m_expectedSavedSearchNamesByGuid[*it] = modifiedSavedSearch.name();
+
+        modifiedSavedSearch.setName(originalName + MODIFIED_REMOTELY_SUFFIX);
+        res = m_pLocalStorageManagerAsync->localStorageManager()->updateSavedSearch(modifiedSavedSearch, errorDescription);
+        QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
+    }
+}
+
+void SynchronizationTester::setConflictingTagsToLocalAndRemoteStorages()
+{
+    m_expectedTagNamesByGuid.clear();
+    QVERIFY(!m_guidsOfUserOwnLocalItemsToModify.m_tagGuids.isEmpty());
+    for(auto it = m_guidsOfUserOwnLocalItemsToModify.m_tagGuids.constBegin(),
+        end = m_guidsOfUserOwnLocalItemsToModify.m_tagGuids.constEnd(); it != end; ++it)
+    {
+        const Tag * pTag = m_pFakeNoteStore->findTag(*it);
+        QVERIFY2(pTag != Q_NULLPTR, "Detected unexpectedly missing tag in fake note store");
+        QVERIFY2(!pTag->hasLinkedNotebookGuid(), "Detected broken test condition - the tag was supposed to be user's own one has linked notebook guid");
+
+        QString originalName = pTag->name();
+
+        Tag modifiedTag(*pTag);
+        modifiedTag.setName(originalName + MODIFIED_REMOTELY_SUFFIX);
+        modifiedTag.setDirty(true);
+        modifiedTag.setLocal(false);
+        modifiedTag.setUpdateSequenceNumber(-1);
+
+        ErrorString errorDescription;
+        bool res = m_pFakeNoteStore->setTag(modifiedTag, errorDescription);
+        QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
+
+        m_expectedTagNamesByGuid[*it] = modifiedTag.name();
+
+        modifiedTag.setName(originalName + MODIFIED_REMOTELY_SUFFIX);
+        res = m_pLocalStorageManagerAsync->localStorageManager()->updateTag(modifiedTag, errorDescription);
+        QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
+    }
+}
+
+void SynchronizationTester::setConflictingNotebooksToLocalAndRemoteStorages()
+{
+    m_expectedNotebookNamesByGuid.clear();
+    QVERIFY(!m_guidsOfUserOwnLocalItemsToModify.m_notebookGuids.isEmpty());
+    for(auto it = m_guidsOfUserOwnLocalItemsToModify.m_notebookGuids.constBegin(),
+        end = m_guidsOfUserOwnLocalItemsToModify.m_notebookGuids.constEnd(); it != end; ++it)
+    {
+        const Notebook * pNotebook = m_pFakeNoteStore->findNotebook(*it);
+        QVERIFY2(pNotebook != Q_NULLPTR, "Detected unexpectedly missing notebook in fake note store");
+        QVERIFY2(!pNotebook->hasLinkedNotebookGuid(), "Detected broken test condition - the notebook was supposed to be user's own has linked notebook guid");
+
+        QString originalName = pNotebook->name();
+
+        Notebook modifiedNotebook(*pNotebook);
+        modifiedNotebook.setName(originalName + MODIFIED_REMOTELY_SUFFIX);
+        modifiedNotebook.setDirty(true);
+        modifiedNotebook.setLocal(false);
+        modifiedNotebook.setUpdateSequenceNumber(-1);
+
+        ErrorString errorDescription;
+        bool res = m_pFakeNoteStore->setNotebook(modifiedNotebook, errorDescription);
+        QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
+
+        m_expectedNotebookNamesByGuid[*it] = modifiedNotebook.name();
+
+        modifiedNotebook.setName(originalName + MODIFIED_LOCALLY_SUFFIX);
+        res = m_pLocalStorageManagerAsync->localStorageManager()->updateNotebook(modifiedNotebook, errorDescription);
+        QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
+    }
+}
+
+void SynchronizationTester::setConflictingNotesToLocalAndRemoteStorages()
+{
+    m_expectedNoteTitlesByGuid.clear();
+    QVERIFY(!m_guidsOfUserOwnLocalItemsToModify.m_noteGuids.isEmpty());
+    for(auto it = m_guidsOfUserOwnLocalItemsToModify.m_noteGuids.constBegin(),
+        end = m_guidsOfUserOwnLocalItemsToModify.m_noteGuids.constEnd(); it != end; ++it)
+    {
+        const Note * pNote = m_pFakeNoteStore->findNote(*it);
+        QVERIFY2(pNote != Q_NULLPTR, "Detected unexpectedly missing note in fake note store");
+
+        QString originalTitle = pNote->title();
+
+        Note modifiedNote(*pNote);
+        modifiedNote.setTitle(originalTitle + MODIFIED_REMOTELY_SUFFIX);
+        modifiedNote.setDirty(true);
+        modifiedNote.setLocal(false);
+        modifiedNote.setUpdateSequenceNumber(-1);
+
+        ErrorString errorDescription;
+        bool res = m_pFakeNoteStore->setNote(modifiedNote, errorDescription);
+        QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
+
+        m_expectedNoteTitlesByGuid[*it] = modifiedNote.title();
+
+        modifiedNote.setTitle(originalTitle + MODIFIED_LOCALLY_SUFFIX);
         QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
     }
 }

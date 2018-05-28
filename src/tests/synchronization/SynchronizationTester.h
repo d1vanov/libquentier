@@ -113,6 +113,11 @@ private:
     void setModifiedUserOwnItemsToLocalStorage();
     void setModifiedLinkedNotebookItemsToLocalStorage();
 
+    void setConflictingSavedSearchesToLocalAndRemoteStorages();
+    void setConflictingTagsToLocalAndRemoteStorages();
+    void setConflictingNotebooksToLocalAndRemoteStorages();
+    void setConflictingNotesToLocalAndRemoteStorages();
+
     void copyRemoteItemsToLocalStorage();
 
     void setRemoteStorageSyncStateToPersistentSyncSettings();
@@ -174,6 +179,11 @@ private:
 
     GuidsOfItemsUsedForSyncTest     m_guidsOfUserOwnRemoteItemsToExpunge;
     GuidsOfItemsUsedForSyncTest     m_guidsOfLinkedNotebookRemoteItemsToExpunge;
+
+    QHash<QString, QString>         m_expectedSavedSearchNamesByGuid;
+    QHash<QString, QString>         m_expectedTagNamesByGuid;
+    QHash<QString, QString>         m_expectedNotebookNamesByGuid;
+    QHash<QString, QString>         m_expectedNoteTitlesByGuid;
 };
 
 } // namespace test
