@@ -94,6 +94,10 @@ private Q_SLOTS:
     void testIncrementalSyncWithExpungedRemoteItemsFromLinkedNotebooksOnly();
     void testIncrementalSyncWithExpungedRemoteItemsFromUsersOwnDataAndLinkedNotebooks();
 
+    void testIncrementalSyncWithNewModifiedAndExpungedRemoteItemsFromUserOwnDataOnly();
+    void testIncrementalSyncWithNewModifiedAndExpungedRemoteItemsFromLinkedNotebooksOnly();
+    void testIncrementalSyncWithNewModifiedAndExpungedRemoteItemsFromUserOwnDataAndLinkedNotebooks();
+
 private:
     void setUserOwnItemsToRemoteStorage();
     void setLinkedNotebookItemsToRemoteStorage();
