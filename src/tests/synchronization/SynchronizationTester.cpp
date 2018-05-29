@@ -1683,7 +1683,7 @@ void SynchronizationTester::testIncrementalSyncWithConflictingSavedSearchesFromU
     copyRemoteItemsToLocalStorage();
     setRemoteStorageSyncStateToPersistentSyncSettings();
 
-    setConflictingSavedSearchesToLocalAndRemoteStorages(ConflictingItemsUsnOption::LargerRemoteUsn);
+    setConflictingSavedSearchesFromUserOwnDataToLocalAndRemoteStorages(ConflictingItemsUsnOption::LargerRemoteUsn);
 
     SynchronizationManagerSignalsCatcher catcher(*m_pSynchronizationManager);
     runTest(catcher);
@@ -1720,7 +1720,7 @@ void SynchronizationTester::testIncrementalSyncWithConflictingTagsFromUserOwnDat
     copyRemoteItemsToLocalStorage();
     setRemoteStorageSyncStateToPersistentSyncSettings();
 
-    setConflictingTagsToLocalAndRemoteStorages(ConflictingItemsUsnOption::LargerRemoteUsn);
+    setConflictingTagsFromUserOwnDataToLocalAndRemoteStorages(ConflictingItemsUsnOption::LargerRemoteUsn);
 
     SynchronizationManagerSignalsCatcher catcher(*m_pSynchronizationManager);
     runTest(catcher);
@@ -1757,7 +1757,7 @@ void SynchronizationTester::testIncrementalSyncWithConflictingNotebooksFromUserO
     copyRemoteItemsToLocalStorage();
     setRemoteStorageSyncStateToPersistentSyncSettings();
 
-    setConflictingNotebooksToLocalAndRemoteStorages(ConflictingItemsUsnOption::LargerRemoteUsn);
+    setConflictingNotebooksFromUserOwnDataToLocalAndRemoteStorages(ConflictingItemsUsnOption::LargerRemoteUsn);
 
     SynchronizationManagerSignalsCatcher catcher(*m_pSynchronizationManager);
     runTest(catcher);
@@ -1794,7 +1794,7 @@ void SynchronizationTester::testIncrementalSyncWithConflictingNotesFromUserOwnDa
     copyRemoteItemsToLocalStorage();
     setRemoteStorageSyncStateToPersistentSyncSettings();
 
-    setConflictingNotesToLocalAndRemoteStorages(ConflictingItemsUsnOption::LargerRemoteUsn);
+    setConflictingNotesFromUserOwnDataToLocalAndRemoteStorages(ConflictingItemsUsnOption::LargerRemoteUsn);
 
     SynchronizationManagerSignalsCatcher catcher(*m_pSynchronizationManager);
     runTest(catcher);
@@ -1834,7 +1834,7 @@ void SynchronizationTester::testIncrementalSyncWithConflictingSavedSearchesFromU
     copyRemoteItemsToLocalStorage();
     setRemoteStorageSyncStateToPersistentSyncSettings();
 
-    setConflictingSavedSearchesToLocalAndRemoteStorages(ConflictingItemsUsnOption::SameUsn);
+    setConflictingSavedSearchesFromUserOwnDataToLocalAndRemoteStorages(ConflictingItemsUsnOption::SameUsn);
 
     SynchronizationManagerSignalsCatcher catcher(*m_pSynchronizationManager);
     runTest(catcher);
@@ -1871,7 +1871,7 @@ void SynchronizationTester::testIncrementalSyncWithConflictingTagsFromUserOwnDat
     copyRemoteItemsToLocalStorage();
     setRemoteStorageSyncStateToPersistentSyncSettings();
 
-    setConflictingTagsToLocalAndRemoteStorages(ConflictingItemsUsnOption::SameUsn);
+    setConflictingTagsFromUserOwnDataToLocalAndRemoteStorages(ConflictingItemsUsnOption::SameUsn);
 
     SynchronizationManagerSignalsCatcher catcher(*m_pSynchronizationManager);
     runTest(catcher);
@@ -1908,7 +1908,7 @@ void SynchronizationTester::testIncrementalSyncWithConflictingNotebooksFromUserO
     copyRemoteItemsToLocalStorage();
     setRemoteStorageSyncStateToPersistentSyncSettings();
 
-    setConflictingNotebooksToLocalAndRemoteStorages(ConflictingItemsUsnOption::SameUsn);
+    setConflictingNotebooksFromUserOwnDataToLocalAndRemoteStorages(ConflictingItemsUsnOption::SameUsn);
 
     SynchronizationManagerSignalsCatcher catcher(*m_pSynchronizationManager);
     runTest(catcher);
@@ -1945,7 +1945,7 @@ void SynchronizationTester::testIncrementalSyncWithConflictingNotesFromUserOwnDa
     copyRemoteItemsToLocalStorage();
     setRemoteStorageSyncStateToPersistentSyncSettings();
 
-    setConflictingNotesToLocalAndRemoteStorages(ConflictingItemsUsnOption::SameUsn);
+    setConflictingNotesFromUserOwnDataToLocalAndRemoteStorages(ConflictingItemsUsnOption::SameUsn);
 
     SynchronizationManagerSignalsCatcher catcher(*m_pSynchronizationManager);
     runTest(catcher);
@@ -3402,7 +3402,7 @@ void SynchronizationTester::setModifiedLinkedNotebookItemsToLocalStorage()
     }
 }
 
-void SynchronizationTester::setConflictingSavedSearchesToLocalAndRemoteStorages(const ConflictingItemsUsnOption::type usnOption)
+void SynchronizationTester::setConflictingSavedSearchesFromUserOwnDataToLocalAndRemoteStorages(const ConflictingItemsUsnOption::type usnOption)
 {
     QVERIFY(!m_guidsOfUserOwnLocalItemsToModify.m_savedSearchGuids.isEmpty());
     for(auto it = m_guidsOfUserOwnLocalItemsToModify.m_savedSearchGuids.constBegin(),
@@ -3438,7 +3438,7 @@ void SynchronizationTester::setConflictingSavedSearchesToLocalAndRemoteStorages(
     }
 }
 
-void SynchronizationTester::setConflictingTagsToLocalAndRemoteStorages(const ConflictingItemsUsnOption::type usnOption)
+void SynchronizationTester::setConflictingTagsFromUserOwnDataToLocalAndRemoteStorages(const ConflictingItemsUsnOption::type usnOption)
 {
     QVERIFY(!m_guidsOfUserOwnLocalItemsToModify.m_tagGuids.isEmpty());
     for(auto it = m_guidsOfUserOwnLocalItemsToModify.m_tagGuids.constBegin(),
@@ -3481,7 +3481,7 @@ void SynchronizationTester::setConflictingTagsToLocalAndRemoteStorages(const Con
     }
 }
 
-void SynchronizationTester::setConflictingNotebooksToLocalAndRemoteStorages(const ConflictingItemsUsnOption::type usnOption)
+void SynchronizationTester::setConflictingNotebooksFromUserOwnDataToLocalAndRemoteStorages(const ConflictingItemsUsnOption::type usnOption)
 {
     QVERIFY(!m_guidsOfUserOwnLocalItemsToModify.m_notebookGuids.isEmpty());
     for(auto it = m_guidsOfUserOwnLocalItemsToModify.m_notebookGuids.constBegin(),
@@ -3518,7 +3518,7 @@ void SynchronizationTester::setConflictingNotebooksToLocalAndRemoteStorages(cons
     }
 }
 
-void SynchronizationTester::setConflictingNotesToLocalAndRemoteStorages(const ConflictingItemsUsnOption::type usnOption)
+void SynchronizationTester::setConflictingNotesFromUserOwnDataToLocalAndRemoteStorages(const ConflictingItemsUsnOption::type usnOption)
 {
     QVERIFY(!m_guidsOfUserOwnLocalItemsToModify.m_noteGuids.isEmpty());
     for(auto it = m_guidsOfUserOwnLocalItemsToModify.m_noteGuids.constBegin(),

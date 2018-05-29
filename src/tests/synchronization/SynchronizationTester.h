@@ -132,10 +132,10 @@ private:
         };
     };
 
-    void setConflictingSavedSearchesToLocalAndRemoteStorages(const ConflictingItemsUsnOption::type usnOption);
-    void setConflictingTagsToLocalAndRemoteStorages(const ConflictingItemsUsnOption::type usnOption);
-    void setConflictingNotebooksToLocalAndRemoteStorages(const ConflictingItemsUsnOption::type usnOption);
-    void setConflictingNotesToLocalAndRemoteStorages(const ConflictingItemsUsnOption::type usnOption);
+    void setConflictingSavedSearchesFromUserOwnDataToLocalAndRemoteStorages(const ConflictingItemsUsnOption::type usnOption);
+    void setConflictingTagsFromUserOwnDataToLocalAndRemoteStorages(const ConflictingItemsUsnOption::type usnOption);
+    void setConflictingNotebooksFromUserOwnDataToLocalAndRemoteStorages(const ConflictingItemsUsnOption::type usnOption);
+    void setConflictingNotesFromUserOwnDataToLocalAndRemoteStorages(const ConflictingItemsUsnOption::type usnOption);
 
     void copyRemoteItemsToLocalStorage();
 
