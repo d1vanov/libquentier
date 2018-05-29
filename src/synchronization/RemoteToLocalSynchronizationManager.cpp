@@ -8680,16 +8680,23 @@ bool RemoteToLocalSynchronizationManager::onFoundDuplicateByName(ElementType ele
         return true;
     }
 
-    resolveSyncConflict(remoteElement, element);
-
-    typename PendingContainerType::iterator pendingItemIt = std::find_if(pendingItemsContainer.begin(),
-                                                                         pendingItemsContainer.end(),
-                                                                         CompareItemByGuid<typename PendingContainerType::value_type>(remoteElement.guid.ref()));
-    if (pendingItemIt == pendingItemsContainer.end()) {
-        pendingItemsContainer << remoteElement;
+    ResolveSyncConflictStatus::type status = resolveSyncConflict(remoteElement, element);
+    if (status == ResolveSyncConflictStatus::Pending)
+    {
+        typename PendingContainerType::iterator pendingItemIt = std::find_if(pendingItemsContainer.begin(),
+                                                                             pendingItemsContainer.end(),
+                                                                             CompareItemByGuid<typename PendingContainerType::value_type>(remoteElement.guid.ref()));
+        if (pendingItemIt == pendingItemsContainer.end()) {
+            pendingItemsContainer << remoteElement;
+        }
     }
 
     Q_UNUSED(container.erase(it))
+
+    if (status == ResolveSyncConflictStatus::Ready) {
+        checkServerDataMergeCompletion();
+    }
+
     return true;
 }
 
@@ -8729,16 +8736,23 @@ bool RemoteToLocalSynchronizationManager::onFoundDuplicateByGuid(ElementType ele
         return true;
     }
 
-    resolveSyncConflict(remoteElement, element);
-
-    typename PendingContainerType::iterator pendingItemIt = std::find_if(pendingItemsContainer.begin(),
-                                                                         pendingItemsContainer.end(),
-                                                                         CompareItemByGuid<typename PendingContainerType::value_type>(remoteElement.guid.ref()));
-    if (pendingItemIt == pendingItemsContainer.end()) {
-        pendingItemsContainer << remoteElement;
+    ResolveSyncConflictStatus::type status = resolveSyncConflict(remoteElement, element);
+    if (status == ResolveSyncConflictStatus::Pending)
+    {
+        typename PendingContainerType::iterator pendingItemIt = std::find_if(pendingItemsContainer.begin(),
+                                                                             pendingItemsContainer.end(),
+                                                                             CompareItemByGuid<typename PendingContainerType::value_type>(remoteElement.guid.ref()));
+        if (pendingItemIt == pendingItemsContainer.end()) {
+            pendingItemsContainer << remoteElement;
+        }
     }
 
     Q_UNUSED(container.erase(it))
+
+    if (status == ResolveSyncConflictStatus::Ready) {
+        checkServerDataMergeCompletion();
+    }
+
     return true;
 }
 
@@ -8836,8 +8850,8 @@ bool RemoteToLocalSynchronizationManager::onNoDuplicateByName(ElementType elemen
 }
 
 template <>
-void RemoteToLocalSynchronizationManager::resolveSyncConflict(const qevercloud::Notebook & remoteNotebook,
-                                                              const Notebook & localConflict)
+RemoteToLocalSynchronizationManager::ResolveSyncConflictStatus::type RemoteToLocalSynchronizationManager::resolveSyncConflict(const qevercloud::Notebook & remoteNotebook,
+                                                                                                                              const Notebook & localConflict)
 {
     QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::resolveSyncConflict<Notebook>: remote notebook = ")
             << remoteNotebook << QStringLiteral("\nLocal conflicting notebook: ") << localConflict);
@@ -8846,7 +8860,7 @@ void RemoteToLocalSynchronizationManager::resolveSyncConflict(const qevercloud::
         ErrorString error(QT_TR_NOOP("Can't resolve the conflict between remote and local notebooks: the remote notebook has no guid"));
         QNWARNING(error << QStringLiteral(", remote notebook: ") << remoteNotebook);
         Q_EMIT failure(error);
-        return;
+        return ResolveSyncConflictStatus::Ready;
     }
 
     QList<NotebookSyncConflictResolver*> notebookSyncConflictResolvers = findChildren<NotebookSyncConflictResolver*>();
@@ -8880,7 +8894,7 @@ void RemoteToLocalSynchronizationManager::resolveSyncConflict(const qevercloud::
         }
 
         QNDEBUG(QStringLiteral("Found existing notebook sync conflict resolver for this pair of remote and local notebooks"));
-        return;
+        return ResolveSyncConflictStatus::Pending;
     }
 
     NotebookSyncCache * pCache = Q_NULLPTR;
@@ -8915,11 +8929,13 @@ void RemoteToLocalSynchronizationManager::resolveSyncConflict(const qevercloud::
     QObject::connect(pResolver, QNSIGNAL(NotebookSyncConflictResolver,failure,qevercloud::Notebook,ErrorString),
                      this, QNSLOT(RemoteToLocalSynchronizationManager,onNotebookSyncConflictResolverFailure,qevercloud::Notebook,ErrorString));
     pResolver->start();
+
+    return ResolveSyncConflictStatus::Pending;
 }
 
 template <>
-void RemoteToLocalSynchronizationManager::resolveSyncConflict(const qevercloud::Tag & remoteTag,
-                                                              const Tag & localConflict)
+RemoteToLocalSynchronizationManager::ResolveSyncConflictStatus::type RemoteToLocalSynchronizationManager::resolveSyncConflict(const qevercloud::Tag & remoteTag,
+                                                                                                                              const Tag & localConflict)
 {
     QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::resolveSyncConflict<Tag>: remote tag = ")
             << remoteTag << QStringLiteral("\nLocal conflicting tag: ") << localConflict);
@@ -8928,7 +8944,7 @@ void RemoteToLocalSynchronizationManager::resolveSyncConflict(const qevercloud::
         ErrorString error(QT_TR_NOOP("Can't resolve the conflict between remote and local tags: the remote tag has no guid"));
         QNWARNING(error << QStringLiteral(", remote tag: ") << remoteTag);
         Q_EMIT failure(error);
-        return;
+        return ResolveSyncConflictStatus::Ready;
     }
 
     QList<TagSyncConflictResolver*> tagSyncConflictResolvers = findChildren<TagSyncConflictResolver*>();
@@ -8962,7 +8978,7 @@ void RemoteToLocalSynchronizationManager::resolveSyncConflict(const qevercloud::
         }
 
         QNDEBUG(QStringLiteral("Found existing tag sync conflict resolver for this pair of remote and local tags"));
-        return;
+        return ResolveSyncConflictStatus::Pending;
     }
 
     TagSyncCache * pCache = Q_NULLPTR;
@@ -8996,11 +9012,13 @@ void RemoteToLocalSynchronizationManager::resolveSyncConflict(const qevercloud::
     QObject::connect(pResolver, QNSIGNAL(TagSyncConflictResolver,failure,qevercloud::Tag,ErrorString),
                      this, QNSLOT(RemoteToLocalSynchronizationManager,onTagSyncConflictResolverFailure,qevercloud::Tag,ErrorString));
     pResolver->start();
+
+    return ResolveSyncConflictStatus::Pending;
 }
 
 template <>
-void RemoteToLocalSynchronizationManager::resolveSyncConflict(const qevercloud::SavedSearch & remoteSavedSearch,
-                                                              const SavedSearch & localConflict)
+RemoteToLocalSynchronizationManager::ResolveSyncConflictStatus::type RemoteToLocalSynchronizationManager::resolveSyncConflict(const qevercloud::SavedSearch & remoteSavedSearch,
+                                                                                                                              const SavedSearch & localConflict)
 {
     QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::resolveSyncConflict<SavedSearch>: remote saved search = ")
             << remoteSavedSearch << QStringLiteral("\nLocal conflicting saved search: ") << localConflict);
@@ -9009,7 +9027,7 @@ void RemoteToLocalSynchronizationManager::resolveSyncConflict(const qevercloud::
         ErrorString error(QT_TR_NOOP("Can't resolve the conflict between remote and local saved searches: the remote saved search has no guid"));
         QNWARNING(error << QStringLiteral(", remote saved search: ") << remoteSavedSearch);
         Q_EMIT failure(error);
-        return;
+        return ResolveSyncConflictStatus::Ready;
     }
 
     QList<SavedSearchSyncConflictResolver*> savedSearchSyncConflictResolvers = findChildren<SavedSearchSyncConflictResolver*>();
@@ -9044,7 +9062,7 @@ void RemoteToLocalSynchronizationManager::resolveSyncConflict(const qevercloud::
         }
 
         QNDEBUG(QStringLiteral("Found existing saved search conflict resolver for this pair of remote and local saved searches"));
-        return;
+        return ResolveSyncConflictStatus::Pending;
     }
 
     SavedSearchSyncConflictResolver * pResolver = new SavedSearchSyncConflictResolver(remoteSavedSearch, localConflict,
@@ -9055,11 +9073,13 @@ void RemoteToLocalSynchronizationManager::resolveSyncConflict(const qevercloud::
     QObject::connect(pResolver, QNSIGNAL(SavedSearchSyncConflictResolver,failure,qevercloud::SavedSearch,ErrorString),
                      this, QNSLOT(RemoteToLocalSynchronizationManager,onSavedSearchSyncConflictResolverFailure,qevercloud::SavedSearch,ErrorString));
     pResolver->start();
+
+    return ResolveSyncConflictStatus::Pending;
 }
 
 template <>
-void RemoteToLocalSynchronizationManager::resolveSyncConflict(const qevercloud::Note & remoteNote,
-                                                              const Note & localConflict)
+RemoteToLocalSynchronizationManager::ResolveSyncConflictStatus::type RemoteToLocalSynchronizationManager::resolveSyncConflict(const qevercloud::Note & remoteNote,
+                                                                                                                              const Note & localConflict)
 {
     QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::resolveSyncConflict<Note>: remote note = ")
             << remoteNote << QStringLiteral("\nLocal conflicting note: ") << localConflict);
@@ -9068,14 +9088,14 @@ void RemoteToLocalSynchronizationManager::resolveSyncConflict(const qevercloud::
         ErrorString errorDescription(QT_TR_NOOP("Found a remote note without guid set"));
         QNWARNING(errorDescription << QStringLiteral(", note: ") << remoteNote);
         Q_EMIT failure(errorDescription);
-        return;
+        return ResolveSyncConflictStatus::Ready;
     }
 
     if (Q_UNLIKELY(!remoteNote.updateSequenceNum.isSet())) {
         ErrorString errorDescription(QT_TR_NOOP("Found a remote note without update sequence number set"));
         QNWARNING(errorDescription << QStringLiteral(", note: ") << remoteNote);
         Q_EMIT failure(errorDescription);
-        return;
+        return ResolveSyncConflictStatus::Ready;
     }
 
     bool shouldCreateConflictingNote = true;
@@ -9089,7 +9109,7 @@ void RemoteToLocalSynchronizationManager::resolveSyncConflict(const qevercloud::
         }
         else if (localConflict.hasUpdateSequenceNumber() && (localConflict.updateSequenceNumber() == remoteNote.updateSequenceNum.ref())) {
             QNDEBUG(QStringLiteral("The notes match by update sequence number but the local note is dirty => local note should override the remote changes"));
-            return;
+            return ResolveSyncConflictStatus::Ready;
         }
     }
 
@@ -9106,11 +9126,13 @@ void RemoteToLocalSynchronizationManager::resolveSyncConflict(const qevercloud::
         Note conflictingNote = createConflictingNote(localConflict, &remoteNote);
         emitAddRequest(conflictingNote);
     }
+
+    return ResolveSyncConflictStatus::Pending;
 }
 
 template <>
-void RemoteToLocalSynchronizationManager::resolveSyncConflict(const qevercloud::LinkedNotebook & remoteLinkedNotebook,
-                                                              const LinkedNotebook & localConflict)
+RemoteToLocalSynchronizationManager::ResolveSyncConflictStatus::type RemoteToLocalSynchronizationManager::resolveSyncConflict(const qevercloud::LinkedNotebook & remoteLinkedNotebook,
+                                                                                                                              const LinkedNotebook & localConflict)
 {
     QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::resolveSyncConflict<LinkedNotebook>: remote linked notebook = ")
             << remoteLinkedNotebook << QStringLiteral("\nLocal conflicting linked notebook: ") << localConflict);
@@ -9130,6 +9152,8 @@ void RemoteToLocalSynchronizationManager::resolveSyncConflict(const qevercloud::
     QNTRACE(QStringLiteral("Emitting the request to update linked notebook: request id = ") << updateLinkedNotebookRequestId
             << QStringLiteral(", linked notebook: ") << linkedNotebook);
     Q_EMIT updateLinkedNotebook(linkedNotebook, updateLinkedNotebookRequestId);
+
+    return ResolveSyncConflictStatus::Pending;
 }
 
 bool RemoteToLocalSynchronizationManager::sortTagsByParentChildRelations(TagsList & tagList)

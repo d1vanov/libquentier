@@ -347,9 +347,18 @@ private:
     template <class ElementType>
     QString checkAndAddLinkedNotebookBinding(ElementType & targetElement);
 
+    struct ResolveSyncConflictStatus
+    {
+        enum type
+        {
+            Ready = 0,
+            Pending
+        };
+    };
+
     template <class RemoteElementType, class ElementType>
-    void resolveSyncConflict(const RemoteElementType & remoteElement,
-                             const ElementType & localConflict);
+    ResolveSyncConflictStatus::type resolveSyncConflict(const RemoteElementType & remoteElement,
+                                                        const ElementType & localConflict);
 
     template <class ContainerType>
     bool mapContainerElementsWithLinkedNotebookGuid(const QString & linkedNotebookGuid,
