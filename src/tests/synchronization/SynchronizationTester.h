@@ -146,6 +146,7 @@ private:
     void checkPersistentSyncState();
     void checkExpectedNamesOfConflictingItemsAfterSync();
     void checkLocalCopiesOfConflictingNotesWereCreated();
+    void checkNoConflictingNotesWereCreated();
 
     void listSavedSearchesFromLocalStorage(const qint32 afterUSN,
                                            QHash<QString, qevercloud::SavedSearch> & savedSearches) const;

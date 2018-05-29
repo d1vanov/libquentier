@@ -1976,7 +1976,7 @@ void SynchronizationTester::testIncrementalSyncWithConflictingNotesFromUserOwnDa
     checkIdentityOfLocalAndRemoteItems();
     checkPersistentSyncState();
     checkExpectedNamesOfConflictingItemsAfterSync();
-    // TODO: should check the lack of notes marked as conflicting ones here
+    checkNoConflictingNotesWereCreated();
 }
 
 void SynchronizationTester::setUserOwnItemsToRemoteStorage()
@@ -4099,6 +4099,17 @@ void SynchronizationTester::checkLocalCopiesOfConflictingNotesWereCreated()
         QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
         QVERIFY(localConflictingNote.hasTitle());
         QVERIFY(localConflictingNote.title().endsWith(MODIFIED_LOCALLY_SUFFIX + QStringLiteral(" - conflicting")));
+    }
+}
+
+void SynchronizationTester::checkNoConflictingNotesWereCreated()
+{
+    QVERIFY(!m_expectedNoteTitlesByGuid.isEmpty());
+    for(auto it = m_expectedNoteTitlesByGuid.constBegin(),
+        end = m_expectedNoteTitlesByGuid.constEnd(); it != end; ++it)
+    {
+        QList<Note> remoteConflictingNotes = m_pFakeNoteStore->getNotesByConflictSourceNoteGuid(it.key());
+        QVERIFY(remoteConflictingNotes.isEmpty());
     }
 }
 
