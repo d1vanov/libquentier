@@ -182,6 +182,11 @@ void SynchronizationTester::cleanup()
 
     delete m_pLocalStorageManagerThread;
     m_pLocalStorageManagerThread = Q_NULLPTR;
+
+    m_expectedSavedSearchNamesByGuid.clear();
+    m_expectedTagNamesByGuid.clear();
+    m_expectedNotebookNamesByGuid.clear();
+    m_expectedNoteTitlesByGuid.clear();
 }
 
 void SynchronizationTester::initTestCase()
@@ -1672,6 +1677,117 @@ void SynchronizationTester::testIncrementalSyncWithNewModifiedAndExpungedRemoteI
     checkPersistentSyncState();
 }
 
+void SynchronizationTester::testIncrementalSyncWithConflictingSavedSearches()
+{
+    setUserOwnItemsToRemoteStorage();
+    copyRemoteItemsToLocalStorage();
+    setRemoteStorageSyncStateToPersistentSyncSettings();
+
+    setConflictingSavedSearchesToLocalAndRemoteStorages();
+
+    SynchronizationManagerSignalsCatcher catcher(*m_pSynchronizationManager);
+    runTest(catcher);
+
+    CHECK_EXPECTED(receivedStartedSignal)
+    CHECK_EXPECTED(receivedFinishedSignal)
+    CHECK_EXPECTED(finishedSomethingDownloaded)
+    CHECK_EXPECTED(receivedRemoteToLocalSyncDone)
+    CHECK_EXPECTED(remoteToLocalSyncDoneSomethingDownloaded)
+    CHECK_EXPECTED(receivedSyncChunksDownloaded)
+
+    CHECK_UNEXPECTED(receivedAuthenticationFinishedSignal)
+    CHECK_UNEXPECTED(receivedStoppedSignal)
+    CHECK_UNEXPECTED(finishedSomethingSent)
+    CHECK_UNEXPECTED(receivedAuthenticationRevokedSignal)
+    CHECK_UNEXPECTED(receivedRemoteToLocalSyncStopped)
+    CHECK_UNEXPECTED(receivedSendLocalChangedStopped)
+    CHECK_UNEXPECTED(receivedWillRepeatRemoteToLocalSyncAfterSendingChanges)
+    CHECK_UNEXPECTED(receivedDetectedConflictDuringLocalChangesSending)
+    CHECK_UNEXPECTED(receivedRateLimitExceeded)
+    CHECK_UNEXPECTED(receivedLinkedNotebookSyncChunksDownloaded)
+    CHECK_UNEXPECTED(receivedPreparedDirtyObjectsForSending)
+    CHECK_UNEXPECTED(receivedPreparedLinkedNotebookDirtyObjectsForSending)
+
+    checkProgressNotificationsOrder(catcher);
+    checkIdentityOfLocalAndRemoteItems();
+    checkPersistentSyncState();
+    checkExpectedNamesOfConflictingItemsAfterSync();
+}
+
+void SynchronizationTester::testIncrementalSyncWithConflictingTags()
+{
+    setUserOwnItemsToRemoteStorage();
+    copyRemoteItemsToLocalStorage();
+    setRemoteStorageSyncStateToPersistentSyncSettings();
+
+    setConflictingTagsToLocalAndRemoteStorages();
+
+    SynchronizationManagerSignalsCatcher catcher(*m_pSynchronizationManager);
+    runTest(catcher);
+
+    CHECK_EXPECTED(receivedStartedSignal)
+    CHECK_EXPECTED(receivedFinishedSignal)
+    CHECK_EXPECTED(finishedSomethingDownloaded)
+    CHECK_EXPECTED(receivedRemoteToLocalSyncDone)
+    CHECK_EXPECTED(remoteToLocalSyncDoneSomethingDownloaded)
+    CHECK_EXPECTED(receivedSyncChunksDownloaded)
+
+    CHECK_UNEXPECTED(receivedAuthenticationFinishedSignal)
+    CHECK_UNEXPECTED(receivedStoppedSignal)
+    CHECK_UNEXPECTED(finishedSomethingSent)
+    CHECK_UNEXPECTED(receivedAuthenticationRevokedSignal)
+    CHECK_UNEXPECTED(receivedRemoteToLocalSyncStopped)
+    CHECK_UNEXPECTED(receivedSendLocalChangedStopped)
+    CHECK_UNEXPECTED(receivedWillRepeatRemoteToLocalSyncAfterSendingChanges)
+    CHECK_UNEXPECTED(receivedDetectedConflictDuringLocalChangesSending)
+    CHECK_UNEXPECTED(receivedRateLimitExceeded)
+    CHECK_UNEXPECTED(receivedLinkedNotebookSyncChunksDownloaded)
+    CHECK_UNEXPECTED(receivedPreparedDirtyObjectsForSending)
+    CHECK_UNEXPECTED(receivedPreparedLinkedNotebookDirtyObjectsForSending)
+
+    checkProgressNotificationsOrder(catcher);
+    checkIdentityOfLocalAndRemoteItems();
+    checkPersistentSyncState();
+    checkExpectedNamesOfConflictingItemsAfterSync();
+}
+
+void SynchronizationTester::testIncrementalSyncWithConflictingNotebooks()
+{
+    setUserOwnItemsToRemoteStorage();
+    copyRemoteItemsToLocalStorage();
+    setRemoteStorageSyncStateToPersistentSyncSettings();
+
+    setConflictingNotebooksToLocalAndRemoteStorages();
+
+    SynchronizationManagerSignalsCatcher catcher(*m_pSynchronizationManager);
+    runTest(catcher);
+
+    CHECK_EXPECTED(receivedStartedSignal)
+    CHECK_EXPECTED(receivedFinishedSignal)
+    CHECK_EXPECTED(finishedSomethingDownloaded)
+    CHECK_EXPECTED(receivedRemoteToLocalSyncDone)
+    CHECK_EXPECTED(remoteToLocalSyncDoneSomethingDownloaded)
+    CHECK_EXPECTED(receivedSyncChunksDownloaded)
+
+    CHECK_UNEXPECTED(receivedAuthenticationFinishedSignal)
+    CHECK_UNEXPECTED(receivedStoppedSignal)
+    CHECK_UNEXPECTED(finishedSomethingSent)
+    CHECK_UNEXPECTED(receivedAuthenticationRevokedSignal)
+    CHECK_UNEXPECTED(receivedRemoteToLocalSyncStopped)
+    CHECK_UNEXPECTED(receivedSendLocalChangedStopped)
+    CHECK_UNEXPECTED(receivedWillRepeatRemoteToLocalSyncAfterSendingChanges)
+    CHECK_UNEXPECTED(receivedDetectedConflictDuringLocalChangesSending)
+    CHECK_UNEXPECTED(receivedRateLimitExceeded)
+    CHECK_UNEXPECTED(receivedLinkedNotebookSyncChunksDownloaded)
+    CHECK_UNEXPECTED(receivedPreparedDirtyObjectsForSending)
+    CHECK_UNEXPECTED(receivedPreparedLinkedNotebookDirtyObjectsForSending)
+
+    checkProgressNotificationsOrder(catcher);
+    checkIdentityOfLocalAndRemoteItems();
+    checkPersistentSyncState();
+    checkExpectedNamesOfConflictingItemsAfterSync();
+}
+
 void SynchronizationTester::setUserOwnItemsToRemoteStorage()
 {
     ErrorString errorDescription;
@@ -1737,6 +1853,7 @@ void SynchronizationTester::setUserOwnItemsToRemoteStorage()
     Tag thirdTag;
     thirdTag.setGuid(UidGenerator::Generate());
     thirdTag.setParentGuid(secondTag.guid());
+    thirdTag.setParentLocalUid(secondTag.localUid());
     thirdTag.setName(QStringLiteral("Third tag"));
     res = m_pFakeNoteStore->setTag(thirdTag, errorDescription);
     QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
@@ -1744,6 +1861,7 @@ void SynchronizationTester::setUserOwnItemsToRemoteStorage()
     Tag fourthTag;
     fourthTag.setGuid(UidGenerator::Generate());
     fourthTag.setParentGuid(thirdTag.guid());
+    fourthTag.setParentLocalUid(thirdTag.localUid());
     fourthTag.setName(QStringLiteral("Fourth tag"));
     res = m_pFakeNoteStore->setTag(fourthTag, errorDescription);
     QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
@@ -3095,7 +3213,6 @@ void SynchronizationTester::setModifiedLinkedNotebookItemsToLocalStorage()
 
 void SynchronizationTester::setConflictingSavedSearchesToLocalAndRemoteStorages()
 {
-    m_expectedSavedSearchNamesByGuid.clear();
     QVERIFY(!m_guidsOfUserOwnLocalItemsToModify.m_savedSearchGuids.isEmpty());
     for(auto it = m_guidsOfUserOwnLocalItemsToModify.m_savedSearchGuids.constBegin(),
         end = m_guidsOfUserOwnLocalItemsToModify.m_savedSearchGuids.constEnd(); it != end; ++it)
@@ -3117,7 +3234,8 @@ void SynchronizationTester::setConflictingSavedSearchesToLocalAndRemoteStorages(
 
         m_expectedSavedSearchNamesByGuid[*it] = modifiedSavedSearch.name();
 
-        modifiedSavedSearch.setName(originalName + MODIFIED_REMOTELY_SUFFIX);
+        modifiedSavedSearch.setLocalUid(QString());
+        modifiedSavedSearch.setName(originalName + MODIFIED_LOCALLY_SUFFIX);
         res = m_pLocalStorageManagerAsync->localStorageManager()->updateSavedSearch(modifiedSavedSearch, errorDescription);
         QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
     }
@@ -3125,38 +3243,45 @@ void SynchronizationTester::setConflictingSavedSearchesToLocalAndRemoteStorages(
 
 void SynchronizationTester::setConflictingTagsToLocalAndRemoteStorages()
 {
-    m_expectedTagNamesByGuid.clear();
     QVERIFY(!m_guidsOfUserOwnLocalItemsToModify.m_tagGuids.isEmpty());
     for(auto it = m_guidsOfUserOwnLocalItemsToModify.m_tagGuids.constBegin(),
         end = m_guidsOfUserOwnLocalItemsToModify.m_tagGuids.constEnd(); it != end; ++it)
     {
-        const Tag * pTag = m_pFakeNoteStore->findTag(*it);
-        QVERIFY2(pTag != Q_NULLPTR, "Detected unexpectedly missing tag in fake note store");
-        QVERIFY2(!pTag->hasLinkedNotebookGuid(), "Detected broken test condition - the tag was supposed to be user's own one has linked notebook guid");
+        const Tag * pRemoteTag = m_pFakeNoteStore->findTag(*it);
+        QVERIFY2(pRemoteTag != Q_NULLPTR, "Detected unexpectedly missing tag in fake note store");
+        QVERIFY2(!pRemoteTag->hasLinkedNotebookGuid(), "Detected broken test condition - the tag was supposed to be user's own one has linked notebook guid");
 
-        QString originalName = pTag->name();
+        QString originalName = pRemoteTag->name();
 
-        Tag modifiedTag(*pTag);
-        modifiedTag.setName(originalName + MODIFIED_REMOTELY_SUFFIX);
-        modifiedTag.setDirty(true);
-        modifiedTag.setLocal(false);
-        modifiedTag.setUpdateSequenceNumber(-1);
+        Tag modifiedRemoteTag(*pRemoteTag);
+        modifiedRemoteTag.setName(originalName + MODIFIED_REMOTELY_SUFFIX);
+        modifiedRemoteTag.setDirty(true);
+        modifiedRemoteTag.setLocal(false);
+        modifiedRemoteTag.setUpdateSequenceNumber(-1);
 
         ErrorString errorDescription;
-        bool res = m_pFakeNoteStore->setTag(modifiedTag, errorDescription);
+        bool res = m_pFakeNoteStore->setTag(modifiedRemoteTag, errorDescription);
         QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
 
-        m_expectedTagNamesByGuid[*it] = modifiedTag.name();
+        m_expectedTagNamesByGuid[*it] = modifiedRemoteTag.name();
 
-        modifiedTag.setName(originalName + MODIFIED_REMOTELY_SUFFIX);
-        res = m_pLocalStorageManagerAsync->localStorageManager()->updateTag(modifiedTag, errorDescription);
+        Tag localTag;
+        localTag.setGuid(*it);
+        res = m_pLocalStorageManagerAsync->localStorageManager()->findTag(localTag, errorDescription);
+        QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
+
+        Tag modifiedLocalTag(localTag);
+        modifiedLocalTag.setName(originalName + MODIFIED_LOCALLY_SUFFIX);
+        modifiedLocalTag.setDirty(true);
+        modifiedLocalTag.setLocal(false);
+
+        res = m_pLocalStorageManagerAsync->localStorageManager()->updateTag(modifiedLocalTag, errorDescription);
         QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
     }
 }
 
 void SynchronizationTester::setConflictingNotebooksToLocalAndRemoteStorages()
 {
-    m_expectedNotebookNamesByGuid.clear();
     QVERIFY(!m_guidsOfUserOwnLocalItemsToModify.m_notebookGuids.isEmpty());
     for(auto it = m_guidsOfUserOwnLocalItemsToModify.m_notebookGuids.constBegin(),
         end = m_guidsOfUserOwnLocalItemsToModify.m_notebookGuids.constEnd(); it != end; ++it)
@@ -3179,6 +3304,7 @@ void SynchronizationTester::setConflictingNotebooksToLocalAndRemoteStorages()
 
         m_expectedNotebookNamesByGuid[*it] = modifiedNotebook.name();
 
+        modifiedNotebook.setLocalUid(QString());
         modifiedNotebook.setName(originalName + MODIFIED_LOCALLY_SUFFIX);
         res = m_pLocalStorageManagerAsync->localStorageManager()->updateNotebook(modifiedNotebook, errorDescription);
         QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
@@ -3187,7 +3313,6 @@ void SynchronizationTester::setConflictingNotebooksToLocalAndRemoteStorages()
 
 void SynchronizationTester::setConflictingNotesToLocalAndRemoteStorages()
 {
-    m_expectedNoteTitlesByGuid.clear();
     QVERIFY(!m_guidsOfUserOwnLocalItemsToModify.m_noteGuids.isEmpty());
     for(auto it = m_guidsOfUserOwnLocalItemsToModify.m_noteGuids.constBegin(),
         end = m_guidsOfUserOwnLocalItemsToModify.m_noteGuids.constEnd(); it != end; ++it)
@@ -3209,6 +3334,7 @@ void SynchronizationTester::setConflictingNotesToLocalAndRemoteStorages()
 
         m_expectedNoteTitlesByGuid[*it] = modifiedNote.title();
 
+        modifiedNote.setLocalUid(QString());
         modifiedNote.setTitle(originalTitle + MODIFIED_LOCALLY_SUFFIX);
         QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
     }
@@ -3638,6 +3764,103 @@ void SynchronizationTester::checkPersistentSyncState()
         QVERIFY2(timestampSpan < 3*MAX_ALLOWED_TEST_DURATION_MSEC, "The difference between the current datetime and last linked notebook sync timestamp exceeds half an hour");
     }
     appSettings.endArray();
+}
+
+void SynchronizationTester::checkExpectedNamesOfConflictingItemsAfterSync()
+{
+    ErrorString errorDescription;
+    bool res = false;
+    bool onceChecked = false;
+
+    for(auto it = m_expectedSavedSearchNamesByGuid.constBegin(),
+        end = m_expectedSavedSearchNamesByGuid.constEnd(); it != end; ++it)
+    {
+        SavedSearch search;
+        search.setLocalUid(QString());
+        search.setGuid(it.key());
+        res = m_pLocalStorageManagerAsync->localStorageManager()->findSavedSearch(search, errorDescription);
+        QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
+
+        if (Q_UNLIKELY(search.name() != it.value()))
+        {
+            errorDescription.setBase(QStringLiteral("Found mismatch between saved search's actual name and its expected name after the sync"));
+            errorDescription.details() += QStringLiteral("Expected name: ");
+            errorDescription.details() += it.value();
+            errorDescription.details() += QStringLiteral(", actual name: ");
+            errorDescription.details() += search.name();
+            QFAIL(qPrintable(errorDescription.nonLocalizedString()));
+        }
+
+        onceChecked = true;
+    }
+
+    for(auto it = m_expectedTagNamesByGuid.constBegin(),
+        end = m_expectedTagNamesByGuid.constEnd(); it != end; ++it)
+    {
+        Tag tag;
+        tag.setLocalUid(QString());
+        tag.setGuid(it.key());
+        res = m_pLocalStorageManagerAsync->localStorageManager()->findTag(tag, errorDescription);
+        QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
+
+        if (Q_UNLIKELY(tag.name() != it.value()))
+        {
+            errorDescription.setBase(QStringLiteral("Found mismatch between tag's actual name and its expected name after the sync"));
+            errorDescription.details() += QStringLiteral("Expected name: ");
+            errorDescription.details() += it.value();
+            errorDescription.details() += QStringLiteral(", actual name: ");
+            errorDescription.details() += tag.name();
+            QFAIL(qPrintable(errorDescription.nonLocalizedString()));
+        }
+
+        onceChecked = true;
+    }
+
+    for(auto it = m_expectedNotebookNamesByGuid.constBegin(),
+        end = m_expectedNotebookNamesByGuid.constEnd(); it != end; ++it)
+    {
+        Notebook notebook;
+        notebook.setLocalUid(QString());
+        notebook.setGuid(it.key());
+        res = m_pLocalStorageManagerAsync->localStorageManager()->findNotebook(notebook, errorDescription);
+        QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
+
+        if (Q_UNLIKELY(notebook.name() != it.value()))
+        {
+            errorDescription.setBase(QStringLiteral("Found mismatch between notebook's actual name and its expected name after the sync"));
+            errorDescription.details() += QStringLiteral("Expected name: ");
+            errorDescription.details() += it.value();
+            errorDescription.details() += QStringLiteral(", actual name: ");
+            errorDescription.details() += notebook.name();
+            QFAIL(qPrintable(errorDescription.nonLocalizedString()));
+        }
+
+        onceChecked = true;
+    }
+
+    for(auto it = m_expectedNoteTitlesByGuid.constBegin(),
+        end = m_expectedNoteTitlesByGuid.constEnd(); it != end; ++it)
+    {
+        Note note;
+        note.setLocalUid(QString());
+        note.setGuid(it.key());
+        res = m_pLocalStorageManagerAsync->localStorageManager()->findNote(note, errorDescription, /* with resource binary data = */ false);
+        QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
+
+        if (Q_UNLIKELY(note.title() != it.value()))
+        {
+            errorDescription.setBase(QStringLiteral("Found mismatch between note's actual title and its expected title after the sync"));
+            errorDescription.details() += QStringLiteral("Expected title: ");
+            errorDescription.details() += it.value();
+            errorDescription.details() += QStringLiteral(", actual title: ");
+            errorDescription.details() += note.title();
+            QFAIL(qPrintable(errorDescription.nonLocalizedString()));
+        }
+
+        onceChecked = true;
+    }
+
+    QVERIFY2(onceChecked == true, "Found no expected item names to verify");
 }
 
 void SynchronizationTester::listSavedSearchesFromLocalStorage(const qint32 afterUSN,

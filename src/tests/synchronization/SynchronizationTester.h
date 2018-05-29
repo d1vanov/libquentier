@@ -98,6 +98,10 @@ private Q_SLOTS:
     void testIncrementalSyncWithNewModifiedAndExpungedRemoteItemsFromLinkedNotebooksOnly();
     void testIncrementalSyncWithNewModifiedAndExpungedRemoteItemsFromUserOwnDataAndLinkedNotebooks();
 
+    void testIncrementalSyncWithConflictingSavedSearches();
+    void testIncrementalSyncWithConflictingTags();
+    void testIncrementalSyncWithConflictingNotebooks();
+
 private:
     void setUserOwnItemsToRemoteStorage();
     void setLinkedNotebookItemsToRemoteStorage();
@@ -125,6 +129,7 @@ private:
     void checkProgressNotificationsOrder(const SynchronizationManagerSignalsCatcher & catcher);
     void checkIdentityOfLocalAndRemoteItems();
     void checkPersistentSyncState();
+    void checkExpectedNamesOfConflictingItemsAfterSync();
 
     void listSavedSearchesFromLocalStorage(const qint32 afterUSN,
                                            QHash<QString, qevercloud::SavedSearch> & savedSearches) const;
