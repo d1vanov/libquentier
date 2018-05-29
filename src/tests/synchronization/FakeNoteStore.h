@@ -98,6 +98,8 @@ public:
     bool containsExpungedNoteGuid(const QString & guid) const;
     bool removeExpungedNoteGuid(const QString & guid);
 
+    QList<Note> getNotesByConflictSourceNoteGuid(const QString & conflictSourceNoteGuid) const;
+
     // Resources
     QHash<QString,qevercloud::Resource> resources() const;
 
@@ -426,6 +428,24 @@ private:
     struct NoteByGuid{};
     struct NoteByUSN{};
     struct NoteByNotebookGuid{};
+    struct NoteByConflictSourceNoteGuid{};
+
+    struct NoteConflictSourceNoteGuidExtractor
+    {
+        static QString guid(const Note & note)
+        {
+            if (!note.hasNoteAttributes()) {
+                return QString();
+            }
+
+            const qevercloud::NoteAttributes & noteAttributes = note.noteAttributes();
+            if (!noteAttributes.conflictSourceNoteGuid.isSet()) {
+                return QString();
+            }
+
+            return noteAttributes.conflictSourceNoteGuid.ref();
+        }
+    };
 
     typedef boost::multi_index_container<
         Note,
@@ -441,6 +461,10 @@ private:
             boost::multi_index::hashed_non_unique<
                 boost::multi_index::tag<NoteByNotebookGuid>,
                 boost::multi_index::const_mem_fun<Note,const QString&,&Note::notebookGuid>
+            >,
+            boost::multi_index::hashed_non_unique<
+                boost::multi_index::tag<NoteByConflictSourceNoteGuid>,
+                boost::multi_index::global_fun<const Note &,QString,&NoteConflictSourceNoteGuidExtractor::guid>
             >
         >
     > NoteData;
@@ -448,6 +472,7 @@ private:
     typedef NoteData::index<NoteByGuid>::type NoteDataByGuid;
     typedef NoteData::index<NoteByUSN>::type NoteDataByUSN;
     typedef NoteData::index<NoteByNotebookGuid>::type NoteDataByNotebookGuid;
+    typedef NoteData::index<NoteByConflictSourceNoteGuid>::type NoteDataByConflictSourceNoteGuid;
 
     // Resource store
     struct ResourceByGuid{};

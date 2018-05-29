@@ -627,6 +627,18 @@ bool FakeNoteStore::removeExpungedNoteGuid(const QString & guid)
     return true;
 }
 
+QList<Note> FakeNoteStore::getNotesByConflictSourceNoteGuid(const QString & conflictSourceNoteGuid) const
+{
+    const NoteDataByConflictSourceNoteGuid & index = m_data->m_notes.get<NoteByConflictSourceNoteGuid>();
+    auto range = index.equal_range(conflictSourceNoteGuid);
+    QList<Note> result;
+    result.reserve(static_cast<int>(std::distance(range.first, range.second)));
+    for(auto it = range.first; it != range.second; ++it) {
+        result << *it;
+    }
+    return result;
+}
+
 QHash<QString,qevercloud::Resource> FakeNoteStore::resources() const
 {
     QHash<QString,qevercloud::Resource> result;

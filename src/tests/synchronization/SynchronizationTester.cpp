@@ -1677,13 +1677,13 @@ void SynchronizationTester::testIncrementalSyncWithNewModifiedAndExpungedRemoteI
     checkPersistentSyncState();
 }
 
-void SynchronizationTester::testIncrementalSyncWithConflictingSavedSearches()
+void SynchronizationTester::testIncrementalSyncWithConflictingSavedSearchesFromUserOwnDataOnlyWithLargerRemoteUsn()
 {
     setUserOwnItemsToRemoteStorage();
     copyRemoteItemsToLocalStorage();
     setRemoteStorageSyncStateToPersistentSyncSettings();
 
-    setConflictingSavedSearchesToLocalAndRemoteStorages();
+    setConflictingSavedSearchesToLocalAndRemoteStorages(ConflictingItemsUsnOption::LargerRemoteUsn);
 
     SynchronizationManagerSignalsCatcher catcher(*m_pSynchronizationManager);
     runTest(catcher);
@@ -1714,13 +1714,13 @@ void SynchronizationTester::testIncrementalSyncWithConflictingSavedSearches()
     checkExpectedNamesOfConflictingItemsAfterSync();
 }
 
-void SynchronizationTester::testIncrementalSyncWithConflictingTags()
+void SynchronizationTester::testIncrementalSyncWithConflictingTagsFromUserOwnDataOnlyWithLargerRemoteUsn()
 {
     setUserOwnItemsToRemoteStorage();
     copyRemoteItemsToLocalStorage();
     setRemoteStorageSyncStateToPersistentSyncSettings();
 
-    setConflictingTagsToLocalAndRemoteStorages();
+    setConflictingTagsToLocalAndRemoteStorages(ConflictingItemsUsnOption::LargerRemoteUsn);
 
     SynchronizationManagerSignalsCatcher catcher(*m_pSynchronizationManager);
     runTest(catcher);
@@ -1751,13 +1751,13 @@ void SynchronizationTester::testIncrementalSyncWithConflictingTags()
     checkExpectedNamesOfConflictingItemsAfterSync();
 }
 
-void SynchronizationTester::testIncrementalSyncWithConflictingNotebooks()
+void SynchronizationTester::testIncrementalSyncWithConflictingNotebooksFromUserOwnDataOnlyWithLargerRemoteUsn()
 {
     setUserOwnItemsToRemoteStorage();
     copyRemoteItemsToLocalStorage();
     setRemoteStorageSyncStateToPersistentSyncSettings();
 
-    setConflictingNotebooksToLocalAndRemoteStorages();
+    setConflictingNotebooksToLocalAndRemoteStorages(ConflictingItemsUsnOption::LargerRemoteUsn);
 
     SynchronizationManagerSignalsCatcher catcher(*m_pSynchronizationManager);
     runTest(catcher);
@@ -1786,6 +1786,197 @@ void SynchronizationTester::testIncrementalSyncWithConflictingNotebooks()
     checkIdentityOfLocalAndRemoteItems();
     checkPersistentSyncState();
     checkExpectedNamesOfConflictingItemsAfterSync();
+}
+
+void SynchronizationTester::testIncrementalSyncWithConflictingNotesFromUserOwnDataOnlyWithLargerRemoteUsn()
+{
+    setUserOwnItemsToRemoteStorage();
+    copyRemoteItemsToLocalStorage();
+    setRemoteStorageSyncStateToPersistentSyncSettings();
+
+    setConflictingNotesToLocalAndRemoteStorages(ConflictingItemsUsnOption::LargerRemoteUsn);
+
+    SynchronizationManagerSignalsCatcher catcher(*m_pSynchronizationManager);
+    runTest(catcher);
+
+    CHECK_EXPECTED(receivedStartedSignal)
+    CHECK_EXPECTED(receivedFinishedSignal)
+    CHECK_EXPECTED(finishedSomethingDownloaded)
+    CHECK_EXPECTED(receivedRemoteToLocalSyncDone)
+    CHECK_EXPECTED(remoteToLocalSyncDoneSomethingDownloaded)
+    CHECK_EXPECTED(receivedSyncChunksDownloaded)
+
+    // These are expected because local conflicting note should have been created and sent back to Evernote
+    CHECK_EXPECTED(receivedPreparedDirtyObjectsForSending)
+    CHECK_EXPECTED(finishedSomethingSent)
+
+    CHECK_UNEXPECTED(receivedAuthenticationFinishedSignal)
+    CHECK_UNEXPECTED(receivedStoppedSignal)
+    CHECK_UNEXPECTED(receivedAuthenticationRevokedSignal)
+    CHECK_UNEXPECTED(receivedRemoteToLocalSyncStopped)
+    CHECK_UNEXPECTED(receivedSendLocalChangedStopped)
+    CHECK_UNEXPECTED(receivedWillRepeatRemoteToLocalSyncAfterSendingChanges)
+    CHECK_UNEXPECTED(receivedDetectedConflictDuringLocalChangesSending)
+    CHECK_UNEXPECTED(receivedRateLimitExceeded)
+    CHECK_UNEXPECTED(receivedLinkedNotebookSyncChunksDownloaded)
+    CHECK_UNEXPECTED(receivedPreparedLinkedNotebookDirtyObjectsForSending)
+
+    checkProgressNotificationsOrder(catcher);
+    checkIdentityOfLocalAndRemoteItems();
+    checkPersistentSyncState();
+    checkExpectedNamesOfConflictingItemsAfterSync();
+    checkLocalCopiesOfConflictingNotesWereCreated();
+}
+
+void SynchronizationTester::testIncrementalSyncWithConflictingSavedSearchesFromUserOwnDataOnlyWithSameUsn()
+{
+    setUserOwnItemsToRemoteStorage();
+    copyRemoteItemsToLocalStorage();
+    setRemoteStorageSyncStateToPersistentSyncSettings();
+
+    setConflictingSavedSearchesToLocalAndRemoteStorages(ConflictingItemsUsnOption::SameUsn);
+
+    SynchronizationManagerSignalsCatcher catcher(*m_pSynchronizationManager);
+    runTest(catcher);
+
+    CHECK_EXPECTED(receivedStartedSignal)
+    CHECK_EXPECTED(receivedFinishedSignal)
+    CHECK_EXPECTED(finishedSomethingDownloaded)
+    CHECK_EXPECTED(receivedRemoteToLocalSyncDone)
+    CHECK_EXPECTED(remoteToLocalSyncDoneSomethingDownloaded)
+    CHECK_EXPECTED(receivedSyncChunksDownloaded)
+
+    CHECK_UNEXPECTED(receivedAuthenticationFinishedSignal)
+    CHECK_UNEXPECTED(receivedStoppedSignal)
+    CHECK_UNEXPECTED(finishedSomethingSent)
+    CHECK_UNEXPECTED(receivedAuthenticationRevokedSignal)
+    CHECK_UNEXPECTED(receivedRemoteToLocalSyncStopped)
+    CHECK_UNEXPECTED(receivedSendLocalChangedStopped)
+    CHECK_UNEXPECTED(receivedWillRepeatRemoteToLocalSyncAfterSendingChanges)
+    CHECK_UNEXPECTED(receivedDetectedConflictDuringLocalChangesSending)
+    CHECK_UNEXPECTED(receivedRateLimitExceeded)
+    CHECK_UNEXPECTED(receivedLinkedNotebookSyncChunksDownloaded)
+    CHECK_UNEXPECTED(receivedPreparedDirtyObjectsForSending)
+    CHECK_UNEXPECTED(receivedPreparedLinkedNotebookDirtyObjectsForSending)
+
+    checkProgressNotificationsOrder(catcher);
+    checkIdentityOfLocalAndRemoteItems();
+    checkPersistentSyncState();
+    checkExpectedNamesOfConflictingItemsAfterSync();
+}
+
+void SynchronizationTester::testIncrementalSyncWithConflictingTagsFromUserOwnDataOnlyWithSameUsn()
+{
+    setUserOwnItemsToRemoteStorage();
+    copyRemoteItemsToLocalStorage();
+    setRemoteStorageSyncStateToPersistentSyncSettings();
+
+    setConflictingTagsToLocalAndRemoteStorages(ConflictingItemsUsnOption::SameUsn);
+
+    SynchronizationManagerSignalsCatcher catcher(*m_pSynchronizationManager);
+    runTest(catcher);
+
+    CHECK_EXPECTED(receivedStartedSignal)
+    CHECK_EXPECTED(receivedFinishedSignal)
+    CHECK_EXPECTED(finishedSomethingDownloaded)
+    CHECK_EXPECTED(receivedRemoteToLocalSyncDone)
+    CHECK_EXPECTED(remoteToLocalSyncDoneSomethingDownloaded)
+    CHECK_EXPECTED(receivedSyncChunksDownloaded)
+
+    CHECK_UNEXPECTED(receivedAuthenticationFinishedSignal)
+    CHECK_UNEXPECTED(receivedStoppedSignal)
+    CHECK_UNEXPECTED(finishedSomethingSent)
+    CHECK_UNEXPECTED(receivedAuthenticationRevokedSignal)
+    CHECK_UNEXPECTED(receivedRemoteToLocalSyncStopped)
+    CHECK_UNEXPECTED(receivedSendLocalChangedStopped)
+    CHECK_UNEXPECTED(receivedWillRepeatRemoteToLocalSyncAfterSendingChanges)
+    CHECK_UNEXPECTED(receivedDetectedConflictDuringLocalChangesSending)
+    CHECK_UNEXPECTED(receivedRateLimitExceeded)
+    CHECK_UNEXPECTED(receivedLinkedNotebookSyncChunksDownloaded)
+    CHECK_UNEXPECTED(receivedPreparedDirtyObjectsForSending)
+    CHECK_UNEXPECTED(receivedPreparedLinkedNotebookDirtyObjectsForSending)
+
+    checkProgressNotificationsOrder(catcher);
+    checkIdentityOfLocalAndRemoteItems();
+    checkPersistentSyncState();
+    checkExpectedNamesOfConflictingItemsAfterSync();
+}
+
+void SynchronizationTester::testIncrementalSyncWithConflictingNotebooksFromUserOwnDataOnlyWithSameUsn()
+{
+    setUserOwnItemsToRemoteStorage();
+    copyRemoteItemsToLocalStorage();
+    setRemoteStorageSyncStateToPersistentSyncSettings();
+
+    setConflictingNotebooksToLocalAndRemoteStorages(ConflictingItemsUsnOption::SameUsn);
+
+    SynchronizationManagerSignalsCatcher catcher(*m_pSynchronizationManager);
+    runTest(catcher);
+
+    CHECK_EXPECTED(receivedStartedSignal)
+    CHECK_EXPECTED(receivedFinishedSignal)
+    CHECK_EXPECTED(finishedSomethingDownloaded)
+    CHECK_EXPECTED(receivedRemoteToLocalSyncDone)
+    CHECK_EXPECTED(remoteToLocalSyncDoneSomethingDownloaded)
+    CHECK_EXPECTED(receivedSyncChunksDownloaded)
+
+    CHECK_UNEXPECTED(receivedAuthenticationFinishedSignal)
+    CHECK_UNEXPECTED(receivedStoppedSignal)
+    CHECK_UNEXPECTED(finishedSomethingSent)
+    CHECK_UNEXPECTED(receivedAuthenticationRevokedSignal)
+    CHECK_UNEXPECTED(receivedRemoteToLocalSyncStopped)
+    CHECK_UNEXPECTED(receivedSendLocalChangedStopped)
+    CHECK_UNEXPECTED(receivedWillRepeatRemoteToLocalSyncAfterSendingChanges)
+    CHECK_UNEXPECTED(receivedDetectedConflictDuringLocalChangesSending)
+    CHECK_UNEXPECTED(receivedRateLimitExceeded)
+    CHECK_UNEXPECTED(receivedLinkedNotebookSyncChunksDownloaded)
+    CHECK_UNEXPECTED(receivedPreparedDirtyObjectsForSending)
+    CHECK_UNEXPECTED(receivedPreparedLinkedNotebookDirtyObjectsForSending)
+
+    checkProgressNotificationsOrder(catcher);
+    checkIdentityOfLocalAndRemoteItems();
+    checkPersistentSyncState();
+    checkExpectedNamesOfConflictingItemsAfterSync();
+}
+
+void SynchronizationTester::testIncrementalSyncWithConflictingNotesFromUserOwnDataOnlyWithSameUsn()
+{
+    setUserOwnItemsToRemoteStorage();
+    copyRemoteItemsToLocalStorage();
+    setRemoteStorageSyncStateToPersistentSyncSettings();
+
+    setConflictingNotesToLocalAndRemoteStorages(ConflictingItemsUsnOption::SameUsn);
+
+    SynchronizationManagerSignalsCatcher catcher(*m_pSynchronizationManager);
+    runTest(catcher);
+
+    CHECK_EXPECTED(receivedStartedSignal)
+    CHECK_EXPECTED(receivedFinishedSignal)
+    CHECK_EXPECTED(finishedSomethingDownloaded)
+    CHECK_EXPECTED(receivedRemoteToLocalSyncDone)
+    CHECK_EXPECTED(remoteToLocalSyncDoneSomethingDownloaded)
+    CHECK_EXPECTED(receivedSyncChunksDownloaded)
+
+    // These are expected because locally modified notes should have been sent to Evernote
+    CHECK_EXPECTED(receivedPreparedDirtyObjectsForSending)
+    CHECK_EXPECTED(finishedSomethingSent)
+
+    CHECK_UNEXPECTED(receivedAuthenticationFinishedSignal)
+    CHECK_UNEXPECTED(receivedStoppedSignal)
+    CHECK_UNEXPECTED(receivedAuthenticationRevokedSignal)
+    CHECK_UNEXPECTED(receivedRemoteToLocalSyncStopped)
+    CHECK_UNEXPECTED(receivedSendLocalChangedStopped)
+    CHECK_UNEXPECTED(receivedWillRepeatRemoteToLocalSyncAfterSendingChanges)
+    CHECK_UNEXPECTED(receivedDetectedConflictDuringLocalChangesSending)
+    CHECK_UNEXPECTED(receivedRateLimitExceeded)
+    CHECK_UNEXPECTED(receivedLinkedNotebookSyncChunksDownloaded)
+    CHECK_UNEXPECTED(receivedPreparedLinkedNotebookDirtyObjectsForSending)
+
+    checkProgressNotificationsOrder(catcher);
+    checkIdentityOfLocalAndRemoteItems();
+    checkPersistentSyncState();
+    checkExpectedNamesOfConflictingItemsAfterSync();
+    // TODO: should check the lack of notes marked as conflicting ones here
 }
 
 void SynchronizationTester::setUserOwnItemsToRemoteStorage()
@@ -3211,7 +3402,7 @@ void SynchronizationTester::setModifiedLinkedNotebookItemsToLocalStorage()
     }
 }
 
-void SynchronizationTester::setConflictingSavedSearchesToLocalAndRemoteStorages()
+void SynchronizationTester::setConflictingSavedSearchesToLocalAndRemoteStorages(const ConflictingItemsUsnOption::type usnOption)
 {
     QVERIFY(!m_guidsOfUserOwnLocalItemsToModify.m_savedSearchGuids.isEmpty());
     for(auto it = m_guidsOfUserOwnLocalItemsToModify.m_savedSearchGuids.constBegin(),
@@ -3234,6 +3425,12 @@ void SynchronizationTester::setConflictingSavedSearchesToLocalAndRemoteStorages(
 
         m_expectedSavedSearchNamesByGuid[*it] = modifiedSavedSearch.name();
 
+        if (usnOption == ConflictingItemsUsnOption::LargerRemoteUsn) {
+            modifiedSavedSearch = *pSavedSearch;
+            modifiedSavedSearch.setDirty(true);
+            modifiedSavedSearch.setLocal(false);
+        }
+
         modifiedSavedSearch.setLocalUid(QString());
         modifiedSavedSearch.setName(originalName + MODIFIED_LOCALLY_SUFFIX);
         res = m_pLocalStorageManagerAsync->localStorageManager()->updateSavedSearch(modifiedSavedSearch, errorDescription);
@@ -3241,7 +3438,7 @@ void SynchronizationTester::setConflictingSavedSearchesToLocalAndRemoteStorages(
     }
 }
 
-void SynchronizationTester::setConflictingTagsToLocalAndRemoteStorages()
+void SynchronizationTester::setConflictingTagsToLocalAndRemoteStorages(const ConflictingItemsUsnOption::type usnOption)
 {
     QVERIFY(!m_guidsOfUserOwnLocalItemsToModify.m_tagGuids.isEmpty());
     for(auto it = m_guidsOfUserOwnLocalItemsToModify.m_tagGuids.constBegin(),
@@ -3275,12 +3472,16 @@ void SynchronizationTester::setConflictingTagsToLocalAndRemoteStorages()
         modifiedLocalTag.setDirty(true);
         modifiedLocalTag.setLocal(false);
 
+        if (usnOption == ConflictingItemsUsnOption::SameUsn) {
+            modifiedLocalTag.setUpdateSequenceNumber(modifiedRemoteTag.updateSequenceNumber());
+        }
+
         res = m_pLocalStorageManagerAsync->localStorageManager()->updateTag(modifiedLocalTag, errorDescription);
         QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
     }
 }
 
-void SynchronizationTester::setConflictingNotebooksToLocalAndRemoteStorages()
+void SynchronizationTester::setConflictingNotebooksToLocalAndRemoteStorages(const ConflictingItemsUsnOption::type usnOption)
 {
     QVERIFY(!m_guidsOfUserOwnLocalItemsToModify.m_notebookGuids.isEmpty());
     for(auto it = m_guidsOfUserOwnLocalItemsToModify.m_notebookGuids.constBegin(),
@@ -3304,6 +3505,12 @@ void SynchronizationTester::setConflictingNotebooksToLocalAndRemoteStorages()
 
         m_expectedNotebookNamesByGuid[*it] = modifiedNotebook.name();
 
+        if (usnOption == ConflictingItemsUsnOption::LargerRemoteUsn) {
+            modifiedNotebook = *pNotebook;
+            modifiedNotebook.setDirty(true);
+            modifiedNotebook.setLocal(false);
+        }
+
         modifiedNotebook.setLocalUid(QString());
         modifiedNotebook.setName(originalName + MODIFIED_LOCALLY_SUFFIX);
         res = m_pLocalStorageManagerAsync->localStorageManager()->updateNotebook(modifiedNotebook, errorDescription);
@@ -3311,7 +3518,7 @@ void SynchronizationTester::setConflictingNotebooksToLocalAndRemoteStorages()
     }
 }
 
-void SynchronizationTester::setConflictingNotesToLocalAndRemoteStorages()
+void SynchronizationTester::setConflictingNotesToLocalAndRemoteStorages(const ConflictingItemsUsnOption::type usnOption)
 {
     QVERIFY(!m_guidsOfUserOwnLocalItemsToModify.m_noteGuids.isEmpty());
     for(auto it = m_guidsOfUserOwnLocalItemsToModify.m_noteGuids.constBegin(),
@@ -3321,6 +3528,7 @@ void SynchronizationTester::setConflictingNotesToLocalAndRemoteStorages()
         QVERIFY2(pNote != Q_NULLPTR, "Detected unexpectedly missing note in fake note store");
 
         QString originalTitle = pNote->title();
+        qint32 originalUsn = pNote->updateSequenceNumber();
 
         Note modifiedNote(*pNote);
         modifiedNote.setTitle(originalTitle + MODIFIED_REMOTELY_SUFFIX);
@@ -3332,10 +3540,18 @@ void SynchronizationTester::setConflictingNotesToLocalAndRemoteStorages()
         bool res = m_pFakeNoteStore->setNote(modifiedNote, errorDescription);
         QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
 
-        m_expectedNoteTitlesByGuid[*it] = modifiedNote.title();
+        if (usnOption == ConflictingItemsUsnOption::SameUsn) {
+            m_expectedNoteTitlesByGuid[*it] = originalTitle + MODIFIED_LOCALLY_SUFFIX;
+        }
+        else {
+            modifiedNote.setUpdateSequenceNumber(originalUsn);
+            m_expectedNoteTitlesByGuid[*it] = modifiedNote.title();
+        }
 
         modifiedNote.setLocalUid(QString());
         modifiedNote.setTitle(originalTitle + MODIFIED_LOCALLY_SUFFIX);
+        res = m_pLocalStorageManagerAsync->localStorageManager()->updateNote(modifiedNote, /* update resources = */ false,
+                                                                             /* update tags = */ false, errorDescription);
         QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
     }
 }
@@ -3861,6 +4077,29 @@ void SynchronizationTester::checkExpectedNamesOfConflictingItemsAfterSync()
     }
 
     QVERIFY2(onceChecked == true, "Found no expected item names to verify");
+}
+
+void SynchronizationTester::checkLocalCopiesOfConflictingNotesWereCreated()
+{
+    QVERIFY(!m_expectedNoteTitlesByGuid.isEmpty());
+    for(auto it = m_expectedNoteTitlesByGuid.constBegin(),
+        end = m_expectedNoteTitlesByGuid.constEnd(); it != end; ++it)
+    {
+        QList<Note> remoteConflictingNotes = m_pFakeNoteStore->getNotesByConflictSourceNoteGuid(it.key());
+        QVERIFY(remoteConflictingNotes.size() == 1);
+
+        const Note & remoteConfictingNote = remoteConflictingNotes.at(0);
+
+        Note localConflictingNote;
+        localConflictingNote.setLocalUid(QString());
+        localConflictingNote.setGuid(remoteConfictingNote.guid());
+        ErrorString errorDescription;
+        bool res = m_pLocalStorageManagerAsync->localStorageManager()->findNote(localConflictingNote, errorDescription,
+                                                                                /* with resource binary data = */ false);
+        QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
+        QVERIFY(localConflictingNote.hasTitle());
+        QVERIFY(localConflictingNote.title().endsWith(MODIFIED_LOCALLY_SUFFIX + QStringLiteral(" - conflicting")));
+    }
 }
 
 void SynchronizationTester::listSavedSearchesFromLocalStorage(const qint32 afterUSN,

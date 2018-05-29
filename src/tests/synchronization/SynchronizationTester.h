@@ -98,9 +98,15 @@ private Q_SLOTS:
     void testIncrementalSyncWithNewModifiedAndExpungedRemoteItemsFromLinkedNotebooksOnly();
     void testIncrementalSyncWithNewModifiedAndExpungedRemoteItemsFromUserOwnDataAndLinkedNotebooks();
 
-    void testIncrementalSyncWithConflictingSavedSearches();
-    void testIncrementalSyncWithConflictingTags();
-    void testIncrementalSyncWithConflictingNotebooks();
+    void testIncrementalSyncWithConflictingSavedSearchesFromUserOwnDataOnlyWithLargerRemoteUsn();
+    void testIncrementalSyncWithConflictingTagsFromUserOwnDataOnlyWithLargerRemoteUsn();
+    void testIncrementalSyncWithConflictingNotebooksFromUserOwnDataOnlyWithLargerRemoteUsn();
+    void testIncrementalSyncWithConflictingNotesFromUserOwnDataOnlyWithLargerRemoteUsn();
+
+    void testIncrementalSyncWithConflictingSavedSearchesFromUserOwnDataOnlyWithSameUsn();
+    void testIncrementalSyncWithConflictingTagsFromUserOwnDataOnlyWithSameUsn();
+    void testIncrementalSyncWithConflictingNotebooksFromUserOwnDataOnlyWithSameUsn();
+    void testIncrementalSyncWithConflictingNotesFromUserOwnDataOnlyWithSameUsn();
 
 private:
     void setUserOwnItemsToRemoteStorage();
@@ -117,10 +123,19 @@ private:
     void setModifiedUserOwnItemsToLocalStorage();
     void setModifiedLinkedNotebookItemsToLocalStorage();
 
-    void setConflictingSavedSearchesToLocalAndRemoteStorages();
-    void setConflictingTagsToLocalAndRemoteStorages();
-    void setConflictingNotebooksToLocalAndRemoteStorages();
-    void setConflictingNotesToLocalAndRemoteStorages();
+    struct ConflictingItemsUsnOption
+    {
+        enum type
+        {
+            SameUsn = 0,
+            LargerRemoteUsn
+        };
+    };
+
+    void setConflictingSavedSearchesToLocalAndRemoteStorages(const ConflictingItemsUsnOption::type usnOption);
+    void setConflictingTagsToLocalAndRemoteStorages(const ConflictingItemsUsnOption::type usnOption);
+    void setConflictingNotebooksToLocalAndRemoteStorages(const ConflictingItemsUsnOption::type usnOption);
+    void setConflictingNotesToLocalAndRemoteStorages(const ConflictingItemsUsnOption::type usnOption);
 
     void copyRemoteItemsToLocalStorage();
 
@@ -130,6 +145,7 @@ private:
     void checkIdentityOfLocalAndRemoteItems();
     void checkPersistentSyncState();
     void checkExpectedNamesOfConflictingItemsAfterSync();
+    void checkLocalCopiesOfConflictingNotesWereCreated();
 
     void listSavedSearchesFromLocalStorage(const qint32 afterUSN,
                                            QHash<QString, qevercloud::SavedSearch> & savedSearches) const;
