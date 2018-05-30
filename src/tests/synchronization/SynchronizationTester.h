@@ -108,6 +108,22 @@ private Q_SLOTS:
     void testIncrementalSyncWithConflictingNotebooksFromUserOwnDataOnlyWithSameUsn();
     void testIncrementalSyncWithConflictingNotesFromUserOwnDataOnlyWithSameUsn();
 
+    void testIncrementalSyncWithConflictingTagsFromLinkedNotebooksOnlyWithLargerRemoteUsn();
+    void testIncrementalSyncWithConflictingNotebooksFromLinkedNotebooksOnlyWithLargerRemoteUsn();
+    void testIncrementalSyncWithConflictingNotesFromLinkedNotebooksOnlyWithLargerRemoteUsn();
+
+    void testIncrementalSyncWithConflictingTagsFromLinkedNotebooksOnlyWithSameUsn();
+    void testIncrementalSyncWithConflictingNotebooksFromLinkedNotebooksOnlyWithSameUsn();
+    void testIncrementalSyncWithConflictingNotesFromLinkedNotebooksOnlyWithSameUsn();
+
+    void testIncrementalSyncWithConflictingTagsFromUserOwnDataAndLinkedNotebooksWithLargerRemoteUsn();
+    void testIncrementalSyncWithConflictingNotebooksFromUserOwnDataAndLinkedNotebooksWithLargerRemoteUsn();
+    void testIncrementalSyncWithConflictingNotesFromUserOwnDataAndLinkedNotebooksWithLargerRemoteUsn();
+
+    void testIncrementalSyncWithConflictingTagsFromUserOwnDataAndLinkedNotebooksWithSameUsn();
+    void testIncrementalSyncWithConflictingNotebooksFromUserOwnDataAndLinkedNotebooksWithSameUsn();
+    void testIncrementalSyncWithConflictingNotesFromUserOwnDataAndLinkedNotebooksWithSameUsn();
+
 private:
     void setUserOwnItemsToRemoteStorage();
     void setLinkedNotebookItemsToRemoteStorage();
@@ -136,6 +152,19 @@ private:
     void setConflictingTagsFromUserOwnDataToLocalAndRemoteStorages(const ConflictingItemsUsnOption::type usnOption);
     void setConflictingNotebooksFromUserOwnDataToLocalAndRemoteStorages(const ConflictingItemsUsnOption::type usnOption);
     void setConflictingNotesFromUserOwnDataToLocalAndRemoteStorages(const ConflictingItemsUsnOption::type usnOption);
+
+    void setConflictingTagsFromLinkedNotebooksToLocalAndRemoteStorages(const ConflictingItemsUsnOption::type usnOption);
+    void setConflictingNotebooksFromLinkedNotebooksToLocalAndRemoteStorages(const ConflictingItemsUsnOption::type usnOption);
+    void setConflictingNotesFromLinkedNotebooksToLocalAndRemoteStorages(const ConflictingItemsUsnOption::type usnOption);
+
+    void setConflictingTagsToLocalAndRemoteStoragesImpl(const QStringList & sourceTagGuids,
+                                                        const ConflictingItemsUsnOption::type usnOption,
+                                                        const bool shouldHaveLinkedNotebookGuid);
+    void setConflictingNotebooksToLocalAndRemoteStoragesImpl(const QStringList & sourceNotebookGuids,
+                                                             const ConflictingItemsUsnOption::type usnOption,
+                                                             const bool shouldHaveLinkedNotebookGuid);
+    void setConflictingNotesToLocalAndRemoteStoragesImpl(const QStringList & sourceNoteGuids,
+                                                         const ConflictingItemsUsnOption::type usnOption);
 
     void copyRemoteItemsToLocalStorage();
 
