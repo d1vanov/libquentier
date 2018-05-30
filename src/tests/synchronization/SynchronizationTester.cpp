@@ -96,7 +96,9 @@ SynchronizationTester::SynchronizationTester(QObject * parent) :
     m_expectedSavedSearchNamesByGuid(),
     m_expectedTagNamesByGuid(),
     m_expectedNotebookNamesByGuid(),
-    m_expectedNoteTitlesByGuid()
+    m_expectedNoteTitlesByGuid(),
+    m_guidsOfLinkedNotebookNotesToExpungeToProduceNotelessLinkedNotebookTags(),
+    m_guidsOfLinkedNotebookTagsExpectedToBeAutoExpunged()
 {}
 
 SynchronizationTester::~SynchronizationTester()
@@ -187,6 +189,9 @@ void SynchronizationTester::cleanup()
     m_expectedTagNamesByGuid.clear();
     m_expectedNotebookNamesByGuid.clear();
     m_expectedNoteTitlesByGuid.clear();
+
+    m_guidsOfLinkedNotebookNotesToExpungeToProduceNotelessLinkedNotebookTags.clear();
+    m_guidsOfLinkedNotebookTagsExpectedToBeAutoExpunged.clear();
 }
 
 void SynchronizationTester::initTestCase()
@@ -2453,6 +2458,46 @@ void SynchronizationTester::testIncrementalSyncWithConflictingNotesFromUserOwnDa
     checkNoConflictingNotesWereCreated();
 }
 
+void SynchronizationTester::testIncrementalSyncWithExpungedRemoteLinkedNotebookNotesProducingNotelessTags()
+{
+    setUserOwnItemsToRemoteStorage();
+    setLinkedNotebookItemsToRemoteStorage();
+    copyRemoteItemsToLocalStorage();
+    setRemoteStorageSyncStateToPersistentSyncSettings();
+
+    setExpungedLinkedNotebookNotesToRemoteStorageToProduceNotelessLinkedNotebookTags();
+
+    SynchronizationManagerSignalsCatcher catcher(*m_pSynchronizationManager);
+    runTest(catcher);
+
+    CHECK_EXPECTED(receivedStartedSignal)
+    CHECK_EXPECTED(receivedFinishedSignal)
+    CHECK_EXPECTED(receivedRemoteToLocalSyncDone)
+    CHECK_EXPECTED(receivedSyncChunksDownloaded)
+    CHECK_EXPECTED(receivedLinkedNotebookSyncChunksDownloaded)
+
+    CHECK_UNEXPECTED(finishedSomethingSent)
+    CHECK_UNEXPECTED(finishedSomethingDownloaded)
+    CHECK_UNEXPECTED(remoteToLocalSyncDoneSomethingDownloaded)
+    CHECK_UNEXPECTED(receivedAuthenticationFinishedSignal)
+    CHECK_UNEXPECTED(receivedStoppedSignal)
+    CHECK_UNEXPECTED(receivedAuthenticationRevokedSignal)
+    CHECK_UNEXPECTED(receivedRemoteToLocalSyncStopped)
+    CHECK_UNEXPECTED(receivedSendLocalChangedStopped)
+    CHECK_UNEXPECTED(receivedWillRepeatRemoteToLocalSyncAfterSendingChanges)
+    CHECK_UNEXPECTED(receivedDetectedConflictDuringLocalChangesSending)
+    CHECK_UNEXPECTED(receivedRateLimitExceeded)
+    CHECK_UNEXPECTED(receivedPreparedDirtyObjectsForSending)
+    CHECK_UNEXPECTED(receivedPreparedLinkedNotebookDirtyObjectsForSending)
+
+    checkProgressNotificationsOrder(catcher);
+
+    expungeNotelessLinkedNotebookTagsFromRemoteStorage();
+    checkIdentityOfLocalAndRemoteItems();
+
+    checkPersistentSyncState();
+}
+
 void SynchronizationTester::setUserOwnItemsToRemoteStorage()
 {
     ErrorString errorDescription;
@@ -2938,6 +2983,13 @@ void SynchronizationTester::setLinkedNotebookItemsToRemoteStorage()
     m_guidsOfLinkedNotebookLocalItemsToModify.m_noteGuids << secondNote.guid();
     m_guidsOfLinkedNotebookLocalItemsToModify.m_noteGuids << seventhNote.guid();
     m_guidsOfLinkedNotebookRemoteItemsToExpunge.m_noteGuids << sixthNote.guid();  // NOTE: shouldn't expunge the last added note to prevent problems due to fake note store's highest USN decreasing
+
+    Q_UNUSED(m_guidsOfLinkedNotebookNotesToExpungeToProduceNotelessLinkedNotebookTags.insert(fifthNote.guid()))
+    Q_UNUSED(m_guidsOfLinkedNotebookNotesToExpungeToProduceNotelessLinkedNotebookTags.insert(thirdNote.guid()))
+    Q_UNUSED(m_guidsOfLinkedNotebookTagsExpectedToBeAutoExpunged.insert(thirdLinkedNotebookFirstTag.guid()))
+    Q_UNUSED(m_guidsOfLinkedNotebookTagsExpectedToBeAutoExpunged.insert(thirdLinkedNotebookSecondTag.guid()))
+    Q_UNUSED(m_guidsOfLinkedNotebookTagsExpectedToBeAutoExpunged.insert(secondLinkedNotebookFirstTag.guid()))
+    Q_UNUSED(m_guidsOfLinkedNotebookTagsExpectedToBeAutoExpunged.insert(secondLinkedNotebookSecondTag.guid()))
 }
 
 void SynchronizationTester::setModifiedUserOwnItemsToRemoteStorage()
@@ -3283,6 +3335,26 @@ void SynchronizationTester::setExpungedLinkedNotebookItemsToRemoteStorage()
         end = m_guidsOfLinkedNotebookRemoteItemsToExpunge.m_noteGuids.constEnd(); it != end; ++it)
     {
         m_pFakeNoteStore->setExpungedNoteGuid(*it);
+    }
+}
+
+void SynchronizationTester::setExpungedLinkedNotebookNotesToRemoteStorageToProduceNotelessLinkedNotebookTags()
+{
+    QVERIFY(!m_guidsOfLinkedNotebookNotesToExpungeToProduceNotelessLinkedNotebookTags.isEmpty());
+    for(auto it = m_guidsOfLinkedNotebookNotesToExpungeToProduceNotelessLinkedNotebookTags.constBegin(),
+        end = m_guidsOfLinkedNotebookNotesToExpungeToProduceNotelessLinkedNotebookTags.constEnd(); it != end; ++it)
+    {
+        m_pFakeNoteStore->setExpungedNoteGuid(*it);
+    }
+}
+
+void SynchronizationTester::expungeNotelessLinkedNotebookTagsFromRemoteStorage()
+{
+    QVERIFY(!m_guidsOfLinkedNotebookTagsExpectedToBeAutoExpunged.isEmpty());
+    for(auto it = m_guidsOfLinkedNotebookTagsExpectedToBeAutoExpunged.constBegin(),
+        end = m_guidsOfLinkedNotebookTagsExpectedToBeAutoExpunged.constEnd(); it != end; ++it)
+    {
+        m_pFakeNoteStore->setExpungedTagGuid(*it);
     }
 }
 

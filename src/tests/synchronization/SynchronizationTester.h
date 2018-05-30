@@ -124,6 +124,8 @@ private Q_SLOTS:
     void testIncrementalSyncWithConflictingNotebooksFromUserOwnDataAndLinkedNotebooksWithSameUsn();
     void testIncrementalSyncWithConflictingNotesFromUserOwnDataAndLinkedNotebooksWithSameUsn();
 
+    void testIncrementalSyncWithExpungedRemoteLinkedNotebookNotesProducingNotelessTags();
+
 private:
     void setUserOwnItemsToRemoteStorage();
     void setLinkedNotebookItemsToRemoteStorage();
@@ -133,6 +135,8 @@ private:
     void setModifiedLinkedNotebookItemsToRemoteStorage();
     void setExpungedUserOwnItemsToRemoteStorage();
     void setExpungedLinkedNotebookItemsToRemoteStorage();
+    void setExpungedLinkedNotebookNotesToRemoteStorageToProduceNotelessLinkedNotebookTags();
+    void expungeNotelessLinkedNotebookTagsFromRemoteStorage();
 
     void setNewUserOwnItemsToLocalStorage();
     void setNewLinkedNotebookItemsToLocalStorage();
@@ -235,6 +239,9 @@ private:
     QHash<QString, QString>         m_expectedTagNamesByGuid;
     QHash<QString, QString>         m_expectedNotebookNamesByGuid;
     QHash<QString, QString>         m_expectedNoteTitlesByGuid;
+
+    QSet<QString>                   m_guidsOfLinkedNotebookNotesToExpungeToProduceNotelessLinkedNotebookTags;
+    QSet<QString>                   m_guidsOfLinkedNotebookTagsExpectedToBeAutoExpunged;
 };
 
 } // namespace test
