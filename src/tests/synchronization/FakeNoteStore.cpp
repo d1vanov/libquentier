@@ -40,7 +40,8 @@ FakeNoteStore::Data::Data() :
     m_resources(),
     m_linkedNotebooks(),
     m_expungedLinkedNotebookGuids(),
-    m_shouldTriggerRateLimitReachOnNextCall(false),
+    m_onceGetLinkedNotebookSyncChunkCalled(false),
+    m_whenToTriggerAPIRateLimitExceeding(WhenToTriggerAPIRateLimitsExceeding::Never),
     m_getNoteAsyncDelayTimerIds(),
     m_getResourceAsyncDelayTimerIds(),
     m_maxNumSavedSearches(static_cast<quint32>(qevercloud::EDAM_USER_SAVED_SEARCHES_MAX)),
@@ -836,11 +837,6 @@ bool FakeNoteStore::removeExpungedLinkedNotebookGuid(const QString & guid)
     return true;
 }
 
-void FakeNoteStore::triggerRateLimitReachOnNextCall()
-{
-    m_data->m_shouldTriggerRateLimitReachOnNextCall = true;
-}
-
 quint32 FakeNoteStore::maxNumSavedSearches() const
 {
     return m_data->m_maxNumSavedSearches;
@@ -1171,6 +1167,16 @@ qint32 FakeNoteStore::currentMaxUsn(const QString & linkedNotebookGuid) const
     return maxUsn;
 }
 
+FakeNoteStore::WhenToTriggerAPIRateLimitsExceeding::type FakeNoteStore::whenToTriggerAPIRateLimitsExceeding() const
+{
+    return m_data->m_whenToTriggerAPIRateLimitExceeding;
+}
+
+void FakeNoteStore::setAPIRateLimitsExceedingTrigger(const WhenToTriggerAPIRateLimitsExceeding::type trigger)
+{
+    m_data->m_whenToTriggerAPIRateLimitExceeding = trigger;
+}
+
 INoteStore * FakeNoteStore::create() const
 {
     FakeNoteStore * pNoteStore = new FakeNoteStore(m_data);
@@ -1190,17 +1196,14 @@ void FakeNoteStore::stop()
     m_data->m_getResourceAsyncDelayTimerIds.clear();
 }
 
-#define CHECK_API_RATE_LIMIT() \
-    if (m_data->m_shouldTriggerRateLimitReachOnNextCall) { \
-        rateLimitSeconds = 0; \
-        m_data->m_shouldTriggerRateLimitReachOnNextCall = false; \
-        return qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED; \
-    }
-
 qint32 FakeNoteStore::createNotebook(Notebook & notebook, ErrorString & errorDescription, qint32 & rateLimitSeconds,
                                      const QString & linkedNotebookAuthToken)
 {
-    CHECK_API_RATE_LIMIT()
+    if (m_data->m_whenToTriggerAPIRateLimitExceeding == WhenToTriggerAPIRateLimitsExceeding::OnCreateNotebookAttempt) {
+        m_data->m_whenToTriggerAPIRateLimitExceeding = WhenToTriggerAPIRateLimitsExceeding::Never;
+        rateLimitSeconds = 0;
+        return qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED;
+    }
 
     if (m_data->m_notebooks.size() + 1 > m_data->m_maxNumNotebooks) {
         errorDescription.setBase(QStringLiteral("Already at max number of notebooks"));
@@ -1250,7 +1253,11 @@ qint32 FakeNoteStore::createNotebook(Notebook & notebook, ErrorString & errorDes
 qint32 FakeNoteStore::updateNotebook(Notebook & notebook, ErrorString & errorDescription, qint32 & rateLimitSeconds,
                                      const QString & linkedNotebookAuthToken)
 {
-    CHECK_API_RATE_LIMIT()
+    if (m_data->m_whenToTriggerAPIRateLimitExceeding == WhenToTriggerAPIRateLimitsExceeding::OnUpdateNotebookAttempt) {
+        m_data->m_whenToTriggerAPIRateLimitExceeding = WhenToTriggerAPIRateLimitsExceeding::Never;
+        rateLimitSeconds = 0;
+        return qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED;
+    }
 
     if (!notebook.hasGuid()) {
         errorDescription.setBase(QStringLiteral("Notebook guid is not set"));
@@ -1314,7 +1321,11 @@ qint32 FakeNoteStore::updateNotebook(Notebook & notebook, ErrorString & errorDes
 qint32 FakeNoteStore::createNote(Note & note, ErrorString & errorDescription, qint32 & rateLimitSeconds,
                                  const QString & linkedNotebookAuthToken)
 {
-    CHECK_API_RATE_LIMIT()
+    if (m_data->m_whenToTriggerAPIRateLimitExceeding == WhenToTriggerAPIRateLimitsExceeding::OnCreateNoteAttempt) {
+        m_data->m_whenToTriggerAPIRateLimitExceeding = WhenToTriggerAPIRateLimitsExceeding::Never;
+        rateLimitSeconds = 0;
+        return qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED;
+    }
 
     if (m_data->m_notes.size() + 1 > m_data->m_maxNumNotes) {
         errorDescription.setBase(QStringLiteral("Already at max number of notes"));
@@ -1403,7 +1414,11 @@ qint32 FakeNoteStore::createNote(Note & note, ErrorString & errorDescription, qi
 qint32 FakeNoteStore::updateNote(Note & note, ErrorString & errorDescription, qint32 & rateLimitSeconds,
                                  const QString & linkedNotebookAuthToken)
 {
-    CHECK_API_RATE_LIMIT()
+    if (m_data->m_whenToTriggerAPIRateLimitExceeding == WhenToTriggerAPIRateLimitsExceeding::OnUpdateNoteAttempt) {
+        m_data->m_whenToTriggerAPIRateLimitExceeding = WhenToTriggerAPIRateLimitsExceeding::Never;
+        rateLimitSeconds = 0;
+        return qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED;
+    }
 
     if (!note.hasGuid()) {
         errorDescription.setBase(QStringLiteral("Note.guid"));
@@ -1497,7 +1512,11 @@ qint32 FakeNoteStore::updateNote(Note & note, ErrorString & errorDescription, qi
 qint32 FakeNoteStore::createTag(Tag & tag, ErrorString & errorDescription, qint32 & rateLimitSeconds,
                                 const QString & linkedNotebookAuthToken)
 {
-    CHECK_API_RATE_LIMIT()
+    if (m_data->m_whenToTriggerAPIRateLimitExceeding == WhenToTriggerAPIRateLimitsExceeding::OnCreateTagAttempt) {
+        m_data->m_whenToTriggerAPIRateLimitExceeding = WhenToTriggerAPIRateLimitsExceeding::Never;
+        rateLimitSeconds = 0;
+        return qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED;
+    }
 
     if (m_data->m_tags.size() + 1 > m_data->m_maxNumTags) {
         errorDescription.setBase(QStringLiteral("Already at max number of tags"));
@@ -1543,7 +1562,11 @@ qint32 FakeNoteStore::createTag(Tag & tag, ErrorString & errorDescription, qint3
 qint32 FakeNoteStore::updateTag(Tag & tag, ErrorString & errorDescription, qint32 & rateLimitSeconds,
                                 const QString & linkedNotebookAuthToken)
 {
-    CHECK_API_RATE_LIMIT()
+    if (m_data->m_whenToTriggerAPIRateLimitExceeding == WhenToTriggerAPIRateLimitsExceeding::OnUpdateTagAttempt) {
+        m_data->m_whenToTriggerAPIRateLimitExceeding = WhenToTriggerAPIRateLimitsExceeding::Never;
+        rateLimitSeconds = 0;
+        return qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED;
+    }
 
     if (!tag.hasGuid()) {
         errorDescription.setBase(QStringLiteral("Tag guid is not set"));
@@ -1596,7 +1619,11 @@ qint32 FakeNoteStore::updateTag(Tag & tag, ErrorString & errorDescription, qint3
 
 qint32 FakeNoteStore::createSavedSearch(SavedSearch & savedSearch, ErrorString & errorDescription, qint32 & rateLimitSeconds)
 {
-    CHECK_API_RATE_LIMIT()
+    if (m_data->m_whenToTriggerAPIRateLimitExceeding == WhenToTriggerAPIRateLimitsExceeding::OnCreateSavedSearchAttempt) {
+        m_data->m_whenToTriggerAPIRateLimitExceeding = WhenToTriggerAPIRateLimitsExceeding::Never;
+        rateLimitSeconds = 0;
+        return qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED;
+    }
 
     if (m_data->m_savedSearches.size() + 1 > m_data->m_maxNumSavedSearches) {
         errorDescription.setBase(QStringLiteral("Already at max number of saved searches"));
@@ -1628,7 +1655,11 @@ qint32 FakeNoteStore::createSavedSearch(SavedSearch & savedSearch, ErrorString &
 
 qint32 FakeNoteStore::updateSavedSearch(SavedSearch & savedSearch, ErrorString & errorDescription, qint32 & rateLimitSeconds)
 {
-    CHECK_API_RATE_LIMIT()
+    if (m_data->m_whenToTriggerAPIRateLimitExceeding == WhenToTriggerAPIRateLimitsExceeding::OnUpdateSavedSearchAttempt) {
+        m_data->m_whenToTriggerAPIRateLimitExceeding = WhenToTriggerAPIRateLimitsExceeding::Never;
+        rateLimitSeconds = 0;
+        return qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED;
+    }
 
     if (!savedSearch.hasGuid()) {
         errorDescription.setBase(QStringLiteral("Saved search guid is not set"));
@@ -1668,7 +1699,12 @@ qint32 FakeNoteStore::updateSavedSearch(SavedSearch & savedSearch, ErrorString &
 
 qint32 FakeNoteStore::getSyncState(qevercloud::SyncState & syncState, ErrorString & errorDescription, qint32 & rateLimitSeconds)
 {
-    CHECK_API_RATE_LIMIT()
+    if (m_data->m_whenToTriggerAPIRateLimitExceeding == WhenToTriggerAPIRateLimitsExceeding::OnGetUserOwnSyncStateAttempt) {
+        m_data->m_whenToTriggerAPIRateLimitExceeding = WhenToTriggerAPIRateLimitsExceeding::Never;
+        rateLimitSeconds = 0;
+        return qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED;
+    }
+
     syncState = m_data->m_syncState;
     Q_UNUSED(errorDescription)
     return 0;
@@ -1681,15 +1717,25 @@ qint32 FakeNoteStore::getSyncChunk(const qint32 afterUSN, const qint32 maxEntrie
     QNDEBUG(QStringLiteral("FakeNoteStore::getSyncChunk: after USN = ") << afterUSN << QStringLiteral(", max entries = ")
             << maxEntries << QStringLiteral(", filter = ") << filter);
 
+    if (m_data->m_whenToTriggerAPIRateLimitExceeding == WhenToTriggerAPIRateLimitsExceeding::OnGetUserOwnSyncChunkAttempt) {
+        m_data->m_whenToTriggerAPIRateLimitExceeding = WhenToTriggerAPIRateLimitsExceeding::Never;
+        rateLimitSeconds = 0;
+        return qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED;
+    }
+
     return getSyncChunkImpl(afterUSN, maxEntries, (afterUSN == 0), QString(), filter,
-                            syncChunk, errorDescription, rateLimitSeconds);
+                            syncChunk, errorDescription);
 }
 
 qint32 FakeNoteStore::getLinkedNotebookSyncState(const qevercloud::LinkedNotebook & linkedNotebook,
                                                  const QString & authToken, qevercloud::SyncState & syncState,
                                                  ErrorString & errorDescription, qint32 & rateLimitSeconds)
 {
-    CHECK_API_RATE_LIMIT()
+    if (m_data->m_whenToTriggerAPIRateLimitExceeding == WhenToTriggerAPIRateLimitsExceeding::OnGetLinkedNotebookSyncStateAttempt) {
+        m_data->m_whenToTriggerAPIRateLimitExceeding = WhenToTriggerAPIRateLimitsExceeding::Never;
+        rateLimitSeconds = 0;
+        return qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED;
+    }
 
     if (m_pQecNoteStore->authenticationToken() != authToken) {
         errorDescription.setBase(QStringLiteral("Wrong authentication token"));
@@ -1724,7 +1770,13 @@ qint32 FakeNoteStore::getLinkedNotebookSyncChunk(const qevercloud::LinkedNoteboo
             << QStringLiteral(", linked notebook auth token = ") << linkedNotebookAuthToken
             << QStringLiteral(", full sync only = ") << (fullSyncOnly ? QStringLiteral("true") : QStringLiteral("false")));
 
-    CHECK_API_RATE_LIMIT()
+    if (m_data->m_whenToTriggerAPIRateLimitExceeding == WhenToTriggerAPIRateLimitsExceeding::OnGetLinkedNotebookSyncChunkAttempt) {
+        m_data->m_whenToTriggerAPIRateLimitExceeding = WhenToTriggerAPIRateLimitsExceeding::Never;
+        rateLimitSeconds = 0;
+        return qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED;
+    }
+
+    m_data->m_onceGetLinkedNotebookSyncChunkCalled = true;
 
     qint32 checkRes = checkLinkedNotebookFields(linkedNotebook, errorDescription);
     if (checkRes != 0) {
@@ -1758,14 +1810,29 @@ qint32 FakeNoteStore::getLinkedNotebookSyncChunk(const qevercloud::LinkedNoteboo
     }
 
     return getSyncChunkImpl(afterUSN, maxEntries, fullSyncOnly, linkedNotebook.guid.ref(), filter,
-                            syncChunk, errorDescription, rateLimitSeconds);
+                            syncChunk, errorDescription);
 }
 
 qint32 FakeNoteStore::getNote(const bool withContent, const bool withResourcesData,
                               const bool withResourcesRecognition, const bool withResourcesAlternateData,
                               Note & note, ErrorString & errorDescription, qint32 & rateLimitSeconds)
 {
-    CHECK_API_RATE_LIMIT()
+    if (m_data->m_onceGetLinkedNotebookSyncChunkCalled)
+    {
+        if (m_data->m_whenToTriggerAPIRateLimitExceeding == WhenToTriggerAPIRateLimitsExceeding::OnGetNoteAttemptAfterDownloadingLinkedNotebookSyncChunks) {
+            m_data->m_whenToTriggerAPIRateLimitExceeding = WhenToTriggerAPIRateLimitsExceeding::Never;
+            rateLimitSeconds = 0;
+            return qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED;
+        }
+    }
+    else
+    {
+        if (m_data->m_whenToTriggerAPIRateLimitExceeding == WhenToTriggerAPIRateLimitsExceeding::OnGetNoteAttemptAfterDownloadingUserOwnSyncChunks) {
+            m_data->m_whenToTriggerAPIRateLimitExceeding = WhenToTriggerAPIRateLimitsExceeding::Never;
+            rateLimitSeconds = 0;
+            return qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED;
+        }
+    }
 
     if (!note.hasGuid()) {
         errorDescription.setBase(QStringLiteral("Note has no guid"));
@@ -1863,7 +1930,22 @@ qint32 FakeNoteStore::getResource(const bool withDataBody, const bool withRecogn
                                   const QString & authToken, Resource & resource, ErrorString & errorDescription,
                                   qint32 & rateLimitSeconds)
 {
-    CHECK_API_RATE_LIMIT()
+    if (m_data->m_onceGetLinkedNotebookSyncChunkCalled)
+    {
+        if (m_data->m_whenToTriggerAPIRateLimitExceeding == WhenToTriggerAPIRateLimitsExceeding::OnGetResourceAttemptAfterDownloadingLinkedNotebookSyncChunks) {
+            m_data->m_whenToTriggerAPIRateLimitExceeding = WhenToTriggerAPIRateLimitsExceeding::Never;
+            rateLimitSeconds = 0;
+            return qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED;
+        }
+    }
+    else
+    {
+        if (m_data->m_whenToTriggerAPIRateLimitExceeding == WhenToTriggerAPIRateLimitsExceeding::OnGetResourceAttemptAfterDownloadingUserOwnSyncChunks) {
+            m_data->m_whenToTriggerAPIRateLimitExceeding = WhenToTriggerAPIRateLimitsExceeding::Never;
+            rateLimitSeconds = 0;
+            return qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED;
+        }
+    }
 
     if (!resource.hasGuid()) {
         errorDescription.setBase(QStringLiteral("Resource has no guid"));
@@ -1961,7 +2043,11 @@ bool FakeNoteStore::getResourceAsync(const bool withDataBody, const bool withRec
 qint32 FakeNoteStore::authenticateToSharedNotebook(const QString & shareKey, qevercloud::AuthenticationResult & authResult,
                                                    ErrorString & errorDescription, qint32 & rateLimitSeconds)
 {
-    CHECK_API_RATE_LIMIT()
+    if (m_data->m_whenToTriggerAPIRateLimitExceeding == WhenToTriggerAPIRateLimitsExceeding::OnAuthenticateToSharedNotebookAttempt) {
+        m_data->m_whenToTriggerAPIRateLimitExceeding = WhenToTriggerAPIRateLimitsExceeding::Never;
+        rateLimitSeconds = 0;
+        return qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED;
+    }
 
     const LinkedNotebookDataBySharedNotebookGlobalId & index = m_data->m_linkedNotebooks.get<LinkedNotebookBySharedNotebookGlobalId>();
     auto it = index.find(shareKey);
@@ -2646,11 +2732,8 @@ QString FakeNoteStore::nextName(const QString & name) const
 qint32 FakeNoteStore::getSyncChunkImpl(const qint32 afterUSN, const qint32 maxEntries,
                                        const bool fullSyncOnly, const QString & linkedNotebookGuid,
                                        const qevercloud::SyncChunkFilter & filter,
-                                       qevercloud::SyncChunk & syncChunk, ErrorString & errorDescription,
-                                       qint32 & rateLimitSeconds)
+                                       qevercloud::SyncChunk & syncChunk, ErrorString & errorDescription)
 {
-    CHECK_API_RATE_LIMIT()
-
     if (afterUSN < 0) {
         errorDescription.setBase(QStringLiteral("After USN is negative"));
         return qevercloud::EDAMErrorCode::BAD_DATA_FORMAT;

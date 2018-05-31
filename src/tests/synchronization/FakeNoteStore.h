@@ -119,8 +119,6 @@ public:
     bool removeExpungedLinkedNotebookGuid(const QString & guid);
 
     // Other
-    void triggerRateLimitReachOnNextCall();
-
     quint32 maxNumSavedSearches() const;
     void setMaxNumSavedSearches(const quint32 maxNumSavedSearches);
 
@@ -163,6 +161,35 @@ public:
     bool removeLinkedNotebookAuthToken(const QString & linkedNotebookOwner);
 
     qint32 currentMaxUsn(const QString & linkedNotebookGuid = QString()) const;
+
+    // API rate limits handling
+    struct WhenToTriggerAPIRateLimitsExceeding
+    {
+        enum type
+        {
+            Never = 0,
+            OnGetUserOwnSyncStateAttempt,
+            OnGetLinkedNotebookSyncStateAttempt,
+            OnGetUserOwnSyncChunkAttempt,
+            OnGetNoteAttemptAfterDownloadingUserOwnSyncChunks,
+            OnGetResourceAttemptAfterDownloadingUserOwnSyncChunks,
+            OnGetLinkedNotebookSyncChunkAttempt,
+            OnGetNoteAttemptAfterDownloadingLinkedNotebookSyncChunks,
+            OnGetResourceAttemptAfterDownloadingLinkedNotebookSyncChunks,
+            OnCreateSavedSearchAttempt,
+            OnUpdateSavedSearchAttempt,
+            OnCreateTagAttempt,
+            OnUpdateTagAttempt,
+            OnCreateNotebookAttempt,
+            OnUpdateNotebookAttempt,
+            OnCreateNoteAttempt,
+            OnUpdateNoteAttempt,
+            OnAuthenticateToSharedNotebookAttempt
+        };
+    };
+
+    WhenToTriggerAPIRateLimitsExceeding::type whenToTriggerAPIRateLimitsExceeding() const;
+    void setAPIRateLimitsExceedingTrigger(const WhenToTriggerAPIRateLimitsExceeding::type trigger);
 
 public:
     // INoteStore interface
@@ -254,8 +281,7 @@ private:
     qint32 getSyncChunkImpl(const qint32 afterUSN, const qint32 maxEntries,
                             const bool fullSyncOnly, const QString & linkedNotebookGuid,
                             const qevercloud::SyncChunkFilter & filter,
-                            qevercloud::SyncChunk & syncChunk, ErrorString & errorDescription,
-                            qint32 & rateLimitSeconds);
+                            qevercloud::SyncChunk & syncChunk, ErrorString & errorDescription);
 
     /**
      * Helper method to advance the iterator of UsnIndex to the next item
@@ -673,7 +699,8 @@ private:
         LinkedNotebookData      m_linkedNotebooks;
         QSet<QString>           m_expungedLinkedNotebookGuids;
 
-        bool                    m_shouldTriggerRateLimitReachOnNextCall;
+        bool                    m_onceGetLinkedNotebookSyncChunkCalled;
+        WhenToTriggerAPIRateLimitsExceeding::type       m_whenToTriggerAPIRateLimitExceeding;
 
         QSet<int>               m_getNoteAsyncDelayTimerIds;
         QSet<int>               m_getResourceAsyncDelayTimerIds;
