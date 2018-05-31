@@ -1260,6 +1260,8 @@ qint32 FakeNoteStore::createNotebook(Notebook & notebook, ErrorString & errorDes
     ++maxUsn;
     notebook.setUpdateSequenceNumber(maxUsn);
 
+    updateMaxUsnBeforeAPIRateLimitExceeding((notebook.hasLinkedNotebookGuid() ? notebook.linkedNotebookGuid() : QString()), maxUsn);
+
     Q_UNUSED(m_data->m_notebooks.insert(notebook))
     return 0;
 }
@@ -1328,6 +1330,8 @@ qint32 FakeNoteStore::updateNotebook(Notebook & notebook, ErrorString & errorDes
     qint32 maxUsn = currentMaxUsn(notebook.hasLinkedNotebookGuid() ? notebook.linkedNotebookGuid() : QString());
     ++maxUsn;
     notebook.setUpdateSequenceNumber(maxUsn);
+
+    updateMaxUsnBeforeAPIRateLimitExceeding((notebook.hasLinkedNotebookGuid() ? notebook.linkedNotebookGuid() : QString()), maxUsn);
 
     Q_UNUSED(index.replace(it, notebook))
     return 0;
@@ -1572,6 +1576,8 @@ qint32 FakeNoteStore::createTag(Tag & tag, ErrorString & errorDescription, qint3
     ++maxUsn;
     tag.setUpdateSequenceNumber(maxUsn);
 
+    updateMaxUsnBeforeAPIRateLimitExceeding((tag.hasLinkedNotebookGuid() ? tag.linkedNotebookGuid() : QString()), maxUsn);
+
     Q_UNUSED(m_data->m_tags.insert(tag))
 
     return 0;
@@ -1632,6 +1638,8 @@ qint32 FakeNoteStore::updateTag(Tag & tag, ErrorString & errorDescription, qint3
     ++maxUsn;
     tag.setUpdateSequenceNumber(maxUsn);
 
+    updateMaxUsnBeforeAPIRateLimitExceeding((tag.hasLinkedNotebookGuid() ? tag.linkedNotebookGuid() : QString()), maxUsn);
+
     Q_UNUSED(index.replace(it, tag))
     return 0;
 }
@@ -1668,8 +1676,9 @@ qint32 FakeNoteStore::createSavedSearch(SavedSearch & savedSearch, ErrorString &
     ++maxUsn;
     savedSearch.setUpdateSequenceNumber(maxUsn);
 
-    Q_UNUSED(m_data->m_savedSearches.insert(savedSearch))
+    updateMaxUsnBeforeAPIRateLimitExceeding(QString(), maxUsn);
 
+    Q_UNUSED(m_data->m_savedSearches.insert(savedSearch))
     return 0;
 }
 
@@ -1713,6 +1722,8 @@ qint32 FakeNoteStore::updateSavedSearch(SavedSearch & savedSearch, ErrorString &
     qint32 maxUsn = currentMaxUsn();
     ++maxUsn;
     savedSearch.setUpdateSequenceNumber(maxUsn);
+
+    updateMaxUsnBeforeAPIRateLimitExceeding(QString(), maxUsn);
 
     Q_UNUSED(index.replace(it, savedSearch))
     return 0;
@@ -2934,12 +2945,7 @@ qint32 FakeNoteStore::getSyncChunkImpl(const qint32 afterUSN, const qint32 maxEn
                 QNDEBUG(QStringLiteral("Added saved search to sync chunk: ") << savedSearchIt->qevercloudSavedSearch()
                         << QStringLiteral("\nSync chunk high USN updated to ") << syncChunk.chunkHighUSN);
 
-                if (!m_data->m_onceAPIRateLimitExceedingTriggered &&
-                    (m_data->m_usnOfLastCompleteUserOwnDataItemReceivedBeforeRateLimitReaching < savedSearchIt->updateSequenceNumber()))
-                {
-                    m_data->m_usnOfLastCompleteUserOwnDataItemReceivedBeforeRateLimitReaching = savedSearchIt->updateSequenceNumber();
-                }
-
+                updateMaxUsnBeforeAPIRateLimitExceeding(QString(), savedSearchIt->updateSequenceNumber());
                 ++savedSearchIt;
             }
             break;
@@ -2954,27 +2960,7 @@ qint32 FakeNoteStore::getSyncChunkImpl(const qint32 afterUSN, const qint32 maxEn
                 QNDEBUG(QStringLiteral("Added tag to sync chunk: ") << tagIt->qevercloudTag()
                         << QStringLiteral("\nSync chunk high USN updated to ") << syncChunk.chunkHighUSN);
 
-                if (!m_data->m_onceAPIRateLimitExceedingTriggered)
-                {
-                    if (linkedNotebookGuid.isEmpty())
-                    {
-                        if (m_data->m_usnOfLastCompleteUserOwnDataItemReceivedBeforeRateLimitReaching < tagIt->updateSequenceNumber()) {
-                            m_data->m_usnOfLastCompleteUserOwnDataItemReceivedBeforeRateLimitReaching = tagIt->updateSequenceNumber();
-                        }
-                    }
-                    else
-                    {
-                        auto lastUsnIt = m_data->m_usnsOfLastCompleteLinkedNotebookDataItemsReceivedBeforeRateLimitReachingByLinkedNotebookGuid.find(linkedNotebookGuid);
-                        if (lastUsnIt == m_data->m_usnsOfLastCompleteLinkedNotebookDataItemsReceivedBeforeRateLimitReachingByLinkedNotebookGuid.end()) {
-                            lastUsnIt = m_data->m_usnsOfLastCompleteLinkedNotebookDataItemsReceivedBeforeRateLimitReachingByLinkedNotebookGuid.insert(linkedNotebookGuid, 0);
-                        }
-
-                        if (lastUsnIt.value() < tagIt->updateSequenceNumber()) {
-                            lastUsnIt.value() = tagIt->updateSequenceNumber();
-                        }
-                    }
-                }
-
+                updateMaxUsnBeforeAPIRateLimitExceeding(linkedNotebookGuid, tagIt->updateSequenceNumber());
                 ++tagIt;
                 tagIt = advanceIterator(tagIt, tagUsnIndex, linkedNotebookGuid);
             }
@@ -2989,6 +2975,8 @@ qint32 FakeNoteStore::getSyncChunkImpl(const qint32 afterUSN, const qint32 maxEn
                 syncChunk.chunkHighUSN = notebookIt->updateSequenceNumber();
                 QNDEBUG(QStringLiteral("Added notebook to sync chunk: ") << notebookIt->qevercloudNotebook()
                         << QStringLiteral("\nSync chunk high USN updated to ") << syncChunk.chunkHighUSN);
+
+                updateMaxUsnBeforeAPIRateLimitExceeding(linkedNotebookGuid, notebookIt->updateSequenceNumber());
                 ++notebookIt;
                 notebookIt = advanceIterator(notebookIt, notebookUsnIndex, linkedNotebookGuid);
             }
@@ -3109,6 +3097,8 @@ qint32 FakeNoteStore::getSyncChunkImpl(const qint32 afterUSN, const qint32 maxEn
                 syncChunk.chunkHighUSN = linkedNotebookIt->updateSequenceNumber();
                 QNDEBUG(QStringLiteral("Added linked notebook to sync chunk: ") << linkedNotebookIt->qevercloudLinkedNotebook()
                         << QStringLiteral("\nSync chunk high USN updated to ") << syncChunk.chunkHighUSN);
+
+                updateMaxUsnBeforeAPIRateLimitExceeding(QString(), linkedNotebookIt->updateSequenceNumber());
                 ++linkedNotebookIt;
             }
             break;
@@ -3202,6 +3192,38 @@ qint32 FakeNoteStore::getSyncChunkImpl(const qint32 afterUSN, const qint32 maxEn
     }
 
     return 0;
+}
+
+void FakeNoteStore::updateMaxUsnBeforeAPIRateLimitExceeding(const QString & linkedNotebookGuid, const qint32 usn)
+{
+    QNDEBUG(QStringLiteral("FakeNoteStore::updateMaxUsnBeforeAPIRateLimitExceeding: linked notebook guid = ")
+            << linkedNotebookGuid << QStringLiteral(", USN = ") << usn);
+
+    if (m_data->m_onceAPIRateLimitExceedingTriggered) {
+        QNDEBUG(QStringLiteral("API rate limit exceeding has already been triggered"));
+        return;
+    }
+
+    if (linkedNotebookGuid.isEmpty())
+    {
+        if (m_data->m_usnOfLastCompleteUserOwnDataItemReceivedBeforeRateLimitReaching < usn) {
+            m_data->m_usnOfLastCompleteUserOwnDataItemReceivedBeforeRateLimitReaching = usn;
+            QNDEBUG(QStringLiteral("Updated USN of last complete user own data item received before API rate limit reaching to ") << usn);
+        }
+
+        return;
+    }
+
+    auto lastUsnIt = m_data->m_usnsOfLastCompleteLinkedNotebookDataItemsReceivedBeforeRateLimitReachingByLinkedNotebookGuid.find(linkedNotebookGuid);
+    if (lastUsnIt == m_data->m_usnsOfLastCompleteLinkedNotebookDataItemsReceivedBeforeRateLimitReachingByLinkedNotebookGuid.end()) {
+        lastUsnIt = m_data->m_usnsOfLastCompleteLinkedNotebookDataItemsReceivedBeforeRateLimitReachingByLinkedNotebookGuid.insert(linkedNotebookGuid, 0);
+    }
+
+    if (lastUsnIt.value() < usn) {
+        lastUsnIt.value() = usn;
+        QNDEBUG(QStringLiteral("Updated USN of lasy complete data item received before API rate limit reaching for linked notebook with guid ")
+                << linkedNotebookGuid << QStringLiteral(" to ") << usn);
+    }
 }
 
 template <class ConstIterator, class UsnIndex>

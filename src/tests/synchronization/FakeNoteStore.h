@@ -293,6 +293,8 @@ private:
     template <class ConstIterator, class UsnIndex>
     ConstIterator advanceIterator(ConstIterator it, const UsnIndex & index, const QString & linkedNotebookGuid) const;
 
+    void updateMaxUsnBeforeAPIRateLimitExceeding(const QString & linkedNotebookGuid, const qint32 usn);
+
 private:
     // Saved searches store
     struct SavedSearchByGuid{};
