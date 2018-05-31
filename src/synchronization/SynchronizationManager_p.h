@@ -38,6 +38,7 @@ namespace quentier {
 QT_FORWARD_DECLARE_CLASS(SynchronizationManagerDependencyInjector)
 QT_FORWARD_DECLARE_CLASS(INoteStore)
 QT_FORWARD_DECLARE_CLASS(IUserStore)
+QT_FORWARD_DECLARE_CLASS(SyncStatePersistenceManager)
 
 class Q_DECL_HIDDEN SynchronizationManagerPrivate: public QObject
 {
@@ -225,6 +226,7 @@ private:
 
     qint32                                  m_maxSyncChunkEntries;
 
+    SyncStatePersistenceManager *           m_pSyncStatePersistenceManager;
     qint32                                  m_previousUpdateCount;
     qint32                                  m_lastUpdateCount;
     qevercloud::Timestamp                   m_lastSyncTime;

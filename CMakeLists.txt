@@ -185,6 +185,7 @@ set(PRIVATE_HEADERS
     headers/quentier_private/synchronization/INoteStore.h
     headers/quentier_private/synchronization/IUserStore.h
     headers/quentier_private/synchronization/SynchronizationManagerDependencyInjector.h
+    headers/quentier_private/synchronization/SyncStatePersistenceManager.h
     headers/quentier_private/utility/IKeychainService.h
     src/local_storage/Transaction.h
     src/logging/QuentierLogger_p.h
@@ -387,6 +388,7 @@ set(${PROJECT_NAME}_SOURCES
     src/synchronization/SynchronizationShared.cpp
     src/synchronization/SynchronizationManager.cpp
     src/synchronization/SynchronizationManager_p.cpp
+    src/synchronization/SyncStatePersistenceManager.cpp
     src/synchronization/RemoteToLocalSynchronizationManager.cpp
     src/synchronization/SendLocalChangesManager.cpp
     src/synchronization/NotebookSyncConflictResolver.cpp
