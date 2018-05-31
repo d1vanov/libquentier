@@ -191,6 +191,9 @@ public:
     WhenToTriggerAPIRateLimitsExceeding::type whenToTriggerAPIRateLimitsExceeding() const;
     void setAPIRateLimitsExceedingTrigger(const WhenToTriggerAPIRateLimitsExceeding::type trigger);
 
+    qint32 usnOfLastCompleteUserOwnDataItemReceivedBeforeRateLimitReaching() const;
+    const QHash<QString,qint32> & usnsOfLastCompleteLinkedNotebookDataItemsReceivedBeforeRateLimitReaching() const;
+
 public:
     // INoteStore interface
     virtual INoteStore * create() const Q_DECL_OVERRIDE;
@@ -700,6 +703,7 @@ private:
         QSet<QString>           m_expungedLinkedNotebookGuids;
 
         bool                    m_onceGetLinkedNotebookSyncChunkCalled;
+        bool                    m_onceAPIRateLimitExceedingTriggered;
         WhenToTriggerAPIRateLimitsExceeding::type       m_whenToTriggerAPIRateLimitExceeding;
 
         QSet<int>               m_getNoteAsyncDelayTimerIds;
@@ -717,6 +721,9 @@ private:
 
         qevercloud::SyncState   m_syncState;
         QHash<QString,qevercloud::SyncState>    m_linkedNotebookSyncStates;
+
+        qint32                  m_usnOfLastCompleteUserOwnDataItemReceivedBeforeRateLimitReaching;
+        QHash<QString,qint32>   m_usnsOfLastCompleteLinkedNotebookDataItemsReceivedBeforeRateLimitReachingByLinkedNotebookGuid;
 
         QString                 m_authenticationToken;
         QHash<QString,QString>  m_linkedNotebookAuthTokens;
