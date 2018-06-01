@@ -33,6 +33,7 @@
 
 namespace quentier {
 
+QT_FORWARD_DECLARE_CLASS(SyncStatePersistenceManager)
 QT_FORWARD_DECLARE_CLASS(SynchronizationManagerSignalsCatcher)
 
 namespace test {
@@ -206,6 +207,7 @@ private:
     FakeUserStore *                 m_pFakeUserStore;
     FakeAuthenticationManager *     m_pFakeAuthenticationManager;
     FakeKeychainService *           m_pFakeKeychainService;
+    SyncStatePersistenceManager *   m_pSyncStatePersistenceManager;
     SynchronizationManager *        m_pSynchronizationManager;
     bool                            m_detectedTestFailure;
 

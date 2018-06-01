@@ -30,12 +30,14 @@
 namespace quentier {
 
 QT_FORWARD_DECLARE_CLASS(SynchronizationManager)
+QT_FORWARD_DECLARE_CLASS(SyncStatePersistenceManager)
 
 class SynchronizationManagerSignalsCatcher: public QObject
 {
     Q_OBJECT
 public:
     SynchronizationManagerSignalsCatcher(SynchronizationManager & synchronizationManager,
+                                         SyncStatePersistenceManager & syncStatePersistenceManager,
                                          QObject * parent = Q_NULLPTR);
 
     bool receivedStartedSignal() const { return m_receivedStartedSignal; }
@@ -115,6 +117,16 @@ public:
     bool receivedPreparedDirtyObjectsForSending() const { return m_receivedPreparedDirtyObjectsForSending; }
     bool receivedPreparedLinkedNotebookDirtyObjectsForSending() const { return m_receivedPreparedLinkedNotebookDirtyObjectsForSending; }
 
+    struct PersistedSyncStateUpdateCounts
+    {
+        PersistedSyncStateUpdateCounts() : m_userOwnUpdateCount(0), m_linkedNotebookUpdateCountsByLinkedNotebookGuid() {}
+
+        qint32      m_userOwnUpdateCount;
+        QHash<QString,qint32>       m_linkedNotebookUpdateCountsByLinkedNotebookGuid;
+    };
+
+    const QVector<PersistedSyncStateUpdateCounts> & persistedSyncStateUpdateCounts() const { return m_persistedSyncStateUpdateCounts; }
+
 public:
     bool checkSyncChunkDownloadProgressOrder(ErrorString & errorDescription) const;
     bool checkLinkedNotebookSyncChunkDownloadProgressOrder(ErrorString & errorDescription) const;
@@ -153,8 +165,12 @@ private Q_SLOTS:
     void onPreparedDirtyObjectsForSending();
     void onPreparedLinkedNotebookDirtyObjectsForSending();
 
+    void onSyncStatePersisted(Account account, qint32 userOwnDataUpdateCount, qevercloud::Timestamp userOwnDataSyncTime,
+                              QHash<QString,qint32> linkedNotebookUpdateCountsByLinkedNotebookGuid,
+                              QHash<QString,qevercloud::Timestamp> linkedNotebookSyncTimesByLinkedNotebookGuid);
+
 private:
-    void createConnections(SynchronizationManager & synchronizationManager);
+    void createConnections(SynchronizationManager & synchronizationManager, SyncStatePersistenceManager & syncStatePersistenceManager);
     bool checkSyncChunkDownloadProgressOrderImpl(const QVector<SyncChunkDownloadProgress> & syncChunkDownloadProgress,
                                                  ErrorString & errorDescription) const;
     bool checkSingleSyncChunkDownloadProgress(const SyncChunkDownloadProgress & progress,
@@ -212,6 +228,8 @@ private:
 
     QVector<ResourceDownloadProgress>       m_resourceDownloadProgress;
     QVector<ResourceDownloadProgress>       m_linkedNotebookResourceDownloadProgress;
+
+    QVector<PersistedSyncStateUpdateCounts>     m_persistedSyncStateUpdateCounts;
 
     bool            m_receivedPreparedDirtyObjectsForSending;
     bool            m_receivedPreparedLinkedNotebookDirtyObjectsForSending;

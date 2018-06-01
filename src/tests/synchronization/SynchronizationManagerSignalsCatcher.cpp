@@ -18,12 +18,14 @@
 
 #include "SynchronizationManagerSignalsCatcher.h"
 #include <quentier/synchronization/SynchronizationManager.h>
+#include <quentier_private/synchronization/SyncStatePersistenceManager.h>
 #include <quentier/logging/QuentierLogger.h>
 #include <QtTest/QtTest>
 
 namespace quentier {
 
 SynchronizationManagerSignalsCatcher::SynchronizationManagerSignalsCatcher(SynchronizationManager & synchronizationManager,
+                                                                           SyncStatePersistenceManager & syncStatePersistenceManager,
                                                                            QObject * parent) :
     QObject(parent),
     m_receivedStartedSignal(false),
@@ -61,7 +63,7 @@ SynchronizationManagerSignalsCatcher::SynchronizationManagerSignalsCatcher(Synch
     m_receivedPreparedDirtyObjectsForSending(false),
     m_receivedPreparedLinkedNotebookDirtyObjectsForSending(false)
 {
-    createConnections(synchronizationManager);
+    createConnections(synchronizationManager, syncStatePersistenceManager);
 }
 
 bool SynchronizationManagerSignalsCatcher::checkSyncChunkDownloadProgressOrder(ErrorString & errorDescription) const
@@ -276,7 +278,22 @@ void SynchronizationManagerSignalsCatcher::onPreparedLinkedNotebookDirtyObjectsF
     m_receivedPreparedLinkedNotebookDirtyObjectsForSending = true;
 }
 
-void SynchronizationManagerSignalsCatcher::createConnections(SynchronizationManager & synchronizationManager)
+void SynchronizationManagerSignalsCatcher::onSyncStatePersisted(Account account, qint32 userOwnDataUpdateCount, qevercloud::Timestamp userOwnDataSyncTime,
+                                                                QHash<QString,qint32> linkedNotebookUpdateCountsByLinkedNotebookGuid,
+                                                                QHash<QString,qevercloud::Timestamp> linkedNotebookSyncTimesByLinkedNotebookGuid)
+{
+    Q_UNUSED(account)
+    Q_UNUSED(userOwnDataSyncTime)
+    Q_UNUSED(linkedNotebookSyncTimesByLinkedNotebookGuid)
+
+    PersistedSyncStateUpdateCounts data;
+    data.m_userOwnUpdateCount = userOwnDataUpdateCount;
+    data.m_linkedNotebookUpdateCountsByLinkedNotebookGuid = linkedNotebookUpdateCountsByLinkedNotebookGuid;
+    m_persistedSyncStateUpdateCounts << data;
+}
+
+void SynchronizationManagerSignalsCatcher::createConnections(SynchronizationManager & synchronizationManager,
+                                                             SyncStatePersistenceManager & syncStatePersistenceManager)
 {
     QObject::connect(&synchronizationManager, QNSIGNAL(SynchronizationManager,started),
                      this, QNSLOT(SynchronizationManagerSignalsCatcher,onStart));
@@ -320,6 +337,13 @@ void SynchronizationManagerSignalsCatcher::createConnections(SynchronizationMana
                      this, QNSLOT(SynchronizationManagerSignalsCatcher,onPreparedDirtyObjectsForSending));
     QObject::connect(&synchronizationManager, QNSIGNAL(SynchronizationManager,preparedLinkedNotebooksDirtyObjectsForSending),
                      this, QNSLOT(SynchronizationManagerSignalsCatcher,onPreparedLinkedNotebookDirtyObjectsForSending));
+
+    QObject::connect(&syncStatePersistenceManager, QNSIGNAL(SyncStatePersistenceManager,notifyPersistentSyncStateUpdated,
+                                                            Account,qint32,qevercloud::Timestamp,QHash<QString,qint32>,
+                                                            QHash<QString,qevercloud::Timestamp>),
+                     this, QNSLOT(SynchronizationManagerSignalsCatcher,onSyncStatePersisted,
+                                  Account,qint32,qevercloud::Timestamp,QHash<QString,qint32>,
+                                  QHash<QString,qevercloud::Timestamp>));
 }
 
 bool SynchronizationManagerSignalsCatcher::checkSyncChunkDownloadProgressOrderImpl(const QVector<SyncChunkDownloadProgress> & syncChunkDownloadProgress,
