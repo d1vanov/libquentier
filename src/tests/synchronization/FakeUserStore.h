@@ -44,8 +44,6 @@ public:
     const User * findUser(const qint32 id) const;
     void setUser(const qint32 id, const User & user);
 
-    void triggerRateLimitReachOnNextCall();
-
 public:
     // IUserStore interface
     virtual IUserStore * create(const QString & host) const Q_DECL_OVERRIDE;
@@ -64,8 +62,6 @@ private:
 
     typedef QHash<qint32, User> UsersById;
     UsersById   m_users;
-
-    bool        m_shouldTriggerRateLimitReachOnNextCall;
 };
 
 } // namespace quentier
