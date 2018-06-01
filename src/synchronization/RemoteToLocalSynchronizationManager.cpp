@@ -2664,7 +2664,7 @@ void RemoteToLocalSynchronizationManager::onGetNoteAsyncFinished(qint32 errorCod
 
     if (errorCode == qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED)
     {
-        if (rateLimitSeconds <= 0) {
+        if (rateLimitSeconds < 0) {
             errorDescription.setBase(QT_TR_NOOP("QEverCloud or Evernote protocol error: caught RATE_LIMIT_REACHED "
                                                 "exception but the number of seconds to wait is zero or negative"));
             errorDescription.details() = QString::number(rateLimitSeconds);
@@ -2826,7 +2826,7 @@ void RemoteToLocalSynchronizationManager::onGetResourceAsyncFinished(qint32 erro
 
     if (errorCode == qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED)
     {
-        if (rateLimitSeconds <= 0) {
+        if (rateLimitSeconds < 0) {
             errorDescription.setBase(QT_TR_NOOP("QEverCloud or Evernote protocol error: caught RATE_LIMIT_REACHED "
                                                 "exception but the number of seconds to wait is zero or negative"));
             errorDescription.details() = QString::number(rateLimitSeconds);
@@ -3705,7 +3705,7 @@ bool RemoteToLocalSynchronizationManager::syncUserImpl(const bool waitIfRateLimi
     qint32 errorCode = m_manager.userStore().getUser(m_user, errorDescription, rateLimitSeconds);
     if (errorCode == qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED)
     {
-        if (rateLimitSeconds <= 0) {
+        if (rateLimitSeconds < 0) {
             errorDescription.setBase(QT_TR_NOOP("Rate limit reached but the number of seconds to wait is incorrect"));
             errorDescription.details() = QString::number(rateLimitSeconds);
             QNWARNING(errorDescription);
@@ -3728,9 +3728,9 @@ bool RemoteToLocalSynchronizationManager::syncUserImpl(const bool waitIfRateLimi
             }
 
             m_syncUserPostponeTimerId = timerId;
-            Q_EMIT rateLimitExceeded(rateLimitSeconds);
         }
 
+        Q_EMIT rateLimitExceeded(rateLimitSeconds);
         return false;
     }
     else if (errorCode == qevercloud::EDAMErrorCode::AUTH_EXPIRED)
@@ -3840,7 +3840,7 @@ bool RemoteToLocalSynchronizationManager::syncAccountLimits(const bool waitIfRat
     qint32 errorCode = m_manager.userStore().getAccountLimits(m_user.serviceLevel(), m_accountLimits, errorDescription, rateLimitSeconds);
     if (errorCode == qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED)
     {
-        if (rateLimitSeconds <= 0) {
+        if (rateLimitSeconds < 0) {
             errorDescription.setBase(QT_TR_NOOP("Rate limit reached but the number of seconds to wait is incorrect"));
             errorDescription.details() = QString::number(rateLimitSeconds);
             QNWARNING(errorDescription);
@@ -3863,10 +3863,9 @@ bool RemoteToLocalSynchronizationManager::syncAccountLimits(const bool waitIfRat
             }
 
             m_syncAccountLimitsPostponeTimerId = timerId;
-
-            Q_EMIT rateLimitExceeded(rateLimitSeconds);
         }
 
+        Q_EMIT rateLimitExceeded(rateLimitSeconds);
         return false;
     }
     else if (errorCode == qevercloud::EDAMErrorCode::AUTH_EXPIRED)
@@ -5191,7 +5190,7 @@ void RemoteToLocalSynchronizationManager::getLinkedNotebookSyncState(const Linke
                                                               syncState, errorDescription, rateLimitSeconds);
     if (errorCode == qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED)
     {
-        if (rateLimitSeconds <= 0) {
+        if (rateLimitSeconds < 0) {
             errorDescription.setBase(QT_TR_NOOP("Rate limit reached but the number of seconds to wait is incorrect"));
             errorDescription.details() = QString::number(rateLimitSeconds);
             Q_EMIT failure(errorDescription);
@@ -5363,7 +5362,7 @@ bool RemoteToLocalSynchronizationManager::downloadLinkedNotebooksSyncChunks()
                                                                       errorDescription, rateLimitSeconds);
             if (errorCode == qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED)
             {
-                if (rateLimitSeconds <= 0) {
+                if (rateLimitSeconds < 0) {
                     errorDescription.setBase(QT_TR_NOOP("Rate limit reached but the number of seconds to wait is incorrect"));
                     errorDescription.details() = QString::number(rateLimitSeconds);
                     Q_EMIT failure(errorDescription);
@@ -6596,7 +6595,7 @@ void RemoteToLocalSynchronizationManager::downloadSyncChunksAndLaunchSync(qint32
                                                   *pSyncChunk, errorDescription, rateLimitSeconds);
         if (errorCode == qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED)
         {
-            if (rateLimitSeconds <= 0) {
+            if (rateLimitSeconds < 0) {
                 errorDescription.setBase(QT_TR_NOOP("Rate limit reached but the number of seconds to wait is incorrect"));
                 errorDescription.details() = QString::number(rateLimitSeconds);
                 QNWARNING(errorDescription);
@@ -6700,7 +6699,7 @@ bool RemoteToLocalSynchronizationManager::checkUserAccountSyncState(bool & async
     qint32 errorCode = m_manager.noteStore().getSyncState(state, errorDescription, rateLimitSeconds);
     if (errorCode == qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED)
     {
-        if (rateLimitSeconds <= 0) {
+        if (rateLimitSeconds < 0) {
             errorDescription.setBase(QT_TR_NOOP("Rate limit reached but the number of seconds to wait is incorrect"));
             errorDescription.details() = QString::number(rateLimitSeconds);
             Q_EMIT failure(errorDescription);
@@ -6719,6 +6718,7 @@ bool RemoteToLocalSynchronizationManager::checkUserAccountSyncState(bool & async
             asyncWait = true;
         }
 
+        Q_EMIT rateLimitExceeded(rateLimitSeconds);
         return false;
     }
     else if (errorCode == qevercloud::EDAMErrorCode::AUTH_EXPIRED)
@@ -7643,7 +7643,7 @@ void RemoteToLocalSynchronizationManager::processResourceConflictAsNoteConflict(
                                                rateLimitSeconds);
     if (errorCode == qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED)
     {
-        if (Q_UNLIKELY(rateLimitSeconds <= 0)) {
+        if (Q_UNLIKELY(rateLimitSeconds < 0)) {
             errorDescription.setBase(QT_TR_NOOP("Rate limit reached but the number of seconds to wait is incorrect"));
             errorDescription.details() = QString::number(rateLimitSeconds);
             Q_EMIT failure(errorDescription);

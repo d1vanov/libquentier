@@ -1335,7 +1335,7 @@ void SendLocalChangesManager::sendTags()
 
         if (errorCode == qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED)
         {
-            if (rateLimitSeconds <= 0) {
+            if (rateLimitSeconds < 0) {
                 errorDescription.setBase(QT_TR_NOOP("Rate limit reached but the number of seconds to wait is incorrect"));
                 errorDescription.details() = QString::number(rateLimitSeconds);
                 Q_EMIT failure(errorDescription);
@@ -1537,7 +1537,7 @@ void SendLocalChangesManager::sendSavedSearches()
 
         if (errorCode == qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED)
         {
-            if (rateLimitSeconds <= 0) {
+            if (rateLimitSeconds < 0) {
                 errorDescription.setBase(QT_TR_NOOP("Rate limit reached but the number "
                                                     "of seconds to wait is incorrect"));
                 errorDescription.details() = QString::number(rateLimitSeconds);
@@ -1730,7 +1730,7 @@ void SendLocalChangesManager::sendNotebooks()
 
         if (errorCode == qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED)
         {
-            if (rateLimitSeconds <= 0) {
+            if (rateLimitSeconds < 0) {
                 errorDescription.setBase(QT_TR_NOOP("Rate limit reached but the number "
                                                     "of seconds to wait is incorrect"));
                 errorDescription.details() = QString::number(rateLimitSeconds);
@@ -2036,7 +2036,7 @@ void SendLocalChangesManager::sendNotes()
 
         if (errorCode == qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED)
         {
-            if (rateLimitSeconds <= 0) {
+            if (rateLimitSeconds < 0) {
                 errorDescription.setBase(QT_TR_NOOP("Rate limit reached but the number "
                                                     "of seconds to wait is incorrect"));
                 errorDescription.details() = QString::number(rateLimitSeconds);
