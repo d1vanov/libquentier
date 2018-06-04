@@ -130,6 +130,9 @@ private Q_SLOTS:
     void testIncrementalSyncWithRateLimitsBreachOnGetUserOwnSyncStateAttempt();
     void testIncrementalSyncWithRateLimitsBreachOnGetLinkedNotebookSyncStateAttempt();
     void testIncrementalSyncWithRateLimitsBreachOnGetUserOwnSyncChunkAttempt();
+    void testIncrementalSyncWithRateLimitsBreachOnGetLinkedNotebookSyncChunkAttempt();
+
+    // void testIncrementalSyncWithRateLimitBreachOnGetNoteAfterDownloadingUserOwnSyncChunksAttempt();
 
 private:
     void setUserOwnItemsToRemoteStorage();
@@ -186,7 +189,9 @@ private:
     void checkLocalCopiesOfConflictingNotesWereCreated();
     void checkNoConflictingNotesWereCreated();
 
-    void checkSyncStatePersistedRightAfterAPIRateLimitBreach(const SynchronizationManagerSignalsCatcher & catcher);
+    void checkSyncStatePersistedRightAfterAPIRateLimitBreach(const SynchronizationManagerSignalsCatcher & catcher,
+                                                             const int numExpectedSyncStateEntries,
+                                                             const int rateLimitTriggeredSyncStateEntryIndex);
 
     void listSavedSearchesFromLocalStorage(const qint32 afterUSN,
                                            QHash<QString, qevercloud::SavedSearch> & savedSearches) const;

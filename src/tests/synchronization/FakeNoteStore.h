@@ -191,8 +191,7 @@ public:
     WhenToTriggerAPIRateLimitsExceeding::type whenToTriggerAPIRateLimitsExceeding() const;
     void setAPIRateLimitsExceedingTrigger(const WhenToTriggerAPIRateLimitsExceeding::type trigger);
 
-    qint32 usnOfLastCompleteUserOwnDataItemReceivedBeforeRateLimitReaching() const;
-    const QHash<QString,qint32> & usnsOfLastCompleteLinkedNotebookDataItemsReceivedBeforeRateLimitReaching() const;
+    qint32 smallestUsnOfNotCompletelySentDataItemBeforeRateLimitBreach(const QString & linkedNotebookGuid = QString()) const;
 
 public:
     // INoteStore interface
@@ -292,8 +291,6 @@ private:
      */
     template <class ConstIterator, class UsnIndex>
     ConstIterator advanceIterator(ConstIterator it, const UsnIndex & index, const QString & linkedNotebookGuid) const;
-
-    void updateMaxUsnBeforeAPIRateLimitExceeding(const QString & linkedNotebookGuid, const qint32 usn);
 
 private:
     // Saved searches store
@@ -676,6 +673,21 @@ private:
         QString m_authToken;
     };
 
+    // Struct serving as a collection of guids of items
+    // which were sent to the agent synchronizing with FakeNoteStore
+    // in their entirety i.e. while saved searches, tags, notebooks, linked notebooks are counted
+    // as they are sent within sync chunks, notes and resources are only counted
+    // when their whole contents are requested and sent to the synchronizing agent
+    struct GuidsOfCompleteSentItems
+    {
+        QSet<QString>   m_savedSearchGuids;
+        QSet<QString>   m_tagGuids;
+        QSet<QString>   m_notebookGuids;
+        QSet<QString>   m_linkedNotebookGuids;
+        QSet<QString>   m_noteGuids;
+        QSet<QString>   m_resourceGuids;
+    };
+
 private:
     NoteDataByUSN::const_iterator nextNoteByUsnIterator(NoteDataByUSN::const_iterator it,
                                                         const QString & targetLinkedNotebookGuid = QString()) const;
@@ -724,8 +736,8 @@ private:
         qevercloud::SyncState   m_syncState;
         QHash<QString,qevercloud::SyncState>    m_linkedNotebookSyncStates;
 
-        qint32                  m_usnOfLastCompleteUserOwnDataItemReceivedBeforeRateLimitReaching;
-        QHash<QString,qint32>   m_usnsOfLastCompleteLinkedNotebookDataItemsReceivedBeforeRateLimitReachingByLinkedNotebookGuid;
+        GuidsOfCompleteSentItems    m_guidsOfUserOwnCompleteSentItems;
+        QHash<QString, GuidsOfCompleteSentItems>    m_guidsOfCompleteSentItemsByLinkedNotebookGuid;
 
         QString                 m_authenticationToken;
         QHash<QString,QString>  m_linkedNotebookAuthTokens;

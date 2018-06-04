@@ -2625,6 +2625,93 @@ void SynchronizationTester::testIncrementalSyncWithRateLimitsBreachOnGetUserOwnS
     checkPersistentSyncState();
 }
 
+void SynchronizationTester::testIncrementalSyncWithRateLimitsBreachOnGetLinkedNotebookSyncChunkAttempt()
+{
+    setUserOwnItemsToRemoteStorage();
+    setLinkedNotebookItemsToRemoteStorage();
+    copyRemoteItemsToLocalStorage();
+    setRemoteStorageSyncStateToPersistentSyncSettings();
+
+    setNewUserOwnItemsToRemoteStorage();
+    setNewLinkedNotebookItemsToRemoteStorage();
+
+    m_pFakeNoteStore->setAPIRateLimitsExceedingTrigger(FakeNoteStore::WhenToTriggerAPIRateLimitsExceeding::OnGetLinkedNotebookSyncChunkAttempt);
+
+    SynchronizationManagerSignalsCatcher catcher(*m_pSynchronizationManager, *m_pSyncStatePersistenceManager);
+    runTest(catcher);
+
+    CHECK_EXPECTED(receivedStartedSignal)
+    CHECK_EXPECTED(receivedFinishedSignal)
+    CHECK_EXPECTED(finishedSomethingDownloaded)
+    CHECK_EXPECTED(receivedRemoteToLocalSyncDone)
+    CHECK_EXPECTED(remoteToLocalSyncDoneSomethingDownloaded)
+    CHECK_EXPECTED(receivedSyncChunksDownloaded)
+    CHECK_EXPECTED(receivedLinkedNotebookSyncChunksDownloaded)
+    CHECK_EXPECTED(receivedRateLimitExceeded)
+
+    CHECK_UNEXPECTED(receivedAuthenticationFinishedSignal)
+    CHECK_UNEXPECTED(receivedStoppedSignal)
+    CHECK_UNEXPECTED(finishedSomethingSent)
+    CHECK_UNEXPECTED(receivedAuthenticationRevokedSignal)
+    CHECK_UNEXPECTED(receivedRemoteToLocalSyncStopped)
+    CHECK_UNEXPECTED(receivedSendLocalChangedStopped)
+    CHECK_UNEXPECTED(receivedWillRepeatRemoteToLocalSyncAfterSendingChanges)
+    CHECK_UNEXPECTED(receivedDetectedConflictDuringLocalChangesSending)
+    CHECK_UNEXPECTED(receivedPreparedDirtyObjectsForSending)
+    CHECK_UNEXPECTED(receivedPreparedLinkedNotebookDirtyObjectsForSending)
+
+    checkProgressNotificationsOrder(catcher);
+    checkIdentityOfLocalAndRemoteItems();
+    checkPersistentSyncState();
+}
+
+/*
+void SynchronizationTester::testIncrementalSyncWithRateLimitBreachOnGetNoteAfterDownloadingUserOwnSyncChunksAttempt()
+{
+    setUserOwnItemsToRemoteStorage();
+    setLinkedNotebookItemsToRemoteStorage();
+    copyRemoteItemsToLocalStorage();
+    setRemoteStorageSyncStateToPersistentSyncSettings();
+
+    setNewUserOwnItemsToRemoteStorage();
+    setNewLinkedNotebookItemsToRemoteStorage();
+
+    m_pFakeNoteStore->setAPIRateLimitsExceedingTrigger(FakeNoteStore::WhenToTriggerAPIRateLimitsExceeding::OnGetNoteAttemptAfterDownloadingUserOwnSyncChunks);
+
+    SynchronizationManagerSignalsCatcher catcher(*m_pSynchronizationManager, *m_pSyncStatePersistenceManager);
+    runTest(catcher);
+
+    CHECK_EXPECTED(receivedStartedSignal)
+    CHECK_EXPECTED(receivedFinishedSignal)
+    CHECK_EXPECTED(finishedSomethingDownloaded)
+    CHECK_EXPECTED(receivedRemoteToLocalSyncDone)
+    CHECK_EXPECTED(remoteToLocalSyncDoneSomethingDownloaded)
+    CHECK_EXPECTED(receivedSyncChunksDownloaded)
+    CHECK_EXPECTED(receivedLinkedNotebookSyncChunksDownloaded)
+    CHECK_EXPECTED(receivedRateLimitExceeded)
+
+    CHECK_UNEXPECTED(receivedAuthenticationFinishedSignal)
+    CHECK_UNEXPECTED(receivedStoppedSignal)
+    CHECK_UNEXPECTED(finishedSomethingSent)
+    CHECK_UNEXPECTED(receivedAuthenticationRevokedSignal)
+    CHECK_UNEXPECTED(receivedRemoteToLocalSyncStopped)
+    CHECK_UNEXPECTED(receivedSendLocalChangedStopped)
+    CHECK_UNEXPECTED(receivedWillRepeatRemoteToLocalSyncAfterSendingChanges)
+    CHECK_UNEXPECTED(receivedDetectedConflictDuringLocalChangesSending)
+    CHECK_UNEXPECTED(receivedPreparedDirtyObjectsForSending)
+    CHECK_UNEXPECTED(receivedPreparedLinkedNotebookDirtyObjectsForSending)
+
+    checkProgressNotificationsOrder(catcher);
+    checkIdentityOfLocalAndRemoteItems();
+    checkPersistentSyncState();
+
+    int numExpectedSyncStateEntries = 4;    // API rate limits breach + synced user own content + synced linked notebooks content + after local changes sending (although nothing is actually sent here)
+    int rateLimitTriggeredSyncStateEntryIndex = 0;
+    checkSyncStatePersistedRightAfterAPIRateLimitBreach(catcher, numExpectedSyncStateEntries,
+                                                        rateLimitTriggeredSyncStateEntryIndex);
+}
+*/
+
 void SynchronizationTester::setUserOwnItemsToRemoteStorage()
 {
     ErrorString errorDescription;
@@ -4870,35 +4957,57 @@ void SynchronizationTester::checkNoConflictingNotesWereCreated()
     }
 }
 
-void SynchronizationTester::checkSyncStatePersistedRightAfterAPIRateLimitBreach(const SynchronizationManagerSignalsCatcher & catcher)
+void SynchronizationTester::checkSyncStatePersistedRightAfterAPIRateLimitBreach(const SynchronizationManagerSignalsCatcher & catcher,
+                                                                                const int numExpectedSyncStateEntries,
+                                                                                const int rateLimitTriggeredSyncStateEntryIndex)
 {
     typedef SynchronizationManagerSignalsCatcher::PersistedSyncStateUpdateCounts PersistedSyncStateUpdateCounts;
     const QVector<PersistedSyncStateUpdateCounts> & syncStateUpdateCounts = catcher.persistedSyncStateUpdateCounts();
-    if (syncStateUpdateCounts.size() != 2) {
-        QString error = QStringLiteral("Expected to have two events of sync state persisting after the sync is over: "
-                                       "one after API rate limit breach and one after the sync end. Instead got ");
+    if (Q_UNLIKELY(syncStateUpdateCounts.size() != numExpectedSyncStateEntries)) {
+        QString error = QStringLiteral("Expected to have ");
+        error += QString::number(numExpectedSyncStateEntries);
+        error += QStringLiteral(" events of sync state persisting. Instead got ");
         error += QString::number(syncStateUpdateCounts.size());
         error += QStringLiteral(" sync state persisting events");
         QFAIL(qPrintable(error));
         return;
     }
 
+    if (Q_UNLIKELY(rateLimitTriggeredSyncStateEntryIndex >= numExpectedSyncStateEntries)) {
+        QFAIL("The index of sync state persisting event is larger than or equal to the number of expected sync state entries");
+        return;
+    }
+
     // The update counts we are interested in here are those corresponding to API rate limit breach,
     // these must be the first one within this two-items vector
-    const PersistedSyncStateUpdateCounts & syncStateUpdateCount = syncStateUpdateCounts[0];
+    const PersistedSyncStateUpdateCounts & syncStateUpdateCount = syncStateUpdateCounts[rateLimitTriggeredSyncStateEntryIndex];
 
-    qint32 referenceUserOwnUpdateCountBeforeAPILimitBreach = m_pFakeNoteStore->usnOfLastCompleteUserOwnDataItemReceivedBeforeRateLimitReaching();
-    const QHash<QString,qint32> & referenceLinkedNotebookUpdateCountsBeforeAPILimitBreach = m_pFakeNoteStore->usnsOfLastCompleteLinkedNotebookDataItemsReceivedBeforeRateLimitReaching();
+    qint32 referenceUserOwnUpdateCountBeforeAPILimitBreach = m_pFakeNoteStore->smallestUsnOfNotCompletelySentDataItemBeforeRateLimitBreach();
+    if (Q_UNLIKELY(referenceUserOwnUpdateCountBeforeAPILimitBreach != (syncStateUpdateCount.m_userOwnUpdateCount + 1))) {
+        QString error = QStringLiteral("Reference update count before API rate limit breach (");
+        error += QString::number(referenceUserOwnUpdateCountBeforeAPILimitBreach);
+        error += QStringLiteral(") is not equal to the one present within the actual sync state (");
+        error += QString::number(syncStateUpdateCount.m_userOwnUpdateCount);
+        error += QStringLiteral(") + 1");
+        QFAIL(qPrintable(error));
+        return;
+    }
 
-    QVERIFY(referenceUserOwnUpdateCountBeforeAPILimitBreach == syncStateUpdateCount.m_userOwnUpdateCount);
-    QVERIFY(referenceLinkedNotebookUpdateCountsBeforeAPILimitBreach.size() == syncStateUpdateCount.m_linkedNotebookUpdateCountsByLinkedNotebookGuid.size());
-
-    for(auto it = referenceLinkedNotebookUpdateCountsBeforeAPILimitBreach.constBegin(),
-        end = referenceLinkedNotebookUpdateCountsBeforeAPILimitBreach.constEnd(); it != end; ++it)
+    QVERIFY(!syncStateUpdateCount.m_linkedNotebookUpdateCountsByLinkedNotebookGuid.isEmpty());
+    for(auto it = syncStateUpdateCount.m_linkedNotebookUpdateCountsByLinkedNotebookGuid.constBegin(),
+        end = syncStateUpdateCount.m_linkedNotebookUpdateCountsByLinkedNotebookGuid.constEnd(); it != end; ++it)
     {
-        auto otherIt = syncStateUpdateCount.m_linkedNotebookUpdateCountsByLinkedNotebookGuid.find(it.key());
-        QVERIFY(otherIt != syncStateUpdateCount.m_linkedNotebookUpdateCountsByLinkedNotebookGuid.constEnd());
-        QVERIFY(it.value() == otherIt.value());
+        qint32 referenceUsn = m_pFakeNoteStore->smallestUsnOfNotCompletelySentDataItemBeforeRateLimitBreach(it.key());
+        if (Q_UNLIKELY(referenceUsn != (it.value() + 1))) {
+            QString error = QStringLiteral("Reference update count before API rate limit breach (");
+            error += QString::number(referenceUserOwnUpdateCountBeforeAPILimitBreach);
+            error += QStringLiteral(") is not equal to the one present within the actual sync state (");
+            error += QString::number(syncStateUpdateCount.m_userOwnUpdateCount);
+            error += QStringLiteral(") + 1 for linked notebook with guid ");
+            error += it.key();
+            QFAIL(qPrintable(error));
+            return;
+        }
     }
 }
 
