@@ -831,6 +831,8 @@ private:
     QHash<QString,Note>                         m_notesOwningResourcesPendingDownloadForAddingToLocalStorageByResourceGuid;
     QHash<QString,std::pair<Resource,Note> >    m_resourcesPendingDownloadForUpdatingInLocalStorageWithNotesByResourceGuid;
 
+    QHash<QString,QString>                  m_notebookGuidsByNoteGuidsForNotesPendingAsyncGet;
+
     FullSyncStaleDataItemsExpunger::SyncedGuids     m_fullSyncStaleDataItemsSyncedGuids;
     FullSyncStaleDataItemsExpunger *                m_pFullSyncStaleDataItemsExpunger;
     QMap<QString, FullSyncStaleDataItemsExpunger*>  m_fullSyncStaleDataItemsExpungersByLinkedNotebookGuid;

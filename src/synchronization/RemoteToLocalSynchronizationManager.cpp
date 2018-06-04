@@ -2635,6 +2635,17 @@ void RemoteToLocalSynchronizationManager::onGetNoteAsyncFinished(qint32 errorCod
 
     QString noteGuid = qecNote.guid.ref();
 
+    auto notebookGuidIt = m_notebookGuidsByNoteGuidsForNotesPendingAsyncGet.find(noteGuid);
+    if (Q_UNLIKELY(notebookGuidIt == m_notebookGuidsByNoteGuidsForNotesPendingAsyncGet.end())) {
+        errorDescription.setBase(QT_TR_NOOP("Internal error: can't find notebook guid for the just downloaded note"));
+        QNWARNING(errorDescription << QStringLiteral(", note: ") << qecNote);
+        Q_EMIT failure(errorDescription);
+        return;
+    }
+
+    QString notebookGuid = notebookGuidIt.value();
+    m_notebookGuidsByNoteGuidsForNotesPendingAsyncGet.erase(notebookGuidIt);
+
     auto addIt = m_guidsOfNotesPendingDownloadForAddingToLocalStorage.find(noteGuid);
     auto updateIt = ((addIt == m_guidsOfNotesPendingDownloadForAddingToLocalStorage.end())
                      ? m_notesPendingDownloadForUpdatingInLocalStorageByGuid.find(noteGuid)
@@ -2654,6 +2665,9 @@ void RemoteToLocalSynchronizationManager::onGetNoteAsyncFinished(qint32 errorCod
     }
 
     overrideLocalNoteWithRemoteNote(note, qecNote);
+
+    // Additional precaution again the case of rate API limit breach in which case the note might not have notebook guid
+    note.setNotebookGuid(notebookGuid);
 
     if (Q_UNLIKELY(!needToAddNote && !needToUpdateNote)) {
         errorDescription.setBase(QT_TR_NOOP("Internal error: the downloaded note was not expected"));
@@ -5964,6 +5978,8 @@ void RemoteToLocalSynchronizationManager::clear()
     m_notesOwningResourcesPendingDownloadForAddingToLocalStorageByResourceGuid.clear();
     m_resourcesPendingDownloadForUpdatingInLocalStorageWithNotesByResourceGuid.clear();
 
+    m_notebookGuidsByNoteGuidsForNotesPendingAsyncGet.clear();
+
     m_fullSyncStaleDataItemsSyncedGuids.m_syncedNotebookGuids.clear();
     m_fullSyncStaleDataItemsSyncedGuids.m_syncedTagGuids.clear();
     m_fullSyncStaleDataItemsSyncedGuids.m_syncedNoteGuids.clear();
@@ -6303,6 +6319,8 @@ void RemoteToLocalSynchronizationManager::getFullNoteDataAsync(const Note & note
         QNDEBUG(QStringLiteral("No auth token for public linked notebook, will use the account's default auth token"));
         authToken = m_authenticationToken;
     }
+
+    m_notebookGuidsByNoteGuidsForNotesPendingAsyncGet[note.guid()] = note.notebookGuid();
 
     bool withContent = true;
     bool withResourceData = true;
@@ -7191,8 +7209,10 @@ qint32 RemoteToLocalSynchronizationManager::nonProcessedItemsSmallestUsn(const Q
             } \
         } \
         \
+        QNTRACE(QStringLiteral("Checking item with USN ") << item.updateSequenceNum.ref() << QStringLiteral(": ") << item); \
         if ((smallestUsn < 0) || (item.updateSequenceNum.ref() < smallestUsn)) { \
             smallestUsn = item.updateSequenceNum.ref(); \
+            QNTRACE(QStringLiteral("Updated smallest non-processed items USN to ") << smallestUsn); \
         } \
     }
 
