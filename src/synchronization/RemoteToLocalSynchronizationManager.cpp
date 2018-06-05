@@ -216,7 +216,7 @@ RemoteToLocalSynchronizationManager::RemoteToLocalSynchronizationManager(IManage
     m_notesPendingThumbnailDownloadByGuid(),
     m_guidsOfResourcesFoundWithinTheLocalStorage(),
     m_localUidsOfElementsAlreadyAttemptedToFindByName(),
-    m_guidsOfNotesPendingDownloadForAddingToLocalStorage(),
+    m_notesPendingDownloadForAddingToLocalStorage(),
     m_notesPendingDownloadForUpdatingInLocalStorageByGuid(),
     m_notesOwningResourcesPendingDownloadForAddingToLocalStorageByResourceGuid(),
     m_resourcesPendingDownloadForUpdatingInLocalStorageWithNotesByResourceGuid(),
@@ -1005,13 +1005,13 @@ void RemoteToLocalSynchronizationManager::onFindNoteFailed(Note note, bool withR
             return;
         }
 
+        note = *it;
+
         // Removing the note from the list of notes waiting for processing
         // but also remembering it for further reference
         Q_UNUSED(m_notes.erase(it));
 
-        if (note.hasGuid()) {
-            Q_UNUSED(m_guidsOfProcessedNonExpungedNotes.insert(note.guid()))
-        }
+        Q_UNUSED(m_guidsOfProcessedNonExpungedNotes.insert(note.guid()))
 
         getFullNoteDataAsyncAndAddToLocalStorage(note);
         return;
@@ -2635,39 +2635,26 @@ void RemoteToLocalSynchronizationManager::onGetNoteAsyncFinished(qint32 errorCod
 
     QString noteGuid = qecNote.guid.ref();
 
-    auto notebookGuidIt = m_notebookGuidsByNoteGuidsForNotesPendingAsyncGet.find(noteGuid);
-    if (Q_UNLIKELY(notebookGuidIt == m_notebookGuidsByNoteGuidsForNotesPendingAsyncGet.end())) {
-        errorDescription.setBase(QT_TR_NOOP("Internal error: can't find notebook guid for the just downloaded note"));
-        QNWARNING(errorDescription << QStringLiteral(", note: ") << qecNote);
-        Q_EMIT failure(errorDescription);
-        return;
-    }
-
-    QString notebookGuid = notebookGuidIt.value();
-    m_notebookGuidsByNoteGuidsForNotesPendingAsyncGet.erase(notebookGuidIt);
-
-    auto addIt = m_guidsOfNotesPendingDownloadForAddingToLocalStorage.find(noteGuid);
-    auto updateIt = ((addIt == m_guidsOfNotesPendingDownloadForAddingToLocalStorage.end())
+    auto addIt = m_notesPendingDownloadForAddingToLocalStorage.find(noteGuid);
+    auto updateIt = ((addIt == m_notesPendingDownloadForAddingToLocalStorage.end())
                      ? m_notesPendingDownloadForUpdatingInLocalStorageByGuid.find(noteGuid)
                      : m_notesPendingDownloadForUpdatingInLocalStorageByGuid.end());
 
-    bool needToAddNote = (addIt != m_guidsOfNotesPendingDownloadForAddingToLocalStorage.end());
+    bool needToAddNote = (addIt != m_notesPendingDownloadForAddingToLocalStorage.end());
     bool needToUpdateNote = (updateIt != m_notesPendingDownloadForUpdatingInLocalStorageByGuid.end());
 
     Note note;
 
     if (needToAddNote) {
-        Q_UNUSED(m_guidsOfNotesPendingDownloadForAddingToLocalStorage.erase(addIt))
+        note = addIt.value();
+        note.setDirty(false);
+        note.setLocal(false);
+        Q_UNUSED(m_notesPendingDownloadForAddingToLocalStorage.erase(addIt))
     }
     else if (needToUpdateNote) {
         note = updateIt.value();
         Q_UNUSED(m_notesPendingDownloadForUpdatingInLocalStorageByGuid.erase(updateIt))
     }
-
-    overrideLocalNoteWithRemoteNote(note, qecNote);
-
-    // Additional precaution again the case of rate API limit breach in which case the note might not have notebook guid
-    note.setNotebookGuid(notebookGuid);
 
     if (Q_UNLIKELY(!needToAddNote && !needToUpdateNote)) {
         errorDescription.setBase(QT_TR_NOOP("Internal error: the downloaded note was not expected"));
@@ -2713,6 +2700,8 @@ void RemoteToLocalSynchronizationManager::onGetNoteAsyncFinished(qint32 errorCod
         Q_EMIT failure(errorDescription);
         return;
     }
+
+    overrideLocalNoteWithRemoteNote(note, qecNote);
 
     // NOTE: thumbnails for notes are downloaded separately and their download is optional;
     // for the sake of better error tolerance the failure to download thumbnails for particular notes
@@ -4680,7 +4669,7 @@ bool RemoteToLocalSynchronizationManager::notesSyncInProgress() const
         !m_expungeNoteRequestIds.isEmpty() ||
         !m_notesToAddPerAPICallPostponeTimerId.isEmpty() ||
         !m_notesToUpdatePerAPICallPostponeTimerId.isEmpty() ||
-        !m_guidsOfNotesPendingDownloadForAddingToLocalStorage.isEmpty() ||
+        !m_notesPendingDownloadForAddingToLocalStorage.isEmpty() ||
         !m_notesPendingDownloadForUpdatingInLocalStorageByGuid.isEmpty() ||
         !m_notesPendingInkNoteImagesDownloadByFindNotebookRequestId.isEmpty() ||
         !m_notesPendingThumbnailDownloadByFindNotebookRequestId.isEmpty() ||
@@ -4694,7 +4683,7 @@ bool RemoteToLocalSynchronizationManager::notesSyncInProgress() const
                 << m_findNoteByGuidRequestIds.size() << QStringLiteral(" find note by guid requests and/or ")
                 << m_notesToAddPerAPICallPostponeTimerId.size() << QStringLiteral(" notes pending addition due to rate API limits and/or ")
                 << m_notesToUpdatePerAPICallPostponeTimerId.size() << QStringLiteral(" notes pending update due to rate API limits and/or ")
-                << m_guidsOfNotesPendingDownloadForAddingToLocalStorage.size() << QStringLiteral(" notes pending download for adding to the local storage and/or ")
+                << m_notesPendingDownloadForAddingToLocalStorage.size() << QStringLiteral(" notes pending download for adding to the local storage and/or ")
                 << m_notesPendingDownloadForUpdatingInLocalStorageByGuid.size() << QStringLiteral(" notes pending download for updating in the local stroage and/or ")
                 << m_notesPendingInkNoteImagesDownloadByFindNotebookRequestId.size() << QStringLiteral(" notes pending ink note image download and/or ")
                 << (m_notesPendingThumbnailDownloadByFindNotebookRequestId.size() + m_notesPendingThumbnailDownloadByGuid.size())
@@ -5594,7 +5583,7 @@ void RemoteToLocalSynchronizationManager::checkServerDataMergeCompletion()
 
     bool notesReady = m_notes.isEmpty() && m_notesPendingAddOrUpdate.isEmpty() && m_findNoteByGuidRequestIds.isEmpty() &&
                       m_updateNoteRequestIds.isEmpty() && m_addNoteRequestIds.isEmpty() &&
-                      m_guidsOfNotesPendingDownloadForAddingToLocalStorage.isEmpty() &&
+                      m_notesPendingDownloadForAddingToLocalStorage.isEmpty() &&
                       m_notesPendingDownloadForUpdatingInLocalStorageByGuid.isEmpty() &&
                       m_notesToAddPerAPICallPostponeTimerId.isEmpty() && m_notesToUpdatePerAPICallPostponeTimerId.isEmpty() &&
                       m_resourceGuidsPendingInkNoteImageDownloadPerNoteGuid.isEmpty() &&
@@ -5609,7 +5598,7 @@ void RemoteToLocalSynchronizationManager::checkServerDataMergeCompletion()
                 << QStringLiteral(" notes pending add or update within the local storage: pending response for ") << m_updateNoteRequestIds.size()
                 << QStringLiteral(" note update requests and/or ") << m_addNoteRequestIds.size()
                 << QStringLiteral(" note add requests and/or ") << m_findNoteByGuidRequestIds.size()
-                << QStringLiteral(" find note by guid requests and/or ") << m_guidsOfNotesPendingDownloadForAddingToLocalStorage.size()
+                << QStringLiteral(" find note by guid requests and/or ") << m_notesPendingDownloadForAddingToLocalStorage.size()
                 << QStringLiteral(" async full new note data downloads and/or ") << m_notesPendingDownloadForUpdatingInLocalStorageByGuid.size()
                 << QStringLiteral(" async full existing note data downloads; also, there are ") << m_notesToAddPerAPICallPostponeTimerId.size()
                 << QStringLiteral(" postponed note add requests and/or ") << m_notesToUpdatePerAPICallPostponeTimerId.size()
@@ -5972,13 +5961,11 @@ void RemoteToLocalSynchronizationManager::clear()
     m_guidsOfResourcesFoundWithinTheLocalStorage.clear();
     m_localUidsOfElementsAlreadyAttemptedToFindByName.clear();
 
-    m_guidsOfNotesPendingDownloadForAddingToLocalStorage.clear();
+    m_notesPendingDownloadForAddingToLocalStorage.clear();
     m_notesPendingDownloadForUpdatingInLocalStorageByGuid.clear();
 
     m_notesOwningResourcesPendingDownloadForAddingToLocalStorageByResourceGuid.clear();
     m_resourcesPendingDownloadForUpdatingInLocalStorageWithNotesByResourceGuid.clear();
-
-    m_notebookGuidsByNoteGuidsForNotesPendingAsyncGet.clear();
 
     m_fullSyncStaleDataItemsSyncedGuids.m_syncedNotebookGuids.clear();
     m_fullSyncStaleDataItemsSyncedGuids.m_syncedTagGuids.clear();
@@ -6320,8 +6307,6 @@ void RemoteToLocalSynchronizationManager::getFullNoteDataAsync(const Note & note
         authToken = m_authenticationToken;
     }
 
-    m_notebookGuidsByNoteGuidsForNotesPendingAsyncGet[note.guid()] = note.notebookGuid();
-
     bool withContent = true;
     bool withResourceData = true;
     bool withResourceRecognition = true;
@@ -6359,15 +6344,14 @@ void RemoteToLocalSynchronizationManager::getFullNoteDataAsyncAndAddToLocalStora
 
     QString noteGuid = note.guid();
 
-    auto it = m_guidsOfNotesPendingDownloadForAddingToLocalStorage.find(noteGuid);
-    if (Q_UNLIKELY(it != m_guidsOfNotesPendingDownloadForAddingToLocalStorage.end())) {
+    auto it = m_notesPendingDownloadForAddingToLocalStorage.find(noteGuid);
+    if (Q_UNLIKELY(it != m_notesPendingDownloadForAddingToLocalStorage.end())) {
         QNDEBUG(QStringLiteral("Note with guid ") << noteGuid << QStringLiteral(" is already being downloaded"));
         return;
     }
 
-    QNTRACE(QStringLiteral("Adding note guid into the list of those pending download for adding to the local storage: ")
-            << noteGuid);
-    Q_UNUSED(m_guidsOfNotesPendingDownloadForAddingToLocalStorage.insert(noteGuid))
+    QNTRACE(QStringLiteral("Adding note into the list of those pending download for adding to the local storage: ") << note.qevercloudNote());
+    m_notesPendingDownloadForAddingToLocalStorage[noteGuid] = note.qevercloudNote();
 
     getFullNoteDataAsync(note);
 }
@@ -7180,40 +7164,57 @@ qint32 RemoteToLocalSynchronizationManager::nonProcessedItemsSmallestUsn(const Q
 
     qint32 smallestUsn = -1;
 
-#define PROCESS_CONTAINER(container, linkedNotebookMapping) \
-    for(auto it = container.begin(), end = container.end(); it != end; ++it) \
+#define PROCESS_ITEM(item, linkedNotebookMapping) \
+    if (Q_UNLIKELY(!item.updateSequenceNum.isSet())) { \
+        QNWARNING(QStringLiteral("Skipping item with empty update sequence number: ") << item); \
+        continue; \
+    } \
+    \
+    if (!linkedNotebookGuid.isEmpty()) \
     { \
-        const auto & item = *it; \
-        if (Q_UNLIKELY(!item.updateSequenceNum.isSet())) { \
-            QNWARNING(QStringLiteral("Skipping item with empty update sequence number: ") << item); \
+        if (Q_UNLIKELY(!item.guid.isSet())) { \
+            QNWARNING(QStringLiteral("Skipping item without guid: ") << item); \
             continue; \
         } \
         \
-        if (!linkedNotebookGuid.isEmpty()) \
-        { \
-            if (Q_UNLIKELY(!item.guid.isSet())) { \
-                QNWARNING(QStringLiteral("Skipping item without guid: ") << item); \
-                continue; \
-            } \
-            \
-            auto linkedNotebookGuidIt = linkedNotebookMapping.find(item.guid.ref()); \
-            if (linkedNotebookGuidIt == linkedNotebookMapping.end()) { \
-                QNTRACE(QStringLiteral("Skipping item without linked notebook mapping: ") << item); \
-                continue; \
-            } \
-            \
-            if (linkedNotebookGuidIt.value() != linkedNotebookGuid) { \
-                QNTRACE(QStringLiteral("Skipping item corresponding to another linked notebook (") \
-                        << linkedNotebookGuidIt.value() << QStringLiteral("): ") << item); \
-                continue; \
-            } \
+        auto linkedNotebookGuidIt = linkedNotebookMapping.find(item.guid.ref()); \
+        if (linkedNotebookGuidIt == linkedNotebookMapping.end()) { \
+            QNTRACE(QStringLiteral("Skipping item without linked notebook mapping: ") << item); \
+            continue; \
         } \
         \
-        QNTRACE(QStringLiteral("Checking item with USN ") << item.updateSequenceNum.ref() << QStringLiteral(": ") << item); \
-        if ((smallestUsn < 0) || (item.updateSequenceNum.ref() < smallestUsn)) { \
-            smallestUsn = item.updateSequenceNum.ref(); \
-            QNTRACE(QStringLiteral("Updated smallest non-processed items USN to ") << smallestUsn); \
+        if (linkedNotebookGuidIt.value() != linkedNotebookGuid) { \
+            QNTRACE(QStringLiteral("Skipping item corresponding to another linked notebook (") \
+                    << linkedNotebookGuidIt.value() << QStringLiteral("): ") << item); \
+            continue; \
         } \
+    } \
+    \
+    QNTRACE(QStringLiteral("Checking item with USN ") << item.updateSequenceNum.ref() << QStringLiteral(": ") << item); \
+    if ((smallestUsn < 0) || (item.updateSequenceNum.ref() < smallestUsn)) { \
+        smallestUsn = item.updateSequenceNum.ref(); \
+        QNTRACE(QStringLiteral("Updated smallest non-processed items USN to ") << smallestUsn); \
+    }
+
+#define PROCESS_CONTAINER(container, linkedNotebookMapping) \
+    QNTRACE(QStringLiteral("Checking container: ") + QString::fromUtf8(#container)); \
+    for(auto it = container.begin(), end = container.end(); it != end; ++it) { \
+        const auto & item = *it; \
+        PROCESS_ITEM(item, linkedNotebookMapping) \
+    }
+
+#define PROCESS_ASSOCIATIVE_NOTES_CONTAINER(container, linkedNotebookMapping) \
+    QNTRACE(QStringLiteral("Checking associative notes container: ") + QString::fromUtf8(#container)); \
+    for(auto it = container.begin(), end = container.end(); it != end; ++it) { \
+        const auto & item = it.value(); \
+        PROCESS_ITEM(item.qevercloudNote(), linkedNotebookMapping) \
+    }
+
+#define PROCESS_ASSOCIATIVE_RESOURCES_CONTAINER(container, linkedNotebookMapping) \
+    QNTRACE(QStringLiteral("Checking associative resources container: ") + QString::fromUtf8(#container)); \
+    for(auto it = container.begin(), end = container.end(); it != end; ++it) { \
+        const auto & item = it.value().first; \
+        PROCESS_ITEM(item.qevercloudResource(), linkedNotebookMapping) \
     }
 
     QHash<QString,QString> dummyHash;
@@ -7234,7 +7235,7 @@ qint32 RemoteToLocalSynchronizationManager::nonProcessedItemsSmallestUsn(const Q
     {
         if (syncingNotebooks || syncingTags)
         {
-            // That means the sync of notes hasn't started yet so we need to check notes from sync chunks
+            QNTRACE(QStringLiteral("The sync of notes hasn't started yet, checking notes from sync chunks"));
             for(auto it = m_syncChunks.constBegin(), end = m_syncChunks.constEnd(); it != end; ++it)
             {
                 const qevercloud::SyncChunk & syncChunk = *it;
@@ -7247,13 +7248,18 @@ qint32 RemoteToLocalSynchronizationManager::nonProcessedItemsSmallestUsn(const Q
         }
         else
         {
+            QNTRACE(QStringLiteral("The sync of notes has already started, checking notes from pending lists"));
+
             PROCESS_CONTAINER(m_notes, dummyHash)
             PROCESS_CONTAINER(m_notesPendingAddOrUpdate, dummyHash)
+
+            PROCESS_ASSOCIATIVE_NOTES_CONTAINER(m_notesToAddPerAPICallPostponeTimerId, dummyHash)
+            PROCESS_ASSOCIATIVE_NOTES_CONTAINER(m_notesToUpdatePerAPICallPostponeTimerId, dummyHash)
         }
 
         if (syncingNotebooks || syncingTags || notesSyncInProgress())
         {
-            // That means the sync of resources hasn't started yet so we need to check resources from sync chunks
+            QNTRACE(QStringLiteral("The sync of resources hasn't started yet, checking resources from sync chunks"));
             for(auto it = m_syncChunks.constBegin(), end = m_syncChunks.constEnd(); it != end; ++it)
             {
                 const qevercloud::SyncChunk & syncChunk = *it;
@@ -7266,8 +7272,13 @@ qint32 RemoteToLocalSynchronizationManager::nonProcessedItemsSmallestUsn(const Q
         }
         else
         {
+            QNTRACE(QStringLiteral("The sync of resources has already started, checking resources from pending lists"));
+
             PROCESS_CONTAINER(m_resources, dummyHash)
             PROCESS_CONTAINER(m_resourcesPendingAddOrUpdate, dummyHash)
+
+            PROCESS_ASSOCIATIVE_RESOURCES_CONTAINER(m_resourcesToAddWithNotesPerAPICallPostponeTimerId, dummyHash)
+            PROCESS_ASSOCIATIVE_RESOURCES_CONTAINER(m_resourcesToUpdateWithNotesPerAPICallPostponeTimerId, dummyHash)
         }
     }
     else
@@ -7282,7 +7293,7 @@ qint32 RemoteToLocalSynchronizationManager::nonProcessedItemsSmallestUsn(const Q
             NotesList localNotesList;
             if (syncingNotebooks || syncingTags)
             {
-                // That means the sync of notes hasn't started yet so the notes are still within the sync chunks
+                QNTRACE(QStringLiteral("The sync of notes from linked notebooks hasn't started yet, collecting notes from sync chunks"));
                 for(auto it = m_linkedNotebookSyncChunks.constBegin(), end = m_linkedNotebookSyncChunks.constEnd(); it != end; ++it)
                 {
                     const qevercloud::SyncChunk & syncChunk = *it;
@@ -7295,9 +7306,24 @@ qint32 RemoteToLocalSynchronizationManager::nonProcessedItemsSmallestUsn(const Q
             }
             else
             {
-                // The sync of notes has already started so the pending notes are in either of two containers
+                QNTRACE(QStringLiteral("The sync of notes from linked notebooks has already started, collecting notes from pending lists"));
+                localNotesList.reserve(m_notes.size() + m_notesPendingAddOrUpdate.size() +
+                                       m_notesToAddPerAPICallPostponeTimerId.size() +
+                                       m_notesToUpdatePerAPICallPostponeTimerId.size());
                 localNotesList << m_notes;
                 localNotesList << m_notesPendingAddOrUpdate;
+
+                for(auto it = m_notesToAddPerAPICallPostponeTimerId.constBegin(),
+                    end = m_notesToAddPerAPICallPostponeTimerId.constEnd(); it != end; ++it)
+                {
+                    localNotesList << it.value().qevercloudNote();
+                }
+
+                for(auto it = m_notesToUpdatePerAPICallPostponeTimerId.constBegin(),
+                    end = m_notesToUpdatePerAPICallPostponeTimerId.constEnd(); it != end; ++it)
+                {
+                    localNotesList << it.value().qevercloudNote();
+                }
             }
 
             for(auto noteIt = localNotesList.constBegin(), notesEnd = localNotesList.constEnd(); noteIt != notesEnd; ++noteIt)
@@ -7325,7 +7351,7 @@ qint32 RemoteToLocalSynchronizationManager::nonProcessedItemsSmallestUsn(const Q
 
         if (syncingNotebooks || syncingTags)
         {
-            // That means the sync of notes hasn't started yet so we need to check notes from sync chunks
+            QNTRACE(QStringLiteral("The sync of notes from linked notebooks hasn't started yet, checking notes from sync chunks"));
             for(auto it = m_linkedNotebookSyncChunks.constBegin(), end = m_linkedNotebookSyncChunks.constEnd(); it != end; ++it)
             {
                 const qevercloud::SyncChunk & syncChunk = *it;
@@ -7338,13 +7364,17 @@ qint32 RemoteToLocalSynchronizationManager::nonProcessedItemsSmallestUsn(const Q
         }
         else
         {
+            QNTRACE(QStringLiteral("The sync of notes from linked notebooks has already started, checking notes from pending lists"));
             PROCESS_CONTAINER(m_notes, linkedNotebookGuidsByNoteGuids)
             PROCESS_CONTAINER(m_notesPendingAddOrUpdate, linkedNotebookGuidsByNoteGuids)
+
+            PROCESS_ASSOCIATIVE_NOTES_CONTAINER(m_notesToAddPerAPICallPostponeTimerId, linkedNotebookGuidsByNoteGuids)
+            PROCESS_ASSOCIATIVE_NOTES_CONTAINER(m_notesToUpdatePerAPICallPostponeTimerId, linkedNotebookGuidsByNoteGuids)
         }
 
         if (syncingNotebooks || syncingTags || syncingNotes)
         {
-            // That means the sync of resources hasn't started yet so we need to check resources from sync chunks
+            QNTRACE(QStringLiteral("The sync of resources from linked notebooks' notes hasn't started yet, checking resources from sync chunks"));
             for(auto it = m_linkedNotebookSyncChunks.constBegin(), end = m_linkedNotebookSyncChunks.constEnd(); it != end; ++it)
             {
                 const qevercloud::SyncChunk & syncChunk = *it;
@@ -7357,13 +7387,22 @@ qint32 RemoteToLocalSynchronizationManager::nonProcessedItemsSmallestUsn(const Q
         }
         else
         {
+            QNTRACE(QStringLiteral("The sync of resources from linked notebooks' notes has already started, checking resources from pending lists"));
             PROCESS_CONTAINER(m_resources, m_linkedNotebookGuidsByResourceGuids)
             PROCESS_CONTAINER(m_resourcesPendingAddOrUpdate, m_linkedNotebookGuidsByResourceGuids)
+
+            PROCESS_ASSOCIATIVE_RESOURCES_CONTAINER(m_resourcesToAddWithNotesPerAPICallPostponeTimerId,
+                                                    m_linkedNotebookGuidsByResourceGuids)
+            PROCESS_ASSOCIATIVE_RESOURCES_CONTAINER(m_resourcesToUpdateWithNotesPerAPICallPostponeTimerId,
+                                                    m_linkedNotebookGuidsByResourceGuids)
         }
     }
 
 #undef PROCESS_CONTAINER
+#undef PROCESS_ASSOCIATIVE_NOTES_CONTAINER
+#undef PROCESS_ASSOCIATIVE_RESOURCES_CONTAINER
 
+    QNTRACE(QStringLiteral("Overall smallest USN: ") << smallestUsn);
     return smallestUsn;
 }
 
