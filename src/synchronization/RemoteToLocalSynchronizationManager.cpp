@@ -6215,8 +6215,8 @@ void RemoteToLocalSynchronizationManager::timerEvent(QTimerEvent * pEvent)
 
     auto resourceToUpdateIt = m_resourcesToUpdateWithNotesPerAPICallPostponeTimerId.find(timerId);
     if (resourceToUpdateIt != m_resourcesToUpdateWithNotesPerAPICallPostponeTimerId.end()) {
-        std::pair<Resource,Note> pair = resourceToAddIt.value();
-        Q_UNUSED(m_resourcesToAddWithNotesPerAPICallPostponeTimerId.erase(resourceToAddIt))
+        std::pair<Resource,Note> pair = resourceToUpdateIt.value();
+        Q_UNUSED(m_resourcesToUpdateWithNotesPerAPICallPostponeTimerId.erase(resourceToUpdateIt))
         getFullResourceDataAsyncAndUpdateInLocalStorage(pair.first, pair.second);
         return;
     }
