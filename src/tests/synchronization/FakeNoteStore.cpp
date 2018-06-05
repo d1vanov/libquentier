@@ -1180,6 +1180,16 @@ void FakeNoteStore::setAPIRateLimitsExceedingTrigger(const WhenToTriggerAPIRateL
     m_data->m_whenToTriggerAPIRateLimitExceeding = trigger;
 }
 
+void FakeNoteStore::considerAllExistingDataItemsSentBeforeRateLimitBreach()
+{
+    considerAllExistingDataItemsSentBeforeRateLimitBreachImpl();
+
+    const LinkedNotebookDataByGuid & linkedNotebookGuidIndex = m_data->m_linkedNotebooks.get<LinkedNotebookByGuid>();
+    for(auto it = linkedNotebookGuidIndex.begin(), end = linkedNotebookGuidIndex.end(); it != end; ++it) {
+        considerAllExistingDataItemsSentBeforeRateLimitBreachImpl(it->guid());
+    }
+}
+
 qint32 FakeNoteStore::smallestUsnOfNotCompletelySentDataItemBeforeRateLimitBreach(const QString & linkedNotebookGuid) const
 {
     QNDEBUG(QStringLiteral("FakeNoteStore::smallestUsnOfNotCompletelySentDataItemBeforeRateLimitBreach: linked notebook guid = ")
@@ -3437,6 +3447,115 @@ qint32 FakeNoteStore::getSyncChunkImpl(const qint32 afterUSN, const qint32 maxEn
     }
 
     return 0;
+}
+
+void FakeNoteStore::considerAllExistingDataItemsSentBeforeRateLimitBreachImpl(const QString & linkedNotebookGuid)
+{
+    QNDEBUG(QStringLiteral("FakeNoteStore::considerAllExistingDataItemsSentBeforeRateLimitBreachImpl: linked notebook guid = ")
+            << linkedNotebookGuid);
+
+    GuidsOfCompleteSentItems & guidsOfCompleteSentItems = (linkedNotebookGuid.isEmpty()
+                                                           ? m_data->m_guidsOfUserOwnCompleteSentItems
+                                                           : m_data->m_guidsOfCompleteSentItemsByLinkedNotebookGuid[linkedNotebookGuid]);
+
+    if (linkedNotebookGuid.isEmpty())
+    {
+        const SavedSearchDataByGuid & savedSearchGuidIndex = m_data->m_savedSearches.get<SavedSearchByGuid>();
+        for(auto it = savedSearchGuidIndex.begin(), end = savedSearchGuidIndex.end(); it != end; ++it) {
+            Q_UNUSED(guidsOfCompleteSentItems.m_savedSearchGuids.insert(it->guid()))
+            QNTRACE(QStringLiteral("Marked saved search as processed: ") << *it);
+        }
+    }
+
+    const NotebookDataByGuid & notebookGuidIndex = m_data->m_notebooks.get<NotebookByGuid>();
+    for(auto it = notebookGuidIndex.begin(), end = notebookGuidIndex.end(); it != end; ++it)
+    {
+        const Notebook & notebook = *it;
+        if (linkedNotebookGuid.isEmpty() == notebook.hasLinkedNotebookGuid()) {
+            continue;
+        }
+        if (notebook.hasLinkedNotebookGuid() && (notebook.linkedNotebookGuid() != linkedNotebookGuid)) {
+            continue;
+        }
+
+        Q_UNUSED(guidsOfCompleteSentItems.m_notebookGuids.insert(notebook.guid()))
+        QNTRACE(QStringLiteral("Marked notebook as processed: ") << notebook);
+    }
+
+    const TagDataByGuid & tagGuidIndex = m_data->m_tags.get<TagByGuid>();
+    for(auto it = tagGuidIndex.begin(), end = tagGuidIndex.end(); it != end; ++it)
+    {
+        const Tag & tag = *it;
+        if (linkedNotebookGuid.isEmpty() == tag.hasLinkedNotebookGuid()) {
+            continue;
+        }
+        if (tag.hasLinkedNotebookGuid() && (tag.linkedNotebookGuid() != linkedNotebookGuid)) {
+            continue;
+        }
+
+        Q_UNUSED(guidsOfCompleteSentItems.m_tagGuids.insert(tag.guid()))
+        QNTRACE(QStringLiteral("Marked tag as processed: ") << tag);
+    }
+
+    if (linkedNotebookGuid.isEmpty())
+    {
+        const LinkedNotebookDataByGuid & linkedNotebookGuidIndex = m_data->m_linkedNotebooks.get<LinkedNotebookByGuid>();
+        for(auto it = linkedNotebookGuidIndex.begin(), end = linkedNotebookGuidIndex.end(); it != end; ++it) {
+            Q_UNUSED(guidsOfCompleteSentItems.m_linkedNotebookGuids.insert(it->guid()))
+            QNTRACE(QStringLiteral("Marked linked notebook as processed: ") << *it);
+        }
+    }
+
+    const NoteDataByGuid & noteGuidIndex = m_data->m_notes.get<NoteByGuid>();
+    for(auto it = noteGuidIndex.begin(), end = noteGuidIndex.end(); it != end; ++it)
+    {
+        const Note & note = *it;
+        auto notebookIt = notebookGuidIndex.find(note.notebookGuid());
+        if (Q_UNLIKELY(notebookIt == notebookGuidIndex.end())) {
+            QNWARNING(QStringLiteral("Skipping note for which no notebook was found: ") << note);
+            continue;
+        }
+
+        const Notebook & notebook = *notebookIt;
+        if (linkedNotebookGuid.isEmpty() == notebook.hasLinkedNotebookGuid()) {
+            continue;
+        }
+        if (notebook.hasLinkedNotebookGuid() && (notebook.linkedNotebookGuid() != linkedNotebookGuid)) {
+            continue;
+        }
+
+        Q_UNUSED(guidsOfCompleteSentItems.m_noteGuids.insert(note.guid()))
+        QNTRACE(QStringLiteral("Marked note as processed: ") << note);
+    }
+
+    const ResourceDataByGuid & resourceGuidIndex = m_data->m_resources.get<ResourceByGuid>();
+    for(auto it = resourceGuidIndex.begin(), end = resourceGuidIndex.end(); it != end; ++it)
+    {
+        const Resource & resource = *it;
+        auto noteIt = noteGuidIndex.find(resource.noteGuid());
+        if (Q_UNLIKELY(noteIt == noteGuidIndex.end())) {
+            QNWARNING(QStringLiteral("Skipping resource for which no note was found: ") << resource);
+            continue;
+        }
+
+        const Note & note = *noteIt;
+        auto notebookIt = notebookGuidIndex.find(note.notebookGuid());
+        if (Q_UNLIKELY(notebookIt == notebookGuidIndex.end())) {
+            QNWARNING(QStringLiteral("Skipping resource for which note no notebook was found: ") << note);
+            continue;
+        }
+
+        const Notebook & notebook = *notebookIt;
+        if (linkedNotebookGuid.isEmpty() == notebook.hasLinkedNotebookGuid()) {
+            continue;
+        }
+        if (notebook.hasLinkedNotebookGuid() && (notebook.linkedNotebookGuid() != linkedNotebookGuid)) {
+            continue;
+        }
+
+        Q_UNUSED(guidsOfCompleteSentItems.m_resourceGuids.insert(resource.guid()))
+        QNTRACE(QStringLiteral("Marked resource as processed: ") << resource);
+    }
 }
 
 template <class ConstIterator, class UsnIndex>

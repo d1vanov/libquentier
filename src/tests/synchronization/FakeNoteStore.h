@@ -191,6 +191,7 @@ public:
     WhenToTriggerAPIRateLimitsExceeding::type whenToTriggerAPIRateLimitsExceeding() const;
     void setAPIRateLimitsExceedingTrigger(const WhenToTriggerAPIRateLimitsExceeding::type trigger);
 
+    void considerAllExistingDataItemsSentBeforeRateLimitBreach();
     qint32 smallestUsnOfNotCompletelySentDataItemBeforeRateLimitBreach(const QString & linkedNotebookGuid = QString()) const;
 
 public:
@@ -284,6 +285,8 @@ private:
                             const bool fullSyncOnly, const QString & linkedNotebookGuid,
                             const qevercloud::SyncChunkFilter & filter,
                             qevercloud::SyncChunk & syncChunk, ErrorString & errorDescription);
+
+    void considerAllExistingDataItemsSentBeforeRateLimitBreachImpl(const QString & linkedNotebookGuid = QString());
 
     /**
      * Helper method to advance the iterator of UsnIndex to the next item
