@@ -2665,13 +2665,13 @@ void SynchronizationTester::testIncrementalSyncWithRateLimitsBreachOnGetLinkedNo
     checkPersistentSyncState();
 }
 
-/*
-void SynchronizationTester::testIncrementalSyncWithRateLimitBreachOnGetNoteAfterDownloadingUserOwnSyncChunksAttempt()
+void SynchronizationTester::testIncrementalSyncWithRateLimitsBreachOnGetNoteAfterDownloadingUserOwnSyncChunksAttempt()
 {
     setUserOwnItemsToRemoteStorage();
     setLinkedNotebookItemsToRemoteStorage();
     copyRemoteItemsToLocalStorage();
     setRemoteStorageSyncStateToPersistentSyncSettings();
+    m_pFakeNoteStore->considerAllExistingDataItemsSentBeforeRateLimitBreach();
 
     setNewUserOwnItemsToRemoteStorage();
     setNewLinkedNotebookItemsToRemoteStorage();
@@ -2710,7 +2710,6 @@ void SynchronizationTester::testIncrementalSyncWithRateLimitBreachOnGetNoteAfter
     checkSyncStatePersistedRightAfterAPIRateLimitBreach(catcher, numExpectedSyncStateEntries,
                                                         rateLimitTriggeredSyncStateEntryIndex);
 }
-*/
 
 void SynchronizationTester::setUserOwnItemsToRemoteStorage()
 {
