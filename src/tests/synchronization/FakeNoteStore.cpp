@@ -111,10 +111,19 @@ bool FakeNoteStore::setSavedSearch(SavedSearch & search, ErrorString & errorDesc
         nameIt = nameIndex.find(name.toUpper());
     }
 
-    if (!search.hasUpdateSequenceNumber()) {
+    if (!search.hasUpdateSequenceNumber())
+    {
         qint32 maxUsn = currentMaxUsn();
         ++maxUsn;
         search.setUpdateSequenceNumber(maxUsn);
+
+        if (!m_data->m_onceAPIRateLimitExceedingTriggered)
+        {
+            auto it = m_data->m_guidsOfUserOwnCompleteSentItems.m_savedSearchGuids.find(search.guid());
+            if (it != m_data->m_guidsOfUserOwnCompleteSentItems.m_savedSearchGuids.end()) {
+                Q_UNUSED(m_data->m_guidsOfUserOwnCompleteSentItems.m_savedSearchGuids.erase(it))
+            }
+        }
     }
 
     Q_UNUSED(removeExpungedSavedSearchGuid(search.guid()))
@@ -229,10 +238,22 @@ bool FakeNoteStore::setTag(Tag & tag, ErrorString & errorDescription)
         nameIt = nameIndex.find(name.toUpper());
     }
 
-    if (!tag.hasUpdateSequenceNumber()) {
+    if (!tag.hasUpdateSequenceNumber())
+    {
         qint32 maxUsn = currentMaxUsn(tag.hasLinkedNotebookGuid() ? tag.linkedNotebookGuid() : QString());
         ++maxUsn;
         tag.setUpdateSequenceNumber(maxUsn);
+
+        if (!m_data->m_onceAPIRateLimitExceedingTriggered)
+        {
+            GuidsOfCompleteSentItems & guidsOfCompleteSentItems = (tag.hasLinkedNotebookGuid()
+                                                                   ? m_data->m_guidsOfCompleteSentItemsByLinkedNotebookGuid[tag.linkedNotebookGuid()]
+                                                                   : m_data->m_guidsOfUserOwnCompleteSentItems);
+            auto it = guidsOfCompleteSentItems.m_tagGuids.find(tag.guid());
+            if (it != guidsOfCompleteSentItems.m_tagGuids.end()) {
+                Q_UNUSED(guidsOfCompleteSentItems.m_tagGuids.erase(it))
+            }
+        }
     }
 
     if (!tag.hasLinkedNotebookGuid()) {
@@ -390,10 +411,22 @@ bool FakeNoteStore::setNotebook(Notebook & notebook, ErrorString & errorDescript
         nameIt = nameIndex.find(name.toUpper());
     }
 
-    if (!notebook.hasUpdateSequenceNumber()) {
+    if (!notebook.hasUpdateSequenceNumber())
+    {
         qint32 maxUsn = currentMaxUsn(notebook.hasLinkedNotebookGuid() ? notebook.linkedNotebookGuid() : QString());
         ++maxUsn;
         notebook.setUpdateSequenceNumber(maxUsn);
+
+        if (!m_data->m_onceAPIRateLimitExceedingTriggered)
+        {
+            GuidsOfCompleteSentItems & guidsOfCompleteSentItems = (notebook.hasLinkedNotebookGuid()
+                                                                   ? m_data->m_guidsOfCompleteSentItemsByLinkedNotebookGuid[notebook.linkedNotebookGuid()]
+                                                                   : m_data->m_guidsOfUserOwnCompleteSentItems);
+            auto it = guidsOfCompleteSentItems.m_notebookGuids.find(notebook.guid());
+            if (it != guidsOfCompleteSentItems.m_notebookGuids.end()) {
+                Q_UNUSED(guidsOfCompleteSentItems.m_notebookGuids.erase(it))
+            }
+        }
     }
 
     if (!notebook.hasLinkedNotebookGuid()) {
@@ -515,10 +548,22 @@ bool FakeNoteStore::setNote(Note & note, ErrorString & errorDescription)
         return false;
     }
 
-    if (!note.hasUpdateSequenceNumber()) {
+    if (!note.hasUpdateSequenceNumber())
+    {
         qint32 maxUsn = currentMaxUsn(notebookIt->hasLinkedNotebookGuid() ? notebookIt->linkedNotebookGuid() : QString());
         ++maxUsn;
         note.setUpdateSequenceNumber(maxUsn);
+
+        if (!m_data->m_onceAPIRateLimitExceedingTriggered)
+        {
+            GuidsOfCompleteSentItems & guidsOfCompleteSentItems = (notebookIt->hasLinkedNotebookGuid()
+                                                                   ? m_data->m_guidsOfCompleteSentItemsByLinkedNotebookGuid[notebookIt->linkedNotebookGuid()]
+                                                                   : m_data->m_guidsOfUserOwnCompleteSentItems);
+            auto it = guidsOfCompleteSentItems.m_noteGuids.find(note.guid());
+            if (it != guidsOfCompleteSentItems.m_noteGuids.end()) {
+                Q_UNUSED(guidsOfCompleteSentItems.m_noteGuids.erase(it))
+            }
+        }
     }
 
     if (!notebookIt->hasLinkedNotebookGuid()) {
@@ -682,10 +727,22 @@ bool FakeNoteStore::setResource(Resource & resource, ErrorString & errorDescript
         return false;
     }
 
-    if (!resource.hasUpdateSequenceNumber()) {
+    if (!resource.hasUpdateSequenceNumber())
+    {
         qint32 maxUsn = currentMaxUsn(notebookIt->hasLinkedNotebookGuid() ? notebookIt->linkedNotebookGuid() : QString());
         ++maxUsn;
         resource.setUpdateSequenceNumber(maxUsn);
+
+        if (!m_data->m_onceAPIRateLimitExceedingTriggered)
+        {
+            GuidsOfCompleteSentItems & guidsOfCompleteSentItems = (notebookIt->hasLinkedNotebookGuid()
+                                                                   ? m_data->m_guidsOfCompleteSentItemsByLinkedNotebookGuid[notebookIt->linkedNotebookGuid()]
+                                                                   : m_data->m_guidsOfUserOwnCompleteSentItems);
+            auto it = guidsOfCompleteSentItems.m_resourceGuids.find(resource.guid());
+            if (it != guidsOfCompleteSentItems.m_resourceGuids.end()) {
+                Q_UNUSED(guidsOfCompleteSentItems.m_resourceGuids.erase(it))
+            }
+        }
     }
 
     ResourceDataByGuid & resourceGuidIndex = m_data->m_resources.get<ResourceByGuid>();
@@ -779,6 +836,14 @@ bool FakeNoteStore::setLinkedNotebook(LinkedNotebook & linkedNotebook, ErrorStri
     qint32 maxUsn = currentMaxUsn();
     ++maxUsn;
     linkedNotebook.setUpdateSequenceNumber(maxUsn);
+
+    if (!m_data->m_onceAPIRateLimitExceedingTriggered)
+    {
+        auto it = m_data->m_guidsOfUserOwnCompleteSentItems.m_linkedNotebookGuids.find(linkedNotebook.guid());
+        if (it != m_data->m_guidsOfUserOwnCompleteSentItems.m_linkedNotebookGuids.end()) {
+            Q_UNUSED(m_data->m_guidsOfUserOwnCompleteSentItems.m_linkedNotebookGuids.erase(it))
+        }
+    }
 
     Q_UNUSED(removeExpungedLinkedNotebookGuid(linkedNotebook.guid()))
 
@@ -1220,6 +1285,8 @@ qint32 FakeNoteStore::smallestUsnOfNotCompletelySentDataItemBeforeRateLimitBreac
             auto guidIt = guidsOfCompleteSentItems.m_savedSearchGuids.find(savedSearch.guid());
             if (guidIt == guidsOfCompleteSentItems.m_savedSearchGuids.end())
             {
+                QNTRACE(QStringLiteral("Encountered first notebook not within the list of sent items"));
+
                 if ((smallestUsn < 0) || (smallestUsn > savedSearch.updateSequenceNumber())) {
                     smallestUsn = savedSearch.updateSequenceNumber();
                     QNTRACE(QStringLiteral("Updated smallest USN to ") << smallestUsn);
@@ -1235,9 +1302,11 @@ qint32 FakeNoteStore::smallestUsnOfNotCompletelySentDataItemBeforeRateLimitBreac
     {
         const Notebook & notebook = *it;
         if (linkedNotebookGuid.isEmpty() == notebook.hasLinkedNotebookGuid()) {
+            QNTRACE(QStringLiteral("Skipping notebook not matching by linked notebook criteria: ") << notebook);
             continue;
         }
         if (notebook.hasLinkedNotebookGuid() && (notebook.linkedNotebookGuid() != linkedNotebookGuid)) {
+            QNTRACE(QStringLiteral("Skipping notebook not matching by linked notebook criteria: ") << notebook);
             continue;
         }
 
@@ -1246,6 +1315,8 @@ qint32 FakeNoteStore::smallestUsnOfNotCompletelySentDataItemBeforeRateLimitBreac
         auto guidIt = guidsOfCompleteSentItems.m_notebookGuids.find(notebook.guid());
         if (guidIt == guidsOfCompleteSentItems.m_notebookGuids.end())
         {
+            QNTRACE(QStringLiteral("Encountered first notebook not within the list of sent items"));
+
             if ((smallestUsn < 0) || (smallestUsn > notebook.updateSequenceNumber())) {
                 smallestUsn = notebook.updateSequenceNumber();
                 QNTRACE(QStringLiteral("Updated smallest USN to ") << smallestUsn);
@@ -1260,9 +1331,11 @@ qint32 FakeNoteStore::smallestUsnOfNotCompletelySentDataItemBeforeRateLimitBreac
     {
         const Tag & tag = *it;
         if (linkedNotebookGuid.isEmpty() == tag.hasLinkedNotebookGuid()) {
+            QNTRACE(QStringLiteral("Skipping tag not matching by linked notebook criteria: ") << tag);
             continue;
         }
         if (tag.hasLinkedNotebookGuid() && (tag.linkedNotebookGuid() != linkedNotebookGuid)) {
+            QNTRACE(QStringLiteral("Skipping tag not matching by linked notebook criteria: ") << tag);
             continue;
         }
 
@@ -1271,6 +1344,8 @@ qint32 FakeNoteStore::smallestUsnOfNotCompletelySentDataItemBeforeRateLimitBreac
         auto guidIt = guidsOfCompleteSentItems.m_tagGuids.find(tag.guid());
         if (guidIt == guidsOfCompleteSentItems.m_tagGuids.end())
         {
+            QNTRACE(QStringLiteral("Encountered first tag not within the list of sent items"));
+
             if ((smallestUsn < 0) || (smallestUsn > tag.updateSequenceNumber())) {
                 smallestUsn = tag.updateSequenceNumber();
                 QNTRACE(QStringLiteral("Updated smallest USN to ") << smallestUsn);
@@ -1291,6 +1366,8 @@ qint32 FakeNoteStore::smallestUsnOfNotCompletelySentDataItemBeforeRateLimitBreac
             auto guidIt = guidsOfCompleteSentItems.m_linkedNotebookGuids.find(linkedNotebook.guid());
             if (guidIt == guidsOfCompleteSentItems.m_linkedNotebookGuids.end())
             {
+                QNTRACE(QStringLiteral("Encountered first linked notebook not within the list of sent items"));
+
                 if ((smallestUsn < 0) || (smallestUsn > linkedNotebook.updateSequenceNumber())) {
                     smallestUsn = linkedNotebook.updateSequenceNumber();
                     QNTRACE(QStringLiteral("Updated smallest USN to ") << smallestUsn);
@@ -1314,9 +1391,13 @@ qint32 FakeNoteStore::smallestUsnOfNotCompletelySentDataItemBeforeRateLimitBreac
 
         const Notebook & notebook = *notebookIt;
         if (linkedNotebookGuid.isEmpty() == notebook.hasLinkedNotebookGuid()) {
+            QNTRACE(QStringLiteral("Skipping note as its notebook doesn't match by linked notebook criteria: ") << note
+                    << QStringLiteral("\nNotebook: ") << notebook);
             continue;
         }
         if (notebook.hasLinkedNotebookGuid() && (notebook.linkedNotebookGuid() != linkedNotebookGuid)) {
+            QNTRACE(QStringLiteral("Skipping note as its notebook doesn't match by linked notebook criteria: ") << note
+                    << QStringLiteral("\nNotebook: ") << notebook);
             continue;
         }
 
@@ -1325,6 +1406,8 @@ qint32 FakeNoteStore::smallestUsnOfNotCompletelySentDataItemBeforeRateLimitBreac
         auto guidIt = guidsOfCompleteSentItems.m_noteGuids.find(note.guid());
         if (guidIt == guidsOfCompleteSentItems.m_noteGuids.end())
         {
+            QNTRACE(QStringLiteral("Encountered first note not within the list of sent items"));
+
             if ((smallestUsn < 0) || (smallestUsn > note.updateSequenceNumber())) {
                 smallestUsn = note.updateSequenceNumber();
                 QNTRACE(QStringLiteral("Updated smallest USN to ") << smallestUsn);
@@ -1354,9 +1437,13 @@ qint32 FakeNoteStore::smallestUsnOfNotCompletelySentDataItemBeforeRateLimitBreac
 
         const Notebook & notebook = *notebookIt;
         if (linkedNotebookGuid.isEmpty() == notebook.hasLinkedNotebookGuid()) {
+            QNTRACE(QStringLiteral("Skipping resource as its note's notebook doesn't match by linked notebook criteria: ") << resource
+                    << QStringLiteral("\nNote: ") << note << QStringLiteral("\nNotebook: ") << notebook);
             continue;
         }
         if (notebook.hasLinkedNotebookGuid() && (notebook.linkedNotebookGuid() != linkedNotebookGuid)) {
+            QNTRACE(QStringLiteral("Skipping resource as its note's notebook doesn't match by linked notebook criteria: ") << resource
+                    << QStringLiteral("\nNote: ") << note << QStringLiteral("\nNotebook: ") << notebook);
             continue;
         }
 
@@ -1365,6 +1452,8 @@ qint32 FakeNoteStore::smallestUsnOfNotCompletelySentDataItemBeforeRateLimitBreac
         auto guidIt = guidsOfCompleteSentItems.m_resourceGuids.find(resource.guid());
         if (guidIt == guidsOfCompleteSentItems.m_resourceGuids.end())
         {
+            QNTRACE(QStringLiteral("Encountered first resource not within the list of sent items"));
+
             if ((smallestUsn < 0) || (smallestUsn > resource.updateSequenceNumber())) {
                 smallestUsn = resource.updateSequenceNumber();
                 QNTRACE(QStringLiteral("Updated smallest USN to ") << smallestUsn);
@@ -1699,8 +1788,10 @@ qint32 FakeNoteStore::updateNote(Note & note, ErrorString & errorDescription, qi
                 resource.setNoteGuid(note.guid());
             }
 
-            // NOTE: not really sure it should behave this way but let's try: setting each resource's USN to note's USN
-            resource.setUpdateSequenceNumber(note.updateSequenceNumber());
+            if (!resource.hasUpdateSequenceNumber()) {
+                // NOTE: not really sure it should behave this way but let's try: setting each resource's USN to note's USN
+                resource.setUpdateSequenceNumber(note.updateSequenceNumber());
+            }
 
             if (!setResource(resource, errorDescription)) {
                 return qevercloud::EDAMErrorCode::DATA_CONFLICT;
@@ -2157,6 +2248,14 @@ qint32 FakeNoteStore::getNote(const bool withContent, const bool withResourcesDa
                                                                ? m_data->m_guidsOfCompleteSentItemsByLinkedNotebookGuid[pNotebook->linkedNotebookGuid()]
                                                                : m_data->m_guidsOfUserOwnCompleteSentItems);
         Q_UNUSED(guidsOfCompleteSentItems.m_noteGuids.insert(note.guid()))
+
+        if (note.hasResources())
+        {
+            QList<Resource> resources = note.resources();
+            for(auto it = resources.constBegin(), end = resources.constEnd(); it != end; ++it) {
+                Q_UNUSED(guidsOfCompleteSentItems.m_resourceGuids.insert(it->guid()))
+            }
+        }
     }
 
     return 0;
