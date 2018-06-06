@@ -218,7 +218,7 @@ RemoteToLocalSynchronizationManager::RemoteToLocalSynchronizationManager(IManage
     m_localUidsOfElementsAlreadyAttemptedToFindByName(),
     m_notesPendingDownloadForAddingToLocalStorage(),
     m_notesPendingDownloadForUpdatingInLocalStorageByGuid(),
-    m_notesOwningResourcesPendingDownloadForAddingToLocalStorageByResourceGuid(),
+    m_resourcesPendingDownloadForAddingToLocalStorageWithNotesByResourceGuid(),
     m_resourcesPendingDownloadForUpdatingInLocalStorageWithNotesByResourceGuid(),
     m_fullSyncStaleDataItemsSyncedGuids(),
     m_pFullSyncStaleDataItemsExpunger(Q_NULLPTR),
@@ -2802,29 +2802,27 @@ void RemoteToLocalSynchronizationManager::onGetResourceAsyncFinished(qint32 erro
 
     QString resourceGuid = qecResource.guid.ref();
 
-    auto addIt = m_notesOwningResourcesPendingDownloadForAddingToLocalStorageByResourceGuid.find(resourceGuid);
-    auto updateIt = ((addIt == m_notesOwningResourcesPendingDownloadForAddingToLocalStorageByResourceGuid.end())
+    auto addIt = m_resourcesPendingDownloadForAddingToLocalStorageWithNotesByResourceGuid.find(resourceGuid);
+    auto updateIt = ((addIt == m_resourcesPendingDownloadForAddingToLocalStorageWithNotesByResourceGuid.end())
                      ? m_resourcesPendingDownloadForUpdatingInLocalStorageWithNotesByResourceGuid.find(resourceGuid)
                      : m_resourcesPendingDownloadForUpdatingInLocalStorageWithNotesByResourceGuid.end());
 
-    bool needToAddResource = (addIt != m_notesOwningResourcesPendingDownloadForAddingToLocalStorageByResourceGuid.end());
+    bool needToAddResource = (addIt != m_resourcesPendingDownloadForAddingToLocalStorageWithNotesByResourceGuid.end());
     bool needToUpdateResource = (updateIt != m_resourcesPendingDownloadForUpdatingInLocalStorageWithNotesByResourceGuid.end());
 
     Resource resource;
     Note note;
 
     if (needToAddResource) {
-        note = addIt.value();
-        Q_UNUSED(m_notesOwningResourcesPendingDownloadForAddingToLocalStorageByResourceGuid.erase(addIt))
+        resource = addIt.value().first;
+        note = addIt.value().second;
+        Q_UNUSED(m_resourcesPendingDownloadForAddingToLocalStorageWithNotesByResourceGuid.erase(addIt))
     }
     else if (needToUpdateResource) {
         resource = updateIt.value().first;
         note = updateIt.value().second;
         Q_UNUSED(m_resourcesPendingDownloadForUpdatingInLocalStorageWithNotesByResourceGuid.erase(updateIt))
     }
-
-    resource.qevercloudResource() = qecResource;
-    resource.setDirty(false);
 
     if (Q_UNLIKELY(!needToAddResource && !needToUpdateResource)) {
         errorDescription.setBase(QT_TR_NOOP("Internal error: the downloaded resource was not expected"));
@@ -2870,6 +2868,9 @@ void RemoteToLocalSynchronizationManager::onGetResourceAsyncFinished(qint32 erro
         Q_EMIT failure(errorDescription);
         return;
     }
+
+    resource.qevercloudResource() = qecResource;
+    resource.setDirty(false);
 
     checkAndIncrementResourceDownloadProgress(resourceGuid);
 
@@ -4710,7 +4711,7 @@ bool RemoteToLocalSynchronizationManager::resourcesSyncInProgress() const
             !m_resourcesByMarkNoteOwningResourceDirtyRequestIds.isEmpty() ||
             !m_resourcesByFindNoteRequestIds.isEmpty() ||
             !m_inkNoteResourceDataPerFindNotebookRequestId.isEmpty() ||
-            !m_notesOwningResourcesPendingDownloadForAddingToLocalStorageByResourceGuid.isEmpty() ||
+            !m_resourcesPendingDownloadForAddingToLocalStorageWithNotesByResourceGuid.isEmpty() ||
             !m_resourcesPendingDownloadForUpdatingInLocalStorageWithNotesByResourceGuid.isEmpty() ||
             !m_resourcesToAddWithNotesPerAPICallPostponeTimerId.isEmpty() ||
             !m_resourcesToUpdateWithNotesPerAPICallPostponeTimerId.isEmpty() ||
@@ -5624,7 +5625,7 @@ void RemoteToLocalSynchronizationManager::checkServerDataMergeCompletion()
                               m_resourcesByMarkNoteOwningResourceDirtyRequestIds.isEmpty() &&
                               m_addResourceRequestIds.isEmpty() && m_resourcesByFindNoteRequestIds.isEmpty() &&
                               m_inkNoteResourceDataPerFindNotebookRequestId.isEmpty() &&
-                              m_notesOwningResourcesPendingDownloadForAddingToLocalStorageByResourceGuid.isEmpty() &&
+                              m_resourcesPendingDownloadForAddingToLocalStorageWithNotesByResourceGuid.isEmpty() &&
                               m_resourcesPendingDownloadForUpdatingInLocalStorageWithNotesByResourceGuid.isEmpty() &&
                               m_resourcesToAddWithNotesPerAPICallPostponeTimerId.isEmpty() &&
                               m_resourcesToUpdateWithNotesPerAPICallPostponeTimerId.isEmpty() &&
@@ -5640,7 +5641,7 @@ void RemoteToLocalSynchronizationManager::checkServerDataMergeCompletion()
                     << QStringLiteral(" find note for resource requests and/or ") << m_findResourceByGuidRequestIds.size()
                     << QStringLiteral(" find resource requests and/or ") << m_inkNoteResourceDataPerFindNotebookRequestId.size()
                     << QStringLiteral(" resource find notebook for ink note image download processing and/or ")
-                    << m_notesOwningResourcesPendingDownloadForAddingToLocalStorageByResourceGuid.size()
+                    << m_resourcesPendingDownloadForAddingToLocalStorageWithNotesByResourceGuid.size()
                     << QStringLiteral(" async full new resource data downloads and/or ")
                     << m_resourcesPendingDownloadForUpdatingInLocalStorageWithNotesByResourceGuid.size()
                     << QStringLiteral(" async full existing resource data downloads and/or ") << m_resourcesToAddWithNotesPerAPICallPostponeTimerId.size()
@@ -5970,7 +5971,7 @@ void RemoteToLocalSynchronizationManager::clear()
     m_notesPendingDownloadForAddingToLocalStorage.clear();
     m_notesPendingDownloadForUpdatingInLocalStorageByGuid.clear();
 
-    m_notesOwningResourcesPendingDownloadForAddingToLocalStorageByResourceGuid.clear();
+    m_resourcesPendingDownloadForAddingToLocalStorageWithNotesByResourceGuid.clear();
     m_resourcesPendingDownloadForUpdatingInLocalStorageWithNotesByResourceGuid.clear();
 
     m_fullSyncStaleDataItemsSyncedGuids.m_syncedNotebookGuids.clear();
@@ -6517,15 +6518,15 @@ void RemoteToLocalSynchronizationManager::getFullResourceDataAsyncAndAddToLocalS
 
     QString resourceGuid = resource.guid();
 
-    auto it = m_notesOwningResourcesPendingDownloadForAddingToLocalStorageByResourceGuid.find(resourceGuid);
-    if (Q_UNLIKELY(it != m_notesOwningResourcesPendingDownloadForAddingToLocalStorageByResourceGuid.end())) {
+    auto it = m_resourcesPendingDownloadForAddingToLocalStorageWithNotesByResourceGuid.find(resourceGuid);
+    if (Q_UNLIKELY(it != m_resourcesPendingDownloadForAddingToLocalStorageWithNotesByResourceGuid.end())) {
         QNDEBUG(QStringLiteral("Resource with guid ") << resourceGuid << QStringLiteral(" is already being downloaded"));
         return;
     }
 
     QNTRACE(QStringLiteral("Adding resource guid into the list of those pending download for adding to the local storage: ")
             << resourceGuid);
-    m_notesOwningResourcesPendingDownloadForAddingToLocalStorageByResourceGuid[resourceGuid] = resourceOwningNote;
+    m_resourcesPendingDownloadForAddingToLocalStorageWithNotesByResourceGuid[resourceGuid] = std::pair<Resource,Note>(resource, resourceOwningNote);
 
     getFullResourceDataAsync(resource, resourceOwningNote);
 }

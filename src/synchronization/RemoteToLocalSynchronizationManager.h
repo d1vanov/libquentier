@@ -840,7 +840,7 @@ private:
     QHash<QString,qevercloud::Note>         m_notesPendingDownloadForAddingToLocalStorage;
     QHash<QString,Note>                     m_notesPendingDownloadForUpdatingInLocalStorageByGuid;
 
-    QHash<QString,Note>                         m_notesOwningResourcesPendingDownloadForAddingToLocalStorageByResourceGuid;
+    QHash<QString,std::pair<Resource,Note> >    m_resourcesPendingDownloadForAddingToLocalStorageWithNotesByResourceGuid;
     QHash<QString,std::pair<Resource,Note> >    m_resourcesPendingDownloadForUpdatingInLocalStorageWithNotesByResourceGuid;
 
     FullSyncStaleDataItemsExpunger::SyncedGuids     m_fullSyncStaleDataItemsSyncedGuids;
