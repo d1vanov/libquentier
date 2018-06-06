@@ -1082,6 +1082,9 @@ void RemoteToLocalSynchronizationManager::onFindResourceCompleted(Resource resou
             return;
         }
 
+        // Override blank resource object (it contains only guid) with the actual updated resource from the container
+        resource.qevercloudResource() = *it;
+
         // Removing the resource from the list of resources waiting for processing
         Q_UNUSED(m_resources.erase(it))
 
@@ -1128,6 +1131,9 @@ void RemoteToLocalSynchronizationManager::onFindResourceFailed(Resource resource
         if (it == m_resources.end()) {
             return;
         }
+
+        // Override blank resource object (it contains only guid) with the actual updated resource from the container
+        resource.qevercloudResource() = *it;
 
         // Removing the resource from the list of resources waiting for processing
         Q_UNUSED(m_resources.erase(it))
@@ -2579,7 +2585,7 @@ void RemoteToLocalSynchronizationManager::collectNonProcessedItemsSmallestUsns(q
             return;
         }
 
-        qint32 smallestUsn = nonProcessedItemsSmallestUsn();
+        qint32 smallestUsn = findSmallestUsnOfNonSyncedItems();
         if (smallestUsn > 0) {
             QNDEBUG(QStringLiteral("Found the smallest USN of non-processed items within the user's own account: ")
                     << smallestUsn);
@@ -2608,7 +2614,7 @@ void RemoteToLocalSynchronizationManager::collectNonProcessedItemsSmallestUsns(q
             continue;
         }
 
-        qint32 smallestUsn = nonProcessedItemsSmallestUsn(linkedNotebook.guid());
+        qint32 smallestUsn = findSmallestUsnOfNonSyncedItems(linkedNotebook.guid());
         if (smallestUsn >= 0) {
             QNDEBUG(QStringLiteral("Found the smallest USN of non-processed items within linked notebook with guid ")
                     << linkedNotebook.guid() << QStringLiteral(": ") << smallestUsn);
@@ -7157,250 +7163,213 @@ Note RemoteToLocalSynchronizationManager::createConflictingNote(const Note & ori
     return conflictingNote;
 }
 
-qint32 RemoteToLocalSynchronizationManager::nonProcessedItemsSmallestUsn(const QString & linkedNotebookGuid) const
+template<class T>
+QString RemoteToLocalSynchronizationManager::findLinkedNotebookGuidForItem(const T & item) const
 {
-    QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::nonProcessedItemsSmallestUsn: linked notebook guid = ")
+    Q_UNUSED(item)
+    return QString();
+}
+
+template <>
+QString RemoteToLocalSynchronizationManager::findLinkedNotebookGuidForItem<qevercloud::Notebook>(const qevercloud::Notebook & notebook) const
+{
+    if (Q_UNLIKELY(!notebook.guid.isSet())) {
+        return QString();
+    }
+
+    auto it = m_linkedNotebookGuidsByNotebookGuids.find(notebook.guid.ref());
+    if (it == m_linkedNotebookGuidsByNotebookGuids.end()) {
+        return QString();
+    }
+
+    return it.value();
+}
+
+template<>
+QString RemoteToLocalSynchronizationManager::findLinkedNotebookGuidForItem<qevercloud::Tag>(const qevercloud::Tag & tag) const
+{
+    if (Q_UNLIKELY(!tag.guid.isSet())) {
+        return QString();
+    }
+
+    auto it = m_linkedNotebookGuidsByTagGuids.find(tag.guid.ref());
+    if (it == m_linkedNotebookGuidsByTagGuids.end()) {
+        return QString();
+    }
+
+    return it.value();
+}
+
+template<>
+QString RemoteToLocalSynchronizationManager::findLinkedNotebookGuidForItem<qevercloud::Note>(const qevercloud::Note & note) const
+{
+    if (Q_UNLIKELY(!note.notebookGuid.isSet())) {
+        return QString();
+    }
+
+    auto it = m_linkedNotebookGuidsByNotebookGuids.find(note.notebookGuid.ref());
+    if (it == m_linkedNotebookGuidsByNotebookGuids.end()) {
+        return QString();
+    }
+
+    return it.value();
+}
+
+template<>
+QString RemoteToLocalSynchronizationManager::findLinkedNotebookGuidForItem<qevercloud::Resource>(const qevercloud::Resource & resource) const
+{
+    if (Q_UNLIKELY(!resource.guid.isSet())) {
+        return QString();
+    }
+
+    auto it = m_linkedNotebookGuidsByResourceGuids.find(resource.guid.ref());
+    if (it == m_linkedNotebookGuidsByResourceGuids.end()) {
+        return QString();
+    }
+
+    return it.value();
+}
+
+template <class T>
+void RemoteToLocalSynchronizationManager::checkNonSyncedItemForSmallestUsn(const T & item, const QString & linkedNotebookGuid,
+                                                                           qint32 & smallestUsn) const
+{
+    QNTRACE(QStringLiteral("RemoteToLocalSynchronizationManager::checkNonSyncedItemForSmallestUsn: linked notebook guid = ")
+            << linkedNotebookGuid << QStringLiteral(", item: ") << item);
+
+    if (Q_UNLIKELY(!item.updateSequenceNum.isSet())) {
+        QNWARNING(QStringLiteral("Skipping item with empty update sequence number: ") << item);
+        return;
+    }
+
+    if (Q_UNLIKELY(!item.guid.isSet())) {
+        QNWARNING(QStringLiteral("Skipping item without guid: ") << item);
+        return;
+    }
+
+    QString itemLinkedNotebookGuid = findLinkedNotebookGuidForItem(item);
+    if (itemLinkedNotebookGuid != linkedNotebookGuid) {
+        QNTRACE(QStringLiteral("Skipping item as it doesn't match by linked notebook guid: item's linked notebook guid is ")
+                << itemLinkedNotebookGuid << QStringLiteral(" while the requested one is ") << linkedNotebookGuid);
+        return;
+    }
+
+    QNTRACE(QStringLiteral("Checking item with USN ") << item.updateSequenceNum.ref() << QStringLiteral(": ") << item);
+    if ((smallestUsn < 0) || (item.updateSequenceNum.ref() < smallestUsn)) {
+        smallestUsn = item.updateSequenceNum.ref();
+        QNTRACE(QStringLiteral("Updated smallest non-processed items USN to ") << smallestUsn);
+    }
+}
+
+template <class ContainerType>
+void RemoteToLocalSynchronizationManager::checkNonSyncedItemsContainerForSmallestUsn(const ContainerType & container,
+                                                                                     const QString & linkedNotebookGuid,
+                                                                                     qint32 & smallestUsn) const
+{
+    for(auto it = container.begin(), end = container.end(); it != end; ++it) {
+        checkNonSyncedItemForSmallestUsn(*it, linkedNotebookGuid, smallestUsn);
+    }
+}
+
+template <>
+void RemoteToLocalSynchronizationManager::checkNonSyncedItemsContainerForSmallestUsn<QHash<int,Note> >(const QHash<int,Note> & notes,
+                                                                                                       const QString & linkedNotebookGuid,
+                                                                                                       qint32 & smallestUsn) const
+{
+    for(auto it = notes.constBegin(), end = notes.constEnd(); it != end; ++it) {
+        checkNonSyncedItemForSmallestUsn(it.value().qevercloudNote(), linkedNotebookGuid, smallestUsn);
+    }
+}
+
+template <>
+void RemoteToLocalSynchronizationManager::checkNonSyncedItemsContainerForSmallestUsn<QHash<int,std::pair<Resource,Note> > >(const QHash<int,std::pair<Resource,Note> > & resources,
+                                                                                                                            const QString & linkedNotebookGuid,
+                                                                                                                            qint32 & smallestUsn) const
+{
+    for(auto it = resources.constBegin(), end = resources.constEnd(); it != end; ++it) {
+        checkNonSyncedItemForSmallestUsn(it.value().first.qevercloudResource(), linkedNotebookGuid, smallestUsn);
+    }
+}
+
+qint32 RemoteToLocalSynchronizationManager::findSmallestUsnOfNonSyncedItems(const QString & linkedNotebookGuid) const
+{
+    QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::findSmallestUsnOfNonSyncedItems: linked notebook guid = ")
             << linkedNotebookGuid);
 
     qint32 smallestUsn = -1;
 
-#define PROCESS_ITEM(item, linkedNotebookMapping) \
-    if (Q_UNLIKELY(!item.updateSequenceNum.isSet())) { \
-        QNWARNING(QStringLiteral("Skipping item with empty update sequence number: ") << item); \
-        continue; \
-    } \
-    \
-    if (!linkedNotebookGuid.isEmpty()) \
-    { \
-        if (Q_UNLIKELY(!item.guid.isSet())) { \
-            QNWARNING(QStringLiteral("Skipping item without guid: ") << item); \
-            continue; \
-        } \
-        \
-        auto linkedNotebookGuidIt = linkedNotebookMapping.find(item.guid.ref()); \
-        if (linkedNotebookGuidIt == linkedNotebookMapping.end()) { \
-            QNTRACE(QStringLiteral("Skipping item without linked notebook mapping: ") << item); \
-            continue; \
-        } \
-        \
-        if (linkedNotebookGuidIt.value() != linkedNotebookGuid) { \
-            QNTRACE(QStringLiteral("Skipping item corresponding to another linked notebook (") \
-                    << linkedNotebookGuidIt.value() << QStringLiteral("): ") << item); \
-            continue; \
-        } \
-    } \
-    \
-    QNTRACE(QStringLiteral("Checking item with USN ") << item.updateSequenceNum.ref() << QStringLiteral(": ") << item); \
-    if ((smallestUsn < 0) || (item.updateSequenceNum.ref() < smallestUsn)) { \
-        smallestUsn = item.updateSequenceNum.ref(); \
-        QNTRACE(QStringLiteral("Updated smallest non-processed items USN to ") << smallestUsn); \
+    checkNonSyncedItemsContainerForSmallestUsn(m_tags, linkedNotebookGuid, smallestUsn);
+    checkNonSyncedItemsContainerForSmallestUsn(m_tagsPendingAddOrUpdate, linkedNotebookGuid, smallestUsn);
+    checkNonSyncedItemsContainerForSmallestUsn(m_notebooks, linkedNotebookGuid, smallestUsn);
+    checkNonSyncedItemsContainerForSmallestUsn(m_notebooksPendingAddOrUpdate, linkedNotebookGuid, smallestUsn);
+
+    if (linkedNotebookGuid.isEmpty()) {
+        checkNonSyncedItemsContainerForSmallestUsn(m_savedSearches, linkedNotebookGuid, smallestUsn);
+        checkNonSyncedItemsContainerForSmallestUsn(m_savedSearchesPendingAddOrUpdate, linkedNotebookGuid, smallestUsn);
+        checkNonSyncedItemsContainerForSmallestUsn(m_linkedNotebooks, linkedNotebookGuid, smallestUsn);
+        checkNonSyncedItemsContainerForSmallestUsn(m_linkedNotebooksPendingAddOrUpdate, linkedNotebookGuid, smallestUsn);
     }
-
-#define PROCESS_CONTAINER(container, linkedNotebookMapping) \
-    QNTRACE(QStringLiteral("Checking container: ") + QString::fromUtf8(#container)); \
-    for(auto it = container.begin(), end = container.end(); it != end; ++it) { \
-        const auto & item = *it; \
-        PROCESS_ITEM(item, linkedNotebookMapping) \
-    }
-
-#define PROCESS_ASSOCIATIVE_NOTES_CONTAINER(container, linkedNotebookMapping) \
-    QNTRACE(QStringLiteral("Checking associative notes container: ") + QString::fromUtf8(#container)); \
-    for(auto it = container.begin(), end = container.end(); it != end; ++it) { \
-        const auto & item = it.value(); \
-        PROCESS_ITEM(item.qevercloudNote(), linkedNotebookMapping) \
-    }
-
-#define PROCESS_ASSOCIATIVE_RESOURCES_CONTAINER(container, linkedNotebookMapping) \
-    QNTRACE(QStringLiteral("Checking associative resources container: ") + QString::fromUtf8(#container)); \
-    for(auto it = container.begin(), end = container.end(); it != end; ++it) { \
-        const auto & item = it.value().first; \
-        PROCESS_ITEM(item.qevercloudResource(), linkedNotebookMapping) \
-    }
-
-    QHash<QString,QString> dummyHash;
-
-    PROCESS_CONTAINER(m_tags, m_linkedNotebookGuidsByTagGuids)
-    PROCESS_CONTAINER(m_tagsPendingAddOrUpdate, m_linkedNotebookGuidsByTagGuids)
-    PROCESS_CONTAINER(m_savedSearches, dummyHash)
-    PROCESS_CONTAINER(m_savedSearchesPendingAddOrUpdate, dummyHash)
-    PROCESS_CONTAINER(m_linkedNotebooks, dummyHash)
-    PROCESS_CONTAINER(m_linkedNotebooksPendingAddOrUpdate, dummyHash)
-    PROCESS_CONTAINER(m_notebooks, m_linkedNotebookGuidsByNotebookGuids)
-    PROCESS_CONTAINER(m_notebooksPendingAddOrUpdate, m_linkedNotebookGuidsByNotebookGuids)
 
     bool syncingNotebooks = m_pendingNotebooksSyncStart || notebooksSyncInProgress();
     bool syncingTags = m_pendingTagsSyncStart || tagsSyncInProgress();
 
-    if (linkedNotebookGuid.isEmpty())
+    if (syncingNotebooks || syncingTags)
     {
-        if (syncingNotebooks || syncingTags)
-        {
-            QNTRACE(QStringLiteral("The sync of notes hasn't started yet, checking notes from sync chunks"));
-            for(auto it = m_syncChunks.constBegin(), end = m_syncChunks.constEnd(); it != end; ++it)
-            {
-                const qevercloud::SyncChunk & syncChunk = *it;
-                if (!syncChunk.notes.isSet()) {
-                    continue;
-                }
+        QNTRACE(QStringLiteral("The sync of notes hasn't started yet, checking notes from sync chunks"));
 
-                PROCESS_CONTAINER(syncChunk.notes.ref(), dummyHash)
+        const QVector<qevercloud::SyncChunk> & syncChunks = (linkedNotebookGuid.isEmpty()
+                                                             ? m_syncChunks
+                                                             : m_linkedNotebookSyncChunks);
+
+        for(auto it = syncChunks.constBegin(), end = syncChunks.constEnd(); it != end; ++it)
+        {
+            const qevercloud::SyncChunk & syncChunk = *it;
+            if (!syncChunk.notes.isSet()) {
+                continue;
             }
-        }
-        else
-        {
-            QNTRACE(QStringLiteral("The sync of notes has already started, checking notes from pending lists"));
 
-            PROCESS_CONTAINER(m_notes, dummyHash)
-            PROCESS_CONTAINER(m_notesPendingAddOrUpdate, dummyHash)
-
-            PROCESS_ASSOCIATIVE_NOTES_CONTAINER(m_notesToAddPerAPICallPostponeTimerId, dummyHash)
-            PROCESS_ASSOCIATIVE_NOTES_CONTAINER(m_notesToUpdatePerAPICallPostponeTimerId, dummyHash)
-        }
-
-        if (syncingNotebooks || syncingTags || notesSyncInProgress())
-        {
-            QNTRACE(QStringLiteral("The sync of resources hasn't started yet, checking resources from sync chunks"));
-            for(auto it = m_syncChunks.constBegin(), end = m_syncChunks.constEnd(); it != end; ++it)
-            {
-                const qevercloud::SyncChunk & syncChunk = *it;
-                if (!syncChunk.resources.isSet()) {
-                    continue;
-                }
-
-                PROCESS_CONTAINER(syncChunk.resources.ref(), dummyHash)
-            }
-        }
-        else
-        {
-            QNTRACE(QStringLiteral("The sync of resources has already started, checking resources from pending lists"));
-
-            PROCESS_CONTAINER(m_resources, dummyHash)
-            PROCESS_CONTAINER(m_resourcesPendingAddOrUpdate, dummyHash)
-
-            PROCESS_ASSOCIATIVE_RESOURCES_CONTAINER(m_resourcesToAddWithNotesPerAPICallPostponeTimerId, dummyHash)
-            PROCESS_ASSOCIATIVE_RESOURCES_CONTAINER(m_resourcesToUpdateWithNotesPerAPICallPostponeTimerId, dummyHash)
+            checkNonSyncedItemsContainerForSmallestUsn(syncChunk.notes.ref(), linkedNotebookGuid, smallestUsn);
         }
     }
     else
     {
-        // The mapping between linked notebook guids and note guids is implicit, through notebook guid;
-        // need to make it explicit here in order to reuse the macro
-        QHash<QString,QString> linkedNotebookGuidsByNoteGuids;
+        QNTRACE(QStringLiteral("The sync of notes has already started, checking notes from pending lists"));
 
-        bool syncingNotes = notesSyncInProgress();
-        if (syncingNotebooks || syncingTags || syncingNotes)
-        {
-            NotesList localNotesList;
-            if (syncingNotebooks || syncingTags)
-            {
-                QNTRACE(QStringLiteral("The sync of notes from linked notebooks hasn't started yet, collecting notes from sync chunks"));
-                for(auto it = m_linkedNotebookSyncChunks.constBegin(), end = m_linkedNotebookSyncChunks.constEnd(); it != end; ++it)
-                {
-                    const qevercloud::SyncChunk & syncChunk = *it;
-                    if (!syncChunk.notes.isSet()) {
-                        continue;
-                    }
-
-                    localNotesList << syncChunk.notes.ref();
-                }
-            }
-            else
-            {
-                QNTRACE(QStringLiteral("The sync of notes from linked notebooks has already started, collecting notes from pending lists"));
-                localNotesList.reserve(m_notes.size() + m_notesPendingAddOrUpdate.size() +
-                                       m_notesToAddPerAPICallPostponeTimerId.size() +
-                                       m_notesToUpdatePerAPICallPostponeTimerId.size());
-                localNotesList << m_notes;
-                localNotesList << m_notesPendingAddOrUpdate;
-
-                for(auto it = m_notesToAddPerAPICallPostponeTimerId.constBegin(),
-                    end = m_notesToAddPerAPICallPostponeTimerId.constEnd(); it != end; ++it)
-                {
-                    localNotesList << it.value().qevercloudNote();
-                }
-
-                for(auto it = m_notesToUpdatePerAPICallPostponeTimerId.constBegin(),
-                    end = m_notesToUpdatePerAPICallPostponeTimerId.constEnd(); it != end; ++it)
-                {
-                    localNotesList << it.value().qevercloudNote();
-                }
-            }
-
-            for(auto noteIt = localNotesList.constBegin(), notesEnd = localNotesList.constEnd(); noteIt != notesEnd; ++noteIt)
-            {
-                const qevercloud::Note & note = *noteIt;
-                if (Q_UNLIKELY(!note.guid.isSet())) {
-                    QNWARNING(QStringLiteral("Skipping note without guid: ") << note);
-                    continue;
-                }
-
-                if (!note.notebookGuid.isSet()) {
-                    QNWARNING(QStringLiteral("Skipping note without notebook guid: ") << note);
-                    continue;
-                }
-
-                auto linkedNotebookGuidIt = m_linkedNotebookGuidsByNotebookGuids.find(note.notebookGuid.ref());
-                if (linkedNotebookGuidIt == m_linkedNotebookGuidsByNotebookGuids.end()) {
-                    QNTRACE(QStringLiteral("Skipping note without linked notebook mapping: ") << note);
-                    continue;
-                }
-
-                linkedNotebookGuidsByNoteGuids[note.guid.ref()] = linkedNotebookGuidIt.value();
-            }
-        }
-
-        if (syncingNotebooks || syncingTags)
-        {
-            QNTRACE(QStringLiteral("The sync of notes from linked notebooks hasn't started yet, checking notes from sync chunks"));
-            for(auto it = m_linkedNotebookSyncChunks.constBegin(), end = m_linkedNotebookSyncChunks.constEnd(); it != end; ++it)
-            {
-                const qevercloud::SyncChunk & syncChunk = *it;
-                if (!syncChunk.notes.isSet()) {
-                    continue;
-                }
-
-                PROCESS_CONTAINER(syncChunk.notes.ref(), linkedNotebookGuidsByNoteGuids)
-            }
-        }
-        else
-        {
-            QNTRACE(QStringLiteral("The sync of notes from linked notebooks has already started, checking notes from pending lists"));
-            PROCESS_CONTAINER(m_notes, linkedNotebookGuidsByNoteGuids)
-            PROCESS_CONTAINER(m_notesPendingAddOrUpdate, linkedNotebookGuidsByNoteGuids)
-
-            PROCESS_ASSOCIATIVE_NOTES_CONTAINER(m_notesToAddPerAPICallPostponeTimerId, linkedNotebookGuidsByNoteGuids)
-            PROCESS_ASSOCIATIVE_NOTES_CONTAINER(m_notesToUpdatePerAPICallPostponeTimerId, linkedNotebookGuidsByNoteGuids)
-        }
-
-        if (syncingNotebooks || syncingTags || syncingNotes)
-        {
-            QNTRACE(QStringLiteral("The sync of resources from linked notebooks' notes hasn't started yet, checking resources from sync chunks"));
-            for(auto it = m_linkedNotebookSyncChunks.constBegin(), end = m_linkedNotebookSyncChunks.constEnd(); it != end; ++it)
-            {
-                const qevercloud::SyncChunk & syncChunk = *it;
-                if (!syncChunk.resources.isSet()) {
-                    continue;
-                }
-
-                PROCESS_CONTAINER(syncChunk.resources.ref(), m_linkedNotebookGuidsByResourceGuids)
-            }
-        }
-        else
-        {
-            QNTRACE(QStringLiteral("The sync of resources from linked notebooks' notes has already started, checking resources from pending lists"));
-            PROCESS_CONTAINER(m_resources, m_linkedNotebookGuidsByResourceGuids)
-            PROCESS_CONTAINER(m_resourcesPendingAddOrUpdate, m_linkedNotebookGuidsByResourceGuids)
-
-            PROCESS_ASSOCIATIVE_RESOURCES_CONTAINER(m_resourcesToAddWithNotesPerAPICallPostponeTimerId,
-                                                    m_linkedNotebookGuidsByResourceGuids)
-            PROCESS_ASSOCIATIVE_RESOURCES_CONTAINER(m_resourcesToUpdateWithNotesPerAPICallPostponeTimerId,
-                                                    m_linkedNotebookGuidsByResourceGuids)
-        }
+        checkNonSyncedItemsContainerForSmallestUsn(m_notes, linkedNotebookGuid, smallestUsn);
+        checkNonSyncedItemsContainerForSmallestUsn(m_notesPendingAddOrUpdate, linkedNotebookGuid, smallestUsn);
+        checkNonSyncedItemsContainerForSmallestUsn(m_notesToAddPerAPICallPostponeTimerId, linkedNotebookGuid, smallestUsn);
+        checkNonSyncedItemsContainerForSmallestUsn(m_notesToUpdatePerAPICallPostponeTimerId, linkedNotebookGuid, smallestUsn);
     }
 
-#undef PROCESS_CONTAINER
-#undef PROCESS_ASSOCIATIVE_NOTES_CONTAINER
-#undef PROCESS_ASSOCIATIVE_RESOURCES_CONTAINER
+    if (syncingNotebooks || syncingTags || notesSyncInProgress())
+    {
+        QNTRACE(QStringLiteral("The sync of resources hasn't started yet, checking resources from sync chunks"));
+
+        const QVector<qevercloud::SyncChunk> & syncChunks = (linkedNotebookGuid.isEmpty()
+                                                             ? m_syncChunks
+                                                             : m_linkedNotebookSyncChunks);
+
+        for(auto it = syncChunks.constBegin(), end = syncChunks.constEnd(); it != end; ++it)
+        {
+            const qevercloud::SyncChunk & syncChunk = *it;
+            if (!syncChunk.resources.isSet()) {
+                continue;
+            }
+
+            checkNonSyncedItemsContainerForSmallestUsn(syncChunk.resources.ref(), linkedNotebookGuid, smallestUsn);
+        }
+    }
+    else
+    {
+        QNTRACE(QStringLiteral("The sync of resources has already started, checking resources from pending lists"));
+
+        checkNonSyncedItemsContainerForSmallestUsn(m_resources, linkedNotebookGuid, smallestUsn);
+        checkNonSyncedItemsContainerForSmallestUsn(m_resourcesPendingAddOrUpdate, linkedNotebookGuid, smallestUsn);
+        checkNonSyncedItemsContainerForSmallestUsn(m_resourcesToAddWithNotesPerAPICallPostponeTimerId,
+                                                   linkedNotebookGuid, smallestUsn);
+        checkNonSyncedItemsContainerForSmallestUsn(m_resourcesToUpdateWithNotesPerAPICallPostponeTimerId,
+                                                   linkedNotebookGuid, smallestUsn);
+    }
 
     QNTRACE(QStringLiteral("Overall smallest USN: ") << smallestUsn);
     return smallestUsn;

@@ -543,10 +543,21 @@ private:
 
     QString clientNameForProtocolVersionCheck() const;
 
-    Note createConflictingNote(const Note & originalNote, const qevercloud::Note * pRemoteNote = Q_NULLPTR) const;
+    // Infrastructure for persisting the sync state corresponding to data synced so far when API rate limit breach occurs
+    qint32 findSmallestUsnOfNonSyncedItems(const QString & linkedNotebookGuid = QString()) const;
+    QHash<QString,QString> linkedNotebookGuidByNoteGuidHash() const;
 
-    qint32 nonProcessedItemsSmallestUsn(const QString & linkedNotebookGuid = QString()) const;
+    template <class T>
+    QString findLinkedNotebookGuidForItem(const T & item) const;
 
+    template <class T>
+    void checkNonSyncedItemForSmallestUsn(const T & item, const QString & linkedNotebookGuid,
+                                          qint32 & smallestUsn) const;
+
+    template <class ContainerType>
+    void checkNonSyncedItemsContainerForSmallestUsn(const ContainerType & container, const QString & linkedNotebookGuid, qint32 & smallestUsn) const;
+
+    // Infrastructure for handling of asynchronous data items add/update requests
     void registerTagPendingAddOrUpdate(const Tag & tag);
     void registerSavedSearchPendingAddOrUpdate(const SavedSearch & search);
     void registerLinkedNotebookPendingAddOrUpdate(const LinkedNotebook & linkedNotebook);
@@ -561,11 +572,11 @@ private:
     void unregisterNotePendingAddOrUpdate(const Note & note);
     void unregisterResourcePendingAddOrUpdate(const Resource & resource);
 
+    // Infrastructure for processing of conflicts occurred during sync
+    Note createConflictingNote(const Note & originalNote, const qevercloud::Note * pRemoteNote = Q_NULLPTR) const;
     void overrideLocalNoteWithRemoteNote(Note & localNote, const qevercloud::Note & remoteNote) const;
     void processResourceConflictAsNoteConflict(Note & remoteNote, const Note & localConflictingNote,
                                                Resource & remoteNoteResource);
-
-    void syncNextTagPendingProcessing();
 
     void junkFullSyncStaleDataItemsExpunger(FullSyncStaleDataItemsExpunger & expunger);
 
@@ -575,6 +586,7 @@ private:
                                                                            const TagSyncCache & tagSyncCache);
 
     void startFeedingDownloadedTagsToLocalStorageOneByOne(const TagsContainer & container);
+    void syncNextTagPendingProcessing();
 
 private:
     template <class T>
