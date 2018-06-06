@@ -133,6 +133,7 @@ private Q_SLOTS:
     void testIncrementalSyncWithRateLimitsBreachOnGetLinkedNotebookSyncChunkAttempt();
 
     void testIncrementalSyncWithRateLimitsBreachOnGetNoteAfterDownloadingUserOwnSyncChunksAttempt();
+    void testIncrementalSyncWithRateLimitsBreachOnGetResourceAfterDownloadingUserOwnSyncChunksAttempt();
 
 private:
     void setUserOwnItemsToRemoteStorage();
@@ -140,6 +141,7 @@ private:
     void setNewUserOwnItemsToRemoteStorage();
     void setNewLinkedNotebookItemsToRemoteStorage();
     void setModifiedUserOwnItemsToRemoteStorage();
+    void setModifiedUserOwnResourcesOnlyToRemoteStorage();
     void setModifiedLinkedNotebookItemsToRemoteStorage();
     void setExpungedUserOwnItemsToRemoteStorage();
     void setExpungedLinkedNotebookItemsToRemoteStorage();

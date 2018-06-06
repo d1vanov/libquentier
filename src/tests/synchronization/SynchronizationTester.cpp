@@ -2711,6 +2711,57 @@ void SynchronizationTester::testIncrementalSyncWithRateLimitsBreachOnGetNoteAfte
                                                         rateLimitTriggeredSyncStateEntryIndex);
 }
 
+void SynchronizationTester::testIncrementalSyncWithRateLimitsBreachOnGetResourceAfterDownloadingUserOwnSyncChunksAttempt()
+{
+    setUserOwnItemsToRemoteStorage();
+    setLinkedNotebookItemsToRemoteStorage();
+    copyRemoteItemsToLocalStorage();
+    setRemoteStorageSyncStateToPersistentSyncSettings();
+    m_pFakeNoteStore->considerAllExistingDataItemsSentBeforeRateLimitBreach();
+
+    setModifiedUserOwnResourcesOnlyToRemoteStorage();
+    setNewUserOwnItemsToRemoteStorage();
+    setNewLinkedNotebookItemsToRemoteStorage();
+
+    m_pFakeNoteStore->setAPIRateLimitsExceedingTrigger(FakeNoteStore::WhenToTriggerAPIRateLimitsExceeding::OnGetResourceAttemptAfterDownloadingUserOwnSyncChunks);
+
+    SynchronizationManagerSignalsCatcher catcher(*m_pSynchronizationManager, *m_pSyncStatePersistenceManager);
+    runTest(catcher);
+
+    CHECK_EXPECTED(receivedStartedSignal)
+    CHECK_EXPECTED(receivedFinishedSignal)
+    CHECK_EXPECTED(finishedSomethingDownloaded)
+    CHECK_EXPECTED(receivedRemoteToLocalSyncDone)
+    CHECK_EXPECTED(remoteToLocalSyncDoneSomethingDownloaded)
+    CHECK_EXPECTED(receivedSyncChunksDownloaded)
+    CHECK_EXPECTED(receivedLinkedNotebookSyncChunksDownloaded)
+    CHECK_EXPECTED(receivedRateLimitExceeded)
+
+    // These are expected because remotely modified resource lead to the locally induced updates of note containing them
+    CHECK_EXPECTED(receivedPreparedDirtyObjectsForSending)
+    CHECK_EXPECTED(finishedSomethingSent)
+
+    // FIXME: this one shouldn't actually be expected but it's too much trouble to change this behaviour, so will keep it for now
+    CHECK_EXPECTED(receivedPreparedLinkedNotebookDirtyObjectsForSending)
+
+    CHECK_UNEXPECTED(receivedAuthenticationFinishedSignal)
+    CHECK_UNEXPECTED(receivedStoppedSignal)
+    CHECK_UNEXPECTED(receivedAuthenticationRevokedSignal)
+    CHECK_UNEXPECTED(receivedRemoteToLocalSyncStopped)
+    CHECK_UNEXPECTED(receivedSendLocalChangedStopped)
+    CHECK_UNEXPECTED(receivedWillRepeatRemoteToLocalSyncAfterSendingChanges)
+    CHECK_UNEXPECTED(receivedDetectedConflictDuringLocalChangesSending)
+
+    checkProgressNotificationsOrder(catcher);
+    checkIdentityOfLocalAndRemoteItems();
+    checkPersistentSyncState();
+
+    int numExpectedSyncStateEntries = 4;    // API rate limits breach + synced user own content + synced linked notebooks content + after local changes sending (although nothing is actually sent here)
+    int rateLimitTriggeredSyncStateEntryIndex = 0;
+    checkSyncStatePersistedRightAfterAPIRateLimitBreach(catcher, numExpectedSyncStateEntries,
+                                                        rateLimitTriggeredSyncStateEntryIndex);
+}
+
 void SynchronizationTester::setUserOwnItemsToRemoteStorage()
 {
     ErrorString errorDescription;
@@ -3287,6 +3338,14 @@ void SynchronizationTester::setModifiedUserOwnItemsToRemoteStorage()
         QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
     }
 
+    setModifiedUserOwnResourcesOnlyToRemoteStorage();
+}
+
+void SynchronizationTester::setModifiedUserOwnResourcesOnlyToRemoteStorage()
+{
+    ErrorString errorDescription;
+    bool res = false;
+
     QVERIFY(!m_guidsOfUsersOwnRemoteItemsToModify.m_resourceGuids.isEmpty());
     for(auto it = m_guidsOfUsersOwnRemoteItemsToModify.m_resourceGuids.constBegin(),
         end = m_guidsOfUsersOwnRemoteItemsToModify.m_resourceGuids.constEnd(); it != end; ++it)
@@ -3302,7 +3361,7 @@ void SynchronizationTester::setModifiedUserOwnItemsToRemoteStorage()
         QVERIFY2(pNote->hasResources(), "Detected broken test condition - the resource's note doesn't have resources in fake note store");
 
         const Notebook * pNotebook = m_pFakeNoteStore->findNotebook(pNote->notebookGuid());
-        QVERIFY2(pNotebook != Q_NULLPTR, "Detected unexpectedly mising notebook in fake note store");
+        QVERIFY2(pNotebook != Q_NULLPTR, "Detected unexpectedly missing notebook in fake note store");
         QVERIFY2(!pNotebook->hasLinkedNotebookGuid(), "Detected broken test condition - the note was supposed to be user's own belongs to a notebook which has linked notebook guid");
 
         Resource modifiedResource(*pResource);
