@@ -132,7 +132,8 @@ private Q_SLOTS:
     void testIncrementalSyncWithRateLimitsBreachOnGetUserOwnSyncChunkAttempt();
     void testIncrementalSyncWithRateLimitsBreachOnGetLinkedNotebookSyncChunkAttempt();
 
-    void testIncrementalSyncWithRateLimitsBreachOnGetNoteAfterDownloadingUserOwnSyncChunksAttempt();
+    void testIncrementalSyncWithRateLimitsBreachOnGetNewNoteAfterDownloadingUserOwnSyncChunksAttempt();
+    void testIncrementalSyncWithRateLimitsBreachOnGetModifiedNoteAfterDownloadingUserOwnSyncChunksAttempt();
     void testIncrementalSyncWithRateLimitsBreachOnGetResourceAfterDownloadingUserOwnSyncChunksAttempt();
 
 private:
