@@ -2575,51 +2575,38 @@ void RemoteToLocalSynchronizationManager::collectNonProcessedItemsSmallestUsns(q
     usn = -1;
     usnByLinkedNotebookGuid.clear();
 
-    bool syncingLinkedNotebooks = syncingLinkedNotebooksContent();
-    QNTRACE(QStringLiteral("Syncing linked notebooks = ") << (syncingLinkedNotebooks ? QStringLiteral("true") : QStringLiteral("false")));
+    QNDEBUG(QStringLiteral("User own data sync chunks downloaded = ") << (m_syncChunksDownloaded ? QStringLiteral("true") : QStringLiteral("false"))
+            << QStringLiteral(", all linked notebooks listed = ") << (m_allLinkedNotebooksListed ? QStringLiteral("true") : QStringLiteral("false"))
+            << QStringLiteral(", linked notebook sync chunks downloaded = ") << (m_linkedNotebooksSyncChunksDownloaded ? QStringLiteral("true") : QStringLiteral("false")));
 
-    if (!syncingLinkedNotebooks)
+    if (m_syncChunksDownloaded)
     {
-        if (!m_syncChunksDownloaded) {
-            QNDEBUG(QStringLiteral("Not all sync chunks from user's own account were downloaded (if any) => there are no valid USNs to return"));
-            return;
-        }
-
         qint32 smallestUsn = findSmallestUsnOfNonSyncedItems();
         if (smallestUsn > 0) {
             QNDEBUG(QStringLiteral("Found the smallest USN of non-processed items within the user's own account: ")
                     << smallestUsn);
             usn = smallestUsn - 1;  // NOTE: decrement this USN because that would give the USN *after which* the next sync should start
         }
-
-        return;
     }
 
-    if (!m_allLinkedNotebooksListed) {
-        QNDEBUG(QStringLiteral("Not all linked notebooks are listed"));
-        return;
-    }
-
-    if (!m_linkedNotebooksSyncChunksDownloaded) {
-        QNDEBUG(QStringLiteral("Not all sync chunks from linked notebooks were downloaded (if any) => there are no valid USNs to return"));
-        return;
-    }
-
-    for(auto it = m_allLinkedNotebooks.constBegin(), end = m_allLinkedNotebooks.constEnd(); it != end; ++it)
+    if (m_allLinkedNotebooksListed && m_linkedNotebooksSyncChunksDownloaded)
     {
-        const LinkedNotebook & linkedNotebook = *it;
+        for(auto it = m_allLinkedNotebooks.constBegin(), end = m_allLinkedNotebooks.constEnd(); it != end; ++it)
+        {
+            const LinkedNotebook & linkedNotebook = *it;
 
-        if (Q_UNLIKELY(!linkedNotebook.hasGuid())) {
-            QNWARNING(QStringLiteral("Detected a linked notebook without guid: ") << linkedNotebook);
-            continue;
-        }
+            if (Q_UNLIKELY(!linkedNotebook.hasGuid())) {
+                QNWARNING(QStringLiteral("Detected a linked notebook without guid: ") << linkedNotebook);
+                continue;
+            }
 
-        qint32 smallestUsn = findSmallestUsnOfNonSyncedItems(linkedNotebook.guid());
-        if (smallestUsn >= 0) {
-            QNDEBUG(QStringLiteral("Found the smallest USN of non-processed items within linked notebook with guid ")
-                    << linkedNotebook.guid() << QStringLiteral(": ") << smallestUsn);
-            usnByLinkedNotebookGuid[linkedNotebook.guid()] = (smallestUsn - 1);
-            continue;
+            qint32 smallestUsn = findSmallestUsnOfNonSyncedItems(linkedNotebook.guid());
+            if (smallestUsn >= 0) {
+                QNDEBUG(QStringLiteral("Found the smallest USN of non-processed items within linked notebook with guid ")
+                        << linkedNotebook.guid() << QStringLiteral(": ") << smallestUsn);
+                usnByLinkedNotebookGuid[linkedNotebook.guid()] = (smallestUsn - 1);
+                continue;
+            }
         }
     }
 }
