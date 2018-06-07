@@ -2862,6 +2862,52 @@ void SynchronizationTester::testIncrementalSyncWithRateLimitsBreachOnGetModified
                                                         rateLimitTriggeredSyncStateEntryIndex);
 }
 
+void SynchronizationTester::testIncrementalSyncWithRateLimitsBreachOnGetNewNoteAfterDownloadingLinkedNotebookSyncChunksAttempt()
+{
+    setUserOwnItemsToRemoteStorage();
+    setLinkedNotebookItemsToRemoteStorage();
+    copyRemoteItemsToLocalStorage();
+    setRemoteStorageSyncStateToPersistentSyncSettings();
+    m_pFakeNoteStore->considerAllExistingDataItemsSentBeforeRateLimitBreach();
+
+    setNewUserOwnItemsToRemoteStorage();
+    setNewLinkedNotebookItemsToRemoteStorage();
+
+    m_pFakeNoteStore->setAPIRateLimitsExceedingTrigger(FakeNoteStore::WhenToTriggerAPIRateLimitsExceeding::OnGetNoteAttemptAfterDownloadingLinkedNotebookSyncChunks);
+
+    SynchronizationManagerSignalsCatcher catcher(*m_pSynchronizationManager, *m_pSyncStatePersistenceManager);
+    runTest(catcher);
+
+    CHECK_EXPECTED(receivedStartedSignal)
+    CHECK_EXPECTED(receivedFinishedSignal)
+    CHECK_EXPECTED(finishedSomethingDownloaded)
+    CHECK_EXPECTED(receivedRemoteToLocalSyncDone)
+    CHECK_EXPECTED(remoteToLocalSyncDoneSomethingDownloaded)
+    CHECK_EXPECTED(receivedSyncChunksDownloaded)
+    CHECK_EXPECTED(receivedLinkedNotebookSyncChunksDownloaded)
+    CHECK_EXPECTED(receivedRateLimitExceeded)
+
+    CHECK_UNEXPECTED(receivedAuthenticationFinishedSignal)
+    CHECK_UNEXPECTED(receivedStoppedSignal)
+    CHECK_UNEXPECTED(finishedSomethingSent)
+    CHECK_UNEXPECTED(receivedAuthenticationRevokedSignal)
+    CHECK_UNEXPECTED(receivedRemoteToLocalSyncStopped)
+    CHECK_UNEXPECTED(receivedSendLocalChangedStopped)
+    CHECK_UNEXPECTED(receivedWillRepeatRemoteToLocalSyncAfterSendingChanges)
+    CHECK_UNEXPECTED(receivedDetectedConflictDuringLocalChangesSending)
+    CHECK_UNEXPECTED(receivedPreparedDirtyObjectsForSending)
+    CHECK_UNEXPECTED(receivedPreparedLinkedNotebookDirtyObjectsForSending)
+
+    checkProgressNotificationsOrder(catcher);
+    checkIdentityOfLocalAndRemoteItems();
+    checkPersistentSyncState();
+
+    int numExpectedSyncStateEntries = 4;    // synced user own content + API rate limits breach + synced linked notebooks content + after local changes sending (although nothing is actually sent here)
+    int rateLimitTriggeredSyncStateEntryIndex = 1;
+    checkSyncStatePersistedRightAfterAPIRateLimitBreach(catcher, numExpectedSyncStateEntries,
+                                                        rateLimitTriggeredSyncStateEntryIndex);
+}
+
 void SynchronizationTester::setUserOwnItemsToRemoteStorage()
 {
     ErrorString errorDescription;
