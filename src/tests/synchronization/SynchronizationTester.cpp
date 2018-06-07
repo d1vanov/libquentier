@@ -2856,7 +2856,7 @@ void SynchronizationTester::testIncrementalSyncWithRateLimitsBreachOnGetModified
     checkIdentityOfLocalAndRemoteItems();
     checkPersistentSyncState();
 
-    int numExpectedSyncStateEntries = 4;    // API rate limits breach + synced user own content + synced linked notebooks content + after local changes sending (although nothing is actually sent here)
+    int numExpectedSyncStateEntries = 4;    // API rate limits breach + synced user own content + synced linked notebooks content + after local changes sending
     int rateLimitTriggeredSyncStateEntryIndex = 0;
     checkSyncStatePersistedRightAfterAPIRateLimitBreach(catcher, numExpectedSyncStateEntries,
                                                         rateLimitTriggeredSyncStateEntryIndex);
@@ -2903,6 +2903,54 @@ void SynchronizationTester::testIncrementalSyncWithRateLimitsBreachOnGetNewNoteA
     checkPersistentSyncState();
 
     int numExpectedSyncStateEntries = 4;    // synced user own content + API rate limits breach + synced linked notebooks content + after local changes sending (although nothing is actually sent here)
+    int rateLimitTriggeredSyncStateEntryIndex = 1;
+    checkSyncStatePersistedRightAfterAPIRateLimitBreach(catcher, numExpectedSyncStateEntries,
+                                                        rateLimitTriggeredSyncStateEntryIndex);
+}
+
+void SynchronizationTester::testIncrementalSyncWithRateLimitsBreachOnGetModifiedNoteAfterDownloadingLinkedNotebookSyncChunksAttempt()
+{
+    setUserOwnItemsToRemoteStorage();
+    setLinkedNotebookItemsToRemoteStorage();
+    copyRemoteItemsToLocalStorage();
+    setRemoteStorageSyncStateToPersistentSyncSettings();
+    m_pFakeNoteStore->considerAllExistingDataItemsSentBeforeRateLimitBreach();
+
+    setModifiedUserOwnItemsToRemoteStorage();
+    setModifiedLinkedNotebookItemsToRemoteStorage();
+
+    m_pFakeNoteStore->setAPIRateLimitsExceedingTrigger(FakeNoteStore::WhenToTriggerAPIRateLimitsExceeding::OnGetNoteAttemptAfterDownloadingLinkedNotebookSyncChunks);
+
+    SynchronizationManagerSignalsCatcher catcher(*m_pSynchronizationManager, *m_pSyncStatePersistenceManager);
+    runTest(catcher);
+
+    CHECK_EXPECTED(receivedStartedSignal)
+    CHECK_EXPECTED(receivedFinishedSignal)
+    CHECK_EXPECTED(finishedSomethingDownloaded)
+    CHECK_EXPECTED(receivedRemoteToLocalSyncDone)
+    CHECK_EXPECTED(remoteToLocalSyncDoneSomethingDownloaded)
+    CHECK_EXPECTED(receivedSyncChunksDownloaded)
+    CHECK_EXPECTED(receivedLinkedNotebookSyncChunksDownloaded)
+    CHECK_EXPECTED(receivedRateLimitExceeded)
+
+    // These are expected because remotely modified resource lead to the locally induced updates of note containing them
+    CHECK_EXPECTED(receivedPreparedDirtyObjectsForSending)
+    CHECK_EXPECTED(receivedPreparedLinkedNotebookDirtyObjectsForSending)
+    CHECK_EXPECTED(finishedSomethingSent)
+
+    CHECK_UNEXPECTED(receivedAuthenticationFinishedSignal)
+    CHECK_UNEXPECTED(receivedStoppedSignal)
+    CHECK_UNEXPECTED(receivedAuthenticationRevokedSignal)
+    CHECK_UNEXPECTED(receivedRemoteToLocalSyncStopped)
+    CHECK_UNEXPECTED(receivedSendLocalChangedStopped)
+    CHECK_UNEXPECTED(receivedWillRepeatRemoteToLocalSyncAfterSendingChanges)
+    CHECK_UNEXPECTED(receivedDetectedConflictDuringLocalChangesSending)
+
+    checkProgressNotificationsOrder(catcher);
+    checkIdentityOfLocalAndRemoteItems();
+    checkPersistentSyncState();
+
+    int numExpectedSyncStateEntries = 4;    // synced user own content + API rate limits breach + synced linked notebooks content + after local changes sending
     int rateLimitTriggeredSyncStateEntryIndex = 1;
     checkSyncStatePersistedRightAfterAPIRateLimitBreach(catcher, numExpectedSyncStateEntries,
                                                         rateLimitTriggeredSyncStateEntryIndex);
@@ -5220,8 +5268,8 @@ void SynchronizationTester::checkSyncStatePersistedRightAfterAPIRateLimitBreach(
 
     qint32 referenceUserOwnUpdateCountBeforeAPILimitBreach = m_pFakeNoteStore->smallestUsnOfNotCompletelySentDataItemBeforeRateLimitBreach();
     if (referenceUserOwnUpdateCountBeforeAPILimitBreach < 0) {
-        referenceUserOwnUpdateCountBeforeAPILimitBreach = m_pFakeNoteStore->currentMaxUsn();
-        QVERIFY2(referenceUserOwnUpdateCountBeforeAPILimitBreach >= 0, "FakeNoteStore returned negative smallest USN before API rate limit breach and negative current max USN for user's own data");
+        referenceUserOwnUpdateCountBeforeAPILimitBreach = m_pFakeNoteStore->maxUsnBeforeAPIRateLimitsExceeding();
+        QVERIFY2(referenceUserOwnUpdateCountBeforeAPILimitBreach >= 0, "FakeNoteStore returned negative smallest USN before API rate limit breach and negative max USN before API rate limit breach for user's own data");
         ++referenceUserOwnUpdateCountBeforeAPILimitBreach;
     }
 
@@ -5241,8 +5289,8 @@ void SynchronizationTester::checkSyncStatePersistedRightAfterAPIRateLimitBreach(
     {
         qint32 referenceUsn = m_pFakeNoteStore->smallestUsnOfNotCompletelySentDataItemBeforeRateLimitBreach(it.key());
         if (referenceUsn < 0) {
-            referenceUsn = m_pFakeNoteStore->currentMaxUsn(it.key());
-            QVERIFY2(referenceUsn >= 0, "FakeNoteStore returned negative smallest USN before API rate limit breach and negative current max USN for one of linked notebooks");
+            referenceUsn = m_pFakeNoteStore->maxUsnBeforeAPIRateLimitsExceeding(it.key());
+            QVERIFY2(referenceUsn >= 0, "FakeNoteStore returned negative smallest USN before API rate limit breach and negative max USN before API rate limit breach for one of linked notebooks");
             ++referenceUsn;
         }
 
