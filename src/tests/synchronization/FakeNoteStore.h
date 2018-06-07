@@ -194,6 +194,8 @@ public:
     void considerAllExistingDataItemsSentBeforeRateLimitBreach();
     qint32 smallestUsnOfNotCompletelySentDataItemBeforeRateLimitBreach(const QString & linkedNotebookGuid = QString()) const;
 
+    qint32 maxUsnBeforeAPIRateLimitsExceeding(const QString & linkedNotebookGuid = QString()) const;
+
 public:
     // INoteStore interface
     virtual INoteStore * create() const Q_DECL_OVERRIDE;
@@ -287,6 +289,9 @@ private:
                             qevercloud::SyncChunk & syncChunk, ErrorString & errorDescription);
 
     void considerAllExistingDataItemsSentBeforeRateLimitBreachImpl(const QString & linkedNotebookGuid = QString());
+
+    void storeCurrentMaxUsnsAsThoseBeforeRateLimitBreach();
+    void storeCurrentMaxUsnAsThatBeforeRateLimitBreachImpl(const QString & linkedNotebookGuid = QString());
 
     /**
      * Helper method to advance the iterator of UsnIndex to the next item
@@ -741,6 +746,9 @@ private:
 
         GuidsOfCompleteSentItems    m_guidsOfUserOwnCompleteSentItems;
         QHash<QString, GuidsOfCompleteSentItems>    m_guidsOfCompleteSentItemsByLinkedNotebookGuid;
+
+        qint32                  m_maxUsnForUserOwnDataBeforeRateLimitBreach;
+        QHash<QString,qint32>   m_maxUsnsForLinkedNotebooksDataBeforeRateLimitBreach;
 
         QString                 m_authenticationToken;
         QHash<QString,QString>  m_linkedNotebookAuthTokens;
