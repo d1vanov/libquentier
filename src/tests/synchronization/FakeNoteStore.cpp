@@ -2254,6 +2254,7 @@ qint32 FakeNoteStore::getNote(const bool withContent, const bool withResourcesDa
             QList<Resource> resources = note.resources();
             for(auto it = resources.constBegin(), end = resources.constEnd(); it != end; ++it) {
                 Q_UNUSED(guidsOfCompleteSentItems.m_resourceGuids.insert(it->guid()))
+                QNTRACE(QStringLiteral("Marked resource as processed: ") << *it);
             }
         }
     }
@@ -2387,6 +2388,7 @@ qint32 FakeNoteStore::getResource(const bool withDataBody, const bool withRecogn
                                                                ? m_data->m_guidsOfCompleteSentItemsByLinkedNotebookGuid[notebookIt->linkedNotebookGuid()]
                                                                : m_data->m_guidsOfUserOwnCompleteSentItems);
         Q_UNUSED(guidsOfCompleteSentItems.m_resourceGuids.insert(resource.guid()))
+        QNTRACE(QStringLiteral("Marked resource as processed: ") << resource);
     }
 
     return 0;
