@@ -134,13 +134,15 @@ private Q_SLOTS:
 
     void testIncrementalSyncWithRateLimitsBreachOnGetNewNoteAfterDownloadingUserOwnSyncChunksAttempt();
     void testIncrementalSyncWithRateLimitsBreachOnGetModifiedNoteAfterDownloadingUserOwnSyncChunksAttempt();
-    void testIncrementalSyncWithRateLimitsBreachOnGetResourceAfterDownloadingUserOwnSyncChunksAttempt();
+    void testIncrementalSyncWithRateLimitsBreachOnGetNewResourceAfterDownloadingUserOwnSyncChunksAttempt();
+    void testIncrementalSyncWithRateLimitsBreachOnGetModifiedResourceAfterDownloadingUserOwnSyncChunksAttempt();
 
 private:
     void setUserOwnItemsToRemoteStorage();
     void setLinkedNotebookItemsToRemoteStorage();
     void setNewUserOwnItemsToRemoteStorage();
     void setNewLinkedNotebookItemsToRemoteStorage();
+    void setNewUserOwnResourcesInExistingNotesToRemoteStorage();
     void setModifiedUserOwnItemsToRemoteStorage();
     void setModifiedUserOwnResourcesOnlyToRemoteStorage();
     void setModifiedLinkedNotebookItemsToRemoteStorage();

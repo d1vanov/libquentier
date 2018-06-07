@@ -2761,7 +2761,57 @@ void SynchronizationTester::testIncrementalSyncWithRateLimitsBreachOnGetModified
                                                         rateLimitTriggeredSyncStateEntryIndex);
 }
 
-void SynchronizationTester::testIncrementalSyncWithRateLimitsBreachOnGetResourceAfterDownloadingUserOwnSyncChunksAttempt()
+void SynchronizationTester::testIncrementalSyncWithRateLimitsBreachOnGetNewResourceAfterDownloadingUserOwnSyncChunksAttempt()
+{
+    setUserOwnItemsToRemoteStorage();
+    setLinkedNotebookItemsToRemoteStorage();
+    copyRemoteItemsToLocalStorage();
+    setRemoteStorageSyncStateToPersistentSyncSettings();
+    m_pFakeNoteStore->considerAllExistingDataItemsSentBeforeRateLimitBreach();
+
+    setNewUserOwnResourcesInExistingNotesToRemoteStorage();
+    setNewLinkedNotebookItemsToRemoteStorage();
+
+    m_pFakeNoteStore->setAPIRateLimitsExceedingTrigger(FakeNoteStore::WhenToTriggerAPIRateLimitsExceeding::OnGetResourceAttemptAfterDownloadingUserOwnSyncChunks);
+
+    SynchronizationManagerSignalsCatcher catcher(*m_pSynchronizationManager, *m_pSyncStatePersistenceManager);
+    runTest(catcher);
+
+    CHECK_EXPECTED(receivedStartedSignal)
+    CHECK_EXPECTED(receivedFinishedSignal)
+    CHECK_EXPECTED(finishedSomethingDownloaded)
+    CHECK_EXPECTED(receivedRemoteToLocalSyncDone)
+    CHECK_EXPECTED(remoteToLocalSyncDoneSomethingDownloaded)
+    CHECK_EXPECTED(receivedSyncChunksDownloaded)
+    CHECK_EXPECTED(receivedLinkedNotebookSyncChunksDownloaded)
+    CHECK_EXPECTED(receivedRateLimitExceeded)
+
+    // These are expected because remotely modified resource lead to the locally induced updates of note containing them
+    CHECK_EXPECTED(receivedPreparedDirtyObjectsForSending)
+    CHECK_EXPECTED(finishedSomethingSent)
+
+    // FIXME: this one shouldn't actually be expected but it's too much trouble to change this behaviour, so will keep it for now
+    CHECK_EXPECTED(receivedPreparedLinkedNotebookDirtyObjectsForSending)
+
+    CHECK_UNEXPECTED(receivedAuthenticationFinishedSignal)
+    CHECK_UNEXPECTED(receivedStoppedSignal)
+    CHECK_UNEXPECTED(receivedAuthenticationRevokedSignal)
+    CHECK_UNEXPECTED(receivedRemoteToLocalSyncStopped)
+    CHECK_UNEXPECTED(receivedSendLocalChangedStopped)
+    CHECK_UNEXPECTED(receivedWillRepeatRemoteToLocalSyncAfterSendingChanges)
+    CHECK_UNEXPECTED(receivedDetectedConflictDuringLocalChangesSending)
+
+    checkProgressNotificationsOrder(catcher);
+    checkIdentityOfLocalAndRemoteItems();
+    checkPersistentSyncState();
+
+    int numExpectedSyncStateEntries = 4;    // API rate limits breach + synced user own content + synced linked notebooks content + after local changes sending (although nothing is actually sent here)
+    int rateLimitTriggeredSyncStateEntryIndex = 0;
+    checkSyncStatePersistedRightAfterAPIRateLimitBreach(catcher, numExpectedSyncStateEntries,
+                                                        rateLimitTriggeredSyncStateEntryIndex);
+}
+
+void SynchronizationTester::testIncrementalSyncWithRateLimitsBreachOnGetModifiedResourceAfterDownloadingUserOwnSyncChunksAttempt()
 {
     setUserOwnItemsToRemoteStorage();
     setLinkedNotebookItemsToRemoteStorage();
@@ -3304,6 +3354,38 @@ void SynchronizationTester::setLinkedNotebookItemsToRemoteStorage()
     Q_UNUSED(m_guidsOfLinkedNotebookTagsExpectedToBeAutoExpunged.insert(thirdLinkedNotebookSecondTag.guid()))
     Q_UNUSED(m_guidsOfLinkedNotebookTagsExpectedToBeAutoExpunged.insert(secondLinkedNotebookFirstTag.guid()))
     Q_UNUSED(m_guidsOfLinkedNotebookTagsExpectedToBeAutoExpunged.insert(secondLinkedNotebookSecondTag.guid()))
+}
+
+void SynchronizationTester::setNewUserOwnResourcesInExistingNotesToRemoteStorage()
+{
+    ErrorString errorDescription;
+    bool res = false;
+
+    QVERIFY(!m_guidsOfUsersOwnRemoteItemsToModify.m_noteGuids.isEmpty());
+    for(auto it = m_guidsOfUsersOwnRemoteItemsToModify.m_noteGuids.constBegin(),
+        end = m_guidsOfUsersOwnRemoteItemsToModify.m_noteGuids.constEnd(); it != end; ++it)
+    {
+        const Note * pNote = m_pFakeNoteStore->findNote(*it);
+        QVERIFY2(pNote != Q_NULLPTR, "Detected unexpectedly missing note in fake note store");
+
+        Resource newResource;
+        newResource.setGuid(UidGenerator::Generate());
+        newResource.setDataBody(QByteArray("New resource"));
+        newResource.setDataSize(newResource.dataBody().size());
+        newResource.setDataHash(QCryptographicHash::hash(newResource.dataBody(), QCryptographicHash::Md5));
+        newResource.setDirty(true);
+        newResource.setLocal(false);
+        newResource.setUpdateSequenceNumber(-1);
+
+        Note modifiedNote(*pNote);
+        modifiedNote.addResource(newResource);
+        modifiedNote.setDirty(false);
+        modifiedNote.setLocal(false);
+        // NOTE: intentionally acting like the note hasn't changed at all as that seems to be the behaviour of actual Evernote servers
+
+        res = m_pFakeNoteStore->setNote(modifiedNote, errorDescription);
+        QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
+    }
 }
 
 void SynchronizationTester::setModifiedUserOwnItemsToRemoteStorage()
