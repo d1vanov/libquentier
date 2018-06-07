@@ -588,6 +588,9 @@ private:
     void startFeedingDownloadedTagsToLocalStorageOneByOne(const TagsContainer & container);
     void syncNextTagPendingProcessing();
 
+    void removeNoteResourcesFromSyncChunks(const Note & note);
+    void removeResourceFromSyncChunks(const Resource & resource, QVector<qevercloud::SyncChunk> & syncChunks);
+
 private:
     template <class T>
     class Q_DECL_HIDDEN CompareItemByName

@@ -2705,6 +2705,10 @@ void RemoteToLocalSynchronizationManager::onGetNoteAsyncFinished(qint32 errorCod
 
     const Notebook * pNotebook = Q_NULLPTR;
 
+    // Since the downloaded note includes the whole content for each of their resources, need to ensure
+    // this note's resources which might still be present in the sync chunks are removed from there
+    removeNoteResourcesFromSyncChunks(note);
+
     if (shouldDownloadThumbnailsForNotes() && note.hasResources())
     {
         QNDEBUG(QStringLiteral("The added or updated note contains resources, need to download the thumbnails for it"));
@@ -7748,6 +7752,48 @@ void RemoteToLocalSynchronizationManager::syncNextTagPendingProcessing()
 
     qevercloud::Tag frontTag = m_tagsPendingProcessing.takeFirst();
     emitFindByGuidRequest(frontTag);
+}
+
+void RemoteToLocalSynchronizationManager::removeNoteResourcesFromSyncChunks(const Note & note)
+{
+    if (!note.hasResources()) {
+        return;
+    }
+
+    QVector<qevercloud::SyncChunk> & syncChunks = (syncingLinkedNotebooksContent()
+                                                   ? m_linkedNotebookSyncChunks
+                                                   : m_syncChunks);
+
+    QList<Resource> resources = note.resources();
+    for(auto it = resources.constBegin(), end = resources.constEnd(); it != end; ++it) {
+        removeResourceFromSyncChunks(*it, syncChunks);
+    }
+}
+
+void RemoteToLocalSynchronizationManager::removeResourceFromSyncChunks(const Resource & resource,
+                                                                       QVector<qevercloud::SyncChunk> & syncChunks)
+{
+    if (Q_UNLIKELY(!resource.hasGuid())) {
+        QNWARNING(QStringLiteral("Can't remove resource from sync chunks as it has no guid: ") << resource);
+        return;
+    }
+
+    for(auto sit = syncChunks.begin(), send = syncChunks.end(); sit != send; ++sit)
+    {
+        qevercloud::SyncChunk & syncChunk = *sit;
+        if (!syncChunk.resources.isSet()) {
+            continue;
+        }
+
+        for(auto rit = syncChunk.resources->begin(), rend = syncChunk.resources->end(); rit != rend; ++rit)
+        {
+            if (rit->guid.isSet() && (rit->guid.ref() == resource.guid())) {
+                Q_UNUSED(syncChunk.resources->erase(rit))
+                QNDEBUG(QStringLiteral("Note: removed resource from sync chunk because it was downloaded along with the note containing it: ") << resource);
+                break;
+            }
+        }
+    }
 }
 
 void RemoteToLocalSynchronizationManager::junkFullSyncStaleDataItemsExpunger(FullSyncStaleDataItemsExpunger & expunger)
