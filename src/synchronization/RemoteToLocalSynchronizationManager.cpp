@@ -2578,7 +2578,7 @@ void RemoteToLocalSynchronizationManager::collectNonProcessedItemsSmallestUsns(q
             << QStringLiteral(", all linked notebooks listed = ") << (m_allLinkedNotebooksListed ? QStringLiteral("true") : QStringLiteral("false"))
             << QStringLiteral(", linked notebook sync chunks downloaded = ") << (m_linkedNotebooksSyncChunksDownloaded ? QStringLiteral("true") : QStringLiteral("false")));
 
-    if (m_syncChunksDownloaded)
+    if (m_syncChunksDownloaded && !syncingLinkedNotebooksContent())
     {
         qint32 smallestUsn = findSmallestUsnOfNonSyncedItems();
         if (smallestUsn > 0) {
