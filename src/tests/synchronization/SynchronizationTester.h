@@ -141,6 +141,24 @@ private Q_SLOTS:
     void testIncrementalSyncWithRateLimitsBreachOnGetNewResourceAfterDownloadingLinkedNotebookSyncChunksAttempt();
     void testIncrementalSyncWithRateLimitsBreachOnGetModifiedResourceAfterDownloadingLinkedNotebookSyncChunksAttempt();
 
+    void testIncrementalSyncWithRateLimitsBreachOnCreateSavedSearchAttempt();
+    void testIncrementalSyncWithRateLimitsBreachOnUpdateSavedSearchAttempt();
+
+    void testIncrementalSyncWithRateLimitsBreachOnCreateUserOwnTagAttempt();
+    void testIncrementalSyncWithRateLimitBreachOnUpdateUserOwnTagAttempt();
+    void testIncrementalSyncWithRateLimitsBreachOnCreateTagInLinkedNotebookAttempt();
+    void testIncrementalSyncWithRateLimitsBreachOnUpdateTagInLinkedNotebookAttempt();
+
+    void testIncrementalSyncWithRateLimitsBreachOnCreateNotebookAttempt();
+    void testIncrementalSyncWithRateLimitsBreachOnUpdateNotebookAttempt();
+
+    void testIncrementalSyncWithRateLimitsBreachOnCreateUserOwnNoteAttempt();
+    void testIncrementalSyncWithRateLimitsBreachOnUpdateUserOwnNoteAttempt();
+    void testIncrementalSyncWithRateLimitsBreachOnCreateNoteInLinkedNotebookAttempt();
+    void testIncrementalSyncWithRateLimitsBreachOnUpdateNoteInLinkedNotebookAttempt();
+
+    void testIncrementalSyncWithRateLimitsBreachOnAuthenticateToLinkedNotebookAttempt();
+
 private:
     void setUserOwnItemsToRemoteStorage();
     void setLinkedNotebookItemsToRemoteStorage();
