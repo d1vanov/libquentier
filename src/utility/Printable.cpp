@@ -571,6 +571,9 @@ QTextStream & operator <<(QTextStream & strm, const qevercloud::Resource & resou
         strm << indent << QStringLiteral("body: ") << (resource.data->body.isSet()
                                                        ? QStringLiteral("is set")
                                                        : QStringLiteral("is not set")) << QStringLiteral(";\n");
+        if (resource.data->body.isSet() && (resource.data->body->size() < 4096)) {
+            strm << indent << QStringLiteral("raw data body content: ") << resource.data->body.ref() << QStringLiteral(";\n");
+        }
 
         strm << indent << QStringLiteral("};\n");
     }
@@ -587,6 +590,10 @@ QTextStream & operator <<(QTextStream & strm, const qevercloud::Resource & resou
         PRINT_FIELD(resource.recognition.ref(), bodyHash, byteArrayToHex);
         PRINT_FIELD(resource.recognition.ref(), body, QString::fromUtf8);
 
+        if (resource.recognition->body.isSet() && (resource.recognition->body->size() < 4096)) {
+            strm << indent << QStringLiteral("raw recognition body content: ") << resource.data->body.ref() << QStringLiteral(";\n");
+        }
+
         strm << indent << QStringLiteral("};\n");
     }
 
@@ -600,6 +607,9 @@ QTextStream & operator <<(QTextStream & strm, const qevercloud::Resource & resou
         strm << indent << QStringLiteral("body: ") << (resource.alternateData->body.isSet()
                                                        ? QStringLiteral("is set")
                                                        : QStringLiteral("is not set")) << QStringLiteral(";\n");
+        if (resource.alternateData->body.isSet() && (resource.alternateData->body->size() < 4096)) {
+            strm << indent << QStringLiteral("raw alternate data body content: ") << resource.data->body.ref() << QStringLiteral(";\n");
+        }
 
         strm << indent << QStringLiteral("};\n");
     }
@@ -1127,8 +1137,14 @@ QTextStream & operator<<(QTextStream & strm, const qevercloud::SyncState & syncS
          << QStringLiteral("  current time = ") << quentier::printableDateTimeFromTimestamp(syncState.currentTime) << QStringLiteral(";\n")
          << QStringLiteral("  full sync before = ") << quentier::printableDateTimeFromTimestamp(syncState.fullSyncBefore) << QStringLiteral(";\n")
          << QStringLiteral("  update count = ") << QString::number(syncState.updateCount) << QStringLiteral(";\n")
-         << QStringLiteral("  uploaded = ") << QString::number(syncState.uploaded) << QStringLiteral(";\n")
-         << QStringLiteral("  user last updated = ") << quentier::printableDateTimeFromTimestamp(syncState.userLastUpdated) << QStringLiteral(";\n")
+         << QStringLiteral("  uploaded = ") << (syncState.uploaded.isSet()
+                                                ? QString::number(syncState.uploaded.ref())
+                                                : QStringLiteral("<not set>"))
+         << QStringLiteral(";\n")
+         << QStringLiteral("  user last updated = ") << (syncState.userLastUpdated.isSet()
+                                                         ? quentier::printableDateTimeFromTimestamp(syncState.userLastUpdated)
+                                                         : QStringLiteral("<not set>"))
+         << QStringLiteral(";\n")
          << QStringLiteral("};\n");
 
     return strm;

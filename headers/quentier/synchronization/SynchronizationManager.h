@@ -30,6 +30,10 @@
 namespace quentier {
 
 QT_FORWARD_DECLARE_CLASS(LocalStorageManagerAsync)
+QT_FORWARD_DECLARE_CLASS(SynchronizationManagerDependencyInjector)
+QT_FORWARD_DECLARE_CLASS(INoteStore)
+QT_FORWARD_DECLARE_CLASS(IUserStore)
+QT_FORWARD_DECLARE_CLASS(IKeychainService)
 QT_FORWARD_DECLARE_CLASS(SynchronizationManagerPrivate)
 
 /**
@@ -42,16 +46,16 @@ class QUENTIER_EXPORT SynchronizationManager: public QObject
     Q_OBJECT
 public:
     /**
-     * @param consumerKey - consumer key for your application obtained from the Evernote service
-     * @param consumerSecret - consumer secret for your application obtained from the Evernote service
      * @param host - the host to use for the connection with the Evernote service - typically www.evernote.com
      *               but could be sandbox.evernote.com or some other one
      * @param localStorageManagerAsync - local storage manager
      * @param authenticationManager - authentication manager (particular implementation of IAuthenticationManager abstract class)
+     * @param pInjector - opaque pointer to the internal class which is a part of libquentier's private API and which is
+     *                    used for testing of SynchronizationManager; for clients of the library this pointer should stay nullptr
      */
-    SynchronizationManager(const QString & consumerKey, const QString & consumerSecret,
-                           const QString & host, LocalStorageManagerAsync & localStorageManagerAsync,
-                           IAuthenticationManager & authenticationManager);
+    SynchronizationManager(const QString & host, LocalStorageManagerAsync & localStorageManagerAsync,
+                           IAuthenticationManager & authenticationManager,
+                           SynchronizationManagerDependencyInjector * pInjector = Q_NULLPTR);
 
     virtual ~SynchronizationManager();
 
@@ -181,8 +185,10 @@ Q_SIGNALS:
                                qevercloud::UserID userId);
 
     /**
-     * This signal is emitted in response to the attempt to authenticate the new user of the client app to synchronize
-     * with the Evernote service
+     * This signal is emitted in response to the explicit attempt to authenticate the new user
+     * of the client app to the Evernote service. NOTE: this signal is not emitted
+     * if the authentication was requested automatically during sync attempt, it is only
+     * emitted in response to the explicit invokation of authenticate slot.
      * @param success - true if the authentication was successful, false otherwise
      * @param errorDescription - the textual explanation of the failure to authenticate the new user
      * @param account - the account of the authenticated user

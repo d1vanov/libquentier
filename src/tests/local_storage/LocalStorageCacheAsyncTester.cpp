@@ -21,7 +21,7 @@
 #include <quentier/local_storage/DefaultLocalStorageCacheExpiryChecker.h>
 #include <quentier/local_storage/LocalStorageCacheManager.h>
 #include <quentier/logging/QuentierLogger.h>
-#include "../local_storage/DefaultLocalStorageCacheExpiryCheckerConfig.h"
+#include "../../local_storage/DefaultLocalStorageCacheExpiryCheckerConfig.h"
 #include <QThread>
 
 namespace quentier {

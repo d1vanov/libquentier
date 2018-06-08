@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Dmitry Ivanov
+ * Copyright 2018 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,8 +16,8 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LIB_QUENTIER_TESTS_CORE_TESTER_H
-#define LIB_QUENTIER_TESTS_CORE_TESTER_H
+#ifndef LIB_QUENTIER_TESTS_LOCAL_STORAGE_LOCAL_STORAGE_MANAGER_TESTER_H
+#define LIB_QUENTIER_TESTS_LOCAL_STORAGE_LOCAL_STORAGE_MANAGER_TESTER_H
 
 #include <quentier/utility/Macros.h>
 #include <QObject>
@@ -25,46 +25,15 @@
 namespace quentier {
 namespace test {
 
-class CoreTester: public QObject
+class LocalStorageManagerTester: public QObject
 {
     Q_OBJECT
 public:
-    explicit CoreTester(QObject * parent = Q_NULLPTR);
-    virtual ~CoreTester();
+    LocalStorageManagerTester(QObject * parent = Q_NULLPTR);
+    virtual ~LocalStorageManagerTester();
 
 private Q_SLOTS:
-    void initTestCase();
-
-    void noteContainsToDoTest();
-    void noteContainsEncryptionTest();
-
-    void encryptDecryptNoteTest();
-    void decryptNoteAesTest();
-    void decryptNoteRc2Test();
-
-    void enmlConverterSimpleTest();
-    void enmlConverterToDoTest();
-    void enmlConverterEnCryptTest();
-    void enmlConverterEnCryptWithModifiedDecryptedTextTest();
-    void enmlConverterEnMediaTest();
-    void enmlConverterComplexTest();
-    void enmlConverterComplexTest2();
-    void enmlConverterComplexTest3();
-    void enmlConverterComplexTest4();
-    void enmlConverterHtmlWithTableHelperTags();
-    void enmlConverterHtmlWithTableAndHilitorHelperTags();
-
-    void enexExportImportSingleSimpleNoteTest();
-    void enexExportImportSingleNoteWithTagsTest();
-    void enexExportImportSingleNoteWithResourcesTest();
-    void enexExportImportSingleNoteWithTagsAndResourcesTest();
-    void enexExportImportSingleNoteWithTagsButSkipTagsTest();
-    void enexExportImportMultipleNotesWithTagsAndResourcesTest();
-    void importRealWorldEnexTest();
-
-    void tagSortByParentChildRelationsTest();
-
-    void resourceRecognitionIndicesParsingTest();
+    void init();
 
     void noteSearchQueryTest();
     void localStorageManagerNoteSearchQueryTest();
@@ -103,13 +72,9 @@ private Q_SLOTS:
 
     void localStorageCacheManagerTest();
 
-private:
-    CoreTester(const CoreTester & other) Q_DECL_EQ_DELETE;
-    CoreTester & operator=(const CoreTester & other) Q_DECL_EQ_DELETE;
-
 };
 
 } // namespace test
 } // namespace quentier
 
-#endif // LIB_QUENTIER_TESTS_CORE_TESTER_H
+#endif // LIB_QUENTIER_TESTS_LOCAL_STORAGE_LOCAL_STORAGE_MANAGER_TESTER_H

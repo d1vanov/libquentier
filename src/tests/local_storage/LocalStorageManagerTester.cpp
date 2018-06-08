@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Dmitry Ivanov
+ * Copyright 2018 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,7 +16,7 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "CoreTester.h"
+#include "LocalStorageManagerTester.h"
 #include "LocalStorageManagerTests.h"
 #include "SavedSearchLocalStorageManagerAsyncTester.h"
 #include "LinkedNotebookLocalStorageManagerAsyncTester.h"
@@ -28,59 +28,49 @@
 #include "ResourceLocalStorageManagerAsyncTester.h"
 #include "LocalStorageManagerNoteSearchQueryTest.h"
 #include "LocalStorageCacheAsyncTester.h"
-#include "EncryptionManagerTests.h"
-#include "ENMLConverterTests.h"
-#include "EnexExportImportTests.h"
-#include "ResourceRecognitionIndicesParsingTest.h"
-#include "TagSortByParentChildRelationsTest.h"
-#include <quentier/exception/IQuentierException.h>
-#include <quentier/utility/EventLoopWithExitStatus.h>
-#include <quentier/local_storage/LocalStorageManager.h>
-#include <quentier/types/SavedSearch.h>
-#include <quentier/types/LinkedNotebook.h>
-#include <quentier/types/Tag.h>
-#include <quentier/types/Resource.h>
-#include <quentier/types/Note.h>
-#include <quentier/types/SharedNote.h>
-#include <quentier/types/Notebook.h>
-#include <quentier/types/SharedNotebook.h>
-#include <quentier/types/User.h>
-#include <quentier/types/RegisterMetatypes.h>
 #include <quentier/logging/QuentierLogger.h>
+#include <quentier/types/RegisterMetatypes.h>
 #include <quentier/utility/SysInfo.h>
-#include <QApplication>
+#include <quentier/utility/EventLoopWithExitStatus.h>
 #include <QTextStream>
 #include <QtTest/QTest>
 #include <QTimer>
 
 // 10 minutes should be enough
-#define MAX_ALLOWED_MILLISECONDS 600000
+#define MAX_ALLOWED_TEST_DURATION_MSEC 600000
 
-namespace quentier {
-namespace test {
-
-CoreTester::CoreTester(QObject * parent) :
-    QObject(parent)
-{}
-
-CoreTester::~CoreTester()
-{}
+#define CATCH_EXCEPTION() \
+    catch(const std::exception & exception) { \
+        SysInfo sysInfo; \
+        QFAIL(qPrintable(QStringLiteral("Caught exception: ") + QString::fromUtf8(exception.what()) + \
+                         QStringLiteral(", backtrace: ") + sysInfo.stackTrace())); \
+    }
 
 #if QT_VERSION >= 0x050000
-void nullMessageHandler(QtMsgType type, const QMessageLogContext &, const QString & message) {
+inline void nullMessageHandler(QtMsgType type, const QMessageLogContext &, const QString & message) {
     if (type != QtDebugMsg) {
         QTextStream(stdout) << message << QStringLiteral("\n");
     }
 }
 #else
-void nullMessageHandler(QtMsgType type, const char * message) {
+inline void nullMessageHandler(QtMsgType type, const char * message) {
     if (type != QtDebugMsg) {
         QTextStream(stdout) << message << QStringLiteral("\n");
     }
 }
 #endif
 
-void CoreTester::initTestCase()
+namespace quentier {
+namespace test {
+
+LocalStorageManagerTester::LocalStorageManagerTester(QObject * parent) :
+    QObject(parent)
+{}
+
+LocalStorageManagerTester::~LocalStorageManagerTester()
+{}
+
+void LocalStorageManagerTester::init()
 {
     registerMetatypes();
 
@@ -91,346 +81,7 @@ void CoreTester::initTestCase()
 #endif
 }
 
-#define CATCH_EXCEPTION() \
-    catch(const std::exception & exception) { \
-        SysInfo sysInfo; \
-        QFAIL(qPrintable(QStringLiteral("Caught exception: ") + QString::fromUtf8(exception.what()) + \
-                         QStringLiteral(", backtrace: ") + sysInfo.stackTrace())); \
-    }
-
-
-void CoreTester::noteContainsToDoTest()
-{
-    try
-    {
-        QString noteContent = QStringLiteral("<en-note><h1>Hello, world!</h1><en-todo checked = \"true\"/>"
-                                             "Completed item<en-todo/>Not yet completed item</en-note>");
-        Note note;
-        note.setContent(noteContent);
-
-        QString error = QStringLiteral("Wrong result of Note's containsToDo method");
-        QVERIFY2(note.containsCheckedTodo(), qPrintable(error));
-        QVERIFY2(note.containsUncheckedTodo(), qPrintable(error));
-        QVERIFY2(note.containsTodo(), qPrintable(error));
-
-        noteContent = QStringLiteral("<en-note><h1>Hello, world!</h1><en-todo checked = \"true\"/>"
-                                     "Completed item</en-note>");
-        note.setContent(noteContent);
-
-        QVERIFY2(note.containsCheckedTodo(), qPrintable(error));
-        QVERIFY2(!note.containsUncheckedTodo(), qPrintable(error));
-        QVERIFY2(note.containsTodo(), qPrintable(error));
-
-        noteContent = QStringLiteral("<en-note><h1>Hello, world!</h1><en-todo/>Not yet completed item</en-note>");
-        note.setContent(noteContent);
-
-        QVERIFY2(!note.containsCheckedTodo(), qPrintable(error));
-        QVERIFY2(note.containsUncheckedTodo(), qPrintable(error));
-        QVERIFY2(note.containsTodo(), qPrintable(error));
-
-        noteContent = QStringLiteral("<en-note><h1>Hello, world!</h1><en-todo checked = \"false\"/>Not yet completed item</en-note>");
-        note.setContent(noteContent);
-
-        QVERIFY2(!note.containsCheckedTodo(), qPrintable(error));
-        QVERIFY2(note.containsUncheckedTodo(), qPrintable(error));
-        QVERIFY2(note.containsTodo(), qPrintable(error));
-
-        noteContent = QStringLiteral("<en-note><h1>Hello, world!</h1></en-note>");
-        note.setContent(noteContent);
-
-        QVERIFY2(!note.containsCheckedTodo(), qPrintable(error));
-        QVERIFY2(!note.containsUncheckedTodo(), qPrintable(error));
-        QVERIFY2(!note.containsTodo(), qPrintable(error));
-    }
-    CATCH_EXCEPTION();
-}
-
-void CoreTester::noteContainsEncryptionTest()
-{
-    try
-    {
-        QString noteContent = QStringLiteral("<en-note><h1>Hello, world!</h1><en-crypt hint = \"the hint\" "
-                                             "cipher = \"RC2\" length = \"64\">NKLHX5yK1MlpzemJQijAN6C4545s2EODxQ8Bg1r==</en-crypt></en-note>");
-
-        Note note;
-        note.setContent(noteContent);
-
-        QString error = QStringLiteral("Wrong result of Note's containsEncryption method");
-        QVERIFY2(note.containsEncryption(), qPrintable(error));
-
-        QString noteContentWithoutEncryption = QStringLiteral("<en-note><h1>Hello, world!</h1></en-note>");
-        note.setContent(noteContentWithoutEncryption);
-
-        QVERIFY2(!note.containsEncryption(), qPrintable(error));
-
-        note.clear();
-        note.setContent(noteContentWithoutEncryption);
-
-        QVERIFY2(!note.containsEncryption(), qPrintable(error));
-
-        note.setContent(noteContent);
-        QVERIFY2(note.containsEncryption(), qPrintable(error));
-
-        note.clear();
-        QVERIFY2(!note.containsEncryption(), qPrintable(error));
-    }
-    CATCH_EXCEPTION();
-}
-
-void CoreTester::encryptDecryptNoteTest()
-{
-    try
-    {
-        QString error;
-        bool res = encryptDecryptTest(error);
-        QVERIFY2(res == true, qPrintable(error));
-    }
-    CATCH_EXCEPTION();
-}
-
-void CoreTester::decryptNoteAesTest()
-{
-    try
-    {
-        QString error;
-        bool res = decryptAesTest(error);
-        QVERIFY2(res == true, qPrintable(error));
-    }
-    CATCH_EXCEPTION();
-}
-
-void CoreTester::decryptNoteRc2Test()
-{
-    try
-    {
-        QString error;
-        bool res = decryptRc2Test(error);
-        QVERIFY2(res == true, qPrintable(error));
-    }
-    CATCH_EXCEPTION();
-}
-
-void CoreTester::enmlConverterSimpleTest()
-{
-    try
-    {
-        QString error;
-        bool res = convertSimpleNoteToHtmlAndBack(error);
-        QVERIFY2(res == true, qPrintable(error));
-    }
-    CATCH_EXCEPTION();
-}
-
-void CoreTester::enmlConverterToDoTest()
-{
-    try
-    {
-        QString error;
-        bool res = convertNoteWithToDoTagsToHtmlAndBack(error);
-        QVERIFY2(res == true, qPrintable(error));
-    }
-    CATCH_EXCEPTION();
-}
-
-void CoreTester::enmlConverterEnCryptTest()
-{
-    try
-    {
-        QString error;
-        bool res = convertNoteWithEncryptionToHtmlAndBack(error);
-        QVERIFY2(res == true, qPrintable(error));
-    }
-    CATCH_EXCEPTION();
-}
-
-void CoreTester::enmlConverterEnCryptWithModifiedDecryptedTextTest()
-{
-    try
-    {
-        QString error;
-        bool res = convertHtmlWithModifiedDecryptedTextToEnml(error);
-        QVERIFY2(res == true, qPrintable(error));
-    }
-    CATCH_EXCEPTION();
-}
-
-void CoreTester::enmlConverterEnMediaTest()
-{
-    try
-    {
-        QString error;
-        bool res = convertNoteWithResourcesToHtmlAndBack(error);
-        QVERIFY2(res == true, qPrintable(error));
-    }
-    CATCH_EXCEPTION();
-}
-
-void CoreTester::enmlConverterComplexTest()
-{
-    try
-    {
-        QString error;
-        bool res = convertComplexNoteToHtmlAndBack(error);
-        QVERIFY2(res == true, qPrintable(error));
-    }
-    CATCH_EXCEPTION();
-}
-
-void CoreTester::enmlConverterComplexTest2()
-{
-    try
-    {
-        QString error;
-        bool res = convertComplexNote2ToHtmlAndBack(error);
-        QVERIFY2(res == true, qPrintable(error));
-    }
-    CATCH_EXCEPTION();
-}
-
-void CoreTester::enmlConverterComplexTest3()
-{
-    try
-    {
-        QString error;
-        bool res = convertComplexNote3ToHtmlAndBack(error);
-        QVERIFY2(res == true, qPrintable(error));
-    }
-    CATCH_EXCEPTION();
-}
-
-void CoreTester::enmlConverterComplexTest4()
-{
-    try
-    {
-        QString error;
-        bool res = convertComplexNote4ToHtmlAndBack(error);
-        QVERIFY2(res == true, qPrintable(error));
-    }
-    CATCH_EXCEPTION();
-}
-
-void CoreTester::enmlConverterHtmlWithTableHelperTags()
-{
-    try
-    {
-        QString error;
-        bool res = convertHtmlWithTableHelperTagsToEnml(error);
-        QVERIFY2(res == true, qPrintable(error));
-    }
-    CATCH_EXCEPTION();
-}
-
-void CoreTester::enmlConverterHtmlWithTableAndHilitorHelperTags()
-{
-    try
-    {
-        QString error;
-        bool res = convertHtmlWithTableAndHilitorHelperTagsToEnml(error);
-        QVERIFY2(res == true, qPrintable(error));
-    }
-    CATCH_EXCEPTION();
-}
-
-void CoreTester::enexExportImportSingleSimpleNoteTest()
-{
-    try
-    {
-        QString error;
-        bool res = exportSingleNoteWithoutTagsAndResourcesToEnexAndImportBack(error);
-        QVERIFY2(res == true, qPrintable(error));
-    }
-    CATCH_EXCEPTION();
-}
-
-void CoreTester::enexExportImportSingleNoteWithTagsTest()
-{
-    try
-    {
-        QString error;
-        bool res = exportSingleNoteWithTagsButNoResourcesToEnexAndImportBack(error);
-        QVERIFY2(res == true, qPrintable(error));
-    }
-    CATCH_EXCEPTION();
-}
-
-void CoreTester::enexExportImportSingleNoteWithResourcesTest()
-{
-    try
-    {
-        QString error;
-        bool res = exportSingleNoteWithResourcesButNoTagsToEnexAndImportBack(error);
-        QVERIFY2(res == true, qPrintable(error));
-    }
-    CATCH_EXCEPTION();
-}
-
-void CoreTester::enexExportImportSingleNoteWithTagsAndResourcesTest()
-{
-    try
-    {
-        QString error;
-        bool res = exportSingleNoteWithTagsAndResourcesToEnexAndImportBack(error);
-        QVERIFY2(res == true, qPrintable(error));
-    }
-    CATCH_EXCEPTION();
-}
-
-void CoreTester::enexExportImportSingleNoteWithTagsButSkipTagsTest()
-{
-    try
-    {
-        QString error;
-        bool res = exportSingleNoteWithTagsToEnexButSkipTagsAndImportBack(error);
-        QVERIFY2(res == true, qPrintable(error));
-    }
-    CATCH_EXCEPTION();
-}
-
-void CoreTester::enexExportImportMultipleNotesWithTagsAndResourcesTest()
-{
-    try
-    {
-        QString error;
-        bool res = exportMultipleNotesWithTagsAndResourcesAndImportBack(error);
-        QVERIFY2(res == true, qPrintable(error));
-    }
-    CATCH_EXCEPTION();
-}
-
-void CoreTester::importRealWorldEnexTest()
-{
-    try
-    {
-        QString error;
-        bool res = importRealWorldEnex(error);
-        QVERIFY2(res == true, qPrintable(error));
-    }
-    CATCH_EXCEPTION();
-}
-
-void CoreTester::tagSortByParentChildRelationsTest()
-{
-    try
-    {
-        QString error;
-        bool res = ::quentier::test::tagSortByParentChildRelationsTest(error);
-        QVERIFY2(res == true, qPrintable(error));
-    }
-    CATCH_EXCEPTION();
-}
-
-void CoreTester::resourceRecognitionIndicesParsingTest()
-{
-    try
-    {
-        QString error;
-        bool res = parseResourceRecognitionIndicesAndItemsTest(error);
-        QVERIFY2(res == true, qPrintable(error));
-    }
-    CATCH_EXCEPTION();
-}
-
-void CoreTester::noteSearchQueryTest()
+void LocalStorageManagerTester::noteSearchQueryTest()
 {
     try
     {
@@ -441,7 +92,7 @@ void CoreTester::noteSearchQueryTest()
     CATCH_EXCEPTION();
 }
 
-void CoreTester::localStorageManagerNoteSearchQueryTest()
+void LocalStorageManagerTester::localStorageManagerNoteSearchQueryTest()
 {
     try
     {
@@ -454,7 +105,7 @@ void CoreTester::localStorageManagerNoteSearchQueryTest()
     CATCH_EXCEPTION();
 }
 
-void CoreTester::localStorageManagerIndividualSavedSearchTest()
+void LocalStorageManagerTester::localStorageManagerIndividualSavedSearchTest()
 {
     try
     {
@@ -465,7 +116,7 @@ void CoreTester::localStorageManagerIndividualSavedSearchTest()
     CATCH_EXCEPTION();
 }
 
-void CoreTester::localStorageManagerIndividualLinkedNotebookTest()
+void LocalStorageManagerTester::localStorageManagerIndividualLinkedNotebookTest()
 {
     try
     {
@@ -476,7 +127,7 @@ void CoreTester::localStorageManagerIndividualLinkedNotebookTest()
     CATCH_EXCEPTION();
 }
 
-void CoreTester::localStorageManagerIndividualTagTest()
+void LocalStorageManagerTester::localStorageManagerIndividualTagTest()
 {
     try
     {
@@ -487,7 +138,7 @@ void CoreTester::localStorageManagerIndividualTagTest()
     CATCH_EXCEPTION();
 }
 
-void CoreTester::localStorageManagerIndividualResourceTest()
+void LocalStorageManagerTester::localStorageManagerIndividualResourceTest()
 {
     try
     {
@@ -498,7 +149,7 @@ void CoreTester::localStorageManagerIndividualResourceTest()
     CATCH_EXCEPTION();
 }
 
-void CoreTester::localStorageManagedIndividualNoteTest()
+void LocalStorageManagerTester::localStorageManagedIndividualNoteTest()
 {
     try
     {
@@ -509,7 +160,7 @@ void CoreTester::localStorageManagedIndividualNoteTest()
     CATCH_EXCEPTION();
 }
 
-void CoreTester::localStorageManagerIndividualNotebookTest()
+void LocalStorageManagerTester::localStorageManagerIndividualNotebookTest()
 {
     try
     {
@@ -520,7 +171,7 @@ void CoreTester::localStorageManagerIndividualNotebookTest()
     CATCH_EXCEPTION();
 }
 
-void CoreTester::localStorageManagedIndividualUserTest()
+void LocalStorageManagerTester::localStorageManagedIndividualUserTest()
 {
     try
     {
@@ -531,7 +182,7 @@ void CoreTester::localStorageManagedIndividualUserTest()
     CATCH_EXCEPTION();
 }
 
-void CoreTester::localStorageManagerSequentialUpdatesTest()
+void LocalStorageManagerTester::localStorageManagerSequentialUpdatesTest()
 {
     try
     {
@@ -542,7 +193,7 @@ void CoreTester::localStorageManagerSequentialUpdatesTest()
     CATCH_EXCEPTION();
 }
 
-void CoreTester::localStorageManagerAccountHighUsnTest()
+void LocalStorageManagerTester::localStorageManagerAccountHighUsnTest()
 {
     try
     {
@@ -553,7 +204,7 @@ void CoreTester::localStorageManagerAccountHighUsnTest()
     CATCH_EXCEPTION();
 }
 
-void CoreTester::localStorageManagerAddNoteWithoutLocalUidTest()
+void LocalStorageManagerTester::localStorageManagerAddNoteWithoutLocalUidTest()
 {
     try
     {
@@ -564,7 +215,7 @@ void CoreTester::localStorageManagerAddNoteWithoutLocalUidTest()
     CATCH_EXCEPTION();
 }
 
-void CoreTester::localStorageManagerNoteTagIdsComplementTest()
+void LocalStorageManagerTester::localStorageManagerNoteTagIdsComplementTest()
 {
     try
     {
@@ -575,7 +226,7 @@ void CoreTester::localStorageManagerNoteTagIdsComplementTest()
     CATCH_EXCEPTION();
 }
 
-void CoreTester::localStorageManagerListSavedSearchesTest()
+void LocalStorageManagerTester::localStorageManagerListSavedSearchesTest()
 {
     try
     {
@@ -727,7 +378,7 @@ void CoreTester::localStorageManagerListSavedSearchesTest()
     CATCH_EXCEPTION();
 }
 
-void CoreTester::localStorageManagerListLinkedNotebooksTest()
+void LocalStorageManagerTester::localStorageManagerListLinkedNotebooksTest()
 {
     try
     {
@@ -813,7 +464,7 @@ void CoreTester::localStorageManagerListLinkedNotebooksTest()
     CATCH_EXCEPTION();
 }
 
-void CoreTester::localStorageManagerListTagsTest()
+void LocalStorageManagerTester::localStorageManagerListTagsTest()
 {
     try
     {
@@ -934,7 +585,7 @@ void CoreTester::localStorageManagerListTagsTest()
     CATCH_EXCEPTION();
 }
 
-void CoreTester::localStorageManagerListTagsWithNoteLocalUidsTest()
+void LocalStorageManagerTester::localStorageManagerListTagsWithNoteLocalUidsTest()
 {
     try
     {
@@ -1148,7 +799,7 @@ void CoreTester::localStorageManagerListTagsWithNoteLocalUidsTest()
     CATCH_EXCEPTION();
 }
 
-void CoreTester::localStorageManagerListAllSharedNotebooksTest()
+void LocalStorageManagerTester::localStorageManagerListAllSharedNotebooksTest()
 {
     try
     {
@@ -1217,7 +868,7 @@ void CoreTester::localStorageManagerListAllSharedNotebooksTest()
     CATCH_EXCEPTION();
 }
 
-void CoreTester::localStorageManagerListAllTagsPerNoteTest()
+void LocalStorageManagerTester::localStorageManagerListAllTagsPerNoteTest()
 {
     try
     {
@@ -1349,7 +1000,7 @@ void CoreTester::localStorageManagerListAllTagsPerNoteTest()
     CATCH_EXCEPTION();
 }
 
-void CoreTester::localStorageManagerListNotesTest()
+void LocalStorageManagerTester::localStorageManagerListNotesTest()
 {
     try
     {
@@ -1597,7 +1248,7 @@ void CoreTester::localStorageManagerListNotesTest()
     CATCH_EXCEPTION();
 }
 
-void CoreTester::localStorageManagerListNotebooksTest()
+void LocalStorageManagerTester::localStorageManagerListNotebooksTest()
 {
     try
     {
@@ -1764,7 +1415,7 @@ void CoreTester::localStorageManagerListNotebooksTest()
     CATCH_EXCEPTION();
 }
 
-void CoreTester::localStorageManagerExpungeNotelessTagsFromLinkedNotebooksTest()
+void LocalStorageManagerTester::localStorageManagerExpungeNotelessTagsFromLinkedNotebooksTest()
 {
     try
     {
@@ -1881,12 +1532,12 @@ void CoreTester::localStorageManagerExpungeNotelessTagsFromLinkedNotebooksTest()
     CATCH_EXCEPTION();
 }
 
-void CoreTester::localStorageManagerAsyncSavedSearchesTest()
+void LocalStorageManagerTester::localStorageManagerAsyncSavedSearchesTest()
 {
     int savedSeachAsyncTestsResult = -1;
     {
         QTimer timer;
-        timer.setInterval(MAX_ALLOWED_MILLISECONDS);
+        timer.setInterval(MAX_ALLOWED_TEST_DURATION_MSEC);
         timer.setSingleShot(true);
 
         SavedSearchLocalStorageManagerAsyncTester savedSearchAsyncTester;
@@ -1916,12 +1567,12 @@ void CoreTester::localStorageManagerAsyncSavedSearchesTest()
     }
 }
 
-void CoreTester::localStorageManagerAsyncLinkedNotebooksTest()
+void LocalStorageManagerTester::localStorageManagerAsyncLinkedNotebooksTest()
 {
     int linkedNotebookAsyncTestResult = -1;
     {
         QTimer timer;
-        timer.setInterval(MAX_ALLOWED_MILLISECONDS);
+        timer.setInterval(MAX_ALLOWED_TEST_DURATION_MSEC);
         timer.setSingleShot(true);
 
         LinkedNotebookLocalStorageManagerAsyncTester linkedNotebookAsyncTester;
@@ -1951,12 +1602,12 @@ void CoreTester::localStorageManagerAsyncLinkedNotebooksTest()
     }
 }
 
-void CoreTester::localStorageManagerAsyncTagsTest()
+void LocalStorageManagerTester::localStorageManagerAsyncTagsTest()
 {
     int tagAsyncTestResult = -1;
     {
         QTimer timer;
-        timer.setInterval(MAX_ALLOWED_MILLISECONDS);
+        timer.setInterval(MAX_ALLOWED_TEST_DURATION_MSEC);
         timer.setSingleShot(true);
 
         TagLocalStorageManagerAsyncTester tagAsyncTester;
@@ -1986,12 +1637,12 @@ void CoreTester::localStorageManagerAsyncTagsTest()
     }
 }
 
-void CoreTester::localStorageManagerAsyncUsersTest()
+void LocalStorageManagerTester::localStorageManagerAsyncUsersTest()
 {
     int userAsyncTestResult = -1;
     {
         QTimer timer;
-        timer.setInterval(MAX_ALLOWED_MILLISECONDS);
+        timer.setInterval(MAX_ALLOWED_TEST_DURATION_MSEC);
         timer.setSingleShot(true);
 
         UserLocalStorageManagerAsyncTester userAsyncTester;
@@ -2021,12 +1672,12 @@ void CoreTester::localStorageManagerAsyncUsersTest()
     }
 }
 
-void CoreTester::localStorageManagerAsyncNotebooksTest()
+void LocalStorageManagerTester::localStorageManagerAsyncNotebooksTest()
 {
     int notebookAsyncTestResult = -1;
     {
         QTimer timer;
-        timer.setInterval(MAX_ALLOWED_MILLISECONDS);
+        timer.setInterval(MAX_ALLOWED_TEST_DURATION_MSEC);
         timer.setSingleShot(true);
 
         NotebookLocalStorageManagerAsyncTester notebookAsyncTester;
@@ -2056,12 +1707,12 @@ void CoreTester::localStorageManagerAsyncNotebooksTest()
     }
 }
 
-void CoreTester::localStorageManagerAsyncNotesTest()
+void LocalStorageManagerTester::localStorageManagerAsyncNotesTest()
 {
     int noteAsyncTestResult = -1;
     {
         QTimer timer;
-        timer.setInterval(MAX_ALLOWED_MILLISECONDS);
+        timer.setInterval(MAX_ALLOWED_TEST_DURATION_MSEC);
         timer.setSingleShot(true);
 
         NoteLocalStorageManagerAsyncTester noteAsyncTester;
@@ -2091,12 +1742,12 @@ void CoreTester::localStorageManagerAsyncNotesTest()
     }
 }
 
-void CoreTester::localStorageManagerAsyncResourceTest()
+void LocalStorageManagerTester::localStorageManagerAsyncResourceTest()
 {
     int resourceAsyncTestResult = -1;
     {
         QTimer timer;
-        timer.setInterval(MAX_ALLOWED_MILLISECONDS);
+        timer.setInterval(MAX_ALLOWED_TEST_DURATION_MSEC);
         timer.setSingleShot(true);
 
         ResourceLocalStorageManagerAsyncTester resourceAsyncTester;
@@ -2126,12 +1777,12 @@ void CoreTester::localStorageManagerAsyncResourceTest()
     }
 }
 
-void CoreTester::localStorageCacheManagerTest()
+void LocalStorageManagerTester::localStorageCacheManagerTest()
 {
     int localStorageCacheAsyncTestResult = -1;
     {
         QTimer timer;
-        timer.setInterval(MAX_ALLOWED_MILLISECONDS);
+        timer.setInterval(MAX_ALLOWED_TEST_DURATION_MSEC);
         timer.setSingleShot(true);
 
         LocalStorageCacheAsyncTester localStorageCacheAsyncTester;
@@ -2161,7 +1812,6 @@ void CoreTester::localStorageCacheManagerTest()
     }
 }
 
-#undef CATCH_EXCEPTION
 
 } // namespace test
 } // namespace quentier

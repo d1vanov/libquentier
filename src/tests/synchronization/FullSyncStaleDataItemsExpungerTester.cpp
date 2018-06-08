@@ -17,9 +17,9 @@
  */
 
 #include "FullSyncStaleDataItemsExpungerTester.h"
-#include "../synchronization/NotebookSyncCache.h"
-#include "../synchronization/TagSyncCache.h"
-#include "../synchronization/SavedSearchSyncCache.h"
+#include "../../synchronization/NotebookSyncCache.h"
+#include "../../synchronization/TagSyncCache.h"
+#include "../../synchronization/SavedSearchSyncCache.h"
 #include <quentier/utility/UidGenerator.h>
 #include <quentier/utility/EventLoopWithExitStatus.h>
 #include <QtTest/QTest>
@@ -27,7 +27,6 @@
 
 // 10 minutes should be enough
 #define MAX_ALLOWED_MILLISECONDS 600000
-
 
 // Local uids of base data items' notebooks
 #define FIRST_NOTEBOOK_LOCAL_UID QStringLiteral("68b6df59-5e35-4850-a972-b5493dfead8a")

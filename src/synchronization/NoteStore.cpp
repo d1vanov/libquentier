@@ -37,9 +37,8 @@ namespace quentier {
         errorDescription.details() += userException.exceptionData()->errorMessage; \
     }
 
-NoteStore::NoteStore(QSharedPointer<qevercloud::NoteStore> pQecNoteStore, QObject * parent) :
-    QObject(parent),
-    m_pQecNoteStore(pQecNoteStore),
+NoteStore::NoteStore(const QSharedPointer<qevercloud::NoteStore> & pQecNoteStore, QObject * parent) :
+    INoteStore(pQecNoteStore, parent),
     m_noteGuidByAsyncResultPtr()
 {
     QUENTIER_CHECK_PTR(m_pQecNoteStore)
@@ -48,6 +47,11 @@ NoteStore::NoteStore(QSharedPointer<qevercloud::NoteStore> pQecNoteStore, QObjec
 NoteStore::~NoteStore()
 {
     stop();
+}
+
+INoteStore * NoteStore::create() const
+{
+    return new NoteStore(QSharedPointer<qevercloud::NoteStore>(new qevercloud::NoteStore));
 }
 
 void NoteStore::stop()
@@ -66,31 +70,6 @@ void NoteStore::stop()
     }
 
     m_noteGuidByAsyncResultPtr.clear();
-}
-
-QSharedPointer<qevercloud::NoteStore> NoteStore::getQecNoteStore()
-{
-    return m_pQecNoteStore;
-}
-
-QString NoteStore::noteStoreUrl() const
-{
-    return m_pQecNoteStore->noteStoreUrl();
-}
-
-void NoteStore::setNoteStoreUrl(const QString & noteStoreUrl)
-{
-    m_pQecNoteStore->setNoteStoreUrl(noteStoreUrl);
-}
-
-QString NoteStore::authenticationToken() const
-{
-    return m_pQecNoteStore->authenticationToken();
-}
-
-void NoteStore::setAuthenticationToken(const QString & authToken)
-{
-    m_pQecNoteStore->setAuthenticationToken(authToken);
 }
 
 qint32 NoteStore::createNotebook(Notebook & notebook, ErrorString & errorDescription,

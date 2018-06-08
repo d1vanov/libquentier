@@ -19,6 +19,7 @@
 #ifndef LIB_QUENTIER_SYNCHRONIZATION_NOTE_STORE_H
 #define LIB_QUENTIER_SYNCHRONIZATION_NOTE_STORE_H
 
+#include <quentier_private/synchronization/INoteStore.h>
 #include <quentier/utility/Macros.h>
 #include <quentier/types/ErrorString.h>
 #include <QSharedPointer>
@@ -50,77 +51,67 @@ QT_FORWARD_DECLARE_CLASS(SavedSearch)
  * libquentier at the moment uses only several methods from those available in QEverCloud's NoteStore
  * so only the small subset of original NoteStore's API is wrapped here at the moment.
  */
-class Q_DECL_HIDDEN NoteStore: public QObject
+class Q_DECL_HIDDEN NoteStore: public INoteStore
 {
     Q_OBJECT
 public:
-    explicit NoteStore(QSharedPointer<qevercloud::NoteStore> pQecNoteStore, QObject * parent = Q_NULLPTR);
+    explicit NoteStore(const QSharedPointer<qevercloud::NoteStore> & pQecNoteStore, QObject * parent = Q_NULLPTR);
     virtual ~NoteStore();
 
-    void stop();
+    virtual INoteStore * create() const Q_DECL_OVERRIDE;
 
-    QSharedPointer<qevercloud::NoteStore> getQecNoteStore();
+    virtual void stop() Q_DECL_OVERRIDE;
 
-    QString noteStoreUrl() const;
-    void setNoteStoreUrl(const QString & noteStoreUrl);
+    virtual qint32 createNotebook(Notebook & notebook, ErrorString & errorDescription, qint32 & rateLimitSeconds, const QString & linkedNotebookAuthToken = QString()) Q_DECL_OVERRIDE;
+    virtual qint32 updateNotebook(Notebook & notebook, ErrorString & errorDescription, qint32 & rateLimitSeconds, const QString & linkedNotebookAuthToken = QString()) Q_DECL_OVERRIDE;
 
-    QString authenticationToken() const;
-    void setAuthenticationToken(const QString & authToken);
+    virtual qint32 createNote(Note & note, ErrorString & errorDescription, qint32 & rateLimitSeconds, const QString & linkedNotebookAuthToken = QString()) Q_DECL_OVERRIDE;
+    virtual qint32 updateNote(Note & note, ErrorString & errorDescription, qint32 & rateLimitSeconds, const QString & linkedNotebookAuthToken = QString()) Q_DECL_OVERRIDE;
 
-    qint32 createNotebook(Notebook & notebook, ErrorString & errorDescription, qint32 & rateLimitSeconds, const QString & linkedNotebookAuthToken = QString());
-    qint32 updateNotebook(Notebook & notebook, ErrorString & errorDescription, qint32 & rateLimitSeconds, const QString & linkedNotebookAuthToken = QString());
+    virtual qint32 createTag(Tag & tag, ErrorString & errorDescription, qint32 & rateLimitSeconds, const QString & linkedNotebookAuthToken = QString()) Q_DECL_OVERRIDE;
+    virtual qint32 updateTag(Tag & tag, ErrorString & errorDescription, qint32 & rateLimitSeconds, const QString & linkedNotebookAuthToken = QString()) Q_DECL_OVERRIDE;
 
-    qint32 createNote(Note & note, ErrorString & errorDescription, qint32 & rateLimitSeconds, const QString & linkedNotebookAuthToken = QString());
-    qint32 updateNote(Note & note, ErrorString & errorDescription, qint32 & rateLimitSeconds, const QString & linkedNotebookAuthToken = QString());
+    virtual qint32 createSavedSearch(SavedSearch & savedSearch, ErrorString & errorDescription, qint32 & rateLimitSeconds) Q_DECL_OVERRIDE;
+    virtual qint32 updateSavedSearch(SavedSearch & savedSearch, ErrorString & errorDescription, qint32 & rateLimitSeconds) Q_DECL_OVERRIDE;
 
-    qint32 createTag(Tag & tag, ErrorString & errorDescription, qint32 & rateLimitSeconds, const QString & linkedNotebookAuthToken = QString());
-    qint32 updateTag(Tag & tag, ErrorString & errorDescription, qint32 & rateLimitSeconds, const QString & linkedNotebookAuthToken = QString());
+    virtual qint32 getSyncState(qevercloud::SyncState & syncState, ErrorString & errorDescription, qint32 & rateLimitSeconds) Q_DECL_OVERRIDE;
 
-    qint32 createSavedSearch(SavedSearch & savedSearch, ErrorString & errorDescription, qint32 & rateLimitSeconds);
-    qint32 updateSavedSearch(SavedSearch & savedSearch, ErrorString & errorDescription, qint32 & rateLimitSeconds);
+    virtual qint32 getSyncChunk(const qint32 afterUSN, const qint32 maxEntries,
+                                const qevercloud::SyncChunkFilter & filter,
+                                qevercloud::SyncChunk & syncChunk, ErrorString & errorDescription,
+                                qint32 & rateLimitSeconds) Q_DECL_OVERRIDE;
 
-    qint32 getSyncState(qevercloud::SyncState & syncState, ErrorString & errorDescription, qint32 & rateLimitSeconds);
+    virtual qint32 getLinkedNotebookSyncState(const qevercloud::LinkedNotebook & linkedNotebook,
+                                              const QString & authToken, qevercloud::SyncState & syncState,
+                                              ErrorString & errorDescription, qint32 & rateLimitSeconds) Q_DECL_OVERRIDE;
 
-    qint32 getSyncChunk(const qint32 afterUSN, const qint32 maxEntries,
-                        const qevercloud::SyncChunkFilter & filter,
-                        qevercloud::SyncChunk & syncChunk, ErrorString & errorDescription,
-                        qint32 & rateLimitSeconds);
+    virtual qint32 getLinkedNotebookSyncChunk(const qevercloud::LinkedNotebook & linkedNotebook,
+                                              const qint32 afterUSN, const qint32 maxEntries,
+                                              const QString & linkedNotebookAuthToken, const bool fullSyncOnly,
+                                              qevercloud::SyncChunk & syncChunk, ErrorString & errorDescription,
+                                              qint32 & rateLimitSeconds) Q_DECL_OVERRIDE;
 
-    qint32 getLinkedNotebookSyncState(const qevercloud::LinkedNotebook & linkedNotebook,
-                                      const QString & authToken, qevercloud::SyncState & syncState,
-                                      ErrorString & errorDescription, qint32 & rateLimitSeconds);
+    virtual qint32 getNote(const bool withContent, const bool withResourcesData,
+                           const bool withResourcesRecognition, const bool withResourceAlternateData,
+                           Note & note, ErrorString & errorDescription, qint32 & rateLimitSeconds) Q_DECL_OVERRIDE;
 
-    qint32 getLinkedNotebookSyncChunk(const qevercloud::LinkedNotebook & linkedNotebook,
-                                      const qint32 afterUSN, const qint32 maxEntries,
-                                      const QString & linkedNotebookAuthToken, const bool fullSyncOnly,
-                                      qevercloud::SyncChunk & syncChunk, ErrorString & errorDescription,
-                                      qint32 & rateLimitSeconds);
+    virtual bool getNoteAsync(const bool withContent, const bool withResourceData, const bool withResourcesRecognition,
+                              const bool withResourceAlternateData, const bool withSharedNotes,
+                              const bool withNoteAppDataValues, const bool withResourceAppDataValues,
+                              const bool withNoteLimits, const QString & noteGuid,
+                              const QString & authToken, ErrorString & errorDescription) Q_DECL_OVERRIDE;
 
-    qint32 getNote(const bool withContent, const bool withResourcesData,
-                   const bool withResourcesRecognition, const bool withResourceAlternateData,
-                   Note & note, ErrorString & errorDescription, qint32 & rateLimitSeconds);
+    virtual qint32 getResource(const bool withDataBody, const bool withRecognitionDataBody,
+                               const bool withAlternateDataBody, const bool withAttributes,
+                               const QString & authToken, Resource & resource, ErrorString & errorDescription,
+                               qint32 & rateLimitSeconds) Q_DECL_OVERRIDE;
 
-    bool getNoteAsync(const bool withContent, const bool withResourceData, const bool withResourcesRecognition,
-                      const bool withResourceAlternateData, const bool withSharedNotes,
-                      const bool withNoteAppDataValues, const bool withResourceAppDataValues,
-                      const bool withNoteLimits, const QString & noteGuid,
-                      const QString & authToken, ErrorString & errorDescription);
+    virtual bool getResourceAsync(const bool withDataBody, const bool withRecognitionDataBody,
+                                  const bool withAlternateDataBody, const bool withAttributes, const QString & resourceGuid,
+                                  const QString & authToken, ErrorString & errorDescription) Q_DECL_OVERRIDE;
 
-    qint32 getResource(const bool withDataBody, const bool withRecognitionDataBody,
-                       const bool withAlternateDataBody, const bool withAttributes,
-                       const QString & authToken, Resource & resource, ErrorString & errorDescription,
-                       qint32 & rateLimitSeconds);
-
-    bool getResourceAsync(const bool withDataBody, const bool withRecognitionDataBody,
-                          const bool withAlternateDataBody, const bool withAttributes, const QString & resourceGuid,
-                          const QString & authToken, ErrorString & errorDescription);
-
-    qint32 authenticateToSharedNotebook(const QString & shareKey, qevercloud::AuthenticationResult & authResult,
-                                        ErrorString & errorDescription, qint32 & rateLimitSeconds);
-
-Q_SIGNALS:
-    void getNoteAsyncFinished(qint32 errorCode, qevercloud::Note note, qint32 rateLimitSeconds, ErrorString errorDescription);
-    void getResourceAsyncFinished(qint32 errorCode, qevercloud::Resource resource, qint32 rateLimitSeconds, ErrorString errorDescription);
+    virtual qint32 authenticateToSharedNotebook(const QString & shareKey, qevercloud::AuthenticationResult & authResult,
+                                                ErrorString & errorDescription, qint32 & rateLimitSeconds) Q_DECL_OVERRIDE;
 
 private:
     typedef qevercloud::EverCloudExceptionData EverCloudExceptionData;
@@ -173,7 +164,6 @@ private:
     Q_DISABLE_COPY(NoteStore)
 
 private:
-    QSharedPointer<qevercloud::NoteStore>       m_pQecNoteStore;
     QHash<qevercloud::AsyncResult*, QString>    m_noteGuidByAsyncResultPtr;
     QHash<qevercloud::AsyncResult*, QString>    m_resourceGuidByAsyncResultPtr;
 };
