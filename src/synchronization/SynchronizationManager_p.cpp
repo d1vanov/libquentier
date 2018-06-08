@@ -1099,6 +1099,7 @@ void SynchronizationManagerPrivate::timerEvent(QTimerEvent * pTimerEvent)
     }
 
     if (timerId == m_authenticateToLinkedNotebooksPostponeTimerId)  {
+        m_authenticateToLinkedNotebooksPostponeTimerId = -1;
         QNDEBUG(QStringLiteral("Re-attempting to authenticate to remaining linked (shared) notebooks"));
         onRequestAuthenticationTokensForLinkedNotebooks(m_linkedNotebookAuthDataPendingAuthentication);
         return;
