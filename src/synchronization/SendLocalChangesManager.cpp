@@ -1202,16 +1202,27 @@ void SendLocalChangesManager::sendLocalChanges()
         return; \
     }
 
-    sendTags();
-    CHECK_RATE_LIMIT()
+    if (!m_tags.isEmpty()) {
+        sendTags();
+        CHECK_RATE_LIMIT()
+    }
 
-    sendSavedSearches();
-    CHECK_RATE_LIMIT()
+    if (!m_savedSearches.isEmpty()) {
+        sendSavedSearches();
+        CHECK_RATE_LIMIT()
+    }
 
-    sendNotebooks();
-    CHECK_RATE_LIMIT()
+    if (!m_notebooks.isEmpty()) {
+        sendNotebooks();
+        CHECK_RATE_LIMIT()
+    }
 
-    findNotebooksForNotes();
+    if (!m_notes.isEmpty()) {
+        // NOTE: in case of API rate limits breaching this can be done multiple times
+        // but it's safer to do overwork than not to do some important missing piece
+        // so it's ok to repeatedly search for notebooks here
+        findNotebooksForNotes();
+    }
 }
 
 void SendLocalChangesManager::sendTags()
@@ -2226,8 +2237,14 @@ void SendLocalChangesManager::checkSendLocalChangesAndDirtyFlagsRemovingUpdatesA
 
     if (m_tags.isEmpty() && m_savedSearches.isEmpty() && m_notebooks.isEmpty() && m_notes.isEmpty()) {
         checkDirtyFlagRemovingUpdatesAndFinalize();
+        return;
     }
 
+    QNDEBUG(QStringLiteral("Still have ") << m_tags.size() << QStringLiteral(" not yet sent tags, ")
+            << m_savedSearches.size() << QStringLiteral(" not yet sent saved searches, ")
+            << m_notebooks.size() << QStringLiteral(" not yet sent notebooks and ")
+            << m_notes.size() << QStringLiteral(" not yet sent notes"));
+    sendLocalChanges();
 }
 
 void SendLocalChangesManager::checkDirtyFlagRemovingUpdatesAndFinalize()
