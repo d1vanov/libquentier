@@ -34,7 +34,7 @@
 
 namespace quentier {
 
-class SyncStatePersistenceManager: public QObject
+class QUENTIER_EXPORT SyncStatePersistenceManager: public QObject
 {
     Q_OBJECT
 public:
