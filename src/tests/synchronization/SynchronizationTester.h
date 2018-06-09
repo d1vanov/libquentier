@@ -145,7 +145,7 @@ private Q_SLOTS:
     void testIncrementalSyncWithRateLimitsBreachOnUpdateSavedSearchAttempt();
 
     void testIncrementalSyncWithRateLimitsBreachOnCreateUserOwnTagAttempt();
-    void testIncrementalSyncWithRateLimitBreachOnUpdateUserOwnTagAttempt();
+    void testIncrementalSyncWithRateLimitsBreachOnUpdateUserOwnTagAttempt();
     void testIncrementalSyncWithRateLimitsBreachOnCreateTagInLinkedNotebookAttempt();
     void testIncrementalSyncWithRateLimitsBreachOnUpdateTagInLinkedNotebookAttempt();
 

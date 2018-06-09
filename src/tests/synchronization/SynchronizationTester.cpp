@@ -3184,7 +3184,7 @@ void SynchronizationTester::testIncrementalSyncWithRateLimitsBreachOnCreateUserO
     checkSyncStatePersistedRightAfterAPIRateLimitBreach(catcher, numExpectedSyncStateEntries, -1);
 }
 
-void SynchronizationTester::testIncrementalSyncWithRateLimitBreachOnUpdateUserOwnTagAttempt()
+void SynchronizationTester::testIncrementalSyncWithRateLimitsBreachOnUpdateUserOwnTagAttempt()
 {
     setUserOwnItemsToRemoteStorage();
     copyRemoteItemsToLocalStorage();
