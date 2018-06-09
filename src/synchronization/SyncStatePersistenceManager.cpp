@@ -37,7 +37,6 @@ void SyncStatePersistenceManager::getPersistentSyncState(const Account & account
 
     userOwnDataUpdateCount = 0;
     userOwnDataSyncTime = 0;
-    qint32 m_previousUpdateCount = 0;
     linkedNotebookUpdateCountsByLinkedNotebookGuid.clear();
     linkedNotebookSyncTimesByLinkedNotebookGuid.clear();
 
@@ -55,7 +54,6 @@ void SyncStatePersistenceManager::getPersistentSyncState(const Account & account
             QNWARNING(QStringLiteral("Couldn't read last update count from persistent application settings"));
             userOwnDataUpdateCount = 0;
         }
-        m_previousUpdateCount = userOwnDataUpdateCount;
     }
 
     QVariant lastSyncTimeVar = appSettings.value(keyGroup + LAST_SYNC_TIME_KEY);
