@@ -6254,7 +6254,7 @@ void SynchronizationTester::runTest(SynchronizationManagerSignalsCatcher & catch
         slotInvokingTimer.setSingleShot(true);
 
         timer.start();
-        slotInvokingTimer.singleShot(0, m_pSynchronizationManager, QNSLOT(SynchronizationManager,synchronize));
+        slotInvokingTimer.singleShot(0, m_pSynchronizationManager, SLOT(synchronize()));
         testAsyncResult = loop.exec();
     }
 
