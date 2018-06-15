@@ -41,6 +41,8 @@ private Q_SLOTS:
 
     void tagSortByParentChildRelationsTest();
 
+    void lruCacheTests();
+
 private:
     UtilityTester(const UtilityTester & other) Q_DECL_EQ_DELETE;
     UtilityTester & operator=(const UtilityTester & other) Q_DECL_EQ_DELETE;

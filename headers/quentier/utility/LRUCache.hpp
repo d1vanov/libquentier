@@ -81,34 +81,13 @@ public:
 
     void put(const key_type & key, const mapped_type & value)
     {
-        auto mapperIt = m_mapper.find(key);
-        if (mapperIt != m_mapper.end()) {
-            auto it = mapperIt.value();
-            Q_UNUSED(m_container.erase(it))
-            Q_UNUSED(m_mapper.erase(mapperIt))
-            if (m_currentSize != 0) {
-                --m_currentSize;
-            }
-        }
+        Q_UNUSED(remove(key))
 
         m_container.push_front(value_type(key, value));
         m_mapper[key] = m_container.begin();
         ++m_currentSize;
 
-        if (m_currentSize > m_maxSize)
-        {
-            auto lastIt = m_container.end();
-            --lastIt;
-
-            const key_type & lastElementKey = lastIt->first;
-
-            Q_UNUSED(m_mapper.remove(lastElementKey))
-            Q_UNUSED(m_container.erase(lastIt))
-
-            if (m_currentSize != 0) {
-                --m_currentSize;
-            }
-        }
+        fixupSize();
     }
 
     const mapped_type * get(const key_type & key) const
@@ -119,6 +98,10 @@ public:
         }
 
         auto it = mapperIt.value();
+        if (it == m_container.end()) {
+            return Q_NULLPTR;
+        }
+
         m_container.splice(m_container.begin(), m_container, it);
         mapperIt.value() = m_container.begin();
         return &(mapperIt.value()->second);
@@ -127,7 +110,12 @@ public:
     bool exists(const key_type & key)
     {
         auto mapperIt = m_mapper.find(key);
-        return (mapperIt != m_mapper.end());
+        if (mapperIt == m_mapper.end()) {
+            return false;
+        }
+
+        auto it = mapperIt.value();
+        return (it != m_container.end());
     }
 
     bool remove(const key_type & key)
@@ -140,11 +128,59 @@ public:
         auto it = mapperIt.value();
         Q_UNUSED(m_container.erase(it))
         Q_UNUSED(m_mapper.erase(mapperIt))
+
         if (m_currentSize != 0) {
             --m_currentSize;
         }
 
         return true;
+    }
+
+    void setMaxSize(const size_t maxSize)
+    {
+        if (maxSize >= m_maxSize) {
+            m_maxSize = maxSize;
+            return;
+        }
+
+        size_t diff = m_maxSize - maxSize;
+        for(size_t i = 0; (i < diff) && !m_container.empty(); ++i)
+        {
+            auto lastIt = m_container.end();
+            --lastIt;
+
+            const key_type & lastElementKey = lastIt->first;
+            Q_UNUSED(m_mapper.remove(lastElementKey))
+            Q_UNUSED(m_container.erase(lastIt))
+
+            if (m_currentSize != 0) {
+                --m_currentSize;
+            }
+        }
+    }
+
+private:
+    void fixupSize()
+    {
+        if (m_currentSize <= m_maxSize) {
+            return;
+        }
+
+        if (Q_UNLIKELY(m_container.empty())) {
+            return;
+        }
+
+        auto lastIt = m_container.end();
+        --lastIt;
+
+        const key_type & lastElementKey = lastIt->first;
+
+        Q_UNUSED(m_mapper.remove(lastElementKey))
+        Q_UNUSED(m_container.erase(lastIt))
+
+        if (m_currentSize != 0) {
+            --m_currentSize;
+        }
     }
 
 private:

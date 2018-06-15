@@ -19,6 +19,7 @@
 #include "UtilityTester.h"
 #include "EncryptionManagerTests.h"
 #include "TagSortByParentChildRelationsTest.h"
+#include "LRUCacheTests.h"
 #include <quentier/exception/IQuentierException.h>
 #include <quentier/utility/EventLoopWithExitStatus.h>
 #include <quentier/types/SavedSearch.h>
@@ -120,6 +121,32 @@ void UtilityTester::tagSortByParentChildRelationsTest()
     {
         QString error;
         bool res = ::quentier::test::tagSortByParentChildRelationsTest(error);
+        QVERIFY2(res == true, qPrintable(error));
+    }
+    CATCH_EXCEPTION();
+}
+
+void UtilityTester::lruCacheTests()
+{
+    try
+    {
+        QString error;
+        bool res = ::quentier::test::testEmptyLRUCacheConsistency(error);
+        QVERIFY2(res == true, qPrintable(error));
+
+        res = ::quentier::test::testNonEmptyLRUCacheConsistency(error);
+        QVERIFY2(res == true, qPrintable(error));
+
+        res = ::quentier::test::testRemovalFromLRUCache(error);
+        QVERIFY2(res == true, qPrintable(error));
+
+        res = ::quentier::test::testLRUCacheReverseIterators(error);
+        QVERIFY2(res == true, qPrintable(error));
+
+        res = ::quentier::test::testItemsAdditionToLRUCacheBeforeReachingMaxSize(error);
+        QVERIFY2(res == true, qPrintable(error));
+
+        res = ::quentier::test::testItemsAdditionToLRUCacheAfterReachingMaxSize(error);
         QVERIFY2(res == true, qPrintable(error));
     }
     CATCH_EXCEPTION();

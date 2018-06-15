@@ -748,6 +748,7 @@ set(TEST_HEADERS
     src/tests/synchronization/SynchronizationManagerSignalsCatcher.h
     src/tests/synchronization/SynchronizationTester.h
     src/tests/utility/EncryptionManagerTests.h
+    src/tests/utility/LRUCacheTests.h
     src/tests/utility/TagSortByParentChildRelationsTest.h
     src/tests/utility/UtilityTester.h
     src/synchronization/FullSyncStaleDataItemsExpunger.h
@@ -782,6 +783,7 @@ set(TEST_SOURCES
     src/tests/synchronization/SynchronizationManagerSignalsCatcher.cpp
     src/tests/synchronization/SynchronizationTester.cpp
     src/tests/utility/EncryptionManagerTests.cpp
+    src/tests/utility/LRUCacheTests.cpp
     src/tests/utility/TagSortByParentChildRelationsTest.cpp
     src/tests/utility/UtilityTester.cpp
     src/tests/TestMain.cpp
