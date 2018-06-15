@@ -7273,6 +7273,46 @@ void RemoteToLocalSynchronizationManager::checkNonSyncedItemsContainerForSmalles
 }
 
 template <>
+void RemoteToLocalSynchronizationManager::checkNonSyncedItemsContainerForSmallestUsn<QHash<QString,Note> >(const QHash<QString,Note> & notes,
+                                                                                                           const QString & linkedNotebookGuid,
+                                                                                                           qint32 & smallestUsn) const
+{
+    for(auto it = notes.constBegin(), end = notes.constEnd(); it != end; ++it) {
+        checkNonSyncedItemForSmallestUsn(it.value().qevercloudNote(), linkedNotebookGuid, smallestUsn);
+    }
+}
+
+template <>
+void RemoteToLocalSynchronizationManager::checkNonSyncedItemsContainerForSmallestUsn<QHash<QUuid,Note> >(const QHash<QUuid,Note> & notes,
+                                                                                                         const QString & linkedNotebookGuid,
+                                                                                                         qint32 & smallestUsn) const
+{
+    for(auto it = notes.constBegin(), end = notes.constEnd(); it != end; ++it) {
+        checkNonSyncedItemForSmallestUsn(it.value().qevercloudNote(), linkedNotebookGuid, smallestUsn);
+    }
+}
+
+template <>
+void RemoteToLocalSynchronizationManager::checkNonSyncedItemsContainerForSmallestUsn<RemoteToLocalSynchronizationManager::NoteDataPerFindNotebookRequestId>(const NoteDataPerFindNotebookRequestId & notes,
+                                                                                                                                                            const QString & linkedNotebookGuid,
+                                                                                                                                                            qint32 & smallestUsn) const
+{
+    for(auto it = notes.constBegin(), end = notes.constEnd(); it != end; ++it) {
+        checkNonSyncedItemForSmallestUsn(it.value().first.qevercloudNote(), linkedNotebookGuid, smallestUsn);
+    }
+}
+
+template <>
+void RemoteToLocalSynchronizationManager::checkNonSyncedItemsContainerForSmallestUsn<QHash<QString,qevercloud::Note> >(const QHash<QString,qevercloud::Note> & notes,
+                                                                                                                       const QString & linkedNotebookGuid,
+                                                                                                                       qint32 & smallestUsn) const
+{
+    for(auto it = notes.constBegin(), end = notes.constEnd(); it != end; ++it) {
+        checkNonSyncedItemForSmallestUsn(it.value(), linkedNotebookGuid, smallestUsn);
+    }
+}
+
+template <>
 void RemoteToLocalSynchronizationManager::checkNonSyncedItemsContainerForSmallestUsn<QHash<int,std::pair<Resource,Note> > >(const QHash<int,std::pair<Resource,Note> > & resources,
                                                                                                                             const QString & linkedNotebookGuid,
                                                                                                                             qint32 & smallestUsn) const
@@ -7330,6 +7370,21 @@ qint32 RemoteToLocalSynchronizationManager::findSmallestUsnOfNonSyncedItems(cons
         checkNonSyncedItemsContainerForSmallestUsn(m_notesPendingAddOrUpdate, linkedNotebookGuid, smallestUsn);
         checkNonSyncedItemsContainerForSmallestUsn(m_notesToAddPerAPICallPostponeTimerId, linkedNotebookGuid, smallestUsn);
         checkNonSyncedItemsContainerForSmallestUsn(m_notesToUpdatePerAPICallPostponeTimerId, linkedNotebookGuid, smallestUsn);
+
+        // Also need to check for notes which might be currently pending find notebook requests
+        checkNonSyncedItemsContainerForSmallestUsn(m_notesWithFindRequestIdsPerFindNotebookRequestId, linkedNotebookGuid, smallestUsn);
+
+        // Also need to check for notes which are currently pending download for adding to local storage
+        // or for updating within the local storage
+        checkNonSyncedItemsContainerForSmallestUsn(m_notesPendingDownloadForAddingToLocalStorage, linkedNotebookGuid, smallestUsn);
+        checkNonSyncedItemsContainerForSmallestUsn(m_notesPendingDownloadForUpdatingInLocalStorageByGuid, linkedNotebookGuid, smallestUsn);
+
+        // Also need to check for notes which might be pending the download of ink note image or thumbnail
+        // (these downloads should not cause API limit breach since they are not fully a part of Evernote API
+        // but just to be on the safe side)
+        checkNonSyncedItemsContainerForSmallestUsn(m_notesPendingInkNoteImagesDownloadByFindNotebookRequestId, linkedNotebookGuid, smallestUsn);
+        checkNonSyncedItemsContainerForSmallestUsn(m_notesPendingThumbnailDownloadByFindNotebookRequestId, linkedNotebookGuid, smallestUsn);
+        checkNonSyncedItemsContainerForSmallestUsn(m_notesPendingThumbnailDownloadByGuid, linkedNotebookGuid, smallestUsn);
     }
 
     if (syncingNotebooks || syncingTags || notesSyncInProgress())
