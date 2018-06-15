@@ -46,15 +46,19 @@ EncryptionManagerPrivate::EncryptionManagerPrivate() :
     m_decrypt_rc2_chunk_key_codes(),
     m_rc2_chunk_out()
 {
+#if OPENSSL_VERSION_NUMBER < 0x10100003L
+    OPENSSL_config(NULL);
     ERR_load_crypto_strings();
     OpenSSL_add_all_algorithms();
-    OPENSSL_config(NULL);
+#endif
 }
 
 EncryptionManagerPrivate::~EncryptionManagerPrivate()
 {
+#if OPENSSL_VERSION_NUMBER < 0x10100003L
     EVP_cleanup();
     ERR_free_strings();
+#endif
 }
 
 bool EncryptionManagerPrivate::decrypt(const QString & encryptedText, const QString & passphrase,
