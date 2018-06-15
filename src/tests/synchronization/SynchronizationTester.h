@@ -222,6 +222,7 @@ private:
                                                              const int numExpectedSyncStateEntries,
                                                              const int rateLimitTriggeredSyncStateEntryIndex);
 
+    // List stuff from local storage
     void listSavedSearchesFromLocalStorage(const qint32 afterUSN,
                                            QHash<QString, qevercloud::SavedSearch> & savedSearches) const;
 
@@ -234,8 +235,34 @@ private:
     void listNotesFromLocalStorage(const qint32 afterUSN, const QString & linkedNotebookGuid,
                                    QHash<QString, qevercloud::Note> & notes) const;
 
+    void listResourcesFromLocalStorage(const qint32 afterUSN, const QString & linkedNotebookGuid,
+                                       QHash<QString, qevercloud::Resource> & resources) const;
+
     void listLinkedNotebooksFromLocalStorage(const qint32 afterUSN,
                                              QHash<QString, qevercloud::LinkedNotebook> & linkedNotebooks) const;
+
+    // List stuff from fake note store
+    void listSavedSearchesFromFakeNoteStore(const qint32 afterUSN,
+                                            QHash<QString, qevercloud::SavedSearch> & savedSearches) const;
+
+    void listTagsFromFakeNoteStore(const qint32 afterUSN, const QString & linkedNotebookGuid,
+                                   QHash<QString, qevercloud::Tag> & tags) const;
+
+    void listNotebooksFromFakeNoteStore(const qint32 afterUSN, const QString & linkedNotebookGuid,
+                                        QHash<QString, qevercloud::Notebook> & notebooks) const;
+
+    void listNotesFromFakeNoteStore(const qint32 afterUSN, const QString & linkedNotebookGuid,
+                                    QHash<QString, qevercloud::Note> & notes) const;
+
+    void listResourcesFromFakeNoteStore(const qint32 afterUSN, const QString & linkedNotebookGuid,
+                                        QHash<QString, qevercloud::Resource> & resources) const;
+
+    void listLinkedNotebooksFromFakeNoteStore(const qint32 afterUSN,
+                                              QHash<QString, qevercloud::LinkedNotebook> & linkedNotebooks) const;
+
+    // Print stuff from both local storage and fake note store into a warning level log entry
+    void printContentsOfLocalStorageAndFakeNoteStoreToWarnLog(const QString & prefix = QString(),
+                                                              const QString & linkedNotebookGuid = QString());
 
     void runTest(SynchronizationManagerSignalsCatcher & catcher);
 

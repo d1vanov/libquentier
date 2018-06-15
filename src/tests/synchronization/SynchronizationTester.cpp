@@ -6023,6 +6023,7 @@ void SynchronizationTester::checkSyncStatePersistedRightAfterAPIRateLimitBreach(
         error += QStringLiteral(") is not equal to the one present within the actual sync state (");
         error += QString::number(syncStateUpdateCount.m_userOwnUpdateCount);
         error += QStringLiteral(") + 1");
+        printContentsOfLocalStorageAndFakeNoteStoreToWarnLog(error);
         QFAIL(qPrintable(error));
         return;
     }
@@ -6038,13 +6039,15 @@ void SynchronizationTester::checkSyncStatePersistedRightAfterAPIRateLimitBreach(
             ++referenceUsn;
         }
 
-        if (Q_UNLIKELY(referenceUsn != (it.value() + 1))) {
+        if (Q_UNLIKELY(referenceUsn != (it.value() + 1)))
+        {
             QString error = QStringLiteral("Reference update count before API rate limit breach (");
             error += QString::number(referenceUsn);
             error += QStringLiteral(") is not equal to the one present within the actual sync state (");
             error += QString::number(it.value());
             error += QStringLiteral(") + 1 for linked notebook with guid ");
             error += it.key();
+            printContentsOfLocalStorageAndFakeNoteStoreToWarnLog(error, it.key());
             QFAIL(qPrintable(error));
             return;
         }
@@ -6203,6 +6206,55 @@ void SynchronizationTester::listNotesFromLocalStorage(const qint32 afterUSN, con
     }
 }
 
+void SynchronizationTester::listResourcesFromLocalStorage(const qint32 afterUSN, const QString & linkedNotebookGuid,
+                                                          QHash<QString, qevercloud::Resource> & resources) const
+{
+    resources.clear();
+
+    const LocalStorageManager * pLocalStorageManager = m_pLocalStorageManagerAsync->localStorageManager();
+    if (Q_UNLIKELY(!pLocalStorageManager)) {
+        QFAIL("Local storage manager is null");
+    }
+
+    QString localLinkedNotebookGuid = QStringLiteral("");
+    if (!linkedNotebookGuid.isEmpty()) {
+        localLinkedNotebookGuid = linkedNotebookGuid;
+    }
+
+    ErrorString errorDescription;
+    QList<Note> localNotes = pLocalStorageManager->listNotes(LocalStorageManager::ListAll,
+                                                             errorDescription, true, 0, 0, LocalStorageManager::ListNotesOrder::NoOrder,
+                                                             LocalStorageManager::OrderDirection::Ascending,
+                                                             localLinkedNotebookGuid);
+    if (localNotes.isEmpty() && !errorDescription.isEmpty()) {
+        QFAIL(qPrintable(errorDescription.nonLocalizedString()));
+    }
+
+    resources.reserve(localNotes.size());
+    for(auto it = localNotes.constBegin(), end = localNotes.constEnd(); it != end; ++it)
+    {
+        const Note & note = *it;
+        if (!note.hasResources()) {
+            continue;
+        }
+
+        QList<Resource> localResources = note.resources();
+        for(auto rit = localResources.constBegin(), rend = localResources.constEnd(); rit != rend; ++rit)
+        {
+            const Resource & localResource = *rit;
+            if (Q_UNLIKELY(!localResource.hasGuid())) {
+                continue;
+            }
+
+            if ((afterUSN > 0) && (!localResource.hasUpdateSequenceNumber() || (localResource.updateSequenceNumber() <= afterUSN))) {
+                continue;
+            }
+
+            resources[localResource.guid()] = localResource.qevercloudResource();
+        }
+    }
+}
+
 void SynchronizationTester::listLinkedNotebooksFromLocalStorage(const qint32 afterUSN,
                                                                 QHash<QString, qevercloud::LinkedNotebook> & linkedNotebooks) const
 {
@@ -6235,6 +6287,272 @@ void SynchronizationTester::listLinkedNotebooksFromLocalStorage(const qint32 aft
 
         linkedNotebooks[linkedNotebook.guid()] = linkedNotebook.qevercloudLinkedNotebook();
     }
+}
+
+void SynchronizationTester::listSavedSearchesFromFakeNoteStore(const qint32 afterUSN,
+                                                               QHash<QString, qevercloud::SavedSearch> & savedSearches) const
+{
+    savedSearches = m_pFakeNoteStore->savedSearches();
+    if (afterUSN <= 0) {
+        return;
+    }
+
+    for(auto it = savedSearches.begin(); it != savedSearches.end(); )
+    {
+        const qevercloud::SavedSearch & search = it.value();
+        if (!search.updateSequenceNum.isSet() || (search.updateSequenceNum.ref() <= afterUSN)) {
+            it = savedSearches.erase(it);
+            continue;
+        }
+
+        ++it;
+    }
+}
+
+void SynchronizationTester::listTagsFromFakeNoteStore(const qint32 afterUSN, const QString & linkedNotebookGuid,
+                                                      QHash<QString, qevercloud::Tag> & tags) const
+{
+    tags = m_pFakeNoteStore->tags();
+
+    for(auto it = tags.begin(); it != tags.end(); )
+    {
+        const qevercloud::Tag & tag = it.value();
+
+        if ((afterUSN > 0) && (!tag.updateSequenceNum.isSet() || (tag.updateSequenceNum.ref() <= afterUSN))) {
+            it = tags.erase(it);
+            continue;
+        }
+
+        const Tag * pTag = m_pFakeNoteStore->findTag(it.key());
+        if (Q_UNLIKELY(!pTag)) {
+            it = tags.erase(it);
+            continue;
+        }
+
+        if ( (linkedNotebookGuid.isEmpty() && pTag->hasLinkedNotebookGuid()) ||
+             (!linkedNotebookGuid.isEmpty() && (!pTag->hasLinkedNotebookGuid() || (pTag->linkedNotebookGuid() != linkedNotebookGuid))) )
+        {
+            it = tags.erase(it);
+            continue;
+        }
+
+        ++it;
+    }
+}
+
+void SynchronizationTester::listNotebooksFromFakeNoteStore(const qint32 afterUSN, const QString & linkedNotebookGuid,
+                                                           QHash<QString, qevercloud::Notebook> & notebooks) const
+{
+    notebooks.clear();
+
+    QList<const Notebook*> notebookPtrs = m_pFakeNoteStore->findNotebooksForLinkedNotebookGuid(linkedNotebookGuid);
+    notebooks.reserve(notebookPtrs.size());
+
+    for(auto it = notebookPtrs.begin(); it != notebookPtrs.end(); ++it)
+    {
+        const Notebook & notebook = *(*it);
+        if (Q_UNLIKELY(!notebook.hasGuid())) {
+            continue;
+        }
+
+        if ((afterUSN > 0) && (!notebook.hasUpdateSequenceNumber() || (notebook.updateSequenceNumber() <= afterUSN))) {
+            continue;
+        }
+
+        notebooks[notebook.guid()] = notebook.qevercloudNotebook();
+    }
+}
+
+void SynchronizationTester::listNotesFromFakeNoteStore(const qint32 afterUSN, const QString & linkedNotebookGuid,
+                                                       QHash<QString, qevercloud::Note> & notes) const
+{
+    notes = m_pFakeNoteStore->notes();
+
+    for(auto it = notes.begin(); it != notes.end(); )
+    {
+        const qevercloud::Note & note = it.value();
+        if (Q_UNLIKELY(!note.notebookGuid.isSet())) {
+            it = notes.erase(it);
+            continue;
+        }
+
+        if ((afterUSN > 0) && (!note.updateSequenceNum.isSet() || (note.updateSequenceNum.ref() <= afterUSN))) {
+            it = notes.erase(it);
+            continue;
+        }
+
+        const Notebook * pNotebook = m_pFakeNoteStore->findNotebook(note.notebookGuid.ref());
+        if (Q_UNLIKELY(!pNotebook)) {
+            it = notes.erase(it);
+            continue;
+        }
+
+        if ( (linkedNotebookGuid.isEmpty() && pNotebook->hasLinkedNotebookGuid()) ||
+             (!linkedNotebookGuid.isEmpty() && (!pNotebook->hasLinkedNotebookGuid() || (pNotebook->linkedNotebookGuid() != linkedNotebookGuid))) )
+        {
+            it = notes.erase(it);
+            continue;
+        }
+
+        ++it;
+    }
+}
+
+void SynchronizationTester::listResourcesFromFakeNoteStore(const qint32 afterUSN, const QString & linkedNotebookGuid,
+                                                           QHash<QString, qevercloud::Resource> & resources) const
+{
+    resources = m_pFakeNoteStore->resources();
+
+    for(auto it = resources.begin(); it != resources.end(); )
+    {
+        const qevercloud::Resource & resource = it.value();
+        if (Q_UNLIKELY(!resource.noteGuid.isSet())) {
+            it = resources.erase(it);
+            continue;
+        }
+
+        if ((afterUSN > 0) && (!resource.updateSequenceNum.isSet() || (resource.updateSequenceNum.ref() <= afterUSN))) {
+            it = resources.erase(it);
+            continue;
+        }
+
+        const Note * pNote = m_pFakeNoteStore->findNote(resource.noteGuid.ref());
+        if (Q_UNLIKELY(!pNote || !pNote->hasNotebookGuid())) {
+            it = resources.erase(it);
+            continue;
+        }
+
+        const Notebook * pNotebook = m_pFakeNoteStore->findNotebook(pNote->notebookGuid());
+        if (Q_UNLIKELY(!pNotebook)) {
+            it = resources.erase(it);
+            continue;
+        }
+
+        if ( (linkedNotebookGuid.isEmpty() && pNotebook->hasLinkedNotebookGuid()) ||
+             (!linkedNotebookGuid.isEmpty() && (!pNotebook->hasLinkedNotebookGuid() || (pNotebook->linkedNotebookGuid() != linkedNotebookGuid))) )
+        {
+            it = resources.erase(it);
+            continue;
+        }
+
+        ++it;
+    }
+}
+
+void SynchronizationTester::listLinkedNotebooksFromFakeNoteStore(const qint32 afterUSN,
+                                                                 QHash<QString, qevercloud::LinkedNotebook> & linkedNotebooks) const
+{
+    linkedNotebooks = m_pFakeNoteStore->linkedNotebooks();
+    if (afterUSN <= 0) {
+        return;
+    }
+
+    for(auto it = linkedNotebooks.begin(); it != linkedNotebooks.end(); )
+    {
+        const qevercloud::LinkedNotebook & linkedNotebook = it.value();
+
+        if (!linkedNotebook.updateSequenceNum.isSet() && (linkedNotebook.updateSequenceNum.ref() <= afterUSN)) {
+            it = linkedNotebooks.erase(it);
+            continue;
+        }
+    }
+}
+
+void SynchronizationTester::printContentsOfLocalStorageAndFakeNoteStoreToWarnLog(const QString & prefix,
+                                                                                 const QString & linkedNotebookGuid)
+{
+    QString message;
+
+    if (!prefix.isEmpty()) {
+        message += prefix;
+    }
+
+    QHash<QString,qevercloud::SavedSearch> localSavedSearches;
+    QHash<QString,qevercloud::Tag> localTags;
+    QHash<QString,qevercloud::Notebook> localNotebooks;
+    QHash<QString,qevercloud::Note> localNotes;
+    QHash<QString,qevercloud::Resource> localResources;
+    QHash<QString,qevercloud::LinkedNotebook> localLinkedNotebooks;
+
+    QHash<QString,qevercloud::SavedSearch> remoteSavedSearches;
+    QHash<QString,qevercloud::Tag> remoteTags;
+    QHash<QString,qevercloud::Notebook> remoteNotebooks;
+    QHash<QString,qevercloud::Note> remoteNotes;
+    QHash<QString,qevercloud::Resource> remoteResources;
+    QHash<QString,qevercloud::LinkedNotebook> remoteLinkedNotebooks;
+
+    if (linkedNotebookGuid.isEmpty()) {
+        listSavedSearchesFromLocalStorage(0, localSavedSearches);
+        listSavedSearchesFromFakeNoteStore(0, remoteSavedSearches);
+        listLinkedNotebooksFromLocalStorage(0, localLinkedNotebooks);
+        listLinkedNotebooksFromFakeNoteStore(0, remoteLinkedNotebooks);
+    }
+
+    listTagsFromLocalStorage(0, linkedNotebookGuid, localTags);
+    listTagsFromFakeNoteStore(0, linkedNotebookGuid, remoteTags);
+
+    listNotebooksFromLocalStorage(0, linkedNotebookGuid, localNotebooks);
+    listNotebooksFromFakeNoteStore(0, linkedNotebookGuid, remoteNotebooks);
+
+    listNotesFromLocalStorage(0, linkedNotebookGuid, localNotes);
+    listNotesFromLocalStorage(0, linkedNotebookGuid, remoteNotes);
+
+    listResourcesFromLocalStorage(0, linkedNotebookGuid, localResources);
+    listResourcesFromFakeNoteStore(0, linkedNotebookGuid, remoteResources);
+
+#define PRINT_CONTAINER_ITEMS_GUIDS_AND_USNS(container) \
+    for(auto it = container.constBegin(), end = container.constEnd(); it != end; ++it) { \
+        message += QStringLiteral("    guid = ") % it.key() % QStringLiteral(", USN = ") % \
+                   (it.value().updateSequenceNum.isSet() ? QString::number(it.value().updateSequenceNum.ref()) : QStringLiteral("<not set>")); \
+    }
+
+    if (linkedNotebookGuid.isEmpty()) {
+        message += QStringLiteral("Local saved searches:\n");
+        PRINT_CONTAINER_ITEMS_GUIDS_AND_USNS(localSavedSearches)
+    }
+
+    message += QStringLiteral("\nLocal tags:\n");
+    PRINT_CONTAINER_ITEMS_GUIDS_AND_USNS(localTags)
+
+    message += QStringLiteral("\nLocal notebooks:\n");
+    PRINT_CONTAINER_ITEMS_GUIDS_AND_USNS(localNotebooks)
+
+    message += QStringLiteral("\nLocal notes:\n");
+    PRINT_CONTAINER_ITEMS_GUIDS_AND_USNS(localNotes)
+
+    message += QStringLiteral("\nLocal resources:\n");
+    PRINT_CONTAINER_ITEMS_GUIDS_AND_USNS(localResources)
+
+    if (linkedNotebookGuid.isEmpty()) {
+        message += QStringLiteral("\nLocal linked notebooks:\n");
+        PRINT_CONTAINER_ITEMS_GUIDS_AND_USNS(localLinkedNotebooks);
+    }
+
+    message += QStringLiteral("\n\n");
+
+    if (linkedNotebookGuid.isEmpty()) {
+        message += QStringLiteral("Remote saved searches:\n");
+        PRINT_CONTAINER_ITEMS_GUIDS_AND_USNS(remoteSavedSearches)
+    }
+
+    message += QStringLiteral("\nRemote tags:\n");
+    PRINT_CONTAINER_ITEMS_GUIDS_AND_USNS(remoteTags)
+
+    message += QStringLiteral("\nRemote notebooks:\n");
+    PRINT_CONTAINER_ITEMS_GUIDS_AND_USNS(remoteNotebooks)
+
+    message += QStringLiteral("\nRemote notes:\n");
+    PRINT_CONTAINER_ITEMS_GUIDS_AND_USNS(remoteNotes)
+
+    message += QStringLiteral("\nRemote resources:\n");
+    PRINT_CONTAINER_ITEMS_GUIDS_AND_USNS(remoteResources)
+
+    if (linkedNotebookGuid.isEmpty()) {
+        message += QStringLiteral("\nRemote linked notebooks:\n");
+        PRINT_CONTAINER_ITEMS_GUIDS_AND_USNS(remoteLinkedNotebooks);
+    }
+
+    QNWARNING(message);
 }
 
 void SynchronizationTester::runTest(SynchronizationManagerSignalsCatcher & catcher)
