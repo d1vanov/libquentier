@@ -30,6 +30,8 @@
 #include <QDateTime>
 #include <QTimer>
 #include <QTextStream>
+#include <QDebug>
+#include <iostream>
 
 // 10 minutes should be enough
 #define MAX_ALLOWED_TEST_DURATION_MSEC 600000
@@ -107,6 +109,8 @@ SynchronizationTester::~SynchronizationTester()
 
 void SynchronizationTester::init()
 {
+    QuentierRestartLogging();
+
     m_pLocalStorageManagerThread = new QThread;
     m_pLocalStorageManagerThread->start();
 
@@ -6024,8 +6028,10 @@ void SynchronizationTester::checkSyncStatePersistedRightAfterAPIRateLimitBreach(
         error += QString::number(syncStateUpdateCount.m_userOwnUpdateCount);
         error += QStringLiteral(") + 1");
         printContentsOfLocalStorageAndFakeNoteStoreToWarnLog(error);
-        QFAIL(qPrintable(error));
-        return;
+        printCurrentTestLogs();
+        QCoreApplication::exit(1);
+        // QFAIL(qPrintable(error));
+        // return;
     }
 
     QVERIFY(!syncStateUpdateCount.m_linkedNotebookUpdateCountsByLinkedNotebookGuid.isEmpty());
@@ -6048,8 +6054,10 @@ void SynchronizationTester::checkSyncStatePersistedRightAfterAPIRateLimitBreach(
             error += QStringLiteral(") + 1 for linked notebook with guid ");
             error += it.key();
             printContentsOfLocalStorageAndFakeNoteStoreToWarnLog(error, it.key());
-            QFAIL(qPrintable(error));
-            return;
+            printCurrentTestLogs();
+            QCoreApplication::exit(1);
+            // QFAIL(qPrintable(error));
+            // return;
         }
     }
 }
@@ -6502,12 +6510,13 @@ void SynchronizationTester::printContentsOfLocalStorageAndFakeNoteStoreToWarnLog
 
 #define PRINT_CONTAINER_ITEMS_GUIDS_AND_USNS(container) \
     for(auto it = container.constBegin(), end = container.constEnd(); it != end; ++it) { \
-        message += QStringLiteral("    guid = ") % it.key() % QStringLiteral(", USN = ") % \
-                   (it.value().updateSequenceNum.isSet() ? QString::number(it.value().updateSequenceNum.ref()) : QStringLiteral("<not set>")); \
+        message += QStringLiteral("    guid = ") % it.key() % QStringLiteral(", USN = ") + \
+                   (it.value().updateSequenceNum.isSet() ? QString::number(it.value().updateSequenceNum.ref()) : QStringLiteral("<not set>")) + \
+                   QStringLiteral("\n"); \
     }
 
     if (linkedNotebookGuid.isEmpty()) {
-        message += QStringLiteral("Local saved searches:\n");
+        message += QStringLiteral("\nLocal saved searches:\n");
         PRINT_CONTAINER_ITEMS_GUIDS_AND_USNS(localSavedSearches)
     }
 
@@ -6553,6 +6562,20 @@ void SynchronizationTester::printContentsOfLocalStorageAndFakeNoteStoreToWarnLog
     }
 
     QNWARNING(message);
+}
+
+void SynchronizationTester::printCurrentTestLogs()
+{
+    QFile logFile(QuentierLogFilesDirPath() + QStringLiteral("/LibquentierTests-log.txt"));
+    bool res = logFile.open(QIODevice::ReadOnly);
+    if (!res) {
+        std::cerr << "Can't pring the log file contents, failed to open the log file for reading";
+        return;
+    }
+
+    QByteArray logFileContents = logFile.readAll();
+    qWarning() << QStringLiteral("\n\nLog file contents:\n\n") << logFileContents;
+    logFile.close();
 }
 
 void SynchronizationTester::runTest(SynchronizationManagerSignalsCatcher & catcher)

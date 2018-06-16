@@ -53,6 +53,8 @@ bool QUENTIER_EXPORT QuentierIsLogLevelActive(const LogLevel::type logLevel);
 
 QString QUENTIER_EXPORT QuentierLogFilesDirPath();
 
+void QUENTIER_EXPORT QuentierRestartLogging();
+
 } // namespace quentier
 
 #if QT_VERSION >= QT_VERSION_CHECK(5, 4, 0)

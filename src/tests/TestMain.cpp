@@ -40,8 +40,8 @@ int main(int argc, char *argv[])
     app.setApplicationName(QStringLiteral("LibquentierTests"));
 
     QUENTIER_INITIALIZE_LOGGING();
-    QUENTIER_SET_MIN_LOG_LEVEL(Warn);
-    QUENTIER_ADD_STDOUT_LOG_DESTINATION();
+    QUENTIER_SET_MIN_LOG_LEVEL(Trace);
+    // QUENTIER_ADD_STDOUT_LOG_DESTINATION();
 
     quentier::initializeLibquentier();
 

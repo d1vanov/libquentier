@@ -84,6 +84,7 @@ public:
 
 public Q_SLOTS:
     virtual void write(QString message) Q_DECL_OVERRIDE;
+    void restartLogging();
 
 private:
     void rotate();
@@ -127,8 +128,11 @@ public:
     LogLevel::type minLogLevel() const;
     void setMinLogLevel(const LogLevel::type minLogLevel);
 
+    void restartLogging();
+
 Q_SIGNALS:
     void sendLogMessage(QString message);
+    void sendRestartLoggingRequest();
 
 private:
     QuentierLogger(QObject * parent = Q_NULLPTR);

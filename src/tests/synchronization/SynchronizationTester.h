@@ -264,6 +264,8 @@ private:
     void printContentsOfLocalStorageAndFakeNoteStoreToWarnLog(const QString & prefix = QString(),
                                                               const QString & linkedNotebookGuid = QString());
 
+    void printCurrentTestLogs();
+
     void runTest(SynchronizationManagerSignalsCatcher & catcher);
 
 private:

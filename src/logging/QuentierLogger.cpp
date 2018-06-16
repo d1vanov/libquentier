@@ -87,4 +87,10 @@ QString QuentierLogFilesDirPath()
     return QuentierLogger::logFilesDirPath();
 }
 
+void QuentierRestartLogging()
+{
+    QuentierLogger & logger = QuentierLogger::instance();
+    logger.restartLogging();
+}
+
 } // namespace quentier

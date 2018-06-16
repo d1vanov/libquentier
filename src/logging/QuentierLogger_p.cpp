@@ -92,6 +92,37 @@ void QuentierFileLogWriter::write(QString message)
     m_stream.flush();
 }
 
+void QuentierFileLogWriter::restartLogging()
+{
+    m_stream.flush();
+
+    m_stream.setDevice(Q_NULLPTR);
+    m_logFile.close();
+
+    QFileInfo logFileInfo(m_logFile);
+    QString logFilePath = logFileInfo.absoluteFilePath();
+    bool res = QFile::remove(logFilePath);
+    if (Q_UNLIKELY(!res))
+    {
+        std::cerr << "Can't restart logging: failed to remove the existing log file: " << qPrintable(logFilePath) << "\n";
+    }
+    else
+    {
+        m_logFile.setFileName(logFilePath);
+        bool opened = m_logFile.open(QIODevice::WriteOnly | QIODevice::Append | QIODevice::Unbuffered | QIODevice::Text);
+        if (Q_UNLIKELY(!opened)) {
+            std::cerr << "Can't open the new libquentier log file, error: " << qPrintable(m_logFile.errorString())
+                << " (error code " << qPrintable(QString::number(m_logFile.error())) << ")\n";
+            return;
+        }
+    }
+
+    m_currentLogFileSize = m_logFile.size();
+
+    m_stream.setDevice(&m_logFile);
+    m_stream.setCodec(QTextCodec::codecForName("UTF-8"));
+}
+
 void QuentierFileLogWriter::rotate()
 {
     QString logFileDirPath = QFileInfo(m_logFile).absolutePath();
@@ -220,6 +251,13 @@ void QuentierLogger::addLogWriter(IQuentierLogWriter * pLogWriter)
                      pLogWriter, QNSLOT(IQuentierLogWriter,write,QString),
                      Qt::QueuedConnection);
 
+    QuentierFileLogWriter * pFileLogWriter = qobject_cast<QuentierFileLogWriter*>(pLogWriter);
+    if (pFileLogWriter) {
+        QObject::connect(this, QNSIGNAL(QuentierLogger,sendRestartLoggingRequest),
+                         pFileLogWriter, QNSLOT(QuentierFileLogWriter,restartLogging),
+                         Qt::QueuedConnection);
+    }
+
     pLogWriter->setParent(Q_NULLPTR);
     pLogWriter->moveToThread(m_pImpl->m_pLogWriteThread);
 }
@@ -257,6 +295,11 @@ void QuentierLogger::write(QString message)
 void QuentierLogger::setMinLogLevel(const LogLevel::type minLogLevel)
 {
     Q_UNUSED(m_pImpl->m_minLogLevel.fetchAndStoreOrdered(static_cast<int>(minLogLevel)))
+}
+
+void QuentierLogger::restartLogging()
+{
+    Q_EMIT sendRestartLoggingRequest();
 }
 
 LogLevel::type QuentierLogger::minLogLevel() const
