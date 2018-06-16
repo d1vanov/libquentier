@@ -6566,6 +6566,11 @@ void SynchronizationTester::printContentsOfLocalStorageAndFakeNoteStoreToWarnLog
 
 void SynchronizationTester::printCurrentTestLogs()
 {
+    if (!qgetenv("TRAVIS_OS_NAME").isEmpty()) {
+        QNDEBUG(QStringLiteral("Skipping printing the log on Travis CI"));
+        return;
+    }
+
     QFile logFile(QuentierLogFilesDirPath() + QStringLiteral("/LibquentierTests-log.txt"));
     bool res = logFile.open(QIODevice::ReadOnly);
     if (!res) {
