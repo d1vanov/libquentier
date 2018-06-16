@@ -223,7 +223,7 @@ script:
               -DCMAKE_VERBOSE_MAKEFILE=ON -DUSE_QT5=1 ..
       fi
       make &&
-      run_tests() &&
+      run_tests &&
       if [[ $TESTS_RESULT -ne 0 ]] && [ "${TRAVIS_OS_NAME}" = "linux" ] && [ "${TRAVIS_BRANCH}" = "development" ]; then
         cd /tmp &&
         wget https://github.com/d1vanov/ciuploadtool/releases/download/continuous-master/ciuploadtool_linux.zip &&
