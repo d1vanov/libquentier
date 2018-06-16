@@ -167,8 +167,9 @@ install:
       cd ../..
 
 script:
-    - function run_tests() {
-        export TESTS_RESULT=$(make check)
+    - |
+      function run_tests() {
+        export TESTS_RESULT=$(make check) &&
         return 0
       }
     - |
