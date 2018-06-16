@@ -7382,11 +7382,6 @@ qint32 RemoteToLocalSynchronizationManager::findSmallestUsnOfNonSyncedItems(cons
         checkNonSyncedItemsContainerForSmallestUsn(m_notesToUpdatePerAPICallPostponeTimerId, linkedNotebookGuid, smallestUsn);
         QNTRACE(QStringLiteral("Collected from m_notesToUpdatePerAPICallPostponeTimerId, smallest USN after: ") << smallestUsn);
 
-        // Also need to check for notes which might be currently pending find notebook requests
-        QNTRACE(QStringLiteral("Collecting from m_notesWithFindRequestIdsPerFindNotebookRequestId, smallest USN before: ") << smallestUsn);
-        checkNonSyncedItemsContainerForSmallestUsn(m_notesWithFindRequestIdsPerFindNotebookRequestId, linkedNotebookGuid, smallestUsn);
-        QNTRACE(QStringLiteral("Collected from m_notesWithFindRequestIdsPerFindNotebookRequestId, smallest USN after: ") << smallestUsn);
-
         // Also need to check for notes which are currently pending download for adding to local storage
         // or for updating within the local storage
         QNTRACE(QStringLiteral("Collecting from m_notesPendingDownloadForAddingToLocalStorage, smallest USN before: ") << smallestUsn);

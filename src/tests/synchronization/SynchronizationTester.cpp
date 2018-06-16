@@ -6027,8 +6027,10 @@ void SynchronizationTester::checkSyncStatePersistedRightAfterAPIRateLimitBreach(
         error += QStringLiteral(") is not equal to the one present within the actual sync state (");
         error += QString::number(syncStateUpdateCount.m_userOwnUpdateCount);
         error += QStringLiteral(") + 1");
-        printContentsOfLocalStorageAndFakeNoteStoreToWarnLog(error);
         QFAIL(qPrintable(error));
+        printContentsOfLocalStorageAndFakeNoteStoreToWarnLog(error);
+        printCurrentTestLogs();
+        QCoreApplication::exit(-1);
         return;
     }
 
@@ -6051,8 +6053,10 @@ void SynchronizationTester::checkSyncStatePersistedRightAfterAPIRateLimitBreach(
             error += QString::number(it.value());
             error += QStringLiteral(") + 1 for linked notebook with guid ");
             error += it.key();
-            printContentsOfLocalStorageAndFakeNoteStoreToWarnLog(error, it.key());
             QFAIL(qPrintable(error));
+            printContentsOfLocalStorageAndFakeNoteStoreToWarnLog(error, it.key());
+            printCurrentTestLogs();
+            QCoreApplication::exit(-1);
             return;
         }
     }
