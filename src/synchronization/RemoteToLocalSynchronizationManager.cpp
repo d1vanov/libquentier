@@ -7366,25 +7366,53 @@ qint32 RemoteToLocalSynchronizationManager::findSmallestUsnOfNonSyncedItems(cons
     {
         QNTRACE(QStringLiteral("The sync of notes has already started, checking notes from pending lists"));
 
+        QNTRACE(QStringLiteral("Collecting from m_notes, smallest USN before: ") << smallestUsn);
         checkNonSyncedItemsContainerForSmallestUsn(m_notes, linkedNotebookGuid, smallestUsn);
+        QNTRACE(QStringLiteral("Collected from m_notes, smallest USN after: ") << smallestUsn);
+
+        QNTRACE(QStringLiteral("Collecting from m_notesPendingAddOrUpdate, smallest USN before: ") << smallestUsn);
         checkNonSyncedItemsContainerForSmallestUsn(m_notesPendingAddOrUpdate, linkedNotebookGuid, smallestUsn);
+        QNTRACE(QStringLiteral("Collected from m_notesPendingAddOrUpdate, smallest USN after: ") << smallestUsn);
+
+        QNTRACE(QStringLiteral("Collecting from m_notesToAddPerAPICallPostponeTimerId, smallest USN before: ") << smallestUsn);
         checkNonSyncedItemsContainerForSmallestUsn(m_notesToAddPerAPICallPostponeTimerId, linkedNotebookGuid, smallestUsn);
+        QNTRACE(QStringLiteral("Collected from m_notesToAddPerAPICallPostponeTimerId, smallest USN after: ") << smallestUsn);
+
+        QNTRACE(QStringLiteral("Collecting from m_notesToUpdatePerAPICallPostponeTimerId, smallest USN before: ") << smallestUsn);
         checkNonSyncedItemsContainerForSmallestUsn(m_notesToUpdatePerAPICallPostponeTimerId, linkedNotebookGuid, smallestUsn);
+        QNTRACE(QStringLiteral("Collected from m_notesToUpdatePerAPICallPostponeTimerId, smallest USN after: ") << smallestUsn);
 
         // Also need to check for notes which might be currently pending find notebook requests
+        QNTRACE(QStringLiteral("Collecting from m_notesWithFindRequestIdsPerFindNotebookRequestId, smallest USN before: ") << smallestUsn);
         checkNonSyncedItemsContainerForSmallestUsn(m_notesWithFindRequestIdsPerFindNotebookRequestId, linkedNotebookGuid, smallestUsn);
+        QNTRACE(QStringLiteral("Collected from m_notesWithFindRequestIdsPerFindNotebookRequestId, smallest USN after: ") << smallestUsn);
 
         // Also need to check for notes which are currently pending download for adding to local storage
         // or for updating within the local storage
+        QNTRACE(QStringLiteral("Collecting from m_notesPendingDownloadForAddingToLocalStorage, smallest USN before: ") << smallestUsn);
         checkNonSyncedItemsContainerForSmallestUsn(m_notesPendingDownloadForAddingToLocalStorage, linkedNotebookGuid, smallestUsn);
+        QNTRACE(QStringLiteral("Collected from m_notesPendingDownloadForAddingToLocalStorage, smallest USN after: ") << smallestUsn);
+
+        QNTRACE(QStringLiteral("Collecting from m_notesPendingDownloadForUpdatingInLocalStorageByGuid, smallest USN before: ") << smallestUsn);
         checkNonSyncedItemsContainerForSmallestUsn(m_notesPendingDownloadForUpdatingInLocalStorageByGuid, linkedNotebookGuid, smallestUsn);
+        QNTRACE(QStringLiteral("Collected from m_notesPendingDownloadForUpdatingInLocalStorageByGuid, smallest USN after: ") << smallestUsn);
 
         // Also need to check for notes which might be pending the download of ink note image or thumbnail
         // (these downloads should not cause API limit breach since they are not fully a part of Evernote API
         // but just to be on the safe side)
+        QNTRACE(QStringLiteral("Collecting from m_notesPendingInkNoteImagesDownloadByFindNotebookRequestId, smallest USN before: ") << smallestUsn);
         checkNonSyncedItemsContainerForSmallestUsn(m_notesPendingInkNoteImagesDownloadByFindNotebookRequestId, linkedNotebookGuid, smallestUsn);
+        QNTRACE(QStringLiteral("Collected from m_notesPendingInkNoteImagesDownloadByFindNotebookRequestId, smallest USN after: ") << smallestUsn);
+
+        QNTRACE(QStringLiteral("Collecting from m_notesPendingThumbnailDownloadByFindNotebookRequestId, smallest USN before: ") << smallestUsn);
         checkNonSyncedItemsContainerForSmallestUsn(m_notesPendingThumbnailDownloadByFindNotebookRequestId, linkedNotebookGuid, smallestUsn);
+        QNTRACE(QStringLiteral("Collected from m_notesPendingThumbnailDownloadByFindNotebookRequestId, smallest USN before: ") << smallestUsn);
+
+        QNTRACE(QStringLiteral("Collecting from m_notesPendingThumbnailDownloadByGuid, smallest USN before: ") << smallestUsn);
         checkNonSyncedItemsContainerForSmallestUsn(m_notesPendingThumbnailDownloadByGuid, linkedNotebookGuid, smallestUsn);
+        QNTRACE(QStringLiteral("Collected from m_notesPendingThumbnailDownloadByGuid, smallest USN after: ") << smallestUsn);
+
+        QNTRACE(QStringLiteral("Overall smallest USN after collecting it from notes: ") << smallestUsn);
     }
 
     if (syncingNotebooks || syncingTags || notesSyncInProgress())
