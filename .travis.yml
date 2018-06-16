@@ -167,6 +167,10 @@ install:
       cd ../..
 
 script:
+    - function run_tests() {
+        export TESTS_RESULT=$(make check)
+        return 0
+      }
     - |
       echo "Building libquentier" &&
       cd $LIBQUENTIER_DIR &&
@@ -218,7 +222,16 @@ script:
               -DCMAKE_VERBOSE_MAKEFILE=ON -DUSE_QT5=1 ..
       fi
       make &&
-      make check &&
+      run_tests() &&
+      if [[ $TESTS_RESULT -ne 0 ]] && [ "${TRAVIS_OS_NAME}" = "linux" ] && [ "${TRAVIS_BRANCH}" = "development" ]; then
+        cd /tmp &&
+        wget https://github.com/d1vanov/ciuploadtool/releases/download/continuous-master/ciuploadtool_linux.zip &&
+        unzip ciuploadtool_linux.zip &&
+        chmod 755 ciuploadtool &&
+        tar czvf libquentier_test_failure_logs_qt_${QT_BASE}_x86_64.tar.gz ~/.libquentiertests/logs-quentier/* &&
+        ./ciuploadtool -suffix="$TRAVIS_BRANCH" libquentier_test_failure_logs_qt_${QT_BASE}_x86_64.tar.gz &&
+        cd -
+      fi
       make lupdate &&
       make lrelease &&
       make install

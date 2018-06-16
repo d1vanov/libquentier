@@ -6028,10 +6028,8 @@ void SynchronizationTester::checkSyncStatePersistedRightAfterAPIRateLimitBreach(
         error += QString::number(syncStateUpdateCount.m_userOwnUpdateCount);
         error += QStringLiteral(") + 1");
         printContentsOfLocalStorageAndFakeNoteStoreToWarnLog(error);
-        printCurrentTestLogs();
-        QCoreApplication::exit(1);
-        // QFAIL(qPrintable(error));
-        // return;
+        QFAIL(qPrintable(error));
+        return;
     }
 
     QVERIFY(!syncStateUpdateCount.m_linkedNotebookUpdateCountsByLinkedNotebookGuid.isEmpty());
@@ -6054,10 +6052,8 @@ void SynchronizationTester::checkSyncStatePersistedRightAfterAPIRateLimitBreach(
             error += QStringLiteral(") + 1 for linked notebook with guid ");
             error += it.key();
             printContentsOfLocalStorageAndFakeNoteStoreToWarnLog(error, it.key());
-            printCurrentTestLogs();
-            QCoreApplication::exit(1);
-            // QFAIL(qPrintable(error));
-            // return;
+            QFAIL(qPrintable(error));
+            return;
         }
     }
 }
