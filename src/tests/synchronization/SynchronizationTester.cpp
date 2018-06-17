@@ -6017,8 +6017,6 @@ void SynchronizationTester::checkSyncStatePersistedRightAfterAPIRateLimitBreach(
         error += QStringLiteral(") + 1");
         QFAIL(qPrintable(error));
         printContentsOfLocalStorageAndFakeNoteStoreToWarnLog(error);
-        printCurrentTestLogs();
-        QCoreApplication::exit(-1);
         return;
     }
 
@@ -6043,8 +6041,6 @@ void SynchronizationTester::checkSyncStatePersistedRightAfterAPIRateLimitBreach(
             error += it.key();
             QFAIL(qPrintable(error));
             printContentsOfLocalStorageAndFakeNoteStoreToWarnLog(error, it.key());
-            printCurrentTestLogs();
-            QCoreApplication::exit(-1);
             return;
         }
     }
@@ -6550,25 +6546,6 @@ void SynchronizationTester::printContentsOfLocalStorageAndFakeNoteStoreToWarnLog
     }
 
     QNWARNING(message);
-}
-
-void SynchronizationTester::printCurrentTestLogs()
-{
-    if (!qgetenv("TRAVIS_OS_NAME").isEmpty()) {
-        QNDEBUG(QStringLiteral("Skipping printing the log on Travis CI"));
-        return;
-    }
-
-    QFile logFile(QuentierLogFilesDirPath() + QStringLiteral("/LibquentierTests-log.txt"));
-    bool res = logFile.open(QIODevice::ReadOnly);
-    if (!res) {
-        std::cerr << "Can't pring the log file contents, failed to open the log file for reading";
-        return;
-    }
-
-    QByteArray logFileContents = logFile.readAll();
-    qWarning() << QStringLiteral("\n\nLog file contents:\n\n") << logFileContents;
-    logFile.close();
 }
 
 void SynchronizationTester::runTest(SynchronizationManagerSignalsCatcher & catcher)
