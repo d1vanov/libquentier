@@ -29,7 +29,6 @@
 #include <quentier/synchronization/SynchronizationManager.h>
 #include <QObject>
 #include <QScopedPointer>
-#include <QThread>
 
 namespace quentier {
 
@@ -270,7 +269,6 @@ private:
 
 private:
     Account                         m_testAccount;
-    QThread *                       m_pLocalStorageManagerThread;
     LocalStorageManagerAsync *      m_pLocalStorageManagerAsync;
     FakeNoteStore *                 m_pFakeNoteStore;
     FakeUserStore *                 m_pFakeUserStore;

@@ -191,7 +191,8 @@ void NoteSyncCache::connectToLocalStorage()
                      &m_localStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,onListNotesRequest,
                                                          LocalStorageManager::ListObjectsOptions,bool,
                                                          size_t,size_t,LocalStorageManager::ListNotesOrder::type,
-                                                         LocalStorageManager::OrderDirection::type,QString,QUuid));
+                                                         LocalStorageManager::OrderDirection::type,QString,QUuid),
+                     Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
 
     // Connect local storage manager async's signals to local slots
     QObject::connect(&m_localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,listNotesComplete,
@@ -201,7 +202,8 @@ void NoteSyncCache::connectToLocalStorage()
                                                            QString,QList<Note>,QUuid),
                      this, QNSLOT(NoteSyncCache,onListNotesComplete,LocalStorageManager::ListObjectsOptions,bool,
                                   size_t,size_t,LocalStorageManager::ListNotesOrder::type,
-                                  LocalStorageManager::OrderDirection::type,QString,QList<Note>,QUuid));
+                                  LocalStorageManager::OrderDirection::type,QString,QList<Note>,QUuid),
+                     Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
     QObject::connect(&m_localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,listNotesFailed,
                                                            LocalStorageManager::ListObjectsOptions,bool,
                                                            size_t,size_t,LocalStorageManager::ListNotesOrder::type,
@@ -209,13 +211,17 @@ void NoteSyncCache::connectToLocalStorage()
                                                            QString,ErrorString,QUuid),
                      this, QNSLOT(NoteSyncCache,onListNotesFailed,LocalStorageManager::ListObjectsOptions,bool,
                                   size_t,size_t,LocalStorageManager::ListNotesOrder::type,
-                                  LocalStorageManager::OrderDirection::type,QString,ErrorString,QUuid));
+                                  LocalStorageManager::OrderDirection::type,QString,ErrorString,QUuid),
+                     Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
     QObject::connect(&m_localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,addNoteComplete,Note,QUuid),
-                     this, QNSLOT(NoteSyncCache,onAddNoteComplete,Note,QUuid));
+                     this, QNSLOT(NoteSyncCache,onAddNoteComplete,Note,QUuid),
+                     Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
     QObject::connect(&m_localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,updateNoteComplete,Note,bool,bool,QUuid),
-                     this, QNSLOT(NoteSyncCache,onUpdateNoteComplete,Note,bool,bool,QUuid));
+                     this, QNSLOT(NoteSyncCache,onUpdateNoteComplete,Note,bool,bool,QUuid),
+                     Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
     QObject::connect(&m_localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,expungeNoteComplete,Note,QUuid),
-                     this, QNSLOT(NoteSyncCache,onExpungeNoteComplete,Note,QUuid));
+                     this, QNSLOT(NoteSyncCache,onExpungeNoteComplete,Note,QUuid),
+                     Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
 
     m_connectedToLocalStorage = true;
 }

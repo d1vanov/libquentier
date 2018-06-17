@@ -519,7 +519,8 @@ bool NoteStore::getNoteAsync(const bool withContent, const bool withResourceData
     m_noteGuidByAsyncResultPtr[pAsyncResult] = noteGuid;
 
     QObject::connect(pAsyncResult, QNSIGNAL(qevercloud::AsyncResult,finished,QVariant,QSharedPointer<EverCloudExceptionData>),
-                     this, QNSLOT(NoteStore,onGetNoteAsyncFinished,QVariant,QSharedPointer<EverCloudExceptionData>));
+                     this, QNSLOT(NoteStore,onGetNoteAsyncFinished,QVariant,QSharedPointer<EverCloudExceptionData>),
+                     Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
     return true;
 }
 
@@ -590,7 +591,8 @@ bool NoteStore::getResourceAsync(const bool withDataBody, const bool withRecogni
     m_resourceGuidByAsyncResultPtr[pAsyncResult] = resourceGuid;
 
     QObject::connect(pAsyncResult, QNSIGNAL(qevercloud::AsyncResult,finished,QVariant,QSharedPointer<EverCloudExceptionData>),
-                     this, QNSLOT(NoteStore,onGetResourceAsyncFinished,QVariant,QSharedPointer<EverCloudExceptionData>));
+                     this, QNSLOT(NoteStore,onGetResourceAsyncFinished,QVariant,QSharedPointer<EverCloudExceptionData>),
+                     Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
     return true;
 }
 

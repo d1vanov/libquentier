@@ -81,7 +81,6 @@ SynchronizationTester::SynchronizationTester(QObject * parent) :
     QObject(parent),
     m_testAccount(QStringLiteral("SynchronizationTesterFakeUser"),
                   Account::Type::Evernote, qevercloud::UserID(1)),
-    m_pLocalStorageManagerThread(Q_NULLPTR),
     m_pLocalStorageManagerAsync(Q_NULLPTR),
     m_pFakeNoteStore(Q_NULLPTR),
     m_pFakeUserStore(Q_NULLPTR),
@@ -111,15 +110,11 @@ void SynchronizationTester::init()
 {
     QuentierRestartLogging();
 
-    m_pLocalStorageManagerThread = new QThread;
-    m_pLocalStorageManagerThread->start();
-
     m_testAccount = Account(m_testAccount.name(), Account::Type::Evernote, m_testAccount.id() + 1,
                             Account::EvernoteAccountType::Free, QStringLiteral("www.evernote.com"));
     m_pLocalStorageManagerAsync = new LocalStorageManagerAsync(m_testAccount, /* start from scratch = */ true,
                                                                /* override lock = */ true);
     m_pLocalStorageManagerAsync->init();
-    m_pLocalStorageManagerAsync->moveToThread(m_pLocalStorageManagerThread);
 
     m_pFakeUserStore = new FakeUserStore;
     m_pFakeUserStore->setEdamVersionMajor(qevercloud::EDAM_VERSION_MAJOR);
@@ -186,15 +181,8 @@ void SynchronizationTester::cleanup()
     // NOTE: not deleting SyncStatePersistenceManager intentionally, it is owned by SynchronizationManager
     m_pSyncStatePersistenceManager = Q_NULLPTR;
 
-    if (!m_pLocalStorageManagerThread->isFinished()) {
-        m_pLocalStorageManagerThread->quit();
-    }
-
     delete m_pLocalStorageManagerAsync;
     m_pLocalStorageManagerAsync = Q_NULLPTR;
-
-    delete m_pLocalStorageManagerThread;
-    m_pLocalStorageManagerThread = Q_NULLPTR;
 
     m_expectedSavedSearchNamesByGuid.clear();
     m_expectedTagNamesByGuid.clear();

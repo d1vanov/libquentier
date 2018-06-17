@@ -95,7 +95,8 @@ void NoteThumbnailDownloader::start()
     QObject::connect(m_pAsyncResult,
                      QNSIGNAL(qevercloud::AsyncResult,finished,QVariant,QSharedPointer<EverCloudExceptionData>),
                      this,
-                     QNSLOT(NoteThumbnailDownloader,onDownloadFinished,QVariant,QSharedPointer<EverCloudExceptionData>));
+                     QNSLOT(NoteThumbnailDownloader,onDownloadFinished,QVariant,QSharedPointer<EverCloudExceptionData>),
+                     Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
 }
 
 void NoteThumbnailDownloader::onDownloadFinished(QVariant result, QSharedPointer<EverCloudExceptionData> error)

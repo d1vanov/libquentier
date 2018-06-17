@@ -45,6 +45,14 @@ void registerMetatypes()
     qRegisterMetaType<SavedSearch>("SavedSearch");
     qRegisterMetaType<Account>("Account");
 
+    qRegisterMetaType<qevercloud::UserID>("qevercloud::UserID");
+    qRegisterMetaType<qevercloud::Timestamp>("qevercloud::Timestamp");
+    qRegisterMetaType<qevercloud::Note>("qevercloud::Note");
+    qRegisterMetaType<qevercloud::SavedSearch>("qevercloud::SavedSearch");
+    qRegisterMetaType<qevercloud::Tag>("qevercloud::Tag");
+    qRegisterMetaType<qevercloud::Notebook>("qevercloud::Notebook");
+    qRegisterMetaType<qevercloud::Resource>("qevercloud::Resource");
+
     qRegisterMetaType< QList<Notebook> >("QList<Notebook>");
     qRegisterMetaType< QList<Note> >("QList<Note>");
     qRegisterMetaType< QList<Tag> >("QList<Tag>");
@@ -67,6 +75,7 @@ void registerMetatypes()
     qRegisterMetaType<QUuid>("QUuid");
 
     qRegisterMetaType<QList<QPair<QString,QString> > >("QList<QPair<QString,QString> >");
+    qRegisterMetaType<QHash<QString, QPair<QString,QString> > >("QHash<QString, QPair<QString,QString> >");
     qRegisterMetaType<QHash<QString,QString> >("QHash<QString,QString>");
     qRegisterMetaType<QHash<QString,qevercloud::Timestamp> >("QHash<QString,qevercloud::Timestamp>");
     qRegisterMetaType<QHash<QString,qint32> >("QHash<QString,qint32>");
