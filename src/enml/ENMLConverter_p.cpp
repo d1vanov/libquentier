@@ -2828,11 +2828,11 @@ bool ENMLConverterPrivate::importEnex(const QString & enex, QVector<Note> & note
 
                     if (insideResourceRecognitionData)
                     {
-                        currentResourceRecognitionData = reader.text().toString().toLocal8Bit();
+                        currentResourceRecognitionData = reader.text().toString().toUtf8();
                         QNTRACE(QStringLiteral("Read resource recognition data"));
 
                         ErrorString error;
-                        bool res = validateRecoIndex(QString::fromLocal8Bit(currentResourceRecognitionData), error);
+                        bool res = validateRecoIndex(QString::fromUtf8(currentResourceRecognitionData), error);
                         if (Q_UNLIKELY(!res)) {
                             errorDescription.setBase(QT_TR_NOOP("Resource recognition index is invalid"));
                             errorDescription.appendBase(error.base());
