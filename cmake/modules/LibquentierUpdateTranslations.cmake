@@ -9,6 +9,11 @@ macro(update_translation SOURCES FORMS TRANSLATIONS)
     "# All changes will be lost\n"
     "#\n")
 
+  # INCLUDEPATH section
+  file(APPEND "${fake_pro_file}"
+    "\n"
+    "INCLUDEPATH += ${PROJECT_SOURCE_DIR}/headers\n")
+
   # SOURCES section
   file(APPEND "${fake_pro_file}"
     "\n"

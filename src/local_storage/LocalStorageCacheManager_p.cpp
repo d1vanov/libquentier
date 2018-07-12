@@ -113,7 +113,7 @@ void LocalStorageCacheManagerPrivate::cache##Type(const Type & name) \
     auto insertionResult = cache_name.insert(name##Holder); \
     if (Q_UNLIKELY(!insertionResult.second)) { \
         QNWARNING(QStringLiteral("Failed to insert " #name " into the cache of local storage manager: ") << name); \
-        ErrorString error(QT_TR_NOOP("Unable to insert the data item into the local storage cache")); \
+        ErrorString error(QT_TRANSLATE_NOOP("LocalStorageCacheManagerPrivate", "Unable to insert the data item into the local storage cache")); \
         error.details() = QStringLiteral( #name ); \
         throw LocalStorageCacheManagerException(error); \
     } \

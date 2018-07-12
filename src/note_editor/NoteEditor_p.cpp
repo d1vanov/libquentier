@@ -144,7 +144,7 @@ typedef QWebEngineSettings WebSettings;
 #define CHECK_NOTE_EDITABLE(message) \
     if (Q_UNLIKELY(!isPageEditable())) { \
         ErrorString error(message); \
-        error.appendBase(QT_TR_NOOP("Note is not editable")); \
+        error.appendBase(QT_TRANSLATE_NOOP("NoteEditorPrivate", "Note is not editable")); \
         QNINFO(error << QStringLiteral(", note: ") << (m_pNote.isNull() ? QStringLiteral("<null>") : m_pNote->toString()) \
                << QStringLiteral("\nNotebook: ") << (m_pNotebook.isNull() ? QStringLiteral("<null>") : m_pNotebook->toString())); \
         Q_EMIT notifyError(error); \
@@ -154,7 +154,7 @@ typedef QWebEngineSettings WebSettings;
 #define CHECK_ACCOUNT(message, ...) \
     if (Q_UNLIKELY(m_pAccount.isNull())) { \
         ErrorString error(message); \
-        error.appendBase(QT_TR_NOOP("No account is associated with the note editor")); \
+        error.appendBase(QT_TRANSLATE_NOOP("NoteEditorPrivate", "No account is associated with the note editor")); \
         QNWARNING(error); \
         Q_EMIT notifyError(error); \
         return __VA_ARGS__; \
@@ -7339,7 +7339,7 @@ void NoteEditorPrivate::insertTableDialog()
 
 #define CHECK_NUM_COLUMNS() \
     if (columns <= 0) { \
-        ErrorString error(QT_TR_NOOP("Detected attempt to insert a table with negative or zero number of columns")); \
+        ErrorString error(QT_TRANSLATE_NOOP("NoteEditorPrivate", "Detected attempt to insert a table with negative or zero number of columns")); \
         error.details() = QString::number(columns); \
         QNWARNING(error); \
         Q_EMIT notifyError(error); \
@@ -7348,7 +7348,7 @@ void NoteEditorPrivate::insertTableDialog()
 
 #define CHECK_NUM_ROWS() \
     if (rows <= 0) { \
-        ErrorString error(QT_TR_NOOP("Detected attempt to insert a table with negative or zero number of rows")); \
+        ErrorString error(QT_TRANSLATE_NOOP("NoteEditorPrivate", "Detected attempt to insert a table with negative or zero number of rows")); \
         error.details() = QString::number(rows); \
         QNWARNING(error); \
         Q_EMIT notifyError(error); \

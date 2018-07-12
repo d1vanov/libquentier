@@ -345,12 +345,12 @@ bool LocalStorageManagerPrivate::expungeUser(const User & user, ErrorString & er
 
 #define SET_INT_CONVERSION_ERROR() \
     errorDescription.base() = errorPrefix.base(); \
-    errorDescription.appendBase(QT_TR_NOOP("can't convert the fetched data to int")); \
+    errorDescription.appendBase(QT_TRANSLATE_NOOP("LocalStorageManagerPrivate", "can't convert the fetched data to int")); \
     QNERROR(errorDescription << QStringLiteral(": ") << query.value(0))
 
 #define SET_NO_DATA_FOUND() \
     errorDescription.base() = errorPrefix.base(); \
-    errorDescription.appendBase(QT_TR_NOOP("no data found")); \
+    errorDescription.appendBase(QT_TRANSLATE_NOOP("LocalStorageManagerPrivate", "no data found")); \
     QNDEBUG(errorDescription)
 
 int LocalStorageManagerPrivate::notebookCount(ErrorString & errorDescription) const
@@ -10442,7 +10442,7 @@ QString LocalStorageManagerPrivate::listObjectsOptionsToSqlQueryConditions(const
     if (!listAll && !listDirty && !listNonDirty && !listElementsWithoutGuid && !listElementsWithGuid &&
         !listLocal && !listNonLocal && !listFavoritedElements && !listNonFavoritedElements)
     {
-        errorDescription.setBase(QT_TR_NOOP("Can't list objects by filter: detected incorrect filter flag"));
+        errorDescription.setBase(QT_TRANSLATE_NOOP("LocalStorageManagerPrivate", "Can't list objects by filter: detected incorrect filter flag"));
         errorDescription.details() = QString::number(static_cast<int>(options));
         return result;
     }
@@ -10506,7 +10506,7 @@ QString LocalStorageManagerPrivate::listObjectsOptionsToSqlQueryConditions<Linke
     bool listNonDirty = flag.testFlag(LocalStorageManager::ListNonDirty);
 
     if (!listAll && !listDirty && !listNonDirty) {
-        errorDescription.setBase(QT_TR_NOOP("Can't list linked notebooks by filter: detected incorrect filter flag"));
+        errorDescription.setBase(QT_TRANSLATE_NOOP("LocalStorageManagerPrivate", "Can't list linked notebooks by filter: detected incorrect filter flag"));
         errorDescription.details() = QString::number(static_cast<int>(flag));
         return result;
     }
@@ -10793,7 +10793,7 @@ bool LocalStorageManagerPrivate::fillObjectsFromSqlQuery<Notebook>(QSqlQuery que
 
         int localUidIndex = rec.indexOf(QStringLiteral("localUid"));
         if (localUidIndex < 0) {
-            errorDescription.setBase(QT_TR_NOOP("no localUid field in SQL record for notebook"));
+            errorDescription.setBase(QT_TRANSLATE_NOOP("LocalStorageManagerPrivate", "no localUid field in SQL record for notebook"));
             QNWARNING(errorDescription);
             return false;
         }
@@ -10801,7 +10801,7 @@ bool LocalStorageManagerPrivate::fillObjectsFromSqlQuery<Notebook>(QSqlQuery que
         QVariant localUidValue = rec.value(localUidIndex);
         QString localUid = localUidValue.toString();
         if (localUid.isEmpty()) {
-            errorDescription.setBase(QT_TR_NOOP("found empty localUid field in SQL record for Notebook"));
+            errorDescription.setBase(QT_TRANSLATE_NOOP("LocalStorageManagerPrivate", "found empty localUid field in SQL record for Notebook"));
             QNWARNING(errorDescription);
             return false;
         }
@@ -10966,7 +10966,7 @@ QList<T> LocalStorageManagerPrivate::listObjects(const LocalStorageManager::List
 
     QList<T> objects;
 
-    ErrorString errorPrefix(QT_TR_NOOP("can't list objects from the local storage database by filter"));
+    ErrorString errorPrefix(QT_TRANSLATE_NOOP("LocalStorageManagerPrivate", "can't list objects from the local storage database by filter"));
     QSqlQuery query(m_sqlDatabase);
     bool res = query.exec(queryString);
     if (!res) {

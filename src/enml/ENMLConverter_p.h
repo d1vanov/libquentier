@@ -37,10 +37,26 @@ QT_FORWARD_DECLARE_CLASS(Resource)
 QT_FORWARD_DECLARE_CLASS(DecryptedTextManager)
 QT_FORWARD_DECLARE_CLASS(HTMLCleaner)
 
-class Q_DECL_HIDDEN ENMLConverterPrivate
+class Q_DECL_HIDDEN ShouldSkipElementResult: public Printable
 {
 public:
-    ENMLConverterPrivate();
+    enum type
+    {
+        SkipWithContents = 0x0,
+        SkipButPreserveContents = 0x1,
+        ShouldNotSkip = 0x2
+    };
+
+    Q_DECLARE_FLAGS(Types, type)
+
+        virtual QTextStream & print(QTextStream & strm) const Q_DECL_OVERRIDE;
+};
+
+class Q_DECL_HIDDEN ENMLConverterPrivate: public QObject
+{
+    Q_OBJECT
+public:
+    explicit ENMLConverterPrivate(QObject * parent = Q_NULLPTR);
     ~ENMLConverterPrivate();
 
     typedef ENMLConverter::NoteContentToHtmlExtraData NoteContentToHtmlExtraData;
@@ -129,21 +145,6 @@ private:
     bool validateRecoIndex(const QString & recoIndex, ErrorString & errorDescription) const;
 
     bool validateAgainstDtd(const QString & input, const QString & dtdFilePath, ErrorString & errorDescription) const;
-
-    class ShouldSkipElementResult: public Printable
-    {
-    public:
-        enum type
-        {
-            SkipWithContents = 0x0,
-            SkipButPreserveContents = 0x1,
-            ShouldNotSkip = 0x2
-        };
-
-        Q_DECLARE_FLAGS(Types, type)
-
-        virtual QTextStream & print(QTextStream & strm) const Q_DECL_OVERRIDE;
-    };
 
     ShouldSkipElementResult::type shouldSkipElement(const QString & elementName,
                                                     const QXmlStreamAttributes & attributes,

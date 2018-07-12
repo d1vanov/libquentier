@@ -40,7 +40,7 @@ namespace quentier {
 #define CHECK_ACCOUNT() \
     CHECK_NOTE_EDITOR() \
     if (Q_UNLIKELY(!m_pNoteEditor->accountPtr())) { \
-        ErrorString error(QT_TR_NOOP("Can't decrypt the encrypted text: no account is set to the note editor")); \
+        ErrorString error(QT_TRANSLATE_NOOP("DecryptEncryptedTextDelegate", "Can't decrypt the encrypted text: no account is set to the note editor")); \
         QNWARNING(error); \
         Q_EMIT notifyError(error); \
         return; \
@@ -50,7 +50,7 @@ namespace quentier {
     CHECK_NOTE_EDITOR() \
     NoteEditorPage * page = qobject_cast<NoteEditorPage*>(m_pNoteEditor->page()); \
     if (Q_UNLIKELY(!page)) { \
-        ErrorString error(QT_TR_NOOP("Can't decrypt the encrypted text: no note editor page")); \
+        ErrorString error(QT_TRANSLATE_NOOP("DecryptEncryptedTextDelegate", "Can't decrypt the encrypted text: no note editor page")); \
         QNWARNING(error); \
         Q_EMIT notifyError(error); \
         return; \

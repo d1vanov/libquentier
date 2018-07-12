@@ -111,7 +111,7 @@ bool Tag::validateName(const QString & name, ErrorString * pErrorDescription)
     if (name != name.trimmed())
     {
         if (pErrorDescription) {
-            pErrorDescription->setBase(QT_TR_NOOP("Tag name cannot start or end with whitespace"));
+            pErrorDescription->setBase(QT_TRANSLATE_NOOP("Tag", "Tag name cannot start or end with whitespace"));
             pErrorDescription->details() = name;
         }
 
@@ -122,7 +122,7 @@ bool Tag::validateName(const QString & name, ErrorString * pErrorDescription)
     if (len < qevercloud::EDAM_TAG_NAME_LEN_MIN)
     {
         if (pErrorDescription) {
-            pErrorDescription->setBase(QT_TR_NOOP("Tag name's length is too small"));
+            pErrorDescription->setBase(QT_TRANSLATE_NOOP("Tag", "Tag name's length is too small"));
             pErrorDescription->details() = name;
         }
 
@@ -132,7 +132,7 @@ bool Tag::validateName(const QString & name, ErrorString * pErrorDescription)
     if (len > qevercloud::EDAM_TAG_NAME_LEN_MAX)
     {
         if (pErrorDescription) {
-            pErrorDescription->setBase(QT_TR_NOOP("Tag name's length is too large"));
+            pErrorDescription->setBase(QT_TRANSLATE_NOOP("Tag", "Tag name's length is too large"));
             pErrorDescription->details() = name;
         }
 
@@ -185,7 +185,7 @@ void Tag::setUpdateSequenceNumber(const qint32 usn)
 bool Tag::checkParameters(ErrorString & errorDescription) const
 {
     if (localUid().isEmpty() && !d->m_qecTag.guid.isSet()) {
-        errorDescription.setBase(QT_TR_NOOP("Both tag's local and remote guids are empty"));
+        errorDescription.setBase(QT_TRANSLATE_NOOP("Tag", "Both tag's local and remote guids are empty"));
         return false;
     }
 

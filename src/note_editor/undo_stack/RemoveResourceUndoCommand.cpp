@@ -25,7 +25,7 @@ namespace quentier {
 #define GET_PAGE() \
     NoteEditorPage * page = qobject_cast<NoteEditorPage*>(m_noteEditorPrivate.page()); \
     if (Q_UNLIKELY(!page)) { \
-        ErrorString error(QT_TR_NOOP("Can't undo/redo remove attachment: can't get note editor page")); \
+        ErrorString error(QT_TRANSLATE_NOOP("RemoveResourceUndoCommand", "Can't undo/redo remove attachment: can't get note editor page")); \
         QNWARNING(error); \
         Q_EMIT notifyError(error); \
         return; \

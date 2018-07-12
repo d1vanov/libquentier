@@ -157,7 +157,7 @@ bool Note::validateTitle(const QString & title, ErrorString * pErrorDescription)
     if (title != title.trimmed())
     {
         if (pErrorDescription) {
-            pErrorDescription->setBase(QT_TR_NOOP("Note title cannot start or end with whitespace"));
+            pErrorDescription->setBase(QT_TRANSLATE_NOOP("Note", "Note title cannot start or end with whitespace"));
             pErrorDescription->details() = title;
         }
 
@@ -168,7 +168,7 @@ bool Note::validateTitle(const QString & title, ErrorString * pErrorDescription)
     if (len < qevercloud::EDAM_NOTE_TITLE_LEN_MIN)
     {
         if (pErrorDescription) {
-            pErrorDescription->setBase(QT_TR_NOOP("Note title's length is too small"));
+            pErrorDescription->setBase(QT_TRANSLATE_NOOP("Note", "Note title's length is too small"));
             pErrorDescription->details() = title;
         }
 
@@ -177,7 +177,7 @@ bool Note::validateTitle(const QString & title, ErrorString * pErrorDescription)
     else if (len > qevercloud::EDAM_NOTE_TITLE_LEN_MAX)
     {
         if (pErrorDescription) {
-            pErrorDescription->setBase(QT_TR_NOOP("Note title's length is too large"));
+            pErrorDescription->setBase(QT_TRANSLATE_NOOP("Note", "Note title's length is too large"));
             pErrorDescription->details() = title;
         }
 
@@ -190,7 +190,7 @@ bool Note::validateTitle(const QString & title, ErrorString * pErrorDescription)
 bool Note::checkParameters(ErrorString & errorDescription) const
 {
     if (localUid().isEmpty() && !d->m_qecNote.guid.isSet()) {
-        errorDescription.setBase(QT_TR_NOOP("Both Note's local and remote guids are empty"));
+        errorDescription.setBase(QT_TRANSLATE_NOOP("Note", "Both Note's local and remote guids are empty"));
         return false;
     }
 

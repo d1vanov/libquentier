@@ -54,7 +54,8 @@ namespace quentier {
 #define WRAP(x) \
     << QStringLiteral(x)
 
-ENMLConverterPrivate::ENMLConverterPrivate() :
+ENMLConverterPrivate::ENMLConverterPrivate(QObject * parent) :
+    QObject(parent),
     m_forbiddenXhtmlTags(QSet<QString>()
 #include "forbiddenXhtmlTags.inl"
     ),
@@ -3474,9 +3475,9 @@ bool ENMLConverterPrivate::validateAgainstDtd(const QString & input, const QStri
     return res;
 }
 
-ENMLConverterPrivate::ShouldSkipElementResult::type ENMLConverterPrivate::shouldSkipElement(const QString & elementName,
-                                                                                            const QXmlStreamAttributes & attributes,
-                                                                                            const QVector<SkipHtmlElementRule> & skipRules) const
+ShouldSkipElementResult::type ENMLConverterPrivate::shouldSkipElement(const QString & elementName,
+                                                                      const QXmlStreamAttributes & attributes,
+                                                                      const QVector<SkipHtmlElementRule> & skipRules) const
 {
     QNDEBUG(QStringLiteral("ENMLConverterPrivate::shouldSkipElement: element name = ") << elementName
             << QStringLiteral(", attributes = ") << attributes);
