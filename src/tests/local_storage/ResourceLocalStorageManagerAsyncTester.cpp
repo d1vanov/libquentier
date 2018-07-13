@@ -59,6 +59,7 @@ void ResourceLocalStorageManagerAsyncTester::onInitTestCase()
     m_pLocalStorageManagerAsync->init();
     m_pLocalStorageManagerAsync->moveToThread(m_pLocalStorageManagerThread);
 
+    m_pLocalStorageManagerThread->setObjectName(QStringLiteral("ResourceLocalStorageManagerAsyncTester-local-storage-thread"));
     m_pLocalStorageManagerThread->start();
 }
 

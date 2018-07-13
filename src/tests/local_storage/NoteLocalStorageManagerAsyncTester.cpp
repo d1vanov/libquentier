@@ -62,8 +62,8 @@ void NoteLocalStorageManagerAsyncTester::onInitTestCase()
     m_pLocalStorageManagerAsync->init();
     m_pLocalStorageManagerAsync->moveToThread(m_pLocalStorageManagerThread);
 
+    m_pLocalStorageManagerThread->setObjectName(QStringLiteral("NoteLocalStorageManagerAsyncTester-local-storage-thread"));
     m_pLocalStorageManagerThread->start();
-
 }
 
 void NoteLocalStorageManagerAsyncTester::onWorkerInitialized()

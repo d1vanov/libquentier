@@ -58,6 +58,7 @@ void TagLocalStorageManagerAsyncTester::onInitTestCase()
     m_pLocalStorageManagerAsync->init();
     m_pLocalStorageManagerAsync->moveToThread(m_pLocalStorageManagerThread);
 
+    m_pLocalStorageManagerThread->setObjectName(QStringLiteral("TagLocalStorageManagerAsyncTester-local-storage-thread"));
     m_pLocalStorageManagerThread->start();
 }
 

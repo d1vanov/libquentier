@@ -321,7 +321,7 @@ QuentierLoggerImpl::QuentierLoggerImpl(QObject * parent) :
 {
     QObject::connect(m_pLogWriteThread, QNSIGNAL(QThread,finished), m_pLogWriteThread, QNSLOT(QThread,deleteLater));
     QObject::connect(this, QNSIGNAL(QuentierLoggerImpl,destroyed), m_pLogWriteThread, QNSLOT(QThread,quit));
-    m_pLogWriteThread->setObjectName(QStringLiteral("Logger thread"));
+    m_pLogWriteThread->setObjectName(QStringLiteral("Libquentier-logger-thread"));
     m_pLogWriteThread->start(QThread::LowPriority);
 }
 

@@ -79,6 +79,7 @@ void LocalStorageCacheAsyncTester::onInitTestCase()
     m_pLocalStorageManagerAsync->init();
     m_pLocalStorageManagerAsync->moveToThread(m_pLocalStorageManagerThread);
 
+    m_pLocalStorageManagerThread->setObjectName(QStringLiteral("LocalStorageCacheAsyncTester-local-storage-thread"));
     m_pLocalStorageManagerThread->start();
 }
 
