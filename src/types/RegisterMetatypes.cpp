@@ -31,6 +31,7 @@
 #include <quentier/local_storage/NoteSearchQuery.h>
 #include <QMetaType>
 #include <QSqlError>
+#include <QSharedPointer>
 
 namespace quentier {
 
@@ -52,6 +53,11 @@ void registerMetatypes()
     qRegisterMetaType<qevercloud::Tag>("qevercloud::Tag");
     qRegisterMetaType<qevercloud::Notebook>("qevercloud::Notebook");
     qRegisterMetaType<qevercloud::Resource>("qevercloud::Resource");
+
+    qRegisterMetaType<QSharedPointer<qevercloud::EverCloudExceptionData> >("QSharedPointer<qevercloud::EverCloudExceptionData>");
+
+    typedef qevercloud::EverCloudExceptionData EverCloudExceptionData;
+    qRegisterMetaType<QSharedPointer<EverCloudExceptionData> >("QSharedPointer<EverCloudExceptionData>");
 
     qRegisterMetaType< QList<Notebook> >("QList<Notebook>");
     qRegisterMetaType< QList<Note> >("QList<Note>");
