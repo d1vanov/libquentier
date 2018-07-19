@@ -16,6 +16,7 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "../src/synchronization/SynchronizationShared.h"
 #include <quentier/types/RegisterMetatypes.h>
 #include <quentier/types/Account.h>
 #include <quentier/types/ErrorString.h>
@@ -32,6 +33,7 @@
 #include <QMetaType>
 #include <QSqlError>
 #include <QSharedPointer>
+#include <QVector>
 
 namespace quentier {
 
@@ -58,6 +60,8 @@ void registerMetatypes()
 
     typedef qevercloud::EverCloudExceptionData EverCloudExceptionData;
     qRegisterMetaType<QSharedPointer<EverCloudExceptionData> >("QSharedPointer<EverCloudExceptionData>");
+
+    qRegisterMetaType<QVector<LinkedNotebookAuthData> >("QVector<LinkedNotebookAuthData>");
 
     qRegisterMetaType< QList<Notebook> >("QList<Notebook>");
     qRegisterMetaType< QList<Note> >("QList<Note>");

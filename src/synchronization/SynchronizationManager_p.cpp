@@ -66,7 +66,9 @@ private:
 
 SynchronizationManagerPrivate::SynchronizationManagerPrivate(const QString & host, LocalStorageManagerAsync & localStorageManagerAsync,
                                                              IAuthenticationManager & authenticationManager,
-                                                             SynchronizationManagerDependencyInjector * pInjector) :
+                                                             SynchronizationManagerDependencyInjector * pInjector,
+                                                             QObject * parent) :
+    QObject(parent),
     m_host(host),
     m_maxSyncChunkEntries(50),
     m_pSyncStatePersistenceManager((pInjector && pInjector->m_pSyncStatePersistenceManager)

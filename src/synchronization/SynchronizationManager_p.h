@@ -46,7 +46,8 @@ class Q_DECL_HIDDEN SynchronizationManagerPrivate: public QObject
 public:
     SynchronizationManagerPrivate(const QString & host, LocalStorageManagerAsync & localStorageManagerAsync,
                                   IAuthenticationManager & authenticationManager,
-                                  SynchronizationManagerDependencyInjector * pInjector);
+                                  SynchronizationManagerDependencyInjector * pInjector,
+                                  QObject * parent);
     virtual ~SynchronizationManagerPrivate();
 
     bool active() const;

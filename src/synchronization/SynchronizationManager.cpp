@@ -26,7 +26,7 @@ namespace quentier {
 SynchronizationManager::SynchronizationManager(const QString & host, LocalStorageManagerAsync & localStorageManagerAsync,
                                                IAuthenticationManager & authenticationManager,
                                                SynchronizationManagerDependencyInjector * pInjector) :
-    d_ptr(new SynchronizationManagerPrivate(host, localStorageManagerAsync, authenticationManager, pInjector))
+    d_ptr(new SynchronizationManagerPrivate(host, localStorageManagerAsync, authenticationManager, pInjector, this))
 {
     QObject::connect(d_ptr, QNSIGNAL(SynchronizationManagerPrivate,notifyStart),
                      this, QNSIGNAL(SynchronizationManager,started));
@@ -75,9 +75,7 @@ SynchronizationManager::SynchronizationManager(const QString & host, LocalStorag
 }
 
 SynchronizationManager::~SynchronizationManager()
-{
-    delete d_ptr;
-}
+{}
 
 bool SynchronizationManager::active() const
 {
