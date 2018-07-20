@@ -2064,6 +2064,34 @@ void SendLocalChangesManager::sendNotes()
             pNoteStore = &(m_manager.noteStore());
         }
 
+        /**
+         * Per Evernote API documentation, clients MUST set note title quality attribute to one of the following values
+         * when the corresponding note's title was not manually entered by the user:
+         * 1. EDAM_NOTE_TITLE_QUALITY_UNTITLED
+         * 2. EDAM_NOTE_TITLE_QUALITY_LOW
+         * 3. EDAM_NOTE_TITLE_QUALITY_MEDIUM
+         * 4. EDAM_NOTE_TITLE_QUALITY_HIGH
+         * When a user edits a note's title, clients MUST unset this value.
+         *
+         * Obeying this rule.
+         */
+        if (!note.hasTitle())
+        {
+            qevercloud::NoteAttributes & noteAttributes = note.noteAttributes();
+            if (!noteAttributes.noteTitleQuality.isSet()) {
+                noteAttributes.noteTitleQuality = qevercloud::EDAM_NOTE_TITLE_QUALITY_UNTITLED;
+            }
+        }
+        else if (note.hasNoteAttributes())
+        {
+            qevercloud::NoteAttributes & noteAttributes = note.noteAttributes();
+            if (noteAttributes.noteTitleQuality.isSet() &&
+                (noteAttributes.noteTitleQuality.ref() == qevercloud::EDAM_NOTE_TITLE_QUALITY_UNTITLED))
+            {
+                noteAttributes.noteTitleQuality.clear();
+            }
+        }
+
         bool creatingNote = !note.hasUpdateSequenceNumber();
         if (creatingNote) {
             QNTRACE(QStringLiteral("Sending new note: ") << note);
