@@ -1373,7 +1373,7 @@ qint32 NoteStore::processEdamUserExceptionForNote(const Note & note, const qever
         if (userException.parameter.ref() == QStringLiteral("Note.title"))
         {
             if (note.hasTitle()) {
-                errorDescription.appendBase(QT_TR_NOOP("invalid length or pattetn of note's title"));
+                errorDescription.appendBase(QT_TR_NOOP("invalid length or pattern of note's title"));
                 errorDescription.details() = note.title();
             }
             else {
@@ -1445,6 +1445,10 @@ qint32 NoteStore::processEdamUserExceptionForNote(const Note & note, const qever
         if (userException.parameter.ref() == QStringLiteral("Note.deleted")) {
             errorDescription.appendBase(QT_TR_NOOP("deletion timestamp is set on active note"));
         }
+        else {
+            errorDescription.appendBase(QT_TR_NOOP("unexpected parameter"));
+            errorDescription.details() = userException.parameter.ref();
+        }
 
         return userException.errorCode;
     }
@@ -1469,6 +1473,10 @@ qint32 NoteStore::processEdamUserExceptionForNote(const Note & note, const qever
         if (userException.parameter.ref() == QStringLiteral("Resource.data")) {
             errorDescription.appendBase(QT_TR_NOOP("data body for some of note's resources is missing"));
             QNWARNING(errorDescription << QStringLiteral(", note: ") << note);
+        }
+        else {
+            errorDescription.appendBase(QT_TR_NOOP("unexpected parameter"));
+            errorDescription.details() = userException.parameter.ref();
         }
 
         return userException.errorCode;
