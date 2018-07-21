@@ -2073,14 +2073,33 @@ void SendLocalChangesManager::sendNotes()
          * 4. EDAM_NOTE_TITLE_QUALITY_HIGH
          * When a user edits a note's title, clients MUST unset this value.
          *
-         * Obeying this rule.
+         * It also seems that Evernote no longer accepts notes without a title, so need to create some note title
+         * if it's not set
          */
         if (!note.hasTitle())
         {
             qevercloud::NoteAttributes & noteAttributes = note.noteAttributes();
-            if (!noteAttributes.noteTitleQuality.isSet()) {
+            QString title;
+
+            if (note.hasContent())
+            {
+                title = note.plainText();
+                if (!title.isEmpty()) {
+                    title.truncate(qevercloud::EDAM_NOTE_TITLE_LEN_MAX-4);
+                    title = title.simplified();
+                    title += QStringLiteral("...");
+                }
+            }
+
+            if (title.isEmpty()) {
+                title = tr("Untitled note");
                 noteAttributes.noteTitleQuality = qevercloud::EDAM_NOTE_TITLE_QUALITY_UNTITLED;
             }
+            else {
+                noteAttributes.noteTitleQuality = qevercloud::EDAM_NOTE_TITLE_QUALITY_LOW;
+            }
+
+            note.setTitle(title);
         }
         else if (note.hasNoteAttributes())
         {
