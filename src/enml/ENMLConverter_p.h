@@ -146,6 +146,8 @@ private:
 
     bool validateAgainstDtd(const QString & input, const QString & dtdFilePath, ErrorString & errorDescription) const;
 
+    qint64 timestampFromDateTime(const QDateTime & dateTime) const;
+
     ShouldSkipElementResult::type shouldSkipElement(const QString & elementName,
                                                     const QXmlStreamAttributes & attributes,
                                                     const QVector<SkipHtmlElementRule> & skipRules) const;

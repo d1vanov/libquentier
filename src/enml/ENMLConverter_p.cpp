@@ -2089,7 +2089,7 @@ bool ENMLConverterPrivate::importEnex(const QString & enex, QVector<Note> & note
                         return false;
                     }
 
-                    qint64 timestamp = creationDateTime.toMSecsSinceEpoch();
+                    qint64 timestamp = timestampFromDateTime(creationDateTime);
                     currentNote.setCreationTimestamp(timestamp);
                     QNTRACE(QStringLiteral("Set creation timestamp to ") << timestamp);
 
@@ -2115,7 +2115,7 @@ bool ENMLConverterPrivate::importEnex(const QString & enex, QVector<Note> & note
                         return false;
                     }
 
-                    qint64 timestamp = modificationDateTime.toMSecsSinceEpoch();
+                    qint64 timestamp = timestampFromDateTime(modificationDateTime);
                     currentNote.setModificationTimestamp(timestamp);
                     QNTRACE(QStringLiteral("Set modification timestamp to ") << timestamp);
 
@@ -2389,7 +2389,7 @@ bool ENMLConverterPrivate::importEnex(const QString & enex, QVector<Note> & note
                         return false;
                     }
 
-                    qint64 timestamp = reminderTimeDateTime.toMSecsSinceEpoch();
+                    qint64 timestamp = timestampFromDateTime(reminderTimeDateTime);
                     qevercloud::NoteAttributes & noteAttributes = currentNote.noteAttributes();
                     noteAttributes.reminderTime = timestamp;
                     QNTRACE(QStringLiteral("Set reminder time to ") << timestamp);
@@ -2415,7 +2415,7 @@ bool ENMLConverterPrivate::importEnex(const QString & enex, QVector<Note> & note
                         return false;
                     }
 
-                    qint64 timestamp = subjectDateTime.toMSecsSinceEpoch();
+                    qint64 timestamp = timestampFromDateTime(subjectDateTime);
                     qevercloud::NoteAttributes & noteAttributes = currentNote.noteAttributes();
                     noteAttributes.subjectDate = timestamp;
                     QNTRACE(QStringLiteral("Set subject date to ") << timestamp);
@@ -2441,7 +2441,7 @@ bool ENMLConverterPrivate::importEnex(const QString & enex, QVector<Note> & note
                         return false;
                     }
 
-                    qint64 timestamp = reminderDoneTimeDateTime.toMSecsSinceEpoch();
+                    qint64 timestamp = timestampFromDateTime(reminderDoneTimeDateTime);
                     qevercloud::NoteAttributes & noteAttributes = currentNote.noteAttributes();
                     noteAttributes.reminderDoneTime = timestamp;
                     QNTRACE(QStringLiteral("Set reminder done time to ") << timestamp);
@@ -2703,7 +2703,7 @@ bool ENMLConverterPrivate::importEnex(const QString & enex, QVector<Note> & note
                         return false;
                     }
 
-                    qint64 timestamp = timestampDateTime.toMSecsSinceEpoch();
+                    qint64 timestamp = timestampFromDateTime(timestampDateTime);
                     qevercloud::ResourceAttributes & resourceAttributes = currentResource.resourceAttributes();
                     resourceAttributes.timestamp = timestamp;
                     QNTRACE(QStringLiteral("Set resource timestamp to ") << timestamp);
@@ -3473,6 +3473,20 @@ bool ENMLConverterPrivate::validateAgainstDtd(const QString & input, const QStri
     }
 
     return res;
+}
+
+qint64 ENMLConverterPrivate::timestampFromDateTime(const QDateTime & dateTime) const
+{
+    if (!dateTime.isValid()) {
+        return 0;
+    }
+
+    qint64 timestamp = dateTime.toMSecsSinceEpoch();
+    if (Q_UNLIKELY(timestamp < 0)) {
+        timestamp = 0;
+    }
+
+    return timestamp;
 }
 
 ShouldSkipElementResult::type ENMLConverterPrivate::shouldSkipElement(const QString & elementName,
