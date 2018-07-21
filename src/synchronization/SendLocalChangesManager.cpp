@@ -2111,6 +2111,12 @@ void SendLocalChangesManager::sendNotes()
             }
         }
 
+        // NOTE: need to ensure the note's "active" property is set to false if it has deletion timestamp,
+        // otherwise Evernote would reject such note
+        if (note.hasDeletionTimestamp()) {
+            note.setActive(false);
+        }
+
         bool creatingNote = !note.hasUpdateSequenceNumber();
         if (creatingNote) {
             QNTRACE(QStringLiteral("Sending new note: ") << note);
@@ -2165,14 +2171,6 @@ void SendLocalChangesManager::sendNotes()
                 }
             }
 
-            return;
-        }
-        else if (errorCode == qevercloud::EDAMErrorCode::DATA_CONFLICT)
-        {
-            QNINFO(QStringLiteral("Encountered DATA_CONFLICT exception while trying to send new and/or modified notes, "
-                                  "it means the incremental sync should be repeated before sending the changes to the service"));
-            Q_EMIT conflictDetected();
-            stop();
             return;
         }
         else if (errorCode != 0)
