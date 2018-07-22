@@ -88,6 +88,10 @@ bool checkUpdateSequenceNumber(const int32_t updateSequenceNumber)
 const QString printableDateTimeFromTimestamp(const qint64 timestamp, const DateTimePrint::Options options,
                                              const char * customFormat)
 {
+    if (Q_UNLIKELY(timestamp < 0)) {
+        return QString::number(timestamp);
+    }
+
     QString result;
 
     if (options & DateTimePrint::IncludeNumericTimestamp) {
@@ -109,7 +113,6 @@ const QString printableDateTimeFromTimestamp(const qint64 timestamp, const DateT
 #if _MSC_VER >= 1400
     // MSVC's localtime is thread-safe since MSVC 2005
     tm = std::localtime(&t);
-    Q_UNUSED(localTm);
 #else
 #error "Too old MSVC version to reliably build libquentier"
 #endif
@@ -123,6 +126,10 @@ const QString printableDateTimeFromTimestamp(const qint64 timestamp, const DateT
     Q_UNUSED(localtime_r(&t, tm))
 #endif
 #endif // ifdef _MSC_VER
+
+    if (Q_UNLIKELY(!tm)) {
+        return QString::number(timestamp);
+    }
 
     const size_t maxBufSize = 100;
     char buffer[maxBufSize];
