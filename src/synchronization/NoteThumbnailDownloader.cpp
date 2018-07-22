@@ -44,9 +44,7 @@ NoteThumbnailDownloader::~NoteThumbnailDownloader()
 {
     delete m_pThumbnail;
 
-    if (m_pAsyncResult) {
-        m_pAsyncResult->deleteLater();
-    }
+    // NOTE: m_pAsyncResult deletes itself automatically
 }
 
 void NoteThumbnailDownloader::start()
@@ -81,7 +79,7 @@ void NoteThumbnailDownloader::start()
     m_pThumbnail = Q_NULLPTR;
 
     if (m_pAsyncResult) {
-        m_pAsyncResult->deleteLater();
+        // NOTE: m_pAsyncResult deletes itself automatically
         m_pAsyncResult = Q_NULLPTR;
     }
 
@@ -103,6 +101,12 @@ void NoteThumbnailDownloader::onDownloadFinished(QVariant result, QSharedPointer
 {
     QNDEBUG(QStringLiteral("NoteThumbnailDownloader::onDownloadFinished"));
 
+    delete m_pThumbnail;
+    m_pThumbnail = Q_NULLPTR;
+
+    // NOTE: after AsyncResult finishes, it destroys itself so must lose the pointer to it here
+    m_pAsyncResult = Q_NULLPTR;
+
     if (!error.isNull()) {
         ErrorString errorDescription(QT_TR_NOOP("failed to download the note thumbnail"));
         errorDescription.details() = error->errorMessage;
@@ -114,14 +118,6 @@ void NoteThumbnailDownloader::onDownloadFinished(QVariant result, QSharedPointer
     QByteArray thumbnailImageData = result.toByteArray();
     if (Q_UNLIKELY(thumbnailImageData.isEmpty())) {
         SET_ERROR(QT_TR_NOOP("received empty note thumbnail data"));
-    }
-
-    delete m_pThumbnail;
-    m_pThumbnail = Q_NULLPTR;
-
-    if (m_pAsyncResult) {
-        m_pAsyncResult->deleteLater();
-        m_pAsyncResult = Q_NULLPTR;
     }
 
     Q_EMIT finished(true, m_noteGuid, thumbnailImageData, ErrorString());

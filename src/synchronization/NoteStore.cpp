@@ -39,7 +39,8 @@ namespace quentier {
 
 NoteStore::NoteStore(const QSharedPointer<qevercloud::NoteStore> & pQecNoteStore, QObject * parent) :
     INoteStore(pQecNoteStore, parent),
-    m_noteGuidByAsyncResultPtr()
+    m_noteGuidByAsyncResultPtr(),
+    m_resourceGuidByAsyncResultPtr()
 {
     QUENTIER_CHECK_PTR(m_pQecNoteStore)
 }
@@ -70,6 +71,19 @@ void NoteStore::stop()
     }
 
     m_noteGuidByAsyncResultPtr.clear();
+
+    for(auto it = m_resourceGuidByAsyncResultPtr.begin(), end = m_resourceGuidByAsyncResultPtr.end(); it != end; ++it)
+    {
+        qevercloud::AsyncResult * pAsyncResult = it.key();
+        if (Q_UNLIKELY(!pAsyncResult)) {
+            continue;
+        }
+
+        QObject::disconnect(pAsyncResult, QNSIGNAL(qevercloud::AsyncResult,finished,QVariant,QSharedPointer<EverCloudExceptionData>),
+                            this, QNSLOT(NoteStore,onGetResourceAsyncFinished,QVariant,QSharedPointer<EverCloudExceptionData>));
+    }
+
+    m_resourceGuidByAsyncResultPtr.clear();
 }
 
 qint32 NoteStore::createNotebook(Notebook & notebook, ErrorString & errorDescription,
@@ -520,7 +534,7 @@ bool NoteStore::getNoteAsync(const bool withContent, const bool withResourceData
 
     QObject::connect(pAsyncResult, QNSIGNAL(qevercloud::AsyncResult,finished,QVariant,QSharedPointer<EverCloudExceptionData>),
                      this, QNSLOT(NoteStore,onGetNoteAsyncFinished,QVariant,QSharedPointer<EverCloudExceptionData>),
-                     Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
+                     Qt::ConnectionType(Qt::UniqueConnection | Qt::DirectConnection));
     return true;
 }
 
@@ -592,7 +606,7 @@ bool NoteStore::getResourceAsync(const bool withDataBody, const bool withRecogni
 
     QObject::connect(pAsyncResult, QNSIGNAL(qevercloud::AsyncResult,finished,QVariant,QSharedPointer<EverCloudExceptionData>),
                      this, QNSLOT(NoteStore,onGetResourceAsyncFinished,QVariant,QSharedPointer<EverCloudExceptionData>),
-                     Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
+                     Qt::ConnectionType(Qt::UniqueConnection | Qt::DirectConnection));
     return true;
 }
 
