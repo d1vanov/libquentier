@@ -1956,7 +1956,7 @@ void SendLocalChangesManager::sendNotes()
     typedef QList<Note>::iterator Iter;
     for(Iter it = m_notes.begin(); it != m_notes.end(); )
     {
-        Note & note = *it;
+        Note note = *it;
 
         errorDescription.clear();
         qint32 rateLimitSeconds = 0;
