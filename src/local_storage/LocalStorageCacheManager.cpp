@@ -28,7 +28,9 @@ LocalStorageCacheManager::LocalStorageCacheManager() :
 {}
 
 LocalStorageCacheManager::~LocalStorageCacheManager()
-{}
+{
+    delete d_ptr;
+}
 
 void LocalStorageCacheManager::clear()
 {
