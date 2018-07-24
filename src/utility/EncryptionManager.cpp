@@ -27,7 +27,9 @@ EncryptionManager::EncryptionManager(QObject * parent) :
 {}
 
 EncryptionManager::~EncryptionManager()
-{}
+{
+    delete d_ptr;
+}
 
 bool EncryptionManager::decrypt(const QString & encryptedText, const QString & passphrase,
                                 const QString & cipher, const size_t keyLength,
