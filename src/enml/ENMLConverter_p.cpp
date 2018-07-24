@@ -1335,7 +1335,7 @@ bool ENMLConverterPrivate::validateAndFixupEnml(QString & enml, ErrorString & er
 bool ENMLConverterPrivate::noteContentToPlainText(const QString & noteContent, QString & plainText,
                                                   ErrorString & errorMessage)
 {
-    QNDEBUG(QStringLiteral("ENMLConverterPrivate::noteContentToPlainText: ") << noteContent);
+    QNTRACE(QStringLiteral("ENMLConverterPrivate::noteContentToPlainText: ") << noteContent);
 
     plainText.resize(0);
 

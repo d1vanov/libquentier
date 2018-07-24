@@ -557,7 +557,7 @@ void Note::setResources(const QList<Resource> & resources)
             info.isDirty = it->isDirty();
             d->m_resourcesAdditionalInfo.push_back(info);
         }
-        QNDEBUG(QStringLiteral("Added ") << resources.size() << QStringLiteral(" resources to note"));
+        QNTRACE(QStringLiteral("Added ") << resources.size() << QStringLiteral(" resources to note"));
     }
     else
     {

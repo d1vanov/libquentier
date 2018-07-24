@@ -3266,7 +3266,7 @@ int LocalStorageManagerPrivate::enResourceCount(ErrorString & errorDescription) 
 bool LocalStorageManagerPrivate::findEnResource(Resource & resource, ErrorString & errorDescription,
                                                 const bool withBinaryData) const
 {
-    QNDEBUG(QStringLiteral("LocalStorageManagerPrivate::findEnResource: ") << resource);
+    QNTRACE(QStringLiteral("LocalStorageManagerPrivate::findEnResource: ") << resource);
 
     ErrorString errorPrefix(QT_TR_NOOP("Can't find resource in the local storage database"));
 
@@ -9049,7 +9049,7 @@ bool LocalStorageManagerPrivate::findAndSetTagIdsPerNote(Note & note, ErrorStrin
             return false;
         }
 
-        QNDEBUG(QStringLiteral("Found tag local uid ") << tagLocalUid << QStringLiteral(" and tag guid ") << tagGuid
+        QNTRACE(QStringLiteral("Found tag local uid ") << tagLocalUid << QStringLiteral(" and tag guid ") << tagGuid
                 << QStringLiteral(" for note with local uid ") << noteLocalUid);
 
         int indexInNote = -1;
@@ -9161,13 +9161,13 @@ bool LocalStorageManagerPrivate::findAndSetResourcesPerNote(Note & note, ErrorSt
 
                 QString resourceLocalUid = value.toString();
                 resourceLocalUids << resourceLocalUid;
-                QNDEBUG(QStringLiteral("Found resource's local uid: ") << resourceLocalUid);
+                QNTRACE(QStringLiteral("Found resource's local uid: ") << resourceLocalUid);
             }
         }
     }
 
     int numResources = resourceLocalUids.size();
-    QNDEBUG(QStringLiteral("Found ") << numResources << QStringLiteral(" resources"));
+    QNTRACE(QStringLiteral("Found ") << numResources << QStringLiteral(" resources"));
 
     ErrorString error;
     QList<Resource> resources;
@@ -9191,7 +9191,7 @@ bool LocalStorageManagerPrivate::findAndSetResourcesPerNote(Note & note, ErrorSt
             return false;
         }
 
-        QNDEBUG(QStringLiteral("Found resource with local uid ") << resource.localUid()
+        QNTRACE(QStringLiteral("Found resource with local uid ") << resource.localUid()
                 << QStringLiteral(" for note with local uid ") << noteLocalUid);
     }
 
