@@ -227,7 +227,7 @@ build_script:
   - if %qt%==mingw492_32 set PATH=%ORIGPATH%
 
 test_script:
-  - cd C:\Program Files (x86)
+  - cd "C:\Program Files (x86)"
   - dir \s
   - ps: >-
       If($true) {
