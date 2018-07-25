@@ -239,7 +239,7 @@ test_script:
         cmd /r mkdir C:\symbols
 
         Write-Host "Running test executable"
-        cdb -y $SymPath -c "|;g;kv;q" -o C:\dev\libquentier\build\text_libquentier.exe
+        cdb -y $SymPath -c "|;g;kv;q" -o C:\dev\libquentier\build\test_libquentier.exe
         Write-Host "Exit code: " $lastExitCode
       }
 
