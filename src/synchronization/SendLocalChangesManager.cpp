@@ -491,7 +491,9 @@ void SendLocalChangesManager::onUpdateTagCompleted(Tag tag, QUuid requestId)
     QNDEBUG(QStringLiteral("SendLocalChangesManager::onUpdateTagCompleted: tag = ") << tag << QStringLiteral("\nRequest id = ") << requestId);
     Q_UNUSED(m_updateTagRequestIds.erase(it));
 
-    checkSendLocalChangesAndDirtyFlagsRemovingUpdatesAndFinalize();
+    if (m_tags.isEmpty() && m_updateTagRequestIds.isEmpty()) {
+        checkSendLocalChangesAndDirtyFlagsRemovingUpdatesAndFinalize();
+    }
 }
 
 void SendLocalChangesManager::onUpdateTagFailed(Tag tag, ErrorString errorDescription, QUuid requestId)
@@ -501,13 +503,16 @@ void SendLocalChangesManager::onUpdateTagFailed(Tag tag, ErrorString errorDescri
         return;
     }
 
+    QNWARNING(QStringLiteral("SendLocalChangesManager::onUpdateTagFailed: tag = ") << tag
+              << QStringLiteral("\nRequest id = ") << requestId << QStringLiteral(", error description = ")
+              << errorDescription);
+
     Q_UNUSED(m_updateTagRequestIds.erase(it));
 
     ErrorString error(QT_TR_NOOP("Failed to update a tag in the local storage"));
     error.additionalBases().append(errorDescription.base());
     error.additionalBases().append(errorDescription.additionalBases());
     error.details() = errorDescription.details();
-    QNWARNING(error << QStringLiteral("; tag: ") << tag);
     Q_EMIT failure(error);
 }
 
@@ -522,7 +527,9 @@ void SendLocalChangesManager::onUpdateSavedSearchCompleted(SavedSearch savedSear
             << QStringLiteral("\nRequest id = ") << requestId);
     Q_UNUSED(m_updateSavedSearchRequestIds.erase(it));
 
-    checkSendLocalChangesAndDirtyFlagsRemovingUpdatesAndFinalize();
+    if (m_savedSearches.isEmpty() && m_updateSavedSearchRequestIds.isEmpty()) {
+        checkSendLocalChangesAndDirtyFlagsRemovingUpdatesAndFinalize();
+    }
 }
 
 void SendLocalChangesManager::onUpdateSavedSearchFailed(SavedSearch savedSearch, ErrorString errorDescription, QUuid requestId)
@@ -532,13 +539,16 @@ void SendLocalChangesManager::onUpdateSavedSearchFailed(SavedSearch savedSearch,
         return;
     }
 
+    QNWARNING(QStringLiteral("SendLocalChangesManager::onUpdateSavedSearchFailed: saved search = ") << savedSearch
+              << QStringLiteral("\nRequest id = ") << requestId << QStringLiteral(", error description = ")
+              << errorDescription);
+
     Q_UNUSED(m_updateSavedSearchRequestIds.erase(it));
 
     ErrorString error(QT_TR_NOOP("Failed to update a saved search in the local storage"));
     error.additionalBases().append(errorDescription.base());
     error.additionalBases().append(errorDescription.additionalBases());
     error.details() = errorDescription.details();
-    QNWARNING(error << QStringLiteral("; saved search: ") << savedSearch);
     Q_EMIT failure(error);
 }
 
@@ -553,7 +563,9 @@ void SendLocalChangesManager::onUpdateNotebookCompleted(Notebook notebook, QUuid
             << QStringLiteral("\nRequest id = ") << requestId);
     Q_UNUSED(m_updateNotebookRequestIds.erase(it));
 
-    checkSendLocalChangesAndDirtyFlagsRemovingUpdatesAndFinalize();
+    if (m_notebooks.isEmpty() && m_updateNotebookRequestIds.isEmpty()) {
+        checkSendLocalChangesAndDirtyFlagsRemovingUpdatesAndFinalize();
+    }
 }
 
 void SendLocalChangesManager::onUpdateNotebookFailed(Notebook notebook, ErrorString errorDescription, QUuid requestId)
@@ -563,13 +575,16 @@ void SendLocalChangesManager::onUpdateNotebookFailed(Notebook notebook, ErrorStr
         return;
     }
 
+    QNWARNING(QStringLiteral("SendLocalChangesManager::onUpdateNotebookFailed: notebook = ") << notebook
+              << QStringLiteral("\nRequest id = ") << requestId << QStringLiteral(", error description = ")
+              << errorDescription);
+
     Q_UNUSED(m_updateNotebookRequestIds.erase(it));
 
     ErrorString error(QT_TR_NOOP("Failed to update a notebook in the local storage"));
     error.additionalBases().append(errorDescription.base());
     error.additionalBases().append(errorDescription.additionalBases());
     error.details() = errorDescription.details();
-    QNWARNING(error << QStringLiteral("; notebook: ") << notebook);
     Q_EMIT failure(error);
 }
 
@@ -586,7 +601,9 @@ void SendLocalChangesManager::onUpdateNoteCompleted(Note note, bool updateResour
     QNDEBUG(QStringLiteral("SendLocalChangesManager::onUpdateNoteCompleted: note = ") << note << QStringLiteral("\nRequest id = ") << requestId);
     Q_UNUSED(m_updateNoteRequestIds.erase(it));
 
-    checkSendLocalChangesAndDirtyFlagsRemovingUpdatesAndFinalize();
+    if (m_notes.isEmpty() && m_updateNoteRequestIds.isEmpty()) {
+        checkDirtyFlagRemovingUpdatesAndFinalize();
+    }
 }
 
 void SendLocalChangesManager::onUpdateNoteFailed(Note note, bool updateResources, bool updateTags,
@@ -600,13 +617,16 @@ void SendLocalChangesManager::onUpdateNoteFailed(Note note, bool updateResources
         return;
     }
 
+    QNWARNING(QStringLiteral("SendLocalChangesManager::onUpdateNoteFailed: note = ") << note
+              << QStringLiteral("\nRequest id = ") << requestId << QStringLiteral(", error description = ")
+              << errorDescription);
+
     Q_UNUSED(m_updateNoteRequestIds.erase(it));
 
     ErrorString error(QT_TR_NOOP("Failed to update a note in the local storage"));
     error.additionalBases().append(errorDescription.base());
     error.additionalBases().append(errorDescription.additionalBases());
     error.details() = errorDescription.details();
-    QNWARNING(error << QStringLiteral("; note: ") << note);
     Q_EMIT failure(error);
 }
 
@@ -1269,6 +1289,8 @@ void SendLocalChangesManager::sendTags()
     QHash<QString, QString> tagGuidsByLocalUid;
     tagGuidsByLocalUid.reserve(m_tags.size());
 
+    size_t numSentTags = 0;
+
     for(auto it = m_tags.begin(); it != m_tags.end(); )
     {
         Tag & tag = *it;
@@ -1378,6 +1400,7 @@ void SendLocalChangesManager::sendTags()
             if (rateLimitSeconds < 0) {
                 errorDescription.setBase(QT_TR_NOOP("Rate limit reached but the number of seconds to wait is incorrect"));
                 errorDescription.details() = QString::number(rateLimitSeconds);
+                QNWARNING(errorDescription);
                 Q_EMIT failure(errorDescription);
                 return;
             }
@@ -1386,11 +1409,17 @@ void SendLocalChangesManager::sendTags()
             if (Q_UNLIKELY(timerId == 0)) {
                 errorDescription.setBase(QT_TR_NOOP("Failed to start a timer to postpone "
                                                     "the Evernote API call due to rate limit exceeding"));
+                QNWARNING(errorDescription);
                 Q_EMIT failure(errorDescription);
                 return;
             }
 
             m_sendTagsPostponeTimerId = timerId;
+
+            QNINFO(QStringLiteral("Encountered API rate limits exceeding during the attempt to send new or modified tag, ")
+                   << QStringLiteral(", will need to wait for ") << rateLimitSeconds << QStringLiteral(" seconds"));
+            QNDEBUG(QStringLiteral("Send tags postpone timer id = ") << timerId);
+
             Q_EMIT rateLimitExceeded(rateLimitSeconds);
             return;
         }
@@ -1433,6 +1462,7 @@ void SendLocalChangesManager::sendTags()
             error.additionalBases().append(errorDescription.base());
             error.additionalBases().append(errorDescription.additionalBases());
             error.details() = errorDescription.details();
+            QNWARNING(error);
             Q_EMIT failure(error);
             return;
         }
@@ -1516,6 +1546,14 @@ void SendLocalChangesManager::sendTags()
         }
 
         it = m_tags.erase(it);
+        ++numSentTags;
+    }
+
+    if (numSentTags != 0) {
+        QNINFO(QStringLiteral("Sent ") << numSentTags << QStringLiteral(" locally added/updated tags to Evernote"));
+    }
+    else {
+        QNINFO(QStringLiteral("Found no locally added/modified tags to send to Evernote"));
     }
 
     // Need to set tag guids for all dirty notes which have the corresponding tags local uids
@@ -1547,6 +1585,13 @@ void SendLocalChangesManager::sendTags()
             note.addTagGuid(tagGuid);
         }
     }
+
+    // If we got here, m_tags should be empty; m_updateTagRequestIds would unlikely
+    // be empty, it should only happen if updateNote signal-slot connection executed synchronously
+    // which is unlikely but still theoretically possible so accounting for this possibility
+    if (m_updateTagRequestIds.isEmpty()) {
+        checkSendLocalChangesAndDirtyFlagsRemovingUpdatesAndFinalize();
+    }
 }
 
 void SendLocalChangesManager::sendSavedSearches()
@@ -1555,9 +1600,9 @@ void SendLocalChangesManager::sendSavedSearches()
 
     ErrorString errorDescription;
     INoteStore & noteStore = m_manager.noteStore();
+    size_t numSentSavedSearches = 0;
 
-    typedef QList<SavedSearch>::iterator Iter;
-    for(Iter it = m_savedSearches.begin(); it != m_savedSearches.end(); )
+    for(auto it = m_savedSearches.begin(); it != m_savedSearches.end(); )
     {
         SavedSearch & search = *it;
 
@@ -1578,9 +1623,9 @@ void SendLocalChangesManager::sendSavedSearches()
         if (errorCode == qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED)
         {
             if (rateLimitSeconds < 0) {
-                errorDescription.setBase(QT_TR_NOOP("Rate limit reached but the number "
-                                                    "of seconds to wait is incorrect"));
+                errorDescription.setBase(QT_TR_NOOP("Rate limit reached but the number of seconds to wait is incorrect"));
                 errorDescription.details() = QString::number(rateLimitSeconds);
+                QNWARNING(errorDescription);
                 Q_EMIT failure(errorDescription);
                 return;
             }
@@ -1589,11 +1634,17 @@ void SendLocalChangesManager::sendSavedSearches()
             if (Q_UNLIKELY(timerId == 0)) {
                 errorDescription.setBase(QT_TR_NOOP("Failed to start a timer to postpone "
                                                     "the Evernote API call due to rate limit exceeding"));
+                QNWARNING(errorDescription);
                 Q_EMIT failure(errorDescription);
                 return;
             }
 
             m_sendSavedSearchesPostponeTimerId = timerId;
+
+            QNINFO(QStringLiteral("Encountered API rate limits exceeding during the attempt to send new or modified saved search, ")
+                   << QStringLiteral(", will need to wait for ") << rateLimitSeconds << QStringLiteral(" seconds"));
+            QNDEBUG(QStringLiteral("Send saved searches postpone timer id = ") << timerId);
+
             Q_EMIT rateLimitExceeded(rateLimitSeconds);
             return;
         }
@@ -1616,6 +1667,7 @@ void SendLocalChangesManager::sendSavedSearches()
             error.additionalBases().append(errorDescription.base());
             error.additionalBases().append(errorDescription.additionalBases());
             error.details() = errorDescription.details();
+            QNWARNING(error);
             Q_EMIT failure(error);
             return;
         }
@@ -1637,22 +1689,38 @@ void SendLocalChangesManager::sendSavedSearches()
                 errorDescription.setBase(QT_TR_NOOP("Internal error: saved search's update "
                                                     "sequence number is not set after sending it "
                                                     "to Evernote service"));
+                QNWARNING(errorDescription);
                 Q_EMIT failure(errorDescription);
                 return;
             }
 
             if (search.updateSequenceNumber() == m_lastUpdateCount + 1) {
                 m_lastUpdateCount = search.updateSequenceNumber();
-                QNTRACE(QStringLiteral("The client is in sync with the service; updated last update count to ") << m_lastUpdateCount);
+                QNDEBUG(QStringLiteral("The client is in sync with the service; updated last update count to ") << m_lastUpdateCount);
             }
             else {
                 m_shouldRepeatIncrementalSync = true;
+                QNDEBUG(QStringLiteral("The client is not in sync with the service"));
                 Q_EMIT shouldRepeatIncrementalSync();
-                QNTRACE(QStringLiteral("The client is not in sync with the service"));
             }
         }
 
         it = m_savedSearches.erase(it);
+        ++numSentSavedSearches;
+    }
+
+    if (numSentSavedSearches != 0) {
+        QNINFO(QStringLiteral("Sent ") << numSentSavedSearches << QStringLiteral(" locally added/updated saved searches to Evernote"));
+    }
+    else {
+        QNINFO(QStringLiteral("Found no locally added/modified saved searches to send to Evernote"));
+    }
+
+    // If we got here, m_savedSearches should be empty; m_updateSavedSearchRequestIds would unlikely
+    // be empty, it should only happen if updateSavedSearch signal-slot connection executed synchronously
+    // which is unlikely but still theoretically possible so accounting for this possibility
+    if (m_updateSavedSearchRequestIds.isEmpty()) {
+        checkSendLocalChangesAndDirtyFlagsRemovingUpdatesAndFinalize();
     }
 }
 
@@ -1664,6 +1732,8 @@ void SendLocalChangesManager::sendNotebooks()
 
     QHash<QString, QString> notebookGuidsByLocalUid;
     notebookGuidsByLocalUid.reserve(m_notebooks.size());
+
+    size_t numSentNotebooks = 0;
 
     for(auto it = m_notebooks.begin(); it != m_notebooks.end(); )
     {
@@ -1771,9 +1841,9 @@ void SendLocalChangesManager::sendNotebooks()
         if (errorCode == qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED)
         {
             if (rateLimitSeconds < 0) {
-                errorDescription.setBase(QT_TR_NOOP("Rate limit reached but the number "
-                                                    "of seconds to wait is incorrect"));
+                errorDescription.setBase(QT_TR_NOOP("Rate limit reached but the number of seconds to wait is incorrect"));
                 errorDescription.details() = QString::number(rateLimitSeconds);
+                QNWARNING(errorDescription);
                 Q_EMIT failure(errorDescription);
                 return;
             }
@@ -1782,11 +1852,17 @@ void SendLocalChangesManager::sendNotebooks()
             if (Q_UNLIKELY(timerId == 0)) {
                 errorDescription.setBase(QT_TR_NOOP("Failed to start a timer to postpone "
                                                     "the Evernote API call due to rate limit exceeding"));
+                QNWARNING(errorDescription);
                 Q_EMIT failure(errorDescription);
                 return;
             }
 
             m_sendNotebooksPostponeTimerId = timerId;
+
+            QNINFO(QStringLiteral("Encountered API rate limits exceeding during the attempt to send new or modified notebook, ")
+                   << QStringLiteral(", will need to wait for ") << rateLimitSeconds << QStringLiteral(" seconds"));
+            QNDEBUG(QStringLiteral("Send notebooks postpone timer id = ") << timerId);
+
             Q_EMIT rateLimitExceeded(rateLimitSeconds);
             return;
         }
@@ -1800,8 +1876,7 @@ void SendLocalChangesManager::sendNotebooks()
                 auto cit = m_authenticationTokenExpirationTimesByLinkedNotebookGuid.find(notebook.linkedNotebookGuid());
                 if (cit == m_authenticationTokenExpirationTimesByLinkedNotebookGuid.end())
                 {
-                    errorDescription.setBase(QT_TR_NOOP("Couldn't find the linked notebook "
-                                                        "auth token's expiration time"));
+                    errorDescription.setBase(QT_TR_NOOP("Couldn't find the linked notebook auth token's expiration time"));
                     QNWARNING(errorDescription << QStringLiteral(", linked notebook guid = ") << notebook.linkedNotebookGuid());
                     Q_EMIT failure(errorDescription);
                 }
@@ -1829,6 +1904,7 @@ void SendLocalChangesManager::sendNotebooks()
             error.additionalBases().append(errorDescription.base());
             error.additionalBases().append(errorDescription.additionalBases());
             error.details() = errorDescription.details();
+            QNWARNING(error);
             Q_EMIT failure(error);
             return;
         }
@@ -1904,6 +1980,14 @@ void SendLocalChangesManager::sendNotebooks()
         }
 
         it = m_notebooks.erase(it);
+        ++numSentNotebooks;
+    }
+
+    if (numSentNotebooks != 0) {
+        QNINFO(QStringLiteral("Sent ") << numSentNotebooks << QStringLiteral(" locally added/updated notebooks to Evernote"));
+    }
+    else {
+        QNINFO(QStringLiteral("Found no locally added/modified notebooks to send to Evernote"));
     }
 
     // Need to set notebook guids for all dirty notes which have the
@@ -1936,6 +2020,13 @@ void SendLocalChangesManager::sendNotebooks()
 
         note.setNotebookGuid(git.value());
     }
+
+    // If we got here, m_notebooks should be empty; m_updateNotebookRequestIds would unlikely
+    // be empty, it should only happen if updateNotebook signal-slot connection executed synchronously
+    // which is unlikely but still theoretically possible so accounting for this possibility
+    if (m_updateNotebookRequestIds.isEmpty()) {
+        checkSendLocalChangesAndDirtyFlagsRemovingUpdatesAndFinalize();
+    }
 }
 
 void SendLocalChangesManager::checkAndSendNotes()
@@ -1952,11 +2043,11 @@ void SendLocalChangesManager::sendNotes()
     QNDEBUG(QStringLiteral("SendLocalChangesManager::sendNotes"));
 
     ErrorString errorDescription;
+    size_t numSentNotes = 0;
 
-    typedef QList<Note>::iterator Iter;
-    for(Iter it = m_notes.begin(); it != m_notes.end(); )
+    for(auto it = m_notes.begin(); it != m_notes.end(); )
     {
-        Note note = *it;
+        Note & note = *it;
 
         errorDescription.clear();
         qint32 rateLimitSeconds = 0;
@@ -2133,6 +2224,7 @@ void SendLocalChangesManager::sendNotes()
                 errorDescription.setBase(QT_TR_NOOP("Rate limit reached but the number "
                                                     "of seconds to wait is incorrect"));
                 errorDescription.details() = QString::number(rateLimitSeconds);
+                QNWARNING(errorDescription);
                 Q_EMIT failure(errorDescription);
                 return;
             }
@@ -2141,11 +2233,17 @@ void SendLocalChangesManager::sendNotes()
             if (timerId == 0) {
                 errorDescription.setBase(QT_TR_NOOP("Failed to start a timer to postpone "
                                                     "the Evernote API call due to rate limit exceeding"));
+                QNWARNING(errorDescription);
                 Q_EMIT failure(errorDescription);
                 return;
             }
 
             m_sendNotesPostponeTimerId = timerId;
+
+            QNINFO(QStringLiteral("Encountered API rate limits exceeding during the attempt to send new or modified note, ")
+                   << QStringLiteral(", will need to wait for ") << rateLimitSeconds << QStringLiteral(" seconds"));
+            QNDEBUG(QStringLiteral("Send notes postpone timer id = ") << timerId);
+
             Q_EMIT rateLimitExceeded(rateLimitSeconds);
             return;
         }
@@ -2179,6 +2277,7 @@ void SendLocalChangesManager::sendNotes()
             error.additionalBases().append(errorDescription.base());
             error.additionalBases().append(errorDescription.additionalBases());
             error.details() = errorDescription.details();
+            QNWARNING(error);
             Q_EMIT failure(error);
             return;
         }
@@ -2244,14 +2343,22 @@ void SendLocalChangesManager::sendNotes()
         }
 
         it = m_notes.erase(it);
+        ++numSentNotes;
     }
 
-    QNINFO(QStringLiteral("Sent all locally added/updated notes back to the Evernote service"));
+    if (numSentNotes != 0) {
+        QNINFO(QStringLiteral("Sent ") << numSentNotes << QStringLiteral(" locally added/updated notes to Evernote"));
+    }
+    else {
+        QNINFO(QStringLiteral("Found no locally added/modified notes to send to Evernote"));
+    }
 
     // NOTE: as notes are sent the last, after sending them we must be done;
     // the only possibly still pending transactions are those removing dirty flags
     // from sent objects within the local storage
-    checkDirtyFlagRemovingUpdatesAndFinalize();
+    if (m_updateNoteRequestIds.isEmpty()) {
+        checkDirtyFlagRemovingUpdatesAndFinalize();
+    }
 }
 
 void SendLocalChangesManager::findNotebooksForNotes()
@@ -2497,7 +2604,7 @@ bool SendLocalChangesManager::checkAndRequestAuthenticationTokensForLinkedNotebo
 
 void SendLocalChangesManager::handleAuthExpiration()
 {
-    QNDEBUG(QStringLiteral("SendLocalChangesManager::handleAuthExpiration"));
+    QNINFO(QStringLiteral("SendLocalChangesManager::handleAuthExpiration"));
     Q_EMIT requestAuthenticationToken();
 }
 
