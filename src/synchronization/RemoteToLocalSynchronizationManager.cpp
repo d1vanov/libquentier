@@ -845,8 +845,8 @@ void RemoteToLocalSynchronizationManager::onFindNoteCompleted(Note note, bool wi
     auto it = m_findNoteByGuidRequestIds.find(requestId);
     if (it != m_findNoteByGuidRequestIds.end())
     {
-        QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::onFindNoteCompleted: note = ")
-                << note << QStringLiteral(", requestId = ") << requestId);
+        QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::onFindNoteCompleted: requestId = ") << requestId);
+        QNTRACE(QStringLiteral("Note = ") << note);
 
         // NOTE: erase is required for proper work of the macro; the request would be re-inserted below if macro doesn't return from the method
         Q_UNUSED(m_findNoteByGuidRequestIds.erase(it));

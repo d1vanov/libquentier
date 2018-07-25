@@ -243,7 +243,7 @@ void ShortcutManagerPrivate::setDefaultShortcut(int key, QKeySequence shortcut, 
 {
     QString keyString = keyToString(key);
 
-    QNDEBUG(QStringLiteral("ShortcutManagerPrivate::setDefaultShortcut: key = ") << keyString << QStringLiteral(" (")
+    QNTRACE(QStringLiteral("ShortcutManagerPrivate::setDefaultShortcut: key = ") << keyString << QStringLiteral(" (")
             << key << QStringLiteral("), shortcut = ") << shortcut << QStringLiteral(", context = ") << context
             << QStringLiteral(", account: ") << account);
 
