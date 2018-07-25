@@ -4,7 +4,7 @@ branches:
   only:
     - master
     - development
-    - bugfix/Issue-60-attempt-to-get-crash-backtrace-from-appveyor-ci
+    - bugfix/Issue-64-attempt-to-get-crash-backtrace-from-appveyor-ci
     - /^v\d+\.\d+(\.\d+)?(-\S*)?$/
 
 environment:
