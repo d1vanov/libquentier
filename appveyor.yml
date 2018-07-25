@@ -228,12 +228,12 @@ build_script:
   - if %qt%==mingw492_32 set PATH=%ORIGPATH%
 
 test_script:
-  - cd "C:\Program Files (x86)\Windows Kits"
-  - dir /s
+    # - cd "C:\Program Files (x86)\Windows Kits"
+    # - dir /s
   - ps: >-
       If($true) {
-        $env:Path += ";C:\Program Files (x86)\Windows Kits\10.0\Debuggers\x86\;"
-        $env:Path += ";C:\Program Files (x86)\Windows Kits\10.0\Debuggers\x64\;"
+        $env:Path += ";C:\Program Files (x86)\Windows Kits\10\Debuggers\x86\;"
+        $env:Path += ";C:\Program Files (x86)\Windows Kits\10\Debuggers\x64\;"
         $SymPath = "C:\dev\libquentier\build;SRV*C:\symbols*http://msdl.microsoft.com/download/symbols"
 
         cmd /r mkdir C:\symbols
