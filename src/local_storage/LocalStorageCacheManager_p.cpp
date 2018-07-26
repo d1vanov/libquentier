@@ -88,8 +88,7 @@ void LocalStorageCacheManagerPrivate::cache##Type(const Type & name) \
             res = m_cacheExpiryChecker->expiry_checker(); \
             if (Q_UNLIKELY(!res)) { \
                 auto latIndexBegin = latIndex.begin(); \
-                QNDEBUG(QStringLiteral("Going to remove the object from local storage cache")); \
-                QNTRACE(QStringLiteral("Content: ") << *latIndexBegin); \
+                QNTRACE(QStringLiteral("Going to remove the object from local storage cache") << *latIndexBegin); \
                 Q_UNUSED(latIndex.erase(latIndexBegin)); \
                 continue; \
             } \
@@ -106,7 +105,7 @@ void LocalStorageCacheManagerPrivate::cache##Type(const Type & name) \
     Index::iterator it = uniqueIndex.find(name.IndexAccessor()); \
     if (it != uniqueIndex.end()) { \
         uniqueIndex.replace(it, name##Holder); \
-        QNDEBUG(QStringLiteral("Updated " #name " in the local storage cache: ") << name); \
+        QNTRACE(QStringLiteral("Updated " #name " in the local storage cache: ") << name); \
         return; \
     } \
     \
@@ -119,8 +118,7 @@ void LocalStorageCacheManagerPrivate::cache##Type(const Type & name) \
         throw LocalStorageCacheManagerException(error); \
     } \
     \
-    QNDEBUG(QStringLiteral("Added " #name " to the local storage cache")); \
-    QNTRACE(QStringLiteral("Content: ") << name); \
+    QNTRACE(QStringLiteral("Added " #name " to the local storage cache") << name); \
 }
 
 CACHE_OBJECT(Note, note, NotesCache, m_notesCache, checkNotes, ByLocalUid, localUid)

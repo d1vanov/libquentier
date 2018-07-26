@@ -5344,7 +5344,7 @@ void NoteEditorPrivate::initialize(FileIOProcessorAsync & fileIOProcessorAsync,
 
 void NoteEditorPrivate::setAccount(const Account & account)
 {
-    QNDEBUG(QStringLiteral("NoteEditorPrivate::setAccount: ") << account);
+    QNDEBUG(QStringLiteral("NoteEditorPrivate::setAccount: ") << account.name());
 
     if (!m_pAccount.isNull() && (m_pAccount->type() == account.type()) &&
         (m_pAccount->name() == account.name()) && (m_pAccount->id() == account.id()))
