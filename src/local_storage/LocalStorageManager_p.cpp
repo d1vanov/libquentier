@@ -9128,42 +9128,30 @@ bool LocalStorageManagerPrivate::findAndSetResourcesPerNote(Note & note, ErrorSt
 
     const QString noteLocalUid = note.localUid();
 
-    // NOTE: it's weird but I can only get this query work as intended,
-    // any more specific ones trying to pick the resource for note's local uid fail miserably.
-    // I've just spent some hours of my life trying to figure out what the hell is going on here
-    // but the best I was able to do is this. Please be very careful if you think you can do better here...
-    QString queryString = QString(QStringLiteral("SELECT * FROM NoteResources"));
+    QString queryString = QString::fromUtf8("SELECT localResource FROM NoteResources WHERE localNote='%1'").arg(sqlEscapeString(noteLocalUid));
     QSqlQuery query(m_sqlDatabase);
     bool res = query.exec(queryString);
     DATABASE_CHECK_AND_SET_ERROR();
 
     QStringList resourceLocalUids;
+    resourceLocalUids.reserve(std::max(query.size(), 0));
+
     while(query.next())
     {
         QSqlRecord rec = query.record();
-        int index = rec.indexOf(QStringLiteral("localNote"));
-        if (index >= 0)
-        {
-            QVariant value = rec.value(index);
-            if (value.isNull()) {
-                continue;
-            }
-
-            QString foundNoteLocalUid = value.toString();
-
-            int resourceIndex = rec.indexOf(QStringLiteral("localResource"));
-            if ((foundNoteLocalUid == noteLocalUid) && (resourceIndex >= 0))
-            {
-                value = rec.value(resourceIndex);
-                if (value.isNull()) {
-                    continue;
-                }
-
-                QString resourceLocalUid = value.toString();
-                resourceLocalUids << resourceLocalUid;
-                QNTRACE(QStringLiteral("Found resource's local uid: ") << resourceLocalUid);
-            }
+        int index = rec.indexOf(QStringLiteral("localResource"));
+        if (Q_UNLIKELY(index < 0)) {
+            continue;
         }
+
+        QVariant value = rec.value(index);
+        if (Q_UNLIKELY(value.isNull())) {
+            continue;
+        }
+
+        QString resourceLocalUid = value.toString();
+        resourceLocalUids << resourceLocalUid;
+        QNTRACE(QStringLiteral("Found resource's local uid: ") << resourceLocalUid);
     }
 
     int numResources = resourceLocalUids.size();
