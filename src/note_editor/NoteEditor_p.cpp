@@ -1706,7 +1706,7 @@ void NoteEditorPrivate::onRemoveResourceUndoRedoFinished(const QVariant & data, 
 void NoteEditorPrivate::onRenameResourceDelegateFinished(QString oldResourceName, QString newResourceName,
                                                          Resource resource, bool performingUndo)
 {
-    QNDEBUG(QStringLiteral("NoteEditorPrivate::onRenameResourceDelegateFinished: old resource name = ") << oldResourceName
+    QNTRACE(QStringLiteral("NoteEditorPrivate::onRenameResourceDelegateFinished: old resource name = ") << oldResourceName
             << QStringLiteral(", new resource name = ") << newResourceName << QStringLiteral(", performing undo = ")
             << (performingUndo ? QStringLiteral("true") : QStringLiteral("false")) << QStringLiteral(", resource: ") << resource);
 
@@ -3322,7 +3322,7 @@ void NoteEditorPrivate::saveNoteResourcesToLocalFiles()
 
 bool NoteEditorPrivate::saveResourceToLocalFile(const Resource & resource)
 {
-    QNDEBUG(QStringLiteral("NoteEditorPrivate::saveResourceToLocalFile: ") << resource);
+    QNTRACE(QStringLiteral("NoteEditorPrivate::saveResourceToLocalFile: ") << resource);
 
     if (Q_UNLIKELY(!resource.hasMime())) {
         ErrorString error(QT_TR_NOOP("Can't save the resource to local file: no resource mime type"));
