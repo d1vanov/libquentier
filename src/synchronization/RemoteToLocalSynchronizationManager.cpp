@@ -2653,7 +2653,7 @@ void RemoteToLocalSynchronizationManager::onGetNoteAsyncFinished(qint32 errorCod
 
     if (Q_UNLIKELY(!needToAddNote && !needToUpdateNote)) {
         errorDescription.setBase(QT_TR_NOOP("Internal error: the downloaded note was not expected"));
-        QNWARNING(errorDescription << QStringLiteral(", note: ") << note);
+        QNWARNING(errorDescription << QStringLiteral(", note: ") << qecNote);
         Q_EMIT failure(errorDescription);
         return;
     }
