@@ -413,7 +413,7 @@ void Note::setTagGuids(const QStringList & guids)
         tagGuids << *it;
     }
 
-    QNDEBUG(QStringLiteral("Added ") << numTagGuids << QStringLiteral(" tag guids to note"));
+    QNTRACE(QStringLiteral("Added ") << numTagGuids << QStringLiteral(" tag guids to note"));
 }
 
 void Note::addTagGuid(const QString & guid)
