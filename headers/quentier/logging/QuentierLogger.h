@@ -99,4 +99,6 @@ void QUENTIER_EXPORT QuentierRestartLogging();
 #define QUENTIER_ADD_STDOUT_LOG_DESTINATION() \
     quentier::QuentierAddStdOutLogDestination()
 
+#define QNLOG_FILE_LINENUMBER_DELIMITER ":"
+
 #endif // LIB_QUENTIER_LOGGING_QUENTIER_LOGGER_H
