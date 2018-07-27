@@ -3292,21 +3292,29 @@ bool LocalStorageManagerPrivate::findEnResource(Resource & resource, ErrorString
         uid = resource.localUid();
     }
 
-    QString resourcesTable = (withBinaryData
-                              ? QStringLiteral("Resources")
-                              : QStringLiteral("ResourcesWithoutBinaryData"));
-
     uid = sqlEscapeString(uid);
 
-    QString queryString = QString::fromUtf8("SELECT * FROM %1 "
-                                            "LEFT OUTER JOIN ResourceAttributes "
-                                            "ON %1.resourceLocalUid = ResourceAttributes.resourceLocalUid "
-                                            "LEFT OUTER JOIN ResourceAttributesApplicationDataKeysOnly "
-                                            "ON %1.resourceLocalUid = ResourceAttributesApplicationDataKeysOnly.resourceLocalUid "
-                                            "LEFT OUTER JOIN ResourceAttributesApplicationDataFullMap "
-                                            "ON %1.resourceLocalUid = ResourceAttributesApplicationDataFullMap.resourceLocalUid "
-                                            "LEFT OUTER JOIN NoteResources ON %1.resourceLocalUid = NoteResources.localResource "
-                                            "WHERE %1.%2 = '%3'").arg(resourcesTable,column,uid);
+    QString queryString = QStringLiteral("SELECT Resources.resourceLocalUid, resourceGuid, "
+                                         "noteGuid, resourceUpdateSequenceNumber, resourceIsDirty, "
+                                         "dataSize, dataHash, mime, width, height, recognitionDataSize, "
+                                         "recognitionDataHash, alternateDataSize, alternateDataHash, "
+                                         "resourceIndexInNote, resourceSourceURL, timestamp, resourceLatitude, "
+                                         "resourceLongitude, resourceAltitude, cameraMake, cameraModel, clientWillIndex, "
+                                         "fileName, attachment, resourceKey, resourceMapKey, resourceValue, localNote");
+    if (withBinaryData) {
+        queryString += QStringLiteral(", dataBody, recognitionDataBody, alternateDataBody");
+    }
+
+    queryString += QString::fromUtf8(" FROM Resources "
+                                     "LEFT OUTER JOIN ResourceAttributes "
+                                     "ON Resources.resourceLocalUid = ResourceAttributes.resourceLocalUid "
+                                     "LEFT OUTER JOIN ResourceAttributesApplicationDataKeysOnly "
+                                     "ON Resources.resourceLocalUid = ResourceAttributesApplicationDataKeysOnly.resourceLocalUid "
+                                     "LEFT OUTER JOIN ResourceAttributesApplicationDataFullMap "
+                                     "ON Resources.resourceLocalUid = ResourceAttributesApplicationDataFullMap.resourceLocalUid "
+                                     "LEFT OUTER JOIN NoteResources "
+                                     "ON Resources.resourceLocalUid = NoteResources.localResource "
+                                     "WHERE Resources.%1 = '%2'").arg(column,uid);
 
     QSqlQuery query(m_sqlDatabase);
     bool res = query.exec(queryString);
