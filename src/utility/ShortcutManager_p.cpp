@@ -39,7 +39,7 @@ ShortcutManagerPrivate::ShortcutManagerPrivate(ShortcutManager & shortcutManager
 
 QKeySequence ShortcutManagerPrivate::shortcut(const int key, const Account & account, const QString & context) const
 {
-    QNTRACE(QStringLiteral("ShortcutManagerPrivate::shortcut: key = ") << key << QStringLiteral(", context = ")
+    QNDEBUG(QStringLiteral("ShortcutManagerPrivate::shortcut: key = ") << key << QStringLiteral(", context = ")
             << context << QStringLiteral(", account: ") << account.name());
 
     QKeySequence userKeySequence = userShortcut(key, account, context);
@@ -47,13 +47,13 @@ QKeySequence ShortcutManagerPrivate::shortcut(const int key, const Account & acc
         return userKeySequence;
     }
 
-    QNTRACE(QStringLiteral("User shortcut is empty, fallback to the default shortcut"));
+    QNDEBUG(QStringLiteral("User shortcut is empty, fallback to the default shortcut"));
     return defaultShortcut(key, account, context);
 }
 
 QKeySequence ShortcutManagerPrivate::shortcut(const QString & nonStandardKey, const Account & account, const QString & context) const
 {
-    QNTRACE(QStringLiteral("ShortcutManagerPrivate::shortcut: non-standard key = ") << nonStandardKey
+    QNDEBUG(QStringLiteral("ShortcutManagerPrivate::shortcut: non-standard key = ") << nonStandardKey
             << QStringLiteral(", context = ") << context << QStringLiteral(", account: ") << account.name());
 
     QKeySequence userKeySequence = userShortcut(nonStandardKey, account, context);
@@ -69,7 +69,7 @@ QKeySequence ShortcutManagerPrivate::defaultShortcut(const int key, const Accoun
 {
     QString keyString = keyToString(key);
 
-    QNTRACE(QStringLiteral("ShortcutManagerPrivate::defaultShortcut: key = ") << keyString << QStringLiteral(" (")
+    QNDEBUG(QStringLiteral("ShortcutManagerPrivate::defaultShortcut: key = ") << keyString << QStringLiteral(" (")
             << key << QStringLiteral("), context = ") << context << QStringLiteral(", account: ") << account.name());
 
     if (Q_UNLIKELY(keyString.isEmpty())) {
@@ -108,7 +108,7 @@ QKeySequence ShortcutManagerPrivate::defaultShortcut(const int key, const Accoun
 QKeySequence ShortcutManagerPrivate::defaultShortcut(const QString & nonStandardKey, const Account & account,
                                                      const QString & context) const
 {
-    QNTRACE(QStringLiteral("ShortcutManagerPrivate::defaultShortcut: non-standard key = ") << nonStandardKey
+    QNDEBUG(QStringLiteral("ShortcutManagerPrivate::defaultShortcut: non-standard key = ") << nonStandardKey
             << QStringLiteral(", context = ") << context << QStringLiteral(", account: ") << account.name());
 
     if (Q_UNLIKELY(nonStandardKey.isEmpty())) {
@@ -138,7 +138,7 @@ QKeySequence ShortcutManagerPrivate::userShortcut(const int key, const Account &
 {
     QString keyString = keyToString(key);
 
-    QNTRACE(QStringLiteral("ShortcutManagerPrivate::userShortcut: key = ") << keyString << QStringLiteral(" (")
+    QNDEBUG(QStringLiteral("ShortcutManagerPrivate::userShortcut: key = ") << keyString << QStringLiteral(" (")
             << key << QStringLiteral("), context = ") << context << QStringLiteral(", account: ") << account.name());
 
     if (Q_UNLIKELY(keyString.isEmpty())) {
@@ -166,7 +166,7 @@ QKeySequence ShortcutManagerPrivate::userShortcut(const int key, const Account &
 
 QKeySequence ShortcutManagerPrivate::userShortcut(const QString & nonStandardKey, const Account & account, const QString & context) const
 {
-    QNTRACE(QStringLiteral("ShortcutManagerPrivate::userShortcut: non-standard key = ") << nonStandardKey
+    QNDEBUG(QStringLiteral("ShortcutManagerPrivate::userShortcut: non-standard key = ") << nonStandardKey
             << QStringLiteral(", context = ") << context << QStringLiteral(", account: ") << account.name());
 
     if (Q_UNLIKELY(nonStandardKey.isEmpty())) {
@@ -194,7 +194,7 @@ void ShortcutManagerPrivate::setUserShortcut(int key, QKeySequence shortcut, con
 {
     QString keyString = keyToString(key);
 
-    QNTRACE(QStringLiteral("ShortcutManagerPrivate::setUserShortcut: key = ") << keyString << QStringLiteral(" (")
+    QNDEBUG(QStringLiteral("ShortcutManagerPrivate::setUserShortcut: key = ") << keyString << QStringLiteral(" (")
             << key << QStringLiteral("), shortcut = ") << shortcut << QStringLiteral(", context = ") << context
             << QStringLiteral(", account: ") << account.name());
 
@@ -218,7 +218,7 @@ void ShortcutManagerPrivate::setUserShortcut(int key, QKeySequence shortcut, con
 void ShortcutManagerPrivate::setNonStandardUserShortcut(QString nonStandardKey, QKeySequence shortcut,
                                                         const Account & account, QString context)
 {
-    QNTRACE(QStringLiteral("ShortcutManagerPrivate::setNonStandardUserShortcut: non-standard key = ") << nonStandardKey
+    QNDEBUG(QStringLiteral("ShortcutManagerPrivate::setNonStandardUserShortcut: non-standard key = ") << nonStandardKey
             << QStringLiteral(", shortcut = ") << shortcut << QStringLiteral(", context = ") << context
             << QStringLiteral(", account: ") << account.name());
 
@@ -243,7 +243,7 @@ void ShortcutManagerPrivate::setDefaultShortcut(int key, QKeySequence shortcut, 
 {
     QString keyString = keyToString(key);
 
-    QNTRACE(QStringLiteral("ShortcutManagerPrivate::setDefaultShortcut: key = ") << keyString << QStringLiteral(" (")
+    QNDEBUG(QStringLiteral("ShortcutManagerPrivate::setDefaultShortcut: key = ") << keyString << QStringLiteral(" (")
             << key << QStringLiteral("), shortcut = ") << shortcut << QStringLiteral(", context = ") << context
             << QStringLiteral(", account: ") << account.name());
 
@@ -275,7 +275,7 @@ void ShortcutManagerPrivate::setDefaultShortcut(int key, QKeySequence shortcut, 
 void ShortcutManagerPrivate::setNonStandardDefaultShortcut(QString nonStandardKey, QKeySequence shortcut,
                                                            const Account & account, QString context)
 {
-    QNTRACE(QStringLiteral("ShortcutManagerPrivate::setNonStandardDefaultShortcut: non-standard key = ") << nonStandardKey
+    QNDEBUG(QStringLiteral("ShortcutManagerPrivate::setNonStandardDefaultShortcut: non-standard key = ") << nonStandardKey
             << QStringLiteral(", shortcut = ") << shortcut << QStringLiteral(", context = ") << context
             << QStringLiteral(", account: ") << account.name());
 
@@ -482,7 +482,7 @@ QString ShortcutManagerPrivate::keyToString(const int key) const
 
 QString ShortcutManagerPrivate::shortcutGroupString(const QString & context, const bool defaultShortcut, const bool nonStandardShortcut) const
 {
-    QNTRACE(QStringLiteral("ShortcutManagerPrivate::shortcutGroupString: context = ") << context << QStringLiteral(", default shortcut = ")
+    QNDEBUG(QStringLiteral("ShortcutManagerPrivate::shortcutGroupString: context = ") << context << QStringLiteral(", default shortcut = ")
             << (defaultShortcut ? QStringLiteral("true") : QStringLiteral("false")) << QStringLiteral(", non-standard shortcut = ")
             << (nonStandardShortcut ? QStringLiteral("true") : QStringLiteral("false")));
 

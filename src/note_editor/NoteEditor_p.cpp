@@ -1706,9 +1706,10 @@ void NoteEditorPrivate::onRemoveResourceUndoRedoFinished(const QVariant & data, 
 void NoteEditorPrivate::onRenameResourceDelegateFinished(QString oldResourceName, QString newResourceName,
                                                          Resource resource, bool performingUndo)
 {
-    QNTRACE(QStringLiteral("NoteEditorPrivate::onRenameResourceDelegateFinished: old resource name = ") << oldResourceName
+    QNDEBUG(QStringLiteral("NoteEditorPrivate::onRenameResourceDelegateFinished: old resource name = ") << oldResourceName
             << QStringLiteral(", new resource name = ") << newResourceName << QStringLiteral(", performing undo = ")
-            << (performingUndo ? QStringLiteral("true") : QStringLiteral("false")) << QStringLiteral(", resource: ") << resource);
+            << (performingUndo ? QStringLiteral("true") : QStringLiteral("false")));
+    QNTRACE(QStringLiteral("Resource: ") << resource);
 
 #ifndef QUENTIER_USE_QT_WEB_ENGINE
     if (m_pPluginFactory) {
