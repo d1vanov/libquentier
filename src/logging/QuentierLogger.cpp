@@ -27,7 +27,7 @@ void QuentierAddLogEntry(const QString & sourceFileName, const int sourceFileLin
     }
 
     QString logEntry = relativeSourceFileName;
-    logEntry += QStringLiteral(" @ ");
+    logEntry += QStringLiteral(QNLOG_FILE_LINENUMBER_DELIMITER);
     logEntry += QString::number(sourceFileLineNumber);
     logEntry += QStringLiteral(" [");
 

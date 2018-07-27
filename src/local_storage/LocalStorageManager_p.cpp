@@ -389,10 +389,11 @@ int LocalStorageManagerPrivate::notebookCount(ErrorString & errorDescription) co
 void LocalStorageManagerPrivate::switchUser(const Account & account,
                                             const bool startFromScratch, const bool overrideLock)
 {
-    QNDEBUG(QStringLiteral("LocalStorageManagerPrivate::switchUser: start from scratch = ")
+    QNDEBUG(QStringLiteral("LocalStorageManagerPrivate::switchUser: ") << account.name()
+            << QStringLiteral(", start from scratch = ")
             << (startFromScratch ? QStringLiteral("true") : QStringLiteral("false"))
-            << QStringLiteral(", override lock = ") << (overrideLock ? QStringLiteral("true") : QStringLiteral("false"))
-            << QStringLiteral(", account: ") << account);
+            << QStringLiteral(", override lock = ") << (overrideLock ? QStringLiteral("true") : QStringLiteral("false")));
+    QNTRACE(QStringLiteral("Account: ") << account);
 
     if (!m_databaseFilePath.isEmpty() &&
         (m_currentAccount.type() == account.type()) &&

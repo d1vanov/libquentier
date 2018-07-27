@@ -251,7 +251,7 @@ bool RemoteToLocalSynchronizationManager::active() const
 
 void RemoteToLocalSynchronizationManager::setAccount(const Account & account)
 {
-    QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::setAccount: ") << account);
+    QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::setAccount: ") << account.name());
 
     if (m_user.hasId() && (m_user.id() != account.id())) {
         QNDEBUG(QStringLiteral("Switching to a different user, clearing the current state"));
