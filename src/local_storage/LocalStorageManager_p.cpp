@@ -4544,6 +4544,10 @@ bool LocalStorageManagerPrivate::createTables(ErrorString & errorDescription)
     errorPrefix.setBase(QT_TR_NOOP("Can't create NoteRestrictions table"));
     DATABASE_CHECK_AND_SET_ERROR();
 
+    res = query.exec(QStringLiteral("CREATE INDEX IF NOT EXISTS NoteRestrictionsByNoteLocalUid ON NoteRestrictions(noteLocalUid)"));
+    errorPrefix.setBase(QT_TR_NOOP("Can't create index NoteRestrictionsByNoteLocalUid"));
+    DATABASE_CHECK_AND_SET_ERROR();
+
     res = query.exec(QStringLiteral("CREATE TABLE IF NOT EXISTS NoteLimits("
                                     "  noteLocalUid REFERENCES Notes(localUid) ON UPDATE CASCADE, "
                                     "  noteResourceCountMax             INTEGER             DEFAULT NULL, "
