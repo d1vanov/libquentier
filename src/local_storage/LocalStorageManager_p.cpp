@@ -1938,30 +1938,53 @@ bool LocalStorageManagerPrivate::findNote(Note & note, ErrorString & errorDescri
         uid = note.localUid();
     }
 
-    QString resourcesTable = QStringLiteral("Resources");
-    if (!withResourceBinaryData) {
-        resourcesTable += QStringLiteral("WithoutBinaryData");
-    }
-
     QString resourceIndexColumn = (column == QStringLiteral("localUid")
                                    ? QStringLiteral("noteLocalUid")
                                    : QStringLiteral("noteGuid"));
 
     uid = sqlEscapeString(uid);
 
-    QString queryString = QString::fromUtf8("SELECT * FROM Notes "
-                                            "LEFT OUTER JOIN SharedNotes ON ((Notes.guid IS NOT NULL) AND (Notes.guid = SharedNotes.sharedNoteNoteGuid)) "
-                                            "LEFT OUTER JOIN NoteRestrictions ON Notes.localUid = NoteRestrictions.noteLocalUid "
-                                            "LEFT OUTER JOIN NoteLimits ON Notes.localUid = NoteLimits.noteLocalUid "
-                                            "LEFT OUTER JOIN %1 ON Notes.%3 = %1.%2 "
-                                            "LEFT OUTER JOIN ResourceAttributes "
-                                            "ON %1.resourceLocalUid = ResourceAttributes.resourceLocalUid "
-                                            "LEFT OUTER JOIN ResourceAttributesApplicationDataKeysOnly "
-                                            "ON %1.resourceLocalUid = ResourceAttributesApplicationDataKeysOnly.resourceLocalUid "
-                                            "LEFT OUTER JOIN ResourceAttributesApplicationDataFullMap "
-                                            "ON %1.resourceLocalUid = ResourceAttributesApplicationDataFullMap.resourceLocalUid "
-                                            "LEFT OUTER JOIN NoteTags ON Notes.localUid = NoteTags.localNote "
-                                            "WHERE %3 = '%4'").arg(resourcesTable,resourceIndexColumn,column,uid);
+    QString queryString = QStringLiteral("SELECT localUid, guid, updateSequenceNumber, isDirty, isLocal, isFavorited, "
+                                         "title, content, contentLength, contentHash, creationTimestamp, modificationTimestamp, "
+                                         "deletionTimestamp, isActive, hasAttributes, thumbnail, notebookLocalUid, notebookGuid, "
+                                         "subjectDate, latitude, longitude, altitude, author, source, sourceURL, sourceApplication, "
+                                         "shareDate, reminderOrder, reminderDoneTime, reminderTime, placeName, contentClass, "
+                                         "lastEditedBy, creatorId, lastEditorId, sharedWithBusiness, conflictSourceNoteGuid, "
+                                         "noteTitleQuality, applicationDataKeysOnly, applicationDataKeysMap, applicationDataValues, "
+                                         "classificationKeys, classificationValues, sharedNoteNoteGuid, sharedNoteSharerUserId, "
+                                         "sharedNoteRecipientIdentityId, sharedNoteRecipientContactName, sharedNoteRecipientContactId, "
+                                         "sharedNoteRecipientContactType, sharedNoteRecipientContactPhotoUrl, "
+                                         "sharedNoteRecipientContactPhotoLastUpdated, sharedNoteRecipientContactMessagingPermit, "
+                                         "sharedNoteRecipientContactMessagingPermitExpires, sharedNoteRecipientUserId, "
+                                         "sharedNoteRecipientDeactivated, sharedNoteRecipientSameBusiness, "
+                                         "sharedNoteRecipientBlocked, sharedNoteRecipientUserConnected, "
+                                         "sharedNoteRecipientEventId, sharedNotePrivilegeLevel, sharedNoteCreationTimestamp, "
+                                         "sharedNoteModificationTimestamp, sharedNoteAssignmentTimestamp, indexInNote, "
+                                         "noUpdateNoteTitle, noUpdateNoteContent, noEmailNote, noShareNote, noShareNotePublicly, "
+                                         "noteResourceCountMax, uploadLimit, resourceSizeMax, noteSizeMax, uploaded, "
+                                         "Resources.resourceLocalUid, resourceGuid, Resources.noteLocalUid, noteGuid, resourceUpdateSequenceNumber, "
+                                         "resourceIsDirty, dataSize, dataHash, mime, width, height, recognitionDataSize, "
+                                         "recognitionDataHash, alternateDataSize, alternateDataHash, resourceIndexInNote, "
+                                         "resourceSourceURL, timestamp, resourceLatitude, resourceLongitude, resourceAltitude, "
+                                         "cameraMake, cameraModel, clientWillIndex, fileName, attachment, resourceKey, "
+                                         "resourceMapKey, resourceValue, localNote, note, localTag, tag, tagIndexInNote");
+    if (withResourceBinaryData) {
+        queryString += QStringLiteral(", dataBody, recognitionDataBody, alternateDataBody");
+    }
+
+    queryString += QStringLiteral(" FROM Notes "
+                                  "LEFT OUTER JOIN SharedNotes ON ((Notes.guid IS NOT NULL) AND (Notes.guid = SharedNotes.sharedNoteNoteGuid)) "
+                                  "LEFT OUTER JOIN NoteRestrictions ON Notes.localUid = NoteRestrictions.noteLocalUid "
+                                  "LEFT OUTER JOIN NoteLimits ON Notes.localUid = NoteLimits.noteLocalUid "
+                                  "LEFT OUTER JOIN Resources ON Notes.%2 = Resources.%1 "
+                                  "LEFT OUTER JOIN ResourceAttributes "
+                                  "ON Resources.resourceLocalUid = ResourceAttributes.resourceLocalUid "
+                                  "LEFT OUTER JOIN ResourceAttributesApplicationDataKeysOnly "
+                                  "ON Resources.resourceLocalUid = ResourceAttributesApplicationDataKeysOnly.resourceLocalUid "
+                                  "LEFT OUTER JOIN ResourceAttributesApplicationDataFullMap "
+                                  "ON Resources.resourceLocalUid = ResourceAttributesApplicationDataFullMap.resourceLocalUid "
+                                  "LEFT OUTER JOIN NoteTags ON Notes.localUid = NoteTags.localNote "
+                                  "WHERE %2 = '%3'").arg(resourceIndexColumn,column,uid);
     QSqlQuery query(m_sqlDatabase);
     bool res = query.exec(queryString);
     DATABASE_CHECK_AND_SET_ERROR();
@@ -4673,14 +4696,6 @@ bool LocalStorageManagerPrivate::createTables(ErrorString & errorDescription)
                                     "INSERT INTO ResourceMimeFTS(ResourceMimeFTS) VALUES('rebuild'); "
                                     "END"));
     errorPrefix.setBase(QT_TR_NOOP("Can't create trigger ResourceMimeFTS_AfterInsertTrigger"));
-    DATABASE_CHECK_AND_SET_ERROR();
-
-    res = query.exec(QStringLiteral("CREATE VIEW IF NOT EXISTS ResourcesWithoutBinaryData "
-                                    "AS SELECT resourceLocalUid, resourceGuid, noteLocalUid, noteGuid, "
-                                    "resourceUpdateSequenceNumber, resourceIsDirty, dataSize, dataHash, "
-                                    "mime, width, height, recognitionDataSize, recognitionDataHash, "
-                                    "alternateDataSize, alternateDataHash, resourceIndexInNote FROM Resources"));
-    errorPrefix.setBase(QT_TR_NOOP("Can't create ResourcesWithoutBinaryData view"));
     DATABASE_CHECK_AND_SET_ERROR();
 
     res = query.exec(QStringLiteral("CREATE INDEX IF NOT EXISTS ResourceNote ON Resources(noteLocalUid)"));
