@@ -1127,7 +1127,8 @@ void LocalStorageManagerTester::localStorageManagerListNotesTest()
         size_t offset = 1;
         LocalStorageManager::ListNotesOrder::type order = LocalStorageManager::ListNotesOrder::ByUpdateSequenceNumber;
         LocalStorageManager::OrderDirection::type orderDirection = LocalStorageManager::OrderDirection::Descending;
-        foundNotes = localStorageManager.listNotesPerNotebook(notebook, errorMessage, /* with resource binary data = */ true,
+        foundNotes = localStorageManager.listNotesPerNotebook(notebook, errorMessage, /* with resource metadata = */ true,
+                                                              /* with resource binary data = */ true,
                                                               LocalStorageManager::ListElementsWithGuid, limit, offset,
                                                               order, orderDirection);
         if (foundNotes.size() != static_cast<int>(limit)) {
@@ -1158,7 +1159,8 @@ void LocalStorageManagerTester::localStorageManagerListNotesTest()
         limit = 2;
         offset = 0;
 
-        foundNotes = localStorageManager.listNotesPerTag(testTag, errorMessage, /* with resource binary data = */ true,
+        foundNotes = localStorageManager.listNotesPerTag(testTag, errorMessage, /* with resource metadata = */ true,
+                                                         /* with resource binary data = */ true,
                                                          LocalStorageManager::ListElementsWithGuid, limit, offset,
                                                          order, orderDirection);
         if (foundNotes.size() != static_cast<int>(limit)) {

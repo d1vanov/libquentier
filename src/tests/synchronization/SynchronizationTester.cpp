@@ -6175,7 +6175,7 @@ void SynchronizationTester::listNotesFromLocalStorage(const qint32 afterUSN, con
 
     ErrorString errorDescription;
     QList<Note> localNotes = pLocalStorageManager->listNotes(LocalStorageManager::ListAll,
-                                                             errorDescription, true, 0, 0, LocalStorageManager::ListNotesOrder::NoOrder,
+                                                             errorDescription, true, true, 0, 0, LocalStorageManager::ListNotesOrder::NoOrder,
                                                              LocalStorageManager::OrderDirection::Ascending,
                                                              localLinkedNotebookGuid);
     if (localNotes.isEmpty() && !errorDescription.isEmpty()) {
@@ -6215,7 +6215,7 @@ void SynchronizationTester::listResourcesFromLocalStorage(const qint32 afterUSN,
 
     ErrorString errorDescription;
     QList<Note> localNotes = pLocalStorageManager->listNotes(LocalStorageManager::ListAll,
-                                                             errorDescription, true, 0, 0, LocalStorageManager::ListNotesOrder::NoOrder,
+                                                             errorDescription, true, true, 0, 0, LocalStorageManager::ListNotesOrder::NoOrder,
                                                              LocalStorageManager::OrderDirection::Ascending,
                                                              localLinkedNotebookGuid);
     if (localNotes.isEmpty() && !errorDescription.isEmpty()) {

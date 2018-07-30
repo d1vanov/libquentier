@@ -838,9 +838,11 @@ void RemoteToLocalSynchronizationManager::onFindNotebookFailed(Notebook notebook
     }
 }
 
-void RemoteToLocalSynchronizationManager::onFindNoteCompleted(Note note, bool withResourceBinaryData, QUuid requestId)
+void RemoteToLocalSynchronizationManager::onFindNoteCompleted(Note note, bool withResourceMetadata,
+                                                              bool withResourceBinaryData, QUuid requestId)
 {
-    Q_UNUSED(withResourceBinaryData);
+    Q_UNUSED(withResourceMetadata)
+    Q_UNUSED(withResourceBinaryData)
 
     auto it = m_findNoteByGuidRequestIds.find(requestId);
     if (it != m_findNoteByGuidRequestIds.end())
@@ -987,9 +989,10 @@ void RemoteToLocalSynchronizationManager::onFindNoteCompleted(Note note, bool wi
     }
 }
 
-void RemoteToLocalSynchronizationManager::onFindNoteFailed(Note note, bool withResourceBinaryData,
+void RemoteToLocalSynchronizationManager::onFindNoteFailed(Note note, bool withResourceMetadata, bool withResourceBinaryData,
                                                            ErrorString errorDescription, QUuid requestId)
 {
+    Q_UNUSED(withResourceMetadata)
     Q_UNUSED(withResourceBinaryData)
     Q_UNUSED(errorDescription)
 
@@ -1109,7 +1112,8 @@ void RemoteToLocalSynchronizationManager::onFindResourceCompleted(Resource resou
 
         QNTRACE(QStringLiteral("Emitting the request to find resource's note by guid: request id = ") << findNotePerResourceRequestId
                 << QStringLiteral(", note: ") << noteToFind);
-        Q_EMIT findNote(noteToFind, /* with resource binary data = */ true, findNotePerResourceRequestId);
+        Q_EMIT findNote(noteToFind, /* with resource metadata = */ true,
+                        /* with resource binary data = */ true, findNotePerResourceRequestId);
         return;
     }
 }
@@ -1156,7 +1160,8 @@ void RemoteToLocalSynchronizationManager::onFindResourceFailed(Resource resource
 
         QNTRACE(QStringLiteral("Emitting the request to find resource's note by guid: request id = ") << findNotePerResourceRequestId
                 << QStringLiteral(", note: ") << noteToFind);
-        Q_EMIT findNote(noteToFind, /* with resource binary data = */ false, findNotePerResourceRequestId);
+        Q_EMIT findNote(noteToFind, /* with resource metadata = */ true,
+                        /* with resource binary data = */ false, findNotePerResourceRequestId);
         return;
     }
 }
@@ -1995,10 +2000,11 @@ void RemoteToLocalSynchronizationManager::emitFindByGuidRequest<qevercloud::Note
 
     QUuid requestId = QUuid::createUuid();
     Q_UNUSED(m_findNoteByGuidRequestIds.insert(requestId));
-    bool withResourceDataOption = false;
+    bool withResourceMetadata = true;
+    bool withResourceBinaryData = false;
     QNTRACE(QStringLiteral("Emitting the request to find note in the local storage: request id = ") << requestId
             << QStringLiteral(", note: ") << note);
-    Q_EMIT findNote(note, withResourceDataOption, requestId);
+    Q_EMIT findNote(note, withResourceMetadata, withResourceBinaryData, requestId);
 }
 
 template <>
@@ -3144,8 +3150,8 @@ void RemoteToLocalSynchronizationManager::connectToLocalStorage()
     QObject::connect(this, QNSIGNAL(RemoteToLocalSynchronizationManager,updateNote,Note,bool,bool,QUuid),
                      &localStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,onUpdateNoteRequest,Note,bool,bool,QUuid),
                      Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
-    QObject::connect(this, QNSIGNAL(RemoteToLocalSynchronizationManager,findNote,Note,bool,QUuid),
-                     &localStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,onFindNoteRequest,Note,bool,QUuid),
+    QObject::connect(this, QNSIGNAL(RemoteToLocalSynchronizationManager,findNote,Note,bool,bool,QUuid),
+                     &localStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,onFindNoteRequest,Note,bool,bool,QUuid),
                      Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
     QObject::connect(this, QNSIGNAL(RemoteToLocalSynchronizationManager,expungeNote,Note,QUuid),
                      &localStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,onExpungeNoteRequest,Note,QUuid),
@@ -3227,11 +3233,11 @@ void RemoteToLocalSynchronizationManager::connectToLocalStorage()
                      this, QNSLOT(RemoteToLocalSynchronizationManager,onFindNotebookFailed,Notebook,ErrorString,QUuid),
                      Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
 
-    QObject::connect(&localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,findNoteComplete,Note,bool,QUuid),
-                     this, QNSLOT(RemoteToLocalSynchronizationManager,onFindNoteCompleted,Note,bool,QUuid),
+    QObject::connect(&localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,findNoteComplete,Note,bool,bool,QUuid),
+                     this, QNSLOT(RemoteToLocalSynchronizationManager,onFindNoteCompleted,Note,bool,bool,QUuid),
                      Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
-    QObject::connect(&localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,findNoteFailed,Note,bool,ErrorString,QUuid),
-                     this, QNSLOT(RemoteToLocalSynchronizationManager,onFindNoteFailed,Note,bool,ErrorString,QUuid),
+    QObject::connect(&localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,findNoteFailed,Note,bool,bool,ErrorString,QUuid),
+                     this, QNSLOT(RemoteToLocalSynchronizationManager,onFindNoteFailed,Note,bool,bool,ErrorString,QUuid),
                      Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
 
     QObject::connect(&localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,findTagComplete,Tag,QUuid),
@@ -3452,8 +3458,8 @@ void RemoteToLocalSynchronizationManager::disconnectFromLocalStorage()
                         &localStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,onAddNoteRequest,Note,QUuid));
     QObject::disconnect(this, QNSIGNAL(RemoteToLocalSynchronizationManager,updateNote,Note,bool,bool,QUuid),
                         &localStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,onUpdateNoteRequest,Note,bool,bool,QUuid));
-    QObject::disconnect(this, QNSIGNAL(RemoteToLocalSynchronizationManager,findNote,Note,bool,QUuid),
-                        &localStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,onFindNoteRequest,Note,bool,QUuid));
+    QObject::disconnect(this, QNSIGNAL(RemoteToLocalSynchronizationManager,findNote,Note,bool,bool,QUuid),
+                        &localStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,onFindNoteRequest,Note,bool,bool,QUuid));
     QObject::disconnect(this, QNSIGNAL(RemoteToLocalSynchronizationManager,expungeNote,Note,QUuid),
                         &localStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,onExpungeNoteRequest,Note,QUuid));
 
@@ -3512,10 +3518,10 @@ void RemoteToLocalSynchronizationManager::disconnectFromLocalStorage()
     QObject::disconnect(&localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,findNotebookFailed,Notebook,ErrorString,QUuid),
                         this, QNSLOT(RemoteToLocalSynchronizationManager,onFindNotebookFailed,Notebook,ErrorString,QUuid));
 
-    QObject::disconnect(&localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,findNoteComplete,Note,bool,QUuid),
-                        this, QNSLOT(RemoteToLocalSynchronizationManager,onFindNoteCompleted,Note,bool,QUuid));
-    QObject::disconnect(&localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,findNoteFailed,Note,bool,ErrorString,QUuid),
-                        this, QNSLOT(RemoteToLocalSynchronizationManager,onFindNoteFailed,Note,bool,ErrorString,QUuid));
+    QObject::disconnect(&localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,findNoteComplete,Note,bool,bool,QUuid),
+                        this, QNSLOT(RemoteToLocalSynchronizationManager,onFindNoteCompleted,Note,bool,bool,QUuid));
+    QObject::disconnect(&localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,findNoteFailed,Note,bool,bool,ErrorString,QUuid),
+                        this, QNSLOT(RemoteToLocalSynchronizationManager,onFindNoteFailed,Note,bool,bool,ErrorString,QUuid));
 
     QObject::disconnect(&localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,findTagComplete,Tag,QUuid),
                         this, QNSLOT(RemoteToLocalSynchronizationManager,onFindTagCompleted,Tag,QUuid));

@@ -896,10 +896,11 @@ bool TestNoteFindUpdateDeleteExpungeInLocalStorage(QString & errorDescription)
     }
 
     const QString noteGuid = note.guid();
+    const bool withResourceMetadata = true;
     const bool withResourceBinaryData = true;
     Note foundNote;
     foundNote.setGuid(noteGuid);
-    res = localStorageManager.findNote(foundNote, errorMessage, withResourceBinaryData);
+    res = localStorageManager.findNote(foundNote, errorMessage, withResourceMetadata, withResourceBinaryData);
     if (!res) {
         errorDescription = errorMessage.nonLocalizedString();
         return false;
@@ -1041,7 +1042,8 @@ bool TestNoteFindUpdateDeleteExpungeInLocalStorage(QString & errorDescription)
     }
 
     res = localStorageManager.findNote(foundNote, errorMessage,
-                                       /* withResourceBinaryData = */ true);
+                                       /* with resource metadata = */ true,
+                                       /* with resource binary data = */ true);
     if (!res) {
         errorDescription = errorMessage.nonLocalizedString();
         return false;
@@ -1171,7 +1173,8 @@ bool TestNoteFindUpdateDeleteExpungeInLocalStorage(QString & errorDescription)
     }
 
     res = localStorageManager.findNote(foundNote, errorMessage,
-                                       /* withResourceBinaryData = */ true);
+                                       /* with resource metadata = */ true,
+                                       /* with resource binary data = */ true);
     if (!res) {
         errorDescription = errorMessage.nonLocalizedString();
         return false;
@@ -1204,7 +1207,8 @@ bool TestNoteFindUpdateDeleteExpungeInLocalStorage(QString & errorDescription)
     }
 
     res = localStorageManager.findNote(foundNote, errorMessage,
-                                       /* withResourceBinaryData = */ true);
+                                       /* with resource metadata = */ true,
+                                       /* with resource binary data = */ true);
     if (res) {
         errorDescription = QStringLiteral("Error: found Note which should have been expunged "
                                           "from LocalStorageManager");
@@ -1217,7 +1221,7 @@ bool TestNoteFindUpdateDeleteExpungeInLocalStorage(QString & errorDescription)
     foundResource = Resource();
     foundResource.setGuid(newResource.guid());
     res = localStorageManager.findEnResource(foundResource, errorMessage,
-                                             /* withBinaryData = */ true);
+                                             /* with binary data = */ true);
     if (res) {
         errorDescription = QStringLiteral("Error: found Resource which should have been expunged "
                                           "from LocalStorageManager along with Note owning it");

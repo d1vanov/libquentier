@@ -548,14 +548,17 @@ public:
      * @param note - note to be found in the local storage database. Must have either
      * local or "remote" Evernote service's guid set
      * @param errorDescription - error description if note could not be found
+     * @param withResourceMetadata - optional boolean parameter defining whether found note
+     * should be filled with the metadata of its respective attached resources.
      * @param withResourceBinaryData - optional boolean parameter defining whether found note
-     * should be filled with all the contents of its attached resources. By default this parameter is true
-     * which means the whole contents of all resources would be filled. If it's false,
-     * dataBody, recognitionBody or alternateDataBody won't be present within the found note's
-     * resources
+     * should be filled with the whole contents of its respective attached resources including the heavy binary data
+     * of these resources. By default this parameter is true which means the whole contents of all resources
+     * would be filled. If it's false, dataBody, recognitionBody or alternateDataBody won't be present
+     * within the found note's resources
      * @return true if note was found, false otherwise
      */
     bool findNote(Note & note, ErrorString & errorDescription,
+                  const bool withResourceMetadata = true,
                   const bool withResourceBinaryData = true) const;
 
     /**
@@ -586,8 +589,11 @@ public:
      * the "remote" Evernote service's guid set, it would be used to identify the notebook
      * in the local storage database, otherwise its local uid would be used
      * @param errorDescription - error description in case notes could not be listed
+     * @param withResourceMetadata - optional boolean parameter defining whether found notes
+     * should be filled with the metadata of their respective attached resources.
      * @param withResourceBinaryData - optional boolean parameter defining whether found notes
-     * should be filled with all the contents of their respective attached resources.
+     * should be filled with the whole contents of their respective attached resources including the heavy binary data
+     * of these resources. This parameter is only effective if withResourceMetadata is true.
      * By default this parameter is true which means the whole contents of all resources
      * would be filled. If it's false, dataBody, recognitionBody or alternateDataBody
      * won't be present within each found note's resources
@@ -600,6 +606,7 @@ public:
      * no notes presence in the given notebook
      */
     QList<Note> listNotesPerNotebook(const Notebook & notebook, ErrorString & errorDescription,
+                                     const bool withResourceMetadata = true,
                                      const bool withResourceBinaryData = true,
                                      const ListObjectsOptions & flag = ListAll,
                                      const size_t limit = 0, const size_t offset = 0,
@@ -612,8 +619,11 @@ public:
      * the "remote" Evernote service's guid set, it would be used to identify the tag
      * in the local storage database, otherwise its local uid would be used
      * @param errorDescription - error description in case notes could not be listed
+     * @param withResourceMetadata - optional boolean parameter defining whether found notes
+     * should be filled with the metadata of their respective attached resources.
      * @param withResourceBinaryData - optional boolean parameter defining whether found notes
-     * should be filled with all the contents of their respective attached resources.
+     * should be filled with the whole contents of their respective attached resources including the heavy binary data
+     * of these resources. This parameter is only effective if withResourceMetadata is true.
      * By default this parameter is true which means the whole contents of all resources
      * would be filled. If it's false, dataBody, recognitionBody or alternateDataBody
      * won't be present within each found note's resources
@@ -625,19 +635,23 @@ public:
      * @return either list of notes per tag or empty list in case of error or no notes labeled with the given tag presence
      */
     QList<Note> listNotesPerTag(const Tag & tag, ErrorString & errorDescription,
-                                const bool withResourceBinaryData,
-                                const LocalStorageManager::ListObjectsOptions & flag,
-                                const size_t limit, const size_t offset,
-                                const LocalStorageManager::ListNotesOrder::type & order,
-                                const LocalStorageManager::OrderDirection::type & orderDirection) const;
+                                const bool withResourceMetadata = true,
+                                const bool withResourceBinaryData = true,
+                                const LocalStorageManager::ListObjectsOptions & flag = ListAll,
+                                const size_t limit = 0, const size_t offset = 0,
+                                const LocalStorageManager::ListNotesOrder::type & order = ListNotesOrder::NoOrder,
+                                const LocalStorageManager::OrderDirection::type & orderDirection = OrderDirection::Ascending) const;
 
     /**
      * @brief listNotes - attempts to list notes within the account according to the specified input flag
      * @param flag - input parameter used to set the filter for the desired notes to be listed
      * @param errorDescription - error description if notes within the account could not be listed;
      * if no error happens, this parameter is untouched
+     * @param withResourceMetadata - optional boolean parameter defining whether found notes
+     * should be filled with the metadata of their respective attached resources.
      * @param withResourceBinaryData - optional boolean parameter defining whether found notes
-     * should be filled with all the contents of their respective attached resources.
+     * should be filled with the whole contents of their respective attached resources including the heavy binary data
+     * of these resources. This parameter is only effective if withResourceMetadata is true.
      * By default this parameter is true which means the whole contents of all resources
      * would be filled. If it's false, dataBody, recognitionBody or alternateDataBody
      * won't be present within each found note's resources
@@ -653,8 +667,9 @@ public:
      * in cases of error or no notes conforming to the filter exist within the account
      */
     QList<Note> listNotes(const ListObjectsOptions flag, ErrorString & errorDescription,
-                          const bool withResourceBinaryData = true, const size_t limit = 0,
-                          const size_t offset = 0, const ListNotesOrder::type order = ListNotesOrder::NoOrder,
+                          const bool withResourceMetadata = true, const bool withResourceBinaryData = true,
+                          const size_t limit = 0, const size_t offset = 0,
+                          const ListNotesOrder::type order = ListNotesOrder::NoOrder,
                           const OrderDirection::type orderDirection = OrderDirection::Ascending,
                           const QString & linkedNotebookGuid = QString()) const;
 
@@ -672,8 +687,11 @@ public:
      * NoteSearchQuery object.
      * @param noteSearchQuery - filled NoteSearchQuery object used to filter the notes
      * @param errorDescription - error description in case notes could not be listed
+     * @param withResourceMetadata - optional boolean parameter defining whether found notes
+     * should be filled with the metadata of their respective attached resources.
      * @param withResourceBinaryData - optional boolean parameter defining whether found notes
-     * should be filled with all the contents of their respective attached resources.
+     * should be filled with the whole contents of their respective attached resources including the heavy binary data
+     * of these resources. This parameter is only effective if withResourceMetadata is true.
      * By default this parameter is true which means the whole contents of all resources
      * would be filled. If it's false, dataBody, recognitionBody or alternateDataBody
      * won't be present within each found note's resources
@@ -682,6 +700,7 @@ public:
      */
     NoteList findNotesWithSearchQuery(const NoteSearchQuery & noteSearchQuery,
                                       ErrorString & errorDescription,
+                                      const bool withResourceMetadata = true,
                                       const bool withResourceBinaryData = true) const;
 
     /**

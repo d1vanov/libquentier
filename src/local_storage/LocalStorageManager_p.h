@@ -87,21 +87,23 @@ public:
     bool addNote(Note & note, ErrorString & errorDescription);
     bool updateNote(Note & note, const bool updateResources, const bool updateTags, ErrorString & errorDescription);
     bool findNote(Note & note, ErrorString & errorDescription,
+                  const bool withResourceMetadata = true,
                   const bool withResourceBinaryData = true) const;
     QList<Note> listNotesPerNotebook(const Notebook & notebook, ErrorString & errorDescription,
-                                     const bool withResourceBinaryData,
+                                     const bool withResourceMetadata, const bool withResourceBinaryData,
                                      const LocalStorageManager::ListObjectsOptions & flag,
                                      const size_t limit, const size_t offset,
                                      const LocalStorageManager::ListNotesOrder::type & order,
                                      const LocalStorageManager::OrderDirection::type & orderDirection) const;
     QList<Note> listNotesPerTag(const Tag & tag, ErrorString & errorDescription,
+                                const bool withResourceMetadata,
                                 const bool withResourceBinaryData,
                                 const LocalStorageManager::ListObjectsOptions & flag,
                                 const size_t limit, const size_t offset,
                                 const LocalStorageManager::ListNotesOrder::type & order,
                                 const LocalStorageManager::OrderDirection::type & orderDirection) const;
     QList<Note> listNotes(const LocalStorageManager::ListObjectsOptions flag, ErrorString & errorDescription,
-                          const bool withResourceBinaryData, const size_t limit,
+                          const bool withResourceMetadata, const bool withResourceBinaryData, const size_t limit,
                           const size_t offset, const LocalStorageManager::ListNotesOrder::type & order,
                           const LocalStorageManager::OrderDirection::type & orderDirection,
                           const QString & linkedNotebookGuid) const;
@@ -111,6 +113,7 @@ public:
                                                  ErrorString & errorDescription) const;
     NoteList findNotesWithSearchQuery(const NoteSearchQuery & noteSearchQuery,
                                       ErrorString & errorDescription,
+                                      const bool withResourceMetadata = true,
                                       const bool withResourceBinaryData = true) const;
 
     int tagCount(ErrorString & errorDescription) const;

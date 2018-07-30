@@ -149,7 +149,7 @@ Q_SIGNALS:
 
     void addNote(Note note, QUuid requestId);
     void updateNote(Note note, bool updateResources, bool updateTags, QUuid requestId);
-    void findNote(Note note, bool withResourceBinaryData, QUuid requestId);
+    void findNote(Note note, bool withResourceMetadata, bool withResourceBinaryData, QUuid requestId);
     void expungeNote(Note note, QUuid requestId);
 
     void addTag(Tag tag, QUuid requestId);
@@ -180,8 +180,9 @@ private Q_SLOTS:
     void onFindUserFailed(User user, ErrorString errorDescription, QUuid requestId);
     void onFindNotebookCompleted(Notebook notebook, QUuid requestId);
     void onFindNotebookFailed(Notebook notebook, ErrorString errorDescription, QUuid requestId);
-    void onFindNoteCompleted(Note note, bool withResourceBinaryData, QUuid requestId);
-    void onFindNoteFailed(Note note, bool withResourceBinaryData, ErrorString errorDescription, QUuid requestId);
+    void onFindNoteCompleted(Note note, bool withResourceMetadata, bool withResourceBinaryData, QUuid requestId);
+    void onFindNoteFailed(Note note, bool withResourceMetadata, bool withResourceBinaryData,
+                          ErrorString errorDescription, QUuid requestId);
     void onFindTagCompleted(Tag tag, QUuid requestId);
     void onFindTagFailed(Tag tag, ErrorString errorDescription, QUuid requestId);
     void onFindResourceCompleted(Resource resource, bool withResourceBinaryData, QUuid requestId);

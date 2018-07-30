@@ -60,8 +60,8 @@ Q_SIGNALS:
 
 // private signals
     void listNotes(LocalStorageManager::ListObjectsOptions flag,
-                   bool withResourceBinaryData, size_t limit, size_t offset,
-                   LocalStorageManager::ListNotesOrder::type order,
+                   bool withResourceMetadata, bool withResourceBinaryData,
+                   size_t limit, size_t offset, LocalStorageManager::ListNotesOrder::type order,
                    LocalStorageManager::OrderDirection::type orderDirection,
                    QString linkedNotebookGuid, QUuid requestId);
 
@@ -74,12 +74,14 @@ public Q_SLOTS:
     void fill();
 
 private Q_SLOTS:
-    void onListNotesComplete(LocalStorageManager::ListObjectsOptions flag, bool withResourceBinaryData,
-                             size_t limit, size_t offset, LocalStorageManager::ListNotesOrder::type order,
+    void onListNotesComplete(LocalStorageManager::ListObjectsOptions flag, bool withResourceMetadata,
+                             bool withResourceBinaryData, size_t limit, size_t offset,
+                             LocalStorageManager::ListNotesOrder::type order,
                              LocalStorageManager::OrderDirection::type orderDirection,
                              QString linkedNotebookGuid, QList<Note> foundNotes, QUuid requestId);
-    void onListNotesFailed(LocalStorageManager::ListObjectsOptions flag, bool withResourceBinaryData,
-                           size_t limit, size_t offset, LocalStorageManager::ListNotesOrder::type order,
+    void onListNotesFailed(LocalStorageManager::ListObjectsOptions flag, bool withResourceMetadata,
+                           bool withResourceBinaryData, size_t limit, size_t offset,
+                           LocalStorageManager::ListNotesOrder::type order,
                            LocalStorageManager::OrderDirection::type orderDirection,
                            QString linkedNotebookGuid, ErrorString errorDescription, QUuid requestId);
     void onAddNoteComplete(Note note, QUuid requestId);
