@@ -242,11 +242,11 @@ test_script:
         cdb -y $SymPath -c "|;g;~* kP;q" -o C:\dev\libquentier\build\test_libquentier.exe
         Write-Host "Exit code: " $lastExitCode
       }
+  - if exist %LOCALAPPDATA%\CrashDumps for %%f in (%LOCALAPPDATA%\CrashDumps\*) do 7z a crash_dumps.7z "%%f"
+  - if exist crash_dumps.7z cp crash_dumps.7z %APPVEYOR_BUILD_FOLDER%
 
 after_build:
   - cd c:\dev\libquentier\build\installdir
-  - if exist %LOCALAPPDATA%\CrashDumps for %%f in (%LOCALAPPDATA%\CrashDumps\*) do 7z a crash_dumps.7z "%%f"
-  - if exist crash_dumps.7z cp crash_dumps.7z %APPVEYOR_BUILD_FOLDER%
   - 7z a %DEPLOYMENT_TARGET% *
   - cp %DEPLOYMENT_TARGET% %APPVEYOR_BUILD_FOLDER%
   - cd %APPVEYOR_BUILD_FOLDER%
