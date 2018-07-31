@@ -230,7 +230,7 @@ build_script:
 test_script:
   - dir C:\MinGW\bin /s
   - C:\MinGW\bin\mingw-get.exe install gdb
-  - C:\MinGW\bin\gdb.exe -q --batch -ex 'handle SIGTERM nostop pass' -ex 'set print thread-events off' -ex 'run' -ex 'thread apply all bt' --tty=/dev/stdout --args test_libquentier
+  - C:\MinGW\bin\gdb.exe -q --batch -ex 'handle SIGTERM nostop pass' -ex 'set print thread-events off' -ex 'run' -ex 'thread apply all bt' --args c:\dev\libquentier\build\test_libquentier.exe
     # - cd "C:\Program Files (x86)\Windows Kits"
     # - dir /s
     #- ps: >-
