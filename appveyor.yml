@@ -230,8 +230,7 @@ build_script:
   - if %qt%==mingw492_32 set PATH=%ORIGPATH%
 
 test_script:
-  - dir C:\MinGW\bin /s
-  - C:\MinGW\bin\mingw-get.exe install gdb
+  - ps: iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
   - C:\MinGW\bin\gdb.exe -q --batch -ex "handle SIGTERM nostop pass" -ex "set print thread-events off" -ex "run" -ex "thread apply all bt" --args c:\dev\libquentier\build\test_libquentier.exe
     # - cd "C:\Program Files (x86)\Windows Kits"
     # - dir /s
