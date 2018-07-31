@@ -15,21 +15,21 @@ environment:
       #      name: win32-prepare
       #      platform: amd64_x86
       #      qt: msvc2015
-    - prepare_mode: NO
-      APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
-      name: win32
-      platform: amd64_x86
-      qt: msvc2015
+      #- prepare_mode: NO
+      #APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
+      #name: win32
+      #platform: amd64_x86
+      #qt: msvc2015
       #- prepare_mode: NO
       #APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
       #name: win64
       #platform: amd64
       #qt: msvc2017_64
-      #    - prepare_mode: NO
-      #      APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2013
-      #      name: win32
-      #      platform: mingw
-      #      qt: mingw492_32
+    - prepare_mode: NO
+      APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2013
+      name: win32
+      platform: mingw
+      qt: mingw492_32
 
 clone_folder: c:\dev\libquentier
 
@@ -228,20 +228,21 @@ build_script:
   - if %qt%==mingw492_32 set PATH=%ORIGPATH%
 
 test_script:
+  - gdb -q --batch -ex 'handle SIGTERM nostop pass' -ex 'set print thread-events off' -ex 'run' -ex 'thread apply all bt' --tty=/dev/stdout --args test_libquentier
     # - cd "C:\Program Files (x86)\Windows Kits"
     # - dir /s
-  - ps: >-
-      If($true) {
-        $env:Path += ";C:\Program Files (x86)\Windows Kits\10\Debuggers\x86\;"
-        $env:Path += ";C:\Program Files (x86)\Windows Kits\10\Debuggers\x64\;"
-        $SymPath = "C:\dev\libquentier\build;SRV*C:\symbols*http://msdl.microsoft.com/download/symbols"
-
-        cmd /r mkdir C:\symbols
-
-        Write-Host "Running test executable"
-        cdb -y $SymPath -c "|;g;~* kP;q" -o C:\dev\libquentier\build\test_libquentier.exe
-        Write-Host "Exit code: " $lastExitCode
-      }
+    #- ps: >-
+    #  If($true) {
+    #    $env:Path += ";C:\Program Files (x86)\Windows Kits\10\Debuggers\x86\;"
+    #    $env:Path += ";C:\Program Files (x86)\Windows Kits\10\Debuggers\x64\;"
+    #    $SymPath = "C:\dev\libquentier\build;SRV*C:\symbols*http://msdl.microsoft.com/download/symbols"
+    #
+    #    cmd /r mkdir C:\symbols
+    #
+    #    Write-Host "Running test executable"
+    #    cdb -y $SymPath -c "|;g;~* kP;q" -o C:\dev\libquentier\build\test_libquentier.exe
+    #    Write-Host "Exit code: " $lastExitCode
+    #  }
 
 after_build:
   - cd c:\dev\libquentier\build\installdir
