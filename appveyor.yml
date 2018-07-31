@@ -228,8 +228,9 @@ build_script:
   - if %qt%==mingw492_32 set PATH=%ORIGPATH%
 
 test_script:
-  - mingw-get install gdb
-  - gdb -q --batch -ex 'handle SIGTERM nostop pass' -ex 'set print thread-events off' -ex 'run' -ex 'thread apply all bt' --tty=/dev/stdout --args test_libquentier
+  - dir /s C:\MinGW\bin
+  - C:\MinGW\bin\mingw-get.exe install gdb
+  - C:\MinGW\bin\gdb.exe -q --batch -ex 'handle SIGTERM nostop pass' -ex 'set print thread-events off' -ex 'run' -ex 'thread apply all bt' --tty=/dev/stdout --args test_libquentier
     # - cd "C:\Program Files (x86)\Windows Kits"
     # - dir /s
     #- ps: >-
