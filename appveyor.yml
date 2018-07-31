@@ -219,7 +219,7 @@ build_script:
   - if %qt%==mingw492_32 set PATH=C:\MinGW\bin;C:\Qt\5.5\%qt%\bin;%PATH%
   - if not %qt%==mingw492_32 C:\msys64\usr\bin\bash -lc "cd /c/dev/libquentier && echo 'install(FILES $<TARGET_PDB_FILE:${LIBNAME}> DESTINATION bin OPTIONAL)' >> CMakeLists.txt"
   - if %qt%==mingw492_32 cmake .. -G %makefiles% -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX="c:/dev/libquentier/build/installdir" -DUSE_QT5=1 -DUSE_QT5_WEBKIT=1 -DCMAKE_PREFIX_PATH="C:/Qt/5.5/%qt%" -DOPENSSL_ROOT_DIR="c:/dev/openssl" -DBOOST_ROOT="c:/dev/boost"
-  - if not %qt%==mingw492_32 cmake .. -G %makefiles% -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX="c:/dev/libquentier/build/installdir" -DUSE_QT5=1 -DCMAKE_PREFIX_PATH="C:/Qt/5.10/%qt%" -DOPENSSL_ROOT_DIR="c:/dev/openssl" -DBOOST_ROOT="c:/dev/boost"
+  - if not %qt%==mingw492_32 cmake .. -G %makefiles% -DCMAKE_BUILD_TYPE=RelWithDebInfo -DLOGGING_IN_SAME_THREAD=1 -DCMAKE_INSTALL_PREFIX="c:/dev/libquentier/build/installdir" -DUSE_QT5=1 -DCMAKE_PREFIX_PATH="C:/Qt/5.10/%qt%" -DOPENSSL_ROOT_DIR="c:/dev/openssl" -DBOOST_ROOT="c:/dev/boost"
   - cmake --build . --target all
   #- cmake --build . --target check
   #- cmake --build . --target lupdate

@@ -258,8 +258,12 @@ void QuentierLogger::addLogWriter(IQuentierLogWriter * pLogWriter)
                          Qt::QueuedConnection);
     }
 
+#ifndef LIB_QUENTIER_LOGGING_IN_SAME_THREAD
     pLogWriter->setParent(Q_NULLPTR);
     pLogWriter->moveToThread(m_pImpl->m_pLogWriteThread);
+#else
+    pLogWriter->setParent(this);
+#endif
 }
 
 void QuentierLogger::removeLogWriter(IQuentierLogWriter * pLogWriter)
@@ -317,12 +321,15 @@ QuentierLoggerImpl::QuentierLoggerImpl(QObject * parent) :
     QObject(parent),
     m_logWriterPtrs(),
     m_minLogLevel(static_cast<int>(LogLevel::InfoLevel)),
-    m_pLogWriteThread(new QThread)
+    m_pLogWriteThread(Q_NULLPTR)
 {
+#ifndef LIB_QUENTIER_LOGGING_IN_SAME_THREAD
+    m_pLogWriteThread = new QThread;
     QObject::connect(m_pLogWriteThread, QNSIGNAL(QThread,finished), m_pLogWriteThread, QNSLOT(QThread,deleteLater));
     QObject::connect(this, QNSIGNAL(QuentierLoggerImpl,destroyed), m_pLogWriteThread, QNSLOT(QThread,quit));
     m_pLogWriteThread->setObjectName(QStringLiteral("Libquentier-logger-thread"));
     m_pLogWriteThread->start(QThread::LowPriority);
+#endif
 }
 
 } // namespace quentier
