@@ -249,12 +249,16 @@ test_script:
 
 after_build:
   - cd c:\dev\libquentier\build\installdir
+  - if exist %LOCALAPPDATA%\CrashDumps for %%f in (%LOCALAPPDATA%\CrashDumps\*) do 7z a crash_dumps.7z "%%f"
+  - if exist crash_dumps.7z cp crash_dumps.7z %APPVEYOR_BUILD_FOLDER%
   - 7z a %DEPLOYMENT_TARGET% *
   - cp %DEPLOYMENT_TARGET% %APPVEYOR_BUILD_FOLDER%
-    #  - cd %APPVEYOR_BUILD_FOLDER%
+  - cd %APPVEYOR_BUILD_FOLDER%
     #  - c:\dev\ciuploadtool\ciuploadtool.exe -suffix="%APPVEYOR_REPO_BRANCH%" %DEPLOYMENT_TARGET%
 
 artifacts:
+  - path: '*.7z'
+    name: crash_dumps
   - path: '*.zip'
     name: archive
 
