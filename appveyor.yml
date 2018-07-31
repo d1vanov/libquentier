@@ -239,7 +239,7 @@ test_script:
         $SymPath = "C:\dev\libquentier\build;SRV*C:\symbols*http://msdl.microsoft.com/download/symbols"
         cmd /r mkdir C:\symbols
         Write-Host "Running test executable"
-        cdb -lines -y $SymPath -c "|;g;~* kP;.dump /ma C:\dev\libquentier\build\test_libquentier.dmp;q" -o C:\dev\libquentier\build\test_libquentier.exe
+        cdb -lines -x -y $SymPath -c "|;g;~* kP;.dump /ma C:\dev\libquentier\build\test_libquentier.dmp;q" -o C:\dev\libquentier\build\test_libquentier.exe
         Write-Host "Exit code: " $lastExitCode
       }
   - if exist C:\dev\libquentier\build\test_libquentier.dmp 7z a crash_dumps.7z C:\dev\libquentier\build\test_libquentier.dmp
