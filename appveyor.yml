@@ -9,7 +9,7 @@ branches:
 
 environment:
   APPVEYOR_RDP_PASSWORD:
-    secure: PJUvxwX90PxChhg3WIc3JQ==
+    secure: +fkmRkh6YEcEEgKVMTl5/D3ntYVpFKt25MoDNaD8WAQ=
   auth_token:
     secure: rLuHhO0prerqoGCYmfOoyxqcwwamCXtuZtl4Jzqeu3aGgflk0mnX1fogLq68YcRW
   matrix:
