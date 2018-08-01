@@ -575,6 +575,7 @@ private:
 
     // Infrastructure for processing of conflicts occurred during sync
     Note createConflictingNote(const Note & originalNote, const qevercloud::Note * pRemoteNote = Q_NULLPTR) const;
+    void convertNoteToLocalConflictingOne(Note & note) const;
     void overrideLocalNoteWithRemoteNote(Note & localNote, const qevercloud::Note & remoteNote) const;
     void processResourceConflictAsNoteConflict(Note & remoteNote, const Note & localConflictingNote,
                                                Resource & remoteNoteResource);
