@@ -78,38 +78,39 @@ QUuid FakeKeychainService::startDeletePasswordJob(const QString & service, const
 void FakeKeychainService::timerEvent(QTimerEvent * pEvent)
 {
     int timerId = pEvent->timerId();
-    
+
     auto writeIt = m_writePasswordRequestIdByTimerId.find(timerId);
     if (writeIt != m_writePasswordRequestIdByTimerId.end()) {
-        Q_EMIT writePasswordJobFinished(writeIt.value(), IKeychainService::ErrorCode::NoError, ErrorString());
+        pEvent->accept();
         killTimer(timerId);
+        Q_EMIT writePasswordJobFinished(writeIt.value(), IKeychainService::ErrorCode::NoError, ErrorString());
         Q_UNUSED(m_writePasswordRequestIdByTimerId.erase(writeIt))
         return;
     }
 
     auto readIt = m_readPasswordRequestIdWithPasswordByTimerId.find(timerId);
     if (readIt != m_readPasswordRequestIdWithPasswordByTimerId.end()) {
+        pEvent->accept();
+        killTimer(timerId);
         IKeychainService::ErrorCode::type errorCode = (readIt.value().second.isEmpty()
                                                        ? IKeychainService::ErrorCode::EntryNotFound
                                                        : IKeychainService::ErrorCode::NoError);
         Q_EMIT readPasswordJobFinished(readIt.value().first, errorCode, ErrorString(), readIt.value().second);
-        killTimer(timerId);
         Q_UNUSED(m_readPasswordRequestIdWithPasswordByTimerId.erase(readIt))
         return;
     }
 
     auto deleteIt = m_deletePasswordRequestIdByTimerId.find(timerId);
     if (deleteIt != m_deletePasswordRequestIdByTimerId.end()) {
+        pEvent->accept();
+        killTimer(timerId);
         IKeychainService::ErrorCode::type errorCode = (deleteIt.value().second
                                                        ? IKeychainService::ErrorCode::NoError
                                                        : IKeychainService::ErrorCode::EntryNotFound);
         Q_EMIT deletePasswordJobFinished(deleteIt.value().first, errorCode, ErrorString());
-        killTimer(timerId);
         Q_UNUSED(m_deletePasswordRequestIdByTimerId.erase(deleteIt))
         return;
     }
-
-    IKeychainService::timerEvent(pEvent);
 }
 
 } // namespace quentier
