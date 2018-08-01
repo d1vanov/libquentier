@@ -8,15 +8,13 @@ branches:
     - /^v\d+\.\d+(\.\d+)?(-\S*)?$/
 
 environment:
-    #  APPVEYOR_RDP_PASSWORD:
-    #    secure: +fkmRkh6YEcEEgKVMTl5/D3ntYVpFKt25MoDNaD8WAQ=
   auth_token:
     secure: rLuHhO0prerqoGCYmfOoyxqcwwamCXtuZtl4Jzqeu3aGgflk0mnX1fogLq68YcRW
   matrix:
-      #    - prepare_mode: YES
-      #      name: win32-prepare
-      #      platform: amd64_x86
-      #      qt: msvc2015
+      #- prepare_mode: YES
+      #name: win32-prepare
+      #platform: amd64_x86
+      #qt: msvc2015
     - prepare_mode: NO
       APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
       name: win32
@@ -223,38 +221,29 @@ build_script:
   - if %qt%==mingw492_32 cmake .. -G %makefiles% -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX="c:/dev/libquentier/build/installdir" -DUSE_QT5=1 -DUSE_QT5_WEBKIT=1 -DCMAKE_PREFIX_PATH="C:/Qt/5.5/%qt%" -DOPENSSL_ROOT_DIR="c:/dev/openssl" -DBOOST_ROOT="c:/dev/boost"
   - if not %qt%==mingw492_32 cmake .. -G %makefiles% -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX="c:/dev/libquentier/build/installdir" -DUSE_QT5=1 -DCMAKE_PREFIX_PATH="C:/Qt/5.10/%qt%" -DOPENSSL_ROOT_DIR="c:/dev/openssl" -DBOOST_ROOT="c:/dev/boost"
   - cmake --build . --target all
-  #- cmake --build . --target check
-  #- cmake --build . --target lupdate
-  #- cmake --build . --target lrelease
+  - cmake --build . --target check
+  - cmake --build . --target lupdate
+  - cmake --build . --target lrelease
   - cmake --build . --target install
   - if %qt%==mingw492_32 set PATH=%ORIGPATH%
 
 test_script:
-    # - cd "C:\Program Files (x86)\Windows Kits"
-    # - dir /s
-  - ps: >-
-      If($true) {
-        $env:Path += ";C:\Program Files (x86)\Windows Kits\10\Debuggers\x86\;"
-        $env:Path += ";C:\Program Files (x86)\Windows Kits\10\Debuggers\x64\;"
-        $SymPath = "C:\dev\libquentier\build;SRV*C:\symbols*http://msdl.microsoft.com/download/symbols"
-        cmd /r mkdir C:\symbols
-        Write-Host "Running test executable"
-        cdb -lines -x -y $SymPath -c "|;!peb;.kframes 100;g;~* kP;!analyze -vp;.excr;!gle -all;.dump /ma C:\dev\libquentier\build\test_libquentier.dmp;q" -o C:\dev\libquentier\build\test_libquentier.exe
-        Write-Host "Exit code: " $lastExitCode
-      }
-  - if exist C:\dev\libquentier\build\test_libquentier.dmp 7z a crash_dumps.7z C:\dev\libquentier\build\test_libquentier.dmp
-  - if exist crash_dumps.7z cp crash_dumps.7z %APPVEYOR_BUILD_FOLDER%
+  - if not %qt%==mingw492_32 if exist %LOCALAPPDATA%\CrashDumps mkdir C:\symbols & set PATH="C:\Program Files (x86)\Windows Kits\10\Debuggers\x86";C:\Program Files (x86)\Windows Kits\10\Debuggers\x64;%PATH% & set SYMBOLSPATH="C:\dev\libquentier\build;SRV*C:\symbols*http://msdl.microsoft.com/download/symbols"
+  - if not %qt%==mingw492_32 if exist %LOCALAPPDATA%\CrashDumps for %%f in (%LOCALAPPDATA%\CrashDumps\*) do cdb -lines -x -y %SYMBOLSPATH% -c "|;!peb;.kframes 100;g;~* kP;!analyze -vp;.excr;!gle -all;.dump /ma C:\dev\libquentier\build\test_libquentier.dmp;q" -z "%%f"
+  - if not %qt%==mingw492_32 if exist C:\dev\libquentier\build\test_libquentier.dmp 7z a crash_dump.7z C:\dev\libquentier\build\test_libquentier.dmp
+  - if not %qt%==mingw492_32 if exist crash_dump.7z appveyor PushArtifact crash_dump.7z
+  - ps: if (Test-Path C:\dev\libquentier\build\crash_dump.7z -PathType Leaf) { throw "Test crashed" }
 
 after_build:
   - cd c:\dev\libquentier\build\installdir
   - 7z a %DEPLOYMENT_TARGET% *
   - cp %DEPLOYMENT_TARGET% %APPVEYOR_BUILD_FOLDER%
   - cd %APPVEYOR_BUILD_FOLDER%
-    #  - c:\dev\ciuploadtool\ciuploadtool.exe -suffix="%APPVEYOR_REPO_BRANCH%" %DEPLOYMENT_TARGET%
+  # - c:\dev\ciuploadtool\ciuploadtool.exe -suffix="%APPVEYOR_REPO_BRANCH%" %DEPLOYMENT_TARGET%
 
 artifacts:
   - path: '*.7z'
-    name: crash_dumps
+    name: crash_dump
   - path: '*.zip'
     name: archive
 
@@ -262,5 +251,3 @@ matrix:
   fast_finish: true
   allow_failures:
     - prepare_mode: YES
-
-# dummy change to trigger build
