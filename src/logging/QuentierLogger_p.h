@@ -11,6 +11,7 @@
 #include <QTextStream>
 #include <QThread>
 #include <QAtomicInt>
+#include <QScopedPointer>
 
 #if __cplusplus < 201103L
 #include <QMutex>
@@ -91,7 +92,7 @@ private:
 
 private:
     QFile       m_logFile;
-    QTextStream m_stream;
+    QScopedPointer<QTextStream>     m_pStream;
 
     qint64      m_maxSizeBytes;
     int         m_maxOldLogFilesCount;

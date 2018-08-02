@@ -23,7 +23,7 @@ QuentierFileLogWriter::QuentierFileLogWriter(const MaxSizeBytes & maxSizeBytes,
                                              QObject * parent) :
     IQuentierLogWriter(parent),
     m_logFile(),
-    m_stream(),
+    m_pStream(),
     m_maxSizeBytes(maxSizeBytes.size()),
     m_maxOldLogFilesCount(maxOldLogFilesCount.count()),
     m_currentLogFileSize(0),
@@ -53,9 +53,6 @@ QuentierFileLogWriter::QuentierFileLogWriter(const MaxSizeBytes & maxSizeBytes,
         error.details() += QString::number(m_logFile.error());
         throw LoggerInitializationException(error);
     }
-
-    m_stream.setDevice(&m_logFile);
-    m_stream.setCodec(QTextCodec::codecForName("UTF-8"));
 
     m_currentLogFileSize = m_logFile.size();
 
@@ -88,15 +85,23 @@ void QuentierFileLogWriter::write(QString message)
         rotate();
     }
 
-    m_stream << message << QStringLiteral("\n");
-    m_stream.flush();
+    if (Q_UNLIKELY(m_pStream.isNull())) {
+        m_pStream.reset(new QTextStream);
+        m_pStream->setDevice(&m_logFile);
+        m_pStream->setCodec(QTextCodec::codecForName("UTF-8"));
+    }
+
+    *m_pStream << message << QStringLiteral("\n");
+    m_pStream->flush();
 }
 
 void QuentierFileLogWriter::restartLogging()
 {
-    m_stream.flush();
+    if (m_pStream) {
+        m_pStream->flush();
+        m_pStream->setDevice(Q_NULLPTR);
+    }
 
-    m_stream.setDevice(Q_NULLPTR);
     m_logFile.close();
 
     QFileInfo logFileInfo(m_logFile);
@@ -119,8 +124,10 @@ void QuentierFileLogWriter::restartLogging()
 
     m_currentLogFileSize = m_logFile.size();
 
-    m_stream.setDevice(&m_logFile);
-    m_stream.setCodec(QTextCodec::codecForName("UTF-8"));
+    if (m_pStream) {
+        m_pStream->setDevice(&m_logFile);
+        m_pStream->setCodec(QTextCodec::codecForName("UTF-8"));
+    }
 }
 
 void QuentierFileLogWriter::rotate()
@@ -152,7 +159,9 @@ void QuentierFileLogWriter::rotate()
     }
 
     // 2) Rename the current log file
-    m_stream.setDevice(Q_NULLPTR);
+    if (m_pStream) {
+        m_pStream->setDevice(Q_NULLPTR);
+    }
     m_logFile.close();
     bool res = m_logFile.rename(logFileDirPath + QStringLiteral("/") + QCoreApplication::applicationName() + QStringLiteral("-log.1.txt"));
     if (Q_UNLIKELY(!res)) {
@@ -172,8 +181,10 @@ void QuentierFileLogWriter::rotate()
 
     m_currentLogFileSize = m_logFile.size();
 
-    m_stream.setDevice(&m_logFile);
-    m_stream.setCodec(QTextCodec::codecForName("UTF-8"));
+    if (m_pStream) {
+        m_pStream->setDevice(&m_logFile);
+        m_pStream->setCodec(QTextCodec::codecForName("UTF-8"));
+    }
 
     // 4) Increase the current count of old log files
     ++m_currentOldLogFilesCount;
