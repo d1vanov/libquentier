@@ -520,6 +520,31 @@ public:
     bool addNote(Note & note, ErrorString & errorDescription);
 
     /**
+     * @brief The UpdateNoteOption enum is the base enum for QFlags which allows to specify
+     * which note fields should be updated when updateNote method is called
+     *
+     * Most note data is updated unconditionally - note title, content, attributes (if any) etc.
+     * However, some specific data can be chosen to not update - notably, metadata of resources, binary data
+     * of resources or lists of note's tags
+     */
+    enum UpdateNoteOption {
+        /**
+         * UpdateResourceMetadata value specifies that non-binary data fields for note's resources should be updated
+         */
+        UpdateResourceMetadata      = 0,
+        /**
+         * UpdateResourceBinaryData value specifies that binary data for note's resources should be updated; this value
+         * only has effect if flags also has UpdateResourceMetadata value enabled!
+         */
+        UpdateResourceBinaryData    = 1,
+        /**
+         * UpdateTags value specifies that note's linkage to tags should be updated
+         */
+        UpdateTags                  = 2
+    };
+    Q_DECLARE_FLAGS(UpdateNoteOptions, UpdateNoteOption)
+
+    /**
      * @brief updateNote - updates passed in Note in the local storage database
      *
      * If the note has "remote" Evernote service's guid set, it is identified by this guid
@@ -533,15 +558,11 @@ public:
      * and tag local uids are filled if the note passed in contained only tag guids. Bear in mind that after the call the note
      * may not have the representative resources if "updateResources" input parameter was false as well as it may not
      * have the representative tags if "updateTags" input parameter was false
-     * @param updateResources - flag indicating whether the note's resources should be updated
-     * along with the note; if not, the existing resource information stored in the local storage is not touched
-     * @param updateTags - flag indicating whether the note's tags should be updated along with the note;
-     * if not, the existing tags to note linkage information is not touched
+     * @param options - options specifying which optionally updatable fields of the note should actually be updated
      * @param errorDescription - error description if note could not be updated
      * @return true if note was updated successfully, false otherwise
      */
-    bool updateNote(Note & note, const bool updateResources,
-                    const bool updateTags, ErrorString & errorDescription);
+    bool updateNote(Note & note, const UpdateNoteOptions options, ErrorString & errorDescription);
 
     /**
      * @brief findNote - attempts to find note in the local storage database

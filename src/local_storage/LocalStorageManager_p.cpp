@@ -48,8 +48,10 @@ LocalStorageManagerPrivate::LocalStorageManagerPrivate(const Account & account, 
     m_insertOrReplaceSavedSearchQueryPrepared(false),
     m_getSavedSearchCountQuery(),
     m_getSavedSearchCountQueryPrepared(false),
-    m_insertOrReplaceResourceQuery(),
-    m_insertOrReplaceResourceQueryPrepared(false),
+    m_insertOrReplaceResourceWithBinaryDataQuery(),
+    m_insertOrReplaceResourceWithBinaryDataQueryPrepared(false),
+    m_insertOrReplaceResourceWithoutBinaryDataQuery(),
+    m_insertOrReplaceResourceWithoutBinaryDataQueryPrepared(false),
     m_insertOrReplaceNoteResourceQuery(),
     m_insertOrReplaceNoteResourceQueryPrepared(false),
     m_deleteResourceFromResourceRecognitionTypesQuery(),
@@ -1771,7 +1773,10 @@ bool LocalStorageManagerPrivate::addNote(Note & note, ErrorString & errorDescrip
         return false;
     }
 
-    res = insertOrReplaceNote(note, /* update resources = */ true, /* update tags = */ true, errorDescription);
+    LocalStorageManager::UpdateNoteOptions options(LocalStorageManager::UpdateResourceMetadata |
+                                                   LocalStorageManager::UpdateResourceBinaryData |
+                                                   LocalStorageManager::UpdateTags);
+    res = insertOrReplaceNote(note, options, errorDescription);
     if (!res) {
         QNWARNING(QStringLiteral("Note which produced the error: ") << note);
     }
@@ -1779,7 +1784,7 @@ bool LocalStorageManagerPrivate::addNote(Note & note, ErrorString & errorDescrip
     return res;
 }
 
-bool LocalStorageManagerPrivate::updateNote(Note & note, const bool updateResources, const bool updateTags,
+bool LocalStorageManagerPrivate::updateNote(Note & note, const LocalStorageManager::UpdateNoteOptions options,
                                             ErrorString & errorDescription)
 {
     ErrorString errorPrefix(QT_TR_NOOP("Can't update note in the local storage database"));
@@ -1902,7 +1907,7 @@ bool LocalStorageManagerPrivate::updateNote(Note & note, const bool updateResour
         }
     }
 
-    res = insertOrReplaceNote(note, updateResources, updateTags, errorDescription);
+    res = insertOrReplaceNote(note, options, errorDescription);
     if (!res) {
         QNWARNING(QStringLiteral("Note which produced the error: ") << note);
     }
@@ -6219,8 +6224,8 @@ bool LocalStorageManagerPrivate::getSavedSearchLocalUidForGuid(const QString & s
     return true;
 }
 
-bool LocalStorageManagerPrivate::insertOrReplaceNote(Note & note, const bool updateResources,
-                                                     const bool updateTags, ErrorString & errorDescription)
+bool LocalStorageManagerPrivate::insertOrReplaceNote(Note & note, const LocalStorageManager::UpdateNoteOptions options,
+                                                     ErrorString & errorDescription)
 {
     // NOTE: this method expects to be called after the note is already checked
     // for sanity of its parameters!
@@ -6515,7 +6520,7 @@ bool LocalStorageManagerPrivate::insertOrReplaceNote(Note & note, const bool upd
         }
     }
 
-    if (updateTags)
+    if (options & LocalStorageManager::UpdateTags)
     {
         // Clear note-to-tag binding first, update them second
         {
@@ -6609,7 +6614,7 @@ bool LocalStorageManagerPrivate::insertOrReplaceNote(Note & note, const bool upd
         // has the only purpose to provide tag names alternatively to guids to NoteStore::createNote method
     }
 
-    if (updateResources)
+    if (options & LocalStorageManager::UpdateResourceMetadata)
     {
         if (!note.hasResources())
         {
@@ -6621,7 +6626,8 @@ bool LocalStorageManagerPrivate::insertOrReplaceNote(Note & note, const bool upd
         }
         else
         {
-            bool res = partialUpdateNoteResources(localUid, note.resources(), errorDescription);
+            bool updateResourceBinaryData = (options & LocalStorageManager::UpdateResourceBinaryData);
+            bool res = partialUpdateNoteResources(localUid, note.resources(), updateResourceBinaryData, errorDescription);
             if (!res) {
                 return false;
             }
@@ -7124,12 +7130,14 @@ bool LocalStorageManagerPrivate::complementTagParentInfo(Tag & tag, ErrorString 
 }
 
 bool LocalStorageManagerPrivate::insertOrReplaceResource(const Resource & resource, ErrorString & errorDescription,
+                                                         const bool setResourceBinaryData,
                                                          const bool useSeparateTransaction)
 {
     // NOTE: this method expects to be called after resource is already checked
     // for sanity of its parameters!
 
     QNDEBUG(QStringLiteral("LocalStorageManagerPrivate::insertOrReplaceResource: resource = ") << resource
+            << QStringLiteral("\nSet resource binary data = ") << (setResourceBinaryData ? QStringLiteral("true") : QStringLiteral("false"))
             << QStringLiteral(", use separate transaction = ") << (useSeparateTransaction ? QStringLiteral("true") : QStringLiteral("false")));
 
     ErrorString errorPrefix(QT_TR_NOOP("can't insert or replace resource into the local storage database"));
@@ -7142,7 +7150,7 @@ bool LocalStorageManagerPrivate::insertOrReplaceResource(const Resource & resour
     QString resourceLocalUid = resource.localUid();
     QString noteLocalUid = resource.noteLocalUid();
 
-    bool res = updateCommonResourceData(resource, errorDescription);
+    bool res = updateCommonResourceData(resource, setResourceBinaryData, errorDescription);
     if (!res) {
         return false;
     }
@@ -7337,21 +7345,25 @@ bool LocalStorageManagerPrivate::insertOrReplaceResourceAttributes(const QString
     return true;
 }
 
-bool LocalStorageManagerPrivate::updateCommonResourceData(const Resource & resource, ErrorString & errorDescription)
+bool LocalStorageManagerPrivate::updateCommonResourceData(const Resource & resource, const bool setResourceBinaryData,
+                                                          ErrorString & errorDescription)
 {
     QNDEBUG(QStringLiteral("LocalStorageManagerPrivate::updateCommonResourceData"));
 
     ErrorString errorPrefix(QT_TR_NOOP("can't insert or replace resource: can't update common resource data"));
 
     QVariant nullValue;
-    bool res = checkAndPrepareInsertOrReplaceResourceQuery();
-    QSqlQuery & query = m_insertOrReplaceResourceQuery;
+    bool res = (setResourceBinaryData
+                ? checkAndPrepareInsertOrReplaceResourceWithBinaryDataQuery()
+                : checkAndPrepareInsertOrReplaceResourceWithoutBinaryDataQuery());
+    QSqlQuery & query = (setResourceBinaryData
+                         ? m_insertOrReplaceResourceWithBinaryDataQuery
+                         : m_insertOrReplaceResourceWithoutBinaryDataQuery);
     DATABASE_CHECK_AND_SET_ERROR();
 
     query.bindValue(QStringLiteral(":resourceGuid"), (resource.hasGuid() ? resource.guid() : nullValue));
     query.bindValue(QStringLiteral(":noteGuid"), (resource.hasNoteGuid() ? resource.noteGuid() : nullValue));
     query.bindValue(QStringLiteral(":noteLocalUid"), resource.noteLocalUid());
-    query.bindValue(QStringLiteral(":dataBody"), (resource.hasDataBody() ? resource.dataBody() : nullValue));
     query.bindValue(QStringLiteral(":dataSize"), (resource.hasDataSize() ? resource.dataSize() : nullValue));
     query.bindValue(QStringLiteral(":dataHash"), (resource.hasDataHash() ? resource.dataHash() : nullValue));
     query.bindValue(QStringLiteral(":mime"), (resource.hasMime() ? resource.mime() : nullValue));
@@ -7360,13 +7372,17 @@ bool LocalStorageManagerPrivate::updateCommonResourceData(const Resource & resou
     query.bindValue(QStringLiteral(":recognitionDataBody"), (resource.hasRecognitionDataBody() ? resource.recognitionDataBody() : nullValue));
     query.bindValue(QStringLiteral(":recognitionDataSize"), (resource.hasRecognitionDataSize() ? resource.recognitionDataSize() : nullValue));
     query.bindValue(QStringLiteral(":recognitionDataHash"), (resource.hasRecognitionDataHash() ? resource.recognitionDataHash() : nullValue));
-    query.bindValue(QStringLiteral(":alternateDataBody"), (resource.hasAlternateDataBody() ? resource.alternateDataBody() : nullValue));
     query.bindValue(QStringLiteral(":alternateDataSize"), (resource.hasAlternateDataSize() ? resource.alternateDataSize() : nullValue));
     query.bindValue(QStringLiteral(":alternateDataHash"), (resource.hasAlternateDataHash() ? resource.alternateDataHash() : nullValue));
     query.bindValue(QStringLiteral(":resourceUpdateSequenceNumber"), (resource.hasUpdateSequenceNumber() ? resource.updateSequenceNumber() : nullValue));
     query.bindValue(QStringLiteral(":resourceIsDirty"), (resource.isDirty() ? 1 : 0));
     query.bindValue(QStringLiteral(":resourceIndexInNote"), resource.indexInNote());
     query.bindValue(QStringLiteral(":resourceLocalUid"), resource.localUid());
+
+    if (setResourceBinaryData) {
+        query.bindValue(QStringLiteral(":dataBody"), (resource.hasDataBody() ? resource.dataBody() : nullValue));
+        query.bindValue(QStringLiteral(":alternateDataBody"), (resource.hasAlternateDataBody() ? resource.alternateDataBody() : nullValue));
+    }
 
     res = query.exec();
     DATABASE_CHECK_AND_SET_ERROR();
@@ -7396,29 +7412,57 @@ bool LocalStorageManagerPrivate::updateNoteResources(const Resource & resource, 
     return true;
 }
 
-bool LocalStorageManagerPrivate::checkAndPrepareInsertOrReplaceResourceQuery()
+bool LocalStorageManagerPrivate::checkAndPrepareInsertOrReplaceResourceWithBinaryDataQuery()
 {
-    if (Q_LIKELY(m_insertOrReplaceResourceQueryPrepared)) {
+    if (Q_LIKELY(m_insertOrReplaceResourceWithBinaryDataQueryPrepared)) {
         return true;
     }
 
-    QNDEBUG(QStringLiteral("Preparing SQL query to insert or replace the resource"));
+    QNDEBUG(QStringLiteral("Preparing SQL query to insert or replace the resource with binary data"));
 
-    m_insertOrReplaceResourceQuery = QSqlQuery(m_sqlDatabase);
-    bool res = m_insertOrReplaceResourceQuery.prepare(QStringLiteral("INSERT OR REPLACE INTO Resources (resourceGuid, "
-                                                                     "noteGuid, noteLocalUid, dataBody, dataSize, dataHash, mime, "
-                                                                     "width, height, recognitionDataBody, recognitionDataSize, "
-                                                                     "recognitionDataHash, alternateDataBody, alternateDataSize, "
-                                                                     "alternateDataHash, resourceUpdateSequenceNumber, "
-                                                                     "resourceIsDirty, resourceIndexInNote, resourceLocalUid) "
-                                                                     "VALUES(:resourceGuid, :noteGuid, :noteLocalUid, :dataBody, "
-                                                                     ":dataSize, :dataHash, :mime, :width, :height, "
-                                                                     ":recognitionDataBody, :recognitionDataSize, "
-                                                                     ":recognitionDataHash, :alternateDataBody, :alternateDataSize, "
-                                                                     ":alternateDataHash, :resourceUpdateSequenceNumber, :resourceIsDirty, "
-                                                                     ":resourceIndexInNote, :resourceLocalUid)"));
+    m_insertOrReplaceResourceWithBinaryDataQuery = QSqlQuery(m_sqlDatabase);
+    bool res = m_insertOrReplaceResourceWithBinaryDataQuery.prepare(QStringLiteral("INSERT OR REPLACE INTO Resources (resourceGuid, "
+                                                                                   "noteGuid, noteLocalUid, dataBody, dataSize, dataHash, mime, "
+                                                                                   "width, height, recognitionDataBody, recognitionDataSize, "
+                                                                                   "recognitionDataHash, alternateDataBody, alternateDataSize, "
+                                                                                   "alternateDataHash, resourceUpdateSequenceNumber, "
+                                                                                   "resourceIsDirty, resourceIndexInNote, resourceLocalUid) "
+                                                                                   "VALUES(:resourceGuid, :noteGuid, :noteLocalUid, :dataBody, "
+                                                                                   ":dataSize, :dataHash, :mime, :width, :height, "
+                                                                                   ":recognitionDataBody, :recognitionDataSize, "
+                                                                                   ":recognitionDataHash, :alternateDataBody, :alternateDataSize, "
+                                                                                   ":alternateDataHash, :resourceUpdateSequenceNumber, :resourceIsDirty, "
+                                                                                   ":resourceIndexInNote, :resourceLocalUid)"));
     if (res) {
-        m_insertOrReplaceResourceQueryPrepared = true;
+        m_insertOrReplaceResourceWithBinaryDataQueryPrepared = true;
+    }
+
+    return res;
+}
+
+bool LocalStorageManagerPrivate::checkAndPrepareInsertOrReplaceResourceWithoutBinaryDataQuery()
+{
+    if (Q_LIKELY(m_insertOrReplaceResourceWithoutBinaryDataQueryPrepared)) {
+        return true;
+    }
+
+    QNDEBUG(QStringLiteral("Preparing SQL query to insert or replace the resource without binary data"));
+
+    m_insertOrReplaceResourceWithoutBinaryDataQuery = QSqlQuery(m_sqlDatabase);
+    bool res = m_insertOrReplaceResourceWithoutBinaryDataQuery.prepare(QStringLiteral("INSERT OR REPLACE INTO Resources (resourceGuid, "
+                                                                                      "noteGuid, noteLocalUid, dataSize, dataHash, mime, "
+                                                                                      "width, height, recognitionDataBody, recognitionDataSize, "
+                                                                                      "recognitionDataHash, alternateDataSize, "
+                                                                                      "alternateDataHash, resourceUpdateSequenceNumber, "
+                                                                                      "resourceIsDirty, resourceIndexInNote, resourceLocalUid) "
+                                                                                      "VALUES(:resourceGuid, :noteGuid, :noteLocalUid, :dataBody, "
+                                                                                      ":dataSize, :dataHash, :mime, :width, :height, "
+                                                                                      ":recognitionDataBody, :recognitionDataSize, "
+                                                                                      ":recognitionDataHash, :alternateDataBody, :alternateDataSize, "
+                                                                                      ":alternateDataHash, :resourceUpdateSequenceNumber, :resourceIsDirty, "
+                                                                                      ":resourceIndexInNote, :resourceLocalUid)"));
+    if (res) {
+        m_insertOrReplaceResourceWithoutBinaryDataQueryPrepared = true;
     }
 
     return res;
@@ -10237,9 +10281,11 @@ bool LocalStorageManagerPrivate::complementResourceNoteIds(Resource & resource, 
 
 bool LocalStorageManagerPrivate::partialUpdateNoteResources(const QString & noteLocalUid,
                                                             const QList<Resource> & updatedNoteResources,
+                                                            const bool updateResourceBinaryData,
                                                             ErrorString & errorDescription)
 {
-    QNDEBUG(QStringLiteral("LocalStorageManagerPrivate::partialUpdateNoteResources: note local uid = ") << noteLocalUid);
+    QNDEBUG(QStringLiteral("LocalStorageManagerPrivate::partialUpdateNoteResources: note local uid = ") << noteLocalUid
+            << QStringLiteral(", update resource binary data = ") << (updateResourceBinaryData ? QStringLiteral("true") : QStringLiteral("false")));
 
     ErrorString errorPrefix(QT_TR_NOOP("can't do the partial update of note's resources"));
 
@@ -10290,7 +10336,8 @@ bool LocalStorageManagerPrivate::partialUpdateNoteResources(const QString & note
 
     // Now figure out which resources were removed from the note and which were added or updated
     QStringList localUidsForResourcesRemovedFromNote;
-    QList<Resource> addedOrUpdatedResources;
+    QList<Resource> addedResources;
+    QList<Resource> updatedResources;
 
     int numResources = updatedNoteResources.size();
     int numPreviousResources = previousNoteResources.size();
@@ -10336,7 +10383,7 @@ bool LocalStorageManagerPrivate::partialUpdateNoteResources(const QString & note
             changed |= (resource.indexInNote() != previousNoteResource.indexInNote());
 
             if (changed) {
-                addedOrUpdatedResources << resource;
+                updatedResources << resource;
             }
 
             break;
@@ -10364,7 +10411,7 @@ bool LocalStorageManagerPrivate::partialUpdateNoteResources(const QString & note
         }
 
         if (!foundResource) {
-            addedOrUpdatedResources << resource;
+            addedResources << resource;
         }
     }
 
@@ -10377,12 +10424,29 @@ bool LocalStorageManagerPrivate::partialUpdateNoteResources(const QString & note
         DATABASE_CHECK_AND_SET_ERROR();
     }
 
-    int numAddedOrUpdatedResources = addedOrUpdatedResources.size();
-    QNDEBUG(QStringLiteral("Num added or updated resources = ") << numAddedOrUpdatedResources);
+    int numAddedResources = addedResources.size();
+    int numUpdatedResources = updatedResources.size();
+    QNDEBUG(QStringLiteral("Number of added resources = ") << numAddedResources
+            << QStringLiteral(", number of updated resources = ") << numUpdatedResources);
 
-    for(int i = 0; i < numAddedOrUpdatedResources; ++i)
+    if (!updateResourceBinaryData && (numAddedResources != 0))
     {
-        const Resource & resource = addedOrUpdatedResources[i];
+        errorDescription.base() = errorPrefix.base();
+        errorDescription.appendBase(QT_TR_NOOP("can't update resource metadata only when updating note: note contains new resources"));
+        QStringList addedResourcesLocalUids;
+        addedResourcesLocalUids.reserve(numAddedResources);
+        for(auto it = addedResources.constBegin(), end = addedResources.constEnd(); it != end; ++it) {
+            addedResourcesLocalUids << it->localUid();
+        }
+        QNWARNING(errorDescription << QStringLiteral(", note local uid = ") << noteLocalUid
+                  << QStringLiteral(", new resources local uids: ") << addedResourcesLocalUids.join(QStringLiteral(", "))
+                  << QStringLiteral(", note resources: ") << updatedNoteResources);
+        return false;
+    }
+
+    for(int i = 0; i < numUpdatedResources; ++i)
+    {
+        const Resource & resource = updatedResources[i];
 
         ErrorString error;
         bool res = resource.checkParameters(error);
@@ -10397,7 +10461,37 @@ bool LocalStorageManagerPrivate::partialUpdateNoteResources(const QString & note
         }
 
         error.clear();
-        res = insertOrReplaceResource(resource, error, /* useSeparateTransaction = */ false);
+        res = insertOrReplaceResource(resource, error, /* set resource binary data = */ updateResourceBinaryData,
+                                      /* useSeparateTransaction = */ false);
+        if (!res) {
+            errorDescription.base() = errorPrefix.base();
+            errorDescription.appendBase(QT_TR_NOOP("can't add or update one of note's resources"));
+            errorDescription.appendBase(error.base());
+            errorDescription.appendBase(error.additionalBases());
+            errorDescription.details() = error.details();
+            QNWARNING(errorDescription << QStringLiteral(", resource: ") << resource);
+            return false;
+        }
+    }
+
+    for(int i = 0; i < numAddedResources; ++i)
+    {
+        const Resource & resource = addedResources[i];
+
+        ErrorString error;
+        bool res = resource.checkParameters(error);
+        if (!res) {
+            errorDescription.base() = errorPrefix.base();
+            errorDescription.appendBase(QT_TR_NOOP("found invalid resource linked with note"));
+            errorDescription.appendBase(error.base());
+            errorDescription.appendBase(error.additionalBases());
+            errorDescription.details() = error.details();
+            QNWARNING(errorDescription << QStringLiteral(", resource: ") << resource);
+            return false;
+        }
+
+        error.clear();
+        res = insertOrReplaceResource(resource, error, /* set resource binary data = */ true, /* useSeparateTransaction = */ false);
         if (!res) {
             errorDescription.base() = errorPrefix.base();
             errorDescription.appendBase(QT_TR_NOOP("can't add or update one of note's resources"));
@@ -10432,7 +10526,8 @@ void LocalStorageManagerPrivate::clearCachedQueries()
 
     m_insertOrReplaceSavedSearchQueryPrepared = false;
     m_getSavedSearchCountQueryPrepared = false;
-    m_insertOrReplaceResourceQueryPrepared = false;
+    m_insertOrReplaceResourceWithBinaryDataQueryPrepared = false;
+    m_insertOrReplaceResourceWithoutBinaryDataQueryPrepared = false;
     m_insertOrReplaceNoteResourceQueryPrepared = false;
     m_deleteResourceFromResourceRecognitionTypesQueryPrepared = false;
     m_insertOrReplaceIntoResourceRecognitionDataQueryPrepared = false;
