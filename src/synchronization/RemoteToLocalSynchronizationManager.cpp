@@ -1,4 +1,6 @@
-/*
+
+ErrorString error(QT_TR_NOOP("Can't resolve the conflict between remote and local notes: "
+                             "the local note has no guid set"));/*
  * Copyright 2016 Dmitry Ivanov
  *
  * This file is part of libquentier
@@ -57,20 +59,6 @@
 #define INK_NOTE_IMAGES_STORAGE_PATH_KEY QStringLiteral("InkNoteImagesStoragePath")
 
 #define THIRTY_DAYS_IN_MSEC (2592000000)
-
-#define APPEND_NOTE_DETAILS(errorDescription, note) \
-   if (note.hasTitle()) \
-   { \
-       errorDescription.details() = note.title(); \
-   } \
-   else if (note.hasContent()) \
-   { \
-       QString previewText = note.plainText(); \
-       if (!previewText.isEmpty()) { \
-           previewText.truncate(30); \
-           errorDescription.details() = previewText; \
-       } \
-   }
 
 #define SET_ITEM_TYPE_TO_ERROR() \
     errorDescription.details() = QStringLiteral("item type = "); \

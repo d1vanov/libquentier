@@ -17,6 +17,7 @@
  */
 
 #include "NoteSyncConflictResolver.h"
+#include "SynchronizationShared.h"
 #include <quentier/local_storage/LocalStorageManagerAsync.h>
 #include <quentier/logging/QuentierLogger.h>
 #include <quentier_private/synchronization/INoteStore.h>
@@ -50,16 +51,73 @@ void NoteSyncConflictResolver::start()
 
     m_started = true;
 
-    if (Q_UNLIKELY(!m_remoteNote.guid.isSet())) {
-        ErrorString error(QT_TR_NOOP("Can't resolve the confict between remote and local notes: "
-                                     "the remote note has no guid set"));
-        QNWARNING(error << QStringLiteral(": ") << m_remoteNote);
-        Q_EMIT failure(m_remoteNote, error);
+    connectToLocalStorage();
+    processNotesConflictByGuid();
+}
+
+void NoteSyncConflictResolver::onAddNoteComplete(Note note, QUuid requestId)
+{
+    if (requestId != m_addNoteRequestId) {
         return;
     }
 
-    connectToLocalStorage();
-    processNotesConflictByGuid();
+    QNDEBUG(QStringLiteral("NoteSyncConflictResolver::onAddNoteComplete: request id = ")
+            << requestId << QStringLiteral(", note: ") << note);
+
+    // TODO: implement further
+}
+
+void NoteSyncConflictResolver::onAddNoteFailed(Note note, ErrorString errorDescription, QUuid requestId)
+{
+    if (requestId != m_addNoteRequestId) {
+        return;
+    }
+
+    QNDEBUG(QStringLiteral("NoteSyncConflictResolver::onAddNoteFailed: request id = ")
+            << requestId << QStringLiteral(", error description = ") << errorDescription
+            << QStringLiteral("; note: ") << note);
+
+    Q_EMIT failure(m_remoteNote, errorDescription);
+}
+
+void NoteSyncConflictResolver::onUpdateNoteComplete(Note note, bool updateResources, bool updateTags, QUuid requestId)
+{
+    if (requestId != m_updateNoteRequestId) {
+        return;
+    }
+
+    QNDEBUG(QStringLiteral("NoteSyncConflictResolver::onUpdateNoteComplete: note = ") << note
+            << QStringLiteral("\nRequest id = ") << requestId << QStringLiteral(", update resources = ")
+            << (updateResources ? QStringLiteral("true") : QStringLiteral("false")) << QStringLiteral(", update tags = ")
+            << (updateTags ? QStringLiteral("true") : QStringLiteral("false")));
+
+    // TODO: implement further
+}
+
+void NoteSyncConflictResolver::onUpdateNoteFailed(Note note, bool updateResources, bool updateTags,
+                                                  ErrorString errorDescription, QUuid requestId)
+{
+    if (requestId != m_updateNoteRequestId) {
+        return;
+    }
+
+    QNDEBUG(QStringLiteral("NoteSyncConflictResolver::onUpdateNoteFailed: note = ") << note
+            << QStringLiteral("\nRequest id = ") << requestId << QStringLiteral(", update resources = ")
+            << (updateResources ? QStringLiteral("true") : QStringLiteral("false")) << QStringLiteral(", update tags = ")
+            << (updateTags ? QStringLiteral("true") : QStringLiteral("false"))
+            << QStringLiteral("; error description = ") << errorDescription);
+
+    // TODO: implement further
+}
+
+void NoteSyncConflictResolver::onGetNoteAsyncFinished(qint32 errorCode, qevercloud::Note qecNote,
+                                                      qint32 rateLimitSeconds, ErrorString errorDescription)
+{
+    QNDEBUG(QStringLiteral("NoteSyncConflictResolver::onGetNoteAsyncFinished: error code = ") << errorCode
+            << QStringLiteral(", note = ") << qecNote << QStringLiteral("\nRate limit seconds = ")
+            << rateLimitSeconds << QStringLiteral(", error description = ") << errorDescription);
+
+    // TODO: implement
 }
 
 void NoteSyncConflictResolver::connectToLocalStorage()
@@ -84,5 +142,82 @@ void NoteSyncConflictResolver::connectToLocalStorage()
     QObject::connect(&localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,updateNoteFailed,Note,bool,bool,ErrorString,QUuid),
                      this, QNSLOT(NoteSyncConflictResolver,onUpdateNoteFailed,Note,bool,bool,ErrorString,QUuid));
 }
+
+void NoteSyncConflictResolver::processNotesConflictByGuid()
+{
+    QNDEBUG(QStringLiteral("NoteSyncConflictResolver::processNotesConflictByGuid"));
+
+    if (Q_UNLIKELY(!m_remoteNote.guid.isSet())) {
+        ErrorString error(QT_TR_NOOP("Can't resolve the confict between remote and local notes: "
+                                     "the remote note has no guid set"));
+        APPEND_NOTE_DETAILS(error, Note(m_remoteNote))
+        QNWARNING(error << QStringLiteral(": ") << m_remoteNote);
+        Q_EMIT failure(m_remoteNote, error);
+        return;
+    }
+
+    if (Q_UNLIKELY(!m_remoteNote.updateSequenceNum.isSet())) {
+        ErrorString error(QT_TR_NOOP("Can't resolve the conflict between remote and local notes: "
+                                     "the remote note has no update sequence number set"));
+        APPEND_NOTE_DETAILS(error, Note(m_remoteNote))
+        QNWARNING(error << QStringLiteral(": ") << m_remoteNote);
+        Q_EMIT failure(m_remoteNote, error);
+        return;
+    }
+
+    if (Q_UNLIKELY(!m_localConflict.hasGuid())) {
+        ErrorString error(QT_TR_NOOP("Can't resolve the conflict between remote and local notes: "
+                                     "the local note has no guid set"));
+        APPEND_NOTE_DETAILS(error, m_localConflict)
+        QNWARNING(error << QStringLiteral(": ") << m_localConflict);
+        Q_EMIT failure(m_remoteNote, error);
+        return;
+    }
+
+    if (Q_UNLIKELY(m_remoteNote.guid.ref() != m_localConflict.guid())) {
+        ErrorString error(QT_TR_NOOP("Note sync conflict resolution was applied to notes which do not conflict by guid"));
+        APPEND_NOTE_DETAILS(error, m_localConflict)
+        QNWARNING(error << QStringLiteral(": ") << m_localConflict);
+        Q_EMIT failure(m_remoteNote, error);
+        return;
+    }
+
+    bool shouldClearEvernoteFieldsFromConflictingNote = true;
+    if (!m_localConflict.isDirty()) {
+        QNDEBUG(QStringLiteral("The local note is not dirty, can just override it with remote changes"));
+        shouldClearEvernoteFieldsFromConflictingNote = false;
+    }
+    else if (m_localConflict.hasUpdateSequenceNumber() && (m_localConflict.updateSequenceNumber() == m_remoteNote.updateSequenceNum.ref())) {
+        QNDEBUG(QStringLiteral("The notes match by update sequence number but the local note is dirty => local note should override the remote changes"));
+        Q_EMIT finished(m_remoteNote);
+        return;
+    }
+
+    if (shouldClearEvernoteFieldsFromConflictingNote)
+    {
+        m_localConflict.setGuid(QString());
+        m_localConflict.setUpdateSequenceNumber(-1);
+        m_localConflict.setDirty(true);
+
+        if (m_localConflict.hasResources())
+        {
+            QList<Resource> resources = m_localConflict.resources();
+            for(auto it = resources.begin(), end = resources.end(); it != end; ++it) {
+                Resource & resource = *it;
+                resource.setGuid(QString());
+                resource.setUpdateSequenceNumber(-1);
+                resource.setDirty(true);
+            }
+
+            m_localConflict.setResources(resources);
+        }
+
+        m_updateNoteRequestId = QUuid::createUuid();
+        QNDEBUG(QStringLiteral("Emitting the request to update the local conflicting note (after clearing Evernote assigned fields from it): request id = ")
+                << m_updateNoteRequestId << QStringLiteral(", note to update: ") << m_localConflict);
+        // TODO: update local conflict note but update only resource metadata
+    }
+}
+
 
 } // namespace quentier

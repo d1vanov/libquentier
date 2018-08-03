@@ -67,13 +67,15 @@ Q_SIGNALS:
     void finished(qevercloud::Note remoteNote);
     void failure(qevercloud::Note remoteNote, ErrorString errorDescription);
 
+    void rateLimitExceeded(qint32 secondsToWait);
+
 // private signals
     void addNote(Note note, QUuid requestId);
     void updateNote(Note note, bool updateResources, bool updateTags, QUuid requestId);
 
 private Q_SLOTS:
     void onAddNoteComplete(Note note, QUuid requestId);
-    void onAddNoteFailed(Note note, QUuid requestId);
+    void onAddNoteFailed(Note note, ErrorString errorDescription, QUuid requestId);
     void onUpdateNoteComplete(Note note, bool updateResources, bool updateTags, QUuid requestId);
     void onUpdateNoteFailed(Note note, bool updateResources, bool updateTags,
                             ErrorString errorDescription, QUuid requestId);
