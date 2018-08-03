@@ -49,7 +49,7 @@ Q_SIGNALS:
     void addNotebookRequest(Notebook notebook, QUuid requestId = QUuid());
     void getNoteCountRequest(QUuid requestId = QUuid());
     void addNoteRequest(Note note, QUuid requestId = QUuid());
-    void updateNoteRequest(Note note, bool updateResources, bool updateTags, QUuid requestId = QUuid());
+    void updateNoteRequest(Note note, LocalStorageManager::UpdateNoteOptions options, QUuid requestId = QUuid());
     void findNoteRequest(Note note, bool withResourceMetadata, bool withResourceBinaryData, QUuid requestId = QUuid());
     void listNotesPerNotebookRequest(Notebook notebook, bool withResourceMetadata, bool withResourceBinaryData,
                                      LocalStorageManager::ListObjectsOptions flag,
@@ -66,8 +66,8 @@ private Q_SLOTS:
     void onGetNoteCountFailed(ErrorString errorDescription, QUuid requestId);
     void onAddNoteCompleted(Note note, QUuid requestId);
     void onAddNoteFailed(Note note, ErrorString errorDescription, QUuid requestId);
-    void onUpdateNoteCompleted(Note note, bool updateResources, bool updateTags, QUuid requestId);
-    void onUpdateNoteFailed(Note note, bool updateResources, bool updateTags,
+    void onUpdateNoteCompleted(Note note, LocalStorageManager::UpdateNoteOptions options, QUuid requestId);
+    void onUpdateNoteFailed(Note note, LocalStorageManager::UpdateNoteOptions options,
                             ErrorString errorDescription, QUuid requestId);
     void onFindNoteCompleted(Note note, bool withResourceMetadata, bool withResourceBinaryData, QUuid requestId);
     void onFindNoteFailed(Note note, bool withResourceMetadata, bool withResourceBinaryData, ErrorString errorDescription,

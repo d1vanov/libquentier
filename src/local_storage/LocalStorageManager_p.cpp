@@ -1773,9 +1773,9 @@ bool LocalStorageManagerPrivate::addNote(Note & note, ErrorString & errorDescrip
         return false;
     }
 
-    LocalStorageManager::UpdateNoteOptions options(LocalStorageManager::UpdateResourceMetadata |
-                                                   LocalStorageManager::UpdateResourceBinaryData |
-                                                   LocalStorageManager::UpdateTags);
+    LocalStorageManager::UpdateNoteOptions options(LocalStorageManager::UpdateNoteOption::UpdateResourceMetadata |
+                                                   LocalStorageManager::UpdateNoteOption::UpdateResourceBinaryData |
+                                                   LocalStorageManager::UpdateNoteOption::UpdateTags);
     res = insertOrReplaceNote(note, options, errorDescription);
     if (!res) {
         QNWARNING(QStringLiteral("Note which produced the error: ") << note);
@@ -1976,10 +1976,10 @@ bool LocalStorageManagerPrivate::findNote(Note & note, ErrorString & errorDescri
                                       "height, recognitionDataSize, recognitionDataHash, alternateDataSize, alternateDataHash, "
                                       "resourceIndexInNote, resourceSourceURL, timestamp, resourceLatitude, resourceLongitude, "
                                       "resourceAltitude, cameraMake, cameraModel, clientWillIndex, fileName, attachment, "
-                                      "resourceKey, resourceMapKey, resourceValue");
+                                      "resourceKey, resourceMapKey, resourceValue, recognitionDataBody");
 
         if (withResourceBinaryData) {
-            queryString += QStringLiteral(", dataBody, recognitionDataBody, alternateDataBody");
+            queryString += QStringLiteral(", dataBody, alternateDataBody");
         }
     }
 
@@ -3365,9 +3365,10 @@ bool LocalStorageManagerPrivate::findEnResource(Resource & resource, ErrorString
                                          "recognitionDataHash, alternateDataSize, alternateDataHash, "
                                          "resourceIndexInNote, resourceSourceURL, timestamp, resourceLatitude, "
                                          "resourceLongitude, resourceAltitude, cameraMake, cameraModel, clientWillIndex, "
-                                         "fileName, attachment, resourceKey, resourceMapKey, resourceValue, localNote");
+                                         "fileName, attachment, resourceKey, resourceMapKey, resourceValue, localNote, "
+                                         "recognitionDataBody");
     if (withBinaryData) {
-        queryString += QStringLiteral(", dataBody, recognitionDataBody, alternateDataBody");
+        queryString += QStringLiteral(", dataBody, alternateDataBody");
     }
 
     queryString += QString::fromUtf8(" FROM Resources "
@@ -6520,7 +6521,7 @@ bool LocalStorageManagerPrivate::insertOrReplaceNote(Note & note, const LocalSto
         }
     }
 
-    if (options & LocalStorageManager::UpdateTags)
+    if (options & LocalStorageManager::UpdateNoteOption::UpdateTags)
     {
         // Clear note-to-tag binding first, update them second
         {
@@ -6614,7 +6615,7 @@ bool LocalStorageManagerPrivate::insertOrReplaceNote(Note & note, const LocalSto
         // has the only purpose to provide tag names alternatively to guids to NoteStore::createNote method
     }
 
-    if (options & LocalStorageManager::UpdateResourceMetadata)
+    if (options & LocalStorageManager::UpdateNoteOption::UpdateResourceMetadata)
     {
         if (!note.hasResources())
         {
@@ -6626,7 +6627,7 @@ bool LocalStorageManagerPrivate::insertOrReplaceNote(Note & note, const LocalSto
         }
         else
         {
-            bool updateResourceBinaryData = (options & LocalStorageManager::UpdateResourceBinaryData);
+            bool updateResourceBinaryData = (options & LocalStorageManager::UpdateNoteOption::UpdateResourceBinaryData);
             bool res = partialUpdateNoteResources(localUid, note.resources(), updateResourceBinaryData, errorDescription);
             if (!res) {
                 return false;
@@ -7850,9 +7851,9 @@ void LocalStorageManagerPrivate::fillResourceFromSqlRecord(const QSqlRecord & re
     CHECK_AND_SET_RESOURCE_PROPERTY(resourceIndexInNote, int, int, setIndexInNote);
     CHECK_AND_SET_RESOURCE_PROPERTY(alternateDataSize, int, qint32, setAlternateDataSize);
     CHECK_AND_SET_RESOURCE_PROPERTY(alternateDataHash, QByteArray, QByteArray, setAlternateDataHash);
+    CHECK_AND_SET_RESOURCE_PROPERTY(recognitionDataBody, QByteArray, QByteArray, setRecognitionDataBody);
 
     if (withBinaryData) {
-        CHECK_AND_SET_RESOURCE_PROPERTY(recognitionDataBody, QByteArray, QByteArray, setRecognitionDataBody);
         CHECK_AND_SET_RESOURCE_PROPERTY(dataBody, QByteArray, QByteArray, setDataBody);
         CHECK_AND_SET_RESOURCE_PROPERTY(alternateDataBody, QByteArray, QByteArray, setAlternateDataBody);
     }

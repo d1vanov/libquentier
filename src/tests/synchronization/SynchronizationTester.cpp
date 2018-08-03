@@ -5111,8 +5111,7 @@ void SynchronizationTester::setModifiedUserOwnItemsToLocalStorage()
         note.setTitle(note.title() + MODIFIED_LOCALLY_SUFFIX);
         note.setDirty(true);
 
-        res = m_pLocalStorageManagerAsync->localStorageManager()->updateNote(note, /* update tags = */ false,
-                                                                             /* update resources = */ false,
+        res = m_pLocalStorageManagerAsync->localStorageManager()->updateNote(note, LocalStorageManager::UpdateNoteOptions(0),
                                                                              errorDescription);
         QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
     }
@@ -5170,8 +5169,7 @@ void SynchronizationTester::setModifiedLinkedNotebookItemsToLocalStorage()
         note.setTitle(note.title() + MODIFIED_LOCALLY_SUFFIX);
         note.setDirty(true);
 
-        res = m_pLocalStorageManagerAsync->localStorageManager()->updateNote(note, /* update tags = */ false,
-                                                                             /* update resources = */ false,
+        res = m_pLocalStorageManagerAsync->localStorageManager()->updateNote(note, LocalStorageManager::UpdateNoteOptions(0),
                                                                              errorDescription);
         QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
     }
@@ -5391,8 +5389,8 @@ void SynchronizationTester::setConflictingNotesToLocalAndRemoteStoragesImpl(cons
 
         modifiedNote.setLocalUid(QString());
         modifiedNote.setTitle(originalTitle + MODIFIED_LOCALLY_SUFFIX);
-        res = m_pLocalStorageManagerAsync->localStorageManager()->updateNote(modifiedNote, /* update resources = */ false,
-                                                                             /* update tags = */ false, errorDescription);
+        res = m_pLocalStorageManagerAsync->localStorageManager()->updateNote(modifiedNote, LocalStorageManager::UpdateNoteOptions(0),
+                                                                             errorDescription);
         QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
 
         const Notebook * pNotebook = m_pFakeNoteStore->findNotebook(pNote->notebookGuid());

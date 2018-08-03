@@ -148,7 +148,7 @@ Q_SIGNALS:
     void expungeNotebook(Notebook notebook, QUuid requestId);
 
     void addNote(Note note, QUuid requestId);
-    void updateNote(Note note, bool updateResources, bool updateTags, QUuid requestId);
+    void updateNote(Note note, LocalStorageManager::UpdateNoteOptions options, QUuid requestId);
     void findNote(Note note, bool withResourceMetadata, bool withResourceBinaryData, QUuid requestId);
     void expungeNote(Note note, QUuid requestId);
 
@@ -236,8 +236,8 @@ private Q_SLOTS:
 
     void onAddNoteCompleted(Note note, QUuid requestId);
     void onAddNoteFailed(Note note, ErrorString errorDescription, QUuid requestId);
-    void onUpdateNoteCompleted(Note note, bool updateResources, bool updateTags, QUuid requestId);
-    void onUpdateNoteFailed(Note note, bool updateResources, bool updateTags,
+    void onUpdateNoteCompleted(Note note, LocalStorageManager::UpdateNoteOptions options, QUuid requestId);
+    void onUpdateNoteFailed(Note note, LocalStorageManager::UpdateNoteOptions options,
                             ErrorString errorDescription, QUuid requestId);
     void onExpungeNoteCompleted(Note note, QUuid requestId);
     void onExpungeNoteFailed(Note note, ErrorString errorDescription, QUuid requestId);

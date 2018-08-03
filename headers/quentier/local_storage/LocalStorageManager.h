@@ -520,29 +520,33 @@ public:
     bool addNote(Note & note, ErrorString & errorDescription);
 
     /**
-     * @brief The UpdateNoteOption enum is the base enum for QFlags which allows to specify
+     * @brief The UpdateNoteOption is a C++-98 style scoped enum servomg as the base enum for QFlags which allows to specify
      * which note fields should be updated when updateNote method is called
      *
      * Most note data is updated unconditionally - note title, content, attributes (if any) etc.
      * However, some specific data can be chosen to not update - notably, metadata of resources, binary data
      * of resources or lists of note's tags
      */
-    enum UpdateNoteOption {
-        /**
-         * UpdateResourceMetadata value specifies that non-binary data fields for note's resources should be updated
-         */
-        UpdateResourceMetadata      = 0,
-        /**
-         * UpdateResourceBinaryData value specifies that binary data for note's resources should be updated; this value
-         * only has effect if flags also has UpdateResourceMetadata value enabled!
-         */
-        UpdateResourceBinaryData    = 1,
-        /**
-         * UpdateTags value specifies that note's linkage to tags should be updated
-         */
-        UpdateTags                  = 2
+    struct UpdateNoteOption
+    {
+        enum type
+        {
+            /**
+             * UpdateResourceMetadata value specifies that non-binary data fields for note's resources should be updated
+             */
+            UpdateResourceMetadata      = 1,
+            /**
+             * UpdateResourceBinaryData value specifies that binary data for note's resources should be updated; this value
+             * only has effect if flags also has UpdateResourceMetadata value enabled!
+             */
+            UpdateResourceBinaryData    = 2,
+            /**
+             * UpdateTags value specifies that note's linkage to tags should be updated
+             */
+            UpdateTags                  = 4
+        };
     };
-    Q_DECLARE_FLAGS(UpdateNoteOptions, UpdateNoteOption)
+    Q_DECLARE_FLAGS(UpdateNoteOptions, UpdateNoteOption::type)
 
     /**
      * @brief updateNote - updates passed in Note in the local storage database

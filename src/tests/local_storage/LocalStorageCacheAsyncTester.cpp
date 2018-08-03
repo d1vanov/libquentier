@@ -17,7 +17,6 @@
  */
 
 #include "LocalStorageCacheAsyncTester.h"
-#include <quentier/local_storage/LocalStorageManagerAsync.h>
 #include <quentier/local_storage/DefaultLocalStorageCacheExpiryChecker.h>
 #include <quentier/local_storage/LocalStorageCacheManager.h>
 #include <quentier/logging/QuentierLogger.h>
@@ -286,12 +285,11 @@ void LocalStorageCacheAsyncTester::onAddNoteFailed(Note note, ErrorString errorD
     Q_EMIT failure(errorDescription.nonLocalizedString());
 }
 
-void LocalStorageCacheAsyncTester::onUpdateNoteCompleted(Note note, bool updateResources,
-                                                         bool updateTags, QUuid requestId)
+void LocalStorageCacheAsyncTester::onUpdateNoteCompleted(Note note, LocalStorageManager::UpdateNoteOptions options,
+                                                         QUuid requestId)
 {
+    Q_UNUSED(options)
     Q_UNUSED(requestId)
-    Q_UNUSED(updateResources)
-    Q_UNUSED(updateTags)
 
     ErrorString errorDescription;
 
@@ -338,11 +336,10 @@ void LocalStorageCacheAsyncTester::onUpdateNoteCompleted(Note note, bool updateR
     HANDLE_WRONG_STATE()
 }
 
-void LocalStorageCacheAsyncTester::onUpdateNoteFailed(Note note, bool updateResources, bool updateTags,
+void LocalStorageCacheAsyncTester::onUpdateNoteFailed(Note note, LocalStorageManager::UpdateNoteOptions options,
                                                       ErrorString errorDescription, QUuid requestId)
 {
-    Q_UNUSED(updateResources)
-    Q_UNUSED(updateTags)
+    Q_UNUSED(options)
 
     QNWARNING(errorDescription << QStringLiteral(", requestId = ") << requestId << QStringLiteral(", note: ") << note);
     Q_EMIT failure(errorDescription.nonLocalizedString());
@@ -697,8 +694,8 @@ void LocalStorageCacheAsyncTester::createConnections()
                      m_pLocalStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,onUpdateNotebookRequest,Notebook,QUuid));
     QObject::connect(this, QNSIGNAL(LocalStorageCacheAsyncTester,addNoteRequest,Note,QUuid),
                      m_pLocalStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,onAddNoteRequest,Note,QUuid));
-    QObject::connect(this, QNSIGNAL(LocalStorageCacheAsyncTester,updateNoteRequest,Note,bool,bool,QUuid),
-                     m_pLocalStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,onUpdateNoteRequest,Note,bool,bool,QUuid));
+    QObject::connect(this, QNSIGNAL(LocalStorageCacheAsyncTester,updateNoteRequest,Note,LocalStorageManager::UpdateNoteOptions,QUuid),
+                     m_pLocalStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,onUpdateNoteRequest,Note,LocalStorageManager::UpdateNoteOptions,QUuid));
     QObject::connect(this, QNSIGNAL(LocalStorageCacheAsyncTester,addTagRequest,Tag,QUuid),
                      m_pLocalStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,onAddTagRequest,Tag,QUuid));
     QObject::connect(this, QNSIGNAL(LocalStorageCacheAsyncTester,updateTagRequest,Tag,QUuid),
@@ -725,10 +722,10 @@ void LocalStorageCacheAsyncTester::createConnections()
                      this, QNSLOT(LocalStorageCacheAsyncTester,onAddNoteCompleted,Note,QUuid));
     QObject::connect(m_pLocalStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,addNoteFailed,Note,ErrorString,QUuid),
                      this, QNSLOT(LocalStorageCacheAsyncTester,onAddNoteFailed,Note,ErrorString,QUuid));
-    QObject::connect(m_pLocalStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,updateNoteComplete,Note,bool,bool,QUuid),
-                     this, QNSLOT(LocalStorageCacheAsyncTester,onUpdateNoteCompleted,Note,bool,bool,QUuid));
-    QObject::connect(m_pLocalStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,updateNoteFailed,Note,bool,bool,ErrorString,QUuid),
-                     this, QNSLOT(LocalStorageCacheAsyncTester,onUpdateNoteFailed,Note,bool,bool,ErrorString,QUuid));
+    QObject::connect(m_pLocalStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,updateNoteComplete,Note,LocalStorageManager::UpdateNoteOptions,QUuid),
+                     this, QNSLOT(LocalStorageCacheAsyncTester,onUpdateNoteCompleted,Note,LocalStorageManager::UpdateNoteOptions,QUuid));
+    QObject::connect(m_pLocalStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,updateNoteFailed,Note,LocalStorageManager::UpdateNoteOptions,ErrorString,QUuid),
+                     this, QNSLOT(LocalStorageCacheAsyncTester,onUpdateNoteFailed,Note,LocalStorageManager::UpdateNoteOptions,ErrorString,QUuid));
     QObject::connect(m_pLocalStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,addTagComplete,Tag,QUuid),
                      this, QNSLOT(LocalStorageCacheAsyncTester,onAddTagCompleted,Tag,QUuid));
     QObject::connect(m_pLocalStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,addTagFailed,Tag,ErrorString,QUuid),
@@ -819,7 +816,10 @@ void LocalStorageCacheAsyncTester::updateNote()
     m_secondNote.setModificationTimestamp(QDateTime::currentMSecsSinceEpoch());
 
     m_state = STATE_SENT_NOTE_UPDATE_REQUEST;
-    Q_EMIT updateNoteRequest(m_secondNote, /* update resources = */ true, /* update tags = */ true);
+    Q_EMIT updateNoteRequest(m_secondNote,
+                             LocalStorageManager::UpdateNoteOptions(LocalStorageManager::UpdateNoteOption::UpdateResourceMetadata |
+                                                                    LocalStorageManager::UpdateNoteOption::UpdateResourceBinaryData |
+                                                                    LocalStorageManager::UpdateNoteOption::UpdateTags));
 }
 
 void LocalStorageCacheAsyncTester::addTag()

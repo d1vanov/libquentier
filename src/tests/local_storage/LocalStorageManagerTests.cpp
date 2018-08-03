@@ -674,7 +674,6 @@ bool TestResourceAddFindUpdateExpungeInLocalStorage(QString & errorDescription)
     }
 
     modifiedResource.setDataBody(QByteArray());
-    modifiedResource.setRecognitionDataBody(QByteArray());
     modifiedResource.setAlternateDataBody(QByteArray());
 
     if (modifiedResource != foundResource) {
@@ -825,7 +824,8 @@ bool TestNoteFindUpdateDeleteExpungeInLocalStorage(QString & errorDescription)
     note.addTagLocalUid(tag.localUid());
 
     errorMessage.clear();
-    res = localStorageManager.updateNote(note, /* updateResources = */ false, /* updateTags = */ true, errorMessage);
+    res = localStorageManager.updateNote(note, LocalStorageManager::UpdateNoteOptions(LocalStorageManager::UpdateNoteOption::UpdateTags),
+                                         errorMessage);
     if (!res) {
         errorDescription = errorMessage.nonLocalizedString();
         return false;
@@ -877,8 +877,11 @@ bool TestNoteFindUpdateDeleteExpungeInLocalStorage(QString & errorDescription)
     note.addResource(resource);
 
     errorMessage.clear();
-    res = localStorageManager.updateNote(note, /* update resources = */ true,
-                                         /* update tags = */ true, errorMessage);
+    res = localStorageManager.updateNote(note,
+                                         LocalStorageManager::UpdateNoteOptions(LocalStorageManager::UpdateNoteOption::UpdateTags |
+                                                                                LocalStorageManager::UpdateNoteOption::UpdateResourceMetadata |
+                                                                                LocalStorageManager::UpdateNoteOption::UpdateResourceBinaryData),
+                                         errorMessage);
     if (!res) {
         errorDescription = errorMessage.nonLocalizedString();
         return false;
@@ -1014,8 +1017,11 @@ bool TestNoteFindUpdateDeleteExpungeInLocalStorage(QString & errorDescription)
     modifiedNote.unsetLocalUid();
     modifiedNote.setNotebookLocalUid(notebook.localUid());
 
-    res = localStorageManager.updateNote(modifiedNote, /* update resources = */ true,
-                                         /* update tags = */ true, errorMessage);
+    res = localStorageManager.updateNote(modifiedNote,
+                                         LocalStorageManager::UpdateNoteOptions(LocalStorageManager::UpdateNoteOption::UpdateTags |
+                                                                                LocalStorageManager::UpdateNoteOption::UpdateResourceMetadata |
+                                                                                LocalStorageManager::UpdateNoteOption::UpdateResourceBinaryData),
+                                         errorMessage);
     if (!res) {
         errorDescription = errorMessage.nonLocalizedString();
         return false;
@@ -1165,8 +1171,8 @@ bool TestNoteFindUpdateDeleteExpungeInLocalStorage(QString & errorDescription)
     modifiedNote.setActive(false);
     modifiedNote.setDeletionTimestamp(1);
     foundNote.setActive(true);
-    res = localStorageManager.updateNote(modifiedNote, /* update resources = */ false,
-                                         /* update tags = */ false, errorMessage);
+    res = localStorageManager.updateNote(modifiedNote, LocalStorageManager::UpdateNoteOptions(0),
+                                         errorMessage);
     if (!res) {
         errorDescription = errorMessage.nonLocalizedString();
         return false;
@@ -1359,8 +1365,8 @@ bool TestNotebookFindUpdateDeleteExpungeInLocalStorage(QString & errorDescriptio
     note.addTagLocalUid(tag.localUid());
 
     errorMessage.clear();
-    res = localStorageManager.updateNote(note, /* updateResources = */ false,
-                                         /* update tags = */ true, errorMessage);
+    res = localStorageManager.updateNote(note, LocalStorageManager::UpdateNoteOptions(LocalStorageManager::UpdateNoteOption::UpdateTags),
+                                         errorMessage);
     if (!res) {
         errorDescription = errorMessage.nonLocalizedString();
         return false;
@@ -2160,8 +2166,11 @@ bool TestSequentialUpdatesInLocalStorage(QString & errorDescription)
     updatedNote.setNotebookGuid(notebook.guid());
     updatedNote.setNotebookLocalUid(notebook.localUid());
 
-    res = localStorageManager.updateNote(updatedNote, /* update resources = */ true,
-                                         /* update tags = */ true, errorMessage);
+    res = localStorageManager.updateNote(updatedNote,
+                                         LocalStorageManager::UpdateNoteOptions(LocalStorageManager::UpdateNoteOption::UpdateTags |
+                                                                                LocalStorageManager::UpdateNoteOption::UpdateResourceMetadata |
+                                                                                LocalStorageManager::UpdateNoteOption::UpdateResourceBinaryData),
+                                         errorMessage);
     if (!res) {
         errorDescription = errorMessage.nonLocalizedString();
         return false;
@@ -2205,8 +2214,11 @@ bool TestSequentialUpdatesInLocalStorage(QString & errorDescription)
 
     updatedNote.addResource(resource);
 
-    res = localStorageManager.updateNote(updatedNote, /* update resources = */ true,
-                                         /* update tags = */ true, errorMessage);
+    res = localStorageManager.updateNote(updatedNote,
+                                         LocalStorageManager::UpdateNoteOptions(LocalStorageManager::UpdateNoteOption::UpdateTags |
+                                                                                LocalStorageManager::UpdateNoteOption::UpdateResourceMetadata |
+                                                                                LocalStorageManager::UpdateNoteOption::UpdateResourceBinaryData),
+                                         errorMessage);
     if (!res) {
         errorDescription = errorMessage.nonLocalizedString();
         return res;
@@ -2227,8 +2239,11 @@ bool TestSequentialUpdatesInLocalStorage(QString & errorDescription)
 
     updatedNote.setResources(resources);
 
-    res = localStorageManager.updateNote(updatedNote, /* update resources = */ true,
-                                         /* update tags = */ true, errorMessage);
+    res = localStorageManager.updateNote(updatedNote,
+                                         LocalStorageManager::UpdateNoteOptions(LocalStorageManager::UpdateNoteOption::UpdateTags |
+                                                                                LocalStorageManager::UpdateNoteOption::UpdateResourceMetadata |
+                                                                                LocalStorageManager::UpdateNoteOption::UpdateResourceBinaryData),
+                                         errorMessage);
     if (!res) {
         errorDescription = errorMessage.nonLocalizedString();
         return false;
@@ -2992,7 +3007,8 @@ bool TestNoteTagIdsComplementWhenAddingAndUpdatingNote(QString & errorDescriptio
     firstNote.setTagGuids(QStringList() << firstTag.guid() << secondTag.guid());
 
     error.clear();
-    res = localStorageManager.updateNote(firstNote, /* update resources = */ false, /* update tags = */ true, error);
+    res = localStorageManager.updateNote(firstNote, LocalStorageManager::UpdateNoteOptions(LocalStorageManager::UpdateNoteOption::UpdateTags),
+                                         error);
     if (!res) {
         errorDescription = error.nonLocalizedString();
         return false;
@@ -3021,7 +3037,8 @@ bool TestNoteTagIdsComplementWhenAddingAndUpdatingNote(QString & errorDescriptio
     secondNote.setTagLocalUids(QStringList() << firstTag.localUid() << secondTag.localUid());
 
     error.clear();
-    res = localStorageManager.updateNote(secondNote, /* update resources = */ false, /* update tags = */ true, error);
+    res = localStorageManager.updateNote(secondNote, LocalStorageManager::UpdateNoteOptions(LocalStorageManager::UpdateNoteOption::UpdateTags),
+                                         error);
     if (!res) {
         errorDescription = error.nonLocalizedString();
         return false;

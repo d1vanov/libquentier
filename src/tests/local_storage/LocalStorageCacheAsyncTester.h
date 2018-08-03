@@ -20,16 +20,10 @@
 #define LIB_QUENTIER_TESTS_LOCAL_STORAGE_CACHE_ASYNC_TESTER_H
 
 #include <quentier/utility/Macros.h>
-#include <quentier/types/ErrorString.h>
-#include <quentier/types/Notebook.h>
-#include <quentier/types/Note.h>
-#include <quentier/types/Tag.h>
-#include <quentier/types/LinkedNotebook.h>
-#include <quentier/types/SavedSearch.h>
+#include <quentier/local_storage/LocalStorageManagerAsync.h>
 
 namespace quentier {
 
-QT_FORWARD_DECLARE_CLASS(LocalStorageManagerAsync)
 QT_FORWARD_DECLARE_CLASS(LocalStorageCacheManager)
 
 namespace test {
@@ -53,7 +47,7 @@ Q_SIGNALS:
     void updateNotebookRequest(Notebook notebook, QUuid requestId = QUuid());
 
     void addNoteRequest(Note note, QUuid requestId = QUuid());
-    void updateNoteRequest(Note note, bool updateResources, bool updateTags, QUuid requestId = QUuid());
+    void updateNoteRequest(Note note, LocalStorageManager::UpdateNoteOptions options, QUuid requestId = QUuid());
 
     void addTagRequest(Tag tag, QUuid requestId = QUuid());
     void updateTagRequest(Tag tag, QUuid requestId = QUuid());
@@ -76,8 +70,8 @@ private Q_SLOTS:
     void onAddNoteCompleted(Note note, QUuid requestId);
     void onAddNoteFailed(Note note, ErrorString errorDescription, QUuid requestId);
 
-    void onUpdateNoteCompleted(Note note, bool updateResources, bool updateTags, QUuid requestId);
-    void onUpdateNoteFailed(Note note, bool updateResources, bool updateTags,
+    void onUpdateNoteCompleted(Note note, LocalStorageManager::UpdateNoteOptions options, QUuid requestId);
+    void onUpdateNoteFailed(Note note, LocalStorageManager::UpdateNoteOptions options,
                             ErrorString errorDescription, QUuid requestId);
 
     void onAddTagCompleted(Tag tag, QUuid requestId);
