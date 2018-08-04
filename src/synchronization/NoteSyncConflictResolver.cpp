@@ -19,8 +19,10 @@
 #include "NoteSyncConflictResolver.h"
 #include "SynchronizationShared.h"
 #include <quentier/local_storage/LocalStorageManagerAsync.h>
+#include <quentier/utility/Utility.h>
 #include <quentier/logging/QuentierLogger.h>
 #include <quentier_private/synchronization/INoteStore.h>
+#include <QTimerEvent>
 
 namespace quentier {
 
@@ -38,6 +40,7 @@ NoteSyncConflictResolver::NoteSyncConflictResolver(IManager & manager,
     m_pendingFullRemoteNoteDataDownload(false),
     m_pendingRemoteNoteAdditionToLocalStorage(false),
     m_pendingRemoteNoteUpdateInLocalStorage(false),
+    m_retryNoteDownloadingTimerId(-1),
     m_addNoteRequestId(),
     m_updateNoteRequestId(),
     m_started(false)
@@ -207,6 +210,38 @@ void NoteSyncConflictResolver::onGetNoteAsyncFinished(qint32 errorCode, qeverclo
             << QStringLiteral(", note = ") << qecNote << QStringLiteral("\nRate limit seconds = ")
             << rateLimitSeconds << QStringLiteral(", error description = ") << errorDescription);
 
+    if (errorCode == qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED)
+    {
+        if (rateLimitSeconds < 0) {
+            errorDescription.setBase(QT_TR_NOOP("QEverCloud or Evernote protocol error: caught RATE_LIMIT_REACHED "
+                                                "exception but the number of seconds to wait is zero or negative"));
+            errorDescription.details() = QString::number(rateLimitSeconds);
+            Q_EMIT failure(m_remoteNote, errorDescription);
+            return;
+        }
+
+        int timerId = startTimer(SEC_TO_MSEC(rateLimitSeconds));
+        if (Q_UNLIKELY(timerId == 0)) {
+            errorDescription.setBase(QT_TR_NOOP("Failed to start a timer to postpone the Evernote API call "
+                                                "due to rate limit exceeding"));
+            Q_EMIT failure(m_remoteNote, errorDescription);
+            return;
+        }
+
+        m_retryNoteDownloadingTimerId = timerId;
+        Q_EMIT rateLimitExceeded(rateLimitSeconds);
+        return;
+    }
+    else if (errorCode == qevercloud::EDAMErrorCode::AUTH_EXPIRED)
+    {
+        // FIXME: handle auth expiration
+        return;
+    }
+    else if (errorCode != 0) {
+        Q_EMIT failure(m_remoteNote, errorDescription);
+        return;
+    }
+
     m_pendingFullRemoteNoteDataDownload = false;
 
     if (m_shouldOverrideLocalNoteWithRemoteNote)
@@ -305,44 +340,9 @@ void NoteSyncConflictResolver::processNotesConflictByGuid()
     }
 
     // Regardless of the exact way of further processing we need to download full note data for the remote note
-    m_remoteNoteAsLocalNote = Note(m_remoteNote);
-    QString authToken;
-    ErrorString errorDescription;
-    INoteStore * pNoteStore = m_manager.noteStoreForNote(m_remoteNoteAsLocalNote, authToken, errorDescription);
-    if (Q_UNLIKELY(!pNoteStore)) {
-        ErrorString error(QT_TR_NOOP("Can't resolve sync conflict between notes: internal error, failed to find note store for the remote note"));
-        error.appendBase(errorDescription.base());
-        error.appendBase(errorDescription.additionalBases());
-        APPEND_NOTE_DETAILS(error, m_remoteNoteAsLocalNote);
-        QNWARNING(error << QStringLiteral(": ") << m_remoteNoteAsLocalNote);
-        Q_EMIT failure(m_remoteNote, error);
+    if (!downloadFullRemoteNoteData()) {
         return;
     }
-
-    QObject::connect(pNoteStore, QNSIGNAL(INoteStore,getNoteAsyncFinished,qint32,qevercloud::Note,qint32,ErrorString),
-                     this, QNSLOT(NoteSyncConflictResolver,onGetNoteAsyncFinished,qint32,qevercloud::Note,qint32,ErrorString),
-                     Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
-
-    bool withContent = true;
-    bool withResourceData = true;
-    bool withResourceRecognition = true;
-    bool withResourceAlternateData = true;
-    bool withSharedNotes = true;
-    bool withNoteAppDataValues = true;
-    bool withResourceAppDataValues = true;
-    bool withNoteLimits = m_manager.syncingLinkedNotebooksContent();
-    bool res = pNoteStore->getNoteAsync(withContent, withResourceData, withResourceRecognition,
-                                        withResourceAlternateData, withSharedNotes,
-                                        withNoteAppDataValues, withResourceAppDataValues,
-                                        withNoteLimits, m_remoteNoteAsLocalNote.guid(), authToken, errorDescription);
-    if (!res) {
-        APPEND_NOTE_DETAILS(errorDescription, m_remoteNoteAsLocalNote)
-        QNWARNING(errorDescription << QStringLiteral(", note: ") << m_remoteNoteAsLocalNote);
-        Q_EMIT failure(m_remoteNote, errorDescription);
-        return;
-    }
-
-    m_pendingFullRemoteNoteDataDownload = true;
 
     if (!m_localConflict.isDirty()) {
         QNDEBUG(QStringLiteral("The local conflicting note is not dirty and thus should be overridden with the remote note"));
@@ -485,6 +485,67 @@ void NoteSyncConflictResolver::addRemoteNoteToLocalStorageAsNewNote()
     QNDEBUG(QStringLiteral("Emitting the request to add note to the local storage: request id = ")
             << m_addNoteRequestId << QStringLiteral(", note: ") << m_remoteNoteAsLocalNote);
     Q_EMIT addNote(m_remoteNoteAsLocalNote, m_addNoteRequestId);
+}
+
+bool NoteSyncConflictResolver::downloadFullRemoteNoteData()
+{
+    m_remoteNoteAsLocalNote = Note(m_remoteNote);
+    QString authToken;
+    ErrorString errorDescription;
+    INoteStore * pNoteStore = m_manager.noteStoreForNote(m_remoteNoteAsLocalNote, authToken, errorDescription);
+    if (Q_UNLIKELY(!pNoteStore)) {
+        ErrorString error(QT_TR_NOOP("Can't resolve sync conflict between notes: internal error, failed to find note store for the remote note"));
+        error.appendBase(errorDescription.base());
+        error.appendBase(errorDescription.additionalBases());
+        APPEND_NOTE_DETAILS(error, m_remoteNoteAsLocalNote);
+        QNWARNING(error << QStringLiteral(": ") << m_remoteNoteAsLocalNote);
+        Q_EMIT failure(m_remoteNote, error);
+        return false;
+    }
+
+    QObject::connect(pNoteStore, QNSIGNAL(INoteStore,getNoteAsyncFinished,qint32,qevercloud::Note,qint32,ErrorString),
+                     this, QNSLOT(NoteSyncConflictResolver,onGetNoteAsyncFinished,qint32,qevercloud::Note,qint32,ErrorString),
+                     Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
+
+    bool withContent = true;
+    bool withResourceData = true;
+    bool withResourceRecognition = true;
+    bool withResourceAlternateData = true;
+    bool withSharedNotes = true;
+    bool withNoteAppDataValues = true;
+    bool withResourceAppDataValues = true;
+    bool withNoteLimits = m_manager.syncingLinkedNotebooksContent();
+    bool res = pNoteStore->getNoteAsync(withContent, withResourceData, withResourceRecognition,
+                                        withResourceAlternateData, withSharedNotes,
+                                        withNoteAppDataValues, withResourceAppDataValues,
+                                        withNoteLimits, m_remoteNoteAsLocalNote.guid(), authToken, errorDescription);
+    if (!res) {
+        APPEND_NOTE_DETAILS(errorDescription, m_remoteNoteAsLocalNote)
+        QNWARNING(errorDescription << QStringLiteral(", note: ") << m_remoteNoteAsLocalNote);
+        Q_EMIT failure(m_remoteNote, errorDescription);
+        return false;
+    }
+
+    m_pendingFullRemoteNoteDataDownload = true;
+    return true;
+}
+
+void NoteSyncConflictResolver::timerEvent(QTimerEvent * pEvent)
+{
+    if (!pEvent) {
+        ErrorString errorDescription(QT_TR_NOOP("Qt error: detected null pointer to QTimerEvent"));
+        QNWARNING(errorDescription);
+        Q_EMIT failure(m_remoteNote, errorDescription);
+        return;
+    }
+
+    int timerId = pEvent->timerId();
+    killTimer(timerId);
+    QNDEBUG(QStringLiteral("Killed timer with id ") << timerId);
+
+    if (timerId == m_retryNoteDownloadingTimerId) {
+        Q_UNUSED(downloadFullRemoteNoteData());
+    }
 }
 
 } // namespace quentier

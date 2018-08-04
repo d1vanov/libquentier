@@ -19,6 +19,7 @@
 #include "RemoteToLocalSynchronizationManager.h"
 #include "InkNoteImageDownloader.h"
 #include "NoteThumbnailDownloader.h"
+#include "NoteSyncConflictResolver.h"
 #include <quentier/utility/Utility.h>
 #include <quentier/local_storage/LocalStorageManagerAsync.h>
 #include <quentier/types/Resource.h>
@@ -84,6 +85,19 @@
     QNWARNING(errorDescription << QStringLiteral(": ") << element)
 
 namespace quentier {
+
+class NoteSyncConflictResolverManager: public NoteSyncConflictResolver::IManager
+{
+public:
+    NoteSyncConflictResolverManager(RemoteToLocalSynchronizationManager & manager);
+
+    virtual LocalStorageManagerAsync & localStorageManagerAsync() Q_DECL_OVERRIDE;
+    virtual INoteStore * noteStoreForNote(const Note & note, QString & authToken, ErrorString & errorDescription) Q_DECL_OVERRIDE;
+    virtual bool syncingLinkedNotebooksContent() const Q_DECL_OVERRIDE;
+
+private:
+    RemoteToLocalSynchronizationManager &   m_manager;
+};
 
 RemoteToLocalSynchronizationManager::RemoteToLocalSynchronizationManager(IManager & manager, const QString & host, QObject * parent) :
     QObject(parent),
@@ -2444,6 +2458,8 @@ void RemoteToLocalSynchronizationManager::onAuthenticationInfoReceived(QString a
     if (!wasPending) {
         return;
     }
+
+    // TODO: notify sync conflict resolvers of new auth token?
 
     launchSync();
 }
@@ -6765,6 +6781,8 @@ void RemoteToLocalSynchronizationManager::handleAuthExpiration()
 {
     QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::handleAuthExpiration"));
 
+    // FIXME: if linked notebooks contents are being synced, auth tokens for linked notebooks need to be requested
+
     if (m_pendingAuthenticationTokenAndShardId) {
         QNDEBUG(QStringLiteral("Already pending the authentication token and shard id"));
         return;
@@ -9443,6 +9461,36 @@ QTextStream & RemoteToLocalSynchronizationManager::PostponedConflictingResourceD
          << m_localConflictingNote << QStringLiteral("\n\n  Remote note's resource without full data:\n")
          << m_remoteNoteResourceWithoutFullData << QStringLiteral("\n};\n");
     return strm;
+}
+
+NoteSyncConflictResolverManager::NoteSyncConflictResolverManager(RemoteToLocalSynchronizationManager & manager) :
+    m_manager(manager)
+{}
+
+LocalStorageManagerAsync & NoteSyncConflictResolverManager::localStorageManagerAsync()
+{
+    return m_manager.m_manager.localStorageManagerAsync();
+}
+
+INoteStore * NoteSyncConflictResolverManager::noteStoreForNote(const Note & note, QString & authToken, ErrorString & errorDescription)
+{
+    authToken.resize(0);
+    errorDescription.clear();
+    INoteStore * pNoteStore = m_manager.noteStoreForNote(note, authToken, errorDescription);
+    if (Q_UNLIKELY(!pNoteStore)) {
+        return Q_NULLPTR;
+    }
+
+    if (authToken.isEmpty()) {
+        authToken = m_manager.m_authenticationToken;
+    }
+
+    return pNoteStore;
+}
+
+bool NoteSyncConflictResolverManager::syncingLinkedNotebooksContent() const
+{
+    return m_manager.syncingLinkedNotebooksContent();
 }
 
 } // namespace quentier

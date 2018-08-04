@@ -679,6 +679,8 @@ private:
 
     friend QTextStream & operator<<(QTextStream & strm, const SyncMode::type & obj);
 
+    friend class NoteSyncConflictResolverManager;
+
 private:
     IManager &                              m_manager;
     bool                                    m_connectedToLocalStorage;

@@ -70,6 +70,7 @@ Q_SIGNALS:
     void failure(qevercloud::Note remoteNote, ErrorString errorDescription);
 
     void rateLimitExceeded(qint32 secondsToWait);
+    void notifyAuthExpiration();
 
 // private signals
     void addNote(Note note, QUuid requestId);
@@ -90,6 +91,10 @@ private:
     void processNotesConflictByGuid();
     void overrideLocalNoteWithRemoteChanges();
     void addRemoteNoteToLocalStorageAsNewNote();
+    bool downloadFullRemoteNoteData();
+
+private:
+    virtual void timerEvent(QTimerEvent * pEvent);
 
 private:
     Q_DISABLE_COPY(NoteSyncConflictResolver)
@@ -108,6 +113,8 @@ private:
     bool                m_pendingFullRemoteNoteDataDownload;
     bool                m_pendingRemoteNoteAdditionToLocalStorage;
     bool                m_pendingRemoteNoteUpdateInLocalStorage;
+
+    int                 m_retryNoteDownloadingTimerId;
 
     QUuid               m_addNoteRequestId;
     QUuid               m_updateNoteRequestId;
