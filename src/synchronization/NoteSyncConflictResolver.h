@@ -20,6 +20,7 @@
 #define LIB_QUENTIER_SYNCHRONIZATION_NOTE_SYNC_CONFLICT_RESOLVER_H
 
 #include <quentier/types/Note.h>
+#include <quentier/local_storage/LocalStorageManager.h>
 #include <QObject>
 
 #if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
@@ -50,6 +51,7 @@ public:
     public:
         virtual LocalStorageManagerAsync & localStorageManagerAsync() = 0;
         virtual INoteStore * noteStoreForNote(const Note & note, QString & authToken, ErrorString & errorDescription) = 0;
+        virtual bool syncingLinkedNotebooksContent() const = 0;
         virtual ~IManager() {}
     };
 
@@ -71,13 +73,13 @@ Q_SIGNALS:
 
 // private signals
     void addNote(Note note, QUuid requestId);
-    void updateNote(Note note, bool updateResources, bool updateTags, QUuid requestId);
+    void updateNote(Note note, LocalStorageManager::UpdateNoteOptions options, QUuid requestId);
 
 private Q_SLOTS:
     void onAddNoteComplete(Note note, QUuid requestId);
     void onAddNoteFailed(Note note, ErrorString errorDescription, QUuid requestId);
-    void onUpdateNoteComplete(Note note, bool updateResources, bool updateTags, QUuid requestId);
-    void onUpdateNoteFailed(Note note, bool updateResources, bool updateTags,
+    void onUpdateNoteComplete(Note note, LocalStorageManager::UpdateNoteOptions options, QUuid requestId);
+    void onUpdateNoteFailed(Note note, LocalStorageManager::UpdateNoteOptions options,
                             ErrorString errorDescription, QUuid requestId);
 
     void onGetNoteAsyncFinished(qint32 errorCode, qevercloud::Note qecNote,
@@ -87,18 +89,7 @@ private:
     void connectToLocalStorage();
     void processNotesConflictByGuid();
     void overrideLocalNoteWithRemoteChanges();
-
-    struct State
-    {
-        enum type
-        {
-            Undefined = 0,
-            OverrideLocalChangesWithRemoteChanges,
-            PendingConflictingNoteUpdate,
-            PendingFullRemoteNoteDataDownload,
-            PendingRemoteNoteAdoptionInLocalStorage
-        };
-    };
+    void addRemoteNoteToLocalStorageAsNewNote();
 
 private:
     Q_DISABLE_COPY(NoteSyncConflictResolver)
@@ -109,7 +100,14 @@ private:
     qevercloud::Note    m_remoteNote;
     Note                m_localConflict;
 
-    State::type         m_state;
+    Note                m_remoteNoteAsLocalNote;
+
+    bool                m_shouldOverrideLocalNoteWithRemoteNote;
+
+    bool                m_pendingLocalConflictUpdateInLocalStorage;
+    bool                m_pendingFullRemoteNoteDataDownload;
+    bool                m_pendingRemoteNoteAdditionToLocalStorage;
+    bool                m_pendingRemoteNoteUpdateInLocalStorage;
 
     QUuid               m_addNoteRequestId;
     QUuid               m_updateNoteRequestId;
