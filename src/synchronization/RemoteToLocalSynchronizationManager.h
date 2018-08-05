@@ -53,6 +53,7 @@
 namespace quentier {
 
 QT_FORWARD_DECLARE_CLASS(LocalStorageManagerAsync)
+QT_FORWARD_DECLARE_CLASS(NoteSyncConflictResolverManager)
 
 class Q_DECL_HIDDEN RemoteToLocalSynchronizationManager: public QObject
 {
@@ -69,6 +70,7 @@ public:
     };
 
     explicit RemoteToLocalSynchronizationManager(IManager & manager, const QString & host, QObject * parent = Q_NULLPTR);
+    ~RemoteToLocalSynchronizationManager();
 
     bool active() const;
 
@@ -810,6 +812,8 @@ private:
 
     typedef QHash<QUuid,QPair<Note,QUuid> > NoteDataPerFindNotebookRequestId;
     NoteDataPerFindNotebookRequestId        m_notesWithFindRequestIdsPerFindNotebookRequestId;
+
+    QScopedPointer<NoteSyncConflictResolverManager>     m_pNoteSyncConflictResolverManager;
 
     QHash<QPair<QString,QString>,Notebook>  m_notebooksPerNoteIds;
 

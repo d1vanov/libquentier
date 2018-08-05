@@ -198,6 +198,7 @@ RemoteToLocalSynchronizationManager::RemoteToLocalSynchronizationManager(IManage
     m_expungeNoteRequestIds(),
     m_guidsOfProcessedNonExpungedNotes(),
     m_notesWithFindRequestIdsPerFindNotebookRequestId(),
+    m_pNoteSyncConflictResolverManager(new NoteSyncConflictResolverManager(*this)),
     m_notebooksPerNoteIds(),
     m_resources(),
     m_resourcesPendingAddOrUpdate(),
@@ -243,6 +244,9 @@ RemoteToLocalSynchronizationManager::RemoteToLocalSynchronizationManager(IManage
                      this, QNSLOT(RemoteToLocalSynchronizationManager,onGetResourceAsyncFinished,qint32,qevercloud::Resource,qint32,ErrorString),
                      Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
 }
+
+RemoteToLocalSynchronizationManager::~RemoteToLocalSynchronizationManager()
+{}
 
 bool RemoteToLocalSynchronizationManager::active() const
 {
@@ -4761,6 +4765,8 @@ bool RemoteToLocalSynchronizationManager::tagsSyncInProgress() const
 
 bool RemoteToLocalSynchronizationManager::notesSyncInProgress() const
 {
+    QList<NoteSyncConflictResolver*> noteSyncConflictResolvers = findChildren<NoteSyncConflictResolver*>();
+
     if (!m_notesPendingAddOrUpdate.isEmpty() ||
         !m_findNoteByGuidRequestIds.isEmpty() ||
         !m_addNoteRequestIds.isEmpty() ||
@@ -4773,7 +4779,8 @@ bool RemoteToLocalSynchronizationManager::notesSyncInProgress() const
         !m_notesPendingInkNoteImagesDownloadByFindNotebookRequestId.isEmpty() ||
         !m_notesPendingThumbnailDownloadByFindNotebookRequestId.isEmpty() ||
         !m_notesPendingThumbnailDownloadByGuid.isEmpty() ||
-        !m_updateNoteWithThumbnailRequestIds.isEmpty())
+        !m_updateNoteWithThumbnailRequestIds.isEmpty() ||
+        !noteSyncConflictResolvers.isEmpty())
     {
         QNDEBUG(QStringLiteral("Notes sync is in progress: there are ")
                 << m_notesPendingAddOrUpdate.size() << QStringLiteral(" notes pending add or update within the local storage: pending ")
@@ -4787,7 +4794,8 @@ bool RemoteToLocalSynchronizationManager::notesSyncInProgress() const
                 << m_notesPendingInkNoteImagesDownloadByFindNotebookRequestId.size() << QStringLiteral(" notes pending ink note image download and/or ")
                 << (m_notesPendingThumbnailDownloadByFindNotebookRequestId.size() + m_notesPendingThumbnailDownloadByGuid.size())
                 << QStringLiteral(" notes pending thumbnail download and/or ")
-                << m_updateNoteWithThumbnailRequestIds.size() << QStringLiteral(" update note with thumbnail requests"));
+                << m_updateNoteWithThumbnailRequestIds.size() << QStringLiteral(" update note with thumbnail requests and/or ")
+                << noteSyncConflictResolvers.size() << QStringLiteral(" note sync conflict resolvers"));
         return true;
     }
 
@@ -5683,7 +5691,8 @@ void RemoteToLocalSynchronizationManager::checkServerDataMergeCompletion()
         return;
     }
 
-    bool notesReady = m_notes.isEmpty() && m_notesPendingAddOrUpdate.isEmpty() && m_findNoteByGuidRequestIds.isEmpty() &&
+    bool notesReady = m_notes.isEmpty() && m_notesPendingAddOrUpdate.isEmpty() &&
+                      m_findNoteByGuidRequestIds.isEmpty() &&
                       m_updateNoteRequestIds.isEmpty() && m_addNoteRequestIds.isEmpty() &&
                       m_notesPendingDownloadForAddingToLocalStorage.isEmpty() &&
                       m_notesPendingDownloadForUpdatingInLocalStorageByGuid.isEmpty() &&
@@ -5767,6 +5776,13 @@ void RemoteToLocalSynchronizationManager::checkServerDataMergeCompletion()
     if (!savedSearchSyncConflictResolvers.isEmpty()) {
         QNDEBUG(QStringLiteral("Still have ") << savedSearchSyncConflictResolvers.size()
                 << QStringLiteral(" pending saved search sync conflict resolutions"));
+        return;
+    }
+
+    QList<NoteSyncConflictResolver*> noteSyncConflictResolvers = findChildren<NoteSyncConflictResolver*>();
+    if (!noteSyncConflictResolvers.isEmpty()) {
+        QNDEBUG(QStringLiteral("Still have ") << noteSyncConflictResolvers.size()
+                << QStringLiteral(" pending note sync conflict resolutions"));
         return;
     }
 
@@ -9381,20 +9397,16 @@ RemoteToLocalSynchronizationManager::ResolveSyncConflictStatus::type RemoteToLoc
         return ResolveSyncConflictStatus::Ready;
     }
 
-    bool shouldCreateConflictingNote = true;
-    if (localConflict.hasGuid() && (localConflict.guid() == remoteNote.guid.ref()))
+    if (localConflict.hasGuid() && (localConflict.guid() == remoteNote.guid.ref()) &&
+        localConflict.hasUpdateSequenceNumber() &&
+        (localConflict.updateSequenceNumber() >= remoteNote.updateSequenceNum.ref()))
     {
-        QNDEBUG(QStringLiteral("The notes match by guid"));
-
-        if (!localConflict.isDirty()) {
-            QNDEBUG(QStringLiteral("The local note is not dirty, can just override it with remote changes"));
-            shouldCreateConflictingNote = false;
-        }
-        else if (localConflict.hasUpdateSequenceNumber() && (localConflict.updateSequenceNumber() == remoteNote.updateSequenceNum.ref())) {
-            QNDEBUG(QStringLiteral("The notes match by update sequence number but the local note is dirty => local note should override the remote changes"));
-            return ResolveSyncConflictStatus::Ready;
-        }
+        QNDEBUG(QStringLiteral("The local conflicting note's update sequence number is greater than or equal to the remote note's one => ")
+                << QStringLiteral(" the remote note shouldn't override the local note"));
+        return ResolveSyncConflictStatus::Ready;
     }
+
+    // TODO: switch to using NoteSyncConflictResolver here
 
     // NOTE: it is necessary to copy the updated note from the local conflict
     // in order to preserve stuff like e.g. resource local uids which otherwise
@@ -9405,7 +9417,7 @@ RemoteToLocalSynchronizationManager::ResolveSyncConflictStatus::type RemoteToLoc
     registerNotePendingAddOrUpdate(updatedNote);
     getFullNoteDataAsyncAndUpdateInLocalStorage(updatedNote);
 
-    if (shouldCreateConflictingNote) {
+    if (localConflict.isDirty()) {
         Note conflictingNote = createConflictingNote(localConflict, &remoteNote);
         emitAddRequest(conflictingNote);
     }
