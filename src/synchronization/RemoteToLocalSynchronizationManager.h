@@ -177,6 +177,10 @@ Q_SIGNALS:
     void findSavedSearch(SavedSearch savedSearch, QUuid requestId);
     void expungeSavedSearch(SavedSearch savedSearch, QUuid requestId);
 
+    void authDataUpdated(QString authToken, QString shardId, qevercloud::Timestamp expirationTime);
+    void linkedNotebookAuthDataUpdated(QHash<QString,QPair<QString,QString> > authenticationTokensAndShardIdsByLinkedNotebookGuid,
+                                       QHash<QString,qevercloud::Timestamp> authenticationTokenExpirationTimesByLinkedNotebookGuid);
+
 private Q_SLOTS:
     void onFindUserCompleted(User user, QUuid requestId);
     void onFindUserFailed(User user, ErrorString errorDescription, QUuid requestId);
@@ -269,6 +273,11 @@ private Q_SLOTS:
 
     void onSavedSearchSyncConflictResolverFinished(qevercloud::SavedSearch remoteSavedSearch);
     void onSavedSearchSyncConflictResolverFailure(qevercloud::SavedSearch remoteSavedSearch, ErrorString errorDescription);
+
+    void onNoteSyncConflictResolverFinished(qevercloud::Note remoteNote);
+    void onNoteSyncConflictResolvedFailure(qevercloud::Note remoteNote, ErrorString errorDescription);
+    void onNoteSyncConflictRateLimitExceeded(qint32 secondsToWait);
+    void onNoteSyncConflictAuthenticationExpired();
 
     // Slots for FullSyncStaleDataItemsExpunger signals
     void onFullSyncStaleDataItemsExpungerFinished();

@@ -65,6 +65,11 @@ public:
     const qevercloud::Note & remoteNote() const { return m_remoteNote; }
     const Note & localConflict() const { return m_localConflict; }
 
+public Q_SLOTS:
+    void onAuthDataUpdated(QString authToken, QString shardId, qevercloud::Timestamp expirationTime);
+    void onLinkedNotebooksAuthDataUpdated(QHash<QString,QPair<QString,QString> > authenticationTokensAndShardIdsByLinkedNotebookGuid,
+                                          QHash<QString,qevercloud::Timestamp> authenticationTokenExpirationTimesByLinkedNotebookGuid);
+
 Q_SIGNALS:
     void finished(qevercloud::Note remoteNote);
     void failure(qevercloud::Note remoteNote, ErrorString errorDescription);
@@ -113,6 +118,9 @@ private:
     bool                m_pendingFullRemoteNoteDataDownload;
     bool                m_pendingRemoteNoteAdditionToLocalStorage;
     bool                m_pendingRemoteNoteUpdateInLocalStorage;
+
+    bool                m_pendingAuthDataUpdate;
+    bool                m_pendingLinkedNotebookAuthDataUpdate;
 
     int                 m_retryNoteDownloadingTimerId;
 

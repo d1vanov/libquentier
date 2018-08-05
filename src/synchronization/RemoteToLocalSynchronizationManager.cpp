@@ -2463,8 +2463,7 @@ void RemoteToLocalSynchronizationManager::onAuthenticationInfoReceived(QString a
         return;
     }
 
-    // TODO: notify sync conflict resolvers of new auth token?
-
+    Q_EMIT authDataUpdated(authToken, shardId, expirationTime);
     launchSync();
 }
 
@@ -2484,6 +2483,8 @@ void RemoteToLocalSynchronizationManager::onAuthenticationTokensForLinkedNoteboo
         return;
     }
 
+    Q_EMIT linkedNotebookAuthDataUpdated(authenticationTokensAndShardIdsByLinkedNotebookGuid,
+                                         authenticationTokenExpirationTimesByLinkedNotebookGuid);
     startLinkedNotebooksSync();
 }
 
@@ -2957,6 +2958,7 @@ void RemoteToLocalSynchronizationManager::onNotebookSyncConflictResolverFinished
 
     NotebookSyncConflictResolver * pResolver = qobject_cast<NotebookSyncConflictResolver*>(sender());
     if (pResolver) {
+        pResolver->disconnect(this);
         pResolver->setParent(Q_NULLPTR);
         pResolver->deleteLater();
     }
@@ -2974,6 +2976,7 @@ void RemoteToLocalSynchronizationManager::onNotebookSyncConflictResolverFailure(
 
     NotebookSyncConflictResolver * pResolver = qobject_cast<NotebookSyncConflictResolver*>(sender());
     if (pResolver) {
+        pResolver->disconnect(this);
         pResolver->setParent(Q_NULLPTR);
         pResolver->deleteLater();
     }
@@ -2987,6 +2990,7 @@ void RemoteToLocalSynchronizationManager::onTagSyncConflictResolverFinished(qeve
 
     TagSyncConflictResolver * pResolver = qobject_cast<TagSyncConflictResolver*>(sender());
     if (pResolver) {
+        pResolver->disconnect(this);
         pResolver->setParent(Q_NULLPTR);
         pResolver->deleteLater();
     }
@@ -3004,6 +3008,7 @@ void RemoteToLocalSynchronizationManager::onTagSyncConflictResolverFailure(qever
 
     TagSyncConflictResolver * pResolver = qobject_cast<TagSyncConflictResolver*>(sender());
     if (pResolver) {
+        pResolver->disconnect(this);
         pResolver->setParent(Q_NULLPTR);
         pResolver->deleteLater();
     }
@@ -3017,6 +3022,7 @@ void RemoteToLocalSynchronizationManager::onSavedSearchSyncConflictResolverFinis
 
     SavedSearchSyncConflictResolver * pResolver = qobject_cast<SavedSearchSyncConflictResolver*>(sender());
     if (pResolver) {
+        pResolver->disconnect(this);
         pResolver->setParent(Q_NULLPTR);
         pResolver->deleteLater();
     }
@@ -3032,11 +3038,73 @@ void RemoteToLocalSynchronizationManager::onSavedSearchSyncConflictResolverFailu
 
     SavedSearchSyncConflictResolver * pResolver = qobject_cast<SavedSearchSyncConflictResolver*>(sender());
     if (pResolver) {
+        pResolver->disconnect(this);
         pResolver->setParent(Q_NULLPTR);
         pResolver->deleteLater();
     }
 
     Q_EMIT failure(errorDescription);
+}
+
+void RemoteToLocalSynchronizationManager::onNoteSyncConflictResolverFinished(qevercloud::Note note)
+{
+    QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::onNoteSyncConflictResolverFinished: note guid = ")
+            << (note.guid.isSet() ? note.guid.ref() : QStringLiteral("<not set>")));
+
+    NoteSyncConflictResolver * pResolver = qobject_cast<NoteSyncConflictResolver*>(sender());
+    if (pResolver) {
+        pResolver->disconnect(this);
+        pResolver->setParent(Q_NULLPTR);
+        pResolver->deleteLater();
+    }
+
+    checkServerDataMergeCompletion();
+}
+
+void RemoteToLocalSynchronizationManager::onNoteSyncConflictResolvedFailure(qevercloud::Note note, ErrorString errorDescription)
+{
+    QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::onNoteSyncConflictResolvedFailure: note guid = ")
+            << (note.guid.isSet() ? note.guid.ref() : QStringLiteral("<not set>")) << QStringLiteral(", error description = ")
+            << errorDescription);
+
+    NoteSyncConflictResolver * pResolver = qobject_cast<NoteSyncConflictResolver*>(sender());
+    if (pResolver) {
+        pResolver->disconnect(this);
+        pResolver->setParent(Q_NULLPTR);
+        pResolver->deleteLater();
+    }
+
+    Q_EMIT failure(errorDescription);
+}
+
+void RemoteToLocalSynchronizationManager::onNoteSyncConflictRateLimitExceeded(qint32 rateLimitSeconds)
+{
+    QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::onNoteSyncConflictRateLimitExceeded: rate limit seconds = ")
+            << rateLimitSeconds);
+
+    Q_EMIT rateLimitExceeded(rateLimitSeconds);
+}
+
+void RemoteToLocalSynchronizationManager::onNoteSyncConflictAuthenticationExpired()
+{
+    QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::onNoteSyncConflictAuthenticationExpired"));
+
+    NoteSyncConflictResolver * pResolver = qobject_cast<NoteSyncConflictResolver*>(sender());
+    if (pResolver)
+    {
+        if (syncingLinkedNotebooksContent()) {
+            QObject::connect(this, QNSIGNAL(RemoteToLocalSynchronizationManager,linkedNotebookAuthDataUpdated,QHash<QString,QPair<QString,QString> >,QHash<QString,qevercloud::Timestamp>),
+                             pResolver, QNSLOT(NoteSyncConflictResolver,onLinkedNotebooksAuthDataUpdated,QHash<QString,QPair<QString,QString> >,QHash<QString,qevercloud::Timestamp>),
+                             Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
+        }
+        else {
+            QObject::connect(this, QNSIGNAL(RemoteToLocalSynchronizationManager,authDataUpdated,QString,QString,qevercloud::Timestamp),
+                             pResolver, QNSLOT(NoteSyncConflictResolver,onAuthDataUpdated,QString,QString,qevercloud::Timestamp),
+                             Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
+        }
+    }
+
+    handleAuthExpiration();
 }
 
 void RemoteToLocalSynchronizationManager::onFullSyncStaleDataItemsExpungerFinished()
@@ -6797,15 +6865,25 @@ void RemoteToLocalSynchronizationManager::handleAuthExpiration()
 {
     QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::handleAuthExpiration"));
 
-    // FIXME: if linked notebooks contents are being synced, auth tokens for linked notebooks need to be requested
+    if (syncingLinkedNotebooksContent())
+    {
+        if (m_pendingAuthenticationTokensForLinkedNotebooks) {
+            QNDEBUG(QStringLiteral("Already pending authentication tokens for linked notebooks"));
+            return;
+        }
 
-    if (m_pendingAuthenticationTokenAndShardId) {
-        QNDEBUG(QStringLiteral("Already pending the authentication token and shard id"));
-        return;
+        requestAuthenticationTokensForAllLinkedNotebooks();
     }
+    else
+    {
+        if (m_pendingAuthenticationTokenAndShardId) {
+            QNDEBUG(QStringLiteral("Already pending the authentication token and shard id"));
+            return;
+        }
 
-    m_pendingAuthenticationTokenAndShardId = true;
-    Q_EMIT requestAuthenticationToken();
+        m_pendingAuthenticationTokenAndShardId = true;
+        Q_EMIT requestAuthenticationToken();
+    }
 }
 
 bool RemoteToLocalSynchronizationManager::checkUserAccountSyncState(bool & asyncWait, bool & error, qint32 & afterUsn)

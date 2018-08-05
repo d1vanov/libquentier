@@ -40,7 +40,9 @@ NoteSyncConflictResolver::NoteSyncConflictResolver(IManager & manager,
     m_pendingFullRemoteNoteDataDownload(false),
     m_pendingRemoteNoteAdditionToLocalStorage(false),
     m_pendingRemoteNoteUpdateInLocalStorage(false),
-    m_retryNoteDownloadingTimerId(-1),
+    m_pendingAuthDataUpdate(false),
+    m_pendingLinkedNotebookAuthDataUpdate(false),
+    m_retryNoteDownloadingTimerId(0),
     m_addNoteRequestId(),
     m_updateNoteRequestId(),
     m_started(false)
@@ -61,6 +63,40 @@ void NoteSyncConflictResolver::start()
 
     connectToLocalStorage();
     processNotesConflictByGuid();
+}
+
+void NoteSyncConflictResolver::onAuthDataUpdated(QString authToken, QString shardId, qevercloud::Timestamp expirationTime)
+{
+    QNDEBUG(QStringLiteral("NoteSyncConflictResolver::onAuthDataUpdated"));
+
+    Q_UNUSED(authToken)
+    Q_UNUSED(shardId)
+    Q_UNUSED(expirationTime)
+
+    if (Q_UNLIKELY(!m_pendingAuthDataUpdate)) {
+        QNWARNING(QStringLiteral("NoteSyncConflictResolver: received unexpected auth data update, ignoring it"));
+        return;
+    }
+
+    m_pendingAuthDataUpdate = false;
+    Q_UNUSED(downloadFullRemoteNoteData())
+}
+
+void NoteSyncConflictResolver::onLinkedNotebooksAuthDataUpdated(QHash<QString,QPair<QString,QString> > authenticationTokensAndShardIdsByLinkedNotebookGuid,
+                                                                QHash<QString,qevercloud::Timestamp> authenticationTokenExpirationTimesByLinkedNotebookGuid)
+{
+    QNDEBUG(QStringLiteral("NoteSyncConflictResolver::onLinkedNotebooksAuthDataUpdated"));
+
+    Q_UNUSED(authenticationTokensAndShardIdsByLinkedNotebookGuid)
+    Q_UNUSED(authenticationTokenExpirationTimesByLinkedNotebookGuid)
+
+    if (Q_UNLIKELY(!m_pendingLinkedNotebookAuthDataUpdate)) {
+        QNWARNING(QStringLiteral("NoteSyncConflictResolver: received unexpected linked notebook auth data update, ignoring it"));
+        return;
+    }
+
+    m_pendingLinkedNotebookAuthDataUpdate = false;
+    Q_UNUSED(downloadFullRemoteNoteData())
 }
 
 void NoteSyncConflictResolver::onAddNoteComplete(Note note, QUuid requestId)
@@ -128,6 +164,21 @@ void NoteSyncConflictResolver::onUpdateNoteComplete(Note note, LocalStorageManag
 
         if (m_pendingFullRemoteNoteDataDownload) {
             QNDEBUG(QStringLiteral("Still waiting for full remote note's data downloading"));
+            return;
+        }
+
+        if (m_retryNoteDownloadingTimerId != 0) {
+            QNDEBUG(QStringLiteral("Retry full remote note data timer is active, hence the remote note data has not been fully downloaded yet"));
+            return;
+        }
+
+        if (m_pendingAuthDataUpdate) {
+            QNDEBUG(QStringLiteral("Remote note was not downloaded properly yet, pending auth token for full remote note data downloading"));
+            return;
+        }
+
+        if (m_manager.syncingLinkedNotebooksContent() && m_pendingLinkedNotebookAuthDataUpdate) {
+            QNDEBUG(QStringLiteral("Remote note was not downloaded properly yet, pending linked notebook auth token for full remote note data downloading"));
             return;
         }
 
@@ -210,6 +261,8 @@ void NoteSyncConflictResolver::onGetNoteAsyncFinished(qint32 errorCode, qeverclo
             << QStringLiteral(", note = ") << qecNote << QStringLiteral("\nRate limit seconds = ")
             << rateLimitSeconds << QStringLiteral(", error description = ") << errorDescription);
 
+    m_pendingFullRemoteNoteDataDownload = false;
+
     if (errorCode == qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED)
     {
         if (rateLimitSeconds < 0) {
@@ -234,15 +287,21 @@ void NoteSyncConflictResolver::onGetNoteAsyncFinished(qint32 errorCode, qeverclo
     }
     else if (errorCode == qevercloud::EDAMErrorCode::AUTH_EXPIRED)
     {
-        // FIXME: handle auth expiration
+        if (m_manager.syncingLinkedNotebooksContent()) {
+            m_pendingLinkedNotebookAuthDataUpdate = true;
+        }
+        else {
+            m_pendingAuthDataUpdate = true;
+        }
+
+        Q_EMIT notifyAuthExpiration();
         return;
     }
-    else if (errorCode != 0) {
+    else if (errorCode != 0)
+    {
         Q_EMIT failure(m_remoteNote, errorDescription);
         return;
     }
-
-    m_pendingFullRemoteNoteDataDownload = false;
 
     if (m_shouldOverrideLocalNoteWithRemoteNote)
     {
