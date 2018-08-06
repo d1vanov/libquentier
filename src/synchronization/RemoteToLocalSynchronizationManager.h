@@ -553,6 +553,8 @@ private:
     bool findNotebookForNoteThumbnailDownloading(const Note & note);
     bool setupNoteThumbnailDownloading(const Note & note, const Notebook & notebook);
 
+    void launchNoteSyncConflictResolver(const Note & localConflict, const qevercloud::Note & remoteNote);
+
     QString clientNameForProtocolVersionCheck() const;
 
     // Infrastructure for persisting the sync state corresponding to data synced so far when API rate limit breach occurs
@@ -582,6 +584,7 @@ private:
     void unregisterLinkedNotebookPendingAddOrUpdate(const LinkedNotebook & linkedNotebook);
     void unregisterNotebookPendingAddOrUpdate(const Notebook & notebook);
     void unregisterNotePendingAddOrUpdate(const Note & note);
+    void unregisterNotePendingAddOrUpdate(const qevercloud::Note & note);
     void unregisterResourcePendingAddOrUpdate(const Resource & resource);
 
     // Infrastructure for processing of conflicts occurred during sync

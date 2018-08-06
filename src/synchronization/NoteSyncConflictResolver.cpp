@@ -52,7 +52,7 @@ void NoteSyncConflictResolver::start()
 {
     QNDEBUG(QStringLiteral("NoteSyncConflictResolver::start: remote note guid = ")
             << (m_remoteNote.guid.isSet() ? m_remoteNote.guid.ref() : QStringLiteral("<not set>"))
-            << QStringLiteral(", local conflict local uid = ") << m_localConflict);
+            << QStringLiteral(", local conflict local uid = ") << m_localConflict.localUid());
 
     if (m_started) {
         QNDEBUG(QStringLiteral("Already started"));
@@ -303,6 +303,8 @@ void NoteSyncConflictResolver::onGetNoteAsyncFinished(qint32 errorCode, qeverclo
         return;
     }
 
+    m_remoteNoteAsLocalNote.qevercloudNote() = qecNote;
+
     if (m_shouldOverrideLocalNoteWithRemoteNote)
     {
         overrideLocalNoteWithRemoteChanges();
@@ -413,6 +415,26 @@ void NoteSyncConflictResolver::processNotesConflictByGuid()
 
     m_localConflict.setGuid(QString());
     m_localConflict.setUpdateSequenceNumber(-1);
+    m_localConflict.noteAttributes().conflictSourceNoteGuid = m_remoteNote.guid.ref();
+
+    QString conflictingNoteTitle;
+    if (m_localConflict.hasTitle())
+    {
+        conflictingNoteTitle = m_localConflict.title() + QStringLiteral(" - ") + tr("conflicting");
+    }
+    else
+    {
+        QString previewText = m_localConflict.plainText();
+        if (!previewText.isEmpty()) {
+            previewText.truncate(12);
+            conflictingNoteTitle = previewText + QStringLiteral("... - ") + tr("conflicting");
+        }
+        else {
+            conflictingNoteTitle = tr("Conflicting note");
+        }
+    }
+
+    m_localConflict.setTitle(conflictingNoteTitle);
 
     if (m_localConflict.hasResources())
     {
@@ -439,7 +461,7 @@ void NoteSyncConflictResolver::processNotesConflictByGuid()
 void NoteSyncConflictResolver::overrideLocalNoteWithRemoteChanges()
 {
     QNDEBUG(QStringLiteral("NoteSyncConflictResolver::overrideLocalNoteWithRemoteChanges"));
-    QNTRACE(QStringLiteral("Local conflict: ") << m_localConflict << QStringLiteral("\nRemote note: ") << m_remoteNote);
+    QNTRACE(QStringLiteral("Local conflict: ") << m_localConflict << QStringLiteral("\nRemote note: ") << m_remoteNoteAsLocalNote);
 
     Note localNote(m_localConflict);
 
@@ -453,14 +475,11 @@ void NoteSyncConflictResolver::overrideLocalNoteWithRemoteChanges()
         resources = localNote.resources();
     }
 
-    localNote.qevercloudNote() = m_remoteNote;
+    localNote.qevercloudNote() = m_remoteNoteAsLocalNote.qevercloudNote();
     localNote.setDirty(false);
     localNote.setLocal(false);
 
-    QList<qevercloud::Resource> updatedResources;
-    if (m_remoteNote.resources.isSet()) {
-        updatedResources = m_remoteNote.resources.ref();
-    }
+    QList<Resource> updatedResources = m_remoteNoteAsLocalNote.resources();
 
     QList<Resource> amendedResources;
     amendedResources.reserve(updatedResources.size());
@@ -476,13 +495,13 @@ void NoteSyncConflictResolver::overrideLocalNoteWithRemoteChanges()
         bool foundResource = false;
         for(auto uit = updatedResources.constBegin(), uend = updatedResources.constEnd(); uit != uend; ++uit)
         {
-            const qevercloud::Resource & updatedResource = *uit;
-            if (!updatedResource.guid.isSet()) {
+            const Resource & updatedResource = *uit;
+            if (!updatedResource.hasGuid()) {
                 continue;
             }
 
-            if (updatedResource.guid.ref() == resource.guid()) {
-                resource.qevercloudResource() = updatedResource;
+            if (updatedResource.guid() == resource.guid()) {
+                resource.qevercloudResource() = updatedResource.qevercloudResource();
                 // NOTE: need to not forget to reset the dirty flag since we are
                 // resetting the state of the local resource here
                 resource.setDirty(false);
@@ -500,8 +519,8 @@ void NoteSyncConflictResolver::overrideLocalNoteWithRemoteChanges()
     // Then account for new resources
     for(auto uit = updatedResources.constBegin(), uend = updatedResources.constEnd(); uit != uend; ++uit)
     {
-        const qevercloud::Resource & updatedResource = *uit;
-        if (Q_UNLIKELY(!updatedResource.guid.isSet())) {
+        const Resource & updatedResource = *uit;
+        if (Q_UNLIKELY(!updatedResource.hasGuid())) {
             QNWARNING(QStringLiteral("Skipping resource from remote note without guid: ") << updatedResource);
             continue;
         }
@@ -510,7 +529,7 @@ void NoteSyncConflictResolver::overrideLocalNoteWithRemoteChanges()
         for(auto it = resources.constBegin(), end = resources.constEnd(); it != end; ++it)
         {
             const Resource & resource = *it;
-            if (resource.hasGuid() && (resource.guid() == updatedResource.guid.ref())) {
+            if (resource.hasGuid() && (resource.guid() == updatedResource.guid())) {
                 pExistingResource = &resource;
                 break;
             }
@@ -521,7 +540,7 @@ void NoteSyncConflictResolver::overrideLocalNoteWithRemoteChanges()
         }
 
         Resource newResource;
-        newResource.qevercloudResource() = updatedResource;
+        newResource.qevercloudResource() = updatedResource.qevercloudResource();
         newResource.setDirty(false);
         newResource.setLocal(false);
         newResource.setNoteLocalUid(localNote.localUid());
@@ -549,6 +568,9 @@ void NoteSyncConflictResolver::addRemoteNoteToLocalStorageAsNewNote()
 bool NoteSyncConflictResolver::downloadFullRemoteNoteData()
 {
     m_remoteNoteAsLocalNote = Note(m_remoteNote);
+    m_remoteNoteAsLocalNote.setDirty(false);
+    m_remoteNoteAsLocalNote.setLocal(false);
+
     QString authToken;
     ErrorString errorDescription;
     INoteStore * pNoteStore = m_manager.noteStoreForNote(m_remoteNoteAsLocalNote, authToken, errorDescription);
