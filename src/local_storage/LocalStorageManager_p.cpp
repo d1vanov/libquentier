@@ -6121,7 +6121,7 @@ bool LocalStorageManagerPrivate::getNoteLocalUidForGuid(const QString & noteGuid
 
     ErrorString errorPrefix(QT_TR_NOOP("can't get note local uid for guid"));
 
-    QString queryString = QString::fromUtf8("SELECT localUid FROM Notes WHERE guid = '%1'").arg(sqlEscapeString(noteGuid));
+    QString queryString = QString::fromUtf8("SELECT localUid FROM Notes WHERE guid='%1'").arg(sqlEscapeString(noteGuid));
     QSqlQuery query(m_sqlDatabase);
     bool res = query.exec(queryString);
     DATABASE_CHECK_AND_SET_ERROR();
@@ -6137,6 +6137,24 @@ bool LocalStorageManagerPrivate::getNoteLocalUidForGuid(const QString & noteGuid
         errorDescription.details() = noteGuid;
         QNDEBUG(errorDescription);
         return false;
+    }
+
+    return true;
+}
+
+bool LocalStorageManagerPrivate::getNoteGuidForLocalUid(const QString & noteLocalUid, QString & noteGuid, ErrorString & errorDescription)
+{
+    QNDEBUG(QStringLiteral("LocalStorageManagerPrivate::getNoteGuidForLocalUid: note local uid = ") << noteLocalUid);
+
+    ErrorString errorPrefix(QT_TR_NOOP("can't get note guid for local uid"));
+
+    QString queryString = QString::fromUtf8("SELECT guid FROM Notes WHERE localUid='%1'").arg(sqlEscapeString(noteLocalUid));
+    QSqlQuery query(m_sqlDatabase);
+    bool res = query.exec(queryString);
+    DATABASE_CHECK_AND_SET_ERROR();
+
+    if (query.next()) {
+        noteGuid = query.record().value(QStringLiteral("guid")).toString();
     }
 
     return true;
@@ -6238,6 +6256,91 @@ bool LocalStorageManagerPrivate::insertOrReplaceNote(Note & note, const LocalSto
     QVariant nullValue;
     QString localUid = sqlEscapeString(note.localUid());
     QString notebookLocalUid = (note.hasNotebookLocalUid() ? sqlEscapeString(note.notebookLocalUid()) : QString());
+
+    // Special logics needs to be applied if guid is being cleared from the note; here the evaluation occurs whether
+    // guid clearance is meant to take place here
+    bool noteGuidIsBeingCleared = false;
+    if (!note.hasGuid())
+    {
+        QString noteGuid;
+        bool res = getNoteGuidForLocalUid(note.localUid(), noteGuid, errorDescription);
+        if (!res) {
+            return false;
+        }
+
+        noteGuidIsBeingCleared = !noteGuid.isEmpty();
+    }
+
+    // NOTE: first need to remove the note-to-tags bindings corresponding to this note in either of two cases:
+    // 1) We were actually asked to update note-to-tags bindings corresponding to this note
+    // 2) Guid is being cleared out from the note - in this case we update note-to-tags bindings forcefully because otherwise
+    //    SQLite won't allow the execution of note updating query due to foreign key constraint failure
+
+    QStringList tagLocalUids;
+    QStringList tagGuids;
+
+    if (noteGuidIsBeingCleared || (options & LocalStorageManager::UpdateNoteOption::UpdateTags))
+    {
+        if (!(options & LocalStorageManager::UpdateNoteOption::UpdateTags))
+        {
+            Note helperNoteWithTags = note;
+            bool res = findAndSetTagIdsPerNote(helperNoteWithTags, errorDescription);
+            if (!res) {
+                return false;
+            }
+
+            if (helperNoteWithTags.hasTagLocalUids()) {
+                tagLocalUids = helperNoteWithTags.tagLocalUids();
+            }
+
+            if (helperNoteWithTags.hasTagGuids()) {
+                tagGuids = helperNoteWithTags.tagGuids();
+            }
+        }
+        else
+        {
+            if (note.hasTagLocalUids()) {
+                tagLocalUids = note.tagLocalUids();
+            }
+
+            if (note.hasTagGuids()) {
+                tagGuids = note.tagGuids();
+            }
+        }
+
+        QString queryString = QString::fromUtf8("DELETE From NoteTags WHERE localNote='%1'").arg(localUid);
+        QSqlQuery query(m_sqlDatabase);
+        bool res = query.exec(queryString);
+        DATABASE_CHECK_AND_SET_ERROR();
+    }
+
+    // The same trick needs to be appied for notes to resources bindings but only if note has no guid because otherwise
+    // SQLite won't allow the execution of note updating query due to foreign key constraint failure.
+
+    QList<Resource> noteResources;
+
+    if (noteGuidIsBeingCleared)
+    {
+        if (!(options & LocalStorageManager::UpdateNoteOption::UpdateResourceMetadata))
+        {
+            Note helperNoteWithResources = note;
+            bool res = findAndSetResourcesPerNote(helperNoteWithResources, errorDescription,
+                                                  /* with binary data = */ false);
+            if (!res) {
+                return false;
+            }
+        }
+        else
+        {
+            noteResources = note.resources();
+        }
+
+        // Clear any resources the note might have had
+        QString queryString = QString::fromUtf8("DELETE FROM Resources WHERE noteLocalUid='%1'").arg(localUid);
+        QSqlQuery query(m_sqlDatabase);
+        bool res = query.exec(queryString);
+        DATABASE_CHECK_AND_SET_ERROR();
+    }
 
     // Update common table with Note properties
     {
@@ -6521,27 +6624,19 @@ bool LocalStorageManagerPrivate::insertOrReplaceNote(Note & note, const LocalSto
         }
     }
 
-    if (options & LocalStorageManager::UpdateNoteOption::UpdateTags)
+    if (noteGuidIsBeingCleared || (options & LocalStorageManager::UpdateNoteOption::UpdateTags))
     {
-        // Clear note-to-tag binding first, update them second
-        {
-            QString queryString = QString::fromUtf8("DELETE From NoteTags WHERE localNote='%1'").arg(localUid);
-            QSqlQuery query(m_sqlDatabase);
-            bool res = query.exec(queryString);
-            DATABASE_CHECK_AND_SET_ERROR();
-        }
-
-        bool hasTagLocalUids = note.hasTagLocalUids();
-        bool hasTagGuids = note.hasTagGuids();
+        bool hasTagLocalUids = !tagLocalUids.isEmpty();
+        bool hasTagGuids = !tagGuids.isEmpty();
 
         if (hasTagLocalUids || hasTagGuids)
         {
             QStringList tagIds;
             if (hasTagLocalUids) {
-                tagIds = note.tagLocalUids();
+                tagIds = tagLocalUids;
             }
             else {
-                tagIds = note.tagGuids();
+                tagIds = tagGuids;
             }
 
             int numTagIds = tagIds.size();
@@ -6555,12 +6650,13 @@ bool LocalStorageManagerPrivate::insertOrReplaceNote(Note & note, const LocalSto
 
             ErrorString error;
 
-            for(int i = 0; i < numTagIds; ++i)
+            int tagIndexInNote = 0;
+            for(auto it = tagIds.constBegin(), end = tagIds.constEnd(); it != end; ++it, ++tagIndexInNote)
             {
                 // NOTE: the behavior expressed here is valid since tags are synchronized before notes
                 // so they must exist within local storage database; if they don't then something went really wrong
 
-                const QString & tagId = tagIds[i];
+                const QString & tagId = *it;
 
                 Tag tag;
                 if (hasTagLocalUids) {
@@ -6597,7 +6693,7 @@ bool LocalStorageManagerPrivate::insertOrReplaceNote(Note & note, const LocalSto
                 query.bindValue(QStringLiteral(":note"), (note.hasGuid() ? note.guid() : nullValue));
                 query.bindValue(QStringLiteral(":localTag"), tag.localUid());
                 query.bindValue(QStringLiteral(":tag"), (tag.hasGuid() ? tag.guid() : nullValue));
-                query.bindValue(QStringLiteral(":tagIndexInNote"), i);
+                query.bindValue(QStringLiteral(":tagIndexInNote"), tagIndexInNote);
 
                 res = query.exec();
                 DATABASE_CHECK_AND_SET_ERROR();
@@ -6615,9 +6711,9 @@ bool LocalStorageManagerPrivate::insertOrReplaceNote(Note & note, const LocalSto
         // has the only purpose to provide tag names alternatively to guids to NoteStore::createNote method
     }
 
-    if (options & LocalStorageManager::UpdateNoteOption::UpdateResourceMetadata)
+    if (noteGuidIsBeingCleared || (options & LocalStorageManager::UpdateNoteOption::UpdateResourceMetadata))
     {
-        if (!note.hasResources())
+        if (!noteGuidIsBeingCleared && !note.hasResources())
         {
             // Just clear any resources the note might have had then
             QString queryString = QString::fromUtf8("DELETE FROM Resources WHERE noteLocalUid='%1'").arg(localUid);
@@ -6627,10 +6723,17 @@ bool LocalStorageManagerPrivate::insertOrReplaceNote(Note & note, const LocalSto
         }
         else
         {
-            bool updateResourceBinaryData = (options & LocalStorageManager::UpdateNoteOption::UpdateResourceBinaryData);
-            bool res = partialUpdateNoteResources(localUid, note.resources(), updateResourceBinaryData, errorDescription);
-            if (!res) {
-                return false;
+            if (!noteGuidIsBeingCleared && note.hasResources()) {
+                noteResources = note.resources();
+            }
+
+            if (!noteResources.isEmpty())
+            {
+                bool updateResourceBinaryData = (options & LocalStorageManager::UpdateNoteOption::UpdateResourceBinaryData);
+                bool res = partialUpdateNoteResources(localUid, noteResources, updateResourceBinaryData, errorDescription);
+                if (!res) {
+                    return false;
+                }
             }
         }
     }

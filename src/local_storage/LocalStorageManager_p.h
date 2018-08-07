@@ -222,6 +222,7 @@ private:
     bool getNotebookGuidForNote(const Note & note, QString & notebookGuid, ErrorString & errorDescription);
     bool getNotebookLocalUidForGuid(const QString & notebookGuid, QString & notebookLocalUid, ErrorString & errorDescription);
     bool getNoteLocalUidForGuid(const QString & noteGuid, QString & noteLocalUid, ErrorString & errorDescription);
+    bool getNoteGuidForLocalUid(const QString & noteLocalUid, QString & noteGuid, ErrorString & errorDescription);
     bool getTagLocalUidForGuid(const QString & tagGuid, QString & tagLocalUid, ErrorString & errorDescription);
     bool getResourceLocalUidForGuid(const QString & resourceGuid, QString & resourceLocalUid, ErrorString & errorDescription);
     bool getSavedSearchLocalUidForGuid(const QString & savedSearchGuid, QString & savedSearchLocalUid, ErrorString & errorDescription);
