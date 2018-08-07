@@ -758,7 +758,7 @@ void SynchronizationManagerPrivate::createConnections(IAuthenticationManager & a
                      Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
     QObject::connect(&m_remoteToLocalSyncManager, QNSIGNAL(RemoteToLocalSynchronizationManager,rateLimitExceeded,qint32),
                      this, QNSLOT(SynchronizationManagerPrivate,onRateLimitExceeded,qint32),
-                     Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
+                     Qt::ConnectionType(Qt::UniqueConnection | Qt::DirectConnection));
     QObject::connect(&m_remoteToLocalSyncManager, QNSIGNAL(RemoteToLocalSynchronizationManager,requestAuthenticationToken),
                      this, QNSLOT(SynchronizationManagerPrivate,onRequestAuthenticationToken),
                      Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
@@ -819,7 +819,7 @@ void SynchronizationManagerPrivate::createConnections(IAuthenticationManager & a
                      Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
     QObject::connect(&m_sendLocalChangesManager, QNSIGNAL(SendLocalChangesManager,rateLimitExceeded,qint32),
                      this, QNSLOT(SynchronizationManagerPrivate,onRateLimitExceeded,qint32),
-                     Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
+                     Qt::ConnectionType(Qt::UniqueConnection | Qt::DirectConnection));
     QObject::connect(&m_sendLocalChangesManager, QNSIGNAL(SendLocalChangesManager,requestAuthenticationToken),
                      this, QNSLOT(SynchronizationManagerPrivate,onRequestAuthenticationToken),
                      Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));

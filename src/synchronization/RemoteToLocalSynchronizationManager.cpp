@@ -7288,7 +7288,7 @@ void RemoteToLocalSynchronizationManager::launchNoteSyncConflictResolver(const N
                      Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
     QObject::connect(pResolver, QNSIGNAL(NoteSyncConflictResolver,rateLimitExceeded,qint32),
                      this, QNSLOT(RemoteToLocalSynchronizationManager,onNoteSyncConflictRateLimitExceeded,qint32),
-                     Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
+                     Qt::ConnectionType(Qt::UniqueConnection | Qt::DirectConnection));
     QObject::connect(pResolver, QNSIGNAL(NoteSyncConflictResolver,notifyAuthExpiration),
                      this, QNSLOT(RemoteToLocalSynchronizationManager,onNoteSyncConflictAuthenticationExpired),
                      Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
