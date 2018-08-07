@@ -269,6 +269,7 @@ void NoteSyncConflictResolver::onGetNoteAsyncFinished(qint32 errorCode, qeverclo
             errorDescription.setBase(QT_TR_NOOP("QEverCloud or Evernote protocol error: caught RATE_LIMIT_REACHED "
                                                 "exception but the number of seconds to wait is zero or negative"));
             errorDescription.details() = QString::number(rateLimitSeconds);
+            QNWARNING(errorDescription);
             Q_EMIT failure(m_remoteNote, errorDescription);
             return;
         }
@@ -277,10 +278,13 @@ void NoteSyncConflictResolver::onGetNoteAsyncFinished(qint32 errorCode, qeverclo
         if (Q_UNLIKELY(timerId == 0)) {
             errorDescription.setBase(QT_TR_NOOP("Failed to start a timer to postpone the Evernote API call "
                                                 "due to rate limit exceeding"));
+            QNWARNING(errorDescription);
             Q_EMIT failure(m_remoteNote, errorDescription);
             return;
         }
 
+        QNDEBUG(QStringLiteral("Started timer to retry downloading full note data: timer id = ")
+                << timerId << QStringLiteral(", need to wait for ") << rateLimitSeconds << QStringLiteral(" seconds"));
         m_retryNoteDownloadingTimerId = timerId;
         Q_EMIT rateLimitExceeded(rateLimitSeconds);
         return;
@@ -442,6 +446,7 @@ void NoteSyncConflictResolver::processNotesConflictByGuid()
         for(auto it = resources.begin(), end = resources.end(); it != end; ++it) {
             Resource & resource = *it;
             resource.setGuid(QString());
+            resource.setNoteGuid(QString());
             resource.setUpdateSequenceNumber(-1);
             resource.setDirty(true);
         }
@@ -608,6 +613,7 @@ bool NoteSyncConflictResolver::downloadFullRemoteNoteData()
     }
 
     m_pendingFullRemoteNoteDataDownload = true;
+    QNDEBUG(QStringLiteral("Pending full remote note data downloading"));
     return true;
 }
 
@@ -625,6 +631,7 @@ void NoteSyncConflictResolver::timerEvent(QTimerEvent * pEvent)
     QNDEBUG(QStringLiteral("Killed timer with id ") << timerId);
 
     if (timerId == m_retryNoteDownloadingTimerId) {
+        QNDEBUG(QStringLiteral("NoteSyncConflictResolver::timerEvent: retrying the download of full remote note data"));
         Q_UNUSED(downloadFullRemoteNoteData());
     }
 }
