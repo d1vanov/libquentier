@@ -1069,6 +1069,65 @@ bool TestNoteFindUpdateDeleteExpungeInLocalStorage(QString & errorDescription)
         return false;
     }
 
+    // Check that tags are not touched if update tags flag is not set on attempt to update note
+    QStringList tagLocalUidsBeforeUpdate = modifiedNote.tagLocalUids();
+    QStringList tagGuidsBeforeUpdate = modifiedNote.tagGuids();
+
+    modifiedNote.removeTagGuid(newTag.guid());
+    modifiedNote.removeTagLocalUid(newTag.localUid());
+
+    // Modify something about the note to make the test a little more interesting
+    modifiedNote.setTitle(modifiedNote.title() + QStringLiteral("_modified_again"));
+    modifiedNote.setFavorited(false);
+    modifiedNote.setModificationTimestamp(QDateTime::currentMSecsSinceEpoch());
+
+    res = localStorageManager.updateNote(modifiedNote,
+                                         LocalStorageManager::UpdateNoteOptions(LocalStorageManager::UpdateNoteOption::UpdateResourceMetadata |
+                                                                                LocalStorageManager::UpdateNoteOption::UpdateResourceBinaryData),
+                                         errorMessage);
+    if (!res) {
+        errorDescription = errorMessage.nonLocalizedString();
+        return false;
+    }
+
+    foundNote = Note();
+    foundNote.setGuid(modifiedNote.guid());
+    res = localStorageManager.findNote(foundNote, errorMessage,
+                                       /* with resource metadata = */ true,
+                                       /* with resource binary data = */ true);
+    if (!res) {
+        errorDescription = errorMessage.nonLocalizedString();
+        return false;
+    }
+
+    // NOTE: foundNote was searched by guid and might have another local uid is the original note
+    // doesn't have one. So use this workaround to ensure the comparison is good for everything
+    // without local uid
+    if (modifiedNote.localUid().isEmpty()) {
+        foundNote.unsetLocalUid();
+    }
+
+    // Found note should not be equal to the modified note because their tag ids should be different;
+    // after restoring the previous tag ids lists to the modified notes the two notes should become equal
+    if (modifiedNote == foundNote) {
+        errorDescription = QStringLiteral("Detected unexpectedly equal notes: locally modified notes which had its tags list "
+                                          "modified but not updated in the local storage and the note found in the local storage");
+        QNWARNING(errorDescription << QStringLiteral(": Note updated in LocalStorageManager (without tags lists): ") << modifiedNote
+                  << QStringLiteral("\nNote found in LocalStorageManager: ") << foundNote);
+        return false;
+    }
+
+    modifiedNote.setTagGuids(tagGuidsBeforeUpdate);
+    modifiedNote.setTagLocalUids(tagLocalUidsBeforeUpdate);
+
+    if (modifiedNote != foundNote) {
+        errorDescription = QStringLiteral("Updated and found in local storage notes don't match");
+        QNWARNING(errorDescription << QStringLiteral(": Note updated in LocalStorageManager (without tags after which tags were manually restored): ")
+                  << modifiedNote << QStringLiteral("\nNote found in LocalStorageManager: ") << foundNote);
+        return false;
+    }
+
+    // Add one more note to test note counting methods
     Note newNote;
     newNote.setNotebookGuid(notebook.guid());
     newNote.setTitle(QStringLiteral("New note"));
