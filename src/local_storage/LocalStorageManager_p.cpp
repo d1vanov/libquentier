@@ -50,8 +50,8 @@ LocalStorageManagerPrivate::LocalStorageManagerPrivate(const Account & account, 
     m_getSavedSearchCountQueryPrepared(false),
     m_insertOrReplaceResourceWithBinaryDataQuery(),
     m_insertOrReplaceResourceWithBinaryDataQueryPrepared(false),
-    m_insertOrReplaceResourceWithoutBinaryDataQuery(),
-    m_insertOrReplaceResourceWithoutBinaryDataQueryPrepared(false),
+    m_updateResourceWithoutBinaryDataQuery(),
+    m_updateResourceWithoutBinaryDataQueryPrepared(false),
     m_insertOrReplaceNoteResourceQuery(),
     m_insertOrReplaceNoteResourceQueryPrepared(false),
     m_deleteResourceFromResourceRecognitionTypesQuery(),
@@ -6246,6 +6246,15 @@ bool LocalStorageManagerPrivate::getSavedSearchLocalUidForGuid(const QString & s
 bool LocalStorageManagerPrivate::insertOrReplaceNote(Note & note, const LocalStorageManager::UpdateNoteOptions options,
                                                      ErrorString & errorDescription)
 {
+    QNDEBUG(QStringLiteral("LocalStorageManagerPrivate::insertOrReplaceNote: update tags = ")
+            << ((options & LocalStorageManager::UpdateNoteOption::UpdateTags) ? QStringLiteral("true") : QStringLiteral("false"))
+            << QStringLiteral(", update resource metadata = ")
+            << ((options & LocalStorageManager::UpdateNoteOption::UpdateResourceMetadata) ? QStringLiteral("true") : QStringLiteral("false"))
+            << QStringLiteral(", update resource binary data = ")
+            << ((options & LocalStorageManager::UpdateNoteOption::UpdateResourceBinaryData) ? QStringLiteral("true") : QStringLiteral("false"))
+            << QStringLiteral(", note local uid = ") << note.localUid());
+    QNTRACE(note);
+
     // NOTE: this method expects to be called after the note is already checked
     // for sanity of its parameters!
 
@@ -6270,6 +6279,8 @@ bool LocalStorageManagerPrivate::insertOrReplaceNote(Note & note, const LocalSto
 
         noteGuidIsBeingCleared = !noteGuid.isEmpty();
     }
+
+    QNDEBUG(QStringLiteral("Note guid is being cleared = ") << (noteGuidIsBeingCleared ? QStringLiteral("true") : QStringLiteral("false")));
 
     // NOTE: first need to remove the note-to-tags bindings corresponding to this note in either of two cases:
     // 1) We were actually asked to update note-to-tags bindings corresponding to this note
@@ -6336,6 +6347,7 @@ bool LocalStorageManagerPrivate::insertOrReplaceNote(Note & note, const LocalSto
         }
 
         // Clear any resources the note might have had
+        QNDEBUG(QStringLiteral("Clearing all existing note's resources"));
         QString queryString = QString::fromUtf8("DELETE FROM Resources WHERE noteLocalUid='%1'").arg(localUid);
         QSqlQuery query(m_sqlDatabase);
         bool res = query.exec(queryString);
@@ -6716,6 +6728,7 @@ bool LocalStorageManagerPrivate::insertOrReplaceNote(Note & note, const LocalSto
         if (!noteGuidIsBeingCleared && !note.hasResources())
         {
             // Just clear any resources the note might have had then
+            QNDEBUG(QStringLiteral("Deleting all resources the note might have"));
             QString queryString = QString::fromUtf8("DELETE FROM Resources WHERE noteLocalUid='%1'").arg(localUid);
             QSqlQuery query(m_sqlDatabase);
             bool res = query.exec(queryString);
@@ -7459,25 +7472,21 @@ bool LocalStorageManagerPrivate::updateCommonResourceData(const Resource & resou
     QVariant nullValue;
     bool res = (setResourceBinaryData
                 ? checkAndPrepareInsertOrReplaceResourceWithBinaryDataQuery()
-                : checkAndPrepareInsertOrReplaceResourceWithoutBinaryDataQuery());
+                : checkAndPrepareUpdateResourceWithoutBinaryDataQuery());
     QSqlQuery & query = (setResourceBinaryData
                          ? m_insertOrReplaceResourceWithBinaryDataQuery
-                         : m_insertOrReplaceResourceWithoutBinaryDataQuery);
+                         : m_updateResourceWithoutBinaryDataQuery);
     DATABASE_CHECK_AND_SET_ERROR();
 
     query.bindValue(QStringLiteral(":resourceGuid"), (resource.hasGuid() ? resource.guid() : nullValue));
     query.bindValue(QStringLiteral(":noteGuid"), (resource.hasNoteGuid() ? resource.noteGuid() : nullValue));
     query.bindValue(QStringLiteral(":noteLocalUid"), resource.noteLocalUid());
-    query.bindValue(QStringLiteral(":dataSize"), (resource.hasDataSize() ? resource.dataSize() : nullValue));
-    query.bindValue(QStringLiteral(":dataHash"), (resource.hasDataHash() ? resource.dataHash() : nullValue));
     query.bindValue(QStringLiteral(":mime"), (resource.hasMime() ? resource.mime() : nullValue));
     query.bindValue(QStringLiteral(":width"), (resource.hasWidth() ? resource.width() : nullValue));
     query.bindValue(QStringLiteral(":height"), (resource.hasHeight() ? resource.height() : nullValue));
     query.bindValue(QStringLiteral(":recognitionDataBody"), (resource.hasRecognitionDataBody() ? resource.recognitionDataBody() : nullValue));
     query.bindValue(QStringLiteral(":recognitionDataSize"), (resource.hasRecognitionDataSize() ? resource.recognitionDataSize() : nullValue));
     query.bindValue(QStringLiteral(":recognitionDataHash"), (resource.hasRecognitionDataHash() ? resource.recognitionDataHash() : nullValue));
-    query.bindValue(QStringLiteral(":alternateDataSize"), (resource.hasAlternateDataSize() ? resource.alternateDataSize() : nullValue));
-    query.bindValue(QStringLiteral(":alternateDataHash"), (resource.hasAlternateDataHash() ? resource.alternateDataHash() : nullValue));
     query.bindValue(QStringLiteral(":resourceUpdateSequenceNumber"), (resource.hasUpdateSequenceNumber() ? resource.updateSequenceNumber() : nullValue));
     query.bindValue(QStringLiteral(":resourceIsDirty"), (resource.isDirty() ? 1 : 0));
     query.bindValue(QStringLiteral(":resourceIndexInNote"), resource.indexInNote());
@@ -7485,7 +7494,11 @@ bool LocalStorageManagerPrivate::updateCommonResourceData(const Resource & resou
 
     if (setResourceBinaryData) {
         query.bindValue(QStringLiteral(":dataBody"), (resource.hasDataBody() ? resource.dataBody() : nullValue));
+        query.bindValue(QStringLiteral(":dataSize"), (resource.hasDataSize() ? resource.dataSize() : nullValue));
+        query.bindValue(QStringLiteral(":dataHash"), (resource.hasDataHash() ? resource.dataHash() : nullValue));
         query.bindValue(QStringLiteral(":alternateDataBody"), (resource.hasAlternateDataBody() ? resource.alternateDataBody() : nullValue));
+        query.bindValue(QStringLiteral(":alternateDataSize"), (resource.hasAlternateDataSize() ? resource.alternateDataSize() : nullValue));
+        query.bindValue(QStringLiteral(":alternateDataHash"), (resource.hasAlternateDataHash() ? resource.alternateDataHash() : nullValue));
     }
 
     res = query.exec();
@@ -7544,29 +7557,27 @@ bool LocalStorageManagerPrivate::checkAndPrepareInsertOrReplaceResourceWithBinar
     return res;
 }
 
-bool LocalStorageManagerPrivate::checkAndPrepareInsertOrReplaceResourceWithoutBinaryDataQuery()
+bool LocalStorageManagerPrivate::checkAndPrepareUpdateResourceWithoutBinaryDataQuery()
 {
-    if (Q_LIKELY(m_insertOrReplaceResourceWithoutBinaryDataQueryPrepared)) {
+    if (Q_LIKELY(m_updateResourceWithoutBinaryDataQueryPrepared)) {
         return true;
     }
 
-    QNDEBUG(QStringLiteral("Preparing SQL query to insert or replace the resource without binary data"));
+    QNDEBUG(QStringLiteral("Preparing SQL query to update the resource without binary data"));
 
-    m_insertOrReplaceResourceWithoutBinaryDataQuery = QSqlQuery(m_sqlDatabase);
-    bool res = m_insertOrReplaceResourceWithoutBinaryDataQuery.prepare(QStringLiteral("INSERT OR REPLACE INTO Resources (resourceGuid, "
-                                                                                      "noteGuid, noteLocalUid, dataSize, dataHash, mime, "
-                                                                                      "width, height, recognitionDataBody, recognitionDataSize, "
-                                                                                      "recognitionDataHash, alternateDataSize, "
-                                                                                      "alternateDataHash, resourceUpdateSequenceNumber, "
-                                                                                      "resourceIsDirty, resourceIndexInNote, resourceLocalUid) "
-                                                                                      "VALUES(:resourceGuid, :noteGuid, :noteLocalUid, :dataBody, "
-                                                                                      ":dataSize, :dataHash, :mime, :width, :height, "
-                                                                                      ":recognitionDataBody, :recognitionDataSize, "
-                                                                                      ":recognitionDataHash, :alternateDataBody, :alternateDataSize, "
-                                                                                      ":alternateDataHash, :resourceUpdateSequenceNumber, :resourceIsDirty, "
-                                                                                      ":resourceIndexInNote, :resourceLocalUid)"));
+    m_updateResourceWithoutBinaryDataQuery = QSqlQuery(m_sqlDatabase);
+    bool res = m_updateResourceWithoutBinaryDataQuery.prepare(QStringLiteral("UPDATE Resources SET resourceGuid = :resourceGuid, "
+                                                                             "noteGuid = :noteGuid, noteLocalUid = :noteLocalUid, "
+                                                                             "mime = :mime, width = :width, height = :height, "
+                                                                             "recognitionDataBody = :recognitionDataBody, "
+                                                                             "recognitionDataSize = :recognitionDataSize, "
+                                                                             "recognitionDataHash = :recognitionDataHash, "
+                                                                             "resourceUpdateSequenceNumber = :resourceUpdateSequenceNumber, "
+                                                                             "resourceIsDirty = :resourceIsDirty, "
+                                                                             "resourceIndexInNote = :resourceIndexInNote "
+                                                                             "WHERE resourceLocalUid = :resourceLocalUid"));
     if (res) {
-        m_insertOrReplaceResourceWithoutBinaryDataQueryPrepared = true;
+        m_updateResourceWithoutBinaryDataQueryPrepared = true;
     }
 
     return res;
@@ -10631,7 +10642,7 @@ void LocalStorageManagerPrivate::clearCachedQueries()
     m_insertOrReplaceSavedSearchQueryPrepared = false;
     m_getSavedSearchCountQueryPrepared = false;
     m_insertOrReplaceResourceWithBinaryDataQueryPrepared = false;
-    m_insertOrReplaceResourceWithoutBinaryDataQueryPrepared = false;
+    m_updateResourceWithoutBinaryDataQueryPrepared = false;
     m_insertOrReplaceNoteResourceQueryPrepared = false;
     m_deleteResourceFromResourceRecognitionTypesQueryPrepared = false;
     m_insertOrReplaceIntoResourceRecognitionDataQueryPrepared = false;

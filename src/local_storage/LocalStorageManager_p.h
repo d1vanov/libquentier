@@ -260,7 +260,7 @@ private:
     bool updateNoteResources(const Resource & resource, ErrorString & errorDescription);
 
     bool checkAndPrepareInsertOrReplaceResourceWithBinaryDataQuery();
-    bool checkAndPrepareInsertOrReplaceResourceWithoutBinaryDataQuery();
+    bool checkAndPrepareUpdateResourceWithoutBinaryDataQuery();
     bool checkAndPrepareInsertOrReplaceNoteResourceQuery();
     bool checkAndPrepareDeleteResourceFromResourceRecognitionTypesQuery();
     bool checkAndPrepareInsertOrReplaceIntoResourceRecognitionDataQuery();
@@ -416,8 +416,8 @@ private:
     QSqlQuery           m_insertOrReplaceResourceWithBinaryDataQuery;
     bool                m_insertOrReplaceResourceWithBinaryDataQueryPrepared;
 
-    QSqlQuery           m_insertOrReplaceResourceWithoutBinaryDataQuery;
-    bool                m_insertOrReplaceResourceWithoutBinaryDataQueryPrepared;
+    QSqlQuery           m_updateResourceWithoutBinaryDataQuery;
+    bool                m_updateResourceWithoutBinaryDataQueryPrepared;
 
     QSqlQuery           m_insertOrReplaceNoteResourceQuery;
     bool                m_insertOrReplaceNoteResourceQueryPrepared;

@@ -1108,7 +1108,7 @@ bool TestNoteFindUpdateDeleteExpungeInLocalStorage(QString & errorDescription)
     }
 
     // Found note should not be equal to the modified note because their tag ids should be different;
-    // after restoring the previous tag ids lists to the modified notes the two notes should become equal
+    // after restoring the previous tag ids lists to the modified note the two notes should become equal
     if (modifiedNote == foundNote) {
         errorDescription = QStringLiteral("Detected unexpectedly equal notes: locally modified notes which had its tags list "
                                           "modified but not updated in the local storage and the note found in the local storage");
@@ -1123,6 +1123,163 @@ bool TestNoteFindUpdateDeleteExpungeInLocalStorage(QString & errorDescription)
     if (modifiedNote != foundNote) {
         errorDescription = QStringLiteral("Updated and found in local storage notes don't match");
         QNWARNING(errorDescription << QStringLiteral(": Note updated in LocalStorageManager (without tags after which tags were manually restored): ")
+                  << modifiedNote << QStringLiteral("\nNote found in LocalStorageManager: ") << foundNote);
+        return false;
+    }
+
+    // Check that resources are not touched if update resource metadata flag is not set on attempt to update note
+    QList<Resource> previousModifiedNoteResources = modifiedNote.resources();
+    Q_UNUSED(modifiedNote.removeResource(newResource))
+
+    // Modify something about the note to make the test a little more interesting
+    modifiedNote.setTitle(modifiedNote.title() + QStringLiteral("_modified_once_again"));
+    modifiedNote.setFavorited(true);
+    modifiedNote.setModificationTimestamp(QDateTime::currentMSecsSinceEpoch());
+
+    res = localStorageManager.updateNote(modifiedNote,
+                                         LocalStorageManager::UpdateNoteOptions(LocalStorageManager::UpdateNoteOption::UpdateTags),
+                                         errorMessage);
+    if (!res) {
+        errorDescription = errorMessage.nonLocalizedString();
+        return false;
+    }
+
+    foundNote = Note();
+    foundNote.setGuid(modifiedNote.guid());
+    res = localStorageManager.findNote(foundNote, errorMessage,
+                                       /* with resource metadata = */ true,
+                                       /* with resource binary data = */ true);
+    if (!res) {
+        errorDescription = errorMessage.nonLocalizedString();
+        return false;
+    }
+
+    // NOTE: foundNote was searched by guid and might have another local uid is the original note
+    // doesn't have one. So use this workaround to ensure the comparison is good for everything
+    // without local uid
+    if (modifiedNote.localUid().isEmpty()) {
+        foundNote.unsetLocalUid();
+    }
+
+    // Found note should not be equal to the modified note because their resources should be different;
+    // after restoring the previous resources list to the modified note the two notes should become equal
+    if (modifiedNote == foundNote) {
+        errorDescription = QStringLiteral("Detected unexpectedly equal notes: locally modified notes which had its resources list "
+                                          "modified but not updated in the local storage and the note found in the local storage");
+        QNWARNING(errorDescription << QStringLiteral(": Note updated in LocalStorageManager (with resource removed): ") << modifiedNote
+                  << QStringLiteral("\nNote found in LocalStorageManager: ") << foundNote);
+        return false;
+    }
+
+    modifiedNote.setResources(previousModifiedNoteResources);
+
+    if (modifiedNote != foundNote) {
+        errorDescription = QStringLiteral("Updated and found in local storage notes don't match");
+        QNWARNING(errorDescription << QStringLiteral(": Note updated in LocalStorageManager (without resource metadata after which resources were manually restored): ")
+                  << modifiedNote << QStringLiteral("\nNote found in LocalStorageManager: ") << foundNote);
+        return false;
+    }
+
+    // Check that resources are not touched if update resource metadata flag is not set even if update resource binary data flag
+    // is set on attempt to update note
+    Q_UNUSED(modifiedNote.removeResource(newResource))
+
+    modifiedNote.setModificationTimestamp(QDateTime::currentMSecsSinceEpoch());
+
+    res = localStorageManager.updateNote(modifiedNote,
+                                         LocalStorageManager::UpdateNoteOptions(LocalStorageManager::UpdateNoteOption::UpdateTags |
+                                                                                LocalStorageManager::UpdateNoteOption::UpdateResourceBinaryData),
+                                         errorMessage);
+    if (!res) {
+        errorDescription = errorMessage.nonLocalizedString();
+        return false;
+    }
+
+    foundNote = Note();
+    foundNote.setGuid(modifiedNote.guid());
+    res = localStorageManager.findNote(foundNote, errorMessage,
+                                       /* with resource metadata = */ true,
+                                       /* with resource binary data = */ true);
+    if (!res) {
+        errorDescription = errorMessage.nonLocalizedString();
+        return false;
+    }
+
+    // NOTE: foundNote was searched by guid and might have another local uid is the original note
+    // doesn't have one. So use this workaround to ensure the comparison is good for everything
+    // without local uid
+    if (modifiedNote.localUid().isEmpty()) {
+        foundNote.unsetLocalUid();
+    }
+
+    // Found note should not be equal to the modified note because their resources should be different;
+    // after restoring the previous resources list to the modified note the two notes should become equal
+    if (modifiedNote == foundNote) {
+        errorDescription = QStringLiteral("Detected unexpectedly equal notes: locally modified notes which had its resources list "
+                                          "modified but not updated in the local storage and the note found in the local storage");
+        QNWARNING(errorDescription << QStringLiteral(": Note updated in LocalStorageManager (with resource removed): ") << modifiedNote
+                  << QStringLiteral("\nNote found in LocalStorageManager: ") << foundNote);
+        return false;
+    }
+
+    modifiedNote.setResources(previousModifiedNoteResources);
+
+    if (modifiedNote != foundNote) {
+        errorDescription = QStringLiteral("Updated and found in local storage notes don't match");
+        QNWARNING(errorDescription << QStringLiteral(": Note updated in LocalStorageManager (without resource metadata after which resources were manually restored): ")
+                  << modifiedNote << QStringLiteral("\nNote found in LocalStorageManager: ") << foundNote);
+        return false;
+    }
+
+    // Check that resource binary data is not touched unless update resource binary data flag is set on attempt to update note
+    newResource.setDataBody(QByteArray("Fake modified new resource data body"));
+    newResource.setDataSize(newResource.dataBody().size());
+
+    Q_UNUSED(modifiedNote.updateResource(newResource))
+
+    modifiedNote.setModificationTimestamp(QDateTime::currentMSecsSinceEpoch());
+
+    res = localStorageManager.updateNote(modifiedNote,
+                                         LocalStorageManager::UpdateNoteOptions(LocalStorageManager::UpdateNoteOption::UpdateTags |
+                                                                                LocalStorageManager::UpdateNoteOption::UpdateResourceMetadata),
+                                         errorMessage);
+    if (!res) {
+        errorDescription = errorMessage.nonLocalizedString();
+        return false;
+    }
+
+    foundNote = Note();
+    foundNote.setGuid(modifiedNote.guid());
+    res = localStorageManager.findNote(foundNote, errorMessage,
+                                       /* with resource metadata = */ true,
+                                       /* with resource binary data = */ true);
+    if (!res) {
+        errorDescription = errorMessage.nonLocalizedString();
+        return false;
+    }
+
+    // NOTE: foundNote was searched by guid and might have another local uid is the original note
+    // doesn't have one. So use this workaround to ensure the comparison is good for everything
+    // without local uid
+    if (modifiedNote.localUid().isEmpty()) {
+        foundNote.unsetLocalUid();
+    }
+
+    // Found note should not be equal to the modified note because the binary data of one resource should be different;
+    // after restoring the previous resources to the modified note the two notes should become equal
+    if (modifiedNote == foundNote) {
+        errorDescription = QStringLiteral("Detected unexpectedly equal notes: locally modified notes which had its resource data body "
+                                          "modified but not updated in the local storage and the note found in the local storage");
+        QNWARNING(errorDescription << QStringLiteral(": Note updated in LocalStorageManager (without resource data body): ") << modifiedNote
+                  << QStringLiteral("\nNote found in LocalStorageManager: ") << foundNote);
+        return false;
+    }
+
+    modifiedNote.setResources(previousModifiedNoteResources);
+
+    if (modifiedNote != foundNote) {
+        errorDescription = QStringLiteral("Updated and found in local storage notes don't match");
+        QNWARNING(errorDescription << QStringLiteral(": Note updated in LocalStorageManager (without resource binary data after which resources were manually restored): ")
                   << modifiedNote << QStringLiteral("\nNote found in LocalStorageManager: ") << foundNote);
         return false;
     }

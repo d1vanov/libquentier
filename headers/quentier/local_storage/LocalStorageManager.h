@@ -532,12 +532,14 @@ public:
         enum type
         {
             /**
-             * UpdateResourceMetadata value specifies that non-binary data fields for note's resources should be updated
+             * UpdateResourceMetadata value specifies that fields aside dataBody, dataSize, dataHash, alternateDataBody,
+             * alternateDataSize, alternateDataHash for each note's resource should be updated
              */
             UpdateResourceMetadata      = 1,
             /**
-             * UpdateResourceBinaryData value specifies that binary data for note's resources should be updated; this value
-             * only has effect if flags also has UpdateResourceMetadata value enabled!
+             * UpdateResourceBinaryData value specifies that dataBody, its size and hasn and alternateDataBody, its size and hash
+             * should be updated for each of note's resources; this value only has effect if flags also has
+             * UpdateResourceMetadata value enabled!
              */
             UpdateResourceBinaryData    = 2,
             /**
