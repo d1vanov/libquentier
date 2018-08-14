@@ -228,7 +228,6 @@ set(PRIVATE_HEADERS
     src/synchronization/TagSyncCache.h
     src/synchronization/SavedSearchSyncConflictResolver.h
     src/synchronization/SavedSearchSyncCache.h
-    src/synchronization/NotebookSyncConflictResolver.h
     src/synchronization/NoteSyncConflictResolver.h
     src/synchronization/NoteSyncCache.h
     src/synchronization/FullSyncStaleDataItemsExpunger.h
@@ -396,7 +395,6 @@ set(${PROJECT_NAME}_SOURCES
     src/synchronization/SyncStatePersistenceManager.cpp
     src/synchronization/RemoteToLocalSynchronizationManager.cpp
     src/synchronization/SendLocalChangesManager.cpp
-    src/synchronization/NotebookSyncConflictResolver.cpp
     src/synchronization/NotebookSyncCache.cpp
     src/synchronization/TagSyncConflictResolver.cpp
     src/synchronization/TagSyncCache.cpp
