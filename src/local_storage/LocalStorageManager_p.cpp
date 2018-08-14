@@ -6312,17 +6312,6 @@ bool LocalStorageManagerPrivate::insertOrReplaceNote(Note & note, const LocalSto
                     QNWARNING(errorDescription);
                     return false;
                 }
-
-                if (Q_UNLIKELY(resource.hasUpdateSequenceNumber()))
-                {
-                    errorDescription = errorPrefix;
-                    errorDescription.appendBase(QT_TR_NOOP("note's guid is being cleared but one of note's resources has non-empty update sequence number"));
-                    if (resource.hasResourceAttributes() && resource.resourceAttributes().fileName.isSet()) {
-                        errorDescription.details() = resource.resourceAttributes().fileName.ref();
-                    }
-                    QNWARNING(errorDescription);
-                    return false;
-                }
             }
         }
 
