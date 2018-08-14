@@ -6332,13 +6332,30 @@ bool LocalStorageManagerPrivate::insertOrReplaceNote(Note & note, const LocalSto
 
     if (noteGuidIsBeingCleared)
     {
-        if (!(options & LocalStorageManager::UpdateNoteOption::UpdateResourceMetadata))
+        if (!(options & LocalStorageManager::UpdateNoteOption::UpdateResourceMetadata) ||
+            !(options & LocalStorageManager::UpdateNoteOption::UpdateResourceBinaryData))
         {
+            // NOTE: we are about to delete any resources the note might have head. After that we won't be able to find them anywhere
+            // so need to list them along with their whole binary data regardless of whether the corresponding flag is enabled
+            // in update note options
             Note helperNoteWithResources = note;
             bool res = findAndSetResourcesPerNote(helperNoteWithResources, errorDescription,
-                                                  /* with binary data = */ false);
+                                                  /* with binary data = */ true);
             if (!res) {
                 return false;
+            }
+
+            noteResources = helperNoteWithResources.resources();
+
+            // NOTE: since note's guid is being cleared, need to remove note guid from all resources
+            // Also need to remove guids from resources themselves because note without guid
+            // cannot own resources which have guids; along with guids it's also ok/good to remove
+            // update sequence numbers from resources now considered local
+            for(auto it = noteResources.begin(), end = noteResources.end(); it != end; ++it) {
+                Resource & resource = *it;
+                resource.setGuid(QString());
+                resource.setNoteGuid(QString());
+                resource.setUpdateSequenceNumber(-1);
             }
         }
         else
@@ -6742,7 +6759,10 @@ bool LocalStorageManagerPrivate::insertOrReplaceNote(Note & note, const LocalSto
 
             if (!noteResources.isEmpty())
             {
-                bool updateResourceBinaryData = (options & LocalStorageManager::UpdateNoteOption::UpdateResourceBinaryData);
+                bool updateResourceBinaryData = (options & LocalStorageManager::UpdateNoteOption::UpdateResourceBinaryData) ||
+                                                (noteGuidIsBeingCleared &&
+                                                 (!(options & LocalStorageManager::UpdateNoteOption::UpdateResourceMetadata) ||
+                                                  !(options & LocalStorageManager::UpdateNoteOption::UpdateResourceBinaryData)));
                 bool res = partialUpdateNoteResources(localUid, noteResources, updateResourceBinaryData, errorDescription);
                 if (!res) {
                     return false;
