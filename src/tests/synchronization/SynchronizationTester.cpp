@@ -3848,6 +3848,16 @@ void SynchronizationTester::setUserOwnItemsToRemoteStorage()
     seventhNote.setContentHash(QCryptographicHash::hash(sixthNote.content().toUtf8(), QCryptographicHash::Md5));
     seventhNote.setCreationTimestamp(QDateTime::currentMSecsSinceEpoch());
     seventhNote.setModificationTimestamp(sixthNote.creationTimestamp());
+
+    Resource seventhNoteFirstResource;
+    seventhNoteFirstResource.setGuid(UidGenerator::Generate());
+    seventhNoteFirstResource.setNoteGuid(seventhNote.guid());
+    seventhNoteFirstResource.setMime(QStringLiteral("text/plain"));
+    seventhNoteFirstResource.setDataBody(QByteArray("Seventh note first resource data body"));
+    seventhNoteFirstResource.setDataSize(seventhNoteFirstResource.dataBody().size());
+    seventhNoteFirstResource.setDataHash(QCryptographicHash::hash(seventhNoteFirstResource.dataBody(), QCryptographicHash::Md5));
+    seventhNote.addResource(seventhNoteFirstResource);
+
     res = m_pFakeNoteStore->setNote(seventhNote, errorDescription);
     QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
 
@@ -4098,6 +4108,16 @@ void SynchronizationTester::setLinkedNotebookItemsToRemoteStorage()
     seventhNote.setContentHash(QCryptographicHash::hash(seventhNote.content().toUtf8(), QCryptographicHash::Md5));
     seventhNote.setCreationTimestamp(QDateTime::currentMSecsSinceEpoch());
     seventhNote.setModificationTimestamp(seventhNote.creationTimestamp());
+
+    Resource seventhNoteFirstResource;
+    seventhNoteFirstResource.setGuid(UidGenerator::Generate());
+    seventhNoteFirstResource.setNoteGuid(seventhNote.guid());
+    seventhNoteFirstResource.setMime(QStringLiteral("text/plain"));
+    seventhNoteFirstResource.setDataBody(QByteArray("Third linked notebook third note first resource data body"));
+    seventhNoteFirstResource.setDataSize(seventhNoteFirstResource.dataBody().size());
+    seventhNoteFirstResource.setDataHash(QCryptographicHash::hash(seventhNoteFirstResource.dataBody(), QCryptographicHash::Md5));
+    seventhNote.addResource(seventhNoteFirstResource);
+
     res = m_pFakeNoteStore->setNote(seventhNote, errorDescription);
     QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
 
@@ -5374,6 +5394,9 @@ void SynchronizationTester::setConflictingNotesToLocalAndRemoteStoragesImpl(cons
         modifiedNote.setDirty(true);
         modifiedNote.setLocal(false);
         modifiedNote.setUpdateSequenceNumber(-1);
+
+        // Remove any resources the note might have had to make the test more interesting
+        modifiedNote.setResources(QList<Resource>());
 
         ErrorString errorDescription;
         bool res = m_pFakeNoteStore->setNote(modifiedNote, errorDescription);
