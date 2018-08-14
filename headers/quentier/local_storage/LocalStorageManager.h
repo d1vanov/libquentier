@@ -520,7 +520,7 @@ public:
     bool addNote(Note & note, ErrorString & errorDescription);
 
     /**
-     * @brief The UpdateNoteOption is a C++-98 style scoped enum servomg as the base enum for QFlags which allows to specify
+     * @brief The UpdateNoteOption is a C++-98 style scoped enum serving as the base enum for QFlags which allows to specify
      * which note fields should be updated when updateNote method is called
      *
      * Most note data is updated unconditionally - note title, content, attributes (if any) etc.
@@ -537,13 +537,13 @@ public:
              */
             UpdateResourceMetadata      = 1,
             /**
-             * UpdateResourceBinaryData value specifies that dataBody, its size and hasn and alternateDataBody, its size and hash
-             * should be updated for each of note's resources; this value only has effect if flags also has
+             * UpdateResourceBinaryData value specifies that dataBody, its size and hash and alternateDataBody, its size
+             * and hash should be updated for each of note's resources; this value only has effect if flags also have
              * UpdateResourceMetadata value enabled!
              */
             UpdateResourceBinaryData    = 2,
             /**
-             * UpdateTags value specifies that note's linkage to tags should be updated
+             * UpdateTags value specifies that note's tag lists should be updated
              */
             UpdateTags                  = 4
         };
@@ -557,6 +557,14 @@ public:
      * in the local storage database. If no note with such guid is found, the local uid is used
      * to identify the note in the local storage database. If the note has no guid, the local uid
      * is used to identify it in the local storage database.
+     *
+     * A special way in which this method might be used is the update of a note which clears note's guid.
+     * This way is special because it imposes certain requirements onto the resources which the note might have.
+     * However, it is only relevant if options input parameter has UpdateResourceMetadata flag enabled. The requirements
+     * for this special case are as follows:
+     *   - each resource should not have noteGuid field set to a non-empty value
+     *   - each resource should not have guid field set to a non-empty value as it makes no sense for note without guid
+     *     i.e. note not synchronized with Evernote to own a resource which has guid i.e. is synchronized with Evernote
      *
      * @param note - note to be updated in the local storage database; required to contain either "remote" notebook guid
      * or local notebook uid; may be changed as a result of the call, filled with fields like local uid or notebook guid or local uid
