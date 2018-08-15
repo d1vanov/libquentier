@@ -175,22 +175,7 @@ bool Resource::checkParameters(ErrorString & errorDescription) const
 
     if (enResource.data.isSet())
     {
-        if (!enResource.data->body.isSet()) {
-            errorDescription.setBase(QT_TRANSLATE_NOOP("Resource", "Resource's data body is not set"));
-            return false;
-        }
-
-        if (!enResource.data->size.isSet()) {
-            errorDescription.setBase(QT_TRANSLATE_NOOP("Resource", "Resource's data size is not set"));
-            return false;
-        }
-
-        if (!enResource.data->bodyHash.isSet())
-        {
-            errorDescription.setBase(QT_TRANSLATE_NOOP("Resource", "Resource's data hash is not set"));
-            return false;
-        }
-        else
+        if (enResource.data->bodyHash.isSet())
         {
             qint32 hashSize = static_cast<qint32>(enResource.data->bodyHash->size());
             if (hashSize != qevercloud::EDAM_HASH_LEN) {
@@ -199,26 +184,19 @@ bool Resource::checkParameters(ErrorString & errorDescription) const
                 return false;
             }
         }
+
+        if (enResource.data->body.isSet() && enResource.data->size.isSet() &&
+            (enResource.data->body->size() != enResource.data->size.ref()))
+        {
+            errorDescription.setBase(QT_TRANSLATE_NOOP("Resource", "Resource's data size is not equal to the actual resource data size"));
+            errorDescription.details() = QString::number(enResource.data->size.ref());
+            return false;
+        }
     }
 
     if (enResource.recognition.isSet())
     {
-        if (!enResource.recognition->body.isSet()) {
-            errorDescription.setBase(QT_TRANSLATE_NOOP("Resource", "Resource's recognition data body is not set"));
-            return false;
-        }
-
-        if (!enResource.recognition->size.isSet()) {
-            errorDescription.setBase(QT_TRANSLATE_NOOP("Resource", "Resource's recognition data size is not set"));
-            return false;
-        }
-
-        if (!enResource.recognition->bodyHash.isSet())
-        {
-            errorDescription.setBase(QT_TRANSLATE_NOOP("Resource", "Resource's recognition data hash is not set"));
-            return false;
-        }
-        else
+        if (enResource.recognition->bodyHash.isSet())
         {
             qint32 hashSize = static_cast<qint32>(enResource.recognition->bodyHash->size());
             if (hashSize != qevercloud::EDAM_HASH_LEN) {
@@ -227,26 +205,19 @@ bool Resource::checkParameters(ErrorString & errorDescription) const
                 return false;
             }
         }
+
+        if (enResource.recognition->body.isSet() && enResource.recognition->size.isSet() &&
+            (enResource.recognition->body->size() != enResource.recognition->size.ref()))
+        {
+            errorDescription.setBase(QT_TRANSLATE_NOOP("Resource", "Resource's recognition size is not equal to the actual recognition data size"));
+            errorDescription.details() = QString::number(enResource.recognition->size.ref());
+            return false;
+        }
     }
 
     if (enResource.alternateData.isSet())
     {
-        if (!enResource.alternateData->body.isSet()) {
-            errorDescription.setBase(QT_TRANSLATE_NOOP("Resource", "Resource's alternate data body is not set"));
-            return false;
-        }
-
-        if (!enResource.alternateData->size.isSet()) {
-            errorDescription.setBase(QT_TRANSLATE_NOOP("Resource", "Resource's alternate data size is not set"));
-            return false;
-        }
-
-        if (!enResource.alternateData->bodyHash.isSet())
-        {
-            errorDescription.setBase(QT_TRANSLATE_NOOP("Resource", "Resource's alternate data hash is not set"));
-            return false;
-        }
-        else
+        if (enResource.alternateData->bodyHash.isSet())
         {
             qint32 hashSize = static_cast<qint32>(enResource.alternateData->bodyHash->size());
             if (hashSize != qevercloud::EDAM_HASH_LEN) {
@@ -254,6 +225,14 @@ bool Resource::checkParameters(ErrorString & errorDescription) const
                 errorDescription.details() = QString::fromLocal8Bit(enResource.alternateData->bodyHash.ref());
                 return false;
             }
+        }
+
+        if (enResource.alternateData->body.isSet() && enResource.alternateData->size.isSet() &&
+            (enResource.alternateData->body->size() != enResource.alternateData->size.ref()))
+        {
+            errorDescription.setBase(QT_TRANSLATE_NOOP("Resource", "Resource's alternate data size is not equal to the actual alternate data size"));
+            errorDescription.details() = QString::number(enResource.alternateData->size.ref());
+            return false;
         }
     }
 

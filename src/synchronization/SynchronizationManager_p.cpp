@@ -758,7 +758,7 @@ void SynchronizationManagerPrivate::createConnections(IAuthenticationManager & a
                      Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
     QObject::connect(&m_remoteToLocalSyncManager, QNSIGNAL(RemoteToLocalSynchronizationManager,rateLimitExceeded,qint32),
                      this, QNSLOT(SynchronizationManagerPrivate,onRateLimitExceeded,qint32),
-                     Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
+                     Qt::ConnectionType(Qt::UniqueConnection | Qt::DirectConnection));
     QObject::connect(&m_remoteToLocalSyncManager, QNSIGNAL(RemoteToLocalSynchronizationManager,requestAuthenticationToken),
                      this, QNSLOT(SynchronizationManagerPrivate,onRequestAuthenticationToken),
                      Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
@@ -819,7 +819,7 @@ void SynchronizationManagerPrivate::createConnections(IAuthenticationManager & a
                      Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
     QObject::connect(&m_sendLocalChangesManager, QNSIGNAL(SendLocalChangesManager,rateLimitExceeded,qint32),
                      this, QNSLOT(SynchronizationManagerPrivate,onRateLimitExceeded,qint32),
-                     Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
+                     Qt::ConnectionType(Qt::UniqueConnection | Qt::DirectConnection));
     QObject::connect(&m_sendLocalChangesManager, QNSIGNAL(SendLocalChangesManager,requestAuthenticationToken),
                      this, QNSLOT(SynchronizationManagerPrivate,onRequestAuthenticationToken),
                      Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
@@ -1471,7 +1471,7 @@ void SynchronizationManagerPrivate::authenticateToLinkedNotebooks()
         }
 
         // 2) Set up the job writing the shard id to the keychain
-        jobIt = m_writeLinkedNotebookShardIdJobIdsWithLinkedNotebookGuids.left.find(guid);
+        jobIt = m_writeLinkedNotebookShardIdJobIdsWithLinkedNotebookGuids.left.find(guid);  // clazy:exclude=rule-of-two-soft
         if (jobIt == m_writeLinkedNotebookShardIdJobIdsWithLinkedNotebookGuids.left.end()) {
             QString key = keyPrefix + LINKED_NOTEBOOK_SHARD_ID_KEY_PART + guid;
             QUuid jobId = m_pKeychainService->startWritePasswordJob(WRITE_LINKED_NOTEBOOK_SHARD_ID_JOB, key, shardId);

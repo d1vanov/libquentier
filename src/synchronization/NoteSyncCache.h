@@ -85,7 +85,7 @@ private Q_SLOTS:
                            LocalStorageManager::OrderDirection::type orderDirection,
                            QString linkedNotebookGuid, ErrorString errorDescription, QUuid requestId);
     void onAddNoteComplete(Note note, QUuid requestId);
-    void onUpdateNoteComplete(Note note, bool updateResources, bool updateTags, QUuid requestId);
+    void onUpdateNoteComplete(Note note, LocalStorageManager::UpdateNoteOptions options, QUuid requestId);
     void onExpungeNoteComplete(Note note, QUuid requestId);
 
 private:

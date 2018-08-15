@@ -152,8 +152,8 @@ Q_SIGNALS:
     void getNoteCountsPerAllTagsFailed(ErrorString errorDescription, QUuid requestId = QUuid());
     void addNoteComplete(Note note, QUuid requestId = QUuid());
     void addNoteFailed(Note note, ErrorString errorDescription, QUuid requestId = QUuid());
-    void updateNoteComplete(Note note, bool updateResources, bool updateTags, QUuid requestId = QUuid());
-    void updateNoteFailed(Note note, bool updateResources, bool updateTags,
+    void updateNoteComplete(Note note, LocalStorageManager::UpdateNoteOptions options, QUuid requestId = QUuid());
+    void updateNoteFailed(Note note, LocalStorageManager::UpdateNoteOptions options,
                           ErrorString errorDescription, QUuid requestId = QUuid());
     void findNoteComplete(Note foundNote, bool withResourceMetadata, bool withResourceBinaryData, QUuid requestId = QUuid());
     void findNoteFailed(Note note, bool withResourceMetadata, bool withResourceBinaryData, ErrorString errorDescription,
@@ -346,7 +346,7 @@ public Q_SLOTS:
     void onGetNoteCountPerTagRequest(Tag tag, QUuid requestId);
     void onGetNoteCountsPerAllTagsRequest(QUuid requestId);
     void onAddNoteRequest(Note note, QUuid requestId);
-    void onUpdateNoteRequest(Note note, bool updateResources, bool updateTags, QUuid requestId);
+    void onUpdateNoteRequest(Note note, LocalStorageManager::UpdateNoteOptions options, QUuid requestId);
     void onFindNoteRequest(Note note, bool withResourceMetadata, bool withResourceBinaryData, QUuid requestId);
     void onListNotesPerNotebookRequest(Notebook notebook, bool withResourceMetadata, bool withResourceBinaryData,
                                        LocalStorageManager::ListObjectsOptions flag,

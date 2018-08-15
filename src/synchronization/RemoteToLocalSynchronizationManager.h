@@ -53,6 +53,7 @@
 namespace quentier {
 
 QT_FORWARD_DECLARE_CLASS(LocalStorageManagerAsync)
+QT_FORWARD_DECLARE_CLASS(NoteSyncConflictResolverManager)
 
 class Q_DECL_HIDDEN RemoteToLocalSynchronizationManager: public QObject
 {
@@ -69,6 +70,7 @@ public:
     };
 
     explicit RemoteToLocalSynchronizationManager(IManager & manager, const QString & host, QObject * parent = Q_NULLPTR);
+    ~RemoteToLocalSynchronizationManager();
 
     bool active() const;
 
@@ -148,7 +150,7 @@ Q_SIGNALS:
     void expungeNotebook(Notebook notebook, QUuid requestId);
 
     void addNote(Note note, QUuid requestId);
-    void updateNote(Note note, bool updateResources, bool updateTags, QUuid requestId);
+    void updateNote(Note note, LocalStorageManager::UpdateNoteOptions options, QUuid requestId);
     void findNote(Note note, bool withResourceMetadata, bool withResourceBinaryData, QUuid requestId);
     void expungeNote(Note note, QUuid requestId);
 
@@ -174,6 +176,10 @@ Q_SIGNALS:
     void updateSavedSearch(SavedSearch savedSearch, QUuid requestId);
     void findSavedSearch(SavedSearch savedSearch, QUuid requestId);
     void expungeSavedSearch(SavedSearch savedSearch, QUuid requestId);
+
+    void authDataUpdated(QString authToken, QString shardId, qevercloud::Timestamp expirationTime);
+    void linkedNotebookAuthDataUpdated(QHash<QString,QPair<QString,QString> > authenticationTokensAndShardIdsByLinkedNotebookGuid,
+                                       QHash<QString,qevercloud::Timestamp> authenticationTokenExpirationTimesByLinkedNotebookGuid);
 
 private Q_SLOTS:
     void onFindUserCompleted(User user, QUuid requestId);
@@ -236,8 +242,8 @@ private Q_SLOTS:
 
     void onAddNoteCompleted(Note note, QUuid requestId);
     void onAddNoteFailed(Note note, ErrorString errorDescription, QUuid requestId);
-    void onUpdateNoteCompleted(Note note, bool updateResources, bool updateTags, QUuid requestId);
-    void onUpdateNoteFailed(Note note, bool updateResources, bool updateTags,
+    void onUpdateNoteCompleted(Note note, LocalStorageManager::UpdateNoteOptions options, QUuid requestId);
+    void onUpdateNoteFailed(Note note, LocalStorageManager::UpdateNoteOptions options,
                             ErrorString errorDescription, QUuid requestId);
     void onExpungeNoteCompleted(Note note, QUuid requestId);
     void onExpungeNoteFailed(Note note, ErrorString errorDescription, QUuid requestId);
@@ -267,6 +273,11 @@ private Q_SLOTS:
 
     void onSavedSearchSyncConflictResolverFinished(qevercloud::SavedSearch remoteSavedSearch);
     void onSavedSearchSyncConflictResolverFailure(qevercloud::SavedSearch remoteSavedSearch, ErrorString errorDescription);
+
+    void onNoteSyncConflictResolverFinished(qevercloud::Note remoteNote);
+    void onNoteSyncConflictResolvedFailure(qevercloud::Note remoteNote, ErrorString errorDescription);
+    void onNoteSyncConflictRateLimitExceeded(qint32 secondsToWait);
+    void onNoteSyncConflictAuthenticationExpired();
 
     // Slots for FullSyncStaleDataItemsExpunger signals
     void onFullSyncStaleDataItemsExpungerFinished();
@@ -542,6 +553,8 @@ private:
     bool findNotebookForNoteThumbnailDownloading(const Note & note);
     bool setupNoteThumbnailDownloading(const Note & note, const Notebook & notebook);
 
+    void launchNoteSyncConflictResolver(const Note & localConflict, const qevercloud::Note & remoteNote);
+
     QString clientNameForProtocolVersionCheck() const;
 
     // Infrastructure for persisting the sync state corresponding to data synced so far when API rate limit breach occurs
@@ -571,10 +584,12 @@ private:
     void unregisterLinkedNotebookPendingAddOrUpdate(const LinkedNotebook & linkedNotebook);
     void unregisterNotebookPendingAddOrUpdate(const Notebook & notebook);
     void unregisterNotePendingAddOrUpdate(const Note & note);
+    void unregisterNotePendingAddOrUpdate(const qevercloud::Note & note);
     void unregisterResourcePendingAddOrUpdate(const Resource & resource);
 
     // Infrastructure for processing of conflicts occurred during sync
     Note createConflictingNote(const Note & originalNote, const qevercloud::Note * pRemoteNote = Q_NULLPTR) const;
+    void convertNoteToLocalConflictingOne(Note & note) const;
     void overrideLocalNoteWithRemoteNote(Note & localNote, const qevercloud::Note & remoteNote) const;
     void processResourceConflictAsNoteConflict(Note & remoteNote, const Note & localConflictingNote,
                                                Resource & remoteNoteResource);
@@ -677,6 +692,8 @@ private:
     };
 
     friend QTextStream & operator<<(QTextStream & strm, const SyncMode::type & obj);
+
+    friend class NoteSyncConflictResolverManager;
 
 private:
     IManager &                              m_manager;
@@ -807,6 +824,8 @@ private:
 
     typedef QHash<QUuid,QPair<Note,QUuid> > NoteDataPerFindNotebookRequestId;
     NoteDataPerFindNotebookRequestId        m_notesWithFindRequestIdsPerFindNotebookRequestId;
+
+    QScopedPointer<NoteSyncConflictResolverManager>     m_pNoteSyncConflictResolverManager;
 
     QHash<QPair<QString,QString>,Notebook>  m_notebooksPerNoteIds;
 

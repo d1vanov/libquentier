@@ -85,7 +85,7 @@ public:
     int noteCountPerTag(const Tag & tag, ErrorString & errorDescription) const;
     bool noteCountsPerAllTags(QHash<QString, int> & noteCountsPerTagLocalUid, ErrorString & errorDescription) const;
     bool addNote(Note & note, ErrorString & errorDescription);
-    bool updateNote(Note & note, const bool updateResources, const bool updateTags, ErrorString & errorDescription);
+    bool updateNote(Note & note, const LocalStorageManager::UpdateNoteOptions options, ErrorString & errorDescription);
     bool findNote(Note & note, ErrorString & errorDescription,
                   const bool withResourceMetadata = true,
                   const bool withResourceBinaryData = true) const;
@@ -222,11 +222,12 @@ private:
     bool getNotebookGuidForNote(const Note & note, QString & notebookGuid, ErrorString & errorDescription);
     bool getNotebookLocalUidForGuid(const QString & notebookGuid, QString & notebookLocalUid, ErrorString & errorDescription);
     bool getNoteLocalUidForGuid(const QString & noteGuid, QString & noteLocalUid, ErrorString & errorDescription);
+    bool getNoteGuidForLocalUid(const QString & noteLocalUid, QString & noteGuid, ErrorString & errorDescription);
     bool getTagLocalUidForGuid(const QString & tagGuid, QString & tagLocalUid, ErrorString & errorDescription);
     bool getResourceLocalUidForGuid(const QString & resourceGuid, QString & resourceLocalUid, ErrorString & errorDescription);
     bool getSavedSearchLocalUidForGuid(const QString & savedSearchGuid, QString & savedSearchLocalUid, ErrorString & errorDescription);
 
-    bool insertOrReplaceNote(Note & note, const bool updateResources, const bool updateTags, ErrorString & errorDescription);
+    bool insertOrReplaceNote(Note & note, const LocalStorageManager::UpdateNoteOptions options, ErrorString & errorDescription);
     bool insertOrReplaceSharedNote(const SharedNote & sharedNote, ErrorString & errorDescription);
     bool insertOrReplaceNoteRestrictions(const QString & noteLocalUid, const qevercloud::NoteRestrictions & noteRestrictions,
                                          ErrorString & errorDescription);
@@ -250,14 +251,16 @@ private:
     bool complementTagParentInfo(Tag & tag, ErrorString & errorDescription);
 
     bool insertOrReplaceResource(const Resource & resource, ErrorString & errorDescription,
+                                 const bool setResourceBinaryData = true,
                                  const bool useSeparateTransaction = true);
     bool insertOrReplaceResourceAttributes(const QString & localUid,
                                            const qevercloud::ResourceAttributes & attributes,
                                            ErrorString & errorDescription);
-    bool updateCommonResourceData(const Resource & resource, ErrorString & errorDescription);
+    bool updateCommonResourceData(const Resource & resource, const bool setResourceBinaryData, ErrorString & errorDescription);
     bool updateNoteResources(const Resource & resource, ErrorString & errorDescription);
 
-    bool checkAndPrepareInsertOrReplaceResourceQuery();
+    bool checkAndPrepareInsertOrReplaceResourceWithBinaryDataQuery();
+    bool checkAndPrepareUpdateResourceWithoutBinaryDataQuery();
     bool checkAndPrepareInsertOrReplaceNoteResourceQuery();
     bool checkAndPrepareDeleteResourceFromResourceRecognitionTypesQuery();
     bool checkAndPrepareInsertOrReplaceIntoResourceRecognitionDataQuery();
@@ -329,7 +332,7 @@ private:
     bool complementResourceNoteIds(Resource & resource, ErrorString & errorDescription) const;
 
     bool partialUpdateNoteResources(const QString & noteLocalUid, const QList<Resource> & updatedNoteResources,
-                                    ErrorString & errorDescription);
+                                    const bool UpdateResourceBinaryData, ErrorString & errorDescription);
 
     template <class T>
     QString listObjectsOptionsToSqlQueryConditions(const LocalStorageManager::ListObjectsOptions & flag,
@@ -410,8 +413,11 @@ private:
     mutable QSqlQuery   m_getSavedSearchCountQuery;
     mutable bool        m_getSavedSearchCountQueryPrepared;
 
-    QSqlQuery           m_insertOrReplaceResourceQuery;
-    bool                m_insertOrReplaceResourceQueryPrepared;
+    QSqlQuery           m_insertOrReplaceResourceWithBinaryDataQuery;
+    bool                m_insertOrReplaceResourceWithBinaryDataQueryPrepared;
+
+    QSqlQuery           m_updateResourceWithoutBinaryDataQuery;
+    bool                m_updateResourceWithoutBinaryDataQueryPrepared;
 
     QSqlQuery           m_insertOrReplaceNoteResourceQuery;
     bool                m_insertOrReplaceNoteResourceQueryPrepared;

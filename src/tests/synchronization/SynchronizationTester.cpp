@@ -3848,6 +3848,16 @@ void SynchronizationTester::setUserOwnItemsToRemoteStorage()
     seventhNote.setContentHash(QCryptographicHash::hash(sixthNote.content().toUtf8(), QCryptographicHash::Md5));
     seventhNote.setCreationTimestamp(QDateTime::currentMSecsSinceEpoch());
     seventhNote.setModificationTimestamp(sixthNote.creationTimestamp());
+
+    Resource seventhNoteFirstResource;
+    seventhNoteFirstResource.setGuid(UidGenerator::Generate());
+    seventhNoteFirstResource.setNoteGuid(seventhNote.guid());
+    seventhNoteFirstResource.setMime(QStringLiteral("text/plain"));
+    seventhNoteFirstResource.setDataBody(QByteArray("Seventh note first resource data body"));
+    seventhNoteFirstResource.setDataSize(seventhNoteFirstResource.dataBody().size());
+    seventhNoteFirstResource.setDataHash(QCryptographicHash::hash(seventhNoteFirstResource.dataBody(), QCryptographicHash::Md5));
+    seventhNote.addResource(seventhNoteFirstResource);
+
     res = m_pFakeNoteStore->setNote(seventhNote, errorDescription);
     QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
 
@@ -4098,6 +4108,16 @@ void SynchronizationTester::setLinkedNotebookItemsToRemoteStorage()
     seventhNote.setContentHash(QCryptographicHash::hash(seventhNote.content().toUtf8(), QCryptographicHash::Md5));
     seventhNote.setCreationTimestamp(QDateTime::currentMSecsSinceEpoch());
     seventhNote.setModificationTimestamp(seventhNote.creationTimestamp());
+
+    Resource seventhNoteFirstResource;
+    seventhNoteFirstResource.setGuid(UidGenerator::Generate());
+    seventhNoteFirstResource.setNoteGuid(seventhNote.guid());
+    seventhNoteFirstResource.setMime(QStringLiteral("text/plain"));
+    seventhNoteFirstResource.setDataBody(QByteArray("Third linked notebook third note first resource data body"));
+    seventhNoteFirstResource.setDataSize(seventhNoteFirstResource.dataBody().size());
+    seventhNoteFirstResource.setDataHash(QCryptographicHash::hash(seventhNoteFirstResource.dataBody(), QCryptographicHash::Md5));
+    seventhNote.addResource(seventhNoteFirstResource);
+
     res = m_pFakeNoteStore->setNote(seventhNote, errorDescription);
     QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
 
@@ -5111,8 +5131,7 @@ void SynchronizationTester::setModifiedUserOwnItemsToLocalStorage()
         note.setTitle(note.title() + MODIFIED_LOCALLY_SUFFIX);
         note.setDirty(true);
 
-        res = m_pLocalStorageManagerAsync->localStorageManager()->updateNote(note, /* update tags = */ false,
-                                                                             /* update resources = */ false,
+        res = m_pLocalStorageManagerAsync->localStorageManager()->updateNote(note, LocalStorageManager::UpdateNoteOptions(0),
                                                                              errorDescription);
         QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
     }
@@ -5170,8 +5189,7 @@ void SynchronizationTester::setModifiedLinkedNotebookItemsToLocalStorage()
         note.setTitle(note.title() + MODIFIED_LOCALLY_SUFFIX);
         note.setDirty(true);
 
-        res = m_pLocalStorageManagerAsync->localStorageManager()->updateNote(note, /* update tags = */ false,
-                                                                             /* update resources = */ false,
+        res = m_pLocalStorageManagerAsync->localStorageManager()->updateNote(note, LocalStorageManager::UpdateNoteOptions(0),
                                                                              errorDescription);
         QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
     }
@@ -5377,6 +5395,9 @@ void SynchronizationTester::setConflictingNotesToLocalAndRemoteStoragesImpl(cons
         modifiedNote.setLocal(false);
         modifiedNote.setUpdateSequenceNumber(-1);
 
+        // Remove any resources the note might have had to make the test more interesting
+        modifiedNote.setResources(QList<Resource>());
+
         ErrorString errorDescription;
         bool res = m_pFakeNoteStore->setNote(modifiedNote, errorDescription);
         QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
@@ -5391,8 +5412,8 @@ void SynchronizationTester::setConflictingNotesToLocalAndRemoteStoragesImpl(cons
 
         modifiedNote.setLocalUid(QString());
         modifiedNote.setTitle(originalTitle + MODIFIED_LOCALLY_SUFFIX);
-        res = m_pLocalStorageManagerAsync->localStorageManager()->updateNote(modifiedNote, /* update resources = */ false,
-                                                                             /* update tags = */ false, errorDescription);
+        res = m_pLocalStorageManagerAsync->localStorageManager()->updateNote(modifiedNote, LocalStorageManager::UpdateNoteOptions(0),
+                                                                             errorDescription);
         QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
 
         const Notebook * pNotebook = m_pFakeNoteStore->findNotebook(pNote->notebookGuid());

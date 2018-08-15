@@ -34,7 +34,7 @@ QT_FORWARD_DECLARE_CLASS(TagSyncCache)
 QT_FORWARD_DECLARE_CLASS(LocalStorageManagerAsync)
 
 /**
- * The TagSyncConflictResolver class resolver resolves the conflict between two tags: the one downloaded
+ * The TagSyncConflictResolver class resolves the conflict between two tags: the one downloaded
  * from the remote server and the local one. The conflict resolution might involve
  * changes in other tags, seemingly unrelated to the currently conflicting ones
  */

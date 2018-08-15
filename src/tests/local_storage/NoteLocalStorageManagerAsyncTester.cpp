@@ -180,7 +180,7 @@ void NoteLocalStorageManagerAsyncTester::onGetNoteCountCompleted(int count, QUui
         m_modifiedNote.setActive(false);
         m_modifiedNote.setDeletionTimestamp(3);
         m_state = STATE_SENT_DELETE_REQUEST;
-        Q_EMIT updateNoteRequest(m_modifiedNote, /* update resources = */ false, /* update tags = */ false);
+        Q_EMIT updateNoteRequest(m_modifiedNote, LocalStorageManager::UpdateNoteOptions(0));
     }
     else if (m_state == STATE_SENT_GET_COUNT_AFTER_EXPUNGE_REQUEST)
     {
@@ -331,12 +331,11 @@ void NoteLocalStorageManagerAsyncTester::onAddNoteFailed(Note note, ErrorString 
     Q_EMIT failure(errorDescription.nonLocalizedString());
 }
 
-void NoteLocalStorageManagerAsyncTester::onUpdateNoteCompleted(Note note, bool updateResources,
-                                                               bool updateTags, QUuid requestId)
+void NoteLocalStorageManagerAsyncTester::onUpdateNoteCompleted(Note note, LocalStorageManager::UpdateNoteOptions options,
+                                                               QUuid requestId)
 {
+    Q_UNUSED(options)
     Q_UNUSED(requestId)
-    Q_UNUSED(updateResources)
-    Q_UNUSED(updateTags)
 
     ErrorString errorDescription;
 
@@ -376,11 +375,10 @@ void NoteLocalStorageManagerAsyncTester::onUpdateNoteCompleted(Note note, bool u
     HANDLE_WRONG_STATE();
 }
 
-void NoteLocalStorageManagerAsyncTester::onUpdateNoteFailed(Note note, bool updateResources,
-                                                            bool updateTags, ErrorString errorDescription, QUuid requestId)
+void NoteLocalStorageManagerAsyncTester::onUpdateNoteFailed(Note note, LocalStorageManager::UpdateNoteOptions options,
+                                                            ErrorString errorDescription, QUuid requestId)
 {
-    Q_UNUSED(updateResources)
-    Q_UNUSED(updateTags)
+    Q_UNUSED(options)
 
     QNWARNING(errorDescription << QStringLiteral(", requestId = ") << requestId << QStringLiteral(", note: ") << note);
     Q_EMIT failure(errorDescription.nonLocalizedString());
@@ -411,7 +409,10 @@ void NoteLocalStorageManagerAsyncTester::onFindNoteCompleted(Note note, bool wit
         m_modifiedNote.setTitle(m_initialNote.title() + QStringLiteral("_modified"));
 
         m_state = STATE_SENT_UPDATE_REQUEST;
-        Q_EMIT updateNoteRequest(m_modifiedNote, /* update resources = */ true, /* update tags = */ true);
+        Q_EMIT updateNoteRequest(m_modifiedNote,
+                                 LocalStorageManager::UpdateNoteOptions(LocalStorageManager::UpdateNoteOption::UpdateResourceMetadata |
+                                                                        LocalStorageManager::UpdateNoteOption::UpdateResourceBinaryData |
+                                                                        LocalStorageManager::UpdateNoteOption::UpdateTags));
     }
     else if (m_state == STATE_SENT_FIND_AFTER_UPDATE_REQUEST)
     {
@@ -592,8 +593,8 @@ void NoteLocalStorageManagerAsyncTester::createConnections()
                      m_pLocalStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,onGetNoteCountRequest,QUuid));
     QObject::connect(this, QNSIGNAL(NoteLocalStorageManagerAsyncTester,addNoteRequest,Note,QUuid),
                      m_pLocalStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,onAddNoteRequest,Note,QUuid));
-    QObject::connect(this, QNSIGNAL(NoteLocalStorageManagerAsyncTester,updateNoteRequest,Note,bool,bool,QUuid),
-                     m_pLocalStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,onUpdateNoteRequest,Note,bool,bool,QUuid));
+    QObject::connect(this, QNSIGNAL(NoteLocalStorageManagerAsyncTester,updateNoteRequest,Note,LocalStorageManager::UpdateNoteOptions,QUuid),
+                     m_pLocalStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,onUpdateNoteRequest,Note,LocalStorageManager::UpdateNoteOptions,QUuid));
     QObject::connect(this, QNSIGNAL(NoteLocalStorageManagerAsyncTester,findNoteRequest,Note,bool,bool,QUuid),
                      m_pLocalStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,onFindNoteRequest,Note,bool,bool,QUuid));
     QObject::connect(this, QNSIGNAL(NoteLocalStorageManagerAsyncTester,listNotesPerNotebookRequest,Notebook,bool,bool,
@@ -619,10 +620,10 @@ void NoteLocalStorageManagerAsyncTester::createConnections()
                      this, QNSLOT(NoteLocalStorageManagerAsyncTester,onAddNoteCompleted,Note,QUuid));
     QObject::connect(m_pLocalStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,addNoteFailed,Note,ErrorString,QUuid),
                      this, QNSLOT(NoteLocalStorageManagerAsyncTester,onAddNoteFailed,Note,ErrorString,QUuid));
-    QObject::connect(m_pLocalStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,updateNoteComplete,Note,bool,bool,QUuid),
-                     this, QNSLOT(NoteLocalStorageManagerAsyncTester,onUpdateNoteCompleted,Note,bool,bool,QUuid));
-    QObject::connect(m_pLocalStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,updateNoteFailed,Note,bool,bool,ErrorString,QUuid),
-                     this, QNSLOT(NoteLocalStorageManagerAsyncTester,onUpdateNoteFailed,Note,bool,bool,ErrorString,QUuid));
+    QObject::connect(m_pLocalStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,updateNoteComplete,Note,LocalStorageManager::UpdateNoteOptions,QUuid),
+                     this, QNSLOT(NoteLocalStorageManagerAsyncTester,onUpdateNoteCompleted,Note,LocalStorageManager::UpdateNoteOptions,QUuid));
+    QObject::connect(m_pLocalStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,updateNoteFailed,Note,LocalStorageManager::UpdateNoteOptions,ErrorString,QUuid),
+                     this, QNSLOT(NoteLocalStorageManagerAsyncTester,onUpdateNoteFailed,Note,LocalStorageManager::UpdateNoteOptions,ErrorString,QUuid));
     QObject::connect(m_pLocalStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,findNoteComplete,Note,bool,bool,QUuid),
                      this, QNSLOT(NoteLocalStorageManagerAsyncTester,onFindNoteCompleted,Note,bool,bool,QUuid));
     QObject::connect(m_pLocalStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,findNoteFailed,Note,bool,bool,ErrorString,QUuid),

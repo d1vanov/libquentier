@@ -326,7 +326,7 @@ void ResourceLocalStorageManagerAsyncTester::onUpdateResourceCompleted(Resource 
         m_foundResource.setLocalUid(m_modifiedResource.localUid());
 
         m_state = STATE_SENT_FIND_AFTER_UPDATE_REQUEST;
-        bool withBinaryData = false;    // test find without binary data, for a change
+        bool withBinaryData = false;
         Q_EMIT findResourceRequest(m_foundResource, withBinaryData);
     }
     HANDLE_WRONG_STATE();
@@ -375,10 +375,6 @@ void ResourceLocalStorageManagerAsyncTester::onFindResourceCompleted(Resource re
         // resource prior to the comparison
         if (m_modifiedResource.hasDataBody()) {
             m_modifiedResource.setDataBody(QByteArray());
-        }
-
-        if (m_modifiedResource.hasRecognitionDataBody()) {
-            m_modifiedResource.setRecognitionDataBody(QByteArray());
         }
 
         if (resource != m_modifiedResource) {

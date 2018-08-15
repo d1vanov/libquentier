@@ -965,32 +965,36 @@ void LocalStorageManagerAsync::onAddNoteRequest(Note note, QUuid requestId)
     }
 }
 
-void LocalStorageManagerAsync::onUpdateNoteRequest(Note note, bool updateResources,
-                                                   bool updateTags, QUuid requestId)
+void LocalStorageManagerAsync::onUpdateNoteRequest(Note note, const LocalStorageManager::UpdateNoteOptions options,
+                                                   QUuid requestId)
 {
     try
     {
         ErrorString errorDescription;
 
-        bool res = m_pLocalStorageManager->updateNote(note, updateResources, updateTags, errorDescription);
+        bool res = m_pLocalStorageManager->updateNote(note, options, errorDescription);
         if (!res) {
-            Q_EMIT updateNoteFailed(note, updateResources, updateTags, errorDescription, requestId);
+            Q_EMIT updateNoteFailed(note, options, errorDescription, requestId);
             return;
         }
 
         if (m_useCache)
         {
-            if (updateResources && updateTags) {
+            if ((options & LocalStorageManager::UpdateNoteOption::UpdateResourceMetadata) &&
+                (options & LocalStorageManager::UpdateNoteOption::UpdateResourceBinaryData) &&
+                (options & LocalStorageManager::UpdateNoteOption::UpdateTags))
+            {
                 m_pLocalStorageCacheManager->cacheNote(note);
             }
-            else {
+            else
+            {
                 // The note was somehow changed but the resources or tags information was not updated =>
                 // the note in the cache is stale/incomplete in either case, need to remove it from there
                 m_pLocalStorageCacheManager->expungeNote(note);
             }
         }
 
-        Q_EMIT updateNoteComplete(note, updateResources, updateTags, requestId);
+        Q_EMIT updateNoteComplete(note, options, requestId);
     }
     catch(const std::exception & e)
     {
@@ -998,7 +1002,7 @@ void LocalStorageManagerAsync::onUpdateNoteRequest(Note note, bool updateResourc
         error.details() = QString::fromUtf8(e.what());
         SysInfo sysInfo;
         QNERROR(error << QStringLiteral("; backtrace: ") << sysInfo.stackTrace());
-        Q_EMIT updateNoteFailed(note, updateResources, updateTags, error, requestId);
+        Q_EMIT updateNoteFailed(note, options, error, requestId);
     }
 }
 

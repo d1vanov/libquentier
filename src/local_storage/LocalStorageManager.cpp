@@ -235,11 +235,10 @@ bool LocalStorageManager::addNote(Note & note, ErrorString & errorDescription)
     return d->addNote(note, errorDescription);
 }
 
-bool LocalStorageManager::updateNote(Note & note, const bool updateResources,
-                                     const bool updateTags, ErrorString & errorDescription)
+bool LocalStorageManager::updateNote(Note & note, const UpdateNoteOptions options, ErrorString & errorDescription)
 {
     Q_D(LocalStorageManager);
-    return d->updateNote(note, updateResources, updateTags, errorDescription);
+    return d->updateNote(note, options, errorDescription);
 }
 
 bool LocalStorageManager::findNote(Note & note, ErrorString & errorDescription,

@@ -63,6 +63,20 @@
 #define AUTH_TOKEN_KEYCHAIN_KEY_PART QStringLiteral("_auth_token")
 #define SHARD_ID_KEYCHAIN_KEY_PART QStringLiteral("_shard_id")
 
+#define APPEND_NOTE_DETAILS(errorDescription, note) \
+   if (note.hasTitle()) \
+   { \
+       errorDescription.details() = note.title(); \
+   } \
+   else if (note.hasContent()) \
+   { \
+       QString previewText = note.plainText(); \
+       if (!previewText.isEmpty()) { \
+           previewText.truncate(30); \
+           errorDescription.details() = previewText; \
+       } \
+   }
+
 namespace quentier {
 
 class Q_DECL_HIDDEN LinkedNotebookAuthData: public Printable

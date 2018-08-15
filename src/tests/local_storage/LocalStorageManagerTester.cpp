@@ -927,7 +927,8 @@ void LocalStorageManagerTester::localStorageManagerListAllTagsPerNoteTest()
             note.addTagGuid(tag.guid());
             note.addTagLocalUid(tag.localUid());
 
-            res = localStorageManager.updateNote(note, /* update resources = */ false, /* update tags = */ true, errorMessage);
+            res = localStorageManager.updateNote(note, LocalStorageManager::UpdateNoteOptions(LocalStorageManager::UpdateNoteOption::UpdateTags),
+                                                 errorMessage);
             QVERIFY2(res == true, qPrintable(errorMessage.nonLocalizedString()));
         }
 
@@ -1495,7 +1496,8 @@ void LocalStorageManagerTester::localStorageManagerExpungeNotelessTagsFromLinked
             note.addTagGuid(tag.guid());
             note.addTagLocalUid(tag.localUid());
 
-            res = localStorageManager.updateNote(note, /* update resources = */ false, /* update tags = */ true, errorMessage);
+            res = localStorageManager.updateNote(note, LocalStorageManager::UpdateNoteOptions(LocalStorageManager::UpdateNoteOption::UpdateTags),
+                                                 errorMessage);
             QVERIFY2(res == true, qPrintable(errorMessage.nonLocalizedString()));
         }
 
