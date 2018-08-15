@@ -118,6 +118,50 @@ public:
                     const bool overrideLock = false);
 
     /**
+     * isLocalStorageVersionTooHigh method checks whether the existing local storage persistence has version which is too high
+     * for the currenly run version of libquentier to work with i.e. whether the local storage has already been upgraded
+     * using a new version of libquentier.
+
+     * NOTE: it is libquentier client code's responsibility to call this method and/or localStorageRequiresUpgrade method,
+     * libquentier won't call any of these on its own and will just attempt to work with the existing local stotage,
+     * whatever version it is of. If version is too high, things can fail in most mysterious way, so the client code
+     * is obliged to call these methods to ensure the local storage version is checked properly.
+     *
+     * @param errorDescription      Textual description of the error if the method was unable to determine whether
+     *                              the local storage version is too high for the currently run version of libquentier
+     *                              to work with, otherwise this parameter is not touched by the method
+     * @return true if local storage version is too high for the currently run version of libquentier to work with, false otherwise
+     */
+    bool isLocalStorageVersionTooHigh(ErrorString & errorDescription);
+
+    /**
+     * localStorageRequiresUpgrade method checks whether the existing local storage persistence requires to be upgraded.
+     * The upgrades may be required sometimes when new version of libquentier is rolled out which changes something
+     * in the internals of local storage organization. This method only checks for changes which are backwards
+     * incompatible i.e. once the local storage is upgraded, previous version of libquentier won't be able to work with it properly!
+     *
+     * NOTE: it is libquentier client code's responsibility to call this method and/or isLocalStorageVersionTooHigh method,
+     * libquentier won't call any of these on its own and will just attempt to work with the existing local stotage,
+     * whatever version it is of. If version is too high, things can fail in most mysterious way, so the client code
+     * is obliged to call these methods to ensure the local storage version is checked properly.
+     *
+     * @param errorDescription      Textual description of the error if the method was unable to determine whether
+     *                              the local storage requires upgrade, otherwise this parameter is not touched by the method
+     * @return true if local storage requires upgrade, false otherwise
+     */
+    bool localStorageRequiresUpgrade(ErrorString & errorDescription);
+
+    /**
+     * @brief upgradeLocalStorage method performs the upgrade of local storage persistence if upgrade is required;
+     * upgradeProgress signal is emitted to inform any listeners of the progress of the upgrade
+     * @param errorDescription      Textual description of the error if the local storage upgrade failed,
+     *                              otherwise this parameter is not touched by the method
+     * @return true if local storage persistence was upgraded successfully, false if local storage persistence was not upgraded
+     * either due to error or due to the fact the local storage persistence doesn't require an upgrade
+     */
+    bool upgradeLocalStorage(ErrorString & errorDescription);
+
+    /**
      * @brief userCount - returns the number of non-deleted users currently stored in the local storage database
      * @param errorDescription - error description if the number of users could not be returned
      * @return either non-negative value with the number of users or -1 which means some error has occurred
