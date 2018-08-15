@@ -363,7 +363,7 @@ void NoteSyncConflictResolver::processNotesConflictByGuid()
     QNDEBUG(QStringLiteral("NoteSyncConflictResolver::processNotesConflictByGuid"));
 
     if (Q_UNLIKELY(!m_remoteNote.guid.isSet())) {
-        ErrorString error(QT_TR_NOOP("Can't resolve the confict between remote and local notes: "
+        ErrorString error(QT_TR_NOOP("Can't resolve the conflict between remote and local notes: "
                                      "the remote note has no guid set"));
         APPEND_NOTE_DETAILS(error, Note(m_remoteNote))
         QNWARNING(error << QStringLiteral(": ") << m_remoteNote);
