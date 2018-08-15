@@ -7394,27 +7394,6 @@ Note RemoteToLocalSynchronizationManager::createConflictingNote(const Note & ori
     return conflictingNote;
 }
 
-void RemoteToLocalSynchronizationManager::convertNoteToLocalConflictingOne(Note & note) const
-{
-    note.setGuid(QString());
-    note.setUpdateSequenceNumber(-1);
-    note.setDirty(true);
-
-    if (!note.hasResources()) {
-        return;
-    }
-
-    QList<Resource> resources = note.resources();
-    for(auto it = resources.begin(), end = resources.end(); it != end; ++it) {
-        Resource & resource = *it;
-        resource.setGuid(QString());
-        resource.setUpdateSequenceNumber(-1);
-        resource.setDirty(true);
-    }
-
-    note.setResources(resources);
-}
-
 template<class T>
 QString RemoteToLocalSynchronizationManager::findLinkedNotebookGuidForItem(const T & item) const
 {
