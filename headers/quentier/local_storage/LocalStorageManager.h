@@ -162,6 +162,23 @@ public:
     bool upgradeLocalStorage(ErrorString & errorDescription);
 
     /**
+     * localStorageVersion method fetches the current version of local storage persistence which can be used for informational purposes
+     *
+     * @param errorDescription      Textual description of the error if the method was unable to determine the current version
+     *                              of local storage persistence
+     * @return positive number indication local storage version or negative number in case of error retrieving the local storage version
+     */
+    qint32 localStorageVersion(ErrorString & errorDescription);
+
+    /**
+     * highestSupportedLocalStorageVersion returns the highest version of local storage persistence which the current build of libquentier
+     * is capable of working with
+     *
+     * @return highest supported local storage version
+     */
+    qint32 highestSupportedLocalStorageVersion() const;
+
+    /**
      * @brief userCount - returns the number of non-deleted users currently stored in the local storage database
      * @param errorDescription - error description if the number of users could not be returned
      * @return either non-negative value with the number of users or -1 which means some error has occurred

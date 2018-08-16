@@ -39,6 +39,13 @@ Q_SIGNALS:
 public:
     void switchUser(const Account & account, const bool startFromScratch = false,
                     const bool overrideLock = false);
+
+    bool isLocalStorageVersionTooHigh(ErrorString & errorDescription);
+    bool localStorageRequiresUpgrade(ErrorString & errorDescription);
+    bool upgradeLocalStorage(ErrorString & errorDescription);
+    qint32 localStorageVersion(ErrorString & errorDescription);
+    qint32 highestSupportedLocalStorageVersion() const;
+
     int userCount(ErrorString & errorDescription) const;
     bool addUser(const User & user, ErrorString & errorDescription);
     bool updateUser(const User & user, ErrorString & errorDescription);
