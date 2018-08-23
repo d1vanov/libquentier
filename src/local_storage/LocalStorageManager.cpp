@@ -75,6 +75,36 @@ void LocalStorageManager::switchUser(const Account & account,
     d->switchUser(account, startFromScratch, overrideLock);
 }
 
+bool LocalStorageManager::isLocalStorageVersionTooHigh(ErrorString & errorDescription)
+{
+    Q_D(LocalStorageManager);
+    return d->isLocalStorageVersionTooHigh(errorDescription);
+}
+
+bool LocalStorageManager::localStorageRequiresUpgrade(ErrorString & errorDescription)
+{
+    Q_D(LocalStorageManager);
+    return d->localStorageRequiresUpgrade(errorDescription);
+}
+
+bool LocalStorageManager::upgradeLocalStorage(ErrorString & errorDescription)
+{
+    Q_D(LocalStorageManager);
+    return d->upgradeLocalStorage(errorDescription);
+}
+
+qint32 LocalStorageManager::localStorageVersion(ErrorString & errorDescription)
+{
+    Q_D(LocalStorageManager);
+    return d->localStorageVersion(errorDescription);
+}
+
+qint32 LocalStorageManager::highestSupportedLocalStorageVersion() const
+{
+    Q_D(const LocalStorageManager);
+    return d->highestSupportedLocalStorageVersion();
+}
+
 int LocalStorageManager::userCount(ErrorString & errorDescription) const
 {
     Q_D(const LocalStorageManager);

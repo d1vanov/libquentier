@@ -575,8 +575,72 @@ void LocalStorageManagerPrivate::switchUser(const Account & account,
     }
 
     clearCachedQueries();
+}
 
-    // TODO: in future should check whether the upgrade from previous database version is necessary
+bool LocalStorageManagerPrivate::isLocalStorageVersionTooHigh(ErrorString & errorDescription)
+{
+    qint32 currentVersion = localStorageVersion(errorDescription);
+    if (currentVersion < 0) {
+        return false;
+    }
+
+    qint32 highestSupportedVersion = highestSupportedLocalStorageVersion();
+    return currentVersion > highestSupportedVersion;
+}
+
+bool LocalStorageManagerPrivate::localStorageRequiresUpgrade(ErrorString & errorDescription)
+{
+    qint32 currentVersion = localStorageVersion(errorDescription);
+    if (currentVersion < 0) {
+        return false;
+    }
+
+    qint32 highestSupportedVersion = highestSupportedLocalStorageVersion();
+    return currentVersion < highestSupportedVersion;
+}
+
+bool LocalStorageManagerPrivate::upgradeLocalStorage(ErrorString & errorDescription)
+{
+    Q_UNUSED(errorDescription)
+    return false;
+}
+
+qint32 LocalStorageManagerPrivate::localStorageVersion(ErrorString & errorDescription)
+{
+    QNDEBUG(QStringLiteral("LocalStorageManagerPrivate::localStorageVersion"));
+
+    QString queryString = QStringLiteral("SELECT version FROM Auxiliary LIMIT 1");
+    QSqlQuery query(m_sqlDatabase);
+    bool res = query.exec(queryString);
+    if (Q_UNLIKELY(!res)) {
+        errorDescription.setBase(QT_TR_NOOP("failed to execute SQL query checking whether the database requires an upgrade"));
+        errorDescription.details() = query.lastError().text();
+        QNWARNING(errorDescription);
+        return -1;
+    }
+
+    if (!query.next()) {
+        QNDEBUG(QStringLiteral("No version was found within the local storage database, assuming version 1"));
+        return 1;
+    }
+
+    QSqlRecord rec = query.record();
+    QVariant value = rec.value(QStringLiteral("version"));
+    bool conversionResult = false;
+    int version = value.toInt(&conversionResult);
+    if (Q_UNLIKELY(!conversionResult)) {
+        errorDescription.setBase(QT_TR_NOOP("failed to decode the current database version"));
+        QNWARNING(errorDescription << QStringLiteral(", value = ") << value);
+        return -1;
+    }
+
+    QNDEBUG(QStringLiteral("Version = ") << version);
+    return version;
+}
+
+qint32 LocalStorageManagerPrivate::highestSupportedLocalStorageVersion() const
+{
+    return 1;
 }
 
 int LocalStorageManagerPrivate::userCount(ErrorString & errorDescription) const
