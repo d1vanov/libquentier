@@ -173,65 +173,32 @@ bool Resource::checkParameters(ErrorString & errorDescription) const
         return false;
     }
 
-    if (enResource.data.isSet())
+    if (enResource.data.isSet() && enResource.data->bodyHash.isSet())
     {
-        if (enResource.data->bodyHash.isSet())
-        {
-            qint32 hashSize = static_cast<qint32>(enResource.data->bodyHash->size());
-            if (hashSize != qevercloud::EDAM_HASH_LEN) {
-                errorDescription.setBase(QT_TRANSLATE_NOOP("Resource", "Resource's data hash has invalid size"));
-                errorDescription.details() = QString::fromLocal8Bit(enResource.data->bodyHash.ref());
-                return false;
-            }
-        }
-
-        if (enResource.data->body.isSet() && enResource.data->size.isSet() &&
-            (enResource.data->body->size() != enResource.data->size.ref()))
-        {
-            errorDescription.setBase(QT_TRANSLATE_NOOP("Resource", "Resource's data size is not equal to the actual resource data size"));
-            errorDescription.details() = QString::number(enResource.data->size.ref());
+        qint32 hashSize = static_cast<qint32>(enResource.data->bodyHash->size());
+        if (hashSize != qevercloud::EDAM_HASH_LEN) {
+            errorDescription.setBase(QT_TRANSLATE_NOOP("Resource", "Resource's data hash has invalid size"));
+            errorDescription.details() = QString::fromLocal8Bit(enResource.data->bodyHash.ref());
             return false;
         }
     }
 
-    if (enResource.recognition.isSet())
+    if (enResource.recognition.isSet() && enResource.recognition->bodyHash.isSet())
     {
-        if (enResource.recognition->bodyHash.isSet())
-        {
-            qint32 hashSize = static_cast<qint32>(enResource.recognition->bodyHash->size());
-            if (hashSize != qevercloud::EDAM_HASH_LEN) {
-                errorDescription.setBase(QT_TRANSLATE_NOOP("Resource", "Resource's recognition data hash has invalid size"));
-                errorDescription.details() = QString::fromLocal8Bit(enResource.recognition->bodyHash.ref());
-                return false;
-            }
-        }
-
-        if (enResource.recognition->body.isSet() && enResource.recognition->size.isSet() &&
-            (enResource.recognition->body->size() != enResource.recognition->size.ref()))
-        {
-            errorDescription.setBase(QT_TRANSLATE_NOOP("Resource", "Resource's recognition size is not equal to the actual recognition data size"));
-            errorDescription.details() = QString::number(enResource.recognition->size.ref());
+        qint32 hashSize = static_cast<qint32>(enResource.recognition->bodyHash->size());
+        if (hashSize != qevercloud::EDAM_HASH_LEN) {
+            errorDescription.setBase(QT_TRANSLATE_NOOP("Resource", "Resource's recognition data hash has invalid size"));
+            errorDescription.details() = QString::fromLocal8Bit(enResource.recognition->bodyHash.ref());
             return false;
         }
     }
 
-    if (enResource.alternateData.isSet())
+    if (enResource.alternateData.isSet() && enResource.alternateData->bodyHash.isSet())
     {
-        if (enResource.alternateData->bodyHash.isSet())
-        {
-            qint32 hashSize = static_cast<qint32>(enResource.alternateData->bodyHash->size());
-            if (hashSize != qevercloud::EDAM_HASH_LEN) {
-                errorDescription.setBase(QT_TRANSLATE_NOOP("Resource", "Resource's alternate data hash has invalid size"));
-                errorDescription.details() = QString::fromLocal8Bit(enResource.alternateData->bodyHash.ref());
-                return false;
-            }
-        }
-
-        if (enResource.alternateData->body.isSet() && enResource.alternateData->size.isSet() &&
-            (enResource.alternateData->body->size() != enResource.alternateData->size.ref()))
-        {
-            errorDescription.setBase(QT_TRANSLATE_NOOP("Resource", "Resource's alternate data size is not equal to the actual alternate data size"));
-            errorDescription.details() = QString::number(enResource.alternateData->size.ref());
+        qint32 hashSize = static_cast<qint32>(enResource.alternateData->bodyHash->size());
+        if (hashSize != qevercloud::EDAM_HASH_LEN) {
+            errorDescription.setBase(QT_TRANSLATE_NOOP("Resource", "Resource's alternate data hash has invalid size"));
+            errorDescription.details() = QString::fromLocal8Bit(enResource.alternateData->bodyHash.ref());
             return false;
         }
     }
