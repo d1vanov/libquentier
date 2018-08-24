@@ -22,7 +22,9 @@
 #include <quentier/utility/Macros.h>
 #include <quentier/types/Account.h>
 #include <quentier/types/ErrorString.h>
+#include <quentier/utility/ApplicationSettings.h>
 #include <QObject>
+#include <QSet>
 
 QT_FORWARD_DECLARE_CLASS(QSqlDatabase)
 
@@ -70,10 +72,32 @@ private:
 
     // Helper methods for upgrading the database from version 1 to version 2
     QStringList listResourceLocalUidsForDatabaseUpgradeFromVersion1ToVersion2(ErrorString & errorDescription);
+    void filterResourceLocalUidsForDatabaseUpgradeFromVersion1ToVersion2(QStringList & resourceLocalUids);
     bool ensureExistenceOfResouceDataDirsForDatabaseUpgradeFromVersion1ToVersion2(ErrorString & errorDescription);
 
 private:
     Q_DISABLE_COPY(LocalStorageDatabaseUpgrader)
+
+private:
+    struct StringFilterPredicate
+    {
+        StringFilterPredicate(QSet<QString> & filteredStrings) : m_filteredStrings(filteredStrings) {}
+
+        bool operator()(const QString & str) const
+        {
+            return m_filteredStrings.contains(str);
+        }
+
+        QSet<QString> &     m_filteredStrings;
+    };
+
+    struct ApplicationSettingsArrayCloser
+    {
+        ApplicationSettingsArrayCloser(ApplicationSettings & settings) : m_settings(settings) {}
+        ~ApplicationSettingsArrayCloser() { m_settings.endArray(); m_settings.sync(); }
+
+        ApplicationSettings & m_settings;
+    };
 
 private:
     Account                         m_account;
