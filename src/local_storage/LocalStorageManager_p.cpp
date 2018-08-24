@@ -17,6 +17,7 @@
  */
 
 #include "LocalStorageManager_p.h"
+#include "LocalStorageShared.h"
 #include <quentier/exception/DatabaseLockedException.h>
 #include <quentier/exception/DatabaseLockFailedException.h>
 #include <quentier/exception/DatabaseOpeningException.h>
@@ -141,14 +142,6 @@ LocalStorageManagerPrivate::~LocalStorageManagerPrivate()
 
     unlockDatabaseFile();
 }
-
-#define DATABASE_CHECK_AND_SET_ERROR() \
-    if (!res) { \
-        errorDescription.base() = errorPrefix.base(); \
-        errorDescription.details() = query.lastError().text(); \
-        QNERROR(errorDescription << QStringLiteral(", last executed query: ") << lastExecutedQuery(query)); \
-        return false; \
-    }
 
 bool LocalStorageManagerPrivate::addUser(const User & user, ErrorString & errorDescription)
 {
@@ -4295,25 +4288,6 @@ void LocalStorageManagerPrivate::unlockDatabaseFile()
                   << QStringLiteral("; native error = ") << exc.get_native_error());
     }
 #endif
-}
-
-QString LocalStorageManagerPrivate::sqlEscapeString(const QString & str) const
-{
-    QString res = str;
-    res.replace(QStringLiteral("\'"), QStringLiteral("\'\'"));
-    return res;
-}
-
-QString LocalStorageManagerPrivate::lastExecutedQuery(const QSqlQuery & query) const
-{
-    QString str = query.lastQuery();
-    QMap<QString,QVariant> boundValues = query.boundValues();
-
-    for(auto it = boundValues.constBegin(), end = boundValues.constEnd(); it != end; ++it) {
-        str.replace(it.key(), it.value().toString());
-    }
-
-    return str;
 }
 
 bool LocalStorageManagerPrivate::createTables(ErrorString & errorDescription)

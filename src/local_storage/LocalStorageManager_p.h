@@ -183,9 +183,6 @@ private:
 
     void unlockDatabaseFile();
 
-    QString sqlEscapeString(const QString & str) const;
-    QString lastExecutedQuery(const QSqlQuery & query) const;
-
     bool createTables(ErrorString & errorDescription);
     bool insertOrReplaceNotebookRestrictions(const QString & localUid, const qevercloud::NotebookRestrictions & notebookRestrictions,
                                              ErrorString & errorDescription);

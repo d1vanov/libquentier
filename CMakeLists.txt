@@ -211,7 +211,9 @@ set(PRIVATE_HEADERS
     src/enml/ENMLConverter_p.h
     src/enml/DecryptedTextManager_p.h
     src/local_storage/LocalStorageCacheManager_p.h
+    src/local_storage/LocalStorageDatabaseUpgrader.h
     src/local_storage/LocalStorageManager_p.h
+    src/local_storage/LocalStorageShared.h
     src/local_storage/NoteSearchQueryData.h
     src/synchronization/ExceptionHandlingHelpers.h
     src/synchronization/InkNoteImageDownloader.h
@@ -378,7 +380,9 @@ set(${PROJECT_NAME}_SOURCES
     src/local_storage/LocalStorageManager_p.cpp
     src/local_storage/LocalStorageCacheManager.cpp
     src/local_storage/LocalStorageCacheManager_p.cpp
+    src/local_storage/LocalStorageDatabaseUpgrader.cpp
     src/local_storage/LocalStorageManagerAsync.cpp
+    src/local_storage/LocalStorageShared.cpp
     src/local_storage/NoteSearchQuery.cpp
     src/local_storage/NoteSearchQueryData.cpp
     src/local_storage/Transaction.cpp
