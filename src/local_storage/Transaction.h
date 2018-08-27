@@ -24,6 +24,7 @@ public:
     virtual ~Transaction();
 
     bool commit(ErrorString & errorDescription);
+    bool rollback(ErrorString & errorDescription);
     bool end(ErrorString & errorDescription);
 
 private:
@@ -37,6 +38,7 @@ private:
 private:
     TransactionType m_type;
     bool m_committed;
+    bool m_rolledBack;
     bool m_ended;
 };
 

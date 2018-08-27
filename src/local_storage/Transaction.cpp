@@ -31,6 +31,7 @@ Transaction::Transaction(const QSqlDatabase & db, const LocalStorageManagerPriva
     m_localStorageManager(localStorageManager),
     m_type(type),
     m_committed(false),
+    m_rolledBack(false),
     m_ended(false)
 {
     init();
@@ -38,7 +39,7 @@ Transaction::Transaction(const QSqlDatabase & db, const LocalStorageManagerPriva
 
 Transaction::~Transaction()
 {
-    if ((m_type != Selection) && !m_committed)
+    if ((m_type != Selection) && !m_committed && !m_rolledBack)
     {
         QSqlQuery query(m_db);
         bool res = query.exec(QStringLiteral("ROLLBACK"));
@@ -81,6 +82,26 @@ bool Transaction::commit(ErrorString & errorDescription)
     }
 
     m_committed = true;
+    return true;
+}
+
+bool Transaction::rollback(ErrorString & errorDescription)
+{
+    if (m_type == Selection) {
+        errorDescription.setBase(QT_TRANSLATE_NOOP("Transaction", "Can't rollback the transaction of selection type"));
+        return false;
+    }
+
+    QSqlQuery query(m_db);
+    bool res = query.exec(QStringLiteral("ROLLBACK"));
+    if (!res) {
+        errorDescription.setBase(QT_TRANSLATE_NOOP("Transaction", "Can't rollback the SQL transaction"));
+        errorDescription.details() = query.lastError().text();
+        QNWARNING(errorDescription << QStringLiteral(", full last query error: ") << query.lastError());
+        return false;
+    }
+
+    m_rolledBack = true;
     return true;
 }
 
