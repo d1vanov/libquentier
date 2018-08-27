@@ -46,13 +46,6 @@ public:
                                           QObject * parent = Q_NULLPTR);
 
     /**
-     * @param errorDescription      Textual description of the error if the method was unable to determine whether
-     *                              the database requires upgrade, otherwise this parameter is not touched by the method
-     * @return true if database requires upgrade, false otherwise
-     */
-    bool databaseRequiresUpgrade(ErrorString & errorDescription) const;
-
-    /**
      * @brief upgradeDatabase method performs the upgrade of local storage database if upgrade is required; upgradeProgress
      * signal is emitted to inform any listeners of the progress of the upgrade
      * @param errorDescription      Textual description of the error if the database upgrade failed,

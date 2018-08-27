@@ -18,6 +18,7 @@
 
 #include "LocalStorageManager_p.h"
 #include "LocalStorageShared.h"
+#include "LocalStorageDatabaseUpgrader.h"
 #include <quentier/exception/DatabaseLockedException.h>
 #include <quentier/exception/DatabaseLockFailedException.h>
 #include <quentier/exception/DatabaseOpeningException.h>
@@ -32,6 +33,8 @@
 #include <quentier/utility/UidGenerator.h>
 #include <quentier/types/ResourceRecognitionIndices.h>
 #include <QBuffer>
+#include <QDir>
+#include <QFile>
 #include <algorithm>
 
 namespace quentier {
@@ -125,6 +128,7 @@ LocalStorageManagerPrivate::LocalStorageManagerPrivate(const Account & account, 
     m_insertOrReplaceUserAttributesRecentMailedAddressesQueryPrepared(false),
     m_deleteUserQuery(),
     m_deleteUserQueryPrepared(false),
+    m_pLocalStorageDatabaseUpgrader(Q_NULLPTR),
     m_stringUtils(),
     m_preservedAsterisk()
 {
@@ -597,8 +601,25 @@ bool LocalStorageManagerPrivate::localStorageRequiresUpgrade(ErrorString & error
 
 bool LocalStorageManagerPrivate::upgradeLocalStorage(ErrorString & errorDescription)
 {
-    Q_UNUSED(errorDescription)
-    return false;
+    QNDEBUG(QStringLiteral("LocalStorageManagerPrivate::upgradeLocalStorage"));
+
+    if (m_pLocalStorageDatabaseUpgrader) {
+        m_pLocalStorageDatabaseUpgrader->disconnect(this);
+        m_pLocalStorageDatabaseUpgrader->deleteLater();
+        m_pLocalStorageDatabaseUpgrader = Q_NULLPTR;
+    }
+
+    m_pLocalStorageDatabaseUpgrader = new LocalStorageDatabaseUpgrader(m_currentAccount, *this, m_sqlDatabase, this);
+    QObject::connect(m_pLocalStorageDatabaseUpgrader, QNSIGNAL(LocalStorageDatabaseUpgrader,upgradeProgress,double),
+                     this, QNSIGNAL(LocalStorageManagerPrivate,upgradeProgress,double));
+
+    bool res = m_pLocalStorageDatabaseUpgrader->upgradeDatabase(errorDescription);
+
+    m_pLocalStorageDatabaseUpgrader->disconnect(this);
+    m_pLocalStorageDatabaseUpgrader->deleteLater();
+    m_pLocalStorageDatabaseUpgrader = Q_NULLPTR;
+
+    return res;
 }
 
 qint32 LocalStorageManagerPrivate::localStorageVersion(ErrorString & errorDescription)
@@ -636,7 +657,7 @@ qint32 LocalStorageManagerPrivate::localStorageVersion(ErrorString & errorDescri
 
 qint32 LocalStorageManagerPrivate::highestSupportedLocalStorageVersion() const
 {
-    return 1;
+    return 2;
 }
 
 int LocalStorageManagerPrivate::userCount(ErrorString & errorDescription) const
@@ -7272,7 +7293,7 @@ bool LocalStorageManagerPrivate::insertOrReplaceResource(const Resource & resour
     QString resourceLocalUid = resource.localUid();
     QString noteLocalUid = resource.noteLocalUid();
 
-    bool res = updateCommonResourceData(resource, setResourceBinaryData, errorDescription);
+    bool res = insertOrReplaceCommonResourceMetadata(resource, setResourceBinaryData, errorDescription);
     if (!res) {
         return false;
     }
@@ -7382,12 +7403,135 @@ bool LocalStorageManagerPrivate::insertOrReplaceResource(const Resource & resour
         }
     }
 
-    if (!pTransaction.isNull()) {
-        return pTransaction->commit(errorDescription);
+    if (setResourceBinaryData)
+    {
+        if (!writeResourceBinaryDataToFiles(resource, errorDescription)) {
+            return false;
+        }
+    }
+
+    if (!pTransaction.isNull())
+    {
+        if (!pTransaction->commit(errorDescription)) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+bool LocalStorageManagerPrivate::writeResourceBinaryDataToFiles(const Resource & resource, ErrorString & errorDescription)
+{
+    // NOTE: this method expects to be called after resource is already checked
+    // for sanity of its parameters!
+
+    QNDEBUG(QStringLiteral("LocalStorageManagerPrivate::writeResourceBinaryDataToFiles: resource local uid = ") << resource.localUid());
+
+    ErrorString errorPrefix(QT_TR_NOOP("can't insert or replace resource: failed to write resource binary data to files"));
+
+    if (Q_UNLIKELY(!resource.hasDataBody() && !resource.hasAlternateDataBody())) {
+        errorDescription = errorPrefix;
+        errorDescription.appendBase(QT_TR_NOOP("the resource has neither data body nor alternate data body set"));
+        errorDescription.details() = QStringLiteral("resource local uid = ") + resource.localUid();
+        QNWARNING(errorDescription << QStringLiteral(", resource: ") << resource);
+        return false;
+    }
+
+    if (resource.hasDataBody())
+    {
+        ErrorString error;
+        bool res = writeResourceBinaryDataToFile(resource.localUid(), resource.noteLocalUid(),
+                                                 resource.dataBody(), /* is alternate data body = */ false,
+                                                 error);
+        if (!res) {
+            errorDescription = errorPrefix;
+            errorDescription.appendBase(error.base());
+            errorDescription.appendBase(error.additionalBases());
+            errorDescription.details() = error.details();
+            return false;
+        }
+    }
+
+    if (resource.hasAlternateDataBody())
+    {
+        ErrorString error;
+        bool res = writeResourceBinaryDataToFile(resource.localUid(), resource.noteLocalUid(),
+                                                 resource.alternateDataBody(), /* is alternate data body = */ true,
+                                                 error);
+        if (!res) {
+            errorDescription = errorPrefix;
+            errorDescription.appendBase(error.base());
+            errorDescription.appendBase(error.additionalBases());
+            errorDescription.details() = error.details();
+            return false;
+        }
+    }
+
+    return true;
+}
+
+bool LocalStorageManagerPrivate::writeResourceBinaryDataToFile(const QString & resourceLocalUid, const QString & noteLocalUid,
+                                                               const QByteArray & dataBody, const bool isAlternateDataBody,
+                                                               ErrorString & errorDescription)
+{
+    QNDEBUG(QStringLiteral("LocalStorageManagerPrivate::writeResourceBinaryDataToFile: resource local uid = ")
+            << resourceLocalUid << QStringLiteral(", note local uid = ") << noteLocalUid << QStringLiteral(", writing ")
+            << (isAlternateDataBody ? QStringLiteral("alternate") : QString()) << QStringLiteral(" data body"));
+
+    QString storagePath = accountPersistentStoragePath(m_currentAccount);
+    if (isAlternateDataBody) {
+        storagePath += QStringLiteral("/Resources/alternateData/");
     }
     else {
-        return true;
+        storagePath += QStringLiteral("/Resources/data/");
     }
+
+    storagePath += noteLocalUid;
+
+    QDir storageDir(storagePath);
+    if (!storageDir.exists())
+    {
+        bool res = storageDir.mkpath(storagePath);
+        if (!res) {
+            errorDescription.setBase(QT_TR_NOOP("failed to create directory for resource data file storage"));
+            errorDescription.details() = storagePath;
+            QNWARNING(errorDescription);
+            return false;
+        }
+    }
+
+    QFile resourceDataFile(storagePath + QStringLiteral("/") + resourceLocalUid + QStringLiteral(".dat"));
+    if (!resourceDataFile.open(QIODevice::WriteOnly)) {
+        errorDescription.setBase(QT_TR_NOOP("failed to open resource data file for writing"));
+        errorDescription.details() = resourceDataFile.fileName();
+        QNWARNING(errorDescription);
+        return false;
+    }
+
+    qint64 dataSize = dataBody.size();
+    qint64 bytesWritten = resourceDataFile.write(dataBody);
+    if (bytesWritten < 0) {
+        errorDescription.setBase(QT_TR_NOOP("failed to write resource data to file"));
+        errorDescription.details() = resourceDataFile.fileName();
+        QNWARNING(errorDescription);
+        return false;
+    }
+
+    if (bytesWritten < dataSize) {
+        errorDescription.setBase(QT_TR_NOOP("failed to write the whole resource data to file"));
+        errorDescription.details() = resourceDataFile.fileName();
+        QNWARNING(errorDescription);
+        return false;
+    }
+
+    if (!resourceDataFile.flush()) {
+        errorDescription.setBase(QT_TR_NOOP("failed to flush file after writing resource data to it"));
+        errorDescription.details() = resourceDataFile.fileName();
+        QNWARNING(errorDescription);
+        return false;
+    }
+
+    return true;
 }
 
 bool LocalStorageManagerPrivate::insertOrReplaceResourceAttributes(const QString & localUid,
@@ -7467,12 +7611,12 @@ bool LocalStorageManagerPrivate::insertOrReplaceResourceAttributes(const QString
     return true;
 }
 
-bool LocalStorageManagerPrivate::updateCommonResourceData(const Resource & resource, const bool setResourceBinaryData,
-                                                          ErrorString & errorDescription)
+bool LocalStorageManagerPrivate::insertOrReplaceCommonResourceMetadata(const Resource & resource, const bool setResourceBinaryData,
+                                                                       ErrorString & errorDescription)
 {
-    QNDEBUG(QStringLiteral("LocalStorageManagerPrivate::updateCommonResourceData"));
+    QNDEBUG(QStringLiteral("LocalStorageManagerPrivate::insertOrReplaceCommonResourceMetadata"));
 
-    ErrorString errorPrefix(QT_TR_NOOP("can't insert or replace resource: can't update common resource data"));
+    ErrorString errorPrefix(QT_TR_NOOP("can't insert or replace resource: failed to update common resource metadata"));
 
     QVariant nullValue;
     bool res = (setResourceBinaryData
@@ -7516,7 +7660,7 @@ bool LocalStorageManagerPrivate::updateNoteResources(const Resource & resource, 
 {
     QNDEBUG(QStringLiteral("LocalStorageManagerPrivate::updateNoteResources"));
 
-    ErrorString errorPrefix(QT_TR_NOOP("can't insert or replace resource: can't update note-resource interconnections"));
+    ErrorString errorPrefix(QT_TR_NOOP("can't insert or replace resource: failed to update note-resource interconnections"));
 
     QVariant nullValue;
     bool res = checkAndPrepareInsertOrReplaceNoteResourceQuery();
@@ -7936,6 +8080,24 @@ bool LocalStorageManagerPrivate::complementTagsWithNoteLocalUids(QList<std::pair
         }
     }
 
+    return true;
+}
+
+bool LocalStorageManagerPrivate::readResourceBinaryDataFromFiles(Resource & resource, ErrorString & errorDescription) const
+{
+    QNDEBUG(QStringLiteral("LocalStorageManagerPrivate::readResourceBinaryDataFromFiles: resource local uid = ") << resource.localUid());
+
+    // TODO: implement
+    return true;
+}
+
+bool LocalStorageManagerPrivate::readResourceBinaryDataFromFile(const QString & resourceLocalUid, const QString & noteLocalUid,
+                                                                QByteArray & dataBody, ErrorString & errorDescription) const
+{
+    QNDEBUG(QStringLiteral("LocalStorageManagerPrivate::readResourceBinaryDataFromFile: resource local uid = ")
+            << resourceLocalUid << QStringLiteral(", note local uid = ") << noteLocalUid);
+
+    // TODO: implement
     return true;
 }
 

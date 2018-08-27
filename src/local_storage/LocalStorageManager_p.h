@@ -25,6 +25,7 @@
 namespace quentier {
 
 QT_FORWARD_DECLARE_CLASS(NoteSearchQuery)
+QT_FORWARD_DECLARE_CLASS(LocalStorageDatabaseUpgrader)
 
 class Q_DECL_HIDDEN LocalStorageManagerPrivate: public QObject
 {
@@ -260,7 +261,11 @@ private:
     bool insertOrReplaceResourceAttributes(const QString & localUid,
                                            const qevercloud::ResourceAttributes & attributes,
                                            ErrorString & errorDescription);
-    bool updateCommonResourceData(const Resource & resource, const bool setResourceBinaryData, ErrorString & errorDescription);
+    bool insertOrReplaceCommonResourceMetadata(const Resource & resource, const bool setResourceBinaryData, ErrorString & errorDescription);
+    bool writeResourceBinaryDataToFiles(const Resource & resource, ErrorString & errorDescription);
+    bool writeResourceBinaryDataToFile(const QString & resourceLocalUid, const QString & noteLocalUid,
+                                       const QByteArray & dataBody, const bool isAlternateDataBody,
+                                       ErrorString & errorDescription);
     bool updateNoteResources(const Resource & resource, ErrorString & errorDescription);
 
     bool checkAndPrepareInsertOrReplaceResourceWithBinaryDataQuery();
@@ -284,6 +289,9 @@ private:
     bool complementTagsWithNoteLocalUids(QList<std::pair<Tag, QStringList> > & tagsWithNoteLocalUids,
                                          ErrorString & errorDescription) const;
 
+    bool readResourceBinaryDataFromFiles(Resource & resource, ErrorString & errorDescription) const;
+    bool readResourceBinaryDataFromFile(const QString & resourceLocalUid, const QString & noteLocalUid,
+                                        QByteArray & dataBody, ErrorString & errorDescription) const;
     void fillResourceFromSqlRecord(const QSqlRecord & rec, const bool withBinaryData, Resource & resource) const;
     bool fillResourceAttributesFromSqlRecord(const QSqlRecord & rec, qevercloud::ResourceAttributes & attributes) const;
     bool fillResourceAttributesApplicationDataKeysOnlyFromSqlRecord(const QSqlRecord & rec, qevercloud::ResourceAttributes & attributes) const;
@@ -530,6 +538,8 @@ private:
 
     QSqlQuery           m_deleteUserQuery;
     bool                m_deleteUserQueryPrepared;
+
+    LocalStorageDatabaseUpgrader *  m_pLocalStorageDatabaseUpgrader;
 
     StringUtils         m_stringUtils;
     QVector<QChar>      m_preservedAsterisk;

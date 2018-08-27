@@ -46,22 +46,6 @@ LocalStorageDatabaseUpgrader::LocalStorageDatabaseUpgrader(const Account & accou
     m_sqlDatabase(sqlDatabase)
 {}
 
-bool LocalStorageDatabaseUpgrader::databaseRequiresUpgrade(ErrorString & errorDescription) const
-{
-    QNDEBUG(QStringLiteral("LocalStorageDatabaseUpgrader::databaseRequiresUpgrade"));
-
-    int version = m_localStorageManager.localStorageVersion(errorDescription);
-    if (version <= 0) {
-        return false;
-    }
-
-    if (version < 2) {
-        return true;
-    }
-
-    return false;
-}
-
 bool LocalStorageDatabaseUpgrader::upgradeDatabase(ErrorString & errorDescription)
 {
     QNDEBUG(QStringLiteral("LocalStorageDatabaseUpgrader::upgradeDatabase"));
@@ -186,7 +170,7 @@ bool LocalStorageDatabaseUpgrader::upgradeDatabaseFromVersion1ToVersion2(ErrorSt
             }
 
             // 3.2 Write resource data body to a file
-            QFile resourceDataFile(noteResourceDataDir.absolutePath() + QStringLiteral("/") + resourceLocalUid);
+            QFile resourceDataFile(noteResourceDataDir.absolutePath() + QStringLiteral("/") + resourceLocalUid + QStringLiteral(".dat"));
             if (!resourceDataFile.open(QIODevice::WriteOnly)) {
                 errorDescription = errorPrefix;
                 errorDescription.appendBase(QT_TR_NOOP("failed to open resource data file for writing"));
@@ -248,7 +232,7 @@ bool LocalStorageDatabaseUpgrader::upgradeDatabaseFromVersion1ToVersion2(ErrorSt
             }
 
             // 3.5 Write resource alternate data body to a file
-            QFile resourceAlternateDataFile(noteResourceAlternateDataDir.absolutePath() + QStringLiteral("/") + resourceLocalUid);
+            QFile resourceAlternateDataFile(noteResourceAlternateDataDir.absolutePath() + QStringLiteral("/") + resourceLocalUid + QStringLiteral(".dat"));
             if (!resourceAlternateDataFile.open(QIODevice::WriteOnly)) {
                 errorDescription = errorPrefix;
                 errorDescription.appendBase(QT_TR_NOOP("failed to open resource alternate data file for writing"));
@@ -328,8 +312,6 @@ bool LocalStorageDatabaseUpgrader::upgradeDatabaseFromVersion1ToVersion2(ErrorSt
 
         QNDEBUG(QStringLiteral("Compacted the local storage database"));
         Q_EMIT upgradeProgress(0.9);
-
-        // TODO: think about altering Resources table to remove dataBody and alternateDataBody columns from it
 
         // 5.3 Mark the removal of resource tables in upgrade persistence
         databaseUpgradeInfo.setValue(UPGRADE_1_TO_2_ALL_RESOURCE_DATA_REMOVED_FROM_RESOURCE_TABLE, true);
