@@ -222,15 +222,15 @@ private:
     bool checkAndPrepareGetLinkedNotebookCountQuery() const;
     bool checkAndPrepareInsertOrReplaceLinkedNotebookQuery();
 
-    bool getNoteLocalUidFromResource(const Resource & resource, QString & noteLocalUid, ErrorString & errorDescription);
-    bool getNotebookLocalUidFromNote(const Note & note, QString & notebookLocalUid, ErrorString & errorDescription);
-    bool getNotebookGuidForNote(const Note & note, QString & notebookGuid, ErrorString & errorDescription);
-    bool getNotebookLocalUidForGuid(const QString & notebookGuid, QString & notebookLocalUid, ErrorString & errorDescription);
-    bool getNoteLocalUidForGuid(const QString & noteGuid, QString & noteLocalUid, ErrorString & errorDescription);
-    bool getNoteGuidForLocalUid(const QString & noteLocalUid, QString & noteGuid, ErrorString & errorDescription);
-    bool getTagLocalUidForGuid(const QString & tagGuid, QString & tagLocalUid, ErrorString & errorDescription);
-    bool getResourceLocalUidForGuid(const QString & resourceGuid, QString & resourceLocalUid, ErrorString & errorDescription);
-    bool getSavedSearchLocalUidForGuid(const QString & savedSearchGuid, QString & savedSearchLocalUid, ErrorString & errorDescription);
+    bool getNoteLocalUidFromResource(const Resource & resource, QString & noteLocalUid, ErrorString & errorDescription) const;
+    bool getNotebookLocalUidFromNote(const Note & note, QString & notebookLocalUid, ErrorString & errorDescription) const;
+    bool getNotebookGuidForNote(const Note & note, QString & notebookGuid, ErrorString & errorDescription) const;
+    bool getNotebookLocalUidForGuid(const QString & notebookGuid, QString & notebookLocalUid, ErrorString & errorDescription) const;
+    bool getNoteLocalUidForGuid(const QString & noteGuid, QString & noteLocalUid, ErrorString & errorDescription) const;
+    bool getNoteGuidForLocalUid(const QString & noteLocalUid, QString & noteGuid, ErrorString & errorDescription) const;
+    bool getTagLocalUidForGuid(const QString & tagGuid, QString & tagLocalUid, ErrorString & errorDescription) const;
+    bool getResourceLocalUidForGuid(const QString & resourceGuid, QString & resourceLocalUid, ErrorString & errorDescription) const;
+    bool getSavedSearchLocalUidForGuid(const QString & savedSearchGuid, QString & savedSearchLocalUid, ErrorString & errorDescription) const;
 
     bool insertOrReplaceNote(Note & note, const LocalStorageManager::UpdateNoteOptions options, ErrorString & errorDescription);
     bool insertOrReplaceSharedNote(const SharedNote & sharedNote, ErrorString & errorDescription);
@@ -261,15 +261,23 @@ private:
     bool insertOrReplaceResourceAttributes(const QString & localUid,
                                            const qevercloud::ResourceAttributes & attributes,
                                            ErrorString & errorDescription);
-    bool insertOrReplaceCommonResourceMetadata(const Resource & resource, const bool setResourceBinaryData, ErrorString & errorDescription);
+    bool insertOrReplaceResourceMetadata(const Resource & resource, const bool setResourceDataProperties,
+                                         ErrorString & errorDescription);
     bool writeResourceBinaryDataToFiles(const Resource & resource, ErrorString & errorDescription);
     bool writeResourceBinaryDataToFile(const QString & resourceLocalUid, const QString & noteLocalUid,
                                        const QByteArray & dataBody, const bool isAlternateDataBody,
                                        ErrorString & errorDescription);
     bool updateNoteResources(const Resource & resource, ErrorString & errorDescription);
 
-    bool checkAndPrepareInsertOrReplaceResourceWithBinaryDataQuery();
-    bool checkAndPrepareUpdateResourceWithoutBinaryDataQuery();
+    void setNoteIdsToNoteResources(Note & note) const;
+
+    bool removeResourceBinaryDataFiles(const Resource & resource, ErrorString & errorDescription);
+    bool removeResourceBinaryDataFilesForNote(const QString & noteLocalUid, ErrorString & errorDescription);
+    bool removeResourceBinaryDataFilesForNotebook(const Notebook & notebook, ErrorString & errorDescription);
+    bool removeResourceBinaryDataFilesForLinkedNotebook(const LinkedNotebook & linkedNotebook, ErrorString & errorDescription);
+
+    bool checkAndPrepareInsertOrReplaceResourceMetadataWithDataPropertiesQuery();
+    bool checkAndPrepareUpdateResourceMetadataWithoutDataPropertiesQuery();
     bool checkAndPrepareInsertOrReplaceNoteResourceQuery();
     bool checkAndPrepareDeleteResourceFromResourceRecognitionTypesQuery();
     bool checkAndPrepareInsertOrReplaceIntoResourceRecognitionDataQuery();
@@ -289,10 +297,23 @@ private:
     bool complementTagsWithNoteLocalUids(QList<std::pair<Tag, QStringList> > & tagsWithNoteLocalUids,
                                          ErrorString & errorDescription) const;
 
+    struct ReadResourceBinaryDataFromFileStatus
+    {
+        enum type
+        {
+            Success = 0,
+            FileNotFound,
+            Failure
+        };
+    };
+
     bool readResourceBinaryDataFromFiles(Resource & resource, ErrorString & errorDescription) const;
-    bool readResourceBinaryDataFromFile(const QString & resourceLocalUid, const QString & noteLocalUid,
-                                        QByteArray & dataBody, ErrorString & errorDescription) const;
-    void fillResourceFromSqlRecord(const QSqlRecord & rec, const bool withBinaryData, Resource & resource) const;
+    ReadResourceBinaryDataFromFileStatus::type readResourceBinaryDataFromFile(const QString & resourceLocalUid,
+                                                                              const QString & noteLocalUid,
+                                                                              const bool isAlternateDataBody,
+                                                                              QByteArray & dataBody,
+                                                                              ErrorString & errorDescription) const;
+    void fillResourceFromSqlRecord(const QSqlRecord & rec, Resource & resource) const;
     bool fillResourceAttributesFromSqlRecord(const QSqlRecord & rec, qevercloud::ResourceAttributes & attributes) const;
     bool fillResourceAttributesApplicationDataKeysOnlyFromSqlRecord(const QSqlRecord & rec, qevercloud::ResourceAttributes & attributes) const;
     bool fillResourceAttributesApplicationDataFullMapFromSqlRecord(const QSqlRecord & rec, qevercloud::ResourceAttributes & attributes) const;
@@ -425,11 +446,11 @@ private:
     mutable QSqlQuery   m_getSavedSearchCountQuery;
     mutable bool        m_getSavedSearchCountQueryPrepared;
 
-    QSqlQuery           m_insertOrReplaceResourceWithBinaryDataQuery;
-    bool                m_insertOrReplaceResourceWithBinaryDataQueryPrepared;
+    QSqlQuery           m_insertOrReplaceResourceMetadataWithDataPropertiesQuery;
+    bool                m_insertOrReplaceResourceMetadataWithDataPropertiesQueryPrepared;
 
-    QSqlQuery           m_updateResourceWithoutBinaryDataQuery;
-    bool                m_updateResourceWithoutBinaryDataQueryPrepared;
+    QSqlQuery           m_updateResourceMetadataWithoutDataPropertiesQuery;
+    bool                m_updateResourceMetadataWithoutDataPropertiesQueryPrepared;
 
     QSqlQuery           m_insertOrReplaceNoteResourceQuery;
     bool                m_insertOrReplaceNoteResourceQueryPrepared;
