@@ -16,16 +16,21 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "LocalStorageDatabaseUpgrader.h"
-#include "LocalStorageShared.h"
-#include "LocalStorageManager_p.h"
+#include "LocalStoragePatch1To2.h"
+#include "../LocalStorageManager_p.h"
+#include "../LocalStorageShared.h"
+#include <quentier/types/ErrorString.h>
+#include <quentier/utility/ApplicationSettings.h>
 #include <quentier/utility/StandardPaths.h>
+#include <quentier/utility/StringUtils.h>
 #include <quentier/logging/QuentierLogger.h>
 #include <QSqlDatabase>
 #include <QSqlQuery>
 #include <QSqlRecord>
 #include <QScopedPointer>
 #include <QDir>
+#include <QFile>
+#include <QFileInfo>
 
 #define UPGRADE_1_TO_2_PERSISTENCE QStringLiteral("LocalStorageDatabaseUpgradeFromVersion1ToVersion2")
 
@@ -37,38 +42,59 @@
 
 namespace quentier {
 
-LocalStorageDatabaseUpgrader::LocalStorageDatabaseUpgrader(const Account & account,
-                                                           LocalStorageManagerPrivate & localStorageManager,
-                                                           QSqlDatabase & sqlDatabase, QObject * parent) :
-    QObject(parent),
+LocalStoragePatch1To2::LocalStoragePatch1To2(const Account & account,
+                                             LocalStorageManagerPrivate & localStorageManager,
+                                             QSqlDatabase & database, QObject * parent) :
+    ILocalStoragePatch(parent),
     m_account(account),
     m_localStorageManager(localStorageManager),
-    m_sqlDatabase(sqlDatabase)
+    m_sqlDatabase(database)
 {}
 
-bool LocalStorageDatabaseUpgrader::upgradeDatabase(ErrorString & errorDescription)
+QString LocalStoragePatch1To2::patchShortDescription() const
 {
-    QNDEBUG(QStringLiteral("LocalStorageDatabaseUpgrader::upgradeDatabase"));
-
-    int version = m_localStorageManager.localStorageVersion(errorDescription);
-    if (version <= 0) {
-        return false;
-    }
-
-    if (version < 2)
-    {
-        bool upgraded = upgradeDatabaseFromVersion1ToVersion2(errorDescription);
-        if (!upgraded) {
-            return false;
-        }
-    }
-
-    return true;
+    return tr("Move attachments data from SQLite database to plain files");
 }
 
-bool LocalStorageDatabaseUpgrader::upgradeDatabaseFromVersion1ToVersion2(ErrorString & errorDescription)
+QStringList LocalStoragePatch1To2::patchLongDescription() const
 {
-    QNINFO(QStringLiteral("LocalStorageDatabaseUpgrader::upgradeDatabaseFromVersion1ToVersion2"));
+    QStringList result;
+
+    result << tr("This patch will move the data corresponding to notes' attachments from Quentier's primary SQLite " \
+                 "database to plain files. This change of local storage structure is necessary to fix or prevent " \
+                 "serious performance issues for accounts containing enough large enough note attachments due to " \
+                 "the way SQLite puts large data blocks together within the database file. If you are interested " \
+                 "in technical details on this topic, consider consulting this following material");
+    result << QStringLiteral(": <a href=\"https://www.sqlite.org/intern-v-extern-blob.html\">Internal Versus External BLOBs in SQLite</a>.\n\n");
+    result << tr("The time required to apply this patch would depend on the general performance " \
+                 "of disk I/O on your system and on the number of resources within your account");
+
+    ErrorString errorDescription;
+    int numResources = m_localStorageManager.enResourceCount(errorDescription);
+    if (Q_UNLIKELY(numResources < 0)) {
+        QNWARNING(QStringLiteral("Can't get the number of resources within the local storage database: ") << errorDescription);
+    }
+    else {
+        QNINFO(QStringLiteral("Before applying local storage 1-to-2 patch: ") << numResources << QStringLiteral(" resources within the local storage"));
+        result << QStringLiteral(" (");
+        result << QString::number(numResources);
+        result << QStringLiteral(")");
+    }
+
+    result << QStringLiteral(".\n\n");
+    result << tr("If the account which local storage is to be upgraded is Evernote one and if you don't have any local " \
+                 "unsynchronized changes there, you can consider just re-syncing it from Evernote instead of upgrading " \
+                 "the local database - if your account contains many large enough attachments to notes, re-syncing can " \
+                 "actually be faster than upgrading the local storage");
+    result << QStringLiteral(".\n\n");
+    result << tr("Note that after the upgrade previous versions of Quentier would no longer be able to use this account's local storage");
+    result << QStringLiteral(".");
+    return result;
+}
+
+bool LocalStoragePatch1To2::apply(ErrorString & errorDescription)
+{
+    QNINFO(QStringLiteral("LocalStoragePatch1To2::apply"));
 
     ApplicationSettings databaseUpgradeInfo(m_account, UPGRADE_1_TO_2_PERSISTENCE);
 
@@ -89,7 +115,7 @@ bool LocalStorageDatabaseUpgrader::upgradeDatabaseFromVersion1ToVersion2(ErrorSt
         }
 
         lastProgress = 0.05;
-        Q_EMIT upgradeProgress(lastProgress);
+        Q_EMIT progress(lastProgress);
 
         filterResourceLocalUidsForDatabaseUpgradeFromVersion1ToVersion2(resourceLocalUids);
 
@@ -100,7 +126,8 @@ bool LocalStorageDatabaseUpgrader::upgradeDatabaseFromVersion1ToVersion2(ErrorSt
 
         // Part 3: copy the data for each resource local uid into the local file
         databaseUpgradeInfo.beginWriteArray(UPGRADE_1_TO_2_LOCAL_UIDS_FOR_RESOURCES_COPIED_TO_FILES_KEY);
-        QScopedPointer<ApplicationSettingsArrayCloser> pProcessedResourceLocalUidsDatabaseUpgradeInfoCloser(new ApplicationSettingsArrayCloser(databaseUpgradeInfo));
+        QScopedPointer<ApplicationSettings::ApplicationSettingsArrayCloser> pProcessedResourceLocalUidsDatabaseUpgradeInfoCloser(
+                                                        new ApplicationSettings::ApplicationSettingsArrayCloser(databaseUpgradeInfo));
 
         int numResources = resourceLocalUids.size();
         double singleResourceProgressFraction = (0.7 - lastProgress) / std::max(1.0, static_cast<double>(numResources));
@@ -139,7 +166,7 @@ bool LocalStorageDatabaseUpgrader::upgradeDatabaseFromVersion1ToVersion2(ErrorSt
         } \
         else if (required) { \
             errorDescription = errorPrefix; \
-            errorDescription.appendBase(QT_TRANSLATE_NOOP("LocalStorageDatabaseUpgrader", "failed to get resource data from local storage database")); \
+            errorDescription.appendBase(QT_TRANSLATE_NOOP("LocalStoragePatch1To2", "failed to get resource data from local storage database")); \
             errorDescription.details() = QStringLiteral(#name); \
             QNWARNING(errorDescription); \
             return false; \
@@ -213,7 +240,7 @@ bool LocalStorageDatabaseUpgrader::upgradeDatabaseFromVersion1ToVersion2(ErrorSt
                 lastProgress += singleResourceProgressFraction;
                 QNDEBUG(QStringLiteral("Processed resource data (no alternate data) for resource local uid ")
                         << resourceLocalUid << QStringLiteral("; updated progress to ") << lastProgress);
-                Q_EMIT upgradeProgress(lastProgress);
+                Q_EMIT progress(lastProgress);
                 continue;
             }
 
@@ -272,7 +299,7 @@ bool LocalStorageDatabaseUpgrader::upgradeDatabaseFromVersion1ToVersion2(ErrorSt
             lastProgress += singleResourceProgressFraction;
             QNDEBUG(QStringLiteral("Processed resource data and alternate data for resource local uid ")
                     << resourceLocalUid << QStringLiteral("; updated progress to ") << lastProgress);
-            Q_EMIT upgradeProgress(lastProgress);
+            Q_EMIT progress(lastProgress);
         }
 
         pProcessedResourceLocalUidsDatabaseUpgradeInfoCloser.reset(Q_NULLPTR);
@@ -282,7 +309,7 @@ bool LocalStorageDatabaseUpgrader::upgradeDatabaseFromVersion1ToVersion2(ErrorSt
         // Part 4: as data and alternate data for all resources has been written to files, need to mark that fact in database upgrade persistence
         databaseUpgradeInfo.setValue(UPGRADE_1_TO_2_ALL_RESOURCE_DATA_COPIED_FROM_TABLE_TO_FILES_KEY, true);
 
-        Q_EMIT upgradeProgress(0.7);
+        Q_EMIT progress(0.7);
     }
 
     // Part 5: delete resource data body and alternate data body from resources table (unless already done)
@@ -301,7 +328,7 @@ bool LocalStorageDatabaseUpgrader::upgradeDatabaseFromVersion1ToVersion2(ErrorSt
         }
 
         QNDEBUG(QStringLiteral("Set data bodies and alternate data bodies for resources to null in the database table"));
-        Q_EMIT upgradeProgress(0.8);
+        Q_EMIT progress(0.8);
 
         // 5.2 Vacuum the database to reduce its size and make it faster to operate
         {
@@ -311,13 +338,13 @@ bool LocalStorageDatabaseUpgrader::upgradeDatabaseFromVersion1ToVersion2(ErrorSt
         }
 
         QNDEBUG(QStringLiteral("Compacted the local storage database"));
-        Q_EMIT upgradeProgress(0.9);
+        Q_EMIT progress(0.9);
 
         // 5.3 Mark the removal of resource tables in upgrade persistence
         databaseUpgradeInfo.setValue(UPGRADE_1_TO_2_ALL_RESOURCE_DATA_REMOVED_FROM_RESOURCE_TABLE, true);
     }
 
-    Q_EMIT upgradeProgress(0.95);
+    Q_EMIT progress(0.95);
 
     // Part 6: change the version in local storage database
     QSqlQuery query(m_sqlDatabase);
@@ -328,7 +355,7 @@ bool LocalStorageDatabaseUpgrader::upgradeDatabaseFromVersion1ToVersion2(ErrorSt
     return true;
 }
 
-QStringList LocalStorageDatabaseUpgrader::listResourceLocalUidsForDatabaseUpgradeFromVersion1ToVersion2(ErrorString & errorDescription)
+QStringList LocalStoragePatch1To2::listResourceLocalUidsForDatabaseUpgradeFromVersion1ToVersion2(ErrorString & errorDescription)
 {
     QSqlQuery query(m_sqlDatabase);
     bool res = query.exec(QStringLiteral("SELECT resourceLocalUid FROM Resources"));
@@ -357,9 +384,9 @@ QStringList LocalStorageDatabaseUpgrader::listResourceLocalUidsForDatabaseUpgrad
     return resourceLocalUids;
 }
 
-void LocalStorageDatabaseUpgrader::filterResourceLocalUidsForDatabaseUpgradeFromVersion1ToVersion2(QStringList & resourceLocalUids)
+void LocalStoragePatch1To2::filterResourceLocalUidsForDatabaseUpgradeFromVersion1ToVersion2(QStringList & resourceLocalUids)
 {
-    QNDEBUG(QStringLiteral("LocalStorageDatabaseUpgrader::filterResourceLocalUidsForDatabaseUpgradeFromVersion1ToVersion2"));
+    QNDEBUG(QStringLiteral("LocalStoragePatch1To2::filterResourceLocalUidsForDatabaseUpgradeFromVersion1ToVersion2"));
 
     ApplicationSettings databaseUpgradeInfo(m_account, UPGRADE_1_TO_2_PERSISTENCE);
 
@@ -374,13 +401,14 @@ void LocalStorageDatabaseUpgrader::filterResourceLocalUidsForDatabaseUpgradeFrom
 
     databaseUpgradeInfo.endArray();
 
-    auto it = std::remove_if(resourceLocalUids.begin(), resourceLocalUids.end(), StringFilterPredicate(processedResourceLocalUids));
+    auto it = std::remove_if(resourceLocalUids.begin(), resourceLocalUids.end(),
+                             StringUtils::StringFilterPredicate(processedResourceLocalUids));
     resourceLocalUids.erase(it, resourceLocalUids.end());
 }
 
-bool LocalStorageDatabaseUpgrader::ensureExistenceOfResouceDataDirsForDatabaseUpgradeFromVersion1ToVersion2(ErrorString & errorDescription)
+bool LocalStoragePatch1To2::ensureExistenceOfResouceDataDirsForDatabaseUpgradeFromVersion1ToVersion2(ErrorString & errorDescription)
 {
-    QNDEBUG(QStringLiteral("LocalStorageDatabaseUpgrader::ensureExistenceOfResouceDataDirsForDatabaseUpgradeFromVersion1ToVersion2"));
+    QNDEBUG(QStringLiteral("LocalStoragePatch1To2::ensureExistenceOfResouceDataDirsForDatabaseUpgradeFromVersion1ToVersion2"));
 
     QString storagePath = accountPersistentStoragePath(m_account);
 

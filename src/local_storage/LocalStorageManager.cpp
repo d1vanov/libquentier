@@ -17,6 +17,7 @@
  */
 
 #include <quentier/local_storage/LocalStorageManager.h>
+#include <quentier/local_storage/ILocalStoragePatch.h>
 #include "LocalStorageManager_p.h"
 
 namespace quentier {
@@ -87,10 +88,10 @@ bool LocalStorageManager::localStorageRequiresUpgrade(ErrorString & errorDescrip
     return d->localStorageRequiresUpgrade(errorDescription);
 }
 
-bool LocalStorageManager::upgradeLocalStorage(ErrorString & errorDescription)
+QVector<ILocalStoragePatch*> LocalStorageManager::requiredLocalStoragePatches()
 {
     Q_D(LocalStorageManager);
-    return d->upgradeLocalStorage(errorDescription);
+    return d->requiredLocalStoragePatches();
 }
 
 qint32 LocalStorageManager::localStorageVersion(ErrorString & errorDescription)

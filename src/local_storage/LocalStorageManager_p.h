@@ -25,7 +25,7 @@
 namespace quentier {
 
 QT_FORWARD_DECLARE_CLASS(NoteSearchQuery)
-QT_FORWARD_DECLARE_CLASS(LocalStorageDatabaseUpgrader)
+QT_FORWARD_DECLARE_CLASS(LocalStoragePatchManager)
 
 class Q_DECL_HIDDEN LocalStorageManagerPrivate: public QObject
 {
@@ -43,7 +43,7 @@ public:
 
     bool isLocalStorageVersionTooHigh(ErrorString & errorDescription);
     bool localStorageRequiresUpgrade(ErrorString & errorDescription);
-    bool upgradeLocalStorage(ErrorString & errorDescription);
+    QVector<ILocalStoragePatch*> requiredLocalStoragePatches();
     qint32 localStorageVersion(ErrorString & errorDescription);
     qint32 highestSupportedLocalStorageVersion() const;
 
@@ -560,7 +560,7 @@ private:
     QSqlQuery           m_deleteUserQuery;
     bool                m_deleteUserQueryPrepared;
 
-    LocalStorageDatabaseUpgrader *  m_pLocalStorageDatabaseUpgrader;
+    LocalStoragePatchManager *  m_pLocalStoragePatchManager;
 
     StringUtils         m_stringUtils;
     QVector<QChar>      m_preservedAsterisk;

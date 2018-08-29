@@ -119,6 +119,7 @@ set(ENML_HEADERS
 
 set(LOCAL_STORAGE_HEADERS
     headers/quentier/local_storage/ILocalStorageCacheExpiryChecker.h
+    headers/quentier/local_storage/ILocalStoragePatch.h
     headers/quentier/local_storage/DefaultLocalStorageCacheExpiryChecker.h
     headers/quentier/local_storage/Lists.h
     headers/quentier/local_storage/LocalStorageCacheManager.h
@@ -211,10 +212,11 @@ set(PRIVATE_HEADERS
     src/enml/ENMLConverter_p.h
     src/enml/DecryptedTextManager_p.h
     src/local_storage/LocalStorageCacheManager_p.h
-    src/local_storage/LocalStorageDatabaseUpgrader.h
+    src/local_storage/LocalStoragePatchManager.h
     src/local_storage/LocalStorageManager_p.h
     src/local_storage/LocalStorageShared.h
     src/local_storage/NoteSearchQueryData.h
+    src/local_storage/patches/LocalStoragePatch1To2.h
     src/synchronization/ExceptionHandlingHelpers.h
     src/synchronization/InkNoteImageDownloader.h
     src/synchronization/NoteStore.h
@@ -380,12 +382,14 @@ set(${PROJECT_NAME}_SOURCES
     src/local_storage/LocalStorageManager_p.cpp
     src/local_storage/LocalStorageCacheManager.cpp
     src/local_storage/LocalStorageCacheManager_p.cpp
-    src/local_storage/LocalStorageDatabaseUpgrader.cpp
+    src/local_storage/LocalStoragePatchManager.cpp
     src/local_storage/LocalStorageManagerAsync.cpp
     src/local_storage/LocalStorageShared.cpp
     src/local_storage/NoteSearchQuery.cpp
     src/local_storage/NoteSearchQueryData.cpp
     src/local_storage/Transaction.cpp
+    src/local_storage/patches/ILocalStoragePatch.cpp
+    src/local_storage/patches/LocalStoragePatch1To2.cpp
     src/synchronization/IAuthenticationManager.cpp
     src/synchronization/InkNoteImageDownloader.cpp
     src/synchronization/INoteStore.cpp

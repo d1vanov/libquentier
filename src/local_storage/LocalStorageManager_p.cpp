@@ -18,7 +18,7 @@
 
 #include "LocalStorageManager_p.h"
 #include "LocalStorageShared.h"
-#include "LocalStorageDatabaseUpgrader.h"
+#include "LocalStoragePatchManager.h"
 #include <quentier/exception/DatabaseLockedException.h>
 #include <quentier/exception/DatabaseLockFailedException.h>
 #include <quentier/exception/DatabaseOpeningException.h>
@@ -129,7 +129,7 @@ LocalStorageManagerPrivate::LocalStorageManagerPrivate(const Account & account, 
     m_insertOrReplaceUserAttributesRecentMailedAddressesQueryPrepared(false),
     m_deleteUserQuery(),
     m_deleteUserQueryPrepared(false),
-    m_pLocalStorageDatabaseUpgrader(Q_NULLPTR),
+    m_pLocalStoragePatchManager(Q_NULLPTR),
     m_stringUtils(),
     m_preservedAsterisk()
 {
@@ -407,6 +407,11 @@ void LocalStorageManagerPrivate::switchUser(const Account & account,
     // Unlocking the previous database file, if any
     unlockDatabaseFile();
 
+    if (m_pLocalStoragePatchManager) {
+        m_pLocalStoragePatchManager->deleteLater();
+        m_pLocalStoragePatchManager = Q_NULLPTR;
+    }
+
     m_currentAccount = account;
 
     QString sqlDriverName = QStringLiteral("QSQLITE");
@@ -600,27 +605,13 @@ bool LocalStorageManagerPrivate::localStorageRequiresUpgrade(ErrorString & error
     return currentVersion < highestSupportedVersion;
 }
 
-bool LocalStorageManagerPrivate::upgradeLocalStorage(ErrorString & errorDescription)
+QVector<ILocalStoragePatch*> LocalStorageManagerPrivate::requiredLocalStoragePatches()
 {
-    QNDEBUG(QStringLiteral("LocalStorageManagerPrivate::upgradeLocalStorage"));
-
-    if (m_pLocalStorageDatabaseUpgrader) {
-        m_pLocalStorageDatabaseUpgrader->disconnect(this);
-        m_pLocalStorageDatabaseUpgrader->deleteLater();
-        m_pLocalStorageDatabaseUpgrader = Q_NULLPTR;
+    if (!m_pLocalStoragePatchManager) {
+        m_pLocalStoragePatchManager = new LocalStoragePatchManager(m_currentAccount, *this, m_sqlDatabase, this);
     }
 
-    m_pLocalStorageDatabaseUpgrader = new LocalStorageDatabaseUpgrader(m_currentAccount, *this, m_sqlDatabase, this);
-    QObject::connect(m_pLocalStorageDatabaseUpgrader, QNSIGNAL(LocalStorageDatabaseUpgrader,upgradeProgress,double),
-                     this, QNSIGNAL(LocalStorageManagerPrivate,upgradeProgress,double));
-
-    bool res = m_pLocalStorageDatabaseUpgrader->upgradeDatabase(errorDescription);
-
-    m_pLocalStorageDatabaseUpgrader->disconnect(this);
-    m_pLocalStorageDatabaseUpgrader->deleteLater();
-    m_pLocalStorageDatabaseUpgrader = Q_NULLPTR;
-
-    return res;
+    return m_pLocalStoragePatchManager->patchesForCurrentVersion();
 }
 
 qint32 LocalStorageManagerPrivate::localStorageVersion(ErrorString & errorDescription)
