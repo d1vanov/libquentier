@@ -465,18 +465,8 @@ void SynchronizationManagerPrivate::onReadPasswordJobFinished(QUuid jobId, IKeyc
         }
         else
         {
-            ErrorString error(QT_TR_NOOP("Error reading linked notebook's authentication token from the keychain"));
-            error.appendBase(errorDescription.base());
-            error.appendBase(errorDescription.additionalBases());
-            error.details() = QStringLiteral("error code = ");
-            error.details() += ToString(errorCode);
-            const QString & errorDetails = errorDescription.details();
-            if (!errorDetails.isEmpty()) {
-                error.details() += QStringLiteral(": ");
-                error.details() += errorDetails;
-            }
-            QNWARNING(error);
-            Q_EMIT notifyError(error);
+            QNWARNING(QStringLiteral("Failed to read linked notebook's authentication token from the keychain: error code = ")
+                      << errorCode << QStringLiteral(", error description: ") << errorDescription);
 
             // Try to recover by making user to authenticate again in the blind hope that
             // the next time the persistence of auth settings in the keychain would work
@@ -503,18 +493,8 @@ void SynchronizationManagerPrivate::onReadPasswordJobFinished(QUuid jobId, IKeyc
         }
         else
         {
-            ErrorString error(QT_TR_NOOP("Error reading linked notebook's shard id from the keychain"));
-            error.appendBase(errorDescription.base());
-            error.appendBase(errorDescription.additionalBases());
-            error.details() = QStringLiteral("error code = ");
-            error.details() += ToString(errorCode);
-            const QString & errorDetails = errorDescription.details();
-            if (!errorDetails.isEmpty()) {
-                error.details() += QStringLiteral(": ");
-                error.details() += errorDetails;
-            }
-            QNWARNING(error);
-            Q_EMIT notifyError(error);
+            QNWARNING(QStringLiteral("Failed to read linked notebook's authentication token from the keychain: error code = ")
+                      << errorCode << QStringLiteral(", error description: ") << errorDescription);
 
             // Try to recover by making user to authenticate again in the blind hope that
             // the next time the persistence of auth settings in the keychain would work
@@ -525,8 +505,6 @@ void SynchronizationManagerPrivate::onReadPasswordJobFinished(QUuid jobId, IKeyc
         Q_UNUSED(m_readLinkedNotebookShardIdJobIdsWithLinkedNotebookGuids.right.erase(readShardIdIt))
         return;
     }
-
-    QNDEBUG(QStringLiteral("Couldn't identify the read password from keychain job"));
 }
 
 void SynchronizationManagerPrivate::onDeletePasswordJobFinished(QUuid jobId, IKeychainService::ErrorCode::type errorCode,
@@ -979,6 +957,11 @@ void SynchronizationManagerPrivate::launchOAuth()
 {
     QNDEBUG(QStringLiteral("SynchronizationManagerPrivate::launchOAuth"));
 
+    if (m_authenticationInProgress) {
+        QNDEBUG(QStringLiteral("Authentication is already in progress"));
+        return;
+    }
+
     m_authenticationInProgress = true;
     Q_EMIT requestAuthentication();
 }
@@ -1033,6 +1016,8 @@ void SynchronizationManagerPrivate::sendChanges()
 
 void SynchronizationManagerPrivate::launchStoreOAuthResult(const AuthData & result)
 {
+    QNDEBUG(QStringLiteral("SynchronizationManagerPrivate::launchStoreOAuthResult"));
+
     m_writtenOAuthResult = result;
 
     m_writingAuthToken = true;
@@ -1491,16 +1476,25 @@ void SynchronizationManagerPrivate::onReadAuthTokenFinished(const IKeychainServi
 
     m_readingAuthToken = false;
 
+    if (errorCode == IKeychainService::ErrorCode::EntryNotFound) {
+        QNWARNING(QStringLiteral("Unexpectedly missing OAuth token in the keychain: ")
+                  << errorDescription << QStringLiteral("; fallback to explicit OAuth"));
+        launchOAuth();
+        return;
+    }
+
     if (errorCode != IKeychainService::ErrorCode::NoError) {
-        QNWARNING(errorDescription);
-        Q_EMIT notifyError(errorDescription);
+        QNWARNING(QStringLiteral("Attempt to read the auth token returned with error: error code ")
+                  << errorCode << QStringLiteral(", ") << errorDescription
+                  << QStringLiteral(". Fallback to explicit OAuth"));
+        launchOAuth();
         return;
     }
 
     QNDEBUG(QStringLiteral("Successfully restored the authentication token"));
     m_OAuthResult.m_authToken = password;
 
-    if (!m_readingShardId) {
+    if (!m_readingShardId && !m_authenticationInProgress && !m_writingShardId) {
         finalizeAuthentication();
     }
 }
@@ -1513,16 +1507,25 @@ void SynchronizationManagerPrivate::onReadShardIdFinished(const IKeychainService
 
     m_readingShardId = false;
 
+    if (errorCode == IKeychainService::ErrorCode::EntryNotFound) {
+        QNWARNING(QStringLiteral("Unexpectedly missing OAuth shard id in the keychain: ")
+                  << errorDescription << QStringLiteral("; fallback to explicit OAuth"));
+        launchOAuth();
+        return;
+    }
+
     if (errorCode != IKeychainService::ErrorCode::NoError) {
-        QNWARNING(errorDescription);
-        Q_EMIT notifyError(errorDescription);
+        QNWARNING(QStringLiteral("Attempt to read the shard id returned with error: error code ")
+                  << errorCode << QStringLiteral(", ") << errorDescription
+                  << QStringLiteral(". Fallback to explicit OAuth"));
+        launchOAuth();
         return;
     }
 
     QNDEBUG(QStringLiteral("Successfully restored the shard id"));
     m_OAuthResult.m_shardId = password;
 
-    if (!m_readingAuthToken) {
+    if (!m_readingAuthToken && !m_authenticationInProgress && !m_writingAuthToken) {
         finalizeAuthentication();
     }
 }
@@ -1547,7 +1550,7 @@ void SynchronizationManagerPrivate::onWriteAuthTokenFinished(const IKeychainServ
 
     QNDEBUG(QStringLiteral("Successfully stored the authentication token in the keychain"));
 
-    if (!m_writingShardId) {
+    if (!m_writingShardId && !m_authenticationInProgress && !m_readingShardId) {
         finalizeStoreOAuthResult();
     }
 }
@@ -1572,7 +1575,7 @@ void SynchronizationManagerPrivate::onWriteShardIdFinished(const IKeychainServic
 
     QNDEBUG(QStringLiteral("Successfully stored the shard id in the keychain"));
 
-    if (!m_writingAuthToken) {
+    if (!m_writingAuthToken && !m_authenticationInProgress && !m_readingAuthToken) {
         finalizeStoreOAuthResult();
     }
 }
