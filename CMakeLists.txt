@@ -422,9 +422,10 @@ set(${PROJECT_NAME}_SOURCES
     src/utility/StringUtils.cpp
     src/utility/StringUtils_p.cpp
     src/utility/SysInfo.cpp
-    src/utility/Utility.cpp
     src/utility/TagSortByParentChildRelations.cpp
-    src/utility/UidGenerator.cpp)
+    src/utility/Utility.cpp
+    src/utility/UidGenerator.cpp
+    src/utility/VersionInfo.cpp)
 
 if(BUILD_WITH_AUTHENTICATION_MANAGER)
   list(APPEND ${PROJECT_NAME}_SOURCES
@@ -542,7 +543,9 @@ else()
   set(LIB_QUENTIER_HAS_NOTE_EDITOR_DEFINE "#define LIB_QUENTIER_HAS_NOTE_EDITOR 0")
 endif()
 
-set(LIBQUENTIER_LIBRARY_VERSION "${PROJECT_VERSION_MAJOR} * 10000 + ${PROJECT_VERSION_MINOR} * 100 + ${PROJECT_VERSION_PATCH}")
+set(LIB_QUENTIER_VERSION_MAJOR_DEFINE "#define LIB_QUENTIER_VERSION_MAJOR ${PROJECT_VERSION_MAJOR}")
+set(LIB_QUENTIER_VERSION_MINOR_DEFINE "#define LIB_QUENTIER_VERSION_MINOR ${PROJECT_VERSION_MINOR}")
+set(LIB_QUENTIER_VERSION_PATCH_DEFINE "#define LIB_QUENTIER_VERSION_PATCH ${PROJECT_VERSION_PATCH}")
 
 find_package(Git)
 if(GIT_FOUND)
@@ -598,10 +601,10 @@ else()
 endif()
 
 configure_file(headers/quentier/utility/VersionInfo.h.in
-               ${PROJECT_BINARY_DIR}/VersionInfo.h @ONLY)
+               ${PROJECT_BINARY_DIR}/quentier/utility/VersionInfo.h @ONLY)
 
-list(APPEND UTILITY_HEADERS ${PROJECT_BINARY_DIR}/VersionInfo.h)
-list(APPEND PUBLIC_HEADERS ${PROJECT_BINARY_DIR}/VersionInfo.h)
+list(APPEND UTILITY_HEADERS ${PROJECT_BINARY_DIR}/quentier/utility/VersionInfo.h)
+list(APPEND PUBLIC_HEADERS ${PROJECT_BINARY_DIR}/quentier/utility/VersionInfo.h)
 
 set(RESOURCES
     src/enml/enml.qrc)

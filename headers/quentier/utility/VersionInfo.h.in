@@ -54,17 +54,17 @@
 /**
  * This macro is set to the major version number of libquentier
  */
-@LIB_QUENTIER_VERSION_MAJOR@
+@LIB_QUENTIER_VERSION_MAJOR_DEFINE@
 
 /**
  * This macro is set to the minor version of libquentier
  */
-@LIB_QUENTIER_VERSION_MINOR@
+@LIB_QUENTIER_VERSION_MINOR_DEFINE@
 
 /**
  * This macro is set to the patch version of libquentier
  */
-@LIB_QUENTIER_VERSION_PATCH@
+@LIB_QUENTIER_VERSION_PATCH_DEFINE@
 
 namespace quentier {
 
@@ -87,6 +87,12 @@ int QUENTIER_EXPORT libquentierVersionPatch();
  * @return          String containing information about the current libquentier build
  */
 QString QUENTIER_EXPORT libquentierBuildInfo();
+
+/**
+ * @return          String representing the version of Qt against which
+ *                  libquentier was built
+ */
+QString QUENTIER_EXPORT libquentierBuiltWithQtVersion();
 
 /**
  * @return          True if the current build if libquentier has note editor
