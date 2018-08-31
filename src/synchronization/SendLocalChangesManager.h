@@ -44,6 +44,7 @@ public:
         virtual LocalStorageManagerAsync & localStorageManagerAsync() = 0;
         virtual NoteStore & noteStore() = 0;
         virtual NoteStore * noteStoreForLinkedNotebook(const LinkedNotebook & linkedNotebook) = 0;
+        virtual ~IManager() {}
     };
 
     explicit SendLocalChangesManager(IManager & manager, QObject * parent = Q_NULLPTR);
