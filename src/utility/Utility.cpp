@@ -360,4 +360,62 @@ bool removeFile(const QString & filePath)
     return false;
 }
 
+bool removeDirImpl(const QString & dirPath)
+{
+    bool result = true;
+    QDir dir(dirPath);
+
+    if (dir.exists())
+    {
+        QFileInfoList dirContents = dir.entryInfoList(QDir::NoDotAndDotDot | QDir::System | QDir::Hidden |
+                                                      QDir::AllDirs | QDir::Files, QDir::DirsFirst);
+        for(auto it = dirContents.constBegin(), end = dirContents.constEnd(); it != end; ++it)
+        {
+            const QFileInfo & info = *it;
+            if (info.isDir()) {
+                result = removeDirImpl(info.absoluteFilePath());
+            }
+            else {
+                result = removeFile(info.absoluteFilePath());
+            }
+
+            if (!result) {
+                return result;
+            }
+        }
+
+        result = dir.rmpath(dirPath);
+        if (!result)
+        {
+            // NOTE: QDir::rmpath seems to occasionally return failure on Windows while in reality the method works
+            if (!dir.exists())
+            {
+                result = true;
+            }
+            else
+            {
+                // Ok, it truly didn't work, let's try a hack then
+                QFile dirFile(dirPath);
+                QFile::Permissions originalPermissions = dirFile.permissions();
+                dirFile.setPermissions(QFile::WriteOther);
+                result = dir.rmpath(dirPath);
+                if (!result && !dir.exists()) {
+                    // If still failure, revert the original permissions
+                    dirFile.setPermissions(originalPermissions);
+                }
+                else if (!dir.exists()) {
+                    result = true;
+                }
+            }
+        }
+    }
+
+    return result;
+}
+
+bool removeDir(const QString & dirPath)
+{
+    return removeDirImpl(dirPath);
+}
+
 } // namespace quentier
