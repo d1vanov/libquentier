@@ -91,7 +91,7 @@ void LocalStorageManagerAsync::init()
         delete m_pLocalStorageManager;
     }
 
-    m_pLocalStorageManager = new LocalStorageManager(m_account, m_startFromScratch, m_overrideLock);
+    m_pLocalStorageManager = new LocalStorageManager(m_account, m_startFromScratch, m_overrideLock, this);
 
     if (m_pLocalStorageCacheManager) {
         delete m_pLocalStorageCacheManager;

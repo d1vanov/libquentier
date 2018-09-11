@@ -11,6 +11,7 @@
 #include <quentier/types/Resource.h>
 #include <quentier/types/LinkedNotebook.h>
 #include <quentier/types/SavedSearch.h>
+#include <quentier/utility/Macros.h>
 #include <quentier/utility/StringUtils.h>
 #include <QtSql>
 
@@ -30,7 +31,8 @@ class Q_DECL_HIDDEN LocalStorageManagerPrivate: public QObject
 {
     Q_OBJECT
 public:
-    LocalStorageManagerPrivate(const Account & account, const bool startFromScratch, const bool overrideLock);
+    LocalStorageManagerPrivate(const Account & account, const bool startFromScratch,
+                               const bool overrideLock, QObject * parent = Q_NULLPTR);
     ~LocalStorageManagerPrivate();
 
 Q_SIGNALS:
