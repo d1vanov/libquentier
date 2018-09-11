@@ -246,14 +246,14 @@ private:
     bool                                    m_authenticationInProgress;
 
     QScopedPointer<RemoteToLocalSynchronizationManagerController>   m_pRemoteToLocalSyncManagerController;
-    RemoteToLocalSynchronizationManager     m_remoteToLocalSyncManager;
+    RemoteToLocalSynchronizationManager *   m_pRemoteToLocalSyncManager;
 
     // The flag coming from RemoteToLocalSynchronizationManager and telling whether something was downloaded
     // during the last remote to local sync
     bool                                    m_somethingDownloaded;
 
     QScopedPointer<SendLocalChangesManagerController>   m_pSendLocalChangesManagerController;
-    SendLocalChangesManager                 m_sendLocalChangesManager;
+    SendLocalChangesManager *               m_pSendLocalChangesManager;
 
     QHash<QString,QPair<QString,QString> >  m_cachedLinkedNotebookAuthTokensAndShardIdsByGuid;
     QHash<QString,qevercloud::Timestamp>    m_cachedLinkedNotebookAuthTokenExpirationTimeByGuid;
