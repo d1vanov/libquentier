@@ -65,6 +65,31 @@ public:
     virtual QStringList patchLongDescription() const = 0;
 
     /**
+     * Backup either the entire local storage or its parts affected by the
+     * particular patch, should be called before applying the patch (but can be
+     * skipped if not desired).
+     *
+     * @param errorDescription      The textual description of the error in case
+     *                              of backup preparation failure
+     * @return                      True if the local storage was backed up for the patch
+     *                              successfully, false otherwise
+     */
+    virtual bool backupLocalStorage(ErrorString & errorDescription) = 0;
+
+    /**
+     * Restore local storage from previously made backup, presumably after the
+     * failed attempt to apply a patch. Won't work if no backup was made before
+     * applying a patch, obviously.
+     *
+     * @param errorDescription      The textual description of the error in case
+     *                              of failure to restore the local storage from
+     *                              backup
+     * @return                      True if local storage was successfully
+     *                              restored from backup, false otherwise
+     */
+    virtual bool restoreLocalStorageFromBackup(ErrorString & errorDescription) = 0;
+
+    /**
      * Apply the patch to local storage
      *
      * @param errorDescription      The textual description of the error in case of patch application failure
@@ -81,6 +106,21 @@ Q_SIGNALS:
      * @param progress          Patch application progress value, from 0 to 1
      */
     void progress(double progress);
+
+    /**
+     * Local storage backup preparation progress
+     *
+     * @param progress          Backup preparation progress value, from 0 to 1
+     */
+    void backupProgress(double progress);
+
+    /**
+     * Local storage restoration from backup progress
+     *
+     * @param progress          Local storage restoration from backup progress
+     *                          value, from 0 to 1
+     */
+    void restoreBackupProgress(double progress);
 };
 
 } // namespace quentier

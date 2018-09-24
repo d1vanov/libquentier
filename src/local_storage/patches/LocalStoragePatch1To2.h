@@ -42,7 +42,18 @@ public:
     virtual QString patchShortDescription() const Q_DECL_OVERRIDE;
     virtual QStringList patchLongDescription() const Q_DECL_OVERRIDE;
 
+    virtual bool backupLocalStorage(ErrorString & errorDescription) Q_DECL_OVERRIDE;
+    virtual bool restoreLocalStorageFromBackup(ErrorString & errorDescription) Q_DECL_OVERRIDE;
+
     virtual bool apply(ErrorString & errorDescription) Q_DECL_OVERRIDE;
+
+// private
+Q_SIGNALS:
+    void copyDbFile(QString sourcePath, QString destPath);
+
+private Q_SLOTS:
+    void startLocalStorageBackup();
+    void startLocalStorageRestorationFromBackup();
 
 private:
     QStringList listResourceLocalUidsForDatabaseUpgradeFromVersion1ToVersion2(ErrorString & errorDescription);

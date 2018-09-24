@@ -23,6 +23,8 @@
 #include <quentier/utility/ApplicationSettings.h>
 #include <quentier/utility/StandardPaths.h>
 #include <quentier/utility/StringUtils.h>
+#include <quentier/utility/FileCopier.h>
+#include <quentier/utility/EventLoopWithExitStatus.h>
 #include <quentier/logging/QuentierLogger.h>
 #include <QSqlDatabase>
 #include <QSqlQuery>
@@ -31,6 +33,7 @@
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
+#include <QThread>
 
 #define UPGRADE_1_TO_2_PERSISTENCE QStringLiteral("LocalStorageDatabaseUpgradeFromVersion1ToVersion2")
 
@@ -90,6 +93,82 @@ QStringList LocalStoragePatch1To2::patchLongDescription() const
     result << tr("Note that after the upgrade previous versions of Quentier would no longer be able to use this account's local storage");
     result << QStringLiteral(".");
     return result;
+}
+
+bool LocalStoragePatch1To2::backupLocalStorage(ErrorString & errorDescription)
+{
+    QNINFO(QStringLiteral("LocalStoragePatch1To2::backupLocalStorage"));
+
+    QString storagePath = accountPersistentStoragePath(m_account);
+
+    QFileInfo shmDbFileInfo(storagePath + QStringLiteral("/qn.storage.sqlite-shm"));
+    if (shmDbFileInfo.exists())
+    {
+        QString shmDbFilePath = shmDbFileInfo.absoluteFilePath();
+        QString shmDbBackupFilePath = shmDbFilePath + QStringLiteral(".bak");
+
+        QFileInfo shmDbBackupFileInfo(shmDbBackupFilePath);
+        if (shmDbBackupFileInfo.exists()) {
+            Q_UNUSED(QFile::remove(shmDbBackupFilePath))
+        }
+
+        QFile::copy(shmDbFilePath, shmDbBackupFilePath);
+    }
+
+    QFileInfo walDbFileInfo(storagePath + QStringLiteral("/qn.storage.sqlite-wal"));
+    if (walDbFileInfo.exists())
+    {
+        QString walDbFilePath = walDbFileInfo.absoluteFilePath();
+        QString walDbBackupFilePath = walDbFilePath + QStringLiteral(".bak");
+
+        QFileInfo walDbBackupFileInfo(walDbBackupFilePath);
+        if (walDbBackupFileInfo.exists()) {
+            Q_UNUSED(QFile::remove(walDbBackupFilePath))
+        }
+
+        QFile::copy(walDbFilePath, walDbBackupFilePath);
+    }
+
+    EventLoopWithExitStatus backupEventLoop;
+
+    QThread * pMainDbFileCopierThread = new QThread;
+    QObject::connect(pMainDbFileCopierThread, QNSIGNAL(QThread,finished),
+                     pMainDbFileCopierThread, QNSLOT(QThread,deleteLater));
+    pMainDbFileCopierThread->start();
+
+    FileCopier * pMainDbFileCopier = new FileCopier;
+    QObject::connect(pMainDbFileCopier, QNSIGNAL(FileCopier,progressUpdate,double),
+                     this, QNSIGNAL(LocalStoragePatch1To2,backupProgress,double));
+    QObject::connect(pMainDbFileCopier, QNSIGNAL(FileCopier,notifyError,ErrorString),
+                     &backupEventLoop, QNSLOT(EventLoopWithExitStatus,exitAsFailureWithErrorString,ErrorString));
+    QObject::connect(pMainDbFileCopier, QNSIGNAL(FileCopier,finished),
+                     &backupEventLoop, QNSLOT(EventLoopWithExitStatus,exitAsSuccess));
+    QObject::connect(pMainDbFileCopier, QNSIGNAL(FileCopier,finished),
+                     pMainDbFileCopier, QNSLOT(FileCopier,deleteLater));
+    QObject::connect(pMainDbFileCopier, QNSIGNAL(FileCopier,finished),
+                     pMainDbFileCopierThread, QNSLOT(QThread,quit));
+    QObject::connect(this, QNSIGNAL(LocalStoragePatch1To2,copyDbFile,QString,QString),
+                     pMainDbFileCopier, QNSLOT(FileCopier,copyFile,QString,QString));
+    pMainDbFileCopier->moveToThread(pMainDbFileCopierThread);
+
+    QTimer::singleShot(0, this, SLOT(startLocalStorageBackup()));
+
+    int result = backupEventLoop.exec();
+    if (result == EventLoopWithExitStatus::ExitStatus::Failure) {
+        errorDescription = backupEventLoop.errorDescription();
+        return false;
+    }
+
+    return true;
+}
+
+bool LocalStoragePatch1To2::restoreLocalStorageFromBackup(ErrorString & errorDescription)
+{
+    QNINFO(QStringLiteral("LocalStoragePatch1To2::restoreLocalStorageFromBackup"));
+
+    // TODO: implement
+    Q_UNUSED(errorDescription)
+    return true;
 }
 
 bool LocalStoragePatch1To2::apply(ErrorString & errorDescription)
@@ -437,6 +516,26 @@ bool LocalStoragePatch1To2::ensureExistenceOfResouceDataDirsForDatabaseUpgradeFr
     }
 
     return true;
+}
+
+void LocalStoragePatch1To2::startLocalStorageBackup()
+{
+    QNDEBUG(QStringLiteral("LocalStoragePatch1To2::startLocalStorageBackup"));
+
+    QString storagePath = accountPersistentStoragePath(m_account);
+    QString sourceDbFilePath = storagePath + QStringLiteral("/qn.storage.sqlite");
+    QString backupFilePath = sourceDbFilePath + QStringLiteral(".bak");
+    Q_EMIT copyDbFile(sourceDbFilePath, backupFilePath);
+}
+
+void LocalStoragePatch1To2::startLocalStorageRestorationFromBackup()
+{
+    QNDEBUG(QStringLiteral("LocalStoragePatch1To2::startLocalStorageRestorationFromBackup"));
+
+    QString storagePath = accountPersistentStoragePath(m_account);
+    QString sourceDbFilePath = storagePath + QStringLiteral("/qn.storage.sqlite");
+    QString backupDbFilePath = sourceDbFilePath + QStringLiteral(".bak");
+    Q_EMIT copyDbFile(backupDbFilePath, sourceDbFilePath);
 }
 
 } // namespace quentier
