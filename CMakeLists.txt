@@ -159,6 +159,7 @@ set(UTILITY_HEADERS
     headers/quentier/utility/StandardPaths.h
     headers/quentier/utility/EncryptionManager.h
     headers/quentier/utility/EventLoopWithExitStatus.h
+    headers/quentier/utility/FileCopier.h
     headers/quentier/utility/FileIOProcessorAsync.h
     headers/quentier/utility/FileSystemWatcher.h
     headers/quentier/utility/LimitedStack.h
@@ -239,6 +240,7 @@ set(PRIVATE_HEADERS
     src/utility/tag_topological_sort/TagDirectedGraphDepthFirstSearch.h
     src/utility/TagSortByParentChildRelationsHelpers.hpp
     src/utility/EncryptionManager_p.h
+    src/utility/FileCopier_p.h
     src/utility/FileIOProcessorAsync_p.h
     src/utility/FileSystemWatcher_p.h
     src/utility/KeychainService.h
@@ -432,6 +434,8 @@ set(${PROJECT_NAME}_SOURCES
     src/utility/EncryptionManager.cpp
     src/utility/EncryptionManager_p.cpp
     src/utility/EventLoopWithExitStatus.cpp
+    src/utility/FileCopier.cpp
+    src/utility/FileCopier_p.cpp
     src/utility/FileIOProcessorAsync.cpp
     src/utility/FileIOProcessorAsync_p.cpp
     src/utility/FileSystemWatcher.cpp
