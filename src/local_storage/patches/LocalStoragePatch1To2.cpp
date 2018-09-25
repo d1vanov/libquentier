@@ -25,6 +25,7 @@
 #include <quentier/utility/StringUtils.h>
 #include <quentier/utility/FileCopier.h>
 #include <quentier/utility/EventLoopWithExitStatus.h>
+#include <quentier/utility/Utility.h>
 #include <quentier/logging/QuentierLogger.h>
 #include <QSqlDatabase>
 #include <QSqlQuery>
@@ -108,11 +109,19 @@ bool LocalStoragePatch1To2::backupLocalStorage(ErrorString & errorDescription)
         QString shmDbBackupFilePath = shmDbFilePath + QStringLiteral(".bak");
 
         QFileInfo shmDbBackupFileInfo(shmDbBackupFilePath);
-        if (shmDbBackupFileInfo.exists()) {
-            Q_UNUSED(QFile::remove(shmDbBackupFilePath))
+        if (shmDbBackupFileInfo.exists() && !removeFile(shmDbBackupFilePath)) {
+            errorDescription.setBase(QT_TR_NOOP("Can't backup local storage: failed to remove pre-existing SQLite shm backup file"));
+            errorDescription.details() = QDir::toNativeSeparators(shmDbBackupFilePath);
+            QNWARNING(errorDescription);
+            return false;
         }
 
-        Q_UNUSED(QFile::copy(shmDbFilePath, shmDbBackupFilePath))
+        if (!QFile::copy(shmDbFilePath, shmDbBackupFilePath)) {
+            errorDescription.setBase(QT_TR_NOOP("Can't backup local storage: failed to backup SQLite shm file"));
+            errorDescription.details() = QDir::toNativeSeparators(shmDbFilePath);
+            QNWARNING(errorDescription);
+            return false;
+        }
     }
 
     QFileInfo walDbFileInfo(storagePath + QStringLiteral("/qn.storage.sqlite-wal"));
@@ -122,11 +131,19 @@ bool LocalStoragePatch1To2::backupLocalStorage(ErrorString & errorDescription)
         QString walDbBackupFilePath = walDbFilePath + QStringLiteral(".bak");
 
         QFileInfo walDbBackupFileInfo(walDbBackupFilePath);
-        if (walDbBackupFileInfo.exists()) {
-            Q_UNUSED(QFile::remove(walDbBackupFilePath))
+        if (walDbBackupFileInfo.exists() && !removeFile(walDbBackupFilePath)) {
+            errorDescription.setBase(QT_TR_NOOP("Can't backup local storage: failed to remove pre-existing SQLite wal backup file"));
+            errorDescription.details() = QDir::toNativeSeparators(walDbBackupFilePath);
+            QNWARNING(errorDescription);
+            return false;
         }
 
-        Q_UNUSED(QFile::copy(walDbFilePath, walDbBackupFilePath))
+        if (!QFile::copy(walDbFilePath, walDbBackupFilePath)) {
+            errorDescription.setBase(QT_TR_NOOP("Can't backup local storage: failed to backup SQLite wal file"));
+            errorDescription.details() = QDir::toNativeSeparators(walDbFilePath);
+            QNWARNING(errorDescription);
+            return false;
+        }
     }
 
     EventLoopWithExitStatus backupEventLoop;
@@ -180,11 +197,19 @@ bool LocalStoragePatch1To2::restoreLocalStorageFromBackup(ErrorString & errorDes
         shmDbFilePath.chop(4);
 
         QFileInfo shmDbFileInfo(shmDbFilePath);
-        if (shmDbFileInfo.exists()) {
-            Q_UNUSED(QFile::remove(shmDbFilePath))
+        if (shmDbFileInfo.exists() && !removeFile(shmDbFilePath)) {
+            errorDescription.setBase(QT_TR_NOOP("Can't restore local storage from backup: failed to remove pre-existing SQLite shm file"));
+            errorDescription.details() = QDir::toNativeSeparators(shmDbFilePath);
+            QNWARNING(errorDescription);
+            return false;
         }
 
-        Q_UNUSED(QFile::copy(shmDbBackupFilePath, shmDbFilePath))
+        if (!QFile::copy(shmDbBackupFilePath, shmDbFilePath)) {
+            errorDescription.setBase(QT_TR_NOOP("Can't restore local storage from backup: failed to restore SQLite shm file"));
+            errorDescription.details() = QDir::toNativeSeparators(shmDbFilePath);
+            QNWARNING(errorDescription);
+            return false;
+        }
     }
 
     QFileInfo walDbBackupFileInfo(storagePath + QStringLiteral("/qn.storage.sqlite-wal.bak"));
@@ -195,11 +220,19 @@ bool LocalStoragePatch1To2::restoreLocalStorageFromBackup(ErrorString & errorDes
         walDbFilePath.chop(4);
 
         QFileInfo walDbFileInfo(walDbFilePath);
-        if (walDbFileInfo.exists()) {
-            Q_UNUSED(QFile::remove(walDbFilePath))
+        if (walDbFileInfo.exists() && !removeFile(walDbFilePath)) {
+            errorDescription.setBase(QT_TR_NOOP("Can't restore local storage from backup: failed to remove pre-existing SQLite wal file"));
+            errorDescription.details() = QDir::toNativeSeparators(walDbFilePath);
+            QNWARNING(errorDescription);
+            return false;
         }
 
-        Q_UNUSED(QFile::copy(walDbBackupFilePath, walDbFilePath))
+        if (!QFile::copy(walDbBackupFilePath, walDbFilePath)) {
+            errorDescription.setBase(QT_TR_NOOP("Can't restore local storage from backup: failed to restore SQLite wal file"));
+            errorDescription.details() = QDir::toNativeSeparators(walDbFilePath);
+            QNWARNING(errorDescription);
+            return false;
+        }
     }
 
     EventLoopWithExitStatus restoreFromBackupEventLoop;
