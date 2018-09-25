@@ -112,7 +112,7 @@ bool LocalStoragePatch1To2::backupLocalStorage(ErrorString & errorDescription)
             Q_UNUSED(QFile::remove(shmDbBackupFilePath))
         }
 
-        QFile::copy(shmDbFilePath, shmDbBackupFilePath);
+        Q_UNUSED(QFile::copy(shmDbFilePath, shmDbBackupFilePath))
     }
 
     QFileInfo walDbFileInfo(storagePath + QStringLiteral("/qn.storage.sqlite-wal"));
@@ -126,7 +126,7 @@ bool LocalStoragePatch1To2::backupLocalStorage(ErrorString & errorDescription)
             Q_UNUSED(QFile::remove(walDbBackupFilePath))
         }
 
-        QFile::copy(walDbFilePath, walDbBackupFilePath);
+        Q_UNUSED(QFile::copy(walDbFilePath, walDbBackupFilePath))
     }
 
     EventLoopWithExitStatus backupEventLoop;
@@ -154,6 +154,10 @@ bool LocalStoragePatch1To2::backupLocalStorage(ErrorString & errorDescription)
     QTimer::singleShot(0, this, SLOT(startLocalStorageBackup()));
 
     int result = backupEventLoop.exec();
+
+    QObject::disconnect(this, QNSIGNAL(LocalStoragePatch1To2,copyDbFile,QString,QString),
+                        pMainDbFileCopier, QNSLOT(FileCopier,copyFile,QString,QString));
+
     if (result == EventLoopWithExitStatus::ExitStatus::Failure) {
         errorDescription = backupEventLoop.errorDescription();
         return false;
@@ -166,8 +170,72 @@ bool LocalStoragePatch1To2::restoreLocalStorageFromBackup(ErrorString & errorDes
 {
     QNINFO(QStringLiteral("LocalStoragePatch1To2::restoreLocalStorageFromBackup"));
 
-    // TODO: implement
-    Q_UNUSED(errorDescription)
+    QString storagePath = accountPersistentStoragePath(m_account);
+
+    QFileInfo shmDbBackupFileInfo(storagePath + QStringLiteral("/qn.storage.sqlite-shm.bak"));
+    if (shmDbBackupFileInfo.exists())
+    {
+        QString shmDbBackupFilePath = shmDbBackupFileInfo.absoluteFilePath();
+        QString shmDbFilePath = shmDbBackupFilePath;
+        shmDbFilePath.chop(4);
+
+        QFileInfo shmDbFileInfo(shmDbFilePath);
+        if (shmDbFileInfo.exists()) {
+            Q_UNUSED(QFile::remove(shmDbFilePath))
+        }
+
+        Q_UNUSED(QFile::copy(shmDbBackupFilePath, shmDbFilePath))
+    }
+
+    QFileInfo walDbBackupFileInfo(storagePath + QStringLiteral("/qn.storage.sqlite-wal.bak"));
+    if (walDbBackupFileInfo.exists())
+    {
+        QString walDbBackupFilePath = walDbBackupFileInfo.absoluteFilePath();
+        QString walDbFilePath = walDbBackupFilePath;
+        walDbFilePath.chop(4);
+
+        QFileInfo walDbFileInfo(walDbFilePath);
+        if (walDbFileInfo.exists()) {
+            Q_UNUSED(QFile::remove(walDbFilePath))
+        }
+
+        Q_UNUSED(QFile::copy(walDbBackupFilePath, walDbFilePath))
+    }
+
+    EventLoopWithExitStatus restoreFromBackupEventLoop;
+
+    QThread * pMainDbFileCopierThread = new QThread;
+    QObject::connect(pMainDbFileCopierThread, QNSIGNAL(QThread,finished),
+                     pMainDbFileCopierThread, QNSLOT(QThread,deleteLater));
+    pMainDbFileCopierThread->start();
+
+    FileCopier * pMainDbFileCopier = new FileCopier;
+    QObject::connect(pMainDbFileCopier, QNSIGNAL(FileCopier,progressUpdate,double),
+                     this, QNSIGNAL(LocalStoragePatch1To2,restoreBackupProgress,double));
+    QObject::connect(pMainDbFileCopier, QNSIGNAL(FileCopier,notifyError,ErrorString),
+                     &restoreFromBackupEventLoop, QNSLOT(EventLoopWithExitStatus,exitAsFailureWithErrorString,ErrorString));
+    QObject::connect(pMainDbFileCopier, QNSIGNAL(FileCopier,finished),
+                     &restoreFromBackupEventLoop, QNSLOT(EventLoopWithExitStatus,exitAsSuccess));
+    QObject::connect(pMainDbFileCopier, QNSIGNAL(FileCopier,finished),
+                     pMainDbFileCopier, QNSLOT(FileCopier,deleteLater));
+    QObject::connect(pMainDbFileCopier, QNSIGNAL(FileCopier,finished),
+                     pMainDbFileCopierThread, QNSLOT(QThread,quit));
+    QObject::connect(this, QNSIGNAL(LocalStoragePatch1To2,copyDbFile,QString,QString),
+                     pMainDbFileCopier, QNSLOT(FileCopier,copyFile,QString,QString));
+    pMainDbFileCopier->moveToThread(pMainDbFileCopierThread);
+
+    QTimer::singleShot(0, this, SLOT(startLocalStorageRestorationFromBackup()));
+
+    int result = restoreFromBackupEventLoop.exec();
+
+    QObject::disconnect(this, QNSIGNAL(LocalStoragePatch1To2,copyDbFile,QString,QString),
+                        pMainDbFileCopier, QNSLOT(FileCopier,copyFile,QString,QString));
+
+    if (result == EventLoopWithExitStatus::ExitStatus::Failure) {
+        errorDescription = restoreFromBackupEventLoop.errorDescription();
+        return false;
+    }
+
     return true;
 }
 
