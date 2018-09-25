@@ -22,9 +22,10 @@
 
 namespace quentier {
 
-LocalStorageManager::LocalStorageManager(const Account & account,
-                                         const bool startFromScratch, const bool overrideLock) :
-    d_ptr(new LocalStorageManagerPrivate(account, startFromScratch, overrideLock))
+LocalStorageManager::LocalStorageManager(const Account & account, const bool startFromScratch,
+                                         const bool overrideLock, QObject * parent) :
+    QObject(parent),
+    d_ptr(new LocalStorageManagerPrivate(account, startFromScratch, overrideLock, this))
 {
     QObject::connect(d_ptr.data(), QNSIGNAL(LocalStorageManagerPrivate,upgradeProgress,double),
                      this, QNSIGNAL(LocalStorageManager,upgradeProgress,double));

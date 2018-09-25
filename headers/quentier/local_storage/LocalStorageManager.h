@@ -62,8 +62,9 @@ public:
      * during the local storage manager construction (used in tests)
      * @param overrideLock - if set to true, the constructor would ignore the existing advisory lock (if any) put on the database file;
      * otherwise the presence of advisory lock on the database file would cause the constructor to throw @link DatabaseLockedException @endlink
+     * @param parent - parent QObject
      */
-    LocalStorageManager(const Account & account, const bool startFromScratch, const bool overrideLock);
+    explicit LocalStorageManager(const Account & account, const bool startFromScratch, const bool overrideLock, QObject * parent = Q_NULLPTR);
 
     virtual ~LocalStorageManager();
 

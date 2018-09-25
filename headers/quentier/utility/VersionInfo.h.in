@@ -19,6 +19,9 @@
 #ifndef LIB_QUENTIER_UTILITY_VERSION_INFO_H
 #define LIB_QUENTIER_UTILITY_VERSION_INFO_H
 
+#include <quentier/utility/Linkage.h>
+#include <QString>
+
 /**
  * This file contains automatically generated code including macro definitions
  * and functions which determine configuration-specific properties of libquentier
@@ -27,7 +30,7 @@
 /**
  * This macro is set to true if libquentier uses QtWebEngine component;
  * it requires specialized deployment, so this definition can tell whether
- * they are required for libquentier
+ * it is required for libquentier
  */
 @LIB_QUENTIER_QT_WEB_ENGINE_DEFINE@
 
@@ -48,9 +51,69 @@
  */
 @LIB_QUENTIER_BUILD_INFO@
 
+/**
+ * This macro is set to the major version number of libquentier
+ */
+@LIB_QUENTIER_VERSION_MAJOR_DEFINE@
+
+/**
+ * This macro is set to the minor version of libquentier
+ */
+@LIB_QUENTIER_VERSION_MINOR_DEFINE@
+
+/**
+ * This macro is set to the patch version of libquentier
+ */
+@LIB_QUENTIER_VERSION_PATCH_DEFINE@
+
 namespace quentier {
 
-inline int libraryVersion() { return @LIBQUENTIER_LIBRARY_VERSION@; }
+/**
+ * @return          Major version of libquentier
+ */
+int QUENTIER_EXPORT libquentierVersionMajor();
+
+/**
+ * @return          Minor version of libquentier
+ */
+int QUENTIER_EXPORT libquentierVersionMinor();
+
+/**
+ * @return          Patch version of libquentier
+ */
+int QUENTIER_EXPORT libquentierVersionPatch();
+
+/**
+ * @return          String containing information about the current libquentier build
+ */
+QString QUENTIER_EXPORT libquentierBuildInfo();
+
+/**
+ * @return          String representing the version of Qt against which
+ *                  libquentier was built
+ */
+QString QUENTIER_EXPORT libquentierBuiltWithQtVersion();
+
+/**
+ * @return          True if the current build if libquentier has note editor
+ *                  included, false otherwise
+ */
+bool QUENTIER_EXPORT libquentierHasNoteEditor();
+
+/**
+ * @return          True if the current build of libquentier has authentication
+ *                  manager included, false otherwise
+ */
+bool QUENTIER_EXPORT libquentierHasAuthenticationManager();
+
+/**
+ * @return          True if the current build of libquentier uses QtWebEngine
+ *                  component for note editor and/or authentication manager,
+ *                  false otherwise (if neither note editor nor authentication
+ *                  manager are present or if QtWebKit is used for these instead
+ *                  of QtWebEngine)
+ */
+bool QUENTIER_EXPORT libquentierUsesQtWebEngine();
 
 } // namespace quentier
 

@@ -42,8 +42,9 @@ namespace quentier {
 
 #define QUENTIER_DATABASE_NAME "qn.storage.sqlite"
 
-LocalStorageManagerPrivate::LocalStorageManagerPrivate(const Account & account, const bool startFromScratch, const bool overrideLock) :
-    QObject(),
+LocalStorageManagerPrivate::LocalStorageManagerPrivate(const Account & account, const bool startFromScratch,
+                                                       const bool overrideLock, QObject * parent) :
+    QObject(parent),
     // NOTE: don't initialize these! Otherwise SwitchUser won't work right
     m_currentAccount(account),
     m_databaseFilePath(),
