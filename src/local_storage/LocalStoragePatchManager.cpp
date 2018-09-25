@@ -31,15 +31,12 @@ LocalStoragePatchManager::LocalStoragePatchManager(const Account & account,
     QObject(parent),
     m_account(account),
     m_localStorageManager(localStorageManager),
-    m_sqlDatabase(database),
-    m_patches()
-{
-    registerPatch(new LocalStoragePatch1To2(account, localStorageManager, database));
-}
+    m_sqlDatabase(database)
+{}
 
-QVector<ILocalStoragePatch*> LocalStoragePatchManager::patchesForCurrentVersion()
+QVector<QSharedPointer<ILocalStoragePatch> > LocalStoragePatchManager::patchesForCurrentVersion()
 {
-    QVector<ILocalStoragePatch*> result;
+    QVector<QSharedPointer<ILocalStoragePatch> > result;
 
     ErrorString errorDescription;
     int version = m_localStorageManager.localStorageVersion(errorDescription);
@@ -48,32 +45,11 @@ QVector<ILocalStoragePatch*> LocalStoragePatchManager::patchesForCurrentVersion(
         return result;
     }
 
-    auto it = m_patches.find(version);
-    if (it == m_patches.end()) {
-        return result;
-    }
-
-    result.reserve(static_cast<int>(std::distance(it, m_patches.end())));
-    for(auto cit = it; cit != m_patches.end(); ++cit) {
-        result << cit->second;
+    if (version == 1) {
+        result.append(QSharedPointer<ILocalStoragePatch>(new LocalStoragePatch1To2(m_account, m_localStorageManager, m_sqlDatabase)));
     }
 
     return result;
-}
-
-void LocalStoragePatchManager::registerPatch(ILocalStoragePatch * pPatch)
-{
-    QNDEBUG(QStringLiteral("LocalStoragePatchManager::registerPatch: from version ")
-            << (pPatch ? QString::number(pPatch->fromVersion()) : QStringLiteral("<null>"))
-            << QStringLiteral(" to version ") << (pPatch ? QString::number(pPatch->toVersion()) : QStringLiteral("<null>")));
-
-    if (Q_UNLIKELY(!pPatch)) {
-        QNWARNING(QStringLiteral("Detected attempt to register null patch for local storage"));
-        return;
-    }
-
-    pPatch->setParent(this);
-    m_patches[pPatch->fromVersion()] = pPatch;
 }
 
 } // namespace quentier

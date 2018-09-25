@@ -161,14 +161,11 @@ public:
      * code. If no patches are required, an empty list of patches is returned.
      *
      * The client code should apply each patch in the exact order in which they
-     * are returned by this method. The client code should not worry about the
-     * lifetime of patches, it is controlled by libquentier internals. The
-     * client code should also not reparent the patches, otherwise that would
-     * yield undefined behaviour.
+     * are returned by this method.
      *
      * @return the vector of patches required to be applied to the current local storage version
      */
-    QVector<ILocalStoragePatch*> requiredLocalStoragePatches();
+    QVector<QSharedPointer<ILocalStoragePatch> > requiredLocalStoragePatches();
 
     /**
      * localStorageVersion method fetches the current version of local storage persistence which can be used for informational purposes

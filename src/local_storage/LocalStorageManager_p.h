@@ -43,7 +43,7 @@ public:
 
     bool isLocalStorageVersionTooHigh(ErrorString & errorDescription);
     bool localStorageRequiresUpgrade(ErrorString & errorDescription);
-    QVector<ILocalStoragePatch*> requiredLocalStoragePatches();
+    QVector<QSharedPointer<ILocalStoragePatch> > requiredLocalStoragePatches();
     qint32 localStorageVersion(ErrorString & errorDescription);
     qint32 highestSupportedLocalStorageVersion() const;
 

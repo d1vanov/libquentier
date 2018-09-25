@@ -605,7 +605,7 @@ bool LocalStorageManagerPrivate::localStorageRequiresUpgrade(ErrorString & error
     return currentVersion < highestSupportedVersion;
 }
 
-QVector<ILocalStoragePatch*> LocalStorageManagerPrivate::requiredLocalStoragePatches()
+QVector<QSharedPointer<ILocalStoragePatch> > LocalStorageManagerPrivate::requiredLocalStoragePatches()
 {
     if (!m_pLocalStoragePatchManager) {
         m_pLocalStoragePatchManager = new LocalStoragePatchManager(m_currentAccount, *this, m_sqlDatabase, this);

@@ -88,7 +88,7 @@ bool LocalStorageManager::localStorageRequiresUpgrade(ErrorString & errorDescrip
     return d->localStorageRequiresUpgrade(errorDescription);
 }
 
-QVector<ILocalStoragePatch*> LocalStorageManager::requiredLocalStoragePatches()
+QVector<QSharedPointer<ILocalStoragePatch> > LocalStorageManager::requiredLocalStoragePatches()
 {
     Q_D(LocalStorageManager);
     return d->requiredLocalStoragePatches();

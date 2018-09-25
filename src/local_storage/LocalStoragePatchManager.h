@@ -22,8 +22,7 @@
 #include <quentier/utility/Macros.h>
 #include <quentier/types/Account.h>
 #include <QObject>
-#include <map>
-#include <utility>
+#include <QSharedPointer>
 
 QT_FORWARD_DECLARE_CLASS(QSqlDatabase)
 
@@ -49,10 +48,7 @@ public:
      * @return          The list of patches required to be applied to the
      *                  current version of local storage
      */
-    QVector<ILocalStoragePatch*> patchesForCurrentVersion();
-
-private:
-    void registerPatch(ILocalStoragePatch * pPatch);
+    QVector<QSharedPointer<ILocalStoragePatch> > patchesForCurrentVersion();
 
 private:
     Q_DISABLE_COPY(LocalStoragePatchManager)
@@ -61,7 +57,6 @@ private:
     Account                             m_account;
     LocalStorageManagerPrivate &        m_localStorageManager;
     QSqlDatabase &                      m_sqlDatabase;
-    std::map<int, ILocalStoragePatch*>  m_patches;
 };
 
 } // namespace quentier
