@@ -272,6 +272,41 @@ bool LocalStoragePatch1To2::restoreLocalStorageFromBackup(ErrorString & errorDes
     return true;
 }
 
+bool LocalStoragePatch1To2::removeLocalStorageBackup(ErrorString & errorDescription)
+{
+    QNINFO(QStringLiteral("LocalStoragePatch1To2::removeLocalStorageBackup"));
+
+    QString storagePath = accountPersistentStoragePath(m_account);
+
+    bool removedShmDbBackup = true;
+    QFileInfo shmDbBackupFileInfo(storagePath + QStringLiteral("/qn.storage.sqlite-shm.bak"));
+    if (shmDbBackupFileInfo.exists() && !removeFile(shmDbBackupFileInfo.absoluteFilePath())) {
+        QNDEBUG(QStringLiteral("Failed to remove SQLite shm file's backup: ") << shmDbBackupFileInfo.absoluteFilePath());
+        removedShmDbBackup = false;
+    }
+
+    bool removedWalDbBackup = true;
+    QFileInfo walDbBackupFileInfo(storagePath + QStringLiteral("/qn.storage.sqlite-shm.bak"));
+    if (walDbBackupFileInfo.exists() && !removeFile(walDbBackupFileInfo.absoluteFilePath())) {
+        QNDEBUG(QStringLiteral("Failed to remove SQLite wal file's backup: ") << walDbBackupFileInfo.absoluteFilePath());
+        removedWalDbBackup = false;
+    }
+
+    bool removedDbBackup = true;
+    QFileInfo dbBackupFileInfo(storagePath + QStringLiteral("/qn.storage.sqlite"));
+    if (dbBackupFileInfo.exists() && !removeFile(dbBackupFileInfo.absoluteFilePath())) {
+        QNWARNING(QStringLiteral("Failed to remove SQLite database's backup: ") << dbBackupFileInfo.absoluteFilePath());
+        removedDbBackup = false;
+    }
+
+    if (!removedShmDbBackup || !removedWalDbBackup || !removedDbBackup) {
+        errorDescription.setBase(QT_TR_NOOP("Failed to remove some of SQLite database's backups"));
+        return false;
+    }
+
+    return true;
+}
+
 bool LocalStoragePatch1To2::apply(ErrorString & errorDescription)
 {
     QNINFO(QStringLiteral("LocalStoragePatch1To2::apply"));

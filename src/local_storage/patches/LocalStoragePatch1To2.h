@@ -44,6 +44,7 @@ public:
 
     virtual bool backupLocalStorage(ErrorString & errorDescription) Q_DECL_OVERRIDE;
     virtual bool restoreLocalStorageFromBackup(ErrorString & errorDescription) Q_DECL_OVERRIDE;
+    virtual bool removeLocalStorageBackup(ErrorString & errorDescription) Q_DECL_OVERRIDE;
 
     virtual bool apply(ErrorString & errorDescription) Q_DECL_OVERRIDE;
 

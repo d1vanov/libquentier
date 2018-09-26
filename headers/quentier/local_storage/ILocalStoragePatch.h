@@ -90,6 +90,20 @@ public:
     virtual bool restoreLocalStorageFromBackup(ErrorString & errorDescription) = 0;
 
     /**
+     * Remove the previously made backup of local storage, presumably
+     * after successful application of the patch so the backup is no longer
+     * needed. It won't work if no backup was made before applying a patch,
+     * obviously.
+     *
+     * @param errorDescription      The textual description of the error in case
+     *                              of failure to remove the local storage
+     *                              backup
+     * @return                      True if local storage backup was successfully
+     *                              removed, false otherwise
+     */
+    virtual bool removeLocalStorageBackup(ErrorString & errorDescription) = 0;
+
+    /**
      * Apply the patch to local storage
      *
      * @param errorDescription      The textual description of the error in case of patch application failure
