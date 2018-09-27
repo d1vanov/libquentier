@@ -24,17 +24,26 @@ namespace quentier {
 FileCopier::FileCopier(QObject * parent) :
     QObject(parent),
     d_ptr(new FileCopierPrivate(this))
-{}
+{
+    QObject::connect(d_ptr, QNSIGNAL(FileCopierPrivate,progressUpdate,double),
+                     this, QNSIGNAL(FileCopier,progressUpdate,double));
+    QObject::connect(d_ptr, QNSIGNAL(FileCopierPrivate,finished,QString,QString),
+                     this, QNSIGNAL(FileCopier,finished,QString,QString));
+    QObject::connect(d_ptr, QNSIGNAL(FileCopierPrivate,cancelled,QString,QString),
+                     this, QNSIGNAL(FileCopier,cancelled,QString,QString));
+    QObject::connect(d_ptr, QNSIGNAL(FileCopierPrivate,notifyError,ErrorString),
+                     this, QNSIGNAL(FileCopier,notifyError,ErrorString));
+}
 
 FileCopier::State::type FileCopier::state() const
 {
     Q_D(const FileCopier);
 
-    if (d->idle()) {
+    if (d->isIdle()) {
         return State::Idle;
     }
 
-    if (d->cancelled()) {
+    if (d->isCancelled()) {
         return State::Cancelling;
     }
 

@@ -32,8 +32,8 @@ class FileCopierPrivate: public QObject
 public:
     explicit FileCopierPrivate(QObject * parent = Q_NULLPTR);
 
-    bool idle() const { return m_idle; }
-    bool cancelled() const { return m_cancelled; }
+    bool isIdle() const { return m_idle; }
+    bool isCancelled() const { return m_cancelled; }
 
     const QString & sourceFilePath() const { return m_sourcePath; }
     const QString & destinationFilePath() const { return m_destPath; }
