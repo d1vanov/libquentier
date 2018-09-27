@@ -40,7 +40,7 @@ public:
     virtual int toVersion() const Q_DECL_OVERRIDE { return 2; }
 
     virtual QString patchShortDescription() const Q_DECL_OVERRIDE;
-    virtual QStringList patchLongDescription() const Q_DECL_OVERRIDE;
+    virtual QString patchLongDescription() const Q_DECL_OVERRIDE;
 
     virtual bool backupLocalStorage(ErrorString & errorDescription) Q_DECL_OVERRIDE;
     virtual bool restoreLocalStorageFromBackup(ErrorString & errorDescription) Q_DECL_OVERRIDE;

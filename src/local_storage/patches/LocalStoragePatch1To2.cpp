@@ -60,17 +60,17 @@ QString LocalStoragePatch1To2::patchShortDescription() const
     return tr("Move attachments data from SQLite database to plain files");
 }
 
-QStringList LocalStoragePatch1To2::patchLongDescription() const
+QString LocalStoragePatch1To2::patchLongDescription() const
 {
-    QStringList result;
+    QString result;
 
-    result << tr("This patch will move the data corresponding to notes' attachments from Quentier's primary SQLite " \
+    result += tr("This patch will move the data corresponding to notes' attachments from Quentier's primary SQLite " \
                  "database to plain files. This change of local storage structure is necessary to fix or prevent " \
                  "serious performance issues for accounts containing enough large enough note attachments due to " \
                  "the way SQLite puts large data blocks together within the database file. If you are interested " \
                  "in technical details on this topic, consider consulting this following material");
-    result << QStringLiteral(": <a href=\"https://www.sqlite.org/intern-v-extern-blob.html\">Internal Versus External BLOBs in SQLite</a>.\n\n");
-    result << tr("The time required to apply this patch would depend on the general performance " \
+    result += QStringLiteral(": <a href=\"https://www.sqlite.org/intern-v-extern-blob.html\">Internal Versus External BLOBs in SQLite</a>.\n\n");
+    result += tr("The time required to apply this patch would depend on the general performance " \
                  "of disk I/O on your system and on the number of resources within your account");
 
     ErrorString errorDescription;
@@ -80,19 +80,19 @@ QStringList LocalStoragePatch1To2::patchLongDescription() const
     }
     else {
         QNINFO(QStringLiteral("Before applying local storage 1-to-2 patch: ") << numResources << QStringLiteral(" resources within the local storage"));
-        result << QStringLiteral(" (");
-        result << QString::number(numResources);
-        result << QStringLiteral(")");
+        result += QStringLiteral(" (");
+        result += QString::number(numResources);
+        result += QStringLiteral(")");
     }
 
-    result << QStringLiteral(".\n\n");
-    result << tr("If the account which local storage is to be upgraded is Evernote one and if you don't have any local " \
+    result += QStringLiteral(".\n\n");
+    result += tr("If the account which local storage is to be upgraded is Evernote one and if you don't have any local " \
                  "unsynchronized changes there, you can consider just re-syncing it from Evernote instead of upgrading " \
                  "the local database - if your account contains many large enough attachments to notes, re-syncing can " \
                  "actually be faster than upgrading the local storage");
-    result << QStringLiteral(".\n\n");
-    result << tr("Note that after the upgrade previous versions of Quentier would no longer be able to use this account's local storage");
-    result << QStringLiteral(".");
+    result += QStringLiteral(".\n\n");
+    result += tr("Note that after the upgrade previous versions of Quentier would no longer be able to use this account's local storage");
+    result += QStringLiteral(".");
     return result;
 }
 

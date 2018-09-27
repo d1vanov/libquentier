@@ -22,7 +22,6 @@
 #include <quentier/utility/Macros.h>
 #include <quentier/utility/Linkage.h>
 #include <QObject>
-#include <QStringList>
 
 namespace quentier {
 
@@ -62,7 +61,7 @@ public:
     /**
      * @return      Long i.e. detailed description of the patch
      */
-    virtual QStringList patchLongDescription() const = 0;
+    virtual QString patchLongDescription() const = 0;
 
     /**
      * Backup either the entire local storage or its parts affected by the
