@@ -571,7 +571,7 @@ bool LocalStoragePatch1To2::apply(ErrorString & errorDescription)
 
     // Part 6: change the version in local storage database
     QSqlQuery query(m_sqlDatabase);
-    bool res = query.exec(QStringLiteral("INSERT OR REPLACE INTO Auxiliary (version) VALUES(1)"));
+    bool res = query.exec(QStringLiteral("INSERT OR REPLACE INTO Auxiliary (version) VALUES(2)"));
     DATABASE_CHECK_AND_SET_ERROR()
 
     QNDEBUG(QStringLiteral("Finished upgrading the local storage from version 1 to version 2"));
