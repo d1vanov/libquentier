@@ -66,9 +66,9 @@ QString LocalStoragePatch1To2::patchLongDescription() const
 
     result += tr("This patch will move the data corresponding to notes' attachments from Quentier's primary SQLite " \
                  "database to plain files. This change of local storage structure is necessary to fix or prevent " \
-                 "serious performance issues for accounts containing enough large enough note attachments due to " \
+                 "serious performance issues for accounts containing numerous large enough note attachments due to " \
                  "the way SQLite puts large data blocks together within the database file. If you are interested " \
-                 "in technical details on this topic, consider consulting this following material");
+                 "in technical details on this topic, consider consulting the following material");
     result += QStringLiteral(": <a href=\"https://www.sqlite.org/intern-v-extern-blob.html\">Internal Versus External BLOBs in SQLite</a>.\n\n");
     result += tr("The time required to apply this patch would depend on the general performance " \
                  "of disk I/O on your system and on the number of resources within your account");
@@ -87,7 +87,11 @@ QString LocalStoragePatch1To2::patchLongDescription() const
 
     result += QStringLiteral(".\n\n");
     result += tr("If the account which local storage is to be upgraded is Evernote one and if you don't have any local " \
-                 "unsynchronized changes there, you can consider just re-syncing it from Evernote instead of upgrading " \
+                 "unsynchronized changes there, you can consider just wiping out its data folder");
+    result += QStringLiteral(" (");
+    result += QDir::toNativeSeparators(accountPersistentStoragePath(m_account));
+    result += QStringLiteral(") ");
+    result += tr("and re-syncing it from Evernote instead of upgrading " \
                  "the local database - if your account contains many large enough attachments to notes, re-syncing can " \
                  "actually be faster than upgrading the local storage");
     result += QStringLiteral(".\n\n");
@@ -545,11 +549,15 @@ bool LocalStoragePatch1To2::apply(ErrorString & errorDescription)
         QNDEBUG(QStringLiteral("Set data bodies and alternate data bodies for resources to null in the database table"));
         Q_EMIT progress(0.8);
 
-        // 5.2 Vacuum the database to reduce its size and make it faster to operate
-        {
-            QSqlQuery query(m_sqlDatabase);
-            bool res = query.exec(QStringLiteral("VACUUM"));
-            DATABASE_CHECK_AND_SET_ERROR()
+        // 5.2 Compact the database to reduce its size and make it faster to operate
+        ErrorString compactionError;
+        if (!m_localStorageManager.compactLocalStorage(compactionError)) {
+            errorDescription = errorPrefix;
+            errorDescription.appendBase(compactionError.base());
+            errorDescription.appendBase(compactionError.additionalBases());
+            errorDescription.details() = compactionError.details();
+            QNWARNING(errorDescription);
+            return false;
         }
 
         QNDEBUG(QStringLiteral("Compacted the local storage database"));

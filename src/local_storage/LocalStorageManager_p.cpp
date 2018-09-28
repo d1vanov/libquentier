@@ -4078,6 +4078,21 @@ bool LocalStorageManagerPrivate::updateSequenceNumberFromTable(const QString & t
     return true;
 }
 
+bool LocalStorageManagerPrivate::compactLocalStorage(ErrorString & errorDescription)
+{
+    QNDEBUG(QStringLiteral("LocalStorageManagerPrivate::compactLocalStorage"));
+
+    clearCachedQueries();
+
+    ErrorString errorPrefix(QT_TR_NOOP("Can't compact local storage database"));
+
+    QSqlQuery query(m_sqlDatabase);
+    bool res = query.exec(QStringLiteral("VACUUM"));
+    DATABASE_CHECK_AND_SET_ERROR()
+
+    return true;
+}
+
 void LocalStorageManagerPrivate::processPostTransactionException(ErrorString message, QSqlError error)
 {
     QNERROR(message << QStringLiteral(": ") << error);
@@ -11172,45 +11187,124 @@ void LocalStorageManagerPrivate::clearCachedQueries()
 {
     QNDEBUG(QStringLiteral("LocalStorageManagerPrivate::clearCachedQueries"));
 
+    m_insertOrReplaceSavedSearchQuery = QSqlQuery();
     m_insertOrReplaceSavedSearchQueryPrepared = false;
+
+    m_getSavedSearchCountQuery = QSqlQuery();
     m_getSavedSearchCountQueryPrepared = false;
+
+    m_insertOrReplaceResourceMetadataWithDataPropertiesQuery = QSqlQuery();
     m_insertOrReplaceResourceMetadataWithDataPropertiesQueryPrepared = false;
+
+    m_updateResourceMetadataWithoutDataPropertiesQuery = QSqlQuery();
     m_updateResourceMetadataWithoutDataPropertiesQueryPrepared = false;
+
+    m_insertOrReplaceNoteResourceQuery = QSqlQuery();
     m_insertOrReplaceNoteResourceQueryPrepared = false;
+
+    m_deleteResourceFromResourceRecognitionTypesQuery = QSqlQuery();
     m_deleteResourceFromResourceRecognitionTypesQueryPrepared = false;
+
+    m_insertOrReplaceIntoResourceRecognitionDataQuery = QSqlQuery();
     m_insertOrReplaceIntoResourceRecognitionDataQueryPrepared = false;
+
+    m_deleteResourceFromResourceAttributesQuery = QSqlQuery();
     m_deleteResourceFromResourceAttributesQueryPrepared = false;
+
+    m_deleteResourceFromResourceAttributesApplicationDataKeysOnlyQuery = QSqlQuery();
     m_deleteResourceFromResourceAttributesApplicationDataKeysOnlyQueryPrepared = false;
+
+    m_deleteResourceFromResourceAttributesApplicationDataFullMapQuery = QSqlQuery();
     m_deleteResourceFromResourceAttributesApplicationDataFullMapQueryPrepared = false;
+
+    m_insertOrReplaceResourceAttributesQuery = QSqlQuery();
     m_insertOrReplaceResourceAttributesQueryPrepared = false;
+
+    m_insertOrReplaceResourceAttributeApplicationDataKeysOnlyQuery = QSqlQuery();
     m_insertOrReplaceResourceAttributeApplicationDataKeysOnlyQueryPrepared = false;
+
+    m_insertOrReplaceResourceAttributeApplicationDataFullMapQuery = QSqlQuery();
     m_insertOrReplaceResourceAttributeApplicationDataFullMapQueryPrepared = false;
+
+    m_getResourceCountQuery = QSqlQuery();
     m_getResourceCountQueryPrepared = false;
+
+    m_getTagCountQuery = QSqlQuery();
     m_getTagCountQueryPrepared = false;
+
+    m_insertOrReplaceTagQuery = QSqlQuery();
     m_insertOrReplaceTagQueryPrepared = false;
+
+    m_getNoteCountQuery = QSqlQuery();
     m_getNoteCountQueryPrepared = false;
+
+    m_insertOrReplaceNoteQuery = QSqlQuery();
     m_insertOrReplaceNoteQueryPrepared = false;
+
+    m_insertOrReplaceSharedNoteQuery = QSqlQuery();
     m_insertOrReplaceSharedNoteQueryPrepared = false;
+
+    m_insertOrReplaceNoteRestrictionsQuery = QSqlQuery();
     m_insertOrReplaceNoteRestrictionsQueryPrepared = false;
+
+    m_insertOrReplaceNoteLimitsQuery = QSqlQuery();
     m_insertOrReplaceNoteLimitsQueryPrepared = false;
+
+    m_canAddNoteToNotebookQuery = QSqlQuery();
     m_canAddNoteToNotebookQueryPrepared = false;
+
+    m_canUpdateNoteInNotebookQuery = QSqlQuery();
     m_canUpdateNoteInNotebookQueryPrepared = false;
+
+    m_canExpungeNoteInNotebookQuery = QSqlQuery();
     m_canExpungeNoteInNotebookQueryPrepared = false;
+
+    m_insertOrReplaceNoteIntoNoteTagsQuery = QSqlQuery();
     m_insertOrReplaceNoteIntoNoteTagsQueryPrepared = false;
+
+    m_getLinkedNotebookCountQuery = QSqlQuery();
     m_getLinkedNotebookCountQueryPrepared = false;
+
+    m_insertOrReplaceLinkedNotebookQuery = QSqlQuery();
     m_insertOrReplaceLinkedNotebookQueryPrepared = false;
+
+    m_getNotebookCountQuery = QSqlQuery();
     m_getNotebookCountQueryPrepared = false;
+
+    m_insertOrReplaceNotebookQuery = QSqlQuery();
     m_insertOrReplaceNotebookQueryPrepared = false;
+
+    m_insertOrReplaceNotebookRestrictionsQuery = QSqlQuery();
     m_insertOrReplaceNotebookRestrictionsQueryPrepared = false;
+
+    m_insertOrReplaceSharedNotebookQuery = QSqlQuery();
     m_insertOrReplaceSharedNotebookQueryPrepared = false;
+
+    m_getUserCountQuery = QSqlQuery();
     m_getUserCountQueryPrepared = false;
+
+    m_insertOrReplaceUserQuery = QSqlQuery();
     m_insertOrReplaceUserQueryPrepared = false;
+
+    m_insertOrReplaceUserAttributesQuery = QSqlQuery();
     m_insertOrReplaceUserAttributesQueryPrepared = false;
+
+    m_insertOrReplaceAccountingQuery = QSqlQuery();
     m_insertOrReplaceAccountingQueryPrepared = false;
+
+    m_insertOrReplaceAccountLimitsQuery = QSqlQuery();
     m_insertOrReplaceAccountLimitsQueryPrepared = false;
+
+    m_insertOrReplaceBusinessUserInfoQuery = QSqlQuery();
     m_insertOrReplaceBusinessUserInfoQueryPrepared = false;
+
+    m_insertOrReplaceUserAttributesViewedPromotionsQuery = QSqlQuery();
     m_insertOrReplaceUserAttributesViewedPromotionsQueryPrepared = false;
+
+    m_insertOrReplaceUserAttributesRecentMailedAddressesQuery = QSqlQuery();
     m_insertOrReplaceUserAttributesRecentMailedAddressesQueryPrepared = false;
+
+    m_deleteUserQuery = QSqlQuery();
     m_deleteUserQueryPrepared = false;
 }
 

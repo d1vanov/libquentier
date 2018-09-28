@@ -177,6 +177,8 @@ public:
                                        const QString & queryCondition,
                                        qint32 & usn, ErrorString & errorDescription);
 
+    bool compactLocalStorage(ErrorString & errorDescription);
+
 public Q_SLOTS:
     void processPostTransactionException(ErrorString message, QSqlError error);
 
