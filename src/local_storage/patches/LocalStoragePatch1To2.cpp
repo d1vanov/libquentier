@@ -290,14 +290,14 @@ bool LocalStoragePatch1To2::removeLocalStorageBackup(ErrorString & errorDescript
     }
 
     bool removedWalDbBackup = true;
-    QFileInfo walDbBackupFileInfo(storagePath + QStringLiteral("/qn.storage.sqlite-shm.bak"));
+    QFileInfo walDbBackupFileInfo(storagePath + QStringLiteral("/qn.storage.sqlite-wal.bak"));
     if (walDbBackupFileInfo.exists() && !removeFile(walDbBackupFileInfo.absoluteFilePath())) {
         QNDEBUG(QStringLiteral("Failed to remove SQLite wal file's backup: ") << walDbBackupFileInfo.absoluteFilePath());
         removedWalDbBackup = false;
     }
 
     bool removedDbBackup = true;
-    QFileInfo dbBackupFileInfo(storagePath + QStringLiteral("/qn.storage.sqlite"));
+    QFileInfo dbBackupFileInfo(storagePath + QStringLiteral("/qn.storage.sqlite.bak"));
     if (dbBackupFileInfo.exists() && !removeFile(dbBackupFileInfo.absoluteFilePath())) {
         QNWARNING(QStringLiteral("Failed to remove SQLite database's backup: ") << dbBackupFileInfo.absoluteFilePath());
         removedDbBackup = false;
