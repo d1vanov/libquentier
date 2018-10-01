@@ -125,7 +125,7 @@ void FileCopierPrivate::copyFile(const QString & sourcePath, const QString & des
         }
 
         totalBytesWritten += bytesWritten;
-        m_currentProgress = totalBytesWritten / fromFileSize;
+        m_currentProgress = static_cast<double>(totalBytesWritten) / fromFileSize;
 
         QNTRACE(QStringLiteral("File copying progress update: progress = ") << m_currentProgress
                 << QStringLiteral(", total bytes written = ") << totalBytesWritten
