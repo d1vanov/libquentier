@@ -35,6 +35,7 @@
 #include <QFile>
 #include <QFileInfo>
 #include <QThread>
+#include <QPointer>
 
 #define UPGRADE_1_TO_2_PERSISTENCE QStringLiteral("LocalStorageDatabaseUpgradeFromVersion1ToVersion2")
 
@@ -158,15 +159,17 @@ bool LocalStoragePatch1To2::backupLocalStorage(ErrorString & errorDescription)
     pMainDbFileCopierThread->start();
 
     FileCopier * pMainDbFileCopier = new FileCopier;
+    QPointer<FileCopier> pFileCopierQPtr = pMainDbFileCopier;
+
     QObject::connect(pMainDbFileCopier, QNSIGNAL(FileCopier,progressUpdate,double),
                      this, QNSIGNAL(LocalStoragePatch1To2,backupProgress,double));
     QObject::connect(pMainDbFileCopier, QNSIGNAL(FileCopier,notifyError,ErrorString),
                      &backupEventLoop, QNSLOT(EventLoopWithExitStatus,exitAsFailureWithErrorString,ErrorString));
-    QObject::connect(pMainDbFileCopier, QNSIGNAL(FileCopier,finished),
+    QObject::connect(pMainDbFileCopier, QNSIGNAL(FileCopier,finished,QString,QString),
                      &backupEventLoop, QNSLOT(EventLoopWithExitStatus,exitAsSuccess));
-    QObject::connect(pMainDbFileCopier, QNSIGNAL(FileCopier,finished),
+    QObject::connect(pMainDbFileCopier, QNSIGNAL(FileCopier,finished,QString,QString),
                      pMainDbFileCopier, QNSLOT(FileCopier,deleteLater));
-    QObject::connect(pMainDbFileCopier, QNSIGNAL(FileCopier,finished),
+    QObject::connect(pMainDbFileCopier, QNSIGNAL(FileCopier,finished,QString,QString),
                      pMainDbFileCopierThread, QNSLOT(QThread,quit));
     QObject::connect(this, QNSIGNAL(LocalStoragePatch1To2,copyDbFile,QString,QString),
                      pMainDbFileCopier, QNSLOT(FileCopier,copyFile,QString,QString));
@@ -176,8 +179,10 @@ bool LocalStoragePatch1To2::backupLocalStorage(ErrorString & errorDescription)
 
     int result = backupEventLoop.exec();
 
-    QObject::disconnect(this, QNSIGNAL(LocalStoragePatch1To2,copyDbFile,QString,QString),
-                        pMainDbFileCopier, QNSLOT(FileCopier,copyFile,QString,QString));
+    if (!pFileCopierQPtr.isNull()) {
+        QObject::disconnect(this, QNSIGNAL(LocalStoragePatch1To2,copyDbFile,QString,QString),
+                            pMainDbFileCopier, QNSLOT(FileCopier,copyFile,QString,QString));
+    }
 
     if (result == EventLoopWithExitStatus::ExitStatus::Failure) {
         errorDescription = backupEventLoop.errorDescription();
@@ -247,15 +252,17 @@ bool LocalStoragePatch1To2::restoreLocalStorageFromBackup(ErrorString & errorDes
     pMainDbFileCopierThread->start();
 
     FileCopier * pMainDbFileCopier = new FileCopier;
+    QPointer<FileCopier> pFileCopierQPtr = pMainDbFileCopier;
+
     QObject::connect(pMainDbFileCopier, QNSIGNAL(FileCopier,progressUpdate,double),
                      this, QNSIGNAL(LocalStoragePatch1To2,restoreBackupProgress,double));
     QObject::connect(pMainDbFileCopier, QNSIGNAL(FileCopier,notifyError,ErrorString),
                      &restoreFromBackupEventLoop, QNSLOT(EventLoopWithExitStatus,exitAsFailureWithErrorString,ErrorString));
-    QObject::connect(pMainDbFileCopier, QNSIGNAL(FileCopier,finished),
+    QObject::connect(pMainDbFileCopier, QNSIGNAL(FileCopier,finished,QString,QString),
                      &restoreFromBackupEventLoop, QNSLOT(EventLoopWithExitStatus,exitAsSuccess));
-    QObject::connect(pMainDbFileCopier, QNSIGNAL(FileCopier,finished),
+    QObject::connect(pMainDbFileCopier, QNSIGNAL(FileCopier,finished,QString,QString),
                      pMainDbFileCopier, QNSLOT(FileCopier,deleteLater));
-    QObject::connect(pMainDbFileCopier, QNSIGNAL(FileCopier,finished),
+    QObject::connect(pMainDbFileCopier, QNSIGNAL(FileCopier,finished,QString,QString),
                      pMainDbFileCopierThread, QNSLOT(QThread,quit));
     QObject::connect(this, QNSIGNAL(LocalStoragePatch1To2,copyDbFile,QString,QString),
                      pMainDbFileCopier, QNSLOT(FileCopier,copyFile,QString,QString));
@@ -265,8 +272,10 @@ bool LocalStoragePatch1To2::restoreLocalStorageFromBackup(ErrorString & errorDes
 
     int result = restoreFromBackupEventLoop.exec();
 
-    QObject::disconnect(this, QNSIGNAL(LocalStoragePatch1To2,copyDbFile,QString,QString),
-                        pMainDbFileCopier, QNSLOT(FileCopier,copyFile,QString,QString));
+    if (!pFileCopierQPtr.isNull()) {
+        QObject::disconnect(this, QNSIGNAL(LocalStoragePatch1To2,copyDbFile,QString,QString),
+                            pMainDbFileCopier, QNSLOT(FileCopier,copyFile,QString,QString));
+    }
 
     if (result == EventLoopWithExitStatus::ExitStatus::Failure) {
         errorDescription = restoreFromBackupEventLoop.errorDescription();
