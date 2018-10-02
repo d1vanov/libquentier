@@ -3103,6 +3103,7 @@ void NoteEditorPrivate::noteToEditorContent()
 
     m_htmlCachedMemory.insert(bodyClosingTagIndex + 7, QStringLiteral("</html>"));
     m_htmlCachedMemory.replace(QStringLiteral("<br></br>"), QStringLiteral("</br>"));   // Webkit-specific fix
+    QNTRACE(QStringLiteral("Note page HTML: ") << m_htmlCachedMemory);
     writeNotePageFile(m_htmlCachedMemory);
 }
 
