@@ -32,10 +32,10 @@ QT_FORWARD_DECLARE_CLASS(QUndoStack)
 namespace quentier {
 
 QT_FORWARD_DECLARE_CLASS(Account)
-QT_FORWARD_DECLARE_CLASS(Notebook)
 QT_FORWARD_DECLARE_CLASS(INoteEditorBackend)
 QT_FORWARD_DECLARE_CLASS(FileIOProcessorAsync)
 QT_FORWARD_DECLARE_CLASS(SpellChecker)
+QT_FORWARD_DECLARE_CLASS(LocalStorageManager)
 
 /**
  * @brief The NoteEditor class is a widget encapsulating all the functionality necessary for showing and editing notes
@@ -48,10 +48,12 @@ public:
     virtual ~NoteEditor() Q_DECL_OVERRIDE;
 
     /**
-     * NoteEditor requires FileIOProcessorAsync, SpellChecker and Account for its work but due to the particularities of Qt's .ui
-     * files processing these can't be passed right inside the constructor, hence here's a special initialization method
+     * NoteEditor requires LocalStorageManager, FileIOProcessorAsync, SpellChecker and Account for its work
+     * but due to the particularities of Qt's .ui files processing these can't be passed right inside the constructor,
+     * hence here's a special initialization method
      */
-    void initialize(FileIOProcessorAsync & fileIOProcessorAsync,
+    void initialize(LocalStorageManager & localStorageManager,
+                    FileIOProcessorAsync & fileIOProcessorAsync,
                     SpellChecker & spellChecker,
                     const Account & account);
 
@@ -87,9 +89,13 @@ public:
     QString currentNoteLocalUid() const;
 
     /**
-     * Set the note and its respective notebook to the note editor
+     * Set note local uid to the note editor. The note is being searched for
+     * within the local storage, in case of no note being found noteNotFound
+     * signal is emitted. Otherwise note editor page starts loading.
+     *
+     * @param noteLocalUid              The local uid of note
      */
-    void setNoteAndNotebook(const Note & note, const Notebook & notebook);
+    void setCurrentNoteLocalUid(const QString & noteLocalUid);
 
     /**
      * Clear the contents of the note editor
@@ -130,6 +136,12 @@ Q_SIGNALS:
     void contentChanged();
 
     /**
+     * @brief noteNotFound signal is emitted when the note could not be found
+     * within the local storage by the provided local uid
+     */
+    void noteNotFound(QString noteLocalUid);
+
+    /**
      * @brief noteModified signal is emitted when the note's content within the editor gets modified via some way -
      * either via manual editing or via some action (like paste or cut)
      */
@@ -167,6 +179,20 @@ Q_SIGNALS:
 
     void noteLoaded();
 
+    /**
+     * @brief noteSavedToLocalStorage signal is emitted when the note has been
+     * saved within the local storage. NoteEditor doesn't do this on its own
+     * unless it's explicitly asked to do this via invoking its
+     * saveNoteToLocalStorage slot
+     */
+    void noteSavedToLocalStorage(QString noteLocalUid);
+
+    /**
+     * @brief failedToSaveNoteToLocalStorage signal is emitted in case of
+     * failure to save the note to local storage
+     */
+    void failedToSaveNoteToLocalStorage(ErrorString errorDescription, QString noteLocalUid);
+
     // Signals to notify anyone interested of the formatting at the current cursor position
     void textBoldState(bool state);
     void textItalicState(bool state);
@@ -191,6 +217,16 @@ public Q_SLOTS:
      * to note; the @link convertedToNote @endlink signal would be emitted in response when the conversion is done
      */
     void convertToNote();
+
+    /**
+     * Invoke this slot to launch the asynchronous procedure of saving the
+     * modified current note back to the local storage. If no note is set to the
+     * editor or if the note is not modified, no action would be performed.
+     * Otherwise noteSavedToLocalStorage signal would be emitted in case of
+     * successful saving or failedToSaveNoteToLocalStorage would be emitted
+     * otherwise
+     */
+    void saveNoteToLocalStorage();
 
     void undo();
     void redo();

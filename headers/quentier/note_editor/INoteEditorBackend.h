@@ -23,7 +23,6 @@
 #include <quentier/utility/Linkage.h>
 #include <quentier/utility/Printable.h>
 #include <quentier/types/Note.h>
-#include <quentier/types/Notebook.h>
 #include <QWidget>
 #include <QPrinter>
 #include <QStringList>
@@ -36,13 +35,15 @@ QT_FORWARD_DECLARE_CLASS(Account)
 QT_FORWARD_DECLARE_CLASS(NoteEditor)
 QT_FORWARD_DECLARE_CLASS(FileIOProcessorAsync)
 QT_FORWARD_DECLARE_CLASS(SpellChecker)
+QT_FORWARD_DECLARE_CLASS(LocalStorageManager)
 
 class QUENTIER_EXPORT INoteEditorBackend
 {
 public:
     virtual ~INoteEditorBackend();
 
-    virtual void initialize(FileIOProcessorAsync & fileIOProcessorAsync,
+    virtual void initialize(LocalStorageManager & localStorageManager,
+                            FileIOProcessorAsync & fileIOProcessorAsync,
                             SpellChecker & spellChecker,
                             const Account & account) = 0;
 
@@ -57,6 +58,7 @@ public:
     virtual bool isNoteLoaded() const = 0;
 
     virtual void convertToNote() = 0;
+    virtual void saveNoteToLocalStorage() = 0;
     virtual void undo() = 0;
     virtual void redo() = 0;
     virtual void cut() = 0;
@@ -164,7 +166,7 @@ public:
     virtual bool exportToEnex(const QStringList & tagNames,
                               QString & enex, ErrorString & errorDescription) = 0;
 
-    virtual void setNoteAndNotebook(const Note & note, const Notebook & notebook) = 0;
+    virtual void setCurrentNoteLocalUid(const QString & noteLocalUid) = 0;
 
     virtual void clear() = 0;
 
