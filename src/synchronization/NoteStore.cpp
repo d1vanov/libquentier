@@ -37,10 +37,10 @@ namespace quentier {
         errorDescription.details() += userException.exceptionData()->errorMessage; \
     }
 
-NoteStore::NoteStore(QSharedPointer<qevercloud::NoteStore> pQecNoteStore, QObject * parent) :
-    QObject(parent),
-    m_pQecNoteStore(pQecNoteStore),
-    m_noteGuidByAsyncResultPtr()
+NoteStore::NoteStore(const QSharedPointer<qevercloud::NoteStore> & pQecNoteStore, QObject * parent) :
+    INoteStore(pQecNoteStore, parent),
+    m_noteGuidByAsyncResultPtr(),
+    m_resourceGuidByAsyncResultPtr()
 {
     QUENTIER_CHECK_PTR(m_pQecNoteStore)
 }
@@ -48,6 +48,11 @@ NoteStore::NoteStore(QSharedPointer<qevercloud::NoteStore> pQecNoteStore, QObjec
 NoteStore::~NoteStore()
 {
     stop();
+}
+
+INoteStore * NoteStore::create() const
+{
+    return new NoteStore(QSharedPointer<qevercloud::NoteStore>(new qevercloud::NoteStore));
 }
 
 void NoteStore::stop()
@@ -66,31 +71,19 @@ void NoteStore::stop()
     }
 
     m_noteGuidByAsyncResultPtr.clear();
-}
 
-QSharedPointer<qevercloud::NoteStore> NoteStore::getQecNoteStore()
-{
-    return m_pQecNoteStore;
-}
+    for(auto it = m_resourceGuidByAsyncResultPtr.begin(), end = m_resourceGuidByAsyncResultPtr.end(); it != end; ++it)
+    {
+        qevercloud::AsyncResult * pAsyncResult = it.key();
+        if (Q_UNLIKELY(!pAsyncResult)) {
+            continue;
+        }
 
-QString NoteStore::noteStoreUrl() const
-{
-    return m_pQecNoteStore->noteStoreUrl();
-}
+        QObject::disconnect(pAsyncResult, QNSIGNAL(qevercloud::AsyncResult,finished,QVariant,QSharedPointer<EverCloudExceptionData>),
+                            this, QNSLOT(NoteStore,onGetResourceAsyncFinished,QVariant,QSharedPointer<EverCloudExceptionData>));
+    }
 
-void NoteStore::setNoteStoreUrl(const QString & noteStoreUrl)
-{
-    m_pQecNoteStore->setNoteStoreUrl(noteStoreUrl);
-}
-
-QString NoteStore::authenticationToken() const
-{
-    return m_pQecNoteStore->authenticationToken();
-}
-
-void NoteStore::setAuthenticationToken(const QString & authToken)
-{
-    m_pQecNoteStore->setAuthenticationToken(authToken);
+    m_resourceGuidByAsyncResultPtr.clear();
 }
 
 qint32 NoteStore::createNotebook(Notebook & notebook, ErrorString & errorDescription,
@@ -540,7 +533,8 @@ bool NoteStore::getNoteAsync(const bool withContent, const bool withResourceData
     m_noteGuidByAsyncResultPtr[pAsyncResult] = noteGuid;
 
     QObject::connect(pAsyncResult, QNSIGNAL(qevercloud::AsyncResult,finished,QVariant,QSharedPointer<EverCloudExceptionData>),
-                     this, QNSLOT(NoteStore,onGetNoteAsyncFinished,QVariant,QSharedPointer<EverCloudExceptionData>));
+                     this, QNSLOT(NoteStore,onGetNoteAsyncFinished,QVariant,QSharedPointer<EverCloudExceptionData>),
+                     Qt::ConnectionType(Qt::UniqueConnection | Qt::DirectConnection));
     return true;
 }
 
@@ -611,7 +605,8 @@ bool NoteStore::getResourceAsync(const bool withDataBody, const bool withRecogni
     m_resourceGuidByAsyncResultPtr[pAsyncResult] = resourceGuid;
 
     QObject::connect(pAsyncResult, QNSIGNAL(qevercloud::AsyncResult,finished,QVariant,QSharedPointer<EverCloudExceptionData>),
-                     this, QNSLOT(NoteStore,onGetResourceAsyncFinished,QVariant,QSharedPointer<EverCloudExceptionData>));
+                     this, QNSLOT(NoteStore,onGetResourceAsyncFinished,QVariant,QSharedPointer<EverCloudExceptionData>),
+                     Qt::ConnectionType(Qt::UniqueConnection | Qt::DirectConnection));
     return true;
 }
 
@@ -1392,7 +1387,7 @@ qint32 NoteStore::processEdamUserExceptionForNote(const Note & note, const qever
         if (userException.parameter.ref() == QStringLiteral("Note.title"))
         {
             if (note.hasTitle()) {
-                errorDescription.appendBase(QT_TR_NOOP("invalid length or pattetn of note's title"));
+                errorDescription.appendBase(QT_TR_NOOP("invalid length or pattern of note's title"));
                 errorDescription.details() = note.title();
             }
             else {
@@ -1464,6 +1459,10 @@ qint32 NoteStore::processEdamUserExceptionForNote(const Note & note, const qever
         if (userException.parameter.ref() == QStringLiteral("Note.deleted")) {
             errorDescription.appendBase(QT_TR_NOOP("deletion timestamp is set on active note"));
         }
+        else {
+            errorDescription.appendBase(QT_TR_NOOP("unexpected parameter"));
+            errorDescription.details() = userException.parameter.ref();
+        }
 
         return userException.errorCode;
     }
@@ -1488,6 +1487,10 @@ qint32 NoteStore::processEdamUserExceptionForNote(const Note & note, const qever
         if (userException.parameter.ref() == QStringLiteral("Resource.data")) {
             errorDescription.appendBase(QT_TR_NOOP("data body for some of note's resources is missing"));
             QNWARNING(errorDescription << QStringLiteral(", note: ") << note);
+        }
+        else {
+            errorDescription.appendBase(QT_TR_NOOP("unexpected parameter"));
+            errorDescription.details() = userException.parameter.ref();
         }
 
         return userException.errorCode;

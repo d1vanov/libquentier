@@ -86,7 +86,7 @@ Q_SIGNALS:
     void updateNotebook(Notebook notebook, QUuid requestId);
     void updateTag(Tag tag, QUuid requestId);
     void updateSavedSearch(SavedSearch search, QUuid requestId);
-    void updateNote(Note note, bool updateResources, bool updateTags, QUuid requestId);
+    void updateNote(Note note, LocalStorageManager::UpdateNoteOptions options, QUuid requestId);
 
 public Q_SLOTS:
     void start();
@@ -112,8 +112,9 @@ private Q_SLOTS:
     void onUpdateTagFailed(Tag tag, ErrorString errorDescription, QUuid requestId);
     void onUpdateSavedSearchComplete(SavedSearch search, QUuid requestId);
     void onUpdateSavedSearchFailed(SavedSearch search, ErrorString errorDescription, QUuid requestId);
-    void onUpdateNoteComplete(Note note, bool updateResources, bool updateTags, QUuid requestId);
-    void onUpdateNoteFailed(Note note, bool updateResources, bool updateTags, ErrorString errorDescription, QUuid requestId);
+    void onUpdateNoteComplete(Note note, LocalStorageManager::UpdateNoteOptions options, QUuid requestId);
+    void onUpdateNoteFailed(Note note, LocalStorageManager::UpdateNoteOptions options,
+                            ErrorString errorDescription, QUuid requestId);
 
 private:
     void connectToLocalStorage();

@@ -52,10 +52,16 @@ function managedPageAction(command, args) {
     textEditingUndoRedoManager.pushNode(targetNode, targetNodeHtml);
     textEditingUndoRedoManager.pushNumMutations(1);
 
+    var shouldRestoreSelection = (command != 'insertText') &&
+                                 (command != 'cut') &&
+                                 (command != 'insertUnorderedList') &&
+                                 (command != 'insertOrderedList') &&
+                                 (command != 'indent') &&
+                                 (command != 'outdent')
     observer.stop();
     try {
         var savedSelection;
-        if ((command != 'insertText') && (command != 'cut')) {
+        if (shouldRestoreSelection) {
             savedSelection = selectionManager.saveSelection();
         }
 
@@ -67,7 +73,7 @@ function managedPageAction(command, args) {
             document.execCommand(command, false, args);
         }
 
-        if ((command != 'insertText') && (command != 'cut')) {
+        if (shouldRestoreSelection) {
             selectionManager.restoreSelection(savedSelection);
         }
     }

@@ -25,7 +25,7 @@ namespace quentier {
 #define GET_PAGE() \
     NoteEditorPage * page = qobject_cast<NoteEditorPage*>(m_noteEditorPrivate.page()); \
     if (Q_UNLIKELY(!page)) { \
-        ErrorString error(QT_TR_NOOP("Can't undo/redo hyperlink removal: no note editor's page")); \
+        ErrorString error(QT_TRANSLATE_NOOP("RemoveHyperlinkUndoCommand", "Can't undo/redo hyperlink removal: no note editor's page")); \
         QNWARNING(error); \
         Q_EMIT notifyError(error); \
         return; \

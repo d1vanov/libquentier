@@ -24,25 +24,15 @@
 
 namespace quentier {
 
-UserStore::UserStore(QSharedPointer<qevercloud::UserStore> pQecUserStore) :
-    m_pQecUserStore(pQecUserStore)
+UserStore::UserStore(const QSharedPointer<qevercloud::UserStore> & pQecUserStore) :
+    IUserStore(pQecUserStore)
 {
     QUENTIER_CHECK_PTR(m_pQecUserStore)
 }
 
-QSharedPointer<qevercloud::UserStore> UserStore::getQecUserStore()
+IUserStore * UserStore::create(const QString & host) const
 {
-    return m_pQecUserStore;
-}
-
-QString UserStore::authenticationToken() const
-{
-    return m_pQecUserStore->authenticationToken();
-}
-
-void UserStore::setAuthenticationToken(const QString & authToken)
-{
-    m_pQecUserStore->setAuthenticationToken(authToken);
+    return new UserStore(QSharedPointer<qevercloud::UserStore>(new qevercloud::UserStore(host)));
 }
 
 bool UserStore::checkVersion(const QString & clientName, qint16 edamVersionMajor, qint16 edamVersionMinor,
@@ -105,25 +95,25 @@ qint32 UserStore::processEdamUserException(const qevercloud::EDAMUserException &
     switch(userException.errorCode)
     {
     case qevercloud::EDAMErrorCode::BAD_DATA_FORMAT:
-        errorDescription.setBase(QT_TR_NOOP("BAD_DATA_FORMAT exception"));
+        errorDescription.setBase(QT_TRANSLATE_NOOP("UserStore", "BAD_DATA_FORMAT exception"));
         break;
     case qevercloud::EDAMErrorCode::INTERNAL_ERROR:
-        errorDescription.setBase(QT_TR_NOOP("INTERNAL_ERROR exception"));
+        errorDescription.setBase(QT_TRANSLATE_NOOP("UserStore", "INTERNAL_ERROR exception"));
         break;
     case qevercloud::EDAMErrorCode::TAKEN_DOWN:
-        errorDescription.setBase(QT_TR_NOOP("TAKEN_DOWN exception"));
+        errorDescription.setBase(QT_TRANSLATE_NOOP("UserStore", "TAKEN_DOWN exception"));
         break;
     case qevercloud::EDAMErrorCode::INVALID_AUTH:
-        errorDescription.setBase(QT_TR_NOOP("INVALID_AUTH exception"));
+        errorDescription.setBase(QT_TRANSLATE_NOOP("UserStore", "INVALID_AUTH exception"));
         break;
     case qevercloud::EDAMErrorCode::AUTH_EXPIRED:
-        errorDescription.setBase(QT_TR_NOOP("AUTH_EXPIRED exception"));
+        errorDescription.setBase(QT_TRANSLATE_NOOP("UserStore", "AUTH_EXPIRED exception"));
         break;
     case qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED:
-        errorDescription.setBase(QT_TR_NOOP("RATE_LIMIT_REACHED exception"));
+        errorDescription.setBase(QT_TRANSLATE_NOOP("UserStore", "RATE_LIMIT_REACHED exception"));
         break;
     default:
-        errorDescription.setBase(QT_TR_NOOP("Error"));
+        errorDescription.setBase(QT_TRANSLATE_NOOP("UserStore", "Error"));
         errorDescription.details() = QStringLiteral("error code = ");
         errorDescription.details() += QString::number(userException.errorCode);
         break;
@@ -152,11 +142,11 @@ qint32 UserStore::processEdamSystemException(const qevercloud::EDAMSystemExcepti
     if (systemException.errorCode == qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED)
     {
         if (!systemException.rateLimitDuration.isSet()) {
-            errorDescription.setBase(QT_TR_NOOP("Evernote API rate limit exceeded but "
-                                                "no rate limit duration is available"));
+            errorDescription.setBase(QT_TRANSLATE_NOOP("UserStore", "Evernote API rate limit exceeded but "
+                                                       "no rate limit duration is available"));
         }
         else {
-            errorDescription.setBase(QT_TR_NOOP("Evernote API rate limit exceeded, retry in"));
+            errorDescription.setBase(QT_TRANSLATE_NOOP("UserStore", "Evernote API rate limit exceeded, retry in"));
             errorDescription.details() = QString::number(systemException.rateLimitDuration.ref());
             errorDescription.details() += QStringLiteral(" sec");
             rateLimitSeconds = systemException.rateLimitDuration.ref();
@@ -164,7 +154,7 @@ qint32 UserStore::processEdamSystemException(const qevercloud::EDAMSystemExcepti
     }
     else
     {
-        errorDescription.setBase(QT_TR_NOOP("Caught EDAM system exception, error code "));
+        errorDescription.setBase(QT_TRANSLATE_NOOP("UserStore", "Caught EDAM system exception, error code "));
         errorDescription.details() += QStringLiteral("error code = ");
         errorDescription.details() += ToString(systemException.errorCode);
 

@@ -27,7 +27,7 @@ void QuentierAddLogEntry(const QString & sourceFileName, const int sourceFileLin
     }
 
     QString logEntry = relativeSourceFileName;
-    logEntry += QStringLiteral(" @ ");
+    logEntry += QStringLiteral(QNLOG_FILE_LINENUMBER_DELIMITER);
     logEntry += QString::number(sourceFileLineNumber);
     logEntry += QStringLiteral(" [");
 
@@ -85,6 +85,12 @@ void QuentierAddStdOutLogDestination()
 QString QuentierLogFilesDirPath()
 {
     return QuentierLogger::logFilesDirPath();
+}
+
+void QuentierRestartLogging()
+{
+    QuentierLogger & logger = QuentierLogger::instance();
+    logger.restartLogging();
 }
 
 } // namespace quentier

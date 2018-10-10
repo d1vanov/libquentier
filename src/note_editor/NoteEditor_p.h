@@ -746,7 +746,6 @@ private:
     QString     m_getSelectionHtmlJs;
     QString     m_snapSelectionToWordJs;
     QString     m_replaceSelectionWithHtmlJs;
-    QString     m_replaceHyperlinkContentJs;
     QString     m_updateResourceHashJs;
     QString     m_updateImageResourceSrcJs;
     QString     m_provideSrcForResourceImgTagsJs;
@@ -773,6 +772,7 @@ private:
     QString     m_toDoCheckboxAutomaticInsertionJs;
     QString     m_disablePasteJs;
     QString     m_findAndReplaceDOMTextJs;
+    QString     m_tabAndShiftTabIndentAndUnindentReplacerJs;
 
 #ifndef QUENTIER_USE_QT_WEB_ENGINE
     QString     m_qWebKitSetupJs;

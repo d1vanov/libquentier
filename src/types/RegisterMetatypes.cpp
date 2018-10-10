@@ -16,6 +16,7 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "../src/synchronization/SynchronizationShared.h"
 #include <quentier/types/RegisterMetatypes.h>
 #include <quentier/types/Account.h>
 #include <quentier/types/ErrorString.h>
@@ -31,6 +32,8 @@
 #include <quentier/local_storage/NoteSearchQuery.h>
 #include <QMetaType>
 #include <QSqlError>
+#include <QSharedPointer>
+#include <QVector>
 
 namespace quentier {
 
@@ -44,6 +47,21 @@ void registerMetatypes()
     qRegisterMetaType<LinkedNotebook>("LinkedNotebook");
     qRegisterMetaType<SavedSearch>("SavedSearch");
     qRegisterMetaType<Account>("Account");
+
+    qRegisterMetaType<qevercloud::UserID>("qevercloud::UserID");
+    qRegisterMetaType<qevercloud::Timestamp>("qevercloud::Timestamp");
+    qRegisterMetaType<qevercloud::Note>("qevercloud::Note");
+    qRegisterMetaType<qevercloud::SavedSearch>("qevercloud::SavedSearch");
+    qRegisterMetaType<qevercloud::Tag>("qevercloud::Tag");
+    qRegisterMetaType<qevercloud::Notebook>("qevercloud::Notebook");
+    qRegisterMetaType<qevercloud::Resource>("qevercloud::Resource");
+
+    qRegisterMetaType<QSharedPointer<qevercloud::EverCloudExceptionData> >("QSharedPointer<qevercloud::EverCloudExceptionData>");
+
+    typedef qevercloud::EverCloudExceptionData EverCloudExceptionData;
+    qRegisterMetaType<QSharedPointer<EverCloudExceptionData> >("QSharedPointer<EverCloudExceptionData>");
+
+    qRegisterMetaType<QVector<LinkedNotebookAuthData> >("QVector<LinkedNotebookAuthData>");
 
     qRegisterMetaType< QList<Notebook> >("QList<Notebook>");
     qRegisterMetaType< QList<Note> >("QList<Note>");
@@ -62,11 +80,13 @@ void registerMetatypes()
     qRegisterMetaType<LocalStorageManager::ListTagsOrder::type>("LocalStorageManager::ListTagsOrder::type");
     qRegisterMetaType<LocalStorageManager::ListSavedSearchesOrder::type>("LocalStorageManager::ListSavedSearchesOrder::type");
     qRegisterMetaType<LocalStorageManager::OrderDirection::type>("LocalStorageManager::OrderDirection::type");
+    qRegisterMetaType<LocalStorageManager::UpdateNoteOptions>("LocalStorageManager::UpdateNoteOptions");
     qRegisterMetaType<size_t>("size_t");
 
     qRegisterMetaType<QUuid>("QUuid");
 
     qRegisterMetaType<QList<QPair<QString,QString> > >("QList<QPair<QString,QString> >");
+    qRegisterMetaType<QHash<QString, QPair<QString,QString> > >("QHash<QString, QPair<QString,QString> >");
     qRegisterMetaType<QHash<QString,QString> >("QHash<QString,QString>");
     qRegisterMetaType<QHash<QString,qevercloud::Timestamp> >("QHash<QString,qevercloud::Timestamp>");
     qRegisterMetaType<QHash<QString,qint32> >("QHash<QString,qint32>");
@@ -76,6 +96,8 @@ void registerMetatypes()
 
     qRegisterMetaType<ErrorString>("ErrorString");
     qRegisterMetaType<QSqlError>("QSqlError");
+
+    qRegisterMetaType<QList<std::pair<Tag, QStringList> > >("QList<std::pair<Tag, QStringList> >");
 }
 
 } // namespace quentier

@@ -1,5 +1,6 @@
 function(FIND_TIDY_HTML5)
-  find_path(TIDY_HTML5_INCLUDE_PATH tidy.h PATHS /usr/include)
+  find_path(TIDY_HTML5_INCLUDE_PATH tidy.h
+            PATHS /usr/include /usr/include/tidy)
   if(NOT TIDY_HTML5_INCLUDE_PATH)
     return()
   endif()

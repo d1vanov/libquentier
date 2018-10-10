@@ -88,7 +88,7 @@ void LocalStorageCacheManagerPrivate::cache##Type(const Type & name) \
             res = m_cacheExpiryChecker->expiry_checker(); \
             if (Q_UNLIKELY(!res)) { \
                 auto latIndexBegin = latIndex.begin(); \
-                QNDEBUG(QStringLiteral("Going to remove the object from local storage cache: ") << *latIndexBegin); \
+                QNTRACE(QStringLiteral("Going to remove the object from local storage cache") << *latIndexBegin); \
                 Q_UNUSED(latIndex.erase(latIndexBegin)); \
                 continue; \
             } \
@@ -105,7 +105,7 @@ void LocalStorageCacheManagerPrivate::cache##Type(const Type & name) \
     Index::iterator it = uniqueIndex.find(name.IndexAccessor()); \
     if (it != uniqueIndex.end()) { \
         uniqueIndex.replace(it, name##Holder); \
-        QNDEBUG(QStringLiteral("Updated " #name " in the local storage cache: ") << name); \
+        QNTRACE(QStringLiteral("Updated " #name " in the local storage cache: ") << name); \
         return; \
     } \
     \
@@ -113,12 +113,12 @@ void LocalStorageCacheManagerPrivate::cache##Type(const Type & name) \
     auto insertionResult = cache_name.insert(name##Holder); \
     if (Q_UNLIKELY(!insertionResult.second)) { \
         QNWARNING(QStringLiteral("Failed to insert " #name " into the cache of local storage manager: ") << name); \
-        ErrorString error(QT_TR_NOOP("Unable to insert the data item into the local storage cache")); \
+        ErrorString error(QT_TRANSLATE_NOOP("LocalStorageCacheManagerPrivate", "Unable to insert the data item into the local storage cache")); \
         error.details() = QStringLiteral( #name ); \
         throw LocalStorageCacheManagerException(error); \
     } \
     \
-    QNDEBUG(QStringLiteral("Added " #name " to the local storage cache: ") << name); \
+    QNTRACE(QStringLiteral("Added " #name " to the local storage cache") << name); \
 }
 
 CACHE_OBJECT(Note, note, NotesCache, m_notesCache, checkNotes, ByLocalUid, localUid)

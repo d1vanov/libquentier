@@ -19,13 +19,14 @@
 #include <quentier/synchronization/SynchronizationManager.h>
 #include "SynchronizationManager_p.h"
 #include <quentier/local_storage/LocalStorageManagerAsync.h>
+#include <quentier_private/synchronization/SynchronizationManagerDependencyInjector.h>
 
 namespace quentier {
 
-SynchronizationManager::SynchronizationManager(const QString & consumerKey, const QString & consumerSecret,
-                                               const QString & host, LocalStorageManagerAsync & localStorageManagerAsync,
-                                               IAuthenticationManager & authenticationManager) :
-    d_ptr(new SynchronizationManagerPrivate(consumerKey, consumerSecret, host, localStorageManagerAsync, authenticationManager))
+SynchronizationManager::SynchronizationManager(const QString & host, LocalStorageManagerAsync & localStorageManagerAsync,
+                                               IAuthenticationManager & authenticationManager,
+                                               SynchronizationManagerDependencyInjector * pInjector) :
+    d_ptr(new SynchronizationManagerPrivate(host, localStorageManagerAsync, authenticationManager, pInjector, this))
 {
     QObject::connect(d_ptr, QNSIGNAL(SynchronizationManagerPrivate,notifyStart),
                      this, QNSIGNAL(SynchronizationManager,started));
@@ -33,8 +34,8 @@ SynchronizationManager::SynchronizationManager(const QString & consumerKey, cons
                      this, QNSIGNAL(SynchronizationManager,stopped));
     QObject::connect(d_ptr, QNSIGNAL(SynchronizationManagerPrivate,notifyError,ErrorString),
                      this, QNSIGNAL(SynchronizationManager,failed,ErrorString));
-    QObject::connect(d_ptr, QNSIGNAL(SynchronizationManagerPrivate,notifyFinish,Account),
-                     this, QNSIGNAL(SynchronizationManager,finished,Account));
+    QObject::connect(d_ptr, QNSIGNAL(SynchronizationManagerPrivate,notifyFinish,Account,bool,bool),
+                     this, QNSIGNAL(SynchronizationManager,finished,Account,bool,bool));
     QObject::connect(d_ptr, QNSIGNAL(SynchronizationManagerPrivate,syncChunksDownloaded),
                      this, QNSIGNAL(SynchronizationManager,syncChunksDownloaded));
     QObject::connect(d_ptr, QNSIGNAL(SynchronizationManagerPrivate,syncChunksDownloadProgress,qint32,qint32,qint32),
@@ -69,14 +70,12 @@ SynchronizationManager::SynchronizationManager(const QString & consumerKey, cons
                      this, QNSIGNAL(SynchronizationManager,detectedConflictDuringLocalChangesSending));
     QObject::connect(d_ptr, QNSIGNAL(SynchronizationManagerPrivate,rateLimitExceeded,qint32),
                      this, QNSIGNAL(SynchronizationManager,rateLimitExceeded,qint32));
-    QObject::connect(d_ptr, QNSIGNAL(SynchronizationManagerPrivate,notifyRemoteToLocalSyncDone),
-                     this, QNSIGNAL(SynchronizationManager,remoteToLocalSyncDone));
+    QObject::connect(d_ptr, QNSIGNAL(SynchronizationManagerPrivate,notifyRemoteToLocalSyncDone,bool),
+                     this, QNSIGNAL(SynchronizationManager,remoteToLocalSyncDone,bool));
 }
 
 SynchronizationManager::~SynchronizationManager()
-{
-    delete d_ptr;
-}
+{}
 
 bool SynchronizationManager::active() const
 {

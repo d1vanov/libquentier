@@ -292,25 +292,34 @@ void NotebookSyncConflictResolver::connectToLocalStorage()
 
     // Connect local signals to local storage manager async's slots
     QObject::connect(this, QNSIGNAL(NotebookSyncConflictResolver,addNotebook,Notebook,QUuid),
-                     &m_localStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,onAddNotebookRequest,Notebook,QUuid));
+                     &m_localStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,onAddNotebookRequest,Notebook,QUuid),
+                     Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
     QObject::connect(this, QNSIGNAL(NotebookSyncConflictResolver,updateNotebook,Notebook,QUuid),
-                     &m_localStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,onUpdateNotebookRequest,Notebook,QUuid));
+                     &m_localStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,onUpdateNotebookRequest,Notebook,QUuid),
+                     Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
     QObject::connect(this, QNSIGNAL(NotebookSyncConflictResolver,findNotebook,Notebook,QUuid),
-                     &m_localStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,onFindNotebookRequest,Notebook,QUuid));
+                     &m_localStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,onFindNotebookRequest,Notebook,QUuid),
+                     Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
 
     // Connect local storage manager async's signals to local slots
     QObject::connect(&m_localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,addNotebookComplete,Notebook,QUuid),
-                     this, QNSLOT(NotebookSyncConflictResolver,onAddNotebookComplete,Notebook,QUuid));
+                     this, QNSLOT(NotebookSyncConflictResolver,onAddNotebookComplete,Notebook,QUuid),
+                     Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
     QObject::connect(&m_localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,addNotebookFailed,Notebook,ErrorString,QUuid),
-                     this, QNSLOT(NotebookSyncConflictResolver,onAddNotebookFailed,Notebook,ErrorString,QUuid));
+                     this, QNSLOT(NotebookSyncConflictResolver,onAddNotebookFailed,Notebook,ErrorString,QUuid),
+                     Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
     QObject::connect(&m_localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,updateNotebookComplete,Notebook,QUuid),
-                     this, QNSLOT(NotebookSyncConflictResolver,onUpdateNotebookComplete,Notebook,QUuid));
+                     this, QNSLOT(NotebookSyncConflictResolver,onUpdateNotebookComplete,Notebook,QUuid),
+                     Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
     QObject::connect(&m_localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,updateNotebookFailed,Notebook,ErrorString,QUuid),
-                     this, QNSLOT(NotebookSyncConflictResolver,onUpdateNotebookFailed,Notebook,ErrorString,QUuid));
+                     this, QNSLOT(NotebookSyncConflictResolver,onUpdateNotebookFailed,Notebook,ErrorString,QUuid),
+                     Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
     QObject::connect(&m_localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,findNotebookComplete,Notebook,QUuid),
-                     this, QNSLOT(NotebookSyncConflictResolver,onFindNotebookComplete,Notebook,QUuid));
+                     this, QNSLOT(NotebookSyncConflictResolver,onFindNotebookComplete,Notebook,QUuid),
+                     Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
     QObject::connect(&m_localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,findNotebookFailed,Notebook,ErrorString,QUuid),
-                     this, QNSLOT(NotebookSyncConflictResolver,onFindNotebookFailed,Notebook,ErrorString,QUuid));
+                     this, QNSLOT(NotebookSyncConflictResolver,onFindNotebookFailed,Notebook,ErrorString,QUuid),
+                     Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
 }
 
 void NotebookSyncConflictResolver::processNotebooksConflictByGuid()

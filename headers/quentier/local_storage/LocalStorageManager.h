@@ -30,6 +30,7 @@
 #include <QSharedPointer>
 #include <QHash>
 #include <cstdint>
+#include <utility>
 
 namespace qevercloud {
 QT_FORWARD_DECLARE_STRUCT(ResourceAttributes)
@@ -59,8 +60,9 @@ public:
      * during the local storage manager construction (used in tests)
      * @param overrideLock - if set to true, the constructor would ignore the existing advisory lock (if any) put on the database file;
      * otherwise the presence of advisory lock on the database file would cause the constructor to throw @link DatabaseLockedException @endlink
+     * @param parent - parent QObject
      */
-    LocalStorageManager(const Account & account, const bool startFromScratch, const bool overrideLock);
+    explicit LocalStorageManager(const Account & account, const bool startFromScratch, const bool overrideLock, QObject * parent = Q_NULLPTR);
 
     virtual ~LocalStorageManager();
 
@@ -384,7 +386,7 @@ public:
      * @param orderDirection - specifies the direction of ordering, by default ascending direction is used;
      * this parameter has no meaning if order is equal to NoOrder
      * @param linkedNotebookGuid - if it's null, the method would list the notebooks ignoring their belonging
-     * to the current account or to some linked notebook; if it's empty, only the non-linked notebooks  would be listed;
+     * to the current account or to some linked notebook; if it's empty, only the non-linked notebooks would be listed;
      * otherwise, the only one notebook from the corresponding linked notebook would be listed
      * @return either the list of notebooks within the account conforming to the filter or empty list
      * in cases of error or no notebooks conforming to the filter exist within the account
@@ -580,6 +582,37 @@ public:
     bool addNote(Note & note, ErrorString & errorDescription);
 
     /**
+     * @brief The UpdateNoteOption is a C++-98 style scoped enum serving as the base enum for QFlags which allows to specify
+     * which note fields should be updated when updateNote method is called
+     *
+     * Most note data is updated unconditionally - note title, content, attributes (if any) etc.
+     * However, some specific data can be chosen to not update - notably, metadata of resources, binary data
+     * of resources or lists of note's tags
+     */
+    struct UpdateNoteOption
+    {
+        enum type
+        {
+            /**
+             * UpdateResourceMetadata value specifies that fields aside dataBody, dataSize, dataHash, alternateDataBody,
+             * alternateDataSize, alternateDataHash for each note's resource should be updated
+             */
+            UpdateResourceMetadata      = 1,
+            /**
+             * UpdateResourceBinaryData value specifies that dataBody, its size and hash and alternateDataBody, its size
+             * and hash should be updated for each of note's resources; this value only has effect if flags also have
+             * UpdateResourceMetadata value enabled!
+             */
+            UpdateResourceBinaryData    = 2,
+            /**
+             * UpdateTags value specifies that note's tag lists should be updated
+             */
+            UpdateTags                  = 4
+        };
+    };
+    Q_DECLARE_FLAGS(UpdateNoteOptions, UpdateNoteOption::type)
+
+    /**
      * @brief updateNote - updates passed in Note in the local storage database
      *
      * If the note has "remote" Evernote service's guid set, it is identified by this guid
@@ -587,35 +620,42 @@ public:
      * to identify the note in the local storage database. If the note has no guid, the local uid
      * is used to identify it in the local storage database.
      *
+     * A special way in which this method might be used is the update of a note which clears note's guid.
+     * This way is special because it imposes certain requirements onto the resources which the note might have.
+     * However, it is only relevant if options input parameter has UpdateResourceMetadata flag enabled. The requirements
+     * for this special case are as follows:
+     *   - each resource should not have noteGuid field set to a non-empty value
+     *   - each resource should not have guid field set to a non-empty value as it makes no sense for note without guid
+     *     i.e. note not synchronized with Evernote to own a resource which has guid i.e. is synchronized with Evernote
+     *
      * @param note - note to be updated in the local storage database; required to contain either "remote" notebook guid
      * or local notebook uid; may be changed as a result of the call, filled with fields like local uid or notebook guid or local uid
      * if any of these were empty before the call; also tag guids are filled if the note passed in contained only tag local uids
      * and tag local uids are filled if the note passed in contained only tag guids. Bear in mind that after the call the note
      * may not have the representative resources if "updateResources" input parameter was false as well as it may not
      * have the representative tags if "updateTags" input parameter was false
-     * @param updateResources - flag indicating whether the note's resources should be updated
-     * along with the note; if not, the existing resource information stored in the local storage is not touched
-     * @param updateTags - flag indicating whether the note's tags should be updated along with the note;
-     * if not, the existing tags to note linkage information is not touched
+     * @param options - options specifying which optionally updatable fields of the note should actually be updated
      * @param errorDescription - error description if note could not be updated
      * @return true if note was updated successfully, false otherwise
      */
-    bool updateNote(Note & note, const bool updateResources,
-                    const bool updateTags, ErrorString & errorDescription);
+    bool updateNote(Note & note, const UpdateNoteOptions options, ErrorString & errorDescription);
 
     /**
      * @brief findNote - attempts to find note in the local storage database
      * @param note - note to be found in the local storage database. Must have either
      * local or "remote" Evernote service's guid set
      * @param errorDescription - error description if note could not be found
+     * @param withResourceMetadata - optional boolean parameter defining whether found note
+     * should be filled with the metadata of its respective attached resources.
      * @param withResourceBinaryData - optional boolean parameter defining whether found note
-     * should be filled with all the contents of its attached resources. By default this parameter is true
-     * which means the whole contents of all resources would be filled. If it's false,
-     * dataBody, recognitionBody or alternateDataBody won't be present within the found note's
-     * resources
+     * should be filled with the whole contents of its respective attached resources including the heavy binary data
+     * of these resources. By default this parameter is true which means the whole contents of all resources
+     * would be filled. If it's false, dataBody, recognitionBody or alternateDataBody won't be present
+     * within the found note's resources
      * @return true if note was found, false otherwise
      */
     bool findNote(Note & note, ErrorString & errorDescription,
+                  const bool withResourceMetadata = true,
                   const bool withResourceBinaryData = true) const;
 
     /**
@@ -646,8 +686,11 @@ public:
      * the "remote" Evernote service's guid set, it would be used to identify the notebook
      * in the local storage database, otherwise its local uid would be used
      * @param errorDescription - error description in case notes could not be listed
+     * @param withResourceMetadata - optional boolean parameter defining whether found notes
+     * should be filled with the metadata of their respective attached resources.
      * @param withResourceBinaryData - optional boolean parameter defining whether found notes
-     * should be filled with all the contents of their respective attached resources.
+     * should be filled with the whole contents of their respective attached resources including the heavy binary data
+     * of these resources. This parameter is only effective if withResourceMetadata is true.
      * By default this parameter is true which means the whole contents of all resources
      * would be filled. If it's false, dataBody, recognitionBody or alternateDataBody
      * won't be present within each found note's resources
@@ -660,6 +703,7 @@ public:
      * no notes presence in the given notebook
      */
     QList<Note> listNotesPerNotebook(const Notebook & notebook, ErrorString & errorDescription,
+                                     const bool withResourceMetadata = true,
                                      const bool withResourceBinaryData = true,
                                      const ListObjectsOptions & flag = ListAll,
                                      const size_t limit = 0, const size_t offset = 0,
@@ -672,8 +716,11 @@ public:
      * the "remote" Evernote service's guid set, it would be used to identify the tag
      * in the local storage database, otherwise its local uid would be used
      * @param errorDescription - error description in case notes could not be listed
+     * @param withResourceMetadata - optional boolean parameter defining whether found notes
+     * should be filled with the metadata of their respective attached resources.
      * @param withResourceBinaryData - optional boolean parameter defining whether found notes
-     * should be filled with all the contents of their respective attached resources.
+     * should be filled with the whole contents of their respective attached resources including the heavy binary data
+     * of these resources. This parameter is only effective if withResourceMetadata is true.
      * By default this parameter is true which means the whole contents of all resources
      * would be filled. If it's false, dataBody, recognitionBody or alternateDataBody
      * won't be present within each found note's resources
@@ -685,19 +732,23 @@ public:
      * @return either list of notes per tag or empty list in case of error or no notes labeled with the given tag presence
      */
     QList<Note> listNotesPerTag(const Tag & tag, ErrorString & errorDescription,
-                                const bool withResourceBinaryData,
-                                const LocalStorageManager::ListObjectsOptions & flag,
-                                const size_t limit, const size_t offset,
-                                const LocalStorageManager::ListNotesOrder::type & order,
-                                const LocalStorageManager::OrderDirection::type & orderDirection) const;
+                                const bool withResourceMetadata = true,
+                                const bool withResourceBinaryData = true,
+                                const LocalStorageManager::ListObjectsOptions & flag = ListAll,
+                                const size_t limit = 0, const size_t offset = 0,
+                                const LocalStorageManager::ListNotesOrder::type & order = ListNotesOrder::NoOrder,
+                                const LocalStorageManager::OrderDirection::type & orderDirection = OrderDirection::Ascending) const;
 
     /**
      * @brief listNotes - attempts to list notes within the account according to the specified input flag
      * @param flag - input parameter used to set the filter for the desired notes to be listed
      * @param errorDescription - error description if notes within the account could not be listed;
      * if no error happens, this parameter is untouched
+     * @param withResourceMetadata - optional boolean parameter defining whether found notes
+     * should be filled with the metadata of their respective attached resources.
      * @param withResourceBinaryData - optional boolean parameter defining whether found notes
-     * should be filled with all the contents of their respective attached resources.
+     * should be filled with the whole contents of their respective attached resources including the heavy binary data
+     * of these resources. This parameter is only effective if withResourceMetadata is true.
      * By default this parameter is true which means the whole contents of all resources
      * would be filled. If it's false, dataBody, recognitionBody or alternateDataBody
      * won't be present within each found note's resources
@@ -713,8 +764,9 @@ public:
      * in cases of error or no notes conforming to the filter exist within the account
      */
     QList<Note> listNotes(const ListObjectsOptions flag, ErrorString & errorDescription,
-                          const bool withResourceBinaryData = true, const size_t limit = 0,
-                          const size_t offset = 0, const ListNotesOrder::type order = ListNotesOrder::NoOrder,
+                          const bool withResourceMetadata = true, const bool withResourceBinaryData = true,
+                          const size_t limit = 0, const size_t offset = 0,
+                          const ListNotesOrder::type order = ListNotesOrder::NoOrder,
                           const OrderDirection::type orderDirection = OrderDirection::Ascending,
                           const QString & linkedNotebookGuid = QString()) const;
 
@@ -732,8 +784,11 @@ public:
      * NoteSearchQuery object.
      * @param noteSearchQuery - filled NoteSearchQuery object used to filter the notes
      * @param errorDescription - error description in case notes could not be listed
+     * @param withResourceMetadata - optional boolean parameter defining whether found notes
+     * should be filled with the metadata of their respective attached resources.
      * @param withResourceBinaryData - optional boolean parameter defining whether found notes
-     * should be filled with all the contents of their respective attached resources.
+     * should be filled with the whole contents of their respective attached resources including the heavy binary data
+     * of these resources. This parameter is only effective if withResourceMetadata is true.
      * By default this parameter is true which means the whole contents of all resources
      * would be filled. If it's false, dataBody, recognitionBody or alternateDataBody
      * won't be present within each found note's resources
@@ -742,6 +797,7 @@ public:
      */
     NoteList findNotesWithSearchQuery(const NoteSearchQuery & noteSearchQuery,
                                       ErrorString & errorDescription,
+                                      const bool withResourceMetadata = true,
                                       const bool withResourceBinaryData = true) const;
 
     /**
@@ -886,6 +942,33 @@ public:
                         const ListTagsOrder::type & order = ListTagsOrder::NoOrder,
                         const OrderDirection::type orderDirection = OrderDirection::Ascending,
                         const QString & linkedNotebookGuid = QString()) const;
+
+    /**
+     * @brief listTagsWithNoteLocalUids - attempts to list tags and their corresponding local uids within the account
+     * according to the specified input flag
+     *
+     * The method is very similar to listTags only for each listed tag it returns the list of note local uids corresponding
+     * to notes labeled with the respective tag.
+     *
+     * @param flag - input parameter used to set the filter for the desired tags to be listed
+     * @param errorDescription - error description if notes within the account could not be listed;
+     * if no error happens, this parameter is untouched
+     * @param limit - limit for the max number of tags in the result, zero by default which means no limit is set
+     * @param offset - number of tags to skip in the beginning of the result, zero by default
+     * @param order - allows to specify particular ordering of tags in the result, NoOrder by default
+     * @param orderDirection - specifies the direction of ordering, by default ascending direction is used;
+     * this parameter has no meaning if order is equal to NoOrder
+     * @param linkedNotebookGuid - if it's null, the method would list tags ignoring their belonging to the current account
+     * or to some linked notebook; if it's empty, only the tags from user's own account would be listed;
+     * otherwise, only the tags corresponding to the certain linked notebook would be listed
+     * @return either list of tags and note local uids within the account conforming to the filter or empty list
+     * in cases of error or no tags conforming to the filter exist within the account
+     */
+    QList<std::pair<Tag, QStringList> > listTagsWithNoteLocalUids(const ListObjectsOptions flag, ErrorString & errorDescription,
+                                                                  const size_t limit = 0, const size_t offset = 0,
+                                                                  const ListTagsOrder::type & order = ListTagsOrder::NoOrder,
+                                                                  const OrderDirection::type orderDirection = OrderDirection::Ascending,
+                                                                  const QString & linkedNotebookGuid = QString()) const;
 
     /**
      * @brief expungeTag - permanently deletes tag from local storage.

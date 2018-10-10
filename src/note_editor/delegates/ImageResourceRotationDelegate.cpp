@@ -30,7 +30,7 @@ namespace quentier {
 #define GET_PAGE() \
     NoteEditorPage * page = qobject_cast<NoteEditorPage*>(m_noteEditor.page()); \
     if (Q_UNLIKELY(!page)) { \
-        ErrorString error(QT_TR_NOOP("Can't rotate the image attachment: no note editor page")); \
+        ErrorString error(QT_TRANSLATE_NOOP("ImageResourceRotationDelegate", "Can't rotate the image attachment: no note editor page")); \
         QNWARNING(error); \
         Q_EMIT notifyError(error); \
         return; \

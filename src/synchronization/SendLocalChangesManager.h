@@ -19,7 +19,6 @@
 #ifndef LIB_QUENTIER_SYNCHRONIZATION_SEND_LOCAL_CHANGES_MANAGER_H
 #define LIB_QUENTIER_SYNCHRONIZATION_SEND_LOCAL_CHANGES_MANAGER_H
 
-#include "NoteStore.h"
 #include "SynchronizationShared.h"
 #include <quentier/utility/Macros.h>
 #include <quentier/types/ErrorString.h>
@@ -28,6 +27,7 @@
 #include <quentier/types/SavedSearch.h>
 #include <quentier/types/Notebook.h>
 #include <quentier/types/Note.h>
+#include <quentier_private/synchronization/INoteStore.h>
 #include <QObject>
 
 namespace quentier {
@@ -42,8 +42,8 @@ public:
     {
     public:
         virtual LocalStorageManagerAsync & localStorageManagerAsync() = 0;
-        virtual NoteStore & noteStore() = 0;
-        virtual NoteStore * noteStoreForLinkedNotebook(const LinkedNotebook & linkedNotebook) = 0;
+        virtual INoteStore & noteStore() = 0;
+        virtual INoteStore * noteStoreForLinkedNotebook(const LinkedNotebook & linkedNotebook) = 0;
         virtual ~IManager() {}
     };
 
@@ -67,7 +67,7 @@ Q_SIGNALS:
 
     // progress information
     void receivedUserAccountDirtyObjects();
-    void receivedAllDirtyObjects();
+    void receivedDirtyObjectsFromLinkedNotebooks();
 
 public Q_SLOTS:
     void start(qint32 updateCount, QHash<QString,qint32> updateCountByLinkedNotebookGuid);
@@ -95,9 +95,8 @@ Q_SIGNALS:
                                              LocalStorageManager::OrderDirection::type orderDirection,
                                              QString linkedNotebookGuid, QUuid requestId);
     void requestLocalUnsynchronizedNotes(LocalStorageManager::ListObjectsOptions flag,
-                                         bool withResourceBinaryData,
-                                         size_t limit, size_t offset,
-                                         LocalStorageManager::ListNotesOrder::type order,
+                                         bool withResourceMetadata, bool withResourceBinaryData,
+                                         size_t limit, size_t offset, LocalStorageManager::ListNotesOrder::type order,
                                          LocalStorageManager::OrderDirection::type orderDirection,
                                          QString linkedNotebookGuid, QUuid requestId);
 
@@ -111,7 +110,7 @@ Q_SIGNALS:
     void updateTag(Tag tag, QUuid requestId);
     void updateSavedSearch(SavedSearch savedSearch, QUuid requestId);
     void updateNotebook(Notebook notebook, QUuid requestId);
-    void updateNote(Note note, bool updateResources, bool updateTags, QUuid requestId);
+    void updateNote(Note note, LocalStorageManager::UpdateNoteOptions options, QUuid requestId);
 
     void findNotebook(Notebook notebook, QUuid requestId);
 
@@ -150,13 +149,13 @@ private Q_SLOTS:
                                     LocalStorageManager::OrderDirection::type orderDirection,
                                     QString linkedNotebookGuid, ErrorString errorDescription, QUuid requestId);
 
-    void onListDirtyNotesCompleted(LocalStorageManager::ListObjectsOptions flag, bool withResourceBinaryData,
-                                   size_t limit, size_t offset,
+    void onListDirtyNotesCompleted(LocalStorageManager::ListObjectsOptions flag, bool withResourceMetadata,
+                                   bool withResourceBinaryData, size_t limit, size_t offset,
                                    LocalStorageManager::ListNotesOrder::type order,
                                    LocalStorageManager::OrderDirection::type orderDirection,
                                    QString linkedNotebookGuid, QList<Note> notes, QUuid requestId);
-    void onListDirtyNotesFailed(LocalStorageManager::ListObjectsOptions flag, bool withResourceBinaryData,
-                                size_t limit, size_t offset,
+    void onListDirtyNotesFailed(LocalStorageManager::ListObjectsOptions flag, bool withResourceMetadata,
+                                bool withResourceBinaryData, size_t limit, size_t offset,
                                 LocalStorageManager::ListNotesOrder::type order,
                                 LocalStorageManager::OrderDirection::type orderDirection,
                                 QString linkedNotebookGuid, ErrorString errorDescription, QUuid requestId);
@@ -181,8 +180,8 @@ private Q_SLOTS:
     void onUpdateNotebookCompleted(Notebook notebook, QUuid requestId);
     void onUpdateNotebookFailed(Notebook notebook, ErrorString errorDescription, QUuid requestId);
 
-    void onUpdateNoteCompleted(Note note, bool updateResources, bool updateTags, QUuid requestId);
-    void onUpdateNoteFailed(Note note, bool updateResources, bool updateTags,
+    void onUpdateNoteCompleted(Note note, LocalStorageManager::UpdateNoteOptions options, QUuid requestId);
+    void onUpdateNoteFailed(Note note, LocalStorageManager::UpdateNoteOptions options,
                             ErrorString errorDescription, QUuid requestId);
 
     void onFindNotebookCompleted(Notebook notebook, QUuid requestId);
@@ -195,7 +194,7 @@ private:
     void connectToLocalStorage();
     void disconnectFromLocalStorage();
 
-    bool requestStuffFromLocalStorage(const QString & linkedNotebookGuid = QString());
+    bool requestStuffFromLocalStorage(const QString & linkedNotebookGuid = QStringLiteral(""));
 
     void checkListLocalStorageObjectsCompletion();
 

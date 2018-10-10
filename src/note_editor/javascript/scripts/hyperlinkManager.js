@@ -29,35 +29,6 @@ function HyperlinkManager() {
 
     var lastError;
 
-    this.replaceHyperlinkContent = function(hyperlinkId, link, text) {
-        console.log("HyperlinkManager::replaceHyperlinkContent: hyperlink id = " + hyperlinkId +
-                    ", link = " + link + ", text = " + text);
-
-        var element = document.querySelector("[en-hyperlink-id='" + hyperlinkId + "']");
-        if (!element) {
-            lastError = "can't replace hyperlink content: can't find hyperlink element by id number";
-            return { status:false, error:lastError };
-        }
-
-        if (!element.parentNode) {
-            lastError = "can't replace hyperlink content: the found hyperlink element has no parent";
-            return { status:false, error:lastError };
-        }
-
-        undoNodes.push(element.parentNode);
-        undoNodeInnerHtmls.push(element.parentNode.innerHTML);
-
-        observer.stop();
-
-        try {
-            element.setAttribute("href", link);
-            element.innerHTML = text;
-        }
-        finally {
-            observer.start();
-        }
-    }
-
     this.removeHyperlink = function(hyperlinkIdNumber, completely) {
         console.log("HyperlinkManager::removeHyperlink: id number = " + hyperlinkIdNumber +
                     ", completely = " + (completely ? "true" : "false"));
@@ -195,6 +166,8 @@ function HyperlinkManager() {
         finally {
             observer.start();
         }
+
+        return { status:true, error:"" };
     }
 
     this.getHyperlinkData = function(hyperlinkId) {

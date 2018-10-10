@@ -23,7 +23,7 @@ QuentierFileLogWriter::QuentierFileLogWriter(const MaxSizeBytes & maxSizeBytes,
                                              QObject * parent) :
     IQuentierLogWriter(parent),
     m_logFile(),
-    m_stream(),
+    m_pStream(),
     m_maxSizeBytes(maxSizeBytes.size()),
     m_maxOldLogFilesCount(maxOldLogFilesCount.count()),
     m_currentLogFileSize(0),
@@ -53,9 +53,6 @@ QuentierFileLogWriter::QuentierFileLogWriter(const MaxSizeBytes & maxSizeBytes,
         error.details() += QString::number(m_logFile.error());
         throw LoggerInitializationException(error);
     }
-
-    m_stream.setDevice(&m_logFile);
-    m_stream.setCodec(QTextCodec::codecForName("UTF-8"));
 
     m_currentLogFileSize = m_logFile.size();
 
@@ -88,8 +85,49 @@ void QuentierFileLogWriter::write(QString message)
         rotate();
     }
 
-    m_stream << message << QStringLiteral("\n");
-    m_stream.flush();
+    if (Q_UNLIKELY(m_pStream.isNull())) {
+        m_pStream.reset(new QTextStream);
+        m_pStream->setDevice(&m_logFile);
+        m_pStream->setCodec(QTextCodec::codecForName("UTF-8"));
+    }
+
+    *m_pStream << message << QStringLiteral("\n");
+    m_pStream->flush();
+}
+
+void QuentierFileLogWriter::restartLogging()
+{
+    if (m_pStream) {
+        m_pStream->flush();
+        m_pStream->setDevice(Q_NULLPTR);
+    }
+
+    m_logFile.close();
+
+    QFileInfo logFileInfo(m_logFile);
+    QString logFilePath = logFileInfo.absoluteFilePath();
+    bool res = QFile::remove(logFilePath);
+    if (Q_UNLIKELY(!res))
+    {
+        std::cerr << "Can't restart logging: failed to remove the existing log file: " << qPrintable(logFilePath) << "\n";
+    }
+    else
+    {
+        m_logFile.setFileName(logFilePath);
+        bool opened = m_logFile.open(QIODevice::WriteOnly | QIODevice::Append | QIODevice::Unbuffered | QIODevice::Text);
+        if (Q_UNLIKELY(!opened)) {
+            std::cerr << "Can't open the new libquentier log file, error: " << qPrintable(m_logFile.errorString())
+                << " (error code " << qPrintable(QString::number(m_logFile.error())) << ")\n";
+            return;
+        }
+    }
+
+    m_currentLogFileSize = m_logFile.size();
+
+    if (m_pStream) {
+        m_pStream->setDevice(&m_logFile);
+        m_pStream->setCodec(QTextCodec::codecForName("UTF-8"));
+    }
 }
 
 void QuentierFileLogWriter::rotate()
@@ -121,7 +159,9 @@ void QuentierFileLogWriter::rotate()
     }
 
     // 2) Rename the current log file
-    m_stream.setDevice(Q_NULLPTR);
+    if (m_pStream) {
+        m_pStream->setDevice(Q_NULLPTR);
+    }
     m_logFile.close();
     bool res = m_logFile.rename(logFileDirPath + QStringLiteral("/") + QCoreApplication::applicationName() + QStringLiteral("-log.1.txt"));
     if (Q_UNLIKELY(!res)) {
@@ -141,8 +181,10 @@ void QuentierFileLogWriter::rotate()
 
     m_currentLogFileSize = m_logFile.size();
 
-    m_stream.setDevice(&m_logFile);
-    m_stream.setCodec(QTextCodec::codecForName("UTF-8"));
+    if (m_pStream) {
+        m_pStream->setDevice(&m_logFile);
+        m_pStream->setCodec(QTextCodec::codecForName("UTF-8"));
+    }
 
     // 4) Increase the current count of old log files
     ++m_currentOldLogFilesCount;
@@ -220,6 +262,13 @@ void QuentierLogger::addLogWriter(IQuentierLogWriter * pLogWriter)
                      pLogWriter, QNSLOT(IQuentierLogWriter,write,QString),
                      Qt::QueuedConnection);
 
+    QuentierFileLogWriter * pFileLogWriter = qobject_cast<QuentierFileLogWriter*>(pLogWriter);
+    if (pFileLogWriter) {
+        QObject::connect(this, QNSIGNAL(QuentierLogger,sendRestartLoggingRequest),
+                         pFileLogWriter, QNSLOT(QuentierFileLogWriter,restartLogging),
+                         Qt::QueuedConnection);
+    }
+
     pLogWriter->setParent(Q_NULLPTR);
     pLogWriter->moveToThread(m_pImpl->m_pLogWriteThread);
 }
@@ -259,6 +308,11 @@ void QuentierLogger::setMinLogLevel(const LogLevel::type minLogLevel)
     Q_UNUSED(m_pImpl->m_minLogLevel.fetchAndStoreOrdered(static_cast<int>(minLogLevel)))
 }
 
+void QuentierLogger::restartLogging()
+{
+    Q_EMIT sendRestartLoggingRequest();
+}
+
 LogLevel::type QuentierLogger::minLogLevel() const
 {
     return static_cast<LogLevel::type>(
@@ -278,7 +332,7 @@ QuentierLoggerImpl::QuentierLoggerImpl(QObject * parent) :
 {
     QObject::connect(m_pLogWriteThread, QNSIGNAL(QThread,finished), m_pLogWriteThread, QNSLOT(QThread,deleteLater));
     QObject::connect(this, QNSIGNAL(QuentierLoggerImpl,destroyed), m_pLogWriteThread, QNSLOT(QThread,quit));
-    m_pLogWriteThread->setObjectName(QStringLiteral("Logger thread"));
+    m_pLogWriteThread->setObjectName(QStringLiteral("Libquentier-logger-thread"));
     m_pLogWriteThread->start(QThread::LowPriority);
 }
 

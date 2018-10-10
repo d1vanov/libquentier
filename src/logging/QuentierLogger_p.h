@@ -11,6 +11,7 @@
 #include <QTextStream>
 #include <QThread>
 #include <QAtomicInt>
+#include <QScopedPointer>
 
 #if __cplusplus < 201103L
 #include <QMutex>
@@ -84,13 +85,14 @@ public:
 
 public Q_SLOTS:
     virtual void write(QString message) Q_DECL_OVERRIDE;
+    void restartLogging();
 
 private:
     void rotate();
 
 private:
     QFile       m_logFile;
-    QTextStream m_stream;
+    QScopedPointer<QTextStream>     m_pStream;
 
     qint64      m_maxSizeBytes;
     int         m_maxOldLogFilesCount;
@@ -127,8 +129,11 @@ public:
     LogLevel::type minLogLevel() const;
     void setMinLogLevel(const LogLevel::type minLogLevel);
 
+    void restartLogging();
+
 Q_SIGNALS:
     void sendLogMessage(QString message);
+    void sendRestartLoggingRequest();
 
 private:
     QuentierLogger(QObject * parent = Q_NULLPTR);

@@ -144,7 +144,7 @@ typedef QWebEngineSettings WebSettings;
 #define CHECK_NOTE_EDITABLE(message) \
     if (Q_UNLIKELY(!isPageEditable())) { \
         ErrorString error(message); \
-        error.appendBase(QT_TR_NOOP("Note is not editable")); \
+        error.appendBase(QT_TRANSLATE_NOOP("NoteEditorPrivate", "Note is not editable")); \
         QNINFO(error << QStringLiteral(", note: ") << (m_pNote.isNull() ? QStringLiteral("<null>") : m_pNote->toString()) \
                << QStringLiteral("\nNotebook: ") << (m_pNotebook.isNull() ? QStringLiteral("<null>") : m_pNotebook->toString())); \
         Q_EMIT notifyError(error); \
@@ -154,7 +154,7 @@ typedef QWebEngineSettings WebSettings;
 #define CHECK_ACCOUNT(message, ...) \
     if (Q_UNLIKELY(m_pAccount.isNull())) { \
         ErrorString error(message); \
-        error.appendBase(QT_TR_NOOP("No account is associated with the note editor")); \
+        error.appendBase(QT_TRANSLATE_NOOP("NoteEditorPrivate", "No account is associated with the note editor")); \
         QNWARNING(error); \
         Q_EMIT notifyError(error); \
         return __VA_ARGS__; \
@@ -182,7 +182,6 @@ NoteEditorPrivate::NoteEditorPrivate(NoteEditor & noteEditor) :
     m_getSelectionHtmlJs(),
     m_snapSelectionToWordJs(),
     m_replaceSelectionWithHtmlJs(),
-    m_replaceHyperlinkContentJs(),
     m_updateResourceHashJs(),
     m_updateImageResourceSrcJs(),
     m_provideSrcForResourceImgTagsJs(),
@@ -209,6 +208,7 @@ NoteEditorPrivate::NoteEditorPrivate(NoteEditor & noteEditor) :
     m_toDoCheckboxAutomaticInsertionJs(),
     m_disablePasteJs(),
     m_findAndReplaceDOMTextJs(),
+    m_tabAndShiftTabIndentAndUnindentReplacerJs(),
 #ifndef QUENTIER_USE_QT_WEB_ENGINE
     m_qWebKitSetupJs(),
 #else
@@ -293,6 +293,7 @@ NoteEditorPrivate::NoteEditorPrivate(NoteEditor & noteEditor) :
                                 "<link rel=\"stylesheet\" type=\"text/css\" href=\"qrc:/css/en-todo.css\">"
                                 "<link rel=\"stylesheet\" type=\"text/css\" href=\"qrc:/css/link.css\">"
                                 "<link rel=\"stylesheet\" type=\"text/css\" href=\"qrc:/css/misspell.css\">"
+                                "<link rel=\"stylesheet\" type=\"text/css\" href=\"qrc:/css/edit_cursor_trick.css\">"
                                 "<title></title></head>")),
     m_lastSelectedHtml(),
     m_lastSelectedHtmlForEncryption(),
@@ -477,7 +478,6 @@ void NoteEditorPrivate::onNoteLoadFinished(bool ok)
     page->executeJavaScript(m_selectionManagerJs);
     page->executeJavaScript(m_textEditingUndoRedoManagerJs);
     page->executeJavaScript(m_snapSelectionToWordJs);
-    page->executeJavaScript(m_replaceHyperlinkContentJs);
     page->executeJavaScript(m_updateResourceHashJs);
     page->executeJavaScript(m_updateImageResourceSrcJs);
     page->executeJavaScript(m_provideSrcForResourceImgTagsJs);
@@ -501,6 +501,7 @@ void NoteEditorPrivate::onNoteLoadFinished(bool ok)
         page->executeJavaScript(m_setupEnToDoTagsJs);
         page->executeJavaScript(m_flipEnToDoCheckboxStateJs);
         page->executeJavaScript(m_toDoCheckboxAutomaticInsertionJs);
+        page->executeJavaScript(m_tabAndShiftTabIndentAndUnindentReplacerJs);
     }
 
     updateColResizableTableBindings();
@@ -1707,7 +1708,8 @@ void NoteEditorPrivate::onRenameResourceDelegateFinished(QString oldResourceName
 {
     QNDEBUG(QStringLiteral("NoteEditorPrivate::onRenameResourceDelegateFinished: old resource name = ") << oldResourceName
             << QStringLiteral(", new resource name = ") << newResourceName << QStringLiteral(", performing undo = ")
-            << (performingUndo ? QStringLiteral("true") : QStringLiteral("false")) << QStringLiteral(", resource: ") << resource);
+            << (performingUndo ? QStringLiteral("true") : QStringLiteral("false")));
+    QNTRACE(QStringLiteral("Resource: ") << resource);
 
 #ifndef QUENTIER_USE_QT_WEB_ENGINE
     if (m_pPluginFactory) {
@@ -3321,7 +3323,7 @@ void NoteEditorPrivate::saveNoteResourcesToLocalFiles()
 
 bool NoteEditorPrivate::saveResourceToLocalFile(const Resource & resource)
 {
-    QNDEBUG(QStringLiteral("NoteEditorPrivate::saveResourceToLocalFile: ") << resource);
+    QNTRACE(QStringLiteral("NoteEditorPrivate::saveResourceToLocalFile: ") << resource);
 
     if (Q_UNLIKELY(!resource.hasMime())) {
         ErrorString error(QT_TR_NOOP("Can't save the resource to local file: no resource mime type"));
@@ -4384,7 +4386,6 @@ void NoteEditorPrivate::setupScripts()
     SETUP_SCRIPT("javascript/scripts/setInitialCaretPosition.js", m_setInitialCaretPositionJs);
     SETUP_SCRIPT("javascript/scripts/toDoCheckboxAutomaticInserter.js", m_toDoCheckboxAutomaticInsertionJs);
     SETUP_SCRIPT("javascript/scripts/disablePaste.js", m_disablePasteJs);
-    SETUP_SCRIPT("javascript/scripts/replaceHyperlinkContent.js", m_replaceHyperlinkContentJs);
     SETUP_SCRIPT("javascript/scripts/updateResourceHash.js", m_updateResourceHashJs);
     SETUP_SCRIPT("javascript/scripts/updateImageResourceSrc.js", m_updateImageResourceSrcJs);
     SETUP_SCRIPT("javascript/scripts/provideSrcForResourceImgTags.js", m_provideSrcForResourceImgTagsJs);
@@ -4400,6 +4401,7 @@ void NoteEditorPrivate::setupScripts()
     SETUP_SCRIPT("javascript/scripts/hyperlinkManager.js", m_hyperlinkManagerJs);
     SETUP_SCRIPT("javascript/scripts/encryptDecryptManager.js", m_encryptDecryptManagerJs);
     SETUP_SCRIPT("javascript/scripts/findAndReplaceDOMText.js", m_findAndReplaceDOMTextJs);
+    SETUP_SCRIPT("javascript/scripts/tabAndShiftTabToIndentAndUnindentReplacer.js", m_tabAndShiftTabIndentAndUnindentReplacerJs);
 
 #ifndef QUENTIER_USE_QT_WEB_ENGINE
     SETUP_SCRIPT("javascript/scripts/qWebKitSetup.js", m_qWebKitSetupJs);
@@ -5343,7 +5345,7 @@ void NoteEditorPrivate::initialize(FileIOProcessorAsync & fileIOProcessorAsync,
 
 void NoteEditorPrivate::setAccount(const Account & account)
 {
-    QNDEBUG(QStringLiteral("NoteEditorPrivate::setAccount: ") << account);
+    QNDEBUG(QStringLiteral("NoteEditorPrivate::setAccount: ") << account.name());
 
     if (!m_pAccount.isNull() && (m_pAccount->type() == account.type()) &&
         (m_pAccount->name() == account.name()) && (m_pAccount->id() == account.id()))
@@ -7338,7 +7340,7 @@ void NoteEditorPrivate::insertTableDialog()
 
 #define CHECK_NUM_COLUMNS() \
     if (columns <= 0) { \
-        ErrorString error(QT_TR_NOOP("Detected attempt to insert a table with negative or zero number of columns")); \
+        ErrorString error(QT_TRANSLATE_NOOP("NoteEditorPrivate", "Detected attempt to insert a table with negative or zero number of columns")); \
         error.details() = QString::number(columns); \
         QNWARNING(error); \
         Q_EMIT notifyError(error); \
@@ -7347,7 +7349,7 @@ void NoteEditorPrivate::insertTableDialog()
 
 #define CHECK_NUM_ROWS() \
     if (rows <= 0) { \
-        ErrorString error(QT_TR_NOOP("Detected attempt to insert a table with negative or zero number of rows")); \
+        ErrorString error(QT_TRANSLATE_NOOP("NoteEditorPrivate", "Detected attempt to insert a table with negative or zero number of rows")); \
         error.details() = QString::number(rows); \
         QNWARNING(error); \
         Q_EMIT notifyError(error); \
@@ -8144,7 +8146,8 @@ void NoteEditorPrivate::onFoundSelectedHyperlinkId(const QVariant & hyperlinkDat
     EditHyperlinkDelegate * delegate = new EditHyperlinkDelegate(*this, hyperlinkId);
     QObject::connect(delegate, QNSIGNAL(EditHyperlinkDelegate,finished),
                      this, QNSLOT(NoteEditorPrivate,onEditHyperlinkDelegateFinished));
-    QObject::connect(delegate, QNSIGNAL(EditHyperlinkDelegate,cancelled), this, QNSLOT(NoteEditorPrivate,onEditHyperlinkDelegateCancelled));
+    QObject::connect(delegate, QNSIGNAL(EditHyperlinkDelegate,cancelled),
+                     this, QNSLOT(NoteEditorPrivate,onEditHyperlinkDelegateCancelled));
     QObject::connect(delegate, QNSIGNAL(EditHyperlinkDelegate,notifyError,ErrorString),
                      this, QNSLOT(NoteEditorPrivate,onEditHyperlinkDelegateError,ErrorString));
     delegate->start();

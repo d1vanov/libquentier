@@ -43,7 +43,7 @@ Transaction::~Transaction()
         QSqlQuery query(m_db);
         bool res = query.exec(QStringLiteral("ROLLBACK"));
         if (!res) {
-            ErrorString errorMessage(QT_TR_NOOP("Can't rollback the SQL transaction"));
+            ErrorString errorMessage(QT_TRANSLATE_NOOP("Transaction", "Can't rollback the SQL transaction"));
             QSqlError error = query.lastError();
             QMetaObject::invokeMethod(const_cast<LocalStorageManagerPrivate*>(&m_localStorageManager),
                                       "processPostTransactionException", Qt::QueuedConnection,
@@ -55,7 +55,7 @@ Transaction::~Transaction()
         QSqlQuery query(m_db);
         bool res = query.exec(QStringLiteral("END"));
         if (!res) {
-            ErrorString errorMessage(QT_TR_NOOP("Can't end the SQL transaction"));
+            ErrorString errorMessage(QT_TRANSLATE_NOOP("Transaction", "Can't end the SQL transaction"));
             QSqlError error = query.lastError();
             QMetaObject::invokeMethod(const_cast<LocalStorageManagerPrivate*>(&m_localStorageManager),
                                       "processPostTransactionException", Qt::QueuedConnection,
@@ -67,14 +67,14 @@ Transaction::~Transaction()
 bool Transaction::commit(ErrorString & errorDescription)
 {
     if (m_type == Selection) {
-        errorDescription.setBase(QT_TR_NOOP("Can't commit the transaction of selection type"));
+        errorDescription.setBase(QT_TRANSLATE_NOOP("Transaction", "Can't commit the transaction of selection type"));
         return false;
     }
 
     QSqlQuery query(m_db);
     bool res = query.exec(QStringLiteral("COMMIT"));
     if (!res) {
-        errorDescription.setBase(QT_TR_NOOP("Can't commit the SQL transaction"));
+        errorDescription.setBase(QT_TRANSLATE_NOOP("Transaction", "Can't commit the SQL transaction"));
         errorDescription.details() = query.lastError().text();
         QNWARNING(errorDescription << QStringLiteral(", full last query error: ") << query.lastError());
         return false;
@@ -87,7 +87,7 @@ bool Transaction::commit(ErrorString & errorDescription)
 bool Transaction::end(ErrorString & errorDescription)
 {
     if (m_type != Selection) {
-        errorDescription.setBase(QT_TR_NOOP("Only transactions used for selection queries should be "
+        errorDescription.setBase(QT_TRANSLATE_NOOP("Transaction", "Only transactions used for selection queries should be "
                                             "explicitly ended without committing the changes"));
         return false;
     }
@@ -95,7 +95,7 @@ bool Transaction::end(ErrorString & errorDescription)
     QSqlQuery query(m_db);
     bool res = query.exec(QStringLiteral("END"));
     if (!res) {
-        errorDescription.setBase(QT_TR_NOOP("Can't end the SQL transaction"));
+        errorDescription.setBase(QT_TRANSLATE_NOOP("Transaction", "Can't end the SQL transaction"));
         errorDescription.details() = query.lastError().text();
         QNWARNING(errorDescription << QStringLiteral(", full last query error: ") << query.lastError());
         return false;
@@ -119,7 +119,7 @@ void Transaction::init()
     bool res = query.exec(queryString);
     if (!res) {
         QNERROR(QStringLiteral("Error beginning the SQL transaction: ") << query.lastError());
-        ErrorString errorDescription(QT_TR_NOOP("Can't begin the SQL transaction"));
+        ErrorString errorDescription(QT_TRANSLATE_NOOP("Transaction", "Can't begin the SQL transaction"));
         errorDescription.details() = query.lastError().text();
         throw DatabaseSqlErrorException(errorDescription);
     }

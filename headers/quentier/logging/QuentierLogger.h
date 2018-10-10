@@ -53,6 +53,8 @@ bool QUENTIER_EXPORT QuentierIsLogLevelActive(const LogLevel::type logLevel);
 
 QString QUENTIER_EXPORT QuentierLogFilesDirPath();
 
+void QUENTIER_EXPORT QuentierRestartLogging();
+
 } // namespace quentier
 
 #if QT_VERSION >= QT_VERSION_CHECK(5, 4, 0)
@@ -96,5 +98,7 @@ QString QUENTIER_EXPORT QuentierLogFilesDirPath();
 
 #define QUENTIER_ADD_STDOUT_LOG_DESTINATION() \
     quentier::QuentierAddStdOutLogDestination()
+
+#define QNLOG_FILE_LINENUMBER_DELIMITER ":"
 
 #endif // LIB_QUENTIER_LOGGING_QUENTIER_LOGGER_H

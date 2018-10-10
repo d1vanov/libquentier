@@ -288,25 +288,34 @@ void SavedSearchSyncConflictResolver::connectToLocalStorage()
 
     // Connect local signals to local storage manager async's slots
     QObject::connect(this, QNSIGNAL(SavedSearchSyncConflictResolver,addSavedSearch,SavedSearch,QUuid),
-                     &m_localStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,onAddSavedSearchRequest,SavedSearch,QUuid));
+                     &m_localStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,onAddSavedSearchRequest,SavedSearch,QUuid),
+                     Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
     QObject::connect(this, QNSIGNAL(SavedSearchSyncConflictResolver,updateSavedSearch,SavedSearch,QUuid),
-                     &m_localStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,onUpdateSavedSearchRequest,SavedSearch,QUuid));
+                     &m_localStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,onUpdateSavedSearchRequest,SavedSearch,QUuid),
+                     Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
     QObject::connect(this, QNSIGNAL(SavedSearchSyncConflictResolver,findSavedSearch,SavedSearch,QUuid),
-                     &m_localStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,onFindSavedSearchRequest,SavedSearch,QUuid));
+                     &m_localStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,onFindSavedSearchRequest,SavedSearch,QUuid),
+                     Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
 
     // Connect local storage manager async's signals to local slots
     QObject::connect(&m_localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,addSavedSearchComplete,SavedSearch,QUuid),
-                     this, QNSLOT(SavedSearchSyncConflictResolver,onAddSavedSearchComplete,SavedSearch,QUuid));
+                     this, QNSLOT(SavedSearchSyncConflictResolver,onAddSavedSearchComplete,SavedSearch,QUuid),
+                     Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
     QObject::connect(&m_localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,addSavedSearchFailed,SavedSearch,ErrorString,QUuid),
-                     this, QNSLOT(SavedSearchSyncConflictResolver,onAddSavedSearchFailed,SavedSearch,ErrorString,QUuid));
+                     this, QNSLOT(SavedSearchSyncConflictResolver,onAddSavedSearchFailed,SavedSearch,ErrorString,QUuid),
+                     Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
     QObject::connect(&m_localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,updateSavedSearchComplete,SavedSearch,QUuid),
-                     this, QNSLOT(SavedSearchSyncConflictResolver,onUpdateSavedSearchComplete,SavedSearch,QUuid));
+                     this, QNSLOT(SavedSearchSyncConflictResolver,onUpdateSavedSearchComplete,SavedSearch,QUuid),
+                     Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
     QObject::connect(&m_localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,updateSavedSearchFailed,SavedSearch,ErrorString,QUuid),
-                     this, QNSLOT(SavedSearchSyncConflictResolver,onUpdateSavedSearchFailed,SavedSearch,ErrorString,QUuid));
+                     this, QNSLOT(SavedSearchSyncConflictResolver,onUpdateSavedSearchFailed,SavedSearch,ErrorString,QUuid),
+                     Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
     QObject::connect(&m_localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,findSavedSearchComplete,SavedSearch,QUuid),
-                     this, QNSLOT(SavedSearchSyncConflictResolver,onFindSavedSearchComplete,SavedSearch,QUuid));
+                     this, QNSLOT(SavedSearchSyncConflictResolver,onFindSavedSearchComplete,SavedSearch,QUuid),
+                     Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
     QObject::connect(&m_localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,findSavedSearchFailed,SavedSearch,ErrorString,QUuid),
-                     this, QNSLOT(SavedSearchSyncConflictResolver,onFindSavedSearchFailed,SavedSearch,ErrorString,QUuid));
+                     this, QNSLOT(SavedSearchSyncConflictResolver,onFindSavedSearchFailed,SavedSearch,ErrorString,QUuid),
+                     Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
 }
 
 void SavedSearchSyncConflictResolver::processSavedSearchesConflictByGuid()

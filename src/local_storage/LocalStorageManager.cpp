@@ -21,9 +21,10 @@
 
 namespace quentier {
 
-LocalStorageManager::LocalStorageManager(const Account & account,
-                                         const bool startFromScratch, const bool overrideLock) :
-    d_ptr(new LocalStorageManagerPrivate(account, startFromScratch, overrideLock))
+LocalStorageManager::LocalStorageManager(const Account & account, const bool startFromScratch,
+                                         const bool overrideLock, QObject * parent) :
+    QObject(parent),
+    d_ptr(new LocalStorageManagerPrivate(account, startFromScratch, overrideLock, this))
 {
     QObject::connect(d_ptr.data(), QNSIGNAL(LocalStorageManagerPrivate,upgradeProgress,double),
                      this, QNSIGNAL(LocalStorageManager,upgradeProgress,double));
@@ -265,22 +266,23 @@ bool LocalStorageManager::addNote(Note & note, ErrorString & errorDescription)
     return d->addNote(note, errorDescription);
 }
 
-bool LocalStorageManager::updateNote(Note & note, const bool updateResources,
-                                     const bool updateTags, ErrorString & errorDescription)
+bool LocalStorageManager::updateNote(Note & note, const UpdateNoteOptions options, ErrorString & errorDescription)
 {
     Q_D(LocalStorageManager);
-    return d->updateNote(note, updateResources, updateTags, errorDescription);
+    return d->updateNote(note, options, errorDescription);
 }
 
 bool LocalStorageManager::findNote(Note & note, ErrorString & errorDescription,
+                                   const bool withResourceMetadata,
                                    const bool withResourceBinaryData) const
 {
     Q_D(const LocalStorageManager);
-    return d->findNote(note, errorDescription, withResourceBinaryData);
+    return d->findNote(note, errorDescription, withResourceMetadata, withResourceBinaryData);
 }
 
 QList<Note> LocalStorageManager::listNotesPerNotebook(const Notebook & notebook,
                                                       ErrorString & errorDescription,
+                                                      const bool withResourceMetadata,
                                                       const bool withResourceBinaryData,
                                                       const LocalStorageManager::ListObjectsOptions & flag,
                                                       const size_t limit, const size_t offset,
@@ -288,11 +290,12 @@ QList<Note> LocalStorageManager::listNotesPerNotebook(const Notebook & notebook,
                                                       const LocalStorageManager::OrderDirection::type & orderDirection) const
 {
     Q_D(const LocalStorageManager);
-    return d->listNotesPerNotebook(notebook, errorDescription, withResourceBinaryData,
+    return d->listNotesPerNotebook(notebook, errorDescription, withResourceMetadata, withResourceBinaryData,
                                    flag, limit, offset, order, orderDirection);
 }
 
 QList<Note> LocalStorageManager::listNotesPerTag(const Tag & tag, ErrorString & errorDescription,
+                                                 const bool withResourceMetadata,
                                                  const bool withResourceBinaryData,
                                                  const LocalStorageManager::ListObjectsOptions & flag,
                                                  const size_t limit, const size_t offset,
@@ -300,17 +303,19 @@ QList<Note> LocalStorageManager::listNotesPerTag(const Tag & tag, ErrorString & 
                                                  const LocalStorageManager::OrderDirection::type & orderDirection) const
 {
     Q_D(const LocalStorageManager);
-    return d->listNotesPerTag(tag, errorDescription, withResourceBinaryData, flag, limit, offset, order, orderDirection);
+    return d->listNotesPerTag(tag, errorDescription, withResourceMetadata, withResourceBinaryData,
+                              flag, limit, offset, order, orderDirection);
 }
 
 QList<Note> LocalStorageManager::listNotes(const ListObjectsOptions flag, ErrorString & errorDescription,
-                                           const bool withResourceBinaryData, const size_t limit,
-                                           const size_t offset, const ListNotesOrder::type order,
+                                           const bool withResourceMetadata, const bool withResourceBinaryData,
+                                           const size_t limit, const size_t offset, const ListNotesOrder::type order,
                                            const OrderDirection::type orderDirection,
                                            const QString & linkedNotebookGuid) const
 {
     Q_D(const LocalStorageManager);
-    return d->listNotes(flag, errorDescription, withResourceBinaryData, limit, offset, order, orderDirection, linkedNotebookGuid);
+    return d->listNotes(flag, errorDescription, withResourceMetadata, withResourceBinaryData, limit, offset,
+                        order, orderDirection, linkedNotebookGuid);
 }
 
 QStringList LocalStorageManager::findNoteLocalUidsWithSearchQuery(const NoteSearchQuery & noteSearchQuery,
@@ -322,10 +327,11 @@ QStringList LocalStorageManager::findNoteLocalUidsWithSearchQuery(const NoteSear
 
 NoteList LocalStorageManager::findNotesWithSearchQuery(const NoteSearchQuery & noteSearchQuery,
                                                        ErrorString & errorDescription,
+                                                       const bool withResourceMetadata,
                                                        const bool withResourceBinaryData) const
 {
     Q_D(const LocalStorageManager);
-    return d->findNotesWithSearchQuery(noteSearchQuery, errorDescription, withResourceBinaryData);
+    return d->findNotesWithSearchQuery(noteSearchQuery, errorDescription, withResourceMetadata, withResourceBinaryData);
 }
 
 bool LocalStorageManager::expungeNote(Note & note, ErrorString & errorDescription)
@@ -384,6 +390,17 @@ QList<Tag> LocalStorageManager::listTags(const ListObjectsOptions flag, ErrorStr
 {
     Q_D(const LocalStorageManager);
     return d->listTags(flag, errorDescription, limit, offset, order, orderDirection, linkedNotebookGuid);
+}
+
+QList<std::pair<Tag, QStringList> > LocalStorageManager::listTagsWithNoteLocalUids(const ListObjectsOptions flag,
+                                                                                   ErrorString & errorDescription,
+                                                                                   const size_t limit, const size_t offset,
+                                                                                   const ListTagsOrder::type & order,
+                                                                                   const OrderDirection::type orderDirection,
+                                                                                   const QString & linkedNotebookGuid) const
+{
+    Q_D(const LocalStorageManager);
+    return d->listTagsWithNoteLocalUids(flag, errorDescription, limit, offset, order, orderDirection, linkedNotebookGuid);
 }
 
 bool LocalStorageManager::expungeTag(Tag & tag, QStringList & expungedChildTagLocalUids, ErrorString & errorDescription)

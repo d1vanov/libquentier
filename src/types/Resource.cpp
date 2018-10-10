@@ -151,24 +151,24 @@ bool Resource::checkParameters(ErrorString & errorDescription) const
     const qevercloud::Resource & enResource = d->m_qecResource;
 
     if (localUid().isEmpty() && !enResource.guid.isSet()) {
-        errorDescription.setBase(QT_TR_NOOP("Both resource's local and remote guids are empty"));
+        errorDescription.setBase(QT_TRANSLATE_NOOP("Resource", "Both resource's local and remote guids are empty"));
         return false;
     }
 
     if (enResource.guid.isSet() && !checkGuid(enResource.guid.ref())) {
-        errorDescription.setBase(QT_TR_NOOP("Resource's guid is invalid"));
+        errorDescription.setBase(QT_TRANSLATE_NOOP("Resource", "Resource's guid is invalid"));
         errorDescription.details() = enResource.guid.ref();
         return false;
     }
 
     if (enResource.updateSequenceNum.isSet() && !checkUpdateSequenceNumber(enResource.updateSequenceNum)) {
-        errorDescription.setBase(QT_TR_NOOP("Resource's update sequence number is invalid"));
+        errorDescription.setBase(QT_TRANSLATE_NOOP("Resource", "Resource's update sequence number is invalid"));
         errorDescription.details() = QString::number(enResource.updateSequenceNum.ref());
         return false;
     }
 
     if (enResource.noteGuid.isSet() && !checkGuid(enResource.noteGuid.ref())) {
-        errorDescription.setBase(QT_TR_NOOP("Resource's note guid is invalid"));
+        errorDescription.setBase(QT_TRANSLATE_NOOP("Resource", "Resource's note guid is invalid"));
         errorDescription.details() = enResource.noteGuid.ref();
         return false;
     }
@@ -209,7 +209,7 @@ bool Resource::checkParameters(ErrorString & errorDescription) const
         if ( (mimeSize < qevercloud::EDAM_MIME_LEN_MIN) ||
              (mimeSize > qevercloud::EDAM_MIME_LEN_MAX) )
         {
-            errorDescription.setBase(QT_TR_NOOP("Resource's mime type has invalid length"));
+            errorDescription.setBase(QT_TRANSLATE_NOOP("Resource", "Resource's mime type has invalid length"));
             errorDescription.details() = enResource.mime.ref();
             return false;
         }
@@ -223,7 +223,7 @@ bool Resource::checkParameters(ErrorString & errorDescription) const
             if ( (sourceURLSize < qevercloud::EDAM_ATTRIBUTE_LEN_MIN) ||
                  (sourceURLSize > qevercloud::EDAM_ATTRIBUTE_LEN_MAX) )
             {
-                errorDescription.setBase(QT_TR_NOOP("Resource's sourceURL attribute has invalid length"));
+                errorDescription.setBase(QT_TRANSLATE_NOOP("Resource", "Resource's sourceURL attribute has invalid length"));
                 errorDescription.details() = enResource.attributes->sourceURL.ref();
                 return false;
             }
@@ -235,7 +235,7 @@ bool Resource::checkParameters(ErrorString & errorDescription) const
             if ( (cameraMakeSize < qevercloud::EDAM_ATTRIBUTE_LEN_MIN) ||
                  (cameraMakeSize > qevercloud::EDAM_ATTRIBUTE_LEN_MAX) )
             {
-                errorDescription.setBase(QT_TR_NOOP("Resource's cameraMake attribute has invalid length"));
+                errorDescription.setBase(QT_TRANSLATE_NOOP("Resource", "Resource's cameraMake attribute has invalid length"));
                 errorDescription.details() = enResource.attributes->cameraMake.ref();
                 return false;
             }
@@ -247,7 +247,7 @@ bool Resource::checkParameters(ErrorString & errorDescription) const
             if ( (cameraModelSize < qevercloud::EDAM_ATTRIBUTE_LEN_MIN) ||
                  (cameraModelSize > qevercloud::EDAM_ATTRIBUTE_LEN_MAX) )
             {
-                errorDescription.setBase(QT_TR_NOOP("Resource's cameraModel attribute has invalid length"));
+                errorDescription.setBase(QT_TRANSLATE_NOOP("Resource", "Resource's cameraModel attribute has invalid length"));
                 errorDescription.details() = enResource.attributes->cameraModel.ref();
                 return false;
             }

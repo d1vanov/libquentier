@@ -91,7 +91,7 @@ void LocalStorageManagerAsync::init()
         delete m_pLocalStorageManager;
     }
 
-    m_pLocalStorageManager = new LocalStorageManager(m_account, m_startFromScratch, m_overrideLock);
+    m_pLocalStorageManager = new LocalStorageManager(m_account, m_startFromScratch, m_overrideLock, this);
 
     if (m_pLocalStorageCacheManager) {
         delete m_pLocalStorageCacheManager;
@@ -965,32 +965,36 @@ void LocalStorageManagerAsync::onAddNoteRequest(Note note, QUuid requestId)
     }
 }
 
-void LocalStorageManagerAsync::onUpdateNoteRequest(Note note, bool updateResources,
-                                                   bool updateTags, QUuid requestId)
+void LocalStorageManagerAsync::onUpdateNoteRequest(Note note, const LocalStorageManager::UpdateNoteOptions options,
+                                                   QUuid requestId)
 {
     try
     {
         ErrorString errorDescription;
 
-        bool res = m_pLocalStorageManager->updateNote(note, updateResources, updateTags, errorDescription);
+        bool res = m_pLocalStorageManager->updateNote(note, options, errorDescription);
         if (!res) {
-            Q_EMIT updateNoteFailed(note, updateResources, updateTags, errorDescription, requestId);
+            Q_EMIT updateNoteFailed(note, options, errorDescription, requestId);
             return;
         }
 
         if (m_useCache)
         {
-            if (updateResources && updateTags) {
+            if ((options & LocalStorageManager::UpdateNoteOption::UpdateResourceMetadata) &&
+                (options & LocalStorageManager::UpdateNoteOption::UpdateResourceBinaryData) &&
+                (options & LocalStorageManager::UpdateNoteOption::UpdateTags))
+            {
                 m_pLocalStorageCacheManager->cacheNote(note);
             }
-            else {
+            else
+            {
                 // The note was somehow changed but the resources or tags information was not updated =>
                 // the note in the cache is stale/incomplete in either case, need to remove it from there
                 m_pLocalStorageCacheManager->expungeNote(note);
             }
         }
 
-        Q_EMIT updateNoteComplete(note, updateResources, updateTags, requestId);
+        Q_EMIT updateNoteComplete(note, options, requestId);
     }
     catch(const std::exception & e)
     {
@@ -998,18 +1002,18 @@ void LocalStorageManagerAsync::onUpdateNoteRequest(Note note, bool updateResourc
         error.details() = QString::fromUtf8(e.what());
         SysInfo sysInfo;
         QNERROR(error << QStringLiteral("; backtrace: ") << sysInfo.stackTrace());
-        Q_EMIT updateNoteFailed(note, updateResources, updateTags, error, requestId);
+        Q_EMIT updateNoteFailed(note, options, error, requestId);
     }
 }
 
-void LocalStorageManagerAsync::onFindNoteRequest(Note note, bool withResourceBinaryData, QUuid requestId)
+void LocalStorageManagerAsync::onFindNoteRequest(Note note, bool withResourceMetadata, bool withResourceBinaryData, QUuid requestId)
 {
     try
     {
         ErrorString errorDescription;
 
         bool foundNoteInCache = false;
-        if (m_useCache && withResourceBinaryData)
+        if (m_useCache && withResourceMetadata && withResourceBinaryData)
         {
             bool noteHasGuid = note.hasGuid();
             const QString uid = (noteHasGuid ? note.guid() : note.localUid());
@@ -1024,18 +1028,18 @@ void LocalStorageManagerAsync::onFindNoteRequest(Note note, bool withResourceBin
 
         if (!foundNoteInCache)
         {
-            bool res = m_pLocalStorageManager->findNote(note, errorDescription, withResourceBinaryData);
+            bool res = m_pLocalStorageManager->findNote(note, errorDescription, withResourceMetadata, withResourceBinaryData);
             if (!res) {
-                Q_EMIT findNoteFailed(note, withResourceBinaryData, errorDescription, requestId);
+                Q_EMIT findNoteFailed(note, withResourceMetadata, withResourceBinaryData, errorDescription, requestId);
                 return;
             }
         }
 
-        if (!foundNoteInCache && m_useCache && withResourceBinaryData) {
+        if (!foundNoteInCache && m_useCache && withResourceMetadata && withResourceBinaryData) {
             m_pLocalStorageCacheManager->cacheNote(note);
         }
 
-        Q_EMIT findNoteComplete(note, withResourceBinaryData, requestId);
+        Q_EMIT findNoteComplete(note, withResourceMetadata, withResourceBinaryData, requestId);
     }
     catch(const std::exception & e)
     {
@@ -1043,11 +1047,12 @@ void LocalStorageManagerAsync::onFindNoteRequest(Note note, bool withResourceBin
         error.details() = QString::fromUtf8(e.what());
         SysInfo sysInfo;
         QNERROR(error << QStringLiteral("; backtrace: ") << sysInfo.stackTrace());
-        Q_EMIT findNoteFailed(note, withResourceBinaryData, error, requestId);
+        Q_EMIT findNoteFailed(note, withResourceMetadata, withResourceBinaryData, error, requestId);
     }
 }
 
-void LocalStorageManagerAsync::onListNotesPerNotebookRequest(Notebook notebook, bool withResourceBinaryData,
+void LocalStorageManagerAsync::onListNotesPerNotebookRequest(Notebook notebook, bool withResourceMetadata,
+                                                             bool withResourceBinaryData,
                                                              LocalStorageManager::ListObjectsOptions flag,
                                                              size_t limit, size_t offset,
                                                              LocalStorageManager::ListNotesOrder::type order,
@@ -1059,15 +1064,15 @@ void LocalStorageManagerAsync::onListNotesPerNotebookRequest(Notebook notebook, 
         ErrorString errorDescription;
 
         QList<Note> notes = m_pLocalStorageManager->listNotesPerNotebook(notebook, errorDescription,
-                                                                         withResourceBinaryData, flag,
-                                                                         limit, offset, order, orderDirection);
+                                                                         withResourceMetadata, withResourceBinaryData,
+                                                                         flag, limit, offset, order, orderDirection);
         if (notes.isEmpty() && !errorDescription.isEmpty()) {
-            Q_EMIT listNotesPerNotebookFailed(notebook, withResourceBinaryData, flag, limit, offset,
-                                              order, orderDirection, errorDescription, requestId);
+            Q_EMIT listNotesPerNotebookFailed(notebook, withResourceMetadata, withResourceBinaryData, flag,
+                                              limit, offset, order, orderDirection, errorDescription, requestId);
             return;
         }
 
-        if (m_useCache && withResourceBinaryData)
+        if (m_useCache && withResourceMetadata && withResourceBinaryData)
         {
             const int numNotes = notes.size();
             for(int i = 0; i < numNotes; ++i) {
@@ -1076,7 +1081,7 @@ void LocalStorageManagerAsync::onListNotesPerNotebookRequest(Notebook notebook, 
             }
         }
 
-        Q_EMIT listNotesPerNotebookComplete(notebook, withResourceBinaryData, flag, limit,
+        Q_EMIT listNotesPerNotebookComplete(notebook, withResourceMetadata, withResourceBinaryData, flag, limit,
                                             offset, order, orderDirection, notes, requestId);
     }
     catch(const std::exception & e)
@@ -1085,12 +1090,12 @@ void LocalStorageManagerAsync::onListNotesPerNotebookRequest(Notebook notebook, 
         error.details() = QString::fromUtf8(e.what());
         SysInfo sysInfo;
         QNERROR(error << QStringLiteral("; backtrace: ") << sysInfo.stackTrace());
-        Q_EMIT listNotesPerNotebookFailed(notebook, withResourceBinaryData, flag, limit, offset,
+        Q_EMIT listNotesPerNotebookFailed(notebook, withResourceMetadata, withResourceBinaryData, flag, limit, offset,
                                           order, orderDirection, error, requestId);
     }
 }
 
-void LocalStorageManagerAsync::onListNotesPerTagRequest(Tag tag, bool withResourceBinaryData,
+void LocalStorageManagerAsync::onListNotesPerTagRequest(Tag tag, bool withResourceMetadata, bool withResourceBinaryData,
                                                         LocalStorageManager::ListObjectsOptions flag,
                                                         size_t limit, size_t offset,
                                                         LocalStorageManager::ListNotesOrder::type order,
@@ -1101,16 +1106,16 @@ void LocalStorageManagerAsync::onListNotesPerTagRequest(Tag tag, bool withResour
     {
         ErrorString errorDescription;
 
-        QList<Note> notes = m_pLocalStorageManager->listNotesPerTag(tag, errorDescription,
+        QList<Note> notes = m_pLocalStorageManager->listNotesPerTag(tag, errorDescription, withResourceMetadata,
                                                                     withResourceBinaryData, flag,
                                                                     limit, offset, order, orderDirection);
         if (notes.isEmpty() && !errorDescription.isEmpty()) {
-            Q_EMIT listNotesPerTagFailed(tag, withResourceBinaryData, flag, limit, offset,
+            Q_EMIT listNotesPerTagFailed(tag, withResourceMetadata, withResourceBinaryData, flag, limit, offset,
                                          order, orderDirection, errorDescription, requestId);
             return;
         }
 
-        if (m_useCache && withResourceBinaryData)
+        if (m_useCache && withResourceMetadata && withResourceBinaryData)
         {
             const int numNotes = notes.size();
             for(int i = 0; i < numNotes; ++i) {
@@ -1119,7 +1124,7 @@ void LocalStorageManagerAsync::onListNotesPerTagRequest(Tag tag, bool withResour
             }
         }
 
-        Q_EMIT listNotesPerTagComplete(tag, withResourceBinaryData, flag, limit,
+        Q_EMIT listNotesPerTagComplete(tag, withResourceMetadata, withResourceBinaryData, flag, limit,
                                        offset, order, orderDirection, notes, requestId);
     }
     catch(const std::exception & e)
@@ -1128,28 +1133,29 @@ void LocalStorageManagerAsync::onListNotesPerTagRequest(Tag tag, bool withResour
         error.details() = QString::fromUtf8(e.what());
         SysInfo sysInfo;
         QNERROR(error << QStringLiteral("; backtrace: ") << sysInfo.stackTrace());
-        Q_EMIT listNotesPerTagFailed(tag, withResourceBinaryData, flag, limit, offset,
+        Q_EMIT listNotesPerTagFailed(tag, withResourceMetadata, withResourceBinaryData, flag, limit, offset,
                                      order, orderDirection, error, requestId);
     }
 }
 
-void LocalStorageManagerAsync::onListNotesRequest(LocalStorageManager::ListObjectsOptions flag, bool withResourceBinaryData,
-                                                  size_t limit, size_t offset, LocalStorageManager::ListNotesOrder::type order,
+void LocalStorageManagerAsync::onListNotesRequest(LocalStorageManager::ListObjectsOptions flag, bool withResourceMetadata,
+                                                  bool withResourceBinaryData, size_t limit, size_t offset,
+                                                  LocalStorageManager::ListNotesOrder::type order,
                                                   LocalStorageManager::OrderDirection::type orderDirection,
                                                   QString linkedNotebookGuid, QUuid requestId)
 {
     try
     {
         ErrorString errorDescription;
-        QList<Note> notes = m_pLocalStorageManager->listNotes(flag, errorDescription, withResourceBinaryData,
+        QList<Note> notes = m_pLocalStorageManager->listNotes(flag, errorDescription, withResourceMetadata, withResourceBinaryData,
                                                               limit, offset, order, orderDirection, linkedNotebookGuid);
         if (notes.isEmpty() && !errorDescription.isEmpty()) {
-            Q_EMIT listNotesFailed(flag, withResourceBinaryData, limit, offset, order,
+            Q_EMIT listNotesFailed(flag, withResourceMetadata, withResourceBinaryData, limit, offset, order,
                                    orderDirection, linkedNotebookGuid, errorDescription, requestId);
             return;
         }
 
-        if (m_useCache && withResourceBinaryData)
+        if (m_useCache && withResourceMetadata && withResourceBinaryData)
         {
             const int numNotes = notes.size();
             for(int i = 0; i < numNotes; ++i) {
@@ -1158,7 +1164,7 @@ void LocalStorageManagerAsync::onListNotesRequest(LocalStorageManager::ListObjec
             }
         }
 
-        Q_EMIT listNotesComplete(flag, withResourceBinaryData, limit, offset, order,
+        Q_EMIT listNotesComplete(flag, withResourceMetadata, withResourceBinaryData, limit, offset, order,
                                  orderDirection, linkedNotebookGuid, notes, requestId);
     }
     catch(const std::exception & e)
@@ -1167,7 +1173,7 @@ void LocalStorageManagerAsync::onListNotesRequest(LocalStorageManager::ListObjec
         error.details() = QString::fromUtf8(e.what());
         SysInfo sysInfo;
         QNERROR(error << QStringLiteral("; backtrace: ") << sysInfo.stackTrace());
-        Q_EMIT listNotesFailed(flag, withResourceBinaryData, limit, offset,
+        Q_EMIT listNotesFailed(flag, withResourceMetadata, withResourceBinaryData, limit, offset,
                                order, orderDirection, linkedNotebookGuid, error, requestId);
     }
 }
@@ -1448,9 +1454,8 @@ void LocalStorageManagerAsync::onListTagsRequest(LocalStorageManager::ListObject
 
         if (m_useCache)
         {
-            const int numTags = tags.size();
-            for(int i = 0; i < numTags; ++i) {
-                const Tag & tag = tags[i];
+            for(auto it = tags.constBegin(), end = tags.constEnd(); it != end; ++it) {
+                const Tag & tag = *it;
                 m_pLocalStorageCacheManager->cacheTag(tag);
             }
         }
@@ -1464,6 +1469,42 @@ void LocalStorageManagerAsync::onListTagsRequest(LocalStorageManager::ListObject
         SysInfo sysInfo;
         QNERROR(error << QStringLiteral("; backtrace: ") << sysInfo.stackTrace());
         Q_EMIT listTagsFailed(flag, limit, offset, order, orderDirection, linkedNotebookGuid, error, requestId);
+    }
+}
+
+void LocalStorageManagerAsync::onListTagsWithNoteLocalUidsRequest(LocalStorageManager::ListObjectsOptions flag,
+                                                                  size_t limit, size_t offset,
+                                                                  LocalStorageManager::ListTagsOrder::type order,
+                                                                  LocalStorageManager::OrderDirection::type orderDirection,
+                                                                  QString linkedNotebookGuid, QUuid requestId)
+{
+    try
+    {
+        ErrorString errorDescription;
+        QList<std::pair<Tag, QStringList> > tagsWithNoteLocalUids = m_pLocalStorageManager->listTagsWithNoteLocalUids(flag, errorDescription,
+                                                                                                                      limit, offset, order,
+                                                                                                                      orderDirection, linkedNotebookGuid);
+        if (tagsWithNoteLocalUids.isEmpty() && !errorDescription.isEmpty()) {
+            Q_EMIT listTagsWithNoteLocalUidsFailed(flag, limit, offset, order, orderDirection, linkedNotebookGuid, errorDescription, requestId);
+        }
+
+        if (m_useCache)
+        {
+            for(auto it = tagsWithNoteLocalUids.constBegin(), end = tagsWithNoteLocalUids.constEnd(); it != end; ++it) {
+                const Tag & tag = it->first;
+                m_pLocalStorageCacheManager->cacheTag(tag);
+            }
+        }
+
+        Q_EMIT listTagsWithNoteLocalUidsComplete(flag, limit, offset, order, orderDirection, linkedNotebookGuid, tagsWithNoteLocalUids, requestId);
+    }
+    catch(const std::exception & e)
+    {
+        ErrorString error(QT_TR_NOOP("Can't list tags with note local uids from the local storage: caught exception"));
+        error.details() = QString::fromUtf8(e.what());
+        SysInfo sysInfo;
+        QNERROR(error << QStringLiteral("; backtrace: ") << sysInfo.stackTrace());
+        Q_EMIT listTagsWithNoteLocalUidsFailed(flag, limit, offset, order, orderDirection, linkedNotebookGuid, error, requestId);
     }
 }
 

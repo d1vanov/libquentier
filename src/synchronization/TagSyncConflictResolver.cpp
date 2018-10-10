@@ -291,25 +291,34 @@ void TagSyncConflictResolver::connectToLocalStorage()
 
     // Connect local signals to local storage manager async's slots
     QObject::connect(this, QNSIGNAL(TagSyncConflictResolver,addTag,Tag,QUuid),
-                     &m_localStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,onAddTagRequest,Tag,QUuid));
+                     &m_localStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,onAddTagRequest,Tag,QUuid),
+                     Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
     QObject::connect(this, QNSIGNAL(TagSyncConflictResolver,updateTag,Tag,QUuid),
-                     &m_localStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,onUpdateTagRequest,Tag,QUuid));
+                     &m_localStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,onUpdateTagRequest,Tag,QUuid),
+                     Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
     QObject::connect(this, QNSIGNAL(TagSyncConflictResolver,findTag,Tag,QUuid),
-                     &m_localStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,onFindTagRequest,Tag,QUuid));
+                     &m_localStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,onFindTagRequest,Tag,QUuid),
+                     Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
 
     // Connect local storage manager async's signals to local slots
     QObject::connect(&m_localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,addTagComplete,Tag,QUuid),
-                     this, QNSLOT(TagSyncConflictResolver,onAddTagComplete,Tag,QUuid));
+                     this, QNSLOT(TagSyncConflictResolver,onAddTagComplete,Tag,QUuid),
+                     Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
     QObject::connect(&m_localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,addTagFailed,Tag,ErrorString,QUuid),
-                     this, QNSLOT(TagSyncConflictResolver,onAddTagFailed,Tag,ErrorString,QUuid));
+                     this, QNSLOT(TagSyncConflictResolver,onAddTagFailed,Tag,ErrorString,QUuid),
+                     Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
     QObject::connect(&m_localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,updateTagComplete,Tag,QUuid),
-                     this, QNSLOT(TagSyncConflictResolver,onUpdateTagComplete,Tag,QUuid));
+                     this, QNSLOT(TagSyncConflictResolver,onUpdateTagComplete,Tag,QUuid),
+                     Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
     QObject::connect(&m_localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,updateTagFailed,Tag,ErrorString,QUuid),
-                     this, QNSLOT(TagSyncConflictResolver,onUpdateTagFailed,Tag,ErrorString,QUuid));
+                     this, QNSLOT(TagSyncConflictResolver,onUpdateTagFailed,Tag,ErrorString,QUuid),
+                     Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
     QObject::connect(&m_localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,findTagComplete,Tag,QUuid),
-                     this, QNSLOT(TagSyncConflictResolver,onFindTagComplete,Tag,QUuid));
+                     this, QNSLOT(TagSyncConflictResolver,onFindTagComplete,Tag,QUuid),
+                     Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
     QObject::connect(&m_localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,findTagFailed,Tag,ErrorString,QUuid),
-                     this, QNSLOT(TagSyncConflictResolver,onFindTagFailed,Tag,ErrorString,QUuid));
+                     this, QNSLOT(TagSyncConflictResolver,onFindTagFailed,Tag,ErrorString,QUuid),
+                     Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
 }
 
 void TagSyncConflictResolver::processTagsConflictByGuid()

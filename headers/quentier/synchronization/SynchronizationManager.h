@@ -30,6 +30,10 @@
 namespace quentier {
 
 QT_FORWARD_DECLARE_CLASS(LocalStorageManagerAsync)
+QT_FORWARD_DECLARE_CLASS(SynchronizationManagerDependencyInjector)
+QT_FORWARD_DECLARE_CLASS(INoteStore)
+QT_FORWARD_DECLARE_CLASS(IUserStore)
+QT_FORWARD_DECLARE_CLASS(IKeychainService)
 QT_FORWARD_DECLARE_CLASS(SynchronizationManagerPrivate)
 
 /**
@@ -42,16 +46,16 @@ class QUENTIER_EXPORT SynchronizationManager: public QObject
     Q_OBJECT
 public:
     /**
-     * @param consumerKey - consumer key for your application obtained from the Evernote service
-     * @param consumerSecret - consumer secret for your application obtained from the Evernote service
      * @param host - the host to use for the connection with the Evernote service - typically www.evernote.com
      *               but could be sandbox.evernote.com or some other one
      * @param localStorageManagerAsync - local storage manager
      * @param authenticationManager - authentication manager (particular implementation of IAuthenticationManager abstract class)
+     * @param pInjector - opaque pointer to the internal class which is a part of libquentier's private API and which is
+     *                    used for testing of SynchronizationManager; for clients of the library this pointer should stay nullptr
      */
-    SynchronizationManager(const QString & consumerKey, const QString & consumerSecret,
-                           const QString & host, LocalStorageManagerAsync & localStorageManagerAsync,
-                           IAuthenticationManager & authenticationManager);
+    SynchronizationManager(const QString & host, LocalStorageManagerAsync & localStorageManagerAsync,
+                           IAuthenticationManager & authenticationManager,
+                           SynchronizationManagerDependencyInjector * pInjector = Q_NULLPTR);
 
     virtual ~SynchronizationManager();
 
@@ -162,8 +166,14 @@ Q_SIGNALS:
     /**
      * This signal is emitted when the synchronization is finished
      * @param account - represents the latest version of @link Account @endlink structure filled during the synchronization procedure
+     * @param somethingDownloaded - boolean parameter telling the receiver whether any data items were actually downloaded
+     * during remote to local synchronization step; if there was nothing to sync up from the remote storage, this boolean
+     * would be false, otherwise it would be true
+     * @param somethingSent - boolean parameter telling the receiver whether any dat items were actually sent
+     * during the send local changes synchronization step; if there was nothing to send to the remote storage,
+     * this boolean would be false, otherwise it would be true
      */
-    void finished(Account account);
+    void finished(Account account, bool somethingDownloaded, bool somethingSent);
 
     /**
      * This signal is emitted in response to the attempt to revoke the authentication for a given user ID
@@ -175,8 +185,10 @@ Q_SIGNALS:
                                qevercloud::UserID userId);
 
     /**
-     * This signal is emitted in response to the attempt to authenticate the new user of the client app to synchronize
-     * with the Evernote service
+     * This signal is emitted in response to the explicit attempt to authenticate the new user
+     * of the client app to the Evernote service. NOTE: this signal is not emitted
+     * if the authentication was requested automatically during sync attempt, it is only
+     * emitted in response to the explicit invokation of authenticate slot.
      * @param success - true if the authentication was successful, false otherwise
      * @param errorDescription - the textual explanation of the failure to authenticate the new user
      * @param account - the account of the authenticated user
@@ -225,8 +237,12 @@ Q_SIGNALS:
     /**
      * This signal is emitted when the "remote to local" synchronization step is finished; once that step is done,
      * the algorithn switches to sending the local changes back to the Evernote service
+     *
+     * @param somethingDownloaded - boolean parameter telling the receiver whether any data items were actually downloaded
+     * during remote to local synchronization step; if there was nothing to sync up from the remote storage, this boolean
+     * would be false, otherwise it would be true
      */
-    void remoteToLocalSyncDone();
+    void remoteToLocalSyncDone(bool somethingDownloaded);
 
     /**
      * This signal is emitted during user own account's sync chunks downloading and denotes the progress of that step. The percentage

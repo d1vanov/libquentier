@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 2.8)
 
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules ${CMAKE_MODULE_PATH})
+set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules/sanitizers ${CMAKE_MODULE_PATH})
 
 include(LibquentierCMakePolicies)
 SET_POLICIES()
@@ -41,6 +42,8 @@ include(LibquentierFindQt4Mimetypes)
 include(LibquentierFindLibTidyHtml5)
 include(LibquentierSetupDoxygen)
 include(PrependPath)
+
+find_package(Sanitizers)
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/headers
                     ${CMAKE_CURRENT_SOURCE_DIR}/src)
@@ -182,6 +185,11 @@ list(APPEND PUBLIC_HEADERS ${EXCEPTION_HEADERS})
 list(APPEND PUBLIC_HEADERS ${UTILITY_HEADERS})
 
 set(PRIVATE_HEADERS
+    headers/quentier_private/synchronization/INoteStore.h
+    headers/quentier_private/synchronization/IUserStore.h
+    headers/quentier_private/synchronization/SynchronizationManagerDependencyInjector.h
+    headers/quentier_private/synchronization/SyncStatePersistenceManager.h
+    headers/quentier_private/utility/IKeychainService.h
     src/local_storage/Transaction.h
     src/logging/QuentierLogger_p.h
     src/types/data/AccountData.h
@@ -220,6 +228,7 @@ set(PRIVATE_HEADERS
     src/synchronization/TagSyncCache.h
     src/synchronization/SavedSearchSyncConflictResolver.h
     src/synchronization/SavedSearchSyncCache.h
+    src/synchronization/NoteSyncConflictResolver.h
     src/synchronization/NoteSyncCache.h
     src/synchronization/FullSyncStaleDataItemsExpunger.h
     src/utility/tag_topological_sort/TagDirectedGraph.h
@@ -228,6 +237,7 @@ set(PRIVATE_HEADERS
     src/utility/EncryptionManager_p.h
     src/utility/FileIOProcessorAsync_p.h
     src/utility/FileSystemWatcher_p.h
+    src/utility/KeychainService.h
     src/utility/ShortcutManager_p.h
     src/utility/SysInfo_p.h
     src/utility/StringUtils_p.h)
@@ -374,20 +384,24 @@ set(${PROJECT_NAME}_SOURCES
     src/local_storage/Transaction.cpp
     src/synchronization/IAuthenticationManager.cpp
     src/synchronization/InkNoteImageDownloader.cpp
+    src/synchronization/INoteStore.cpp
+    src/synchronization/IUserStore.cpp
     src/synchronization/NoteStore.cpp
     src/synchronization/UserStore.cpp
     src/synchronization/NoteThumbnailDownloader.cpp
     src/synchronization/SynchronizationShared.cpp
     src/synchronization/SynchronizationManager.cpp
     src/synchronization/SynchronizationManager_p.cpp
+    src/synchronization/SyncStatePersistenceManager.cpp
     src/synchronization/RemoteToLocalSynchronizationManager.cpp
     src/synchronization/SendLocalChangesManager.cpp
-    src/synchronization/NotebookSyncConflictResolver.cpp
     src/synchronization/NotebookSyncCache.cpp
     src/synchronization/TagSyncConflictResolver.cpp
     src/synchronization/TagSyncCache.cpp
     src/synchronization/SavedSearchSyncConflictResolver.cpp
     src/synchronization/SavedSearchSyncCache.cpp
+    src/synchronization/NotebookSyncConflictResolver.cpp
+    src/synchronization/NoteSyncConflictResolver.cpp
     src/synchronization/NoteSyncCache.cpp
     src/synchronization/FullSyncStaleDataItemsExpunger.cpp
     src/exception/ApplicationSettingsInitializationException.cpp
@@ -414,6 +428,8 @@ set(${PROJECT_NAME}_SOURCES
     src/utility/FileIOProcessorAsync_p.cpp
     src/utility/FileSystemWatcher.cpp
     src/utility/FileSystemWatcher_p.cpp
+    src/utility/IKeychainService.cpp
+    src/utility/KeychainService.cpp
     src/utility/Printable.cpp
     src/utility/QuentierApplication.cpp
     src/utility/QuentierUndoCommand.cpp
@@ -671,6 +687,8 @@ add_library(${LIBNAME} SHARED
             ${${PROJECT_NAME}_RESOURCES_RCC}
             ${${PROJECT_NAME}_FORMS_HEADERS})
 
+add_sanitizers(${LIBNAME})
+
 # installation settings, needed for target properties
 if(NOT CMAKE_INSTALL_LIBDIR)
   set(CMAKE_INSTALL_LIBDIR "lib")
@@ -715,24 +733,34 @@ if(USE_QT5)
 endif()
 
 set(TEST_HEADERS
-    src/tests/EncryptionManagerTests.h
-    src/tests/EnexExportImportTests.h
-    src/tests/ENMLConverterTests.h
-    src/tests/LocalStorageCacheAsyncTester.h
-    src/tests/LinkedNotebookLocalStorageManagerAsyncTester.h
-    src/tests/NotebookLocalStorageManagerAsyncTester.h
-    src/tests/NoteLocalStorageManagerAsyncTester.h
-    src/tests/NoteSearchQueryTest.h
-    src/tests/ResourceLocalStorageManagerAsyncTester.h
-    src/tests/TagLocalStorageManagerAsyncTester.h
-    src/tests/SavedSearchLocalStorageManagerAsyncTester.h
-    src/tests/UserLocalStorageManagerAsyncTester.h
-    src/tests/LocalStorageManagerTests.h
-    src/tests/LocalStorageManagerNoteSearchQueryTest.h
-    src/tests/ResourceRecognitionIndicesParsingTest.h
-    src/tests/TagSortByParentChildRelationsTest.h
-    src/tests/FullSyncStaleDataItemsExpungerTester.h
-    src/tests/CoreTester.h
+    src/tests/enml/EnexExportImportTests.h
+    src/tests/enml/ENMLConverterTests.h
+    src/tests/enml/ENMLTester.h
+    src/tests/local_storage/LocalStorageCacheAsyncTester.h
+    src/tests/local_storage/LocalStorageManagerTester.h
+    src/tests/local_storage/LocalStorageManagerTests.h
+    src/tests/local_storage/LocalStorageManagerNoteSearchQueryTest.h
+    src/tests/local_storage/LinkedNotebookLocalStorageManagerAsyncTester.h
+    src/tests/local_storage/NotebookLocalStorageManagerAsyncTester.h
+    src/tests/local_storage/NoteLocalStorageManagerAsyncTester.h
+    src/tests/local_storage/NoteSearchQueryTest.h
+    src/tests/local_storage/ResourceLocalStorageManagerAsyncTester.h
+    src/tests/local_storage/SavedSearchLocalStorageManagerAsyncTester.h
+    src/tests/local_storage/TagLocalStorageManagerAsyncTester.h
+    src/tests/local_storage/UserLocalStorageManagerAsyncTester.h
+    src/tests/types/ResourceRecognitionIndicesParsingTest.h
+    src/tests/types/TypesTester.h
+    src/tests/synchronization/FakeAuthenticationManager.h
+    src/tests/synchronization/FakeKeychainService.h
+    src/tests/synchronization/FakeNoteStore.h
+    src/tests/synchronization/FakeUserStore.h
+    src/tests/synchronization/FullSyncStaleDataItemsExpungerTester.h
+    src/tests/synchronization/SynchronizationManagerSignalsCatcher.h
+    src/tests/synchronization/SynchronizationTester.h
+    src/tests/utility/EncryptionManagerTests.h
+    src/tests/utility/LRUCacheTests.h
+    src/tests/utility/TagSortByParentChildRelationsTest.h
+    src/tests/utility/UtilityTester.h
     src/synchronization/FullSyncStaleDataItemsExpunger.h
     src/synchronization/TagSyncCache.h
     src/synchronization/SavedSearchSyncCache.h
@@ -740,25 +768,35 @@ set(TEST_HEADERS
     src/synchronization/NotebookSyncCache.h)
 
 set(TEST_SOURCES
-    src/tests/EncryptionManagerTests.cpp
-    src/tests/EnexExportImportTests.cpp
-    src/tests/ENMLConverterTests.cpp
-    src/tests/LocalStorageCacheAsyncTester.cpp
-    src/tests/LinkedNotebookLocalStorageManagerAsyncTester.cpp
-    src/tests/NotebookLocalStorageManagerAsyncTester.cpp
-    src/tests/NoteLocalStorageManagerAsyncTester.cpp
-    src/tests/NoteSearchQueryTest.cpp
-    src/tests/ResourceLocalStorageManagerAsyncTester.cpp
-    src/tests/TagLocalStorageManagerAsyncTester.cpp
-    src/tests/SavedSearchLocalStorageManagerAsyncTester.cpp
-    src/tests/UserLocalStorageManagerAsyncTester.cpp
-    src/tests/LocalStorageManagerTests.cpp
-    src/tests/LocalStorageManagerNoteSearchQueryTest.cpp
-    src/tests/ResourceRecognitionIndicesParsingTest.cpp
-    src/tests/TagSortByParentChildRelationsTest.cpp
-    src/tests/FullSyncStaleDataItemsExpungerTester.cpp
-    src/tests/CoreTester.cpp
-    src/tests/CoreTestMain.cpp
+    src/tests/enml/EnexExportImportTests.cpp
+    src/tests/enml/ENMLConverterTests.cpp
+    src/tests/enml/ENMLTester.cpp
+    src/tests/local_storage/LocalStorageCacheAsyncTester.cpp
+    src/tests/local_storage/LocalStorageManagerTester.cpp
+    src/tests/local_storage/LocalStorageManagerTests.cpp
+    src/tests/local_storage/LocalStorageManagerNoteSearchQueryTest.cpp
+    src/tests/local_storage/LinkedNotebookLocalStorageManagerAsyncTester.cpp
+    src/tests/local_storage/NotebookLocalStorageManagerAsyncTester.cpp
+    src/tests/local_storage/NoteLocalStorageManagerAsyncTester.cpp
+    src/tests/local_storage/NoteSearchQueryTest.cpp
+    src/tests/local_storage/ResourceLocalStorageManagerAsyncTester.cpp
+    src/tests/local_storage/SavedSearchLocalStorageManagerAsyncTester.cpp
+    src/tests/local_storage/TagLocalStorageManagerAsyncTester.cpp
+    src/tests/local_storage/UserLocalStorageManagerAsyncTester.cpp
+    src/tests/types/ResourceRecognitionIndicesParsingTest.cpp
+    src/tests/types/TypesTester.cpp
+    src/tests/synchronization/FakeAuthenticationManager.cpp
+    src/tests/synchronization/FakeKeychainService.cpp
+    src/tests/synchronization/FakeNoteStore.cpp
+    src/tests/synchronization/FakeUserStore.cpp
+    src/tests/synchronization/FullSyncStaleDataItemsExpungerTester.cpp
+    src/tests/synchronization/SynchronizationManagerSignalsCatcher.cpp
+    src/tests/synchronization/SynchronizationTester.cpp
+    src/tests/utility/EncryptionManagerTests.cpp
+    src/tests/utility/LRUCacheTests.cpp
+    src/tests/utility/TagSortByParentChildRelationsTest.cpp
+    src/tests/utility/UtilityTester.cpp
+    src/tests/TestMain.cpp
     src/synchronization/FullSyncStaleDataItemsExpunger.cpp
     src/synchronization/TagSyncCache.cpp
     src/synchronization/SavedSearchSyncCache.cpp
@@ -766,11 +804,12 @@ set(TEST_SOURCES
     src/synchronization/NotebookSyncCache.cpp)
 
 set(TEST_RESOURCES
-    src/tests/test_resources.qrc)
+    src/tests/resources/test_resources.qrc)
 
 qt_add_resources(${PROJECT_NAME}_TEST_RESOURCES_RCC ${TEST_RESOURCES})
 
 add_executable(test_${PROJECT_NAME} ${TEST_HEADERS} ${TEST_SOURCES} ${${PROJECT_NAME}_TEST_RESOURCES_RCC})
+add_sanitizers(test_${PROJECT_NAME})
 add_test(test_${PROJECT_NAME} test_${PROJECT_NAME})
 
 target_link_libraries(test_${PROJECT_NAME} ${LIBNAME} ${QT_LIBRARIES} ${THIRDPARTY_LIBS})
