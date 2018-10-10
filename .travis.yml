@@ -41,9 +41,7 @@ before_install:
       export DETECTED_CHANGES_AFFECTING_BUILD=False &&
       for CHANGED_FILE in ${CHANGED_FILES}; do
         echo "Checking file ${CHANGED_FILE}" &&
-        if ![[ "${CHANGED_FILE}" =~ "*.md" ]] && \
-           ![[ "${CHANGED_FILE}" == "COPYING.LESSER" ]] && \
-           ![[ "${CHANGED_FILE}" == "COPYING.txt" ]]; then
+        if ! [[ "${CHANGED_FILE}" =~ "*.md" ]] && ! [[ "${CHANGED_FILE}" == "COPYING.LESSER" ]] && [[ "${CHANGED_FILE}" == "COPYING.txt" ]]; then
           DETECTED_CHANGES_AFFECTING_BUILD=True
           break
         fi
