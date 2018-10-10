@@ -7,6 +7,7 @@ branches:
     only:
         - master
         - development
+        - feature/skip-continuous-integration-for-changes-in-docs
         - /^v\d+\.\d+(\.\d+)?(-\S*)?$/
 
 matrix:
@@ -32,6 +33,26 @@ matrix:
         - os: osx
           env: CMAKE_BUILD_TYPE=RelWithDebInfo
           compiler: clang
+
+before_install:
+    - |
+      export CHANGED_FILES=$(git diff --name-only ${TRAVIS_BRANCH}..${TRAVIS_COMMIT}) &&
+      echo "Changed files: ${CHANGED_FILES}" &&
+      export DETECTED_CHANGES_AFFECTING_BUILD=False &&
+      for CHANGED_FILE in ${CHANGED_FILES}; do
+        if ![[ "${CHANGED_FILE}" =~ "*.md" ]] && \
+           ![[ "${CHANGED_FILE}" == "COPYING.LESSER" ]] && \
+           ![[ "${CHANGED_FILE}" == "COPYING.txt" ]]; then
+          DETECTED_CHANGES_AFFECTING_BUILD=True
+          break
+        fi
+      done
+    - |
+      if [[ ${DETECTED_CHANGES_AFFECTING_BUILD} == False ]]; then
+        echo "No changes affecting build detected, exiting" &&
+        travis_terminate 0 &&
+        exit 1
+      fi
 
 install:
     - |
