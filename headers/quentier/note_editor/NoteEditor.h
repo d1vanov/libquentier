@@ -35,7 +35,7 @@ QT_FORWARD_DECLARE_CLASS(Account)
 QT_FORWARD_DECLARE_CLASS(INoteEditorBackend)
 QT_FORWARD_DECLARE_CLASS(FileIOProcessorAsync)
 QT_FORWARD_DECLARE_CLASS(SpellChecker)
-QT_FORWARD_DECLARE_CLASS(LocalStorageManager)
+QT_FORWARD_DECLARE_CLASS(LocalStorageManagerAsync)
 
 /**
  * @brief The NoteEditor class is a widget encapsulating all the functionality necessary for showing and editing notes
@@ -48,11 +48,11 @@ public:
     virtual ~NoteEditor() Q_DECL_OVERRIDE;
 
     /**
-     * NoteEditor requires LocalStorageManager, FileIOProcessorAsync, SpellChecker and Account for its work
+     * NoteEditor requires LocalStorageManagerAsync, FileIOProcessorAsync, SpellChecker and Account for its work
      * but due to the particularities of Qt's .ui files processing these can't be passed right inside the constructor,
      * hence here's a special initialization method
      */
-    void initialize(LocalStorageManager & localStorageManager,
+    void initialize(LocalStorageManagerAsync & localStorageManager,
                     FileIOProcessorAsync & fileIOProcessorAsync,
                     SpellChecker & spellChecker,
                     const Account & account);

@@ -19,8 +19,7 @@
 #include "NoteEditor_p.h"
 #include <quentier/note_editor/NoteEditor.h>
 #include <quentier/note_editor/INoteEditorBackend.h>
-#include <quentier/types/Notebook.h>
-#include <quentier/types/Account.h>
+#include <quentier/local_storage/LocalStorageManagerAsync.h>
 #include <QUndoStack>
 #include <QFont>
 #include <QColor>
@@ -43,11 +42,12 @@ NoteEditor::NoteEditor(QWidget * parent, Qt::WindowFlags flags) :
 NoteEditor::~NoteEditor()
 {}
 
-void NoteEditor::initialize(FileIOProcessorAsync & fileIOProcessorAsync,
+void NoteEditor::initialize(LocalStorageManagerAsync & localStorageManager,
+                            FileIOProcessorAsync & fileIOProcessorAsync,
                             SpellChecker & spellChecker,
                             const Account & account)
 {
-    m_backend->initialize(fileIOProcessorAsync, spellChecker, account);
+    m_backend->initialize(localStorageManager, fileIOProcessorAsync, spellChecker, account);
 }
 
 void NoteEditor::setBackend(INoteEditorBackend * backend)
@@ -75,11 +75,6 @@ void NoteEditor::setBlankPageHtml(const QString & html)
     m_backend->setBlankPageHtml(html);
 }
 
-void NoteEditor::setNoteAndNotebook(const Note & note, const Notebook & notebook)
-{
-    m_backend->setNoteAndNotebook(note, notebook);
-}
-
 void NoteEditor::clear()
 {
     m_backend->clear();
@@ -103,6 +98,11 @@ void NoteEditor::setFocus()
 void NoteEditor::convertToNote()
 {
     m_backend->convertToNote();
+}
+
+void NoteEditor::saveNoteToLocalStorage()
+{
+    m_backend->saveNoteToLocalStorage();
 }
 
 void NoteEditor::undo()

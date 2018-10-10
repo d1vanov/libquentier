@@ -28,6 +28,7 @@
 #include <quentier/utility/EncryptionManager.h>
 #include <quentier/utility/StringUtils.h>
 #include <quentier/types/ErrorString.h>
+#include <quentier/types/Notebook.h>
 #include <quentier/types/ResourceRecognitionIndices.h>
 #include <QObject>
 #include <QMimeType>
@@ -66,6 +67,8 @@ namespace quentier {
 QT_FORWARD_DECLARE_CLASS(ResourceInfoJavaScriptHandler)
 QT_FORWARD_DECLARE_CLASS(ResourceFileStorageManager)
 QT_FORWARD_DECLARE_CLASS(FileIOProcessorAsync)
+QT_FORWARD_DECLARE_CLASS(LocalStorageManagerAsync)
+
 QT_FORWARD_DECLARE_CLASS(TextCursorPositionJavaScriptHandler)
 QT_FORWARD_DECLARE_CLASS(ContextMenuEventJavaScriptHandler)
 QT_FORWARD_DECLARE_CLASS(TableResizeJavaScriptHandler)
@@ -212,7 +215,8 @@ public:
     qint64 noteSize() const;
 
 public Q_SLOTS:
-    virtual void initialize(FileIOProcessorAsync & fileIOProcessorAsync,
+    virtual void initialize(LocalStorageManagerAsync & localStorageManager,
+                            FileIOProcessorAsync & fileIOProcessorAsync,
                             SpellChecker & spellChecker,
                             const Account & account) Q_DECL_OVERRIDE;
     virtual QObject * object() Q_DECL_OVERRIDE { return this; }
@@ -307,10 +311,11 @@ public Q_SLOTS:
     virtual bool exportToEnex(const QStringList & tagNames,
                               QString & enex, ErrorString & errorDescription) Q_DECL_OVERRIDE;
 
-    virtual void setNoteAndNotebook(const Note & note, const Notebook & notebook) Q_DECL_OVERRIDE;
+    virtual void setCurrentNoteLocalUid(const QString & noteLocalUid) Q_DECL_OVERRIDE;
     virtual void clear() Q_DECL_OVERRIDE;
     virtual void setFocusToEditor() Q_DECL_OVERRIDE;
     virtual void convertToNote() Q_DECL_OVERRIDE;
+    virtual void saveNoteToLocalStorage() Q_DECL_OVERRIDE;
 
     void undoPageAction();
     void redoPageAction();

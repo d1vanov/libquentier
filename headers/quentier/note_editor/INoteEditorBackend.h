@@ -35,14 +35,14 @@ QT_FORWARD_DECLARE_CLASS(Account)
 QT_FORWARD_DECLARE_CLASS(NoteEditor)
 QT_FORWARD_DECLARE_CLASS(FileIOProcessorAsync)
 QT_FORWARD_DECLARE_CLASS(SpellChecker)
-QT_FORWARD_DECLARE_CLASS(LocalStorageManager)
+QT_FORWARD_DECLARE_CLASS(LocalStorageManagerAsync)
 
 class QUENTIER_EXPORT INoteEditorBackend
 {
 public:
     virtual ~INoteEditorBackend();
 
-    virtual void initialize(LocalStorageManager & localStorageManager,
+    virtual void initialize(LocalStorageManagerAsync & localStorageManager,
                             FileIOProcessorAsync & fileIOProcessorAsync,
                             SpellChecker & spellChecker,
                             const Account & account) = 0;

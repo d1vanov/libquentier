@@ -62,6 +62,7 @@
 #include "undo_stack/SpellCheckIgnoreWordUndoCommand.h"
 #include "undo_stack/SpellCheckAddToUserWordListUndoCommand.h"
 #include "undo_stack/TableActionUndoCommand.h"
+#include <quentier/local_storage/LocalStorageManager.h>
 #include <quentier/utility/ApplicationSettings.h>
 #include <quentier/utility/EventLoopWithExitStatus.h>
 #include <quentier/utility/StandardPaths.h>
@@ -5333,11 +5334,15 @@ void NoteEditorPrivate::execJavascriptCommand(const QString & command, const QSt
     page->executeJavaScript(javascript, callback);
 }
 
-void NoteEditorPrivate::initialize(FileIOProcessorAsync & fileIOProcessorAsync,
+void NoteEditorPrivate::initialize(LocalStorageManagerAsync & localStorageManager,
+                                   FileIOProcessorAsync & fileIOProcessorAsync,
                                    SpellChecker & spellChecker,
                                    const Account & account)
 {
     QNDEBUG(QStringLiteral("NoteEditorPrivate::initialize"));
+
+    // TODO: actually use it in future
+    Q_UNUSED(localStorageManager)
 
     m_pFileIOProcessorAsync = &fileIOProcessorAsync;
     m_pSpellChecker = &spellChecker;
@@ -5802,6 +5807,15 @@ bool NoteEditorPrivate::exportToEnex(const QStringList & tagNames,
                                              exportTagsOption, enex, errorDescription);
 }
 
+void NoteEditorPrivate::setCurrentNoteLocalUid(const QString & noteLocalUid)
+{
+    QNDEBUG(QStringLiteral("NoteEditorPrivate::setCurrentNoteLocalUid: note local uid = ") << noteLocalUid);
+
+    // TODO: implement
+}
+
+// FIXME: remove when it's no longer needed or move contents to another method
+/*
 void NoteEditorPrivate::setNoteAndNotebook(const Note & note, const Notebook & notebook)
 {
     QNDEBUG(QStringLiteral("NoteEditorPrivate::setNoteAndNotebook: note: local uid = ") << note.localUid()
@@ -5928,6 +5942,7 @@ void NoteEditorPrivate::setNoteAndNotebook(const Note & note, const Notebook & n
 
     QNTRACE(QStringLiteral("Done setting the current note and notebook"));
 }
+*/
 
 void NoteEditorPrivate::clear()
 {
@@ -5971,6 +5986,13 @@ void NoteEditorPrivate::convertToNote()
     if (!res) {
         m_pendingConversionToNote = false;
     }
+}
+
+void NoteEditorPrivate::saveNoteToLocalStorage()
+{
+    QNDEBUG(QStringLiteral("NoteEditorPrivate::saveNoteToLocalStorage"));
+
+    // TODO: implement
 }
 
 void NoteEditorPrivate::updateFromNote()
