@@ -35,14 +35,14 @@ matrix:
 
 before_install:
     - |
-      export CHANGED_FILES=($(git diff --name-only ${TRAVIS_COMMIT_RANGE}))
+      export CHANGED_FILES=($(git diff --name-only ${TRAVIS_COMMIT_RANGE})) &&
       echo "Changed files: ${CHANGED_FILES}" &&
       export DETECTED_CHANGES_AFFECTING_BUILD=False &&
       for CHANGED_FILE in ${CHANGED_FILES}; do
         echo "Checking file ${CHANGED_FILE}" &&
         if ! [[ ${CHANGED_FILE} =~ "*.md" ]] && [[ "${CHANGED_FILE}" != "COPYING.LESSER" ]] && [[ "${CHANGED_FILE}" != "COPYING.txt" ]]; then
-          echo "Detected changes affecting build: file ${CHANGED_FILE}"
-          DETECTED_CHANGES_AFFECTING_BUILD=True
+          echo "Detected changes affecting build: file ${CHANGED_FILE}" &&
+          DETECTED_CHANGES_AFFECTING_BUILD=True &&
           break
         fi
       done
