@@ -7,7 +7,6 @@ branches:
     only:
         - master
         - development
-        - feature/skip-continuous-integration-for-changes-in-docs
         - /^v\d+\.\d+(\.\d+)?(-\S*)?$/
 
 matrix:
