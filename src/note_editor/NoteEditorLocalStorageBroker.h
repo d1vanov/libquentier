@@ -63,6 +63,15 @@ private Q_SLOTS:
     void onFindNotebookComplete(Notebook foundNotebook, QUuid requestId);
     void onFindNotebookFailed(Notebook notebook, ErrorString errorDescription, QUuid requestId);
 
+    void onAddResourceComplete(Resource resource, QUuid requestId);
+    void onAddResourceFailed(Resource resource, ErrorString errorDescription, QUuid requestId);
+
+    void onUpdateResourceComplete(Resource resource, QUuid requestId);
+    void onUpdateResourceFailed(Resource resource, ErrorString errorDescription, QUuid requestId);
+
+    void onExpungeResourceComplete(Resource resource, QUuid requestId);
+    void onExpungeResourceFailed(Resource resource, ErrorString errorDescription, QUuid requestId);
+
 private:
     void createConnections(LocalStorageManagerAsync & localStorageManager);
 
@@ -71,6 +80,32 @@ private:
 
 private:
     QHash<QString, QSet<QString> >   m_originalNoteResourceLocalUidsByNoteLocalUid;
+
+    QHash<QUuid, QString>   m_noteLocalUidsByAddResourceRequestIds;
+    QHash<QUuid, QString>   m_noteLocalUidsByUpdateResourceRequestIds;
+    QHash<QUuid, QString>   m_noteLocalUidsByExpungeResourceRequestIds;
+
+    class SaveNoteInfo: public Printable
+    {
+    public:
+        SaveNoteInfo() :
+            m_notePendingSaving(),
+            m_pendingAddResourceRequests(0),
+            m_pendingUpdateResourceRequests(0),
+            m_pendingExpungeResourceRequests(0)
+        {}
+
+        virtual QTextStream & print(QTextStream & strm) const Q_DECL_OVERRIDE;
+
+        Note        m_notePendingSaving;
+        quint32     m_pendingAddResourceRequests;
+        quint32     m_pendingUpdateResourceRequests;
+        quint32     m_pendingExpungeResourceRequests;
+    };
+
+    QHash<QString, SaveNoteInfo>    m_saveNoteInfoByNoteLocalUids;
+
+    QSet<QUuid>     m_updateNoteRequestIds;
 };
 
 } // namespace quentier
