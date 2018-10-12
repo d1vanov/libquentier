@@ -6,6 +6,12 @@ branches:
     - development
     - /^v\d+\.\d+(\.\d+)?(-\S*)?$/
 
+skip_commits:
+  files:
+    - '*.md'
+    - COPYING.LESSER
+    - COPYING.txt
+
 environment:
   auth_token:
     secure: rLuHhO0prerqoGCYmfOoyxqcwwamCXtuZtl4Jzqeu3aGgflk0mnX1fogLq68YcRW
