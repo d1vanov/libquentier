@@ -21,6 +21,7 @@
 
 #include <quentier/local_storage/LocalStorageManagerAsync.h>
 #include <quentier/types/Note.h>
+#include <quentier/utility/LRUCache.hpp>
 #include <QObject>
 #include <QHash>
 #include <QSet>
@@ -41,6 +42,11 @@ Q_SIGNALS:
     void foundNoteAndNotebook(Note note, Notebook notebook);
     void failedToFindNoteOrNotebook(QString noteLocalUid, ErrorString errorDescription);
 
+    void noteUpdated(Note note);
+    void notebookUpdated(Notebook);
+    void noteDeleted(QString noteLocalUid);
+    void notebookDeleted(QString noteLocalUid);
+
 // private signals
     void updateNote(Note note, LocalStorageManager::UpdateNoteOptions options, QUuid requestId);
     void addResource(Resource resource, QUuid requestId);
@@ -57,6 +63,8 @@ private Q_SLOTS:
     void onUpdateNoteComplete(Note note, LocalStorageManager::UpdateNoteOptions options, QUuid requestId);
     void onUpdateNoteFailed(Note note, LocalStorageManager::UpdateNoteOptions options,
                             ErrorString errorDescription, QUuid requestId);
+    void onUpdateNotebookComplete(Notebook notebook, QUuid requestId);
+
     void onFindNoteComplete(Note foundNote, bool withResourceMetadata, bool withResourceBinaryData, QUuid requestId);
     void onFindNoteFailed(Note note, bool withResourceMetadata, bool withResourceBinaryData,
                           ErrorString errorDescription, QUuid requestId);
@@ -72,8 +80,13 @@ private Q_SLOTS:
     void onExpungeResourceComplete(Resource resource, QUuid requestId);
     void onExpungeResourceFailed(Resource resource, ErrorString errorDescription, QUuid requestId);
 
+    void onExpungeNoteComplete(Note note, QUuid requestId);
+    void onExpungeNotebookComplete(Notebook notebook, QUuid requestId);
+
 private:
     void createConnections(LocalStorageManagerAsync & localStorageManager);
+    void emitFindNoteRequest(const QString & noteLocalUid);
+    void emitFindNotebookRequest(const QString & notebookLocalUid);
 
 private:
     Q_DISABLE_COPY(NoteEditorLocalStorageBroker)
@@ -81,9 +94,15 @@ private:
 private:
     QHash<QString, QSet<QString> >   m_originalNoteResourceLocalUidsByNoteLocalUid;
 
+    QSet<QUuid>     m_findNoteRequestIds;
+    QSet<QUuid>     m_findNotebookRequestIds;
+
     QHash<QUuid, QString>   m_noteLocalUidsByAddResourceRequestIds;
     QHash<QUuid, QString>   m_noteLocalUidsByUpdateResourceRequestIds;
     QHash<QUuid, QString>   m_noteLocalUidsByExpungeResourceRequestIds;
+
+    LRUCache<QString, Notebook>     m_notebooksCache;
+    LRUCache<QString, Note>         m_notesCache;
 
     class SaveNoteInfo: public Printable
     {
