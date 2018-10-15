@@ -25,6 +25,7 @@
 #include <QObject>
 #include <QHash>
 #include <QSet>
+#include <QVector>
 
 namespace quentier {
 
@@ -86,7 +87,7 @@ private Q_SLOTS:
 private:
     void createConnections(LocalStorageManagerAsync & localStorageManager);
     void emitFindNoteRequest(const QString & noteLocalUid);
-    void emitFindNotebookRequest(const QString & notebookLocalUid);
+    void emitFindNotebookRequest(const QString & notebookLocalUid, const Note & note);
 
 private:
     Q_DISABLE_COPY(NoteEditorLocalStorageBroker)
@@ -96,6 +97,11 @@ private:
 
     QSet<QUuid>     m_findNoteRequestIds;
     QSet<QUuid>     m_findNotebookRequestIds;
+
+    typedef QHash<QString, Note> NotesHash;
+    typedef QHash<QString, NotesHash> NotesPendingNotebookFindingHash;
+    NotesPendingNotebookFindingHash     m_notesPendingNotebookFindingByNotebookLocalUid;
+    NotesPendingNotebookFindingHash     m_notesPendingNotebookFindingByNotebookGuid;
 
     QHash<QUuid, QString>   m_noteLocalUidsByAddResourceRequestIds;
     QHash<QUuid, QString>   m_noteLocalUidsByUpdateResourceRequestIds;
