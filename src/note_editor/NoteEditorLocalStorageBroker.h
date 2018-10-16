@@ -86,8 +86,10 @@ private Q_SLOTS:
 
 private:
     void createConnections(LocalStorageManagerAsync & localStorageManager);
+
     void emitFindNoteRequest(const QString & noteLocalUid);
     void emitFindNotebookRequest(const QString & notebookLocalUid, const Note & note);
+    void emitUpdateNoteRequest(const Note & note);
 
 private:
     Q_DISABLE_COPY(NoteEditorLocalStorageBroker)
