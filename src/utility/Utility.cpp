@@ -19,6 +19,7 @@
 #include <quentier/utility/Utility.h>
 #include <quentier/logging/QuentierLogger.h>
 #include <quentier/types/RegisterMetatypes.h>
+#include "../note_editor/NoteEditorLocalStorageBroker.h"
 #include <QStyleFactory>
 #include <QApplication>
 #include <QScopedPointer>
@@ -76,6 +77,9 @@ namespace quentier {
 void initializeLibquentier()
 {
     registerMetatypes();
+
+    // Ensure the instance is created now and not later
+    Q_UNUSED(NoteEditorLocalStorageBroker::instance())
 }
 
 bool checkUpdateSequenceNumber(const int32_t updateSequenceNumber)

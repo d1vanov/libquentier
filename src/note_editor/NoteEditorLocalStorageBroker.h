@@ -32,9 +32,13 @@ namespace quentier {
 class NoteEditorLocalStorageBroker: public QObject
 {
     Q_OBJECT
+private:
+    explicit NoteEditorLocalStorageBroker();
+
 public:
-    explicit NoteEditorLocalStorageBroker(LocalStorageManagerAsync & localStorageManager,
-                                          QObject * parent = Q_NULLPTR);
+    static NoteEditorLocalStorageBroker & instance();
+
+    void setLocalStorageManager(LocalStorageManagerAsync & localStorageManager);
 
 Q_SIGNALS:
     void noteSavedToLocalStorage(QString noteLocalUid);
@@ -91,6 +95,25 @@ private:
     void emitFindNotebookRequest(const QString & notebookLocalUid, const Note & note);
     void emitUpdateNoteRequest(const Note & note);
 
+    class SaveNoteInfo: public Printable
+    {
+    public:
+        SaveNoteInfo() :
+            m_notePendingSaving(),
+            m_pendingAddResourceRequests(0),
+            m_pendingUpdateResourceRequests(0),
+            m_pendingExpungeResourceRequests(0)
+        {}
+
+        virtual QTextStream & print(QTextStream & strm) const Q_DECL_OVERRIDE;
+        bool hasPendingResourceOperations() const;
+
+        Note        m_notePendingSaving;
+        quint32     m_pendingAddResourceRequests;
+        quint32     m_pendingUpdateResourceRequests;
+        quint32     m_pendingExpungeResourceRequests;
+    };
+
 private:
     Q_DISABLE_COPY(NoteEditorLocalStorageBroker)
 
@@ -112,23 +135,6 @@ private:
     LRUCache<QString, Notebook>     m_notebooksCache;
     LRUCache<QString, Note>         m_notesCache;
 
-    class SaveNoteInfo: public Printable
-    {
-    public:
-        SaveNoteInfo() :
-            m_notePendingSaving(),
-            m_pendingAddResourceRequests(0),
-            m_pendingUpdateResourceRequests(0),
-            m_pendingExpungeResourceRequests(0)
-        {}
-
-        virtual QTextStream & print(QTextStream & strm) const Q_DECL_OVERRIDE;
-
-        Note        m_notePendingSaving;
-        quint32     m_pendingAddResourceRequests;
-        quint32     m_pendingUpdateResourceRequests;
-        quint32     m_pendingExpungeResourceRequests;
-    };
 
     QHash<QString, SaveNoteInfo>    m_saveNoteInfoByNoteLocalUids;
 

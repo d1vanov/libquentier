@@ -22,9 +22,8 @@
 
 namespace quentier {
 
-NoteEditorLocalStorageBroker::NoteEditorLocalStorageBroker(LocalStorageManagerAsync & localStorageManager,
-                                                           QObject * parent) :
-    QObject(parent),
+NoteEditorLocalStorageBroker::NoteEditorLocalStorageBroker() :
+    QObject(),
     m_originalNoteResourceLocalUidsByNoteLocalUid(),
     m_findNoteRequestIds(),
     m_findNotebookRequestIds(),
@@ -37,7 +36,17 @@ NoteEditorLocalStorageBroker::NoteEditorLocalStorageBroker(LocalStorageManagerAs
     m_notesCache(5),
     m_saveNoteInfoByNoteLocalUids(),
     m_updateNoteRequestIds()
+{}
+
+NoteEditorLocalStorageBroker & NoteEditorLocalStorageBroker::instance()
 {
+    static NoteEditorLocalStorageBroker noteEditorLocalStorageBroker;
+    return noteEditorLocalStorageBroker;
+}
+
+void NoteEditorLocalStorageBroker::setLocalStorageManager(LocalStorageManagerAsync & localStorageManager)
+{
+    QNDEBUG(QStringLiteral("NoteEditorLocalStorageBroker::setLocalStorageManager"));
     createConnections(localStorageManager);
 }
 
@@ -470,7 +479,7 @@ void NoteEditorLocalStorageBroker::onAddResourceComplete(Resource resource, QUui
 
     auto saveNoteInfoIt = m_saveNoteInfoByNoteLocalUids.find(noteLocalUid);
     if (Q_UNLIKELY(saveNoteInfoIt == m_saveNoteInfoByNoteLocalUids.end())) {
-        QNWARNING(QStringLiteral("Unable to find note for which the resource was added to local storage: resource = ")
+        QNWARNING(QStringLiteral("Unable to find note for which the resource was added to the local storage: resource = ")
                   << resource);
         return;
     }
@@ -482,18 +491,7 @@ void NoteEditorLocalStorageBroker::onAddResourceComplete(Resource resource, QUui
         --saveNoteInfo.m_pendingAddResourceRequests;
     }
 
-    if ( (saveNoteInfo.m_pendingAddResourceRequests != 0) ||
-         (saveNoteInfo.m_pendingUpdateResourceRequests != 0) ||
-         (saveNoteInfo.m_pendingExpungeResourceRequests != 0) )
-    {
-        QNDEBUG(QStringLiteral("Still pending for ")
-                << saveNoteInfo.m_pendingAddResourceRequests
-                << QStringLiteral(" pending add resource requests and/or ")
-                << saveNoteInfo.m_pendingUpdateResourceRequests
-                << QStringLiteral(" pending update resource requests and/or ")
-                << saveNoteInfo.m_pendingExpungeResourceRequests
-                << QStringLiteral(" pending expunge resource requests for note with local uid ")
-                << noteLocalUid);
+    if (saveNoteInfo.hasPendingResourceOperations()) {
         return;
     }
 
@@ -515,6 +513,11 @@ void NoteEditorLocalStorageBroker::onAddResourceFailed(Resource resource, ErrorS
     QString noteLocalUid = it.value();
     m_noteLocalUidsByAddResourceRequestIds.erase(it);
 
+    auto saveNoteInfoIt = m_saveNoteInfoByNoteLocalUids.find(noteLocalUid);
+    if (saveNoteInfoIt != m_saveNoteInfoByNoteLocalUids.end()) {
+        m_saveNoteInfoByNoteLocalUids.erase(saveNoteInfoIt);
+    }
+
     Q_EMIT failedToSaveNoteToLocalStorage(noteLocalUid, errorDescription);
 }
 
@@ -528,30 +531,107 @@ void NoteEditorLocalStorageBroker::onUpdateResourceComplete(Resource resource, Q
     QNDEBUG(QStringLiteral("NoteEditorLocalStorageBroker::onUpdateResourceComplete: request id = ") << requestId
             << QStringLiteral(", resource: ") << resource);
 
-    // TODO: implement further
+    QString noteLocalUid = it.value();
+    m_noteLocalUidsByUpdateResourceRequestIds.erase(it);
+
+    auto saveNoteInfoIt = m_saveNoteInfoByNoteLocalUids.find(noteLocalUid);
+    if (Q_UNLIKELY(saveNoteInfoIt == m_saveNoteInfoByNoteLocalUids.end())) {
+        QNWARNING(QStringLiteral("Unable to find note for which the resource was updated in the local storage: resource = ")
+                  << resource);
+        return;
+    }
+
+    SaveNoteInfo & saveNoteInfo = saveNoteInfoIt.value();
+
+    // Extra precaution against the case of miscounting and overflow
+    if (saveNoteInfo.m_pendingUpdateResourceRequests > 0) {
+        --saveNoteInfo.m_pendingUpdateResourceRequests;
+    }
+
+    if (saveNoteInfo.hasPendingResourceOperations()) {
+        return;
+    }
+
+    emitUpdateNoteRequest(saveNoteInfo.m_notePendingSaving);
+    m_saveNoteInfoByNoteLocalUids.erase(saveNoteInfoIt);
 }
 
 void NoteEditorLocalStorageBroker::onUpdateResourceFailed(Resource resource, ErrorString errorDescription, QUuid requestId)
 {
-    // TODO: implement
-    Q_UNUSED(resource)
-    Q_UNUSED(errorDescription)
-    Q_UNUSED(requestId)
+    auto it = m_noteLocalUidsByUpdateResourceRequestIds.find(requestId);
+    if (it == m_noteLocalUidsByUpdateResourceRequestIds.end()) {
+        return;
+    }
+
+    QNWARNING(QStringLiteral("NoteEditorLocalStorageBroker::onUpdateResourceFailed: request id = ") << requestId
+              << QStringLiteral(", error description: ") << errorDescription
+              << QStringLiteral(", resource: ") << resource);
+
+    QString noteLocalUid = it.value();
+    m_noteLocalUidsByUpdateResourceRequestIds.erase(it);
+
+    auto saveNoteInfoIt = m_saveNoteInfoByNoteLocalUids.find(noteLocalUid);
+    if (saveNoteInfoIt != m_saveNoteInfoByNoteLocalUids.end()) {
+        m_saveNoteInfoByNoteLocalUids.erase(saveNoteInfoIt);
+    }
+
+    Q_EMIT failedToSaveNoteToLocalStorage(noteLocalUid, errorDescription);
 }
 
 void NoteEditorLocalStorageBroker::onExpungeResourceComplete(Resource resource, QUuid requestId)
 {
-    // TODO: implement
-    Q_UNUSED(resource)
-    Q_UNUSED(requestId)
+    auto it = m_noteLocalUidsByExpungeResourceRequestIds.find(requestId);
+    if (it == m_noteLocalUidsByExpungeResourceRequestIds.end()) {
+        return;
+    }
+
+    QNDEBUG(QStringLiteral("NoteEditorLocalStorageBroker::onExpungeResourceComplete"));
+
+    QString noteLocalUid = it.value();
+    m_noteLocalUidsByExpungeResourceRequestIds.erase(it);
+
+    auto saveNoteInfoIt = m_saveNoteInfoByNoteLocalUids.find(noteLocalUid);
+    if (Q_UNLIKELY(saveNoteInfoIt == m_saveNoteInfoByNoteLocalUids.end())) {
+        QNWARNING(QStringLiteral("Unable to find note which resource was expunged from the local storage: resource = ")
+                  << resource);
+        return;
+    }
+
+    SaveNoteInfo & saveNoteInfo = saveNoteInfoIt.value();
+
+    // Extra precaution againts the case of miscounting and overflow
+    if (saveNoteInfo.m_pendingExpungeResourceRequests > 0) {
+        --saveNoteInfo.m_pendingExpungeResourceRequests;
+    }
+
+    if (saveNoteInfo.hasPendingResourceOperations()) {
+        return;
+    }
+
+    emitUpdateNoteRequest(saveNoteInfo.m_notePendingSaving);
+    m_saveNoteInfoByNoteLocalUids.erase(saveNoteInfoIt);
 }
 
 void NoteEditorLocalStorageBroker::onExpungeResourceFailed(Resource resource, ErrorString errorDescription, QUuid requestId)
 {
-    // TODO: implement
-    Q_UNUSED(resource)
-    Q_UNUSED(errorDescription)
-    Q_UNUSED(requestId)
+    auto it = m_noteLocalUidsByExpungeResourceRequestIds.find(requestId);
+    if (it == m_noteLocalUidsByExpungeResourceRequestIds.end()) {
+        return;
+    }
+
+    QNWARNING(QStringLiteral("NoteEditorLocalStorageBroker::onExpungeResourceFailed: request id = ") << requestId
+              << QStringLiteral(", error description: ") << errorDescription
+              << QStringLiteral(", resource: ") << resource);
+
+    QString noteLocalUid = it.value();
+    m_noteLocalUidsByExpungeResourceRequestIds.erase(it);
+
+    auto saveNoteInfoIt = m_saveNoteInfoByNoteLocalUids.find(noteLocalUid);
+    if (saveNoteInfoIt != m_saveNoteInfoByNoteLocalUids.end()) {
+        m_saveNoteInfoByNoteLocalUids.erase(saveNoteInfoIt);
+    }
+
+    Q_EMIT failedToSaveNoteToLocalStorage(noteLocalUid, errorDescription);
 }
 
 void NoteEditorLocalStorageBroker::onExpungeNoteComplete(Note note, QUuid requestId)
@@ -663,6 +743,26 @@ QTextStream & NoteEditorLocalStorageBroker::SaveNoteInfo::print(QTextStream & st
          << ",  note: " << m_notePendingSaving
          << "\n";
     return strm;
+}
+
+bool NoteEditorLocalStorageBroker::SaveNoteInfo::hasPendingResourceOperations() const
+{
+    if ( (m_pendingAddResourceRequests != 0) ||
+         (m_pendingUpdateResourceRequests != 0) ||
+         (m_pendingExpungeResourceRequests != 0) )
+    {
+        QNDEBUG(QStringLiteral("Still pending for ")
+                << m_pendingAddResourceRequests
+                << QStringLiteral(" pending add resource requests and/or ")
+                << m_pendingUpdateResourceRequests
+                << QStringLiteral(" pending update resource requests and/or ")
+                << m_pendingExpungeResourceRequests
+                << QStringLiteral(" pending expunge resource requests for note with local uid ")
+                << m_notePendingSaving.localUid());
+        return true;
+    }
+
+    return false;
 }
 
 } // namespace quentier
