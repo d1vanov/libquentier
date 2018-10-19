@@ -26,6 +26,7 @@
 #include <QWidget>
 #include <QPrinter>
 #include <QStringList>
+#include <QThread>
 
 QT_FORWARD_DECLARE_CLASS(QUndoStack)
 
@@ -33,7 +34,6 @@ namespace quentier {
 
 QT_FORWARD_DECLARE_CLASS(Account)
 QT_FORWARD_DECLARE_CLASS(INoteEditorBackend)
-QT_FORWARD_DECLARE_CLASS(FileIOProcessorAsync)
 QT_FORWARD_DECLARE_CLASS(SpellChecker)
 QT_FORWARD_DECLARE_CLASS(LocalStorageManagerAsync)
 
@@ -48,14 +48,18 @@ public:
     virtual ~NoteEditor() Q_DECL_OVERRIDE;
 
     /**
-     * NoteEditor requires LocalStorageManagerAsync, FileIOProcessorAsync, SpellChecker and Account for its work
+     * NoteEditor requires LocalStorageManagerAsync, SpellChecker and Account for its work
      * but due to the particularities of Qt's .ui files processing these can't be passed right inside the constructor,
      * hence here's a special initialization method
      */
     void initialize(LocalStorageManagerAsync & localStorageManager,
-                    FileIOProcessorAsync & fileIOProcessorAsync,
                     SpellChecker & spellChecker,
                     const Account & account);
+
+    /**
+     * Set the thread in which NoteEditor should perform its background tasks
+     */
+    void setBackgroundThread(QThread * pThread);
 
     /**
      * This method can be used to set the backend to the note editor; the note editor has the default backend

@@ -26,6 +26,7 @@
 #include <QWidget>
 #include <QPrinter>
 #include <QStringList>
+#include <QThread>
 
 QT_FORWARD_DECLARE_CLASS(QUndoStack)
 
@@ -33,7 +34,6 @@ namespace quentier {
 
 QT_FORWARD_DECLARE_CLASS(Account)
 QT_FORWARD_DECLARE_CLASS(NoteEditor)
-QT_FORWARD_DECLARE_CLASS(FileIOProcessorAsync)
 QT_FORWARD_DECLARE_CLASS(SpellChecker)
 QT_FORWARD_DECLARE_CLASS(LocalStorageManagerAsync)
 
@@ -43,9 +43,10 @@ public:
     virtual ~INoteEditorBackend();
 
     virtual void initialize(LocalStorageManagerAsync & localStorageManager,
-                            FileIOProcessorAsync & fileIOProcessorAsync,
                             SpellChecker & spellChecker,
                             const Account & account) = 0;
+
+    virtual void setBackgroundThread(QThread * pThread) = 0;
 
     virtual QObject * object() = 0;   // provide QObject interface
     virtual QWidget * widget() = 0;   // provide QWidget interface

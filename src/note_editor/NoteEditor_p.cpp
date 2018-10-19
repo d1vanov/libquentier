@@ -307,7 +307,7 @@ NoteEditorPrivate::NoteEditorPrivate(NoteEditor & noteEditor) :
     m_errorCachedMemory(),
     m_skipRulesForHtmlToEnmlConversion(),
     m_pResourceFileStorageManager(Q_NULLPTR),
-    m_pFileIOProcessorAsync(Q_NULLPTR),
+    m_pFileIOProcessorAsync(new FileIOProcessorAsync(this)),
     m_resourceInfo(),
     m_pResourceInfoJavaScriptHandler(new ResourceInfoJavaScriptHandler(m_resourceInfo, this)),
     m_resourceLocalFileStorageFolder(),
@@ -4283,8 +4283,6 @@ void NoteEditorPrivate::setupFileIO()
 {
     QNDEBUG(QStringLiteral("NoteEditorPrivate::setupFileIO"));
 
-    QUENTIER_CHECK_PTR(m_pFileIOProcessorAsync, QStringLiteral("no file IO processor async was passed to note editor"));
-
     QObject::connect(this, QNSIGNAL(NoteEditorPrivate,writeNoteHtmlToFile,QString,QByteArray,QUuid,bool),
                      m_pFileIOProcessorAsync, QNSLOT(FileIOProcessorAsync,onWriteFileRequest,QString,QByteArray,QUuid,bool));
     QObject::connect(this, QNSIGNAL(NoteEditorPrivate,saveResourceToFile,QString,QByteArray,QUuid,bool),
@@ -5335,7 +5333,6 @@ void NoteEditorPrivate::execJavascriptCommand(const QString & command, const QSt
 }
 
 void NoteEditorPrivate::initialize(LocalStorageManagerAsync & localStorageManager,
-                                   FileIOProcessorAsync & fileIOProcessorAsync,
                                    SpellChecker & spellChecker,
                                    const Account & account)
 {
@@ -5344,9 +5341,20 @@ void NoteEditorPrivate::initialize(LocalStorageManagerAsync & localStorageManage
     // TODO: actually use it in future
     Q_UNUSED(localStorageManager)
 
-    m_pFileIOProcessorAsync = &fileIOProcessorAsync;
     m_pSpellChecker = &spellChecker;
     setAccount(account);
+}
+
+void NoteEditorPrivate::setBackgroundThread(QThread * pThread)
+{
+    QNDEBUG(QStringLiteral("NoteEditorPrivate::setBackgroundThread"));
+
+    if (Q_UNLIKELY(!pThread)) {
+        QNDEBUG(QStringLiteral("Null pointer to QThread was passed, not doing anything"));
+        return;
+    }
+
+    m_pFileIOProcessorAsync->moveToThread(pThread);
 }
 
 void NoteEditorPrivate::setAccount(const Account & account)

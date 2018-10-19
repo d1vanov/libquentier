@@ -215,10 +215,11 @@ public:
     qint64 noteSize() const;
 
 public Q_SLOTS:
+    // INoteEditorBackend interface
     virtual void initialize(LocalStorageManagerAsync & localStorageManager,
-                            FileIOProcessorAsync & fileIOProcessorAsync,
                             SpellChecker & spellChecker,
                             const Account & account) Q_DECL_OVERRIDE;
+    virtual void setBackgroundThread(QThread * pThread) Q_DECL_OVERRIDE;
     virtual QObject * object() Q_DECL_OVERRIDE { return this; }
     virtual QWidget * widget() Q_DECL_OVERRIDE { return this; }
     virtual void setAccount(const Account & account) Q_DECL_OVERRIDE;
