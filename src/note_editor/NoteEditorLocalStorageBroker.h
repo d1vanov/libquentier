@@ -38,7 +38,7 @@ private:
 public:
     static NoteEditorLocalStorageBroker & instance();
 
-    void setLocalStorageManager(LocalStorageManagerAsync & localStorageManager);
+    void setLocalStorageManager(LocalStorageManagerAsync & localStorageManagerAsync);
 
 Q_SIGNALS:
     void noteSavedToLocalStorage(QString noteLocalUid);
@@ -88,8 +88,11 @@ private Q_SLOTS:
     void onExpungeNoteComplete(Note note, QUuid requestId);
     void onExpungeNotebookComplete(Notebook notebook, QUuid requestId);
 
+    void onSwitchUserComplete(Account account, QUuid requestId);
+
 private:
-    void createConnections(LocalStorageManagerAsync & localStorageManager);
+    void createConnections(LocalStorageManagerAsync & localStorageManagerAsync);
+    void disconnectFromLocalStorage(LocalStorageManagerAsync & localStorageManagerAsync);
 
     void emitFindNoteRequest(const QString & noteLocalUid);
     void emitFindNotebookRequest(const QString & notebookLocalUid, const Note & note);
@@ -118,7 +121,8 @@ private:
     Q_DISABLE_COPY(NoteEditorLocalStorageBroker)
 
 private:
-    QHash<QString, QSet<QString> >   m_originalNoteResourceLocalUidsByNoteLocalUid;
+    LocalStorageManagerAsync *      m_pLocalStorageManagerAsync;
+    QHash<QString, QSet<QString> >  m_originalNoteResourceLocalUidsByNoteLocalUid;
 
     QSet<QUuid>     m_findNoteRequestIds;
     QSet<QUuid>     m_findNotebookRequestIds;
@@ -135,9 +139,7 @@ private:
     LRUCache<QString, Notebook>     m_notebooksCache;
     LRUCache<QString, Note>         m_notesCache;
 
-
     QHash<QString, SaveNoteInfo>    m_saveNoteInfoByNoteLocalUids;
-
     QSet<QUuid>     m_updateNoteRequestIds;
 };
 
