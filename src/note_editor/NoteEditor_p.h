@@ -484,6 +484,16 @@ private Q_SLOTS:
     void getHtmlForPrinting();
 #endif
 
+    // Slots for signals from NoteEditorLocalStorageBroker
+    void onNoteSavedToLocalStorage(QString noteLocalUid);
+    void onFailedToSaveNoteToLocalStorage(QString noteLocalUid, ErrorString errorDescription);
+    void onFoundNoteAndNotebook(Note note, Notebook notebook);
+    void onFailedToFindNoteOrNotebook(QString noteLocalUid, ErrorString errorDescription);
+    void onNoteUpdated(Note note);
+    void onNotebookUpdated(Notebook notebook);
+    void onNoteDeleted(Note note);
+    void onNotebookDeleted(Notebook notebook);
+
 private:
     void init();
 

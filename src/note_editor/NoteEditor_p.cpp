@@ -2599,6 +2599,67 @@ void NoteEditorPrivate::init()
     writeNotePageFile(initialHtml);
 }
 
+void NoteEditorPrivate::onNoteSavedToLocalStorage(QString noteLocalUid)
+{
+    if (!m_pNote || (m_pNote->localUid() != noteLocalUid)) {
+        return;
+    }
+
+    QNDEBUG(QStringLiteral("NoteEditorPrivate::onNoteSavedToLocalStorage: note local uid = ") << noteLocalUid);
+
+    // TODO: implement further (if needed)
+}
+
+void NoteEditorPrivate::onFailedToSaveNoteToLocalStorage(QString noteLocalUid, ErrorString errorDescription)
+{
+    if (!m_pNote || (m_pNote->localUid() != noteLocalUid)) {
+        return;
+    }
+
+    QNDEBUG(QStringLiteral("NoteEditorPrivate::onFailedToSaveNoteToLocalStorage: note local uid = ") << noteLocalUid
+            << QStringLiteral(", error description: ") << errorDescription);
+
+    // TODO: implement further (if needed)
+}
+
+void NoteEditorPrivate::onFoundNoteAndNotebook(Note note, Notebook notebook)
+{
+    // TODO: implement
+    Q_UNUSED(note)
+    Q_UNUSED(notebook)
+}
+
+void NoteEditorPrivate::onFailedToFindNoteOrNotebook(QString noteLocalUid, ErrorString errorDescription)
+{
+    // TODO: implement
+    Q_UNUSED(noteLocalUid)
+    Q_UNUSED(errorDescription)
+}
+
+void NoteEditorPrivate::onNoteUpdated(Note note)
+{
+    // TODO: implement
+    Q_UNUSED(note)
+}
+
+void NoteEditorPrivate::onNotebookUpdated(Notebook notebook)
+{
+    // TODO: implement
+    Q_UNUSED(notebook)
+}
+
+void NoteEditorPrivate::onNoteDeleted(Note note)
+{
+    // TODO: implement
+    Q_UNUSED(note)
+}
+
+void NoteEditorPrivate::onNotebookDeleted(Notebook notebook)
+{
+    // TODO: implement
+    Q_UNUSED(notebook)
+}
+
 void NoteEditorPrivate::handleHyperlinkClicked(const QUrl & url)
 {
     QString urlString = url.toString();
