@@ -259,6 +259,7 @@ if(BUILD_WITH_NOTE_EDITOR)
        src/note_editor/NoteEditorSettingsName.h
        src/note_editor/NoteEditorPage.h
        src/note_editor/NoteEditor_p.h
+       src/note_editor/NoteEditorPrivateMacros.h
        src/note_editor/NoteEditorLocalStorageBroker.h
        src/note_editor/JavaScriptInOrderExecutor.h
        src/note_editor/ResourceFileStorageManager.h

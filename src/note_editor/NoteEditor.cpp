@@ -79,6 +79,16 @@ void NoteEditor::setBlankPageHtml(const QString & html)
     m_backend->setBlankPageHtml(html);
 }
 
+QString NoteEditor::currentNoteLocalUid() const
+{
+    return m_backend->currentNoteLocalUid();
+}
+
+void NoteEditor::setCurrentNoteLocalUid(const QString & noteLocalUid)
+{
+    m_backend->setCurrentNoteLocalUid(noteLocalUid);
+}
+
 void NoteEditor::clear()
 {
     m_backend->clear();

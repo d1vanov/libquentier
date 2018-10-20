@@ -17,6 +17,7 @@
  */
 
 #include "NoteEditor_p.h"
+#include "NoteEditorPrivateMacros.h"
 #include "GenericResourceImageManager.h"
 #include "NoteEditorSettingsName.h"
 #include "ResourceFileStorageManager.h"
@@ -135,32 +136,6 @@ typedef QWebEngineSettings WebSettings;
 #include <QTransform>
 #include <QTimer>
 
-#define GET_PAGE() \
-    NoteEditorPage * page = qobject_cast<NoteEditorPage*>(this->page()); \
-    if (Q_UNLIKELY(!page)) { \
-        QNERROR(QStringLiteral("Can't get access to note editor's underlying page!")); \
-        return; \
-    }
-
-#define CHECK_NOTE_EDITABLE(message) \
-    if (Q_UNLIKELY(!isPageEditable())) { \
-        ErrorString error(message); \
-        error.appendBase(QT_TRANSLATE_NOOP("NoteEditorPrivate", "Note is not editable")); \
-        QNINFO(error << QStringLiteral(", note: ") << (m_pNote.isNull() ? QStringLiteral("<null>") : m_pNote->toString()) \
-               << QStringLiteral("\nNotebook: ") << (m_pNotebook.isNull() ? QStringLiteral("<null>") : m_pNotebook->toString())); \
-        Q_EMIT notifyError(error); \
-        return; \
-    }
-
-#define CHECK_ACCOUNT(message, ...) \
-    if (Q_UNLIKELY(m_pAccount.isNull())) { \
-        ErrorString error(message); \
-        error.appendBase(QT_TRANSLATE_NOOP("NoteEditorPrivate", "No account is associated with the note editor")); \
-        QNWARNING(error); \
-        Q_EMIT notifyError(error); \
-        return __VA_ARGS__; \
-    }
-
 namespace quentier {
 
 NoteEditorPrivate::NoteEditorPrivate(NoteEditor & noteEditor) :
@@ -230,6 +205,7 @@ NoteEditorPrivate::NoteEditorPrivate(NoteEditor & noteEditor) :
     m_pGenericResourceOpenAndSaveButtonsOnClickHandler(new GenericResourceOpenAndSaveButtonsOnClickHandler(this)),
     m_pHyperlinkClickJavaScriptHandler(new HyperlinkClickJavaScriptHandler(this)),
     m_pWebSocketWaiter(new WebSocketWaiter(this)),
+    m_setUpJavaScriptObjects(false),
     m_webSocketReady(false),
     m_webSocketServerPort(0),
 #endif
@@ -260,6 +236,7 @@ NoteEditorPrivate::NoteEditorPrivate(NoteEditor & noteEditor) :
     m_pendingIndexHtmlWritingToFile(false),
     m_pendingJavaScriptExecution(false),
     m_skipPushingUndoCommandOnNextContentChange(false),
+    m_noteLocalUid(),
     m_pNote(),
     m_pNotebook(),
     m_modified(false),
@@ -2607,7 +2584,7 @@ void NoteEditorPrivate::onNoteSavedToLocalStorage(QString noteLocalUid)
 
     QNDEBUG(QStringLiteral("NoteEditorPrivate::onNoteSavedToLocalStorage: note local uid = ") << noteLocalUid);
 
-    // TODO: implement further (if needed)
+    Q_EMIT noteSavedToLocalStorage(noteLocalUid);
 }
 
 void NoteEditorPrivate::onFailedToSaveNoteToLocalStorage(QString noteLocalUid, ErrorString errorDescription)
@@ -2619,27 +2596,135 @@ void NoteEditorPrivate::onFailedToSaveNoteToLocalStorage(QString noteLocalUid, E
     QNDEBUG(QStringLiteral("NoteEditorPrivate::onFailedToSaveNoteToLocalStorage: note local uid = ") << noteLocalUid
             << QStringLiteral(", error description: ") << errorDescription);
 
-    // TODO: implement further (if needed)
+    Q_EMIT failedToSaveNoteToLocalStorage(errorDescription, noteLocalUid);
 }
 
 void NoteEditorPrivate::onFoundNoteAndNotebook(Note note, Notebook notebook)
 {
-    // TODO: implement
-    Q_UNUSED(note)
-    Q_UNUSED(notebook)
+    if (note.localUid() != m_noteLocalUid) {
+        return;
+    }
+
+    QNDEBUG(QStringLiteral("NoteEditorPrivate::onFoundNoteAndNotebook: note = ") << note
+            << QStringLiteral("\nNotebook = ") << notebook);
+
+    m_pNotebook.reset(new Notebook(notebook));
+    m_pNote.reset(new Note(note));
+
+#ifdef QUENTIER_USE_QT_WEB_ENGINE
+    if (m_webSocketServerPort == 0) {
+        setupWebSocketServer();
+    }
+
+    if (!m_setUpJavaScriptObjects) {
+        setupJavaScriptObjects();
+    }
+#else
+    NoteEditorPage * pNoteEditorPage = qobject_cast<NoteEditorPage*>(page());
+    if (Q_LIKELY(pNoteEditorPage))
+    {
+        bool missingPluginFactory = !m_pPluginFactory;
+        if (missingPluginFactory) {
+            m_pPluginFactory = new NoteEditorPluginFactory(*this, *m_pResourceFileStorageManager, *m_pFileIOProcessorAsync, pNoteEditorPage);
+        }
+
+        m_pPluginFactory->setNote(*m_pNote);
+
+        if (missingPluginFactory) {
+            pNoteEditorPage->setPluginFactory(m_pPluginFactory);
+        }
+    }
+#endif
+
+    Q_EMIT currentNoteChanged(*m_pNote);
+    noteToEditorContent();
+    QNTRACE(QStringLiteral("Done setting the current note and notebook"));
 }
 
 void NoteEditorPrivate::onFailedToFindNoteOrNotebook(QString noteLocalUid, ErrorString errorDescription)
 {
-    // TODO: implement
-    Q_UNUSED(noteLocalUid)
-    Q_UNUSED(errorDescription)
+    if (noteLocalUid != m_noteLocalUid) {
+        return;
+    }
+
+    QNWARNING(QStringLiteral("NoteEditorPrivate::onFailedToFindNoteOrNotebook: note local uid = ")
+              << noteLocalUid << QStringLiteral(", error description: ") << errorDescription);
+
+    m_noteLocalUid.clear();
+    Q_EMIT noteNotFound(noteLocalUid);
 }
 
 void NoteEditorPrivate::onNoteUpdated(Note note)
 {
-    // TODO: implement
-    Q_UNUSED(note)
+    if (note.localUid() != m_noteLocalUid) {
+        return;
+    }
+
+    QNDEBUG(QStringLiteral("NoteEditorPrivate::onNoteUpdated: ") << note);
+
+    if (Q_UNLIKELY(!m_pNote))
+    {
+        if (m_pNotebook) {
+            QNDEBUG(QStringLiteral("Current note is unexpectedly empty on note update, acting as if the note has just been found"));
+            Notebook notebook = *m_pNotebook;
+            onFoundNoteAndNotebook(note, notebook);
+        }
+        else {
+            QNWARNING(QStringLiteral("Can't handle the update of note: note editor contains neither note nor notebook"));
+            // Trying to recover through re-requesting note and notebook from local storage
+            m_noteLocalUid.clear();
+            setCurrentNoteLocalUid(note.localUid());
+        }
+
+        return;
+    }
+
+    bool noteChanged = false;
+    noteChanged = noteChanged || (m_pNote->hasContent() != note.hasContent());
+    noteChanged = noteChanged || (m_pNote->hasResources() != note.hasResources());
+
+    if (!noteChanged && m_pNote->hasResources() && note.hasResources())
+    {
+        QList<Resource> currentResources = m_pNote->resources();
+        QList<Resource> updatedResources = note.resources();
+
+        int size = currentResources.size();
+        noteChanged = (size != updatedResources.size());
+        if (!noteChanged)
+        {
+            // NOTE: clearing out data bodies before comparing resources to speed up the comparison
+            for(int i = 0; i < size; ++i)
+            {
+                Resource currentResource = currentResources[i];
+                currentResource.setDataBody(QByteArray());
+                currentResource.setAlternateDataBody(QByteArray());
+
+                Resource updatedResource = updatedResources[i];
+                updatedResource.setDataBody(QByteArray());
+                updatedResource.setAlternateDataBody(QByteArray());
+
+                if (currentResource != updatedResource) {
+                    noteChanged = true;
+                    break;
+                }
+            }
+        }
+    }
+
+    if (!noteChanged && m_pNote->hasContent() && note.hasContent()) {
+        noteChanged = (m_pNote->content() != note.content());
+    }
+
+    if (!noteChanged) {
+        QNDEBUG(QStringLiteral("Haven't found the updates within the note which would be sufficient enough "
+                               "to reload the note editor"));
+        *m_pNote = note;
+        return;
+    }
+
+    QNDEBUG(QStringLiteral("Note has changed substantially, need to reload the editor"));
+    m_noteLocalUid.clear();
+    setCurrentNoteLocalUid(note.localUid());
 }
 
 void NoteEditorPrivate::onNotebookUpdated(Notebook notebook)
@@ -4011,6 +4096,8 @@ void NoteEditorPrivate::setupJavaScriptObjects()
     m_pWebChannel->registerObject(QStringLiteral("resizableImageHandler"), m_pResizableImageJavaScriptHandler);
     m_pWebChannel->registerObject(QStringLiteral("spellCheckerDynamicHelper"), m_pSpellCheckerDynamicHandler);
     QNDEBUG(QStringLiteral("Registered objects exposed to JavaScript"));
+
+    m_setUpJavaScriptObjects = true;
 }
 
 void NoteEditorPrivate::setupTextCursorPositionTracking()
@@ -4533,6 +4620,8 @@ void NoteEditorPrivate::setupGeneralSignalSlotConnections()
                      q, QNSIGNAL(NoteEditor,currentNoteChanged,Note));
     QObject::connect(this, QNSIGNAL(NoteEditorPrivate,contentChanged),
                      q, QNSIGNAL(NoteEditor,contentChanged));
+    QObject::connect(this, QNSIGNAL(NoteEditorPrivate,noteNotFound,QString),
+                     q, QNSIGNAL(NoteEditor,noteNotFound,QString));
     QObject::connect(this, QNSIGNAL(NoteEditorPrivate,noteModified),
                      q, QNSIGNAL(NoteEditor,noteModified));
     QObject::connect(this, QNSIGNAL(NoteEditorPrivate,spellCheckerNotReady),
@@ -4541,6 +4630,10 @@ void NoteEditorPrivate::setupGeneralSignalSlotConnections()
                      q, QNSIGNAL(NoteEditor,spellCheckerReady));
     QObject::connect(this, QNSIGNAL(NoteEditorPrivate,noteLoaded),
                      q, QNSIGNAL(NoteEditor,noteLoaded));
+    QObject::connect(this, QNSIGNAL(NoteEditorPrivate,noteSavedToLocalStorage,QString),
+                     q, QNSIGNAL(NoteEditor,noteSavedToLocalStorage,QString));
+    QObject::connect(this, QNSIGNAL(NoteEditorPrivate,failedToSaveNoteToLocalStorage,ErrorString,QString),
+                     q, QNSIGNAL(NoteEditor,failedToSaveNoteToLocalStorage,ErrorString,QString));
     QObject::connect(this, QNSIGNAL(NoteEditorPrivate,insertTableDialogRequested),
                      q, QNSIGNAL(NoteEditor,insertTableDialogRequested));
 }
@@ -5876,11 +5969,48 @@ bool NoteEditorPrivate::exportToEnex(const QStringList & tagNames,
                                              exportTagsOption, enex, errorDescription);
 }
 
+QString NoteEditorPrivate::currentNoteLocalUid() const
+{
+    return m_noteLocalUid;
+}
+
 void NoteEditorPrivate::setCurrentNoteLocalUid(const QString & noteLocalUid)
 {
     QNDEBUG(QStringLiteral("NoteEditorPrivate::setCurrentNoteLocalUid: note local uid = ") << noteLocalUid);
 
-    // TODO: implement
+    if (m_noteLocalUid == noteLocalUid) {
+        QNDEBUG(QStringLiteral("Already have this note local uid set"));
+        return;
+    }
+
+    m_pNote.reset(Q_NULLPTR);
+    m_pNotebook.reset(Q_NULLPTR);
+
+    // Remove the no longer needed html file with the note editor page
+    Q_UNUSED(removeFile(noteEditorPagePath()))
+
+    m_noteLocalUid = noteLocalUid;
+    clearEditorContent();
+
+    // Clear the caches from previous note
+    m_resourceInfo.clear();
+    m_genericResourceLocalUidBySaveToStorageRequestIds.clear();
+    m_imageResourceSaveToStorageRequestIds.clear();
+    m_resourceFileStoragePathsByResourceLocalUid.clear();
+    m_genericResourceImageFilePathsByResourceHash.clear();
+    m_saveGenericResourceImageToFileRequestIds.clear();
+    m_recognitionIndicesByResourceHash.clear();
+    m_decryptedTextManager->clearNonRememberedForSessionEntries();
+
+    m_lastSearchHighlightedText.resize(0);
+    m_lastSearchHighlightedTextCaseSensitivity = false;
+
+    m_localUidsOfResourcesWantedToBeSaved.clear();
+    m_resourceLocalUidAndFileStoragePathByReadResourceRequestIds.clear();
+
+    QNTRACE(QStringLiteral("Emitting the request to find note and notebook for note local uid ")
+            << m_noteLocalUid);
+    Q_EMIT findNoteAndNotebook(m_noteLocalUid);
 }
 
 // FIXME: remove when it's no longer needed or move contents to another method

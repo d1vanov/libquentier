@@ -108,6 +108,8 @@ public:
 
 Q_SIGNALS:
     void contentChanged();
+    void noteNotFound(QString noteLocalUid);
+
     void noteModified();
     void notifyError(ErrorString error);
 
@@ -312,6 +314,7 @@ public Q_SLOTS:
     virtual bool exportToEnex(const QStringList & tagNames,
                               QString & enex, ErrorString & errorDescription) Q_DECL_OVERRIDE;
 
+    virtual QString currentNoteLocalUid() const Q_DECL_OVERRIDE;
     virtual void setCurrentNoteLocalUid(const QString & noteLocalUid) Q_DECL_OVERRIDE;
     virtual void clear() Q_DECL_OVERRIDE;
     virtual void setFocusToEditor() Q_DECL_OVERRIDE;
@@ -334,6 +337,13 @@ Q_SIGNALS:
     void saveGenericResourceImageToFile(QString noteLocalUid, QString resourceLocalUid, QByteArray resourceImageData,
                                         QString resourceFileSuffix, QByteArray resourceActualHash,
                                         QString resourceDisplayName, QUuid requestId);
+
+    void noteSavedToLocalStorage(QString noteLocalUid);
+    void failedToSaveNoteToLocalStorage(ErrorString errorDescription, QString noteLocalUid);
+
+    // Signals for communicating with NoteEditorLocalStorageBroker
+    void findNoteAndNotebook(const QString & noteLocalUid);
+    void saveNoteToLocalStorage(const Note & note);
 
 #ifdef QUENTIER_USE_QT_WEB_ENGINE
     void htmlReadyForPrinting();
@@ -811,8 +821,10 @@ private:
     GenericResourceOpenAndSaveButtonsOnClickHandler * m_pGenericResourceOpenAndSaveButtonsOnClickHandler;
     HyperlinkClickJavaScriptHandler * m_pHyperlinkClickJavaScriptHandler;
     WebSocketWaiter * m_pWebSocketWaiter;
-    bool        m_webSocketReady;
 
+    bool        m_setUpJavaScriptObjects;
+
+    bool        m_webSocketReady;
     quint16     m_webSocketServerPort;
 #endif
 
@@ -875,6 +887,7 @@ private:
 
     bool        m_skipPushingUndoCommandOnNextContentChange;
 
+    QString     m_noteLocalUid;
     QScopedPointer<Note>        m_pNote;
     QScopedPointer<Notebook>    m_pNotebook;
 

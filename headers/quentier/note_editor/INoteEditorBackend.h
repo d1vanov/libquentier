@@ -167,6 +167,7 @@ public:
     virtual bool exportToEnex(const QStringList & tagNames,
                               QString & enex, ErrorString & errorDescription) = 0;
 
+    virtual QString currentNoteLocalUid() const = 0;
     virtual void setCurrentNoteLocalUid(const QString & noteLocalUid) = 0;
 
     virtual void clear() = 0;
