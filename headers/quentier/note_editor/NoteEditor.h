@@ -146,6 +146,13 @@ Q_SIGNALS:
     void noteNotFound(QString noteLocalUid);
 
     /**
+     * @brief noteDeleted signal is emitted when the note displayed within the
+     * note editor is deleted. The note editor stops displaying the note in this
+     * case shortly after emitting this signal
+     */
+    void noteDeleted(QString noteLocalUid);
+
+    /**
      * @brief noteModified signal is emitted when the note's content within the editor gets modified via some way -
      * either via manual editing or via some action (like paste or cut)
      */

@@ -2467,6 +2467,51 @@ void NoteEditorPrivate::onPageHtmlReceivedForPrinting(const QString & html,
 }
 #endif
 
+void NoteEditorPrivate::clearCurrentNoteInfo()
+{
+    QNDEBUG(QStringLiteral("NoteEditorPrivate::clearCurrentNoteInfo"));
+
+    // Remove the no longer needed html file with the note editor page
+    Q_UNUSED(removeFile(noteEditorPagePath()))
+
+    m_resourceInfo.clear();
+    m_genericResourceLocalUidBySaveToStorageRequestIds.clear();
+    m_imageResourceSaveToStorageRequestIds.clear();
+    m_resourceFileStoragePathsByResourceLocalUid.clear();
+    m_genericResourceImageFilePathsByResourceHash.clear();
+    m_saveGenericResourceImageToFileRequestIds.clear();
+    m_recognitionIndicesByResourceHash.clear();
+    m_decryptedTextManager->clearNonRememberedForSessionEntries();
+
+    m_lastSearchHighlightedText.resize(0);
+    m_lastSearchHighlightedTextCaseSensitivity = false;
+
+    m_localUidsOfResourcesWantedToBeSaved.clear();
+    m_resourceLocalUidAndFileStoragePathByReadResourceRequestIds.clear();
+}
+
+void NoteEditorPrivate::reloadCurrentNote()
+{
+    QNDEBUG(QStringLiteral("NoteEditorPrivate::reloadCurrentNote"));
+
+    if (Q_UNLIKELY(m_noteLocalUid.isEmpty())) {
+        QNWARNING(QStringLiteral("Can't reload current note - no note is set to the editor"));
+        return;
+    }
+
+    if (Q_UNLIKELY(!m_pNote || !m_pNotebook)) {
+        QString noteLocalUid = m_noteLocalUid;
+        m_noteLocalUid.clear();
+        setCurrentNoteLocalUid(noteLocalUid);
+        return;
+    }
+
+    Note note = *m_pNote;
+    Notebook notebook = *m_pNotebook;
+    clearCurrentNoteInfo();
+    onFoundNoteAndNotebook(note, notebook);
+}
+
 void NoteEditorPrivate::timerEvent(QTimerEvent * pEvent)
 {
     QNDEBUG(QStringLiteral("NoteEditorPrivate::timerEvent: ") << (pEvent ? QString::number(pEvent->timerId()) : QStringLiteral("<null>")));
@@ -2679,6 +2724,22 @@ void NoteEditorPrivate::onNoteUpdated(Note note)
         return;
     }
 
+    if (note.hasNotebookLocalUid())
+    {
+        if (Q_UNLIKELY(!m_pNotebook) || (m_pNotebook->localUid() != note.notebookLocalUid()))
+        {
+            QNDEBUG(QStringLiteral("Note's notebook has changed: new notebook local uid = ")
+                    << note.notebookLocalUid());
+            // FIXME: implement processing of this event
+        }
+    }
+    else
+    {
+        QNWARNING(QStringLiteral("Can't handle the update of a note: the updated note has no notebook local uid: ")
+                  << note);
+        return;
+    }
+
     bool noteChanged = false;
     noteChanged = noteChanged || (m_pNote->hasContent() != note.hasContent());
     noteChanged = noteChanged || (m_pNote->hasResources() != note.hasResources());
@@ -2722,27 +2783,111 @@ void NoteEditorPrivate::onNoteUpdated(Note note)
         return;
     }
 
+    // FIXME: if the note was modified, need to let the user choose what to do -
+    // either continue to edit the note or reload it
+
     QNDEBUG(QStringLiteral("Note has changed substantially, need to reload the editor"));
-    m_noteLocalUid.clear();
-    setCurrentNoteLocalUid(note.localUid());
+    reloadCurrentNote();
 }
 
 void NoteEditorPrivate::onNotebookUpdated(Notebook notebook)
 {
-    // TODO: implement
-    Q_UNUSED(notebook)
+    if (!m_pNotebook || (m_pNotebook->localUid() != notebook.localUid())) {
+        return;
+    }
+
+    QNDEBUG(QStringLiteral("NoteEditorPrivate::onNotebookUpdated"));
+
+    bool restrictionsChanged = false;
+    if (m_pNotebook->hasRestrictions() != notebook.hasRestrictions())
+    {
+        restrictionsChanged = true;
+    }
+    else if (m_pNotebook->hasRestrictions() && notebook.hasRestrictions())
+    {
+        const qevercloud::NotebookRestrictions & previousRestrictions = m_pNotebook->restrictions();
+        bool previousCanUpdateNote = (!previousRestrictions.noUpdateNotes.isSet() || !previousRestrictions.noUpdateNotes.ref());
+
+        const qevercloud::NotebookRestrictions & newRestrictions = notebook.restrictions();
+        bool newCanUpdateNote = (!newRestrictions.noUpdateNotes.isSet() || !newRestrictions.noUpdateNotes.ref());
+
+        restrictionsChanged = (previousCanUpdateNote != newCanUpdateNote);
+    }
+
+    *m_pNotebook = notebook;
+
+    if (!restrictionsChanged) {
+        QNDEBUG(QStringLiteral("Detected no change of notebook restrictions"));
+        return;
+    }
+
+    if (Q_UNLIKELY(!m_pNote)) {
+        QNWARNING(QStringLiteral("Note editor has notebook but no note"));
+        return;
+    }
+
+    bool canUpdateNote = true;
+    if (m_pNotebook->hasRestrictions()) {
+        const qevercloud::NotebookRestrictions & restrictions = notebook.restrictions();
+        canUpdateNote = (!restrictions.noUpdateNotes.isSet() || !restrictions.noUpdateNotes.ref());
+    }
+
+    if (!canUpdateNote && m_isPageEditable) {
+        QNDEBUG(QStringLiteral("Note has become non-editable"));
+        setPageEditable(false);
+        return;
+    }
+
+    if (canUpdateNote && !m_isPageEditable)
+    {
+        if (m_pNote->hasActive() && !m_pNote->active()) {
+            QNDEBUG(QStringLiteral("Notebook no longer restricts the update of a note but the note is not active"));
+            return;
+        }
+
+        if (m_pNote->isInkNote()) {
+            QNDEBUG(QStringLiteral("Notebook no longer restricts the update of a note but the note is an ink note"));
+            return;
+        }
+
+        QNDEBUG(QStringLiteral("Note has become editable"));
+        setPageEditable(true);
+        return;
+    }
 }
 
 void NoteEditorPrivate::onNoteDeleted(Note note)
 {
-    // TODO: implement
-    Q_UNUSED(note)
+    if (m_noteLocalUid != note.localUid()) {
+        return;
+    }
+
+    QNDEBUG(QStringLiteral("NoteEditorPrivate::onNoteDeleted: ") << note);
+
+    Q_EMIT noteDeleted(m_noteLocalUid);
+
+    // FIXME: need to display the dedicated note editor page about the fact that
+    // the note has been deleted
+    // FIXME: if the note editor has been marked as modified, need to offer the
+    // option to the user to save their edits as a new note
+    setCurrentNoteLocalUid(QString());
 }
 
 void NoteEditorPrivate::onNotebookDeleted(Notebook notebook)
 {
-    // TODO: implement
-    Q_UNUSED(notebook)
+    if (!m_pNotebook || (m_pNotebook->localUid() != notebook.localUid())) {
+        return;
+    }
+
+    QNDEBUG(QStringLiteral("NoteEditorPrivate::onNotebookDeleted: ") << notebook);
+
+    Q_EMIT noteDeleted(m_noteLocalUid);
+
+    // FIXME: need to display the dedicated note editor page about the fact that
+    // the note has been deleted
+    // FIXME: if the note editor has been marked as modified, need to offer the
+    // option to the user to save their edits as a new note
+    setCurrentNoteLocalUid(QString());
 }
 
 void NoteEditorPrivate::handleHyperlinkClicked(const QUrl & url)
@@ -4622,6 +4767,8 @@ void NoteEditorPrivate::setupGeneralSignalSlotConnections()
                      q, QNSIGNAL(NoteEditor,contentChanged));
     QObject::connect(this, QNSIGNAL(NoteEditorPrivate,noteNotFound,QString),
                      q, QNSIGNAL(NoteEditor,noteNotFound,QString));
+    QObject::connect(this, QNSIGNAL(NoteEditorPrivate,noteDeleted,QString),
+                     q, QNSIGNAL(NoteEditor,noteDeleted,QString));
     QObject::connect(this, QNSIGNAL(NoteEditorPrivate,noteModified),
                      q, QNSIGNAL(NoteEditor,noteModified));
     QObject::connect(this, QNSIGNAL(NoteEditorPrivate,spellCheckerNotReady),
@@ -5986,31 +6133,16 @@ void NoteEditorPrivate::setCurrentNoteLocalUid(const QString & noteLocalUid)
     m_pNote.reset(Q_NULLPTR);
     m_pNotebook.reset(Q_NULLPTR);
 
-    // Remove the no longer needed html file with the note editor page
-    Q_UNUSED(removeFile(noteEditorPagePath()))
+    clearCurrentNoteInfo();
 
     m_noteLocalUid = noteLocalUid;
     clearEditorContent();
 
-    // Clear the caches from previous note
-    m_resourceInfo.clear();
-    m_genericResourceLocalUidBySaveToStorageRequestIds.clear();
-    m_imageResourceSaveToStorageRequestIds.clear();
-    m_resourceFileStoragePathsByResourceLocalUid.clear();
-    m_genericResourceImageFilePathsByResourceHash.clear();
-    m_saveGenericResourceImageToFileRequestIds.clear();
-    m_recognitionIndicesByResourceHash.clear();
-    m_decryptedTextManager->clearNonRememberedForSessionEntries();
-
-    m_lastSearchHighlightedText.resize(0);
-    m_lastSearchHighlightedTextCaseSensitivity = false;
-
-    m_localUidsOfResourcesWantedToBeSaved.clear();
-    m_resourceLocalUidAndFileStoragePathByReadResourceRequestIds.clear();
-
-    QNTRACE(QStringLiteral("Emitting the request to find note and notebook for note local uid ")
-            << m_noteLocalUid);
-    Q_EMIT findNoteAndNotebook(m_noteLocalUid);
+    if (!m_noteLocalUid.isEmpty()) {
+        QNTRACE(QStringLiteral("Emitting the request to find note and notebook for note local uid ")
+                << m_noteLocalUid);
+        Q_EMIT findNoteAndNotebook(m_noteLocalUid);
+    }
 }
 
 // FIXME: remove when it's no longer needed or move contents to another method

@@ -109,6 +109,7 @@ public:
 Q_SIGNALS:
     void contentChanged();
     void noteNotFound(QString noteLocalUid);
+    void noteDeleted(QString noteLocalUid);
 
     void noteModified();
     void notifyError(ErrorString error);
@@ -314,7 +315,6 @@ public Q_SLOTS:
     virtual bool exportToEnex(const QStringList & tagNames,
                               QString & enex, ErrorString & errorDescription) Q_DECL_OVERRIDE;
 
-    virtual QString currentNoteLocalUid() const Q_DECL_OVERRIDE;
     virtual void setCurrentNoteLocalUid(const QString & noteLocalUid) Q_DECL_OVERRIDE;
     virtual void clear() Q_DECL_OVERRIDE;
     virtual void setFocusToEditor() Q_DECL_OVERRIDE;
@@ -325,6 +325,9 @@ public Q_SLOTS:
     void redoPageAction();
 
     void flipEnToDoCheckboxState(const quint64 enToDoIdNumber);
+
+public:
+    virtual QString currentNoteLocalUid() const Q_DECL_OVERRIDE;
 
 // private signals:
 Q_SIGNALS:
@@ -618,6 +621,9 @@ private:
     void onPageHtmlReceivedForPrinting(const QString & html,
                                        const QVector<QPair<QString,QString> > & extraData = QVector<QPair<QString,QString> >());
 #endif
+
+    void clearCurrentNoteInfo();
+    void reloadCurrentNote();
 
 private:
     // Overrides for some Qt's virtual methods
