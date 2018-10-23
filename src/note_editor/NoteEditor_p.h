@@ -228,7 +228,9 @@ public Q_SLOTS:
     virtual void setAccount(const Account & account) Q_DECL_OVERRIDE;
     virtual void setUndoStack(QUndoStack * pUndoStack) Q_DECL_OVERRIDE;
 
-    virtual void setBlankPageHtml(const QString & html) Q_DECL_OVERRIDE;
+    virtual void setInitialPageHtml(const QString & html) Q_DECL_OVERRIDE;
+    virtual void setNoteNotFoundPageHtml(const QString & html) Q_DECL_OVERRIDE;
+    virtual void setNoteDeletedPageHtml(const QString & html) Q_DECL_OVERRIDE;
 
     virtual void undo() Q_DECL_OVERRIDE;
     virtual void redo() Q_DECL_OVERRIDE;
@@ -533,7 +535,47 @@ private:
     void findText(const QString & textToFind, const bool matchCase, const bool searchBackward = false,
                   NoteEditorPage::Callback = 0) const;
 
-    void clearEditorContent();
+    /**
+     * When no note is set to the editor,
+     * it displays some "replacement" or "blank" page.
+     * This page can be different depending on the state of the editor
+     */
+    struct BlankPageKind
+    {
+        enum type
+        {
+            /**
+             * Blank page of "Initial" kind is displayed before the note is set to the editor
+             */
+            Initial = 0,
+            /**
+             * Blank page of "NoteNotFound" kind is displayed if no note corresponding to the local uid passed to
+             * setCurrentNoteLocalUid slot was found within the local storage
+             */
+            NoteNotFound,
+            /**
+             * Blank page of "NoteDeleted" kind is displayed if the note which was displayed by the editor
+             * was deleted (either marked as "deleted" or deleted permanently (expunged) from the local storage
+             */
+            NoteDeleted,
+            /**
+             * Blank page of "InternalError" kind is displayed if the note editor cannot display the note
+             * for some reason
+             */
+            InternalError
+        };
+    };
+
+    /**
+     * Reset the page displayed by the note editor to one of "blank" ones
+     * not corresponding to any note
+     *
+     * @param kind                  The kind of replacement page for the note editor
+     * @param errorDescription      The description of error used if kind is "InternalError"
+     */
+    void clearEditorContent(const BlankPageKind::type kind = BlankPageKind::Initial,
+                            const ErrorString & errorDescription = ErrorString());
+
     void noteToEditorContent();
     void updateColResizableTableBindings();
     void inkNoteToEditorContent();
@@ -579,7 +621,10 @@ private:
     void setupTextCursorPositionJavaScriptHandlerConnections();
     void setupSkipRulesForHtmlToEnmlConversion();
 
+    QString noteNotFoundPageHtml() const;
+    QString noteDeletedPageHtml() const;
     QString initialPageHtml() const;
+    QString composeBlankPageHtml(const QString & rawText) const;
 
     void determineStatesForCurrentTextCursorPosition();
     void determineContextMenuEventTarget();
@@ -849,7 +894,12 @@ private:
 
     QString     m_htmlForPrinting;
 
-    QString     m_blankPageHtml;
+    QString     m_initialPageHtml;
+    QString     m_noteNotFoundPageHtml;
+    QString     m_noteDeletedPageHtml;
+
+    bool        m_noteWasNotFound;
+    bool        m_noteWasDeleted;
 
     quint64     m_contextMenuSequenceNumber;
     QPoint      m_lastContextMenuEventGlobalPos;
@@ -938,8 +988,6 @@ private:
     bool                m_spellCheckerEnabled;
     QStringList         m_currentNoteMisSpelledWords;
     StringUtils         m_stringUtils;
-
-    const QString       m_pagePrefix;
 
     QString     m_lastSelectedHtml;
     QString     m_lastSelectedHtmlForEncryption;

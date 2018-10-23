@@ -54,7 +54,9 @@ public:
     virtual void setAccount(const Account & account) = 0;
     virtual void setUndoStack(QUndoStack * pUndoStack) = 0;
 
-    virtual void setBlankPageHtml(const QString & html) = 0;
+    virtual void setInitialPageHtml(const QString & html) = 0;
+    virtual void setNoteNotFoundPageHtml(const QString & html) = 0;
+    virtual void setNoteDeletedPageHtml(const QString & html) = 0;
 
     virtual bool isNoteLoaded() const = 0;
 

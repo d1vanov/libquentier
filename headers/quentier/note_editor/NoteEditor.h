@@ -85,7 +85,19 @@ public:
     /**
      * Set the html to be displayed when the note is not set to the editor
      */
-    void setBlankPageHtml(const QString & html);
+    void setInitialPageHtml(const QString & html);
+
+    /**
+     * Set the html to be displayed when the note attempted to be set to the editor
+     * was not found within the local storage
+     */
+    void setNoteNotFoundPageHtml(const QString & html);
+
+    /**
+     * Set the html to be displayed when the note set to the editor was deleted
+     * from the local storage (either marked as deleted or deleted permanently i.e. expunged)
+     */
+    void setNoteDeletedPageHtml(const QString & html);
 
     /**
      * Get the local uid of the note currently set to the note editor

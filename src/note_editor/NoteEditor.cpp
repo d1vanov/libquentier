@@ -74,9 +74,19 @@ void NoteEditor::setUndoStack(QUndoStack * pUndoStack)
     m_backend->setUndoStack(pUndoStack);
 }
 
-void NoteEditor::setBlankPageHtml(const QString & html)
+void NoteEditor::setInitialPageHtml(const QString & html)
 {
-    m_backend->setBlankPageHtml(html);
+    m_backend->setInitialPageHtml(html);
+}
+
+void NoteEditor::setNoteNotFoundPageHtml(const QString & html)
+{
+    m_backend->setNoteNotFoundPageHtml(html);
+}
+
+void NoteEditor::setNoteDeletedPageHtml(const QString & html)
+{
+    m_backend->setNoteDeletedPageHtml(html);
 }
 
 QString NoteEditor::currentNoteLocalUid() const

@@ -136,6 +136,22 @@ typedef QWebEngineSettings WebSettings;
 #include <QTransform>
 #include <QTimer>
 
+#define NOTE_EDITOR_PAGE_HEADER QStringLiteral("<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01//EN\" \"http://www.w3.org/TR/html4/strict.dtd\">" \
+                                               "<html><head>" \
+                                               "<meta http-equiv=\"Content-Type\" content=\"text/html\" charset=\"UTF-8\" />")
+
+#define NOTE_EDITOR_PAGE_CSS QStringLiteral("<link rel=\"stylesheet\" type=\"text/css\" href=\"qrc:/css/jquery-ui.min.css\">" \
+                                            "<link rel=\"stylesheet\" type=\"text/css\" href=\"qrc:/css/en-crypt.css\">" \
+                                            "<link rel=\"stylesheet\" type=\"text/css\" href=\"qrc:/css/hover.css\">" \
+                                            "<link rel=\"stylesheet\" type=\"text/css\" href=\"qrc:/css/en-decrypted.css\">" \
+                                            "<link rel=\"stylesheet\" type=\"text/css\" href=\"qrc:/css/en-media-generic.css\">" \
+                                            "<link rel=\"stylesheet\" type=\"text/css\" href=\"qrc:/css/en-media-image.css\">" \
+                                            "<link rel=\"stylesheet\" type=\"text/css\" href=\"qrc:/css/image-area-hilitor.css\">" \
+                                            "<link rel=\"stylesheet\" type=\"text/css\" href=\"qrc:/css/en-todo.css\">" \
+                                            "<link rel=\"stylesheet\" type=\"text/css\" href=\"qrc:/css/link.css\">" \
+                                            "<link rel=\"stylesheet\" type=\"text/css\" href=\"qrc:/css/misspell.css\">" \
+                                            "<link rel=\"stylesheet\" type=\"text/css\" href=\"qrc:/css/edit_cursor_trick.css\">")
+
 namespace quentier {
 
 NoteEditorPrivate::NoteEditorPrivate(NoteEditor & noteEditor) :
@@ -220,7 +236,11 @@ NoteEditorPrivate::NoteEditorPrivate(NoteEditor & noteEditor) :
     m_pUndoStack(Q_NULLPTR),
     m_pAccount(),
     m_htmlForPrinting(),
-    m_blankPageHtml(),
+    m_initialPageHtml(),
+    m_noteNotFoundPageHtml(),
+    m_noteDeletedPageHtml(),
+    m_noteWasNotFound(false),
+    m_noteWasDeleted(false),
     m_contextMenuSequenceNumber(1),     // NOTE: must start from 1 as JavaScript treats 0 as null!
     m_lastContextMenuEventGlobalPos(),
     m_lastContextMenuEventPagePos(),
@@ -258,21 +278,6 @@ NoteEditorPrivate::NoteEditorPrivate(NoteEditor & noteEditor) :
     m_spellCheckerEnabled(false),
     m_currentNoteMisSpelledWords(),
     m_stringUtils(),
-    m_pagePrefix(QStringLiteral("<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01//EN\" \"http://www.w3.org/TR/html4/strict.dtd\">"
-                                "<html><head>"
-                                "<meta http-equiv=\"Content-Type\" content=\"text/html\" charset=\"UTF-8\" />"
-                                "<link rel=\"stylesheet\" type=\"text/css\" href=\"qrc:/css/jquery-ui.min.css\">"
-                                "<link rel=\"stylesheet\" type=\"text/css\" href=\"qrc:/css/en-crypt.css\">"
-                                "<link rel=\"stylesheet\" type=\"text/css\" href=\"qrc:/css/hover.css\">"
-                                "<link rel=\"stylesheet\" type=\"text/css\" href=\"qrc:/css/en-decrypted.css\">"
-                                "<link rel=\"stylesheet\" type=\"text/css\" href=\"qrc:/css/en-media-generic.css\">"
-                                "<link rel=\"stylesheet\" type=\"text/css\" href=\"qrc:/css/en-media-image.css\">"
-                                "<link rel=\"stylesheet\" type=\"text/css\" href=\"qrc:/css/image-area-hilitor.css\">"
-                                "<link rel=\"stylesheet\" type=\"text/css\" href=\"qrc:/css/en-todo.css\">"
-                                "<link rel=\"stylesheet\" type=\"text/css\" href=\"qrc:/css/link.css\">"
-                                "<link rel=\"stylesheet\" type=\"text/css\" href=\"qrc:/css/misspell.css\">"
-                                "<link rel=\"stylesheet\" type=\"text/css\" href=\"qrc:/css/edit_cursor_trick.css\">"
-                                "<title></title></head>")),
     m_lastSelectedHtml(),
     m_lastSelectedHtmlForEncryption(),
     m_lastSelectedHtmlForHyperlink(),
@@ -320,14 +325,36 @@ NoteEditorPrivate::NoteEditorPrivate(NoteEditor & noteEditor) :
 NoteEditorPrivate::~NoteEditorPrivate()
 {}
 
-void NoteEditorPrivate::setBlankPageHtml(const QString & html)
+void NoteEditorPrivate::setInitialPageHtml(const QString & html)
 {
-    QNDEBUG(QStringLiteral("NoteEditorPrivate::setBlankPageHtml: ") << html);
+    QNDEBUG(QStringLiteral("NoteEditorPrivate::setInitialPageHtml: ") << html);
 
-    m_blankPageHtml = html;
+    m_initialPageHtml = html;
 
     if (!m_pNote || !m_pNotebook) {
-        clearEditorContent();
+        clearEditorContent(BlankPageKind::Initial);
+    }
+}
+
+void NoteEditorPrivate::setNoteNotFoundPageHtml(const QString & html)
+{
+    QNDEBUG(QStringLiteral("NoteEditorPrivate::setNoteNotFoundPageHtml: ") << html);
+
+    m_noteNotFoundPageHtml = html;
+
+    if (m_noteWasNotFound) {
+        clearEditorContent(BlankPageKind::NoteNotFound);
+    }
+}
+
+void NoteEditorPrivate::setNoteDeletedPageHtml(const QString & html)
+{
+    QNDEBUG(QStringLiteral("NoteEditorPrivate::setNoteDeletedPageHtml: ") << html);
+
+    m_noteDeletedPageHtml = html;
+
+    if (m_noteWasDeleted) {
+        clearEditorContent(BlankPageKind::NoteDeleted);
     }
 }
 
@@ -1416,11 +1443,11 @@ void NoteEditorPrivate::onWriteFileRequestProcessed(bool success, ErrorString er
         m_pendingIndexHtmlWritingToFile = false;
 
         if (!success) {
-            clearEditorContent();
             ErrorString error(QT_TR_NOOP("Could not write note html to file"));
             error.appendBase(errorDescription.base());
             error.appendBase(errorDescription.additionalBases());
             error.details() = errorDescription.details();
+            clearEditorContent(BlankPageKind::InternalError, error);
             Q_EMIT notifyError(error);
             return;
         }
@@ -2488,6 +2515,15 @@ void NoteEditorPrivate::clearCurrentNoteInfo()
 
     m_localUidsOfResourcesWantedToBeSaved.clear();
     m_resourceLocalUidAndFileStoragePathByReadResourceRequestIds.clear();
+
+    m_noteWasNotFound = false;
+    m_noteWasDeleted = false;
+
+#ifndef QUENTIER_USE_QT_WEB_ENGINE
+    page()->setPluginFactory(Q_NULLPTR);
+    delete m_pPluginFactory;
+    m_pPluginFactory = Q_NULLPTR;
+#endif
 }
 
 void NoteEditorPrivate::reloadCurrentNote()
@@ -2696,7 +2732,10 @@ void NoteEditorPrivate::onFailedToFindNoteOrNotebook(QString noteLocalUid, Error
               << noteLocalUid << QStringLiteral(", error description: ") << errorDescription);
 
     m_noteLocalUid.clear();
+    m_noteWasNotFound = true;
     Q_EMIT noteNotFound(noteLocalUid);
+
+    clearEditorContent(BlankPageKind::NoteNotFound);
 }
 
 void NoteEditorPrivate::onNoteUpdated(Note note)
@@ -2724,19 +2763,15 @@ void NoteEditorPrivate::onNoteUpdated(Note note)
         return;
     }
 
-    if (note.hasNotebookLocalUid())
-    {
-        if (Q_UNLIKELY(!m_pNotebook) || (m_pNotebook->localUid() != note.notebookLocalUid()))
-        {
-            QNDEBUG(QStringLiteral("Note's notebook has changed: new notebook local uid = ")
-                    << note.notebookLocalUid());
-            // FIXME: implement processing of this event
-        }
+    if (Q_UNLIKELY(!note.hasNotebookLocalUid())) {
+        QNWARNING(QStringLiteral("Can't handle the update of a note: the updated note has no notebook local uid: ") << note);
+        return;
     }
-    else
-    {
-        QNWARNING(QStringLiteral("Can't handle the update of a note: the updated note has no notebook local uid: ")
-                  << note);
+
+    if (Q_UNLIKELY(!m_pNotebook) || (m_pNotebook->localUid() != note.notebookLocalUid())) {
+        QNDEBUG(QStringLiteral("Note's notebook has changed: new notebook local uid = ") << note.notebookLocalUid());
+        // Re-requesting both note and notebook from NoteEditorLocalStorageBroker
+        Q_EMIT findNoteAndNotebook(m_noteLocalUid);
         return;
     }
 
@@ -2870,7 +2905,13 @@ void NoteEditorPrivate::onNoteDeleted(Note note)
     // the note has been deleted
     // FIXME: if the note editor has been marked as modified, need to offer the
     // option to the user to save their edits as a new note
-    setCurrentNoteLocalUid(QString());
+
+    m_pNote.reset(Q_NULLPTR);
+    m_pNotebook.reset(Q_NULLPTR);
+    m_noteLocalUid = QString();
+    clearCurrentNoteInfo();
+    m_noteWasDeleted = true;
+    clearEditorContent(BlankPageKind::NoteDeleted);
 }
 
 void NoteEditorPrivate::onNotebookDeleted(Notebook notebook)
@@ -2887,7 +2928,13 @@ void NoteEditorPrivate::onNotebookDeleted(Notebook notebook)
     // the note has been deleted
     // FIXME: if the note editor has been marked as modified, need to offer the
     // option to the user to save their edits as a new note
-    setCurrentNoteLocalUid(QString());
+
+    m_pNote.reset(Q_NULLPTR);
+    m_pNotebook.reset(Q_NULLPTR);
+    m_noteLocalUid = QString();
+    clearCurrentNoteInfo();
+    m_noteWasDeleted = true;
+    clearEditorContent(BlankPageKind::NoteDeleted);
 }
 
 void NoteEditorPrivate::handleHyperlinkClicked(const QUrl & url)
@@ -3297,9 +3344,11 @@ void NoteEditorPrivate::highlightRecognizedImageAreas(const QString & textToFind
     }
 }
 
-void NoteEditorPrivate::clearEditorContent()
+void NoteEditorPrivate::clearEditorContent(const BlankPageKind::type kind,
+                                           const ErrorString & errorDescription)
 {
-    QNDEBUG(QStringLiteral("NoteEditorPrivate::clearEditorContent"));
+    QNDEBUG(QStringLiteral("NoteEditorPrivate::clearEditorContent: blank page kind = ") << kind
+            << QStringLiteral(", error description = ") << errorDescription);
 
     if (m_pageToNoteContentPostponeTimerId != 0) {
         killTimer(m_pageToNoteContentPostponeTimerId);
@@ -3323,8 +3372,24 @@ void NoteEditorPrivate::clearEditorContent()
     m_lastSearchHighlightedText.resize(0);
     m_lastSearchHighlightedTextCaseSensitivity = false;
 
-    QString initialHtml = initialPageHtml();
-    writeNotePageFile(initialHtml);
+    QString blankPageHtml;
+    switch(kind)
+    {
+    case BlankPageKind::NoteNotFound:
+        blankPageHtml = noteNotFoundPageHtml();
+        break;
+    case BlankPageKind::NoteDeleted:
+        blankPageHtml = noteDeletedPageHtml();
+        break;
+    case BlankPageKind::InternalError:
+        blankPageHtml = composeBlankPageHtml(errorDescription.localizedString());
+        break;
+    default:
+        blankPageHtml = initialPageHtml();
+        break;
+    }
+
+    writeNotePageFile(blankPageHtml);
 }
 
 void NoteEditorPrivate::noteToEditorContent()
@@ -3360,9 +3425,11 @@ void NoteEditorPrivate::noteToEditorContent()
                                                  error, *m_decryptedTextManager,
                                                  extraData);
     if (!res) {
-        QNWARNING(QStringLiteral("Can't convert note's content to HTML: ") << m_errorCachedMemory);
+        ErrorString error(QT_TR_NOOP("Can't convert note's content to HTML"));
+        error.details() = m_errorCachedMemory;
+        QNWARNING(error);
+        clearEditorContent(BlankPageKind::InternalError, error);
         Q_EMIT notifyError(error);
-        clearEditorContent();
         return;
     }
 
@@ -3376,20 +3443,24 @@ void NoteEditorPrivate::noteToEditorContent()
         ErrorString error(QT_TR_NOOP("Can't find <body> tag in the result of note to HTML conversion"));
         QNWARNING(error << QStringLiteral(", note content: ") << m_pNote->content()
                   << QStringLiteral(", html: ") << m_htmlCachedMemory);
+        clearEditorContent(BlankPageKind::InternalError, error);
         Q_EMIT notifyError(error);
-        clearEditorContent();
         return;
     }
 
-    m_htmlCachedMemory.replace(0, bodyTagIndex, m_pagePrefix);
+    QString pagePrefix = NOTE_EDITOR_PAGE_HEADER;
+    pagePrefix += NOTE_EDITOR_PAGE_CSS;
+    pagePrefix += QStringLiteral("<title></title></head>");
+
+    m_htmlCachedMemory.replace(0, bodyTagIndex, pagePrefix);
 
     int bodyClosingTagIndex = m_htmlCachedMemory.indexOf(QStringLiteral("</body>"));
     if (bodyClosingTagIndex < 0) {
         error.setBase(QT_TR_NOOP("Can't find </body> tag in the result of note to HTML conversion"));
         QNWARNING(error << QStringLiteral(", note content: ") << m_pNote->content()
                   << QStringLiteral(", html: ") << m_htmlCachedMemory);
+        clearEditorContent(BlankPageKind::InternalError, error);
         Q_EMIT notifyError(error);
-        clearEditorContent();
         return;
     }
 
@@ -3430,8 +3501,9 @@ void NoteEditorPrivate::inkNoteToEditorContent()
     QList<Resource> resources = m_pNote->resources();
     const int numResources = resources.size();
 
-    QString inkNoteHtml = m_pagePrefix;
-    inkNoteHtml += QStringLiteral("<body>");
+    QString inkNoteHtml = NOTE_EDITOR_PAGE_HEADER;
+    inkNoteHtml += NOTE_EDITOR_PAGE_CSS;
+    inkNoteHtml += QStringLiteral("<title></title></head><body>");
 
     for(int i = 0; i < numResources; ++i)
     {
@@ -3486,8 +3558,9 @@ void NoteEditorPrivate::inkNoteToEditorContent()
     }
 
     if (problemDetected) {
-        inkNoteHtml = m_pagePrefix;
-        inkNoteHtml += QStringLiteral("<body><div>");
+        inkNoteHtml = NOTE_EDITOR_PAGE_HEADER;
+        inkNoteHtml += NOTE_EDITOR_PAGE_CSS;
+        inkNoteHtml += QStringLiteral("<title></title></head><body><div>");
         inkNoteHtml += tr("The read-only ink note image should have been present here but something went wrong so the image is not accessible");
         inkNoteHtml += QStringLiteral("</div></body></html>");
     }
@@ -4976,13 +5049,74 @@ void NoteEditorPrivate::setupSkipRulesForHtmlToEnmlConversion()
     m_skipRulesForHtmlToEnmlConversion << resizableImageHelperDivRule;
 }
 
-QString NoteEditorPrivate::initialPageHtml() const
+QString NoteEditorPrivate::noteNotFoundPageHtml() const
 {
-    if (!m_blankPageHtml.isEmpty()) {
-        return m_blankPageHtml;
+    if (!m_noteNotFoundPageHtml.isEmpty()) {
+        return m_noteNotFoundPageHtml;
     }
 
-    return m_pagePrefix + QStringLiteral("<body></body></html>");
+    QString text = tr("Failed to find the note in the local storage");
+    return composeBlankPageHtml(text);
+}
+
+QString NoteEditorPrivate::noteDeletedPageHtml() const
+{
+    if (!m_noteDeletedPageHtml.isEmpty()) {
+        return m_noteDeletedPageHtml;
+    }
+
+    QString text = tr("Note was deleted");
+    return composeBlankPageHtml(text);
+}
+
+QString NoteEditorPrivate::initialPageHtml() const
+{
+    if (!m_initialPageHtml.isEmpty()) {
+        return m_initialPageHtml;
+    }
+
+    QString text = tr("Please select some existing note or create a new one");
+    return composeBlankPageHtml(text);
+}
+
+QString NoteEditorPrivate::composeBlankPageHtml(const QString & rawText) const
+{
+    QString html = NOTE_EDITOR_PAGE_HEADER;
+    html += QStringLiteral("<style>"
+                           "body {"
+                           "background-color: ");
+
+    QColor backgroundColor = palette().color(QPalette::Window).darker(115);
+    html += backgroundColor.name();
+
+    html += QStringLiteral(";"
+                           "color: ");
+    QColor foregroundColor = palette().color(QPalette::WindowText);
+    html += foregroundColor.name();
+
+    html += QStringLiteral(";"
+                           "-webkit-user-select: none;"
+                           "}"
+                           ".outer {"
+                           "    display: table;"
+                           "    position: absolute;"
+                           "    height: 95%;"
+                           "    width: 95%;"
+                           "}"
+                           ".middle {"
+                           "    display: table-cell;"
+                           "    vertical-align: middle;"
+                           "}"
+                           ".inner {"
+                           "    text-align: center;"
+                           "}"
+                           "</style><title></title></head>"
+                           "<body><div class=\"outer\"><div class=\"middle\"><div class=\"inner\">\n\n\n");
+
+    html += rawText;
+
+    html += QStringLiteral("</div></div></div></body></html>");
+    return html;
 }
 
 void NoteEditorPrivate::determineStatesForCurrentTextCursorPosition()
@@ -5934,7 +6068,11 @@ bool NoteEditorPrivate::print(QPrinter & printer, ErrorString & errorDescription
         return false;
     }
 
-    preprocessedHtml.replace(0, bodyOpeningTagEndIndex, m_pagePrefix);
+    QString pagePrefix = NOTE_EDITOR_PAGE_HEADER;
+    pagePrefix += NOTE_EDITOR_PAGE_CSS;
+    pagePrefix += QStringLiteral("<title></title></head>");
+
+    preprocessedHtml.replace(0, bodyOpeningTagEndIndex, pagePrefix);
 
     int bodyClosingTagIndex = preprocessedHtml.indexOf(QStringLiteral("</body>"), bodyOpeningTagEndIndex);
     if (Q_UNLIKELY(bodyClosingTagIndex < 0)) {
@@ -6145,165 +6283,13 @@ void NoteEditorPrivate::setCurrentNoteLocalUid(const QString & noteLocalUid)
     }
 }
 
-// FIXME: remove when it's no longer needed or move contents to another method
-/*
-void NoteEditorPrivate::setNoteAndNotebook(const Note & note, const Notebook & notebook)
-{
-    QNDEBUG(QStringLiteral("NoteEditorPrivate::setNoteAndNotebook: note: local uid = ") << note.localUid()
-            << QStringLiteral(", guid = ") << (note.hasGuid() ? note.guid() : QStringLiteral("<null>"))
-            << QStringLiteral(", title: ") << (note.hasTitle() ? note.title() : QStringLiteral("<null>"))
-            << QStringLiteral("; notebook: local uid = ") << notebook.localUid() << QStringLiteral(", guid = ")
-            << (notebook.hasGuid() ? notebook.guid() : QStringLiteral("<null>"))
-            << QStringLiteral(", name = ") << (notebook.hasName() ? notebook.name() : QStringLiteral("<null>")));
-
-    if (m_pNotebook.isNull()) {
-        m_pNotebook.reset(new Notebook(notebook));
-    }
-    else {
-        *m_pNotebook = notebook;
-    }
-
-    if (m_pNote.isNull())
-    {
-        m_pNote.reset(new Note(note));
-    }
-    else
-    {
-        bool sameUpdatedNote = (m_pNote->localUid() == note.localUid());
-
-        if (sameUpdatedNote)
-        {
-            bool noteChanged = false;
-            noteChanged = noteChanged || (m_pNote->hasContent() != note.hasContent());
-            noteChanged = noteChanged || (m_pNote->hasResources() != note.hasResources());
-
-            if (!noteChanged && m_pNote->hasResources() && note.hasResources())
-            {
-                QList<Resource> currentResources = m_pNote->resources();
-                QList<Resource> updatedResources = note.resources();
-
-                int size = currentResources.size();
-                noteChanged = (size != updatedResources.size());
-                if (!noteChanged)
-                {
-                    // NOTE: clearing out data bodies before comparing resources to speed up the comparison
-                    for(int i = 0; i < size; ++i)
-                    {
-                        Resource currentResource = currentResources[i];
-                        currentResource.setDataBody(QByteArray());
-                        currentResource.setAlternateDataBody(QByteArray());
-
-                        Resource updatedResource = updatedResources[i];
-                        updatedResource.setDataBody(QByteArray());
-                        updatedResource.setAlternateDataBody(QByteArray());
-
-                        if (currentResource != updatedResource) {
-                            noteChanged = true;
-                            break;
-                        }
-                    }
-                }
-            }
-
-            if (!noteChanged && m_pNote->hasContent() && note.hasContent()) {
-                noteChanged = (m_pNote->content() != note.content());
-            }
-
-            if (!noteChanged) {
-                QNDEBUG(QStringLiteral("Haven't found the updates within the note which would be sufficient enough "
-                                       "to reload the note editor"));
-                *m_pNote = note;
-                return;
-            }
-        }
-
-        // If we got here, it's either another note or the same note with sufficient updates
-
-        // Remove the no longer needed html file with the note editor page
-        Q_UNUSED(removeFile(noteEditorPagePath()))
-
-        *m_pNote = note;
-
-        if (!sameUpdatedNote) {
-            m_decryptedTextManager->clearNonRememberedForSessionEntries();
-            QNTRACE(QStringLiteral("Removed non-per-session saved passphrases from decrypted text manager"));
-        }
-    }
-
-    // Clear the caches from previous note
-    m_resourceInfo.clear();
-    m_genericResourceLocalUidBySaveToStorageRequestIds.clear();
-    m_imageResourceSaveToStorageRequestIds.clear();
-    m_resourceFileStoragePathsByResourceLocalUid.clear();
-    m_genericResourceImageFilePathsByResourceHash.clear();
-    m_saveGenericResourceImageToFileRequestIds.clear();
-    rebuildRecognitionIndicesCache();
-
-    m_lastSearchHighlightedText.resize(0);
-    m_lastSearchHighlightedTextCaseSensitivity = false;
-
-#ifdef QUENTIER_USE_QT_WEB_ENGINE
-    m_localUidsOfResourcesWantedToBeSaved.clear();
-
-    setupWebSocketServer();
-    setupJavaScriptObjects();
-
-#else
-    NoteEditorPage * pNoteEditorPage = qobject_cast<NoteEditorPage*>(page());
-    if (Q_LIKELY(pNoteEditorPage))
-    {
-        bool missingPluginFactory = !m_pPluginFactory;
-        if (missingPluginFactory) {
-            m_pPluginFactory = new NoteEditorPluginFactory(*this, *m_pResourceFileStorageManager, *m_pFileIOProcessorAsync, pNoteEditorPage);
-        }
-
-        m_pPluginFactory->setNote(*m_pNote);
-
-        if (missingPluginFactory) {
-            pNoteEditorPage->setPluginFactory(m_pPluginFactory);
-        }
-    }
-#endif
-
-    m_resourceLocalUidAndFileStoragePathByReadResourceRequestIds.clear();
-
-    Q_EMIT currentNoteChanged(*m_pNote);
-
-    noteToEditorContent();
-
-    QNTRACE(QStringLiteral("Done setting the current note and notebook"));
-}
-*/
-
 void NoteEditorPrivate::clear()
 {
     QNDEBUG(QStringLiteral("NoteEditorPrivate::clear"));
 
     m_pNote.reset(Q_NULLPTR);
     m_pNotebook.reset(Q_NULLPTR);
-
-    // Clear the caches from previous note
-    m_resourceInfo.clear();
-    m_genericResourceLocalUidBySaveToStorageRequestIds.clear();
-    m_imageResourceSaveToStorageRequestIds.clear();
-    m_resourceFileStoragePathsByResourceLocalUid.clear();
-    m_genericResourceImageFilePathsByResourceHash.clear();
-    m_saveGenericResourceImageToFileRequestIds.clear();
-    m_recognitionIndicesByResourceHash.clear();
-
-    m_lastSearchHighlightedText.resize(0);
-    m_lastSearchHighlightedTextCaseSensitivity = false;
-
-#ifdef QUENTIER_USE_QT_WEB_ENGINE
-    m_localUidsOfResourcesWantedToBeSaved.clear();
-#else
-    page()->setPluginFactory(Q_NULLPTR);
-    delete m_pPluginFactory;
-    m_pPluginFactory = Q_NULLPTR;
-#endif
-
-    m_resourceLocalUidAndFileStoragePathByReadResourceRequestIds.clear();
-
+    clearCurrentNoteInfo();
     clearEditorContent();
 }
 
