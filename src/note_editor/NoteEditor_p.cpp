@@ -250,6 +250,7 @@ NoteEditorPrivate::NoteEditorPrivate(NoteEditor & noteEditor) :
     m_writeNoteHtmlToFileRequestId(),
     m_isPageEditable(false),
     m_pendingConversionToNote(false),
+    m_pendingConversionToNoteForSavingInLocalStorage(false),
     m_pendingNotePageLoad(false),
     m_pendingNotePageLoadMethodExit(false),
     m_pendingNextPageUrl(),
@@ -2519,6 +2520,9 @@ void NoteEditorPrivate::clearCurrentNoteInfo()
     m_noteWasNotFound = false;
     m_noteWasDeleted = false;
 
+    m_pendingConversionToNote = false;
+    m_pendingConversionToNoteForSavingInLocalStorage = false;
+
 #ifndef QUENTIER_USE_QT_WEB_ENGINE
     page()->setPluginFactory(Q_NULLPTR);
     delete m_pPluginFactory;
@@ -3002,15 +3006,14 @@ bool NoteEditorPrivate::parseInAppLink(const QString & urlString, QString & user
     return true;
 }
 
-bool NoteEditorPrivate::checkNoteSize(const QString & newNoteContent)
+bool NoteEditorPrivate::checkNoteSize(const QString & newNoteContent, ErrorString & errorDescription) const
 {
     QNDEBUG(QStringLiteral("NoteEditorPrivate::checkNoteSize"));
 
     if (Q_UNLIKELY(m_pNote.isNull())) {
-        ErrorString error(QT_TR_NOOP("Internal error: can't check the note size on note editor update: "
-                                     "no note is set ot the editor"));
-        QNWARNING(error);
-        Q_EMIT notifyError(error);
+        errorDescription.setBase(QT_TR_NOOP("Internal error: can't check the note size on note editor update: "
+                                            "no note is set to the editor"));
+        QNWARNING(errorDescription);
         return false;
     }
 
@@ -3026,10 +3029,9 @@ bool NoteEditorPrivate::checkNoteSize(const QString & newNoteContent)
         QNTRACE(QStringLiteral("Note has its own limits, will use them to check the note size: ") << noteLimits);
 
         if (noteLimits.noteSizeMax.isSet() && (Q_UNLIKELY(noteLimits.noteSizeMax.ref() < noteSize))) {
-            ErrorString error(QT_TR_NOOP("Can't save note: note size (text + resources) exceeds the allowed maximum"));
-            error.details() = humanReadableSize(static_cast<quint64>(noteLimits.noteSizeMax.ref()));
-            QNINFO(error);
-            Q_EMIT cantConvertToNote(error);
+            errorDescription.setBase(QT_TR_NOOP("Note size (text + resources) exceeds the allowed maximum"));
+            errorDescription.details() = humanReadableSize(static_cast<quint64>(noteLimits.noteSizeMax.ref()));
+            QNINFO(errorDescription);
             return false;
         }
     }
@@ -3037,13 +3039,16 @@ bool NoteEditorPrivate::checkNoteSize(const QString & newNoteContent)
     {
         QNTRACE(QStringLiteral("Note has no its own limits, will use the account-wise limits to check the note size"));
 
-        CHECK_ACCOUNT(QT_TR_NOOP("Internal error: can't check the note size on note editor update"), false)
+        if (Q_UNLIKELY(!m_pAccount)) {
+            errorDescription.setBase(QT_TR_NOOP("Internal error: can't check the note size on note editor update: no account info is set to the editor"));
+            QNWARNING(errorDescription);
+            return false;
+        }
 
         if (Q_UNLIKELY(noteSize > m_pAccount->noteSizeMax())) {
-            ErrorString error(QT_TR_NOOP("Can't save note: note size (text + resources) exceeds the allowed maximum"));
-            error.details() = humanReadableSize(static_cast<quint64>(m_pAccount->noteSizeMax()));
-            QNINFO(error);
-            Q_EMIT cantConvertToNote(error);
+            errorDescription.setBase(QT_TR_NOOP("Note size (text + resources) exceeds the allowed maximum"));
+            errorDescription.details() = humanReadableSize(static_cast<quint64>(m_pAccount->noteSizeMax()));
+            QNINFO(errorDescription);
             return false;
         }
     }
@@ -5179,16 +5184,32 @@ void NoteEditorPrivate::onPageHtmlReceived(const QString & html,
         return;
     }
 
-    if (m_pNote.isNull()) {
+    if (Q_UNLIKELY(m_pNote.isNull()))
+    {
         m_pendingConversionToNote = false;
         ErrorString error(QT_TR_NOOP("No current note is set to note editor"));
         Q_EMIT cantConvertToNote(error);
+
+        if (m_pendingConversionToNoteForSavingInLocalStorage) {
+            m_pendingConversionToNoteForSavingInLocalStorage = false;
+            Q_EMIT failedToSaveNoteToLocalStorage(error, m_noteLocalUid);
+        }
+
         return;
     }
 
-    if (m_pNote->isInkNote()) {
+    if (Q_UNLIKELY(m_pNote->isInkNote()))
+    {
         m_pendingConversionToNote = false;
         QNINFO(QStringLiteral("Currently selected note is an ink note, it's not editable hence won't respond to the unexpected change of its HTML"));
+        Q_EMIT convertedToNote(*m_pNote);
+
+        if (m_pendingConversionToNoteForSavingInLocalStorage) {
+            m_pendingConversionToNoteForSavingInLocalStorage = false;
+            // Pretend the note was actually saved to local storage
+            Q_EMIT noteSavedToLocalStorage(m_noteLocalUid);
+        }
+
         return;
     }
 
@@ -5210,19 +5231,38 @@ void NoteEditorPrivate::onPageHtmlReceived(const QString & html,
         m_pendingConversionToNote = false;
         Q_EMIT cantConvertToNote(errorDescription);
 
+        if (m_pendingConversionToNoteForSavingInLocalStorage) {
+            m_pendingConversionToNoteForSavingInLocalStorage = false;
+            Q_EMIT failedToSaveNoteToLocalStorage(errorDescription, m_noteLocalUid);
+        }
+
         return;
     }
 
-    if (!checkNoteSize(m_enmlCachedMemory)) {
+    ErrorString errorDescription;
+    if (!checkNoteSize(m_enmlCachedMemory, errorDescription))
+    {
+        m_pendingConversionToNote = false;
+        Q_EMIT cantConvertToNote(errorDescription);
+
+        if (m_pendingConversionToNoteForSavingInLocalStorage) {
+            m_pendingConversionToNoteForSavingInLocalStorage = false;
+            Q_EMIT failedToSaveNoteToLocalStorage(errorDescription, m_noteLocalUid);
+        }
+
         return;
     }
 
     m_pNote->setContent(m_enmlCachedMemory);
     m_pendingConversionToNote = false;
-
     m_modified = false;
 
     Q_EMIT convertedToNote(*m_pNote);
+
+    if (m_pendingConversionToNoteForSavingInLocalStorage) {
+        m_pendingConversionToNoteForSavingInLocalStorage = false;
+        saveNoteToLocalStorage();
+    }
 }
 
 void NoteEditorPrivate::onSelectedTextEncryptionDone(const QVariant & dummy, const QVector<QPair<QString,QString> > & extraData)
@@ -6309,7 +6349,28 @@ void NoteEditorPrivate::saveNoteToLocalStorage()
 {
     QNDEBUG(QStringLiteral("NoteEditorPrivate::saveNoteToLocalStorage"));
 
-    // TODO: implement
+    if (Q_UNLIKELY(!m_pNote)) {
+        ErrorString errorDescription(QT_TR_NOOP("Can't save note to local storage: no note is loaded to the editor"));
+        QNWARNING(errorDescription);
+        Q_EMIT failedToSaveNoteToLocalStorage(errorDescription, m_noteLocalUid);
+        return;
+    }
+
+    if (Q_UNLIKELY(m_pNote->isInkNote())) {
+        QNDEBUG(QStringLiteral("Ink notes are read-only so won't save it to local storage, will just pretend it was saved"));
+        Q_EMIT noteSavedToLocalStorage(m_noteLocalUid);
+        return;
+    }
+
+    if (m_modified) {
+        m_pendingConversionToNoteForSavingInLocalStorage = true;
+        convertToNote();
+        return;
+    }
+
+    QNDEBUG(QStringLiteral("Emitting the request to save the note in local storage"));
+    QNTRACE(*m_pNote);
+    Q_EMIT saveNoteToLocalStorageRequest(*m_pNote);
 }
 
 void NoteEditorPrivate::updateFromNote()

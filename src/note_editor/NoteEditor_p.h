@@ -348,7 +348,7 @@ Q_SIGNALS:
 
     // Signals for communicating with NoteEditorLocalStorageBroker
     void findNoteAndNotebook(const QString & noteLocalUid);
-    void saveNoteToLocalStorage(const Note & note);
+    void saveNoteToLocalStorageRequest(const Note & note);
 
 #ifdef QUENTIER_USE_QT_WEB_ENGINE
     void htmlReadyForPrinting();
@@ -517,7 +517,7 @@ private:
     bool parseInAppLink(const QString & urlString, QString & userId,
                         QString & shardId, QString & noteGuid, ErrorString & errorDescription) const;
 
-    bool checkNoteSize(const QString & newNoteContent);
+    bool checkNoteSize(const QString & newNoteContent, ErrorString & errorDescription) const;
 
     void pushNoteContentEditUndoCommand();
     void pushTableActionUndoCommand(const QString & name, NoteEditorPage::Callback callback);
@@ -914,6 +914,7 @@ private:
 
     bool        m_isPageEditable;
     bool        m_pendingConversionToNote;
+    bool        m_pendingConversionToNoteForSavingInLocalStorage;
     bool        m_pendingNotePageLoad;
 
     /**
