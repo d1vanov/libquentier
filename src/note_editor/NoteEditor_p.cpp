@@ -18,6 +18,7 @@
 
 #include "NoteEditor_p.h"
 #include "NoteEditorPrivateMacros.h"
+#include "NoteEditorLocalStorageBroker.h"
 #include "GenericResourceImageManager.h"
 #include "NoteEditorSettingsName.h"
 #include "ResourceFileStorageManager.h"
@@ -2895,13 +2896,13 @@ void NoteEditorPrivate::onNotebookUpdated(Notebook notebook)
     }
 }
 
-void NoteEditorPrivate::onNoteDeleted(Note note)
+void NoteEditorPrivate::onNoteDeleted(QString noteLocalUid)
 {
-    if (m_noteLocalUid != note.localUid()) {
+    if (m_noteLocalUid != noteLocalUid) {
         return;
     }
 
-    QNDEBUG(QStringLiteral("NoteEditorPrivate::onNoteDeleted: ") << note);
+    QNDEBUG(QStringLiteral("NoteEditorPrivate::onNoteDeleted: ") << noteLocalUid);
 
     Q_EMIT noteDeleted(m_noteLocalUid);
 
@@ -2918,13 +2919,13 @@ void NoteEditorPrivate::onNoteDeleted(Note note)
     clearEditorContent(BlankPageKind::NoteDeleted);
 }
 
-void NoteEditorPrivate::onNotebookDeleted(Notebook notebook)
+void NoteEditorPrivate::onNotebookDeleted(QString notebookLocalUid)
 {
-    if (!m_pNotebook || (m_pNotebook->localUid() != notebook.localUid())) {
+    if (!m_pNotebook || (m_pNotebook->localUid() != notebookLocalUid)) {
         return;
     }
 
-    QNDEBUG(QStringLiteral("NoteEditorPrivate::onNotebookDeleted: ") << notebook);
+    QNDEBUG(QStringLiteral("NoteEditorPrivate::onNotebookDeleted: ") << notebookLocalUid);
 
     Q_EMIT noteDeleted(m_noteLocalUid);
 
@@ -4826,6 +4827,28 @@ void NoteEditorPrivate::setupGeneralSignalSlotConnections()
     QObject::connect(m_pActionsWatcher, QNSIGNAL(ActionsWatcher,pasteActionToggled),
                      this, QNSLOT(NoteEditorPrivate,paste));
 
+    NoteEditorLocalStorageBroker & noteEditorLocalStorageBroker = NoteEditorLocalStorageBroker::instance();
+    QObject::connect(this, QNSIGNAL(NoteEditorPrivate,findNoteAndNotebook,QString),
+                     &noteEditorLocalStorageBroker, QNSLOT(NoteEditorLocalStorageBroker,findNoteAndNotebook,QString));
+    QObject::connect(this, QNSIGNAL(NoteEditorPrivate,saveNoteToLocalStorageRequest,Note),
+                     &noteEditorLocalStorageBroker, QNSLOT(NoteEditorLocalStorageBroker,saveNoteToLocalStorage,Note));
+    QObject::connect(&noteEditorLocalStorageBroker, QNSIGNAL(NoteEditorLocalStorageBroker,noteSavedToLocalStorage,QString),
+                     this, QNSLOT(NoteEditorPrivate,onNoteSavedToLocalStorage,QString));
+    QObject::connect(&noteEditorLocalStorageBroker, QNSIGNAL(NoteEditorLocalStorageBroker,failedToSaveNoteToLocalStorage,QString,ErrorString),
+                     this, QNSLOT(NoteEditorPrivate,onFailedToSaveNoteToLocalStorage,QString,ErrorString));
+    QObject::connect(&noteEditorLocalStorageBroker, QNSIGNAL(NoteEditorLocalStorageBroker,foundNoteAndNotebook,Note,Notebook),
+                     this, QNSLOT(NoteEditorPrivate,onFoundNoteAndNotebook,Note,Notebook));
+    QObject::connect(&noteEditorLocalStorageBroker, QNSIGNAL(NoteEditorLocalStorageBroker,failedToFindNoteOrNotebook,QString,ErrorString),
+                     this, QNSLOT(NoteEditorPrivate,onFailedToFindNoteOrNotebook,QString,ErrorString));
+    QObject::connect(&noteEditorLocalStorageBroker, QNSIGNAL(NoteEditorLocalStorageBroker,noteUpdated,Note),
+                     this, QNSLOT(NoteEditorPrivate,onNoteUpdated,Note));
+    QObject::connect(&noteEditorLocalStorageBroker, QNSIGNAL(NoteEditorLocalStorageBroker,notebookUpdated,Notebook),
+                     this, QNSLOT(NoteEditorPrivate,onNotebookUpdated,Notebook));
+    QObject::connect(&noteEditorLocalStorageBroker, QNSIGNAL(NoteEditorLocalStorageBroker,noteDeleted,QString),
+                     this, QNSLOT(NoteEditorPrivate,onNoteDeleted,QString));
+    QObject::connect(&noteEditorLocalStorageBroker, QNSIGNAL(NoteEditorLocalStorageBroker,notebookDeleted,QString),
+                     this, QNSLOT(NoteEditorPrivate,onNotebookDeleted,QString));
+
     Q_Q(NoteEditor);
     QObject::connect(this, QNSIGNAL(NoteEditorPrivate,notifyError,ErrorString),
                      q, QNSIGNAL(NoteEditor,notifyError,ErrorString));
@@ -5813,8 +5836,8 @@ void NoteEditorPrivate::initialize(LocalStorageManagerAsync & localStorageManage
 {
     QNDEBUG(QStringLiteral("NoteEditorPrivate::initialize"));
 
-    // TODO: actually use it in future
-    Q_UNUSED(localStorageManager)
+    NoteEditorLocalStorageBroker & noteEditorLocalStorageBroker = NoteEditorLocalStorageBroker::instance();
+    noteEditorLocalStorageBroker.setLocalStorageManager(localStorageManager);
 
     m_pSpellChecker = &spellChecker;
     setAccount(account);

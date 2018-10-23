@@ -50,7 +50,7 @@ Q_SIGNALS:
     void noteUpdated(Note note);
     void notebookUpdated(Notebook);
     void noteDeleted(QString noteLocalUid);
-    void notebookDeleted(QString noteLocalUid);
+    void notebookDeleted(QString notebookLocalUid);
 
 // private signals
     void updateNote(Note note, LocalStorageManager::UpdateNoteOptions options, QUuid requestId);

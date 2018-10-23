@@ -506,8 +506,8 @@ private Q_SLOTS:
     void onFailedToFindNoteOrNotebook(QString noteLocalUid, ErrorString errorDescription);
     void onNoteUpdated(Note note);
     void onNotebookUpdated(Notebook notebook);
-    void onNoteDeleted(Note note);
-    void onNotebookDeleted(Notebook notebook);
+    void onNoteDeleted(QString noteLocalUid);
+    void onNotebookDeleted(QString notebookLocalUid);
 
 private:
     void init();
