@@ -21,7 +21,7 @@
 #include "NoteEditorLocalStorageBroker.h"
 #include "GenericResourceImageManager.h"
 #include "NoteEditorSettingsName.h"
-#include "ResourceFileStorageManager.h"
+#include "ResourceDataInTemporaryFileStorageManager.h"
 #include "delegates/AddResourceDelegate.h"
 #include "delegates/RemoveResourceDelegate.h"
 #include "delegates/RenameResourceDelegate.h"
@@ -290,7 +290,7 @@ NoteEditorPrivate::NoteEditorPrivate(NoteEditor & noteEditor) :
     m_htmlCachedMemory(),
     m_errorCachedMemory(),
     m_skipRulesForHtmlToEnmlConversion(),
-    m_pResourceFileStorageManager(Q_NULLPTR),
+    m_pResourceDataInTemporaryFileStorageManager(Q_NULLPTR),
     m_pFileIOProcessorAsync(new FileIOProcessorAsync(this)),
     m_resourceInfo(),
     m_pResourceInfoJavaScriptHandler(new ResourceInfoJavaScriptHandler(m_resourceInfo, this)),
@@ -375,6 +375,8 @@ void NoteEditorPrivate::onNoteLoadFinished(bool ok)
 
     if (!ok) {
         QNDEBUG(QStringLiteral("Note page was not loaded successfully"));
+        // NOTE: most of the times this callback fires with ok = false shortly before it fires with ok = true,
+        // so settling with just a debug log entry here
         return;
     }
 
@@ -1466,11 +1468,15 @@ void NoteEditorPrivate::onWriteFileRequestProcessed(bool success, ErrorString er
 
         while(!m_pendingNextPageUrl.isEmpty())
         {
+            /**
+             * WARNING: the piece of code just below is trickier than it might seem, thanks to Qt developers.
+             * Make sure to read comments in NoteEditor_p.h near the declaration of class members
+             * m_pendingNotePageLoadMethodExit and m_pendingNextPageUrl to see how it works
+             */
+
             QNDEBUG(QStringLiteral("Setting the pending url: ") << m_pendingNextPageUrl);
 
             url = m_pendingNextPageUrl;
-            QNDEBUG(QStringLiteral("Before starting to load the url into the page: ") << url);
-
             m_pendingNotePageLoad = true;
             m_pendingNotePageLoadMethodExit = true;
 #ifdef QUENTIER_USE_QT_WEB_ENGINE
@@ -2711,7 +2717,7 @@ void NoteEditorPrivate::onFoundNoteAndNotebook(Note note, Notebook notebook)
     {
         bool missingPluginFactory = !m_pPluginFactory;
         if (missingPluginFactory) {
-            m_pPluginFactory = new NoteEditorPluginFactory(*this, *m_pResourceFileStorageManager, *m_pFileIOProcessorAsync, pNoteEditorPage);
+            m_pPluginFactory = new NoteEditorPluginFactory(*this, *m_pResourceDataInTemporaryFileStorageManager, *m_pFileIOProcessorAsync, pNoteEditorPage);
         }
 
         m_pPluginFactory->setNote(*m_pNote);
@@ -3759,6 +3765,97 @@ void NoteEditorPrivate::provideSrcForResourceImgTags()
     page->executeJavaScript(QStringLiteral("provideSrcForResourceImgTags();"));
 }
 
+void NoteEditorPrivate::saveNoteImageResourcesToTemporaryFiles()
+{
+    QNDEBUG(QStringLiteral("NoteEditorPrivate::saveNoteImageResourcesToTemporaryFiles"));
+
+    if (Q_UNLIKELY(m_pNote.isNull())) {
+        QNDEBUG(QStringLiteral("No note is set for the editor"));
+        return;
+    }
+
+    QList<Resource> resources = m_pNote->resources();
+    if (resources.isEmpty()) {
+        QNTRACE(QStringLiteral("Note has no resources, nothing to do"));
+        return;
+    }
+
+    auto resourcesConstBegin = resources.constBegin();
+    auto resourcesConstEnd = resources.constEnd();
+
+    size_t numPendingResourceWritesToLocalFiles = 0;
+
+    QString mimeImagePrefix = QStringLiteral("image");
+    for(auto it = resourcesConstBegin; it != resourcesConstEnd; ++it)
+    {
+        const Resource & resource = *it;
+        if (Q_UNLIKELY(!resource.hasMime())) {
+            QNINFO(QStringLiteral("Detected resource without mime type: ") << resource);
+            continue;
+        }
+
+        const QString & mime = resource.mime();
+        if (!mime.startsWith(mimeImagePrefix)) {
+            QNTRACE(QStringLiteral("Skipping non-image resource: ") << resource);
+            continue;
+        }
+
+        if (!resource.hasDataBody() && !resource.hasAlternateDataBody()) {
+            QNINFO(QStringLiteral("Detected resource without data body: ") << resource);
+            continue;
+        }
+
+        if (!resource.hasDataHash() && !resource.hasAlternateDataHash()) {
+            QNINFO(QStringLiteral("Detected resource without data hash: ") << resource);
+            continue;
+        }
+
+        if (!resource.hasMime()) {
+            QNINFO(QStringLiteral("Detected resource without mime type: ") << resource);
+            continue;
+        }
+
+        const QByteArray & dataHash = (resource.hasDataHash()
+                                       ? resource.dataHash()
+                                       : resource.alternateDataHash());
+
+        QNTRACE(QStringLiteral("Found current note's resource corresponding to the data hash ")
+                << dataHash.toHex() << ": " << resource);
+
+        if (!m_resourceInfo.contains(dataHash))
+        {
+            bool res = saveImageResourceDataToTemporaryFile(resource);
+            if (res) {
+                ++numPendingResourceWritesToLocalFiles;
+            }
+        }
+    }
+
+    if (numPendingResourceWritesToLocalFiles == 0)
+    {
+        QNTRACE(QStringLiteral("All current note's image resources are written to temporary files and are actual. "
+                               "Will set filepaths to these local files to src attributes of img resource tags"));
+        if (!m_pendingNotePageLoad) {
+            provideSrcForResourceImgTags();
+        }
+
+        return;
+    }
+
+    QNTRACE(QStringLiteral("Scheduled writing of ") << numPendingResourceWritesToLocalFiles
+            << QStringLiteral(" image resources to temporary files, will wait until they are written "
+                              "and add the src attributes to img resources when the files are ready"));
+}
+
+bool NoteEditorPrivate::saveImageResourceDataToTemporaryFile(const Resource & resource)
+{
+    QNDEBUG(QStringLiteral("NoteEditorPrivate::saveImageResourceDataToTemporaryFile"));
+    QNTRACE(resource);
+
+    // TODO: implement
+    return false;
+}
+
 void NoteEditorPrivate::manualSaveResourceToFile(const Resource & resource)
 {
     QNDEBUG(QStringLiteral("NoteEditorPrivate::manualSaveResourceToFile"));
@@ -4662,27 +4759,27 @@ void NoteEditorPrivate::setupFileIO()
     QObject::connect(m_pFileIOProcessorAsync, QNSIGNAL(FileIOProcessorAsync,writeFileRequestProcessed,bool,ErrorString,QUuid),
                      this, QNSLOT(NoteEditorPrivate,onWriteFileRequestProcessed,bool,ErrorString,QUuid));
 
-    if (m_pResourceFileStorageManager) {
-        m_pResourceFileStorageManager->deleteLater();
-        m_pResourceFileStorageManager = Q_NULLPTR;
+    if (m_pResourceDataInTemporaryFileStorageManager) {
+        m_pResourceDataInTemporaryFileStorageManager->deleteLater();
+        m_pResourceDataInTemporaryFileStorageManager = Q_NULLPTR;
     }
 
-    m_pResourceFileStorageManager = new ResourceFileStorageManager(m_resourceLocalFileStorageFolder, m_noteEditorImageResourcesStoragePath);
-    m_pResourceFileStorageManager->moveToThread(m_pFileIOProcessorAsync->thread());
+    m_pResourceDataInTemporaryFileStorageManager = new ResourceDataInTemporaryFileStorageManager();
+    m_pResourceDataInTemporaryFileStorageManager->moveToThread(m_pFileIOProcessorAsync->thread());
 
     QObject::connect(this, QNSIGNAL(NoteEditorPrivate,currentNoteChanged,Note),
-                     m_pResourceFileStorageManager, QNSLOT(ResourceFileStorageManager,onCurrentNoteChanged,Note));
+                     m_pResourceDataInTemporaryFileStorageManager, QNSLOT(ResourceDataInTemporaryFileStorageManager,onCurrentNoteChanged,Note));
     QObject::connect(this, QNSIGNAL(NoteEditorPrivate,readResourceFromStorage,QString,QString,QUuid),
-                     m_pResourceFileStorageManager, QNSLOT(ResourceFileStorageManager,onReadResourceFromFileRequest,QString,QString,QUuid));
-    QObject::connect(m_pResourceFileStorageManager, QNSIGNAL(ResourceFileStorageManager,readResourceFromFileCompleted,QUuid,QByteArray,QByteArray,int,ErrorString),
+                     m_pResourceDataInTemporaryFileStorageManager, QNSLOT(ResourceDataInTemporaryFileStorageManager,onReadResourceFromFileRequest,QString,QString,QUuid));
+    QObject::connect(m_pResourceDataInTemporaryFileStorageManager, QNSIGNAL(ResourceDataInTemporaryFileStorageManager,readResourceFromFileCompleted,QUuid,QByteArray,QByteArray,int,ErrorString),
                      this, QNSLOT(NoteEditorPrivate,onResourceFileReadFromStorage,QUuid,QByteArray,QByteArray,int,ErrorString));
     QObject::connect(this, QNSIGNAL(NoteEditorPrivate,openResourceFile,QString),
-                     m_pResourceFileStorageManager, QNSLOT(ResourceFileStorageManager,onOpenResourceRequest,QString));
-    QObject::connect(m_pResourceFileStorageManager, QNSIGNAL(ResourceFileStorageManager,resourceFileChanged,QString,QString),
+                     m_pResourceDataInTemporaryFileStorageManager, QNSLOT(ResourceDataInTemporaryFileStorageManager,onOpenResourceRequest,QString));
+    QObject::connect(m_pResourceDataInTemporaryFileStorageManager, QNSIGNAL(ResourceDataInTemporaryFileStorageManager,resourceFileChanged,QString,QString),
                      this, QNSLOT(NoteEditorPrivate,onResourceFileChanged,QString,QString));
     QObject::connect(this, QNSIGNAL(NoteEditorPrivate,saveResourceToStorage,QString,QString,QByteArray,QByteArray,QString,QUuid,bool),
-                     m_pResourceFileStorageManager, QNSLOT(ResourceFileStorageManager,onWriteResourceToFileRequest,QString,QString,QByteArray,QByteArray,QString,QUuid,bool));
-    QObject::connect(m_pResourceFileStorageManager, QNSIGNAL(ResourceFileStorageManager,writeResourceToFileCompleted,QUuid,QByteArray,QString,int,ErrorString),
+                     m_pResourceDataInTemporaryFileStorageManager, QNSLOT(ResourceDataInTemporaryFileStorageManager,onWriteResourceToFileRequest,QString,QString,QByteArray,QByteArray,QString,QUuid,bool));
+    QObject::connect(m_pResourceDataInTemporaryFileStorageManager, QNSIGNAL(ResourceDataInTemporaryFileStorageManager,writeResourceToFileCompleted,QUuid,QByteArray,QString,int,ErrorString),
                      this, QNSLOT(NoteEditorPrivate,onResourceSavedToStorage,QUuid,QByteArray,QString,int,ErrorString));
 
     if (m_pGenericResourceImageManager) {
@@ -4922,7 +5019,7 @@ void NoteEditorPrivate::setupNoteEditorPage()
     page->mainFrame()->addToJavaScriptWindowObject(QStringLiteral("actionsWatcher"), m_pActionsWatcher,
                                                    OwnershipNamespace::QtOwnership);
 
-    m_pPluginFactory = new NoteEditorPluginFactory(*this, *m_pResourceFileStorageManager, *m_pFileIOProcessorAsync, page);
+    m_pPluginFactory = new NoteEditorPluginFactory(*this, *m_pResourceDataInTemporaryFileStorageManager, *m_pFileIOProcessorAsync, page);
     if (Q_LIKELY(!m_pNote.isNull())) {
         m_pPluginFactory->setNote(*m_pNote);
     }
@@ -7226,7 +7323,7 @@ void NoteEditorPrivate::paste()
             QNDEBUG(QStringLiteral("HTML from mime data: ") << html);
 
             InsertHtmlDelegate * pInsertHtmlDelegate = new InsertHtmlDelegate(html, *this, m_enmlConverter,
-                                                                              m_pResourceFileStorageManager,
+                                                                              m_pResourceDataInTemporaryFileStorageManager,
                                                                               m_resourceFileStoragePathsByResourceLocalUid,
                                                                               m_resourceInfo, this);
             QObject::connect(pInsertHtmlDelegate, QNSIGNAL(InsertHtmlDelegate,finished,QList<Resource>,QStringList),
@@ -8300,7 +8397,7 @@ void NoteEditorPrivate::rotateImageAttachment(const QByteArray & resourceHash, c
     }
 
     ImageResourceRotationDelegate * delegate = new ImageResourceRotationDelegate(resource.dataHash(), rotationDirection,
-                                                                                 *this, m_resourceInfo, *m_pResourceFileStorageManager,
+                                                                                 *this, m_resourceInfo, *m_pResourceDataInTemporaryFileStorageManager,
                                                                                  m_resourceFileStoragePathsByResourceLocalUid);
 
     QObject::connect(delegate, QNSIGNAL(ImageResourceRotationDelegate,finished,QByteArray,QByteArray,QByteArray,QByteArray,Resource,INoteEditorBackend::Rotation::type),
@@ -8612,7 +8709,7 @@ void NoteEditorPrivate::dropFile(const QString & filePath)
 
     CHECK_NOTE_EDITABLE(QT_TR_NOOP("Can't add the attachment via drag'n'drop"))
 
-    AddResourceDelegate * delegate = new AddResourceDelegate(filePath, *this, m_pResourceFileStorageManager,
+    AddResourceDelegate * delegate = new AddResourceDelegate(filePath, *this, m_pResourceDataInTemporaryFileStorageManager,
                                                              m_pFileIOProcessorAsync, m_pGenericResourceImageManager,
                                                              m_genericResourceImageFilePathsByResourceHash);
 
@@ -8636,7 +8733,7 @@ void NoteEditorPrivate::pasteImageData(const QMimeData & mimeData)
 
     QString mimeType = QStringLiteral("image/png");
 
-    AddResourceDelegate * delegate = new AddResourceDelegate(data, mimeType, *this, m_pResourceFileStorageManager,
+    AddResourceDelegate * delegate = new AddResourceDelegate(data, mimeType, *this, m_pResourceDataInTemporaryFileStorageManager,
                                                              m_pFileIOProcessorAsync, m_pGenericResourceImageManager,
                                                              m_genericResourceImageFilePathsByResourceHash);
 

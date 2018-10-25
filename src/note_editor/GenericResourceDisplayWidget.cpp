@@ -19,7 +19,7 @@
 #include "GenericResourceDisplayWidget.h"
 #include "ui_GenericResourceDisplayWidget.h"
 #include "NoteEditorSettingsName.h"
-#include "ResourceFileStorageManager.h"
+#include "ResourceDataInTemporaryFileStorageManager.h"
 #include <quentier/utility/FileIOProcessorAsync.h>
 #include <quentier/utility/QuentierCheckPtr.h>
 #include <quentier/utility/Utility.h>
@@ -41,7 +41,7 @@ GenericResourceDisplayWidget::GenericResourceDisplayWidget(QWidget * parent) :
     QWidget(parent),
     m_pUI(new Ui::GenericResourceDisplayWidget),
     m_pResource(Q_NULLPTR),
-    m_pResourceFileStorageManager(Q_NULLPTR),
+    m_pResourceDataInTemporaryFileStorageManager(Q_NULLPTR),
     m_pFileIOProcessorAsync(Q_NULLPTR),
     m_preferredFileSuffixes(),
     m_filterString(),
@@ -65,13 +65,13 @@ void GenericResourceDisplayWidget::initialize(const QIcon & icon, const QString 
                                               const QString & size, const QStringList & preferredFileSuffixes,
                                               const QString & filterString,
                                               const Resource & resource, const Account & account,
-                                              const ResourceFileStorageManager & resourceFileStorageManager,
+                                              const ResourceDataInTemporaryFileStorageManager & resourceDataInTemporaryFileStorageManager,
                                               const FileIOProcessorAsync & fileIOProcessorAsync)
 {
     QNDEBUG(QStringLiteral("GenericResourceDisplayWidget::initialize: name = ") << name << QStringLiteral(", size = ") << size);
 
     m_pResource = new Resource(resource);
-    m_pResourceFileStorageManager = &resourceFileStorageManager;
+    m_pResourceDataInTemporaryFileStorageManager = &resourceDataInTemporaryFileStorageManager;
     m_pFileIOProcessorAsync = &fileIOProcessorAsync;
     m_preferredFileSuffixes = preferredFileSuffixes;
 
@@ -101,10 +101,10 @@ void GenericResourceDisplayWidget::initialize(const QIcon & icon, const QString 
     QObject::connect(m_pUI->saveResourceButton, QNSIGNAL(QPushButton,released),
                      this, QNSLOT(GenericResourceDisplayWidget,onSaveAsButtonPressed));
 
-    QObject::connect(m_pResourceFileStorageManager, QNSIGNAL(ResourceFileStorageManager,writeResourceToFileCompleted,QUuid,QByteArray,QString,int,ErrorString),
+    QObject::connect(m_pResourceDataInTemporaryFileStorageManager, QNSIGNAL(ResourceDataInTemporaryFileStorageManager,writeResourceToFileCompleted,QUuid,QByteArray,QString,int,ErrorString),
                      this, QNSLOT(GenericResourceDisplayWidget,onSaveResourceToStorageRequestProcessed,QUuid,QByteArray,QString,int,ErrorString));
     QObject::connect(this, QNSIGNAL(GenericResourceDisplayWidget,saveResourceToStorage,QString,QString,QByteArray,QByteArray,QString,QUuid,bool),
-                     m_pResourceFileStorageManager, QNSLOT(ResourceFileStorageManager,onWriteResourceToFileRequest,QString,QString,QByteArray,QByteArray,QString,QUuid,bool));
+                     m_pResourceDataInTemporaryFileStorageManager, QNSLOT(ResourceDataInTemporaryFileStorageManager,onWriteResourceToFileRequest,QString,QString,QByteArray,QByteArray,QString,QUuid,bool));
 
     QObject::connect(m_pFileIOProcessorAsync, QNSIGNAL(FileIOProcessorAsync,writeFileRequestProcessed,bool,ErrorString,QUuid),
                      this, QNSLOT(GenericResourceDisplayWidget,onSaveResourceToFileRequestProcessed,bool,ErrorString,QUuid));

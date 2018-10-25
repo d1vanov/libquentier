@@ -17,7 +17,7 @@
  */
 
 #include "ImageResourceRotationDelegate.h"
-#include "../ResourceFileStorageManager.h"
+#include "../ResourceDataInTemporaryFileStorageManager.h"
 #include <quentier/types/Note.h>
 #include <quentier/types/Resource.h>
 #include <quentier/logging/QuentierLogger.h>
@@ -38,11 +38,11 @@ namespace quentier {
 
 ImageResourceRotationDelegate::ImageResourceRotationDelegate(const QByteArray & resourceHashBefore, const INoteEditorBackend::Rotation::type rotationDirection,
                                                              NoteEditorPrivate & noteEditor, ResourceInfo & resourceInfo,
-                                                             ResourceFileStorageManager & resourceFileStorageManager,
+                                                             ResourceDataInTemporaryFileStorageManager & resourceDataInTemporaryFileStorageManager,
                                                              QHash<QString, QString> & resourceFileStoragePathsByLocalUid) :
     m_noteEditor(noteEditor),
     m_resourceInfo(resourceInfo),
-    m_resourceFileStorageManager(resourceFileStorageManager),
+    m_resourceDataInTemporaryFileStorageManager(resourceDataInTemporaryFileStorageManager),
     m_resourceFileStoragePathsByLocalUid(resourceFileStoragePathsByLocalUid),
     m_rotationDirection(rotationDirection),
     m_pNote(Q_NULLPTR),
@@ -180,8 +180,8 @@ void ImageResourceRotationDelegate::rotateImageResource()
     m_saveResourceRequestId = QUuid::createUuid();
 
     QObject::connect(this, QNSIGNAL(ImageResourceRotationDelegate,saveResourceToStorage,QString,QString,QByteArray,QByteArray,QString,QUuid,bool),
-                     &m_resourceFileStorageManager, QNSLOT(ResourceFileStorageManager,onWriteResourceToFileRequest,QString,QString,QByteArray,QByteArray,QString,QUuid,bool));
-    QObject::connect(&m_resourceFileStorageManager, QNSIGNAL(ResourceFileStorageManager,writeResourceToFileCompleted,QUuid,QByteArray,QString,int,ErrorString),
+                     &m_resourceDataInTemporaryFileStorageManager, QNSLOT(ResourceDataInTemporaryFileStorageManager,onWriteResourceToFileRequest,QString,QString,QByteArray,QByteArray,QString,QUuid,bool));
+    QObject::connect(&m_resourceDataInTemporaryFileStorageManager, QNSIGNAL(ResourceDataInTemporaryFileStorageManager,writeResourceToFileCompleted,QUuid,QByteArray,QString,int,ErrorString),
                      this, QNSLOT(ImageResourceRotationDelegate,onResourceSavedToStorage,QUuid,QByteArray,QString,int,ErrorString));
 
     Q_EMIT saveResourceToStorage(m_rotatedResource.noteLocalUid(), m_rotatedResource.localUid(), m_rotatedResource.dataBody(), QByteArray(),

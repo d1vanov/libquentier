@@ -34,7 +34,7 @@ namespace quentier {
 
 QT_FORWARD_DECLARE_CLASS(Account)
 QT_FORWARD_DECLARE_CLASS(NoteEditorPrivate)
-QT_FORWARD_DECLARE_CLASS(ResourceFileStorageManager)
+QT_FORWARD_DECLARE_CLASS(ResourceDataInTemporaryFileStorageManager)
 QT_FORWARD_DECLARE_CLASS(FileIOProcessorAsync)
 QT_FORWARD_DECLARE_CLASS(GenericResourceImageManager)
 
@@ -51,7 +51,7 @@ public:
      *
      * @param filePath - the absolute path to the file in which the resource data is located
      * @param noteEditor - the note editor holding the note to which the resource is to be added
-     * @param pResourceFileStorageManager - the pointer to ResourceFileStorageManager which is required for storing
+     * @param pResourceFileStorageManager - the pointer to ResourceDataInTemporaryFileStorageManager which is required for storing
      * the new resource's data in a proper place on the hard drive
      * @param pFileIOThreadWorker - the pointer to FileIOProcessorAsync worker performing the actual IO of file data
      * @param pGenericResourceImageManager - the pointer to GenericResourceImageManager required for composing
@@ -59,7 +59,7 @@ public:
      * @param genericResourceImageFilePathsByResourceHash - the hash container storing generic resource file paths by resource hash
      */
     explicit AddResourceDelegate(const QString & filePath, NoteEditorPrivate & noteEditor,
-                                 ResourceFileStorageManager * pResourceFileStorageManager,
+                                 ResourceDataInTemporaryFileStorageManager * pResourceFileStorageManager,
                                  FileIOProcessorAsync * pFileIOThreadWorker,
                                  GenericResourceImageManager * pGenericResourceImageManager,
                                  QHash<QByteArray, QString> & genericResourceImageFilePathsByResourceHash);
@@ -70,7 +70,7 @@ public:
      * @param resourceData - the resource data to be added to the note as a new resource
      * @param mimeType - the mime type of the resource data
      * @param noteEditor - the note editor holding the note to which the resource is to be added
-     * @param pResourceFileStorageManager - the pointer to ResourceFileStorageManager which is required for storing
+     * @param pResourceFileStorageManager - the pointer to ResourceDataInTemporaryFileStorageManager which is required for storing
      * the new resource's data in a proper place on the hard drive
      * @param pFileIOThreadWorker - the pointer to FileIOProcessorAsync worker performing the actual IO of file data
      * @param pGenericResourceImageManager - the pointer to GenericResourceImageManager required for composing
@@ -79,7 +79,7 @@ public:
      */
     explicit AddResourceDelegate(const QByteArray & resourceData, const QString & mimeType,
                                  NoteEditorPrivate & noteEditor,
-                                 ResourceFileStorageManager * pResourceFileStorageManager,
+                                 ResourceDataInTemporaryFileStorageManager * pResourceFileStorageManager,
                                  FileIOProcessorAsync * pFileIOThreadWorker,
                                  GenericResourceImageManager * pGenericResourceImageManager,
                                  QHash<QByteArray, QString> & genericResourceImageFilePathsByResourceHash);
@@ -129,7 +129,7 @@ private:
 
 private:
     NoteEditorPrivate &             m_noteEditor;
-    ResourceFileStorageManager *    m_pResourceFileStorageManager;
+    ResourceDataInTemporaryFileStorageManager *     m_pResourceDataInTemporaryFileStorageManager;
     FileIOProcessorAsync *          m_pFileIOProcessorAsync;
 
     QHash<QByteArray, QString> &    m_genericResourceImageFilePathsByResourceHash;

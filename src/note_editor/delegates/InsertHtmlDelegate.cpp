@@ -1,7 +1,7 @@
 #include "InsertHtmlDelegate.h"
 #include "../NoteEditor_p.h"
 #include "../NoteEditorPage.h"
-#include "../ResourceFileStorageManager.h"
+#include "../ResourceDataInTemporaryFileStorageManager.h"
 #include <quentier/enml/ENMLConverter.h>
 #include <quentier/types/Account.h>
 #include <quentier/types/Note.h>
@@ -25,14 +25,14 @@ namespace quentier {
 
 InsertHtmlDelegate::InsertHtmlDelegate(const QString & inputHtml, NoteEditorPrivate & noteEditor,
                                        ENMLConverter & enmlConverter,
-                                       ResourceFileStorageManager * pResourceFileStorageManager,
+                                       ResourceDataInTemporaryFileStorageManager * pResourceDataInTemporaryFileStorageManager,
                                        QHash<QString, QString> & resourceFileStoragePathsByResourceLocalUid,
                                        ResourceInfo & resourceInfo,
                                        QObject * parent) :
     QObject(parent),
     m_noteEditor(noteEditor),
     m_enmlConverter(enmlConverter),
-    m_pResourceFileStorageManager(pResourceFileStorageManager),
+    m_pResourceDataInTemporaryFileStorageManager(pResourceDataInTemporaryFileStorageManager),
     m_resourceFileStoragePathsByResourceLocalUid(resourceFileStoragePathsByResourceLocalUid),
     m_resourceInfo(resourceInfo),
     m_inputHtml(inputHtml),
@@ -843,10 +843,10 @@ bool InsertHtmlDelegate::addResource(const QByteArray & resourceData, const QUrl
 
     QObject::connect(this, QNSIGNAL(InsertHtmlDelegate,saveResourceToStorage,
                                     QString,QString,QByteArray,QByteArray,QString,QUuid,bool),
-                     m_pResourceFileStorageManager, QNSLOT(ResourceFileStorageManager,onWriteResourceToFileRequest,
-                                                           QString,QString,QByteArray,QByteArray,QString,QUuid));
-    QObject::connect(m_pResourceFileStorageManager, QNSIGNAL(ResourceFileStorageManager,writeResourceToFileCompleted,
-                                                             QString,QString,QByteArray,QByteArray,QString,QUuid,bool),
+                     m_pResourceDataInTemporaryFileStorageManager, QNSLOT(ResourceDataInTemporaryFileStorageManager,onWriteResourceToFileRequest,
+                                                                          QString,QString,QByteArray,QByteArray,QString,QUuid));
+    QObject::connect(m_pResourceDataInTemporaryFileStorageManager, QNSIGNAL(ResourceDataInTemporaryFileStorageManager,writeResourceToFileCompleted,
+                                                                            QString,QString,QByteArray,QByteArray,QString,QUuid,bool),
                      this, QNSLOT(InsertHtmlDelegate,onResourceSavedToStorage,
                                   QString,QString,QByteArray,QByteArray,QString,QUuid,bool));
 

@@ -20,7 +20,7 @@
 #include "../NoteEditor_p.h"
 #include "../NoteEditorPage.h"
 #include "../GenericResourceImageManager.h"
-#include "../ResourceFileStorageManager.h"
+#include "../ResourceDataInTemporaryFileStorageManager.h"
 #include <quentier/utility/FileIOProcessorAsync.h>
 #include <quentier/utility/Utility.h>
 #include <quentier/logging/QuentierLogger.h>
@@ -48,13 +48,13 @@ namespace quentier {
     }
 
 AddResourceDelegate::AddResourceDelegate(const QString & filePath, NoteEditorPrivate & noteEditor,
-                                         ResourceFileStorageManager * pResourceFileStorageManager,
+                                         ResourceDataInTemporaryFileStorageManager * pResourceFileStorageManager,
                                          FileIOProcessorAsync * pFileIOProcessorAsync,
                                          GenericResourceImageManager * pGenericResourceImageManager,
                                          QHash<QByteArray, QString> & genericResourceImageFilePathsByResourceHash) :
     QObject(&noteEditor),
     m_noteEditor(noteEditor),
-    m_pResourceFileStorageManager(pResourceFileStorageManager),
+    m_pResourceDataInTemporaryFileStorageManager(pResourceFileStorageManager),
     m_pFileIOProcessorAsync(pFileIOProcessorAsync),
     m_genericResourceImageFilePathsByResourceHash(genericResourceImageFilePathsByResourceHash),
     m_pGenericResourceImageManager(pGenericResourceImageManager),
@@ -70,13 +70,13 @@ AddResourceDelegate::AddResourceDelegate(const QString & filePath, NoteEditorPri
 
 AddResourceDelegate::AddResourceDelegate(const QByteArray & resourceData,
                                          const QString & mimeType, NoteEditorPrivate & noteEditor,
-                                         ResourceFileStorageManager * pResourceFileStorageManager,
+                                         ResourceDataInTemporaryFileStorageManager * pResourceFileStorageManager,
                                          FileIOProcessorAsync * pFileIOProcessorAsync,
                                          GenericResourceImageManager * pGenericResourceImageManager,
                                          QHash<QByteArray, QString> & genericResourceImageFilePathsByResourceHash) :
     QObject(&noteEditor),
     m_noteEditor(noteEditor),
-    m_pResourceFileStorageManager(pResourceFileStorageManager),
+    m_pResourceDataInTemporaryFileStorageManager(pResourceFileStorageManager),
     m_pFileIOProcessorAsync(pFileIOProcessorAsync),
     m_genericResourceImageFilePathsByResourceHash(genericResourceImageFilePathsByResourceHash),
     m_pGenericResourceImageManager(pGenericResourceImageManager),
@@ -361,8 +361,8 @@ void AddResourceDelegate::doSaveResourceToStorage(const QByteArray & data, QStri
     m_saveResourceToStorageRequestId = QUuid::createUuid();
 
     QObject::connect(this, QNSIGNAL(AddResourceDelegate,saveResourceToStorage,QString,QString,QByteArray,QByteArray,QString,QUuid,bool),
-                     m_pResourceFileStorageManager, QNSLOT(ResourceFileStorageManager,onWriteResourceToFileRequest,QString,QString,QByteArray,QByteArray,QString,QUuid,bool));
-    QObject::connect(m_pResourceFileStorageManager, QNSIGNAL(ResourceFileStorageManager,writeResourceToFileCompleted,QUuid,QByteArray,QString,int,ErrorString),
+                     m_pResourceDataInTemporaryFileStorageManager, QNSLOT(ResourceDataInTemporaryFileStorageManager,onWriteResourceToFileRequest,QString,QString,QByteArray,QByteArray,QString,QUuid,bool));
+    QObject::connect(m_pResourceDataInTemporaryFileStorageManager, QNSIGNAL(ResourceDataInTemporaryFileStorageManager,writeResourceToFileCompleted,QUuid,QByteArray,QString,int,ErrorString),
                      this, QNSLOT(AddResourceDelegate,onResourceSavedToStorage,QUuid,QByteArray,QString,int,ErrorString));
 
     QNTRACE(QStringLiteral("Emitting the request to save the dropped/pasted resource to local file storage: generated local uid = ")
@@ -387,8 +387,8 @@ void AddResourceDelegate::onResourceSavedToStorage(QUuid requestId, QByteArray d
     m_resourceFileStoragePath = fileStoragePath;
 
     QObject::disconnect(this, QNSIGNAL(AddResourceDelegate,saveResourceToStorage,QString,QString,QByteArray,QByteArray,QString,QUuid,bool),
-                        m_pResourceFileStorageManager, QNSLOT(ResourceFileStorageManager,onWriteResourceToFileRequest,QString,QString,QByteArray,QByteArray,QString,QUuid,bool));
-    QObject::disconnect(m_pResourceFileStorageManager, QNSIGNAL(ResourceFileStorageManager,writeResourceToFileCompleted,QUuid,QByteArray,QString,int,QString),
+                        m_pResourceDataInTemporaryFileStorageManager, QNSLOT(ResourceDataInTemporaryFileStorageManager,onWriteResourceToFileRequest,QString,QString,QByteArray,QByteArray,QString,QUuid,bool));
+    QObject::disconnect(m_pResourceDataInTemporaryFileStorageManager, QNSIGNAL(ResourceDataInTemporaryFileStorageManager,writeResourceToFileCompleted,QUuid,QByteArray,QString,int,QString),
                         this, QNSLOT(AddResourceDelegate,onResourceSavedToStorage,QUuid,QByteArray,QString,int,QString));
 
     if (Q_UNLIKELY(errorCode != 0)) {

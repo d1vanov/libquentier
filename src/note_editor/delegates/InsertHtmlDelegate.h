@@ -19,7 +19,7 @@ namespace quentier {
 QT_FORWARD_DECLARE_CLASS(Account)
 QT_FORWARD_DECLARE_CLASS(NoteEditorPrivate)
 QT_FORWARD_DECLARE_CLASS(ENMLConverter)
-QT_FORWARD_DECLARE_CLASS(ResourceFileStorageManager)
+QT_FORWARD_DECLARE_CLASS(ResourceDataInTemporaryFileStorageManager)
 QT_FORWARD_DECLARE_CLASS(ResourceInfo)
 
 class Q_DECL_HIDDEN InsertHtmlDelegate: public QObject
@@ -28,7 +28,7 @@ class Q_DECL_HIDDEN InsertHtmlDelegate: public QObject
 public:
     explicit InsertHtmlDelegate(const QString & inputHtml, NoteEditorPrivate & noteEditor,
                                 ENMLConverter & enmlConverter,
-                                ResourceFileStorageManager * pResourceFileStorageManager,
+                                ResourceDataInTemporaryFileStorageManager * pResourceFileStorageManager,
                                 QHash<QString, QString> & resourceFileStoragePathsByResourceLocalUid,
                                 ResourceInfo & resourceInfo,
                                 QObject * parent = Q_NULLPTR);
@@ -69,7 +69,7 @@ private:
     NoteEditorPrivate &             m_noteEditor;
     ENMLConverter &                 m_enmlConverter;
 
-    ResourceFileStorageManager *    m_pResourceFileStorageManager;
+    ResourceDataInTemporaryFileStorageManager *    m_pResourceDataInTemporaryFileStorageManager;
     QHash<QString, QString> &       m_resourceFileStoragePathsByResourceLocalUid;
     ResourceInfo &                  m_resourceInfo;
 

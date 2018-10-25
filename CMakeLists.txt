@@ -262,7 +262,7 @@ if(BUILD_WITH_NOTE_EDITOR)
        src/note_editor/NoteEditorPrivateMacros.h
        src/note_editor/NoteEditorLocalStorageBroker.h
        src/note_editor/JavaScriptInOrderExecutor.h
-       src/note_editor/ResourceFileStorageManager.h
+       src/note_editor/ResourceDataInTemporaryFileStorageManager.h
        src/note_editor/ResourceInfo.h
        src/note_editor/SpellChecker_p.h
        src/note_editor/SpellCheckerDictionariesFinder.h
@@ -472,7 +472,7 @@ if(BUILD_WITH_NOTE_EDITOR)
        src/note_editor/NoteEditor_p.cpp
        src/note_editor/NoteEditorLocalStorageBroker.cpp
        src/note_editor/JavaScriptInOrderExecutor.cpp
-       src/note_editor/ResourceFileStorageManager.cpp
+       src/note_editor/ResourceDataInTemporaryFileStorageManager.cpp
        src/note_editor/ResourceInfo.cpp
        src/note_editor/SpellChecker.cpp
        src/note_editor/SpellChecker_p.cpp

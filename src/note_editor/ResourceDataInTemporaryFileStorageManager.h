@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Dmitry Ivanov
+ * Copyright 2016-2018 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,8 +16,8 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LIB_QUENTIER_NOTE_EDITOR_RESOURCE_FILES_STORAGE_MANAGER_H
-#define LIB_QUENTIER_NOTE_EDITOR_RESOURCE_FILES_STORAGE_MANAGER_H
+#ifndef LIB_QUENTIER_NOTE_EDITOR_RESOURCE_DATA_IN_TEMPORARY_FILE_STORAGE_MANAGER_H
+#define LIB_QUENTIER_NOTE_EDITOR_RESOURCE_DATA_IN_TEMPORARY_FILE_STORAGE_MANAGER_H
 
 #include <quentier/utility/Macros.h>
 #include <quentier/utility/FileSystemWatcher.h>
@@ -35,18 +35,17 @@ namespace quentier {
 QT_FORWARD_DECLARE_CLASS(Note)
 
 /**
- * @brief The ResourceFileStorageManager class is intended to provide the service of
- * reading and writing the resource data from/to local files. The purpose of having
+ * @brief The ResourceDataInTemporaryFileStorageManager class is intended to provide the service of
+ * reading and writing the resource data from/to temporary files. The purpose of having
  * a separate class for that is to encapsulate the logics around the checks for resource
- * files actuality and also to make it possible to move all the resource file IO into a separate thread.
+ * temporary files existence and actuality and also to make it possible to move all
+ * the resource file IO into a separate thread.
  */
-class Q_DECL_HIDDEN ResourceFileStorageManager: public QObject
+class Q_DECL_HIDDEN ResourceDataInTemporaryFileStorageManager: public QObject
 {
     Q_OBJECT
 public:
-    explicit ResourceFileStorageManager(const QString & nonImageResourceFileStorageFolderPath,
-                                        const QString & imageResourceFileStorageFolderPath,
-                                        QObject * parent = Q_NULLPTR);
+    explicit ResourceDataInTemporaryFileStorageManager(QObject * parent = Q_NULLPTR);
 
     struct Errors
     {
@@ -58,6 +57,9 @@ public:
             NoResourceFileStorageLocation = -4
         };
     };
+
+    static QString imageResourceFileStorageFolderPath();
+    static QString nonImageResourceFileStorageFolderPath();
 
 Q_SIGNALS:
     void writeResourceToFileCompleted(QUuid requestId, QByteArray dataHash,
@@ -96,8 +98,9 @@ public Q_SLOTS:
 
     /**
      * @brief onOpenResourceRequest - slot being called when the resource file is requested to be opened
-     * in any external program for viewing and/or editing; the resource file storage manager would watch
-     * for the changes of this resource until the current note in the note editor is changed or until the file
+     * in any external program for viewing and/or editing; if the resource data hasn't been written into a temporary file yet,
+     * it will be written. The resource data in temporary file storage manager would watch
+     * for the changes of the opened resource file until the current note in the note editor is changed or until the file
      * is replaced with its own next version, for example
      */
     void onOpenResourceRequest(QString fileStoragePath);
@@ -112,7 +115,7 @@ public Q_SLOTS:
 
     /**
      * @brief onRequestDiagnostics - slot which initiates the collection of diagnostics regarding the internal state of
-     * ResourceFileStorageManager; intended primarily for troubleshooting purposes
+     * ResourceDataInTemporaryFileStorageManager; intended primarily for troubleshooting purposes
      */
     void onRequestDiagnostics(QUuid requestId);
 
@@ -134,15 +137,18 @@ private:
     void removeStaleResourceFilesFromCurrentNote();
 
 private:
+    Q_DISABLE_COPY(ResourceDataInTemporaryFileStorageManager)
+
+private:
     QString     m_nonImageResourceFileStorageLocation;
     QString     m_imageResourceFileStorageLocation;
 
-    QScopedPointer<Note>                m_pCurrentNote;
+    QScopedPointer<Note>        m_pCurrentNote;
 
-    QHash<QString, QString>             m_resourceLocalUidByFilePath;
-    FileSystemWatcher                   m_fileSystemWatcher;
+    QHash<QString, QString>     m_resourceLocalUidByFilePath;
+    FileSystemWatcher           m_fileSystemWatcher;
 };
 
 } // namespace quentier
 
-#endif // LIB_QUENTIER_NOTE_EDITOR_RESOURCE_FILES_STORAGE_MANAGER_H
+#endif // LIB_QUENTIER_NOTE_EDITOR_RESOURCE_DATA_IN_TEMPORARY_FILE_STORAGE_MANAGER_H

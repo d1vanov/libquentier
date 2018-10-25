@@ -31,7 +31,7 @@ class Q_DECL_HIDDEN ImageResourceRotationDelegate: public QObject
 public:
     explicit ImageResourceRotationDelegate(const QByteArray & resourceHashBefore, const INoteEditorBackend::Rotation::type rotationDirection,
                                            NoteEditorPrivate & noteEditor, ResourceInfo & resourceInfo,
-                                           ResourceFileStorageManager & resourceFileStorageManager,
+                                           ResourceDataInTemporaryFileStorageManager & resourceDataInTemporaryFileStorageManager,
                                            QHash<QString, QString> & resourceFileStoragePathsByLocalUid);
     void start();
 
@@ -61,7 +61,7 @@ private:
 private:
     NoteEditorPrivate &             m_noteEditor;
     ResourceInfo &                  m_resourceInfo;
-    ResourceFileStorageManager &    m_resourceFileStorageManager;
+    ResourceDataInTemporaryFileStorageManager &    m_resourceDataInTemporaryFileStorageManager;
     QHash<QString, QString> &       m_resourceFileStoragePathsByLocalUid;
 
     INoteEditorBackend::Rotation::type  m_rotationDirection;

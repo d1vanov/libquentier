@@ -65,7 +65,7 @@ QT_FORWARD_DECLARE_CLASS(WebSocketClientWrapper)
 namespace quentier {
 
 QT_FORWARD_DECLARE_CLASS(ResourceInfoJavaScriptHandler)
-QT_FORWARD_DECLARE_CLASS(ResourceFileStorageManager)
+QT_FORWARD_DECLARE_CLASS(ResourceDataInTemporaryFileStorageManager)
 QT_FORWARD_DECLARE_CLASS(FileIOProcessorAsync)
 QT_FORWARD_DECLARE_CLASS(LocalStorageManagerAsync)
 
@@ -587,6 +587,9 @@ private:
     void updateHashForResourceTag(const QByteArray & oldResourceHash, const QByteArray & newResourceHash);
     void provideSrcForResourceImgTags();
 
+    void saveNoteImageResourcesToTemporaryFiles();
+    bool saveImageResourceDataToTemporaryFile(const Resource & resource);
+
     void manualSaveResourceToFile(const Resource & resource);
     void openResource(const QString & resourceAbsoluteFilePath);
 
@@ -1005,7 +1008,7 @@ private:
 
     QVector<ENMLConverter::SkipHtmlElementRule>     m_skipRulesForHtmlToEnmlConversion;
 
-    ResourceFileStorageManager *    m_pResourceFileStorageManager;
+    ResourceDataInTemporaryFileStorageManager *     m_pResourceDataInTemporaryFileStorageManager;
     FileIOProcessorAsync *          m_pFileIOProcessorAsync;
 
     ResourceInfo                    m_resourceInfo;

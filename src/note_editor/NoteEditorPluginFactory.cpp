@@ -20,7 +20,7 @@
 #include "GenericResourceDisplayWidget.h"
 #include "EncryptedAreaPlugin.h"
 #include "NoteEditor_p.h"
-#include "ResourceFileStorageManager.h"
+#include "ResourceDataInTemporaryFileStorageManager.h"
 #include <quentier/utility/FileIOProcessorAsync.h>
 #include <quentier/utility/EncryptionManager.h>
 #include <quentier/enml/DecryptedTextManager.h>
@@ -37,7 +37,7 @@
 namespace quentier {
 
 NoteEditorPluginFactory::NoteEditorPluginFactory(NoteEditorPrivate & noteEditor,
-                                                 const ResourceFileStorageManager & resourceFileStorageManager,
+                                                 const ResourceDataInTemporaryFileStorageManager & resourceDataInTemporaryFileStorageManager,
                                                  const FileIOProcessorAsync & fileIOThreadWorker,
                                                  QObject * parent) :
     QWebPluginFactory(parent),
@@ -47,7 +47,7 @@ NoteEditorPluginFactory::NoteEditorPluginFactory(NoteEditorPrivate & noteEditor,
     m_pCurrentNote(Q_NULLPTR),
     m_fallbackResourceIcon(QIcon::fromTheme(QStringLiteral("unknown"))),
     m_mimeDatabase(),
-    m_pResourceFileStorageManager(&resourceFileStorageManager),
+    m_pResourceDataInTemporaryFileStorageManager(&resourceDataInTemporaryFileStorageManager),
     m_pFileIOProcessorAsync(&fileIOThreadWorker),
     m_resourceIconCache(),
     m_fileSuffixesCache(),
@@ -474,7 +474,7 @@ QObject * NoteEditorPluginFactory::createResourcePlugin(const QStringList & argu
 
     pGenericResourceDisplayWidget->initialize(cachedIconIt.value(), resourceDisplayName,
                                               resourceDataSize, fileSuffixes, filterString,
-                                              *pCurrentResource, *pAccount, *m_pResourceFileStorageManager,
+                                              *pCurrentResource, *pAccount, *m_pResourceDataInTemporaryFileStorageManager,
                                               *m_pFileIOProcessorAsync);
 
     m_genericResourceDisplayWidgetPlugins.push_back(QPointer<GenericResourceDisplayWidget>(pGenericResourceDisplayWidget));

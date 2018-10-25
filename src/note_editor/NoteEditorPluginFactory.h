@@ -35,7 +35,7 @@ QT_FORWARD_DECLARE_CLASS(QRegExp)
 namespace quentier {
 
 QT_FORWARD_DECLARE_CLASS(Note)
-QT_FORWARD_DECLARE_CLASS(ResourceFileStorageManager)
+QT_FORWARD_DECLARE_CLASS(ResourceDataInTemporaryFileStorageManager)
 QT_FORWARD_DECLARE_CLASS(FileIOProcessorAsync)
 QT_FORWARD_DECLARE_CLASS(EncryptionManager)
 QT_FORWARD_DECLARE_CLASS(DecryptedTextManager)
@@ -52,7 +52,7 @@ class Q_DECL_HIDDEN NoteEditorPluginFactory: public QWebPluginFactory
     Q_OBJECT
 public:
     explicit NoteEditorPluginFactory(NoteEditorPrivate & editor,
-                                     const ResourceFileStorageManager & resourceFileStorageManager,
+                                     const ResourceDataInTemporaryFileStorageManager & resourceDataInTemporaryFileStorageManager,
                                      const FileIOProcessorAsync & fileIOThreadWorker,
                                      QObject * parent = Q_NULLPTR);
     virtual ~NoteEditorPluginFactory();
@@ -180,7 +180,7 @@ private:
 
     QMimeDatabase                                       m_mimeDatabase;
 
-    const ResourceFileStorageManager *                  m_pResourceFileStorageManager;
+    const ResourceDataInTemporaryFileStorageManager *   m_pResourceDataInTemporaryFileStorageManager;
     const FileIOProcessorAsync *                        m_pFileIOProcessorAsync;
 
     mutable QHash<QString, QIcon>                       m_resourceIconCache;
