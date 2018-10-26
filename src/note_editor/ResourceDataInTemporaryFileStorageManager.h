@@ -33,6 +33,7 @@ QT_FORWARD_DECLARE_CLASS(QWidget)
 namespace quentier {
 
 QT_FORWARD_DECLARE_CLASS(Note)
+QT_FORWARD_DECLARE_CLASS(Resource)
 
 /**
  * @brief The ResourceDataInTemporaryFileStorageManager class is intended to provide the service of
@@ -133,8 +134,25 @@ private:
                             const QString & storageFolderPath, int & errorCode, ErrorString & errorDescription);
     void watchResourceFileForChanges(const QString & resourceLocalUid, const QString & fileStoragePath);
     void stopWatchingResourceFile(const QString & filePath);
-
     void removeStaleResourceFilesFromCurrentNote();
+
+    struct ResultType
+    {
+        enum type
+        {
+            Ready = 0,
+            Error,
+            AsyncPending
+        };
+    };
+
+    ResultType::type partialUpdateResourceFilesForCurrentNote(const QList<Resource> & previousResources,
+                                                              ErrorString & errorDescription);
+
+    void requestResourceDataFromLocalStorage(const Resource & resource);
+    bool writeResourceDataToTemporaryFile(const QString & noteLocalUid, const QString & resourceLocalUid,
+                                          const QByteArray & data, const QByteArray & dataHash,
+                                          ErrorString & errorDescription);
 
 private:
     Q_DISABLE_COPY(ResourceDataInTemporaryFileStorageManager)

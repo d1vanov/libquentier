@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Dmitry Ivanov
+ * Copyright 2016-2018 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -25,6 +25,7 @@
 #include <QWidget>
 #include <QFileInfo>
 #include <QDir>
+#include <QDirIterator>
 #include <QDesktopServices>
 #include <QCryptographicHash>
 
@@ -50,7 +51,7 @@ QString ResourceDataInTemporaryFileStorageManager::nonImageResourceFileStorageFo
 }
 
 void ResourceDataInTemporaryFileStorageManager::onWriteResourceToFileRequest(QString noteLocalUid, QString resourceLocalUid, QByteArray data,
-                                                              QByteArray dataHash, QString preferredFileSuffix, QUuid requestId, bool isImage)
+                                                                             QByteArray dataHash, QString preferredFileSuffix, QUuid requestId, bool isImage)
 {
     QNDEBUG(QStringLiteral("ResourceDataInTemporaryFileStorageManager::onWriteResourceToFileRequest: note local uid = ") << noteLocalUid
             << QStringLiteral(", resource local uid = ") << resourceLocalUid << QStringLiteral(", request id = ") << requestId
@@ -370,7 +371,7 @@ QByteArray ResourceDataInTemporaryFileStorageManager::calculateHash(const QByteA
 }
 
 bool ResourceDataInTemporaryFileStorageManager::checkIfResourceFileExistsAndIsActual(const QString & noteLocalUid, const QString & resourceLocalUid,
-                                                                             const QString & fileStoragePath, const QByteArray & dataHash) const
+                                                                                     const QString & fileStoragePath, const QByteArray & dataHash) const
 {
     QNDEBUG(QStringLiteral("ResourceDataInTemporaryFileStorageManager::checkIfResourceFileExistsAndIsActual: note local uid = ")
             << noteLocalUid << QStringLiteral(", resource local uid = ") << resourceLocalUid << QStringLiteral(", data hash = ")
@@ -567,6 +568,183 @@ void ResourceDataInTemporaryFileStorageManager::removeStaleResourceFilesFromCurr
         stopWatchingResourceFile(filePath);
         Q_UNUSED(removeFile(fileInfo.absolutePath() + QStringLiteral("/") + baseName + QStringLiteral(".hash")));
     }
+}
+
+ResourceDataInTemporaryFileStorageManager::ResultType::type
+ResourceDataInTemporaryFileStorageManager::partialUpdateResourceFilesForCurrentNote(const QList<Resource> & previousResources,
+                                                                                    ErrorString & errorDescription)
+{
+    QNDEBUG(QStringLiteral("ResourceDataInTemporaryFileStorageManager::partialUpdateResourceFilesForCurrentNote"));
+
+    if (m_pCurrentNote.isNull()) {
+        QNDEBUG(QStringLiteral("No current note, nothing to do"));
+        return ResultType::Ready;
+    }
+
+    QList<Resource> newAndUpdatedResources;
+    QStringList removedAndStaleResourceLocalUids;
+
+    QList<Resource> resources = m_pCurrentNote->resources();
+    for(auto it = resources.constBegin(), end = resources.constEnd(); it != end; ++it)
+    {
+        const Resource & resource = *it;
+        const QString resourceLocalUid = resource.localUid();
+
+        const Resource * pPreviousResource = Q_NULLPTR;
+        for(auto pit = previousResources.constBegin(), pend = previousResources.constEnd(); pit != pend; ++pit)
+        {
+            const Resource & previousResource = *pit;
+            if (previousResource.localUid() == resourceLocalUid) {
+                pPreviousResource = &previousResource;
+                break;
+            }
+        }
+
+        if (!pPreviousResource)
+        {
+            QNTRACE(QStringLiteral("No previous resource, considering the resource new: local uid = ") << resourceLocalUid);
+
+            if (!resource.hasMime() || !resource.mime().startsWith(QStringLiteral("image"))) {
+                QNTRACE(QStringLiteral("Resource has no mime type or mime type is not an image one, won't add the resource to the list of new ones"));
+            }
+            else {
+                newAndUpdatedResources << resource;
+            }
+
+            continue;
+        }
+
+        bool dataHashIsDifferent = (!pPreviousResource->hasDataHash() || !resource.hasDataHash() ||
+                                    (pPreviousResource->dataHash() != resource.dataHash()));
+        bool dataSizeIsDifferent = (!pPreviousResource->hasDataSize() || !resource.hasDataSize() ||
+                                    (pPreviousResource->dataSize() != resource.dataSize()));
+
+        if (dataHashIsDifferent || dataSizeIsDifferent)
+        {
+            QNTRACE(QStringLiteral("Different or missing data hash or size, considering the resource updated: local uid = ")
+                    << resourceLocalUid);
+
+            if (!resource.hasMime() || !resource.mime().startsWith(QStringLiteral("image"))) {
+                QNTRACE(QStringLiteral("Resource has no mime type or mime type is not an image one, will remove the resource "
+                                       "instead of adding it to the list of updated resources"));
+                removedAndStaleResourceLocalUids << resourceLocalUid;
+            }
+            else {
+                newAndUpdatedResources << resource;
+            }
+
+            continue;
+        }
+    }
+
+    for(auto it = previousResources.constBegin(), end = previousResources.constEnd(); it != end; ++it)
+    {
+        const Resource & previousResource = *it;
+        const QString resourceLocalUid = previousResource.localUid();
+
+        const Resource * pResource = Q_NULLPTR;
+        for(auto uit = resources.constBegin(), uend = resources.constEnd(); uit != uend; ++uit)
+        {
+            const Resource & resource = *uit;
+            if (resource.localUid() == resourceLocalUid) {
+                pResource = &resource;
+                break;
+            }
+        }
+
+        if (!pResource) {
+            QNTRACE(QStringLiteral("Found no resource with local uid ") << resourceLocalUid
+                    << QStringLiteral(" within the list of new/updated resources, considering it stale"));
+            removedAndStaleResourceLocalUids << resourceLocalUid;
+        }
+    }
+
+    QStringList dirsToCheck;
+    dirsToCheck.reserve(2);
+    dirsToCheck << (m_imageResourceFileStorageLocation + QStringLiteral("/") + m_pCurrentNote->localUid());
+    dirsToCheck << (m_nonImageResourceFileStorageLocation + QStringLiteral("/") + m_pCurrentNote->localUid());
+
+    for(auto dit = dirsToCheck.constBegin(), dend = dirsToCheck.constEnd(); dit != dend; ++dit)
+    {
+        QDir dir(*dit);
+        if (!dir.exists()) {
+            continue;
+        }
+
+        QDirIterator dirIterator(dir);
+        while(dirIterator.hasNext())
+        {
+            QString entry = dirIterator.next();
+            QFileInfo entryInfo(entry);
+            if (!entryInfo.isFile()) {
+                continue;
+            }
+
+            for(auto it = removedAndStaleResourceLocalUids.constBegin(),
+                end = removedAndStaleResourceLocalUids.constEnd(); it != end; ++it)
+            {
+                if (!entry.startsWith(*it)) {
+                    continue;
+                }
+
+                stopWatchingResourceFile(dir.absoluteFilePath(entry));
+
+                if (!removeFile(dir.absoluteFilePath(entry))) {
+                    errorDescription.setBase(QT_TR_NOOP("Failed to remove stale temporary resource file"));
+                    errorDescription.details() = QDir::toNativeSeparators(dir.absoluteFilePath(entry));
+                    QNWARNING(errorDescription);
+                    return ResultType::Error;
+                }
+            }
+        }
+    }
+
+    size_t numResourcesPendingDataFromLocalStorage = 0;
+    for(auto it = newAndUpdatedResources.constBegin(), end = newAndUpdatedResources.constEnd(); it != end; ++it)
+    {
+        const Resource & resource = *it;
+        if (!resource.hasDataBody()) {
+            requestResourceDataFromLocalStorage(resource);
+            ++numResourcesPendingDataFromLocalStorage;
+            continue;
+        }
+
+        QByteArray dataHash = (resource.hasDataHash()
+                               ? resource.dataHash()
+                               : calculateHash(resource.dataBody()));
+
+        bool res = writeResourceDataToTemporaryFile(m_pCurrentNote->localUid(), resource.localUid(),
+                                                    resource.dataBody(), dataHash, errorDescription);
+        if (!res) {
+            return ResultType::Error;
+        }
+    }
+
+    if (numResourcesPendingDataFromLocalStorage > 0) {
+        return ResultType::AsyncPending;
+    }
+
+    return ResultType::Ready;
+}
+
+void ResourceDataInTemporaryFileStorageManager::requestResourceDataFromLocalStorage(const Resource & resource)
+{
+    QNDEBUG(QStringLiteral("ResourceDataInTemporaryFileStorageManager::requestResourceDataFromLocalStorage: resource local uid = ")
+            << resource.localUid());
+    // TODO: implement
+}
+
+bool ResourceDataInTemporaryFileStorageManager::writeResourceDataToTemporaryFile(const QString & noteLocalUid, const QString & resourceLocalUid,
+                                                                                 const QByteArray & data, const QByteArray & dataHash,
+                                                                                 ErrorString & errorDescription)
+{
+    // TODO: implement
+    Q_UNUSED(noteLocalUid)
+    Q_UNUSED(resourceLocalUid)
+    Q_UNUSED(data)
+    Q_UNUSED(dataHash)
+    Q_UNUSED(errorDescription)
+    return false;
 }
 
 } // namespace quentier
