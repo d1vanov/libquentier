@@ -124,6 +124,10 @@ private Q_SLOTS:
     void onFileChanged(const QString & path);
     void onFileRemoved(const QString & path);
 
+    // Slots for dealing with NoteEditorLocalStorageBroker
+    void onFoundResourceData(Resource resource);
+    void onFailedToFindResourceData(QString resourceLocalUid, ErrorString errorDescription);
+
 private:
     void createConnections();
     QByteArray calculateHash(const QByteArray & data) const;
@@ -150,8 +154,19 @@ private:
                                                               ErrorString & errorDescription);
 
     void requestResourceDataFromLocalStorage(const Resource & resource);
+
+    struct ResourceType
+    {
+        enum type
+        {
+            Image = 0,
+            NonImage
+        };
+    };
+
     bool writeResourceDataToTemporaryFile(const QString & noteLocalUid, const QString & resourceLocalUid,
                                           const QByteArray & data, const QByteArray & dataHash,
+                                          const ResourceType::type resourceType,
                                           ErrorString & errorDescription);
 
 private:
@@ -162,6 +177,8 @@ private:
     QString     m_imageResourceFileStorageLocation;
 
     QScopedPointer<Note>        m_pCurrentNote;
+
+    QSet<QString>               m_resourceLocalUidsPendingFindInLocalStorage;
 
     QHash<QString, QString>     m_resourceLocalUidByFilePath;
     FileSystemWatcher           m_fileSystemWatcher;
