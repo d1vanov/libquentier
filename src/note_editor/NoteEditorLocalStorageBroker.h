@@ -52,6 +52,9 @@ Q_SIGNALS:
     void noteDeleted(QString noteLocalUid);
     void notebookDeleted(QString notebookLocalUid);
 
+    void foundResourceData(Resource resource);
+    void failedToFindResourceData(QString resourceLocalUid, ErrorString errorDescription);
+
 // private signals
     void updateNote(Note note, LocalStorageManager::UpdateNoteOptions options, QUuid requestId);
     void addResource(Resource resource, QUuid requestId);
@@ -59,10 +62,12 @@ Q_SIGNALS:
     void expungeResource(Resource resource, QUuid requestId);
     void findNote(Note note, bool withResourceMetadata, bool withResourceBinaryData, QUuid requestId);
     void findNotebook(Notebook notebook, QUuid requestId);
+    void findResource(Resource resource, bool withBinaryData, QUuid requestId);
 
 public Q_SLOTS:
     void saveNoteToLocalStorage(const Note & note);
     void findNoteAndNotebook(const QString & noteLocalUid);
+    void findResourceData(const QString & resourceLocalUid);
 
 private Q_SLOTS:
     void onUpdateNoteComplete(Note note, LocalStorageManager::UpdateNoteOptions options, QUuid requestId);
@@ -87,6 +92,9 @@ private Q_SLOTS:
 
     void onExpungeNoteComplete(Note note, QUuid requestId);
     void onExpungeNotebookComplete(Notebook notebook, QUuid requestId);
+
+    void onFindResourceComplete(Resource resource, bool withBinaryData, QUuid requestId);
+    void onFindResourceFailed(Resource resource, bool withBinaryData, ErrorString errorDescription, QUuid requestId);
 
     void onSwitchUserComplete(Account account, QUuid requestId);
 
@@ -126,6 +134,7 @@ private:
 
     QSet<QUuid>     m_findNoteRequestIds;
     QSet<QUuid>     m_findNotebookRequestIds;
+    QSet<QUuid>     m_findResourceRequestIds;
 
     typedef QHash<QString, Note> NotesHash;
     typedef QHash<QString, NotesHash> NotesPendingNotebookFindingHash;

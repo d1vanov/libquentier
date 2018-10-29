@@ -28,6 +28,7 @@ NoteEditorLocalStorageBroker::NoteEditorLocalStorageBroker() :
     m_originalNoteResourceLocalUidsByNoteLocalUid(),
     m_findNoteRequestIds(),
     m_findNotebookRequestIds(),
+    m_findResourceRequestIds(),
     m_notesPendingNotebookFindingByNotebookLocalUid(),
     m_notesPendingNotebookFindingByNotebookGuid(),
     m_noteLocalUidsByAddResourceRequestIds(),
@@ -230,6 +231,19 @@ void NoteEditorLocalStorageBroker::findNoteAndNotebook(const QString & noteLocal
     QNDEBUG(QStringLiteral("Emitting the request to find notebook: request id = ") << requestId
             << QStringLiteral(", notebook guid = ") << pCachedNote->notebookGuid());
     Q_EMIT findNotebook(notebook, requestId);
+}
+
+void NoteEditorLocalStorageBroker::findResourceData(const QString & resourceLocalUid)
+{
+    QNDEBUG(QStringLiteral("NoteEditorLocalStorageBroker::findResourceData: resource local uid = ") << resourceLocalUid);
+
+    QUuid requestId = QUuid::createUuid();
+    Q_UNUSED(m_findResourceRequestIds.insert(requestId))
+    Resource resource;
+    resource.setLocalUid(resourceLocalUid);
+    QNDEBUG(QStringLiteral("Emitting the request to find resource: request id = ") << requestId
+            << QStringLiteral(", resource local uid = ") << resource);
+    Q_EMIT findResource(resource, /* with binary data = */ true, requestId);
 }
 
 void NoteEditorLocalStorageBroker::onUpdateNoteComplete(Note note, LocalStorageManager::UpdateNoteOptions options,
@@ -660,6 +674,38 @@ void NoteEditorLocalStorageBroker::onExpungeNotebookComplete(Notebook notebook, 
     Q_EMIT notebookDeleted(notebookLocalUid);
 }
 
+void NoteEditorLocalStorageBroker::onFindResourceComplete(Resource resource, bool withBinaryData, QUuid requestId)
+{
+    auto it = m_findResourceRequestIds.find(requestId);
+    if (it == m_findResourceRequestIds.end()) {
+        return;
+    }
+
+    QNDEBUG(QStringLiteral("NoteEditorLocalStorageBroker::onFindResourceComplete: request id = ") << requestId
+            << QStringLiteral(", with binary data = ") << (withBinaryData ? QStringLiteral("true") : QStringLiteral("false"))
+            << QStringLiteral(", resource: ") << resource);
+
+    m_findResourceRequestIds.erase(it);
+    Q_EMIT foundResourceData(resource);
+}
+
+void NoteEditorLocalStorageBroker::onFindResourceFailed(Resource resource, bool withBinaryData,
+                                                        ErrorString errorDescription, QUuid requestId)
+{
+    auto it = m_findResourceRequestIds.find(requestId);
+    if (it == m_findResourceRequestIds.end()) {
+        return;
+    }
+
+    QNWARNING(QStringLiteral("NoteEditorLocalStorageBroker::onFindResourceFailed: request id = ") << requestId
+              << QStringLiteral(", with binary data = ") << (withBinaryData ? QStringLiteral("true") : QStringLiteral("false"))
+              << QStringLiteral(", error description = ") << errorDescription << QStringLiteral(", resource: ")
+              << resource);
+
+    m_findResourceRequestIds.erase(it);
+    Q_EMIT failedToFindResourceData(resource.localUid(), errorDescription);
+}
+
 void NoteEditorLocalStorageBroker::onSwitchUserComplete(Account account, QUuid requestId)
 {
     QNDEBUG(QStringLiteral("NoteEditorLocalStorageBroker::onSwitchUserComplete: account = ")
@@ -667,6 +713,7 @@ void NoteEditorLocalStorageBroker::onSwitchUserComplete(Account account, QUuid r
 
     m_findNoteRequestIds.clear();
     m_findNotebookRequestIds.clear();
+    m_findResourceRequestIds.clear();
     m_notesPendingNotebookFindingByNotebookGuid.clear();
     m_notesPendingNotebookFindingByNotebookLocalUid.clear();
 
@@ -698,6 +745,8 @@ void NoteEditorLocalStorageBroker::createConnections(LocalStorageManagerAsync & 
                      &localStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,onFindNoteRequest,Note,bool,bool,QUuid));
     QObject::connect(this, QNSIGNAL(NoteEditorLocalStorageBroker,findNotebook,Notebook,QUuid),
                      &localStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,onFindNotebookRequest,Notebook,QUuid));
+    QObject::connect(this, QNSIGNAL(NoteEditorLocalStorageBroker,findResource,Resource,bool,QUuid),
+                     &localStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,onFindResourceRequest,Resource,bool,QUuid));
 
     // LocalStorageManagerAsync's signals to local slots
     QObject::connect(&localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,updateNoteComplete,Note,LocalStorageManager::UpdateNoteOptions,QUuid),
@@ -726,6 +775,10 @@ void NoteEditorLocalStorageBroker::createConnections(LocalStorageManagerAsync & 
                      this, QNSLOT(NoteEditorLocalStorageBroker,onFindNotebookComplete,Notebook,QUuid));
     QObject::connect(&localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,findNotebookFailed,Notebook,ErrorString,QUuid),
                      this, QNSLOT(NoteEditorLocalStorageBroker,onFindNotebookFailed,Notebook,ErrorString,QUuid));
+    QObject::connect(&localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,findResourceComplete,Resource,bool,QUuid),
+                     this, QNSLOT(NoteEditorLocalStorageBroker,onFindResourceComplete,Resource,bool,QUuid));
+    QObject::connect(&localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,findResourceFailed,Resource,bool,ErrorString,QUuid),
+                     this, QNSLOT(NoteEditorLocalStorageBroker,onFindResourceFailed,Resource,bool,ErrorString,QUuid));
     QObject::connect(&localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,expungeNoteComplete,Note,QUuid),
                      this, QNSLOT(NoteEditorLocalStorageBroker,onExpungeNoteComplete,Note,QUuid));
     QObject::connect(&localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,expungeNotebookComplete,Notebook,QUuid),
@@ -751,6 +804,8 @@ void NoteEditorLocalStorageBroker::disconnectFromLocalStorage(LocalStorageManage
                         &localStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,onFindNoteRequest,Note,bool,bool,QUuid));
     QObject::disconnect(this, QNSIGNAL(NoteEditorLocalStorageBroker,findNotebook,Notebook,QUuid),
                         &localStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,onFindNotebookRequest,Notebook,QUuid));
+    QObject::disconnect(this, QNSIGNAL(NoteEditorLocalStorageBroker,findResource,Resource,bool,QUuid),
+                        &localStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,onFindResourceRequest,Resource,bool,QUuid));
 
     // Disconnect LocalStorageManagerAsync's signals from local slots
     QObject::disconnect(&localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,updateNoteComplete,Note,LocalStorageManager::UpdateNoteOptions,QUuid),
@@ -779,6 +834,10 @@ void NoteEditorLocalStorageBroker::disconnectFromLocalStorage(LocalStorageManage
                         this, QNSLOT(NoteEditorLocalStorageBroker,onFindNotebookComplete,Notebook,QUuid));
     QObject::disconnect(&localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,findNotebookFailed,Notebook,ErrorString,QUuid),
                         this, QNSLOT(NoteEditorLocalStorageBroker,onFindNotebookFailed,Notebook,ErrorString,QUuid));
+    QObject::disconnect(&localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,findResourceComplete,Resource,bool,QUuid),
+                        this, QNSLOT(NoteEditorLocalStorageBroker,onFindResourceComplete,Resource,bool,QUuid));
+    QObject::disconnect(&localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,findResourceFailed,Resource,bool,ErrorString,QUuid),
+                        this, QNSLOT(NoteEditorLocalStorageBroker,onFindResourceFailed,Resource,bool,ErrorString,QUuid));
     QObject::disconnect(&localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,expungeNoteComplete,Note,QUuid),
                         this, QNSLOT(NoteEditorLocalStorageBroker,onExpungeNoteComplete,Note,QUuid));
     QObject::disconnect(&localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,expungeNotebookComplete,Notebook,QUuid),
