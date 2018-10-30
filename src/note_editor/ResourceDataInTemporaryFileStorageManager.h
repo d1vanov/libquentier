@@ -72,6 +72,10 @@ Q_SIGNALS:
 
     void diagnosticsCollected(QUuid requestId, QString diagnostics);
 
+    void failedToPutResourceDataIntoTemporaryFile(QString resourceLocalUid, ErrorString errorDescription);
+
+    void noteResourcesReady(Note note);
+
 public Q_SLOTS:
     /**
      * @brief onWriteResourceToFileRequest - slot being called when the resource data needs to be written
@@ -119,6 +123,10 @@ public Q_SLOTS:
      * ResourceDataInTemporaryFileStorageManager; intended primarily for troubleshooting purposes
      */
     void onRequestDiagnostics(QUuid requestId);
+
+    // private signals
+Q_SIGNALS:
+    void findResourceData(const QString & resourceLocalUid);
 
 private Q_SLOTS:
     void onFileChanged(const QString & path);

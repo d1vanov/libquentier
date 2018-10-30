@@ -17,6 +17,7 @@
  */
 
 #include "ResourceDataInTemporaryFileStorageManager.h"
+#include "NoteEditorLocalStorageBroker.h"
 #include <quentier/types/Note.h>
 #include <quentier/types/Resource.h>
 #include <quentier/logging/QuentierLogger.h>
@@ -384,13 +385,11 @@ void ResourceDataInTemporaryFileStorageManager::onFoundResourceData(Resource res
                                                 resource.dataBody(), dataHash, ResourceType::Image,
                                                 errorDescription);
     if (!res) {
-        // TODO: emit some signal notifying about the error of resource loading
-        return;
+        Q_EMIT failedToPutResourceDataIntoTemporaryFile(resource.localUid(), errorDescription);
     }
 
     if (m_resourceLocalUidsPendingFindInLocalStorage.empty()) {
-        // TODO: emit some signal notifying about the completion of note's
-        // resources preprocessing
+        Q_EMIT noteResourcesReady(*m_pCurrentNote);
     }
 }
 
@@ -406,18 +405,33 @@ void ResourceDataInTemporaryFileStorageManager::onFailedToFindResourceData(QStri
 
     m_resourceLocalUidsPendingFindInLocalStorage.erase(it);
 
-    // TODO: emit some signal notifying about the error of resource loading
+    Q_EMIT failedToPutResourceDataIntoTemporaryFile(resourceLocalUid, errorDescription);
 
-    if (m_resourceLocalUidsPendingFindInLocalStorage.empty()) {
-        // TODO: emit some signal notifying about the completion of note's
-        // resources preprocessing
+    if (!m_resourceLocalUidsPendingFindInLocalStorage.empty()) {
+        return;
     }
+
+    if (Q_UNLIKELY(!m_pCurrentNote)) {
+        QNWARNING(QStringLiteral("Can't notify about the completion of resource data uploading to temporary files: "
+                                 "no note is set to ResourceDataInTemporaryFileStorageManager"));
+        return;
+    }
+
+    Q_EMIT noteResourcesReady(*m_pCurrentNote);
 }
 
 void ResourceDataInTemporaryFileStorageManager::createConnections()
 {
     QObject::connect(&m_fileSystemWatcher, QNSIGNAL(FileSystemWatcher,fileChanged,QString),
                      this, QNSLOT(ResourceDataInTemporaryFileStorageManager,onFileChanged,QString));
+
+    NoteEditorLocalStorageBroker & noteEditorLocalStorageBroker = NoteEditorLocalStorageBroker::instance();
+    QObject::connect(this, QNSIGNAL(ResourceDataInTemporaryFileStorageManager,findResourceData,QString),
+                     &noteEditorLocalStorageBroker, QNSLOT(NoteEditorLocalStorageBroker,findResourceData,QString));
+    QObject::connect(&noteEditorLocalStorageBroker, QNSIGNAL(NoteEditorLocalStorageBroker,foundResourceData,Resource),
+                     this, QNSLOT(ResourceDataInTemporaryFileStorageManager,onFoundResourceData,Resource));
+    QObject::connect(&noteEditorLocalStorageBroker, QNSIGNAL(NoteEditorLocalStorageBroker,failedToFindResourceData,QString,ErrorString),
+                     this, QNSLOT(ResourceDataInTemporaryFileStorageManager,onFailedToFindResourceData,QString,ErrorString));
 }
 
 QByteArray ResourceDataInTemporaryFileStorageManager::calculateHash(const QByteArray & data) const
