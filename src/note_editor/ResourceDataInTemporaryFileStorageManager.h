@@ -28,6 +28,11 @@
 #include <QHash>
 #include <QScopedPointer>
 
+// NOTE: Workaround a bug in Qt4 which may prevent building with some boost versions
+#ifndef Q_MOC_RUN
+#include <boost/function.hpp>
+#endif
+
 QT_FORWARD_DECLARE_CLASS(QWidget)
 
 namespace quentier {
@@ -73,6 +78,8 @@ Q_SIGNALS:
     void diagnosticsCollected(QUuid requestId, QString diagnostics);
 
     void failedToPutResourceDataIntoTemporaryFile(QString resourceLocalUid, ErrorString errorDescription);
+
+    void noteResourcesPreparationProgress(double progress);
 
     void noteResourcesReady(Note note);
 
@@ -172,10 +179,12 @@ private:
         };
     };
 
+    typedef boost::function<void (const double)> WriteResourceDataCallback;
+
     bool writeResourceDataToTemporaryFile(const QString & noteLocalUid, const QString & resourceLocalUid,
                                           const QByteArray & data, const QByteArray & dataHash,
                                           const ResourceType::type resourceType,
-                                          ErrorString & errorDescription);
+                                          ErrorString & errorDescription, WriteResourceDataCallback = 0);
 
 private:
     Q_DISABLE_COPY(ResourceDataInTemporaryFileStorageManager)

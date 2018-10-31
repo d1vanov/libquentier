@@ -30,6 +30,9 @@
 #include <QDesktopServices>
 #include <QCryptographicHash>
 
+// 4 megabytes
+#define RESOURCE_DATA_BATCH_SIZE_IN_BYTES (4194304)
+
 namespace quentier {
 
 ResourceDataInTemporaryFileStorageManager::ResourceDataInTemporaryFileStorageManager(QObject * parent) :
@@ -801,13 +804,14 @@ void ResourceDataInTemporaryFileStorageManager::requestResourceDataFromLocalStor
 {
     QNDEBUG(QStringLiteral("ResourceDataInTemporaryFileStorageManager::requestResourceDataFromLocalStorage: resource local uid = ")
             << resource.localUid());
-    // TODO: implement
+    Q_EMIT findResourceData(resource.localUid());
 }
 
 bool ResourceDataInTemporaryFileStorageManager::writeResourceDataToTemporaryFile(const QString & noteLocalUid, const QString & resourceLocalUid,
                                                                                  const QByteArray & data, const QByteArray & dataHash,
                                                                                  const ResourceType::type resourceType,
-                                                                                 ErrorString & errorDescription)
+                                                                                 ErrorString & errorDescription,
+                                                                                 WriteResourceDataCallback callback)
 {
     if (Q_UNLIKELY(noteLocalUid.isEmpty())) {
         errorDescription.setBase(QT_TR_NOOP("Detected attempt to write resource data for empty note local uid to local file"));
@@ -864,15 +868,48 @@ bool ResourceDataInTemporaryFileStorageManager::writeResourceDataToTemporaryFile
         return false;
     }
 
-    qint64 writeRes = file.write(data);
-    if (Q_UNLIKELY(writeRes < 0))
+    if (!callback || (data.size() <= RESOURCE_DATA_BATCH_SIZE_IN_BYTES))
     {
-        errorDescription.setBase(QT_TR_NOOP("Can't write data to resource file"));
-        errorDescription.details() = file.errorString();
-        int errorCode = file.error();
-        QNWARNING(errorDescription << QStringLiteral(", error code = ") << errorCode << QStringLiteral(", note local uid = ")
-                  << noteLocalUid << QStringLiteral(", resource local uid = ") << resourceLocalUid);
-        return false;
+        qint64 writeRes = file.write(data);
+        if (Q_UNLIKELY(writeRes < 0))
+        {
+            errorDescription.setBase(QT_TR_NOOP("Can't write data to resource file"));
+            errorDescription.details() = file.errorString();
+            int errorCode = file.error();
+            QNWARNING(errorDescription << QStringLiteral(", error code = ") << errorCode << QStringLiteral(", note local uid = ")
+                      << noteLocalUid << QStringLiteral(", resource local uid = ") << resourceLocalUid);
+            return false;
+        }
+    }
+    else
+    {
+        const char * rawData = data.constData();
+        size_t offset = 0;
+        double progress = 0;
+        while(true)
+        {
+            qint64 writeRes = file.write(rawData, RESOURCE_DATA_BATCH_SIZE_IN_BYTES);
+            if (Q_UNLIKELY(writeRes < 0)) {
+                errorDescription.setBase(QT_TR_NOOP("Can't write data to resource file"));
+                errorDescription.details() = file.errorString();
+                int errorCode = file.error();
+                QNWARNING(errorDescription << QStringLiteral(", error code = ") << errorCode << QStringLiteral(", note local uid = ")
+                          << noteLocalUid << QStringLiteral(", resource local uid = ") << resourceLocalUid);
+                return false;
+            }
+
+            offset += static_cast<size_t>(writeRes);
+            if (offset >= static_cast<size_t>(data.size())) {
+                break;
+            }
+
+            rawData += writeRes;
+
+            if (callback) {
+                progress = static_cast<double>(offset) / data.size();
+                callback(progress);
+            }
+        }
     }
 
     file.close();
