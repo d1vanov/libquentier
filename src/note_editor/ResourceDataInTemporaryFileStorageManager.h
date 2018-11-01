@@ -75,13 +75,52 @@ Q_SIGNALS:
 
     void resourceFileChanged(QString localUid, QString fileStoragePath);
 
+    /**
+     * @brief failedToPutResourceDataIntoTemporaryFile signal is emitted when
+     * the resource data of some image resource failed to be written into a
+     * temporary file for the sake of safe display within note editor's page
+     *
+     * @param resourceLocalUid              The local uid of the resource which data was not successfully written
+     *                                      into a temporary file
+     * @param noteLocalUid                  The local uid of the note one of which resource's data was not successfully
+     *                                      written into a temporary file
+     * @param errorDescription              The textual description of the error which occurred on attempt
+     *                                      to write resource data to a temporary file
+     */
+    void failedToPutResourceDataIntoTemporaryFile(QString resourceLocalUid, QString noteLocalUid, ErrorString errorDescription);
+
+    /**
+     * @brief noteResourcesPreparationProgress signal is emitted to notify the
+     * client about the progress in putting the note's image resources into
+     * temporary files for the sake of their safe display within note editor's
+     * page.
+     *
+     * @param progress                      Progress value, between 0 to 1
+     * @param noteLocalUid                  The local uid of the note which
+     *                                      resources preparation progress is being
+     *                                      notified about
+     */
+    void noteResourcesPreparationProgress(double progress, QString noteLocalUid);
+
+    /**
+     * @brief noteResourcesReady signal is emitted when all image resources for
+     * the current note were put into temporary files so the note editor's page
+     * can safely load them
+     *
+     * @param noteLocalUid                  The local uid of the note all of which
+     *                                      image resources were successfully
+     *                                      put into temporary files
+     */
+    void noteResourcesReady(QString noteLocalUid);
+
+    /**
+     * @brief diagnosticsCollected signal is emitted in response to the previous
+     * invocation of onRequestDiagnostics slot
+     *
+     * @param requestId                     The identifier of the request to collect the diagnostic
+     * @param diagnostics                   Collected diagnostics
+     */
     void diagnosticsCollected(QUuid requestId, QString diagnostics);
-
-    void failedToPutResourceDataIntoTemporaryFile(QString resourceLocalUid, ErrorString errorDescription);
-
-    void noteResourcesPreparationProgress(double progress);
-
-    void noteResourcesReady(Note note);
 
 public Q_SLOTS:
     /**
@@ -167,6 +206,41 @@ private:
 
     ResultType::type partialUpdateResourceFilesForCurrentNote(const QList<Resource> & previousResources,
                                                               ErrorString & errorDescription);
+
+    /**
+     * Callback for writeResourceDataToTemporaryFile which emits noteResourcesPreparationProgress signal with the
+     * given progress value
+     */
+    void emitPartialUpdateResourceFilesForCurrentNoteProgress(const double progress);
+
+    /**
+     * Wrapper around emitPartialUpdateResourceFilesForCurrentNoteProgress
+     * callback for writeResourceDataToTemporaryFile, normalizes the given
+     * progress value which corresponds to a single resource to the progress
+     * for all of current note's resources
+     */
+    class PartialUpdateResourceFilesForCurrentNoteProgressFunctor
+    {
+    public:
+        PartialUpdateResourceFilesForCurrentNoteProgressFunctor(const int resourceIndex, const int numResources,
+                                                                ResourceDataInTemporaryFileStorageManager & manager) :
+            m_resourceIndex(resourceIndex),
+            m_numResources(numResources),
+            m_manager(manager)
+        {}
+
+        void operator()(const double progress)
+        {
+            double doneProgress = static_cast<double>(m_resourceIndex) / m_numResources;
+            double normalizedProgress = progress / m_numResources;
+            m_manager.emitPartialUpdateResourceFilesForCurrentNoteProgress(doneProgress + normalizedProgress);
+        }
+
+    private:
+        int m_resourceIndex;
+        int m_numResources;
+        ResourceDataInTemporaryFileStorageManager & m_manager;
+    };
 
     void requestResourceDataFromLocalStorage(const Resource & resource);
 
