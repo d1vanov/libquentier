@@ -75,6 +75,8 @@ Q_SIGNALS:
 
     void resourceFileChanged(QString localUid, QString fileStoragePath);
 
+    // 1) ========= Signals notifying about the state after changing the current note ========
+
     /**
      * @brief failedToPutResourceDataIntoTemporaryFile signal is emitted when
      * the resource data of some image resource failed to be written into a
@@ -95,12 +97,22 @@ Q_SIGNALS:
      * temporary files for the sake of their safe display within note editor's
      * page.
      *
-     * @param progress                      Progress value, between 0 to 1
+     * @param progress                      Progress value, between 0 and 1
      * @param noteLocalUid                  The local uid of the note which
      *                                      resources preparation progress is being
      *                                      notified about
      */
     void noteResourcesPreparationProgress(double progress, QString noteLocalUid);
+
+    /**
+     * @brief noteResourcesPreparationError signal is emitted when some error occurs
+     * which leads to incorrect or incomplete preparation of note's image resources
+     * for note editor page's loading
+     *
+     * @param errorDescription              The textual description of the error
+     * @param noteLocalUid                  The local uid of the note which resources preparation errored
+     */
+    void noteResourcesPreparationError(ErrorString errorDescription, QString noteLocalUid);
 
     /**
      * @brief noteResourcesReady signal is emitted when all image resources for
@@ -112,6 +124,47 @@ Q_SIGNALS:
      *                                      put into temporary files
      */
     void noteResourcesReady(QString noteLocalUid);
+
+    // 2) ======== Signals notifying about the state of open resource operation ========
+
+    /**
+     * @brief openResourcePreparationProgress signal is emitted to notify the
+     * client about the progress in preparing the resource file for being
+     * opened in some external program for viewing/editing
+     *
+     * @param progress                      Progress value, between 0 and 1
+     * @param resourceLocalUid              The local uid of the resource which
+     *                                      temporary file is being prepared for being opened
+     * @param noteLocalUid                  The local uid of the note which
+     *                                      resource temporary file is being prepared
+     *                                      for being opened
+     */
+    void openResourcePreparationProgress(double progress, QString resourceLocalUid, QString noteLocalUid);
+
+    /**
+     * @brief failedToOpenResource signal is emitted if opening the temporary
+     * file containing the resource data failed
+     *
+     * @param resourceLocalUid              The local uid of the resource which
+     *                                      temporary file failed to be opened
+     * @param noteLocalUid                  The local uid of the note which
+     *                                      resource temporary file failed
+     *                                      to be opened
+     */
+    void failedToOpenResource(QString resourceLocalUid, QString noteLocalUid, ErrorString errorDescription);
+
+    /**
+     * @brief openedResource signal is emitted after the successful opening of
+     * the resource in the external program for viewing/editing
+     *
+     * @param resourceLocalUid              The local uid of the resource which
+     *                                      temporary file was opened
+     * @param noteLocalUid                  The local uid of the note which
+     *                                      resource temporary file was opened
+     */
+    void openedResource(QString resourceLocalUid, QString noteLocalUid);
+
+    // 3) ======== Auxiliary signals ========
 
     /**
      * @brief diagnosticsCollected signal is emitted in response to the previous
@@ -148,13 +201,16 @@ public Q_SLOTS:
     void onReadResourceFromFileRequest(QString fileStoragePath, QString resourceLocalUid, QUuid requestId);
 
     /**
-     * @brief onOpenResourceRequest - slot being called when the resource file is requested to be opened
-     * in any external program for viewing and/or editing; if the resource data hasn't been written into a temporary file yet,
-     * it will be written. The resource data in temporary file storage manager would watch
-     * for the changes of the opened resource file until the current note in the note editor is changed or until the file
-     * is replaced with its own next version, for example
+     * @brief onOpenResourceRequest slot should be invoked when the temporary file containing the resource data
+     * is requested to be opened in some external program for viewing and/or editing; if the resource data
+     * hasn't been written into the temporary file yet, it will be written when the slot is called. The resource data
+     * in temporary file storage manager would watch for the changes of the opened resource file until the current note
+     * in the note editor is changed
+     *
+     * @param resourceLocalUid      The local uid of the resource corresponding to the temporary file which is requested
+     *                              to be opened
      */
-    void onOpenResourceRequest(QString fileStoragePath);
+    void onOpenResourceRequest(QString resourceLocalUid);
 
     /**
      * @brief onCurrentNoteChanged - slot which should be called when the current note in the note editor is changed;

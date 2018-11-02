@@ -235,20 +235,64 @@ void ResourceDataInTemporaryFileStorageManager::onReadResourceFromFileRequest(QS
     Q_EMIT readResourceFromFileCompleted(requestId, data, dataHash, 0, ErrorString());
 }
 
-void ResourceDataInTemporaryFileStorageManager::onOpenResourceRequest(QString fileStoragePath)
+void ResourceDataInTemporaryFileStorageManager::onOpenResourceRequest(QString resourceLocalUid)
 {
-    QNDEBUG(QStringLiteral("ResourceDataInTemporaryFileStorageManager::onOpenResourceRequest: file path = ") << fileStoragePath);
+    QNDEBUG(QStringLiteral("ResourceDataInTemporaryFileStorageManager::onOpenResourceRequest: resource local uid = ")
+            << resourceLocalUid);
 
-    auto it = m_resourceLocalUidByFilePath.find(fileStoragePath);
-    if (Q_UNLIKELY(it == m_resourceLocalUidByFilePath.end())) {
-        QNWARNING(QStringLiteral("Can't set up watching for resource file's changes: can't find resource local uid for file path: ")
-                  << fileStoragePath);
-    }
-    else {
-        watchResourceFileForChanges(it.value(), fileStoragePath);
+    if (Q_UNLIKELY(m_pCurrentNote.isNull())) {
+        ErrorString errorDescription(QT_TR_NOOP("Can't open the resource in external editor: internal error, no note is set to ResourceDataInTemporaryFileStorageManager"));
+        errorDescription.details() = QStringLiteral("resource local uid = ") + resourceLocalUid;
+        QNWARNING(errorDescription);
+        Q_EMIT failedToOpenResource(resourceLocalUid, QString(), errorDescription);
+        return;
     }
 
-    QDesktopServices::openUrl(QUrl::fromLocalFile(fileStoragePath));
+    QList<Resource> resources = m_pCurrentNote->resources();
+    const Resource * pResource = Q_NULLPTR;
+    for(auto it = resources.constBegin(), end = resources.constEnd(); it != end; ++it)
+    {
+        const Resource & resource = *it;
+        if (resource.localUid() == resourceLocalUid) {
+            pResource = &resource;
+            break;
+        }
+    }
+
+    if (Q_UNLIKELY(!pResource)) {
+        ErrorString errorDescription(QT_TR_NOOP("Can't open the resource in external editor: internal error, failed to find the resource within the note"));
+        errorDescription.details() = QStringLiteral("resource local uid = ") + resourceLocalUid;
+        QNWARNING(errorDescription);
+        Q_EMIT failedToOpenResource(resourceLocalUid, m_pCurrentNote->localUid(), errorDescription);
+        return;
+    }
+
+    if (Q_UNLIKELY(!pResource->hasMime())) {
+        ErrorString errorDescription(QT_TR_NOOP("Can't open the resource in external editor: resource has no mime type"));
+        errorDescription.details() = QStringLiteral("resource local uid = ") + resourceLocalUid;
+        QNWARNING(errorDescription << QStringLiteral(", resource: ") << *pResource);
+        Q_EMIT failedToOpenResource(resourceLocalUid, m_pCurrentNote->localUid(), errorDescription);
+        return;
+    }
+
+    const QString & mime = pResource->mime();
+    QString fileStoragePath = (mime.startsWith(QStringLiteral("image"))
+                               ? m_imageResourceFileStorageLocation
+                               : m_nonImageResourceFileStorageLocation);
+    fileStoragePath += QStringLiteral("/") + m_pCurrentNote->localUid() + QStringLiteral("/") + resourceLocalUid + QStringLiteral(".dat");
+
+    if (pResource->hasDataHash() &&
+        checkIfResourceFileExistsAndIsActual(m_pCurrentNote->localUid(), resourceLocalUid, fileStoragePath, pResource->dataHash()))
+    {
+        QNDEBUG(QStringLiteral("Temporary file for resource local uid ") << resourceLocalUid << QStringLiteral(" already exists and is actual"));
+        watchResourceFileForChanges(resourceLocalUid, fileStoragePath);
+        QDesktopServices::openUrl(QUrl::fromLocalFile(fileStoragePath));
+        Q_EMIT openedResource(resourceLocalUid, m_pCurrentNote->localUid());
+        return;
+    }
+
+    // TODO: put resource data to the temporary file while notifying the
+    // progress of this operation + open that file when ready
 }
 
 void ResourceDataInTemporaryFileStorageManager::onCurrentNoteChanged(Note note)
@@ -256,10 +300,19 @@ void ResourceDataInTemporaryFileStorageManager::onCurrentNoteChanged(Note note)
     QNDEBUG(QStringLiteral("ResourceDataInTemporaryFileStorageManager::onCurrentNoteChanged; new note local uid = ") << note.localUid()
             << QStringLiteral(", previous note local uid = ") << (m_pCurrentNote.isNull() ? QStringLiteral("<null>") : m_pCurrentNote->localUid()));
 
-    if (!m_pCurrentNote.isNull() && (m_pCurrentNote->localUid() == note.localUid())) {
+    if (!m_pCurrentNote.isNull() && (m_pCurrentNote->localUid() == note.localUid()))
+    {
         QNTRACE(QStringLiteral("The current note is the same, only the note object might have changed"));
+
+        QList<Resource> previousResources = note.resources();
         *m_pCurrentNote = note;
-        removeStaleResourceFilesFromCurrentNote();
+
+        ErrorString errorDescription;
+        ResultType::type res = partialUpdateResourceFilesForCurrentNote(previousResources, errorDescription);
+        if (res == ResultType::Error) {
+            Q_EMIT noteResourcesPreparationError(errorDescription, m_pCurrentNote->localUid());
+        }
+
         return;
     }
 
@@ -268,8 +321,6 @@ void ResourceDataInTemporaryFileStorageManager::onCurrentNoteChanged(Note note)
         QNTRACE(QStringLiteral("Stopped watching for file ") << it.key());
     }
     m_resourceLocalUidByFilePath.clear();
-
-    removeStaleResourceFilesFromCurrentNote();
 
     if (m_pCurrentNote.isNull()) {
         m_pCurrentNote.reset(new Note(note));
