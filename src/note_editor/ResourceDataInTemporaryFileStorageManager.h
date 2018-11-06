@@ -260,6 +260,12 @@ private:
         };
     };
 
+    /**
+     * Compares the list of resources from the previous version of current note with the actual list of current note's
+     * resources, removes stale resource data temporary files and puts the data of new and updated resources
+     * into temporary data files. The process might be asynchronous as some resources might not have binary data set
+     * which means it needs to be queried from the local storage.
+     */
     ResultType::type partialUpdateResourceFilesForCurrentNote(const QList<Resource> & previousResources,
                                                               ErrorString & errorDescription);
 
@@ -298,6 +304,43 @@ private:
         ResourceDataInTemporaryFileStorageManager & m_manager;
     };
 
+    /**
+     * Writes binary data of passed in resources to temporary files unless such files already exist and are actual.
+     * The process might be asynchronous as some resources might not have binary data set which means it needs
+     * to be queried from the local storage.
+     */
+    ResultType::type putResourcesDataToTemporaryFiles(const QList<Resource> & resources, ErrorString & errorDescription);
+
+    /**
+     * Callback for writeResourceDataToTemporaryFile which emits openResourcePreparationProgress with the
+     * given progress value for the given resource
+     */
+    void emitOpenResourcePreparationProgress(const double progress, const QString & resourceLocalUid);
+
+    /**
+     * Wrapper around emitOpenResourcePreparationProgress
+     * callback for writeResourceDataToTemporaryFile, simply passes through
+     * the local uid of the prepared resource
+     */
+    class OpenResourcePreparationProgressFunctor
+    {
+    public:
+        OpenResourcePreparationProgressFunctor(const QString & resourceLocalUid,
+                                               ResourceDataInTemporaryFileStorageManager & manager) :
+            m_resourceLocalUid(resourceLocalUid),
+            m_manager(manager)
+        {}
+
+        void operator()(const double progress)
+        {
+            m_manager.emitOpenResourcePreparationProgress(progress, m_resourceLocalUid);
+        }
+
+    private:
+        QString     m_resourceLocalUid;
+        ResourceDataInTemporaryFileStorageManager & m_manager;
+    };
+
     void requestResourceDataFromLocalStorage(const Resource & resource);
 
     struct ResourceType
@@ -325,7 +368,19 @@ private:
 
     QScopedPointer<Note>        m_pCurrentNote;
 
+    /**
+     * Local uids of image resources from current note which are pending full binary data
+     * extraction from local storage for writing to temporary files for the sake of note
+     * editor page loading
+     */
     QSet<QString>               m_resourceLocalUidsPendingFindInLocalStorage;
+
+    /**
+     * Local uids of resources from current note which are pending full binary data
+     * extraction from local storage for writing to temporary files because these resources
+     * were required to be opened in external program
+     */
+    QSet<QString>               m_resourceLocalUidsPendingFindInLocalStorageForWritingToFileForOpening;
 
     QHash<QString, QString>     m_resourceLocalUidByFilePath;
     FileSystemWatcher           m_fileSystemWatcher;
