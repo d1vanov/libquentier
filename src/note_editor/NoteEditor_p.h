@@ -336,6 +336,7 @@ Q_SIGNALS:
     void saveResourceToStorage(QString noteLocalUid, QString resourceLocalUid, QByteArray data, QByteArray dataHash,
                                QString preferredFileSuffix, QUuid requestId, bool isImage);
     void readResourceFromStorage(QString fileStoragePath, QString localUid, QUuid requestId);
+
     void openResourceFile(QString absoluteFilePath);
     void writeNoteHtmlToFile(QString absoluteFilePath, QByteArray html, QUuid requestId, bool append);
     void saveResourceToFile(QString absoluteFilePath, QByteArray resourceData, QUuid requestId, bool append);
@@ -508,6 +509,15 @@ private Q_SLOTS:
     void onNotebookUpdated(Notebook notebook);
     void onNoteDeleted(QString noteLocalUid);
     void onNotebookDeleted(QString notebookLocalUid);
+
+    // Slots for signals from ResourceDataInTemporaryFileStorageManager
+    void onFailedToPutResourceDataInTemporaryFile(QString resourceLocalUid, QString noteLocalUid, ErrorString errorDescription);
+    void onNoteResourceTemporaryFilesPreparationProgress(double progress, QString noteLocalUid);
+    void onNoteResourceTemporaryFilesPreparationError(QString noteLocalUid, ErrorString errorDescription);
+    void onNoteResourceTemporaryFilesReady(QString noteLocalUid);
+    void onOpenResourceInExternalEditorPreparationProgress(double progress, QString resourceLocalUid, QString noteLocalUid);
+    void onFailedToOpenResourceInExternalEditor(QString resourceLocalUid, QString noteLocalUid, ErrorString errorDescription);
+    void onOpenedResourceInExternalEditor(QString resourceLocalUid, QString noteLocalUid);
 
 private:
     void init();

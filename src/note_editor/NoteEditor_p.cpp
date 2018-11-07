@@ -2631,6 +2631,67 @@ void NoteEditorPrivate::getHtmlForPrinting()
 }
 #endif
 
+void NoteEditorPrivate::onFailedToPutResourceDataInTemporaryFile(QString resourceLocalUid, QString noteLocalUid,
+                                                                 ErrorString errorDescription)
+{
+    QNDEBUG(QStringLiteral("NoteEditorPrivate::onFailedToPutResourceDataInTemporaryFile: resource local uid = ")
+            << resourceLocalUid << QStringLiteral(", note local uid = ") << noteLocalUid
+            << QStringLiteral(", error description: ") << errorDescription);
+
+    // TODO: implement
+}
+
+void NoteEditorPrivate::onNoteResourceTemporaryFilesPreparationProgress(double progress, QString noteLocalUid)
+{
+    QNDEBUG(QStringLiteral("NoteEditorPrivate::onNoteResourceTemporaryFilesPreparationProgress: progress = ")
+            << progress << QStringLiteral(", note local uid = ") << noteLocalUid);
+
+    // TODO: implement
+}
+
+void NoteEditorPrivate::onNoteResourceTemporaryFilesPreparationError(QString noteLocalUid, ErrorString errorDescription)
+{
+    QNDEBUG(QStringLiteral("NoteEditorPrivate::onNoteResourceTemporaryFilesPreparationError: note local uid = ")
+            << noteLocalUid << QStringLiteral(", error description: ") << errorDescription);
+
+    // TODO: implement
+}
+
+void NoteEditorPrivate::onNoteResourceTemporaryFilesReady(QString noteLocalUid)
+{
+    QNDEBUG(QStringLiteral("NoteEditorPrivate::onNoteResourceTemporaryFilesReady: note local uid = ") << noteLocalUid);
+
+    // TODO: implement
+}
+
+void NoteEditorPrivate::onOpenResourceInExternalEditorPreparationProgress(double progress, QString resourceLocalUid,
+                                                                          QString noteLocalUid)
+{
+    QNDEBUG(QStringLiteral("NoteEditorPrivate::onOpenResourceInExternalEditorPreparationProgress: progress = ")
+            << progress << QStringLiteral(", resource local uid = ") << resourceLocalUid
+            << QStringLiteral(", note local uid = ") << noteLocalUid);
+
+    // TODO: implement
+}
+
+void NoteEditorPrivate::onFailedToOpenResourceInExternalEditor(QString resourceLocalUid, QString noteLocalUid,
+                                                               ErrorString errorDescription)
+{
+    QNDEBUG(QStringLiteral("NoteEditorPrivate::onFailedToOpenResourceInExternalEditor: resource local uid = ")
+            << resourceLocalUid << QStringLiteral(", note local uid = ") << noteLocalUid
+            << QStringLiteral(", error description = ") << errorDescription);
+
+    // TODO: implement
+}
+
+void NoteEditorPrivate::onOpenedResourceInExternalEditor(QString resourceLocalUid, QString noteLocalUid)
+{
+    QNDEBUG(QStringLiteral("NoteEditorPrivate::onOpenedResourceInExternalEditor: resource local uid = ")
+            << resourceLocalUid << QStringLiteral(", note local uid = ") << noteLocalUid);
+
+    // TODO: implement
+}
+
 void NoteEditorPrivate::init()
 {
     QNDEBUG(QStringLiteral("NoteEditorPrivate::init"));
@@ -3743,7 +3804,7 @@ bool NoteEditorPrivate::saveResourceToLocalFile(const Resource & resource)
             << preferredFileSuffix << QStringLiteral(", request id = ") << saveResourceRequestId << QStringLiteral(", resource is image = ")
             << (isImage ? QStringLiteral("true") : QStringLiteral("false")));
     Q_EMIT saveResourceToStorage(resource.noteLocalUid(), resource.localUid(), dataBody,
-                               QByteArray(), preferredFileSuffix, saveResourceRequestId, isImage);
+                                 QByteArray(), preferredFileSuffix, saveResourceRequestId, isImage);
     return true;
 }
 
@@ -3789,6 +3850,7 @@ void NoteEditorPrivate::saveNoteImageResourcesToTemporaryFiles()
     for(auto it = resourcesConstBegin; it != resourcesConstEnd; ++it)
     {
         const Resource & resource = *it;
+
         if (Q_UNLIKELY(!resource.hasMime())) {
             QNINFO(QStringLiteral("Detected resource without mime type: ") << resource);
             continue;
@@ -3807,11 +3869,6 @@ void NoteEditorPrivate::saveNoteImageResourcesToTemporaryFiles()
 
         if (!resource.hasDataHash() && !resource.hasAlternateDataHash()) {
             QNINFO(QStringLiteral("Detected resource without data hash: ") << resource);
-            continue;
-        }
-
-        if (!resource.hasMime()) {
-            QNINFO(QStringLiteral("Detected resource without mime type: ") << resource);
             continue;
         }
 
@@ -3849,7 +3906,9 @@ void NoteEditorPrivate::saveNoteImageResourcesToTemporaryFiles()
 
 bool NoteEditorPrivate::saveImageResourceDataToTemporaryFile(const Resource & resource)
 {
-    QNDEBUG(QStringLiteral("NoteEditorPrivate::saveImageResourceDataToTemporaryFile"));
+    QNDEBUG(QStringLiteral("NoteEditorPrivate::saveImageResourceDataToTemporaryFile: resource local uid = ")
+            << resource.localUid());
+
     QNTRACE(resource);
 
     // TODO: implement
@@ -4769,6 +4828,22 @@ void NoteEditorPrivate::setupFileIO()
 
     QObject::connect(this, QNSIGNAL(NoteEditorPrivate,currentNoteChanged,Note),
                      m_pResourceDataInTemporaryFileStorageManager, QNSLOT(ResourceDataInTemporaryFileStorageManager,onCurrentNoteChanged,Note));
+
+    QObject::connect(m_pResourceDataInTemporaryFileStorageManager, QNSIGNAL(ResourceDataInTemporaryFileStorageManager,failedToPutResourceDataIntoTemporaryFile,QString,QString,ErrorString),
+                     this, QNSLOT(NoteEditorPrivate,onFailedToPutResourceDataInTemporaryFile,QString,QString,ErrorString));
+    QObject::connect(m_pResourceDataInTemporaryFileStorageManager, QNSIGNAL(ResourceDataInTemporaryFileStorageManager,noteResourcesPreparationProgress,double,QString),
+                     this, QNSLOT(NoteEditorPrivate,onNoteResourceTemporaryFilesPreparationProgress,double,QString));
+    QObject::connect(m_pResourceDataInTemporaryFileStorageManager, QNSIGNAL(ResourceDataInTemporaryFileStorageManager,noteResourcesPreparationError,QString,ErrorString),
+                     this, QNSLOT(NoteEditorPrivate,onNoteResourceTemporaryFilesPreparationError,QString,ErrorString));
+    QObject::connect(m_pResourceDataInTemporaryFileStorageManager, QNSIGNAL(ResourceDataInTemporaryFileStorageManager,noteResourcesReady,QString),
+                     this, QNSLOT(NoteEditorPrivate,onNoteResourceTemporaryFilesReady,QString));
+    QObject::connect(m_pResourceDataInTemporaryFileStorageManager, QNSIGNAL(ResourceDataInTemporaryFileStorageManager,openResourcePreparationProgress,double,QString,QString),
+                     this, QNSLOT(NoteEditorPrivate,onOpenResourceInExternalEditorPreparationProgress,double,QString,QString));
+    QObject::connect(m_pResourceDataInTemporaryFileStorageManager, QNSIGNAL(ResourceDataInTemporaryFileStorageManager,failedToOpenResource,QString,QString,ErrorString),
+                     this, QNSLOT(NoteEditorPrivate,onFailedToOpenResourceInExternalEditor,QString,QString,ErrorString));
+    QObject::connect(m_pResourceDataInTemporaryFileStorageManager, QNSIGNAL(ResourceDataInTemporaryFileStorageManager,openedResource,QString,QString),
+                     this, QNSLOT(NoteEditorPrivate,onOpenedResourceInExternalEditor,QString,QString));
+
     QObject::connect(this, QNSIGNAL(NoteEditorPrivate,readResourceFromStorage,QString,QString,QUuid),
                      m_pResourceDataInTemporaryFileStorageManager, QNSLOT(ResourceDataInTemporaryFileStorageManager,onReadResourceFromFileRequest,QString,QString,QUuid));
     QObject::connect(m_pResourceDataInTemporaryFileStorageManager, QNSIGNAL(ResourceDataInTemporaryFileStorageManager,readResourceFromFileCompleted,QUuid,QByteArray,QByteArray,int,ErrorString),

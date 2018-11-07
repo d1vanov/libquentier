@@ -109,10 +109,10 @@ Q_SIGNALS:
      * which leads to incorrect or incomplete preparation of note's image resources
      * for note editor page's loading
      *
-     * @param errorDescription              The textual description of the error
      * @param noteLocalUid                  The local uid of the note which resources preparation errored
+     * @param errorDescription              The textual description of the error
      */
-    void noteResourcesPreparationError(ErrorString errorDescription, QString noteLocalUid);
+    void noteResourcesPreparationError(QString noteLocalUid, ErrorString errorDescription);
 
     /**
      * @brief noteResourcesReady signal is emitted when all image resources for
