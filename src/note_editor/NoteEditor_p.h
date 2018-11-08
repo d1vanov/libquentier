@@ -38,6 +38,7 @@
 #include <QUndoStack>
 #include <QPointer>
 #include <QScopedPointer>
+#include <QProgressDialog>
 #include <QMimeData>
 
 #ifdef QUENTIER_USE_QT_WEB_ENGINE
@@ -683,6 +684,8 @@ private:
     void clearCurrentNoteInfo();
     void reloadCurrentNote();
 
+    void clearPrepareNoteImageResourcesProgressDialog();
+
 private:
     // Overrides for some Qt's virtual methods
     virtual void timerEvent(QTimerEvent * pEvent) Q_DECL_OVERRIDE;
@@ -992,6 +995,11 @@ private:
 #ifndef QUENTIER_USE_QT_WEB_ENGINE
     NoteEditorPluginFactory *               m_pPluginFactory;
 #endif
+
+    // Dialog to display the progress of putting note's image resources into
+    // temporary files for the sake of being displayed within the note editor
+    // page
+    QProgressDialog *   m_pPrepareNoteImageResourcesProgressDialog;
 
     QMenu *             m_pGenericTextContextMenu;
     QMenu *             m_pImageResourceContextMenu;

@@ -272,6 +272,7 @@ NoteEditorPrivate::NoteEditorPrivate(NoteEditor & noteEditor) :
 #ifndef QUENTIER_USE_QT_WEB_ENGINE
     m_pPluginFactory(Q_NULLPTR),
 #endif
+    m_pPrepareNoteImageResourcesProgressDialog(Q_NULLPTR),
     m_pGenericTextContextMenu(Q_NULLPTR),
     m_pImageResourceContextMenu(Q_NULLPTR),
     m_pNonImageResourceContextMenu(Q_NULLPTR),
@@ -2559,6 +2560,19 @@ void NoteEditorPrivate::reloadCurrentNote()
     onFoundNoteAndNotebook(note, notebook);
 }
 
+void NoteEditorPrivate::clearPrepareNoteImageResourcesProgressDialog()
+{
+    QNDEBUG(QStringLiteral("NoteEditorPrivate::clearPrepareNoteImageResourcesProgressDialog"));
+
+    if (!m_pPrepareNoteImageResourcesProgressDialog) {
+        return;
+    }
+
+    m_pPrepareNoteImageResourcesProgressDialog->accept();
+    m_pPrepareNoteImageResourcesProgressDialog->deleteLater();
+    m_pPrepareNoteImageResourcesProgressDialog = Q_NULLPTR;
+}
+
 void NoteEditorPrivate::timerEvent(QTimerEvent * pEvent)
 {
     QNDEBUG(QStringLiteral("NoteEditorPrivate::timerEvent: ") << (pEvent ? QString::number(pEvent->timerId()) : QStringLiteral("<null>")));
@@ -2646,7 +2660,17 @@ void NoteEditorPrivate::onNoteResourceTemporaryFilesPreparationProgress(double p
     QNDEBUG(QStringLiteral("NoteEditorPrivate::onNoteResourceTemporaryFilesPreparationProgress: progress = ")
             << progress << QStringLiteral(", note local uid = ") << noteLocalUid);
 
-    // TODO: implement
+    if (Q_UNLIKELY(!m_pPrepareNoteImageResourcesProgressDialog)) {
+        QNDEBUG(QStringLiteral("Unexpectedly missing prepare note image resources progress dialog, won't do anything"));
+        return;
+    }
+
+    int normalizedProgress = static_cast<int>(std::floor(progress * 100.0 + 0.5));
+    if (normalizedProgress > 100) {
+        normalizedProgress = 100;
+    }
+
+    m_pPrepareNoteImageResourcesProgressDialog->setValue(normalizedProgress);
 }
 
 void NoteEditorPrivate::onNoteResourceTemporaryFilesPreparationError(QString noteLocalUid, ErrorString errorDescription)
@@ -2655,13 +2679,23 @@ void NoteEditorPrivate::onNoteResourceTemporaryFilesPreparationError(QString not
             << noteLocalUid << QStringLiteral(", error description: ") << errorDescription);
 
     // TODO: implement
+
+    clearPrepareNoteImageResourcesProgressDialog();
 }
 
 void NoteEditorPrivate::onNoteResourceTemporaryFilesReady(QString noteLocalUid)
 {
+    if (m_pNote.isNull() || (m_pNote->localUid() != noteLocalUid)) {
+        return;
+    }
+
     QNDEBUG(QStringLiteral("NoteEditorPrivate::onNoteResourceTemporaryFilesReady: note local uid = ") << noteLocalUid);
 
-    // TODO: implement
+    if (!m_pendingNotePageLoad) {
+        provideSrcForResourceImgTags();
+    }
+
+    clearPrepareNoteImageResourcesProgressDialog();
 }
 
 void NoteEditorPrivate::onOpenResourceInExternalEditorPreparationProgress(double progress, QString resourceLocalUid,
@@ -2788,6 +2822,35 @@ void NoteEditorPrivate::onFoundNoteAndNotebook(Note note, Notebook notebook)
         }
     }
 #endif
+
+    clearPrepareNoteImageResourcesProgressDialog();
+
+    if (m_pNote->hasResources())
+    {
+        QList<Resource> resources = m_pNote->resources();
+        int numImageResources = 0;
+        QString imageResourcePrefix = QStringLiteral("image");
+        for(auto it = resources.constBegin(), end = resources.constEnd(); it != end; ++it)
+        {
+            const Resource & resource = *it;
+            if (!resource.hasMime()) {
+                continue;
+            }
+
+            if (!resource.mime().startsWith(imageResourcePrefix)) {
+                continue;
+            }
+
+            ++numImageResources;
+        }
+
+        if (numImageResources > 0) {
+            m_pPrepareNoteImageResourcesProgressDialog = new QProgressDialog(tr("Preparing attachment images") + QStringLiteral("..."),
+                                                                             QString(), 0, 100, this, Qt::Dialog);
+            m_pPrepareNoteImageResourcesProgressDialog->setWindowModality(Qt::WindowModal);
+            m_pPrepareNoteImageResourcesProgressDialog->setMinimumDuration(2000);
+        }
+    }
 
     Q_EMIT currentNoteChanged(*m_pNote);
     noteToEditorContent();
