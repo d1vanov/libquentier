@@ -685,6 +685,7 @@ private:
     void reloadCurrentNote();
 
     void clearPrepareNoteImageResourcesProgressDialog();
+    void clearPrepareResourceForOpeningProgressDialog(const QString & resourceLocalUid);
 
 private:
     // Overrides for some Qt's virtual methods
@@ -1000,6 +1001,9 @@ private:
     // temporary files for the sake of being displayed within the note editor
     // page
     QProgressDialog *   m_pPrepareNoteImageResourcesProgressDialog;
+
+    // Progress dialogs for note resources requested to be opened
+    QVector<std::pair<QString, QProgressDialog*> >  m_prepareResourceForOpeningProgressDialogs;
 
     QMenu *             m_pGenericTextContextMenu;
     QMenu *             m_pImageResourceContextMenu;

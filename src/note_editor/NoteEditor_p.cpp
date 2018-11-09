@@ -273,6 +273,7 @@ NoteEditorPrivate::NoteEditorPrivate(NoteEditor & noteEditor) :
     m_pPluginFactory(Q_NULLPTR),
 #endif
     m_pPrepareNoteImageResourcesProgressDialog(Q_NULLPTR),
+    m_prepareResourceForOpeningProgressDialogs(),
     m_pGenericTextContextMenu(Q_NULLPTR),
     m_pImageResourceContextMenu(Q_NULLPTR),
     m_pNonImageResourceContextMenu(Q_NULLPTR),
@@ -1130,6 +1131,25 @@ void NoteEditorPrivate::onOpenResourceRequest(const QByteArray & resourceHash)
         // so just mark this resource local uid as pending for open
         Q_UNUSED(m_localUidsOfResourcesWantedToBeOpened.insert(resourceLocalUid));
         return;
+    }
+
+    QProgressDialog * pProgressDialog = Q_NULLPTR;
+    for(auto pit = m_prepareResourceForOpeningProgressDialogs.constBegin(),
+        pend = m_prepareResourceForOpeningProgressDialogs.constEnd(); pit != pend; ++pit)
+    {
+        if (pit->first == resourceLocalUid) {
+            pProgressDialog = pit->second;
+            break;
+        }
+    }
+
+    if (!pProgressDialog)
+    {
+        pProgressDialog = new QProgressDialog(tr("Preparing to open attachment") + QStringLiteral("..."),
+                                              QString(), 0, 100, this, Qt::Dialog);
+        pProgressDialog->setWindowModality(Qt::WindowModal);
+        pProgressDialog->setMinimumDuration(2000);
+        m_prepareResourceForOpeningProgressDialogs.push_back(std::pair<QString,QProgressDialog*>(resourceLocalUid, pProgressDialog));
     }
 
     openResource(it.value());
@@ -2536,6 +2556,16 @@ void NoteEditorPrivate::clearCurrentNoteInfo()
     delete m_pPluginFactory;
     m_pPluginFactory = Q_NULLPTR;
 #endif
+
+    clearPrepareNoteImageResourcesProgressDialog();
+
+    for(auto it = m_prepareResourceForOpeningProgressDialogs.constBegin(),
+        end = m_prepareResourceForOpeningProgressDialogs.constEnd(); it != end; ++it)
+    {
+        it->second->accept();
+        it->second->deleteLater();
+    }
+    m_prepareResourceForOpeningProgressDialogs.clear();
 }
 
 void NoteEditorPrivate::reloadCurrentNote()
@@ -2571,6 +2601,33 @@ void NoteEditorPrivate::clearPrepareNoteImageResourcesProgressDialog()
     m_pPrepareNoteImageResourcesProgressDialog->accept();
     m_pPrepareNoteImageResourcesProgressDialog->deleteLater();
     m_pPrepareNoteImageResourcesProgressDialog = Q_NULLPTR;
+}
+
+void NoteEditorPrivate::clearPrepareResourceForOpeningProgressDialog(const QString & resourceLocalUid)
+{
+    QNDEBUG(QStringLiteral("NoteEditorPrivate::clearPrepareResourceForOpeningProgressDialog: resource local uid = ")
+            << resourceLocalUid);
+
+    auto progressDialogIt = m_prepareResourceForOpeningProgressDialogs.end();
+    for(auto pit = m_prepareResourceForOpeningProgressDialogs.begin(),
+        pend = m_prepareResourceForOpeningProgressDialogs.end(); pit != pend; ++pit)
+    {
+        if (pit->first == resourceLocalUid) {
+            progressDialogIt = pit;
+            break;
+        }
+    }
+
+    if (Q_UNLIKELY(progressDialogIt == m_prepareResourceForOpeningProgressDialogs.end())) {
+        QNDEBUG(QStringLiteral("Haven't found QProgressDialog for this resource"));
+        return;
+    }
+
+    progressDialogIt->second->accept();
+    progressDialogIt->second->deleteLater();
+    progressDialogIt->second = Q_NULLPTR;
+
+    m_prepareResourceForOpeningProgressDialogs.erase(progressDialogIt);
 }
 
 void NoteEditorPrivate::timerEvent(QTimerEvent * pEvent)
@@ -2648,15 +2705,23 @@ void NoteEditorPrivate::getHtmlForPrinting()
 void NoteEditorPrivate::onFailedToPutResourceDataInTemporaryFile(QString resourceLocalUid, QString noteLocalUid,
                                                                  ErrorString errorDescription)
 {
+    if (m_pNote.isNull() || (m_pNote->localUid() != noteLocalUid)) {
+        return;
+    }
+
     QNDEBUG(QStringLiteral("NoteEditorPrivate::onFailedToPutResourceDataInTemporaryFile: resource local uid = ")
             << resourceLocalUid << QStringLiteral(", note local uid = ") << noteLocalUid
             << QStringLiteral(", error description: ") << errorDescription);
 
-    // TODO: implement
+    Q_EMIT notifyError(errorDescription);
 }
 
 void NoteEditorPrivate::onNoteResourceTemporaryFilesPreparationProgress(double progress, QString noteLocalUid)
 {
+    if (m_pNote.isNull() || (m_pNote->localUid() != noteLocalUid)) {
+        return;
+    }
+
     QNDEBUG(QStringLiteral("NoteEditorPrivate::onNoteResourceTemporaryFilesPreparationProgress: progress = ")
             << progress << QStringLiteral(", note local uid = ") << noteLocalUid);
 
@@ -2675,12 +2740,15 @@ void NoteEditorPrivate::onNoteResourceTemporaryFilesPreparationProgress(double p
 
 void NoteEditorPrivate::onNoteResourceTemporaryFilesPreparationError(QString noteLocalUid, ErrorString errorDescription)
 {
+    if (m_pNote.isNull() || (m_pNote->localUid() != noteLocalUid)) {
+        return;
+    }
+
     QNDEBUG(QStringLiteral("NoteEditorPrivate::onNoteResourceTemporaryFilesPreparationError: note local uid = ")
             << noteLocalUid << QStringLiteral(", error description: ") << errorDescription);
 
-    // TODO: implement
-
     clearPrepareNoteImageResourcesProgressDialog();
+    Q_EMIT notifyError(errorDescription);
 }
 
 void NoteEditorPrivate::onNoteResourceTemporaryFilesReady(QString noteLocalUid)
@@ -2701,29 +2769,62 @@ void NoteEditorPrivate::onNoteResourceTemporaryFilesReady(QString noteLocalUid)
 void NoteEditorPrivate::onOpenResourceInExternalEditorPreparationProgress(double progress, QString resourceLocalUid,
                                                                           QString noteLocalUid)
 {
+    if (m_pNote.isNull() || (m_pNote->localUid() != noteLocalUid)) {
+        return;
+    }
+
     QNDEBUG(QStringLiteral("NoteEditorPrivate::onOpenResourceInExternalEditorPreparationProgress: progress = ")
             << progress << QStringLiteral(", resource local uid = ") << resourceLocalUid
             << QStringLiteral(", note local uid = ") << noteLocalUid);
 
-    // TODO: implement
+    auto progressDialogIt = m_prepareResourceForOpeningProgressDialogs.constEnd();
+    for(auto pit = m_prepareResourceForOpeningProgressDialogs.constBegin(),
+        pend = m_prepareResourceForOpeningProgressDialogs.constEnd(); pit != pend; ++pit)
+    {
+        if (pit->first == resourceLocalUid) {
+            progressDialogIt = pit;
+            break;
+        }
+    }
+
+    if (Q_UNLIKELY(progressDialogIt == m_prepareResourceForOpeningProgressDialogs.constEnd())) {
+        QNDEBUG(QStringLiteral("Haven't found QProgressDialog for this resource"));
+        return;
+    }
+
+    int normalizedProgress = static_cast<int>(std::floor(progress * 100.0 + 0.5));
+    if (normalizedProgress > 100) {
+        normalizedProgress = 100;
+    }
+
+    progressDialogIt->second->setValue(normalizedProgress);
 }
 
 void NoteEditorPrivate::onFailedToOpenResourceInExternalEditor(QString resourceLocalUid, QString noteLocalUid,
                                                                ErrorString errorDescription)
 {
+    if (m_pNote.isNull() || (m_pNote->localUid() != noteLocalUid)) {
+        return;
+    }
+
     QNDEBUG(QStringLiteral("NoteEditorPrivate::onFailedToOpenResourceInExternalEditor: resource local uid = ")
             << resourceLocalUid << QStringLiteral(", note local uid = ") << noteLocalUid
             << QStringLiteral(", error description = ") << errorDescription);
 
-    // TODO: implement
+    clearPrepareResourceForOpeningProgressDialog(resourceLocalUid);
+    Q_EMIT notifyError(errorDescription);
 }
 
 void NoteEditorPrivate::onOpenedResourceInExternalEditor(QString resourceLocalUid, QString noteLocalUid)
 {
+    if (m_pNote.isNull() || (m_pNote->localUid() != noteLocalUid)) {
+        return;
+    }
+
     QNDEBUG(QStringLiteral("NoteEditorPrivate::onOpenedResourceInExternalEditor: resource local uid = ")
             << resourceLocalUid << QStringLiteral(", note local uid = ") << noteLocalUid);
 
-    // TODO: implement
+    clearPrepareResourceForOpeningProgressDialog(resourceLocalUid);
 }
 
 void NoteEditorPrivate::init()
