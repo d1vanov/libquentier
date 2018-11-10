@@ -336,10 +336,10 @@ void AddResourceDelegate::doSaveResourceToStorage(const QByteArray & data, QStri
 
     bool isImage = m_resourceMimeType.name().startsWith(QStringLiteral("image/"));
     if (isImage) {
-        m_resourceFileStoragePath = m_noteEditor.imageResourcesStoragePath();
+        m_resourceFileStoragePath = ResourceDataInTemporaryFileStorageManager::imageResourceFileStorageFolderPath();
     }
     else {
-        m_resourceFileStoragePath = m_noteEditor.resourceLocalFileStoragePath();
+        m_resourceFileStoragePath = ResourceDataInTemporaryFileStorageManager::nonImageResourceFileStorageFolderPath();
     }
 
     m_resourceFileStoragePath += QStringLiteral("/") + pNote->localUid() + QStringLiteral("/") + resourceLocalUid;

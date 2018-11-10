@@ -136,6 +136,7 @@ typedef QWebEngineSettings WebSettings;
 #include <QBuffer>
 #include <QTransform>
 #include <QTimer>
+#include <QCryptographicHash>
 
 #define NOTE_EDITOR_PAGE_HEADER QStringLiteral("<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01//EN\" \"http://www.w3.org/TR/html4/strict.dtd\">" \
                                                "<html><head>" \
@@ -158,7 +159,6 @@ namespace quentier {
 NoteEditorPrivate::NoteEditorPrivate(NoteEditor & noteEditor) :
     INoteEditorBackend(&noteEditor),
     m_noteEditorPageFolderPath(),
-    m_noteEditorImageResourcesStoragePath(),
     m_genericResourceImageFileStoragePath(),
     m_font(),
     m_jQueryJs(),
@@ -296,12 +296,7 @@ NoteEditorPrivate::NoteEditorPrivate(NoteEditor & noteEditor) :
     m_pFileIOProcessorAsync(new FileIOProcessorAsync(this)),
     m_resourceInfo(),
     m_pResourceInfoJavaScriptHandler(new ResourceInfoJavaScriptHandler(m_resourceInfo, this)),
-    m_resourceLocalFileStorageFolder(),
-    m_genericResourceLocalUidBySaveToStorageRequestIds(),
-    m_imageResourceSaveToStorageRequestIds(),
     m_resourceFileStoragePathsByResourceLocalUid(),
-    m_localUidsOfResourcesWantedToBeSaved(),
-    m_localUidsOfResourcesWantedToBeOpened(),
     m_manualSaveResourceToFileRequestIds(),
     m_fileSuffixesForMimeType(),
     m_fileFilterStringForMimeType(),
@@ -516,7 +511,6 @@ void NoteEditorPrivate::onNoteLoadFinished(bool ok)
     }
 
     updateColResizableTableBindings();
-    saveNoteResourcesToLocalFiles();
 
 #ifdef QUENTIER_USE_QT_WEB_ENGINE
     provideSrcAndOnClickScriptForImgEnCryptTags();
@@ -573,160 +567,6 @@ void NoteEditorPrivate::onContentChanged()
     m_contentChangedSinceWatchingStart = false;
     QNTRACE(QStringLiteral("Started timer to postpone note editor page's content to ENML conversion: timer id = ")
             << m_pageToNoteContentPostponeTimerId);
-}
-
-void NoteEditorPrivate::onResourceSavedToStorage(QUuid requestId, QByteArray dataHash,
-                                                 QString fileStoragePath, int errorCode,
-                                                 ErrorString errorDescription)
-{
-    auto it = m_genericResourceLocalUidBySaveToStorageRequestIds.find(requestId);
-    if (it == m_genericResourceLocalUidBySaveToStorageRequestIds.end()) {
-        return;
-    }
-
-    QNDEBUG(QStringLiteral("NoteEditorPrivate::onResourceSavedToStorage: requestId = ") << requestId
-            << QStringLiteral(", data hash = ") << dataHash.toHex() << QStringLiteral(", file storage path = ")
-            << fileStoragePath << QStringLiteral(", error code = ") << errorCode << QStringLiteral(", error description: ")
-            << errorDescription);
-
-    if (errorCode != 0) {
-        ErrorString error(QT_TR_NOOP("Can't write the resource to local file"));
-        error.appendBase(errorDescription.base());
-        error.appendBase(errorDescription.additionalBases());
-        error.details() = errorDescription.details();
-        QNWARNING(error << QStringLiteral(", error code = ") << errorCode);
-        Q_EMIT notifyError(error);
-        return;
-    }
-
-    const QString localUid = it.value();
-    QNDEBUG(QStringLiteral("Local uid of the resource updated in the local storage: ") << localUid);
-
-    bool shouldCreateLinkToTheResourceFile = false;
-    auto imageResourceIt = m_imageResourceSaveToStorageRequestIds.find(requestId);
-    shouldCreateLinkToTheResourceFile = (imageResourceIt != m_imageResourceSaveToStorageRequestIds.end());
-    if (shouldCreateLinkToTheResourceFile)
-    {
-        QNDEBUG(QStringLiteral("The just saved resource is an image for which we need to create a link "
-                               "in order to fool the web engine's cache to ensure it would reload the image "
-                               "if its previous version has already been displayed on the page"));
-
-        Q_UNUSED(m_imageResourceSaveToStorageRequestIds.erase(imageResourceIt));
-
-        QString linkFileName = createSymlinkToImageResourceFile(fileStoragePath, localUid, errorDescription);
-        if (linkFileName.isEmpty()) {
-            QNWARNING(errorDescription);
-            Q_EMIT notifyError(errorDescription);
-        }
-        else {
-            fileStoragePath = linkFileName;
-        }
-    }
-
-    m_resourceFileStoragePathsByResourceLocalUid[localUid] = fileStoragePath;
-
-    QString resourceDisplayName;
-    QString resourceDisplaySize;
-
-    QByteArray oldResourceHash;
-    if (!m_pNote.isNull())
-    {
-        bool shouldUpdateNoteResources = false;
-        QList<Resource> resources = m_pNote->resources();
-        const int numResources = resources.size();
-        for(int i = 0; i < numResources; ++i)
-        {
-            Resource & resource = resources[i];
-
-            if (resource.localUid() != localUid) {
-                continue;
-            }
-
-            shouldUpdateNoteResources = true;
-            if (resource.hasDataHash()) {
-                oldResourceHash = resource.dataHash();
-            }
-
-            resource.setDataHash(dataHash);
-
-            if (resource.hasRecognitionDataBody())
-            {
-                ResourceRecognitionIndices recoIndices(resource.recognitionDataBody());
-                if (!recoIndices.isNull() && recoIndices.isValid()) {
-                    m_recognitionIndicesByResourceHash[dataHash] = recoIndices;
-                    QNDEBUG(QStringLiteral("Updated recognition indices for resource with hash ") << dataHash.toHex());
-                }
-            }
-
-            resourceDisplayName = resource.displayName();
-            if (resource.hasDataSize()) {
-                resourceDisplaySize = humanReadableSize(static_cast<quint64>(resource.dataSize()));
-            }
-
-            break;
-        }
-
-        if (shouldUpdateNoteResources) {
-            m_pNote->setResources(resources);
-        }
-    }
-
-    m_resourceInfo.cacheResourceInfo(dataHash, resourceDisplayName,
-                                     resourceDisplaySize, fileStoragePath);
-
-    Q_UNUSED(m_genericResourceLocalUidBySaveToStorageRequestIds.erase(it));
-
-    if (!oldResourceHash.isEmpty() && (oldResourceHash != dataHash)) {
-        updateHashForResourceTag(oldResourceHash, dataHash);
-        highlightRecognizedImageAreas(m_lastSearchHighlightedText, m_lastSearchHighlightedTextCaseSensitivity);
-    }
-
-    if (m_genericResourceLocalUidBySaveToStorageRequestIds.isEmpty() && !m_pendingNotePageLoad) {
-        QNTRACE(QStringLiteral("All current note's resources were saved to local file storage and are actual. "
-                               "Will set filepaths to these local files to src attributes of img resource tags"));
-        provideSrcForResourceImgTags();
-    }
-
-    auto saveIt = m_localUidsOfResourcesWantedToBeSaved.find(localUid);
-    if (saveIt != m_localUidsOfResourcesWantedToBeSaved.end())
-    {
-        QNTRACE(QStringLiteral("Resource with local uid ") << localUid << QStringLiteral(" is pending manual saving to file"));
-
-        Q_UNUSED(m_localUidsOfResourcesWantedToBeSaved.erase(saveIt));
-
-        if (Q_UNLIKELY(m_pNote.isNull())) {
-            ErrorString error(QT_TR_NOOP("Can't save the resource to file: no note is set to the editor"));
-            QNINFO(error << QStringLiteral(", resource local uid = ") << localUid);
-            Q_EMIT notifyError(error);
-            return;
-        }
-
-        QList<Resource> resources = m_pNote->resources();
-        int numResources = resources.size();
-        for(int i = 0; i < numResources; ++i)
-        {
-            const Resource & resource = resources[i];
-            if (resource.localUid() == localUid) {
-                manualSaveResourceToFile(resource);
-                return;
-            }
-        }
-
-        ErrorString error(QT_TR_NOOP("Can't save the resource to file: can't find the target resource within the note"));
-        QNINFO(error << QStringLiteral(", resource local uid = ") << localUid);
-        Q_EMIT notifyError(error);
-    }
-
-    auto openIt = m_localUidsOfResourcesWantedToBeOpened.find(localUid);
-    if (openIt != m_localUidsOfResourcesWantedToBeOpened.end()) {
-        QNTRACE(QStringLiteral("Resource with local uid ") << localUid << QStringLiteral(" is pending opening in application"));
-        Q_UNUSED(m_localUidsOfResourcesWantedToBeOpened.erase(openIt));
-        openResource(fileStoragePath);
-    }
-
-#ifdef QUENTIER_USE_QT_WEB_ENGINE
-    setupGenericResourceImages();
-#endif
 }
 
 void NoteEditorPrivate::onResourceFileChanged(QString resourceLocalUid, QString fileStoragePath)
@@ -1124,15 +964,6 @@ void NoteEditorPrivate::onOpenResourceRequest(const QByteArray & resourceHash)
     const Resource & resource = resources[resourceIndex];
     const QString resourceLocalUid = resource.localUid();
 
-    // See whether this resource has already been written to file
-    auto it = m_resourceFileStoragePathsByResourceLocalUid.find(resourceLocalUid);
-    if (it == m_resourceFileStoragePathsByResourceLocalUid.end()) {
-        // It must be being written to file at the moment - all note's resources are saved to files on note load -
-        // so just mark this resource local uid as pending for open
-        Q_UNUSED(m_localUidsOfResourcesWantedToBeOpened.insert(resourceLocalUid));
-        return;
-    }
-
     QProgressDialog * pProgressDialog = Q_NULLPTR;
     for(auto pit = m_prepareResourceForOpeningProgressDialogs.constBegin(),
         pend = m_prepareResourceForOpeningProgressDialogs.constEnd(); pit != pend; ++pit)
@@ -1152,7 +983,8 @@ void NoteEditorPrivate::onOpenResourceRequest(const QByteArray & resourceHash)
         m_prepareResourceForOpeningProgressDialogs.push_back(std::pair<QString,QProgressDialog*>(resourceLocalUid, pProgressDialog));
     }
 
-    openResource(it.value());
+    QNTRACE(QStringLiteral("Emitting the request to open resource with local uid ") << resourceLocalUid);
+    Q_EMIT openResourceFile(resourceLocalUid);
 }
 
 void NoteEditorPrivate::onSaveResourceRequest(const QByteArray & resourceHash)
@@ -1174,19 +1006,7 @@ void NoteEditorPrivate::onSaveResourceRequest(const QByteArray & resourceHash)
         return;
     }
 
-    const Resource & resource = resources[resourceIndex];
-    const QString resourceLocalUid = resource.localUid();
-
-    // See whether this resource has already been written to file
-    auto it = m_resourceFileStoragePathsByResourceLocalUid.find(resourceLocalUid);
-    if (it == m_resourceFileStoragePathsByResourceLocalUid.end()) {
-        // It must be being written to file at the moment - all note's resources are saved to files on note load -
-        // so just mark this resource local uid as pending for save
-        Q_UNUSED(m_localUidsOfResourcesWantedToBeSaved.insert(resourceLocalUid));
-        return;
-    }
-
-    manualSaveResourceToFile(resource);
+    manualSaveResourceToFile(resources[resourceIndex]);
 }
 
 void NoteEditorPrivate::contextMenuEvent(QContextMenuEvent * pEvent)
@@ -2531,8 +2351,6 @@ void NoteEditorPrivate::clearCurrentNoteInfo()
     Q_UNUSED(removeFile(noteEditorPagePath()))
 
     m_resourceInfo.clear();
-    m_genericResourceLocalUidBySaveToStorageRequestIds.clear();
-    m_imageResourceSaveToStorageRequestIds.clear();
     m_resourceFileStoragePathsByResourceLocalUid.clear();
     m_genericResourceImageFilePathsByResourceHash.clear();
     m_saveGenericResourceImageToFileRequestIds.clear();
@@ -2542,7 +2360,6 @@ void NoteEditorPrivate::clearCurrentNoteInfo()
     m_lastSearchHighlightedText.resize(0);
     m_lastSearchHighlightedTextCaseSensitivity = false;
 
-    m_localUidsOfResourcesWantedToBeSaved.clear();
     m_resourceLocalUidAndFileStoragePathByReadResourceRequestIds.clear();
 
     m_noteWasNotFound = false;
@@ -2759,8 +2576,59 @@ void NoteEditorPrivate::onNoteResourceTemporaryFilesReady(QString noteLocalUid)
 
     QNDEBUG(QStringLiteral("NoteEditorPrivate::onNoteResourceTemporaryFilesReady: note local uid = ") << noteLocalUid);
 
+    /**
+     * All note's image resources (if any) were written to temporary files so they can now be displayed
+     * within the note editor page. However, one more trick is required for the case in which the note
+     * was updated i.e. previous versions of this note's image resources have already been displayed:
+     * even though the image files are updated with new data, the web engine's cache doesn't know about this
+     * and the updated data from image files is not reloaded, the old data is displayed. The workaround is
+     * to create a symlink to each resource image file and use that instead of the real path, this way
+     * web engine's undesired caching is avoided
+     */
+
+    QList<Resource> resources = m_pNote->resources();
+    QString imageResourceMimePrefix = QStringLiteral("image/");
+    for(auto it = resources.constBegin(), end = resources.constEnd(); it != end; ++it)
+    {
+        const Resource & resource = *it;
+        if (!resource.hasMime() || !resource.mime().startsWith(imageResourceMimePrefix)) {
+            continue;
+        }
+
+        if (Q_UNLIKELY(!resource.hasDataBody())) {
+            continue;
+        }
+
+        QString resourceLocalUid = resource.localUid();
+
+        QString fileStoragePath = ResourceDataInTemporaryFileStorageManager::imageResourceFileStorageFolderPath() +
+                                  QStringLiteral("/") + noteLocalUid + QStringLiteral("/") + resourceLocalUid +
+                                  QStringLiteral(".dat");
+
+        ErrorString errorDescription;
+        QString linkFilePath = createSymlinkToImageResourceFile(fileStoragePath, resourceLocalUid, errorDescription);
+        if (Q_UNLIKELY(linkFilePath.isEmpty())) {
+            QNWARNING(errorDescription);
+            // Since the proper way has failed, use the improper one as a fallback
+            linkFilePath = fileStoragePath;
+        }
+
+        m_resourceFileStoragePathsByResourceLocalUid[resourceLocalUid] = linkFilePath;
+
+        QByteArray dataHash = (resource.hasDataHash()
+                               ? resource.dataHash()
+                               : QCryptographicHash::hash(resource.dataBody(), QCryptographicHash::Md5));
+        QString resourceDisplayName = resource.displayName();
+        QString resourceDisplaySize = humanReadableSize(static_cast<quint64>(resource.hasDataSize()
+                                                                             ? resource.dataSize()
+                                                                             : resource.dataBody().size()));
+        m_resourceInfo.cacheResourceInfo(dataHash, resourceDisplayName,
+                                         resourceDisplaySize, linkFilePath);
+    }
+
     if (!m_pendingNotePageLoad) {
         provideSrcForResourceImgTags();
+        highlightRecognizedImageAreas(m_lastSearchHighlightedText, m_lastSearchHighlightedTextCaseSensitivity);
     }
 
     clearPrepareNoteImageResourcesProgressDialog();
@@ -2852,8 +2720,6 @@ void NoteEditorPrivate::init()
     m_noteEditorPageFolderPath = storagePath;
     m_noteEditorPageFolderPath += QStringLiteral("/NoteEditorPage");
 
-    m_resourceLocalFileStorageFolder = m_noteEditorPageFolderPath + QStringLiteral("/nonImageResources");
-    m_noteEditorImageResourcesStoragePath = m_noteEditorPageFolderPath + QStringLiteral("/imageResources");
     m_genericResourceImageFileStoragePath = m_noteEditorPageFolderPath + QStringLiteral("/genericResourceImages");
 
     setupFileIO();
@@ -2898,6 +2764,8 @@ void NoteEditorPrivate::onFoundNoteAndNotebook(Note note, Notebook notebook)
 
     m_pNotebook.reset(new Notebook(notebook));
     m_pNote.reset(new Note(note));
+
+    rebuildRecognitionIndicesCache();
 
 #ifdef QUENTIER_USE_QT_WEB_ENGINE
     if (m_webSocketServerPort == 0) {
@@ -3854,124 +3722,6 @@ bool NoteEditorPrivate::htmlToNoteContent(ErrorString & errorDescription)
     return true;
 }
 
-void NoteEditorPrivate::saveNoteResourcesToLocalFiles()
-{
-    QNDEBUG(QStringLiteral("NoteEditorPrivate::saveNoteResourcesToLocalFiles"));
-
-    if (m_pNote.isNull()) {
-        QNTRACE(QStringLiteral("No note is set for the editor"));
-        return;
-    }
-
-    QList<Resource> resources = m_pNote->resources();
-    if (resources.isEmpty()) {
-        QNTRACE(QStringLiteral("Note has no resources, nothing to do"));
-        return;
-    }
-
-    auto resourcesConstBegin = resources.constBegin();
-    auto resourcesConstEnd = resources.constEnd();
-
-    size_t numPendingResourceWritesToLocalFiles = 0;
-
-    for(auto it = resourcesConstBegin; it != resourcesConstEnd; ++it)
-    {
-        const Resource & resource = *it;
-
-        if (!resource.hasDataBody() && !resource.hasAlternateDataBody()) {
-            QNINFO(QStringLiteral("Detected resource without data body: ") << resource);
-            continue;
-        }
-
-        if (!resource.hasDataHash() && !resource.hasAlternateDataHash()) {
-            QNINFO(QStringLiteral("Detected resource without data hash: ") << resource);
-            continue;
-        }
-
-        if (!resource.hasMime()) {
-            QNINFO(QStringLiteral("Detected resource without mime type: ") << resource);
-            continue;
-        }
-
-        const QByteArray & dataHash = (resource.hasDataHash()
-                                       ? resource.dataHash()
-                                       : resource.alternateDataHash());
-
-        QNTRACE(QStringLiteral("Found current note's resource corresponding to the data hash ")
-                << dataHash.toHex() << ": " << resource);
-
-        if (!m_resourceInfo.contains(dataHash))
-        {
-            bool res = saveResourceToLocalFile(resource);
-            if (res) {
-                ++numPendingResourceWritesToLocalFiles;
-            }
-        }
-    }
-
-    if (numPendingResourceWritesToLocalFiles == 0)
-    {
-        QNTRACE(QStringLiteral("All current note's resources are written to local files and are actual. "
-                               "Will set filepaths to these local files to src attributes of img resource tags"));
-        if (!m_pendingNotePageLoad) {
-            provideSrcForResourceImgTags();
-        }
-        return;
-    }
-
-    QNTRACE(QStringLiteral("Scheduled writing of ") << numPendingResourceWritesToLocalFiles
-            << QStringLiteral(" to local files, will wait until they are written "
-                              "and add the src attributes to img resources when the files are ready"));
-}
-
-bool NoteEditorPrivate::saveResourceToLocalFile(const Resource & resource)
-{
-    QNTRACE(QStringLiteral("NoteEditorPrivate::saveResourceToLocalFile: ") << resource);
-
-    if (Q_UNLIKELY(!resource.hasMime())) {
-        ErrorString error(QT_TR_NOOP("Can't save the resource to local file: no resource mime type"));
-        QNWARNING(error << QStringLiteral(", resource: ") << resource);
-        Q_EMIT notifyError(error);
-        return false;
-    }
-
-    if (Q_UNLIKELY(!resource.hasNoteLocalUid())) {
-        ErrorString error(QT_TR_NOOP("Can't save the resource to local file: the resource has no note local uid"));
-        QNWARNING(error << QStringLiteral(", resource: ") << resource);
-        Q_EMIT notifyError(error);
-        return false;
-    }
-
-    if (Q_UNLIKELY(!resource.hasDataBody() && !resource.hasAlternateDataBody())) {
-        ErrorString error(QT_TR_NOOP("Can't save the resource to local file: resource has neither data body nor alternate data body"));
-        QNWARNING(error << QStringLiteral(", resource: ") << resource);
-        Q_EMIT notifyError(error);
-        return false;
-    }
-
-    QUuid saveResourceRequestId = QUuid::createUuid();
-    QString preferredFileSuffix = resource.preferredFileSuffix();
-
-    m_genericResourceLocalUidBySaveToStorageRequestIds[saveResourceRequestId] = resource.localUid();
-
-    bool isImage = resource.mime().startsWith(QStringLiteral("image"));
-    if (isImage) {
-        Q_UNUSED(m_imageResourceSaveToStorageRequestIds.insert(saveResourceRequestId))
-    }
-
-    QByteArray dataBody = (resource.hasDataBody()
-                           ? resource.dataBody()
-                           : resource.alternateDataBody());
-
-    QNTRACE(QStringLiteral("Emitting the request to save the resource to file storage: note local uid = ") << resource.noteLocalUid()
-            << QStringLiteral(", resource local uid = ") << resource.localUid() << QStringLiteral(", preferred file suffix = ")
-            << preferredFileSuffix << QStringLiteral(", request id = ") << saveResourceRequestId << QStringLiteral(", resource is image = ")
-            << (isImage ? QStringLiteral("true") : QStringLiteral("false")));
-    Q_EMIT saveResourceToStorage(resource.noteLocalUid(), resource.localUid(), dataBody,
-                                 QByteArray(), preferredFileSuffix, saveResourceRequestId, isImage);
-    return true;
-}
-
 void NoteEditorPrivate::updateHashForResourceTag(const QByteArray & oldResourceHash, const QByteArray & newResourceHash)
 {
     QNDEBUG(QStringLiteral("NoteEditorPrivate::updateHashForResourceTag: old hash = ") << oldResourceHash.toHex()
@@ -3990,100 +3740,12 @@ void NoteEditorPrivate::provideSrcForResourceImgTags()
     page->executeJavaScript(QStringLiteral("provideSrcForResourceImgTags();"));
 }
 
-void NoteEditorPrivate::saveNoteImageResourcesToTemporaryFiles()
-{
-    QNDEBUG(QStringLiteral("NoteEditorPrivate::saveNoteImageResourcesToTemporaryFiles"));
-
-    if (Q_UNLIKELY(m_pNote.isNull())) {
-        QNDEBUG(QStringLiteral("No note is set for the editor"));
-        return;
-    }
-
-    QList<Resource> resources = m_pNote->resources();
-    if (resources.isEmpty()) {
-        QNTRACE(QStringLiteral("Note has no resources, nothing to do"));
-        return;
-    }
-
-    auto resourcesConstBegin = resources.constBegin();
-    auto resourcesConstEnd = resources.constEnd();
-
-    size_t numPendingResourceWritesToLocalFiles = 0;
-
-    QString mimeImagePrefix = QStringLiteral("image");
-    for(auto it = resourcesConstBegin; it != resourcesConstEnd; ++it)
-    {
-        const Resource & resource = *it;
-
-        if (Q_UNLIKELY(!resource.hasMime())) {
-            QNINFO(QStringLiteral("Detected resource without mime type: ") << resource);
-            continue;
-        }
-
-        const QString & mime = resource.mime();
-        if (!mime.startsWith(mimeImagePrefix)) {
-            QNTRACE(QStringLiteral("Skipping non-image resource: ") << resource);
-            continue;
-        }
-
-        if (!resource.hasDataBody() && !resource.hasAlternateDataBody()) {
-            QNINFO(QStringLiteral("Detected resource without data body: ") << resource);
-            continue;
-        }
-
-        if (!resource.hasDataHash() && !resource.hasAlternateDataHash()) {
-            QNINFO(QStringLiteral("Detected resource without data hash: ") << resource);
-            continue;
-        }
-
-        const QByteArray & dataHash = (resource.hasDataHash()
-                                       ? resource.dataHash()
-                                       : resource.alternateDataHash());
-
-        QNTRACE(QStringLiteral("Found current note's resource corresponding to the data hash ")
-                << dataHash.toHex() << ": " << resource);
-
-        if (!m_resourceInfo.contains(dataHash))
-        {
-            bool res = saveImageResourceDataToTemporaryFile(resource);
-            if (res) {
-                ++numPendingResourceWritesToLocalFiles;
-            }
-        }
-    }
-
-    if (numPendingResourceWritesToLocalFiles == 0)
-    {
-        QNTRACE(QStringLiteral("All current note's image resources are written to temporary files and are actual. "
-                               "Will set filepaths to these local files to src attributes of img resource tags"));
-        if (!m_pendingNotePageLoad) {
-            provideSrcForResourceImgTags();
-        }
-
-        return;
-    }
-
-    QNTRACE(QStringLiteral("Scheduled writing of ") << numPendingResourceWritesToLocalFiles
-            << QStringLiteral(" image resources to temporary files, will wait until they are written "
-                              "and add the src attributes to img resources when the files are ready"));
-}
-
-bool NoteEditorPrivate::saveImageResourceDataToTemporaryFile(const Resource & resource)
-{
-    QNDEBUG(QStringLiteral("NoteEditorPrivate::saveImageResourceDataToTemporaryFile: resource local uid = ")
-            << resource.localUid());
-
-    QNTRACE(resource);
-
-    // TODO: implement
-    return false;
-}
-
 void NoteEditorPrivate::manualSaveResourceToFile(const Resource & resource)
 {
     QNDEBUG(QStringLiteral("NoteEditorPrivate::manualSaveResourceToFile"));
 
     if (Q_UNLIKELY(!resource.hasDataBody() && !resource.hasAlternateDataBody())) {
+        // FIXME: should actually request the data from NoteEditorLocalStorageBroker instead
         ErrorString error(QT_TR_NOOP("Can't save resource to file: resource has neither data body nor alternate data body"));
         QNINFO(error << QStringLiteral(", resource: ") << resource);
         Q_EMIT notifyError(error);
@@ -4250,29 +3912,6 @@ void NoteEditorPrivate::manualSaveResourceToFile(const Resource & resource)
     Q_EMIT saveResourceToFile(absoluteFilePath, data, saveResourceToFileRequestId, /* append = */ false);
     QNDEBUG(QStringLiteral("Sent request to manually save resource to file, request id = ") << saveResourceToFileRequestId
             << QStringLiteral(", resource local uid = ") << resource.localUid());
-}
-
-void NoteEditorPrivate::openResource(const QString & resourceAbsoluteFilePath)
-{
-    QNDEBUG(QStringLiteral("NoteEditorPrivate::openResource: ") << resourceAbsoluteFilePath);
-
-    QFile resourceFile(resourceAbsoluteFilePath);
-    if (Q_UNLIKELY(!resourceFile.exists())) {
-        ErrorString errorDescription(QT_TR_NOOP("Can't open attachment: the attachment file does not exist"));
-        QNWARNING(errorDescription << QStringLiteral(", supposed file path: ") << resourceAbsoluteFilePath);
-        Q_EMIT notifyError(errorDescription);
-        return;
-    }
-
-    QString symLinkTarget = resourceFile.symLinkTarget();
-    if (!symLinkTarget.isEmpty()) {
-        QNDEBUG(QStringLiteral("The resource file is actually a symlink, substituting the file path to open to the real file: ")
-                << symLinkTarget);
-        Q_EMIT openResourceFile(symLinkTarget);
-    }
-    else {
-        Q_EMIT openResourceFile(resourceAbsoluteFilePath);
-    }
 }
 
 QImage NoteEditorPrivate::buildGenericResourceImage(const Resource & resource)
@@ -4703,8 +4342,6 @@ void NoteEditorPrivate::updateResource(const QString & resourceLocalUid, const Q
         return;
     }
 
-    Q_EMIT convertedToNote(*m_pNote);
-
     m_resourceInfo.removeResourceInfo(previousResourceHash);
 
     auto recoIt = m_recognitionIndicesByResourceHash.find(previousResourceHash);
@@ -4712,7 +4349,7 @@ void NoteEditorPrivate::updateResource(const QString & resourceLocalUid, const Q
         Q_UNUSED(m_recognitionIndicesByResourceHash.erase(recoIt));
     }
 
-    Q_UNUSED(saveResourceToLocalFile(updatedResource))
+    Q_EMIT convertedToNote(*m_pNote);
 }
 
 void NoteEditorPrivate::setupGenericTextContextMenu(const QStringList & extraData, const QString & selectedHtml, bool insideDecryptedTextFragment)
@@ -4992,6 +4629,8 @@ void NoteEditorPrivate::setupFileIO()
 
     QObject::connect(this, QNSIGNAL(NoteEditorPrivate,currentNoteChanged,Note),
                      m_pResourceDataInTemporaryFileStorageManager, QNSLOT(ResourceDataInTemporaryFileStorageManager,onCurrentNoteChanged,Note));
+    QObject::connect(this, QNSIGNAL(NoteEditorPrivate,convertedToNote,Note),
+                     m_pResourceDataInTemporaryFileStorageManager, QNSLOT(ResourceDataInTemporaryFileStorageManager,onCurrentNoteChanged,Note));
 
     QObject::connect(m_pResourceDataInTemporaryFileStorageManager, QNSIGNAL(ResourceDataInTemporaryFileStorageManager,failedToPutResourceDataIntoTemporaryFile,QString,QString,ErrorString),
                      this, QNSLOT(NoteEditorPrivate,onFailedToPutResourceDataInTemporaryFile,QString,QString,ErrorString));
@@ -5016,10 +4655,6 @@ void NoteEditorPrivate::setupFileIO()
                      m_pResourceDataInTemporaryFileStorageManager, QNSLOT(ResourceDataInTemporaryFileStorageManager,onOpenResourceRequest,QString));
     QObject::connect(m_pResourceDataInTemporaryFileStorageManager, QNSIGNAL(ResourceDataInTemporaryFileStorageManager,resourceFileChanged,QString,QString),
                      this, QNSLOT(NoteEditorPrivate,onResourceFileChanged,QString,QString));
-    QObject::connect(this, QNSIGNAL(NoteEditorPrivate,saveResourceToStorage,QString,QString,QByteArray,QByteArray,QString,QUuid,bool),
-                     m_pResourceDataInTemporaryFileStorageManager, QNSLOT(ResourceDataInTemporaryFileStorageManager,onWriteResourceToFileRequest,QString,QString,QByteArray,QByteArray,QString,QUuid,bool));
-    QObject::connect(m_pResourceDataInTemporaryFileStorageManager, QNSIGNAL(ResourceDataInTemporaryFileStorageManager,writeResourceToFileCompleted,QUuid,QByteArray,QString,int,ErrorString),
-                     this, QNSLOT(NoteEditorPrivate,onResourceSavedToStorage,QUuid,QByteArray,QString,int,ErrorString));
 
     if (m_pGenericResourceImageManager) {
         m_pGenericResourceImageManager->deleteLater();
@@ -6760,9 +6395,6 @@ void NoteEditorPrivate::addResourceToNote(const Resource & resource)
         return;
     }
 
-    m_pNote->addResource(resource);
-    Q_EMIT convertedToNote(*m_pNote);
-
     if (resource.hasDataHash() && resource.hasRecognitionDataBody())
     {
         ResourceRecognitionIndices recoIndices(resource.recognitionDataBody());
@@ -6772,7 +6404,8 @@ void NoteEditorPrivate::addResourceToNote(const Resource & resource)
         }
     }
 
-    saveResourceToLocalFile(resource);
+    m_pNote->addResource(resource);
+    Q_EMIT convertedToNote(*m_pNote);
 }
 
 void NoteEditorPrivate::removeResourceFromNote(const Resource & resource)
@@ -6864,9 +6497,9 @@ void NoteEditorPrivate::setNoteResources(const QList<Resource> & resources)
     }
 
     m_pNote->setResources(resources);
-    Q_EMIT convertedToNote(*m_pNote);
-
     rebuildRecognitionIndicesCache();
+
+    Q_EMIT convertedToNote(*m_pNote);
 }
 
 bool NoteEditorPrivate::isModified() const
@@ -6954,7 +6587,8 @@ void NoteEditorPrivate::removeSymlinksToImageResourceFile(const QString & resour
         return;
     }
 
-    QString fileStorageDirPath = m_noteEditorImageResourcesStoragePath + QStringLiteral("/") + m_pNote->localUid();
+    QString fileStorageDirPath = ResourceDataInTemporaryFileStorageManager::imageResourceFileStorageFolderPath() +
+                                 QStringLiteral("/") + m_pNote->localUid();
     QString fileStoragePathPrefix = fileStorageDirPath + QStringLiteral("/") + resourceLocalUid;
     QString fileStoragePath = fileStoragePathPrefix + QStringLiteral(".png");
 
@@ -6993,23 +6627,23 @@ QString NoteEditorPrivate::createSymlinkToImageResourceFile(const QString & file
     QNDEBUG(QStringLiteral("NoteEditorPrivate::createSymlinkToImageResourceFile: file storage path = ") << fileStoragePath
             << QStringLiteral(", local uid = ") << localUid);
 
-    QString linkFileName = fileStoragePath;
-    linkFileName.remove(linkFileName.size() - 4, 4);
-    linkFileName += QStringLiteral("_");
-    linkFileName += QString::number(QDateTime::currentMSecsSinceEpoch());
+    QString linkFilePath = fileStoragePath;
+    linkFilePath.remove(linkFilePath.size() - 4, 4);
+    linkFilePath += QStringLiteral("_");
+    linkFilePath += QString::number(QDateTime::currentMSecsSinceEpoch());
 
 #ifdef Q_OS_WIN
-    linkFileName += QStringLiteral(".lnk");
+    linkFilePath += QStringLiteral(".lnk");
 #else
-    linkFileName += QStringLiteral(".png");
+    linkFilePath += QStringLiteral(".png");
 #endif
 
-    QNTRACE(QStringLiteral("Link file name = ") << linkFileName);
+    QNTRACE(QStringLiteral("Link file path = ") << linkFilePath);
 
     removeSymlinksToImageResourceFile(localUid);
 
     QFile imageResourceFile(fileStoragePath);
-    bool res = imageResourceFile.link(linkFileName);
+    bool res = imageResourceFile.link(linkFilePath);
     if (Q_UNLIKELY(!res)) {
         errorDescription.setBase(QT_TR_NOOP("Can't process the image resource update: "
                                             "can't create a symlink to the resource file"));
@@ -7019,7 +6653,7 @@ QString NoteEditorPrivate::createSymlinkToImageResourceFile(const QString & file
         return QString();
     }
 
-    return linkFileName;
+    return linkFilePath;
 }
 
 void NoteEditorPrivate::onDropEvent(QDropEvent * pEvent)

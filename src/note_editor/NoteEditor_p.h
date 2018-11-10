@@ -179,8 +179,6 @@ public:
     bool isPageEditable() const { return m_isPageEditable; }
 
     QString noteEditorPagePath() const;
-    const QString & imageResourcesStoragePath() const { return m_noteEditorImageResourcesStoragePath; }
-    const QString & resourceLocalFileStoragePath() const { return m_resourceLocalFileStorageFolder; }
     const QString & genericResourceImageFileStoragePath() const { return m_genericResourceImageFileStoragePath; }
 
     void setRenameResourceDelegateSubscriptions(RenameResourceDelegate & delegate);
@@ -334,8 +332,6 @@ public:
 
 // private signals:
 Q_SIGNALS:
-    void saveResourceToStorage(QString noteLocalUid, QString resourceLocalUid, QByteArray data, QByteArray dataHash,
-                               QString preferredFileSuffix, QUuid requestId, bool isImage);
     void readResourceFromStorage(QString fileStoragePath, QString localUid, QUuid requestId);
 
     void openResourceFile(QString absoluteFilePath);
@@ -367,8 +363,6 @@ private Q_SLOTS:
     void onNoteLoadFinished(bool ok);
     void onContentChanged();
 
-    void onResourceSavedToStorage(QUuid requestId, QByteArray dataHash, QString fileStoragePath,
-                                  int errorCode, ErrorString errorDescription);
     void onResourceFileChanged(QString resourceLocalUid, QString fileStoragePath);
     void onResourceFileReadFromStorage(QUuid requestId, QByteArray data, QByteArray dataHash,
                                        int errorCode, ErrorString errorDescription);
@@ -593,16 +587,10 @@ private:
 
     bool htmlToNoteContent(ErrorString & errorDescription);
 
-    void saveNoteResourcesToLocalFiles();
-    bool saveResourceToLocalFile(const Resource & resource);
     void updateHashForResourceTag(const QByteArray & oldResourceHash, const QByteArray & newResourceHash);
     void provideSrcForResourceImgTags();
 
-    void saveNoteImageResourcesToTemporaryFiles();
-    bool saveImageResourceDataToTemporaryFile(const Resource & resource);
-
     void manualSaveResourceToFile(const Resource & resource);
-    void openResource(const QString & resourceAbsoluteFilePath);
 
 #ifdef QUENTIER_USE_QT_WEB_ENGINE
     void provideSrcAndOnClickScriptForImgEnCryptTags();
@@ -820,7 +808,6 @@ private:
 
 private:
     QString     m_noteEditorPageFolderPath;
-    QString     m_noteEditorImageResourcesStoragePath;
     QString     m_genericResourceImageFileStoragePath;
 
     QFont       m_font;
@@ -1036,16 +1023,7 @@ private:
     ResourceInfo                    m_resourceInfo;
     ResourceInfoJavaScriptHandler * m_pResourceInfoJavaScriptHandler;
 
-    QString                         m_resourceLocalFileStorageFolder;
-
-    QHash<QUuid, QString>           m_genericResourceLocalUidBySaveToStorageRequestIds;
-    QSet<QUuid>                     m_imageResourceSaveToStorageRequestIds;
-
     QHash<QString, QString>         m_resourceFileStoragePathsByResourceLocalUid;
-
-    QSet<QString>                   m_localUidsOfResourcesWantedToBeSaved;
-    QSet<QString>                   m_localUidsOfResourcesWantedToBeOpened;
-
     QSet<QUuid>                     m_manualSaveResourceToFileRequestIds;
 
     QHash<QString, QStringList>     m_fileSuffixesForMimeType;
