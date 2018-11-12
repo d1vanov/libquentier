@@ -92,8 +92,8 @@ Q_SIGNALS:
 
 // private signals
     void readFileData(QString filePath, QUuid requestId);
-    void saveResourceToStorage(QString noteLocalUid, QString resourceLocalUid, QByteArray data, QByteArray dataHash,
-                               QString preferredFileSuffix, QUuid requestId, bool isImage);
+    void saveResourceDataToTemporaryFile(QString noteLocalUid, QString resourceLocalUid, QByteArray data,
+                                         QByteArray dataHash, QUuid requestId, bool isImage);
     void writeFile(QString filePath, QByteArray data, QUuid requestId);
 
     void saveGenericResourceImageToFile(QString noteLocalUid, QString resourceLocalUid, QByteArray data, QString fileSuffix,
@@ -104,9 +104,7 @@ private Q_SLOTS:
 
     void onResourceFileRead(bool success, ErrorString errorDescription,
                             QByteArray data, QUuid requestId);
-    void onResourceSavedToStorage(QUuid requestId, QByteArray dataHash,
-                                  QString fileStoragePath, int errorCode,
-                                  ErrorString errorDescription);
+    void onResourceDataSavedToTemporaryFile(QUuid requestId, QByteArray dataHash, ErrorString errorDescription);
 
     void onGenericResourceImageSaved(bool success, QByteArray resourceImageDataHash,
                                      QString filePath, ErrorString errorDescription,
@@ -147,7 +145,7 @@ private:
     QString                         m_resourceFileStoragePath;
 
     QUuid                           m_readResourceFileRequestId;
-    QUuid                           m_saveResourceToStorageRequestId;
+    QUuid                           m_saveResourceDataToTemporaryFileRequestId;
 };
 
 } // namespace quentier

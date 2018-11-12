@@ -56,133 +56,26 @@ QString ResourceDataInTemporaryFileStorageManager::nonImageResourceFileStorageFo
     return applicationTemporaryStoragePath() + QStringLiteral("/resources/non-image");
 }
 
-void ResourceDataInTemporaryFileStorageManager::onWriteResourceToFileRequest(QString noteLocalUid, QString resourceLocalUid, QByteArray data,
-                                                                             QByteArray dataHash, QString preferredFileSuffix, QUuid requestId, bool isImage)
+void ResourceDataInTemporaryFileStorageManager::onSaveResourceDataToTemporaryFileRequest(QString noteLocalUid, QString resourceLocalUid,
+                                                                                         QByteArray data, QByteArray dataHash,
+                                                                                         QUuid requestId, bool isImage)
 {
-    QNDEBUG(QStringLiteral("ResourceDataInTemporaryFileStorageManager::onWriteResourceToFileRequest: note local uid = ") << noteLocalUid
-            << QStringLiteral(", resource local uid = ") << resourceLocalUid << QStringLiteral(", request id = ") << requestId
-            << QStringLiteral(", preferred file suffix = ") << preferredFileSuffix << QStringLiteral(", data hash = ") << dataHash.toHex()
-            << QStringLiteral(", is image = ") << (isImage ? QStringLiteral("true") : QStringLiteral("false")));
+    QNDEBUG(QStringLiteral("ResourceDataInTemporaryFileStorageManager::onSaveResourceDataToTemporaryFileRequest: note local uid = ")
+            << noteLocalUid << QStringLiteral(", resource local uid = ") << resourceLocalUid << QStringLiteral(", request id = ")
+            << requestId << QStringLiteral(", data hash = ") << dataHash.toHex() << QStringLiteral(", is image = ")
+            << (isImage ? QStringLiteral("true") : QStringLiteral("false")));
 
-    if (Q_UNLIKELY(noteLocalUid.isEmpty())) {
-        ErrorString errorDescription(QT_TR_NOOP("Detected attempt to write resource data for empty note local uid to local file"));
-        QNWARNING(errorDescription << QStringLiteral(", request id = ") << requestId);
-        Q_EMIT writeResourceToFileCompleted(requestId, dataHash, QString(), Errors::EmptyLocalUid, errorDescription);
-        return;
-    }
-
-    if (Q_UNLIKELY(resourceLocalUid.isEmpty())) {
-        ErrorString errorDescription(QT_TR_NOOP("Detected attempt to write data for empty resource local uid to local file"));
-        QNWARNING(errorDescription << QStringLiteral(", request id = ") << requestId);
-        Q_EMIT writeResourceToFileCompleted(requestId, dataHash, QString(), Errors::EmptyLocalUid, errorDescription);
-        return;
-    }
-
-    if (Q_UNLIKELY(requestId.isNull())) {
-        ErrorString errorDescription(QT_TR_NOOP("Detected attempt to write data for resource to local file with empty request id"));
-        QNWARNING(errorDescription << QStringLiteral(", note local uid = ") << noteLocalUid << QStringLiteral(", resource local uid = ") << resourceLocalUid);
-        Q_EMIT writeResourceToFileCompleted(requestId, dataHash, QString(), ResourceDataInTemporaryFileStorageManager::Errors::EmptyRequestId, errorDescription);
-        return;
-    }
-
-    if (Q_UNLIKELY(data.isEmpty())) {
-        ErrorString errorDescription(QT_TR_NOOP("Detected attempt to write empty resource data to local file"));
-        QNWARNING(errorDescription << QStringLiteral(", note local uid = ") << noteLocalUid << QStringLiteral(", resource local uid = ") << resourceLocalUid);
-        Q_EMIT writeResourceToFileCompleted(requestId, dataHash, QString(), ResourceDataInTemporaryFileStorageManager::Errors::EmptyData, errorDescription);
-        return;
-    }
-
-    if (!isImage && Q_UNLIKELY(m_nonImageResourceFileStorageLocation.isEmpty())) {
-        ErrorString errorDescription(QT_TR_NOOP("Can't automatically choose resource file storage location"));
-        QNWARNING(errorDescription);
-        Q_EMIT writeResourceToFileCompleted(requestId, dataHash, QString(),
-                                            ResourceDataInTemporaryFileStorageManager::Errors::NoResourceFileStorageLocation,
-                                            errorDescription);
-        return;
-    }
-
-    QString fileStoragePath = (isImage
-                               ? m_imageResourceFileStorageLocation
-                               : m_nonImageResourceFileStorageLocation);
-    fileStoragePath += QStringLiteral("/") + noteLocalUid + QStringLiteral("/") + resourceLocalUid;
-
-    if (!preferredFileSuffix.isEmpty()) {
-        fileStoragePath += QStringLiteral(".") + preferredFileSuffix;
-    }
-
-    QFileInfo fileStoragePathInfo(fileStoragePath);
-    QDir fileStorageDir(fileStoragePathInfo.absoluteDir());
-    if (!fileStorageDir.exists())
-    {
-        bool createDir = fileStorageDir.mkpath(fileStorageDir.absolutePath());
-        if (!createDir)
-        {
-            int errorCode = -1;
-            ErrorString errorDescription(QT_TR_NOOP("Can't create folder to write the resource into"));
-            QNWARNING(errorDescription << QStringLiteral(", note local uid = ") << noteLocalUid << QStringLiteral(", resource local uid = ")
-                      << resourceLocalUid << QStringLiteral(", request id = ") << requestId);
-            Q_EMIT writeResourceToFileCompleted(requestId, dataHash, fileStoragePath, errorCode, errorDescription);
-            return;
-        }
-    }
-
-    if (dataHash.isEmpty()) {
-        dataHash = calculateHash(data);
-        QNTRACE(QStringLiteral("Resource data hash was empty, calculated hash: ") << dataHash.toHex());
-    }
-
-    bool actual = checkIfResourceFileExistsAndIsActual(noteLocalUid, resourceLocalUid, fileStoragePath, dataHash);
-    if (actual) {
-        QNTRACE(QStringLiteral("Skipping writing the resource to file as it is not necessary"));
-        Q_EMIT writeResourceToFileCompleted(requestId, dataHash, fileStoragePath, 0, ErrorString());
-        return;
-    }
-
-    QFile file(fileStoragePath);
-    bool open = file.open(QIODevice::WriteOnly);
-    if (Q_UNLIKELY(!open))
-    {
-        ErrorString errorDescription(QT_TR_NOOP("Can't open resource file for writing"));
-        errorDescription.details() = file.errorString();
-        int errorCode = file.error();
-        QNWARNING(errorDescription << QStringLiteral(", error code = ") << errorCode << QStringLiteral(", note local uid = ")
-                  << noteLocalUid << QStringLiteral(", resource local uid = ") << resourceLocalUid << QStringLiteral(", request id = ")
-                  << requestId);
-        Q_EMIT writeResourceToFileCompleted(requestId, dataHash, fileStoragePath, errorCode, errorDescription);
-        return;
-    }
-
-    qint64 writeRes = file.write(data);
-    if (Q_UNLIKELY(writeRes < 0))
-    {
-        ErrorString errorDescription(QT_TR_NOOP("Can't write data to resource file"));
-        errorDescription.details() = file.errorString();
-        int errorCode = file.error();
-        QNWARNING(errorDescription << QStringLiteral(", error code = ") << errorCode << QStringLiteral(", note local uid = ")
-                  << noteLocalUid << QStringLiteral(", resource local uid = ") << resourceLocalUid << QStringLiteral(", request id = ")
-                  << requestId);
-        Q_EMIT writeResourceToFileCompleted(requestId, dataHash, fileStoragePath, errorCode, errorDescription);
-        return;
-    }
-
-    file.close();
-
-    m_resourceLocalUidByFilePath[fileStoragePath] = resourceLocalUid;
-
-    int errorCode = 0;
     ErrorString errorDescription;
-    bool res = updateResourceHash(resourceLocalUid, dataHash, fileStoragePathInfo.absolutePath(),
-                                  errorCode, errorDescription);
-    if (Q_UNLIKELY(!res)) {
-        Q_EMIT writeResourceToFileCompleted(requestId, dataHash, fileStoragePath, errorCode, errorDescription);
-        QNWARNING(errorDescription << QStringLiteral(", error code = ") << errorCode << QStringLiteral(", resource local uid = ")
-                  << resourceLocalUid << QStringLiteral(", request id = ") << requestId);
+    bool res = writeResourceDataToTemporaryFile(noteLocalUid, resourceLocalUid, data, dataHash,
+                                                (isImage ? ResourceType::Image : ResourceType::NonImage),
+                                                errorDescription);
+    if (!res) {
+        Q_EMIT saveResourceDataToFileTemporaryFileCompleted(requestId, dataHash, errorDescription);
         return;
     }
 
-    QNDEBUG(QStringLiteral("Successfully wrote resource data to file: resource local uid = ") << resourceLocalUid
-            << QStringLiteral(", file path = ") << fileStoragePath);
-    Q_EMIT writeResourceToFileCompleted(requestId, dataHash, fileStoragePath, 0, ErrorString());
+    QNDEBUG(QStringLiteral("Successfully wrote resource data to file: resource local uid = ") << resourceLocalUid);
+    Q_EMIT saveResourceDataToFileTemporaryFileCompleted(requestId, dataHash, ErrorString());
 }
 
 void ResourceDataInTemporaryFileStorageManager::onReadResourceFromFileRequest(QString fileStoragePath, QString resourceLocalUid, QUuid requestId)

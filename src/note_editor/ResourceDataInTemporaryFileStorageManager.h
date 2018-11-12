@@ -68,8 +68,8 @@ public:
     static QString nonImageResourceFileStorageFolderPath();
 
 Q_SIGNALS:
-    void writeResourceToFileCompleted(QUuid requestId, QByteArray dataHash,
-                                      QString fileStoragePath, int errorCode, ErrorString errorDescription);
+    void saveResourceDataToFileTemporaryFileCompleted(QUuid requestId, QByteArray dataHash,
+                                                      ErrorString errorDescription);
     void readResourceFromFileCompleted(QUuid requestId, QByteArray data, QByteArray dataHash,
                                        int errorCode, ErrorString errorDescription);
 
@@ -177,19 +177,18 @@ Q_SIGNALS:
 
 public Q_SLOTS:
     /**
-     * @brief onWriteResourceToFileRequest - slot being called when the resource data needs to be written
-     * to local file; the method would also check that the already existing file (if any) is actual.
+     * @brief onSaveResourceDataToTemporaryFileRequest - slot being called when the resource data needs to be saved
+     * to a temporary file; the method would also check that the already existing file (if any) is actual.
      * If so, it would return successfully without doing any IO.
      * @param noteLocalUid - the local uid of the note to which the resource belongs
      * @param resourceLocalUid - the local uid of the resource for which the data is written to file
      * @param data - the resource data to be written to file
      * @param dataHash - the hash of the resource data; if it's empty, it would be calculated by the method itself
-     * @param preferredFileSuffix - the preferred file suffix for the resource; if empty, the resource file is written withoug suffix
      * @param requestId - request identifier for writing the data to file
      * @param isImage - indicates whether the resource is the image which can be displayed inline in the note editor page
      */
-    void onWriteResourceToFileRequest(QString noteLocalUid, QString resourceLocalUid, QByteArray data, QByteArray dataHash,
-                                      QString preferredFileSuffix, QUuid requestId, bool isImage);
+    void onSaveResourceDataToTemporaryFileRequest(QString noteLocalUid, QString resourceLocalUid, QByteArray data, QByteArray dataHash,
+                                                  QUuid requestId, bool isImage);
 
     /**
      * @brief onReadResourceFromFileRequest - slot being called when the resource data and hash need to be read

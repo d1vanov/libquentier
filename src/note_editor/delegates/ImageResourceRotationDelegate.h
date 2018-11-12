@@ -42,13 +42,12 @@ Q_SIGNALS:
     void notifyError(ErrorString error);
 
 // private signals
-    void saveResourceToStorage(QString noteLocalUid, QString resourceLocalUid, QByteArray data, QByteArray dataHash,
-                               QString preferredFileSuffix, QUuid requestId, bool isImage);
+    void saveResourceDataToTemporaryFile(QString noteLocalUid, QString resourceLocalUid, QByteArray data, QByteArray dataHash,
+                                         QUuid requestId, bool isImage);
 
 private Q_SLOTS:
     void onOriginalPageConvertedToNote(Note note);
-    void onResourceSavedToStorage(QUuid requestId, QByteArray dataHash, QString fileStoragePath,
-                                  int errorCode, ErrorString errorDescription);
+    void onResourceDataSavedToTemporaryFile(QUuid requestId, QByteArray dataHash, ErrorString errorDescription);
     void onResourceTagHashUpdated(const QVariant & data);
     void onResourceTagSrcUpdated(const QVariant & data);
 
@@ -78,7 +77,7 @@ private:
     QString                         m_resourceFileStoragePathAfter;
 
     Resource                        m_rotatedResource;
-    QUuid                           m_saveResourceRequestId;
+    QUuid                           m_saveResourceDataToTemporaryFileRequestId;
 };
 
 } // namespace quentier
