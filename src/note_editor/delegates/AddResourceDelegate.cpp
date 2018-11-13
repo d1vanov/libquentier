@@ -273,7 +273,13 @@ void AddResourceDelegate::onResourceFileRead(bool success, ErrorString errorDesc
     }
 
     QFileInfo fileInfo(m_filePath);
-    doSaveResourceToStorage(data, fileInfo.fileName());
+
+    if (m_resourceMimeType.name().startsWith(QStringLiteral("image/"))) {
+        doSaveResourceDataToTemporaryFile(data, fileInfo.fileName());
+    }
+    else {
+        doGenerateGenericResourceImage(data, fileInfo.fileName());
+    }
 }
 
 void AddResourceDelegate::doStartUsingData()
@@ -308,12 +314,17 @@ void AddResourceDelegate::doStartUsingData()
         return;
     }
 
-    doSaveResourceToStorage(m_data, QString());
+    if (m_resourceMimeType.name().startsWith(QStringLiteral("image/"))) {
+        doSaveResourceDataToTemporaryFile(m_data, QString());
+    }
+    else {
+        doGenerateGenericResourceImage(m_data, QString());
+    }
 }
 
-void AddResourceDelegate::doSaveResourceToStorage(const QByteArray & data, QString resourceName)
+void AddResourceDelegate::doSaveResourceDataToTemporaryFile(const QByteArray & data, QString resourceName)
 {
-    QNDEBUG(QStringLiteral("AddResourceDelegate::doSaveResourceToStorage: resource name = ") << resourceName);
+    QNDEBUG(QStringLiteral("AddResourceDelegate::doSaveResourceDataToTemporaryFile: resource name = ") << resourceName);
 
     const Note * pNote = m_noteEditor.notePtr();
     if (!pNote) {
@@ -334,13 +345,8 @@ void AddResourceDelegate::doSaveResourceToStorage(const QByteArray & data, QStri
         return;
     }
 
-    bool isImage = m_resourceMimeType.name().startsWith(QStringLiteral("image/"));
-    if (isImage) {
-        m_resourceFileStoragePath = ResourceDataInTemporaryFileStorageManager::imageResourceFileStorageFolderPath();
-    }
-    else {
-        m_resourceFileStoragePath = ResourceDataInTemporaryFileStorageManager::nonImageResourceFileStorageFolderPath();
-    }
+    // NOTE: only image resources data gets saved to temporary files
+    m_resourceFileStoragePath = ResourceDataInTemporaryFileStorageManager::imageResourceFileStorageFolderPath();
 
     m_resourceFileStoragePath += QStringLiteral("/") + pNote->localUid() + QStringLiteral("/") + resourceLocalUid;
 
@@ -355,7 +361,7 @@ void AddResourceDelegate::doSaveResourceToStorage(const QByteArray & data, QStri
             << resourceLocalUid << QStringLiteral(", data hash = ") << dataHash.toHex() << QStringLiteral(", request id = ")
             << m_saveResourceDataToTemporaryFileRequestId << QStringLiteral(", mime type name = ") << m_resourceMimeType.name());
     Q_EMIT saveResourceDataToTemporaryFile(pNote->localUid(), resourceLocalUid, data, dataHash,
-                                           m_saveResourceDataToTemporaryFileRequestId, isImage);
+                                           m_saveResourceDataToTemporaryFileRequestId, /* is image = */ true);
 }
 
 void AddResourceDelegate::onResourceDataSavedToTemporaryFile(QUuid requestId, QByteArray dataHash, ErrorString errorDescription)
@@ -375,10 +381,7 @@ void AddResourceDelegate::onResourceDataSavedToTemporaryFile(QUuid requestId, QB
         return;
     }
 
-    bool isImageResource = m_resourceMimeType.name().startsWith(QStringLiteral("image/"));
-    m_resourceFileStoragePath = (isImageResource
-                                 ? ResourceDataInTemporaryFileStorageManager::imageResourceFileStorageFolderPath()
-                                 : ResourceDataInTemporaryFileStorageManager::nonImageResourceFileStorageFolderPath());
+    m_resourceFileStoragePath = ResourceDataInTemporaryFileStorageManager::imageResourceFileStorageFolderPath();
     m_resourceFileStoragePath += QStringLiteral("/") + pNote->localUid() + QStringLiteral("/") + m_resource.localUid() +
                                  QStringLiteral(".dat");
 
@@ -403,32 +406,8 @@ void AddResourceDelegate::onResourceDataSavedToTemporaryFile(QUuid requestId, QB
         m_noteEditor.replaceResourceInNote(m_resource);
     }
 
-    if (isImageResource) {
-        QNTRACE(QStringLiteral("Done adding the image resource to the note, moving on to adding it to the page"));
-        insertNewResourceHtml();
-        return;
-    }
-
-    // Otherwise need to build the image for the generic resource
-    QImage resourceImage = m_noteEditor.buildGenericResourceImage(m_resource);
-
-    QByteArray resourceImageData;
-    QBuffer buffer(&resourceImageData);
-    Q_UNUSED(buffer.open(QIODevice::WriteOnly));
-    resourceImage.save(&buffer, "PNG");
-
-    m_saveResourceImageRequestId = QUuid::createUuid();
-
-    QObject::connect(this, QNSIGNAL(AddResourceDelegate,saveGenericResourceImageToFile,QString,QString,QByteArray,QString,QByteArray,QString,QUuid),
-                     m_pGenericResourceImageManager, QNSLOT(GenericResourceImageManager,onGenericResourceImageWriteRequest,QString,QString,QByteArray,QString,QByteArray,QString,QUuid));
-    QObject::connect(m_pGenericResourceImageManager, QNSIGNAL(GenericResourceImageManager,genericResourceImageWriteReply,bool,QByteArray,QString,ErrorString,QUuid),
-                     this, QNSLOT(AddResourceDelegate,onGenericResourceImageSaved,bool,QByteArray,QString,ErrorString,QUuid));
-
-    QNDEBUG(QStringLiteral("Emitting request to write generic resource image for new resource with local uid ")
-            << m_resource.localUid() << QStringLiteral(", request id ") << m_saveResourceImageRequestId
-            << QStringLiteral(", note local uid = ") << pNote->localUid());
-    Q_EMIT saveGenericResourceImageToFile(pNote->localUid(), m_resource.localUid(), resourceImageData, QStringLiteral("png"),
-                                          dataHash, m_resourceFileStoragePath, m_saveResourceImageRequestId);
+    QNTRACE(QStringLiteral("Done adding the image resource to the note, moving on to adding it to the page"));
+    insertNewResourceHtml();
 }
 
 void AddResourceDelegate::onGenericResourceImageSaved(bool success, QByteArray resourceImageDataHash,
@@ -466,6 +445,54 @@ void AddResourceDelegate::onGenericResourceImageSaved(bool success, QByteArray r
     }
 
     insertNewResourceHtml();
+}
+
+void AddResourceDelegate::doGenerateGenericResourceImage(const QByteArray & data, QString resourceName)
+{
+    QNDEBUG(QStringLiteral("AddResourceDelegate::doGenerateGenericResourceImage"));
+
+    const Note * pNote = m_noteEditor.notePtr();
+    if (Q_UNLIKELY(!pNote)) {
+        ErrorString errorDescription(QT_TR_NOOP("Can't set up the image corresponding to the resource: no note is set to the editor"));
+        QNWARNING(errorDescription);
+        Q_EMIT notifyError(errorDescription);
+        return;
+    }
+
+    m_resourceFileStoragePath = ResourceDataInTemporaryFileStorageManager::nonImageResourceFileStorageFolderPath();
+    m_resourceFileStoragePath += QStringLiteral("/") + pNote->localUid() + QStringLiteral("/") + m_resource.localUid() +
+                                 QStringLiteral(".dat");
+
+    if (resourceName.isEmpty()) {
+        resourceName = tr("Attachment");
+    }
+
+    QByteArray dataHash = QCryptographicHash::hash(data, QCryptographicHash::Md5);
+    m_resource = m_noteEditor.attachResourceToNote(data, dataHash, m_resourceMimeType, resourceName);
+    QString resourceLocalUid = m_resource.localUid();
+    if (Q_UNLIKELY(resourceLocalUid.isEmpty())) {
+        return;
+    }
+
+    QImage resourceImage = m_noteEditor.buildGenericResourceImage(m_resource);
+
+    QByteArray resourceImageData;
+    QBuffer buffer(&resourceImageData);
+    Q_UNUSED(buffer.open(QIODevice::WriteOnly));
+    resourceImage.save(&buffer, "PNG");
+
+    m_saveResourceImageRequestId = QUuid::createUuid();
+
+    QObject::connect(this, QNSIGNAL(AddResourceDelegate,saveGenericResourceImageToFile,QString,QString,QByteArray,QString,QByteArray,QString,QUuid),
+                     m_pGenericResourceImageManager, QNSLOT(GenericResourceImageManager,onGenericResourceImageWriteRequest,QString,QString,QByteArray,QString,QByteArray,QString,QUuid));
+    QObject::connect(m_pGenericResourceImageManager, QNSIGNAL(GenericResourceImageManager,genericResourceImageWriteReply,bool,QByteArray,QString,ErrorString,QUuid),
+                     this, QNSLOT(AddResourceDelegate,onGenericResourceImageSaved,bool,QByteArray,QString,ErrorString,QUuid));
+
+    QNDEBUG(QStringLiteral("Emitting request to write generic resource image for new resource with local uid ")
+            << m_resource.localUid() << QStringLiteral(", request id ") << m_saveResourceImageRequestId
+            << QStringLiteral(", note local uid = ") << pNote->localUid());
+    Q_EMIT saveGenericResourceImageToFile(pNote->localUid(), m_resource.localUid(), resourceImageData, QStringLiteral("png"),
+                                          dataHash, m_resourceFileStoragePath, m_saveResourceImageRequestId);
 }
 
 void AddResourceDelegate::insertNewResourceHtml()

@@ -51,15 +51,17 @@ public:
      *
      * @param filePath - the absolute path to the file in which the resource data is located
      * @param noteEditor - the note editor holding the note to which the resource is to be added
-     * @param pResourceFileStorageManager - the pointer to ResourceDataInTemporaryFileStorageManager which is required for storing
-     * the new resource's data in a proper place on the hard drive
+     * @param pResourceDataInTemporaryFileStorageManager - the pointer to ResourceDataInTemporaryFileStorageManager
+     * which might be required for storing the new resource's data in a temporary file for the sake of note editor
+     * page's convenience; it is only actually required if the added resource is an image
      * @param pFileIOThreadWorker - the pointer to FileIOProcessorAsync worker performing the actual IO of file data
      * @param pGenericResourceImageManager - the pointer to GenericResourceImageManager required for composing
      * the generic resource image for QWebEngine-based backend of NoteEditor
-     * @param genericResourceImageFilePathsByResourceHash - the hash container storing generic resource file paths by resource hash
+     * @param genericResourceImageFilePathsByResourceHash - the hash container storing generic resource image
+     * file paths by resource hash
      */
     explicit AddResourceDelegate(const QString & filePath, NoteEditorPrivate & noteEditor,
-                                 ResourceDataInTemporaryFileStorageManager * pResourceFileStorageManager,
+                                 ResourceDataInTemporaryFileStorageManager * pResourceDataInTemporaryFileStorageManager,
                                  FileIOProcessorAsync * pFileIOThreadWorker,
                                  GenericResourceImageManager * pGenericResourceImageManager,
                                  QHash<QByteArray, QString> & genericResourceImageFilePathsByResourceHash);
@@ -70,8 +72,9 @@ public:
      * @param resourceData - the resource data to be added to the note as a new resource
      * @param mimeType - the mime type of the resource data
      * @param noteEditor - the note editor holding the note to which the resource is to be added
-     * @param pResourceFileStorageManager - the pointer to ResourceDataInTemporaryFileStorageManager which is required for storing
-     * the new resource's data in a proper place on the hard drive
+     * @param pResourceDataInTemporaryFileStorageManager - the pointer to ResourceDataInTemporaryFileStorageManager
+     * which might be required for storing the new resource's data in a temporary file for the sake of note editor
+     * page's convenience; it is only actually required if the added resource is an image
      * @param pFileIOThreadWorker - the pointer to FileIOProcessorAsync worker performing the actual IO of file data
      * @param pGenericResourceImageManager - the pointer to GenericResourceImageManager required for composing
      * the generic resource image for QWebEngine-based backend of NoteEditor
@@ -79,7 +82,7 @@ public:
      */
     explicit AddResourceDelegate(const QByteArray & resourceData, const QString & mimeType,
                                  NoteEditorPrivate & noteEditor,
-                                 ResourceDataInTemporaryFileStorageManager * pResourceFileStorageManager,
+                                 ResourceDataInTemporaryFileStorageManager * pResourceDataInTemporaryFileStorageManager,
                                  FileIOProcessorAsync * pFileIOThreadWorker,
                                  GenericResourceImageManager * pGenericResourceImageManager,
                                  QHash<QByteArray, QString> & genericResourceImageFilePathsByResourceHash);
@@ -116,7 +119,8 @@ private:
     void doStart();
     void doStartUsingFile();
     void doStartUsingData();
-    void doSaveResourceToStorage(const QByteArray & data, QString resourceName);
+    void doSaveResourceDataToTemporaryFile(const QByteArray & data, QString resourceName);
+    void doGenerateGenericResourceImage(const QByteArray & data, QString resourceName);
 
     void insertNewResourceHtml();
 
