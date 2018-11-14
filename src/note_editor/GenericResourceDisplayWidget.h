@@ -61,22 +61,25 @@ Q_SIGNALS:
 
 // private signals
 Q_SIGNALS:
-    void saveResourceToStorage(QString noteLocalUid, QString resourceLocalUid, QByteArray data, QByteArray dataHash,
-                               QString preferredFileSuffix, QUuid requestId, bool isImage);
+    void saveResourceDataToTemporaryFile(QString noteLocalUid, QString resourceLocalUid, QByteArray data, QByteArray dataHash,
+                                         QString preferredFileSuffix, QUuid requestId, bool isImage);
     void saveResourceToFile(QString filePath, QByteArray data, QUuid requestId, bool append);
 
 private Q_SLOTS:
-    void onOpenWithButtonPressed();
-    void onSaveAsButtonPressed();
+    void onOpenResourceInExternalAppButtonPressed();
+    void onSaveResourceDataToFileButtonPressed();
 
-    void onSaveResourceToStorageRequestProcessed(QUuid requestId, QByteArray dataHash, QString fileStoragePath, int errorCode,
-                                                 ErrorString errorDescription);
+    void onSaveResourceDataToTemporaryFileRequestProcessed(QUuid requestId, QByteArray dataHash, ErrorString errorDescription);
     void onSaveResourceToFileRequestProcessed(bool success, ErrorString errorDescription, QUuid requestId);
 
 private:
-    void setPendingMode(const bool pendingMode);
+    void setPendingOpenResourceMode(const bool pendingMode);
+    void setPendingSaveResourceDataToFileMode(const bool pendingMode);
+    void setCursorAccordingToPendingModes();
+
     void openResource();
 
+    void sendSaveResourceDataToTemporaryFileRequest();
     void setupFilterString(const QString & defaultFilterString);
 
 private:
@@ -92,13 +95,15 @@ private:
     QString                             m_filterString;
 
     QUuid                               m_saveResourceToFileRequestId;
-    QUuid                               m_saveResourceToStorageRequestId;
+    QUuid                               m_saveResourceDataToTemporaryFileRequestId;
 
     Account                             m_account;
 
     QByteArray                          m_resourceHash;
-    bool                                m_savedResourceToStorage;
-    bool                                m_pendingSaveResourceToStorage;
+    bool                                m_savedResourceToTemporaryFileForOpening;
+
+    bool                                m_pendingResourceOpening;
+    bool                                m_pendingResourceDataSavingToFile;
 };
 
 } // namespace quentier

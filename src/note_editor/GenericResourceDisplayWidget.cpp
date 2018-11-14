@@ -46,11 +46,12 @@ GenericResourceDisplayWidget::GenericResourceDisplayWidget(QWidget * parent) :
     m_preferredFileSuffixes(),
     m_filterString(),
     m_saveResourceToFileRequestId(),
-    m_saveResourceToStorageRequestId(),
+    m_saveResourceDataToTemporaryFileRequestId(),
     m_account(),
     m_resourceHash(),
-    m_savedResourceToStorage(false),
-    m_pendingSaveResourceToStorage(false)
+    m_savedResourceToTemporaryFileForOpening(false),
+    m_pendingResourceOpening(false),
+    m_pendingResourceDataSavingToFile(false)
 {
     m_pUI->setupUi(this);
 }
@@ -97,53 +98,9 @@ void GenericResourceDisplayWidget::initialize(const QIcon & icon, const QString 
     }
 
     QObject::connect(m_pUI->openResourceButton, QNSIGNAL(QPushButton,released),
-                     this, QNSLOT(GenericResourceDisplayWidget,onOpenWithButtonPressed));
+                     this, QNSLOT(GenericResourceDisplayWidget,onOpenResourceInExternalAppButtonPressed));
     QObject::connect(m_pUI->saveResourceButton, QNSIGNAL(QPushButton,released),
-                     this, QNSLOT(GenericResourceDisplayWidget,onSaveAsButtonPressed));
-
-    QObject::connect(m_pResourceDataInTemporaryFileStorageManager, QNSIGNAL(ResourceDataInTemporaryFileStorageManager,writeResourceToFileCompleted,QUuid,QByteArray,QString,int,ErrorString),
-                     this, QNSLOT(GenericResourceDisplayWidget,onSaveResourceToStorageRequestProcessed,QUuid,QByteArray,QString,int,ErrorString));
-    QObject::connect(this, QNSIGNAL(GenericResourceDisplayWidget,saveResourceToStorage,QString,QString,QByteArray,QByteArray,QString,QUuid,bool),
-                     m_pResourceDataInTemporaryFileStorageManager, QNSLOT(ResourceDataInTemporaryFileStorageManager,onWriteResourceToFileRequest,QString,QString,QByteArray,QByteArray,QString,QUuid,bool));
-
-    QObject::connect(m_pFileIOProcessorAsync, QNSIGNAL(FileIOProcessorAsync,writeFileRequestProcessed,bool,ErrorString,QUuid),
-                     this, QNSLOT(GenericResourceDisplayWidget,onSaveResourceToFileRequestProcessed,bool,ErrorString,QUuid));
-    QObject::connect(this, QNSIGNAL(GenericResourceDisplayWidget,saveResourceToFile,QString,QByteArray,QUuid,bool),
-                     m_pFileIOProcessorAsync, QNSLOT(FileIOProcessorAsync,onWriteFileRequest,QString,QByteArray,QUuid,bool));
-
-    if (!m_pResource->hasDataBody() && !m_pResource->hasAlternateDataBody()) {
-        QNWARNING(QStringLiteral("Resource passed to GenericResourceDisplayWidget has no data: ") << *m_pResource);
-        return;
-    }
-
-    const QByteArray & data = (m_pResource->hasDataBody()
-                               ? m_pResource->dataBody()
-                               : m_pResource->alternateDataBody());
-
-    const QByteArray * dataHash = Q_NULLPTR;
-    if (m_pResource->hasDataBody() && m_pResource->hasDataHash()) {
-        dataHash = &(m_pResource->dataHash());
-    }
-    else if (m_pResource->hasAlternateDataBody() && m_pResource->hasAlternateDataHash()) {
-        dataHash = &(m_pResource->alternateDataHash());
-    }
-
-    QByteArray localDataHash;
-    if (!dataHash) {
-        dataHash = &localDataHash;
-    }
-
-    // Write resource's data to file asynchronously so that it can further be opened in some application
-    QString preferredFileSuffix = m_pResource->preferredFileSuffix();
-    m_saveResourceToStorageRequestId = QUuid::createUuid();
-    bool isImage = (m_pResource->hasMime()
-                    ? m_pResource->mime().startsWith(QStringLiteral("image"))
-                    : false);
-
-    QNTRACE(QStringLiteral("Emitting the request to save the attachment to own file storage location, request id = ")
-            << m_saveResourceToStorageRequestId << QStringLiteral(", resource local uid = ") << m_pResource->localUid());
-    Q_EMIT saveResourceToStorage(m_pResource->noteLocalUid(), m_pResource->localUid(), data, *dataHash,
-                                 preferredFileSuffix, m_saveResourceToStorageRequestId, isImage);
+                     this, QNSLOT(GenericResourceDisplayWidget,onSaveResourceDataToFileButtonPressed));
 }
 
 QString GenericResourceDisplayWidget::resourceLocalUid() const
@@ -161,19 +118,32 @@ void GenericResourceDisplayWidget::updateResourceName(const QString & resourceNa
                                              resourceName + QStringLiteral("</span></p></body></head></html>"));
 }
 
-void GenericResourceDisplayWidget::onOpenWithButtonPressed()
+void GenericResourceDisplayWidget::onOpenResourceInExternalAppButtonPressed()
 {
-    if (m_savedResourceToStorage) {
+    QNDEBUG(QStringLiteral("GenericResourceDisplayWidget::onOpenResourceInExternalAppButtonPressed"));
+
+    if (m_pendingResourceOpening) {
+        QNDEBUG(QStringLiteral("Already pending resource opening"));
+        return;
+    }
+
+    if (m_savedResourceToTemporaryFileForOpening) {
         openResource();
         return;
     }
 
-    setPendingMode(true);
+    if (!m_pResource->hasDataBody() && !m_pResource->hasAlternateDataBody()) {
+        // TODO: send request to retrieve resource data from NoteEditorLocalStorageBroker
+        return;
+    }
+
+    setPendingOpenResourceMode(true);
+    sendSaveResourceDataToTemporaryFileRequest();
 }
 
-void GenericResourceDisplayWidget::onSaveAsButtonPressed()
+void GenericResourceDisplayWidget::onSaveResourceDataToFileButtonPressed()
 {
-    QNDEBUG(QStringLiteral("GenericResourceDisplayWidget::onSaveAsButtonPressed"));
+    QNDEBUG(QStringLiteral("GenericResourceDisplayWidget::onSaveResourceDataToFileButtonPressed"));
 
     QUENTIER_CHECK_PTR(m_pResource);
 
@@ -269,41 +239,53 @@ void GenericResourceDisplayWidget::onSaveAsButtonPressed()
     QNDEBUG(QStringLiteral("Sent request to save resource to file, request id = ") << m_saveResourceToFileRequestId);
 }
 
-void GenericResourceDisplayWidget::onSaveResourceToStorageRequestProcessed(QUuid requestId, QByteArray dataHash,
-                                                                           QString fileStoragePath, int errorCode,
-                                                                           ErrorString errorDescription)
+void GenericResourceDisplayWidget::onSaveResourceDataToTemporaryFileRequestProcessed(QUuid requestId, QByteArray dataHash,
+                                                                                     ErrorString errorDescription)
 {
-    if (requestId == m_saveResourceToStorageRequestId)
-    {
-        if (errorCode == 0)
-        {
-            QNDEBUG(QStringLiteral("Successfully saved resource to storage, request id = ") << requestId
-                    << QStringLiteral(", file storage path = ") << fileStoragePath);
-            m_savedResourceToStorage = true;
-            m_resourceHash = dataHash;
-            if (m_pendingSaveResourceToStorage) {
-                setPendingMode(false);
-                openResource();
-            }
-        }
-        else
-        {
-            QNWARNING(QStringLiteral("Could not save resource to storage: ") << errorDescription << QStringLiteral("; request id = ") << requestId);
-            warningMessageBox(this, tr("Error saving the resource to hidden file"),
-                              tr("Could not save the resource to hidden file "
-                                 "(in order to make it possible to open it with some application)"),
-                              tr("Error code") + QStringLiteral(" = ") + QString::number(errorCode) + QStringLiteral(": ") +
-                              errorDescription.localizedString());
-            if (m_pendingSaveResourceToStorage) {
-                setPendingMode(false);
-            }
-        }
+    if (requestId != m_saveResourceDataToTemporaryFileRequestId) {
+        return;
     }
-    // otherwise it's not ours request reply, skip it
+
+    QNDEBUG(QStringLiteral("GenericResourceDisplayWidget::onSaveResourceDataToTemporaryFileRequestProcessed: request id = ")
+            << requestId << QStringLiteral(", data hash = ") << dataHash << QStringLiteral(", error description = ")
+            << errorDescription);
+
+    if (errorDescription.isEmpty())
+    {
+        m_savedResourceToTemporaryFileForOpening = true;
+        m_resourceHash = dataHash;
+
+        if (m_pendingResourceOpening) {
+            setPendingOpenResourceMode(false);
+            openResource();
+        }
+
+        if (m_pendingResourceDataSavingToFile) {
+            setPendingSaveResourceDataToFileMode(false);
+            // TODO: trigger save resource data to file action
+        }
+
+        return;
+    }
+
+    QNWARNING(QStringLiteral("Could not save resource data to temporary file: ") << errorDescription
+              << QStringLiteral(", resource: ") << (m_pResource ? m_pResource->toString() : QStringLiteral("<null>")));
+
+    warningMessageBox(this, tr("Error saving resource data to a temporary file for opening"),
+                      tr("Could not save the resource data to a temporary file "
+                         "(in order to make it possible to open it with some application)"),
+                      errorDescription.localizedString());
+
+    if (m_pendingResourceOpening) {
+        setPendingOpenResourceMode(false);
+    }
+
+    if (m_pendingResourceDataSavingToFile) {
+        setPendingSaveResourceDataToFileMode(false);
+    }
 }
 
-void GenericResourceDisplayWidget::onSaveResourceToFileRequestProcessed(bool success,
-                                                                        ErrorString errorDescription,
+void GenericResourceDisplayWidget::onSaveResourceToFileRequestProcessed(bool success, ErrorString errorDescription,
                                                                         QUuid requestId)
 {
     QNTRACE(QStringLiteral("GenericResourceDisplayWidget::onSaveResourceToFileRequestProcessed: success = ")
@@ -324,13 +306,32 @@ void GenericResourceDisplayWidget::onSaveResourceToFileRequestProcessed(bool suc
     }
 }
 
-void GenericResourceDisplayWidget::setPendingMode(const bool pendingMode)
+void GenericResourceDisplayWidget::setPendingOpenResourceMode(const bool pendingMode)
 {
-    QNDEBUG(QStringLiteral("GenericResourceDisplayWidget::setPendingMode: pending mode = ")
+    QNDEBUG(QStringLiteral("GenericResourceDisplayWidget::setPendingOpenResourceMode: pending mode = ")
             << (pendingMode ? QStringLiteral("true") : QStringLiteral("false")));
 
-    m_pendingSaveResourceToStorage = pendingMode;
-    if (pendingMode) {
+    m_pendingResourceOpening = pendingMode;
+    setCursorAccordingToPendingModes();
+}
+
+void GenericResourceDisplayWidget::setPendingSaveResourceDataToFileMode(const bool pendingMode)
+{
+    QNDEBUG(QStringLiteral("GenericResourceDisplayWidget::setPendingSaveResourceDataToFileMode: pending mode = ")
+            << (pendingMode ? QStringLiteral("true") : QStringLiteral("false")));
+
+    m_pendingResourceDataSavingToFile = pendingMode;
+    setCursorAccordingToPendingModes();
+}
+
+void GenericResourceDisplayWidget::setCursorAccordingToPendingModes()
+{
+    QNDEBUG(QStringLiteral("GenericResourceDisplayWidget::setCursorAccordingToPendingModes: pending resource opening = ")
+            << (m_pendingResourceOpening ? QStringLiteral("true") : QStringLiteral("false"))
+            << QStringLiteral(", pending resource saving to file: ")
+            << (m_pendingResourceDataSavingToFile ? QStringLiteral("true") : QStringLiteral("false")));
+
+    if (m_pendingResourceOpening || m_pendingResourceDataSavingToFile) {
         QApplication::setOverrideCursor(Qt::BusyCursor);
     }
     else {
@@ -342,6 +343,60 @@ void GenericResourceDisplayWidget::openResource()
 {
     QNDEBUG(QStringLiteral("GenericResourceDisplayWidget::openResource: hash = ") << m_resourceHash.toHex());
     Q_EMIT openResourceRequest(m_resourceHash);
+}
+
+void GenericResourceDisplayWidget::sendSaveResourceDataToTemporaryFileRequest()
+{
+    QNDEBUG(QStringLiteral("GenericResourceDisplayWidget::sendSaveResourceDataToTemporaryFileRequest"));
+
+    if (Q_UNLIKELY(!m_pResource)) {
+        QNWARNING(QStringLiteral("Can't send generic resource data to temporary file: no resource is set to GenericResourceDisplayWidget"));
+        return;
+    }
+
+    if (!m_pResource->hasDataBody() && !m_pResource->hasAlternateDataBody()) {
+        QNWARNING(QStringLiteral("Can't send generic resource data to temporary file: the resource has no data: ") << *m_pResource);
+        return;
+    }
+
+    QObject::connect(m_pResourceDataInTemporaryFileStorageManager, QNSIGNAL(ResourceDataInTemporaryFileStorageManager,writeResourceToFileCompleted,QUuid,QByteArray,ErrorString),
+                     this, QNSLOT(GenericResourceDisplayWidget,onSaveResourceDataToTemporaryFileRequestProcessed,QUuid,QByteArray,ErrorString));
+    QObject::connect(this, QNSIGNAL(GenericResourceDisplayWidget,saveResourceDataToTemporaryFile,QString,QString,QByteArray,QByteArray,QString,QUuid,bool),
+                     m_pResourceDataInTemporaryFileStorageManager, QNSLOT(ResourceDataInTemporaryFileStorageManager,onWriteResourceToFileRequest,QString,QString,QByteArray,QByteArray,QString,QUuid,bool));
+
+    QObject::connect(m_pFileIOProcessorAsync, QNSIGNAL(FileIOProcessorAsync,writeFileRequestProcessed,bool,ErrorString,QUuid),
+                     this, QNSLOT(GenericResourceDisplayWidget,onSaveResourceToFileRequestProcessed,bool,ErrorString,QUuid));
+    QObject::connect(this, QNSIGNAL(GenericResourceDisplayWidget,saveResourceToFile,QString,QByteArray,QUuid,bool),
+                     m_pFileIOProcessorAsync, QNSLOT(FileIOProcessorAsync,onWriteFileRequest,QString,QByteArray,QUuid,bool));
+
+    const QByteArray & data = (m_pResource->hasDataBody()
+                               ? m_pResource->dataBody()
+                               : m_pResource->alternateDataBody());
+
+    const QByteArray * dataHash = Q_NULLPTR;
+    if (m_pResource->hasDataBody() && m_pResource->hasDataHash()) {
+        dataHash = &(m_pResource->dataHash());
+    }
+    else if (m_pResource->hasAlternateDataBody() && m_pResource->hasAlternateDataHash()) {
+        dataHash = &(m_pResource->alternateDataHash());
+    }
+
+    QByteArray localDataHash;
+    if (!dataHash) {
+        dataHash = &localDataHash;
+    }
+
+    // Write resource's data to file asynchronously so that it can further be opened in some application
+    QString preferredFileSuffix = m_pResource->preferredFileSuffix();
+    m_saveResourceDataToTemporaryFileRequestId = QUuid::createUuid();
+    bool isImage = (m_pResource->hasMime()
+                    ? m_pResource->mime().startsWith(QStringLiteral("image"))
+                    : false);
+
+    QNTRACE(QStringLiteral("Emitting the request to save the attachment to a temporary file, request id = ")
+            << m_saveResourceDataToTemporaryFileRequestId << QStringLiteral(", resource local uid = ") << m_pResource->localUid());
+    Q_EMIT saveResourceDataToTemporaryFile(m_pResource->noteLocalUid(), m_pResource->localUid(), data, *dataHash,
+                                           preferredFileSuffix, m_saveResourceDataToTemporaryFileRequestId, isImage);
 }
 
 void GenericResourceDisplayWidget::setupFilterString(const QString & defaultFilterString)
