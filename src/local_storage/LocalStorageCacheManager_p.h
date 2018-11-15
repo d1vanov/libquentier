@@ -3,6 +3,7 @@
 
 #include <quentier/local_storage/LocalStorageCacheManager.h>
 #include <quentier/types/Note.h>
+#include <quentier/types/Resource.h>
 #include <quentier/types/Notebook.h>
 #include <quentier/types/Tag.h>
 #include <quentier/types/LinkedNotebook.h>
@@ -37,6 +38,14 @@ public:
 
     const Note * findNoteByLocalUid(const QString & localUid) const;
     const Note * findNoteByGuid(const QString & guid) const;
+
+    // Resources cache
+    size_t numCachesResources() const;
+    void cacheResource(const Resource & resource);
+    void expungeResource(const Resource & resource);
+
+    const Resource * findResourceByLocalUid(const QString & localUid) const;
+    const Resource * findResourceByGuid(const QString & guid) const;
 
     // Notebooks cache
     size_t numCachedNotebooks() const;
@@ -122,6 +131,43 @@ private:
             >
         >
     > NotesCache;
+
+    class ResourceHolder: public Printable
+    {
+    public:
+        ResourceHolder & operator=(const ResourceHolder & other);
+
+        Resource    m_resource;
+        qint64      m_lastAccessTimestamp;
+
+        const QString localUid() const { return m_resource.localUid(); }
+        const QString guid() const;
+
+        struct ByLastAccessTimestamp{};
+        struct ByLocalUid{};
+        struct ByGuid{};
+
+        virtual QTextStream & print(QTextStream & strm) const Q_DECL_OVERRIDE;
+    };
+
+    typedef boost::multi_index_container<
+        ResourceHolder,
+        boost::multi_index::indexed_by<
+            boost::multi_index::ordered_non_unique<
+                boost::multi_index::tag<ResourceHolder::ByLastAccessTimestamp>,
+                boost::multi_index::member<ResourceHolder,qint64,&ResourceHolder::m_lastAccessTimestamp>
+            >,
+            boost::multi_index::hashed_unique<
+                boost::multi_index::tag<ResourceHolder::ByLocalUid>,
+                boost::multi_index::const_mem_fun<ResourceHolder,const QString,&ResourceHolder::localUid>
+            >,
+            /* NOTE: non-unique for proper support of empty guids */
+            boost::multi_index::hashed_non_unique<
+                boost::multi_index::tag<ResourceHolder::ByGuid>,
+                boost::multi_index::const_mem_fun<ResourceHolder,const QString,&ResourceHolder::guid>
+            >
+        >
+    > ResourcesCache;
 
     class NotebookHolder: public Printable
     {
@@ -294,6 +340,7 @@ private:
 private:
     QScopedPointer<ILocalStorageCacheExpiryChecker>   m_cacheExpiryChecker;
     NotesCache              m_notesCache;
+    ResourcesCache          m_resourcesCache;
     NotebooksCache          m_notebooksCache;
     TagsCache               m_tagsCache;
     LinkedNotebooksCache    m_linkedNotebooksCache;

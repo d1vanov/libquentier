@@ -34,12 +34,16 @@ DefaultLocalStorageCacheExpiryChecker * DefaultLocalStorageCacheExpiryChecker::c
     return new DefaultLocalStorageCacheExpiryChecker(m_localStorageCacheManager);
 }
 
-// Probably should not attempt to track memory using syscalls for the following methods, too expensive
-
 bool DefaultLocalStorageCacheExpiryChecker::checkNotes() const
 {
     size_t numNotes = m_localStorageCacheManager.numCachedNotes();
     return (numNotes < MAX_NOTES_TO_STORE);
+}
+
+bool DefaultLocalStorageCacheExpiryChecker::checkResources() const
+{
+    size_t numResources = m_localStorageCacheManager.numCachedResources();
+    return (numResources < MAX_RESOURCES_TO_STORE);
 }
 
 bool DefaultLocalStorageCacheExpiryChecker::checkNotebooks() const

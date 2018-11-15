@@ -63,11 +63,11 @@ void LocalStorageCacheManager::expungeNote(const Note & note)
 }
 
 #define FIND_OBJECT(Type) \
-const Type * LocalStorageCacheManager::find##Type(const QString & uid, const LocalStorageCacheManager::WhichUid wu) const \
+const Type * LocalStorageCacheManager::find##Type(const QString & uid, const LocalStorageCacheManager::WhichUid whichUid) const \
 { \
     Q_D(const LocalStorageCacheManager); \
     \
-    switch(wu) {    \
+    switch(whichUid) {    \
     case LocalUid: \
         return d->find##Type##ByLocalUid(uid); \
     case Guid: \
@@ -81,6 +81,7 @@ const Type * LocalStorageCacheManager::find##Type(const QString & uid, const Loc
 }
 
 FIND_OBJECT(Note)
+FIND_OBJECT(Resource)
 FIND_OBJECT(Notebook)
 FIND_OBJECT(Tag)
 FIND_OBJECT(SavedSearch)
@@ -103,6 +104,24 @@ const SavedSearch * LocalStorageCacheManager::findSavedSearchByName(const QStrin
 {
     Q_D(const LocalStorageCacheManager);
     return d->findSavedSearchByName(name.toUpper());
+}
+
+size_t LocalStorageCacheManager::numCachedResources() const
+{
+    Q_D(const LocalStorageCacheManager);
+    return d->numCachesResources();
+}
+
+void LocalStorageCacheManager::cacheResource(const Resource & resource)
+{
+    Q_D(LocalStorageCacheManager);
+    d->cacheResource(resource);
+}
+
+void LocalStorageCacheManager::expungeResource(const Resource & resource)
+{
+    Q_D(LocalStorageCacheManager);
+    d->expungeResource(resource);
 }
 
 size_t LocalStorageCacheManager::numCachedNotebooks() const

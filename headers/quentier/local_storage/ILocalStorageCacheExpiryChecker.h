@@ -45,27 +45,32 @@ public:
     virtual ILocalStorageCacheExpiryChecker * clone() const = 0;
 
     /**
-     * @return true if the cache of notes needs to be shrunk (due to its size or whatever other reason), false otherwise
+     * @return false if the cache of notes needs to be shrunk (due to its size or whatever other reason), true otherwise
      */
     virtual bool checkNotes() const = 0;
 
     /**
-     * @return true if the cache of notebooks needs to be shrunk (due to its size or whatever other reason), false otherwise
+     * @return false if the cache of resources needs to be shrunk (due to its size or whatever other reason), true otherwise
+     */
+    virtual bool checkResources() const = 0;
+
+    /**
+     * @return false if the cache of notebooks needs to be shrunk (due to its size or whatever other reason), true otherwise
      */
     virtual bool checkNotebooks() const = 0;
 
     /**
-     * @return true if the cache of tags needs to be shrunk (due to its size or whatever other reason), false otherwise
+     * @return false if the cache of tags needs to be shrunk (due to its size or whatever other reason), true otherwise
      */
     virtual bool checkTags() const = 0;
 
     /**
-     * @return true if the cache of linked notebooks needs to be shrunk (due to its size or whatever other reason), false otherwise
+     * @return false if the cache of linked notebooks needs to be shrunk (due to its size or whatever other reason), true otherwise
      */
     virtual bool checkLinkedNotebooks() const = 0;
 
     /**
-     * @return true if the cache of saved searches needs to be shrunk (due to its size or whatever other reason), false otherwise
+     * @return false if the cache of saved searches needs to be shrunk (due to its size or whatever other reason), true otherwise
      */
     virtual bool checkSavedSearches() const = 0;
 

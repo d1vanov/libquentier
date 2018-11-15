@@ -30,6 +30,7 @@ LocalStorageCacheManagerPrivate::LocalStorageCacheManagerPrivate(LocalStorageCac
     q_ptr(&q),
     m_cacheExpiryChecker(new DefaultLocalStorageCacheExpiryChecker(q)),
     m_notesCache(),
+    m_resourcesCache(),
     m_notebooksCache(),
     m_tagsCache(),
     m_linkedNotebooksCache(),
@@ -42,6 +43,7 @@ LocalStorageCacheManagerPrivate::~LocalStorageCacheManagerPrivate()
 void LocalStorageCacheManagerPrivate::clear()
 {
     m_notesCache.clear();
+    m_resourcesCache.clear();
     m_notebooksCache.clear();
     m_tagsCache.clear();
     m_linkedNotebooksCache.clear();
@@ -51,6 +53,7 @@ void LocalStorageCacheManagerPrivate::clear()
 bool LocalStorageCacheManagerPrivate::empty() const
 {
     return (m_notesCache.empty() &&
+            m_resourcesCache.empty() &&
             m_notebooksCache.empty() &&
             m_tagsCache.empty() &&
             m_linkedNotebooksCache.empty() &&
@@ -65,6 +68,7 @@ size_t LocalStorageCacheManagerPrivate::method_name() const \
 }
 
 NUM_CACHED_OBJECTS(Note, numCachedNotes, m_notesCache, ByLocalUid)
+NUM_CACHED_OBJECTS(Resource, numCachesResources, m_resourcesCache, ByLocalUid)
 NUM_CACHED_OBJECTS(Notebook, numCachedNotebooks, m_notebooksCache, ByLocalUid)
 NUM_CACHED_OBJECTS(Tag, numCachedTags, m_tagsCache, ByLocalUid)
 NUM_CACHED_OBJECTS(LinkedNotebook, numCachedLinkedNotebooks, m_linkedNotebooksCache, ByGuid)
@@ -122,6 +126,7 @@ void LocalStorageCacheManagerPrivate::cache##Type(const Type & name) \
 }
 
 CACHE_OBJECT(Note, note, NotesCache, m_notesCache, checkNotes, ByLocalUid, localUid)
+CACHE_OBJECT(Resource, resource, ResourcesCache, m_resourcesCache, checkResources, ByLocalUid, localUid)
 CACHE_OBJECT(Notebook, notebook, NotebooksCache, m_notebooksCache, checkNotebooks, ByLocalUid, localUid)
 CACHE_OBJECT(Tag, tag, TagsCache, m_tagsCache, checkTags, ByLocalUid, localUid)
 CACHE_OBJECT(LinkedNotebook, linkedNotebook, LinkedNotebooksCache, m_linkedNotebooksCache,
@@ -160,6 +165,7 @@ void LocalStorageCacheManagerPrivate::expunge##Type(const Type & name) \
 }
 
 EXPUNGE_OBJECT(Note, note, NotesCache, m_notesCache)
+EXPUNGE_OBJECT(Resource, resource, ResourcesCache, m_resourcesCache)
 EXPUNGE_OBJECT(Notebook, notebook, NotebooksCache, m_notebooksCache)
 EXPUNGE_OBJECT(Tag, tag, TagsCache, m_tagsCache)
 EXPUNGE_OBJECT(SavedSearch, savedSearch, SavedSearchesCache, m_savedSearchesCache)
@@ -193,6 +199,8 @@ const Type * LocalStorageCacheManagerPrivate::find##Type##tag(const QString & gu
 
 FIND_OBJECT(Note, note, ByLocalUid, m_notesCache)
 FIND_OBJECT(Note, note, ByGuid, m_notesCache)
+FIND_OBJECT(Resource, resource, ByLocalUid, m_resourcesCache)
+FIND_OBJECT(Resource, resource, ByGuid, m_resourcesCache)
 FIND_OBJECT(Notebook, notebook, ByLocalUid, m_notebooksCache)
 FIND_OBJECT(Notebook, notebook, ByGuid, m_notebooksCache)
 FIND_OBJECT(Notebook, notebook, ByName, m_notebooksCache)
@@ -220,6 +228,16 @@ QTextStream & LocalStorageCacheManagerPrivate::print(QTextStream & strm) const
     typedef NotesCache::index<NoteHolder::ByLocalUid>::type::const_iterator NotesConstIter;
     NotesConstIter notesCacheEnd = notesCacheIndex.end();
     for(NotesConstIter it = notesCacheIndex.begin(); it != notesCacheEnd; ++it) {
+        strm << *it;
+    }
+
+    strm << QStringLiteral("}; \n");
+    strm << QStringLiteral("Resources cache: {\n");
+
+    const ResourcesCache::index<ResourceHolder::ByLocalUid>::type & resourcesCacheIndex = m_resourcesCache.get<ResourceHolder::ByLocalUid>();
+    typedef ResourcesCache::index<ResourceHolder::ByLocalUid>::type::const_iterator ResourcesConstIter;
+    ResourcesConstIter resourcesCacheEnd = resourcesCacheIndex.end();
+    for(ResourcesConstIter it = resourcesCacheIndex.begin(); it != resourcesCacheEnd; ++it) {
         strm << *it;
     }
 
@@ -289,6 +307,7 @@ const QString LocalStorageCacheManagerPrivate::Type##Holder::guid() const \
 }
 
 GET_GUID(Note, note)
+GET_GUID(Resource, resource)
 GET_GUID(Notebook, notebook)
 GET_GUID(Tag, tag)
 GET_GUID(LinkedNotebook, linkedNotebook)
@@ -299,6 +318,13 @@ GET_GUID(SavedSearch, savedSearch)
 QTextStream & LocalStorageCacheManagerPrivate::NoteHolder::print(QTextStream & strm) const
 {
     strm << QStringLiteral("NoteHolder: note = ") << m_note << QStringLiteral("last access timestamp = ")
+         << printableDateTimeFromTimestamp(m_lastAccessTimestamp) << QStringLiteral("\n");
+    return strm;
+}
+
+QTextStream & LocalStorageCacheManagerPrivate::ResourceHolder::print(QTextStream & strm) const
+{
+    strm << QStringLiteral("ResourceHolder: resource = ") << m_resource << QStringLiteral(", last access timestamp = ")
          << printableDateTimeFromTimestamp(m_lastAccessTimestamp) << QStringLiteral("\n");
     return strm;
 }
@@ -337,6 +363,16 @@ LocalStorageCacheManagerPrivate::NoteHolder & LocalStorageCacheManagerPrivate::N
 {
     if (this != &other) {
         m_note = other.m_note;
+        m_lastAccessTimestamp = other.m_lastAccessTimestamp;
+    }
+
+    return *this;
+}
+
+LocalStorageCacheManagerPrivate::ResourceHolder & LocalStorageCacheManagerPrivate::ResourceHolder::operator=(const LocalStorageCacheManagerPrivate::ResourceHolder & other)
+{
+    if (this != &other) {
+        m_resource = other.m_resource;
         m_lastAccessTimestamp = other.m_lastAccessTimestamp;
     }
 
