@@ -35,8 +35,6 @@ QT_FORWARD_DECLARE_CLASS(QRegExp)
 namespace quentier {
 
 QT_FORWARD_DECLARE_CLASS(Note)
-QT_FORWARD_DECLARE_CLASS(ResourceDataInTemporaryFileStorageManager)
-QT_FORWARD_DECLARE_CLASS(FileIOProcessorAsync)
 QT_FORWARD_DECLARE_CLASS(EncryptionManager)
 QT_FORWARD_DECLARE_CLASS(DecryptedTextManager)
 QT_FORWARD_DECLARE_CLASS(NoteEditorPrivate)
@@ -51,10 +49,7 @@ class Q_DECL_HIDDEN NoteEditorPluginFactory: public QWebPluginFactory
 {
     Q_OBJECT
 public:
-    explicit NoteEditorPluginFactory(NoteEditorPrivate & editor,
-                                     const ResourceDataInTemporaryFileStorageManager & resourceDataInTemporaryFileStorageManager,
-                                     const FileIOProcessorAsync & fileIOThreadWorker,
-                                     QObject * parent = Q_NULLPTR);
+    explicit NoteEditorPluginFactory(NoteEditorPrivate & editor, QObject * parent = Q_NULLPTR);
     virtual ~NoteEditorPluginFactory();
 
     /**
@@ -180,12 +175,8 @@ private:
 
     QMimeDatabase                                       m_mimeDatabase;
 
-    const ResourceDataInTemporaryFileStorageManager *   m_pResourceDataInTemporaryFileStorageManager;
-    const FileIOProcessorAsync *                        m_pFileIOProcessorAsync;
-
     mutable QHash<QString, QIcon>                       m_resourceIconCache;
     mutable QHash<QString, QStringList>                 m_fileSuffixesCache;
-    mutable QHash<QString, QString>                     m_filterStringsCache;
 
     mutable QVector<QPointer<GenericResourceDisplayWidget> >      m_genericResourceDisplayWidgetPlugins;
     mutable QVector<QPointer<EncryptedAreaPlugin> >               m_encryptedAreaPlugins;

@@ -20,8 +20,6 @@
 #include "GenericResourceDisplayWidget.h"
 #include "EncryptedAreaPlugin.h"
 #include "NoteEditor_p.h"
-#include "ResourceDataInTemporaryFileStorageManager.h"
-#include <quentier/utility/FileIOProcessorAsync.h>
 #include <quentier/utility/EncryptionManager.h>
 #include <quentier/enml/DecryptedTextManager.h>
 #include <quentier/utility/QuentierCheckPtr.h>
@@ -37,8 +35,6 @@
 namespace quentier {
 
 NoteEditorPluginFactory::NoteEditorPluginFactory(NoteEditorPrivate & noteEditor,
-                                                 const ResourceDataInTemporaryFileStorageManager & resourceDataInTemporaryFileStorageManager,
-                                                 const FileIOProcessorAsync & fileIOThreadWorker,
                                                  QObject * parent) :
     QWebPluginFactory(parent),
     m_noteEditor(noteEditor),
@@ -47,11 +43,8 @@ NoteEditorPluginFactory::NoteEditorPluginFactory(NoteEditorPrivate & noteEditor,
     m_pCurrentNote(Q_NULLPTR),
     m_fallbackResourceIcon(QIcon::fromTheme(QStringLiteral("unknown"))),
     m_mimeDatabase(),
-    m_pResourceDataInTemporaryFileStorageManager(&resourceDataInTemporaryFileStorageManager),
-    m_pFileIOProcessorAsync(&fileIOThreadWorker),
     m_resourceIconCache(),
     m_fileSuffixesCache(),
-    m_filterStringsCache(),
     m_genericResourceDisplayWidgetPlugins(),
     m_encryptedAreaPlugins()
 {}
@@ -456,26 +449,19 @@ QObject * NoteEditorPluginFactory::createResourcePlugin(const QStringList & argu
         m_fileSuffixesCache[resourceMimeType] = fileSuffixes;
     }
 
-    QString filterString;
-    auto filterStringIt = m_filterStringsCache.find(resourceMimeType);
-    if (filterStringIt == m_filterStringsCache.end()) {
-        filterString = getFilterStringForMimeType(resourceMimeType);
-        m_filterStringsCache[resourceMimeType] = filterString;
-    }
-
     QWidget * pParentWidget = qobject_cast<QWidget*>(parent());
     GenericResourceDisplayWidget * pGenericResourceDisplayWidget = new GenericResourceDisplayWidget(pParentWidget);
-    QObject::connect(pGenericResourceDisplayWidget, QNSIGNAL(GenericResourceDisplayWidget,openResourceRequest,const QByteArray&),
-                     &m_noteEditor, QNSLOT(NoteEditorPrivate,openAttachment,const QByteArray&));
+    QObject::connect(pGenericResourceDisplayWidget, QNSIGNAL(GenericResourceDisplayWidget,openResourceRequest,QByteArray),
+                     &m_noteEditor, QNSLOT(NoteEditorPrivate,openAttachment,QByteArray));
+    QObject::connect(pGenericResourceDisplayWidget, QNSIGNAL(GenericResourceDisplayWidget,saveResourceRequest,QByteArray),
+                     &m_noteEditor, QNSLOT(NoteEditorPrivate,saveAttachmentDialog,QByteArray));
 
     // NOTE: upon return this generic resource display widget would be reparented to the caller anyway,
     // the parent setting above is strictly for possible use within initialize method (for example, if
     // the widget would need to create some dialog window, it could be modal due to the existence of the parent)
 
     pGenericResourceDisplayWidget->initialize(cachedIconIt.value(), resourceDisplayName,
-                                              resourceDataSize, fileSuffixes, filterString,
-                                              *pCurrentResource, *pAccount, *m_pResourceDataInTemporaryFileStorageManager,
-                                              *m_pFileIOProcessorAsync);
+                                              resourceDataSize, *pCurrentResource);
 
     m_genericResourceDisplayWidgetPlugins.push_back(QPointer<GenericResourceDisplayWidget>(pGenericResourceDisplayWidget));
     return pGenericResourceDisplayWidget;

@@ -2781,7 +2781,7 @@ void NoteEditorPrivate::onFoundNoteAndNotebook(Note note, Notebook notebook)
     {
         bool missingPluginFactory = !m_pPluginFactory;
         if (missingPluginFactory) {
-            m_pPluginFactory = new NoteEditorPluginFactory(*this, *m_pResourceDataInTemporaryFileStorageManager, *m_pFileIOProcessorAsync, pNoteEditorPage);
+            m_pPluginFactory = new NoteEditorPluginFactory(*this, pNoteEditorPage);
         }
 
         m_pPluginFactory->setNote(*m_pNote);
@@ -4893,7 +4893,7 @@ void NoteEditorPrivate::setupNoteEditorPage()
     page->mainFrame()->addToJavaScriptWindowObject(QStringLiteral("actionsWatcher"), m_pActionsWatcher,
                                                    OwnershipNamespace::QtOwnership);
 
-    m_pPluginFactory = new NoteEditorPluginFactory(*this, *m_pResourceDataInTemporaryFileStorageManager, *m_pFileIOProcessorAsync, page);
+    m_pPluginFactory = new NoteEditorPluginFactory(*this, page);
     if (Q_LIKELY(!m_pNote.isNull())) {
         m_pPluginFactory->setNote(*m_pNote);
     }

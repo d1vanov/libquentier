@@ -328,7 +328,7 @@ void AddResourceDelegate::doSaveResourceDataToTemporaryFile(const QByteArray & d
 
     const Note * pNote = m_noteEditor.notePtr();
     if (!pNote) {
-        ErrorString errorDescription(QT_TR_NOOP("Can't save the added resource to local file: no note is set to the editor"));
+        ErrorString errorDescription(QT_TR_NOOP("Can't save the added resource to a temporary file: no note is set to the editor"));
         QNWARNING(errorDescription);
         Q_EMIT notifyError(errorDescription);
         return;
@@ -357,7 +357,7 @@ void AddResourceDelegate::doSaveResourceDataToTemporaryFile(const QByteArray & d
     QObject::connect(m_pResourceDataInTemporaryFileStorageManager, QNSIGNAL(ResourceDataInTemporaryFileStorageManager,saveResourceDataToFileTemporaryFileCompleted,QUuid,QByteArray,ErrorString),
                      this, QNSLOT(AddResourceDelegate,onResourceDataSavedToTemporaryFile,QUuid,QByteArray,ErrorString));
 
-    QNTRACE(QStringLiteral("Emitting the request to save the dropped/pasted resource to local file storage: generated local uid = ")
+    QNTRACE(QStringLiteral("Emitting the request to save the dropped/pasted resource to a temporary file: generated local uid = ")
             << resourceLocalUid << QStringLiteral(", data hash = ") << dataHash.toHex() << QStringLiteral(", request id = ")
             << m_saveResourceDataToTemporaryFileRequestId << QStringLiteral(", mime type name = ") << m_resourceMimeType.name());
     Q_EMIT saveResourceDataToTemporaryFile(pNote->localUid(), resourceLocalUid, data, dataHash,
@@ -391,7 +391,7 @@ void AddResourceDelegate::onResourceDataSavedToTemporaryFile(QUuid requestId, QB
                         this, QNSLOT(AddResourceDelegate,onResourceDataSavedToTemporaryFile,QUuid,QByteArray,QString));
 
     if (Q_UNLIKELY(!errorDescription.isEmpty())) {
-        ErrorString error(QT_TR_NOOP("Can't write the resource to local file"));
+        ErrorString error(QT_TR_NOOP("Can't write the resource data to a temporary file"));
         error.appendBase(errorDescription.base());
         error.appendBase(errorDescription.additionalBases());
         error.details() = errorDescription.details();
@@ -434,7 +434,7 @@ void AddResourceDelegate::onGenericResourceImageSaved(bool success, QByteArray r
     Q_UNUSED(resourceImageDataHash);
 
     if (Q_UNLIKELY(!success)) {
-        ErrorString error(QT_TR_NOOP("Can't write the image representing the resource to local file"));
+        ErrorString error(QT_TR_NOOP("Can't write the image representing the resource to a temporary file"));
         error.appendBase(errorDescription.base());
         error.appendBase(errorDescription.additionalBases());
         error.details() = errorDescription.details();

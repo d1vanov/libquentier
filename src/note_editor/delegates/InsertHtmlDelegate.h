@@ -46,7 +46,7 @@ Q_SIGNALS:
 private Q_SLOTS:
     void onOriginalPageConvertedToNote(Note note);
     void onImageDataDownloadFinished(QNetworkReply * pReply);
-    void onResourceSavedToStorage(QUuid requestId, QByteArray dataHash, ErrorString errorDescription);
+    void onResourceDataSavedToTemporaryFile(QUuid requestId, QByteArray dataHash, ErrorString errorDescription);
 
     void onHtmlInserted(const QVariant & responseData);
 
@@ -78,7 +78,7 @@ private:
     QSet<QUrl>                      m_pendingImageUrls;
     QSet<QUrl>                      m_failingImageUrls;
 
-    QHash<QUuid, Resource>          m_resourceBySaveToStorageRequestId;
+    QHash<QUuid, Resource>          m_resourceBySaveDataToTemporaryFileRequestId;
     QHash<QString, QUrl>            m_sourceUrlByResourceLocalUid;
     QHash<QUrl, QUrl>               m_urlToRedirectUrl;
 
