@@ -23,25 +23,46 @@
 
 namespace quentier {
 
+namespace {
+
+/**
+ * Removes dataBody and alternateDataBody from note's resources and returns
+ * resources containing dataBody and/or alternateDataBody within a separate list
+ * in order to cache them separately from notes
+ */
+void splitNoteAndResourcesForCaching(Note & note, QList<Resource> & resources)
+{
+    resources = note.resources();
+    QList<Resource> noteResources = resources;
+    for(auto it = noteResources.begin(), end = noteResources.end(); it != end; ++it) {
+        Resource & resource = *it;
+        resource.setDataBody(QByteArray());
+        resource.setAlternateDataBody(QByteArray());
+    }
+    note.setResources(noteResources);
+}
+
+}
+
 LocalStorageManagerAsync::LocalStorageManagerAsync(const Account & account, const bool startFromScratch,
                                                    const bool overrideLock, QObject * parent) :
     QObject(parent),
     m_account(account),
     m_startFromScratch(startFromScratch),
     m_overrideLock(overrideLock),
-    m_pLocalStorageManager(Q_NULLPTR),
     m_useCache(true),
+    m_pLocalStorageManager(Q_NULLPTR),
     m_pLocalStorageCacheManager(Q_NULLPTR)
 {}
 
 LocalStorageManagerAsync::~LocalStorageManagerAsync()
 {
-    if (m_pLocalStorageManager) {
-        delete m_pLocalStorageManager;
-    }
-
     if (m_pLocalStorageCacheManager) {
         delete m_pLocalStorageCacheManager;
+    }
+
+    if (m_pLocalStorageManager) {
+        delete m_pLocalStorageManager;
     }
 }
 
@@ -91,7 +112,7 @@ void LocalStorageManagerAsync::init()
         delete m_pLocalStorageManager;
     }
 
-    m_pLocalStorageManager = new LocalStorageManager(m_account, m_startFromScratch, m_overrideLock, this);
+    m_pLocalStorageManager = new LocalStorageManager(m_account, m_startFromScratch, m_overrideLock);
 
     if (m_pLocalStorageCacheManager) {
         delete m_pLocalStorageCacheManager;
@@ -949,8 +970,16 @@ void LocalStorageManagerAsync::onAddNoteRequest(Note note, QUuid requestId)
             return;
         }
 
-        if (m_useCache) {
-            m_pLocalStorageCacheManager->cacheNote(note);
+        if (m_useCache)
+        {
+            Note noteForCaching = note;
+            QList<Resource> resourcesForCaching;
+            splitNoteAndResourcesForCaching(noteForCaching, resourcesForCaching);
+
+            m_pLocalStorageCacheManager->cacheNote(noteForCaching);
+            for(auto it = resourcesForCaching.constBegin(), end = resourcesForCaching.constEnd(); it != end; ++it) {
+                m_pLocalStorageCacheManager->cacheResource(*it);
+            }
         }
 
         Q_EMIT addNoteComplete(note, requestId);
@@ -981,16 +1010,38 @@ void LocalStorageManagerAsync::onUpdateNoteRequest(Note note, const LocalStorage
         if (m_useCache)
         {
             if ((options & LocalStorageManager::UpdateNoteOption::UpdateResourceMetadata) &&
-                (options & LocalStorageManager::UpdateNoteOption::UpdateResourceBinaryData) &&
                 (options & LocalStorageManager::UpdateNoteOption::UpdateTags))
             {
-                m_pLocalStorageCacheManager->cacheNote(note);
+                Note noteForCaching = note;
+                QList<Resource> resourcesForCaching;
+                splitNoteAndResourcesForCaching(noteForCaching, resourcesForCaching);
+                m_pLocalStorageCacheManager->cacheNote(noteForCaching);
+
+                if (options & LocalStorageManager::UpdateNoteOption::UpdateResourceBinaryData)
+                {
+                    for(auto it = resourcesForCaching.constBegin(), end = resourcesForCaching.constEnd(); it != end; ++it) {
+                        m_pLocalStorageCacheManager->cacheResource(*it);
+                    }
+                }
+                else
+                {
+                    // Since resources metadata might have changed, it would become stale within the cache so need to remove it from there
+                    for(auto it = resourcesForCaching.constBegin(), end = resourcesForCaching.constEnd(); it != end; ++it) {
+                        m_pLocalStorageCacheManager->expungeResource(*it);
+                    }
+                }
             }
             else
             {
                 // The note was somehow changed but the resources or tags information was not updated =>
                 // the note in the cache is stale/incomplete in either case, need to remove it from there
                 m_pLocalStorageCacheManager->expungeNote(note);
+
+                // Same goes for its resources
+                QList<Resource> resources = note.resources();
+                for(auto it = resources.constBegin(), end = resources.constEnd(); it != end; ++it) {
+                    m_pLocalStorageCacheManager->expungeResource(*it);
+                }
             }
         }
 
