@@ -39,6 +39,8 @@ public:
     const Note * findNoteByLocalUid(const QString & localUid) const;
     const Note * findNoteByGuid(const QString & guid) const;
 
+    void clearAllNotes();
+
     // Resources cache
     size_t numCachesResources() const;
     void cacheResource(const Resource & resource);
@@ -46,6 +48,8 @@ public:
 
     const Resource * findResourceByLocalUid(const QString & localUid) const;
     const Resource * findResourceByGuid(const QString & guid) const;
+
+    void clearAllResources();
 
     // Notebooks cache
     size_t numCachedNotebooks() const;
@@ -56,6 +60,8 @@ public:
     const Notebook * findNotebookByGuid(const QString & guid) const;
     const Notebook * findNotebookByName(const QString & name) const;
 
+    void clearAllNotebooks();
+
     // Tags cache
     size_t numCachedTags() const;
     void cacheTag(const Tag & tag);
@@ -65,12 +71,16 @@ public:
     const Tag * findTagByGuid(const QString & guid) const;
     const Tag * findTagByName(const QString & name) const;
 
+    void clearAllTags();
+
     // Linked notebooks cache
     size_t numCachedLinkedNotebooks() const;
     void cacheLinkedNotebook(const LinkedNotebook & linkedNotebook);
     void expungeLinkedNotebook(const LinkedNotebook & linkedNotebook);
 
     const LinkedNotebook * findLinkedNotebookByGuid(const QString & guid) const;
+
+    void clearAllLinkedNotebooks();
 
     // Saved searches cache
     size_t numCachedSavedSearches() const;
@@ -80,6 +90,8 @@ public:
     const SavedSearch * findSavedSearchByLocalUid(const QString & localUid) const;
     const SavedSearch * findSavedSearchByGuid(const QString & guid) const;
     const SavedSearch * findSavedSearchByName(const QString & name) const;
+
+    void clearAllSavedSearches();
 
     void installCacheExpiryFunction(const ILocalStorageCacheExpiryChecker & checker);
 

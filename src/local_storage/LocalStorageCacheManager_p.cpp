@@ -214,6 +214,36 @@ FIND_OBJECT(SavedSearch, savedSearch, ByName, m_savedSearchesCache)
 
 #undef FIND_OBJECT
 
+void LocalStorageCacheManagerPrivate::clearAllNotes()
+{
+    m_notesCache.clear();
+}
+
+void LocalStorageCacheManagerPrivate::clearAllResources()
+{
+    m_resourcesCache.clear();
+}
+
+void LocalStorageCacheManagerPrivate::clearAllNotebooks()
+{
+    m_notebooksCache.clear();
+}
+
+void LocalStorageCacheManagerPrivate::clearAllTags()
+{
+    m_tagsCache.clear();
+}
+
+void LocalStorageCacheManagerPrivate::clearAllLinkedNotebooks()
+{
+    m_linkedNotebooksCache.clear();
+}
+
+void LocalStorageCacheManagerPrivate::clearAllSavedSearches()
+{
+    m_savedSearchesCache.clear();
+}
+
 void LocalStorageCacheManagerPrivate::installCacheExpiryFunction(const ILocalStorageCacheExpiryChecker & checker)
 {
     m_cacheExpiryChecker.reset(checker.clone());

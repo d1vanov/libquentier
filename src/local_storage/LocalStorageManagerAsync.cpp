@@ -1064,16 +1064,46 @@ void LocalStorageManagerAsync::onFindNoteRequest(Note note, bool withResourceMet
         ErrorString errorDescription;
 
         bool foundNoteInCache = false;
-        if (m_useCache && withResourceMetadata && withResourceBinaryData)
+        if (m_useCache)
         {
             bool noteHasGuid = note.hasGuid();
             const QString uid = (noteHasGuid ? note.guid() : note.localUid());
             LocalStorageCacheManager::WhichUid wu = (noteHasGuid ? LocalStorageCacheManager::Guid : LocalStorageCacheManager::LocalUid);
 
             const Note * pNote = m_pLocalStorageCacheManager->findNote(uid, wu);
-            if (pNote) {
+            if (pNote)
+            {
                 note = *pNote;
                 foundNoteInCache = true;
+
+                if (withResourceBinaryData)
+                {
+                    QList<Resource> resources = note.resources();
+                    for(auto it = resources.begin(), end = resources.end(); it != end; ++it)
+                    {
+                        Resource & resource = *it;
+
+                        bool resourceHasGuid = resource.hasGuid();
+                        const QString resourceUid = (resourceHasGuid ? resource.guid() : resource.localUid());
+                        LocalStorageCacheManager::WhichUid rwu = (resourceHasGuid ? LocalStorageCacheManager::Guid : LocalStorageCacheManager::LocalUid);
+
+                        const Resource * pResource = m_pLocalStorageCacheManager->findResource(resourceUid, rwu);
+                        if (pResource)
+                        {
+                            resource = *pResource;
+                        }
+                        else
+                        {
+                            bool res = m_pLocalStorageManager->findEnResource(resource, errorDescription, /* with resource binary data = */ true);
+                            if (!res) {
+                                Q_EMIT findNoteFailed(note, withResourceMetadata, withResourceBinaryData, errorDescription, requestId);
+                                return;
+                            }
+                        }
+                    }
+
+                    note.setResources(resources);
+                }
             }
         }
 
@@ -1086,8 +1116,22 @@ void LocalStorageManagerAsync::onFindNoteRequest(Note note, bool withResourceMet
             }
         }
 
-        if (!foundNoteInCache && m_useCache && withResourceMetadata && withResourceBinaryData) {
-            m_pLocalStorageCacheManager->cacheNote(note);
+        if (!foundNoteInCache && m_useCache)
+        {
+            QList<Resource> resources = note.resources();
+            for(auto it = resources.begin(), end = resources.end(); it != end; ++it) {
+                Resource & resource = *it;
+                resource.setDataBody(QByteArray());
+                resource.setAlternateDataBody(QByteArray());
+            }
+
+            Note noteWithoutResourceBinaryData = note;
+            noteWithoutResourceBinaryData.setResources(resources);
+            m_pLocalStorageCacheManager->cacheNote(noteWithoutResourceBinaryData);
+        }
+
+        if (foundNoteInCache && !withResourceMetadata) {
+            note.setResources(QList<Resource>());
         }
 
         Q_EMIT findNoteComplete(note, withResourceMetadata, withResourceBinaryData, requestId);
@@ -1259,14 +1303,21 @@ void LocalStorageManagerAsync::onExpungeNoteRequest(Note note, QUuid requestId)
     {
         ErrorString errorDescription;
 
+        QList<Resource> resources = note.resources();
+
         bool res = m_pLocalStorageManager->expungeNote(note, errorDescription);
         if (!res) {
             Q_EMIT expungeNoteFailed(note, errorDescription, requestId);
             return;
         }
 
-        if (m_useCache) {
+        if (m_useCache)
+        {
             m_pLocalStorageCacheManager->expungeNote(note);
+
+            for(auto it = resources.constBegin(), end = resources.constEnd(); it != end; ++it) {
+                m_pLocalStorageCacheManager->expungeResource(*it);
+            }
         }
 
         Q_EMIT expungeNoteComplete(note, requestId);
@@ -1603,10 +1654,15 @@ void LocalStorageManagerAsync::onExpungeNotelessTagsFromLinkedNotebooksRequest(Q
         bool res = m_pLocalStorageManager->expungeNotelessTagsFromLinkedNotebooks(errorDescription);
         if (!res) {
             Q_EMIT expungeNotelessTagsFromLinkedNotebooksFailed(errorDescription, requestId);
+            return;
         }
-        else {
-            Q_EMIT expungeNotelessTagsFromLinkedNotebooksComplete(requestId);
+
+        if (m_useCache) {
+            m_pLocalStorageCacheManager->clearAllNotes();
+            m_pLocalStorageCacheManager->clearAllResources();
         }
+
+        Q_EMIT expungeNotelessTagsFromLinkedNotebooksComplete(requestId);
     }
     catch(const std::exception & e)
     {
@@ -1653,6 +1709,10 @@ void LocalStorageManagerAsync::onAddResourceRequest(Resource resource, QUuid req
             return;
         }
 
+        if (m_useCache) {
+            m_pLocalStorageCacheManager->cacheResource(resource);
+        }
+
         Q_EMIT addResourceComplete(resource, requestId);
     }
     catch(const std::exception & e)
@@ -1677,6 +1737,10 @@ void LocalStorageManagerAsync::onUpdateResourceRequest(Resource resource, QUuid 
             return;
         }
 
+        if (m_useCache) {
+            m_pLocalStorageCacheManager->cacheResource(resource);
+        }
+
         Q_EMIT updateResourceComplete(resource, requestId);
     }
     catch(const std::exception & e)
@@ -1695,10 +1759,36 @@ void LocalStorageManagerAsync::onFindResourceRequest(Resource resource, bool wit
     {
         ErrorString errorDescription;
 
-        bool res = m_pLocalStorageManager->findEnResource(resource, errorDescription, withBinaryData);
-        if (!res) {
-            Q_EMIT findResourceFailed(resource, withBinaryData, errorDescription, requestId);
-            return;
+        bool foundResourceInCache = false;
+        if (m_useCache)
+        {
+            bool resourceHasGuid = resource.hasGuid();
+            const QString uid = (resourceHasGuid ? resource.guid() : resource.localUid());
+            LocalStorageCacheManager::WhichUid wu = (resourceHasGuid ? LocalStorageCacheManager::Guid : LocalStorageCacheManager::LocalUid);
+
+            const Resource * pResource = m_pLocalStorageCacheManager->findResource(uid, wu);
+            if (pResource) {
+                resource = *pResource;
+                foundResourceInCache = true;
+            }
+        }
+
+        if (!foundResourceInCache)
+        {
+            bool res = m_pLocalStorageManager->findEnResource(resource, errorDescription, withBinaryData);
+            if (!res) {
+                Q_EMIT findResourceFailed(resource, withBinaryData, errorDescription, requestId);
+                return;
+            }
+
+            if (withBinaryData && m_useCache) {
+                m_pLocalStorageCacheManager->cacheResource(resource);
+            }
+        }
+        else if (!withBinaryData)
+        {
+            resource.setDataBody(QByteArray());
+            resource.setAlternateDataBody(QByteArray());
         }
 
         Q_EMIT findResourceComplete(resource, withBinaryData, requestId);
@@ -1723,6 +1813,10 @@ void LocalStorageManagerAsync::onExpungeResourceRequest(Resource resource, QUuid
         if (!res) {
             Q_EMIT expungeResourceFailed(resource, errorDescription, requestId);
             return;
+        }
+
+        if (m_useCache) {
+            m_pLocalStorageCacheManager->expungeResource(resource);
         }
 
         Q_EMIT expungeResourceComplete(resource, requestId);
