@@ -43,10 +43,8 @@ public:
     virtual ~INoteEditorBackend();
 
     virtual void initialize(LocalStorageManagerAsync & localStorageManager,
-                            SpellChecker & spellChecker,
-                            const Account & account) = 0;
-
-    virtual void setBackgroundThread(QThread * pThread) = 0;
+                            SpellChecker & spellChecker, const Account & account,
+                            QThread * pBackgroundJobsThread) = 0;
 
     virtual QObject * object() = 0;   // provide QObject interface
     virtual QWidget * widget() = 0;   // provide QWidget interface

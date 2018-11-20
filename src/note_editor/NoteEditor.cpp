@@ -44,14 +44,10 @@ NoteEditor::~NoteEditor()
 
 void NoteEditor::initialize(LocalStorageManagerAsync & localStorageManager,
                             SpellChecker & spellChecker,
-                            const Account & account)
+                            const Account & account,
+                            QThread * pBackgroundJobsThread)
 {
-    m_backend->initialize(localStorageManager, spellChecker, account);
-}
-
-void NoteEditor::setBackgroundThread(QThread * pThread)
-{
-    m_backend->setBackgroundThread(pThread);
+    m_backend->initialize(localStorageManager, spellChecker, account, pBackgroundJobsThread);
 }
 
 void NoteEditor::setBackend(INoteEditorBackend * backend)

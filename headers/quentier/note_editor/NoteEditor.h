@@ -51,15 +51,17 @@ public:
      * NoteEditor requires LocalStorageManagerAsync, SpellChecker and Account for its work
      * but due to the particularities of Qt's .ui files processing these can't be passed right inside the constructor,
      * hence here's a special initialization method
+     *
+     * @param localStorageManager           The reference to LocalStorageManagerAsync, to set up signal-slot connections with it
+     * @param spellChecker                  The spell checker to be used by note editor for, well, spell-checking
+     * @param account                       Currently active account
+     * @param pBackgroundJobsThread         Pointer to the thread to be used for scheduling of background jobs
+     *                                      of NoteEditor; if null, NoteEditor's background jobs would take place in GUI
+     *                                      thread
      */
     void initialize(LocalStorageManagerAsync & localStorageManager,
-                    SpellChecker & spellChecker,
-                    const Account & account);
-
-    /**
-     * Set the thread in which NoteEditor should perform its background tasks
-     */
-    void setBackgroundThread(QThread * pThread);
+                    SpellChecker & spellChecker, const Account & account,
+                    QThread * pBackgroundJobsThread = Q_NULLPTR);
 
     /**
      * This method can be used to set the backend to the note editor; the note editor has the default backend

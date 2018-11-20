@@ -219,9 +219,8 @@ public:
 public Q_SLOTS:
     // INoteEditorBackend interface
     virtual void initialize(LocalStorageManagerAsync & localStorageManager,
-                            SpellChecker & spellChecker,
-                            const Account & account) Q_DECL_OVERRIDE;
-    virtual void setBackgroundThread(QThread * pThread) Q_DECL_OVERRIDE;
+                            SpellChecker & spellChecker, const Account & account,
+                            QThread * pBackgroundJobsThread) Q_DECL_OVERRIDE;
     virtual QObject * object() Q_DECL_OVERRIDE { return this; }
     virtual QWidget * widget() Q_DECL_OVERRIDE { return this; }
     virtual void setAccount(const Account & account) Q_DECL_OVERRIDE;

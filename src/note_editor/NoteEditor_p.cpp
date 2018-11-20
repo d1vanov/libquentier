@@ -5802,8 +5802,8 @@ void NoteEditorPrivate::execJavascriptCommand(const QString & command, const QSt
 }
 
 void NoteEditorPrivate::initialize(LocalStorageManagerAsync & localStorageManager,
-                                   SpellChecker & spellChecker,
-                                   const Account & account)
+                                   SpellChecker & spellChecker, const Account & account,
+                                   QThread * pBackgroundJobsThread)
 {
     QNDEBUG(QStringLiteral("NoteEditorPrivate::initialize"));
 
@@ -5811,19 +5811,12 @@ void NoteEditorPrivate::initialize(LocalStorageManagerAsync & localStorageManage
     noteEditorLocalStorageBroker.setLocalStorageManager(localStorageManager);
 
     m_pSpellChecker = &spellChecker;
-    setAccount(account);
-}
 
-void NoteEditorPrivate::setBackgroundThread(QThread * pThread)
-{
-    QNDEBUG(QStringLiteral("NoteEditorPrivate::setBackgroundThread"));
-
-    if (Q_UNLIKELY(!pThread)) {
-        QNDEBUG(QStringLiteral("Null pointer to QThread was passed, not doing anything"));
-        return;
+    if (pBackgroundJobsThread) {
+        m_pFileIOProcessorAsync->moveToThread(pBackgroundJobsThread);
     }
 
-    m_pFileIOProcessorAsync->moveToThread(pThread);
+    setAccount(account);
 }
 
 void NoteEditorPrivate::setAccount(const Account & account)
