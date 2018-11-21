@@ -265,6 +265,7 @@ void NoteEditorLocalStorageBroker::onUpdateNoteComplete(Note note, LocalStorageM
             for(auto it = resources.begin(), end = resources.end(); it != end; ++it) {
                 Resource & resource = *it;
                 resource.setDataBody(QByteArray());
+                resource.setAlternateDataBody(QByteArray());
             }
             Note noteWithoutResourceDataBodies = note;
             noteWithoutResourceDataBodies.setResources(resources);
