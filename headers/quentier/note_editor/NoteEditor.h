@@ -20,6 +20,7 @@
 #define LIB_QUENTIER_NOTE_EDITOR_NOTE_EDITOR_H
 
 #include <quentier/types/Note.h>
+#include <quentier/types/Notebook.h>
 #include <quentier/utility/Macros.h>
 #include <quentier/utility/Linkage.h>
 #include <quentier/types/ErrorString.h>
@@ -152,6 +153,13 @@ Q_SIGNALS:
      * (i.e. not any action like paste or cut)
      */
     void contentChanged();
+
+    /**
+     * @brief noteAndNotebookFoundInLocalStorage signal is emitted when note and
+     * its corresponding notebook were found within the local storage right
+     * before the note editor starts to load the note into the editor
+     */
+    void noteAndNotebookFoundInLocalStorage(Note note, Notebook notebook);
 
     /**
      * @brief noteNotFound signal is emitted when the note could not be found

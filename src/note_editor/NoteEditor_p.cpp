@@ -2821,6 +2821,8 @@ void NoteEditorPrivate::onFoundNoteAndNotebook(Note note, Notebook notebook)
         }
     }
 
+    Q_EMIT noteAndNotebookFoundInLocalStorage(*m_pNote, *m_pNotebook);
+
     Q_EMIT currentNoteChanged(*m_pNote);
     noteToEditorContent();
     QNTRACE(QStringLiteral("Done setting the current note and notebook"));
@@ -4837,6 +4839,8 @@ void NoteEditorPrivate::setupGeneralSignalSlotConnections()
                      q, QNSIGNAL(NoteEditor,currentNoteChanged,Note));
     QObject::connect(this, QNSIGNAL(NoteEditorPrivate,contentChanged),
                      q, QNSIGNAL(NoteEditor,contentChanged));
+    QObject::connect(this, QNSIGNAL(NoteEditorPrivate,noteAndNotebookFoundInLocalStorage,Note,Notebook),
+                     q, QNSIGNAL(NoteEditor,noteAndNotebookFoundInLocalStorage,Note,Notebook));
     QObject::connect(this, QNSIGNAL(NoteEditorPrivate,noteNotFound,QString),
                      q, QNSIGNAL(NoteEditor,noteNotFound,QString));
     QObject::connect(this, QNSIGNAL(NoteEditorPrivate,noteDeleted,QString),

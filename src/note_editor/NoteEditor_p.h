@@ -109,6 +109,7 @@ public:
 
 Q_SIGNALS:
     void contentChanged();
+    void noteAndNotebookFoundInLocalStorage(Note note, Notebook notebook);
     void noteNotFound(QString noteLocalUid);
     void noteDeleted(QString noteLocalUid);
 
