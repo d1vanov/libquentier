@@ -5253,12 +5253,20 @@ void NoteEditorPrivate::onPageHtmlReceived(const QString & html,
 
     m_pNote->setContent(m_enmlCachedMemory);
     m_pendingConversionToNote = false;
+
+    bool wasModified = m_modified;
     m_modified = false;
 
     Q_EMIT convertedToNote(*m_pNote);
 
-    if (m_pendingConversionToNoteForSavingInLocalStorage) {
+    if (m_pendingConversionToNoteForSavingInLocalStorage)
+    {
         m_pendingConversionToNoteForSavingInLocalStorage = false;
+
+        if (wasModified) {
+            m_pNote->setDirty(true);
+        }
+
         saveNoteToLocalStorage();
     }
 }
@@ -6646,8 +6654,6 @@ void NoteEditorPrivate::setModified()
         QNDEBUG(QStringLiteral("No note is set to the editor"));
         return;
     }
-
-    m_pNote->setDirty(true);
 
     if (!m_modified) {
         m_modified = true;
