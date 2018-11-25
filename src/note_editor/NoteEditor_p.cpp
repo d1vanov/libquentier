@@ -6364,6 +6364,107 @@ void NoteEditorPrivate::saveNoteToLocalStorage()
     Q_EMIT saveNoteToLocalStorageRequest(*m_pNote);
 }
 
+void NoteEditorPrivate::setNoteTitle(const QString & noteTitle)
+{
+    QNDEBUG(QStringLiteral("NoteEditorPrivate::setNoteTitle: ") << noteTitle);
+
+    if (Q_UNLIKELY(m_pNote.isNull())) {
+        ErrorString error(QT_TR_NOOP("Can't set title to the note: no note is set to the editor"));
+        QNWARNING(error << QStringLiteral(", title to set: ") << noteTitle);
+        Q_EMIT notifyError(error);
+        return;
+    }
+
+    if (!m_pNote->hasTitle() && noteTitle.isEmpty()) {
+        QNDEBUG(QStringLiteral("Note title is still empty, nothing to do"));
+        return;
+    }
+
+    if (m_pNote->hasTitle() && (m_pNote->title() == noteTitle)) {
+        QNDEBUG(QStringLiteral("Note title hasn't changed, nothing to do"));
+        return;
+    }
+
+    m_pNote->setTitle(noteTitle);
+    setModified();
+}
+
+void NoteEditorPrivate::setTagIds(const QStringList & tagLocalUids, const QStringList & tagGuids)
+{
+    QNDEBUG(QStringLiteral("NoteEditorPrivate::setTagIds: tag local uids: ") << tagLocalUids.join(QStringLiteral(", "))
+            << QStringLiteral("; tag guids: ") << tagGuids.join(QStringLiteral(", ")));
+
+    if (Q_UNLIKELY(m_pNote.isNull())) {
+        ErrorString error(QT_TR_NOOP("Can't set tags to the note: no note is set to the editor"));
+        QNWARNING(error << QStringLiteral(", tag local uids: ") << tagLocalUids.join(QStringLiteral(", "))
+                  << QStringLiteral("; tag guids: ") << tagGuids.join(QStringLiteral(", ")));
+        Q_EMIT notifyError(error);
+        return;
+    }
+
+    QStringList previousTagLocalUids = (m_pNote->hasTagLocalUids() ? m_pNote->tagLocalUids() : QStringList());
+    QStringList previousTagGuids = (m_pNote->hasTagGuids() ? m_pNote->tagGuids() : QStringList());
+
+    if (!tagLocalUids.isEmpty() && !tagGuids.isEmpty())
+    {
+        if (tagLocalUids.size() != tagGuids.size()) {
+            ErrorString error(QT_TR_NOOP("Can't set tags to the note: the number of tag local uids is different from the number of tag guids"));
+            QNWARNING(error << QStringLiteral(", tag local uids: ") << tagLocalUids.join(QStringLiteral(", "))
+                      << QStringLiteral("; tag guids: ") << tagGuids.join(QStringLiteral(", ")));
+            Q_EMIT notifyError(error);
+            return;
+        }
+
+        if ((tagLocalUids == previousTagLocalUids) && (tagGuids == previousTagGuids)) {
+            QNDEBUG(QStringLiteral("The list of tag ids hasn't changed, nothing to do"));
+            return;
+        }
+
+        m_pNote->setTagLocalUids(tagLocalUids);
+        m_pNote->setTagGuids(tagGuids);
+        setModified();
+
+        return;
+    }
+
+    if (!tagLocalUids.isEmpty())
+    {
+        if (tagLocalUids == previousTagLocalUids) {
+            QNDEBUG(QStringLiteral("The list of tag local uids hasn't changed, nothing to do"));
+            return;
+        }
+
+        m_pNote->setTagLocalUids(tagLocalUids);
+        m_pNote->setTagGuids(QStringList());
+        setModified();
+
+        return;
+    }
+
+    if (!tagGuids.isEmpty())
+    {
+        if (tagGuids == previousTagGuids) {
+            QNDEBUG(QStringLiteral("The list of tag guids hasn't changed, nothing to do"));
+            return;
+        }
+
+        m_pNote->setTagGuids(tagGuids);
+        m_pNote->setTagLocalUids(QStringList());
+        setModified();
+
+        return;
+    }
+
+    if (previousTagLocalUids.isEmpty() && previousTagGuids.isEmpty()) {
+        QNDEBUG(QStringLiteral("Tag local uids and/or guids were empty and are still empty, nothing to do"));
+        return;
+    }
+
+    m_pNote->setTagLocalUids(QStringList());
+    m_pNote->setTagGuids(QStringList());
+    setModified();
+}
+
 void NoteEditorPrivate::updateFromNote()
 {
     QNDEBUG(QStringLiteral("NoteEditorPrivate::updateFromNote"));

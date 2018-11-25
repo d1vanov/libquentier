@@ -874,7 +874,7 @@ void NoteEditorLocalStorageBroker::emitFindNotebookRequest(const QString & noteb
 
 void NoteEditorLocalStorageBroker::emitUpdateNoteRequest(const Note & note)
 {
-    LocalStorageManager::UpdateNoteOptions options(LocalStorageManager::UpdateNoteOption::UpdateResourceMetadata);
+    LocalStorageManager::UpdateNoteOptions options(LocalStorageManager::UpdateNoteOption::UpdateTags | LocalStorageManager::UpdateNoteOption::UpdateResourceMetadata);
     QUuid requestId = QUuid::createUuid();
     Q_UNUSED(m_updateNoteRequestIds.insert(requestId))
     QNDEBUG(QStringLiteral("Emitting the request to update note in local storage: request id = ") << requestId

@@ -321,6 +321,8 @@ public Q_SLOTS:
     virtual void setFocusToEditor() Q_DECL_OVERRIDE;
     virtual void convertToNote() Q_DECL_OVERRIDE;
     virtual void saveNoteToLocalStorage() Q_DECL_OVERRIDE;
+    virtual void setNoteTitle(const QString & noteTitle) Q_DECL_OVERRIDE;
+    virtual void setTagIds(const QStringList & tagLocalUids, const QStringList & tagGuids) Q_DECL_OVERRIDE;
 
     void undoPageAction();
     void redoPageAction();

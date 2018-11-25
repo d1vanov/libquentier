@@ -60,6 +60,8 @@ public:
 
     virtual void convertToNote() = 0;
     virtual void saveNoteToLocalStorage() = 0;
+    virtual void setNoteTitle(const QString & noteTitle) = 0;
+    virtual void setTagIds(const QStringList & tagLocalUids, const QStringList & tagGuids) = 0;
     virtual void undo() = 0;
     virtual void redo() = 0;
     virtual void cut() = 0;

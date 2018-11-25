@@ -125,6 +125,16 @@ void NoteEditor::saveNoteToLocalStorage()
     m_backend->saveNoteToLocalStorage();
 }
 
+void NoteEditor::setNoteTitle(const QString & noteTitle)
+{
+    m_backend->setNoteTitle(noteTitle);
+}
+
+void NoteEditor::setTagIds(const QStringList & tagLocalUids, const QStringList & tagGuids)
+{
+    m_backend->setTagIds(tagLocalUids, tagGuids);
+}
+
 void NoteEditor::undo()
 {
     m_backend->undo();

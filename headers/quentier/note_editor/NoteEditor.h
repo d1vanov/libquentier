@@ -261,6 +261,30 @@ public Q_SLOTS:
      */
     void saveNoteToLocalStorage();
 
+    /**
+     * Invoke this slot to set the title to the note displayed via the note
+     * editor. The note editor itself doesn't manage the note title in any way
+     * so any external code using the note editor can set the title to the note
+     * editor's note which would be considered modified if the title is new and
+     * then eventually the note would be saved to local storage
+     *
+     * @param noteTitle         The title of the note
+     */
+    void setNoteTitle(const QString & noteTitle);
+
+    /**
+     * Invoke this slot to set tag local uids and/or tag guids to the note
+     * displayed via the note editor. The note editor itself doesn't manage the
+     * note tags in any way so any external code using the note editor can set
+     * the tag ids to the note editor's internal note which would be considered
+     * modified if the tag ids are new and then eventually the note would be
+     * saved to local storage
+     *
+     * @param tagLocalUids      The list of tag local uids for the note
+     * @param tagGuids          The list of tag guids for the note
+     */
+    void setTagIds(const QStringList & tagLocalUids, const QStringList & tagGuids);
+
     void undo();
     void redo();
     void cut();
