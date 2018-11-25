@@ -6647,6 +6647,8 @@ void NoteEditorPrivate::setModified()
         return;
     }
 
+    m_pNote->setDirty(true);
+
     if (!m_modified) {
         m_modified = true;
         QNTRACE(QStringLiteral("Emitting noteModified signal"));
