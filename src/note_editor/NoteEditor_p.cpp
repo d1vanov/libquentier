@@ -6395,6 +6395,12 @@ void NoteEditorPrivate::setNoteTitle(const QString & noteTitle)
     }
 
     m_pNote->setTitle(noteTitle);
+
+    if (m_pNote->hasNoteAttributes()) {
+        qevercloud::NoteAttributes & attributes = m_pNote->noteAttributes();
+        attributes.noteTitleQuality.clear();
+    }
+
     setModified();
 }
 
