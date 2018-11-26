@@ -5265,6 +5265,7 @@ void NoteEditorPrivate::onPageHtmlReceived(const QString & html,
 
         if (wasModified) {
             m_pNote->setDirty(true);
+            m_pNote->setModificationTimestamp(QDateTime::currentMSecsSinceEpoch());
         }
 
         saveNoteToLocalStorage();
