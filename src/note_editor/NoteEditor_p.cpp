@@ -253,6 +253,7 @@ NoteEditorPrivate::NoteEditorPrivate(NoteEditor & noteEditor) :
     m_pendingConversionToNote(false),
     m_pendingConversionToNoteForSavingInLocalStorage(false),
     m_pendingNotePageLoad(false),
+    m_pendingNoteImageResourceTemporaryFiles(false),
     m_pendingNotePageLoadMethodExit(false),
     m_pendingNextPageUrl(),
     m_pendingIndexHtmlWritingToFile(false),
@@ -293,7 +294,7 @@ NoteEditorPrivate::NoteEditorPrivate(NoteEditor & noteEditor) :
     m_errorCachedMemory(),
     m_skipRulesForHtmlToEnmlConversion(),
     m_pResourceDataInTemporaryFileStorageManager(Q_NULLPTR),
-    m_pFileIOProcessorAsync(new FileIOProcessorAsync(this)),
+    m_pFileIOProcessorAsync(new FileIOProcessorAsync),
     m_resourceInfo(),
     m_pResourceInfoJavaScriptHandler(new ResourceInfoJavaScriptHandler(m_resourceInfo, this)),
     m_resourceFileStoragePathsByResourceLocalUid(),
@@ -322,7 +323,10 @@ NoteEditorPrivate::NoteEditorPrivate(NoteEditor & noteEditor) :
 }
 
 NoteEditorPrivate::~NoteEditorPrivate()
-{}
+{
+    QObject::disconnect(m_pFileIOProcessorAsync);
+    m_pFileIOProcessorAsync->deleteLater();
+}
 
 void NoteEditorPrivate::setInitialPageHtml(const QString & html)
 {
@@ -363,7 +367,7 @@ bool NoteEditorPrivate::isNoteLoaded() const
         return false;
     }
 
-    return !m_pendingNotePageLoad && !m_pendingJavaScriptExecution;
+    return !m_pendingNotePageLoad && !m_pendingJavaScriptExecution && !m_pendingNoteImageResourceTemporaryFiles;
 }
 
 void NoteEditorPrivate::onNoteLoadFinished(bool ok)
@@ -518,6 +522,11 @@ void NoteEditorPrivate::onNoteLoadFinished(bool ok)
     setupTextCursorPositionTracking();
     setupGenericResourceImages();
 #endif
+
+    if (!m_pendingNoteImageResourceTemporaryFiles) {
+        provideSrcForResourceImgTags();
+        highlightRecognizedImageAreas(m_lastSearchHighlightedText, m_lastSearchHighlightedTextCaseSensitivity);
+    }
 
     // Set the caret position to the end of the body
     page->executeJavaScript(m_setInitialCaretPositionJs);
@@ -1018,7 +1027,7 @@ void NoteEditorPrivate::contextMenuEvent(QContextMenuEvent * pEvent)
         return;
     }
 
-    if (m_pendingIndexHtmlWritingToFile || m_pendingNotePageLoad || m_pendingJavaScriptExecution) {
+    if (m_pendingIndexHtmlWritingToFile || m_pendingNotePageLoad || m_pendingJavaScriptExecution || m_pendingNoteImageResourceTemporaryFiles) {
         QNINFO(QStringLiteral("Ignoring context menu event for now, until the note is fully loaded..."));
         return;
     }
@@ -2368,6 +2377,8 @@ void NoteEditorPrivate::clearCurrentNoteInfo()
     m_pendingConversionToNote = false;
     m_pendingConversionToNoteForSavingInLocalStorage = false;
 
+    m_pendingNoteImageResourceTemporaryFiles = false;
+
 #ifndef QUENTIER_USE_QT_WEB_ENGINE
     page()->setPluginFactory(Q_NULLPTR);
     delete m_pPluginFactory;
@@ -2586,16 +2597,28 @@ void NoteEditorPrivate::onNoteResourceTemporaryFilesReady(QString noteLocalUid)
      * web engine's undesired caching is avoided
      */
 
+    m_pendingNoteImageResourceTemporaryFiles = false;
+
     QList<Resource> resources = m_pNote->resources();
     QString imageResourceMimePrefix = QStringLiteral("image/");
     for(auto it = resources.constBegin(), end = resources.constEnd(); it != end; ++it)
     {
         const Resource & resource = *it;
+        QNTRACE(QStringLiteral("Processing resource: ") << resource);
+
         if (!resource.hasMime() || !resource.mime().startsWith(imageResourceMimePrefix)) {
+            QNTRACE(QStringLiteral("Skipping the resource with inappropriate mime type: ")
+                    << (resource.hasMime() ? resource.mime() : QStringLiteral("<not set>")));
             continue;
         }
 
-        if (Q_UNLIKELY(!resource.hasDataBody())) {
+        if (Q_UNLIKELY(!resource.hasDataHash())) {
+            QNTRACE(QStringLiteral("Skipping the resource without data hash"));
+            continue;
+        }
+
+        if (Q_UNLIKELY(!resource.hasDataSize())) {
+            QNTRACE(QStringLiteral("Skipping the resource without data size"));
             continue;
         }
 
@@ -2615,15 +2638,9 @@ void NoteEditorPrivate::onNoteResourceTemporaryFilesReady(QString noteLocalUid)
 
         m_resourceFileStoragePathsByResourceLocalUid[resourceLocalUid] = linkFilePath;
 
-        QByteArray dataHash = (resource.hasDataHash()
-                               ? resource.dataHash()
-                               : QCryptographicHash::hash(resource.dataBody(), QCryptographicHash::Md5));
         QString resourceDisplayName = resource.displayName();
-        QString resourceDisplaySize = humanReadableSize(static_cast<quint64>(resource.hasDataSize()
-                                                                             ? resource.dataSize()
-                                                                             : resource.dataBody().size()));
-        m_resourceInfo.cacheResourceInfo(dataHash, resourceDisplayName,
-                                         resourceDisplaySize, linkFilePath);
+        QString resourceDisplaySize = humanReadableSize(static_cast<quint64>(std::max(resource.dataSize(), qint32(0))));
+        m_resourceInfo.cacheResourceInfo(resource.dataHash(), resourceDisplayName, resourceDisplaySize, linkFilePath);
     }
 
     if (!m_pendingNotePageLoad) {
@@ -5875,7 +5892,7 @@ bool NoteEditorPrivate::print(QPrinter & printer, ErrorString & errorDescription
         return false;
     }
 
-    if (m_pendingNotePageLoad || m_pendingIndexHtmlWritingToFile || m_pendingJavaScriptExecution) {
+    if (m_pendingNotePageLoad || m_pendingIndexHtmlWritingToFile || m_pendingJavaScriptExecution || m_pendingNoteImageResourceTemporaryFiles) {
         errorDescription.setBase(QT_TR_NOOP("Can't print note: the note has not been fully loaded "
                                             "into the editor yet, please try again in a few seconds"));
         QNDEBUG(errorDescription);
@@ -6180,7 +6197,7 @@ bool NoteEditorPrivate::exportToPdf(const QString & absoluteFilePath, ErrorStrin
         return false;
     }
 
-    if (m_pendingNotePageLoad || m_pendingIndexHtmlWritingToFile || m_pendingJavaScriptExecution) {
+    if (m_pendingNotePageLoad || m_pendingIndexHtmlWritingToFile || m_pendingJavaScriptExecution || m_pendingNoteImageResourceTemporaryFiles) {
         errorDescription.setBase(QT_TR_NOOP("Can't export note to pdf: the note has not been fully loaded "
                                             "into the editor yet, please try again in a few seconds"));
         QNDEBUG(errorDescription);
@@ -6235,7 +6252,7 @@ bool NoteEditorPrivate::exportToEnex(const QStringList & tagNames,
         return false;
     }
 
-    if (m_pendingNotePageLoad || m_pendingIndexHtmlWritingToFile || m_pendingJavaScriptExecution) {
+    if (m_pendingNotePageLoad || m_pendingIndexHtmlWritingToFile || m_pendingJavaScriptExecution || m_pendingNoteImageResourceTemporaryFiles) {
         errorDescription.setBase(QT_TR_NOOP("Can't export note to enex: the note has not been fully loaded "
                                             "into the editor yet, please try again in a few seconds"));
         QNDEBUG(errorDescription);

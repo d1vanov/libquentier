@@ -922,6 +922,7 @@ private:
     bool        m_pendingConversionToNote;
     bool        m_pendingConversionToNoteForSavingInLocalStorage;
     bool        m_pendingNotePageLoad;
+    bool        m_pendingNoteImageResourceTemporaryFiles;
 
     /**
      * The two following variables deserve a special explanation. Since Qt 5.9 QWebEnginePage::load method started to behave

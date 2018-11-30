@@ -44,7 +44,9 @@ ResourceDataInTemporaryFileStorageManager::ResourceDataInTemporaryFileStorageMan
     m_resourceLocalUidsPendingFindInLocalStorageForWritingToFileForOpening(),
     m_resourceLocalUidByFilePath(),
     m_fileSystemWatcher()
-{}
+{
+    createConnections();
+}
 
 QString ResourceDataInTemporaryFileStorageManager::imageResourceFileStorageFolderPath()
 {
@@ -1067,7 +1069,7 @@ bool ResourceDataInTemporaryFileStorageManager::writeResourceDataToTemporaryFile
 
     QNDEBUG(QStringLiteral("Successfully wrote resource data to file: resource local uid = ") << resourceLocalUid
             << QStringLiteral(", file path = ") << fileStoragePath);
-    return false;
+    return true;
 }
 
 } // namespace quentier
