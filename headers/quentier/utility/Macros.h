@@ -22,6 +22,15 @@
 #include <QtGlobal>
 #include <QString>
 
+#if QT_VERSION < QT_VERSION_CHECK(5, 7, 0)
+#ifdef CPP11_COMPLIANT
+#include <type_traits>
+#else
+#include <boost/type_traits/add_const.hpp>
+#endif
+#endif //  QT_VERSION < 5.7.0
+
+
 #if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
 
 #ifndef Q_DECL_OVERRIDE
@@ -60,7 +69,43 @@
 #endif
 #endif
 
-#endif // QT_VERSION
+#endif // QT_VERSION < 5.0.0
+
+
+#ifndef Q_DECL_CONSTEXPR
+#define Q_DECL_CONSTEXPR
+#endif
+
+#ifndef Q_DECL_NOTHROW
+#define Q_DECL_NOTHROW throw()
+#endif
+
+#ifndef Q_DECL_EQ_DELETE
+#ifdef CPP11_COMPLIANT
+#define Q_DECL_EQ_DELETE = delete
+#else
+#define Q_DECL_EQ_DELETE
+#endif
+#endif // Q_DECL_EQ_DELETE
+
+#if QT_VERSION < QT_VERSION_CHECK(5, 7, 0)
+#ifdef CPP11_COMPLIANT
+
+// this adds const to non-const objects (like std::as_const)
+template <typename T>
+Q_DECL_CONSTEXPR typename std::add_const<T>::type &qAsConst(T &t) Q_DECL_NOTHROW { return t; }
+// prevent rvalue arguments:
+template <typename T>
+void qAsConst(const T &&) Q_DECL_EQ_DELETE;
+
+#else // CPP11_COMPLIANT
+
+// this adds const to non-const objects (like std::as_const)
+template <typename T>
+Q_DECL_CONSTEXPR typename boost::add_const<T>::type &qAsConst(T &t) Q_DECL_NOTHROW { return t; }
+
+#endif // CPP11_COMPLIANT
+#endif // QT_VERSION < 5.7.0
 
 #ifdef QNSIGNAL
 #undef QNSIGNAL
@@ -84,13 +129,5 @@
 #define QStringLiteral(x) QString::fromUtf8(x, sizeof(x) - 1)
 #endif
 #endif
-
-#ifndef Q_DECL_EQ_DELETE
-#ifdef CPP11_COMPLIANT
-#define Q_DECL_EQ_DELETE = delete
-#else
-#define Q_DECL_EQ_DELETE
-#endif
-#endif // Q_DECL_EQ_DELETE
 
 #endif // LIB_QUENTIER_UTILITY_MACROS_H
