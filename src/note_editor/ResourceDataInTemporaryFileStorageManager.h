@@ -351,12 +351,22 @@ private:
         };
     };
 
+    struct CheckResourceFileActualityOption
+    {
+        enum type
+        {
+            On = 0,
+            Off
+        };
+    };
+
     typedef boost::function<void (const double)> WriteResourceDataCallback;
 
     bool writeResourceDataToTemporaryFile(const QString & noteLocalUid, const QString & resourceLocalUid,
                                           const QByteArray & data, const QByteArray & dataHash,
-                                          const ResourceType::type resourceType,
-                                          ErrorString & errorDescription, WriteResourceDataCallback = 0);
+                                          const ResourceType::type resourceType, ErrorString & errorDescription,
+                                          const CheckResourceFileActualityOption::type checkActualityOption = CheckResourceFileActualityOption::On,
+                                          WriteResourceDataCallback = 0);
 
 private:
     Q_DISABLE_COPY(ResourceDataInTemporaryFileStorageManager)
