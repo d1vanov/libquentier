@@ -101,11 +101,14 @@ const QString accountPersistentStoragePath(const Account & account)
 
 const QString applicationTemporaryStoragePath()
 {
+    QString path;
 #if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
-    return QStandardPaths::writableLocation(QStandardPaths::TempLocation);
+    path = QStandardPaths::writableLocation(QStandardPaths::TempLocation);
 #else
-    return QDesktopServices::storageLocation(QDesktopServices::TempLocation);
+    path = QDesktopServices::storageLocation(QDesktopServices::TempLocation);
 #endif
+    path += QStringLiteral("/") + QCoreApplication::applicationName();
+    return path;
 }
 
 const QString homePath()
