@@ -255,6 +255,7 @@ void ResourceDataInTemporaryFileStorageManager::onCurrentNoteChanged(Note note)
     }
 
     if (!m_pCurrentNote->hasResources()) {
+        QNTRACE(QStringLiteral("Current note has no resources, emitting noteResourcesReady signal"));
         Q_EMIT noteResourcesReady(m_pCurrentNote->localUid());
         return;
     }
@@ -269,6 +270,7 @@ void ResourceDataInTemporaryFileStorageManager::onCurrentNoteChanged(Note note)
         }
 
         imageResources << resource;
+        QNDEBUG(QStringLiteral("Will process image resource with local uid ") << resource.localUid());
     }
 
     if (imageResources.isEmpty()) {
@@ -400,6 +402,8 @@ void ResourceDataInTemporaryFileStorageManager::onFoundResourceData(Resource res
         }
 
         if (m_resourceLocalUidsPendingFindInLocalStorage.empty()) {
+            QNDEBUG(QStringLiteral("Received and process all image resources data for the current note, "
+                                   "emitting noteResourcesReady signal: note local uid = ") << noteLocalUid);
             Q_EMIT noteResourcesReady(noteLocalUid);
         }
         else {
@@ -881,8 +885,12 @@ void ResourceDataInTemporaryFileStorageManager::emitPartialUpdateResourceFilesFo
 }
 
 ResourceDataInTemporaryFileStorageManager::ResultType::type
-ResourceDataInTemporaryFileStorageManager::putResourcesDataToTemporaryFiles(const QList<Resource> & resources, ErrorString & errorDescription)
+ResourceDataInTemporaryFileStorageManager::putResourcesDataToTemporaryFiles(const QList<Resource> & resources,
+                                                                            ErrorString & errorDescription)
 {
+    QNDEBUG(QStringLiteral("ResourceDataInTemporaryFileStorageManager::putResourcesDataToTemporaryFiles: ")
+            << resources.size() << QStringLiteral(" resources"));
+
     if (Q_UNLIKELY(m_pCurrentNote.isNull())) {
         errorDescription.setBase(QT_TR_NOOP("Can't put resources data into temporary files: internal error, "
                                             "no current note is set to ResourceDataInTemporaryFileStorageManager"));

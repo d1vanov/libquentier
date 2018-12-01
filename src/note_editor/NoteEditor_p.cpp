@@ -5346,7 +5346,7 @@ void NoteEditorPrivate::writeNotePageFile(const QString & html)
     m_writeNoteHtmlToFileRequestId = QUuid::createUuid();
     m_pendingIndexHtmlWritingToFile = true;
     QString pagePath = noteEditorPagePath();
-    QNTRACE(QStringLiteral("Emitting the request to write the note html to file: request id = ") << m_writeNoteHtmlToFileRequestId);
+    QNTRACE(QStringLiteral("Emitting the request to write note html to file: request id = ") << m_writeNoteHtmlToFileRequestId);
     Q_EMIT writeNoteHtmlToFile(pagePath, html.toUtf8(),
                                m_writeNoteHtmlToFileRequestId, /* append = */ false);
 }
@@ -8786,5 +8786,5 @@ void initNoteEditorResources()
     Q_INIT_RESOURCE(scripts);
     Q_INIT_RESOURCE(hilitor);
 
-    QNDEBUG(QStringLiteral("Initialized NoteEditor's resources"));
+    QNDEBUG(QStringLiteral("Initialized NoteEditor's qrc resources"));
 }

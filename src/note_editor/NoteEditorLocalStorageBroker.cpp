@@ -393,6 +393,7 @@ void NoteEditorLocalStorageBroker::onFindNotebookComplete(Notebook foundNotebook
             << requestId << QStringLiteral(", notebook: ") << foundNotebook);
 
     m_findNotebookRequestIds.erase(it);
+
     QString notebookLocalUid = foundNotebook.localUid();
     m_notebooksCache.put(notebookLocalUid, foundNotebook);
 
@@ -425,7 +426,10 @@ void NoteEditorLocalStorageBroker::onFindNotebookComplete(Notebook foundNotebook
     }
 
     const NotesHash & notes = pendingNotesIt.value();
-    for(auto noteIt = notes.constBegin(), noteEnd = notes.constEnd(); noteIt != noteEnd; ++noteIt) {
+    for(auto noteIt = notes.constBegin(), noteEnd = notes.constEnd(); noteIt != noteEnd; ++noteIt)
+    {
+        QNTRACE(QStringLiteral("Found pending note, emitting foundNoteAndNotebook signal: note local uid = ")
+                << noteIt.value().localUid());
         Q_EMIT foundNoteAndNotebook(noteIt.value(), foundNotebook);
     }
 
