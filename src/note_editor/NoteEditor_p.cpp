@@ -309,6 +309,7 @@ NoteEditorPrivate::NoteEditorPrivate(NoteEditor & noteEditor) :
     m_recognitionIndicesByResourceHash(),
     m_currentContextMenuExtraData(),
     m_resourceLocalUidAndFileStoragePathByReadResourceRequestIds(),
+    m_localUidsOfResourcesPendingFindDataInLocalStorage(),
     m_lastFreeEnToDoIdNumber(1),
     m_lastFreeHyperlinkIdNumber(1),
     m_lastFreeEnCryptIdNumber(1),
@@ -723,11 +724,13 @@ void NoteEditorPrivate::onResourceFileReadFromStorage(QUuid requestId, QByteArra
                                     QStringLiteral("', '") + linkFileName + QStringLiteral("');"));
         }
     }
+#ifdef QUENTIER_USE_QT_WEB_ENGINE
     else
     {
         QImage image = buildGenericResourceImage(resource);
         saveGenericResourceImage(resource, image);
     }
+#endif
 }
 
 #ifdef QUENTIER_USE_QT_WEB_ENGINE
@@ -1015,7 +1018,18 @@ void NoteEditorPrivate::onSaveResourceRequest(const QByteArray & resourceHash)
         return;
     }
 
-    manualSaveResourceToFile(resources[resourceIndex]);
+    const Resource & resource = qAsConst(resources)[resourceIndex];
+
+    if (!resource.hasDataBody() && !resource.hasAlternateDataBody())
+    {
+        QNTRACE(QStringLiteral("The resource meant to be saved to a local file has neither data body "
+                               "nor alternate data body, need to request these from the local storage"));
+        Q_UNUSED(m_localUidsOfResourcesPendingFindDataInLocalStorage.insert(resource.localUid()))
+        Q_EMIT findResourceData(resource.localUid());
+        return;
+    }
+
+    manualSaveResourceToFile(resource);
 }
 
 void NoteEditorPrivate::contextMenuEvent(QContextMenuEvent * pEvent)
@@ -2376,6 +2390,7 @@ void NoteEditorPrivate::clearCurrentNoteInfo()
     m_lastSearchHighlightedTextCaseSensitivity = false;
 
     m_resourceLocalUidAndFileStoragePathByReadResourceRequestIds.clear();
+    m_localUidsOfResourcesPendingFindDataInLocalStorage.clear();
 
     m_noteWasNotFound = false;
     m_noteWasDeleted = false;
@@ -2534,7 +2549,77 @@ void NoteEditorPrivate::getHtmlForPrinting()
     GET_PAGE()
     page->toHtml(NoteEditorCallbackFunctor<QString>(this, &NoteEditorPrivate::onPageHtmlReceivedForPrinting));
 }
-#endif
+#endif // QUENTIER_USE_QT_WEB_ENGINE
+
+void NoteEditorPrivate::onFoundResourceData(Resource resource)
+{
+    QString resourceLocalUid = resource.localUid();
+    auto it = m_localUidsOfResourcesPendingFindDataInLocalStorage.find(resourceLocalUid);
+    if (it == m_localUidsOfResourcesPendingFindDataInLocalStorage.end()) {
+        return;
+    }
+
+    QNDEBUG(QStringLiteral("NoteEditorPrivate::onFoundResourceData: resource local uid = ") << resourceLocalUid);
+    QNTRACE(resource);
+
+    Q_UNUSED(m_localUidsOfResourcesPendingFindDataInLocalStorage.erase(it))
+
+    if (Q_UNLIKELY(m_pNote.isNull())) {
+        QNDEBUG(QStringLiteral("No note is set to the editor"));
+        return;
+    }
+
+    QList<Resource> resources = m_pNote->resources();
+    int resourceIndex = -1;
+    for(int i = 0, size = resources.size(); i < size; ++i)
+    {
+        const Resource & currentResource = qAsConst(resources)[i];
+        if (currentResource.localUid() == resourceLocalUid) {
+            resourceIndex = i;
+            break;
+        }
+    }
+
+    if (Q_UNLIKELY(resourceIndex < 0))
+    {
+        ErrorString errorDescription(QT_TR_NOOP("Can't save attachment data to a file: the attachment to be saved "
+                                                "was not found within the note"));
+        QNWARNING(errorDescription << QStringLiteral(", resource local uid = ") << resourceLocalUid);
+        Q_EMIT notifyError(errorDescription);
+        return;
+    }
+
+    QNTRACE(QStringLiteral("Updating the resource within the note"));
+    resources[resourceIndex] = resource;
+    m_pNote->setResources(resources);
+    Q_EMIT currentNoteChanged(*m_pNote);
+
+    manualSaveResourceToFile(resource);
+}
+
+void NoteEditorPrivate::onFailedToFindResourceData(QString resourceLocalUid, ErrorString errorDescription)
+{
+    auto it = m_localUidsOfResourcesPendingFindDataInLocalStorage.find(resourceLocalUid);
+    if (it == m_localUidsOfResourcesPendingFindDataInLocalStorage.end()) {
+        return;
+    }
+
+    QNDEBUG(QStringLiteral("NoteEditorPrivate::onFailedToFindResourceData: resource local uid = ") << resourceLocalUid);
+
+    Q_UNUSED(m_localUidsOfResourcesPendingFindDataInLocalStorage.erase(it))
+
+    if (Q_UNLIKELY(m_pNote.isNull())) {
+        QNDEBUG(QStringLiteral("No note is set to the editor"));
+        return;
+    }
+
+    ErrorString error(QT_TR_NOOP("Can't save attachment data to a file: attachment data was not found within the local storage"));
+    error.appendBase(errorDescription.base());
+    error.appendBase(errorDescription.additionalBases());
+    error.details() = errorDescription.details();
+    QNWARNING(error << QStringLiteral(", resource local uid = ") << resourceLocalUid);
+    Q_EMIT notifyError(error);
+}
 
 void NoteEditorPrivate::onFailedToPutResourceDataInTemporaryFile(QString resourceLocalUid, QString noteLocalUid,
                                                                  ErrorString errorDescription)
@@ -3770,7 +3855,6 @@ void NoteEditorPrivate::manualSaveResourceToFile(const Resource & resource)
     QNDEBUG(QStringLiteral("NoteEditorPrivate::manualSaveResourceToFile"));
 
     if (Q_UNLIKELY(!resource.hasDataBody() && !resource.hasAlternateDataBody())) {
-        // FIXME: should actually request the data from NoteEditorLocalStorageBroker instead
         ErrorString error(QT_TR_NOOP("Can't save resource to file: resource has neither data body nor alternate data body"));
         QNINFO(error << QStringLiteral(", resource: ") << resource);
         Q_EMIT notifyError(error);
@@ -4081,6 +4165,7 @@ QImage NoteEditorPrivate::buildGenericResourceImage(const Resource & resource)
     return pixmap.toImage();
 }
 
+#ifdef QUENTIER_USE_QT_WEB_ENGINE
 void NoteEditorPrivate::saveGenericResourceImage(const Resource & resource, const QImage & image)
 {
     QNDEBUG(QStringLiteral("NoteEditorPrivate::saveGenericResourceImage: resource local uid = ") << resource.localUid());
@@ -4114,7 +4199,6 @@ void NoteEditorPrivate::saveGenericResourceImage(const Resource & resource, cons
                                           resource.displayName(), requestId);
 }
 
-#ifdef QUENTIER_USE_QT_WEB_ENGINE
 void NoteEditorPrivate::provideSrcAndOnClickScriptForImgEnCryptTags()
 {
     QNDEBUG(QStringLiteral("NoteEditorPrivate::provideSrcAndOnClickScriptForImgEnCryptTags"));
@@ -4828,6 +4912,8 @@ void NoteEditorPrivate::setupGeneralSignalSlotConnections()
                      &noteEditorLocalStorageBroker, QNSLOT(NoteEditorLocalStorageBroker,findNoteAndNotebook,QString));
     QObject::connect(this, QNSIGNAL(NoteEditorPrivate,saveNoteToLocalStorageRequest,Note),
                      &noteEditorLocalStorageBroker, QNSLOT(NoteEditorLocalStorageBroker,saveNoteToLocalStorage,Note));
+    QObject::connect(this, QNSIGNAL(NoteEditorPrivate,findResourceData,QString),
+                     &noteEditorLocalStorageBroker, QNSLOT(NoteEditorLocalStorageBroker,findResourceData,QString));
     QObject::connect(&noteEditorLocalStorageBroker, QNSIGNAL(NoteEditorLocalStorageBroker,noteSavedToLocalStorage,QString),
                      this, QNSLOT(NoteEditorPrivate,onNoteSavedToLocalStorage,QString));
     QObject::connect(&noteEditorLocalStorageBroker, QNSIGNAL(NoteEditorLocalStorageBroker,failedToSaveNoteToLocalStorage,QString,ErrorString),
@@ -4844,6 +4930,10 @@ void NoteEditorPrivate::setupGeneralSignalSlotConnections()
                      this, QNSLOT(NoteEditorPrivate,onNoteDeleted,QString));
     QObject::connect(&noteEditorLocalStorageBroker, QNSIGNAL(NoteEditorLocalStorageBroker,notebookDeleted,QString),
                      this, QNSLOT(NoteEditorPrivate,onNotebookDeleted,QString));
+    QObject::connect(&noteEditorLocalStorageBroker, QNSIGNAL(NoteEditorLocalStorageBroker,foundResourceData,Resource),
+                     this, QNSLOT(NoteEditorPrivate,onFoundResourceData,Resource));
+    QObject::connect(&noteEditorLocalStorageBroker, QNSIGNAL(NoteEditorLocalStorageBroker,failedToFindResourceData,QString,ErrorString),
+                     this, QNSLOT(NoteEditorPrivate,onFailedToFindResourceData,QString,ErrorString));
 
     Q_Q(NoteEditor);
     QObject::connect(this, QNSIGNAL(NoteEditorPrivate,notifyError,ErrorString),

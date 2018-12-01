@@ -167,9 +167,12 @@ public:
     void setNoteResources(const QList<Resource> & resources);
 
     QImage buildGenericResourceImage(const Resource & resource);
+
+#ifdef QUENTIER_USE_QT_WEB_ENGINE
     void saveGenericResourceImage(const Resource & resource, const QImage & image);
     void provideSrcForGenericResourceImages();
     void setupGenericResourceOnClickHandler();
+#endif
 
     void updateResource(const QString & resourceLocalUid, const QByteArray & previousResourceHash,
                         Resource updatedResource);
@@ -334,23 +337,60 @@ public:
 
 // private signals:
 Q_SIGNALS:
+    // Signals for communicating with ResourceDataInTemporaryFileStorageManager
+
+    /**
+     * The signal used to receive the latest version of resource binary data
+     * from ResourceDataInTemporaryFileStorageManager after detecting the change
+     * of a resource file (which was supposedly edited within the external editor)
+     */
     void readResourceFromStorage(QString fileStoragePath, QString localUid, QUuid requestId);
 
-    void openResourceFile(QString absoluteFilePath);
+    /**
+     * The signal delegating the sequence of actions required for opening the
+     * resource data within the external editor to
+     * ResourceDataInTemporaryFileStorageManager
+     */
+    void openResourceFile(QString resourceLocalUid);
+
+    // Signals for communicating with FileIOProcessorAsync
+
+    /**
+     * The signal used for writing of note editor page's HTML to a file so that
+     * it can be loaded as a URL within the note editor page
+     */
     void writeNoteHtmlToFile(QString absoluteFilePath, QByteArray html, QUuid requestId, bool append);
+
+    /**
+     * The signal used to save the resource binary data to some file selected by
+     * the user (i.e. this signal is used in the course of actions processing
+     * the user initiated request to save some of note's resources to a file)
+     */
     void saveResourceToFile(QString absoluteFilePath, QByteArray resourceData, QUuid requestId, bool append);
+
+#ifdef QUENTIER_USE_QT_WEB_ENGINE
+    /**
+     * The signal used during the preparation for loading the note into the note editor page: this signal initiates
+     * writing the specifically constructed image - "generic resource image" - to a file so that it can be loaded
+     * as an img tag's URL into the note editor page
+     */
     void saveGenericResourceImageToFile(QString noteLocalUid, QString resourceLocalUid, QByteArray resourceImageData,
                                         QString resourceFileSuffix, QByteArray resourceActualHash,
                                         QString resourceDisplayName, QUuid requestId);
-
-    void noteSavedToLocalStorage(QString noteLocalUid);
-    void failedToSaveNoteToLocalStorage(ErrorString errorDescription, QString noteLocalUid);
+#endif // QUENTIER_USE_QT_WEB_ENGINE
 
     // Signals for communicating with NoteEditorLocalStorageBroker
     void findNoteAndNotebook(const QString & noteLocalUid);
     void saveNoteToLocalStorageRequest(const Note & note);
+    void findResourceData(const QString & resourceLocalUid);
+    void noteSavedToLocalStorage(QString noteLocalUid);
+    void failedToSaveNoteToLocalStorage(ErrorString errorDescription, QString noteLocalUid);
 
 #ifdef QUENTIER_USE_QT_WEB_ENGINE
+    /**
+     * The signal used during the asynchronous sequence of actions required for
+     * printing the note to pdf
+     */
     void htmlReadyForPrinting();
 #endif
 
@@ -506,6 +546,8 @@ private Q_SLOTS:
     void onNotebookUpdated(Notebook notebook);
     void onNoteDeleted(QString noteLocalUid);
     void onNotebookDeleted(QString notebookLocalUid);
+    void onFoundResourceData(Resource resource);
+    void onFailedToFindResourceData(QString resourceLocalUid, ErrorString errorDescription);
 
     // Slots for signals from ResourceDataInTemporaryFileStorageManager
     void onFailedToPutResourceDataInTemporaryFile(QString resourceLocalUid, QString noteLocalUid, ErrorString errorDescription);
@@ -1038,13 +1080,15 @@ private:
     GenericResourceImageJavaScriptHandler *     m_pGenericResoureImageJavaScriptHandler;
 #endif
 
-    QSet<QUuid>                                 m_saveGenericResourceImageToFileRequestIds;
+    QSet<QUuid>     m_saveGenericResourceImageToFileRequestIds;
 
     QHash<QByteArray, ResourceRecognitionIndices>   m_recognitionIndicesByResourceHash;
 
-    CurrentContextMenuExtraData                 m_currentContextMenuExtraData;
+    CurrentContextMenuExtraData     m_currentContextMenuExtraData;
 
     QHash<QUuid, QPair<QString, QString> >      m_resourceLocalUidAndFileStoragePathByReadResourceRequestIds;
+
+    QSet<QUuid>     m_localUidsOfResourcesPendingFindDataInLocalStorage;
 
     quint64     m_lastFreeEnToDoIdNumber;
     quint64     m_lastFreeHyperlinkIdNumber;
