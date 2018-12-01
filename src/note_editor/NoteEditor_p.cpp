@@ -2357,7 +2357,13 @@ void NoteEditorPrivate::clearCurrentNoteInfo()
     QNDEBUG(QStringLiteral("NoteEditorPrivate::clearCurrentNoteInfo"));
 
     // Remove the no longer needed html file with the note editor page
-    Q_UNUSED(removeFile(noteEditorPagePath()))
+    if (!m_pNote.isNull())
+    {
+        QFileInfo noteEditorPageFileInfo(noteEditorPagePath());
+        if (noteEditorPageFileInfo.exists() && noteEditorPageFileInfo.isFile()) {
+            Q_UNUSED(removeFile(noteEditorPageFileInfo.absoluteFilePath()))
+        }
+    }
 
     m_resourceInfo.clear();
     m_resourceFileStoragePathsByResourceLocalUid.clear();
