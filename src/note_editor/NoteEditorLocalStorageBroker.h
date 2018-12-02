@@ -148,6 +148,12 @@ private:
     LRUCache<QString, Notebook>     m_notebooksCache;
     LRUCache<QString, Note>         m_notesCache;
 
+    /**
+     * This cache stores resources with binary data but only if that data is not
+     * too large to prevent spending too much memory on it
+     */
+    LRUCache<QString, Resource>     m_resourcesCache;
+
     QHash<QString, SaveNoteInfo>    m_saveNoteInfoByNoteLocalUids;
     QSet<QUuid>     m_updateNoteRequestIds;
 };

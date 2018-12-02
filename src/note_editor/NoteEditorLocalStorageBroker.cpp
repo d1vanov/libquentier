@@ -20,6 +20,9 @@
 #include "../synchronization/SynchronizationShared.h"
 #include <quentier/logging/QuentierLogger.h>
 
+// 10 Mb
+#define MAX_TOTAL_RESOURCE_BINARY_DATA_SIZE_IN_BYTES (10485760)
+
 namespace quentier {
 
 NoteEditorLocalStorageBroker::NoteEditorLocalStorageBroker() :
@@ -36,6 +39,7 @@ NoteEditorLocalStorageBroker::NoteEditorLocalStorageBroker() :
     m_noteLocalUidsByExpungeResourceRequestIds(),
     m_notebooksCache(5),
     m_notesCache(5),
+    m_resourcesCache(5),
     m_saveNoteInfoByNoteLocalUids(),
     m_updateNoteRequestIds()
 {}
@@ -236,6 +240,13 @@ void NoteEditorLocalStorageBroker::findNoteAndNotebook(const QString & noteLocal
 void NoteEditorLocalStorageBroker::findResourceData(const QString & resourceLocalUid)
 {
     QNDEBUG(QStringLiteral("NoteEditorLocalStorageBroker::findResourceData: resource local uid = ") << resourceLocalUid);
+
+    const Resource * pCachedResource = m_resourcesCache.get(resourceLocalUid);
+    if (pCachedResource) {
+        QNDEBUG(QStringLiteral("Found cached resource binary data"));
+        Q_EMIT foundResourceData(*pCachedResource);
+        return;
+    }
 
     QUuid requestId = QUuid::createUuid();
     Q_UNUSED(m_findResourceRequestIds.insert(requestId))
@@ -554,6 +565,10 @@ void NoteEditorLocalStorageBroker::onAddResourceFailed(Resource resource, ErrorS
 
 void NoteEditorLocalStorageBroker::onUpdateResourceComplete(Resource resource, QUuid requestId)
 {
+    if (m_resourcesCache.get(resource.localUid())) {
+        m_resourcesCache.put(resource.localUid(), resource);
+    }
+
     auto it = m_noteLocalUidsByUpdateResourceRequestIds.find(requestId);
     if (it == m_noteLocalUidsByUpdateResourceRequestIds.end()) {
         return;
@@ -611,6 +626,8 @@ void NoteEditorLocalStorageBroker::onUpdateResourceFailed(Resource resource, Err
 
 void NoteEditorLocalStorageBroker::onExpungeResourceComplete(Resource resource, QUuid requestId)
 {
+    Q_UNUSED(m_resourcesCache.remove(resource.localUid()))
+
     auto it = m_noteLocalUidsByExpungeResourceRequestIds.find(requestId);
     if (it == m_noteLocalUidsByExpungeResourceRequestIds.end()) {
         return;
@@ -691,6 +708,19 @@ void NoteEditorLocalStorageBroker::onFindResourceComplete(Resource resource, boo
             << QStringLiteral(", resource: ") << resource);
 
     m_findResourceRequestIds.erase(it);
+
+    qint32 totalBinaryDataSize = 0;
+    if (resource.hasDataSize()) {
+        totalBinaryDataSize += resource.dataSize();
+    }
+    if (resource.hasAlternateDataSize()) {
+        totalBinaryDataSize += resource.alternateDataSize();
+    }
+
+    if (totalBinaryDataSize < MAX_TOTAL_RESOURCE_BINARY_DATA_SIZE_IN_BYTES) {
+        m_resourcesCache.put(resource.localUid(), resource);
+    }
+
     Q_EMIT foundResourceData(resource);
 }
 
@@ -728,6 +758,7 @@ void NoteEditorLocalStorageBroker::onSwitchUserComplete(Account account, QUuid r
 
     m_notebooksCache.clear();
     m_notesCache.clear();
+    m_resourcesCache.clear();
 
     m_saveNoteInfoByNoteLocalUids.clear();
     m_updateNoteRequestIds.clear();
