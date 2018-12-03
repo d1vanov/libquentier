@@ -685,7 +685,28 @@ void NoteEditorLocalStorageBroker::onExpungeResourceFailed(Resource resource, Er
 void NoteEditorLocalStorageBroker::onExpungeNoteComplete(Note note, QUuid requestId)
 {
     Q_UNUSED(requestId)
-    Q_EMIT noteDeleted(note.localUid());
+    QString noteLocalUid = note.localUid();
+    Q_UNUSED(m_notesCache.remove(noteLocalUid))
+
+    QStringList resourceLocalUidsToRemoveFromCache;
+    for(auto rit = m_resourcesCache.begin(), rend = m_resourcesCache.end(); rit != rend; ++rit)
+    {
+        if (Q_UNLIKELY(!rit->second.hasNoteLocalUid())) {
+            QNTRACE(QStringLiteral("Detected resource without note local uid; will remove it from the cache: ") << rit->second);
+            resourceLocalUidsToRemoveFromCache << rit->first;
+            continue;
+        }
+
+        if (rit->second.noteLocalUid() == noteLocalUid) {
+            resourceLocalUidsToRemoveFromCache << rit->first;
+        }
+    }
+
+    for(auto rit = resourceLocalUidsToRemoveFromCache.begin(), rend = resourceLocalUidsToRemoveFromCache.end(); rit != rend; ++rit) {
+        Q_UNUSED(m_resourcesCache.remove(*rit))
+    }
+
+    Q_EMIT noteDeleted(noteLocalUid);
 }
 
 void NoteEditorLocalStorageBroker::onExpungeNotebookComplete(Notebook notebook, QUuid requestId)
@@ -693,6 +714,44 @@ void NoteEditorLocalStorageBroker::onExpungeNotebookComplete(Notebook notebook, 
     Q_UNUSED(requestId)
     QString notebookLocalUid = notebook.localUid();
     Q_UNUSED(m_notebooksCache.remove(notebookLocalUid))
+
+    QStringList noteLocalUidsToRemoveFromCache;
+    for(auto it = m_notesCache.begin(), end = m_notesCache.end(); it != end; ++it)
+    {
+        if (Q_UNLIKELY(!it->second.hasNotebookLocalUid())) {
+            QNTRACE(QStringLiteral("Detected note without notebook local uid; will remove it from the cache: ") << it->second);
+            noteLocalUidsToRemoveFromCache << it->first;
+            continue;
+        }
+
+        if (it->second.notebookLocalUid() == notebookLocalUid) {
+            noteLocalUidsToRemoveFromCache << it->first;
+        }
+    }
+
+    for(auto it = noteLocalUidsToRemoveFromCache.begin(), end = noteLocalUidsToRemoveFromCache.end(); it != end; ++it) {
+        Q_UNUSED(m_notesCache.remove(*it))
+    }
+
+    QStringList resourceLocalUidsToRemoveFromCache;
+    for(auto rit = m_resourcesCache.begin(), rend = m_resourcesCache.end(); rit != rend; ++rit)
+    {
+        if (Q_UNLIKELY(!rit->second.hasNoteLocalUid())) {
+            QNTRACE(QStringLiteral("Detected resource without note local uid; will remove it from the cache: ") << rit->second);
+            resourceLocalUidsToRemoveFromCache << rit->first;
+            continue;
+        }
+
+        int index = noteLocalUidsToRemoveFromCache.indexOf(rit->second.noteLocalUid());
+        if (index >= 0) {
+            resourceLocalUidsToRemoveFromCache << rit->first;
+        }
+    }
+
+    for(auto rit = resourceLocalUidsToRemoveFromCache.begin(), rend = resourceLocalUidsToRemoveFromCache.end(); rit != rend; ++rit) {
+        Q_UNUSED(m_resourcesCache.remove(*rit))
+    }
+
     Q_EMIT notebookDeleted(notebookLocalUid);
 }
 
