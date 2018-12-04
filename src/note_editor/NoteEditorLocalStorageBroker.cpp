@@ -733,24 +733,13 @@ void NoteEditorLocalStorageBroker::onExpungeNotebookComplete(Notebook notebook, 
         Q_UNUSED(m_notesCache.remove(*it))
     }
 
-    QStringList resourceLocalUidsToRemoveFromCache;
-    for(auto rit = m_resourcesCache.begin(), rend = m_resourcesCache.end(); rit != rend; ++rit)
-    {
-        if (Q_UNLIKELY(!rit->second.hasNoteLocalUid())) {
-            QNTRACE(QStringLiteral("Detected resource without note local uid; will remove it from the cache: ") << rit->second);
-            resourceLocalUidsToRemoveFromCache << rit->first;
-            continue;
-        }
-
-        int index = noteLocalUidsToRemoveFromCache.indexOf(rit->second.noteLocalUid());
-        if (index >= 0) {
-            resourceLocalUidsToRemoveFromCache << rit->first;
-        }
-    }
-
-    for(auto rit = resourceLocalUidsToRemoveFromCache.begin(), rend = resourceLocalUidsToRemoveFromCache.end(); rit != rend; ++rit) {
-        Q_UNUSED(m_resourcesCache.remove(*rit))
-    }
+    /**
+     * The list of all notes removed along with the notebook is not known:
+     * if we remove only those cached resources belonging to notes we have
+     * removed from the cache, we still might have stale resources within the
+     * cache so it's safer to just clear all cached resources
+     */
+    m_resourcesCache.clear();
 
     Q_EMIT notebookDeleted(notebookLocalUid);
 }
