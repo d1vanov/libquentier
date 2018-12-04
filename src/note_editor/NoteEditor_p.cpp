@@ -309,7 +309,8 @@ NoteEditorPrivate::NoteEditorPrivate(NoteEditor & noteEditor) :
     m_recognitionIndicesByResourceHash(),
     m_currentContextMenuExtraData(),
     m_resourceLocalUidAndFileStoragePathByReadResourceRequestIds(),
-    m_localUidsOfResourcesPendingFindDataInLocalStorage(),
+    m_localUidsOfResourcesPendingFindDataInLocalStorageForManualSavingToFile(),
+    m_rotationTypeByResourceLocalUidsPendingFindDataInLocalStorageForImageResourceRotating(),
     m_lastFreeEnToDoIdNumber(1),
     m_lastFreeHyperlinkIdNumber(1),
     m_lastFreeEnCryptIdNumber(1),
@@ -1024,7 +1025,7 @@ void NoteEditorPrivate::onSaveResourceRequest(const QByteArray & resourceHash)
     {
         QNTRACE(QStringLiteral("The resource meant to be saved to a local file has neither data body "
                                "nor alternate data body, need to request these from the local storage"));
-        Q_UNUSED(m_localUidsOfResourcesPendingFindDataInLocalStorage.insert(resource.localUid()))
+        Q_UNUSED(m_localUidsOfResourcesPendingFindDataInLocalStorageForManualSavingToFile.insert(resource.localUid()))
         Q_EMIT findResourceData(resource.localUid());
         return;
     }
@@ -2390,7 +2391,8 @@ void NoteEditorPrivate::clearCurrentNoteInfo()
     m_lastSearchHighlightedTextCaseSensitivity = false;
 
     m_resourceLocalUidAndFileStoragePathByReadResourceRequestIds.clear();
-    m_localUidsOfResourcesPendingFindDataInLocalStorage.clear();
+    m_localUidsOfResourcesPendingFindDataInLocalStorageForManualSavingToFile.clear();
+    m_rotationTypeByResourceLocalUidsPendingFindDataInLocalStorageForImageResourceRotating.clear();
 
     m_noteWasNotFound = false;
     m_noteWasDeleted = false;
@@ -2554,71 +2556,140 @@ void NoteEditorPrivate::getHtmlForPrinting()
 void NoteEditorPrivate::onFoundResourceData(Resource resource)
 {
     QString resourceLocalUid = resource.localUid();
-    auto it = m_localUidsOfResourcesPendingFindDataInLocalStorage.find(resourceLocalUid);
-    if (it == m_localUidsOfResourcesPendingFindDataInLocalStorage.end()) {
-        return;
-    }
 
-    QNDEBUG(QStringLiteral("NoteEditorPrivate::onFoundResourceData: resource local uid = ") << resourceLocalUid);
-    QNTRACE(resource);
-
-    Q_UNUSED(m_localUidsOfResourcesPendingFindDataInLocalStorage.erase(it))
-
-    if (Q_UNLIKELY(m_pNote.isNull())) {
-        QNDEBUG(QStringLiteral("No note is set to the editor"));
-        return;
-    }
-
-    QList<Resource> resources = m_pNote->resources();
-    int resourceIndex = -1;
-    for(int i = 0, size = resources.size(); i < size; ++i)
+    auto sit = m_localUidsOfResourcesPendingFindDataInLocalStorageForManualSavingToFile.find(resourceLocalUid);
+    if (sit != m_localUidsOfResourcesPendingFindDataInLocalStorageForManualSavingToFile.end())
     {
-        const Resource & currentResource = qAsConst(resources)[i];
-        if (currentResource.localUid() == resourceLocalUid) {
-            resourceIndex = i;
-            break;
+        QNDEBUG(QStringLiteral("NoteEditorPrivate::onFoundResourceData: resource local uid = ") << resourceLocalUid);
+        QNTRACE(resource);
+
+        Q_UNUSED(m_localUidsOfResourcesPendingFindDataInLocalStorageForManualSavingToFile.erase(sit))
+
+        if (Q_UNLIKELY(m_pNote.isNull())) {
+            QNDEBUG(QStringLiteral("No note is set to the editor"));
+            return;
         }
+
+        QList<Resource> resources = m_pNote->resources();
+        int resourceIndex = -1;
+        for(int i = 0, size = resources.size(); i < size; ++i)
+        {
+            const Resource & currentResource = qAsConst(resources)[i];
+            if (currentResource.localUid() == resourceLocalUid) {
+                resourceIndex = i;
+                break;
+            }
+        }
+
+        if (Q_UNLIKELY(resourceIndex < 0))
+        {
+            ErrorString errorDescription(QT_TR_NOOP("Can't save attachment data to a file: the attachment to be saved "
+                                                    "was not found within the note"));
+            QNWARNING(errorDescription << QStringLiteral(", resource local uid = ") << resourceLocalUid);
+            Q_EMIT notifyError(errorDescription);
+            return;
+        }
+
+        QNTRACE(QStringLiteral("Updating the resource within the note"));
+        resources[resourceIndex] = resource;
+        m_pNote->setResources(resources);
+        Q_EMIT currentNoteChanged(*m_pNote);
+
+        manualSaveResourceToFile(resource);
     }
 
-    if (Q_UNLIKELY(resourceIndex < 0))
+    auto iit = m_rotationTypeByResourceLocalUidsPendingFindDataInLocalStorageForImageResourceRotating.find(resourceLocalUid);
+    if (iit != m_rotationTypeByResourceLocalUidsPendingFindDataInLocalStorageForImageResourceRotating.end())
     {
-        ErrorString errorDescription(QT_TR_NOOP("Can't save attachment data to a file: the attachment to be saved "
-                                                "was not found within the note"));
-        QNWARNING(errorDescription << QStringLiteral(", resource local uid = ") << resourceLocalUid);
-        Q_EMIT notifyError(errorDescription);
-        return;
+        QNDEBUG(QStringLiteral("NoteEditorPrivate::onFoundResourceData: resource local uid = ") << resourceLocalUid);
+        QNTRACE(resource);
+
+        Rotation::type rotationDirection = iit.value();
+        Q_UNUSED(m_rotationTypeByResourceLocalUidsPendingFindDataInLocalStorageForImageResourceRotating.erase(iit))
+
+        if (Q_UNLIKELY(m_pNote.isNull())) {
+            QNDEBUG(QStringLiteral("No note is set to the editor"));
+            return;
+        }
+
+        if (Q_UNLIKELY(!resource.hasDataBody() && !resource.hasDataHash())) {
+            ErrorString errorDescription(QT_TR_NOOP("Can't rotate image attachment: the image attachment has neither data nor data hash"));
+            QNWARNING(errorDescription << QStringLiteral(", resource: ") << resource);
+            Q_EMIT notifyError(errorDescription);
+            return;
+        }
+
+        QList<Resource> resources = m_pNote->resources();
+        int resourceIndex = -1;
+        for(int i = 0, size = resources.size(); i < size; ++i)
+        {
+            const Resource & currentResource = qAsConst(resources)[i];
+            if (currentResource.localUid() == resourceLocalUid) {
+                resourceIndex = i;
+                break;
+            }
+        }
+
+        if (Q_UNLIKELY(resourceIndex < 0))
+        {
+            ErrorString errorDescription(QT_TR_NOOP("Can't rotate image attachment: the attachment to be rotated "
+                                                    "was not found within the note"));
+            QNWARNING(errorDescription << QStringLiteral(", resource local uid = ") << resourceLocalUid);
+            Q_EMIT notifyError(errorDescription);
+            return;
+        }
+
+        resources[resourceIndex] = resource;
+        m_pNote->setResources(resources);
+
+        QByteArray dataHash = (resource.hasDataHash()
+                               ? resource.dataHash()
+                               : QCryptographicHash::hash(resource.dataBody(), QCryptographicHash::Md5));
+        rotateImageAttachment(dataHash, rotationDirection);
     }
-
-    QNTRACE(QStringLiteral("Updating the resource within the note"));
-    resources[resourceIndex] = resource;
-    m_pNote->setResources(resources);
-    Q_EMIT currentNoteChanged(*m_pNote);
-
-    manualSaveResourceToFile(resource);
 }
 
 void NoteEditorPrivate::onFailedToFindResourceData(QString resourceLocalUid, ErrorString errorDescription)
 {
-    auto it = m_localUidsOfResourcesPendingFindDataInLocalStorage.find(resourceLocalUid);
-    if (it == m_localUidsOfResourcesPendingFindDataInLocalStorage.end()) {
-        return;
+    auto sit = m_localUidsOfResourcesPendingFindDataInLocalStorageForManualSavingToFile.find(resourceLocalUid);
+    if (sit != m_localUidsOfResourcesPendingFindDataInLocalStorageForManualSavingToFile.end())
+    {
+        QNDEBUG(QStringLiteral("NoteEditorPrivate::onFailedToFindResourceData: resource local uid = ") << resourceLocalUid);
+
+        Q_UNUSED(m_localUidsOfResourcesPendingFindDataInLocalStorageForManualSavingToFile.erase(sit))
+
+        if (Q_UNLIKELY(m_pNote.isNull())) {
+            QNDEBUG(QStringLiteral("No note is set to the editor"));
+            return;
+        }
+
+        ErrorString error(QT_TR_NOOP("Can't save attachment data to a file: attachment data was not found within the local storage"));
+        error.appendBase(errorDescription.base());
+        error.appendBase(errorDescription.additionalBases());
+        error.details() = errorDescription.details();
+        QNWARNING(error << QStringLiteral(", resource local uid = ") << resourceLocalUid);
+        Q_EMIT notifyError(error);
     }
 
-    QNDEBUG(QStringLiteral("NoteEditorPrivate::onFailedToFindResourceData: resource local uid = ") << resourceLocalUid);
+    auto iit = m_rotationTypeByResourceLocalUidsPendingFindDataInLocalStorageForImageResourceRotating.find(resourceLocalUid);
+    if (iit != m_rotationTypeByResourceLocalUidsPendingFindDataInLocalStorageForImageResourceRotating.end())
+    {
+        QNDEBUG(QStringLiteral("NoteEditorPrivate::onFailedToFindResourceData: resource local uid = ") << resourceLocalUid);
 
-    Q_UNUSED(m_localUidsOfResourcesPendingFindDataInLocalStorage.erase(it))
+        Q_UNUSED(m_rotationTypeByResourceLocalUidsPendingFindDataInLocalStorageForImageResourceRotating.erase(iit))
 
-    if (Q_UNLIKELY(m_pNote.isNull())) {
-        QNDEBUG(QStringLiteral("No note is set to the editor"));
-        return;
+        if (Q_UNLIKELY(m_pNote.isNull())) {
+            QNDEBUG(QStringLiteral("No note is set to the editor"));
+            return;
+        }
+
+        ErrorString error(QT_TR_NOOP("Can't rotate image attachment: attachment data was not found within the local storage"));
+        error.appendBase(errorDescription.base());
+        error.appendBase(errorDescription.additionalBases());
+        error.details() = errorDescription.details();
+        QNWARNING(error << QStringLiteral(", resource local uid = ") << resourceLocalUid);
+        Q_EMIT notifyError(error);
     }
-
-    ErrorString error(QT_TR_NOOP("Can't save attachment data to a file: attachment data was not found within the local storage"));
-    error.appendBase(errorDescription.base());
-    error.appendBase(errorDescription.additionalBases());
-    error.details() = errorDescription.details();
-    QNWARNING(error << QStringLiteral(", resource local uid = ") << resourceLocalUid);
-    Q_EMIT notifyError(error);
 }
 
 void NoteEditorPrivate::onFailedToPutResourceDataInTemporaryFile(QString resourceLocalUid, QString noteLocalUid,
@@ -4360,10 +4431,6 @@ void NoteEditorPrivate::setupJavaScriptObjects()
     QObject::connect(m_pTextCursorPositionJavaScriptHandler,
                      &TextCursorPositionJavaScriptHandler::textCursorPositionChanged,
                      this, &NoteEditorPrivate::onTextCursorPositionChange);
-
-    QObject::connect(m_pContextMenuEventJavaScriptHandler,
-                     &ContextMenuEventJavaScriptHandler::contextMenuEventReply,
-                     this, &NoteEditorPrivate::onContextMenuEventReply);
 
     QObject::connect(m_pHyperlinkClickJavaScriptHandler,
                      &HyperlinkClickJavaScriptHandler::hyperlinkClicked,
@@ -6819,7 +6886,7 @@ void NoteEditorPrivate::removeSymlinksToImageResourceFile(const QString & resour
     QString fileStoragePath = fileStoragePathPrefix + QStringLiteral(".png");
 
     QDir dir(fileStorageDirPath);
-    QFileInfoList entryList = dir.entryInfoList();
+    QFileInfoList entryList = dir.entryInfoList(QDir::NoDotAndDotDot);
 
     const int numEntries = entryList.size();
     QNTRACE(QStringLiteral("Found ") << numEntries << QStringLiteral(" files in the image resources folder"));
@@ -8444,7 +8511,7 @@ void NoteEditorPrivate::rotateImageAttachment(const QByteArray & resourceHash, c
     const int numResources = resources.size();
     for(int i = 0; i < numResources; ++i)
     {
-        const Resource & resource = resources[i];
+        const Resource & resource = qAsConst(resources)[i];
         if (!resource.hasDataHash() || (resource.dataHash() != resourceHash)) {
             continue;
         }
@@ -8479,11 +8546,11 @@ void NoteEditorPrivate::rotateImageAttachment(const QByteArray & resourceHash, c
     }
 
     Resource & resource = resources[targetResourceIndex];
-    if (Q_UNLIKELY(!resource.hasDataBody())) {
-        ErrorString error = errorPrefix;
-        error.appendBase(QT_TR_NOOP("The attachment doesn't have the data body set"));
-        QNWARNING(error);
-        Q_EMIT notifyError(error);
+    if (!resource.hasDataBody()) {
+        QNDEBUG(QStringLiteral("The resource to be rotated doesn't have data body set, requesting it from NoteEditorLocalStorageBroker"));
+        QString resourceLocalUid = resource.localUid();
+        m_rotationTypeByResourceLocalUidsPendingFindDataInLocalStorageForImageResourceRotating[resourceLocalUid] = rotationDirection;
+        Q_EMIT findResourceData(resourceLocalUid);
         return;
     }
 

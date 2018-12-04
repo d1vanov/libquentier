@@ -1088,7 +1088,8 @@ private:
 
     QHash<QUuid, QPair<QString, QString> >      m_resourceLocalUidAndFileStoragePathByReadResourceRequestIds;
 
-    QSet<QUuid>     m_localUidsOfResourcesPendingFindDataInLocalStorage;
+    QSet<QUuid>     m_localUidsOfResourcesPendingFindDataInLocalStorageForManualSavingToFile;
+    QHash<QUuid, Rotation::type>    m_rotationTypeByResourceLocalUidsPendingFindDataInLocalStorageForImageResourceRotating;
 
     quint64     m_lastFreeEnToDoIdNumber;
     quint64     m_lastFreeHyperlinkIdNumber;

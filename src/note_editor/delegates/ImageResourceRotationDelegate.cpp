@@ -246,7 +246,7 @@ void ImageResourceRotationDelegate::onResourceDataSavedToTemporaryFile(QUuid req
         return;
     }
 
-    QNTRACE(QStringLiteral("Created a link to the original file (") << m_resourceFileStoragePathAfter
+    QNTRACE(QStringLiteral("Created a link to the original file (") << fileStoragePath
             << QStringLiteral("): ") << linkFileName);
 
     m_resourceFileStoragePathAfter = linkFileName;
