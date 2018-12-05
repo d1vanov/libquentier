@@ -81,6 +81,7 @@ void ImageResourceRotationUndoCommand::undoImpl()
     Resource resource(m_resourceAfter);
     resource.setDataBody(m_resourceDataBefore);
     resource.setDataSize(m_resourceDataBefore.size());
+    resource.setDataHash(m_resourceHashBefore);
     resource.setRecognitionDataBody(m_resourceRecognitionDataBefore);
     resource.setRecognitionDataHash(m_resourceRecognitionDataHashBefore);
     if (!m_resourceRecognitionDataBefore.isEmpty()) {

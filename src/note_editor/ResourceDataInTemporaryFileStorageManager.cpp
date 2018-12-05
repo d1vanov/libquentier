@@ -67,6 +67,10 @@ void ResourceDataInTemporaryFileStorageManager::onSaveResourceDataToTemporaryFil
             << requestId << QStringLiteral(", data hash = ") << dataHash.toHex() << QStringLiteral(", is image = ")
             << (isImage ? QStringLiteral("true") : QStringLiteral("false")));
 
+    if (dataHash.isEmpty()) {
+        dataHash = calculateHash(data);
+    }
+
     ErrorString errorDescription;
     bool res = writeResourceDataToTemporaryFile(noteLocalUid, resourceLocalUid, data, dataHash,
                                                 (isImage ? ResourceType::Image : ResourceType::NonImage),

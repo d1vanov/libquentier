@@ -101,7 +101,7 @@ void ImageResourceRotationDelegate::rotateImageResource()
     const int numResources = resources.size();
     for(int i = 0; i < numResources; ++i)
     {
-        const Resource & resource = resources[i];
+        const Resource & resource = qAsConst(resources)[i];
         if (!resource.hasDataHash() || (resource.dataHash() != m_resourceHashBefore)) {
             continue;
         }
@@ -131,7 +131,7 @@ void ImageResourceRotationDelegate::rotateImageResource()
         return;
     }
 
-    m_rotatedResource = resources[targetResourceIndex];
+    m_rotatedResource = qAsConst(resources)[targetResourceIndex];
     if (Q_UNLIKELY(!m_rotatedResource.hasDataBody())) {
         error.appendBase(QT_TR_NOOP("The data body is missing"));
         QNWARNING(error);
