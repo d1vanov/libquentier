@@ -2785,6 +2785,7 @@ void NoteEditorPrivate::onNoteResourceTemporaryFilesReady(QString noteLocalUid)
         }
 
         QString resourceLocalUid = resource.localUid();
+        removeSymlinksToImageResourceFile(resourceLocalUid);
 
         QString fileStoragePath = ResourceDataInTemporaryFileStorageManager::imageResourceFileStorageFolderPath() +
                                   QStringLiteral("/") + noteLocalUid + QStringLiteral("/") + resourceLocalUid +
@@ -4506,9 +4507,21 @@ void NoteEditorPrivate::updateResource(const QString & resourceLocalUid, const Q
         return;
     }
 
+    if (!updatedResource.hasDataHash()) {
+        updatedResource.setDataHash(QCryptographicHash::hash(updatedResource.dataBody(), QCryptographicHash::Md5));
+        QNDEBUG(QStringLiteral("Set updated resource's data hash to ") << updatedResource.dataHash().toHex());
+    }
+
+    if (!updatedResource.hasDataSize()) {
+        updatedResource.setDataSize(updatedResource.dataBody().size());
+        QNDEBUG(QStringLiteral("Set updated resource's data size to ") << updatedResource.dataSize());
+    }
+
+    /*
     // NOTE: intentionally set the "wrong", "stale" hash value here, it is required for proper update procedure
     // once the resource is saved in the local file storage; it's kinda hacky but it seems the simplest option
     updatedResource.setDataHash(previousResourceHash);
+    */
 
     bool res = m_pNote->updateResource(updatedResource);
     if (Q_UNLIKELY(!res)) {
@@ -4525,6 +4538,14 @@ void NoteEditorPrivate::updateResource(const QString & resourceLocalUid, const Q
         Q_UNUSED(m_recognitionIndicesByResourceHash.erase(recoIt));
     }
 
+    updateHashForResourceTag(previousResourceHash, updatedResource.dataHash());
+
+    /**
+     * Emitting this signal would cause the update of the temporary file
+     * corresponding to this resource (if any) within
+     * ResourceDataInTemporaryFileStorageManager and then NoteEditorPrivate::onNoteResourceTemporaryFilesReady
+     * slot would get invoked where the src for img tag would be updated
+     */
     Q_EMIT convertedToNote(*m_pNote);
 }
 

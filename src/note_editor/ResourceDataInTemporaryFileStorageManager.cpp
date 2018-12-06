@@ -752,6 +752,7 @@ ResourceDataInTemporaryFileStorageManager::partialUpdateResourceFilesForCurrentN
     {
         const Resource & resource = *it;
         const QString resourceLocalUid = resource.localUid();
+        QNTRACE(QStringLiteral("Examining resource with local uid ") << resourceLocalUid);
 
         const Resource * pPreviousResource = Q_NULLPTR;
         for(auto pit = previousResources.constBegin(), pend = previousResources.constEnd(); pit != pend; ++pit)
@@ -776,6 +777,11 @@ ResourceDataInTemporaryFileStorageManager::partialUpdateResourceFilesForCurrentN
 
             continue;
         }
+
+        QNTRACE(QStringLiteral("Previous resource's data size = ") << (pPreviousResource->hasDataSize() ? pPreviousResource->dataSize() : 0)
+                << QStringLiteral(", updated resource's data size = ") << (resource.hasDataSize() ? resource.dataSize() : 0)
+                << QStringLiteral("; previous resource's data hash = ") << (pPreviousResource->hasDataHash() ? pPreviousResource->dataHash().toHex() : QByteArray())
+                << QStringLiteral(", updated resource's data hash = ") << (resource.hasDataHash() ? resource.dataHash().toHex() : QByteArray()));
 
         bool dataHashIsDifferent = (!pPreviousResource->hasDataHash() || !resource.hasDataHash() ||
                                     (pPreviousResource->dataHash() != resource.dataHash()));
