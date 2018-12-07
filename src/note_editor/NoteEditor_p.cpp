@@ -6904,18 +6904,21 @@ void NoteEditorPrivate::removeSymlinksToImageResourceFile(const QString & resour
     QString fileStorageDirPath = ResourceDataInTemporaryFileStorageManager::imageResourceFileStorageFolderPath() +
                                  QStringLiteral("/") + m_pNote->localUid();
     QString fileStoragePathPrefix = fileStorageDirPath + QStringLiteral("/") + resourceLocalUid;
-    QString fileStoragePath = fileStoragePathPrefix + QStringLiteral(".png");
 
     QDir dir(fileStorageDirPath);
-    QFileInfoList entryList = dir.entryInfoList(QDir::NoDotAndDotDot);
+    QNTRACE(QStringLiteral("Resource file storage dir ") << (dir.exists() ? QStringLiteral("exists") : QStringLiteral("doesn't exist")));
+
+    QFileInfoList entryList = dir.entryInfoList(QDir::Files | QDir::NoDotAndDotDot);
 
     const int numEntries = entryList.size();
-    QNTRACE(QStringLiteral("Found ") << numEntries << QStringLiteral(" files in the image resources folder"));
+    QNTRACE(QStringLiteral("Found ") << numEntries << QStringLiteral(" files in the image resources folder: ")
+            << QDir::toNativeSeparators(fileStorageDirPath));
 
     QString entryFilePath;
     for(int i = 0; i < numEntries; ++i)
     {
-        const QFileInfo & entry = entryList[i];
+        const QFileInfo & entry = qAsConst(entryList)[i];
+
         if (!entry.isSymLink()) {
             continue;
         }
@@ -6924,10 +6927,6 @@ void NoteEditorPrivate::removeSymlinksToImageResourceFile(const QString & resour
         QNTRACE(QStringLiteral("See if we need to remove the symlink to resource image file ") << entryFilePath);
 
         if (!entryFilePath.startsWith(fileStoragePathPrefix)) {
-            continue;
-        }
-
-        if (entryFilePath.toUpper() == fileStoragePath.toUpper()) {
             continue;
         }
 
