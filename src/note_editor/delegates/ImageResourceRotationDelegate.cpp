@@ -181,7 +181,7 @@ void ImageResourceRotationDelegate::rotateImageResource()
 
     QObject::connect(this, QNSIGNAL(ImageResourceRotationDelegate,saveResourceDataToTemporaryFile,QString,QString,QByteArray,QByteArray,QUuid,bool),
                      &m_resourceDataInTemporaryFileStorageManager, QNSLOT(ResourceDataInTemporaryFileStorageManager,onSaveResourceDataToTemporaryFileRequest,QString,QString,QByteArray,QByteArray,QUuid,bool));
-    QObject::connect(&m_resourceDataInTemporaryFileStorageManager, QNSIGNAL(ResourceDataInTemporaryFileStorageManager,saveResourceDataToFileTemporaryFileCompleted,QUuid,QByteArray,ErrorString),
+    QObject::connect(&m_resourceDataInTemporaryFileStorageManager, QNSIGNAL(ResourceDataInTemporaryFileStorageManager,saveResourceDataToTemporaryFileCompleted,QUuid,QByteArray,ErrorString),
                      this, QNSLOT(ImageResourceRotationDelegate,onResourceDataSavedToTemporaryFile,QUuid,QByteArray,ErrorString));
 
     Q_EMIT saveResourceDataToTemporaryFile(m_rotatedResource.noteLocalUid(), m_rotatedResource.localUid(), m_rotatedResource.dataBody(),

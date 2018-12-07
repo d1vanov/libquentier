@@ -354,7 +354,7 @@ void AddResourceDelegate::doSaveResourceDataToTemporaryFile(const QByteArray & d
 
     QObject::connect(this, QNSIGNAL(AddResourceDelegate,saveResourceDataToTemporaryFile,QString,QString,QByteArray,QByteArray,QUuid,bool),
                      m_pResourceDataInTemporaryFileStorageManager, QNSLOT(ResourceDataInTemporaryFileStorageManager,onSaveResourceDataToTemporaryFileRequest,QString,QString,QByteArray,QByteArray,QUuid,bool));
-    QObject::connect(m_pResourceDataInTemporaryFileStorageManager, QNSIGNAL(ResourceDataInTemporaryFileStorageManager,saveResourceDataToFileTemporaryFileCompleted,QUuid,QByteArray,ErrorString),
+    QObject::connect(m_pResourceDataInTemporaryFileStorageManager, QNSIGNAL(ResourceDataInTemporaryFileStorageManager,saveResourceDataToTemporaryFileCompleted,QUuid,QByteArray,ErrorString),
                      this, QNSLOT(AddResourceDelegate,onResourceDataSavedToTemporaryFile,QUuid,QByteArray,ErrorString));
 
     QNTRACE(QStringLiteral("Emitting the request to save the dropped/pasted resource to a temporary file: generated local uid = ")
@@ -387,7 +387,7 @@ void AddResourceDelegate::onResourceDataSavedToTemporaryFile(QUuid requestId, QB
 
     QObject::disconnect(this, QNSIGNAL(AddResourceDelegate,saveResourceDataToTemporaryFile,QString,QString,QByteArray,QByteArray,QString,QUuid,bool),
                         m_pResourceDataInTemporaryFileStorageManager, QNSLOT(ResourceDataInTemporaryFileStorageManager,onSaveResourceDataToTemporaryFileRequest,QString,QString,QByteArray,QByteArray,QString,QUuid,bool));
-    QObject::disconnect(m_pResourceDataInTemporaryFileStorageManager, QNSIGNAL(ResourceDataInTemporaryFileStorageManager,saveResourceDataToFileTemporaryFileCompleted,QUuid,QByteArray,QString),
+    QObject::disconnect(m_pResourceDataInTemporaryFileStorageManager, QNSIGNAL(ResourceDataInTemporaryFileStorageManager,saveResourceDataToTemporaryFileCompleted,QUuid,QByteArray,QString),
                         this, QNSLOT(AddResourceDelegate,onResourceDataSavedToTemporaryFile,QUuid,QByteArray,QString));
 
     if (Q_UNLIKELY(!errorDescription.isEmpty())) {

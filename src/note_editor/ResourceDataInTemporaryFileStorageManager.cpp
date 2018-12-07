@@ -76,12 +76,12 @@ void ResourceDataInTemporaryFileStorageManager::onSaveResourceDataToTemporaryFil
                                                 (isImage ? ResourceType::Image : ResourceType::NonImage),
                                                 errorDescription);
     if (!res) {
-        Q_EMIT saveResourceDataToFileTemporaryFileCompleted(requestId, dataHash, errorDescription);
+        Q_EMIT saveResourceDataToTemporaryFileCompleted(requestId, dataHash, errorDescription);
         return;
     }
 
     QNDEBUG(QStringLiteral("Successfully wrote resource data to file: resource local uid = ") << resourceLocalUid);
-    Q_EMIT saveResourceDataToFileTemporaryFileCompleted(requestId, dataHash, ErrorString());
+    Q_EMIT saveResourceDataToTemporaryFileCompleted(requestId, dataHash, ErrorString());
 }
 
 void ResourceDataInTemporaryFileStorageManager::onReadResourceFromFileRequest(QString fileStoragePath, QString resourceLocalUid, QUuid requestId)

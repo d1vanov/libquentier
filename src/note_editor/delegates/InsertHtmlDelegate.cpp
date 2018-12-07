@@ -846,7 +846,7 @@ bool InsertHtmlDelegate::addResource(const QByteArray & resourceData, const QUrl
                      QNSLOT(ResourceDataInTemporaryFileStorageManager,onSaveResourceDataToTemporaryFileRequest,
                             QString,QString,QByteArray,QByteArray,QUuid,bool));
     QObject::connect(m_pResourceDataInTemporaryFileStorageManager,
-                     QNSIGNAL(ResourceDataInTemporaryFileStorageManager,saveResourceDataToFileTemporaryFileCompleted,
+                     QNSIGNAL(ResourceDataInTemporaryFileStorageManager,saveResourceDataToTemporaryFileCompleted,
                               QUuid,QByteArray,ErrorString),
                      this, QNSLOT(InsertHtmlDelegate,onResourceDataSavedToTemporaryFile,QUuid,QByteArray,ErrorString));
 

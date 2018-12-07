@@ -68,8 +68,8 @@ public:
     static QString nonImageResourceFileStorageFolderPath();
 
 Q_SIGNALS:
-    void saveResourceDataToFileTemporaryFileCompleted(QUuid requestId, QByteArray dataHash,
-                                                      ErrorString errorDescription);
+    void saveResourceDataToTemporaryFileCompleted(QUuid requestId, QByteArray dataHash,
+                                                  ErrorString errorDescription);
     void readResourceFromFileCompleted(QUuid requestId, QByteArray data, QByteArray dataHash,
                                        int errorCode, ErrorString errorDescription);
 
