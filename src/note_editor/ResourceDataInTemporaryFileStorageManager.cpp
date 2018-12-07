@@ -230,7 +230,7 @@ void ResourceDataInTemporaryFileStorageManager::onCurrentNoteChanged(Note note)
     {
         QNTRACE(QStringLiteral("The current note is the same, only the note object might have changed"));
 
-        QList<Resource> previousResources = note.resources();
+        QList<Resource> previousResources = m_pCurrentNote->resources();
         *m_pCurrentNote = note;
 
         ErrorString errorDescription;
