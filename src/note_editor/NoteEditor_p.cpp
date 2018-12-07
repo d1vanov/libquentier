@@ -1653,6 +1653,10 @@ void NoteEditorPrivate::onImageResourceRotationDelegateFinished(QByteArray resou
         delegate->deleteLater();
     }
 
+    if (m_pNote) {
+        Q_UNUSED(m_pNote->updateResource(resourceAfter))
+    }
+
     highlightRecognizedImageAreas(m_lastSearchHighlightedText, m_lastSearchHighlightedTextCaseSensitivity);
 
     setModified();
@@ -4516,12 +4520,6 @@ void NoteEditorPrivate::updateResource(const QString & resourceLocalUid, const Q
         updatedResource.setDataSize(updatedResource.dataBody().size());
         QNDEBUG(QStringLiteral("Set updated resource's data size to ") << updatedResource.dataSize());
     }
-
-    /*
-    // NOTE: intentionally set the "wrong", "stale" hash value here, it is required for proper update procedure
-    // once the resource is saved in the local file storage; it's kinda hacky but it seems the simplest option
-    updatedResource.setDataHash(previousResourceHash);
-    */
 
     bool res = m_pNote->updateResource(updatedResource);
     if (Q_UNLIKELY(!res)) {

@@ -106,6 +106,9 @@ private:
     void emitFindNotebookRequest(const QString & notebookLocalUid, const Note & note);
     void emitUpdateNoteRequest(const Note & note);
 
+    void saveNoteToLocalStorageImpl(const Note & previousNoteVersion,
+                                    const Note & updatedNoteVersion);
+
     class SaveNoteInfo: public Printable
     {
     public:
@@ -130,11 +133,12 @@ private:
 
 private:
     LocalStorageManagerAsync *      m_pLocalStorageManagerAsync;
-    QHash<QString, QSet<QString> >  m_originalNoteResourceLocalUidsByNoteLocalUid;
 
     QSet<QUuid>     m_findNoteRequestIds;
     QSet<QUuid>     m_findNotebookRequestIds;
     QSet<QUuid>     m_findResourceRequestIds;
+
+    QHash<QUuid, Note>      m_notesPendingSavingByFindNoteRequestIds;
 
     typedef QHash<QString, Note> NotesHash;
     typedef QHash<QString, NotesHash> NotesPendingNotebookFindingHash;
