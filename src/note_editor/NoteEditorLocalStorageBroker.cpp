@@ -496,8 +496,8 @@ void NoteEditorLocalStorageBroker::onUpdateResourceComplete(Resource resource, Q
 
     auto saveNoteInfoIt = m_saveNoteInfoByNoteLocalUids.find(noteLocalUid);
     if (Q_UNLIKELY(saveNoteInfoIt == m_saveNoteInfoByNoteLocalUids.end())) {
-        QNWARNING(QStringLiteral("Unable to find note for which the resource was updated in the local storage: resource = ")
-                  << resource);
+        QNWARNING(QStringLiteral("Unable to find note for which the resource was updated in the local storage: note local uid = ")
+                  << noteLocalUid << QStringLiteral(", resource = ") << resource);
         return;
     }
 
@@ -948,6 +948,22 @@ void NoteEditorLocalStorageBroker::saveNoteToLocalStorageImpl(const Note & previ
     QString noteLocalUid = updatedNoteVersion.localUid();
 
     int numAddResourceRequests = newResources.size();
+    int numUpdateResourceRequests = updatedResources.size();
+    int numExpungeResourceRequests = expungedResourcesLocalUids.size();
+
+    auto saveNoteInfoIt = m_saveNoteInfoByNoteLocalUids.find(noteLocalUid);
+    if (saveNoteInfoIt == m_saveNoteInfoByNoteLocalUids.end()) {
+        saveNoteInfoIt = m_saveNoteInfoByNoteLocalUids.insert(noteLocalUid, SaveNoteInfo());
+    }
+
+    SaveNoteInfo & info = saveNoteInfoIt.value();
+    info.m_notePendingSaving = updatedNoteVersion;
+    info.m_pendingAddResourceRequests += static_cast<quint32>(std::max(numAddResourceRequests, 0));
+    info.m_pendingUpdateResourceRequests += static_cast<quint32>(std::max(numUpdateResourceRequests, 0));
+    info.m_pendingExpungeResourceRequests += static_cast<quint32>(std::max(numExpungeResourceRequests, 0));
+    m_saveNoteInfoByNoteLocalUids[noteLocalUid] = info;
+    QNTRACE(QStringLiteral("Added pending save note info for note local uid = ") << noteLocalUid);
+
     for(auto it = newResources.constBegin(), end = newResources.constEnd(); it != end; ++it)
     {
         const Resource & resource = *it;
@@ -959,7 +975,6 @@ void NoteEditorLocalStorageBroker::saveNoteToLocalStorageImpl(const Note & previ
         Q_EMIT addResource(resource, requestId);
     }
 
-    int numUpdateResourceRequests = updatedResources.size();
     for(auto it = updatedResources.constBegin(), end = updatedResources.constEnd(); it != end; ++it)
     {
         const Resource & resource = *it;
@@ -971,7 +986,6 @@ void NoteEditorLocalStorageBroker::saveNoteToLocalStorageImpl(const Note & previ
         Q_EMIT updateResource(resource, requestId);
     }
 
-    int numExpungeResourceRequests = expungedResourcesLocalUids.size();
     for(auto it = expungedResourcesLocalUids.constBegin(), end = expungedResourcesLocalUids.constEnd(); it != end; ++it)
     {
         Resource dummyResource;
@@ -984,15 +998,8 @@ void NoteEditorLocalStorageBroker::saveNoteToLocalStorageImpl(const Note & previ
         Q_EMIT expungeResource(dummyResource, requestId);
     }
 
-    if ((numAddResourceRequests > 0) || (numUpdateResourceRequests > 0) || (numExpungeResourceRequests > 0))
-    {
-        SaveNoteInfo info;
-        info.m_notePendingSaving = updatedNoteVersion;
-        info.m_pendingAddResourceRequests = static_cast<quint32>(std::max(numAddResourceRequests, 0));
-        info.m_pendingUpdateResourceRequests = static_cast<quint32>(std::max(numUpdateResourceRequests, 0));
-        info.m_pendingExpungeResourceRequests = static_cast<quint32>(std::max(numExpungeResourceRequests, 0));
-        m_saveNoteInfoByNoteLocalUids[noteLocalUid] = info;
-        QNTRACE(QStringLiteral("Pending note saving: ") << info);
+    if ((numAddResourceRequests > 0) || (numUpdateResourceRequests > 0) || (numExpungeResourceRequests > 0)) {
+        QNDEBUG(QStringLiteral("Pending note saving: ") << info);
         return;
     }
 
