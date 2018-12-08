@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Dmitry Ivanov
+ * Copyright 2016-2018 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -21,6 +21,7 @@
 
 #include <QObject>
 #include <QString>
+#include <QSize>
 #include <quentier/utility/Macros.h>
 
 namespace quentier {
@@ -42,7 +43,9 @@ Q_SIGNALS:
     void notifyResourceInfo(const QString & resourceHash,
                             const QString & resourceLocalFilePath,
                             const QString & resourceDisplayName,
-                            const QString & resourceDisplaySize);
+                            const QString & resourceDisplaySize,
+                            const int resourceImageHeight,
+                            const int resourceImageWidth);
 
 public Q_SLOTS:
     void findResourceInfo(const QString & resourceHash);

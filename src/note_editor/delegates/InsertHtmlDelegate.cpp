@@ -220,8 +220,16 @@ void InsertHtmlDelegate::onHtmlInserted(const QVariant & responseData)
         }
 
         m_resourceFileStoragePathsByResourceLocalUid[resource.localUid()] = imgData.m_resourceFileStoragePath;
+
+        QSize resourceImageSize;
+        if (resource.hasHeight() && resource.hasWidth()) {
+            resourceImageSize.setHeight(resource.height());
+            resourceImageSize.setWidth(resource.width());
+        }
+
         m_resourceInfo.cacheResourceInfo(resource.dataHash(), resource.displayName(),
-                                         humanReadableSize(static_cast<quint64>(resource.dataSize())), imgData.m_resourceFileStoragePath);
+                                         humanReadableSize(static_cast<quint64>(resource.dataSize())),
+                                         imgData.m_resourceFileStoragePath, resourceImageSize);
 
         resources << resource;
         resourceFileStoragePaths << imgData.m_resourceFileStoragePath;

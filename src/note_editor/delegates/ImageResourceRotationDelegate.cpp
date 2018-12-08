@@ -297,7 +297,8 @@ void ImageResourceRotationDelegate::onResourceDataSavedToTemporaryFile(QUuid req
 
     m_resourceInfo.removeResourceInfo(m_resourceHashBefore);
     m_resourceInfo.cacheResourceInfo(dataHash, resourceDisplayName,
-                                     resourceDisplaySize, linkFilePath);
+                                     resourceDisplaySize, linkFilePath,
+                                     QSize(m_rotatedResource.width(), m_rotatedResource.height()));
 
     if (m_resourceFileStoragePathBefore != fileStoragePath)
     {
@@ -351,7 +352,8 @@ void ImageResourceRotationDelegate::onResourceTagSrcUpdated(const QVariant & dat
     Q_UNUSED(data)
 
     Q_EMIT finished(m_resourceDataBefore, m_resourceHashBefore, m_resourceRecognitionDataBefore,
-                    m_resourceRecognitionDataHashBefore, m_rotatedResource, m_rotationDirection);
+                    m_resourceRecognitionDataHashBefore, m_resourceImageSizeBefore,
+                    m_rotatedResource, m_rotationDirection);
 }
 
 } // namespace quentier

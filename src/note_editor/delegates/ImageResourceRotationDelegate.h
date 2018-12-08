@@ -39,7 +39,8 @@ public:
 Q_SIGNALS:
     void finished(QByteArray resourceDataBefore, QByteArray resourceHashBefore,
                   QByteArray resourceRecognitionDataBefore, QByteArray resourceRecognitionDataHashBefore,
-                  Resource resourceAfter, INoteEditorBackend::Rotation::type rotationDirection);
+                  QSize resourceImageSizeBefore, Resource resourceAfter,
+                  INoteEditorBackend::Rotation::type rotationDirection);
     void notifyError(ErrorString error);
 
 // private signals

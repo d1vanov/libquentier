@@ -699,9 +699,16 @@ void NoteEditorPrivate::onResourceFileReadFromStorage(QUuid requestId, QByteArra
 
     if (!oldResourceHash.isEmpty() && (oldResourceHash != dataHash))
     {
+        QSize resourceImageSize;
+        if (resource.hasHeight() && resource.hasWidth()) {
+            resourceImageSize.setHeight(resource.height());
+            resourceImageSize.setWidth(resource.width());
+        }
+
         m_resourceInfo.removeResourceInfo(oldResourceHash);
         m_resourceInfo.cacheResourceInfo(dataHash, resourceDisplayName,
-                                         resourceDisplaySize, fileStoragePath);
+                                         resourceDisplaySize, fileStoragePath,
+                                         resourceImageSize);
         updateHashForResourceTag(oldResourceHash, dataHash);
     }
 
@@ -716,8 +723,15 @@ void NoteEditorPrivate::onResourceFileReadFromStorage(QUuid requestId, QByteArra
 
         m_resourceFileStoragePathsByResourceLocalUid[resourceLocalUid] = linkFilePath;
 
+        QSize resourceImageSize;
+        if (resource.hasHeight() && resource.hasWidth()) {
+            resourceImageSize.setHeight(resource.height());
+            resourceImageSize.setWidth(resource.width());
+        }
+
         m_resourceInfo.cacheResourceInfo(dataHash, resourceDisplayName,
-                                         resourceDisplaySize, linkFilePath);
+                                         resourceDisplaySize, linkFilePath,
+                                         resourceImageSize);
 
         if (!m_pendingNotePageLoad) {
             GET_PAGE()
@@ -1469,8 +1483,15 @@ void NoteEditorPrivate::onAddResourceDelegateFinished(Resource addedResource, QS
 
     m_resourceFileStoragePathsByResourceLocalUid[addedResource.localUid()] = resourceFileStoragePath;
 
+    QSize resourceImageSize;
+    if (addedResource.hasHeight() && addedResource.hasWidth()) {
+        resourceImageSize.setHeight(addedResource.height());
+        resourceImageSize.setWidth(addedResource.width());
+    }
+
     m_resourceInfo.cacheResourceInfo(addedResource.dataHash(), addedResource.displayName(),
-                                     humanReadableSize(static_cast<quint64>(addedResource.dataSize())), resourceFileStoragePath);
+                                     humanReadableSize(static_cast<quint64>(addedResource.dataSize())),
+                                     resourceFileStoragePath, resourceImageSize);
 
 #ifdef QUENTIER_USE_QT_WEB_ENGINE
     setupGenericResourceImages();
@@ -1637,7 +1658,8 @@ void NoteEditorPrivate::onRenameResourceDelegateError(ErrorString error)
 
 void NoteEditorPrivate::onImageResourceRotationDelegateFinished(QByteArray resourceDataBefore, QByteArray resourceHashBefore,
                                                                 QByteArray resourceRecognitionDataBefore, QByteArray resourceRecognitionDataHashBefore,
-                                                                Resource resourceAfter, INoteEditorBackend::Rotation::type rotationDirection)
+                                                                QSize resourceImageSizeBefore, Resource resourceAfter,
+                                                                INoteEditorBackend::Rotation::type rotationDirection)
 {
     QNDEBUG(QStringLiteral("NoteEditorPrivate::onImageResourceRotationDelegateFinished: previous resource hash = ")
             << resourceHashBefore.toHex() << QStringLiteral(", resource local uid = ") << resourceAfter.localUid()
@@ -1646,7 +1668,8 @@ void NoteEditorPrivate::onImageResourceRotationDelegateFinished(QByteArray resou
     ImageResourceRotationUndoCommand * pCommand = new ImageResourceRotationUndoCommand(resourceDataBefore, resourceHashBefore,
                                                                                        resourceRecognitionDataBefore,
                                                                                        resourceRecognitionDataHashBefore,
-                                                                                       resourceAfter, rotationDirection, *this);
+                                                                                       resourceImageSizeBefore, resourceAfter,
+                                                                                       rotationDirection, *this);
     QObject::connect(pCommand, QNSIGNAL(ImageResourceRotationUndoCommand,notifyError,ErrorString),
                      this, QNSLOT(NoteEditorPrivate,onUndoCommandError,ErrorString));
     m_pUndoStack->push(pCommand);
@@ -2810,7 +2833,15 @@ void NoteEditorPrivate::onNoteResourceTemporaryFilesReady(QString noteLocalUid)
 
         QString resourceDisplayName = resource.displayName();
         QString resourceDisplaySize = humanReadableSize(static_cast<quint64>(std::max(resource.dataSize(), qint32(0))));
-        m_resourceInfo.cacheResourceInfo(resource.dataHash(), resourceDisplayName, resourceDisplaySize, linkFilePath);
+
+        QSize resourceImageSize;
+        if (resource.hasHeight() && resource.hasWidth()) {
+            resourceImageSize.setHeight(resource.height());
+            resourceImageSize.setWidth(resource.width());
+        }
+
+        m_resourceInfo.cacheResourceInfo(resource.dataHash(), resourceDisplayName, resourceDisplaySize,
+                                         linkFilePath, resourceImageSize);
     }
 
     if (!m_pendingNotePageLoad) {
@@ -8587,8 +8618,8 @@ void NoteEditorPrivate::rotateImageAttachment(const QByteArray & resourceHash, c
                                                                                  *this, m_resourceInfo, *m_pResourceDataInTemporaryFileStorageManager,
                                                                                  m_resourceFileStoragePathsByResourceLocalUid);
 
-    QObject::connect(delegate, QNSIGNAL(ImageResourceRotationDelegate,finished,QByteArray,QByteArray,QByteArray,QByteArray,Resource,INoteEditorBackend::Rotation::type),
-                     this, QNSLOT(NoteEditorPrivate,onImageResourceRotationDelegateFinished,QByteArray,QByteArray,QByteArray,QByteArray,Resource,INoteEditorBackend::Rotation::type));
+    QObject::connect(delegate, QNSIGNAL(ImageResourceRotationDelegate,finished,QByteArray,QByteArray,QByteArray,QByteArray,QSize,Resource,INoteEditorBackend::Rotation::type),
+                     this, QNSLOT(NoteEditorPrivate,onImageResourceRotationDelegateFinished,QByteArray,QByteArray,QByteArray,QByteArray,QSize,Resource,INoteEditorBackend::Rotation::type));
     QObject::connect(delegate, QNSIGNAL(ImageResourceRotationDelegate,notifyError,ErrorString),
                      this, QNSLOT(NoteEditorPrivate,onImageResourceRotationDelegateError,ErrorString));
 

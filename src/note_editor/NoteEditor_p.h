@@ -490,7 +490,8 @@ private Q_SLOTS:
 
     void onImageResourceRotationDelegateFinished(QByteArray resourceDataBefore, QByteArray resourceHashBefore,
                                                  QByteArray resourceRecognitionDataBefore, QByteArray resourceRecognitionDataHashBefore,
-                                                 Resource resourceAfter, INoteEditorBackend::Rotation::type rotationDirection);
+                                                 QSize resourceImageSizeBefore, Resource resourceAfter,
+                                                 INoteEditorBackend::Rotation::type rotationDirection);
     void onImageResourceRotationDelegateError(ErrorString error);
 
     void onHideDecryptedTextFinished(const QVariant & data, const QVector<QPair<QString,QString> > & extraData);

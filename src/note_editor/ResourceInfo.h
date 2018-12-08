@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Dmitry Ivanov
+ * Copyright 2016-2018 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -21,6 +21,7 @@
 
 #include <QString>
 #include <QHash>
+#include <QSize>
 
 namespace quentier {
 
@@ -30,14 +31,16 @@ public:
     void cacheResourceInfo(const QByteArray & resourceHash,
                            const QString & resourceDisplayName,
                            const QString & resourceDisplaySize,
-                           const QString & resourceLocalFilePath);
+                           const QString & resourceLocalFilePath,
+                           const QSize & resourceImageSize);
 
     bool contains(const QByteArray & resourceHash) const;
 
     bool findResourceInfo(const QByteArray & resourceHash,
                           QString & resourceDisplayName,
                           QString & resourceDisplaySize,
-                          QString & resourceLocalFilePath) const;
+                          QString & resourceLocalFilePath,
+                          QSize & resourceImageSize) const;
 
     bool removeResourceInfo(const QByteArray & resourceHash);
 
@@ -49,6 +52,7 @@ private:
         QString m_resourceDisplayName;
         QString m_resourceDisplaySize;
         QString m_resourceLocalFilePath;
+        QSize m_resourceImageSize;
     };
 
     typedef QHash<QByteArray, Info> ResourceInfoHash;
