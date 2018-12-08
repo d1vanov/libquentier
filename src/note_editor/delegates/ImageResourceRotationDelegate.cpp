@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Dmitry Ivanov
+ * Copyright 2016-2018 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -24,6 +24,7 @@
 #include <quentier/utility/Utility.h>
 #include <QDateTime>
 #include <QBuffer>
+#include <limits>
 
 namespace quentier {
 
@@ -48,6 +49,7 @@ ImageResourceRotationDelegate::ImageResourceRotationDelegate(const QByteArray & 
     m_pNote(Q_NULLPTR),
     m_resourceDataBefore(),
     m_resourceHashBefore(resourceHashBefore),
+    m_resourceImageSizeBefore(),
     m_resourceRecognitionDataBefore(),
     m_resourceRecognitionDataHashBefore(),
     m_resourceFileStoragePathBefore(),
@@ -158,10 +160,16 @@ void ImageResourceRotationDelegate::rotateImageResource()
         return;
     }
 
+    m_resourceImageSizeBefore.setHeight(resourceImage.height());
+    m_resourceImageSizeBefore.setWidth(resourceImage.width());
+
     qreal angle = ((m_rotationDirection == INoteEditorBackend::Rotation::Clockwise) ? 90.0 : -90.0);
     QTransform transform;
     transform.rotate(angle);
     resourceImage = resourceImage.transformed(transform);
+    resourceImage = resourceImage.scaled(m_resourceImageSizeBefore.height(),
+                                         m_resourceImageSizeBefore.width(),
+                                         Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
 
     QByteArray rotatedResourceData;
     QBuffer rotatedResourceDataBuffer(&rotatedResourceData);
@@ -171,6 +179,23 @@ void ImageResourceRotationDelegate::rotateImageResource()
     m_rotatedResource.setDataBody(rotatedResourceData);
     m_rotatedResource.setDataSize(rotatedResourceData.size());
     m_rotatedResource.setDataHash(QByteArray());
+
+    int height = resourceImage.height();
+    int width = resourceImage.width();
+    QNTRACE(QStringLiteral("Rotated resource's height = ") << height
+            << QStringLiteral(", width = ") << width);
+
+    if ((height > 0) && (height <= std::numeric_limits<qint16>::max()) &&
+        (width > 0) && (width <= std::numeric_limits<qint16>::max()))
+    {
+        m_rotatedResource.setHeight(static_cast<qint16>(height));
+        m_rotatedResource.setWidth(static_cast<qint16>(width));
+    }
+    else
+    {
+        m_rotatedResource.setHeight(-1);
+        m_rotatedResource.setWidth(-1);
+    }
 
     // Need to destroy the recognition data (if any) because it would no longer correspond to the rotated image
     m_rotatedResource.setRecognitionDataBody(QByteArray());
@@ -223,18 +248,18 @@ void ImageResourceRotationDelegate::onResourceDataSavedToTemporaryFile(QUuid req
                               QStringLiteral("/") + pNote->localUid() + QStringLiteral("/") + localUid + QStringLiteral(".dat");
 
     QFile rotatedImageResourceFile(fileStoragePath);
-    QString linkFileName = fileStoragePath;
-    linkFileName.remove(linkFileName.size() - 4, 4);
-    linkFileName += QStringLiteral("_");
-    linkFileName += QString::number(QDateTime::currentMSecsSinceEpoch());
+    QString linkFilePath = fileStoragePath;
+    linkFilePath.remove(linkFilePath.size() - 4, 4);
+    linkFilePath += QStringLiteral("_");
+    linkFilePath += QString::number(QDateTime::currentMSecsSinceEpoch());
 
 #ifdef Q_OS_WIN
-    linkFileName += QStringLiteral(".lnk");
+    linkFilePath += QStringLiteral(".lnk");
 #else
-    linkFileName += QStringLiteral(".png");
+    linkFilePath += QStringLiteral(".png");
 #endif
 
-    bool res = rotatedImageResourceFile.link(linkFileName);
+    bool res = rotatedImageResourceFile.link(linkFilePath);
     if (Q_UNLIKELY(!res)) {
         errorDescription.setBase(QT_TR_NOOP("Can't rotate the image attachment: can't create a link "
                                             "to the resource file to use within the note editor"));
@@ -246,10 +271,10 @@ void ImageResourceRotationDelegate::onResourceDataSavedToTemporaryFile(QUuid req
         return;
     }
 
-    QNTRACE(QStringLiteral("Created a link to the original file (") << fileStoragePath
-            << QStringLiteral("): ") << linkFileName);
+    QNTRACE(QStringLiteral("Created a link to the original file (") << QDir::toNativeSeparators(fileStoragePath)
+            << QStringLiteral("): ") << QDir::toNativeSeparators(linkFilePath));
 
-    m_resourceFileStoragePathAfter = linkFileName;
+    m_resourceFileStoragePathAfter = linkFilePath;
 
     auto resourceFileStoragePathIt = m_resourceFileStoragePathsByLocalUid.find(localUid);
     if (Q_UNLIKELY(resourceFileStoragePathIt == m_resourceFileStoragePathsByLocalUid.end())) {
@@ -261,7 +286,7 @@ void ImageResourceRotationDelegate::onResourceDataSavedToTemporaryFile(QUuid req
     }
 
     m_resourceFileStoragePathBefore = resourceFileStoragePathIt.value();
-    resourceFileStoragePathIt.value() = linkFileName;
+    resourceFileStoragePathIt.value() = linkFilePath;
 
     QString resourceDisplayName = m_rotatedResource.displayName();
     QString resourceDisplaySize = humanReadableSize(static_cast<quint64>(m_rotatedResource.dataSize()));
@@ -272,7 +297,7 @@ void ImageResourceRotationDelegate::onResourceDataSavedToTemporaryFile(QUuid req
 
     m_resourceInfo.removeResourceInfo(m_resourceHashBefore);
     m_resourceInfo.cacheResourceInfo(dataHash, resourceDisplayName,
-                                     resourceDisplaySize, linkFileName);
+                                     resourceDisplaySize, linkFilePath);
 
     if (m_resourceFileStoragePathBefore != fileStoragePath)
     {
@@ -310,7 +335,10 @@ void ImageResourceRotationDelegate::onResourceTagHashUpdated(const QVariant & da
     Q_UNUSED(data)
 
     QString javascript = QStringLiteral("updateImageResourceSrc('") + QString::fromLocal8Bit(m_rotatedResource.dataHash().toHex()) +
-                         QStringLiteral("', '") + m_resourceFileStoragePathAfter + QStringLiteral("');");
+                         QStringLiteral("', '") + m_resourceFileStoragePathAfter +
+                         QStringLiteral("', ") + QString::number(m_rotatedResource.hasHeight() ? m_rotatedResource.height() : qint16(0)) +
+                         QStringLiteral(", ") + QString::number(m_rotatedResource.hasWidth() ? m_rotatedResource.width() : qint16(0)) +
+                         QStringLiteral(");");
 
     GET_PAGE()
     page->executeJavaScript(javascript, JsCallback(*this, &ImageResourceRotationDelegate::onResourceTagSrcUpdated));

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Dmitry Ivanov
+ * Copyright 2016-2018 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -22,6 +22,7 @@
 #include "../NoteEditor_p.h"
 #include "JsResultCallbackFunctor.hpp"
 #include <quentier/types/Resource.h>
+#include <QSize>
 
 namespace quentier {
 
@@ -69,6 +70,7 @@ private:
 
     QByteArray                      m_resourceDataBefore;
     QByteArray                      m_resourceHashBefore;
+    QSize                           m_resourceImageSizeBefore;
 
     QByteArray                      m_resourceRecognitionDataBefore;
     QByteArray                      m_resourceRecognitionDataHashBefore;

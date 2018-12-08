@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Dmitry Ivanov
+ * Copyright 2016-2018 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -707,22 +707,25 @@ void NoteEditorPrivate::onResourceFileReadFromStorage(QUuid requestId, QByteArra
 
     if (resourceMimeTypeName.startsWith(QStringLiteral("image/")))
     {
-        QString linkFileName = createSymlinkToImageResourceFile(fileStoragePath, resourceLocalUid, errorDescription);
-        if (linkFileName.isEmpty()) {
+        QString linkFilePath = createSymlinkToImageResourceFile(fileStoragePath, resourceLocalUid, errorDescription);
+        if (linkFilePath.isEmpty()) {
             QNWARNING(errorDescription);
             Q_EMIT notifyError(errorDescription);
             return;
         }
 
-        m_resourceFileStoragePathsByResourceLocalUid[resourceLocalUid] = linkFileName;
+        m_resourceFileStoragePathsByResourceLocalUid[resourceLocalUid] = linkFilePath;
 
         m_resourceInfo.cacheResourceInfo(dataHash, resourceDisplayName,
-                                         resourceDisplaySize, linkFileName);
+                                         resourceDisplaySize, linkFilePath);
 
         if (!m_pendingNotePageLoad) {
             GET_PAGE()
             page->executeJavaScript(QStringLiteral("updateImageResourceSrc('") + QString::fromLocal8Bit(dataHash.toHex()) +
-                                    QStringLiteral("', '") + linkFileName + QStringLiteral("');"));
+                                    QStringLiteral("', '") + linkFilePath +
+                                    QStringLiteral("', ") + QString::number(resource.hasHeight() ? resource.height() : qint16(0)) +
+                                    QStringLiteral(", ") + QString::number(resource.hasWidth() ? resource.width() : qint16(0)) +
+                                    QStringLiteral(");"));
         }
     }
 #ifdef QUENTIER_USE_QT_WEB_ENGINE

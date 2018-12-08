@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Dmitry Ivanov
+ * Copyright 2016-2018 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -340,15 +340,14 @@ void AddResourceDelegate::doSaveResourceDataToTemporaryFile(const QByteArray & d
 
     QByteArray dataHash = QCryptographicHash::hash(data, QCryptographicHash::Md5);
     m_resource = m_noteEditor.attachResourceToNote(data, dataHash, m_resourceMimeType, resourceName);
+    QNTRACE(QStringLiteral("Attached resource to note: ") << m_resource);
+
     QString resourceLocalUid = m_resource.localUid();
     if (Q_UNLIKELY(resourceLocalUid.isEmpty())) {
         return;
     }
 
     // NOTE: only image resources data gets saved to temporary files
-    m_resourceFileStoragePath = ResourceDataInTemporaryFileStorageManager::imageResourceFileStorageFolderPath();
-
-    m_resourceFileStoragePath += QStringLiteral("/") + pNote->localUid() + QStringLiteral("/") + resourceLocalUid;
 
     m_saveResourceDataToTemporaryFileRequestId = QUuid::createUuid();
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Dmitry Ivanov
+ * Copyright 2016-2018 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -232,7 +232,7 @@ void RenameResourceDelegate::onGenericResourceImageWriterFinished(bool success, 
     m_genericResourceImageFilePathsByResourceHash[resourceHash] = filePath;
 
     QString javascript = QStringLiteral("updateImageResourceSrc('") + QString::fromLocal8Bit(resourceHash.toHex()) +
-                         QStringLiteral("', '") + filePath + QStringLiteral("');");
+                         QStringLiteral("', '") + filePath + QStringLiteral("', 0, 0);");
 
     GET_PAGE()
     page->executeJavaScript(javascript, JsCallback(*this, &RenameResourceDelegate::onGenericResourceImageUpdated));
