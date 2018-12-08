@@ -3525,6 +3525,8 @@ bool LocalStorageManagerPrivate::expungeEnResource(Resource & resource, ErrorStr
         return false;
     }
 
+    resource.setNoteLocalUid(noteLocalUid);
+
     // NOTE: since expunging the resource is essentially the update of a note containing the resource,
     // we might need to check if the notebook in which this note resides allows one
     // to update the notes; however, there is no such check here because the request to update the note
