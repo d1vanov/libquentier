@@ -355,7 +355,8 @@ void ResourceDataInTemporaryFileStorageManager::onFileChanged(const QString & pa
 
     int errorCode = 0;
     ErrorString errorDescription;
-    bool res = updateResourceHash(it.value(), dataHash, resourceFileInfo.absolutePath(), errorCode, errorDescription);
+    bool res = updateResourceHashHelperFile(it.value(), dataHash, resourceFileInfo.absolutePath(),
+                                            errorCode, errorDescription);
     if (Q_UNLIKELY(!res)) {
         QNWARNING(QStringLiteral("Can't process resource local file change properly: can't update the hash for resource file: error code = ")
                   << errorCode << QStringLiteral(", error description: ") << errorDescription);
@@ -363,7 +364,7 @@ void ResourceDataInTemporaryFileStorageManager::onFileChanged(const QString & pa
         return;
     }
 
-    Q_EMIT resourceFileChanged(it.value(), path);
+    Q_EMIT resourceFileChanged(it.value(), path, data, dataHash);
 }
 
 void ResourceDataInTemporaryFileStorageManager::onFileRemoved(const QString & path)
@@ -578,11 +579,11 @@ bool ResourceDataInTemporaryFileStorageManager::checkIfResourceFileExistsAndIsAc
     return true;
 }
 
-bool ResourceDataInTemporaryFileStorageManager::updateResourceHash(const QString & resourceLocalUid, const QByteArray & dataHash,
-                                                                   const QString & storageFolderPath, int & errorCode,
-                                                                   ErrorString & errorDescription)
+bool ResourceDataInTemporaryFileStorageManager::updateResourceHashHelperFile(const QString & resourceLocalUid, const QByteArray & dataHash,
+                                                                             const QString & storageFolderPath, int & errorCode,
+                                                                             ErrorString & errorDescription)
 {
-    QNDEBUG(QStringLiteral("ResourceDataInTemporaryFileStorageManager::updateResourceHash: resource local uid = ") << resourceLocalUid
+    QNDEBUG(QStringLiteral("ResourceDataInTemporaryFileStorageManager::updateResourceHashHelperFile: resource local uid = ") << resourceLocalUid
             << QStringLiteral(", data hash = ") << dataHash.toHex() << QStringLiteral(", storage folder path = ") << storageFolderPath);
 
     QFile file(storageFolderPath + QStringLiteral("/") + resourceLocalUid + QStringLiteral(".hash"));
@@ -1086,8 +1087,8 @@ bool ResourceDataInTemporaryFileStorageManager::writeResourceDataToTemporaryFile
     m_resourceLocalUidByFilePath[fileStoragePath] = resourceLocalUid;
 
     int errorCode = 0;
-    bool res = updateResourceHash(resourceLocalUid, dataHash, fileStoragePathInfo.absolutePath(),
-                                  errorCode, errorDescription);
+    bool res = updateResourceHashHelperFile(resourceLocalUid, dataHash, fileStoragePathInfo.absolutePath(),
+                                            errorCode, errorDescription);
     if (Q_UNLIKELY(!res)) {
         QNWARNING(errorDescription << QStringLiteral(", error code = ") << errorCode
                   << QStringLiteral(", resource local uid = ") << resourceLocalUid);

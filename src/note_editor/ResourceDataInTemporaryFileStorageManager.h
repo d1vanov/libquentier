@@ -73,7 +73,8 @@ Q_SIGNALS:
     void readResourceFromFileCompleted(QUuid requestId, QByteArray data, QByteArray dataHash,
                                        int errorCode, ErrorString errorDescription);
 
-    void resourceFileChanged(QString localUid, QString fileStoragePath);
+    void resourceFileChanged(QString resourceLocalUid, QString fileStoragePath,
+                             QByteArray resourceData, QByteArray resourceDataHash);
 
     // 1) ========= Signals notifying about the state after changing the current note ========
 
@@ -243,8 +244,8 @@ private:
     bool checkIfResourceFileExistsAndIsActual(const QString & noteLocalUid, const QString & resourceLocalUid,
                                               const QString & fileStoragePath, const QByteArray & dataHash) const;
 
-    bool updateResourceHash(const QString & resourceLocalUid, const QByteArray & dataHash,
-                            const QString & storageFolderPath, int & errorCode, ErrorString & errorDescription);
+    bool updateResourceHashHelperFile(const QString & resourceLocalUid, const QByteArray & dataHash,
+                                      const QString & storageFolderPath, int & errorCode, ErrorString & errorDescription);
     void watchResourceFileForChanges(const QString & resourceLocalUid, const QString & fileStoragePath);
     void stopWatchingResourceFile(const QString & filePath);
     void removeStaleResourceFilesFromCurrentNote();

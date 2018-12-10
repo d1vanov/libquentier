@@ -340,13 +340,6 @@ Q_SIGNALS:
     // Signals for communicating with ResourceDataInTemporaryFileStorageManager
 
     /**
-     * The signal used to receive the latest version of resource binary data
-     * from ResourceDataInTemporaryFileStorageManager after detecting the change
-     * of a resource file (which was supposedly edited within the external editor)
-     */
-    void readResourceFromStorage(QString fileStoragePath, QString localUid, QUuid requestId);
-
-    /**
      * The signal delegating the sequence of actions required for opening the
      * resource data within the external editor to
      * ResourceDataInTemporaryFileStorageManager
@@ -405,9 +398,8 @@ private Q_SLOTS:
     void onNoteLoadFinished(bool ok);
     void onContentChanged();
 
-    void onResourceFileChanged(QString resourceLocalUid, QString fileStoragePath);
-    void onResourceFileReadFromStorage(QUuid requestId, QByteArray data, QByteArray dataHash,
-                                       int errorCode, ErrorString errorDescription);
+    void onResourceFileChanged(QString resourceLocalUid, QString fileStoragePath,
+                               QByteArray resourceData, QByteArray resourceDataHash);
 
 #ifdef QUENTIER_USE_QT_WEB_ENGINE
     void onGenericResourceImageSaved(bool success, QByteArray resourceActualHash,
@@ -1086,8 +1078,6 @@ private:
     QHash<QByteArray, ResourceRecognitionIndices>   m_recognitionIndicesByResourceHash;
 
     CurrentContextMenuExtraData     m_currentContextMenuExtraData;
-
-    QHash<QUuid, QPair<QString, QString> >      m_resourceLocalUidAndFileStoragePathByReadResourceRequestIds;
 
     QSet<QUuid>     m_localUidsOfResourcesPendingFindDataInLocalStorageForManualSavingToFile;
     QHash<QUuid, Rotation::type>    m_rotationTypeByResourceLocalUidsPendingFindDataInLocalStorageForImageResourceRotating;
