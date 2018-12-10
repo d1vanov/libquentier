@@ -680,8 +680,9 @@ void NoteEditorPrivate::onResourceFileChanged(QString resourceLocalUid, QString 
         QImage image = buildGenericResourceImage(resource);
         saveGenericResourceImage(resource, image);
 #else
-        // TODO: need to figure out how to update the info displayed by generic
-        // resource plugin
+        if (m_pPluginFactory) {
+            m_pPluginFactory->updateResource(resource);
+        }
 #endif
     }
 }

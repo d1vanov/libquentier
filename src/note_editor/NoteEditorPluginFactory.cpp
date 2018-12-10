@@ -31,6 +31,8 @@
 #include <QFileIconProvider>
 #include <QDir>
 #include <QRegExp>
+#include <cmath>
+#include <algorithm>
 
 namespace quentier {
 
@@ -282,15 +284,38 @@ void NoteEditorPluginFactory::updateResource(const Resource & resource)
     auto it = std::find_if(m_genericResourceDisplayWidgetPlugins.begin(),
                            m_genericResourceDisplayWidgetPlugins.end(),
                            GenericResourceDisplayWidgetFinder(resource));
-    if (it != m_genericResourceDisplayWidgetPlugins.end())
-    {
-        QPointer<GenericResourceDisplayWidget> pWidget = *it;
-        if (Q_UNLIKELY(pWidget.isNull())) {
-            return;
-        }
-
-        pWidget->updateResourceName(resource.displayName());
+    if (it == m_genericResourceDisplayWidgetPlugins.end()) {
+        return;
     }
+
+    QPointer<GenericResourceDisplayWidget> pWidget = *it;
+    if (Q_UNLIKELY(pWidget.isNull())) {
+        return;
+    }
+
+    pWidget->updateResourceName(resource.displayName());
+
+    quint64 bytes = 0;
+    if (resource.hasDataSize()) {
+        bytes = static_cast<quint64>(std::max(resource.dataSize(), 0));
+    }
+    else if (resource.hasDataBody()) {
+        const QByteArray & data = resource.dataBody();
+        bytes = static_cast<quint64>(std::max(data.size(), 0));
+    }
+    else if (resource.hasAlternateDataSize()) {
+        bytes = static_cast<quint64>(std::max(resource.alternateDataSize(), 0));
+    }
+    else if (resource.hasAlternateDataBody()) {
+        const QByteArray & data = resource.alternateDataBody();
+        bytes = static_cast<quint64>(std::max(data.size(), 0));
+    }
+    else {
+        return;
+    }
+
+    QString resourceDataSize = humanReadableSize(bytes);
+    pWidget->updateResourceSize(resourceDataSize);
 }
 
 QObject * NoteEditorPluginFactory::create(const QString & pluginType, const QUrl & url,

@@ -59,12 +59,11 @@ void GenericResourceDisplayWidget::initialize(const QIcon & icon, const QString 
     QNDEBUG(QStringLiteral("GenericResourceDisplayWidget::initialize: name = ") << name << QStringLiteral(", size = ") << size);
 
     m_pResource = new Resource(resource);
-    updateResourceName(name);
 
+    updateResourceName(name);
     m_pUI->resourceDisplayNameLabel->setTextFormat(Qt::RichText);
 
-    m_pUI->resourceSizeLabel->setText(QStringLiteral("<html><head/><body><p><span style=\" font-size:8pt;\">") + size +
-                                      QStringLiteral("</span></p></body></head></html>"));
+    updateResourceSize(size);
     m_pUI->resourceSizeLabel->setTextFormat(Qt::RichText);
 
     m_pUI->resourceIconLabel->setPixmap(icon.pixmap(QSize(16,16)));
@@ -96,6 +95,12 @@ void GenericResourceDisplayWidget::updateResourceName(const QString & resourceNa
 {
     m_pUI->resourceDisplayNameLabel->setText(QStringLiteral("<html><head/><body><p><span style=\" font-size:8pt;\">") +
                                              resourceName + QStringLiteral("</span></p></body></head></html>"));
+}
+
+void GenericResourceDisplayWidget::updateResourceSize(const QString & size)
+{
+    m_pUI->resourceSizeLabel->setText(QStringLiteral("<html><head/><body><p><span style=\" font-size:8pt;\">") + size +
+                                      QStringLiteral("</span></p></body></head></html>"));
 }
 
 void GenericResourceDisplayWidget::onOpenResourceInExternalAppButtonPressed()

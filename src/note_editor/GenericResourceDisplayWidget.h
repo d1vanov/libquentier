@@ -48,6 +48,7 @@ public:
     QString resourceLocalUid() const;
 
     void updateResourceName(const QString & resourceName);
+    void updateResourceSize(const QString & size);
 
 Q_SIGNALS:
     void openResourceRequest(const QByteArray & resourceHash);
