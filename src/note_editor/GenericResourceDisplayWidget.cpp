@@ -41,7 +41,7 @@ namespace quentier {
 GenericResourceDisplayWidget::GenericResourceDisplayWidget(QWidget * parent) :
     QWidget(parent),
     m_pUI(new Ui::GenericResourceDisplayWidget),
-    m_pResource(Q_NULLPTR),
+    m_resourceLocalUid(),
     m_resourceHash()
 {
     m_pUI->setupUi(this);
@@ -50,7 +50,6 @@ GenericResourceDisplayWidget::GenericResourceDisplayWidget(QWidget * parent) :
 GenericResourceDisplayWidget::~GenericResourceDisplayWidget()
 {
     delete m_pUI;
-    delete m_pResource;
 }
 
 void GenericResourceDisplayWidget::initialize(const QIcon & icon, const QString & name,
@@ -58,7 +57,20 @@ void GenericResourceDisplayWidget::initialize(const QIcon & icon, const QString 
 {
     QNDEBUG(QStringLiteral("GenericResourceDisplayWidget::initialize: name = ") << name << QStringLiteral(", size = ") << size);
 
-    m_pResource = new Resource(resource);
+    m_resourceLocalUid = resource.localUid();
+
+    if (resource.hasDataHash()) {
+        m_resourceHash = resource.dataHash();
+    }
+    else if (resource.hasDataBody()) {
+        m_resourceHash = QCryptographicHash::hash(resource.dataBody(), QCryptographicHash::Md5);
+    }
+    else if (resource.hasAlternateDataHash()) {
+        m_resourceHash = resource.alternateDataHash();
+    }
+    else if (resource.hasAlternateDataBody()) {
+        m_resourceHash = QCryptographicHash::hash(resource.alternateDataBody(), QCryptographicHash::Md5);
+    }
 
     updateResourceName(name);
     m_pUI->resourceDisplayNameLabel->setTextFormat(Qt::RichText);
@@ -84,11 +96,7 @@ void GenericResourceDisplayWidget::initialize(const QIcon & icon, const QString 
 
 QString GenericResourceDisplayWidget::resourceLocalUid() const
 {
-    if (m_pResource) {
-        return m_pResource->localUid();
-    }
-
-    return QString();
+    return m_resourceLocalUid;
 }
 
 void GenericResourceDisplayWidget::updateResourceName(const QString & resourceName)
@@ -107,19 +115,9 @@ void GenericResourceDisplayWidget::onOpenResourceInExternalAppButtonPressed()
 {
     QNDEBUG(QStringLiteral("GenericResourceDisplayWidget::onOpenResourceInExternalAppButtonPressed"));
 
-    if (m_resourceHash.isEmpty())
-    {
-        if (!m_pResource || (!m_pResource->hasDataHash() && !m_pResource->hasDataBody())) {
-            QNDEBUG(QStringLiteral("Can't open resource: resource hash is empty"));
-            return;
-        }
-
-        if (m_pResource->hasDataHash()) {
-            m_resourceHash = m_pResource->dataHash();
-        }
-        else {
-            m_resourceHash = QCryptographicHash::hash(m_pResource->dataBody(), QCryptographicHash::Md5);
-        }
+    if (m_resourceHash.isEmpty()) {
+        QNDEBUG(QStringLiteral("Can't open resource: resource hash is empty"));
+        return;
     }
 
     Q_EMIT openResourceRequest(m_resourceHash);
@@ -129,19 +127,9 @@ void GenericResourceDisplayWidget::onSaveResourceDataToFileButtonPressed()
 {
     QNDEBUG(QStringLiteral("GenericResourceDisplayWidget::onSaveResourceDataToFileButtonPressed"));
 
-    if (m_resourceHash.isEmpty())
-    {
-        if (!m_pResource || (!m_pResource->hasDataHash() && !m_pResource->hasDataBody())) {
-            QNDEBUG(QStringLiteral("Can't save resource: resource hash is empty"));
-            return;
-        }
-
-        if (m_pResource->hasDataHash()) {
-            m_resourceHash = m_pResource->dataHash();
-        }
-        else {
-            m_resourceHash = QCryptographicHash::hash(m_pResource->dataBody(), QCryptographicHash::Md5);
-        }
+    if (m_resourceHash.isEmpty()) {
+        QNDEBUG(QStringLiteral("Can't save resource: resource hash is empty"));
+        return;
     }
 
     Q_EMIT saveResourceRequest(m_resourceHash);

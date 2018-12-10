@@ -63,7 +63,7 @@ private:
 
 private:
     Ui::GenericResourceDisplayWidget *  m_pUI;
-    const Resource *    m_pResource;
+    QString             m_resourceLocalUid;
     QByteArray          m_resourceHash;
 };
 
