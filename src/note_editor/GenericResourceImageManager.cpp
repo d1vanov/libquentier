@@ -86,7 +86,7 @@ void GenericResourceImageManager::onGenericResourceImageWriteRequest(QString not
     }
 
     QStringList nameFilter = QStringList() << resourceFileNameMask;
-    QFileInfoList existingResourceImageFileInfos = storageDir.entryInfoList(nameFilter, QDir::Files | QDir::Readable);
+    QFileInfoList existingResourceImageFileInfos = storageDir.entryInfoList(nameFilter, QDir::Files | QDir::Readable | QDir::NoDotAndDotDot);
 
     bool resourceHashChanged = true;
     QFileInfo resourceHashFileInfo(storageDir.absolutePath() + QStringLiteral("/") + resourceLocalUid + QStringLiteral(".hash"));

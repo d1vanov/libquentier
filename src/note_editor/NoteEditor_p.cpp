@@ -137,6 +137,8 @@ typedef QWebEngineSettings WebSettings;
 #include <QTransform>
 #include <QTimer>
 #include <QCryptographicHash>
+#include <cmath>
+#include <algorithm>
 
 #define NOTE_EDITOR_PAGE_HEADER QStringLiteral("<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01//EN\" \"http://www.w3.org/TR/html4/strict.dtd\">" \
                                                "<html><head>" \
@@ -583,7 +585,8 @@ void NoteEditorPrivate::onResourceFileChanged(QString resourceLocalUid, QString 
                                               QByteArray resourceData, QByteArray resourceDataHash)
 {
     QNDEBUG(QStringLiteral("NoteEditorPrivate::onResourceFileChanged: resource local uid = ") << resourceLocalUid
-            << QStringLiteral(", file storage path: ") << fileStoragePath);
+            << QStringLiteral(", file storage path: ") << fileStoragePath << QStringLiteral(", new resource data size = ")
+            << humanReadableSize(static_cast<quint64>(std::max(resourceData.size(), 0))));
 
     if (Q_UNLIKELY(m_pNote.isNull())) {
         QNDEBUG(QStringLiteral("Can't process resource file change: no note is set to the editor"));
@@ -608,25 +611,28 @@ void NoteEditorPrivate::onResourceFileChanged(QString resourceLocalUid, QString 
     }
 
     Resource resource = qAsConst(resources)[targetResourceIndex];
-    QByteArray oldResourceHash = (resource.hasDataHash() ? resource.dataHash() : QByteArray());
+    QByteArray previousResourceHash = (resource.hasDataHash() ? resource.dataHash() : QByteArray());
+    QNTRACE(QStringLiteral("Previous resource hash = ") << previousResourceHash.toHex());
+
     resource.setDataBody(resourceData);
     resource.setDataHash(resourceDataHash);
     resource.setDataSize(resourceData.size());
-
-    QString resourceMimeTypeName = (resource.hasMime() ? resource.mime() : QString());
-    QString resourceDisplayName =  resource.displayName();
-    QString resourceDisplaySize = humanReadableSize(static_cast<quint64>(resource.dataSize()));
 
     // Need to clear any existing recognition data as the resource's contents were changed
     resource.setRecognitionDataBody(QByteArray());
     resource.setRecognitionDataHash(QByteArray());
     resource.setRecognitionDataSize(-1);
 
+    QString resourceMimeTypeName = (resource.hasMime() ? resource.mime() : QString());
+    QString resourceDisplayName =  resource.displayName();
+    QString resourceDisplaySize = humanReadableSize(static_cast<quint64>(resourceData.size()));
+
+    QNTRACE(QStringLiteral("Updating the resource within the note: ") << resource);
     Q_UNUSED(m_pNote->updateResource(resource))
 
     setModified();
 
-    if (!oldResourceHash.isEmpty() && (oldResourceHash != resourceDataHash))
+    if (!previousResourceHash.isEmpty() && (previousResourceHash != resourceDataHash))
     {
         QSize resourceImageSize;
         if (resource.hasHeight() && resource.hasWidth()) {
@@ -634,11 +640,11 @@ void NoteEditorPrivate::onResourceFileChanged(QString resourceLocalUid, QString 
             resourceImageSize.setWidth(resource.width());
         }
 
-        m_resourceInfo.removeResourceInfo(oldResourceHash);
+        m_resourceInfo.removeResourceInfo(previousResourceHash);
         m_resourceInfo.cacheResourceInfo(resourceDataHash, resourceDisplayName,
                                          resourceDisplaySize, fileStoragePath,
                                          resourceImageSize);
-        updateHashForResourceTag(oldResourceHash, resourceDataHash);
+        updateHashForResourceTag(previousResourceHash, resourceDataHash);
     }
 
     if (resourceMimeTypeName.startsWith(QStringLiteral("image/")))
@@ -4070,7 +4076,8 @@ void NoteEditorPrivate::manualSaveResourceToFile(const Resource & resource)
 
 QImage NoteEditorPrivate::buildGenericResourceImage(const Resource & resource)
 {
-    QNDEBUG(QStringLiteral("NoteEditorPrivate::buildGenericResourceImage"));
+    QNDEBUG(QStringLiteral("NoteEditorPrivate::buildGenericResourceImage: resource local uid = ")
+            << resource.localUid());
 
     QString resourceDisplayName = resource.displayName();
     if (Q_UNLIKELY(resourceDisplayName.isEmpty())) {

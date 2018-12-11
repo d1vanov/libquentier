@@ -29,6 +29,11 @@
 #include <QDirIterator>
 #include <QDesktopServices>
 #include <QCryptographicHash>
+#include <QThread>
+#include <cmath>
+#include <algorithm>
+#include <fstream>
+#include <string>
 
 // 4 megabytes
 #define RESOURCE_DATA_BATCH_SIZE_IN_BYTES (4194304)
@@ -351,6 +356,32 @@ void ResourceDataInTemporaryFileStorageManager::onFileChanged(const QString & pa
     }
 
     QByteArray data = file.readAll();
+
+    if (Q_UNLIKELY(data.isEmpty()))
+    {
+        QNDEBUG(QStringLiteral("Failed to read the updated resource file data, trying to re-open and re-read"));
+
+        file.close();
+
+        std::ifstream istrm;
+        istrm.open(QDir::toNativeSeparators(path).toStdString(), std::ifstream::in);
+        if (istrm.good())
+        {
+            std::string content;
+            content.assign( (std::istreambuf_iterator<char>(istrm) ),
+                            (std::istreambuf_iterator<char>()    ) );
+            data = QByteArray::fromStdString(content);
+        }
+    }
+
+    if (data.isEmpty()) {
+        QNWARNING(QStringLiteral("Failed to read the updated resource's data, I/O error: error code = ") << file.error()
+                  << QStringLiteral(", error description: ") << file.errorString());
+        return;
+    }
+
+    QNTRACE(QStringLiteral("Size of new resource data: ") << humanReadableSize(static_cast<quint64>(std::max(data.size(), 0))));
+
     QByteArray dataHash = calculateHash(data);
 
     int errorCode = 0;
