@@ -72,6 +72,10 @@
 #include <ctime>
 #include <time.h>
 
+#include <fstream>
+#include <string>
+#include <cstring>
+
 namespace quentier {
 
 void initializeLibquentier()
@@ -429,6 +433,35 @@ bool removeDirImpl(const QString & dirPath)
 bool removeDir(const QString & dirPath)
 {
     return removeDirImpl(dirPath);
+}
+
+QByteArray readFileContents(const QString & filePath, ErrorString & errorDescription)
+{
+    QByteArray result;
+    errorDescription.clear();
+
+    std::ifstream istrm;
+    istrm.open(QDir::toNativeSeparators(filePath).toStdString(), std::ifstream::in);
+    if (!istrm.good()) {
+        errorDescription.setBase(QT_TRANSLATE_NOOP("readFileContents", "Failed to read file contents, could not open the file for reading"));
+        errorDescription.details() = QString::fromLocal8Bit(strerror(errno));
+        return result;
+    }
+
+    istrm.seekg(0, std::ios::end);
+    std::streamsize length = istrm.tellg();
+    if (length > std::numeric_limits<int>::max()) {
+        errorDescription.setBase(QT_TRANSLATE_NOOP("readFileContents", "Failed to read file contents, file is too large"));
+        errorDescription.details() = humanReadableSize(static_cast<quint64>(length));
+        return result;
+    }
+
+    istrm.seekg(0, std::ios::beg);
+
+    result.resize(static_cast<int>(length));
+    istrm.read(result.data(), length);
+
+    return result;
 }
 
 } // namespace quentier

@@ -20,6 +20,7 @@
 #define LIB_QUENTIER_UTILITY_UTILITY_H
 
 #include <quentier/utility/Linkage.h>
+#include <quentier/types/ErrorString.h>
 #include <QtGlobal>
 
 #if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
@@ -28,6 +29,7 @@
 #include <qt4qevercloud/QEverCloud.h>
 #endif
 
+#include <QByteArray>
 #include <QString>
 #include <QUrl>
 #include <QStyle>
@@ -193,6 +195,19 @@ bool QUENTIER_EXPORT removeFile(const QString & filePath);
  * @return              True if the directory was removed successfully, false otherwise
  */
 bool QUENTIER_EXPORT removeDir(const QString & dirPath);
+
+/**
+ * readFileContents - reads the entire contents of a file into QByteArray which
+ * is then returned from the function. This function workarounds some quirks of
+ * QFile::readAll and hence can be used instead of it.
+ *
+ * @param filePath          The path to the file which contents are to be read
+ * @param errorDescription  The textual description of the error in case of I/O
+ *                          error, empty otherwise
+ * @return                  QByteArray with file's contents read into memory or
+ *                          empty QByteArray in case of I/O error
+ */
+QByteArray QUENTIER_EXPORT readFileContents(const QString & filePath, ErrorString & errorDescription);
 
 } // namespace quentier
 

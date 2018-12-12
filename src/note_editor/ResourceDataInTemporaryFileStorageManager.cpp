@@ -194,6 +194,7 @@ void ResourceDataInTemporaryFileStorageManager::onOpenResourceRequest(QString re
         checkIfResourceFileExistsAndIsActual(noteLocalUid, resourceLocalUid, fileStoragePath, pResource->dataHash()))
     {
         QNDEBUG(QStringLiteral("Temporary file for resource local uid ") << resourceLocalUid << QStringLiteral(" already exists and is actual"));
+        m_resourceLocalUidByFilePath[fileStoragePath] = resourceLocalUid;
         watchResourceFileForChanges(resourceLocalUid, fileStoragePath);
         QDesktopServices::openUrl(QUrl::fromLocalFile(fileStoragePath));
         Q_EMIT openedResource(resourceLocalUid, noteLocalUid);
@@ -346,37 +347,11 @@ void ResourceDataInTemporaryFileStorageManager::onFileChanged(const QString & pa
         return;
     }
 
-    QFile file(path);
-    bool open = file.QIODevice::open(QIODevice::ReadOnly);
-    if (Q_UNLIKELY(!open)) {
-        QNWARNING(QStringLiteral("Can't process resource local file change properly: can't open resource file for reading: error code = ")
-                  << file.error() << QStringLiteral(", error description: ") << file.errorString());
+    ErrorString errorDescription;
+    QByteArray data = readFileContents(path, errorDescription);
+    if (!errorDescription.isEmpty()) {
+        QNWARNING(errorDescription);
         m_fileSystemWatcher.removePath(path);
-        return;
-    }
-
-    QByteArray data = file.readAll();
-
-    if (Q_UNLIKELY(data.isEmpty()))
-    {
-        QNDEBUG(QStringLiteral("Failed to read the updated resource file data, trying to re-open and re-read"));
-
-        file.close();
-
-        std::ifstream istrm;
-        istrm.open(QDir::toNativeSeparators(path).toStdString(), std::ifstream::in);
-        if (istrm.good())
-        {
-            std::string content;
-            content.assign( (std::istreambuf_iterator<char>(istrm) ),
-                            (std::istreambuf_iterator<char>()    ) );
-            data = QByteArray::fromStdString(content);
-        }
-    }
-
-    if (data.isEmpty()) {
-        QNWARNING(QStringLiteral("Failed to read the updated resource's data, I/O error: error code = ") << file.error()
-                  << QStringLiteral(", error description: ") << file.errorString());
         return;
     }
 
@@ -385,7 +360,6 @@ void ResourceDataInTemporaryFileStorageManager::onFileChanged(const QString & pa
     QByteArray dataHash = calculateHash(data);
 
     int errorCode = 0;
-    ErrorString errorDescription;
     bool res = updateResourceHashHelperFile(it.value(), dataHash, resourceFileInfo.absolutePath(),
                                             errorCode, errorDescription);
     if (Q_UNLIKELY(!res)) {
