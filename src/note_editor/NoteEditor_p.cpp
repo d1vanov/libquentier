@@ -1457,6 +1457,7 @@ void NoteEditorPrivate::onAddResourceDelegateFinished(Resource addedResource, QS
 
     setModified();
     convertToNote();
+    saveNoteToLocalStorage();
 }
 
 void NoteEditorPrivate::onAddResourceDelegateError(ErrorString error)
@@ -6507,6 +6508,12 @@ void NoteEditorPrivate::clear()
 void NoteEditorPrivate::convertToNote()
 {
     QNDEBUG(QStringLiteral("NoteEditorPrivate::convertToNote"));
+
+    if (m_pendingConversionToNote) {
+        QNDEBUG(QStringLiteral("Already pending the conversion of note editor page to HTML"));
+        return;
+    }
+
     m_pendingConversionToNote = true;
 
     ErrorString error;
