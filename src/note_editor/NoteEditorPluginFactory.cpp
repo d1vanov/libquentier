@@ -450,9 +450,17 @@ QObject * NoteEditorPluginFactory::createResourcePlugin(const QStringList & argu
     }
 
     QString resourceDataSize;
-    if (pCurrentResource->hasDataBody()) {
+    if (pCurrentResource->hasDataSize()) {
+        quint64 bytes = static_cast<quint64>(std::max(pCurrentResource->dataSize(), 0));
+        resourceDataSize = humanReadableSize(bytes);
+    }
+    else if (pCurrentResource->hasDataBody()) {
         const QByteArray & data = pCurrentResource->dataBody();
         quint64 bytes = static_cast<quint64>(data.size());
+        resourceDataSize = humanReadableSize(bytes);
+    }
+    else if (pCurrentResource->hasAlternateDataSize()) {
+        quint64 bytes = static_cast<quint64>(std::max(pCurrentResource->alternateDataSize(), 0));
         resourceDataSize = humanReadableSize(bytes);
     }
     else if (pCurrentResource->hasAlternateDataBody()) {
