@@ -254,6 +254,8 @@ NoteEditorPrivate::NoteEditorPrivate(NoteEditor & noteEditor) :
     m_isPageEditable(false),
     m_pendingConversionToNote(false),
     m_pendingConversionToNoteForSavingInLocalStorage(false),
+    m_pendingNoteSavingInLocalStorage(false),
+    m_shouldRepeatSavingNoteInLocalStorage(false),
     m_pendingNotePageLoad(false),
     m_pendingNoteImageResourceTemporaryFiles(false),
     m_pendingNotePageLoadMethodExit(false),
@@ -264,7 +266,8 @@ NoteEditorPrivate::NoteEditorPrivate(NoteEditor & noteEditor) :
     m_noteLocalUid(),
     m_pNote(),
     m_pNotebook(),
-    m_modified(false),
+    m_needConversionToNote(false),
+    m_needSavingNoteInLocalStorage(false),
     m_watchingForContentChange(false),
     m_contentChangedSinceWatchingStart(false),
     m_secondsToWaitBeforeConversionStart(30),
@@ -1457,7 +1460,6 @@ void NoteEditorPrivate::onAddResourceDelegateFinished(Resource addedResource, QS
 
     setModified();
     convertToNote();
-    saveNoteToLocalStorage();
 }
 
 void NoteEditorPrivate::onAddResourceDelegateError(ErrorString error)
@@ -2372,6 +2374,9 @@ void NoteEditorPrivate::clearCurrentNoteInfo()
     m_pendingConversionToNote = false;
     m_pendingConversionToNoteForSavingInLocalStorage = false;
 
+    m_pendingNoteSavingInLocalStorage = false;
+    m_shouldRepeatSavingNoteInLocalStorage = false;
+
     m_pendingNoteImageResourceTemporaryFiles = false;
 
 #ifndef QUENTIER_USE_QT_WEB_ENGINE
@@ -2892,23 +2897,35 @@ void NoteEditorPrivate::init()
 
 void NoteEditorPrivate::onNoteSavedToLocalStorage(QString noteLocalUid)
 {
-    if (!m_pNote || (m_pNote->localUid() != noteLocalUid)) {
+    if (!m_pendingNoteSavingInLocalStorage || !m_pNote || (m_pNote->localUid() != noteLocalUid)) {
         return;
     }
 
     QNDEBUG(QStringLiteral("NoteEditorPrivate::onNoteSavedToLocalStorage: note local uid = ") << noteLocalUid);
+
+    m_needSavingNoteInLocalStorage = false;
+    m_pendingNoteSavingInLocalStorage = false;
+
+    if (m_shouldRepeatSavingNoteInLocalStorage) {
+        m_shouldRepeatSavingNoteInLocalStorage = false;
+        saveNoteToLocalStorage();
+        return;
+    }
 
     Q_EMIT noteSavedToLocalStorage(noteLocalUid);
 }
 
 void NoteEditorPrivate::onFailedToSaveNoteToLocalStorage(QString noteLocalUid, ErrorString errorDescription)
 {
-    if (!m_pNote || (m_pNote->localUid() != noteLocalUid)) {
+    if (!m_pendingNoteSavingInLocalStorage || !m_pNote || (m_pNote->localUid() != noteLocalUid)) {
         return;
     }
 
     QNDEBUG(QStringLiteral("NoteEditorPrivate::onFailedToSaveNoteToLocalStorage: note local uid = ") << noteLocalUid
             << QStringLiteral(", error description: ") << errorDescription);
+
+    m_pendingNoteSavingInLocalStorage = false;
+    m_shouldRepeatSavingNoteInLocalStorage = false;
 
     Q_EMIT failedToSaveNoteToLocalStorage(errorDescription, noteLocalUid);
 }
@@ -3625,7 +3642,8 @@ void NoteEditorPrivate::clearEditorContent(const BlankPageKind::type kind,
     m_watchingForContentChange = false;
     m_contentChangedSinceWatchingStart = false;
 
-    m_modified = false;
+    m_needConversionToNote = false;
+    m_needSavingNoteInLocalStorage = false;
 
     m_contextMenuSequenceNumber = 1;
     m_lastContextMenuEventGlobalPos = QPoint();
@@ -5424,10 +5442,11 @@ void NoteEditorPrivate::onPageHtmlReceived(const QString & html,
     }
 
     m_pNote->setContent(m_enmlCachedMemory);
-    m_pendingConversionToNote = false;
 
-    bool wasModified = m_modified;
-    m_modified = false;
+    bool neededConversionToNote = m_needConversionToNote;
+    m_needConversionToNote = false;
+
+    m_pendingConversionToNote = false;
 
     Q_EMIT convertedToNote(*m_pNote);
 
@@ -5435,7 +5454,7 @@ void NoteEditorPrivate::onPageHtmlReceived(const QString & html,
     {
         m_pendingConversionToNoteForSavingInLocalStorage = false;
 
-        if (wasModified) {
+        if (neededConversionToNote) {
             m_pNote->setDirty(true);
             m_pNote->setModificationTimestamp(QDateTime::currentMSecsSinceEpoch());
         }
@@ -6414,7 +6433,7 @@ bool NoteEditorPrivate::exportToEnex(const QStringList & tagNames,
         return false;
     }
 
-    if (m_modified)
+    if (m_needConversionToNote)
     {
         // Need to save the editor's content into a note before proceeding
         QTimer * pSaveNoteTimer = new QTimer(this);
@@ -6540,12 +6559,26 @@ void NoteEditorPrivate::saveNoteToLocalStorage()
         return;
     }
 
-    if (m_modified) {
+    if (m_pendingNoteSavingInLocalStorage)
+    {
+        QNDEBUG(QStringLiteral("Note is already being saved to local storage"));
+
+        if (m_needConversionToNote) {
+            QNDEBUG(QStringLiteral("It appears the note editor content has been changed since save note request was last issued; "
+                                   "will repeat the attempt to save the note after the current attemtp is finished"));
+            m_shouldRepeatSavingNoteInLocalStorage = true;
+        }
+
+        return;
+    }
+
+    if (m_needConversionToNote) {
         m_pendingConversionToNoteForSavingInLocalStorage = true;
         convertToNote();
         return;
     }
 
+    m_pendingNoteSavingInLocalStorage = true;
     QNDEBUG(QStringLiteral("Emitting the request to save the note in local storage"));
     QNTRACE(*m_pNote);
     Q_EMIT saveNoteToLocalStorageRequest(*m_pNote);
@@ -6795,7 +6828,7 @@ void NoteEditorPrivate::setNoteResources(const QList<Resource> & resources)
 
 bool NoteEditorPrivate::isModified() const
 {
-    return m_modified;
+    return m_needConversionToNote || m_needSavingNoteInLocalStorage;
 }
 
 void NoteEditorPrivate::setFocusToEditor()
@@ -6840,8 +6873,9 @@ void NoteEditorPrivate::setModified()
         return;
     }
 
-    if (!m_modified) {
-        m_modified = true;
+    if (!m_needConversionToNote && !m_needSavingNoteInLocalStorage ) {
+        m_needConversionToNote = true;
+        m_needSavingNoteInLocalStorage = true;
         QNTRACE(QStringLiteral("Emitting noteModified signal"));
         Q_EMIT noteModified();
     }

@@ -956,6 +956,8 @@ private:
     bool        m_isPageEditable;
     bool        m_pendingConversionToNote;
     bool        m_pendingConversionToNoteForSavingInLocalStorage;
+    bool        m_pendingNoteSavingInLocalStorage;
+    bool        m_shouldRepeatSavingNoteInLocalStorage;
     bool        m_pendingNotePageLoad;
     bool        m_pendingNoteImageResourceTemporaryFiles;
 
@@ -990,7 +992,23 @@ private:
     QScopedPointer<Note>        m_pNote;
     QScopedPointer<Notebook>    m_pNotebook;
 
-    bool        m_modified;
+    /**
+     * This flag is set to true when the note editor page's content gets changed
+     * and thus needs to be converted to HTML and then ENML and then put into m_pNote object;
+     * when m_pNote's ENML becomes actual with the note editor page's content,
+     * this flag is dropped back to false
+     */
+    bool        m_needConversionToNote;
+
+    /**
+     * This flag is set to true when then note editor page's content gets
+     * changed and thus needs to be converted to HTML and then ENML and then put
+     * into m_pNote object which then needs to be saved in local storage. Or
+     * when m_pNote object changes via some other way and needs to be saved in
+     * local storage. This flag is dropped back to false after the note has been
+     * saved to local storage.
+     */
+    bool        m_needSavingNoteInLocalStorage;
 
     // These two bools implement a cheap scheme of watching
     // for changes in note editor since some particular moment in time.

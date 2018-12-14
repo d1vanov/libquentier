@@ -448,6 +448,7 @@ void NoteEditorLocalStorageBroker::onAddResourceComplete(Resource resource, QUui
     }
 
     if (saveNoteInfo.hasPendingResourceOperations()) {
+        QNDEBUG(QStringLiteral("Still pending resource data saving: ") << saveNoteInfo);
         return;
     }
 
@@ -509,6 +510,7 @@ void NoteEditorLocalStorageBroker::onUpdateResourceComplete(Resource resource, Q
     }
 
     if (saveNoteInfo.hasPendingResourceOperations()) {
+        QNDEBUG(QStringLiteral("Still pending resource data saving: ") << saveNoteInfo);
         return;
     }
 
@@ -567,6 +569,7 @@ void NoteEditorLocalStorageBroker::onExpungeResourceComplete(Resource resource, 
     }
 
     if (saveNoteInfo.hasPendingResourceOperations()) {
+        QNDEBUG(QStringLiteral("Still pending resource data saving: ") << saveNoteInfo);
         return;
     }
 

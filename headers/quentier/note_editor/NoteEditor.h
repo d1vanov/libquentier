@@ -122,7 +122,8 @@ public:
     void clear();
 
     /**
-     * @return true if there's content within the editor not yet converted to note, false otherwise
+     * @return true if there's content within the editor not yet converted to note or not saved to local storage,
+     * false otherwise
      */
     bool isModified() const;
 
