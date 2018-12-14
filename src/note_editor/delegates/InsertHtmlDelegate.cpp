@@ -51,7 +51,7 @@ void InsertHtmlDelegate::start()
 {
     QNDEBUG(QStringLiteral("InsertHtmlDelegate::start"));
 
-    if (m_noteEditor.isModified()) {
+    if (m_noteEditor.isEditorPageModified()) {
         QObject::connect(&m_noteEditor, QNSIGNAL(NoteEditorPrivate,convertedToNote,Note),
                          this, QNSLOT(InsertHtmlDelegate,onOriginalPageConvertedToNote,Note));
         m_noteEditor.convertToNote();

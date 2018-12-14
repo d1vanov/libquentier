@@ -1459,6 +1459,8 @@ void NoteEditorPrivate::onAddResourceDelegateFinished(Resource addedResource, QS
     }
 
     setModified();
+
+    m_pendingConversionToNoteForSavingInLocalStorage = true;
     convertToNote();
 }
 
@@ -1480,8 +1482,9 @@ void NoteEditorPrivate::onAddResourceUndoRedoFinished(const QVariant & data, con
 
     Q_UNUSED(extraData);
 
-    QMap<QString,QVariant> resultMap = data.toMap();
+    setModified();
 
+    QMap<QString,QVariant> resultMap = data.toMap();
     auto statusIt = resultMap.find(QStringLiteral("status"));
     if (Q_UNLIKELY(statusIt == resultMap.end())) {
         ErrorString error(QT_TR_NOOP("Can't parse the result of new resource html insertion undo/redo from JavaScript"));
@@ -1509,6 +1512,7 @@ void NoteEditorPrivate::onAddResourceUndoRedoFinished(const QVariant & data, con
         return;
     }
 
+    m_pendingConversionToNoteForSavingInLocalStorage = true;
     convertToNote();
 }
 
@@ -1577,6 +1581,11 @@ void NoteEditorPrivate::onRenameResourceDelegateFinished(QString oldResourceName
     if (Q_LIKELY(delegate)) {
         delegate->deleteLater();
     }
+
+    setModified();
+
+    m_pendingConversionToNoteForSavingInLocalStorage = true;
+    convertToNote();
 }
 
 void NoteEditorPrivate::onRenameResourceDelegateCancelled()
@@ -1631,6 +1640,8 @@ void NoteEditorPrivate::onImageResourceRotationDelegateFinished(QByteArray resou
     highlightRecognizedImageAreas(m_lastSearchHighlightedText, m_lastSearchHighlightedTextCaseSensitivity);
 
     setModified();
+
+    m_pendingConversionToNoteForSavingInLocalStorage = true;
     convertToNote();
 }
 
@@ -1753,6 +1764,8 @@ void NoteEditorPrivate::onEncryptSelectedTextDelegateFinished()
     }
 
     setModified();
+
+    m_pendingConversionToNoteForSavingInLocalStorage = true;
     convertToNote();
 
 #ifdef QUENTIER_USE_QT_WEB_ENGINE
@@ -1787,8 +1800,9 @@ void NoteEditorPrivate::onEncryptSelectedTextUndoRedoFinished(const QVariant & d
 
     Q_UNUSED(extraData)
 
-    QMap<QString,QVariant> resultMap = data.toMap();
+    setModified();
 
+    QMap<QString,QVariant> resultMap = data.toMap();
     auto statusIt = resultMap.find(QStringLiteral("status"));
     if (Q_UNLIKELY(statusIt == resultMap.end())) {
         ErrorString error(QT_TR_NOOP("Can't parse the result of encryption undo/redo from JavaScript"));
@@ -1816,6 +1830,7 @@ void NoteEditorPrivate::onEncryptSelectedTextUndoRedoFinished(const QVariant & d
         return;
     }
 
+    m_pendingConversionToNoteForSavingInLocalStorage = true;
     convertToNote();
 
 #ifdef QUENTIER_USE_QT_WEB_ENGINE
@@ -1857,6 +1872,7 @@ void NoteEditorPrivate::onDecryptEncryptedTextDelegateFinished(QString encrypted
     }
 
     if (decryptPermanently) {
+        m_pendingConversionToNoteForSavingInLocalStorage = true;
         convertToNote();
     }
 }
@@ -1887,8 +1903,9 @@ void NoteEditorPrivate::onDecryptEncryptedTextUndoRedoFinished(const QVariant & 
 {
     QNDEBUG(QStringLiteral("NoteEditorPrivate::onDecryptEncryptedTextUndoRedoFinished: ") << data);
 
-    QMap<QString,QVariant> resultMap = data.toMap();
+    setModified();
 
+    QMap<QString,QVariant> resultMap = data.toMap();
     auto statusIt = resultMap.find(QStringLiteral("status"));
     if (Q_UNLIKELY(statusIt == resultMap.end())) {
         ErrorString error(QT_TR_NOOP("Can't parse the result of encrypted text decryption undo/redo from JavaScript"));
@@ -1926,6 +1943,7 @@ void NoteEditorPrivate::onDecryptEncryptedTextUndoRedoFinished(const QVariant & 
     }
 
     if (shouldConvertToNote) {
+        m_pendingConversionToNoteForSavingInLocalStorage = true;
         convertToNote();
     }
 }
@@ -1946,6 +1964,9 @@ void NoteEditorPrivate::onAddHyperlinkToSelectedTextDelegateFinished()
         delegate->deleteLater();
     }
 
+    setModified();
+
+    m_pendingConversionToNoteForSavingInLocalStorage = true;
     convertToNote();
 }
 
@@ -1976,8 +1997,9 @@ void NoteEditorPrivate::onAddHyperlinkToSelectedTextUndoRedoFinished(const QVari
 
     Q_UNUSED(extraData)
 
-    QMap<QString,QVariant> resultMap = data.toMap();
+    setModified();
 
+    QMap<QString,QVariant> resultMap = data.toMap();
     auto statusIt = resultMap.find(QStringLiteral("status"));
     if (Q_UNLIKELY(statusIt == resultMap.end())) {
         ErrorString error(QT_TR_NOOP("Can't parse the result of hyperlink addition undo/redo from JavaScript"));
@@ -2005,6 +2027,7 @@ void NoteEditorPrivate::onAddHyperlinkToSelectedTextUndoRedoFinished(const QVari
         return;
     }
 
+    m_pendingConversionToNoteForSavingInLocalStorage = true;
     convertToNote();
 }
 
@@ -2025,6 +2048,7 @@ void NoteEditorPrivate::onEditHyperlinkDelegateFinished()
         delegate->deleteLater();
     }
 
+    m_pendingConversionToNoteForSavingInLocalStorage = true;
     convertToNote();
 }
 
@@ -2056,8 +2080,9 @@ void NoteEditorPrivate::onEditHyperlinkUndoRedoFinished(const QVariant & data, c
 
     Q_UNUSED(extraData)
 
-    QMap<QString,QVariant> resultMap = data.toMap();
+    setModified();
 
+    QMap<QString,QVariant> resultMap = data.toMap();
     auto statusIt = resultMap.find(QStringLiteral("status"));
     if (Q_UNLIKELY(statusIt == resultMap.end())) {
         ErrorString error(QT_TR_NOOP("Can't parse the result of hyperlink edit undo/redo from JavaScript"));
@@ -2085,6 +2110,7 @@ void NoteEditorPrivate::onEditHyperlinkUndoRedoFinished(const QVariant & data, c
         return;
     }
 
+    m_pendingConversionToNoteForSavingInLocalStorage = true;
     convertToNote();
 }
 
@@ -2107,6 +2133,7 @@ void NoteEditorPrivate::onRemoveHyperlinkDelegateFinished()
         delegate->deleteLater();
     }
 
+    m_pendingConversionToNoteForSavingInLocalStorage = true;
     convertToNote();
 }
 
@@ -2127,8 +2154,9 @@ void NoteEditorPrivate::onRemoveHyperlinkUndoRedoFinished(const QVariant & data,
 
     Q_UNUSED(extraData)
 
-    QMap<QString,QVariant> resultMap = data.toMap();
+    setModified();
 
+    QMap<QString,QVariant> resultMap = data.toMap();
     auto statusIt = resultMap.find(QStringLiteral("status"));
     if (Q_UNLIKELY(statusIt == resultMap.end())) {
         ErrorString error(QT_TR_NOOP("Can't parse the result of hyperlink removal undo/redo from JavaScript"));
@@ -2156,6 +2184,7 @@ void NoteEditorPrivate::onRemoveHyperlinkUndoRedoFinished(const QVariant & data,
         return;
     }
 
+    m_pendingConversionToNoteForSavingInLocalStorage = true;
     convertToNote();
 }
 
@@ -2191,6 +2220,7 @@ void NoteEditorPrivate::onInsertHtmlDelegateFinished(QList<Resource> addedResour
                      this, QNSLOT(NoteEditorPrivate,onUndoCommandError,ErrorString));
     m_pUndoStack->push(pCommand);
 
+    m_pendingConversionToNoteForSavingInLocalStorage = true;
     convertToNote();
 }
 
@@ -2212,8 +2242,9 @@ void NoteEditorPrivate::onInsertHtmlUndoRedoFinished(const QVariant & data, cons
 
     Q_UNUSED(extraData);
 
-    QMap<QString,QVariant> resultMap = data.toMap();
+    setModified();
 
+    QMap<QString,QVariant> resultMap = data.toMap();
     auto statusIt = resultMap.find(QStringLiteral("status"));
     if (Q_UNLIKELY(statusIt == resultMap.end())) {
         ErrorString error(QT_TR_NOOP("Can't parse the result of html insertion undo/redo from JavaScript"));
@@ -2241,6 +2272,7 @@ void NoteEditorPrivate::onInsertHtmlUndoRedoFinished(const QVariant & data, cons
         return;
     }
 
+    m_pendingConversionToNoteForSavingInLocalStorage = true;
     convertToNote();
 }
 
@@ -6829,6 +6861,11 @@ void NoteEditorPrivate::setNoteResources(const QList<Resource> & resources)
 bool NoteEditorPrivate::isModified() const
 {
     return m_needConversionToNote || m_needSavingNoteInLocalStorage;
+}
+
+bool NoteEditorPrivate::isEditorPageModified() const
+{
+    return m_needConversionToNote;
 }
 
 void NoteEditorPrivate::setFocusToEditor()

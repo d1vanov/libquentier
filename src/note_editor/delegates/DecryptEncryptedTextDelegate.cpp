@@ -102,7 +102,7 @@ void DecryptEncryptedTextDelegate::start()
         return;
     }
 
-    if (m_pNoteEditor->isModified()) {
+    if (m_pNoteEditor->isEditorPageModified()) {
         QObject::connect(m_pNoteEditor.data(), QNSIGNAL(NoteEditorPrivate,convertedToNote,Note),
                          this, QNSLOT(DecryptEncryptedTextDelegate,onOriginalPageConvertedToNote,Note));
         m_pNoteEditor->convertToNote();

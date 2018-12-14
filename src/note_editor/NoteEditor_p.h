@@ -215,6 +215,7 @@ public:
     virtual bool spellCheckEnabled() const Q_DECL_OVERRIDE;
 
     virtual bool isModified() const Q_DECL_OVERRIDE;
+    virtual bool isEditorPageModified() const Q_DECL_OVERRIDE;
 
     qint64 noteResourcesSize() const;
     qint64 noteContentSize() const;

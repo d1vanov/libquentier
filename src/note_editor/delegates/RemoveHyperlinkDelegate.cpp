@@ -40,7 +40,7 @@ void RemoveHyperlinkDelegate::start()
 {
     QNDEBUG(QStringLiteral("RemoveHyperlinkDelegate::start"));
 
-    if (m_noteEditor.isModified()) {
+    if (m_noteEditor.isEditorPageModified()) {
         QObject::connect(&m_noteEditor, QNSIGNAL(NoteEditorPrivate,convertedToNote,Note),
                          this, QNSLOT(RemoveHyperlinkDelegate,onOriginalPageConvertedToNote,Note));
         m_noteEditor.convertToNote();

@@ -175,6 +175,7 @@ public:
     virtual void clear() = 0;
 
     virtual bool isModified() const = 0;
+    virtual bool isEditorPageModified() const = 0;
 
     virtual void setFocusToEditor() = 0;
 

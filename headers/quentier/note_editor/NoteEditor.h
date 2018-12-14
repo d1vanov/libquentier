@@ -128,6 +128,11 @@ public:
     bool isModified() const;
 
     /**
+     * @return true if there's content within the editor not yet converted to note, false otherwise
+     */
+    bool isEditorPageModified() const;
+
+    /**
      * @return true if the note last set to the editor has been fully loaded already,
      * false otherwise
      */

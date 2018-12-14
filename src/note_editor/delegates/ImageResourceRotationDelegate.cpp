@@ -62,7 +62,7 @@ void ImageResourceRotationDelegate::start()
 {
     QNDEBUG(QStringLiteral("ImageResourceRotationDelegate::start"));
 
-    if (m_noteEditor.isModified()) {
+    if (m_noteEditor.isEditorPageModified()) {
         QObject::connect(&m_noteEditor, QNSIGNAL(NoteEditorPrivate,convertedToNote,Note),
                          this, QNSLOT(ImageResourceRotationDelegate,onOriginalPageConvertedToNote,Note));
         m_noteEditor.convertToNote();
