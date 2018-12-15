@@ -50,6 +50,11 @@ NoteEditorLocalStorageBroker & NoteEditorLocalStorageBroker::instance()
     return noteEditorLocalStorageBroker;
 }
 
+LocalStorageManagerAsync * NoteEditorLocalStorageBroker::localStorageManager()
+{
+    return m_pLocalStorageManagerAsync;
+}
+
 void NoteEditorLocalStorageBroker::setLocalStorageManager(LocalStorageManagerAsync & localStorageManagerAsync)
 {
     QNDEBUG(QStringLiteral("NoteEditorLocalStorageBroker::setLocalStorageManager"));

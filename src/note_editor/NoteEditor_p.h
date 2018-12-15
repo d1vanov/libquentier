@@ -472,7 +472,8 @@ private Q_SLOTS:
     void onAddResourceDelegateError(ErrorString error);
     void onAddResourceUndoRedoFinished(const QVariant & data, const QVector<QPair<QString,QString> > & extraData);
 
-    void onRemoveResourceDelegateFinished(Resource removedResource);
+    void onRemoveResourceDelegateFinished(Resource removedResource, bool reversible);
+    void onRemoveResourceDelegateCancelled(QString resourceLocalUid);
     void onRemoveResourceDelegateError(ErrorString error);
     void onRemoveResourceUndoRedoFinished(const QVariant & data, const QVector<QPair<QString,QString> > & extraData);
 

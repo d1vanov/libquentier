@@ -18,7 +18,7 @@
 
 #include "EncryptionDialog.h"
 #include "ui_EncryptionDialog.h"
-#include "../NoteEditorSettingsName.h"
+#include "../NoteEditorSettingsNames.h"
 #include <quentier/enml/DecryptedTextManager.h>
 #include <quentier/utility/QuentierCheckPtr.h>
 #include <quentier/logging/QuentierLogger.h>
@@ -44,7 +44,7 @@ EncryptionDialog::EncryptionDialog(const QString & textToEncrypt, const Account 
 
     bool rememberPassphraseForSessionDefault = false;
     ApplicationSettings appSettings(m_account, NOTE_EDITOR_SETTINGS_NAME);
-    QVariant rememberPassphraseForSessionSetting = appSettings.value(QStringLiteral("Encryption/rememberPassphraseForSession"));
+    QVariant rememberPassphraseForSessionSetting = appSettings.value(NOTE_EDITOR_ENCRYPTION_REMEMBER_PASSWORD_FOR_SESSION);
     if (!rememberPassphraseForSessionSetting.isNull()) {
         rememberPassphraseForSessionDefault = rememberPassphraseForSessionSetting.toBool();
     }
@@ -95,7 +95,7 @@ void EncryptionDialog::onRememberPassphraseStateChanged(int checked)
         QNINFO(QStringLiteral("Can't persist remember passphrase for session setting: settings are not writable"));
     }
     else {
-        appSettings.setValue(QStringLiteral("Encryption/rememberPassphraseForSession"),
+        appSettings.setValue(NOTE_EDITOR_ENCRYPTION_REMEMBER_PASSWORD_FOR_SESSION,
                              QVariant(m_pUI->rememberPasswordForSessionCheckBox->isChecked()));
     }
 }

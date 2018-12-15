@@ -38,6 +38,7 @@ private:
 public:
     static NoteEditorLocalStorageBroker & instance();
 
+    LocalStorageManagerAsync * localStorageManager();
     void setLocalStorageManager(LocalStorageManagerAsync & localStorageManagerAsync);
 
 Q_SIGNALS:

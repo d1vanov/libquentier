@@ -20,7 +20,7 @@
 #include "NoteEditorPrivateMacros.h"
 #include "NoteEditorLocalStorageBroker.h"
 #include "GenericResourceImageManager.h"
-#include "NoteEditorSettingsName.h"
+#include "NoteEditorSettingsNames.h"
 #include "ResourceDataInTemporaryFileStorageManager.h"
 #include "delegates/AddResourceDelegate.h"
 #include "delegates/RemoveResourceDelegate.h"
@@ -1516,15 +1516,34 @@ void NoteEditorPrivate::onAddResourceUndoRedoFinished(const QVariant & data, con
     convertToNote();
 }
 
-void NoteEditorPrivate::onRemoveResourceDelegateFinished(Resource removedResource)
+void NoteEditorPrivate::onRemoveResourceDelegateFinished(Resource removedResource, bool reversible)
 {
-    QNDEBUG(QStringLiteral("onRemoveResourceDelegateFinished: removed resource = ") << removedResource);
+    QNDEBUG(QStringLiteral("onRemoveResourceDelegateFinished: removed resource = ") << removedResource
+            << QStringLiteral("\nReversible: ") << reversible);
 
-    NoteEditorCallbackFunctor<QVariant> callback(this, &NoteEditorPrivate::onRemoveResourceUndoRedoFinished);
-    RemoveResourceUndoCommand * pCommand = new RemoveResourceUndoCommand(removedResource, callback, *this);
-    QObject::connect(pCommand, QNSIGNAL(RemoveResourceUndoCommand,notifyError,ErrorString),
-                     this, QNSLOT(NoteEditorPrivate,onUndoCommandError,ErrorString));
-    m_pUndoStack->push(pCommand);
+    if (reversible) {
+        NoteEditorCallbackFunctor<QVariant> callback(this, &NoteEditorPrivate::onRemoveResourceUndoRedoFinished);
+        RemoveResourceUndoCommand * pCommand = new RemoveResourceUndoCommand(removedResource, callback, *this);
+        QObject::connect(pCommand, QNSIGNAL(RemoveResourceUndoCommand,notifyError,ErrorString),
+                         this, QNSLOT(NoteEditorPrivate,onUndoCommandError,ErrorString));
+        m_pUndoStack->push(pCommand);
+    }
+
+    RemoveResourceDelegate * delegate = qobject_cast<RemoveResourceDelegate*>(sender());
+    if (Q_LIKELY(delegate)) {
+        delegate->deleteLater();
+    }
+
+    setModified();
+
+    m_pendingConversionToNoteForSavingInLocalStorage = true;
+    convertToNote();
+}
+
+void NoteEditorPrivate::onRemoveResourceDelegateCancelled(QString resourceLocalUid)
+{
+    QNDEBUG(QStringLiteral("NoteEditorPrivate::onRemoveResourceDelegateCancelled: resource local uid = ")
+            << resourceLocalUid);
 
     RemoveResourceDelegate * delegate = qobject_cast<RemoveResourceDelegate*>(sender());
     if (Q_LIKELY(delegate)) {
@@ -1552,6 +1571,11 @@ void NoteEditorPrivate::onRemoveResourceUndoRedoFinished(const QVariant & data, 
     if (!m_lastSearchHighlightedText.isEmpty()) {
         highlightRecognizedImageAreas(m_lastSearchHighlightedText, m_lastSearchHighlightedTextCaseSensitivity);
     }
+
+    setModified();
+
+    m_pendingConversionToNoteForSavingInLocalStorage = true;
+    convertToNote();
 }
 
 void NoteEditorPrivate::onRenameResourceDelegateFinished(QString oldResourceName, QString newResourceName,
@@ -8262,7 +8286,7 @@ void NoteEditorPrivate::addAttachmentDialog()
     QString addAttachmentInitialFolderPath;
 
     ApplicationSettings appSettings(*m_pAccount, NOTE_EDITOR_SETTINGS_NAME);
-    QVariant lastAttachmentAddLocation = appSettings.value(QStringLiteral("LastAttachmentAddLocation"));
+    QVariant lastAttachmentAddLocation = appSettings.value(NOTE_EDITOR_LAST_ATTACHMENT_ADD_LOCATION);
     if (!lastAttachmentAddLocation.isNull() && lastAttachmentAddLocation.isValid())
     {
         QNTRACE(QStringLiteral("Found last attachment add location: ") << lastAttachmentAddLocation);
@@ -8293,7 +8317,7 @@ void NoteEditorPrivate::addAttachmentDialog()
     QFileInfo fileInfo(absoluteFilePath);
     QString absoluteDirPath = fileInfo.absoluteDir().absolutePath();
     if (!absoluteDirPath.isEmpty()) {
-        appSettings.setValue(QStringLiteral("LastAttachmentAddLocation"), absoluteDirPath);
+        appSettings.setValue(NOTE_EDITOR_LAST_ATTACHMENT_ADD_LOCATION, absoluteDirPath);
         QNTRACE(QStringLiteral("Updated last attachment add location to ") << absoluteDirPath);
     }
 
@@ -8443,9 +8467,20 @@ void NoteEditorPrivate::removeAttachment(const QByteArray & resourceHash)
         {
             m_resourceInfo.removeResourceInfo(resource.dataHash());
 
-            RemoveResourceDelegate * delegate = new RemoveResourceDelegate(resource, *this);
-            QObject::connect(delegate, QNSIGNAL(RemoveResourceDelegate,finished,Resource),
-                             this, QNSLOT(NoteEditorPrivate,onRemoveResourceDelegateFinished,Resource));
+            NoteEditorLocalStorageBroker & noteEditorLocalStorageBroker = NoteEditorLocalStorageBroker::instance();
+            LocalStorageManagerAsync * pLocalStorageManager = noteEditorLocalStorageBroker.localStorageManager();
+            if (Q_UNLIKELY(!pLocalStorageManager)) {
+                ErrorString error(QT_TR_NOOP("Can't remove the attachment: note editor is not initialized properly"));
+                QNWARNING(error);
+                Q_EMIT notifyError(error);
+                return;
+            }
+
+            RemoveResourceDelegate * delegate = new RemoveResourceDelegate(resource, *this, *pLocalStorageManager);
+            QObject::connect(delegate, QNSIGNAL(RemoveResourceDelegate,finished,Resource,bool),
+                             this, QNSLOT(NoteEditorPrivate,onRemoveResourceDelegateFinished,Resource,bool));
+            QObject::connect(delegate, QNSIGNAL(RemoveResourceDelegate,cancelled,QString),
+                             this, QNSLOT(NoteEditorPrivate,onRemoveResourceDelegateCancelled,QString));
             QObject::connect(delegate, QNSIGNAL(RemoveResourceDelegate,notifyError,ErrorString),
                              this, QNSLOT(NoteEditorPrivate,onRemoveResourceDelegateError,ErrorString));
             delegate->start();

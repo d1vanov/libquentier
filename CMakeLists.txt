@@ -256,7 +256,7 @@ endif()
 if(BUILD_WITH_NOTE_EDITOR)
   list(APPEND PRIVATE_HEADERS
        src/note_editor/GenericResourceImageManager.h
-       src/note_editor/NoteEditorSettingsName.h
+       src/note_editor/NoteEditorSettingsNames.h
        src/note_editor/NoteEditorPage.h
        src/note_editor/NoteEditor_p.h
        src/note_editor/NoteEditorPrivateMacros.h

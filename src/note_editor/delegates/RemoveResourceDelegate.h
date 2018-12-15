@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Dmitry Ivanov
+ * Copyright 2016-2018 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -20,42 +20,59 @@
 #define LIB_QUENTIER_NOTE_EDITOR_DELEGATES_REMOVE_RESOURCE_DELEGATE_H
 
 #include "JsResultCallbackFunctor.hpp"
-#include <quentier/utility/Macros.h>
 #include <quentier/types/ErrorString.h>
 #include <quentier/types/Note.h>
 #include <quentier/types/Resource.h>
+#include <quentier/utility/Macros.h>
 #include <QObject>
 
 namespace quentier {
 
 QT_FORWARD_DECLARE_CLASS(NoteEditorPrivate)
+QT_FORWARD_DECLARE_CLASS(LocalStorageManagerAsync)
 
 class Q_DECL_HIDDEN RemoveResourceDelegate: public QObject
 {
     Q_OBJECT
 public:
-    explicit RemoveResourceDelegate(const Resource & resourceToRemove, NoteEditorPrivate & noteEditor);
+    explicit RemoveResourceDelegate(const Resource & resourceToRemove,
+                                    NoteEditorPrivate & noteEditor,
+                                    LocalStorageManagerAsync & localStorageManager);
 
     void start();
 
 Q_SIGNALS:
-    void finished(Resource removedResource);
+    void finished(Resource removedResource, bool reversible);
+    void cancelled(QString resourceLocalUid);
     void notifyError(ErrorString error);
+
+// private signals
+    void findResource(Resource resource, bool withBinaryData, QUuid requestId);
 
 private Q_SLOTS:
     void onOriginalPageConvertedToNote(Note note);
 
     void onResourceReferenceRemovedFromNoteContent(const QVariant & data);
 
+private Q_SLOTS:
+    void onFindResourceComplete(Resource resource, bool withBinaryData, QUuid requestId);
+    void onFindResourceFailed(Resource resource, bool withBinaryData, ErrorString errorDescription, QUuid requestId);
+
 private:
     void doStart();
+    void removeResourceFromNoteEditorPage();
+    void connectToLocalStorage();
 
 private:
     typedef JsResultCallbackFunctor<RemoveResourceDelegate> JsCallback;
 
 private:
-    NoteEditorPrivate &      m_noteEditor;
-    Resource                 m_resource;
+    NoteEditorPrivate &         m_noteEditor;
+    LocalStorageManagerAsync &  m_localStorageManager;
+    Resource                    m_resource;
+    bool                        m_reversible;
+
+    QUuid                       m_findResourceRequestId;
 };
 
 } // namespace quentier
