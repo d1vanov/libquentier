@@ -167,6 +167,8 @@ void RemoveResourceDelegate::doStart()
     if (m_reversible && !m_resource.hasDataBody() && !m_resource.hasAlternateDataBody()) {
         connectToLocalStorage();
         m_findResourceRequestId = QUuid::createUuid();
+        QNDEBUG(QStringLiteral("Emitting the request to find resource within the local storage: request id = ")
+                << m_findResourceRequestId << QStringLiteral(", resource local uid = ") << m_resource.localUid());
         Q_EMIT findResource(m_resource, /* with binary data = */ true, m_findResourceRequestId);
         return;
     }

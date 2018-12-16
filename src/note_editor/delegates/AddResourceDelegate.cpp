@@ -556,7 +556,8 @@ void AddResourceDelegate::onNewResourceHtmlInserted(const QVariant & data)
 
 bool AddResourceDelegate::checkResourceDataSize(const Note & note, const Account * pAccount, const qint64 size)
 {
-    QNDEBUG(QStringLiteral("AddResourceDelegate::checkResourceDataSize: size = ") << size);
+    QNDEBUG(QStringLiteral("AddResourceDelegate::checkResourceDataSize: size = ")
+            << humanReadableSize(static_cast<quint64>(std::max(size, qint64(0)))));
 
     bool noteHasLimits = note.hasNoteLimits();
     if (noteHasLimits)

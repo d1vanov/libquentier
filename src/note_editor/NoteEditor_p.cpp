@@ -1528,7 +1528,7 @@ void NoteEditorPrivate::onAddResourceUndoRedoFinished(const QVariant & data, con
 
 void NoteEditorPrivate::onRemoveResourceDelegateFinished(Resource removedResource, bool reversible)
 {
-    QNDEBUG(QStringLiteral("onRemoveResourceDelegateFinished: removed resource = ") << removedResource
+    QNDEBUG(QStringLiteral("NoteEditorPrivate::onRemoveResourceDelegateFinished: removed resource = ") << removedResource
             << QStringLiteral("\nReversible: ") << reversible);
 
     if (reversible) {
@@ -3926,6 +3926,7 @@ bool NoteEditorPrivate::htmlToNoteContent(ErrorString & errorDescription)
 
     if (m_pNote.isNull()) {
         errorDescription.setBase(QT_TR_NOOP("No note was set to note editor"));
+        QNWARNING(errorDescription);
         Q_EMIT cantConvertToNote(errorDescription);
         return false;
     }
@@ -5509,24 +5510,21 @@ void NoteEditorPrivate::onPageHtmlReceived(const QString & html,
 
     m_pNote->setContent(m_enmlCachedMemory);
 
-    bool neededConversionToNote = m_needConversionToNote;
-    m_needConversionToNote = false;
-
-    m_pendingConversionToNote = false;
-
-    Q_EMIT convertedToNote(*m_pNote);
-
     if (m_pendingConversionToNoteForSavingInLocalStorage)
     {
         m_pendingConversionToNoteForSavingInLocalStorage = false;
 
-        if (neededConversionToNote) {
+        if (m_needConversionToNote) {
             m_pNote->setDirty(true);
             m_pNote->setModificationTimestamp(QDateTime::currentMSecsSinceEpoch());
         }
 
         saveNoteToLocalStorage();
     }
+
+    m_needConversionToNote = false;
+    m_pendingConversionToNote = false;
+    Q_EMIT convertedToNote(*m_pNote);
 }
 
 void NoteEditorPrivate::onSelectedTextEncryptionDone(const QVariant & dummy, const QVector<QPair<QString,QString> > & extraData)
@@ -6795,7 +6793,7 @@ void NoteEditorPrivate::addResourceToNote(const Resource & resource)
     }
 
     m_pNote->addResource(resource);
-    Q_EMIT convertedToNote(*m_pNote);
+    setModified();
 }
 
 void NoteEditorPrivate::removeResourceFromNote(const Resource & resource)
@@ -6811,7 +6809,7 @@ void NoteEditorPrivate::removeResourceFromNote(const Resource & resource)
     }
 
     m_pNote->removeResource(resource);
-    Q_EMIT convertedToNote(*m_pNote);
+    setModified();
 
     if (resource.hasDataHash())
     {

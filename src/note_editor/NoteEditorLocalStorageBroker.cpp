@@ -898,7 +898,7 @@ void NoteEditorLocalStorageBroker::saveNoteToLocalStorageImpl(const Note & previ
 {
     QNDEBUG(QStringLiteral("NoteEditorLocalStorageBroker::saveNoteToLocalStorageImpl"));
     QNTRACE(QStringLiteral("Previous version of the note: ") << previousNoteVersion
-            << QStringLiteral(", updated version of the note: ") << updatedNoteVersion);
+            << QStringLiteral("\nUpdated version of the note: ") << updatedNoteVersion);
 
     QList<Resource> previousNoteResources = previousNoteVersion.resources();
 
@@ -915,19 +915,70 @@ void NoteEditorLocalStorageBroker::saveNoteToLocalStorageImpl(const Note & previ
 
         const QString resourceLocalUid = resource.localUid();
         bool foundResourceInPreviousNoteVersion = false;
+        bool resourceDataSizeOrHashChanged = false;
         for(auto oit = previousNoteResources.constBegin(),
             oend = previousNoteResources.constEnd(); oit != oend; ++oit)
         {
-            if (oit->localUid() == resourceLocalUid) {
-                foundResourceInPreviousNoteVersion = true;
-                break;
+            if (oit->localUid() != resourceLocalUid) {
+                continue;
             }
+
+            foundResourceInPreviousNoteVersion = true;
+
+            bool dataSizeEqual = true;
+            if ( (oit->hasDataSize() != resource.hasDataSize()) ||
+                 (oit->hasDataSize() && resource.hasDataSize() && (oit->dataSize() != resource.dataSize())) )
+            {
+                dataSizeEqual = false;
+            }
+
+            bool dataHashEqual = true;
+            if ( dataSizeEqual &&
+                 ((oit->hasDataHash() != resource.hasDataHash()) ||
+                  (oit->hasDataHash() && resource.hasDataSize() && (oit->dataHash() != resource.dataHash()))) )
+            {
+                dataHashEqual = false;
+            }
+
+            bool alternateDataSizeEqual = true;
+            if ( dataSizeEqual && dataHashEqual &&
+                 ((oit->hasAlternateDataSize() != resource.hasAlternateDataSize()) ||
+                  (oit->hasAlternateDataSize() && resource.hasAlternateDataSize() && (oit->alternateDataSize() != resource.alternateDataSize()))) )
+            {
+                alternateDataSizeEqual = false;
+            }
+
+            bool alternateDataHashEqual = true;
+            if ( dataSizeEqual && dataHashEqual && alternateDataSizeEqual &&
+                 ((oit->hasAlternateDataHash() != resource.hasAlternateDataHash()) ||
+                  (oit->hasAlternateDataHash() && resource.hasAlternateDataHash() && (oit->alternateDataHash() != resource.alternateDataHash()))) )
+            {
+                alternateDataHashEqual = false;
+            }
+
+            if (!dataSizeEqual || !dataHashEqual || !alternateDataSizeEqual || !alternateDataHashEqual) {
+                resourceDataSizeOrHashChanged = true;
+            }
+
+            break;
         }
 
-        if (foundResourceInPreviousNoteVersion) {
+        if (foundResourceInPreviousNoteVersion)
+        {
+            if (!resourceDataSizeOrHashChanged) {
+                QNTRACE(QStringLiteral("Resource with local uid ") << resource.localUid()
+                        << QStringLiteral(" has not changed since the previous note version"));
+                continue;
+            }
+
+            QNTRACE(QStringLiteral("Resource with local uid ") << resource.localUid()
+                    << QStringLiteral(" has changed since the previous note version"));
             updatedResources << resource;
         }
-        else {
+        else
+        {
+            QNTRACE(QStringLiteral("Resource with local uid ") << resource.localUid()
+                    << QStringLiteral(" did not appear in the previous note version"));
             newResources << resource;
         }
     }
@@ -949,6 +1000,8 @@ void NoteEditorLocalStorageBroker::saveNoteToLocalStorageImpl(const Note & previ
         }
 
         if (!foundResource) {
+            QNTRACE(QStringLiteral("Resource with local uid ") << previousNoteResourceLocalUid
+                    << QStringLiteral(" no longer appears within the new note version"));
             expungedResourcesLocalUids << previousNoteResourceLocalUid;
         }
     }
