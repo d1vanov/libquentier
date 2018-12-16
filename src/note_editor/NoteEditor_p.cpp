@@ -589,7 +589,8 @@ void NoteEditorPrivate::onResourceFileChanged(QString resourceLocalUid, QString 
 {
     QNDEBUG(QStringLiteral("NoteEditorPrivate::onResourceFileChanged: resource local uid = ") << resourceLocalUid
             << QStringLiteral(", file storage path: ") << fileStoragePath << QStringLiteral(", new resource data size = ")
-            << humanReadableSize(static_cast<quint64>(std::max(resourceData.size(), 0))));
+            << humanReadableSize(static_cast<quint64>(std::max(resourceData.size(), 0)))
+            << QStringLiteral(", resource data hash = ") << resourceDataHash.toHex());
 
     if (Q_UNLIKELY(m_pNote.isNull())) {
         QNDEBUG(QStringLiteral("Can't process resource file change: no note is set to the editor"));
@@ -616,6 +617,15 @@ void NoteEditorPrivate::onResourceFileChanged(QString resourceLocalUid, QString 
     Resource resource = qAsConst(resources)[targetResourceIndex];
     QByteArray previousResourceHash = (resource.hasDataHash() ? resource.dataHash() : QByteArray());
     QNTRACE(QStringLiteral("Previous resource hash = ") << previousResourceHash.toHex());
+
+    if (!previousResourceHash.isEmpty() &&
+        (previousResourceHash == resourceDataHash) &&
+        resource.hasDataSize() &&
+        (resource.dataSize() == resourceData.size()))
+    {
+        QNDEBUG(QStringLiteral("Neither resource hash nor binary data size has changed -> the resource data has not actually changed, nothing to do"));
+        return;
+    }
 
     resource.setDataBody(resourceData);
     resource.setDataHash(resourceDataHash);
