@@ -268,9 +268,12 @@ private:
     bool insertOrReplaceResourceMetadata(const Resource & resource, const bool setResourceDataProperties,
                                          ErrorString & errorDescription);
     bool writeResourceBinaryDataToFiles(const Resource & resource, ErrorString & errorDescription);
+
     bool writeResourceBinaryDataToFile(const QString & resourceLocalUid, const QString & noteLocalUid,
                                        const QByteArray & dataBody, const bool isAlternateDataBody,
+                                       const bool replaceOriginalFile,
                                        ErrorString & errorDescription);
+
     bool updateNoteResources(const Resource & resource, ErrorString & errorDescription);
 
     void setNoteIdsToNoteResources(Note & note) const;

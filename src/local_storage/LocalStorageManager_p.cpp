@@ -37,6 +37,7 @@
 #include <QFile>
 #include <QFileInfo>
 #include <algorithm>
+#include <cstdio>
 
 namespace quentier {
 
@@ -7491,7 +7492,8 @@ bool LocalStorageManagerPrivate::insertOrReplaceResource(const Resource & resour
 
 bool LocalStorageManagerPrivate::writeResourceBinaryDataToFiles(const Resource & resource, ErrorString & errorDescription)
 {
-    QNDEBUG(QStringLiteral("LocalStorageManagerPrivate::writeResourceBinaryDataToFiles: resource local uid = ") << resource.localUid());
+    QString resourceLocalUid = resource.localUid();
+    QNDEBUG(QStringLiteral("LocalStorageManagerPrivate::writeResourceBinaryDataToFiles: resource local uid = ") << resourceLocalUid);
 
     ErrorString errorPrefix(QT_TR_NOOP("can't insert or replace resource: failed to write resource binary data to files"));
 
@@ -7503,7 +7505,7 @@ bool LocalStorageManagerPrivate::writeResourceBinaryDataToFiles(const Resource &
         if (!displayName.isEmpty()) {
             errorDescription.details() = displayName + QStringLiteral(", ");
         }
-        errorDescription.details() += QStringLiteral("resource local uid = ") + resource.localUid();
+        errorDescription.details() += QStringLiteral("resource local uid = ") + resourceLocalUid;
         QNWARNING(errorDescription << QStringLiteral(", resource: ") << resource);
         return false;
     }
@@ -7516,17 +7518,19 @@ bool LocalStorageManagerPrivate::writeResourceBinaryDataToFiles(const Resource &
         if (!displayName.isEmpty()) {
             errorDescription.details() = displayName + QStringLiteral(", ");
         }
-        errorDescription.details() += QStringLiteral("resource local uid = ") + resource.localUid();
+        errorDescription.details() += QStringLiteral("resource local uid = ") + resourceLocalUid;
         QNWARNING(errorDescription << QStringLiteral(", resource: ") << resource);
         return false;
     }
 
+    bool shouldReplaceOriginalFile = (!resource.hasDataBody() || !resource.hasAlternateDataBody());
+
     if (resource.hasDataBody())
     {
         ErrorString error;
-        bool res = writeResourceBinaryDataToFile(resource.localUid(), resource.noteLocalUid(),
+        bool res = writeResourceBinaryDataToFile(resourceLocalUid, resource.noteLocalUid(),
                                                  resource.dataBody(), /* is alternate data body = */ false,
-                                                 error);
+                                                 shouldReplaceOriginalFile, error);
         if (!res) {
             errorDescription = errorPrefix;
             errorDescription.appendBase(error.base());
@@ -7539,9 +7543,9 @@ bool LocalStorageManagerPrivate::writeResourceBinaryDataToFiles(const Resource &
     if (resource.hasAlternateDataBody())
     {
         ErrorString error;
-        bool res = writeResourceBinaryDataToFile(resource.localUid(), resource.noteLocalUid(),
+        bool res = writeResourceBinaryDataToFile(resourceLocalUid, resource.noteLocalUid(),
                                                  resource.alternateDataBody(), /* is alternate data body = */ true,
-                                                 error);
+                                                 shouldReplaceOriginalFile, error);
         if (!res) {
             errorDescription = errorPrefix;
             errorDescription.appendBase(error.base());
@@ -7551,16 +7555,62 @@ bool LocalStorageManagerPrivate::writeResourceBinaryDataToFiles(const Resource &
         }
     }
 
+    if (shouldReplaceOriginalFile) {
+        return true;
+    }
+
+    // New data files were written for both data body and alternate data
+    // body, now need to replace the old ones with the new ones
+
+    QString storagePath = accountPersistentStoragePath(m_currentAccount);
+    QString dataStoragePath = storagePath + QStringLiteral("/Resources/data/") + resource.noteLocalUid() + QStringLiteral("/") +
+                              resourceLocalUid + QStringLiteral(".dat");
+
+    // First replace alternate data because if replacing data fails, we'd
+    // lose the old alternate data only which is not quite as bad as losing
+    // the actual data as well
+    QString alternateDataStoragePath = storagePath + QStringLiteral("/Resources/alternateData/") + resource.noteLocalUid() +
+                                       QStringLiteral("/") + resourceLocalUid + QStringLiteral(".dat");
+
+    QString oldFileName = alternateDataStoragePath;
+    QString newFileName = oldFileName + QStringLiteral(".new");
+
+    int res = rename(QDir::toNativeSeparators(newFileName).toLocal8Bit().constData(),
+                     QDir::toNativeSeparators(oldFileName).toLocal8Bit().constData());
+    if (res != 0) {
+        errorDescription.setBase(QT_TR_NOOP("failed to atomically replace old resource file with the new one"));
+        errorDescription.details() = QString::fromLocal8Bit(strerror(errno));
+        errorDescription.details() += QStringLiteral(", old file: ") + oldFileName;
+        errorDescription.details() += QStringLiteral(", new file: ") + newFileName;
+        QNWARNING(errorDescription);
+        return false;
+    }
+
+    oldFileName = dataStoragePath;
+    newFileName = oldFileName + QStringLiteral(".new");
+
+    res = rename(QDir::toNativeSeparators(newFileName).toLocal8Bit().constData(),
+                 QDir::toNativeSeparators(oldFileName).toLocal8Bit().constData());
+    if (res != 0) {
+        errorDescription.setBase(QT_TR_NOOP("failed to atomically replace old resource file with the new one"));
+        errorDescription.details() = QString::fromLocal8Bit(strerror(errno));
+        errorDescription.details() += QStringLiteral(", old file: ") + oldFileName;
+        errorDescription.details() += QStringLiteral(", new file: ") + newFileName;
+        QNWARNING(errorDescription);
+        return false;
+    }
+
     return true;
 }
 
 bool LocalStorageManagerPrivate::writeResourceBinaryDataToFile(const QString & resourceLocalUid, const QString & noteLocalUid,
                                                                const QByteArray & dataBody, const bool isAlternateDataBody,
-                                                               ErrorString & errorDescription)
+                                                               const bool replaceOriginalFile, ErrorString & errorDescription)
 {
     QNDEBUG(QStringLiteral("LocalStorageManagerPrivate::writeResourceBinaryDataToFile: resource local uid = ")
             << resourceLocalUid << QStringLiteral(", note local uid = ") << noteLocalUid << QStringLiteral(", writing")
-            << (isAlternateDataBody ? QStringLiteral(" alternate") : QString()) << QStringLiteral(" data body"));
+            << (isAlternateDataBody ? QStringLiteral(" alternate") : QString()) << QStringLiteral(" data body; replace original file = ")
+            << (replaceOriginalFile ? QStringLiteral("true") : QStringLiteral("false")));
 
     QString storagePath = accountPersistentStoragePath(m_currentAccount);
     if (isAlternateDataBody) {
@@ -7584,7 +7634,9 @@ bool LocalStorageManagerPrivate::writeResourceBinaryDataToFile(const QString & r
         }
     }
 
-    QFile resourceDataFile(storagePath + QStringLiteral("/") + resourceLocalUid + QStringLiteral(".dat"));
+    // NOTE: for crash recovery pusposes new data gets written to a new file
+    // which will then replace the old file
+    QFile resourceDataFile(storagePath + QStringLiteral("/") + resourceLocalUid + QStringLiteral(".dat.new"));
     if (!resourceDataFile.open(QIODevice::WriteOnly)) {
         errorDescription.setBase(QT_TR_NOOP("failed to open resource data file for writing"));
         errorDescription.details() = resourceDataFile.fileName();
@@ -7613,6 +7665,23 @@ bool LocalStorageManagerPrivate::writeResourceBinaryDataToFile(const QString & r
         errorDescription.details() = resourceDataFile.fileName();
         QNWARNING(errorDescription);
         return false;
+    }
+
+    if (replaceOriginalFile)
+    {
+        QString oldFileName = storagePath + QStringLiteral("/") + resourceLocalUid + QStringLiteral(".dat");
+        QString newFileName = oldFileName + QStringLiteral(".new");
+
+        int res = rename(QDir::toNativeSeparators(newFileName).toLocal8Bit().constData(),
+                         QDir::toNativeSeparators(oldFileName).toLocal8Bit().constData());
+        if (res != 0) {
+            errorDescription.setBase(QT_TR_NOOP("failed to atomically replace old resource file with the new one"));
+            errorDescription.details() = QString::fromLocal8Bit(strerror(errno));
+            errorDescription.details() += QStringLiteral(", old file: ") + oldFileName;
+            errorDescription.details() += QStringLiteral(", new file: ") + newFileName;
+            QNWARNING(errorDescription);
+            return false;
+        }
     }
 
     return true;
