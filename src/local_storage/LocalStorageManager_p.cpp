@@ -25,9 +25,9 @@
 #include <quentier/exception/DatabaseSqlErrorException.h>
 #include "Transaction.h"
 #include <quentier/local_storage/NoteSearchQuery.h>
+#include <quentier/logging/QuentierLogger.h>
 #include <quentier/utility/StringUtils.h>
 #include <quentier/utility/Utility.h>
-#include <quentier/logging/QuentierLogger.h>
 #include <quentier/utility/StandardPaths.h>
 #include <quentier/utility/SysInfo.h>
 #include <quentier/utility/UidGenerator.h>
@@ -7563,16 +7563,46 @@ bool LocalStorageManagerPrivate::writeResourceBinaryDataToFiles(const Resource &
     // body, now need to replace the old ones with the new ones
 
     QString storagePath = accountPersistentStoragePath(m_currentAccount);
-    QString dataStoragePath = storagePath + QStringLiteral("/Resources/data/") + resource.noteLocalUid() + QStringLiteral("/") +
-                              resourceLocalUid + QStringLiteral(".dat");
 
-    // First replace alternate data because if replacing data fails, we'd
-    // lose the old alternate data only which is not quite as bad as losing
-    // the actual data as well
+    /**
+     * Tricky algorithm tolerant to crashes anywhere during the process:
+     * 1) if alternate data file exists, move it to the file with additional ".old" suffix
+     * 2) rename/move the alternate data file with ".new" suffix to the file without that suffix
+     * 3) rename/move the data file with ".new" suffix to the file without that suffix (i.e. replace the old file with the new one)
+     * 4) remove the alternate data file with additional ".old" suffix if it exists
+     *
+     * Each of these actions is atomic. If alternate data file existed and the
+     * process crashed after 1 but before 2, 3 and 4 the logic reading the alternate data
+     * from file would handle the case of nonexisting file with existing file
+     * with additional ".old" suffix. If the process crashed after 2 but before
+     * 3 and 4, it is still possible to recover because the situation is
+     * unambiguous - the alternate data file with ".old" extension should not
+     * exist unless something went wrong. The logic reading the alternate data
+     * from file would handle it. Same goes for the case of crash after 3 but
+     * before 4 - it is only different by the existence of two data body files -
+     * the "usual" one and the one with ".new" suffix.
+     */
+
     QString alternateDataStoragePath = storagePath + QStringLiteral("/Resources/alternateData/") + resource.noteLocalUid() +
                                        QStringLiteral("/") + resourceLocalUid + QStringLiteral(".dat");
 
     QString oldFileName = alternateDataStoragePath;
+
+    QFileInfo oldAlternateDataFileInfo(oldFileName);
+    if (oldAlternateDataFileInfo.exists() && oldAlternateDataFileInfo.isFile())
+    {
+        QString oldFileBackupName = alternateDataStoragePath + QStringLiteral(".old");
+        int res = rename(QDir::toNativeSeparators(oldFileName).toLocal8Bit().constData(),
+                         QDir::toNativeSeparators(oldFileBackupName).toLocal8Bit().constData());
+        if (res != 0) {
+            errorDescription.setBase(QT_TR_NOOP("failed to atomically backup old resource alternate data file"));
+            errorDescription.details() = QString::fromLocal8Bit(strerror(errno));
+            errorDescription.details() += QStringLiteral(": ") + QDir::toNativeSeparators(oldFileName);
+            QNWARNING(errorDescription);
+            return false;
+        }
+    }
+
     QString newFileName = oldFileName + QStringLiteral(".new");
 
     int res = rename(QDir::toNativeSeparators(newFileName).toLocal8Bit().constData(),
@@ -7586,6 +7616,8 @@ bool LocalStorageManagerPrivate::writeResourceBinaryDataToFiles(const Resource &
         return false;
     }
 
+    QString dataStoragePath = storagePath + QStringLiteral("/Resources/data/") + resource.noteLocalUid() + QStringLiteral("/") +
+                              resourceLocalUid + QStringLiteral(".dat");
     oldFileName = dataStoragePath;
     newFileName = oldFileName + QStringLiteral(".new");
 
@@ -7598,6 +7630,11 @@ bool LocalStorageManagerPrivate::writeResourceBinaryDataToFiles(const Resource &
         errorDescription.details() += QStringLiteral(", new file: ") + newFileName;
         QNWARNING(errorDescription);
         return false;
+    }
+
+    QFileInfo backupAlternateDataFileInfo(alternateDataStoragePath + QStringLiteral(".old"));
+    if (backupAlternateDataFileInfo.exists() && backupAlternateDataFileInfo.isFile()) {
+        Q_UNUSED(removeFile(backupAlternateDataFileInfo.absoluteFilePath()))
     }
 
     return true;
@@ -8526,9 +8563,67 @@ LocalStorageManagerPrivate::readResourceBinaryDataFromFile(const QString & resou
 
     storagePath += noteLocalUid + QStringLiteral("/") + resourceLocalUid + QStringLiteral(".dat");
     QFile resourceDataFile(storagePath);
-    if (!resourceDataFile.exists()) {
+
+    /**
+     * Below there's a specialized logic of crash recovery from unsuccessful
+     * attempt to update resource data body and alternate data body simultaneously,
+     * see writeResourceBinaryDataToFiles method implementation for more details
+     */
+
+    if (!resourceDataFile.exists())
+    {
         QNDEBUG(QStringLiteral("Resource data file doesn't exist: ") << QDir::toNativeSeparators(storagePath));
-        return ReadResourceBinaryDataFromFileStatus::FileNotFound;
+
+        if (isAlternateDataBody)
+        {
+            QFileInfo prevAlternateDataFileInfo(storagePath + QStringLiteral(".old"));
+            if (prevAlternateDataFileInfo.exists() && prevAlternateDataFileInfo.isFile())
+            {
+                resourceDataFile.setFileName(prevAlternateDataFileInfo.absoluteFilePath());
+
+                int res = rename(QDir::toNativeSeparators(prevAlternateDataFileInfo.absoluteFilePath()).toLocal8Bit().constData(),
+                                 QDir::toNativeSeparators(storagePath).toLocal8Bit().constData());
+                if (res != 0) {
+                    QNWARNING(QStringLiteral("Failed to recover the previous alternate data file: ")
+                              << prevAlternateDataFileInfo.absoluteFilePath() << QStringLiteral(": ")
+                              << strerror(errno));
+                    return ReadResourceBinaryDataFromFileStatus::FileNotFound;
+                }
+
+                QNINFO(QStringLiteral("Recovered alternate resource data from file with \".old\" suffix: ")
+                       << prevAlternateDataFileInfo.absoluteFilePath());
+                resourceDataFile.setFileName(storagePath);
+            }
+        }
+
+        if (!resourceDataFile.exists()) {
+            return ReadResourceBinaryDataFromFileStatus::FileNotFound;
+        }
+    }
+    else if (isAlternateDataBody)
+    {
+        QFileInfo prevAlternateDataFileInfo(storagePath + QStringLiteral(".old"));
+        if (prevAlternateDataFileInfo.exists() && prevAlternateDataFileInfo.isFile())
+        {
+            QString resourceDataStoragePath = accountPersistentStoragePath(m_currentAccount);
+            resourceDataStoragePath += QStringLiteral("/Resources/data/");
+            resourceDataStoragePath += noteLocalUid;
+            resourceDataStoragePath += QStringLiteral("/");
+            resourceDataStoragePath += resourceLocalUid;
+            resourceDataStoragePath += QStringLiteral(".dat");
+
+            QFileInfo newResourceDataFileInfo(resourceDataStoragePath + QStringLiteral(".new"));
+            if (newResourceDataFileInfo.exists() && newResourceDataFileInfo.isFile()) {
+                // TODO: handle this case
+            }
+            else {
+                // TODO: handle this case as well
+            }
+        }
+    }
+    else
+    {
+        // TODO: handle the case in which the file with ".new" suffix also exists
     }
 
     if (!resourceDataFile.open(QIODevice::ReadOnly)) {
