@@ -7633,8 +7633,13 @@ bool LocalStorageManagerPrivate::writeResourceBinaryDataToFiles(const Resource &
     }
 
     QFileInfo backupAlternateDataFileInfo(alternateDataStoragePath + QStringLiteral(".old"));
-    if (backupAlternateDataFileInfo.exists() && backupAlternateDataFileInfo.isFile()) {
-        Q_UNUSED(removeFile(backupAlternateDataFileInfo.absoluteFilePath()))
+    if (backupAlternateDataFileInfo.exists() && backupAlternateDataFileInfo.isFile() &&
+        !removeFile(backupAlternateDataFileInfo.absoluteFilePath()))
+    {
+        errorDescription.setBase(QT_TR_NOOP("failed to remove backup alternate data file"));
+        errorDescription.details() += backupAlternateDataFileInfo.absoluteFilePath();
+        QNWARNING(errorDescription);
+        return false;
     }
 
     return true;
@@ -8613,17 +8618,43 @@ LocalStorageManagerPrivate::readResourceBinaryDataFromFile(const QString & resou
             resourceDataStoragePath += QStringLiteral(".dat");
 
             QFileInfo newResourceDataFileInfo(resourceDataStoragePath + QStringLiteral(".new"));
-            if (newResourceDataFileInfo.exists() && newResourceDataFileInfo.isFile()) {
-                // TODO: handle this case
+            if (newResourceDataFileInfo.exists() && newResourceDataFileInfo.isFile())
+            {
+                QNDEBUG(QStringLiteral("Old resource alternate data file exists + resource data file with .new suffix exists "
+                                       "=> need to use old resource alternate data file"));
+
+                resourceDataFile.setFileName(prevAlternateDataFileInfo.absoluteFilePath());
+
+                int res = rename(QDir::toNativeSeparators(prevAlternateDataFileInfo.absoluteFilePath()).toLocal8Bit().constData(),
+                                 QDir::toNativeSeparators(storagePath).toLocal8Bit().constData());
+                if (res != 0) {
+                    QNWARNING(QStringLiteral("Failed to recover the previous alternate data file: ")
+                              << prevAlternateDataFileInfo.absoluteFilePath() << QStringLiteral(": ")
+                              << strerror(errno));
+                    return ReadResourceBinaryDataFromFileStatus::FileNotFound;
+                }
+
+                Q_UNUSED(removeFile(newResourceDataFileInfo.absoluteFilePath()))
+
+                resourceDataFile.setFileName(storagePath);
             }
-            else {
-                // TODO: handle this case as well
+            else
+            {
+                QNINFO(QStringLiteral("Removing stale leftover resource alternate data file: ")
+                       << prevAlternateDataFileInfo.absoluteFilePath());
+                Q_UNUSED(removeFile(prevAlternateDataFileInfo.absoluteFilePath()));
             }
         }
     }
     else
     {
-        // TODO: handle the case in which the file with ".new" suffix also exists
+        QFileInfo newDataFileInfo(storagePath + QStringLiteral(".new"));
+        if (newDataFileInfo.exists() && newDataFileInfo.isFile())
+        {
+            QNINFO(QStringLiteral("Removing stale leftover resource data file: ")
+                   << newDataFileInfo.absoluteFilePath());
+            Q_UNUSED(removeFile(newDataFileInfo.absoluteFilePath()))
+        }
     }
 
     if (!resourceDataFile.open(QIODevice::ReadOnly)) {
