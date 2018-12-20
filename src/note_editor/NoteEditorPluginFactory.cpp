@@ -49,7 +49,9 @@ NoteEditorPluginFactory::NoteEditorPluginFactory(NoteEditorPrivate & noteEditor,
     m_fileSuffixesCache(),
     m_genericResourceDisplayWidgetPlugins(),
     m_encryptedAreaPlugins()
-{}
+{
+    QNDEBUG(QStringLiteral("NoteEditorPluginFactory::NoteEditorPluginFactory"));
+}
 
 NoteEditorPluginFactory::~NoteEditorPluginFactory()
 {

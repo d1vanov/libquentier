@@ -3030,6 +3030,7 @@ void NoteEditorPrivate::onFoundNoteAndNotebook(Note note, Notebook notebook)
         m_pPluginFactory->setNote(*m_pNote);
 
         if (missingPluginFactory) {
+            QNDEBUG(QStringLiteral("Setting note editor plugin factory to the page"));
             pNoteEditorPage->setPluginFactory(m_pPluginFactory);
         }
     }
@@ -5159,6 +5160,7 @@ void NoteEditorPrivate::setupNoteEditorPage()
         m_pPluginFactory->setNote(*m_pNote);
     }
 
+    QNDEBUG(QStringLiteral("Setting note editor plugin factory to the page"));
     page->setPluginFactory(m_pPluginFactory);
 
 #endif
