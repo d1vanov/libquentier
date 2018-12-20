@@ -746,7 +746,7 @@ void NoteEditorLocalStorageBroker::createConnections(LocalStorageManagerAsync & 
                      &localStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,onAddResourceRequest,Resource,QUuid));
     QObject::connect(this, QNSIGNAL(NoteEditorLocalStorageBroker,updateResource,Resource,QUuid),
                      &localStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,onUpdateResourceRequest,Resource,QUuid));
-    QObject::connect(this, QNSIGNAL(NoteEditorLocalStorageBroker,expungeResource,QUuid),
+    QObject::connect(this, QNSIGNAL(NoteEditorLocalStorageBroker,expungeResource,Resource,QUuid),
                      &localStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,onExpungeResourceRequest,Resource,QUuid));
     QObject::connect(this, QNSIGNAL(NoteEditorLocalStorageBroker,findNote,Note,bool,bool,QUuid),
                      &localStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,onFindNoteRequest,Note,bool,bool,QUuid));
