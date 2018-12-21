@@ -6055,6 +6055,8 @@ QVariant NoteEditorPrivate::execJavascriptCommandWithResult(const QString & comm
 
 void NoteEditorPrivate::execJavascriptCommand(const QString & command)
 {
+    QNDEBUG(QStringLiteral("NoteEditorPrivate::execJavascriptCommand: ") << command);
+
     COMMAND_TO_JS(command);
 
     GET_PAGE()
@@ -6064,6 +6066,9 @@ void NoteEditorPrivate::execJavascriptCommand(const QString & command)
 
 void NoteEditorPrivate::execJavascriptCommand(const QString & command, const QString & args)
 {
+    QNDEBUG(QStringLiteral("NoteEditorPrivate::execJavascriptCommand: ") << command
+            << QStringLiteral("; args: ") << args);
+
     COMMAND_WITH_ARGS_TO_JS(command, args);
 
     GET_PAGE()

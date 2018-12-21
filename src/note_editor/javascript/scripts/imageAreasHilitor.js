@@ -27,7 +27,11 @@ function ImageAreasHilitor() {
             return;
         }
 
-        observer.stop();
+        try {
+            observer.stop();
+        }
+        catch(e) {
+        }
 
         try {
             var div = document.createElement("div");
@@ -50,14 +54,22 @@ function ImageAreasHilitor() {
             }
         }
         finally {
-            observer.start();
+            try {
+                observer.start();
+            }
+            catch(e) {
+            }
         }
     }
 
     this.clearImageHilitors = function(hash) {
         console.log("ImageAreasHilitor::clearImageHilitors: hash = " + (hash ? hash : "<all>"));
 
-        observer.stop();
+        try {
+            observer.stop();
+        }
+        catch(e) {
+        }
 
         try {
             var selector = "";
@@ -71,7 +83,11 @@ function ImageAreasHilitor() {
             }
         }
         finally {
-            observer.start();
+            try {
+                observer.start();
+            }
+            catch(e) {
+            }
         }
     }
 }
