@@ -66,7 +66,7 @@ QString LocalStoragePatch1To2::patchLongDescription() const
     QString result;
 
     result += tr("This patch will move the data corresponding to notes' attachments from Quentier's primary SQLite " \
-                 "database to plain files. This change of local storage structure is necessary to fix or prevent " \
+                 "database to separate files. This change of local storage structure is necessary to fix or prevent " \
                  "serious performance issues for accounts containing numerous large enough note attachments due to " \
                  "the way SQLite puts large data blocks together within the database file. If you are interested " \
                  "in technical details on this topic, consider consulting the following material");
