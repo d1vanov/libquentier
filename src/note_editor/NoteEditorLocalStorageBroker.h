@@ -104,8 +104,16 @@ private:
     void disconnectFromLocalStorage(LocalStorageManagerAsync & localStorageManagerAsync);
 
     void emitFindNoteRequest(const QString & noteLocalUid);
-    void emitFindNotebookRequest(const QString & notebookLocalUid, const Note & note);
     void emitUpdateNoteRequest(const Note & note);
+
+    void emitFindNotebookForNoteByLocalUidRequest(const QString & notebookLocalUid, const Note & note);
+    void emitFindNotebookForNoteByGuidRequest(const QString & notebookGuid, const Note & note);
+
+    typedef QHash<QString, Note> NotesHash;
+    typedef QHash<QString, NotesHash> NotesPendingNotebookFindingHash;
+    void emitFindNotebookForNoteRequest(const Notebook & notebook, const Note & note,
+                                        NotesPendingNotebookFindingHash & notesPendingNotebookFinding);
+
 
     void saveNoteToLocalStorageImpl(const Note & previousNoteVersion,
                                     const Note & updatedNoteVersion);
@@ -141,8 +149,6 @@ private:
 
     QHash<QUuid, Note>      m_notesPendingSavingByFindNoteRequestIds;
 
-    typedef QHash<QString, Note> NotesHash;
-    typedef QHash<QString, NotesHash> NotesPendingNotebookFindingHash;
     NotesPendingNotebookFindingHash     m_notesPendingNotebookFindingByNotebookLocalUid;
     NotesPendingNotebookFindingHash     m_notesPendingNotebookFindingByNotebookGuid;
 
