@@ -32,6 +32,7 @@
 #include <quentier/utility/SysInfo.h>
 #include <quentier/utility/UidGenerator.h>
 #include <quentier/types/ResourceRecognitionIndices.h>
+#include <QSqlRecord>
 #include <QBuffer>
 #include <QDir>
 #include <QFile>

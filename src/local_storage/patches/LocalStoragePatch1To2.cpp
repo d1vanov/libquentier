@@ -30,6 +30,8 @@
 #include <QSqlDatabase>
 #include <QSqlQuery>
 #include <QSqlRecord>
+#include <QSqlError>
+#include <QTimer>
 #include <QScopedPointer>
 #include <QDir>
 #include <QFile>
