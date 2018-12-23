@@ -245,6 +245,6 @@ artifacts:
     name: archive
 
 matrix:
-  fast_finish: true
   allow_failures:
     - prepare_mode: YES
+  fast_finish: true
