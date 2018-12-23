@@ -7710,6 +7710,9 @@ bool LocalStorageManagerPrivate::writeResourceBinaryDataToFile(const QString & r
         return false;
     }
 
+    // NOTE: this seems to be requires for the subsequent call to rename to work on Windows
+    resourceDataFile.close();
+
     if (replaceOriginalFile)
     {
         QString oldFileName = storagePath + QStringLiteral("/") + resourceLocalUid + QStringLiteral(".dat");
