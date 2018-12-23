@@ -12,7 +12,9 @@
 #include <quentier/types/LinkedNotebook.h>
 #include <quentier/types/SavedSearch.h>
 #include <quentier/utility/StringUtils.h>
-#include <QtSql>
+#include <QSqlDatabase>
+#include <QSqlQuery>
+#include <QSqlError>
 
 // Prevent boost::interprocess from automatic linkage to boost::datetime
 #define BOOST_DATE_TIME_NO_LIB
