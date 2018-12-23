@@ -7593,6 +7593,17 @@ bool LocalStorageManagerPrivate::writeResourceBinaryDataToFiles(const Resource &
     if (oldAlternateDataFileInfo.exists() && oldAlternateDataFileInfo.isFile())
     {
         QString oldFileBackupName = alternateDataStoragePath + QStringLiteral(".old");
+        QFileInfo oldFileBackupFileInfo(oldFileBackupName);
+        if (oldFileBackupFileInfo.exists() && oldFileBackupFileInfo.isFile() &&
+            !removeFile(oldFileBackupFileInfo.absoluteFilePath()))
+        {
+            errorDescription.setBase(QT_TR_NOOP("failed to remove backup alternate resource data file"));
+            errorDescription.details() = QString::fromLocal8Bit(strerror(errno));
+            errorDescription.details() += QStringLiteral(": ") + QDir::toNativeSeparators(oldFileBackupName);
+            QNWARNING(errorDescription);
+            return false;
+        }
+
         int res = rename(QDir::toNativeSeparators(oldFileName).toLocal8Bit().constData(),
                          QDir::toNativeSeparators(oldFileBackupName).toLocal8Bit().constData());
         if (res != 0) {
@@ -7609,7 +7620,7 @@ bool LocalStorageManagerPrivate::writeResourceBinaryDataToFiles(const Resource &
     int res = rename(QDir::toNativeSeparators(newFileName).toLocal8Bit().constData(),
                      QDir::toNativeSeparators(oldFileName).toLocal8Bit().constData());
     if (res != 0) {
-        errorDescription.setBase(QT_TR_NOOP("failed to atomically replace old resource file with the new one"));
+        errorDescription.setBase(QT_TR_NOOP("failed to atomically replace old alternate data resource file with the new one"));
         errorDescription.details() = QString::fromLocal8Bit(strerror(errno));
         errorDescription.details() += QStringLiteral(", old file: ") + oldFileName;
         errorDescription.details() += QStringLiteral(", new file: ") + newFileName;
@@ -7620,6 +7631,15 @@ bool LocalStorageManagerPrivate::writeResourceBinaryDataToFiles(const Resource &
     QString dataStoragePath = storagePath + QStringLiteral("/Resources/data/") + resource.noteLocalUid() + QStringLiteral("/") +
                               resourceLocalUid + QStringLiteral(".dat");
     oldFileName = dataStoragePath;
+    QFileInfo oldDataFileInfo(oldFileName);
+    if (oldDataFileInfo.exists() && oldDataFileInfo.isFile() && !removeFile(oldFileName)) {
+        errorDescription.setBase(QT_TR_NOOP("failed to remove old resource data file"));
+        errorDescription.details() = QString::fromLocal8Bit(strerror(errno));
+        errorDescription.details() += QStringLiteral(": ") + QDir::toNativeSeparators(oldFileName);
+        QNWARNING(errorDescription);
+        return false;
+    }
+
     newFileName = oldFileName + QStringLiteral(".new");
 
     res = rename(QDir::toNativeSeparators(newFileName).toLocal8Bit().constData(),
