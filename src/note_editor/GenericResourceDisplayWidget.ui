@@ -125,6 +125,11 @@ margin-left: 2px;
           <height>14</height>
          </size>
         </property>
+        <property name="font">
+         <font>
+          <pointsize>10</pointsize>
+         </font>
+        </property>
         <property name="text">
          <string notr="true">Resource display name</string>
         </property>
@@ -144,14 +149,19 @@ margin-left: 2px;
         <property name="minimumSize">
          <size>
           <width>80</width>
-          <height>10</height>
+          <height>14</height>
          </size>
         </property>
         <property name="maximumSize">
          <size>
           <width>80</width>
-          <height>10</height>
+          <height>14</height>
          </size>
+        </property>
+        <property name="font">
+         <font>
+          <pointsize>10</pointsize>
+         </font>
         </property>
         <property name="text">
          <string notr="true">Resource size</string>

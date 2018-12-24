@@ -48,8 +48,24 @@ public:
      */
     ApplicationSettings(const Account & account, const QString & settingsName = QString());
 
+    /**
+     * Destructor
+     */
     ~ApplicationSettings();
 
+public:
+    /**
+     * Helper struct for RAII style of ensuring the array once began would be closed even in the fact of exceptions
+     */
+    struct ApplicationSettingsArrayCloser
+    {
+        ApplicationSettingsArrayCloser(ApplicationSettings & settings) : m_settings(settings) {}
+        ~ApplicationSettingsArrayCloser() { m_settings.endArray(); m_settings.sync(); }
+
+        ApplicationSettings & m_settings;
+    };
+
+public:
     virtual QTextStream & print(QTextStream & strm) const Q_DECL_OVERRIDE;
 
 private:

@@ -8,8 +8,8 @@ if(NOT HUNSPELL_INCLUDE_DIR AND NOT HUNSPELL_LIBRARIES)
 
   find_library(HUNSPELL_LIBRARIES
                NAMES
-               hunspell hunspell-1.6 hunspell-1.5 hunspell-1.4 hunspell-1.3 hunspell-1.2
-               libhunspell libhunspell-1.6 libhunspell-1.5 libhunspell-1.4 libhunspell-1.3 libhunspell-1.2)
+               hunspell hunspell-1.7 hunspell-1.6 hunspell-1.5 hunspell-1.4 hunspell-1.3 hunspell-1.2
+               libhunspell libhunspell-1.7 libhunspell-1.6 libhunspell-1.5 libhunspell-1.4 libhunspell-1.3 libhunspell-1.2)
   if(NOT HUNSPELL_LIBRARIES)
     message(FATAL_ERROR "Can't find hunspell library")
   else()

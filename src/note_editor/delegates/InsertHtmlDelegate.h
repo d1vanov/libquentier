@@ -19,7 +19,7 @@ namespace quentier {
 QT_FORWARD_DECLARE_CLASS(Account)
 QT_FORWARD_DECLARE_CLASS(NoteEditorPrivate)
 QT_FORWARD_DECLARE_CLASS(ENMLConverter)
-QT_FORWARD_DECLARE_CLASS(ResourceFileStorageManager)
+QT_FORWARD_DECLARE_CLASS(ResourceDataInTemporaryFileStorageManager)
 QT_FORWARD_DECLARE_CLASS(ResourceInfo)
 
 class Q_DECL_HIDDEN InsertHtmlDelegate: public QObject
@@ -28,7 +28,7 @@ class Q_DECL_HIDDEN InsertHtmlDelegate: public QObject
 public:
     explicit InsertHtmlDelegate(const QString & inputHtml, NoteEditorPrivate & noteEditor,
                                 ENMLConverter & enmlConverter,
-                                ResourceFileStorageManager * pResourceFileStorageManager,
+                                ResourceDataInTemporaryFileStorageManager * pResourceFileStorageManager,
                                 QHash<QString, QString> & resourceFileStoragePathsByResourceLocalUid,
                                 ResourceInfo & resourceInfo,
                                 QObject * parent = Q_NULLPTR);
@@ -40,15 +40,13 @@ Q_SIGNALS:
     void notifyError(ErrorString error);
 
     // private signals:
-    void saveResourceToStorage(QString noteLocalUid, QString resourceLocalUid, QByteArray data, QByteArray dataHash,
-                               QString preferredFileSuffix, QUuid requestId, bool isImage);
+    void saveResourceDataToTemporaryFile(QString noteLocalUid, QString resourceLocalUid, QByteArray data, QByteArray dataHash,
+                                         QUuid requestId, bool isImage);
 
 private Q_SLOTS:
     void onOriginalPageConvertedToNote(Note note);
     void onImageDataDownloadFinished(QNetworkReply * pReply);
-    void onResourceSavedToStorage(QUuid requestId, QByteArray dataHash,
-                                  QString fileStoragePath, int errorCode,
-                                  ErrorString errorDescription);
+    void onResourceDataSavedToTemporaryFile(QUuid requestId, QByteArray dataHash, ErrorString errorDescription);
 
     void onHtmlInserted(const QVariant & responseData);
 
@@ -69,7 +67,7 @@ private:
     NoteEditorPrivate &             m_noteEditor;
     ENMLConverter &                 m_enmlConverter;
 
-    ResourceFileStorageManager *    m_pResourceFileStorageManager;
+    ResourceDataInTemporaryFileStorageManager *    m_pResourceDataInTemporaryFileStorageManager;
     QHash<QString, QString> &       m_resourceFileStoragePathsByResourceLocalUid;
     ResourceInfo &                  m_resourceInfo;
 
@@ -80,7 +78,7 @@ private:
     QSet<QUrl>                      m_pendingImageUrls;
     QSet<QUrl>                      m_failingImageUrls;
 
-    QHash<QUuid, Resource>          m_resourceBySaveToStorageRequestId;
+    QHash<QUuid, Resource>          m_resourceBySaveDataToTemporaryFileRequestId;
     QHash<QString, QUrl>            m_sourceUrlByResourceLocalUid;
     QHash<QUrl, QUrl>               m_urlToRedirectUrl;
 

@@ -424,11 +424,11 @@ private:
     LocalStorageManagerAsync() Q_DECL_EQ_DELETE;
     Q_DISABLE_COPY(LocalStorageManagerAsync)
 
-    Account                     m_account;
-    bool                        m_startFromScratch;
-    bool                        m_overrideLock;
+    Account     m_account;
+    bool        m_startFromScratch;
+    bool        m_overrideLock;
+    bool        m_useCache;
     LocalStorageManager *       m_pLocalStorageManager;
-    bool                        m_useCache;
     LocalStorageCacheManager *  m_pLocalStorageCacheManager;
 };
 

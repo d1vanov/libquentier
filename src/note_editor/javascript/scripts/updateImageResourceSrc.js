@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Dmitry Ivanov
+ * Copyright 2016-2018 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,8 +16,9 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-function updateImageResourceSrc(hash, newSrc) {
-    console.log("updateImageResourceSrc: hash = " + hash + ", new src = " + newSrc);
+function updateImageResourceSrc(hash, newSrc, newHeight, newWidth) {
+    console.log("updateImageResourceSrc: hash = " + hash + ", new src = " + newSrc +
+                ", new height = " + newHeight + ", new width = " + newWidth);
 
     var resource = document.querySelector("[hash=\"" + hash + "\"]");
     if (!resource) {
@@ -42,8 +43,8 @@ function updateImageResourceSrc(hash, newSrc) {
             }
         }
 
-        resource.setAttribute("height", resource.naturalHeight);
-        resource.setAttribute("width", resource.naturalWidth);
+        resource.setAttribute("height", (newHeight ? newHeight : resource.naturalHeight));
+        resource.setAttribute("width", (newWidth ? newWidth : resource.naturalWidth));
         resource.setAttribute("src", escapedPath);
 
         if (isImageResource) {

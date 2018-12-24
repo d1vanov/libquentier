@@ -50,19 +50,29 @@ function ResizableImageManager() {
     }
 
     this.onResizeStart = function(event, ui) {
-        if (window.hasOwnProperty("observer")) {
+        console.log("ResizableImageManager::onResizeStart");
+        try {
+            console.log("Stopping the observer");
             observer.stop();
+        }
+        catch(e) {
         }
     }
 
     this.onResizeStop = function(event, ui) {
+        console.log("ResizableImageManager::onResizeStop");
+
         undoNodes.push(ui.originalElement[0]);
         undoSizes.push(ui.originalSize);
 
-        if (window.hasOwnProperty("observer")) {
+        try {
+            console.log("Starting the observer again");
             observer.start();
         }
+        catch(e) {
+        }
 
+        console.log("Notifying resizable image handler about the resize stop");
         resizableImageHandler.notifyImageResourceResized(true);
     }
 
@@ -81,8 +91,10 @@ function ResizableImageManager() {
         if (document.body.contentEditable && resource.nodeName === "IMG") {
             $(resource).load(function() {
                 var observerWasRunning = false;
-                if (window.hasOwnProperty("observer")) {
+                try {
                     observerWasRunning = observer.running;
+                }
+                catch(e) {
                 }
                 console.log("observerWasRunning = " + observerWasRunning);
 
@@ -142,6 +154,9 @@ function ResizableImageManager() {
                     $element.height(height);
                     $wrapper.height(height);
 
+                    this.setAttribute("width", width);
+                    this.setAttribute("height", height);
+
                     console.log("Resized element and wrapper to height = " + $element.height() + ", width = " + $element.width());
                 }
                 finally {
@@ -168,8 +183,10 @@ function ResizableImageManager() {
         var node = sourceNodes.pop();
         var size = sourceSizes.pop();
 
-        if (window.hasOwnProperty("observer")) {
+        try {
             observer.stop();
+        }
+        catch(e) {
         }
 
         try {
@@ -196,8 +213,12 @@ function ResizableImageManager() {
             $element.height(size.height);
             $wrapper.height($wrapper.height() - dy);
 
+            node.setAttribute("width", size.width);
+            node.setAttribute("height", size.height);
+
             console.log("Set element width to " + size.width + ", height to " + size.height +
-                        "; wrapper's width to " + $wrapper.width() + ", height to " + $wrapper.height());
+                        "; wrapper's width to " + $wrapper.width() + ", height to " + $wrapper.height() +
+                        "; previous width = " + previousWidth + ", previous height = " + previousHeight);
 
             size.height = previousHeight;
             size.width = previousWidth;
@@ -208,8 +229,10 @@ function ResizableImageManager() {
             resizableImageHandler.notifyImageResourceResized(false);
         }
         finally {
-            if (window.hasOwnProperty("observer")) {
+            try {
                 observer.start();
+            }
+            catch(e) {
             }
         }
     }

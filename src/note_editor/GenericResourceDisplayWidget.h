@@ -34,9 +34,6 @@ QT_FORWARD_DECLARE_CLASS(GenericResourceDisplayWidget)
 namespace quentier {
 
 QT_FORWARD_DECLARE_CLASS(Resource)
-QT_FORWARD_DECLARE_CLASS(ResourceFileStorageManager)
-QT_FORWARD_DECLARE_CLASS(FileIOProcessorAsync)
-QT_FORWARD_DECLARE_CLASS(Resource)
 
 class Q_DECL_HIDDEN GenericResourceDisplayWidget: public QWidget
 {
@@ -46,59 +43,28 @@ public:
     virtual ~GenericResourceDisplayWidget();
 
     void initialize(const QIcon & icon, const QString & name,
-                    const QString & size, const QStringList & preferredFileSuffixes,
-                    const QString & filterString, const Resource & resource,
-                    const Account & account, const ResourceFileStorageManager & resourceFileStorageManager,
-                    const FileIOProcessorAsync & fileIOProcessorAsync);
+                    const QString & size, const Resource & resource);
 
     QString resourceLocalUid() const;
 
     void updateResourceName(const QString & resourceName);
+    void updateResourceSize(const QString & size);
 
 Q_SIGNALS:
-    void savedResourceToFile();
     void openResourceRequest(const QByteArray & resourceHash);
-
-// private signals
-Q_SIGNALS:
-    void saveResourceToStorage(QString noteLocalUid, QString resourceLocalUid, QByteArray data, QByteArray dataHash,
-                               QString preferredFileSuffix, QUuid requestId, bool isImage);
-    void saveResourceToFile(QString filePath, QByteArray data, QUuid requestId, bool append);
+    void saveResourceRequest(const QByteArray & resourceHash);
 
 private Q_SLOTS:
-    void onOpenWithButtonPressed();
-    void onSaveAsButtonPressed();
-
-    void onSaveResourceToStorageRequestProcessed(QUuid requestId, QByteArray dataHash, QString fileStoragePath, int errorCode,
-                                                 ErrorString errorDescription);
-    void onSaveResourceToFileRequestProcessed(bool success, ErrorString errorDescription, QUuid requestId);
-
-private:
-    void setPendingMode(const bool pendingMode);
-    void openResource();
-
-    void setupFilterString(const QString & defaultFilterString);
+    void onOpenResourceInExternalAppButtonPressed();
+    void onSaveResourceDataToFileButtonPressed();
 
 private:
     Q_DISABLE_COPY(GenericResourceDisplayWidget)
 
 private:
     Ui::GenericResourceDisplayWidget *  m_pUI;
-
-    const Resource *                    m_pResource;
-    const ResourceFileStorageManager *  m_pResourceFileStorageManager;
-    const FileIOProcessorAsync *        m_pFileIOProcessorAsync;
-    QStringList                         m_preferredFileSuffixes;
-    QString                             m_filterString;
-
-    QUuid                               m_saveResourceToFileRequestId;
-    QUuid                               m_saveResourceToStorageRequestId;
-
-    Account                             m_account;
-
-    QByteArray                          m_resourceHash;
-    bool                                m_savedResourceToStorage;
-    bool                                m_pendingSaveResourceToStorage;
+    QString             m_resourceLocalUid;
+    QByteArray          m_resourceHash;
 };
 
 } // namespace quentier

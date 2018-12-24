@@ -20,22 +20,23 @@
 #define LIB_QUENTIER_NOTE_EDITOR_NOTE_EDITOR_H
 
 #include <quentier/types/Note.h>
+#include <quentier/types/Notebook.h>
 #include <quentier/utility/Macros.h>
 #include <quentier/utility/Linkage.h>
 #include <quentier/types/ErrorString.h>
 #include <QWidget>
 #include <QPrinter>
 #include <QStringList>
+#include <QThread>
 
 QT_FORWARD_DECLARE_CLASS(QUndoStack)
 
 namespace quentier {
 
 QT_FORWARD_DECLARE_CLASS(Account)
-QT_FORWARD_DECLARE_CLASS(Notebook)
 QT_FORWARD_DECLARE_CLASS(INoteEditorBackend)
-QT_FORWARD_DECLARE_CLASS(FileIOProcessorAsync)
 QT_FORWARD_DECLARE_CLASS(SpellChecker)
+QT_FORWARD_DECLARE_CLASS(LocalStorageManagerAsync)
 
 /**
  * @brief The NoteEditor class is a widget encapsulating all the functionality necessary for showing and editing notes
@@ -48,12 +49,20 @@ public:
     virtual ~NoteEditor() Q_DECL_OVERRIDE;
 
     /**
-     * NoteEditor requires FileIOProcessorAsync, SpellChecker and Account for its work but due to the particularities of Qt's .ui
-     * files processing these can't be passed right inside the constructor, hence here's a special initialization method
+     * NoteEditor requires LocalStorageManagerAsync, SpellChecker and Account for its work
+     * but due to the particularities of Qt's .ui files processing these can't be passed right inside the constructor,
+     * hence here's a special initialization method
+     *
+     * @param localStorageManager           The reference to LocalStorageManagerAsync, to set up signal-slot connections with it
+     * @param spellChecker                  The spell checker to be used by note editor for, well, spell-checking
+     * @param account                       Currently active account
+     * @param pBackgroundJobsThread         Pointer to the thread to be used for scheduling of background jobs
+     *                                      of NoteEditor; if null, NoteEditor's background jobs would take place in GUI
+     *                                      thread
      */
-    void initialize(FileIOProcessorAsync & fileIOProcessorAsync,
-                    SpellChecker & spellChecker,
-                    const Account & account);
+    void initialize(LocalStorageManagerAsync & localStorageManager,
+                    SpellChecker & spellChecker, const Account & account,
+                    QThread * pBackgroundJobsThread = Q_NULLPTR);
 
     /**
      * This method can be used to set the backend to the note editor; the note editor has the default backend
@@ -79,7 +88,19 @@ public:
     /**
      * Set the html to be displayed when the note is not set to the editor
      */
-    void setBlankPageHtml(const QString & html);
+    void setInitialPageHtml(const QString & html);
+
+    /**
+     * Set the html to be displayed when the note attempted to be set to the editor
+     * was not found within the local storage
+     */
+    void setNoteNotFoundPageHtml(const QString & html);
+
+    /**
+     * Set the html to be displayed when the note set to the editor was deleted
+     * from the local storage (either marked as deleted or deleted permanently i.e. expunged)
+     */
+    void setNoteDeletedPageHtml(const QString & html);
 
     /**
      * Get the local uid of the note currently set to the note editor
@@ -87,9 +108,13 @@ public:
     QString currentNoteLocalUid() const;
 
     /**
-     * Set the note and its respective notebook to the note editor
+     * Set note local uid to the note editor. The note is being searched for
+     * within the local storage, in case of no note being found noteNotFound
+     * signal is emitted. Otherwise note editor page starts loading.
+     *
+     * @param noteLocalUid              The local uid of note
      */
-    void setNoteAndNotebook(const Note & note, const Notebook & notebook);
+    void setCurrentNoteLocalUid(const QString & noteLocalUid);
 
     /**
      * Clear the contents of the note editor
@@ -97,9 +122,15 @@ public:
     void clear();
 
     /**
-     * @return true if there's content within the editor not yet converted to note, false otherwise
+     * @return true if there's content within the editor not yet converted to note or not saved to local storage,
+     * false otherwise
      */
     bool isModified() const;
+
+    /**
+     * @return true if there's content within the editor not yet converted to note, false otherwise
+     */
+    bool isEditorPageModified() const;
 
     /**
      * @return true if the note last set to the editor has been fully loaded already,
@@ -128,6 +159,26 @@ Q_SIGNALS:
      * (i.e. not any action like paste or cut)
      */
     void contentChanged();
+
+    /**
+     * @brief noteAndNotebookFoundInLocalStorage signal is emitted when note and
+     * its corresponding notebook were found within the local storage right
+     * before the note editor starts to load the note into the editor
+     */
+    void noteAndNotebookFoundInLocalStorage(Note note, Notebook notebook);
+
+    /**
+     * @brief noteNotFound signal is emitted when the note could not be found
+     * within the local storage by the provided local uid
+     */
+    void noteNotFound(QString noteLocalUid);
+
+    /**
+     * @brief noteDeleted signal is emitted when the note displayed within the
+     * note editor is deleted. The note editor stops displaying the note in this
+     * case shortly after emitting this signal
+     */
+    void noteDeleted(QString noteLocalUid);
 
     /**
      * @brief noteModified signal is emitted when the note's content within the editor gets modified via some way -
@@ -167,6 +218,20 @@ Q_SIGNALS:
 
     void noteLoaded();
 
+    /**
+     * @brief noteSavedToLocalStorage signal is emitted when the note has been
+     * saved within the local storage. NoteEditor doesn't do this on its own
+     * unless it's explicitly asked to do this via invoking its
+     * saveNoteToLocalStorage slot
+     */
+    void noteSavedToLocalStorage(QString noteLocalUid);
+
+    /**
+     * @brief failedToSaveNoteToLocalStorage signal is emitted in case of
+     * failure to save the note to local storage
+     */
+    void failedToSaveNoteToLocalStorage(ErrorString errorDescription, QString noteLocalUid);
+
     // Signals to notify anyone interested of the formatting at the current cursor position
     void textBoldState(bool state);
     void textItalicState(bool state);
@@ -191,6 +256,40 @@ public Q_SLOTS:
      * to note; the @link convertedToNote @endlink signal would be emitted in response when the conversion is done
      */
     void convertToNote();
+
+    /**
+     * Invoke this slot to launch the asynchronous procedure of saving the
+     * modified current note back to the local storage. If no note is set to the
+     * editor or if the note is not modified, no action would be performed.
+     * Otherwise noteSavedToLocalStorage signal would be emitted in case of
+     * successful saving or failedToSaveNoteToLocalStorage would be emitted
+     * otherwise
+     */
+    void saveNoteToLocalStorage();
+
+    /**
+     * Invoke this slot to set the title to the note displayed via the note
+     * editor. The note editor itself doesn't manage the note title in any way
+     * so any external code using the note editor can set the title to the note
+     * editor's note which would be considered modified if the title is new and
+     * then eventually the note would be saved to local storage
+     *
+     * @param noteTitle         The title of the note
+     */
+    void setNoteTitle(const QString & noteTitle);
+
+    /**
+     * Invoke this slot to set tag local uids and/or tag guids to the note
+     * displayed via the note editor. The note editor itself doesn't manage the
+     * note tags in any way so any external code using the note editor can set
+     * the tag ids to the note editor's internal note which would be considered
+     * modified if the tag ids are new and then eventually the note would be
+     * saved to local storage
+     *
+     * @param tagLocalUids      The list of tag local uids for the note
+     * @param tagGuids          The list of tag guids for the note
+     */
+    void setTagIds(const QStringList & tagLocalUids, const QStringList & tagGuids);
 
     void undo();
     void redo();

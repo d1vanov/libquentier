@@ -45,7 +45,7 @@ void EditHyperlinkDelegate::start()
 {
     QNDEBUG(QStringLiteral("EditHyperlinkDelegate::start"));
 
-    if (m_noteEditor.isModified()) {
+    if (m_noteEditor.isEditorPageModified()) {
         QObject::connect(&m_noteEditor, QNSIGNAL(NoteEditorPrivate,convertedToNote,Note),
                          this, QNSLOT(EditHyperlinkDelegate,onOriginalPageConvertedToNote,Note));
         m_noteEditor.convertToNote();

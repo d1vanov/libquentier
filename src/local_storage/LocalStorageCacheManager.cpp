@@ -62,12 +62,18 @@ void LocalStorageCacheManager::expungeNote(const Note & note)
     d->expungeNote(note);
 }
 
+void LocalStorageCacheManager::clearAllNotes()
+{
+    Q_D(LocalStorageCacheManager);
+    d->clearAllNotes();
+}
+
 #define FIND_OBJECT(Type) \
-const Type * LocalStorageCacheManager::find##Type(const QString & uid, const LocalStorageCacheManager::WhichUid wu) const \
+const Type * LocalStorageCacheManager::find##Type(const QString & uid, const LocalStorageCacheManager::WhichUid whichUid) const \
 { \
     Q_D(const LocalStorageCacheManager); \
     \
-    switch(wu) {    \
+    switch(whichUid) {    \
     case LocalUid: \
         return d->find##Type##ByLocalUid(uid); \
     case Guid: \
@@ -81,6 +87,7 @@ const Type * LocalStorageCacheManager::find##Type(const QString & uid, const Loc
 }
 
 FIND_OBJECT(Note)
+FIND_OBJECT(Resource)
 FIND_OBJECT(Notebook)
 FIND_OBJECT(Tag)
 FIND_OBJECT(SavedSearch)
@@ -105,6 +112,30 @@ const SavedSearch * LocalStorageCacheManager::findSavedSearchByName(const QStrin
     return d->findSavedSearchByName(name.toUpper());
 }
 
+size_t LocalStorageCacheManager::numCachedResources() const
+{
+    Q_D(const LocalStorageCacheManager);
+    return d->numCachesResources();
+}
+
+void LocalStorageCacheManager::cacheResource(const Resource & resource)
+{
+    Q_D(LocalStorageCacheManager);
+    d->cacheResource(resource);
+}
+
+void LocalStorageCacheManager::expungeResource(const Resource & resource)
+{
+    Q_D(LocalStorageCacheManager);
+    d->expungeResource(resource);
+}
+
+void LocalStorageCacheManager::clearAllResources()
+{
+    Q_D(LocalStorageCacheManager);
+    d->clearAllResources();
+}
+
 size_t LocalStorageCacheManager::numCachedNotebooks() const
 {
     Q_D(const LocalStorageCacheManager);
@@ -123,6 +154,12 @@ void LocalStorageCacheManager::expungeNotebook(const Notebook & notebook)
     d->expungeNotebook(notebook);
 }
 
+void LocalStorageCacheManager::clearAllNotebooks()
+{
+    Q_D(LocalStorageCacheManager);
+    d->clearAllNotebooks();
+}
+
 size_t LocalStorageCacheManager::numCachedTags() const
 {
     Q_D(const LocalStorageCacheManager);
@@ -139,6 +176,12 @@ void LocalStorageCacheManager::expungeTag(const Tag &tag)
 {
     Q_D(LocalStorageCacheManager);
     d->expungeTag(tag);
+}
+
+void LocalStorageCacheManager::clearAllTags()
+{
+    Q_D(LocalStorageCacheManager);
+    d->clearAllTags();
 }
 
 size_t LocalStorageCacheManager::numCachedLinkedNotebooks() const
@@ -165,6 +208,12 @@ const LinkedNotebook * LocalStorageCacheManager::findLinkedNotebook(const QStrin
     return d->findLinkedNotebookByGuid(guid);
 }
 
+void LocalStorageCacheManager::clearAllLinkedNotebooks()
+{
+    Q_D(LocalStorageCacheManager);
+    d->clearAllLinkedNotebooks();
+}
+
 size_t LocalStorageCacheManager::numCachedSavedSearches() const
 {
     Q_D(const LocalStorageCacheManager);
@@ -181,6 +230,12 @@ void LocalStorageCacheManager::expungeSavedSearch(const SavedSearch & savedSearc
 {
     Q_D(LocalStorageCacheManager);
     d->expungeSavedSearch(savedSearch);
+}
+
+void LocalStorageCacheManager::clearAllSavedSearches()
+{
+    Q_D(LocalStorageCacheManager);
+    d->clearAllSavedSearches();
 }
 
 void LocalStorageCacheManager::installCacheExpiryFunction(const ILocalStorageCacheExpiryChecker & checker)

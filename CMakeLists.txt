@@ -8,18 +8,18 @@ SET_POLICIES()
 
 if("${CMAKE_MAJOR_VERSION}" GREATER "2")
   project(libquentier
-          VERSION 0.4.0)
+          VERSION 0.5.0)
 else()
   project(libquentier)
   set(PROJECT_VERSION_MAJOR "0")
-  set(PROJECT_VERSION_MINOR "4")
+  set(PROJECT_VERSION_MINOR "5")
   set(PROJECT_VERSION_PATCH "0")
   set(PROJECT_VERSION_COUNT 3)
   set(PROJECT_VERSION "${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}.${PROJECT_VERSION_PATCH}")
 endif()
 
 set(PROJECT_VENDOR "Dmitry Ivanov")
-set(PROJECT_COPYRIGHT_YEAR "2017")
+set(PROJECT_COPYRIGHT_YEAR "2018")
 set(PROJECT_DOMAIN_FIRST "quentier")
 set(PROJECT_DOMAIN_SECOND "org")
 set(PROJECT_DOMAIN "${PROJECT_DOMAIN_FIRST}.${PROJECT_DOMAIN_SECOND}")
@@ -119,6 +119,7 @@ set(ENML_HEADERS
 
 set(LOCAL_STORAGE_HEADERS
     headers/quentier/local_storage/ILocalStorageCacheExpiryChecker.h
+    headers/quentier/local_storage/ILocalStoragePatch.h
     headers/quentier/local_storage/DefaultLocalStorageCacheExpiryChecker.h
     headers/quentier/local_storage/Lists.h
     headers/quentier/local_storage/LocalStorageCacheManager.h
@@ -158,6 +159,7 @@ set(UTILITY_HEADERS
     headers/quentier/utility/StandardPaths.h
     headers/quentier/utility/EncryptionManager.h
     headers/quentier/utility/EventLoopWithExitStatus.h
+    headers/quentier/utility/FileCopier.h
     headers/quentier/utility/FileIOProcessorAsync.h
     headers/quentier/utility/FileSystemWatcher.h
     headers/quentier/utility/LimitedStack.h
@@ -211,8 +213,11 @@ set(PRIVATE_HEADERS
     src/enml/ENMLConverter_p.h
     src/enml/DecryptedTextManager_p.h
     src/local_storage/LocalStorageCacheManager_p.h
+    src/local_storage/LocalStoragePatchManager.h
     src/local_storage/LocalStorageManager_p.h
+    src/local_storage/LocalStorageShared.h
     src/local_storage/NoteSearchQueryData.h
+    src/local_storage/patches/LocalStoragePatch1To2.h
     src/synchronization/ExceptionHandlingHelpers.h
     src/synchronization/InkNoteImageDownloader.h
     src/synchronization/NoteStore.h
@@ -235,6 +240,7 @@ set(PRIVATE_HEADERS
     src/utility/tag_topological_sort/TagDirectedGraphDepthFirstSearch.h
     src/utility/TagSortByParentChildRelationsHelpers.hpp
     src/utility/EncryptionManager_p.h
+    src/utility/FileCopier_p.h
     src/utility/FileIOProcessorAsync_p.h
     src/utility/FileSystemWatcher_p.h
     src/utility/KeychainService.h
@@ -250,11 +256,13 @@ endif()
 if(BUILD_WITH_NOTE_EDITOR)
   list(APPEND PRIVATE_HEADERS
        src/note_editor/GenericResourceImageManager.h
-       src/note_editor/NoteEditorSettingsName.h
+       src/note_editor/NoteEditorSettingsNames.h
        src/note_editor/NoteEditorPage.h
        src/note_editor/NoteEditor_p.h
+       src/note_editor/NoteEditorPrivateMacros.h
+       src/note_editor/NoteEditorLocalStorageBroker.h
        src/note_editor/JavaScriptInOrderExecutor.h
-       src/note_editor/ResourceFileStorageManager.h
+       src/note_editor/ResourceDataInTemporaryFileStorageManager.h
        src/note_editor/ResourceInfo.h
        src/note_editor/SpellChecker_p.h
        src/note_editor/SpellCheckerDictionariesFinder.h
@@ -378,10 +386,14 @@ set(${PROJECT_NAME}_SOURCES
     src/local_storage/LocalStorageManager_p.cpp
     src/local_storage/LocalStorageCacheManager.cpp
     src/local_storage/LocalStorageCacheManager_p.cpp
+    src/local_storage/LocalStoragePatchManager.cpp
     src/local_storage/LocalStorageManagerAsync.cpp
+    src/local_storage/LocalStorageShared.cpp
     src/local_storage/NoteSearchQuery.cpp
     src/local_storage/NoteSearchQueryData.cpp
     src/local_storage/Transaction.cpp
+    src/local_storage/patches/ILocalStoragePatch.cpp
+    src/local_storage/patches/LocalStoragePatch1To2.cpp
     src/synchronization/IAuthenticationManager.cpp
     src/synchronization/InkNoteImageDownloader.cpp
     src/synchronization/INoteStore.cpp
@@ -424,6 +436,8 @@ set(${PROJECT_NAME}_SOURCES
     src/utility/EncryptionManager.cpp
     src/utility/EncryptionManager_p.cpp
     src/utility/EventLoopWithExitStatus.cpp
+    src/utility/FileCopier.cpp
+    src/utility/FileCopier_p.cpp
     src/utility/FileIOProcessorAsync.cpp
     src/utility/FileIOProcessorAsync_p.cpp
     src/utility/FileSystemWatcher.cpp
@@ -456,8 +470,9 @@ if(BUILD_WITH_NOTE_EDITOR)
        src/note_editor/NoteEditor.cpp
        src/note_editor/INoteEditorBackend.cpp
        src/note_editor/NoteEditor_p.cpp
+       src/note_editor/NoteEditorLocalStorageBroker.cpp
        src/note_editor/JavaScriptInOrderExecutor.cpp
-       src/note_editor/ResourceFileStorageManager.cpp
+       src/note_editor/ResourceDataInTemporaryFileStorageManager.cpp
        src/note_editor/ResourceInfo.cpp
        src/note_editor/SpellChecker.cpp
        src/note_editor/SpellChecker_p.cpp

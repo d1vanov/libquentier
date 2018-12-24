@@ -1,7 +1,7 @@
 #include "InsertHtmlDelegate.h"
 #include "../NoteEditor_p.h"
 #include "../NoteEditorPage.h"
-#include "../ResourceFileStorageManager.h"
+#include "../ResourceDataInTemporaryFileStorageManager.h"
 #include <quentier/enml/ENMLConverter.h>
 #include <quentier/types/Account.h>
 #include <quentier/types/Note.h>
@@ -25,14 +25,14 @@ namespace quentier {
 
 InsertHtmlDelegate::InsertHtmlDelegate(const QString & inputHtml, NoteEditorPrivate & noteEditor,
                                        ENMLConverter & enmlConverter,
-                                       ResourceFileStorageManager * pResourceFileStorageManager,
+                                       ResourceDataInTemporaryFileStorageManager * pResourceDataInTemporaryFileStorageManager,
                                        QHash<QString, QString> & resourceFileStoragePathsByResourceLocalUid,
                                        ResourceInfo & resourceInfo,
                                        QObject * parent) :
     QObject(parent),
     m_noteEditor(noteEditor),
     m_enmlConverter(enmlConverter),
-    m_pResourceFileStorageManager(pResourceFileStorageManager),
+    m_pResourceDataInTemporaryFileStorageManager(pResourceDataInTemporaryFileStorageManager),
     m_resourceFileStoragePathsByResourceLocalUid(resourceFileStoragePathsByResourceLocalUid),
     m_resourceInfo(resourceInfo),
     m_inputHtml(inputHtml),
@@ -40,7 +40,7 @@ InsertHtmlDelegate::InsertHtmlDelegate(const QString & inputHtml, NoteEditorPriv
     m_imageUrls(),
     m_pendingImageUrls(),
     m_failingImageUrls(),
-    m_resourceBySaveToStorageRequestId(),
+    m_resourceBySaveDataToTemporaryFileRequestId(),
     m_sourceUrlByResourceLocalUid(),
     m_urlToRedirectUrl(),
     m_imgDataBySourceUrl(),
@@ -51,7 +51,7 @@ void InsertHtmlDelegate::start()
 {
     QNDEBUG(QStringLiteral("InsertHtmlDelegate::start"));
 
-    if (m_noteEditor.isModified()) {
+    if (m_noteEditor.isEditorPageModified()) {
         QObject::connect(&m_noteEditor, QNSIGNAL(NoteEditorPrivate,convertedToNote,Note),
                          this, QNSLOT(InsertHtmlDelegate,onOriginalPageConvertedToNote,Note));
         m_noteEditor.convertToNote();
@@ -73,27 +73,24 @@ void InsertHtmlDelegate::onOriginalPageConvertedToNote(Note note)
     doStart();
 }
 
-void InsertHtmlDelegate::onResourceSavedToStorage(QUuid requestId, QByteArray dataHash,
-                                                  QString fileStoragePath, int errorCode,
-                                                  ErrorString errorDescription)
+void InsertHtmlDelegate::onResourceDataSavedToTemporaryFile(QUuid requestId, QByteArray dataHash,
+                                                            ErrorString errorDescription)
 {
-    auto it = m_resourceBySaveToStorageRequestId.find(requestId);
-    if (it == m_resourceBySaveToStorageRequestId.end()) {
+    auto it = m_resourceBySaveDataToTemporaryFileRequestId.find(requestId);
+    if (it == m_resourceBySaveDataToTemporaryFileRequestId.end()) {
         return;
     }
 
-    QNDEBUG(QStringLiteral("InsertHtmlDelegate::onResourceSavedToStorage: request id = ") << requestId
-            << QStringLiteral(", data hash = ") << dataHash.toHex() << QStringLiteral(", file storage path = ")
-            << fileStoragePath << QStringLiteral(", error code = ") << errorCode
+    QNDEBUG(QStringLiteral("InsertHtmlDelegate::onResourceDataSavedToTemporaryFile: request id = ") << requestId
+            << QStringLiteral(", data hash = ") << dataHash.toHex()
             << QStringLiteral(", error description: ") << errorDescription);
 
     Resource resource = it.value();
-    Q_UNUSED(m_resourceBySaveToStorageRequestId.erase(it))
+    Q_UNUSED(m_resourceBySaveDataToTemporaryFileRequestId.erase(it))
 
-    if (Q_UNLIKELY(errorCode != 0))
+    if (Q_UNLIKELY(!errorDescription.isEmpty()))
     {
-        QNWARNING(QStringLiteral("Failed to save the resource to storage: ") << errorDescription
-                  << QStringLiteral(", error code = ") << errorCode);
+        QNWARNING(QStringLiteral("Failed to save the resource to a temporary file: ") << errorDescription);
 
         auto urlIt = m_sourceUrlByResourceLocalUid.find(resource.localUid());
         if (urlIt != m_sourceUrlByResourceLocalUid.end()) {
@@ -118,7 +115,20 @@ void InsertHtmlDelegate::onResourceSavedToStorage(QUuid requestId, QByteArray da
         const QUrl & url = urlIt.value();
         ImgData & imgData = m_imgDataBySourceUrl[url];
         imgData.m_resource = resource;
+
+        Note * pNote = m_noteEditor.notePtr();
+        if (Q_UNLIKELY(!pNote)) {
+            errorDescription.setBase(QT_TR_NOOP("Internal error: can't insert HTML containing images: no note is set to the editor"));
+            QNWARNING(errorDescription);
+            Q_EMIT notifyError(errorDescription);
+            return;
+        }
+
+        QString fileStoragePath = ResourceDataInTemporaryFileStorageManager::imageResourceFileStorageFolderPath() +
+                                  QStringLiteral("/") + pNote->localUid() + QStringLiteral("/") + resource.localUid() +
+                                  QStringLiteral(".dat");
         imgData.m_resourceFileStoragePath = fileStoragePath;
+
         Q_UNUSED(m_sourceUrlByResourceLocalUid.erase(urlIt))
     }
     else
@@ -210,8 +220,16 @@ void InsertHtmlDelegate::onHtmlInserted(const QVariant & responseData)
         }
 
         m_resourceFileStoragePathsByResourceLocalUid[resource.localUid()] = imgData.m_resourceFileStoragePath;
+
+        QSize resourceImageSize;
+        if (resource.hasHeight() && resource.hasWidth()) {
+            resourceImageSize.setHeight(resource.height());
+            resourceImageSize.setWidth(resource.width());
+        }
+
         m_resourceInfo.cacheResourceInfo(resource.dataHash(), resource.displayName(),
-                                         humanReadableSize(static_cast<quint64>(resource.dataSize())), imgData.m_resourceFileStoragePath);
+                                         humanReadableSize(static_cast<quint64>(resource.dataSize())),
+                                         imgData.m_resourceFileStoragePath, resourceImageSize);
 
         resources << resource;
         resourceFileStoragePaths << imgData.m_resourceFileStoragePath;
@@ -547,8 +565,8 @@ void InsertHtmlDelegate::checkImageResourcesReady()
         return;
     }
 
-    if (!m_resourceBySaveToStorageRequestId.isEmpty()) {
-        QNDEBUG(QStringLiteral("Still pending saving of ") << QString::number(m_resourceBySaveToStorageRequestId.size())
+    if (!m_resourceBySaveDataToTemporaryFileRequestId.isEmpty()) {
+        QNDEBUG(QStringLiteral("Still pending saving of ") << QString::number(m_resourceBySaveDataToTemporaryFileRequestId.size())
                 << QStringLiteral(" images"));
         return;
     }
@@ -830,35 +848,24 @@ bool InsertHtmlDelegate::addResource(const QByteArray & resourceData, const QUrl
 
     m_sourceUrlByResourceLocalUid[resource.localUid()] = url;
 
-    QString resourceFileSuffix;
-    QStringList mimeTypeSuffixes = mimeType.suffixes();
-    if (!mimeTypeSuffixes.isEmpty()) {
-        QNDEBUG(QStringLiteral("Mime type suffixes: ") << mimeTypeSuffixes.join(QStringLiteral(", ")));
-        resourceFileSuffix = mimeTypeSuffixes.at(0);
-    }
-    else {
-        QNDEBUG(QStringLiteral("Unexpectedly no mime type suffixes, fallback to png"));
-        resourceFileSuffix = QStringLiteral("png");
-    }
-
-    QObject::connect(this, QNSIGNAL(InsertHtmlDelegate,saveResourceToStorage,
-                                    QString,QString,QByteArray,QByteArray,QString,QUuid,bool),
-                     m_pResourceFileStorageManager, QNSLOT(ResourceFileStorageManager,onWriteResourceToFileRequest,
-                                                           QString,QString,QByteArray,QByteArray,QString,QUuid));
-    QObject::connect(m_pResourceFileStorageManager, QNSIGNAL(ResourceFileStorageManager,writeResourceToFileCompleted,
-                                                             QString,QString,QByteArray,QByteArray,QString,QUuid,bool),
-                     this, QNSLOT(InsertHtmlDelegate,onResourceSavedToStorage,
-                                  QString,QString,QByteArray,QByteArray,QString,QUuid,bool));
+    QObject::connect(this, QNSIGNAL(InsertHtmlDelegate,saveResourceDataToTemporaryFile,
+                                    QString,QString,QByteArray,QByteArray,QUuid,bool),
+                     m_pResourceDataInTemporaryFileStorageManager,
+                     QNSLOT(ResourceDataInTemporaryFileStorageManager,onSaveResourceDataToTemporaryFileRequest,
+                            QString,QString,QByteArray,QByteArray,QUuid,bool));
+    QObject::connect(m_pResourceDataInTemporaryFileStorageManager,
+                     QNSIGNAL(ResourceDataInTemporaryFileStorageManager,saveResourceDataToTemporaryFileCompleted,
+                              QUuid,QByteArray,ErrorString),
+                     this, QNSLOT(InsertHtmlDelegate,onResourceDataSavedToTemporaryFile,QUuid,QByteArray,ErrorString));
 
     QUuid requestId = QUuid::createUuid();
-    m_resourceBySaveToStorageRequestId[requestId] = resource;
+    m_resourceBySaveDataToTemporaryFileRequestId[requestId] = resource;
 
-    QNTRACE(QStringLiteral("Emitting the request to save the image resource to file storage: request id = ")
+    QNTRACE(QStringLiteral("Emitting the request to save the image resource to a temporary file: request id = ")
             << requestId << ", resource local uid = " << resource.localUid() << QStringLiteral(", data hash = ")
-            << dataHash.toHex() << QStringLiteral(", mime type name = ") << mimeType.name()
-            << QStringLiteral(", file suffix = ") << resourceFileSuffix);
-    Q_EMIT saveResourceToStorage(pNote->localUid(), resource.localUid(), resourceData, dataHash,
-                                 resourceFileSuffix, requestId, /* is image = */ true);
+            << dataHash.toHex() << QStringLiteral(", mime type name = ") << mimeType.name());
+    Q_EMIT saveResourceDataToTemporaryFile(pNote->localUid(), resource.localUid(), resourceData, dataHash,
+                                           requestId, /* is image = */ true);
     return true;
 }
 

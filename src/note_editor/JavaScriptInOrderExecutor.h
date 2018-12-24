@@ -29,7 +29,10 @@
 #include <QWebView>
 #endif
 
+// NOTE: Workaround a bug in Qt4 which may prevent building with some boost versions
+#ifndef Q_MOC_RUN
 #include <boost/function.hpp>
+#endif
 
 namespace quentier {
 

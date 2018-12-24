@@ -19,6 +19,7 @@
 #include <quentier/utility/Utility.h>
 #include <quentier/logging/QuentierLogger.h>
 #include <quentier/types/RegisterMetatypes.h>
+#include "../note_editor/NoteEditorLocalStorageBroker.h"
 #include <QStyleFactory>
 #include <QApplication>
 #include <QScopedPointer>
@@ -33,6 +34,7 @@
 #endif
 
 #include <limits>
+#include <string>
 
 #include <qwindowdefs.h>
 #include <QtGui/qwindowdefs_win.h>
@@ -42,7 +44,9 @@
 #define SECURITY_WIN32
 #include <security.h>
 
-#else
+#else // defined Q_OS_WIN
+
+#include <cstdio>
 
 #if defined Q_OS_MAC
 #if (QT_VERSION < QT_VERSION_CHECK(5, 0, 0))
@@ -71,11 +75,18 @@
 #include <ctime>
 #include <time.h>
 
+#include <fstream>
+#include <string>
+#include <cstring>
+
 namespace quentier {
 
 void initializeLibquentier()
 {
     registerMetatypes();
+
+    // Ensure the instance is created now and not later
+    Q_UNUSED(NoteEditorLocalStorageBroker::instance())
 }
 
 bool checkUpdateSequenceNumber(const int32_t updateSequenceNumber)
@@ -425,6 +436,82 @@ bool removeDirImpl(const QString & dirPath)
 bool removeDir(const QString & dirPath)
 {
     return removeDirImpl(dirPath);
+}
+
+QByteArray readFileContents(const QString & filePath, ErrorString & errorDescription)
+{
+    QByteArray result;
+    errorDescription.clear();
+
+    std::ifstream istrm;
+    istrm.open(QDir::toNativeSeparators(filePath).toStdString(), std::ifstream::in);
+    if (!istrm.good()) {
+        errorDescription.setBase(QT_TRANSLATE_NOOP("readFileContents", "Failed to read file contents, could not open the file for reading"));
+        errorDescription.details() = QString::fromLocal8Bit(strerror(errno));
+        return result;
+    }
+
+    istrm.seekg(0, std::ios::end);
+    std::streamsize length = istrm.tellg();
+    if (length > std::numeric_limits<int>::max()) {
+        errorDescription.setBase(QT_TRANSLATE_NOOP("readFileContents", "Failed to read file contents, file is too large"));
+        errorDescription.details() = humanReadableSize(static_cast<quint64>(length));
+        return result;
+    }
+
+    istrm.seekg(0, std::ios::beg);
+
+    result.resize(static_cast<int>(length));
+    istrm.read(result.data(), length);
+
+    return result;
+}
+
+bool renameFile(const QString & from, const QString & to, ErrorString & errorDescription)
+{
+#ifdef Q_OS_WIN
+
+    std::wstring fromW = QDir::toNativeSeparators(from).toStdWString();
+    std::wstring toW = QDir::toNativeSeparators(to).toStdWString();
+    int res = MoveFileExW(fromW.c_str(), toW.c_str(), MOVEFILE_COPY_ALLOWED | MOVEFILE_REPLACE_EXISTING | MOVEFILE_WRITE_THROUGH);
+    if (res == 0)
+    {
+        errorDescription.setBase(QT_TRANSLATE_NOOP("renameFile", "failed to rename file"));
+
+        LPTSTR errorText = NULL;
+
+        Q_UNUSED(FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_IGNORE_INSERTS,
+                               NULL, GetLastError(), MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPTSTR)&errorText, 0, NULL))
+        if (errorText != NULL) {
+            errorDescription.details() += QString::fromWCharArray(errorText);
+            LocalFree(errorText);
+            errorText = 0;
+        }
+
+        errorDescription.details() += QStringLiteral("; from = ");
+        errorDescription.details() += from;
+        errorDescription.details() += QStringLiteral(", to = ");
+        errorDescription.details() += to;
+        return false;
+    }
+
+    return true;
+
+#else // Q_OS_WIN
+
+    int res = rename(from.toUtf8().constData(), to.toUtf8().constData());
+    if (res != 0) {
+        errorDescription.setBase(QT_TRANSLATE_NOOP("renameFile", "failed to rename file"));
+        errorDescription.details() += QString::fromUtf8(strerror(errno));
+        errorDescription.details() += QStringLiteral("; from = ");
+        errorDescription.details() += from;
+        errorDescription.details() += QStringLiteral(", to = ");
+        errorDescription.details() += to;
+        return false;
+    }
+
+    return true;
+#endif // Q_OS_WIN
 }
 
 } // namespace quentier

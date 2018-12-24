@@ -23,10 +23,10 @@
 #include <quentier/utility/Linkage.h>
 #include <quentier/utility/Printable.h>
 #include <quentier/types/Note.h>
-#include <quentier/types/Notebook.h>
 #include <QWidget>
 #include <QPrinter>
 #include <QStringList>
+#include <QThread>
 
 QT_FORWARD_DECLARE_CLASS(QUndoStack)
 
@@ -34,17 +34,17 @@ namespace quentier {
 
 QT_FORWARD_DECLARE_CLASS(Account)
 QT_FORWARD_DECLARE_CLASS(NoteEditor)
-QT_FORWARD_DECLARE_CLASS(FileIOProcessorAsync)
 QT_FORWARD_DECLARE_CLASS(SpellChecker)
+QT_FORWARD_DECLARE_CLASS(LocalStorageManagerAsync)
 
 class QUENTIER_EXPORT INoteEditorBackend
 {
 public:
     virtual ~INoteEditorBackend();
 
-    virtual void initialize(FileIOProcessorAsync & fileIOProcessorAsync,
-                            SpellChecker & spellChecker,
-                            const Account & account) = 0;
+    virtual void initialize(LocalStorageManagerAsync & localStorageManager,
+                            SpellChecker & spellChecker, const Account & account,
+                            QThread * pBackgroundJobsThread) = 0;
 
     virtual QObject * object() = 0;   // provide QObject interface
     virtual QWidget * widget() = 0;   // provide QWidget interface
@@ -52,11 +52,16 @@ public:
     virtual void setAccount(const Account & account) = 0;
     virtual void setUndoStack(QUndoStack * pUndoStack) = 0;
 
-    virtual void setBlankPageHtml(const QString & html) = 0;
+    virtual void setInitialPageHtml(const QString & html) = 0;
+    virtual void setNoteNotFoundPageHtml(const QString & html) = 0;
+    virtual void setNoteDeletedPageHtml(const QString & html) = 0;
 
     virtual bool isNoteLoaded() const = 0;
 
     virtual void convertToNote() = 0;
+    virtual void saveNoteToLocalStorage() = 0;
+    virtual void setNoteTitle(const QString & noteTitle) = 0;
+    virtual void setTagIds(const QStringList & tagLocalUids, const QStringList & tagGuids) = 0;
     virtual void undo() = 0;
     virtual void redo() = 0;
     virtual void cut() = 0;
@@ -164,11 +169,13 @@ public:
     virtual bool exportToEnex(const QStringList & tagNames,
                               QString & enex, ErrorString & errorDescription) = 0;
 
-    virtual void setNoteAndNotebook(const Note & note, const Notebook & notebook) = 0;
+    virtual QString currentNoteLocalUid() const = 0;
+    virtual void setCurrentNoteLocalUid(const QString & noteLocalUid) = 0;
 
     virtual void clear() = 0;
 
     virtual bool isModified() const = 0;
+    virtual bool isEditorPageModified() const = 0;
 
     virtual void setFocusToEditor() = 0;
 

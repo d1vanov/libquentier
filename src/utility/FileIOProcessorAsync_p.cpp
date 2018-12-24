@@ -43,7 +43,7 @@ void FileIOProcessorAsyncPrivate::setIdleTimePeriod(const qint32 seconds)
         killTimer(m_postOperationTimerId); \
     } \
     m_postOperationTimerId = startTimer(SEC_TO_MSEC(m_idleTimePeriodSeconds)); \
-    QNTRACE(QStringLiteral("FileIOProcessorAsyncPrivate: started timer with id ") << m_postOperationTimerId)
+    QNTRACE(QStringLiteral("FileIOProcessorAsyncPrivate: started post operation timer with id ") << m_postOperationTimerId)
 
 void FileIOProcessorAsyncPrivate::onWriteFileRequest(QString absoluteFilePath, QByteArray data,
                                                      QUuid requestId, bool append)
@@ -98,7 +98,7 @@ void FileIOProcessorAsyncPrivate::onWriteFileRequest(QString absoluteFilePath, Q
     }
 
     file.close();
-    QNDEBUG(QStringLiteral("Successfully wrote the file ") + absoluteFilePath);
+    QNDEBUG(QStringLiteral("Successfully wrote file ") + absoluteFilePath);
     Q_EMIT writeFileRequestProcessed(true, ErrorString(), requestId);
     RESTART_TIMER();
 }

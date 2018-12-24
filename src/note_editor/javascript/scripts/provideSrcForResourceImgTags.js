@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Dmitry Ivanov
+ * Copyright 2016-2018 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -26,6 +26,7 @@ function provideSrcForResourceImgTags() {
     var imgElements = document.getElementsByTagName("img");
     var numElements = imgElements.length;
     if (!numElements) {
+        console.log("No img tags within the document");
         return;
     }
 

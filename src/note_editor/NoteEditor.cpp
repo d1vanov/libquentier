@@ -19,8 +19,7 @@
 #include "NoteEditor_p.h"
 #include <quentier/note_editor/NoteEditor.h>
 #include <quentier/note_editor/INoteEditorBackend.h>
-#include <quentier/types/Notebook.h>
-#include <quentier/types/Account.h>
+#include <quentier/local_storage/LocalStorageManagerAsync.h>
 #include <QUndoStack>
 #include <QFont>
 #include <QColor>
@@ -43,11 +42,12 @@ NoteEditor::NoteEditor(QWidget * parent, Qt::WindowFlags flags) :
 NoteEditor::~NoteEditor()
 {}
 
-void NoteEditor::initialize(FileIOProcessorAsync & fileIOProcessorAsync,
+void NoteEditor::initialize(LocalStorageManagerAsync & localStorageManager,
                             SpellChecker & spellChecker,
-                            const Account & account)
+                            const Account & account,
+                            QThread * pBackgroundJobsThread)
 {
-    m_backend->initialize(fileIOProcessorAsync, spellChecker, account);
+    m_backend->initialize(localStorageManager, spellChecker, account, pBackgroundJobsThread);
 }
 
 void NoteEditor::setBackend(INoteEditorBackend * backend)
@@ -70,14 +70,29 @@ void NoteEditor::setUndoStack(QUndoStack * pUndoStack)
     m_backend->setUndoStack(pUndoStack);
 }
 
-void NoteEditor::setBlankPageHtml(const QString & html)
+void NoteEditor::setInitialPageHtml(const QString & html)
 {
-    m_backend->setBlankPageHtml(html);
+    m_backend->setInitialPageHtml(html);
 }
 
-void NoteEditor::setNoteAndNotebook(const Note & note, const Notebook & notebook)
+void NoteEditor::setNoteNotFoundPageHtml(const QString & html)
 {
-    m_backend->setNoteAndNotebook(note, notebook);
+    m_backend->setNoteNotFoundPageHtml(html);
+}
+
+void NoteEditor::setNoteDeletedPageHtml(const QString & html)
+{
+    m_backend->setNoteDeletedPageHtml(html);
+}
+
+QString NoteEditor::currentNoteLocalUid() const
+{
+    return m_backend->currentNoteLocalUid();
+}
+
+void NoteEditor::setCurrentNoteLocalUid(const QString & noteLocalUid)
+{
+    m_backend->setCurrentNoteLocalUid(noteLocalUid);
 }
 
 void NoteEditor::clear()
@@ -103,6 +118,21 @@ void NoteEditor::setFocus()
 void NoteEditor::convertToNote()
 {
     m_backend->convertToNote();
+}
+
+void NoteEditor::saveNoteToLocalStorage()
+{
+    m_backend->saveNoteToLocalStorage();
+}
+
+void NoteEditor::setNoteTitle(const QString & noteTitle)
+{
+    m_backend->setNoteTitle(noteTitle);
+}
+
+void NoteEditor::setTagIds(const QStringList & tagLocalUids, const QStringList & tagGuids)
+{
+    m_backend->setTagIds(tagLocalUids, tagGuids);
 }
 
 void NoteEditor::undo()

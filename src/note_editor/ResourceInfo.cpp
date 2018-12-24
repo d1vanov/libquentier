@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Dmitry Ivanov
+ * Copyright 2016-2018 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -24,18 +24,21 @@ namespace quentier {
 void ResourceInfo::cacheResourceInfo(const QByteArray & resourceHash,
                                      const QString & resourceDisplayName,
                                      const QString & resourceDisplaySize,
-                                     const QString & resourceLocalFilePath)
+                                     const QString & resourceLocalFilePath,
+                                     const QSize & resourceImageSize)
 {
     QNDEBUG(QStringLiteral("ResourceInfo::cacheResourceInfo: resource hash = ")
             << resourceHash.toHex()
             << QStringLiteral(", resource display name = ") << resourceDisplayName
             << QStringLiteral(", resource display size = ") << resourceDisplaySize
-            << QStringLiteral(", resource local file path = ") << resourceLocalFilePath);
+            << QStringLiteral(", resource local file path = ") << resourceLocalFilePath
+            << QStringLiteral(", resource image size = ") << resourceImageSize);
 
     Info & info = m_resourceInfoHash[resourceHash];
     info.m_resourceDisplayName = resourceDisplayName;
     info.m_resourceDisplaySize = resourceDisplaySize;
     info.m_resourceLocalFilePath = resourceLocalFilePath;
+    info.m_resourceImageSize = resourceImageSize;
 }
 
 bool ResourceInfo::contains(const QByteArray & resourceHash) const
@@ -47,7 +50,8 @@ bool ResourceInfo::contains(const QByteArray & resourceHash) const
 bool ResourceInfo::findResourceInfo(const QByteArray & resourceHash,
                                     QString & resourceDisplayName,
                                     QString & resourceDisplaySize,
-                                    QString & resourceLocalFilePath) const
+                                    QString & resourceLocalFilePath,
+                                    QSize & resourceImageSize) const
 {
     QNDEBUG(QStringLiteral("ResourceInfo::findResourceInfo: resource hash = ") << resourceHash.toHex());
 
@@ -61,10 +65,11 @@ bool ResourceInfo::findResourceInfo(const QByteArray & resourceHash,
     resourceDisplayName = info.m_resourceDisplayName;
     resourceDisplaySize = info.m_resourceDisplaySize;
     resourceLocalFilePath = info.m_resourceLocalFilePath;
+    resourceImageSize = info.m_resourceImageSize;
 
     QNTRACE(QStringLiteral("Found resource info: name = ") << resourceDisplayName
-            << QStringLiteral(", size = ") << resourceDisplaySize << QStringLiteral(", local file path = ")
-            << resourceLocalFilePath);
+            << QStringLiteral(", display size = ") << resourceDisplaySize << QStringLiteral(", local file path = ")
+            << resourceLocalFilePath << QStringLiteral(", image size = ") << resourceImageSize);
     return true;
 }
 

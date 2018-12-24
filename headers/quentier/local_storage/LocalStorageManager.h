@@ -29,6 +29,7 @@
 #include <QScopedPointer>
 #include <QSharedPointer>
 #include <QHash>
+#include <QVector>
 #include <cstdint>
 #include <utility>
 
@@ -45,6 +46,7 @@ QT_FORWARD_DECLARE_STRUCT(NotebookRestrictions)
 
 namespace quentier {
 
+QT_FORWARD_DECLARE_CLASS(ILocalStoragePatch)
 QT_FORWARD_DECLARE_CLASS(LocalStorageManagerPrivate)
 
 class QUENTIER_EXPORT LocalStorageManager: public QObject
@@ -154,14 +156,17 @@ public:
     bool localStorageRequiresUpgrade(ErrorString & errorDescription);
 
     /**
-     * @brief upgradeLocalStorage method performs the upgrade of local storage persistence if upgrade is required;
-     * upgradeProgress signal is emitted to inform any listeners of the progress of the upgrade
-     * @param errorDescription      Textual description of the error if the local storage upgrade failed,
-     *                              otherwise this parameter is not touched by the method
-     * @return true if local storage persistence was upgraded successfully, false if local storage persistence was not upgraded
-     * either due to error or due to the fact the local storage persistence doesn't require an upgrade
+     * requiredLocalStoragePatches provides the client code with the list of
+     * patches which need to be applied to the current state of local storage
+     * in order to bring it to a state compatible with the current version of
+     * code. If no patches are required, an empty list of patches is returned.
+     *
+     * The client code should apply each patch in the exact order in which they
+     * are returned by this method.
+     *
+     * @return the vector of patches required to be applied to the current local storage version
      */
-    bool upgradeLocalStorage(ErrorString & errorDescription);
+    QVector<QSharedPointer<ILocalStoragePatch> > requiredLocalStoragePatches();
 
     /**
      * localStorageVersion method fetches the current version of local storage persistence which can be used for informational purposes

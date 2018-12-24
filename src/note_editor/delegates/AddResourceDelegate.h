@@ -34,7 +34,7 @@ namespace quentier {
 
 QT_FORWARD_DECLARE_CLASS(Account)
 QT_FORWARD_DECLARE_CLASS(NoteEditorPrivate)
-QT_FORWARD_DECLARE_CLASS(ResourceFileStorageManager)
+QT_FORWARD_DECLARE_CLASS(ResourceDataInTemporaryFileStorageManager)
 QT_FORWARD_DECLARE_CLASS(FileIOProcessorAsync)
 QT_FORWARD_DECLARE_CLASS(GenericResourceImageManager)
 
@@ -51,15 +51,17 @@ public:
      *
      * @param filePath - the absolute path to the file in which the resource data is located
      * @param noteEditor - the note editor holding the note to which the resource is to be added
-     * @param pResourceFileStorageManager - the pointer to ResourceFileStorageManager which is required for storing
-     * the new resource's data in a proper place on the hard drive
+     * @param pResourceDataInTemporaryFileStorageManager - the pointer to ResourceDataInTemporaryFileStorageManager
+     * which might be required for storing the new resource's data in a temporary file for the sake of note editor
+     * page's convenience; it is only actually required if the added resource is an image
      * @param pFileIOThreadWorker - the pointer to FileIOProcessorAsync worker performing the actual IO of file data
      * @param pGenericResourceImageManager - the pointer to GenericResourceImageManager required for composing
      * the generic resource image for QWebEngine-based backend of NoteEditor
-     * @param genericResourceImageFilePathsByResourceHash - the hash container storing generic resource file paths by resource hash
+     * @param genericResourceImageFilePathsByResourceHash - the hash container storing generic resource image
+     * file paths by resource hash
      */
     explicit AddResourceDelegate(const QString & filePath, NoteEditorPrivate & noteEditor,
-                                 ResourceFileStorageManager * pResourceFileStorageManager,
+                                 ResourceDataInTemporaryFileStorageManager * pResourceDataInTemporaryFileStorageManager,
                                  FileIOProcessorAsync * pFileIOThreadWorker,
                                  GenericResourceImageManager * pGenericResourceImageManager,
                                  QHash<QByteArray, QString> & genericResourceImageFilePathsByResourceHash);
@@ -70,8 +72,9 @@ public:
      * @param resourceData - the resource data to be added to the note as a new resource
      * @param mimeType - the mime type of the resource data
      * @param noteEditor - the note editor holding the note to which the resource is to be added
-     * @param pResourceFileStorageManager - the pointer to ResourceFileStorageManager which is required for storing
-     * the new resource's data in a proper place on the hard drive
+     * @param pResourceDataInTemporaryFileStorageManager - the pointer to ResourceDataInTemporaryFileStorageManager
+     * which might be required for storing the new resource's data in a temporary file for the sake of note editor
+     * page's convenience; it is only actually required if the added resource is an image
      * @param pFileIOThreadWorker - the pointer to FileIOProcessorAsync worker performing the actual IO of file data
      * @param pGenericResourceImageManager - the pointer to GenericResourceImageManager required for composing
      * the generic resource image for QWebEngine-based backend of NoteEditor
@@ -79,7 +82,7 @@ public:
      */
     explicit AddResourceDelegate(const QByteArray & resourceData, const QString & mimeType,
                                  NoteEditorPrivate & noteEditor,
-                                 ResourceFileStorageManager * pResourceFileStorageManager,
+                                 ResourceDataInTemporaryFileStorageManager * pResourceDataInTemporaryFileStorageManager,
                                  FileIOProcessorAsync * pFileIOThreadWorker,
                                  GenericResourceImageManager * pGenericResourceImageManager,
                                  QHash<QByteArray, QString> & genericResourceImageFilePathsByResourceHash);
@@ -92,8 +95,8 @@ Q_SIGNALS:
 
 // private signals
     void readFileData(QString filePath, QUuid requestId);
-    void saveResourceToStorage(QString noteLocalUid, QString resourceLocalUid, QByteArray data, QByteArray dataHash,
-                               QString preferredFileSuffix, QUuid requestId, bool isImage);
+    void saveResourceDataToTemporaryFile(QString noteLocalUid, QString resourceLocalUid, QByteArray data,
+                                         QByteArray dataHash, QUuid requestId, bool isImage);
     void writeFile(QString filePath, QByteArray data, QUuid requestId);
 
     void saveGenericResourceImageToFile(QString noteLocalUid, QString resourceLocalUid, QByteArray data, QString fileSuffix,
@@ -104,9 +107,7 @@ private Q_SLOTS:
 
     void onResourceFileRead(bool success, ErrorString errorDescription,
                             QByteArray data, QUuid requestId);
-    void onResourceSavedToStorage(QUuid requestId, QByteArray dataHash,
-                                  QString fileStoragePath, int errorCode,
-                                  ErrorString errorDescription);
+    void onResourceDataSavedToTemporaryFile(QUuid requestId, QByteArray dataHash, ErrorString errorDescription);
 
     void onGenericResourceImageSaved(bool success, QByteArray resourceImageDataHash,
                                      QString filePath, ErrorString errorDescription,
@@ -118,7 +119,8 @@ private:
     void doStart();
     void doStartUsingFile();
     void doStartUsingData();
-    void doSaveResourceToStorage(const QByteArray & data, QString resourceName);
+    void doSaveResourceDataToTemporaryFile(const QByteArray & data, QString resourceName);
+    void doGenerateGenericResourceImage(const QByteArray & data, QString resourceName);
 
     void insertNewResourceHtml();
 
@@ -129,7 +131,7 @@ private:
 
 private:
     NoteEditorPrivate &             m_noteEditor;
-    ResourceFileStorageManager *    m_pResourceFileStorageManager;
+    ResourceDataInTemporaryFileStorageManager *     m_pResourceDataInTemporaryFileStorageManager;
     FileIOProcessorAsync *          m_pFileIOProcessorAsync;
 
     QHash<QByteArray, QString> &    m_genericResourceImageFilePathsByResourceHash;
@@ -147,7 +149,7 @@ private:
     QString                         m_resourceFileStoragePath;
 
     QUuid                           m_readResourceFileRequestId;
-    QUuid                           m_saveResourceToStorageRequestId;
+    QUuid                           m_saveResourceDataToTemporaryFileRequestId;
 };
 
 } // namespace quentier

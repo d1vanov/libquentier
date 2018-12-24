@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Dmitry Ivanov
+ * Copyright 2016-2018 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,10 +16,10 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-function onResourceInfoReceived(resourceHash, filePath, displayName, displaySize) {
-    console.log("onResourceInfoReceived: hash = " + resourceHash +
-                ", file path = " + filePath + ", name = " + displayName +
-                ", size = " + displaySize);
+function onResourceInfoReceived(resourceHash, filePath, displayName, displaySize, height, width) {
+    console.log("onResourceInfoReceived: hash = " + resourceHash + ", file path = " + filePath +
+                ", name = " + displayName + ", size = " + displaySize + ", image resource height = " +
+                height + ", image resource width = " + width);
 
     var resources = document.querySelectorAll("[hash=\"" + resourceHash + "\"]");
     if (!resources) {
@@ -43,6 +43,14 @@ function onResourceInfoReceived(resourceHash, filePath, displayName, displaySize
     try {
         resource.setAttribute("src", escapedPath);
         console.log("Set the src attribute for resource with hash \"" + resourceHash + "\" to " + escapedPath);
+
+        if (height) {
+            resource.setAttribute("height", height);
+        }
+
+        if (width) {
+            resource.setAttribute("width", width);
+        }
 
         resizableImageManager.setResizable(resource);
 

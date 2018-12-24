@@ -186,9 +186,16 @@ void InsertHtmlUndoCommand::redoImpl()
         if (Q_LIKELY(m_resourceFileStoragePaths.size() > i))
         {
             m_resourceFileStoragePathsByResourceLocalUid[pResource->localUid()] = m_resourceFileStoragePaths[i];
+
+            QSize resourceImageSize;
+            if (pResource->hasHeight() && pResource->hasWidth()) {
+                resourceImageSize.setHeight(pResource->height());
+                resourceImageSize.setWidth(pResource->width());
+            }
+
             m_resourceInfo.cacheResourceInfo(pResource->dataHash(), pResource->displayName(),
                                              humanReadableSize(static_cast<quint64>(pResource->dataSize())),
-                                             m_resourceFileStoragePaths[i]);
+                                             m_resourceFileStoragePaths[i], resourceImageSize);
         }
         else
         {

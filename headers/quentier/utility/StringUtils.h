@@ -22,6 +22,7 @@
 #include <quentier/utility/Linkage.h>
 #include <QString>
 #include <QVector>
+#include <QSet>
 
 namespace quentier {
 
@@ -36,6 +37,18 @@ public:
     void removePunctuation(QString & str, const QVector<QChar> & charactersToPreserve = QVector<QChar>()) const;
     void removeDiacritics(QString & str) const;
     void removeNewlines(QString & str) const;
+
+    struct StringFilterPredicate
+    {
+        StringFilterPredicate(QSet<QString> & filteredStrings) : m_filteredStrings(filteredStrings) {}
+
+        bool operator()(const QString & str) const
+        {
+            return m_filteredStrings.contains(str);
+        }
+
+        QSet<QString> &     m_filteredStrings;
+    };
 
 private:
     StringUtilsPrivate * const d_ptr;

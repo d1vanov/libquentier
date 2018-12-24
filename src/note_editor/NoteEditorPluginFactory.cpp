@@ -20,8 +20,6 @@
 #include "GenericResourceDisplayWidget.h"
 #include "EncryptedAreaPlugin.h"
 #include "NoteEditor_p.h"
-#include "ResourceFileStorageManager.h"
-#include <quentier/utility/FileIOProcessorAsync.h>
 #include <quentier/utility/EncryptionManager.h>
 #include <quentier/enml/DecryptedTextManager.h>
 #include <quentier/utility/QuentierCheckPtr.h>
@@ -33,12 +31,12 @@
 #include <QFileIconProvider>
 #include <QDir>
 #include <QRegExp>
+#include <cmath>
+#include <algorithm>
 
 namespace quentier {
 
 NoteEditorPluginFactory::NoteEditorPluginFactory(NoteEditorPrivate & noteEditor,
-                                                 const ResourceFileStorageManager & resourceFileStorageManager,
-                                                 const FileIOProcessorAsync & fileIOThreadWorker,
                                                  QObject * parent) :
     QWebPluginFactory(parent),
     m_noteEditor(noteEditor),
@@ -47,14 +45,13 @@ NoteEditorPluginFactory::NoteEditorPluginFactory(NoteEditorPrivate & noteEditor,
     m_pCurrentNote(Q_NULLPTR),
     m_fallbackResourceIcon(QIcon::fromTheme(QStringLiteral("unknown"))),
     m_mimeDatabase(),
-    m_pResourceFileStorageManager(&resourceFileStorageManager),
-    m_pFileIOProcessorAsync(&fileIOThreadWorker),
     m_resourceIconCache(),
     m_fileSuffixesCache(),
-    m_filterStringsCache(),
     m_genericResourceDisplayWidgetPlugins(),
     m_encryptedAreaPlugins()
-{}
+{
+    QNDEBUG(QStringLiteral("NoteEditorPluginFactory::NoteEditorPluginFactory"));
+}
 
 NoteEditorPluginFactory::~NoteEditorPluginFactory()
 {
@@ -289,15 +286,38 @@ void NoteEditorPluginFactory::updateResource(const Resource & resource)
     auto it = std::find_if(m_genericResourceDisplayWidgetPlugins.begin(),
                            m_genericResourceDisplayWidgetPlugins.end(),
                            GenericResourceDisplayWidgetFinder(resource));
-    if (it != m_genericResourceDisplayWidgetPlugins.end())
-    {
-        QPointer<GenericResourceDisplayWidget> pWidget = *it;
-        if (Q_UNLIKELY(pWidget.isNull())) {
-            return;
-        }
-
-        pWidget->updateResourceName(resource.displayName());
+    if (it == m_genericResourceDisplayWidgetPlugins.end()) {
+        return;
     }
+
+    QPointer<GenericResourceDisplayWidget> pWidget = *it;
+    if (Q_UNLIKELY(pWidget.isNull())) {
+        return;
+    }
+
+    pWidget->updateResourceName(resource.displayName());
+
+    quint64 bytes = 0;
+    if (resource.hasDataSize()) {
+        bytes = static_cast<quint64>(std::max(resource.dataSize(), 0));
+    }
+    else if (resource.hasDataBody()) {
+        const QByteArray & data = resource.dataBody();
+        bytes = static_cast<quint64>(std::max(data.size(), 0));
+    }
+    else if (resource.hasAlternateDataSize()) {
+        bytes = static_cast<quint64>(std::max(resource.alternateDataSize(), 0));
+    }
+    else if (resource.hasAlternateDataBody()) {
+        const QByteArray & data = resource.alternateDataBody();
+        bytes = static_cast<quint64>(std::max(data.size(), 0));
+    }
+    else {
+        return;
+    }
+
+    QString resourceDataSize = humanReadableSize(bytes);
+    pWidget->updateResourceSize(resourceDataSize);
 }
 
 QObject * NoteEditorPluginFactory::create(const QString & pluginType, const QUrl & url,
@@ -432,9 +452,17 @@ QObject * NoteEditorPluginFactory::createResourcePlugin(const QStringList & argu
     }
 
     QString resourceDataSize;
-    if (pCurrentResource->hasDataBody()) {
+    if (pCurrentResource->hasDataSize()) {
+        quint64 bytes = static_cast<quint64>(std::max(pCurrentResource->dataSize(), 0));
+        resourceDataSize = humanReadableSize(bytes);
+    }
+    else if (pCurrentResource->hasDataBody()) {
         const QByteArray & data = pCurrentResource->dataBody();
         quint64 bytes = static_cast<quint64>(data.size());
+        resourceDataSize = humanReadableSize(bytes);
+    }
+    else if (pCurrentResource->hasAlternateDataSize()) {
+        quint64 bytes = static_cast<quint64>(std::max(pCurrentResource->alternateDataSize(), 0));
         resourceDataSize = humanReadableSize(bytes);
     }
     else if (pCurrentResource->hasAlternateDataBody()) {
@@ -456,26 +484,19 @@ QObject * NoteEditorPluginFactory::createResourcePlugin(const QStringList & argu
         m_fileSuffixesCache[resourceMimeType] = fileSuffixes;
     }
 
-    QString filterString;
-    auto filterStringIt = m_filterStringsCache.find(resourceMimeType);
-    if (filterStringIt == m_filterStringsCache.end()) {
-        filterString = getFilterStringForMimeType(resourceMimeType);
-        m_filterStringsCache[resourceMimeType] = filterString;
-    }
-
     QWidget * pParentWidget = qobject_cast<QWidget*>(parent());
     GenericResourceDisplayWidget * pGenericResourceDisplayWidget = new GenericResourceDisplayWidget(pParentWidget);
-    QObject::connect(pGenericResourceDisplayWidget, QNSIGNAL(GenericResourceDisplayWidget,openResourceRequest,const QByteArray&),
-                     &m_noteEditor, QNSLOT(NoteEditorPrivate,openAttachment,const QByteArray&));
+    QObject::connect(pGenericResourceDisplayWidget, QNSIGNAL(GenericResourceDisplayWidget,openResourceRequest,QByteArray),
+                     &m_noteEditor, QNSLOT(NoteEditorPrivate,openAttachment,QByteArray));
+    QObject::connect(pGenericResourceDisplayWidget, QNSIGNAL(GenericResourceDisplayWidget,saveResourceRequest,QByteArray),
+                     &m_noteEditor, QNSLOT(NoteEditorPrivate,saveAttachmentDialog,QByteArray));
 
     // NOTE: upon return this generic resource display widget would be reparented to the caller anyway,
     // the parent setting above is strictly for possible use within initialize method (for example, if
     // the widget would need to create some dialog window, it could be modal due to the existence of the parent)
 
     pGenericResourceDisplayWidget->initialize(cachedIconIt.value(), resourceDisplayName,
-                                              resourceDataSize, fileSuffixes, filterString,
-                                              *pCurrentResource, *pAccount, *m_pResourceFileStorageManager,
-                                              *m_pFileIOProcessorAsync);
+                                              resourceDataSize, *pCurrentResource);
 
     m_genericResourceDisplayWidgetPlugins.push_back(QPointer<GenericResourceDisplayWidget>(pGenericResourceDisplayWidget));
     return pGenericResourceDisplayWidget;

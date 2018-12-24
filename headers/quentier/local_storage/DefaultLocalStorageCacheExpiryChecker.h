@@ -41,27 +41,32 @@ public:
     virtual DefaultLocalStorageCacheExpiryChecker * clone() const Q_DECL_OVERRIDE;
 
     /**
-     * @return true if the current number of cached notes is higher than a reasonable limit, false otherwise
+     * @return false if the current number of cached notes is higher than a reasonable limit, true otherwise
      */
     virtual bool checkNotes() const Q_DECL_OVERRIDE;
 
     /**
-     * @return true if the current number of cached notebooks is higher than a reasonable limit, false otherwise
+     * @return false if the current number of cached resource is higher than a reasonable limit, true otherwise
+     */
+    virtual bool checkResources() const Q_DECL_OVERRIDE;
+
+    /**
+     * @return false if the current number of cached notebooks is higher than a reasonable limit, true otherwise
      */
     virtual bool checkNotebooks() const Q_DECL_OVERRIDE;
 
     /**
-     * @return true if the current number of cached tags is higher than a reasonable limit, false otherwise
+     * @return false if the current number of cached tags is higher than a reasonable limit, true otherwise
      */
     virtual bool checkTags() const Q_DECL_OVERRIDE;
 
     /**
-     * @return true if the current number of cached linked notebooks is higher than a reasonable limit, false otherwise
+     * @return false if the current number of cached linked notebooks is higher than a reasonable limit, true otherwise
      */
     virtual bool checkLinkedNotebooks() const Q_DECL_OVERRIDE;
 
     /**
-     * @return true if the current number of cached saved searches is higher than a reasonable limit, false otherwise
+     * @return false if the current number of cached saved searches is higher than a reasonable limit, true otherwise
      */
     virtual bool checkSavedSearches() const Q_DECL_OVERRIDE;
 

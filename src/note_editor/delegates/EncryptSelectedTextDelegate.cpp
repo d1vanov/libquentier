@@ -133,7 +133,7 @@ void EncryptSelectedTextDelegate::onSelectedTextEncrypted(QString selectedText, 
         ENMLConverter::escapeString(m_encryptedTextHtml);
     }
 
-    if (m_pNoteEditor->isModified()) {
+    if (m_pNoteEditor->isEditorPageModified()) {
         QObject::connect(m_pNoteEditor.data(), QNSIGNAL(NoteEditorPrivate,convertedToNote,Note),
                          this, QNSLOT(EncryptSelectedTextDelegate,onOriginalPageConvertedToNote,Note));
         m_pNoteEditor->convertToNote();

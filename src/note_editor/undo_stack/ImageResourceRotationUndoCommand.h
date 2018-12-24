@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Dmitry Ivanov
+ * Copyright 2016-2018 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -22,6 +22,7 @@
 #include "INoteEditorUndoCommand.h"
 #include "../NoteEditor_p.h"
 #include <quentier/types/Resource.h>
+#include <QSize>
 
 namespace quentier {
 
@@ -31,11 +32,13 @@ class Q_DECL_HIDDEN ImageResourceRotationUndoCommand: public INoteEditorUndoComm
 public:
     ImageResourceRotationUndoCommand(const QByteArray & resourceDataBefore, const QByteArray & resourceHashBefore,
                                      const QByteArray & resourceRecognitionDataBefore, const QByteArray & resourceRecognitionDataHashBefore,
-                                     const Resource & resourceAfter, const INoteEditorBackend::Rotation::type rotationDirection,
+                                     const QSize & resourceImageSizeBefore, const Resource & resourceAfter,
+                                     const INoteEditorBackend::Rotation::type rotationDirection,
                                      NoteEditorPrivate & noteEditor, QUndoCommand * parent = Q_NULLPTR);
     ImageResourceRotationUndoCommand(const QByteArray & resourceDataBefore, const QByteArray & resourceHashBefore,
                                      const QByteArray & resourceRecognitionDataBefore, const QByteArray & resourceRecognitionDataHashBefore,
-                                     const Resource & resourceAfter, const INoteEditorBackend::Rotation::type rotationDirection,
+                                     const QSize & resourceImageSizeBefore, const Resource & resourceAfter,
+                                     const INoteEditorBackend::Rotation::type rotationDirection,
                                      NoteEditorPrivate & noteEditor, const QString & text, QUndoCommand * parent = Q_NULLPTR);
     virtual ~ImageResourceRotationUndoCommand();
 
@@ -47,6 +50,7 @@ private:
     const QByteArray                            m_resourceHashBefore;
     const QByteArray                            m_resourceRecognitionDataBefore;
     const QByteArray                            m_resourceRecognitionDataHashBefore;
+    const QSize                                 m_resourceImageSizeBefore;
     const Resource                              m_resourceAfter;
     const INoteEditorBackend::Rotation::type    m_rotationDirection;
 };
