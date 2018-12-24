@@ -471,8 +471,8 @@ bool renameFile(const QString & from, const QString & to, ErrorString & errorDes
 {
 #ifdef Q_OS_WIN
 
-    std::wstring fromW = QDir::toNativeSeparators(from).toStdWstring();
-    std::wstring toW = QDir::toNativeSeparators(to).toStdWstring();
+    std::wstring fromW = QDir::toNativeSeparators(from).toStdWString();
+    std::wstring toW = QDir::toNativeSeparators(to).toStdWString();
     int res = MoveFileExW(fromW.c_str(), toW.c_str(), MOVEFILE_COPY_ALLOWED | MOVEFILE_REPLACE_EXISTING | MOVEFILE_WRITE_THROUGH);
     if (res == 0)
     {
@@ -481,9 +481,9 @@ bool renameFile(const QString & from, const QString & to, ErrorString & errorDes
         LPTSTR errorText = NULL;
 
         Q_UNUSED(FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_IGNORE_INSERTS,
-                               NULL, GetLastError(), MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPSTR)&errorText, 0, NULL))
+                               NULL, GetLastError(), MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPTSTR)&errorText, 0, NULL))
         if (errorText != NULL) {
-            errorDescription.details() += QString::fromUtf16(errorText);
+            errorDescription.details() += QString::fromWCharArray(errorText);
             LocalFree(errorText);
             errorText = 0;
         }
