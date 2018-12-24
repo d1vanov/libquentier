@@ -34,6 +34,7 @@
 #endif
 
 #include <limits>
+#include <string>
 
 #include <qwindowdefs.h>
 #include <QtGui/qwindowdefs_win.h>
@@ -43,7 +44,9 @@
 #define SECURITY_WIN32
 #include <security.h>
 
-#else
+#else // defined Q_OS_WIN
+
+#include <cstdio>
 
 #if defined Q_OS_MAC
 #if (QT_VERSION < QT_VERSION_CHECK(5, 0, 0))
@@ -462,6 +465,53 @@ QByteArray readFileContents(const QString & filePath, ErrorString & errorDescrip
     istrm.read(result.data(), length);
 
     return result;
+}
+
+bool renameFile(const QString & from, const QString & to, ErrorString & errorDescription)
+{
+#ifdef Q_OS_WIN
+
+    std::wstring fromW = QDir::toNativeSeparators(from).toStdWstring();
+    std::wstring toW = QDir::toNativeSeparators(to).toStdWstring();
+    int res = MoveFileExW(fromW.c_str(), toW.c_str(), MOVEFILE_COPY_ALLOWED | MOVEFILE_REPLACE_EXISTING | MOVEFILE_WRITE_THROUGH);
+    if (res == 0)
+    {
+        errorDescription.setBase(QT_TRANSLATE_NOOP("renameFile", "failed to rename file"));
+
+        LPTSTR errorText = NULL;
+
+        Q_UNUSED(FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_IGNORE_INSERTS,
+                               NULL, GetLastError(), MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPSTR)&errorText, 0, NULL))
+        if (errorText != NULL) {
+            errorDescription.details() += QString::fromUtf16(errorText);
+            LocalFree(errorText);
+            errorText = 0;
+        }
+
+        errorDescription.details() += QStringLiteral("; from = ");
+        errorDescription.details() += from;
+        errorDescription.details() += QStringLiteral(", to = ");
+        errorDescription.details() += to;
+        return false;
+    }
+
+    return true;
+
+#else // Q_OS_WIN
+
+    int res = rename(from.toUtf8().constData(), to.toUtf8().constData());
+    if (res != 0) {
+        errorDescription.setBase(QT_TRANSLATE_NOOP("renameFile", "failed to rename file"));
+        errorDescription.details() += QString::fromUtf8(strerror(errno));
+        errorDescription.details() += QStringLiteral("; from = ");
+        errorDescription.details() += from;
+        errorDescription.details() += QStringLiteral(", to = ");
+        errorDescription.details() += to;
+        return false;
+    }
+
+    return true;
+#endif // Q_OS_WIN
 }
 
 } // namespace quentier

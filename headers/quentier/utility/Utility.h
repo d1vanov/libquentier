@@ -209,6 +209,22 @@ bool QUENTIER_EXPORT removeDir(const QString & dirPath);
  */
 QByteArray QUENTIER_EXPORT readFileContents(const QString & filePath, ErrorString & errorDescription);
 
+/**
+ * renameFile - renames file with absolute path "from" to file with absolute
+ * path "to". This function handles the case when file "to" already exists. On
+ * Linux and Mac this function simply calls "rename" from the standard C library
+ * while on Windows it calls MoveFileExW with flags MOVEFILE_COPY_ALLOWED,
+ * MOVEFILE_REPLACE_EXISTING and MOVEFILE_WRITE_THROUGH
+ *
+ * @param from              The absolute file path of the file to be renamed
+ * @param to                The absolute target file path
+ * @param errorDescription  The textual description of the error in case of
+ *                          inability to rename the file
+ * @return                  True if file was successfully renamed, false
+ *                          otherwise
+ */
+bool QUENTIER_EXPORT renameFile(const QString & from, const QString & to, ErrorString & errorDescription);
+
 } // namespace quentier
 
 #endif // LIB_QUENTIER_UTILITY_UTILITY_H
