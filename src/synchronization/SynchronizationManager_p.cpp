@@ -207,7 +207,24 @@ void SynchronizationManagerPrivate::authenticate()
         return;
     }
 
-    authenticateImpl(AuthContext::Request);
+    authenticateImpl(AuthContext::NewUserRequest);
+}
+
+void SynchronizationManagerPrivate::authenticateCurrentAccount()
+{
+    QNDEBUG(QStringLiteral("SynchronizationManagerPrivate::authenticateCurrentAccount"));
+
+    if (m_authenticationInProgress || m_writingAuthToken || m_writingShardId) {
+        ErrorString error(QT_TR_NOOP("Previous authentication is not finished yet, please wait"));
+        QNDEBUG(error << QStringLiteral(", authentication in progress = ")
+                << (m_authenticationInProgress ? QStringLiteral("true") : QStringLiteral("false"))
+                << QStringLiteral(", writing OAuth token = ") << (m_writingAuthToken ? QStringLiteral("true") : QStringLiteral("false"))
+                << QStringLiteral(", writing shard id = ") << (m_writingShardId ? QStringLiteral("true") : QStringLiteral("false")));
+        Q_EMIT authenticationFinished(/* success = */ false, error, Account());
+        return;
+    }
+
+    authenticateImpl(AuthContext::CurrentUserRequest);
 }
 
 void SynchronizationManagerPrivate::stop()
@@ -320,10 +337,13 @@ void SynchronizationManagerPrivate::onOAuthResult(bool success, qevercloud::User
     }
     else
     {
-        if (m_authContext == AuthContext::Request) {
+        if ((m_authContext == AuthContext::NewUserRequest) ||
+            (m_authContext == AuthContext::CurrentUserRequest))
+        {
             Q_EMIT authenticationFinished(/* success = */ false, errorDescription, Account());
         }
-        else {
+        else
+        {
             Q_EMIT notifyError(errorDescription);
         }
     }
@@ -847,7 +867,7 @@ void SynchronizationManagerPrivate::authenticateImpl(const AuthContext::type aut
 
     m_authContext = authContext;
 
-    if (m_authContext == AuthContext::Request) {
+    if (m_authContext == AuthContext::NewUserRequest) {
         QNDEBUG(QStringLiteral("Authentication of the new user is requested, proceeding to OAuth"));
         launchOAuth();
         return;
@@ -1071,7 +1091,8 @@ void SynchronizationManagerPrivate::finalizeAuthentication()
         launchSync();
         break;
     }
-    case AuthContext::Request:
+    case AuthContext::NewUserRequest:
+    case AuthContext::CurrentUserRequest:
     {
         Account account = m_pRemoteToLocalSyncManager->account();
         QNDEBUG(QStringLiteral("Emitting the authenticationFinished signal: ") << account);
