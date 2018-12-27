@@ -87,6 +87,11 @@ void initializeLibquentier()
 
     // Ensure the instance is created now and not later
     Q_UNUSED(NoteEditorLocalStorageBroker::instance())
+
+#ifdef QUENTIER_USE_QT_WEB_ENGINE
+    // Attempt to workaround https://bugreports.qt.io/browse/QTBUG-40765
+    QCoreApplication::setAttribute(Qt::AA_DontCreateNativeWidgetSiblings);
+#endif
 }
 
 bool checkUpdateSequenceNumber(const int32_t updateSequenceNumber)
