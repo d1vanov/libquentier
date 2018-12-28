@@ -20,15 +20,10 @@
 #define LIB_QUENTIER_UTILITY_KEYCHAIN_SERVICE_H
 
 #include <quentier_private/utility/IKeychainService.h>
-#include <QHash>
-
-#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
-#include <qt5keychain/keychain.h>
-#else
-#include <qtkeychain/keychain.h>
-#endif
 
 namespace quentier {
+
+QT_FORWARD_DECLARE_CLASS(QtKeychainWrapper)
 
 class KeychainService: public IKeychainService
 {
@@ -41,18 +36,14 @@ public:
     virtual QUuid startReadPasswordJob(const QString & service, const QString & key) Q_DECL_OVERRIDE;
     virtual QUuid startDeletePasswordJob(const QString & service, const QString & key) Q_DECL_OVERRIDE;
 
-private Q_SLOTS:
-    void onWritePasswordJobFinished(QKeychain::Job * pJob);
-    void onReadPasswordJobFinished(QKeychain::Job * pJob);
-    void onDeletePasswordJobFinished(QKeychain::Job * pJob);
+Q_SIGNALS:
+    // private signals
+    void notifyStartWritePasswordJob(QUuid jobId, QString service, QString key, QString password);
+    void notifyStartReadPasswordJob(QUuid jobId, QString service, QString key);
+    void notifyStartDeletePasswordJob(QUuid jobId, QString service, QString key);
 
 private:
-    ErrorCode::type translateErrorCode(const QKeychain::Error errorCode) const;
-
-private:
-    QHash<QKeychain::ReadPasswordJob*, QUuid>   m_readPasswordJobs;
-    QHash<QKeychain::WritePasswordJob*, QUuid>  m_writePasswordJobs;
-    QHash<QKeychain::DeletePasswordJob*, QUuid> m_deletePasswordJobs;
+    QtKeychainWrapper * m_pQtKeychainWrapper;
 };
 
 } // namespace quentier
