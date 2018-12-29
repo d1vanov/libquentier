@@ -493,7 +493,12 @@ void SynchronizationManagerPrivate::onReadPasswordJobFinished(QUuid jobId, IKeyc
             Q_UNUSED(m_linkedNotebookGuidsWithoutLocalAuthData.insert(readAuthTokenIt->second))
         }
 
-        authenticateToLinkedNotebooks();
+        auto readShardIdJobIt = m_readLinkedNotebookShardIdJobIdsWithLinkedNotebookGuids.left.find(readAuthTokenIt->second);
+        if (readShardIdJobIt == m_readLinkedNotebookShardIdJobIdsWithLinkedNotebookGuids.left.end()) {
+            QNDEBUG(QStringLiteral("Found no pending read linked notebook shard id job"));
+            authenticateToLinkedNotebooks();
+        }
+
         Q_UNUSED(m_readLinkedNotebookAuthTokenJobIdsWithLinkedNotebookGuids.right.erase(readAuthTokenIt))
         return;
     }
@@ -521,7 +526,12 @@ void SynchronizationManagerPrivate::onReadPasswordJobFinished(QUuid jobId, IKeyc
             Q_UNUSED(m_linkedNotebookGuidsWithoutLocalAuthData.insert(readShardIdIt->second))
         }
 
-        authenticateToLinkedNotebooks();
+        auto readAuthTokenJobIt = m_readLinkedNotebookAuthTokenJobIdsWithLinkedNotebookGuids.left.find(readShardIdIt->second);
+        if (readAuthTokenJobIt == m_readLinkedNotebookAuthTokenJobIdsWithLinkedNotebookGuids.left.end()) {
+            QNDEBUG(QStringLiteral("Found no pending read linked notebook auth token job"));
+            authenticateToLinkedNotebooks();
+        }
+
         Q_UNUSED(m_readLinkedNotebookShardIdJobIdsWithLinkedNotebookGuids.right.erase(readShardIdIt))
         return;
     }
@@ -742,11 +752,14 @@ void SynchronizationManagerPrivate::createConnections(IAuthenticationManager & a
 
     // Connections with keychain service
     QObject::connect(m_pKeychainService, QNSIGNAL(IKeychainService,writePasswordJobFinished,QUuid,ErrorCode::type,ErrorString),
-                     this, QNSLOT(SynchronizationManagerPrivate,onWritePasswordJobFinished,QUuid,ErrorCode::type,ErrorString));
+                     this, QNSLOT(SynchronizationManagerPrivate,onWritePasswordJobFinished,QUuid,ErrorCode::type,ErrorString),
+                     Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
     QObject::connect(m_pKeychainService, QNSIGNAL(IKeychainService,readPasswordJobFinished,QUuid,ErrorCode::type,ErrorString,QString),
-                     this, QNSLOT(SynchronizationManagerPrivate,onReadPasswordJobFinished,QUuid,ErrorCode::type,ErrorString,QString));
+                     this, QNSLOT(SynchronizationManagerPrivate,onReadPasswordJobFinished,QUuid,ErrorCode::type,ErrorString,QString),
+                     Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
     QObject::connect(m_pKeychainService, QNSIGNAL(IKeychainService,deletePasswordJobFinished,QUuid,ErrorCode::type,ErrorString),
-                     this, QNSLOT(SynchronizationManagerPrivate,onDeletePasswordJobFinished,QUuid,ErrorCode::type,ErrorString));
+                     this, QNSLOT(SynchronizationManagerPrivate,onDeletePasswordJobFinished,QUuid,ErrorCode::type,ErrorString),
+                     Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
 
     // Connections with remote to local synchronization manager
     QObject::connect(m_pRemoteToLocalSyncManager, QNSIGNAL(RemoteToLocalSynchronizationManager,finished,qint32,qevercloud::Timestamp,QHash<QString,qint32>,
@@ -1252,6 +1265,8 @@ void SynchronizationManagerPrivate::authenticateToLinkedNotebooks()
     QString keyPrefix = QCoreApplication::applicationName() + QStringLiteral("_") + m_host +
                         QStringLiteral("_") + QString::number(m_OAuthResult.m_userId);
 
+    QSet<QString> linkedNotebookGuidsPendingReadAuthTokenAndShardIdInKeychain;
+
     for(auto it = m_linkedNotebookAuthDataPendingAuthentication.begin();
         it != m_linkedNotebookAuthDataPendingAuthentication.end(); )
     {
@@ -1295,21 +1310,7 @@ void SynchronizationManagerPrivate::authenticateToLinkedNotebooks()
                 QNDEBUG(QStringLiteral("Haven't found the authentication token and shard id for linked notebook guid ") << guid
                         << QStringLiteral(" in the local cache, will try to read them from the keychain"));
 
-                // 1) Set up the job of reading the authentication token
-                auto readAuthTokenJobIt = m_readLinkedNotebookAuthTokenJobIdsWithLinkedNotebookGuids.left.find(guid);
-                if (readAuthTokenJobIt == m_readLinkedNotebookAuthTokenJobIdsWithLinkedNotebookGuids.left.end()) {
-                    QUuid jobId = m_pKeychainService->startReadPasswordJob(READ_LINKED_NOTEBOOK_AUTH_TOKEN_JOB,
-                                                                           keyPrefix + LINKED_NOTEBOOK_AUTH_TOKEN_KEY_PART + guid);
-                    m_readLinkedNotebookAuthTokenJobIdsWithLinkedNotebookGuids.insert(JobIdWithGuidBimap::value_type(guid, jobId));
-                }
-
-                // 2) Set up the job reading the shard id
-                auto readShardIdJobIt = m_readLinkedNotebookShardIdJobIdsWithLinkedNotebookGuids.left.find(guid);
-                if (readShardIdJobIt == m_readLinkedNotebookShardIdJobIdsWithLinkedNotebookGuids.left.end()) {
-                    QUuid jobId = m_pKeychainService->startReadPasswordJob(READ_LINKED_NOTEBOOK_SHARD_ID_JOB,
-                                                                           keyPrefix + LINKED_NOTEBOOK_SHARD_ID_KEY_PART + guid);
-                    m_readLinkedNotebookShardIdJobIdsWithLinkedNotebookGuids.insert(JobIdWithGuidBimap::value_type(guid, jobId));
-                }
+                Q_UNUSED(linkedNotebookGuidsPendingReadAuthTokenAndShardIdInKeychain.insert(guid))
 
                 ++it;
                 continue;
@@ -1444,6 +1445,36 @@ void SynchronizationManagerPrivate::authenticateToLinkedNotebooks()
         QNDEBUG(QStringLiteral("Retrieved authentication data for all requested linked notebooks, sending the answer now"));
         Q_EMIT sendAuthenticationTokensForLinkedNotebooks(m_cachedLinkedNotebookAuthTokensAndShardIdsByGuid,
                                                           m_cachedLinkedNotebookAuthTokenExpirationTimeByGuid);
+    }
+
+    if (!linkedNotebookGuidsPendingReadAuthTokenAndShardIdInKeychain.isEmpty())
+    {
+        for(auto it = linkedNotebookGuidsPendingReadAuthTokenAndShardIdInKeychain.constBegin(),
+            end = linkedNotebookGuidsPendingReadAuthTokenAndShardIdInKeychain.constEnd(); it != end; ++it)
+        {
+            const QString & guid = *it;
+
+            // 1) Set up the job of reading the authentication token
+            auto readAuthTokenJobIt = m_readLinkedNotebookAuthTokenJobIdsWithLinkedNotebookGuids.left.find(guid);
+            if (readAuthTokenJobIt == m_readLinkedNotebookAuthTokenJobIdsWithLinkedNotebookGuids.left.end()) {
+                QUuid jobId = m_pKeychainService->startReadPasswordJob(READ_LINKED_NOTEBOOK_AUTH_TOKEN_JOB,
+                                                                       keyPrefix + LINKED_NOTEBOOK_AUTH_TOKEN_KEY_PART + guid);
+                m_readLinkedNotebookAuthTokenJobIdsWithLinkedNotebookGuids.insert(JobIdWithGuidBimap::value_type(guid, jobId));
+            }
+
+            // 2) Set up the job reading the shard id
+            auto readShardIdJobIt = m_readLinkedNotebookShardIdJobIdsWithLinkedNotebookGuids.left.find(guid);
+            if (readShardIdJobIt == m_readLinkedNotebookShardIdJobIdsWithLinkedNotebookGuids.left.end()) {
+                QUuid jobId = m_pKeychainService->startReadPasswordJob(READ_LINKED_NOTEBOOK_SHARD_ID_JOB,
+                                                                       keyPrefix + LINKED_NOTEBOOK_SHARD_ID_KEY_PART + guid);
+                m_readLinkedNotebookShardIdJobIdsWithLinkedNotebookGuids.insert(JobIdWithGuidBimap::value_type(guid, jobId));
+            }
+        }
+
+        QNDEBUG(QStringLiteral("Pending read auth tokens and shard ids from keychain for ")
+                << linkedNotebookGuidsPendingReadAuthTokenAndShardIdInKeychain.size()
+                << QStringLiteral(" linked notebooks"));
+        return;
     }
 
     // Caching linked notebook's authentication token's expiration time in app settings

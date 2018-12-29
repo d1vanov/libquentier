@@ -26,18 +26,24 @@ KeychainService::KeychainService(QObject * parent) :
     m_pQtKeychainWrapper(new QtKeychainWrapper)
 {
     QObject::connect(this, QNSIGNAL(KeychainService,notifyStartWritePasswordJob,QUuid,QString,QString,QString),
-                     m_pQtKeychainWrapper, QNSLOT(QtKeychainWrapper,onStartWritePasswordJob,QUuid,QString,QString,QString));
+                     m_pQtKeychainWrapper, QNSLOT(QtKeychainWrapper,onStartWritePasswordJob,QUuid,QString,QString,QString),
+                     Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
     QObject::connect(this, QNSIGNAL(KeychainService,notifyStartReadPasswordJob,QUuid,QString,QString),
-                     m_pQtKeychainWrapper, QNSLOT(QtKeychainWrapper,onStartReadPasswordJob,QUuid,QString,QString));
+                     m_pQtKeychainWrapper, QNSLOT(QtKeychainWrapper,onStartReadPasswordJob,QUuid,QString,QString),
+                     Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
     QObject::connect(this, QNSIGNAL(KeychainService,notifyStartDeletePasswordJob,QUuid,QString,QString),
-                     m_pQtKeychainWrapper, QNSLOT(QtKeychainWrapper,onStartDeletePasswordJob,QUuid,QString,QString));
+                     m_pQtKeychainWrapper, QNSLOT(QtKeychainWrapper,onStartDeletePasswordJob,QUuid,QString,QString),
+                     Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
 
     QObject::connect(m_pQtKeychainWrapper, QNSIGNAL(QtKeychainWrapper,writePasswordJobFinished,QUuid,ErrorCode::type,ErrorString),
-                     this, QNSIGNAL(KeychainService,writePasswordJobFinished,QUuid,ErrorCode::type,ErrorString));
+                     this, QNSIGNAL(KeychainService,writePasswordJobFinished,QUuid,ErrorCode::type,ErrorString),
+                     Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
     QObject::connect(m_pQtKeychainWrapper, QNSIGNAL(QtKeychainWrapper,readPasswordJobFinished,QUuid,ErrorCode::type,ErrorString,QString),
-                     this, QNSIGNAL(KeychainService,readPasswordJobFinished,QUuid,ErrorCode::type,ErrorString,QString));
+                     this, QNSIGNAL(KeychainService,readPasswordJobFinished,QUuid,ErrorCode::type,ErrorString,QString),
+                     Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
     QObject::connect(m_pQtKeychainWrapper, QNSIGNAL(QtKeychainWrapper,deletePasswordJobFinished,QUuid,ErrorCode::type,ErrorString),
-                     this, QNSIGNAL(KeychainService,deletePasswordJobFinished,QUuid,ErrorCode::type,ErrorString));
+                     this, QNSIGNAL(KeychainService,deletePasswordJobFinished,QUuid,ErrorCode::type,ErrorString),
+                     Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
 }
 
 KeychainService::~KeychainService()
