@@ -493,13 +493,15 @@ void SynchronizationManagerPrivate::onReadPasswordJobFinished(QUuid jobId, IKeyc
             Q_UNUSED(m_linkedNotebookGuidsWithoutLocalAuthData.insert(readAuthTokenIt->second))
         }
 
-        auto readShardIdJobIt = m_readLinkedNotebookShardIdJobIdsWithLinkedNotebookGuids.left.find(readAuthTokenIt->second);
-        if (readShardIdJobIt == m_readLinkedNotebookShardIdJobIdsWithLinkedNotebookGuids.left.end()) {
-            QNDEBUG(QStringLiteral("Found no pending read linked notebook shard id job"));
+        Q_UNUSED(m_readLinkedNotebookAuthTokenJobIdsWithLinkedNotebookGuids.right.erase(readAuthTokenIt))
+
+        if (m_readLinkedNotebookAuthTokenJobIdsWithLinkedNotebookGuids.empty() &&
+            m_readLinkedNotebookShardIdJobIdsWithLinkedNotebookGuids.empty())
+        {
+            QNDEBUG(QStringLiteral("No pending read linked notebook auth token or shard id job"));
             authenticateToLinkedNotebooks();
         }
 
-        Q_UNUSED(m_readLinkedNotebookAuthTokenJobIdsWithLinkedNotebookGuids.right.erase(readAuthTokenIt))
         return;
     }
 
@@ -526,13 +528,15 @@ void SynchronizationManagerPrivate::onReadPasswordJobFinished(QUuid jobId, IKeyc
             Q_UNUSED(m_linkedNotebookGuidsWithoutLocalAuthData.insert(readShardIdIt->second))
         }
 
-        auto readAuthTokenJobIt = m_readLinkedNotebookAuthTokenJobIdsWithLinkedNotebookGuids.left.find(readShardIdIt->second);
-        if (readAuthTokenJobIt == m_readLinkedNotebookAuthTokenJobIdsWithLinkedNotebookGuids.left.end()) {
-            QNDEBUG(QStringLiteral("Found no pending read linked notebook auth token job"));
+        Q_UNUSED(m_readLinkedNotebookShardIdJobIdsWithLinkedNotebookGuids.right.erase(readShardIdIt))
+
+        if (m_readLinkedNotebookShardIdJobIdsWithLinkedNotebookGuids.empty() &&
+            m_readLinkedNotebookAuthTokenJobIdsWithLinkedNotebookGuids.empty())
+        {
+            QNDEBUG(QStringLiteral("No pending read linked notebook auth token or shard id job"));
             authenticateToLinkedNotebooks();
         }
 
-        Q_UNUSED(m_readLinkedNotebookShardIdJobIdsWithLinkedNotebookGuids.right.erase(readShardIdIt))
         return;
     }
 }
