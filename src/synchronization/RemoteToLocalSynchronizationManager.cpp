@@ -275,6 +275,9 @@ void RemoteToLocalSynchronizationManager::setAccount(const Account & account)
     case Account::EvernoteAccountType::Premium:
         m_user.setServiceLevel(qevercloud::ServiceLevel::PREMIUM);
         break;
+    case Account::EvernoteAccountType::Business:
+        m_user.setServiceLevel(qevercloud::ServiceLevel::BUSINESS);
+        break;
     default:
         m_user.setServiceLevel(qevercloud::ServiceLevel::BASIC);
         break;
@@ -316,6 +319,9 @@ Account RemoteToLocalSynchronizationManager::account() const
             break;
         case qevercloud::ServiceLevel::PREMIUM:
             accountEnType = Account::EvernoteAccountType::Premium;
+            break;
+        case qevercloud::ServiceLevel::BUSINESS:
+            accountEnType = Account::EvernoteAccountType::Business;
             break;
         case qevercloud::ServiceLevel::BASIC:
         default:

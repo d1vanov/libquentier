@@ -419,7 +419,7 @@ void User::setServiceLevel(const qint8 level)
 {
     qevercloud::User & enUser = d->m_qecUser;
 
-    if (level <= static_cast<qint8>(qevercloud::ServiceLevel::PREMIUM)) {
+    if (level <= static_cast<qint8>(qevercloud::ServiceLevel::BUSINESS)) {
         enUser.serviceLevel = static_cast<ServiceLevel>(level);
     }
     else {
