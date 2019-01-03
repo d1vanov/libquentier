@@ -244,6 +244,7 @@ set(PRIVATE_HEADERS
     src/utility/FileIOProcessorAsync_p.h
     src/utility/FileSystemWatcher_p.h
     src/utility/KeychainService.h
+    src/utility/QtKeychainWrapper.h
     src/utility/ShortcutManager_p.h
     src/utility/SysInfo_p.h
     src/utility/StringUtils_p.h)
@@ -444,6 +445,7 @@ set(${PROJECT_NAME}_SOURCES
     src/utility/FileSystemWatcher_p.cpp
     src/utility/IKeychainService.cpp
     src/utility/KeychainService.cpp
+    src/utility/QtKeychainWrapper.cpp
     src/utility/Printable.cpp
     src/utility/QuentierApplication.cpp
     src/utility/QuentierUndoCommand.cpp

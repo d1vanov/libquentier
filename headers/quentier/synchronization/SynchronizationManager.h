@@ -85,12 +85,23 @@ public Q_SLOTS:
 
     /**
      * Use this slot to authenticate the new user to do the synchronization with the Evernote service via the client app.
-     * The invoking of slot would respond asynchronously with @link authenticationFinished @endlink signal but won't start
-     * the synchronization.
+     * The invocation of this slot would respond asynchronously with @link authenticationFinished @endlink signal but
+     * won't start the synchronization.
      *
      * Note that this slot would always proceed to the actual OAuth.
      */
     void authenticate();
+
+    /**
+     * Use this slot to authenticate the current account to do the synchronization with the Evernote service via the client app.
+     * The invocation of this slot would respond asynchronously with @link authenticationFinished @endlink signal but
+     * won't start the synchronization
+     *
+     * If no account was set to SynchronizationManager prior to this slot invocation, it would proceed to OAuth.
+     * Otherwise SynchronizationManager would first check whether the persistent authentication data is in place
+     * and actual. If yes, no OAuth would be performed.
+     */
+    void authenticateCurrentAccount();
 
     /**
      * Use this slot to launch the synchronization of data

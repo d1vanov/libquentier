@@ -103,6 +103,12 @@ void SynchronizationManager::authenticate()
     d->authenticate();
 }
 
+void SynchronizationManager::authenticateCurrentAccount()
+{
+    Q_D(SynchronizationManager);
+    d->authenticateCurrentAccount();
+}
+
 void SynchronizationManager::synchronize()
 {
     Q_D(SynchronizationManager);

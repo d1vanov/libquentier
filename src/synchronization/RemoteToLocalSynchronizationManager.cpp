@@ -297,8 +297,6 @@ void RemoteToLocalSynchronizationManager::setAccount(const Account & account)
 
 Account RemoteToLocalSynchronizationManager::account() const
 {
-    QNDEBUG(QStringLiteral("RemoteToLocalSynchronizationManager::account"));
-
     QString name;
     if (m_user.hasName()) {
         name = m_user.name();

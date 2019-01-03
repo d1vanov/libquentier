@@ -30,6 +30,7 @@
 #include <quentier/types/SharedNotebook.h>
 #include <quentier/local_storage/LocalStorageManager.h>
 #include <quentier/local_storage/NoteSearchQuery.h>
+#include <quentier_private/utility/IKeychainService.h>
 #include <QMetaType>
 #include <QSqlError>
 #include <QSharedPointer>
@@ -98,6 +99,9 @@ void registerMetatypes()
     qRegisterMetaType<QSqlError>("QSqlError");
 
     qRegisterMetaType<QList<std::pair<Tag, QStringList> > >("QList<std::pair<Tag, QStringList> >");
+
+    typedef IKeychainService::ErrorCode ErrorCode;
+    qRegisterMetaType<ErrorCode::type>("ErrorCode::type");
 }
 
 } // namespace quentier

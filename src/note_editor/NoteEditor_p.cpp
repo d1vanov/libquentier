@@ -2445,7 +2445,9 @@ void NoteEditorPrivate::clearCurrentNoteInfo()
 
     m_pendingNoteImageResourceTemporaryFiles = false;
 
-#ifndef QUENTIER_USE_QT_WEB_ENGINE
+#ifdef QUENTIER_USE_QT_WEB_ENGINE
+    m_webSocketServerPort = 0;
+#else
     page()->setPluginFactory(Q_NULLPTR);
     delete m_pPluginFactory;
     m_pPluginFactory = Q_NULLPTR;
@@ -2828,7 +2830,6 @@ void NoteEditorPrivate::onNoteResourceTemporaryFilesReady(QString noteLocalUid)
         }
 
         QString resourceLocalUid = resource.localUid();
-        removeSymlinksToImageResourceFile(resourceLocalUid);
 
         QString fileStoragePath = ResourceDataInTemporaryFileStorageManager::imageResourceFileStorageFolderPath() +
                                   QStringLiteral("/") + noteLocalUid + QStringLiteral("/") + resourceLocalUid +
@@ -4478,7 +4479,8 @@ void NoteEditorPrivate::setupWebSocketServer()
     QNDEBUG(QStringLiteral("Using automatically selected websocket server port ") << m_webSocketServerPort);
 
     QObject::connect(m_pWebSocketClientWrapper, &WebSocketClientWrapper::clientConnected,
-                     m_pWebChannel, &QWebChannel::connectTo);
+                     m_pWebChannel, &QWebChannel::connectTo,
+                     Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
 }
 
 void NoteEditorPrivate::setupJavaScriptObjects()
@@ -4486,26 +4488,32 @@ void NoteEditorPrivate::setupJavaScriptObjects()
     QNDEBUG(QStringLiteral("NoteEditorPrivate::setupJavaScriptObjects"));
 
     QObject::connect(m_pEnCryptElementClickHandler, &EnCryptElementOnClickHandler::decrypt,
-                     this, &NoteEditorPrivate::decryptEncryptedText);
+                     this, &NoteEditorPrivate::decryptEncryptedText,
+                     Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
 
     QObject::connect(m_pGenericResourceOpenAndSaveButtonsOnClickHandler,
                      &GenericResourceOpenAndSaveButtonsOnClickHandler::saveResourceRequest,
-                     this, &NoteEditorPrivate::onSaveResourceRequest);
+                     this, &NoteEditorPrivate::onSaveResourceRequest,
+                     Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
 
     QObject::connect(m_pGenericResourceOpenAndSaveButtonsOnClickHandler,
                      &GenericResourceOpenAndSaveButtonsOnClickHandler::openResourceRequest,
-                     this, &NoteEditorPrivate::onOpenResourceRequest);
+                     this, &NoteEditorPrivate::onOpenResourceRequest,
+                     Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
 
     QObject::connect(m_pTextCursorPositionJavaScriptHandler,
                      &TextCursorPositionJavaScriptHandler::textCursorPositionChanged,
-                     this, &NoteEditorPrivate::onTextCursorPositionChange);
+                     this, &NoteEditorPrivate::onTextCursorPositionChange,
+                     Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
 
     QObject::connect(m_pHyperlinkClickJavaScriptHandler,
                      &HyperlinkClickJavaScriptHandler::hyperlinkClicked,
-                     this, &NoteEditorPrivate::onHyperlinkClicked);
+                     this, &NoteEditorPrivate::onHyperlinkClicked,
+                     Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
 
     QObject::connect(m_pWebSocketWaiter, &WebSocketWaiter::ready,
-                     this, &NoteEditorPrivate::onWebSocketReady);
+                     this, &NoteEditorPrivate::onWebSocketReady,
+                     Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
 
     m_pWebChannel->registerObject(QStringLiteral("webSocketWaiter"), m_pWebSocketWaiter);
     m_pWebChannel->registerObject(QStringLiteral("actionsWatcher"), m_pActionsWatcher);

@@ -94,6 +94,7 @@ public Q_SLOTS:
     void setAccount(const Account & account);
     void synchronize();
     void authenticate();
+    void authenticateCurrentAccount();
     void stop();
 
     void revokeAuthentication(const qevercloud::UserID userId);
@@ -159,7 +160,8 @@ private:
         enum type {
             Blank = 0,
             SyncLaunch,
-            Request,
+            NewUserRequest,
+            CurrentUserRequest,
             AuthToLinkedNotebooks,
         };
     };
