@@ -391,6 +391,8 @@ QString serviceLevelToString(const qevercloud::ServiceLevel::type & level)
         return QStringLiteral("PLUS");
     case qevercloud::ServiceLevel::PREMIUM:
         return QStringLiteral("PREMIUM");
+    case qevercloud::ServiceLevel::BUSINESS:
+        return QStringLiteral("BUSINESS");
     default:
         return QStringLiteral("Unknown");
     }
