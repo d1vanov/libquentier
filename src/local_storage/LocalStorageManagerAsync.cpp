@@ -1051,6 +1051,13 @@ void LocalStorageManagerAsync::onUpdateNoteRequest(Note note, const LocalStorage
 
             if (!foundNoteInCache)
             {
+                if (note.hasGuid()) {
+                    previousNoteVersion.setGuid(note.guid());
+                }
+                else {
+                    previousNoteVersion.setLocalUid(note.localUid());
+                }
+
                 ErrorString errorDescription;
                 bool res = m_pLocalStorageManager->findNote(previousNoteVersion, errorDescription,
                                                             /* with resource metadata = */ false,
