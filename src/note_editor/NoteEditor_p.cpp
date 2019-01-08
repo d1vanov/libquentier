@@ -3122,7 +3122,9 @@ void NoteEditorPrivate::onNoteUpdated(Note note)
     if (Q_UNLIKELY(!m_pNotebook) || (m_pNotebook->localUid() != note.notebookLocalUid())) {
         QNDEBUG(QStringLiteral("Note's notebook has changed: new notebook local uid = ") << note.notebookLocalUid());
         // Re-requesting both note and notebook from NoteEditorLocalStorageBroker
-        Q_EMIT findNoteAndNotebook(m_noteLocalUid);
+        QString noteLocalUid = m_noteLocalUid;
+        clearCurrentNoteInfo();
+        Q_EMIT findNoteAndNotebook(noteLocalUid);
         return;
     }
 
