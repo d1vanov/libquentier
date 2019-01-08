@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Dmitry Ivanov
+ * Copyright 2016-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -20,6 +20,10 @@
 #include <quentier/local_storage/NoteSearchQuery.h>
 #include <quentier/logging/QuentierLogger.h>
 #include <quentier/utility/SysInfo.h>
+
+#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
+#include <QMetaMethod>
+#endif
 
 namespace quentier {
 
@@ -999,8 +1003,73 @@ void LocalStorageManagerAsync::onUpdateNoteRequest(Note note, const LocalStorage
 {
     try
     {
-        ErrorString errorDescription;
+        bool shouldCheckForNotebookChange = false;
+        bool shouldCheckForTagListUpdate = false;
 
+#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
+        static const QMetaMethod noteMovedToAnotherNotebookSignal = QMetaMethod::fromSignal(&LocalStorageManagerAsync::noteMovedToAnotherNotebook);
+        if (isSignalConnected(noteMovedToAnotherNotebookSignal)) {
+            shouldCheckForNotebookChange = true;
+        }
+
+        if (options & LocalStorageManager::UpdateNoteOption::UpdateTags)
+        {
+            static const QMetaMethod noteTagListChangedSignal = QMetaMethod::fromSignal(&LocalStorageManagerAsync::noteTagListChanged);
+            if (isSignalConnected(noteTagListChangedSignal)) {
+                shouldCheckForTagListUpdate = true;
+            }
+        }
+#else
+        if (receivers(SIGNAL(noteMovedToAnotherNotebook(QString,QString,QString))) > 0) {
+            shouldCheckForNotebookChange = true;
+        }
+
+        if ((options & LocalStorageManager::UpdateNoteOption::UpdateTags) &&
+            (receivers(SIGNAL(noteTagListChanged(QString,QStringList,QStringList))) > 0))
+        {
+            shouldCheckForTagListUpdate = true;
+        }
+#endif
+
+        Note previousNoteVersion;
+        if (shouldCheckForNotebookChange || shouldCheckForTagListUpdate)
+        {
+            bool foundNoteInCache = false;
+            if (m_useCache)
+            {
+                bool noteHasGuid = note.hasGuid();
+                const QString uid = (noteHasGuid ? note.guid() : note.localUid());
+                LocalStorageCacheManager::WhichUid wu = (noteHasGuid
+                                                         ? LocalStorageCacheManager::Guid
+                                                         : LocalStorageCacheManager::LocalUid);
+                const Note * pNote = m_pLocalStorageCacheManager->findNote(uid, wu);
+                if (pNote) {
+                    previousNoteVersion = *pNote;
+                    foundNoteInCache = true;
+                }
+            }
+
+            if (!foundNoteInCache)
+            {
+                if (note.hasGuid()) {
+                    previousNoteVersion.setGuid(note.guid());
+                }
+                else {
+                    previousNoteVersion.setLocalUid(note.localUid());
+                }
+
+                ErrorString errorDescription;
+                bool res = m_pLocalStorageManager->findNote(previousNoteVersion, errorDescription,
+                                                            /* with resource metadata = */ false,
+                                                            /* with resource binary data = */ false);
+                if (!res) {
+                    Q_EMIT updateNoteFailed(note, options, errorDescription, requestId);
+                    return;
+                }
+            }
+        }
+
+        ErrorString errorDescription;
         bool res = m_pLocalStorageManager->updateNote(note, options, errorDescription);
         if (!res) {
             Q_EMIT updateNoteFailed(note, options, errorDescription, requestId);
@@ -1046,6 +1115,53 @@ void LocalStorageManagerAsync::onUpdateNoteRequest(Note note, const LocalStorage
         }
 
         Q_EMIT updateNoteComplete(note, options, requestId);
+
+        if (shouldCheckForNotebookChange)
+        {
+            bool notebookChanged = false;
+            if (note.hasNotebookGuid() && previousNoteVersion.hasNotebookGuid()) {
+                notebookChanged = (note.notebookGuid() != previousNoteVersion.notebookGuid());
+            }
+            else {
+                notebookChanged = (note.notebookLocalUid() != previousNoteVersion.notebookLocalUid());
+            }
+
+            if (notebookChanged) {
+                QNDEBUG(QStringLiteral("Notebook change detected for note ") << note.localUid()
+                        << QStringLiteral(": moved from notebook ") << previousNoteVersion.notebookLocalUid()
+                        << QStringLiteral(" to notebook ") << note.notebookLocalUid());
+                Q_EMIT noteMovedToAnotherNotebook(note.localUid(), previousNoteVersion.notebookLocalUid(),
+                                                  note.notebookLocalUid());
+            }
+        }
+
+        if (shouldCheckForTagListUpdate)
+        {
+            const QStringList & previousTagLocalUids = previousNoteVersion.tagLocalUids();
+            const QStringList & updatedTagLocalUids = note.tagLocalUids();
+
+            bool tagListUpdated = (previousTagLocalUids.size() != updatedTagLocalUids.size());
+            if (!tagListUpdated)
+            {
+                for(auto it = previousTagLocalUids.constBegin(),
+                    end = previousTagLocalUids.constEnd(); it != end; ++it)
+                {
+                    const QString & prevTagLocalUid = *it;
+                    int index = updatedTagLocalUids.indexOf(prevTagLocalUid);
+                    if (index < 0) {
+                        tagListUpdated = true;
+                        break;
+                    }
+                }
+            }
+
+            if (tagListUpdated) {
+                QNDEBUG(QStringLiteral("Tags list update detected for note ") << note.localUid()
+                        << QStringLiteral(": previous tag local uids: ") << previousTagLocalUids.join(QStringLiteral(", "))
+                        << QStringLiteral("; updated tag local uids: ") << updatedTagLocalUids.join(QStringLiteral(",")));
+                Q_EMIT noteTagListChanged(note.localUid(), previousTagLocalUids, updatedTagLocalUids);
+            }
+        }
     }
     catch(const std::exception & e)
     {
@@ -1068,7 +1184,9 @@ void LocalStorageManagerAsync::onFindNoteRequest(Note note, bool withResourceMet
         {
             bool noteHasGuid = note.hasGuid();
             const QString uid = (noteHasGuid ? note.guid() : note.localUid());
-            LocalStorageCacheManager::WhichUid wu = (noteHasGuid ? LocalStorageCacheManager::Guid : LocalStorageCacheManager::LocalUid);
+            LocalStorageCacheManager::WhichUid wu = (noteHasGuid
+                                                     ? LocalStorageCacheManager::Guid
+                                                     : LocalStorageCacheManager::LocalUid);
 
             const Note * pNote = m_pLocalStorageCacheManager->findNote(uid, wu);
             if (pNote)

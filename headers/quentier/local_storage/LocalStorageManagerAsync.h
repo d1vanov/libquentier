@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Dmitry Ivanov
+ * Copyright 2016-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -196,6 +196,14 @@ Q_SIGNALS:
                                                 QUuid requestId = QUuid());
     void expungeNoteComplete(Note note, QUuid requestId = QUuid());
     void expungeNoteFailed(Note note, ErrorString errorDescription, QUuid requestId = QUuid());
+
+    // Specialized signal emitted alongside updateNoteComplete (after it)
+    // if the update of a note causes the change of its notebook
+    void noteMovedToAnotherNotebook(QString noteLocalUid, QString previousNotebookLocalUid, QString newNotebookLocalUid);
+
+    // Specialized signal emitted alongside updateNoteComplete (after it)
+    // if the update of a note causes the change of its set of tags
+    void noteTagListChanged(QString noteLocalUid, QStringList previousNoteTagLocalUids, QStringList newNoteTagLocalUids);
 
     // Tag-related signals:
     void getTagCountComplete(int tagCount, QUuid requestId = QUuid());

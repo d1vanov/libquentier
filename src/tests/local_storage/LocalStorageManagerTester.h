@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Dmitry Ivanov
+ * Copyright 2018-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -69,9 +69,9 @@ private Q_SLOTS:
     void localStorageManagerAsyncNotebooksTest();
     void localStorageManagerAsyncNotesTest();
     void localStorageManagerAsyncResourceTest();
+    void localStorageManagerAsyncNoteNotebookAndTagListTrackingTest();
 
     void localStorageCacheManagerTest();
-
 };
 
 } // namespace test
