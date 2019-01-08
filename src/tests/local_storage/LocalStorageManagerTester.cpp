@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Dmitry Ivanov
+ * Copyright 2018-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -19,6 +19,7 @@
 #include "LocalStorageManagerTester.h"
 #include "LocalStorageManagerTests.h"
 #include "SavedSearchLocalStorageManagerAsyncTester.h"
+#include "NoteNotebookAndTagListTrackingAsyncTester.h"
 #include "LinkedNotebookLocalStorageManagerAsyncTester.h"
 #include "TagLocalStorageManagerAsyncTester.h"
 #include "UserLocalStorageManagerAsyncTester.h"
@@ -1778,6 +1779,46 @@ void LocalStorageManagerTester::localStorageManagerAsyncResourceTest()
     }
     else if (resourceAsyncTestResult == EventLoopWithExitStatus::ExitStatus::Timeout) {
         QFAIL("Resource async tester failed to finish in time");
+    }
+}
+
+void LocalStorageManagerTester::localStorageManagerAsyncNoteNotebookAndTagListTrackingTest()
+{
+    int noteNotebookAndTagListTrackingTestResult = -1;
+    ErrorString errorDescription;
+    {
+        QTimer timer;
+        timer.setInterval(MAX_ALLOWED_TEST_DURATION_MSEC);
+        timer.setSingleShot(true);
+
+        NoteNotebookAndTagListTrackingAsyncTester noteNotebookAndTagListTrackingAsycTester;
+
+        EventLoopWithExitStatus loop;
+        QObject::connect(&timer, QNSIGNAL(QTimer,timeout), &loop, QNSLOT(EventLoopWithExitStatus,exitAsTimeout));
+        QObject::connect(&noteNotebookAndTagListTrackingAsycTester, QNSIGNAL(NoteNotebookAndTagListTrackingAsyncTester,success),
+                         &loop, QNSLOT(EventLoopWithExitStatus,exitAsSuccess));
+        QObject::connect(&noteNotebookAndTagListTrackingAsycTester, QNSIGNAL(NoteNotebookAndTagListTrackingAsyncTester,failure,QString),
+                         &loop, QNSLOT(EventLoopWithExitStatus,exitAsFailureWithError,QString));
+
+        QTimer slotInvokingTimer;
+        slotInvokingTimer.setInterval(500);
+        slotInvokingTimer.setSingleShot(true);
+
+        timer.start();
+        slotInvokingTimer.singleShot(0, &noteNotebookAndTagListTrackingAsycTester, SLOT(onInitTestCase()));
+        noteNotebookAndTagListTrackingTestResult = loop.exec();
+        errorDescription = loop.errorDescription();
+    }
+
+    if (noteNotebookAndTagListTrackingTestResult == -1) {
+        QFAIL("Internal error: incorrect return status from Note notebook and tag list tracking async tester");
+    }
+    else if (noteNotebookAndTagListTrackingTestResult == EventLoopWithExitStatus::ExitStatus::Failure) {
+        QFAIL(qPrintable(QString::fromUtf8("Detected failure during the asynchronous loop processing in Note notebook and tag list tracking async tester: ") +
+                         errorDescription.nonLocalizedString()));
+    }
+    else if (noteNotebookAndTagListTrackingTestResult == EventLoopWithExitStatus::ExitStatus::Timeout) {
+        QFAIL("Note notebook and tag list tracking async tester failed to finish in time");
     }
 }
 

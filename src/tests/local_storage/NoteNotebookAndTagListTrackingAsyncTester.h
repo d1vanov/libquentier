@@ -63,7 +63,13 @@ private Q_SLOTS:
 private:
     void createConnections();
     void clear();
+
     void createNoteInLocalStorage();
+    void moveNoteToAnotherNotebook();
+    void changeNoteTagsList();
+    void moveNoteToAnotherNotebookAlongWithTagListChange();
+
+    bool checkTagsListEqual(const QVector<Tag> & lhs, const QStringList & rhs) const;
 
 private:
     enum State
@@ -95,6 +101,9 @@ private:
     bool            m_receivedUpdateNoteCompleteSignal;
     bool            m_receivedNoteMovedToAnotherNotebookSignal;
     bool            m_receivedNoteTagsListChangedSignal;
+
+    int             m_noteMovedToAnotherNotebookSlotInvocationCount;
+    int             m_noteTagsListChangedSlotInvocationCount;
 };
 
 } // namespace test
