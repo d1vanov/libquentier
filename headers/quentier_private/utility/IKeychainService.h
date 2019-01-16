@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Dmitry Ivanov
+ * Copyright 2018-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -77,17 +77,25 @@ public:
         };
     };
 
-    friend QTextStream & operator<<(QTextStream & strm, const ErrorCode::type errorCode);
+    friend QTextStream & operator<<(QTextStream & strm,
+                                    const ErrorCode::type errorCode);
 
 public:
-    virtual QUuid startWritePasswordJob(const QString & service, const QString & key, const QString & password) = 0;
-    virtual QUuid startReadPasswordJob(const QString & service, const QString & key) = 0;
-    virtual QUuid startDeletePasswordJob(const QString & service, const QString & key) = 0;
+    virtual QUuid startWritePasswordJob(const QString & service,
+                                        const QString & key,
+                                        const QString & password) = 0;
+    virtual QUuid startReadPasswordJob(const QString & service,
+                                       const QString & key) = 0;
+    virtual QUuid startDeletePasswordJob(const QString & service,
+                                         const QString & key) = 0;
 
 Q_SIGNALS:
-    void writePasswordJobFinished(QUuid requestId, ErrorCode::type errorCode, ErrorString errorDescription);
-    void readPasswordJobFinished(QUuid requestId, ErrorCode::type errorCode, ErrorString errorDescription, QString password);
-    void deletePasswordJobFinished(QUuid requestId, ErrorCode::type errorCode, ErrorString errorDescription);
+    void writePasswordJobFinished(QUuid requestId, ErrorCode::type errorCode,
+                                  ErrorString errorDescription);
+    void readPasswordJobFinished(QUuid requestId, ErrorCode::type errorCode,
+                                 ErrorString errorDescription, QString password);
+    void deletePasswordJobFinished(QUuid requestId, ErrorCode::type errorCode,
+                                   ErrorString errorDescription);
 
 private:
     Q_DISABLE_COPY(IKeychainService);
