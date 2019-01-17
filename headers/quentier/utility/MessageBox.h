@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Dmitry Ivanov
+ * Copyright 2017-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -26,24 +26,38 @@
 namespace quentier {
 
 int QUENTIER_EXPORT genericMessageBox(QWidget * parent, const QString & title,
-                                      const QString & briefText, const QString & detailedText = QString(),
-                                      const QMessageBox::StandardButtons standardButtons = QMessageBox::Ok);
+                                      const QString & briefText,
+                                      const QString & detailedText = QString(),
+                                      const QMessageBox::StandardButtons standardButtons =
+                                      QMessageBox::Ok);
 int QUENTIER_EXPORT informationMessageBox(QWidget * parent, const QString & title,
-                                          const QString & briefText, const QString & detailedText = QString(),
-                                          const QMessageBox::StandardButtons standardButtons = QMessageBox::Ok);
+                                          const QString & briefText,
+                                          const QString & detailedText = QString(),
+                                          const QMessageBox::StandardButtons standardButtons =
+                                          QMessageBox::Ok);
 int QUENTIER_EXPORT warningMessageBox(QWidget * parent, const QString & title,
-                                      const QString & briefText, const QString & detailedText = QString(),
-                                      const QMessageBox::StandardButtons standardButtons = QMessageBox::Ok);
+                                      const QString & briefText,
+                                      const QString & detailedText = QString(),
+                                      const QMessageBox::StandardButtons standardButtons =
+                                      QMessageBox::Ok);
 int QUENTIER_EXPORT criticalMessageBox(QWidget * parent, const QString & title,
-                                       const QString & briefText, const QString & detailedText = QString(),
-                                       const QMessageBox::StandardButtons standardButtons = QMessageBox::Ok);
+                                       const QString & briefText,
+                                       const QString & detailedText = QString(),
+                                       const QMessageBox::StandardButtons standardButtons =
+                                       QMessageBox::Ok);
 int QUENTIER_EXPORT questionMessageBox(QWidget * parent, const QString & title,
-                                       const QString & briefText, const QString & detailedText = QString(),
-                                       const QMessageBox::StandardButtons standardButtons = QMessageBox::Ok | QMessageBox::Cancel);
+                                       const QString & briefText,
+                                       const QString & detailedText = QString(),
+                                       const QMessageBox::StandardButtons standardButtons =
+                                       QMessageBox::Ok | QMessageBox::Cancel);
 
-// Convenience function for critical message box due to internal error, has built-in title
-// ("Internal error") and brief text so the caller only needs to provide the detailed text
-void QUENTIER_EXPORT internalErrorMessageBox(QWidget * parent, QString detailedText = QString());
+/**
+ * Convenience function for critical message box due to internal error,
+ * has built-in title ("Internal error") and brief text so the caller only
+ * needs to provide the detailed text
+ */
+void QUENTIER_EXPORT internalErrorMessageBox(QWidget * parent,
+                                             QString detailedText = QString());
 
 } // namespace quentier
 

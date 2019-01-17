@@ -1,3 +1,21 @@
+/*
+ * Copyright 2016-2019 Dmitry Ivanov
+ *
+ * This file is part of libquentier
+ *
+ * libquentier is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, version 3 of the License.
+ *
+ * libquentier is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
+ */
+
 #ifndef LIB_QUENTIER_TYPES_ACCOUNT_H
 #define LIB_QUENTIER_TYPES_ACCOUNT_H
 
@@ -48,7 +66,8 @@ public:
     explicit Account();
     explicit Account(const QString & name, const Type::type type,
                      const qevercloud::UserID userId = -1,
-                     const EvernoteAccountType::type evernoteAccountType = EvernoteAccountType::Free,
+                     const EvernoteAccountType::type evernoteAccountType =
+                     EvernoteAccountType::Free,
                      const QString & evernoteHost = QString(),
                      const QString & shardId = QString());
     Account(const Account & other);
@@ -59,24 +78,26 @@ public:
     bool operator!=(const Account & other) const;
 
     /**
-     * @return true if either the account is local but the name is empty or if the account is Evernote but user id is negative;
-     * in all other cases return false
+     * @return      True if either the account is local but the name is empty
+     *              or if the account is Evernote but user id is negative;
+     *              in all other cases return false
      */
     bool isEmpty() const;
 
     /**
-     * @return username for either local or Evernote account
+     * @return      Username for either local or Evernote account
      */
     QString name() const;
 
     /**
-     * @brief setName - set the username to the account
+     * @brief setName sets the username to the account
      */
     void setName(const QString & name);
 
     /**
-     * @return printable user's name that is not used to uniquely identify the account, so this name
-     * may repeat across different local and Evernote accounts
+     * @return      Printable user's name that is not used to uniquely identify
+     *              the account, so this name may repeat across different local
+     *              and Evernote accounts
      */
     QString displayName() const;
 
@@ -86,27 +107,30 @@ public:
     void setDisplayName(const QString & displayName);
 
     /**
-     * @return the type of the account: either local of Evernote
+     * @return      The type of the account: either local of Evernote
      */
     Type::type type() const;
 
     /**
-     * @return user id for Evernote accounts, -1 for local accounts (as the concept of user id is not defined for local accounts)
+     * @return      User id for Evernote accounts, -1 for local accounts
+     *              (as the concept of user id is not defined for local accounts)
      */
     qevercloud::UserID id() const;
 
     /**
-     * @return the type of the Evernote account; if applied to free account, returns "Free"
+     * @return      The type of the Evernote account; if applied to free account,
+     *              returns "Free"
      */
     EvernoteAccountType::type evernoteAccountType() const;
 
     /**
-     * @return the Evernote server host with which the account is associated
+     * @return      The Evernote server host with which the account is associated
      */
     QString evernoteHost() const;
 
     /**
-     * @return shard id for Evernote accounts, empty string for local accounts (as the concept of shard id is not defined for local accounts)
+     * @return      Shard id for Evernote accounts, empty string for local accounts
+     *              (as the concept of shard id is not defined for local accounts)
      */
     QString shardId() const;
 

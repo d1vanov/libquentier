@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Dmitry Ivanov
+ * Copyright 2016-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -34,13 +34,17 @@ public:
     StringUtils();
     virtual ~StringUtils();
 
-    void removePunctuation(QString & str, const QVector<QChar> & charactersToPreserve = QVector<QChar>()) const;
+    void removePunctuation(QString & str,
+                           const QVector<QChar> & charactersToPreserve =
+                           QVector<QChar>()) const;
     void removeDiacritics(QString & str) const;
     void removeNewlines(QString & str) const;
 
     struct StringFilterPredicate
     {
-        StringFilterPredicate(QSet<QString> & filteredStrings) : m_filteredStrings(filteredStrings) {}
+        StringFilterPredicate(QSet<QString> & filteredStrings) :
+            m_filteredStrings(filteredStrings)
+        {}
 
         bool operator()(const QString & str) const
         {

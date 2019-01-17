@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Dmitry Ivanov
+ * Copyright 2016-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -34,9 +34,12 @@ class QUENTIER_EXPORT FileSystemWatcher: public QObject
 {
     Q_OBJECT
 public:
-    explicit FileSystemWatcher(const int removalTimeoutMSec = FILE_SYSTEM_WATCHER_DEFAULT_REMOVAL_TIMEOUT_MSEC,
+    explicit FileSystemWatcher(const int removalTimeoutMSec =
+                               FILE_SYSTEM_WATCHER_DEFAULT_REMOVAL_TIMEOUT_MSEC,
                                QObject * parent = Q_NULLPTR);
-    explicit FileSystemWatcher(const QStringList & paths, const int removalTimeoutMSec = FILE_SYSTEM_WATCHER_DEFAULT_REMOVAL_TIMEOUT_MSEC,
+    explicit FileSystemWatcher(const QStringList & paths,
+                               const int removalTimeoutMSec =
+                               FILE_SYSTEM_WATCHER_DEFAULT_REMOVAL_TIMEOUT_MSEC,
                                QObject * parent = Q_NULLPTR);
 
     virtual ~FileSystemWatcher();

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Dmitry Ivanov
+ * Copyright 2016-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -26,7 +26,8 @@ namespace quentier {
 
 /**
  * @brief The ApplicationSettings class enhances the functionality of QSettings,
- * in particular it simplifies the way of working with either application-wide or account-specific settings
+ * in particular it simplifies the way of working with either application-wide
+ * or account-specific settings
  */
 class QUENTIER_EXPORT ApplicationSettings: public QSettings,
                                            public Printable
@@ -41,12 +42,16 @@ public:
     /**
      * Constructor for application settings specific to the account
      *
-     * @param account - the account for which the settings are to be stored or read
-     * @param settingsName - if not empty, the created application settings would manage the settings stored
-     * in a file with a specific name within the account's settings storage; otherwise they would be stored in the default
-     * settings file for the account
+     * @param account       The account for which the settings are to be stored
+     *                      or read
+     * @param settingsName  If not empty, the created application settings
+     *                      would manage the settings stored in a file with
+     *                      a specific name within the account's settings storage;
+     *                      otherwise they would be stored in the default
+     *                      settings file for the account
      */
-    ApplicationSettings(const Account & account, const QString & settingsName = QString());
+    ApplicationSettings(const Account & account,
+                        const QString & settingsName = QString());
 
     /**
      * Destructor
@@ -55,12 +60,20 @@ public:
 
 public:
     /**
-     * Helper struct for RAII style of ensuring the array once began would be closed even in the fact of exceptions
+     * Helper struct for RAII style of ensuring the array once began would be
+     * closed even in the fact of exceptions
      */
     struct ApplicationSettingsArrayCloser
     {
-        ApplicationSettingsArrayCloser(ApplicationSettings & settings) : m_settings(settings) {}
-        ~ApplicationSettingsArrayCloser() { m_settings.endArray(); m_settings.sync(); }
+        ApplicationSettingsArrayCloser(ApplicationSettings & settings) :
+            m_settings(settings)
+        {}
+
+        ~ApplicationSettingsArrayCloser()
+        {
+            m_settings.endArray();
+            m_settings.sync();
+        }
 
         ApplicationSettings & m_settings;
     };

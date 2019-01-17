@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Dmitry Ivanov
+ * Copyright 2016-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -27,7 +27,9 @@
     if (Q_UNLIKELY(!pointer)) \
     { \
         using quentier::NullPtrException; \
-        ErrorString quentier_null_ptr_error(QT_TRANSLATE_NOOP("", "Detected the unintended null pointer")); \
+        ErrorString quentier_null_ptr_error(QT_TRANSLATE_NOOP("", \
+                                                              "Detected unintended "\
+                                                              "null pointer")); \
         quentier_null_ptr_error.details() = QStringLiteral(__FILE__); \
         quentier_null_ptr_error.details() += QStringLiteral(" ("); \
         quentier_null_ptr_error.details() += QString::number(__LINE__); \

@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Dmitry Ivanov
+ * Copyright 2017-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -35,19 +35,20 @@
 @LIB_QUENTIER_QT_WEB_ENGINE_DEFINE@
 
 /**
- * This macro is set to true if libquentier was built with AuthenticationManager class
- * for OAuth handling
+ * This macro is set to true if libquentier was built with AuthenticationManager
+ * class for OAuth handling
  */
 @LIB_QUENTIER_HAS_AUTHENTICATION_MANAGER_DEFINE@
 
 /**
- * This macro is set to true if libquentier was built with NoteEditor and INoteEditorBackend classes
- * (as well as their implementations)
+ * This macro is set to true if libquentier was built with NoteEditor and
+ * INoteEditorBackend classes (as well as their implementations)
  */
 @LIB_QUENTIER_HAS_NOTE_EDITOR_DEFINE@
 
 /**
- * This macro is set to a string holding the information about the current libquentier build
+ * This macro is set to a string holding the information about
+ * the current libquentier build
  */
 @LIB_QUENTIER_BUILD_INFO@
 
@@ -84,7 +85,8 @@ int QUENTIER_EXPORT libquentierVersionMinor();
 int QUENTIER_EXPORT libquentierVersionPatch();
 
 /**
- * @return          String containing information about the current libquentier build
+ * @return          String containing information about
+ *                  the current libquentier build
  */
 QString QUENTIER_EXPORT libquentierBuildInfo();
 

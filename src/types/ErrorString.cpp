@@ -1,3 +1,21 @@
+/*
+ * Copyright 2017-2019 Dmitry Ivanov
+ *
+ * This file is part of libquentier
+ *
+ * libquentier is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, version 3 of the License.
+ *
+ * libquentier is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
+ */
+
 #include <quentier/types/ErrorString.h>
 #include "data/ErrorStringData.h"
 #include <QApplication>
@@ -102,7 +120,9 @@ void ErrorString::setDetails(const char * error)
 
 bool ErrorString::isEmpty() const
 {
-    return d->m_base.isEmpty() && d->m_details.isEmpty() && d->m_additionalBases.isEmpty();
+    return d->m_base.isEmpty() &&
+           d->m_details.isEmpty() &&
+           d->m_additionalBases.isEmpty();
 }
 
 void ErrorString::clear()
@@ -124,14 +144,16 @@ QString ErrorString::localizedString() const
     }
 
     QString additionalBasesStr;
-    for(auto it = d->m_additionalBases.constBegin(), end = d->m_additionalBases.constEnd(); it != end; ++it)
+    for(auto it = d->m_additionalBases.constBegin(),
+        end = d->m_additionalBases.constEnd(); it != end; ++it)
     {
         const QString & additionalBase = *it;
         if (additionalBase.isEmpty()) {
             continue;
         }
 
-        QString translatedStr = qApp->translate("", additionalBase.toLocal8Bit().constData());
+        QString translatedStr =
+            qApp->translate("", additionalBase.toLocal8Bit().constData());
         if (additionalBasesStr.isEmpty()) {
             additionalBasesStr = translatedStr;
         }
@@ -188,7 +210,8 @@ QString ErrorString::nonLocalizedString() const
 {
     QString result = d->m_base;
 
-    for(auto it = d->m_additionalBases.constBegin(), end = d->m_additionalBases.constEnd(); it != end; ++it)
+    for(auto it = d->m_additionalBases.constBegin(),
+        end = d->m_additionalBases.constEnd(); it != end; ++it)
     {
         const QString & additionalBase = *it;
         if (additionalBase.isEmpty()) {
@@ -218,7 +241,8 @@ QTextStream & ErrorString::print(QTextStream & strm) const
 {
     strm << d->m_base;
 
-    for(auto it = d->m_additionalBases.constBegin(), end = d->m_additionalBases.constEnd(); it != end; ++it)
+    for(auto it = d->m_additionalBases.constBegin(),
+        end = d->m_additionalBases.constEnd(); it != end; ++it)
     {
         QString previousStr = d->m_base;
         if (Q_LIKELY(it != d->m_additionalBases.constBegin())) {

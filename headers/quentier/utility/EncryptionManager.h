@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Dmitry Ivanov
+ * Copyright 2016-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -31,9 +31,9 @@ namespace quentier {
 QT_FORWARD_DECLARE_CLASS(EncryptionManagerPrivate)
 
 /**
- * @brief The EncryptionManager class provides both synchronous methods to encrypt or decrypt
- * given text with password, cipher and key length and their signal-slot based potentially asynchronous
- * counterparts
+ * @brief The EncryptionManager class provides both synchronous methods to encrypt
+ * or decrypt given text with password, cipher and key length and their signal-slot
+ * based potentially asynchronous counterparts
  */
 class QUENTIER_EXPORT EncryptionManager: public QObject
 {
@@ -51,8 +51,11 @@ public:
                  QString & encryptedText, ErrorString & errorDescription);
 
 Q_SIGNALS:
-    void decryptedText(QString text, bool success, ErrorString errorDescription, QUuid requestId);
-    void encryptedText(QString encryptedText, bool success, ErrorString errorDescription, QUuid requestId);
+    void decryptedText(QString text, bool success,
+                       ErrorString errorDescription,
+                       QUuid requestId);
+    void encryptedText(QString encryptedText, bool success,
+                       ErrorString errorDescription, QUuid requestId);
 
 public Q_SLOTS:
     void onDecryptTextRequest(QString encryptedText, QString passphrase,

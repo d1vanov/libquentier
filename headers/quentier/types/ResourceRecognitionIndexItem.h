@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Dmitry Ivanov
+ * Copyright 2016-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -70,7 +70,8 @@ public:
     {
         TextItem() : m_text(), m_weight(-1) {}
 
-        bool operator==(const TextItem & other) const { return (m_text == other.m_text) && (m_weight == other.m_weight); }
+        bool operator==(const TextItem & other) const
+        { return (m_text == other.m_text) && (m_weight == other.m_weight); }
 
         QString     m_text;
         int         m_weight;
@@ -90,7 +91,8 @@ public:
     {
         ObjectItem() : m_objectType(), m_weight(-1) {}
 
-        bool operator==(const ObjectItem & other) const { return (m_objectType == other.m_objectType) && (m_weight == other.m_weight); }
+        bool operator==(const ObjectItem & other) const
+        { return (m_objectType == other.m_objectType) && (m_weight == other.m_weight); }
 
         QString     m_objectType;
         int         m_weight;
@@ -110,7 +112,8 @@ public:
     {
         ShapeItem() : m_shapeType(), m_weight(-1) {}
 
-        bool operator==(const ShapeItem & other) const { return (m_shapeType == other.m_shapeType) && (m_weight == other.m_weight); }
+        bool operator==(const ShapeItem & other) const
+        { return (m_shapeType == other.m_shapeType) && (m_weight == other.m_weight); }
 
         QString     m_shapeType;
         int         m_weight;
@@ -130,7 +133,8 @@ public:
     {
         BarcodeItem() : m_barcode(), m_weight(-1) {}
 
-        bool operator==(const BarcodeItem & other) const { return (m_barcode == other.m_barcode) && (m_weight == other.m_weight); }
+        bool operator==(const BarcodeItem & other) const
+        { return (m_barcode == other.m_barcode) && (m_weight == other.m_weight); }
 
         QString     m_barcode;
         int         m_weight;

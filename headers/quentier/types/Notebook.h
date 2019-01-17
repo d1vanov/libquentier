@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Dmitry Ivanov
+ * Copyright 2016-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -65,7 +65,8 @@ public:
 
     virtual void clear() Q_DECL_OVERRIDE;
 
-    static bool validateName(const QString & name, ErrorString * pErrorDescription = Q_NULLPTR);
+    static bool validateName(const QString & name,
+                             ErrorString * pErrorDescription = Q_NULLPTR);
 
     virtual bool hasGuid() const Q_DECL_OVERRIDE;
     virtual const QString & guid() const Q_DECL_OVERRIDE;

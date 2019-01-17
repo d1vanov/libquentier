@@ -3255,24 +3255,32 @@ void RemoteToLocalSynchronizationManager::connectToLocalStorage()
                      Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
 
     QObject::connect(this,
-                     QNSIGNAL(RemoteToLocalSynchronizationManager,addNotebook,Notebook,QUuid),
+                     QNSIGNAL(RemoteToLocalSynchronizationManager,addNotebook,
+                              Notebook,QUuid),
                      &localStorageManagerAsync,
-                     QNSLOT(LocalStorageManagerAsync,onAddNotebookRequest,Notebook,QUuid),
+                     QNSLOT(LocalStorageManagerAsync,onAddNotebookRequest,
+                            Notebook,QUuid),
                      Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
     QObject::connect(this,
-                     QNSIGNAL(RemoteToLocalSynchronizationManager,updateNotebook,Notebook,QUuid),
+                     QNSIGNAL(RemoteToLocalSynchronizationManager,updateNotebook,
+                              Notebook,QUuid),
                      &localStorageManagerAsync,
-                     QNSLOT(LocalStorageManagerAsync,onUpdateNotebookRequest,Notebook,QUuid),
+                     QNSLOT(LocalStorageManagerAsync,onUpdateNotebookRequest,
+                            Notebook,QUuid),
                      Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
     QObject::connect(this,
-                     QNSIGNAL(RemoteToLocalSynchronizationManager,findNotebook,Notebook,QUuid),
+                     QNSIGNAL(RemoteToLocalSynchronizationManager,findNotebook,
+                              Notebook,QUuid),
                      &localStorageManagerAsync,
-                     QNSLOT(LocalStorageManagerAsync,onFindNotebookRequest,Notebook,QUuid),
+                     QNSLOT(LocalStorageManagerAsync,onFindNotebookRequest,
+                            Notebook,QUuid),
                      Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
     QObject::connect(this,
-                     QNSIGNAL(RemoteToLocalSynchronizationManager,expungeNotebook,Notebook,QUuid),
+                     QNSIGNAL(RemoteToLocalSynchronizationManager,expungeNotebook,
+                              Notebook,QUuid),
                      &localStorageManagerAsync,
-                     QNSLOT(LocalStorageManagerAsync,onExpungeNotebookRequest,Notebook,QUuid),
+                     QNSLOT(LocalStorageManagerAsync,onExpungeNotebookRequest,
+                            Notebook,QUuid),
                      Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
 
     QObject::connect(this,
@@ -3330,14 +3338,17 @@ void RemoteToLocalSynchronizationManager::connectToLocalStorage()
                      Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
 
     QObject::connect(this,
-                     QNSIGNAL(RemoteToLocalSynchronizationManager,addResource,Resource,QUuid),
+                     QNSIGNAL(RemoteToLocalSynchronizationManager,addResource,
+                              Resource,QUuid),
                      &localStorageManagerAsync,
                      QNSLOT(LocalStorageManagerAsync,onAddResourceRequest,Resource,QUuid),
                      Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
     QObject::connect(this,
-                     QNSIGNAL(RemoteToLocalSynchronizationManager,updateResource,Resource,QUuid),
+                     QNSIGNAL(RemoteToLocalSynchronizationManager,updateResource,
+                              Resource,QUuid),
                      &localStorageManagerAsync,
-                     QNSLOT(LocalStorageManagerAsync,onUpdateResourceRequest,Resource,QUuid),
+                     QNSLOT(LocalStorageManagerAsync,onUpdateResourceRequest,
+                            Resource,QUuid),
                      Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
     QObject::connect(this,
                      QNSIGNAL(RemoteToLocalSynchronizationManager,findResource,
@@ -3369,16 +3380,16 @@ void RemoteToLocalSynchronizationManager::connectToLocalStorage()
                             LinkedNotebook,QUuid),
                      Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
     QObject::connect(this,
-                     QNSIGNAL(RemoteToLocalSynchronizationManager,expungeLinkedNotebook,
-                              LinkedNotebook,QUuid),
+                     QNSIGNAL(RemoteToLocalSynchronizationManager,
+                              expungeLinkedNotebook,LinkedNotebook,QUuid),
                      &localStorageManagerAsync,
                      QNSLOT(LocalStorageManagerAsync,onExpungeLinkedNotebookRequest,
                             LinkedNotebook,QUuid),
                      Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
 
     QObject::connect(this,
-                     QNSIGNAL(RemoteToLocalSynchronizationManager,listAllLinkedNotebooks,
-                              size_t,size_t,
+                     QNSIGNAL(RemoteToLocalSynchronizationManager,
+                              listAllLinkedNotebooks,size_t,size_t,
                               LocalStorageManager::ListLinkedNotebooksOrder::type,
                               LocalStorageManager::OrderDirection::type,QUuid),
                      &localStorageManagerAsync,
@@ -3436,13 +3447,15 @@ void RemoteToLocalSynchronizationManager::connectToLocalStorage()
                      QNSIGNAL(LocalStorageManagerAsync,findNotebookComplete,
                               Notebook,QUuid),
                      this,
-                     QNSLOT(RemoteToLocalSynchronizationManager,onFindNotebookCompleted,
+                     QNSLOT(RemoteToLocalSynchronizationManager,
+                            onFindNotebookCompleted,
                             Notebook,QUuid),
                      Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
     QObject::connect(&localStorageManagerAsync,
                      QNSIGNAL(LocalStorageManagerAsync,findNotebookFailed,
                               Notebook,ErrorString,QUuid),
-                     this, QNSLOT(RemoteToLocalSynchronizationManager,onFindNotebookFailed,
+                     this, QNSLOT(RemoteToLocalSynchronizationManager,
+                                  onFindNotebookFailed,
                                   Notebook,ErrorString,QUuid),
                      Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
 
@@ -3455,16 +3468,19 @@ void RemoteToLocalSynchronizationManager::connectToLocalStorage()
                      Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
     QObject::connect(&localStorageManagerAsync,
                      QNSIGNAL(LocalStorageManagerAsync,findNoteFailed,
-                              Note,LocalStorageManager::GetNoteOptions,ErrorString,QUuid),
+                              Note,LocalStorageManager::GetNoteOptions,
+                              ErrorString,QUuid),
                      this,
                      QNSLOT(RemoteToLocalSynchronizationManager,onFindNoteFailed,
-                            Note,LocalStorageManager::GetNoteOptions,ErrorString,QUuid),
+                            Note,LocalStorageManager::GetNoteOptions,
+                            ErrorString,QUuid),
                      Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
 
     QObject::connect(&localStorageManagerAsync,
                      QNSIGNAL(LocalStorageManagerAsync,findTagComplete,Tag,QUuid),
                      this,
-                     QNSLOT(RemoteToLocalSynchronizationManager,onFindTagCompleted,Tag,QUuid),
+                     QNSLOT(RemoteToLocalSynchronizationManager,
+                            onFindTagCompleted,Tag,QUuid),
                      Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
     QObject::connect(&localStorageManagerAsync,
                      QNSIGNAL(LocalStorageManagerAsync,findTagFailed,
@@ -3478,14 +3494,16 @@ void RemoteToLocalSynchronizationManager::connectToLocalStorage()
                      QNSIGNAL(LocalStorageManagerAsync,findLinkedNotebookComplete,
                               LinkedNotebook,QUuid),
                      this,
-                     QNSLOT(RemoteToLocalSynchronizationManager,onFindLinkedNotebookCompleted,
+                     QNSLOT(RemoteToLocalSynchronizationManager,
+                            onFindLinkedNotebookCompleted,
                             LinkedNotebook,QUuid),
                      Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
     QObject::connect(&localStorageManagerAsync,
                      QNSIGNAL(LocalStorageManagerAsync,findLinkedNotebookFailed,
                               LinkedNotebook,ErrorString,QUuid),
                      this,
-                     QNSLOT(RemoteToLocalSynchronizationManager,onFindLinkedNotebookFailed,
+                     QNSLOT(RemoteToLocalSynchronizationManager,
+                            onFindLinkedNotebookFailed,
                             LinkedNotebook,ErrorString,QUuid),
                      Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
 
@@ -3493,14 +3511,16 @@ void RemoteToLocalSynchronizationManager::connectToLocalStorage()
                      QNSIGNAL(LocalStorageManagerAsync,findSavedSearchComplete,
                               SavedSearch,QUuid),
                      this,
-                     QNSLOT(RemoteToLocalSynchronizationManager,onFindSavedSearchCompleted,
+                     QNSLOT(RemoteToLocalSynchronizationManager,
+                            onFindSavedSearchCompleted,
                             SavedSearch,QUuid),
                      Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
     QObject::connect(&localStorageManagerAsync,
                      QNSIGNAL(LocalStorageManagerAsync,findSavedSearchFailed,
                               SavedSearch,ErrorString,QUuid),
                      this,
-                     QNSLOT(RemoteToLocalSynchronizationManager,onFindSavedSearchFailed,
+                     QNSLOT(RemoteToLocalSynchronizationManager,
+                            onFindSavedSearchFailed,
                             SavedSearch,ErrorString,QUuid),
                      Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
 
@@ -3513,16 +3533,19 @@ void RemoteToLocalSynchronizationManager::connectToLocalStorage()
                      Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
     QObject::connect(&localStorageManagerAsync,
                      QNSIGNAL(LocalStorageManagerAsync,findResourceFailed,
-                              Resource,LocalStorageManager::GetResourceOptions,ErrorString,QUuid),
+                              Resource,LocalStorageManager::GetResourceOptions,
+                              ErrorString,QUuid),
                      this,
                      QNSLOT(RemoteToLocalSynchronizationManager,onFindResourceFailed,
-                            Resource,LocalStorageManager::GetResourceOptions,ErrorString,QUuid),
+                            Resource,LocalStorageManager::GetResourceOptions,
+                            ErrorString,QUuid),
                      Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
 
     QObject::connect(&localStorageManagerAsync,
                      QNSIGNAL(LocalStorageManagerAsync,addTagComplete,Tag,QUuid),
                      this,
-                     QNSLOT(RemoteToLocalSynchronizationManager,onAddTagCompleted,Tag,QUuid),
+                     QNSLOT(RemoteToLocalSynchronizationManager,
+                            onAddTagCompleted,Tag,QUuid),
                      Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
     QObject::connect(&localStorageManagerAsync,
                      QNSIGNAL(LocalStorageManagerAsync,addTagFailed,
@@ -3535,7 +3558,8 @@ void RemoteToLocalSynchronizationManager::connectToLocalStorage()
     QObject::connect(&localStorageManagerAsync,
                      QNSIGNAL(LocalStorageManagerAsync,updateTagComplete,Tag,QUuid),
                      this,
-                     QNSLOT(RemoteToLocalSynchronizationManager,onUpdateTagCompleted,Tag,QUuid),
+                     QNSLOT(RemoteToLocalSynchronizationManager,
+                            onUpdateTagCompleted,Tag,QUuid),
                      Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
     QObject::connect(&localStorageManagerAsync,
                      QNSIGNAL(LocalStorageManagerAsync,updateTagFailed,
@@ -3582,7 +3606,8 @@ void RemoteToLocalSynchronizationManager::connectToLocalStorage()
     QObject::connect(&localStorageManagerAsync,
                      QNSIGNAL(LocalStorageManagerAsync,addUserComplete,User,QUuid),
                      this,
-                     QNSLOT(RemoteToLocalSynchronizationManager,onAddUserCompleted,User,QUuid),
+                     QNSLOT(RemoteToLocalSynchronizationManager,
+                            onAddUserCompleted,User,QUuid),
                      Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
     QObject::connect(&localStorageManagerAsync,
                      QNSIGNAL(LocalStorageManagerAsync,addUserFailed,
@@ -3593,9 +3618,11 @@ void RemoteToLocalSynchronizationManager::connectToLocalStorage()
                      Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
 
     QObject::connect(&localStorageManagerAsync,
-                     QNSIGNAL(LocalStorageManagerAsync,updateUserComplete,User,QUuid),
+                     QNSIGNAL(LocalStorageManagerAsync,updateUserComplete,
+                              User,QUuid),
                      this,
-                     QNSLOT(RemoteToLocalSynchronizationManager,onUpdateUserCompleted,User,QUuid),
+                     QNSLOT(RemoteToLocalSynchronizationManager,
+                            onUpdateUserCompleted,User,QUuid),
                      Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
     QObject::connect(&localStorageManagerAsync,
                      QNSIGNAL(LocalStorageManagerAsync,updateUserFailed,
@@ -3609,14 +3636,16 @@ void RemoteToLocalSynchronizationManager::connectToLocalStorage()
                      QNSIGNAL(LocalStorageManagerAsync,addSavedSearchComplete,
                               SavedSearch,QUuid),
                      this,
-                     QNSLOT(RemoteToLocalSynchronizationManager,onAddSavedSearchCompleted,
+                     QNSLOT(RemoteToLocalSynchronizationManager,
+                            onAddSavedSearchCompleted,
                             SavedSearch,QUuid),
                      Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
     QObject::connect(&localStorageManagerAsync,
                      QNSIGNAL(LocalStorageManagerAsync,addSavedSearchFailed,
                               SavedSearch,ErrorString,QUuid),
                      this,
-                     QNSLOT(RemoteToLocalSynchronizationManager,onAddSavedSearchFailed,
+                     QNSLOT(RemoteToLocalSynchronizationManager,
+                            onAddSavedSearchFailed,
                             SavedSearch,ErrorString,QUuid),
                      Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
 
@@ -3624,14 +3653,16 @@ void RemoteToLocalSynchronizationManager::connectToLocalStorage()
                      QNSIGNAL(LocalStorageManagerAsync,updateSavedSearchComplete,
                               SavedSearch,QUuid),
                      this,
-                     QNSLOT(RemoteToLocalSynchronizationManager,onUpdateSavedSearchCompleted,
+                     QNSLOT(RemoteToLocalSynchronizationManager,
+                            onUpdateSavedSearchCompleted,
                             SavedSearch,QUuid),
                      Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
     QObject::connect(&localStorageManagerAsync,
                      QNSIGNAL(LocalStorageManagerAsync,updateSavedSearchFailed,
                               SavedSearch,ErrorString,QUuid),
                      this,
-                     QNSLOT(RemoteToLocalSynchronizationManager,onUpdateSavedSearchFailed,
+                     QNSLOT(RemoteToLocalSynchronizationManager,
+                            onUpdateSavedSearchFailed,
                             SavedSearch,ErrorString,QUuid),
                      Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
 
@@ -3646,7 +3677,8 @@ void RemoteToLocalSynchronizationManager::connectToLocalStorage()
                      QNSIGNAL(LocalStorageManagerAsync,expungeSavedSearchFailed,
                               SavedSearch,ErrorString,QUuid),
                      this,
-                     QNSLOT(RemoteToLocalSynchronizationManager,onExpungeSavedSearchFailed,
+                     QNSLOT(RemoteToLocalSynchronizationManager,
+                            onExpungeSavedSearchFailed,
                             SavedSearch,ErrorString,QUuid),
                      Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
 
@@ -3654,14 +3686,16 @@ void RemoteToLocalSynchronizationManager::connectToLocalStorage()
                      QNSIGNAL(LocalStorageManagerAsync,addLinkedNotebookComplete,
                               LinkedNotebook,QUuid),
                      this,
-                     QNSLOT(RemoteToLocalSynchronizationManager,onAddLinkedNotebookCompleted,
+                     QNSLOT(RemoteToLocalSynchronizationManager,
+                            onAddLinkedNotebookCompleted,
                             LinkedNotebook,QUuid),
                      Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
     QObject::connect(&localStorageManagerAsync,
                      QNSIGNAL(LocalStorageManagerAsync,addLinkedNotebookFailed,
                               LinkedNotebook,ErrorString,QUuid),
                      this,
-                     QNSLOT(RemoteToLocalSynchronizationManager,onAddLinkedNotebookFailed,
+                     QNSLOT(RemoteToLocalSynchronizationManager,
+                            onAddLinkedNotebookFailed,
                             LinkedNotebook,ErrorString,QUuid),
                      Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
 
@@ -3669,14 +3703,16 @@ void RemoteToLocalSynchronizationManager::connectToLocalStorage()
                      QNSIGNAL(LocalStorageManagerAsync,updateLinkedNotebookComplete,
                               LinkedNotebook,QUuid),
                      this,
-                     QNSLOT(RemoteToLocalSynchronizationManager,onUpdateLinkedNotebookCompleted,
+                     QNSLOT(RemoteToLocalSynchronizationManager,
+                            onUpdateLinkedNotebookCompleted,
                             LinkedNotebook,QUuid),
                      Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
     QObject::connect(&localStorageManagerAsync,
                      QNSIGNAL(LocalStorageManagerAsync,updateLinkedNotebookFailed,
                               LinkedNotebook,ErrorString,QUuid),
                      this,
-                     QNSLOT(RemoteToLocalSynchronizationManager,onUpdateLinkedNotebookFailed,
+                     QNSLOT(RemoteToLocalSynchronizationManager,
+                            onUpdateLinkedNotebookFailed,
                             LinkedNotebook,ErrorString,QUuid),
                      Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
 
@@ -3684,14 +3720,16 @@ void RemoteToLocalSynchronizationManager::connectToLocalStorage()
                      QNSIGNAL(LocalStorageManagerAsync,expungeLinkedNotebookComplete,
                               LinkedNotebook,QUuid),
                      this,
-                     QNSLOT(RemoteToLocalSynchronizationManager,onExpungeLinkedNotebookCompleted,
+                     QNSLOT(RemoteToLocalSynchronizationManager,
+                            onExpungeLinkedNotebookCompleted,
                             LinkedNotebook,QUuid),
                      Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
     QObject::connect(&localStorageManagerAsync,
                      QNSIGNAL(LocalStorageManagerAsync,expungeLinkedNotebookFailed,
                               LinkedNotebook,ErrorString,QUuid),
                      this,
-                     QNSLOT(RemoteToLocalSynchronizationManager,onExpungeLinkedNotebookFailed,
+                     QNSLOT(RemoteToLocalSynchronizationManager,
+                            onExpungeLinkedNotebookFailed,
                             LinkedNotebook,ErrorString,QUuid),
                      Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
 
@@ -3712,12 +3750,14 @@ void RemoteToLocalSynchronizationManager::connectToLocalStorage()
                      QNSIGNAL(LocalStorageManagerAsync,listAllLinkedNotebooksFailed,
                               size_t,size_t,
                               LocalStorageManager::ListLinkedNotebooksOrder::type,
-                              LocalStorageManager::OrderDirection::type,ErrorString,QUuid),
+                              LocalStorageManager::OrderDirection::type,
+                              ErrorString,QUuid),
                      this,
                      QNSLOT(RemoteToLocalSynchronizationManager,
                             onListAllLinkedNotebooksFailed,size_t,size_t,
                             LocalStorageManager::ListLinkedNotebooksOrder::type,
-                            LocalStorageManager::OrderDirection::type,ErrorString,QUuid),
+                            LocalStorageManager::OrderDirection::type,
+                            ErrorString,QUuid),
                      Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
 
     QObject::connect(&localStorageManagerAsync,
@@ -3768,7 +3808,8 @@ void RemoteToLocalSynchronizationManager::connectToLocalStorage()
     QObject::connect(&localStorageManagerAsync,
                      QNSIGNAL(LocalStorageManagerAsync,addNoteComplete,Note,QUuid),
                      this,
-                     QNSLOT(RemoteToLocalSynchronizationManager,onAddNoteCompleted,Note,QUuid),
+                     QNSLOT(RemoteToLocalSynchronizationManager,
+                            onAddNoteCompleted,Note,QUuid),
                      Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
     QObject::connect(&localStorageManagerAsync,
                      QNSIGNAL(LocalStorageManagerAsync,addNoteFailed,
@@ -3855,219 +3896,578 @@ void RemoteToLocalSynchronizationManager::disconnectFromLocalStorage()
     LocalStorageManagerAsync & localStorageManagerAsync = m_manager.localStorageManagerAsync();
 
     // Disconnect local signals from localStorageManagerThread's slots
-    QObject::disconnect(this, QNSIGNAL(RemoteToLocalSynchronizationManager,addUser,User,QUuid),
-                        &localStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,onAddUserRequest,User,QUuid));
-    QObject::disconnect(this, QNSIGNAL(RemoteToLocalSynchronizationManager,updateUser,User,QUuid),
-                        &localStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,onUpdateUserRequest,User,QUuid));
-    QObject::disconnect(this, QNSIGNAL(RemoteToLocalSynchronizationManager,findUser,User,QUuid),
-                        &localStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,onFindUserRequest,User,QUuid));
-
-    QObject::disconnect(this, QNSIGNAL(RemoteToLocalSynchronizationManager,addNotebook,Notebook,QUuid),
-                        &localStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,onAddNotebookRequest,Notebook,QUuid));
-    QObject::disconnect(this, QNSIGNAL(RemoteToLocalSynchronizationManager,updateNotebook,Notebook,QUuid),
-                        &localStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,onUpdateNotebookRequest,Notebook,QUuid));
-    QObject::disconnect(this, QNSIGNAL(RemoteToLocalSynchronizationManager,findNotebook,Notebook,QUuid),
-                        &localStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,onFindNotebookRequest,Notebook,QUuid));
-    QObject::disconnect(this, QNSIGNAL(RemoteToLocalSynchronizationManager,expungeNotebook,Notebook,QUuid),
-                        &localStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,onExpungeNotebookRequest,Notebook,QUuid));
-
-    QObject::disconnect(this, QNSIGNAL(RemoteToLocalSynchronizationManager,addNote,Note,QUuid),
-                        &localStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,onAddNoteRequest,Note,QUuid));
-    QObject::disconnect(this, QNSIGNAL(RemoteToLocalSynchronizationManager,updateNote,Note,LocalStorageManager::UpdateNoteOptions,QUuid),
-                        &localStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,onUpdateNoteRequest,Note,LocalStorageManager::UpdateNoteOptions,QUuid));
-    QObject::disconnect(this, QNSIGNAL(RemoteToLocalSynchronizationManager,findNote,Note,LocalStorageManager::GetNoteOptions,QUuid),
-                        &localStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,onFindNoteRequest,Note,LocalStorageManager::GetNoteOptions,QUuid));
-    QObject::disconnect(this, QNSIGNAL(RemoteToLocalSynchronizationManager,expungeNote,Note,QUuid),
-                        &localStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,onExpungeNoteRequest,Note,QUuid));
-
-    QObject::disconnect(this, QNSIGNAL(RemoteToLocalSynchronizationManager,addTag,Tag,QUuid),
-                        &localStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,onAddTagRequest,Tag,QUuid));
-    QObject::disconnect(this, QNSIGNAL(RemoteToLocalSynchronizationManager,updateTag,Tag,QUuid),
-                        &localStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,onUpdateTagRequest,Tag,QUuid));
-    QObject::disconnect(this, QNSIGNAL(RemoteToLocalSynchronizationManager,findTag,Tag,QUuid),
-                        &localStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,onFindTagRequest,Tag,QUuid));
-    QObject::disconnect(this, QNSIGNAL(RemoteToLocalSynchronizationManager,expungeTag,Tag,QUuid),
-                        &localStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,onExpungeTagRequest,Tag,QUuid));
-    QObject::disconnect(&localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,expungeNotelessTagsFromLinkedNotebooksComplete,QUuid),
-                        this, QNSLOT(RemoteToLocalSynchronizationManager,onExpungeNotelessTagsFromLinkedNotebooksCompleted,QUuid));
-    QObject::disconnect(&localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,expungeNotelessTagsFromLinkedNotebooksFailed,ErrorString,QUuid),
-                        this, QNSLOT(RemoteToLocalSynchronizationManager,onExpungeNotelessTagsFromLinkedNotebooksFailed,ErrorString,QUuid));
-
-    QObject::disconnect(this, QNSIGNAL(RemoteToLocalSynchronizationManager,addResource,Resource,QUuid),
-                        &localStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,onAddResourceRequest,Resource,QUuid));
-    QObject::disconnect(this, QNSIGNAL(RemoteToLocalSynchronizationManager,updateResource,Resource,QUuid),
-                        &localStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,onUpdateResourceRequest,Resource,QUuid));
-    QObject::disconnect(this, QNSIGNAL(RemoteToLocalSynchronizationManager,findResource,Resource,LocalStorageManager::GetResourceOptions,QUuid),
-                        &localStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,onFindResourceRequest,Resource,LocalStorageManager::GetResourceOptions,QUuid));
-
-    QObject::disconnect(this, QNSIGNAL(RemoteToLocalSynchronizationManager,addLinkedNotebook,LinkedNotebook,QUuid),
-                        &localStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,onAddLinkedNotebookRequest,LinkedNotebook,QUuid));
-    QObject::disconnect(this, QNSIGNAL(RemoteToLocalSynchronizationManager,updateLinkedNotebook,LinkedNotebook,QUuid),
-                        &localStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,onUpdateLinkedNotebookRequest,LinkedNotebook,QUuid));
-    QObject::disconnect(this, QNSIGNAL(RemoteToLocalSynchronizationManager,findLinkedNotebook,LinkedNotebook,QUuid),
-                        &localStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,onFindLinkedNotebookRequest,LinkedNotebook,QUuid));
-    QObject::disconnect(this, QNSIGNAL(RemoteToLocalSynchronizationManager,expungeLinkedNotebook,LinkedNotebook,QUuid),
-                        &localStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,onExpungeLinkedNotebookRequest,LinkedNotebook,QUuid));
+    QObject::disconnect(this,
+                        QNSIGNAL(RemoteToLocalSynchronizationManager,addUser,
+                                 User,QUuid),
+                        &localStorageManagerAsync,
+                        QNSLOT(LocalStorageManagerAsync,onAddUserRequest,
+                               User,QUuid));
+    QObject::disconnect(this,
+                        QNSIGNAL(RemoteToLocalSynchronizationManager,updateUser,
+                                 User,QUuid),
+                        &localStorageManagerAsync,
+                        QNSLOT(LocalStorageManagerAsync,onUpdateUserRequest,
+                               User,QUuid));
+    QObject::disconnect(this,
+                        QNSIGNAL(RemoteToLocalSynchronizationManager,findUser,
+                                 User,QUuid),
+                        &localStorageManagerAsync,
+                        QNSLOT(LocalStorageManagerAsync,onFindUserRequest,
+                               User,QUuid));
 
     QObject::disconnect(this,
-                        QNSIGNAL(RemoteToLocalSynchronizationManager,listAllLinkedNotebooks,size_t,size_t,
-                                 LocalStorageManager::ListLinkedNotebooksOrder::type,LocalStorageManager::OrderDirection::type,QUuid),
+                        QNSIGNAL(RemoteToLocalSynchronizationManager,addNotebook,
+                                 Notebook,QUuid),
                         &localStorageManagerAsync,
-                        QNSLOT(LocalStorageManagerAsync,onListAllLinkedNotebooksRequest,size_t,size_t,
-                               LocalStorageManager::ListLinkedNotebooksOrder::type,LocalStorageManager::OrderDirection::type,QUuid));
+                        QNSLOT(LocalStorageManagerAsync,onAddNotebookRequest,
+                               Notebook,QUuid));
+    QObject::disconnect(this,
+                        QNSIGNAL(RemoteToLocalSynchronizationManager,updateNotebook,
+                                 Notebook,QUuid),
+                        &localStorageManagerAsync,
+                        QNSLOT(LocalStorageManagerAsync,onUpdateNotebookRequest,
+                               Notebook,QUuid));
+    QObject::disconnect(this,
+                        QNSIGNAL(RemoteToLocalSynchronizationManager,findNotebook,
+                                 Notebook,QUuid),
+                        &localStorageManagerAsync,
+                        QNSLOT(LocalStorageManagerAsync,onFindNotebookRequest,
+                               Notebook,QUuid));
+    QObject::disconnect(this,
+                        QNSIGNAL(RemoteToLocalSynchronizationManager,expungeNotebook,
+                                 Notebook,QUuid),
+                        &localStorageManagerAsync,
+                        QNSLOT(LocalStorageManagerAsync,onExpungeNotebookRequest,
+                               Notebook,QUuid));
 
-    QObject::disconnect(this, QNSIGNAL(RemoteToLocalSynchronizationManager,addSavedSearch,SavedSearch,QUuid),
-                        &localStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,onAddSavedSearchRequest,SavedSearch,QUuid));
-    QObject::disconnect(this, QNSIGNAL(RemoteToLocalSynchronizationManager,updateSavedSearch,SavedSearch,QUuid),
-                        &localStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,onUpdateSavedSearchRequest,SavedSearch,QUuid));
-    QObject::disconnect(this, QNSIGNAL(RemoteToLocalSynchronizationManager,findSavedSearch,SavedSearch,QUuid),
-                        &localStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,onFindSavedSearchRequest,SavedSearch,QUuid));
-    QObject::disconnect(this, QNSIGNAL(RemoteToLocalSynchronizationManager,expungeSavedSearch,SavedSearch,QUuid),
-                        &localStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,onExpungeSavedSearchRequest,SavedSearch,QUuid));
+    QObject::disconnect(this,
+                        QNSIGNAL(RemoteToLocalSynchronizationManager,addNote,
+                                 Note,QUuid),
+                        &localStorageManagerAsync,
+                        QNSLOT(LocalStorageManagerAsync,onAddNoteRequest,
+                               Note,QUuid));
+    QObject::disconnect(this,
+                        QNSIGNAL(RemoteToLocalSynchronizationManager,updateNote,
+                                 Note,LocalStorageManager::UpdateNoteOptions,QUuid),
+                        &localStorageManagerAsync,
+                        QNSLOT(LocalStorageManagerAsync,onUpdateNoteRequest,
+                               Note,LocalStorageManager::UpdateNoteOptions,QUuid));
+    QObject::disconnect(this,
+                        QNSIGNAL(RemoteToLocalSynchronizationManager,findNote,
+                                 Note,LocalStorageManager::GetNoteOptions,QUuid),
+                        &localStorageManagerAsync,
+                        QNSLOT(LocalStorageManagerAsync,onFindNoteRequest,
+                               Note,LocalStorageManager::GetNoteOptions,QUuid));
+    QObject::disconnect(this,
+                        QNSIGNAL(RemoteToLocalSynchronizationManager,expungeNote,
+                                 Note,QUuid),
+                        &localStorageManagerAsync,
+                        QNSLOT(LocalStorageManagerAsync,onExpungeNoteRequest,
+                               Note,QUuid));
+
+    QObject::disconnect(this,
+                        QNSIGNAL(RemoteToLocalSynchronizationManager,addTag,
+                                 Tag,QUuid),
+                        &localStorageManagerAsync,
+                        QNSLOT(LocalStorageManagerAsync,onAddTagRequest,
+                               Tag,QUuid));
+    QObject::disconnect(this,
+                        QNSIGNAL(RemoteToLocalSynchronizationManager,updateTag,
+                                 Tag,QUuid),
+                        &localStorageManagerAsync,
+                        QNSLOT(LocalStorageManagerAsync,onUpdateTagRequest,
+                               Tag,QUuid));
+    QObject::disconnect(this,
+                        QNSIGNAL(RemoteToLocalSynchronizationManager,findTag,
+                                 Tag,QUuid),
+                        &localStorageManagerAsync,
+                        QNSLOT(LocalStorageManagerAsync,onFindTagRequest,
+                               Tag,QUuid));
+    QObject::disconnect(this,
+                        QNSIGNAL(RemoteToLocalSynchronizationManager,expungeTag,
+                                 Tag,QUuid),
+                        &localStorageManagerAsync,
+                        QNSLOT(LocalStorageManagerAsync,onExpungeTagRequest,
+                               Tag,QUuid));
+    QObject::disconnect(&localStorageManagerAsync,
+                        QNSIGNAL(LocalStorageManagerAsync,
+                                 expungeNotelessTagsFromLinkedNotebooksComplete,
+                                 QUuid),
+                        this,
+                        QNSLOT(RemoteToLocalSynchronizationManager,
+                               onExpungeNotelessTagsFromLinkedNotebooksCompleted,
+                               QUuid));
+    QObject::disconnect(&localStorageManagerAsync,
+                        QNSIGNAL(LocalStorageManagerAsync,
+                                 expungeNotelessTagsFromLinkedNotebooksFailed,
+                                 ErrorString,QUuid),
+                        this,
+                        QNSLOT(RemoteToLocalSynchronizationManager,
+                               onExpungeNotelessTagsFromLinkedNotebooksFailed,
+                               ErrorString,QUuid));
+
+    QObject::disconnect(this,
+                        QNSIGNAL(RemoteToLocalSynchronizationManager,addResource,
+                                 Resource,QUuid),
+                        &localStorageManagerAsync,
+                        QNSLOT(LocalStorageManagerAsync,onAddResourceRequest,
+                               Resource,QUuid));
+    QObject::disconnect(this,
+                        QNSIGNAL(RemoteToLocalSynchronizationManager,updateResource,
+                                 Resource,QUuid),
+                        &localStorageManagerAsync,
+                        QNSLOT(LocalStorageManagerAsync,onUpdateResourceRequest,
+                               Resource,QUuid));
+    QObject::disconnect(this,
+                        QNSIGNAL(RemoteToLocalSynchronizationManager,findResource,
+                                 Resource,LocalStorageManager::GetResourceOptions,QUuid),
+                        &localStorageManagerAsync,
+                        QNSLOT(LocalStorageManagerAsync,onFindResourceRequest,
+                               Resource,LocalStorageManager::GetResourceOptions,QUuid));
+
+    QObject::disconnect(this,
+                        QNSIGNAL(RemoteToLocalSynchronizationManager,addLinkedNotebook,
+                                 LinkedNotebook,QUuid),
+                        &localStorageManagerAsync,
+                        QNSLOT(LocalStorageManagerAsync,onAddLinkedNotebookRequest,
+                               LinkedNotebook,QUuid));
+    QObject::disconnect(this,
+                        QNSIGNAL(RemoteToLocalSynchronizationManager,
+                                 updateLinkedNotebook,LinkedNotebook,QUuid),
+                        &localStorageManagerAsync,
+                        QNSLOT(LocalStorageManagerAsync,onUpdateLinkedNotebookRequest,
+                               LinkedNotebook,QUuid));
+    QObject::disconnect(this,
+                        QNSIGNAL(RemoteToLocalSynchronizationManager,
+                                 findLinkedNotebook,LinkedNotebook,QUuid),
+                        &localStorageManagerAsync,
+                        QNSLOT(LocalStorageManagerAsync,onFindLinkedNotebookRequest,
+                               LinkedNotebook,QUuid));
+    QObject::disconnect(this,
+                        QNSIGNAL(RemoteToLocalSynchronizationManager,
+                                 expungeLinkedNotebook,LinkedNotebook,QUuid),
+                        &localStorageManagerAsync,
+                        QNSLOT(LocalStorageManagerAsync,
+                               onExpungeLinkedNotebookRequest,
+                               LinkedNotebook,QUuid));
+
+    QObject::disconnect(this,
+                        QNSIGNAL(RemoteToLocalSynchronizationManager,
+                                 listAllLinkedNotebooks,size_t,size_t,
+                                 LocalStorageManager::ListLinkedNotebooksOrder::type,
+                                 LocalStorageManager::OrderDirection::type,QUuid),
+                        &localStorageManagerAsync,
+                        QNSLOT(LocalStorageManagerAsync,onListAllLinkedNotebooksRequest,
+                               size_t,size_t,
+                               LocalStorageManager::ListLinkedNotebooksOrder::type,
+                               LocalStorageManager::OrderDirection::type,QUuid));
+
+    QObject::disconnect(this,
+                        QNSIGNAL(RemoteToLocalSynchronizationManager,addSavedSearch,
+                                 SavedSearch,QUuid),
+                        &localStorageManagerAsync,
+                        QNSLOT(LocalStorageManagerAsync,onAddSavedSearchRequest,
+                               SavedSearch,QUuid));
+    QObject::disconnect(this,
+                        QNSIGNAL(RemoteToLocalSynchronizationManager,updateSavedSearch,
+                                 SavedSearch,QUuid),
+                        &localStorageManagerAsync,
+                        QNSLOT(LocalStorageManagerAsync,onUpdateSavedSearchRequest,
+                               SavedSearch,QUuid));
+    QObject::disconnect(this,
+                        QNSIGNAL(RemoteToLocalSynchronizationManager,findSavedSearch,
+                                 SavedSearch,QUuid),
+                        &localStorageManagerAsync,
+                        QNSLOT(LocalStorageManagerAsync,onFindSavedSearchRequest,
+                               SavedSearch,QUuid));
+    QObject::disconnect(this,
+                        QNSIGNAL(RemoteToLocalSynchronizationManager,
+                                 expungeSavedSearch,SavedSearch,QUuid),
+                        &localStorageManagerAsync,
+                        QNSLOT(LocalStorageManagerAsync,onExpungeSavedSearchRequest,
+                               SavedSearch,QUuid));
 
     // Disconnect localStorageManagerThread's signals to local slots
-    QObject::disconnect(&localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,findUserComplete,User,QUuid),
-                        this, QNSLOT(RemoteToLocalSynchronizationManager,onFindUserCompleted,User,QUuid));
-    QObject::disconnect(&localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,findUserFailed,User,ErrorString,QUuid),
-                        this, QNSLOT(RemoteToLocalSynchronizationManager,onFindUserFailed,User,ErrorString,QUuid));
-    QObject::disconnect(&localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,findNotebookComplete,Notebook,QUuid),
-                        this, QNSLOT(RemoteToLocalSynchronizationManager,onFindNotebookCompleted,Notebook,QUuid));
-    QObject::disconnect(&localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,findNotebookFailed,Notebook,ErrorString,QUuid),
-                        this, QNSLOT(RemoteToLocalSynchronizationManager,onFindNotebookFailed,Notebook,ErrorString,QUuid));
-
-    QObject::disconnect(&localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,findNoteComplete,Note,LocalStorageManager::GetNoteOptions,QUuid),
-                        this, QNSLOT(RemoteToLocalSynchronizationManager,onFindNoteCompleted,Note,LocalStorageManager::GetNoteOptions,QUuid));
-    QObject::disconnect(&localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,findNoteFailed,Note,LocalStorageManager::GetNoteOptions,ErrorString,QUuid),
-                        this, QNSLOT(RemoteToLocalSynchronizationManager,onFindNoteFailed,Note,LocalStorageManager::GetNoteOptions,ErrorString,QUuid));
-
-    QObject::disconnect(&localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,findTagComplete,Tag,QUuid),
-                        this, QNSLOT(RemoteToLocalSynchronizationManager,onFindTagCompleted,Tag,QUuid));
-    QObject::disconnect(&localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,findTagFailed,Tag,ErrorString,QUuid),
-                        this, QNSLOT(RemoteToLocalSynchronizationManager,onFindTagFailed,Tag,ErrorString,QUuid));
-
-    QObject::disconnect(&localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,findLinkedNotebookComplete,LinkedNotebook,QUuid),
-                        this, QNSLOT(RemoteToLocalSynchronizationManager,onFindLinkedNotebookCompleted,LinkedNotebook,QUuid));
-    QObject::disconnect(&localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,findLinkedNotebookFailed,LinkedNotebook,ErrorString,QUuid),
-                        this, QNSLOT(RemoteToLocalSynchronizationManager,onFindLinkedNotebookFailed,LinkedNotebook,ErrorString,QUuid));
-
-    QObject::disconnect(&localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,findSavedSearchComplete,SavedSearch,QUuid),
-                        this, QNSLOT(RemoteToLocalSynchronizationManager,onFindSavedSearchCompleted,SavedSearch,QUuid));
-    QObject::disconnect(&localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,findSavedSearchFailed,SavedSearch,ErrorString,QUuid),
-                        this, QNSLOT(RemoteToLocalSynchronizationManager,onFindSavedSearchFailed,SavedSearch,ErrorString,QUuid));
-
-    QObject::disconnect(&localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,findResourceComplete,Resource,LocalStorageManager::GetResourceOptions,QUuid),
-                        this, QNSLOT(RemoteToLocalSynchronizationManager,onFindResourceCompleted,Resource,LocalStorageManager::GetResourceOptions,QUuid));
-    QObject::disconnect(&localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,findResourceFailed,Resource,LocalStorageManager::GetResourceOptions,ErrorString,QUuid),
-                        this, QNSLOT(RemoteToLocalSynchronizationManager,onFindResourceFailed,Resource,LocalStorageManager::GetResourceOptions,ErrorString,QUuid));
-
-    QObject::disconnect(&localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,addTagComplete,Tag,QUuid),
-                        this, QNSLOT(RemoteToLocalSynchronizationManager,onAddTagCompleted,Tag,QUuid));
-    QObject::disconnect(&localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,addTagFailed,Tag,ErrorString,QUuid),
-                        this, QNSLOT(RemoteToLocalSynchronizationManager,onAddTagFailed,Tag,ErrorString,QUuid));
-
-    QObject::disconnect(&localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,updateTagComplete,Tag,QUuid),
-                        this, QNSLOT(RemoteToLocalSynchronizationManager,onUpdateTagCompleted,Tag,QUuid));
-    QObject::disconnect(&localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,updateTagFailed,Tag,ErrorString,QUuid),
-                        this, QNSLOT(RemoteToLocalSynchronizationManager,onUpdateTagFailed,Tag,ErrorString,QUuid));
-
-    QObject::disconnect(&localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,expungeTagComplete,Tag,QStringList,QUuid),
-                        this, QNSLOT(RemoteToLocalSynchronizationManager,onExpungeTagCompleted,Tag,QStringList,QUuid));
-    QObject::disconnect(&localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,expungeTagFailed,Tag,ErrorString,QUuid),
-                        this, QNSLOT(RemoteToLocalSynchronizationManager,onExpungeTagFailed,Tag,ErrorString,QUuid));
-
-    QObject::disconnect(&localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,addSavedSearchComplete,SavedSearch,QUuid),
-                        this, QNSLOT(RemoteToLocalSynchronizationManager,onAddSavedSearchCompleted,SavedSearch,QUuid));
-    QObject::disconnect(&localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,addSavedSearchFailed,SavedSearch,ErrorString,QUuid),
-                        this, QNSLOT(RemoteToLocalSynchronizationManager,onAddSavedSearchFailed,SavedSearch,ErrorString,QUuid));
-
-    QObject::disconnect(&localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,updateSavedSearchComplete,SavedSearch,QUuid),
-                        this, QNSLOT(RemoteToLocalSynchronizationManager,onUpdateSavedSearchCompleted,SavedSearch,QUuid));
-    QObject::disconnect(&localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,updateSavedSearchFailed,SavedSearch,ErrorString,QUuid),
-                        this, QNSLOT(RemoteToLocalSynchronizationManager,onUpdateSavedSearchFailed,SavedSearch,ErrorString,QUuid));
-
-    QObject::disconnect(&localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,expungeSavedSearchComplete,SavedSearch,QUuid),
-                        this, QNSLOT(RemoteToLocalSynchronizationManager,onExpungeSavedSearchCompleted,SavedSearch,QUuid));
-    QObject::disconnect(&localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,expungeSavedSearchFailed,SavedSearch,ErrorString,QUuid),
-                        this, QNSLOT(RemoteToLocalSynchronizationManager,onExpungeSavedSearchFailed,SavedSearch,ErrorString,QUuid));
-    QObject::disconnect(&localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,addUserComplete,User,QUuid),
-                        this, QNSLOT(RemoteToLocalSynchronizationManager,onAddUserCompleted,User,QUuid));
-    QObject::disconnect(&localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,addUserFailed,User,ErrorString,QUuid),
-                        this, QNSLOT(RemoteToLocalSynchronizationManager,onAddUserFailed,User,ErrorString,QUuid));
-    QObject::disconnect(&localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,updateUserComplete,User,QUuid),
-                        this, QNSLOT(RemoteToLocalSynchronizationManager,onUpdateUserCompleted,User,QUuid));
-    QObject::disconnect(&localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,updateUserFailed,User,ErrorString,QUuid),
-                        this, QNSLOT(RemoteToLocalSynchronizationManager,onUpdateUserFailed,User,ErrorString,QUuid));
-    QObject::disconnect(&localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,addLinkedNotebookComplete,LinkedNotebook,QUuid),
-                        this, QNSLOT(RemoteToLocalSynchronizationManager,onAddLinkedNotebookCompleted,LinkedNotebook,QUuid));
-    QObject::disconnect(&localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,addLinkedNotebookFailed,LinkedNotebook,ErrorString,QUuid),
-                        this, QNSLOT(RemoteToLocalSynchronizationManager,onAddLinkedNotebookFailed,LinkedNotebook,ErrorString,QUuid));
-
-    QObject::disconnect(&localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,updateLinkedNotebookComplete,LinkedNotebook,QUuid),
-                        this, QNSLOT(RemoteToLocalSynchronizationManager,onUpdateLinkedNotebookCompleted,LinkedNotebook,QUuid));
-    QObject::disconnect(&localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,updateLinkedNotebookFailed,LinkedNotebook,ErrorString,QUuid),
-                        this, QNSLOT(RemoteToLocalSynchronizationManager,onUpdateLinkedNotebookFailed,LinkedNotebook,ErrorString,QUuid));
-
-    QObject::disconnect(&localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,expungeLinkedNotebookComplete,LinkedNotebook,QUuid),
-                        this, QNSLOT(RemoteToLocalSynchronizationManager,onExpungeLinkedNotebookCompleted,LinkedNotebook,QUuid));
-    QObject::disconnect(&localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,expungeLinkedNotebookFailed,LinkedNotebook,ErrorString,QUuid),
-                        this, QNSLOT(RemoteToLocalSynchronizationManager,onExpungeLinkedNotebookFailed,LinkedNotebook,ErrorString,QUuid));
+    QObject::disconnect(&localStorageManagerAsync,
+                        QNSIGNAL(LocalStorageManagerAsync,findUserComplete,
+                                 User,QUuid),
+                        this,
+                        QNSLOT(RemoteToLocalSynchronizationManager,
+                               onFindUserCompleted,User,QUuid));
+    QObject::disconnect(&localStorageManagerAsync,
+                        QNSIGNAL(LocalStorageManagerAsync,findUserFailed,
+                                 User,ErrorString,QUuid),
+                        this,
+                        QNSLOT(RemoteToLocalSynchronizationManager,onFindUserFailed,
+                               User,ErrorString,QUuid));
+    QObject::disconnect(&localStorageManagerAsync,
+                        QNSIGNAL(LocalStorageManagerAsync,findNotebookComplete,
+                                 Notebook,QUuid),
+                        this,
+                        QNSLOT(RemoteToLocalSynchronizationManager,
+                               onFindNotebookCompleted,Notebook,QUuid));
+    QObject::disconnect(&localStorageManagerAsync,
+                        QNSIGNAL(LocalStorageManagerAsync,findNotebookFailed,
+                                 Notebook,ErrorString,QUuid),
+                        this,
+                        QNSLOT(RemoteToLocalSynchronizationManager,
+                               onFindNotebookFailed,Notebook,ErrorString,QUuid));
 
     QObject::disconnect(&localStorageManagerAsync,
-                        QNSIGNAL(LocalStorageManagerAsync,listAllLinkedNotebooksComplete,size_t,size_t,
-                                 LocalStorageManager::ListLinkedNotebooksOrder::type,LocalStorageManager::OrderDirection::type,QList<LinkedNotebook>,QUuid),
+                        QNSIGNAL(LocalStorageManagerAsync,findNoteComplete,
+                                 Note,LocalStorageManager::GetNoteOptions,QUuid),
                         this,
-                        QNSLOT(RemoteToLocalSynchronizationManager,onListAllLinkedNotebooksCompleted,size_t,size_t,
-                               LocalStorageManager::ListLinkedNotebooksOrder::type,LocalStorageManager::OrderDirection::type,QList<LinkedNotebook>,QUuid));
+                        QNSLOT(RemoteToLocalSynchronizationManager,onFindNoteCompleted,
+                               Note,LocalStorageManager::GetNoteOptions,QUuid));
     QObject::disconnect(&localStorageManagerAsync,
-                        QNSIGNAL(LocalStorageManagerAsync,listAllLinkedNotebooksFailed,size_t,size_t,
-                                 LocalStorageManager::ListLinkedNotebooksOrder::type,LocalStorageManager::OrderDirection::type,ErrorString,QUuid),
+                        QNSIGNAL(LocalStorageManagerAsync,findNoteFailed,
+                                 Note,LocalStorageManager::GetNoteOptions,
+                                 ErrorString,QUuid),
                         this,
-                        QNSLOT(RemoteToLocalSynchronizationManager,onListAllLinkedNotebooksFailed,size_t,size_t,
-                               LocalStorageManager::ListLinkedNotebooksOrder::type,LocalStorageManager::OrderDirection::type,ErrorString,QUuid));
+                        QNSLOT(RemoteToLocalSynchronizationManager,onFindNoteFailed,
+                               Note,LocalStorageManager::GetNoteOptions,
+                               ErrorString,QUuid));
 
-    QObject::disconnect(&localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,addNotebookComplete,Notebook,QUuid),
-                        this, QNSLOT(RemoteToLocalSynchronizationManager,onAddNotebookCompleted,Notebook,QUuid));
-    QObject::disconnect(&localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,addNotebookFailed,Notebook,ErrorString,QUuid),
-                        this, QNSLOT(RemoteToLocalSynchronizationManager,onAddNotebookFailed,Notebook,ErrorString,QUuid));
+    QObject::disconnect(&localStorageManagerAsync,
+                        QNSIGNAL(LocalStorageManagerAsync,findTagComplete,
+                                 Tag,QUuid),
+                        this,
+                        QNSLOT(RemoteToLocalSynchronizationManager,
+                               onFindTagCompleted,Tag,QUuid));
+    QObject::disconnect(&localStorageManagerAsync,
+                        QNSIGNAL(LocalStorageManagerAsync,findTagFailed,
+                                 Tag,ErrorString,QUuid),
+                        this,
+                        QNSLOT(RemoteToLocalSynchronizationManager,
+                               onFindTagFailed,Tag,ErrorString,QUuid));
 
-    QObject::disconnect(&localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,updateNotebookComplete,Notebook,QUuid),
-                        this, QNSLOT(RemoteToLocalSynchronizationManager,onUpdateNotebookCompleted,Notebook,QUuid));
-    QObject::disconnect(&localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,updateNotebookFailed,Notebook,ErrorString,QUuid),
-                        this, QNSLOT(RemoteToLocalSynchronizationManager,onUpdateNotebookFailed,Notebook,ErrorString,QUuid));
+    QObject::disconnect(&localStorageManagerAsync,
+                        QNSIGNAL(LocalStorageManagerAsync,findLinkedNotebookComplete,
+                                 LinkedNotebook,QUuid),
+                        this,
+                        QNSLOT(RemoteToLocalSynchronizationManager,
+                               onFindLinkedNotebookCompleted,LinkedNotebook,QUuid));
+    QObject::disconnect(&localStorageManagerAsync,
+                        QNSIGNAL(LocalStorageManagerAsync,findLinkedNotebookFailed,
+                                 LinkedNotebook,ErrorString,QUuid),
+                        this,
+                        QNSLOT(RemoteToLocalSynchronizationManager,
+                               onFindLinkedNotebookFailed,LinkedNotebook,
+                               ErrorString,QUuid));
 
-    QObject::disconnect(&localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,expungeNotebookComplete,Notebook,QUuid),
-                        this, QNSLOT(RemoteToLocalSynchronizationManager,onExpungeNotebookCompleted,Notebook,QUuid));
-    QObject::disconnect(&localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,expungeNotebookFailed,Notebook,ErrorString,QUuid),
-                        this, QNSLOT(RemoteToLocalSynchronizationManager,onExpungeNotebookFailed,Notebook,ErrorString,QUuid));
+    QObject::disconnect(&localStorageManagerAsync,
+                        QNSIGNAL(LocalStorageManagerAsync,findSavedSearchComplete,
+                                 SavedSearch,QUuid),
+                        this,
+                        QNSLOT(RemoteToLocalSynchronizationManager,
+                               onFindSavedSearchCompleted,SavedSearch,QUuid));
+    QObject::disconnect(&localStorageManagerAsync,
+                        QNSIGNAL(LocalStorageManagerAsync,findSavedSearchFailed,
+                                 SavedSearch,ErrorString,QUuid),
+                        this,
+                        QNSLOT(RemoteToLocalSynchronizationManager,
+                               onFindSavedSearchFailed,SavedSearch,
+                               ErrorString,QUuid));
 
-    QObject::disconnect(&localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,updateNoteComplete,Note,LocalStorageManager::UpdateNoteOptions,QUuid),
-                        this, QNSLOT(RemoteToLocalSynchronizationManager,onUpdateNoteCompleted,Note,LocalStorageManager::UpdateNoteOptions,QUuid));
-    QObject::disconnect(&localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,updateNoteFailed,Note,LocalStorageManager::UpdateNoteOptions,ErrorString,QUuid),
-                        this, QNSLOT(RemoteToLocalSynchronizationManager,onUpdateNoteFailed,Note,LocalStorageManager::UpdateNoteOptions,ErrorString,QUuid));
+    QObject::disconnect(&localStorageManagerAsync,
+                        QNSIGNAL(LocalStorageManagerAsync,findResourceComplete,
+                                 Resource,LocalStorageManager::GetResourceOptions,
+                                 QUuid),
+                        this,
+                        QNSLOT(RemoteToLocalSynchronizationManager,
+                               onFindResourceCompleted,Resource,
+                               LocalStorageManager::GetResourceOptions,QUuid));
+    QObject::disconnect(&localStorageManagerAsync,
+                        QNSIGNAL(LocalStorageManagerAsync,findResourceFailed,
+                                 Resource,LocalStorageManager::GetResourceOptions,
+                                 ErrorString,QUuid),
+                        this,
+                        QNSLOT(RemoteToLocalSynchronizationManager,onFindResourceFailed,
+                               Resource,LocalStorageManager::GetResourceOptions,
+                               ErrorString,QUuid));
 
-    QObject::disconnect(&localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,addNoteComplete,Note,QUuid),
-                        this, QNSLOT(RemoteToLocalSynchronizationManager,onAddNoteCompleted,Note,QUuid));
-    QObject::disconnect(&localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,addNoteFailed,Note,ErrorString,QUuid),
-                        this, QNSLOT(RemoteToLocalSynchronizationManager,onAddNoteFailed,Note,ErrorString,QUuid));
+    QObject::disconnect(&localStorageManagerAsync,
+                        QNSIGNAL(LocalStorageManagerAsync,addTagComplete,
+                                 Tag,QUuid),
+                        this,
+                        QNSLOT(RemoteToLocalSynchronizationManager,onAddTagCompleted,
+                               Tag,QUuid));
+    QObject::disconnect(&localStorageManagerAsync,
+                        QNSIGNAL(LocalStorageManagerAsync,addTagFailed,
+                                 Tag,ErrorString,QUuid),
+                        this,
+                        QNSLOT(RemoteToLocalSynchronizationManager,onAddTagFailed,
+                               Tag,ErrorString,QUuid));
 
-    QObject::disconnect(&localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,expungeNoteComplete,Note,QUuid),
-                        this, QNSLOT(RemoteToLocalSynchronizationManager,onExpungeNoteCompleted,Note,QUuid));
-    QObject::disconnect(&localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,expungeNoteFailed,Note,ErrorString,QUuid),
-                        this, QNSLOT(RemoteToLocalSynchronizationManager,onExpungeNoteFailed,Note,ErrorString,QUuid));
+    QObject::disconnect(&localStorageManagerAsync,
+                        QNSIGNAL(LocalStorageManagerAsync,updateTagComplete,
+                                 Tag,QUuid),
+                        this,
+                        QNSLOT(RemoteToLocalSynchronizationManager,
+                               onUpdateTagCompleted,Tag,QUuid));
+    QObject::disconnect(&localStorageManagerAsync,
+                        QNSIGNAL(LocalStorageManagerAsync,updateTagFailed,
+                                 Tag,ErrorString,QUuid),
+                        this,
+                        QNSLOT(RemoteToLocalSynchronizationManager,onUpdateTagFailed,
+                               Tag,ErrorString,QUuid));
 
-    QObject::disconnect(&localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,addResourceComplete,Resource,QUuid),
-                        this, QNSLOT(RemoteToLocalSynchronizationManager,onAddResourceCompleted,Resource,QUuid));
-    QObject::disconnect(&localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,addResourceFailed,Resource,ErrorString,QUuid),
-                        this, QNSLOT(RemoteToLocalSynchronizationManager,onAddResourceFailed,Resource,ErrorString,QUuid));
+    QObject::disconnect(&localStorageManagerAsync,
+                        QNSIGNAL(LocalStorageManagerAsync,expungeTagComplete,
+                                 Tag,QStringList,QUuid),
+                        this,
+                        QNSLOT(RemoteToLocalSynchronizationManager,
+                               onExpungeTagCompleted,Tag,QStringList,QUuid));
+    QObject::disconnect(&localStorageManagerAsync,
+                        QNSIGNAL(LocalStorageManagerAsync,expungeTagFailed,
+                                 Tag,ErrorString,QUuid),
+                        this,
+                        QNSLOT(RemoteToLocalSynchronizationManager,
+                               onExpungeTagFailed,Tag,ErrorString,QUuid));
 
-    QObject::disconnect(&localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,updateResourceComplete,Resource,QUuid),
-                        this, QNSLOT(RemoteToLocalSynchronizationManager,onUpdateResourceCompleted,Resource,QUuid));
-    QObject::disconnect(&localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,updateResourceFailed,Resource,ErrorString,QUuid),
-                        this, QNSLOT(RemoteToLocalSynchronizationManager,onUpdateResourceFailed,Resource,ErrorString,QUuid));
+    QObject::disconnect(&localStorageManagerAsync,
+                        QNSIGNAL(LocalStorageManagerAsync,addSavedSearchComplete,
+                                 SavedSearch,QUuid),
+                        this,
+                        QNSLOT(RemoteToLocalSynchronizationManager,
+                               onAddSavedSearchCompleted,SavedSearch,QUuid));
+    QObject::disconnect(&localStorageManagerAsync,
+                        QNSIGNAL(LocalStorageManagerAsync,addSavedSearchFailed,
+                                 SavedSearch,ErrorString,QUuid),
+                        this,
+                        QNSLOT(RemoteToLocalSynchronizationManager,
+                               onAddSavedSearchFailed,SavedSearch,ErrorString,QUuid));
+
+    QObject::disconnect(&localStorageManagerAsync,
+                        QNSIGNAL(LocalStorageManagerAsync,updateSavedSearchComplete,
+                                 SavedSearch,QUuid),
+                        this,
+                        QNSLOT(RemoteToLocalSynchronizationManager,
+                               onUpdateSavedSearchCompleted,SavedSearch,QUuid));
+    QObject::disconnect(&localStorageManagerAsync,
+                        QNSIGNAL(LocalStorageManagerAsync,updateSavedSearchFailed,
+                                 SavedSearch,ErrorString,QUuid),
+                        this,
+                        QNSLOT(RemoteToLocalSynchronizationManager,
+                               onUpdateSavedSearchFailed,SavedSearch,
+                               ErrorString,QUuid));
+
+    QObject::disconnect(&localStorageManagerAsync,
+                        QNSIGNAL(LocalStorageManagerAsync,expungeSavedSearchComplete,
+                                 SavedSearch,QUuid),
+                        this,
+                        QNSLOT(RemoteToLocalSynchronizationManager,
+                               onExpungeSavedSearchCompleted,SavedSearch,QUuid));
+    QObject::disconnect(&localStorageManagerAsync,
+                        QNSIGNAL(LocalStorageManagerAsync,expungeSavedSearchFailed,
+                                 SavedSearch,ErrorString,QUuid),
+                        this,
+                        QNSLOT(RemoteToLocalSynchronizationManager,
+                               onExpungeSavedSearchFailed,SavedSearch,
+                               ErrorString,QUuid));
+    QObject::disconnect(&localStorageManagerAsync,
+                        QNSIGNAL(LocalStorageManagerAsync,addUserComplete,
+                                 User,QUuid),
+                        this,
+                        QNSLOT(RemoteToLocalSynchronizationManager,
+                               onAddUserCompleted,User,QUuid));
+    QObject::disconnect(&localStorageManagerAsync,
+                        QNSIGNAL(LocalStorageManagerAsync,addUserFailed,
+                                 User,ErrorString,QUuid),
+                        this,
+                        QNSLOT(RemoteToLocalSynchronizationManager,
+                               onAddUserFailed,User,ErrorString,QUuid));
+    QObject::disconnect(&localStorageManagerAsync,
+                        QNSIGNAL(LocalStorageManagerAsync,updateUserComplete,
+                                 User,QUuid),
+                        this,
+                        QNSLOT(RemoteToLocalSynchronizationManager,
+                               onUpdateUserCompleted,User,QUuid));
+    QObject::disconnect(&localStorageManagerAsync,
+                        QNSIGNAL(LocalStorageManagerAsync,updateUserFailed,
+                                 User,ErrorString,QUuid),
+                        this,
+                        QNSLOT(RemoteToLocalSynchronizationManager,
+                               onUpdateUserFailed,User,ErrorString,QUuid));
+    QObject::disconnect(&localStorageManagerAsync,
+                        QNSIGNAL(LocalStorageManagerAsync,addLinkedNotebookComplete,
+                                 LinkedNotebook,QUuid),
+                        this,
+                        QNSLOT(RemoteToLocalSynchronizationManager,
+                               onAddLinkedNotebookCompleted,LinkedNotebook,QUuid));
+    QObject::disconnect(&localStorageManagerAsync,
+                        QNSIGNAL(LocalStorageManagerAsync,addLinkedNotebookFailed,
+                                 LinkedNotebook,ErrorString,QUuid),
+                        this,
+                        QNSLOT(RemoteToLocalSynchronizationManager,
+                               onAddLinkedNotebookFailed,LinkedNotebook,
+                               ErrorString,QUuid));
+
+    QObject::disconnect(&localStorageManagerAsync,
+                        QNSIGNAL(LocalStorageManagerAsync,updateLinkedNotebookComplete,
+                                 LinkedNotebook,QUuid),
+                        this,
+                        QNSLOT(RemoteToLocalSynchronizationManager,
+                               onUpdateLinkedNotebookCompleted,LinkedNotebook,QUuid));
+    QObject::disconnect(&localStorageManagerAsync,
+                        QNSIGNAL(LocalStorageManagerAsync,updateLinkedNotebookFailed,
+                                 LinkedNotebook,ErrorString,QUuid),
+                        this,
+                        QNSLOT(RemoteToLocalSynchronizationManager,
+                               onUpdateLinkedNotebookFailed,LinkedNotebook,
+                               ErrorString,QUuid));
+
+    QObject::disconnect(&localStorageManagerAsync,
+                        QNSIGNAL(LocalStorageManagerAsync,expungeLinkedNotebookComplete,
+                                 LinkedNotebook,QUuid),
+                        this,
+                        QNSLOT(RemoteToLocalSynchronizationManager,
+                               onExpungeLinkedNotebookCompleted,LinkedNotebook,QUuid));
+    QObject::disconnect(&localStorageManagerAsync,
+                        QNSIGNAL(LocalStorageManagerAsync,expungeLinkedNotebookFailed,
+                                 LinkedNotebook,ErrorString,QUuid),
+                        this,
+                        QNSLOT(RemoteToLocalSynchronizationManager,
+                               onExpungeLinkedNotebookFailed,LinkedNotebook,
+                               ErrorString,QUuid));
+
+    QObject::disconnect(&localStorageManagerAsync,
+                        QNSIGNAL(LocalStorageManagerAsync,
+                                 listAllLinkedNotebooksComplete,size_t,size_t,
+                                 LocalStorageManager::ListLinkedNotebooksOrder::type,
+                                 LocalStorageManager::OrderDirection::type,
+                                 QList<LinkedNotebook>,QUuid),
+                        this,
+                        QNSLOT(RemoteToLocalSynchronizationManager,
+                               onListAllLinkedNotebooksCompleted,size_t,size_t,
+                               LocalStorageManager::ListLinkedNotebooksOrder::type,
+                               LocalStorageManager::OrderDirection::type,
+                               QList<LinkedNotebook>,QUuid));
+    QObject::disconnect(&localStorageManagerAsync,
+                        QNSIGNAL(LocalStorageManagerAsync,listAllLinkedNotebooksFailed,
+                                 size_t,size_t,
+                                 LocalStorageManager::ListLinkedNotebooksOrder::type,
+                                 LocalStorageManager::OrderDirection::type,
+                                 ErrorString,QUuid),
+                        this,
+                        QNSLOT(RemoteToLocalSynchronizationManager,
+                               onListAllLinkedNotebooksFailed,size_t,size_t,
+                               LocalStorageManager::ListLinkedNotebooksOrder::type,
+                               LocalStorageManager::OrderDirection::type,
+                               ErrorString,QUuid));
+
+    QObject::disconnect(&localStorageManagerAsync,
+                        QNSIGNAL(LocalStorageManagerAsync,addNotebookComplete,
+                                 Notebook,QUuid),
+                        this,
+                        QNSLOT(RemoteToLocalSynchronizationManager,
+                               onAddNotebookCompleted,Notebook,QUuid));
+    QObject::disconnect(&localStorageManagerAsync,
+                        QNSIGNAL(LocalStorageManagerAsync,addNotebookFailed,
+                                 Notebook,ErrorString,QUuid),
+                        this,
+                        QNSLOT(RemoteToLocalSynchronizationManager,
+                               onAddNotebookFailed,Notebook,ErrorString,QUuid));
+
+    QObject::disconnect(&localStorageManagerAsync,
+                        QNSIGNAL(LocalStorageManagerAsync,updateNotebookComplete,
+                                 Notebook,QUuid),
+                        this,
+                        QNSLOT(RemoteToLocalSynchronizationManager,
+                               onUpdateNotebookCompleted,Notebook,QUuid));
+    QObject::disconnect(&localStorageManagerAsync,
+                        QNSIGNAL(LocalStorageManagerAsync,updateNotebookFailed,
+                                 Notebook,ErrorString,QUuid),
+                        this,
+                        QNSLOT(RemoteToLocalSynchronizationManager,
+                               onUpdateNotebookFailed,Notebook,ErrorString,QUuid));
+
+    QObject::disconnect(&localStorageManagerAsync,
+                        QNSIGNAL(LocalStorageManagerAsync,expungeNotebookComplete,
+                                 Notebook,QUuid),
+                        this,
+                        QNSLOT(RemoteToLocalSynchronizationManager,
+                               onExpungeNotebookCompleted,Notebook,QUuid));
+    QObject::disconnect(&localStorageManagerAsync,
+                        QNSIGNAL(LocalStorageManagerAsync,expungeNotebookFailed,Notebook,
+                                 ErrorString,QUuid),
+                        this,
+                        QNSLOT(RemoteToLocalSynchronizationManager,
+                               onExpungeNotebookFailed,Notebook,ErrorString,QUuid));
+
+    QObject::disconnect(&localStorageManagerAsync,
+                        QNSIGNAL(LocalStorageManagerAsync,updateNoteComplete,
+                                 Note,LocalStorageManager::UpdateNoteOptions,
+                                 QUuid),
+                        this,
+                        QNSLOT(RemoteToLocalSynchronizationManager,
+                               onUpdateNoteCompleted,Note,
+                               LocalStorageManager::UpdateNoteOptions,QUuid));
+    QObject::disconnect(&localStorageManagerAsync,
+                        QNSIGNAL(LocalStorageManagerAsync,updateNoteFailed,
+                                 Note,LocalStorageManager::UpdateNoteOptions,
+                                 ErrorString,QUuid),
+                        this,
+                        QNSLOT(RemoteToLocalSynchronizationManager,onUpdateNoteFailed,
+                               Note,LocalStorageManager::UpdateNoteOptions,
+                               ErrorString,QUuid));
+
+    QObject::disconnect(&localStorageManagerAsync,
+                        QNSIGNAL(LocalStorageManagerAsync,addNoteComplete,
+                                 Note,QUuid),
+                        this,
+                        QNSLOT(RemoteToLocalSynchronizationManager,
+                               onAddNoteCompleted,Note,QUuid));
+    QObject::disconnect(&localStorageManagerAsync,
+                        QNSIGNAL(LocalStorageManagerAsync,addNoteFailed,
+                                 Note,ErrorString,QUuid),
+                        this,
+                        QNSLOT(RemoteToLocalSynchronizationManager,
+                               onAddNoteFailed,Note,ErrorString,QUuid));
+
+    QObject::disconnect(&localStorageManagerAsync,
+                        QNSIGNAL(LocalStorageManagerAsync,expungeNoteComplete,
+                                 Note,QUuid),
+                        this,
+                        QNSLOT(RemoteToLocalSynchronizationManager,
+                               onExpungeNoteCompleted,Note,QUuid));
+    QObject::disconnect(&localStorageManagerAsync,
+                        QNSIGNAL(LocalStorageManagerAsync,expungeNoteFailed,
+                                 Note,ErrorString,QUuid),
+                        this,
+                        QNSLOT(RemoteToLocalSynchronizationManager,
+                               onExpungeNoteFailed,Note,ErrorString,QUuid));
+
+    QObject::disconnect(&localStorageManagerAsync,
+                        QNSIGNAL(LocalStorageManagerAsync,addResourceComplete,
+                                 Resource,QUuid),
+                        this,
+                        QNSLOT(RemoteToLocalSynchronizationManager,
+                               onAddResourceCompleted,Resource,QUuid));
+    QObject::disconnect(&localStorageManagerAsync,
+                        QNSIGNAL(LocalStorageManagerAsync,addResourceFailed,
+                                 Resource,ErrorString,QUuid),
+                        this,
+                        QNSLOT(RemoteToLocalSynchronizationManager,
+                               onAddResourceFailed,Resource,ErrorString,QUuid));
+
+    QObject::disconnect(&localStorageManagerAsync,
+                        QNSIGNAL(LocalStorageManagerAsync,updateResourceComplete,
+                                 Resource,QUuid),
+                        this,
+                        QNSLOT(RemoteToLocalSynchronizationManager,
+                               onUpdateResourceCompleted,Resource,QUuid));
+    QObject::disconnect(&localStorageManagerAsync,
+                        QNSIGNAL(LocalStorageManagerAsync,updateResourceFailed,
+                                 Resource,ErrorString,QUuid),
+                        this,
+                        QNSLOT(RemoteToLocalSynchronizationManager,
+                               onUpdateResourceFailed,Resource,ErrorString,QUuid));
 
     m_connectedToLocalStorage = false;
 
-    // With the disconnect from local storage the list of previously received linked notebooks (if any) + new additions/updates becomes invalidated
+    // With the disconnect from local storage the list of previously received
+    // linked notebooks (if any) + new additions/updates becomes invalidated
     m_allLinkedNotebooksListed = false;
 }
 

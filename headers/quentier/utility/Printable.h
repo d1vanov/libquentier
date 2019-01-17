@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Dmitry Ivanov
+ * Copyright 2016-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -49,7 +49,8 @@ namespace quentier {
 
 /**
  * @brief The Printable class is the interface for Quentier's internal classes
- * which should be able to write themselves into QTextStream and/or convert to QString
+ * which should be able to write themselves into QTextStream and/or convert
+ * to QString
  */
 class QUENTIER_EXPORT Printable
 {
@@ -91,7 +92,8 @@ const QString ToString(const QHash<TKey, TValue> & object)
     typedef typename QHash<TKey,TValue>::const_iterator CIter;
     CIter hashEnd = object.end();
     for(CIter it = object.begin(); it != hashEnd; ++it) {
-        strm << QStringLiteral("[") << it.key() << QStringLiteral("] = ") << it.value() << QStringLiteral(";\n");
+        strm << QStringLiteral("[") << it.key() << QStringLiteral("] = ")
+             << it.value() << QStringLiteral(";\n");
     }
     return str;
 }

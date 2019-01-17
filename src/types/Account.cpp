@@ -1,3 +1,21 @@
+/*
+ * Copyright 2016-2019 Dmitry Ivanov
+ *
+ * This file is part of libquentier
+ *
+ * libquentier is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, version 3 of the License.
+ *
+ * libquentier is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
+ */
+
 #include <quentier/types/Account.h>
 #include "data/AccountData.h"
 
@@ -206,7 +224,8 @@ QTextStream & Account::print(QTextStream & strm) const
 {
     strm << QStringLiteral("Account: {\n");
     strm << QStringLiteral("    name = ") << d->m_name << QStringLiteral(";\n");
-    strm << QStringLiteral("    display name = ") << d->m_displayName << QStringLiteral(";\n");
+    strm << QStringLiteral("    display name = ") << d->m_displayName
+         << QStringLiteral(";\n");
     strm << QStringLiteral("    id = ") << d->m_userId << QStringLiteral(";\n");
 
     strm << QStringLiteral("    type = ");
@@ -245,18 +264,30 @@ QTextStream & Account::print(QTextStream & strm) const
     }
     strm << QStringLiteral(";\n");
 
-    strm << QStringLiteral("    Evernote host = ") << d->m_evernoteHost << QStringLiteral(";\n");
-    strm << QStringLiteral("    shard id = ") << d->m_shardId << QStringLiteral(";\n");
-    strm << QStringLiteral("    mail limit daily = ") << d->m_mailLimitDaily << QStringLiteral(";\n");
-    strm << QStringLiteral("    note size max = ") << d->m_noteSizeMax << QStringLiteral(";\n");
-    strm << QStringLiteral("    resource size max = ") << d->m_resourceSizeMax << QStringLiteral(";\n");
-    strm << QStringLiteral("    linked notebook max = ") << d->m_linkedNotebookMax << QStringLiteral(";\n");
-    strm << QStringLiteral("    note count max = ") << d->m_noteCountMax << QStringLiteral(";\n");
-    strm << QStringLiteral("    notebook count max = ") << d->m_notebookCountMax << QStringLiteral(";\n");
-    strm << QStringLiteral("    tag count max = ") << d->m_tagCountMax << QStringLiteral(";\n");
-    strm << QStringLiteral("    note tag count max = ") << d->m_noteTagCountMax << QStringLiteral(";\n");
-    strm << QStringLiteral("    saved search count max = ") << d->m_savedSearchCountMax << QStringLiteral(";\n");
-    strm << QStringLiteral("    note resource count max = ") << d->m_noteResourceCountMax << QStringLiteral(";\n");
+    strm << QStringLiteral("    Evernote host = ")
+         << d->m_evernoteHost << QStringLiteral(";\n");
+    strm << QStringLiteral("    shard id = ")
+         << d->m_shardId << QStringLiteral(";\n");
+    strm << QStringLiteral("    mail limit daily = ")
+         << d->m_mailLimitDaily << QStringLiteral(";\n");
+    strm << QStringLiteral("    note size max = ")
+         << d->m_noteSizeMax << QStringLiteral(";\n");
+    strm << QStringLiteral("    resource size max = ")
+         << d->m_resourceSizeMax << QStringLiteral(";\n");
+    strm << QStringLiteral("    linked notebook max = ")
+         << d->m_linkedNotebookMax << QStringLiteral(";\n");
+    strm << QStringLiteral("    note count max = ")
+         << d->m_noteCountMax << QStringLiteral(";\n");
+    strm << QStringLiteral("    notebook count max = ")
+         << d->m_notebookCountMax << QStringLiteral(";\n");
+    strm << QStringLiteral("    tag count max = ")
+         << d->m_tagCountMax << QStringLiteral(";\n");
+    strm << QStringLiteral("    note tag count max = ")
+         << d->m_noteTagCountMax << QStringLiteral(";\n");
+    strm << QStringLiteral("    saved search count max = ")
+         << d->m_savedSearchCountMax << QStringLiteral(";\n");
+    strm << QStringLiteral("    note resource count max = ")
+         << d->m_noteResourceCountMax << QStringLiteral(";\n");
     strm << QStringLiteral("};\n");
 
     return strm;
