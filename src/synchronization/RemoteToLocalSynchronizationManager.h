@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Dmitry Ivanov
+ * Copyright 2017-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -65,7 +65,8 @@ public:
         virtual LocalStorageManagerAsync & localStorageManagerAsync() = 0;
         virtual INoteStore & noteStore() = 0;
         virtual IUserStore & userStore() = 0;
-        virtual INoteStore * noteStoreForLinkedNotebook(const LinkedNotebook & linkedNotebook) = 0;
+        virtual INoteStore * noteStoreForLinkedNotebook(
+                                    const LinkedNotebook & linkedNotebook) = 0;
         virtual ~IManager() {}
     };
 
@@ -135,7 +136,8 @@ Q_SIGNALS:
     void stopped();
 
     void requestAuthenticationToken();
-    void requestAuthenticationTokensForLinkedNotebooks(QVector<LinkedNotebookAuthData> linkedNotebookAuthData);
+    void requestAuthenticationTokensForLinkedNotebooks(
+            QVector<LinkedNotebookAuthData> linkedNotebookAuthData);
     void requestLastSyncParameters();
 
 public Q_SLOTS:
@@ -146,19 +148,20 @@ public Q_SLOTS:
     void onAuthenticationInfoReceived(QString authToken, QString shardId,
                                       qevercloud::Timestamp expirationTime);
     void onAuthenticationTokensForLinkedNotebooksReceived(
-                QHash<QString,QPair<QString,QString> > authenticationTokensAndShardIdsByLinkedNotebookGuid,
-                QHash<QString,qevercloud::Timestamp> authenticationTokenExpirationTimesByLinkedNotebookGuid);
-    void onLastSyncParametersReceived(qint32 lastUpdateCount,
-                                      qevercloud::Timestamp lastSyncTime,
-                                      QHash<QString,qint32> lastUpdateCountByLinkedNotebookGuid,
-                                      QHash<QString,qevercloud::Timestamp> lastSyncTimeByLinkedNotebookGuid);
+            QHash<QString,QPair<QString,QString> > authTokensAndShardIdsByLinkedNotebookGuid,
+            QHash<QString,qevercloud::Timestamp> authTokenExpirationTimesByLinkedNotebookGuid);
+    void onLastSyncParametersReceived(
+            qint32 lastUpdateCount,
+            qevercloud::Timestamp lastSyncTime,
+            QHash<QString,qint32> lastUpdateCountByLinkedNotebookGuid,
+            QHash<QString,qevercloud::Timestamp> lastSyncTimeByLinkedNotebookGuid);
 
     void setDownloadNoteThumbnails(const bool flag);
     void setDownloadInkNoteImages(const bool flag);
     void setInkNoteImagesStoragePath(const QString & path);
 
-    void collectNonProcessedItemsSmallestUsns(qint32 & usn,
-                                              QHash<QString,qint32> & usnByLinkedNotebookGuid);
+    void collectNonProcessedItemsSmallestUsns(
+            qint32 & usn, QHash<QString,qint32> & usnByLinkedNotebookGuid);
 
 // private signals
 Q_SIGNALS:
@@ -206,8 +209,8 @@ Q_SIGNALS:
     void authDataUpdated(QString authToken, QString shardId,
                          qevercloud::Timestamp expirationTime);
     void linkedNotebookAuthDataUpdated(
-                QHash<QString,QPair<QString,QString> > authenticationTokensAndShardIdsByLinkedNotebookGuid,
-                QHash<QString,qevercloud::Timestamp> authenticationTokenExpirationTimesByLinkedNotebookGuid);
+            QHash<QString,QPair<QString,QString> > authTokensAndShardIdsByLinkedNotebookGuid,
+            QHash<QString,qevercloud::Timestamp> authTokenExpirationTimesByLinkedNotebookGuid);
 
 private Q_SLOTS:
     void onFindUserCompleted(User user, QUuid requestId);
@@ -282,15 +285,16 @@ private Q_SLOTS:
                                        ErrorString errorDescription,
                                        QUuid requestId);
 
-    void onListAllLinkedNotebooksCompleted(size_t limit, size_t offset,
-                                           LocalStorageManager::ListLinkedNotebooksOrder::type order,
-                                           LocalStorageManager::OrderDirection::type orderDirection,
-                                           QList<LinkedNotebook> linkedNotebooks,
-                                           QUuid requestId);
-    void onListAllLinkedNotebooksFailed(size_t limit, size_t offset,
-                                        LocalStorageManager::ListLinkedNotebooksOrder::type order,
-                                        LocalStorageManager::OrderDirection::type orderDirection,
-                                        ErrorString errorDescription, QUuid requestId);
+    void onListAllLinkedNotebooksCompleted(
+            size_t limit, size_t offset,
+            LocalStorageManager::ListLinkedNotebooksOrder::type order,
+            LocalStorageManager::OrderDirection::type orderDirection,
+            QList<LinkedNotebook> linkedNotebooks, QUuid requestId);
+    void onListAllLinkedNotebooksFailed(
+            size_t limit, size_t offset,
+            LocalStorageManager::ListLinkedNotebooksOrder::type order,
+            LocalStorageManager::OrderDirection::type orderDirection,
+            ErrorString errorDescription, QUuid requestId);
 
     void onAddNotebookCompleted(Notebook notebook, QUuid requestId);
     void onAddNotebookFailed(Notebook notebook,
