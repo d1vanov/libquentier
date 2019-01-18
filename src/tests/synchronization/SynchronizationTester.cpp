@@ -5118,21 +5118,26 @@ void SynchronizationTester::setModifiedUserOwnItemsToLocalStorage()
         QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
     }
 
+    auto * pLocalStorageManager = m_pLocalStorageManagerAsync->localStorageManager();
+
     QVERIFY(!m_guidsOfUserOwnLocalItemsToModify.m_noteGuids.isEmpty());
     for(auto it = m_guidsOfUserOwnLocalItemsToModify.m_noteGuids.constBegin(),
         end = m_guidsOfUserOwnLocalItemsToModify.m_noteGuids.constEnd(); it != end; ++it)
     {
         Note note;
         note.setGuid(*it);
-        res = m_pLocalStorageManagerAsync->localStorageManager()->findNote(note, errorDescription, /* with resource binary data = */ false);
+        LocalStorageManager::GetNoteOptions options(
+            LocalStorageManager::GetNoteOption::WithResourceMetadata);
+        res = pLocalStorageManager->findNote(note, options, errorDescription);
         QVERIFY2(res == true, "Detected unexpectedly missing note in local storage");
         QVERIFY2(note.hasTitle(), "Detected note without title in local storage");
 
         note.setTitle(note.title() + MODIFIED_LOCALLY_SUFFIX);
         note.setDirty(true);
 
-        res = m_pLocalStorageManagerAsync->localStorageManager()->updateNote(note, LocalStorageManager::UpdateNoteOptions(0),
-                                                                             errorDescription);
+        res = pLocalStorageManager->updateNote(note,
+                                               LocalStorageManager::UpdateNoteOptions(0),
+                                               errorDescription);
         QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
     }
 }
@@ -5176,21 +5181,26 @@ void SynchronizationTester::setModifiedLinkedNotebookItemsToLocalStorage()
         QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
     }
 
+    auto * pLocalStorageManager = m_pLocalStorageManagerAsync->localStorageManager();
+
     QVERIFY(!m_guidsOfLinkedNotebookLocalItemsToModify.m_noteGuids.isEmpty());
     for(auto it = m_guidsOfLinkedNotebookLocalItemsToModify.m_noteGuids.constBegin(),
         end = m_guidsOfLinkedNotebookLocalItemsToModify.m_noteGuids.constEnd(); it != end; ++it)
     {
         Note note;
         note.setGuid(*it);
-        res = m_pLocalStorageManagerAsync->localStorageManager()->findNote(note, errorDescription, /* with resource binary data = */ false);
+        LocalStorageManager::GetNoteOptions options(
+            LocalStorageManager::GetNoteOption::WithResourceMetadata);
+        res = pLocalStorageManager->findNote(note, options, errorDescription);
         QVERIFY2(res == true, "Detected unexpectedly missing note in local storage");
         QVERIFY2(note.hasTitle(), "Detected note without title in local storage");
 
         note.setTitle(note.title() + MODIFIED_LOCALLY_SUFFIX);
         note.setDirty(true);
 
-        res = m_pLocalStorageManagerAsync->localStorageManager()->updateNote(note, LocalStorageManager::UpdateNoteOptions(0),
-                                                                             errorDescription);
+        res = pLocalStorageManager->updateNote(note,
+                                               LocalStorageManager::UpdateNoteOptions(0),
+                                               errorDescription);
         QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
     }
 }
@@ -5934,13 +5944,17 @@ void SynchronizationTester::checkExpectedNamesOfConflictingItemsAfterSync()
         onceChecked = true;
     }
 
+    auto * pLocalStorageManager = m_pLocalStorageManagerAsync->localStorageManager();
+
     for(auto it = m_expectedNoteTitlesByGuid.constBegin(),
         end = m_expectedNoteTitlesByGuid.constEnd(); it != end; ++it)
     {
         Note note;
         note.setLocalUid(QString());
         note.setGuid(it.key());
-        res = m_pLocalStorageManagerAsync->localStorageManager()->findNote(note, errorDescription, /* with resource binary data = */ false);
+        LocalStorageManager::GetNoteOptions options(
+            LocalStorageManager::GetNoteOption::WithResourceMetadata);
+        res = pLocalStorageManager->findNote(note, options, errorDescription);
         QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
 
         if (Q_UNLIKELY(note.title() != it.value()))
@@ -5961,11 +5975,14 @@ void SynchronizationTester::checkExpectedNamesOfConflictingItemsAfterSync()
 
 void SynchronizationTester::checkLocalCopiesOfConflictingNotesWereCreated()
 {
+    auto * pLocalStorageManager = m_pLocalStorageManagerAsync->localStorageManager();
+
     QVERIFY(!m_expectedNoteTitlesByGuid.isEmpty());
     for(auto it = m_expectedNoteTitlesByGuid.constBegin(),
         end = m_expectedNoteTitlesByGuid.constEnd(); it != end; ++it)
     {
-        QList<Note> remoteConflictingNotes = m_pFakeNoteStore->getNotesByConflictSourceNoteGuid(it.key());
+        QList<Note> remoteConflictingNotes =
+            m_pFakeNoteStore->getNotesByConflictSourceNoteGuid(it.key());
         QVERIFY(remoteConflictingNotes.size() == 1);
 
         const Note & remoteConfictingNote = remoteConflictingNotes.at(0);
@@ -5973,12 +5990,15 @@ void SynchronizationTester::checkLocalCopiesOfConflictingNotesWereCreated()
         Note localConflictingNote;
         localConflictingNote.setLocalUid(QString());
         localConflictingNote.setGuid(remoteConfictingNote.guid());
+        LocalStorageManager::GetNoteOptions options(
+            LocalStorageManager::GetNoteOption::WithResourceMetadata);
         ErrorString errorDescription;
-        bool res = m_pLocalStorageManagerAsync->localStorageManager()->findNote(localConflictingNote, errorDescription,
-                                                                                /* with resource binary data = */ false);
+        bool res = pLocalStorageManager->findNote(localConflictingNote,
+                                                  options, errorDescription);
         QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
         QVERIFY(localConflictingNote.hasTitle());
-        QVERIFY(localConflictingNote.title().endsWith(MODIFIED_LOCALLY_SUFFIX + QStringLiteral(" - conflicting")));
+        QVERIFY(localConflictingNote.title().endsWith(MODIFIED_LOCALLY_SUFFIX +
+                                                      QStringLiteral(" - conflicting")));
     }
 }
 
@@ -6194,11 +6214,16 @@ void SynchronizationTester::listNotesFromLocalStorage(const qint32 afterUSN, con
         localLinkedNotebookGuid = linkedNotebookGuid;
     }
 
+    LocalStorageManager::GetNoteOptions options(
+        LocalStorageManager::GetNoteOption::WithResourceMetadata |
+        LocalStorageManager::GetNoteOption::WithResourceBinaryData);
     ErrorString errorDescription;
-    QList<Note> localNotes = pLocalStorageManager->listNotes(LocalStorageManager::ListAll,
-                                                             errorDescription, true, true, 0, 0, LocalStorageManager::ListNotesOrder::NoOrder,
-                                                             LocalStorageManager::OrderDirection::Ascending,
-                                                             localLinkedNotebookGuid);
+    QList<Note> localNotes =
+        pLocalStorageManager->listNotes(LocalStorageManager::ListAll,
+                                        options, errorDescription, 0, 0,
+                                        LocalStorageManager::ListNotesOrder::NoOrder,
+                                        LocalStorageManager::OrderDirection::Ascending,
+                                        localLinkedNotebookGuid);
     if (localNotes.isEmpty() && !errorDescription.isEmpty()) {
         QFAIL(qPrintable(errorDescription.nonLocalizedString()));
     }
@@ -6219,12 +6244,14 @@ void SynchronizationTester::listNotesFromLocalStorage(const qint32 afterUSN, con
     }
 }
 
-void SynchronizationTester::listResourcesFromLocalStorage(const qint32 afterUSN, const QString & linkedNotebookGuid,
+void SynchronizationTester::listResourcesFromLocalStorage(const qint32 afterUSN,
+                                                          const QString & linkedNotebookGuid,
                                                           QHash<QString, qevercloud::Resource> & resources) const
 {
     resources.clear();
 
-    const LocalStorageManager * pLocalStorageManager = m_pLocalStorageManagerAsync->localStorageManager();
+    const LocalStorageManager * pLocalStorageManager =
+        m_pLocalStorageManagerAsync->localStorageManager();
     if (Q_UNLIKELY(!pLocalStorageManager)) {
         QFAIL("Local storage manager is null");
     }
@@ -6234,11 +6261,16 @@ void SynchronizationTester::listResourcesFromLocalStorage(const qint32 afterUSN,
         localLinkedNotebookGuid = linkedNotebookGuid;
     }
 
+    LocalStorageManager::GetNoteOptions options(
+        LocalStorageManager::GetNoteOption::WithResourceMetadata |
+        LocalStorageManager::GetNoteOption::WithResourceBinaryData);
     ErrorString errorDescription;
-    QList<Note> localNotes = pLocalStorageManager->listNotes(LocalStorageManager::ListAll,
-                                                             errorDescription, true, true, 0, 0, LocalStorageManager::ListNotesOrder::NoOrder,
-                                                             LocalStorageManager::OrderDirection::Ascending,
-                                                             localLinkedNotebookGuid);
+    QList<Note> localNotes =
+        pLocalStorageManager->listNotes(LocalStorageManager::ListAll,
+                                        options, errorDescription, 0, 0,
+                                        LocalStorageManager::ListNotesOrder::NoOrder,
+                                        LocalStorageManager::OrderDirection::Ascending,
+                                        localLinkedNotebookGuid);
     if (localNotes.isEmpty() && !errorDescription.isEmpty()) {
         QFAIL(qPrintable(errorDescription.nonLocalizedString()));
     }
@@ -6252,14 +6284,18 @@ void SynchronizationTester::listResourcesFromLocalStorage(const qint32 afterUSN,
         }
 
         QList<Resource> localResources = note.resources();
-        for(auto rit = localResources.constBegin(), rend = localResources.constEnd(); rit != rend; ++rit)
+        for(auto rit = localResources.constBegin(),
+            rend = localResources.constEnd(); rit != rend; ++rit)
         {
             const Resource & localResource = *rit;
             if (Q_UNLIKELY(!localResource.hasGuid())) {
                 continue;
             }
 
-            if ((afterUSN > 0) && (!localResource.hasUpdateSequenceNumber() || (localResource.updateSequenceNumber() <= afterUSN))) {
+            if ((afterUSN > 0) &&
+                (!localResource.hasUpdateSequenceNumber() ||
+                 (localResource.updateSequenceNumber() <= afterUSN)))
+            {
                 continue;
             }
 
