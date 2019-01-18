@@ -44,8 +44,7 @@ class QUENTIER_EXPORT LocalStorageManagerAsync: public QObject
     Q_OBJECT
 public:
     explicit LocalStorageManagerAsync(const Account & account,
-                                      const bool startFromScratch,
-                                      const bool overrideLock,
+                                      LocalStorageManager::StartupOptions options,
                                       QObject * parent = Q_NULLPTR);
     virtual ~LocalStorageManagerAsync();
 
@@ -388,7 +387,9 @@ public Q_SLOTS:
 
     // User-related slots:
     void onGetUserCountRequest(QUuid requestId);
-    void onSwitchUserRequest(Account account, bool startFromScratch, QUuid requestId);
+    void onSwitchUserRequest(Account account,
+                             LocalStorageManager::StartupOptions startupOptions,
+                             QUuid requestId);
     void onAddUserRequest(User user, QUuid requestId);
     void onUpdateUserRequest(User user, QUuid requestId);
     void onFindUserRequest(User user, QUuid requestId);
