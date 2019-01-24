@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Dmitry Ivanov
+ * Copyright 2016-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -45,17 +45,19 @@ Q_SIGNALS:
     void failure(QString errorDescription);
 
 // private signals:
-    void getTagCountRequest(QUuid requestId = QUuid());
-    void addTagRequest(Tag tag, QUuid requestId = QUuid());
-    void updateTagRequest(Tag tag, QUuid requestId = QUuid());
-    void findTagRequest(Tag tag, QUuid requestId = QUuid());
-    void listAllTagsRequest(size_t limit, size_t offset, LocalStorageManager::ListTagsOrder::type order,
-                            LocalStorageManager::OrderDirection::type orderDirection, QString linkedNotebookGuid,
-                            QUuid requestId = QUuid());
-    void expungeTagRequest(Tag tag, QUuid requestId = QUuid());
+    void getTagCountRequest(QUuid requestId);
+    void addTagRequest(Tag tag, QUuid requestId);
+    void updateTagRequest(Tag tag, QUuid requestId);
+    void findTagRequest(Tag tag, QUuid requestId);
+    void listAllTagsRequest(size_t limit, size_t offset,
+                            LocalStorageManager::ListTagsOrder::type order,
+                            LocalStorageManager::OrderDirection::type orderDirection,
+                            QString linkedNotebookGuid,
+                            QUuid requestId);
+    void expungeTagRequest(Tag tag, QUuid requestId);
 
 private Q_SLOTS:
-    void onWorkerInitialized();
+    void initialize();
     void onGetTagCountCompleted(int count, QUuid requestId);
     void onGetTagCountFailed(ErrorString errorDescription, QUuid requestId);
     void onAddTagCompleted(Tag tag, QUuid requestId);
@@ -64,13 +66,19 @@ private Q_SLOTS:
     void onUpdateTagFailed(Tag tag, ErrorString errorDescription, QUuid requestId);
     void onFindTagCompleted(Tag tag, QUuid requestId);
     void onFindTagFailed(Tag tag, ErrorString errorDescription, QUuid requestId);
-    void onListAllTagsCompleted(size_t limit, size_t offset, LocalStorageManager::ListTagsOrder::type order,
-                                LocalStorageManager::OrderDirection::type orderDirection, QString linkedNotebookGuid,
+    void onListAllTagsCompleted(size_t limit, size_t offset,
+                                LocalStorageManager::ListTagsOrder::type order,
+                                LocalStorageManager::OrderDirection::type orderDirection,
+                                QString linkedNotebookGuid,
                                 QList<Tag> tags, QUuid requestId);
-    void onListAllTagsFailed(size_t limit, size_t offset, LocalStorageManager::ListTagsOrder::type order,
-                             LocalStorageManager::OrderDirection::type orderDirection, QString linkedNotebookGuid,
+    void onListAllTagsFailed(size_t limit, size_t offset,
+                             LocalStorageManager::ListTagsOrder::type order,
+                             LocalStorageManager::OrderDirection::type orderDirection,
+                             QString linkedNotebookGuid,
                              ErrorString errorDescription, QUuid requestId);
-    void onExpungeTagCompleted(Tag tag, QStringList expungedChildTagLocalUids, QUuid requestId);
+    void onExpungeTagCompleted(Tag tag,
+                               QStringList expungedChildTagLocalUids,
+                               QUuid requestId);
     void onExpungeTagFailed(Tag tag, ErrorString errorDescription, QUuid requestId);
 
 private:

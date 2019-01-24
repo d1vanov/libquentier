@@ -44,21 +44,32 @@ Q_SIGNALS:
     void addNotebook(Notebook notebook, QUuid requestId);
     void addTag(Tag tag, QUuid requestId);
     void addNote(Note note, QUuid requestId);
-    void updateNote(Note note, LocalStorageManager::UpdateNoteOptions options, QUuid requestId);
+    void updateNote(Note note,
+                    LocalStorageManager::UpdateNoteOptions options,
+                    QUuid requestId);
 
 private Q_SLOTS:
-    void onLocalStorageManagerInitialized();
+    void initialize();
     void onAddNotebookComplete(Notebook notebook, QUuid requestId);
-    void onAddNotebookFailed(Notebook notebook, ErrorString errorDescription, QUuid requestId);
+    void onAddNotebookFailed(Notebook notebook,
+                             ErrorString errorDescription,
+                             QUuid requestId);
     void onAddTagComplete(Tag tag, QUuid requestId);
     void onAddTagFailed(Tag tag, ErrorString errorDescription, QUuid requestId);
     void onAddNoteComplete(Note note, QUuid requestId);
     void onAddNoteFailed(Note note, ErrorString errorDescription, QUuid requestId);
-    void onUpdateNoteComplete(Note note, LocalStorageManager::UpdateNoteOptions options, QUuid requestId);
-    void onUpdateNoteFailed(Note note, LocalStorageManager::UpdateNoteOptions options,
+    void onUpdateNoteComplete(Note note,
+                              LocalStorageManager::UpdateNoteOptions options,
+                              QUuid requestId);
+    void onUpdateNoteFailed(Note note,
+                            LocalStorageManager::UpdateNoteOptions options,
                             ErrorString errorDescription, QUuid requestId);
-    void onNoteMovedToAnotherNotebook(QString noteLocalUid, QString previousNotebookLocalUid, QString newNotebookLocalUid);
-    void onNoteTagListUpdated(QString noteLocalUid, QStringList previousTagLocalUids, QStringList newTagLocalUids);
+    void onNoteMovedToAnotherNotebook(QString noteLocalUid,
+                                      QString previousNotebookLocalUid,
+                                      QString newNotebookLocalUid);
+    void onNoteTagListUpdated(QString noteLocalUid,
+                              QStringList previousTagLocalUids,
+                              QStringList newTagLocalUids);
 
 private:
     void createConnections();

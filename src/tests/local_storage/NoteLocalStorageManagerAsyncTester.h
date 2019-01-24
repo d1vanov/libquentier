@@ -63,7 +63,7 @@ Q_SIGNALS:
     void expungeNoteRequest(Note note, QUuid requestId);
 
 private Q_SLOTS:
-    void onWorkerInitialized();
+    void initialize();
     void onAddNotebookCompleted(Notebook notebook, QUuid requestId);
     void onAddNotebookFailed(Notebook notebook,
                              ErrorString errorDescription,

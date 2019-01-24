@@ -68,7 +68,7 @@ void NoteLocalStorageManagerAsyncTester::onInitTestCase()
     m_pLocalStorageManagerThread->start();
 }
 
-void NoteLocalStorageManagerAsyncTester::onWorkerInitialized()
+void NoteLocalStorageManagerAsyncTester::initialize()
 {
     m_notebook.clear();
     m_notebook.setGuid(QStringLiteral("00000000-0000-0000-c000-000000000047"));
@@ -649,7 +649,7 @@ void NoteLocalStorageManagerAsyncTester::createConnections()
     QObject::connect(m_pLocalStorageManagerAsync,
                      QNSIGNAL(LocalStorageManagerAsync,initialized),
                      this,
-                     QNSLOT(NoteLocalStorageManagerAsyncTester,onWorkerInitialized));
+                     QNSLOT(NoteLocalStorageManagerAsyncTester,initialize));
 
     // Request --> slot connections
     QObject::connect(this,
