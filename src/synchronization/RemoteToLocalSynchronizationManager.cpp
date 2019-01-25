@@ -2260,8 +2260,6 @@ void RemoteToLocalSynchronizationManager::emitFindByGuidRequest<qevercloud::Note
 
     QUuid requestId = QUuid::createUuid();
     Q_UNUSED(m_findNoteByGuidRequestIds.insert(requestId));
-    bool withResourceMetadata = true;
-    bool withResourceBinaryData = false;
     QNTRACE(QStringLiteral("Emitting the request to find note in the local storage: request id = ") << requestId
             << QStringLiteral(", note: ") << note);
     LocalStorageManager::GetNoteOptions options =

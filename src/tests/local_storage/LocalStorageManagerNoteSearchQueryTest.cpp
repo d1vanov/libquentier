@@ -42,9 +42,8 @@ bool CheckQueryString(const QString & queryString, const QVector<Note> & notes,
 
     errorDescription.clear();
     LocalStorageManager::GetNoteOptions options = 0;
-    NoteList foundNotes = localStorageManager.findNotesWithSearchQuery(noteSearchQuery,
-                                                                       options,
-                                                                       errorDescription);
+    NoteList foundNotes = localStorageManager.findNotesWithSearchQuery(
+        noteSearchQuery, options, errorDescription);
     if (foundNotes.isEmpty())
     {
         if (!expectedContainedNotesIndices.contains(true)) {
@@ -137,7 +136,8 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
         notebooks << Notebook();
         Notebook & notebook = notebooks.back();
 
-        notebook.setName(QString(QStringLiteral("Test notebook #")) + QString::number(i));
+        notebook.setName(QString(QStringLiteral("Test notebook #")) +
+                         QString::number(i));
         notebook.setUpdateSequenceNumber(i);
         notebook.setDefaultNotebook(i == 0 ? true : false);
         notebook.setLastUsed(i == 1 ? true : false);
@@ -265,34 +265,35 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
     int numContents = 9;
     QVector<QString> contents;
     contents.reserve(numContents);
-    contents << QStringLiteral("<en-note><h1>The unique identifier of this note. "
-                               "Will be set by the server</h1></en-note>")
-             << QStringLiteral("<en-note><h1>The XHTML block that makes up the note. "
-                               "This is the canonical form of the note's contents"
-                               "</h1><en-todo checked = \"true\"/></en-note>")
-             << QStringLiteral("<en-note><h1>The binary MD5 checksum of the UTF-8 "
-                               "encoded content body.</h1></en-note>")
-             << QString::fromUtf8("<en-note><h1>The number of Unicode characters "
-                                  "\"αυτό είναι ένα αυτοκίνητο\" in the content "
-                                  "of the note.</h1><en-todo/></en-note>")
-             << QStringLiteral("<en-note><en-todo checked = \"true\"/><h1>The date "
-                               "and time when the note was created in one of "
-                               "the clients.</h1><en-todo checked = \"false\"/></en-note>")
-             << QStringLiteral("<en-note><h1>If present [code characters], the note "
-                               "is considered \"deleted\", and this stores the date "
-                               "and time when the note was deleted</h1></en-note>")
-             << QString::fromUtf8("<en-note><h1>If the note is available {ΑΥΤΌ "
-                                  "ΕΊΝΑΙ ΈΝΑ ΑΥΤΟΚΊΝΗΤΟ} for normal actions and viewing, "
-                                  "this flag will be set to true.</h1><en-crypt "
-                                  "hint=\"My Cat\'s Name\">NKLHX5yK1MlpzemJQijA"
-                                  "N6C4545s2EODxQ8Bg1r==</en-crypt></en-note>")
-             << QString::fromUtf8("<en-note><h1>A number identifying the last "
-                                  "transaction (Αυτό ΕΊΝΑΙ ένα αυΤΟκίΝΗτο) to "
-                                  "modify the state of this note</h1></en-note>")
-             << QStringLiteral("<en-note><h1>The list of resources that are embedded "
-                               "within this note.</h1><en-todo checked = \"true\"/>"
-                               "<en-crypt hint=\"My Cat\'s Name\">NKLHX5yK1Mlpzem"
-                               "JQijAN6C4545s2EODxQ8Bg1r==</en-crypt></en-note>");
+    contents
+        << QStringLiteral("<en-note><h1>The unique identifier of this note. ") +
+           QStringLiteral("Will be set by the server</h1></en-note>")
+        << QStringLiteral("<en-note><h1>The XHTML block that makes up the note. ") +
+           QStringLiteral("This is the canonical form of the note's contents") +
+           QStringLiteral("</h1><en-todo checked = \"true\"/></en-note>")
+        << QStringLiteral("<en-note><h1>The binary MD5 checksum of the UTF-8 ") +
+           QStringLiteral("encoded content body.</h1></en-note>")
+        << QString::fromUtf8("<en-note><h1>The number of Unicode characters ") +
+           QString::fromUtf8("\"αυτό είναι ένα αυτοκίνητο\" in the content ") +
+           QString::fromUtf8("of the note.</h1><en-todo/></en-note>")
+        << QStringLiteral("<en-note><en-todo checked = \"true\"/><h1>The date ") +
+           QStringLiteral("and time when the note was created in one of ") +
+           QStringLiteral("the clients.</h1><en-todo checked = \"false\"/></en-note>")
+        << QStringLiteral("<en-note><h1>If present [code characters], the note ") +
+           QStringLiteral("is considered \"deleted\", and this stores the date ") +
+           QStringLiteral("and time when the note was deleted</h1></en-note>")
+        << QString::fromUtf8("<en-note><h1>If the note is available {ΑΥΤΌ ") +
+           QString::fromUtf8("ΕΊΝΑΙ ΈΝΑ ΑΥΤΟΚΊΝΗΤΟ} for normal actions and viewing, ") +
+           QString::fromUtf8("this flag will be set to true.</h1><en-crypt ") +
+           QString::fromUtf8("hint=\"My Cat\'s Name\">NKLHX5yK1MlpzemJQijA") +
+           QString::fromUtf8("N6C4545s2EODxQ8Bg1r==</en-crypt></en-note>")
+        << QString::fromUtf8("<en-note><h1>A number identifying the last ") +
+           QString::fromUtf8("transaction (Αυτό ΕΊΝΑΙ ένα αυΤΟκίΝΗτο) to ") +
+           QString::fromUtf8("modify the state of this note</h1></en-note>")
+        << QStringLiteral("<en-note><h1>The list of resources that are embedded ") +
+           QStringLiteral("within this note.</h1><en-todo checked = \"true\"/>") +
+           QStringLiteral("<en-crypt hint=\"My Cat\'s Name\">NKLHX5yK1Mlpzem") +
+           QStringLiteral("JQijAN6C4545s2EODxQ8Bg1r==</en-crypt></en-note>");
 
     QHash<QString,qint64> timestampForDateTimeString;
 

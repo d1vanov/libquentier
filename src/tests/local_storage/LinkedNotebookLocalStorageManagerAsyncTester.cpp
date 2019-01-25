@@ -44,8 +44,6 @@ void LinkedNotebookLocalStorageManagerAsyncTester::onInitTestCase()
 {
     QString username = QStringLiteral("LinkedNotebookLocalStorageManagerAsyncTester");
     qint32 userId = 1;
-    bool startFromScratch = true;
-    bool overrideLock = false;
     LocalStorageManager::StartupOptions startupOptions(
         LocalStorageManager::StartupOption::ClearDatabase);
 

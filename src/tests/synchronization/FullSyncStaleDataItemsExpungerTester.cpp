@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Dmitry Ivanov
+ * Copyright 2017-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -76,14 +76,21 @@ FullSyncStaleDataItemsExpungerTester::~FullSyncStaleDataItemsExpungerTester()
 
 void FullSyncStaleDataItemsExpungerTester::init()
 {
-    m_testAccount = Account(m_testAccount.name(), Account::Type::Evernote, m_testAccount.id() + 1);
-    m_pLocalStorageManagerAsync = new LocalStorageManagerAsync(m_testAccount, /* start from scratch = */ true,
-                                                               /* override lock = */ false, this);
+    m_testAccount = Account(m_testAccount.name(),
+                            Account::Type::Evernote,
+                            m_testAccount.id() + 1);
+    LocalStorageManager::StartupOptions startupOptions(
+        LocalStorageManager::StartupOption::ClearDatabase);
+    m_pLocalStorageManagerAsync =
+        new LocalStorageManagerAsync(m_testAccount, startupOptions, this);
     m_pLocalStorageManagerAsync->init();
 
-    m_pNotebookSyncCache = new NotebookSyncCache(*m_pLocalStorageManagerAsync, QString(), this);
-    m_pTagSyncCache = new TagSyncCache(*m_pLocalStorageManagerAsync, QString(), this);
-    m_pSavedSearchSyncCache = new SavedSearchSyncCache(*m_pLocalStorageManagerAsync, this);
+    m_pNotebookSyncCache =
+        new NotebookSyncCache(*m_pLocalStorageManagerAsync, QString(), this);
+    m_pTagSyncCache =
+        new TagSyncCache(*m_pLocalStorageManagerAsync, QString(), this);
+    m_pSavedSearchSyncCache =
+        new SavedSearchSyncCache(*m_pLocalStorageManagerAsync, this);
 }
 
 void FullSyncStaleDataItemsExpungerTester::cleanup()
@@ -2136,8 +2143,11 @@ void FullSyncStaleDataItemsExpungerTester::doTest(const bool useBaseDataItems,
     // intended to be preserved were actually preserved ======
 
     errorDescription.clear();
-    QList<Note> remainingNotes = pLocalStorageManager->listNotes(LocalStorageManager::ListAll, errorDescription,
-                                                                 /* with resource binary data = */ false);
+    LocalStorageManager::GetNoteOptions getNoteOptions(
+        LocalStorageManager::GetNoteOption::WithResourceMetadata);
+    QList<Note> remainingNotes =
+        pLocalStorageManager->listNotes(LocalStorageManager::ListAll,
+                                        getNoteOptions, errorDescription);
     if (remainingNotes.isEmpty() && !errorDescription.isEmpty()) {
         QFAIL(qPrintable(errorDescription.nonLocalizedString()));
     }

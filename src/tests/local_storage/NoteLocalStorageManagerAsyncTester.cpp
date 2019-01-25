@@ -287,8 +287,6 @@ void NoteLocalStorageManagerAsyncTester::onAddNoteCompleted(Note note, QUuid req
         m_foundNote.setLocalUid(note.localUid());
 
         m_state = STATE_SENT_FIND_AFTER_ADD_REQUEST;
-        bool withResourceMetadata = true;
-        bool withResourceBinaryData = true;
         LocalStorageManager::GetNoteOptions options(
             LocalStorageManager::GetNoteOption::WithResourceMetadata |
             LocalStorageManager::GetNoteOption::WithResourceBinaryData);
@@ -378,8 +376,6 @@ void NoteLocalStorageManagerAsyncTester::onUpdateNoteCompleted(
         }
 
         m_state = STATE_SENT_FIND_AFTER_UPDATE_REQUEST;
-        bool withResourceMetadata = true;
-        bool withResourceBinaryData = true;
         LocalStorageManager::GetNoteOptions options(
             LocalStorageManager::GetNoteOption::WithResourceMetadata |
             LocalStorageManager::GetNoteOption::WithResourceBinaryData);
@@ -625,8 +621,6 @@ void NoteLocalStorageManagerAsyncTester::onExpungeNoteCompleted(Note note,
     }
 
     m_state = STATE_SENT_FIND_AFTER_EXPUNGE_REQUEST;
-    bool withResourceMetadata = true;
-    bool withResourceBinaryData = true;
     LocalStorageManager::GetNoteOptions options(
         LocalStorageManager::GetNoteOption::WithResourceMetadata |
         LocalStorageManager::GetNoteOption::WithResourceBinaryData);

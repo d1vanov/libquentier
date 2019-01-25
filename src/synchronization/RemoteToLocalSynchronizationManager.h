@@ -190,7 +190,9 @@ Q_SIGNALS:
 
     void addResource(Resource resource, QUuid requestId);
     void updateResource(Resource resource, QUuid requestId);
-    void findResource(Resource resource, bool withBinaryData, QUuid requestId);
+    void findResource(Resource resource,
+                      LocalStorageManager::GetResourceOptions options,
+                      QUuid requestId);
 
     void addLinkedNotebook(LinkedNotebook notebook, QUuid requestId);
     void updateLinkedNotebook(LinkedNotebook notebook, QUuid requestId);

@@ -66,8 +66,6 @@ void LocalStorageCacheAsyncTester::onInitTestCase()
 
     LocalStorageManager::StartupOptions startupOptions(
         LocalStorageManager::StartupOption::ClearDatabase);
-    bool startFromScratch = true;
-    bool overrideLock = false;
 
     clear();
 

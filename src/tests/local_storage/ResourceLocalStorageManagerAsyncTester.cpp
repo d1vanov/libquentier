@@ -368,7 +368,7 @@ void ResourceLocalStorageManagerAsyncTester::onUpdateResourceCompleted(Resource 
 
         m_state = STATE_SENT_FIND_AFTER_UPDATE_REQUEST;
         LocalStorageManager::GetResourceOptions options(0);
-        Q_EMIT findResourceRequest(m_foundResource, 0, QUuid::createUuid());
+        Q_EMIT findResourceRequest(m_foundResource, options, QUuid::createUuid());
     }
     HANDLE_WRONG_STATE();
 }
@@ -496,7 +496,6 @@ void ResourceLocalStorageManagerAsyncTester::onExpungeResourceCompleted(Resource
     }
 
     m_state = STATE_SENT_FIND_AFTER_EXPUNGE_REQUEST;
-    bool withBinaryData = true;
     LocalStorageManager::GetResourceOptions options(
         LocalStorageManager::GetResourceOption::WithBinaryData);
     Q_EMIT findResourceRequest(m_foundResource, options, QUuid::createUuid());

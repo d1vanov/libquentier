@@ -95,7 +95,7 @@ Q_SIGNALS:
                                              LocalStorageManager::OrderDirection::type orderDirection,
                                              QString linkedNotebookGuid, QUuid requestId);
     void requestLocalUnsynchronizedNotes(LocalStorageManager::ListObjectsOptions flag,
-                                         bool withResourceMetadata, bool withResourceBinaryData,
+                                         LocalStorageManager::GetNoteOptions options,
                                          size_t limit, size_t offset, LocalStorageManager::ListNotesOrder::type order,
                                          LocalStorageManager::OrderDirection::type orderDirection,
                                          QString linkedNotebookGuid, QUuid requestId);
@@ -149,16 +149,20 @@ private Q_SLOTS:
                                     LocalStorageManager::OrderDirection::type orderDirection,
                                     QString linkedNotebookGuid, ErrorString errorDescription, QUuid requestId);
 
-    void onListDirtyNotesCompleted(LocalStorageManager::ListObjectsOptions flag, bool withResourceMetadata,
-                                   bool withResourceBinaryData, size_t limit, size_t offset,
+    void onListDirtyNotesCompleted(LocalStorageManager::ListObjectsOptions flag,
+                                   LocalStorageManager::GetNoteOptions options,
+                                   size_t limit, size_t offset,
                                    LocalStorageManager::ListNotesOrder::type order,
                                    LocalStorageManager::OrderDirection::type orderDirection,
-                                   QString linkedNotebookGuid, QList<Note> notes, QUuid requestId);
-    void onListDirtyNotesFailed(LocalStorageManager::ListObjectsOptions flag, bool withResourceMetadata,
-                                bool withResourceBinaryData, size_t limit, size_t offset,
+                                   QString linkedNotebookGuid, QList<Note> notes,
+                                   QUuid requestId);
+    void onListDirtyNotesFailed(LocalStorageManager::ListObjectsOptions flag,
+                                LocalStorageManager::GetNoteOptions options,
+                                size_t limit, size_t offset,
                                 LocalStorageManager::ListNotesOrder::type order,
                                 LocalStorageManager::OrderDirection::type orderDirection,
-                                QString linkedNotebookGuid, ErrorString errorDescription, QUuid requestId);
+                                QString linkedNotebookGuid, ErrorString errorDescription,
+                                QUuid requestId);
 
     void onListLinkedNotebooksCompleted(LocalStorageManager::ListObjectsOptions flag,
                                         size_t limit, size_t offset,
