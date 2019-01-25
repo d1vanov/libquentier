@@ -82,6 +82,9 @@ void registerMetatypes()
     qRegisterMetaType<LocalStorageManager::ListSavedSearchesOrder::type>("LocalStorageManager::ListSavedSearchesOrder::type");
     qRegisterMetaType<LocalStorageManager::OrderDirection::type>("LocalStorageManager::OrderDirection::type");
     qRegisterMetaType<LocalStorageManager::UpdateNoteOptions>("LocalStorageManager::UpdateNoteOptions");
+    qRegisterMetaType<LocalStorageManager::GetNoteOptions>("LocalStorageManager::GetNoteOptions");
+    qRegisterMetaType<LocalStorageManager::GetResourceOptions>("LocalStorageManager::GetResourceOptions");
+    qRegisterMetaType<LocalStorageManager::StartupOptions>("LocalStorageManager::StartupOptions");
     qRegisterMetaType<size_t>("size_t");
 
     qRegisterMetaType<QUuid>("QUuid");

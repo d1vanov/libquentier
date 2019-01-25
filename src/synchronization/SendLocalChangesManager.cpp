@@ -1061,11 +1061,19 @@ void SendLocalChangesManager::disconnectFromLocalStorage()
                                QString,QList<Note>,QUuid));
 
     QObject::disconnect(&localStorageManagerAsync,
-                        QNSIGNAL(LocalStorageManagerAsync,listNotesFailed,LocalStorageManager::ListObjectsOptions,bool,bool,size_t,size_t,
-                                 LocalStorageManager::ListNotesOrder::type, LocalStorageManager::OrderDirection::type,QString,ErrorString,QUuid),
+                        QNSIGNAL(LocalStorageManagerAsync,listNotesFailed,
+                                 LocalStorageManager::ListObjectsOptions,
+                                 LocalStorageManager::GetNoteOptions,size_t,size_t,
+                                 LocalStorageManager::ListNotesOrder::type,
+                                 LocalStorageManager::OrderDirection::type,
+                                 QString,ErrorString,QUuid),
                         this,
-                        QNSLOT(SendLocalChangesManager,onListDirtyNotesFailed,LocalStorageManager::ListObjectsOptions,bool,bool,size_t,size_t,
-                               LocalStorageManager::ListNotesOrder::type,LocalStorageManager::OrderDirection::type,QString,ErrorString,QUuid));
+                        QNSLOT(SendLocalChangesManager,onListDirtyNotesFailed,
+                               LocalStorageManager::ListObjectsOptions,
+                               LocalStorageManager::GetNoteOptions,size_t,size_t,
+                               LocalStorageManager::ListNotesOrder::type,
+                               LocalStorageManager::OrderDirection::type,
+                               QString,ErrorString,QUuid));
 
     QObject::disconnect(&localStorageManagerAsync,
                         QNSIGNAL(LocalStorageManagerAsync,listLinkedNotebooksComplete,LocalStorageManager::ListObjectsOptions,size_t,size_t,

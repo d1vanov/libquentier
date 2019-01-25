@@ -41,7 +41,9 @@ bool CheckQueryString(const QString & queryString, const QVector<Note> & notes,
     }
 
     errorDescription.clear();
-    LocalStorageManager::GetNoteOptions options = 0;
+    LocalStorageManager::GetNoteOptions options(
+        LocalStorageManager::GetNoteOption::WithResourceMetadata |
+        LocalStorageManager::GetNoteOption::WithResourceBinaryData);
     NoteList foundNotes = localStorageManager.findNotesWithSearchQuery(
         noteSearchQuery, options, errorDescription);
     if (foundNotes.isEmpty())
