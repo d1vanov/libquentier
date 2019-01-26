@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Dmitry Ivanov
+ * Copyright 2016-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -30,12 +30,16 @@ DecryptedTextManager::~DecryptedTextManager()
     delete d_ptr;
 }
 
-void DecryptedTextManager::addEntry(const QString & hash, const QString & decryptedText,
-                                    const bool rememberForSession, const QString & passphrase,
-                                    const QString & cipher, const size_t keyLength)
+void DecryptedTextManager::addEntry(const QString & hash,
+                                    const QString & decryptedText,
+                                    const bool rememberForSession,
+                                    const QString & passphrase,
+                                    const QString & cipher,
+                                    const size_t keyLength)
 {
     Q_D(DecryptedTextManager);
-    d->addEntry(hash, decryptedText, rememberForSession, passphrase, cipher, keyLength);
+    d->addEntry(hash, decryptedText, rememberForSession,
+                passphrase, cipher, keyLength);
 }
 
 void DecryptedTextManager::removeEntry(const QString & hash)
@@ -55,7 +59,8 @@ bool DecryptedTextManager::findDecryptedTextByEncryptedText(const QString & encr
                                                             bool & rememberForSession) const
 {
     Q_D(const DecryptedTextManager);
-    return d->findDecryptedTextByEncryptedText(encryptedText, decryptedText, rememberForSession);
+    return d->findDecryptedTextByEncryptedText(encryptedText, decryptedText,
+                                               rememberForSession);
 }
 
 bool DecryptedTextManager::modifyDecryptedText(const QString & originalEncryptedText,
@@ -63,7 +68,8 @@ bool DecryptedTextManager::modifyDecryptedText(const QString & originalEncrypted
                                                QString & newEncryptedText)
 {
     Q_D(DecryptedTextManager);
-    return d->modifyDecryptedText(originalEncryptedText, newDecryptedText, newEncryptedText);
+    return d->modifyDecryptedText(originalEncryptedText, newDecryptedText,
+                                  newEncryptedText);
 }
 
 } // namespace quentier

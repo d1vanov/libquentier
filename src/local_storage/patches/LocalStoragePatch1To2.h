@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Dmitry Ivanov
+ * Copyright 2018-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -34,7 +34,8 @@ class Q_DECL_HIDDEN LocalStoragePatch1To2: public ILocalStoragePatch
 public:
     explicit LocalStoragePatch1To2(const Account & account,
                                    LocalStorageManagerPrivate & localStorageManager,
-                                   QSqlDatabase & database, QObject * parent = Q_NULLPTR);
+                                   QSqlDatabase & database,
+                                   QObject * parent = Q_NULLPTR);
 
     virtual int fromVersion() const Q_DECL_OVERRIDE { return 1; }
     virtual int toVersion() const Q_DECL_OVERRIDE { return 2; }
@@ -42,9 +43,12 @@ public:
     virtual QString patchShortDescription() const Q_DECL_OVERRIDE;
     virtual QString patchLongDescription() const Q_DECL_OVERRIDE;
 
-    virtual bool backupLocalStorage(ErrorString & errorDescription) Q_DECL_OVERRIDE;
-    virtual bool restoreLocalStorageFromBackup(ErrorString & errorDescription) Q_DECL_OVERRIDE;
-    virtual bool removeLocalStorageBackup(ErrorString & errorDescription) Q_DECL_OVERRIDE;
+    virtual bool backupLocalStorage(
+        ErrorString & errorDescription) Q_DECL_OVERRIDE;
+    virtual bool restoreLocalStorageFromBackup(
+        ErrorString & errorDescription) Q_DECL_OVERRIDE;
+    virtual bool removeLocalStorageBackup(
+        ErrorString & errorDescription) Q_DECL_OVERRIDE;
 
     virtual bool apply(ErrorString & errorDescription) Q_DECL_OVERRIDE;
 
@@ -57,9 +61,12 @@ private Q_SLOTS:
     void startLocalStorageRestorationFromBackup();
 
 private:
-    QStringList listResourceLocalUidsForDatabaseUpgradeFromVersion1ToVersion2(ErrorString & errorDescription);
-    void filterResourceLocalUidsForDatabaseUpgradeFromVersion1ToVersion2(QStringList & resourceLocalUids);
-    bool ensureExistenceOfResouceDataDirsForDatabaseUpgradeFromVersion1ToVersion2(ErrorString & errorDescription);
+    QStringList listResourceLocalUidsForDatabaseUpgradeFromVersion1ToVersion2(
+        ErrorString & errorDescription);
+    void filterResourceLocalUidsForDatabaseUpgradeFromVersion1ToVersion2(
+        QStringList & resourceLocalUids);
+    bool ensureExistenceOfResouceDataDirsForDatabaseUpgradeFromVersion1ToVersion2(
+        ErrorString & errorDescription);
 
 private:
     Q_DISABLE_COPY(LocalStoragePatch1To2)

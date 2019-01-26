@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Dmitry Ivanov
+ * Copyright 2016-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -22,7 +22,8 @@
 
 namespace quentier {
 
-DefaultLocalStorageCacheExpiryChecker::DefaultLocalStorageCacheExpiryChecker(const LocalStorageCacheManager & cacheManager) :
+DefaultLocalStorageCacheExpiryChecker::DefaultLocalStorageCacheExpiryChecker(
+        const LocalStorageCacheManager & cacheManager) :
     ILocalStorageCacheExpiryChecker(cacheManager)
 {}
 
@@ -75,11 +76,16 @@ QTextStream & DefaultLocalStorageCacheExpiryChecker::print(QTextStream & strm) c
     const char * indent = "  ";
 
     strm << QStringLiteral("DefaultLocalStorageCacheExpiryChecker: {\n") ;
-    strm << indent << QStringLiteral("max notes to store: ") << MAX_NOTES_TO_STORE << QStringLiteral(";\n");
-    strm << indent << QStringLiteral("max notebooks to store: ") << MAX_NOTEBOOKS_TO_STORE << QStringLiteral(";\n");
-    strm << indent << QStringLiteral("max tags to store: ") << MAX_TAGS_TO_STORE << QStringLiteral(";\n");
-    strm << indent << QStringLiteral("max linked notebooks to store: ") << MAX_LINKED_NOTEBOOKS_TO_STORE << QStringLiteral(";\n");
-    strm << indent << QStringLiteral("max saved searches to store: ") << MAX_SAVED_SEARCHES_TO_STORE << QStringLiteral("\n");
+    strm << indent << QStringLiteral("max notes to store: ")
+         << MAX_NOTES_TO_STORE << QStringLiteral(";\n");
+    strm << indent << QStringLiteral("max notebooks to store: ")
+         << MAX_NOTEBOOKS_TO_STORE << QStringLiteral(";\n");
+    strm << indent << QStringLiteral("max tags to store: ")
+         << MAX_TAGS_TO_STORE << QStringLiteral(";\n");
+    strm << indent << QStringLiteral("max linked notebooks to store: ")
+         << MAX_LINKED_NOTEBOOKS_TO_STORE << QStringLiteral(";\n");
+    strm << indent << QStringLiteral("max saved searches to store: ")
+         << MAX_SAVED_SEARCHES_TO_STORE << QStringLiteral("\n");
     strm << QStringLiteral("};\n");
 
     return strm;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Dmitry Ivanov
+ * Copyright 2018-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -32,8 +32,9 @@ QT_FORWARD_DECLARE_CLASS(ILocalStoragePatch)
 QT_FORWARD_DECLARE_CLASS(LocalStorageManagerPrivate)
 
 /**
- * @brief The LocalStoragePatchManager controls the set of patches which are applied to the local storage
- * when its schema/structure needs to be changed (with upgrades of libquentier)
+ * @brief The LocalStoragePatchManager controls the set of patches which are
+ * applied to the local storage when its schema/structure needs to be changed
+ * (with upgrades of libquentier)
  */
 class Q_DECL_HIDDEN LocalStoragePatchManager: public QObject
 {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Dmitry Ivanov
+ * Copyright 2016-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -40,10 +40,12 @@ bool ENMLConverter::htmlToNoteContent(const QString & html, QString & noteConten
     QNDEBUG(QStringLiteral("ENMLConverter::htmlToNoteContent"));
 
     Q_D(const ENMLConverter);
-    return d->htmlToNoteContent(html, skipRules, noteContent, decryptedTextManager, errorDescription);
+    return d->htmlToNoteContent(html, skipRules, noteContent,
+                                decryptedTextManager, errorDescription);
 }
 
-bool ENMLConverter::cleanupExternalHtml(const QString & inputHtml, QString & cleanedUpHtml,
+bool ENMLConverter::cleanupExternalHtml(const QString & inputHtml,
+                                        QString & cleanedUpHtml,
                                         ErrorString & errorDescription) const
 {
     QNDEBUG(QStringLiteral("ENMLConverter::cleanupExternalHtml"));
@@ -52,7 +54,8 @@ bool ENMLConverter::cleanupExternalHtml(const QString & inputHtml, QString & cle
     return d->cleanupExternalHtml(inputHtml, cleanedUpHtml, errorDescription);
 }
 
-bool ENMLConverter::htmlToQTextDocument(const QString & html, QTextDocument & doc, ErrorString & errorDescription,
+bool ENMLConverter::htmlToQTextDocument(const QString & html, QTextDocument & doc,
+                                        ErrorString & errorDescription,
                                         const QVector<SkipHtmlElementRule> & skipRules) const
 {
     QNDEBUG(QStringLiteral("ENMLConverter::htmlToQTextDocument"));
@@ -69,7 +72,8 @@ bool ENMLConverter::noteContentToHtml(const QString & noteContent, QString & htm
     QNDEBUG(QStringLiteral("ENMLConverter::noteContentToHtml"));
 
     Q_D(const ENMLConverter);
-    return d->noteContentToHtml(noteContent, html, errorDescription, decryptedTextManager, extraData);
+    return d->noteContentToHtml(noteContent, html, errorDescription,
+                                decryptedTextManager, extraData);
 }
 
 bool ENMLConverter::validateEnml(const QString & enml, ErrorString & errorDescription) const
@@ -84,16 +88,21 @@ bool ENMLConverter::validateAndFixupEnml(QString & enml, ErrorString & errorDesc
     return d->validateAndFixupEnml(enml, errorDescription);
 }
 
-bool ENMLConverter::noteContentToPlainText(const QString & noteContent, QString & plainText,
+bool ENMLConverter::noteContentToPlainText(const QString & noteContent,
+                                           QString & plainText,
                                            ErrorString & errorMessage)
 {
-    return ENMLConverterPrivate::noteContentToPlainText(noteContent, plainText, errorMessage);
+    return ENMLConverterPrivate::noteContentToPlainText(noteContent, plainText,
+                                                        errorMessage);
 }
 
-bool ENMLConverter::noteContentToListOfWords(const QString & noteContent, QStringList & listOfWords,
-                                             ErrorString & errorMessage, QString * plainText)
+bool ENMLConverter::noteContentToListOfWords(const QString & noteContent,
+                                             QStringList & listOfWords,
+                                             ErrorString & errorMessage,
+                                             QString * plainText)
 {
-    return ENMLConverterPrivate::noteContentToListOfWords(noteContent, listOfWords, errorMessage, plainText);
+    return ENMLConverterPrivate::noteContentToListOfWords(noteContent, listOfWords,
+                                                          errorMessage, plainText);
 }
 
 QStringList ENMLConverter::plainTextToListOfWords(const QString & plainText)
@@ -106,22 +115,29 @@ QString ENMLConverter::toDoCheckboxHtml(const bool checked, const quint64 idNumb
     return ENMLConverterPrivate::toDoCheckboxHtml(checked, idNumber);
 }
 
-QString ENMLConverter::encryptedTextHtml(const QString & encryptedText, const QString & hint,
-                                         const QString & cipher, const size_t keyLength,
+QString ENMLConverter::encryptedTextHtml(const QString & encryptedText,
+                                         const QString & hint,
+                                         const QString & cipher,
+                                         const size_t keyLength,
                                          const quint64 enCryptIndex)
 {
-    return ENMLConverterPrivate::encryptedTextHtml(encryptedText, hint, cipher, keyLength, enCryptIndex);
+    return ENMLConverterPrivate::encryptedTextHtml(encryptedText, hint, cipher,
+                                                   keyLength, enCryptIndex);
 }
 
-QString ENMLConverter::decryptedTextHtml(const QString & decryptedText, const QString & encryptedText,
+QString ENMLConverter::decryptedTextHtml(const QString & decryptedText,
+                                         const QString & encryptedText,
                                          const QString & hint, const QString & cipher,
-                                         const size_t keyLength, const quint64 enDecryptedIndex)
+                                         const size_t keyLength,
+                                         const quint64 enDecryptedIndex)
 {
     return ENMLConverterPrivate::decryptedTextHtml(decryptedText, encryptedText,
-                                                   hint, cipher, keyLength, enDecryptedIndex);
+                                                   hint, cipher, keyLength,
+                                                   enDecryptedIndex);
 }
 
-QString ENMLConverter::resourceHtml(const Resource & resource, ErrorString & errorDescription)
+QString ENMLConverter::resourceHtml(const Resource & resource,
+                                    ErrorString & errorDescription)
 {
     return ENMLConverterPrivate::resourceHtml(resource, errorDescription);
 }
@@ -131,12 +147,15 @@ void ENMLConverter::escapeString(QString & string, const bool simplify)
     ENMLConverterPrivate::escapeString(string, simplify);
 }
 
-bool ENMLConverter::exportNotesToEnex(const QVector<Note> & notes, const QHash<QString, QString> & tagNamesByTagLocalUids,
-                                      const EnexExportTags::type exportTagsOption, QString & enex, ErrorString & errorDescription,
+bool ENMLConverter::exportNotesToEnex(const QVector<Note> & notes,
+                                      const QHash<QString, QString> & tagNamesByTagLocalUids,
+                                      const EnexExportTags::type exportTagsOption,
+                                      QString & enex, ErrorString & errorDescription,
                                       const QString & version) const
 {
     Q_D(const ENMLConverter);
-    return d->exportNotesToEnex(notes, tagNamesByTagLocalUids, exportTagsOption, enex, errorDescription, version);
+    return d->exportNotesToEnex(notes, tagNamesByTagLocalUids, exportTagsOption,
+                                enex, errorDescription, version);
 }
 
 bool ENMLConverter::importEnex(const QString & enex, QVector<Note> & notes,
@@ -173,25 +192,30 @@ QTextStream & ENMLConverter::SkipHtmlElementRule::print(QTextStream & strm) cons
     strm << QStringLiteral("  element name to skip = ") << m_elementNameToSkip
          << QStringLiteral(", rule: ");
     PRINT_COMPARISON_RULE(m_elementNameComparisonRule)
-    strm << QStringLiteral(", case ") << ((m_elementNameCaseSensitivity == Qt::CaseSensitive)
-                                          ? QStringLiteral("sensitive")
-                                          : QStringLiteral("insensitive"));
+    strm << QStringLiteral(", case ")
+         << ((m_elementNameCaseSensitivity == Qt::CaseSensitive)
+             ? QStringLiteral("sensitive")
+             : QStringLiteral("insensitive"));
     strm << QStringLiteral("\n");
 
-    strm << QStringLiteral("  attribute name to skip = ") << m_attributeNameToSkip
+    strm << QStringLiteral("  attribute name to skip = ")
+         << m_attributeNameToSkip
          << QStringLiteral(", rule: ");
     PRINT_COMPARISON_RULE(m_attributeNameComparisonRule)
-    strm << QStringLiteral(", case ") << ((m_attributeNameCaseSensitivity == Qt::CaseSensitive)
-                                          ? QStringLiteral("sensitive")
-                                          : QStringLiteral("insensitive"));
+    strm << QStringLiteral(", case ")
+         << ((m_attributeNameCaseSensitivity == Qt::CaseSensitive)
+             ? QStringLiteral("sensitive")
+             : QStringLiteral("insensitive"));
     strm << QStringLiteral("\n");
 
-    strm << QStringLiteral("  attribute value to skip = ") << m_attributeValueToSkip
+    strm << QStringLiteral("  attribute value to skip = ")
+         << m_attributeValueToSkip
          << QStringLiteral(", rule: ");
     PRINT_COMPARISON_RULE(m_attributeValueComparisonRule)
-    strm << QStringLiteral(", case ") << ((m_attributeValueCaseSensitivity == Qt::CaseSensitive)
-                                          ? QStringLiteral("sensitive")
-                                          : QStringLiteral("insensitive"));
+    strm << QStringLiteral(", case ")
+         << ((m_attributeValueCaseSensitivity == Qt::CaseSensitive)
+             ? QStringLiteral("sensitive")
+             : QStringLiteral("insensitive"));
     strm << "\n}\n";
 
     return strm;

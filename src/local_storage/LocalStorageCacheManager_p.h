@@ -1,3 +1,21 @@
+/*
+ * Copyright 2016-2019 Dmitry Ivanov
+ *
+ * This file is part of libquentier
+ *
+ * libquentier is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, version 3 of the License.
+ *
+ * libquentier is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
+ */
+
 #ifndef LIB_QUENTIER_LOCAL_STORAGE_LOCAL_STORAGE_CACHE_MANAGER_PRIVATE_H
 #define LIB_QUENTIER_LOCAL_STORAGE_LOCAL_STORAGE_CACHE_MANAGER_PRIVATE_H
 
@@ -101,10 +119,14 @@ public:
 
 private:
     LocalStorageCacheManagerPrivate() Q_DECL_EQ_DELETE;
-    LocalStorageCacheManagerPrivate(const LocalStorageCacheManagerPrivate & other) Q_DECL_EQ_DELETE;
-    LocalStorageCacheManagerPrivate(LocalStorageCacheManagerPrivate && other) Q_DECL_EQ_DELETE;
-    LocalStorageCacheManagerPrivate & operator=(const LocalStorageCacheManagerPrivate & other) Q_DECL_EQ_DELETE;
-    LocalStorageCacheManagerPrivate & operator=(LocalStorageCacheManagerPrivate && other) Q_DECL_EQ_DELETE;
+    LocalStorageCacheManagerPrivate(
+        const LocalStorageCacheManagerPrivate & other) Q_DECL_EQ_DELETE;
+    LocalStorageCacheManagerPrivate(
+        LocalStorageCacheManagerPrivate && other) Q_DECL_EQ_DELETE;
+    LocalStorageCacheManagerPrivate & operator=(
+        const LocalStorageCacheManagerPrivate & other) Q_DECL_EQ_DELETE;
+    LocalStorageCacheManagerPrivate & operator=(
+        LocalStorageCacheManagerPrivate && other) Q_DECL_EQ_DELETE;
 
 private:
     class NoteHolder: public Printable
@@ -130,16 +152,19 @@ private:
         boost::multi_index::indexed_by<
             boost::multi_index::ordered_non_unique<
                 boost::multi_index::tag<NoteHolder::ByLastAccessTimestamp>,
-                boost::multi_index::member<NoteHolder,qint64,&NoteHolder::m_lastAccessTimestamp>
+                boost::multi_index::member<NoteHolder,qint64,
+                                           &NoteHolder::m_lastAccessTimestamp>
             >,
             boost::multi_index::hashed_unique<
                 boost::multi_index::tag<NoteHolder::ByLocalUid>,
-                boost::multi_index::const_mem_fun<NoteHolder,const QString,&NoteHolder::localUid>
+                boost::multi_index::const_mem_fun<NoteHolder,const QString,
+                                                  &NoteHolder::localUid>
             >,
-            /* NOTE: non-unique for proper support of empty guids */
+            // NOTE: non-unique for proper support of empty guids
             boost::multi_index::hashed_non_unique<
                 boost::multi_index::tag<NoteHolder::ByGuid>,
-                boost::multi_index::const_mem_fun<NoteHolder,const QString,&NoteHolder::guid>
+                boost::multi_index::const_mem_fun<NoteHolder,const QString,
+                                                  &NoteHolder::guid>
             >
         >
     > NotesCache;
@@ -167,16 +192,19 @@ private:
         boost::multi_index::indexed_by<
             boost::multi_index::ordered_non_unique<
                 boost::multi_index::tag<ResourceHolder::ByLastAccessTimestamp>,
-                boost::multi_index::member<ResourceHolder,qint64,&ResourceHolder::m_lastAccessTimestamp>
+                boost::multi_index::member<ResourceHolder,qint64,
+                                           &ResourceHolder::m_lastAccessTimestamp>
             >,
             boost::multi_index::hashed_unique<
                 boost::multi_index::tag<ResourceHolder::ByLocalUid>,
-                boost::multi_index::const_mem_fun<ResourceHolder,const QString,&ResourceHolder::localUid>
+                boost::multi_index::const_mem_fun<ResourceHolder,const QString,
+                                                  &ResourceHolder::localUid>
             >,
-            /* NOTE: non-unique for proper support of empty guids */
+            // NOTE: non-unique for proper support of empty guids
             boost::multi_index::hashed_non_unique<
                 boost::multi_index::tag<ResourceHolder::ByGuid>,
-                boost::multi_index::const_mem_fun<ResourceHolder,const QString,&ResourceHolder::guid>
+                boost::multi_index::const_mem_fun<ResourceHolder,const QString,
+                                                  &ResourceHolder::guid>
             >
         >
     > ResourcesCache;
@@ -208,21 +236,26 @@ private:
         boost::multi_index::indexed_by<
             boost::multi_index::ordered_non_unique<
                 boost::multi_index::tag<NotebookHolder::ByLastAccessTimestamp>,
-                boost::multi_index::member<NotebookHolder,qint64,&NotebookHolder::m_lastAccessTimestamp>
+                boost::multi_index::member<NotebookHolder,qint64,
+                                           &NotebookHolder::m_lastAccessTimestamp>
             >,
             boost::multi_index::hashed_unique<
                 boost::multi_index::tag<NotebookHolder::ByLocalUid>,
-                boost::multi_index::const_mem_fun<NotebookHolder,const QString,&NotebookHolder::localUid>
+                boost::multi_index::const_mem_fun<NotebookHolder,const QString,
+                                                  &NotebookHolder::localUid>
             >,
-            /* NOTE: non-unique for proper support of empty guids */
+            // NOTE: non-unique for proper support of empty guids
             boost::multi_index::hashed_non_unique<
                 boost::multi_index::tag<NotebookHolder::ByGuid>,
-                boost::multi_index::const_mem_fun<NotebookHolder,const QString,&NotebookHolder::guid>
+                boost::multi_index::const_mem_fun<NotebookHolder,const QString,
+                                                  &NotebookHolder::guid>
             >,
-            /* NOTE: non-unique for proper support of empty names and possible name collisions due to linked notebooks */
+            // NOTE: non-unique for proper support of empty names and possible
+            // name collisions due to linked notebooks
             boost::multi_index::hashed_non_unique<
                 boost::multi_index::tag<NotebookHolder::ByName>,
-                boost::multi_index::const_mem_fun<NotebookHolder,const QString,&NotebookHolder::nameUpper>
+                boost::multi_index::const_mem_fun<NotebookHolder,const QString,
+                                                  &NotebookHolder::nameUpper>
             >
         >
     > NotebooksCache;
@@ -254,21 +287,26 @@ private:
         boost::multi_index::indexed_by<
             boost::multi_index::ordered_non_unique<
                 boost::multi_index::tag<TagHolder::ByLastAccessTimestamp>,
-                boost::multi_index::member<TagHolder,qint64,&TagHolder::m_lastAccessTimestamp>
+                boost::multi_index::member<TagHolder,qint64,
+                                           &TagHolder::m_lastAccessTimestamp>
             >,
             boost::multi_index::hashed_unique<
                 boost::multi_index::tag<TagHolder::ByLocalUid>,
-                boost::multi_index::const_mem_fun<TagHolder,const QString,&TagHolder::localUid>
+                boost::multi_index::const_mem_fun<TagHolder,const QString,
+                                                  &TagHolder::localUid>
             >,
-            /* NOTE: non-unique for proper support of empty guids */
+            // NOTE: non-unique for proper support of empty guids
             boost::multi_index::hashed_non_unique<
                 boost::multi_index::tag<TagHolder::ByGuid>,
-                boost::multi_index::const_mem_fun<TagHolder,const QString,&TagHolder::guid>
+                boost::multi_index::const_mem_fun<TagHolder,const QString,
+                                                  &TagHolder::guid>
             >,
-            /* NOTE: non-unique for proper support of empty names and possible name collisions due to linked notebooks */
+            // NOTE: non-unique for proper support of empty names and possible
+            // name collisions due to linked notebooks */
             boost::multi_index::hashed_non_unique<
                 boost::multi_index::tag<TagHolder::ByName>,
-                boost::multi_index::const_mem_fun<TagHolder,const QString,&TagHolder::nameUpper>
+                boost::multi_index::const_mem_fun<TagHolder,const QString,
+                                                  &TagHolder::nameUpper>
             >
         >
     > TagsCache;
@@ -294,11 +332,13 @@ private:
         boost::multi_index::indexed_by<
             boost::multi_index::ordered_non_unique<
                 boost::multi_index::tag<LinkedNotebookHolder::ByLastAccessTimestamp>,
-                boost::multi_index::member<LinkedNotebookHolder,qint64,&LinkedNotebookHolder::m_lastAccessTimestamp>
+                boost::multi_index::member<LinkedNotebookHolder,qint64,
+                                          &LinkedNotebookHolder::m_lastAccessTimestamp>
             >,
             boost::multi_index::hashed_unique<
                 boost::multi_index::tag<LinkedNotebookHolder::ByGuid>,
-                boost::multi_index::const_mem_fun<LinkedNotebookHolder,const QString,&LinkedNotebookHolder::guid>
+                boost::multi_index::const_mem_fun<LinkedNotebookHolder,const QString,
+                                                  &LinkedNotebookHolder::guid>
             >
         >
     > LinkedNotebooksCache;
@@ -330,21 +370,25 @@ private:
         boost::multi_index::indexed_by<
             boost::multi_index::ordered_non_unique<
                 boost::multi_index::tag<SavedSearchHolder::ByLastAccessTimestamp>,
-                boost::multi_index::member<SavedSearchHolder,qint64,&SavedSearchHolder::m_lastAccessTimestamp>
+                boost::multi_index::member<SavedSearchHolder,qint64,
+                                           &SavedSearchHolder::m_lastAccessTimestamp>
             >,
             boost::multi_index::hashed_unique<
                 boost::multi_index::tag<SavedSearchHolder::ByLocalUid>,
-                boost::multi_index::const_mem_fun<SavedSearchHolder,const QString,&SavedSearchHolder::localUid>
+                boost::multi_index::const_mem_fun<SavedSearchHolder,const QString,
+                                                  &SavedSearchHolder::localUid>
             >,
-            /* NOTE: non-unique for proper support of empty guids */
+            // NOTE: non-unique for proper support of empty guids
             boost::multi_index::hashed_non_unique<
                 boost::multi_index::tag<SavedSearchHolder::ByGuid>,
-                boost::multi_index::const_mem_fun<SavedSearchHolder,const QString,&SavedSearchHolder::guid>
+                boost::multi_index::const_mem_fun<SavedSearchHolder,const QString,
+                                                  &SavedSearchHolder::guid>
             >,
-            /* NOTE: non-unique for proper support of empty names */
+            // NOTE: non-unique for proper support of empty names
             boost::multi_index::hashed_non_unique<
                 boost::multi_index::tag<SavedSearchHolder::ByName>,
-                boost::multi_index::const_mem_fun<SavedSearchHolder,const QString,&SavedSearchHolder::nameUpper>
+                boost::multi_index::const_mem_fun<SavedSearchHolder,const QString,
+                                                  &SavedSearchHolder::nameUpper>
             >
         >
     > SavedSearchesCache;

@@ -60,9 +60,9 @@ public:
     virtual const QString toString() const;
 
     friend QUENTIER_EXPORT QTextStream & operator << (QTextStream & strm,
-                                                       const Printable & printable);
+                                                      const Printable & printable);
     friend QUENTIER_EXPORT QDebug & operator << (QDebug & debug,
-                                                  const Printable & printable);
+                                                 const Printable & printable);
 protected:
     Printable();
     Printable(const Printable & other);

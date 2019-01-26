@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Dmitry Ivanov
+ * Copyright 2016-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -69,7 +69,8 @@ void LocalStorageCacheManager::clearAllNotes()
 }
 
 #define FIND_OBJECT(Type) \
-const Type * LocalStorageCacheManager::find##Type(const QString & uid, const LocalStorageCacheManager::WhichUid whichUid) const \
+const Type * LocalStorageCacheManager::find##Type(\
+    const QString & uid, const LocalStorageCacheManager::WhichUid whichUid) const \
 { \
     Q_D(const LocalStorageCacheManager); \
     \
@@ -80,7 +81,8 @@ const Type * LocalStorageCacheManager::find##Type(const QString & uid, const Loc
         return d->find##Type##ByGuid(uid); \
     default: \
     { \
-        QNERROR(QStringLiteral("Detected incorrect local uid/remote guid qualifier in local storage cache manager")); \
+        QNERROR(QStringLiteral("Detected incorrect local uid/remote guid qualifier "\
+                               "in local storage cache manager")); \
         return Q_NULLPTR; \
     } \
     } \
@@ -100,13 +102,15 @@ const Tag * LocalStorageCacheManager::findTagByName(const QString & name) const
     return d->findTagByName(name.toUpper());
 }
 
-const Notebook * LocalStorageCacheManager::findNotebookByName(const QString & name) const
+const Notebook * LocalStorageCacheManager::findNotebookByName(
+    const QString & name) const
 {
     Q_D(const LocalStorageCacheManager);
     return d->findNotebookByName(name.toUpper());
 }
 
-const SavedSearch * LocalStorageCacheManager::findSavedSearchByName(const QString & name) const
+const SavedSearch * LocalStorageCacheManager::findSavedSearchByName(
+    const QString & name) const
 {
     Q_D(const LocalStorageCacheManager);
     return d->findSavedSearchByName(name.toUpper());
@@ -190,13 +194,15 @@ size_t LocalStorageCacheManager::numCachedLinkedNotebooks() const
     return d->numCachedLinkedNotebooks();
 }
 
-void LocalStorageCacheManager::cacheLinkedNotebook(const LinkedNotebook & linkedNotebook)
+void LocalStorageCacheManager::cacheLinkedNotebook(
+    const LinkedNotebook & linkedNotebook)
 {
     Q_D(LocalStorageCacheManager);
     d->cacheLinkedNotebook(linkedNotebook);
 }
 
-void LocalStorageCacheManager::expungeLinkedNotebook(const LinkedNotebook & linkedNotebook)
+void LocalStorageCacheManager::expungeLinkedNotebook(
+    const LinkedNotebook & linkedNotebook)
 {
     Q_D(LocalStorageCacheManager);
     d->expungeLinkedNotebook(linkedNotebook);
@@ -238,7 +244,8 @@ void LocalStorageCacheManager::clearAllSavedSearches()
     d->clearAllSavedSearches();
 }
 
-void LocalStorageCacheManager::installCacheExpiryFunction(const ILocalStorageCacheExpiryChecker & checker)
+void LocalStorageCacheManager::installCacheExpiryFunction(
+    const ILocalStorageCacheExpiryChecker & checker)
 {
     Q_D(LocalStorageCacheManager);
     d->installCacheExpiryFunction(checker);

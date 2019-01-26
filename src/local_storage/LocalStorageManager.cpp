@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Dmitry Ivanov
+ * Copyright 2016-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -97,7 +97,8 @@ bool LocalStorageManager::localStorageRequiresUpgrade(ErrorString & errorDescrip
     return d->localStorageRequiresUpgrade(errorDescription);
 }
 
-QVector<QSharedPointer<ILocalStoragePatch> > LocalStorageManager::requiredLocalStoragePatches()
+QVector<QSharedPointer<ILocalStoragePatch> >
+LocalStorageManager::requiredLocalStoragePatches()
 {
     Q_D(LocalStorageManager);
     return d->requiredLocalStoragePatches();
@@ -176,7 +177,8 @@ LocalStorageManager::listAllNotebooks(ErrorString & errorDescription,
 }
 
 QList<Notebook>
-LocalStorageManager::listNotebooks(const ListObjectsOptions flag, ErrorString & errorDescription,
+LocalStorageManager::listNotebooks(const ListObjectsOptions flag,
+                                   ErrorString & errorDescription,
                                    const size_t limit, const size_t offset,
                                    const ListNotebooksOrder::type order,
                                    const OrderDirection::type orderDirection,

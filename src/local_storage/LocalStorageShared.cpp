@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Dmitry Ivanov
+ * Copyright 2018-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -28,7 +28,9 @@ QString lastExecutedQuery(const QSqlQuery & query)
     QString str = query.lastQuery();
     QMap<QString,QVariant> boundValues = query.boundValues();
 
-    for(auto it = boundValues.constBegin(), end = boundValues.constEnd(); it != end; ++it) {
+    for(auto it = boundValues.constBegin(),
+        end = boundValues.constEnd(); it != end; ++it)
+    {
         str.replace(it.key(), it.value().toString());
     }
 

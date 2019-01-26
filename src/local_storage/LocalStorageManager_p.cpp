@@ -44,9 +44,10 @@ namespace quentier {
 
 #define QUENTIER_DATABASE_NAME "qn.storage.sqlite"
 
-LocalStorageManagerPrivate::LocalStorageManagerPrivate(const Account & account,
-                                                       const LocalStorageManager::StartupOptions options,
-                                                       QObject * parent) :
+LocalStorageManagerPrivate::LocalStorageManagerPrivate(
+        const Account & account,
+        const LocalStorageManager::StartupOptions options,
+        QObject * parent) :
     QObject(parent),
     // NOTE: don't initialize these! Otherwise SwitchUser won't work right
     m_currentAccount(account),
@@ -316,7 +317,8 @@ bool LocalStorageManagerPrivate::deleteUser(const User & user,
     QSqlQuery & query = m_deleteUserQuery;
     DATABASE_CHECK_AND_SET_ERROR()
 
-    query.bindValue(QStringLiteral(":userDeletionTimestamp"), user.deletionTimestamp());
+    query.bindValue(QStringLiteral(":userDeletionTimestamp"),
+                    user.deletionTimestamp());
     query.bindValue(QStringLiteral(":userIsLocal"), (user.isLocal() ? 1 : 0));
     query.bindValue(QStringLiteral(":id"), user.id());
 

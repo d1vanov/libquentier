@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Dmitry Ivanov
+ * Copyright 2018-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -27,7 +27,8 @@ namespace quentier {
     if (!res) { \
         errorDescription.base() = errorPrefix.base(); \
         errorDescription.details() = query.lastError().text(); \
-        QNERROR(errorDescription << QStringLiteral(", last executed query: ") << lastExecutedQuery(query)); \
+        QNERROR(errorDescription << QStringLiteral(", last executed query: ") \
+                << lastExecutedQuery(query)); \
         return false; \
     }
 
