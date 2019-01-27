@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Dmitry Ivanov
+ * Copyright 2016-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -31,18 +31,20 @@ namespace quentier {
 QT_FORWARD_DECLARE_CLASS(NoteEditorPrivate)
 
 /**
- * @brief The AddHyperlinkToSelectedTextDelegate class encapsulates a chain of callbacks
- * required for proper implementation of adding a hyperlink to the currently selected text
- * considering the details of wrapping this action around undo stack and necessary switching
- * of note editor page during the process
+ * @brief The AddHyperlinkToSelectedTextDelegate class encapsulates a chain of
+ * callbacks required for proper implementation of adding a hyperlink to
+ * the currently selected text considering the details of wrapping this action
+ * around undo stack and necessary switching of note editor page during the process
  */
 class Q_DECL_HIDDEN AddHyperlinkToSelectedTextDelegate: public QObject
 {
     Q_OBJECT
 public:
-    explicit AddHyperlinkToSelectedTextDelegate(NoteEditorPrivate & noteEditor, const quint64 hyperlinkIdToAdd);
+    explicit AddHyperlinkToSelectedTextDelegate(NoteEditorPrivate & noteEditor,
+                                                const quint64 hyperlinkIdToAdd);
     void start();
-    void startWithPresetHyperlink(const QString & presetHyperlink, const QString & replacementLinkText = QString());
+    void startWithPresetHyperlink(const QString & presetHyperlink,
+                                  const QString & replacementLinkText = QString());
 
 Q_SIGNALS:
     void finished();
@@ -53,7 +55,9 @@ private Q_SLOTS:
     void onOriginalPageConvertedToNote(Note note);
     void onInitialHyperlinkDataReceived(const QVariant & data);
 
-    void onAddHyperlinkDialogFinished(QString text, QUrl url, quint64 hyperlinkId, bool startupUrlWasEmpty);
+    void onAddHyperlinkDialogFinished(QString text, QUrl url,
+                                      quint64 hyperlinkId,
+                                      bool startupUrlWasEmpty);
 
     void onHyperlinkSetToSelection(const QVariant & data);
 

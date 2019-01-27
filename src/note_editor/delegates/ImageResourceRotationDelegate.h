@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 Dmitry Ivanov
+ * Copyright 2016-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -30,26 +30,32 @@ class Q_DECL_HIDDEN ImageResourceRotationDelegate: public QObject
 {
     Q_OBJECT
 public:
-    explicit ImageResourceRotationDelegate(const QByteArray & resourceHashBefore, const INoteEditorBackend::Rotation::type rotationDirection,
-                                           NoteEditorPrivate & noteEditor, ResourceInfo & resourceInfo,
-                                           ResourceDataInTemporaryFileStorageManager & resourceDataInTemporaryFileStorageManager,
-                                           QHash<QString, QString> & resourceFileStoragePathsByLocalUid);
+    explicit ImageResourceRotationDelegate(
+        const QByteArray & resourceHashBefore,
+        const INoteEditorBackend::Rotation::type rotationDirection,
+        NoteEditorPrivate & noteEditor, ResourceInfo & resourceInfo,
+        ResourceDataInTemporaryFileStorageManager & resourceDataInTemporaryFileStorageManager,
+        QHash<QString, QString> & resourceFileStoragePathsByLocalUid);
     void start();
 
 Q_SIGNALS:
     void finished(QByteArray resourceDataBefore, QByteArray resourceHashBefore,
-                  QByteArray resourceRecognitionDataBefore, QByteArray resourceRecognitionDataHashBefore,
+                  QByteArray resourceRecognitionDataBefore,
+                  QByteArray resourceRecognitionDataHashBefore,
                   QSize resourceImageSizeBefore, Resource resourceAfter,
                   INoteEditorBackend::Rotation::type rotationDirection);
     void notifyError(ErrorString error);
 
 // private signals
-    void saveResourceDataToTemporaryFile(QString noteLocalUid, QString resourceLocalUid, QByteArray data, QByteArray dataHash,
+    void saveResourceDataToTemporaryFile(QString noteLocalUid,
+                                         QString resourceLocalUid, QByteArray data,
+                                         QByteArray dataHash,
                                          QUuid requestId, bool isImage);
 
 private Q_SLOTS:
     void onOriginalPageConvertedToNote(Note note);
-    void onResourceDataSavedToTemporaryFile(QUuid requestId, QByteArray dataHash, ErrorString errorDescription);
+    void onResourceDataSavedToTemporaryFile(QUuid requestId, QByteArray dataHash,
+                                            ErrorString errorDescription);
     void onResourceTagHashUpdated(const QVariant & data);
     void onResourceTagSrcUpdated(const QVariant & data);
 

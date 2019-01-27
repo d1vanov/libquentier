@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Dmitry Ivanov
+ * Copyright 2016-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -40,8 +40,10 @@ class Q_DECL_HIDDEN EncryptSelectedTextDelegate: public QObject
 {
     Q_OBJECT
 public:
-    explicit EncryptSelectedTextDelegate(NoteEditorPrivate * pNoteEditor, QSharedPointer<EncryptionManager> encryptionManager,
-                                         QSharedPointer<DecryptedTextManager> decryptedTextManager);
+    explicit EncryptSelectedTextDelegate(
+        NoteEditorPrivate * pNoteEditor,
+        QSharedPointer<EncryptionManager> encryptionManager,
+        QSharedPointer<DecryptedTextManager> decryptedTextManager);
     void start(const QString & selectionHtml);
 
 Q_SIGNALS:
@@ -51,8 +53,9 @@ Q_SIGNALS:
 
 private Q_SLOTS:
     void onOriginalPageConvertedToNote(Note note);
-    void onSelectedTextEncrypted(QString selectedText, QString encryptedText, QString cipher,
-                                 size_t keyLength, QString hint, bool rememberForSession);
+    void onSelectedTextEncrypted(QString selectedText, QString encryptedText,
+                                 QString cipher, size_t keyLength, QString hint,
+                                 bool rememberForSession);
     void onEncryptionScriptDone(const QVariant & data);
 
 private:

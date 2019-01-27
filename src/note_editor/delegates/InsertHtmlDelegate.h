@@ -1,3 +1,21 @@
+/*
+ * Copyright 2016-2019 Dmitry Ivanov
+ *
+ * This file is part of libquentier
+ *
+ * libquentier is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, version 3 of the License.
+ *
+ * libquentier is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
+ */
+
 #ifndef LIB_QUENTIER_NOTE_EDITOR_DELEGATES_INSERT_HTML_DELEGATE_H
 #define LIB_QUENTIER_NOTE_EDITOR_DELEGATES_INSERT_HTML_DELEGATE_H
 
@@ -26,27 +44,32 @@ class Q_DECL_HIDDEN InsertHtmlDelegate: public QObject
 {
     Q_OBJECT
 public:
-    explicit InsertHtmlDelegate(const QString & inputHtml, NoteEditorPrivate & noteEditor,
-                                ENMLConverter & enmlConverter,
-                                ResourceDataInTemporaryFileStorageManager * pResourceFileStorageManager,
-                                QHash<QString, QString> & resourceFileStoragePathsByResourceLocalUid,
-                                ResourceInfo & resourceInfo,
-                                QObject * parent = Q_NULLPTR);
+    explicit InsertHtmlDelegate(
+        const QString & inputHtml, NoteEditorPrivate & noteEditor,
+        ENMLConverter & enmlConverter,
+        ResourceDataInTemporaryFileStorageManager * pResourceFileStorageManager,
+        QHash<QString, QString> & resourceFileStoragePathsByResourceLocalUid,
+        ResourceInfo & resourceInfo,
+        QObject * parent = Q_NULLPTR);
 
     void start();
 
 Q_SIGNALS:
-    void finished(QList<Resource> addedResources, QStringList resourceFileStoragePaths);
+    void finished(QList<Resource> addedResources,
+                  QStringList resourceFileStoragePaths);
     void notifyError(ErrorString error);
 
     // private signals:
-    void saveResourceDataToTemporaryFile(QString noteLocalUid, QString resourceLocalUid, QByteArray data, QByteArray dataHash,
+    void saveResourceDataToTemporaryFile(QString noteLocalUid,
+                                         QString resourceLocalUid,
+                                         QByteArray data, QByteArray dataHash,
                                          QUuid requestId, bool isImage);
 
 private Q_SLOTS:
     void onOriginalPageConvertedToNote(Note note);
     void onImageDataDownloadFinished(QNetworkReply * pReply);
-    void onResourceDataSavedToTemporaryFile(QUuid requestId, QByteArray dataHash, ErrorString errorDescription);
+    void onResourceDataSavedToTemporaryFile(QUuid requestId, QByteArray dataHash,
+                                            ErrorString errorDescription);
 
     void onHtmlInserted(const QVariant & responseData);
 

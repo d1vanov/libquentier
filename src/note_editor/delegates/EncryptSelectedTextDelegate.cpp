@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Dmitry Ivanov
+ * Copyright 2016-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -32,7 +32,9 @@ namespace quentier {
 #define CHECK_ACCOUNT() \
     CHECK_NOTE_EDITOR() \
     if (Q_UNLIKELY(!m_pNoteEditor->accountPtr())) { \
-        ErrorString error(QT_TRANSLATE_NOOP("EncryptSelectedTextDelegate", "Can't encrypt the selected text: no account is set to the note editor")); \
+        ErrorString error(QT_TRANSLATE_NOOP("EncryptSelectedTextDelegate", \
+                                            "Can't encrypt the selected text: "\
+                                            "no account is set to the note editor")); \
         QNWARNING(error); \
         Q_EMIT notifyError(error); \
         return; \
@@ -42,15 +44,18 @@ namespace quentier {
     CHECK_NOTE_EDITOR() \
     NoteEditorPage * page = qobject_cast<NoteEditorPage*>(m_pNoteEditor->page()); \
     if (Q_UNLIKELY(!page)) { \
-        ErrorString error(QT_TRANSLATE_NOOP("EncryptSelectedTextDelegate", "Can't encrypt the selected text: no note editor page")); \
+        ErrorString error(QT_TRANSLATE_NOOP("EncryptSelectedTextDelegate", \
+                                            "Can't encrypt the selected text: "\
+                                            "no note editor page")); \
         QNWARNING(error); \
         Q_EMIT notifyError(error); \
         return; \
     }
 
-EncryptSelectedTextDelegate::EncryptSelectedTextDelegate(NoteEditorPrivate * pNoteEditor,
-                                                         QSharedPointer<EncryptionManager> encryptionManager,
-                                                         QSharedPointer<DecryptedTextManager> decryptedTextManager) :
+EncryptSelectedTextDelegate::EncryptSelectedTextDelegate(
+        NoteEditorPrivate * pNoteEditor,
+        QSharedPointer<EncryptionManager> encryptionManager,
+        QSharedPointer<DecryptedTextManager> decryptedTextManager) :
     QObject(pNoteEditor),
     m_pNoteEditor(pNoteEditor),
     m_encryptionManager(encryptionManager),
@@ -66,7 +71,8 @@ EncryptSelectedTextDelegate::EncryptSelectedTextDelegate(NoteEditorPrivate * pNo
 
 void EncryptSelectedTextDelegate::start(const QString & selectionHtml)
 {
-    QNDEBUG(QStringLiteral("EncryptSelectedTextDelegate::start: selection html = ") << selectionHtml);
+    QNDEBUG(QStringLiteral("EncryptSelectedTextDelegate::start: selection html = ")
+            << selectionHtml);
 
     CHECK_NOTE_EDITOR()
 
@@ -87,25 +93,39 @@ void EncryptSelectedTextDelegate::raiseEncryptionDialog()
 
     CHECK_ACCOUNT()
 
-    QScopedPointer<EncryptionDialog> pEncryptionDialog(new EncryptionDialog(m_selectionHtml, *m_pNoteEditor->accountPtr(),
-                                                                            m_encryptionManager, m_decryptedTextManager,
-                                                                            m_pNoteEditor));
+    QScopedPointer<EncryptionDialog> pEncryptionDialog(
+        new EncryptionDialog(m_selectionHtml, *m_pNoteEditor->accountPtr(),
+                             m_encryptionManager, m_decryptedTextManager,
+                             m_pNoteEditor));
     pEncryptionDialog->setWindowModality(Qt::WindowModal);
-    QObject::connect(pEncryptionDialog.data(), QNSIGNAL(EncryptionDialog,accepted,QString,QString,QString,size_t,QString,bool),
-                     this, QNSLOT(EncryptSelectedTextDelegate,onSelectedTextEncrypted,QString,QString,QString,size_t,QString,bool));
+    QObject::connect(pEncryptionDialog.data(),
+                     QNSIGNAL(EncryptionDialog,accepted,
+                              QString,QString,QString,size_t,QString,bool),
+                     this,
+                     QNSLOT(EncryptSelectedTextDelegate,onSelectedTextEncrypted,
+                            QString,QString,QString,size_t,QString,bool));
     int res = pEncryptionDialog->exec();
-    QNTRACE(QStringLiteral("Executed encryption dialog: ") << (res == QDialog::Accepted ? QStringLiteral("accepted") : QStringLiteral("rejected")));
+    QNTRACE(QStringLiteral("Executed encryption dialog: ")
+            << (res == QDialog::Accepted
+                ? QStringLiteral("accepted")
+                : QStringLiteral("rejected")));
     if (res == QDialog::Rejected) {
         Q_EMIT cancelled();
         return;
     }
 }
 
-void EncryptSelectedTextDelegate::onSelectedTextEncrypted(QString selectedText, QString encryptedText,
-                                                          QString cipher, size_t keyLength, QString hint, bool rememberForSession)
+void EncryptSelectedTextDelegate::onSelectedTextEncrypted(QString selectedText,
+                                                          QString encryptedText,
+                                                          QString cipher,
+                                                          size_t keyLength,
+                                                          QString hint,
+                                                          bool rememberForSession)
 {
-    QNDEBUG(QStringLiteral("EncryptSelectedTextDelegate::onSelectedTextEncrypted: encrypted text = ")
-            << encryptedText << QStringLiteral(", hint = ") << hint << QStringLiteral(", remember for session = ")
+    QNDEBUG(QStringLiteral("EncryptSelectedTextDelegate::onSelectedTextEncrypted: ")
+            << QStringLiteral("encrypted text = ") << encryptedText
+            << QStringLiteral(", hint = ") << hint
+            << QStringLiteral(", remember for session = ")
             << (rememberForSession ? QStringLiteral("true") : QStringLiteral("false")));
 
     CHECK_NOTE_EDITOR()
@@ -129,13 +149,19 @@ void EncryptSelectedTextDelegate::onSelectedTextEncrypted(QString selectedText, 
     }
     else
     {
-        m_encryptedTextHtml = ENMLConverter::encryptedTextHtml(encryptedText, hint, cipher, keyLength, m_pNoteEditor->GetFreeEncryptedTextId());
+        m_encryptedTextHtml =
+            ENMLConverter::encryptedTextHtml(encryptedText, hint,
+                                             cipher, keyLength,
+                                             m_pNoteEditor->GetFreeEncryptedTextId());
         ENMLConverter::escapeString(m_encryptedTextHtml);
     }
 
     if (m_pNoteEditor->isEditorPageModified()) {
-        QObject::connect(m_pNoteEditor.data(), QNSIGNAL(NoteEditorPrivate,convertedToNote,Note),
-                         this, QNSLOT(EncryptSelectedTextDelegate,onOriginalPageConvertedToNote,Note));
+        QObject::connect(m_pNoteEditor.data(),
+                         QNSIGNAL(NoteEditorPrivate,convertedToNote,Note),
+                         this,
+                         QNSLOT(EncryptSelectedTextDelegate,
+                                onOriginalPageConvertedToNote,Note));
         m_pNoteEditor->convertToNote();
     }
     else {
@@ -151,8 +177,11 @@ void EncryptSelectedTextDelegate::onOriginalPageConvertedToNote(Note note)
 
     Q_UNUSED(note)
 
-    QObject::disconnect(m_pNoteEditor.data(), QNSIGNAL(NoteEditorPrivate,convertedToNote,Note),
-                        this, QNSLOT(EncryptSelectedTextDelegate,onOriginalPageConvertedToNote,Note));
+    QObject::disconnect(m_pNoteEditor.data(),
+                        QNSIGNAL(NoteEditorPrivate,convertedToNote,Note),
+                        this,
+                        QNSLOT(EncryptSelectedTextDelegate,
+                               onOriginalPageConvertedToNote,Note));
 
     encryptSelectedText();
 }
@@ -169,28 +198,36 @@ void EncryptSelectedTextDelegate::encryptSelectedText()
         QString id = QString::number(m_pNoteEditor->GetFreeDecryptedTextId());
         QString escapedDecryptedText = m_selectionHtml;
         ENMLConverter::escapeString(escapedDecryptedText);
-        javascript = QStringLiteral("encryptDecryptManager.replaceSelectionWithDecryptedText('") + id +
-                     QStringLiteral("', '") + escapedDecryptedText + QStringLiteral("', '") + m_encryptedText +
-                     QStringLiteral("', '") + m_hint + QStringLiteral("', '") + m_cipher +
-                     QStringLiteral("', '") + m_keyLength + QStringLiteral("');");
+        javascript =
+            QStringLiteral("encryptDecryptManager.replaceSelectionWithDecryptedText('") +
+            id + QStringLiteral("', '") + escapedDecryptedText + QStringLiteral("', '") +
+            m_encryptedText + QStringLiteral("', '") + m_hint + QStringLiteral("', '") +
+            m_cipher + QStringLiteral("', '") + m_keyLength + QStringLiteral("');");
     }
     else
     {
-        javascript = QString::fromUtf8("encryptDecryptManager.encryptSelectedText('%1');").arg(m_encryptedTextHtml);
+        javascript =
+            QString::fromUtf8("encryptDecryptManager.encryptSelectedText('%1');")
+            .arg(m_encryptedTextHtml);
     }
 
-    page->executeJavaScript(javascript, JsCallback(*this, &EncryptSelectedTextDelegate::onEncryptionScriptDone));
+    page->executeJavaScript(
+        javascript,
+        JsCallback(*this, &EncryptSelectedTextDelegate::onEncryptionScriptDone));
 }
 
 void EncryptSelectedTextDelegate::onEncryptionScriptDone(const QVariant & data)
 {
-    QNDEBUG(QStringLiteral("EncryptSelectedTextDelegate::onEncryptionScriptDone: ") << data);
+    QNDEBUG(QStringLiteral("EncryptSelectedTextDelegate::onEncryptionScriptDone: ")
+            << data);
 
     QMap<QString,QVariant> resultMap = data.toMap();
 
     auto statusIt = resultMap.find(QStringLiteral("status"));
-    if (Q_UNLIKELY(statusIt == resultMap.end())) {
-        ErrorString error(QT_TR_NOOP("Can't parse the result of text encryption script from JavaScript"));
+    if (Q_UNLIKELY(statusIt == resultMap.end()))
+    {
+        ErrorString error(QT_TR_NOOP("Can't parse the result of text encryption "
+                                     "script from JavaScript"));
         QNWARNING(error);
         Q_EMIT notifyError(error);
         return;
@@ -202,10 +239,13 @@ void EncryptSelectedTextDelegate::onEncryptionScriptDone(const QVariant & data)
         ErrorString error;
 
         auto errorIt = resultMap.find(QStringLiteral("error"));
-        if (Q_UNLIKELY(errorIt == resultMap.end())) {
-            error.setBase(QT_TR_NOOP("Can't parse the error of text encryption from JavaScript"));
+        if (Q_UNLIKELY(errorIt == resultMap.end()))
+        {
+            error.setBase(QT_TR_NOOP("Can't parse the error of text encryption "
+                                     "from JavaScript"));
         }
-        else {
+        else
+        {
             error.setBase(QT_TR_NOOP("Can't encrypt the selected text"));
             error.details() = errorIt.value().toString();
         }
