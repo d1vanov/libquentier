@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Dmitry Ivanov
+ * Copyright 2016-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -35,7 +35,8 @@ Q_SIGNALS:
 
     void textCursorPositionOnImageResourceState(bool state, QByteArray resourceHash);
     void textCursorPositionOnNonImageResourceState(bool state, QByteArray resourceHash);
-    void textCursorPositionOnEnCryptTagState(bool state, QString encryptedText, QString cipher, QString length);
+    void textCursorPositionOnEnCryptTagState(bool state, QString encryptedText,
+                                             QString cipher, QString length);
 
     void textCursorPositionBoldState(bool bold);
     void textCursorPositionItalicState(bool italic);
@@ -60,7 +61,8 @@ public Q_SLOTS:
 
     void setOnImageResourceState(bool state, QString resourceHash);
     void setOnNonImageResourceState(bool state, QString resourceHash);
-    void setOnEnCryptTagState(bool state, QString encryptedText, QString cipher, QString length);
+    void setOnEnCryptTagState(bool state, QString encryptedText,
+                              QString cipher, QString length);
 
     void setTextCursorPositionBoldState(bool bold);
     void setTextCursorPositionItalicState(bool italic);

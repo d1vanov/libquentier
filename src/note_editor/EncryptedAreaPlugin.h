@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Dmitry Ivanov
+ * Copyright 2016-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -36,11 +36,14 @@ class Q_DECL_HIDDEN EncryptedAreaPlugin: public QWidget
 {
     Q_OBJECT
 public:
-    explicit EncryptedAreaPlugin(NoteEditorPrivate & noteEditor, QWidget * parent = Q_NULLPTR);
+    explicit EncryptedAreaPlugin(NoteEditorPrivate & noteEditor,
+                                 QWidget * parent = Q_NULLPTR);
     virtual ~EncryptedAreaPlugin();
 
-    bool initialize(const QStringList & parameterNames, const QStringList & parameterValues,
-                    const NoteEditorPluginFactory & pluginFactory, ErrorString & errorDescription);
+    bool initialize(const QStringList & parameterNames,
+                    const QStringList & parameterValues,
+                    const NoteEditorPluginFactory & pluginFactory,
+                    ErrorString & errorDescription);
     QString name() const;
     QString description() const;
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Dmitry Ivanov
+ * Copyright 2016-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -21,19 +21,24 @@
 
 namespace quentier {
 
-GenericResourceOpenAndSaveButtonsOnClickHandler::GenericResourceOpenAndSaveButtonsOnClickHandler(QObject * parent) :
+GenericResourceOpenAndSaveButtonsOnClickHandler::GenericResourceOpenAndSaveButtonsOnClickHandler(
+        QObject * parent) :
     QObject(parent)
 {}
 
-void GenericResourceOpenAndSaveButtonsOnClickHandler::onOpenResourceButtonPressed(const QString & resourceHash)
+void GenericResourceOpenAndSaveButtonsOnClickHandler::onOpenResourceButtonPressed(
+    const QString & resourceHash)
 {
-    QNDEBUG(QStringLiteral("GenericResourceOpenAndSaveButtonsOnClickHandler::onOpenResourceButtonPressed: ") << resourceHash);
+    QNDEBUG(QStringLiteral("GenericResourceOpenAndSaveButtonsOnClickHandler::")
+            << QStringLiteral("onOpenResourceButtonPressed: ") << resourceHash);
     Q_EMIT openResourceRequest(QByteArray::fromHex(resourceHash.toLocal8Bit()));
 }
 
-void GenericResourceOpenAndSaveButtonsOnClickHandler::onSaveResourceButtonPressed(const QString & resourceHash)
+void GenericResourceOpenAndSaveButtonsOnClickHandler::onSaveResourceButtonPressed(
+    const QString & resourceHash)
 {
-    QNDEBUG(QStringLiteral("GenericResourceOpenAndSaveButtonsOnClickHandler::onSaveResourceButtonPressed: ") << resourceHash);
+    QNDEBUG(QStringLiteral("GenericResourceOpenAndSaveButtonsOnClickHandler::")
+            << QStringLiteral("onSaveResourceButtonPressed: ") << resourceHash);
     Q_EMIT saveResourceRequest(QByteArray::fromHex(resourceHash.toLocal8Bit()));
 }
 

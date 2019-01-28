@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Dmitry Ivanov
+ * Copyright 2016-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -52,10 +52,13 @@ GenericResourceDisplayWidget::~GenericResourceDisplayWidget()
     delete m_pUI;
 }
 
-void GenericResourceDisplayWidget::initialize(const QIcon & icon, const QString & name,
-                                              const QString & size, const Resource & resource)
+void GenericResourceDisplayWidget::initialize(const QIcon & icon,
+                                              const QString & name,
+                                              const QString & size,
+                                              const Resource & resource)
 {
-    QNDEBUG(QStringLiteral("GenericResourceDisplayWidget::initialize: name = ") << name << QStringLiteral(", size = ") << size);
+    QNDEBUG(QStringLiteral("GenericResourceDisplayWidget::initialize: name = ")
+            << name << QStringLiteral(", size = ") << size);
 
     m_resourceLocalUid = resource.localUid();
 
@@ -63,13 +66,15 @@ void GenericResourceDisplayWidget::initialize(const QIcon & icon, const QString 
         m_resourceHash = resource.dataHash();
     }
     else if (resource.hasDataBody()) {
-        m_resourceHash = QCryptographicHash::hash(resource.dataBody(), QCryptographicHash::Md5);
+        m_resourceHash = QCryptographicHash::hash(resource.dataBody(),
+                                                  QCryptographicHash::Md5);
     }
     else if (resource.hasAlternateDataHash()) {
         m_resourceHash = resource.alternateDataHash();
     }
     else if (resource.hasAlternateDataBody()) {
-        m_resourceHash = QCryptographicHash::hash(resource.alternateDataBody(), QCryptographicHash::Md5);
+        m_resourceHash = QCryptographicHash::hash(resource.alternateDataBody(),
+                                                  QCryptographicHash::Md5);
     }
 
     updateResourceName(name);
@@ -81,17 +86,23 @@ void GenericResourceDisplayWidget::initialize(const QIcon & icon, const QString 
     m_pUI->resourceIconLabel->setPixmap(icon.pixmap(QSize(16,16)));
 
     if (!QIcon::hasThemeIcon(QStringLiteral("document-open"))) {
-        m_pUI->openResourceButton->setIcon(QIcon(QStringLiteral(":/generic_resource_icons/png/open_with.png")));
+        m_pUI->openResourceButton->setIcon(
+            QIcon(QStringLiteral(":/generic_resource_icons/png/open_with.png")));
     }
 
     if (!QIcon::hasThemeIcon(QStringLiteral("document-save-as"))) {
-        m_pUI->saveResourceButton->setIcon(QIcon(QStringLiteral(":/generic_resource_icons/png/save.png")));
+        m_pUI->saveResourceButton->setIcon(
+            QIcon(QStringLiteral(":/generic_resource_icons/png/save.png")));
     }
 
     QObject::connect(m_pUI->openResourceButton, QNSIGNAL(QPushButton,released),
-                     this, QNSLOT(GenericResourceDisplayWidget,onOpenResourceInExternalAppButtonPressed));
+                     this,
+                     QNSLOT(GenericResourceDisplayWidget,
+                            onOpenResourceInExternalAppButtonPressed));
     QObject::connect(m_pUI->saveResourceButton, QNSIGNAL(QPushButton,released),
-                     this, QNSLOT(GenericResourceDisplayWidget,onSaveResourceDataToFileButtonPressed));
+                     this,
+                     QNSLOT(GenericResourceDisplayWidget,
+                            onSaveResourceDataToFileButtonPressed));
 }
 
 QString GenericResourceDisplayWidget::resourceLocalUid() const
@@ -101,19 +112,23 @@ QString GenericResourceDisplayWidget::resourceLocalUid() const
 
 void GenericResourceDisplayWidget::updateResourceName(const QString & resourceName)
 {
-    m_pUI->resourceDisplayNameLabel->setText(QStringLiteral("<html><head/><body><p><span style=\" font-size:8pt;\">") +
-                                             resourceName + QStringLiteral("</span></p></body></head></html>"));
+    m_pUI->resourceDisplayNameLabel->setText(
+        QStringLiteral("<html><head/><body><p><span style=\" font-size:8pt;\">") +
+        resourceName + QStringLiteral("</span></p></body></head></html>"));
 }
 
 void GenericResourceDisplayWidget::updateResourceSize(const QString & size)
 {
-    m_pUI->resourceSizeLabel->setText(QStringLiteral("<html><head/><body><p><span style=\" font-size:8pt;\">") + size +
-                                      QStringLiteral("</span></p></body></head></html>"));
+    m_pUI->resourceSizeLabel->setText(
+        QStringLiteral("<html><head/><body><p><span style=\" font-size:8pt;\">") +
+        size +
+        QStringLiteral("</span></p></body></head></html>"));
 }
 
 void GenericResourceDisplayWidget::onOpenResourceInExternalAppButtonPressed()
 {
-    QNDEBUG(QStringLiteral("GenericResourceDisplayWidget::onOpenResourceInExternalAppButtonPressed"));
+    QNDEBUG(QStringLiteral("GenericResourceDisplayWidget::"
+                           "onOpenResourceInExternalAppButtonPressed"));
 
     if (m_resourceHash.isEmpty()) {
         QNDEBUG(QStringLiteral("Can't open resource: resource hash is empty"));
@@ -125,7 +140,8 @@ void GenericResourceDisplayWidget::onOpenResourceInExternalAppButtonPressed()
 
 void GenericResourceDisplayWidget::onSaveResourceDataToFileButtonPressed()
 {
-    QNDEBUG(QStringLiteral("GenericResourceDisplayWidget::onSaveResourceDataToFileButtonPressed"));
+    QNDEBUG(QStringLiteral("GenericResourceDisplayWidget::"
+                           "onSaveResourceDataToFileButtonPressed"));
 
     if (m_resourceHash.isEmpty()) {
         QNDEBUG(QStringLiteral("Can't save resource: resource hash is empty"));

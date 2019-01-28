@@ -40,9 +40,10 @@ namespace quentier {
         return; \
     }
 
-RemoveResourceDelegate::RemoveResourceDelegate(const Resource & resourceToRemove,
-                                               NoteEditorPrivate & noteEditor,
-                                               LocalStorageManagerAsync & localStorageManager) :
+RemoveResourceDelegate::RemoveResourceDelegate(
+        const Resource & resourceToRemove,
+        NoteEditorPrivate & noteEditor,
+        LocalStorageManagerAsync & localStorageManager) :
     m_noteEditor(noteEditor),
     m_localStorageManager(localStorageManager),
     m_resource(resourceToRemove),
@@ -90,8 +91,8 @@ void RemoveResourceDelegate::onFindResourceComplete(
         return;
     }
 
-    QNDEBUG(QStringLiteral("RemoveResourceDelegate::onFindResourceComplete: request id = ")
-            << requestId);
+    QNDEBUG(QStringLiteral("RemoveResourceDelegate::onFindResourceComplete: ")
+            << QStringLiteral("request id = ") << requestId);
 
     Q_UNUSED(options)
     m_findResourceRequestId = QUuid();
@@ -108,9 +109,9 @@ void RemoveResourceDelegate::onFindResourceFailed(
         return;
     }
 
-    QNDEBUG(QStringLiteral("RemoveResourceDelegate::onFindResourceFailed: request id = ")
-            << requestId << QStringLiteral(", error description: ")
-            << errorDescription);
+    QNDEBUG(QStringLiteral("RemoveResourceDelegate::onFindResourceFailed: ")
+            << QStringLiteral("request id = ") << requestId
+            << QStringLiteral(", error description: ") << errorDescription);
 
     Q_UNUSED(resource)
     Q_UNUSED(options)
@@ -251,7 +252,8 @@ void RemoveResourceDelegate::connectToLocalStorage()
 void RemoveResourceDelegate::onResourceReferenceRemovedFromNoteContent(
     const QVariant & data)
 {
-    QNDEBUG(QStringLiteral("RemoveResourceDelegate::onResourceReferenceRemovedFromNoteContent"));
+    QNDEBUG(QStringLiteral("RemoveResourceDelegate::"
+                           "onResourceReferenceRemovedFromNoteContent"));
 
     QMap<QString,QVariant> resultMap = data.toMap();
 

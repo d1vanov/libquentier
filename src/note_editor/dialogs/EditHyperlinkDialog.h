@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Dmitry Ivanov
+ * Copyright 2016-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -40,7 +40,8 @@ public:
     virtual ~EditHyperlinkDialog();
 
 Q_SIGNALS:
-    void accepted(QString text, QUrl url, quint64 idNumber, bool startupUrlWasEmpty);
+    void accepted(QString text, QUrl url,
+                  quint64 idNumber, bool startupUrlWasEmpty);
 
 private Q_SLOTS:
     virtual void accept() Q_DECL_OVERRIDE;

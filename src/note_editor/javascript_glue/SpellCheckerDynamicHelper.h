@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Dmitry Ivanov
+ * Copyright 2016-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -37,7 +37,8 @@ Q_SIGNALS:
 
 public Q_SLOTS:
 
-    // NOTE: workarounding https://bugreports.qt.io/browse/QTBUG-39951 - JavaScript array doesn't get automatically converted to QVariant
+    // NOTE: working around https://bugreports.qt.io/browse/QTBUG-39951 -
+    // JavaScript array doesn't get automatically converted to QVariant
 #ifdef QUENTIER_USE_QT_WEB_ENGINE
     void setLastEnteredWords(QVariant words);
 #else

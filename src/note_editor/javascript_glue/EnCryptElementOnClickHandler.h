@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Dmitry Ivanov
+ * Copyright 2016-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -37,10 +37,13 @@ public:
     explicit EnCryptElementOnClickHandler(QObject * parent = Q_NULLPTR);
 
 Q_SIGNALS:
-    void decrypt(QString encryptedText, QString cipher, QString length, QString hint, QString enCryptIndex, bool * pCancelled);
+    void decrypt(QString encryptedText, QString cipher, QString length,
+                 QString hint, QString enCryptIndex, bool * pCancelled);
 
 public Q_SLOTS:
-    void onEnCryptElementClicked(QString encryptedText, QString cipher, QString length, QString hint, QString enCryptIndex);
+    void onEnCryptElementClicked(QString encryptedText, QString cipher,
+                                 QString length, QString hint,
+                                 QString enCryptIndex);
 };
 
 } // namespace quentier

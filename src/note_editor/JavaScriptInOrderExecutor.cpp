@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Dmitry Ivanov
+ * Copyright 2016-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -25,7 +25,8 @@
 
 namespace quentier {
 
-JavaScriptInOrderExecutor::JavaScriptInOrderExecutor(WebView & view, QObject * parent) :
+JavaScriptInOrderExecutor::JavaScriptInOrderExecutor(WebView & view,
+                                                     QObject * parent) :
     QObject(parent),
     m_view(view),
     m_javaScriptsQueue(),
@@ -33,7 +34,8 @@ JavaScriptInOrderExecutor::JavaScriptInOrderExecutor(WebView & view, QObject * p
     m_inProgress(false)
 {}
 
-void JavaScriptInOrderExecutor::append(const QString &script, JavaScriptInOrderExecutor::Callback callback)
+void JavaScriptInOrderExecutor::append(const QString &script,
+                                       JavaScriptInOrderExecutor::Callback callback)
 {
     m_javaScriptsQueue.enqueue(QPair<QString, Callback>(script, callback));
     QNTRACE(QStringLiteral("JavaScriptInOrderExecutor: appended new script, there are ")
@@ -75,7 +77,9 @@ void JavaScriptInOrderExecutor::next(const QVariant & data)
         return;
     }
 
-    QNTRACE(QStringLiteral("JavaScriptInOrderExecutor: ") << m_javaScriptsQueue.size() << QStringLiteral(" more scripts to execute"));
+    QNTRACE(QStringLiteral("JavaScriptInOrderExecutor: ")
+            << m_javaScriptsQueue.size()
+            << QStringLiteral(" more scripts to execute"));
     start();
 }
 

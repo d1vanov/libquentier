@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Dmitry Ivanov
+ * Copyright 2016-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -30,7 +30,8 @@ INoteEditorBackend::INoteEditorBackend(NoteEditor * parent) :
     m_pNoteEditor(parent)
 {}
 
-QTextStream & operator<<(QTextStream & strm, const INoteEditorBackend::Rotation::type rotationDirection)
+QTextStream & operator<<(QTextStream & strm,
+                         const INoteEditorBackend::Rotation::type rotationDirection)
 {
     switch(rotationDirection)
     {

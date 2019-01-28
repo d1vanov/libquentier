@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Dmitry Ivanov
+ * Copyright 2016-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -34,31 +34,37 @@ QT_FORWARD_DECLARE_CLASS(NoteEditorPrivate)
 QT_FORWARD_DECLARE_CLASS(GenericResourceImageManager)
 
 /**
- * @brief The RenameResourceDelegate class encapsulates a chain of callbacks required
- * for proper implementation of renaming a resource displayed on the note editor's page
- * considering the details of wrapping this action around undo stack
+ * @brief The RenameResourceDelegate class encapsulates a chain of callbacks
+ * required for proper implementation of renaming a resource displayed on
+ * the note editor's page considering the details of wrapping this action
+ * around undo stack
  */
 class Q_DECL_HIDDEN RenameResourceDelegate: public QObject
 {
     Q_OBJECT
 public:
-    explicit RenameResourceDelegate(const Resource & resource, NoteEditorPrivate & noteEditor,
-                                    GenericResourceImageManager * pGenericResourceImageManager,
-                                    QHash<QByteArray, QString> & genericResourceImageFilePathsByResourceHash,
-                                    const bool performingUndo = false);
+    explicit RenameResourceDelegate(
+        const Resource & resource, NoteEditorPrivate & noteEditor,
+        GenericResourceImageManager * pGenericResourceImageManager,
+        QHash<QByteArray, QString> & genericResourceImageFilePathsByResourceHash,
+        const bool performingUndo = false);
     void start();
-    void startWithPresetNames(const QString & oldResourceName, const QString & newResourceName);
+    void startWithPresetNames(const QString & oldResourceName,
+                              const QString & newResourceName);
 
 Q_SIGNALS:
-    void finished(QString oldResourceName, QString newResourceName, Resource resource, bool performingUndo);
+    void finished(QString oldResourceName, QString newResourceName,
+                  Resource resource, bool performingUndo);
     void cancelled();
     void notifyError(ErrorString);
 
 // private signals
 #ifdef QUENTIER_USE_QT_WEB_ENGINE
-    void saveGenericResourceImageToFile(QString noteLocalUid, QString resourceLocalUid, QByteArray resourceImageData,
-                                        QString resourceFileSuffix, QByteArray resourceActualHash,
-                                        QString resourceDisplayName, QUuid requestId);
+    void saveGenericResourceImageToFile(
+        QString noteLocalUid, QString resourceLocalUid,
+        QByteArray resourceImageData, QString resourceFileSuffix,
+        QByteArray resourceActualHash, QString resourceDisplayName,
+        QUuid requestId);
 #endif
 
 private Q_SLOTS:
@@ -66,8 +72,9 @@ private Q_SLOTS:
     void onRenameResourceDialogFinished(QString newResourceName);
 
 #ifdef QUENTIER_USE_QT_WEB_ENGINE
-    void onGenericResourceImageWriterFinished(bool success, QByteArray resourceHash, QString filePath,
-                                              ErrorString errorDescription, QUuid requestId);
+    void onGenericResourceImageWriterFinished(
+        bool success, QByteArray resourceHash, QString filePath,
+        ErrorString errorDescription, QUuid requestId);
     void onGenericResourceImageUpdated(const QVariant & data);
 #endif
 
