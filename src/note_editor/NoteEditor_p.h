@@ -1248,7 +1248,7 @@ private:
 
     CurrentContextMenuExtraData     m_currentContextMenuExtraData;
 
-    QSet<QUuid>     m_localUidsOfResourcesPendingFindDataInLocalStorageForManualSavingToFile;
+    QSet<QUuid>     m_resourceLocalUidsPendingFindDataInLocalStorageForSavingToFile;
     QHash<QUuid, Rotation::type>    m_rotationTypeByResourceLocalUidsPendingFindDataInLocalStorage;
 
     quint64     m_lastFreeEnToDoIdNumber;
