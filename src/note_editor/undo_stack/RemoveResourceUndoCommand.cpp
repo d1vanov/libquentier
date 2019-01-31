@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Dmitry Ivanov
+ * Copyright 2016-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -23,16 +23,20 @@
 namespace quentier {
 
 #define GET_PAGE() \
-    NoteEditorPage * page = qobject_cast<NoteEditorPage*>(m_noteEditorPrivate.page()); \
+    NoteEditorPage * page = \
+        qobject_cast<NoteEditorPage*>(m_noteEditorPrivate.page()); \
     if (Q_UNLIKELY(!page)) { \
-        ErrorString error(QT_TRANSLATE_NOOP("RemoveResourceUndoCommand", "Can't undo/redo remove attachment: can't get note editor page")); \
+        ErrorString error(QT_TRANSLATE_NOOP("RemoveResourceUndoCommand", \
+                                            "Can't undo/redo remove attachment: "\
+                                            "can't get note editor page")); \
         QNWARNING(error); \
         Q_EMIT notifyError(error); \
         return; \
     }
 
-RemoveResourceUndoCommand::RemoveResourceUndoCommand(const Resource & resource, const Callback & callback,
-                                                     NoteEditorPrivate & noteEditorPrivate, QUndoCommand * parent) :
+RemoveResourceUndoCommand::RemoveResourceUndoCommand(
+        const Resource & resource, const Callback & callback,
+        NoteEditorPrivate & noteEditorPrivate, QUndoCommand * parent) :
     INoteEditorUndoCommand(noteEditorPrivate, parent),
     m_resource(resource),
     m_callback(callback)
@@ -40,9 +44,10 @@ RemoveResourceUndoCommand::RemoveResourceUndoCommand(const Resource & resource, 
     setText(tr("Remove attachment"));
 }
 
-RemoveResourceUndoCommand::RemoveResourceUndoCommand(const Resource & resource, const Callback & callback,
-                                                     NoteEditorPrivate & noteEditorPrivate, const QString & text,
-                                                     QUndoCommand * parent) :
+RemoveResourceUndoCommand::RemoveResourceUndoCommand(
+        const Resource & resource, const Callback & callback,
+        NoteEditorPrivate & noteEditorPrivate, const QString & text,
+        QUndoCommand * parent) :
     INoteEditorUndoCommand(noteEditorPrivate, text, parent),
     m_resource(resource),
     m_callback(callback)
@@ -59,7 +64,8 @@ void RemoveResourceUndoCommand::undoImpl()
 
     GET_PAGE()
     page->executeJavaScript(QStringLiteral("resourceManager.undo();"));
-    page->executeJavaScript(QStringLiteral("setupGenericResourceOnClickHandler();"), m_callback);
+    page->executeJavaScript(QStringLiteral("setupGenericResourceOnClickHandler();"),
+                            m_callback);
 }
 
 void RemoveResourceUndoCommand::redoImpl()

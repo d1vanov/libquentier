@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Dmitry Ivanov
+ * Copyright 2016-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -38,7 +38,8 @@ public:
     typedef QHash<QString, QPair<QString, QString> > DicAndAffFilesByDictionaryName;
 
 public:
-    SpellCheckerDictionariesFinder(const QSharedPointer<QAtomicInt> & pStopFlag, QObject * parent = Q_NULLPTR);
+    SpellCheckerDictionariesFinder(const QSharedPointer<QAtomicInt> & pStopFlag,
+                                   QObject * parent = Q_NULLPTR);
 
     virtual void run() Q_DECL_OVERRIDE;
 

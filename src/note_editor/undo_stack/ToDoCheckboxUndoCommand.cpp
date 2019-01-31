@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Dmitry Ivanov
+ * Copyright 2016-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -22,7 +22,8 @@
 
 namespace quentier {
 
-ToDoCheckboxUndoCommand::ToDoCheckboxUndoCommand(const quint64 enToDoCheckboxId, NoteEditorPrivate & noteEditorPrivate,
+ToDoCheckboxUndoCommand::ToDoCheckboxUndoCommand(const quint64 enToDoCheckboxId,
+                                                 NoteEditorPrivate & noteEditorPrivate,
                                                  QUndoCommand * parent) :
     INoteEditorUndoCommand(noteEditorPrivate, parent),
     m_enToDoCheckboxId(enToDoCheckboxId)
@@ -30,8 +31,10 @@ ToDoCheckboxUndoCommand::ToDoCheckboxUndoCommand(const quint64 enToDoCheckboxId,
     setText(tr("Change ToDo state"));
 }
 
-ToDoCheckboxUndoCommand::ToDoCheckboxUndoCommand(const quint64 enToDoCheckboxId, NoteEditorPrivate & noteEditorPrivate,
-                                                 const QString & text, QUndoCommand * parent) :
+ToDoCheckboxUndoCommand::ToDoCheckboxUndoCommand(const quint64 enToDoCheckboxId,
+                                                 NoteEditorPrivate & noteEditorPrivate,
+                                                 const QString & text,
+                                                 QUndoCommand * parent) :
     INoteEditorUndoCommand(noteEditorPrivate, text, parent),
     m_enToDoCheckboxId(enToDoCheckboxId)
 {}

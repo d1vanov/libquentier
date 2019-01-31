@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Dmitry Ivanov
+ * Copyright 2016-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -23,8 +23,9 @@
 
 namespace quentier {
 
-SpellCheckAddToUserWordListUndoCommand::SpellCheckAddToUserWordListUndoCommand(NoteEditorPrivate & noteEditor, const QString & word,
-                                                                               SpellChecker * pSpellChecker, QUndoCommand * parent) :
+SpellCheckAddToUserWordListUndoCommand::SpellCheckAddToUserWordListUndoCommand(
+        NoteEditorPrivate & noteEditor, const QString & word,
+        SpellChecker * pSpellChecker, QUndoCommand * parent) :
     INoteEditorUndoCommand(noteEditor, parent),
     m_pSpellChecker(pSpellChecker),
     m_word(word)
@@ -32,9 +33,10 @@ SpellCheckAddToUserWordListUndoCommand::SpellCheckAddToUserWordListUndoCommand(N
     setText(tr("Add to user word list"));
 }
 
-SpellCheckAddToUserWordListUndoCommand::SpellCheckAddToUserWordListUndoCommand(NoteEditorPrivate & noteEditor, const QString & word,
-                                                                               SpellChecker * pSpellChecker, const QString & text,
-                                                                               QUndoCommand * parent) :
+SpellCheckAddToUserWordListUndoCommand::SpellCheckAddToUserWordListUndoCommand(
+        NoteEditorPrivate & noteEditor, const QString & word,
+        SpellChecker * pSpellChecker, const QString & text,
+        QUndoCommand * parent) :
     INoteEditorUndoCommand(noteEditor, text, parent),
     m_pSpellChecker(pSpellChecker),
     m_word(word)

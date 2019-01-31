@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Dmitry Ivanov
+ * Copyright 2016-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -31,9 +31,11 @@ class Q_DECL_HIDDEN AddResourceUndoCommand: public INoteEditorUndoCommand
     Q_OBJECT
     typedef NoteEditorPage::Callback Callback;
 public:
-    AddResourceUndoCommand(const Resource & resource, const Callback & callback, NoteEditorPrivate & noteEditorPrivate,
+    AddResourceUndoCommand(const Resource & resource, const Callback & callback,
+                           NoteEditorPrivate & noteEditorPrivate,
                            QUndoCommand * parent = Q_NULLPTR);
-    AddResourceUndoCommand(const Resource & resource, const Callback & callback, NoteEditorPrivate & noteEditorPrivate,
+    AddResourceUndoCommand(const Resource & resource, const Callback & callback,
+                           NoteEditorPrivate & noteEditorPrivate,
                            const QString & text, QUndoCommand * parent = Q_NULLPTR);
     virtual ~AddResourceUndoCommand();
 

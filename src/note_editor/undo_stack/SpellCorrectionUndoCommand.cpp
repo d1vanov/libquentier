@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Dmitry Ivanov
+ * Copyright 2016-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -23,15 +23,19 @@
 namespace quentier {
 
 #define GET_PAGE() \
-    NoteEditorPage * page = qobject_cast<NoteEditorPage*>(m_noteEditorPrivate.page()); \
+    NoteEditorPage * page = \
+        qobject_cast<NoteEditorPage*>(m_noteEditorPrivate.page()); \
     if (Q_UNLIKELY(!page)) { \
-        ErrorString error(QT_TRANSLATE_NOOP("SpellCorrectionUndoCommand", "Can't undo/redo spelling correction: can't get note editor's page")); \
+        ErrorString error(QT_TRANSLATE_NOOP("SpellCorrectionUndoCommand", \
+                                            "Can't undo/redo spelling correction: "\
+                                            "can't get note editor's page")); \
         QNWARNING(error); \
         Q_EMIT notifyError(error); \
         return; \
     }
 
-SpellCorrectionUndoCommand::SpellCorrectionUndoCommand(NoteEditorPrivate & noteEditor, const Callback & callback,
+SpellCorrectionUndoCommand::SpellCorrectionUndoCommand(NoteEditorPrivate & noteEditor,
+                                                       const Callback & callback,
                                                        QUndoCommand * parent) :
     INoteEditorUndoCommand(noteEditor, parent),
     m_callback(callback)
@@ -39,8 +43,10 @@ SpellCorrectionUndoCommand::SpellCorrectionUndoCommand(NoteEditorPrivate & noteE
     setText(tr("Spelling correction"));
 }
 
-SpellCorrectionUndoCommand::SpellCorrectionUndoCommand(NoteEditorPrivate & noteEditor, const Callback & callback,
-                                                       const QString & text, QUndoCommand * parent) :
+SpellCorrectionUndoCommand::SpellCorrectionUndoCommand(NoteEditorPrivate & noteEditor,
+                                                       const Callback & callback,
+                                                       const QString & text,
+                                                       QUndoCommand * parent) :
     INoteEditorUndoCommand(noteEditor, text, parent),
     m_callback(callback)
 {}

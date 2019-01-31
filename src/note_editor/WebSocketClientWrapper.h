@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Dmitry Ivanov
+ * Copyright 2016-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -28,7 +28,8 @@ class Q_DECL_HIDDEN WebSocketClientWrapper: public QObject
 {
     Q_OBJECT
 public:
-    explicit WebSocketClientWrapper(QWebSocketServer * server, QObject * parent = Q_NULLPTR);
+    explicit WebSocketClientWrapper(QWebSocketServer * server,
+                                    QObject * parent = Q_NULLPTR);
 
 Q_SIGNALS:
     void clientConnected(WebSocketTransport * client);

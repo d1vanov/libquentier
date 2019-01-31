@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Dmitry Ivanov
+ * Copyright 2016-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -23,16 +23,21 @@
 namespace quentier {
 
 #define GET_PAGE() \
-    NoteEditorPage * page = qobject_cast<NoteEditorPage*>(m_noteEditorPrivate.page()); \
+    NoteEditorPage * page = \
+        qobject_cast<NoteEditorPage*>(m_noteEditorPrivate.page()); \
     if (Q_UNLIKELY(!page)) { \
-        ErrorString error(QT_TRANSLATE_NOOP("AddResourceUndoCommand", "Can't undo/redo adding the attachment: no note editor page")); \
+        ErrorString error(QT_TRANSLATE_NOOP("AddResourceUndoCommand", \
+                                            "Can't undo/redo adding the attachment: "\
+                                            "no note editor page")); \
         QNWARNING(error); \
         Q_EMIT notifyError(error); \
         return; \
     }
 
-AddResourceUndoCommand::AddResourceUndoCommand(const Resource & resource, const Callback & callback,
-                                               NoteEditorPrivate & noteEditorPrivate, QUndoCommand * parent) :
+AddResourceUndoCommand::AddResourceUndoCommand(const Resource & resource,
+                                               const Callback & callback,
+                                               NoteEditorPrivate & noteEditorPrivate,
+                                               QUndoCommand * parent) :
     INoteEditorUndoCommand(noteEditorPrivate, parent),
     m_resource(resource),
     m_callback(callback)
@@ -40,8 +45,10 @@ AddResourceUndoCommand::AddResourceUndoCommand(const Resource & resource, const 
     setText(tr("Add attachment"));
 }
 
-AddResourceUndoCommand::AddResourceUndoCommand(const Resource & resource, const Callback & callback,
-                                               NoteEditorPrivate & noteEditorPrivate, const QString & text,
+AddResourceUndoCommand::AddResourceUndoCommand(const Resource & resource,
+                                               const Callback & callback,
+                                               NoteEditorPrivate & noteEditorPrivate,
+                                               const QString & text,
                                                QUndoCommand * parent) :
     INoteEditorUndoCommand(noteEditorPrivate, text, parent),
     m_resource(resource),
