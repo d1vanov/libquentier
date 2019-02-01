@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Dmitry Ivanov
+ * Copyright 2017-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -34,20 +34,21 @@ QT_FORWARD_DECLARE_CLASS(NotebookSyncCache)
 QT_FORWARD_DECLARE_CLASS(LocalStorageManagerAsync)
 
 /**
- * The NotebookSyncConflictResolver class resolves the conflict between two notebooks: the one downloaded
- * from the remote server and the local one. The conflict resolution might involve
- * changes in other notebooks, seemingly unrelated to the currently conflicting ones
+ * The NotebookSyncConflictResolver class resolves the conflict between two
+ * notebooks: the one downloaded from the remote server and the local one.
+ * The conflict resolution might involve changes in other notebooks, seemingly
+ * unrelated to the currently conflicting ones
  */
 class Q_DECL_HIDDEN NotebookSyncConflictResolver: public QObject
 {
     Q_OBJECT
 public:
-    explicit NotebookSyncConflictResolver(const qevercloud::Notebook & remoteNotebook,
-                                          const QString & remoteNotebookLinkedNotebookGuid,
-                                          const Notebook & localConflict,
-                                          NotebookSyncCache & cache,
-                                          LocalStorageManagerAsync & localStorageManagerAsync,
-                                          QObject * parent = Q_NULLPTR);
+    explicit NotebookSyncConflictResolver(
+        const qevercloud::Notebook & remoteNotebook,
+        const QString & remoteNotebookLinkedNotebookGuid,
+        const Notebook & localConflict, NotebookSyncCache & cache,
+        LocalStorageManagerAsync & localStorageManagerAsync,
+        QObject * parent = Q_NULLPTR);
 
     void start();
 
@@ -66,11 +67,14 @@ Q_SIGNALS:
 
 private Q_SLOTS:
     void onAddNotebookComplete(Notebook notebook, QUuid requestId);
-    void onAddNotebookFailed(Notebook notebook, ErrorString errorDescription, QUuid requestId);
+    void onAddNotebookFailed(Notebook notebook, ErrorString errorDescription,
+                             QUuid requestId);
     void onUpdateNotebookComplete(Notebook notebook, QUuid requestId);
-    void onUpdateNotebookFailed(Notebook notebook, ErrorString errorDescription, QUuid requestId);
+    void onUpdateNotebookFailed(Notebook notebook, ErrorString errorDescription,
+                                QUuid requestId);
     void onFindNotebookComplete(Notebook notebook, QUuid requestId);
-    void onFindNotebookFailed(Notebook notebook, ErrorString errorDescription, QUuid requestId);
+    void onFindNotebookFailed(Notebook notebook, ErrorString errorDescription,
+                              QUuid requestId);
 
     void onCacheFilled();
     void onCacheFailed(ErrorString errorDescription);

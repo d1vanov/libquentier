@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Dmitry Ivanov
+ * Copyright 2017-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -44,15 +44,21 @@ public:
     const QString & linkedNotebookGuid() const { return m_linkedNotebookGuid; }
 
     /**
-     * @return True if the cache is already filled with up-to-moment data, false otherwise
+     * @return  True if the cache is already filled with up-to-moment data,
+     *          false otherwise
      */
     bool isFilled() const;
 
     typedef boost::bimap<QString, QString> NoteGuidToLocalUidBimap;
 
-    const NoteGuidToLocalUidBimap & noteGuidToLocalUidBimap() const { return m_noteGuidToLocalUidBimap; }
-    const QHash<QString,Note> & dirtyNotesByGuid() const { return m_dirtyNotesByGuid; }
-    const QHash<QString,QString> & notebookGuidByNoteGuid() const { return m_notebookGuidByNoteGuid; }
+    const NoteGuidToLocalUidBimap & noteGuidToLocalUidBimap() const
+    { return m_noteGuidToLocalUidBimap; }
+
+    const QHash<QString,Note> & dirtyNotesByGuid() const
+    { return m_dirtyNotesByGuid; }
+
+    const QHash<QString,QString> & notebookGuidByNoteGuid() const
+    { return m_notebookGuidByNoteGuid; }
 
 Q_SIGNALS:
     void filled();
@@ -67,9 +73,9 @@ Q_SIGNALS:
 
 public Q_SLOTS:
     /**
-     * Start collecting the information about notes; does nothing if the information is already collected
-     * or is being collected at the moment, otherwise initiates the sequence of actions required to collect
-     * the note information
+     * Start collecting the information about notes; does nothing if the information
+     * is already collected or is being collected at the moment, otherwise initiates
+     * the sequence of actions required to collect the note information
      */
     void fill();
 

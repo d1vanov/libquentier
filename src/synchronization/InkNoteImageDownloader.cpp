@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Dmitry Ivanov
+ * Copyright 2016-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -35,11 +35,12 @@
 
 namespace quentier {
 
-InkNoteImageDownloader::InkNoteImageDownloader(const QString & host, const QString & resourceGuid,
-                                               const QString & noteGuid, const QString & authToken,
-                                               const QString & shardId, const int height, const int width,
-                                               const bool noteFromPublicLinkedNotebook,
-                                               const QString & storageFolderPath, QObject * parent) :
+InkNoteImageDownloader::InkNoteImageDownloader(
+        const QString & host, const QString & resourceGuid,
+        const QString & noteGuid, const QString & authToken,
+        const QString & shardId, const int height, const int width,
+        const bool noteFromPublicLinkedNotebook,
+        const QString & storageFolderPath, QObject * parent) :
     QObject(parent),
     m_host(host),
     m_resourceGuid(resourceGuid),
@@ -54,9 +55,10 @@ InkNoteImageDownloader::InkNoteImageDownloader(const QString & host, const QStri
 
 void InkNoteImageDownloader::run()
 {
-    QNDEBUG(QStringLiteral("InkNoteImageDownloader::run: host = ") << m_host << QStringLiteral(", resource guid = ")
-            << m_resourceGuid << QStringLiteral(", note guid = ") << m_noteGuid << QStringLiteral(", storage folder path = ")
-            << m_storageFolderPath);
+    QNDEBUG(QStringLiteral("InkNoteImageDownloader::run: host = ") << m_host
+            << QStringLiteral(", resource guid = ") << m_resourceGuid
+            << QStringLiteral(", note guid = ") << m_noteGuid
+            << QStringLiteral(", storage folder path = ") << m_storageFolderPath);
 
 #define SET_ERROR(error) \
     ErrorString errorDescription(error); \
@@ -79,15 +81,19 @@ void InkNoteImageDownloader::run()
         SET_ERROR(QT_TR_NOOP("the authentication data is incomplete"));
     }
 
-    qevercloud::InkNoteImageDownloader downloader(m_host, m_shardId, m_authToken, m_width, m_height);
+    qevercloud::InkNoteImageDownloader downloader(m_host, m_shardId, m_authToken,
+                                                  m_width, m_height);
     QByteArray inkNoteImageData;
     try
     {
-        inkNoteImageData = downloader.download(m_resourceGuid, m_noteFromPublicLinkedNotebook);
+        inkNoteImageData = downloader.download(m_resourceGuid,
+                                               m_noteFromPublicLinkedNotebook);
     }
     catch(const qevercloud::EverCloudException & everCloudException)
     {
-        ErrorString errorDescription(QT_TR_NOOP("Caught EverCloudException on attempt to download the ink note image data"));
+        ErrorString errorDescription(QT_TR_NOOP("Caught EverCloudException on "
+                                                "attempt to download the ink note "
+                                                "image data"));
         auto exceptionData = everCloudException.exceptionData();
         if (!exceptionData.isNull()) {
             errorDescription.details() = exceptionData->errorMessage;
@@ -98,14 +104,17 @@ void InkNoteImageDownloader::run()
     }
     catch(const std::exception & stdException)
     {
-        ErrorString errorDescription(QT_TR_NOOP("Caught std::exception on attempt to download the ink note image data"));
+        ErrorString errorDescription(QT_TR_NOOP("Caught std::exception on attempt "
+                                                "to download the ink note image "
+                                                "data"));
         errorDescription.details() = QString::fromUtf8(stdException.what());
         Q_EMIT finished(false, m_resourceGuid, m_noteGuid, errorDescription);
         return;
     }
     catch(...)
     {
-        ErrorString errorDescription(QT_TR_NOOP("Caught unknown exception on attempt to download the ink note image data"));
+        ErrorString errorDescription(QT_TR_NOOP("Caught unknown exception on attempt "
+                                                "to download the ink note image data"));
         Q_EMIT finished(false, m_resourceGuid, m_noteGuid, errorDescription);
         return;
     }
@@ -131,7 +140,8 @@ void InkNoteImageDownloader::run()
         SET_ERROR(QT_TR_NOOP("the folder for ink note images storage is not writable"));
     }
 
-    QString filePath = m_storageFolderPath + QStringLiteral("/") + m_resourceGuid + QStringLiteral(".png");
+    QString filePath = m_storageFolderPath + QStringLiteral("/") + m_resourceGuid +
+                       QStringLiteral(".png");
     QFile file(filePath);
     if (Q_UNLIKELY(!file.open(QIODevice::WriteOnly))) {
         SET_ERROR(QT_TR_NOOP("can't open the ink note image file for writing"));

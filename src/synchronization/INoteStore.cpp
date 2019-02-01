@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Dmitry Ivanov
+ * Copyright 2018-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -20,7 +20,8 @@
 
 namespace quentier {
 
-INoteStore::INoteStore(const QSharedPointer<qevercloud::NoteStore> & pQecNoteStore, QObject * parent) :
+INoteStore::INoteStore(const QSharedPointer<qevercloud::NoteStore> & pQecNoteStore,
+                       QObject * parent) :
     QObject(parent),
     m_pQecNoteStore(pQecNoteStore)
 {}
@@ -33,7 +34,8 @@ QSharedPointer<qevercloud::NoteStore> INoteStore::getQecNoteStore()
     return m_pQecNoteStore;
 }
 
-void INoteStore::setQecNoteStore(const QSharedPointer<qevercloud::NoteStore> & pQecNoteStore)
+void INoteStore::setQecNoteStore(
+    const QSharedPointer<qevercloud::NoteStore> & pQecNoteStore)
 {
     m_pQecNoteStore = pQecNoteStore;
 }

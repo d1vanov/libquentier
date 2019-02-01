@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Dmitry Ivanov
+ * Copyright 2017-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -31,24 +31,31 @@ QT_FORWARD_DECLARE_CLASS(TagSyncCache)
 QT_FORWARD_DECLARE_CLASS(SavedSearchSyncCache)
 
 /**
- * @brief The FullSyncStaleDataItemsExpunger class ensures there would be no stale data items
- * left within the local storage after the full sync performed not for the first time.
+ * @brief The FullSyncStaleDataItemsExpunger class ensures there would be no
+ * stale data items left within the local storage after the full sync performed
+ * not for the first time.
  *
- * From time to time the Evernote synchronization protocol (EDAM) might require the client to perform
- * a full sync instead of incremental sync. It might happen because the client hasn't synced with the service
- * for too long so that the guids of expunged data items are no longer stored within the service.
- * It also might happen in case of some unforeseen service's malfunction so that the status quo needs to be
- * restored for all clients. In any event, sometimes Evernote might require the client to perform the full sync.
+ * From time to time the Evernote synchronization protocol (EDAM) might require
+ * the client to perform a full sync instead of incremental sync. It might happen
+ * because the client hasn't synced with the service for too long so that the guids
+ * of expunged data items are no longer stored within the service. It also might
+ * happen in case of some unforeseen service's malfunction so that the status quo
+ * needs to be restored for all clients. In any event, sometimes Evernote might
+ * require the client to perform the full sync.
  *
- * When the client performs full sync for the first time, there is no need for the client to expunge anything:
- * it starts with empty local storage and only fills in the data received from the service into it. However,
- * when full sync is done after the local storage database has been filled with something, the client
- * needs to understand which data items are now stale within its local storage (i.e. were expunged from the service
- * at some point) and thus need to be expunged from the client's local storage. These are all data items which
- * have guids which were not referenced during the last full sync. However, for the sake of preserving the unsynced
- * data, the matching data items which are marked as dirty are not expunged from the local storage: instead
- * their guid and update sequence number are wiped out so that they are presented as new data items to the service.
- * That happens during sending the local changes to Evernote service.
+ * When the client performs full sync for the first time, there is no need for
+ * the client to expunge anything: it starts with empty local storage and only
+ * fills in the data received from the service into it. However, when full sync
+ * is done after the local storage database has been filled with something,
+ * the client needs to understand which data items are now stale within its
+ * local storage (i.e. were expunged from the service at some point) and thus
+ * need to be expunged from the client's local storage. These are all data items
+ * which have guids which were not referenced during the last full sync. However,
+ * for the sake of preserving the unsynced data, the matching data items which
+ * are marked as dirty are not expunged from the local storage: instead their guid
+ * and update sequence number are wiped out so that they are presented as new data
+ * items to the service. That happens during sending the local changes to Evernote
+ * service.
  */
 class Q_DECL_HIDDEN FullSyncStaleDataItemsExpunger: public QObject
 {
@@ -86,7 +93,8 @@ Q_SIGNALS:
     void updateNotebook(Notebook notebook, QUuid requestId);
     void updateTag(Tag tag, QUuid requestId);
     void updateSavedSearch(SavedSearch search, QUuid requestId);
-    void updateNote(Note note, LocalStorageManager::UpdateNoteOptions options, QUuid requestId);
+    void updateNote(Note note, LocalStorageManager::UpdateNoteOptions options,
+                    QUuid requestId);
 
 public Q_SLOTS:
     void start();
@@ -98,22 +106,41 @@ private Q_SLOTS:
     void onNoteCacheFilled();
 
     void onExpungeNotebookComplete(Notebook notebook, QUuid requestId);
-    void onExpungeNotebookFailed(Notebook notebook, ErrorString errorDescription, QUuid requestId);
-    void onExpungeTagComplete(Tag tag, QStringList expungedChildTagLocalUids, QUuid requestId);
-    void onExpungeTagFailed(Tag tag, ErrorString errorDescription, QUuid requestId);
+    void onExpungeNotebookFailed(Notebook notebook,
+                                 ErrorString errorDescription,
+                                 QUuid requestId);
+    void onExpungeTagComplete(Tag tag,
+                              QStringList expungedChildTagLocalUids,
+                              QUuid requestId);
+    void onExpungeTagFailed(Tag tag,
+                            ErrorString errorDescription,
+                            QUuid requestId);
     void onExpungeSavedSearchComplete(SavedSearch search, QUuid requestId);
-    void onExpungeSavedSearchFailed(SavedSearch search, ErrorString errorDescription, QUuid requestId);
+    void onExpungeSavedSearchFailed(SavedSearch search,
+                                    ErrorString errorDescription,
+                                    QUuid requestId);
     void onExpungeNoteComplete(Note note, QUuid requestId);
-    void onExpungeNoteFailed(Note note, ErrorString errorDescription, QUuid requestId);
+    void onExpungeNoteFailed(Note note,
+                             ErrorString errorDescription,
+                             QUuid requestId);
 
     void onUpdateNotebookComplete(Notebook notebook, QUuid requestId);
-    void onUpdateNotebookFailed(Notebook notebook, ErrorString errorDescription, QUuid requestId);
+    void onUpdateNotebookFailed(Notebook notebook,
+                                ErrorString errorDescription,
+                                QUuid requestId);
     void onUpdateTagComplete(Tag tag, QUuid requestId);
-    void onUpdateTagFailed(Tag tag, ErrorString errorDescription, QUuid requestId);
+    void onUpdateTagFailed(Tag tag,
+                           ErrorString errorDescription,
+                           QUuid requestId);
     void onUpdateSavedSearchComplete(SavedSearch search, QUuid requestId);
-    void onUpdateSavedSearchFailed(SavedSearch search, ErrorString errorDescription, QUuid requestId);
-    void onUpdateNoteComplete(Note note, LocalStorageManager::UpdateNoteOptions options, QUuid requestId);
-    void onUpdateNoteFailed(Note note, LocalStorageManager::UpdateNoteOptions options,
+    void onUpdateSavedSearchFailed(SavedSearch search,
+                                   ErrorString errorDescription,
+                                   QUuid requestId);
+    void onUpdateNoteComplete(Note note,
+                              LocalStorageManager::UpdateNoteOptions options,
+                              QUuid requestId);
+    void onUpdateNoteFailed(Note note,
+                            LocalStorageManager::UpdateNoteOptions options,
                             ErrorString errorDescription, QUuid requestId);
 
 private:
