@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Dmitry Ivanov
+ * Copyright 2016-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -27,9 +27,10 @@
 
 namespace quentier {
 
-NoteThumbnailDownloader::NoteThumbnailDownloader(const QString & host, const QString & noteGuid,
-                                                 const QString & authToken, const QString & shardId,
-                                                 const bool noteFromPublicLinkedNotebook, QObject * parent) :
+NoteThumbnailDownloader::NoteThumbnailDownloader(
+        const QString & host, const QString & noteGuid,
+        const QString & authToken, const QString & shardId,
+        const bool noteFromPublicLinkedNotebook, QObject * parent) :
     QObject(parent),
     m_host(host),
     m_noteGuid(noteGuid),
@@ -49,9 +50,12 @@ NoteThumbnailDownloader::~NoteThumbnailDownloader()
 
 void NoteThumbnailDownloader::start()
 {
-    QNDEBUG(QStringLiteral("NoteThumbnailDownloader::start: host = ") << m_host << QStringLiteral(", note guid = ")
-            << m_noteGuid << QStringLiteral(", is public = ")
-            << (m_noteFromPublicLinkedNotebook ? QStringLiteral("true") : QStringLiteral("false")));
+    QNDEBUG(QStringLiteral("NoteThumbnailDownloader::start: host = ") << m_host
+            << QStringLiteral(", note guid = ") << m_noteGuid
+            << QStringLiteral(", is public = ")
+            << (m_noteFromPublicLinkedNotebook
+                ? QStringLiteral("true")
+                : QStringLiteral("false")));
 
 #define SET_ERROR(error) \
     ErrorString errorDescription(error); \
@@ -84,31 +88,39 @@ void NoteThumbnailDownloader::start()
     }
 
     m_pThumbnail = new qevercloud::Thumbnail(m_host, m_shardId, m_authToken);
-    m_pAsyncResult = m_pThumbnail->downloadAsync(m_noteGuid, m_noteFromPublicLinkedNotebook,
-                                                 /* is resource guid = */ false);
+    m_pAsyncResult =
+        m_pThumbnail->downloadAsync(m_noteGuid, m_noteFromPublicLinkedNotebook,
+                                    /* is resource guid = */ false);
     if (Q_UNLIKELY(!m_pAsyncResult)) {
-        SET_ERROR(QT_TR_NOOP("failed to download the note thumbnail, QEverCloud returned null pointer to AsyncResult"));
+        SET_ERROR(QT_TR_NOOP("failed to download the note thumbnail, QEverCloud "
+                             "returned null pointer to AsyncResult"));
     }
 
     QObject::connect(m_pAsyncResult,
-                     QNSIGNAL(qevercloud::AsyncResult,finished,QVariant,QSharedPointer<EverCloudExceptionData>),
+                     QNSIGNAL(qevercloud::AsyncResult,finished,
+                              QVariant,QSharedPointer<EverCloudExceptionData>),
                      this,
-                     QNSLOT(NoteThumbnailDownloader,onDownloadFinished,QVariant,QSharedPointer<EverCloudExceptionData>),
+                     QNSLOT(NoteThumbnailDownloader,onDownloadFinished,
+                            QVariant,QSharedPointer<EverCloudExceptionData>),
                      Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
 }
 
-void NoteThumbnailDownloader::onDownloadFinished(QVariant result, QSharedPointer<EverCloudExceptionData> error)
+void NoteThumbnailDownloader::onDownloadFinished(
+    QVariant result, QSharedPointer<EverCloudExceptionData> error)
 {
     QNDEBUG(QStringLiteral("NoteThumbnailDownloader::onDownloadFinished"));
 
     delete m_pThumbnail;
     m_pThumbnail = Q_NULLPTR;
 
-    // NOTE: after AsyncResult finishes, it destroys itself so must lose the pointer to it here
+    // NOTE: after AsyncResult finishes, it destroys itself so must lose
+    // the pointer to it here
     m_pAsyncResult = Q_NULLPTR;
 
-    if (!error.isNull()) {
-        ErrorString errorDescription(QT_TR_NOOP("failed to download the note thumbnail"));
+    if (!error.isNull())
+    {
+        ErrorString errorDescription(QT_TR_NOOP("failed to download the note "
+                                                "thumbnail"));
         errorDescription.details() = error->errorMessage;
         QNDEBUG(errorDescription);
         Q_EMIT finished(false, m_noteGuid, QByteArray(), errorDescription);

@@ -96,9 +96,11 @@ public:
 
 Q_SIGNALS:
     void failure(ErrorString errorDescription);
-    void finished(qint32 lastUpdateCount, qevercloud::Timestamp lastSyncTime,
-                  QHash<QString,qint32> lastUpdateCountByLinkedNotebookGuid,
-                  QHash<QString,qevercloud::Timestamp> lastSyncTimeByLinkedNotebookGuid);
+
+    void finished(
+        qint32 lastUpdateCount, qevercloud::Timestamp lastSyncTime,
+        QHash<QString,qint32> lastUpdateCountByLinkedNotebookGuid,
+        QHash<QString,qevercloud::Timestamp> lastSyncTimeByLinkedNotebookGuid);
 
     /**
      * Signal notifying that the Evernote API rate limit was exceeded so that
@@ -147,14 +149,15 @@ public Q_SLOTS:
 
     void onAuthenticationInfoReceived(QString authToken, QString shardId,
                                       qevercloud::Timestamp expirationTime);
+
     void onAuthenticationTokensForLinkedNotebooksReceived(
-            QHash<QString,QPair<QString,QString> > authTokensAndShardIdsByLinkedNotebookGuid,
-            QHash<QString,qevercloud::Timestamp> authTokenExpirationTimesByLinkedNotebookGuid);
+        QHash<QString,QPair<QString,QString> > authTokensAndShardIdsByLinkedNotebookGuid,
+        QHash<QString,qevercloud::Timestamp> authTokenExpirationTimesByLinkedNotebookGuid);
+
     void onLastSyncParametersReceived(
-            qint32 lastUpdateCount,
-            qevercloud::Timestamp lastSyncTime,
-            QHash<QString,qint32> lastUpdateCountByLinkedNotebookGuid,
-            QHash<QString,qevercloud::Timestamp> lastSyncTimeByLinkedNotebookGuid);
+        qint32 lastUpdateCount, qevercloud::Timestamp lastSyncTime,
+        QHash<QString,qint32> lastUpdateCountByLinkedNotebookGuid,
+        QHash<QString,qevercloud::Timestamp> lastSyncTimeByLinkedNotebookGuid);
 
     void setDownloadNoteThumbnails(const bool flag);
     void setDownloadInkNoteImages(const bool flag);
@@ -211,8 +214,8 @@ Q_SIGNALS:
     void authDataUpdated(QString authToken, QString shardId,
                          qevercloud::Timestamp expirationTime);
     void linkedNotebookAuthDataUpdated(
-            QHash<QString,QPair<QString,QString> > authTokensAndShardIdsByLinkedNotebookGuid,
-            QHash<QString,qevercloud::Timestamp> authTokenExpirationTimesByLinkedNotebookGuid);
+        QHash<QString,QPair<QString,QString> > authTokensAndShardIdsByLinkedNotebookGuid,
+        QHash<QString,qevercloud::Timestamp> authTokenExpirationTimesByLinkedNotebookGuid);
 
 private Q_SLOTS:
     void onFindUserCompleted(User user, QUuid requestId);
@@ -365,9 +368,12 @@ private Q_SLOTS:
     void onTagSyncConflictResolverFailure(qevercloud::Tag remoteTag,
                                           ErrorString errorDescription);
 
-    void onSavedSearchSyncConflictResolverFinished(qevercloud::SavedSearch remoteSavedSearch);
-    void onSavedSearchSyncConflictResolverFailure(qevercloud::SavedSearch remoteSavedSearch,
-                                                  ErrorString errorDescription);
+    void onSavedSearchSyncConflictResolverFinished(
+        qevercloud::SavedSearch remoteSavedSearch);
+
+    void onSavedSearchSyncConflictResolverFailure(
+        qevercloud::SavedSearch remoteSavedSearch,
+        ErrorString errorDescription);
 
     void onNoteSyncConflictResolverFinished(qevercloud::Note remoteNote);
     void onNoteSyncConflictResolvedFailure(qevercloud::Note remoteNote,
@@ -392,7 +398,8 @@ private:
     // If any of these return false, it is either due to error or due to
     // API rate limit exceeding
     bool checkProtocolVersion(ErrorString & errorDescription);
-    bool syncUserImpl(const bool waitIfRateLimitReached, ErrorString & errorDescription,
+    bool syncUserImpl(const bool waitIfRateLimitReached,
+                      ErrorString & errorDescription,
                       const bool writeUserDataToLocalStorage = true);
 
     void launchWritingUserDataToLocalStorage();
@@ -470,8 +477,9 @@ private:
     };
 
     template <class RemoteElementType, class ElementType>
-    ResolveSyncConflictStatus::type resolveSyncConflict(const RemoteElementType & remoteElement,
-                                                        const ElementType & localConflict);
+    ResolveSyncConflictStatus::type resolveSyncConflict(
+        const RemoteElementType & remoteElement,
+        const ElementType & localConflict);
 
     template <class ContainerType>
     bool mapContainerElementsWithLinkedNotebookGuid(const QString & linkedNotebookGuid,
