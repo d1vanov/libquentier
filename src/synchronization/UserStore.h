@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Dmitry Ivanov
+ * Copyright 2016-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -24,15 +24,20 @@
 namespace quentier {
 
 /**
- * @brief The UserStore class in quentier namespace is a wrapper under UserStore from QEverCloud.
- * The main difference from the underlying class is stronger exception safety: most QEverCloud's methods
- * throw exceptions to indicate errors (much like the native Evernote API for supported languages do).
- * Using exceptions along with Qt is not simple and desirable. Therefore, this class' methods
- * simply redirect the requests to methods of QEverCloud's UserStore but catch the "expected" exceptions,
- * "parse" their internal error flags and return the textual representation of the error.
+ * @brief The UserStore class in quentier namespace is a wrapper under UserStore
+ * from QEverCloud.
  *
- * libquentier at the moment uses only several methods from those available in QEverCloud's UserStore
- * so only the small subset of original UserStore's API is wrapped at the moment.
+ * The main difference from the underlying class is stronger exception safety:
+ * most QEverCloud's methods throw exceptions to indicate errors (much like
+ * the native Evernote API for supported languages do). Using exceptions along
+ * with Qt is not simple and desirable. Therefore, this class' methods
+ * simply redirect the requests to methods of QEverCloud's UserStore but catch
+ * the "expected" exceptions, "parse" their internal error flags and return
+ * the textual representation of the error.
+ *
+ * libquentier at the moment uses only several methods from those available
+ * in QEverCloud's UserStore so only the small subset of original UserStore's
+ * API is wrapped at the moment.
  */
 class Q_DECL_HIDDEN UserStore: public IUserStore
 {
@@ -41,18 +46,25 @@ public:
 
     virtual IUserStore * create(const QString & host) const Q_DECL_OVERRIDE;
 
-    virtual bool checkVersion(const QString & clientName, qint16 edamVersionMajor, qint16 edamVersionMinor,
+    virtual bool checkVersion(const QString & clientName,
+                              qint16 edamVersionMajor,
+                              qint16 edamVersionMinor,
                               ErrorString & errorDescription) Q_DECL_OVERRIDE;
 
-    virtual qint32 getUser(User & user, ErrorString & errorDescription, qint32 & rateLimitSeconds) Q_DECL_OVERRIDE;
+    virtual qint32 getUser(User & user, ErrorString & errorDescription,
+                           qint32 & rateLimitSeconds) Q_DECL_OVERRIDE;
 
-    virtual qint32 getAccountLimits(const qevercloud::ServiceLevel::type serviceLevel, qevercloud::AccountLimits & limits,
-                                    ErrorString & errorDescription, qint32 & rateLimitSeconds) Q_DECL_OVERRIDE;
+    virtual qint32 getAccountLimits(const qevercloud::ServiceLevel::type serviceLevel,
+                                    qevercloud::AccountLimits & limits,
+                                    ErrorString & errorDescription,
+                                    qint32 & rateLimitSeconds) Q_DECL_OVERRIDE;
 
 private:
-    qint32 processEdamUserException(const qevercloud::EDAMUserException & userException, ErrorString & errorDescription) const;
+    qint32 processEdamUserException(const qevercloud::EDAMUserException & userException,
+                                    ErrorString & errorDescription) const;
     qint32 processEdamSystemException(const qevercloud::EDAMSystemException & systemException,
-                                      ErrorString & errorDescription, qint32 & rateLimitSeconds) const;
+                                      ErrorString & errorDescription,
+                                      qint32 & rateLimitSeconds) const;
 
 private:
     UserStore(const UserStore & other) Q_DECL_EQ_DELETE;

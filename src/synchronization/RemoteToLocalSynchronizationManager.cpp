@@ -4425,7 +4425,7 @@ void RemoteToLocalSynchronizationManager::disconnectFromLocalStorage()
     LocalStorageManagerAsync & localStorageManagerAsync =
         m_manager.localStorageManagerAsync();
 
-    // Disconnect local signals from localStorageManagerThread's slots
+    // Disconnect local signals from localStorageManagerAsync's slots
     QObject::disconnect(this,
                         QNSIGNAL(RemoteToLocalSynchronizationManager,addUser,
                                  User,QUuid),
@@ -4617,7 +4617,7 @@ void RemoteToLocalSynchronizationManager::disconnectFromLocalStorage()
                         QNSLOT(LocalStorageManagerAsync,onExpungeSavedSearchRequest,
                                SavedSearch,QUuid));
 
-    // Disconnect localStorageManagerThread's signals to local slots
+    // Disconnect localStorageManagerAsync's signals to local slots
     QObject::disconnect(&localStorageManagerAsync,
                         QNSIGNAL(LocalStorageManagerAsync,findUserComplete,
                                  User,QUuid),

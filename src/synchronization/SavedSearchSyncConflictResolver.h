@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Dmitry Ivanov
+ * Copyright 2017-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -37,20 +37,24 @@ class Q_DECL_HIDDEN SavedSearchSyncConflictResolver: public QObject
 {
     Q_OBJECT
 public:
-    explicit SavedSearchSyncConflictResolver(const qevercloud::SavedSearch & remoteSavedSearch,
-                                             const SavedSearch & localConflict,
-                                             SavedSearchSyncCache & cache,
-                                             LocalStorageManagerAsync & localStorageManagerAsync,
-                                             QObject * parent = Q_NULLPTR);
+    explicit SavedSearchSyncConflictResolver(
+        const qevercloud::SavedSearch & remoteSavedSearch,
+        const SavedSearch & localConflict,
+        SavedSearchSyncCache & cache,
+        LocalStorageManagerAsync & localStorageManagerAsync,
+        QObject * parent = Q_NULLPTR);
 
     void start();
 
-    const qevercloud::SavedSearch & remoteSavedSearch() const { return m_remoteSavedSearch; }
+    const qevercloud::SavedSearch & remoteSavedSearch() const
+    { return m_remoteSavedSearch; }
+
     const SavedSearch & localConflict() const { return m_localConflict; }
 
 Q_SIGNALS:
     void finished(qevercloud::SavedSearch remoteSavedSearch);
-    void failure(qevercloud::SavedSearch remoteSavedSearch, ErrorString errorDescription);
+    void failure(qevercloud::SavedSearch remoteSavedSearch,
+                 ErrorString errorDescription);
 
 // private signals
     void fillSavedSearchesCache();
@@ -60,11 +64,15 @@ Q_SIGNALS:
 
 private Q_SLOTS:
     void onAddSavedSearchComplete(SavedSearch search, QUuid requestId);
-    void onAddSavedSearchFailed(SavedSearch search, ErrorString errorDescription, QUuid requestId);
+    void onAddSavedSearchFailed(SavedSearch search, ErrorString errorDescription,
+                                QUuid requestId);
     void onUpdateSavedSearchComplete(SavedSearch search, QUuid requestId);
-    void onUpdateSavedSearchFailed(SavedSearch search, ErrorString errorDescription, QUuid requestId);
+    void onUpdateSavedSearchFailed(SavedSearch search,
+                                   ErrorString errorDescription,
+                                   QUuid requestId);
     void onFindSavedSearchComplete(SavedSearch search, QUuid requestId);
-    void onFindSavedSearchFailed(SavedSearch search, ErrorString errorDescription, QUuid requestId);
+    void onFindSavedSearchFailed(SavedSearch search, ErrorString errorDescription,
+                                 QUuid requestId);
 
     void onCacheFilled();
     void onCacheFailed(ErrorString errorDescription);

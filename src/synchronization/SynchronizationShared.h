@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Dmitry Ivanov
+ * Copyright 2017-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -37,28 +37,51 @@
 #include <boost/multi_index/ordered_index.hpp>
 #endif
 
-#define SYNCHRONIZATION_PERSISTENCE_NAME QStringLiteral("SynchronizationPersistence")
+#define SYNCHRONIZATION_PERSISTENCE_NAME \
+    QStringLiteral("SynchronizationPersistence")
 
 #define HALF_AN_HOUR_IN_MSEC (1800000)
 
 #define EXPIRATION_TIMESTAMP_KEY QStringLiteral("ExpirationTimestamp")
-#define LINKED_NOTEBOOK_EXPIRATION_TIMESTAMP_KEY_PREFIX QStringLiteral("LinkedNotebookExpirationTimestamp_")
-#define LINKED_NOTEBOOK_AUTH_TOKEN_KEY_PART QStringLiteral("_LinkedNotebookAuthToken_")
-#define LINKED_NOTEBOOK_SHARD_ID_KEY_PART QStringLiteral("_LinkedNotebookShardId_")
-#define READ_LINKED_NOTEBOOK_AUTH_TOKEN_JOB QStringLiteral("readLinkedNotebookAuthToken")
-#define READ_LINKED_NOTEBOOK_SHARD_ID_JOB QStringLiteral("readLinkedNotebookShardId")
-#define WRITE_LINKED_NOTEBOOK_AUTH_TOKEN_JOB QStringLiteral("writeLinkedNotebookAuthToken")
-#define WRITE_LINKED_NOTEBOOK_SHARD_ID_JOB QStringLiteral("writeLinkedNotebookShardId")
+
+#define LINKED_NOTEBOOK_EXPIRATION_TIMESTAMP_KEY_PREFIX \
+    QStringLiteral("LinkedNotebookExpirationTimestamp_")
+
+#define LINKED_NOTEBOOK_AUTH_TOKEN_KEY_PART \
+    QStringLiteral("_LinkedNotebookAuthToken_")
+
+#define LINKED_NOTEBOOK_SHARD_ID_KEY_PART \
+    QStringLiteral("_LinkedNotebookShardId_")
+
+#define READ_LINKED_NOTEBOOK_AUTH_TOKEN_JOB \
+    QStringLiteral("readLinkedNotebookAuthToken")
+
+#define READ_LINKED_NOTEBOOK_SHARD_ID_JOB \
+    QStringLiteral("readLinkedNotebookShardId")
+
+#define WRITE_LINKED_NOTEBOOK_AUTH_TOKEN_JOB \
+    QStringLiteral("writeLinkedNotebookAuthToken")
+
+#define WRITE_LINKED_NOTEBOOK_SHARD_ID_JOB \
+    QStringLiteral("writeLinkedNotebookShardId")
+
 #define NOTE_STORE_URL_KEY QStringLiteral("NoteStoreUrl")
 #define WEB_API_URL_PREFIX_KEY QStringLiteral("WebApiUrlPrefix")
 
 #define LAST_SYNC_PARAMS_KEY_GROUP QStringLiteral("last_sync_params")
 #define LAST_SYNC_UPDATE_COUNT_KEY QStringLiteral("last_sync_update_count")
 #define LAST_SYNC_TIME_KEY         QStringLiteral("last_sync_time")
-#define LAST_SYNC_LINKED_NOTEBOOKS_PARAMS QStringLiteral("last_sync_linked_notebooks_params")
+
+#define LAST_SYNC_LINKED_NOTEBOOKS_PARAMS \
+    QStringLiteral("last_sync_linked_notebooks_params")
+
 #define LINKED_NOTEBOOK_GUID_KEY QStringLiteral("linked_notebook_guid")
-#define LINKED_NOTEBOOK_LAST_UPDATE_COUNT_KEY QStringLiteral("linked_notebook_last_update_count")
-#define LINKED_NOTEBOOK_LAST_SYNC_TIME_KEY QStringLiteral("linked_notebook_last_sync_time")
+
+#define LINKED_NOTEBOOK_LAST_UPDATE_COUNT_KEY \
+    QStringLiteral("linked_notebook_last_update_count")
+
+#define LINKED_NOTEBOOK_LAST_SYNC_TIME_KEY \
+    QStringLiteral("linked_notebook_last_sync_time")
 
 #define AUTH_TOKEN_KEYCHAIN_KEY_PART QStringLiteral("_auth_token")
 #define SHARD_ID_KEYCHAIN_KEY_PART QStringLiteral("_shard_id")
@@ -102,7 +125,8 @@ template <typename T>
 class OptionalComparator
 {
 public:
-    bool operator()(const qevercloud::Optional<T> & lhs, const qevercloud::Optional<T> & rhs) const
+    bool operator()(const qevercloud::Optional<T> & lhs,
+                    const qevercloud::Optional<T> & rhs) const
     {
         if (!lhs.isSet() && !rhs.isSet()) {
             return false;
@@ -122,7 +146,8 @@ public:
 class OptionalStringCaseInsensitiveComparator
 {
 public:
-    bool operator()(const qevercloud::Optional<QString> & lhs, const qevercloud::Optional<QString> & rhs) const
+    bool operator()(const qevercloud::Optional<QString> & lhs,
+                    const qevercloud::Optional<QString> & rhs) const
     {
         if (!lhs.isSet() && !rhs.isSet()) {
             return false;
@@ -148,17 +173,20 @@ typedef boost::multi_index_container<
     boost::multi_index::indexed_by<
         boost::multi_index::ordered_unique<
             boost::multi_index::tag<ByGuid>,
-            boost::multi_index::member<qevercloud::Tag,qevercloud::Optional<QString>,&qevercloud::Tag::guid>,
+            boost::multi_index::member<
+                qevercloud::Tag,qevercloud::Optional<QString>,&qevercloud::Tag::guid>,
             OptionalComparator<QString>
         >,
         boost::multi_index::ordered_non_unique<
             boost::multi_index::tag<ByName>,
-            boost::multi_index::member<qevercloud::Tag,qevercloud::Optional<QString>,&qevercloud::Tag::name>,
+            boost::multi_index::member<
+                qevercloud::Tag,qevercloud::Optional<QString>,&qevercloud::Tag::name>,
             OptionalStringCaseInsensitiveComparator
         >,
         boost::multi_index::ordered_non_unique<
             boost::multi_index::tag<ByParentTagGuid>,
-            boost::multi_index::member<qevercloud::Tag,qevercloud::Optional<QString>,&qevercloud::Tag::parentGuid>,
+            boost::multi_index::member<
+            qevercloud::Tag,qevercloud::Optional<QString>,&qevercloud::Tag::parentGuid>,
             OptionalComparator<QString>
         >
     >

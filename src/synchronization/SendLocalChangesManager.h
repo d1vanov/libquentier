@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Dmitry Ivanov
+ * Copyright 2016-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -43,18 +43,21 @@ public:
     public:
         virtual LocalStorageManagerAsync & localStorageManagerAsync() = 0;
         virtual INoteStore & noteStore() = 0;
-        virtual INoteStore * noteStoreForLinkedNotebook(const LinkedNotebook & linkedNotebook) = 0;
+        virtual INoteStore * noteStoreForLinkedNotebook(
+            const LinkedNotebook & linkedNotebook) = 0;
         virtual ~IManager() {}
     };
 
-    explicit SendLocalChangesManager(IManager & manager, QObject * parent = Q_NULLPTR);
+    explicit SendLocalChangesManager(IManager & manager,
+                                     QObject * parent = Q_NULLPTR);
 
     bool active() const;
 
 Q_SIGNALS:
     void failure(ErrorString errorDescription);
 
-    void finished(qint32 lastUpdateCount, QHash<QString,qint32> lastUpdateCountByLinkedNotebookGuid);
+    void finished(qint32 lastUpdateCount,
+                  QHash<QString,qint32> lastUpdateCountByLinkedNotebookGuid);
 
     void rateLimitExceeded(qint32 secondsToWait);
     void conflictDetected();
@@ -63,133 +66,171 @@ Q_SIGNALS:
     void stopped();
 
     void requestAuthenticationToken();
-    void requestAuthenticationTokensForLinkedNotebooks(QVector<LinkedNotebookAuthData> linkedNotebookGuidsAndSharedNotebookGlobalIds);
+    void requestAuthenticationTokensForLinkedNotebooks(
+        QVector<LinkedNotebookAuthData> linkedNotebookGuidsAndSharedNotebookGlobalIds);
 
     // progress information
     void receivedUserAccountDirtyObjects();
     void receivedDirtyObjectsFromLinkedNotebooks();
 
 public Q_SLOTS:
-    void start(qint32 updateCount, QHash<QString,qint32> updateCountByLinkedNotebookGuid);
+    void start(qint32 updateCount,
+               QHash<QString,qint32> updateCountByLinkedNotebookGuid);
     void stop();
 
-    void onAuthenticationTokensForLinkedNotebooksReceived(QHash<QString,QPair<QString,QString> > authenticationTokensAndShardIdsByLinkedNotebookGuid,
-                                                          QHash<QString,qevercloud::Timestamp> authenticationTokenExpirationTimesByLinkedNotebookGuid);
+    void onAuthenticationTokensForLinkedNotebooksReceived(
+        QHash<QString,QPair<QString,QString> > authenticationTokensAndShardIdsByLinkedNotebookGuid,
+        QHash<QString,qevercloud::Timestamp> authenticationTokenExpirationTimesByLinkedNotebookGuid);
 
 // private signals:
 Q_SIGNALS:
     // signals to request dirty & not yet synchronized objects from local storage
-    void requestLocalUnsynchronizedTags(LocalStorageManager::ListObjectsOptions flag,
-                                        size_t limit, size_t offset,
-                                        LocalStorageManager::ListTagsOrder::type order,
-                                        LocalStorageManager::OrderDirection::type orderDirection,
-                                        QString linkedNotebookGuid, QUuid requestId);
-    void requestLocalUnsynchronizedSavedSearches(LocalStorageManager::ListObjectsOptions flag,
-                                                 size_t limit, size_t offset,
-                                                 LocalStorageManager::ListSavedSearchesOrder::type order,
-                                                 LocalStorageManager::OrderDirection::type orderDirection,
-                                                 QUuid requestId);
-    void requestLocalUnsynchronizedNotebooks(LocalStorageManager::ListObjectsOptions flag,
-                                             size_t limit, size_t offset,
-                                             LocalStorageManager::ListNotebooksOrder::type order,
-                                             LocalStorageManager::OrderDirection::type orderDirection,
-                                             QString linkedNotebookGuid, QUuid requestId);
-    void requestLocalUnsynchronizedNotes(LocalStorageManager::ListObjectsOptions flag,
-                                         LocalStorageManager::GetNoteOptions options,
-                                         size_t limit, size_t offset, LocalStorageManager::ListNotesOrder::type order,
-                                         LocalStorageManager::OrderDirection::type orderDirection,
-                                         QString linkedNotebookGuid, QUuid requestId);
+    void requestLocalUnsynchronizedTags(
+        LocalStorageManager::ListObjectsOptions flag,
+        size_t limit, size_t offset,
+        LocalStorageManager::ListTagsOrder::type order,
+        LocalStorageManager::OrderDirection::type orderDirection,
+        QString linkedNotebookGuid, QUuid requestId);
 
-    // signal to request the list of linked notebooks so that all linked notebook guids would be available
-    void requestLinkedNotebooksList(LocalStorageManager::ListObjectsOptions flag,
-                                    size_t limit, size_t offset,
-                                    LocalStorageManager::ListLinkedNotebooksOrder::type order,
-                                    LocalStorageManager::OrderDirection::type orderDirection,
-                                    QUuid requestId);
+    void requestLocalUnsynchronizedSavedSearches(
+        LocalStorageManager::ListObjectsOptions flag,
+        size_t limit, size_t offset,
+        LocalStorageManager::ListSavedSearchesOrder::type order,
+        LocalStorageManager::OrderDirection::type orderDirection,
+        QUuid requestId);
+
+    void requestLocalUnsynchronizedNotebooks(
+        LocalStorageManager::ListObjectsOptions flag,
+        size_t limit, size_t offset,
+        LocalStorageManager::ListNotebooksOrder::type order,
+        LocalStorageManager::OrderDirection::type orderDirection,
+        QString linkedNotebookGuid, QUuid requestId);
+
+    void requestLocalUnsynchronizedNotes(
+        LocalStorageManager::ListObjectsOptions flag,
+        LocalStorageManager::GetNoteOptions options,
+        size_t limit, size_t offset,
+        LocalStorageManager::ListNotesOrder::type order,
+        LocalStorageManager::OrderDirection::type orderDirection,
+        QString linkedNotebookGuid, QUuid requestId);
+
+    // signal to request the list of linked notebooks so that all linked notebook
+    // guids would be available
+    void requestLinkedNotebooksList(
+        LocalStorageManager::ListObjectsOptions flag,
+        size_t limit, size_t offset,
+        LocalStorageManager::ListLinkedNotebooksOrder::type order,
+        LocalStorageManager::OrderDirection::type orderDirection,
+        QUuid requestId);
 
     void updateTag(Tag tag, QUuid requestId);
     void updateSavedSearch(SavedSearch savedSearch, QUuid requestId);
     void updateNotebook(Notebook notebook, QUuid requestId);
-    void updateNote(Note note, LocalStorageManager::UpdateNoteOptions options, QUuid requestId);
+    void updateNote(Note note, LocalStorageManager::UpdateNoteOptions options,
+                    QUuid requestId);
 
     void findNotebook(Notebook notebook, QUuid requestId);
 
 private Q_SLOTS:
-    void onListDirtyTagsCompleted(LocalStorageManager::ListObjectsOptions flag,
-                                  size_t limit, size_t offset,
-                                  LocalStorageManager::ListTagsOrder::type order,
-                                  LocalStorageManager::OrderDirection::type orderDirection,
-                                  QString linkedNotebookGuid, QList<Tag> tags, QUuid requestId);
-    void onListDirtyTagsFailed(LocalStorageManager::ListObjectsOptions flag,
-                               size_t limit, size_t offset,
-                               LocalStorageManager::ListTagsOrder::type order,
-                               LocalStorageManager::OrderDirection::type orderDirection,
-                               QString linkedNotebookGuid, ErrorString errorDescription, QUuid requestId);
+    void onListDirtyTagsCompleted(
+        LocalStorageManager::ListObjectsOptions flag,
+        size_t limit, size_t offset,
+        LocalStorageManager::ListTagsOrder::type order,
+        LocalStorageManager::OrderDirection::type orderDirection,
+        QString linkedNotebookGuid, QList<Tag> tags, QUuid requestId);
 
-    void onListDirtySavedSearchesCompleted(LocalStorageManager::ListObjectsOptions flag,
-                                           size_t limit, size_t offset,
-                                           LocalStorageManager::ListSavedSearchesOrder::type order,
-                                           LocalStorageManager::OrderDirection::type orderDirection,
-                                           QList<SavedSearch> savedSearches, QUuid requestId);
-    void onListDirtySavedSearchesFailed(LocalStorageManager::ListObjectsOptions flag,
-                                        size_t limit, size_t offset,
-                                        LocalStorageManager::ListSavedSearchesOrder::type order,
-                                        LocalStorageManager::OrderDirection::type orderDirection,
-                                        ErrorString errorDescription, QUuid requestId);
+    void onListDirtyTagsFailed(
+        LocalStorageManager::ListObjectsOptions flag,
+        size_t limit, size_t offset,
+        LocalStorageManager::ListTagsOrder::type order,
+        LocalStorageManager::OrderDirection::type orderDirection,
+        QString linkedNotebookGuid, ErrorString errorDescription,
+        QUuid requestId);
 
-    void onListDirtyNotebooksCompleted(LocalStorageManager::ListObjectsOptions flag,
-                                       size_t limit, size_t offset,
-                                       LocalStorageManager::ListNotebooksOrder::type order,
-                                       LocalStorageManager::OrderDirection::type orderDirection,
-                                       QString linkedNotebookGuid,
-                                       QList<Notebook> notebooks, QUuid requestId);
-    void onListDirtyNotebooksFailed(LocalStorageManager::ListObjectsOptions flag,
-                                    size_t limit, size_t offset,
-                                    LocalStorageManager::ListNotebooksOrder::type order,
-                                    LocalStorageManager::OrderDirection::type orderDirection,
-                                    QString linkedNotebookGuid, ErrorString errorDescription, QUuid requestId);
+    void onListDirtySavedSearchesCompleted(
+        LocalStorageManager::ListObjectsOptions flag,
+        size_t limit, size_t offset,
+        LocalStorageManager::ListSavedSearchesOrder::type order,
+        LocalStorageManager::OrderDirection::type orderDirection,
+        QList<SavedSearch> savedSearches, QUuid requestId);
 
-    void onListDirtyNotesCompleted(LocalStorageManager::ListObjectsOptions flag,
-                                   LocalStorageManager::GetNoteOptions options,
-                                   size_t limit, size_t offset,
-                                   LocalStorageManager::ListNotesOrder::type order,
-                                   LocalStorageManager::OrderDirection::type orderDirection,
-                                   QString linkedNotebookGuid, QList<Note> notes,
-                                   QUuid requestId);
-    void onListDirtyNotesFailed(LocalStorageManager::ListObjectsOptions flag,
-                                LocalStorageManager::GetNoteOptions options,
-                                size_t limit, size_t offset,
-                                LocalStorageManager::ListNotesOrder::type order,
-                                LocalStorageManager::OrderDirection::type orderDirection,
-                                QString linkedNotebookGuid, ErrorString errorDescription,
-                                QUuid requestId);
+    void onListDirtySavedSearchesFailed(
+        LocalStorageManager::ListObjectsOptions flag,
+        size_t limit, size_t offset,
+        LocalStorageManager::ListSavedSearchesOrder::type order,
+        LocalStorageManager::OrderDirection::type orderDirection,
+        ErrorString errorDescription, QUuid requestId);
 
-    void onListLinkedNotebooksCompleted(LocalStorageManager::ListObjectsOptions flag,
-                                        size_t limit, size_t offset,
-                                        LocalStorageManager::ListLinkedNotebooksOrder::type order,
-                                        LocalStorageManager::OrderDirection::type orderDirection,
-                                        QList<LinkedNotebook> linkedNotebooks, QUuid requestId);
-    void onListLinkedNotebooksFailed(LocalStorageManager::ListObjectsOptions flag,
-                                     size_t limit, size_t offset,
-                                     LocalStorageManager::ListLinkedNotebooksOrder::type order,
-                                     LocalStorageManager::OrderDirection::type orderDirection,
-                                     ErrorString errorDescription, QUuid requestId);
+    void onListDirtyNotebooksCompleted(
+        LocalStorageManager::ListObjectsOptions flag,
+        size_t limit, size_t offset,
+        LocalStorageManager::ListNotebooksOrder::type order,
+        LocalStorageManager::OrderDirection::type orderDirection,
+        QString linkedNotebookGuid, QList<Notebook> notebooks, QUuid requestId);
+
+    void onListDirtyNotebooksFailed(
+        LocalStorageManager::ListObjectsOptions flag,
+        size_t limit, size_t offset,
+        LocalStorageManager::ListNotebooksOrder::type order,
+        LocalStorageManager::OrderDirection::type orderDirection,
+        QString linkedNotebookGuid, ErrorString errorDescription,
+        QUuid requestId);
+
+    void onListDirtyNotesCompleted(
+        LocalStorageManager::ListObjectsOptions flag,
+        LocalStorageManager::GetNoteOptions options,
+        size_t limit, size_t offset,
+        LocalStorageManager::ListNotesOrder::type order,
+        LocalStorageManager::OrderDirection::type orderDirection,
+        QString linkedNotebookGuid, QList<Note> notes, QUuid requestId);
+
+    void onListDirtyNotesFailed(
+        LocalStorageManager::ListObjectsOptions flag,
+        LocalStorageManager::GetNoteOptions options,
+        size_t limit, size_t offset,
+        LocalStorageManager::ListNotesOrder::type order,
+        LocalStorageManager::OrderDirection::type orderDirection,
+        QString linkedNotebookGuid, ErrorString errorDescription,
+        QUuid requestId);
+
+    void onListLinkedNotebooksCompleted(
+        LocalStorageManager::ListObjectsOptions flag,
+        size_t limit, size_t offset,
+        LocalStorageManager::ListLinkedNotebooksOrder::type order,
+        LocalStorageManager::OrderDirection::type orderDirection,
+        QList<LinkedNotebook> linkedNotebooks, QUuid requestId);
+
+    void onListLinkedNotebooksFailed(
+        LocalStorageManager::ListObjectsOptions flag,
+        size_t limit, size_t offset,
+        LocalStorageManager::ListLinkedNotebooksOrder::type order,
+        LocalStorageManager::OrderDirection::type orderDirection,
+        ErrorString errorDescription, QUuid requestId);
 
     void onUpdateTagCompleted(Tag tag, QUuid requestId);
-    void onUpdateTagFailed(Tag tag, ErrorString errorDescription, QUuid requestId);
+    void onUpdateTagFailed(Tag tag, ErrorString errorDescription,
+                           QUuid requestId);
 
     void onUpdateSavedSearchCompleted(SavedSearch savedSearch, QUuid requestId);
-    void onUpdateSavedSearchFailed(SavedSearch savedSearch, ErrorString errorDescription, QUuid requestId);
+    void onUpdateSavedSearchFailed(SavedSearch savedSearch,
+                                   ErrorString errorDescription,
+                                   QUuid requestId);
 
     void onUpdateNotebookCompleted(Notebook notebook, QUuid requestId);
-    void onUpdateNotebookFailed(Notebook notebook, ErrorString errorDescription, QUuid requestId);
+    void onUpdateNotebookFailed(Notebook notebook,
+                                ErrorString errorDescription,
+                                QUuid requestId);
 
-    void onUpdateNoteCompleted(Note note, LocalStorageManager::UpdateNoteOptions options, QUuid requestId);
-    void onUpdateNoteFailed(Note note, LocalStorageManager::UpdateNoteOptions options,
+    void onUpdateNoteCompleted(Note note,
+                               LocalStorageManager::UpdateNoteOptions options,
+                               QUuid requestId);
+    void onUpdateNoteFailed(Note note,
+                            LocalStorageManager::UpdateNoteOptions options,
                             ErrorString errorDescription, QUuid requestId);
 
     void onFindNotebookCompleted(Notebook notebook, QUuid requestId);
-    void onFindNotebookFailed(Notebook notebook, ErrorString errorDescription, QUuid requestId);
+    void onFindNotebookFailed(Notebook notebook, ErrorString errorDescription,
+                              QUuid requestId);
 
 private:
     virtual void timerEvent(QTimerEvent * pEvent);
@@ -198,7 +239,8 @@ private:
     void connectToLocalStorage();
     void disconnectFromLocalStorage();
 
-    bool requestStuffFromLocalStorage(const QString & linkedNotebookGuid = QStringLiteral(""));
+    bool requestStuffFromLocalStorage(const QString & linkedNotebookGuid =
+                                      QStringLiteral(""));
 
     void checkListLocalStorageObjectsCompletion();
 
