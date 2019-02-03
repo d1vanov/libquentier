@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Dmitry Ivanov
+ * Copyright 2018-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -37,7 +37,8 @@ public:
     qint16 edamVersionMinor() const;
     void setEdamVersionMinor(const qint16 edamVersionMinor);
 
-    const qevercloud::AccountLimits * findAccountLimits(const qevercloud::ServiceLevel::type serviceLevel) const;
+    const qevercloud::AccountLimits * findAccountLimits(
+        const qevercloud::ServiceLevel::type serviceLevel) const;
     void setAccountLimits(const qevercloud::ServiceLevel::type serviceLevel,
                           const qevercloud::AccountLimits & limits);
 
@@ -47,17 +48,23 @@ public:
 public:
     // IUserStore interface
     virtual IUserStore * create(const QString & host) const Q_DECL_OVERRIDE;
-    virtual bool checkVersion(const QString & clientName, qint16 edamVersionMajor, qint16 edamVersionMinor,
+    virtual bool checkVersion(const QString & clientName,
+                              qint16 edamVersionMajor, qint16 edamVersionMinor,
                               ErrorString & errorDescription) Q_DECL_OVERRIDE;
-    virtual qint32 getUser(User & user, ErrorString & errorDescription, qint32 & rateLimitSeconds) Q_DECL_OVERRIDE;
-    virtual qint32 getAccountLimits(const qevercloud::ServiceLevel::type serviceLevel, qevercloud::AccountLimits & limits,
-                                    ErrorString & errorDescription, qint32 & rateLimitSeconds) Q_DECL_OVERRIDE;
+    virtual qint32 getUser(User & user, ErrorString & errorDescription,
+                           qint32 & rateLimitSeconds) Q_DECL_OVERRIDE;
+    virtual qint32 getAccountLimits(const qevercloud::ServiceLevel::type serviceLevel,
+                                    qevercloud::AccountLimits & limits,
+                                    ErrorString & errorDescription,
+                                    qint32 & rateLimitSeconds) Q_DECL_OVERRIDE;
 
 private:
     qint16      m_edamVersionMajor;
     qint16      m_edamVersionMinor;
 
-    typedef QHash<qevercloud::ServiceLevel::type, qevercloud::AccountLimits> AccountLimitsByServiceLevel;
+    typedef QHash<qevercloud::ServiceLevel::type, qevercloud::AccountLimits>
+        AccountLimitsByServiceLevel;
+
     AccountLimitsByServiceLevel     m_accountLimits;
 
     typedef QHash<qint32, User> UsersById;
