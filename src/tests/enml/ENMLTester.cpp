@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Dmitry Ivanov
+ * Copyright 2018-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -28,18 +28,23 @@
 #define CATCH_EXCEPTION() \
     catch(const std::exception & exception) { \
         SysInfo sysInfo; \
-        QFAIL(qPrintable(QStringLiteral("Caught exception: ") + QString::fromUtf8(exception.what()) + \
-                         QStringLiteral(", backtrace: ") + sysInfo.stackTrace())); \
+        QFAIL(qPrintable(QStringLiteral("Caught exception: ") + \
+                         QString::fromUtf8(exception.what()) + \
+                         QStringLiteral(", backtrace: ") + \
+                         sysInfo.stackTrace())); \
     }
 
 #if QT_VERSION >= 0x050000
-inline void nullMessageHandler(QtMsgType type, const QMessageLogContext &, const QString & message) {
+inline void nullMessageHandler(QtMsgType type, const QMessageLogContext &,
+                               const QString & message)
+{
     if (type != QtDebugMsg) {
         QTextStream(stdout) << message << QStringLiteral("\n");
     }
 }
 #else
-inline void nullMessageHandler(QtMsgType type, const char * message) {
+inline void nullMessageHandler(QtMsgType type, const char * message)
+{
     if (type != QtDebugMsg) {
         QTextStream(stdout) << message << QStringLiteral("\n");
     }

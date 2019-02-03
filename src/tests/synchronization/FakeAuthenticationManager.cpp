@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Dmitry Ivanov
+ * Copyright 2018-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -61,15 +61,18 @@ void FakeAuthenticationManager::onAuthenticationRequest()
 {
     if (m_failNextRequest) {
         m_failNextRequest = false;
-        Q_EMIT sendAuthenticationResult(false, m_userId, QString(), qevercloud::Timestamp(0),
-                                        QString(), QString(), QString(), ErrorString("Artificial error"));
+        Q_EMIT sendAuthenticationResult(false, m_userId, QString(),
+                                        qevercloud::Timestamp(0),
+                                        QString(), QString(), QString(),
+                                        ErrorString("Artificial error"));
         return;
     }
 
-    Q_EMIT sendAuthenticationResult(true, m_userId, m_authToken,
-                                    qevercloud::Timestamp(QDateTime::currentDateTime().addYears(1).toMSecsSinceEpoch()),
-                                    UidGenerator::Generate(), QStringLiteral("note_store_url"), QStringLiteral("web_api_url_prefix"),
-                                    ErrorString());
+    Q_EMIT sendAuthenticationResult(
+        true, m_userId, m_authToken,
+        qevercloud::Timestamp(QDateTime::currentDateTime().addYears(1).toMSecsSinceEpoch()),
+        UidGenerator::Generate(), QStringLiteral("note_store_url"),
+        QStringLiteral("web_api_url_prefix"), ErrorString());
 }
 
 } // namespace quentier

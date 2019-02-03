@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Dmitry Ivanov
+ * Copyright 2018-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -29,28 +29,33 @@ bool testEmptyLRUCacheConsistency(QString & error)
     LRUCache<QString, int> cache(maxSize);
 
     if (Q_UNLIKELY(!cache.empty())) {
-        error = QStringLiteral("Empty LRUCache's empty method unexpectedly returns true");
+        error = QStringLiteral("Empty LRUCache's empty method unexpectedly "
+                               "returns true");
         return false;
     }
 
     if (Q_UNLIKELY(cache.size() != 0)) {
-        error = QStringLiteral("Empty LRUCache's size method returns non-zero: ") + QString::number(cache.size());
+        error = QStringLiteral("Empty LRUCache's size method returns non-zero: ") +
+                QString::number(cache.size());
         return false;
     }
 
     if (Q_UNLIKELY(cache.max_size() != maxSize)) {
-        error = QStringLiteral("Empty LRUCache's max_size method returns ") + QString::number(cache.max_size()) +
+        error = QStringLiteral("Empty LRUCache's max_size method returns ") +
+                QString::number(cache.max_size()) +
                 QStringLiteral(" while expected ") + QString::number(maxSize);
         return false;
     }
 
     if (Q_UNLIKELY(cache.begin() != cache.end())) {
-        error = QStringLiteral("Empty LRUCache's begin method returns iterator not equal to its end method");
+        error = QStringLiteral("Empty LRUCache's begin method returns iterator "
+                               "not equal to its end method");
         return false;
     }
 
     if (Q_UNLIKELY(cache.rbegin() != cache.rend())) {
-        error = QStringLiteral("Empty LRUCache's rbegin method returns iterator not equal to its rend method");
+        error = QStringLiteral("Empty LRUCache's rbegin method returns iterator "
+                               "not equal to its rend method");
         return false;
     }
 
@@ -70,7 +75,8 @@ bool testNonEmptyLRUCacheConsistency(QString & error)
                     (cache.get(secondItemName) != Q_NULLPTR) ||
                     (cache.get(thirdItemName) != Q_NULLPTR)) )
     {
-        error = QStringLiteral("Empty LRUCache's get method returned non-null pointer to item");
+        error = QStringLiteral("Empty LRUCache's get method returned non-null "
+                               "pointer to item");
         return false;
     }
 
@@ -79,18 +85,21 @@ bool testNonEmptyLRUCacheConsistency(QString & error)
     cache.put(thirdItemName, 3);
 
     if (Q_UNLIKELY(cache.empty())) {
-        error = QStringLiteral("LRUCache's empty method returns true after several items were added to it");
+        error = QStringLiteral("LRUCache's empty method returns true after "
+                               "several items were added to it");
         return false;
     }
 
     if (Q_UNLIKELY(cache.size() != 3)) {
-        error = QStringLiteral("LRUCache's size method returned unexpected value (") + QString::number(cache.size()) +
+        error = QStringLiteral("LRUCache's size method returned unexpected value (") +
+                QString::number(cache.size()) +
                 QStringLiteral(") instead of the expected one (3)");
         return false;
     }
 
     if (Q_UNLIKELY(cache.max_size() != maxSize)) {
-        error = QStringLiteral("LRUCache's max_size method returned unexpected value (") + QString::number(cache.max_size()) +
+        error = QStringLiteral("LRUCache's max_size method returned unexpected value (") +
+                QString::number(cache.max_size()) +
                 QStringLiteral(") instead of the expected one (5)");
         return false;
     }
@@ -103,7 +112,8 @@ bool testNonEmptyLRUCacheConsistency(QString & error)
                     (pSecondItemValue == Q_NULLPTR) ||
                     (pThirdItemValue == Q_NULLPTR)) )
     {
-        error = QStringLiteral("One or some of items inserted into LRU cache were not found in it");
+        error = QStringLiteral("One or some of items inserted into LRU cache "
+                               "were not found in it");
         return false;
     }
 
@@ -116,17 +126,20 @@ bool testNonEmptyLRUCacheConsistency(QString & error)
     }
 
     if (Q_UNLIKELY(cache.get(QStringLiteral("Nonexisting item")) != Q_NULLPTR)) {
-        error = QStringLiteral("LRUCache's get method returns non-null pointer for nonexisting item");
+        error = QStringLiteral("LRUCache's get method returns non-null pointer "
+                               "for nonexisting item");
         return false;
     }
 
     if (Q_UNLIKELY(cache.begin() == cache.end())) {
-        error = QStringLiteral("LRUCache's begin and end iterators are equal even though the cache is not empty");
+        error = QStringLiteral("LRUCache's begin and end iterators are equal "
+                               "even though the cache is not empty");
         return false;
     }
 
     if (Q_UNLIKELY(cache.rbegin() == cache.rend())) {
-        error = QStringLiteral("LRUCache's rbegin and rend iterators are equal even though the cache is not empty");
+        error = QStringLiteral("LRUCache's rbegin and rend iterators are equal "
+                               "even though the cache is not empty");
         return false;
     }
 
@@ -138,23 +151,27 @@ bool testNonEmptyLRUCacheConsistency(QString & error)
     }
 
     if (Q_UNLIKELY(cache.size() != 0)) {
-        error = QStringLiteral("LRUCache's size method returns non-zero value on cleared cache");
+        error = QStringLiteral("LRUCache's size method returns non-zero value "
+                               "on cleared cache");
         return false;
     }
 
     if (Q_UNLIKELY(cache.max_size() != maxSize)) {
-        error = QStringLiteral("LRUCache's max_size method returned unexpected value (") + QString::number(cache.max_size()) +
+        error = QStringLiteral("LRUCache's max_size method returned unexpected value (") +
+                QString::number(cache.max_size()) +
                 QStringLiteral(") instead of the expected one (5)");
         return false;
     }
 
     if (Q_UNLIKELY(cache.begin() != cache.end())) {
-        error = QStringLiteral("Empty LRUCache's begin method returns iterator not equal to its end method");
+        error = QStringLiteral("Empty LRUCache's begin method returns iterator "
+                               "not equal to its end method");
         return false;
     }
 
     if (Q_UNLIKELY(cache.rbegin() != cache.rend())) {
-        error = QStringLiteral("Empty LRUCache's rbegin method returns iterator not equal to its rend method");
+        error = QStringLiteral("Empty LRUCache's rbegin method returns iterator "
+                               "not equal to its rend method");
         return false;
     }
 
@@ -177,18 +194,21 @@ bool testRemovalFromLRUCache(QString & error)
     cache.remove(firstItemName);
 
     if (Q_UNLIKELY(cache.empty())) {
-        error = QStringLiteral("LRUCache's empty method returns true after several items were added to it and only one was removed");
+        error = QStringLiteral("LRUCache's empty method returns true after several "
+                               "items were added to it and only one was removed");
         return false;
     }
 
     if (Q_UNLIKELY(cache.size() != 2)) {
-        error = QStringLiteral("LRUCache's size method returned unexpected value (") + QString::number(cache.size()) +
+        error = QStringLiteral("LRUCache's size method returned unexpected value (") +
+                QString::number(cache.size()) +
                 QStringLiteral(") instead of the expected one (2)");
         return false;
     }
 
     if (Q_UNLIKELY(cache.max_size() != maxSize)) {
-        error = QStringLiteral("LRUCache's max_size method returned unexpected value (") + QString::number(cache.max_size()) +
+        error = QStringLiteral("LRUCache's max_size method returned unexpected value (") +
+                QString::number(cache.max_size()) +
                 QStringLiteral(") instead of the expected one (5)");
         return false;
     }
@@ -198,44 +218,52 @@ bool testRemovalFromLRUCache(QString & error)
     const int * pThirdItemValue = cache.get(thirdItemName);
 
     if (Q_UNLIKELY(pFirstItemValue != Q_NULLPTR)) {
-        error = QStringLiteral("LRUCache's get method returned non-null pointer for item removed from the cache");
+        error = QStringLiteral("LRUCache's get method returned non-null pointer "
+                               "for item removed from the cache");
         return false;
     }
 
     if ( Q_UNLIKELY((pSecondItemValue == Q_NULLPTR) ||
                     (pThirdItemValue == Q_NULLPTR)) )
     {
-        error = QStringLiteral("One or some of items inserted into LRU cache and not removed from it were not found in it");
+        error = QStringLiteral("One or some of items inserted into LRU cache and "
+                               "not removed from it were not found in it");
         return false;
     }
 
     if (Q_UNLIKELY(cache.get(QStringLiteral("Nonexisting item")) != Q_NULLPTR)) {
-        error = QStringLiteral("LRUCache's get method returns non-null pointer for nonexisting item");
+        error = QStringLiteral("LRUCache's get method returns non-null pointer "
+                               "for nonexisting item");
         return false;
     }
 
     if ( Q_UNLIKELY((*pSecondItemValue != 2) ||
                     (*pThirdItemValue != 3)) )
     {
-        error = QStringLiteral("LRUCache returns wrong items from get method after one item removal");
+        error = QStringLiteral("LRUCache returns wrong items from get method "
+                               "after one item removal");
         return false;
     }
 
     cache.remove(secondItemName);
 
     if (Q_UNLIKELY(cache.empty())) {
-        error = QStringLiteral("LRUCache's empty method returns true after several items were added to it and only some of them were removed");
+        error = QStringLiteral("LRUCache's empty method returns true after several "
+                               "items were added to it and only some of them were "
+                               "removed");
         return false;
     }
 
     if (Q_UNLIKELY(cache.size() != 1)) {
-        error = QStringLiteral("LRUCache's size method returned unexpected value (") + QString::number(cache.size()) +
+        error = QStringLiteral("LRUCache's size method returned unexpected value (") +
+                QString::number(cache.size()) +
                 QStringLiteral(") instead of the expected one (1)");
         return false;
     }
 
     if (Q_UNLIKELY(cache.max_size() != maxSize)) {
-        error = QStringLiteral("LRUCache's max_size method returned unexpected value (") + QString::number(cache.max_size()) +
+        error = QStringLiteral("LRUCache's max_size method returned unexpected value (") +
+                QString::number(cache.max_size()) +
                 QStringLiteral(") instead of the expected one (5)");
         return false;
     }
@@ -245,22 +273,27 @@ bool testRemovalFromLRUCache(QString & error)
     pThirdItemValue = cache.get(thirdItemName);
 
     if (Q_UNLIKELY(pFirstItemValue != Q_NULLPTR)) {
-        error = QStringLiteral("LRUCache's get method returned non-null pointer for item removed from the cache");
+        error = QStringLiteral("LRUCache's get method returned non-null pointer "
+                               "for item removed from the cache");
         return false;
     }
 
     if (Q_UNLIKELY(pSecondItemValue != Q_NULLPTR)) {
-        error = QStringLiteral("LRUCache's get method returned non-null pointer for item removed from the cache");
+        error = QStringLiteral("LRUCache's get method returned non-null pointer "
+                               "for item removed from the cache");
         return false;
     }
 
     if (Q_UNLIKELY(pThirdItemValue == Q_NULLPTR)) {
-        error = QStringLiteral("LRUCache's get method returned null pointer for the single item which should have been left in the cache");
+        error = QStringLiteral("LRUCache's get method returned null pointer for "
+                               "the single item which should have been left "
+                               "in the cache");
         return false;
     }
 
     if (Q_UNLIKELY(*pThirdItemValue != 3)) {
-        error = QStringLiteral("LRUCache returns wrong item from get method for the single item left in the cache");
+        error = QStringLiteral("LRUCache returns wrong item from get method for "
+                               "the single item left in the cache");
         return false;
     }
 
@@ -272,23 +305,27 @@ bool testRemovalFromLRUCache(QString & error)
     }
 
     if (Q_UNLIKELY(cache.size() != 0)) {
-        error = QStringLiteral("LRUCache's size method returns non-zero value on cache all items of which were removed");
+        error = QStringLiteral("LRUCache's size method returns non-zero value "
+                               "on cache all items of which were removed");
         return false;
     }
 
     if (Q_UNLIKELY(cache.max_size() != maxSize)) {
-        error = QStringLiteral("LRUCache's max_size method returned unexpected value (") + QString::number(cache.max_size()) +
+        error = QStringLiteral("LRUCache's max_size method returned unexpected value (") +
+                QString::number(cache.max_size()) +
                 QStringLiteral(") instead of the expected one (5)");
         return false;
     }
 
     if (Q_UNLIKELY(cache.begin() != cache.end())) {
-        error = QStringLiteral("Empty LRUCache's begin method returns iterator not equal to its end method");
+        error = QStringLiteral("Empty LRUCache's begin method returns iterator "
+                               "not equal to its end method");
         return false;
     }
 
     if (Q_UNLIKELY(cache.rbegin() != cache.rend())) {
-        error = QStringLiteral("Empty LRUCache's rbegin method returns iterator not equal to its rend method");
+        error = QStringLiteral("Empty LRUCache's rbegin method returns iterator "
+                               "not equal to its rend method");
         return false;
     }
 
@@ -307,7 +344,7 @@ bool testLRUCacheReverseIterators(QString & error)
     cache.put(firstItemName, 1);
     cache.put(secondItemName, 2);
     cache.put(thirdItemName, 3);
-    
+
     if (Q_UNLIKELY(&(*cache.rbegin()) != &(*(--cache.end())))) {
         error = QStringLiteral("LRUCache's rbegin doesn't point to the right item");
         return false;
@@ -327,17 +364,20 @@ bool testItemsAdditionToLRUCacheBeforeReachingMaxSize(QString & error)
     LRUCache<QString, int> cache(maxSize);
 
     if (Q_UNLIKELY(!cache.empty())) {
-        error = QStringLiteral("Empty LRUCache's empty method unexpectedly returns true");
+        error = QStringLiteral("Empty LRUCache's empty method unexpectedly "
+                               "returns true");
         return false;
     }
 
     if (Q_UNLIKELY(cache.size() != 0)) {
-        error = QStringLiteral("Empty LRUCache's size method returns non-zero: ") + QString::number(cache.size());
+        error = QStringLiteral("Empty LRUCache's size method returns non-zero: ") +
+                QString::number(cache.size());
         return false;
     }
 
     if (Q_UNLIKELY(cache.max_size() != maxSize)) {
-        error = QStringLiteral("Empty LRUCache's max_size method returns ") + QString::number(cache.max_size()) +
+        error = QStringLiteral("Empty LRUCache's max_size method returns ") +
+                QString::number(cache.max_size()) +
                 QStringLiteral(" while expected ") + QString::number(maxSize);
         return false;
     }
@@ -349,78 +389,91 @@ bool testItemsAdditionToLRUCacheBeforeReachingMaxSize(QString & error)
     cache.put(firstItemName, 1);
 
     if (Q_UNLIKELY(cache.empty())) {
-        error = QStringLiteral("LRUCache's empty method returns true after one item was added to it");
+        error = QStringLiteral("LRUCache's empty method returns true after one "
+                               "item was added to it");
         return false;
     }
 
     if (Q_UNLIKELY(cache.size() != 1)) {
-        error = QStringLiteral("LRUCache's size method returned unexpected value (") + QString::number(cache.size()) +
+        error = QStringLiteral("LRUCache's size method returned unexpected value (") +
+                QString::number(cache.size()) +
                 QStringLiteral(") instead of the expected one (1)");
         return false;
     }
 
     if (Q_UNLIKELY(cache.max_size() != maxSize)) {
-        error = QStringLiteral("LRUCache's max_size method returned unexpected value (") + QString::number(cache.max_size()) +
+        error = QStringLiteral("LRUCache's max_size method returned unexpected value (") +
+                QString::number(cache.max_size()) +
                 QStringLiteral(") instead of the expected one (5)");
         return false;
     }
 
     if (Q_UNLIKELY(cache.begin()->second != 1)) {
-        error = QStringLiteral("The most recently added item wasn't put into the beginning of the cache");
+        error = QStringLiteral("The most recently added item wasn't put into "
+                               "the beginning of the cache");
         return false;
     }
 
     cache.put(secondItemName, 2);
 
     if (Q_UNLIKELY(cache.empty())) {
-        error = QStringLiteral("LRUCache's empty method returns true after two items were added to it");
+        error = QStringLiteral("LRUCache's empty method returns true after two "
+                               "items were added to it");
         return false;
     }
 
     if (Q_UNLIKELY(cache.size() != 2)) {
-        error = QStringLiteral("LRUCache's size method returned unexpected value (") + QString::number(cache.size()) +
+        error = QStringLiteral("LRUCache's size method returned unexpected value (") +
+                QString::number(cache.size()) +
                 QStringLiteral(") instead of the expected one (2)");
         return false;
     }
 
     if (Q_UNLIKELY(cache.max_size() != maxSize)) {
-        error = QStringLiteral("LRUCache's max_size method returned unexpected value (") + QString::number(cache.max_size()) +
+        error = QStringLiteral("LRUCache's max_size method returned unexpected value (") +
+                QString::number(cache.max_size()) +
                 QStringLiteral(") instead of the expected one (5)");
         return false;
     }
 
     if (Q_UNLIKELY(cache.begin()->second != 2)) {
-        error = QStringLiteral("The most recently added item wasn't put into the beginning of the cache");
+        error = QStringLiteral("The most recently added item wasn't put into "
+                               "the beginning of the cache");
         return false;
     }
 
     cache.put(thirdItemName, 3);
 
     if (Q_UNLIKELY(cache.empty())) {
-        error = QStringLiteral("LRUCache's empty method returns true after three items were added to it");
+        error = QStringLiteral("LRUCache's empty method returns true after three "
+                               "items were added to it");
         return false;
     }
 
     if (Q_UNLIKELY(cache.size() != 3)) {
-        error = QStringLiteral("LRUCache's size method returned unexpected value (") + QString::number(cache.size()) +
+        error = QStringLiteral("LRUCache's size method returned unexpected value (") +
+                QString::number(cache.size()) +
                 QStringLiteral(") instead of the expected one (3)");
         return false;
     }
 
     if (Q_UNLIKELY(cache.max_size() != maxSize)) {
-        error = QStringLiteral("LRUCache's max_size method returned unexpected value (") + QString::number(cache.max_size()) +
+        error = QStringLiteral("LRUCache's max_size method returned unexpected value (") +
+                QString::number(cache.max_size()) +
                 QStringLiteral(") instead of the expected one (5)");
         return false;
     }
 
     if (Q_UNLIKELY(cache.begin()->second != 3)) {
-        error = QStringLiteral("The most recently added item wasn't put into the beginning of the cache");
+        error = QStringLiteral("The most recently added item wasn't put into "
+                               "the beginning of the cache");
         return false;
     }
 
     const int * pSecondItemValue = cache.get(secondItemName);
     if (Q_UNLIKELY(pSecondItemValue == Q_NULLPTR)) {
-        error = QStringLiteral("LRUCache's get method returned null pointer to item which was added to it before");
+        error = QStringLiteral("LRUCache's get method returned null pointer to "
+                               "item which was added to it before");
         return false;
     }
 
@@ -430,13 +483,15 @@ bool testItemsAdditionToLRUCacheBeforeReachingMaxSize(QString & error)
     }
 
     if (Q_UNLIKELY(cache.begin()->second != *pSecondItemValue)) {
-        error = QStringLiteral("The most recently accessed item wasn't moved to the beginning of the cache");
+        error = QStringLiteral("The most recently accessed item wasn't moved "
+                               "to the beginning of the cache");
         return false;
     }
 
     const int * pFirstItemValue = cache.get(firstItemName);
     if (Q_UNLIKELY(pFirstItemValue == Q_NULLPTR)) {
-        error = QStringLiteral("LRUCache's get method returned null pointer to item which was added to it before");
+        error = QStringLiteral("LRUCache's get method returned null pointer to "
+                               "item which was added to it before");
         return false;
     }
 
@@ -446,7 +501,8 @@ bool testItemsAdditionToLRUCacheBeforeReachingMaxSize(QString & error)
     }
 
     if (Q_UNLIKELY(cache.begin()->second != *pFirstItemValue)) {
-        error = QStringLiteral("The most recently accessed item wasn't moved to the beginning of the cache");
+        error = QStringLiteral("The most recently accessed item wasn't moved "
+                               "to the beginning of the cache");
         return false;
     }
 
@@ -459,17 +515,20 @@ bool testItemsAdditionToLRUCacheAfterReachingMaxSize(QString & error)
     LRUCache<QString, int> cache(maxSize);
 
     if (Q_UNLIKELY(!cache.empty())) {
-        error = QStringLiteral("Empty LRUCache's empty method unexpectedly returns true");
+        error = QStringLiteral("Empty LRUCache's empty method unexpectedly "
+                               "returns true");
         return false;
     }
 
     if (Q_UNLIKELY(cache.size() != 0)) {
-        error = QStringLiteral("Empty LRUCache's size method returns non-zero: ") + QString::number(cache.size());
+        error = QStringLiteral("Empty LRUCache's size method returns non-zero: ") +
+                QString::number(cache.size());
         return false;
     }
 
     if (Q_UNLIKELY(cache.max_size() != maxSize)) {
-        error = QStringLiteral("Empty LRUCache's max_size method returns ") + QString::number(cache.max_size()) +
+        error = QStringLiteral("Empty LRUCache's max_size method returns ") +
+                QString::number(cache.max_size()) +
                 QStringLiteral(" while expected ") + QString::number(maxSize);
         return false;
     }
@@ -494,13 +553,15 @@ bool testItemsAdditionToLRUCacheAfterReachingMaxSize(QString & error)
     }
 
     if (Q_UNLIKELY(cache.size() != 5)) {
-        error = QStringLiteral("LRUCache's size method returned unexpected value (") + QString::number(cache.size()) +
+        error = QStringLiteral("LRUCache's size method returned unexpected value (") +
+                QString::number(cache.size()) +
                 QStringLiteral(") instead of the expected one (5)");
         return false;
     }
 
     if (Q_UNLIKELY(cache.max_size() != maxSize)) {
-        error = QStringLiteral("LRUCache's max_size method returned unexpected value (") + QString::number(cache.max_size()) +
+        error = QStringLiteral("LRUCache's max_size method returned unexpected value (") +
+                QString::number(cache.max_size()) +
                 QStringLiteral(") instead of the expected one (5)");
         return false;
     }
@@ -513,25 +574,30 @@ bool testItemsAdditionToLRUCacheAfterReachingMaxSize(QString & error)
     }
 
     if (Q_UNLIKELY(cache.size() != maxSize)) {
-        error = QStringLiteral("LRUCache's size method returned unexpected value (") + QString::number(cache.size()) +
+        error = QStringLiteral("LRUCache's size method returned unexpected value (") +
+                QString::number(cache.size()) +
                 QStringLiteral(") instead of the expected one (5)");
         return false;
     }
 
     if (Q_UNLIKELY(cache.max_size() != maxSize)) {
-        error = QStringLiteral("LRUCache's max_size method returned unexpected value (") + QString::number(cache.max_size()) +
+        error = QStringLiteral("LRUCache's max_size method returned unexpected value (") +
+                QString::number(cache.max_size()) +
                 QStringLiteral(") instead of the expected one (5)");
         return false;
     }
 
     if (Q_UNLIKELY(cache.begin()->second != 6)) {
-        error = QStringLiteral("The most recently accessed item wasn't moved to the beginning of the cache");
+        error = QStringLiteral("The most recently accessed item wasn't moved "
+                               "to the beginning of the cache");
         return false;
     }
 
     const int * pFirstItemValue = cache.get(firstItemName);
     if (Q_UNLIKELY(pFirstItemValue != Q_NULLPTR)) {
-        error = QStringLiteral("LRUCache's get method returned non-null pointer for item which should have been automatically removed from the cache");
+        error = QStringLiteral("LRUCache's get method returned non-null pointer "
+                               "for item which should have been automatically "
+                               "removed from the cache");
         return false;
     }
 
@@ -547,7 +613,8 @@ bool testItemsAdditionToLRUCacheAfterReachingMaxSize(QString & error)
                     (pFifthItemValue == Q_NULLPTR) ||
                     (pSixthItemValue == Q_NULLPTR)) )
     {
-        error = QStringLiteral("One or some of items inserted into LRU cache and not removed from it were not found in it");
+        error = QStringLiteral("One or some of items inserted into LRU cache and "
+                               "not removed from it were not found in it");
         return false;
     }
 
@@ -569,19 +636,22 @@ bool testItemsAdditionToLRUCacheAfterReachingMaxSize(QString & error)
     }
 
     if (Q_UNLIKELY(cache.size() != maxSize)) {
-        error = QStringLiteral("LRUCache's size method returned unexpected value (") + QString::number(cache.size()) +
+        error = QStringLiteral("LRUCache's size method returned unexpected value (") +
+                QString::number(cache.size()) +
                 QStringLiteral(") instead of the expected one (5)");
         return false;
     }
 
     if (Q_UNLIKELY(cache.max_size() != maxSize)) {
-        error = QStringLiteral("LRUCache's max_size method returned unexpected value (") + QString::number(cache.max_size()) +
+        error = QStringLiteral("LRUCache's max_size method returned unexpected value (") +
+                QString::number(cache.max_size()) +
                 QStringLiteral(") instead of the expected one (5)");
         return false;
     }
 
     if (Q_UNLIKELY(cache.begin()->second != 7)) {
-        error = QStringLiteral("The most recently accessed item wasn't moved to the beginning of the cache");
+        error = QStringLiteral("The most recently accessed item wasn't moved "
+                               "to the beginning of the cache");
         return false;
     }
 
@@ -596,7 +666,9 @@ bool testItemsAdditionToLRUCacheAfterReachingMaxSize(QString & error)
     if ( Q_UNLIKELY((pFirstItemValue != Q_NULLPTR) ||
                     (pSecondItemValue != Q_NULLPTR)) )
     {
-        error = QStringLiteral("LRUCache's get method returned non-null pointer for items which should have been automatically removed from the cache");
+        error = QStringLiteral("LRUCache's get method returned non-null pointer "
+                               "for items which should have been automatically "
+                               "removed from the cache");
         return false;
     }
 
@@ -606,7 +678,8 @@ bool testItemsAdditionToLRUCacheAfterReachingMaxSize(QString & error)
                     (pSixthItemValue == Q_NULLPTR) ||
                     (pSeventhItemValue == Q_NULLPTR)) )
     {
-        error = QStringLiteral("One or some of items inserted into LRU cache and not removed from it were not found in it");
+        error = QStringLiteral("One or some of items inserted into LRU cache and "
+                               "not removed from it were not found in it");
         return false;
     }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Dmitry Ivanov
+ * Copyright 2018-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -32,9 +32,13 @@ public:
     explicit FakeKeychainService(QObject * parent = Q_NULLPTR);
     virtual ~FakeKeychainService();
 
-    virtual QUuid startWritePasswordJob(const QString & service, const QString & key, const QString & password) Q_DECL_OVERRIDE;
-    virtual QUuid startReadPasswordJob(const QString & service, const QString & key) Q_DECL_OVERRIDE;
-    virtual QUuid startDeletePasswordJob(const QString & service, const QString & key) Q_DECL_OVERRIDE;
+    virtual QUuid startWritePasswordJob(const QString & service,
+                                        const QString & key,
+                                        const QString & password) Q_DECL_OVERRIDE;
+    virtual QUuid startReadPasswordJob(const QString & service,
+                                       const QString & key) Q_DECL_OVERRIDE;
+    virtual QUuid startDeletePasswordJob(const QString & service,
+                                         const QString & key) Q_DECL_OVERRIDE;
 
 private:
     virtual void timerEvent(QTimerEvent * pEvent) Q_DECL_OVERRIDE;
