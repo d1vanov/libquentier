@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Dmitry Ivanov
+ * Copyright 2016-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -38,8 +38,10 @@ public:
 
 Q_SIGNALS:
     void readyForIO();
-    void writeFileRequestProcessed(bool success, ErrorString errorDescription, QUuid requestId);
-    void readFileRequestProcessed(bool success, ErrorString errorDescription, QByteArray data, QUuid requestId);
+    void writeFileRequestProcessed(bool success, ErrorString errorDescription,
+                                   QUuid requestId);
+    void readFileRequestProcessed(bool success, ErrorString errorDescription,
+                                  QByteArray data, QUuid requestId);
 
 public Q_SLOTS:
     void onWriteFileRequest(QString absoluteFilePath, QByteArray data,

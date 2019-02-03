@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Dmitry Ivanov
+ * Copyright 2018-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -24,9 +24,10 @@
 
 namespace quentier {
 
-SynchronizationManagerSignalsCatcher::SynchronizationManagerSignalsCatcher(SynchronizationManager & synchronizationManager,
-                                                                           SyncStatePersistenceManager & syncStatePersistenceManager,
-                                                                           QObject * parent) :
+SynchronizationManagerSignalsCatcher::SynchronizationManagerSignalsCatcher(
+        SynchronizationManager & synchronizationManager,
+        SyncStatePersistenceManager & syncStatePersistenceManager,
+        QObject * parent) :
     QObject(parent),
     m_receivedStartedSignal(false),
     m_receivedStoppedSignal(false),
@@ -66,17 +67,23 @@ SynchronizationManagerSignalsCatcher::SynchronizationManagerSignalsCatcher(Synch
     createConnections(synchronizationManager, syncStatePersistenceManager);
 }
 
-bool SynchronizationManagerSignalsCatcher::checkSyncChunkDownloadProgressOrder(ErrorString & errorDescription) const
+bool SynchronizationManagerSignalsCatcher::checkSyncChunkDownloadProgressOrder(
+    ErrorString & errorDescription) const
 {
-    return checkSyncChunkDownloadProgressOrderImpl(m_syncChunkDownloadProgress, errorDescription);
+    return checkSyncChunkDownloadProgressOrderImpl(m_syncChunkDownloadProgress,
+                                                   errorDescription);
 }
 
-bool SynchronizationManagerSignalsCatcher::checkLinkedNotebookSyncChunkDownloadProgressOrder(ErrorString & errorDescription) const
+bool SynchronizationManagerSignalsCatcher::checkLinkedNotebookSyncChunkDownloadProgressOrder(
+    ErrorString & errorDescription) const
 {
     for(auto it = m_linkedNotebookSyncChunkDownloadProgress.constBegin(),
-        end = m_linkedNotebookSyncChunkDownloadProgress.constEnd(); it != end; ++it)
+        end = m_linkedNotebookSyncChunkDownloadProgress.constEnd();
+        it != end; ++it)
     {
-        if (!checkSyncChunkDownloadProgressOrderImpl(it.value(), errorDescription)) {
+        if (!checkSyncChunkDownloadProgressOrderImpl(it.value(),
+                                                     errorDescription))
+        {
             return false;
         }
     }
@@ -84,24 +91,32 @@ bool SynchronizationManagerSignalsCatcher::checkLinkedNotebookSyncChunkDownloadP
     return true;
 }
 
-bool SynchronizationManagerSignalsCatcher::checkNoteDownloadProgressOrder(ErrorString & errorDescription) const
+bool SynchronizationManagerSignalsCatcher::checkNoteDownloadProgressOrder(
+    ErrorString & errorDescription) const
 {
-    return checkNoteDownloadProgressOrderImpl(m_noteDownloadProgress, errorDescription);
+    return checkNoteDownloadProgressOrderImpl(m_noteDownloadProgress,
+                                              errorDescription);
 }
 
-bool SynchronizationManagerSignalsCatcher::checkLinkedNotebookNoteDownloadProgressOrder(ErrorString & errorDescription) const
+bool SynchronizationManagerSignalsCatcher::checkLinkedNotebookNoteDownloadProgressOrder(
+    ErrorString & errorDescription) const
 {
-    return checkNoteDownloadProgressOrderImpl(m_linkedNotebookNoteDownloadProgress, errorDescription);
+    return checkNoteDownloadProgressOrderImpl(m_linkedNotebookNoteDownloadProgress,
+                                              errorDescription);
 }
 
-bool SynchronizationManagerSignalsCatcher::checkResourceDownloadProgressOrder(ErrorString & errorDescription) const
+bool SynchronizationManagerSignalsCatcher::checkResourceDownloadProgressOrder(
+    ErrorString & errorDescription) const
 {
-    return checkResourceDownloadProgressOrderImpl(m_resourceDownloadProgress, errorDescription);
+    return checkResourceDownloadProgressOrderImpl(m_resourceDownloadProgress,
+                                                  errorDescription);
 }
 
-bool SynchronizationManagerSignalsCatcher::checkLinkedNotebookResourceDownloadProgressOrder(ErrorString & errorDescription) const
+bool SynchronizationManagerSignalsCatcher::checkLinkedNotebookResourceDownloadProgressOrder(
+    ErrorString & errorDescription) const
 {
-    return checkResourceDownloadProgressOrderImpl(m_linkedNotebookResourceDownloadProgress, errorDescription);
+    return checkResourceDownloadProgressOrderImpl(m_linkedNotebookResourceDownloadProgress,
+                                                  errorDescription);
 }
 
 void SynchronizationManagerSignalsCatcher::onStart()
@@ -119,7 +134,8 @@ void SynchronizationManagerSignalsCatcher::onFailure(ErrorString errorDescriptio
     m_receivedFailedSignal = true;
     m_failureErrorDescription = errorDescription;
 
-    SynchronizationManager * pSyncManager = qobject_cast<SynchronizationManager*>(sender());
+    SynchronizationManager * pSyncManager =
+        qobject_cast<SynchronizationManager*>(sender());
     if (pSyncManager) {
         pSyncManager->stop();
     }
@@ -127,7 +143,9 @@ void SynchronizationManagerSignalsCatcher::onFailure(ErrorString errorDescriptio
     Q_EMIT ready();
 }
 
-void SynchronizationManagerSignalsCatcher::onFinish(Account account, bool somethingDownloaded, bool somethingSent)
+void SynchronizationManagerSignalsCatcher::onFinish(Account account,
+                                                    bool somethingDownloaded,
+                                                    bool somethingSent)
 {
     m_receivedFinishedSignal = true;
     m_finishedAccount = account;
@@ -137,8 +155,8 @@ void SynchronizationManagerSignalsCatcher::onFinish(Account account, bool someth
     Q_EMIT ready();
 }
 
-void SynchronizationManagerSignalsCatcher::onAuthenticationRevoked(bool success, ErrorString errorDescription,
-                                                                   qevercloud::UserID userId)
+void SynchronizationManagerSignalsCatcher::onAuthenticationRevoked(
+    bool success, ErrorString errorDescription, qevercloud::UserID userId)
 {
     m_receivedAuthenticationRevokedSignal = true;
     m_authenticationRevokeSuccess = success;
@@ -146,8 +164,8 @@ void SynchronizationManagerSignalsCatcher::onAuthenticationRevoked(bool success,
     m_authenticationRevokeUserId = userId;
 }
 
-void SynchronizationManagerSignalsCatcher::onAuthenticationFinished(bool success, ErrorString errorDescription,
-                                                                    Account account)
+void SynchronizationManagerSignalsCatcher::onAuthenticationFinished(
+    bool success, ErrorString errorDescription, Account account)
 {
     m_receivedAuthenticationFinishedSignal = true;
     m_authenticationSuccess = success;
@@ -175,13 +193,15 @@ void SynchronizationManagerSignalsCatcher::onDetectedConflictDuringLocalChangesS
     m_receivedDetectedConflictDuringLocalChangesSending = true;
 }
 
-void SynchronizationManagerSignalsCatcher::onRateLimitExceeded(qint32 rateLimitSeconds)
+void SynchronizationManagerSignalsCatcher::onRateLimitExceeded(
+    qint32 rateLimitSeconds)
 {
     m_receivedRateLimitExceeded = true;
     m_rateLimitSeconds = rateLimitSeconds;
 }
 
-void SynchronizationManagerSignalsCatcher::onRemoteToLocalSyncDone(bool somethingDownloaded)
+void SynchronizationManagerSignalsCatcher::onRemoteToLocalSyncDone(
+    bool somethingDownloaded)
 {
     m_receivedRemoteToLocalSyncDone = true;
     m_remoteToLocalSyncDoneSomethingDownloaded = somethingDownloaded;
@@ -197,13 +217,14 @@ void SynchronizationManagerSignalsCatcher::onLinkedNotebookSyncChunksDownloaded(
     m_receivedLinkedNotebookSyncChunksDownloaded = true;
 }
 
-void SynchronizationManagerSignalsCatcher::onSyncChunkDownloadProgress(qint32 highestDownloadedUsn,
-                                                                       qint32 highestServerUsn,
-                                                                       qint32 lastPreviousUsn)
+void SynchronizationManagerSignalsCatcher::onSyncChunkDownloadProgress(
+    qint32 highestDownloadedUsn, qint32 highestServerUsn, qint32 lastPreviousUsn)
 {
-    QNDEBUG(QStringLiteral("SynchronizationManagerSignalsCatcher::onSyncChunkDownloadProgress: highest downloaded USN = ")
-            << highestDownloadedUsn << QStringLiteral(", highest server USN = ") << highestServerUsn
-            << QStringLiteral(", last previous USN = ") << lastPreviousUsn);
+    QNDEBUG(QStringLiteral("SynchronizationManagerSignalsCatcher::")
+            << QStringLiteral("onSyncChunkDownloadProgress: highest downloaded USN = ")
+            << highestDownloadedUsn << QStringLiteral(", highest server USN = ")
+            << highestServerUsn << QStringLiteral(", last previous USN = ")
+            << lastPreviousUsn);
 
     SyncChunkDownloadProgress progress;
     progress.m_highestDownloadedUsn = highestDownloadedUsn;
@@ -213,15 +234,21 @@ void SynchronizationManagerSignalsCatcher::onSyncChunkDownloadProgress(qint32 hi
     m_syncChunkDownloadProgress << progress;
 }
 
-void SynchronizationManagerSignalsCatcher::onLinkedNotebookSyncChunkDownloadProgress(qint32 highestDownloadedUsn, qint32 highestServerUsn,
-                                                                                     qint32 lastPreviousUsn, LinkedNotebook linkedNotebook)
+void SynchronizationManagerSignalsCatcher::onLinkedNotebookSyncChunkDownloadProgress(
+    qint32 highestDownloadedUsn, qint32 highestServerUsn,
+    qint32 lastPreviousUsn, LinkedNotebook linkedNotebook)
 {
-    QNDEBUG(QStringLiteral("SynchronizationManagerSignalsCatcher::onLinkedNotebookSyncChunkDownloadProgress: highest downloaded USN = ")
-            << highestDownloadedUsn << QStringLiteral(", highest server USN = ") << highestServerUsn
-            << QStringLiteral(", last previous USN = ") << lastPreviousUsn << QStringLiteral(", linked notebook: ")
+    QNDEBUG(QStringLiteral("SynchronizationManagerSignalsCatcher::")
+            << QStringLiteral("onLinkedNotebookSyncChunkDownloadProgress: ")
+            << QStringLiteral("highest downloaded USN = ")
+            << highestDownloadedUsn << QStringLiteral(", highest server USN = ")
+            << highestServerUsn << QStringLiteral(", last previous USN = ")
+            << lastPreviousUsn << QStringLiteral(", linked notebook: ")
             << linkedNotebook);
 
-    QVERIFY2(linkedNotebook.hasGuid(), "Detected sync chunk download progress for a linked notebook without guid");
+    QVERIFY2(linkedNotebook.hasGuid(),
+             "Detected sync chunk download progress "
+             "for a linked notebook without guid");
 
     SyncChunkDownloadProgress progress;
     progress.m_highestDownloadedUsn = highestDownloadedUsn;
@@ -231,7 +258,8 @@ void SynchronizationManagerSignalsCatcher::onLinkedNotebookSyncChunkDownloadProg
     m_linkedNotebookSyncChunkDownloadProgress[linkedNotebook.guid()] << progress;
 }
 
-void SynchronizationManagerSignalsCatcher::onNoteDownloadProgress(quint32 notesDownloaded, quint32 totalNotesToDownload)
+void SynchronizationManagerSignalsCatcher::onNoteDownloadProgress(
+    quint32 notesDownloaded, quint32 totalNotesToDownload)
 {
     NoteDownloadProgress progress;
     progress.m_notesDownloaded = notesDownloaded;
@@ -240,7 +268,8 @@ void SynchronizationManagerSignalsCatcher::onNoteDownloadProgress(quint32 notesD
     m_noteDownloadProgress << progress;
 }
 
-void SynchronizationManagerSignalsCatcher::onLinkedNotebookNoteDownloadProgress(quint32 notesDownloaded, quint32 totalNotesToDownload)
+void SynchronizationManagerSignalsCatcher::onLinkedNotebookNoteDownloadProgress(
+    quint32 notesDownloaded, quint32 totalNotesToDownload)
 {
     NoteDownloadProgress progress;
     progress.m_notesDownloaded = notesDownloaded;
@@ -249,7 +278,8 @@ void SynchronizationManagerSignalsCatcher::onLinkedNotebookNoteDownloadProgress(
     m_linkedNotebookNoteDownloadProgress << progress;
 }
 
-void SynchronizationManagerSignalsCatcher::onResourceDownloadProgress(quint32 resourcesDownloaded, quint32 totalResourcesToDownload)
+void SynchronizationManagerSignalsCatcher::onResourceDownloadProgress(
+    quint32 resourcesDownloaded, quint32 totalResourcesToDownload)
 {
     ResourceDownloadProgress progress;
     progress.m_resourcesDownloaded = resourcesDownloaded;
@@ -258,8 +288,8 @@ void SynchronizationManagerSignalsCatcher::onResourceDownloadProgress(quint32 re
     m_resourceDownloadProgress << progress;
 }
 
-void SynchronizationManagerSignalsCatcher::onLinkedNotebookResourceDownloadProgress(quint32 resourcesDownloaded,
-                                                                                    quint32 totalResourcesToDownload)
+void SynchronizationManagerSignalsCatcher::onLinkedNotebookResourceDownloadProgress(
+    quint32 resourcesDownloaded, quint32 totalResourcesToDownload)
 {
     ResourceDownloadProgress progress;
     progress.m_resourcesDownloaded = resourcesDownloaded;
@@ -278,9 +308,11 @@ void SynchronizationManagerSignalsCatcher::onPreparedLinkedNotebookDirtyObjectsF
     m_receivedPreparedLinkedNotebookDirtyObjectsForSending = true;
 }
 
-void SynchronizationManagerSignalsCatcher::onSyncStatePersisted(Account account, qint32 userOwnDataUpdateCount, qevercloud::Timestamp userOwnDataSyncTime,
-                                                                QHash<QString,qint32> linkedNotebookUpdateCountsByLinkedNotebookGuid,
-                                                                QHash<QString,qevercloud::Timestamp> linkedNotebookSyncTimesByLinkedNotebookGuid)
+void SynchronizationManagerSignalsCatcher::onSyncStatePersisted(
+    Account account, qint32 userOwnDataUpdateCount,
+    qevercloud::Timestamp userOwnDataSyncTime,
+    QHash<QString,qint32> linkedNotebookUpdateCountsByLinkedNotebookGuid,
+    QHash<QString,qevercloud::Timestamp> linkedNotebookSyncTimesByLinkedNotebookGuid)
 {
     Q_UNUSED(account)
     Q_UNUSED(userOwnDataSyncTime)
@@ -288,99 +320,205 @@ void SynchronizationManagerSignalsCatcher::onSyncStatePersisted(Account account,
 
     PersistedSyncStateUpdateCounts data;
     data.m_userOwnUpdateCount = userOwnDataUpdateCount;
-    data.m_linkedNotebookUpdateCountsByLinkedNotebookGuid = linkedNotebookUpdateCountsByLinkedNotebookGuid;
+    data.m_linkedNotebookUpdateCountsByLinkedNotebookGuid =
+        linkedNotebookUpdateCountsByLinkedNotebookGuid;
     m_persistedSyncStateUpdateCounts << data;
 }
 
-void SynchronizationManagerSignalsCatcher::createConnections(SynchronizationManager & synchronizationManager,
-                                                             SyncStatePersistenceManager & syncStatePersistenceManager)
+void SynchronizationManagerSignalsCatcher::createConnections(
+    SynchronizationManager & synchronizationManager,
+    SyncStatePersistenceManager & syncStatePersistenceManager)
 {
-    QObject::connect(&synchronizationManager, QNSIGNAL(SynchronizationManager,started),
-                     this, QNSLOT(SynchronizationManagerSignalsCatcher,onStart));
-    QObject::connect(&synchronizationManager, QNSIGNAL(SynchronizationManager,stopped),
-                     this, QNSLOT(SynchronizationManagerSignalsCatcher,onStop));
-    QObject::connect(&synchronizationManager, QNSIGNAL(SynchronizationManager,failed,ErrorString),
-                     this, QNSLOT(SynchronizationManagerSignalsCatcher,onFailure,ErrorString));
-    QObject::connect(&synchronizationManager, QNSIGNAL(SynchronizationManager,finished,Account,bool,bool),
-                     this, QNSLOT(SynchronizationManagerSignalsCatcher,onFinish,Account,bool,bool));
-    QObject::connect(&synchronizationManager, QNSIGNAL(SynchronizationManager,authenticationRevoked,bool,ErrorString,qevercloud::UserID),
-                     this, QNSLOT(SynchronizationManagerSignalsCatcher,onAuthenticationRevoked,bool,ErrorString,qevercloud::UserID));
-    QObject::connect(&synchronizationManager, QNSIGNAL(SynchronizationManager,authenticationFinished,bool,ErrorString,Account),
-                     this, QNSLOT(SynchronizationManagerSignalsCatcher,onAuthenticationFinished,bool,ErrorString,Account));
-    QObject::connect(&synchronizationManager, QNSIGNAL(SynchronizationManager,remoteToLocalSyncStopped),
-                     this, QNSLOT(SynchronizationManagerSignalsCatcher,onRemoteToLocalSyncStopped));
-    QObject::connect(&synchronizationManager, QNSIGNAL(SynchronizationManager,sendLocalChangesStopped),
-                     this, QNSLOT(SynchronizationManagerSignalsCatcher,onSendLocalChangesStopped));
-    QObject::connect(&synchronizationManager, QNSIGNAL(SynchronizationManager,willRepeatRemoteToLocalSyncAfterSendingChanges),
-                     this, QNSLOT(SynchronizationManagerSignalsCatcher,onWillRepeatRemoteToLocalSyncAfterSendingLocalChanges));
-    QObject::connect(&synchronizationManager, QNSIGNAL(SynchronizationManager,detectedConflictDuringLocalChangesSending),
-                     this, QNSLOT(SynchronizationManagerSignalsCatcher,onDetectedConflictDuringLocalChangesSending));
-    QObject::connect(&synchronizationManager, QNSIGNAL(SynchronizationManager,rateLimitExceeded,qint32),
-                     this, QNSLOT(SynchronizationManagerSignalsCatcher,onRateLimitExceeded,qint32));
-    QObject::connect(&synchronizationManager, QNSIGNAL(SynchronizationManager,remoteToLocalSyncDone,bool),
-                     this, QNSLOT(SynchronizationManagerSignalsCatcher,onRemoteToLocalSyncDone,bool));
-    QObject::connect(&synchronizationManager, QNSIGNAL(SynchronizationManager,syncChunksDownloaded),
-                     this, QNSLOT(SynchronizationManagerSignalsCatcher,onSyncChunksDownloaded));
-    QObject::connect(&synchronizationManager, QNSIGNAL(SynchronizationManager,linkedNotebooksSyncChunksDownloaded),
-                     this, QNSLOT(SynchronizationManagerSignalsCatcher,onLinkedNotebookSyncChunksDownloaded));
-    QObject::connect(&synchronizationManager, QNSIGNAL(SynchronizationManager,syncChunksDownloadProgress,qint32,qint32,qint32),
-                     this, QNSLOT(SynchronizationManagerSignalsCatcher,onSyncChunkDownloadProgress,qint32,qint32,qint32));
-    QObject::connect(&synchronizationManager, QNSIGNAL(SynchronizationManager,linkedNotebookSyncChunksDownloadProgress,qint32,qint32,qint32,LinkedNotebook),
-                     this, QNSLOT(SynchronizationManagerSignalsCatcher,onLinkedNotebookSyncChunkDownloadProgress,qint32,qint32,qint32,LinkedNotebook));
-    QObject::connect(&synchronizationManager, QNSIGNAL(SynchronizationManager,notesDownloadProgress,quint32,quint32),
-                     this, QNSLOT(SynchronizationManagerSignalsCatcher,onNoteDownloadProgress,quint32,quint32));
-    QObject::connect(&synchronizationManager, QNSIGNAL(SynchronizationManager,linkedNotebooksNotesDownloadProgress,quint32,quint32),
-                     this, QNSLOT(SynchronizationManagerSignalsCatcher,onLinkedNotebookNoteDownloadProgress,quint32,quint32));
-    QObject::connect(&synchronizationManager, QNSIGNAL(SynchronizationManager,resourcesDownloadProgress,quint32,quint32),
-                     this, QNSLOT(SynchronizationManagerSignalsCatcher,onResourceDownloadProgress,quint32,quint32));
-    QObject::connect(&synchronizationManager, QNSIGNAL(SynchronizationManager,preparedDirtyObjectsForSending),
-                     this, QNSLOT(SynchronizationManagerSignalsCatcher,onPreparedDirtyObjectsForSending));
-    QObject::connect(&synchronizationManager, QNSIGNAL(SynchronizationManager,preparedLinkedNotebooksDirtyObjectsForSending),
-                     this, QNSLOT(SynchronizationManagerSignalsCatcher,onPreparedLinkedNotebookDirtyObjectsForSending));
+    QObject::connect(&synchronizationManager,
+                     QNSIGNAL(SynchronizationManager,started),
+                     this,
+                     QNSLOT(SynchronizationManagerSignalsCatcher,onStart));
+    QObject::connect(&synchronizationManager,
+                     QNSIGNAL(SynchronizationManager,stopped),
+                     this,
+                     QNSLOT(SynchronizationManagerSignalsCatcher,onStop));
+    QObject::connect(&synchronizationManager,
+                     QNSIGNAL(SynchronizationManager,failed,ErrorString),
+                     this,
+                     QNSLOT(SynchronizationManagerSignalsCatcher,
+                            onFailure,ErrorString));
+    QObject::connect(&synchronizationManager,
+                     QNSIGNAL(SynchronizationManager,finished,Account,bool,bool),
+                     this,
+                     QNSLOT(SynchronizationManagerSignalsCatcher,
+                            onFinish,Account,bool,bool));
+    QObject::connect(&synchronizationManager,
+                     QNSIGNAL(SynchronizationManager,authenticationRevoked,
+                              bool,ErrorString,qevercloud::UserID),
+                     this,
+                     QNSLOT(SynchronizationManagerSignalsCatcher,
+                            onAuthenticationRevoked,
+                            bool,ErrorString,qevercloud::UserID));
+    QObject::connect(&synchronizationManager,
+                     QNSIGNAL(SynchronizationManager,authenticationFinished,
+                              bool,ErrorString,Account),
+                     this,
+                     QNSLOT(SynchronizationManagerSignalsCatcher,
+                            onAuthenticationFinished,bool,ErrorString,Account));
+    QObject::connect(&synchronizationManager,
+                     QNSIGNAL(SynchronizationManager,remoteToLocalSyncStopped),
+                     this,
+                     QNSLOT(SynchronizationManagerSignalsCatcher,
+                            onRemoteToLocalSyncStopped));
+    QObject::connect(&synchronizationManager,
+                     QNSIGNAL(SynchronizationManager,sendLocalChangesStopped),
+                     this,
+                     QNSLOT(SynchronizationManagerSignalsCatcher,
+                            onSendLocalChangesStopped));
+    QObject::connect(&synchronizationManager,
+                     QNSIGNAL(SynchronizationManager,
+                              willRepeatRemoteToLocalSyncAfterSendingChanges),
+                     this,
+                     QNSLOT(SynchronizationManagerSignalsCatcher,
+                            onWillRepeatRemoteToLocalSyncAfterSendingLocalChanges));
+    QObject::connect(&synchronizationManager,
+                     QNSIGNAL(SynchronizationManager,
+                              detectedConflictDuringLocalChangesSending),
+                     this,
+                     QNSLOT(SynchronizationManagerSignalsCatcher,
+                            onDetectedConflictDuringLocalChangesSending));
+    QObject::connect(&synchronizationManager,
+                     QNSIGNAL(SynchronizationManager,rateLimitExceeded,qint32),
+                     this,
+                     QNSLOT(SynchronizationManagerSignalsCatcher,
+                            onRateLimitExceeded,qint32));
+    QObject::connect(&synchronizationManager,
+                     QNSIGNAL(SynchronizationManager,remoteToLocalSyncDone,bool),
+                     this,
+                     QNSLOT(SynchronizationManagerSignalsCatcher,
+                            onRemoteToLocalSyncDone,bool));
+    QObject::connect(&synchronizationManager,
+                     QNSIGNAL(SynchronizationManager,syncChunksDownloaded),
+                     this,
+                     QNSLOT(SynchronizationManagerSignalsCatcher,
+                            onSyncChunksDownloaded));
+    QObject::connect(&synchronizationManager,
+                     QNSIGNAL(SynchronizationManager,
+                              linkedNotebooksSyncChunksDownloaded),
+                     this,
+                     QNSLOT(SynchronizationManagerSignalsCatcher,
+                            onLinkedNotebookSyncChunksDownloaded));
+    QObject::connect(&synchronizationManager,
+                     QNSIGNAL(SynchronizationManager,syncChunksDownloadProgress,
+                              qint32,qint32,qint32),
+                     this,
+                     QNSLOT(SynchronizationManagerSignalsCatcher,
+                            onSyncChunkDownloadProgress,qint32,qint32,qint32));
+    QObject::connect(&synchronizationManager,
+                     QNSIGNAL(SynchronizationManager,
+                              linkedNotebookSyncChunksDownloadProgress,
+                              qint32,qint32,qint32,LinkedNotebook),
+                     this,
+                     QNSLOT(SynchronizationManagerSignalsCatcher,
+                            onLinkedNotebookSyncChunkDownloadProgress,
+                            qint32,qint32,qint32,LinkedNotebook));
+    QObject::connect(&synchronizationManager,
+                     QNSIGNAL(SynchronizationManager,notesDownloadProgress,
+                              quint32,quint32),
+                     this,
+                     QNSLOT(SynchronizationManagerSignalsCatcher,
+                            onNoteDownloadProgress,quint32,quint32));
+    QObject::connect(&synchronizationManager,
+                     QNSIGNAL(SynchronizationManager,
+                              linkedNotebooksNotesDownloadProgress,
+                              quint32,quint32),
+                     this,
+                     QNSLOT(SynchronizationManagerSignalsCatcher,
+                            onLinkedNotebookNoteDownloadProgress,
+                            quint32,quint32));
+    QObject::connect(&synchronizationManager,
+                     QNSIGNAL(SynchronizationManager,resourcesDownloadProgress,
+                              quint32,quint32),
+                     this,
+                     QNSLOT(SynchronizationManagerSignalsCatcher,
+                            onResourceDownloadProgress,quint32,quint32));
+    QObject::connect(&synchronizationManager,
+                     QNSIGNAL(SynchronizationManager,
+                              preparedDirtyObjectsForSending),
+                     this,
+                     QNSLOT(SynchronizationManagerSignalsCatcher,
+                            onPreparedDirtyObjectsForSending));
+    QObject::connect(&synchronizationManager,
+                     QNSIGNAL(SynchronizationManager,
+                              preparedLinkedNotebooksDirtyObjectsForSending),
+                     this,
+                     QNSLOT(SynchronizationManagerSignalsCatcher,
+                            onPreparedLinkedNotebookDirtyObjectsForSending));
 
-    QObject::connect(&syncStatePersistenceManager, QNSIGNAL(SyncStatePersistenceManager,notifyPersistentSyncStateUpdated,
-                                                            Account,qint32,qevercloud::Timestamp,QHash<QString,qint32>,
-                                                            QHash<QString,qevercloud::Timestamp>),
-                     this, QNSLOT(SynchronizationManagerSignalsCatcher,onSyncStatePersisted,
-                                  Account,qint32,qevercloud::Timestamp,QHash<QString,qint32>,
-                                  QHash<QString,qevercloud::Timestamp>));
+    QObject::connect(&syncStatePersistenceManager,
+                     QNSIGNAL(SyncStatePersistenceManager,
+                              notifyPersistentSyncStateUpdated,
+                              Account,qint32,qevercloud::Timestamp,
+                              QHash<QString,qint32>,
+                              QHash<QString,qevercloud::Timestamp>),
+                     this,
+                     QNSLOT(SynchronizationManagerSignalsCatcher,
+                            onSyncStatePersisted,
+                            Account,qint32,qevercloud::Timestamp,
+                            QHash<QString,qint32>,
+                            QHash<QString,qevercloud::Timestamp>));
 }
 
-bool SynchronizationManagerSignalsCatcher::checkSyncChunkDownloadProgressOrderImpl(const QVector<SyncChunkDownloadProgress> & syncChunkDownloadProgress,
-                                                                                   ErrorString & errorDescription) const
+bool SynchronizationManagerSignalsCatcher::checkSyncChunkDownloadProgressOrderImpl(
+    const QVector<SyncChunkDownloadProgress> & syncChunkDownloadProgress,
+    ErrorString & errorDescription) const
 {
     if (syncChunkDownloadProgress.isEmpty()) {
         return true;
     }
 
     if (syncChunkDownloadProgress.size() == 1) {
-        return checkSingleSyncChunkDownloadProgress(syncChunkDownloadProgress[0], errorDescription);
+        return checkSingleSyncChunkDownloadProgress(syncChunkDownloadProgress[0],
+                                                    errorDescription);
     }
 
     for(int i = 1, size = syncChunkDownloadProgress.size(); i < size; ++i)
     {
-        const SyncChunkDownloadProgress & currentProgress = syncChunkDownloadProgress[i];
-        if (!checkSingleSyncChunkDownloadProgress(currentProgress, errorDescription)) {
+        const SyncChunkDownloadProgress & currentProgress =
+            syncChunkDownloadProgress[i];
+        if (!checkSingleSyncChunkDownloadProgress(currentProgress,
+                                                  errorDescription))
+        {
             return false;
         }
 
-        const SyncChunkDownloadProgress & previousProgress = syncChunkDownloadProgress[i-1];
-        if ((i == 1) && !checkSingleSyncChunkDownloadProgress(previousProgress, errorDescription)) {
+        const SyncChunkDownloadProgress & previousProgress =
+            syncChunkDownloadProgress[i-1];
+        if ((i == 1) &&
+            !checkSingleSyncChunkDownloadProgress(previousProgress,
+                                                  errorDescription))
+        {
             return false;
         }
 
-        if (previousProgress.m_highestDownloadedUsn >= currentProgress.m_highestDownloadedUsn) {
-            errorDescription.setBase(QStringLiteral("Found decreasing highest downloaded USN"));
+        if (previousProgress.m_highestDownloadedUsn >=
+            currentProgress.m_highestDownloadedUsn)
+        {
+            errorDescription.setBase(QStringLiteral("Found decreasing highest "
+                                                    "downloaded USN"));
             return false;
         }
 
-        if (previousProgress.m_highestServerUsn != currentProgress.m_highestServerUsn) {
-            errorDescription.setBase(QStringLiteral("Highest server USN changed between two sync chunk download progresses"));
+        if (previousProgress.m_highestServerUsn !=
+            currentProgress.m_highestServerUsn)
+        {
+            errorDescription.setBase(QStringLiteral("Highest server USN changed "
+                                                    "between two sync chunk "
+                                                    "download progresses"));
             return false;
         }
 
-        if (previousProgress.m_lastPreviousUsn != currentProgress.m_lastPreviousUsn) {
-            errorDescription.setBase(QStringLiteral("Last previous USN changed between two sync chunk download progresses"));
+        if (previousProgress.m_lastPreviousUsn !=
+            currentProgress.m_lastPreviousUsn)
+        {
+            errorDescription.setBase(QStringLiteral("Last previous USN changed "
+                                                    "between two sync chunk "
+                                                    "download progresses"));
             return false;
         }
     }
@@ -388,31 +526,37 @@ bool SynchronizationManagerSignalsCatcher::checkSyncChunkDownloadProgressOrderIm
     return true;
 }
 
-bool SynchronizationManagerSignalsCatcher::checkSingleSyncChunkDownloadProgress(const SyncChunkDownloadProgress & progress,
-                                                                                ErrorString & errorDescription) const
+bool SynchronizationManagerSignalsCatcher::checkSingleSyncChunkDownloadProgress(
+    const SyncChunkDownloadProgress & progress,
+    ErrorString & errorDescription) const
 {
     if (progress.m_highestDownloadedUsn > progress.m_highestServerUsn) {
-        errorDescription.setBase(QStringLiteral("Detected highest downloaded USN greater than highest server USN"));
+        errorDescription.setBase(QStringLiteral("Detected highest downloaded USN "
+                                                "greater than highest server USN"));
         return false;
     }
 
     if (progress.m_lastPreviousUsn > progress.m_highestDownloadedUsn) {
-        errorDescription.setBase(QStringLiteral("Detected last previous USN greater than highest downloaded USN"));
+        errorDescription.setBase(QStringLiteral("Detected last previous USN "
+                                                "greater than highest "
+                                                "downloaded USN"));
         return false;
     }
 
     return true;
 }
 
-bool SynchronizationManagerSignalsCatcher::checkNoteDownloadProgressOrderImpl(const QVector<NoteDownloadProgress> & noteDownloadProgress,
-                                                                              ErrorString & errorDescription) const
+bool SynchronizationManagerSignalsCatcher::checkNoteDownloadProgressOrderImpl(
+    const QVector<NoteDownloadProgress> & noteDownloadProgress,
+    ErrorString & errorDescription) const
 {
     if (noteDownloadProgress.isEmpty()) {
         return true;
     }
 
     if (noteDownloadProgress.size() == 1) {
-        return checkSingleNoteDownloadProgress(noteDownloadProgress[0], errorDescription);
+        return checkSingleNoteDownloadProgress(noteDownloadProgress[0],
+                                               errorDescription);
     }
 
     for(int i = 1, size = noteDownloadProgress.size(); i < size; ++i)
@@ -423,17 +567,26 @@ bool SynchronizationManagerSignalsCatcher::checkNoteDownloadProgressOrderImpl(co
         }
 
         const NoteDownloadProgress & previousProgress = noteDownloadProgress[i-1];
-        if ((i == 1) && !checkSingleNoteDownloadProgress(previousProgress, errorDescription)) {
+        if ((i == 1) &&
+            !checkSingleNoteDownloadProgress(previousProgress, errorDescription))
+        {
             return false;
         }
 
-        if (previousProgress.m_notesDownloaded >= currentProgress.m_notesDownloaded) {
-            errorDescription.setBase(QStringLiteral("Found non-increasing downloaded notes count"));
+        if (previousProgress.m_notesDownloaded >=
+            currentProgress.m_notesDownloaded)
+        {
+            errorDescription.setBase(QStringLiteral("Found non-increasing "
+                                                    "downloaded notes count"));
             return false;
         }
 
-        if (previousProgress.m_totalNotesToDownload != currentProgress.m_totalNotesToDownload) {
-            errorDescription.setBase(QStringLiteral("The total number of notes to download has changed between two progresses"));
+        if (previousProgress.m_totalNotesToDownload !=
+            currentProgress.m_totalNotesToDownload)
+        {
+            errorDescription.setBase(QStringLiteral("The total number of notes "
+                                                    "to download has changed "
+                                                    "between two progresses"));
             return false;
         }
     }
@@ -441,47 +594,66 @@ bool SynchronizationManagerSignalsCatcher::checkNoteDownloadProgressOrderImpl(co
     return true;
 }
 
-bool SynchronizationManagerSignalsCatcher::checkSingleNoteDownloadProgress(const NoteDownloadProgress & progress,
-                                                                           ErrorString & errorDescription) const
+bool SynchronizationManagerSignalsCatcher::checkSingleNoteDownloadProgress(
+    const NoteDownloadProgress & progress,
+    ErrorString & errorDescription) const
 {
-    if (progress.m_notesDownloaded > progress.m_totalNotesToDownload) {
-        errorDescription.setBase(QStringLiteral("The number of downloaded notes is greater than the total number of notes to download"));
+    if (progress.m_notesDownloaded > progress.m_totalNotesToDownload)
+    {
+        errorDescription.setBase(QStringLiteral("The number of downloaded notes "
+                                                "is greater than the total number "
+                                                "of notes to download"));
         return false;
     }
 
     return true;
 }
 
-bool SynchronizationManagerSignalsCatcher::checkResourceDownloadProgressOrderImpl(const QVector<ResourceDownloadProgress> & resourceDownloadProgress,
-                                                                                  ErrorString & errorDescription) const
+bool SynchronizationManagerSignalsCatcher::checkResourceDownloadProgressOrderImpl(
+    const QVector<ResourceDownloadProgress> & resourceDownloadProgress,
+    ErrorString & errorDescription) const
 {
     if (resourceDownloadProgress.isEmpty()) {
         return true;
     }
 
     if (resourceDownloadProgress.size() == 1) {
-        return checkSingleResourceDownloadProgress(resourceDownloadProgress[0], errorDescription);
+        return checkSingleResourceDownloadProgress(resourceDownloadProgress[0],
+                                                   errorDescription);
     }
 
     for(int i = 1, size = resourceDownloadProgress.size(); i < size; ++i)
     {
-        const ResourceDownloadProgress & currentProgress = resourceDownloadProgress[i];
-        if (!checkSingleResourceDownloadProgress(currentProgress, errorDescription)) {
+        const ResourceDownloadProgress & currentProgress =
+            resourceDownloadProgress[i];
+        if (!checkSingleResourceDownloadProgress(currentProgress,
+                                                 errorDescription))
+        {
             return false;
         }
 
-        const ResourceDownloadProgress & previousProgress = resourceDownloadProgress[i-1];
-        if ((i == 1) && !checkSingleResourceDownloadProgress(previousProgress, errorDescription)) {
+        const ResourceDownloadProgress & previousProgress =
+            resourceDownloadProgress[i-1];
+        if ((i == 1) &&
+            !checkSingleResourceDownloadProgress(previousProgress, errorDescription))
+        {
             return false;
         }
 
-        if (previousProgress.m_resourcesDownloaded >= currentProgress.m_resourcesDownloaded) {
-            errorDescription.setBase(QStringLiteral("Found non-increasing downloaded resources count"));
+        if (previousProgress.m_resourcesDownloaded >=
+            currentProgress.m_resourcesDownloaded)
+        {
+            errorDescription.setBase(QStringLiteral("Found non-increasing "
+                                                    "downloaded resources count"));
             return false;
         }
 
-        if (previousProgress.m_totalResourcesToDownload != currentProgress.m_totalResourcesToDownload) {
-            errorDescription.setBase(QStringLiteral("The total number of resources to download has changed between two progresses"));
+        if (previousProgress.m_totalResourcesToDownload !=
+            currentProgress.m_totalResourcesToDownload)
+        {
+            errorDescription.setBase(QStringLiteral("The total number of resources "
+                                                    "to download has changed "
+                                                    "between two progresses"));
             return false;
         }
     }
@@ -489,11 +661,15 @@ bool SynchronizationManagerSignalsCatcher::checkResourceDownloadProgressOrderImp
     return true;
 }
 
-bool SynchronizationManagerSignalsCatcher::checkSingleResourceDownloadProgress(const ResourceDownloadProgress & progress,
-                                                                               ErrorString & errorDescription) const
+bool SynchronizationManagerSignalsCatcher::checkSingleResourceDownloadProgress(
+    const ResourceDownloadProgress & progress,
+    ErrorString & errorDescription) const
 {
     if (progress.m_resourcesDownloaded > progress.m_totalResourcesToDownload) {
-        errorDescription.setBase(QStringLiteral("The number of downloaded resources is greater than the total number of resources to download"));
+        errorDescription.setBase(QStringLiteral("The number of downloaded "
+                                                "resources is greater than "
+                                                "the total number of resources "
+                                                "to download"));
         return false;
     }
 

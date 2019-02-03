@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Dmitry Ivanov
+ * Copyright 2016-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -112,7 +112,10 @@ bool SavedSearch::validateName(const QString & name, ErrorString * pErrorDescrip
     if (name != name.trimmed())
     {
         if (pErrorDescription) {
-            pErrorDescription->setBase(QT_TRANSLATE_NOOP("SavedSearch", "Saved search name cannot start or end with whitespace"));
+            pErrorDescription->setBase(QT_TRANSLATE_NOOP("SavedSearch",
+                                                         "Saved search name cannot "
+                                                         "start or end with "
+                                                         "whitespace"));
             pErrorDescription->details() = name;
         }
 
@@ -123,7 +126,9 @@ bool SavedSearch::validateName(const QString & name, ErrorString * pErrorDescrip
     if (len < qevercloud::EDAM_SAVED_SEARCH_NAME_LEN_MIN)
     {
         if (pErrorDescription) {
-            pErrorDescription->setBase(QT_TRANSLATE_NOOP("SavedSearch", "Saved search name's length is too small"));
+            pErrorDescription->setBase(QT_TRANSLATE_NOOP("SavedSearch",
+                                                         "Saved search name's "
+                                                         "length is too small"));
             pErrorDescription->details() = name;
         }
 
@@ -133,7 +138,9 @@ bool SavedSearch::validateName(const QString & name, ErrorString * pErrorDescrip
     if (len > qevercloud::EDAM_SAVED_SEARCH_NAME_LEN_MAX)
     {
         if (pErrorDescription) {
-            pErrorDescription->setBase(QT_TRANSLATE_NOOP("SavedSearch", "Saved search's name length is too large"));
+            pErrorDescription->setBase(QT_TRANSLATE_NOOP("SavedSearch",
+                                                         "Saved search's name "
+                                                         "length is too large"));
             pErrorDescription->details() = name;
         }
 
@@ -186,7 +193,9 @@ void SavedSearch::setUpdateSequenceNumber(const qint32 usn)
 bool SavedSearch::checkParameters(ErrorString & errorDescription) const
 {
     if (localUid().isEmpty() && !d->m_qecSearch.guid.isSet()) {
-        errorDescription.setBase(QT_TRANSLATE_NOOP("SavedSearch", "Both saved search's local and remote guids are empty"));
+        errorDescription.setBase(QT_TRANSLATE_NOOP("SavedSearch",
+                                                   "Both saved search's local "
+                                                   "and remote guids are empty"));
         return false;
     }
 
@@ -260,7 +269,8 @@ void SavedSearch::setQueryFormat(const qint8 queryFormat)
 
 bool SavedSearch::hasIncludeAccount() const
 {
-    return d->m_qecSearch.scope.isSet() && d->m_qecSearch.scope->includeAccount.isSet();
+    return d->m_qecSearch.scope.isSet() &&
+           d->m_qecSearch.scope->includeAccount.isSet();
 }
 
 bool SavedSearch::includeAccount() const
@@ -276,7 +286,8 @@ void SavedSearch::setIncludeAccount(const bool includeAccount)
 
 bool SavedSearch::hasIncludePersonalLinkedNotebooks() const
 {
-    return d->m_qecSearch.scope.isSet() && d->m_qecSearch.scope->includePersonalLinkedNotebooks.isSet();
+    return d->m_qecSearch.scope.isSet() &&
+           d->m_qecSearch.scope->includePersonalLinkedNotebooks.isSet();
 }
 
 bool SavedSearch::includePersonalLinkedNotebooks() const
@@ -284,15 +295,18 @@ bool SavedSearch::includePersonalLinkedNotebooks() const
     return d->m_qecSearch.scope->includePersonalLinkedNotebooks;
 }
 
-void SavedSearch::setIncludePersonalLinkedNotebooks(const bool includePersonalLinkedNotebooks)
+void SavedSearch::setIncludePersonalLinkedNotebooks(
+    const bool includePersonalLinkedNotebooks)
 {
     CHECK_AND_SET_SCOPE();
-    d->m_qecSearch.scope->includePersonalLinkedNotebooks = includePersonalLinkedNotebooks;
+    d->m_qecSearch.scope->includePersonalLinkedNotebooks =
+        includePersonalLinkedNotebooks;
 }
 
 bool SavedSearch::hasIncludeBusinessLinkedNotebooks() const
 {
-    return d->m_qecSearch.scope.isSet() && d->m_qecSearch.scope->includeBusinessLinkedNotebooks.isSet();
+    return d->m_qecSearch.scope.isSet() &&
+           d->m_qecSearch.scope->includeBusinessLinkedNotebooks.isSet();
 }
 
 bool SavedSearch::includeBusinessLinkedNotebooks() const
@@ -300,10 +314,12 @@ bool SavedSearch::includeBusinessLinkedNotebooks() const
     return d->m_qecSearch.scope->includeBusinessLinkedNotebooks;
 }
 
-void SavedSearch::setIncludeBusinessLinkedNotebooks(const bool includeBusinessLinkedNotebooks)
+void SavedSearch::setIncludeBusinessLinkedNotebooks(
+    const bool includeBusinessLinkedNotebooks)
 {
     CHECK_AND_SET_SCOPE();
-    d->m_qecSearch.scope->includeBusinessLinkedNotebooks = includeBusinessLinkedNotebooks;
+    d->m_qecSearch.scope->includeBusinessLinkedNotebooks =
+        includeBusinessLinkedNotebooks;
 }
 
 QTextStream & SavedSearch::print(QTextStream & strm) const
@@ -312,42 +328,49 @@ QTextStream & SavedSearch::print(QTextStream & strm) const
 
     const QString localUid_ = localUid();
     if (!localUid_.isEmpty()) {
-        strm << QStringLiteral("localUid: ") << localUid_ << QStringLiteral("; \n");
+        strm << QStringLiteral("localUid: ") << localUid_
+             << QStringLiteral("; \n");
     }
     else {
         strm << QStringLiteral("localUid is not set; \n");
     }
 
     if (d->m_qecSearch.guid.isSet()) {
-        strm << QStringLiteral("guid: ") << d->m_qecSearch.guid << QStringLiteral("; \n");
+        strm << QStringLiteral("guid: ") << d->m_qecSearch.guid
+             << QStringLiteral("; \n");
     }
     else {
         strm << QStringLiteral("guid is not set; \n");
     }
 
     if (d->m_qecSearch.updateSequenceNum.isSet()) {
-        strm << QStringLiteral("updateSequenceNumber: ") << QString::number(d->m_qecSearch.updateSequenceNum) << QStringLiteral("; \n");
+        strm << QStringLiteral("updateSequenceNumber: ")
+             << QString::number(d->m_qecSearch.updateSequenceNum)
+             << QStringLiteral("; \n");
     }
     else {
         strm << QStringLiteral("updateSequenceNumber is not set; \n");
     }
 
     if (d->m_qecSearch.name.isSet()) {
-        strm << QStringLiteral("name: ") << d->m_qecSearch.name << QStringLiteral("; \n");
+        strm << QStringLiteral("name: ") << d->m_qecSearch.name
+             << QStringLiteral("; \n");
     }
     else {
         strm << QStringLiteral("name is not set; \n");
     }
 
     if (d->m_qecSearch.query.isSet()) {
-        strm << QStringLiteral("query: ") << d->m_qecSearch.query << QStringLiteral("; \n");
+        strm << QStringLiteral("query: ") << d->m_qecSearch.query
+             << QStringLiteral("; \n");
     }
     else {
         strm << QStringLiteral("query is not set; \n");
     }
 
     if (d->m_qecSearch.format.isSet()) {
-        strm << QStringLiteral("queryFormat: ") << d->m_qecSearch.format << QStringLiteral("; \n");
+        strm << QStringLiteral("queryFormat: ") << d->m_qecSearch.format
+             << QStringLiteral("; \n");
     }
     else {
         strm << QStringLiteral("queryFormat is not set; \n");
@@ -359,28 +382,43 @@ QTextStream & SavedSearch::print(QTextStream & strm) const
 
         const SavedSearchScope & scope = d->m_qecSearch.scope;
 
-        if (scope.includeAccount.isSet()) {
-            strm << QStringLiteral("includeAccount: ") << (scope.includeAccount ? QStringLiteral("true") : QStringLiteral("false"))
-                << QStringLiteral("; \n");
+        if (scope.includeAccount.isSet())
+        {
+            strm << QStringLiteral("includeAccount: ")
+                 << (scope.includeAccount
+                     ? QStringLiteral("true")
+                     : QStringLiteral("false"))
+                 << QStringLiteral("; \n");
         }
-        else {
+        else
+        {
             strm << QStringLiteral("includeAccount is not set; \n");
         }
 
-        if (scope.includePersonalLinkedNotebooks.isSet()) {
-            strm << QStringLiteral("includePersonalLinkedNotebooks: ") << (scope.includePersonalLinkedNotebooks ? QStringLiteral("true") : QStringLiteral("false"))
-                << QStringLiteral("; \n");
+        if (scope.includePersonalLinkedNotebooks.isSet())
+        {
+            strm << QStringLiteral("includePersonalLinkedNotebooks: ")
+                 << (scope.includePersonalLinkedNotebooks
+                     ? QStringLiteral("true")
+                     : QStringLiteral("false"))
+                 << QStringLiteral(";\n");
         }
-        else {
-            strm << QStringLiteral("includePersonalLinkedNotebooks is not set; \n");
+        else
+        {
+            strm << QStringLiteral("includePersonalLinkedNotebooks is not set;\n");
         }
 
-        if (scope.includeBusinessLinkedNotebooks.isSet()) {
-            strm << QStringLiteral("includeBusinessLinkedNotebooks: ") << (scope.includeBusinessLinkedNotebooks ? QStringLiteral("true") : QStringLiteral("false"))
-                << QStringLiteral("; \n");
+        if (scope.includeBusinessLinkedNotebooks.isSet())
+        {
+            strm << QStringLiteral("includeBusinessLinkedNotebooks: ")
+                 << (scope.includeBusinessLinkedNotebooks
+                     ? QStringLiteral("true")
+                     : QStringLiteral("false"))
+                 << QStringLiteral("; \n");
         }
-        else {
-            strm << QStringLiteral("includeBusinessLinkedNotebooks is not set; \n");
+        else
+        {
+            strm << QStringLiteral("includeBusinessLinkedNotebooks is not set;\n");
         }
     }
     else
@@ -389,7 +427,11 @@ QTextStream & SavedSearch::print(QTextStream & strm) const
         return strm;
     }
 
-    strm << QStringLiteral("isFavorited = ") << (isFavorited() ? QStringLiteral("true") : QStringLiteral("false")) << QStringLiteral("; \n");
+    strm << QStringLiteral("isFavorited = ")
+         << (isFavorited()
+             ? QStringLiteral("true")
+             : QStringLiteral("false"))
+         << QStringLiteral("; \n");
 
     strm << QStringLiteral("}; \n");
     return strm;

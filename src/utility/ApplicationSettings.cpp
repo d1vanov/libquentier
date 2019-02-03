@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Dmitry Ivanov
+ * Copyright 2016-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -27,10 +27,13 @@ namespace quentier {
 QString defaultApplicationStoragePath()
 {
     QString storagePath = applicationPersistentStoragePath();
-    if (Q_UNLIKELY(storagePath.isEmpty())) {
-        throw ApplicationSettingsInitializationException(ErrorString(QT_TRANSLATE_NOOP("ApplicationSettings",
-                                                                                       "Can't create ApplicationSettings instance: "
-                                                                                       "no persistent storage path")));
+    if (Q_UNLIKELY(storagePath.isEmpty()))
+    {
+        throw ApplicationSettingsInitializationException(
+            ErrorString(
+                QT_TRANSLATE_NOOP("ApplicationSettings",
+                                  "Can't create ApplicationSettings instance: "
+                                  "no persistent storage path")));
     }
 
     storagePath += QStringLiteral("/settings/");
@@ -47,21 +50,29 @@ QString defaultApplicationStoragePath()
     return storagePath;
 }
 
-QString accountApplicationStoragePath(const Account & account, const QString & settingsName)
+QString accountApplicationStoragePath(const Account & account,
+                                      const QString & settingsName)
 {
     QString accountName = account.name();
-    if (Q_UNLIKELY(accountName.isEmpty())) {
-        QNWARNING(QStringLiteral("Detected attempt to create ApplicationSettings for account with empty name"));
-        throw ApplicationSettingsInitializationException(ErrorString(QT_TRANSLATE_NOOP("ApplicationSettings",
-                                                                                       "Can't create ApplicationSettings instance: "
-                                                                                       "the account name is empty")));
+    if (Q_UNLIKELY(accountName.isEmpty()))
+    {
+        QNWARNING(QStringLiteral("Detected attempt to create ApplicationSettings "
+                                 "for account with empty name"));
+        throw ApplicationSettingsInitializationException(
+            ErrorString(
+                QT_TRANSLATE_NOOP("ApplicationSettings",
+                                  "Can't create ApplicationSettings instance: "
+                                  "the account name is empty")));
     }
 
     QString storagePath = accountPersistentStoragePath(account);
-    if (Q_UNLIKELY(storagePath.isEmpty())) {
-        throw ApplicationSettingsInitializationException(ErrorString(QT_TRANSLATE_NOOP("ApplicationSettings",
-                                                                                       "Can't create ApplicationSettings instance: "
-                                                                                       "no account persistent storage path")));
+    if (Q_UNLIKELY(storagePath.isEmpty()))
+    {
+        throw ApplicationSettingsInitializationException(
+            ErrorString(
+                QT_TRANSLATE_NOOP("ApplicationSettings",
+                                  "Can't create ApplicationSettings instance: "
+                                  "no account persistent storage path")));
     }
 
     storagePath += QStringLiteral("/settings/");
@@ -86,8 +97,10 @@ ApplicationSettings::ApplicationSettings() :
     QSettings(defaultApplicationStoragePath(), QSettings::IniFormat)
 {}
 
-ApplicationSettings::ApplicationSettings(const Account & account, const QString & settingsName) :
-    QSettings(accountApplicationStoragePath(account, settingsName), QSettings::IniFormat)
+ApplicationSettings::ApplicationSettings(const Account & account,
+                                         const QString & settingsName) :
+    QSettings(accountApplicationStoragePath(account, settingsName),
+              QSettings::IniFormat)
 {}
 
 ApplicationSettings::~ApplicationSettings()
@@ -97,9 +110,12 @@ QTextStream & ApplicationSettings::print(QTextStream & strm) const
 {
     QStringList allStoredKeys = QSettings::allKeys();
 
-    for(auto it = allStoredKeys.constBegin(), end = allStoredKeys.constEnd(); it != end; ++it) {
+    for(auto it = allStoredKeys.constBegin(),
+        end = allStoredKeys.constEnd(); it != end; ++it)
+    {
         QVariant value = QSettings::value(*it);
-        strm << QStringLiteral("Key: ") << *it << QStringLiteral("; Value: ") << value.toString() << QStringLiteral("\n;");
+        strm << QStringLiteral("Key: ") << *it << QStringLiteral("; Value: ")
+             << value.toString() << QStringLiteral("\n;");
     }
 
     return strm;

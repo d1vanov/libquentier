@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Dmitry Ivanov
+ * Copyright 2016-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -76,7 +76,8 @@ qevercloud::LinkedNotebook & LinkedNotebook::qevercloudLinkedNotebook()
 
 bool LinkedNotebook::operator==(const LinkedNotebook & other) const
 {
-    return ((isDirty() == other.isDirty()) && (d->m_qecLinkedNotebook == other.d->m_qecLinkedNotebook));
+    return ((isDirty() == other.isDirty()) &&
+            (d->m_qecLinkedNotebook == other.d->m_qecLinkedNotebook));
 }
 
 bool LinkedNotebook::operator!=(const LinkedNotebook & other) const
@@ -307,7 +308,8 @@ void LinkedNotebook::setBusinessId(const qint32 businessId)
 QTextStream & LinkedNotebook::print(QTextStream & strm) const
 {
     strm << QStringLiteral("LinkedNotebook: {\n");
-    strm << QStringLiteral("isDirty = ") << (isDirty() ? QStringLiteral("true") : QStringLiteral("false"))
+    strm << QStringLiteral("isDirty = ")
+         << (isDirty() ? QStringLiteral("true") : QStringLiteral("false"))
          << QStringLiteral("\n");
     strm << d->m_qecLinkedNotebook;
     strm << QStringLiteral("};\n");

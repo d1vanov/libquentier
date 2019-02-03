@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Dmitry Ivanov
+ * Copyright 2016-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -65,13 +65,15 @@ SharedNotebook::~SharedNotebook()
 bool SharedNotebook::operator==(const SharedNotebook & other) const
 {
     const qevercloud::SharedNotebook & sharedNotebook = d->m_qecSharedNotebook;
-    const qevercloud::SharedNotebook & otherSharedNotebook = other.d->m_qecSharedNotebook;
+    const qevercloud::SharedNotebook & otherSharedNotebook =
+        other.d->m_qecSharedNotebook;
 
     return (sharedNotebook == otherSharedNotebook);
 
     // NOTE: d->m_indexInNotebook does not take any part in comparison
-    // as it is by nature a helper parameter intended to preserve sorting of shared notebooks
-    // in notebook between insertions and selections from the database
+    // as it is by nature a helper parameter intended to preserve sorting of
+    // shared notebooks in notebook between insertions and selections from
+    // the database
 }
 
 bool SharedNotebook::operator!=(const SharedNotebook & other) const
@@ -246,10 +248,15 @@ void SharedNotebook::setPrivilegeLevel(const SharedNotebookPrivilegeLevel privil
 
 void SharedNotebook::setPrivilegeLevel(const qint8 privilegeLevel)
 {
-    if (privilegeLevel <= static_cast<qint8>(qevercloud::SharedNotebookPrivilegeLevel::BUSINESS_FULL_ACCESS)) {
-        d->m_qecSharedNotebook.privilege = static_cast<qevercloud::SharedNotebookPrivilegeLevel::type>(privilegeLevel);
+    if (privilegeLevel <=
+        static_cast<qint8>(
+            qevercloud::SharedNotebookPrivilegeLevel::BUSINESS_FULL_ACCESS))
+    {
+        d->m_qecSharedNotebook.privilege =
+            static_cast<qevercloud::SharedNotebookPrivilegeLevel::type>(privilegeLevel);
     }
-    else {
+    else
+    {
         d->m_qecSharedNotebook.privilege.clear();
     }
 }
@@ -257,7 +264,8 @@ void SharedNotebook::setPrivilegeLevel(const qint8 privilegeLevel)
 bool SharedNotebook::hasReminderNotifyEmail() const
 {
     const qevercloud::SharedNotebook & sharedNotebook = d->m_qecSharedNotebook;
-    return sharedNotebook.recipientSettings.isSet() && sharedNotebook.recipientSettings->reminderNotifyEmail.isSet();
+    return sharedNotebook.recipientSettings.isSet() &&
+           sharedNotebook.recipientSettings->reminderNotifyEmail.isSet();
 }
 
 bool SharedNotebook::reminderNotifyEmail() const
@@ -268,7 +276,8 @@ bool SharedNotebook::reminderNotifyEmail() const
 #define CHECK_AND_SET_RECIPIENT_SETTINGS \
     qevercloud::SharedNotebook & sharedNotebook = d->m_qecSharedNotebook; \
     if (!sharedNotebook.recipientSettings.isSet()) { \
-        sharedNotebook.recipientSettings = qevercloud::SharedNotebookRecipientSettings(); \
+        sharedNotebook.recipientSettings = \
+            qevercloud::SharedNotebookRecipientSettings(); \
     }
 
 void SharedNotebook::setReminderNotifyEmail(const bool notifyEmail)
@@ -280,7 +289,8 @@ void SharedNotebook::setReminderNotifyEmail(const bool notifyEmail)
 bool SharedNotebook::hasReminderNotifyApp() const
 {
     const qevercloud::SharedNotebook & sharedNotebook = d->m_qecSharedNotebook;
-    return sharedNotebook.recipientSettings.isSet() && sharedNotebook.recipientSettings->reminderNotifyInApp.isSet();
+    return sharedNotebook.recipientSettings.isSet() &&
+           sharedNotebook.recipientSettings->reminderNotifyInApp.isSet();
 }
 
 bool SharedNotebook::reminderNotifyApp() const
@@ -404,7 +414,8 @@ void SharedNotebook::setAssignmentTimestamp(const qint64 timestamp)
 QTextStream & SharedNotebook::print(QTextStream & strm) const
 {
     strm << QStringLiteral("SharedNotebook {\n");
-    strm << QStringLiteral("  index in notebook: ") << QString::number(d->m_indexInNotebook)
+    strm << QStringLiteral("  index in notebook: ")
+         << QString::number(d->m_indexInNotebook)
          << QStringLiteral(";\n");
 
     const qevercloud::SharedNotebook & sharedNotebook = d->m_qecSharedNotebook;

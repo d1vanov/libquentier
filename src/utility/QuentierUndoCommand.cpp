@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Dmitry Ivanov
+ * Copyright 2016-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -27,7 +27,8 @@ QuentierUndoCommand::QuentierUndoCommand(QUndoCommand * parent) :
     m_onceUndoExecuted(false)
 {}
 
-QuentierUndoCommand::QuentierUndoCommand(const QString & text, QUndoCommand * parent) :
+QuentierUndoCommand::QuentierUndoCommand(const QString & text,
+                                         QUndoCommand * parent) :
     QObject(Q_NULLPTR),
     QUndoCommand(text, parent),
     m_onceUndoExecuted(false)
@@ -48,8 +49,8 @@ void QuentierUndoCommand::redo()
     QNTRACE(QStringLiteral("QuentierUndoCommand::redo"));
 
     if (Q_UNLIKELY(!m_onceUndoExecuted)) {
-        QNTRACE(QStringLiteral("Ignoring the attempt to execute redo for command ") << text()
-                << QStringLiteral(" as there was no previous undo"));
+        QNTRACE(QStringLiteral("Ignoring the attempt to execute redo for command ")
+                << text() << QStringLiteral(" as there was no previous undo"));
         return;
     }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Dmitry Ivanov
+ * Copyright 2016-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -28,12 +28,14 @@ FavoritableDataElementData::FavoritableDataElementData() :
 FavoritableDataElementData::~FavoritableDataElementData()
 {}
 
-FavoritableDataElementData::FavoritableDataElementData(const FavoritableDataElementData & other) :
+FavoritableDataElementData::FavoritableDataElementData(
+        const FavoritableDataElementData & other) :
     NoteStoreDataElementData(other),
     m_isFavorited(other.m_isFavorited)
 {}
 
-FavoritableDataElementData::FavoritableDataElementData(FavoritableDataElementData && other) :
+FavoritableDataElementData::FavoritableDataElementData(
+        FavoritableDataElementData && other) :
     NoteStoreDataElementData(std::move(other)),
     m_isFavorited(std::move(other.m_isFavorited))
 {}

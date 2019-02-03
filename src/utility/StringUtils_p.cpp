@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Dmitry Ivanov
+ * Copyright 2016-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -29,11 +29,14 @@ StringUtilsPrivate::StringUtilsPrivate() :
     initialize();
 }
 
-void StringUtilsPrivate::removePunctuation(QString & str, const QVector<QChar> & charactersToPreserve) const
+void StringUtilsPrivate::removePunctuation(
+    QString & str, const QVector<QChar> & charactersToPreserve) const
 {
-    QString filterStr = QString::fromUtf8("[`~!@#$%^&()—+=|:;<>«»,.?/{}\'\"\\[\\]]");
+    QString filterStr =
+        QString::fromUtf8("[`~!@#$%^&()—+=|:;<>«»,.?/{}\'\"\\[\\]]");
 
-    for(auto it = charactersToPreserve.begin(), end = charactersToPreserve.end(); it != end; ++it)
+    for(auto it = charactersToPreserve.begin(),
+        end = charactersToPreserve.end(); it != end; ++it)
     {
         int pos = -1;
         while((pos = filterStr.indexOf(*it)) >= 0) {
@@ -82,26 +85,34 @@ void StringUtilsPrivate::removeNewlines(QString & str) const
 
 void StringUtilsPrivate::initialize()
 {
-    m_diacriticLetters = QString::fromUtf8("ŠŒŽšœžŸ¥µÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖØÙÚÛÜÝßàáâãäåæçèéêëìíîïðñòóôõöøùúûüýÿ");
+    m_diacriticLetters =
+        QString::fromUtf8("ŠŒŽšœžŸ¥µÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖØÙÚÛÜÝßàáâãäåæ"
+                          "çèéêëìíîïðñòóôõöøùúûüýÿ");
     m_noDiacriticLetters.reserve(m_diacriticLetters.size());
-    m_noDiacriticLetters << QStringLiteral("S") << QStringLiteral("OE") << QStringLiteral("Z") << QStringLiteral("s")
-                         << QStringLiteral("oe") << QStringLiteral("z") << QStringLiteral("Y") << QStringLiteral("Y")
-                         << QStringLiteral("u") << QStringLiteral("A") << QStringLiteral("A") << QStringLiteral("A")
-                         << QStringLiteral("A") << QStringLiteral("A") << QStringLiteral("A") << QStringLiteral("AE")
-                         << QStringLiteral("C") << QStringLiteral("E") << QStringLiteral("E") << QStringLiteral("E")
-                         << QStringLiteral("E") << QStringLiteral("I") << QStringLiteral("I") << QStringLiteral("I")
-                         << QStringLiteral("I") << QStringLiteral("D") << QStringLiteral("N") << QStringLiteral("O")
-                         << QStringLiteral("O") << QStringLiteral("O") << QStringLiteral("O") << QStringLiteral("O")
-                         << QStringLiteral("O") << QStringLiteral("U") << QStringLiteral("U") << QStringLiteral("U")
-                         << QStringLiteral("U") << QStringLiteral("Y") << QStringLiteral("s") << QStringLiteral("a")
-                         << QStringLiteral("a") << QStringLiteral("a") << QStringLiteral("a") << QStringLiteral("a")
-                         << QStringLiteral("a") << QStringLiteral("ae") << QStringLiteral("c") << QStringLiteral("e")
-                         << QStringLiteral("e") << QStringLiteral("e") << QStringLiteral("e") << QStringLiteral("i")
-                         << QStringLiteral("i") << QStringLiteral("i") << QStringLiteral("i") << QStringLiteral("o")
-                         << QStringLiteral("n") << QStringLiteral("o") << QStringLiteral("o") << QStringLiteral("o")
-                         << QStringLiteral("o") << QStringLiteral("o") << QStringLiteral("o") << QStringLiteral("u")
-                         << QStringLiteral("u") << QStringLiteral("u") << QStringLiteral("u") << QStringLiteral("y")
-                         << QStringLiteral("y");
+    m_noDiacriticLetters
+        << QStringLiteral("S") << QStringLiteral("OE") << QStringLiteral("Z")
+        << QStringLiteral("s") << QStringLiteral("oe") << QStringLiteral("z")
+        << QStringLiteral("Y") << QStringLiteral("Y") << QStringLiteral("u")
+        << QStringLiteral("A") << QStringLiteral("A") << QStringLiteral("A")
+        << QStringLiteral("A") << QStringLiteral("A") << QStringLiteral("A")
+        << QStringLiteral("AE") << QStringLiteral("C") << QStringLiteral("E")
+        << QStringLiteral("E") << QStringLiteral("E") << QStringLiteral("E")
+        << QStringLiteral("I") << QStringLiteral("I") << QStringLiteral("I")
+        << QStringLiteral("I") << QStringLiteral("D") << QStringLiteral("N")
+        << QStringLiteral("O") << QStringLiteral("O") << QStringLiteral("O")
+        << QStringLiteral("O") << QStringLiteral("O") << QStringLiteral("O")
+        << QStringLiteral("U") << QStringLiteral("U") << QStringLiteral("U")
+        << QStringLiteral("U") << QStringLiteral("Y") << QStringLiteral("s")
+        << QStringLiteral("a") << QStringLiteral("a") << QStringLiteral("a")
+        << QStringLiteral("a") << QStringLiteral("a") << QStringLiteral("a")
+        << QStringLiteral("ae") << QStringLiteral("c") << QStringLiteral("e")
+        << QStringLiteral("e") << QStringLiteral("e") << QStringLiteral("e")
+        << QStringLiteral("i") << QStringLiteral("i") << QStringLiteral("i")
+        << QStringLiteral("i") << QStringLiteral("o") << QStringLiteral("n")
+        << QStringLiteral("o") << QStringLiteral("o") << QStringLiteral("o")
+        << QStringLiteral("o") << QStringLiteral("o") << QStringLiteral("o")
+        << QStringLiteral("u") << QStringLiteral("u") << QStringLiteral("u")
+        << QStringLiteral("u") << QStringLiteral("y") << QStringLiteral("y");
 }
 
 } // namespace quentier
