@@ -44,7 +44,7 @@ class QUENTIER_EXPORT LocalStorageManagerAsync: public QObject
     Q_OBJECT
 public:
     explicit LocalStorageManagerAsync(const Account & account,
-                                      LocalStorageManager::StartupOptions options,
+                                      LocalStorageManager::StartupOptions options = 0,
                                       QObject * parent = Q_NULLPTR);
     virtual ~LocalStorageManagerAsync();
 
