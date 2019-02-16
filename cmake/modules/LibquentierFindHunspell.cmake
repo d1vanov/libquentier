@@ -14,6 +14,16 @@ if(NOT HUNSPELL_INCLUDE_DIR AND NOT HUNSPELL_LIBRARIES)
     message(FATAL_ERROR "Can't find hunspell library")
   else()
     message(STATUS "Found hunspell library: ${HUNSPELL_LIBRARIES}")
+
+    try_compile(HUNSPELL_NEW_API_AVAILABLE "${CMAKE_BINARY_DIR}/hunspell_api_check"
+                "${CMAKE_SOURCE_DIR}/cmake/modules/hunspell_new_api_check.cpp"
+                LINK_LIBRARIES ${HUNSPELL_LIBRARIES}
+                CMAKE_FLAGS
+                    "-DINCLUDE_DIRECTORIES=${HUNSPELL_INCLUDE_DIR}")
+    if (HUNSPELL_NEW_API_AVAILABLE)
+      message(STATUS "Using new libhunspell API")
+      add_definitions("-DHUNSPELL_NEW_API_AVAILABLE")
+    endif()
   endif()
 endif()
 
