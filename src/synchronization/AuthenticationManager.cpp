@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Dmitry Ivanov
+ * Copyright 2017-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -21,15 +21,23 @@
 
 namespace quentier {
 
-AuthenticationManager::AuthenticationManager(const QString & consumerKey, const QString & consumerSecret,
-                                             const QString & host, QObject * parent) :
+AuthenticationManager::AuthenticationManager(const QString & consumerKey,
+                                             const QString & consumerSecret,
+                                             const QString & host,
+                                             QObject * parent) :
     IAuthenticationManager(parent),
     d_ptr(new AuthenticationManagerPrivate(consumerKey, consumerSecret, host, this))
 {
-    QObject::connect(d_ptr, QNSIGNAL(AuthenticationManagerPrivate,sendAuthenticationResult,bool,qevercloud::UserID,
-                                     QString,qevercloud::Timestamp,QString,QString,QString,ErrorString),
-                     this, QNSIGNAL(AuthenticationManager,sendAuthenticationResult,bool,qevercloud::UserID,
-                                    QString,qevercloud::Timestamp,QString,QString,QString,ErrorString));
+    QObject::connect(d_ptr,
+                     QNSIGNAL(AuthenticationManagerPrivate,
+                              sendAuthenticationResult,
+                              bool,qevercloud::UserID,QString,qevercloud::Timestamp,
+                              QString,QString,QString,ErrorString),
+                     this,
+                     QNSIGNAL(AuthenticationManager,
+                              sendAuthenticationResult,bool,qevercloud::UserID,
+                              QString,qevercloud::Timestamp,QString,QString,
+                              QString,ErrorString));
 }
 
 AuthenticationManager::~AuthenticationManager()

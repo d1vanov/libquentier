@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Dmitry Ivanov
+ * Copyright 2016-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -29,10 +29,11 @@
 namespace quentier {
 
 /**
- * @brief The GenericResourceImageManager class is a worker for the I/O thread which
- * would write two files in a folder accessible for note editor's page: the composed image
- * for a generic resource and the hash of that resource. It would also listen to the current note
- * changes and remove stale generic resource images as appropriate.
+ * @brief The GenericResourceImageManager class is a worker for the I/O thread
+ * which would write two files in a folder accessible for note editor's page:
+ * the composed image for a generic resource and the hash of that resource.
+ * It would also listen to the current note changes and remove stale generic
+ * resource images as appropriate.
  */
 class Q_DECL_HIDDEN GenericResourceImageManager: public QObject
 {
@@ -43,13 +44,18 @@ public:
     void setStorageFolderPath(const QString & storageFolderPath);
 
 Q_SIGNALS:
-    void genericResourceImageWriteReply(bool success, QByteArray resourceHash, QString filePath,
-                                        ErrorString errorDescription, QUuid requestId);
+    void genericResourceImageWriteReply(bool success, QByteArray resourceHash,
+                                        QString filePath, ErrorString errorDescription,
+                                        QUuid requestId);
 
 public Q_SLOTS:
-    void onGenericResourceImageWriteRequest(QString noteLocalUid, QString resourceLocalUid, QByteArray resourceImageData,
-                                            QString resourceFileSuffix, QByteArray resourceActualHash,
-                                            QString resourceDisplayName, QUuid requestId);
+    void onGenericResourceImageWriteRequest(QString noteLocalUid,
+                                            QString resourceLocalUid,
+                                            QByteArray resourceImageData,
+                                            QString resourceFileSuffix,
+                                            QByteArray resourceActualHash,
+                                            QString resourceDisplayName,
+                                            QUuid requestId);
     void onCurrentNoteChanged(Note note);
 
 private:

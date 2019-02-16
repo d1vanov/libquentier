@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Dmitry Ivanov
+ * Copyright 2016-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -38,11 +38,12 @@ class Q_DECL_HIDDEN DecryptionDialog: public QDialog
 {
     Q_OBJECT
 public:
-    explicit DecryptionDialog(const QString & encryptedText, const QString & cipher,
-                              const QString & hint, const size_t keyLength, const Account & account,
-                              QSharedPointer<EncryptionManager> encryptionManager,
-                              QSharedPointer<DecryptedTextManager> decryptedTextManager,
-                              QWidget * parent = Q_NULLPTR, bool decryptPermanentlyFlag = false);
+    explicit DecryptionDialog(
+        const QString & encryptedText, const QString & cipher,
+        const QString & hint, const size_t keyLength, const Account & account,
+        QSharedPointer<EncryptionManager> encryptionManager,
+        QSharedPointer<DecryptedTextManager> decryptedTextManager,
+        QWidget * parent = Q_NULLPTR, bool decryptPermanentlyFlag = false);
     virtual ~DecryptionDialog();
 
     QString passphrase() const;

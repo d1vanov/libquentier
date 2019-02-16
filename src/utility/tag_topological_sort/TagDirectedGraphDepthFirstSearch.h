@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Dmitry Ivanov
+ * Copyright 2017-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -37,9 +37,14 @@ public:
     bool hasCycle() const;
     const QStack<QString> & cycle() const;
 
-    const QQueue<QString> & tagIdsInPreOrder() const { return m_tagIdsInPreOrder; }
-    const QQueue<QString> & tagIdsInPostOrder() const { return m_tagIdsInPostOrder; }
-    const QStack<QString> & tagIdsInReversePostOrder() const { return m_tagIdsInReversePostOrder; }
+    const QQueue<QString> & tagIdsInPreOrder() const
+    { return m_tagIdsInPreOrder; }
+
+    const QQueue<QString> & tagIdsInPostOrder() const
+    { return m_tagIdsInPostOrder; }
+
+    const QStack<QString> & tagIdsInReversePostOrder() const
+    { return m_tagIdsInReversePostOrder; }
 
 private:
     void depthFirstSearch(const QString & sourceTagGuid);

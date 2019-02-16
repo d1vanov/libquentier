@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Dmitry Ivanov
+ * Copyright 2018-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -49,7 +49,8 @@ public:
     virtual int fromVersion() const = 0;
 
     /**
-     * @return      Version of local storage to which the patch would upgrade the local storage
+     * @return      Version of local storage to which the patch would upgrade
+     *              the local storage
      */
     virtual int toVersion() const = 0;
 
@@ -70,8 +71,8 @@ public:
      *
      * @param errorDescription      The textual description of the error in case
      *                              of backup preparation failure
-     * @return                      True if the local storage was backed up for the patch
-     *                              successfully, false otherwise
+     * @return                      True if the local storage was backed up for
+     *                              the patch successfully, false otherwise
      */
     virtual bool backupLocalStorage(ErrorString & errorDescription) = 0;
 
@@ -105,8 +106,10 @@ public:
     /**
      * Apply the patch to local storage
      *
-     * @param errorDescription      The textual description of the error in case of patch application failure
-     * @return                      True in case of successful patch application, false otherwise
+     * @param errorDescription      The textual description of the error in case
+     *                              of patch application failure
+     * @return                      True in case of successful patch application,
+     *                              false otherwise
      */
     virtual bool apply(ErrorString & errorDescription) = 0;
 

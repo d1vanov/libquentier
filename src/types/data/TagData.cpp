@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Dmitry Ivanov
+ * Copyright 2016-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -61,30 +61,43 @@ void TagData::clear()
 
 bool TagData::checkParameters(ErrorString & errorDescription) const
 {
-    if (m_qecTag.guid.isSet() && !checkGuid(m_qecTag.guid.ref())) {
-        errorDescription.setBase(QT_TRANSLATE_NOOP("TagData", "Tag's guid is invalid"));
+    if (m_qecTag.guid.isSet() && !checkGuid(m_qecTag.guid.ref()))
+    {
+        errorDescription.setBase(QT_TRANSLATE_NOOP("TagData",
+                                                   "Tag's guid is invalid"));
         errorDescription.details() = m_qecTag.guid;
         return false;
     }
 
-    if (m_linkedNotebookGuid.isSet() && !checkGuid(m_linkedNotebookGuid.ref())) {
-        errorDescription.setBase(QT_TRANSLATE_NOOP("TagData", "Tag's linked notebook guid is invalid"));
+    if (m_linkedNotebookGuid.isSet() && !checkGuid(m_linkedNotebookGuid.ref()))
+    {
+        errorDescription.setBase(QT_TRANSLATE_NOOP("TagData",
+                                                   "Tag's linked notebook guid "
+                                                   "is invalid"));
         errorDescription.details() = m_linkedNotebookGuid;
         return false;
     }
 
-    if (m_qecTag.name.isSet() && !Tag::validateName(m_qecTag.name.ref(), &errorDescription)) {
+    if (m_qecTag.name.isSet() &&
+        !Tag::validateName(m_qecTag.name.ref(), &errorDescription))
+    {
         return false;
     }
 
-    if (m_qecTag.updateSequenceNum.isSet() && !checkUpdateSequenceNumber(m_qecTag.updateSequenceNum)) {
-        errorDescription.setBase(QT_TRANSLATE_NOOP("TagData", "Tag's update sequence number is invalid"));
+    if (m_qecTag.updateSequenceNum.isSet() &&
+        !checkUpdateSequenceNumber(m_qecTag.updateSequenceNum))
+    {
+        errorDescription.setBase(QT_TRANSLATE_NOOP("TagData",
+                                                   "Tag's update sequence number "
+                                                   "is invalid"));
         errorDescription.details() = QString::number(m_qecTag.updateSequenceNum);
         return false;
     }
 
-    if (m_qecTag.parentGuid.isSet() && !checkGuid(m_qecTag.parentGuid.ref())) {
-        errorDescription.setBase(QT_TRANSLATE_NOOP("TagData", "Tag's parent guid is invalid"));
+    if (m_qecTag.parentGuid.isSet() && !checkGuid(m_qecTag.parentGuid.ref()))
+    {
+        errorDescription.setBase(QT_TRANSLATE_NOOP("TagData",
+                                                   "Tag's parent guid is invalid"));
         errorDescription.details() = m_qecTag.parentGuid;
         return false;
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 Dmitry Ivanov
+ * Copyright 2016-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -30,16 +30,28 @@ class Q_DECL_HIDDEN ImageResourceRotationUndoCommand: public INoteEditorUndoComm
 {
     Q_OBJECT
 public:
-    ImageResourceRotationUndoCommand(const QByteArray & resourceDataBefore, const QByteArray & resourceHashBefore,
-                                     const QByteArray & resourceRecognitionDataBefore, const QByteArray & resourceRecognitionDataHashBefore,
-                                     const QSize & resourceImageSizeBefore, const Resource & resourceAfter,
-                                     const INoteEditorBackend::Rotation::type rotationDirection,
-                                     NoteEditorPrivate & noteEditor, QUndoCommand * parent = Q_NULLPTR);
-    ImageResourceRotationUndoCommand(const QByteArray & resourceDataBefore, const QByteArray & resourceHashBefore,
-                                     const QByteArray & resourceRecognitionDataBefore, const QByteArray & resourceRecognitionDataHashBefore,
-                                     const QSize & resourceImageSizeBefore, const Resource & resourceAfter,
-                                     const INoteEditorBackend::Rotation::type rotationDirection,
-                                     NoteEditorPrivate & noteEditor, const QString & text, QUndoCommand * parent = Q_NULLPTR);
+    ImageResourceRotationUndoCommand(
+        const QByteArray & resourceDataBefore,
+        const QByteArray & resourceHashBefore,
+        const QByteArray & resourceRecognitionDataBefore,
+        const QByteArray & resourceRecognitionDataHashBefore,
+        const QSize & resourceImageSizeBefore,
+        const Resource & resourceAfter,
+        const INoteEditorBackend::Rotation::type rotationDirection,
+        NoteEditorPrivate & noteEditor,
+        QUndoCommand * parent = Q_NULLPTR);
+
+    ImageResourceRotationUndoCommand(
+        const QByteArray & resourceDataBefore,
+        const QByteArray & resourceHashBefore,
+        const QByteArray & resourceRecognitionDataBefore,
+        const QByteArray & resourceRecognitionDataHashBefore,
+        const QSize & resourceImageSizeBefore,
+        const Resource & resourceAfter,
+        const INoteEditorBackend::Rotation::type rotationDirection,
+        NoteEditorPrivate & noteEditor, const QString & text,
+        QUndoCommand * parent = Q_NULLPTR);
+
     virtual ~ImageResourceRotationUndoCommand();
 
     virtual void redoImpl() Q_DECL_OVERRIDE;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Dmitry Ivanov
+ * Copyright 2017-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -39,7 +39,8 @@ public:
                  const Account & account, QObject * parent = Q_NULLPTR,
                  const QString & userDictionaryPath = QString());
 
-    // The second bool in the pair indicates whether the dictionary is enabled or disabled
+    // The second bool in the pair indicates whether the dictionary
+    // is enabled or disabled
     QVector<QPair<QString,bool> > listAvailableDictionaries() const;
 
     void setAccount(const Account & account);

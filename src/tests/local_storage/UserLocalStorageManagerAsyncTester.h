@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Dmitry Ivanov
+ * Copyright 2016-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -45,15 +45,15 @@ Q_SIGNALS:
     void failure(QString errorDescription);
 
 // private signals:
-    void getUserCountRequest(QUuid requestId = QUuid());
-    void addUserRequest(User user, QUuid requestId = QUuid());
-    void updateUserRequest(User user, QUuid requestId = QUuid());
-    void findUserRequest(User user, QUuid requestId = QUuid());
-    void deleteUserRequest(User user, QUuid requestId = QUuid());
-    void expungeUserRequest(User user, QUuid requestId = QUuid());
+    void getUserCountRequest(QUuid requestId);
+    void addUserRequest(User user, QUuid requestId);
+    void updateUserRequest(User user, QUuid requestId);
+    void findUserRequest(User user, QUuid requestId);
+    void deleteUserRequest(User user, QUuid requestId);
+    void expungeUserRequest(User user, QUuid requestId);
 
 private Q_SLOTS:
-    void onWorkerInitialized();
+    void initialize();
     void onGetUserCountCompleted(int count, QUuid requestId);
     void onGetUserCountFailed(ErrorString errorDescription, QUuid requestId);
     void onAddUserCompleted(User user, QUuid requestId);

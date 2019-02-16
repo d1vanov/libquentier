@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Dmitry Ivanov
+ * Copyright 2016-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -23,16 +23,22 @@
 namespace quentier {
 
 #define GET_PAGE() \
-    NoteEditorPage * page = qobject_cast<NoteEditorPage*>(m_noteEditorPrivate.page()); \
+    NoteEditorPage * page = \
+        qobject_cast<NoteEditorPage*>(m_noteEditorPrivate.page()); \
     if (Q_UNLIKELY(!page)) { \
-        ErrorString error(QT_TRANSLATE_NOOP("DecryptUndoCommand", "Can't undo/redo the encrypted text decryption: no note editor page")); \
+        ErrorString error(QT_TRANSLATE_NOOP("DecryptUndoCommand", \
+                                            "Can't undo/redo the encrypted text "\
+                                            "decryption: no note editor page")); \
         QNWARNING(error); \
         Q_EMIT notifyError(error); \
         return; \
     }
 
-DecryptUndoCommand::DecryptUndoCommand(const EncryptDecryptUndoCommandInfo & info, const QSharedPointer<DecryptedTextManager> & decryptedTextManager,
-                                       NoteEditorPrivate & noteEditorPrivate, const Callback & callback, QUndoCommand * parent) :
+DecryptUndoCommand::DecryptUndoCommand(
+        const EncryptDecryptUndoCommandInfo & info,
+        const QSharedPointer<DecryptedTextManager> & decryptedTextManager,
+        NoteEditorPrivate & noteEditorPrivate, const Callback & callback,
+        QUndoCommand * parent) :
     INoteEditorUndoCommand(noteEditorPrivate, parent),
     m_info(info),
     m_decryptedTextManager(decryptedTextManager),
@@ -41,8 +47,11 @@ DecryptUndoCommand::DecryptUndoCommand(const EncryptDecryptUndoCommandInfo & inf
     setText(tr("Decrypt text"));
 }
 
-DecryptUndoCommand::DecryptUndoCommand(const EncryptDecryptUndoCommandInfo & info, const QSharedPointer<DecryptedTextManager> & decryptedTextManager,
-                                       NoteEditorPrivate & noteEditorPrivate, const Callback & callback, const QString & text, QUndoCommand * parent) :
+DecryptUndoCommand::DecryptUndoCommand(
+        const EncryptDecryptUndoCommandInfo & info,
+        const QSharedPointer<DecryptedTextManager> & decryptedTextManager,
+        NoteEditorPrivate & noteEditorPrivate, const Callback & callback,
+        const QString & text, QUndoCommand * parent) :
     INoteEditorUndoCommand(noteEditorPrivate, text, parent),
     m_info(info),
     m_decryptedTextManager(decryptedTextManager),
@@ -59,12 +68,14 @@ void DecryptUndoCommand::redoImpl()
     GET_PAGE()
 
     if (!m_info.m_decryptPermanently) {
-        m_decryptedTextManager->addEntry(m_info.m_encryptedText, m_info.m_decryptedText,
-                                         m_info.m_rememberForSession, m_info.m_passphrase,
-                                         m_info.m_cipher, m_info.m_keyLength);
+        m_decryptedTextManager->addEntry(
+            m_info.m_encryptedText, m_info.m_decryptedText,
+            m_info.m_rememberForSession, m_info.m_passphrase,
+            m_info.m_cipher, m_info.m_keyLength);
     }
 
-    page->executeJavaScript(QStringLiteral("encryptDecryptManager.redo();"), m_callback);
+    page->executeJavaScript(QStringLiteral("encryptDecryptManager.redo();"),
+                            m_callback);
 }
 
 void DecryptUndoCommand::undoImpl()
@@ -77,7 +88,8 @@ void DecryptUndoCommand::undoImpl()
         m_decryptedTextManager->removeEntry(m_info.m_encryptedText);
     }
 
-    page->executeJavaScript(QStringLiteral("encryptDecryptManager.undo();"), m_callback);
+    page->executeJavaScript(QStringLiteral("encryptDecryptManager.undo();"),
+                            m_callback);
 }
 
 } // namespace quentier

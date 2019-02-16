@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Dmitry Ivanov
+ * Copyright 2016-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -21,12 +21,15 @@
 
 namespace quentier {
 
-INoteEditorUndoCommand::INoteEditorUndoCommand(NoteEditorPrivate & noteEditorPrivate, QUndoCommand * parent) :
+INoteEditorUndoCommand::INoteEditorUndoCommand(NoteEditorPrivate & noteEditorPrivate,
+                                               QUndoCommand * parent) :
     QuentierUndoCommand(parent),
     m_noteEditorPrivate(noteEditorPrivate)
 {}
 
-INoteEditorUndoCommand::INoteEditorUndoCommand(NoteEditorPrivate & noteEditorPrivate, const QString & text, QUndoCommand * parent) :
+INoteEditorUndoCommand::INoteEditorUndoCommand(NoteEditorPrivate & noteEditorPrivate,
+                                               const QString & text,
+                                               QUndoCommand * parent) :
     QuentierUndoCommand(text, parent),
     m_noteEditorPrivate(noteEditorPrivate)
 {}

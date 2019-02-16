@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Dmitry Ivanov
+ * Copyright 2016-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -48,25 +48,27 @@ void NoteLocalStorageManagerAsyncTester::onInitTestCase()
 {
     QString username = QStringLiteral("NoteLocalStorageManagerAsyncTester");
     qint32 userId = 5;
-    bool startFromScratch = true;
-    bool overrideLock = false;
+    LocalStorageManager::StartupOptions startupOptions(
+        LocalStorageManager::StartupOption::ClearDatabase);
 
     clear();
 
     m_pLocalStorageManagerThread = new QThread(this);
     Account account(username, Account::Type::Evernote, userId);
-    m_pLocalStorageManagerAsync = new LocalStorageManagerAsync(account, startFromScratch, overrideLock);
+    m_pLocalStorageManagerAsync =
+        new LocalStorageManagerAsync(account, startupOptions);
 
     createConnections();
 
     m_pLocalStorageManagerAsync->init();
     m_pLocalStorageManagerAsync->moveToThread(m_pLocalStorageManagerThread);
 
-    m_pLocalStorageManagerThread->setObjectName(QStringLiteral("NoteLocalStorageManagerAsyncTester-local-storage-thread"));
+    m_pLocalStorageManagerThread->setObjectName(
+        QStringLiteral("NoteLocalStorageManagerAsyncTester-local-storage-thread"));
     m_pLocalStorageManagerThread->start();
 }
 
-void NoteLocalStorageManagerAsyncTester::onWorkerInitialized()
+void NoteLocalStorageManagerAsyncTester::initialize()
 {
     m_notebook.clear();
     m_notebook.setGuid(QStringLiteral("00000000-0000-0000-c000-000000000047"));
@@ -79,25 +81,29 @@ void NoteLocalStorageManagerAsyncTester::onWorkerInitialized()
     m_notebook.setPublishingUri(QStringLiteral("Fake publishing uri"));
     m_notebook.setPublishingOrder(1);
     m_notebook.setPublishingAscending(true);
-    m_notebook.setPublishingPublicDescription(QStringLiteral("Fake public description"));
+    m_notebook.setPublishingPublicDescription(
+        QStringLiteral("Fake public description"));
     m_notebook.setPublished(true);
     m_notebook.setStack(QStringLiteral("Fake notebook stack"));
-    m_notebook.setBusinessNotebookDescription(QStringLiteral("Fake business notebook description"));
+    m_notebook.setBusinessNotebookDescription(
+        QStringLiteral("Fake business notebook description"));
     m_notebook.setBusinessNotebookPrivilegeLevel(1);
     m_notebook.setBusinessNotebookRecommended(true);
 
     ErrorString errorDescription;
     if (!m_notebook.checkParameters(errorDescription)) {
-        QNWARNING(QStringLiteral("Found invalid notebook: ") << m_notebook << QStringLiteral(", error: ") << errorDescription);
+        QNWARNING(QStringLiteral("Found invalid notebook: ") << m_notebook
+                  << QStringLiteral(", error: ") << errorDescription);
         Q_EMIT failure(errorDescription.nonLocalizedString());
         return;
     }
 
     m_state = STATE_SENT_ADD_NOTEBOOK_REQUEST;
-    Q_EMIT addNotebookRequest(m_notebook);
+    Q_EMIT addNotebookRequest(m_notebook, QUuid::createUuid());
 }
 
-void NoteLocalStorageManagerAsyncTester::onAddNotebookCompleted(Notebook notebook, QUuid requestId)
+void NoteLocalStorageManagerAsyncTester::onAddNotebookCompleted(Notebook notebook,
+                                                                QUuid requestId)
 {
     Q_UNUSED(requestId)
 
@@ -105,7 +111,8 @@ void NoteLocalStorageManagerAsyncTester::onAddNotebookCompleted(Notebook noteboo
 
 #define HANDLE_WRONG_STATE() \
     else { \
-        errorDescription.setBase("Internal error in NoteLocalStorageManagerAsyncTester: found wrong state"); \
+        errorDescription.setBase("Internal error in NoteLocalStorageManagerAsyncTester: "\
+                                 "found wrong state"); \
         QNWARNING(errorDescription << ": " << m_state); \
         Q_EMIT failure(errorDescription.nonLocalizedString()); \
     }
@@ -133,7 +140,7 @@ void NoteLocalStorageManagerAsyncTester::onAddNotebookCompleted(Notebook noteboo
         m_initialNote.setActive(true);
 
         m_state = STATE_SENT_ADD_REQUEST;
-        Q_EMIT addNoteRequest(m_initialNote);
+        Q_EMIT addNoteRequest(m_initialNote, QUuid::createUuid());
     }
     else if (m_state == STATE_SENT_ADD_EXTRA_NOTEBOOK_REQUEST)
     {
@@ -149,18 +156,22 @@ void NoteLocalStorageManagerAsyncTester::onAddNotebookCompleted(Notebook noteboo
         extraNote.setTitle(QStringLiteral("Fake note title three"));
 
         m_state = STATE_SENT_ADD_EXTRA_NOTE_THREE_REQUEST;
-        Q_EMIT addNoteRequest(extraNote);
+        Q_EMIT addNoteRequest(extraNote, QUuid::createUuid());
     }
     HANDLE_WRONG_STATE();
 }
 
-void NoteLocalStorageManagerAsyncTester::onAddNotebookFailed(Notebook notebook, ErrorString errorDescription, QUuid requestId)
+void NoteLocalStorageManagerAsyncTester::onAddNotebookFailed(Notebook notebook,
+                                                             ErrorString errorDescription,
+                                                             QUuid requestId)
 {
-    QNWARNING(errorDescription << QStringLiteral(", requestId = ") << requestId << QStringLiteral(", Notebook: ") << notebook);
+    QNWARNING(errorDescription << QStringLiteral(", requestId = ") << requestId
+              << QStringLiteral(", Notebook: ") << notebook);
     Q_EMIT failure(errorDescription.nonLocalizedString());
 }
 
-void NoteLocalStorageManagerAsyncTester::onGetNoteCountCompleted(int count, QUuid requestId)
+void NoteLocalStorageManagerAsyncTester::onGetNoteCountCompleted(int count,
+                                                                 QUuid requestId)
 {
     Q_UNUSED(requestId)
 
@@ -169,7 +180,8 @@ void NoteLocalStorageManagerAsyncTester::onGetNoteCountCompleted(int count, QUui
     if (m_state == STATE_SENT_GET_COUNT_AFTER_UPDATE_REQUEST)
     {
         if (count != 1) {
-            errorDescription.setBase("GetNoteCount returned result different from the expected one (1)");
+            errorDescription.setBase("GetNoteCount returned result different "
+                                     "from the expected one (1)");
             errorDescription.details() = QString::number(count);
             QNWARNING(errorDescription);
             Q_EMIT failure(errorDescription.nonLocalizedString());
@@ -180,12 +192,15 @@ void NoteLocalStorageManagerAsyncTester::onGetNoteCountCompleted(int count, QUui
         m_modifiedNote.setActive(false);
         m_modifiedNote.setDeletionTimestamp(3);
         m_state = STATE_SENT_DELETE_REQUEST;
-        Q_EMIT updateNoteRequest(m_modifiedNote, LocalStorageManager::UpdateNoteOptions(0));
+        Q_EMIT updateNoteRequest(m_modifiedNote,
+                                 LocalStorageManager::UpdateNoteOptions(0),
+                                 QUuid::createUuid());
     }
     else if (m_state == STATE_SENT_GET_COUNT_AFTER_EXPUNGE_REQUEST)
     {
         if (count != 0) {
-            errorDescription.setBase("GetNoteCount returned result different from the expected one (0)");
+            errorDescription.setBase("GetNoteCount returned result different "
+                                     "from the expected one (0)");
             errorDescription.details() = QString::number(count);
             QNWARNING(errorDescription);
             Q_EMIT failure(errorDescription.nonLocalizedString());
@@ -239,12 +254,13 @@ void NoteLocalStorageManagerAsyncTester::onGetNoteCountCompleted(int count, QUui
         noteAttributes.sourceApplication = QStringLiteral("tester");
 
         m_state = STATE_SENT_ADD_EXTRA_NOTE_ONE_REQUEST;
-        Q_EMIT addNoteRequest(extraNote);
+        Q_EMIT addNoteRequest(extraNote, QUuid::createUuid());
     }
     HANDLE_WRONG_STATE();
 }
 
-void NoteLocalStorageManagerAsyncTester::onGetNoteCountFailed(ErrorString errorDescription, QUuid requestId)
+void NoteLocalStorageManagerAsyncTester::onGetNoteCountFailed(ErrorString errorDescription,
+                                                              QUuid requestId)
 {
     QNWARNING(errorDescription << QStringLiteral(", requestId = ") << requestId);
     Q_EMIT failure(errorDescription.nonLocalizedString());
@@ -260,7 +276,8 @@ void NoteLocalStorageManagerAsyncTester::onAddNoteCompleted(Note note, QUuid req
     {
         if (m_initialNote != note) {
             errorDescription.setBase("Internal error in NoteLocalStorageManagerAsyncTester: "
-                                     "note in onAddNoteCompleted slot doesn't match the original Note");
+                                     "note in onAddNoteCompleted slot doesn't match "
+                                     "the original Note");
             QNWARNING(errorDescription);
             Q_EMIT failure(errorDescription.nonLocalizedString());
             return;
@@ -270,9 +287,10 @@ void NoteLocalStorageManagerAsyncTester::onAddNoteCompleted(Note note, QUuid req
         m_foundNote.setLocalUid(note.localUid());
 
         m_state = STATE_SENT_FIND_AFTER_ADD_REQUEST;
-        bool withResourceMetadata = true;
-        bool withResourceBinaryData = true;
-        Q_EMIT findNoteRequest(m_foundNote, withResourceMetadata, withResourceBinaryData);
+        LocalStorageManager::GetNoteOptions options(
+            LocalStorageManager::GetNoteOption::WithResourceMetadata |
+            LocalStorageManager::GetNoteOption::WithResourceBinaryData);
+        Q_EMIT findNoteRequest(m_foundNote, options, QUuid::createUuid());
     }
     else if (m_state == STATE_SENT_ADD_EXTRA_NOTE_ONE_REQUEST)
     {
@@ -290,7 +308,7 @@ void NoteLocalStorageManagerAsyncTester::onAddNoteCompleted(Note note, QUuid req
         extraNote.setTitle(QStringLiteral("Fake note title two"));
 
         m_state = STATE_SENT_ADD_EXTRA_NOTE_TWO_REQUEST;
-        Q_EMIT addNoteRequest(extraNote);
+        Q_EMIT addNoteRequest(extraNote, QUuid::createUuid());
     }
     else if (m_state == STATE_SENT_ADD_EXTRA_NOTE_TWO_REQUEST)
     {
@@ -306,33 +324,40 @@ void NoteLocalStorageManagerAsyncTester::onAddNoteCompleted(Note note, QUuid req
         m_extraNotebook.setLastUsed(true);
 
         m_state = STATE_SENT_ADD_EXTRA_NOTEBOOK_REQUEST;
-        Q_EMIT addNotebookRequest(m_extraNotebook);
+        Q_EMIT addNotebookRequest(m_extraNotebook, QUuid::createUuid());
     }
     else if (m_state == STATE_SENT_ADD_EXTRA_NOTE_THREE_REQUEST)
     {
         m_initialNotes << note;
 
         m_state = STATE_SENT_LIST_NOTES_PER_NOTEBOOK_ONE_REQUEST;
-        bool withResourceMetadata = true;
-        bool withResourceBinaryData = true;
         LocalStorageManager::ListObjectsOptions flag = LocalStorageManager::ListAll;
         size_t limit = 0, offset = 0;
-        LocalStorageManager::ListNotesOrder::type order = LocalStorageManager::ListNotesOrder::NoOrder;
-        LocalStorageManager::OrderDirection::type orderDirection = LocalStorageManager::OrderDirection::Ascending;
-        Q_EMIT listNotesPerNotebookRequest(m_notebook, withResourceMetadata, withResourceBinaryData, flag,
-                                           limit, offset, order, orderDirection);
+        LocalStorageManager::ListNotesOrder::type order =
+            LocalStorageManager::ListNotesOrder::NoOrder;
+        LocalStorageManager::OrderDirection::type orderDirection =
+            LocalStorageManager::OrderDirection::Ascending;
+        LocalStorageManager::GetNoteOptions options(
+            LocalStorageManager::GetNoteOption::WithResourceMetadata |
+            LocalStorageManager::GetNoteOption::WithResourceBinaryData);
+        Q_EMIT listNotesPerNotebookRequest(m_notebook, options, flag,
+                                           limit, offset, order, orderDirection,
+                                           QUuid::createUuid());
     }
     HANDLE_WRONG_STATE();
 }
 
-void NoteLocalStorageManagerAsyncTester::onAddNoteFailed(Note note, ErrorString errorDescription, QUuid requestId)
+void NoteLocalStorageManagerAsyncTester::onAddNoteFailed(Note note,
+                                                         ErrorString errorDescription,
+                                                         QUuid requestId)
 {
-    QNWARNING(errorDescription << QStringLiteral(", requestId = ") << requestId << QStringLiteral(", note: ") << note);
+    QNWARNING(errorDescription << QStringLiteral(", requestId = ") << requestId
+              << QStringLiteral(", note: ") << note);
     Q_EMIT failure(errorDescription.nonLocalizedString());
 }
 
-void NoteLocalStorageManagerAsyncTester::onUpdateNoteCompleted(Note note, LocalStorageManager::UpdateNoteOptions options,
-                                                               QUuid requestId)
+void NoteLocalStorageManagerAsyncTester::onUpdateNoteCompleted(
+    Note note, LocalStorageManager::UpdateNoteOptions options, QUuid requestId)
 {
     Q_UNUSED(options)
     Q_UNUSED(requestId)
@@ -351,9 +376,10 @@ void NoteLocalStorageManagerAsyncTester::onUpdateNoteCompleted(Note note, LocalS
         }
 
         m_state = STATE_SENT_FIND_AFTER_UPDATE_REQUEST;
-        bool withResourceMetadata = true;
-        bool withResourceBinaryData = true;
-        Q_EMIT findNoteRequest(m_foundNote, withResourceMetadata, withResourceBinaryData);
+        LocalStorageManager::GetNoteOptions options(
+            LocalStorageManager::GetNoteOption::WithResourceMetadata |
+            LocalStorageManager::GetNoteOption::WithResourceBinaryData);
+        Q_EMIT findNoteRequest(m_foundNote, options, QUuid::createUuid());
     }
     else if (m_state == STATE_SENT_DELETE_REQUEST)
     {
@@ -361,7 +387,8 @@ void NoteLocalStorageManagerAsyncTester::onUpdateNoteCompleted(Note note, LocalS
 
         if (m_modifiedNote != note) {
             errorDescription.setBase("Internal error in NoteLocalStorageManagerAsyncTester: "
-                                     "note in onUpdateNoteCompleted slot after the deletion update doesn't match "
+                                     "note in onUpdateNoteCompleted slot after "
+                                     "the deletion update doesn't match "
                                      "the original deleted Note");
             QNWARNING(errorDescription);
             Q_EMIT failure(errorDescription.nonLocalizedString());
@@ -370,25 +397,27 @@ void NoteLocalStorageManagerAsyncTester::onUpdateNoteCompleted(Note note, LocalS
 
         m_modifiedNote.setLocal(true);
         m_state = STATE_SENT_EXPUNGE_REQUEST;
-        Q_EMIT expungeNoteRequest(m_modifiedNote);
+        Q_EMIT expungeNoteRequest(m_modifiedNote, QUuid::createUuid());
     }
     HANDLE_WRONG_STATE();
 }
 
-void NoteLocalStorageManagerAsyncTester::onUpdateNoteFailed(Note note, LocalStorageManager::UpdateNoteOptions options,
-                                                            ErrorString errorDescription, QUuid requestId)
+void NoteLocalStorageManagerAsyncTester::onUpdateNoteFailed(
+    Note note, LocalStorageManager::UpdateNoteOptions options,
+    ErrorString errorDescription, QUuid requestId)
 {
     Q_UNUSED(options)
 
-    QNWARNING(errorDescription << QStringLiteral(", requestId = ") << requestId << QStringLiteral(", note: ") << note);
+    QNWARNING(errorDescription << QStringLiteral(", requestId = ") << requestId
+              << QStringLiteral(", note: ") << note);
     Q_EMIT failure(errorDescription.nonLocalizedString());
 }
 
-void NoteLocalStorageManagerAsyncTester::onFindNoteCompleted(Note note, bool withResourceMetadata, bool withResourceBinaryData, QUuid requestId)
+void NoteLocalStorageManagerAsyncTester::onFindNoteCompleted(
+    Note note, LocalStorageManager::GetNoteOptions options, QUuid requestId)
 {
     Q_UNUSED(requestId)
-    Q_UNUSED(withResourceMetadata)
-    Q_UNUSED(withResourceBinaryData)
+    Q_UNUSED(options)
 
     ErrorString errorDescription;
 
@@ -396,9 +425,11 @@ void NoteLocalStorageManagerAsyncTester::onFindNoteCompleted(Note note, bool wit
     {
         if (m_initialNote != note) {
             errorDescription.setBase("Internal error in NoteLocalStorageManagerAsyncTester: "
-                                     "note in onFindNoteCompleted slot doesn't match the original Note");
-            QNWARNING(errorDescription << QStringLiteral("; original note: ") << m_initialNote
-                      << QStringLiteral("\nFound note: ") << note);
+                                     "note in onFindNoteCompleted slot doesn't "
+                                     "match the original Note");
+            QNWARNING(errorDescription << QStringLiteral("; original note: ")
+                      << m_initialNote << QStringLiteral("\nFound note: ")
+                      << note);
             Q_EMIT failure(errorDescription.nonLocalizedString());
             return;
         }
@@ -409,10 +440,11 @@ void NoteLocalStorageManagerAsyncTester::onFindNoteCompleted(Note note, bool wit
         m_modifiedNote.setTitle(m_initialNote.title() + QStringLiteral("_modified"));
 
         m_state = STATE_SENT_UPDATE_REQUEST;
-        Q_EMIT updateNoteRequest(m_modifiedNote,
-                                 LocalStorageManager::UpdateNoteOptions(LocalStorageManager::UpdateNoteOption::UpdateResourceMetadata |
-                                                                        LocalStorageManager::UpdateNoteOption::UpdateResourceBinaryData |
-                                                                        LocalStorageManager::UpdateNoteOption::UpdateTags));
+        LocalStorageManager::UpdateNoteOptions options(
+            LocalStorageManager::UpdateNoteOption::UpdateResourceMetadata |
+            LocalStorageManager::UpdateNoteOption::UpdateResourceBinaryData |
+            LocalStorageManager::UpdateNoteOption::UpdateTags);
+        Q_EMIT updateNoteRequest(m_modifiedNote, options, QUuid::createUuid());
     }
     else if (m_state == STATE_SENT_FIND_AFTER_UPDATE_REQUEST)
     {
@@ -428,45 +460,56 @@ void NoteLocalStorageManagerAsyncTester::onFindNoteCompleted(Note note, bool wit
         m_modifiedNote = note;
 
         m_state = STATE_SENT_GET_COUNT_AFTER_UPDATE_REQUEST;
-        Q_EMIT getNoteCountRequest();
+        Q_EMIT getNoteCountRequest(QUuid::createUuid());
     }
     else if (m_state == STATE_SENT_FIND_AFTER_EXPUNGE_REQUEST)
     {
-        errorDescription.setBase("Found note which should have been expunged from local storage");
-        QNWARNING(errorDescription << QStringLiteral(": Note expunged from LocalStorageManager: ") << m_modifiedNote
-                  << QStringLiteral("\nNote found in LocalStorageManager: ") << m_foundNote);
+        errorDescription.setBase("Found note which should have been expunged "
+                                 "from the local storage");
+        QNWARNING(errorDescription
+                  << QStringLiteral(": Note expunged from LocalStorageManager: ")
+                  << m_modifiedNote
+                  << QStringLiteral("\nNote found in LocalStorageManager: ")
+                  << m_foundNote);
         Q_EMIT failure(errorDescription.nonLocalizedString());
         return;
     }
     HANDLE_WRONG_STATE();
 }
 
-void NoteLocalStorageManagerAsyncTester::onFindNoteFailed(Note note, bool withResourceMetadata, bool withResourceBinaryData,
-                                                          ErrorString errorDescription, QUuid requestId)
+void NoteLocalStorageManagerAsyncTester::onFindNoteFailed(
+    Note note, LocalStorageManager::GetNoteOptions options,
+    ErrorString errorDescription, QUuid requestId)
 {
     if (m_state == STATE_SENT_FIND_AFTER_EXPUNGE_REQUEST) {
         m_state = STATE_SENT_GET_COUNT_AFTER_EXPUNGE_REQUEST;
-        Q_EMIT getNoteCountRequest();
+        Q_EMIT getNoteCountRequest(QUuid::createUuid());
         return;
     }
 
-    QNWARNING(errorDescription << QStringLiteral(", requestId = ") << requestId << QStringLiteral(", note: ") << note
-              << QStringLiteral("\nWith resource metadata = ") << (withResourceMetadata ? QStringLiteral("true") : QStringLiteral("false"))
-              << QStringLiteral(", with resource binary data = ") << (withResourceBinaryData ? QStringLiteral("true") : QStringLiteral("false")));
+    QNWARNING(errorDescription << QStringLiteral(", requestId = ") << requestId
+              << QStringLiteral(", note: ") << note
+              << QStringLiteral("\nWith resource metadata = ")
+              << ((options & LocalStorageManager::GetNoteOption::WithResourceMetadata)
+                  ? QStringLiteral("true")
+                  : QStringLiteral("false"))
+              << QStringLiteral(", with resource binary data = ")
+              << ((options & LocalStorageManager::GetNoteOption::WithResourceBinaryData)
+                  ? QStringLiteral("true")
+                  : QStringLiteral("false")));
     Q_EMIT failure(errorDescription.nonLocalizedString());
 }
 
-void NoteLocalStorageManagerAsyncTester::onListNotesPerNotebookCompleted(Notebook notebook, bool withResourceMetadata,
-                                                                         bool withResourceBinaryData,
-                                                                         LocalStorageManager::ListObjectsOptions flag,
-                                                                         size_t limit, size_t offset,
-                                                                         LocalStorageManager::ListNotesOrder::type order,
-                                                                         LocalStorageManager::OrderDirection::type orderDirection,
-                                                                         QList<Note> notes, QUuid requestId)
+void NoteLocalStorageManagerAsyncTester::onListNotesPerNotebookCompleted(
+    Notebook notebook, LocalStorageManager::GetNoteOptions options,
+    LocalStorageManager::ListObjectsOptions flag,
+    size_t limit, size_t offset,
+    LocalStorageManager::ListNotesOrder::type order,
+    LocalStorageManager::OrderDirection::type orderDirection,
+    QList<Note> notes, QUuid requestId)
 {
     Q_UNUSED(notebook)
-    Q_UNUSED(withResourceMetadata)
-    Q_UNUSED(withResourceBinaryData)
+    Q_UNUSED(options)
     Q_UNUSED(flag)
     Q_UNUSED(limit)
     Q_UNUSED(offset)
@@ -483,8 +526,10 @@ void NoteLocalStorageManagerAsyncTester::onListNotesPerNotebookCompleted(Noteboo
             const Note & note = *it;
 
             if (!m_initialNotes.contains(note)) {
-                errorDescription.setBase("One of found notes was not found within initial notes");
-                QNWARNING(errorDescription << QStringLiteral(", unfound note: ") << note);
+                errorDescription.setBase("One of found notes was not found "
+                                         "within initial notes");
+                QNWARNING(errorDescription << QStringLiteral(", unfound note: ")
+                          << note);
                 Q_EMIT failure(errorDescription.nonLocalizedString());
                 return;
             }
@@ -508,7 +553,8 @@ void NoteLocalStorageManagerAsyncTester::onListNotesPerNotebookCompleted(Noteboo
             const Note & note = *it;
 
             if (!m_initialNotes.contains(note)) {
-                errorDescription.setBase("One of found notes was not found within initial notes");
+                errorDescription.setBase("One of found notes was not found "
+                                         "within initial notes");
                 QNWARNING(errorDescription);
                 Q_EMIT failure(errorDescription.nonLocalizedString());
                 return;
@@ -531,13 +577,13 @@ void NoteLocalStorageManagerAsyncTester::onListNotesPerNotebookCompleted(Noteboo
     Q_EMIT success();
 }
 
-void NoteLocalStorageManagerAsyncTester::onListNotesPerNotebookFailed(Notebook notebook, bool withResourceMetadata,
-                                                                      bool withResourceBinaryData,
-                                                                      LocalStorageManager::ListObjectsOptions flag,
-                                                                      size_t limit, size_t offset,
-                                                                      LocalStorageManager::ListNotesOrder::type order,
-                                                                      LocalStorageManager::OrderDirection::type orderDirection,
-                                                                      ErrorString errorDescription, QUuid requestId)
+void NoteLocalStorageManagerAsyncTester::onListNotesPerNotebookFailed(
+    Notebook notebook, LocalStorageManager::GetNoteOptions options,
+    LocalStorageManager::ListObjectsOptions flag,
+    size_t limit, size_t offset,
+    LocalStorageManager::ListNotesOrder::type order,
+    LocalStorageManager::OrderDirection::type orderDirection,
+    ErrorString errorDescription, QUuid requestId)
 {
     Q_UNUSED(flag)
     Q_UNUSED(limit)
@@ -545,13 +591,21 @@ void NoteLocalStorageManagerAsyncTester::onListNotesPerNotebookFailed(Notebook n
     Q_UNUSED(order)
     Q_UNUSED(orderDirection)
 
-    QNWARNING(errorDescription << QStringLiteral(", requestId = ") << requestId << QStringLiteral(", notebook: ") << notebook
-              << QStringLiteral(", with resource metadata = ") << (withResourceMetadata ? QStringLiteral("true") : QStringLiteral("false"))
-              << QStringLiteral(", with resource binary data = ") << (withResourceBinaryData ? QStringLiteral("true") : QStringLiteral("false")));
+    QNWARNING(errorDescription << QStringLiteral(", requestId = ") << requestId
+              << QStringLiteral(", notebook: ") << notebook
+              << QStringLiteral(", with resource metadata = ")
+              << ((options & LocalStorageManager::GetNoteOption::WithResourceMetadata)
+                  ? QStringLiteral("true")
+                  : QStringLiteral("false"))
+              << QStringLiteral(", with resource binary data = ")
+              << ((options & LocalStorageManager::GetNoteOption::WithResourceBinaryData)
+                  ? QStringLiteral("true")
+                  : QStringLiteral("false")));
     Q_EMIT failure(errorDescription.nonLocalizedString());
 }
 
-void NoteLocalStorageManagerAsyncTester::onExpungeNoteCompleted(Note note, QUuid requestId)
+void NoteLocalStorageManagerAsyncTester::onExpungeNoteCompleted(Note note,
+                                                                QUuid requestId)
 {
     Q_UNUSED(requestId)
 
@@ -567,14 +621,17 @@ void NoteLocalStorageManagerAsyncTester::onExpungeNoteCompleted(Note note, QUuid
     }
 
     m_state = STATE_SENT_FIND_AFTER_EXPUNGE_REQUEST;
-    bool withResourceMetadata = true;
-    bool withResourceBinaryData = true;
-    Q_EMIT findNoteRequest(m_foundNote, withResourceMetadata, withResourceBinaryData);
+    LocalStorageManager::GetNoteOptions options(
+        LocalStorageManager::GetNoteOption::WithResourceMetadata |
+        LocalStorageManager::GetNoteOption::WithResourceBinaryData);
+    Q_EMIT findNoteRequest(m_foundNote, options, QUuid::createUuid());
 }
 
-void NoteLocalStorageManagerAsyncTester::onExpungeNoteFailed(Note note, ErrorString errorDescription, QUuid requestId)
+void NoteLocalStorageManagerAsyncTester::onExpungeNoteFailed(
+    Note note, ErrorString errorDescription, QUuid requestId)
 {
-    QNWARNING(errorDescription << QStringLiteral(", requestId = ") << requestId << QStringLiteral(", note: ") << note);
+    QNWARNING(errorDescription << QStringLiteral(", requestId = ") << requestId
+              << QStringLiteral(", note: ") << note);
     Q_EMIT failure(errorDescription.nonLocalizedString());
 }
 
@@ -583,69 +640,167 @@ void NoteLocalStorageManagerAsyncTester::createConnections()
     QObject::connect(m_pLocalStorageManagerThread, QNSIGNAL(QThread,finished),
                      m_pLocalStorageManagerThread, QNSLOT(QThread,deleteLater));
 
-    QObject::connect(m_pLocalStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,initialized),
-                     this, QNSLOT(NoteLocalStorageManagerAsyncTester,onWorkerInitialized));
+    QObject::connect(m_pLocalStorageManagerAsync,
+                     QNSIGNAL(LocalStorageManagerAsync,initialized),
+                     this,
+                     QNSLOT(NoteLocalStorageManagerAsyncTester,initialize));
 
     // Request --> slot connections
-    QObject::connect(this, QNSIGNAL(NoteLocalStorageManagerAsyncTester,addNotebookRequest,Notebook,QUuid),
-                     m_pLocalStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,onAddNotebookRequest,Notebook,QUuid));
-    QObject::connect(this, QNSIGNAL(NoteLocalStorageManagerAsyncTester,getNoteCountRequest,QUuid),
-                     m_pLocalStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,onGetNoteCountRequest,QUuid));
-    QObject::connect(this, QNSIGNAL(NoteLocalStorageManagerAsyncTester,addNoteRequest,Note,QUuid),
-                     m_pLocalStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,onAddNoteRequest,Note,QUuid));
-    QObject::connect(this, QNSIGNAL(NoteLocalStorageManagerAsyncTester,updateNoteRequest,Note,LocalStorageManager::UpdateNoteOptions,QUuid),
-                     m_pLocalStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,onUpdateNoteRequest,Note,LocalStorageManager::UpdateNoteOptions,QUuid));
-    QObject::connect(this, QNSIGNAL(NoteLocalStorageManagerAsyncTester,findNoteRequest,Note,bool,bool,QUuid),
-                     m_pLocalStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,onFindNoteRequest,Note,bool,bool,QUuid));
-    QObject::connect(this, QNSIGNAL(NoteLocalStorageManagerAsyncTester,listNotesPerNotebookRequest,Notebook,bool,bool,
-                                    LocalStorageManager::ListObjectsOptions,size_t,size_t,LocalStorageManager::ListNotesOrder::type,
-                                    LocalStorageManager::OrderDirection::type,QUuid),
-                     m_pLocalStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,onListNotesPerNotebookRequest,
-                                                         Notebook,bool,bool,LocalStorageManager::ListObjectsOptions,
-                                                         size_t,size_t,LocalStorageManager::ListNotesOrder::type,
-                                                         LocalStorageManager::OrderDirection::type,QUuid));
-    QObject::connect(this, QNSIGNAL(NoteLocalStorageManagerAsyncTester,expungeNoteRequest,Note,QUuid),
-                     m_pLocalStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,onExpungeNoteRequest,Note,QUuid));
+    QObject::connect(this,
+                     QNSIGNAL(NoteLocalStorageManagerAsyncTester,addNotebookRequest,
+                              Notebook,QUuid),
+                     m_pLocalStorageManagerAsync,
+                     QNSLOT(LocalStorageManagerAsync,onAddNotebookRequest,
+                            Notebook,QUuid));
+    QObject::connect(this,
+                     QNSIGNAL(NoteLocalStorageManagerAsyncTester,
+                              getNoteCountRequest, QUuid),
+                     m_pLocalStorageManagerAsync,
+                     QNSLOT(LocalStorageManagerAsync,onGetNoteCountRequest,QUuid));
+    QObject::connect(this,
+                     QNSIGNAL(NoteLocalStorageManagerAsyncTester,addNoteRequest,
+                              Note,QUuid),
+                     m_pLocalStorageManagerAsync,
+                     QNSLOT(LocalStorageManagerAsync,onAddNoteRequest,Note,QUuid));
+    QObject::connect(this,
+                     QNSIGNAL(NoteLocalStorageManagerAsyncTester,updateNoteRequest,
+                              Note,LocalStorageManager::UpdateNoteOptions,QUuid),
+                     m_pLocalStorageManagerAsync,
+                     QNSLOT(LocalStorageManagerAsync,onUpdateNoteRequest,
+                            Note,LocalStorageManager::UpdateNoteOptions,QUuid));
+    QObject::connect(this,
+                     QNSIGNAL(NoteLocalStorageManagerAsyncTester,findNoteRequest,
+                              Note,LocalStorageManager::GetNoteOptions,QUuid),
+                     m_pLocalStorageManagerAsync,
+                     QNSLOT(LocalStorageManagerAsync,onFindNoteRequest,
+                            Note,LocalStorageManager::GetNoteOptions,QUuid));
+    QObject::connect(this,
+                     QNSIGNAL(NoteLocalStorageManagerAsyncTester,
+                              listNotesPerNotebookRequest,Notebook,
+                              LocalStorageManager::GetNoteOptions,
+                              LocalStorageManager::ListObjectsOptions,size_t,
+                              size_t,LocalStorageManager::ListNotesOrder::type,
+                              LocalStorageManager::OrderDirection::type,QUuid),
+                     m_pLocalStorageManagerAsync,
+                     QNSLOT(LocalStorageManagerAsync,onListNotesPerNotebookRequest,
+                            Notebook,LocalStorageManager::GetNoteOptions,
+                            LocalStorageManager::ListObjectsOptions,
+                            size_t,size_t,LocalStorageManager::ListNotesOrder::type,
+                            LocalStorageManager::OrderDirection::type,QUuid));
+    QObject::connect(this,
+                     QNSIGNAL(NoteLocalStorageManagerAsyncTester,expungeNoteRequest,
+                              Note,QUuid),
+                     m_pLocalStorageManagerAsync,
+                     QNSLOT(LocalStorageManagerAsync,onExpungeNoteRequest,
+                            Note,QUuid));
 
     // Slot <-- result connections
-    QObject::connect(m_pLocalStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,addNotebookComplete,Notebook,QUuid),
-                     this, QNSLOT(NoteLocalStorageManagerAsyncTester,onAddNotebookCompleted,Notebook,QUuid));
-    QObject::connect(m_pLocalStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,addNotebookFailed,Notebook,ErrorString,QUuid),
-                     this, QNSLOT(NoteLocalStorageManagerAsyncTester,onAddNotebookFailed,Notebook,ErrorString,QUuid));
-    QObject::connect(m_pLocalStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,getNoteCountComplete,int,QUuid),
-                     this, QNSLOT(NoteLocalStorageManagerAsyncTester,onGetNoteCountCompleted,int,QUuid));
-    QObject::connect(m_pLocalStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,getNoteCountFailed,ErrorString,QUuid),
-                     this, QNSLOT(NoteLocalStorageManagerAsyncTester,onGetNoteCountFailed,ErrorString,QUuid));
-    QObject::connect(m_pLocalStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,addNoteComplete,Note,QUuid),
-                     this, QNSLOT(NoteLocalStorageManagerAsyncTester,onAddNoteCompleted,Note,QUuid));
-    QObject::connect(m_pLocalStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,addNoteFailed,Note,ErrorString,QUuid),
-                     this, QNSLOT(NoteLocalStorageManagerAsyncTester,onAddNoteFailed,Note,ErrorString,QUuid));
-    QObject::connect(m_pLocalStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,updateNoteComplete,Note,LocalStorageManager::UpdateNoteOptions,QUuid),
-                     this, QNSLOT(NoteLocalStorageManagerAsyncTester,onUpdateNoteCompleted,Note,LocalStorageManager::UpdateNoteOptions,QUuid));
-    QObject::connect(m_pLocalStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,updateNoteFailed,Note,LocalStorageManager::UpdateNoteOptions,ErrorString,QUuid),
-                     this, QNSLOT(NoteLocalStorageManagerAsyncTester,onUpdateNoteFailed,Note,LocalStorageManager::UpdateNoteOptions,ErrorString,QUuid));
-    QObject::connect(m_pLocalStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,findNoteComplete,Note,bool,bool,QUuid),
-                     this, QNSLOT(NoteLocalStorageManagerAsyncTester,onFindNoteCompleted,Note,bool,bool,QUuid));
-    QObject::connect(m_pLocalStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,findNoteFailed,Note,bool,bool,ErrorString,QUuid),
-                     this, QNSLOT(NoteLocalStorageManagerAsyncTester,onFindNoteFailed,Note,bool,bool,ErrorString,QUuid));
     QObject::connect(m_pLocalStorageManagerAsync,
-                     QNSIGNAL(LocalStorageManagerAsync,listNotesPerNotebookComplete,Notebook,bool,bool,
-                              LocalStorageManager::ListObjectsOptions,size_t,size_t,LocalStorageManager::ListNotesOrder::type,
-                              LocalStorageManager::OrderDirection::type,QList<Note>,QUuid),
-                     this, QNSLOT(NoteLocalStorageManagerAsyncTester,onListNotesPerNotebookCompleted,Notebook,bool,bool,
-                                  LocalStorageManager::ListObjectsOptions,size_t,size_t,LocalStorageManager::ListNotesOrder::type,
-                                  LocalStorageManager::OrderDirection::type,QList<Note>,QUuid));
+                     QNSIGNAL(LocalStorageManagerAsync,addNotebookComplete,
+                              Notebook,QUuid),
+                     this,
+                     QNSLOT(NoteLocalStorageManagerAsyncTester,onAddNotebookCompleted,
+                            Notebook,QUuid));
     QObject::connect(m_pLocalStorageManagerAsync,
-                     QNSIGNAL(LocalStorageManagerAsync,listNotesPerNotebookFailed,Notebook,bool,bool,
-                              LocalStorageManager::ListObjectsOptions,size_t,size_t,LocalStorageManager::ListNotesOrder::type,
-                              LocalStorageManager::OrderDirection::type,ErrorString,QUuid),
-                     this, QNSLOT(NoteLocalStorageManagerAsyncTester,onListNotesPerNotebookFailed,Notebook,bool,bool,
-                                  LocalStorageManager::ListObjectsOptions,size_t,size_t,LocalStorageManager::ListNotesOrder::type,
-                                  LocalStorageManager::OrderDirection::type,ErrorString,QUuid));
-    QObject::connect(m_pLocalStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,expungeNoteComplete,Note,QUuid),
-                     this, QNSLOT(NoteLocalStorageManagerAsyncTester,onExpungeNoteCompleted,Note,QUuid));
-    QObject::connect(m_pLocalStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,expungeNoteFailed,Note,ErrorString,QUuid),
-                     this, QNSLOT(NoteLocalStorageManagerAsyncTester,onExpungeNoteFailed,Note,ErrorString,QUuid));
+                     QNSIGNAL(LocalStorageManagerAsync,addNotebookFailed,
+                              Notebook,ErrorString,QUuid),
+                     this,
+                     QNSLOT(NoteLocalStorageManagerAsyncTester,onAddNotebookFailed,
+                            Notebook,ErrorString,QUuid));
+    QObject::connect(m_pLocalStorageManagerAsync,
+                     QNSIGNAL(LocalStorageManagerAsync,getNoteCountComplete,
+                              int,QUuid),
+                     this,
+                     QNSLOT(NoteLocalStorageManagerAsyncTester,onGetNoteCountCompleted,
+                            int,QUuid));
+    QObject::connect(m_pLocalStorageManagerAsync,
+                     QNSIGNAL(LocalStorageManagerAsync,getNoteCountFailed,
+                              ErrorString,QUuid),
+                     this,
+                     QNSLOT(NoteLocalStorageManagerAsyncTester,onGetNoteCountFailed,
+                            ErrorString,QUuid));
+    QObject::connect(m_pLocalStorageManagerAsync,
+                     QNSIGNAL(LocalStorageManagerAsync,addNoteComplete,Note,QUuid),
+                     this,
+                     QNSLOT(NoteLocalStorageManagerAsyncTester,onAddNoteCompleted,
+                            Note,QUuid));
+    QObject::connect(m_pLocalStorageManagerAsync,
+                     QNSIGNAL(LocalStorageManagerAsync,addNoteFailed,
+                              Note,ErrorString,QUuid),
+                     this,
+                     QNSLOT(NoteLocalStorageManagerAsyncTester,onAddNoteFailed,
+                            Note,ErrorString,QUuid));
+    QObject::connect(m_pLocalStorageManagerAsync,
+                     QNSIGNAL(LocalStorageManagerAsync,updateNoteComplete,
+                              Note,LocalStorageManager::UpdateNoteOptions,QUuid),
+                     this,
+                     QNSLOT(NoteLocalStorageManagerAsyncTester,onUpdateNoteCompleted,
+                            Note,LocalStorageManager::UpdateNoteOptions,QUuid));
+    QObject::connect(m_pLocalStorageManagerAsync,
+                     QNSIGNAL(LocalStorageManagerAsync,updateNoteFailed,
+                              Note,LocalStorageManager::UpdateNoteOptions,
+                              ErrorString,QUuid),
+                     this,
+                     QNSLOT(NoteLocalStorageManagerAsyncTester,onUpdateNoteFailed,
+                            Note,LocalStorageManager::UpdateNoteOptions,
+                            ErrorString,QUuid));
+    QObject::connect(m_pLocalStorageManagerAsync,
+                     QNSIGNAL(LocalStorageManagerAsync,findNoteComplete,
+                              Note,LocalStorageManager::GetNoteOptions,QUuid),
+                     this,
+                     QNSLOT(NoteLocalStorageManagerAsyncTester,
+                            onFindNoteCompleted,
+                            Note,LocalStorageManager::GetNoteOptions,QUuid));
+    QObject::connect(m_pLocalStorageManagerAsync,
+                     QNSIGNAL(LocalStorageManagerAsync,findNoteFailed,
+                              Note,LocalStorageManager::GetNoteOptions,
+                              ErrorString,QUuid),
+                     this,
+                     QNSLOT(NoteLocalStorageManagerAsyncTester,onFindNoteFailed,
+                            Note,LocalStorageManager::GetNoteOptions,
+                            ErrorString,QUuid));
+    QObject::connect(m_pLocalStorageManagerAsync,
+                     QNSIGNAL(LocalStorageManagerAsync,listNotesPerNotebookComplete,
+                              Notebook,LocalStorageManager::GetNoteOptions,
+                              LocalStorageManager::ListObjectsOptions,size_t,
+                              size_t,LocalStorageManager::ListNotesOrder::type,
+                              LocalStorageManager::OrderDirection::type,
+                              QList<Note>,QUuid),
+                     this,
+                     QNSLOT(NoteLocalStorageManagerAsyncTester,
+                            onListNotesPerNotebookCompleted,Notebook,
+                            LocalStorageManager::GetNoteOptions,
+                            LocalStorageManager::ListObjectsOptions,size_t,
+                            size_t,LocalStorageManager::ListNotesOrder::type,
+                            LocalStorageManager::OrderDirection::type,
+                            QList<Note>,QUuid));
+    QObject::connect(m_pLocalStorageManagerAsync,
+                     QNSIGNAL(LocalStorageManagerAsync,listNotesPerNotebookFailed,
+                              Notebook,LocalStorageManager::GetNoteOptions,
+                              LocalStorageManager::ListObjectsOptions,size_t,
+                              size_t,LocalStorageManager::ListNotesOrder::type,
+                              LocalStorageManager::OrderDirection::type,
+                              ErrorString,QUuid),
+                     this,
+                     QNSLOT(NoteLocalStorageManagerAsyncTester,
+                            onListNotesPerNotebookFailed,Notebook,
+                            LocalStorageManager::GetNoteOptions,
+                            LocalStorageManager::ListObjectsOptions,size_t,
+                            size_t,LocalStorageManager::ListNotesOrder::type,
+                            LocalStorageManager::OrderDirection::type,
+                            ErrorString,QUuid));
+    QObject::connect(m_pLocalStorageManagerAsync,
+                     QNSIGNAL(LocalStorageManagerAsync,expungeNoteComplete,
+                              Note,QUuid),
+                     this,
+                     QNSLOT(NoteLocalStorageManagerAsyncTester,
+                            onExpungeNoteCompleted,Note,QUuid));
+    QObject::connect(m_pLocalStorageManagerAsync,
+                     QNSIGNAL(LocalStorageManagerAsync,expungeNoteFailed,
+                              Note,ErrorString,QUuid),
+                     this,
+                     QNSLOT(NoteLocalStorageManagerAsyncTester,onExpungeNoteFailed,
+                            Note,ErrorString,QUuid));
 }
 
 void NoteLocalStorageManagerAsyncTester::clear()

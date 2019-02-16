@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Dmitry Ivanov
+ * Copyright 2016-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -23,19 +23,25 @@
 namespace quentier {
 
 #define GET_PAGE() \
-    NoteEditorPage * page = qobject_cast<NoteEditorPage*>(m_noteEditorPrivate.page()); \
+    NoteEditorPage * page = \
+        qobject_cast<NoteEditorPage*>(m_noteEditorPrivate.page()); \
     if (Q_UNLIKELY(!page)) { \
-        ErrorString error(QT_TRANSLATE_NOOP("ImageResizeUndoCommand", "Can't undo/redo image resizing: can't get note editor page")); \
+        ErrorString error(QT_TRANSLATE_NOOP("ImageResizeUndoCommand", \
+                                            "Can't undo/redo image resizing: "\
+                                            "can't get note editor page")); \
         QNWARNING(error); \
         Q_EMIT notifyError(error); \
         return; \
     }
 
-ImageResizeUndoCommand::ImageResizeUndoCommand(NoteEditorPrivate & noteEditor, QUndoCommand * parent) :
+ImageResizeUndoCommand::ImageResizeUndoCommand(NoteEditorPrivate & noteEditor,
+                                               QUndoCommand * parent) :
     INoteEditorUndoCommand(noteEditor, parent)
 {}
 
-ImageResizeUndoCommand::ImageResizeUndoCommand(NoteEditorPrivate & noteEditor, const QString & text, QUndoCommand * parent) :
+ImageResizeUndoCommand::ImageResizeUndoCommand(NoteEditorPrivate & noteEditor,
+                                               const QString & text,
+                                               QUndoCommand * parent) :
     INoteEditorUndoCommand(noteEditor, text, parent)
 {}
 

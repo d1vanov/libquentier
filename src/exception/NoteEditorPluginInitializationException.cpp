@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Dmitry Ivanov
+ * Copyright 2016-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -20,7 +20,8 @@
 
 namespace quentier {
 
-NoteEditorPluginInitializationException::NoteEditorPluginInitializationException(const ErrorString & message) :
+NoteEditorPluginInitializationException::NoteEditorPluginInitializationException(
+        const ErrorString & message) :
     IQuentierException(message)
 {}
 

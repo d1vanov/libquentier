@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Dmitry Ivanov
+ * Copyright 2016-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -29,8 +29,11 @@ class Q_DECL_HIDDEN EditHyperlinkUndoCommand: public INoteEditorUndoCommand
     Q_OBJECT
     typedef NoteEditorPage::Callback Callback;
 public:
-    EditHyperlinkUndoCommand(NoteEditorPrivate & noteEditorPrivate, const Callback & callback, QUndoCommand * parent = Q_NULLPTR);
-    EditHyperlinkUndoCommand(NoteEditorPrivate & noteEditorPrivate, const Callback & callback, const QString & text, QUndoCommand * parent = Q_NULLPTR);
+    EditHyperlinkUndoCommand(NoteEditorPrivate & noteEditorPrivate,
+                             const Callback & callback, QUndoCommand * parent = Q_NULLPTR);
+    EditHyperlinkUndoCommand(NoteEditorPrivate & noteEditorPrivate,
+                             const Callback & callback, const QString & text,
+                             QUndoCommand * parent = Q_NULLPTR);
     virtual ~EditHyperlinkUndoCommand();
 
     virtual void redoImpl() Q_DECL_OVERRIDE;

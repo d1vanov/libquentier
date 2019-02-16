@@ -1,3 +1,21 @@
+/*
+ * Copyright 2016-2019 Dmitry Ivanov
+ *
+ * This file is part of libquentier
+ *
+ * libquentier is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, version 3 of the License.
+ *
+ * libquentier is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
+ */
+
 #include "AccountData.h"
 
 #if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
@@ -80,7 +98,8 @@ AccountData::AccountData(AccountData && other) :
     m_noteResourceCountMax(std::move(other.m_noteResourceCountMax))
 {}
 
-void AccountData::switchEvernoteAccountType(const Account::EvernoteAccountType::type evernoteAccountType)
+void AccountData::switchEvernoteAccountType(
+    const Account::EvernoteAccountType::type evernoteAccountType)
 {
     m_evernoteAccountType = evernoteAccountType;
     m_mailLimitDaily = mailLimitDaily();
@@ -97,16 +116,36 @@ void AccountData::switchEvernoteAccountType(const Account::EvernoteAccountType::
 
 void AccountData::setEvernoteAccountLimits(const qevercloud::AccountLimits & limits)
 {
-    m_mailLimitDaily = (limits.userMailLimitDaily.isSet() ? limits.userMailLimitDaily.ref() : mailLimitDaily());
-    m_noteSizeMax = (limits.noteSizeMax.isSet() ? limits.noteSizeMax.ref() : noteSizeMax());
-    m_resourceSizeMax = (limits.resourceSizeMax.isSet() ? limits.resourceSizeMax.ref() : resourceSizeMax());
-    m_linkedNotebookMax = (limits.userLinkedNotebookMax.isSet() ? limits.userLinkedNotebookMax.ref() : linkedNotebookMax());
-    m_noteCountMax = (limits.userNoteCountMax.isSet() ? limits.userNoteCountMax.ref() : noteCountMax());
-    m_notebookCountMax = (limits.userNotebookCountMax.isSet() ? limits.userNotebookCountMax.ref() : notebookCountMax());
-    m_tagCountMax = (limits.userTagCountMax.isSet() ? limits.userTagCountMax.ref() : tagCountMax());
-    m_noteTagCountMax = (limits.noteTagCountMax.isSet() ? limits.noteTagCountMax.ref() : noteTagCountMax());
-    m_savedSearchCountMax = (limits.userSavedSearchesMax.isSet() ? limits.userSavedSearchesMax.ref() : savedSearchCountMax());
-    m_noteResourceCountMax = (limits.noteResourceCountMax.isSet() ? limits.noteResourceCountMax.ref() : noteResourceCountMax());
+    m_mailLimitDaily = (limits.userMailLimitDaily.isSet()
+                        ? limits.userMailLimitDaily.ref()
+                        : mailLimitDaily());
+    m_noteSizeMax = (limits.noteSizeMax.isSet()
+                     ? limits.noteSizeMax.ref()
+                     : noteSizeMax());
+    m_resourceSizeMax = (limits.resourceSizeMax.isSet()
+                         ? limits.resourceSizeMax.ref()
+                         : resourceSizeMax());
+    m_linkedNotebookMax = (limits.userLinkedNotebookMax.isSet()
+                           ? limits.userLinkedNotebookMax.ref()
+                           : linkedNotebookMax());
+    m_noteCountMax = (limits.userNoteCountMax.isSet()
+                      ? limits.userNoteCountMax.ref()
+                      : noteCountMax());
+    m_notebookCountMax = (limits.userNotebookCountMax.isSet()
+                          ? limits.userNotebookCountMax.ref()
+                          : notebookCountMax());
+    m_tagCountMax = (limits.userTagCountMax.isSet()
+                     ? limits.userTagCountMax.ref()
+                     : tagCountMax());
+    m_noteTagCountMax = (limits.noteTagCountMax.isSet()
+                         ? limits.noteTagCountMax.ref()
+                         : noteTagCountMax());
+    m_savedSearchCountMax = (limits.userSavedSearchesMax.isSet()
+                             ? limits.userSavedSearchesMax.ref()
+                             : savedSearchCountMax());
+    m_noteResourceCountMax = (limits.noteResourceCountMax.isSet()
+                              ? limits.noteResourceCountMax.ref()
+                              : noteResourceCountMax());
 }
 
 qint32 AccountData::mailLimitDaily() const

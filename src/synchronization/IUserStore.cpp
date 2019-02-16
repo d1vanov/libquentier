@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Dmitry Ivanov
+ * Copyright 2018-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -30,7 +30,8 @@ QSharedPointer<qevercloud::UserStore> IUserStore::getQecUserStore() const
     return m_pQecUserStore;
 }
 
-void IUserStore::setQecUserStore(const QSharedPointer<qevercloud::UserStore> & pQecUserStore)
+void IUserStore::setQecUserStore(
+    const QSharedPointer<qevercloud::UserStore> & pQecUserStore)
 {
     m_pQecUserStore = pQecUserStore;
 }

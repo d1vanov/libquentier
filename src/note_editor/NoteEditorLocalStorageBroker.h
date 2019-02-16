@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Dmitry Ivanov
+ * Copyright 2018-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -43,10 +43,12 @@ public:
 
 Q_SIGNALS:
     void noteSavedToLocalStorage(QString noteLocalUid);
-    void failedToSaveNoteToLocalStorage(QString noteLocalUid, ErrorString errorDescription);
+    void failedToSaveNoteToLocalStorage(QString noteLocalUid,
+                                        ErrorString errorDescription);
 
     void foundNoteAndNotebook(Note note, Notebook notebook);
-    void failedToFindNoteOrNotebook(QString noteLocalUid, ErrorString errorDescription);
+    void failedToFindNoteOrNotebook(QString noteLocalUid,
+                                    ErrorString errorDescription);
 
     void noteUpdated(Note note);
     void notebookUpdated(Notebook);
@@ -54,16 +56,23 @@ Q_SIGNALS:
     void notebookDeleted(QString notebookLocalUid);
 
     void foundResourceData(Resource resource);
-    void failedToFindResourceData(QString resourceLocalUid, ErrorString errorDescription);
+    void failedToFindResourceData(QString resourceLocalUid,
+                                  ErrorString errorDescription);
 
 // private signals
-    void updateNote(Note note, LocalStorageManager::UpdateNoteOptions options, QUuid requestId);
+    void updateNote(Note note,
+                    LocalStorageManager::UpdateNoteOptions options,
+                    QUuid requestId);
     void addResource(Resource resource, QUuid requestId);
     void updateResource(Resource resource, QUuid requestId);
     void expungeResource(Resource resource, QUuid requestId);
-    void findNote(Note note, bool withResourceMetadata, bool withResourceBinaryData, QUuid requestId);
+    void findNote(Note note,
+                  LocalStorageManager::GetNoteOptions options,
+                  QUuid requestId);
     void findNotebook(Notebook notebook, QUuid requestId);
-    void findResource(Resource resource, bool withBinaryData, QUuid requestId);
+    void findResource(Resource resource,
+                      LocalStorageManager::GetResourceOptions options,
+                      QUuid requestId);
 
 public Q_SLOTS:
     void saveNoteToLocalStorage(const Note & note);
@@ -71,31 +80,47 @@ public Q_SLOTS:
     void findResourceData(const QString & resourceLocalUid);
 
 private Q_SLOTS:
-    void onUpdateNoteComplete(Note note, LocalStorageManager::UpdateNoteOptions options, QUuid requestId);
-    void onUpdateNoteFailed(Note note, LocalStorageManager::UpdateNoteOptions options,
+    void onUpdateNoteComplete(Note note,
+                              LocalStorageManager::UpdateNoteOptions options,
+                              QUuid requestId);
+    void onUpdateNoteFailed(Note note,
+                            LocalStorageManager::UpdateNoteOptions options,
                             ErrorString errorDescription, QUuid requestId);
     void onUpdateNotebookComplete(Notebook notebook, QUuid requestId);
 
-    void onFindNoteComplete(Note foundNote, bool withResourceMetadata, bool withResourceBinaryData, QUuid requestId);
-    void onFindNoteFailed(Note note, bool withResourceMetadata, bool withResourceBinaryData,
+    void onFindNoteComplete(Note foundNote,
+                            LocalStorageManager::GetNoteOptions options,
+                            QUuid requestId);
+    void onFindNoteFailed(Note note, LocalStorageManager::GetNoteOptions options,
                           ErrorString errorDescription, QUuid requestId);
     void onFindNotebookComplete(Notebook foundNotebook, QUuid requestId);
-    void onFindNotebookFailed(Notebook notebook, ErrorString errorDescription, QUuid requestId);
+    void onFindNotebookFailed(Notebook notebook,
+                              ErrorString errorDescription,
+                              QUuid requestId);
 
     void onAddResourceComplete(Resource resource, QUuid requestId);
-    void onAddResourceFailed(Resource resource, ErrorString errorDescription, QUuid requestId);
+    void onAddResourceFailed(Resource resource,
+                             ErrorString errorDescription,
+                             QUuid requestId);
 
     void onUpdateResourceComplete(Resource resource, QUuid requestId);
-    void onUpdateResourceFailed(Resource resource, ErrorString errorDescription, QUuid requestId);
+    void onUpdateResourceFailed(Resource resource,
+                                ErrorString errorDescription,
+                                QUuid requestId);
 
     void onExpungeResourceComplete(Resource resource, QUuid requestId);
-    void onExpungeResourceFailed(Resource resource, ErrorString errorDescription, QUuid requestId);
+    void onExpungeResourceFailed(Resource resource,
+                                 ErrorString errorDescription, QUuid requestId);
 
     void onExpungeNoteComplete(Note note, QUuid requestId);
     void onExpungeNotebookComplete(Notebook notebook, QUuid requestId);
 
-    void onFindResourceComplete(Resource resource, bool withBinaryData, QUuid requestId);
-    void onFindResourceFailed(Resource resource, bool withBinaryData, ErrorString errorDescription, QUuid requestId);
+    void onFindResourceComplete(Resource resource,
+                                LocalStorageManager::GetResourceOptions options,
+                                QUuid requestId);
+    void onFindResourceFailed(Resource resource,
+                              LocalStorageManager::GetResourceOptions options,
+                              ErrorString errorDescription, QUuid requestId);
 
     void onSwitchUserComplete(Account account, QUuid requestId);
 
@@ -106,13 +131,17 @@ private:
     void emitFindNoteRequest(const QString & noteLocalUid);
     void emitUpdateNoteRequest(const Note & note);
 
-    void emitFindNotebookForNoteByLocalUidRequest(const QString & notebookLocalUid, const Note & note);
-    void emitFindNotebookForNoteByGuidRequest(const QString & notebookGuid, const Note & note);
+    void emitFindNotebookForNoteByLocalUidRequest(const QString & notebookLocalUid,
+                                                  const Note & note);
+    void emitFindNotebookForNoteByGuidRequest(const QString & notebookGuid,
+                                              const Note & note);
 
     typedef QHash<QString, Note> NotesHash;
     typedef QHash<QString, NotesHash> NotesPendingNotebookFindingHash;
-    void emitFindNotebookForNoteRequest(const Notebook & notebook, const Note & note,
-                                        NotesPendingNotebookFindingHash & notesPendingNotebookFinding);
+    void emitFindNotebookForNoteRequest(
+                    const Notebook & notebook,
+                    const Note & note,
+                    NotesPendingNotebookFindingHash & notesPendingNotebookFinding);
 
 
     void saveNoteToLocalStorageImpl(const Note & previousNoteVersion,

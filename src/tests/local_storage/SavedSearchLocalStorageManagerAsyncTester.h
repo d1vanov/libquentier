@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Dmitry Ivanov
+ * Copyright 2016-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -45,36 +45,46 @@ Q_SIGNALS:
     void failure(QString errorDescription);
 
 // private signals:
-    void getSavedSearchCountRequest(QUuid requestId = QUuid());
-    void addSavedSearchRequest(SavedSearch search, QUuid requestId = QUuid());
-    void updateSavedSearchRequest(SavedSearch search, QUuid requestId = QUuid());
-    void findSavedSearchRequest(SavedSearch search, QUuid requestId = QUuid());
+    void getSavedSearchCountRequest(QUuid requestId);
+    void addSavedSearchRequest(SavedSearch search, QUuid requestId);
+    void updateSavedSearchRequest(SavedSearch search, QUuid requestId);
+    void findSavedSearchRequest(SavedSearch search, QUuid requestId);
     void listAllSavedSearchesRequest(size_t limit, size_t offset,
                                      LocalStorageManager::ListSavedSearchesOrder::type order,
                                      LocalStorageManager::OrderDirection::type orderDirection,
-                                     QUuid requestId = QUuid());
-    void expungeSavedSearchRequest(SavedSearch search, QUuid requestId = QUuid());
+                                     QUuid requestId);
+    void expungeSavedSearchRequest(SavedSearch search, QUuid requestId);
 
 private Q_SLOTS:
-    void onWorkerInitialized();
+    void initialize();
     void onGetSavedSearchCountCompleted(int count, QUuid requestId);
     void onGetSavedSearchCountFailed(ErrorString errorDescription, QUuid requestId);
     void onAddSavedSearchCompleted(SavedSearch search, QUuid requestId);
-    void onAddSavedSearchFailed(SavedSearch search, ErrorString errorDescription, QUuid requestId);
+    void onAddSavedSearchFailed(SavedSearch search,
+                                ErrorString errorDescription,
+                                QUuid requestId);
     void onUpdateSavedSearchCompleted(SavedSearch search, QUuid requestId);
-    void onUpdateSavedSearchFailed(SavedSearch search, ErrorString errorDescription, QUuid requestId);
+    void onUpdateSavedSearchFailed(SavedSearch search,
+                                   ErrorString errorDescription,
+                                   QUuid requestId);
     void onFindSavedSearchCompleted(SavedSearch search, QUuid requestId);
-    void onFindSavedSearchFailed(SavedSearch search, ErrorString errorDescription, QUuid requestId);
+    void onFindSavedSearchFailed(SavedSearch search,
+                                 ErrorString errorDescription,
+                                 QUuid requestId);
     void onListAllSavedSearchesCompleted(size_t limit, size_t offset,
                                          LocalStorageManager::ListSavedSearchesOrder::type order,
                                          LocalStorageManager::OrderDirection::type orderDirection,
-                                         QList<SavedSearch> searches, QUuid requestId);
+                                         QList<SavedSearch> searches,
+                                         QUuid requestId);
     void onListAllSavedSearchedFailed(size_t limit, size_t offset,
                                       LocalStorageManager::ListSavedSearchesOrder::type order,
                                       LocalStorageManager::OrderDirection::type orderDirection,
-                                      ErrorString errorDescription, QUuid requestId);
+                                      ErrorString errorDescription,
+                                      QUuid requestId);
     void onExpungeSavedSearchCompleted(SavedSearch search, QUuid requestId);
-    void onExpungeSavedSearchFailed(SavedSearch search, ErrorString errorDescription, QUuid requestId);
+    void onExpungeSavedSearchFailed(SavedSearch search,
+                                    ErrorString errorDescription,
+                                    QUuid requestId);
 
 private:
     void createConnections();

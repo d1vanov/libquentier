@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Dmitry Ivanov
+ * Copyright 2016-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -29,10 +29,13 @@ class Q_DECL_HIDDEN SpellCorrectionUndoCommand: public INoteEditorUndoCommand
     Q_OBJECT
     typedef NoteEditorPage::Callback Callback;
 public:
-    SpellCorrectionUndoCommand(NoteEditorPrivate & noteEditor, const Callback & callback,
+    SpellCorrectionUndoCommand(NoteEditorPrivate & noteEditor,
+                               const Callback & callback,
                                QUndoCommand * parent = Q_NULLPTR);
-    SpellCorrectionUndoCommand(NoteEditorPrivate & noteEditor, const Callback & callback,
-                               const QString & text, QUndoCommand * parent = Q_NULLPTR);
+    SpellCorrectionUndoCommand(NoteEditorPrivate & noteEditor,
+                               const Callback & callback,
+                               const QString & text,
+                               QUndoCommand * parent = Q_NULLPTR);
     virtual ~SpellCorrectionUndoCommand();
 
     virtual void redoImpl() Q_DECL_OVERRIDE;

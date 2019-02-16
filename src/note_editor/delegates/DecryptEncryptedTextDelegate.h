@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Dmitry Ivanov
+ * Copyright 2016-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -40,8 +40,10 @@ class Q_DECL_HIDDEN DecryptEncryptedTextDelegate: public QObject
 {
     Q_OBJECT
 public:
-    explicit DecryptEncryptedTextDelegate(const QString & encryptedTextId, const QString & encryptedText,
-                                          const QString & cipher, const QString & length, const QString & hint,
+    explicit DecryptEncryptedTextDelegate(const QString & encryptedTextId,
+                                          const QString & encryptedText,
+                                          const QString & cipher,
+                                          const QString & length, const QString & hint,
                                           NoteEditorPrivate * pNoteEditor,
                                           QSharedPointer<EncryptionManager> encryptionManager,
                                           QSharedPointer<DecryptedTextManager> decryptedTextManager);
@@ -49,16 +51,18 @@ public:
     void start();
 
 Q_SIGNALS:
-    void finished(QString encryptedText, QString cipher, size_t length, QString hint,
-                  QString decryptedText, QString passphrase, bool rememberForSession,
-                  bool decryptPermanently);
+    void finished(QString encryptedText, QString cipher, size_t length,
+                  QString hint, QString decryptedText, QString passphrase,
+                  bool rememberForSession, bool decryptPermanently);
     void cancelled();
     void notifyError(ErrorString error);
 
 private Q_SLOTS:
     void onOriginalPageConvertedToNote(Note note);
-    void onEncryptedTextDecrypted(QString cipher, size_t keyLength, QString encryptedText, QString passphrase,
-                                  QString decryptedText, bool rememberForSession, bool decryptPermanently);
+    void onEncryptedTextDecrypted(QString cipher, size_t keyLength,
+                                  QString encryptedText, QString passphrase,
+                                  QString decryptedText, bool rememberForSession,
+                                  bool decryptPermanently);
     void onDecryptionScriptFinished(const QVariant & data);
 
 private:

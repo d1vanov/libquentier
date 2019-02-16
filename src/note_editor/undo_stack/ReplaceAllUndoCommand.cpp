@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Dmitry Ivanov
+ * Copyright 2016-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -23,16 +23,22 @@
 namespace quentier {
 
 #define GET_PAGE() \
-    NoteEditorPage * page = qobject_cast<NoteEditorPage*>(m_noteEditorPrivate.page()); \
+    NoteEditorPage * page = \
+        qobject_cast<NoteEditorPage*>(m_noteEditorPrivate.page()); \
     if (Q_UNLIKELY(!page)) { \
-        ErrorString error(QT_TRANSLATE_NOOP("ReplaceAllUndoCommand", "Can't undo/redo text replacement: can't get note editor page")); \
+        ErrorString error(QT_TRANSLATE_NOOP("ReplaceAllUndoCommand", \
+                                            "Can't undo/redo text replacement: "\
+                                            "can't get note editor page")); \
         QNWARNING(error); \
         Q_EMIT notifyError(error); \
         return; \
     }
 
-ReplaceAllUndoCommand::ReplaceAllUndoCommand(const QString & textToReplace, const bool matchCase, NoteEditorPrivate & noteEditorPrivate,
-                                             Callback callback, QUndoCommand * parent) :
+ReplaceAllUndoCommand::ReplaceAllUndoCommand(const QString & textToReplace,
+                                             const bool matchCase,
+                                             NoteEditorPrivate & noteEditorPrivate,
+                                             Callback callback,
+                                             QUndoCommand * parent) :
     INoteEditorUndoCommand(noteEditorPrivate, parent),
     m_textToReplace(textToReplace),
     m_matchCase(matchCase),
@@ -41,8 +47,12 @@ ReplaceAllUndoCommand::ReplaceAllUndoCommand(const QString & textToReplace, cons
     setText(tr("Replace all"));
 }
 
-ReplaceAllUndoCommand::ReplaceAllUndoCommand(const QString & textToReplace, const bool matchCase, NoteEditorPrivate & noteEditorPrivate,
-                                             const QString & text, Callback callback, QUndoCommand * parent) :
+ReplaceAllUndoCommand::ReplaceAllUndoCommand(const QString & textToReplace,
+                                             const bool matchCase,
+                                             NoteEditorPrivate & noteEditorPrivate,
+                                             const QString & text,
+                                             Callback callback,
+                                             QUndoCommand * parent) :
     INoteEditorUndoCommand(noteEditorPrivate, text, parent),
     m_textToReplace(textToReplace),
     m_matchCase(matchCase),
@@ -62,7 +72,8 @@ void ReplaceAllUndoCommand::redoImpl()
     page->executeJavaScript(javascript, m_callback);
 
     if (m_noteEditorPrivate.searchHighlightEnabled()) {
-        m_noteEditorPrivate.setSearchHighlight(m_textToReplace, m_matchCase, /* force = */ true);
+        m_noteEditorPrivate.setSearchHighlight(m_textToReplace, m_matchCase,
+                                               /* force = */ true);
     }
 }
 
@@ -76,7 +87,8 @@ void ReplaceAllUndoCommand::undoImpl()
     page->executeJavaScript(javascript, m_callback);
 
     if (m_noteEditorPrivate.searchHighlightEnabled()) {
-        m_noteEditorPrivate.setSearchHighlight(m_textToReplace, m_matchCase, /* force = */ true);
+        m_noteEditorPrivate.setSearchHighlight(m_textToReplace, m_matchCase,
+                                               /* force = */ true);
     }
 }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Dmitry Ivanov
+ * Copyright 2016-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -41,7 +41,11 @@ bool CheckQueryString(const QString & queryString, const QVector<Note> & notes,
     }
 
     errorDescription.clear();
-    NoteList foundNotes = localStorageManager.findNotesWithSearchQuery(noteSearchQuery, errorDescription);
+    LocalStorageManager::GetNoteOptions options(
+        LocalStorageManager::GetNoteOption::WithResourceMetadata |
+        LocalStorageManager::GetNoteOption::WithResourceBinaryData);
+    NoteList foundNotes = localStorageManager.findNotesWithSearchQuery(
+        noteSearchQuery, options, errorDescription);
     if (foundNotes.isEmpty())
     {
         if (!expectedContainedNotesIndices.contains(true)) {
@@ -50,8 +54,10 @@ bool CheckQueryString(const QString & queryString, const QVector<Note> & notes,
 
         if (errorDescription.isEmpty())
         {
-            errorDescription.setBase("Internal error: no notes corresponding to note search query "
-                                     "were found and the error description is empty as well; query string");
+            errorDescription.setBase("Internal error: no notes corresponding "
+                                     "to note search query were found and "
+                                     "the error description is empty as well; "
+                                     "query string");
             errorDescription.details() = queryString;
             errorDescription.details() += QStringLiteral("; \nNoteSearchQuery: ");
             errorDescription.details() += noteSearchQuery.toString();
@@ -70,16 +76,21 @@ bool CheckQueryString(const QString & queryString, const QVector<Note> & notes,
 
     if (!res)
     {
-        errorDescription.setBase("Internal error: unexpected result of note search query processing");
+        errorDescription.setBase("Internal error: unexpected result "
+                                 "of note search query processing");
 
         for(int i = 0; i < numOriginalNotes; ++i)
         {
             errorDescription.details() += QStringLiteral("foundNotes.contains(notes[");
             errorDescription.details() += QString::number(i);
             errorDescription.details() += QStringLiteral("]) = ");
-            errorDescription.details() += (foundNotes.contains(notes[i]) ? QStringLiteral("true") : QStringLiteral("false"));
+            errorDescription.details() += (foundNotes.contains(notes[i])
+                                           ? QStringLiteral("true")
+                                           : QStringLiteral("false"));
             errorDescription.details() += QStringLiteral("; expected: ");
-            errorDescription.details() += (expectedContainedNotesIndices[i] ? QStringLiteral("true") : QStringLiteral("false"));
+            errorDescription.details() += (expectedContainedNotesIndices[i]
+                                           ? QStringLiteral("true")
+                                           : QStringLiteral("false"));
             errorDescription.details() += QStringLiteral("\n");
         }
 
@@ -127,7 +138,8 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
         notebooks << Notebook();
         Notebook & notebook = notebooks.back();
 
-        notebook.setName(QString(QStringLiteral("Test notebook #")) + QString::number(i));
+        notebook.setName(QString(QStringLiteral("Test notebook #")) +
+                         QString::number(i));
         notebook.setUpdateSequenceNumber(i);
         notebook.setDefaultNotebook(i == 0 ? true : false);
         notebook.setLastUsed(i == 1 ? true : false);
@@ -186,49 +198,57 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
     res0.setDataBody(QByteArray("fake image/gif byte array"));
     res0.setDataSize(res0.dataBody().size());
     res0.setDataHash(QCryptographicHash::hash(res0.dataBody(), QCryptographicHash::Md5));
-    QString recognitionBodyStr = QString::fromUtf8("<recoIndex docType=\"handwritten\" objType=\"image\" objID=\"fc83e58282d8059be17debabb69be900\" "
-                                                   "engineVersion=\"5.5.22.7\" recoType=\"service\" lang=\"en\" objWidth=\"2398\" objHeight=\"1798\"> "
-                                                   "<item x=\"437\" y=\"589\" w=\"1415\" h=\"190\">"
-                                                   "<t w=\"87\">INFO ?</t>"
-                                                   "<t w=\"83\">INFORMATION</t>"
-                                                   "<t w=\"82\">LNFOPWATION</t>"
-                                                   "<t w=\"71\">LNFOPMATION</t>"
-                                                   "<t w=\"67\">LNFOPWATJOM</t>"
-                                                   "<t w=\"67\">LMFOPWAFJOM</t>"
-                                                   "<t w=\"62\">ΕΊΝΑΙ ένα</t>"
-                                                   "</item>"
-                                                   "<item x=\"1850\" y=\"1465\" w=\"14\" h=\"12\">"
-                                                   "<t w=\"11\">et</t>"
-                                                   "<t w=\"10\">TQ</t>"
-                                                   "</item>"
-                                                   "</recoIndex>");
+    QString recognitionBodyStr =
+        QString::fromUtf8("<recoIndex docType=\"handwritten\" objType=\"image\" "
+                          "objID=\"fc83e58282d8059be17debabb69be900\" "
+                          "engineVersion=\"5.5.22.7\" recoType=\"service\" "
+                          "lang=\"en\" objWidth=\"2398\" objHeight=\"1798\"> "
+                          "<item x=\"437\" y=\"589\" w=\"1415\" h=\"190\">"
+                          "<t w=\"87\">INFO ?</t>"
+                          "<t w=\"83\">INFORMATION</t>"
+                          "<t w=\"82\">LNFOPWATION</t>"
+                          "<t w=\"71\">LNFOPMATION</t>"
+                          "<t w=\"67\">LNFOPWATJOM</t>"
+                          "<t w=\"67\">LMFOPWAFJOM</t>"
+                          "<t w=\"62\">ΕΊΝΑΙ ένα</t>"
+                          "</item>"
+                          "<item x=\"1850\" y=\"1465\" w=\"14\" h=\"12\">"
+                          "<t w=\"11\">et</t>"
+                          "<t w=\"10\">TQ</t>"
+                          "</item>"
+                          "</recoIndex>");
     res0.setRecognitionDataBody(recognitionBodyStr.toUtf8());
     res0.setRecognitionDataSize(res0.recognitionDataBody().size());
-    res0.setRecognitionDataHash(QCryptographicHash::hash(res0.recognitionDataBody(), QCryptographicHash::Md5));
+    res0.setRecognitionDataHash(QCryptographicHash::hash(res0.recognitionDataBody(),
+                                                         QCryptographicHash::Md5));
 
     Resource & res1 = resources[1];
     res1.setMime(QStringLiteral("audio/*"));
     res1.setDataBody(QByteArray("fake audio/* byte array"));
     res1.setDataSize(res1.dataBody().size());
     res1.setDataHash(QCryptographicHash::hash(res1.dataBody(), QCryptographicHash::Md5));
-    res1.setRecognitionDataBody(QByteArray("<recoIndex docType=\"picture\" objType=\"image\" objID=\"fc83e58282d8059be17debabb69be900\" "
-                                           "engineVersion=\"5.5.22.7\" recoType=\"service\" lang=\"en\" objWidth=\"2398\" objHeight=\"1798\"> "
-                                           "<item x=\"437\" y=\"589\" w=\"1415\" h=\"190\">"
-                                           "<t w=\"87\">WIKI ?</t>"
-                                           "<t w=\"83\">WIKIPEDIA</t>"
-                                           "<t w=\"82\">WIKJPEDJA</t>"
-                                           "<t w=\"71\">WJKJPEDJA</t>"
-                                           "<t w=\"67\">MJKJPEDJA</t>"
-                                           "<t w=\"67\">MJKJREDJA</t>"
-                                           "<t w=\"66\">MJKJREDJA</t>"
-                                           "</item>"
-                                           "<item x=\"1840\" y=\"1475\" w=\"14\" h=\"12\">"
-                                           "<t w=\"11\">et</t>"
-                                           "<t w=\"10\">TQ</t>"
-                                           "</item>"
-                                           "</recoIndex>"));
+    res1.setRecognitionDataBody(
+            QByteArray("<recoIndex docType=\"picture\" objType=\"image\" "
+                       "objID=\"fc83e58282d8059be17debabb69be900\" "
+                       "engineVersion=\"5.5.22.7\" recoType=\"service\" "
+                       "lang=\"en\" objWidth=\"2398\" objHeight=\"1798\"> "
+                       "<item x=\"437\" y=\"589\" w=\"1415\" h=\"190\">"
+                       "<t w=\"87\">WIKI ?</t>"
+                       "<t w=\"83\">WIKIPEDIA</t>"
+                       "<t w=\"82\">WIKJPEDJA</t>"
+                       "<t w=\"71\">WJKJPEDJA</t>"
+                       "<t w=\"67\">MJKJPEDJA</t>"
+                       "<t w=\"67\">MJKJREDJA</t>"
+                       "<t w=\"66\">MJKJREDJA</t>"
+                       "</item>"
+                       "<item x=\"1840\" y=\"1475\" w=\"14\" h=\"12\">"
+                       "<t w=\"11\">et</t>"
+                       "<t w=\"10\">TQ</t>"
+                       "</item>"
+                       "</recoIndex>"));
     res1.setRecognitionDataSize(res1.recognitionDataBody().size());
-    res1.setRecognitionDataHash(QCryptographicHash::hash(res1.recognitionDataBody(), QCryptographicHash::Md5));
+    res1.setRecognitionDataHash(QCryptographicHash::hash(res1.recognitionDataBody(),
+                                                         QCryptographicHash::Md5));
 
     Resource & res2 = resources[2];
     res2.setMime(QStringLiteral("application/vnd.evernote.ink"));
@@ -240,22 +260,42 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
     int numTitles = 3;
     QVector<QString> titles;
     titles.reserve(numTitles);
-    titles << QString::fromUtf8("Potato (είΝΑΙ)") << QStringLiteral("Ham") << QStringLiteral("Eggs");
+    titles << QString::fromUtf8("Potato (είΝΑΙ)")
+           << QStringLiteral("Ham")
+           << QStringLiteral("Eggs");
 
     int numContents = 9;
     QVector<QString> contents;
     contents.reserve(numContents);
-    contents << QStringLiteral("<en-note><h1>The unique identifier of this note. Will be set by the server</h1></en-note>")
-             << QStringLiteral("<en-note><h1>The XHTML block that makes up the note. This is the canonical form of the note's contents</h1><en-todo checked = \"true\"/></en-note>")
-             << QStringLiteral("<en-note><h1>The binary MD5 checksum of the UTF-8 encoded content body.</h1></en-note>")
-             << QString::fromUtf8("<en-note><h1>The number of Unicode characters \"αυτό είναι ένα αυτοκίνητο\" in the content of the note.</h1><en-todo/></en-note>")
-             << QStringLiteral("<en-note><en-todo checked = \"true\"/><h1>The date and time when the note was created in one of the clients.</h1><en-todo checked = \"false\"/></en-note>")
-             << QStringLiteral("<en-note><h1>If present [code characters], the note is considered \"deleted\", and this stores the date and time when the note was deleted</h1></en-note>")
-             << QString::fromUtf8("<en-note><h1>If the note is available {ΑΥΤΌ ΕΊΝΑΙ ΈΝΑ ΑΥΤΟΚΊΝΗΤΟ} for normal actions and viewing, "
-                                  "this flag will be set to true.</h1><en-crypt hint=\"My Cat\'s Name\">NKLHX5yK1MlpzemJQijAN6C4545s2EODxQ8Bg1r==</en-crypt></en-note>")
-             << QString::fromUtf8("<en-note><h1>A number identifying the last transaction (Αυτό ΕΊΝΑΙ ένα αυΤΟκίΝΗτο) to modify the state of this note</h1></en-note>")
-             << QStringLiteral("<en-note><h1>The list of resources that are embedded within this note.</h1><en-todo checked = \"true\"/>"
-                               "<en-crypt hint=\"My Cat\'s Name\">NKLHX5yK1MlpzemJQijAN6C4545s2EODxQ8Bg1r==</en-crypt></en-note>");
+    contents
+        << QStringLiteral("<en-note><h1>The unique identifier of this note. ") +
+           QStringLiteral("Will be set by the server</h1></en-note>")
+        << QStringLiteral("<en-note><h1>The XHTML block that makes up the note. ") +
+           QStringLiteral("This is the canonical form of the note's contents") +
+           QStringLiteral("</h1><en-todo checked = \"true\"/></en-note>")
+        << QStringLiteral("<en-note><h1>The binary MD5 checksum of the UTF-8 ") +
+           QStringLiteral("encoded content body.</h1></en-note>")
+        << QString::fromUtf8("<en-note><h1>The number of Unicode characters ") +
+           QString::fromUtf8("\"αυτό είναι ένα αυτοκίνητο\" in the content ") +
+           QString::fromUtf8("of the note.</h1><en-todo/></en-note>")
+        << QStringLiteral("<en-note><en-todo checked = \"true\"/><h1>The date ") +
+           QStringLiteral("and time when the note was created in one of ") +
+           QStringLiteral("the clients.</h1><en-todo checked = \"false\"/></en-note>")
+        << QStringLiteral("<en-note><h1>If present [code characters], the note ") +
+           QStringLiteral("is considered \"deleted\", and this stores the date ") +
+           QStringLiteral("and time when the note was deleted</h1></en-note>")
+        << QString::fromUtf8("<en-note><h1>If the note is available {ΑΥΤΌ ") +
+           QString::fromUtf8("ΕΊΝΑΙ ΈΝΑ ΑΥΤΟΚΊΝΗΤΟ} for normal actions and viewing, ") +
+           QString::fromUtf8("this flag will be set to true.</h1><en-crypt ") +
+           QString::fromUtf8("hint=\"My Cat\'s Name\">NKLHX5yK1MlpzemJQijA") +
+           QString::fromUtf8("N6C4545s2EODxQ8Bg1r==</en-crypt></en-note>")
+        << QString::fromUtf8("<en-note><h1>A number identifying the last ") +
+           QString::fromUtf8("transaction (Αυτό ΕΊΝΑΙ ένα αυΤΟκίΝΗτο) to ") +
+           QString::fromUtf8("modify the state of this note</h1></en-note>")
+        << QStringLiteral("<en-note><h1>The list of resources that are embedded ") +
+           QStringLiteral("within this note.</h1><en-todo checked = \"true\"/>") +
+           QStringLiteral("<en-crypt hint=\"My Cat\'s Name\">NKLHX5yK1Mlpzem") +
+           QStringLiteral("JQijAN6C4545s2EODxQ8Bg1r==</en-crypt></en-note>");
 
     QHash<QString,qint64> timestampForDateTimeString;
 
@@ -410,32 +450,44 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
     int numAuthors = 3;
     QVector<QString> authors;
     authors.reserve(numAuthors);
-    authors << QStringLiteral("Shakespeare") << QStringLiteral("Homer") << QStringLiteral("Socrates");
+    authors << QStringLiteral("Shakespeare")
+            << QStringLiteral("Homer")
+            << QStringLiteral("Socrates");
 
     int numSources = 3;
     QVector<QString> sources;
     sources.reserve(numSources);
-    sources << QStringLiteral("web.clip") << QStringLiteral("mail.clip") << QStringLiteral("mobile.android");
+    sources << QStringLiteral("web.clip")
+            << QStringLiteral("mail.clip")
+            << QStringLiteral("mobile.android");
 
     int numSourceApplications = 3;
     QVector<QString> sourceApplications;
     sourceApplications.reserve(numSourceApplications);
-    sourceApplications << QStringLiteral("food.*") << QStringLiteral("hello.*") << QStringLiteral("skitch.*");
+    sourceApplications << QStringLiteral("food.*")
+                       << QStringLiteral("hello.*")
+                       << QStringLiteral("skitch.*");
 
     int numContentClasses = 3;
     QVector<QString> contentClasses;
     contentClasses.reserve(numContentClasses);
-    contentClasses << QStringLiteral("evernote.food.meal") << QStringLiteral("evernote.hello.*") << QStringLiteral("whatever");
+    contentClasses << QStringLiteral("evernote.food.meal")
+                   << QStringLiteral("evernote.hello.*")
+                   << QStringLiteral("whatever");
 
     int numPlaceNames = 3;
     QVector<QString> placeNames;
     placeNames.reserve(numPlaceNames);
-    placeNames << QStringLiteral("home") << QStringLiteral("school") << QStringLiteral("bus");
+    placeNames << QStringLiteral("home")
+               << QStringLiteral("school")
+               << QStringLiteral("bus");
 
     int numApplicationData = 3;
     QVector<QString> applicationData;
     applicationData.reserve(numApplicationData);
-    applicationData << QStringLiteral("myapp") << QStringLiteral("Evernote") << QStringLiteral("Quentier");
+    applicationData << QStringLiteral("myapp")
+                    << QStringLiteral("Evernote")
+                    << QStringLiteral("Quentier");
 
     int numReminderOrders = 3;
     QVector<qint64> reminderOrders;
@@ -502,7 +554,8 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
             attributes.applicationData->fullMap = QMap<QString,QString>();
             auto & fullMap = attributes.applicationData->fullMap.ref();
             fullMap.insert(applicationData[i/numApplicationData],
-                           QStringLiteral("Application data value at key ") + applicationData[i/numApplicationData]);
+                           QStringLiteral("Application data value at key ") +
+                           applicationData[i/numApplicationData]);
         }
 
         if (i == 6)
@@ -518,7 +571,8 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
             }
             auto & fullMap = attributes.applicationData->fullMap.ref();
             fullMap.insert(applicationData[1],
-                           QStringLiteral("Application data value at key ") + applicationData[1]);
+                           QStringLiteral("Application data value at key ") +
+                           applicationData[1]);
         }
 
         if ((i != 0) && (i != 1) && (i != 2)) {
@@ -556,12 +610,14 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
         notebookIndexForNoteIndex[i] = i/numNotebooks;
     }
 
-    // 6) =========== Create local storage, add created notebooks, tags and notes there ===========
+    // 6) =========== Create local storage, add created notebooks,
+    //                tags and notes there ===========
 
-    const bool startFromScratch = true;
-    const bool overrideLock = false;
-    Account account(QStringLiteral("LocalStorageManagerNoteSearchQueryTestFakeUser"), Account::Type::Local);
-    LocalStorageManager localStorageManager(account, startFromScratch, overrideLock);
+    Account account(QStringLiteral("LocalStorageManagerNoteSearchQueryTestFakeUser"),
+                    Account::Type::Local);
+    LocalStorageManager::StartupOptions startupOptions(
+        LocalStorageManager::StartupOption::ClearDatabase);
+    LocalStorageManager localStorageManager(account, startupOptions);
 
     ErrorString errorMessage;
 
@@ -593,7 +649,8 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
         }
     }
 
-    // 7) =========== Create and execute some note search queries with advanced search modifiers, verify they are consistent
+    // 7) =========== Create and execute some note search queries with advanced
+    //                search modifiers, verify they are consistent
 
     bool res = false;
 
@@ -993,9 +1050,15 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
     // 7.8.1) Single creation timestamps
     QStringList creationTimestampDateTimeStrings;
     creationTimestampDateTimeStrings.reserve(numNotes - 1);
-    creationTimestampDateTimeStrings << QStringLiteral("day-3") << QStringLiteral("day-2") << QStringLiteral("day-1")
-                                     << QStringLiteral("day") << QStringLiteral("day+1") << QStringLiteral("day+2")
-                                     << QStringLiteral("day+3") << QStringLiteral("week-3") << QStringLiteral("week-2");
+    creationTimestampDateTimeStrings << QStringLiteral("day-3")
+                                     << QStringLiteral("day-2")
+                                     << QStringLiteral("day-1")
+                                     << QStringLiteral("day")
+                                     << QStringLiteral("day+1")
+                                     << QStringLiteral("day+2")
+                                     << QStringLiteral("day+3")
+                                     << QStringLiteral("week-3")
+                                     << QStringLiteral("week-2");
 
     queryString = QStringLiteral("created:day");
 
@@ -1224,8 +1287,8 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
 
     RUN_CHECK()
 
-    // 7.10.5) Both positive and negated placeNames (should work the same way as only positive
-    // placeName provided that negated one is not the same)
+    // 7.10.5) Both positive and negated placeNames (should work the same way
+    // as only positive placeName provided that negated one is not the same)
     queryString = QStringLiteral("placeName:");
     queryString += placeNames[0];
     queryString += QStringLiteral(" -placeName:");
@@ -1349,7 +1412,8 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
 
     RUN_CHECK()
 
-    // 7.11.6) Find notes with two negated application data entries nad "any:" modifier
+    // 7.11.6) Find notes with two negated application data entries
+    // and "any:" modifier
     queryString = QStringLiteral("any: -applicationData:");
     queryString += applicationData[0];
     queryString += QStringLiteral(" -applicationData:");
@@ -1373,7 +1437,8 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
 
     RUN_CHECK()
 
-    // 7.11.8) Find notes with both positive and negated application data entry and "any:" modifier
+    // 7.11.8) Find notes with both positive and negated application data entry
+    // and "any:" modifier
     queryString = QStringLiteral("any: applicationData:");
     queryString += applicationData[2];
     queryString += QStringLiteral(" -applicationData:");
@@ -1409,7 +1474,8 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
 
     RUN_CHECK()
 
-    // 8) =========== Create and execute some note search queries without advanced search modifiers, verify they are consistent
+    // 8) =========== Create and execute some note search queries without
+    //                advanced search modifiers, verify they are consistent
 
     // 8.1.1 Find a single note with a single term query
     queryString = QStringLiteral("cAnOniCal");
@@ -1443,7 +1509,8 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
 
     RUN_CHECK()
 
-    // 8.1.4 Attempt to find the intersection of all notes corresponding to several note search terms
+    // 8.1.4 Attempt to find the intersection of all notes corresponding
+    // to several note search terms
     queryString = QStringLiteral("cAnOnical cHeckSuM ConsiDerEd");
 
     for(int i = 0; i < numNotes; ++i) {
@@ -1473,8 +1540,8 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
 
     RUN_CHECK()
 
-    // 8.1.7 Find all notes corresponding to a mixed query containing both included and
-    // excluded search terms when some of them "overlap" in certain notes
+    // 8.1.7 Find all notes corresponding to a mixed query containing both included
+    // and excluded search terms when some of them "overlap" in certain notes
     queryString = QStringLiteral("-iDEnTIfIEr xhTmL -cHeckSuM -ConsiDerEd");
 
     for(int i = 0; i < numNotes; ++i) {
@@ -1484,7 +1551,8 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
 
     RUN_CHECK()
 
-    // 8.2.1 Find all notes corresponding to a query which involves tag names as well as note content
+    // 8.2.1 Find all notes corresponding to a query which involves tag names
+    // as well as note content
     queryString = QStringLiteral("any: CaNonIcAl colLeGE UniCODe foOtLOCkeR");
 
     for(int i = 0; i < numNotes; ++i) {
@@ -1499,7 +1567,8 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
 
     RUN_CHECK()
 
-    // 8.2.2 Find the intersection of all notes corresponding to queries involving tag names as well as note content
+    // 8.2.2 Find the intersection of all notes corresponding to queries involving
+    // tag names as well as note content
     queryString = QStringLiteral("CaNonIcAl sERveR");
 
     for(int i = 0; i < numNotes; ++i) {
@@ -1509,7 +1578,8 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
 
     RUN_CHECK()
 
-    // 8.2.3 Find all notes corresponding to a query which involves both "positive" and negated note content words and tag names
+    // 8.2.3 Find all notes corresponding to a query which involves both "positive"
+    // and negated note content words and tag names
     queryString = QStringLiteral("wiLl -colLeGe");
 
     for(int i = 0; i < numNotes; ++i) {
@@ -1519,7 +1589,8 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
 
     RUN_CHECK()
 
-    // 8.3.1 Find all notes corresponding to a query which involves note titles as well as note content
+    // 8.3.1 Find all notes corresponding to a query which involves note titles
+    // as well as note content
     queryString = QStringLiteral("any: CaNonIcAl eGGs");
 
     for(int i = 0; i < numNotes; ++i) {
@@ -1532,7 +1603,8 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
 
     RUN_CHECK()
 
-    // 8.3.2 Find the intersection of all notes corresponding to a query which involves note titles as well as note content
+    // 8.3.2 Find the intersection of all notes corresponding to a query which
+    // involves note titles as well as note content
     queryString = QStringLiteral("CaNonIcAl PotAto");
 
     for(int i = 0; i < numNotes; ++i) {
@@ -1542,7 +1614,8 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
 
     RUN_CHECK()
 
-    // 8.3.3 Find all notes corresponding to a query which involves both "positive" and negated note content words and titles
+    // 8.3.3 Find all notes corresponding to a query which involves both "positive"
+    // and negated note content words and titles
     queryString = QStringLiteral("unIQue -EGgs");
 
     for(int i = 0; i < numNotes; ++i) {
@@ -1552,7 +1625,8 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
 
     RUN_CHECK()
 
-    // 8.3.4 Find the union of notes corresponding to a query involving both "positive" and negated note content words and titles
+    // 8.3.4 Find the union of notes corresponding to a query involving both "positive"
+    // and negated note content words and titles
     queryString = QStringLiteral("any: cONSiDERed -hAm");
     for(int i = 0; i < numNotes; ++i) {
         expectedContainedNotesIndices[i] = true;
@@ -1562,7 +1636,8 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
 
     RUN_CHECK()
 
-    // 8.3.5 Find all notes corresponding to a query involving note content words, titles and tag names
+    // 8.3.5 Find all notes corresponding to a query involving note content words,
+    // titles and tag names
     queryString = QStringLiteral("any: cHECksUM SeRVEr hAM");
 
     for(int i = 0; i < numNotes; ++i) {
@@ -1624,8 +1699,8 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
 
     RUN_CHECK()
 
-    // 8.4.5. Find the intersection of notes corresponding to the query involving content search terms, note titles,
-    // tag names and resource recognition data
+    // 8.4.5. Find the intersection of notes corresponding to the query involving
+    // content search terms, note titles, tag names and resource recognition data
     queryString = QStringLiteral("inFOrMATioN tHe poTaTO serVEr");
 
     for(int i = 0; i < numNotes; ++i) {
@@ -1636,8 +1711,8 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
 
     RUN_CHECK()
 
-    // 8.4.6 Find the union of notes corresponding to the query involving content search terms, note titles,
-    // tag names and resource recognition data
+    // 8.4.6 Find the union of notes corresponding to the query involving content
+    // search terms, note titles, tag names and resource recognition data
 
     queryString = QStringLiteral("wiKiPeDiA servER haM iDEntiFYiNg any:");
 
@@ -1650,8 +1725,9 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
 
     RUN_CHECK()
 
-    // 8.4.7 Find the intersection of notes corresponding to the query involving some positive and some negated content search terms,
-    // note titles, tag names and resource recognition data
+    // 8.4.7 Find the intersection of notes corresponding to the query involving
+    // some positive and some negated content search terms, note titles, tag
+    // names and resource recognition data
 
     queryString = QStringLiteral("infORMatioN -colLEgE pOtaTo -xHtMl");
 
@@ -1662,8 +1738,9 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
 
     RUN_CHECK()
 
-    // 8.4.8 Find the union of notes corresponding to the query involving some positive and some negated content search terms,
-    // note titles, tag names and resource recognition data
+    // 8.4.8 Find the union of notes corresponding to the query involving some
+    // positive and some negated content search terms, note titles, tag names
+    // and resource recognition data
 
     queryString = QStringLiteral("wikiPEDiA traNSActioN any: -PotaTo -biNARy");
 
@@ -1698,7 +1775,8 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
 
     RUN_CHECK()
 
-    // 8.5.3 Find the union of notes corresponding to a couple of phrases and other search terms as well
+    // 8.5.3 Find the union of notes corresponding to a couple of phrases and
+    // other search terms as well
     queryString = QStringLiteral("any: \"The xhTMl\" eggS wikiPEDiA");
 
     for(int i = 0; i < numNotes; ++i) {
@@ -1709,7 +1787,8 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
 
     RUN_CHECK()
 
-    // 8.5.4 Find notes corresponding to some positive and some negated search terms containing phrases
+    // 8.5.4 Find notes corresponding to some positive and some negated search
+    // terms containing phrases
     queryString = QStringLiteral("\"tHE noTE\" -\"of tHE\"");
 
     for(int i = 0; i < numNotes; ++i) {
@@ -1730,7 +1809,8 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
 
     RUN_CHECK()
 
-    // 8.5.6 Find notes corresponding to some phrase containing the wildcard in the middle of it
+    // 8.5.6 Find notes corresponding to some phrase containing the wildcard
+    // in the middle of it
     queryString = QStringLiteral("\"the can*cal\"");
 
     for(int i = 0; i < numNotes; ++i) {
@@ -1740,7 +1820,8 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
 
     RUN_CHECK()
 
-    // 8.5.7 Find notes corresponding to some phrase containing the wildcard in the beginning of it
+    // 8.5.7 Find notes corresponding to some phrase containing the wildcard
+    // in the beginning of it
     queryString = QStringLiteral("\"*onical\"");
 
     for(int i = 0; i < numNotes; ++i) {
@@ -1750,7 +1831,8 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
 
     RUN_CHECK()
 
-    // 8.5.8 Find notes corresponding to some phrase containing the wildcard in the beginning of it
+    // 8.5.8 Find notes corresponding to some phrase containing the wildcard
+    // in the beginning of it
     queryString = QStringLiteral("\"*code characters\"");
 
     for(int i = 0; i < numNotes; ++i) {
@@ -1761,7 +1843,8 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
 
     RUN_CHECK()
 
-    // 8.6.1 Find notes corresponding to Greek letters using characters with diacritics for the note search query
+    // 8.6.1 Find notes corresponding to Greek letters using characters
+    // with diacritics for the note search query
     queryString = QString::fromUtf8("είναι");
 
     for(int i = 0; i < numNotes; ++i) {
@@ -1773,7 +1856,8 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
 
     RUN_CHECK()
 
-    // 8.6.2 Find notes corresponding to Greek letters using characters with diacritics and upper case for the note search query
+    // 8.6.2 Find notes corresponding to Greek letters using characters
+    // with diacritics and upper case for the note search query
     queryString = QString::fromUtf8("ΕΊΝΑΙ");
 
     for(int i = 0; i < numNotes; ++i) {
@@ -1785,7 +1869,8 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
 
     RUN_CHECK()
 
-    // 8.6.3 Find notes corresponding to Greek letters using characters with diacritics and mixed case for the note search query
+    // 8.6.3 Find notes corresponding to Greek letters using characters
+    // with diacritics and mixed case for the note search query
     queryString = QString::fromUtf8("ΕΊναι");
 
     for(int i = 0; i < numNotes; ++i) {
@@ -1797,7 +1882,8 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
 
     RUN_CHECK()
 
-    // 8.6.4 Find notes corresponding to Greek letters using characters without diacritics
+    // 8.6.4 Find notes corresponding to Greek letters using characters
+    // without diacritics
     queryString = QString::fromUtf8("ειναι");
 
     for(int i = 0; i < numNotes; ++i) {
@@ -1809,7 +1895,8 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
 
     RUN_CHECK()
 
-    // 8.6.5 Find notes corresponding to Greek letters using characters without diacritics in upper case
+    // 8.6.5 Find notes corresponding to Greek letters using characters
+    // without diacritics in upper case
     queryString = QString::fromUtf8("ΕΙΝΑΙ");
 
     for(int i = 0; i < numNotes; ++i) {
@@ -1821,7 +1908,8 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
 
     RUN_CHECK()
 
-    // 8.6.6 Find notes corresponding to Greek letters using characters without diacritics in mixed case
+    // 8.6.6 Find notes corresponding to Greek letters using characters
+    // without diacritics in mixed case
     queryString = QString::fromUtf8("ΕΙναι");
 
     for(int i = 0; i < numNotes; ++i) {
@@ -1833,7 +1921,8 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
 
     RUN_CHECK()
 
-    // 8.6.7 Find notes corresponding to Greek letters using characters with and without diacritics in mixed case when tags are also involved
+    // 8.6.7 Find notes corresponding to Greek letters using characters with
+    // and without diacritics in mixed case when tags are also involved
     queryString = QString::fromUtf8("ΕΊναι any: αυΤΟκιΝΗτο");
 
     for(int i = 0; i < numNotes; ++i) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Dmitry Ivanov
+ * Copyright 2016-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -27,9 +27,12 @@ class Q_DECL_HIDDEN ToDoCheckboxUndoCommand: public INoteEditorUndoCommand
 {
     Q_OBJECT
 public:
-    ToDoCheckboxUndoCommand(const quint64 enToDoCheckboxId, NoteEditorPrivate & noteEditorPrivate,
+    ToDoCheckboxUndoCommand(const quint64 enToDoCheckboxId,
+                            NoteEditorPrivate & noteEditorPrivate,
                             QUndoCommand * parent = Q_NULLPTR);
-    ToDoCheckboxUndoCommand(const quint64 enToDoCheckboxId, NoteEditorPrivate & noteEditorPrivate, const QString & text,
+    ToDoCheckboxUndoCommand(const quint64 enToDoCheckboxId,
+                            NoteEditorPrivate & noteEditorPrivate,
+                            const QString & text,
                             QUndoCommand * parent = Q_NULLPTR);
     virtual ~ToDoCheckboxUndoCommand();
 

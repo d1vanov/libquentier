@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Dmitry Ivanov
+ * Copyright 2016-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -70,7 +70,8 @@ const QString NoteSearchQuery::queryString() const
     return d->m_queryString;
 }
 
-bool NoteSearchQuery::setQueryString(const QString & queryString, ErrorString & error)
+bool NoteSearchQuery::setQueryString(const QString & queryString,
+                                     ErrorString & error)
 {
     d->clear();
     return d->parseQueryString(queryString, error);
@@ -498,7 +499,8 @@ const QStringList & NoteSearchQuery::negatedContentSearchTerms() const
 
 bool NoteSearchQuery::hasAnyContentSearchTerms() const
 {
-    return (!d->m_contentSearchTerms.isEmpty()) || (!d->m_negatedContentSearchTerms.isEmpty());
+    return !d->m_contentSearchTerms.isEmpty() ||
+           !d->m_negatedContentSearchTerms.isEmpty();
 }
 
 bool NoteSearchQuery::isMatcheable() const

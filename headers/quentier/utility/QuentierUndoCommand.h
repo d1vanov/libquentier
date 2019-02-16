@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Dmitry Ivanov
+ * Copyright 2016-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -30,23 +30,26 @@ namespace quentier {
  * @brief The QuentierUndoCommand class has the sole purpose of working around
  * one quirky aspect of Qt's undo/redo framework: when you push QUndoCommand
  * to QUndoStack, it calls "redo" method of that command. This class offers
- * subclasses to implement their own methods for actual "undo" and "redo" commands while
- * ignoring the attempts to "redo" anything if there were no previous "undo" call
- * prior to that.
+ * subclasses to implement their own methods for actual "undo" and "redo" commands
+ * while ignoring the attempts to "redo" anything if there were no previous "undo"
+ * call prior to that.
  *
  * The rationale behind the current behaviour seems to be the compliance with
  * "command pattern behaviour" when you create the command to execute the action
- * instead of just executing it immediately. This design is enforced by Qt's undo/redo
- * framework, there's no option to choose not to call "redo" when pushing to the stack.
+ * instead of just executing it immediately. This design is enforced by Qt's
+ * undo/redo framework, there's no option to choose not to call "redo" when
+ * pushing to the stack.
  *
  * One thing which this design fails to see is the fact that the command may be
  * already executed externally by the moment the QUndoCommand
- * can be created. Suppose we can get the information about how to undo (and then again redo)
- * that command. We create the corresponding QUndoCommand, set up the stuff for its
- * undo/redo methods and push it to QUndoStack for future use... but at the same time
- * QUndoStack calls "redo" method of the command. Really not the behaviour you'd like to have.
+ * can be created. Suppose we can get the information about how to undo (and then
+ * again redo) that command. We create the corresponding QUndoCommand, set up
+ * the stuff for its undo/redo methods and push it to QUndoStack for future use...
+ * but at the same time QUndoStack calls "redo" method of the command. Really
+ * not the behaviour you'd like to have.
  *
- * QuentierUndoCommand is also QObject, it is for error reporting via @link notifyError @endlink signal
+ * QuentierUndoCommand is also QObject, it is for error reporting via notifyError
+ * signal
  */
 class QuentierUndoCommand: public QObject,
                            public QUndoCommand

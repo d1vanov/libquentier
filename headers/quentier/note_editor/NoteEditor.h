@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Dmitry Ivanov
+ * Copyright 2016-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -39,7 +39,8 @@ QT_FORWARD_DECLARE_CLASS(SpellChecker)
 QT_FORWARD_DECLARE_CLASS(LocalStorageManagerAsync)
 
 /**
- * @brief The NoteEditor class is a widget encapsulating all the functionality necessary for showing and editing notes
+ * @brief The NoteEditor class is a widget encapsulating all the functionality
+ * necessary for showing and editing notes
  */
 class QUENTIER_EXPORT NoteEditor: public QWidget
 {
@@ -49,15 +50,20 @@ public:
     virtual ~NoteEditor() Q_DECL_OVERRIDE;
 
     /**
-     * NoteEditor requires LocalStorageManagerAsync, SpellChecker and Account for its work
-     * but due to the particularities of Qt's .ui files processing these can't be passed right inside the constructor,
+     * NoteEditor requires LocalStorageManagerAsync, SpellChecker and
+     * Account for its work but due to the particularities of Qt's .ui files
+     * processing these can't be passed right inside the constructor,
      * hence here's a special initialization method
      *
-     * @param localStorageManager           The reference to LocalStorageManagerAsync, to set up signal-slot connections with it
-     * @param spellChecker                  The spell checker to be used by note editor for, well, spell-checking
+     * @param localStorageManager           The reference to LocalStorageManagerAsync,
+     *                                      to set up signal-slot connections with it
+     * @param spellChecker                  The spell checker to be used by note
+     *                                      editor for, well, spell-checking
      * @param account                       Currently active account
-     * @param pBackgroundJobsThread         Pointer to the thread to be used for scheduling of background jobs
-     *                                      of NoteEditor; if null, NoteEditor's background jobs would take place in GUI
+     * @param pBackgroundJobsThread         Pointer to the thread to be used for
+     *                                      scheduling of background jobs
+     *                                      of NoteEditor; if null, NoteEditor's
+     *                                      background jobs would take place in GUI
      *                                      thread
      */
     void initialize(LocalStorageManagerAsync & localStorageManager,
@@ -65,8 +71,9 @@ public:
                     QThread * pBackgroundJobsThread = Q_NULLPTR);
 
     /**
-     * This method can be used to set the backend to the note editor; the note editor has the default backend
-     * so this method is not obligatory to be called
+     * This method can be used to set the backend to the note editor;
+     * the note editor has the default backend so this method is not obligatory
+     * to be called
      */
     void setBackend(INoteEditorBackend * backend);
 
@@ -98,7 +105,8 @@ public:
 
     /**
      * Set the html to be displayed when the note set to the editor was deleted
-     * from the local storage (either marked as deleted or deleted permanently i.e. expunged)
+     * from the local storage (either marked as deleted or deleted permanently
+     * i.e. expunged)
      */
     void setNoteDeletedPageHtml(const QString & html);
 
@@ -122,19 +130,20 @@ public:
     void clear();
 
     /**
-     * @return true if there's content within the editor not yet converted to note or not saved to local storage,
-     * false otherwise
+     * @return true if there's content within the editor not yet converted to
+     * note or not saved to local storage, false otherwise
      */
     bool isModified() const;
 
     /**
-     * @return true if there's content within the editor not yet converted to note, false otherwise
+     * @return true if there's content within the editor not yet converted to
+     * note, false otherwise
      */
     bool isEditorPageModified() const;
 
     /**
-     * @return true if the note last set to the editor has been fully loaded already,
-     * false otherwise
+     * @return true if the note last set to the editor has been fully
+     * loaded already, false otherwise
      */
     bool isNoteLoaded() const;
 
@@ -149,14 +158,15 @@ public:
     bool spellCheckEnabled() const;
 
     bool print(QPrinter & printer, ErrorString & errorDescription);
-    bool exportToPdf(const QString & absoluteFilePath, ErrorString & errorDescription);
+    bool exportToPdf(const QString & absoluteFilePath,
+                     ErrorString & errorDescription);
     bool exportToEnex(const QStringList & tagNames,
                       QString & enex, ErrorString & errorDescription);
 
 Q_SIGNALS:
     /**
-     * @brief contentChanged signal is emitted when the note's content (text) gets modified via manual editing
-     * (i.e. not any action like paste or cut)
+     * @brief contentChanged signal is emitted when the note's content (text)
+     * gets modified via manual editing (i.e. not any action like paste or cut)
      */
     void contentChanged();
 
@@ -181,30 +191,37 @@ Q_SIGNALS:
     void noteDeleted(QString noteLocalUid);
 
     /**
-     * @brief noteModified signal is emitted when the note's content within the editor gets modified via some way -
-     * either via manual editing or via some action (like paste or cut)
+     * @brief noteModified signal is emitted when the note's content within
+     * the editor gets modified via some way - either via manual editing or
+     * via some action (like paste or cut)
      */
     void noteModified();
 
     /**
-     * @brief notifyError signal is emitted when NoteEditor encounters some problem worth letting the user to know about
+     * @brief notifyError signal is emitted when NoteEditor encounters some
+     * problem worth letting the user to know about
      */
     void notifyError(ErrorString error);
 
     /**
-     * @brief inAppNoteLinkClicked signal is emitted when the in-app note link is clicked within the note editor
+     * @brief inAppNoteLinkClicked signal is emitted when the in-app note link
+     * is clicked within the note editor
      */
     void inAppNoteLinkClicked(QString userId, QString shardId, QString noteGuid);
 
     /**
-     * inAppNoteLinkPasteRequested signal is emitted when the note editor detects the attempt to paste
-     * the in-app note link into the note editor; the link would not be inserted right away, instead this signal
-     * would be emitted. Whatever party managing the note editor is expected to connect some slot to this signal
-     * and provide the optionally amended link information to the note editor by sending the signal connected to its
-     * insertInAppNoteLink slot - this slot accepts both the URL of the link and the link text and performs the actual
-     * link insertion into the note. If the link text is empty, the URL itself is used as the link text.
+     * inAppNoteLinkPasteRequested signal is emitted when the note editor detects
+     * the attempt to paste the in-app note link into the note editor; the link
+     * would not be inserted right away, instead this signal would be emitted.
+     * Whatever party managing the note editor is expected to connect some slot
+     * to this signal and provide the optionally amended link information to
+     * the note editor by sending the signal connected to its insertInAppNoteLink
+     * slot - this slot accepts both the URL of the link and the link text and
+     * performs the actual link insertion into the note. If the link text is empty,
+     * the URL itself is used as the link text.
      */
-    void inAppNoteLinkPasteRequested(QString url, QString userId, QString shardId, QString noteGuid);
+    void inAppNoteLinkPasteRequested(QString url, QString userId,
+                                     QString shardId, QString noteGuid);
 
     void convertedToNote(Note note);
     void cantConvertToNote(ErrorString error);
@@ -230,9 +247,11 @@ Q_SIGNALS:
      * @brief failedToSaveNoteToLocalStorage signal is emitted in case of
      * failure to save the note to local storage
      */
-    void failedToSaveNoteToLocalStorage(ErrorString errorDescription, QString noteLocalUid);
+    void failedToSaveNoteToLocalStorage(ErrorString errorDescription,
+                                        QString noteLocalUid);
 
-    // Signals to notify anyone interested of the formatting at the current cursor position
+    // Signals to notify anyone interested of the formatting at the current
+    // cursor position
     void textBoldState(bool state);
     void textItalicState(bool state);
     void textUnderlineState(bool state);
@@ -252,8 +271,9 @@ Q_SIGNALS:
 
 public Q_SLOTS:
     /**
-     * Invoke this slot to launch the asynchronous procedure of converting the current contents of the note editor
-     * to note; the @link convertedToNote @endlink signal would be emitted in response when the conversion is done
+     * Invoke this slot to launch the asynchronous procedure of converting
+     * the current contents of the note editor to note; the convertedToNote
+     * signal would be emitted in response when the conversion is done
      */
     void convertToNote();
 
@@ -315,12 +335,17 @@ public Q_SLOTS:
 
     void findNext(const QString & text, const bool matchCase) const;
     void findPrevious(const QString & text, const bool matchCase) const;
-    void replace(const QString & textToReplace, const QString & replacementText, const bool matchCase);
-    void replaceAll(const QString & textToReplace, const QString & replacementText, const bool matchCase);
+    void replace(const QString & textToReplace,
+                 const QString & replacementText,
+                 const bool matchCase);
+    void replaceAll(const QString & textToReplace,
+                    const QString & replacementText,
+                    const bool matchCase);
 
     void insertToDoCheckbox();
 
-    void insertInAppNoteLink(const QString & userId, const QString & shardId, const QString & noteGuid, const QString & linkText);
+    void insertInAppNoteLink(const QString & userId, const QString & shardId,
+                             const QString & noteGuid, const QString & linkText);
 
     void setSpellcheck(const bool enabled);
 
@@ -341,8 +366,12 @@ public Q_SLOTS:
     void insertNumberedList();
 
     void insertTableDialog();
-    void insertFixedWidthTable(const int rows, const int columns, const int widthInPixels);
-    void insertRelativeWidthTable(const int rows, const int columns, const double relativeWidth);
+    void insertFixedWidthTable(const int rows,
+                               const int columns,
+                               const int widthInPixels);
+    void insertRelativeWidthTable(const int rows,
+                                  const int columns,
+                                  const double relativeWidth);
     void insertTableRow();
     void insertTableColumn();
     void removeTableRow();

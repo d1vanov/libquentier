@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Dmitry Ivanov
+ * Copyright 2018-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -25,28 +25,36 @@
 
 namespace quentier {
 
-LocalStoragePatchManager::LocalStoragePatchManager(const Account & account,
-                                                   LocalStorageManagerPrivate & localStorageManager,
-                                                   QSqlDatabase & database, QObject * parent) :
+LocalStoragePatchManager::LocalStoragePatchManager(
+        const Account & account,
+        LocalStorageManagerPrivate & localStorageManager,
+        QSqlDatabase & database, QObject * parent) :
     QObject(parent),
     m_account(account),
     m_localStorageManager(localStorageManager),
     m_sqlDatabase(database)
 {}
 
-QVector<QSharedPointer<ILocalStoragePatch> > LocalStoragePatchManager::patchesForCurrentVersion()
+QVector<QSharedPointer<ILocalStoragePatch> >
+LocalStoragePatchManager::patchesForCurrentVersion()
 {
     QVector<QSharedPointer<ILocalStoragePatch> > result;
 
     ErrorString errorDescription;
     int version = m_localStorageManager.localStorageVersion(errorDescription);
     if (version <= 0) {
-        QNWARNING(QStringLiteral("LocalStoragePatchManager::patchInfoForCurrentLocalStorageVersion: unable to determine the current local storage version"));
+        QNWARNING(QStringLiteral("LocalStoragePatchManager::"
+                                 "patchInfoForCurrentLocalStorageVersion: "
+                                 "unable to determine the current local "
+                                 "storage version"));
         return result;
     }
 
     if (version == 1) {
-        result.append(QSharedPointer<ILocalStoragePatch>(new LocalStoragePatch1To2(m_account, m_localStorageManager, m_sqlDatabase)));
+        result.append(QSharedPointer<ILocalStoragePatch>(
+                new LocalStoragePatch1To2(m_account,
+                                          m_localStorageManager,
+                                          m_sqlDatabase)));
     }
 
     return result;

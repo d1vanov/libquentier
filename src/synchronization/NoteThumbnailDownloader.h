@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Dmitry Ivanov
+ * Copyright 2016-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -37,21 +37,27 @@ class Q_DECL_HIDDEN NoteThumbnailDownloader: public QObject
 {
     Q_OBJECT
 public:
-    explicit NoteThumbnailDownloader(const QString & host, const QString & noteGuid,
-                                     const QString & authToken, const QString & shardId,
-                                     const bool noteFromPublicLinkedNotebook, QObject * parent = Q_NULLPTR);
+    explicit NoteThumbnailDownloader(const QString & host,
+                                     const QString & noteGuid,
+                                     const QString & authToken,
+                                     const QString & shardId,
+                                     const bool noteFromPublicLinkedNotebook,
+                                     QObject * parent = Q_NULLPTR);
     virtual ~NoteThumbnailDownloader();
 
     void start();
 
 Q_SIGNALS:
-    void finished(bool success, QString noteGuid, QByteArray downloadedThumbnailData, ErrorString errorDescription);
+    void finished(bool success, QString noteGuid,
+                  QByteArray downloadedThumbnailData,
+                  ErrorString errorDescription);
 
 private:
     typedef qevercloud::EverCloudExceptionData EverCloudExceptionData;
 
 private Q_SLOTS:
-    void onDownloadFinished(QVariant result, QSharedPointer<EverCloudExceptionData> error);
+    void onDownloadFinished(QVariant result,
+                            QSharedPointer<EverCloudExceptionData> error);
 
 private:
     QString                     m_host;

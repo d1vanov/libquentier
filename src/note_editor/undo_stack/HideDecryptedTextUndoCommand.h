@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Dmitry Ivanov
+ * Copyright 2016-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -29,8 +29,12 @@ class Q_DECL_HIDDEN HideDecryptedTextUndoCommand: public INoteEditorUndoCommand
     Q_OBJECT
     typedef NoteEditorPage::Callback Callback;
 public:
-    HideDecryptedTextUndoCommand(NoteEditorPrivate & noteEditorPrivate, const Callback & callback, QUndoCommand * parent = Q_NULLPTR);
-    HideDecryptedTextUndoCommand(NoteEditorPrivate & noteEditorPrivate, const Callback & callback, const QString & text, QUndoCommand * parent = Q_NULLPTR);
+    HideDecryptedTextUndoCommand(NoteEditorPrivate & noteEditorPrivate,
+                                 const Callback & callback,
+                                 QUndoCommand * parent = Q_NULLPTR);
+    HideDecryptedTextUndoCommand(NoteEditorPrivate & noteEditorPrivate,
+                                 const Callback & callback, const QString & text,
+                                 QUndoCommand * parent = Q_NULLPTR);
     virtual ~HideDecryptedTextUndoCommand();
 
     virtual void redoImpl() Q_DECL_OVERRIDE;

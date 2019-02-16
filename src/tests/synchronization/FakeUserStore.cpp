@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Dmitry Ivanov
+ * Copyright 2018-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -21,7 +21,8 @@
 namespace quentier {
 
 FakeUserStore::FakeUserStore() :
-    IUserStore(QSharedPointer<qevercloud::UserStore>(new qevercloud::UserStore(QStringLiteral("127.0.0.1")))),
+    IUserStore(QSharedPointer<qevercloud::UserStore>(
+            new qevercloud::UserStore(QStringLiteral("127.0.0.1")))),
     m_edamVersionMajor(0),
     m_edamVersionMinor(0),
     m_accountLimits(),
@@ -48,7 +49,8 @@ void FakeUserStore::setEdamVersionMinor(const qint16 edamVersionMinor)
     m_edamVersionMinor = edamVersionMinor;
 }
 
-const qevercloud::AccountLimits * FakeUserStore::findAccountLimits(const qevercloud::ServiceLevel::type serviceLevel) const
+const qevercloud::AccountLimits * FakeUserStore::findAccountLimits(
+    const qevercloud::ServiceLevel::type serviceLevel) const
 {
     auto it = m_accountLimits.find(serviceLevel);
     if (it != m_accountLimits.end()) {
@@ -85,8 +87,10 @@ IUserStore * FakeUserStore::create(const QString & host) const
     return new FakeUserStore;
 }
 
-bool FakeUserStore::checkVersion(const QString & clientName, qint16 edamVersionMajor,
-                                 qint16 edamVersionMinor, ErrorString & errorDescription)
+bool FakeUserStore::checkVersion(const QString & clientName,
+                                 qint16 edamVersionMajor,
+                                 qint16 edamVersionMinor,
+                                 ErrorString & errorDescription)
 {
     Q_UNUSED(clientName);
 
@@ -103,7 +107,8 @@ bool FakeUserStore::checkVersion(const QString & clientName, qint16 edamVersionM
     return true;
 }
 
-qint32 FakeUserStore::getUser(User & user, ErrorString & errorDescription, qint32 & rateLimitSeconds)
+qint32 FakeUserStore::getUser(User & user, ErrorString & errorDescription,
+                              qint32 & rateLimitSeconds)
 {
     Q_UNUSED(rateLimitSeconds)
 
@@ -122,8 +127,10 @@ qint32 FakeUserStore::getUser(User & user, ErrorString & errorDescription, qint3
     return 0;
 }
 
-qint32 FakeUserStore::getAccountLimits(const qevercloud::ServiceLevel::type serviceLevel, qevercloud::AccountLimits & limits,
-                                       ErrorString & errorDescription, qint32 & rateLimitSeconds)
+qint32 FakeUserStore::getAccountLimits(const qevercloud::ServiceLevel::type serviceLevel,
+                                       qevercloud::AccountLimits & limits,
+                                       ErrorString & errorDescription,
+                                       qint32 & rateLimitSeconds)
 {
     Q_UNUSED(rateLimitSeconds)
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Dmitry Ivanov
+ * Copyright 2016-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -28,10 +28,15 @@ class Q_DECL_HIDDEN UpdateResourceUndoCommand: public INoteEditorUndoCommand
 {
     Q_OBJECT
 public:
-    UpdateResourceUndoCommand(const Resource & resourceBefore, const Resource & resourceAfter,
-                             NoteEditorPrivate & noteEditorPrivate, QUndoCommand * parent = Q_NULLPTR);
-    UpdateResourceUndoCommand(const Resource & resourceBefore, const Resource & resourceAfter,
-                              NoteEditorPrivate & noteEditorPrivate, const QString & text, QUndoCommand * parent = Q_NULLPTR);
+    UpdateResourceUndoCommand(const Resource & resourceBefore,
+                              const Resource & resourceAfter,
+                              NoteEditorPrivate & noteEditorPrivate,
+                              QUndoCommand * parent = Q_NULLPTR);
+    UpdateResourceUndoCommand(const Resource & resourceBefore,
+                              const Resource & resourceAfter,
+                              NoteEditorPrivate & noteEditorPrivate,
+                              const QString & text,
+                              QUndoCommand * parent = Q_NULLPTR);
     virtual ~UpdateResourceUndoCommand();
 
     virtual void undoImpl() Q_DECL_OVERRIDE;

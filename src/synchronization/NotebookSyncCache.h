@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Dmitry Ivanov
+ * Copyright 2017-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -27,11 +27,13 @@
 namespace quentier {
 
 /**
- * The NotebookSyncCache class is a lazy cache of notebook info required for the sync conflicts resolution and
- * possibly for expunging stale notebooks after the out of order full sync. The cache is lazy because initially
- * it doesn't contain any information, it only starts to collect it after the first request to do so hence saving
- * the CPU and memory in case it won't be needed (i.e. there won't be any conflicts detected during sync + there won't
- * be the need to expunge stale notebooks after the full sync).
+ * The NotebookSyncCache class is a lazy cache of notebook info required for
+ * the sync conflicts resolution and possibly for expunging stale notebooks
+ * after the out of order full sync. The cache is lazy because initially it
+ * doesn't contain any information, it only starts to collect it after
+ * the first request to do so hence saving the CPU and memory in case it won't
+ * be needed (i.e. there won't be any conflicts detected during sync + there
+ * won't be the need to expunge stale notebooks after the full sync).
  */
 class Q_DECL_HIDDEN NotebookSyncCache: public QObject
 {
@@ -44,15 +46,22 @@ public:
     void clear();
 
     /**
-     * @return True if the cache is already filled with up-to-moment data, false otherwise
+     * @return  True if the cache is already filled with up-to-moment data,
+     *          false otherwise
      */
     bool isFilled() const;
 
-    const QHash<QString,QString> & nameByLocalUidHash() const { return m_notebookNameByLocalUid; }
-    const QHash<QString,QString> & nameByGuidHash() const { return m_notebookNameByGuid; }
-    const QHash<QString,QString> & guidByNameHash() const { return m_notebookGuidByName; }
+    const QHash<QString,QString> & nameByLocalUidHash() const
+    { return m_notebookNameByLocalUid; }
 
-    const QHash<QString,Notebook> & dirtyNotebooksByGuidHash() const { return m_dirtyNotebooksByGuid; }
+    const QHash<QString,QString> & nameByGuidHash() const
+    { return m_notebookNameByGuid; }
+
+    const QHash<QString,QString> & guidByNameHash() const
+    { return m_notebookGuidByName; }
+
+    const QHash<QString,Notebook> & dirtyNotebooksByGuidHash() const
+    { return m_dirtyNotebooksByGuid; }
 
     const QString & linkedNotebookGuid() const { return m_linkedNotebookGuid; }
 
@@ -69,24 +78,31 @@ Q_SIGNALS:
 
 public Q_SLOTS:
     /**
-     * Start collecting the information about notebooks; does nothing if the information is already collected
-     * or is being collected at the moment, otherwise initiates the sequence of actions required to collect
+     * Start collecting the information about notebooks; does nothing if
+     * the information is already collected or is being collected at the moment,
+     * otherwise initiates the sequence of actions required to collect
      * the notebook information
      */
     void fill();
 
 private Q_SLOTS:
-    void onListNotebooksComplete(LocalStorageManager::ListObjectsOptions flag,
-                                 size_t limit, size_t offset,
-                                 LocalStorageManager::ListNotebooksOrder::type order,
-                                 LocalStorageManager::OrderDirection::type orderDirection,
-                                 QString linkedNotebookGuid, QList<Notebook> foundNotebooks,
-                                 QUuid requestId);
-    void onListNotebooksFailed(LocalStorageManager::ListObjectsOptions flag,
-                               size_t limit, size_t offset,
-                               LocalStorageManager::ListNotebooksOrder::type order,
-                               LocalStorageManager::OrderDirection::type orderDirection,
-                               QString linkedNotebookGuid, ErrorString errorDescription, QUuid requestId);
+    void onListNotebooksComplete(
+        LocalStorageManager::ListObjectsOptions flag,
+        size_t limit, size_t offset,
+        LocalStorageManager::ListNotebooksOrder::type order,
+        LocalStorageManager::OrderDirection::type orderDirection,
+        QString linkedNotebookGuid,
+        QList<Notebook> foundNotebooks,
+        QUuid requestId);
+
+    void onListNotebooksFailed(
+        LocalStorageManager::ListObjectsOptions flag,
+        size_t limit, size_t offset,
+        LocalStorageManager::ListNotebooksOrder::type order,
+        LocalStorageManager::OrderDirection::type orderDirection,
+        QString linkedNotebookGuid, ErrorString errorDescription,
+        QUuid requestId);
+
     void onAddNotebookComplete(Notebook notebook, QUuid requestId);
     void onUpdateNotebookComplete(Notebook notebook, QUuid requestId);
     void onExpungeNotebookComplete(Notebook notebook, QUuid requestId);

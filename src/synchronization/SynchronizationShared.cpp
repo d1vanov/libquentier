@@ -1,3 +1,21 @@
+/*
+ * Copyright 2017-2019 Dmitry Ivanov
+ *
+ * This file is part of libquentier
+ *
+ * libquentier is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, version 3 of the License.
+ *
+ * libquentier is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
+ */
+
 #include "SynchronizationShared.h"
 
 namespace quentier {
@@ -27,10 +45,11 @@ QTextStream & LinkedNotebookAuthData::print(QTextStream & strm) const
     strm << QStringLiteral("LinkedNotebookAuthData: {\n")
          << QStringLiteral("    guid = ") << m_guid << QStringLiteral("\n")
          << QStringLiteral("    shard id = ") << m_shardId << QStringLiteral("\n")
-         << QStringLiteral("    shared notebook global id = ") << m_sharedNotebookGlobalId << QStringLiteral("\n")
+         << QStringLiteral("    shared notebook global id = ")
+         << m_sharedNotebookGlobalId << QStringLiteral("\n")
          << QStringLiteral("    uri = ") << m_uri << QStringLiteral("\n")
-         << QStringLiteral("    note store url = ") << m_noteStoreUrl << QStringLiteral("\n")
-         << QStringLiteral("};\n");
+         << QStringLiteral("    note store url = ") << m_noteStoreUrl
+         << QStringLiteral("\n") << QStringLiteral("};\n");
 
     return strm;
 }

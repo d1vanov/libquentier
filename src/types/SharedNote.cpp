@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Dmitry Ivanov
+ * Copyright 2016-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -68,11 +68,12 @@ bool SharedNote::operator==(const SharedNote & other) const
     const qevercloud::SharedNote & enSharedNote = d->m_qecSharedNote;
     const qevercloud::SharedNote & otherEnSharedNote = other.d->m_qecSharedNote;
 
-    return (enSharedNote == otherEnSharedNote) && (d->m_noteGuid == other.d->m_noteGuid);
+    return (enSharedNote == otherEnSharedNote) &&
+           (d->m_noteGuid == other.d->m_noteGuid);
 
     // NOTE: m_indexInNote does not take any part in comparison
-    // as it is by nature a helper parameter intended to preserve sorting of shared notes
-    // in note between insertions and selections from the database
+    // as it is by nature a helper parameter intended to preserve sorting of
+    // shared notes in note between insertions and selections from the database
 }
 
 bool SharedNote::operator!=(const SharedNote & other) const
@@ -163,7 +164,8 @@ const QString & SharedNote::recipientIdentityContactName() const
     return d->m_qecSharedNote.recipientIdentity->contact->name;
 }
 
-void SharedNote::setRecipientIdentityContactName(const QString & recipientIdentityContactName)
+void SharedNote::setRecipientIdentityContactName(
+    const QString & recipientIdentityContactName)
 {
     if (recipientIdentityContactName.isEmpty())
     {
@@ -187,13 +189,15 @@ void SharedNote::setRecipientIdentityContactName(const QString & recipientIdenti
             d->m_qecSharedNote.recipientIdentity->contact = qevercloud::Contact();
         }
 
-        d->m_qecSharedNote.recipientIdentity->contact->name = recipientIdentityContactName;
+        d->m_qecSharedNote.recipientIdentity->contact->name =
+            recipientIdentityContactName;
     }
 }
 
 bool SharedNote::hasRecipientIdentityContactId() const
 {
-    return d->m_qecSharedNote.recipientIdentity.isSet() && d->m_qecSharedNote.recipientIdentity->contact.isSet() &&
+    return d->m_qecSharedNote.recipientIdentity.isSet() &&
+           d->m_qecSharedNote.recipientIdentity->contact.isSet() &&
            d->m_qecSharedNote.recipientIdentity->contact->id.isSet();
 }
 
@@ -202,7 +206,8 @@ const QString & SharedNote::recipientIdentityContactId() const
     return d->m_qecSharedNote.recipientIdentity->contact->id;
 }
 
-void SharedNote::setRecipientIdentityContactId(const QString & recipientIdentityContactId)
+void SharedNote::setRecipientIdentityContactId(
+    const QString & recipientIdentityContactId)
 {
     if (recipientIdentityContactId.isEmpty())
     {
@@ -226,13 +231,15 @@ void SharedNote::setRecipientIdentityContactId(const QString & recipientIdentity
             d->m_qecSharedNote.recipientIdentity->contact = qevercloud::Contact();
         }
 
-        d->m_qecSharedNote.recipientIdentity->contact->id = recipientIdentityContactId;
+        d->m_qecSharedNote.recipientIdentity->contact->id =
+            recipientIdentityContactId;
     }
 }
 
 bool SharedNote::hasRecipientIdentityContactType() const
 {
-    return d->m_qecSharedNote.recipientIdentity.isSet() && d->m_qecSharedNote.recipientIdentity->contact.isSet() &&
+    return d->m_qecSharedNote.recipientIdentity.isSet() &&
+           d->m_qecSharedNote.recipientIdentity->contact.isSet() &&
            d->m_qecSharedNote.recipientIdentity->contact->type.isSet();
 }
 
@@ -241,7 +248,8 @@ qevercloud::ContactType::type SharedNote::recipientIdentityContactType() const
     return d->m_qecSharedNote.recipientIdentity->contact->type;
 }
 
-void SharedNote::setRecipientIdentityContactType(const qevercloud::ContactType::type recipientIdentityContactType)
+void SharedNote::setRecipientIdentityContactType(
+    const qevercloud::ContactType::type recipientIdentityContactType)
 {
     if (!d->m_qecSharedNote.recipientIdentity.isSet()) {
         d->m_qecSharedNote.recipientIdentity = qevercloud::Identity();
@@ -251,15 +259,20 @@ void SharedNote::setRecipientIdentityContactType(const qevercloud::ContactType::
         d->m_qecSharedNote.recipientIdentity->contact = qevercloud::Contact();
     }
 
-    d->m_qecSharedNote.recipientIdentity->contact->type = recipientIdentityContactType;
+    d->m_qecSharedNote.recipientIdentity->contact->type =
+        recipientIdentityContactType;
 }
 
-void SharedNote::setRecipientIdentityContactType(const qint32 recipientIdentityContactType)
+void SharedNote::setRecipientIdentityContactType(
+    const qint32 recipientIdentityContactType)
 {
-    if ( (recipientIdentityContactType >= static_cast<qint32>(qevercloud::ContactType::EVERNOTE)) &&
-         (recipientIdentityContactType <= static_cast<qint32>(qevercloud::ContactType::LINKEDIN)) )
+    if ( (recipientIdentityContactType >=
+          static_cast<qint32>(qevercloud::ContactType::EVERNOTE)) &&
+         (recipientIdentityContactType <=
+          static_cast<qint32>(qevercloud::ContactType::LINKEDIN)) )
     {
-        setRecipientIdentityContactType(static_cast<qevercloud::ContactType::type>(recipientIdentityContactType));
+        setRecipientIdentityContactType(static_cast<qevercloud::ContactType::type>(
+                recipientIdentityContactType));
     }
     else
     {
@@ -277,7 +290,8 @@ void SharedNote::setRecipientIdentityContactType(const qint32 recipientIdentityC
 
 bool SharedNote::hasRecipientIdentityContactPhotoUrl() const
 {
-    return d->m_qecSharedNote.recipientIdentity.isSet() && d->m_qecSharedNote.recipientIdentity->contact.isSet() &&
+    return d->m_qecSharedNote.recipientIdentity.isSet() &&
+           d->m_qecSharedNote.recipientIdentity->contact.isSet() &&
            d->m_qecSharedNote.recipientIdentity->contact->photoUrl.isSet();
 }
 
@@ -286,7 +300,8 @@ const QString & SharedNote::recipientIdentityContactPhotoUrl() const
     return d->m_qecSharedNote.recipientIdentity->contact->photoUrl;
 }
 
-void SharedNote::setRecipientIdentityContactPhotoUrl(const QString & recipientIdentityContactPhotoUrl)
+void SharedNote::setRecipientIdentityContactPhotoUrl(
+    const QString & recipientIdentityContactPhotoUrl)
 {
     if (recipientIdentityContactPhotoUrl.isEmpty())
     {
@@ -310,13 +325,15 @@ void SharedNote::setRecipientIdentityContactPhotoUrl(const QString & recipientId
             d->m_qecSharedNote.recipientIdentity->contact = qevercloud::Contact();
         }
 
-        d->m_qecSharedNote.recipientIdentity->contact->photoUrl = recipientIdentityContactPhotoUrl;
+        d->m_qecSharedNote.recipientIdentity->contact->photoUrl =
+            recipientIdentityContactPhotoUrl;
     }
 }
 
 bool SharedNote::hasRecipientIdentityContactPhotoLastUpdated() const
 {
-    return d->m_qecSharedNote.recipientIdentity.isSet() && d->m_qecSharedNote.recipientIdentity->contact.isSet() &&
+    return d->m_qecSharedNote.recipientIdentity.isSet() &&
+           d->m_qecSharedNote.recipientIdentity->contact.isSet() &&
            d->m_qecSharedNote.recipientIdentity->contact->photoLastUpdated.isSet();
 }
 
@@ -355,7 +372,8 @@ void SharedNote::setRecipientIdentityContactPhotoLastUpdated(const qint64 timest
 
 bool SharedNote::hasRecipientIdentityContactMessagingPermit() const
 {
-    return d->m_qecSharedNote.recipientIdentity.isSet() && d->m_qecSharedNote.recipientIdentity->contact.isSet() &&
+    return d->m_qecSharedNote.recipientIdentity.isSet() &&
+           d->m_qecSharedNote.recipientIdentity->contact.isSet() &&
            d->m_qecSharedNote.recipientIdentity->contact->messagingPermit.isSet();
 }
 
@@ -364,7 +382,8 @@ const QByteArray & SharedNote::recipientIdentityContactMessagingPermit() const
     return d->m_qecSharedNote.recipientIdentity->contact->messagingPermit;
 }
 
-void SharedNote::setRecipientIdentityContactMessagingPermit(const QByteArray & messagingPermit)
+void SharedNote::setRecipientIdentityContactMessagingPermit(
+    const QByteArray & messagingPermit)
 {
     if (messagingPermit.isEmpty())
     {
@@ -394,7 +413,8 @@ void SharedNote::setRecipientIdentityContactMessagingPermit(const QByteArray & m
 
 bool SharedNote::hasRecipientIdentityContactMessagingPermitExpires() const
 {
-    return d->m_qecSharedNote.recipientIdentity.isSet() && d->m_qecSharedNote.recipientIdentity->contact.isSet() &&
+    return d->m_qecSharedNote.recipientIdentity.isSet() &&
+           d->m_qecSharedNote.recipientIdentity->contact.isSet() &&
            d->m_qecSharedNote.recipientIdentity->contact->messagingPermitExpires.isSet();
 }
 
@@ -403,7 +423,8 @@ qint64 SharedNote::recipientIdentityContactMessagingPermitExpires() const
     return d->m_qecSharedNote.recipientIdentity->contact->messagingPermitExpires;
 }
 
-void SharedNote::setRecipientIdentityContactMessagingPermitExpires(const qint64 timestamp)
+void SharedNote::setRecipientIdentityContactMessagingPermitExpires(
+    const qint64 timestamp)
 {
     if (timestamp >= 0)
     {
@@ -415,7 +436,8 @@ void SharedNote::setRecipientIdentityContactMessagingPermitExpires(const qint64 
             d->m_qecSharedNote.recipientIdentity->contact = qevercloud::Contact();
         }
 
-        d->m_qecSharedNote.recipientIdentity->contact->messagingPermitExpires = timestamp;
+        d->m_qecSharedNote.recipientIdentity->contact->messagingPermitExpires =
+            timestamp;
     }
     else
     {
@@ -433,7 +455,8 @@ void SharedNote::setRecipientIdentityContactMessagingPermitExpires(const qint64 
 
 bool SharedNote::hasRecipientIdentityUserId() const
 {
-    return d->m_qecSharedNote.recipientIdentity.isSet() && d->m_qecSharedNote.recipientIdentity->userId.isSet();
+    return d->m_qecSharedNote.recipientIdentity.isSet() &&
+           d->m_qecSharedNote.recipientIdentity->userId.isSet();
 }
 
 qint32 SharedNote::recipientIdentityUserId() const
@@ -452,7 +475,8 @@ void SharedNote::setRecipientIdentityUserId(const qint32 userId)
 
 bool SharedNote::hasRecipientIdentityDeactivated() const
 {
-    return d->m_qecSharedNote.recipientIdentity.isSet() && d->m_qecSharedNote.recipientIdentity->deactivated.isSet();
+    return d->m_qecSharedNote.recipientIdentity.isSet() &&
+           d->m_qecSharedNote.recipientIdentity->deactivated.isSet();
 }
 
 bool SharedNote::recipientIdentityDeactivated() const
@@ -471,7 +495,8 @@ void SharedNote::setRecipientIdentityDeactivated(const bool deactivated)
 
 bool SharedNote::hasRecipientIdentitySameBusiness() const
 {
-    return d->m_qecSharedNote.recipientIdentity.isSet() && d->m_qecSharedNote.recipientIdentity->sameBusiness.isSet();
+    return d->m_qecSharedNote.recipientIdentity.isSet() &&
+           d->m_qecSharedNote.recipientIdentity->sameBusiness.isSet();
 }
 
 bool SharedNote::recipientIdentitySameBusiness() const
@@ -490,7 +515,8 @@ void SharedNote::setRecipientIdentitySameBusiness(const bool sameBusiness)
 
 bool SharedNote::hasRecipientIdentityBlocked() const
 {
-    return d->m_qecSharedNote.recipientIdentity.isSet() && d->m_qecSharedNote.recipientIdentity->blocked.isSet();
+    return d->m_qecSharedNote.recipientIdentity.isSet() &&
+           d->m_qecSharedNote.recipientIdentity->blocked.isSet();
 }
 
 bool SharedNote::recipientIdentityBlocked() const
@@ -509,7 +535,8 @@ void SharedNote::setRecipientIdentityBlocked(const bool blocked)
 
 bool SharedNote::hasRecipientIdentityUserConnected() const
 {
-    return d->m_qecSharedNote.recipientIdentity.isSet() && d->m_qecSharedNote.recipientIdentity->userConnected.isSet();
+    return d->m_qecSharedNote.recipientIdentity.isSet() &&
+           d->m_qecSharedNote.recipientIdentity->userConnected.isSet();
 }
 
 bool SharedNote::recipientIdentityUserConnected() const
@@ -528,7 +555,8 @@ void SharedNote::setRecipientIdentityUserConnected(const bool userConnected)
 
 bool SharedNote::hasRecipientIdentityEventId() const
 {
-    return d->m_qecSharedNote.recipientIdentity.isSet() && d->m_qecSharedNote.recipientIdentity->eventId.isSet();
+    return d->m_qecSharedNote.recipientIdentity.isSet() &&
+           d->m_qecSharedNote.recipientIdentity->eventId.isSet();
 }
 
 qint64 SharedNote::recipientIdentityEventId() const
@@ -577,8 +605,11 @@ void SharedNote::setPrivilegeLevel(const SharedNote::SharedNotePrivilegeLevel le
 
 void SharedNote::setPrivilegeLevel(const qint8 level)
 {
-    if (level <= static_cast<qint8>(qevercloud::SharedNotePrivilegeLevel::FULL_ACCESS)) {
-        d->m_qecSharedNote.privilege = static_cast<qevercloud::SharedNotePrivilegeLevel::type>(level);
+    if (level <=
+        static_cast<qint8>(qevercloud::SharedNotePrivilegeLevel::FULL_ACCESS))
+    {
+        d->m_qecSharedNote.privilege =
+            static_cast<qevercloud::SharedNotePrivilegeLevel::type>(level);
     }
     else {
         d->m_qecSharedNote.privilege.clear();
@@ -650,7 +681,8 @@ QTextStream & SharedNote::print(QTextStream & strm) const
     strm << QStringLiteral("SharedNote {\n");
 
     strm << d->m_qecSharedNote;
-    strm << QStringLiteral("index in note = ") << d->m_indexInNote << QStringLiteral(";\n");
+    strm << QStringLiteral("index in note = ") << d->m_indexInNote
+         << QStringLiteral(";\n");
     strm << QStringLiteral("};\n");
 
     return strm;

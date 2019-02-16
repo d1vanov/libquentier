@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Dmitry Ivanov
+ * Copyright 2016-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -33,8 +33,9 @@ bool parseResourceRecognitionIndicesAndItemsTest(QString & error)
     QFile resource(QStringLiteral(":/tests/recoIndex-all-in-one-example.xml"));
     if (!resource.open(QIODevice::ReadOnly)) {
         error = QStringLiteral("Can't open test file ") + resource.fileName();
-        QNWARNING(error << QStringLiteral(", error: ") << resource.errorString() << QStringLiteral(" (error code ")
-                  << resource.error() << QStringLiteral(")"));
+        QNWARNING(error << QStringLiteral(", error: ") << resource.errorString()
+                  << QStringLiteral(" (error code ") << resource.error()
+                  << QStringLiteral(")"));
         return false;
     }
 
@@ -50,7 +51,8 @@ bool parseResourceRecognitionIndicesAndItemsTest(QString & error)
 
 #define CHECK_INDICES_PROPERTY(accessor, expected, property) \
     if (recoIndices.accessor() != QStringLiteral(expected)) { \
-        error = QStringLiteral("Incorrectly parsed reco indices " property ": expected \"" expected "\", got \"") + \
+        error = QStringLiteral("Incorrectly parsed reco indices " property ": " \
+                               "expected \"" expected "\", got \"") + \
                 recoIndices.accessor() + QStringLiteral("\""); \
         QNWARNING(error << QStringLiteral("; reco indices: ") << recoIndices); \
         return false; \
@@ -58,19 +60,24 @@ bool parseResourceRecognitionIndicesAndItemsTest(QString & error)
 
     CHECK_INDICES_PROPERTY(docType, "picture", "doc type")
     CHECK_INDICES_PROPERTY(objectType, "ink", "object type")
-    CHECK_INDICES_PROPERTY(objectId, "a284273e482578224145f2560b67bf45", "object id")
+    CHECK_INDICES_PROPERTY(objectId, "a284273e482578224145f2560b67bf45",
+                           "object id")
     CHECK_INDICES_PROPERTY(engineVersion, "3.0.17.14", "engine version")
     CHECK_INDICES_PROPERTY(recoType, "client", "recognition type")
     CHECK_INDICES_PROPERTY(lang, "en", "lang")
 
     if (recoIndices.objectHeight() != 2592) {
-        error = QStringLiteral("Incorrectly parsed reco indices object height: expected 2592, got ") + QString::number(recoIndices.objectHeight());
+        error = QStringLiteral("Incorrectly parsed reco indices object height: ") +
+                QStringLiteral("expected 2592, got ") +
+                QString::number(recoIndices.objectHeight());
         QNWARNING(error << QStringLiteral("; reco indices: ") << recoIndices);
         return false;
     }
 
     if (recoIndices.objectWidth() != 1936) {
-        error = QStringLiteral("Incorrectly parsed reco indices object width: expected 1936, got ") + QString::number(recoIndices.objectWidth());
+        error = QStringLiteral("Incorrectly parsed reco indices object width: ") +
+                QStringLiteral("expected 1936, got ") +
+                QString::number(recoIndices.objectWidth());
         QNWARNING(error << QStringLiteral("; reco indices: ") << recoIndices);
         return false;
     }
@@ -78,14 +85,16 @@ bool parseResourceRecognitionIndicesAndItemsTest(QString & error)
     QVector<ResourceRecognitionIndexItem> items = recoIndices.items();
     int numItems = items.size();
     if (numItems != 2) {
-        error = QStringLiteral("Incorrectly parsed reco indices items: expected 2 items, got ") + QString::number(numItems);
+        error = QStringLiteral("Incorrectly parsed reco indices items: expected ") +
+                QStringLiteral("2 items, got ") + QString::number(numItems);
         QNWARNING(error << QStringLiteral("; reco indices: ") << recoIndices);
         return false;
     }
 
 #define CHECK_ITEM_PROPERTY(item, accessor, expected, property) \
     if (item.accessor() != expected) { \
-        error = QStringLiteral("Incorrectly parsed recognition item's " property ": expected ") + QString::number(expected) + \
+        error = QStringLiteral("Incorrectly parsed recognition item's " property ": " \
+                               "expected ") + QString::number(expected) + \
                 QStringLiteral(", got ") + QString::number(item.accessor()); \
         QNWARNING(error << QStringLiteral("; reco indices: ") << recoIndices); \
         return false; \
@@ -99,7 +108,8 @@ bool parseResourceRecognitionIndicesAndItemsTest(QString & error)
 
     QVector<ResourceRecognitionIndexItem::ObjectItem> objectItems0 = item0.objectItems();
     if (!objectItems0.empty()) {
-        error = QStringLiteral("Incorrectly parsed recognition item's object items: expected none of them, got ") +
+        error = QStringLiteral("Incorrectly parsed recognition item's object ") +
+                QStringLiteral("items: expected none of them, got ") +
                 QString::number(objectItems0.size());
         QNWARNING(error << QStringLiteral("; reco indices: ") << recoIndices);
         return false;
@@ -107,7 +117,8 @@ bool parseResourceRecognitionIndicesAndItemsTest(QString & error)
 
     QVector<ResourceRecognitionIndexItem::ShapeItem> shapeItems0 = item0.shapeItems();
     if (!shapeItems0.empty()) {
-        error = QStringLiteral("Incorrectly parsed recognition item's shape items: expected none of them, got ") +
+        error = QStringLiteral("Incorrectly parsed recognition item's shape items: ") +
+                QStringLiteral("expected none of them, got ") +
                 QString::number(shapeItems0.size());
         QNWARNING(error << "; reco indices: " << recoIndices);
         return false;
@@ -115,7 +126,8 @@ bool parseResourceRecognitionIndicesAndItemsTest(QString & error)
 
     QVector<ResourceRecognitionIndexItem::BarcodeItem> barcodeItems0 = item0.barcodeItems();
     if (!barcodeItems0.empty()) {
-        error = QStringLiteral("Incorrectly parsed recognition item's barcode items: expected none of them, got ") +
+        error = QStringLiteral("Incorrectly parsed recognition item's barcode ") +
+                QStringLiteral("items: expected none of them, got ") +
                 QString::number(barcodeItems0.size());
         QNWARNING(error << QStringLiteral("; reco indices: ") << recoIndices);
         return false;
@@ -123,23 +135,30 @@ bool parseResourceRecognitionIndicesAndItemsTest(QString & error)
 
     QVector<ResourceRecognitionIndexItem::TextItem> textItems0 = item0.textItems();
     if (textItems0.size() != 4) {
-        error = QStringLiteral("Incorrectly parsed recognition item's text items: expected 4 text items, got ") + QString::number(textItems0.size());
+        error = QStringLiteral("Incorrectly parsed recognition item's text items: ") +
+                QStringLiteral("expected 4 text items, got ") +
+                QString::number(textItems0.size());
         QNWARNING(error << QStringLiteral("; reco indices: ") << recoIndices);
         return false;
     }
 
 #define CHECK_TEXT_ITEM_TEXT(item, global_index, index, expected) \
-    const ResourceRecognitionIndexItem::TextItem & item##_textItem##index = textItems##global_index[index]; \
-    if (item##_textItem##index.m_text != QStringLiteral(expected)) { \
-        error = QStringLiteral("Incorrectly parsed recognition item's text item's text: expected ") + \
-                QStringLiteral(expected) + QStringLiteral(", got ") + item##_textItem##index.m_text; \
+    const ResourceRecognitionIndexItem::TextItem & item##_textItem##index = \
+        textItems##global_index[index]; \
+    if (item##_textItem##index.m_text != QStringLiteral(expected)) \
+    { \
+        error = QStringLiteral("Incorrectly parsed recognition item's text " \
+                               "item's text: expected ") + \
+                QStringLiteral(expected) + QStringLiteral(", got ") + \
+                item##_textItem##index.m_text; \
         QNWARNING(error << QStringLiteral("; reco indices: ") << recoIndices); \
         return false; \
     }
 
 #define CHECK_TEXT_ITEM_WEIGHT(item, index, expected) \
     if (item##_textItem##index.m_weight != expected) { \
-        error = QStringLiteral("Incorrectly parsed recognition item's text item's text: expected " #expected ", got ") + \
+        error = QStringLiteral("Incorrectly parsed recognition item's text item's " \
+                               "text: expected " #expected ", got ") + \
                 QString::number(item##_textItem##index.m_weight); \
         QNWARNING(error << QStringLiteral("; reco indices: ") << recoIndices); \
         return false; \
@@ -167,44 +186,51 @@ bool parseResourceRecognitionIndicesAndItemsTest(QString & error)
 
     QVector<int> strokeList = item1.strokeList();
     if (strokeList.size() != 5) {
-        error = QStringLiteral("Incorrectly parsed recognition item's stroke list: expected 5 items in the list, got ") +
+        error = QStringLiteral("Incorrectly parsed recognition item's stroke list: ") +
+                QStringLiteral("expected 5 items in the list, got ") +
                 QString::number(strokeList.size());
         QNWARNING(error << QStringLiteral("; reco indices: ") << recoIndices);
         return false;
     }
 
-    bool strokeListOk = strokeList.contains(14) && strokeList.contains(28) && strokeList.contains(19) &&
-                        strokeList.contains(41) && strokeList.contains(54);
+    bool strokeListOk = strokeList.contains(14) && strokeList.contains(28) &&
+                        strokeList.contains(19) && strokeList.contains(41) &&
+                        strokeList.contains(54);
     if (!strokeListOk) {
-        error = QStringLiteral("Incorrectly parsed recognition item's stroke list: not all expected numbers are found within the list");
+        error = QStringLiteral("Incorrectly parsed recognition item's stroke list: ") +
+                QStringLiteral("not all expected numbers are found within the list");
         QNWARNING(error << QStringLiteral("; reco indices: ") << recoIndices);
         return false;
     }
 
     QVector<ResourceRecognitionIndexItem::ObjectItem> objectItems1 = item1.objectItems();
     if (objectItems1.size() != 4) {
-        error = QStringLiteral("Incorrectly parsed recognition item's object items: expected 4, got ") + QString::number(objectItems1.size());
+        error = QStringLiteral("Incorrectly parsed recognition item's object items: ") +
+                QStringLiteral("expected 4, got ") + QString::number(objectItems1.size());
         QNWARNING(error << QStringLiteral("; reco indices: ") << recoIndices);
         return false;
     }
 
     QVector<ResourceRecognitionIndexItem::ShapeItem> shapeItems1 = item1.shapeItems();
     if (shapeItems1.size() != 4) {
-        error = QStringLiteral("Incorrectly parsed recognition item's shape items: expected 4, got ") + QString::number(shapeItems1.size());
+        error = QStringLiteral("Incorrectly parsed recognition item's shape items: ") +
+                QStringLiteral("expected 4, got ") + QString::number(shapeItems1.size());
         QNWARNING(error << QStringLiteral("; reco indices: ") << recoIndices);
         return false;
     }
 
     QVector<ResourceRecognitionIndexItem::BarcodeItem> barcodeItems1 = item1.barcodeItems();
     if (barcodeItems1.size() != 3) {
-        error = QStringLiteral("Incorrectly parsed recognition item's barcode items: expected 3, got ") + QString::number(barcodeItems1.size());
+        error = QStringLiteral("Incorrectly parsed recognition item's barcode items: ") +
+                QStringLiteral("expected 3, got ") + QString::number(barcodeItems1.size());
         QNWARNING(error << QStringLiteral("; reco indices: ") << recoIndices);
         return false;
     }
 
     QVector<ResourceRecognitionIndexItem::TextItem> textItems1 = item1.textItems();
     if (textItems1.size() != 11) {
-        error = QStringLiteral("Incorrectly parsed recognition item's barcode items: expected 11, got ") + QString::number(textItems1.size());
+        error = QStringLiteral("Incorrectly parsed recognition item's barcode items: ") +
+                QStringLiteral("expected 11, got ") + QString::number(textItems1.size());
         QNWARNING(error << QStringLiteral("; reco indices: ") << recoIndices);
         return false;
     }
@@ -213,7 +239,9 @@ bool parseResourceRecognitionIndicesAndItemsTest(QString & error)
     { \
         const ResourceRecognitionIndexItem::subItemType & checkedItem = subItems[index]; \
         if (checkedItem.property != expected) { \
-            error = QStringLiteral("Incorrectly parsed recognition item's " #subItemType " " #property ": expected ") + QString(__VA_ARGS__(expected)) + \
+            error = QStringLiteral("Incorrectly parsed recognition item's " \
+                                   #subItemType " " #property ": expected ") + \
+                                   QString(__VA_ARGS__(expected)) + \
                     QStringLiteral(", got ") + __VA_ARGS__(checkedItem.property); \
             QNWARNING(error << QStringLiteral("; reco indices: ") << recoIndices); \
             return false; \

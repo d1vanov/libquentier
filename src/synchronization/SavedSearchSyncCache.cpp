@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Dmitry Ivanov
+ * Copyright 2017-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -21,7 +21,8 @@
 
 namespace quentier {
 
-SavedSearchSyncCache::SavedSearchSyncCache(LocalStorageManagerAsync & localStorageManagerAsync, QObject * parent) :
+SavedSearchSyncCache::SavedSearchSyncCache(
+        LocalStorageManagerAsync & localStorageManagerAsync, QObject * parent) :
     QObject(parent),
     m_localStorageManagerAsync(localStorageManagerAsync),
     m_connectedToLocalStorage(false),
@@ -67,7 +68,8 @@ void SavedSearchSyncCache::fill()
     QNDEBUG(QStringLiteral("SavedSearchSyncCache::fill"));
 
     if (m_connectedToLocalStorage) {
-        QNDEBUG(QStringLiteral("Already connected to the local storage, no need to do anything"));
+        QNDEBUG(QStringLiteral("Already connected to the local storage, no need "
+                               "to do anything"));
         return;
     }
 
@@ -75,29 +77,35 @@ void SavedSearchSyncCache::fill()
     requestSavedSearchesList();
 }
 
-void SavedSearchSyncCache::onListSavedSearchesComplete(LocalStorageManager::ListObjectsOptions flag,
-                                                       size_t limit, size_t offset,
-                                                       LocalStorageManager::ListSavedSearchesOrder::type order,
-                                                       LocalStorageManager::OrderDirection::type orderDirection,
-                                                       QList<SavedSearch> foundSearches, QUuid requestId)
+void SavedSearchSyncCache::onListSavedSearchesComplete(
+    LocalStorageManager::ListObjectsOptions flag,
+    size_t limit, size_t offset,
+    LocalStorageManager::ListSavedSearchesOrder::type order,
+    LocalStorageManager::OrderDirection::type orderDirection,
+    QList<SavedSearch> foundSearches, QUuid requestId)
 {
     if (requestId != m_listSavedSearchesRequestId) {
         return;
     }
 
-    QNDEBUG(QStringLiteral("SavedSearchSyncCache::onListSavedSearchesComplete: flag = ")
-            << flag << QStringLiteral(", limit = ") << limit << QStringLiteral(", offset = ")
-            << offset << QStringLiteral(", order = ") << order << QStringLiteral(", order direction = ")
+    QNDEBUG(QStringLiteral("SavedSearchSyncCache::onListSavedSearchesComplete: ")
+            << QStringLiteral("flag = ") << flag << QStringLiteral(", limit = ")
+            << limit << QStringLiteral(", offset = ") << offset
+            << QStringLiteral(", order = ") << order
+            << QStringLiteral(", order direction = ")
             << orderDirection << QStringLiteral(", request id = ") << requestId);
 
-    for(auto it = foundSearches.constBegin(), end = foundSearches.constEnd(); it != end; ++it) {
+    for(auto it = foundSearches.constBegin(),
+        end = foundSearches.constEnd(); it != end; ++it)
+    {
         processSavedSearch(*it);
     }
 
     m_listSavedSearchesRequestId = QUuid();
 
     if (foundSearches.size() == static_cast<int>(limit)) {
-        QNTRACE(QStringLiteral("The number of found saved searches matches the limit, requesting more saved searches "
+        QNTRACE(QStringLiteral("The number of found saved searches matches "
+                               "the limit, requesting more saved searches "
                                "from the local storage"));
         m_offset += limit;
         requestSavedSearchesList();
@@ -107,24 +115,27 @@ void SavedSearchSyncCache::onListSavedSearchesComplete(LocalStorageManager::List
     Q_EMIT filled();
 }
 
-void SavedSearchSyncCache::onListSavedSearchesFailed(LocalStorageManager::ListObjectsOptions flag,
-                                                     size_t limit, size_t offset,
-                                                     LocalStorageManager::ListSavedSearchesOrder::type order,
-                                                     LocalStorageManager::OrderDirection::type orderDirection,
-                                                     ErrorString errorDescription, QUuid requestId)
+void SavedSearchSyncCache::onListSavedSearchesFailed(
+    LocalStorageManager::ListObjectsOptions flag,
+    size_t limit, size_t offset,
+    LocalStorageManager::ListSavedSearchesOrder::type order,
+    LocalStorageManager::OrderDirection::type orderDirection,
+    ErrorString errorDescription, QUuid requestId)
 {
     if (requestId != m_listSavedSearchesRequestId) {
         return;
     }
 
-    QNDEBUG(QStringLiteral("SavedSearchSyncCache::onListSavedSearchesFailed: flag = ")
-            << flag << QStringLiteral(", limit = ") << limit << QStringLiteral(", offset = ")
-            << offset << QStringLiteral(", order = ") << order << QStringLiteral(", order direction = ")
-            << orderDirection << QStringLiteral(", error description = ") << errorDescription
+    QNDEBUG(QStringLiteral("SavedSearchSyncCache::onListSavedSearchesFailed: ")
+            << QStringLiteral("flag = ") << flag << QStringLiteral(", limit = ")
+            << limit << QStringLiteral(", offset = ") << offset
+            << QStringLiteral(", order = ") << order
+            << QStringLiteral(", order direction = ") << orderDirection
+            << QStringLiteral(", error description = ") << errorDescription
             << QStringLiteral(", request id = ") << requestId);
 
-    QNWARNING(QStringLiteral("Failed to cache the saved search information required for the sync: ")
-              << errorDescription);
+    QNWARNING(QStringLiteral("Failed to cache the saved search information "
+                             "required for the sync: ") << errorDescription);
 
     m_savedSearchNameByLocalUid.clear();
     m_savedSearchNameByGuid.clear();
@@ -135,27 +146,33 @@ void SavedSearchSyncCache::onListSavedSearchesFailed(LocalStorageManager::ListOb
     Q_EMIT failure(errorDescription);
 }
 
-void SavedSearchSyncCache::onAddSavedSearchComplete(SavedSearch search, QUuid requestId)
+void SavedSearchSyncCache::onAddSavedSearchComplete(SavedSearch search,
+                                                    QUuid requestId)
 {
-    QNDEBUG(QStringLiteral("SavedSearchSyncCache::onAddSavedSearchComplete: request id = ")
-            << requestId << QStringLiteral(", saved search: ") << search);
+    QNDEBUG(QStringLiteral("SavedSearchSyncCache::onAddSavedSearchComplete: ")
+            << QStringLiteral("request id = ") << requestId
+            << QStringLiteral(", saved search: ") << search);
 
     processSavedSearch(search);
 }
 
-void SavedSearchSyncCache::onUpdateSavedSearchComplete(SavedSearch search, QUuid requestId)
+void SavedSearchSyncCache::onUpdateSavedSearchComplete(SavedSearch search,
+                                                       QUuid requestId)
 {
-    QNDEBUG(QStringLiteral("SavedSearchSyncCache::onUpdateSavedSearchComplete: request id = ")
-            << requestId << QStringLiteral(", saved search: ") << search);
+    QNDEBUG(QStringLiteral("SavedSearchSyncCache::onUpdateSavedSearchComplete: ")
+            << QStringLiteral("request id = ") << requestId
+            << QStringLiteral(", saved search: ") << search);
 
     removeSavedSearch(search.localUid());
     processSavedSearch(search);
 }
 
-void SavedSearchSyncCache::onExpungeSavedSearchComplete(SavedSearch search, QUuid requestId)
+void SavedSearchSyncCache::onExpungeSavedSearchComplete(SavedSearch search,
+                                                        QUuid requestId)
 {
-    QNDEBUG(QStringLiteral("SavedSearchSyncCache::onExpungeSavedSearchComplete: request id = ")
-            << requestId << QStringLiteral(", saved search: ") << search);
+    QNDEBUG(QStringLiteral("SavedSearchSyncCache::onExpungeSavedSearchComplete: ")
+            << QStringLiteral("request id = ") << requestId
+            << QStringLiteral(", saved search: ") << search);
 
     removeSavedSearch(search.localUid());
 }
@@ -172,12 +189,14 @@ void SavedSearchSyncCache::connectToLocalStorage()
     // Connect local signals to local storage manager async's slots
     QObject::connect(this,
                      QNSIGNAL(SavedSearchSyncCache,listSavedSearches,
-                              LocalStorageManager::ListObjectsOptions,size_t,size_t,
+                              LocalStorageManager::ListObjectsOptions,
+                              size_t,size_t,
                               LocalStorageManager::ListSavedSearchesOrder::type,
                               LocalStorageManager::OrderDirection::type,QUuid),
                      &m_localStorageManagerAsync,
                      QNSLOT(LocalStorageManagerAsync,onListSavedSearchesRequest,
-                            LocalStorageManager::ListObjectsOptions,size_t,size_t,
+                            LocalStorageManager::ListObjectsOptions,
+                            size_t,size_t,
                             LocalStorageManager::ListSavedSearchesOrder::type,
                             LocalStorageManager::OrderDirection::type,QUuid),
                      Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
@@ -185,38 +204,54 @@ void SavedSearchSyncCache::connectToLocalStorage()
     // Connect local storage manager async's signals to local slots
     QObject::connect(&m_localStorageManagerAsync,
                      QNSIGNAL(LocalStorageManagerAsync,listSavedSearchesComplete,
-                              LocalStorageManager::ListObjectsOptions,size_t,size_t,
+                              LocalStorageManager::ListObjectsOptions,
+                              size_t,size_t,
                               LocalStorageManager::ListSavedSearchesOrder::type,
                               LocalStorageManager::OrderDirection::type,
                               QList<SavedSearch>,QUuid),
                      this,
                      QNSLOT(SavedSearchSyncCache,onListSavedSearchesComplete,
-                            LocalStorageManager::ListObjectsOptions,size_t,size_t,
+                            LocalStorageManager::ListObjectsOptions,
+                            size_t,size_t,
                             LocalStorageManager::ListSavedSearchesOrder::type,
                             LocalStorageManager::OrderDirection::type,
                             QList<SavedSearch>,QUuid),
                      Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
     QObject::connect(&m_localStorageManagerAsync,
                      QNSIGNAL(LocalStorageManagerAsync,listSavedSearchesFailed,
-                              LocalStorageManager::ListObjectsOptions,size_t,size_t,
+                              LocalStorageManager::ListObjectsOptions,
+                              size_t,size_t,
                               LocalStorageManager::ListSavedSearchesOrder::type,
                               LocalStorageManager::OrderDirection::type,
                               ErrorString,QUuid),
                      this,
                      QNSLOT(SavedSearchSyncCache,onListSavedSearchesFailed,
-                            LocalStorageManager::ListObjectsOptions,size_t,size_t,
+                            LocalStorageManager::ListObjectsOptions,
+                            size_t,size_t,
                             LocalStorageManager::ListSavedSearchesOrder::type,
                             LocalStorageManager::OrderDirection::type,
                             ErrorString,QUuid),
                      Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
-    QObject::connect(&m_localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,addSavedSearchComplete,SavedSearch,QUuid),
-                     this, QNSLOT(SavedSearchSyncCache,onAddSavedSearchComplete,SavedSearch,QUuid),
+    QObject::connect(&m_localStorageManagerAsync,
+                     QNSIGNAL(LocalStorageManagerAsync,addSavedSearchComplete,
+                              SavedSearch,QUuid),
+                     this,
+                     QNSLOT(SavedSearchSyncCache,onAddSavedSearchComplete,
+                            SavedSearch,QUuid),
                      Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
-    QObject::connect(&m_localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,updateSavedSearchComplete,SavedSearch,QUuid),
-                     this, QNSLOT(SavedSearchSyncCache,onUpdateSavedSearchComplete,SavedSearch,QUuid),
+    QObject::connect(&m_localStorageManagerAsync,
+                     QNSIGNAL(LocalStorageManagerAsync,updateSavedSearchComplete,
+                              SavedSearch,QUuid),
+                     this,
+                     QNSLOT(SavedSearchSyncCache,onUpdateSavedSearchComplete,
+                            SavedSearch,QUuid),
                      Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
-    QObject::connect(&m_localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,expungeSavedSearchComplete,SavedSearch,QUuid),
-                     this, QNSLOT(SavedSearchSyncCache,onExpungeSavedSearchComplete,SavedSearch,QUuid),
+    QObject::connect(&m_localStorageManagerAsync,
+                     QNSIGNAL(LocalStorageManagerAsync,expungeSavedSearchComplete,
+                              SavedSearch,QUuid),
+                     this,
+                     QNSLOT(SavedSearchSyncCache,onExpungeSavedSearchComplete,
+                            SavedSearch,QUuid),
                      Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
 
     m_connectedToLocalStorage = true;
@@ -234,46 +269,64 @@ void SavedSearchSyncCache::disconnectFromLocalStorage()
     // Disconnect local signals from local storage manager async's slots
     QObject::disconnect(this,
                         QNSIGNAL(SavedSearchSyncCache,listSavedSearches,
-                                 LocalStorageManager::ListObjectsOptions,size_t,size_t,
+                                 LocalStorageManager::ListObjectsOptions,
+                                 size_t,size_t,
                                  LocalStorageManager::ListSavedSearchesOrder::type,
                                  LocalStorageManager::OrderDirection::type,QUuid),
                         &m_localStorageManagerAsync,
                         QNSLOT(LocalStorageManagerAsync,onListSavedSearchesRequest,
-                               LocalStorageManager::ListObjectsOptions,size_t,size_t,
+                               LocalStorageManager::ListObjectsOptions,
+                               size_t,size_t,
                                LocalStorageManager::ListSavedSearchesOrder::type,
                                LocalStorageManager::OrderDirection::type,QUuid));
 
     // Disconnect local storage manager async's signals from local slots
     QObject::disconnect(&m_localStorageManagerAsync,
                         QNSIGNAL(LocalStorageManagerAsync,listSavedSearchesComplete,
-                                 LocalStorageManager::ListObjectsOptions,size_t,size_t,
+                                 LocalStorageManager::ListObjectsOptions,
+                                 size_t,size_t,
                                  LocalStorageManager::ListSavedSearchesOrder::type,
                                  LocalStorageManager::OrderDirection::type,
                                  QList<SavedSearch>,QUuid),
                         this,
                         QNSLOT(SavedSearchSyncCache,onListSavedSearchesComplete,
-                               LocalStorageManager::ListObjectsOptions,size_t,size_t,
+                               LocalStorageManager::ListObjectsOptions,
+                               size_t,size_t,
                                LocalStorageManager::ListSavedSearchesOrder::type,
                                LocalStorageManager::OrderDirection::type,
                                QList<SavedSearch>,QUuid));
     QObject::disconnect(&m_localStorageManagerAsync,
                         QNSIGNAL(LocalStorageManagerAsync,listSavedSearchesFailed,
-                                 LocalStorageManager::ListObjectsOptions,size_t,size_t,
+                                 LocalStorageManager::ListObjectsOptions,
+                                 size_t,size_t,
                                  LocalStorageManager::ListSavedSearchesOrder::type,
                                  LocalStorageManager::OrderDirection::type,
                                  ErrorString,QUuid),
                         this,
                         QNSLOT(SavedSearchSyncCache,onListSavedSearchesFailed,
-                               LocalStorageManager::ListObjectsOptions,size_t,size_t,
+                               LocalStorageManager::ListObjectsOptions,
+                               size_t,size_t,
                                LocalStorageManager::ListSavedSearchesOrder::type,
                                LocalStorageManager::OrderDirection::type,
                                ErrorString,QUuid));
-    QObject::disconnect(&m_localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,addSavedSearchComplete,SavedSearch,QUuid),
-                        this, QNSLOT(SavedSearchSyncCache,onAddSavedSearchComplete,SavedSearch,QUuid));
-    QObject::disconnect(&m_localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,updateSavedSearchComplete,SavedSearch,QUuid),
-                        this, QNSLOT(SavedSearchSyncCache,onUpdateSavedSearchComplete,SavedSearch,QUuid));
-    QObject::disconnect(&m_localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,expungeSavedSearchComplete,SavedSearch,QUuid),
-                        this, QNSLOT(SavedSearchSyncCache,onExpungeSavedSearchComplete,SavedSearch,QUuid));
+    QObject::disconnect(&m_localStorageManagerAsync,
+                        QNSIGNAL(LocalStorageManagerAsync,addSavedSearchComplete,
+                                 SavedSearch,QUuid),
+                        this,
+                        QNSLOT(SavedSearchSyncCache,onAddSavedSearchComplete,
+                               SavedSearch,QUuid));
+    QObject::disconnect(&m_localStorageManagerAsync,
+                        QNSIGNAL(LocalStorageManagerAsync,updateSavedSearchComplete,
+                                 SavedSearch,QUuid),
+                        this,
+                        QNSLOT(SavedSearchSyncCache,onUpdateSavedSearchComplete,
+                               SavedSearch,QUuid));
+    QObject::disconnect(&m_localStorageManagerAsync,
+                        QNSIGNAL(LocalStorageManagerAsync,
+                                 expungeSavedSearchComplete,SavedSearch,QUuid),
+                        this, QNSLOT(SavedSearchSyncCache,
+                                     onExpungeSavedSearchComplete,
+                                     SavedSearch,QUuid));
 
     m_connectedToLocalStorage = false;
 }
@@ -284,12 +337,14 @@ void SavedSearchSyncCache::requestSavedSearchesList()
 
     m_listSavedSearchesRequestId = QUuid::createUuid();
 
-    QNTRACE(QStringLiteral("Emitting the request to list saved searches: request id = ")
-            << m_listSavedSearchesRequestId << QStringLiteral(", offset = ") << m_offset);
-    Q_EMIT listSavedSearches(LocalStorageManager::ListAll,
-                           m_limit, m_offset, LocalStorageManager::ListSavedSearchesOrder::NoOrder,
-                           LocalStorageManager::OrderDirection::Ascending,
-                           m_listSavedSearchesRequestId);
+    QNTRACE(QStringLiteral("Emitting the request to list saved searches: ")
+            << QStringLiteral("request id = ") << m_listSavedSearchesRequestId
+            << QStringLiteral(", offset = ") << m_offset);
+
+    Q_EMIT listSavedSearches(LocalStorageManager::ListAll, m_limit, m_offset,
+                             LocalStorageManager::ListSavedSearchesOrder::NoOrder,
+                             LocalStorageManager::OrderDirection::Ascending,
+                             m_listSavedSearchesRequestId);
 }
 
 void SavedSearchSyncCache::removeSavedSearch(const QString & savedSearchLocalUid)
@@ -299,7 +354,8 @@ void SavedSearchSyncCache::removeSavedSearch(const QString & savedSearchLocalUid
 
     auto localUidIt = m_savedSearchNameByLocalUid.find(savedSearchLocalUid);
     if (Q_UNLIKELY(localUidIt == m_savedSearchNameByLocalUid.end())) {
-        QNDEBUG(QStringLiteral("The saved search name was not found in the cache by local uid"));
+        QNDEBUG(QStringLiteral("The saved search name was not found in the cache "
+                               "by local uid"));
         return;
     }
 
@@ -308,7 +364,8 @@ void SavedSearchSyncCache::removeSavedSearch(const QString & savedSearchLocalUid
 
     auto guidIt = m_savedSearchNameByGuid.find(name);
     if (Q_UNLIKELY(guidIt == m_savedSearchNameByGuid.end())) {
-        QNDEBUG(QStringLiteral("The saved search guid was not found in the cache by name"));
+        QNDEBUG(QStringLiteral("The saved search guid was not found in the cache "
+                               "by name"));
         return;
     }
 
@@ -322,7 +379,8 @@ void SavedSearchSyncCache::removeSavedSearch(const QString & savedSearchLocalUid
 
     auto nameIt = m_savedSearchNameByGuid.find(guid);
     if (Q_UNLIKELY(nameIt == m_savedSearchNameByGuid.end())) {
-        QNDEBUG(QStringLiteral("The saved search name was not found in the cache by guid"));
+        QNDEBUG(QStringLiteral("The saved search name was not found in the cache "
+                               "by guid"));
         return;
     }
 

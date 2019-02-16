@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Dmitry Ivanov
+ * Copyright 2018-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -17,12 +17,14 @@
  */
 
 /**
- * The below CSS is a trick to enable the display of text edit cursor in contenteditable body
- * which is initially empty - it is so when the new note is created.
+ * The below CSS is a trick to enable the display of text edit cursor
+ * in contenteditable body which is initially empty - it is so when
+ * the new note is created.
  * Reference: https://stackoverflow.com/a/20250367/1217285
  *
- * 97% is the ad-hoc value which seems to work well enough; 100% causes the new note's editor page
- * to appear like it's slightly slided down
+ * 97% is the ad-hoc value which seems to work well enough;
+ * 100% causes the new note's editor page to appear like it's slightly
+ * slided down
  */
 
 html {

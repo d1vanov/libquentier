@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Dmitry Ivanov
+ * Copyright 2017-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -44,15 +44,21 @@ public:
     const QString & linkedNotebookGuid() const { return m_linkedNotebookGuid; }
 
     /**
-     * @return True if the cache is already filled with up-to-moment data, false otherwise
+     * @return  True if the cache is already filled with up-to-moment data,
+     *          false otherwise
      */
     bool isFilled() const;
 
     typedef boost::bimap<QString, QString> NoteGuidToLocalUidBimap;
 
-    const NoteGuidToLocalUidBimap & noteGuidToLocalUidBimap() const { return m_noteGuidToLocalUidBimap; }
-    const QHash<QString,Note> & dirtyNotesByGuid() const { return m_dirtyNotesByGuid; }
-    const QHash<QString,QString> & notebookGuidByNoteGuid() const { return m_notebookGuidByNoteGuid; }
+    const NoteGuidToLocalUidBimap & noteGuidToLocalUidBimap() const
+    { return m_noteGuidToLocalUidBimap; }
+
+    const QHash<QString,Note> & dirtyNotesByGuid() const
+    { return m_dirtyNotesByGuid; }
+
+    const QHash<QString,QString> & notebookGuidByNoteGuid() const
+    { return m_notebookGuidByNoteGuid; }
 
 Q_SIGNALS:
     void filled();
@@ -60,32 +66,38 @@ Q_SIGNALS:
 
 // private signals
     void listNotes(LocalStorageManager::ListObjectsOptions flag,
-                   bool withResourceMetadata, bool withResourceBinaryData,
-                   size_t limit, size_t offset, LocalStorageManager::ListNotesOrder::type order,
+                   LocalStorageManager::GetNoteOptions options, size_t limit,
+                   size_t offset, LocalStorageManager::ListNotesOrder::type order,
                    LocalStorageManager::OrderDirection::type orderDirection,
                    QString linkedNotebookGuid, QUuid requestId);
 
 public Q_SLOTS:
     /**
-     * Start collecting the information about notes; does nothing if the information is already collected
-     * or is being collected at the moment, otherwise initiates the sequence of actions required to collect
-     * the note information
+     * Start collecting the information about notes; does nothing if the information
+     * is already collected or is being collected at the moment, otherwise initiates
+     * the sequence of actions required to collect the note information
      */
     void fill();
 
 private Q_SLOTS:
-    void onListNotesComplete(LocalStorageManager::ListObjectsOptions flag, bool withResourceMetadata,
-                             bool withResourceBinaryData, size_t limit, size_t offset,
+    void onListNotesComplete(LocalStorageManager::ListObjectsOptions flag,
+                             LocalStorageManager::GetNoteOptions options,
+                             size_t limit, size_t offset,
                              LocalStorageManager::ListNotesOrder::type order,
                              LocalStorageManager::OrderDirection::type orderDirection,
-                             QString linkedNotebookGuid, QList<Note> foundNotes, QUuid requestId);
-    void onListNotesFailed(LocalStorageManager::ListObjectsOptions flag, bool withResourceMetadata,
-                           bool withResourceBinaryData, size_t limit, size_t offset,
+                             QString linkedNotebookGuid, QList<Note> foundNotes,
+                             QUuid requestId);
+    void onListNotesFailed(LocalStorageManager::ListObjectsOptions flag,
+                           LocalStorageManager::GetNoteOptions options,
+                           size_t limit, size_t offset,
                            LocalStorageManager::ListNotesOrder::type order,
                            LocalStorageManager::OrderDirection::type orderDirection,
-                           QString linkedNotebookGuid, ErrorString errorDescription, QUuid requestId);
+                           QString linkedNotebookGuid, ErrorString errorDescription,
+                           QUuid requestId);
     void onAddNoteComplete(Note note, QUuid requestId);
-    void onUpdateNoteComplete(Note note, LocalStorageManager::UpdateNoteOptions options, QUuid requestId);
+    void onUpdateNoteComplete(Note note,
+                              LocalStorageManager::UpdateNoteOptions options,
+                              QUuid requestId);
     void onExpungeNoteComplete(Note note, QUuid requestId);
 
 private:

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Dmitry Ivanov
+ * Copyright 2016-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -50,18 +50,26 @@ int main(int argc, char *argv[])
     QDir libquentierTestsPersistenceDir(libquentierTestsPersistencePath);
     if (libquentierTestsPersistenceDir.exists())
     {
-        QString evernoteAccountsPath = libquentierTestsPersistencePath + QStringLiteral("/EvernoteAccounts");
+        QString evernoteAccountsPath = libquentierTestsPersistencePath +
+                                       QStringLiteral("/EvernoteAccounts");
         QDir evernoteAccountsDir(evernoteAccountsPath);
-        if (evernoteAccountsDir.exists() && !quentier::removeDir(evernoteAccountsPath)) {
-            qWarning() << "Failed to delete the directory with libquentier tests persistence for Evernote accounts: "
+        if (evernoteAccountsDir.exists() &&
+            !quentier::removeDir(evernoteAccountsPath))
+        {
+            qWarning() << "Failed to delete the directory with libquentier tests "
+                          "persistence for Evernote accounts: "
                        << QDir::toNativeSeparators(evernoteAccountsPath);
             return 1;
         }
 
-        QString localAccountsPath = libquentierTestsPersistencePath + QStringLiteral("/LocalAccounts");
+        QString localAccountsPath = libquentierTestsPersistencePath +
+                                    QStringLiteral("/LocalAccounts");
         QDir localAccountsDir(localAccountsPath);
-        if (localAccountsDir.exists() && !quentier::removeDir(localAccountsPath)) {
-            qWarning() << "Failed to delete the directory with libquentier tests persistence for local accounts: "
+        if (localAccountsDir.exists() &&
+            !quentier::removeDir(localAccountsPath))
+        {
+            qWarning() << "Failed to delete the directory with libquentier tests "
+                          "persistence for local accounts: "
                        << QDir::toNativeSeparators(evernoteAccountsPath);
             return 1;
         }

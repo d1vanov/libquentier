@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Dmitry Ivanov
+ * Copyright 2016-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -31,16 +31,18 @@ class Q_DECL_HIDDEN InkNoteImageDownloader: public QObject,
 {
     Q_OBJECT
 public:
-    explicit InkNoteImageDownloader(const QString & host, const QString & resourceGuid,
-                                    const QString & noteGuid, const QString & authToken,
-                                    const QString & shardId, const int height, const int width,
-                                    const bool noteFromPublicLinkedNotebook,
-                                    const QString & storageFolderPath, QObject * parent = Q_NULLPTR);
+    explicit InkNoteImageDownloader(
+        const QString & host, const QString & resourceGuid,
+        const QString & noteGuid, const QString & authToken,
+        const QString & shardId, const int height, const int width,
+        const bool noteFromPublicLinkedNotebook,
+        const QString & storageFolderPath, QObject * parent = Q_NULLPTR);
 
     virtual void run() Q_DECL_OVERRIDE;
 
 Q_SIGNALS:
-    void finished(bool status, QString resourceGuid, QString noteGuid, ErrorString errorDescription);
+    void finished(bool status, QString resourceGuid,
+                  QString noteGuid, ErrorString errorDescription);
 
 private:
     QString     m_host;

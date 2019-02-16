@@ -1,3 +1,21 @@
+/*
+ * Copyright 2016-2019 Dmitry Ivanov
+ *
+ * This file is part of libquentier
+ *
+ * libquentier is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, version 3 of the License.
+ *
+ * libquentier is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
+ */
+
 #include <quentier/note_editor/SpellChecker.h>
 #include <quentier/utility/FileIOProcessorAsync.h>
 #include <quentier/types/Account.h>
@@ -9,7 +27,8 @@ SpellChecker::SpellChecker(FileIOProcessorAsync * pFileIOProcessorAsync,
                            const Account & account, QObject * parent,
                            const QString & userDictionaryPath) :
     QObject(parent),
-    d_ptr(new SpellCheckerPrivate(pFileIOProcessorAsync, account, this, userDictionaryPath))
+    d_ptr(new SpellCheckerPrivate(pFileIOProcessorAsync, account,
+                                  this, userDictionaryPath))
 {
     QObject::connect(d_ptr, QNSIGNAL(SpellCheckerPrivate,ready),
                      this, QNSIGNAL(SpellChecker,ready));
@@ -45,7 +64,8 @@ bool SpellChecker::checkSpell(const QString & word) const
     return d->checkSpell(word);
 }
 
-QStringList SpellChecker::spellCorrectionSuggestions(const QString & misSpelledWord) const
+QStringList SpellChecker::spellCorrectionSuggestions(
+    const QString & misSpelledWord) const
 {
     Q_D(const SpellChecker);
     return d->spellCorrectionSuggestions(misSpelledWord);

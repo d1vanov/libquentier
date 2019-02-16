@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Dmitry Ivanov
+ * Copyright 2016-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -157,7 +157,9 @@ bool Note::validateTitle(const QString & title, ErrorString * pErrorDescription)
     if (title != title.trimmed())
     {
         if (pErrorDescription) {
-            pErrorDescription->setBase(QT_TRANSLATE_NOOP("Note", "Note title cannot start or end with whitespace"));
+            pErrorDescription->setBase(QT_TRANSLATE_NOOP("Note",
+                                                         "Note title cannot start "
+                                                         "or end with whitespace"));
             pErrorDescription->details() = title;
         }
 
@@ -168,7 +170,8 @@ bool Note::validateTitle(const QString & title, ErrorString * pErrorDescription)
     if (len < qevercloud::EDAM_NOTE_TITLE_LEN_MIN)
     {
         if (pErrorDescription) {
-            pErrorDescription->setBase(QT_TRANSLATE_NOOP("Note", "Note title's length is too small"));
+            pErrorDescription->setBase(QT_TRANSLATE_NOOP("Note", "Note title's "
+                                                         "length is too small"));
             pErrorDescription->details() = title;
         }
 
@@ -177,7 +180,8 @@ bool Note::validateTitle(const QString & title, ErrorString * pErrorDescription)
     else if (len > qevercloud::EDAM_NOTE_TITLE_LEN_MAX)
     {
         if (pErrorDescription) {
-            pErrorDescription->setBase(QT_TRANSLATE_NOOP("Note", "Note title's length is too large"));
+            pErrorDescription->setBase(QT_TRANSLATE_NOOP("Note", "Note title's "
+                                                         "length is too large"));
             pErrorDescription->details() = title;
         }
 
@@ -190,7 +194,8 @@ bool Note::validateTitle(const QString & title, ErrorString * pErrorDescription)
 bool Note::checkParameters(ErrorString & errorDescription) const
 {
     if (localUid().isEmpty() && !d->m_qecNote.guid.isSet()) {
-        errorDescription.setBase(QT_TRANSLATE_NOOP("Note", "Both Note's local and remote guids are empty"));
+        errorDescription.setBase(QT_TRANSLATE_NOOP("Note", "Both Note's local uid "
+                                                   "and guid are empty"));
         return false;
     }
 
@@ -413,7 +418,8 @@ void Note::setTagGuids(const QStringList & guids)
         tagGuids << *it;
     }
 
-    QNTRACE(QStringLiteral("Added ") << numTagGuids << QStringLiteral(" tag guids to note"));
+    QNTRACE(QStringLiteral("Added ") << numTagGuids
+            << QStringLiteral(" tag guids to note"));
 }
 
 void Note::addTagGuid(const QString & guid)
@@ -428,7 +434,8 @@ void Note::addTagGuid(const QString & guid)
 
     if (!d->m_qecNote.tagGuids->contains(guid)) {
         d->m_qecNote.tagGuids.ref() << guid;
-        QNDEBUG(QStringLiteral("Added tag guid ") << guid << QStringLiteral(" to the note"));
+        QNDEBUG(QStringLiteral("Added tag guid ") << guid
+                << QStringLiteral(" to the note"));
     }
 }
 
@@ -447,10 +454,13 @@ void Note::removeTagGuid(const QString & guid)
     QList<qevercloud::Guid> & tagGuids = d->m_qecNote.tagGuids.ref();
     int removed = tagGuids.removeAll(guid);
     if (removed > 0) {
-        QNDEBUG(QStringLiteral("Removed tag guid ") << guid << QStringLiteral(" (") << removed << QStringLiteral(") occurrences"));
+        QNDEBUG(QStringLiteral("Removed tag guid ") << guid
+                << QStringLiteral(" (") << removed << QStringLiteral(") occurrences"));
     }
     else {
-        QNDEBUG(QStringLiteral("Haven't removed tag guid ") << guid << QStringLiteral(" because there was no such guid within the note's tag guids"));
+        QNDEBUG(QStringLiteral("Haven't removed tag guid ") << guid
+                << QStringLiteral(" because there was no such guid within "
+                                  "the note's tag guids"));
     }
 }
 
@@ -477,7 +487,8 @@ void Note::addTagLocalUid(const QString & tagLocalUid)
 
     if (!d->m_tagLocalUids.contains(tagLocalUid)) {
         d->m_tagLocalUids << tagLocalUid;
-        QNDEBUG(QStringLiteral("Added tag local uid ") << tagLocalUid << QStringLiteral(" to the note"));
+        QNDEBUG(QStringLiteral("Added tag local uid ") << tagLocalUid
+                << QStringLiteral(" to the note"));
     }
 }
 
@@ -495,10 +506,13 @@ void Note::removeTagLocalUid(const QString & tagLocalUid)
 
     int removed = d->m_tagLocalUids.removeAll(tagLocalUid);
     if (removed > 0) {
-        QNDEBUG(QStringLiteral("Removed tag local uid ") << tagLocalUid << QStringLiteral(" (") << removed << QStringLiteral(") occurrences"));
+        QNDEBUG(QStringLiteral("Removed tag local uid ") << tagLocalUid
+                << QStringLiteral(" (") << removed << QStringLiteral(") occurrences"));
     }
     else {
-        QNDEBUG(QStringLiteral("Haven't removed tag local uid ") << tagLocalUid << QStringLiteral(" because there was no such uid within the note's tag local uids"));
+        QNDEBUG(QStringLiteral("Haven't removed tag local uid ") << tagLocalUid
+                << QStringLiteral(" because there was no such uid within "
+                                  "the note's tag local uids"));
     }
 }
 
@@ -557,7 +571,8 @@ void Note::setResources(const QList<Resource> & resources)
             info.isDirty = it->isDirty();
             d->m_resourcesAdditionalInfo.push_back(info);
         }
-        QNTRACE(QStringLiteral("Added ") << resources.size() << QStringLiteral(" resources to note"));
+        QNTRACE(QStringLiteral("Added ") << resources.size()
+                << QStringLiteral(" resources to note"));
     }
     else
     {
@@ -573,7 +588,8 @@ void Note::addResource(const Resource & resource)
     }
 
     if (d->m_qecNote.resources->contains(resource.qevercloudResource())) {
-        QNDEBUG(QStringLiteral("Can't add resource to note: this note already has this resource"));
+        QNDEBUG(QStringLiteral("Can't add resource to note: this note already "
+                               "has this resource"));
         return;
     }
 
@@ -582,13 +598,15 @@ void Note::addResource(const Resource & resource)
     info.localUid = resource.localUid();
     info.isDirty = resource.isDirty();
     d->m_resourcesAdditionalInfo.push_back(info);
-    QNDEBUG(QStringLiteral("Added resource to note, local uid = ") << resource.localUid());
+    QNDEBUG(QStringLiteral("Added resource to note, local uid = ")
+            << resource.localUid());
 }
 
 bool Note::updateResource(const Resource & resource)
 {
     if (!d->m_qecNote.resources.isSet()) {
-        QNDEBUG(QStringLiteral("Can't update resource in note: note has no attached resources"));
+        QNDEBUG(QStringLiteral("Can't update resource in note: note has no "
+                               "attached resources"));
         return false;
     }
 
@@ -603,7 +621,8 @@ bool Note::updateResource(const Resource & resource)
     }
 
     if (targetResourceIndex < 0) {
-        QNDEBUG(QStringLiteral("Can't update resource in note: can't find resource to update"));
+        QNDEBUG(QStringLiteral("Can't update resource in note: can't find "
+                               "the resource to update"));
         return false;
     }
 
@@ -615,7 +634,8 @@ bool Note::updateResource(const Resource & resource)
 bool Note::removeResource(const Resource & resource)
 {
     if (!d->m_qecNote.resources.isSet()) {
-        QNDEBUG(QStringLiteral("Can't remove resource from note: note has no attached resources"));
+        QNDEBUG(QStringLiteral("Can't remove resource from note: note has no "
+                               "attached resources"));
         return false;
     }
 
@@ -632,7 +652,8 @@ bool Note::removeResource(const Resource & resource)
     }
 
     if (targetResourceIndex < 0) {
-        QNDEBUG(QStringLiteral("Can't remove resource from note: can't find resource to remove"));
+        QNDEBUG(QStringLiteral("Can't remove resource from note: can't find "
+                               "the resource to remove"));
         return false;
     }
 
@@ -683,7 +704,8 @@ QList<SharedNote> Note::sharedNotes() const
     result.reserve(d->m_qecNote.sharedNotes->size());
 
     int noteIndex = 0;
-    for(auto it = d->m_qecNote.sharedNotes->begin(), end = d->m_qecNote.sharedNotes->end(); it != end; ++it)
+    for(auto it = d->m_qecNote.sharedNotes->constBegin(),
+        end = d->m_qecNote.sharedNotes->constEnd(); it != end; ++it)
     {
         SharedNote sharedNote(*it);
         if (hasGuid()) {
@@ -704,12 +726,15 @@ void Note::setSharedNotes(const QList<SharedNote> & sharedNotes)
     }
 
     QList<SharedNote> sortedSharedNotes = sharedNotes;
-    std::sort(sortedSharedNotes.begin(), sortedSharedNotes.end(), CompareSharedNotesByIndexInNote());
+    std::sort(sortedSharedNotes.begin(), sortedSharedNotes.end(),
+              CompareSharedNotesByIndexInNote());
 
     QList<qevercloud::SharedNote> internalSharedNotes;
     internalSharedNotes.reserve(sortedSharedNotes.size());
 
-    for(auto it = sortedSharedNotes.constBegin(), end = sortedSharedNotes.constEnd(); it != end; ++it) {
+    for(auto it = sortedSharedNotes.constBegin(),
+        end = sortedSharedNotes.constEnd(); it != end; ++it)
+    {
         internalSharedNotes << it->qevercloudSharedNote();
     }
 
@@ -725,7 +750,8 @@ void Note::addSharedNote(const SharedNote & sharedNote)
     const qevercloud::SharedNote & qecSharedNote = sharedNote.qevercloudSharedNote();
 
     if (d->m_qecNote.sharedNotes->contains(qecSharedNote)) {
-        QNDEBUG(QStringLiteral("Can't add shared note: this note already has this shared note"));
+        QNDEBUG(QStringLiteral("Can't add shared note: this note already "
+                               "has this shared note"));
         return;
     }
 
@@ -828,7 +854,8 @@ bool Note::isInkNote() const
 
     const QList<qevercloud::Resource> & resources = d->m_qecNote.resources.ref();
 
-    // NOTE: it is not known for sure how many resources there might be within an ink note. Probably just one in most cases.
+    // NOTE: it is not known for sure how many resources there might be within
+    // an ink note. Probably just one in most cases.
     const int numResources = resources.size();
     if (numResources == 0) {
         return false;
@@ -858,7 +885,8 @@ QStringList Note::listOfWords(ErrorString * pErrorMessage) const
     return d->listOfWords(pErrorMessage);
 }
 
-std::pair<QString, QStringList> Note::plainTextAndListOfWords(ErrorString * pErrorMessage) const
+std::pair<QString, QStringList>
+Note::plainTextAndListOfWords(ErrorString * pErrorMessage) const
 {
     return d->plainTextAndListOfWords(pErrorMessage);
 }
@@ -908,7 +936,8 @@ QTextStream & Note::print(QTextStream & strm) const
     INSERT_DELIMITER;
 
     if (d->m_qecNote.updateSequenceNum.isSet()) {
-        strm << QStringLiteral("updateSequenceNumber: ") << QString::number(d->m_qecNote.updateSequenceNum);
+        strm << QStringLiteral("updateSequenceNumber: ")
+             << QString::number(d->m_qecNote.updateSequenceNum);
     }
     else {
         strm << QStringLiteral("updateSequenceNumber is not set");
@@ -932,7 +961,8 @@ QTextStream & Note::print(QTextStream & strm) const
     INSERT_DELIMITER;
 
     if (d->m_qecNote.contentHash.isSet()) {
-        strm << QStringLiteral("contentHash: ") << d->m_qecNote.contentHash.ref().toHex();
+        strm << QStringLiteral("contentHash: ")
+             << d->m_qecNote.contentHash.ref().toHex();
     }
     else {
         strm << QStringLiteral("contentHash is not set");
@@ -940,7 +970,8 @@ QTextStream & Note::print(QTextStream & strm) const
     INSERT_DELIMITER;
 
     if (d->m_qecNote.contentLength.isSet()) {
-        strm << QStringLiteral("contentLength: ") << QString::number(d->m_qecNote.contentLength);
+        strm << QStringLiteral("contentLength: ")
+             << QString::number(d->m_qecNote.contentLength);
     }
     else {
         strm << QStringLiteral("contentLength is not set");
@@ -948,7 +979,8 @@ QTextStream & Note::print(QTextStream & strm) const
     INSERT_DELIMITER;
 
     if (d->m_qecNote.created.isSet()) {
-        strm << QStringLiteral("creationTimestamp: ") << d->m_qecNote.created << QStringLiteral(", datetime: ")
+        strm << QStringLiteral("creationTimestamp: ") << d->m_qecNote.created
+             << QStringLiteral(", datetime: ")
              << printableDateTimeFromTimestamp(d->m_qecNote.created);
     }
     else {
@@ -957,7 +989,8 @@ QTextStream & Note::print(QTextStream & strm) const
     INSERT_DELIMITER;
 
     if (d->m_qecNote.updated.isSet()) {
-        strm << QStringLiteral("modificationTimestamp: ") << d->m_qecNote.updated << QStringLiteral(", datetime: ")
+        strm << QStringLiteral("modificationTimestamp: ") << d->m_qecNote.updated
+             << QStringLiteral(", datetime: ")
              << printableDateTimeFromTimestamp(d->m_qecNote.updated);
     }
     else {
@@ -966,7 +999,8 @@ QTextStream & Note::print(QTextStream & strm) const
     INSERT_DELIMITER;
 
     if (d->m_qecNote.deleted.isSet()) {
-        strm << QStringLiteral("deletionTimestamp: ") << d->m_qecNote.deleted << QStringLiteral(", datetime: ")
+        strm << QStringLiteral("deletionTimestamp: ") << d->m_qecNote.deleted
+             << QStringLiteral(", datetime: ")
              << printableDateTimeFromTimestamp(d->m_qecNote.deleted);
     }
     else {
@@ -975,7 +1009,10 @@ QTextStream & Note::print(QTextStream & strm) const
     INSERT_DELIMITER;
 
     if (d->m_qecNote.active.isSet()) {
-        strm << QStringLiteral("active: ") << (d->m_qecNote.active ? QStringLiteral("true") : QStringLiteral("false"));
+        strm << QStringLiteral("active: ")
+            << (d->m_qecNote.active
+                ? QStringLiteral("true")
+                : QStringLiteral("false"));
     }
     else {
         strm << QStringLiteral("active is not set");
@@ -1002,7 +1039,9 @@ QTextStream & Note::print(QTextStream & strm) const
     {
         strm << QStringLiteral("tagGuids: {");
         const QStringList tagGuids = d->m_qecNote.tagGuids.ref();
-        for(auto it = tagGuids.constBegin(), end = tagGuids.constEnd(); it != end; ++it) {
+        for(auto it = tagGuids.constBegin(),
+            end = tagGuids.constEnd(); it != end; ++it)
+        {
             strm << QStringLiteral("'") << *it << QStringLiteral("'; ");
         }
         strm << QStringLiteral("}");
@@ -1016,7 +1055,9 @@ QTextStream & Note::print(QTextStream & strm) const
     {
         strm << QStringLiteral("tagLocalUids: {");
         const QStringList tagLocalUids = d->m_tagLocalUids;
-        for(auto it = tagLocalUids.constBegin(), end = tagLocalUids.constEnd(); it != end; ++it) {
+        for(auto it = tagLocalUids.constBegin(),
+            end = tagLocalUids.constEnd(); it != end; ++it)
+        {
             strm << QStringLiteral("'") << *it << QStringLiteral("';");
         }
         strm << QStringLiteral("}");
@@ -1026,7 +1067,10 @@ QTextStream & Note::print(QTextStream & strm) const
     }
     INSERT_DELIMITER;
 
-    strm << QStringLiteral("thumbnail is ") << (d->m_thumbnailData.isEmpty() ? QStringLiteral("null") : QStringLiteral("non-null"));
+    strm << QStringLiteral("thumbnail is ")
+         << (d->m_thumbnailData.isEmpty()
+             ? QStringLiteral("null")
+             : QStringLiteral("non-null"));
     INSERT_DELIMITER;
 
     if (d->m_qecNote.resources.isSet())
@@ -1040,9 +1084,13 @@ QTextStream & Note::print(QTextStream & strm) const
             strm << *it << QStringLiteral("; \n");
 
             if (resourceIndex < resourcesAdditionalInfoSize) {
-                const NoteData::ResourceAdditionalInfo & info = d->m_resourcesAdditionalInfo.at(resourceIndex);
+                const NoteData::ResourceAdditionalInfo & info =
+                    d->m_resourcesAdditionalInfo.at(resourceIndex);
                 strm << QStringLiteral("Resource additional info: local uid = ")
-                     << info.localUid << QStringLiteral(", dirty = ") << (info.isDirty ? QStringLiteral("true") : QStringLiteral("false"))
+                     << info.localUid << QStringLiteral(", dirty = ")
+                     << (info.isDirty
+                         ? QStringLiteral("true")
+                         : QStringLiteral("false"))
                      << QStringLiteral("; \n");
             }
 
@@ -1078,13 +1126,22 @@ QTextStream & Note::print(QTextStream & strm) const
     }
     INSERT_DELIMITER;
 
-    strm << QStringLiteral("isDirty: ") << (isDirty() ? QStringLiteral("true") : QStringLiteral("false"));
+    strm << QStringLiteral("isDirty: ")
+         << (isDirty()
+             ? QStringLiteral("true")
+             : QStringLiteral("false"));
     INSERT_DELIMITER;
 
-    strm << QStringLiteral("isLocal: ") << (d->m_isLocal ? QStringLiteral("true") : QStringLiteral("false"));
+    strm << QStringLiteral("isLocal: ")
+         << (d->m_isLocal
+             ? QStringLiteral("true")
+             : QStringLiteral("false"));
     INSERT_DELIMITER;
 
-    strm << QStringLiteral("isFavorited = ") << (isFavorited() ? QStringLiteral("true") : QStringLiteral("false"));
+    strm << QStringLiteral("isFavorited = ")
+         << (isFavorited()
+             ? QStringLiteral("true")
+             : QStringLiteral("false"));
     INSERT_DELIMITER;
 
 #undef INSERT_DELIMITER

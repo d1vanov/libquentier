@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Dmitry Ivanov
+ * Copyright 2016-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -45,37 +45,50 @@ Q_SIGNALS:
     void failure(QString errorDescription);
 
 // private signals:
-    void getLinkedNotebookCountRequest(QUuid requestId = QUuid());
-    void addLinkedNotebookRequest(LinkedNotebook notebook, QUuid requestId = QUuid());
-    void updateLinkedNotebookRequest(LinkedNotebook notebook, QUuid requestId = QUuid());
-    void findLinkedNotebookRequest(LinkedNotebook notebook, QUuid requestId = QUuid());
-    void listAllLinkedNotebooksRequest(size_t limit, size_t offset,
-                                       LocalStorageManager::ListLinkedNotebooksOrder::type order,
-                                       LocalStorageManager::OrderDirection::type orderDirection,
-                                       QUuid requestId = QUuid());
-    void expungeLinkedNotebookRequest(LinkedNotebook notebook, QUuid requestId = QUuid());
+    void getLinkedNotebookCountRequest(QUuid requestId);
+    void addLinkedNotebookRequest(LinkedNotebook notebook, QUuid requestId);
+    void updateLinkedNotebookRequest(LinkedNotebook notebook, QUuid requestId);
+    void findLinkedNotebookRequest(LinkedNotebook notebook, QUuid requestId);
+    void listAllLinkedNotebooksRequest(
+            size_t limit, size_t offset,
+            LocalStorageManager::ListLinkedNotebooksOrder::type order,
+            LocalStorageManager::OrderDirection::type orderDirection,
+            QUuid requestId);
+    void expungeLinkedNotebookRequest(LinkedNotebook notebook, QUuid requestId);
 
 private Q_SLOTS:
-    void onWorkerInitialized();
+    void initialize();
     void onGetLinkedNotebookCountCompleted(int count, QUuid requestId);
-    void onGetLinkedNotebookCountFailed(ErrorString errorDescription, QUuid requestId);
+    void onGetLinkedNotebookCountFailed(ErrorString errorDescription,
+                                        QUuid requestId);
     void onAddLinkedNotebookCompleted(LinkedNotebook notebook, QUuid requestId);
-    void onAddLinkedNotebookFailed(LinkedNotebook notebook, ErrorString errorDescription, QUuid requestId);
-    void onUpdateLinkedNotebookCompleted(LinkedNotebook notebook, QUuid requestId);
-    void onUpdateLinkedNotebookFailed(LinkedNotebook notebook, ErrorString errorDescription, QUuid requestId);
+    void onAddLinkedNotebookFailed(LinkedNotebook notebook,
+                                   ErrorString errorDescription,
+                                   QUuid requestId);
+    void onUpdateLinkedNotebookCompleted(LinkedNotebook notebook,
+                                         QUuid requestId);
+    void onUpdateLinkedNotebookFailed(LinkedNotebook notebook,
+                                      ErrorString errorDescription,
+                                      QUuid requestId);
     void onFindLinkedNotebookCompleted(LinkedNotebook notebook, QUuid requestId);
-    void onFindLinkedNotebookFailed(LinkedNotebook notebook, ErrorString errorDescription, QUuid requestId);
-    void onListAllLinkedNotebooksCompleted(size_t limit, size_t offset,
-                                           LocalStorageManager::ListLinkedNotebooksOrder::type order,
-                                           LocalStorageManager::OrderDirection::type orderDirection,
-                                           QList<LinkedNotebook> linkedNotebooks,
-                                           QUuid requestId);
-    void onListAllLinkedNotebooksFailed(size_t limit, size_t offset,
-                                        LocalStorageManager::ListLinkedNotebooksOrder::type order,
-                                        LocalStorageManager::OrderDirection::type orderDirection,
-                                        ErrorString errorDescription, QUuid requestId);
-    void onExpungeLinkedNotebookCompleted(LinkedNotebook notebook, QUuid requestId);
-    void onExpungeLinkedNotebookFailed(LinkedNotebook notebook, ErrorString errorDescription, QUuid requestId);
+    void onFindLinkedNotebookFailed(LinkedNotebook notebook,
+                                    ErrorString errorDescription,
+                                    QUuid requestId);
+    void onListAllLinkedNotebooksCompleted(
+            size_t limit, size_t offset,
+            LocalStorageManager::ListLinkedNotebooksOrder::type order,
+            LocalStorageManager::OrderDirection::type orderDirection,
+            QList<LinkedNotebook> linkedNotebooks, QUuid requestId);
+    void onListAllLinkedNotebooksFailed(
+            size_t limit, size_t offset,
+            LocalStorageManager::ListLinkedNotebooksOrder::type order,
+            LocalStorageManager::OrderDirection::type orderDirection,
+            ErrorString errorDescription, QUuid requestId);
+    void onExpungeLinkedNotebookCompleted(LinkedNotebook notebook,
+                                          QUuid requestId);
+    void onExpungeLinkedNotebookFailed(LinkedNotebook notebook,
+                                       ErrorString errorDescription,
+                                       QUuid requestId);
 
 private:
     void createConnections();

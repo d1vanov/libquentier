@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Dmitry Ivanov
+ * Copyright 2016-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -31,14 +31,20 @@ class Q_DECL_HIDDEN RenameResourceUndoCommand: public INoteEditorUndoCommand
 {
     Q_OBJECT
 public:
-    RenameResourceUndoCommand(const Resource & resource, const QString & previousResourceName,
-                              NoteEditorPrivate & noteEditor, GenericResourceImageManager * pGenericResourceImageManager,
-                              QHash<QByteArray, QString> & genericResourceImageFilePathsByResourceHash,
-                              QUndoCommand * parent = Q_NULLPTR);
-    RenameResourceUndoCommand(const Resource & resource, const QString & previousResourceName,
-                              NoteEditorPrivate & noteEditor, GenericResourceImageManager * pGenericResourceImageManager,
-                              QHash<QByteArray, QString> & genericResourceImageFilePathsByResourceHash,
-                              const QString & text,  QUndoCommand * parent = Q_NULLPTR);
+    RenameResourceUndoCommand(
+        const Resource & resource, const QString & previousResourceName,
+        NoteEditorPrivate & noteEditor,
+        GenericResourceImageManager * pGenericResourceImageManager,
+        QHash<QByteArray, QString> & genericResourceImageFilePathsByResourceHash,
+        QUndoCommand * parent = Q_NULLPTR);
+
+    RenameResourceUndoCommand(
+        const Resource & resource, const QString & previousResourceName,
+        NoteEditorPrivate & noteEditor,
+        GenericResourceImageManager * pGenericResourceImageManager,
+        QHash<QByteArray, QString> & genericResourceImageFilePathsByResourceHash,
+        const QString & text,  QUndoCommand * parent = Q_NULLPTR);
+
     virtual ~RenameResourceUndoCommand();
 
     virtual void undoImpl() Q_DECL_OVERRIDE;

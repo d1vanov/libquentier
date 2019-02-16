@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Dmitry Ivanov
+ * Copyright 2016-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -71,7 +71,8 @@ public:
 
     virtual void clear() Q_DECL_OVERRIDE;
 
-    static bool validateTitle(const QString & title, ErrorString * pErrorDescription = Q_NULLPTR);
+    static bool validateTitle(const QString & title,
+                              ErrorString * pErrorDescription = Q_NULLPTR);
 
     virtual bool checkParameters(ErrorString & errorDescription) const Q_DECL_OVERRIDE;
 
@@ -145,7 +146,8 @@ public:
     void setSharedNotes(const QList<SharedNote> & sharedNotes);
     void addSharedNote(const SharedNote & sharedNote);
 
-    // NOTE: the shared note is recognized by its index in note in the following two methods
+    // NOTE: the shared note is recognized by its index in note
+    // in the following two methods
     bool updateSharedNote(const SharedNote & sharedNote);
     bool removeSharedNote(const SharedNote & sharedNote);
 
@@ -166,7 +168,9 @@ public:
 
     QString plainText(ErrorString * pErrorMessage = Q_NULLPTR) const;
     QStringList listOfWords(ErrorString * pErrorMessage = Q_NULLPTR) const;
-    std::pair<QString, QStringList> plainTextAndListOfWords(ErrorString * pErrorMessage = Q_NULLPTR) const;
+
+    std::pair<QString, QStringList>
+    plainTextAndListOfWords(ErrorString * pErrorMessage = Q_NULLPTR) const;
 
     bool containsCheckedTodo() const;
     bool containsUncheckedTodo() const;

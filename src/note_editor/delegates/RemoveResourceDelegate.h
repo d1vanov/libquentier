@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 Dmitry Ivanov
+ * Copyright 2016-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -23,6 +23,7 @@
 #include <quentier/types/ErrorString.h>
 #include <quentier/types/Note.h>
 #include <quentier/types/Resource.h>
+#include <quentier/local_storage/LocalStorageManager.h>
 #include <quentier/utility/Macros.h>
 #include <QObject>
 
@@ -47,7 +48,9 @@ Q_SIGNALS:
     void notifyError(ErrorString error);
 
 // private signals
-    void findResource(Resource resource, bool withBinaryData, QUuid requestId);
+    void findResource(Resource resource,
+                      LocalStorageManager::GetResourceOptions options,
+                      QUuid requestId);
 
 private Q_SLOTS:
     void onOriginalPageConvertedToNote(Note note);
@@ -55,8 +58,12 @@ private Q_SLOTS:
     void onResourceReferenceRemovedFromNoteContent(const QVariant & data);
 
 private Q_SLOTS:
-    void onFindResourceComplete(Resource resource, bool withBinaryData, QUuid requestId);
-    void onFindResourceFailed(Resource resource, bool withBinaryData, ErrorString errorDescription, QUuid requestId);
+    void onFindResourceComplete(Resource resource,
+                                LocalStorageManager::GetResourceOptions options,
+                                QUuid requestId);
+    void onFindResourceFailed(Resource resource,
+                              LocalStorageManager::GetResourceOptions options,
+                              ErrorString errorDescription, QUuid requestId);
 
 private:
     void doStart();

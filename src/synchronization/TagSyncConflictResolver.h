@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Dmitry Ivanov
+ * Copyright 2017-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -34,9 +34,10 @@ QT_FORWARD_DECLARE_CLASS(TagSyncCache)
 QT_FORWARD_DECLARE_CLASS(LocalStorageManagerAsync)
 
 /**
- * The TagSyncConflictResolver class resolves the conflict between two tags: the one downloaded
- * from the remote server and the local one. The conflict resolution might involve
- * changes in other tags, seemingly unrelated to the currently conflicting ones
+ * The TagSyncConflictResolver class resolves the conflict between two tags:
+ * the one downloaded from the remote server and the local one. The conflict
+ * resolution might involve changes in other tags, seemingly unrelated
+ * to the currently conflicting ones
  */
 class Q_DECL_HIDDEN TagSyncConflictResolver: public QObject
 {

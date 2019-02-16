@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Dmitry Ivanov
+ * Copyright 2016-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -36,8 +36,11 @@ public:
     bool    m_isFavorited;
 
 private:
-    FavoritableDataElementData & operator=(const FavoritableDataElementData & other) Q_DECL_EQ_DELETE;
-    FavoritableDataElementData & operator=(FavoritableDataElementData && other) Q_DECL_EQ_DELETE;
+    FavoritableDataElementData &
+    operator=(const FavoritableDataElementData & other) Q_DECL_EQ_DELETE;
+
+    FavoritableDataElementData &
+    operator=(FavoritableDataElementData && other) Q_DECL_EQ_DELETE;
 };
 
 } // namespace quentier

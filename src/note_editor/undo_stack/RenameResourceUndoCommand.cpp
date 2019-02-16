@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Dmitry Ivanov
+ * Copyright 2016-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -23,33 +23,37 @@
 
 namespace quentier {
 
-RenameResourceUndoCommand::RenameResourceUndoCommand(const Resource & resource, const QString & previousResourceName,
-                                                     NoteEditorPrivate & noteEditor,
-                                                     GenericResourceImageManager * pGenericResourceImageManager,
-                                                     QHash<QByteArray, QString> & genericResourceImageFilePathsByResourceHash,
-                                                     QUndoCommand * parent) :
+RenameResourceUndoCommand::RenameResourceUndoCommand(
+        const Resource & resource, const QString & previousResourceName,
+        NoteEditorPrivate & noteEditor,
+        GenericResourceImageManager * pGenericResourceImageManager,
+        QHash<QByteArray, QString> & genericResourceImageFilePathsByResourceHash,
+        QUndoCommand * parent) :
     INoteEditorUndoCommand(noteEditor, parent),
     m_resource(resource),
     m_previousResourceName(previousResourceName),
     m_newResourceName(resource.displayName()),
     m_pGenericResourceImageManager(pGenericResourceImageManager),
-    m_genericResourceImageFilePathsByResourceHash(genericResourceImageFilePathsByResourceHash)
+    m_genericResourceImageFilePathsByResourceHash(
+        genericResourceImageFilePathsByResourceHash)
 {
     setText(tr("Rename attachment"));
 }
 
-RenameResourceUndoCommand::RenameResourceUndoCommand(const Resource & resource,
-                                                     const QString & previousResourceName,
-                                                     NoteEditorPrivate & noteEditor,
-                                                     GenericResourceImageManager * pGenericResourceImageManager,
-                                                     QHash<QByteArray, QString> & genericResourceImageFilePathsByResourceHash,
-                                                     const QString & text, QUndoCommand * parent) :
+RenameResourceUndoCommand::RenameResourceUndoCommand(
+        const Resource & resource,
+        const QString & previousResourceName,
+        NoteEditorPrivate & noteEditor,
+        GenericResourceImageManager * pGenericResourceImageManager,
+        QHash<QByteArray, QString> & genericResourceImageFilePathsByResourceHash,
+        const QString & text, QUndoCommand * parent) :
     INoteEditorUndoCommand(noteEditor, text, parent),
     m_resource(resource),
     m_previousResourceName(previousResourceName),
     m_newResourceName(resource.displayName()),
     m_pGenericResourceImageManager(pGenericResourceImageManager),
-    m_genericResourceImageFilePathsByResourceHash(genericResourceImageFilePathsByResourceHash)
+    m_genericResourceImageFilePathsByResourceHash(
+        genericResourceImageFilePathsByResourceHash)
 {}
 
 RenameResourceUndoCommand::~RenameResourceUndoCommand()
@@ -57,10 +61,11 @@ RenameResourceUndoCommand::~RenameResourceUndoCommand()
 
 void RenameResourceUndoCommand::undoImpl()
 {
-    RenameResourceDelegate * delegate = new RenameResourceDelegate(m_resource, m_noteEditorPrivate,
-                                                                   m_pGenericResourceImageManager,
-                                                                   m_genericResourceImageFilePathsByResourceHash,
-                                                                   /* performing undo = */ true);
+    RenameResourceDelegate * delegate =
+        new RenameResourceDelegate(m_resource, m_noteEditorPrivate,
+                                   m_pGenericResourceImageManager,
+                                   m_genericResourceImageFilePathsByResourceHash,
+                                   /* performing undo = */ true);
 
     m_noteEditorPrivate.setRenameResourceDelegateSubscriptions(*delegate);
     delegate->startWithPresetNames(m_newResourceName, m_previousResourceName);
@@ -68,10 +73,11 @@ void RenameResourceUndoCommand::undoImpl()
 
 void RenameResourceUndoCommand::redoImpl()
 {
-    RenameResourceDelegate * delegate = new RenameResourceDelegate(m_resource, m_noteEditorPrivate,
-                                                                   m_pGenericResourceImageManager,
-                                                                   m_genericResourceImageFilePathsByResourceHash,
-                                                                   /* performing undo = */ true);
+    RenameResourceDelegate * delegate =
+        new RenameResourceDelegate(m_resource, m_noteEditorPrivate,
+                                   m_pGenericResourceImageManager,
+                                   m_genericResourceImageFilePathsByResourceHash,
+                                   /* performing undo = */ true);
 
     m_noteEditorPrivate.setRenameResourceDelegateSubscriptions(*delegate);
     delegate->startWithPresetNames(m_previousResourceName, m_newResourceName);

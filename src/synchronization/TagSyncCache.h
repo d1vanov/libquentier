@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Dmitry Ivanov
+ * Copyright 2017-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -31,7 +31,8 @@ class Q_DECL_HIDDEN TagSyncCache: public QObject
     Q_OBJECT
 public:
     TagSyncCache(LocalStorageManagerAsync & localStorageManagerAsync,
-                 const QString & linkedNotebookGuid, QObject * parent = Q_NULLPTR);
+                 const QString & linkedNotebookGuid,
+                 QObject * parent = Q_NULLPTR);
 
     void clear();
 
@@ -40,11 +41,17 @@ public:
      */
     bool isFilled() const;
 
-    const QHash<QString,QString> & nameByLocalUidHash() const { return m_tagNameByLocalUid; }
-    const QHash<QString,QString> & nameByGuidHash() const { return m_tagNameByGuid; }
-    const QHash<QString,QString> & guidByNameHash() const { return m_tagGuidByName; }
+    const QHash<QString,QString> & nameByLocalUidHash() const
+    { return m_tagNameByLocalUid; }
 
-    const QHash<QString,Tag> & dirtyTagsByGuidHash() const { return m_dirtyTagsByGuid; }
+    const QHash<QString,QString> & nameByGuidHash() const
+    { return m_tagNameByGuid; }
+
+    const QHash<QString,QString> & guidByNameHash() const
+    { return m_tagGuidByName; }
+
+    const QHash<QString,Tag> & dirtyTagsByGuidHash() const
+    { return m_dirtyTagsByGuid; }
 
     const QString & linkedNotebookGuid() const { return m_linkedNotebookGuid; }
 
@@ -61,25 +68,30 @@ Q_SIGNALS:
 
 public Q_SLOTS:
     /**
-     * Start collecting the information about tags; does nothing if the information is already collected
-     * or is being collected at the moment, otherwise initiates the sequence of actions required to collect
-     * the tag information
+     * Start collecting the information about tags; does nothing if the information
+     * is already collected or is being collected at the moment, otherwise initiates
+     * the sequence of actions required to collect the tag information
      */
     void fill();
 
 private Q_SLOTS:
     void onListTagsComplete(LocalStorageManager::ListObjectsOptions flag,
-                            size_t limit, size_t offset, LocalStorageManager::ListTagsOrder::type order,
+                            size_t limit, size_t offset,
+                            LocalStorageManager::ListTagsOrder::type order,
                             LocalStorageManager::OrderDirection::type orderDirection,
-                            QString linkedNotebookGuid, QList<Tag> foundTags, QUuid requestId);
+                            QString linkedNotebookGuid, QList<Tag> foundTags,
+                            QUuid requestId);
     void onListTagsFailed(LocalStorageManager::ListObjectsOptions flag,
-                          size_t limit, size_t offset, LocalStorageManager::ListTagsOrder::type order,
+                          size_t limit, size_t offset,
+                          LocalStorageManager::ListTagsOrder::type order,
                           LocalStorageManager::OrderDirection::type orderDirection,
-                          QString linkedNotebookGuid, ErrorString errorDescription, QUuid requestId);
+                          QString linkedNotebookGuid, ErrorString errorDescription,
+                          QUuid requestId);
 
     void onAddTagComplete(Tag tag, QUuid requestId);
     void onUpdateTagComplete(Tag tag, QUuid requestId);
-    void onExpungeTagComplete(Tag tag, QStringList expungedChildTagLocalUids, QUuid requestId);
+    void onExpungeTagComplete(Tag tag, QStringList expungedChildTagLocalUids,
+                              QUuid requestId);
 
 private:
     void connectToLocalStorage();

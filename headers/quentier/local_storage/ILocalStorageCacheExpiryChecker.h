@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Dmitry Ivanov
+ * Copyright 2016-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -26,9 +26,10 @@ namespace quentier {
 QT_FORWARD_DECLARE_CLASS(LocalStorageCacheManager)
 
 /**
- * @brief The ILocalStorageCacheExpiryChecker class represents the interface for cache expiry checker
- * used by LocalStorageCacheManager to see whether particular caches (of notes, notebooks, tags, linked notebooks
- * and/or saved searches) need to be shrunk
+ * @brief The ILocalStorageCacheExpiryChecker class represents the interface
+ * for cache expiry checker used by LocalStorageCacheManager to see whether
+ * particular caches (of notes, notebooks, tags, linked notebooks and/or saved
+ * searches) need to be shrunk
  */
 class QUENTIER_EXPORT ILocalStorageCacheExpiryChecker: public Printable
 {
@@ -40,42 +41,51 @@ public:
     virtual ~ILocalStorageCacheExpiryChecker();
 
     /**
-     * @return a pointer to the newly allocated copy of a particular ILocalStorageCacheExpiryChecker implementation
+     * @return              A pointer to the newly allocated copy of a particular
+     *                      ILocalStorageCacheExpiryChecker implementation
      */
     virtual ILocalStorageCacheExpiryChecker * clone() const = 0;
 
     /**
-     * @return false if the cache of notes needs to be shrunk (due to its size or whatever other reason), true otherwise
+     * @return              False if the cache of notes needs to be shrunk (due
+     *                      to its size or whatever other reason), true otherwise
      */
     virtual bool checkNotes() const = 0;
 
     /**
-     * @return false if the cache of resources needs to be shrunk (due to its size or whatever other reason), true otherwise
+     * @return              False if the cache of resources needs to be shrunk
+     *                      (due to its size or whatever other reason), true otherwise
      */
     virtual bool checkResources() const = 0;
 
     /**
-     * @return false if the cache of notebooks needs to be shrunk (due to its size or whatever other reason), true otherwise
+     * @return              False if the cache of notebooks needs to be shrunk
+     *                      (due to its size or whatever other reason), true otherwise
      */
     virtual bool checkNotebooks() const = 0;
 
     /**
-     * @return false if the cache of tags needs to be shrunk (due to its size or whatever other reason), true otherwise
+     * @return              False if the cache of tags needs to be shrunk
+     *                      (due to its size or whatever other reason), true otherwise
      */
     virtual bool checkTags() const = 0;
 
     /**
-     * @return false if the cache of linked notebooks needs to be shrunk (due to its size or whatever other reason), true otherwise
+     * @return              False if the cache of linked notebooks needs to be shrunk
+     *                      (due to its size or whatever other reason), true otherwise
      */
     virtual bool checkLinkedNotebooks() const = 0;
 
     /**
-     * @return false if the cache of saved searches needs to be shrunk (due to its size or whatever other reason), true otherwise
+     * @return              False if the cache of saved searches needs to be shrunk
+     *                      (due to its size or whatever other reason), true otherwise
      */
     virtual bool checkSavedSearches() const = 0;
 
     /**
-     * @brief print the internal information about ILocalStorageCacheExpiryChecker implementation instance to the text stream
+     * @brief               Print the internal information about
+     *                      ILocalStorageCacheExpiryChecker implementation
+     *                      instance to the text stream
      */
     virtual QTextStream & print(QTextStream & strm) const = 0;
 

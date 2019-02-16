@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Dmitry Ivanov
+ * Copyright 2016-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -30,7 +30,8 @@ StringUtils::~StringUtils()
     delete d_ptr;
 }
 
-void StringUtils::removePunctuation(QString & str, const QVector<QChar> & charactersToPreserve) const
+void StringUtils::removePunctuation(QString & str,
+                                    const QVector<QChar> & charactersToPreserve) const
 {
     Q_D(const StringUtils);
     d->removePunctuation(str, charactersToPreserve);

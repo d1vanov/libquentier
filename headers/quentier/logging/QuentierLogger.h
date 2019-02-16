@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Dmitry Ivanov
+ * Copyright 2016-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -40,8 +40,10 @@ public:
 
 void QUENTIER_EXPORT QuentierInitializeLogging();
 
-void QUENTIER_EXPORT QuentierAddLogEntry(const QString & sourceFileName, const int sourceFileLineNumber,
-                                         const QString & message, const LogLevel::type logLevel);
+void QUENTIER_EXPORT QuentierAddLogEntry(const QString & sourceFileName,
+                                         const int sourceFileLineNumber,
+                                         const QString & message,
+                                         const LogLevel::type logLevel);
 
 LogLevel::type QUENTIER_EXPORT QuentierMinLogLevel();
 
@@ -72,7 +74,9 @@ void QUENTIER_EXPORT QuentierRestartLogging();
         QDebug dbg(&msg); \
         __QNLOG_QDEBUG_HELPER(); \
         dbg << message; \
-        quentier::QuentierAddLogEntry(QStringLiteral(__FILE__), __LINE__, msg, quentier::LogLevel::level##Level); \
+        quentier::QuentierAddLogEntry(QStringLiteral(__FILE__), \
+                                      __LINE__, msg, \
+                                      quentier::LogLevel::level##Level); \
     }
 
 #define QNTRACE(message) \

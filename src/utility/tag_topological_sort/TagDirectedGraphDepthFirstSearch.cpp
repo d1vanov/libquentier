@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Dmitry Ivanov
+ * Copyright 2017-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -20,7 +20,8 @@
 
 namespace quentier {
 
-TagDirectedGraphDepthFirstSearch::TagDirectedGraphDepthFirstSearch(const TagDirectedGraph & graph) :
+TagDirectedGraphDepthFirstSearch::TagDirectedGraphDepthFirstSearch(
+        const TagDirectedGraph & graph) :
     m_graph(graph),
     m_reachedTagIds(),
     m_parentTagIdByChildTagId(),
@@ -31,7 +32,8 @@ TagDirectedGraphDepthFirstSearch::TagDirectedGraphDepthFirstSearch(const TagDire
     m_tagIdsInReversePostOrder()
 {
     QStringList allTagIds = m_graph.allTagIds();
-    for(auto it = allTagIds.constBegin(), end = allTagIds.constEnd(); it != end; ++it)
+    for(auto it = allTagIds.constBegin(),
+        end = allTagIds.constEnd(); it != end; ++it)
     {
         if (!reached(*it)) {
             depthFirstSearch(*it);
@@ -67,7 +69,8 @@ void TagDirectedGraphDepthFirstSearch::depthFirstSearch(const QString & sourceTa
     Q_UNUSED(m_reachedTagIds.insert(sourceTagId))
 
     QStringList childTagIds = m_graph.childTagIds(sourceTagId);
-    for(auto it = childTagIds.constBegin(), end = childTagIds.constEnd(); it != end; ++it)
+    for(auto it = childTagIds.constBegin(),
+        end = childTagIds.constEnd(); it != end; ++it)
     {
         if (hasCycle()) {
             return;

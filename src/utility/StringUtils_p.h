@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Dmitry Ivanov
+ * Copyright 2016-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -30,7 +30,8 @@ class Q_DECL_HIDDEN StringUtilsPrivate
 public:
     StringUtilsPrivate();
 
-    void removePunctuation(QString & str, const QVector<QChar> & charactersToPreserve) const;
+    void removePunctuation(QString & str,
+                           const QVector<QChar> & charactersToPreserve) const;
     void removeDiacritics(QString & str) const;
     void removeNewlines(QString & str) const;
 

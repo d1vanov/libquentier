@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Dmitry Ivanov
+ * Copyright 2016-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -26,18 +26,21 @@ ResourceRecognitionIndices::ResourceRecognitionIndices() :
     d(new ResourceRecognitionIndicesData)
 {}
 
-ResourceRecognitionIndices::ResourceRecognitionIndices(const ResourceRecognitionIndices & other) :
+ResourceRecognitionIndices::ResourceRecognitionIndices(
+        const ResourceRecognitionIndices & other) :
     Printable(),
     d(other.d)
 {}
 
-ResourceRecognitionIndices::ResourceRecognitionIndices(const QByteArray & rawRecognitionIndicesData) :
+ResourceRecognitionIndices::ResourceRecognitionIndices(
+    const QByteArray & rawRecognitionIndicesData) :
     d(new ResourceRecognitionIndicesData)
 {
     d->setData(rawRecognitionIndicesData);
 }
 
-ResourceRecognitionIndices & ResourceRecognitionIndices::operator=(const ResourceRecognitionIndices & other)
+ResourceRecognitionIndices &
+ResourceRecognitionIndices::operator=(const ResourceRecognitionIndices & other)
 {
     if (this != &other) {
         d = other.d;
@@ -119,56 +122,64 @@ QTextStream & ResourceRecognitionIndices::print(QTextStream & strm) const
     }
 
     if (!d->m_objectId.isEmpty()) {
-        strm << QStringLiteral("  object id = ") << d->m_objectId << QStringLiteral(";\n");
+        strm << QStringLiteral("  object id = ") << d->m_objectId
+             << QStringLiteral(";\n");
     }
     else {
         strm << QStringLiteral("  object id is not set;\n");
     }
 
     if (!d->m_objectType.isEmpty()) {
-        strm << QStringLiteral("  object type = ") << d->m_objectType << QStringLiteral(";\n");
+        strm << QStringLiteral("  object type = ") << d->m_objectType
+             << QStringLiteral(";\n");
     }
     else {
         strm << QStringLiteral("  object type is not set;\n");
     }
 
     if (!d->m_recoType.isEmpty()) {
-        strm << QStringLiteral("  reco type = ") << d->m_recoType << QStringLiteral(";\n");
+        strm << QStringLiteral("  reco type = ") << d->m_recoType
+             << QStringLiteral(";\n");
     }
     else {
         strm << QStringLiteral("  reco type is not set;\n");
     }
 
     if (!d->m_engineVersion.isEmpty()) {
-        strm << QStringLiteral("  engine version = ") << d->m_engineVersion << QStringLiteral(";\n");
+        strm << QStringLiteral("  engine version = ") << d->m_engineVersion
+             << QStringLiteral(";\n");
     }
     else {
         strm << QStringLiteral("  engine version is not set;\n");
     }
 
     if (!d->m_docType.isEmpty()) {
-        strm << QStringLiteral("  doc type = ") << d->m_docType << QStringLiteral(";\n");
+        strm << QStringLiteral("  doc type = ") << d->m_docType
+             << QStringLiteral(";\n");
     }
     else {
         strm << QStringLiteral("  doc type is not set;\n");
     }
 
     if (!d->m_lang.isEmpty()) {
-        strm << QStringLiteral("  lang = ") << d->m_lang << QStringLiteral(";\n");
+        strm << QStringLiteral("  lang = ") << d->m_lang
+             << QStringLiteral(";\n");
     }
     else {
         strm << QStringLiteral("  lang is not set;\n");
     }
 
     if (d->m_objectHeight >= 0) {
-        strm << QStringLiteral("  object height = ") << d->m_objectHeight << QStringLiteral(";\n");
+        strm << QStringLiteral("  object height = ") << d->m_objectHeight
+             << QStringLiteral(";\n");
     }
     else {
         strm << QStringLiteral("  object height is not set;\n");
     }
 
     if (d->m_objectWidth >= 0) {
-        strm << QStringLiteral("  object width = ") << d->m_objectWidth << QStringLiteral(";\n");
+        strm << QStringLiteral("  object width = ") << d->m_objectWidth
+             << QStringLiteral(";\n");
     }
     else {
         strm << QStringLiteral("  object width is not set;\n");
@@ -177,7 +188,9 @@ QTextStream & ResourceRecognitionIndices::print(QTextStream & strm) const
     if (!d->m_items.isEmpty())
     {
         strm << QStringLiteral("  recognition items: \n");
-        for(auto it = d->m_items.constBegin(), end = d->m_items.constEnd(); it != end; ++it) {
+        for(auto it = d->m_items.constBegin(),
+            end = d->m_items.constEnd(); it != end; ++it)
+        {
             strm << *it << QStringLiteral("\n");
         }
         strm << QStringLiteral("\n");

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Dmitry Ivanov
+ * Copyright 2016-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -55,20 +55,25 @@ public:
     void setActive();
 
     /**
-     * @brief stopJavaScriptAutoExecution method can be used to prevent the actual execution of JavaScript code immediately
-     * on calling executeJavaScript; instead the code would be put on the queue for subsequent execution and the signal
-     * javaScriptLoaded would only be emitted when the whole queue is executed
+     * @brief stopJavaScriptAutoExecution method can be used to prevent the actual
+     * execution of JavaScript code immediately on calling executeJavaScript;
+     * instead the code would be put on the queue for subsequent execution and
+     * the signal javaScriptLoaded would only be emitted when the whole queue
+     * is executed
      */
     void stopJavaScriptAutoExecution();
 
     /**
-     * @brief startJavaScriptAutoExecution is the counterpart of stopJavaScriptAutoExecution: when called on stopped
-     * JavaScript queue it starts the execution of the code in the queue until it is empty; if the auto execution
-     * was not stopped or the queue of JavaScript code is empty, calling this method has no effect
+     * @brief startJavaScriptAutoExecution is the counterpart of
+     * stopJavaScriptAutoExecution: when called on stopped JavaScript queue it
+     * starts the execution of the code in the queue until it is empty;
+     * if the auto execution was not stopped or the queue of JavaScript code is
+     * empty, calling this method has no effect
      */
     void startJavaScriptAutoExecution();
 
-    virtual void triggerAction(WebPage::WebAction action, bool checked = false) Q_DECL_OVERRIDE;
+    virtual void triggerAction(WebPage::WebAction action,
+                               bool checked = false) Q_DECL_OVERRIDE;
 
 Q_SIGNALS:
     void javaScriptLoaded();
@@ -84,21 +89,28 @@ public Q_SLOTS:
     bool shouldInterruptJavaScript();
 #endif
 
-    void executeJavaScript(const QString & script, Callback callback = 0, const bool clearPreviousQueue = false);
+    void executeJavaScript(const QString & script, Callback callback = 0,
+                           const bool clearPreviousQueue = false);
 
 private Q_SLOTS:
     void onJavaScriptQueueEmpty();
 
 private:
 #ifndef QUENTIER_USE_QT_WEB_ENGINE
-    virtual void javaScriptAlert(QWebFrame * pFrame, const QString & message) Q_DECL_OVERRIDE;
-    virtual bool javaScriptConfirm(QWebFrame * pFrame, const QString & message) Q_DECL_OVERRIDE;
-    virtual void javaScriptConsoleMessage(const QString & message, int lineNumber, const QString & sourceID) Q_DECL_OVERRIDE;
+    virtual void javaScriptAlert(QWebFrame * pFrame,
+                                 const QString & message) Q_DECL_OVERRIDE;
+    virtual bool javaScriptConfirm(QWebFrame * pFrame,
+                                   const QString & message) Q_DECL_OVERRIDE;
+    virtual void javaScriptConsoleMessage(const QString & message, int lineNumber,
+                                          const QString & sourceID) Q_DECL_OVERRIDE;
 #else
-    virtual void javaScriptAlert(const QUrl & securityOrigin, const QString & msg) Q_DECL_OVERRIDE;
-    virtual bool javaScriptConfirm(const QUrl & securityOrigin, const QString & msg) Q_DECL_OVERRIDE;
-    virtual void javaScriptConsoleMessage(JavaScriptConsoleMessageLevel level, const QString & message,
-                                          int lineNumber, const QString & sourceID) Q_DECL_OVERRIDE;
+    virtual void javaScriptAlert(const QUrl & securityOrigin,
+                                 const QString & msg) Q_DECL_OVERRIDE;
+    virtual bool javaScriptConfirm(const QUrl & securityOrigin,
+                                   const QString & msg) Q_DECL_OVERRIDE;
+    virtual void javaScriptConsoleMessage(JavaScriptConsoleMessageLevel level,
+                                          const QString & message, int lineNumber,
+                                          const QString & sourceID) Q_DECL_OVERRIDE;
 #endif
 
 private:

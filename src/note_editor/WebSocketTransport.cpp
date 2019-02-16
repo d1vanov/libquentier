@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Dmitry Ivanov
+ * Copyright 2016-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -57,7 +57,8 @@ bool WebSocketTransport::parseMessage(QByteArray messageData, QJsonObject & obje
     if (!error.error)
     {
         if (!document.isObject()) {
-            QNWARNING(QStringLiteral("Failed to parse JSON message that is not an object: ") << messageData);
+            QNWARNING(QStringLiteral("Failed to parse JSON message that is not ")
+                      << QStringLiteral("an object: ") << messageData);
             return false;
         }
 
@@ -66,21 +67,27 @@ bool WebSocketTransport::parseMessage(QByteArray messageData, QJsonObject & obje
     }
 
     if (error.error != QJsonParseError::GarbageAtEnd) {
-        QNWARNING(QStringLiteral("Failed to parse text message as JSON object: ") << messageData
-                  << QStringLiteral("; error is: ") << error.errorString());
+        QNWARNING(QStringLiteral("Failed to parse text message as JSON object: ")
+                  << messageData << QStringLiteral("; error is: ")
+                  << error.errorString());
         return false;
     }
 
-    QNTRACE(QStringLiteral("Detected \"garbage at the end\" JSON parsing error, trying to workaround; message data: ")
-            << messageData);
+    QNTRACE(QStringLiteral("Detected \"garbage at the end\" JSON parsing error, ")
+            << QStringLiteral("trying to workaround; message data: ") << messageData);
 
-    // NOTE: for some reason which I can't fully comprehend yet the first part of the message
-    // (i.e. the first JSON object) seems to always be the previous message which has already
-    // been parsed and processed. So here we just get rid of everything but the last message.
-    // FIXME: need to have a better understanding of how this thing is supposed to work
+    /**
+     * NOTE: for some reason which I can't fully comprehend yet the first part
+     * of the message (i.e. the first JSON object) seems to always be the previous
+     * message which has already been parsed and processed. So here we just get
+     * rid of everything but the last message.
+     * FIXME: need to have a better understanding of how this thing is supposed
+     * to work
+     */
     int lastOpeningCurvyBraceIndex = messageData.lastIndexOf('{');
     if (lastOpeningCurvyBraceIndex <= 0) {
-        QNWARNING(QStringLiteral("Failed to workaround \"Garbage at the end\" error, message data: ") << messageData);
+        QNWARNING(QStringLiteral("Failed to workaround \"Garbage at the end\" ")
+                  << QStringLiteral("error, message data: ") << messageData);
         return false;
     }
 

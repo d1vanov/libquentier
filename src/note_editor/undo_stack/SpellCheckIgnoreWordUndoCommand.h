@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Dmitry Ivanov
+ * Copyright 2016-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -30,10 +30,15 @@ class Q_DECL_HIDDEN SpellCheckIgnoreWordUndoCommand: public INoteEditorUndoComma
 {
     Q_OBJECT
 public:
-    SpellCheckIgnoreWordUndoCommand(NoteEditorPrivate & noteEditor, const QString & ignoredWord,
-                                    SpellChecker * pSpellChecker, QUndoCommand * parent = Q_NULLPTR);
-    SpellCheckIgnoreWordUndoCommand(NoteEditorPrivate & noteEditor, const QString & ignoredWord,
-                                    SpellChecker * pSpellChecker, const QString & text, QUndoCommand * parent = Q_NULLPTR);
+    SpellCheckIgnoreWordUndoCommand(NoteEditorPrivate & noteEditor,
+                                    const QString & ignoredWord,
+                                    SpellChecker * pSpellChecker,
+                                    QUndoCommand * parent = Q_NULLPTR);
+    SpellCheckIgnoreWordUndoCommand(NoteEditorPrivate & noteEditor,
+                                    const QString & ignoredWord,
+                                    SpellChecker * pSpellChecker,
+                                    const QString & text,
+                                    QUndoCommand * parent = Q_NULLPTR);
     virtual ~SpellCheckIgnoreWordUndoCommand();
 
     virtual void redoImpl() Q_DECL_OVERRIDE;

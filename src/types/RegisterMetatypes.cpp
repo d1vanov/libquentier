@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Dmitry Ivanov
+ * Copyright 2016-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -57,12 +57,15 @@ void registerMetatypes()
     qRegisterMetaType<qevercloud::Notebook>("qevercloud::Notebook");
     qRegisterMetaType<qevercloud::Resource>("qevercloud::Resource");
 
-    qRegisterMetaType<QSharedPointer<qevercloud::EverCloudExceptionData> >("QSharedPointer<qevercloud::EverCloudExceptionData>");
+    qRegisterMetaType<QSharedPointer<qevercloud::EverCloudExceptionData> >(
+        "QSharedPointer<qevercloud::EverCloudExceptionData>");
 
     typedef qevercloud::EverCloudExceptionData EverCloudExceptionData;
-    qRegisterMetaType<QSharedPointer<EverCloudExceptionData> >("QSharedPointer<EverCloudExceptionData>");
+    qRegisterMetaType<QSharedPointer<EverCloudExceptionData> >(
+        "QSharedPointer<EverCloudExceptionData>");
 
-    qRegisterMetaType<QVector<LinkedNotebookAuthData> >("QVector<LinkedNotebookAuthData>");
+    qRegisterMetaType<QVector<LinkedNotebookAuthData> >(
+        "QVector<LinkedNotebookAuthData>");
 
     qRegisterMetaType< QList<Notebook> >("QList<Notebook>");
     qRegisterMetaType< QList<Note> >("QList<Note>");
@@ -74,22 +77,40 @@ void registerMetatypes()
 
     qRegisterMetaType< QList<SharedNotebook> >("QList<SharedNotebook>");
 
-    qRegisterMetaType<LocalStorageManager::ListObjectsOptions>("LocalStorageManager::ListObjectsOptions");
-    qRegisterMetaType<LocalStorageManager::ListNotesOrder::type>("LocalStorageManager::ListNotesOrder::type");
-    qRegisterMetaType<LocalStorageManager::ListNotebooksOrder::type>("LocalStorageManager::ListNotebooksOrder::type");
-    qRegisterMetaType<LocalStorageManager::ListLinkedNotebooksOrder::type>("LocalStorageManager::ListLinkedNotebooksOrder::type");
-    qRegisterMetaType<LocalStorageManager::ListTagsOrder::type>("LocalStorageManager::ListTagsOrder::type");
-    qRegisterMetaType<LocalStorageManager::ListSavedSearchesOrder::type>("LocalStorageManager::ListSavedSearchesOrder::type");
-    qRegisterMetaType<LocalStorageManager::OrderDirection::type>("LocalStorageManager::OrderDirection::type");
-    qRegisterMetaType<LocalStorageManager::UpdateNoteOptions>("LocalStorageManager::UpdateNoteOptions");
+    qRegisterMetaType<LocalStorageManager::ListObjectsOptions>(
+        "LocalStorageManager::ListObjectsOptions");
+    qRegisterMetaType<LocalStorageManager::ListNotesOrder::type>(
+        "LocalStorageManager::ListNotesOrder::type");
+    qRegisterMetaType<LocalStorageManager::ListNotebooksOrder::type>(
+        "LocalStorageManager::ListNotebooksOrder::type");
+    qRegisterMetaType<LocalStorageManager::ListLinkedNotebooksOrder::type>(
+        "LocalStorageManager::ListLinkedNotebooksOrder::type");
+    qRegisterMetaType<LocalStorageManager::ListTagsOrder::type>(
+        "LocalStorageManager::ListTagsOrder::type");
+    qRegisterMetaType<LocalStorageManager::ListSavedSearchesOrder::type>(
+        "LocalStorageManager::ListSavedSearchesOrder::type");
+    qRegisterMetaType<LocalStorageManager::OrderDirection::type>(
+        "LocalStorageManager::OrderDirection::type");
+    qRegisterMetaType<LocalStorageManager::UpdateNoteOptions>(
+        "LocalStorageManager::UpdateNoteOptions");
+    qRegisterMetaType<LocalStorageManager::GetNoteOptions>(
+        "LocalStorageManager::GetNoteOptions");
+    qRegisterMetaType<LocalStorageManager::GetResourceOptions>(
+        "LocalStorageManager::GetResourceOptions");
+    qRegisterMetaType<LocalStorageManager::StartupOptions>(
+        "LocalStorageManager::StartupOptions");
     qRegisterMetaType<size_t>("size_t");
 
     qRegisterMetaType<QUuid>("QUuid");
 
-    qRegisterMetaType<QList<QPair<QString,QString> > >("QList<QPair<QString,QString> >");
-    qRegisterMetaType<QHash<QString, QPair<QString,QString> > >("QHash<QString, QPair<QString,QString> >");
-    qRegisterMetaType<QHash<QString,QString> >("QHash<QString,QString>");
-    qRegisterMetaType<QHash<QString,qevercloud::Timestamp> >("QHash<QString,qevercloud::Timestamp>");
+    qRegisterMetaType<QList<QPair<QString,QString> > >(
+        "QList<QPair<QString,QString> >");
+    qRegisterMetaType<QHash<QString, QPair<QString,QString> > >(
+        "QHash<QString, QPair<QString,QString> >");
+    qRegisterMetaType<QHash<QString,QString> >(
+        "QHash<QString,QString>");
+    qRegisterMetaType<QHash<QString,qevercloud::Timestamp> >(
+        "QHash<QString,qevercloud::Timestamp>");
     qRegisterMetaType<QHash<QString,qint32> >("QHash<QString,qint32>");
     qRegisterMetaType<QHash<QString,int> >("QHash<QString,int>");
 
@@ -98,7 +119,8 @@ void registerMetatypes()
     qRegisterMetaType<ErrorString>("ErrorString");
     qRegisterMetaType<QSqlError>("QSqlError");
 
-    qRegisterMetaType<QList<std::pair<Tag, QStringList> > >("QList<std::pair<Tag, QStringList> >");
+    qRegisterMetaType<QList<std::pair<Tag, QStringList> > >(
+        "QList<std::pair<Tag, QStringList> >");
 
     typedef IKeychainService::ErrorCode ErrorCode;
     qRegisterMetaType<ErrorCode::type>("ErrorCode::type");

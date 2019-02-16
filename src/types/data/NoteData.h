@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Dmitry Ivanov
+ * Copyright 2016-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -46,7 +46,9 @@ public:
 
     QString plainText(ErrorString * pErrorMessage) const;
     QStringList listOfWords(ErrorString * pErrorMessage) const;
-    std::pair<QString, QStringList> plainTextAndListOfWords(ErrorString * pErrorMessage) const;
+
+    std::pair<QString, QStringList>
+    plainTextAndListOfWords(ErrorString * pErrorMessage) const;
 
     bool containsToDoImpl(const bool checked) const;
     bool containsEncryption() const;

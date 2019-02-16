@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Dmitry Ivanov
+ * Copyright 2018-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -67,44 +67,66 @@ public:
     /**
      * Check the version of EDAM protocol
      *
-     * @param clientName - application name + application version + platform name string
-     * @param edamVersionMajor - the major version of EDAM protocol the application wants to use to connect to Evernote
-     * @param edamVersionMinor - the minor version of EDAM protocol the application wants to use to connect to Evernote
-     * @param errorDescription - the textual description of the error if the supplied protocol version cannot be used
-     *                           to connect to Evernote
-     * @return true if protocol check was successful i.e. the service can talk to the client using the supplied protocol version,
-     *         false otherwise
+     * @param clientName        Application name + application version +
+     *                          platform name string
+     * @param edamVersionMajor  The major version of EDAM protocol the application
+     *                          wants to use to connect to Evernote
+     * @param edamVersionMinor  The minor version of EDAM protocol the application
+     *                          wants to use to connect to Evernote
+     * @param errorDescription  The textual description of the error if the supplied
+     *                          protocol version cannot be used to connect to Evernote
+     * @return                  True if protocol check was successful i.e.
+     *                          the service can talk to the client using
+     *                          the supplied protocol version, false otherwise
      */
-    virtual bool checkVersion(const QString & clientName, qint16 edamVersionMajor, qint16 edamVersionMinor,
+    virtual bool checkVersion(const QString & clientName,
+                              qint16 edamVersionMajor,
+                              qint16 edamVersionMinor,
                               ErrorString & errorDescription) = 0;
 
     /**
      * Retrieve full information about user (account)
      *
-     * @param user - input and output parameter; on input needs to have user id set
-     * @param errorDescription - the textual description of the error if full user information could not be retrieved
-     * @param rateLimitSeconds - output parameter, the number of seconds the client needs to wait before attempting
-     *                           to call this method or any other method calling Evernote API again; only meaningful
-     *                           if returned value matches qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED
-     * @return error code, 0 in case of successful retrieval of full user information, other values corresponding
-     *         to qevercloud::EDAMErrorCode::type enumeration instead
+     * @param user              Input and output parameter; on input needs
+     *                          to have user id set
+     * @param errorDescription  The textual description of the error if full
+     *                          user information could not be retrieved
+     * @param rateLimitSeconds  Output parameter, the number of seconds
+     *                          the client needs to wait before attempting
+     *                          to call this method or any other method calling
+     *                          Evernote API again; only meaningful if returned
+     *                          value matches
+     *                          qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED
+     * @return                  Error code, 0 in case of successful retrieval
+     *                          of full user information, other values corresponding
+     *                          to qevercloud::EDAMErrorCode::type enumeration instead
      */
-    virtual qint32 getUser(User & user, ErrorString & errorDescription, qint32 & rateLimitSeconds) = 0;
+    virtual qint32 getUser(User & user,
+                           ErrorString & errorDescription,
+                           qint32 & rateLimitSeconds) = 0;
 
     /**
      * Retrieve account limits corresponding to certain provided service level
      *
-     * @param serviceLevel - the level of Evernote service for which account limits are requested
-     * @param limits - output account limits
-     * @param errorDescription - the textual description of the error if account limits could not be retrieved
-     * @param rateLimitSeconds - output parameter, the number of seconds the client needs to wait before attempting
-     *                           to call this method or any other method calling Evernote API again; only meaningful
-     *                           if returned value matches qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED
-     * @return error code, 0 in case of successful retrieval of account limits for the given service level,
-     *         other values corresponding to qevercoud::EDAMErrorCode::type enumeration instead
+     * @param serviceLevel      The level of Evernote service for which account
+     *                          limits are requested
+     * @param limits            Output account limits
+     * @param errorDescription  The textual description of the error if account
+     *                          limits could not be retrieved
+     * @param rateLimitSeconds  Output parameter, the number of seconds
+     *                          the client needs to wait before attempting
+     *                          to call this method or any other method calling
+     *                          Evernote API again; only meaningful if returned
+     *                          value matches qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED
+     * @return                  Error code, 0 in case of successful retrieval
+     *                          of account limits for the given service level,
+     *                          other values corresponding to
+     *                          qevercoud::EDAMErrorCode::type enumeration instead
      */
-    virtual qint32 getAccountLimits(const qevercloud::ServiceLevel::type serviceLevel, qevercloud::AccountLimits & limits,
-                                    ErrorString & errorDescription, qint32 & rateLimitSeconds) = 0;
+    virtual qint32 getAccountLimits(const qevercloud::ServiceLevel::type serviceLevel,
+                                    qevercloud::AccountLimits & limits,
+                                    ErrorString & errorDescription,
+                                    qint32 & rateLimitSeconds) = 0;
 
 protected:
     QSharedPointer<qevercloud::UserStore> m_pQecUserStore;

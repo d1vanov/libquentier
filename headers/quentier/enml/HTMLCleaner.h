@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Dmitry Ivanov
+ * Copyright 2016-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -31,8 +31,10 @@ public:
     HTMLCleaner();
     virtual ~HTMLCleaner();
 
-    bool htmlToXml(const QString & html, QString & output, QString & errorDescription);
-    bool htmlToXhtml(const QString & html, QString & output, QString & errorDescription);
+    bool htmlToXml(const QString & html, QString & output,
+                   QString & errorDescription);
+    bool htmlToXhtml(const QString & html, QString & output,
+                     QString & errorDescription);
     bool cleanupHtml(QString & html, QString & errorDescription);
 
 private:

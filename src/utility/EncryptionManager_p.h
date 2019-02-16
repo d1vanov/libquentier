@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Dmitry Ivanov
+ * Copyright 2016-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -58,7 +58,8 @@ private:
         };
     };
 
-    bool generateSalt(const SaltKind::type saltKind, const size_t saltSize, ErrorString & errorDescription);
+    bool generateSalt(const SaltKind::type saltKind, const size_t saltSize,
+                      ErrorString & errorDescription);
 
     bool generateKey(const QByteArray & passphraseData, const unsigned char * salt,
                      const size_t keySize, ErrorString & errorDescription);
@@ -83,7 +84,9 @@ private:
                     QString & decryptedText, ErrorString & errorDescription);
 
     void rc2KeyCodesFromPassphrase(const QString & passphrase) const;
-    QString decryptRc2Chunk(const QByteArray & inputCharCodes, const QVector<int> & key) const;
+
+    QString decryptRc2Chunk(const QByteArray & inputCharCodes,
+                            const QVector<int> & key) const;
 
     qint32 crc32(const QString & str) const;
 

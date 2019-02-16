@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Dmitry Ivanov
+ * Copyright 2017-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -24,7 +24,8 @@
         __QNLOG_BASE(message, level); \
     } \
     else { \
-        __QNLOG_BASE(QStringLiteral("[linked notebook ") << m_linkedNotebookGuid << QStringLiteral("]: ") << message, level); \
+        __QNLOG_BASE(QStringLiteral("[linked notebook ") << m_linkedNotebookGuid \
+                     << QStringLiteral("]: ") << message, level); \
     }
 
 #define NSTRACE(message) \
@@ -83,7 +84,8 @@ void NoteSyncCache::fill()
     NSDEBUG(QStringLiteral("NoteSyncCache::fill"));
 
     if (m_connectedToLocalStorage) {
-        NSDEBUG(QStringLiteral("Already connected to the local storage, no need to do anything"));
+        NSDEBUG(QStringLiteral("Already connected to the local storage, no need "
+                               "to do anything"));
         return;
     }
 
@@ -91,33 +93,46 @@ void NoteSyncCache::fill()
     requestNotesList();
 }
 
-void NoteSyncCache::onListNotesComplete(LocalStorageManager::ListObjectsOptions flag, bool withResourceMetadata,
-                                        bool withResourceBinaryData, size_t limit, size_t offset,
+void NoteSyncCache::onListNotesComplete(LocalStorageManager::ListObjectsOptions flag,
+                                        LocalStorageManager::GetNoteOptions options,
+                                        size_t limit, size_t offset,
                                         LocalStorageManager::ListNotesOrder::type order,
                                         LocalStorageManager::OrderDirection::type orderDirection,
-                                        QString linkedNotebookGuid, QList<Note> foundNotes, QUuid requestId)
+                                        QString linkedNotebookGuid,
+                                        QList<Note> foundNotes,
+                                        QUuid requestId)
 {
     if (requestId != m_listNotesRequestId) {
         return;
     }
 
-    NSDEBUG(QStringLiteral("NoteSyncCache::onListNotesComplete: flag = ") << flag << QStringLiteral(", with resource metadata = ")
-            << (withResourceMetadata ? QStringLiteral("true") : QStringLiteral("false"))
+    NSDEBUG(QStringLiteral("NoteSyncCache::onListNotesComplete: flag = ") << flag
+            << QStringLiteral(", with resource metadata = ")
+            << ((options & LocalStorageManager::GetNoteOption::WithResourceMetadata)
+                ? QStringLiteral("true")
+                : QStringLiteral("false"))
             << QStringLiteral(", with resource binary data = ")
-            << (withResourceBinaryData ? QStringLiteral("true") : QStringLiteral("false"))
-            << QStringLiteral(", limit = ") << limit << QStringLiteral(", offset = ") << offset
-            << QStringLiteral(", order = ") << order << QStringLiteral(", order direction = ") << orderDirection
+            << ((options & LocalStorageManager::GetNoteOption::WithResourceBinaryData)
+                ? QStringLiteral("true")
+                : QStringLiteral("false"))
+            << QStringLiteral(", limit = ") << limit << QStringLiteral(", offset = ")
+            << offset << QStringLiteral(", order = ") << order
+            << QStringLiteral(", order direction = ") << orderDirection
             << QStringLiteral(", linked notebook guid = ") << linkedNotebookGuid
-            << QStringLiteral(", num found notes = ") << foundNotes.size() << QStringLiteral(", request id = ") << requestId);
+            << QStringLiteral(", num found notes = ") << foundNotes.size()
+            << QStringLiteral(", request id = ") << requestId);
 
-    for(auto it = foundNotes.constBegin(), end = foundNotes.constEnd(); it != end; ++it) {
+    for(auto it = foundNotes.constBegin(),
+        end = foundNotes.constEnd(); it != end; ++it)
+    {
         processNote(*it);
     }
 
     m_listNotesRequestId = QUuid();
 
     if (foundNotes.size() == static_cast<int>(limit)) {
-        NSTRACE(QStringLiteral("The number of found notes matches the limit, requesting more notes from the local storage"));
+        NSTRACE(QStringLiteral("The number of found notes matches the limit, "
+                               "requesting more notes from the local storage"));
         m_offset += limit;
         requestNotesList();
         return;
@@ -126,24 +141,37 @@ void NoteSyncCache::onListNotesComplete(LocalStorageManager::ListObjectsOptions 
     Q_EMIT filled();
 }
 
-void NoteSyncCache::onListNotesFailed(LocalStorageManager::ListObjectsOptions flag, bool withResourceMetadata, bool withResourceBinaryData,
-                                      size_t limit, size_t offset, LocalStorageManager::ListNotesOrder::type order,
+void NoteSyncCache::onListNotesFailed(LocalStorageManager::ListObjectsOptions flag,
+                                      LocalStorageManager::GetNoteOptions options,
+                                      size_t limit, size_t offset,
+                                      LocalStorageManager::ListNotesOrder::type order,
                                       LocalStorageManager::OrderDirection::type orderDirection,
-                                      QString linkedNotebookGuid, ErrorString errorDescription, QUuid requestId)
+                                      QString linkedNotebookGuid,
+                                      ErrorString errorDescription,
+                                      QUuid requestId)
 {
     if (requestId != m_listNotesRequestId) {
         return;
     }
 
-    NSDEBUG(QStringLiteral("NoteSyncCache::onListNotesFailed: flag = ") << flag << QStringLiteral(", with resource metadata = ")
-            << (withResourceMetadata ? QStringLiteral("true") : QStringLiteral("false")) << QStringLiteral(", with resource binary data = ")
-            << (withResourceBinaryData ? QStringLiteral("true") : QStringLiteral("false")) << QStringLiteral(", limit = ")
-            << limit << QStringLiteral(", offset = ") << offset << QStringLiteral(", order = ") << order
-            << QStringLiteral(", order direction = ") << orderDirection << QStringLiteral(", linked notebook guid = ")
-            << linkedNotebookGuid << QStringLiteral(", error description = ") << errorDescription << QStringLiteral(", request id = ")
-            << requestId);
+    NSDEBUG(QStringLiteral("NoteSyncCache::onListNotesFailed: flag = ") << flag
+            << QStringLiteral(", with resource metadata = ")
+            << ((options & LocalStorageManager::GetNoteOption::WithResourceMetadata)
+                ? QStringLiteral("true")
+                : QStringLiteral("false"))
+            << QStringLiteral(", with resource binary data = ")
+            << ((options & LocalStorageManager::GetNoteOption::WithResourceBinaryData)
+                ? QStringLiteral("true")
+                : QStringLiteral("false"))
+            << QStringLiteral(", limit = ") << limit << QStringLiteral(", offset = ")
+            << offset << QStringLiteral(", order = ") << order
+            << QStringLiteral(", order direction = ") << orderDirection
+            << QStringLiteral(", linked notebook guid = ")
+            << linkedNotebookGuid << QStringLiteral(", error description = ")
+            << errorDescription << QStringLiteral(", request id = ") << requestId);
 
-    NSWARNING(QStringLiteral("Failed to cache the note information required for the sync: ") << errorDescription);
+    NSWARNING(QStringLiteral("Failed to cache the note information required for the sync: ")
+              << errorDescription);
 
     m_noteGuidToLocalUidBimap.clear();
     m_dirtyNotesByGuid.clear();
@@ -161,15 +189,22 @@ void NoteSyncCache::onAddNoteComplete(Note note, QUuid requestId)
     processNote(note);
 }
 
-void NoteSyncCache::onUpdateNoteComplete(Note note, LocalStorageManager::UpdateNoteOptions options, QUuid requestId)
+void NoteSyncCache::onUpdateNoteComplete(
+    Note note, LocalStorageManager::UpdateNoteOptions options, QUuid requestId)
 {
-    NSDEBUG(QStringLiteral("NoteSyncCache::onUpdateNoteComplete: request id = ") << requestId
-            << QStringLiteral(", update resource metadata = ")
-            << ((options & LocalStorageManager::UpdateNoteOption::UpdateResourceMetadata) ? QStringLiteral("true") : QStringLiteral("false"))
+    NSDEBUG(QStringLiteral("NoteSyncCache::onUpdateNoteComplete: request id = ")
+            << requestId << QStringLiteral(", update resource metadata = ")
+            << ((options & LocalStorageManager::UpdateNoteOption::UpdateResourceMetadata)
+                ? QStringLiteral("true")
+                : QStringLiteral("false"))
             << QStringLiteral(", update resource binary data = ")
-            << ((options & LocalStorageManager::UpdateNoteOption::UpdateResourceBinaryData) ? QStringLiteral("true") : QStringLiteral("false"))
+            << ((options & LocalStorageManager::UpdateNoteOption::UpdateResourceBinaryData)
+                ? QStringLiteral("true")
+                : QStringLiteral("false"))
             << QStringLiteral(", update tags = ")
-            << ((options & LocalStorageManager::UpdateNoteOption::UpdateTags) ? QStringLiteral("true") : QStringLiteral("false"))
+            << ((options & LocalStorageManager::UpdateNoteOption::UpdateTags)
+                ? QStringLiteral("true")
+                : QStringLiteral("false"))
             << QStringLiteral(", note: ") << note);
 
     processNote(note);
@@ -177,8 +212,8 @@ void NoteSyncCache::onUpdateNoteComplete(Note note, LocalStorageManager::UpdateN
 
 void NoteSyncCache::onExpungeNoteComplete(Note note, QUuid requestId)
 {
-    NSDEBUG(QStringLiteral("NoteSyncCache::onExpungeNoteComplete: request id = ") << requestId
-            << QStringLiteral(", note: ") << note);
+    NSDEBUG(QStringLiteral("NoteSyncCache::onExpungeNoteComplete: request id = ")
+            << requestId << QStringLiteral(", note: ") << note);
 
     removeNote(note.localUid());
 }
@@ -193,41 +228,66 @@ void NoteSyncCache::connectToLocalStorage()
     }
 
     // Connect local signals to local storage manager async's slots
-    QObject::connect(this, QNSIGNAL(NoteSyncCache,listNotes,LocalStorageManager::ListObjectsOptions,
-                                    bool,bool,size_t,size_t,LocalStorageManager::ListNotesOrder::type,
-                                    LocalStorageManager::OrderDirection::type,QString,QUuid),
-                     &m_localStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,onListNotesRequest,
-                                                         LocalStorageManager::ListObjectsOptions,bool,bool,
-                                                         size_t,size_t,LocalStorageManager::ListNotesOrder::type,
-                                                         LocalStorageManager::OrderDirection::type,QString,QUuid),
+    QObject::connect(this,
+                     QNSIGNAL(NoteSyncCache,listNotes,
+                              LocalStorageManager::ListObjectsOptions,
+                              LocalStorageManager::GetNoteOptions,size_t,size_t,
+                              LocalStorageManager::ListNotesOrder::type,
+                              LocalStorageManager::OrderDirection::type,
+                              QString,QUuid),
+                     &m_localStorageManagerAsync,
+                     QNSLOT(LocalStorageManagerAsync,onListNotesRequest,
+                            LocalStorageManager::ListObjectsOptions,
+                            LocalStorageManager::GetNoteOptions,size_t,size_t,
+                            LocalStorageManager::ListNotesOrder::type,
+                            LocalStorageManager::OrderDirection::type,
+                            QString,QUuid),
                      Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
 
     // Connect local storage manager async's signals to local slots
-    QObject::connect(&m_localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,listNotesComplete,
-                                                           LocalStorageManager::ListObjectsOptions,bool,bool,
-                                                           size_t,size_t,LocalStorageManager::ListNotesOrder::type,
-                                                           LocalStorageManager::OrderDirection::type,
-                                                           QString,QList<Note>,QUuid),
-                     this, QNSLOT(NoteSyncCache,onListNotesComplete,LocalStorageManager::ListObjectsOptions,bool,bool,
-                                  size_t,size_t,LocalStorageManager::ListNotesOrder::type,
-                                  LocalStorageManager::OrderDirection::type,QString,QList<Note>,QUuid),
+    QObject::connect(&m_localStorageManagerAsync,
+                     QNSIGNAL(LocalStorageManagerAsync,listNotesComplete,
+                              LocalStorageManager::ListObjectsOptions,
+                              LocalStorageManager::GetNoteOptions,size_t,size_t,
+                              LocalStorageManager::ListNotesOrder::type,
+                              LocalStorageManager::OrderDirection::type,
+                              QString,QList<Note>,QUuid),
+                     this,
+                     QNSLOT(NoteSyncCache,onListNotesComplete,
+                            LocalStorageManager::ListObjectsOptions,
+                            LocalStorageManager::GetNoteOptions,size_t,size_t,
+                            LocalStorageManager::ListNotesOrder::type,
+                            LocalStorageManager::OrderDirection::type,
+                            QString,QList<Note>,QUuid),
                      Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
-    QObject::connect(&m_localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,listNotesFailed,
-                                                           LocalStorageManager::ListObjectsOptions,bool,bool,
-                                                           size_t,size_t,LocalStorageManager::ListNotesOrder::type,
-                                                           LocalStorageManager::OrderDirection::type,
-                                                           QString,ErrorString,QUuid),
-                     this, QNSLOT(NoteSyncCache,onListNotesFailed,LocalStorageManager::ListObjectsOptions,bool,bool,
-                                  size_t,size_t,LocalStorageManager::ListNotesOrder::type,
-                                  LocalStorageManager::OrderDirection::type,QString,ErrorString,QUuid),
+    QObject::connect(&m_localStorageManagerAsync,
+                     QNSIGNAL(LocalStorageManagerAsync,listNotesFailed,
+                              LocalStorageManager::ListObjectsOptions,
+                              LocalStorageManager::GetNoteOptions,
+                              size_t,size_t,LocalStorageManager::ListNotesOrder::type,
+                              LocalStorageManager::OrderDirection::type,
+                              QString,ErrorString,QUuid),
+                     this,
+                     QNSLOT(NoteSyncCache,onListNotesFailed,
+                            LocalStorageManager::ListObjectsOptions,
+                            LocalStorageManager::GetNoteOptions,
+                            size_t,size_t,LocalStorageManager::ListNotesOrder::type,
+                            LocalStorageManager::OrderDirection::type,
+                            QString,ErrorString,QUuid),
                      Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
-    QObject::connect(&m_localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,addNoteComplete,Note,QUuid),
+    QObject::connect(&m_localStorageManagerAsync,
+                     QNSIGNAL(LocalStorageManagerAsync,addNoteComplete,Note,QUuid),
                      this, QNSLOT(NoteSyncCache,onAddNoteComplete,Note,QUuid),
                      Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
-    QObject::connect(&m_localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,updateNoteComplete,Note,LocalStorageManager::UpdateNoteOptions,QUuid),
-                     this, QNSLOT(NoteSyncCache,onUpdateNoteComplete,Note,LocalStorageManager::UpdateNoteOptions,QUuid),
+    QObject::connect(&m_localStorageManagerAsync,
+                     QNSIGNAL(LocalStorageManagerAsync,updateNoteComplete,
+                              Note,LocalStorageManager::UpdateNoteOptions,QUuid),
+                     this,
+                     QNSLOT(NoteSyncCache,onUpdateNoteComplete,Note,
+                            LocalStorageManager::UpdateNoteOptions,QUuid),
                      Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
-    QObject::connect(&m_localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,expungeNoteComplete,Note,QUuid),
+    QObject::connect(&m_localStorageManagerAsync,
+                     QNSIGNAL(LocalStorageManagerAsync,expungeNoteComplete,Note,QUuid),
                      this, QNSLOT(NoteSyncCache,onExpungeNoteComplete,Note,QUuid),
                      Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
 
@@ -244,37 +304,66 @@ void NoteSyncCache::disconnectFromLocalStorage()
     }
 
     // Disconnect local signals from local storage manager async's slots
-    QObject::disconnect(this, QNSIGNAL(NoteSyncCache,listNotes,LocalStorageManager::ListObjectsOptions,
-                                       bool,size_t,size_t,LocalStorageManager::ListNotesOrder::type,
-                                       LocalStorageManager::OrderDirection::type,QString,QUuid),
-                        &m_localStorageManagerAsync, QNSLOT(LocalStorageManagerAsync,onListNotesRequest,
-                                                            LocalStorageManager::ListObjectsOptions,bool,
-                                                            size_t,size_t,LocalStorageManager::ListNotesOrder::type,
-                                                            LocalStorageManager::OrderDirection::type,QString,QUuid));
+    QObject::disconnect(this,
+                        QNSIGNAL(NoteSyncCache,listNotes,
+                                 LocalStorageManager::ListObjectsOptions,
+                                 LocalStorageManager::GetNoteOptions,size_t,size_t,
+                                 LocalStorageManager::ListNotesOrder::type,
+                                 LocalStorageManager::OrderDirection::type,
+                                 QString,QUuid),
+                        &m_localStorageManagerAsync,
+                        QNSLOT(LocalStorageManagerAsync,onListNotesRequest,
+                               LocalStorageManager::ListObjectsOptions,
+                               LocalStorageManager::GetNoteOptions,size_t,size_t,
+                               LocalStorageManager::ListNotesOrder::type,
+                               LocalStorageManager::OrderDirection::type,
+                               QString,QUuid));
 
     // Disconnect local storage manager async's signals from local slots
-    QObject::disconnect(&m_localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,listNotesComplete,
-                                                              LocalStorageManager::ListObjectsOptions,bool,
-                                                              size_t,size_t,LocalStorageManager::ListNotesOrder::type,
-                                                              LocalStorageManager::OrderDirection::type,
-                                                              QString,QList<Note>,QUuid),
-                        this, QNSLOT(NoteSyncCache,onListNotesComplete,LocalStorageManager::ListObjectsOptions,bool,
-                                     size_t,size_t,LocalStorageManager::ListNotesOrder::type,
-                                     LocalStorageManager::OrderDirection::type,QString,QList<Note>,QUuid));
-    QObject::disconnect(&m_localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,listNotesFailed,
-                                                              LocalStorageManager::ListObjectsOptions,bool,
-                                                              size_t,size_t,LocalStorageManager::ListNotesOrder::type,
-                                                              LocalStorageManager::OrderDirection::type,
-                                                              QString,ErrorString,QUuid),
-                        this, QNSLOT(NoteSyncCache,onListNotesFailed,LocalStorageManager::ListObjectsOptions,bool,
-                                     size_t,size_t,LocalStorageManager::ListNotesOrder::type,
-                                     LocalStorageManager::OrderDirection::type,QString,ErrorString,QUuid));
-    QObject::disconnect(&m_localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,addNoteComplete,Note,QUuid),
-                        this, QNSLOT(NoteSyncCache,onAddNoteComplete,Note,QUuid));
-    QObject::disconnect(&m_localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,updateNoteComplete,Note,LocalStorageManager::UpdateNoteOptions,QUuid),
-                        this, QNSLOT(NoteSyncCache,onUpdateNoteComplete,Note,LocalStorageManager::UpdateNoteOptions,QUuid));
-    QObject::disconnect(&m_localStorageManagerAsync, QNSIGNAL(LocalStorageManagerAsync,expungeNoteComplete,Note,QUuid),
-                        this, QNSLOT(NoteSyncCache,onExpungeNoteComplete,Note,QUuid));
+    QObject::disconnect(&m_localStorageManagerAsync,
+                        QNSIGNAL(LocalStorageManagerAsync,listNotesComplete,
+                                 LocalStorageManager::ListObjectsOptions,
+                                 LocalStorageManager::GetNoteOptions,size_t,size_t,
+                                 LocalStorageManager::ListNotesOrder::type,
+                                 LocalStorageManager::OrderDirection::type,
+                                 QString,QList<Note>,QUuid),
+                        this,
+                        QNSLOT(NoteSyncCache,onListNotesComplete,
+                               LocalStorageManager::ListObjectsOptions,
+                               LocalStorageManager::GetNoteOptions,size_t,size_t,
+                               LocalStorageManager::ListNotesOrder::type,
+                               LocalStorageManager::OrderDirection::type,
+                               QString,QList<Note>,QUuid));
+    QObject::disconnect(&m_localStorageManagerAsync,
+                        QNSIGNAL(LocalStorageManagerAsync,listNotesFailed,
+                                 LocalStorageManager::ListObjectsOptions,bool,
+                                 size_t,size_t,
+                                 LocalStorageManager::ListNotesOrder::type,
+                                 LocalStorageManager::OrderDirection::type,
+                                 QString,ErrorString,QUuid),
+                        this,
+                        QNSLOT(NoteSyncCache,onListNotesFailed,
+                               LocalStorageManager::ListObjectsOptions,bool,
+                               size_t,size_t,
+                               LocalStorageManager::ListNotesOrder::type,
+                               LocalStorageManager::OrderDirection::type,
+                               QString,ErrorString,QUuid));
+    QObject::disconnect(&m_localStorageManagerAsync,
+                        QNSIGNAL(LocalStorageManagerAsync,addNoteComplete,
+                                 Note,QUuid),
+                        this,
+                        QNSLOT(NoteSyncCache,onAddNoteComplete,Note,QUuid));
+    QObject::disconnect(&m_localStorageManagerAsync,
+                        QNSIGNAL(LocalStorageManagerAsync,updateNoteComplete,
+                                 Note,LocalStorageManager::UpdateNoteOptions,QUuid),
+                        this,
+                        QNSLOT(NoteSyncCache,onUpdateNoteComplete,
+                               Note,LocalStorageManager::UpdateNoteOptions,QUuid));
+    QObject::disconnect(&m_localStorageManagerAsync,
+                        QNSIGNAL(LocalStorageManagerAsync,expungeNoteComplete,
+                                 Note,QUuid),
+                        this,
+                        QNSLOT(NoteSyncCache,onExpungeNoteComplete,Note,QUuid));
 
     m_connectedToLocalStorage = false;
 }
@@ -287,11 +376,14 @@ void NoteSyncCache::requestNotesList()
 
     NSTRACE(QStringLiteral("Emitting the request to list notes: request id = ")
             << m_listNotesRequestId << QStringLiteral(", offset = ") << m_offset);
-    Q_EMIT listNotes(LocalStorageManager::ListAll, /* with resource metadata = */ true,
-                     /* with resource binary data = */ false,
-                     m_limit, m_offset, LocalStorageManager::ListNotesOrder::NoOrder,
+    LocalStorageManager::GetNoteOptions options(
+        LocalStorageManager::GetNoteOption::WithResourceMetadata);
+    Q_EMIT listNotes(LocalStorageManager::ListAll, options, m_limit, m_offset,
+                     LocalStorageManager::ListNotesOrder::NoOrder,
                      LocalStorageManager::OrderDirection::Ascending,
-                     (m_linkedNotebookGuid.isEmpty() ? QStringLiteral("") : m_linkedNotebookGuid),
+                     (m_linkedNotebookGuid.isEmpty()
+                      ? QStringLiteral("")
+                      : m_linkedNotebookGuid),
                      m_listNotesRequestId);
 }
 
@@ -325,7 +417,8 @@ void NoteSyncCache::processNote(const Note & note)
 
     if (note.hasGuid())
     {
-        Q_UNUSED(m_noteGuidToLocalUidBimap.insert(NoteGuidToLocalUidBimap::value_type(note.guid(), note.localUid())))
+        Q_UNUSED(m_noteGuidToLocalUidBimap.insert(
+                NoteGuidToLocalUidBimap::value_type(note.guid(), note.localUid())))
     }
     else
     {

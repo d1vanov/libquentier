@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Dmitry Ivanov
+ * Copyright 2016-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -34,7 +34,8 @@ FileIOProcessorAsyncPrivate::FileIOProcessorAsyncPrivate(QObject * parent) :
 
 void FileIOProcessorAsyncPrivate::setIdleTimePeriod(const qint32 seconds)
 {
-    QNDEBUG(QStringLiteral("FileIOProcessorAsyncPrivate::setIdleTimePeriod: seconds = ") << seconds);
+    QNDEBUG(QStringLiteral("FileIOProcessorAsyncPrivate::")
+            << QStringLiteral("setIdleTimePeriod: seconds = ") << seconds);
     m_idleTimePeriodSeconds = seconds;
 }
 
@@ -43,13 +44,17 @@ void FileIOProcessorAsyncPrivate::setIdleTimePeriod(const qint32 seconds)
         killTimer(m_postOperationTimerId); \
     } \
     m_postOperationTimerId = startTimer(SEC_TO_MSEC(m_idleTimePeriodSeconds)); \
-    QNTRACE(QStringLiteral("FileIOProcessorAsyncPrivate: started post operation timer with id ") << m_postOperationTimerId)
+    QNTRACE(QStringLiteral("FileIOProcessorAsyncPrivate: started post operation ") \
+            << QStringLiteral("timer with id ") << m_postOperationTimerId)
 
-void FileIOProcessorAsyncPrivate::onWriteFileRequest(QString absoluteFilePath, QByteArray data,
+void FileIOProcessorAsyncPrivate::onWriteFileRequest(QString absoluteFilePath,
+                                                     QByteArray data,
                                                      QUuid requestId, bool append)
 {
-    QNDEBUG(QStringLiteral("FileIOProcessorAsyncPrivate::onWriteFileRequest: file path = ") << absoluteFilePath
-            << QStringLiteral(", request id = ") << requestId << QStringLiteral(", append = ")
+    QNDEBUG(QStringLiteral("FileIOProcessorAsyncPrivate::onWriteFileRequest: ")
+            << QStringLiteral("file path = ") << absoluteFilePath
+            << QStringLiteral(", request id = ") << requestId
+            << QStringLiteral(", append = ")
             << (append ? QStringLiteral("true") : QStringLiteral("false")));
 
     QFileInfo fileInfo(absoluteFilePath);
@@ -103,15 +108,19 @@ void FileIOProcessorAsyncPrivate::onWriteFileRequest(QString absoluteFilePath, Q
     RESTART_TIMER();
 }
 
-void FileIOProcessorAsyncPrivate::onReadFileRequest(QString absoluteFilePath, QUuid requestId)
+void FileIOProcessorAsyncPrivate::onReadFileRequest(QString absoluteFilePath,
+                                                    QUuid requestId)
 {
-    QNDEBUG(QStringLiteral("FileIOProcessorAsyncPrivate::onReadFileRequest: file path = ") << absoluteFilePath
+    QNDEBUG(QStringLiteral("FileIOProcessorAsyncPrivate::onReadFileRequest: ")
+            << QStringLiteral("file path = ") << absoluteFilePath
             << QStringLiteral(", request id = ") << requestId);
 
     QFile file(absoluteFilePath);
     if (!file.exists()) {
-        QNTRACE(QStringLiteral("The file to read does not exist, sending empty data in return"));
-        Q_EMIT readFileRequestProcessed(true, ErrorString(), QByteArray(), requestId);
+        QNTRACE(QStringLiteral("The file to read does not exist, sending empty "
+                               "data in return"));
+        Q_EMIT readFileRequestProcessed(true, ErrorString(), QByteArray(),
+                                        requestId);
         RESTART_TIMER();
         return;
     }
@@ -134,14 +143,16 @@ void FileIOProcessorAsyncPrivate::onReadFileRequest(QString absoluteFilePath, QU
 void FileIOProcessorAsyncPrivate::timerEvent(QTimerEvent * pEvent)
 {
     if (!pEvent) {
-        QNWARNING(QStringLiteral("Detected null pointer to QTimerEvent in FileIOProcessorAsyncPrivate"));
+        QNWARNING(QStringLiteral("Detected null pointer to QTimerEvent in "
+                                 "FileIOProcessorAsyncPrivate"));
         return;
     }
 
     qint32 timerId = pEvent->timerId();
 
     if (timerId != m_postOperationTimerId) {
-        QNTRACE(QStringLiteral("Received unidentified timer event for FileIOProcessorAsyncPrivate"));
+        QNTRACE(QStringLiteral("Received unidentified timer event for "
+                               "FileIOProcessorAsyncPrivate"));
         return;
     }
 

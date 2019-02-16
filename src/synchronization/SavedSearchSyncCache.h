@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Dmitry Ivanov
+ * Copyright 2017-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -30,20 +30,28 @@ class Q_DECL_HIDDEN SavedSearchSyncCache: public QObject
 {
     Q_OBJECT
 public:
-    SavedSearchSyncCache(LocalStorageManagerAsync & localStorageManagerAsync, QObject * parent = Q_NULLPTR);
+    SavedSearchSyncCache(LocalStorageManagerAsync & localStorageManagerAsync,
+                         QObject * parent = Q_NULLPTR);
 
     void clear();
 
     /**
-     * @return True if the cache is already filled with up-to-moment data, false otherwise
+     * @return      True if the cache is already filled with up-to-moment data,
+     *              false otherwise
      */
     bool isFilled() const;
 
-    const QHash<QString,QString> & nameByLocalUidHash() const { return m_savedSearchNameByLocalUid; }
-    const QHash<QString,QString> & nameByGuidHash() const { return m_savedSearchNameByGuid; }
-    const QHash<QString,QString> & guidByNameHash() const { return m_savedSearchGuidByName; }
+    const QHash<QString,QString> & nameByLocalUidHash() const
+    { return m_savedSearchNameByLocalUid; }
 
-    const QHash<QString,SavedSearch> & dirtySavedSearchesByGuid() const { return m_dirtySavedSearchesByGuid; }
+    const QHash<QString,QString> & nameByGuidHash() const
+    { return m_savedSearchNameByGuid; }
+
+    const QHash<QString,QString> & guidByNameHash() const
+    { return m_savedSearchGuidByName; }
+
+    const QHash<QString,SavedSearch> & dirtySavedSearchesByGuid() const
+    { return m_dirtySavedSearchesByGuid; }
 
 Q_SIGNALS:
     void filled();
@@ -58,8 +66,9 @@ Q_SIGNALS:
 
 public Q_SLOTS:
     /**
-     * Start collecting the information about saved searches; does nothing if the information is already collected
-     * or is being collected at the moment, otherwise initiates the sequence of actions required to collect
+     * Start collecting the information about saved searches; does nothing if
+     * the information is already collected or is being collected at the moment,
+     * otherwise initiates the sequence of actions required to collect
      * the saved search information
      */
     void fill();

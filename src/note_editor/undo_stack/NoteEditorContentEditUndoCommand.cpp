@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Dmitry Ivanov
+ * Copyright 2016-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -22,18 +22,19 @@
 
 namespace quentier {
 
-NoteEditorContentEditUndoCommand::NoteEditorContentEditUndoCommand(NoteEditorPrivate & noteEditorPrivate,
-                                                                   const QList<Resource> & resources,
-                                                                   QUndoCommand * parent) :
+NoteEditorContentEditUndoCommand::NoteEditorContentEditUndoCommand(
+        NoteEditorPrivate & noteEditorPrivate,
+        const QList<Resource> & resources, QUndoCommand * parent) :
     INoteEditorUndoCommand(noteEditorPrivate, parent),
     m_resources(resources)
 {
     init();
 }
 
-NoteEditorContentEditUndoCommand::NoteEditorContentEditUndoCommand(NoteEditorPrivate & noteEditorPrivate,
-                                                                   const QList<Resource> & resources,
-                                                                   const QString & text, QUndoCommand * parent) :
+NoteEditorContentEditUndoCommand::NoteEditorContentEditUndoCommand(
+        NoteEditorPrivate & noteEditorPrivate,
+        const QList<Resource> & resources,
+        const QString & text, QUndoCommand * parent) :
     INoteEditorUndoCommand(noteEditorPrivate, text, parent),
     m_resources(resources)
 {
@@ -45,13 +46,15 @@ NoteEditorContentEditUndoCommand::~NoteEditorContentEditUndoCommand()
 
 void NoteEditorContentEditUndoCommand::redoImpl()
 {
-    QNDEBUG(QStringLiteral("NoteEditorContentEditUndoCommand::redoImpl (") << text() << QStringLiteral(")"));
+    QNDEBUG(QStringLiteral("NoteEditorContentEditUndoCommand::redoImpl (")
+            << text() << QStringLiteral(")"));
     m_noteEditorPrivate.redoPageAction();
 }
 
 void NoteEditorContentEditUndoCommand::undoImpl()
 {
-    QNDEBUG(QStringLiteral("NoteEditorContentEditUndoCommand::undoImpl (") << text() << QStringLiteral(")"));
+    QNDEBUG(QStringLiteral("NoteEditorContentEditUndoCommand::undoImpl (")
+            << text() << QStringLiteral(")"));
     m_noteEditorPrivate.undoPageAction();
     m_noteEditorPrivate.setNoteResources(m_resources);
 }

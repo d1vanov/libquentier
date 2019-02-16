@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Dmitry Ivanov
+ * Copyright 2016-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -76,38 +76,48 @@ public:
                            DecryptedTextManager & decryptedTextManager,
                            NoteContentToHtmlExtraData & extraData) const;
 
-    bool htmlToQTextDocument(const QString & html, QTextDocument & doc, ErrorString & errorDescription,
+    bool htmlToQTextDocument(const QString & html, QTextDocument & doc,
+                             ErrorString & errorDescription,
                              const QVector<SkipHtmlElementRule> & skipRules) const;
 
     bool validateEnml(const QString & enml, ErrorString & errorDescription) const;
 
     bool validateAndFixupEnml(QString & enml, ErrorString & errorDescription) const;
 
-    static bool noteContentToPlainText(const QString & noteContent, QString & plainText,
+    static bool noteContentToPlainText(const QString & noteContent,
+                                       QString & plainText,
                                        ErrorString & errorMessage);
 
-    static bool noteContentToListOfWords(const QString & noteContent, QStringList & listOfWords,
-                                         ErrorString & errorMessage, QString * plainText = Q_NULLPTR);
+    static bool noteContentToListOfWords(const QString & noteContent,
+                                         QStringList & listOfWords,
+                                         ErrorString & errorMessage,
+                                         QString * plainText = Q_NULLPTR);
 
     static QStringList plainTextToListOfWords(const QString & plainText);
 
     static QString toDoCheckboxHtml(const bool checked, const quint64 idNumber);
 
-    static QString encryptedTextHtml(const QString & encryptedText, const QString & hint,
-                                     const QString & cipher, const size_t keyLength,
+    static QString encryptedTextHtml(const QString & encryptedText,
+                                     const QString & hint, const QString & cipher,
+                                     const size_t keyLength,
                                      const quint64 enCryptIndex);
 
-    static QString decryptedTextHtml(const QString & decryptedText, const QString & encryptedText,
+    static QString decryptedTextHtml(const QString & decryptedText,
+                                     const QString & encryptedText,
                                      const QString & hint, const QString & cipher,
-                                     const size_t keyLength, const quint64 enDecryptedIndex);
+                                     const size_t keyLength,
+                                     const quint64 enDecryptedIndex);
 
-    static QString resourceHtml(const Resource & resource, ErrorString & errorDescription);
+    static QString resourceHtml(const Resource & resource,
+                                ErrorString & errorDescription);
 
     static void escapeString(QString & string, const bool simplify);
 
-    bool exportNotesToEnex(const QVector<Note> & notes, const QHash<QString, QString> & tagNamesByTagLocalUids,
+    bool exportNotesToEnex(const QVector<Note> & notes,
+                           const QHash<QString, QString> & tagNamesByTagLocalUids,
                            const ENMLConverter::EnexExportTags::type exportTagsOption,
-                           QString & enex, ErrorString & errorDescription, const QString & version) const;
+                           QString & enex, ErrorString & errorDescription,
+                           const QString & version) const;
 
     bool importEnex(const QString & enex, QVector<Note> & notes,
                     QHash<QString, QStringList> & tagNamesByNoteLocalUid,
@@ -122,29 +132,37 @@ private:
     // convert <div> element with decrypted text to ENML <en-crypt> tag
     bool decryptedTextToEnml(QXmlStreamReader & reader,
                              DecryptedTextManager & decryptedTextManager,
-                             QXmlStreamWriter & writer, ErrorString & errorDescription) const;
+                             QXmlStreamWriter & writer,
+                             ErrorString & errorDescription) const;
 
     // convert ENML en-crypt tag to HTML <object> tag
     bool encryptedTextToHtml(const QXmlStreamAttributes & enCryptAttributes,
-                             const QStringRef & encryptedTextCharacters, const quint64 enCryptIndex, const quint64 enDecryptedIndex,
-                             QXmlStreamWriter & writer, DecryptedTextManager & decryptedTextManager, bool & convertedToEnCryptNode) const;
+                             const QStringRef & encryptedTextCharacters,
+                             const quint64 enCryptIndex, const quint64 enDecryptedIndex,
+                             QXmlStreamWriter & writer,
+                             DecryptedTextManager & decryptedTextManager,
+                             bool & convertedToEnCryptNode) const;
 
     // convert ENML <en-media> tag to HTML <object> tag
-    static bool resourceInfoToHtml(const QXmlStreamAttributes & attributes, QXmlStreamWriter & writer,
+    static bool resourceInfoToHtml(const QXmlStreamAttributes & attributes,
+                                   QXmlStreamWriter & writer,
                                    ErrorString & errorDescription);
 
     void toDoTagsToHtml(const QXmlStreamReader & reader, const quint64 enToDoIndex,
                         QXmlStreamWriter & writer) const;
 
-    static void decryptedTextHtml(const QString & decryptedText, const QString & encryptedText,
-                                  const QString & hint, const QString & cipher, const size_t keyLength, const quint64 enDecryptedIndex,
+    static void decryptedTextHtml(const QString & decryptedText,
+                                  const QString & encryptedText,
+                                  const QString & hint, const QString & cipher,
+                                  const size_t keyLength, const quint64 enDecryptedIndex,
                                   QXmlStreamWriter & writer);
 
     bool validateEnex(const QString & enex, ErrorString & errorDescription) const;
 
     bool validateRecoIndex(const QString & recoIndex, ErrorString & errorDescription) const;
 
-    bool validateAgainstDtd(const QString & input, const QString & dtdFilePath, ErrorString & errorDescription) const;
+    bool validateAgainstDtd(const QString & input, const QString & dtdFilePath,
+                            ErrorString & errorDescription) const;
 
     qint64 timestampFromDateTime(const QDateTime & dateTime) const;
 

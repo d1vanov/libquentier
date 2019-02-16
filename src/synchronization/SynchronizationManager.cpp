@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Dmitry Ivanov
+ * Copyright 2016-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -23,55 +23,136 @@
 
 namespace quentier {
 
-SynchronizationManager::SynchronizationManager(const QString & host, LocalStorageManagerAsync & localStorageManagerAsync,
-                                               IAuthenticationManager & authenticationManager,
-                                               SynchronizationManagerDependencyInjector * pInjector) :
-    d_ptr(new SynchronizationManagerPrivate(host, localStorageManagerAsync, authenticationManager, pInjector, this))
+SynchronizationManager::SynchronizationManager(
+        const QString & host,
+        LocalStorageManagerAsync & localStorageManagerAsync,
+        IAuthenticationManager & authenticationManager,
+        SynchronizationManagerDependencyInjector * pInjector) :
+    d_ptr(new SynchronizationManagerPrivate(host, localStorageManagerAsync,
+                                            authenticationManager, pInjector, this))
 {
-    QObject::connect(d_ptr, QNSIGNAL(SynchronizationManagerPrivate,notifyStart),
-                     this, QNSIGNAL(SynchronizationManager,started));
-    QObject::connect(d_ptr, QNSIGNAL(SynchronizationManagerPrivate,notifyStop),
-                     this, QNSIGNAL(SynchronizationManager,stopped));
-    QObject::connect(d_ptr, QNSIGNAL(SynchronizationManagerPrivate,notifyError,ErrorString),
-                     this, QNSIGNAL(SynchronizationManager,failed,ErrorString));
-    QObject::connect(d_ptr, QNSIGNAL(SynchronizationManagerPrivate,notifyFinish,Account,bool,bool),
-                     this, QNSIGNAL(SynchronizationManager,finished,Account,bool,bool));
-    QObject::connect(d_ptr, QNSIGNAL(SynchronizationManagerPrivate,syncChunksDownloaded),
-                     this, QNSIGNAL(SynchronizationManager,syncChunksDownloaded));
-    QObject::connect(d_ptr, QNSIGNAL(SynchronizationManagerPrivate,syncChunksDownloadProgress,qint32,qint32,qint32),
-                     this, QNSIGNAL(SynchronizationManager,syncChunksDownloadProgress,qint32,qint32,qint32));
-    QObject::connect(d_ptr, QNSIGNAL(SynchronizationManagerPrivate,linkedNotebookSyncChunksDownloadProgress,qint32,qint32,qint32,LinkedNotebook),
-                     this, QNSIGNAL(SynchronizationManager,linkedNotebookSyncChunksDownloadProgress,qint32,qint32,qint32,LinkedNotebook));
-    QObject::connect(d_ptr, QNSIGNAL(SynchronizationManagerPrivate,linkedNotebooksSyncChunksDownloaded),
-                     this, QNSIGNAL(SynchronizationManager,linkedNotebooksSyncChunksDownloaded));
-    QObject::connect(d_ptr, QNSIGNAL(SynchronizationManagerPrivate,notesDownloadProgress,quint32,quint32),
-                     this, QNSIGNAL(SynchronizationManager,notesDownloadProgress,quint32,quint32));
-    QObject::connect(d_ptr, QNSIGNAL(SynchronizationManagerPrivate,linkedNotebooksNotesDownloadProgress,quint32,quint32),
-                     this, QNSIGNAL(SynchronizationManager,linkedNotebooksNotesDownloadProgress,quint32,quint32));
-    QObject::connect(d_ptr, QNSIGNAL(SynchronizationManagerPrivate,resourcesDownloadProgress,quint32,quint32),
-                     this, QNSIGNAL(SynchronizationManager,resourcesDownloadProgress,quint32,quint32));
-    QObject::connect(d_ptr, QNSIGNAL(SynchronizationManagerPrivate,linkedNotebooksResourcesDownloadProgress,quint32,quint32),
-                     this, QNSIGNAL(SynchronizationManager,linkedNotebooksResourcesDownloadProgress,quint32,quint32));
-    QObject::connect(d_ptr, QNSIGNAL(SynchronizationManagerPrivate,preparedDirtyObjectsForSending),
-                     this, QNSIGNAL(SynchronizationManager,preparedDirtyObjectsForSending));
-    QObject::connect(d_ptr, QNSIGNAL(SynchronizationManagerPrivate,preparedLinkedNotebooksDirtyObjectsForSending),
-                     this, QNSIGNAL(SynchronizationManager,preparedLinkedNotebooksDirtyObjectsForSending));
-    QObject::connect(d_ptr, QNSIGNAL(SynchronizationManagerPrivate,authenticationFinished,bool,ErrorString,Account),
-                     this, QNSIGNAL(SynchronizationManager,authenticationFinished,bool,ErrorString,Account));
-    QObject::connect(d_ptr, QNSIGNAL(SynchronizationManagerPrivate,authenticationRevoked,bool,ErrorString,qevercloud::UserID),
-                     this, QNSIGNAL(SynchronizationManager,authenticationRevoked,bool,ErrorString,qevercloud::UserID));
-    QObject::connect(d_ptr, QNSIGNAL(SynchronizationManagerPrivate,remoteToLocalSyncStopped),
-                     this, QNSIGNAL(SynchronizationManager,remoteToLocalSyncStopped));
-    QObject::connect(d_ptr, QNSIGNAL(SynchronizationManagerPrivate,sendLocalChangesStopped),
-                     this, QNSIGNAL(SynchronizationManager,sendLocalChangesStopped));
-    QObject::connect(d_ptr, QNSIGNAL(SynchronizationManagerPrivate,willRepeatRemoteToLocalSyncAfterSendingChanges),
-                     this, QNSIGNAL(SynchronizationManager,willRepeatRemoteToLocalSyncAfterSendingChanges));
-    QObject::connect(d_ptr, QNSIGNAL(SynchronizationManagerPrivate,detectedConflictDuringLocalChangesSending),
-                     this, QNSIGNAL(SynchronizationManager,detectedConflictDuringLocalChangesSending));
-    QObject::connect(d_ptr, QNSIGNAL(SynchronizationManagerPrivate,rateLimitExceeded,qint32),
-                     this, QNSIGNAL(SynchronizationManager,rateLimitExceeded,qint32));
-    QObject::connect(d_ptr, QNSIGNAL(SynchronizationManagerPrivate,notifyRemoteToLocalSyncDone,bool),
-                     this, QNSIGNAL(SynchronizationManager,remoteToLocalSyncDone,bool));
+    QObject::connect(d_ptr,
+                     QNSIGNAL(SynchronizationManagerPrivate,notifyStart),
+                     this,
+                     QNSIGNAL(SynchronizationManager,started));
+    QObject::connect(d_ptr,
+                     QNSIGNAL(SynchronizationManagerPrivate,notifyStop),
+                     this,
+                     QNSIGNAL(SynchronizationManager,stopped));
+    QObject::connect(d_ptr,
+                     QNSIGNAL(SynchronizationManagerPrivate,
+                              notifyError,ErrorString),
+                     this,
+                     QNSIGNAL(SynchronizationManager,failed,ErrorString));
+    QObject::connect(d_ptr,
+                     QNSIGNAL(SynchronizationManagerPrivate,notifyFinish,
+                              Account,bool,bool),
+                     this,
+                     QNSIGNAL(SynchronizationManager,finished,Account,bool,bool));
+    QObject::connect(d_ptr,
+                     QNSIGNAL(SynchronizationManagerPrivate,syncChunksDownloaded),
+                     this,
+                     QNSIGNAL(SynchronizationManager,syncChunksDownloaded));
+    QObject::connect(d_ptr,
+                     QNSIGNAL(SynchronizationManagerPrivate,
+                              syncChunksDownloadProgress,qint32,qint32,qint32),
+                     this,
+                     QNSIGNAL(SynchronizationManager,
+                              syncChunksDownloadProgress,qint32,qint32,qint32));
+    QObject::connect(d_ptr,
+                     QNSIGNAL(SynchronizationManagerPrivate,
+                              linkedNotebookSyncChunksDownloadProgress,
+                              qint32,qint32,qint32,LinkedNotebook),
+                     this,
+                     QNSIGNAL(SynchronizationManager,
+                              linkedNotebookSyncChunksDownloadProgress,
+                              qint32,qint32,qint32,LinkedNotebook));
+    QObject::connect(d_ptr,
+                     QNSIGNAL(SynchronizationManagerPrivate,
+                              linkedNotebooksSyncChunksDownloaded),
+                     this,
+                     QNSIGNAL(SynchronizationManager,
+                              linkedNotebooksSyncChunksDownloaded));
+    QObject::connect(d_ptr,
+                     QNSIGNAL(SynchronizationManagerPrivate,
+                              notesDownloadProgress,quint32,quint32),
+                     this,
+                     QNSIGNAL(SynchronizationManager,
+                              notesDownloadProgress,quint32,quint32));
+    QObject::connect(d_ptr,
+                     QNSIGNAL(SynchronizationManagerPrivate,
+                              linkedNotebooksNotesDownloadProgress,quint32,quint32),
+                     this,
+                     QNSIGNAL(SynchronizationManager,
+                              linkedNotebooksNotesDownloadProgress,quint32,quint32));
+    QObject::connect(d_ptr,
+                     QNSIGNAL(SynchronizationManagerPrivate,
+                              resourcesDownloadProgress,quint32,quint32),
+                     this,
+                     QNSIGNAL(SynchronizationManager,
+                              resourcesDownloadProgress,quint32,quint32));
+    QObject::connect(d_ptr,
+                     QNSIGNAL(SynchronizationManagerPrivate,
+                              linkedNotebooksResourcesDownloadProgress,
+                              quint32,quint32),
+                     this,
+                     QNSIGNAL(SynchronizationManager,
+                              linkedNotebooksResourcesDownloadProgress,
+                              quint32,quint32));
+    QObject::connect(d_ptr,
+                     QNSIGNAL(SynchronizationManagerPrivate,
+                              preparedDirtyObjectsForSending),
+                     this,
+                     QNSIGNAL(SynchronizationManager,
+                              preparedDirtyObjectsForSending));
+    QObject::connect(d_ptr,
+                     QNSIGNAL(SynchronizationManagerPrivate,
+                              preparedLinkedNotebooksDirtyObjectsForSending),
+                     this,
+                     QNSIGNAL(SynchronizationManager,
+                              preparedLinkedNotebooksDirtyObjectsForSending));
+    QObject::connect(d_ptr,
+                     QNSIGNAL(SynchronizationManagerPrivate,authenticationFinished,
+                              bool,ErrorString,Account),
+                     this,
+                     QNSIGNAL(SynchronizationManager,authenticationFinished,
+                              bool,ErrorString,Account));
+    QObject::connect(d_ptr,
+                     QNSIGNAL(SynchronizationManagerPrivate,authenticationRevoked,
+                              bool,ErrorString,qevercloud::UserID),
+                     this,
+                     QNSIGNAL(SynchronizationManager,authenticationRevoked,
+                              bool,ErrorString,qevercloud::UserID));
+    QObject::connect(d_ptr,
+                     QNSIGNAL(SynchronizationManagerPrivate,remoteToLocalSyncStopped),
+                     this,
+                     QNSIGNAL(SynchronizationManager,remoteToLocalSyncStopped));
+    QObject::connect(d_ptr,
+                     QNSIGNAL(SynchronizationManagerPrivate,sendLocalChangesStopped),
+                     this,
+                     QNSIGNAL(SynchronizationManager,sendLocalChangesStopped));
+    QObject::connect(d_ptr,
+                     QNSIGNAL(SynchronizationManagerPrivate,
+                              willRepeatRemoteToLocalSyncAfterSendingChanges),
+                     this,
+                     QNSIGNAL(SynchronizationManager,
+                              willRepeatRemoteToLocalSyncAfterSendingChanges));
+    QObject::connect(d_ptr,
+                     QNSIGNAL(SynchronizationManagerPrivate,
+                              detectedConflictDuringLocalChangesSending),
+                     this,
+                     QNSIGNAL(SynchronizationManager,
+                              detectedConflictDuringLocalChangesSending));
+    QObject::connect(d_ptr,
+                     QNSIGNAL(SynchronizationManagerPrivate,
+                              rateLimitExceeded,qint32),
+                     this,
+                     QNSIGNAL(SynchronizationManager,rateLimitExceeded,qint32));
+    QObject::connect(d_ptr,
+                     QNSIGNAL(SynchronizationManagerPrivate,
+                              notifyRemoteToLocalSyncDone,bool),
+                     this,
+                     QNSIGNAL(SynchronizationManager,remoteToLocalSyncDone,bool));
 }
 
 SynchronizationManager::~SynchronizationManager()

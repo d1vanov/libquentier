@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Dmitry Ivanov
+ * Copyright 2016-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -61,7 +61,8 @@ public:
     virtual void convertToNote() = 0;
     virtual void saveNoteToLocalStorage() = 0;
     virtual void setNoteTitle(const QString & noteTitle) = 0;
-    virtual void setTagIds(const QStringList & tagLocalUids, const QStringList & tagGuids) = 0;
+    virtual void setTagIds(const QStringList & tagLocalUids,
+                           const QStringList & tagGuids) = 0;
     virtual void undo() = 0;
     virtual void redo() = 0;
     virtual void cut() = 0;
@@ -89,13 +90,19 @@ public:
 
     virtual void findNext(const QString & text, const bool matchCase) const = 0;
     virtual void findPrevious(const QString & text, const bool matchCase) const = 0;
-    virtual void replace(const QString & textToReplace, const QString & replacementText, const bool matchCase) = 0;
-    virtual void replaceAll(const QString & textToReplace, const QString & replacementText, const bool matchCase) = 0;
+    virtual void replace(const QString & textToReplace,
+                         const QString & replacementText,
+                         const bool matchCase) = 0;
+    virtual void replaceAll(const QString & textToReplace,
+                            const QString & replacementText,
+                            const bool matchCase) = 0;
 
     virtual void insertToDoCheckbox() = 0;
 
-    virtual void insertInAppNoteLink(const QString & userId, const QString & shardId,
-                                     const QString & noteGuid, const QString & linkText) = 0;
+    virtual void insertInAppNoteLink(const QString & userId,
+                                     const QString & shardId,
+                                     const QString & noteGuid,
+                                     const QString & linkText) = 0;
 
     virtual void setSpellcheck(const bool enabled) = 0;
     virtual bool spellCheckEnabled() const = 0;
@@ -117,8 +124,10 @@ public:
     virtual void insertNumberedList() = 0;
 
     virtual void insertTableDialog() = 0;
-    virtual void insertFixedWidthTable(const int rows, const int columns, const int widthInPixels) = 0;
-    virtual void insertRelativeWidthTable(const int rows, const int columns, const double relativeWidth) = 0;
+    virtual void insertFixedWidthTable(const int rows, const int columns,
+                                       const int widthInPixels) = 0;
+    virtual void insertRelativeWidthTable(const int rows, const int columns,
+                                          const double relativeWidth) = 0;
     virtual void insertTableRow() = 0;
     virtual void insertTableColumn() = 0;
     virtual void removeTableRow() = 0;
@@ -147,16 +156,21 @@ public:
         friend QTextStream & operator<<(QTextStream & strm, const type & rotation);
     };
 
-    virtual void rotateImageAttachment(const QByteArray & resourceHash, const Rotation::type rotationDirection) = 0;
+    virtual void rotateImageAttachment(const QByteArray & resourceHash,
+                                       const Rotation::type rotationDirection) = 0;
     virtual void rotateImageAttachmentUnderCursor(const Rotation::type rotationDirection) = 0;
 
     virtual void encryptSelectedText() = 0;
 
     virtual void decryptEncryptedTextUnderCursor() = 0;
-    virtual void decryptEncryptedText(QString encryptedText, QString cipher, QString keyLength, QString hint, QString enCryptIndex) = 0;
+    virtual void decryptEncryptedText(QString encryptedText, QString cipher,
+                                      QString keyLength, QString hint,
+                                      QString enCryptIndex) = 0;
 
     virtual void hideDecryptedTextUnderCursor() = 0;
-    virtual void hideDecryptedText(QString encryptedText, QString decryptedText, QString cipher, QString keyLength, QString hint, QString enDecryptedIndex) = 0;
+    virtual void hideDecryptedText(QString encryptedText, QString decryptedText,
+                                   QString cipher, QString keyLength,
+                                   QString hint, QString enDecryptedIndex) = 0;
 
     virtual void editHyperlinkDialog() = 0;
     virtual void copyHyperlink() = 0;
@@ -165,7 +179,8 @@ public:
     virtual void onNoteLoadCancelled() = 0;
 
     virtual bool print(QPrinter & printer, ErrorString & errorDescription) = 0;
-    virtual bool exportToPdf(const QString & absoluteFilePath, ErrorString & errorDescription) = 0;
+    virtual bool exportToPdf(const QString & absoluteFilePath,
+                             ErrorString & errorDescription) = 0;
     virtual bool exportToEnex(const QStringList & tagNames,
                               QString & enex, ErrorString & errorDescription) = 0;
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Dmitry Ivanov
+ * Copyright 2016-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -26,12 +26,14 @@ ResourceRecognitionIndexItem::ResourceRecognitionIndexItem() :
     d(new ResourceRecognitionIndexItemData)
 {}
 
-ResourceRecognitionIndexItem::ResourceRecognitionIndexItem(const ResourceRecognitionIndexItem & other) :
+ResourceRecognitionIndexItem::ResourceRecognitionIndexItem(
+        const ResourceRecognitionIndexItem & other) :
     Printable(),
     d(other.d)
 {}
 
-ResourceRecognitionIndexItem & ResourceRecognitionIndexItem::operator=(const ResourceRecognitionIndexItem & other)
+ResourceRecognitionIndexItem &
+ResourceRecognitionIndexItem::operator=(const ResourceRecognitionIndexItem & other)
 {
     if (this != &other) {
         d = other.d;
@@ -118,7 +120,8 @@ int ResourceRecognitionIndexItem::numStrokes() const
     return d->m_strokeList.size();
 }
 
-bool ResourceRecognitionIndexItem::strokeAt(const int strokeIndex, int & stroke) const
+bool ResourceRecognitionIndexItem::strokeAt(const int strokeIndex,
+                                            int & stroke) const
 {
     if ((strokeIndex < 0) || (d->m_strokeList.size() <= strokeIndex)) {
         return false;
@@ -128,7 +131,8 @@ bool ResourceRecognitionIndexItem::strokeAt(const int strokeIndex, int & stroke)
     return true;
 }
 
-bool ResourceRecognitionIndexItem::setStrokeAt(const int strokeIndex, const int stroke)
+bool ResourceRecognitionIndexItem::setStrokeAt(const int strokeIndex,
+                                               const int stroke)
 {
     if ((strokeIndex < 0) || (d.constData()->m_strokeList.size() <= strokeIndex)) {
         return false;
@@ -176,7 +180,8 @@ bool ResourceRecognitionIndexItem::removeStrokeAt(const int strokeIndex)
     return true;
 }
 
-QVector<ResourceRecognitionIndexItem::TextItem> ResourceRecognitionIndexItem::textItems() const
+QVector<ResourceRecognitionIndexItem::TextItem>
+ResourceRecognitionIndexItem::textItems() const
 {
     return d->m_textItems;
 }
@@ -186,7 +191,8 @@ int ResourceRecognitionIndexItem::numTextItems() const
     return d->m_textItems.size();
 }
 
-bool ResourceRecognitionIndexItem::textItemAt(const int textItemIndex, TextItem & item) const
+bool ResourceRecognitionIndexItem::textItemAt(const int textItemIndex,
+                                              TextItem & item) const
 {
     if ((textItemIndex < 0) || (d->m_textItems.size() <= textItemIndex)) {
         return false;
@@ -196,9 +202,12 @@ bool ResourceRecognitionIndexItem::textItemAt(const int textItemIndex, TextItem 
     return true;
 }
 
-bool ResourceRecognitionIndexItem::setTextItemAt(const int textItemIndex, const TextItem & textItem)
+bool ResourceRecognitionIndexItem::setTextItemAt(const int textItemIndex,
+                                                 const TextItem & textItem)
 {
-    if ((textItemIndex < 0) || (d.constData()->m_textItems.size() <= textItemIndex)) {
+    if ((textItemIndex < 0) ||
+        (d.constData()->m_textItems.size() <= textItemIndex))
+    {
         return false;
     }
 
@@ -244,7 +253,8 @@ bool ResourceRecognitionIndexItem::removeTextItemAt(const int textItemIndex)
     return true;
 }
 
-QVector<ResourceRecognitionIndexItem::ObjectItem> ResourceRecognitionIndexItem::objectItems() const
+QVector<ResourceRecognitionIndexItem::ObjectItem>
+ResourceRecognitionIndexItem::objectItems() const
 {
     return d->m_objectItems;
 }
@@ -254,7 +264,8 @@ int ResourceRecognitionIndexItem::numObjectItems() const
     return d->m_objectItems.size();
 }
 
-bool ResourceRecognitionIndexItem::objectItemAt(const int objectItemIndex, ObjectItem & objectItem) const
+bool ResourceRecognitionIndexItem::objectItemAt(const int objectItemIndex,
+                                                ObjectItem & objectItem) const
 {
     if ((objectItemIndex < 0) || (d->m_objectItems.size() <= objectItemIndex)) {
         return false;
@@ -264,9 +275,12 @@ bool ResourceRecognitionIndexItem::objectItemAt(const int objectItemIndex, Objec
     return true;
 }
 
-bool ResourceRecognitionIndexItem::setObjectItemAt(const int objectItemIndex, const ObjectItem & objectItem)
+bool ResourceRecognitionIndexItem::setObjectItemAt(const int objectItemIndex,
+                                                   const ObjectItem & objectItem)
 {
-    if ((objectItemIndex < 0) || (d.constData()->m_objectItems.size() <= objectItemIndex)) {
+    if ((objectItemIndex < 0) ||
+        (d.constData()->m_objectItems.size() <= objectItemIndex))
+    {
         return false;
     }
 
@@ -312,7 +326,8 @@ bool ResourceRecognitionIndexItem::removeObjectItemAt(const int objectItemIndex)
     return true;
 }
 
-QVector<ResourceRecognitionIndexItem::ShapeItem> ResourceRecognitionIndexItem::shapeItems() const
+QVector<ResourceRecognitionIndexItem::ShapeItem>
+ResourceRecognitionIndexItem::shapeItems() const
 {
     return d->m_shapeItems;
 }
@@ -322,7 +337,8 @@ int ResourceRecognitionIndexItem::numShapeItems() const
     return d->m_shapeItems.size();
 }
 
-bool ResourceRecognitionIndexItem::shapeItemAt(const int shapeItemIndex, ShapeItem & shapeItem) const
+bool ResourceRecognitionIndexItem::shapeItemAt(const int shapeItemIndex,
+                                               ShapeItem & shapeItem) const
 {
     if ((shapeItemIndex < 0) || (d->m_shapeItems.size() <= shapeItemIndex)) {
         return false;
@@ -332,9 +348,12 @@ bool ResourceRecognitionIndexItem::shapeItemAt(const int shapeItemIndex, ShapeIt
     return true;
 }
 
-bool ResourceRecognitionIndexItem::setShapeItemAt(const int shapeItemIndex, const ShapeItem & shapeItem)
+bool ResourceRecognitionIndexItem::setShapeItemAt(const int shapeItemIndex,
+                                                  const ShapeItem & shapeItem)
 {
-    if ((shapeItemIndex < 0) || (d.constData()->m_shapeItems.size() <= shapeItemIndex)) {
+    if ((shapeItemIndex < 0) ||
+        (d.constData()->m_shapeItems.size() <= shapeItemIndex))
+    {
         return false;
     }
 
@@ -380,7 +399,8 @@ bool ResourceRecognitionIndexItem::removeShapeItemAt(const int shapeItemIndex)
     return true;
 }
 
-QVector<ResourceRecognitionIndexItem::BarcodeItem> ResourceRecognitionIndexItem::barcodeItems() const
+QVector<ResourceRecognitionIndexItem::BarcodeItem>
+ResourceRecognitionIndexItem::barcodeItems() const
 {
     return d->m_barcodeItems;
 }
@@ -390,7 +410,8 @@ int ResourceRecognitionIndexItem::numBarcodeItems() const
     return d->m_barcodeItems.size();
 }
 
-bool ResourceRecognitionIndexItem::barcodeItemAt(const int barcodeItemIndex, BarcodeItem & barcodeItem) const
+bool ResourceRecognitionIndexItem::barcodeItemAt(const int barcodeItemIndex,
+                                                 BarcodeItem & barcodeItem) const
 {
     if ((barcodeItemIndex < 0) || (d->m_barcodeItems.size() <= barcodeItemIndex)) {
         return false;
@@ -400,9 +421,12 @@ bool ResourceRecognitionIndexItem::barcodeItemAt(const int barcodeItemIndex, Bar
     return true;
 }
 
-bool ResourceRecognitionIndexItem::setBarcodeItemAt(const int barcodeItemIndex, const BarcodeItem & barcodeItem)
+bool ResourceRecognitionIndexItem::setBarcodeItemAt(const int barcodeItemIndex,
+                                                    const BarcodeItem & barcodeItem)
 {
-    if ((barcodeItemIndex < 0) || (d.constData()->m_barcodeItems.size() <= barcodeItemIndex)) {
+    if ((barcodeItemIndex < 0) ||
+        (d.constData()->m_barcodeItems.size() <= barcodeItemIndex))
+    {
         return false;
     }
 
@@ -410,7 +434,8 @@ bool ResourceRecognitionIndexItem::setBarcodeItemAt(const int barcodeItemIndex, 
     return true;
 }
 
-void ResourceRecognitionIndexItem::setBarcodeItems(const QVector<BarcodeItem> & barcodeItems)
+void ResourceRecognitionIndexItem::setBarcodeItems(
+    const QVector<BarcodeItem> & barcodeItems)
 {
     d->m_barcodeItems = barcodeItems;
 }
@@ -481,14 +506,16 @@ QTextStream & ResourceRecognitionIndexItem::print(QTextStream & strm) const
     }
 
     if (d->m_offset >= 0) {
-        strm << QStringLiteral("  offset = ") << d->m_offset << QStringLiteral(";\n");
+        strm << QStringLiteral("  offset = ") << d->m_offset
+             << QStringLiteral(";\n");
     }
     else {
         strm << QStringLiteral("  offset is not set;\n");
     }
 
     if (d->m_duration >= 0) {
-        strm << QStringLiteral("  duration = ") << d->m_duration << QStringLiteral(";\n");
+        strm << QStringLiteral("  duration = ") << d->m_duration
+             << QStringLiteral(";\n");
     }
     else {
         strm << QStringLiteral("  duration is not set;\n");
@@ -497,7 +524,9 @@ QTextStream & ResourceRecognitionIndexItem::print(QTextStream & strm) const
     if (!d->m_strokeList.isEmpty())
     {
         strm << QStringLiteral("  stroke list: ");
-        for(auto it = d->m_strokeList.constBegin(), end = d->m_strokeList.constEnd(); it != end; ++it) {
+        for(auto it = d->m_strokeList.constBegin(),
+            end = d->m_strokeList.constEnd(); it != end; ++it)
+        {
             strm << *it << QStringLiteral(" ");
         }
         strm << QStringLiteral(";\n");
@@ -510,8 +539,11 @@ QTextStream & ResourceRecognitionIndexItem::print(QTextStream & strm) const
     if (!d->m_textItems.isEmpty())
     {
         strm << QStringLiteral("  text items: \n");
-        for(auto it = d->m_textItems.constBegin(), end = d->m_textItems.constEnd(); it != end; ++it) {
-            strm << QStringLiteral("    text: ") << it->m_text << QStringLiteral("; weight = ") << it->m_weight
+        for(auto it = d->m_textItems.constBegin(),
+            end = d->m_textItems.constEnd(); it != end; ++it)
+        {
+            strm << QStringLiteral("    text: ") << it->m_text
+                 << QStringLiteral("; weight = ") << it->m_weight
                  << QStringLiteral(";\n");
         }
     }
@@ -523,9 +555,12 @@ QTextStream & ResourceRecognitionIndexItem::print(QTextStream & strm) const
     if (!d->m_objectItems.isEmpty())
     {
         strm << QStringLiteral("  object items: \n");
-        for(auto it = d->m_objectItems.constBegin(), end = d->m_objectItems.constEnd(); it != end; ++it) {
-            strm << QStringLiteral("    object type: ") << it->m_objectType << QStringLiteral("; weight: ")
-                 << it->m_weight << QStringLiteral(";\n");
+        for(auto it = d->m_objectItems.constBegin(),
+            end = d->m_objectItems.constEnd(); it != end; ++it)
+        {
+            strm << QStringLiteral("    object type: ") << it->m_objectType
+                 << QStringLiteral("; weight: ") << it->m_weight
+                 << QStringLiteral(";\n");
         }
     }
     else
@@ -536,8 +571,11 @@ QTextStream & ResourceRecognitionIndexItem::print(QTextStream & strm) const
     if (!d->m_shapeItems.isEmpty())
     {
         strm << QStringLiteral("  shape items: \n");
-        for(auto it = d->m_shapeItems.constBegin(), end = d->m_shapeItems.constEnd(); it != end; ++it) {
-            strm << QStringLiteral("    shape type: ") << it->m_shapeType << QStringLiteral("; weight: ") << it->m_weight
+        for(auto it = d->m_shapeItems.constBegin(),
+            end = d->m_shapeItems.constEnd(); it != end; ++it)
+        {
+            strm << QStringLiteral("    shape type: ") << it->m_shapeType
+                 << QStringLiteral("; weight: ") << it->m_weight
                  << QStringLiteral(";\n");
         }
     }
@@ -549,8 +587,11 @@ QTextStream & ResourceRecognitionIndexItem::print(QTextStream & strm) const
     if (!d->m_barcodeItems.isEmpty())
     {
         strm << QStringLiteral("  barcode items: \n");
-        for(auto it = d->m_barcodeItems.constBegin(), end = d->m_barcodeItems.constEnd(); it != end; ++it) {
-            strm << QStringLiteral("    barcode: ") << it->m_barcode << QStringLiteral("; weight: ") << it->m_weight
+        for(auto it = d->m_barcodeItems.constBegin(),
+            end = d->m_barcodeItems.constEnd(); it != end; ++it)
+        {
+            strm << QStringLiteral("    barcode: ") << it->m_barcode
+                 << QStringLiteral("; weight: ") << it->m_weight
                  << QStringLiteral(";\n");
         }
     }

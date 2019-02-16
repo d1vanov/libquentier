@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Dmitry Ivanov
+ * Copyright 2016-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -29,8 +29,11 @@ class Q_DECL_HIDDEN TableActionUndoCommand: public INoteEditorUndoCommand
     Q_OBJECT
     typedef NoteEditorPage::Callback Callback;
 public:
-    TableActionUndoCommand(NoteEditorPrivate & noteEditorPrivate, Callback callback, QUndoCommand * parent = Q_NULLPTR);
-    TableActionUndoCommand(NoteEditorPrivate & noteEditorPrivate, const QString & text, Callback callback, QUndoCommand * parent = Q_NULLPTR);
+    TableActionUndoCommand(NoteEditorPrivate & noteEditorPrivate,
+                           Callback callback, QUndoCommand * parent = Q_NULLPTR);
+    TableActionUndoCommand(NoteEditorPrivate & noteEditorPrivate,
+                           const QString & text, Callback callback,
+                           QUndoCommand * parent = Q_NULLPTR);
     virtual ~TableActionUndoCommand();
 
     virtual void redoImpl() Q_DECL_OVERRIDE;

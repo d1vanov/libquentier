@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 Dmitry Ivanov
+ * Copyright 2016-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -29,8 +29,8 @@ namespace quentier {
 QT_FORWARD_DECLARE_CLASS(ResourceInfo)
 
 /**
- * The ResourceInfoJavaScriptHandler is used for communicating the information on resources
- * from C++ to JavaScript on requests coming from JavaScript to C++
+ * The ResourceInfoJavaScriptHandler is used for communicating the information
+ * on resources from C++ to JavaScript on requests coming from JavaScript to C++
  */
 class ResourceInfoJavaScriptHandler: public QObject
 {

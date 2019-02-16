@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Dmitry Ivanov
+ * Copyright 2016-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -29,10 +29,12 @@ class GenericResourceImageJavaScriptHandler: public QObject
 {
     Q_OBJECT
 public:
-    explicit GenericResourceImageJavaScriptHandler(const QHash<QByteArray, QString> & cache, QObject * parent = Q_NULLPTR);
+    explicit GenericResourceImageJavaScriptHandler(
+        const QHash<QByteArray, QString> & cache, QObject * parent = Q_NULLPTR);
 
 Q_SIGNALS:
-    void genericResourceImageFound(QByteArray resourceHash, QString genericResourceImageFilePath);
+    void genericResourceImageFound(QByteArray resourceHash,
+                                   QString genericResourceImageFilePath);
 
 public Q_SLOTS:
     void findGenericResourceImage(QByteArray resourceHash);

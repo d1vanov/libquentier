@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Dmitry Ivanov
+ * Copyright 2017-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -25,8 +25,9 @@
 namespace quentier {
 
 /**
- * @brief The ActionsWatcher class is a small class object of which is exposed to JavaScript
- * in order to notify the C++ code of certain events, including 'cut' and 'paste' actions
+ * @brief The ActionsWatcher class is a small class object of which is exposed
+ * to JavaScript in order to notify the C++ code of certain events, including
+ * 'cut' and 'paste' actions
  */
 class ActionsWatcher: public QObject
 {

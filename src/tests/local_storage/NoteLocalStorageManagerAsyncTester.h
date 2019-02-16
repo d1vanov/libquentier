@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Dmitry Ivanov
+ * Copyright 2016-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -46,39 +46,49 @@ Q_SIGNALS:
     void failure(QString errorDescription);
 
 // private signals
-    void addNotebookRequest(Notebook notebook, QUuid requestId = QUuid());
-    void getNoteCountRequest(QUuid requestId = QUuid());
-    void addNoteRequest(Note note, QUuid requestId = QUuid());
-    void updateNoteRequest(Note note, LocalStorageManager::UpdateNoteOptions options, QUuid requestId = QUuid());
-    void findNoteRequest(Note note, bool withResourceMetadata, bool withResourceBinaryData, QUuid requestId = QUuid());
-    void listNotesPerNotebookRequest(Notebook notebook, bool withResourceMetadata, bool withResourceBinaryData,
+    void addNotebookRequest(Notebook notebook, QUuid requestId);
+    void getNoteCountRequest(QUuid requestId);
+    void addNoteRequest(Note note, QUuid requestId);
+    void updateNoteRequest(Note note, LocalStorageManager::UpdateNoteOptions options,
+                           QUuid requestId);
+    void findNoteRequest(Note note, LocalStorageManager::GetNoteOptions options,
+                         QUuid requestId);
+    void listNotesPerNotebookRequest(Notebook notebook,
+                                     LocalStorageManager::GetNoteOptions options,
                                      LocalStorageManager::ListObjectsOptions flag,
-                                     size_t limit, size_t offset, LocalStorageManager::ListNotesOrder::type order,
+                                     size_t limit, size_t offset,
+                                     LocalStorageManager::ListNotesOrder::type order,
                                      LocalStorageManager::OrderDirection::type orderDirection,
-                                     QUuid requestId = QUuid());
-    void expungeNoteRequest(Note note, QUuid requestId = QUuid());
+                                     QUuid requestId);
+    void expungeNoteRequest(Note note, QUuid requestId);
 
 private Q_SLOTS:
-    void onWorkerInitialized();
+    void initialize();
     void onAddNotebookCompleted(Notebook notebook, QUuid requestId);
-    void onAddNotebookFailed(Notebook notebook, ErrorString errorDescription, QUuid requestId);
+    void onAddNotebookFailed(Notebook notebook,
+                             ErrorString errorDescription,
+                             QUuid requestId);
     void onGetNoteCountCompleted(int count, QUuid requestId);
     void onGetNoteCountFailed(ErrorString errorDescription, QUuid requestId);
     void onAddNoteCompleted(Note note, QUuid requestId);
     void onAddNoteFailed(Note note, ErrorString errorDescription, QUuid requestId);
-    void onUpdateNoteCompleted(Note note, LocalStorageManager::UpdateNoteOptions options, QUuid requestId);
+    void onUpdateNoteCompleted(Note note, LocalStorageManager::UpdateNoteOptions options,
+                               QUuid requestId);
     void onUpdateNoteFailed(Note note, LocalStorageManager::UpdateNoteOptions options,
                             ErrorString errorDescription, QUuid requestId);
-    void onFindNoteCompleted(Note note, bool withResourceMetadata, bool withResourceBinaryData, QUuid requestId);
-    void onFindNoteFailed(Note note, bool withResourceMetadata, bool withResourceBinaryData, ErrorString errorDescription,
-                          QUuid requestId);
-    void onListNotesPerNotebookCompleted(Notebook notebook, bool withResourceMetadata, bool withResourceBinaryData,
+    void onFindNoteCompleted(Note note, LocalStorageManager::GetNoteOptions options,
+                             QUuid requestId);
+    void onFindNoteFailed(Note note, LocalStorageManager::GetNoteOptions options,
+                          ErrorString errorDescription, QUuid requestId);
+    void onListNotesPerNotebookCompleted(Notebook notebook,
+                                         LocalStorageManager::GetNoteOptions options,
                                          LocalStorageManager::ListObjectsOptions flag,
                                          size_t limit, size_t offset,
                                          LocalStorageManager::ListNotesOrder::type order,
                                          LocalStorageManager::OrderDirection::type orderDirection,
                                          QList<Note> notes, QUuid requestId);
-    void onListNotesPerNotebookFailed(Notebook notebook, bool withResourceMetadata, bool withResourceBinaryData,
+    void onListNotesPerNotebookFailed(Notebook notebook,
+                                      LocalStorageManager::GetNoteOptions options,
                                       LocalStorageManager::ListObjectsOptions flag,
                                       size_t limit, size_t offset,
                                       LocalStorageManager::ListNotesOrder::type order,

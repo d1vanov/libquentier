@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Dmitry Ivanov
+ * Copyright 2016-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -37,8 +37,11 @@ public:
     QUuid m_localUid;
 
 private:
-    LocalStorageDataElementData & operator=(const LocalStorageDataElementData & other) Q_DECL_EQ_DELETE;
-    LocalStorageDataElementData & operator=(LocalStorageDataElementData && other) Q_DECL_EQ_DELETE;
+    LocalStorageDataElementData &
+    operator=(const LocalStorageDataElementData & other) Q_DECL_EQ_DELETE;
+
+    LocalStorageDataElementData &
+    operator=(LocalStorageDataElementData && other) Q_DECL_EQ_DELETE;
 };
 
 } // namespace quentier

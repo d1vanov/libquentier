@@ -27,12 +27,14 @@ ToDoCheckboxOnClickHandler::ToDoCheckboxOnClickHandler(QObject * parent) :
 
 void ToDoCheckboxOnClickHandler::onToDoCheckboxClicked(QString enToDoCheckboxId)
 {
-    QNDEBUG(QStringLiteral("ToDoCheckboxOnClickHandler::onToDoCheckboxClicked: ") << enToDoCheckboxId);
+    QNDEBUG(QStringLiteral("ToDoCheckboxOnClickHandler::onToDoCheckboxClicked: ")
+            << enToDoCheckboxId);
 
     bool conversionResult = false;
     quint64 id = enToDoCheckboxId.toULongLong(&conversionResult);
     if (Q_UNLIKELY(!conversionResult)) {
-        ErrorString error(QT_TR_NOOP("Error handling todo checkbox click event: can't convert id from string to number"));
+        ErrorString error(QT_TR_NOOP("Error handling todo checkbox click event: "
+                                     "can't convert id from string to number"));
         QNWARNING(error);
         Q_EMIT notifyError(error);
         return;

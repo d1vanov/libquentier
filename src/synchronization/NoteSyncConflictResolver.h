@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Dmitry Ivanov
+ * Copyright 2018-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -35,12 +35,15 @@ QT_FORWARD_DECLARE_CLASS(LocalStorageManagerAsync)
 QT_FORWARD_DECLARE_CLASS(INoteStore)
 
 /**
- * The NoteSyncConflictResolver class resolves the conflict between two notes: the one downloaded
- * from the remote server (but without full note data downloaded yet) and the local one. The conflict resolution
- * might lead to either overriding the local conflicting notes with remote changes or to clearing out Evernote-assigned
- * fields from the local conflicting note and any resources it might have - such fields as guid and update sequence number
- * in particular; in the latter case the local note would be converted to a local i.e. "not yet synchronized with Evernote"
- * note and the remote note would be treated as a new note coming from Evernote
+ * The NoteSyncConflictResolver class resolves the conflict between two notes:
+ * the one downloaded from the remote server (but without full note data
+ * downloaded yet) and the local one. The conflict resolution might lead to either
+ * overriding the local conflicting notes with remote changes or to clearing out
+ * Evernote-assigned fields from the local conflicting note and any resources
+ * it might have - such fields as guid and update sequence number in particular;
+ * in the latter case the local note would be converted to a local i.e.
+ * "not yet synchronized with Evernote" note and the remote note would be treated
+ * as a new note coming from Evernote
  */
 class Q_DECL_HIDDEN NoteSyncConflictResolver: public QObject
 {
@@ -50,7 +53,9 @@ public:
     {
     public:
         virtual LocalStorageManagerAsync & localStorageManagerAsync() = 0;
-        virtual INoteStore * noteStoreForNote(const Note & note, QString & authToken, ErrorString & errorDescription) = 0;
+        virtual INoteStore * noteStoreForNote(const Note & note,
+                                              QString & authToken,
+                                              ErrorString & errorDescription) = 0;
         virtual bool syncingLinkedNotebooksContent() const = 0;
         virtual ~IManager() {}
     };
@@ -66,9 +71,11 @@ public:
     const Note & localConflict() const { return m_localConflict; }
 
 public Q_SLOTS:
-    void onAuthDataUpdated(QString authToken, QString shardId, qevercloud::Timestamp expirationTime);
-    void onLinkedNotebooksAuthDataUpdated(QHash<QString,QPair<QString,QString> > authenticationTokensAndShardIdsByLinkedNotebookGuid,
-                                          QHash<QString,qevercloud::Timestamp> authenticationTokenExpirationTimesByLinkedNotebookGuid);
+    void onAuthDataUpdated(QString authToken, QString shardId,
+                           qevercloud::Timestamp expirationTime);
+    void onLinkedNotebooksAuthDataUpdated(
+        QHash<QString,QPair<QString,QString> > authTokensAndShardIdsByLinkedNotebookGuid,
+        QHash<QString,qevercloud::Timestamp> authTokenExpirationTimesByLinkedNotebookGuid);
 
 Q_SIGNALS:
     void finished(qevercloud::Note remoteNote);
@@ -79,17 +86,22 @@ Q_SIGNALS:
 
 // private signals
     void addNote(Note note, QUuid requestId);
-    void updateNote(Note note, LocalStorageManager::UpdateNoteOptions options, QUuid requestId);
+    void updateNote(Note note, LocalStorageManager::UpdateNoteOptions options,
+                    QUuid requestId);
 
 private Q_SLOTS:
     void onAddNoteComplete(Note note, QUuid requestId);
     void onAddNoteFailed(Note note, ErrorString errorDescription, QUuid requestId);
-    void onUpdateNoteComplete(Note note, LocalStorageManager::UpdateNoteOptions options, QUuid requestId);
-    void onUpdateNoteFailed(Note note, LocalStorageManager::UpdateNoteOptions options,
+    void onUpdateNoteComplete(Note note,
+                              LocalStorageManager::UpdateNoteOptions options,
+                              QUuid requestId);
+    void onUpdateNoteFailed(Note note,
+                            LocalStorageManager::UpdateNoteOptions options,
                             ErrorString errorDescription, QUuid requestId);
 
     void onGetNoteAsyncFinished(qint32 errorCode, qevercloud::Note qecNote,
-                                qint32 rateLimitSeconds, ErrorString errorDescription);
+                                qint32 rateLimitSeconds,
+                                ErrorString errorDescription);
 
 private:
     void connectToLocalStorage();

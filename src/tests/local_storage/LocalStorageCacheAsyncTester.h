@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Dmitry Ivanov
+ * Copyright 2016-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -43,36 +43,50 @@ Q_SIGNALS:
     void failure(QString errorDescription);
 
 // private signals
-    void addNotebookRequest(Notebook notebook, QUuid requestId = QUuid());
-    void updateNotebookRequest(Notebook notebook, QUuid requestId = QUuid());
+    void addNotebookRequest(Notebook notebook, QUuid requestId);
+    void updateNotebookRequest(Notebook notebook, QUuid requestId);
 
-    void addNoteRequest(Note note, QUuid requestId = QUuid());
-    void updateNoteRequest(Note note, LocalStorageManager::UpdateNoteOptions options, QUuid requestId = QUuid());
+    void addNoteRequest(Note note, QUuid requestId);
+    void updateNoteRequest(Note note,
+                           LocalStorageManager::UpdateNoteOptions options,
+                           QUuid requestId);
 
-    void addTagRequest(Tag tag, QUuid requestId = QUuid());
-    void updateTagRequest(Tag tag, QUuid requestId = QUuid());
+    void addTagRequest(Tag tag, QUuid requestId);
+    void updateTagRequest(Tag tag, QUuid requestId);
 
-    void addLinkedNotebookRequest(LinkedNotebook linkedNotebook, QUuid requestId = QUuid());
-    void updateLinkedNotebookRequest(LinkedNotebook linkedNotebook, QUuid requestId = QUuid());
+    void addLinkedNotebookRequest(LinkedNotebook linkedNotebook,
+                                  QUuid requestId);
+    void updateLinkedNotebookRequest(LinkedNotebook linkedNotebook,
+                                     QUuid requestId);
 
-    void addSavedSearchRequest(SavedSearch search, QUuid requestId = QUuid());
-    void updateSavedSearchRequest(SavedSearch search, QUuid requestId = QUuid());
+    void addSavedSearchRequest(SavedSearch search, QUuid requestId);
+    void updateSavedSearchRequest(SavedSearch search, QUuid requestId);
 
 private Q_SLOTS:
-    void onWorkerInitialized();
+    void initialize();
 
     void onAddNotebookCompleted(Notebook notebook, QUuid requestId);
-    void onAddNotebookFailed(Notebook notebook, ErrorString errorDescription, QUuid requestId);
+    void onAddNotebookFailed(Notebook notebook,
+                             ErrorString errorDescription,
+                             QUuid requestId);
 
     void onUpdateNotebookCompleted(Notebook notebook, QUuid requestId);
-    void onUpdateNotebookFailed(Notebook notebook, ErrorString errorDescription, QUuid requestId);
+    void onUpdateNotebookFailed(Notebook notebook,
+                                ErrorString errorDescription,
+                                QUuid requestId);
 
     void onAddNoteCompleted(Note note, QUuid requestId);
-    void onAddNoteFailed(Note note, ErrorString errorDescription, QUuid requestId);
+    void onAddNoteFailed(Note note,
+                         ErrorString errorDescription,
+                         QUuid requestId);
 
-    void onUpdateNoteCompleted(Note note, LocalStorageManager::UpdateNoteOptions options, QUuid requestId);
-    void onUpdateNoteFailed(Note note, LocalStorageManager::UpdateNoteOptions options,
-                            ErrorString errorDescription, QUuid requestId);
+    void onUpdateNoteCompleted(Note note,
+                               LocalStorageManager::UpdateNoteOptions options,
+                               QUuid requestId);
+    void onUpdateNoteFailed(Note note,
+                            LocalStorageManager::UpdateNoteOptions options,
+                            ErrorString errorDescription,
+                            QUuid requestId);
 
     void onAddTagCompleted(Tag tag, QUuid requestId);
     void onAddTagFailed(Tag tag, ErrorString errorDescription, QUuid requestId);
@@ -80,17 +94,27 @@ private Q_SLOTS:
     void onUpdateTagCompleted(Tag tag, QUuid requestId);
     void onUpdateTagFailed(Tag tag, ErrorString errorDescription, QUuid requestId);
 
-    void onAddLinkedNotebookCompleted(LinkedNotebook linkedNotebook, QUuid requestId);
-    void onAddLinkedNotebookFailed(LinkedNotebook linkedNotebook, ErrorString errorDescription, QUuid requestId);
+    void onAddLinkedNotebookCompleted(LinkedNotebook linkedNotebook,
+                                      QUuid requestId);
+    void onAddLinkedNotebookFailed(LinkedNotebook linkedNotebook,
+                                   ErrorString errorDescription,
+                                   QUuid requestId);
 
-    void onUpdateLinkedNotebookCompleted(LinkedNotebook linkedNotebook, QUuid requestId);
-    void onUpdateLinkedNotebookFailed(LinkedNotebook linkedNotebook, ErrorString errorDescription, QUuid requestId);
+    void onUpdateLinkedNotebookCompleted(LinkedNotebook linkedNotebook,
+                                         QUuid requestId);
+    void onUpdateLinkedNotebookFailed(LinkedNotebook linkedNotebook,
+                                      ErrorString errorDescription,
+                                      QUuid requestId);
 
     void onAddSavedSearchCompleted(SavedSearch search, QUuid requestId);
-    void onAddSavedSearchFailed(SavedSearch search, ErrorString errorDescription, QUuid requestId);
+    void onAddSavedSearchFailed(SavedSearch search,
+                                ErrorString errorDescription,
+                                QUuid requestId);
 
     void onUpdateSavedSearchCompleted(SavedSearch search, QUuid requestId);
-    void onUpdateSavedSearchFailed(SavedSearch search, ErrorString errorDescription, QUuid requestId);
+    void onUpdateSavedSearchFailed(SavedSearch search,
+                                   ErrorString errorDescription,
+                                   QUuid requestId);
 
 private:
     void createConnections();

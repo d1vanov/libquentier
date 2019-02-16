@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Dmitry Ivanov
+ * Copyright 2016-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -23,22 +23,31 @@
 namespace quentier {
 
 #define GET_PAGE() \
-    NoteEditorPage * page = qobject_cast<NoteEditorPage*>(m_noteEditorPrivate.page()); \
+    NoteEditorPage * page = \
+        qobject_cast<NoteEditorPage*>(m_noteEditorPrivate.page()); \
     if (Q_UNLIKELY(!page)) { \
-        ErrorString error(QT_TRANSLATE_NOOP("AddHyperlinkUndoCommand", "Can't undo/redo adding the hyperlink to the selected text: no note editor page")); \
+        ErrorString error(QT_TRANSLATE_NOOP("AddHyperlinkUndoCommand", \
+                                            "Can't undo/redo adding the hyperlink "\
+                                            "to the selected text: no note editor "\
+                                            "page")); \
         QNWARNING(error); \
         Q_EMIT notifyError(error); \
         return; \
     }
 
-AddHyperlinkUndoCommand::AddHyperlinkUndoCommand(NoteEditorPrivate & noteEditor, const Callback & callback, QUndoCommand * parent) :
+AddHyperlinkUndoCommand::AddHyperlinkUndoCommand(NoteEditorPrivate & noteEditor,
+                                                 const Callback & callback,
+                                                 QUndoCommand * parent) :
     INoteEditorUndoCommand(noteEditor, parent),
     m_callback(callback)
 {
     setText(tr("Add hyperlink"));
 }
 
-AddHyperlinkUndoCommand::AddHyperlinkUndoCommand(NoteEditorPrivate & noteEditor, const Callback & callback, const QString & text, QUndoCommand * parent) :
+AddHyperlinkUndoCommand::AddHyperlinkUndoCommand(NoteEditorPrivate & noteEditor,
+                                                 const Callback & callback,
+                                                 const QString & text,
+                                                 QUndoCommand * parent) :
     INoteEditorUndoCommand(noteEditor, text, parent),
     m_callback(callback)
 {}

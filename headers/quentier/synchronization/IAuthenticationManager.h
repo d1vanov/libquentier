@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Dmitry Ivanov
+ * Copyright 2017-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -44,9 +44,14 @@ public:
     virtual ~IAuthenticationManager();
 
 Q_SIGNALS:
-    void sendAuthenticationResult(bool success, qevercloud::UserID userId, QString authToken,
-                                  qevercloud::Timestamp authTokenExpirationTime, QString shardId,
-                                  QString noteStoreUrl, QString webApiUrlPrefix, ErrorString errorDescription);
+    void sendAuthenticationResult(bool success,
+                                  qevercloud::UserID userId,
+                                  QString authToken,
+                                  qevercloud::Timestamp authTokenExpirationTime,
+                                  QString shardId,
+                                  QString noteStoreUrl,
+                                  QString webApiUrlPrefix,
+                                  ErrorString errorDescription);
 
 public Q_SLOTS:
     virtual void onAuthenticationRequest() = 0;

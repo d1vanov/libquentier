@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Dmitry Ivanov
+ * Copyright 2016-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -47,7 +47,8 @@ public:
                         const QString & userDictionaryPath = QString());
     ~SpellCheckerPrivate();
 
-    // The second bool in the pair indicates whether the dictionary is enabled or disabled
+    // The second bool in the pair indicates whether the dictionary
+    // is enabled or disabled
     QVector<QPair<QString,bool> > listAvailableDictionaries() const;
 
     void setAccount(const Account & account);
@@ -69,10 +70,12 @@ Q_SIGNALS:
 
 // private signals
     void readFile(QString absoluteFilePath, QUuid requestId);
-    void writeFile(QString absoluteFilePath, QByteArray data, QUuid requestId, bool append);
+    void writeFile(QString absoluteFilePath, QByteArray data,
+                   QUuid requestId, bool append);
 
 private Q_SLOTS:
-    void onDictionariesFound(SpellCheckerDictionariesFinder::DicAndAffFilesByDictionaryName files);
+    void onDictionariesFound(
+        SpellCheckerDictionariesFinder::DicAndAffFilesByDictionaryName files);
 
 private:
     void checkAndScanSystemDictionaries();
@@ -91,8 +94,10 @@ private:
     void restoreSystemDictionatiesEnabledDisabledSettings();
 
 private Q_SLOTS:
-    void onReadFileRequestProcessed(bool success, ErrorString errorDescription, QByteArray data, QUuid requestId);
-    void onWriteFileRequestProcessed(bool success, ErrorString errorDescription, QUuid requestId);
+    void onReadFileRequestProcessed(bool success, ErrorString errorDescription,
+                                    QByteArray data, QUuid requestId);
+    void onWriteFileRequestProcessed(bool success, ErrorString errorDescription,
+                                     QUuid requestId);
 
 private:
     class Q_DECL_HIDDEN Dictionary

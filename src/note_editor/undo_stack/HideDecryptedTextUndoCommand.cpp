@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Dmitry Ivanov
+ * Copyright 2016-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -23,22 +23,29 @@
 namespace quentier {
 
 #define GET_PAGE() \
-    NoteEditorPage * page = qobject_cast<NoteEditorPage*>(m_noteEditorPrivate.page()); \
+    NoteEditorPage * page = \
+        qobject_cast<NoteEditorPage*>(m_noteEditorPrivate.page()); \
     if (Q_UNLIKELY(!page)) { \
-        ErrorString error(QT_TRANSLATE_NOOP("HideDecryptedTextUndoCommand", "Can't undo/redo the decrypted text hiding: can't get note editor page")); \
+        ErrorString error(QT_TRANSLATE_NOOP("HideDecryptedTextUndoCommand", \
+                                            "Can't undo/redo the decrypted text "\
+                                            "hiding: can't get note editor page")); \
         QNWARNING(error); \
         Q_EMIT notifyError(error); \
         return; \
     }
 
-HideDecryptedTextUndoCommand::HideDecryptedTextUndoCommand(NoteEditorPrivate & noteEditorPrivate, const Callback & callback, QUndoCommand * parent) :
+HideDecryptedTextUndoCommand::HideDecryptedTextUndoCommand(
+        NoteEditorPrivate & noteEditorPrivate,
+        const Callback & callback, QUndoCommand * parent) :
     INoteEditorUndoCommand(noteEditorPrivate, parent),
     m_callback(callback)
 {
     setText(tr("Hide decrypted text"));
 }
 
-HideDecryptedTextUndoCommand::HideDecryptedTextUndoCommand(NoteEditorPrivate & noteEditorPrivate, const Callback & callback, const QString & text, QUndoCommand * parent) :
+HideDecryptedTextUndoCommand::HideDecryptedTextUndoCommand(
+        NoteEditorPrivate & noteEditorPrivate, const Callback & callback,
+        const QString & text, QUndoCommand * parent) :
     INoteEditorUndoCommand(noteEditorPrivate, text, parent),
     m_callback(callback)
 {}
@@ -51,7 +58,8 @@ void HideDecryptedTextUndoCommand::redoImpl()
     QNDEBUG(QStringLiteral("HideDecryptedTextUndoCommand::redoImpl"));
 
     GET_PAGE()
-    page->executeJavaScript(QStringLiteral("encryptDecryptManager.redo();"), m_callback);
+    page->executeJavaScript(QStringLiteral("encryptDecryptManager.redo();"),
+                            m_callback);
 }
 
 void HideDecryptedTextUndoCommand::undoImpl()
@@ -59,7 +67,8 @@ void HideDecryptedTextUndoCommand::undoImpl()
     QNDEBUG(QStringLiteral("HideDecryptedTextUndoCommand::undoImpl"));
 
     GET_PAGE()
-    page->executeJavaScript(QStringLiteral("encryptDecryptManager.undo();"), m_callback);
+    page->executeJavaScript(QStringLiteral("encryptDecryptManager.undo();"),
+                            m_callback);
 }
 
 } // namespace quentier

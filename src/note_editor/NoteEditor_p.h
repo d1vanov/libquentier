@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 Dmitry Ivanov
+ * Copyright 2016-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -101,7 +101,8 @@ public:
 
 #ifndef QUENTIER_USE_QT_WEB_ENGINE
     QVariant execJavascriptCommandWithResult(const QString & command);
-    QVariant execJavascriptCommandWithResult(const QString & command, const QString & args);
+    QVariant execJavascriptCommandWithResult(const QString & command,
+                                             const QString & args);
 #endif
 
     void execJavascriptCommand(const QString & command);
@@ -117,7 +118,8 @@ Q_SIGNALS:
     void notifyError(ErrorString error);
 
     void inAppNoteLinkClicked(QString userId, QString shardId, QString noteGuid);
-    void inAppNoteLinkPasteRequested(QString url, QString userId, QString shardId, QString noteGuid);
+    void inAppNoteLinkPasteRequested(QString url, QString userId,
+                                     QString shardId, QString noteGuid);
 
     void convertedToNote(Note note);
     void cantConvertToNote(ErrorString error);
@@ -158,8 +160,10 @@ public:
 
     const Account * accountPtr() const;
 
-    const Resource attachResourceToNote(const QByteArray & data, const QByteArray & dataHash,
-                                        const QMimeType & mimeType, const QString & filename,
+    const Resource attachResourceToNote(const QByteArray & data,
+                                        const QByteArray & dataHash,
+                                        const QMimeType & mimeType,
+                                        const QString & filename,
                                         const QString & sourceUrl = QString());
     void addResourceToNote(const Resource & resource);
     void removeResourceFromNote(const Resource & resource);
@@ -169,12 +173,14 @@ public:
     QImage buildGenericResourceImage(const Resource & resource);
 
 #ifdef QUENTIER_USE_QT_WEB_ENGINE
-    void saveGenericResourceImage(const Resource & resource, const QImage & image);
+    void saveGenericResourceImage(const Resource & resource,
+                                  const QImage & image);
     void provideSrcForGenericResourceImages();
     void setupGenericResourceOnClickHandler();
 #endif
 
-    void updateResource(const QString & resourceLocalUid, const QByteArray & previousResourceHash,
+    void updateResource(const QString & resourceLocalUid,
+                        const QByteArray & previousResourceHash,
                         Resource updatedResource);
 
     Note * notePtr() { return m_pNote.data(); }
@@ -183,12 +189,14 @@ public:
     bool isPageEditable() const { return m_isPageEditable; }
 
     QString noteEditorPagePath() const;
-    const QString & genericResourceImageFileStoragePath() const { return m_genericResourceImageFileStoragePath; }
+    const QString & genericResourceImageFileStoragePath() const
+    { return m_genericResourceImageFileStoragePath; }
 
     void setRenameResourceDelegateSubscriptions(RenameResourceDelegate & delegate);
 
     void removeSymlinksToImageResourceFile(const QString & resourceLocalUid);
-    QString createSymlinkToImageResourceFile(const QString & fileStoragePath, const QString & localUid,
+    QString createSymlinkToImageResourceFile(const QString & fileStoragePath,
+                                             const QString & localUid,
                                              ErrorString & errorDescription);
 
     void onDropEvent(QDropEvent * pEvent);
@@ -209,8 +217,10 @@ public:
     virtual bool hasSelection() const Q_DECL_OVERRIDE;
 
     bool searchHighlightEnabled() const;
-    void setSearchHighlight(const QString & textToFind, const bool matchCase, const bool force = false) const;
-    void highlightRecognizedImageAreas(const QString & textToFind, const bool matchCase) const;
+    void setSearchHighlight(const QString & textToFind, const bool matchCase,
+                            const bool force = false) const;
+    void highlightRecognizedImageAreas(const QString & textToFind,
+                                       const bool matchCase) const;
 
     virtual bool spellCheckEnabled() const Q_DECL_OVERRIDE;
 
@@ -254,17 +264,25 @@ public Q_SLOTS:
     virtual void alignRight() Q_DECL_OVERRIDE;
     virtual void alignFull() Q_DECL_OVERRIDE;
 
-    virtual void findNext(const QString & text, const bool matchCase) const Q_DECL_OVERRIDE;
-    virtual void findPrevious(const QString & text, const bool matchCase) const Q_DECL_OVERRIDE;
+    virtual void findNext(const QString & text,
+                          const bool matchCase) const Q_DECL_OVERRIDE;
+    virtual void findPrevious(const QString & text,
+                              const bool matchCase) const Q_DECL_OVERRIDE;
 
-    virtual void replace(const QString & textToReplace, const QString & replacementText, const bool matchCase) Q_DECL_OVERRIDE;
-    virtual void replaceAll(const QString & textToReplace, const QString & replacementText, const bool matchCase) Q_DECL_OVERRIDE;
+    virtual void replace(const QString & textToReplace,
+                         const QString & replacementText,
+                         const bool matchCase) Q_DECL_OVERRIDE;
+    virtual void replaceAll(const QString & textToReplace,
+                            const QString & replacementText,
+                            const bool matchCase) Q_DECL_OVERRIDE;
 
     void onReplaceJavaScriptDone(const QVariant & data);
 
     virtual void insertToDoCheckbox() Q_DECL_OVERRIDE;
-    virtual void insertInAppNoteLink(const QString & userId, const QString & shardId,
-                                     const QString & noteGuid, const QString & linkText) Q_DECL_OVERRIDE;
+    virtual void insertInAppNoteLink(const QString & userId,
+                                     const QString & shardId,
+                                     const QString & noteGuid,
+                                     const QString & linkText) Q_DECL_OVERRIDE;
     virtual void setSpellcheck(const bool enabled) Q_DECL_OVERRIDE;
     virtual void setFont(const QFont & font) Q_DECL_OVERRIDE;
     virtual void setFontHeight(const int height) Q_DECL_OVERRIDE;
@@ -278,8 +296,10 @@ public Q_SLOTS:
     virtual void insertBulletedList() Q_DECL_OVERRIDE;
     virtual void insertNumberedList() Q_DECL_OVERRIDE;
     virtual void insertTableDialog() Q_DECL_OVERRIDE;
-    virtual void insertFixedWidthTable(const int rows, const int columns, const int widthInPixels) Q_DECL_OVERRIDE;
-    virtual void insertRelativeWidthTable(const int rows, const int columns, const double relativeWidth) Q_DECL_OVERRIDE;
+    virtual void insertFixedWidthTable(const int rows, const int columns,
+                                       const int widthInPixels) Q_DECL_OVERRIDE;
+    virtual void insertRelativeWidthTable(const int rows, const int columns,
+                                          const double relativeWidth) Q_DECL_OVERRIDE;
     virtual void insertTableRow() Q_DECL_OVERRIDE;
     virtual void insertTableColumn() Q_DECL_OVERRIDE;
     virtual void removeTableRow() Q_DECL_OVERRIDE;
@@ -295,8 +315,10 @@ public Q_SLOTS:
     virtual void removeAttachmentUnderCursor() Q_DECL_OVERRIDE;
     virtual void renameAttachment(const QByteArray & resourceHash) Q_DECL_OVERRIDE;
     virtual void renameAttachmentUnderCursor() Q_DECL_OVERRIDE;
-    virtual void rotateImageAttachment(const QByteArray & resourceHash, const Rotation::type rotationDirection) Q_DECL_OVERRIDE;
-    virtual void rotateImageAttachmentUnderCursor(const Rotation::type rotationDirection) Q_DECL_OVERRIDE;
+    virtual void rotateImageAttachment(const QByteArray & resourceHash,
+                                       const Rotation::type rotationDirection) Q_DECL_OVERRIDE;
+    virtual void rotateImageAttachmentUnderCursor(
+        const Rotation::type rotationDirection) Q_DECL_OVERRIDE;
 
     void rotateImageAttachmentUnderCursorClockwise();
     void rotateImageAttachmentUnderCursorCounterclockwise();
@@ -304,10 +326,14 @@ public Q_SLOTS:
     virtual void encryptSelectedText() Q_DECL_OVERRIDE;
 
     virtual void decryptEncryptedTextUnderCursor() Q_DECL_OVERRIDE;
-    virtual void decryptEncryptedText(QString encryptedText, QString cipher, QString keyLength, QString hint, QString enCryptIndex) Q_DECL_OVERRIDE;
+    virtual void decryptEncryptedText(QString encryptedText, QString cipher,
+                                      QString keyLength, QString hint,
+                                      QString enCryptIndex) Q_DECL_OVERRIDE;
 
     virtual void hideDecryptedTextUnderCursor() Q_DECL_OVERRIDE;
-    virtual void hideDecryptedText(QString encryptedText, QString decryptedText, QString cipher, QString keyLength, QString hint, QString enDecryptedIndex) Q_DECL_OVERRIDE;
+    virtual void hideDecryptedText(QString encryptedText, QString decryptedText,
+                                   QString cipher, QString keyLength, QString hint,
+                                   QString enDecryptedIndex) Q_DECL_OVERRIDE;
 
     virtual void editHyperlinkDialog() Q_DECL_OVERRIDE;
     virtual void copyHyperlink() Q_DECL_OVERRIDE;
@@ -316,9 +342,10 @@ public Q_SLOTS:
     virtual void onNoteLoadCancelled() Q_DECL_OVERRIDE;
 
     virtual bool print(QPrinter & printer, ErrorString & errorDescription) Q_DECL_OVERRIDE;
-    virtual bool exportToPdf(const QString & absoluteFilePath, ErrorString & errorDescription) Q_DECL_OVERRIDE;
-    virtual bool exportToEnex(const QStringList & tagNames,
-                              QString & enex, ErrorString & errorDescription) Q_DECL_OVERRIDE;
+    virtual bool exportToPdf(const QString & absoluteFilePath,
+                             ErrorString & errorDescription) Q_DECL_OVERRIDE;
+    virtual bool exportToEnex(const QStringList & tagNames, QString & enex,
+                              ErrorString & errorDescription) Q_DECL_OVERRIDE;
 
     virtual void setCurrentNoteLocalUid(const QString & noteLocalUid) Q_DECL_OVERRIDE;
     virtual void clear() Q_DECL_OVERRIDE;
@@ -326,7 +353,8 @@ public Q_SLOTS:
     virtual void convertToNote() Q_DECL_OVERRIDE;
     virtual void saveNoteToLocalStorage() Q_DECL_OVERRIDE;
     virtual void setNoteTitle(const QString & noteTitle) Q_DECL_OVERRIDE;
-    virtual void setTagIds(const QStringList & tagLocalUids, const QStringList & tagGuids) Q_DECL_OVERRIDE;
+    virtual void setTagIds(const QStringList & tagLocalUids,
+                           const QStringList & tagGuids) Q_DECL_OVERRIDE;
 
     void undoPageAction();
     void redoPageAction();
@@ -353,24 +381,29 @@ Q_SIGNALS:
      * The signal used for writing of note editor page's HTML to a file so that
      * it can be loaded as a URL within the note editor page
      */
-    void writeNoteHtmlToFile(QString absoluteFilePath, QByteArray html, QUuid requestId, bool append);
+    void writeNoteHtmlToFile(QString absoluteFilePath, QByteArray html,
+                             QUuid requestId, bool append);
 
     /**
      * The signal used to save the resource binary data to some file selected by
      * the user (i.e. this signal is used in the course of actions processing
      * the user initiated request to save some of note's resources to a file)
      */
-    void saveResourceToFile(QString absoluteFilePath, QByteArray resourceData, QUuid requestId, bool append);
+    void saveResourceToFile(QString absoluteFilePath, QByteArray resourceData,
+                            QUuid requestId, bool append);
 
 #ifdef QUENTIER_USE_QT_WEB_ENGINE
     /**
-     * The signal used during the preparation for loading the note into the note editor page: this signal initiates
-     * writing the specifically constructed image - "generic resource image" - to a file so that it can be loaded
+     * The signal used during the preparation for loading the note into the note
+     * editor page: this signal initiates writing the specifically constructed
+     * image - "generic resource image" - to a file so that it can be loaded
      * as an img tag's URL into the note editor page
      */
-    void saveGenericResourceImageToFile(QString noteLocalUid, QString resourceLocalUid, QByteArray resourceImageData,
-                                        QString resourceFileSuffix, QByteArray resourceActualHash,
-                                        QString resourceDisplayName, QUuid requestId);
+    void saveGenericResourceImageToFile(
+        QString noteLocalUid, QString resourceLocalUid,
+        QByteArray resourceImageData, QString resourceFileSuffix,
+        QByteArray resourceActualHash, QString resourceDisplayName,
+        QUuid requestId);
 #endif // QUENTIER_USE_QT_WEB_ENGINE
 
     // Signals for communicating with NoteEditorLocalStorageBroker
@@ -378,7 +411,8 @@ Q_SIGNALS:
     void saveNoteToLocalStorageRequest(const Note & note);
     void findResourceData(const QString & resourceLocalUid);
     void noteSavedToLocalStorage(QString noteLocalUid);
-    void failedToSaveNoteToLocalStorage(ErrorString errorDescription, QString noteLocalUid);
+    void failedToSaveNoteToLocalStorage(ErrorString errorDescription,
+                                        QString noteLocalUid);
 
 #ifdef QUENTIER_USE_QT_WEB_ENGINE
     /**
@@ -391,10 +425,12 @@ Q_SIGNALS:
 private Q_SLOTS:
     void onTableResized();
 
-    void onFoundSelectedHyperlinkId(const QVariant & hyperlinkData,
-                                    const QVector<QPair<QString, QString> > & extraData);
-    void onFoundHyperlinkToCopy(const QVariant & hyperlinkData,
-                                const QVector<QPair<QString, QString> > & extraData);
+    void onFoundSelectedHyperlinkId(
+        const QVariant & hyperlinkData,
+        const QVector<QPair<QString, QString> > & extraData);
+    void onFoundHyperlinkToCopy(
+        const QVariant & hyperlinkData,
+        const QVector<QPair<QString, QString> > & extraData);
 
     void onNoteLoadFinished(bool ok);
     void onContentChanged();
@@ -417,9 +453,11 @@ private Q_SLOTS:
     void onToDoCheckboxClicked(quint64 enToDoCheckboxId);
     void onToDoCheckboxClickHandlerError(ErrorString error);
 
-    void onToDoCheckboxInserted(const QVariant & data, const QVector<QPair<QString,QString> > & extraData);
+    void onToDoCheckboxInserted(const QVariant & data,
+                                const QVector<QPair<QString,QString> > & extraData);
     void onToDoCheckboxAutomaticInsertion();
-    void onToDoCheckboxAutomaticInsertionUndoRedoFinished(const QVariant & data, const QVector<QPair<QString,QString> > & extraData);
+    void onToDoCheckboxAutomaticInsertionUndoRedoFinished(
+        const QVariant & data, const QVector<QPair<QString,QString> > & extraData);
 
     void onJavaScriptLoaded();
 
@@ -427,7 +465,8 @@ private Q_SLOTS:
     void onSaveResourceRequest(const QByteArray & resourceHash);
 
     void contextMenuEvent(QContextMenuEvent * pEvent) Q_DECL_OVERRIDE;
-    void onContextMenuEventReply(QString contentType, QString selectedHtml, bool insideDecryptedTextFragment,
+    void onContextMenuEventReply(QString contentType, QString selectedHtml,
+                                 bool insideDecryptedTextFragment,
                                  QStringList extraData, quint64 sequenceNumber);
 
     void onTextCursorPositionChange();
@@ -444,84 +483,111 @@ private Q_SLOTS:
     void onTextCursorInsideUnorderedListStateChanged(bool state);
     void onTextCursorInsideTableStateChanged(bool state);
 
-    void onTextCursorOnImageResourceStateChanged(bool state, QByteArray resourceHash);
-    void onTextCursorOnNonImageResourceStateChanged(bool state, QByteArray resourceHash);
-    void onTextCursorOnEnCryptTagStateChanged(bool state, QString encryptedText, QString cipher, QString length);
+    void onTextCursorOnImageResourceStateChanged(bool state,
+                                                 QByteArray resourceHash);
+    void onTextCursorOnNonImageResourceStateChanged(bool state,
+                                                    QByteArray resourceHash);
+    void onTextCursorOnEnCryptTagStateChanged(bool state, QString encryptedText,
+                                              QString cipher, QString length);
 
     void onTextCursorFontNameChanged(QString fontName);
     void onTextCursorFontSizeChanged(int fontSize);
 
-    void onWriteFileRequestProcessed(bool success, ErrorString errorDescription, QUuid requestId);
+    void onWriteFileRequestProcessed(bool success, ErrorString errorDescription,
+                                     QUuid requestId);
 
     void onSpellCheckCorrectionAction();
     void onSpellCheckIgnoreWordAction();
     void onSpellCheckAddWordToUserDictionaryAction();
 
-    void onSpellCheckCorrectionActionDone(const QVariant & data, const QVector<QPair<QString,QString> > & extraData);
-    void onSpellCheckCorrectionUndoRedoFinished(const QVariant & data, const QVector<QPair<QString,QString> > & extraData);
+    void onSpellCheckCorrectionActionDone(
+        const QVariant & data, const QVector<QPair<QString,QString> > & extraData);
+    void onSpellCheckCorrectionUndoRedoFinished(
+        const QVariant & data, const QVector<QPair<QString,QString> > & extraData);
     void onSpellCheckerDynamicHelperUpdate(QStringList words);
 
     void onSpellCheckerReady();
 
     void onImageResourceResized(bool pushUndoCommand);
 
-    void onSelectionFormattedAsSourceCode(const QVariant & response, const QVector<QPair<QString,QString> > & extraData);
+    void onSelectionFormattedAsSourceCode(
+        const QVariant & response,
+        const QVector<QPair<QString,QString> > & extraData);
 
     // Slots for delegates
-    void onAddResourceDelegateFinished(Resource addedResource, QString resourceFileStoragePath);
+    void onAddResourceDelegateFinished(Resource addedResource,
+                                       QString resourceFileStoragePath);
     void onAddResourceDelegateError(ErrorString error);
-    void onAddResourceUndoRedoFinished(const QVariant & data, const QVector<QPair<QString,QString> > & extraData);
+    void onAddResourceUndoRedoFinished(
+        const QVariant & data, const QVector<QPair<QString,QString> > & extraData);
 
     void onRemoveResourceDelegateFinished(Resource removedResource, bool reversible);
     void onRemoveResourceDelegateCancelled(QString resourceLocalUid);
     void onRemoveResourceDelegateError(ErrorString error);
-    void onRemoveResourceUndoRedoFinished(const QVariant & data, const QVector<QPair<QString,QString> > & extraData);
+    void onRemoveResourceUndoRedoFinished(
+        const QVariant & data, const QVector<QPair<QString,QString> > & extraData);
 
-    void onRenameResourceDelegateFinished(QString oldResourceName, QString newResourceName,
+    void onRenameResourceDelegateFinished(QString oldResourceName,
+                                          QString newResourceName,
                                           Resource resource, bool performingUndo);
     void onRenameResourceDelegateCancelled();
     void onRenameResourceDelegateError(ErrorString error);
 
-    void onImageResourceRotationDelegateFinished(QByteArray resourceDataBefore, QByteArray resourceHashBefore,
-                                                 QByteArray resourceRecognitionDataBefore, QByteArray resourceRecognitionDataHashBefore,
-                                                 QSize resourceImageSizeBefore, Resource resourceAfter,
-                                                 INoteEditorBackend::Rotation::type rotationDirection);
+    void onImageResourceRotationDelegateFinished(
+        QByteArray resourceDataBefore, QByteArray resourceHashBefore,
+        QByteArray resourceRecognitionDataBefore,
+        QByteArray resourceRecognitionDataHashBefore,
+        QSize resourceImageSizeBefore, Resource resourceAfter,
+        INoteEditorBackend::Rotation::type rotationDirection);
+
     void onImageResourceRotationDelegateError(ErrorString error);
 
-    void onHideDecryptedTextFinished(const QVariant & data, const QVector<QPair<QString,QString> > & extraData);
-    void onHideDecryptedTextUndoRedoFinished(const QVariant & data, const QVector<QPair<QString,QString> > & extraData);
+    void onHideDecryptedTextFinished(
+        const QVariant & data, const QVector<QPair<QString,QString> > & extraData);
+
+    void onHideDecryptedTextUndoRedoFinished(
+        const QVariant & data, const QVector<QPair<QString,QString> > & extraData);
 
     void onEncryptSelectedTextDelegateFinished();
     void onEncryptSelectedTextDelegateCancelled();
     void onEncryptSelectedTextDelegateError(ErrorString error);
-    void onEncryptSelectedTextUndoRedoFinished(const QVariant & data, const QVector<QPair<QString,QString> > & extraData);
+    void onEncryptSelectedTextUndoRedoFinished(
+        const QVariant & data, const QVector<QPair<QString,QString> > & extraData);
 
-    void onDecryptEncryptedTextDelegateFinished(QString encryptedText, QString cipher, size_t length, QString hint,
-                                                QString decryptedText, QString passphrase, bool rememberForSession,
-                                                bool decryptPermanently);
+    void onDecryptEncryptedTextDelegateFinished(
+        QString encryptedText, QString cipher, size_t length, QString hint,
+        QString decryptedText, QString passphrase, bool rememberForSession,
+        bool decryptPermanently);
     void onDecryptEncryptedTextDelegateCancelled();
     void onDecryptEncryptedTextDelegateError(ErrorString error);
-    void onDecryptEncryptedTextUndoRedoFinished(const QVariant & data, const QVector<QPair<QString,QString> > & extraData);
+    void onDecryptEncryptedTextUndoRedoFinished(
+        const QVariant & data, const QVector<QPair<QString,QString> > & extraData);
 
     void onAddHyperlinkToSelectedTextDelegateFinished();
     void onAddHyperlinkToSelectedTextDelegateCancelled();
     void onAddHyperlinkToSelectedTextDelegateError(ErrorString error);
-    void onAddHyperlinkToSelectedTextUndoRedoFinished(const QVariant & data, const QVector<QPair<QString,QString> > & extraData);
+    void onAddHyperlinkToSelectedTextUndoRedoFinished(
+        const QVariant & data, const QVector<QPair<QString,QString> > & extraData);
 
     void onEditHyperlinkDelegateFinished();
     void onEditHyperlinkDelegateCancelled();
     void onEditHyperlinkDelegateError(ErrorString error);
-    void onEditHyperlinkUndoRedoFinished(const QVariant & data, const QVector<QPair<QString,QString> > & extraData);
+    void onEditHyperlinkUndoRedoFinished(
+        const QVariant & data, const QVector<QPair<QString,QString> > & extraData);
 
     void onRemoveHyperlinkDelegateFinished();
     void onRemoveHyperlinkDelegateError(ErrorString error);
-    void onRemoveHyperlinkUndoRedoFinished(const QVariant & data, const QVector<QPair<QString,QString> > & extraData);
+    void onRemoveHyperlinkUndoRedoFinished(
+        const QVariant & data, const QVector<QPair<QString,QString> > & extraData);
 
-    void onInsertHtmlDelegateFinished(QList<Resource> addedResources, QStringList resourceFileStoragePaths);
+    void onInsertHtmlDelegateFinished(QList<Resource> addedResources,
+                                      QStringList resourceFileStoragePaths);
     void onInsertHtmlDelegateError(ErrorString error);
-    void onInsertHtmlUndoRedoFinished(const QVariant & data, const QVector<QPair<QString,QString> > & extraData);
+    void onInsertHtmlUndoRedoFinished(
+        const QVariant & data, const QVector<QPair<QString,QString> > & extraData);
 
-    void onSourceCodeFormatUndoRedoFinished(const QVariant & data, const QVector<QPair<QString,QString> > & extraData);
+    void onSourceCodeFormatUndoRedoFinished(
+        const QVariant & data, const QVector<QPair<QString,QString> > & extraData);
 
     // Slots for undo command signals
     void onUndoCommandError(ErrorString error);
@@ -534,24 +600,36 @@ private Q_SLOTS:
 
     // Slots for signals from NoteEditorLocalStorageBroker
     void onNoteSavedToLocalStorage(QString noteLocalUid);
-    void onFailedToSaveNoteToLocalStorage(QString noteLocalUid, ErrorString errorDescription);
+    void onFailedToSaveNoteToLocalStorage(QString noteLocalUid,
+                                          ErrorString errorDescription);
     void onFoundNoteAndNotebook(Note note, Notebook notebook);
-    void onFailedToFindNoteOrNotebook(QString noteLocalUid, ErrorString errorDescription);
+    void onFailedToFindNoteOrNotebook(QString noteLocalUid,
+                                      ErrorString errorDescription);
     void onNoteUpdated(Note note);
     void onNotebookUpdated(Notebook notebook);
     void onNoteDeleted(QString noteLocalUid);
     void onNotebookDeleted(QString notebookLocalUid);
     void onFoundResourceData(Resource resource);
-    void onFailedToFindResourceData(QString resourceLocalUid, ErrorString errorDescription);
+    void onFailedToFindResourceData(QString resourceLocalUid,
+                                    ErrorString errorDescription);
 
     // Slots for signals from ResourceDataInTemporaryFileStorageManager
-    void onFailedToPutResourceDataInTemporaryFile(QString resourceLocalUid, QString noteLocalUid, ErrorString errorDescription);
-    void onNoteResourceTemporaryFilesPreparationProgress(double progress, QString noteLocalUid);
-    void onNoteResourceTemporaryFilesPreparationError(QString noteLocalUid, ErrorString errorDescription);
+    void onFailedToPutResourceDataInTemporaryFile(QString resourceLocalUid,
+                                                  QString noteLocalUid,
+                                                  ErrorString errorDescription);
+    void onNoteResourceTemporaryFilesPreparationProgress(double progress,
+                                                         QString noteLocalUid);
+    void onNoteResourceTemporaryFilesPreparationError(QString noteLocalUid,
+                                                      ErrorString errorDescription);
     void onNoteResourceTemporaryFilesReady(QString noteLocalUid);
-    void onOpenResourceInExternalEditorPreparationProgress(double progress, QString resourceLocalUid, QString noteLocalUid);
-    void onFailedToOpenResourceInExternalEditor(QString resourceLocalUid, QString noteLocalUid, ErrorString errorDescription);
-    void onOpenedResourceInExternalEditor(QString resourceLocalUid, QString noteLocalUid);
+    void onOpenResourceInExternalEditorPreparationProgress(double progress,
+                                                           QString resourceLocalUid,
+                                                           QString noteLocalUid);
+    void onFailedToOpenResourceInExternalEditor(QString resourceLocalUid,
+                                                QString noteLocalUid,
+                                                ErrorString errorDescription);
+    void onOpenedResourceInExternalEditor(QString resourceLocalUid,
+                                          QString noteLocalUid);
 
 private:
     void init();
@@ -559,24 +637,29 @@ private:
     void handleHyperlinkClicked(const QUrl & url);
     void handleInAppLinkClicked(const QString & urlString);
     bool parseInAppLink(const QString & urlString, QString & userId,
-                        QString & shardId, QString & noteGuid, ErrorString & errorDescription) const;
+                        QString & shardId, QString & noteGuid,
+                        ErrorString & errorDescription) const;
 
-    bool checkNoteSize(const QString & newNoteContent, ErrorString & errorDescription) const;
+    bool checkNoteSize(const QString & newNoteContent,
+                       ErrorString & errorDescription) const;
 
     void pushNoteContentEditUndoCommand();
-    void pushTableActionUndoCommand(const QString & name, NoteEditorPage::Callback callback);
+    void pushTableActionUndoCommand(const QString & name,
+                                    NoteEditorPage::Callback callback);
 
     template <typename T>
-    QString composeHtmlTable(const T width, const T singleColumnWidth, const int rows,
-                             const int columns, const bool relative);
+    QString composeHtmlTable(const T width, const T singleColumnWidth,
+                             const int rows, const int columns, const bool relative);
 
-    void onManagedPageActionFinished(const QVariant & result, const QVector<QPair<QString, QString> > & extraData);
+    void onManagedPageActionFinished(
+        const QVariant & result, const QVector<QPair<QString, QString> > & extraData);
     void updateJavaScriptBindings();
 
     void changeFontSize(const bool increase);
     void changeIndentation(const bool increase);
 
-    void findText(const QString & textToFind, const bool matchCase, const bool searchBackward = false,
+    void findText(const QString & textToFind, const bool matchCase,
+                  const bool searchBackward = false,
                   NoteEditorPage::Callback = 0) const;
 
     /**
@@ -589,22 +672,25 @@ private:
         enum type
         {
             /**
-             * Blank page of "Initial" kind is displayed before the note is set to the editor
+             * Blank page of "Initial" kind is displayed before the note is set
+             * to the editor
              */
             Initial = 0,
             /**
-             * Blank page of "NoteNotFound" kind is displayed if no note corresponding to the local uid passed to
-             * setCurrentNoteLocalUid slot was found within the local storage
+             * Blank page of "NoteNotFound" kind is displayed if no note corresponding
+             * to the local uid passed to setCurrentNoteLocalUid slot was found
+             * within the local storage
              */
             NoteNotFound,
             /**
-             * Blank page of "NoteDeleted" kind is displayed if the note which was displayed by the editor
-             * was deleted (either marked as "deleted" or deleted permanently (expunged) from the local storage
+             * Blank page of "NoteDeleted" kind is displayed if the note which
+             * was displayed by the editor was deleted (either marked as "deleted"
+             * or deleted permanently (expunged) from the local storage
              */
             NoteDeleted,
             /**
-             * Blank page of "InternalError" kind is displayed if the note editor cannot display the note
-             * for some reason
+             * Blank page of "InternalError" kind is displayed if the note editor
+             * cannot display the note for some reason
              */
             InternalError
         };
@@ -626,7 +712,8 @@ private:
 
     bool htmlToNoteContent(ErrorString & errorDescription);
 
-    void updateHashForResourceTag(const QByteArray & oldResourceHash, const QByteArray & newResourceHash);
+    void updateHashForResourceTag(const QByteArray & oldResourceHash,
+                                  const QByteArray & newResourceHash);
     void provideSrcForResourceImgTags();
 
     void manualSaveResourceToFile(const Resource & resource);
@@ -636,7 +723,8 @@ private:
 
     void setupGenericResourceImages();
 
-    // Returns true if the resource image gets built and is being saved to a file asynchronously
+    // Returns true if the resource image gets built and is being saved
+    // to a file asynchronously
     bool findOrBuildGenericResourceImage(const Resource & resource);
 
     void setupWebSocketServer();
@@ -644,14 +732,19 @@ private:
     void setupTextCursorPositionTracking();
 #endif
 
-    void setupGenericTextContextMenu(const QStringList & extraData, const QString & selectedHtml, bool insideDecryptedTextFragment);
+    void setupGenericTextContextMenu(const QStringList & extraData,
+                                     const QString & selectedHtml,
+                                     bool insideDecryptedTextFragment);
     void setupImageResourceContextMenu(const QByteArray & resourceHash);
     void setupNonImageResourceContextMenu(const QByteArray & resourceHash);
-    void setupEncryptedTextContextMenu(const QString & cipher, const QString & keyLength,
-                                       const QString & encryptedText, const QString & hint,
+    void setupEncryptedTextContextMenu(const QString & cipher,
+                                       const QString & keyLength,
+                                       const QString & encryptedText,
+                                       const QString & hint,
                                        const QString & id);
 
-    void setupActionShortcut(const int key, const QString & context, QAction & action);
+    void setupActionShortcut(const int key, const QString & context,
+                             QAction & action);
 
     void setupFileIO();
     void setupSpellChecker();
@@ -674,18 +767,26 @@ private:
 
     bool checkContextMenuSequenceNumber(const quint64 sequenceNumber) const;
 
-    void onPageHtmlReceived(const QString & html, const QVector<QPair<QString,QString> > & extraData = QVector<QPair<QString,QString> >());
-    void onSelectedTextEncryptionDone(const QVariant & dummy, const QVector<QPair<QString,QString> > & extraData);
+    void onPageHtmlReceived(
+        const QString & html, const QVector<QPair<QString,QString> > & extraData =
+        QVector<QPair<QString,QString> >());
 
-    void onTableActionDone(const QVariant & dummy, const QVector<QPair<QString,QString> > & extraData);
+    void onSelectedTextEncryptionDone(
+        const QVariant & dummy, const QVector<QPair<QString,QString> > & extraData);
 
-    int resourceIndexByHash(const QList<Resource> & resources, const QByteArray & resourceHash) const;
+    void onTableActionDone(
+        const QVariant & dummy, const QVector<QPair<QString,QString> > & extraData);
+
+    int resourceIndexByHash(const QList<Resource> & resources,
+                            const QByteArray & resourceHash) const;
 
     void writeNotePageFile(const QString & html);
 
-    bool parseEncryptedTextContextMenuExtraData(const QStringList & extraData, QString & encryptedText,
-                                                QString & decryptedText, QString & cipher, QString & keyLength, QString & hint,
-                                                QString & id, ErrorString & errorDescription) const;
+    bool parseEncryptedTextContextMenuExtraData(
+        const QStringList & extraData, QString & encryptedText,
+        QString & decryptedText, QString & cipher, QString & keyLength,
+        QString & hint, QString & id, ErrorString & errorDescription) const;
+
     void setupPasteGenericTextMenuActions();
     void setupParagraphSubMenuForGenericTextMenu(const QString & selectedHtml);
     void setupStyleSubMenuForGenericTextMenu();
@@ -696,16 +797,19 @@ private:
     void enableSpellCheck();
     void disableSpellCheck();
 
-    void onSpellCheckSetOrCleared(const QVariant & dummy, const QVector<QPair<QString,QString> > & extraData);
+    void onSpellCheckSetOrCleared(
+        const QVariant & dummy, const QVector<QPair<QString,QString> > & extraData);
 
     bool isNoteReadOnly() const;
 
-    void setupAddHyperlinkDelegate(const quint64 hyperlinkId, const QString & presetHyperlink = QString(),
+    void setupAddHyperlinkDelegate(const quint64 hyperlinkId,
+                                   const QString & presetHyperlink = QString(),
                                    const QString & replacementLinkText = QString());
 
 #ifdef QUENTIER_USE_QT_WEB_ENGINE
-    void onPageHtmlReceivedForPrinting(const QString & html,
-                                       const QVector<QPair<QString,QString> > & extraData = QVector<QPair<QString,QString> >());
+    void onPageHtmlReceivedForPrinting(
+        const QString & html, const QVector<QPair<QString,QString> > & extraData =
+        QVector<QPair<QString,QString> >());
 #endif
 
     void clearCurrentNoteInfo();
@@ -730,21 +834,42 @@ private:
     {
     public:
         NoteEditorCallbackFunctor(NoteEditorPrivate * pNoteEditor,
-                                  void (NoteEditorPrivate::* method)(const T & result,
-                                                                     const QVector<QPair<QString,QString> > & extraData),
-                                  const QVector<QPair<QString,QString> > & extraData = QVector<QPair<QString,QString> >()) :
+                                  void (NoteEditorPrivate::* method)(
+                                      const T & result,
+                                      const QVector<QPair<QString,QString> > & extraData),
+                                  const QVector<QPair<QString,QString> > & extraData =
+                                  QVector<QPair<QString,QString> >()) :
             m_pNoteEditor(pNoteEditor), m_method(method), m_extraData(extraData)
         {}
 
-        NoteEditorCallbackFunctor(const NoteEditorCallbackFunctor<T> & other) : m_pNoteEditor(other.m_pNoteEditor), m_method(other.m_method), m_extraData(other.m_extraData) {}
-        NoteEditorCallbackFunctor & operator=(const NoteEditorCallbackFunctor<T> & other)
-        { if (this != &other) { m_pNoteEditor = other.m_pNoteEditor; m_method = other.m_method; m_extraData = other.m_extraData; } return *this; }
+        NoteEditorCallbackFunctor(const NoteEditorCallbackFunctor<T> & other) :
+            m_pNoteEditor(other.m_pNoteEditor),
+            m_method(other.m_method),
+            m_extraData(other.m_extraData)
+        {}
 
-        void operator()(const T & result) { if (Q_LIKELY(!m_pNoteEditor.isNull())) { (m_pNoteEditor->*m_method)(result, m_extraData); } }
+        NoteEditorCallbackFunctor & operator=(const NoteEditorCallbackFunctor<T> & other)
+        {
+            if (this != &other) {
+                m_pNoteEditor = other.m_pNoteEditor;
+                m_method = other.m_method;
+                m_extraData = other.m_extraData;
+            }
+
+            return *this;
+        }
+
+        void operator()(const T & result)
+        {
+            if (Q_LIKELY(!m_pNoteEditor.isNull())) {
+                (m_pNoteEditor->*m_method)(result, m_extraData);
+            }
+        }
 
     private:
         QPointer<NoteEditorPrivate> m_pNoteEditor;
-        void (NoteEditorPrivate::* m_method)(const T & result, const QVector<QPair<QString,QString> > & extraData);
+        void (NoteEditorPrivate::* m_method)(
+            const T & result, const QVector<QPair<QString,QString> > & extraData);
         QVector<QPair<QString, QString> > m_extraData;
     };
 
@@ -754,9 +879,18 @@ private:
     class Q_DECL_HIDDEN ReplaceCallback
     {
     public:
-        ReplaceCallback(NoteEditorPrivate * pNoteEditor) : m_pNoteEditor(pNoteEditor) {}
+        ReplaceCallback(NoteEditorPrivate * pNoteEditor) :
+            m_pNoteEditor(pNoteEditor)
+        {}
 
-        void operator()(const QVariant & data) { if (Q_UNLIKELY(m_pNoteEditor.isNull())) { return; } m_pNoteEditor->onReplaceJavaScriptDone(data); }
+        void operator()(const QVariant & data)
+        {
+            if (Q_UNLIKELY(m_pNoteEditor.isNull())) {
+                return;
+            }
+
+            m_pNoteEditor->onReplaceJavaScriptDone(data);
+        }
 
     private:
         QPointer<NoteEditorPrivate>     m_pNoteEditor;
@@ -813,8 +947,9 @@ private:
         QString m_length;
     };
 
-    // Holds some data required for certain context menu actions, like the encrypted text data for its decryption,
-    // the hash of the resource under cursor for which the action is toggled etc.
+    // Holds some data required for certain context menu actions, like
+    // the encrypted text data for its decryption, the hash of the resource
+    // under cursor for which the action is toggled etc.
     class Q_DECL_HIDDEN CurrentContextMenuExtraData
     {
     public:
@@ -964,23 +1099,33 @@ private:
     bool        m_pendingNoteImageResourceTemporaryFiles;
 
     /**
-     * The two following variables deserve a special explanation. Since Qt 5.9 QWebEnginePage::load method started to behave
-     * really weirdly: it seems when it's called for the first time, the method blocks the event loop until the page is actually loaded.
-     * I.e. when the page got loaded, the execution of code after the call to QWebEnginePage::load (or QWebEnginePage::setUrl
-     * since it calls QWebEnginePage::load internally) continues.
+     * The two following variables deserve a special explanation. Since Qt 5.9
+     * QWebEnginePage::load method started to behave really weirdly: it seems
+     * when it's called for the first time, the method blocks the event loop
+     * until the page is actually loaded. I.e. when the page got loaded,
+     * the execution of code after the call to QWebEnginePage::load
+     * (or QWebEnginePage::setUrl since it calls QWebEnginePage::load internally)
+     * continues.
      *
-     * Why to give a damn, you ask? Well, things become more interesting if you attempt to call QWebEnginePage::load
-     * (or QWebEnginePage::setUrl) while there's still an event loop blocked inside QWebEnginePage::load. In particular,
-     * what seems to happen is that the second call to QWebEnginePage::load does not block; the page seems to be loaded
-     * successfully but then the original blocked call to QWebEnginePage::load returns. The net effect is the appearance
-     * of the first loaded URL within the page, not the second one.
+     * Why to give a damn, you ask? Well, things become more interesting if you
+     * attempt to call QWebEnginePage::load (or QWebEnginePage::setUrl) while
+     * there's still an event loop blocked inside QWebEnginePage::load.
+     * In particular, what seems to happen is that the second call to
+     * QWebEnginePage::load does not block; the page seems to be loaded
+     * successfully but then the original blocked call to QWebEnginePage::load
+     * returns. The net effect is the appearance of the first loaded URL within
+     * the page, not the second one.
      *
-     * This behaviour has only been observed with Qt 5.9, not with any prior version. It is (of course) not documented
-     * or mentioned anywhere, you have to learn this on your own, the hard way. Thank you, Qt devs, you are the best... not.
+     * This behaviour has only been observed with Qt 5.9, not with any prior
+     * version. It is (of course) not documented or mentioned anywhere, you have
+     * to learn this on your own, the hard way. Thank you, Qt devs, you are
+     * the best... not.
      *
-     * Working around this issue using the special boolean flag indicating whether the method is currently blocked
-     * in at least one event loop. If yes, won't attempt to call QWebEnginePage::load (or QWebEnginePage::setUrl)
-     * until the blocked method returns, instead will just save the next URL to load and will load it later
+     * Working around this issue using the special boolean flag indicating whether
+     * the method is currently blocked in at least one event loop. If yes, won't
+     * attempt to call QWebEnginePage::load (or QWebEnginePage::setUrl) until
+     * the blocked method returns, instead will just save the next URL to load
+     * and will load it later
      */
     bool        m_pendingNotePageLoadMethodExit;
     QUrl        m_pendingNextPageUrl;
@@ -996,9 +1141,9 @@ private:
 
     /**
      * This flag is set to true when the note editor page's content gets changed
-     * and thus needs to be converted to HTML and then ENML and then put into m_pNote object;
-     * when m_pNote's ENML becomes actual with the note editor page's content,
-     * this flag is dropped back to false
+     * and thus needs to be converted to HTML and then ENML and then put into
+     * m_pNote object; when m_pNote's ENML becomes actual with the note editor
+     * page's content, this flag is dropped back to false
      */
     bool        m_needConversionToNote;
 
@@ -1012,20 +1157,22 @@ private:
      */
     bool        m_needSavingNoteInLocalStorage;
 
-    // These two bools implement a cheap scheme of watching
-    // for changes in note editor since some particular moment in time.
-    // For example, the conversion of note from HTML into ENML happens
-    // in the background mode, when the editor is idle for at least N seconds.
-    // How can such idle state be determined? Create a timer for N seconds,
-    // as it begins, set m_watchingForContentChange to true and
-    // m_contentChangedSinceWatchingStart to false. On every next content change
-    // m_contentChangedSinceWatchingStart would be set to true. When the timer ends,
-    // it can check the state of m_contentChangedSinceWatchingStart.
-    // If it's true, it means the editing is still in progress and it's not nice
-    // to block the GUI thread by HTML to ENML conversion. So drop this
-    // variable into false again and wait for another N seconds. And only
-    // if there were no further edits during N seconds, convert note editor's page
-    // to ENML
+    /**
+     * These two bools implement a cheap scheme of watching
+     * for changes in note editor since some particular moment in time.
+     * For example, the conversion of note from HTML into ENML happens
+     * in the background mode, when the editor is idle for at least N seconds.
+     * How can such idle state be determined? Create a timer for N seconds,
+     * as it begins, set m_watchingForContentChange to true and
+     * m_contentChangedSinceWatchingStart to false. On every next content change
+     * m_contentChangedSinceWatchingStart would be set to true. When the timer ends,
+     * it can check the state of m_contentChangedSinceWatchingStart.
+     * If it's true, it means the editing is still in progress and it's not nice
+     * to block the GUI thread by HTML to ENML conversion. So drop this
+     * variable into false again and wait for another N seconds. And only
+     * if there were no further edits during N seconds, convert note editor's page
+     * to ENML
+     */
     bool        m_watchingForContentChange;
     bool        m_contentChangedSinceWatchingStart;
 
@@ -1042,9 +1189,11 @@ private:
     NoteEditorPluginFactory *               m_pPluginFactory;
 #endif
 
-    // Dialog to display the progress of putting note's image resources into
-    // temporary files for the sake of being displayed within the note editor
-    // page
+    /**
+     * Dialog to display the progress of putting note's image resources into
+     * temporary files for the sake of being displayed within the note editor
+     * page
+     */
     QProgressDialog *   m_pPrepareNoteImageResourcesProgressDialog;
 
     // Progress dialogs for note resources requested to be opened
@@ -1099,8 +1248,8 @@ private:
 
     CurrentContextMenuExtraData     m_currentContextMenuExtraData;
 
-    QSet<QUuid>     m_localUidsOfResourcesPendingFindDataInLocalStorageForManualSavingToFile;
-    QHash<QUuid, Rotation::type>    m_rotationTypeByResourceLocalUidsPendingFindDataInLocalStorageForImageResourceRotating;
+    QSet<QUuid>     m_resourceLocalUidsPendingFindDataInLocalStorageForSavingToFile;
+    QHash<QUuid, Rotation::type>    m_rotationTypeByResourceLocalUidsPendingFindDataInLocalStorage;
 
     quint64     m_lastFreeEnToDoIdNumber;
     quint64     m_lastFreeHyperlinkIdNumber;

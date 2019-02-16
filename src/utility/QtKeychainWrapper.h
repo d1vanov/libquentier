@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Dmitry Ivanov
+ * Copyright 2018-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -45,18 +45,23 @@ public:
     QtKeychainWrapper();
     virtual ~QtKeychainWrapper();
 
-    // NOTE: this is required for Qt4 connection syntax, it won't properly understand IKeychainService::ErrorCode::type
+    // NOTE: this is required for Qt4 connection syntax, it won't properly
+    // understand IKeychainService::ErrorCode::type
     typedef IKeychainService::ErrorCode ErrorCode;
 
 public Q_SLOTS:
-    void onStartWritePasswordJob(QUuid jobId, QString service, QString key, QString password);
+    void onStartWritePasswordJob(QUuid jobId, QString service, QString key,
+                                 QString password);
     void onStartReadPasswordJob(QUuid jobId, QString service, QString key);
     void onStartDeletePasswordJob(QUuid jobId, QString service, QString key);
 
 Q_SIGNALS:
-    void writePasswordJobFinished(QUuid requestId, ErrorCode::type errorCode, ErrorString errorDescription);
-    void readPasswordJobFinished(QUuid requestId, ErrorCode::type errorCode, ErrorString errorDescription, QString password);
-    void deletePasswordJobFinished(QUuid requestId, ErrorCode::type errorCode, ErrorString errorDescription);
+    void writePasswordJobFinished(QUuid requestId, ErrorCode::type errorCode,
+                                  ErrorString errorDescription);
+    void readPasswordJobFinished(QUuid requestId, ErrorCode::type errorCode,
+                                 ErrorString errorDescription, QString password);
+    void deletePasswordJobFinished(QUuid requestId, ErrorCode::type errorCode,
+                                   ErrorString errorDescription);
 
 private Q_SLOTS:
     void onWritePasswordJobFinished(QKeychain::Job * pJob);

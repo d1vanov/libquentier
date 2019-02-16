@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Dmitry Ivanov
+ * Copyright 2017-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -41,8 +41,9 @@
 
 namespace quentier {
 
-AuthenticationManagerPrivate::AuthenticationManagerPrivate(const QString & consumerKey, const QString & consumerSecret,
-                                                           const QString & host, QObject * parent) :
+AuthenticationManagerPrivate::AuthenticationManagerPrivate(
+        const QString & consumerKey, const QString & consumerSecret,
+        const QString & host, QObject * parent) :
     QObject(parent),
     m_consumerKey(consumerKey),
     m_consumerSecret(consumerSecret),
@@ -54,24 +55,28 @@ void AuthenticationManagerPrivate::onAuthenticationRequest()
     QNDEBUG(QStringLiteral("AuthenticationManagerPrivate::onAuthenticationRequest"));
 
     QWidget * pParentWidget = qobject_cast<QWidget*>(parent());
-    QScopedPointer<qevercloud::EvernoteOAuthDialog> pDialog(new qevercloud::EvernoteOAuthDialog(m_consumerKey, m_consumerSecret, m_host, pParentWidget));
+    QScopedPointer<qevercloud::EvernoteOAuthDialog> pDialog(
+        new qevercloud::EvernoteOAuthDialog(m_consumerKey, m_consumerSecret,
+                                            m_host, pParentWidget));
     pDialog->setWindowModality(Qt::WindowModal);
 
     auto res = pDialog->exec();
     if (res == QDialog::Accepted)
     {
         qevercloud::EvernoteOAuthDialog::OAuthResult result = pDialog->oauthResult();
-        Q_EMIT sendAuthenticationResult(/* success = */ true, result.userId, result.authenticationToken,
-                                        result.expires, result.shardId, result.noteStoreUrl,
+        Q_EMIT sendAuthenticationResult(/* success = */ true, result.userId,
+                                        result.authenticationToken, result.expires,
+                                        result.shardId, result.noteStoreUrl,
                                         result.webApiUrlPrefix, ErrorString());
     }
     else
     {
         ErrorString errorDescription(QT_TR_NOOP("Can't authenticate to Evernote"));
         errorDescription.details() = pDialog->oauthError();
-        Q_EMIT sendAuthenticationResult(/* success = */ false, qevercloud::UserID(-1), QString(),
-                                        qevercloud::Timestamp(0), QString(), QString(), QString(),
-                                        errorDescription);
+        Q_EMIT sendAuthenticationResult(/* success = */ false,
+                                        qevercloud::UserID(-1), QString(),
+                                        qevercloud::Timestamp(0), QString(),
+                                        QString(), QString(), errorDescription);
     }
 }
 

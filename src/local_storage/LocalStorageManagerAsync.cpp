@@ -27,6 +27,70 @@
 
 namespace quentier {
 
+class LocalStorageManagerAsyncPrivate
+{
+public:
+    LocalStorageManagerAsyncPrivate() :
+        m_account(),
+        m_useCache(true),
+        m_startupOptions(0),
+        m_pLocalStorageManager(Q_NULLPTR),
+        m_pLocalStorageCacheManager(Q_NULLPTR)
+    {}
+
+    ~LocalStorageManagerAsyncPrivate()
+    {
+        delete m_pLocalStorageCacheManager;
+        delete m_pLocalStorageManager;
+    }
+
+    void setUseCache(const bool useCache)
+    {
+        if (m_useCache) {
+            // Cache is being disabled - no point to store things in it anymore,
+            // it would get rotten pretty quick
+            m_pLocalStorageCacheManager->clear();
+        }
+
+        m_useCache = useCache;
+    }
+
+    void cacheNotes(const QList<Note> & notes,
+                    const LocalStorageManager::GetNoteOptions options)
+    {
+        if (!m_useCache) {
+            return;
+        }
+
+        if (!(options & LocalStorageManager::GetNoteOption::WithResourceMetadata)) {
+            return;
+        }
+
+        if (options & LocalStorageManager::GetNoteOption::WithResourceBinaryData)
+        {
+            for(auto it = notes.begin(), end = notes.end(); it != end; ++it) {
+                Note note = *it;
+                note.setResources(QList<Resource>());
+                m_pLocalStorageCacheManager->cacheNote(note);
+            }
+        }
+        else
+        {
+            for(auto it = notes.constBegin(),
+                end = notes.constEnd(); it != end; ++it)
+            {
+                m_pLocalStorageCacheManager->cacheNote(*it);
+            }
+        }
+    }
+
+    Account     m_account;
+    bool        m_useCache;
+    LocalStorageManager::StartupOptions     m_startupOptions;
+    LocalStorageManager *       m_pLocalStorageManager;
+    LocalStorageCacheManager *  m_pLocalStorageCacheManager;
+};
+
 namespace {
 
 /**
@@ -48,52 +112,44 @@ void splitNoteAndResourcesForCaching(Note & note, QList<Resource> & resources)
 
 }
 
-LocalStorageManagerAsync::LocalStorageManagerAsync(const Account & account, const bool startFromScratch,
-                                                   const bool overrideLock, QObject * parent) :
+LocalStorageManagerAsync::LocalStorageManagerAsync(const Account & account,
+                                                   const LocalStorageManager::StartupOptions options,
+                                                   QObject * parent) :
     QObject(parent),
-    m_account(account),
-    m_startFromScratch(startFromScratch),
-    m_overrideLock(overrideLock),
-    m_useCache(true),
-    m_pLocalStorageManager(Q_NULLPTR),
-    m_pLocalStorageCacheManager(Q_NULLPTR)
-{}
+    d_ptr(new LocalStorageManagerAsyncPrivate)
+{
+    Q_D(LocalStorageManagerAsync);
+    d->m_account = account;
+    d->m_startupOptions = options;
+}
 
 LocalStorageManagerAsync::~LocalStorageManagerAsync()
-{
-    if (m_pLocalStorageCacheManager) {
-        delete m_pLocalStorageCacheManager;
-    }
-
-    if (m_pLocalStorageManager) {
-        delete m_pLocalStorageManager;
-    }
-}
+{}
 
 void LocalStorageManagerAsync::setUseCache(const bool useCache)
 {
-    if (m_useCache) {
-        // Cache is being disabled - no point to store things in it anymore, it would get rotten pretty quick
-        m_pLocalStorageCacheManager->clear();
-    }
-
-    m_useCache = useCache;
+    Q_D(LocalStorageManagerAsync);
+    d->setUseCache(useCache);
 }
 
 const LocalStorageCacheManager * LocalStorageManagerAsync::localStorageCacheManager() const
 {
-    if (!m_useCache) {
+    Q_D(const LocalStorageManagerAsync);
+
+    if (!d->m_useCache) {
         return Q_NULLPTR;
     }
     else {
-        return m_pLocalStorageCacheManager;
+        return d->m_pLocalStorageCacheManager;
     }
 }
 
-bool LocalStorageManagerAsync::installCacheExpiryFunction(const ILocalStorageCacheExpiryChecker & checker)
+bool LocalStorageManagerAsync::installCacheExpiryFunction(
+    const ILocalStorageCacheExpiryChecker & checker)
 {
-    if (m_useCache && m_pLocalStorageCacheManager) {
-        m_pLocalStorageCacheManager->installCacheExpiryFunction(checker);
+    Q_D(LocalStorageManagerAsync);
+    if (d->m_useCache && d->m_pLocalStorageCacheManager) {
+        d->m_pLocalStorageCacheManager->installCacheExpiryFunction(checker);
         return true;
     }
 
@@ -102,37 +158,44 @@ bool LocalStorageManagerAsync::installCacheExpiryFunction(const ILocalStorageCac
 
 const LocalStorageManager * LocalStorageManagerAsync::localStorageManager() const
 {
-    return m_pLocalStorageManager;
+    Q_D(const LocalStorageManagerAsync);
+    return d->m_pLocalStorageManager;
 }
 
 LocalStorageManager * LocalStorageManagerAsync::localStorageManager()
 {
-    return m_pLocalStorageManager;
+    Q_D(LocalStorageManagerAsync);
+    return d->m_pLocalStorageManager;
 }
 
 void LocalStorageManagerAsync::init()
 {
-    if (m_pLocalStorageManager) {
-        delete m_pLocalStorageManager;
+    Q_D(LocalStorageManagerAsync);
+
+    if (d->m_pLocalStorageManager) {
+        delete d->m_pLocalStorageManager;
     }
 
-    m_pLocalStorageManager = new LocalStorageManager(m_account, m_startFromScratch, m_overrideLock);
+    d->m_pLocalStorageManager =
+            new LocalStorageManager(d->m_account, d->m_startupOptions);
 
-    if (m_pLocalStorageCacheManager) {
-        delete m_pLocalStorageCacheManager;
+    if (d->m_pLocalStorageCacheManager) {
+        delete d->m_pLocalStorageCacheManager;
     }
 
-    m_pLocalStorageCacheManager = new LocalStorageCacheManager();
+    d->m_pLocalStorageCacheManager = new LocalStorageCacheManager();
 
     Q_EMIT initialized();
 }
 
 void LocalStorageManagerAsync::onGetUserCountRequest(QUuid requestId)
 {
+    Q_D(LocalStorageManagerAsync);
+
     try
     {
         ErrorString errorDescription;
-        int count = m_pLocalStorageManager->userCount(errorDescription);
+        int count = d->m_pLocalStorageManager->userCount(errorDescription);
         if (count < 0) {
             Q_EMIT getUserCountFailed(errorDescription, requestId);
         }
@@ -142,7 +205,8 @@ void LocalStorageManagerAsync::onGetUserCountRequest(QUuid requestId)
     }
     catch(const std::exception & e)
     {
-        ErrorString error(QT_TR_NOOP("Can't get user count from the local storage: caught exception"));
+        ErrorString error(QT_TR_NOOP("Can't get user count from the local storage: "
+                                     "caught exception"));
         error.details() = QString::fromUtf8(e.what());
         SysInfo sysInfo;
         QNERROR(error << QStringLiteral("; backtrace: ") << sysInfo.stackTrace());
@@ -150,27 +214,32 @@ void LocalStorageManagerAsync::onGetUserCountRequest(QUuid requestId)
     }
 }
 
-void LocalStorageManagerAsync::onSwitchUserRequest(Account account, bool startFromScratch, QUuid requestId)
+void LocalStorageManagerAsync::onSwitchUserRequest(Account account,
+    LocalStorageManager::StartupOptions startupOptions,
+    QUuid requestId)
 {
+    Q_D(LocalStorageManagerAsync);
+
     try
     {
-        m_pLocalStorageManager->switchUser(account, startFromScratch);
+        d->m_pLocalStorageManager->switchUser(account, startupOptions);
     }
     catch(const std::exception & e)
     {
-        ErrorString errorDescription(QT_TR_NOOP("Can't switch user in the local storage: caught exception"));
+        ErrorString errorDescription(QT_TR_NOOP("Can't switch user in the local "
+                                                "storage: caught exception"));
         errorDescription.details() = QString::fromUtf8(e.what());
 
-        if (m_useCache) {
-            m_pLocalStorageCacheManager->clear();
+        if (d->m_useCache) {
+            d->m_pLocalStorageCacheManager->clear();
         }
 
         Q_EMIT switchUserFailed(account, errorDescription, requestId);
         return;
     }
 
-    if (m_useCache) {
-        m_pLocalStorageCacheManager->clear();
+    if (d->m_useCache) {
+        d->m_pLocalStorageCacheManager->clear();
     }
 
     Q_EMIT switchUserComplete(account, requestId);
@@ -178,11 +247,13 @@ void LocalStorageManagerAsync::onSwitchUserRequest(Account account, bool startFr
 
 void LocalStorageManagerAsync::onAddUserRequest(User user, QUuid requestId)
 {
+    Q_D(LocalStorageManagerAsync);
+
     try
     {
         ErrorString errorDescription;
 
-        bool res = m_pLocalStorageManager->addUser(user, errorDescription);
+        bool res = d->m_pLocalStorageManager->addUser(user, errorDescription);
         if (!res) {
             Q_EMIT addUserFailed(user, errorDescription, requestId);
             return;
@@ -192,7 +263,8 @@ void LocalStorageManagerAsync::onAddUserRequest(User user, QUuid requestId)
     }
     catch(const std::exception & e)
     {
-        ErrorString error(QT_TR_NOOP("Can't add user to the local storage: caught exception"));
+        ErrorString error(QT_TR_NOOP("Can't add user to the local storage: "
+                                     "caught exception"));
         error.details() = QString::fromUtf8(e.what());
         SysInfo sysInfo;
         QNERROR(error << QStringLiteral("; backtrace: ") << sysInfo.stackTrace());
@@ -202,11 +274,13 @@ void LocalStorageManagerAsync::onAddUserRequest(User user, QUuid requestId)
 
 void LocalStorageManagerAsync::onUpdateUserRequest(User user, QUuid requestId)
 {
+    Q_D(LocalStorageManagerAsync);
+
     try
     {
         ErrorString errorDescription;
 
-        bool res = m_pLocalStorageManager->updateUser(user, errorDescription);
+        bool res = d->m_pLocalStorageManager->updateUser(user, errorDescription);
         if (!res) {
             Q_EMIT updateUserFailed(user, errorDescription, requestId);
             return;
@@ -216,7 +290,8 @@ void LocalStorageManagerAsync::onUpdateUserRequest(User user, QUuid requestId)
     }
     catch(const std::exception & e)
     {
-        ErrorString error(QT_TR_NOOP("Can't update user within the local storage: caught exception"));
+        ErrorString error(QT_TR_NOOP("Can't update user within the local storage: "
+                                     "caught exception"));
         error.details() = QString::fromUtf8(e.what());
         SysInfo sysInfo;
         QNERROR(error << QStringLiteral("; backtrace: ") << sysInfo.stackTrace());
@@ -226,11 +301,13 @@ void LocalStorageManagerAsync::onUpdateUserRequest(User user, QUuid requestId)
 
 void LocalStorageManagerAsync::onFindUserRequest(User user, QUuid requestId)
 {
+    Q_D(LocalStorageManagerAsync);
+
     try
     {
         ErrorString errorDescription;
 
-        bool res = m_pLocalStorageManager->findUser(user, errorDescription);
+        bool res = d->m_pLocalStorageManager->findUser(user, errorDescription);
         if (!res) {
             Q_EMIT findUserFailed(user, errorDescription, requestId);
             return;
@@ -250,11 +327,13 @@ void LocalStorageManagerAsync::onFindUserRequest(User user, QUuid requestId)
 
 void LocalStorageManagerAsync::onDeleteUserRequest(User user, QUuid requestId)
 {
+    Q_D(LocalStorageManagerAsync);
+
     try
     {
         ErrorString errorDescription;
 
-        bool res = m_pLocalStorageManager->deleteUser(user, errorDescription);
+        bool res = d->m_pLocalStorageManager->deleteUser(user, errorDescription);
         if (!res) {
             Q_EMIT deleteUserFailed(user, errorDescription, requestId);
             return;
@@ -264,7 +343,8 @@ void LocalStorageManagerAsync::onDeleteUserRequest(User user, QUuid requestId)
     }
     catch(const std::exception & e)
     {
-        ErrorString error(QT_TR_NOOP("Can't mark user as deleted in the local storage: caught exception"));
+        ErrorString error(QT_TR_NOOP("Can't mark user as deleted in the local "
+                                     "storage: caught exception"));
         error.details() = QString::fromUtf8(e.what());
         SysInfo sysInfo;
         QNERROR(error << QStringLiteral("; backtrace: ") << sysInfo.stackTrace());
@@ -274,11 +354,13 @@ void LocalStorageManagerAsync::onDeleteUserRequest(User user, QUuid requestId)
 
 void LocalStorageManagerAsync::onExpungeUserRequest(User user, QUuid requestId)
 {
+    Q_D(LocalStorageManagerAsync);
+
     try
     {
         ErrorString errorDescription;
 
-        bool res = m_pLocalStorageManager->expungeUser(user, errorDescription);
+        bool res = d->m_pLocalStorageManager->expungeUser(user, errorDescription);
         if (!res) {
             Q_EMIT expungeUserFailed(user, errorDescription, requestId);
             return;
@@ -288,7 +370,8 @@ void LocalStorageManagerAsync::onExpungeUserRequest(User user, QUuid requestId)
     }
     catch(const std::exception & e)
     {
-        ErrorString error(QT_TR_NOOP("Can't expunge user from the local storage: caught exception"));
+        ErrorString error(QT_TR_NOOP("Can't expunge user from the local storage: "
+                                     "caught exception"));
         error.details() = QString::fromUtf8(e.what());
         SysInfo sysInfo;
         QNERROR(error << QStringLiteral("; backtrace: ") << sysInfo.stackTrace());
@@ -298,10 +381,12 @@ void LocalStorageManagerAsync::onExpungeUserRequest(User user, QUuid requestId)
 
 void LocalStorageManagerAsync::onGetNotebookCountRequest(QUuid requestId)
 {
+    Q_D(LocalStorageManagerAsync);
+
     try
     {
         ErrorString errorDescription;
-        int count = m_pLocalStorageManager->notebookCount(errorDescription);
+        int count = d->m_pLocalStorageManager->notebookCount(errorDescription);
         if (count < 0) {
             Q_EMIT getNotebookCountFailed(errorDescription, requestId);
         }
@@ -311,7 +396,8 @@ void LocalStorageManagerAsync::onGetNotebookCountRequest(QUuid requestId)
     }
     catch(const std::exception & e)
     {
-        ErrorString error(QT_TR_NOOP("Can't get notebook count from the local storage: caught exception"));
+        ErrorString error(QT_TR_NOOP("Can't get notebook count from the local "
+                                     "storage: caught exception"));
         error.details() = QString::fromUtf8(e.what());
         SysInfo sysInfo;
         QNERROR(error << QStringLiteral("; backtrace: ") << sysInfo.stackTrace());
@@ -319,27 +405,31 @@ void LocalStorageManagerAsync::onGetNotebookCountRequest(QUuid requestId)
     }
 }
 
-void LocalStorageManagerAsync::onAddNotebookRequest(Notebook notebook, QUuid requestId)
+void LocalStorageManagerAsync::onAddNotebookRequest(Notebook notebook,
+                                                    QUuid requestId)
 {
+    Q_D(LocalStorageManagerAsync);
+
     try
     {
         ErrorString errorDescription;
 
-        bool res = m_pLocalStorageManager->addNotebook(notebook, errorDescription);
+        bool res = d->m_pLocalStorageManager->addNotebook(notebook, errorDescription);
         if (!res) {
             Q_EMIT addNotebookFailed(notebook, errorDescription, requestId);
             return;
         }
 
-        if (m_useCache) {
-            m_pLocalStorageCacheManager->cacheNotebook(notebook);
+        if (d->m_useCache) {
+            d->m_pLocalStorageCacheManager->cacheNotebook(notebook);
         }
 
         Q_EMIT addNotebookComplete(notebook, requestId);
     }
     catch(const std::exception & e)
     {
-        ErrorString error(QT_TR_NOOP("Can't add notebook to the local storage: caught exception"));
+        ErrorString error(QT_TR_NOOP("Can't add notebook to the local storage: "
+                                     "caught exception"));
         error.details() = QString::fromUtf8(e.what());
         SysInfo sysInfo;
         QNERROR(error << QStringLiteral("; backtrace: ") << sysInfo.stackTrace());
@@ -347,27 +437,31 @@ void LocalStorageManagerAsync::onAddNotebookRequest(Notebook notebook, QUuid req
     }
 }
 
-void LocalStorageManagerAsync::onUpdateNotebookRequest(Notebook notebook, QUuid requestId)
+void LocalStorageManagerAsync::onUpdateNotebookRequest(Notebook notebook,
+                                                       QUuid requestId)
 {
+    Q_D(LocalStorageManagerAsync);
+
     try
     {
         ErrorString errorDescription;
 
-        bool res = m_pLocalStorageManager->updateNotebook(notebook, errorDescription);
+        bool res = d->m_pLocalStorageManager->updateNotebook(notebook, errorDescription);
         if (!res) {
             Q_EMIT updateNotebookFailed(notebook, errorDescription, requestId);
             return;
         }
 
-        if (m_useCache) {
-            m_pLocalStorageCacheManager->cacheNotebook(notebook);
+        if (d->m_useCache) {
+            d->m_pLocalStorageCacheManager->cacheNotebook(notebook);
         }
 
         Q_EMIT updateNotebookComplete(notebook, requestId);
     }
     catch(const std::exception & e)
     {
-        ErrorString error(QT_TR_NOOP("Can't update notebook in the local storage: caught exception"));
+        ErrorString error(QT_TR_NOOP("Can't update notebook in the local storage: "
+                                     "caught exception"));
         error.details() = QString::fromUtf8(e.what());
         SysInfo sysInfo;
         QNERROR(error << QStringLiteral("; backtrace: ") << sysInfo.stackTrace());
@@ -375,22 +469,31 @@ void LocalStorageManagerAsync::onUpdateNotebookRequest(Notebook notebook, QUuid 
     }
 }
 
-void LocalStorageManagerAsync::onFindNotebookRequest(Notebook notebook, QUuid requestId)
+void LocalStorageManagerAsync::onFindNotebookRequest(Notebook notebook,
+                                                     QUuid requestId)
 {
+    Q_D(LocalStorageManagerAsync);
+
     try
     {
         ErrorString errorDescription;
 
         bool foundNotebookInCache = false;
-        if (m_useCache)
+        if (d->m_useCache)
         {
             bool notebookHasGuid = notebook.hasGuid();
             if (notebookHasGuid || !notebook.localUid().isEmpty())
             {
-                const QString uid = (notebookHasGuid ? notebook.guid() : notebook.localUid());
-                LocalStorageCacheManager::WhichUid wg = (notebookHasGuid ? LocalStorageCacheManager::Guid : LocalStorageCacheManager::LocalUid);
+                const QString uid = (notebookHasGuid
+                                     ? notebook.guid()
+                                     : notebook.localUid());
+                LocalStorageCacheManager::WhichUid wg =
+                        (notebookHasGuid
+                         ? LocalStorageCacheManager::Guid
+                         : LocalStorageCacheManager::LocalUid);
 
-                const Notebook * pNotebook = m_pLocalStorageCacheManager->findNotebook(uid, wg);
+                const Notebook * pNotebook =
+                        d->m_pLocalStorageCacheManager->findNotebook(uid, wg);
                 if (pNotebook) {
                     notebook = *pNotebook;
                     foundNotebookInCache = true;
@@ -399,7 +502,8 @@ void LocalStorageManagerAsync::onFindNotebookRequest(Notebook notebook, QUuid re
             else if (notebook.hasName() && !notebook.name().isEmpty())
             {
                 const QString notebookName = notebook.name();
-                const Notebook * pNotebook = m_pLocalStorageCacheManager->findNotebookByName(notebookName);
+                const Notebook * pNotebook =
+                        d->m_pLocalStorageCacheManager->findNotebookByName(notebookName);
                 if (pNotebook) {
                     notebook = *pNotebook;
                     foundNotebookInCache = true;
@@ -409,7 +513,8 @@ void LocalStorageManagerAsync::onFindNotebookRequest(Notebook notebook, QUuid re
 
         if (!foundNotebookInCache)
         {
-            bool res = m_pLocalStorageManager->findNotebook(notebook, errorDescription);
+            bool res = d->m_pLocalStorageManager->findNotebook(notebook,
+                                                               errorDescription);
             if (!res) {
                 Q_EMIT findNotebookFailed(notebook, errorDescription, requestId);
                 return;
@@ -420,7 +525,8 @@ void LocalStorageManagerAsync::onFindNotebookRequest(Notebook notebook, QUuid re
     }
     catch(const std::exception & e)
     {
-        ErrorString error(QT_TR_NOOP("Can't find notebook within the local storage: caught exception"));
+        ErrorString error(QT_TR_NOOP("Can't find notebook within the local storage: "
+                                     "caught exception"));
         error.details() = QString::fromUtf8(e.what());
         SysInfo sysInfo;
         QNERROR(error << QStringLiteral("; backtrace: ") << sysInfo.stackTrace());
@@ -428,13 +534,17 @@ void LocalStorageManagerAsync::onFindNotebookRequest(Notebook notebook, QUuid re
     }
 }
 
-void LocalStorageManagerAsync::onFindDefaultNotebookRequest(Notebook notebook, QUuid requestId)
+void LocalStorageManagerAsync::onFindDefaultNotebookRequest(Notebook notebook,
+                                                            QUuid requestId)
 {
+    Q_D(LocalStorageManagerAsync);
+
     try
     {
         ErrorString errorDescription;
 
-        bool res = m_pLocalStorageManager->findDefaultNotebook(notebook, errorDescription);
+        bool res = d->m_pLocalStorageManager->findDefaultNotebook(notebook,
+                                                                  errorDescription);
         if (!res) {
             Q_EMIT findDefaultNotebookFailed(notebook, errorDescription, requestId);
             return;
@@ -444,7 +554,8 @@ void LocalStorageManagerAsync::onFindDefaultNotebookRequest(Notebook notebook, Q
     }
     catch(const std::exception & e)
     {
-        ErrorString error(QT_TR_NOOP("Can't find the default notebook within the local storage: caught exception"));
+        ErrorString error(QT_TR_NOOP("Can't find the default notebook within "
+                                     "the local storage: caught exception"));
         error.details() = QString::fromUtf8(e.what());
         SysInfo sysInfo;
         QNERROR(error << QStringLiteral("; backtrace: ") << sysInfo.stackTrace());
@@ -452,13 +563,17 @@ void LocalStorageManagerAsync::onFindDefaultNotebookRequest(Notebook notebook, Q
     }
 }
 
-void LocalStorageManagerAsync::onFindLastUsedNotebookRequest(Notebook notebook, QUuid requestId)
+void LocalStorageManagerAsync::onFindLastUsedNotebookRequest(Notebook notebook,
+                                                             QUuid requestId)
 {
+    Q_D(LocalStorageManagerAsync);
+
     try
     {
         ErrorString errorDescription;
 
-        bool res = m_pLocalStorageManager->findLastUsedNotebook(notebook, errorDescription);
+        bool res = d->m_pLocalStorageManager->findLastUsedNotebook(notebook,
+                                                                errorDescription);
         if (!res) {
             Q_EMIT findLastUsedNotebookFailed(notebook, errorDescription, requestId);
             return;
@@ -468,7 +583,8 @@ void LocalStorageManagerAsync::onFindLastUsedNotebookRequest(Notebook notebook, 
     }
     catch(const std::exception & e)
     {
-        ErrorString error(QT_TR_NOOP("Can't find the last used notebook within the local storage: caught exception"));
+        ErrorString error(QT_TR_NOOP("Can't find the last used notebook within "
+                                     "the local storage: caught exception"));
         error.details() = QString::fromUtf8(e.what());
         SysInfo sysInfo;
         QNERROR(error << QStringLiteral("; backtrace: ") << sysInfo.stackTrace());
@@ -476,15 +592,20 @@ void LocalStorageManagerAsync::onFindLastUsedNotebookRequest(Notebook notebook, 
     }
 }
 
-void LocalStorageManagerAsync::onFindDefaultOrLastUsedNotebookRequest(Notebook notebook, QUuid requestId)
+void LocalStorageManagerAsync::onFindDefaultOrLastUsedNotebookRequest(Notebook notebook,
+                                                                      QUuid requestId)
 {
+    Q_D(LocalStorageManagerAsync);
+
     try
     {
         ErrorString errorDescription;
 
-        bool res = m_pLocalStorageManager->findDefaultOrLastUsedNotebook(notebook, errorDescription);
+        bool res = d->m_pLocalStorageManager->findDefaultOrLastUsedNotebook(notebook,
+                                                                            errorDescription);
         if (!res) {
-            Q_EMIT findDefaultOrLastUsedNotebookFailed(notebook, errorDescription, requestId);
+            Q_EMIT findDefaultOrLastUsedNotebookFailed(notebook, errorDescription,
+                                                       requestId);
             return;
         }
 
@@ -492,7 +613,8 @@ void LocalStorageManagerAsync::onFindDefaultOrLastUsedNotebookRequest(Notebook n
     }
     catch(const std::exception & e)
     {
-        ErrorString error(QT_TR_NOOP("Can't find default or last used notebook within the local storage: caught exception"));
+        ErrorString error(QT_TR_NOOP("Can't find default or last used notebook "
+                                     "within the local storage: caught exception"));
         error.details() = QString::fromUtf8(e.what());
         SysInfo sysInfo;
         QNERROR(error << QStringLiteral("; backtrace: ") << sysInfo.stackTrace());
@@ -500,50 +622,62 @@ void LocalStorageManagerAsync::onFindDefaultOrLastUsedNotebookRequest(Notebook n
     }
 }
 
-void LocalStorageManagerAsync::onListAllNotebooksRequest(size_t limit, size_t offset,
-                                                         LocalStorageManager::ListNotebooksOrder::type order,
-                                                         LocalStorageManager::OrderDirection::type orderDirection,
-                                                         QString linkedNotebookGuid, QUuid requestId)
+void LocalStorageManagerAsync::onListAllNotebooksRequest(
+    size_t limit, size_t offset,
+    LocalStorageManager::ListNotebooksOrder::type order,
+    LocalStorageManager::OrderDirection::type orderDirection,
+    QString linkedNotebookGuid,
+    QUuid requestId)
 {
+    Q_D(LocalStorageManagerAsync);
+
     try
     {
         ErrorString errorDescription;
-        QList<Notebook> notebooks = m_pLocalStorageManager->listAllNotebooks(errorDescription, limit, offset, order,
-                                                                             orderDirection, linkedNotebookGuid);
+        QList<Notebook> notebooks =
+            d->m_pLocalStorageManager->listAllNotebooks(errorDescription, limit,
+                                                        offset, order, orderDirection,
+                                                        linkedNotebookGuid);
         if (notebooks.isEmpty() && !errorDescription.isEmpty()) {
-            Q_EMIT listAllNotebooksFailed(limit, offset, order, orderDirection, linkedNotebookGuid,
-                                        errorDescription, requestId);
+            Q_EMIT listAllNotebooksFailed(limit, offset, order, orderDirection,
+                                          linkedNotebookGuid, errorDescription,
+                                          requestId);
             return;
         }
 
-        if (m_useCache)
+        if (d->m_useCache)
         {
-            const int numNotebooks = notebooks.size();
-            for(int i = 0; i < numNotebooks; ++i) {
-                const Notebook & notebook = notebooks[i];
-                m_pLocalStorageCacheManager->cacheNotebook(notebook);
+            for(auto it = notebooks.constBegin(),
+                end = notebooks.constEnd(); it != end; ++it)
+            {
+                d->m_pLocalStorageCacheManager->cacheNotebook(*it);
             }
         }
 
-        Q_EMIT listAllNotebooksComplete(limit, offset, order, orderDirection, linkedNotebookGuid, notebooks, requestId);
+        Q_EMIT listAllNotebooksComplete(limit, offset, order, orderDirection,
+                                        linkedNotebookGuid, notebooks, requestId);
     }
     catch(const std::exception & e)
     {
-        ErrorString error(QT_TR_NOOP("Can't list all notebooks from the local storage: caught exception"));
+        ErrorString error(QT_TR_NOOP("Can't list all notebooks from the local "
+                                     "storage: caught exception"));
         error.details() = QString::fromUtf8(e.what());
         SysInfo sysInfo;
         QNERROR(error << QStringLiteral("; backtrace: ") << sysInfo.stackTrace());
-        Q_EMIT listAllNotebooksFailed(limit, offset, order, orderDirection, linkedNotebookGuid,
-                                      error, requestId);
+        Q_EMIT listAllNotebooksFailed(limit, offset, order, orderDirection,
+                                      linkedNotebookGuid, error, requestId);
     }
 }
 
 void LocalStorageManagerAsync::onListAllSharedNotebooksRequest(QUuid requestId)
 {
+    Q_D(LocalStorageManagerAsync);
+
     try
     {
         ErrorString errorDescription;
-        QList<SharedNotebook> sharedNotebooks = m_pLocalStorageManager->listAllSharedNotebooks(errorDescription);
+        QList<SharedNotebook> sharedNotebooks =
+            d->m_pLocalStorageManager->listAllSharedNotebooks(errorDescription);
         if (sharedNotebooks.isEmpty() && !errorDescription.isEmpty()) {
             Q_EMIT listAllSharedNotebooksFailed(errorDescription, requestId);
             return;
@@ -553,7 +687,8 @@ void LocalStorageManagerAsync::onListAllSharedNotebooksRequest(QUuid requestId)
     }
     catch(const std::exception & e)
     {
-        ErrorString error(QT_TR_NOOP("Can't list all shared notebooks from the local storage: caught exception"));
+        ErrorString error(QT_TR_NOOP("Can't list all shared notebooks from "
+                                     "the local storage: caught exception"));
         error.details() = QString::fromUtf8(e.what());
         SysInfo sysInfo;
         QNERROR(error << QStringLiteral("; backtrace: ") << sysInfo.stackTrace());
@@ -561,89 +696,113 @@ void LocalStorageManagerAsync::onListAllSharedNotebooksRequest(QUuid requestId)
     }
 }
 
-void LocalStorageManagerAsync::onListNotebooksRequest(LocalStorageManager::ListObjectsOptions flag,
-                                                      size_t limit, size_t offset,
-                                                      LocalStorageManager::ListNotebooksOrder::type order,
-                                                      LocalStorageManager::OrderDirection::type orderDirection,
-                                                      QString linkedNotebookGuid, QUuid requestId)
+void LocalStorageManagerAsync::onListNotebooksRequest(
+    LocalStorageManager::ListObjectsOptions flag,
+    size_t limit, size_t offset,
+    LocalStorageManager::ListNotebooksOrder::type order,
+    LocalStorageManager::OrderDirection::type orderDirection,
+    QString linkedNotebookGuid, QUuid requestId)
 {
+    Q_D(LocalStorageManagerAsync);
+
     try
     {
         ErrorString errorDescription;
-        QList<Notebook> notebooks = m_pLocalStorageManager->listNotebooks(flag, errorDescription, limit,
-                                                                          offset, order, orderDirection,
-                                                                          linkedNotebookGuid);
+        QList<Notebook> notebooks =
+            d->m_pLocalStorageManager->listNotebooks(flag, errorDescription, limit,
+                                                     offset, order, orderDirection,
+                                                     linkedNotebookGuid);
         if (notebooks.isEmpty() && !errorDescription.isEmpty()) {
-            Q_EMIT listNotebooksFailed(flag, limit, offset, order, orderDirection, linkedNotebookGuid,
-                                       errorDescription, requestId);
+            Q_EMIT listNotebooksFailed(flag, limit, offset, order, orderDirection,
+                                       linkedNotebookGuid, errorDescription,
+                                       requestId);
             return;
         }
 
-        if (m_useCache)
+        if (d->m_useCache)
         {
-            const int numNotebooks = notebooks.size();
-            for(int i = 0; i < numNotebooks; ++i) {
-                const Notebook & notebook = notebooks[i];
-                m_pLocalStorageCacheManager->cacheNotebook(notebook);
+            for(auto it = notebooks.constBegin(),
+                end = notebooks.constEnd(); it != end; ++it)
+            {
+                d->m_pLocalStorageCacheManager->cacheNotebook(*it);
             }
         }
 
-        Q_EMIT listNotebooksComplete(flag, limit, offset, order, orderDirection, linkedNotebookGuid, notebooks, requestId);
+        Q_EMIT listNotebooksComplete(flag, limit, offset, order, orderDirection,
+                                     linkedNotebookGuid, notebooks, requestId);
     }
     catch(const std::exception & e)
     {
-        ErrorString error(QT_TR_NOOP("Can't list notebooks from the local storage: caught exception"));
+        ErrorString error(QT_TR_NOOP("Can't list notebooks from the local storage: "
+                                     "caught exception"));
         error.details() = QString::fromUtf8(e.what());
         SysInfo sysInfo;
         QNERROR(error << QStringLiteral("; backtrace: ") << sysInfo.stackTrace());
-        Q_EMIT listNotebooksFailed(flag, limit, offset, order, orderDirection, linkedNotebookGuid, error, requestId);
+        Q_EMIT listNotebooksFailed(flag, limit, offset, order, orderDirection,
+                                   linkedNotebookGuid, error, requestId);
     }
 }
 
-void LocalStorageManagerAsync::onListSharedNotebooksPerNotebookGuidRequest(QString notebookGuid, QUuid requestId)
+void LocalStorageManagerAsync::onListSharedNotebooksPerNotebookGuidRequest(
+    QString notebookGuid, QUuid requestId)
 {
+    Q_D(LocalStorageManagerAsync);
+
     try
     {
         ErrorString errorDescription;
-        QList<SharedNotebook> sharedNotebooks = m_pLocalStorageManager->listSharedNotebooksPerNotebookGuid(notebookGuid, errorDescription);
+        QList<SharedNotebook> sharedNotebooks =
+            d->m_pLocalStorageManager->listSharedNotebooksPerNotebookGuid(notebookGuid,
+                                                                          errorDescription);
         if (sharedNotebooks.isEmpty() && !errorDescription.isEmpty()) {
-            Q_EMIT listSharedNotebooksPerNotebookGuidFailed(notebookGuid, errorDescription, requestId);
+            Q_EMIT listSharedNotebooksPerNotebookGuidFailed(notebookGuid,
+                                                            errorDescription,
+                                                            requestId);
             return;
         }
 
-        Q_EMIT listSharedNotebooksPerNotebookGuidComplete(notebookGuid, sharedNotebooks, requestId);
+        Q_EMIT listSharedNotebooksPerNotebookGuidComplete(notebookGuid,
+                                                          sharedNotebooks,
+                                                          requestId);
     }
     catch(const std::exception & e)
     {
-        ErrorString error(QT_TR_NOOP("Can't list shared notebooks by notebook guid from the local storage: caught exception"));
+        ErrorString error(QT_TR_NOOP("Can't list shared notebooks by notebook guid "
+                                     "from the local storage: caught exception"));
         error.details() = QString::fromUtf8(e.what());
         SysInfo sysInfo;
         QNERROR(error << QStringLiteral("; backtrace: ") << sysInfo.stackTrace());
-        Q_EMIT listSharedNotebooksPerNotebookGuidFailed(notebookGuid, error, requestId);
+        Q_EMIT listSharedNotebooksPerNotebookGuidFailed(notebookGuid, error,
+                                                        requestId);
     }
 }
 
-void LocalStorageManagerAsync::onExpungeNotebookRequest(Notebook notebook, QUuid requestId)
+void LocalStorageManagerAsync::onExpungeNotebookRequest(Notebook notebook,
+                                                        QUuid requestId)
 {
+    Q_D(LocalStorageManagerAsync);
+
     try
     {
         ErrorString errorDescription;
 
-        bool res = m_pLocalStorageManager->expungeNotebook(notebook, errorDescription);
+        bool res = d->m_pLocalStorageManager->expungeNotebook(notebook,
+                                                              errorDescription);
         if (!res) {
             Q_EMIT expungeNotebookFailed(notebook, errorDescription, requestId);
             return;
         }
 
-        if (m_useCache) {
-            m_pLocalStorageCacheManager->expungeNotebook(notebook);
+        if (d->m_useCache) {
+            d->m_pLocalStorageCacheManager->expungeNotebook(notebook);
         }
 
         Q_EMIT expungeNotebookComplete(notebook, requestId);
     }
     catch(const std::exception & e)
     {
-        ErrorString error(QT_TR_NOOP("Can't expunge notebook from the local storage: caught exception"));
+        ErrorString error(QT_TR_NOOP("Can't expunge notebook from the local storage: "
+                                     "caught exception"));
         error.details() = QString::fromUtf8(e.what());
         SysInfo sysInfo;
         QNERROR(error << QStringLiteral("; backtrace: ") << sysInfo.stackTrace());
@@ -653,10 +812,12 @@ void LocalStorageManagerAsync::onExpungeNotebookRequest(Notebook notebook, QUuid
 
 void LocalStorageManagerAsync::onGetLinkedNotebookCountRequest(QUuid requestId)
 {
+    Q_D(LocalStorageManagerAsync);
+
     try
     {
         ErrorString errorDescription;
-        int count = m_pLocalStorageManager->linkedNotebookCount(errorDescription);
+        int count = d->m_pLocalStorageManager->linkedNotebookCount(errorDescription);
         if (count < 0) {
             Q_EMIT getLinkedNotebookCountFailed(errorDescription, requestId);
         }
@@ -666,7 +827,8 @@ void LocalStorageManagerAsync::onGetLinkedNotebookCountRequest(QUuid requestId)
     }
     catch(const std::exception & e)
     {
-        ErrorString error(QT_TR_NOOP("Can't get linked notebook count from the local storage: caught exception"));
+        ErrorString error(QT_TR_NOOP("Can't get linked notebook count from "
+                                     "the local storage: caught exception"));
         error.details() = QString::fromUtf8(e.what());
         SysInfo sysInfo;
         QNERROR(error << QStringLiteral("; backtrace: ") << sysInfo.stackTrace());
@@ -674,27 +836,32 @@ void LocalStorageManagerAsync::onGetLinkedNotebookCountRequest(QUuid requestId)
     }
 }
 
-void LocalStorageManagerAsync::onAddLinkedNotebookRequest(LinkedNotebook linkedNotebook, QUuid requestId)
+void LocalStorageManagerAsync::onAddLinkedNotebookRequest(LinkedNotebook linkedNotebook,
+                                                          QUuid requestId)
 {
+    Q_D(LocalStorageManagerAsync);
+
     try
     {
         ErrorString errorDescription;
 
-        bool res = m_pLocalStorageManager->addLinkedNotebook(linkedNotebook, errorDescription);
+        bool res = d->m_pLocalStorageManager->addLinkedNotebook(linkedNotebook,
+                                                                errorDescription);
         if (!res) {
             Q_EMIT addLinkedNotebookFailed(linkedNotebook, errorDescription, requestId);
             return;
         }
 
-        if (m_useCache) {
-            m_pLocalStorageCacheManager->cacheLinkedNotebook(linkedNotebook);
+        if (d->m_useCache) {
+            d->m_pLocalStorageCacheManager->cacheLinkedNotebook(linkedNotebook);
         }
 
         Q_EMIT addLinkedNotebookComplete(linkedNotebook, requestId);
     }
     catch(const std::exception & e)
     {
-        ErrorString error(QT_TR_NOOP("Can't add linked notebook to the local storage: caught exception"));
+        ErrorString error(QT_TR_NOOP("Can't add linked notebook to the local storage: "
+                                     "caught exception"));
         error.details() = QString::fromUtf8(e.what());
         SysInfo sysInfo;
         QNERROR(error << QStringLiteral("; backtrace: ") << sysInfo.stackTrace());
@@ -702,27 +869,33 @@ void LocalStorageManagerAsync::onAddLinkedNotebookRequest(LinkedNotebook linkedN
     }
 }
 
-void LocalStorageManagerAsync::onUpdateLinkedNotebookRequest(LinkedNotebook linkedNotebook, QUuid requestId)
+void LocalStorageManagerAsync::onUpdateLinkedNotebookRequest(LinkedNotebook linkedNotebook,
+                                                             QUuid requestId)
 {
+    Q_D(LocalStorageManagerAsync);
+
     try
     {
         ErrorString errorDescription;
 
-        bool res = m_pLocalStorageManager->updateLinkedNotebook(linkedNotebook, errorDescription);
+        bool res = d->m_pLocalStorageManager->updateLinkedNotebook(linkedNotebook,
+                                                                   errorDescription);
         if (!res) {
-            Q_EMIT updateLinkedNotebookFailed(linkedNotebook, errorDescription, requestId);
+            Q_EMIT updateLinkedNotebookFailed(linkedNotebook, errorDescription,
+                                              requestId);
             return;
         }
 
-        if (m_useCache) {
-            m_pLocalStorageCacheManager->cacheLinkedNotebook(linkedNotebook);
+        if (d->m_useCache) {
+            d->m_pLocalStorageCacheManager->cacheLinkedNotebook(linkedNotebook);
         }
 
         Q_EMIT updateLinkedNotebookComplete(linkedNotebook, requestId);
     }
     catch(const std::exception & e)
     {
-        ErrorString error(QT_TR_NOOP("Can't update linked notebook in the local storage: caught exception"));
+        ErrorString error(QT_TR_NOOP("Can't update linked notebook in the local "
+                                     "storage: caught exception"));
         error.details() = QString::fromUtf8(e.what());
         SysInfo sysInfo;
         QNERROR(error << QStringLiteral("; backtrace: ") << sysInfo.stackTrace());
@@ -730,17 +903,21 @@ void LocalStorageManagerAsync::onUpdateLinkedNotebookRequest(LinkedNotebook link
     }
 }
 
-void LocalStorageManagerAsync::onFindLinkedNotebookRequest(LinkedNotebook linkedNotebook, QUuid requestId)
+void LocalStorageManagerAsync::onFindLinkedNotebookRequest(LinkedNotebook linkedNotebook,
+                                                           QUuid requestId)
 {
+    Q_D(LocalStorageManagerAsync);
+
     try
     {
         ErrorString errorDescription;
 
         bool foundLinkedNotebookInCache = false;
-        if (m_useCache && linkedNotebook.hasGuid())
+        if (d->m_useCache && linkedNotebook.hasGuid())
         {
             const QString guid = linkedNotebook.guid();
-            const LinkedNotebook * pLinkedNotebook = m_pLocalStorageCacheManager->findLinkedNotebook(guid);
+            const LinkedNotebook * pLinkedNotebook =
+                d->m_pLocalStorageCacheManager->findLinkedNotebook(guid);
             if (pLinkedNotebook) {
                 linkedNotebook = *pLinkedNotebook;
                 foundLinkedNotebookInCache = true;
@@ -749,9 +926,11 @@ void LocalStorageManagerAsync::onFindLinkedNotebookRequest(LinkedNotebook linked
 
         if (!foundLinkedNotebookInCache)
         {
-            bool res = m_pLocalStorageManager->findLinkedNotebook(linkedNotebook, errorDescription);
+            bool res = d->m_pLocalStorageManager->findLinkedNotebook(linkedNotebook,
+                                                                     errorDescription);
             if (!res) {
-                Q_EMIT findLinkedNotebookFailed(linkedNotebook, errorDescription, requestId);
+                Q_EMIT findLinkedNotebookFailed(linkedNotebook, errorDescription,
+                                                requestId);
                 return;
             }
         }
@@ -760,7 +939,8 @@ void LocalStorageManagerAsync::onFindLinkedNotebookRequest(LinkedNotebook linked
     }
     catch(const std::exception & e)
     {
-        ErrorString error(QT_TR_NOOP("Can't find linked notebook within the local storage: caught exception"));
+        ErrorString error(QT_TR_NOOP("Can't find linked notebook within the local "
+                                     "storage: caught exception"));
         error.details() = QString::fromUtf8(e.what());
         SysInfo sysInfo;
         QNERROR(error << QStringLiteral("; backtrace: ") << sysInfo.stackTrace());
@@ -768,100 +948,125 @@ void LocalStorageManagerAsync::onFindLinkedNotebookRequest(LinkedNotebook linked
     }
 }
 
-void LocalStorageManagerAsync::onListAllLinkedNotebooksRequest(size_t limit, size_t offset,
-                                                               LocalStorageManager::ListLinkedNotebooksOrder::type order,
-                                                               LocalStorageManager::OrderDirection::type orderDirection,
-                                                               QUuid requestId)
+void LocalStorageManagerAsync::onListAllLinkedNotebooksRequest(
+    size_t limit, size_t offset,
+    LocalStorageManager::ListLinkedNotebooksOrder::type order,
+    LocalStorageManager::OrderDirection::type orderDirection,
+    QUuid requestId)
 {
+    Q_D(LocalStorageManagerAsync);
+
     try
     {
         ErrorString errorDescription;
-        QList<LinkedNotebook> linkedNotebooks = m_pLocalStorageManager->listAllLinkedNotebooks(errorDescription, limit,
-                                                                                               offset, order, orderDirection);
+        QList<LinkedNotebook> linkedNotebooks =
+            d->m_pLocalStorageManager->listAllLinkedNotebooks(errorDescription,
+                                                              limit, offset, order,
+                                                              orderDirection);
         if (linkedNotebooks.isEmpty() && !errorDescription.isEmpty()) {
-            Q_EMIT listAllLinkedNotebooksFailed(limit, offset, order, orderDirection, errorDescription, requestId);
+            Q_EMIT listAllLinkedNotebooksFailed(limit, offset, order, orderDirection,
+                                                errorDescription, requestId);
             return;
         }
 
-        if (m_useCache)
+        if (d->m_useCache)
         {
-            const int numLinkedNotebooks = linkedNotebooks.size();
-            for(int i = 0; i < numLinkedNotebooks; ++i) {
-                const LinkedNotebook & linkedNotebook = linkedNotebooks[i];
-                m_pLocalStorageCacheManager->cacheLinkedNotebook(linkedNotebook);
+            for(auto it = linkedNotebooks.constBegin(),
+                end = linkedNotebooks.constEnd(); it != end; ++it)
+            {
+                d->m_pLocalStorageCacheManager->cacheLinkedNotebook(*it);
             }
         }
 
-        Q_EMIT listAllLinkedNotebooksComplete(limit, offset, order, orderDirection, linkedNotebooks, requestId);
+        Q_EMIT listAllLinkedNotebooksComplete(limit, offset, order, orderDirection,
+                                              linkedNotebooks, requestId);
     }
     catch(const std::exception & e)
     {
-        ErrorString error(QT_TR_NOOP("Can't list all linked notebooks from the local storage: caught exception"));
+        ErrorString error(QT_TR_NOOP("Can't list all linked notebooks from "
+                                     "the local storage: caught exception"));
         error.details() = QString::fromUtf8(e.what());
         SysInfo sysInfo;
         QNERROR(error << QStringLiteral("; backtrace: ") << sysInfo.stackTrace());
-        Q_EMIT listAllLinkedNotebooksFailed(limit, offset, order, orderDirection, error, requestId);
+        Q_EMIT listAllLinkedNotebooksFailed(limit, offset, order, orderDirection,
+                                            error, requestId);
     }
 }
 
-void LocalStorageManagerAsync::onListLinkedNotebooksRequest(LocalStorageManager::ListObjectsOptions flag,
-                                                            size_t limit, size_t offset,
-                                                            LocalStorageManager::ListLinkedNotebooksOrder::type order,
-                                                            LocalStorageManager::OrderDirection::type orderDirection,
-                                                            QUuid requestId)
+void LocalStorageManagerAsync::onListLinkedNotebooksRequest(
+    LocalStorageManager::ListObjectsOptions flag,
+    size_t limit, size_t offset,
+    LocalStorageManager::ListLinkedNotebooksOrder::type order,
+    LocalStorageManager::OrderDirection::type orderDirection,
+    QUuid requestId)
 {
+    Q_D(LocalStorageManagerAsync);
+
     try
     {
         ErrorString errorDescription;
-        QList<LinkedNotebook> linkedNotebooks = m_pLocalStorageManager->listLinkedNotebooks(flag, errorDescription, limit,
-                                                                                            offset, order, orderDirection);
+        QList<LinkedNotebook> linkedNotebooks =
+            d->m_pLocalStorageManager->listLinkedNotebooks(flag, errorDescription,
+                                                           limit, offset, order,
+                                                           orderDirection);
         if (linkedNotebooks.isEmpty() && !errorDescription.isEmpty()) {
-            Q_EMIT listLinkedNotebooksFailed(flag, limit, offset, order, orderDirection, errorDescription, requestId);
+            Q_EMIT listLinkedNotebooksFailed(flag, limit, offset, order,
+                                             orderDirection, errorDescription,
+                                             requestId);
             return;
         }
 
-        if (m_useCache)
+        if (d->m_useCache)
         {
-            const int numLinkedNotebooks = linkedNotebooks.size();
-            for(int i = 0; i < numLinkedNotebooks; ++i) {
-                const LinkedNotebook & linkedNotebook = linkedNotebooks[i];
-                m_pLocalStorageCacheManager->cacheLinkedNotebook(linkedNotebook);
+            for(auto it = linkedNotebooks.constBegin(),
+                end = linkedNotebooks.constEnd(); it != end; ++it)
+            {
+                d->m_pLocalStorageCacheManager->cacheLinkedNotebook(*it);
             }
         }
 
-        Q_EMIT listLinkedNotebooksComplete(flag, limit, offset, order, orderDirection, linkedNotebooks, requestId);
+        Q_EMIT listLinkedNotebooksComplete(flag, limit, offset, order, orderDirection,
+                                           linkedNotebooks, requestId);
     }
     catch(const std::exception & e)
     {
-        ErrorString error(QT_TR_NOOP("Can't list linked notebooks from the local storage: caught exception"));
+        ErrorString error(QT_TR_NOOP("Can't list linked notebooks from the local "
+                                     "storage: caught exception"));
         error.details() = QString::fromUtf8(e.what());
         SysInfo sysInfo;
         QNERROR(error << QStringLiteral("; backtrace: ") << sysInfo.stackTrace());
-        Q_EMIT listLinkedNotebooksFailed(flag, limit, offset, order, orderDirection, error, requestId);
+        Q_EMIT listLinkedNotebooksFailed(flag, limit, offset, order,
+                                         orderDirection, error, requestId);
     }
 }
 
-void LocalStorageManagerAsync::onExpungeLinkedNotebookRequest(LinkedNotebook linkedNotebook, QUuid requestId)
+void LocalStorageManagerAsync::onExpungeLinkedNotebookRequest(LinkedNotebook linkedNotebook,
+                                                              QUuid requestId)
 {
+    Q_D(LocalStorageManagerAsync);
+
     try
     {
         ErrorString errorDescription;
 
-        bool res = m_pLocalStorageManager->expungeLinkedNotebook(linkedNotebook, errorDescription);
+        bool res = d->m_pLocalStorageManager->expungeLinkedNotebook(linkedNotebook,
+                                                                    errorDescription);
         if (!res) {
-            Q_EMIT expungeLinkedNotebookFailed(linkedNotebook, errorDescription, requestId);
+            Q_EMIT expungeLinkedNotebookFailed(linkedNotebook, errorDescription,
+                                               requestId);
             return;
         }
 
-        if (m_useCache) {
-            m_pLocalStorageCacheManager->expungeLinkedNotebook(linkedNotebook);
+        if (d->m_useCache) {
+            d->m_pLocalStorageCacheManager->expungeLinkedNotebook(linkedNotebook);
         }
 
         Q_EMIT expungeLinkedNotebookComplete(linkedNotebook, requestId);
     }
     catch(const std::exception & e)
     {
-        ErrorString error(QT_TR_NOOP("Can't expunge linked notebook from the local storage: caught exception"));
+        ErrorString error(QT_TR_NOOP("Can't expunge linked notebook from the local "
+                                     "storage: caught exception"));
         error.details() = QString::fromUtf8(e.what());
         SysInfo sysInfo;
         QNERROR(error << QStringLiteral("; backtrace: ") << sysInfo.stackTrace());
@@ -871,10 +1076,12 @@ void LocalStorageManagerAsync::onExpungeLinkedNotebookRequest(LinkedNotebook lin
 
 void LocalStorageManagerAsync::onGetNoteCountRequest(QUuid requestId)
 {
+    Q_D(LocalStorageManagerAsync);
+
     try
     {
         ErrorString errorDescription;
-        int count = m_pLocalStorageManager->noteCount(errorDescription);
+        int count = d->m_pLocalStorageManager->noteCount(errorDescription);
         if (count < 0) {
             Q_EMIT getNoteCountFailed(errorDescription, requestId);
         }
@@ -884,7 +1091,8 @@ void LocalStorageManagerAsync::onGetNoteCountRequest(QUuid requestId)
     }
     catch(const std::exception & e)
     {
-        ErrorString error(QT_TR_NOOP("Can't get note count from the local storage: caught exception"));
+        ErrorString error(QT_TR_NOOP("Can't get note count from the local storage: "
+                                     "caught exception"));
         error.details() = QString::fromUtf8(e.what());
         SysInfo sysInfo;
         QNERROR(error << QStringLiteral("; backtrace: ") << sysInfo.stackTrace());
@@ -892,14 +1100,19 @@ void LocalStorageManagerAsync::onGetNoteCountRequest(QUuid requestId)
     }
 }
 
-void LocalStorageManagerAsync::onGetNoteCountPerNotebookRequest(Notebook notebook, QUuid requestId)
+void LocalStorageManagerAsync::onGetNoteCountPerNotebookRequest(Notebook notebook,
+                                                                QUuid requestId)
 {
+    Q_D(LocalStorageManagerAsync);
+
     try
     {
         ErrorString errorDescription;
-        int count = m_pLocalStorageManager->noteCountPerNotebook(notebook, errorDescription);
+        int count = d->m_pLocalStorageManager->noteCountPerNotebook(notebook,
+                                                                    errorDescription);
         if (count < 0) {
-            Q_EMIT getNoteCountPerNotebookFailed(errorDescription, notebook, requestId);
+            Q_EMIT getNoteCountPerNotebookFailed(errorDescription, notebook,
+                                                 requestId);
         }
         else {
             Q_EMIT getNoteCountPerNotebookComplete(count, notebook, requestId);
@@ -907,7 +1120,8 @@ void LocalStorageManagerAsync::onGetNoteCountPerNotebookRequest(Notebook noteboo
     }
     catch(const std::exception & e)
     {
-        ErrorString error(QT_TR_NOOP("Can't get note count per notebook from the local storage: caught exception"));
+        ErrorString error(QT_TR_NOOP("Can't get note count per notebook from "
+                                     "the local storage: caught exception"));
         error.details() = QString::fromUtf8(e.what());
         SysInfo sysInfo;
         QNERROR(error << QStringLiteral("; backtrace: ") << sysInfo.stackTrace());
@@ -917,10 +1131,12 @@ void LocalStorageManagerAsync::onGetNoteCountPerNotebookRequest(Notebook noteboo
 
 void LocalStorageManagerAsync::onGetNoteCountPerTagRequest(Tag tag, QUuid requestId)
 {
+    Q_D(LocalStorageManagerAsync);
+
     try
     {
         ErrorString errorDescription;
-        int count = m_pLocalStorageManager->noteCountPerTag(tag, errorDescription);
+        int count = d->m_pLocalStorageManager->noteCountPerTag(tag, errorDescription);
         if (count < 0) {
             Q_EMIT getNoteCountPerTagFailed(errorDescription, tag, requestId);
         }
@@ -930,7 +1146,8 @@ void LocalStorageManagerAsync::onGetNoteCountPerTagRequest(Tag tag, QUuid reques
     }
     catch(const std::exception & e)
     {
-        ErrorString error(QT_TR_NOOP("Can't get note count per tag from the local storage: caught exception"));
+        ErrorString error(QT_TR_NOOP("Can't get note count per tag from "
+                                     "the local storage: caught exception"));
         error.details() = QString::fromUtf8(e.what());
         SysInfo sysInfo;
         QNERROR(error << QStringLiteral("; backtrace: ") << sysInfo.stackTrace());
@@ -940,21 +1157,26 @@ void LocalStorageManagerAsync::onGetNoteCountPerTagRequest(Tag tag, QUuid reques
 
 void LocalStorageManagerAsync::onGetNoteCountsPerAllTagsRequest(QUuid requestId)
 {
+    Q_D(LocalStorageManagerAsync);
+
     try
     {
         ErrorString errorDescription;
         QHash<QString, int> noteCountsPerTagLocalUid;
-        bool res = m_pLocalStorageManager->noteCountsPerAllTags(noteCountsPerTagLocalUid, errorDescription);
+        bool res = d->m_pLocalStorageManager->noteCountsPerAllTags(noteCountsPerTagLocalUid,
+                                                                   errorDescription);
         if (!res) {
             Q_EMIT getNoteCountsPerAllTagsFailed(errorDescription, requestId);
         }
         else {
-            Q_EMIT getNoteCountsPerAllTagsComplete(noteCountsPerTagLocalUid, requestId);
+            Q_EMIT getNoteCountsPerAllTagsComplete(noteCountsPerTagLocalUid,
+                                                   requestId);
         }
     }
     catch(const std::exception & e)
     {
-        ErrorString error(QT_TR_NOOP("Can't get note counts per all tags from the local storage: caught exception"));
+        ErrorString error(QT_TR_NOOP("Can't get note counts per all tags from "
+                                     "the local storage: caught exception"));
         error.details() = QString::fromUtf8(e.what());
         SysInfo sysInfo;
         QNERROR(error << QStringLiteral("; backtrace: ") << sysInfo.stackTrace());
@@ -964,25 +1186,30 @@ void LocalStorageManagerAsync::onGetNoteCountsPerAllTagsRequest(QUuid requestId)
 
 void LocalStorageManagerAsync::onAddNoteRequest(Note note, QUuid requestId)
 {
+    Q_D(LocalStorageManagerAsync);
+
     try
     {
         ErrorString errorDescription;
 
-        bool res = m_pLocalStorageManager->addNote(note, errorDescription);
+        bool res = d->m_pLocalStorageManager->addNote(note, errorDescription);
         if (!res) {
             Q_EMIT addNoteFailed(note, errorDescription, requestId);
             return;
         }
 
-        if (m_useCache)
+        if (d->m_useCache)
         {
             Note noteForCaching = note;
             QList<Resource> resourcesForCaching;
             splitNoteAndResourcesForCaching(noteForCaching, resourcesForCaching);
 
-            m_pLocalStorageCacheManager->cacheNote(noteForCaching);
-            for(auto it = resourcesForCaching.constBegin(), end = resourcesForCaching.constEnd(); it != end; ++it) {
-                m_pLocalStorageCacheManager->cacheResource(*it);
+            d->m_pLocalStorageCacheManager->cacheNote(noteForCaching);
+
+            for(auto it = resourcesForCaching.constBegin(),
+                end = resourcesForCaching.constEnd(); it != end; ++it)
+            {
+                d->m_pLocalStorageCacheManager->cacheResource(*it);
             }
         }
 
@@ -990,7 +1217,8 @@ void LocalStorageManagerAsync::onAddNoteRequest(Note note, QUuid requestId)
     }
     catch(const std::exception & e)
     {
-        ErrorString error(QT_TR_NOOP("Can't add note to the local storage: caught exception"));
+        ErrorString error(QT_TR_NOOP("Can't add note to the local storage: "
+                                     "caught exception"));
         error.details() = QString::fromUtf8(e.what());
         SysInfo sysInfo;
         QNERROR(error << QStringLiteral("; backtrace: ") << sysInfo.stackTrace());
@@ -998,23 +1226,28 @@ void LocalStorageManagerAsync::onAddNoteRequest(Note note, QUuid requestId)
     }
 }
 
-void LocalStorageManagerAsync::onUpdateNoteRequest(Note note, const LocalStorageManager::UpdateNoteOptions options,
-                                                   QUuid requestId)
+void LocalStorageManagerAsync::onUpdateNoteRequest(
+    Note note, const LocalStorageManager::UpdateNoteOptions options,
+    QUuid requestId)
 {
+    Q_D(LocalStorageManagerAsync);
+
     try
     {
         bool shouldCheckForNotebookChange = false;
         bool shouldCheckForTagListUpdate = false;
 
 #if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
-        static const QMetaMethod noteMovedToAnotherNotebookSignal = QMetaMethod::fromSignal(&LocalStorageManagerAsync::noteMovedToAnotherNotebook);
+        static const QMetaMethod noteMovedToAnotherNotebookSignal =
+            QMetaMethod::fromSignal(&LocalStorageManagerAsync::noteMovedToAnotherNotebook);
         if (isSignalConnected(noteMovedToAnotherNotebookSignal)) {
             shouldCheckForNotebookChange = true;
         }
 
         if (options & LocalStorageManager::UpdateNoteOption::UpdateTags)
         {
-            static const QMetaMethod noteTagListChangedSignal = QMetaMethod::fromSignal(&LocalStorageManagerAsync::noteTagListChanged);
+            static const QMetaMethod noteTagListChangedSignal =
+                QMetaMethod::fromSignal(&LocalStorageManagerAsync::noteTagListChanged);
             if (isSignalConnected(noteTagListChangedSignal)) {
                 shouldCheckForTagListUpdate = true;
             }
@@ -1035,14 +1268,15 @@ void LocalStorageManagerAsync::onUpdateNoteRequest(Note note, const LocalStorage
         if (shouldCheckForNotebookChange || shouldCheckForTagListUpdate)
         {
             bool foundNoteInCache = false;
-            if (m_useCache)
+            if (d->m_useCache)
             {
                 bool noteHasGuid = note.hasGuid();
                 const QString uid = (noteHasGuid ? note.guid() : note.localUid());
-                LocalStorageCacheManager::WhichUid wu = (noteHasGuid
-                                                         ? LocalStorageCacheManager::Guid
-                                                         : LocalStorageCacheManager::LocalUid);
-                const Note * pNote = m_pLocalStorageCacheManager->findNote(uid, wu);
+                LocalStorageCacheManager::WhichUid wu =
+                    (noteHasGuid
+                     ? LocalStorageCacheManager::Guid
+                     : LocalStorageCacheManager::LocalUid);
+                const Note * pNote = d->m_pLocalStorageCacheManager->findNote(uid, wu);
                 if (pNote) {
                     previousNoteVersion = *pNote;
                     foundNoteInCache = true;
@@ -1059,9 +1293,10 @@ void LocalStorageManagerAsync::onUpdateNoteRequest(Note note, const LocalStorage
                 }
 
                 ErrorString errorDescription;
-                bool res = m_pLocalStorageManager->findNote(previousNoteVersion, errorDescription,
-                                                            /* with resource metadata = */ false,
-                                                            /* with resource binary data = */ false);
+                LocalStorageManager::GetNoteOptions getNoteOptions(0);
+                bool res = d->m_pLocalStorageManager->findNote(previousNoteVersion,
+                                                               getNoteOptions,
+                                                               errorDescription);
                 if (!res) {
                     Q_EMIT updateNoteFailed(note, options, errorDescription, requestId);
                     return;
@@ -1070,13 +1305,14 @@ void LocalStorageManagerAsync::onUpdateNoteRequest(Note note, const LocalStorage
         }
 
         ErrorString errorDescription;
-        bool res = m_pLocalStorageManager->updateNote(note, options, errorDescription);
+        bool res = d->m_pLocalStorageManager->updateNote(note, options,
+                                                         errorDescription);
         if (!res) {
             Q_EMIT updateNoteFailed(note, options, errorDescription, requestId);
             return;
         }
 
-        if (m_useCache)
+        if (d->m_useCache)
         {
             if ((options & LocalStorageManager::UpdateNoteOption::UpdateResourceMetadata) &&
                 (options & LocalStorageManager::UpdateNoteOption::UpdateTags))
@@ -1084,32 +1320,40 @@ void LocalStorageManagerAsync::onUpdateNoteRequest(Note note, const LocalStorage
                 Note noteForCaching = note;
                 QList<Resource> resourcesForCaching;
                 splitNoteAndResourcesForCaching(noteForCaching, resourcesForCaching);
-                m_pLocalStorageCacheManager->cacheNote(noteForCaching);
+                d->m_pLocalStorageCacheManager->cacheNote(noteForCaching);
 
                 if (options & LocalStorageManager::UpdateNoteOption::UpdateResourceBinaryData)
                 {
-                    for(auto it = resourcesForCaching.constBegin(), end = resourcesForCaching.constEnd(); it != end; ++it) {
-                        m_pLocalStorageCacheManager->cacheResource(*it);
+                    for(auto it = resourcesForCaching.constBegin(),
+                        end = resourcesForCaching.constEnd(); it != end; ++it)
+                    {
+                        d->m_pLocalStorageCacheManager->cacheResource(*it);
                     }
                 }
                 else
                 {
-                    // Since resources metadata might have changed, it would become stale within the cache so need to remove it from there
-                    for(auto it = resourcesForCaching.constBegin(), end = resourcesForCaching.constEnd(); it != end; ++it) {
-                        m_pLocalStorageCacheManager->expungeResource(*it);
+                    // Since resources metadata might have changed, it would
+                    // become stale within the cache so need to remove it from there
+                    for(auto it = resourcesForCaching.constBegin(),
+                        end = resourcesForCaching.constEnd(); it != end; ++it)
+                    {
+                        d->m_pLocalStorageCacheManager->expungeResource(*it);
                     }
                 }
             }
             else
             {
-                // The note was somehow changed but the resources or tags information was not updated =>
-                // the note in the cache is stale/incomplete in either case, need to remove it from there
-                m_pLocalStorageCacheManager->expungeNote(note);
+                // The note was somehow changed but the resources or tags
+                // information was not updated => the note in the cache is
+                // stale/incomplete in either case, need to remove it from there
+                d->m_pLocalStorageCacheManager->expungeNote(note);
 
                 // Same goes for its resources
                 QList<Resource> resources = note.resources();
-                for(auto it = resources.constBegin(), end = resources.constEnd(); it != end; ++it) {
-                    m_pLocalStorageCacheManager->expungeResource(*it);
+                for(auto it = resources.constBegin(),
+                    end = resources.constEnd(); it != end; ++it)
+                {
+                    d->m_pLocalStorageCacheManager->expungeResource(*it);
                 }
             }
         }
@@ -1127,10 +1371,12 @@ void LocalStorageManagerAsync::onUpdateNoteRequest(Note note, const LocalStorage
             }
 
             if (notebookChanged) {
-                QNDEBUG(QStringLiteral("Notebook change detected for note ") << note.localUid()
-                        << QStringLiteral(": moved from notebook ") << previousNoteVersion.notebookLocalUid()
+                QNDEBUG(QStringLiteral("Notebook change detected for note ")
+                        << note.localUid() << QStringLiteral(": moved from notebook ")
+                        << previousNoteVersion.notebookLocalUid()
                         << QStringLiteral(" to notebook ") << note.notebookLocalUid());
-                Q_EMIT noteMovedToAnotherNotebook(note.localUid(), previousNoteVersion.notebookLocalUid(),
+                Q_EMIT noteMovedToAnotherNotebook(note.localUid(),
+                                                  previousNoteVersion.notebookLocalUid(),
                                                   note.notebookLocalUid());
             }
         }
@@ -1156,16 +1402,20 @@ void LocalStorageManagerAsync::onUpdateNoteRequest(Note note, const LocalStorage
             }
 
             if (tagListUpdated) {
-                QNDEBUG(QStringLiteral("Tags list update detected for note ") << note.localUid()
-                        << QStringLiteral(": previous tag local uids: ") << previousTagLocalUids.join(QStringLiteral(", "))
-                        << QStringLiteral("; updated tag local uids: ") << updatedTagLocalUids.join(QStringLiteral(",")));
-                Q_EMIT noteTagListChanged(note.localUid(), previousTagLocalUids, updatedTagLocalUids);
+                QNDEBUG(QStringLiteral("Tags list update detected for note ")
+                        << note.localUid() << QStringLiteral(": previous tag local uids: ")
+                        << previousTagLocalUids.join(QStringLiteral(", "))
+                        << QStringLiteral("; updated tag local uids: ")
+                        << updatedTagLocalUids.join(QStringLiteral(",")));
+                Q_EMIT noteTagListChanged(note.localUid(), previousTagLocalUids,
+                                          updatedTagLocalUids);
             }
         }
     }
     catch(const std::exception & e)
     {
-        ErrorString error(QT_TR_NOOP("Can't update note in the local storage: caught exception"));
+        ErrorString error(QT_TR_NOOP("Can't update note in the local storage: "
+                                     "caught exception"));
         error.details() = QString::fromUtf8(e.what());
         SysInfo sysInfo;
         QNERROR(error << QStringLiteral("; backtrace: ") << sysInfo.stackTrace());
@@ -1173,48 +1423,64 @@ void LocalStorageManagerAsync::onUpdateNoteRequest(Note note, const LocalStorage
     }
 }
 
-void LocalStorageManagerAsync::onFindNoteRequest(Note note, bool withResourceMetadata, bool withResourceBinaryData, QUuid requestId)
+void LocalStorageManagerAsync::onFindNoteRequest(
+    Note note, LocalStorageManager::GetNoteOptions options, QUuid requestId)
 {
+    Q_D(LocalStorageManagerAsync);
+
     try
     {
         ErrorString errorDescription;
 
         bool foundNoteInCache = false;
-        if (m_useCache)
+        if (d->m_useCache)
         {
             bool noteHasGuid = note.hasGuid();
             const QString uid = (noteHasGuid ? note.guid() : note.localUid());
-            LocalStorageCacheManager::WhichUid wu = (noteHasGuid
-                                                     ? LocalStorageCacheManager::Guid
-                                                     : LocalStorageCacheManager::LocalUid);
+            LocalStorageCacheManager::WhichUid wu =
+                (noteHasGuid
+                 ? LocalStorageCacheManager::Guid
+                 : LocalStorageCacheManager::LocalUid);
 
-            const Note * pNote = m_pLocalStorageCacheManager->findNote(uid, wu);
+            const Note * pNote = d->m_pLocalStorageCacheManager->findNote(uid, wu);
             if (pNote)
             {
                 note = *pNote;
                 foundNoteInCache = true;
 
-                if (withResourceBinaryData)
+                if (options & LocalStorageManager::GetNoteOption::WithResourceBinaryData)
                 {
                     QList<Resource> resources = note.resources();
-                    for(auto it = resources.begin(), end = resources.end(); it != end; ++it)
+                    for(auto it = resources.begin(),
+                        end = resources.end(); it != end; ++it)
                     {
                         Resource & resource = *it;
 
                         bool resourceHasGuid = resource.hasGuid();
-                        const QString resourceUid = (resourceHasGuid ? resource.guid() : resource.localUid());
-                        LocalStorageCacheManager::WhichUid rwu = (resourceHasGuid ? LocalStorageCacheManager::Guid : LocalStorageCacheManager::LocalUid);
+                        const QString resourceUid = (resourceHasGuid
+                                                     ? resource.guid()
+                                                     : resource.localUid());
+                        LocalStorageCacheManager::WhichUid rwu =
+                                (resourceHasGuid
+                                 ? LocalStorageCacheManager::Guid
+                                 : LocalStorageCacheManager::LocalUid);
 
-                        const Resource * pResource = m_pLocalStorageCacheManager->findResource(resourceUid, rwu);
+                        const Resource * pResource =
+                                d->m_pLocalStorageCacheManager->findResource(resourceUid, rwu);
                         if (pResource)
                         {
                             resource = *pResource;
                         }
                         else
                         {
-                            bool res = m_pLocalStorageManager->findEnResource(resource, errorDescription, /* with resource binary data = */ true);
+                            LocalStorageManager::GetResourceOptions resourceOptions =
+                                    LocalStorageManager::GetResourceOption::WithBinaryData;
+                            bool res = d->m_pLocalStorageManager->findEnResource(resource,
+                                                                                 resourceOptions,
+                                                                                 errorDescription);
                             if (!res) {
-                                Q_EMIT findNoteFailed(note, withResourceMetadata, withResourceBinaryData, errorDescription, requestId);
+                                Q_EMIT findNoteFailed(note, options, errorDescription,
+                                                      requestId);
                                 return;
                             }
                         }
@@ -1227,14 +1493,15 @@ void LocalStorageManagerAsync::onFindNoteRequest(Note note, bool withResourceMet
 
         if (!foundNoteInCache)
         {
-            bool res = m_pLocalStorageManager->findNote(note, errorDescription, withResourceMetadata, withResourceBinaryData);
+            bool res = d->m_pLocalStorageManager->findNote(note, options,
+                                                           errorDescription);
             if (!res) {
-                Q_EMIT findNoteFailed(note, withResourceMetadata, withResourceBinaryData, errorDescription, requestId);
+                Q_EMIT findNoteFailed(note, options, errorDescription, requestId);
                 return;
             }
         }
 
-        if (!foundNoteInCache && m_useCache)
+        if (!foundNoteInCache && d->m_useCache)
         {
             QList<Resource> resources = note.resources();
             for(auto it = resources.begin(), end = resources.end(); it != end; ++it) {
@@ -1245,196 +1512,210 @@ void LocalStorageManagerAsync::onFindNoteRequest(Note note, bool withResourceMet
 
             Note noteWithoutResourceBinaryData = note;
             noteWithoutResourceBinaryData.setResources(resources);
-            m_pLocalStorageCacheManager->cacheNote(noteWithoutResourceBinaryData);
+            d->m_pLocalStorageCacheManager->cacheNote(noteWithoutResourceBinaryData);
         }
 
-        if (foundNoteInCache && !withResourceMetadata) {
+        if (foundNoteInCache &&
+            !(options & LocalStorageManager::GetNoteOption::WithResourceMetadata))
+        {
             note.setResources(QList<Resource>());
         }
 
-        Q_EMIT findNoteComplete(note, withResourceMetadata, withResourceBinaryData, requestId);
+        Q_EMIT findNoteComplete(note, options, requestId);
     }
     catch(const std::exception & e)
     {
-        ErrorString error(QT_TR_NOOP("Can't find note within the local storage: caught exception"));
+        ErrorString error(QT_TR_NOOP("Can't find note within the local storage: "
+                                     "caught exception"));
         error.details() = QString::fromUtf8(e.what());
         SysInfo sysInfo;
         QNERROR(error << QStringLiteral("; backtrace: ") << sysInfo.stackTrace());
-        Q_EMIT findNoteFailed(note, withResourceMetadata, withResourceBinaryData, error, requestId);
+        Q_EMIT findNoteFailed(note, options, error, requestId);
     }
 }
 
-void LocalStorageManagerAsync::onListNotesPerNotebookRequest(Notebook notebook, bool withResourceMetadata,
-                                                             bool withResourceBinaryData,
-                                                             LocalStorageManager::ListObjectsOptions flag,
-                                                             size_t limit, size_t offset,
-                                                             LocalStorageManager::ListNotesOrder::type order,
-                                                             LocalStorageManager::OrderDirection::type orderDirection,
-                                                             QUuid requestId)
+void LocalStorageManagerAsync::onListNotesPerNotebookRequest(
+    Notebook notebook, LocalStorageManager::GetNoteOptions options,
+    LocalStorageManager::ListObjectsOptions flag, size_t limit, size_t offset,
+    LocalStorageManager::ListNotesOrder::type order,
+    LocalStorageManager::OrderDirection::type orderDirection,
+    QUuid requestId)
 {
+    Q_D(LocalStorageManagerAsync);
+
     try
     {
         ErrorString errorDescription;
 
-        QList<Note> notes = m_pLocalStorageManager->listNotesPerNotebook(notebook, errorDescription,
-                                                                         withResourceMetadata, withResourceBinaryData,
-                                                                         flag, limit, offset, order, orderDirection);
+        QList<Note> notes =
+                d->m_pLocalStorageManager->listNotesPerNotebook(notebook, options,
+                                                                errorDescription,
+                                                                flag, limit, offset,
+                                                                order, orderDirection);
         if (notes.isEmpty() && !errorDescription.isEmpty()) {
-            Q_EMIT listNotesPerNotebookFailed(notebook, withResourceMetadata, withResourceBinaryData, flag,
-                                              limit, offset, order, orderDirection, errorDescription, requestId);
+            Q_EMIT listNotesPerNotebookFailed(notebook, options, flag,
+                                              limit, offset, order, orderDirection,
+                                              errorDescription, requestId);
             return;
         }
 
-        if (m_useCache && withResourceMetadata && withResourceBinaryData)
-        {
-            const int numNotes = notes.size();
-            for(int i = 0; i < numNotes; ++i) {
-                const Note & note = notes[i];
-                m_pLocalStorageCacheManager->cacheNote(note);
-            }
-        }
-
-        Q_EMIT listNotesPerNotebookComplete(notebook, withResourceMetadata, withResourceBinaryData, flag, limit,
-                                            offset, order, orderDirection, notes, requestId);
+        d->cacheNotes(notes, options);
+        Q_EMIT listNotesPerNotebookComplete(notebook, options, flag, limit,
+                                            offset, order, orderDirection,
+                                            notes, requestId);
     }
     catch(const std::exception & e)
     {
-        ErrorString error(QT_TR_NOOP("Can't list notes per notebook from the local storage: caught exception"));
+        ErrorString error(QT_TR_NOOP("Can't list notes per notebook from "
+                                     "the local storage: caught exception"));
         error.details() = QString::fromUtf8(e.what());
         SysInfo sysInfo;
         QNERROR(error << QStringLiteral("; backtrace: ") << sysInfo.stackTrace());
-        Q_EMIT listNotesPerNotebookFailed(notebook, withResourceMetadata, withResourceBinaryData, flag, limit, offset,
+        Q_EMIT listNotesPerNotebookFailed(notebook, options, flag, limit, offset,
                                           order, orderDirection, error, requestId);
     }
 }
 
-void LocalStorageManagerAsync::onListNotesPerTagRequest(Tag tag, bool withResourceMetadata, bool withResourceBinaryData,
-                                                        LocalStorageManager::ListObjectsOptions flag,
-                                                        size_t limit, size_t offset,
-                                                        LocalStorageManager::ListNotesOrder::type order,
-                                                        LocalStorageManager::OrderDirection::type orderDirection,
-                                                        QUuid requestId)
+void LocalStorageManagerAsync::onListNotesPerTagRequest(
+    Tag tag, LocalStorageManager::GetNoteOptions options,
+    LocalStorageManager::ListObjectsOptions flag, size_t limit, size_t offset,
+    LocalStorageManager::ListNotesOrder::type order,
+    LocalStorageManager::OrderDirection::type orderDirection,
+    QUuid requestId)
 {
+    Q_D(LocalStorageManagerAsync);
+
     try
     {
         ErrorString errorDescription;
 
-        QList<Note> notes = m_pLocalStorageManager->listNotesPerTag(tag, errorDescription, withResourceMetadata,
-                                                                    withResourceBinaryData, flag,
-                                                                    limit, offset, order, orderDirection);
+        QList<Note> notes =
+                d->m_pLocalStorageManager->listNotesPerTag(tag, options,
+                                                           errorDescription,
+                                                           flag, limit, offset,
+                                                           order, orderDirection);
         if (notes.isEmpty() && !errorDescription.isEmpty()) {
-            Q_EMIT listNotesPerTagFailed(tag, withResourceMetadata, withResourceBinaryData, flag, limit, offset,
-                                         order, orderDirection, errorDescription, requestId);
+            Q_EMIT listNotesPerTagFailed(tag, options, flag, limit, offset, order,
+                                         orderDirection, errorDescription, requestId);
             return;
         }
 
-        if (m_useCache && withResourceMetadata && withResourceBinaryData)
-        {
-            const int numNotes = notes.size();
-            for(int i = 0; i < numNotes; ++i) {
-                const Note & note = notes[i];
-                m_pLocalStorageCacheManager->cacheNote(note);
-            }
-        }
-
-        Q_EMIT listNotesPerTagComplete(tag, withResourceMetadata, withResourceBinaryData, flag, limit,
-                                       offset, order, orderDirection, notes, requestId);
+        d->cacheNotes(notes, options);
+        Q_EMIT listNotesPerTagComplete(tag, options, flag, limit, offset, order,
+                                       orderDirection, notes, requestId);
     }
     catch(const std::exception & e)
     {
-        ErrorString error(QT_TR_NOOP("Can't list notes per tag from the local storage: caught exception"));
+        ErrorString error(QT_TR_NOOP("Can't list notes per tag from the local "
+                                     "storage: caught exception"));
         error.details() = QString::fromUtf8(e.what());
         SysInfo sysInfo;
         QNERROR(error << QStringLiteral("; backtrace: ") << sysInfo.stackTrace());
-        Q_EMIT listNotesPerTagFailed(tag, withResourceMetadata, withResourceBinaryData, flag, limit, offset,
-                                     order, orderDirection, error, requestId);
+        Q_EMIT listNotesPerTagFailed(tag, options, flag, limit, offset, order,
+                                     orderDirection, error, requestId);
     }
 }
 
-void LocalStorageManagerAsync::onListNotesRequest(LocalStorageManager::ListObjectsOptions flag, bool withResourceMetadata,
-                                                  bool withResourceBinaryData, size_t limit, size_t offset,
-                                                  LocalStorageManager::ListNotesOrder::type order,
-                                                  LocalStorageManager::OrderDirection::type orderDirection,
-                                                  QString linkedNotebookGuid, QUuid requestId)
+void LocalStorageManagerAsync::onListNotesRequest(
+    LocalStorageManager::ListObjectsOptions flag,
+    LocalStorageManager::GetNoteOptions options, size_t limit, size_t offset,
+    LocalStorageManager::ListNotesOrder::type order,
+    LocalStorageManager::OrderDirection::type orderDirection,
+    QString linkedNotebookGuid, QUuid requestId)
 {
+    Q_D(LocalStorageManagerAsync);
+
     try
     {
         ErrorString errorDescription;
-        QList<Note> notes = m_pLocalStorageManager->listNotes(flag, errorDescription, withResourceMetadata, withResourceBinaryData,
-                                                              limit, offset, order, orderDirection, linkedNotebookGuid);
+        QList<Note> notes =
+                d->m_pLocalStorageManager->listNotes(flag, options,
+                                                     errorDescription,
+                                                     limit, offset, order,
+                                                     orderDirection,
+                                                     linkedNotebookGuid);
         if (notes.isEmpty() && !errorDescription.isEmpty()) {
-            Q_EMIT listNotesFailed(flag, withResourceMetadata, withResourceBinaryData, limit, offset, order,
-                                   orderDirection, linkedNotebookGuid, errorDescription, requestId);
+            Q_EMIT listNotesFailed(flag, options, limit, offset, order,
+                                   orderDirection, linkedNotebookGuid,
+                                   errorDescription, requestId);
             return;
         }
 
-        if (m_useCache && withResourceMetadata && withResourceBinaryData)
-        {
-            const int numNotes = notes.size();
-            for(int i = 0; i < numNotes; ++i) {
-                const Note & note = notes[i];
-                m_pLocalStorageCacheManager->cacheNote(note);
-            }
-        }
-
-        Q_EMIT listNotesComplete(flag, withResourceMetadata, withResourceBinaryData, limit, offset, order,
-                                 orderDirection, linkedNotebookGuid, notes, requestId);
+        d->cacheNotes(notes, options);
+        Q_EMIT listNotesComplete(flag, options, limit, offset,
+                                 order, orderDirection, linkedNotebookGuid,
+                                 notes, requestId);
     }
     catch(const std::exception & e)
     {
-        ErrorString error(QT_TR_NOOP("Can't list notes from the local storage: caught exception"));
+        ErrorString error(QT_TR_NOOP("Can't list notes from the local storage: "
+                                     "caught exception"));
         error.details() = QString::fromUtf8(e.what());
         SysInfo sysInfo;
         QNERROR(error << QStringLiteral("; backtrace: ") << sysInfo.stackTrace());
-        Q_EMIT listNotesFailed(flag, withResourceMetadata, withResourceBinaryData, limit, offset,
-                               order, orderDirection, linkedNotebookGuid, error, requestId);
+        Q_EMIT listNotesFailed(flag, options, limit, offset, order, orderDirection,
+                               linkedNotebookGuid, error, requestId);
     }
 }
 
-void LocalStorageManagerAsync::onFindNoteLocalUidsWithSearchQuery(NoteSearchQuery noteSearchQuery, QUuid requestId)
+void LocalStorageManagerAsync::onFindNoteLocalUidsWithSearchQuery(
+    NoteSearchQuery noteSearchQuery, QUuid requestId)
 {
+    Q_D(LocalStorageManagerAsync);
+
     try
     {
         ErrorString errorDescription;
-        QStringList noteLocalUids = m_pLocalStorageManager->findNoteLocalUidsWithSearchQuery(noteSearchQuery,
-                                                                                             errorDescription);
+        QStringList noteLocalUids =
+            d->m_pLocalStorageManager->findNoteLocalUidsWithSearchQuery(noteSearchQuery,
+                                                                        errorDescription);
         if (noteLocalUids.isEmpty() && !errorDescription.isEmpty()) {
-            Q_EMIT findNoteLocalUidsWithSearchQueryFailed(noteSearchQuery, errorDescription, requestId);
+            Q_EMIT findNoteLocalUidsWithSearchQueryFailed(noteSearchQuery,
+                                                          errorDescription,
+                                                          requestId);
             return;
         }
 
-        Q_EMIT findNoteLocalUidsWithSearchQueryComplete(noteLocalUids, noteSearchQuery, requestId);
+        Q_EMIT findNoteLocalUidsWithSearchQueryComplete(noteLocalUids,
+                                                        noteSearchQuery,
+                                                        requestId);
     }
     catch(const std::exception & e)
     {
-        ErrorString error(QT_TR_NOOP("Can't find note local uids with search query within the local storage: caught exception"));
+        ErrorString error(QT_TR_NOOP("Can't find note local uids with search query "
+                                     "within the local storage: caught exception"));
         error.details() = QString::fromUtf8(e.what());
         SysInfo sysInfo;
         QNERROR(error << QStringLiteral("; backtrace: ") << sysInfo.stackTrace());
-        Q_EMIT findNoteLocalUidsWithSearchQueryFailed(noteSearchQuery, error, requestId);
+        Q_EMIT findNoteLocalUidsWithSearchQueryFailed(noteSearchQuery, error,
+                                                      requestId);
     }
 }
 
 void LocalStorageManagerAsync::onExpungeNoteRequest(Note note, QUuid requestId)
 {
+    Q_D(LocalStorageManagerAsync);
+
     try
     {
         ErrorString errorDescription;
 
         QList<Resource> resources = note.resources();
 
-        bool res = m_pLocalStorageManager->expungeNote(note, errorDescription);
+        bool res = d->m_pLocalStorageManager->expungeNote(note, errorDescription);
         if (!res) {
             Q_EMIT expungeNoteFailed(note, errorDescription, requestId);
             return;
         }
 
-        if (m_useCache)
+        if (d->m_useCache)
         {
-            m_pLocalStorageCacheManager->expungeNote(note);
+            d->m_pLocalStorageCacheManager->expungeNote(note);
 
-            for(auto it = resources.constBegin(), end = resources.constEnd(); it != end; ++it) {
-                m_pLocalStorageCacheManager->expungeResource(*it);
+            for(auto it = resources.constBegin(),
+                end = resources.constEnd(); it != end; ++it)
+            {
+                d->m_pLocalStorageCacheManager->expungeResource(*it);
             }
         }
 
@@ -1442,7 +1723,8 @@ void LocalStorageManagerAsync::onExpungeNoteRequest(Note note, QUuid requestId)
     }
     catch(const std::exception & e)
     {
-        ErrorString error(QT_TR_NOOP("Can't expunge note from the local storage: caught exception"));
+        ErrorString error(QT_TR_NOOP("Can't expunge note from the local storage: "
+                                     "caught exception"));
         error.details() = QString::fromUtf8(e.what());
         SysInfo sysInfo;
         QNERROR(error << QStringLiteral("; backtrace: ") << sysInfo.stackTrace());
@@ -1452,10 +1734,12 @@ void LocalStorageManagerAsync::onExpungeNoteRequest(Note note, QUuid requestId)
 
 void LocalStorageManagerAsync::onGetTagCountRequest(QUuid requestId)
 {
+    Q_D(LocalStorageManagerAsync);
+
     try
     {
         ErrorString errorDescription;
-        int count = m_pLocalStorageManager->tagCount(errorDescription);
+        int count = d->m_pLocalStorageManager->tagCount(errorDescription);
         if (count < 0) {
             Q_EMIT getTagCountFailed(errorDescription, requestId);
         }
@@ -1465,7 +1749,8 @@ void LocalStorageManagerAsync::onGetTagCountRequest(QUuid requestId)
     }
     catch(const std::exception & e)
     {
-        ErrorString error(QT_TR_NOOP("Can't get tag count from the local storage: caught exception"));
+        ErrorString error(QT_TR_NOOP("Can't get tag count from the local storage: "
+                                     "caught exception"));
         error.details() = QString::fromUtf8(e.what());
         SysInfo sysInfo;
         QNERROR(error << QStringLiteral("; backtrace: ") << sysInfo.stackTrace());
@@ -1475,25 +1760,28 @@ void LocalStorageManagerAsync::onGetTagCountRequest(QUuid requestId)
 
 void LocalStorageManagerAsync::onAddTagRequest(Tag tag, QUuid requestId)
 {
+    Q_D(LocalStorageManagerAsync);
+
     try
     {
         ErrorString errorDescription;
 
-        bool res = m_pLocalStorageManager->addTag(tag, errorDescription);
+        bool res = d->m_pLocalStorageManager->addTag(tag, errorDescription);
         if (!res) {
             Q_EMIT addTagFailed(tag, errorDescription, requestId);
             return;
         }
 
-        if (m_useCache) {
-            m_pLocalStorageCacheManager->cacheTag(tag);
+        if (d->m_useCache) {
+            d->m_pLocalStorageCacheManager->cacheTag(tag);
         }
 
         Q_EMIT addTagComplete(tag, requestId);
     }
     catch(const std::exception & e)
     {
-        ErrorString error(QT_TR_NOOP("Can't add tag to the local storage: caught exception"));
+        ErrorString error(QT_TR_NOOP("Can't add tag to the local storage: "
+                                     "caught exception"));
         error.details() = QString::fromUtf8(e.what());
         SysInfo sysInfo;
         QNERROR(error << QStringLiteral("; backtrace: ") << sysInfo.stackTrace());
@@ -1503,25 +1791,28 @@ void LocalStorageManagerAsync::onAddTagRequest(Tag tag, QUuid requestId)
 
 void LocalStorageManagerAsync::onUpdateTagRequest(Tag tag, QUuid requestId)
 {
+    Q_D(LocalStorageManagerAsync);
+
     try
     {
         ErrorString errorDescription;
 
-        bool res = m_pLocalStorageManager->updateTag(tag, errorDescription);
+        bool res = d->m_pLocalStorageManager->updateTag(tag, errorDescription);
         if (!res) {
             Q_EMIT updateTagFailed(tag, errorDescription, requestId);
             return;
         }
 
-        if (m_useCache) {
-            m_pLocalStorageCacheManager->cacheTag(tag);
+        if (d->m_useCache) {
+            d->m_pLocalStorageCacheManager->cacheTag(tag);
         }
 
         Q_EMIT updateTagComplete(tag, requestId);
     }
     catch(const std::exception & e)
     {
-        ErrorString error(QT_TR_NOOP("Can't update tag in the local storage: caught exception"));
+        ErrorString error(QT_TR_NOOP("Can't update tag in the local storage: "
+                                     "caught exception"));
         error.details() = QString::fromUtf8(e.what());
         SysInfo sysInfo;
         QNERROR(error << QStringLiteral("; backtrace: ") << sysInfo.stackTrace());
@@ -1531,20 +1822,25 @@ void LocalStorageManagerAsync::onUpdateTagRequest(Tag tag, QUuid requestId)
 
 void LocalStorageManagerAsync::onFindTagRequest(Tag tag, QUuid requestId)
 {
+    Q_D(LocalStorageManagerAsync);
+
     try
     {
         ErrorString errorDescription;
 
         bool foundTagInCache = false;
-        if (m_useCache)
+        if (d->m_useCache)
         {
             bool tagHasGuid = tag.hasGuid();
             if (tagHasGuid || !tag.localUid().isEmpty())
             {
                 const QString uid = (tagHasGuid ? tag.guid() : tag.localUid());
-                LocalStorageCacheManager::WhichUid wg = (tagHasGuid ? LocalStorageCacheManager::Guid : LocalStorageCacheManager::LocalUid);
+                LocalStorageCacheManager::WhichUid wg =
+                    (tagHasGuid
+                     ? LocalStorageCacheManager::Guid
+                     : LocalStorageCacheManager::LocalUid);
 
-                const Tag * pTag = m_pLocalStorageCacheManager->findTag(uid, wg);
+                const Tag * pTag = d->m_pLocalStorageCacheManager->findTag(uid, wg);
                 if (pTag) {
                     tag = *pTag;
                     foundTagInCache = true;
@@ -1553,7 +1849,7 @@ void LocalStorageManagerAsync::onFindTagRequest(Tag tag, QUuid requestId)
             else if (tag.hasName() && !tag.name().isEmpty())
             {
                 const QString tagName = tag.name();
-                const Tag * pTag = m_pLocalStorageCacheManager->findTagByName(tagName);
+                const Tag * pTag = d->m_pLocalStorageCacheManager->findTagByName(tagName);
                 if (pTag) {
                     tag = *pTag;
                     foundTagInCache = true;
@@ -1563,7 +1859,7 @@ void LocalStorageManagerAsync::onFindTagRequest(Tag tag, QUuid requestId)
 
         if (!foundTagInCache)
         {
-            bool res = m_pLocalStorageManager->findTag(tag, errorDescription);
+            bool res = d->m_pLocalStorageManager->findTag(tag, errorDescription);
             if (!res) {
                 Q_EMIT findTagFailed(tag, errorDescription, requestId);
                 return;
@@ -1574,7 +1870,8 @@ void LocalStorageManagerAsync::onFindTagRequest(Tag tag, QUuid requestId)
     }
     catch(const std::exception & e)
     {
-        ErrorString error(QT_TR_NOOP("Can't find tag within the local storage: caught exception"));
+        ErrorString error(QT_TR_NOOP("Can't find tag within the local storage: "
+                                     "caught exception"));
         error.details() = QString::fromUtf8(e.what());
         SysInfo sysInfo;
         QNERROR(error << QStringLiteral("; backtrace: ") << sysInfo.stackTrace());
@@ -1582,173 +1879,219 @@ void LocalStorageManagerAsync::onFindTagRequest(Tag tag, QUuid requestId)
     }
 }
 
-void LocalStorageManagerAsync::onListAllTagsPerNoteRequest(Note note, LocalStorageManager::ListObjectsOptions flag,
-                                                           size_t limit, size_t offset,
-                                                           LocalStorageManager::ListTagsOrder::type order,
-                                                           LocalStorageManager::OrderDirection::type orderDirection,
-                                                           QUuid requestId)
+void LocalStorageManagerAsync::onListAllTagsPerNoteRequest(
+    Note note, LocalStorageManager::ListObjectsOptions flag,
+    size_t limit, size_t offset,
+    LocalStorageManager::ListTagsOrder::type order,
+    LocalStorageManager::OrderDirection::type orderDirection,
+    QUuid requestId)
 {
+    Q_D(LocalStorageManagerAsync);
+
     try
     {
         ErrorString errorDescription;
 
-        QList<Tag> tags = m_pLocalStorageManager->listAllTagsPerNote(note, errorDescription, flag, limit,
-                                                                     offset, order, orderDirection);
+        QList<Tag> tags =
+            d->m_pLocalStorageManager->listAllTagsPerNote(note, errorDescription,
+                                                          flag, limit, offset,
+                                                          order, orderDirection);
         if (tags.isEmpty() && !errorDescription.isEmpty()) {
             Q_EMIT listAllTagsPerNoteFailed(note, flag, limit, offset, order,
-                                          orderDirection, errorDescription, requestId);
+                                            orderDirection, errorDescription,
+                                            requestId);
             return;
         }
 
-        if (m_useCache)
+        if (d->m_useCache)
         {
-            foreach(const Tag & tag, tags) {
-                m_pLocalStorageCacheManager->cacheTag(tag);
+            for(auto it = tags.constBegin(),
+                end = tags.constEnd(); it != end; ++it)
+            {
+                d->m_pLocalStorageCacheManager->cacheTag(*it);
             }
         }
 
-        Q_EMIT listAllTagsPerNoteComplete(tags, note, flag, limit, offset, order, orderDirection, requestId);
+        Q_EMIT listAllTagsPerNoteComplete(tags, note, flag, limit, offset,
+                                          order, orderDirection, requestId);
     }
     catch(const std::exception & e)
     {
-        ErrorString error(QT_TR_NOOP("Can't list all tags per note from the local storage: caught exception"));
+        ErrorString error(QT_TR_NOOP("Can't list all tags per note from "
+                                     "the local storage: caught exception"));
         error.details() = QString::fromUtf8(e.what());
         SysInfo sysInfo;
         QNERROR(error << QStringLiteral("; backtrace: ") << sysInfo.stackTrace());
-        Q_EMIT listAllTagsPerNoteFailed(note, flag, limit, offset,
-                                        order, orderDirection, error, requestId);
+        Q_EMIT listAllTagsPerNoteFailed(note, flag, limit, offset, order,
+                                        orderDirection, error, requestId);
     }
 }
 
-void LocalStorageManagerAsync::onListAllTagsRequest(size_t limit, size_t offset,
-                                                    LocalStorageManager::ListTagsOrder::type order,
-                                                    LocalStorageManager::OrderDirection::type orderDirection,
-                                                    QString linkedNotebookGuid, QUuid requestId)
+void LocalStorageManagerAsync::onListAllTagsRequest(
+    size_t limit, size_t offset, LocalStorageManager::ListTagsOrder::type order,
+    LocalStorageManager::OrderDirection::type orderDirection,
+    QString linkedNotebookGuid, QUuid requestId)
 {
+    Q_D(LocalStorageManagerAsync);
+
     try
     {
         ErrorString errorDescription;
 
-        QList<Tag> tags = m_pLocalStorageManager->listAllTags(errorDescription, limit, offset,
-                                                              order, orderDirection, linkedNotebookGuid);
+        QList<Tag> tags =
+            d->m_pLocalStorageManager->listAllTags(errorDescription, limit,
+                                                   offset, order, orderDirection,
+                                                   linkedNotebookGuid);
         if (tags.isEmpty() && !errorDescription.isEmpty()) {
-            Q_EMIT listAllTagsFailed(limit, offset, order, orderDirection, linkedNotebookGuid, errorDescription, requestId);
+            Q_EMIT listAllTagsFailed(limit, offset, order, orderDirection,
+                                     linkedNotebookGuid, errorDescription,
+                                     requestId);
             return;
         }
 
-        if (m_useCache)
+        if (d->m_useCache)
         {
-            const int numTags = tags.size();
-            for(int i = 0; i < numTags; ++i) {
-                const Tag & tag = tags[i];
-                m_pLocalStorageCacheManager->cacheTag(tag);
+            for(auto it = tags.constBegin(),
+                end = tags.constEnd(); it != end; ++it)
+            {
+                d->m_pLocalStorageCacheManager->cacheTag(*it);
             }
         }
 
-        Q_EMIT listAllTagsComplete(limit, offset, order, orderDirection, linkedNotebookGuid, tags, requestId);
+        Q_EMIT listAllTagsComplete(limit, offset, order, orderDirection,
+                                   linkedNotebookGuid, tags, requestId);
     }
     catch(const std::exception & e)
     {
-        ErrorString error(QT_TR_NOOP("Can't list all tags from the local storage: caught exception"));
+        ErrorString error(QT_TR_NOOP("Can't list all tags from the local storage: "
+                                     "caught exception"));
         error.details() = QString::fromUtf8(e.what());
         SysInfo sysInfo;
         QNERROR(error << QStringLiteral("; backtrace: ") << sysInfo.stackTrace());
-        Q_EMIT listAllTagsFailed(limit, offset, order, orderDirection, linkedNotebookGuid, error, requestId);
+        Q_EMIT listAllTagsFailed(limit, offset, order, orderDirection,
+                                 linkedNotebookGuid, error, requestId);
     }
 }
 
-void LocalStorageManagerAsync::onListTagsRequest(LocalStorageManager::ListObjectsOptions flag,
-                                                 size_t limit, size_t offset,
-                                                 LocalStorageManager::ListTagsOrder::type order,
-                                                 LocalStorageManager::OrderDirection::type orderDirection,
-                                                 QString linkedNotebookGuid, QUuid requestId)
+void LocalStorageManagerAsync::onListTagsRequest(
+    LocalStorageManager::ListObjectsOptions flag, size_t limit, size_t offset,
+    LocalStorageManager::ListTagsOrder::type order,
+    LocalStorageManager::OrderDirection::type orderDirection,
+    QString linkedNotebookGuid, QUuid requestId)
 {
+    Q_D(LocalStorageManagerAsync);
+
     try
     {
         ErrorString errorDescription;
-        QList<Tag> tags = m_pLocalStorageManager->listTags(flag, errorDescription, limit, offset, order,
-                                                           orderDirection, linkedNotebookGuid);
+        QList<Tag> tags =
+            d->m_pLocalStorageManager->listTags(flag, errorDescription, limit,
+                                                offset, order, orderDirection,
+                                                linkedNotebookGuid);
         if (tags.isEmpty() && !errorDescription.isEmpty()) {
-            Q_EMIT listTagsFailed(flag, limit, offset, order, orderDirection, linkedNotebookGuid, errorDescription, requestId);
+            Q_EMIT listTagsFailed(flag, limit, offset, order, orderDirection,
+                                  linkedNotebookGuid, errorDescription, requestId);
         }
 
-        if (m_useCache)
+        if (d->m_useCache)
         {
-            for(auto it = tags.constBegin(), end = tags.constEnd(); it != end; ++it) {
-                const Tag & tag = *it;
-                m_pLocalStorageCacheManager->cacheTag(tag);
+            for(auto it = tags.constBegin(),
+                end = tags.constEnd(); it != end; ++it)
+            {
+                d->m_pLocalStorageCacheManager->cacheTag(*it);
             }
         }
 
-        Q_EMIT listTagsComplete(flag, limit, offset, order, orderDirection, linkedNotebookGuid, tags, requestId);
+        Q_EMIT listTagsComplete(flag, limit, offset, order, orderDirection,
+                                linkedNotebookGuid, tags, requestId);
     }
     catch(const std::exception & e)
     {
-        ErrorString error(QT_TR_NOOP("Can't list tags from the local storage: caught exception"));
+        ErrorString error(QT_TR_NOOP("Can't list tags from the local storage: "
+                                     "caught exception"));
         error.details() = QString::fromUtf8(e.what());
         SysInfo sysInfo;
         QNERROR(error << QStringLiteral("; backtrace: ") << sysInfo.stackTrace());
-        Q_EMIT listTagsFailed(flag, limit, offset, order, orderDirection, linkedNotebookGuid, error, requestId);
+        Q_EMIT listTagsFailed(flag, limit, offset, order, orderDirection,
+                              linkedNotebookGuid, error, requestId);
     }
 }
 
-void LocalStorageManagerAsync::onListTagsWithNoteLocalUidsRequest(LocalStorageManager::ListObjectsOptions flag,
-                                                                  size_t limit, size_t offset,
-                                                                  LocalStorageManager::ListTagsOrder::type order,
-                                                                  LocalStorageManager::OrderDirection::type orderDirection,
-                                                                  QString linkedNotebookGuid, QUuid requestId)
+void LocalStorageManagerAsync::onListTagsWithNoteLocalUidsRequest(
+    LocalStorageManager::ListObjectsOptions flag, size_t limit, size_t offset,
+    LocalStorageManager::ListTagsOrder::type order,
+    LocalStorageManager::OrderDirection::type orderDirection,
+    QString linkedNotebookGuid, QUuid requestId)
 {
+    Q_D(LocalStorageManagerAsync);
+
     try
     {
         ErrorString errorDescription;
-        QList<std::pair<Tag, QStringList> > tagsWithNoteLocalUids = m_pLocalStorageManager->listTagsWithNoteLocalUids(flag, errorDescription,
-                                                                                                                      limit, offset, order,
-                                                                                                                      orderDirection, linkedNotebookGuid);
+        QList<std::pair<Tag, QStringList> > tagsWithNoteLocalUids =
+            d->m_pLocalStorageManager->listTagsWithNoteLocalUids(flag, errorDescription,
+                                                                 limit, offset, order,
+                                                                 orderDirection,
+                                                                 linkedNotebookGuid);
         if (tagsWithNoteLocalUids.isEmpty() && !errorDescription.isEmpty()) {
-            Q_EMIT listTagsWithNoteLocalUidsFailed(flag, limit, offset, order, orderDirection, linkedNotebookGuid, errorDescription, requestId);
+            Q_EMIT listTagsWithNoteLocalUidsFailed(flag, limit, offset, order,
+                                                   orderDirection, linkedNotebookGuid,
+                                                   errorDescription, requestId);
         }
 
-        if (m_useCache)
+        if (d->m_useCache)
         {
-            for(auto it = tagsWithNoteLocalUids.constBegin(), end = tagsWithNoteLocalUids.constEnd(); it != end; ++it) {
-                const Tag & tag = it->first;
-                m_pLocalStorageCacheManager->cacheTag(tag);
+            for(auto it = tagsWithNoteLocalUids.constBegin(),
+                end = tagsWithNoteLocalUids.constEnd(); it != end; ++it)
+            {
+                d->m_pLocalStorageCacheManager->cacheTag(it->first);
             }
         }
 
-        Q_EMIT listTagsWithNoteLocalUidsComplete(flag, limit, offset, order, orderDirection, linkedNotebookGuid, tagsWithNoteLocalUids, requestId);
+        Q_EMIT listTagsWithNoteLocalUidsComplete(flag, limit, offset, order,
+                                                 orderDirection, linkedNotebookGuid,
+                                                 tagsWithNoteLocalUids, requestId);
     }
     catch(const std::exception & e)
     {
-        ErrorString error(QT_TR_NOOP("Can't list tags with note local uids from the local storage: caught exception"));
+        ErrorString error(QT_TR_NOOP("Can't list tags with note local uids from "
+                                     "the local storage: caught exception"));
         error.details() = QString::fromUtf8(e.what());
         SysInfo sysInfo;
         QNERROR(error << QStringLiteral("; backtrace: ") << sysInfo.stackTrace());
-        Q_EMIT listTagsWithNoteLocalUidsFailed(flag, limit, offset, order, orderDirection, linkedNotebookGuid, error, requestId);
+        Q_EMIT listTagsWithNoteLocalUidsFailed(flag, limit, offset, order,
+                                               orderDirection, linkedNotebookGuid,
+                                               error, requestId);
     }
 }
 
 void LocalStorageManagerAsync::onExpungeTagRequest(Tag tag, QUuid requestId)
 {
+    Q_D(LocalStorageManagerAsync);
+
     try
     {
         ErrorString errorDescription;
 
         QStringList expungedChildTagLocalUids;
-        bool res = m_pLocalStorageManager->expungeTag(tag, expungedChildTagLocalUids, errorDescription);
+        bool res = d->m_pLocalStorageManager->expungeTag(tag,
+                                                         expungedChildTagLocalUids,
+                                                         errorDescription);
         if (!res) {
             Q_EMIT expungeTagFailed(tag, errorDescription, requestId);
             return;
         }
 
-        if (m_useCache)
+        if (d->m_useCache)
         {
-            m_pLocalStorageCacheManager->expungeTag(tag);
+            d->m_pLocalStorageCacheManager->expungeTag(tag);
 
-            for(auto it = expungedChildTagLocalUids.constBegin(), end = expungedChildTagLocalUids.constEnd(); it != end; ++it) {
+            for(auto it = expungedChildTagLocalUids.constBegin(),
+                end = expungedChildTagLocalUids.constEnd(); it != end; ++it)
+            {
                 Tag dummyTag;
                 dummyTag.setLocalUid(*it);
-                m_pLocalStorageCacheManager->expungeTag(dummyTag);
+                d->m_pLocalStorageCacheManager->expungeTag(dummyTag);
             }
         }
 
@@ -1756,7 +2099,8 @@ void LocalStorageManagerAsync::onExpungeTagRequest(Tag tag, QUuid requestId)
     }
     catch(const std::exception & e)
     {
-        ErrorString error(QT_TR_NOOP("Can't expunge tag from the local storage: caught exception"));
+        ErrorString error(QT_TR_NOOP("Can't expunge tag from the local storage: "
+                                     "caught exception"));
         error.details() = QString::fromUtf8(e.what());
         SysInfo sysInfo;
         QNERROR(error << QStringLiteral("; backtrace: ") << sysInfo.stackTrace());
@@ -1766,25 +2110,29 @@ void LocalStorageManagerAsync::onExpungeTagRequest(Tag tag, QUuid requestId)
 
 void LocalStorageManagerAsync::onExpungeNotelessTagsFromLinkedNotebooksRequest(QUuid requestId)
 {
+    Q_D(LocalStorageManagerAsync);
+
     try
     {
         ErrorString errorDescription;
-        bool res = m_pLocalStorageManager->expungeNotelessTagsFromLinkedNotebooks(errorDescription);
+        bool res = d->m_pLocalStorageManager->expungeNotelessTagsFromLinkedNotebooks(errorDescription);
         if (!res) {
-            Q_EMIT expungeNotelessTagsFromLinkedNotebooksFailed(errorDescription, requestId);
+            Q_EMIT expungeNotelessTagsFromLinkedNotebooksFailed(errorDescription,
+                                                                requestId);
             return;
         }
 
-        if (m_useCache) {
-            m_pLocalStorageCacheManager->clearAllNotes();
-            m_pLocalStorageCacheManager->clearAllResources();
+        if (d->m_useCache) {
+            d->m_pLocalStorageCacheManager->clearAllNotes();
+            d->m_pLocalStorageCacheManager->clearAllResources();
         }
 
         Q_EMIT expungeNotelessTagsFromLinkedNotebooksComplete(requestId);
     }
     catch(const std::exception & e)
     {
-        ErrorString error(QT_TR_NOOP("Can't expunge noteless tags from the local storage: caught exception"));
+        ErrorString error(QT_TR_NOOP("Can't expunge noteless tags from "
+                                     "the local storage: caught exception"));
         error.details() = QString::fromUtf8(e.what());
         SysInfo sysInfo;
         QNERROR(error << QStringLiteral("; backtrace: ") << sysInfo.stackTrace());
@@ -1794,10 +2142,12 @@ void LocalStorageManagerAsync::onExpungeNotelessTagsFromLinkedNotebooksRequest(Q
 
 void LocalStorageManagerAsync::onGetResourceCountRequest(QUuid requestId)
 {
+    Q_D(LocalStorageManagerAsync);
+
     try
     {
         ErrorString errorDescription;
-        int count = m_pLocalStorageManager->enResourceCount(errorDescription);
+        int count = d->m_pLocalStorageManager->enResourceCount(errorDescription);
         if (count < 0) {
             Q_EMIT getResourceCountFailed(errorDescription, requestId);
         }
@@ -1807,7 +2157,8 @@ void LocalStorageManagerAsync::onGetResourceCountRequest(QUuid requestId)
     }
     catch(const std::exception & e)
     {
-        ErrorString error(QT_TR_NOOP("Can't get resource count from the local storage: caught exception"));
+        ErrorString error(QT_TR_NOOP("Can't get resource count from "
+                                     "the local storage: caught exception"));
         error.details() = QString::fromUtf8(e.what());
         SysInfo sysInfo;
         QNERROR(error << QStringLiteral("; backtrace: ") << sysInfo.stackTrace());
@@ -1815,27 +2166,32 @@ void LocalStorageManagerAsync::onGetResourceCountRequest(QUuid requestId)
     }
 }
 
-void LocalStorageManagerAsync::onAddResourceRequest(Resource resource, QUuid requestId)
+void LocalStorageManagerAsync::onAddResourceRequest(Resource resource,
+                                                    QUuid requestId)
 {
+    Q_D(LocalStorageManagerAsync);
+
     try
     {
         ErrorString errorDescription;
 
-        bool res = m_pLocalStorageManager->addEnResource(resource, errorDescription);
+        bool res = d->m_pLocalStorageManager->addEnResource(resource,
+                                                            errorDescription);
         if (!res) {
             Q_EMIT addResourceFailed(resource, errorDescription, requestId);
             return;
         }
 
-        if (m_useCache) {
-            m_pLocalStorageCacheManager->cacheResource(resource);
+        if (d->m_useCache) {
+            d->m_pLocalStorageCacheManager->cacheResource(resource);
         }
 
         Q_EMIT addResourceComplete(resource, requestId);
     }
     catch(const std::exception & e)
     {
-        ErrorString error(QT_TR_NOOP("Can't add resource to the local storage: caught exception"));
+        ErrorString error(QT_TR_NOOP("Can't add resource to the local storage: "
+                                     "caught exception"));
         error.details() = QString::fromUtf8(e.what());
         SysInfo sysInfo;
         QNERROR(error << QStringLiteral("; backtrace: ") << sysInfo.stackTrace());
@@ -1843,27 +2199,32 @@ void LocalStorageManagerAsync::onAddResourceRequest(Resource resource, QUuid req
     }
 }
 
-void LocalStorageManagerAsync::onUpdateResourceRequest(Resource resource, QUuid requestId)
+void LocalStorageManagerAsync::onUpdateResourceRequest(Resource resource,
+                                                       QUuid requestId)
 {
+    Q_D(LocalStorageManagerAsync);
+
     try
     {
         ErrorString errorDescription;
 
-        bool res = m_pLocalStorageManager->updateEnResource(resource, errorDescription);
+        bool res = d->m_pLocalStorageManager->updateEnResource(resource,
+                                                               errorDescription);
         if (!res) {
             Q_EMIT updateResourceFailed(resource, errorDescription, requestId);
             return;
         }
 
-        if (m_useCache) {
-            m_pLocalStorageCacheManager->cacheResource(resource);
+        if (d->m_useCache) {
+            d->m_pLocalStorageCacheManager->cacheResource(resource);
         }
 
         Q_EMIT updateResourceComplete(resource, requestId);
     }
     catch(const std::exception & e)
     {
-        ErrorString error(QT_TR_NOOP("Can't update resource in the local storage: caught exception"));
+        ErrorString error(QT_TR_NOOP("Can't update resource in the local storage: "
+                                     "caught exception"));
         error.details() = QString::fromUtf8(e.what());
         SysInfo sysInfo;
         QNERROR(error << QStringLiteral("; backtrace: ") << sysInfo.stackTrace());
@@ -1871,20 +2232,30 @@ void LocalStorageManagerAsync::onUpdateResourceRequest(Resource resource, QUuid 
     }
 }
 
-void LocalStorageManagerAsync::onFindResourceRequest(Resource resource, bool withBinaryData, QUuid requestId)
+void LocalStorageManagerAsync::onFindResourceRequest(
+    Resource resource, LocalStorageManager::GetResourceOptions options,
+    QUuid requestId)
 {
+    Q_D(LocalStorageManagerAsync);
+
     try
     {
         ErrorString errorDescription;
 
         bool foundResourceInCache = false;
-        if (m_useCache)
+        if (d->m_useCache)
         {
             bool resourceHasGuid = resource.hasGuid();
-            const QString uid = (resourceHasGuid ? resource.guid() : resource.localUid());
-            LocalStorageCacheManager::WhichUid wu = (resourceHasGuid ? LocalStorageCacheManager::Guid : LocalStorageCacheManager::LocalUid);
+            const QString uid = (resourceHasGuid
+                                 ? resource.guid()
+                                 : resource.localUid());
+            LocalStorageCacheManager::WhichUid wu =
+                (resourceHasGuid
+                 ? LocalStorageCacheManager::Guid
+                 : LocalStorageCacheManager::LocalUid);
 
-            const Resource * pResource = m_pLocalStorageCacheManager->findResource(uid, wu);
+            const Resource * pResource =
+                d->m_pLocalStorageCacheManager->findResource(uid, wu);
             if (pResource) {
                 resource = *pResource;
                 foundResourceInCache = true;
@@ -1893,55 +2264,66 @@ void LocalStorageManagerAsync::onFindResourceRequest(Resource resource, bool wit
 
         if (!foundResourceInCache)
         {
-            bool res = m_pLocalStorageManager->findEnResource(resource, errorDescription, withBinaryData);
+            bool res = d->m_pLocalStorageManager->findEnResource(resource,
+                                                                 options,
+                                                                 errorDescription);
             if (!res) {
-                Q_EMIT findResourceFailed(resource, withBinaryData, errorDescription, requestId);
+                Q_EMIT findResourceFailed(resource, options,
+                                          errorDescription, requestId);
                 return;
             }
 
-            if (withBinaryData && m_useCache) {
-                m_pLocalStorageCacheManager->cacheResource(resource);
+            if (d->m_useCache &&
+                (options & LocalStorageManager::GetResourceOption::WithBinaryData))
+            {
+                d->m_pLocalStorageCacheManager->cacheResource(resource);
             }
         }
-        else if (!withBinaryData)
+        else if (!(options & LocalStorageManager::GetResourceOption::WithBinaryData))
         {
             resource.setDataBody(QByteArray());
             resource.setAlternateDataBody(QByteArray());
         }
 
-        Q_EMIT findResourceComplete(resource, withBinaryData, requestId);
+        Q_EMIT findResourceComplete(resource, options, requestId);
     }
     catch(const std::exception & e)
     {
-        ErrorString error(QT_TR_NOOP("Can't find resource within the local storage: caught exception"));
+        ErrorString error(QT_TR_NOOP("Can't find resource within the local storage: "
+                                     "caught exception"));
         error.details() = QString::fromUtf8(e.what());
         SysInfo sysInfo;
         QNERROR(error << QStringLiteral("; backtrace: ") << sysInfo.stackTrace());
-        Q_EMIT findResourceFailed(resource, withBinaryData, error, requestId);
+        Q_EMIT findResourceFailed(resource, options, error, requestId);
     }
 }
 
-void LocalStorageManagerAsync::onExpungeResourceRequest(Resource resource, QUuid requestId)
+void LocalStorageManagerAsync::onExpungeResourceRequest(Resource resource,
+                                                        QUuid requestId)
 {
+    Q_D(LocalStorageManagerAsync);
+
     try
     {
         ErrorString errorDescription;
 
-        bool res = m_pLocalStorageManager->expungeEnResource(resource, errorDescription);
+        bool res = d->m_pLocalStorageManager->expungeEnResource(resource,
+                                                                errorDescription);
         if (!res) {
             Q_EMIT expungeResourceFailed(resource, errorDescription, requestId);
             return;
         }
 
-        if (m_useCache) {
-            m_pLocalStorageCacheManager->expungeResource(resource);
+        if (d->m_useCache) {
+            d->m_pLocalStorageCacheManager->expungeResource(resource);
         }
 
         Q_EMIT expungeResourceComplete(resource, requestId);
     }
     catch(const std::exception & e)
     {
-        ErrorString error(QT_TR_NOOP("Can't expunge resource from the local storage: caught exception"));
+        ErrorString error(QT_TR_NOOP("Can't expunge resource from the local storage: "
+                                     "caught exception"));
         error.details() = QString::fromUtf8(e.what());
         SysInfo sysInfo;
         QNERROR(error << QStringLiteral("; backtrace: ") << sysInfo.stackTrace());
@@ -1951,10 +2333,12 @@ void LocalStorageManagerAsync::onExpungeResourceRequest(Resource resource, QUuid
 
 void LocalStorageManagerAsync::onGetSavedSearchCountRequest(QUuid requestId)
 {
+    Q_D(LocalStorageManagerAsync);
+
     try
     {
         ErrorString errorDescription;
-        int count = m_pLocalStorageManager->savedSearchCount(errorDescription);
+        int count = d->m_pLocalStorageManager->savedSearchCount(errorDescription);
         if (count < 0) {
             Q_EMIT getSavedSearchCountFailed(errorDescription, requestId);
         }
@@ -1964,7 +2348,8 @@ void LocalStorageManagerAsync::onGetSavedSearchCountRequest(QUuid requestId)
     }
     catch(const std::exception & e)
     {
-        ErrorString error(QT_TR_NOOP("Can't get saved searches count from the local storage: caught exception"));
+        ErrorString error(QT_TR_NOOP("Can't get saved searches count from "
+                                     "the local storage: caught exception"));
         error.details() = QString::fromUtf8(e.what());
         SysInfo sysInfo;
         QNERROR(error << QStringLiteral("; backtrace: ") << sysInfo.stackTrace());
@@ -1972,27 +2357,32 @@ void LocalStorageManagerAsync::onGetSavedSearchCountRequest(QUuid requestId)
     }
 }
 
-void LocalStorageManagerAsync::onAddSavedSearchRequest(SavedSearch search, QUuid requestId)
+void LocalStorageManagerAsync::onAddSavedSearchRequest(SavedSearch search,
+                                                       QUuid requestId)
 {
+    Q_D(LocalStorageManagerAsync);
+
     try
     {
         ErrorString errorDescription;
 
-        bool res = m_pLocalStorageManager->addSavedSearch(search, errorDescription);
+        bool res = d->m_pLocalStorageManager->addSavedSearch(search,
+                                                             errorDescription);
         if (!res) {
             Q_EMIT addSavedSearchFailed(search, errorDescription, requestId);
             return;
         }
 
-        if (m_useCache) {
-            m_pLocalStorageCacheManager->cacheSavedSearch(search);
+        if (d->m_useCache) {
+            d->m_pLocalStorageCacheManager->cacheSavedSearch(search);
         }
 
         Q_EMIT addSavedSearchComplete(search, requestId);
     }
     catch(const std::exception & e)
     {
-        ErrorString error(QT_TR_NOOP("Can't add saved search to the local storage: caught exception"));
+        ErrorString error(QT_TR_NOOP("Can't add saved search to the local storage: "
+                                     "caught exception"));
         error.details() = QString::fromUtf8(e.what());
         SysInfo sysInfo;
         QNERROR(error << QStringLiteral("; backtrace: ") << sysInfo.stackTrace());
@@ -2000,27 +2390,32 @@ void LocalStorageManagerAsync::onAddSavedSearchRequest(SavedSearch search, QUuid
     }
 }
 
-void LocalStorageManagerAsync::onUpdateSavedSearchRequest(SavedSearch search, QUuid requestId)
+void LocalStorageManagerAsync::onUpdateSavedSearchRequest(SavedSearch search,
+                                                          QUuid requestId)
 {
+    Q_D(LocalStorageManagerAsync);
+
     try
     {
         ErrorString errorDescription;
 
-        bool res = m_pLocalStorageManager->updateSavedSearch(search, errorDescription);
+        bool res = d->m_pLocalStorageManager->updateSavedSearch(search,
+                                                                errorDescription);
         if (!res) {
             Q_EMIT updateSavedSearchFailed(search, errorDescription, requestId);
             return;
         }
 
-        if (m_useCache) {
-            m_pLocalStorageCacheManager->cacheSavedSearch(search);
+        if (d->m_useCache) {
+            d->m_pLocalStorageCacheManager->cacheSavedSearch(search);
         }
 
         Q_EMIT updateSavedSearchComplete(search, requestId);
     }
     catch(const std::exception & e)
     {
-        ErrorString error(QT_TR_NOOP("Can't update saved search in the local storage: caught exception"));
+        ErrorString error(QT_TR_NOOP("Can't update saved search in the local "
+                                     "storage: caught exception"));
         error.details() = QString::fromUtf8(e.what());
         SysInfo sysInfo;
         QNERROR(error << QStringLiteral("; backtrace: ") << sysInfo.stackTrace());
@@ -2028,22 +2423,31 @@ void LocalStorageManagerAsync::onUpdateSavedSearchRequest(SavedSearch search, QU
     }
 }
 
-void LocalStorageManagerAsync::onFindSavedSearchRequest(SavedSearch search, QUuid requestId)
+void LocalStorageManagerAsync::onFindSavedSearchRequest(SavedSearch search,
+                                                        QUuid requestId)
 {
+    Q_D(LocalStorageManagerAsync);
+
     try
     {
         ErrorString errorDescription;
 
         bool foundCachedSavedSearch = false;
-        if (m_useCache)
+        if (d->m_useCache)
         {
             bool searchHasGuid = search.hasGuid();
             if (searchHasGuid || !search.localUid().isEmpty())
             {
-                const QString uid = (searchHasGuid ? search.guid() : search.localUid());
-                const LocalStorageCacheManager::WhichUid wg = (searchHasGuid ? LocalStorageCacheManager::Guid : LocalStorageCacheManager::LocalUid);
+                const QString uid = (searchHasGuid
+                                     ? search.guid()
+                                     : search.localUid());
+                const LocalStorageCacheManager::WhichUid wg =
+                    (searchHasGuid
+                     ? LocalStorageCacheManager::Guid
+                     : LocalStorageCacheManager::LocalUid);
 
-                const SavedSearch * pSearch = m_pLocalStorageCacheManager->findSavedSearch(uid, wg);
+                const SavedSearch * pSearch =
+                    d->m_pLocalStorageCacheManager->findSavedSearch(uid, wg);
                 if (pSearch) {
                     search = *pSearch;
                     foundCachedSavedSearch = true;
@@ -2052,7 +2456,8 @@ void LocalStorageManagerAsync::onFindSavedSearchRequest(SavedSearch search, QUui
             else if (search.hasName() && !search.name().isEmpty())
             {
                 const QString searchName = search.name();
-                const SavedSearch * pSearch = m_pLocalStorageCacheManager->findSavedSearchByName(searchName);
+                const SavedSearch * pSearch =
+                    d->m_pLocalStorageCacheManager->findSavedSearchByName(searchName);
                 if (pSearch) {
                     search = *pSearch;
                     foundCachedSavedSearch = true;
@@ -2062,7 +2467,8 @@ void LocalStorageManagerAsync::onFindSavedSearchRequest(SavedSearch search, QUui
 
         if (!foundCachedSavedSearch)
         {
-            bool res = m_pLocalStorageManager->findSavedSearch(search, errorDescription);
+            bool res =
+                d->m_pLocalStorageManager->findSavedSearch(search, errorDescription);
             if (!res) {
                 Q_EMIT findSavedSearchFailed(search, errorDescription, requestId);
                 return;
@@ -2073,7 +2479,8 @@ void LocalStorageManagerAsync::onFindSavedSearchRequest(SavedSearch search, QUui
     }
     catch(const std::exception & e)
     {
-        ErrorString error(QT_TR_NOOP("Can't find saved search within the local storage: caught exception"));
+        ErrorString error(QT_TR_NOOP("Can't find saved search within the local "
+                                     "storage: caught exception"));
         error.details() = QString::fromUtf8(e.what());
         SysInfo sysInfo;
         QNERROR(error << QStringLiteral("; backtrace: ") << sysInfo.stackTrace());
@@ -2081,103 +2488,126 @@ void LocalStorageManagerAsync::onFindSavedSearchRequest(SavedSearch search, QUui
     }
 }
 
-void LocalStorageManagerAsync::onListAllSavedSearchesRequest(size_t limit, size_t offset,
-                                                             LocalStorageManager::ListSavedSearchesOrder::type order,
-                                                             LocalStorageManager::OrderDirection::type orderDirection,
-                                                             QUuid requestId)
+void LocalStorageManagerAsync::onListAllSavedSearchesRequest(
+    size_t limit, size_t offset,
+    LocalStorageManager::ListSavedSearchesOrder::type order,
+    LocalStorageManager::OrderDirection::type orderDirection,
+    QUuid requestId)
 {
+    Q_D(LocalStorageManagerAsync);
+
     try
     {
         ErrorString errorDescription;
-        QList<SavedSearch> savedSearches = m_pLocalStorageManager->listAllSavedSearches(errorDescription, limit, offset,
-                                                                                   order, orderDirection);
+        QList<SavedSearch> savedSearches =
+            d->m_pLocalStorageManager->listAllSavedSearches(errorDescription,
+                                                            limit, offset,
+                                                            order, orderDirection);
         if (savedSearches.isEmpty() && !errorDescription.isEmpty()) {
             Q_EMIT listAllSavedSearchesFailed(limit, offset, order, orderDirection,
-                                            errorDescription, requestId);
+                                              errorDescription, requestId);
             return;
         }
 
-        if (m_useCache)
+        if (d->m_useCache)
         {
-            const int numSavedSearches = savedSearches.size();
-            for(int i = 0; i < numSavedSearches; ++i) {
-                const SavedSearch & search = savedSearches[i];
-                m_pLocalStorageCacheManager->cacheSavedSearch(search);
+            for(auto it = savedSearches.constBegin(),
+                end = savedSearches.constEnd(); it != end; ++it)
+            {
+                d->m_pLocalStorageCacheManager->cacheSavedSearch(*it);
             }
         }
 
-        Q_EMIT listAllSavedSearchesComplete(limit, offset, order, orderDirection, savedSearches, requestId);
+        Q_EMIT listAllSavedSearchesComplete(limit, offset, order, orderDirection,
+                                            savedSearches, requestId);
     }
     catch(const std::exception & e)
     {
-        ErrorString error(QT_TR_NOOP("Can't list all saved searches from the local storage: caught exception"));
+        ErrorString error(QT_TR_NOOP("Can't list all saved searches from "
+                                     "the local storage: caught exception"));
         error.details() = QString::fromUtf8(e.what());
         SysInfo sysInfo;
         QNERROR(error << QStringLiteral("; backtrace: ") << sysInfo.stackTrace());
-        Q_EMIT listAllSavedSearchesFailed(limit, offset, order, orderDirection, error, requestId);
+        Q_EMIT listAllSavedSearchesFailed(limit, offset, order, orderDirection,
+                                          error, requestId);
     }
 }
 
-void LocalStorageManagerAsync::onListSavedSearchesRequest(LocalStorageManager::ListObjectsOptions flag,
-                                                          size_t limit, size_t offset,
-                                                          LocalStorageManager::ListSavedSearchesOrder::type order,
-                                                          LocalStorageManager::OrderDirection::type orderDirection,
-                                                          QUuid requestId)
+void LocalStorageManagerAsync::onListSavedSearchesRequest(
+    LocalStorageManager::ListObjectsOptions flag,
+    size_t limit, size_t offset,
+    LocalStorageManager::ListSavedSearchesOrder::type order,
+    LocalStorageManager::OrderDirection::type orderDirection,
+    QUuid requestId)
 {
+    Q_D(LocalStorageManagerAsync);
+
     try
     {
         ErrorString errorDescription;
-        QList<SavedSearch> savedSearches = m_pLocalStorageManager->listSavedSearches(flag, errorDescription, limit,
-                                                                                     offset, order, orderDirection);
+        QList<SavedSearch> savedSearches =
+            d->m_pLocalStorageManager->listSavedSearches(flag, errorDescription,
+                                                         limit, offset, order,
+                                                         orderDirection);
         if (savedSearches.isEmpty() && !errorDescription.isEmpty()) {
             QNTRACE(QStringLiteral("Failed: ") << errorDescription);
-            Q_EMIT listSavedSearchesFailed(flag, limit, offset, order, orderDirection,
-                                           errorDescription, requestId);
+            Q_EMIT listSavedSearchesFailed(flag, limit, offset, order,
+                                           orderDirection, errorDescription,
+                                           requestId);
             return;
         }
 
-        if (m_useCache)
+        if (d->m_useCache)
         {
-            const int numSavedSearches = savedSearches.size();
-            for(int i = 0; i < numSavedSearches; ++i) {
-                const SavedSearch & search = savedSearches[i];
-                m_pLocalStorageCacheManager->cacheSavedSearch(search);
+            for(auto it = savedSearches.constBegin(),
+                end = savedSearches.constEnd(); it != end; ++it)
+            {
+                d->m_pLocalStorageCacheManager->cacheSavedSearch(*it);
             }
         }
 
-        Q_EMIT listSavedSearchesComplete(flag, limit, offset, order, orderDirection, savedSearches, requestId);
+        Q_EMIT listSavedSearchesComplete(flag, limit, offset, order,
+                                         orderDirection, savedSearches,
+                                         requestId);
     }
     catch(const std::exception & e)
     {
-        ErrorString error(QT_TR_NOOP("Can't list all saved searches from the local storage: caught exception"));
+        ErrorString error(QT_TR_NOOP("Can't list all saved searches from "
+                                     "the local storage: caught exception"));
         error.details() = QString::fromUtf8(e.what());
         SysInfo sysInfo;
         QNERROR(error << QStringLiteral("; backtrace: ") << sysInfo.stackTrace());
-        Q_EMIT listSavedSearchesFailed(flag, limit, offset, order, orderDirection, error, requestId);
+        Q_EMIT listSavedSearchesFailed(flag, limit, offset, order,
+                                       orderDirection, error, requestId);
     }
 }
 
-void LocalStorageManagerAsync::onExpungeSavedSearchRequest(SavedSearch search, QUuid requestId)
+void LocalStorageManagerAsync::onExpungeSavedSearchRequest(SavedSearch search,
+                                                           QUuid requestId)
 {
+    Q_D(LocalStorageManagerAsync);
+
     try
     {
         ErrorString errorDescription;
 
-        bool res = m_pLocalStorageManager->expungeSavedSearch(search, errorDescription);
+        bool res = d->m_pLocalStorageManager->expungeSavedSearch(search,
+                                                                 errorDescription);
         if (!res) {
             Q_EMIT expungeSavedSearchFailed(search, errorDescription, requestId);
             return;
         }
 
-        if (m_useCache) {
-            m_pLocalStorageCacheManager->expungeSavedSearch(search);
+        if (d->m_useCache) {
+            d->m_pLocalStorageCacheManager->expungeSavedSearch(search);
         }
 
         Q_EMIT expungeSavedSearchComplete(search, requestId);
     }
     catch(const std::exception & e)
     {
-        ErrorString error(QT_TR_NOOP("Can't expunge saved search from the local storage: caught exception"));
+        ErrorString error(QT_TR_NOOP("Can't expunge saved search from "
+                                     "the local storage: caught exception"));
         error.details() = QString::fromUtf8(e.what());
         SysInfo sysInfo;
         QNERROR(error << QStringLiteral("; backtrace: ") << sysInfo.stackTrace());
@@ -2185,23 +2615,31 @@ void LocalStorageManagerAsync::onExpungeSavedSearchRequest(SavedSearch search, Q
     }
 }
 
-void LocalStorageManagerAsync::onAccountHighUsnRequest(QString linkedNotebookGuid, QUuid requestId)
+void LocalStorageManagerAsync::onAccountHighUsnRequest(QString linkedNotebookGuid,
+                                                       QUuid requestId)
 {
+    Q_D(LocalStorageManagerAsync);
+
     try
     {
         ErrorString errorDescription;
 
-        qint32 updateSequenceNumber = m_pLocalStorageManager->accountHighUsn(linkedNotebookGuid, errorDescription);
+        qint32 updateSequenceNumber =
+            d->m_pLocalStorageManager->accountHighUsn(linkedNotebookGuid,
+                                                      errorDescription);
         if (updateSequenceNumber < 0) {
-            Q_EMIT accountHighUsnFailed(linkedNotebookGuid, errorDescription, requestId);
+            Q_EMIT accountHighUsnFailed(linkedNotebookGuid, errorDescription,
+                                        requestId);
             return;
         }
 
-        Q_EMIT accountHighUsnComplete(updateSequenceNumber, linkedNotebookGuid, requestId);
+        Q_EMIT accountHighUsnComplete(updateSequenceNumber, linkedNotebookGuid,
+                                      requestId);
     }
     catch(const std::exception & e)
     {
-        ErrorString error(QT_TR_NOOP("Can't get account high USN from the local storage: caught exception"));
+        ErrorString error(QT_TR_NOOP("Can't get account high USN from "
+                                     "the local storage: caught exception"));
         error.details() = QString::fromUtf8(e.what());
         SysInfo sysInfo;
         QNERROR(error << QStringLiteral("; backtrace: ") << sysInfo.stackTrace());

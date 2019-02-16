@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Dmitry Ivanov
+ * Copyright 2016-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -101,7 +101,8 @@ bool checkUpdateSequenceNumber(const int32_t updateSequenceNumber)
               (updateSequenceNumber == std::numeric_limits<int32_t>::max()) );
 }
 
-const QString printableDateTimeFromTimestamp(const qint64 timestamp, const DateTimePrint::Options options,
+const QString printableDateTimeFromTimestamp(const qint64 timestamp,
+                                             const DateTimePrint::Options options,
                                              const char * customFormat)
 {
     if (Q_UNLIKELY(timestamp < 0)) {
@@ -134,7 +135,8 @@ const QString printableDateTimeFromTimestamp(const qint64 timestamp, const DateT
 #endif
 #else // ifdef _MSC_VER
 #ifdef __MINGW32__
-    // MinGW lacks localtime_r but uses MS's localtime instead which is told to be thread-safe but it's still not re-entrant
+    // MinGW lacks localtime_r but uses MS's localtime instead which is told to
+    // be thread-safe but it's still not re-entrant.
     // So, can at best hope it won't cause problems too often
     tm = localtime(&t);
 #else // POSIX
@@ -150,7 +152,8 @@ const QString printableDateTimeFromTimestamp(const qint64 timestamp, const DateT
     const size_t maxBufSize = 100;
     char buffer[maxBufSize];
     const char * format = "%Y-%m-%d %H:%M:%S";
-    size_t size = strftime(buffer, maxBufSize, (customFormat ? customFormat : format) , tm);
+    size_t size = strftime(buffer, maxBufSize,
+                           (customFormat ? customFormat : format), tm);
 
     result += QString::fromLocal8Bit(buffer, static_cast<int>(size));
 
@@ -198,7 +201,8 @@ QStyle * applicationStyle()
     const QStringList styleNames = QStyleFactory::keys();
 #if !defined(Q_OS_MAC) && (QT_VERSION < QT_VERSION_CHECK(5, 0, 0))
     if (styleNames.isEmpty()) {
-        QNINFO(QStringLiteral("No valid styles were found in QStyleFactory! Fallback to the last resort of plastique style"));
+        QNINFO(QStringLiteral("No valid styles were found in QStyleFactory! "
+                              "Fallback to the last resort of plastique style"));
         return new QPlastiqueStyle;
     }
 
@@ -215,7 +219,8 @@ QStyle * applicationStyle()
 const QString humanReadableSize(const quint64 bytes)
 {
     QStringList list;
-    list << QStringLiteral("Kb") << QStringLiteral("Mb") << QStringLiteral("Gb") << QStringLiteral("Tb");
+    list << QStringLiteral("Kb") << QStringLiteral("Mb")
+         << QStringLiteral("Gb") << QStringLiteral("Tb");
 
     QStringListIterator it(list);
     QString unit = QStringLiteral("bytes");
@@ -254,7 +259,8 @@ const QString getExistingFolderDialog(QWidget * parent, const QString & title,
     }
 }
 
-const QString relativePathFromAbsolutePath(const QString & absolutePath, const QString & relativePathRootFolder)
+const QString relativePathFromAbsolutePath(const QString & absolutePath,
+                                           const QString & relativePathRootFolder)
 {
     QNDEBUG(QStringLiteral("relativePathFromAbsolutePath: ") << absolutePath);
 
@@ -266,11 +272,13 @@ const QString relativePathFromAbsolutePath(const QString & absolutePath, const Q
 #endif
                                         );
     if (position < 0) {
-        QNINFO(QStringLiteral("Can't find folder ") << relativePathRootFolder << QStringLiteral(" within path ") << absolutePath);
+        QNINFO(QStringLiteral("Can't find folder ") << relativePathRootFolder
+               << QStringLiteral(" within path ") << absolutePath);
         return QString();
     }
 
-    return absolutePath.mid(position + relativePathRootFolder.length() + 1);   // NOTE: additional symbol for slash
+    // NOTE: additional symbol for slash
+    return absolutePath.mid(position + relativePathRootFolder.length() + 1);
 }
 
 const QString getCurrentUserName()
@@ -295,7 +303,8 @@ const QString getCurrentUserName()
 
     if (userName.isEmpty())
     {
-        QNTRACE(QStringLiteral("Native platform API failed to provide the username, trying environment variables fallback"));
+        QNTRACE(QStringLiteral("Native platform API failed to provide the username, "
+                               "trying environment variables fallback"));
 
         userName = QString::fromLocal8Bit(qgetenv("USER"));
         if (userName.isEmpty()) {
@@ -323,10 +332,11 @@ const QString getCurrentUserFullName()
 
     if (userFullName.isEmpty())
     {
-        // GetUserNameEx with NameDisplay format doesn't work when the computer is offline.
-        // It's serious. Take a look here: http://stackoverflow.com/a/2997257
-        // I've never had any serious business with WinAPI but I nearly killed myself
-        // with a facepalm when I figured this thing out. God help Microsoft - nothing else will.
+        // GetUserNameEx with NameDisplay format doesn't work when the computer
+        // is offline. It's serious. Take a look here: http://stackoverflow.com/a/2997257
+        // I've never had any serious business with WinAPI but I nearly killed
+        // myself with a facepalm when I figured this thing out. God help
+        // Microsoft - nothing else will.
         //
         // Falling back to the login name
         userFullName = getCurrentUserName();
@@ -342,8 +352,9 @@ const QString getCurrentUserFullName()
         }
     }
 
-    // NOTE: some Unix systems put more than full user name into this field but also something about the location etc.
-    // The convention is to use comma to split the values of different kind and the user's full name is the first one
+    // NOTE: some Unix systems put more than full user name into this field but
+    // also something about the location etc. The convention is to use comma to
+    // split the values of different kind and the user's full name is the first one
     int commaIndex = userFullName.indexOf(QChar::fromLatin1(','));
     if (commaIndex > 0) {   // NOTE: not >= but >
         userFullName.truncate(commaIndex);
@@ -373,14 +384,16 @@ bool removeFile(const QString & filePath)
 
 #ifdef Q_OS_WIN
     if (filePath.endsWith(QStringLiteral(".lnk"))) {
-        // NOTE: there appears to be a bug in Qt for Windows, QFile::remove returns false
-        // for any *.lnk files even though the files are actually getting removed
+        // NOTE: there appears to be a bug in Qt for Windows, QFile::remove
+        // returns false for any *.lnk files even though the files are actually
+        // getting removed
         QNTRACE(QStringLiteral("Skipping the reported failure at removing the .lnk file"));
         return true;
     }
 #endif
 
-    QNWARNING(QStringLiteral("Cannot remove file ") << filePath << QStringLiteral(": ") << file.errorString()
+    QNWARNING(QStringLiteral("Cannot remove file ") << filePath
+              << QStringLiteral(": ") << file.errorString()
               << QStringLiteral(", error code ") << file.error());
     return false;
 }
@@ -392,9 +405,12 @@ bool removeDirImpl(const QString & dirPath)
 
     if (dir.exists())
     {
-        QFileInfoList dirContents = dir.entryInfoList(QDir::NoDotAndDotDot | QDir::System | QDir::Hidden |
-                                                      QDir::AllDirs | QDir::Files, QDir::DirsFirst);
-        for(auto it = dirContents.constBegin(), end = dirContents.constEnd(); it != end; ++it)
+        QFileInfoList dirContents =
+            dir.entryInfoList(QDir::NoDotAndDotDot | QDir::System |
+                              QDir::Hidden | QDir::AllDirs | QDir::Files,
+                              QDir::DirsFirst);
+        for(auto it = dirContents.constBegin(),
+            end = dirContents.constEnd(); it != end; ++it)
         {
             const QFileInfo & info = *it;
             if (info.isDir()) {
@@ -412,7 +428,8 @@ bool removeDirImpl(const QString & dirPath)
         result = dir.rmpath(dirPath);
         if (!result)
         {
-            // NOTE: QDir::rmpath seems to occasionally return failure on Windows while in reality the method works
+            // NOTE: QDir::rmpath seems to occasionally return failure on
+            // Windows while in reality the method works
             if (!dir.exists())
             {
                 result = true;
@@ -451,7 +468,10 @@ QByteArray readFileContents(const QString & filePath, ErrorString & errorDescrip
     std::ifstream istrm;
     istrm.open(QDir::toNativeSeparators(filePath).toStdString(), std::ifstream::in);
     if (!istrm.good()) {
-        errorDescription.setBase(QT_TRANSLATE_NOOP("readFileContents", "Failed to read file contents, could not open the file for reading"));
+        errorDescription.setBase(QT_TRANSLATE_NOOP("readFileContents",
+                                                   "Failed to read file contents, "
+                                                   "could not open the file "
+                                                   "for reading"));
         errorDescription.details() = QString::fromLocal8Bit(strerror(errno));
         return result;
     }
@@ -459,7 +479,9 @@ QByteArray readFileContents(const QString & filePath, ErrorString & errorDescrip
     istrm.seekg(0, std::ios::end);
     std::streamsize length = istrm.tellg();
     if (length > std::numeric_limits<int>::max()) {
-        errorDescription.setBase(QT_TRANSLATE_NOOP("readFileContents", "Failed to read file contents, file is too large"));
+        errorDescription.setBase(QT_TRANSLATE_NOOP("readFileContents",
+                                                   "Failed to read file contents, "
+                                                   "file is too large"));
         errorDescription.details() = humanReadableSize(static_cast<quint64>(length));
         return result;
     }
@@ -472,21 +494,30 @@ QByteArray readFileContents(const QString & filePath, ErrorString & errorDescrip
     return result;
 }
 
-bool renameFile(const QString & from, const QString & to, ErrorString & errorDescription)
+bool renameFile(const QString & from, const QString & to,
+                ErrorString & errorDescription)
 {
 #ifdef Q_OS_WIN
 
     std::wstring fromW = QDir::toNativeSeparators(from).toStdWString();
     std::wstring toW = QDir::toNativeSeparators(to).toStdWString();
-    int res = MoveFileExW(fromW.c_str(), toW.c_str(), MOVEFILE_COPY_ALLOWED | MOVEFILE_REPLACE_EXISTING | MOVEFILE_WRITE_THROUGH);
+    int res = MoveFileExW(fromW.c_str(), toW.c_str(),
+                          MOVEFILE_COPY_ALLOWED |
+                          MOVEFILE_REPLACE_EXISTING |
+                          MOVEFILE_WRITE_THROUGH);
     if (res == 0)
     {
-        errorDescription.setBase(QT_TRANSLATE_NOOP("renameFile", "failed to rename file"));
+        errorDescription.setBase(QT_TRANSLATE_NOOP("renameFile",
+                                                   "failed to rename file"));
 
         LPTSTR errorText = NULL;
 
-        Q_UNUSED(FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_IGNORE_INSERTS,
-                               NULL, GetLastError(), MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPTSTR)&errorText, 0, NULL))
+        Q_UNUSED(FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM |
+                               FORMAT_MESSAGE_ALLOCATE_BUFFER |
+                               FORMAT_MESSAGE_IGNORE_INSERTS,
+                               NULL, GetLastError(),
+                               MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+                               (LPTSTR)&errorText, 0, NULL))
         if (errorText != NULL) {
             errorDescription.details() += QString::fromWCharArray(errorText);
             LocalFree(errorText);
@@ -506,7 +537,8 @@ bool renameFile(const QString & from, const QString & to, ErrorString & errorDes
 
     int res = rename(from.toUtf8().constData(), to.toUtf8().constData());
     if (res != 0) {
-        errorDescription.setBase(QT_TRANSLATE_NOOP("renameFile", "failed to rename file"));
+        errorDescription.setBase(QT_TRANSLATE_NOOP("renameFile",
+                                                   "failed to rename file"));
         errorDescription.details() += QString::fromUtf8(strerror(errno));
         errorDescription.details() += QStringLiteral("; from = ");
         errorDescription.details() += from;

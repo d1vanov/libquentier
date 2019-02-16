@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Dmitry Ivanov
+ * Copyright 2017-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -62,12 +62,15 @@ bool checkTagsOrder(const QList<T> & tags, QString & error)
     return true;
 }
 
-void tagListToQEverCloudTagList(const QList<Tag> & inputTags, QList<qevercloud::Tag> & outputTags)
+void tagListToQEverCloudTagList(const QList<Tag> & inputTags,
+                                QList<qevercloud::Tag> & outputTags)
 {
     outputTags.clear();
     outputTags.reserve(inputTags.size());
 
-    for(auto it = inputTags.constBegin(), end = inputTags.constEnd(); it != end; ++it) {
+    for(auto it = inputTags.constBegin(),
+        end = inputTags.constEnd(); it != end; ++it)
+    {
         outputTags << it->qevercloudTag();
     }
 }

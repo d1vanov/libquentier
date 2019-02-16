@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Dmitry Ivanov
+ * Copyright 2016-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -30,13 +30,14 @@ namespace quentier {
  * it would then pass the signal on to NoteEditor.
  *
  * The necessity for this class comes from two facts:
- * 1. As of Qt 5.5.x QWebEnginePage's doesn't have just any signal which could provide
- * such information
- * 2. QtWebKit's contentsChanged signal from QWebPage seems to be not smart enough for
- * NoteEditor's purposes: it would notify of any changes while only those caused by
- * manual editing are really wanted and needed.
+ * 1. As of Qt 5.5.x QWebEnginePage's doesn't have just any signal which could
+ * provide such information
+ * 2. QtWebKit's contentsChanged signal from QWebPage seems to be not smart
+ * enough for NoteEditor's purposes: it would notify of any changes while only
+ * those caused by manual editing are really wanted and needed.
  *
- * Hence, JavaScript-side filtering of page mutations + this class for a dialog between JS and C++
+ * Hence, JavaScript-side filtering of page mutations + this class for a dialog
+ * between JS and C++
  */
 class PageMutationHandler: public QObject
 {

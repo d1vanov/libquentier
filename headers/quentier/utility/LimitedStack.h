@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Dmitry Ivanov
+ * Copyright 2016-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -25,17 +25,30 @@
 namespace quentier {
 
 /**
- * @brief The LimitedStack template class implements a stack which may have a limitation for its size;
- * when the size becomes too much according to the limit, the bottom element of the stack gets erased from it.
+ * @brief The LimitedStack template class implements a stack which may have
+ * a limitation for its size; when the size becomes too much according to
+ * the limit, the bottom element of the stack gets erased from it.
  * Only limits greater than zero are considered.
  */
 template <class T>
 class LimitedStack: public QStack<T>
 {
 public:
-    LimitedStack(void (*deleter)(T&) = Q_NULLPTR) : m_limit(-1), m_deleter(deleter) {}
-    LimitedStack(const LimitedStack<T> & other) : QStack<T>(other), m_limit(other.m_limit), m_deleter(other.m_deleter) {}
-    LimitedStack(LimitedStack<T> && other) : QStack<T>(std::move(other)), m_limit(std::move(other.m_limit)), m_deleter(std::move(other.m_deleter)) {}
+    LimitedStack(void (*deleter)(T&) = Q_NULLPTR) :
+        m_limit(-1), m_deleter(deleter)
+    {}
+
+    LimitedStack(const LimitedStack<T> & other) :
+        QStack<T>(other),
+        m_limit(other.m_limit),
+        m_deleter(other.m_deleter)
+    {}
+
+    LimitedStack(LimitedStack<T> && other) :
+        QStack<T>(std::move(other)),
+        m_limit(std::move(other.m_limit)),
+        m_deleter(std::move(other.m_deleter))
+    {}
 
     LimitedStack<T> & operator=(const LimitedStack<T> & other)
     {

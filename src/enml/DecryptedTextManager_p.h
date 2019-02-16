@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Dmitry Ivanov
+ * Copyright 2016-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -38,10 +38,12 @@ public:
 
     void clearNonRememberedForSessionEntries();
 
-    bool findDecryptedTextByEncryptedText(const QString & encryptedText, QString & decryptedText,
+    bool findDecryptedTextByEncryptedText(const QString & encryptedText,
+                                          QString & decryptedText,
                                           bool & rememberForSession) const;
 
-    bool modifyDecryptedText(const QString & originalHash, const QString & newDecryptedText,
+    bool modifyDecryptedText(const QString & originalHash,
+                             const QString & newDecryptedText,
                              QString & newEncryptedText);
 
 private:

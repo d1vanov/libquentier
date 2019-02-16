@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Dmitry Ivanov
+ * Copyright 2016-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -58,18 +58,26 @@ void SavedSearchData::clear()
 
 bool SavedSearchData::checkParameters(ErrorString & errorDescription) const
 {
-    if (m_qecSearch.guid.isSet() && !checkGuid(m_qecSearch.guid.ref())) {
-        errorDescription.setBase(QT_TRANSLATE_NOOP("SavedSearchData", "Saved search's guid is invalid"));
+    if (m_qecSearch.guid.isSet() && !checkGuid(m_qecSearch.guid.ref()))
+    {
+        errorDescription.setBase(QT_TRANSLATE_NOOP("SavedSearchData",
+                                                   "Saved search's guid is invalid"));
         errorDescription.details() = m_qecSearch.guid;
         return false;
     }
 
-    if (m_qecSearch.name.isSet() && !SavedSearch::validateName(m_qecSearch.name, &errorDescription)) {
+    if (m_qecSearch.name.isSet() &&
+        !SavedSearch::validateName(m_qecSearch.name, &errorDescription))
+    {
         return false;
     }
 
-    if (m_qecSearch.updateSequenceNum.isSet() && !checkUpdateSequenceNumber(m_qecSearch.updateSequenceNum)) {
-        errorDescription.setBase(QT_TRANSLATE_NOOP("SavedSearchData", "Saved search's update sequence number is invalid"));
+    if (m_qecSearch.updateSequenceNum.isSet() &&
+        !checkUpdateSequenceNumber(m_qecSearch.updateSequenceNum))
+    {
+        errorDescription.setBase(QT_TRANSLATE_NOOP("SavedSearchData",
+                                                   "Saved search's update sequence "
+                                                   "number is invalid"));
         errorDescription.details() = QString::number(m_qecSearch.updateSequenceNum);
         return false;
     }
@@ -82,14 +90,21 @@ bool SavedSearchData::checkParameters(ErrorString & errorDescription) const
         if ( (querySize < qevercloud::EDAM_SEARCH_QUERY_LEN_MIN) ||
              (querySize > qevercloud::EDAM_SEARCH_QUERY_LEN_MAX) )
         {
-            errorDescription.setBase(QT_TRANSLATE_NOOP("SavedSearchData", "Saved search's query exceeds allowed size"));
+            errorDescription.setBase(QT_TRANSLATE_NOOP("SavedSearchData",
+                                                       "Saved search's query "
+                                                       "exceeds the allowed size"));
             errorDescription.details() = query;
             return false;
         }
     }
 
-    if (m_qecSearch.format.isSet() && (static_cast<qevercloud::QueryFormat::type>(m_qecSearch.format) != qevercloud::QueryFormat::USER)) {
-        errorDescription.setBase(QT_TRANSLATE_NOOP("SavedSearchData", "Saved search has unsupported query format"));
+    if (m_qecSearch.format.isSet() &&
+        (static_cast<qevercloud::QueryFormat::type>(m_qecSearch.format) !=
+         qevercloud::QueryFormat::USER))
+    {
+        errorDescription.setBase(QT_TRANSLATE_NOOP("SavedSearchData",
+                                                   "Saved search has unsupported "
+                                                   "query format"));
         errorDescription.details() = QString::number(m_qecSearch.format.ref());
         return false;
     }

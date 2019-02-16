@@ -253,5 +253,4 @@ artifacts:
 matrix:
   allow_failures:
     - prepare_mode: YES
-  # Disable because I seem to be running into https://github.com/appveyor/ci/issues/2346 again
-  # fast_finish: true
+  fast_finish: true

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Dmitry Ivanov
+ * Copyright 2016-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -26,12 +26,23 @@ FileIOProcessorAsync::FileIOProcessorAsync(QObject * parent) :
     QObject(parent),
     d_ptr(new FileIOProcessorAsyncPrivate(this))
 {
-    QObject::connect(d_ptr, QNSIGNAL(FileIOProcessorAsyncPrivate,readyForIO),
-                     this, QNSIGNAL(FileIOProcessorAsync,readyForIO));
-    QObject::connect(d_ptr, QNSIGNAL(FileIOProcessorAsyncPrivate,writeFileRequestProcessed,bool,ErrorString,QUuid),
-                     this, QNSIGNAL(FileIOProcessorAsync,writeFileRequestProcessed,bool,ErrorString,QUuid));
-    QObject::connect(d_ptr, QNSIGNAL(FileIOProcessorAsyncPrivate,readFileRequestProcessed,bool,ErrorString,QByteArray,QUuid),
-                     this, QNSIGNAL(FileIOProcessorAsync,readFileRequestProcessed,bool,ErrorString,QByteArray,QUuid));
+    QObject::connect(d_ptr,
+                     QNSIGNAL(FileIOProcessorAsyncPrivate,readyForIO),
+                     this,
+                     QNSIGNAL(FileIOProcessorAsync,readyForIO));
+    QObject::connect(d_ptr,
+                     QNSIGNAL(FileIOProcessorAsyncPrivate,
+                              writeFileRequestProcessed,bool,ErrorString,QUuid),
+                     this,
+                     QNSIGNAL(FileIOProcessorAsync,writeFileRequestProcessed,
+                              bool,ErrorString,QUuid));
+    QObject::connect(d_ptr,
+                     QNSIGNAL(FileIOProcessorAsyncPrivate,
+                              readFileRequestProcessed,
+                              bool,ErrorString,QByteArray,QUuid),
+                     this,
+                     QNSIGNAL(FileIOProcessorAsync,readFileRequestProcessed,
+                              bool,ErrorString,QByteArray,QUuid));
 }
 
 void FileIOProcessorAsync::setIdleTimePeriod(qint32 seconds)
@@ -40,13 +51,17 @@ void FileIOProcessorAsync::setIdleTimePeriod(qint32 seconds)
     d->setIdleTimePeriod(seconds);
 }
 
-void FileIOProcessorAsync::onWriteFileRequest(QString absoluteFilePath, QByteArray data, QUuid requestId, bool append)
+void FileIOProcessorAsync::onWriteFileRequest(QString absoluteFilePath,
+                                              QByteArray data,
+                                              QUuid requestId,
+                                              bool append)
 {
     Q_D(FileIOProcessorAsync);
     d->onWriteFileRequest(absoluteFilePath, data, requestId, append);
 }
 
-void FileIOProcessorAsync::onReadFileRequest(QString absoluteFilePath, QUuid requestId)
+void FileIOProcessorAsync::onReadFileRequest(QString absoluteFilePath,
+                                             QUuid requestId)
 {
     Q_D(FileIOProcessorAsync);
     d->onReadFileRequest(absoluteFilePath, requestId);

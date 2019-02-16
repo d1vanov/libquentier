@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Dmitry Ivanov
+ * Copyright 2017-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -33,8 +33,10 @@ class QUENTIER_EXPORT AuthenticationManager: public IAuthenticationManager
 {
     Q_OBJECT
 public:
-    explicit AuthenticationManager(const QString & consumerKey, const QString & consumerSecret,
-                                   const QString & host, QObject * parent = Q_NULLPTR);
+    explicit AuthenticationManager(const QString & consumerKey,
+                                   const QString & consumerSecret,
+                                   const QString & host,
+                                   QObject * parent = Q_NULLPTR);
     virtual ~AuthenticationManager();
 
 public Q_SLOTS:

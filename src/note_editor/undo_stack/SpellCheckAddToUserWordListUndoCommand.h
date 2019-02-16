@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Dmitry Ivanov
+ * Copyright 2016-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -30,10 +30,14 @@ class Q_DECL_HIDDEN SpellCheckAddToUserWordListUndoCommand: public INoteEditorUn
 {
     Q_OBJECT
 public:
-    SpellCheckAddToUserWordListUndoCommand(NoteEditorPrivate & noteEditor, const QString & word,
-                                           SpellChecker * pSpellChecker, QUndoCommand * parent = Q_NULLPTR);
-    SpellCheckAddToUserWordListUndoCommand(NoteEditorPrivate & noteEditor, const QString & word,
-                                           SpellChecker * pSpellChecker, const QString & text,
+    SpellCheckAddToUserWordListUndoCommand(NoteEditorPrivate & noteEditor,
+                                           const QString & word,
+                                           SpellChecker * pSpellChecker,
+                                           QUndoCommand * parent = Q_NULLPTR);
+    SpellCheckAddToUserWordListUndoCommand(NoteEditorPrivate & noteEditor,
+                                           const QString & word,
+                                           SpellChecker * pSpellChecker,
+                                           const QString & text,
                                            QUndoCommand * parent = Q_NULLPTR);
     virtual ~SpellCheckAddToUserWordListUndoCommand();
 

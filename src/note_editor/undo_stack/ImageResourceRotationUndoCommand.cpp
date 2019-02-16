@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 Dmitry Ivanov
+ * Copyright 2016-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -22,11 +22,15 @@
 
 namespace quentier {
 
-ImageResourceRotationUndoCommand::ImageResourceRotationUndoCommand(const QByteArray & resourceDataBefore, const QByteArray & resourceHashBefore,
-                                                                   const QByteArray & resourceRecognitionDataBefore, const QByteArray & resourceRecognitionDataHashBefore,
-                                                                   const QSize & resourceImageSizeBefore, const Resource & resourceAfter,
-                                                                   const INoteEditorBackend::Rotation::type rotationDirection,
-                                                                   NoteEditorPrivate & noteEditor, QUndoCommand * parent) :
+ImageResourceRotationUndoCommand::ImageResourceRotationUndoCommand(
+        const QByteArray & resourceDataBefore,
+        const QByteArray & resourceHashBefore,
+        const QByteArray & resourceRecognitionDataBefore,
+        const QByteArray & resourceRecognitionDataHashBefore,
+        const QSize & resourceImageSizeBefore,
+        const Resource & resourceAfter,
+        const INoteEditorBackend::Rotation::type rotationDirection,
+        NoteEditorPrivate & noteEditor, QUndoCommand * parent) :
     INoteEditorUndoCommand(noteEditor, parent),
     m_resourceDataBefore(resourceDataBefore),
     m_resourceHashBefore(resourceHashBefore),
@@ -42,11 +46,17 @@ ImageResourceRotationUndoCommand::ImageResourceRotationUndoCommand(const QByteAr
              : QObject::tr("counterclockwise")));
 }
 
-ImageResourceRotationUndoCommand::ImageResourceRotationUndoCommand(const QByteArray & resourceDataBefore, const QByteArray & resourceHashBefore,
-                                                                   const QByteArray & resourceRecognitionDataBefore, const QByteArray & resourceRecognitionDataHashBefore,
-                                                                   const QSize & resourceImageSizeBefore, const Resource & resourceAfter,
-                                                                   const INoteEditorBackend::Rotation::type rotationDirection,
-                                                                   NoteEditorPrivate & noteEditor, const QString & text, QUndoCommand * parent) :
+ImageResourceRotationUndoCommand::ImageResourceRotationUndoCommand(
+        const QByteArray & resourceDataBefore,
+        const QByteArray & resourceHashBefore,
+        const QByteArray & resourceRecognitionDataBefore,
+        const QByteArray & resourceRecognitionDataHashBefore,
+        const QSize & resourceImageSizeBefore,
+        const Resource & resourceAfter,
+        const INoteEditorBackend::Rotation::type rotationDirection,
+        NoteEditorPrivate & noteEditor,
+        const QString & text,
+        QUndoCommand * parent) :
     INoteEditorUndoCommand(noteEditor, text, parent),
     m_resourceDataBefore(resourceDataBefore),
     m_resourceHashBefore(resourceHashBefore),
@@ -66,11 +76,14 @@ void ImageResourceRotationUndoCommand::redoImpl()
 
     const Note * pNote = m_noteEditorPrivate.notePtr();
     if (Q_UNLIKELY(!pNote)) {
-        QNDEBUG(QStringLiteral("Can't redo image resource rotation: no note set to the editor"));
+        QNDEBUG(QStringLiteral("Can't redo image resource rotation: no note "
+                               "is set to the editor"));
         return;
     }
 
-    m_noteEditorPrivate.updateResource(m_resourceAfter.localUid(), m_resourceHashBefore, m_resourceAfter);
+    m_noteEditorPrivate.updateResource(m_resourceAfter.localUid(),
+                                       m_resourceHashBefore,
+                                       m_resourceAfter);
 }
 
 void ImageResourceRotationUndoCommand::undoImpl()
@@ -79,7 +92,8 @@ void ImageResourceRotationUndoCommand::undoImpl()
 
     const Note * pNote = m_noteEditorPrivate.notePtr();
     if (Q_UNLIKELY(!pNote)) {
-        QNDEBUG(QStringLiteral("Can't undo image resource rotation: no note set to the editor"));
+        QNDEBUG(QStringLiteral("Can't undo image resource rotation: no note "
+                               "is set to the editor"));
         return;
     }
 
@@ -106,7 +120,9 @@ void ImageResourceRotationUndoCommand::undoImpl()
         resource.setRecognitionDataSize(m_resourceRecognitionDataBefore.size());
     }
 
-    m_noteEditorPrivate.updateResource(resource.localUid(), m_resourceAfter.dataHash(), resource);
+    m_noteEditorPrivate.updateResource(resource.localUid(),
+                                       m_resourceAfter.dataHash(),
+                                       resource);
 }
 
 } // namespace quentier

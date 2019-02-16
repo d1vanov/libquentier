@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Dmitry Ivanov
+ * Copyright 2016-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -24,6 +24,7 @@
 #include <quentier/types/Notebook.h>
 #include <quentier/types/Note.h>
 #include <quentier/types/Resource.h>
+#include <quentier/local_storage/LocalStorageManager.h>
 
 namespace quentier {
 
@@ -46,31 +47,48 @@ Q_SIGNALS:
     void failure(QString errorDescription);
 
 // private signals:
-    void addNotebookRequest(Notebook notebook, QUuid requestId = QUuid());
-    void addNoteRequest(Note note, QUuid requestId = QUuid());
-    void getResourceCountRequest(QUuid requestId = QUuid());
-    void addResourceRequest(Resource resource, QUuid requestId = QUuid());
-    void updateResourceRequest(Resource resource, QUuid requestId = QUuid());
-    void findResourceRequest(Resource resource, bool withBinaryData, QUuid requestId = QUuid());
-    void expungeResourceRequest(Resource resource, QUuid requestId = QUuid());
+    void addNotebookRequest(Notebook notebook, QUuid requestId);
+    void addNoteRequest(Note note, QUuid requestId);
+    void getResourceCountRequest(QUuid requestId);
+    void addResourceRequest(Resource resource, QUuid requestId);
+    void updateResourceRequest(Resource resource, QUuid requestId);
+    void findResourceRequest(Resource resource,
+                             LocalStorageManager::GetResourceOptions options,
+                             QUuid requestId);
+    void expungeResourceRequest(Resource resource, QUuid requestId);
 
 private Q_SLOTS:
-    void onWorkerInitialized();
+    void initialize();
     void onAddNotebookCompleted(Notebook notebook, QUuid requestId);
-    void onAddNotebookFailed(Notebook notebook, ErrorString errorDescription, QUuid requestId);
+    void onAddNotebookFailed(Notebook notebook,
+                             ErrorString errorDescription,
+                             QUuid requestId);
     void onAddNoteCompleted(Note note, QUuid requestId);
-    void onAddNoteFailed(Note note, ErrorString errorDescription, QUuid requestId);
+    void onAddNoteFailed(Note note,
+                         ErrorString errorDescription,
+                         QUuid requestId);
     void onGetResourceCountCompleted(int count, QUuid requestId);
-    void onGetResourceCountFailed(ErrorString errorDescription, QUuid requestId);
+    void onGetResourceCountFailed(ErrorString errorDescription,
+                                  QUuid requestId);
     void onAddResourceCompleted(Resource resource, QUuid requestId);
-    void onAddResourceFailed(Resource resource, ErrorString errorDescription, QUuid requestId);
+    void onAddResourceFailed(Resource resource,
+                             ErrorString errorDescription,
+                             QUuid requestId);
     void onUpdateResourceCompleted(Resource resource, QUuid requestId);
-    void onUpdateResourceFailed(Resource resource, ErrorString errorDescription, QUuid requestId);
-    void onFindResourceCompleted(Resource resource, bool withBinaryData, QUuid requestId);
-    void onFindResourceFailed(Resource resource, bool withBinaryData,
-                              ErrorString errorDescription, QUuid requestId);
+    void onUpdateResourceFailed(Resource resource,
+                                ErrorString errorDescription,
+                                QUuid requestId);
+    void onFindResourceCompleted(Resource resource,
+                                 LocalStorageManager::GetResourceOptions options,
+                                 QUuid requestId);
+    void onFindResourceFailed(Resource resource,
+                              LocalStorageManager::GetResourceOptions options,
+                              ErrorString errorDescription,
+                              QUuid requestId);
     void onExpungeResourceCompleted(Resource resource, QUuid requestId);
-    void onExpungeResourceFailed(Resource resource, ErrorString errorDescription, QUuid requestId);
+    void onExpungeResourceFailed(Resource resource,
+                                 ErrorString errorDescription,
+                                 QUuid requestId);
 
 private:
     void createConnections();

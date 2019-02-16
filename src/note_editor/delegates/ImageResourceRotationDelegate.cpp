@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 Dmitry Ivanov
+ * Copyright 2016-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -31,16 +31,20 @@ namespace quentier {
 #define GET_PAGE() \
     NoteEditorPage * page = qobject_cast<NoteEditorPage*>(m_noteEditor.page()); \
     if (Q_UNLIKELY(!page)) { \
-        ErrorString error(QT_TRANSLATE_NOOP("ImageResourceRotationDelegate", "Can't rotate the image attachment: no note editor page")); \
+        ErrorString error(QT_TRANSLATE_NOOP("ImageResourceRotationDelegate", \
+                                            "Can't rotate the image attachment: "\
+                                            "no note editor page")); \
         QNWARNING(error); \
         Q_EMIT notifyError(error); \
         return; \
     }
 
-ImageResourceRotationDelegate::ImageResourceRotationDelegate(const QByteArray & resourceHashBefore, const INoteEditorBackend::Rotation::type rotationDirection,
-                                                             NoteEditorPrivate & noteEditor, ResourceInfo & resourceInfo,
-                                                             ResourceDataInTemporaryFileStorageManager & resourceDataInTemporaryFileStorageManager,
-                                                             QHash<QString, QString> & resourceFileStoragePathsByLocalUid) :
+ImageResourceRotationDelegate::ImageResourceRotationDelegate(
+        const QByteArray & resourceHashBefore,
+        const INoteEditorBackend::Rotation::type rotationDirection,
+        NoteEditorPrivate & noteEditor, ResourceInfo & resourceInfo,
+        ResourceDataInTemporaryFileStorageManager & resourceDataInTemporaryFileStorageManager,
+        QHash<QString, QString> & resourceFileStoragePathsByLocalUid) :
     m_noteEditor(noteEditor),
     m_resourceInfo(resourceInfo),
     m_resourceDataInTemporaryFileStorageManager(resourceDataInTemporaryFileStorageManager),
@@ -62,12 +66,17 @@ void ImageResourceRotationDelegate::start()
 {
     QNDEBUG(QStringLiteral("ImageResourceRotationDelegate::start"));
 
-    if (m_noteEditor.isEditorPageModified()) {
-        QObject::connect(&m_noteEditor, QNSIGNAL(NoteEditorPrivate,convertedToNote,Note),
-                         this, QNSLOT(ImageResourceRotationDelegate,onOriginalPageConvertedToNote,Note));
+    if (m_noteEditor.isEditorPageModified())
+    {
+        QObject::connect(&m_noteEditor,
+                         QNSIGNAL(NoteEditorPrivate,convertedToNote,Note),
+                         this,
+                         QNSLOT(ImageResourceRotationDelegate,
+                                onOriginalPageConvertedToNote,Note));
         m_noteEditor.convertToNote();
     }
-    else {
+    else
+    {
         rotateImageResource();
     }
 }
@@ -78,8 +87,11 @@ void ImageResourceRotationDelegate::onOriginalPageConvertedToNote(Note note)
 
     Q_UNUSED(note)
 
-    QObject::disconnect(&m_noteEditor, QNSIGNAL(NoteEditorPrivate,convertedToNote,Note),
-                        this, QNSLOT(ImageResourceRotationDelegate,onOriginalPageConvertedToNote,Note));
+    QObject::disconnect(&m_noteEditor,
+                        QNSIGNAL(NoteEditorPrivate,convertedToNote,Note),
+                        this,
+                        QNSLOT(ImageResourceRotationDelegate,
+                               onOriginalPageConvertedToNote,Note));
 
     rotateImageResource();
 }
@@ -104,7 +116,9 @@ void ImageResourceRotationDelegate::rotateImageResource()
     for(int i = 0; i < numResources; ++i)
     {
         const Resource & resource = qAsConst(resources)[i];
-        if (!resource.hasDataHash() || (resource.dataHash() != m_resourceHashBefore)) {
+        if (!resource.hasDataHash() ||
+            (resource.dataHash() != m_resourceHashBefore))
+        {
             continue;
         }
 
@@ -115,8 +129,10 @@ void ImageResourceRotationDelegate::rotateImageResource()
             return;
         }
 
-        if (Q_UNLIKELY(!resource.mime().startsWith(QStringLiteral("image/")))) {
-            error.appendBase(QT_TR_NOOP("The mime type indicates the attachment is not an image"));
+        if (Q_UNLIKELY(!resource.mime().startsWith(QStringLiteral("image/"))))
+        {
+            error.appendBase(QT_TR_NOOP("The mime type indicates the attachment "
+                                        "is not an image"));
             QNWARNING(error << QStringLiteral(", resource: ") << resource);
             Q_EMIT notifyError(error);
             return;
@@ -163,13 +179,16 @@ void ImageResourceRotationDelegate::rotateImageResource()
     m_resourceImageSizeBefore.setHeight(resourceImage.height());
     m_resourceImageSizeBefore.setWidth(resourceImage.width());
 
-    qreal angle = ((m_rotationDirection == INoteEditorBackend::Rotation::Clockwise) ? 90.0 : -90.0);
+    qreal angle = ((m_rotationDirection == INoteEditorBackend::Rotation::Clockwise)
+                   ? 90.0
+                   : -90.0);
     QTransform transform;
     transform.rotate(angle);
     resourceImage = resourceImage.transformed(transform);
     resourceImage = resourceImage.scaled(m_resourceImageSizeBefore.height(),
                                          m_resourceImageSizeBefore.width(),
-                                         Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
+                                         Qt::IgnoreAspectRatio,
+                                         Qt::SmoothTransformation);
 
     QByteArray rotatedResourceData;
     QBuffer rotatedResourceDataBuffer(&rotatedResourceData);
@@ -197,33 +216,55 @@ void ImageResourceRotationDelegate::rotateImageResource()
         m_rotatedResource.setWidth(-1);
     }
 
-    // Need to destroy the recognition data (if any) because it would no longer correspond to the rotated image
+    // Need to destroy the recognition data (if any) because it would no longer
+    // correspond to the rotated image
     m_rotatedResource.setRecognitionDataBody(QByteArray());
     m_rotatedResource.setRecognitionDataSize(0);
     m_rotatedResource.setRecognitionDataHash(QByteArray());
 
     m_saveResourceDataToTemporaryFileRequestId = QUuid::createUuid();
 
-    QObject::connect(this, QNSIGNAL(ImageResourceRotationDelegate,saveResourceDataToTemporaryFile,QString,QString,QByteArray,QByteArray,QUuid,bool),
-                     &m_resourceDataInTemporaryFileStorageManager, QNSLOT(ResourceDataInTemporaryFileStorageManager,onSaveResourceDataToTemporaryFileRequest,QString,QString,QByteArray,QByteArray,QUuid,bool));
-    QObject::connect(&m_resourceDataInTemporaryFileStorageManager, QNSIGNAL(ResourceDataInTemporaryFileStorageManager,saveResourceDataToTemporaryFileCompleted,QUuid,QByteArray,ErrorString),
-                     this, QNSLOT(ImageResourceRotationDelegate,onResourceDataSavedToTemporaryFile,QUuid,QByteArray,ErrorString));
+    QObject::connect(this,
+                     QNSIGNAL(ImageResourceRotationDelegate,
+                              saveResourceDataToTemporaryFile,
+                              QString,QString,QByteArray,QByteArray,QUuid,bool),
+                     &m_resourceDataInTemporaryFileStorageManager,
+                     QNSLOT(ResourceDataInTemporaryFileStorageManager,
+                            onSaveResourceDataToTemporaryFileRequest,
+                            QString,QString,QByteArray,QByteArray,QUuid,bool));
+    QObject::connect(&m_resourceDataInTemporaryFileStorageManager,
+                     QNSIGNAL(ResourceDataInTemporaryFileStorageManager,
+                              saveResourceDataToTemporaryFileCompleted,
+                              QUuid,QByteArray,ErrorString),
+                     this,
+                     QNSLOT(ImageResourceRotationDelegate,
+                            onResourceDataSavedToTemporaryFile,
+                            QUuid,QByteArray,ErrorString));
 
-    Q_EMIT saveResourceDataToTemporaryFile(m_rotatedResource.noteLocalUid(), m_rotatedResource.localUid(), m_rotatedResource.dataBody(),
-                                           QByteArray(), m_saveResourceDataToTemporaryFileRequestId, /* is image = */ true);
+    Q_EMIT saveResourceDataToTemporaryFile(m_rotatedResource.noteLocalUid(),
+                                           m_rotatedResource.localUid(),
+                                           m_rotatedResource.dataBody(),
+                                           QByteArray(),
+                                           m_saveResourceDataToTemporaryFileRequestId,
+                                           /* is image = */ true);
 }
 
-void ImageResourceRotationDelegate::onResourceDataSavedToTemporaryFile(QUuid requestId, QByteArray dataHash, ErrorString errorDescription)
+void ImageResourceRotationDelegate::onResourceDataSavedToTemporaryFile(
+    QUuid requestId, QByteArray dataHash, ErrorString errorDescription)
 {
     if (requestId != m_saveResourceDataToTemporaryFileRequestId) {
         return;
     }
 
-    QNDEBUG(QStringLiteral("ImageResourceRotationDelegate::onResourceDataSavedToTemporaryFile: hash = ") << dataHash.toHex()
-            << QStringLiteral(", error description = ") << errorDescription);
+    QNDEBUG(QStringLiteral("ImageResourceRotationDelegate::")
+            << QStringLiteral("onResourceDataSavedToTemporaryFile: hash = ")
+            << dataHash.toHex() << QStringLiteral(", error description = ")
+            << errorDescription);
 
-    if (Q_UNLIKELY(!errorDescription.isEmpty())) {
-        ErrorString error(QT_TR_NOOP("Can't rotate the image attachment: can't write modified resource data to local file"));
+    if (Q_UNLIKELY(!errorDescription.isEmpty()))
+    {
+        ErrorString error(QT_TR_NOOP("Can't rotate the image attachment: can't "
+                                     "write modified resource data to local file"));
         error.appendBase(errorDescription.base());
         error.appendBase(errorDescription.additionalBases());
         error.details() = errorDescription.details();
@@ -234,8 +275,9 @@ void ImageResourceRotationDelegate::onResourceDataSavedToTemporaryFile(QUuid req
 
     Note * pNote = m_noteEditor.notePtr();
     if (Q_UNLIKELY(pNote != m_pNote)) {
-        errorDescription.setBase(QT_TR_NOOP("Can't rotate the image attachment: note was changed "
-                                            "during the processing of image rotation"));
+        errorDescription.setBase(QT_TR_NOOP("Can't rotate the image attachment: "
+                                            "note was changed during the processing "
+                                            "of image rotation"));
         QNWARNING(errorDescription);
         Q_EMIT notifyError(errorDescription);
         return;
@@ -244,8 +286,10 @@ void ImageResourceRotationDelegate::onResourceDataSavedToTemporaryFile(QUuid req
     const QString localUid = m_rotatedResource.localUid();
     m_noteEditor.removeSymlinksToImageResourceFile(localUid);
 
-    QString fileStoragePath = ResourceDataInTemporaryFileStorageManager::imageResourceFileStorageFolderPath() +
-                              QStringLiteral("/") + pNote->localUid() + QStringLiteral("/") + localUid + QStringLiteral(".dat");
+    QString fileStoragePath =
+        ResourceDataInTemporaryFileStorageManager::imageResourceFileStorageFolderPath() +
+        QStringLiteral("/") + pNote->localUid() + QStringLiteral("/") +
+        localUid + QStringLiteral(".dat");
 
     QFile rotatedImageResourceFile(fileStoragePath);
     QString linkFilePath = fileStoragePath;
@@ -260,9 +304,11 @@ void ImageResourceRotationDelegate::onResourceDataSavedToTemporaryFile(QUuid req
 #endif
 
     bool res = rotatedImageResourceFile.link(linkFilePath);
-    if (Q_UNLIKELY(!res)) {
-        errorDescription.setBase(QT_TR_NOOP("Can't rotate the image attachment: can't create a link "
-                                            "to the resource file to use within the note editor"));
+    if (Q_UNLIKELY(!res))
+    {
+        errorDescription.setBase(QT_TR_NOOP("Can't rotate the image attachment: "
+                                            "can't create a link to the resource "
+                                            "file to use within the note editor"));
         errorDescription.details() = rotatedImageResourceFile.errorString();
         errorDescription.details() += QStringLiteral(", error code: ");
         errorDescription.details() += QString::number(rotatedImageResourceFile.error());
@@ -271,15 +317,18 @@ void ImageResourceRotationDelegate::onResourceDataSavedToTemporaryFile(QUuid req
         return;
     }
 
-    QNTRACE(QStringLiteral("Created a link to the original file (") << QDir::toNativeSeparators(fileStoragePath)
+    QNTRACE(QStringLiteral("Created a link to the original file (")
+            << QDir::toNativeSeparators(fileStoragePath)
             << QStringLiteral("): ") << QDir::toNativeSeparators(linkFilePath));
 
     m_resourceFileStoragePathAfter = linkFilePath;
 
     auto resourceFileStoragePathIt = m_resourceFileStoragePathsByLocalUid.find(localUid);
-    if (Q_UNLIKELY(resourceFileStoragePathIt == m_resourceFileStoragePathsByLocalUid.end())) {
-        errorDescription.setBase(QT_TR_NOOP("Can't rotate the image attachment: can't find path "
-                                            "to the attachment file before the rotation"));
+    if (Q_UNLIKELY(resourceFileStoragePathIt == m_resourceFileStoragePathsByLocalUid.end()))
+    {
+        errorDescription.setBase(QT_TR_NOOP("Can't rotate the image attachment: "
+                                            "can't find path to the attachment "
+                                            "file before the rotation"));
         QNWARNING(errorDescription);
         Q_EMIT notifyError(errorDescription);
         return;
@@ -289,7 +338,8 @@ void ImageResourceRotationDelegate::onResourceDataSavedToTemporaryFile(QUuid req
     resourceFileStoragePathIt.value() = linkFilePath;
 
     QString resourceDisplayName = m_rotatedResource.displayName();
-    QString resourceDisplaySize = humanReadableSize(static_cast<quint64>(m_rotatedResource.dataSize()));
+    QString resourceDisplaySize =
+        humanReadableSize(static_cast<quint64>(m_rotatedResource.dataSize()));
 
     m_rotatedResource.setDataHash(dataHash);
 
@@ -298,7 +348,8 @@ void ImageResourceRotationDelegate::onResourceDataSavedToTemporaryFile(QUuid req
     m_resourceInfo.removeResourceInfo(m_resourceHashBefore);
     m_resourceInfo.cacheResourceInfo(dataHash, resourceDisplayName,
                                      resourceDisplaySize, linkFilePath,
-                                     QSize(m_rotatedResource.width(), m_rotatedResource.height()));
+                                     QSize(m_rotatedResource.width(),
+                                           m_rotatedResource.height()));
 
     if (m_resourceFileStoragePathBefore != fileStoragePath)
     {
@@ -306,15 +357,19 @@ void ImageResourceRotationDelegate::onResourceDataSavedToTemporaryFile(QUuid req
         if (Q_UNLIKELY(!oldResourceFile.remove()))
         {
 #ifdef Q_OS_WIN
-            if (m_resourceFileStoragePathBefore.endsWith(QStringLiteral(".lnk"))) {
-                // NOTE: there appears to be a bug in Qt for Windows, QFile::remove returns false
-                // for any *.lnk files even though the files are actually getting removed
-                QNTRACE(QStringLiteral("Skipping the reported failure at removing the .lnk file"));
+            if (m_resourceFileStoragePathBefore.endsWith(QStringLiteral(".lnk")))
+            {
+                // NOTE: there appears to be a bug in Qt for Windows, QFile::remove
+                // returns false for any *.lnk files even though the files are
+                // actually getting removed
+                QNTRACE(QStringLiteral("Skipping the reported failure at "
+                                       "removing the .lnk file"));
             }
             else {
 #endif
 
-            QNINFO(QStringLiteral("Can't remove stale resource file ") + m_resourceFileStoragePathBefore);
+            QNINFO(QStringLiteral("Can't remove stale resource file ")
+                   << m_resourceFileStoragePathBefore);
 
 #ifdef Q_OS_WIN
             }
@@ -322,11 +377,16 @@ void ImageResourceRotationDelegate::onResourceDataSavedToTemporaryFile(QUuid req
         }
     }
 
-    QString javascript = QStringLiteral("updateResourceHash('") + QString::fromLocal8Bit(m_resourceHashBefore.toHex()) +
-                         QStringLiteral("', '") + QString::fromLocal8Bit(dataHash.toHex()) + QStringLiteral("');");
+    QString javascript = QStringLiteral("updateResourceHash('") +
+                         QString::fromLocal8Bit(m_resourceHashBefore.toHex()) +
+                         QStringLiteral("', '") +
+                         QString::fromLocal8Bit(dataHash.toHex()) +
+                         QStringLiteral("');");
 
     GET_PAGE()
-    page->executeJavaScript(javascript, JsCallback(*this, &ImageResourceRotationDelegate::onResourceTagHashUpdated));
+    page->executeJavaScript(
+        javascript,
+        JsCallback(*this, &ImageResourceRotationDelegate::onResourceTagHashUpdated));
 }
 
 void ImageResourceRotationDelegate::onResourceTagHashUpdated(const QVariant & data)
@@ -335,14 +395,23 @@ void ImageResourceRotationDelegate::onResourceTagHashUpdated(const QVariant & da
 
     Q_UNUSED(data)
 
-    QString javascript = QStringLiteral("updateImageResourceSrc('") + QString::fromLocal8Bit(m_rotatedResource.dataHash().toHex()) +
+    QString javascript = QStringLiteral("updateImageResourceSrc('") +
+                         QString::fromLocal8Bit(m_rotatedResource.dataHash().toHex()) +
                          QStringLiteral("', '") + m_resourceFileStoragePathAfter +
-                         QStringLiteral("', ") + QString::number(m_rotatedResource.hasHeight() ? m_rotatedResource.height() : qint16(0)) +
-                         QStringLiteral(", ") + QString::number(m_rotatedResource.hasWidth() ? m_rotatedResource.width() : qint16(0)) +
+                         QStringLiteral("', ") +
+                         QString::number(m_rotatedResource.hasHeight()
+                                         ? m_rotatedResource.height()
+                                         : qint16(0)) +
+                         QStringLiteral(", ") +
+                         QString::number(m_rotatedResource.hasWidth()
+                                         ? m_rotatedResource.width()
+                                         : qint16(0)) +
                          QStringLiteral(");");
 
     GET_PAGE()
-    page->executeJavaScript(javascript, JsCallback(*this, &ImageResourceRotationDelegate::onResourceTagSrcUpdated));
+    page->executeJavaScript(
+        javascript,
+        JsCallback(*this, &ImageResourceRotationDelegate::onResourceTagSrcUpdated));
 }
 
 void ImageResourceRotationDelegate::onResourceTagSrcUpdated(const QVariant & data)
@@ -351,9 +420,11 @@ void ImageResourceRotationDelegate::onResourceTagSrcUpdated(const QVariant & dat
 
     Q_UNUSED(data)
 
-    Q_EMIT finished(m_resourceDataBefore, m_resourceHashBefore, m_resourceRecognitionDataBefore,
-                    m_resourceRecognitionDataHashBefore, m_resourceImageSizeBefore,
-                    m_rotatedResource, m_rotationDirection);
+    Q_EMIT finished(m_resourceDataBefore, m_resourceHashBefore,
+                    m_resourceRecognitionDataBefore,
+                    m_resourceRecognitionDataHashBefore,
+                    m_resourceImageSizeBefore, m_rotatedResource,
+                    m_rotationDirection);
 }
 
 } // namespace quentier

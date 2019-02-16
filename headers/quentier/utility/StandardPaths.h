@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Dmitry Ivanov
+ * Copyright 2017-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -32,35 +32,42 @@
 namespace quentier {
 
 /**
- * applicationPersistentStoragePath - returns the path to folder in which the application should store
- * its persistent data. By default chooses the appropriate system location but that can be overridden
- * by setting QUENTIER_PERSISTENCE_STORAGE_PATH environment variable. If the standard location
- * is overridden via the environment variable, the bool pointed to by pNonStandardLocation (if any) is set to false
+ * applicationPersistentStoragePath returns the path to folder in which
+ * the application should store its persistent data. By default chooses
+ * the appropriate system location but that can be overridden by setting
+ * QUENTIER_PERSISTENCE_STORAGE_PATH environment variable. If the standard
+ * location is overridden via the environment variable, the bool pointed to
+ * by pNonStandardLocation (if any) is set to false
  */
-const QString QUENTIER_EXPORT applicationPersistentStoragePath(bool * pNonStandardLocation = Q_NULLPTR);
+const QString QUENTIER_EXPORT applicationPersistentStoragePath(
+                                    bool * pNonStandardLocation = Q_NULLPTR);
 
 /**
- * accountPersistentStoragePath - returns the path to account-specific folder in which the application
- * should store the account-specific persistent data. The path returned by this function is a sub-path within
- * that returned by applicationPersistentStoragePath function.
+ * accountPersistentStoragePath returns the path to account-specific folder
+ * in which the application should store the account-specific persistent data.
+ * The path returned by this function is a sub-path within that returned by
+ * applicationPersistentStoragePath function.
  *
- * @param account   The account for which the path needs to be returned; if empty, the application persistent storage path is returned
+ * @param account   The account for which the path needs to be returned; if empty,
+ *                  the application persistent storage path is returned
  */
 const QString QUENTIER_EXPORT accountPersistentStoragePath(const Account & account);
 
 /**
- * applicationTemporaryStoragePath - returns the path to folder in which the application can store temporary files
+ * @return          The path to folder in which the application can store
+ *                  temporary files
  */
 const QString QUENTIER_EXPORT applicationTemporaryStoragePath();
 
 /**
- * homePath - the path to user's home directory - /home/<username> on Linux/BSD, /Users/<username> on OS X/macOS,
- * C:/Users/<username> on Windows
+ * @return          The path to user's home directory - /home/<username> on
+ *                  Linux/BSD, /Users/<username> on OS X/macOS, C:/Users/<username>
+ *                  on Windows
  */
 const QString QUENTIER_EXPORT homePath();
 
 /**
- * documentsPath - the path to user's documents storage directory
+ * @return          The path to user's documents storage directory
  */
 const QString QUENTIER_EXPORT documentsPath();
 

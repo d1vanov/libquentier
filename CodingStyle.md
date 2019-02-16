@@ -74,6 +74,10 @@ but not this:
         b = a;
     }
 
+## Line length
+
+Try to lay out the code in such a way that any single line of code is no longer than 80 columns. It is a rather hard boundary and it's not always possible to satisfy this requirement. It is understandable but still *try* to stick to it. If 80 columns are absolutely not enough for some specific line, ok, let it take 85-90 columns. Maybe even 100 if there's no other way. The point is to have the majority of code written in a compact enough way.
+
 ## Line endings
 
 The «native» line endings for headers and sources of libquentier are considered to be Unix-style single LFs. If you are using Windows or OS X / macOS and want to contribute some code changes to libquentier, please [configure git](https://help.github.com/articles/dealing-with-line-endings/) to convert the line endings to LF on commit or on push.
