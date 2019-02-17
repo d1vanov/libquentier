@@ -100,6 +100,30 @@ private Q_SLOTS:
                                      QUuid requestId);
 
 private:
+    class Q_DECL_HIDDEN HunspellWrapper
+    {
+    public:
+        void initialize(const QString & affFilePath,
+                        const QString & dicFilePath);
+
+        bool isEmpty() const;
+
+        bool spell(const QString & word) const;
+        bool spell(const QByteArray & wordData) const;
+
+        QStringList suggestions(const QString & word) const;
+        QStringList suggestions(const QByteArray & wordData) const;
+
+        void add(const QString & word);
+        void add(const QByteArray & wordData);
+
+        void remove(const QString & word);
+        void remove(const QByteArray & wordData);
+
+    private:
+        QSharedPointer<Hunspell>    m_pHunspell;
+    };
+
     class Q_DECL_HIDDEN Dictionary
     {
     public:
@@ -108,7 +132,7 @@ private:
         bool isEmpty() const;
 
     public:
-        QSharedPointer<Hunspell>    m_pHunspell;
+        HunspellWrapper             m_hunspellWrapper;
         QString                     m_dictionaryPath;
         bool                        m_enabled;
     };
