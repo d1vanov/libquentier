@@ -152,16 +152,16 @@ bool SpellCheckerPrivate::checkSpell(const QString & word) const
             continue;
         }
 
-        int res = dictionary.m_pHunspell->spell(wordData.constData());
-        if (res != 0) {
+        bool res = dictionary.m_hunspellWrapper.spell(wordData);
+        if (res) {
             QNTRACE(QStringLiteral("Found word ") << word
                     << QStringLiteral(" in dictionary ")
                     << dictionary.m_dictionaryPath);
             return true;
         }
 
-        res = dictionary.m_pHunspell->spell(lowerWordData.constData());
-        if (res != 0) {
+        res = dictionary.m_hunspellWrapper.spell(lowerWordData);
+        if (res) {
             QNTRACE(QStringLiteral("Found word ") << lowerWordData
                     << QStringLiteral(" in dictionary ")
                     << dictionary.m_dictionaryPath);
@@ -190,23 +190,7 @@ QStringList SpellCheckerPrivate::spellCorrectionSuggestions(
             continue;
         }
 
-        char **rawCorrectionSuggestions = Q_NULLPTR;
-
-        int numSuggestions =
-            dictionary.m_pHunspell->suggest(&rawCorrectionSuggestions,
-                                            wordData.constData());
-
-        for(int i = 0; i < numSuggestions; ++i)
-        {
-            QString suggestion = QString::fromUtf8(rawCorrectionSuggestions[i]);
-            if (!result.contains(suggestion)) {
-                result << suggestion;
-            }
-
-            free(rawCorrectionSuggestions[i]);
-        }
-
-        free(rawCorrectionSuggestions);
+        result << dictionary.m_hunspellWrapper.suggestions(wordData);
     }
 
     return result;
@@ -274,7 +258,7 @@ void SpellCheckerPrivate::ignoreWord(const QString & word)
             continue;
         }
 
-        dictionary.m_pHunspell->add(wordData.constData());
+        dictionary.m_hunspellWrapper.add(wordData);
     }
 }
 
@@ -293,7 +277,7 @@ void SpellCheckerPrivate::removeWord(const QString & word)
             continue;
         }
 
-        dictionary.m_pHunspell->remove(wordData.constData());
+        dictionary.m_hunspellWrapper.remove(wordData);
     }
 }
 
@@ -310,19 +294,11 @@ void SpellCheckerPrivate::onDictionariesFound(
     for(auto it = files.constBegin(), end = files.constEnd(); it != end; ++it)
     {
         const QPair<QString, QString> & pair = it.value();
-        QByteArray dictionaryFilePathData = pair.first.toLocal8Bit();
-        QByteArray affixFilePathData = pair.second.toLocal8Bit();
-
-        const char * rawDictionaryFilePath = dictionaryFilePathData.constData();
-        const char * rawAffixFilePath = affixFilePathData.constData();
-        QNTRACE(QStringLiteral("Raw dictionary file path = ") << rawDictionaryFilePath
-                << QStringLiteral(", raw affix file path = ") << rawAffixFilePath);
+        QNTRACE(QStringLiteral("Raw dictionary file path = ") << pair.first
+                << QStringLiteral(", raw affix file path = ") << pair.second);
 
         Dictionary & dictionary = m_systemDictionaries[it.key()];
-        QNTRACE(QStringLiteral("Before constructing the new Hunspell object"));
-        dictionary.m_pHunspell = QSharedPointer<Hunspell>(
-            new Hunspell(rawAffixFilePath, rawDictionaryFilePath));
-        QNTRACE(QStringLiteral("After constructing the new Hunspell object"));
+        dictionary.m_hunspellWrapper.initialize(pair.second, pair.first);
         dictionary.m_dictionaryPath = pair.first;
         dictionary.m_enabled = true;
         QNTRACE(QStringLiteral("Added dictionary for language ") << it.key()
@@ -695,23 +671,18 @@ void SpellCheckerPrivate::addSystemDictionary(const QString & path,
         return;
     }
 
-    QByteArray dictionaryFileInfoPathData = dictionaryFileInfo.absoluteFilePath().toLocal8Bit();
-    QByteArray affixFileInfoPathData = affixFileInfo.absoluteFilePath().toLocal8Bit();
-
-    const char * rawDictionaryFilePath = dictionaryFileInfoPathData.constData();
-    const char * rawAffixFilePath = affixFileInfoPathData.constData();
-    QNTRACE(QStringLiteral("Raw dictionary file path = ") << rawDictionaryFilePath
-            << QStringLiteral(", raw affix file path = ") << rawAffixFilePath);
+    QString dictionaryFilePath = dictionaryFileInfo.absoluteFilePath();
+    QString affixFilePath = affixFileInfo.absoluteFilePath();
+    QNTRACE(QStringLiteral("Raw dictionary file path = ") << dictionaryFilePath
+            << QStringLiteral(", raw affix file path = ") << affixFilePath);
 
     Dictionary & dictionary = m_systemDictionaries[name];
-    dictionary.m_pHunspell = QSharedPointer<Hunspell>(new Hunspell(rawAffixFilePath,
-                                                                   rawDictionaryFilePath));
-    dictionary.m_dictionaryPath = dictionaryFileInfo.absoluteFilePath();
+    dictionary.m_hunspellWrapper.initialize(affixFilePath, dictionaryFilePath);
+    dictionary.m_dictionaryPath = dictionaryFilePath;
     dictionary.m_enabled = true;
     QNTRACE(QStringLiteral("Added dictionary for language ") << name
-            << QStringLiteral("; dictionary file ")
-            << dictionaryFileInfo.absoluteFilePath()
-            << QStringLiteral(", affix file ") << affixFileInfo.absoluteFilePath());
+            << QStringLiteral("; dictionary file ") << dictionaryFilePath
+            << QStringLiteral(", affix file ") << affixFilePath);
 }
 
 void SpellCheckerPrivate::initializeUserDictionary(const QString & userDictionaryPath)
@@ -1130,14 +1101,177 @@ void SpellCheckerPrivate::onUpdateUserDictionaryDone(bool success,
 }
 
 SpellCheckerPrivate::Dictionary::Dictionary() :
-    m_pHunspell(),
+    m_hunspellWrapper(),
     m_dictionaryPath(),
     m_enabled(true)
 {}
 
 bool SpellCheckerPrivate::Dictionary::isEmpty() const
 {
-    return m_dictionaryPath.isEmpty() || m_pHunspell.isNull();
+    return m_dictionaryPath.isEmpty() || m_hunspellWrapper.isEmpty();
+}
+
+void SpellCheckerPrivate::HunspellWrapper::initialize(
+    const QString & affFilePath, const QString & dicFilePath)
+{
+    m_pHunspell = QSharedPointer<Hunspell>(
+        new Hunspell(affFilePath.toLocal8Bit().constData(),
+                     dicFilePath.toLocal8Bit().constData()));
+}
+
+bool SpellCheckerPrivate::HunspellWrapper::isEmpty() const
+{
+    return m_pHunspell.isNull();
+}
+
+bool SpellCheckerPrivate::HunspellWrapper::spell(const QString & word) const
+{
+    return spell(word.toUtf8());
+}
+
+bool SpellCheckerPrivate::HunspellWrapper::spell(
+    const QByteArray & wordData) const
+{
+    if (Q_UNLIKELY(m_pHunspell.isNull())) {
+        return false;
+    }
+
+#ifdef HUNSPELL_NEW_API_AVAILABLE
+
+#if QT_VERSION >= QT_VERSION_CHECK(5, 4, 0)
+    return m_pHunspell->spell(wordData.toStdString());
+#else
+    return m_pHunspell->spell(
+        std::string(
+            wordData.constData(),
+            static_cast<size_t>(std::max(wordData.size(), 0))));
+#endif
+
+#else
+    return m_pHunspell->spell(wordData.constData());
+#endif
+}
+
+QStringList SpellCheckerPrivate::HunspellWrapper::suggestions(
+    const QString & word) const
+{
+    return suggestions(word.toUtf8());
+}
+
+QStringList SpellCheckerPrivate::HunspellWrapper::suggestions(
+    const QByteArray & wordData) const
+{
+    QStringList result;
+
+    if (Q_UNLIKELY(m_pHunspell.isNull())) {
+        return result;
+    }
+
+#ifdef HUNSPELL_NEW_API_AVAILABLE
+    std::vector<std::string> res =
+#if QT_VERSION >= QT_VERSION_CHECK(5, 4, 0)
+        m_pHunspell->suggest(wordData.toStdString());
+#else
+        m_pHunspell->suggest(
+            std::string(
+                wordData.constData(),
+                static_cast<size_t>(std::max(wordData.size(), 0))));
+#endif
+
+    size_t size = res.size();
+    result.reserve(
+        static_cast<int>(std::min(size, size_t(std::numeric_limits<int>::max()))));
+    for(size_t i = 0; i < size; ++i) {
+        result << QString::fromStdString(res[i]);
+    }
+#else
+    char **rawCorrectionSuggestions = Q_NULLPTR;
+    int numSuggestions = m_pHunspell->suggest(&rawCorrectionSuggestions,
+                                              wordData.constData());
+    result.reserve(std::max(numSuggestions, 0));
+    for(int i = 0; i < numSuggestions; ++i)
+    {
+        QString suggestion = QString::fromUtf8(rawCorrectionSuggestions[i]);
+        if (!result.contains(suggestion)) {
+            result << suggestion;
+        }
+
+        free(rawCorrectionSuggestions[i]);
+    }
+    free(rawCorrectionSuggestions);
+#endif
+
+    return result;
+}
+
+void SpellCheckerPrivate::HunspellWrapper::add(const QString & word)
+{
+#ifdef HUNSPELL_NEW_API_AVAILABLE
+    if (Q_UNLIKELY(m_pHunspell.isNull())) {
+        return;
+    }
+
+    m_pHunspell->add(word.toStdString());
+#else
+    add(word.toUtf8());
+#endif
+}
+
+void SpellCheckerPrivate::HunspellWrapper::add(const QByteArray & wordData)
+{
+    if (Q_UNLIKELY(m_pHunspell.isNull())) {
+        return;
+    }
+
+#ifdef HUNSPELL_NEW_API_AVAILABLE
+
+#if QT_VERSION >= QT_VERSION_CHECK(5, 4, 0)
+    m_pHunspell->add(wordData.toStdString());
+#else
+    m_pHunspell->add(
+        std::string(
+            wordData.constData(),
+            static_cast<size_t>(std::max(wordData.size(), 0))));
+#endif
+
+#else
+    m_pHunspell->add(wordData.constData());
+#endif
+}
+
+void SpellCheckerPrivate::HunspellWrapper::remove(const QString & word)
+{
+#ifdef HUNSPELL_NEW_API_AVAILABLE
+    if (Q_UNLIKELY(m_pHunspell.isNull())) {
+        return;
+    }
+
+    m_pHunspell->remove(word.toStdString());
+#else
+    remove(word.toUtf8());
+#endif
+}
+
+void SpellCheckerPrivate::HunspellWrapper::remove(const QByteArray & wordData)
+{
+    if (Q_UNLIKELY(m_pHunspell.isNull())) {
+        return;
+    }
+
+#ifdef HUNSPELL_NEW_API_AVAILABLE
+
+#if QT_VERSION >= QT_VERSION_CHECK(5, 4, 0)
+    m_pHunspell->remove(wordData.toStdString());
+#else
+    m_pHunspell->remove(
+        std::string(
+            wordData.constData(),
+            static_cast<size_t>(std::max(wordData.size(), 0))));
+#endif
+
+#else
+    m_pHunspell->remove(wordData.constData());
+#endif
 }
 
 } // namespace quentier
