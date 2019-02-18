@@ -13639,7 +13639,9 @@ QString LocalStorageManagerPrivate::listObjectsGenericSqlQuery<Note>() const
                        "LEFT OUTER JOIN NoteRestrictions ON "
                        "Notes.localUid = NoteRestrictions.noteLocalUid "
                        "LEFT OUTER JOIN NoteLimits ON "
-                       "Notes.localUid = NoteLimits.noteLocalUid");
+                       "Notes.localUid = NoteLimits.noteLocalUid "
+                       "LEFT OUTER JOIN NoteTags ON "
+                       "Notes.localUid = NoteTags.localNote");
     return result;
 }
 
