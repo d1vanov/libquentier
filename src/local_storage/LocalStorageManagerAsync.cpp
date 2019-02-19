@@ -1616,6 +1616,47 @@ void LocalStorageManagerAsync::onListNotesPerTagRequest(
     }
 }
 
+void LocalStorageManagerAsync::onListNotesPerNotebooksAndTagsRequest(
+    QStringList notebookLocalUids, QStringList tagLocalUids,
+    LocalStorageManager::GetNoteOptions options,
+    LocalStorageManager::ListObjectsOptions flag, size_t limit, size_t offset,
+    LocalStorageManager::ListNotesOrder::type order,
+    LocalStorageManager::OrderDirection::type orderDirection,
+    QUuid requestId)
+{
+    Q_D(LocalStorageManagerAsync);
+
+    try
+    {
+        ErrorString errorDescription;
+        QList<Note> notes = d->m_pLocalStorageManager->listNotesPerNotebooksAndTags(
+            notebookLocalUids, tagLocalUids, options, errorDescription, flag,
+            limit, offset, order, orderDirection);
+        if (notes.isEmpty() && !errorDescription.isEmpty()) {
+            Q_EMIT listNotesPerNotebooksAndTagsFailed(
+                notebookLocalUids, tagLocalUids, options, flag, limit, offset,
+                order, orderDirection, errorDescription, requestId);
+            return;
+        }
+
+        d->cacheNotes(notes, options);
+        Q_EMIT listNotesPerNotebooksAndTagsComplete(
+            notebookLocalUids, tagLocalUids, options, flag, limit, offset,
+            order, orderDirection, notes, requestId);
+    }
+    catch(const std::exception & e)
+    {
+        ErrorString error(QT_TR_NOOP("Can't list notes per notebooks and tags "
+                                     "from the local storage: caught exception"));
+        error.details() = QString::fromUtf8(e.what());
+        SysInfo sysInfo;
+        QNERROR(error << QStringLiteral("; backtrace: ") << sysInfo.stackTrace());
+        Q_EMIT listNotesPerNotebooksAndTagsFailed(
+            notebookLocalUids, tagLocalUids, options, flag, limit, offset,
+            order, orderDirection, error, requestId);
+    }
+}
+
 void LocalStorageManagerAsync::onListNotesRequest(
     LocalStorageManager::ListObjectsOptions flag,
     LocalStorageManager::GetNoteOptions options, size_t limit, size_t offset,
@@ -1629,11 +1670,10 @@ void LocalStorageManagerAsync::onListNotesRequest(
     {
         ErrorString errorDescription;
         QList<Note> notes =
-                d->m_pLocalStorageManager->listNotes(flag, options,
-                                                     errorDescription,
-                                                     limit, offset, order,
-                                                     orderDirection,
-                                                     linkedNotebookGuid);
+            d->m_pLocalStorageManager->listNotes(flag, options, errorDescription,
+                                                 limit, offset, order,
+                                                 orderDirection,
+                                                 linkedNotebookGuid);
         if (notes.isEmpty() && !errorDescription.isEmpty()) {
             Q_EMIT listNotesFailed(flag, options, limit, offset, order,
                                    orderDirection, linkedNotebookGuid,

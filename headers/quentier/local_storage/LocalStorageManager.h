@@ -996,13 +996,14 @@ public:
      *                              list in case of error or no notes presence
      *                              in the given notebook
      */
-    QList<Note> listNotesPerNotebook(const Notebook & notebook,
-                                     const GetNoteOptions options,
-                                     ErrorString & errorDescription,
-                                     const ListObjectsOptions & flag = ListAll,
-                                     const size_t limit = 0, const size_t offset = 0,
-                                     const ListNotesOrder::type & order = ListNotesOrder::NoOrder,
-                                     const OrderDirection::type & orderDirection = OrderDirection::Ascending) const;
+    QList<Note> listNotesPerNotebook(
+        const Notebook & notebook,
+        const GetNoteOptions options,
+        ErrorString & errorDescription,
+        const ListObjectsOptions & flag = ListAll,
+        const size_t limit = 0, const size_t offset = 0,
+        const ListNotesOrder::type & order = ListNotesOrder::NoOrder,
+        const OrderDirection::type & orderDirection = OrderDirection::Ascending) const;
 
     /**
      * @brief listNotesPerTag attempts to list notes labeled with a given tag
@@ -1029,12 +1030,54 @@ public:
      *                              in case of error or no notes labeled with
      *                              the given tag presence
      */
-    QList<Note> listNotesPerTag(const Tag & tag, const GetNoteOptions options,
-                                ErrorString & errorDescription,
-                                const LocalStorageManager::ListObjectsOptions & flag = ListAll,
-                                const size_t limit = 0, const size_t offset = 0,
-                                const LocalStorageManager::ListNotesOrder::type & order = ListNotesOrder::NoOrder,
-                                const LocalStorageManager::OrderDirection::type & orderDirection = OrderDirection::Ascending) const;
+    QList<Note> listNotesPerTag(
+        const Tag & tag, const GetNoteOptions options,
+        ErrorString & errorDescription,
+        const LocalStorageManager::ListObjectsOptions & flag = ListAll,
+        const size_t limit = 0, const size_t offset = 0,
+        const LocalStorageManager::ListNotesOrder::type & order =
+        ListNotesOrder::NoOrder,
+        const LocalStorageManager::OrderDirection::type & orderDirection =
+        OrderDirection::Ascending) const;
+
+    /**
+     * @brief listNotesPerNotebooksAndTags attempts to list notes which are
+     * present within one of specified notebooks and are labeled with at least
+     * one of specified tags
+     * @param notebookLocalUids     Local uids of notebooks to which the listed
+     *                              notes might belong
+     * @param tagLocalUids          Local uids of tags with which the listed
+     *                              notes might be labeled
+     * @param options               Options specifying which optionally includable
+     *                              fields of the note should actually be included
+     * @param errorDescription      Error description in case notes could not
+     *                              be listed
+     * @param flag                  Input parameter used to set the filter for
+     *                              the desired notes to be listed
+     * @param limit                 Limit for the max number of notes in the result,
+     *                              zero by default which means no limit is set
+     * @param offset                Number of notes to skip in the beginning of
+     *                              the result, zero by default
+     * @param order                 Allows to specify particular ordering of notes
+     *                              in the result, NoOrder by default
+     * @param orderDirection        Specifies the direction of ordering, by default
+     *                              ascending direction is used;
+     * @return                      Either list of notes per notebooks and tags
+     *                              or empty list in case of error or no notes
+     *                              corresponding to given notebooks and tags
+     *                              presence
+     */
+    QList<Note> listNotesPerNotebooksAndTags(
+        const QStringList & notebookLocalUids,
+        const QStringList & tagLocalUids,
+        const LocalStorageManager::GetNoteOptions options,
+        ErrorString & errorDescription,
+        const LocalStorageManager::ListObjectsOptions & flag,
+        const size_t limit = 0, const size_t offset = 0,
+        const LocalStorageManager::ListNotesOrder::type & order =
+        ListNotesOrder::NoOrder,
+        const LocalStorageManager::OrderDirection::type & orderDirection =
+        OrderDirection::Ascending) const;
 
     /**
      * @brief listNotes attempts to list notes within the account according to
@@ -1066,12 +1109,13 @@ public:
      *                              or no notes conforming to the filter exist
      *                              within the account
      */
-    QList<Note> listNotes(const ListObjectsOptions flag, const GetNoteOptions options,
-                          ErrorString & errorDescription,
-                          const size_t limit = 0, const size_t offset = 0,
-                          const ListNotesOrder::type order = ListNotesOrder::NoOrder,
-                          const OrderDirection::type orderDirection = OrderDirection::Ascending,
-                          const QString & linkedNotebookGuid = QString()) const;
+    QList<Note> listNotes(
+        const ListObjectsOptions flag, const GetNoteOptions options,
+        ErrorString & errorDescription,
+        const size_t limit = 0, const size_t offset = 0,
+        const ListNotesOrder::type order = ListNotesOrder::NoOrder,
+        const OrderDirection::type orderDirection = OrderDirection::Ascending,
+        const QString & linkedNotebookGuid = QString()) const;
 
     /**
      * @brief findNoteLocalUidsWithSearchQuery attempts to find note local uids

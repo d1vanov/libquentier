@@ -226,6 +226,24 @@ Q_SIGNALS:
                                LocalStorageManager::ListNotesOrder::type order,
                                LocalStorageManager::OrderDirection::type orderDirection,
                                ErrorString errorDescription, QUuid requestId);
+    void listNotesPerNotebooksAndTagsComplete(
+        QStringList notebookLocalUids,
+        QStringList tagLocalUids,
+        LocalStorageManager::GetNoteOptions options,
+        LocalStorageManager::ListObjectsOptions flag,
+        size_t limit, size_t offset,
+        LocalStorageManager::ListNotesOrder::type order,
+        LocalStorageManager::OrderDirection::type orderDirection,
+        QList<Note> foundNotes, QUuid requestId);
+    void listNotesPerNotebooksAndTagsFailed(
+        QStringList notebookLocalUids,
+        QStringList tagLocalUids,
+        LocalStorageManager::GetNoteOptions options,
+        LocalStorageManager::ListObjectsOptions flag,
+        size_t limit, size_t offset,
+        LocalStorageManager::ListNotesOrder::type order,
+        LocalStorageManager::OrderDirection::type orderDirection,
+        ErrorString errorDescription, QUuid requestId);
     void listNotesComplete(LocalStorageManager::ListObjectsOptions flag,
                            LocalStorageManager::GetNoteOptions options,
                            size_t limit, size_t offset,
@@ -431,7 +449,8 @@ public Q_SLOTS:
                                       LocalStorageManager::ListLinkedNotebooksOrder::type order,
                                       LocalStorageManager::OrderDirection::type orderDirection,
                                       QUuid requestId);
-    void onExpungeLinkedNotebookRequest(LinkedNotebook linkedNotebook, QUuid requestId);
+    void onExpungeLinkedNotebookRequest(LinkedNotebook linkedNotebook,
+                                        QUuid requestId);
 
     // Note-related slots:
     void onGetNoteCountRequest(QUuid requestId);
@@ -457,13 +476,21 @@ public Q_SLOTS:
                                   LocalStorageManager::ListNotesOrder::type order,
                                   LocalStorageManager::OrderDirection::type orderDirection,
                                   QUuid requestId);
+    void onListNotesPerNotebooksAndTagsRequest(
+        QStringList notebookLocalUids, QStringList tagLocalUids,
+        LocalStorageManager::GetNoteOptions options,
+        LocalStorageManager::ListObjectsOptions flag, size_t limit, size_t offset,
+        LocalStorageManager::ListNotesOrder::type order,
+        LocalStorageManager::OrderDirection::type orderDirection,
+        QUuid requestId);
     void onListNotesRequest(LocalStorageManager::ListObjectsOptions flag,
                             LocalStorageManager::GetNoteOptions options,
                             size_t limit, size_t offset,
                             LocalStorageManager::ListNotesOrder::type order,
                             LocalStorageManager::OrderDirection::type orderDirection,
                             QString linkedNotebookGuid, QUuid requestId);
-    void onFindNoteLocalUidsWithSearchQuery(NoteSearchQuery noteSearchQuery, QUuid requestId);
+    void onFindNoteLocalUidsWithSearchQuery(NoteSearchQuery noteSearchQuery,
+                                            QUuid requestId);
     void onExpungeNoteRequest(Note note, QUuid requestId);
 
     // Tag-related slots:

@@ -2490,13 +2490,14 @@ bool LocalStorageManagerPrivate::findNote(Note & note,
     return true;
 }
 
-QList<Note> LocalStorageManagerPrivate::listNotesPerNotebook(const Notebook & notebook,
-                                                             const LocalStorageManager::GetNoteOptions options,
-                                                             ErrorString & errorDescription,
-                                                             const LocalStorageManager::ListObjectsOptions & flag,
-                                                             const size_t limit, const size_t offset,
-                                                             const LocalStorageManager::ListNotesOrder::type & order,
-                                                             const LocalStorageManager::OrderDirection::type & orderDirection) const
+QList<Note> LocalStorageManagerPrivate::listNotesPerNotebook(
+    const Notebook & notebook,
+    const LocalStorageManager::GetNoteOptions options,
+    ErrorString & errorDescription,
+    const LocalStorageManager::ListObjectsOptions & flag,
+    const size_t limit, const size_t offset,
+    const LocalStorageManager::ListNotesOrder::type & order,
+    const LocalStorageManager::OrderDirection::type & orderDirection) const
 {
     QNDEBUG(QStringLiteral("LocalStorageManagerPrivate::listNotesPerNotebook: notebook = ")
             << notebook << QStringLiteral("\nWith resource metadata = ")
@@ -2616,13 +2617,14 @@ QList<Note> LocalStorageManagerPrivate::listNotesPerNotebook(const Notebook & no
     return notes;
 }
 
-QList<Note> LocalStorageManagerPrivate::listNotesPerTag(const Tag & tag,
-                                                        const LocalStorageManager::GetNoteOptions options,
-                                                        ErrorString & errorDescription,
-                                                        const LocalStorageManager::ListObjectsOptions & flag,
-                                                        const size_t limit, const size_t offset,
-                                                        const LocalStorageManager::ListNotesOrder::type & order,
-                                                        const LocalStorageManager::OrderDirection::type & orderDirection) const
+QList<Note> LocalStorageManagerPrivate::listNotesPerTag(
+    const Tag & tag,
+    const LocalStorageManager::GetNoteOptions options,
+    ErrorString & errorDescription,
+    const LocalStorageManager::ListObjectsOptions & flag,
+    const size_t limit, const size_t offset,
+    const LocalStorageManager::ListNotesOrder::type & order,
+    const LocalStorageManager::OrderDirection::type & orderDirection) const
 {
     QNDEBUG(QStringLiteral("LocalStorageManagerPrivate::listNotesPerTag: tag = ")
             << tag << QStringLiteral("\nWith resource metadata = ")
@@ -2745,13 +2747,171 @@ QList<Note> LocalStorageManagerPrivate::listNotesPerTag(const Tag & tag,
     return notes;
 }
 
-QList<Note> LocalStorageManagerPrivate::listNotes(const LocalStorageManager::ListObjectsOptions flag,
-                                                  const LocalStorageManager::GetNoteOptions options,
-                                                  ErrorString & errorDescription,
-                                                  const size_t limit, const size_t offset,
-                                                  const LocalStorageManager::ListNotesOrder::type & order,
-                                                  const LocalStorageManager::OrderDirection::type & orderDirection,
-                                                  const QString & linkedNotebookGuid) const
+QList<Note> LocalStorageManagerPrivate::listNotesPerNotebooksAndTags(
+    const QStringList & notebookLocalUids,
+    const QStringList & tagLocalUids,
+    const LocalStorageManager::GetNoteOptions options,
+    ErrorString & errorDescription,
+    const LocalStorageManager::ListObjectsOptions & flag,
+    const size_t limit, const size_t offset,
+    const LocalStorageManager::ListNotesOrder::type & order,
+    const LocalStorageManager::OrderDirection::type & orderDirection) const
+{
+    QNDEBUG(QStringLiteral("LocalStorageManagerPrivate::listNotesPerNotebooksAndTags: ")
+            << QStringLiteral("flag = ") << flag
+            << ((options & LocalStorageManager::GetNoteOption::WithResourceMetadata)
+                ? QStringLiteral("true")
+                : QStringLiteral("false"))
+            << QStringLiteral(", with resource binary data = ")
+            << ((options & LocalStorageManager::GetNoteOption::WithResourceBinaryData)
+                ? QStringLiteral("true")
+                : QStringLiteral("false"))
+            << QStringLiteral(", notebook local uids: ")
+            << notebookLocalUids.join(QStringLiteral(", "))
+            << QStringLiteral(", tag local uids: ")
+            << tagLocalUids.join(QStringLiteral(", ")));
+
+    ErrorString errorPrefix(QT_TR_NOOP("Can't list notes per notebooks and tags "
+                                       "from the local storage database"));
+
+    QString notebooksAndTagsSqlQueryCondition;
+
+    if (!notebookLocalUids.isEmpty() && tagLocalUids.isEmpty())
+    {
+        notebooksAndTagsSqlQueryCondition +=
+            QStringLiteral("localUid IN (SELECT DISTINCT Notes.localUid FROM "
+                           "Notes WHERE Notes.notebookLocalUid IN (");
+        for(auto it = notebookLocalUids.constBegin(),
+            end = notebookLocalUids.constEnd(); it != end; ++it)
+        {
+            notebooksAndTagsSqlQueryCondition +=
+                QStringLiteral("'") + sqlEscapeString(*it) + QStringLiteral("', ");
+        }
+        notebooksAndTagsSqlQueryCondition.chop(2);
+        notebooksAndTagsSqlQueryCondition += QStringLiteral("))");
+    }
+    else if (notebookLocalUids.isEmpty() && !tagLocalUids.isEmpty())
+    {
+        notebooksAndTagsSqlQueryCondition +=
+            QStringLiteral("localUid IN (SELECT DISTINCT NoteTags.localNote FROM "
+                           "NoteTags WHERE NoteTags.localTag IN (");
+        for(auto it = tagLocalUids.constBegin(),
+            end = tagLocalUids.constEnd(); it != end; ++it)
+        {
+            notebooksAndTagsSqlQueryCondition +=
+                QStringLiteral("'") + sqlEscapeString(*it) + QStringLiteral("', ");
+        }
+        notebooksAndTagsSqlQueryCondition.chop(2);
+        notebooksAndTagsSqlQueryCondition += QStringLiteral("))");
+    }
+    else
+    {
+        notebooksAndTagsSqlQueryCondition +=
+            QStringLiteral("localUid IN (SELECT DISTINCT Notes.localUid FROM "
+                           "(Notes LEFT OUTER JOIN NoteTags ON "
+                           "Notes.localUid = NoteTags.localNote) "
+                           "WHERE Notes.notebookLocalUid IN (");
+        for(auto it = notebookLocalUids.constBegin(),
+            end = notebookLocalUids.constEnd(); it != end; ++it)
+        {
+            notebooksAndTagsSqlQueryCondition +=
+                QStringLiteral("'") + sqlEscapeString(*it) + QStringLiteral("', ");
+        }
+        notebooksAndTagsSqlQueryCondition.chop(2);
+        notebooksAndTagsSqlQueryCondition +=
+            QStringLiteral(") AND NoteTags.localTag IN(");
+        for(auto it = tagLocalUids.constBegin(),
+            end = tagLocalUids.constEnd(); it != end; ++it)
+        {
+            notebooksAndTagsSqlQueryCondition +=
+                QStringLiteral("'") + sqlEscapeString(*it) + QStringLiteral("', ");
+        }
+        notebooksAndTagsSqlQueryCondition.chop(2);
+        notebooksAndTagsSqlQueryCondition += QStringLiteral("))");
+    }
+
+    bool withResourceMetadata =
+        (options & LocalStorageManager::GetNoteOption::WithResourceMetadata);
+
+    LocalStorageManager::GetResourceOptions resourceOptions =
+            ((options & LocalStorageManager::GetNoteOption::WithResourceBinaryData)
+             ? LocalStorageManager::GetResourceOption::WithBinaryData
+             : LocalStorageManager::GetResourceOptions(0));
+
+    // Will run all the queries from this method and its sub-methods within a single transaction
+    // to prevent multiple drops and re-obtainings of shared lock
+    Transaction transaction(m_sqlDatabase, *this, Transaction::Selection);
+    Q_UNUSED(transaction)
+
+    ErrorString error;
+    QList<Note> notes = listObjects<Note, LocalStorageManager::ListNotesOrder::type>(
+        flag, error, limit, offset, order, orderDirection,
+        notebooksAndTagsSqlQueryCondition);
+
+    if (notes.isEmpty() && !error.isEmpty()) {
+        errorDescription.base() = errorPrefix.base();
+        errorDescription.appendBase(error.base());
+        errorDescription.appendBase(error.additionalBases());
+        errorDescription.details() = error.details();
+        QNWARNING(errorDescription);
+        return notes;
+    }
+
+    const int numNotes = notes.size();
+    for(int i = 0; i < numNotes; ++i)
+    {
+        Note & note = notes[i];
+
+        error.clear();
+        bool res = findAndSetTagIdsPerNote(note, error);
+        if (!res) {
+            errorDescription.base() = errorPrefix.base();
+            errorDescription.appendBase(error.base());
+            errorDescription.appendBase(error.additionalBases());
+            errorDescription.details() = error.details();
+            QNWARNING(errorDescription);
+            notes.clear();
+            return notes;
+        }
+
+        if (withResourceMetadata)
+        {
+            error.clear();
+            res = findAndSetResourcesPerNote(note, resourceOptions, error);
+            if (!res) {
+                errorDescription.base() = errorPrefix.base();
+                errorDescription.appendBase(error.base());
+                errorDescription.appendBase(error.additionalBases());
+                errorDescription.details() = error.details();
+                QNWARNING(errorDescription);
+                notes.clear();
+                return notes;
+            }
+        }
+
+        res = note.checkParameters(error);
+        if (!res) {
+            errorDescription.base() = errorPrefix.base();
+            errorDescription.appendBase(error.base());
+            errorDescription.appendBase(error.additionalBases());
+            errorDescription.details() = error.details();
+            QNWARNING(errorDescription);
+            notes.clear();
+            return notes;
+        }
+    }
+
+    return notes;
+}
+
+QList<Note> LocalStorageManagerPrivate::listNotes(
+    const LocalStorageManager::ListObjectsOptions flag,
+    const LocalStorageManager::GetNoteOptions options,
+    ErrorString & errorDescription,
+    const size_t limit, const size_t offset,
+    const LocalStorageManager::ListNotesOrder::type & order,
+    const LocalStorageManager::OrderDirection::type & orderDirection,
+    const QString & linkedNotebookGuid) const
 {
     QNDEBUG(QStringLiteral("LocalStorageManagerPrivate::listNotes: flag = ") << flag
             << QStringLiteral(", with resource metadata = ")
@@ -2792,18 +2952,17 @@ QList<Note> LocalStorageManagerPrivate::listNotes(const LocalStorageManager::Lis
              ? LocalStorageManager::GetResourceOption::WithBinaryData
              : LocalStorageManager::GetResourceOptions(0));
 
-    // Will run all the queries from this method and its sub-methods within a single transaction
-    // to prevent multiple drops and re-obtainings of shared lock
+    // Will run all the queries from this method and its sub-methods within
+    // a single transaction to prevent multiple drops and re-obtainings of
+    // shared lock
     Transaction transaction(m_sqlDatabase, *this, Transaction::Selection);
     Q_UNUSED(transaction)
 
     ErrorString error;
-    QList<Note> notes =
-        listObjects<Note, LocalStorageManager::ListNotesOrder::type>(flag, error,
-                                                                     limit, offset,
-                                                                     order,
-                                                                     orderDirection,
-                                                                     linkedNotebookGuidSqlQueryCondition);
+    QList<Note> notes = listObjects<Note, LocalStorageManager::ListNotesOrder::type>(
+        flag, error, limit, offset, order, orderDirection,
+        linkedNotebookGuidSqlQueryCondition);
+
     if (notes.isEmpty() && !error.isEmpty()) {
         errorDescription.base() = errorPrefix.base();
         errorDescription.appendBase(error.base());

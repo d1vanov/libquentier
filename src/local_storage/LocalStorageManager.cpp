@@ -344,6 +344,23 @@ LocalStorageManager::listNotesPerTag(const Tag & tag,
 }
 
 QList<Note>
+LocalStorageManager::listNotesPerNotebooksAndTags(
+    const QStringList & notebookLocalUids,
+    const QStringList & tagLocalUids,
+    const LocalStorageManager::GetNoteOptions options,
+    ErrorString & errorDescription,
+    const LocalStorageManager::ListObjectsOptions & flag,
+    const size_t limit, const size_t offset,
+    const LocalStorageManager::ListNotesOrder::type & order,
+    const LocalStorageManager::OrderDirection::type & orderDirection) const
+{
+    Q_D(const LocalStorageManager);
+    return d->listNotesPerNotebooksAndTags(notebookLocalUids, tagLocalUids,
+                                           options, errorDescription, flag,
+                                           limit, offset, order, orderDirection);
+}
+
+QList<Note>
 LocalStorageManager::listNotes(const ListObjectsOptions flag,
                                const GetNoteOptions options,
                                ErrorString & errorDescription,

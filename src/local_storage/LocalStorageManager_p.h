@@ -162,6 +162,16 @@ public:
         const LocalStorageManager::ListNotesOrder::type & order,
         const LocalStorageManager::OrderDirection::type & orderDirection) const;
 
+    QList<Note> listNotesPerNotebooksAndTags(
+        const QStringList & notebookLocalUids,
+        const QStringList & tagLocalUids,
+        const LocalStorageManager::GetNoteOptions options,
+        ErrorString & errorDescription,
+        const LocalStorageManager::ListObjectsOptions & flag,
+        const size_t limit, const size_t offset,
+        const LocalStorageManager::ListNotesOrder::type & order,
+        const LocalStorageManager::OrderDirection::type & orderDirection) const;
+
     QList<Note> listNotes(
         const LocalStorageManager::ListObjectsOptions flag,
         const LocalStorageManager::GetNoteOptions options,
