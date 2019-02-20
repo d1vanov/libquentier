@@ -1161,9 +1161,19 @@ void LocalStorageManagerTester::localStorageManagerListNotesTest()
         bool res = localStorageManager.addNotebook(notebook, errorMessage);
         QVERIFY2(res == true, qPrintable(errorMessage.nonLocalizedString()));
 
+        Notebook secondNotebook;
+        secondNotebook.setGuid(QStringLiteral("00000000-0000-0000-c000-000000000048"));
+        secondNotebook.setUpdateSequenceNumber(1);
+        secondNotebook.setName(QStringLiteral("Fake second notebook name"));
+        secondNotebook.setCreationTimestamp(1);
+        secondNotebook.setModificationTimestamp(1);
+
+        res = localStorageManager.addNotebook(secondNotebook, errorMessage);
+        QVERIFY2(res == true, qPrintable(errorMessage.nonLocalizedString()));
+
         Notebook notebookNotLinkedWithNotes;
         notebookNotLinkedWithNotes.setGuid(
-            QStringLiteral("00000000-0000-0000-c000-000000000048"));
+            QStringLiteral("00000000-0000-0000-c000-000000000049"));
         notebookNotLinkedWithNotes.setUpdateSequenceNumber(1);
         notebookNotLinkedWithNotes.setName(
             QStringLiteral("Fake notebook not linked with notes name name"));
@@ -1173,9 +1183,19 @@ void LocalStorageManagerTester::localStorageManagerListNotesTest()
         res = localStorageManager.addNotebook(notebookNotLinkedWithNotes, errorMessage);
         QVERIFY2(res == true, qPrintable(errorMessage.nonLocalizedString()));
 
-        Tag testTag;
-        testTag.setName(QStringLiteral("My test tag"));
-        res = localStorageManager.addTag(testTag, errorMessage);
+        Tag firstTestTag;
+        firstTestTag.setName(QStringLiteral("My first test tag"));
+        res = localStorageManager.addTag(firstTestTag, errorMessage);
+        QVERIFY2(res == true, qPrintable(errorMessage.nonLocalizedString()));
+
+        Tag secondTestTag;
+        secondTestTag.setName(QStringLiteral("My second test tag"));
+        res = localStorageManager.addTag(secondTestTag, errorMessage);
+        QVERIFY2(res == true, qPrintable(errorMessage.nonLocalizedString()));
+
+        Tag thirdTestTag;
+        thirdTestTag.setName(QStringLiteral("My third test tag"));
+        res = localStorageManager.addTag(thirdTestTag, errorMessage);
         QVERIFY2(res == true, qPrintable(errorMessage.nonLocalizedString()));
 
         int numNotes = 5;
@@ -1213,7 +1233,10 @@ void LocalStorageManagerTester::localStorageManagerListNotesTest()
             }
 
             if ((i == 1) || (i == 2) || (i == 4)) {
-                note.addTagLocalUid(testTag.localUid());
+                note.addTagLocalUid(firstTestTag.localUid());
+            }
+            else if (i == 3) {
+                note.addTagLocalUid(secondTestTag.localUid());
             }
 
             note.setUpdateSequenceNumber(i+1);
@@ -1223,8 +1246,15 @@ void LocalStorageManagerTester::localStorageManagerListNotesTest()
             note.setCreationTimestamp(i+1);
             note.setModificationTimestamp(i+1);
             note.setActive(true);
-            note.setNotebookGuid(notebook.guid());
-            note.setNotebookLocalUid(notebook.localUid());
+
+            if (i != 3) {
+                note.setNotebookGuid(notebook.guid());
+                note.setNotebookLocalUid(notebook.localUid());
+            }
+            else {
+                note.setNotebookGuid(secondNotebook.guid());
+                note.setNotebookLocalUid(secondNotebook.localUid());
+            }
 
             res = localStorageManager.addNote(note, errorMessage);
             QVERIFY2(res == true, qPrintable(errorMessage.nonLocalizedString()));
@@ -1240,7 +1270,7 @@ void LocalStorageManagerTester::localStorageManagerListNotesTest()
         QVERIFY2(errorMessage.isEmpty(), qPrintable(errorMessage.nonLocalizedString()));
 
         int numFoundNotes = foundNotes.size();
-        if (numFoundNotes != numNotes) {
+        if (numFoundNotes != (numNotes-1)) {
             QFAIL(qPrintable(QStringLiteral("Error: number of notes in the result "
                                             "of LocalStorageManager::ListNotesPerNotebook (") +
                              QString::number(numFoundNotes) +
@@ -1249,16 +1279,20 @@ void LocalStorageManagerTester::localStorageManagerListNotesTest()
                              QString::number(numNotes) + QStringLiteral(")")));
         }
 
-        for(int i = 0; i < numFoundNotes; ++i)
+        for(int i = 0; i < numNotes; ++i)
         {
-            const Note & foundNote = foundNotes.at(i);
-            if (!notes.contains(foundNote)) {
-                QFAIL("One of notes from the result of LocalStorageManager::ListNotesPerNotebook "
-                      "was not found in the list of original notes");
+            if (i == 3) {
+                continue;
+            }
+
+            const Note & note = notes[i];
+            if (!foundNotes.contains(note)) {
+                QFAIL("One of original notes was not found in the result of "
+                      "LocalStorageManager::ListNotesPerNotebook ");
             }
         }
 
-        // 2) Ensure the method listing notes per notebook actually checks the notebook
+        // 2) Ensure the method listing notes per notebook returns zero properly
 
         errorMessage.clear();
         foundNotes = localStorageManager.listNotesPerNotebook(notebookNotLinkedWithNotes,
@@ -1275,12 +1309,12 @@ void LocalStorageManagerTester::localStorageManagerListNotesTest()
                              QString::number(foundNotes.size()) + QStringLiteral(" notes)")));
         }
 
-        // 3) Test method listing notes per notebook considering only the notes with guid + with limit, offset,
-        // specific order and order direction
+        // 3) Test method listing notes per notebook considering only the notes
+        // with guid + with limit, specific order and order direction
 
         errorMessage.clear();
         size_t limit = 2;
-        size_t offset = 1;
+        size_t offset = 0;
         LocalStorageManager::ListNotesOrder::type order =
             LocalStorageManager::ListNotesOrder::ByUpdateSequenceNumber;
         LocalStorageManager::OrderDirection::type orderDirection =
@@ -1288,11 +1322,10 @@ void LocalStorageManagerTester::localStorageManagerListNotesTest()
         getNoteOptions = LocalStorageManager::GetNoteOptions(
             LocalStorageManager::GetNoteOption::WithResourceMetadata |
             LocalStorageManager::GetNoteOption::WithResourceBinaryData);
-        foundNotes = localStorageManager.listNotesPerNotebook(notebook, getNoteOptions,
-                                                              errorMessage,
-                                                              LocalStorageManager::ListElementsWithGuid,
-                                                              limit, offset,
-                                                              order, orderDirection);
+        foundNotes = localStorageManager.listNotesPerNotebook(
+            notebook, getNoteOptions, errorMessage,
+            LocalStorageManager::ListElementsWithGuid,
+            limit, offset, order, orderDirection);
         if (foundNotes.size() != static_cast<int>(limit)) {
             QFAIL(qPrintable(QStringLiteral("Found unexpected amount of notes: "
                                             "expected to find ") +
@@ -1311,7 +1344,7 @@ void LocalStorageManagerTester::localStorageManagerListNotesTest()
             QFAIL("Second of found notes doesn't have the update sequence number set");
         }
 
-        if ((firstNote.updateSequenceNumber() != 4) ||
+        if ((firstNote.updateSequenceNumber() != 5) ||
             (secondNote.updateSequenceNumber() != 3))
         {
             QFAIL(qPrintable(QStringLiteral("Unexpected order of found notes by "
@@ -1321,13 +1354,13 @@ void LocalStorageManagerTester::localStorageManagerListNotesTest()
         }
 
         // 4) Test method listing notes per tag considering only the notes
-        // with guid + with limit, offset, specific order and order direction
+        // with guid + with limit, specific order and order direction
 
         errorMessage.clear();
         limit = 2;
         offset = 0;
 
-        foundNotes = localStorageManager.listNotesPerTag(testTag, getNoteOptions,
+        foundNotes = localStorageManager.listNotesPerTag(firstTestTag, getNoteOptions,
                                                          errorMessage,
                                                          LocalStorageManager::ListElementsWithGuid,
                                                          limit, offset, order,
@@ -1432,6 +1465,99 @@ void LocalStorageManagerTester::localStorageManagerListNotesTest()
         CHECK_LIST_NOTES_BY_FLAG(LocalStorageManager::ListLocal |
                                  LocalStorageManager::ListFavoritedElements,
                                  "local, favorited", i == 0, i != 0);
+
+        // 12) Test method listing notes per notebook and tag local uids
+        // using notebook local uids only as a filter
+        QStringList notebookLocalUids = QStringList() << notebook.localUid();
+        QStringList tagLocalUids;
+        foundNotes = localStorageManager.listNotesPerNotebooksAndTags(
+            notebookLocalUids, tagLocalUids, getNoteOptions, errorMessage,
+            LocalStorageManager::ListAll);
+        numFoundNotes = foundNotes.size();
+        if (numFoundNotes != (numNotes-1)) {
+            QFAIL(qPrintable(QStringLiteral("Error: number of notes in the result "
+                                            "of LocalStorageManager::ListNotesPerNotebooksAndTags (") +
+                             QString::number(numFoundNotes) +
+                             QStringLiteral(") does not match the original number "
+                                            "of added notes (") +
+                             QString::number(numNotes) + QStringLiteral(") ") +
+                             QStringLiteral("when only notebooks are present "
+                                            "within the filter")));
+        }
+
+        for(int i = 0; i < numNotes; ++i)
+        {
+            if (i == 3) {
+                continue;
+            }
+
+            const Note & note = notes[i];
+            if (!foundNotes.contains(note)) {
+                QFAIL("One of original notes was not found in the result of "
+                      "LocalStorageManager::ListNotesPerNotebooksAndTags "
+                      "when only notebooks are present within the filter");
+            }
+        }
+
+        // 13) Test method listing notes per notebook and tag local uids
+        // using tag local uids only as a filter
+        notebookLocalUids.clear();
+        tagLocalUids << firstTestTag.localUid();
+        foundNotes = localStorageManager.listNotesPerNotebooksAndTags(
+            notebookLocalUids, tagLocalUids, getNoteOptions, errorMessage,
+            LocalStorageManager::ListAll);
+        numFoundNotes = foundNotes.size();
+        if (numFoundNotes != 3) {
+            QFAIL(qPrintable(QStringLiteral("Error: number of notes in the result "
+                                            "of LocalStorageManager::ListNotesPerNotebooksAndTags (") +
+                             QString::number(numFoundNotes) +
+                             QStringLiteral(") does not match the original number "
+                                            "of added notes per tag (") +
+                             QString::number(3) + QStringLiteral(") ") +
+                             QStringLiteral("when only tags are present "
+                                            "within the filter")));
+        }
+
+        for(int i = 0; i < numNotes; ++i)
+        {
+            if ((i != 1) && (i != 2) && (i != 4)) {
+                continue;
+            }
+
+            const Note & note = notes[i];
+            if (!foundNotes.contains(note)) {
+                QFAIL("One of original notes was not found in the result of "
+                      "LocalStorageManager::ListNotesPerNotebooksAndTags "
+                      "when only tags are present within the filter");
+            }
+        }
+
+        // 14) Test method listing notes per notebook and tag local uids
+        // using notebook local uids and tag local uids as a filter
+        notebookLocalUids << secondNotebook.localUid();
+        tagLocalUids.clear();
+        tagLocalUids << secondTestTag.localUid();
+        foundNotes = localStorageManager.listNotesPerNotebooksAndTags(
+            notebookLocalUids, tagLocalUids, getNoteOptions, errorMessage,
+            LocalStorageManager::ListAll);
+        numFoundNotes = foundNotes.size();
+        if (numFoundNotes != 1) {
+            QFAIL(qPrintable(QStringLiteral("Error: number of notes in the result "
+                                            "of LocalStorageManager::ListNotesPerNotebooksAndTags (") +
+                             QString::number(numFoundNotes) +
+                             QStringLiteral(") does not match the original number "
+                                            "of added notes per tag (") +
+                             QString::number(1) + QStringLiteral(") ") +
+                             QStringLiteral("when both notebooks and tags are present "
+                                            "within the filter")));
+        }
+
+        if (foundNotes[0] != notes[3]) {
+            QFAIL("The note found in the result of "
+                  "LocalStorageManager::ListNotesPerNotebooksAndTags "
+                  "when both notebooks and tags are present within the filter "
+                  "doesn't match the original note");
+        }
     }
     CATCH_EXCEPTION();
 }
