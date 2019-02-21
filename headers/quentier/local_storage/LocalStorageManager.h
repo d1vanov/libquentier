@@ -1044,6 +1044,7 @@ public:
      * @brief listNotesPerNotebooksAndTags attempts to list notes which are
      * present within one of specified notebooks and are labeled with at least
      * one of specified tags
+     *
      * @param notebookLocalUids     Local uids of notebooks to which the listed
      *                              notes might belong
      * @param tagLocalUids          Local uids of tags with which the listed
@@ -1070,6 +1071,46 @@ public:
     QList<Note> listNotesPerNotebooksAndTags(
         const QStringList & notebookLocalUids,
         const QStringList & tagLocalUids,
+        const LocalStorageManager::GetNoteOptions options,
+        ErrorString & errorDescription,
+        const LocalStorageManager::ListObjectsOptions & flag,
+        const size_t limit = 0, const size_t offset = 0,
+        const LocalStorageManager::ListNotesOrder::type & order =
+        ListNotesOrder::NoOrder,
+        const LocalStorageManager::OrderDirection::type & orderDirection =
+        OrderDirection::Ascending) const;
+
+    /**
+     * @brief listNotesByLocalUids attempts to list notes given their local uids
+     *
+     * The method would only return notes which it managed to find within
+     * the local storage i.e. having an invalid local uid in the list won't
+     * result in an error, just in the corresponding note not returned
+     * within the result
+     *
+     * Notes within the result can be additionally filtered with flag parameter
+     *
+     * @param noteLocalUids         Local uids of notes to be listed
+     * @param options               Options specifying which optionally includable
+     *                              fields of the note should actually be included
+     * @param errorDescription      Error description in case notes could not
+     *                              be listed
+     * @param flag                  Input parameter used to set the filter for
+     *                              the desired notes to be listed
+     * @param limit                 Limit for the max number of notes in the result,
+     *                              zero by default which means no limit is set
+     * @param offset                Number of notes to skip in the beginning of
+     *                              the result, zero by default
+     * @param order                 Allows to specify particular ordering of notes
+     *                              in the result, NoOrder by default
+     * @param orderDirection        Specifies the direction of ordering, by default
+     *                              ascending direction is used;
+     * @return                      Either list of notes by local uids or empty
+     *                              list in case of error or no notes corresponding
+     *                              to given local uids presence
+     */
+    QList<Note> listNotesByLocalUids(
+        const QStringList & noteLocalUids,
         const LocalStorageManager::GetNoteOptions options,
         ErrorString & errorDescription,
         const LocalStorageManager::ListObjectsOptions & flag,

@@ -172,6 +172,15 @@ public:
         const LocalStorageManager::ListNotesOrder::type & order,
         const LocalStorageManager::OrderDirection::type & orderDirection) const;
 
+    QList<Note> listNotesByLocalUids(
+        const QStringList & noteLocalUids,
+        const LocalStorageManager::GetNoteOptions options,
+        ErrorString & errorDescription,
+        const LocalStorageManager::ListObjectsOptions & flag,
+        const size_t limit, const size_t offset,
+        const LocalStorageManager::ListNotesOrder::type order,
+        const LocalStorageManager::OrderDirection::type & orderDirection) const;
+
     QList<Note> listNotes(
         const LocalStorageManager::ListObjectsOptions flag,
         const LocalStorageManager::GetNoteOptions options,
@@ -180,6 +189,16 @@ public:
         const LocalStorageManager::ListNotesOrder::type & order,
         const LocalStorageManager::OrderDirection::type & orderDirection,
         const QString & linkedNotebookGuid) const;
+
+    QList<Note> listNotesImpl(
+        const ErrorString & errorPrefix,
+        const QString & sqlQueryCondition,
+        const LocalStorageManager::ListObjectsOptions flag,
+        const LocalStorageManager::GetNoteOptions options,
+        ErrorString & errorDescription,
+        const size_t limit, const size_t offset,
+        const LocalStorageManager::ListNotesOrder::type & order,
+        const LocalStorageManager::OrderDirection::type & orderDirection) const;
 
     bool expungeNote(Note & note, ErrorString & errorDescription);
 
