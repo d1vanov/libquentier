@@ -16,7 +16,8 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "LocalStorageManagerTests.h"
+#include "LocalStorageManagerBasicTests.h"
+#include "../TestMacros.h"
 #include <quentier/logging/QuentierLogger.h>
 #include <quentier/local_storage/LocalStorageManager.h>
 #include <quentier/types/SavedSearch.h>
@@ -30,12 +31,13 @@
 #include <quentier/utility/Utility.h>
 #include <quentier/utility/UidGenerator.h>
 #include <QCryptographicHash>
+#include <QtTest/QtTest>
 #include <string>
 
 namespace quentier {
 namespace test {
 
-bool TestSavedSearchAddFindUpdateExpungeInLocalStorage(QString & errorDescription)
+void TestSavedSearchAddFindUpdateExpungeInLocalStorage()
 {
     LocalStorageManager::StartupOptions startupOptions(
         LocalStorageManager::StartupOption::ClearDatabase);
@@ -54,60 +56,43 @@ bool TestSavedSearchAddFindUpdateExpungeInLocalStorage(QString & errorDescriptio
 
     ErrorString errorMessage;
 
-    if (!search.checkParameters(errorMessage)) {
-        errorDescription = errorMessage.nonLocalizedString();
-        QNWARNING(QStringLiteral("Found invalid SavedSearch: ") << search
-                  << QStringLiteral(", error: ") << errorDescription);
-        return false;
-    }
+    QVERIFY2(search.checkParameters(errorMessage),
+             qPrintable(errorMessage.nonLocalizedString()));
 
     // ======== Check Add + Find ============
-    bool res = localStorageManager.addSavedSearch(search, errorMessage);
-    if (!res) {
-        errorDescription = errorMessage.nonLocalizedString();
-        return false;
-    }
+    QVERIFY2(localStorageManager.addSavedSearch(search, errorMessage),
+             qPrintable(errorMessage.nonLocalizedString()));
 
     const QString searchGuid = search.localUid();
     SavedSearch foundSearch;
     foundSearch.setLocalUid(searchGuid);
-    res = localStorageManager.findSavedSearch(foundSearch, errorMessage);
-    if (!res) {
-        errorDescription = errorMessage.nonLocalizedString();
-        return false;
-    }
+    QVERIFY2(localStorageManager.findSavedSearch(foundSearch, errorMessage),
+             qPrintable(errorMessage.nonLocalizedString()));
 
-    if (search != foundSearch) {
-        errorDescription = QStringLiteral("Added and found saved searches in "
-                                          "the local storage don't match");
-        QNWARNING(errorDescription
-                  << QStringLiteral(": SavedSearch added to the local storage: ")
-                  << search
-                  << QStringLiteral("\nSavedSearch found in the local storage: ")
-                  << foundSearch);
-        return false;
-    }
+    VERIFY2(
+        search == foundSearch,
+        QStringLiteral("Added and found saved searches in the local "
+                       "storage don't match: saved search added to "
+                       "the local storage: ")
+        << search
+        << QStringLiteral("\nSaved search found in the local storage:" )
+        << foundSearch);
 
     // ========= Check Find by name =============
     SavedSearch foundByNameSearch;
     foundByNameSearch.unsetLocalUid();
     foundByNameSearch.setName(search.name());
-    res = localStorageManager.findSavedSearch(foundByNameSearch, errorMessage);
-    if (!res) {
-        errorDescription = errorMessage.nonLocalizedString();
-        return false;
-    }
+    QVERIFY2(localStorageManager.findSavedSearch(foundByNameSearch, errorMessage),
+             qPrintable(errorMessage.nonLocalizedString()));
 
-    if (search != foundByNameSearch) {
-        errorDescription = QStringLiteral("Added and found by name saved searches "
-                                          "in the local storage don't match");
-        QNWARNING(errorDescription
-                  << QStringLiteral(": SavedSearch added to the local storage: ")
-                  << search
-                  << QStringLiteral("\nSaved search found by name in the local storage: ")
-                  << foundByNameSearch);
-        return false;
-    }
+    VERIFY2(
+        search == foundByNameSearch,
+        QStringLiteral("Added and found by name saved searches "
+                       "in the local storage don't match: saved search added "
+                       "to the local storage: ")
+        << search
+        << QStringLiteral("\nSaved search found by name in the local storage: ")
+        << foundByNameSearch);
 
     // ========= Check Update + Find =============
     SavedSearch modifiedSearch(search);
@@ -120,79 +105,51 @@ bool TestSavedSearchAddFindUpdateExpungeInLocalStorage(QString & errorDescriptio
     QString localUid = modifiedSearch.localUid();
     modifiedSearch.unsetLocalUid();
 
-    res = localStorageManager.updateSavedSearch(modifiedSearch, errorMessage);
-    if (!res) {
-        errorDescription = errorMessage.nonLocalizedString();
-        return false;
-    }
+    QVERIFY2(localStorageManager.updateSavedSearch(modifiedSearch, errorMessage),
+             qPrintable(errorMessage.nonLocalizedString()));
 
-    res = localStorageManager.findSavedSearch(foundSearch, errorMessage);
-    if (!res) {
-        errorDescription = errorMessage.nonLocalizedString();
-        return false;
-    }
+    QVERIFY2(localStorageManager.findSavedSearch(foundSearch, errorMessage),
+             qPrintable(errorMessage.nonLocalizedString()));
 
     modifiedSearch.setLocalUid(localUid);
-    if (modifiedSearch != foundSearch) {
-        errorDescription = QStringLiteral("Updated and found saved searches "
-                                          "in the local storage don't match");
-        QNWARNING(errorDescription
-                  << QStringLiteral(": SavedSearch updated in the local storage: ")
-                  << modifiedSearch
-                  << QStringLiteral("\nSavedSearch found in the local storage: ")
-                  << foundSearch);
-        return false;
-    }
+    VERIFY2(
+        modifiedSearch == foundSearch,
+        QStringLiteral("Updated and found saved searches in the local storage "
+                       "don't match: saved search updated in the local storage: ")
+        << modifiedSearch
+        << QStringLiteral("\nSavedSearch found in the local storage: ")
+        << foundSearch);
 
     // ========== Check savedSearchCount to return 1 ============
     int count = localStorageManager.savedSearchCount(errorMessage);
-    if (count < 0) {
-        errorDescription = errorMessage.nonLocalizedString();
-        return false;
-    }
-    else if (count != 1) {
-        errorDescription = QStringLiteral("GetSavedSearchCount returned result "
-                                          "different from the expected one (1): ");
-        errorDescription += QString::number(count);
-        return false;
-    }
+    QVERIFY2(count >= 0, qPrintable(errorMessage.nonLocalizedString()));
+    QVERIFY2(
+        count == 1,
+        qPrintable(
+            QString::fromUtf8("GetSavedSearchCount returned result %1 "
+                              "different from the expected one (1)").arg(count)));
 
     // ============ Check Expunge + Find (failure expected) ============
-    res = localStorageManager.expungeSavedSearch(modifiedSearch, errorMessage);
-    if (!res) {
-        errorDescription = errorMessage.nonLocalizedString();
-        return false;
-    }
+    QVERIFY2(localStorageManager.expungeSavedSearch(modifiedSearch, errorMessage),
+             qPrintable(errorMessage.nonLocalizedString()));
 
-    res = localStorageManager.findSavedSearch(foundSearch, errorMessage);
-    if (res) {
-        errorDescription = QStringLiteral("Error: found saved search which should "
-                                          "have been expunged from local storage");
-        QNWARNING(errorDescription
-                  << QStringLiteral(": SavedSearch expunged from the local storage: ")
-                  << modifiedSearch
-                  << QStringLiteral("\nSavedSearch found in the local storage: ")
-                  << foundSearch);
-        return false;
-    }
+    VERIFY2(!localStorageManager.findSavedSearch(foundSearch, errorMessage),
+            QStringLiteral("Error: found saved search which should have been "
+                           "expunged from local storage: saved search expunged "
+                           "from the local storage: ")
+            << modifiedSearch
+            << QStringLiteral("\nSavedSearch found in the local storage: ")
+            << foundSearch);
 
     // ========== Check savedSearchCount to return 0 ============
     count = localStorageManager.savedSearchCount(errorMessage);
-    if (count < 0) {
-        errorDescription = errorMessage.nonLocalizedString();
-        return false;
-    }
-    else if (count != 0) {
-        errorDescription = QStringLiteral("savedSearchCount returned result "
-                                          "different from the expected one (0): ");
-        errorDescription += QString::number(count);
-        return false;
-    }
-
-    return true;
+    QVERIFY2(count >= 0, qPrintable(errorMessage.nonLocalizedString()));
+    VERIFY2(count == 0,
+            QString::fromUtf8("savedSearchCount returned result %1 "
+                              "different from the expected one (0)").arg(count));
 }
 
-bool TestLinkedNotebookAddFindUpdateExpungeInLocalStorage(QString & errorDescription)
+void TestLinkedNotebookAddFindUpdateExpungeInLocalStorage()
 {
     LocalStorageManager::StartupOptions startupOptions(
         LocalStorageManager::StartupOption::ClearDatabase);
@@ -217,39 +174,27 @@ bool TestLinkedNotebookAddFindUpdateExpungeInLocalStorage(QString & errorDescrip
 
     ErrorString errorMessage;
 
-    if (!linkedNotebook.checkParameters(errorMessage)) {
-        errorDescription = errorMessage.nonLocalizedString();
-        QNWARNING(QStringLiteral("Found invalid LinkedNotebook: ") << linkedNotebook
-                  << QStringLiteral(", error: ") << errorDescription);
-        return false;
-    }
+    VERIFY2(linkedNotebook.checkParameters(errorMessage),
+            QStringLiteral("Found invalid LinkedNotebook: ")
+            << linkedNotebook << QStringLiteral(", error: ")
+            << errorMessage.nonLocalizedString());
 
     // ========== Check Add + Find ===========
-    bool res = localStorageManager.addLinkedNotebook(linkedNotebook, errorMessage);
-    if (!res) {
-        errorDescription = errorMessage.nonLocalizedString();
-        return false;
-    }
+    QVERIFY2(localStorageManager.addLinkedNotebook(linkedNotebook, errorMessage),
+             qPrintable(errorMessage.nonLocalizedString()));
 
     const QString linkedNotebookGuid = linkedNotebook.guid();
     LinkedNotebook foundLinkedNotebook;
     foundLinkedNotebook.setGuid(linkedNotebookGuid);
-    res = localStorageManager.findLinkedNotebook(foundLinkedNotebook, errorMessage);
-    if (!res) {
-        errorDescription = errorMessage.nonLocalizedString();
-        return false;
-    }
+    QVERIFY2(localStorageManager.findLinkedNotebook(foundLinkedNotebook, errorMessage),
+             qPrintable(errorMessage.nonLocalizedString()));
 
-    if (linkedNotebook != foundLinkedNotebook) {
-        errorDescription = QStringLiteral("Added and found linked noteboks in "
-                                          "the local storage don't match");
-        QNWARNING(errorDescription
-                  << QStringLiteral(": LinkedNotebook added to the local storage: ")
-                  << linkedNotebook
-                  << QStringLiteral("\nLinkedNotebook found in the local storage: ")
-                  << foundLinkedNotebook);
-        return false;
-    }
+    VERIFY2(linkedNotebook == foundLinkedNotebook,
+            QStringLiteral("Added and found linked noteboks in the local storage "
+                           "don't match: LinkedNotebook added to the local storage: ")
+            << linkedNotebook
+            << QStringLiteral("\nLinkedNotebook found in the local storage: ")
+            << foundLinkedNotebook);
 
     // =========== Check Update + Find ===========
     LinkedNotebook modifiedLinkedNotebook(linkedNotebook);
@@ -273,75 +218,51 @@ bool TestLinkedNotebookAddFindUpdateExpungeInLocalStorage(QString & errorDescrip
         linkedNotebook.stack() + QStringLiteral("_modified"));
     modifiedLinkedNotebook.setBusinessId(linkedNotebook.businessId() + 1);
 
-    res = localStorageManager.updateLinkedNotebook(modifiedLinkedNotebook, errorMessage);
-    if (!res) {
-        errorDescription = errorMessage.nonLocalizedString();
-        return false;
-    }
+    QVERIFY2(
+        localStorageManager.updateLinkedNotebook(modifiedLinkedNotebook, errorMessage),
+        qPrintable(errorMessage.nonLocalizedString()));
 
-    res = localStorageManager.findLinkedNotebook(foundLinkedNotebook, errorMessage);
-    if (!res) {
-        errorDescription = errorMessage.nonLocalizedString();
-        return false;
-    }
+    QVERIFY2(
+        localStorageManager.findLinkedNotebook(foundLinkedNotebook, errorMessage),
+        qPrintable(errorMessage.nonLocalizedString()));
 
-    if (modifiedLinkedNotebook != foundLinkedNotebook) {
-        errorDescription = QStringLiteral("Updated and found linked notebooks in "
-                                          "the local storage don't match");
-        QNWARNING(errorDescription
-                  << QStringLiteral(": LinkedNotebook updated in the local storage: ")
-                  << modifiedLinkedNotebook
-                  << QStringLiteral("\nLinkedNotebook found in the local storage: ")
-                  << foundLinkedNotebook);
-        return false;
-    }
+    VERIFY2(
+        modifiedLinkedNotebook == foundLinkedNotebook,
+        QStringLiteral("Updated and found linked notebooks in the local storage "
+                       "don't match: LinkedNotebook updated in the local storage: ")
+        << modifiedLinkedNotebook
+        << QStringLiteral("\nLinkedNotebook found in the local storage: ")
+        << foundLinkedNotebook);
 
     // ========== Check linkedNotebookCount to return 1 ============
     int count = localStorageManager.linkedNotebookCount(errorMessage);
-    if (count < 0) {
-        errorDescription = errorMessage.nonLocalizedString();
-        return false;
-    }
-    else if (count != 1) {
-        errorDescription = QStringLiteral("linkedNotebookCount returned result "
-                                          "different from the expected one (1): ");
-        errorDescription += QString::number(count);
-        return false;
-    }
+    QVERIFY2(count >= 0, qPrintable(errorMessage.nonLocalizedString()));
+    QVERIFY2(
+        count == 1,
+        qPrintable(
+            QString::fromUtf8("linkedNotebookCount returned result %1 "
+                              "different from the expected one (1)").arg(count)));
 
     // ============= Check Expunge + Find (failure expected) ============
-    res = localStorageManager.expungeLinkedNotebook(modifiedLinkedNotebook, errorMessage);
-    if (!res) {
-        errorDescription = errorMessage.nonLocalizedString();
-        return false;
-    }
+    QVERIFY2(
+        localStorageManager.expungeLinkedNotebook(modifiedLinkedNotebook, errorMessage),
+        qPrintable(errorMessage.nonLocalizedString()));
 
-    res = localStorageManager.findLinkedNotebook(foundLinkedNotebook, errorMessage);
-    if (res) {
-        errorDescription = QStringLiteral("Error: found linked notebook which should "
-                                          "have been expunged from local storage");
-        QNWARNING(errorDescription
-                  << QStringLiteral(": LinkedNotebook expunged from the local storage: ")
-                  << modifiedLinkedNotebook
-                  << QStringLiteral("\nLinkedNotebook found in the local storage: ")
-                  << foundLinkedNotebook);
-        return false;
-    }
+    VERIFY2(!localStorageManager.findLinkedNotebook(foundLinkedNotebook, errorMessage),
+            QStringLiteral("Error: found linked notebook which should have been "
+                           "expunged from local storage: LinkedNotebook expunged "
+                           "from the local storage: ")
+            << modifiedLinkedNotebook
+            << QStringLiteral("\nLinkedNotebook found in the local storage: ")
+            << foundLinkedNotebook);
 
     // ========== Check linkedNotebookCount to return 0 ============
     count = localStorageManager.linkedNotebookCount(errorMessage);
-    if (count < 0) {
-        errorDescription = errorMessage.nonLocalizedString();
-        return false;
-    }
-    else if (count != 0) {
-        errorDescription = QStringLiteral("GetLinkedNotebookCount returned result "
-                                          "different from the expected one (0): ");
-        errorDescription += QString::number(count);
-        return false;
-    }
-
-    return true;
+    QVERIFY2(count >= 0, qPrintable(errorMessage.nonLocalizedString()));
+    QVERIFY2(
+        count == 0,
+        qPrintable(QString::fromUtf8("GetLinkedNotebookCount returned result %1 "
+                                     "different from the expected one (0)").arg(count)));
 }
 
 bool TestTagAddFindUpdateExpungeInLocalStorage(QString & errorDescription)

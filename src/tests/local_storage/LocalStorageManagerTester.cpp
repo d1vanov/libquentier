@@ -17,7 +17,7 @@
  */
 
 #include "LocalStorageManagerTester.h"
-#include "LocalStorageManagerTests.h"
+#include "LocalStorageManagerBasicTests.h"
 #include "SavedSearchLocalStorageManagerAsyncTester.h"
 #include "NoteNotebookAndTagListTrackingAsyncTester.h"
 #include "LinkedNotebookLocalStorageManagerAsyncTester.h"
@@ -115,9 +115,7 @@ void LocalStorageManagerTester::localStorageManagerIndividualSavedSearchTest()
 {
     try
     {
-        QString error;
-        bool res = TestSavedSearchAddFindUpdateExpungeInLocalStorage(error);
-        QVERIFY2(res == true, qPrintable(error));
+        TestSavedSearchAddFindUpdateExpungeInLocalStorage();
     }
     CATCH_EXCEPTION();
 }
@@ -126,9 +124,7 @@ void LocalStorageManagerTester::localStorageManagerIndividualLinkedNotebookTest(
 {
     try
     {
-        QString error;
-        bool res = TestLinkedNotebookAddFindUpdateExpungeInLocalStorage(error);
-        QVERIFY2(res == true, qPrintable(error));
+        TestLinkedNotebookAddFindUpdateExpungeInLocalStorage();
     }
     CATCH_EXCEPTION();
 }

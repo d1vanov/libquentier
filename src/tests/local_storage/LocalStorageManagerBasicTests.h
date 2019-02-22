@@ -16,27 +16,17 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LIB_QUENTIER_TESTS_LOCAL_STORAGE_MANAGER_TESTS_H
-#define LIB_QUENTIER_TESTS_LOCAL_STORAGE_MANAGER_TESTS_H
+#ifndef LIB_QUENTIER_TESTS_LOCAL_STORAGE_MANAGER_BASIC_TESTS_H
+#define LIB_QUENTIER_TESTS_LOCAL_STORAGE_MANAGER_BASIC_TESTS_H
 
-#include <QtGlobal>
+#include <QString>
 
 namespace quentier {
-
-QT_FORWARD_DECLARE_CLASS(LocalStorageManager)
-QT_FORWARD_DECLARE_CLASS(SavedSearch)
-QT_FORWARD_DECLARE_CLASS(LinkedNotebook)
-QT_FORWARD_DECLARE_CLASS(Tag)
-QT_FORWARD_DECLARE_CLASS(Resource)
-QT_FORWARD_DECLARE_CLASS(Note)
-QT_FORWARD_DECLARE_CLASS(Notebook)
-QT_FORWARD_DECLARE_CLASS(User)
-
 namespace test {
 
-bool TestSavedSearchAddFindUpdateExpungeInLocalStorage(QString & errorDescription);
+void TestSavedSearchAddFindUpdateExpungeInLocalStorage();
 
-bool TestLinkedNotebookAddFindUpdateExpungeInLocalStorage(QString & errorDescription);
+void TestLinkedNotebookAddFindUpdateExpungeInLocalStorage();
 
 bool TestTagAddFindUpdateExpungeInLocalStorage(QString & errorDescription);
 
@@ -59,4 +49,4 @@ bool TestNoteTagIdsComplementWhenAddingAndUpdatingNote(QString & errorDescriptio
 } // namespace test
 } // namespace quentier
 
-#endif // LIB_QUENTIER_TESTS_LOCAL_STORAGE_MANAGER_TESTS_H
+#endif // LIB_QUENTIER_TESTS_LOCAL_STORAGE_MANAGER_BASIC_TESTS_H

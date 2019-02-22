@@ -755,7 +755,7 @@ set(TEST_HEADERS
     src/tests/enml/ENMLTester.h
     src/tests/local_storage/LocalStorageCacheAsyncTester.h
     src/tests/local_storage/LocalStorageManagerTester.h
-    src/tests/local_storage/LocalStorageManagerTests.h
+    src/tests/local_storage/LocalStorageManagerBasicTests.h
     src/tests/local_storage/LocalStorageManagerNoteSearchQueryTest.h
     src/tests/local_storage/LinkedNotebookLocalStorageManagerAsyncTester.h
     src/tests/local_storage/NotebookLocalStorageManagerAsyncTester.h
@@ -779,6 +779,7 @@ set(TEST_HEADERS
     src/tests/utility/LRUCacheTests.h
     src/tests/utility/TagSortByParentChildRelationsTest.h
     src/tests/utility/UtilityTester.h
+    src/tests/TestMacros.h
     src/synchronization/FullSyncStaleDataItemsExpunger.h
     src/synchronization/TagSyncCache.h
     src/synchronization/SavedSearchSyncCache.h
@@ -791,7 +792,7 @@ set(TEST_SOURCES
     src/tests/enml/ENMLTester.cpp
     src/tests/local_storage/LocalStorageCacheAsyncTester.cpp
     src/tests/local_storage/LocalStorageManagerTester.cpp
-    src/tests/local_storage/LocalStorageManagerTests.cpp
+    src/tests/local_storage/LocalStorageManagerBasicTests.cpp
     src/tests/local_storage/LocalStorageManagerNoteSearchQueryTest.cpp
     src/tests/local_storage/LinkedNotebookLocalStorageManagerAsyncTester.cpp
     src/tests/local_storage/NotebookLocalStorageManagerAsyncTester.cpp
