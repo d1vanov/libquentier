@@ -20,7 +20,7 @@
 #include "LocalStorageManagerAsyncTests.h"
 #include "LocalStorageManagerBasicTests.h"
 #include "LocalStorageManagerListTests.h"
-#include "NoteSearchQueryTest.h"
+#include "NoteSearchQueryParsingTest.h"
 #include "LocalStorageManagerNoteSearchQueryTest.h"
 #include <quentier/types/RegisterMetatypes.h>
 #include <quentier/utility/SysInfo.h>
@@ -82,7 +82,7 @@ void LocalStorageManagerTester::noteSearchQueryTest()
     try
     {
         QString error;
-        bool res = NoteSearchQueryTest(error);
+        bool res = NoteSearchQueryParsingTest(error);
         QVERIFY2(res == true, qPrintable(error));
     }
     CATCH_EXCEPTION();
