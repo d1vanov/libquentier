@@ -19,8 +19,6 @@
 #ifndef LIB_QUENTIER_TESTS_LOCAL_STORAGE_MANAGER_BASIC_TESTS_H
 #define LIB_QUENTIER_TESTS_LOCAL_STORAGE_MANAGER_BASIC_TESTS_H
 
-#include <QString>
-
 namespace quentier {
 namespace test {
 
@@ -28,23 +26,23 @@ void TestSavedSearchAddFindUpdateExpungeInLocalStorage();
 
 void TestLinkedNotebookAddFindUpdateExpungeInLocalStorage();
 
-bool TestTagAddFindUpdateExpungeInLocalStorage(QString & errorDescription);
+void TestTagAddFindUpdateExpungeInLocalStorage();
 
-bool TestResourceAddFindUpdateExpungeInLocalStorage(QString & errorDescription);
+void TestResourceAddFindUpdateExpungeInLocalStorage();
 
-bool TestNoteFindUpdateDeleteExpungeInLocalStorage(QString & errorDescription);
+void TestNoteAddFindUpdateDeleteExpungeInLocalStorage();
 
-bool TestNotebookFindUpdateDeleteExpungeInLocalStorage(QString & errorDescription);
+void TestNotebookAddFindUpdateDeleteExpungeInLocalStorage();
 
-bool TestUserAddFindUpdateDeleteExpungeInLocalStorage(QString & errorDescription);
+void TestUserAddFindUpdateDeleteExpungeInLocalStorage();
 
-bool TestSequentialUpdatesInLocalStorage(QString & errorDescription);
+void TestSequentialUpdatesInLocalStorage();
 
-bool TestAccountHighUsnInLocalStorage(QString & errorDescription);
+void TestAccountHighUsnInLocalStorage();
 
-bool TestAddingNoteWithoutLocalUid(QString & errorDescription);
+void TestAddingNoteWithoutLocalUid();
 
-bool TestNoteTagIdsComplementWhenAddingAndUpdatingNote(QString & errorDescription);
+void TestNoteTagIdsComplementWhenAddingAndUpdatingNote();
 
 } // namespace test
 } // namespace quentier

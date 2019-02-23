@@ -133,9 +133,7 @@ void LocalStorageManagerTester::localStorageManagerIndividualTagTest()
 {
     try
     {
-        QString error;
-        bool res = TestTagAddFindUpdateExpungeInLocalStorage(error);
-        QVERIFY2(res == true, qPrintable(error));
+        TestTagAddFindUpdateExpungeInLocalStorage();
     }
     CATCH_EXCEPTION();
 }
@@ -144,9 +142,7 @@ void LocalStorageManagerTester::localStorageManagerIndividualResourceTest()
 {
     try
     {
-        QString error;
-        bool res = TestResourceAddFindUpdateExpungeInLocalStorage(error);
-        QVERIFY2(res == true, error.toStdString().c_str());
+        TestResourceAddFindUpdateExpungeInLocalStorage();
     }
     CATCH_EXCEPTION();
 }
@@ -155,9 +151,7 @@ void LocalStorageManagerTester::localStorageManagedIndividualNoteTest()
 {
     try
     {
-        QString error;
-        bool res = TestNoteFindUpdateDeleteExpungeInLocalStorage(error);
-        QVERIFY2(res == true, qPrintable(error));
+        TestNoteAddFindUpdateDeleteExpungeInLocalStorage();
     }
     CATCH_EXCEPTION();
 }
@@ -166,9 +160,7 @@ void LocalStorageManagerTester::localStorageManagerIndividualNotebookTest()
 {
     try
     {
-        QString error;
-        bool res = TestNotebookFindUpdateDeleteExpungeInLocalStorage(error);
-        QVERIFY2(res == true, qPrintable(error));
+        TestNotebookAddFindUpdateDeleteExpungeInLocalStorage();
     }
     CATCH_EXCEPTION();
 }
@@ -177,9 +169,7 @@ void LocalStorageManagerTester::localStorageManagedIndividualUserTest()
 {
     try
     {
-        QString error;
-        bool res = TestUserAddFindUpdateDeleteExpungeInLocalStorage(error);
-        QVERIFY2(res == true, qPrintable(error));
+        TestUserAddFindUpdateDeleteExpungeInLocalStorage();
     }
     CATCH_EXCEPTION();
 }
@@ -188,9 +178,7 @@ void LocalStorageManagerTester::localStorageManagerSequentialUpdatesTest()
 {
     try
     {
-        QString error;
-        bool res = TestSequentialUpdatesInLocalStorage(error);
-        QVERIFY2(res == true, qPrintable(error));
+        TestSequentialUpdatesInLocalStorage();
     }
     CATCH_EXCEPTION();
 }
@@ -199,9 +187,7 @@ void LocalStorageManagerTester::localStorageManagerAccountHighUsnTest()
 {
     try
     {
-        QString error;
-        bool res = TestAccountHighUsnInLocalStorage(error);
-        QVERIFY2(res == true, qPrintable(error));
+        TestAccountHighUsnInLocalStorage();
     }
     CATCH_EXCEPTION();
 }
@@ -210,9 +196,7 @@ void LocalStorageManagerTester::localStorageManagerAddNoteWithoutLocalUidTest()
 {
     try
     {
-        QString error;
-        bool res = TestAddingNoteWithoutLocalUid(error);
-        QVERIFY2(res == true, qPrintable(error));
+        TestAddingNoteWithoutLocalUid();
     }
     CATCH_EXCEPTION();
 }
@@ -221,9 +205,7 @@ void LocalStorageManagerTester::localStorageManagerNoteTagIdsComplementTest()
 {
     try
     {
-        QString error;
-        bool res = TestNoteTagIdsComplementWhenAddingAndUpdatingNote(error);
-        QVERIFY2(res == true, qPrintable(error));
+        TestNoteTagIdsComplementWhenAddingAndUpdatingNote();
     }
     CATCH_EXCEPTION();
 }
