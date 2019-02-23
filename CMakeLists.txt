@@ -755,7 +755,9 @@ set(TEST_HEADERS
     src/tests/enml/ENMLTester.h
     src/tests/local_storage/LocalStorageCacheAsyncTester.h
     src/tests/local_storage/LocalStorageManagerTester.h
+    src/tests/local_storage/LocalStorageManagerAsyncTests.h
     src/tests/local_storage/LocalStorageManagerBasicTests.h
+    src/tests/local_storage/LocalStorageManagerListTests.h
     src/tests/local_storage/LocalStorageManagerNoteSearchQueryTest.h
     src/tests/local_storage/LinkedNotebookLocalStorageManagerAsyncTester.h
     src/tests/local_storage/NotebookLocalStorageManagerAsyncTester.h
@@ -792,7 +794,9 @@ set(TEST_SOURCES
     src/tests/enml/ENMLTester.cpp
     src/tests/local_storage/LocalStorageCacheAsyncTester.cpp
     src/tests/local_storage/LocalStorageManagerTester.cpp
+    src/tests/local_storage/LocalStorageManagerAsyncTests.cpp
     src/tests/local_storage/LocalStorageManagerBasicTests.cpp
+    src/tests/local_storage/LocalStorageManagerListTests.cpp
     src/tests/local_storage/LocalStorageManagerNoteSearchQueryTest.cpp
     src/tests/local_storage/LinkedNotebookLocalStorageManagerAsyncTester.cpp
     src/tests/local_storage/NotebookLocalStorageManagerAsyncTester.cpp

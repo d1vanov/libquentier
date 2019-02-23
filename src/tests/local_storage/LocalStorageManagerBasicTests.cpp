@@ -18,7 +18,6 @@
 
 #include "LocalStorageManagerBasicTests.h"
 #include "../TestMacros.h"
-#include <quentier/logging/QuentierLogger.h>
 #include <quentier/local_storage/LocalStorageManager.h>
 #include <quentier/types/SavedSearch.h>
 #include <quentier/types/LinkedNotebook.h>

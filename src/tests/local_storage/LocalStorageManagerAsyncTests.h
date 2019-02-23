@@ -16,34 +16,31 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LIB_QUENTIER_TESTS_TEST_MACROS_H
-#define LIB_QUENTIER_TESTS_TEST_MACROS_H
+#ifndef LIB_QUENTIER_TESTS_LOCAL_STORAGE_MANAGER_ASYNC_TESTS_H
+#define LIB_QUENTIER_TESTS_LOCAL_STORAGE_MANAGER_ASYNC_TESTS_H
 
-#include <QtTest/QtTest>
-#include <QDebug>
+namespace quentier {
+namespace test {
 
-#if QT_VERSION >= QT_VERSION_CHECK(5, 4, 0)
-#define VERIFY_QDEBUG_HELPER() \
-    dbg.nospace(); \
-    dbg.noquote()
-#else
-#define VERIFY_QDEBUG_HELPER() \
-    dbg.nospace()
-#endif
+void TestSavedSearhAsync();
 
-#define VERIFY2(condition, message) \
-    if (!(condition)) \
-    { \
-        QString msg; \
-        { \
-            QDebug dbg(&msg); \
-            VERIFY_QDEBUG_HELPER(); \
-            dbg << message; \
-        } \
-        QFAIL(qPrintable(msg)); \
-    }
+void TestLinkedNotebookAsync();
 
-// 10 minutes should be enough
-#define MAX_ALLOWED_TEST_DURATION_MSEC 600000
+void TestTagAsync();
 
-#endif // LIB_QUENTIER_TESTS_TEST_MACROS_H
+void TestUserAsync();
+
+void TestNotebookAsync();
+
+void TestNoteAsync();
+
+void TestResourceAsync();
+
+void TestNoteNotebookAndTagListTrackingAsync();
+
+void TestCacheAsync();
+
+} // namespace test
+} // namespace quentier
+
+#endif // LIB_QUENTIER_TESTS_LOCAL_STORAGE_MANAGER_ASYNC_TESTS_H
