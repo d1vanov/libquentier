@@ -2725,8 +2725,8 @@ QList<Note> LocalStorageManagerPrivate::listNotesByLocalUids(
     for(auto it = noteLocalUids.constBegin(),
         end = noteLocalUids.constEnd(); it != end; ++it)
     {
-        noteLocalUidsSqlQueryCondition += *it;
-        noteLocalUidsSqlQueryCondition += QStringLiteral(", ");
+        noteLocalUidsSqlQueryCondition +=
+            QStringLiteral("'") + sqlEscapeString(*it) + QStringLiteral("', ");
     }
     noteLocalUidsSqlQueryCondition.chop(2);
     noteLocalUidsSqlQueryCondition += QStringLiteral(")");
