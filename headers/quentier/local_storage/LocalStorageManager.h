@@ -1073,7 +1073,7 @@ public:
         const QStringList & tagLocalUids,
         const LocalStorageManager::GetNoteOptions options,
         ErrorString & errorDescription,
-        const LocalStorageManager::ListObjectsOptions & flag,
+        const LocalStorageManager::ListObjectsOptions & flag = ListAll,
         const size_t limit = 0, const size_t offset = 0,
         const LocalStorageManager::ListNotesOrder::type & order =
         ListNotesOrder::NoOrder,
@@ -1113,7 +1113,7 @@ public:
         const QStringList & noteLocalUids,
         const LocalStorageManager::GetNoteOptions options,
         ErrorString & errorDescription,
-        const LocalStorageManager::ListObjectsOptions & flag,
+        const LocalStorageManager::ListObjectsOptions & flag = ListAll,
         const size_t limit = 0, const size_t offset = 0,
         const LocalStorageManager::ListNotesOrder::type & order =
         ListNotesOrder::NoOrder,
