@@ -1334,6 +1334,53 @@ void TestListNotes()
               "when both notebooks and tags are present within the filter "
               "doesn't match the original note");
     }
+
+    // 15) Test method listing notes by note local uids
+    QStringList noteLocalUids;
+    noteLocalUids.reserve(3);
+    for(int i = 0, size = noteLocalUids.size(); i < size; ++i) {
+        noteLocalUids << notes[i].localUid();
+    }
+
+    errorMessage.clear();
+    foundNotes = localStorageManager.listNotesByLocalUids(noteLocalUids,
+                                                          getNoteOptions,
+                                                          errorMessage);
+    QVERIFY2(errorMessage.isEmpty(), qPrintable(errorMessage.nonLocalizedString()));
+    QVERIFY2(foundNotes.size() == noteLocalUids.size(),
+             qPrintable(QString::fromUtf8("Unexpected number of notes found by "
+                                          "method listing notes by local uids: "
+                                          "expected %1 notes, got %2")
+                        .arg(noteLocalUids.size(), foundNotes.size())));
+    for(auto it = foundNotes.constBegin(), end = foundNotes.constEnd(); it != end; ++it) {
+        QVERIFY2(noteLocalUids.contains(it->localUid()),
+                 "Detected note returned by method listing notes by local uids "
+                 "which local uid is not present within the original list of "
+                 "local uids");
+    }
+
+    // 16) Test method listing notes by note local uids when the list of note
+    // local uids contains uids not corresponding to existing notes
+    int originalNoteLocalUidsSize = noteLocalUids.size();
+    noteLocalUids << UidGenerator::Generate();
+    noteLocalUids << UidGenerator::Generate();
+
+    errorMessage.clear();
+    foundNotes = localStorageManager.listNotesByLocalUids(noteLocalUids,
+                                                          getNoteOptions,
+                                                          errorMessage);
+    QVERIFY2(errorMessage.isEmpty(), qPrintable(errorMessage.nonLocalizedString()));
+    QVERIFY2(foundNotes.size() == originalNoteLocalUidsSize,
+             qPrintable(QString::fromUtf8("Unexpected number of notes found by "
+                                          "method listing notes by local uids: "
+                                          "expected %1 notes, got %2")
+                        .arg(originalNoteLocalUidsSize, foundNotes.size())));
+    for(auto it = foundNotes.constBegin(), end = foundNotes.constEnd(); it != end; ++it) {
+        QVERIFY2(noteLocalUids.contains(it->localUid()),
+                 "Detected note returned by method listing notes by local uids "
+                 "which local uid is not present within the original list of "
+                 "local uids");
+    }
 }
 
 void TestListNotebooks()
