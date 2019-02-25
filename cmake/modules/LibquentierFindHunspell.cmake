@@ -18,10 +18,10 @@ endif()
 message(STATUS "Found hunspell library: ${HUNSPELL_LIBRARIES}")
 
 try_compile(HUNSPELL_NEW_API_AVAILABLE "${CMAKE_BINARY_DIR}/hunspell_api_check"
-            "${CMAKE_SOURCE_DIR}/cmake/modules/hunspell_new_api_check.cpp"
+            "${CMAKE_CURRENT_LIST_DIR}/hunspell_new_api_check.cpp"
             LINK_LIBRARIES "${HUNSPELL_LIBRARIES}"
             CMAKE_FLAGS
-              "-DINCLUDE_DIRECTORIES=\"${HUNSPELL_INCLUDE_DIR}\"")
+              "-DINCLUDE_DIRECTORIES=${HUNSPELL_INCLUDE_DIR}")
 
 if (HUNSPELL_NEW_API_AVAILABLE)
   message(STATUS "Using std::string based libhunspell API")
