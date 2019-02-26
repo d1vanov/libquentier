@@ -131,12 +131,14 @@ public:
     bool expungeLinkedNotebook(const LinkedNotebook & linkedNotebook,
                                ErrorString & errorDescription);
 
-    int noteCount(ErrorString & errorDescription) const;
+    int noteCount(ErrorString & errorDescription,
+                  const LocalStorageManager::NoteCountOptions options) const;
     int noteCountPerNotebook(const Notebook & notebook,
                              ErrorString & errorDescription) const;
     int noteCountPerTag(const Tag & tag, ErrorString & errorDescription) const;
     bool noteCountsPerAllTags(QHash<QString, int> & noteCountsPerTagLocalUid,
                               ErrorString & errorDescription) const;
+
     bool addNote(Note & note, ErrorString & errorDescription);
     bool updateNote(Note & note,
                     const LocalStorageManager::UpdateNoteOptions options,
@@ -384,7 +386,6 @@ private:
                                    const qevercloud::NoteLimits & noteLimits,
                                    ErrorString & errorDescription);
 
-    bool checkAndPrepareNoteCountQuery() const;
     bool checkAndPrepareInsertOrReplaceNoteQuery();
     bool checkAndPrepareInsertOrReplaceSharedNoteQuery();
     bool checkAndPrepareInsertOrReplaceNoteRestrictionsQuery();
@@ -700,9 +701,6 @@ private:
 
     QSqlQuery           m_insertOrReplaceTagQuery;
     bool                m_insertOrReplaceTagQueryPrepared;
-
-    mutable QSqlQuery   m_getNoteCountQuery;
-    mutable bool        m_getNoteCountQueryPrepared;
 
     QSqlQuery           m_insertOrReplaceNoteQuery;
     bool                m_insertOrReplaceNoteQueryPrepared;

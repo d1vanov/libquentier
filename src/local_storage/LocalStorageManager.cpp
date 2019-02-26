@@ -268,10 +268,11 @@ bool LocalStorageManager::expungeLinkedNotebook(const LinkedNotebook & linkedNot
     return d->expungeLinkedNotebook(linkedNotebook, errorDescription);
 }
 
-int LocalStorageManager::noteCount(ErrorString & errorDescription) const
+int LocalStorageManager::noteCount(ErrorString & errorDescription,
+                                   const NoteCountOptions options) const
 {
     Q_D(const LocalStorageManager);
-    return d->noteCount(errorDescription);
+    return d->noteCount(errorDescription, options);
 }
 
 int LocalStorageManager::noteCountPerNotebook(const Notebook & notebook,

@@ -750,15 +750,34 @@ public:
                                ErrorString & errorDescription);
 
     /**
-     * @brief noteCount returns the number of non-deleted notes currently
+     * @brief The NoteCountOption struct is a C++98-style scoped enum
+     * which allows to specify ordering of the results of methods returning
+     * note counts from local storage
+     */
+    struct NoteCountOption
+    {
+        enum type
+        {
+            IncludeNonDeletedNotes = 1,
+            IncludeDeletedNotes    = 2
+        };
+    };
+    Q_DECLARE_FLAGS(NoteCountOptions, NoteCountOption::type)
+
+    /**
+     * @brief noteCount returns the number of notes currently
      * stored in the local storage database.
      *
      * @param errorDescription      Error description if the number of notes
      *                              could not be returned
+     * @param options               Options clarifying which notes to list;
+     *                              by default only non-deleted notes are listed
      * @return                      Either non-negative value with the number
      *                              of notes or -1 which means some error occurred
      */
-    int noteCount(ErrorString & errorDescription) const;
+    int noteCount(ErrorString & errorDescription,
+                  const NoteCountOptions options =
+                  NoteCountOption::IncludeNonDeletedNotes) const;
 
     /**
      * @brief noteCountPerNotebook returns the number of non-deleted notes currently

@@ -86,8 +86,6 @@ LocalStorageManagerPrivate::LocalStorageManagerPrivate(
     m_getTagCountQueryPrepared(false),
     m_insertOrReplaceTagQuery(),
     m_insertOrReplaceTagQueryPrepared(false),
-    m_getNoteCountQuery(),
-    m_getNoteCountQueryPrepared(false),
     m_insertOrReplaceNoteQuery(),
     m_insertOrReplaceNoteQueryPrepared(false),
     m_insertOrReplaceSharedNoteQuery(),
@@ -1724,19 +1722,28 @@ bool LocalStorageManagerPrivate::expungeLinkedNotebook(const LinkedNotebook & li
     return true;
 }
 
-int LocalStorageManagerPrivate::noteCount(ErrorString & errorDescription) const
+int LocalStorageManagerPrivate::noteCount(
+    ErrorString & errorDescription,
+    const LocalStorageManager::NoteCountOptions options) const
 {
     ErrorString errorPrefix(QT_TR_NOOP("Can't get the number of notes in "
                                        "the local storage database"));
 
-    bool res = checkAndPrepareNoteCountQuery();
-    QSqlQuery & query = m_getNoteCountQuery;
-    if (!res) {
-        SET_ERROR();
-        return -1;
+    QString queryString = QStringLiteral("SELECT COUNT(*) FROM Notes");
+    if ( !(options & LocalStorageManager::NoteCountOption::IncludeNonDeletedNotes) ||
+         !(options & LocalStorageManager::NoteCountOption::IncludeDeletedNotes) )
+    {
+        queryString += QStringLiteral(" WHERE deletionTimestamp IS ");
+        if (options & LocalStorageManager::NoteCountOption::IncludeNonDeletedNotes) {
+            queryString += QStringLiteral("NULL");
+        }
+        else {
+            queryString += QStringLiteral("NOT NULL");
+        }
     }
 
-    res = query.exec();
+    QSqlQuery query(m_sqlDatabase);
+    bool res = query.exec(queryString);
     if (!res) {
         SET_ERROR();
         return -1;
@@ -8213,25 +8220,6 @@ bool LocalStorageManagerPrivate::insertOrReplaceNoteLimits(const QString & noteL
     return true;
 }
 
-bool LocalStorageManagerPrivate::checkAndPrepareNoteCountQuery() const
-{
-    if (Q_LIKELY(m_getNoteCountQueryPrepared)) {
-        return true;
-    }
-
-    QNTRACE(QStringLiteral("Preparing SQL query to get the count of notes"));
-
-    m_getNoteCountQuery = QSqlQuery(m_sqlDatabase);
-    QString queryString =
-        QStringLiteral("SELECT COUNT(*) FROM Notes WHERE deletionTimestamp IS NULL");
-    bool res = m_getNoteCountQuery.prepare(queryString);
-    if (res) {
-        m_getNoteCountQueryPrepared = true;
-    }
-
-    return res;
-}
-
 bool LocalStorageManagerPrivate::checkAndPrepareInsertOrReplaceNoteQuery()
 {
     if (Q_LIKELY(m_insertOrReplaceNoteQueryPrepared)) {
@@ -13389,9 +13377,6 @@ void LocalStorageManagerPrivate::clearCachedQueries()
 
     m_insertOrReplaceTagQuery = QSqlQuery();
     m_insertOrReplaceTagQueryPrepared = false;
-
-    m_getNoteCountQuery = QSqlQuery();
-    m_getNoteCountQueryPrepared = false;
 
     m_insertOrReplaceNoteQuery = QSqlQuery();
     m_insertOrReplaceNoteQueryPrepared = false;
