@@ -780,7 +780,7 @@ public:
                   NoteCountOption::IncludeNonDeletedNotes) const;
 
     /**
-     * @brief noteCountPerNotebook returns the number of non-deleted notes currently
+     * @brief noteCountPerNotebook returns the number of notes currently
      * stored in the local storage database per given notebook.
      *
      * @param notebook              Notebook for which the number of notes is
@@ -789,15 +789,19 @@ public:
      *                              is used
      * @param errorDescription      Error description if the number of notes per
      *                              given notebook could not be returned
+     * @param options               Options clarifying which notes to list;
+     *                              by default only non-deleted notes are listed
      * @return                      Either non-negative value with the number of
      *                              notes per given notebook or -1 which means
      *                              some error occurred
      */
     int noteCountPerNotebook(const Notebook & notebook,
-                             ErrorString & errorDescription) const;
+                             ErrorString & errorDescription,
+                             const NoteCountOptions options =
+                             NoteCountOption::IncludeNonDeletedNotes) const;
 
     /**
-     * @brief noteCountPerTag returns the number of non-deleted notes currently
+     * @brief noteCountPerTag returns the number of notes currently
      * stored in local storage database labeled with given tag.
      *
      * @param tag                   Tag for which the number of notes labeled
@@ -806,14 +810,19 @@ public:
      *                              its local uid is used
      * @param errorDescription      Error description if the number of notes per
      *                              given tag could not be returned
+     * @param options               Options clarifying which notes to list;
+     *                              by default only non-deleted notes are listed
      * @return                      Either non-negative value with the number of
      *                              notes per given tag or -1 which means some
      *                              error occurred
      */
-    int noteCountPerTag(const Tag & tag, ErrorString & errorDescription) const;
+    int noteCountPerTag(const Tag & tag,
+                        ErrorString & errorDescription,
+                        const NoteCountOptions options =
+                        NoteCountOption::IncludeNonDeletedNotes) const;
 
     /**
-     * @brief noteCountsPerAllTags returns the number of non-deleted notes
+     * @brief noteCountsPerAllTags returns the number of notes
      * currently stored in local storage database labeled with each tag stored
      * in the local storage database.
      *
@@ -821,11 +830,16 @@ public:
      *                                      local uids
      * @param errorDescription              Error description if the number of
      *                                      notes per all tags could not be returned
+     * @param options                       Options clarifying which notes to list;
+     *                                      by default only non-deleted notes
+     *                                      are listed
      * @return                              True if note counts for all tags were
      *                                      computed successfully, false otherwise
      */
     bool noteCountsPerAllTags(QHash<QString, int> & noteCountsPerTagLocalUid,
-                              ErrorString & errorDescription) const;
+                              ErrorString & errorDescription,
+                              const NoteCountOptions options =
+                              NoteCountOption::IncludeNonDeletedNotes) const;
 
     /**
      * @brief addNote adds passed in Note to the local storage database.

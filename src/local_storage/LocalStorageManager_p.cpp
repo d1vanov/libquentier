@@ -1730,16 +1730,10 @@ int LocalStorageManagerPrivate::noteCount(
                                        "the local storage database"));
 
     QString queryString = QStringLiteral("SELECT COUNT(*) FROM Notes");
-    if ( !(options & LocalStorageManager::NoteCountOption::IncludeNonDeletedNotes) ||
-         !(options & LocalStorageManager::NoteCountOption::IncludeDeletedNotes) )
-    {
-        queryString += QStringLiteral(" WHERE deletionTimestamp IS ");
-        if (options & LocalStorageManager::NoteCountOption::IncludeNonDeletedNotes) {
-            queryString += QStringLiteral("NULL");
-        }
-        else {
-            queryString += QStringLiteral("NOT NULL");
-        }
+    QString condition = noteCountOptionsToSqlQueryPart(options);
+    if (!condition.isEmpty()) {
+        queryString += QStringLiteral(" WHERE ");
+        queryString += condition;
     }
 
     QSqlQuery query(m_sqlDatabase);
@@ -1765,8 +1759,9 @@ int LocalStorageManagerPrivate::noteCount(
     return count;
 }
 
-int LocalStorageManagerPrivate::noteCountPerNotebook(const Notebook & notebook,
-                                                     ErrorString & errorDescription) const
+int LocalStorageManagerPrivate::noteCountPerNotebook(
+    const Notebook & notebook, ErrorString & errorDescription,
+    const LocalStorageManager::NoteCountOptions options) const
 {
     ErrorString errorPrefix(QT_TR_NOOP("Can't get the number of notes per notebook "
                                        "in the local storage database"));
@@ -1796,8 +1791,14 @@ int LocalStorageManagerPrivate::noteCountPerNotebook(const Notebook & notebook,
     value = sqlEscapeString(value);
 
     QString queryString =
-        QString::fromUtf8("SELECT COUNT(*) FROM Notes WHERE deletionTimestamp "
-                          "IS NULL AND %1 = '%2'").arg(column, value);
+        QString::fromUtf8("SELECT COUNT(*) FROM Notes WHERE %1 = '%2'")
+        .arg(column, value);
+    QString condition = noteCountOptionsToSqlQueryPart(options);
+    if (!condition.isEmpty()) {
+        queryString += QStringLiteral(" AND ");
+        queryString += condition;
+    }
+
     QSqlQuery query(m_sqlDatabase);
     res = query.exec(queryString);
 
@@ -1822,8 +1823,9 @@ int LocalStorageManagerPrivate::noteCountPerNotebook(const Notebook & notebook,
     return count;
 }
 
-int LocalStorageManagerPrivate::noteCountPerTag(const Tag & tag,
-                                                ErrorString & errorDescription) const
+int LocalStorageManagerPrivate::noteCountPerTag(
+    const Tag & tag, ErrorString & errorDescription,
+    const LocalStorageManager::NoteCountOptions options) const
 {
     ErrorString errorPrefix(QT_TR_NOOP("Can't get the number of notes per tag "
                                        "in the local storage database"));
@@ -1853,9 +1855,15 @@ int LocalStorageManagerPrivate::noteCountPerTag(const Tag & tag,
     value = sqlEscapeString(value);
 
     QString queryString =
-        QString::fromUtf8("SELECT COUNT(*) FROM Notes WHERE deletionTimestamp "
-                          "IS NULL AND (localUid IN (SELECT DISTINCT localNote "
+        QString::fromUtf8("SELECT COUNT(*) FROM Notes WHERE "
+                          "(localUid IN (SELECT DISTINCT localNote "
                           "FROM NoteTags WHERE %1 = '%2'))").arg(column,value);
+    QString condition = noteCountOptionsToSqlQueryPart(options);
+    if (!condition.isEmpty()) {
+        queryString += QStringLiteral(" AND ");
+        queryString += condition;
+    }
+
     QSqlQuery query(m_sqlDatabase);
     res = query.exec(queryString);
     if (!res) {
@@ -1879,8 +1887,10 @@ int LocalStorageManagerPrivate::noteCountPerTag(const Tag & tag,
     return count;
 }
 
-bool LocalStorageManagerPrivate::noteCountsPerAllTags(QHash<QString, int> & noteCountsPerTagLocalUid,
-                                                      ErrorString & errorDescription) const
+bool LocalStorageManagerPrivate::noteCountsPerAllTags(
+    QHash<QString, int> & noteCountsPerTagLocalUid,
+    ErrorString & errorDescription,
+    const LocalStorageManager::NoteCountOptions options) const
 {
     ErrorString errorPrefix(QT_TR_NOOP("Can't get note counts for all tags "
                                        "in the local storage database"));
@@ -1889,8 +1899,15 @@ bool LocalStorageManagerPrivate::noteCountsPerAllTags(QHash<QString, int> & note
     QString queryString =
         QStringLiteral("SELECT localTag, COUNT(localTag) AS noteCount FROM "
                        "NoteTags LEFT OUTER JOIN Notes "
-                       "ON NoteTags.localNote = Notes.localUid WHERE "
-                       "Notes.deletionTimestamp IS NULL GROUP BY localTag");
+                       "ON NoteTags.localNote = Notes.localUid ");
+    QString condition = noteCountOptionsToSqlQueryPart(options);
+    if (!condition.isEmpty()) {
+        queryString += QStringLiteral("WHERE ");
+        queryString += condition;
+        queryString += QStringLiteral(" ");
+    }
+    queryString += QStringLiteral("GROUP BY localTag");
+
     QSqlQuery query(m_sqlDatabase);
     bool res = query.exec(queryString);
     if (!res) {
@@ -1955,6 +1972,24 @@ bool LocalStorageManagerPrivate::noteCountsPerAllTags(QHash<QString, int> & note
     }
 
     return true;
+}
+
+QString LocalStorageManagerPrivate::noteCountOptionsToSqlQueryPart(
+    const LocalStorageManager::NoteCountOptions options) const
+{
+    QString queryPart;
+    if ( !(options & LocalStorageManager::NoteCountOption::IncludeNonDeletedNotes) ||
+         !(options & LocalStorageManager::NoteCountOption::IncludeDeletedNotes) )
+    {
+        queryPart = QStringLiteral("deletionTimestamp IS ");
+        if (options & LocalStorageManager::NoteCountOption::IncludeNonDeletedNotes) {
+            queryPart += QStringLiteral("NULL");
+        }
+        else {
+            queryPart += QStringLiteral("NOT NULL");
+        }
+    }
+    return queryPart;
 }
 
 bool LocalStorageManagerPrivate::addNote(Note & note, ErrorString & errorDescription)

@@ -134,10 +134,17 @@ public:
     int noteCount(ErrorString & errorDescription,
                   const LocalStorageManager::NoteCountOptions options) const;
     int noteCountPerNotebook(const Notebook & notebook,
-                             ErrorString & errorDescription) const;
-    int noteCountPerTag(const Tag & tag, ErrorString & errorDescription) const;
+                             ErrorString & errorDescription,
+                             const LocalStorageManager::NoteCountOptions options) const;
+    int noteCountPerTag(const Tag & tag,
+                        ErrorString & errorDescription,
+                        const LocalStorageManager::NoteCountOptions options) const;
     bool noteCountsPerAllTags(QHash<QString, int> & noteCountsPerTagLocalUid,
-                              ErrorString & errorDescription) const;
+                              ErrorString & errorDescription,
+                              const LocalStorageManager::NoteCountOptions options) const;
+
+    QString noteCountOptionsToSqlQueryPart(
+        const LocalStorageManager::NoteCountOptions options) const;
 
     bool addNote(Note & note, ErrorString & errorDescription);
     bool updateNote(Note & note,

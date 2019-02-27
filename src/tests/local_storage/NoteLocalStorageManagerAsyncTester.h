@@ -47,7 +47,8 @@ Q_SIGNALS:
 
 // private signals
     void addNotebookRequest(Notebook notebook, QUuid requestId);
-    void getNoteCountRequest(QUuid requestId);
+    void getNoteCountRequest(LocalStorageManager::NoteCountOptions options,
+                             QUuid requestId);
     void addNoteRequest(Note note, QUuid requestId);
     void updateNoteRequest(Note note, LocalStorageManager::UpdateNoteOptions options,
                            QUuid requestId);
@@ -68,8 +69,12 @@ private Q_SLOTS:
     void onAddNotebookFailed(Notebook notebook,
                              ErrorString errorDescription,
                              QUuid requestId);
-    void onGetNoteCountCompleted(int count, QUuid requestId);
-    void onGetNoteCountFailed(ErrorString errorDescription, QUuid requestId);
+    void onGetNoteCountCompleted(int count,
+                                 LocalStorageManager::NoteCountOptions options,
+                                 QUuid requestId);
+    void onGetNoteCountFailed(ErrorString errorDescription,
+                              LocalStorageManager::NoteCountOptions options,
+                              QUuid requestId);
     void onAddNoteCompleted(Note note, QUuid requestId);
     void onAddNoteFailed(Note note, ErrorString errorDescription, QUuid requestId);
     void onUpdateNoteCompleted(Note note, LocalStorageManager::UpdateNoteOptions options,

@@ -275,25 +275,30 @@ int LocalStorageManager::noteCount(ErrorString & errorDescription,
     return d->noteCount(errorDescription, options);
 }
 
-int LocalStorageManager::noteCountPerNotebook(const Notebook & notebook,
-                                              ErrorString & errorDescription) const
+int LocalStorageManager::noteCountPerNotebook(
+    const Notebook & notebook, ErrorString & errorDescription,
+    const LocalStorageManager::NoteCountOptions options) const
 {
     Q_D(const LocalStorageManager);
-    return d->noteCountPerNotebook(notebook, errorDescription);
+    return d->noteCountPerNotebook(notebook, errorDescription, options);
 }
 
-int LocalStorageManager::noteCountPerTag(const Tag & tag,
-                                         ErrorString & errorDescription) const
+int LocalStorageManager::noteCountPerTag(
+    const Tag & tag, ErrorString & errorDescription,
+    const LocalStorageManager::NoteCountOptions options) const
 {
     Q_D(const LocalStorageManager);
-    return d->noteCountPerTag(tag, errorDescription);
+    return d->noteCountPerTag(tag, errorDescription, options);
 }
 
-bool LocalStorageManager::noteCountsPerAllTags(QHash<QString, int> & noteCountsPerTagLocalUid,
-                                               ErrorString & errorDescription) const
+bool LocalStorageManager::noteCountsPerAllTags(
+    QHash<QString, int> & noteCountsPerTagLocalUid,
+    ErrorString & errorDescription,
+    const LocalStorageManager::NoteCountOptions options) const
 {
     Q_D(const LocalStorageManager);
-    return d->noteCountsPerAllTags(noteCountsPerTagLocalUid, errorDescription);
+    return d->noteCountsPerAllTags(noteCountsPerTagLocalUid,
+                                   errorDescription, options);
 }
 
 bool LocalStorageManager::addNote(Note & note, ErrorString & errorDescription)
