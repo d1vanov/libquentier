@@ -842,6 +842,30 @@ public:
                               NoteCountOption::IncludeNonDeletedNotes) const;
 
     /**
+     * @brief noteCountPerNotebooksAndTags returns the number of notes currently
+     * stored in local storage database belonging to one of notebooks
+     * corresponding to given notebook local uids and labeled by at least one of
+     * tags corresponding to given tag local uids
+     *
+     * @param notebookLocalUids     The list of notebook local uids used for
+     *                              filtering
+     * @param tagLocalUids          The list of tag local uids used for
+     *                              filtering
+     * @param errorDescription      Error description if the number of notes per
+     *                              notebooks and tags could not be returned
+     * @param options               Options clarifying which notes to list;
+     *                              by default only non-deleted notes are listed
+     * @return                      Either non-negative value with the number of
+     *                              notes per given tag or -1 which means some
+     *                              error occurred
+     */
+    int noteCountPerNotebooksAndTags(const QStringList & notebookLocalUids,
+                                     const QStringList & tagLocalUids,
+                                     ErrorString & errorDescription,
+                                     const NoteCountOptions options =
+                                     NoteCountOption::IncludeNonDeletedNotes) const;
+
+    /**
      * @brief addNote adds passed in Note to the local storage database.
      *
      * @param note                  Note to be added to local storage database;

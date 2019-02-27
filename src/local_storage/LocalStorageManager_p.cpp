@@ -1974,6 +1974,89 @@ bool LocalStorageManagerPrivate::noteCountsPerAllTags(
     return true;
 }
 
+int LocalStorageManagerPrivate::noteCountPerNotebooksAndTags(
+    const QStringList & notebookLocalUids,
+    const QStringList & tagLocalUids,
+    ErrorString & errorDescription,
+    const LocalStorageManager::NoteCountOptions options) const
+{
+    ErrorString errorPrefix(QT_TR_NOOP("Can't get the number of notes per "
+                                       "notebooks and tags in the local storage "
+                                       "database"));
+
+    QString queryString = QStringLiteral("SELECT COUNT(*) FROM Notes");
+    if (!notebookLocalUids.isEmpty() || !tagLocalUids.isEmpty())
+    {
+        queryString += QStringLiteral(" WHERE ");
+
+        if (!notebookLocalUids.isEmpty())
+        {
+            queryString += QStringLiteral("(notebookLocalUid IN (");
+            for(auto it = notebookLocalUids.constBegin(),
+                end = notebookLocalUids.constEnd(); it != end; ++it)
+            {
+                queryString +=
+                    QStringLiteral("'") + sqlEscapeString(*it) + QStringLiteral("', ");
+            }
+            queryString.chop(2);
+            queryString += QStringLiteral(")) ");
+        }
+
+        if (!tagLocalUids.isEmpty())
+        {
+            if (!notebookLocalUids.isEmpty()) {
+                queryString += QStringLiteral(" AND ");
+            }
+
+            queryString +=
+                QStringLiteral("(localUid IN (SELECT DISTINCT localNote "
+                               "FROM NoteTags WHERE localTag IN (");
+            for(auto it = tagLocalUids.constBegin(),
+                end = tagLocalUids.constEnd(); it != end; ++it)
+            {
+                queryString +=
+                    QStringLiteral("'") + sqlEscapeString(*it) + QStringLiteral("', ");
+            }
+            queryString.chop(2);
+            queryString += QStringLiteral("))");
+        }
+    }
+
+    QString condition = noteCountOptionsToSqlQueryPart(options);
+    if (!condition.isEmpty())
+    {
+        if (!notebookLocalUids.isEmpty() || !tagLocalUids.isEmpty()) {
+            queryString += QStringLiteral(" AND ");
+        }
+        else {
+            queryString += QStringLiteral(" WHERE ");
+        }
+        queryString += condition;
+    }
+
+    QSqlQuery query(m_sqlDatabase);
+    bool res = query.exec(queryString);
+    if (!res) {
+        SET_ERROR();
+        return -1;
+    }
+
+    if (!query.next()) {
+        QNDEBUG(QStringLiteral("Found no notes per given notebooks and tags "
+                               "in the local storage database"));
+        return 0;
+    }
+
+    bool conversionResult = false;
+    int count = query.value(0).toInt(&conversionResult);
+    if (!conversionResult) {
+        SET_INT_CONVERSION_ERROR();
+        return -1;
+    }
+
+    return count;
+}
+
 QString LocalStorageManagerPrivate::noteCountOptionsToSqlQueryPart(
     const LocalStorageManager::NoteCountOptions options) const
 {

@@ -142,6 +142,11 @@ public:
     bool noteCountsPerAllTags(QHash<QString, int> & noteCountsPerTagLocalUid,
                               ErrorString & errorDescription,
                               const LocalStorageManager::NoteCountOptions options) const;
+    int noteCountPerNotebooksAndTags(
+        const QStringList & notebookLocalUids,
+        const QStringList & tagLocalUids,
+        ErrorString & errorDescription,
+        const LocalStorageManager::NoteCountOptions options) const;
 
     QString noteCountOptionsToSqlQueryPart(
         const LocalStorageManager::NoteCountOptions options) const;

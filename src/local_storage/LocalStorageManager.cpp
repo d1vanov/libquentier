@@ -301,6 +301,17 @@ bool LocalStorageManager::noteCountsPerAllTags(
                                    errorDescription, options);
 }
 
+int LocalStorageManager::noteCountPerNotebooksAndTags(
+    const QStringList & notebookLocalUids,
+    const QStringList & tagLocalUids,
+    ErrorString & errorDescription,
+    const LocalStorageManager::NoteCountOptions options) const
+{
+    Q_D(const LocalStorageManager);
+    return d->noteCountPerNotebooksAndTags(notebookLocalUids, tagLocalUids,
+                                           errorDescription, options);
+}
+
 bool LocalStorageManager::addNote(Note & note, ErrorString & errorDescription)
 {
     Q_D(LocalStorageManager);
