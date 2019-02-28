@@ -2018,7 +2018,7 @@ int LocalStorageManagerPrivate::noteCountPerNotebooksAndTags(
                     QStringLiteral("'") + sqlEscapeString(*it) + QStringLiteral("', ");
             }
             queryString.chop(2);
-            queryString += QStringLiteral("))");
+            queryString += QStringLiteral(")))");
         }
     }
 
