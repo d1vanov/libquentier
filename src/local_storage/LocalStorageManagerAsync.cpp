@@ -1197,6 +1197,43 @@ void LocalStorageManagerAsync::onGetNoteCountsPerAllTagsRequest(
     }
 }
 
+void LocalStorageManagerAsync::onGetNoteCountPerNotebooksAndTagsRequest(
+    QStringList notebookLocalUids, QStringList tagLocalUids,
+    LocalStorageManager::NoteCountOptions options, QUuid requestId)
+{
+    Q_D(LocalStorageManagerAsync);
+
+    try
+    {
+        ErrorString errorDescription;
+        int count = d->m_pLocalStorageManager->noteCountPerNotebooksAndTags(
+            notebookLocalUids, tagLocalUids, errorDescription, options);
+        if (count < 0) {
+            Q_EMIT getNoteCountPerNotebooksAndTagsFailed(errorDescription,
+                                                         notebookLocalUids,
+                                                         tagLocalUids, options,
+                                                         requestId);
+        }
+        else {
+            Q_EMIT getNoteCountPerNotebooksAndTagsComplete(count, notebookLocalUids,
+                                                           tagLocalUids, options,
+                                                           requestId);
+        }
+    }
+    catch(const std::exception & e)
+    {
+        ErrorString error(QT_TR_NOOP("Can't get note count per notebooks and "
+                                     "tags from the local storage: caught "
+                                     "exception"));
+        error.details() = QString::fromUtf8(e.what());
+        SysInfo sysInfo;
+        QNERROR(error << QStringLiteral("; backtrace: ") << sysInfo.stackTrace());
+        Q_EMIT getNoteCountPerNotebooksAndTagsFailed(error, notebookLocalUids,
+                                                     tagLocalUids, options,
+                                                     requestId);
+    }
+}
+
 void LocalStorageManagerAsync::onAddNoteRequest(Note note, QUuid requestId)
 {
     Q_D(LocalStorageManagerAsync);

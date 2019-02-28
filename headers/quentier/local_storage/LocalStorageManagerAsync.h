@@ -208,6 +208,14 @@ Q_SIGNALS:
         LocalStorageManager::NoteCountOptions options,
         QUuid requestId);
 
+    void getNoteCountPerNotebooksAndTagsComplete(
+        int noteCount, QStringList notebookLocalUids, QStringList tagLocalUids,
+        LocalStorageManager::NoteCountOptions options, QUuid requestId);
+    void getNoteCountPerNotebooksAndTagsFailed(
+        ErrorString errorDescription, QStringList notebookLocalUids,
+        QStringList tagLocalUids, LocalStorageManager::NoteCountOptions options,
+        QUuid requestId);
+
     void addNoteComplete(Note note, QUuid requestId);
     void addNoteFailed(Note note, ErrorString errorDescription, QUuid requestId);
     void updateNoteComplete(Note note, LocalStorageManager::UpdateNoteOptions options,
@@ -510,6 +518,9 @@ public Q_SLOTS:
     void onGetNoteCountPerTagRequest(
         Tag tag, LocalStorageManager::NoteCountOptions options, QUuid requestId);
     void onGetNoteCountsPerAllTagsRequest(
+        LocalStorageManager::NoteCountOptions options, QUuid requestId);
+    void onGetNoteCountPerNotebooksAndTagsRequest(
+        QStringList notebookLocalUids, QStringList tagLocalUids,
         LocalStorageManager::NoteCountOptions options, QUuid requestId);
 
     void onAddNoteRequest(Note note, QUuid requestId);
