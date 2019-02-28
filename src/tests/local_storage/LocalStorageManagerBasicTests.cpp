@@ -1272,6 +1272,34 @@ void TestNoteAddFindUpdateDeleteExpungeInLocalStorage()
                                           "tag: expected 1, got %1")
                         .arg(secondTagNoteCountIt.value())));
 
+    // ========== noteCountPerNotebooksAndTags to return 1 for new tag ==========
+    QStringList notebookLocalUids;
+    notebookLocalUids << notebook.localUid();
+    QStringList tagLocalUids;
+    tagLocalUids << newTag.localUid();
+    count = localStorageManager.noteCountPerNotebooksAndTags(notebookLocalUids,
+                                                             tagLocalUids,
+                                                             errorMessage);
+    QVERIFY2(count >= 0, qPrintable(errorMessage.nonLocalizedString()));
+    QVERIFY2(
+        count == 1,
+        qPrintable(QString::fromUtf8("noteCountPerNotebooksAndTags returned "
+                                     "result %1 different from the expected "
+                                     "one (1)").arg(count)));
+
+    // ========== noteCountPerNotebooksAndTags to return 2 for old tag ==========
+    tagLocalUids << tag.localUid();
+
+    count = localStorageManager.noteCountPerNotebooksAndTags(notebookLocalUids,
+                                                             tagLocalUids,
+                                                             errorMessage);
+    QVERIFY2(count >= 0, qPrintable(errorMessage.nonLocalizedString()));
+    QVERIFY2(
+        count == 2,
+        qPrintable(QString::fromUtf8("noteCountPerNotebooksAndTags returned "
+                                     "result %1 different from the expected "
+                                     "one (2)").arg(count)));
+
     // ========== Check Delete + Find and check deleted flag ============
     modifiedNote.setActive(false);
     modifiedNote.setDeletionTimestamp(1);
