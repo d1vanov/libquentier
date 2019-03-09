@@ -99,6 +99,8 @@ void registerMetatypes()
         "LocalStorageManager::GetResourceOptions");
     qRegisterMetaType<LocalStorageManager::StartupOptions>(
         "LocalStorageManager::StartupOptions");
+    qRegisterMetaType<LocalStorageManager::NoteCountOptions>(
+        "LocalStorageManager::NoteCountOptions");
     qRegisterMetaType<size_t>("size_t");
 
     qRegisterMetaType<QUuid>("QUuid");
