@@ -1074,19 +1074,22 @@ void LocalStorageManagerAsync::onExpungeLinkedNotebookRequest(LinkedNotebook lin
     }
 }
 
-void LocalStorageManagerAsync::onGetNoteCountRequest(QUuid requestId)
+void LocalStorageManagerAsync::onGetNoteCountRequest(
+    LocalStorageManager::NoteCountOptions options,
+    QUuid requestId)
 {
     Q_D(LocalStorageManagerAsync);
 
     try
     {
         ErrorString errorDescription;
-        int count = d->m_pLocalStorageManager->noteCount(errorDescription);
+        int count = d->m_pLocalStorageManager->noteCount(errorDescription,
+                                                         options);
         if (count < 0) {
-            Q_EMIT getNoteCountFailed(errorDescription, requestId);
+            Q_EMIT getNoteCountFailed(errorDescription, options, requestId);
         }
         else {
-            Q_EMIT getNoteCountComplete(count, requestId);
+            Q_EMIT getNoteCountComplete(count, options, requestId);
         }
     }
     catch(const std::exception & e)
@@ -1096,26 +1099,29 @@ void LocalStorageManagerAsync::onGetNoteCountRequest(QUuid requestId)
         error.details() = QString::fromUtf8(e.what());
         SysInfo sysInfo;
         QNERROR(error << QStringLiteral("; backtrace: ") << sysInfo.stackTrace());
-        Q_EMIT getNoteCountFailed(error, requestId);
+        Q_EMIT getNoteCountFailed(error, options, requestId);
     }
 }
 
-void LocalStorageManagerAsync::onGetNoteCountPerNotebookRequest(Notebook notebook,
-                                                                QUuid requestId)
+void LocalStorageManagerAsync::onGetNoteCountPerNotebookRequest(
+    Notebook notebook,
+    LocalStorageManager::NoteCountOptions options,
+    QUuid requestId)
 {
     Q_D(LocalStorageManagerAsync);
 
     try
     {
         ErrorString errorDescription;
-        int count = d->m_pLocalStorageManager->noteCountPerNotebook(notebook,
-                                                                    errorDescription);
+        int count = d->m_pLocalStorageManager->noteCountPerNotebook(
+            notebook, errorDescription, options);
         if (count < 0) {
             Q_EMIT getNoteCountPerNotebookFailed(errorDescription, notebook,
-                                                 requestId);
+                                                 options, requestId);
         }
         else {
-            Q_EMIT getNoteCountPerNotebookComplete(count, notebook, requestId);
+            Q_EMIT getNoteCountPerNotebookComplete(count, notebook,
+                                                   options, requestId);
         }
     }
     catch(const std::exception & e)
@@ -1125,23 +1131,27 @@ void LocalStorageManagerAsync::onGetNoteCountPerNotebookRequest(Notebook noteboo
         error.details() = QString::fromUtf8(e.what());
         SysInfo sysInfo;
         QNERROR(error << QStringLiteral("; backtrace: ") << sysInfo.stackTrace());
-        Q_EMIT getNoteCountPerNotebookFailed(error, notebook, requestId);
+        Q_EMIT getNoteCountPerNotebookFailed(error, notebook, options, requestId);
     }
 }
 
-void LocalStorageManagerAsync::onGetNoteCountPerTagRequest(Tag tag, QUuid requestId)
+void LocalStorageManagerAsync::onGetNoteCountPerTagRequest(
+    Tag tag,
+    LocalStorageManager::NoteCountOptions options,
+    QUuid requestId)
 {
     Q_D(LocalStorageManagerAsync);
 
     try
     {
         ErrorString errorDescription;
-        int count = d->m_pLocalStorageManager->noteCountPerTag(tag, errorDescription);
+        int count = d->m_pLocalStorageManager->noteCountPerTag(
+            tag, errorDescription, options);
         if (count < 0) {
-            Q_EMIT getNoteCountPerTagFailed(errorDescription, tag, requestId);
+            Q_EMIT getNoteCountPerTagFailed(errorDescription, tag, options, requestId);
         }
         else {
-            Q_EMIT getNoteCountPerTagComplete(count, tag, requestId);
+            Q_EMIT getNoteCountPerTagComplete(count, tag, options, requestId);
         }
     }
     catch(const std::exception & e)
@@ -1151,11 +1161,13 @@ void LocalStorageManagerAsync::onGetNoteCountPerTagRequest(Tag tag, QUuid reques
         error.details() = QString::fromUtf8(e.what());
         SysInfo sysInfo;
         QNERROR(error << QStringLiteral("; backtrace: ") << sysInfo.stackTrace());
-        Q_EMIT getNoteCountPerTagFailed(error, tag, requestId);
+        Q_EMIT getNoteCountPerTagFailed(error, tag, options, requestId);
     }
 }
 
-void LocalStorageManagerAsync::onGetNoteCountsPerAllTagsRequest(QUuid requestId)
+void LocalStorageManagerAsync::onGetNoteCountsPerAllTagsRequest(
+    LocalStorageManager::NoteCountOptions options,
+    QUuid requestId)
 {
     Q_D(LocalStorageManagerAsync);
 
@@ -1163,14 +1175,15 @@ void LocalStorageManagerAsync::onGetNoteCountsPerAllTagsRequest(QUuid requestId)
     {
         ErrorString errorDescription;
         QHash<QString, int> noteCountsPerTagLocalUid;
-        bool res = d->m_pLocalStorageManager->noteCountsPerAllTags(noteCountsPerTagLocalUid,
-                                                                   errorDescription);
+        bool res = d->m_pLocalStorageManager->noteCountsPerAllTags(
+            noteCountsPerTagLocalUid, errorDescription, options);
         if (!res) {
-            Q_EMIT getNoteCountsPerAllTagsFailed(errorDescription, requestId);
+            Q_EMIT getNoteCountsPerAllTagsFailed(errorDescription, options,
+                                                 requestId);
         }
         else {
             Q_EMIT getNoteCountsPerAllTagsComplete(noteCountsPerTagLocalUid,
-                                                   requestId);
+                                                   options, requestId);
         }
     }
     catch(const std::exception & e)
@@ -1180,7 +1193,44 @@ void LocalStorageManagerAsync::onGetNoteCountsPerAllTagsRequest(QUuid requestId)
         error.details() = QString::fromUtf8(e.what());
         SysInfo sysInfo;
         QNERROR(error << QStringLiteral("; backtrace: ") << sysInfo.stackTrace());
-        Q_EMIT getNoteCountsPerAllTagsFailed(error, requestId);
+        Q_EMIT getNoteCountsPerAllTagsFailed(error, options, requestId);
+    }
+}
+
+void LocalStorageManagerAsync::onGetNoteCountPerNotebooksAndTagsRequest(
+    QStringList notebookLocalUids, QStringList tagLocalUids,
+    LocalStorageManager::NoteCountOptions options, QUuid requestId)
+{
+    Q_D(LocalStorageManagerAsync);
+
+    try
+    {
+        ErrorString errorDescription;
+        int count = d->m_pLocalStorageManager->noteCountPerNotebooksAndTags(
+            notebookLocalUids, tagLocalUids, errorDescription, options);
+        if (count < 0) {
+            Q_EMIT getNoteCountPerNotebooksAndTagsFailed(errorDescription,
+                                                         notebookLocalUids,
+                                                         tagLocalUids, options,
+                                                         requestId);
+        }
+        else {
+            Q_EMIT getNoteCountPerNotebooksAndTagsComplete(count, notebookLocalUids,
+                                                           tagLocalUids, options,
+                                                           requestId);
+        }
+    }
+    catch(const std::exception & e)
+    {
+        ErrorString error(QT_TR_NOOP("Can't get note count per notebooks and "
+                                     "tags from the local storage: caught "
+                                     "exception"));
+        error.details() = QString::fromUtf8(e.what());
+        SysInfo sysInfo;
+        QNERROR(error << QStringLiteral("; backtrace: ") << sysInfo.stackTrace());
+        Q_EMIT getNoteCountPerNotebooksAndTagsFailed(error, notebookLocalUids,
+                                                     tagLocalUids, options,
+                                                     requestId);
     }
 }
 
@@ -1616,6 +1666,88 @@ void LocalStorageManagerAsync::onListNotesPerTagRequest(
     }
 }
 
+void LocalStorageManagerAsync::onListNotesPerNotebooksAndTagsRequest(
+    QStringList notebookLocalUids, QStringList tagLocalUids,
+    LocalStorageManager::GetNoteOptions options,
+    LocalStorageManager::ListObjectsOptions flag, size_t limit, size_t offset,
+    LocalStorageManager::ListNotesOrder::type order,
+    LocalStorageManager::OrderDirection::type orderDirection,
+    QUuid requestId)
+{
+    Q_D(LocalStorageManagerAsync);
+
+    try
+    {
+        ErrorString errorDescription;
+        QList<Note> notes = d->m_pLocalStorageManager->listNotesPerNotebooksAndTags(
+            notebookLocalUids, tagLocalUids, options, errorDescription, flag,
+            limit, offset, order, orderDirection);
+        if (notes.isEmpty() && !errorDescription.isEmpty()) {
+            Q_EMIT listNotesPerNotebooksAndTagsFailed(
+                notebookLocalUids, tagLocalUids, options, flag, limit, offset,
+                order, orderDirection, errorDescription, requestId);
+            return;
+        }
+
+        d->cacheNotes(notes, options);
+        Q_EMIT listNotesPerNotebooksAndTagsComplete(
+            notebookLocalUids, tagLocalUids, options, flag, limit, offset,
+            order, orderDirection, notes, requestId);
+    }
+    catch(const std::exception & e)
+    {
+        ErrorString error(QT_TR_NOOP("Can't list notes per notebooks and tags "
+                                     "from the local storage: caught exception"));
+        error.details() = QString::fromUtf8(e.what());
+        SysInfo sysInfo;
+        QNERROR(error << QStringLiteral("; backtrace: ") << sysInfo.stackTrace());
+        Q_EMIT listNotesPerNotebooksAndTagsFailed(
+            notebookLocalUids, tagLocalUids, options, flag, limit, offset,
+            order, orderDirection, error, requestId);
+    }
+}
+
+void LocalStorageManagerAsync::onListNotesByLocalUidsRequest(
+    QStringList noteLocalUids,
+    LocalStorageManager::GetNoteOptions options,
+    LocalStorageManager::ListObjectsOptions flag, size_t limit, size_t offset,
+    LocalStorageManager::ListNotesOrder::type order,
+    LocalStorageManager::OrderDirection::type orderDirection,
+    QUuid requestId)
+{
+    Q_D(LocalStorageManagerAsync);
+
+    try
+    {
+        ErrorString errorDescription;
+        QList<Note> notes = d->m_pLocalStorageManager->listNotesByLocalUids(
+            noteLocalUids, options, errorDescription, flag, limit, offset,
+            order, orderDirection);
+        if (notes.isEmpty() && !errorDescription.isEmpty()) {
+            Q_EMIT listNotesByLocalUidsFailed(
+                noteLocalUids, options, flag, limit, offset, order,
+                orderDirection, errorDescription, requestId);
+            return;
+        }
+
+        d->cacheNotes(notes, options);
+        Q_EMIT listNotesByLocalUidsComplete(
+            noteLocalUids, options, flag, limit, offset, order, orderDirection,
+            notes, requestId);
+    }
+    catch(const std::exception & e)
+    {
+        ErrorString error(QT_TR_NOOP("Can't list notes by local uids from "
+                                     "the local storage: caught exception"));
+        error.details() = QString::fromUtf8(e.what());
+        SysInfo sysInfo;
+        QNERROR(error << QStringLiteral("; backtrace: ") << sysInfo.stackTrace());
+        Q_EMIT listNotesByLocalUidsFailed(
+            noteLocalUids, options, flag, limit, offset, order,
+            orderDirection, error, requestId);
+    }
+}
+
 void LocalStorageManagerAsync::onListNotesRequest(
     LocalStorageManager::ListObjectsOptions flag,
     LocalStorageManager::GetNoteOptions options, size_t limit, size_t offset,
@@ -1629,11 +1761,10 @@ void LocalStorageManagerAsync::onListNotesRequest(
     {
         ErrorString errorDescription;
         QList<Note> notes =
-                d->m_pLocalStorageManager->listNotes(flag, options,
-                                                     errorDescription,
-                                                     limit, offset, order,
-                                                     orderDirection,
-                                                     linkedNotebookGuid);
+            d->m_pLocalStorageManager->listNotes(flag, options, errorDescription,
+                                                 limit, offset, order,
+                                                 orderDirection,
+                                                 linkedNotebookGuid);
         if (notes.isEmpty() && !errorDescription.isEmpty()) {
             Q_EMIT listNotesFailed(flag, options, limit, offset, order,
                                    orderDirection, linkedNotebookGuid,

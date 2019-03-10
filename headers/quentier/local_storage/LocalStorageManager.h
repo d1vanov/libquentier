@@ -750,18 +750,37 @@ public:
                                ErrorString & errorDescription);
 
     /**
-     * @brief noteCount returns the number of non-deleted notes currently
+     * @brief The NoteCountOption struct is a C++98-style scoped enum
+     * which allows to specify ordering of the results of methods returning
+     * note counts from local storage
+     */
+    struct NoteCountOption
+    {
+        enum type
+        {
+            IncludeNonDeletedNotes = 1,
+            IncludeDeletedNotes    = 2
+        };
+    };
+    Q_DECLARE_FLAGS(NoteCountOptions, NoteCountOption::type)
+
+    /**
+     * @brief noteCount returns the number of notes currently
      * stored in the local storage database.
      *
      * @param errorDescription      Error description if the number of notes
      *                              could not be returned
+     * @param options               Options clarifying which notes to list;
+     *                              by default only non-deleted notes are listed
      * @return                      Either non-negative value with the number
      *                              of notes or -1 which means some error occurred
      */
-    int noteCount(ErrorString & errorDescription) const;
+    int noteCount(ErrorString & errorDescription,
+                  const NoteCountOptions options =
+                  NoteCountOption::IncludeNonDeletedNotes) const;
 
     /**
-     * @brief noteCountPerNotebook returns the number of non-deleted notes currently
+     * @brief noteCountPerNotebook returns the number of notes currently
      * stored in the local storage database per given notebook.
      *
      * @param notebook              Notebook for which the number of notes is
@@ -770,15 +789,19 @@ public:
      *                              is used
      * @param errorDescription      Error description if the number of notes per
      *                              given notebook could not be returned
+     * @param options               Options clarifying which notes to list;
+     *                              by default only non-deleted notes are listed
      * @return                      Either non-negative value with the number of
      *                              notes per given notebook or -1 which means
      *                              some error occurred
      */
     int noteCountPerNotebook(const Notebook & notebook,
-                             ErrorString & errorDescription) const;
+                             ErrorString & errorDescription,
+                             const NoteCountOptions options =
+                             NoteCountOption::IncludeNonDeletedNotes) const;
 
     /**
-     * @brief noteCountPerTag returns the number of non-deleted notes currently
+     * @brief noteCountPerTag returns the number of notes currently
      * stored in local storage database labeled with given tag.
      *
      * @param tag                   Tag for which the number of notes labeled
@@ -787,14 +810,19 @@ public:
      *                              its local uid is used
      * @param errorDescription      Error description if the number of notes per
      *                              given tag could not be returned
+     * @param options               Options clarifying which notes to list;
+     *                              by default only non-deleted notes are listed
      * @return                      Either non-negative value with the number of
      *                              notes per given tag or -1 which means some
      *                              error occurred
      */
-    int noteCountPerTag(const Tag & tag, ErrorString & errorDescription) const;
+    int noteCountPerTag(const Tag & tag,
+                        ErrorString & errorDescription,
+                        const NoteCountOptions options =
+                        NoteCountOption::IncludeNonDeletedNotes) const;
 
     /**
-     * @brief noteCountsPerAllTags returns the number of non-deleted notes
+     * @brief noteCountsPerAllTags returns the number of notes
      * currently stored in local storage database labeled with each tag stored
      * in the local storage database.
      *
@@ -802,11 +830,40 @@ public:
      *                                      local uids
      * @param errorDescription              Error description if the number of
      *                                      notes per all tags could not be returned
+     * @param options                       Options clarifying which notes to list;
+     *                                      by default only non-deleted notes
+     *                                      are listed
      * @return                              True if note counts for all tags were
      *                                      computed successfully, false otherwise
      */
     bool noteCountsPerAllTags(QHash<QString, int> & noteCountsPerTagLocalUid,
-                              ErrorString & errorDescription) const;
+                              ErrorString & errorDescription,
+                              const NoteCountOptions options =
+                              NoteCountOption::IncludeNonDeletedNotes) const;
+
+    /**
+     * @brief noteCountPerNotebooksAndTags returns the number of notes currently
+     * stored in local storage database belonging to one of notebooks
+     * corresponding to given notebook local uids and labeled by at least one of
+     * tags corresponding to given tag local uids
+     *
+     * @param notebookLocalUids     The list of notebook local uids used for
+     *                              filtering
+     * @param tagLocalUids          The list of tag local uids used for
+     *                              filtering
+     * @param errorDescription      Error description if the number of notes per
+     *                              notebooks and tags could not be returned
+     * @param options               Options clarifying which notes to list;
+     *                              by default only non-deleted notes are listed
+     * @return                      Either non-negative value with the number of
+     *                              notes per given tag or -1 which means some
+     *                              error occurred
+     */
+    int noteCountPerNotebooksAndTags(const QStringList & notebookLocalUids,
+                                     const QStringList & tagLocalUids,
+                                     ErrorString & errorDescription,
+                                     const NoteCountOptions options =
+                                     NoteCountOption::IncludeNonDeletedNotes) const;
 
     /**
      * @brief addNote adds passed in Note to the local storage database.
@@ -996,13 +1053,14 @@ public:
      *                              list in case of error or no notes presence
      *                              in the given notebook
      */
-    QList<Note> listNotesPerNotebook(const Notebook & notebook,
-                                     const GetNoteOptions options,
-                                     ErrorString & errorDescription,
-                                     const ListObjectsOptions & flag = ListAll,
-                                     const size_t limit = 0, const size_t offset = 0,
-                                     const ListNotesOrder::type & order = ListNotesOrder::NoOrder,
-                                     const OrderDirection::type & orderDirection = OrderDirection::Ascending) const;
+    QList<Note> listNotesPerNotebook(
+        const Notebook & notebook,
+        const GetNoteOptions options,
+        ErrorString & errorDescription,
+        const ListObjectsOptions & flag = ListAll,
+        const size_t limit = 0, const size_t offset = 0,
+        const ListNotesOrder::type & order = ListNotesOrder::NoOrder,
+        const OrderDirection::type & orderDirection = OrderDirection::Ascending) const;
 
     /**
      * @brief listNotesPerTag attempts to list notes labeled with a given tag
@@ -1029,12 +1087,95 @@ public:
      *                              in case of error or no notes labeled with
      *                              the given tag presence
      */
-    QList<Note> listNotesPerTag(const Tag & tag, const GetNoteOptions options,
-                                ErrorString & errorDescription,
-                                const LocalStorageManager::ListObjectsOptions & flag = ListAll,
-                                const size_t limit = 0, const size_t offset = 0,
-                                const LocalStorageManager::ListNotesOrder::type & order = ListNotesOrder::NoOrder,
-                                const LocalStorageManager::OrderDirection::type & orderDirection = OrderDirection::Ascending) const;
+    QList<Note> listNotesPerTag(
+        const Tag & tag, const GetNoteOptions options,
+        ErrorString & errorDescription,
+        const LocalStorageManager::ListObjectsOptions & flag = ListAll,
+        const size_t limit = 0, const size_t offset = 0,
+        const LocalStorageManager::ListNotesOrder::type & order =
+        ListNotesOrder::NoOrder,
+        const LocalStorageManager::OrderDirection::type & orderDirection =
+        OrderDirection::Ascending) const;
+
+    /**
+     * @brief listNotesPerNotebooksAndTags attempts to list notes which are
+     * present within one of specified notebooks and are labeled with at least
+     * one of specified tags
+     *
+     * @param notebookLocalUids     Local uids of notebooks to which the listed
+     *                              notes might belong
+     * @param tagLocalUids          Local uids of tags with which the listed
+     *                              notes might be labeled
+     * @param options               Options specifying which optionally includable
+     *                              fields of the note should actually be included
+     * @param errorDescription      Error description in case notes could not
+     *                              be listed
+     * @param flag                  Input parameter used to set the filter for
+     *                              the desired notes to be listed
+     * @param limit                 Limit for the max number of notes in the result,
+     *                              zero by default which means no limit is set
+     * @param offset                Number of notes to skip in the beginning of
+     *                              the result, zero by default
+     * @param order                 Allows to specify particular ordering of notes
+     *                              in the result, NoOrder by default
+     * @param orderDirection        Specifies the direction of ordering, by default
+     *                              ascending direction is used;
+     * @return                      Either list of notes per notebooks and tags
+     *                              or empty list in case of error or no notes
+     *                              corresponding to given notebooks and tags
+     *                              presence
+     */
+    QList<Note> listNotesPerNotebooksAndTags(
+        const QStringList & notebookLocalUids,
+        const QStringList & tagLocalUids,
+        const LocalStorageManager::GetNoteOptions options,
+        ErrorString & errorDescription,
+        const LocalStorageManager::ListObjectsOptions & flag = ListAll,
+        const size_t limit = 0, const size_t offset = 0,
+        const LocalStorageManager::ListNotesOrder::type & order =
+        ListNotesOrder::NoOrder,
+        const LocalStorageManager::OrderDirection::type & orderDirection =
+        OrderDirection::Ascending) const;
+
+    /**
+     * @brief listNotesByLocalUids attempts to list notes given their local uids
+     *
+     * The method would only return notes which it managed to find within
+     * the local storage i.e. having an invalid local uid in the list won't
+     * result in an error, just in the corresponding note not returned
+     * within the result
+     *
+     * Notes within the result can be additionally filtered with flag parameter
+     *
+     * @param noteLocalUids         Local uids of notes to be listed
+     * @param options               Options specifying which optionally includable
+     *                              fields of the note should actually be included
+     * @param errorDescription      Error description in case notes could not
+     *                              be listed
+     * @param flag                  Input parameter used to set the filter for
+     *                              the desired notes to be listed
+     * @param limit                 Limit for the max number of notes in the result,
+     *                              zero by default which means no limit is set
+     * @param offset                Number of notes to skip in the beginning of
+     *                              the result, zero by default
+     * @param order                 Allows to specify particular ordering of notes
+     *                              in the result, NoOrder by default
+     * @param orderDirection        Specifies the direction of ordering, by default
+     *                              ascending direction is used;
+     * @return                      Either list of notes by local uids or empty
+     *                              list in case of error or no notes corresponding
+     *                              to given local uids presence
+     */
+    QList<Note> listNotesByLocalUids(
+        const QStringList & noteLocalUids,
+        const LocalStorageManager::GetNoteOptions options,
+        ErrorString & errorDescription,
+        const LocalStorageManager::ListObjectsOptions & flag = ListAll,
+        const size_t limit = 0, const size_t offset = 0,
+        const LocalStorageManager::ListNotesOrder::type & order =
+        ListNotesOrder::NoOrder,
+        const LocalStorageManager::OrderDirection::type & orderDirection =
+        OrderDirection::Ascending) const;
 
     /**
      * @brief listNotes attempts to list notes within the account according to
@@ -1066,12 +1207,13 @@ public:
      *                              or no notes conforming to the filter exist
      *                              within the account
      */
-    QList<Note> listNotes(const ListObjectsOptions flag, const GetNoteOptions options,
-                          ErrorString & errorDescription,
-                          const size_t limit = 0, const size_t offset = 0,
-                          const ListNotesOrder::type order = ListNotesOrder::NoOrder,
-                          const OrderDirection::type orderDirection = OrderDirection::Ascending,
-                          const QString & linkedNotebookGuid = QString()) const;
+    QList<Note> listNotes(
+        const ListObjectsOptions flag, const GetNoteOptions options,
+        ErrorString & errorDescription,
+        const size_t limit = 0, const size_t offset = 0,
+        const ListNotesOrder::type order = ListNotesOrder::NoOrder,
+        const OrderDirection::type orderDirection = OrderDirection::Ascending,
+        const QString & linkedNotebookGuid = QString()) const;
 
     /**
      * @brief findNoteLocalUidsWithSearchQuery attempts to find note local uids

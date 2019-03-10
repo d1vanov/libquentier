@@ -16,7 +16,7 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "NoteSearchQueryTest.h"
+#include "NoteSearchQueryParsingTest.h"
 #include <quentier/local_storage/NoteSearchQuery.h>
 #include <quentier/logging/QuentierLogger.h>
 #include <QStringList>
@@ -28,7 +28,7 @@
 namespace quentier {
 namespace test {
 
-bool NoteSearchQueryTest(QString & error)
+bool NoteSearchQueryParsingTest(QString & error)
 {
     /**
      * Disclaimer: unfortunately, it doesn't seem possible to verify every

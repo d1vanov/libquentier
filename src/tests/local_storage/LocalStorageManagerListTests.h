@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Dmitry Ivanov
+ * Copyright 2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,17 +16,31 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LIB_QUENTIER_TESTS_NOTE_SEARCH_QUERY_TEST_H
-#define LIB_QUENTIER_TESTS_NOTE_SEARCH_QUERY_TEST_H
-
-#include <QString>
+#ifndef LIB_QUENTIER_TESTS_LOCAL_STORAGE_MANAGER_LIST_TESTS_H
+#define LIB_QUENTIER_TESTS_LOCAL_STORAGE_MANAGER_LIST_TESTS_H
 
 namespace quentier {
 namespace test {
 
-bool NoteSearchQueryTest(QString & error);
+void TestListSavedSearches();
+
+void TestListLinkedNotebooks();
+
+void TestListTags();
+
+void TestListTagsWithNoteLocalUids();
+
+void TestListAllSharedNotebooks();
+
+void TestListAllTagsPerNote();
+
+void TestListNotes();
+
+void TestListNotebooks();
+
+void TestExpungeNotelessTagsFromLinkedNotebooks();
 
 } // namespace test
 } // namespace quentier
 
-#endif // LIB_QUENTIER_TESTS_NOTE_SEARCH_QUERY_TEST_H
+#endif // LIB_QUENTIER_TESTS_LOCAL_STORAGE_MANAGER_LIST_TESTS_H

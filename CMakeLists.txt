@@ -755,13 +755,15 @@ set(TEST_HEADERS
     src/tests/enml/ENMLTester.h
     src/tests/local_storage/LocalStorageCacheAsyncTester.h
     src/tests/local_storage/LocalStorageManagerTester.h
-    src/tests/local_storage/LocalStorageManagerTests.h
+    src/tests/local_storage/LocalStorageManagerAsyncTests.h
+    src/tests/local_storage/LocalStorageManagerBasicTests.h
+    src/tests/local_storage/LocalStorageManagerListTests.h
     src/tests/local_storage/LocalStorageManagerNoteSearchQueryTest.h
     src/tests/local_storage/LinkedNotebookLocalStorageManagerAsyncTester.h
     src/tests/local_storage/NotebookLocalStorageManagerAsyncTester.h
     src/tests/local_storage/NoteLocalStorageManagerAsyncTester.h
     src/tests/local_storage/NoteNotebookAndTagListTrackingAsyncTester.h
-    src/tests/local_storage/NoteSearchQueryTest.h
+    src/tests/local_storage/NoteSearchQueryParsingTest.h
     src/tests/local_storage/ResourceLocalStorageManagerAsyncTester.h
     src/tests/local_storage/SavedSearchLocalStorageManagerAsyncTester.h
     src/tests/local_storage/TagLocalStorageManagerAsyncTester.h
@@ -779,6 +781,7 @@ set(TEST_HEADERS
     src/tests/utility/LRUCacheTests.h
     src/tests/utility/TagSortByParentChildRelationsTest.h
     src/tests/utility/UtilityTester.h
+    src/tests/TestMacros.h
     src/synchronization/FullSyncStaleDataItemsExpunger.h
     src/synchronization/TagSyncCache.h
     src/synchronization/SavedSearchSyncCache.h
@@ -791,13 +794,15 @@ set(TEST_SOURCES
     src/tests/enml/ENMLTester.cpp
     src/tests/local_storage/LocalStorageCacheAsyncTester.cpp
     src/tests/local_storage/LocalStorageManagerTester.cpp
-    src/tests/local_storage/LocalStorageManagerTests.cpp
+    src/tests/local_storage/LocalStorageManagerAsyncTests.cpp
+    src/tests/local_storage/LocalStorageManagerBasicTests.cpp
+    src/tests/local_storage/LocalStorageManagerListTests.cpp
     src/tests/local_storage/LocalStorageManagerNoteSearchQueryTest.cpp
     src/tests/local_storage/LinkedNotebookLocalStorageManagerAsyncTester.cpp
     src/tests/local_storage/NotebookLocalStorageManagerAsyncTester.cpp
     src/tests/local_storage/NoteLocalStorageManagerAsyncTester.cpp
     src/tests/local_storage/NoteNotebookAndTagListTrackingAsyncTester.cpp
-    src/tests/local_storage/NoteSearchQueryTest.cpp
+    src/tests/local_storage/NoteSearchQueryParsingTest.cpp
     src/tests/local_storage/ResourceLocalStorageManagerAsyncTester.cpp
     src/tests/local_storage/SavedSearchLocalStorageManagerAsyncTester.cpp
     src/tests/local_storage/TagLocalStorageManagerAsyncTester.cpp

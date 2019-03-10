@@ -131,12 +131,26 @@ public:
     bool expungeLinkedNotebook(const LinkedNotebook & linkedNotebook,
                                ErrorString & errorDescription);
 
-    int noteCount(ErrorString & errorDescription) const;
+    int noteCount(ErrorString & errorDescription,
+                  const LocalStorageManager::NoteCountOptions options) const;
     int noteCountPerNotebook(const Notebook & notebook,
-                             ErrorString & errorDescription) const;
-    int noteCountPerTag(const Tag & tag, ErrorString & errorDescription) const;
+                             ErrorString & errorDescription,
+                             const LocalStorageManager::NoteCountOptions options) const;
+    int noteCountPerTag(const Tag & tag,
+                        ErrorString & errorDescription,
+                        const LocalStorageManager::NoteCountOptions options) const;
     bool noteCountsPerAllTags(QHash<QString, int> & noteCountsPerTagLocalUid,
-                              ErrorString & errorDescription) const;
+                              ErrorString & errorDescription,
+                              const LocalStorageManager::NoteCountOptions options) const;
+    int noteCountPerNotebooksAndTags(
+        const QStringList & notebookLocalUids,
+        const QStringList & tagLocalUids,
+        ErrorString & errorDescription,
+        const LocalStorageManager::NoteCountOptions options) const;
+
+    QString noteCountOptionsToSqlQueryPart(
+        const LocalStorageManager::NoteCountOptions options) const;
+
     bool addNote(Note & note, ErrorString & errorDescription);
     bool updateNote(Note & note,
                     const LocalStorageManager::UpdateNoteOptions options,
@@ -162,6 +176,25 @@ public:
         const LocalStorageManager::ListNotesOrder::type & order,
         const LocalStorageManager::OrderDirection::type & orderDirection) const;
 
+    QList<Note> listNotesPerNotebooksAndTags(
+        const QStringList & notebookLocalUids,
+        const QStringList & tagLocalUids,
+        const LocalStorageManager::GetNoteOptions options,
+        ErrorString & errorDescription,
+        const LocalStorageManager::ListObjectsOptions & flag,
+        const size_t limit, const size_t offset,
+        const LocalStorageManager::ListNotesOrder::type & order,
+        const LocalStorageManager::OrderDirection::type & orderDirection) const;
+
+    QList<Note> listNotesByLocalUids(
+        const QStringList & noteLocalUids,
+        const LocalStorageManager::GetNoteOptions options,
+        ErrorString & errorDescription,
+        const LocalStorageManager::ListObjectsOptions & flag,
+        const size_t limit, const size_t offset,
+        const LocalStorageManager::ListNotesOrder::type order,
+        const LocalStorageManager::OrderDirection::type & orderDirection) const;
+
     QList<Note> listNotes(
         const LocalStorageManager::ListObjectsOptions flag,
         const LocalStorageManager::GetNoteOptions options,
@@ -170,6 +203,16 @@ public:
         const LocalStorageManager::ListNotesOrder::type & order,
         const LocalStorageManager::OrderDirection::type & orderDirection,
         const QString & linkedNotebookGuid) const;
+
+    QList<Note> listNotesImpl(
+        const ErrorString & errorPrefix,
+        const QString & sqlQueryCondition,
+        const LocalStorageManager::ListObjectsOptions flag,
+        const LocalStorageManager::GetNoteOptions options,
+        ErrorString & errorDescription,
+        const size_t limit, const size_t offset,
+        const LocalStorageManager::ListNotesOrder::type & order,
+        const LocalStorageManager::OrderDirection::type & orderDirection) const;
 
     bool expungeNote(Note & note, ErrorString & errorDescription);
 
@@ -355,7 +398,6 @@ private:
                                    const qevercloud::NoteLimits & noteLimits,
                                    ErrorString & errorDescription);
 
-    bool checkAndPrepareNoteCountQuery() const;
     bool checkAndPrepareInsertOrReplaceNoteQuery();
     bool checkAndPrepareInsertOrReplaceSharedNoteQuery();
     bool checkAndPrepareInsertOrReplaceNoteRestrictionsQuery();
@@ -671,9 +713,6 @@ private:
 
     QSqlQuery           m_insertOrReplaceTagQuery;
     bool                m_insertOrReplaceTagQueryPrepared;
-
-    mutable QSqlQuery   m_getNoteCountQuery;
-    mutable bool        m_getNoteCountQueryPrepared;
 
     QSqlQuery           m_insertOrReplaceNoteQuery;
     bool                m_insertOrReplaceNoteQueryPrepared;
