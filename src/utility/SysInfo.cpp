@@ -17,7 +17,15 @@
  */
 
 #include <quentier/utility/SysInfo.h>
+#include <quentier/utility/VersionInfo.h>
 #include "SysInfo_p.h"
+#include <sstream>
+
+#if LIB_QUENTIER_USE_LIB_BACKTRACE
+#define BOOST_STACKTRACE_USE_BACKTRACE
+#endif
+
+#include <boost/stacktrace.hpp>
 
 namespace quentier {
 
@@ -27,5 +35,12 @@ SysInfo::SysInfo() :
 
 SysInfo::~SysInfo()
 {}
+
+QString SysInfo::stackTrace()
+{
+    std::stringstream sstrm;
+    sstrm << boost::stacktrace::stacktrace();
+    return QString::fromStdString(sstrm.str());
+}
 
 } // namespace quentier

@@ -73,11 +73,6 @@ qint64 SysInfo::totalMemory()
     }
 }
 
-QString SysInfo::stackTrace()
-{
-    return QStringLiteral("Stack trace obtaining is not implemented on Windows, patches are welcome");
-}
-
 QString SysInfo::platformName()
 {
 #if QT_VERSION >= QT_VERSION_CHECK(5, 4, 0)

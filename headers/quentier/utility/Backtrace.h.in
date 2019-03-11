@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Dmitry Ivanov
+ * Copyright 2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,20 +16,9 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <quentier/utility/SysInfo.h>
-#include "../SysInfo_p.h"
-#include <unistd.h>
-#include <QString>
-#include <QFile>
-#include <QByteArray>
-#include <QDir>
-#include <QApplication>
+#ifndef LIB_QUENTIER_UTILITY_BACKTRACE_H
+#define LIB_QUENTIER_UTILITY_BACKTRACE_H
 
-namespace quentier {
+@LIB_QUENTIER_LIB_BACKTRACE_INCLUDE@
 
-qint64 SysInfo::pageSize()
-{
-    return static_cast<qint64>(sysconf(_SC_PAGESIZE));
-}
-
-} // namespace quentier
+#endif
