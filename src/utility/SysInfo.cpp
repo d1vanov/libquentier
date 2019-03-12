@@ -21,7 +21,7 @@
 #include "SysInfo_p.h"
 #include <sstream>
 
-#if LIB_QUENTIER_USE_LIB_BACKTRACE
+#if defined(__GNUC__) && !defined(__clang__)
 #define BOOST_STACKTRACE_USE_BACKTRACE
 #endif
 

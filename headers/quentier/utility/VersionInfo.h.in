@@ -47,12 +47,6 @@
 @LIB_QUENTIER_HAS_NOTE_EDITOR_DEFINE@
 
 /**
- * This macro is set to true if libquentier uses libbacktrace to produce
- * stacktraces (via SysInfo::stackTrace method) and to false otherwise
- */
-@LIB_QUENTIER_USE_LIB_BACKTRACE_DEFINE@
-
-/**
  * This macro is set to a string holding the information about
  * the current libquentier build
  */

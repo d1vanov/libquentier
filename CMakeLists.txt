@@ -43,10 +43,6 @@ include(LibquentierFindLibTidyHtml5)
 include(LibquentierSetupDoxygen)
 include(PrependPath)
 
-if(NOT MSVC)
-  include(LibquentierFindBacktrace)
-endif()
-
 find_package(Sanitizers)
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/headers
@@ -64,9 +60,6 @@ endif()
 if(LIBCPP)
   list(APPEND THIRDPARTY_LIBS ${LIBCPP})
 endif()
-if(Backtrace_FOUND)
-  list(APPEND THIRDPARTY_LIBS ${Backtrace_LIBRARIES})
-endif()
 if(MSVC)
   list(APPEND THIRDPARTY_LIBS secur32.lib)
 endif()
@@ -75,6 +68,9 @@ if(MINGW)
 endif()
 if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
   list(APPEND THIRDPARTY_LIBS "-ldl")
+endif()
+if(CMAKE_COMPILER_IS_GNUCXX)
+  list(APPEND THIRDPARTY_LIBS "-lbacktrace")
 endif()
 
 set(THIRDPARTY_LIB_DIRS ${QEVERCLOUD_LIB_DIR})
@@ -576,14 +572,6 @@ else()
   set(LIB_QUENTIER_HAS_NOTE_EDITOR_DEFINE "#define LIB_QUENTIER_HAS_NOTE_EDITOR 0")
 endif()
 
-if(Backtrace_FOUND)
-  set(LIB_QUENTIER_USE_LIB_BACKTRACE_DEFINE "#define LIB_QUENTIER_USE_LIB_BACKTRACE 1")
-  set(LIB_QUENTIER_LIB_BACKTRACE_INCLUDE "#include <${Backtrace_HEADER}>")
-else()
-  set(LIB_QUENTIER_USE_LIB_BACKTRACE_DEFINE "#define LIB_QUENTIER_USE_LIB_BACKTRACE 0")
-  set(LIB_QUENTIER_LIB_BACKTRACE_INCLUDE "")
-endif()
-
 set(LIB_QUENTIER_VERSION_MAJOR_DEFINE "#define LIB_QUENTIER_VERSION_MAJOR ${PROJECT_VERSION_MAJOR}")
 set(LIB_QUENTIER_VERSION_MINOR_DEFINE "#define LIB_QUENTIER_VERSION_MINOR ${PROJECT_VERSION_MINOR}")
 set(LIB_QUENTIER_VERSION_PATCH_DEFINE "#define LIB_QUENTIER_VERSION_PATCH ${PROJECT_VERSION_PATCH}")
@@ -641,16 +629,11 @@ else()
   set(LIB_QUENTIER_BUILD_INFO "#define LIB_QUENTIER_BUILD_INFO \"unknown\"")
 endif()
 
-configure_file(headers/quentier/utility/Backtrace.h.in
-               ${PROJECT_BINARY_DIR}/quentier/utility/Backtrace.h @ONLY)
-
 configure_file(headers/quentier/utility/VersionInfo.h.in
                ${PROJECT_BINARY_DIR}/quentier/utility/VersionInfo.h @ONLY)
 
 list(APPEND UTILITY_HEADERS ${PROJECT_BINARY_DIR}/quentier/utility/VersionInfo.h)
-list(APPEND UTILITY_HEADERS ${PROJECT_BINARY_DIR}/quentier/utility/Backtrace.h)
 list(APPEND PUBLIC_HEADERS ${PROJECT_BINARY_DIR}/quentier/utility/VersionInfo.h)
-list(APPEND PUBLIC_HEADERS ${PROJECT_BINARY_DIR}/quentier/utility/Backtrace.h)
 
 set(RESOURCES
     src/enml/enml.qrc)
@@ -885,12 +868,6 @@ if(BUILD_WITH_NOTE_EDITOR)
   set(LIB_QUENTIER_HAS_NOTE_EDITOR_OPTION "set(LIB_QUENTIER_HAS_NOTE_EDITOR TRUE)")
 else()
   set(LIB_QUENTIER_HAS_NOTE_EDITOR_OPTION "set(LIB_QUENTIER_HAS_NOTE_EDITOR FALSE)")
-endif()
-
-if(Backtrace_FOUND)
-  set(LIB_QUENTIER_USE_LIB_BACKTRACE_OPTION "set(LIBQUENTIER_USE_LIBBACKTRACE TRUE)")
-else()
-  set(LIB_QUENTIER_USE_LIB_BACKTRACE_OPTION "set(LIBQUENTIER_USE_LIBBACKTRACE FALSE)")
 endif()
 
 configure_file(cmake/modules/LibquentierBuildTreeSettings.cmake.in
