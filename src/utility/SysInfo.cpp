@@ -17,7 +17,6 @@
  */
 
 #include <quentier/utility/SysInfo.h>
-#include <quentier/utility/VersionInfo.h>
 #include "SysInfo_p.h"
 #include <sstream>
 
