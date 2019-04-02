@@ -150,6 +150,8 @@ typedef QWebEngineSettings WebSettings;
     QStringLiteral("<link rel=\"stylesheet\" type=\"text/css\" "\
                    "href=\"qrc:/css/jquery-ui.min.css\">" \
                    "<link rel=\"stylesheet\" type=\"text/css\" "\
+                   "href=\"qrc:/css/background.css\">" \
+                   "<link rel=\"stylesheet\" type=\"text/css\" "\
                    "href=\"qrc:/css/en-crypt.css\">" \
                    "<link rel=\"stylesheet\" type=\"text/css\" "\
                    "href=\"qrc:/css/hover.css\">" \
