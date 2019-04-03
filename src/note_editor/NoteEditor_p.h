@@ -211,6 +211,8 @@ public:
     qint64 noteContentSize() const;
     qint64 noteSize() const;
 
+    virtual QPalette defaultPalette() const Q_DECL_OVERRIDE;
+
 public Q_SLOTS:
     virtual void initialize(FileIOProcessorAsync & fileIOProcessorAsync,
                             SpellChecker & spellChecker,
@@ -257,6 +259,7 @@ public Q_SLOTS:
     virtual void setFontHeight(const int height) Q_DECL_OVERRIDE;
     virtual void setFontColor(const QColor & color) Q_DECL_OVERRIDE;
     virtual void setBackgroundColor(const QColor & color) Q_DECL_OVERRIDE;
+    virtual void setDefaultPalette(const QPalette & pal) Q_DECL_OVERRIDE;
     virtual void insertHorizontalLine() Q_DECL_OVERRIDE;
     virtual void increaseFontSize() Q_DECL_OVERRIDE;
     virtual void decreaseFontSize() Q_DECL_OVERRIDE;
@@ -550,6 +553,7 @@ private:
     void setupTextCursorPositionJavaScriptHandlerConnections();
     void setupSkipRulesForHtmlToEnmlConversion();
 
+    QString noteEditorPagePrefix() const;
     QString initialPageHtml() const;
 
     void determineStatesForCurrentTextCursorPosition();
@@ -903,8 +907,6 @@ private:
     bool                m_spellCheckerEnabled;
     QStringList         m_currentNoteMisSpelledWords;
     StringUtils         m_stringUtils;
-
-    const QString       m_pagePrefix;
 
     QString     m_lastSelectedHtml;
     QString     m_lastSelectedHtmlForEncryption;

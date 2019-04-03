@@ -18,7 +18,7 @@
 
 #include "NoteEditor_p.h"
 #include "GenericResourceImageManager.h"
-#include "NoteEditorSettingsName.h"
+#include "NoteEditorSettingsNames.h"
 #include "ResourceFileStorageManager.h"
 #include "delegates/AddResourceDelegate.h"
 #include "delegates/RemoveResourceDelegate.h"
@@ -280,21 +280,6 @@ NoteEditorPrivate::NoteEditorPrivate(NoteEditor & noteEditor) :
     m_spellCheckerEnabled(false),
     m_currentNoteMisSpelledWords(),
     m_stringUtils(),
-    m_pagePrefix(QStringLiteral("<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01//EN\" \"http://www.w3.org/TR/html4/strict.dtd\">"
-                                "<html><head>"
-                                "<meta http-equiv=\"Content-Type\" content=\"text/html\" charset=\"UTF-8\" />"
-                                "<link rel=\"stylesheet\" type=\"text/css\" href=\"qrc:/css/jquery-ui.min.css\">"
-                                "<link rel=\"stylesheet\" type=\"text/css\" href=\"qrc:/css/background.css\">"
-                                "<link rel=\"stylesheet\" type=\"text/css\" href=\"qrc:/css/en-crypt.css\">"
-                                "<link rel=\"stylesheet\" type=\"text/css\" href=\"qrc:/css/hover.css\">"
-                                "<link rel=\"stylesheet\" type=\"text/css\" href=\"qrc:/css/en-decrypted.css\">"
-                                "<link rel=\"stylesheet\" type=\"text/css\" href=\"qrc:/css/en-media-generic.css\">"
-                                "<link rel=\"stylesheet\" type=\"text/css\" href=\"qrc:/css/en-media-image.css\">"
-                                "<link rel=\"stylesheet\" type=\"text/css\" href=\"qrc:/css/image-area-hilitor.css\">"
-                                "<link rel=\"stylesheet\" type=\"text/css\" href=\"qrc:/css/en-todo.css\">"
-                                "<link rel=\"stylesheet\" type=\"text/css\" href=\"qrc:/css/link.css\">"
-                                "<link rel=\"stylesheet\" type=\"text/css\" href=\"qrc:/css/misspell.css\">"
-                                "<title></title></head>")),
     m_lastSelectedHtml(),
     m_lastSelectedHtmlForEncryption(),
     m_lastSelectedHtmlForHyperlink(),
@@ -3088,7 +3073,8 @@ void NoteEditorPrivate::noteToEditorContent()
         return;
     }
 
-    m_htmlCachedMemory.replace(0, bodyTagIndex, m_pagePrefix);
+    QString prefix = noteEditorPagePrefix();
+    m_htmlCachedMemory.replace(0, bodyTagIndex, prefix);
 
     int bodyClosingTagIndex = m_htmlCachedMemory.indexOf(QStringLiteral("</body>"));
     if (bodyClosingTagIndex < 0) {
@@ -3136,7 +3122,8 @@ void NoteEditorPrivate::inkNoteToEditorContent()
     QList<Resource> resources = m_pNote->resources();
     const int numResources = resources.size();
 
-    QString inkNoteHtml = m_pagePrefix;
+    QString prefix = noteEditorPagePrefix();
+    QString inkNoteHtml = prefix;
     inkNoteHtml += QStringLiteral("<body>");
 
     for(int i = 0; i < numResources; ++i)
@@ -3192,7 +3179,7 @@ void NoteEditorPrivate::inkNoteToEditorContent()
     }
 
     if (problemDetected) {
-        inkNoteHtml = m_pagePrefix;
+        inkNoteHtml = prefix;
         inkNoteHtml += QStringLiteral("<body><div>");
         inkNoteHtml += tr("The read-only ink note image should have been present here but something went wrong so the image is not accessible");
         inkNoteHtml += QStringLiteral("</div></body></html>");
@@ -3470,12 +3457,13 @@ void NoteEditorPrivate::manualSaveResourceToFile(const Resource & resource)
 
         ApplicationSettings appSettings(*m_pAccount, NOTE_EDITOR_SETTINGS_NAME);
         QStringList childGroups = appSettings.childGroups();
-        int attachmentsSaveLocGroupIndex = childGroups.indexOf(QStringLiteral("AttachmentSaveLocations"));
+        int attachmentsSaveLocGroupIndex =
+            childGroups.indexOf(NOTE_EDITOR_ATTACHMENT_SAVE_LOCATIONS_KEY);
         if (attachmentsSaveLocGroupIndex >= 0)
         {
             QNTRACE(QStringLiteral("Found cached attachment save location group within application settings"));
 
-            appSettings.beginGroup(QStringLiteral("AttachmentSaveLocations"));
+            appSettings.beginGroup(NOTE_EDITOR_ATTACHMENT_SAVE_LOCATIONS_KEY);
             QStringList cachedFileSuffixes = appSettings.childKeys();
             const int numPreferredSuffixes = preferredSuffixes.size();
             for(int i = 0; i < numPreferredSuffixes; ++i)
@@ -4619,6 +4607,44 @@ void NoteEditorPrivate::setupTextCursorPositionJavaScriptHandlerConnections()
     QObject::connect(this, QNSIGNAL(NoteEditorPrivate,textFontSizeChanged,int), q, QNSIGNAL(NoteEditor,textFontSizeChanged,int));
 }
 
+QString NoteEditorPrivate::noteEditorPagePrefix() const
+{
+    QString prefix = QStringLiteral(
+        "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01//EN\" "
+        "\"http://www.w3.org/TR/html4/strict.dtd\">"
+        "<html><head>"
+        "<meta http-equiv=\"Content-Type\" content=\"text/html\" "
+        "charset=\"UTF-8\" />"
+        "<link rel=\"stylesheet\" type=\"text/css\" href=\"qrc:/css/jquery-ui.min.css\">"
+        "<link rel=\"stylesheet\" type=\"text/css\" href=\"qrc:/css/en-crypt.css\">"
+        "<link rel=\"stylesheet\" type=\"text/css\" href=\"qrc:/css/hover.css\">"
+        "<link rel=\"stylesheet\" type=\"text/css\" href=\"qrc:/css/en-decrypted.css\">"
+        "<link rel=\"stylesheet\" type=\"text/css\" href=\"qrc:/css/en-media-generic.css\">"
+        "<link rel=\"stylesheet\" type=\"text/css\" href=\"qrc:/css/en-media-image.css\">"
+        "<link rel=\"stylesheet\" type=\"text/css\" href=\"qrc:/css/image-area-hilitor.css\">"
+        "<link rel=\"stylesheet\" type=\"text/css\" href=\"qrc:/css/en-todo.css\">"
+        "<link rel=\"stylesheet\" type=\"text/css\" href=\"qrc:/css/link.css\">"
+        "<link rel=\"stylesheet\" type=\"text/css\" href=\"qrc:/css/misspell.css\">"
+        "<title></title></head>"
+        "<style type=\"text/css\">"
+        "body { color: ");
+
+    QPalette pal = defaultPalette();
+
+    prefix += pal.color(QPalette::WindowText).name();
+    prefix += QStringLiteral("; background-color: ");
+    prefix += pal.color(QPalette::Base).name();
+
+    prefix += QStringLiteral(";} ::selection { background: ");
+    prefix += pal.color(QPalette::Highlight).name();
+    prefix += QStringLiteral("; color: ");
+    prefix += pal.color(QPalette::HighlightedText).name();
+
+    prefix += QStringLiteral("; }</style>");
+
+    return prefix;
+}
+
 void NoteEditorPrivate::setupSkipRulesForHtmlToEnmlConversion()
 {
     QNDEBUG(QStringLiteral("NoteEditorPrivate::setupSkipRulesForHtmlToEnmlConversion"));
@@ -4680,7 +4706,7 @@ QString NoteEditorPrivate::initialPageHtml() const
         return m_blankPageHtml;
     }
 
-    return m_pagePrefix + QStringLiteral("<body></body></html>");
+    return noteEditorPagePrefix() + QStringLiteral("<body></body></html>");
 }
 
 void NoteEditorPrivate::determineStatesForCurrentTextCursorPosition()
@@ -5618,7 +5644,7 @@ bool NoteEditorPrivate::print(QPrinter & printer, ErrorString & errorDescription
         return false;
     }
 
-    preprocessedHtml.replace(0, bodyOpeningTagEndIndex, m_pagePrefix);
+    preprocessedHtml.replace(0, bodyOpeningTagEndIndex, noteEditorPagePrefix());
 
     int bodyClosingTagIndex = preprocessedHtml.indexOf(QStringLiteral("</body>"), bodyOpeningTagEndIndex);
     if (Q_UNLIKELY(bodyClosingTagIndex < 0)) {
@@ -7282,6 +7308,112 @@ void NoteEditorPrivate::setBackgroundColor(const QColor & color)
     }
 }
 
+QPalette NoteEditorPrivate::defaultPalette() const
+{
+    QPalette pal = palette();
+
+    if (!m_pAccount.isNull())
+    {
+        ApplicationSettings appSettings(*m_pAccount, NOTE_EDITOR_SETTINGS_NAME);
+        appSettings.beginGroup(NOTE_EDITOR_DEFAULT_COLORS_GROUP_KEY);
+
+        QVariant defaultFontColorVal =
+            appSettings.value(NOTE_EDITOR_DEFAULT_FONT_COLOR_KEY);
+        if (!defaultFontColorVal.isNull() && defaultFontColorVal.isValid())
+        {
+            QColor color = QColor(defaultFontColorVal.toString());
+            if (color.isValid()) {
+                pal.setColor(QPalette::WindowText, color);
+            }
+        }
+
+        QVariant defaultBackgroundColorVal =
+            appSettings.value(NOTE_EDITOR_DEFAULT_BACKGROUND_COLOR_KEY);
+        if (!defaultBackgroundColorVal.isNull() &&
+            defaultBackgroundColorVal.isValid())
+        {
+            QColor color = QColor(defaultBackgroundColorVal.toString());
+            if (color.isValid()) {
+                pal.setColor(QPalette::Base, color);
+            }
+        }
+
+        QVariant defaultHighlightColorVal =
+            appSettings.value(NOTE_EDITOR_DEFAULT_HIGHLIGHT_COLOR_KEY);
+        if (!defaultHighlightColorVal.isNull() &&
+            defaultHighlightColorVal.isValid())
+        {
+            QColor color = QColor(defaultHighlightColorVal.toString());
+            if (color.isValid()) {
+                pal.setColor(QPalette::Highlight, color);
+            }
+        }
+
+        QVariant defaultHighlightedTextColorVal =
+            appSettings.value(NOTE_EDITOR_DEFAULT_HIGHLIGHT_TEXT_COLOR_KEY);
+        if (!defaultHighlightedTextColorVal.isNull() &&
+            defaultHighlightedTextColorVal.isValid())
+        {
+            QColor color = QColor(defaultHighlightedTextColorVal.toString());
+            if (color.isValid()) {
+                pal.setColor(QPalette::HighlightedText, color);
+            }
+        }
+
+        appSettings.endGroup();
+    }
+
+    return pal;
+}
+
+void NoteEditorPrivate::setDefaultPalette(const QPalette & pal)
+{
+    QNINFO(QStringLiteral("NoteEditorPrivate::setDefaultPalette"));
+
+    CHECK_ACCOUNT(QT_TR_NOOP("Can't save default font color"));
+
+    ApplicationSettings appSettings(*m_pAccount, NOTE_EDITOR_SETTINGS_NAME);
+    appSettings.beginGroup(NOTE_EDITOR_DEFAULT_COLORS_GROUP_KEY);
+
+    QColor defaultFontColor = pal.color(QPalette::WindowText);
+    if (defaultFontColor.isValid()) {
+        appSettings.setValue(NOTE_EDITOR_DEFAULT_FONT_COLOR_KEY,
+                             defaultFontColor.name());
+    }
+    else {
+        appSettings.remove(NOTE_EDITOR_DEFAULT_FONT_COLOR_KEY);
+    }
+
+    QColor defaultBackgroundColor = pal.color(QPalette::Base);
+    if (defaultBackgroundColor.isValid()) {
+        appSettings.setValue(NOTE_EDITOR_DEFAULT_BACKGROUND_COLOR_KEY,
+                             defaultBackgroundColor.name());
+    }
+    else {
+        appSettings.remove(NOTE_EDITOR_DEFAULT_BACKGROUND_COLOR_KEY);
+    }
+
+    QColor defaultHighlightColor = pal.color(QPalette::Highlight);
+    if (defaultHighlightColor.isValid()) {
+        appSettings.setValue(NOTE_EDITOR_DEFAULT_HIGHLIGHT_COLOR_KEY,
+                             defaultHighlightColor.name());
+    }
+    else {
+        appSettings.remove(NOTE_EDITOR_DEFAULT_HIGHLIGHT_COLOR_KEY);
+    }
+
+    QColor defaultHighlightedTextColor = pal.color(QPalette::HighlightedText);
+    if (defaultHighlightedTextColor.isValid()) {
+        appSettings.setValue(NOTE_EDITOR_DEFAULT_HIGHLIGHT_TEXT_COLOR_KEY,
+                             defaultHighlightedTextColor.name());
+    }
+    else {
+        appSettings.remove(NOTE_EDITOR_DEFAULT_HIGHLIGHT_TEXT_COLOR_KEY);
+    }
+
+    appSettings.endGroup();
+}
+
 void NoteEditorPrivate::insertHorizontalLine()
 {
     QNDEBUG(QStringLiteral("NoteEditorPrivate::insertHorizontalLine"));
@@ -7506,7 +7638,8 @@ void NoteEditorPrivate::addAttachmentDialog()
     QString addAttachmentInitialFolderPath;
 
     ApplicationSettings appSettings(*m_pAccount, NOTE_EDITOR_SETTINGS_NAME);
-    QVariant lastAttachmentAddLocation = appSettings.value(QStringLiteral("LastAttachmentAddLocation"));
+    QVariant lastAttachmentAddLocation =
+        appSettings.value(NOTE_EDITOR_LAST_ATTACHMENT_ADD_LOCATION_KEY);
     if (!lastAttachmentAddLocation.isNull() && lastAttachmentAddLocation.isValid())
     {
         QNTRACE(QStringLiteral("Found last attachment add location: ") << lastAttachmentAddLocation);
@@ -7537,7 +7670,7 @@ void NoteEditorPrivate::addAttachmentDialog()
     QFileInfo fileInfo(absoluteFilePath);
     QString absoluteDirPath = fileInfo.absoluteDir().absolutePath();
     if (!absoluteDirPath.isEmpty()) {
-        appSettings.setValue(QStringLiteral("LastAttachmentAddLocation"), absoluteDirPath);
+        appSettings.setValue(NOTE_EDITOR_LAST_ATTACHMENT_ADD_LOCATION_KEY, absoluteDirPath);
         QNTRACE(QStringLiteral("Updated last attachment add location to ") << absoluteDirPath);
     }
 

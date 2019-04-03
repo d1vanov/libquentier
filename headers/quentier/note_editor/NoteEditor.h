@@ -122,6 +122,15 @@ public:
     bool exportToEnex(const QStringList & tagNames,
                       QString & enex, ErrorString & errorDescription);
 
+    /**
+     * @return palette containing default fonts used by the editor; the palette
+     * is composed of colors from note editor widget's native palette but some
+     * of them might be overridden by colors from the palette specified
+     * previously via setDefaultPalette method: those colors from the specified
+     * palette which were valid
+     */
+    QPalette defaultPalette() const;
+
 Q_SIGNALS:
     /**
      * @brief contentChanged signal is emitted when the note's content (text) gets modified via manual editing
@@ -229,6 +238,26 @@ public Q_SLOTS:
     void setFontHeight(const int height);
     void setFontColor(const QColor & color);
     void setBackgroundColor(const QColor & color);
+
+    /**
+     * Sets the palette with colors to be used by the editor for new and
+     * existing notes the next time note editor page is loaded.
+     *
+     * NOTE: the method might not have immediate effect on the already open note
+     * editor page, reloading might be required.
+     *
+     * Colors within the palette and their usage:
+     * 1. WindowText - used as default font color
+     * 2. Base - used as default background color
+     * 3. HighlightedText - used as font color for selected text
+     * 4. Highlight - used as background color for selected text
+     *
+     * @param pal           The palette to be set. Valid colors from the palette
+     *                      are persisted and used by all NoteEditor objects
+     *                      the next time they load note pages. Invalid colors
+     *                      are taken from widget's palette.
+     */
+    void setDefaultPalette(const QPalette & pal);
 
     void insertHorizontalLine();
 
