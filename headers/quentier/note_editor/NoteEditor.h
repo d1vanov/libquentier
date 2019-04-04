@@ -240,11 +240,9 @@ public Q_SLOTS:
     void setBackgroundColor(const QColor & color);
 
     /**
-     * Sets the palette with colors to be used by the editor for new and
-     * existing notes the next time note editor page is loaded.
-     *
-     * NOTE: the method might not have immediate effect on the already open note
-     * editor page, reloading might be required.
+     * Sets the palette with colors to be used by the editor. Might not have
+     * immediate effect: colors would be applied the next time note editor page
+     * is loaded.
      *
      * Colors within the palette and their usage:
      * 1. WindowText - used as default font color
@@ -252,10 +250,9 @@ public Q_SLOTS:
      * 3. HighlightedText - used as font color for selected text
      * 4. Highlight - used as background color for selected text
      *
-     * @param pal           The palette to be set. Valid colors from the palette
-     *                      are persisted and used by all NoteEditor objects
-     *                      the next time they load note pages. Invalid colors
-     *                      are taken from widget's palette.
+     * @param pal           The palette to be set. Invalid colors from it are
+     *                      substituted by colors from widget's palette by
+     *                      the editor
      */
     void setDefaultPalette(const QPalette & pal);
 

@@ -259,6 +259,7 @@ NoteEditorPrivate::NoteEditorPrivate(NoteEditor & noteEditor) :
     m_pendingIndexHtmlWritingToFile(false),
     m_pendingJavaScriptExecution(false),
     m_skipPushingUndoCommandOnNextContentChange(false),
+    m_pPalette(),
     m_pNote(),
     m_pNotebook(),
     m_modified(false),
@@ -7312,55 +7313,27 @@ QPalette NoteEditorPrivate::defaultPalette() const
 {
     QPalette pal = palette();
 
-    if (!m_pAccount.isNull())
+    if (!m_pPalette.isNull())
     {
-        ApplicationSettings appSettings(*m_pAccount, NOTE_EDITOR_SETTINGS_NAME);
-        appSettings.beginGroup(NOTE_EDITOR_DEFAULT_COLORS_GROUP_KEY);
-
-        QVariant defaultFontColorVal =
-            appSettings.value(NOTE_EDITOR_DEFAULT_FONT_COLOR_KEY);
-        if (!defaultFontColorVal.isNull() && defaultFontColorVal.isValid())
-        {
-            QColor color = QColor(defaultFontColorVal.toString());
-            if (color.isValid()) {
-                pal.setColor(QPalette::WindowText, color);
-            }
+        QColor fontColor = m_pPalette->color(QPalette::WindowText);
+        if (fontColor.isValid()) {
+            pal.setColor(QPalette::WindowText, fontColor);
         }
 
-        QVariant defaultBackgroundColorVal =
-            appSettings.value(NOTE_EDITOR_DEFAULT_BACKGROUND_COLOR_KEY);
-        if (!defaultBackgroundColorVal.isNull() &&
-            defaultBackgroundColorVal.isValid())
-        {
-            QColor color = QColor(defaultBackgroundColorVal.toString());
-            if (color.isValid()) {
-                pal.setColor(QPalette::Base, color);
-            }
+        QColor backgroundColor = m_pPalette->color(QPalette::Base);
+        if (backgroundColor.isValid()) {
+            pal.setColor(QPalette::Base, backgroundColor);
         }
 
-        QVariant defaultHighlightColorVal =
-            appSettings.value(NOTE_EDITOR_DEFAULT_HIGHLIGHT_COLOR_KEY);
-        if (!defaultHighlightColorVal.isNull() &&
-            defaultHighlightColorVal.isValid())
-        {
-            QColor color = QColor(defaultHighlightColorVal.toString());
-            if (color.isValid()) {
-                pal.setColor(QPalette::Highlight, color);
-            }
+        QColor highlightColor = m_pPalette->color(QPalette::Highlight);
+        if (highlightColor.isValid()) {
+            pal.setColor(QPalette::Highlight, highlightColor);
         }
 
-        QVariant defaultHighlightedTextColorVal =
-            appSettings.value(NOTE_EDITOR_DEFAULT_HIGHLIGHT_TEXT_COLOR_KEY);
-        if (!defaultHighlightedTextColorVal.isNull() &&
-            defaultHighlightedTextColorVal.isValid())
-        {
-            QColor color = QColor(defaultHighlightedTextColorVal.toString());
-            if (color.isValid()) {
-                pal.setColor(QPalette::HighlightedText, color);
-            }
+        QColor highlightedTextColor = m_pPalette->color(QPalette::HighlightedText);
+        if (highlightedTextColor.isValid()) {
+            pal.setColor(QPalette::HighlightedText, highlightedTextColor);
         }
-
-        appSettings.endGroup();
     }
 
     return pal;
@@ -7370,48 +7343,12 @@ void NoteEditorPrivate::setDefaultPalette(const QPalette & pal)
 {
     QNINFO(QStringLiteral("NoteEditorPrivate::setDefaultPalette"));
 
-    CHECK_ACCOUNT(QT_TR_NOOP("Can't save default font color"));
-
-    ApplicationSettings appSettings(*m_pAccount, NOTE_EDITOR_SETTINGS_NAME);
-    appSettings.beginGroup(NOTE_EDITOR_DEFAULT_COLORS_GROUP_KEY);
-
-    QColor defaultFontColor = pal.color(QPalette::WindowText);
-    if (defaultFontColor.isValid()) {
-        appSettings.setValue(NOTE_EDITOR_DEFAULT_FONT_COLOR_KEY,
-                             defaultFontColor.name());
+    if (m_pPalette.isNull()) {
+        m_pPalette.reset(new QPalette(pal));
     }
     else {
-        appSettings.remove(NOTE_EDITOR_DEFAULT_FONT_COLOR_KEY);
+        *m_pPalette = pal;
     }
-
-    QColor defaultBackgroundColor = pal.color(QPalette::Base);
-    if (defaultBackgroundColor.isValid()) {
-        appSettings.setValue(NOTE_EDITOR_DEFAULT_BACKGROUND_COLOR_KEY,
-                             defaultBackgroundColor.name());
-    }
-    else {
-        appSettings.remove(NOTE_EDITOR_DEFAULT_BACKGROUND_COLOR_KEY);
-    }
-
-    QColor defaultHighlightColor = pal.color(QPalette::Highlight);
-    if (defaultHighlightColor.isValid()) {
-        appSettings.setValue(NOTE_EDITOR_DEFAULT_HIGHLIGHT_COLOR_KEY,
-                             defaultHighlightColor.name());
-    }
-    else {
-        appSettings.remove(NOTE_EDITOR_DEFAULT_HIGHLIGHT_COLOR_KEY);
-    }
-
-    QColor defaultHighlightedTextColor = pal.color(QPalette::HighlightedText);
-    if (defaultHighlightedTextColor.isValid()) {
-        appSettings.setValue(NOTE_EDITOR_DEFAULT_HIGHLIGHT_TEXT_COLOR_KEY,
-                             defaultHighlightedTextColor.name());
-    }
-    else {
-        appSettings.remove(NOTE_EDITOR_DEFAULT_HIGHLIGHT_TEXT_COLOR_KEY);
-    }
-
-    appSettings.endGroup();
 }
 
 void NoteEditorPrivate::insertHorizontalLine()

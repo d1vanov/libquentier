@@ -863,6 +863,8 @@ private:
 
     bool        m_skipPushingUndoCommandOnNextContentChange;
 
+    QScopedPointer<QPalette>    m_pPalette;
+
     QScopedPointer<Note>        m_pNote;
     QScopedPointer<Notebook>    m_pNotebook;
 

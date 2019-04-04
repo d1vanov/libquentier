@@ -30,19 +30,4 @@
 #define NOTE_EDITOR_REMEMBER_PASSPHRASE_FOR_SESSION_KEY \
     QStringLiteral("Encryption/rememberPassphraseForSession")
 
-#define NOTE_EDITOR_DEFAULT_COLORS_GROUP_KEY \
-    QStringLiteral("DefaultColors")
-
-#define NOTE_EDITOR_DEFAULT_FONT_COLOR_KEY \
-    QStringLiteral("DefaultFontColor")
-
-#define NOTE_EDITOR_DEFAULT_BACKGROUND_COLOR_KEY \
-    QStringLiteral("DefaultBackgroundColor")
-
-#define NOTE_EDITOR_DEFAULT_HIGHLIGHT_COLOR_KEY \
-    QStringLiteral("DefaultHighlightColor")
-
-#define NOTE_EDITOR_DEFAULT_HIGHLIGHT_TEXT_COLOR_KEY \
-    QStringLiteral("DefaultHighlightTextColor")
-
 #endif // LIB_QUENTIER_NOTE_EDITOR_SETTINGS_NAME_H
