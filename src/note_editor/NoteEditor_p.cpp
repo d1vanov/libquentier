@@ -283,6 +283,7 @@ NoteEditorPrivate::NoteEditorPrivate(NoteEditor & noteEditor) :
     m_pendingJavaScriptExecution(false),
     m_skipPushingUndoCommandOnNextContentChange(false),
     m_noteLocalUid(),
+    m_pPalette(),
     m_pNote(),
     m_pNotebook(),
     m_needConversionToNote(false),
@@ -4328,10 +4329,7 @@ void NoteEditorPrivate::noteToEditorContent()
         return;
     }
 
-    QString pagePrefix = NOTE_EDITOR_PAGE_HEADER;
-    pagePrefix += NOTE_EDITOR_PAGE_CSS;
-    pagePrefix += QStringLiteral("<title></title></head>");
-
+    QString pagePrefix = noteEditorPagePrefix();
     m_htmlCachedMemory.replace(0, bodyTagIndex, pagePrefix);
 
     int bodyClosingTagIndex = m_htmlCachedMemory.indexOf(QStringLiteral("</body>"));
@@ -4384,9 +4382,8 @@ void NoteEditorPrivate::inkNoteToEditorContent()
     QList<Resource> resources = m_pNote->resources();
     const int numResources = resources.size();
 
-    QString inkNoteHtml = NOTE_EDITOR_PAGE_HEADER;
-    inkNoteHtml += NOTE_EDITOR_PAGE_CSS;
-    inkNoteHtml += QStringLiteral("<title></title></head><body>");
+    QString inkNoteHtml = noteEditorPagePrefix();
+    inkNoteHtml += QStringLiteral("<body>");
 
     for(int i = 0; i < numResources; ++i)
     {
@@ -4451,9 +4448,8 @@ void NoteEditorPrivate::inkNoteToEditorContent()
     }
 
     if (problemDetected) {
-        inkNoteHtml = NOTE_EDITOR_PAGE_HEADER;
-        inkNoteHtml += NOTE_EDITOR_PAGE_CSS;
-        inkNoteHtml += QStringLiteral("<title></title></head><body><div>");
+        inkNoteHtml = noteEditorPagePrefix();
+        inkNoteHtml += QStringLiteral("<body><div>");
         inkNoteHtml += tr("The read-only ink note image should have been present "
                           "here but something went wrong so the image is not "
                           "accessible");
@@ -4655,13 +4651,13 @@ void NoteEditorPrivate::manualSaveResourceToFile(const Resource & resource)
         ApplicationSettings appSettings(*m_pAccount, NOTE_EDITOR_SETTINGS_NAME);
         QStringList childGroups = appSettings.childGroups();
         int attachmentsSaveLocGroupIndex =
-            childGroups.indexOf(QStringLiteral("AttachmentSaveLocations"));
+            childGroups.indexOf(NOTE_EDITOR_ATTACHMENT_SAVE_LOCATIONS_KEY);
         if (attachmentsSaveLocGroupIndex >= 0)
         {
             QNTRACE(QStringLiteral("Found cached attachment save location group "
                                    "within application settings"));
 
-            appSettings.beginGroup(QStringLiteral("AttachmentSaveLocations"));
+            appSettings.beginGroup(NOTE_EDITOR_ATTACHMENT_SAVE_LOCATIONS_KEY);
             QStringList cachedFileSuffixes = appSettings.childKeys();
             const int numPreferredSuffixes = preferredSuffixes.size();
             for(int i = 0; i < numPreferredSuffixes; ++i)
@@ -6308,6 +6304,31 @@ void NoteEditorPrivate::setupTextCursorPositionJavaScriptHandlerConnections()
                      q, QNSIGNAL(NoteEditor,textFontSizeChanged,int));
 }
 
+QString NoteEditorPrivate::noteEditorPagePrefix() const
+{
+    QString prefix = NOTE_EDITOR_PAGE_HEADER;
+    prefix += NOTE_EDITOR_PAGE_CSS;
+    prefix += QStringLiteral(
+        "<title></title></head>"
+        "<style type=\"text/css\">"
+        "body { color: ");
+
+    QPalette pal = defaultPalette();
+
+    prefix += pal.color(QPalette::WindowText).name();
+    prefix += QStringLiteral("; background-color: ");
+    prefix += pal.color(QPalette::Base).name();
+
+    prefix += QStringLiteral(";} ::selection { background: ");
+    prefix += pal.color(QPalette::Highlight).name();
+    prefix += QStringLiteral("; color: ");
+    prefix += pal.color(QPalette::HighlightedText).name();
+
+    prefix += QStringLiteral("; }</style>");
+
+    return prefix;
+}
+
 void NoteEditorPrivate::setupSkipRulesForHtmlToEnmlConversion()
 {
     QNDEBUG(QStringLiteral("NoteEditorPrivate::setupSkipRulesForHtmlToEnmlConversion"));
@@ -7585,11 +7606,7 @@ bool NoteEditorPrivate::print(QPrinter & printer, ErrorString & errorDescription
         return false;
     }
 
-    QString pagePrefix = NOTE_EDITOR_PAGE_HEADER;
-    pagePrefix += NOTE_EDITOR_PAGE_CSS;
-    pagePrefix += QStringLiteral("<title></title></head>");
-
-    preprocessedHtml.replace(0, bodyOpeningTagEndIndex, pagePrefix);
+    preprocessedHtml.replace(0, bodyOpeningTagEndIndex, noteEditorPagePrefix());
 
     int bodyClosingTagIndex = preprocessedHtml.indexOf(QStringLiteral("</body>"),
                                                        bodyOpeningTagEndIndex);
@@ -9503,6 +9520,48 @@ void NoteEditorPrivate::setBackgroundColor(const QColor & color)
     }
 }
 
+QPalette NoteEditorPrivate::defaultPalette() const
+{
+    QPalette pal = palette();
+
+    if (!m_pPalette.isNull())
+    {
+        QColor fontColor = m_pPalette->color(QPalette::WindowText);
+        if (fontColor.isValid()) {
+            pal.setColor(QPalette::WindowText, fontColor);
+        }
+
+        QColor backgroundColor = m_pPalette->color(QPalette::Base);
+        if (backgroundColor.isValid()) {
+            pal.setColor(QPalette::Base, backgroundColor);
+        }
+
+        QColor highlightColor = m_pPalette->color(QPalette::Highlight);
+        if (highlightColor.isValid()) {
+            pal.setColor(QPalette::Highlight, highlightColor);
+        }
+
+        QColor highlightedTextColor = m_pPalette->color(QPalette::HighlightedText);
+        if (highlightedTextColor.isValid()) {
+            pal.setColor(QPalette::HighlightedText, highlightedTextColor);
+        }
+    }
+
+    return pal;
+}
+
+void NoteEditorPrivate::setDefaultPalette(const QPalette & pal)
+{
+    QNINFO(QStringLiteral("NoteEditorPrivate::setDefaultPalette"));
+
+    if (m_pPalette.isNull()) {
+        m_pPalette.reset(new QPalette(pal));
+    }
+    else {
+        *m_pPalette = pal;
+    }
+}
+
 void NoteEditorPrivate::insertHorizontalLine()
 {
     QNDEBUG(QStringLiteral("NoteEditorPrivate::insertHorizontalLine"));
@@ -9743,7 +9802,7 @@ void NoteEditorPrivate::addAttachmentDialog()
 
     ApplicationSettings appSettings(*m_pAccount, NOTE_EDITOR_SETTINGS_NAME);
     QVariant lastAttachmentAddLocation =
-        appSettings.value(NOTE_EDITOR_LAST_ATTACHMENT_ADD_LOCATION);
+        appSettings.value(NOTE_EDITOR_LAST_ATTACHMENT_ADD_LOCATION_KEY);
     if (!lastAttachmentAddLocation.isNull() && lastAttachmentAddLocation.isValid())
     {
         QNTRACE(QStringLiteral("Found last attachment add location: ")
@@ -9780,9 +9839,8 @@ void NoteEditorPrivate::addAttachmentDialog()
 
     QFileInfo fileInfo(absoluteFilePath);
     QString absoluteDirPath = fileInfo.absoluteDir().absolutePath();
-    if (!absoluteDirPath.isEmpty())
-    {
-        appSettings.setValue(NOTE_EDITOR_LAST_ATTACHMENT_ADD_LOCATION,
+    if (!absoluteDirPath.isEmpty()) {
+        appSettings.setValue(NOTE_EDITOR_LAST_ATTACHMENT_ADD_LOCATION_KEY,
                              absoluteDirPath);
         QNTRACE(QStringLiteral("Updated last attachment add location to ")
                 << absoluteDirPath);
