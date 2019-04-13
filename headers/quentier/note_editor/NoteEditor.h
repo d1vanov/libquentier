@@ -240,9 +240,9 @@ public Q_SLOTS:
     void setBackgroundColor(const QColor & color);
 
     /**
-     * Sets the palette with colors to be used by the editor. Might not have
-     * immediate effect: colors would be applied the next time note editor page
-     * is loaded.
+     * Sets the palette with colors to be used by the editor. New colors are
+     * applied after the note is fully loaded. If no note is set to the editor,
+     * the palette is simply remembered for the next note to be loaded into it.
      *
      * Colors within the palette and their usage:
      * 1. WindowText - used as default font color
