@@ -27,7 +27,7 @@
 #include <QPrinter>
 #include <QStringList>
 #include <QThread>
-#include <QColor>
+#include <QPalette>
 
 QT_FORWARD_DECLARE_CLASS(QUndoStack)
 
