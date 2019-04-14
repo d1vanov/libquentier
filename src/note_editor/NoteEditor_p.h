@@ -761,6 +761,7 @@ private:
     QString noteNotFoundPageHtml() const;
     QString noteDeletedPageHtml() const;
     QString noteEditorPagePrefix() const;
+    QString bodyStyleCss() const;
     QString initialPageHtml() const;
     QString composeBlankPageHtml(const QString & rawText) const;
 
@@ -803,6 +804,9 @@ private:
 
     void onSpellCheckSetOrCleared(
         const QVariant & dummy, const QVector<QPair<QString,QString> > & extraData);
+
+    void replaceDefaultPalette();
+    void onDefaultPaletteReplaced(const QVariant & data, const QVector<QPair<QString,QString> > & extraData);
 
     bool isNoteReadOnly() const;
 
@@ -1032,6 +1036,7 @@ private:
     QString     m_disablePasteJs;
     QString     m_findAndReplaceDOMTextJs;
     QString     m_tabAndShiftTabIndentAndUnindentReplacerJs;
+    QString     m_replaceStyleJs;
 
 #ifndef QUENTIER_USE_QT_WEB_ENGINE
     QString     m_qWebKitSetupJs;
@@ -1136,6 +1141,8 @@ private:
 
     bool        m_pendingIndexHtmlWritingToFile;
     bool        m_pendingJavaScriptExecution;
+
+    bool        m_pendingDefaultPaletteReplacement;
 
     bool        m_skipPushingUndoCommandOnNextContentChange;
 

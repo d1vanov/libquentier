@@ -220,6 +220,7 @@ NoteEditorPrivate::NoteEditorPrivate(NoteEditor & noteEditor) :
     m_disablePasteJs(),
     m_findAndReplaceDOMTextJs(),
     m_tabAndShiftTabIndentAndUnindentReplacerJs(),
+    m_replaceStyleJs(),
 #ifndef QUENTIER_USE_QT_WEB_ENGINE
     m_qWebKitSetupJs(),
 #else
@@ -281,6 +282,7 @@ NoteEditorPrivate::NoteEditorPrivate(NoteEditor & noteEditor) :
     m_pendingNextPageUrl(),
     m_pendingIndexHtmlWritingToFile(false),
     m_pendingJavaScriptExecution(false),
+    m_pendingDefaultPaletteReplacement(false),
     m_skipPushingUndoCommandOnNextContentChange(false),
     m_noteLocalUid(),
     m_pPalette(),
@@ -556,6 +558,7 @@ void NoteEditorPrivate::onNoteLoadFinished(bool ok)
     page->executeJavaScript(m_spellCheckerJs);
     page->executeJavaScript(m_managedPageActionJs);
     page->executeJavaScript(m_findAndReplaceDOMTextJs);
+    page->executeJavaScript(m_replaceStyleJs);
 
     if (m_isPageEditable) {
         QNTRACE(QStringLiteral("Note page is editable"));
@@ -1037,6 +1040,11 @@ void NoteEditorPrivate::onJavaScriptLoaded()
 
         QNTRACE(QStringLiteral("Emitting noteLoaded signal"));
         Q_EMIT noteLoaded();
+    }
+
+    if (m_pendingDefaultPaletteReplacement) {
+        m_pendingDefaultPaletteReplacement = false;
+        replaceDefaultPalette();
     }
 }
 
@@ -5842,6 +5850,7 @@ void NoteEditorPrivate::setupScripts()
                  m_findAndReplaceDOMTextJs);
     SETUP_SCRIPT("javascript/scripts/tabAndShiftTabToIndentAndUnindentReplacer.js",
                  m_tabAndShiftTabIndentAndUnindentReplacerJs);
+    SETUP_SCRIPT("javascript/scripts/replaceStyle.js", m_replaceStyleJs);
 
 #ifndef QUENTIER_USE_QT_WEB_ENGINE
     SETUP_SCRIPT("javascript/scripts/qWebKitSetup.js", m_qWebKitSetupJs);
@@ -6310,23 +6319,30 @@ QString NoteEditorPrivate::noteEditorPagePrefix() const
     prefix += NOTE_EDITOR_PAGE_CSS;
     prefix += QStringLiteral(
         "<title></title></head>"
-        "<style type=\"text/css\">"
-        "body { color: ");
+        "<style id=\"bodyStyleTag\" type=\"text/css\">");
+    prefix += bodyStyleCss();
+    prefix += QStringLiteral("</style>");
+
+    return prefix;
+}
+
+QString NoteEditorPrivate::bodyStyleCss() const
+{
+    QString css = QStringLiteral("body { color: ");
 
     QPalette pal = defaultPalette();
 
-    prefix += pal.color(QPalette::WindowText).name();
-    prefix += QStringLiteral("; background-color: ");
-    prefix += pal.color(QPalette::Base).name();
+    css += pal.color(QPalette::WindowText).name();
+    css += QStringLiteral("; background-color: ");
+    css += pal.color(QPalette::Base).name();
 
-    prefix += QStringLiteral(";} ::selection { background: ");
-    prefix += pal.color(QPalette::Highlight).name();
-    prefix += QStringLiteral("; color: ");
-    prefix += pal.color(QPalette::HighlightedText).name();
+    css += QStringLiteral(";} ::selection { background: ");
+    css += pal.color(QPalette::Highlight).name();
+    css += QStringLiteral("; color: ");
+    css += pal.color(QPalette::HighlightedText).name();
 
-    prefix += QStringLiteral("; }</style>");
-
-    return prefix;
+    css += QStringLiteral("; }");
+    return css;
 }
 
 void NoteEditorPrivate::setupSkipRulesForHtmlToEnmlConversion()
@@ -7120,6 +7136,57 @@ void NoteEditorPrivate::onSpellCheckSetOrCleared(
         NoteEditorCallbackFunctor<QString>(
             this, &NoteEditorPrivate::onPageHtmlReceived));
 #endif
+}
+
+void NoteEditorPrivate::replaceDefaultPalette()
+{
+    QNDEBUG(QStringLiteral("NoteEditorPrivate::replaceDefaultPalette"));
+
+    QString css = bodyStyleCss();
+    escapeStringForJavaScript(css);
+
+    QString javascript = QString::fromUtf8("replaceStyle('%1');").arg(css);
+    QNTRACE(QStringLiteral("Script: ") << javascript);
+
+    GET_PAGE()
+    page->executeJavaScript(javascript, NoteEditorCallbackFunctor<QVariant>(this, &NoteEditorPrivate::onDefaultPaletteReplaced));
+}
+
+void NoteEditorPrivate::onDefaultPaletteReplaced(const QVariant & data,
+                                                 const QVector<QPair<QString,QString> > & extraData)
+{
+    QNDEBUG(QStringLiteral("NoteEditorPrivate::onDefaultPaletteReplaced: ") << data);
+
+    Q_UNUSED(extraData)
+
+    QMap<QString,QVariant> resultMap = data.toMap();
+
+    auto statusIt = resultMap.find(QStringLiteral("status"));
+    if (Q_UNLIKELY(statusIt == resultMap.end())) {
+        ErrorString error(QT_TR_NOOP("Can't parse the result of default palette replacing from JavaScript"));
+        QNWARNING(error);
+        Q_EMIT notifyError(error);
+        return;
+    }
+
+    bool res = statusIt.value().toBool();
+    if (!res)
+    {
+        ErrorString error;
+
+        auto errorIt = resultMap.find(QStringLiteral("error"));
+        if (Q_UNLIKELY(errorIt == resultMap.end())) {
+            error.setBase(QT_TR_NOOP("Can't parse the error of default palette replacing from JavaScript"));
+        }
+        else {
+            error.setBase(QT_TR_NOOP("Can't replace default palette"));
+            error.details() = errorIt.value().toString();
+        }
+
+        QNWARNING(error);
+        Q_EMIT notifyError(error);
+        return;
+    }
 }
 
 bool NoteEditorPrivate::isNoteReadOnly() const
@@ -9554,12 +9621,30 @@ void NoteEditorPrivate::setDefaultPalette(const QPalette & pal)
 {
     QNINFO(QStringLiteral("NoteEditorPrivate::setDefaultPalette"));
 
-    if (m_pPalette.isNull()) {
+    if (m_pPalette.isNull())
+    {
         m_pPalette.reset(new QPalette(pal));
     }
-    else {
+    else
+    {
+        if (*m_pPalette == pal) {
+            QNTRACE(QStringLiteral("Palette did not change"));
+            return;
+        }
+
         *m_pPalette = pal;
     }
+
+    if (Q_UNLIKELY(m_pNote.isNull())) {
+        return;
+    }
+
+    if (m_pendingNotePageLoad || m_pendingIndexHtmlWritingToFile || m_pendingJavaScriptExecution) {
+        m_pendingDefaultPaletteReplacement = true;
+        return;
+    }
+
+    replaceDefaultPalette();
 }
 
 void NoteEditorPrivate::insertHorizontalLine()
