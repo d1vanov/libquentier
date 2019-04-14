@@ -220,6 +220,7 @@ NoteEditorPrivate::NoteEditorPrivate(NoteEditor & noteEditor) :
     m_disablePasteJs(),
     m_findAndReplaceDOMTextJs(),
     m_tabAndShiftTabIndentAndUnindentReplacerJs(),
+    m_replaceStyleJs(),
 #ifndef QUENTIER_USE_QT_WEB_ENGINE
     m_qWebKitSetupJs(),
 #else
@@ -281,8 +282,10 @@ NoteEditorPrivate::NoteEditorPrivate(NoteEditor & noteEditor) :
     m_pendingNextPageUrl(),
     m_pendingIndexHtmlWritingToFile(false),
     m_pendingJavaScriptExecution(false),
+    m_pendingDefaultPaletteReplacement(false),
     m_skipPushingUndoCommandOnNextContentChange(false),
     m_noteLocalUid(),
+    m_pPalette(),
     m_pNote(),
     m_pNotebook(),
     m_needConversionToNote(false),
@@ -555,6 +558,7 @@ void NoteEditorPrivate::onNoteLoadFinished(bool ok)
     page->executeJavaScript(m_spellCheckerJs);
     page->executeJavaScript(m_managedPageActionJs);
     page->executeJavaScript(m_findAndReplaceDOMTextJs);
+    page->executeJavaScript(m_replaceStyleJs);
 
     if (m_isPageEditable) {
         QNTRACE(QStringLiteral("Note page is editable"));
@@ -1036,6 +1040,11 @@ void NoteEditorPrivate::onJavaScriptLoaded()
 
         QNTRACE(QStringLiteral("Emitting noteLoaded signal"));
         Q_EMIT noteLoaded();
+    }
+
+    if (m_pendingDefaultPaletteReplacement) {
+        m_pendingDefaultPaletteReplacement = false;
+        replaceDefaultPalette();
     }
 }
 
@@ -4328,10 +4337,7 @@ void NoteEditorPrivate::noteToEditorContent()
         return;
     }
 
-    QString pagePrefix = NOTE_EDITOR_PAGE_HEADER;
-    pagePrefix += NOTE_EDITOR_PAGE_CSS;
-    pagePrefix += QStringLiteral("<title></title></head>");
-
+    QString pagePrefix = noteEditorPagePrefix();
     m_htmlCachedMemory.replace(0, bodyTagIndex, pagePrefix);
 
     int bodyClosingTagIndex = m_htmlCachedMemory.indexOf(QStringLiteral("</body>"));
@@ -4384,9 +4390,8 @@ void NoteEditorPrivate::inkNoteToEditorContent()
     QList<Resource> resources = m_pNote->resources();
     const int numResources = resources.size();
 
-    QString inkNoteHtml = NOTE_EDITOR_PAGE_HEADER;
-    inkNoteHtml += NOTE_EDITOR_PAGE_CSS;
-    inkNoteHtml += QStringLiteral("<title></title></head><body>");
+    QString inkNoteHtml = noteEditorPagePrefix();
+    inkNoteHtml += QStringLiteral("<body>");
 
     for(int i = 0; i < numResources; ++i)
     {
@@ -4451,9 +4456,8 @@ void NoteEditorPrivate::inkNoteToEditorContent()
     }
 
     if (problemDetected) {
-        inkNoteHtml = NOTE_EDITOR_PAGE_HEADER;
-        inkNoteHtml += NOTE_EDITOR_PAGE_CSS;
-        inkNoteHtml += QStringLiteral("<title></title></head><body><div>");
+        inkNoteHtml = noteEditorPagePrefix();
+        inkNoteHtml += QStringLiteral("<body><div>");
         inkNoteHtml += tr("The read-only ink note image should have been present "
                           "here but something went wrong so the image is not "
                           "accessible");
@@ -4655,13 +4659,13 @@ void NoteEditorPrivate::manualSaveResourceToFile(const Resource & resource)
         ApplicationSettings appSettings(*m_pAccount, NOTE_EDITOR_SETTINGS_NAME);
         QStringList childGroups = appSettings.childGroups();
         int attachmentsSaveLocGroupIndex =
-            childGroups.indexOf(QStringLiteral("AttachmentSaveLocations"));
+            childGroups.indexOf(NOTE_EDITOR_ATTACHMENT_SAVE_LOCATIONS_KEY);
         if (attachmentsSaveLocGroupIndex >= 0)
         {
             QNTRACE(QStringLiteral("Found cached attachment save location group "
                                    "within application settings"));
 
-            appSettings.beginGroup(QStringLiteral("AttachmentSaveLocations"));
+            appSettings.beginGroup(NOTE_EDITOR_ATTACHMENT_SAVE_LOCATIONS_KEY);
             QStringList cachedFileSuffixes = appSettings.childKeys();
             const int numPreferredSuffixes = preferredSuffixes.size();
             for(int i = 0; i < numPreferredSuffixes; ++i)
@@ -5846,6 +5850,7 @@ void NoteEditorPrivate::setupScripts()
                  m_findAndReplaceDOMTextJs);
     SETUP_SCRIPT("javascript/scripts/tabAndShiftTabToIndentAndUnindentReplacer.js",
                  m_tabAndShiftTabIndentAndUnindentReplacerJs);
+    SETUP_SCRIPT("javascript/scripts/replaceStyle.js", m_replaceStyleJs);
 
 #ifndef QUENTIER_USE_QT_WEB_ENGINE
     SETUP_SCRIPT("javascript/scripts/qWebKitSetup.js", m_qWebKitSetupJs);
@@ -6306,6 +6311,38 @@ void NoteEditorPrivate::setupTextCursorPositionJavaScriptHandlerConnections()
                      q, QNSIGNAL(NoteEditor,textFontFamilyChanged,QString));
     QObject::connect(this, QNSIGNAL(NoteEditorPrivate,textFontSizeChanged,int),
                      q, QNSIGNAL(NoteEditor,textFontSizeChanged,int));
+}
+
+QString NoteEditorPrivate::noteEditorPagePrefix() const
+{
+    QString prefix = NOTE_EDITOR_PAGE_HEADER;
+    prefix += NOTE_EDITOR_PAGE_CSS;
+    prefix += QStringLiteral(
+        "<title></title></head>"
+        "<style id=\"bodyStyleTag\" type=\"text/css\">");
+    prefix += bodyStyleCss();
+    prefix += QStringLiteral("</style>");
+
+    return prefix;
+}
+
+QString NoteEditorPrivate::bodyStyleCss() const
+{
+    QString css = QStringLiteral("body { color: ");
+
+    QPalette pal = defaultPalette();
+
+    css += pal.color(QPalette::WindowText).name();
+    css += QStringLiteral("; background-color: ");
+    css += pal.color(QPalette::Base).name();
+
+    css += QStringLiteral(";} ::selection { background: ");
+    css += pal.color(QPalette::Highlight).name();
+    css += QStringLiteral("; color: ");
+    css += pal.color(QPalette::HighlightedText).name();
+
+    css += QStringLiteral("; }");
+    return css;
 }
 
 void NoteEditorPrivate::setupSkipRulesForHtmlToEnmlConversion()
@@ -7101,6 +7138,57 @@ void NoteEditorPrivate::onSpellCheckSetOrCleared(
 #endif
 }
 
+void NoteEditorPrivate::replaceDefaultPalette()
+{
+    QNDEBUG(QStringLiteral("NoteEditorPrivate::replaceDefaultPalette"));
+
+    QString css = bodyStyleCss();
+    escapeStringForJavaScript(css);
+
+    QString javascript = QString::fromUtf8("replaceStyle('%1');").arg(css);
+    QNTRACE(QStringLiteral("Script: ") << javascript);
+
+    GET_PAGE()
+    page->executeJavaScript(javascript, NoteEditorCallbackFunctor<QVariant>(this, &NoteEditorPrivate::onDefaultPaletteReplaced));
+}
+
+void NoteEditorPrivate::onDefaultPaletteReplaced(const QVariant & data,
+                                                 const QVector<QPair<QString,QString> > & extraData)
+{
+    QNDEBUG(QStringLiteral("NoteEditorPrivate::onDefaultPaletteReplaced: ") << data);
+
+    Q_UNUSED(extraData)
+
+    QMap<QString,QVariant> resultMap = data.toMap();
+
+    auto statusIt = resultMap.find(QStringLiteral("status"));
+    if (Q_UNLIKELY(statusIt == resultMap.end())) {
+        ErrorString error(QT_TR_NOOP("Can't parse the result of default palette replacing from JavaScript"));
+        QNWARNING(error);
+        Q_EMIT notifyError(error);
+        return;
+    }
+
+    bool res = statusIt.value().toBool();
+    if (!res)
+    {
+        ErrorString error;
+
+        auto errorIt = resultMap.find(QStringLiteral("error"));
+        if (Q_UNLIKELY(errorIt == resultMap.end())) {
+            error.setBase(QT_TR_NOOP("Can't parse the error of default palette replacing from JavaScript"));
+        }
+        else {
+            error.setBase(QT_TR_NOOP("Can't replace default palette"));
+            error.details() = errorIt.value().toString();
+        }
+
+        QNWARNING(error);
+        Q_EMIT notifyError(error);
+        return;
+    }
+}
+
 bool NoteEditorPrivate::isNoteReadOnly() const
 {
     QNDEBUG(QStringLiteral("NoteEditorPrivate::isNoteReadOnly"));
@@ -7585,11 +7673,7 @@ bool NoteEditorPrivate::print(QPrinter & printer, ErrorString & errorDescription
         return false;
     }
 
-    QString pagePrefix = NOTE_EDITOR_PAGE_HEADER;
-    pagePrefix += NOTE_EDITOR_PAGE_CSS;
-    pagePrefix += QStringLiteral("<title></title></head>");
-
-    preprocessedHtml.replace(0, bodyOpeningTagEndIndex, pagePrefix);
+    preprocessedHtml.replace(0, bodyOpeningTagEndIndex, noteEditorPagePrefix());
 
     int bodyClosingTagIndex = preprocessedHtml.indexOf(QStringLiteral("</body>"),
                                                        bodyOpeningTagEndIndex);
@@ -9503,6 +9587,66 @@ void NoteEditorPrivate::setBackgroundColor(const QColor & color)
     }
 }
 
+QPalette NoteEditorPrivate::defaultPalette() const
+{
+    QPalette pal = palette();
+
+    if (!m_pPalette.isNull())
+    {
+        QColor fontColor = m_pPalette->color(QPalette::WindowText);
+        if (fontColor.isValid()) {
+            pal.setColor(QPalette::WindowText, fontColor);
+        }
+
+        QColor backgroundColor = m_pPalette->color(QPalette::Base);
+        if (backgroundColor.isValid()) {
+            pal.setColor(QPalette::Base, backgroundColor);
+        }
+
+        QColor highlightColor = m_pPalette->color(QPalette::Highlight);
+        if (highlightColor.isValid()) {
+            pal.setColor(QPalette::Highlight, highlightColor);
+        }
+
+        QColor highlightedTextColor = m_pPalette->color(QPalette::HighlightedText);
+        if (highlightedTextColor.isValid()) {
+            pal.setColor(QPalette::HighlightedText, highlightedTextColor);
+        }
+    }
+
+    return pal;
+}
+
+void NoteEditorPrivate::setDefaultPalette(const QPalette & pal)
+{
+    QNINFO(QStringLiteral("NoteEditorPrivate::setDefaultPalette"));
+
+    if (m_pPalette.isNull())
+    {
+        m_pPalette.reset(new QPalette(pal));
+    }
+    else
+    {
+        if (*m_pPalette == pal) {
+            QNTRACE(QStringLiteral("Palette did not change"));
+            return;
+        }
+
+        *m_pPalette = pal;
+    }
+
+    if (Q_UNLIKELY(m_pNote.isNull())) {
+        return;
+    }
+
+    if (m_pendingNotePageLoad || m_pendingIndexHtmlWritingToFile || m_pendingJavaScriptExecution) {
+        m_pendingDefaultPaletteReplacement = true;
+        return;
+    }
+
+    replaceDefaultPalette();
+}
+
 void NoteEditorPrivate::insertHorizontalLine()
 {
     QNDEBUG(QStringLiteral("NoteEditorPrivate::insertHorizontalLine"));
@@ -9743,7 +9887,7 @@ void NoteEditorPrivate::addAttachmentDialog()
 
     ApplicationSettings appSettings(*m_pAccount, NOTE_EDITOR_SETTINGS_NAME);
     QVariant lastAttachmentAddLocation =
-        appSettings.value(NOTE_EDITOR_LAST_ATTACHMENT_ADD_LOCATION);
+        appSettings.value(NOTE_EDITOR_LAST_ATTACHMENT_ADD_LOCATION_KEY);
     if (!lastAttachmentAddLocation.isNull() && lastAttachmentAddLocation.isValid())
     {
         QNTRACE(QStringLiteral("Found last attachment add location: ")
@@ -9780,9 +9924,8 @@ void NoteEditorPrivate::addAttachmentDialog()
 
     QFileInfo fileInfo(absoluteFilePath);
     QString absoluteDirPath = fileInfo.absoluteDir().absolutePath();
-    if (!absoluteDirPath.isEmpty())
-    {
-        appSettings.setValue(NOTE_EDITOR_LAST_ATTACHMENT_ADD_LOCATION,
+    if (!absoluteDirPath.isEmpty()) {
+        appSettings.setValue(NOTE_EDITOR_LAST_ATTACHMENT_ADD_LOCATION_KEY,
                              absoluteDirPath);
         QNTRACE(QStringLiteral("Updated last attachment add location to ")
                 << absoluteDirPath);

@@ -21,7 +21,10 @@
 
 #define NOTE_EDITOR_SETTINGS_NAME QStringLiteral("NoteEditor")
 
-#define NOTE_EDITOR_LAST_ATTACHMENT_ADD_LOCATION \
+#define NOTE_EDITOR_ATTACHMENT_SAVE_LOCATIONS_KEY \
+    QStringLiteral("AttachmentSaveLocations")
+
+#define NOTE_EDITOR_LAST_ATTACHMENT_ADD_LOCATION_KEY \
     QStringLiteral("LastAttachmentAddLocation")
 
 #define NOTE_EDITOR_ENCRYPTION_REMEMBER_PASSWORD_FOR_SESSION \

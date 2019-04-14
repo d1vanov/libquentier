@@ -304,6 +304,16 @@ void NoteEditor::setBackgroundColor(const QColor & color)
     m_backend->setBackgroundColor(color);
 }
 
+QPalette NoteEditor::defaultPalette() const
+{
+    return m_backend->defaultPalette();
+}
+
+void NoteEditor::setDefaultPalette(const QPalette & pal)
+{
+    m_backend->setDefaultPalette(pal);
+}
+
 void NoteEditor::insertHorizontalLine()
 {
     m_backend->insertHorizontalLine();

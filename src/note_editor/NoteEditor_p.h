@@ -231,6 +231,8 @@ public:
     qint64 noteContentSize() const;
     qint64 noteSize() const;
 
+    virtual QPalette defaultPalette() const Q_DECL_OVERRIDE;
+
 public Q_SLOTS:
     // INoteEditorBackend interface
     virtual void initialize(LocalStorageManagerAsync & localStorageManager,
@@ -288,6 +290,7 @@ public Q_SLOTS:
     virtual void setFontHeight(const int height) Q_DECL_OVERRIDE;
     virtual void setFontColor(const QColor & color) Q_DECL_OVERRIDE;
     virtual void setBackgroundColor(const QColor & color) Q_DECL_OVERRIDE;
+    virtual void setDefaultPalette(const QPalette & pal) Q_DECL_OVERRIDE;
     virtual void insertHorizontalLine() Q_DECL_OVERRIDE;
     virtual void increaseFontSize() Q_DECL_OVERRIDE;
     virtual void decreaseFontSize() Q_DECL_OVERRIDE;
@@ -757,6 +760,8 @@ private:
 
     QString noteNotFoundPageHtml() const;
     QString noteDeletedPageHtml() const;
+    QString noteEditorPagePrefix() const;
+    QString bodyStyleCss() const;
     QString initialPageHtml() const;
     QString composeBlankPageHtml(const QString & rawText) const;
 
@@ -799,6 +804,9 @@ private:
 
     void onSpellCheckSetOrCleared(
         const QVariant & dummy, const QVector<QPair<QString,QString> > & extraData);
+
+    void replaceDefaultPalette();
+    void onDefaultPaletteReplaced(const QVariant & data, const QVector<QPair<QString,QString> > & extraData);
 
     bool isNoteReadOnly() const;
 
@@ -1028,6 +1036,7 @@ private:
     QString     m_disablePasteJs;
     QString     m_findAndReplaceDOMTextJs;
     QString     m_tabAndShiftTabIndentAndUnindentReplacerJs;
+    QString     m_replaceStyleJs;
 
 #ifndef QUENTIER_USE_QT_WEB_ENGINE
     QString     m_qWebKitSetupJs;
@@ -1133,9 +1142,14 @@ private:
     bool        m_pendingIndexHtmlWritingToFile;
     bool        m_pendingJavaScriptExecution;
 
+    bool        m_pendingDefaultPaletteReplacement;
+
     bool        m_skipPushingUndoCommandOnNextContentChange;
 
     QString     m_noteLocalUid;
+
+    QScopedPointer<QPalette>    m_pPalette;
+
     QScopedPointer<Note>        m_pNote;
     QScopedPointer<Notebook>    m_pNotebook;
 

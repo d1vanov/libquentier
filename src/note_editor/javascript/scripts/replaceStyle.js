@@ -16,6 +16,26 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-body {
-    background-color: white;
+// replaces the contents of the style tag in the upper part of the page
+function replaceStyle(newStyleTagContents) {
+    console.log("replaceStyle: " + newStyleTagContents);
+
+    var styleTag = document.getElementById('bodyStyleTag')
+    if (!styleTag) {
+        return {
+            status:false,
+            error:"Cannot replace style: cannot find style tag with bodyStyleTag id"
+        };
+    }
+
+    observer.stop();
+
+    try {
+        styleTag.innerHTML = newStyleTagContents;
+    }
+    finally {
+        observer.start();
+    }
+
+    return { status:true, error:"" };
 }

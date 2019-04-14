@@ -44,5 +44,6 @@
         <file>toDoCheckboxAutomaticInserter.js</file>
         <file>findAndReplaceDOMText.js</file>
         <file>tabAndShiftTabToIndentAndUnindentReplacer.js</file>
+        <file>replaceStyle.js</file>
     </qresource>
 </RCC>
