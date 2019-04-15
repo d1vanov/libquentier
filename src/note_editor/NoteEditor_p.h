@@ -211,6 +211,8 @@ public:
     qint64 noteContentSize() const;
     qint64 noteSize() const;
 
+    virtual QPalette defaultPalette() const Q_DECL_OVERRIDE;
+
 public Q_SLOTS:
     virtual void initialize(FileIOProcessorAsync & fileIOProcessorAsync,
                             SpellChecker & spellChecker,
@@ -257,6 +259,7 @@ public Q_SLOTS:
     virtual void setFontHeight(const int height) Q_DECL_OVERRIDE;
     virtual void setFontColor(const QColor & color) Q_DECL_OVERRIDE;
     virtual void setBackgroundColor(const QColor & color) Q_DECL_OVERRIDE;
+    virtual void setDefaultPalette(const QPalette & pal) Q_DECL_OVERRIDE;
     virtual void insertHorizontalLine() Q_DECL_OVERRIDE;
     virtual void increaseFontSize() Q_DECL_OVERRIDE;
     virtual void decreaseFontSize() Q_DECL_OVERRIDE;
@@ -550,6 +553,8 @@ private:
     void setupTextCursorPositionJavaScriptHandlerConnections();
     void setupSkipRulesForHtmlToEnmlConversion();
 
+    QString noteEditorPagePrefix() const;
+    QString bodyStyleCss() const;
     QString initialPageHtml() const;
 
     void determineStatesForCurrentTextCursorPosition();
@@ -582,6 +587,9 @@ private:
     void disableSpellCheck();
 
     void onSpellCheckSetOrCleared(const QVariant & dummy, const QVector<QPair<QString,QString> > & extraData);
+
+    void replaceDefaultPalette();
+    void onDefaultPaletteReplaced(const QVariant & data, const QVector<QPair<QString,QString> > & extraData);
 
     bool isNoteReadOnly() const;
 
@@ -773,6 +781,7 @@ private:
     QString     m_toDoCheckboxAutomaticInsertionJs;
     QString     m_disablePasteJs;
     QString     m_findAndReplaceDOMTextJs;
+    QString     m_replaceStyleJs;
 
 #ifndef QUENTIER_USE_QT_WEB_ENGINE
     QString     m_qWebKitSetupJs;
@@ -857,7 +866,11 @@ private:
     bool        m_pendingIndexHtmlWritingToFile;
     bool        m_pendingJavaScriptExecution;
 
+    bool        m_pendingDefaultPaletteReplacement;
+
     bool        m_skipPushingUndoCommandOnNextContentChange;
+
+    QScopedPointer<QPalette>    m_pPalette;
 
     QScopedPointer<Note>        m_pNote;
     QScopedPointer<Notebook>    m_pNotebook;
@@ -903,8 +916,6 @@ private:
     bool                m_spellCheckerEnabled;
     QStringList         m_currentNoteMisSpelledWords;
     StringUtils         m_stringUtils;
-
-    const QString       m_pagePrefix;
 
     QString     m_lastSelectedHtml;
     QString     m_lastSelectedHtmlForEncryption;

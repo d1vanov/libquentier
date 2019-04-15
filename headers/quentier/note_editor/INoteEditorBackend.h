@@ -27,6 +27,7 @@
 #include <QWidget>
 #include <QPrinter>
 #include <QStringList>
+#include <QPalette>
 
 QT_FORWARD_DECLARE_CLASS(QUndoStack)
 
@@ -99,6 +100,9 @@ public:
     virtual void setFontHeight(const int height) = 0;
     virtual void setFontColor(const QColor & color) = 0;
     virtual void setBackgroundColor(const QColor & color) = 0;
+
+    virtual QPalette defaultPalette() const = 0;
+    virtual void setDefaultPalette(const QPalette & pal) = 0;
 
     virtual void insertHorizontalLine() = 0;
 

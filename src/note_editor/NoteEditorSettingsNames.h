@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Dmitry Ivanov
+ * Copyright 2017-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,6 +16,18 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-body {
-    background-color: white;
-}
+#ifndef LIB_QUENTIER_NOTE_EDITOR_SETTINGS_NAME_H
+#define LIB_QUENTIER_NOTE_EDITOR_SETTINGS_NAME_H
+
+#define NOTE_EDITOR_SETTINGS_NAME QStringLiteral("NoteEditor")
+
+#define NOTE_EDITOR_ATTACHMENT_SAVE_LOCATIONS_KEY \
+    QStringLiteral("AttachmentSaveLocations")
+
+#define NOTE_EDITOR_LAST_ATTACHMENT_ADD_LOCATION_KEY \
+    QStringLiteral("LastAttachmentAddLocation")
+
+#define NOTE_EDITOR_REMEMBER_PASSPHRASE_FOR_SESSION_KEY \
+    QStringLiteral("Encryption/rememberPassphraseForSession")
+
+#endif // LIB_QUENTIER_NOTE_EDITOR_SETTINGS_NAME_H

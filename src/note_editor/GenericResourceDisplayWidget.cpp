@@ -18,7 +18,7 @@
 
 #include "GenericResourceDisplayWidget.h"
 #include "ui_GenericResourceDisplayWidget.h"
-#include "NoteEditorSettingsName.h"
+#include "NoteEditorSettingsNames.h"
 #include "ResourceFileStorageManager.h"
 #include <quentier/utility/FileIOProcessorAsync.h>
 #include <quentier/utility/QuentierCheckPtr.h>
@@ -194,12 +194,13 @@ void GenericResourceDisplayWidget::onSaveAsButtonPressed()
     {
         ApplicationSettings appSettings(m_account, NOTE_EDITOR_SETTINGS_NAME);
         QStringList childGroups = appSettings.childGroups();
-        int attachmentsSaveLocGroupIndex = childGroups.indexOf(QStringLiteral("AttachmentSaveLocations"));
+        int attachmentsSaveLocGroupIndex =
+            childGroups.indexOf(NOTE_EDITOR_ATTACHMENT_SAVE_LOCATIONS_KEY);
         if (attachmentsSaveLocGroupIndex >= 0)
         {
             QNTRACE(QStringLiteral("Found cached attachment save location group within application settings"));
 
-            appSettings.beginGroup(QStringLiteral("AttachmentSaveLocations"));
+            appSettings.beginGroup(NOTE_EDITOR_ATTACHMENT_SAVE_LOCATIONS_KEY);
             QStringList cachedFileSuffixes = appSettings.childKeys();
             const int numPreferredSuffixes = m_preferredFileSuffixes.size();
             for(int i = 0; i < numPreferredSuffixes; ++i)
