@@ -580,57 +580,61 @@ set(LIB_QUENTIER_VERSION_MAJOR_DEFINE "#define LIB_QUENTIER_VERSION_MAJOR ${PROJ
 set(LIB_QUENTIER_VERSION_MINOR_DEFINE "#define LIB_QUENTIER_VERSION_MINOR ${PROJECT_VERSION_MINOR}")
 set(LIB_QUENTIER_VERSION_PATCH_DEFINE "#define LIB_QUENTIER_VERSION_PATCH ${PROJECT_VERSION_PATCH}")
 
-find_package(Git)
-if(GIT_FOUND)
-  message(STATUS "Git found: ${GIT_EXECUTABLE}")
+if (NOT LIB_QUENTIER_BUILD_INFO)
+  find_package(Git)
+  if(GIT_FOUND)
+    message(STATUS "Git found: ${GIT_EXECUTABLE}")
 
-  # Get git branch
-  execute_process(COMMAND ${GIT_EXECUTABLE} rev-parse --abbrev-ref HEAD
-                  WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
-                  OUTPUT_VARIABLE LIBQUENTIER_GIT_BRANCH
-                  RESULT_VARIABLE LIBQUENTIER_GIT_BRANCH_RETURN_CODE
-                  OUTPUT_STRIP_TRAILING_WHITESPACE)
-  if(NOT "${LIBQUENTIER_GIT_BRANCH_RETURN_CODE}" STREQUAL "0")
-    message(AUTHOR_WARNING "Failed to determine the current git branch, return code ${LIBQUENTIER_GIT_BRANCH_RETURN_CODE}")
-    set(LIBQUENTIER_GIT_BRANCH "unknown branch")
-  else()
-    if(${LIBQUENTIER_GIT_BRANCH} STREQUAL "HEAD")
-      # Can happen if running on detached HEAD, can happen in CI jobs; workaround: try to get the current branch from environment variables
-      set(APPVEYOR_REPO_BRANCH "$ENV{APPVEYOR_REPO_BRANCH}")
-      set(TRAVIS_BRANCH "$ENV{TRAVIS_BRANCH}")
-      if(NOT "${APPVEYOR_REPO_BRANCH}" STREQUAL "")
-        set(LIBQUENTIER_GIT_BRANCH "${APPVEYOR_REPO_BRANCH}")
-      elseif(NOT "${TRAVIS_BRANCH}" STREQUAL "")
-        set(LIBQUENTIER_GIT_BRANCH "${TRAVIS_BRANCH}")
+    # Get git branch
+    execute_process(COMMAND ${GIT_EXECUTABLE} rev-parse --abbrev-ref HEAD
+      WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+      OUTPUT_VARIABLE LIBQUENTIER_GIT_BRANCH
+      RESULT_VARIABLE LIBQUENTIER_GIT_BRANCH_RETURN_CODE
+      OUTPUT_STRIP_TRAILING_WHITESPACE)
+    if(NOT "${LIBQUENTIER_GIT_BRANCH_RETURN_CODE}" STREQUAL "0")
+      message(AUTHOR_WARNING "Failed to determine the current git branch, return code ${LIBQUENTIER_GIT_BRANCH_RETURN_CODE}")
+      set(LIBQUENTIER_GIT_BRANCH "unknown branch")
+    else()
+      if(${LIBQUENTIER_GIT_BRANCH} STREQUAL "HEAD")
+        # Can happen if running on detached HEAD, can happen in CI jobs; workaround: try to get the current branch from environment variables
+        set(APPVEYOR_REPO_BRANCH "$ENV{APPVEYOR_REPO_BRANCH}")
+        set(TRAVIS_BRANCH "$ENV{TRAVIS_BRANCH}")
+        if(NOT "${APPVEYOR_REPO_BRANCH}" STREQUAL "")
+          set(LIBQUENTIER_GIT_BRANCH "${APPVEYOR_REPO_BRANCH}")
+        elseif(NOT "${TRAVIS_BRANCH}" STREQUAL "")
+          set(LIBQUENTIER_GIT_BRANCH "${TRAVIS_BRANCH}")
+        endif()
       endif()
+      message(STATUS "Git branch: ${LIBQUENTIER_GIT_BRANCH}")
     endif()
-    message(STATUS "Git branch: ${LIBQUENTIER_GIT_BRANCH}")
-  endif()
 
-  # Get last commit short hash
-  execute_process(COMMAND ${GIT_EXECUTABLE} rev-parse --short HEAD
-                  WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
-                  OUTPUT_VARIABLE LIBQUENTIER_GIT_REVISION
-                  RESULT_VARIABLE LIBQUENTIER_GIT_REVISION_RETURN_CODE
-                  OUTPUT_STRIP_TRAILING_WHITESPACE)
-  if(NOT "${LIBQUENTIER_GIT_REVISION_RETURN_CODE}" STREQUAL "0")
-    message(AUTHOR_WARNING "Failed to determine the current git revision")
-    set(LIBQUENTIER_GIT_REVISION "unknown revision")
+    # Get last commit short hash
+    execute_process(COMMAND ${GIT_EXECUTABLE} rev-parse --short HEAD
+      WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+      OUTPUT_VARIABLE LIBQUENTIER_GIT_REVISION
+      RESULT_VARIABLE LIBQUENTIER_GIT_REVISION_RETURN_CODE
+      OUTPUT_STRIP_TRAILING_WHITESPACE)
+    if(NOT "${LIBQUENTIER_GIT_REVISION_RETURN_CODE}" STREQUAL "0")
+      message(AUTHOR_WARNING "Failed to determine the current git revision")
+      set(LIBQUENTIER_GIT_REVISION "unknown revision")
+    else()
+      message(STATUS "Last commit short hash: ${LIBQUENTIER_GIT_REVISION}")
+    endif()
+
+    # Check for uncommitted changes
+    execute_process(COMMAND ${GIT_EXECUTABLE} diff-index --quiet HEAD --
+      WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+      RESULT_VARIABLE LIBQUENTIER_GIT_DIRTY_STATE)
+    if(NOT "${LIBQUENTIER_GIT_DIRTY_STATE}" STREQUAL "0")
+      set(LIBQUENTIER_GIT_REVISION "${LIBQUENTIER_GIT_REVISION}, with uncommitted changes")
+    endif()
+
+    set(LIB_QUENTIER_BUILD_INFO "#define LIB_QUENTIER_BUILD_INFO \"${LIBQUENTIER_GIT_BRANCH}, ${LIBQUENTIER_GIT_REVISION}\"")
   else()
-    message(STATUS "Last commit short hash: ${LIBQUENTIER_GIT_REVISION}")
+    set(LIB_QUENTIER_BUILD_INFO "#define LIB_QUENTIER_BUILD_INFO \"unknown\"")
   endif()
-
-  # Check for uncommitted changes
-  execute_process(COMMAND ${GIT_EXECUTABLE} diff-index --quiet HEAD --
-                  WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
-                  RESULT_VARIABLE LIBQUENTIER_GIT_DIRTY_STATE)
-  if(NOT "${LIBQUENTIER_GIT_DIRTY_STATE}" STREQUAL "0")
-    set(LIBQUENTIER_GIT_REVISION "${LIBQUENTIER_GIT_REVISION}, with uncommitted changes")
-  endif()
-
-  set(LIB_QUENTIER_BUILD_INFO "#define LIB_QUENTIER_BUILD_INFO \"${LIBQUENTIER_GIT_BRANCH}, ${LIBQUENTIER_GIT_REVISION}\"")
 else()
-  set(LIB_QUENTIER_BUILD_INFO "#define LIB_QUENTIER_BUILD_INFO \"unknown\"")
+  set(LIB_QUENTIER_BUILD_INFO "#define LIB_QUENTIER_BUILD_INFO \"${LIB_QUENTIER_BUILD_INFO}\"")
 endif()
 
 configure_file(headers/quentier/utility/VersionInfo.h.in
