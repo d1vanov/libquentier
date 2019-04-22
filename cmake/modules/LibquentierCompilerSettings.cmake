@@ -55,7 +55,7 @@ elseif("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
                     C++11 standard but it is capable of building libquentier")
   else()
     message(STATUS "This version of Visual C++ compiler might not be standard
-                    compliant enough to build libquentierUsing VC++ compiler.
+                    compliant enough to build libquentier.
                     If you get any compilation errors, consider upgrading to
                     a compiler version which fully supports the C++11 standard.")
   endif()
