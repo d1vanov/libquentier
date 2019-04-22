@@ -49,7 +49,6 @@ elseif("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
   if(MSVC_VERSION GREATER_EQUAL 1800)
     message(STATUS "This version of Visual C++ compiler supports C++11 standard.")
     add_definitions("-DCPP11_COMPLIANT")
-    set(CMAKE_CXX_FLAGS "-D_SCL_SECURE_NO_WARNINGS -D_CRT_SECURE_NO_WARNINGS ${CMAKE_CXX_FLAGS}")
   elseif(MSVC_VERSION GREATER_EQUAL 1600)
     message(STATUS "This version of Visual C++ compiler only partially supports
                     C++11 standard but it is capable of building libquentier")
@@ -57,12 +56,12 @@ elseif("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
     message(STATUS "This version of Visual C++ compiler might not be standard
                     compliant enough to build libquentier.
                     If you get any compilation errors, consider upgrading to
-                    a compiler version which fully supports the C++11 standard.")
+                    a compiler version which fully supports C++11 standard.")
   endif()
   set(CMAKE_CXX_FLAGS "-D_SCL_SECURE_NO_WARNINGS -D_CRT_SECURE_NO_WARNINGS ${CMAKE_CXX_FLAGS}")
   add_definitions("-DUNICODE -D_UNICODE")
 else()
   message(WARNING "Your C++ compiler is not officially supported for building of this library.
                    If you get any compilation errors, consider upgrading to a compiler version
-                   which fully supports the C++11 standard.")
+                   which fully supports C++11 standard.")
 endif(CMAKE_COMPILER_IS_GNUCXX)
