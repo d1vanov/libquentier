@@ -71,7 +71,7 @@ install:
             export CC="clang"
           fi
         elif [ "${QT_BASE}" = "5123" ]; then
-          echo "Building for Qt 5.9.2" &&
+          echo "Building for Qt 5.12.3" &&
           sudo apt-add-repository -y ppa:beineri/opt-qt-5.12.3-xenial &&
           sudo apt-get -qq update &&
           sudo apt-get -qq install qt512tools qt512base qt512webchannel qt512webengine qt512websockets qt512xmlpatterns qt512translations &&
