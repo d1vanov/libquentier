@@ -75,7 +75,7 @@ install:
           echo "Building for Qt 5.12.3" &&
           sudo apt-add-repository -y ppa:beineri/opt-qt-5.12.3-xenial &&
           sudo apt-get -qq update &&
-          sudo apt-get -qq install qt512tools qt512base qt512webchannel qt512webengine qt512websockets qt512xmlpatterns qt512translations &&
+          sudo apt-get -qq install qt512tools qt512base qt512webchannel qt512webengine qt512websockets qt512xmlpatterns qt512translations mesa-common-dev &&
           if [ "${COMPILER}" = "clang++" ]; then
             export CXX="clang++" &&
             export CC="clang"
@@ -112,7 +112,7 @@ install:
       mkdir qtkeychain &&
       git clone https://github.com/frankosterfeld/qtkeychain.git qtkeychain &&
       cd qtkeychain &&
-      git checkout v0.8.0 &&
+      git checkout v0.9.1 &&
       mkdir build &&
       cd build &&
       if [ "${TRAVIS_OS_NAME}" = "linux" ]; then
