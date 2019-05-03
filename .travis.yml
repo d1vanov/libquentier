@@ -75,7 +75,7 @@ install:
           echo "Building for Qt 5.12.3" &&
           sudo apt-add-repository -y ppa:beineri/opt-qt-5.12.3-xenial &&
           sudo apt-get -qq update &&
-          sudo apt-get -qq install qt512tools qt512base qt512webchannel qt512webengine qt512websockets qt512xmlpatterns qt512translations mesa-common-dev &&
+          sudo apt-get -qq install qt512tools qt512base qt512webchannel qt512webengine qt512websockets qt512xmlpatterns qt512translations mesa-common-dev libgl1-mesa-dev &&
           if [ "${COMPILER}" = "clang++" ]; then
             export CXX="clang++" &&
             export CC="clang"
