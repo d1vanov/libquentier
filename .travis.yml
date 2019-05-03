@@ -84,11 +84,11 @@ install:
           echo "Building for Qt 4.8" &&
           sudo apt-get -qq update &&
           if [ "${COMPILER}" = "g++-4.6" ]; then
-            sudo apt-get -qq install g++-4.6 gcc-4.6 libqt4-dev libqt4-dev-bin libqt4-network libqt4-xml libqt4-xmlpatterns libqt4-sql libqt4-sql-sqlite libqt4-test libqt4-dbus libqt4-webkit &&
+            sudo apt-get -qq install g++-4.6 gcc-4.6 libqt4-dev libqt4-dev-bin libqt4-network libqt4-xml libqt4-xmlpatterns libqt4-sql libqt4-sql-sqlite libqt4-test libqt4-dbus libqtwebkit-dev &&
             export CXX="g++-4.6" &&
             export CC="gcc-4.6"
           else
-            sudo apt-get -qq install libqt4-dev libqt4-dev-bin libqt4-network libqt4-xml libqt4-xmlpatterns libqt4-sql libqt4-sql-sqlite libqt4-test libqt4-dbus libqt4-webkit &&
+            sudo apt-get -qq install libqt4-dev libqt4-dev-bin libqt4-network libqt4-xml libqt4-xmlpatterns libqt4-sql libqt4-sql-sqlite libqt4-test libqt4-dbus libqtwebkit-dev &&
             export CXX="clang++" &&
             export CC="clang"
           fi
