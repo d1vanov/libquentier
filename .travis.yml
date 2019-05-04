@@ -14,19 +14,19 @@ branches:
 matrix:
     include:
         - os: linux
-          env: QT_BASE=48 COMPILER=g++-4.6 CMAKE_BUILD_TYPE=Debug
+          env: QT_BASE=48 COMPILER=g++-5.4 CMAKE_BUILD_TYPE=Debug
 
         - os: linux
           env: QT_BASE=48 COMPILER=clang++ CMAKE_BUILD_TYPE=Debug
 
         - os: linux
-          env: QT_BASE=551 COMPILER=g++-4.8 CMAKE_BUILD_TYPE=RelWithDebInfo
+          env: QT_BASE=551 COMPILER=g++-5.4 CMAKE_BUILD_TYPE=RelWithDebInfo
 
         - os: linux
           env: QT_BASE=551 COMPILER=clang++ CMAKE_BUILD_TYPE=Debug
 
         - os: linux
-          env: QT_BASE=5123 COMPILER=g++-4.8 CMAKE_BUILD_TYPE=RelWithDebInfo
+          env: QT_BASE=5123 COMPILER=g++-5.4 CMAKE_BUILD_TYPE=RelWithDebInfo
 
         - os: linux
           env: QT_BASE=5123 COMPILER=clang++ CMAKE_BUILD_TYPE=Debug
@@ -83,12 +83,8 @@ install:
         else
           echo "Building for Qt 4.8" &&
           sudo apt-get -qq update &&
-          if [ "${COMPILER}" = "g++-4.6" ]; then
-            sudo apt-get -qq install g++-4.6 gcc-4.6 libqt4-dev libqt4-dev-bin libqt4-network libqt4-xml libqt4-xmlpatterns libqt4-sql libqt4-sql-sqlite libqt4-test libqt4-dbus libqtwebkit-dev &&
-            export CXX="g++-4.6" &&
-            export CC="gcc-4.6"
-          else
-            sudo apt-get -qq install libqt4-dev libqt4-dev-bin libqt4-network libqt4-xml libqt4-xmlpatterns libqt4-sql libqt4-sql-sqlite libqt4-test libqt4-dbus libqtwebkit-dev &&
+          sudo apt-get -qq install libqt4-dev libqt4-dev-bin libqt4-network libqt4-xml libqt4-xmlpatterns libqt4-sql libqt4-sql-sqlite libqt4-test libqt4-dbus libqtwebkit-dev &&
+          if [ "${COMPILER}" = "clang++" ]; then
             export CXX="clang++" &&
             export CC="clang"
           fi
@@ -239,7 +235,7 @@ script:
 
 after_success:
     - |
-      if [ "${TRAVIS_OS_NAME}" = "linux" ] && [ "${QT_BASE}" = "5123" ] && [ "${COMPILER}" = "g++-4.8" ]; then
+      if [ "${TRAVIS_OS_NAME}" = "linux" ] && [ "${QT_BASE}" = "5123" ] && [ "${COMPILER}" = "g++-5.4" ]; then
         if [ "${TRAVIS_BRANCH}" = "master" ] || [ "${TRAVIS_BRANCH}" = "development" ]; then
           cd $LIBQUENTIER_DIR/build/installdir &&
           7z a libquentier_linux_qt_${QT_BASE}_x86_64.zip * &&
