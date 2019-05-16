@@ -33,7 +33,11 @@ NoteData::NoteData() :
     m_notebookLocalUid(),
     m_tagLocalUids(),
     m_thumbnailData()
-{}
+{
+    m_qecNote.tagGuids = QList<qevercloud::Guid>();
+    m_qecNote.resources = QList<qevercloud::Resource>();
+    m_qecNote.sharedNotes = QList<qevercloud::SharedNote>();
+}
 
 NoteData::NoteData(const NoteData & other) :
     FavoritableDataElementData(other),
@@ -145,6 +149,11 @@ void NoteData::setContent(const QString & content)
 void NoteData::clear()
 {
     m_qecNote = qevercloud::Note();
+
+    m_qecNote.tagGuids = QList<qevercloud::Guid>();
+    m_qecNote.resources = QList<qevercloud::Resource>();
+    m_qecNote.sharedNotes = QList<qevercloud::SharedNote>();
+
     m_resourcesAdditionalInfo.clear();
     m_notebookLocalUid.clear();
     m_tagLocalUids.clear();
