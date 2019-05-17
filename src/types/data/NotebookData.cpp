@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Dmitry Ivanov
+ * Copyright 2016-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -27,7 +27,9 @@ NotebookData::NotebookData() :
     m_qecNotebook(),
     m_isLastUsed(false),
     m_linkedNotebookGuid()
-{}
+{
+    m_qecNotebook.sharedNotebooks = QList<qevercloud::SharedNotebook>();
+}
 
 NotebookData::NotebookData(const NotebookData & other) :
     FavoritableDataElementData(other),
@@ -48,17 +50,31 @@ NotebookData::NotebookData(const qevercloud::Notebook & other) :
     m_qecNotebook(other),
     m_isLastUsed(false),
     m_linkedNotebookGuid()
-{}
+{
+    if (!m_qecNotebook.sharedNotebooks.isSet()) {
+        m_qecNotebook.sharedNotebooks = QList<qevercloud::SharedNotebook>();
+    }
+}
 
 NotebookData::NotebookData(qevercloud::Notebook && other) :
     FavoritableDataElementData(),
     m_qecNotebook(std::move(other)),
     m_isLastUsed(false),
     m_linkedNotebookGuid()
-{}
+{
+    if (!m_qecNotebook.sharedNotebooks.isSet()) {
+        m_qecNotebook.sharedNotebooks = QList<qevercloud::SharedNotebook>();
+    }
+}
 
 NotebookData::~NotebookData()
 {}
+
+void NotebookData::clear()
+{
+    m_qecNotebook = qevercloud::Notebook();
+    m_qecNotebook.sharedNotebooks = QList<qevercloud::SharedNotebook>();
+}
 
 bool NotebookData::checkParameters(ErrorString & errorDescription) const
 {
