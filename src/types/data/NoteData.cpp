@@ -26,6 +26,17 @@
 
 namespace quentier {
 
+namespace {
+
+void initListFields(qevercloud::Note & note)
+{
+    note.tagGuids = QList<qevercloud::Guid>();
+    note.resources = QList<qevercloud::Resource>();
+    note.sharedNotes = QList<qevercloud::SharedNote>();
+}
+
+} // namespace
+
 NoteData::NoteData() :
     FavoritableDataElementData(),
     m_qecNote(),
@@ -34,9 +45,7 @@ NoteData::NoteData() :
     m_tagLocalUids(),
     m_thumbnailData()
 {
-    m_qecNote.tagGuids = QList<qevercloud::Guid>();
-    m_qecNote.resources = QList<qevercloud::Resource>();
-    m_qecNote.sharedNotes = QList<qevercloud::SharedNote>();
+    initListFields(m_qecNote);
 }
 
 NoteData::NoteData(const NoteData & other) :
@@ -68,7 +77,14 @@ NoteData::NoteData(const qevercloud::Note & other) :
     m_tagLocalUids(),
     m_thumbnailData()
 {
-    if (m_qecNote.resources.isSet())
+    if (!m_qecNote.tagGuids.isSet()) {
+        m_qecNote.tagGuids = QList<qevercloud::Guid>();
+    }
+
+    if (!m_qecNote.resources.isSet()) {
+        m_qecNote.resources = QList<qevercloud::Resource>();
+    }
+    else
     {
         const auto & resources = m_qecNote.resources.ref();
         m_resourcesAdditionalInfo.reserve(resources.size());
@@ -78,6 +94,10 @@ NoteData::NoteData(const qevercloud::Note & other) :
             info.isDirty = false;
             info.localUid = UidGenerator::Generate();
         }
+    }
+
+    if (!m_qecNote.sharedNotes.isSet()) {
+        m_qecNote.sharedNotes = QList<qevercloud::SharedNote>();
     }
 }
 
@@ -149,10 +169,7 @@ void NoteData::setContent(const QString & content)
 void NoteData::clear()
 {
     m_qecNote = qevercloud::Note();
-
-    m_qecNote.tagGuids = QList<qevercloud::Guid>();
-    m_qecNote.resources = QList<qevercloud::Resource>();
-    m_qecNote.sharedNotes = QList<qevercloud::SharedNote>();
+    initListFields(m_qecNote);
 
     m_resourcesAdditionalInfo.clear();
     m_notebookLocalUid.clear();

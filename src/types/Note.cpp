@@ -553,6 +553,10 @@ void Note::setResources(const QList<Resource> & resources)
     }
 
     NoteData::ResourceAdditionalInfo info;
+    int numResources = resources.size();
+    d->m_qecNote.resources->reserve(numResources);
+    d->m_resourcesAdditionalInfo.reserve(numResources);
+
     for(auto it = resources.constBegin(); it != resources.constEnd(); ++it) {
         d->m_qecNote.resources.ref() << it->qevercloudResource();
         info.localUid = it->localUid();
