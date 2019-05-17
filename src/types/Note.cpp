@@ -389,7 +389,7 @@ void Note::setNotebookLocalUid(const QString & notebookLocalUid)
 
 bool Note::hasTagGuids() const
 {
-    return d->m_qecNote.tagGuids.isSet();
+    return d->m_qecNote.tagGuids.isSet() && !d->m_qecNote.tagGuids->isEmpty();
 }
 
 const QStringList Note::tagGuids() const
@@ -400,7 +400,7 @@ const QStringList Note::tagGuids() const
 void Note::setTagGuids(const QStringList & guids)
 {
     if (guids.isEmpty()) {
-        d->m_qecNote.tagGuids.clear();
+        d->m_qecNote.tagGuids = QList<QString>();
         return;
     }
 
@@ -518,7 +518,7 @@ void Note::removeTagLocalUid(const QString & tagLocalUid)
 
 bool Note::hasResources() const
 {
-    return d->m_qecNote.resources.isSet();
+    return d->m_qecNote.resources.isSet() && !d->m_qecNote.resources->isEmpty();
 }
 
 int Note::numResources() const
@@ -559,24 +559,23 @@ QList<Resource> Note::resources() const
 
 void Note::setResources(const QList<Resource> & resources)
 {
-    if (!resources.empty())
-    {
-        d->m_qecNote.resources = QList<qevercloud::Resource>();
-        d->m_resourcesAdditionalInfo.clear();
-        NoteData::ResourceAdditionalInfo info;
-        for(auto it = resources.constBegin(); it != resources.constEnd(); ++it)
-        {
-            d->m_qecNote.resources.ref() << it->qevercloudResource();
-            info.localUid = it->localUid();
-            info.isDirty = it->isDirty();
-            d->m_resourcesAdditionalInfo.push_back(info);
-        }
-        QNTRACE(QStringLiteral("Added ") << resources.size()
-                << QStringLiteral(" resources to note"));
+    d->m_qecNote.resources = QList<qevercloud::Resource>();
+    d->m_resourcesAdditionalInfo.clear();
+
+    if (resources.isEmpty()) {
+        return;
     }
-    else
-    {
-        d->m_qecNote.resources.clear();
+
+    NoteData::ResourceAdditionalInfo info;
+    int numResources = resources.size();
+    d->m_qecNote.resources->reserve(numResources);
+    d->m_resourcesAdditionalInfo.reserve(numResources);
+
+    for(auto it = resources.constBegin(); it != resources.constEnd(); ++it) {
+        d->m_qecNote.resources.ref() << it->qevercloudResource();
+        info.localUid = it->localUid();
+        info.isDirty = it->isDirty();
+        d->m_resourcesAdditionalInfo.push_back(info);
     }
 }
 
@@ -721,7 +720,7 @@ QList<SharedNote> Note::sharedNotes() const
 void Note::setSharedNotes(const QList<SharedNote> & sharedNotes)
 {
     if (sharedNotes.isEmpty()) {
-        d->m_qecNote.sharedNotes.clear();
+        d->m_qecNote.sharedNotes = QList<qevercloud::SharedNote>();
         return;
     }
 

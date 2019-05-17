@@ -119,7 +119,7 @@ qevercloud::Notebook & Notebook::qevercloudNotebook()
 
 void Notebook::clear()
 {
-    d->m_qecNotebook = qevercloud::Notebook();
+    d->clear();
 }
 
 bool Notebook::validateName(const QString & name, ErrorString * pErrorDescription)
@@ -425,7 +425,8 @@ void Notebook::setStack(const QString & stack)
 
 bool Notebook::hasSharedNotebooks()
 {
-    return d->m_qecNotebook.sharedNotebooks.isSet();
+    return d->m_qecNotebook.sharedNotebooks.isSet() &&
+        !d->m_qecNotebook.sharedNotebooks->isEmpty();
 }
 
 QList<SharedNotebook> Notebook::sharedNotebooks() const
