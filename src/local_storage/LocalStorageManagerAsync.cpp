@@ -1335,18 +1335,27 @@ void LocalStorageManagerAsync::onUpdateNoteRequest(
 
             if (!foundNoteInCache)
             {
-                if (note.hasGuid()) {
-                    previousNoteVersion.setGuid(note.guid());
-                }
-                else {
-                    previousNoteVersion.setLocalUid(note.localUid());
-                }
-
                 ErrorString errorDescription;
                 LocalStorageManager::GetNoteOptions getNoteOptions(0);
-                bool res = d->m_pLocalStorageManager->findNote(previousNoteVersion,
-                                                               getNoteOptions,
-                                                               errorDescription);
+                bool res = false;
+
+                if (note.hasGuid()) {
+                    // Try to find note by guid first
+                    previousNoteVersion.setGuid(note.guid());
+                    res = d->m_pLocalStorageManager->findNote(previousNoteVersion,
+                                                              getNoteOptions,
+                                                              errorDescription);
+                }
+
+                if (!res)
+                {
+                    previousNoteVersion.setLocalUid(note.localUid());
+                    previousNoteVersion.setGuid(QString());
+                    res = d->m_pLocalStorageManager->findNote(previousNoteVersion,
+                                                              getNoteOptions,
+                                                              errorDescription);
+                }
+
                 if (!res) {
                     Q_EMIT updateNoteFailed(note, options, errorDescription, requestId);
                     return;
