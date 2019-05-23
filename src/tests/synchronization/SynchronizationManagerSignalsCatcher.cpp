@@ -17,6 +17,7 @@
  */
 
 #include "SynchronizationManagerSignalsCatcher.h"
+#include <quentier/local_storage/LocalStorageManagerAsync.h>
 #include <quentier/synchronization/SynchronizationManager.h>
 #include <quentier_private/synchronization/SyncStatePersistenceManager.h>
 #include <quentier/logging/QuentierLogger.h>
@@ -25,6 +26,7 @@
 namespace quentier {
 
 SynchronizationManagerSignalsCatcher::SynchronizationManagerSignalsCatcher(
+        LocalStorageManagerAsync & localStorageManagerAsync,
         SynchronizationManager & synchronizationManager,
         SyncStatePersistenceManager & syncStatePersistenceManager,
         QObject * parent) :
@@ -64,7 +66,10 @@ SynchronizationManagerSignalsCatcher::SynchronizationManagerSignalsCatcher(
     m_receivedPreparedDirtyObjectsForSending(false),
     m_receivedPreparedLinkedNotebookDirtyObjectsForSending(false)
 {
-    createConnections(synchronizationManager, syncStatePersistenceManager);
+    createConnections(
+        localStorageManagerAsync,
+        synchronizationManager,
+        syncStatePersistenceManager);
 }
 
 bool SynchronizationManagerSignalsCatcher::checkSyncChunkDownloadProgressOrder(
@@ -325,10 +330,44 @@ void SynchronizationManagerSignalsCatcher::onSyncStatePersisted(
     m_persistedSyncStateUpdateCounts << data;
 }
 
+void SynchronizationManagerSignalsCatcher::onNoteMovedToAnotherNotebook(
+    QString noteLocalUid, QString previousNotebookLocalUid,
+    QString newNotebookLocalUid)
+{
+    Q_UNUSED(noteLocalUid)
+    Q_UNUSED(previousNotebookLocalUid)
+    Q_UNUSED(newNotebookLocalUid)
+}
+
+void SynchronizationManagerSignalsCatcher::onNoteTagListChanged(
+    QString noteLocalUid, QStringList previousNoteTagLocalUids,
+    QStringList newNoteTagLocalUids)
+{
+    Q_UNUSED(noteLocalUid)
+    Q_UNUSED(previousNoteTagLocalUids)
+    Q_UNUSED(newNoteTagLocalUids)
+}
+
 void SynchronizationManagerSignalsCatcher::createConnections(
+    LocalStorageManagerAsync & localStorageManagerAsync,
     SynchronizationManager & synchronizationManager,
     SyncStatePersistenceManager & syncStatePersistenceManager)
 {
+    QObject::connect(&localStorageManagerAsync,
+                     QNSIGNAL(LocalStorageManagerAsync,
+                              noteMovedToAnotherNotebook,
+                              QString,QString,QString),
+                     this,
+                     QNSLOT(SynchronizationManagerSignalsCatcher,
+                            onNoteMovedToAnotherNotebook,
+                            QString,QString,QString));
+    QObject::connect(&localStorageManagerAsync,
+                     QNSIGNAL(LocalStorageManagerAsync,noteTagListChanged,
+                              QString,QStringList,QStringList),
+                     this,
+                     QNSLOT(SynchronizationManagerSignalsCatcher,
+                            onNoteTagListChanged,QString,QStringList,QStringList));
+
     QObject::connect(&synchronizationManager,
                      QNSIGNAL(SynchronizationManager,started),
                      this,

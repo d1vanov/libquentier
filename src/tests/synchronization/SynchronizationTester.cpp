@@ -223,7 +223,8 @@ void SynchronizationTester::testRemoteToLocalFullSyncWithUserOwnDataOnly()
 {
     setUserOwnItemsToRemoteStorage();
 
-    SynchronizationManagerSignalsCatcher catcher(*m_pSynchronizationManager,
+    SynchronizationManagerSignalsCatcher catcher(*m_pLocalStorageManagerAsync,
+                                                 *m_pSynchronizationManager,
                                                  *m_pSyncStatePersistenceManager);
     runTest(catcher);
 
@@ -257,7 +258,8 @@ void SynchronizationTester::testRemoteToLocalFullSyncWithLinkedNotebooks()
     setUserOwnItemsToRemoteStorage();
     setLinkedNotebookItemsToRemoteStorage();
 
-    SynchronizationManagerSignalsCatcher catcher(*m_pSynchronizationManager,
+    SynchronizationManagerSignalsCatcher catcher(*m_pLocalStorageManagerAsync,
+                                                 *m_pSynchronizationManager,
                                                  *m_pSyncStatePersistenceManager);
     runTest(catcher);
 
@@ -294,7 +296,8 @@ void SynchronizationTester::testIncrementalSyncWithNewRemoteItemsFromUserOwnData
 
     setNewUserOwnItemsToRemoteStorage();
 
-    SynchronizationManagerSignalsCatcher catcher(*m_pSynchronizationManager,
+    SynchronizationManagerSignalsCatcher catcher(*m_pLocalStorageManagerAsync,
+                                                 *m_pSynchronizationManager,
                                                  *m_pSyncStatePersistenceManager);
     runTest(catcher);
 
@@ -332,7 +335,8 @@ void SynchronizationTester::testIncrementalSyncWithNewRemoteItemsFromLinkedNoteb
 
     setNewLinkedNotebookItemsToRemoteStorage();
 
-    SynchronizationManagerSignalsCatcher catcher(*m_pSynchronizationManager,
+    SynchronizationManagerSignalsCatcher catcher(*m_pLocalStorageManagerAsync,
+                                                 *m_pSynchronizationManager,
                                                  *m_pSyncStatePersistenceManager);
     runTest(catcher);
 
@@ -371,7 +375,8 @@ void SynchronizationTester::testIncrementalSyncWithNewRemoteItemsFromUserOwnData
     setNewUserOwnItemsToRemoteStorage();
     setNewLinkedNotebookItemsToRemoteStorage();
 
-    SynchronizationManagerSignalsCatcher catcher(*m_pSynchronizationManager,
+    SynchronizationManagerSignalsCatcher catcher(*m_pLocalStorageManagerAsync,
+                                                 *m_pSynchronizationManager,
                                                  *m_pSyncStatePersistenceManager);
     runTest(catcher);
 
@@ -408,7 +413,8 @@ void SynchronizationTester::testIncrementalSyncWithModifiedRemoteItemsFromUserOw
 
     setModifiedUserOwnItemsToRemoteStorage();
 
-    SynchronizationManagerSignalsCatcher catcher(*m_pSynchronizationManager,
+    SynchronizationManagerSignalsCatcher catcher(*m_pLocalStorageManagerAsync,
+                                                 *m_pSynchronizationManager,
                                                  *m_pSyncStatePersistenceManager);
     runTest(catcher);
 
@@ -452,7 +458,8 @@ void SynchronizationTester::testIncrementalSyncWithModifiedRemoteItemsFromLinked
 
     setModifiedLinkedNotebookItemsToRemoteStorage();
 
-    SynchronizationManagerSignalsCatcher catcher(*m_pSynchronizationManager,
+    SynchronizationManagerSignalsCatcher catcher(*m_pLocalStorageManagerAsync,
+                                                 *m_pSynchronizationManager,
                                                  *m_pSyncStatePersistenceManager);
     runTest(catcher);
 
@@ -496,7 +503,8 @@ void SynchronizationTester::testIncrementalSyncWithModifiedRemoteItemsFromUserOw
     setModifiedUserOwnItemsToRemoteStorage();
     setModifiedLinkedNotebookItemsToRemoteStorage();
 
-    SynchronizationManagerSignalsCatcher catcher(*m_pSynchronizationManager,
+    SynchronizationManagerSignalsCatcher catcher(*m_pLocalStorageManagerAsync,
+                                                 *m_pSynchronizationManager,
                                                  *m_pSyncStatePersistenceManager);
     runTest(catcher);
 
@@ -539,7 +547,8 @@ void SynchronizationTester::testIncrementalSyncWithModifiedAndNewRemoteItemsFrom
     setModifiedUserOwnItemsToRemoteStorage();
     setNewUserOwnItemsToRemoteStorage();
 
-    SynchronizationManagerSignalsCatcher catcher(*m_pSynchronizationManager,
+    SynchronizationManagerSignalsCatcher catcher(*m_pLocalStorageManagerAsync,
+                                                 *m_pSynchronizationManager,
                                                  *m_pSyncStatePersistenceManager);
     runTest(catcher);
 
@@ -583,7 +592,8 @@ void SynchronizationTester::testIncrementalSyncWithModifiedAndNewRemoteItemsFrom
     setModifiedLinkedNotebookItemsToRemoteStorage();
     setNewLinkedNotebookItemsToRemoteStorage();
 
-    SynchronizationManagerSignalsCatcher catcher(*m_pSynchronizationManager,
+    SynchronizationManagerSignalsCatcher catcher(*m_pLocalStorageManagerAsync,
+                                                 *m_pSynchronizationManager,
                                                  *m_pSyncStatePersistenceManager);
     runTest(catcher);
 
@@ -629,7 +639,8 @@ void SynchronizationTester::testIncrementalSyncWithModifiedAndNewRemoteItemsFrom
     setNewUserOwnItemsToRemoteStorage();
     setNewLinkedNotebookItemsToRemoteStorage();
 
-    SynchronizationManagerSignalsCatcher catcher(*m_pSynchronizationManager,
+    SynchronizationManagerSignalsCatcher catcher(*m_pLocalStorageManagerAsync,
+                                                 *m_pSynchronizationManager,
                                                  *m_pSyncStatePersistenceManager);
     runTest(catcher);
 
@@ -671,7 +682,8 @@ void SynchronizationTester::testIncrementalSyncWithNewLocalItemsFromUserOwnDataO
 
     setNewUserOwnItemsToLocalStorage();
 
-    SynchronizationManagerSignalsCatcher catcher(*m_pSynchronizationManager,
+    SynchronizationManagerSignalsCatcher catcher(*m_pLocalStorageManagerAsync,
+                                                 *m_pSynchronizationManager,
                                                  *m_pSyncStatePersistenceManager);
     runTest(catcher);
 
@@ -709,7 +721,8 @@ void SynchronizationTester::testIncrementalSyncWithNewLocalItemsFromLinkedNotebo
 
     setNewLinkedNotebookItemsToLocalStorage();
 
-    SynchronizationManagerSignalsCatcher catcher(*m_pSynchronizationManager,
+    SynchronizationManagerSignalsCatcher catcher(*m_pLocalStorageManagerAsync,
+                                                 *m_pSynchronizationManager,
                                                  *m_pSyncStatePersistenceManager);
     runTest(catcher);
 
@@ -748,7 +761,8 @@ void SynchronizationTester::testIncrementalSyncWithNewLocalItemsFromUserOwnDataA
     setNewUserOwnItemsToLocalStorage();
     setNewLinkedNotebookItemsToLocalStorage();
 
-    SynchronizationManagerSignalsCatcher catcher(*m_pSynchronizationManager,
+    SynchronizationManagerSignalsCatcher catcher(*m_pLocalStorageManagerAsync,
+                                                 *m_pSynchronizationManager,
                                                  *m_pSyncStatePersistenceManager);
     runTest(catcher);
 
@@ -785,7 +799,8 @@ void SynchronizationTester::testIncrementalSyncWithModifiedLocalItemsFromUserOwn
 
     setModifiedUserOwnItemsToLocalStorage();
 
-    SynchronizationManagerSignalsCatcher catcher(*m_pSynchronizationManager,
+    SynchronizationManagerSignalsCatcher catcher(*m_pLocalStorageManagerAsync,
+                                                 *m_pSynchronizationManager,
                                                  *m_pSyncStatePersistenceManager);
     runTest(catcher);
 
@@ -823,7 +838,8 @@ void SynchronizationTester::testIncrementalSyncWithModifiedLocalItemsFromLinkedN
 
     setModifiedLinkedNotebookItemsToLocalStorage();
 
-    SynchronizationManagerSignalsCatcher catcher(*m_pSynchronizationManager,
+    SynchronizationManagerSignalsCatcher catcher(*m_pLocalStorageManagerAsync,
+                                                 *m_pSynchronizationManager,
                                                  *m_pSyncStatePersistenceManager);
     runTest(catcher);
 
@@ -862,7 +878,8 @@ void SynchronizationTester::testIncrementalSyncWithModifiedLocalItemsFromUserOwn
     setModifiedUserOwnItemsToLocalStorage();
     setModifiedLinkedNotebookItemsToLocalStorage();
 
-    SynchronizationManagerSignalsCatcher catcher(*m_pSynchronizationManager,
+    SynchronizationManagerSignalsCatcher catcher(*m_pLocalStorageManagerAsync,
+                                                 *m_pSynchronizationManager,
                                                  *m_pSyncStatePersistenceManager);
     runTest(catcher);
 
@@ -900,7 +917,8 @@ void SynchronizationTester::testIncrementalSyncWithNewAndModifiedLocalItemsFromU
     setModifiedUserOwnItemsToLocalStorage();
     setNewUserOwnItemsToLocalStorage();
 
-    SynchronizationManagerSignalsCatcher catcher(*m_pSynchronizationManager,
+    SynchronizationManagerSignalsCatcher catcher(*m_pLocalStorageManagerAsync,
+                                                 *m_pSynchronizationManager,
                                                  *m_pSyncStatePersistenceManager);
     runTest(catcher);
 
@@ -939,7 +957,8 @@ void SynchronizationTester::testIncrementalSyncWithNewAndModifiedLocalItemsFromL
     setModifiedLinkedNotebookItemsToLocalStorage();
     setNewLinkedNotebookItemsToLocalStorage();
 
-    SynchronizationManagerSignalsCatcher catcher(*m_pSynchronizationManager,
+    SynchronizationManagerSignalsCatcher catcher(*m_pLocalStorageManagerAsync,
+                                                 *m_pSynchronizationManager,
                                                  *m_pSyncStatePersistenceManager);
     runTest(catcher);
 
@@ -980,7 +999,8 @@ void SynchronizationTester::testIncrementalSyncWithNewAndModifiedLocalItemsFromU
     setNewUserOwnItemsToLocalStorage();
     setNewLinkedNotebookItemsToLocalStorage();
 
-    SynchronizationManagerSignalsCatcher catcher(*m_pSynchronizationManager,
+    SynchronizationManagerSignalsCatcher catcher(*m_pLocalStorageManagerAsync,
+                                                 *m_pSynchronizationManager,
                                                  *m_pSyncStatePersistenceManager);
     runTest(catcher);
 
@@ -1018,7 +1038,8 @@ void SynchronizationTester::testIncrementalSyncWithNewLocalAndNewRemoteItemsFrom
     setNewUserOwnItemsToLocalStorage();
     setNewUserOwnItemsToRemoteStorage();
 
-    SynchronizationManagerSignalsCatcher catcher(*m_pSynchronizationManager,
+    SynchronizationManagerSignalsCatcher catcher(*m_pLocalStorageManagerAsync,
+                                                 *m_pSynchronizationManager,
                                                  *m_pSyncStatePersistenceManager);
     runTest(catcher);
 
@@ -1057,7 +1078,8 @@ void SynchronizationTester::testIncrementalSyncWithNewLocalAndNewRemoteItemsFrom
     setNewLinkedNotebookItemsToLocalStorage();
     setNewLinkedNotebookItemsToRemoteStorage();
 
-    SynchronizationManagerSignalsCatcher catcher(*m_pSynchronizationManager,
+    SynchronizationManagerSignalsCatcher catcher(*m_pLocalStorageManagerAsync,
+                                                 *m_pSynchronizationManager,
                                                  *m_pSyncStatePersistenceManager);
     runTest(catcher);
 
@@ -1098,7 +1120,8 @@ void SynchronizationTester::testIncrementalSyncWithNewLocalAndNewRemoteItemsFrom
     setNewUserOwnItemsToRemoteStorage();
     setNewLinkedNotebookItemsToRemoteStorage();
 
-    SynchronizationManagerSignalsCatcher catcher(*m_pSynchronizationManager,
+    SynchronizationManagerSignalsCatcher catcher(*m_pLocalStorageManagerAsync,
+                                                 *m_pSynchronizationManager,
                                                  *m_pSyncStatePersistenceManager);
     runTest(catcher);
 
@@ -1136,7 +1159,8 @@ void SynchronizationTester::testIncrementalSyncWithNewLocalAndModifiedRemoteItem
     setNewUserOwnItemsToLocalStorage();
     setModifiedUserOwnItemsToRemoteStorage();
 
-    SynchronizationManagerSignalsCatcher catcher(*m_pSynchronizationManager,
+    SynchronizationManagerSignalsCatcher catcher(*m_pLocalStorageManagerAsync,
+                                                 *m_pSynchronizationManager,
                                                  *m_pSyncStatePersistenceManager);
     runTest(catcher);
 
@@ -1175,7 +1199,8 @@ void SynchronizationTester::testIncrementalSyncWithNewLocalAndModifiedRemoteItem
     setNewLinkedNotebookItemsToLocalStorage();
     setModifiedLinkedNotebookItemsToRemoteStorage();
 
-    SynchronizationManagerSignalsCatcher catcher(*m_pSynchronizationManager,
+    SynchronizationManagerSignalsCatcher catcher(*m_pLocalStorageManagerAsync,
+                                                 *m_pSynchronizationManager,
                                                  *m_pSyncStatePersistenceManager);
     runTest(catcher);
 
@@ -1216,7 +1241,8 @@ void SynchronizationTester::testIncrementalSyncWithNewLocalAndModifiedRemoteItem
     setModifiedUserOwnItemsToRemoteStorage();
     setModifiedLinkedNotebookItemsToRemoteStorage();
 
-    SynchronizationManagerSignalsCatcher catcher(*m_pSynchronizationManager,
+    SynchronizationManagerSignalsCatcher catcher(*m_pLocalStorageManagerAsync,
+                                                 *m_pSynchronizationManager,
                                                  *m_pSyncStatePersistenceManager);
     runTest(catcher);
 
@@ -1254,7 +1280,8 @@ void SynchronizationTester::testIncrementalSyncWithModifiedLocalAndNewRemoteItem
     setModifiedUserOwnItemsToLocalStorage();
     setNewUserOwnItemsToRemoteStorage();
 
-    SynchronizationManagerSignalsCatcher catcher(*m_pSynchronizationManager,
+    SynchronizationManagerSignalsCatcher catcher(*m_pLocalStorageManagerAsync,
+                                                 *m_pSynchronizationManager,
                                                  *m_pSyncStatePersistenceManager);
     runTest(catcher);
 
@@ -1293,7 +1320,8 @@ void SynchronizationTester::testIncrementalSyncWithModifiedLocalAndNewRemoteItem
     setModifiedLinkedNotebookItemsToLocalStorage();
     setNewLinkedNotebookItemsToRemoteStorage();
 
-    SynchronizationManagerSignalsCatcher catcher(*m_pSynchronizationManager,
+    SynchronizationManagerSignalsCatcher catcher(*m_pLocalStorageManagerAsync,
+                                                 *m_pSynchronizationManager,
                                                  *m_pSyncStatePersistenceManager);
     runTest(catcher);
 
@@ -1334,7 +1362,8 @@ void SynchronizationTester::testIncrementalSyncWithModifiedLocalAndNewRemoteItem
     setNewUserOwnItemsToRemoteStorage();
     setNewLinkedNotebookItemsToRemoteStorage();
 
-    SynchronizationManagerSignalsCatcher catcher(*m_pSynchronizationManager,
+    SynchronizationManagerSignalsCatcher catcher(*m_pLocalStorageManagerAsync,
+                                                 *m_pSynchronizationManager,
                                                  *m_pSyncStatePersistenceManager);
     runTest(catcher);
 
@@ -1372,7 +1401,8 @@ void SynchronizationTester::testIncrementalSyncWithModifiedLocalAndModifiedRemot
     setModifiedUserOwnItemsToLocalStorage();
     setModifiedUserOwnItemsToRemoteStorage();
 
-    SynchronizationManagerSignalsCatcher catcher(*m_pSynchronizationManager,
+    SynchronizationManagerSignalsCatcher catcher(*m_pLocalStorageManagerAsync,
+                                                 *m_pSynchronizationManager,
                                                  *m_pSyncStatePersistenceManager);
     runTest(catcher);
 
@@ -1411,7 +1441,8 @@ void SynchronizationTester::testIncrementalSyncWithModifiedLocalAndModifiedRemot
     setModifiedLinkedNotebookItemsToLocalStorage();
     setModifiedLinkedNotebookItemsToRemoteStorage();
 
-    SynchronizationManagerSignalsCatcher catcher(*m_pSynchronizationManager,
+    SynchronizationManagerSignalsCatcher catcher(*m_pLocalStorageManagerAsync,
+                                                 *m_pSynchronizationManager,
                                                  *m_pSyncStatePersistenceManager);
     runTest(catcher);
 
@@ -1452,7 +1483,8 @@ void SynchronizationTester::testIncrementalSyncWithModifiedLocalAndModifiedRemot
     setModifiedUserOwnItemsToRemoteStorage();
     setModifiedLinkedNotebookItemsToRemoteStorage();
 
-    SynchronizationManagerSignalsCatcher catcher(*m_pSynchronizationManager,
+    SynchronizationManagerSignalsCatcher catcher(*m_pLocalStorageManagerAsync,
+                                                 *m_pSynchronizationManager,
                                                  *m_pSyncStatePersistenceManager);
     runTest(catcher);
 
@@ -1489,7 +1521,8 @@ void SynchronizationTester::testIncrementalSyncWithExpungedRemoteItemsFromUsersO
 
     setExpungedUserOwnItemsToRemoteStorage();
 
-    SynchronizationManagerSignalsCatcher catcher(*m_pSynchronizationManager,
+    SynchronizationManagerSignalsCatcher catcher(*m_pLocalStorageManagerAsync,
+                                                 *m_pSynchronizationManager,
                                                  *m_pSyncStatePersistenceManager);
     runTest(catcher);
 
@@ -1527,7 +1560,8 @@ void SynchronizationTester::testIncrementalSyncWithExpungedRemoteItemsFromLinked
 
     setExpungedLinkedNotebookItemsToRemoteStorage();
 
-    SynchronizationManagerSignalsCatcher catcher(*m_pSynchronizationManager,
+    SynchronizationManagerSignalsCatcher catcher(*m_pLocalStorageManagerAsync,
+                                                 *m_pSynchronizationManager,
                                                  *m_pSyncStatePersistenceManager);
     runTest(catcher);
 
@@ -1566,7 +1600,8 @@ void SynchronizationTester::testIncrementalSyncWithExpungedRemoteItemsFromUsersO
     setExpungedUserOwnItemsToRemoteStorage();
     setExpungedLinkedNotebookItemsToRemoteStorage();
 
-    SynchronizationManagerSignalsCatcher catcher(*m_pSynchronizationManager,
+    SynchronizationManagerSignalsCatcher catcher(*m_pLocalStorageManagerAsync,
+                                                 *m_pSynchronizationManager,
                                                  *m_pSyncStatePersistenceManager);
     runTest(catcher);
 
@@ -1605,7 +1640,8 @@ void SynchronizationTester::testIncrementalSyncWithNewModifiedAndExpungedRemoteI
     setModifiedUserOwnItemsToRemoteStorage();
     setExpungedUserOwnItemsToRemoteStorage();
 
-    SynchronizationManagerSignalsCatcher catcher(*m_pSynchronizationManager,
+    SynchronizationManagerSignalsCatcher catcher(*m_pLocalStorageManagerAsync,
+                                                 *m_pSynchronizationManager,
                                                  *m_pSyncStatePersistenceManager);
     runTest(catcher);
 
@@ -1650,7 +1686,8 @@ void SynchronizationTester::testIncrementalSyncWithNewModifiedAndExpungedRemoteI
     setModifiedLinkedNotebookItemsToRemoteStorage();
     setExpungedLinkedNotebookItemsToRemoteStorage();
 
-    SynchronizationManagerSignalsCatcher catcher(*m_pSynchronizationManager,
+    SynchronizationManagerSignalsCatcher catcher(*m_pLocalStorageManagerAsync,
+                                                 *m_pSynchronizationManager,
                                                  *m_pSyncStatePersistenceManager);
     runTest(catcher);
 
@@ -1698,7 +1735,8 @@ void SynchronizationTester::testIncrementalSyncWithNewModifiedAndExpungedRemoteI
     setModifiedLinkedNotebookItemsToRemoteStorage();
     setExpungedLinkedNotebookItemsToRemoteStorage();
 
-    SynchronizationManagerSignalsCatcher catcher(*m_pSynchronizationManager,
+    SynchronizationManagerSignalsCatcher catcher(*m_pLocalStorageManagerAsync,
+                                                 *m_pSynchronizationManager,
                                                  *m_pSyncStatePersistenceManager);
     runTest(catcher);
 
@@ -1740,7 +1778,8 @@ void SynchronizationTester::testIncrementalSyncWithConflictingSavedSearchesFromU
 
     setConflictingSavedSearchesFromUserOwnDataToLocalAndRemoteStorages(ConflictingItemsUsnOption::LargerRemoteUsn);
 
-    SynchronizationManagerSignalsCatcher catcher(*m_pSynchronizationManager,
+    SynchronizationManagerSignalsCatcher catcher(*m_pLocalStorageManagerAsync,
+                                                 *m_pSynchronizationManager,
                                                  *m_pSyncStatePersistenceManager);
     runTest(catcher);
 
@@ -1779,7 +1818,8 @@ void SynchronizationTester::testIncrementalSyncWithConflictingTagsFromUserOwnDat
     setConflictingTagsFromUserOwnDataToLocalAndRemoteStorages(
         ConflictingItemsUsnOption::LargerRemoteUsn);
 
-    SynchronizationManagerSignalsCatcher catcher(*m_pSynchronizationManager,
+    SynchronizationManagerSignalsCatcher catcher(*m_pLocalStorageManagerAsync,
+                                                 *m_pSynchronizationManager,
                                                  *m_pSyncStatePersistenceManager);
     runTest(catcher);
 
@@ -1818,7 +1858,8 @@ void SynchronizationTester::testIncrementalSyncWithConflictingNotebooksFromUserO
     setConflictingNotebooksFromUserOwnDataToLocalAndRemoteStorages(
         ConflictingItemsUsnOption::LargerRemoteUsn);
 
-    SynchronizationManagerSignalsCatcher catcher(*m_pSynchronizationManager,
+    SynchronizationManagerSignalsCatcher catcher(*m_pLocalStorageManagerAsync,
+                                                 *m_pSynchronizationManager,
                                                  *m_pSyncStatePersistenceManager);
     runTest(catcher);
 
@@ -1857,7 +1898,8 @@ void SynchronizationTester::testIncrementalSyncWithConflictingNotesFromUserOwnDa
     setConflictingNotesFromUserOwnDataToLocalAndRemoteStorages(
         ConflictingItemsUsnOption::LargerRemoteUsn);
 
-    SynchronizationManagerSignalsCatcher catcher(*m_pSynchronizationManager,
+    SynchronizationManagerSignalsCatcher catcher(*m_pLocalStorageManagerAsync,
+                                                 *m_pSynchronizationManager,
                                                  *m_pSyncStatePersistenceManager);
     runTest(catcher);
 
@@ -1900,7 +1942,8 @@ void SynchronizationTester::testIncrementalSyncWithConflictingSavedSearchesFromU
     setConflictingSavedSearchesFromUserOwnDataToLocalAndRemoteStorages(
         ConflictingItemsUsnOption::SameUsn);
 
-    SynchronizationManagerSignalsCatcher catcher(*m_pSynchronizationManager,
+    SynchronizationManagerSignalsCatcher catcher(*m_pLocalStorageManagerAsync,
+                                                 *m_pSynchronizationManager,
                                                  *m_pSyncStatePersistenceManager);
     runTest(catcher);
 
@@ -1939,7 +1982,8 @@ void SynchronizationTester::testIncrementalSyncWithConflictingTagsFromUserOwnDat
     setConflictingTagsFromUserOwnDataToLocalAndRemoteStorages(
         ConflictingItemsUsnOption::SameUsn);
 
-    SynchronizationManagerSignalsCatcher catcher(*m_pSynchronizationManager,
+    SynchronizationManagerSignalsCatcher catcher(*m_pLocalStorageManagerAsync,
+                                                 *m_pSynchronizationManager,
                                                  *m_pSyncStatePersistenceManager);
     runTest(catcher);
 
@@ -1978,7 +2022,8 @@ void SynchronizationTester::testIncrementalSyncWithConflictingNotebooksFromUserO
     setConflictingNotebooksFromUserOwnDataToLocalAndRemoteStorages(
         ConflictingItemsUsnOption::SameUsn);
 
-    SynchronizationManagerSignalsCatcher catcher(*m_pSynchronizationManager,
+    SynchronizationManagerSignalsCatcher catcher(*m_pLocalStorageManagerAsync,
+                                                 *m_pSynchronizationManager,
                                                  *m_pSyncStatePersistenceManager);
     runTest(catcher);
 
@@ -2017,7 +2062,8 @@ void SynchronizationTester::testIncrementalSyncWithConflictingNotesFromUserOwnDa
     setConflictingNotesFromUserOwnDataToLocalAndRemoteStorages(
         ConflictingItemsUsnOption::SameUsn);
 
-    SynchronizationManagerSignalsCatcher catcher(*m_pSynchronizationManager,
+    SynchronizationManagerSignalsCatcher catcher(*m_pLocalStorageManagerAsync,
+                                                 *m_pSynchronizationManager,
                                                  *m_pSyncStatePersistenceManager);
     runTest(catcher);
 
@@ -2060,7 +2106,8 @@ void SynchronizationTester::testIncrementalSyncWithConflictingTagsFromLinkedNote
     setConflictingTagsFromLinkedNotebooksToLocalAndRemoteStorages(
         ConflictingItemsUsnOption::LargerRemoteUsn);
 
-    SynchronizationManagerSignalsCatcher catcher(*m_pSynchronizationManager,
+    SynchronizationManagerSignalsCatcher catcher(*m_pLocalStorageManagerAsync,
+                                                 *m_pSynchronizationManager,
                                                  *m_pSyncStatePersistenceManager);
     runTest(catcher);
 
@@ -2100,7 +2147,8 @@ void SynchronizationTester::testIncrementalSyncWithConflictingNotebooksFromLinke
     setConflictingNotebooksFromLinkedNotebooksToLocalAndRemoteStorages(
         ConflictingItemsUsnOption::LargerRemoteUsn);
 
-    SynchronizationManagerSignalsCatcher catcher(*m_pSynchronizationManager,
+    SynchronizationManagerSignalsCatcher catcher(*m_pLocalStorageManagerAsync,
+                                                 *m_pSynchronizationManager,
                                                  *m_pSyncStatePersistenceManager);
     runTest(catcher);
 
@@ -2140,7 +2188,8 @@ void SynchronizationTester::testIncrementalSyncWithConflictingNotesFromLinkedNot
     setConflictingNotesFromLinkedNotebooksToLocalAndRemoteStorages(
         ConflictingItemsUsnOption::LargerRemoteUsn);
 
-    SynchronizationManagerSignalsCatcher catcher(*m_pSynchronizationManager,
+    SynchronizationManagerSignalsCatcher catcher(*m_pLocalStorageManagerAsync,
+                                                 *m_pSynchronizationManager,
                                                  *m_pSyncStatePersistenceManager);
     runTest(catcher);
 
@@ -2183,7 +2232,8 @@ void SynchronizationTester::testIncrementalSyncWithConflictingTagsFromLinkedNote
     setConflictingTagsFromLinkedNotebooksToLocalAndRemoteStorages(
         ConflictingItemsUsnOption::SameUsn);
 
-    SynchronizationManagerSignalsCatcher catcher(*m_pSynchronizationManager,
+    SynchronizationManagerSignalsCatcher catcher(*m_pLocalStorageManagerAsync,
+                                                 *m_pSynchronizationManager,
                                                  *m_pSyncStatePersistenceManager);
     runTest(catcher);
 
@@ -2223,7 +2273,8 @@ void SynchronizationTester::testIncrementalSyncWithConflictingNotebooksFromLinke
     setConflictingNotebooksFromLinkedNotebooksToLocalAndRemoteStorages(
         ConflictingItemsUsnOption::SameUsn);
 
-    SynchronizationManagerSignalsCatcher catcher(*m_pSynchronizationManager,
+    SynchronizationManagerSignalsCatcher catcher(*m_pLocalStorageManagerAsync,
+                                                 *m_pSynchronizationManager,
                                                  *m_pSyncStatePersistenceManager);
     runTest(catcher);
 
@@ -2263,7 +2314,8 @@ void SynchronizationTester::testIncrementalSyncWithConflictingNotesFromLinkedNot
     setConflictingNotesFromLinkedNotebooksToLocalAndRemoteStorages(
         ConflictingItemsUsnOption::SameUsn);
 
-    SynchronizationManagerSignalsCatcher catcher(*m_pSynchronizationManager,
+    SynchronizationManagerSignalsCatcher catcher(*m_pLocalStorageManagerAsync,
+                                                 *m_pSynchronizationManager,
                                                  *m_pSyncStatePersistenceManager);
     runTest(catcher);
 
@@ -2308,7 +2360,8 @@ void SynchronizationTester::testIncrementalSyncWithConflictingTagsFromUserOwnDat
     setConflictingTagsFromLinkedNotebooksToLocalAndRemoteStorages(
         ConflictingItemsUsnOption::LargerRemoteUsn);
 
-    SynchronizationManagerSignalsCatcher catcher(*m_pSynchronizationManager,
+    SynchronizationManagerSignalsCatcher catcher(*m_pLocalStorageManagerAsync,
+                                                 *m_pSynchronizationManager,
                                                  *m_pSyncStatePersistenceManager);
     runTest(catcher);
 
@@ -2350,7 +2403,8 @@ void SynchronizationTester::testIncrementalSyncWithConflictingNotebooksFromUserO
     setConflictingNotebooksFromLinkedNotebooksToLocalAndRemoteStorages(
         ConflictingItemsUsnOption::LargerRemoteUsn);
 
-    SynchronizationManagerSignalsCatcher catcher(*m_pSynchronizationManager,
+    SynchronizationManagerSignalsCatcher catcher(*m_pLocalStorageManagerAsync,
+                                                 *m_pSynchronizationManager,
                                                  *m_pSyncStatePersistenceManager);
     runTest(catcher);
 
@@ -2392,7 +2446,8 @@ void SynchronizationTester::testIncrementalSyncWithConflictingNotesFromUserOwnDa
     setConflictingNotesFromLinkedNotebooksToLocalAndRemoteStorages(
         ConflictingItemsUsnOption::LargerRemoteUsn);
 
-    SynchronizationManagerSignalsCatcher catcher(*m_pSynchronizationManager,
+    SynchronizationManagerSignalsCatcher catcher(*m_pLocalStorageManagerAsync,
+                                                 *m_pSynchronizationManager,
                                                  *m_pSyncStatePersistenceManager);
     runTest(catcher);
 
@@ -2438,7 +2493,8 @@ void SynchronizationTester::testIncrementalSyncWithConflictingTagsFromUserOwnDat
     setConflictingTagsFromLinkedNotebooksToLocalAndRemoteStorages(
         ConflictingItemsUsnOption::SameUsn);
 
-    SynchronizationManagerSignalsCatcher catcher(*m_pSynchronizationManager,
+    SynchronizationManagerSignalsCatcher catcher(*m_pLocalStorageManagerAsync,
+                                                 *m_pSynchronizationManager,
                                                  *m_pSyncStatePersistenceManager);
     runTest(catcher);
 
@@ -2480,7 +2536,8 @@ void SynchronizationTester::testIncrementalSyncWithConflictingNotebooksFromUserO
     setConflictingNotebooksFromLinkedNotebooksToLocalAndRemoteStorages(
         ConflictingItemsUsnOption::SameUsn);
 
-    SynchronizationManagerSignalsCatcher catcher(*m_pSynchronizationManager,
+    SynchronizationManagerSignalsCatcher catcher(*m_pLocalStorageManagerAsync,
+                                                 *m_pSynchronizationManager,
                                                  *m_pSyncStatePersistenceManager);
     runTest(catcher);
 
@@ -2522,7 +2579,8 @@ void SynchronizationTester::testIncrementalSyncWithConflictingNotesFromUserOwnDa
     setConflictingNotesFromLinkedNotebooksToLocalAndRemoteStorages(
         ConflictingItemsUsnOption::SameUsn);
 
-    SynchronizationManagerSignalsCatcher catcher(*m_pSynchronizationManager,
+    SynchronizationManagerSignalsCatcher catcher(*m_pLocalStorageManagerAsync,
+                                                 *m_pSynchronizationManager,
                                                  *m_pSyncStatePersistenceManager);
     runTest(catcher);
 
@@ -2564,7 +2622,8 @@ void SynchronizationTester::testIncrementalSyncWithExpungedRemoteLinkedNotebookN
 
     setExpungedLinkedNotebookNotesToRemoteStorageToProduceNotelessLinkedNotebookTags();
 
-    SynchronizationManagerSignalsCatcher catcher(*m_pSynchronizationManager,
+    SynchronizationManagerSignalsCatcher catcher(*m_pLocalStorageManagerAsync,
+                                                 *m_pSynchronizationManager,
                                                  *m_pSyncStatePersistenceManager);
     runTest(catcher);
 
@@ -2609,7 +2668,8 @@ void SynchronizationTester::testIncrementalSyncWithRateLimitsBreachOnGetUserOwnS
     m_pFakeNoteStore->setAPIRateLimitsExceedingTrigger(
         FakeNoteStore::WhenToTriggerAPIRateLimitsExceeding::OnGetUserOwnSyncStateAttempt);
 
-    SynchronizationManagerSignalsCatcher catcher(*m_pSynchronizationManager,
+    SynchronizationManagerSignalsCatcher catcher(*m_pLocalStorageManagerAsync,
+                                                 *m_pSynchronizationManager,
                                                  *m_pSyncStatePersistenceManager);
     runTest(catcher);
 
@@ -2651,7 +2711,8 @@ void SynchronizationTester::testIncrementalSyncWithRateLimitsBreachOnGetLinkedNo
     m_pFakeNoteStore->setAPIRateLimitsExceedingTrigger(
         FakeNoteStore::WhenToTriggerAPIRateLimitsExceeding::OnGetLinkedNotebookSyncStateAttempt);
 
-    SynchronizationManagerSignalsCatcher catcher(*m_pSynchronizationManager,
+    SynchronizationManagerSignalsCatcher catcher(*m_pLocalStorageManagerAsync,
+                                                 *m_pSynchronizationManager,
                                                  *m_pSyncStatePersistenceManager);
     runTest(catcher);
 
@@ -2693,7 +2754,8 @@ void SynchronizationTester::testIncrementalSyncWithRateLimitsBreachOnGetUserOwnS
     m_pFakeNoteStore->setAPIRateLimitsExceedingTrigger(
         FakeNoteStore::WhenToTriggerAPIRateLimitsExceeding::OnGetUserOwnSyncChunkAttempt);
 
-    SynchronizationManagerSignalsCatcher catcher(*m_pSynchronizationManager,
+    SynchronizationManagerSignalsCatcher catcher(*m_pLocalStorageManagerAsync,
+                                                 *m_pSynchronizationManager,
                                                  *m_pSyncStatePersistenceManager);
     runTest(catcher);
 
@@ -2735,7 +2797,8 @@ void SynchronizationTester::testIncrementalSyncWithRateLimitsBreachOnGetLinkedNo
     m_pFakeNoteStore->setAPIRateLimitsExceedingTrigger(
         FakeNoteStore::WhenToTriggerAPIRateLimitsExceeding::OnGetLinkedNotebookSyncChunkAttempt);
 
-    SynchronizationManagerSignalsCatcher catcher(*m_pSynchronizationManager,
+    SynchronizationManagerSignalsCatcher catcher(*m_pLocalStorageManagerAsync,
+                                                 *m_pSynchronizationManager,
                                                  *m_pSyncStatePersistenceManager);
     runTest(catcher);
 
@@ -2778,7 +2841,8 @@ void SynchronizationTester::testIncrementalSyncWithRateLimitsBreachOnGetNewNoteA
     m_pFakeNoteStore->setAPIRateLimitsExceedingTrigger(
         FakeNoteStore::WhenToTriggerAPIRateLimitsExceeding::OnGetNoteAttemptAfterDownloadingUserOwnSyncChunks);
 
-    SynchronizationManagerSignalsCatcher catcher(*m_pSynchronizationManager,
+    SynchronizationManagerSignalsCatcher catcher(*m_pLocalStorageManagerAsync,
+                                                 *m_pSynchronizationManager,
                                                  *m_pSyncStatePersistenceManager);
     runTest(catcher);
 
@@ -2829,7 +2893,8 @@ void SynchronizationTester::testIncrementalSyncWithRateLimitsBreachOnGetModified
     m_pFakeNoteStore->setAPIRateLimitsExceedingTrigger(
         FakeNoteStore::WhenToTriggerAPIRateLimitsExceeding::OnGetNoteAttemptAfterDownloadingUserOwnSyncChunks);
 
-    SynchronizationManagerSignalsCatcher catcher(*m_pSynchronizationManager,
+    SynchronizationManagerSignalsCatcher catcher(*m_pLocalStorageManagerAsync,
+                                                 *m_pSynchronizationManager,
                                                  *m_pSyncStatePersistenceManager);
     runTest(catcher);
 
@@ -2886,7 +2951,8 @@ void SynchronizationTester::testIncrementalSyncWithRateLimitsBreachOnGetNewResou
     m_pFakeNoteStore->setAPIRateLimitsExceedingTrigger(
         FakeNoteStore::WhenToTriggerAPIRateLimitsExceeding::OnGetResourceAttemptAfterDownloadingUserOwnSyncChunks);
 
-    SynchronizationManagerSignalsCatcher catcher(*m_pSynchronizationManager,
+    SynchronizationManagerSignalsCatcher catcher(*m_pLocalStorageManagerAsync,
+                                                 *m_pSynchronizationManager,
                                                  *m_pSyncStatePersistenceManager);
     runTest(catcher);
 
@@ -2944,7 +3010,8 @@ void SynchronizationTester::testIncrementalSyncWithRateLimitsBreachOnGetModified
     m_pFakeNoteStore->setAPIRateLimitsExceedingTrigger(
         FakeNoteStore::WhenToTriggerAPIRateLimitsExceeding::OnGetResourceAttemptAfterDownloadingUserOwnSyncChunks);
 
-    SynchronizationManagerSignalsCatcher catcher(*m_pSynchronizationManager,
+    SynchronizationManagerSignalsCatcher catcher(*m_pLocalStorageManagerAsync,
+                                                 *m_pSynchronizationManager,
                                                  *m_pSyncStatePersistenceManager);
     runTest(catcher);
 
@@ -3001,7 +3068,8 @@ void SynchronizationTester::testIncrementalSyncWithRateLimitsBreachOnGetNewNoteA
     m_pFakeNoteStore->setAPIRateLimitsExceedingTrigger(
         FakeNoteStore::WhenToTriggerAPIRateLimitsExceeding::OnGetNoteAttemptAfterDownloadingLinkedNotebookSyncChunks);
 
-    SynchronizationManagerSignalsCatcher catcher(*m_pSynchronizationManager,
+    SynchronizationManagerSignalsCatcher catcher(*m_pLocalStorageManagerAsync,
+                                                 *m_pSynchronizationManager,
                                                  *m_pSyncStatePersistenceManager);
     runTest(catcher);
 
@@ -3052,7 +3120,8 @@ void SynchronizationTester::testIncrementalSyncWithRateLimitsBreachOnGetModified
     m_pFakeNoteStore->setAPIRateLimitsExceedingTrigger(
         FakeNoteStore::WhenToTriggerAPIRateLimitsExceeding::OnGetNoteAttemptAfterDownloadingLinkedNotebookSyncChunks);
 
-    SynchronizationManagerSignalsCatcher catcher(*m_pSynchronizationManager,
+    SynchronizationManagerSignalsCatcher catcher(*m_pLocalStorageManagerAsync,
+                                                 *m_pSynchronizationManager,
                                                  *m_pSyncStatePersistenceManager);
     runTest(catcher);
 
@@ -3106,7 +3175,8 @@ void SynchronizationTester::testIncrementalSyncWithRateLimitsBreachOnGetNewResou
     m_pFakeNoteStore->setAPIRateLimitsExceedingTrigger(
         FakeNoteStore::WhenToTriggerAPIRateLimitsExceeding::OnGetResourceAttemptAfterDownloadingLinkedNotebookSyncChunks);
 
-    SynchronizationManagerSignalsCatcher catcher(*m_pSynchronizationManager,
+    SynchronizationManagerSignalsCatcher catcher(*m_pLocalStorageManagerAsync,
+                                                 *m_pSynchronizationManager,
                                                  *m_pSyncStatePersistenceManager);
     runTest(catcher);
 
@@ -3160,7 +3230,8 @@ void SynchronizationTester::testIncrementalSyncWithRateLimitsBreachOnGetModified
     m_pFakeNoteStore->setAPIRateLimitsExceedingTrigger(
         FakeNoteStore::WhenToTriggerAPIRateLimitsExceeding::OnGetResourceAttemptAfterDownloadingLinkedNotebookSyncChunks);
 
-    SynchronizationManagerSignalsCatcher catcher(*m_pSynchronizationManager,
+    SynchronizationManagerSignalsCatcher catcher(*m_pLocalStorageManagerAsync,
+                                                 *m_pSynchronizationManager,
                                                  *m_pSyncStatePersistenceManager);
     runTest(catcher);
 
@@ -3212,7 +3283,8 @@ void SynchronizationTester::testIncrementalSyncWithRateLimitsBreachOnCreateSaved
     m_pFakeNoteStore->setAPIRateLimitsExceedingTrigger(
         FakeNoteStore::WhenToTriggerAPIRateLimitsExceeding::OnCreateSavedSearchAttempt);
 
-    SynchronizationManagerSignalsCatcher catcher(*m_pSynchronizationManager,
+    SynchronizationManagerSignalsCatcher catcher(*m_pLocalStorageManagerAsync,
+                                                 *m_pSynchronizationManager,
                                                  *m_pSyncStatePersistenceManager);
     runTest(catcher);
 
@@ -3262,7 +3334,8 @@ void SynchronizationTester::testIncrementalSyncWithRateLimitsBreachOnUpdateSaved
     m_pFakeNoteStore->setAPIRateLimitsExceedingTrigger(
         FakeNoteStore::WhenToTriggerAPIRateLimitsExceeding::OnUpdateSavedSearchAttempt);
 
-    SynchronizationManagerSignalsCatcher catcher(*m_pSynchronizationManager,
+    SynchronizationManagerSignalsCatcher catcher(*m_pLocalStorageManagerAsync,
+                                                 *m_pSynchronizationManager,
                                                  *m_pSyncStatePersistenceManager);
     runTest(catcher);
 
@@ -3312,7 +3385,8 @@ void SynchronizationTester::testIncrementalSyncWithRateLimitsBreachOnCreateUserO
     m_pFakeNoteStore->setAPIRateLimitsExceedingTrigger(
         FakeNoteStore::WhenToTriggerAPIRateLimitsExceeding::OnCreateTagAttempt);
 
-    SynchronizationManagerSignalsCatcher catcher(*m_pSynchronizationManager,
+    SynchronizationManagerSignalsCatcher catcher(*m_pLocalStorageManagerAsync,
+                                                 *m_pSynchronizationManager,
                                                  *m_pSyncStatePersistenceManager);
     runTest(catcher);
 
@@ -3362,7 +3436,8 @@ void SynchronizationTester::testIncrementalSyncWithRateLimitsBreachOnUpdateUserO
     m_pFakeNoteStore->setAPIRateLimitsExceedingTrigger(
         FakeNoteStore::WhenToTriggerAPIRateLimitsExceeding::OnUpdateTagAttempt);
 
-    SynchronizationManagerSignalsCatcher catcher(*m_pSynchronizationManager,
+    SynchronizationManagerSignalsCatcher catcher(*m_pLocalStorageManagerAsync,
+                                                 *m_pSynchronizationManager,
                                                  *m_pSyncStatePersistenceManager);
     runTest(catcher);
 
@@ -3413,7 +3488,8 @@ void SynchronizationTester::testIncrementalSyncWithRateLimitsBreachOnCreateTagIn
     m_pFakeNoteStore->setAPIRateLimitsExceedingTrigger(
         FakeNoteStore::WhenToTriggerAPIRateLimitsExceeding::OnCreateTagAttempt);
 
-    SynchronizationManagerSignalsCatcher catcher(*m_pSynchronizationManager,
+    SynchronizationManagerSignalsCatcher catcher(*m_pLocalStorageManagerAsync,
+                                                 *m_pSynchronizationManager,
                                                  *m_pSyncStatePersistenceManager);
     runTest(catcher);
 
@@ -3464,7 +3540,8 @@ void SynchronizationTester::testIncrementalSyncWithRateLimitsBreachOnUpdateTagIn
     m_pFakeNoteStore->setAPIRateLimitsExceedingTrigger(
         FakeNoteStore::WhenToTriggerAPIRateLimitsExceeding::OnUpdateTagAttempt);
 
-    SynchronizationManagerSignalsCatcher catcher(*m_pSynchronizationManager,
+    SynchronizationManagerSignalsCatcher catcher(*m_pLocalStorageManagerAsync,
+                                                 *m_pSynchronizationManager,
                                                  *m_pSyncStatePersistenceManager);
     runTest(catcher);
 
@@ -3514,7 +3591,8 @@ void SynchronizationTester::testIncrementalSyncWithRateLimitsBreachOnCreateNoteb
     m_pFakeNoteStore->setAPIRateLimitsExceedingTrigger(
         FakeNoteStore::WhenToTriggerAPIRateLimitsExceeding::OnCreateNotebookAttempt);
 
-    SynchronizationManagerSignalsCatcher catcher(*m_pSynchronizationManager,
+    SynchronizationManagerSignalsCatcher catcher(*m_pLocalStorageManagerAsync,
+                                                 *m_pSynchronizationManager,
                                                  *m_pSyncStatePersistenceManager);
     runTest(catcher);
 
@@ -3564,7 +3642,8 @@ void SynchronizationTester::testIncrementalSyncWithRateLimitsBreachOnUpdateNoteb
     m_pFakeNoteStore->setAPIRateLimitsExceedingTrigger(
         FakeNoteStore::WhenToTriggerAPIRateLimitsExceeding::OnUpdateNotebookAttempt);
 
-    SynchronizationManagerSignalsCatcher catcher(*m_pSynchronizationManager,
+    SynchronizationManagerSignalsCatcher catcher(*m_pLocalStorageManagerAsync,
+                                                 *m_pSynchronizationManager,
                                                  *m_pSyncStatePersistenceManager);
     runTest(catcher);
 
@@ -3614,7 +3693,8 @@ void SynchronizationTester::testIncrementalSyncWithRateLimitsBreachOnCreateUserO
     m_pFakeNoteStore->setAPIRateLimitsExceedingTrigger(
         FakeNoteStore::WhenToTriggerAPIRateLimitsExceeding::OnCreateNoteAttempt);
 
-    SynchronizationManagerSignalsCatcher catcher(*m_pSynchronizationManager,
+    SynchronizationManagerSignalsCatcher catcher(*m_pLocalStorageManagerAsync,
+                                                 *m_pSynchronizationManager,
                                                  *m_pSyncStatePersistenceManager);
     runTest(catcher);
 
@@ -3664,7 +3744,8 @@ void SynchronizationTester::testIncrementalSyncWithRateLimitsBreachOnUpdateUserO
     m_pFakeNoteStore->setAPIRateLimitsExceedingTrigger(
         FakeNoteStore::WhenToTriggerAPIRateLimitsExceeding::OnUpdateNoteAttempt);
 
-    SynchronizationManagerSignalsCatcher catcher(*m_pSynchronizationManager,
+    SynchronizationManagerSignalsCatcher catcher(*m_pLocalStorageManagerAsync,
+                                                 *m_pSynchronizationManager,
                                                  *m_pSyncStatePersistenceManager);
     runTest(catcher);
 
@@ -3715,7 +3796,8 @@ void SynchronizationTester::testIncrementalSyncWithRateLimitsBreachOnCreateNoteI
     m_pFakeNoteStore->setAPIRateLimitsExceedingTrigger(
         FakeNoteStore::WhenToTriggerAPIRateLimitsExceeding::OnCreateNoteAttempt);
 
-    SynchronizationManagerSignalsCatcher catcher(*m_pSynchronizationManager,
+    SynchronizationManagerSignalsCatcher catcher(*m_pLocalStorageManagerAsync,
+                                                 *m_pSynchronizationManager,
                                                  *m_pSyncStatePersistenceManager);
     runTest(catcher);
 
@@ -3766,7 +3848,8 @@ void SynchronizationTester::testIncrementalSyncWithRateLimitsBreachOnUpdateNoteI
     m_pFakeNoteStore->setAPIRateLimitsExceedingTrigger(
         FakeNoteStore::WhenToTriggerAPIRateLimitsExceeding::OnUpdateNoteAttempt);
 
-    SynchronizationManagerSignalsCatcher catcher(*m_pSynchronizationManager,
+    SynchronizationManagerSignalsCatcher catcher(*m_pLocalStorageManagerAsync,
+                                                 *m_pSynchronizationManager,
                                                  *m_pSyncStatePersistenceManager);
     runTest(catcher);
 
@@ -3817,7 +3900,8 @@ void SynchronizationTester::testIncrementalSyncWithRateLimitsBreachOnAuthenticat
     m_pFakeNoteStore->setAPIRateLimitsExceedingTrigger(
         FakeNoteStore::WhenToTriggerAPIRateLimitsExceeding::OnAuthenticateToSharedNotebookAttempt);
 
-    SynchronizationManagerSignalsCatcher catcher(*m_pSynchronizationManager,
+    SynchronizationManagerSignalsCatcher catcher(*m_pLocalStorageManagerAsync,
+                                                 *m_pSynchronizationManager,
                                                  *m_pSyncStatePersistenceManager);
     runTest(catcher);
 

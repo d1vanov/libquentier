@@ -29,6 +29,7 @@
 
 namespace quentier {
 
+QT_FORWARD_DECLARE_CLASS(LocalStorageManagerAsync)
 QT_FORWARD_DECLARE_CLASS(SynchronizationManager)
 QT_FORWARD_DECLARE_CLASS(SyncStatePersistenceManager)
 
@@ -37,6 +38,7 @@ class SynchronizationManagerSignalsCatcher: public QObject
     Q_OBJECT
 public:
     SynchronizationManagerSignalsCatcher(
+        LocalStorageManagerAsync & localStorageManagerAsync,
         SynchronizationManager & synchronizationManager,
         SyncStatePersistenceManager & syncStatePersistenceManager,
         QObject * parent = Q_NULLPTR);
@@ -252,8 +254,17 @@ private Q_SLOTS:
         QHash<QString,qint32> linkedNotebookUpdateCountsByLinkedNotebookGuid,
         QHash<QString,qevercloud::Timestamp> linkedNotebookSyncTimesByLinkedNotebookGuid);
 
+    void onNoteMovedToAnotherNotebook(
+        QString noteLocalUid, QString previousNotebookLocalUid,
+        QString newNotebookLocalUid);
+
+    void onNoteTagListChanged(
+        QString noteLocalUid, QStringList previousNoteTagLocalUids,
+        QStringList newNoteTagLocalUids);
+
 private:
-    void createConnections(SynchronizationManager & synchronizationManager,
+    void createConnections(LocalStorageManagerAsync & localStorageManagerAsync,
+                           SynchronizationManager & synchronizationManager,
                            SyncStatePersistenceManager & syncStatePersistenceManager);
 
     bool checkSyncChunkDownloadProgressOrderImpl(
