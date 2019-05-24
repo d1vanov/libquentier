@@ -1320,13 +1320,20 @@ void LocalStorageManagerAsync::onUpdateNoteRequest(
             bool foundNoteInCache = false;
             if (d->m_useCache)
             {
-                bool noteHasGuid = note.hasGuid();
-                const QString uid = (noteHasGuid ? note.guid() : note.localUid());
-                LocalStorageCacheManager::WhichUid wu =
-                    (noteHasGuid
-                     ? LocalStorageCacheManager::Guid
-                     : LocalStorageCacheManager::LocalUid);
-                const Note * pNote = d->m_pLocalStorageCacheManager->findNote(uid, wu);
+                const Note * pNote = Q_NULLPTR;
+
+                if (note.hasGuid()) {
+                    pNote = d->m_pLocalStorageCacheManager->findNote(
+                        note.guid(),
+                        LocalStorageCacheManager::WhichUid::Guid);
+                }
+
+                if (!pNote) {
+                    pNote = d->m_pLocalStorageCacheManager->findNote(
+                        note.localUid(),
+                        LocalStorageCacheManager::WhichUid::LocalUid);
+                }
+
                 if (pNote) {
                     previousNoteVersion = *pNote;
                     foundNoteInCache = true;
