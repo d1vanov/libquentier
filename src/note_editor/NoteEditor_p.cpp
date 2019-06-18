@@ -262,6 +262,7 @@ NoteEditorPrivate::NoteEditorPrivate(NoteEditor & noteEditor) :
     m_initialPageHtml(),
     m_noteNotFoundPageHtml(),
     m_noteDeletedPageHtml(),
+    m_noteLoadingPageHtml(),
     m_noteWasNotFound(false),
     m_noteWasDeleted(false),
     m_contextMenuSequenceNumber(1),     // NOTE: must start from 1 as JavaScript treats 0 as null!
@@ -390,6 +391,12 @@ void NoteEditorPrivate::setNoteDeletedPageHtml(const QString & html)
     if (m_noteWasDeleted) {
         clearEditorContent(BlankPageKind::NoteDeleted);
     }
+}
+
+void NoteEditorPrivate::setNoteLoadingPageHtml(const QString & html)
+{
+    QNDEBUG(QStringLiteral("NoteEditorPrivate::setNoteLoadingPageHtml: ") << html);
+    m_noteLoadingPageHtml = html;
 }
 
 bool NoteEditorPrivate::isNoteLoaded() const
@@ -4268,6 +4275,9 @@ void NoteEditorPrivate::clearEditorContent(const BlankPageKind::type kind,
     case BlankPageKind::NoteDeleted:
         blankPageHtml = noteDeletedPageHtml();
         break;
+    case BlankPageKind::NoteLoading:
+        blankPageHtml = noteLoadingPageHtml();
+        break;
     case BlankPageKind::InternalError:
         blankPageHtml = composeBlankPageHtml(errorDescription.localizedString());
         break;
@@ -6430,6 +6440,16 @@ QString NoteEditorPrivate::noteDeletedPageHtml() const
     return composeBlankPageHtml(text);
 }
 
+QString NoteEditorPrivate::noteLoadingPageHtml() const
+{
+    if (!m_noteLoadingPageHtml.isEmpty()) {
+        return m_noteLoadingPageHtml;
+    }
+
+    QString text = tr("Loading note...");
+    return composeBlankPageHtml(text);
+}
+
 QString NoteEditorPrivate::initialPageHtml() const
 {
     if (!m_initialPageHtml.isEmpty()) {
@@ -7910,7 +7930,9 @@ void NoteEditorPrivate::setCurrentNoteLocalUid(const QString & noteLocalUid)
     clearCurrentNoteInfo();
 
     m_noteLocalUid = noteLocalUid;
-    clearEditorContent();
+    clearEditorContent(m_noteLocalUid.isEmpty()
+                       ? BlankPageKind::Initial
+                       : BlankPageKind::NoteLoading);
 
     if (!m_noteLocalUid.isEmpty()) {
         QNTRACE(QStringLiteral("Emitting the request to find note and notebook ")

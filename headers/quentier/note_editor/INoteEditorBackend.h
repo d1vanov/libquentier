@@ -56,6 +56,7 @@ public:
     virtual void setInitialPageHtml(const QString & html) = 0;
     virtual void setNoteNotFoundPageHtml(const QString & html) = 0;
     virtual void setNoteDeletedPageHtml(const QString & html) = 0;
+    virtual void setNoteLoadingPageHtml(const QString & html) = 0;
 
     virtual bool isNoteLoaded() const = 0;
 

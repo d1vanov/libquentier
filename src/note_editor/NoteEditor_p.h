@@ -246,6 +246,7 @@ public Q_SLOTS:
     virtual void setInitialPageHtml(const QString & html) Q_DECL_OVERRIDE;
     virtual void setNoteNotFoundPageHtml(const QString & html) Q_DECL_OVERRIDE;
     virtual void setNoteDeletedPageHtml(const QString & html) Q_DECL_OVERRIDE;
+    virtual void setNoteLoadingPageHtml(const QString & html) Q_DECL_OVERRIDE;
 
     virtual void undo() Q_DECL_OVERRIDE;
     virtual void redo() Q_DECL_OVERRIDE;
@@ -692,6 +693,12 @@ private:
              */
             NoteDeleted,
             /**
+             * Blank page of "NoteLoading" kind is displayed after the note
+             * local uid is set to the editor but before the editor is ready
+             * to display the note
+             */
+            NoteLoading,
+            /**
              * Blank page of "InternalError" kind is displayed if the note editor
              * cannot display the note for some reason
              */
@@ -760,6 +767,7 @@ private:
 
     QString noteNotFoundPageHtml() const;
     QString noteDeletedPageHtml() const;
+    QString noteLoadingPageHtml() const;
     QString noteEditorPagePrefix() const;
     QString bodyStyleCss() const;
     QString initialPageHtml() const;
@@ -1084,6 +1092,7 @@ private:
     QString     m_initialPageHtml;
     QString     m_noteNotFoundPageHtml;
     QString     m_noteDeletedPageHtml;
+    QString     m_noteLoadingPageHtml;
 
     bool        m_noteWasNotFound;
     bool        m_noteWasDeleted;

@@ -111,6 +111,12 @@ public:
     void setNoteDeletedPageHtml(const QString & html);
 
     /**
+     * Set the html to be displayed when the note set to the editor is being
+     * loaded into it
+     */
+    void setNoteLoadingPageHtml(const QString & html);
+
+    /**
      * Get the local uid of the note currently set to the note editor
      */
     QString currentNoteLocalUid() const;
