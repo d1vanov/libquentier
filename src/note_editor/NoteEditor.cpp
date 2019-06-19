@@ -86,6 +86,11 @@ void NoteEditor::setNoteDeletedPageHtml(const QString & html)
     m_backend->setNoteDeletedPageHtml(html);
 }
 
+void NoteEditor::setNoteLoadingPageHtml(const QString & html)
+{
+    m_backend->setNoteLoadingPageHtml(html);
+}
+
 QString NoteEditor::currentNoteLocalUid() const
 {
     return m_backend->currentNoteLocalUid();
