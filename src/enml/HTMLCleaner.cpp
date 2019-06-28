@@ -66,8 +66,8 @@ HTMLCleaner::~HTMLCleaner()
 bool HTMLCleaner::htmlToXml(const QString & html, QString & output,
                             QString & errorDescription)
 {
-    QNDEBUG(QStringLiteral("HTMLCleaner::htmlToXml"));
-    QNTRACE(QStringLiteral("html = ") << html);
+    QNDEBUG("HTMLCleaner::htmlToXml");
+    QNTRACE("html = " << html);
 
     return m_impl->convertHtml(html, TidyXmlOut, output, errorDescription);
 }
@@ -75,16 +75,16 @@ bool HTMLCleaner::htmlToXml(const QString & html, QString & output,
 bool HTMLCleaner::htmlToXhtml(const QString & html, QString & output,
                               QString & errorDescription)
 {
-    QNDEBUG(QStringLiteral("HTMLCleaner::htmlToXhtml"));
-    QNTRACE(QStringLiteral("html = ") << html);
+    QNDEBUG("HTMLCleaner::htmlToXhtml");
+    QNTRACE("html = " << html);
 
     return m_impl->convertHtml(html, TidyXhtmlOut, output, errorDescription);
 }
 
 bool HTMLCleaner::cleanupHtml(QString & html, QString & errorDescription)
 {
-    QNDEBUG(QStringLiteral("HTMLCleaner::cleanupHtml"));
-    QNTRACE(QStringLiteral("html = ") << html);
+    QNDEBUG("HTMLCleaner::cleanupHtml");
+    QNTRACE("html = " << html);
 
     return m_impl->convertHtml(html, TidyHtmlOut, html, errorDescription);
 }
@@ -101,110 +101,108 @@ bool HTMLCleaner::Impl::convertHtml(const QString & html,
 
     int rc = -1;
     Bool ok = tidyOptSetBool(m_tidyDoc, outputFormat, yes);
-    QNTRACE(QStringLiteral("tidyOptSetBool: output format: ok = ")
-            << (ok ? QStringLiteral("true") : QStringLiteral("false")));
+    QNTRACE("tidyOptSetBool: output format: ok = " << (ok ? "true" : "false"));
     if (ok) {
         ok = tidyOptSetBool(m_tidyDoc, TidyPreserveEntities, yes);
-        QNTRACE(QStringLiteral("tidyOptSetBool: preserve entities = yes: ok = ")
-                << (ok ? QStringLiteral("true") : QStringLiteral("false")));
+        QNTRACE("tidyOptSetBool: preserve entities = yes: ok = "
+                << (ok ? "true" : "false"));
     }
 
     if (ok) {
         ok = tidyOptSetInt(m_tidyDoc, TidyMergeDivs, no);
-        QNTRACE(QStringLiteral("tidyOptSetInt: merge divs = no: ok = ")
-                << (ok ? QStringLiteral("true") : QStringLiteral("false")));
+        QNTRACE("tidyOptSetInt: merge divs = no: ok = "
+                << (ok ? "true" : "false"));
     }
 
     if (ok) {
         ok = tidyOptSetInt(m_tidyDoc, TidyMergeSpans, no);
-        QNTRACE(QStringLiteral("tidyOptSetInt: merge spans = no: ok = ")
-                << (ok ? QStringLiteral("true") : QStringLiteral("false")));
+        QNTRACE("tidyOptSetInt: merge spans = no: ok = "
+                << (ok ? "true" : "false"));
     }
 
     if (ok) {
         ok = tidyOptSetBool(m_tidyDoc, TidyMergeEmphasis, no);
-        QNTRACE(QStringLiteral("tidyOptSetBool: merge emphasis = no: ok = ")
-                << (ok ? QStringLiteral("true") : QStringLiteral("false")));
+        QNTRACE("tidyOptSetBool: merge emphasis = no: ok = "
+                << (ok ? "true" : "false"));
     }
 
     if (ok) {
         ok = tidyOptSetBool(m_tidyDoc, TidyDropEmptyElems, no);
-        QNTRACE(QStringLiteral("tidyOptSetBool: drop empty elemens = no: ok = ")
-                << (ok ? QStringLiteral("true") : QStringLiteral("false")));
+        QNTRACE("tidyOptSetBool: drop empty elemens = no: ok = "
+                << (ok ? "true" : "false"));
     }
 
     if (ok) {
         ok = tidyOptSetInt(m_tidyDoc, TidyIndentContent, TidyNoState);
-        QNTRACE(QStringLiteral("tidyOptSetInt: indent content = no: ok = ")
-                << (ok ? QStringLiteral("true") : QStringLiteral("false")));
+        QNTRACE("tidyOptSetInt: indent content = no: ok = "
+                << (ok ? "true" : "false"));
     }
 
     if (ok) {
         ok = tidyOptSetBool(m_tidyDoc, TidyIndentAttributes, no);
-        QNTRACE(QStringLiteral("tidyOptSetBool: indent attributes = no: ok = ")
-                << (ok ? QStringLiteral("true") : QStringLiteral("false")));
+        QNTRACE("tidyOptSetBool: indent attributes = no: ok = "
+                << (ok ? "true" : "false"));
     }
 
     if (ok) {
         ok = tidyOptSetBool(m_tidyDoc, TidyIndentCdata, no);
-        QNTRACE(QStringLiteral("tidyOptSetBool: indent CDATA = no: ok = ")
-                << (ok ? QStringLiteral("true") : QStringLiteral("false")));
+        QNTRACE("tidyOptSetBool: indent CDATA = no: ok = "
+                << (ok ? "true" : "false"));
     }
 
     if (ok) {
         ok = tidyOptSetInt(m_tidyDoc, TidyVertSpace, TidyNoState);
-        QNTRACE(QStringLiteral("tidyOptSetBool: vert space = no: ok = ")
-                << (ok ? QStringLiteral("true") : QStringLiteral("false")));
+        QNTRACE("tidyOptSetBool: vert space = no: ok = "
+                << (ok ? "true" : "false"));
     }
 
     if (ok) {
         ok = tidyOptSetBool(m_tidyDoc, TidyMark, no);
-        QNTRACE(QStringLiteral("tidyOptSetBool: tidy mark = no: ok = ")
-                << (ok ? QStringLiteral("true") : QStringLiteral("false")));
+        QNTRACE("tidyOptSetBool: tidy mark = no: ok = "
+                << (ok ? "true" : "false"));
     }
 
     if (ok) {
         ok = tidyOptSetInt(m_tidyDoc, TidyBodyOnly, TidyYesState);
-        QNTRACE(QStringLiteral("tidyOptSetBool: tidy body only = yes: ok = ")
-                << (ok ? QStringLiteral("true") : QStringLiteral("false")));
+        QNTRACE("tidyOptSetBool: tidy body only = yes: ok = "
+                << (ok ? "true" : "false"));
     }
 
     if (ok) {
         ok = tidyOptSetInt(m_tidyDoc, TidyWrapLen, 0);
-        QNTRACE(QStringLiteral("tidyOptSetInt: wrap len = 0: ok = ")
-                << (ok ? QStringLiteral("true") : QStringLiteral("false")));
+        QNTRACE("tidyOptSetInt: wrap len = 0: ok = "
+                << (ok ? "true" : "false"));
     }
 
     if (ok) {
         ok = tidyOptSetValue(m_tidyDoc, TidyDoctype, "omit");
-        QNTRACE(QStringLiteral("tidyOptSetBool: doctype = omit: ok = ")
-                << (ok ? QStringLiteral("true") : QStringLiteral("false")));
+        QNTRACE("tidyOptSetBool: doctype = omit: ok = "
+                << (ok ? "true" : "false"));
     }
 
     if (ok) {
         rc = tidySetErrorBuffer(m_tidyDoc, &m_tidyErrorBuffer);
-        QNTRACE(QStringLiteral("tidySetErrorBuffer: rc = ") << rc);
+        QNTRACE("tidySetErrorBuffer: rc = " << rc);
     }
 
     if (rc >= 0) {
         rc = tidyParseString(m_tidyDoc, html.toUtf8().constData());
-        QNTRACE(QStringLiteral("tidyParseString: rc = ") << rc);
+        QNTRACE("tidyParseString: rc = " << rc);
     }
 
     if (rc >= 0) {
         rc = tidyCleanAndRepair(m_tidyDoc);
-        QNTRACE(QStringLiteral("tidyCleanAndRepair: rc = ") << rc);
+        QNTRACE("tidyCleanAndRepair: rc = " << rc);
     }
 
     if (rc >= 0) {
         rc = tidyRunDiagnostics(m_tidyDoc);
-        QNTRACE(QStringLiteral("tidyRunDiagnostics: rc = ") << rc);
+        QNTRACE("tidyRunDiagnostics: rc = " << rc);
     }
 
     if (rc > 1) {
         int forceOutputRc = tidyOptSetBool(m_tidyDoc, TidyForceOutput, yes);
-        QNTRACE(QStringLiteral("tidyOptSetBool (force output): rc = ")
-                << forceOutputRc);
+        QNTRACE("tidyOptSetBool (force output): rc = " << forceOutputRc);
         if (!forceOutputRc) {
             rc = -1;
         }
@@ -212,7 +210,7 @@ bool HTMLCleaner::Impl::convertHtml(const QString & html,
 
     if (rc >= 0) {
         rc = tidySaveBuffer(m_tidyDoc, &m_tidyOutput);
-        QNTRACE(QStringLiteral("tidySaveBuffer: rc = ") << rc);
+        QNTRACE("tidySaveBuffer: rc = " << rc);
     }
 
     if (rc < 0)
@@ -221,7 +219,7 @@ bool HTMLCleaner::Impl::convertHtml(const QString & html,
         QByteArray errorBody =
             QByteArray(reinterpret_cast<const char*>(m_tidyErrorBuffer.bp),
                        static_cast<int>(m_tidyErrorBuffer.size));
-        QNINFO(errorPrefix << QStringLiteral(": ") << errorBody);
+        QNINFO(errorPrefix << ": " << errorBody);
         errorDescription = errorPrefix;
         errorDescription += QStringLiteral(": ");
         errorDescription += QString::fromUtf8(errorBody.constData(),
@@ -230,7 +228,7 @@ bool HTMLCleaner::Impl::convertHtml(const QString & html,
     }
 
     if (rc > 0) {
-        QNTRACE(QStringLiteral("Tidy diagnostics: ")
+        QNTRACE("Tidy diagnostics: "
                 << QByteArray(reinterpret_cast<const char*>(m_tidyErrorBuffer.bp),
                               static_cast<int>(m_tidyErrorBuffer.size)));
     }
@@ -335,9 +333,8 @@ bool HTMLCleaner::Impl::convertHtml(const QString & html,
         errorDescription = QStringLiteral("Error while trying to clean up "
                                           "the html after tidy-html5: ");
         errorDescription += reader.errorString();
-        QNWARNING(errorDescription << QStringLiteral("; original HTML: ")
-                  << html << QStringLiteral("\nHtml converted to XML by tidy: ")
-                  << output);
+        QNWARNING(errorDescription << "; original HTML: " << html
+                  << "\nHtml converted to XML by tidy: " << output);
         return false;
     }
 

@@ -34,15 +34,13 @@ void DecryptedTextManagerPrivate::addEntry(const QString & hash,
                                            const QString & cipher,
                                            const size_t keyLength)
 {
-    QNDEBUG(QStringLiteral("DecryptedTextManagerPrivate::addEntry: hash = ")
-            << hash << QStringLiteral(", rememberForSession = ")
-            << (rememberForSession
-                ? QStringLiteral("true")
-                : QStringLiteral("false")));
+    QNDEBUG("DecryptedTextManagerPrivate::addEntry: hash = "
+            << hash << ", rememberForSession = "
+            << (rememberForSession ? "true" : "false"));
 
     if (passphrase.isEmpty()) {
-        QNWARNING(QStringLiteral("detected attempt to add decrypted text for "
-                                 "empty passphrase to decrypted text manager"));
+        QNWARNING("detected attempt to add decrypted text for "
+                  "empty passphrase to decrypted text manager");
         return;
     }
 
@@ -56,8 +54,7 @@ void DecryptedTextManagerPrivate::addEntry(const QString & hash,
 
 void DecryptedTextManagerPrivate::removeEntry(const QString & hash)
 {
-    QNDEBUG(QStringLiteral("DecryptedTextManagerPrivate::removeEntry: hash = ")
-            << hash);
+    QNDEBUG("DecryptedTextManagerPrivate::removeEntry: hash = " << hash);
 
     auto it = m_dataHash.find(hash);
     if (it != m_dataHash.end()) {
@@ -71,8 +68,7 @@ void DecryptedTextManagerPrivate::removeEntry(const QString & hash)
 
 void DecryptedTextManagerPrivate::clearNonRememberedForSessionEntries()
 {
-    QNDEBUG(QStringLiteral("DecryptedTextManagerPrivate::"
-                           "clearNonRememberedForSessionEntries"));
+    QNDEBUG("DecryptedTextManagerPrivate::clearNonRememberedForSessionEntries");
 
     for(auto it = m_dataHash.begin(); it != m_dataHash.end();)
     {
@@ -95,19 +91,18 @@ bool DecryptedTextManagerPrivate::findDecryptedTextByEncryptedText(
     QString & decryptedText,
     bool & rememberForSession) const
 {
-    QNDEBUG(QStringLiteral("DecryptedTextManagerPrivate::"
-                           "findDecryptedTextByEncryptedText: ") << encryptedText);
+    QNDEBUG("DecryptedTextManagerPrivate::findDecryptedTextByEncryptedText: "
+            << encryptedText);
 
     DataHash::const_iterator dataIt = m_dataHash.find(encryptedText);
     if (dataIt == m_dataHash.end())
     {
-        QNTRACE(QStringLiteral("Can't find the entry in the up to date data hash, "
-                               "trying the stale hash"));
+        QNTRACE("Can't find entry in the up to date data hash, trying the stale hash");
 
         // Try the stale data hash
         dataIt = m_staleDataHash.find(encryptedText);
         if (dataIt == m_staleDataHash.end()) {
-            QNTRACE(QStringLiteral("Can't find the entry in the stale data hash as well"));
+            QNTRACE("Can't find entry in the stale data hash as well");
             return false;
         }
     }
@@ -115,7 +110,7 @@ bool DecryptedTextManagerPrivate::findDecryptedTextByEncryptedText(
     const Data & data = dataIt.value();
     decryptedText = data.m_decryptedText;
     rememberForSession = data.m_rememberForSession;
-    QNTRACE(QStringLiteral("Found decrypted text"));
+    QNTRACE("Found decrypted text");
     return true;
 }
 
@@ -124,19 +119,18 @@ bool DecryptedTextManagerPrivate::modifyDecryptedText(
     const QString & newDecryptedText,
     QString & newEncryptedText)
 {
-    QNDEBUG(QStringLiteral("DecryptedTextManagerPrivate::modifyDecryptedText: ")
-            << QStringLiteral("original decrypted text = ")
-            << originalEncryptedText);
+    QNDEBUG("DecryptedTextManagerPrivate::modifyDecryptedText: "
+            << "original decrypted text = " << originalEncryptedText);
 
     bool foundInDataHash = true;
-    DataHash::iterator it = m_dataHash.find(originalEncryptedText);
+    auto it = m_dataHash.find(originalEncryptedText);
     if (it == m_dataHash.end())
     {
         foundInDataHash = false;
         // Try the stale data hash instead
         it = m_staleDataHash.find(originalEncryptedText);
         if (it == m_staleDataHash.end()) {
-            QNDEBUG(QStringLiteral("Could not find original hash"));
+            QNDEBUG("Could not find original hash");
             return false;
         }
     }
@@ -148,8 +142,7 @@ bool DecryptedTextManagerPrivate::modifyDecryptedText(
                                            entry.m_cipher, entry.m_keyLength,
                                            newEncryptedText, errorDescription);
     if (!res) {
-        QNWARNING(QStringLiteral("Could not re-encrypt the decrypted text: ")
-                  << errorDescription);
+        QNWARNING("Could not re-encrypt the decrypted text: " << errorDescription);
         return false;
     }
 

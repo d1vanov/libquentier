@@ -19,7 +19,6 @@
 #include <quentier/enml/ENMLConverter.h>
 #include "ENMLConverter_p.h"
 #include <quentier/types/Resource.h>
-#include <quentier/logging/QuentierLogger.h>
 
 namespace quentier {
 
@@ -37,8 +36,6 @@ bool ENMLConverter::htmlToNoteContent(const QString & html, QString & noteConten
                                       ErrorString & errorDescription,
                                       const QVector<SkipHtmlElementRule> & skipRules) const
 {
-    QNDEBUG(QStringLiteral("ENMLConverter::htmlToNoteContent"));
-
     Q_D(const ENMLConverter);
     return d->htmlToNoteContent(html, skipRules, noteContent,
                                 decryptedTextManager, errorDescription);
@@ -48,8 +45,6 @@ bool ENMLConverter::cleanupExternalHtml(const QString & inputHtml,
                                         QString & cleanedUpHtml,
                                         ErrorString & errorDescription) const
 {
-    QNDEBUG(QStringLiteral("ENMLConverter::cleanupExternalHtml"));
-
     Q_D(const ENMLConverter);
     return d->cleanupExternalHtml(inputHtml, cleanedUpHtml, errorDescription);
 }
@@ -58,8 +53,6 @@ bool ENMLConverter::htmlToQTextDocument(const QString & html, QTextDocument & do
                                         ErrorString & errorDescription,
                                         const QVector<SkipHtmlElementRule> & skipRules) const
 {
-    QNDEBUG(QStringLiteral("ENMLConverter::htmlToQTextDocument"));
-
     Q_D(const ENMLConverter);
     return d->htmlToQTextDocument(html, doc, errorDescription, skipRules);
 }
@@ -69,8 +62,6 @@ bool ENMLConverter::noteContentToHtml(const QString & noteContent, QString & htm
                                       DecryptedTextManager & decryptedTextManager,
                                       NoteContentToHtmlExtraData & extraData) const
 {
-    QNDEBUG(QStringLiteral("ENMLConverter::noteContentToHtml"));
-
     Q_D(const ENMLConverter);
     return d->noteContentToHtml(noteContent, html, errorDescription,
                                 decryptedTextManager, extraData);
@@ -172,50 +163,49 @@ QTextStream & ENMLConverter::SkipHtmlElementRule::print(QTextStream & strm) cons
     switch(rule) \
     { \
         case Equals: \
-            strm << QStringLiteral("Equals"); \
+            strm << "Equals"; \
             break; \
         case StartsWith: \
-            strm << QStringLiteral("Starts with"); \
+            strm << "Starts with"; \
             break; \
         case EndsWith: \
-            strm << QStringLiteral("Ends with"); \
+            strm << "Ends with"; \
             break; \
         case Contains: \
-            strm << QStringLiteral("Contains"); \
+            strm << "Contains"; \
             break; \
         default: \
-            strm << QStringLiteral("unknown"); \
+            strm << "unknown"; \
             break; \
     }
 
-    strm << QStringLiteral("SkipHtmlElementRule: {\n");
-    strm << QStringLiteral("  element name to skip = ") << m_elementNameToSkip
-         << QStringLiteral(", rule: ");
+    strm << "SkipHtmlElementRule: {\n";
+    strm << "  element name to skip = " << m_elementNameToSkip << ", rule: ";
     PRINT_COMPARISON_RULE(m_elementNameComparisonRule)
-    strm << QStringLiteral(", case ")
+    strm << ", case "
          << ((m_elementNameCaseSensitivity == Qt::CaseSensitive)
-             ? QStringLiteral("sensitive")
-             : QStringLiteral("insensitive"));
-    strm << QStringLiteral("\n");
+             ? "sensitive"
+             : "insensitive");
+    strm << "\n";
 
-    strm << QStringLiteral("  attribute name to skip = ")
+    strm << "  attribute name to skip = "
          << m_attributeNameToSkip
-         << QStringLiteral(", rule: ");
+         << ", rule: ";
     PRINT_COMPARISON_RULE(m_attributeNameComparisonRule)
-    strm << QStringLiteral(", case ")
+    strm << ", case "
          << ((m_attributeNameCaseSensitivity == Qt::CaseSensitive)
-             ? QStringLiteral("sensitive")
-             : QStringLiteral("insensitive"));
-    strm << QStringLiteral("\n");
+             ? "sensitive"
+             : "insensitive");
+    strm << "\n";
 
-    strm << QStringLiteral("  attribute value to skip = ")
+    strm << "  attribute value to skip = "
          << m_attributeValueToSkip
-         << QStringLiteral(", rule: ");
+         << ", rule: ";
     PRINT_COMPARISON_RULE(m_attributeValueComparisonRule)
-    strm << QStringLiteral(", case ")
+    strm << ", case "
          << ((m_attributeValueCaseSensitivity == Qt::CaseSensitive)
-             ? QStringLiteral("sensitive")
-             : QStringLiteral("insensitive"));
+             ? "sensitive"
+             : "insensitive");
     strm << "\n}\n";
 
     return strm;
