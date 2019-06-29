@@ -324,116 +324,101 @@ void SavedSearch::setIncludeBusinessLinkedNotebooks(
 
 QTextStream & SavedSearch::print(QTextStream & strm) const
 {
-    strm << QStringLiteral("Saved search: { \n");
+    strm << "Saved search: { \n";
 
     const QString localUid_ = localUid();
     if (!localUid_.isEmpty()) {
-        strm << QStringLiteral("localUid: ") << localUid_
-             << QStringLiteral("; \n");
+        strm << "localUid: " << localUid_ << "; \n";
     }
     else {
-        strm << QStringLiteral("localUid is not set; \n");
+        strm << "localUid is not set; \n";
     }
 
     if (d->m_qecSearch.guid.isSet()) {
-        strm << QStringLiteral("guid: ") << d->m_qecSearch.guid
-             << QStringLiteral("; \n");
+        strm << "guid: " << d->m_qecSearch.guid << "; \n";
     }
     else {
-        strm << QStringLiteral("guid is not set; \n");
+        strm << "guid is not set; \n";
     }
 
     if (d->m_qecSearch.updateSequenceNum.isSet()) {
-        strm << QStringLiteral("updateSequenceNumber: ")
+        strm << "updateSequenceNumber: "
              << QString::number(d->m_qecSearch.updateSequenceNum)
-             << QStringLiteral("; \n");
+             << "; \n";
     }
     else {
-        strm << QStringLiteral("updateSequenceNumber is not set; \n");
+        strm << "updateSequenceNumber is not set; \n";
     }
 
     if (d->m_qecSearch.name.isSet()) {
-        strm << QStringLiteral("name: ") << d->m_qecSearch.name
-             << QStringLiteral("; \n");
+        strm << "name: " << d->m_qecSearch.name << "; \n";
     }
     else {
-        strm << QStringLiteral("name is not set; \n");
+        strm << "name is not set; \n";
     }
 
     if (d->m_qecSearch.query.isSet()) {
-        strm << QStringLiteral("query: ") << d->m_qecSearch.query
-             << QStringLiteral("; \n");
+        strm << "query: " << d->m_qecSearch.query << "; \n";
     }
     else {
-        strm << QStringLiteral("query is not set; \n");
+        strm << "query is not set; \n";
     }
 
     if (d->m_qecSearch.format.isSet()) {
-        strm << QStringLiteral("queryFormat: ") << d->m_qecSearch.format
-             << QStringLiteral("; \n");
+        strm << "queryFormat: " << d->m_qecSearch.format << "; \n";
     }
     else {
-        strm << QStringLiteral("queryFormat is not set; \n");
+        strm << "queryFormat is not set; \n";
     }
 
     if (d->m_qecSearch.scope.isSet())
     {
-        strm << QStringLiteral("scope is set; \n");
+        strm << "scope is set; \n";
 
         const SavedSearchScope & scope = d->m_qecSearch.scope;
 
         if (scope.includeAccount.isSet())
         {
-            strm << QStringLiteral("includeAccount: ")
-                 << (scope.includeAccount
-                     ? QStringLiteral("true")
-                     : QStringLiteral("false"))
-                 << QStringLiteral("; \n");
+            strm << "includeAccount: "
+                 << (scope.includeAccount ? "true" : "false")
+                 << "; \n";
         }
         else
         {
-            strm << QStringLiteral("includeAccount is not set; \n");
+            strm << "includeAccount is not set; \n";
         }
 
         if (scope.includePersonalLinkedNotebooks.isSet())
         {
-            strm << QStringLiteral("includePersonalLinkedNotebooks: ")
-                 << (scope.includePersonalLinkedNotebooks
-                     ? QStringLiteral("true")
-                     : QStringLiteral("false"))
-                 << QStringLiteral(";\n");
+            strm << "includePersonalLinkedNotebooks: "
+                 << (scope.includePersonalLinkedNotebooks ? "true" : "false")
+                 << ";\n";
         }
         else
         {
-            strm << QStringLiteral("includePersonalLinkedNotebooks is not set;\n");
+            strm << "includePersonalLinkedNotebooks is not set;\n";
         }
 
         if (scope.includeBusinessLinkedNotebooks.isSet())
         {
-            strm << QStringLiteral("includeBusinessLinkedNotebooks: ")
-                 << (scope.includeBusinessLinkedNotebooks
-                     ? QStringLiteral("true")
-                     : QStringLiteral("false"))
-                 << QStringLiteral("; \n");
+            strm << "includeBusinessLinkedNotebooks: "
+                 << (scope.includeBusinessLinkedNotebooks ? "true" : "false")
+                 << "; \n";
         }
         else
         {
-            strm << QStringLiteral("includeBusinessLinkedNotebooks is not set;\n");
+            strm << "includeBusinessLinkedNotebooks is not set;\n";
         }
     }
     else
     {
-        strm << QStringLiteral("scope is not set; \n");
+        strm << "scope is not set; \n";
         return strm;
     }
 
-    strm << QStringLiteral("isFavorited = ")
-         << (isFavorited()
-             ? QStringLiteral("true")
-             : QStringLiteral("false"))
-         << QStringLiteral("; \n");
+    strm << "isFavorited = " << (isFavorited() ? "true" : "false") << "; \n";
 
-    strm << QStringLiteral("}; \n");
+    strm << "}; \n";
     return strm;
 }
 

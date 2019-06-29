@@ -481,8 +481,8 @@ void Notebook::addSharedNotebook(const SharedNotebook & sharedNotebook)
     const auto & enSharedNotebook = sharedNotebook.qevercloudSharedNotebook();
 
     if (sharedNotebooks.indexOf(enSharedNotebook) != -1) {
-        QNDEBUG(QStringLiteral("Can't add shared notebook: this shared notebook "
-                               "already exists within the notebook"));
+        QNDEBUG("Can't add shared notebook: this shared notebook "
+                "already exists within the notebook");
         return;
     }
 
@@ -496,8 +496,8 @@ void Notebook::removeSharedNotebook(const SharedNotebook & sharedNotebook)
 
     int index = sharedNotebooks->indexOf(enSharedNotebook);
     if (index == -1) {
-        QNDEBUG(QStringLiteral("Can't remove shared notebook: this shared "
-                               "notebook doesn't exists within the notebook"));
+        QNDEBUG("Can't remove shared notebook: this shared "
+                "notebook doesn't exists within the notebook");
         return;
     }
 
@@ -1062,47 +1062,23 @@ void Notebook::setNotebookRecipientSettings(
 
 QTextStream & Notebook::print(QTextStream & strm) const
 {
-    strm << QStringLiteral("Notebook {\n");
+    strm << "Notebook {\n";
 
-    strm << QStringLiteral("  local uid: ") << d->m_localUid.toString()
-         << QStringLiteral(";\n");
-
-    strm << QStringLiteral("  linked notebook guid: ")
+    strm << "  local uid: " << d->m_localUid.toString() << ";\n";
+    strm << "  linked notebook guid: "
          << (d->m_linkedNotebookGuid.isSet()
              ? d->m_linkedNotebookGuid.ref()
-             : QStringLiteral("<empty>")) << QStringLiteral(";\n");
+             : QStringLiteral("<empty>")) << ";\n";
 
-    strm << QStringLiteral("  dirty: ")
-         << (isDirty()
-             ? QStringLiteral("true")
-             : QStringLiteral("false"))
-         << QStringLiteral(";\n");
-
-    strm << QStringLiteral("  local: ")
-         << (isLocal()
-             ? QStringLiteral("true")
-             : QStringLiteral("false"))
-         << QStringLiteral(";\n");
-
-    strm << QStringLiteral("  last used: ")
-         << (isLastUsed()
-             ? QStringLiteral("true")
-             : QStringLiteral("false"))
-         << QStringLiteral(";\n");
-    strm << QStringLiteral("  default: ")
-         << (isDefaultNotebook()
-             ? QStringLiteral("true")
-             : QStringLiteral("false"))
-         << QStringLiteral(";\n");
-    strm << QStringLiteral("  favorited: ")
-         << (isFavorited()
-             ? QStringLiteral("true")
-             : QStringLiteral("false"))
-         << QStringLiteral(";\n");
+    strm << "  dirty: " << (isDirty() ? "true" : "false") << ";\n";
+    strm << "  local: " << (isLocal() ? "true" : "false") << ";\n";
+    strm << "  last used: " << (isLastUsed() ? "true" : "false") << ";\n";
+    strm << "  default: " << (isDefaultNotebook() ? "true" : "false") << ";\n";
+    strm << "  favorited: " << (isFavorited() ? "true" : "false") << ";\n";
 
     strm << d->m_qecNotebook;
 
-    strm << QStringLiteral("};\n");
+    strm << "};\n";
     return strm;
 }
 

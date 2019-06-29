@@ -678,12 +678,11 @@ void SharedNote::setAssignmentTimestamp(const qint64 timestamp)
 
 QTextStream & SharedNote::print(QTextStream & strm) const
 {
-    strm << QStringLiteral("SharedNote {\n");
+    strm << "SharedNote {\n";
 
     strm << d->m_qecSharedNote;
-    strm << QStringLiteral("index in note = ") << d->m_indexInNote
-         << QStringLiteral(";\n");
-    strm << QStringLiteral("};\n");
+    strm << "index in note = " << d->m_indexInNote << ";\n";
+    strm << "};\n";
 
     return strm;
 }

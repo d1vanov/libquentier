@@ -382,7 +382,7 @@ void NoteSyncCache::requestNotesList()
                      LocalStorageManager::ListNotesOrder::NoOrder,
                      LocalStorageManager::OrderDirection::Ascending,
                      (m_linkedNotebookGuid.isEmpty()
-                      ? QStringLiteral("")
+                      ? QLatin1String("")
                       : m_linkedNotebookGuid),
                      m_listNotesRequestId);
 }

@@ -413,14 +413,14 @@ void SharedNotebook::setAssignmentTimestamp(const qint64 timestamp)
 
 QTextStream & SharedNotebook::print(QTextStream & strm) const
 {
-    strm << QStringLiteral("SharedNotebook {\n");
-    strm << QStringLiteral("  index in notebook: ")
+    strm << "SharedNotebook {\n";
+    strm << "  index in notebook: "
          << QString::number(d->m_indexInNotebook)
-         << QStringLiteral(";\n");
+         << ";\n";
 
     const qevercloud::SharedNotebook & sharedNotebook = d->m_qecSharedNotebook;
     strm << sharedNotebook;
-    strm << QStringLiteral("};\n");
+    strm << "};\n";
     return strm;
 }
 

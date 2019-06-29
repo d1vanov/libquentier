@@ -114,94 +114,85 @@ bool ResourceRecognitionIndices::setData(const QByteArray & rawRecognitionIndice
 
 QTextStream & ResourceRecognitionIndices::print(QTextStream & strm) const
 {
-    strm << QStringLiteral("ResourceRecognitionIndices: {\n");
+    strm << "ResourceRecognitionIndices: {\n";
 
     if (isNull()) {
-        strm << QStringLiteral("  <null>\n};\n");
+        strm << "  <null>\n};\n";
         return strm;
     }
 
     if (!d->m_objectId.isEmpty()) {
-        strm << QStringLiteral("  object id = ") << d->m_objectId
-             << QStringLiteral(";\n");
+        strm << "  object id = " << d->m_objectId << ";\n";
     }
     else {
-        strm << QStringLiteral("  object id is not set;\n");
+        strm << "  object id is not set;\n";
     }
 
     if (!d->m_objectType.isEmpty()) {
-        strm << QStringLiteral("  object type = ") << d->m_objectType
-             << QStringLiteral(";\n");
+        strm << "  object type = " << d->m_objectType << ";\n";
     }
     else {
-        strm << QStringLiteral("  object type is not set;\n");
+        strm << "  object type is not set;\n";
     }
 
     if (!d->m_recoType.isEmpty()) {
-        strm << QStringLiteral("  reco type = ") << d->m_recoType
-             << QStringLiteral(";\n");
+        strm << "  reco type = " << d->m_recoType << ";\n";
     }
     else {
-        strm << QStringLiteral("  reco type is not set;\n");
+        strm << "  reco type is not set;\n";
     }
 
     if (!d->m_engineVersion.isEmpty()) {
-        strm << QStringLiteral("  engine version = ") << d->m_engineVersion
-             << QStringLiteral(";\n");
+        strm << "  engine version = " << d->m_engineVersion << ";\n";
     }
     else {
-        strm << QStringLiteral("  engine version is not set;\n");
+        strm << "  engine version is not set;\n";
     }
 
     if (!d->m_docType.isEmpty()) {
-        strm << QStringLiteral("  doc type = ") << d->m_docType
-             << QStringLiteral(";\n");
+        strm << "  doc type = " << d->m_docType << ";\n";
     }
     else {
-        strm << QStringLiteral("  doc type is not set;\n");
+        strm << "  doc type is not set;\n";
     }
 
     if (!d->m_lang.isEmpty()) {
-        strm << QStringLiteral("  lang = ") << d->m_lang
-             << QStringLiteral(";\n");
+        strm << "  lang = " << d->m_lang << ";\n";
     }
     else {
-        strm << QStringLiteral("  lang is not set;\n");
+        strm << "  lang is not set;\n";
     }
 
     if (d->m_objectHeight >= 0) {
-        strm << QStringLiteral("  object height = ") << d->m_objectHeight
-             << QStringLiteral(";\n");
+        strm << "  object height = " << d->m_objectHeight << ";\n";
     }
     else {
-        strm << QStringLiteral("  object height is not set;\n");
+        strm << "  object height is not set;\n";
     }
 
     if (d->m_objectWidth >= 0) {
-        strm << QStringLiteral("  object width = ") << d->m_objectWidth
-             << QStringLiteral(";\n");
+        strm << "  object width = " << d->m_objectWidth << ";\n";
     }
     else {
-        strm << QStringLiteral("  object width is not set;\n");
+        strm << "  object width is not set;\n";
     }
 
     if (!d->m_items.isEmpty())
     {
-        strm << QStringLiteral("  recognition items: \n");
+        strm << "  recognition items: \n";
         for(auto it = d->m_items.constBegin(),
             end = d->m_items.constEnd(); it != end; ++it)
         {
-            strm << *it << QStringLiteral("\n");
+            strm << *it << "\n";
         }
-        strm << QStringLiteral("\n");
+        strm << "\n";
     }
     else
     {
-        strm << QStringLiteral("  no recognition items are set;\n");
+        strm << "  no recognition items are set;\n";
     }
 
-    strm << QStringLiteral("};\n");
-
+    strm << "};\n";
     return strm;
 }
 

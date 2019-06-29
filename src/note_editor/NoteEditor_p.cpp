@@ -5312,15 +5312,16 @@ void NoteEditorPrivate::setupGenericTextContextMenu(const QStringList & extraDat
     delete m_pGenericTextContextMenu;
     m_pGenericTextContextMenu = new QMenu(this);
 
-#define ADD_ACTION_WITH_SHORTCUT(key, name, menu, slot, enabled, ...) \
-    { \
-        QAction * action = new QAction(name, menu); \
-        action->setEnabled(enabled); \
-        setupActionShortcut(key, QStringLiteral("" #__VA_ARGS__), *action); \
-        QObject::connect(action, QNSIGNAL(QAction,triggered), \
-                         this, QNSLOT(NoteEditorPrivate,slot)); \
-        menu->addAction(action); \
-    }
+#define ADD_ACTION_WITH_SHORTCUT(key, name, menu, slot, enabled, ...)          \
+    {                                                                          \
+        QAction * action = new QAction(name, menu);                            \
+        action->setEnabled(enabled);                                           \
+        setupActionShortcut(key, QString::fromUtf8("" #__VA_ARGS__), *action); \
+        QObject::connect(action, QNSIGNAL(QAction,triggered),                  \
+                         this, QNSLOT(NoteEditorPrivate,slot));                \
+        menu->addAction(action);                                               \
+    }                                                                          \
+// ADD_ACTION_WITH_SHORTCUT
 
     bool enabled = true;
 

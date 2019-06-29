@@ -6936,7 +6936,7 @@ void SynchronizationTester::listTagsFromLocalStorage(
         QFAIL("Local storage manager is null");
     }
 
-    QString localLinkedNotebookGuid = QStringLiteral("");
+    QString localLinkedNotebookGuid = QLatin1String("");
     if (!linkedNotebookGuid.isEmpty()) {
         localLinkedNotebookGuid = linkedNotebookGuid;
     }
@@ -6984,7 +6984,7 @@ void SynchronizationTester::listNotebooksFromLocalStorage(
         QFAIL("Local storage manager is null");
     }
 
-    QString localLinkedNotebookGuid = QStringLiteral("");
+    QString localLinkedNotebookGuid = QLatin1String("");
     if (!linkedNotebookGuid.isEmpty()) {
         localLinkedNotebookGuid = linkedNotebookGuid;
     }
@@ -7032,7 +7032,7 @@ void SynchronizationTester::listNotesFromLocalStorage(
         QFAIL("Local storage manager is null");
     }
 
-    QString localLinkedNotebookGuid = QStringLiteral("");
+    QString localLinkedNotebookGuid = QLatin1String("");
     if (!linkedNotebookGuid.isEmpty()) {
         localLinkedNotebookGuid = linkedNotebookGuid;
     }
@@ -7083,7 +7083,7 @@ void SynchronizationTester::listResourcesFromLocalStorage(
         QFAIL("Local storage manager is null");
     }
 
-    QString localLinkedNotebookGuid = QStringLiteral("");
+    QString localLinkedNotebookGuid = QLatin1String("");
     if (!linkedNotebookGuid.isEmpty()) {
         localLinkedNotebookGuid = linkedNotebookGuid;
     }

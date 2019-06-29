@@ -240,7 +240,7 @@ private:
     void disconnectFromLocalStorage();
 
     bool requestStuffFromLocalStorage(const QString & linkedNotebookGuid =
-                                      QStringLiteral(""));
+                                      QLatin1String(""));
 
     void checkListLocalStorageObjectsCompletion();
 

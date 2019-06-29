@@ -1214,7 +1214,7 @@ bool ENMLConverterPrivate::noteContentToHtml(const QString & noteContent, QStrin
                 // NOTE: the following trick seems to prevent the occurrence of
                 // self-closing empty XML tags which are sometimes misinterpreted
                 // by web engines as unclosed tags
-                writer.writeCharacters(QStringLiteral(""));
+                writer.writeCharacters(QLatin1String(""));
             }
 
             writer.writeEndElement();

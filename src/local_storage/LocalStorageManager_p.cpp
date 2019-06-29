@@ -12908,8 +12908,8 @@ void LocalStorageManagerPrivate::contentSearchTermToSQLQueryPart(
     else
     {
         matchStatement = QStringLiteral("MATCH");
-        frontSearchTermModifier = QStringLiteral("");
-        backSearchTermModifier = QStringLiteral("");
+        frontSearchTermModifier = QLatin1String("");
+        backSearchTermModifier = QLatin1String("");
     }
 }
 

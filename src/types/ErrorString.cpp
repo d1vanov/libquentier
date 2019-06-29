@@ -255,12 +255,12 @@ QTextStream & ErrorString::print(QTextStream & strm) const
             strm << *it;
         }
         else {
-            strm << QStringLiteral(", ") << *it;
+            strm << ", " << *it;
         }
     }
 
     if (!d->m_details.isEmpty()) {
-        strm << QStringLiteral(": ") << d->m_details;
+        strm << ": " << d->m_details;
     }
 
     return strm;

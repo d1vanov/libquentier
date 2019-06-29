@@ -338,7 +338,7 @@ void TestTagAddFindUpdateExpungeInLocalStorage()
     // ========== Check Update + Find ==========
     Tag modifiedTag(tag);
     modifiedTag.setUpdateSequenceNumber(tag.updateSequenceNumber() + 1);
-    modifiedTag.setLinkedNotebookGuid(QStringLiteral(""));
+    modifiedTag.setLinkedNotebookGuid(QLatin1String(""));
     modifiedTag.setName(tag.name() + QStringLiteral("_modified"));
     modifiedTag.setFavorited(true);
     modifiedTag.unsetLocalUid();
@@ -347,7 +347,7 @@ void TestTagAddFindUpdateExpungeInLocalStorage()
              qPrintable(errorMessage.nonLocalizedString()));
 
     if (!modifiedTag.hasLinkedNotebookGuid()) {
-        foundTag.setLinkedNotebookGuid(QStringLiteral(""));
+        foundTag.setLinkedNotebookGuid(QLatin1String(""));
     }
 
     QVERIFY2(localStorageManager.findTag(foundTag, errorMessage),
@@ -1573,7 +1573,7 @@ void TestNotebookAddFindUpdateDeleteExpungeInLocalStorage()
     // ========== Check Update + Find ==========
     Notebook modifiedNotebook(notebook);
     modifiedNotebook.setUpdateSequenceNumber(notebook.updateSequenceNumber() + 1);
-    modifiedNotebook.setLinkedNotebookGuid(QStringLiteral(""));
+    modifiedNotebook.setLinkedNotebookGuid(QLatin1String(""));
     modifiedNotebook.setName(notebook.name() + QStringLiteral("_modified"));
     modifiedNotebook.setDefaultNotebook(false);
     modifiedNotebook.setLastUsed(true);

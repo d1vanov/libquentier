@@ -283,82 +283,79 @@ void Tag::setLinkedNotebookGuid(const QString & linkedNotebookGuid)
 
 QTextStream & Tag::print(QTextStream & strm) const
 {
-    strm << QStringLiteral("Tag { \n");
+    strm << "Tag { \n";
 
 #define INSERT_DELIMITER \
-    strm << QStringLiteral("; \n")
+    strm << "; \n"
 
     const QString localUid_ = localUid();
     if (!localUid_.isEmpty()) {
-        strm << QStringLiteral("localUid: ") << localUid_;
+        strm << "localUid: " << localUid_;
     }
     else {
-        strm << QStringLiteral("localUid is not set");
+        strm << "localUid is not set";
     }
     INSERT_DELIMITER;
 
     if (d->m_parentLocalUid.isSet()) {
-        strm << QStringLiteral("parent local uid: ") << d->m_parentLocalUid.ref();
+        strm << "parent local uid: " << d->m_parentLocalUid.ref();
     }
     else {
-        strm << QStringLiteral("parent local uid is not set");
+        strm << "parent local uid is not set";
     }
     INSERT_DELIMITER;
 
     if (d->m_qecTag.guid.isSet()) {
-        strm << QStringLiteral("guid: ") << d->m_qecTag.guid;
+        strm << "guid: " << d->m_qecTag.guid;
     }
     else {
-        strm << QStringLiteral("guid is not set");
+        strm << "guid is not set";
     }
     INSERT_DELIMITER;
 
     if (d->m_linkedNotebookGuid.isSet()) {
-        strm << QStringLiteral("linked notebook guid: ") << d->m_linkedNotebookGuid;
+        strm << "linked notebook guid: " << d->m_linkedNotebookGuid;
     }
     else {
-        strm << QStringLiteral("linked notebook guid is not set");
+        strm << "linked notebook guid is not set";
     }
     INSERT_DELIMITER;
 
     if (d->m_qecTag.name.isSet()) {
-        strm << QStringLiteral("name: ") << d->m_qecTag.name;
+        strm << "name: " << d->m_qecTag.name;
     }
     else {
-        strm << QStringLiteral("name is not set");
+        strm << "name is not set";
     }
     INSERT_DELIMITER;
 
     if (d->m_qecTag.parentGuid.isSet()) {
-        strm << QStringLiteral("parentGuid: ") << d->m_qecTag.parentGuid;
+        strm << "parentGuid: " << d->m_qecTag.parentGuid;
     }
     else {
-        strm << QStringLiteral("parentGuid is not set");
+        strm << "parentGuid is not set";
     }
     INSERT_DELIMITER;
 
     if (d->m_qecTag.updateSequenceNum.isSet()) {
-        strm << QStringLiteral("updateSequenceNumber: ")
+        strm << "updateSequenceNumber: "
              << QString::number(d->m_qecTag.updateSequenceNum);
     }
     else {
-        strm << QStringLiteral("updateSequenceNumber is not set");
+        strm << "updateSequenceNumber is not set";
     }
     INSERT_DELIMITER;
 
-    strm << QStringLiteral("isDirty: ")
-         << (isDirty() ? QStringLiteral("true") : QStringLiteral("false"));
+    strm << "isDirty: " << (isDirty() ? "true" : "false");
     INSERT_DELIMITER;
 
-    strm << QStringLiteral("isLocal: ")
-         << (d->m_isLocal ? QStringLiteral("true") : QStringLiteral("false"));
+    strm << "isLocal: " << (d->m_isLocal ? "true" : "false");
     INSERT_DELIMITER;
 
-    strm << QStringLiteral("isFavorited = ")
-         << (isFavorited() ? QStringLiteral("true") : QStringLiteral("false"));
+    strm << "isFavorited = " << (isFavorited() ? "true" : "false");
     INSERT_DELIMITER;
 
-    strm << QStringLiteral("}; \n");
+    strm << "}; \n";
     return strm;
 }
 
