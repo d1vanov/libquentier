@@ -30,11 +30,11 @@ bool sortTagsByParentChildRelationsImpl(QList<T> & tagList,
     {
         QString log;
         QTextStream strm(&log);
-        strm << QStringLiteral("Tags list before performing the topological sort: ");
+        strm << "Tags list before performing the topological sort: ";
         for(auto it = tagList.constBegin(),
             end = tagList.constEnd(); it != end; ++it)
         {
-            strm << *it << QStringLiteral(", ");
+            strm << *it << ", ";
         }
         strm.flush();
         QNTRACE(log);
@@ -55,8 +55,8 @@ bool sortTagsByParentChildRelationsImpl(QList<T> & tagList,
     {
         if (!tagHasGuid(*it)) {
             allTagsHaveGuids = false;
-            QNDEBUG(QStringLiteral("Not all tags have guids, won't use guids "
-                                   "to track parent-child relations"));
+            QNDEBUG("Not all tags have guids, won't use guids to track "
+                    "parent-child relations");
             break;
         }
     }
@@ -98,15 +98,14 @@ bool sortTagsByParentChildRelationsImpl(QList<T> & tagList,
         {
             QString localUid = tagLocalUid(*it);
             QString parentTagLocalUid = tagParentLocalUid(*it);
-            QNTRACE(QStringLiteral("Adding tag local uid ") << localUid
-                    << QStringLiteral(" and tag parent local uid ")
-                    << parentTagLocalUid << QStringLiteral(" to the graph"));
+            QNTRACE("Adding tag local uid " << localUid
+                    << " and tag parent local uid " << parentTagLocalUid
+                    << " to the graph");
             graph.addChild(parentTagLocalUid, localUid);
         }
         else
         {
-            QNTRACE(QStringLiteral("Skipping tag without either guid or local uid: ")
-                    << *it);
+            QNTRACE("Skipping tag without either guid or local uid: " << *it);
         }
     }
 
@@ -148,10 +147,10 @@ bool sortTagsByParentChildRelationsImpl(QList<T> & tagList,
         }
 
         if (Q_UNLIKELY(it == tagList.end())) {
-            QNDEBUG(QStringLiteral("Skipping the tag guid or local uid not found "
-                                   "within the original set (probably the guid of "
-                                   "some parent tag not present within "
-                                   "the sorted subset): ") << id);
+            QNDEBUG("Skipping the tag guid or local uid not found "
+                    "within the original set (probably the guid of "
+                    "some parent tag not present within the sorted subset): "
+                    << id);
             continue;
         }
 
@@ -165,11 +164,11 @@ bool sortTagsByParentChildRelationsImpl(QList<T> & tagList,
     {
         QString log;
         QTextStream strm(&log);
-        strm << QStringLiteral("Tags list after performing the topological sort: ");
+        strm << "Tags list after performing the topological sort: ";
         for(auto it = tagList.constBegin(),
             end = tagList.constEnd(); it != end; ++it)
         {
-            strm << *it << QStringLiteral("\n");
+            strm << *it << "\n";
         }
         strm.flush();
         QNTRACE(log);

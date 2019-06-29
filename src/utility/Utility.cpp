@@ -204,8 +204,8 @@ QStyle * applicationStyle()
     const QStringList styleNames = QStyleFactory::keys();
 #if !defined(Q_OS_MAC) && (QT_VERSION < QT_VERSION_CHECK(5, 0, 0))
     if (styleNames.isEmpty()) {
-        QNINFO(QStringLiteral("No valid styles were found in QStyleFactory! "
-                              "Fallback to the last resort of plastique style"));
+        QNINFO("No valid styles were found in QStyleFactory! "
+               "Fallback to the last resort of plastique style");
         return new QPlastiqueStyle;
     }
 
@@ -265,7 +265,7 @@ const QString getExistingFolderDialog(QWidget * parent, const QString & title,
 const QString relativePathFromAbsolutePath(const QString & absolutePath,
                                            const QString & relativePathRootFolder)
 {
-    QNDEBUG(QStringLiteral("relativePathFromAbsolutePath: ") << absolutePath);
+    QNDEBUG("relativePathFromAbsolutePath: " << absolutePath);
 
     int position = absolutePath.indexOf(relativePathRootFolder, 0,
 #if defined(Q_OS_WIN) || defined(Q_OS_MAC)
@@ -275,8 +275,8 @@ const QString relativePathFromAbsolutePath(const QString & absolutePath,
 #endif
                                         );
     if (position < 0) {
-        QNINFO(QStringLiteral("Can't find folder ") << relativePathRootFolder
-               << QStringLiteral(" within path ") << absolutePath);
+        QNINFO("Can't find folder " << relativePathRootFolder << " within path "
+               << absolutePath);
         return QString();
     }
 
@@ -286,7 +286,7 @@ const QString relativePathFromAbsolutePath(const QString & absolutePath,
 
 const QString getCurrentUserName()
 {
-    QNDEBUG(QStringLiteral("getCurrentUserName"));
+    QNDEBUG("getCurrentUserName");
 
     QString userName;
 
@@ -306,8 +306,8 @@ const QString getCurrentUserName()
 
     if (userName.isEmpty())
     {
-        QNTRACE(QStringLiteral("Native platform API failed to provide the username, "
-                               "trying environment variables fallback"));
+        QNTRACE("Native platform API failed to provide the username, "
+                "trying environment variables fallback");
 
         userName = QString::fromLocal8Bit(qgetenv("USER"));
         if (userName.isEmpty()) {
@@ -315,13 +315,13 @@ const QString getCurrentUserName()
         }
     }
 
-    QNTRACE(QStringLiteral("Username = ") << userName);
+    QNTRACE("Username = " << userName);
     return userName;
 }
 
 const QString getCurrentUserFullName()
 {
-    QNDEBUG(QStringLiteral("getCurrentUserFullName"));
+    QNDEBUG("getCurrentUserFullName");
 
     QString userFullName;
 
@@ -369,19 +369,19 @@ const QString getCurrentUserFullName()
 
 void openUrl(const QUrl & url)
 {
-    QNDEBUG(QStringLiteral("openUrl: ") << url);
+    QNDEBUG("openUrl: " << url);
     QDesktopServices::openUrl(url);
 }
 
 bool removeFile(const QString & filePath)
 {
-    QNDEBUG(QStringLiteral("removeFile: ") << filePath);
+    QNDEBUG("removeFile: " << filePath);
 
     QFile file(filePath);
     file.close();   // NOTE: this line seems to be mandatory on Windows
     bool res = file.remove();
     if (res) {
-        QNTRACE(QStringLiteral("Successfully removed file ") << filePath);
+        QNTRACE("Successfully removed file " << filePath);
         return true;
     }
 
@@ -390,14 +390,14 @@ bool removeFile(const QString & filePath)
         // NOTE: there appears to be a bug in Qt for Windows, QFile::remove
         // returns false for any *.lnk files even though the files are actually
         // getting removed
-        QNTRACE(QStringLiteral("Skipping the reported failure at removing the .lnk file"));
+        QNTRACE("Skipping the reported failure at removing the .lnk file");
         return true;
     }
 #endif
 
-    QNWARNING(QStringLiteral("Cannot remove file ") << filePath
-              << QStringLiteral(": ") << file.errorString()
-              << QStringLiteral(", error code ") << file.error());
+    QNWARNING("Cannot remove file " << filePath
+              << ": " << file.errorString()
+              << ", error code " << file.error());
     return false;
 }
 
