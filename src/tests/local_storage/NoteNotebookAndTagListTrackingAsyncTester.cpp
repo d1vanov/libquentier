@@ -119,9 +119,9 @@ void NoteNotebookAndTagListTrackingAsyncTester::onAddNotebookComplete(Notebook n
 
     if (Q_UNLIKELY(m_state != STATE_PENDING_NOTEBOOKS_AND_TAGS_CREATION))
     {
-        ErrorString errorDescription(QStringLiteral("Internal error: unexpected "
-                                                    "add notebook complete event"));
-        QNWARNING(errorDescription << QStringLiteral(", state = ") << m_state);
+        ErrorString errorDescription("Internal error: unexpected "
+                                     "add notebook complete event");
+        QNWARNING(errorDescription << ", state = " << m_state);
         Q_EMIT failure(errorDescription.nonLocalizedString());
         return;
     }
@@ -142,8 +142,8 @@ void NoteNotebookAndTagListTrackingAsyncTester::onAddNotebookFailed(Notebook not
                                                                     ErrorString errorDescription,
                                                                     QUuid requestId)
 {
-    QNWARNING(QStringLiteral("NoteNotebookAndTagListTrackingAsyncTester::onAddNotebookFailed: ")
-              << errorDescription << QStringLiteral(", notebook: ") << notebook);
+    QNWARNING("NoteNotebookAndTagListTrackingAsyncTester::onAddNotebookFailed: "
+              << errorDescription << ", notebook: " << notebook);
 
     Q_UNUSED(requestId)
     Q_EMIT failure(errorDescription.nonLocalizedString());
@@ -157,9 +157,9 @@ void NoteNotebookAndTagListTrackingAsyncTester::onAddTagComplete(Tag tag,
 
     if (Q_UNLIKELY(m_state != STATE_PENDING_NOTEBOOKS_AND_TAGS_CREATION))
     {
-        ErrorString errorDescription(QStringLiteral("Internal error: unexpected "
-                                                    "add tag complete event"));
-        QNWARNING(errorDescription << QStringLiteral(", state = ") << m_state);
+        ErrorString errorDescription("Internal error: unexpected "
+                                     "add tag complete event");
+        QNWARNING(errorDescription << ", state = " << m_state);
         Q_EMIT failure(errorDescription.nonLocalizedString());
         return;
     }
@@ -177,12 +177,11 @@ void NoteNotebookAndTagListTrackingAsyncTester::onAddTagComplete(Tag tag,
     }
 }
 
-void NoteNotebookAndTagListTrackingAsyncTester::onAddTagFailed(Tag tag,
-                                                               ErrorString errorDescription,
-                                                               QUuid requestId)
+void NoteNotebookAndTagListTrackingAsyncTester::onAddTagFailed(
+    Tag tag, ErrorString errorDescription, QUuid requestId)
 {
-    QNWARNING(QStringLiteral("NoteNotebookAndTagListTrackingAsyncTester::onAddTagFailed: ")
-              << errorDescription << QStringLiteral(", tag: ") << tag);
+    QNWARNING("NoteNotebookAndTagListTrackingAsyncTester::onAddTagFailed: "
+              << errorDescription << ", tag: " << tag);
 
     Q_UNUSED(requestId)
     Q_EMIT failure(errorDescription.nonLocalizedString());
@@ -195,9 +194,9 @@ void NoteNotebookAndTagListTrackingAsyncTester::onAddNoteComplete(Note note,
 
     if (Q_UNLIKELY(m_state != STATE_PENDING_NOTE_CREATION))
     {
-        ErrorString errorDescription(QStringLiteral("Internal error: unexpected "
-                                                    "add note complete event"));
-        QNWARNING(errorDescription << QStringLiteral(", state = ") << m_state);
+        ErrorString errorDescription("Internal error: unexpected "
+                                     "add note complete event");
+        QNWARNING(errorDescription << ", state = " << m_state);
         Q_EMIT failure(errorDescription.nonLocalizedString());
         return;
     }
@@ -214,12 +213,11 @@ void NoteNotebookAndTagListTrackingAsyncTester::onAddNoteComplete(Note note,
     Q_EMIT updateNote(modifiedNote, options, QUuid::createUuid());
 }
 
-void NoteNotebookAndTagListTrackingAsyncTester::onAddNoteFailed(Note note,
-                                                                ErrorString errorDescription,
-                                                                QUuid requestId)
+void NoteNotebookAndTagListTrackingAsyncTester::onAddNoteFailed(
+    Note note, ErrorString errorDescription, QUuid requestId)
 {
-    QNWARNING(QStringLiteral("NoteNotebookAndTagListTrackingAsyncTester::onAddNoteFailed: ")
-              << errorDescription << QStringLiteral(", note: ") << note);
+    QNWARNING("NoteNotebookAndTagListTrackingAsyncTester::onAddNoteFailed: "
+              << errorDescription << ", note: " << note);
 
     Q_UNUSED(requestId)
     Q_EMIT failure(errorDescription.nonLocalizedString());
@@ -236,8 +234,8 @@ void NoteNotebookAndTagListTrackingAsyncTester::onUpdateNoteComplete(
         if (Q_UNLIKELY(m_receivedNoteMovedToAnotherNotebookSignal))
         {
             ErrorString errorDescription(
-                QStringLiteral("Detected note moved to another notebook signal "
-                               "when note's notebook was not changed"));
+                "Detected note moved to another notebook signal "
+                "when note's notebook was not changed");
             QNWARNING(errorDescription);
             Q_EMIT failure(errorDescription.nonLocalizedString());
             return;
@@ -246,8 +244,8 @@ void NoteNotebookAndTagListTrackingAsyncTester::onUpdateNoteComplete(
         if (Q_UNLIKELY(m_receivedNoteTagsListChangedSignal))
         {
             ErrorString errorDescription(
-                QStringLiteral("Detected note tags list updated signal when "
-                               "note's tags were not changed"));
+                "Detected note tags list updated signal when "
+                "note's tags were not changed");
             QNWARNING(errorDescription);
             Q_EMIT failure(errorDescription.nonLocalizedString());
             return;
@@ -261,8 +259,8 @@ void NoteNotebookAndTagListTrackingAsyncTester::onUpdateNoteComplete(
         if (Q_UNLIKELY(m_receivedNoteTagsListChangedSignal))
         {
             ErrorString errorDescription(
-                QStringLiteral("Detected note tags list updated signal when "
-                               "note's tags were not changed"));
+                "Detected note tags list updated signal when "
+                "note's tags were not changed");
             QNWARNING(errorDescription);
             Q_EMIT failure(errorDescription.nonLocalizedString());
             return;
@@ -280,8 +278,8 @@ void NoteNotebookAndTagListTrackingAsyncTester::onUpdateNoteComplete(
         if (Q_UNLIKELY(m_receivedNoteMovedToAnotherNotebookSignal))
         {
             ErrorString errorDescription(
-                QStringLiteral("Detected note moved to another notebook signal "
-                               "when note's notebook was not changed"));
+                "Detected note moved to another notebook signal "
+                "when note's notebook was not changed");
             QNWARNING(errorDescription);
             Q_EMIT failure(errorDescription.nonLocalizedString());
             return;
@@ -308,8 +306,8 @@ void NoteNotebookAndTagListTrackingAsyncTester::onUpdateNoteComplete(
     else
     {
         ErrorString errorDescription(
-            QStringLiteral("Internal error: unexpected update note complete event"));
-        QNWARNING(errorDescription << QStringLiteral(", state = ") << m_state);
+            "Internal error: unexpected update note complete event");
+        QNWARNING(errorDescription << ", state = " << m_state);
         Q_EMIT failure(errorDescription.nonLocalizedString());
     }
 }
@@ -318,8 +316,8 @@ void NoteNotebookAndTagListTrackingAsyncTester::onUpdateNoteFailed(
     Note note, LocalStorageManager::UpdateNoteOptions options,
     ErrorString errorDescription, QUuid requestId)
 {
-    QNWARNING(QStringLiteral("NoteNotebookAndTagListTrackingAsyncTester::onUpdateNoteFailed: ")
-              << errorDescription << QStringLiteral(", note: ") << note);
+    QNWARNING("NoteNotebookAndTagListTrackingAsyncTester::onUpdateNoteFailed: "
+              << errorDescription << ", note: " << note);
 
     Q_UNUSED(options)
     Q_UNUSED(requestId)
@@ -333,9 +331,9 @@ void NoteNotebookAndTagListTrackingAsyncTester::onNoteMovedToAnotherNotebook(
     ++m_noteMovedToAnotherNotebookSlotInvocationCount;
     if (Q_UNLIKELY(m_noteMovedToAnotherNotebookSlotInvocationCount > 2))
     {
-        ErrorString errorDescription(QStringLiteral("Too many note moved to "
-                                                    "another notebook signals "
-                                                    "received"));
+        ErrorString errorDescription("Too many note moved to "
+                                     "another notebook signals "
+                                     "received");
         QNWARNING(errorDescription);
         Q_EMIT failure(errorDescription.nonLocalizedString());
         return;
@@ -345,10 +343,10 @@ void NoteNotebookAndTagListTrackingAsyncTester::onNoteMovedToAnotherNotebook(
     {
         if (Q_UNLIKELY(m_note.localUid() != noteLocalUid))
         {
-            ErrorString errorDescription(QStringLiteral("Internal error: unexpected "
-                                                        "note local uid in note "
-                                                        "moved to another notebook "
-                                                        "signal"));
+            ErrorString errorDescription("Internal error: unexpected "
+                                         "note local uid in note "
+                                         "moved to another notebook "
+                                         "signal");
             errorDescription.details() = noteLocalUid;
             errorDescription.details() +=
                 QStringLiteral("; expected ") + m_note.localUid();
@@ -359,10 +357,10 @@ void NoteNotebookAndTagListTrackingAsyncTester::onNoteMovedToAnotherNotebook(
 
         if (Q_UNLIKELY(m_firstNotebook.localUid() != previousNotebookLocalUid))
         {
-            ErrorString errorDescription(QStringLiteral("Internal error: unexpected "
-                                                        "previous notebook local "
-                                                        "uid in note moved to "
-                                                        "another notebook signal"));
+            ErrorString errorDescription("Internal error: unexpected "
+                                         "previous notebook local "
+                                         "uid in note moved to "
+                                         "another notebook signal");
             errorDescription.details() = previousNotebookLocalUid;
             errorDescription.details() +=
                 QStringLiteral("; expected ") + m_firstNotebook.localUid();
@@ -373,10 +371,10 @@ void NoteNotebookAndTagListTrackingAsyncTester::onNoteMovedToAnotherNotebook(
 
         if (Q_UNLIKELY(m_secondNotebook.localUid() != newNotebookLocalUid))
         {
-            ErrorString errorDescription(QStringLiteral("Internal error: unexpected "
-                                                        "new notebook local uid "
-                                                        "in note moved to another "
-                                                        "notebook signal"));
+            ErrorString errorDescription("Internal error: unexpected "
+                                         "new notebook local uid "
+                                         "in note moved to another "
+                                         "notebook signal");
             errorDescription.details() = newNotebookLocalUid;
             errorDescription.details() +=
                 QStringLiteral("; expected ") + m_secondNotebook.localUid();
@@ -387,9 +385,9 @@ void NoteNotebookAndTagListTrackingAsyncTester::onNoteMovedToAnotherNotebook(
 
         if (Q_UNLIKELY(m_receivedNoteTagsListChangedSignal))
         {
-            ErrorString errorDescription(QStringLiteral("Detected note tags list "
-                                                        "updated signal when note's "
-                                                        "tags were not changed"));
+            ErrorString errorDescription("Detected note tags list "
+                                         "updated signal when note's "
+                                         "tags were not changed");
             QNWARNING(errorDescription);
             Q_EMIT failure(errorDescription.nonLocalizedString());
             return;
@@ -404,10 +402,10 @@ void NoteNotebookAndTagListTrackingAsyncTester::onNoteMovedToAnotherNotebook(
     {
         if (Q_UNLIKELY(m_note.localUid() != noteLocalUid))
         {
-            ErrorString errorDescription(QStringLiteral("Internal error: unexpected "
-                                                        "note local uid in note "
-                                                        "moved to another notebook "
-                                                        "signal"));
+            ErrorString errorDescription("Internal error: unexpected "
+                                         "note local uid in note "
+                                         "moved to another notebook "
+                                         "signal");
             errorDescription.details() = noteLocalUid;
             errorDescription.details() +=
                 QStringLiteral("; expected ") + m_note.localUid();
@@ -418,10 +416,10 @@ void NoteNotebookAndTagListTrackingAsyncTester::onNoteMovedToAnotherNotebook(
 
         if (Q_UNLIKELY(m_secondNotebook.localUid() != previousNotebookLocalUid))
         {
-            ErrorString errorDescription(QStringLiteral("Internal error: unexpected "
-                                                        "previous notebook local "
-                                                        "uid in note moved to "
-                                                        "another notebook signal"));
+            ErrorString errorDescription("Internal error: unexpected "
+                                         "previous notebook local "
+                                         "uid in note moved to "
+                                         "another notebook signal");
             errorDescription.details() = previousNotebookLocalUid;
             errorDescription.details() +=
                 QStringLiteral("; expected ") + m_secondNotebook.localUid();
@@ -432,10 +430,10 @@ void NoteNotebookAndTagListTrackingAsyncTester::onNoteMovedToAnotherNotebook(
 
         if (Q_UNLIKELY(m_firstNotebook.localUid() != newNotebookLocalUid))
         {
-            ErrorString errorDescription(QStringLiteral("Internal error: "
-                                                        "unexpected new notebook "
-                                                        "local uid in note moved "
-                                                        "to another notebook signal"));
+            ErrorString errorDescription("Internal error: "
+                                         "unexpected new notebook "
+                                         "local uid in note moved "
+                                         "to another notebook signal");
             errorDescription.details() = newNotebookLocalUid;
             errorDescription.details() +=
                 QStringLiteral("; expected ") + m_firstNotebook.localUid();
@@ -452,10 +450,10 @@ void NoteNotebookAndTagListTrackingAsyncTester::onNoteMovedToAnotherNotebook(
     }
     else
     {
-        ErrorString errorDescription(QStringLiteral("Internal error: unexpected "
-                                                    "note moved to another notebook "
-                                                    "event"));
-        QNWARNING(errorDescription << QStringLiteral(", state = ") << m_state);
+        ErrorString errorDescription("Internal error: unexpected "
+                                     "note moved to another notebook "
+                                     "event");
+        QNWARNING(errorDescription << ", state = " << m_state);
         Q_EMIT failure(errorDescription.nonLocalizedString());
     }
 }
@@ -467,8 +465,8 @@ void NoteNotebookAndTagListTrackingAsyncTester::onNoteTagListUpdated(
     ++m_noteTagsListChangedSlotInvocationCount;
     if (Q_UNLIKELY(m_noteTagsListChangedSlotInvocationCount > 2))
     {
-        ErrorString errorDescription(QStringLiteral("Too many note tags list "
-                                                    "changed signals received"));
+        ErrorString errorDescription("Too many note tags list "
+                                     "changed signals received");
         QNWARNING(errorDescription);
         Q_EMIT failure(errorDescription.nonLocalizedString());
         return;
@@ -478,9 +476,9 @@ void NoteNotebookAndTagListTrackingAsyncTester::onNoteTagListUpdated(
     {
         if (Q_UNLIKELY(m_note.localUid() != noteLocalUid))
         {
-            ErrorString errorDescription(QStringLiteral("Internal error: unexpected "
-                                                        "note local uid in note "
-                                                        "tags list updated signal"));
+            ErrorString errorDescription("Internal error: unexpected "
+                                         "note local uid in note "
+                                         "tags list updated signal");
             errorDescription.details() = noteLocalUid;
             errorDescription.details() +=
                 QStringLiteral("; expected ") + m_note.localUid();
@@ -491,10 +489,10 @@ void NoteNotebookAndTagListTrackingAsyncTester::onNoteTagListUpdated(
 
         if (Q_UNLIKELY(!checkTagsListEqual(m_firstNoteTagsSet, previousTagLocalUids)))
         {
-            ErrorString errorDescription(QStringLiteral("Internal error: unexpected "
-                                                        "set of previous tag local "
-                                                        "uids in note tags list "
-                                                        "updated signal"));
+            ErrorString errorDescription("Internal error: unexpected "
+                                         "set of previous tag local "
+                                         "uids in note tags list "
+                                         "updated signal");
             errorDescription.details() = previousTagLocalUids.join(QStringLiteral(","));
             QNWARNING(errorDescription);
             Q_EMIT failure(errorDescription.nonLocalizedString());
@@ -503,10 +501,10 @@ void NoteNotebookAndTagListTrackingAsyncTester::onNoteTagListUpdated(
 
         if (Q_UNLIKELY(!checkTagsListEqual(m_secondNoteTagsSet, newTagLocalUids)))
         {
-            ErrorString errorDescription(QStringLiteral("Internal error: unexpected "
-                                                        "set of new tag local uids "
-                                                        "in note tags list updated "
-                                                        "signal"));
+            ErrorString errorDescription("Internal error: unexpected "
+                                         "set of new tag local uids "
+                                         "in note tags list updated "
+                                         "signal");
             errorDescription.details() = newTagLocalUids.join(QStringLiteral(","));
             QNWARNING(errorDescription);
             Q_EMIT failure(errorDescription.nonLocalizedString());
@@ -515,10 +513,10 @@ void NoteNotebookAndTagListTrackingAsyncTester::onNoteTagListUpdated(
 
         if (Q_UNLIKELY(m_receivedNoteMovedToAnotherNotebookSignal))
         {
-            ErrorString errorDescription(QStringLiteral("Detected note moved to "
-                                                        "another notebook signal "
-                                                        "when note's notebook was "
-                                                        "not changed"));
+            ErrorString errorDescription("Detected note moved to "
+                                         "another notebook signal "
+                                         "when note's notebook was "
+                                         "not changed");
             QNWARNING(errorDescription);
             Q_EMIT failure(errorDescription.nonLocalizedString());
             return;
@@ -533,9 +531,9 @@ void NoteNotebookAndTagListTrackingAsyncTester::onNoteTagListUpdated(
     {
         if (Q_UNLIKELY(m_note.localUid() != noteLocalUid))
         {
-            ErrorString errorDescription(QStringLiteral("Internal error: unexpected "
-                                                        "note local uid in note tags "
-                                                        "list updated signal"));
+            ErrorString errorDescription("Internal error: unexpected "
+                                         "note local uid in note tags "
+                                         "list updated signal");
             errorDescription.details() = noteLocalUid;
             errorDescription.details() +=
                 QStringLiteral("; expected ") + m_note.localUid();
@@ -546,10 +544,10 @@ void NoteNotebookAndTagListTrackingAsyncTester::onNoteTagListUpdated(
 
         if (Q_UNLIKELY(!checkTagsListEqual(m_secondNoteTagsSet, previousTagLocalUids)))
         {
-            ErrorString errorDescription(QStringLiteral("Internal error: unexpected "
-                                                        "set of previous tag local "
-                                                        "uids in note tags list "
-                                                        "updated signal"));
+            ErrorString errorDescription("Internal error: unexpected "
+                                         "set of previous tag local "
+                                         "uids in note tags list "
+                                         "updated signal");
             errorDescription.details() = previousTagLocalUids.join(QStringLiteral(","));
             QNWARNING(errorDescription);
             Q_EMIT failure(errorDescription.nonLocalizedString());
@@ -558,10 +556,10 @@ void NoteNotebookAndTagListTrackingAsyncTester::onNoteTagListUpdated(
 
         if (Q_UNLIKELY(!checkTagsListEqual(m_firstNoteTagsSet, newTagLocalUids)))
         {
-            ErrorString errorDescription(QStringLiteral("Internal error: unexpected "
-                                                        "set of new tag local uids "
-                                                        "in note tags list updated "
-                                                        "signal"));
+            ErrorString errorDescription("Internal error: unexpected "
+                                         "set of new tag local uids "
+                                         "in note tags list updated "
+                                         "signal");
             errorDescription.details() = newTagLocalUids.join(QStringLiteral(","));
             QNWARNING(errorDescription);
             Q_EMIT failure(errorDescription.nonLocalizedString());
@@ -578,9 +576,9 @@ void NoteNotebookAndTagListTrackingAsyncTester::onNoteTagListUpdated(
     }
     else
     {
-        ErrorString errorDescription(QStringLiteral("Internal error: unexpected "
-                                                    "note tags list update event"));
-        QNWARNING(errorDescription << QStringLiteral(", state = ") << m_state);
+        ErrorString errorDescription("Internal error: unexpected "
+                                     "note tags list update event");
+        QNWARNING(errorDescription << ", state = " << m_state);
         Q_EMIT failure(errorDescription.nonLocalizedString());
     }
 }
