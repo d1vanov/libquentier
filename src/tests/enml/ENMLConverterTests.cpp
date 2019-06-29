@@ -322,7 +322,7 @@ bool convertNoteToHtmlAndBackImpl(const QString & noteContent,
 
     res = compareEnml(originalNoteContent, processedNoteContent, error);
     if (!res) {
-        QNWARNING(QStringLiteral("\n\nHTML: ") << html);
+        QNWARNING("\n\nHTML: " << html);
         return false;
     }
 
@@ -338,17 +338,18 @@ bool compareEnml(const QString & original, const QString & processed,
     QXmlStreamReader readerOriginal(originalSimplified);
     QXmlStreamReader readerProcessed(processedSimplified);
 
-#define PRINT_WARNING(err) \
-    QNWARNING(err << QStringLiteral("\n\nContext in the original ENML: <") \
-              << readerOriginal.name() << QStringLiteral(">: ")  \
-              << readerOriginal.readElementText() \
-              << QStringLiteral("\n\nContext in the processed ENML: <") \
-              << readerProcessed.name() \
-              << QStringLiteral(">: ") << readerProcessed.readElementText() \
-              << QStringLiteral("\n\nFull simplified original ENML: ") \
-              << originalSimplified \
-              << QStringLiteral("\n\nFull simplified processed ENML: ") \
-              << processedSimplified);
+#define PRINT_WARNING(err)                                                     \
+    QNWARNING(err << "\n\nContext in the original ENML: <"                     \
+              << readerOriginal.name() << ">: "                                \
+              << readerOriginal.readElementText()                              \
+              << "\n\nContext in the processed ENML: <"                        \
+              << readerProcessed.name()                                        \
+              << ">: " << readerProcessed.readElementText()                    \
+              << "\n\nFull simplified original ENML: "                         \
+              << originalSimplified                                            \
+              << "\n\nFull simplified processed ENML: "                        \
+              << processedSimplified)                                          \
+// PRINT_WARNING
 
     while(!readerOriginal.atEnd() && !readerProcessed.atEnd())
     {
@@ -415,56 +416,55 @@ bool compareEnml(const QString & original, const QString & processed,
                                        "is at the start of the element while "
                                        "the reader of the processed ENML is not");
                 PRINT_WARNING(error
-                              << QStringLiteral("\n\nchecking the state of "
-                                                "processed ENML reader: ")
-                              << QStringLiteral("isStartDocument: ")
+                              << "\n\nchecking the state of "
+                                 "processed ENML reader: isStartDocument: "
                               << (readerProcessed.isStartDocument()
-                                  ? QStringLiteral("true")
-                                  : QStringLiteral("false"))
-                              << QStringLiteral(", isDTD: ")
+                                  ? "true"
+                                  : "false")
+                              << ", isDTD: "
                               << (readerProcessed.isDTD()
-                                  ? QStringLiteral("true")
-                                  : QStringLiteral("false"))
-                              << QStringLiteral(", isCDATA: ")
+                                  ? "true"
+                                  : "false")
+                              << ", isCDATA: "
                               << (readerProcessed.isCDATA()
-                                  ? QStringLiteral("true")
-                                  : QStringLiteral("false"))
-                              << QStringLiteral(", isCharacters: ")
+                                  ? "true"
+                                  : "false")
+                              << ", isCharacters: "
                               << (readerProcessed.isCharacters()
-                                  ? QStringLiteral("true")
-                                  : QStringLiteral("false"))
-                              << QStringLiteral(", isComment: ")
+                                  ? "true"
+                                  : "false")
+                              << ", isComment: "
                               << (readerProcessed.isComment()
-                                  ? QStringLiteral("true")
-                                  : QStringLiteral("false"))
-                              << QStringLiteral(", isEndElement: ")
+                                  ? "true"
+                                  : "false")
+                              << ", isEndElement: "
                               << (readerProcessed.isEndElement()
-                                  ? QStringLiteral("true")
-                                  : QStringLiteral("false"))
-                              << QStringLiteral(", isEndDocument: ")
+                                  ? "true"
+                                  : "false")
+                              << ", isEndDocument: "
                               << (readerProcessed.isEndDocument()
-                                  ? QStringLiteral("true")
-                                  : QStringLiteral("false"))
-                              << QStringLiteral(", isEntityReference: ")
+                                  ? "true"
+                                  : "false")
+                              << ", isEntityReference: "
                               << (readerProcessed.isEntityReference()
-                                  ? QStringLiteral("true")
-                                  : QStringLiteral("false"))
-                              << QStringLiteral(", isProcessingInstruction: ")
+                                  ? "true"
+                                  : "false")
+                              << ", isProcessingInstruction: "
                               << (readerProcessed.isProcessingInstruction()
-                                  ? QStringLiteral("true")
-                                  : QStringLiteral("false"))
-                              << QStringLiteral(", isStandaloneDocument: ")
+                                  ? "true"
+                                  : "false")
+                              << ", isStandaloneDocument: "
                               << (readerProcessed.isStandaloneDocument()
-                                  ? QStringLiteral("true")
-                                  : QStringLiteral("false"))
-                              << QStringLiteral(", isStartDocument: ")
+                                  ? "true"
+                                  : "false")
+                              << ", isStartDocument: "
                               << (readerProcessed.isStartDocument()
-                                  ? QStringLiteral("true")
-                                  : QStringLiteral("false"))
-                              << QStringLiteral(", isWhitespace: ")
+                                  ? "true"
+                                  : "false")
+                              << ", isWhitespace: "
                               << (readerProcessed.isWhitespace()
-                                  ? QStringLiteral("true")
-                                  : QStringLiteral("false")));
+                                  ? "true"
+                                  : "false"));
                 return false;
             }
 
@@ -548,28 +548,27 @@ bool compareEnml(const QString & original, const QString & processed,
                                                "the original and the processed "
                                                "ENMLs do not match");
                         QNWARNING(error
-                                  << QStringLiteral(": the original attribute "
-                                                    "was not found within "
-                                                    "the processed attributes; ")
-                                  << QStringLiteral("original ENML: ")
+                                  << ": the original attribute was not found "
+                                     "within the processed attributes; "
+                                     "original ENML: "
                                   << originalSimplified
-                                  << QStringLiteral("\nProcessed ENML: ")
+                                  << "\nProcessed ENML: "
                                   << processedSimplified
-                                  << QStringLiteral(", index within attributes = ")
+                                  << ", index within attributes = "
                                   << i
-                                  << QStringLiteral("\nOriginal attribute: name = ")
+                                  << "\nOriginal attribute: name = "
                                   << originalAttribute.name()
-                                  << QStringLiteral(", namespace uri = ")
+                                  << ", namespace uri = "
                                   << originalAttribute.namespaceUri()
-                                  << QStringLiteral(", qualified name = ")
+                                  << ", qualified name = "
                                   << originalAttribute.qualifiedName()
-                                  << QStringLiteral(", is default = ")
+                                  << ", is default = "
                                   << (originalAttribute.isDefault()
-                                      ? QStringLiteral("true")
-                                      : QStringLiteral("false"))
-                                  << QStringLiteral(", value = ")
+                                      ? "true"
+                                      : "false")
+                                  << ", value = "
                                   << originalAttribute.value()
-                                  << QStringLiteral(", prefix = ")
+                                  << ", prefix = "
                                   << originalAttribute.prefix());
                         return false;
                     }
@@ -601,28 +600,27 @@ bool compareEnml(const QString & original, const QString & processed,
                                                "the original and the processed "
                                                "ENMLs do not match");
                         QNWARNING(error
-                                  << QStringLiteral(": the original attribute "
-                                                    "was not found within "
-                                                    "the processed attributes; ")
-                                  << QStringLiteral("original ENML: ")
+                                  << ": the original attribute "
+                                     "was not found within "
+                                     "the processed attributes; "
+                                     "original ENML: "
                                   << originalSimplified
-                                  << QStringLiteral("\nProcessed ENML: ")
+                                  << "\nProcessed ENML: "
                                   << processedSimplified
-                                  << QStringLiteral(", index within attributes = ")
-                                  << i
-                                  << QStringLiteral("\nOriginal attribute: name = ")
+                                  << ", index within attributes = " << i
+                                  << "\nOriginal attribute: name = "
                                   << originalAttribute.name()
-                                  << QStringLiteral(", namespace uri = ")
+                                  << ", namespace uri = "
                                   << originalAttribute.namespaceUri()
-                                  << QStringLiteral(", qualified name = ")
+                                  << ", qualified name = "
                                   << originalAttribute.qualifiedName()
-                                  << QStringLiteral(", is default = ")
+                                  << ", is default = "
                                   << (originalAttribute.isDefault()
-                                      ? QStringLiteral("true")
-                                      : QStringLiteral("false"))
-                                  << QStringLiteral(", value = ")
+                                      ? "true"
+                                      : "false")
+                                  << ", value = "
                                   << originalAttribute.value()
-                                  << QStringLiteral(", prefix = ")
+                                  << ", prefix = "
                                   << originalAttribute.prefix());
                         return false;
 
@@ -652,10 +650,8 @@ bool compareEnml(const QString & original, const QString & processed,
                 error = QStringLiteral("QXmlStreamReader of the original ENML "
                                        "points to characters while the reader "
                                        "of the processed ENML does not");
-                QNWARNING(error << QStringLiteral("; original ENML: ")
-                          << originalSimplified
-                          << QStringLiteral("\nProcessed ENML: ")
-                          << processedSimplified);
+                QNWARNING(error << "; original ENML: " << originalSimplified
+                          << "\nProcessed ENML: " << processedSimplified);
                 return false;
             }
 
@@ -665,10 +661,8 @@ bool compareEnml(const QString & original, const QString & processed,
                     error = QStringLiteral("QXmlStreamReader of the original "
                                            "ENML points to CDATA while the reader "
                                            "of the processed ENML does not");
-                    QNWARNING(error << QStringLiteral("; original ENML: ")
-                              << originalSimplified
-                              << QStringLiteral("\nProcessed ENML: ")
-                              << processedSimplified);
+                    QNWARNING(error << "; original ENML: " << originalSimplified
+                              << "\nProcessed ENML: " << processedSimplified);
                     return false;
                 }
             }
@@ -681,14 +675,10 @@ bool compareEnml(const QString & original, const QString & processed,
                 error = QStringLiteral("The text extracted from the corresponding "
                                        "elements of both the original ENML "
                                        "and the processed ENML does not match");
-                QNWARNING(error << QStringLiteral("; original ENML: ")
-                          << originalSimplified
-                          << QStringLiteral("\nProcessed ENML: ")
-                          << processedSimplified
-                          << QStringLiteral("\nOriginal element text: ")
-                          << textOriginal
-                          << QStringLiteral("\nProcessed element text: ")
-                          << textProcessed);
+                QNWARNING(error << "; original ENML: " << originalSimplified
+                          << "\nProcessed ENML: " << processedSimplified
+                          << "\nOriginal element text: " << textOriginal
+                          << "\nProcessed element text: " << textProcessed);
                 return false;
             }
         }
@@ -698,10 +688,8 @@ bool compareEnml(const QString & original, const QString & processed,
             error = QStringLiteral("QXmlStreamReader of the original ENML is at "
                                    "the end of the document while the reader of "
                                    "the processed ENML is not");
-            QNWARNING(error << QStringLiteral("; original ENML: ")
-                      << originalSimplified
-                      << QStringLiteral("\nProcessed ENML: ")
-                      << processedSimplified);
+            QNWARNING(error << "; original ENML: " << originalSimplified
+                      << "\nProcessed ENML: " << processedSimplified);
             return false;
         }
     }
@@ -711,10 +699,8 @@ bool compareEnml(const QString & original, const QString & processed,
         error = QStringLiteral("QXmlStreamReaders for the original ENML and "
                                "the processed ENML have not both came to their "
                                "ends after the checking loop");
-        QNWARNING(error << QStringLiteral("; original ENML: ")
-                  << originalSimplified
-                  << QStringLiteral("\nProcessed ENML: ")
-                  << processedSimplified);
+        QNWARNING(error << "; original ENML: " << originalSimplified
+                  << "\nProcessed ENML: " << processedSimplified);
         return false;
     }
 
@@ -891,7 +877,7 @@ bool convertHtmlWithTableHelperTagsToEnml(QString & error)
 
     res = compareEnml(noteContent, processedNoteContent, error);
     if (!res) {
-        QNWARNING(QStringLiteral("\n\nHTML: ") << html);
+        QNWARNING("\n\nHTML: " << html);
         return false;
     }
 
@@ -954,7 +940,7 @@ bool convertHtmlWithTableAndHilitorHelperTagsToEnml(QString & error)
 
     res = compareEnml(noteContent, processedNoteContent, error);
     if (!res) {
-        QNWARNING(QStringLiteral("\n\nHTML: ") << html);
+        QNWARNING("\n\nHTML: " << html);
         return false;
     }
 

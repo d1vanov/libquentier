@@ -401,21 +401,22 @@ bool NoteSearchQueryParsingTest(QString & error)
             queryString += QStringLiteral("-encryption: ");
         }
 
-#define ADD_LIST_TO_QUERY_STRING(keyword, list, type, ...) \
-    for(int i = 0, size = list.size(); i < size; ++i) { \
-        const type & item = list[i]; \
-        queryString += QStringLiteral(#keyword ":"); \
-        QString itemStr = __VA_ARGS__(item); \
-        bool itemContainsSpace = itemStr.contains(QStringLiteral(" ")); \
-        if (itemContainsSpace) { \
-            queryString += QStringLiteral("\""); \
-        } \
-        queryString += itemStr; \
-        if (itemContainsSpace) { \
-            queryString += QStringLiteral("\""); \
-        } \
-        queryString += QStringLiteral(" "); \
-    } \
+#define ADD_LIST_TO_QUERY_STRING(keyword, list, type, ...)                     \
+    for(int i = 0, size = list.size(); i < size; ++i) {                        \
+        const type & item = list[i];                                           \
+        queryString += QStringLiteral(#keyword ":");                           \
+        QString itemStr = __VA_ARGS__(item);                                   \
+        bool itemContainsSpace = itemStr.contains(QStringLiteral(" "));        \
+        if (itemContainsSpace) {                                               \
+            queryString += QStringLiteral("\"");                               \
+        }                                                                      \
+        queryString += itemStr;                                                \
+        if (itemContainsSpace) {                                               \
+            queryString += QStringLiteral("\"");                               \
+        }                                                                      \
+        queryString += QStringLiteral(" ");                                    \
+    }                                                                          \
+// ADD_LIST_TO_QUERY_STRING
 
         ADD_LIST_TO_QUERY_STRING(tag, tagNames, QString);
         ADD_LIST_TO_QUERY_STRING(-tag, negatedTagNames, QString);
@@ -1003,11 +1004,11 @@ bool NoteSearchQueryParsingTest(QString & error)
         error = QStringLiteral("Internal error: the number of content search "
                                "terms doesn't match the expected one after "
                                "parsing the note search query");
-        QNWARNING(error << QStringLiteral("; original content search terms: ")
+        QNWARNING(error << "; original content search terms: "
                   << contentSearchTerms.join(QStringLiteral("; "))
-                  << QStringLiteral("; filtered content search terms: ")
+                  << "; filtered content search terms: "
                   << filteredContentSearchTerms.join(QStringLiteral("; "))
-                  << QStringLiteral("; processed search query terms: ")
+                  << "; processed search query terms: "
                   << contentSearchTermsFromQuery.join(QStringLiteral("; ")));
         return false;
     }

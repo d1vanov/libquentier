@@ -77,8 +77,8 @@ void UserLocalStorageManagerAsyncTester::initialize()
 
     ErrorString errorDescription;
     if (!m_initialUser.checkParameters(errorDescription)) {
-        QNWARNING(QStringLiteral("Found invalid user: ") << m_initialUser
-                  << QStringLiteral(", error: ") << errorDescription);
+        QNWARNING("Found invalid user: " << m_initialUser
+                  << ", error: " << errorDescription);
         Q_EMIT failure(errorDescription.nonLocalizedString());
         return;
     }
@@ -137,7 +137,7 @@ void UserLocalStorageManagerAsyncTester::onGetUserCountCompleted(int count,
 void UserLocalStorageManagerAsyncTester::onGetUserCountFailed(ErrorString errorDescription,
                                                               QUuid requestId)
 {
-    QNWARNING(errorDescription << QStringLiteral(", requestId = ") << requestId);
+    QNWARNING(errorDescription << ", requestId = " << requestId);
     Q_EMIT failure(errorDescription.nonLocalizedString());
 }
 
@@ -173,8 +173,8 @@ void UserLocalStorageManagerAsyncTester::onAddUserFailed(User user,
                                                          ErrorString errorDescription,
                                                          QUuid requestId)
 {
-    QNWARNING(errorDescription << QStringLiteral(", requestId = ") << requestId
-              << QStringLiteral(", user: ") << user);
+    QNWARNING(errorDescription << ", requestId = " << requestId
+              << ", user: " << user);
     Q_EMIT failure(errorDescription.nonLocalizedString());
 }
 
@@ -208,8 +208,8 @@ void UserLocalStorageManagerAsyncTester::onUpdateUserFailed(User user,
                                                             ErrorString errorDescription,
                                                             QUuid requestId)
 {
-    QNWARNING(errorDescription << QStringLiteral(", requestId = ") << requestId
-              << QStringLiteral(", user: ") << user);
+    QNWARNING(errorDescription << ", requestId = " << requestId
+              << ", user: " << user);
     Q_EMIT failure(errorDescription.nonLocalizedString());
 }
 
@@ -226,10 +226,8 @@ void UserLocalStorageManagerAsyncTester::onFindUserCompleted(User user,
         {
             errorDescription.setBase("Added and found users in the local storage "
                                      "don't match");
-            QNWARNING(errorDescription
-                      << QStringLiteral(": User added to the local storage: ")
-                      << m_initialUser
-                      << QStringLiteral("\nUserWrapper found in the local storage: ")
+            QNWARNING(errorDescription << ": User added to the local storage: "
+                      << m_initialUser << "\nUserWrapper found in the local storage: "
                       << user);
             Q_EMIT failure(errorDescription.nonLocalizedString());
             return;
@@ -249,10 +247,8 @@ void UserLocalStorageManagerAsyncTester::onFindUserCompleted(User user,
         {
             errorDescription.setBase("Updated and found users in the local "
                                      "storage don't match");
-            QNWARNING(errorDescription
-                      << QStringLiteral(": User updated in the local storage: ")
-                      << m_modifiedUser
-                      << QStringLiteral("\nUserWrapper found in the local storage: ")
+            QNWARNING(errorDescription << ": User updated in the local storage: "
+                      << m_modifiedUser << "\nUserWrapper found in the local storage: "
                       << user);
             Q_EMIT failure(errorDescription.nonLocalizedString());
             return;
@@ -265,10 +261,8 @@ void UserLocalStorageManagerAsyncTester::onFindUserCompleted(User user,
     {
         errorDescription.setBase("Error: found user which should have been "
                                  "expunged from local storage");
-        QNWARNING(errorDescription
-                  << QStringLiteral(": User expunged from the local storage: ")
-                  << m_modifiedUser
-                  << QStringLiteral("\nUserWrapper found in the local storage: ")
+        QNWARNING(errorDescription << ": User expunged from the local storage: "
+                  << m_modifiedUser << "\nUserWrapper found in the local storage: "
                   << user);
         Q_EMIT failure(errorDescription.nonLocalizedString());
         return;
@@ -286,8 +280,8 @@ void UserLocalStorageManagerAsyncTester::onFindUserFailed(User user,
         return;
     }
 
-    QNWARNING(errorDescription << QStringLiteral(", requestId = ") << requestId
-              << QStringLiteral(", user: ") << user);
+    QNWARNING(errorDescription << ", requestId = " << requestId
+              << ", user: " << user);
     Q_EMIT failure(errorDescription.nonLocalizedString());
 }
 
@@ -303,8 +297,8 @@ void UserLocalStorageManagerAsyncTester::onDeleteUserCompleted(User user,
         errorDescription.setBase("Internal error in UserLocalStorageManagerAsyncTester: "
                                  "user in onDeleteUserCompleted slot doesn't match "
                                  "the original deleted User");
-        QNWARNING(errorDescription << QStringLiteral("; original deleted user: ")
-                  << m_modifiedUser << QStringLiteral(", user: ") << user);
+        QNWARNING(errorDescription << "; original deleted user: "
+                  << m_modifiedUser << ", user: " << user);
         Q_EMIT failure(errorDescription.nonLocalizedString());
         return;
     }
@@ -318,8 +312,8 @@ void UserLocalStorageManagerAsyncTester::onDeleteUserFailed(User user,
                                                             ErrorString errorDescription,
                                                             QUuid requestId)
 {
-    QNWARNING(errorDescription << QStringLiteral(", requestId = ") << requestId
-              << QStringLiteral(", user: ") << user);
+    QNWARNING(errorDescription << ", requestId = " << requestId
+              << ", user: " << user);
     Q_EMIT failure(errorDescription.nonLocalizedString());
 }
 
@@ -346,8 +340,8 @@ void UserLocalStorageManagerAsyncTester::onExpungeUserFailed(User user,
                                                              ErrorString errorDescription,
                                                              QUuid requestId)
 {
-    QNWARNING(errorDescription << QStringLiteral(", requestId = ") << requestId
-              << QStringLiteral(", user: ") << user);
+    QNWARNING(errorDescription << ", requestId = " << requestId
+              << ", user: " << user);
     Q_EMIT failure(errorDescription.nonLocalizedString());
 }
 

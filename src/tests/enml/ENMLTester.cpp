@@ -39,14 +39,14 @@ inline void nullMessageHandler(QtMsgType type, const QMessageLogContext &,
                                const QString & message)
 {
     if (type != QtDebugMsg) {
-        QTextStream(stdout) << message << QStringLiteral("\n");
+        QTextStream(stdout) << message << "\n";
     }
 }
 #else
 inline void nullMessageHandler(QtMsgType type, const char * message)
 {
     if (type != QtDebugMsg) {
-        QTextStream(stdout) << message << QStringLiteral("\n");
+        QTextStream(stdout) << message << "\n";
     }
 }
 #endif
