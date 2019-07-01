@@ -65,19 +65,23 @@ inline void nullMessageHandler(QtMsgType type, const char * message)
 }
 #endif
 
-#define CHECK_EXPECTED(expected) \
-    if (!catcher.expected()) { \
-        QFAIL(qPrintable(QString::fromUtf8("SynchronizationManagerSignalsCatcher::") + \
-                         QString::fromUtf8(#expected) + \
-                         QString::fromUtf8(" unexpectedly returned false"))); \
-    }
+#define CHECK_EXPECTED(expected)                                               \
+    if (!catcher.expected()) {                                                 \
+        QFAIL(qPrintable(                                                      \
+            QString::fromUtf8("SynchronizationManagerSignalsCatcher::") +      \
+            QString::fromUtf8(#expected) +                                     \
+            QString::fromUtf8(" unexpectedly returned false")));               \
+    }                                                                          \
+// CHECK_EXPECTED
 
-#define CHECK_UNEXPECTED(unexpected) \
-    if (catcher.unexpected()) { \
-        QFAIL(qPrintable(QString::fromUtf8("SynchronizationManagerSignalsCatcher::") + \
-                         QString::fromUtf8(#unexpected) + \
-                         QString::fromUtf8(" unexpectedly returned true"))); \
-    }
+#define CHECK_UNEXPECTED(unexpected)                                           \
+    if (catcher.unexpected()) {                                                \
+        QFAIL(qPrintable(                                                      \
+            QString::fromUtf8("SynchronizationManagerSignalsCatcher::") +      \
+            QString::fromUtf8(#unexpected) +                                   \
+            QString::fromUtf8(" unexpectedly returned true")));                \
+    }                                                                          \
+// CHECK_UNEXPECTED
 
 namespace quentier {
 namespace test {
@@ -116,7 +120,8 @@ void SynchronizationTester::init()
     QuentierRestartLogging();
 
     m_testAccount = Account(m_testAccount.name(), Account::Type::Evernote,
-                            m_testAccount.id() + 1, Account::EvernoteAccountType::Free,
+                            m_testAccount.id() + 1,
+                            Account::EvernoteAccountType::Free,
                             QStringLiteral("www.evernote.com"));
     LocalStorageManager::StartupOptions startupOptions(
         LocalStorageManager::StartupOption::ClearDatabase |
@@ -6497,9 +6502,8 @@ void SynchronizationTester::checkIdentityOfLocalAndRemoteItems()
         }
 
         if (rit.value() != it.value()) {
-            QNWARNING(QStringLiteral("Found mismatch between local and remote "
-                                     "notes: local one: ")
-                      << it.value() << QStringLiteral("\nRemote one: ") << rit.value());
+            QNWARNING("Found mismatch between local and remote notes: local one: "
+                      << it.value() << "\nRemote one: " << rit.value());
         }
 
         QVERIFY2(rit.value() == it.value(),
@@ -7146,10 +7150,11 @@ void SynchronizationTester::listLinkedNotebooksFromLocalStorage(
 
     ErrorString errorDescription;
     QList<LinkedNotebook> localLinkedNotebooks =
-        pLocalStorageManager->listLinkedNotebooks(LocalStorageManager::ListAll,
-                                                  errorDescription, 0, 0,
-                                                  LocalStorageManager::ListLinkedNotebooksOrder::NoOrder,
-                                                  LocalStorageManager::OrderDirection::Ascending);
+        pLocalStorageManager->listLinkedNotebooks(
+            LocalStorageManager::ListAll,
+            errorDescription, 0, 0,
+            LocalStorageManager::ListLinkedNotebooksOrder::NoOrder,
+            LocalStorageManager::OrderDirection::Ascending);
     if (localLinkedNotebooks.isEmpty() && !errorDescription.isEmpty()) {
         QFAIL(qPrintable(errorDescription.nonLocalizedString()));
     }
@@ -7416,14 +7421,18 @@ void SynchronizationTester::printContentsOfLocalStorageAndFakeNoteStoreToWarnLog
     listResourcesFromLocalStorage(0, linkedNotebookGuid, localResources);
     listResourcesFromFakeNoteStore(0, linkedNotebookGuid, remoteResources);
 
-#define PRINT_CONTAINER_ITEMS_GUIDS_AND_USNS(container) \
-    for(auto it = container.constBegin(), end = container.constEnd(); it != end; ++it) { \
-        message += QStringLiteral("    guid = ") % it.key() % QStringLiteral(", USN = ") + \
-                   (it.value().updateSequenceNum.isSet() \
-                    ? QString::number(it.value().updateSequenceNum.ref()) \
-                    : QStringLiteral("<not set>")) + \
-                   QStringLiteral("\n"); \
-    }
+#define PRINT_CONTAINER_ITEMS_GUIDS_AND_USNS(container)                        \
+    for(auto it = container.constBegin(),                                      \
+        end = container.constEnd(); it != end; ++it)                           \
+    {                                                                          \
+        message += QStringLiteral("    guid = ") % it.key() %                  \
+                   QStringLiteral(", USN = ") +                                \
+                   (it.value().updateSequenceNum.isSet()                       \
+                    ? QString::number(it.value().updateSequenceNum.ref())      \
+                    : QStringLiteral("<not set>")) +                           \
+                   QStringLiteral("\n");                                       \
+    }                                                                          \
+// PRINT_CONTAINER_ITEMS_GUIDS_AND_USNS
 
     if (linkedNotebookGuid.isEmpty()) {
         message += QStringLiteral("\nLocal saved searches:\n");

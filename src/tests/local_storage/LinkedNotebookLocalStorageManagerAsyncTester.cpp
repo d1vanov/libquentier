@@ -24,7 +24,8 @@
 namespace quentier {
 namespace test {
 
-LinkedNotebookLocalStorageManagerAsyncTester::LinkedNotebookLocalStorageManagerAsyncTester(QObject * parent) :
+LinkedNotebookLocalStorageManagerAsyncTester::LinkedNotebookLocalStorageManagerAsyncTester(
+        QObject * parent) :
     QObject(parent),
     m_state(STATE_UNINITIALIZED),
     m_pLocalStorageManagerAsync(Q_NULLPTR),
@@ -42,7 +43,8 @@ LinkedNotebookLocalStorageManagerAsyncTester::~LinkedNotebookLocalStorageManager
 
 void LinkedNotebookLocalStorageManagerAsyncTester::onInitTestCase()
 {
-    QString username = QStringLiteral("LinkedNotebookLocalStorageManagerAsyncTester");
+    QString username =
+        QStringLiteral("LinkedNotebookLocalStorageManagerAsyncTester");
     qint32 userId = 1;
     LocalStorageManager::StartupOptions startupOptions(
         LocalStorageManager::StartupOption::ClearDatabase);
@@ -81,13 +83,14 @@ void LinkedNotebookLocalStorageManagerAsyncTester::initialize()
         QStringLiteral("Fake linked notebook note store url"));
     m_initialLinkedNotebook.setWebApiUrlPrefix(
         QStringLiteral("Fake linked notebook web api url prefix"));
-    m_initialLinkedNotebook.setStack(QStringLiteral("Fake linked notebook stack"));
+    m_initialLinkedNotebook.setStack(
+        QStringLiteral("Fake linked notebook stack"));
     m_initialLinkedNotebook.setBusinessId(1);
 
     ErrorString errorDescription;
     if (!m_initialLinkedNotebook.checkParameters(errorDescription)) {
-        QNWARNING(QStringLiteral("Found invalid LinkedNotebook: ")
-                  << m_initialLinkedNotebook << QStringLiteral(", error: ")
+        QNWARNING("Found invalid LinkedNotebook: "
+                  << m_initialLinkedNotebook << ", error: "
                   << errorDescription);
         Q_EMIT failure(errorDescription.nonLocalizedString());
         return;
@@ -104,13 +107,15 @@ void LinkedNotebookLocalStorageManagerAsyncTester::onGetLinkedNotebookCountCompl
 
     ErrorString errorDescription;
 
-#define HANDLE_WRONG_STATE() \
-    else { \
-        errorDescription.setBase("Internal error in "\
-            "LinkedNotebookLocalStorageManagerAsyncTester: found wrong state"); \
-        Q_EMIT failure(errorDescription.nonLocalizedString()); \
-        return; \
-    }
+#define HANDLE_WRONG_STATE()                                                   \
+    else {                                                                     \
+        errorDescription.setBase(                                              \
+            "Internal error in LinkedNotebookLocalStorageManagerAsyncTester: " \
+            "found wrong state");                                              \
+        Q_EMIT failure(errorDescription.nonLocalizedString());                 \
+        return;                                                                \
+    }                                                                          \
+// HANDLE_WRONG_STATE
 
     if (m_state == STATE_SENT_GET_COUNT_AFTER_UPDATE_REQUEST)
     {
@@ -164,7 +169,7 @@ void LinkedNotebookLocalStorageManagerAsyncTester::onGetLinkedNotebookCountCompl
 void LinkedNotebookLocalStorageManagerAsyncTester::onGetLinkedNotebookCountFailed(
     ErrorString errorDescription, QUuid requestId)
 {
-    QNWARNING(errorDescription << QStringLiteral(", requestId = ") << requestId);
+    QNWARNING(errorDescription << ", requestId = " << requestId);
     Q_EMIT failure(errorDescription.nonLocalizedString());
 }
 
@@ -240,8 +245,8 @@ void LinkedNotebookLocalStorageManagerAsyncTester::onAddLinkedNotebookCompleted(
 void LinkedNotebookLocalStorageManagerAsyncTester::onAddLinkedNotebookFailed(
     LinkedNotebook notebook, ErrorString errorDescription, QUuid requestId)
 {
-    QNWARNING(errorDescription << QStringLiteral(", requestId = ") << requestId
-              << QStringLiteral(", linked notebook: ") << notebook);
+    QNWARNING(errorDescription << ", requestId = " << requestId
+              << ", linked notebook: " << notebook);
     Q_EMIT failure(errorDescription.nonLocalizedString());
 }
 
@@ -273,8 +278,8 @@ void LinkedNotebookLocalStorageManagerAsyncTester::onUpdateLinkedNotebookComplet
 void LinkedNotebookLocalStorageManagerAsyncTester::onUpdateLinkedNotebookFailed(
     LinkedNotebook notebook, ErrorString errorDescription, QUuid requestId)
 {
-    QNWARNING(errorDescription << QStringLiteral(", requestId = ") << requestId
-              << QStringLiteral(", linked notebook: ") << notebook);
+    QNWARNING(errorDescription << ", requestId = " << requestId
+              << ", linked notebook: " << notebook);
     Q_EMIT failure(errorDescription.nonLocalizedString());
 }
 
@@ -287,13 +292,14 @@ void LinkedNotebookLocalStorageManagerAsyncTester::onFindLinkedNotebookCompleted
 
     if (m_state == STATE_SENT_FIND_AFTER_ADD_REQUEST)
     {
-        if (notebook != m_initialLinkedNotebook) {
+        if (notebook != m_initialLinkedNotebook)
+        {
             errorDescription.setBase(
                 "Added and found linked notebooks in local storage don't match");
             QNWARNING(errorDescription
-                      << QStringLiteral(": LinkedNotebook added to the local storage: ")
+                      << ": LinkedNotebook added to the local storage: "
                       << m_initialLinkedNotebook
-                      << QStringLiteral("\nLinkedNotebook found in the local storage: ")
+                      << "\nLinkedNotebook found in the local storage: "
                       << notebook);
             Q_EMIT failure(errorDescription.nonLocalizedString());
             return;
@@ -316,13 +322,14 @@ void LinkedNotebookLocalStorageManagerAsyncTester::onFindLinkedNotebookCompleted
     }
     else if (m_state == STATE_SENT_FIND_AFTER_UPDATE_REQUEST)
     {
-        if (notebook != m_modifiedLinkedNotebook) {
+        if (notebook != m_modifiedLinkedNotebook)
+        {
             errorDescription.setBase("Updated and found linked notebooks "
                                      "don't match");
             QNWARNING(errorDescription
-                      << QStringLiteral(": LinkedNotebook updated in the local storage: ")
+                      << ": LinkedNotebook updated in the local storage: "
                       << m_modifiedLinkedNotebook
-                      << QStringLiteral("\nLinkedNotebook found in the local storage: ")
+                      << "\nLinkedNotebook found in the local storage: "
                       << notebook);
             Q_EMIT failure(errorDescription.nonLocalizedString());
             return;
@@ -336,9 +343,9 @@ void LinkedNotebookLocalStorageManagerAsyncTester::onFindLinkedNotebookCompleted
         errorDescription.setBase("Error: found linked notebook which should "
                                  "have been expunged from the local storage");
         QNWARNING(errorDescription
-                  << QStringLiteral(": LinkedNotebook expunged from the local storage: ")
+                  << ": LinkedNotebook expunged from the local storage: "
                   << m_modifiedLinkedNotebook
-                  << QStringLiteral("\nLinkedNotebook found in the local storage: ")
+                  << "\nLinkedNotebook found in the local storage: "
                   << notebook);
         Q_EMIT failure(errorDescription.nonLocalizedString());
         return;
@@ -355,8 +362,8 @@ void LinkedNotebookLocalStorageManagerAsyncTester::onFindLinkedNotebookFailed(
         return;
     }
 
-    QNWARNING(errorDescription << QStringLiteral(", requestId = ") << requestId
-              << QStringLiteral(", linked notebook: ") << notebook);
+    QNWARNING(errorDescription << ", requestId = " << requestId
+              << ", linked notebook: " << notebook);
     Q_EMIT failure(errorDescription.nonLocalizedString());
 }
 
@@ -410,7 +417,7 @@ void LinkedNotebookLocalStorageManagerAsyncTester::onListAllLinkedNotebooksFaile
     Q_UNUSED(order)
     Q_UNUSED(orderDirection)
 
-    QNWARNING(errorDescription << QStringLiteral(", requestId = ") << requestId);
+    QNWARNING(errorDescription << ", requestId = " << requestId);
     Q_EMIT failure(errorDescription.nonLocalizedString());
 }
 
@@ -438,8 +445,8 @@ void LinkedNotebookLocalStorageManagerAsyncTester::onExpungeLinkedNotebookComple
 void LinkedNotebookLocalStorageManagerAsyncTester::onExpungeLinkedNotebookFailed(
     LinkedNotebook notebook, ErrorString errorDescription, QUuid requestId)
 {
-    QNWARNING(errorDescription << QStringLiteral(", requestId = ") << requestId
-              << QStringLiteral(", linked notebook: ") << notebook);
+    QNWARNING(errorDescription << ", requestId = " << requestId
+              << ", linked notebook: " << notebook);
     Q_EMIT failure(errorDescription.nonLocalizedString());
 }
 
@@ -451,7 +458,8 @@ void LinkedNotebookLocalStorageManagerAsyncTester::createConnections()
     QObject::connect(m_pLocalStorageManagerAsync,
                      QNSIGNAL(LocalStorageManagerAsync,initialized),
                      this,
-                     QNSLOT(LinkedNotebookLocalStorageManagerAsyncTester,initialize));
+                     QNSLOT(LinkedNotebookLocalStorageManagerAsyncTester,
+                            initialize));
 
     // Request --> slot connections
     QObject::connect(this,
@@ -523,34 +531,40 @@ void LinkedNotebookLocalStorageManagerAsyncTester::createConnections()
                             onAddLinkedNotebookFailed,LinkedNotebook,
                             ErrorString,QUuid));
     QObject::connect(m_pLocalStorageManagerAsync,
-                     QNSIGNAL(LocalStorageManagerAsync,updateLinkedNotebookComplete,
+                     QNSIGNAL(LocalStorageManagerAsync,
+                              updateLinkedNotebookComplete,
                               LinkedNotebook,QUuid),
                      this,
                      QNSLOT(LinkedNotebookLocalStorageManagerAsyncTester,
-                            onUpdateLinkedNotebookCompleted,LinkedNotebook,QUuid));
+                            onUpdateLinkedNotebookCompleted,
+                            LinkedNotebook,QUuid));
     QObject::connect(m_pLocalStorageManagerAsync,
-                     QNSIGNAL(LocalStorageManagerAsync,updateLinkedNotebookFailed,
+                     QNSIGNAL(LocalStorageManagerAsync,
+                              updateLinkedNotebookFailed,
                               LinkedNotebook,ErrorString,QUuid),
                      this,
                      QNSLOT(LinkedNotebookLocalStorageManagerAsyncTester,
                             onUpdateLinkedNotebookFailed,LinkedNotebook,
                             ErrorString,QUuid));
     QObject::connect(m_pLocalStorageManagerAsync,
-                     QNSIGNAL(LocalStorageManagerAsync,findLinkedNotebookComplete,
+                     QNSIGNAL(LocalStorageManagerAsync,
+                              findLinkedNotebookComplete,
                               LinkedNotebook,QUuid),
                      this,
                      QNSLOT(LinkedNotebookLocalStorageManagerAsyncTester,
-                            onFindLinkedNotebookCompleted,LinkedNotebook,QUuid));
+                            onFindLinkedNotebookCompleted,
+                            LinkedNotebook,QUuid));
     QObject::connect(m_pLocalStorageManagerAsync,
-                     QNSIGNAL(LocalStorageManagerAsync,findLinkedNotebookFailed,
+                     QNSIGNAL(LocalStorageManagerAsync,
+                              findLinkedNotebookFailed,
                               LinkedNotebook,ErrorString,QUuid),
                      this,
                      QNSLOT(LinkedNotebookLocalStorageManagerAsyncTester,
                             onFindLinkedNotebookFailed,LinkedNotebook,
                             ErrorString,QUuid));
     QObject::connect(m_pLocalStorageManagerAsync,
-                     QNSIGNAL(LocalStorageManagerAsync,listAllLinkedNotebooksComplete,
-                              size_t,size_t,
+                     QNSIGNAL(LocalStorageManagerAsync,
+                              listAllLinkedNotebooksComplete,size_t,size_t,
                               LocalStorageManager::ListLinkedNotebooksOrder::type,
                               LocalStorageManager::OrderDirection::type,
                               QList<LinkedNotebook>,QUuid),
@@ -561,8 +575,8 @@ void LinkedNotebookLocalStorageManagerAsyncTester::createConnections()
                             LocalStorageManager::OrderDirection::type,
                             QList<LinkedNotebook>,QUuid));
     QObject::connect(m_pLocalStorageManagerAsync,
-                     QNSIGNAL(LocalStorageManagerAsync,listAllLinkedNotebooksFailed,
-                              size_t,size_t,
+                     QNSIGNAL(LocalStorageManagerAsync,
+                              listAllLinkedNotebooksFailed,size_t,size_t,
                               LocalStorageManager::ListLinkedNotebooksOrder::type,
                               LocalStorageManager::OrderDirection::type,
                               ErrorString,QUuid),
@@ -581,7 +595,8 @@ void LinkedNotebookLocalStorageManagerAsyncTester::createConnections()
                             onExpungeLinkedNotebookCompleted,
                             LinkedNotebook,QUuid));
     QObject::connect(m_pLocalStorageManagerAsync,
-                     QNSIGNAL(LocalStorageManagerAsync,expungeLinkedNotebookFailed,
+                     QNSIGNAL(LocalStorageManagerAsync,
+                              expungeLinkedNotebookFailed,
                               LinkedNotebook,ErrorString,QUuid),
                      this,
                      QNSLOT(LinkedNotebookLocalStorageManagerAsyncTester,

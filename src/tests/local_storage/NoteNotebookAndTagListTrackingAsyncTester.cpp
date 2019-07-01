@@ -23,7 +23,8 @@
 namespace quentier {
 namespace test {
 
-NoteNotebookAndTagListTrackingAsyncTester::NoteNotebookAndTagListTrackingAsyncTester(QObject * parent) :
+NoteNotebookAndTagListTrackingAsyncTester::NoteNotebookAndTagListTrackingAsyncTester(
+        QObject * parent) :
     QObject(parent),
     m_state(STATE_UNINITIALIZED),
     m_pLocalStorageManagerAsync(Q_NULLPTR),
@@ -111,8 +112,8 @@ void NoteNotebookAndTagListTrackingAsyncTester::initialize()
     }
 }
 
-void NoteNotebookAndTagListTrackingAsyncTester::onAddNotebookComplete(Notebook notebook,
-                                                                      QUuid requestId)
+void NoteNotebookAndTagListTrackingAsyncTester::onAddNotebookComplete(
+    Notebook notebook, QUuid requestId)
 {
     Q_UNUSED(notebook)
     Q_UNUSED(requestId)
@@ -138,9 +139,8 @@ void NoteNotebookAndTagListTrackingAsyncTester::onAddNotebookComplete(Notebook n
     }
 }
 
-void NoteNotebookAndTagListTrackingAsyncTester::onAddNotebookFailed(Notebook notebook,
-                                                                    ErrorString errorDescription,
-                                                                    QUuid requestId)
+void NoteNotebookAndTagListTrackingAsyncTester::onAddNotebookFailed(
+    Notebook notebook, ErrorString errorDescription, QUuid requestId)
 {
     QNWARNING("NoteNotebookAndTagListTrackingAsyncTester::onAddNotebookFailed: "
               << errorDescription << ", notebook: " << notebook);
@@ -149,8 +149,8 @@ void NoteNotebookAndTagListTrackingAsyncTester::onAddNotebookFailed(Notebook not
     Q_EMIT failure(errorDescription.nonLocalizedString());
 }
 
-void NoteNotebookAndTagListTrackingAsyncTester::onAddTagComplete(Tag tag,
-                                                                 QUuid requestId)
+void NoteNotebookAndTagListTrackingAsyncTester::onAddTagComplete(
+    Tag tag, QUuid requestId)
 {
     Q_UNUSED(tag)
     Q_UNUSED(requestId)
@@ -187,8 +187,8 @@ void NoteNotebookAndTagListTrackingAsyncTester::onAddTagFailed(
     Q_EMIT failure(errorDescription.nonLocalizedString());
 }
 
-void NoteNotebookAndTagListTrackingAsyncTester::onAddNoteComplete(Note note,
-                                                                  QUuid requestId)
+void NoteNotebookAndTagListTrackingAsyncTester::onAddNoteComplete(
+    Note note, QUuid requestId)
 {
     Q_UNUSED(requestId)
 
@@ -444,7 +444,9 @@ void NoteNotebookAndTagListTrackingAsyncTester::onNoteMovedToAnotherNotebook(
 
         m_receivedNoteTagsListChangedSignal = true;
 
-        if (m_receivedUpdateNoteCompleteSignal && m_receivedNoteTagsListChangedSignal) {
+        if (m_receivedUpdateNoteCompleteSignal &&
+            m_receivedNoteTagsListChangedSignal)
+        {
             Q_EMIT success();
         }
     }

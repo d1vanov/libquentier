@@ -24,7 +24,8 @@
 namespace quentier {
 namespace test {
 
-SavedSearchLocalStorageManagerAsyncTester::SavedSearchLocalStorageManagerAsyncTester(QObject * parent) :
+SavedSearchLocalStorageManagerAsyncTester::SavedSearchLocalStorageManagerAsyncTester(
+        QObject * parent) :
     QObject(parent),
     m_state(STATE_UNINITIALIZED),
     m_pLocalStorageManagerAsync(Q_NULLPTR),
@@ -67,7 +68,8 @@ void SavedSearchLocalStorageManagerAsyncTester::onInitTestCase()
 void SavedSearchLocalStorageManagerAsyncTester::initialize()
 {
     m_initialSavedSearch = SavedSearch();
-    m_initialSavedSearch.setGuid(QStringLiteral("00000000-0000-0000-c000-000000000046"));
+    m_initialSavedSearch.setGuid(
+        QStringLiteral("00000000-0000-0000-c000-000000000046"));
     m_initialSavedSearch.setUpdateSequenceNumber(1);
     m_initialSavedSearch.setName(QStringLiteral("Fake saved search name"));
     m_initialSavedSearch.setQuery(QStringLiteral("Fake saved search query"));
@@ -96,15 +98,16 @@ void SavedSearchLocalStorageManagerAsyncTester::onGetSavedSearchCountCompleted(
 
     ErrorString errorDescription;
 
-#define HANDLE_WRONG_STATE() \
-    else \
-    { \
-        errorDescription.setBase("Internal error in "\
-                                 "SavedSearchLocalStorageManagerAsyncTester: "\
-                                 "found wrong state"); \
-        Q_EMIT failure(errorDescription.nonLocalizedString()); \
-        return; \
-    }
+#define HANDLE_WRONG_STATE()                                                   \
+    else                                                                       \
+    {                                                                          \
+        errorDescription.setBase("Internal error in "                          \
+                                 "SavedSearchLocalStorageManagerAsyncTester: " \
+                                 "found wrong state");                         \
+        Q_EMIT failure(errorDescription.nonLocalizedString());                 \
+        return;                                                                \
+    }                                                                          \
+// HANDLE_WRONG_STATE
 
     if (m_state == STATE_SENT_GET_COUNT_AFTER_UPDATE_REQUEST)
     {
@@ -118,7 +121,8 @@ void SavedSearchLocalStorageManagerAsyncTester::onGetSavedSearchCountCompleted(
         }
 
         m_state = STATE_SENT_EXPUNGE_REQUEST;
-        Q_EMIT expungeSavedSearchRequest(m_modifiedSavedSearch, QUuid::createUuid());
+        Q_EMIT expungeSavedSearchRequest(m_modifiedSavedSearch,
+                                         QUuid::createUuid());
     }
     else if (m_state == STATE_SENT_GET_COUNT_AFTER_EXPUNGE_REQUEST)
     {
@@ -131,10 +135,12 @@ void SavedSearchLocalStorageManagerAsyncTester::onGetSavedSearchCountCompleted(
         }
 
         SavedSearch extraSavedSearch;
-        extraSavedSearch.setGuid(QStringLiteral("00000000-0000-0000-c000-000000000001"));
+        extraSavedSearch.setGuid(
+            QStringLiteral("00000000-0000-0000-c000-000000000001"));
         extraSavedSearch.setUpdateSequenceNumber(1);
         extraSavedSearch.setName(QStringLiteral("Extra SavedSearch"));
-        extraSavedSearch.setQuery(QStringLiteral("Fake extra saved search query"));
+        extraSavedSearch.setQuery(
+            QStringLiteral("Fake extra saved search query"));
         extraSavedSearch.setQueryFormat(1);
         extraSavedSearch.setIncludeAccount(true);
         extraSavedSearch.setIncludeBusinessLinkedNotebooks(true);
@@ -184,10 +190,12 @@ void SavedSearchLocalStorageManagerAsyncTester::onAddSavedSearchCompleted(
         m_initialSavedSearches << search;
 
         SavedSearch extraSavedSearch;
-        extraSavedSearch.setGuid(QStringLiteral("00000000-0000-0000-c000-000000000002"));
+        extraSavedSearch.setGuid(
+            QStringLiteral("00000000-0000-0000-c000-000000000002"));
         extraSavedSearch.setUpdateSequenceNumber(2);
         extraSavedSearch.setName(QStringLiteral("Extra SavedSearch two"));
-        extraSavedSearch.setQuery(QStringLiteral("Fake extra saved search query two"));
+        extraSavedSearch.setQuery(
+            QStringLiteral("Fake extra saved search query two"));
         extraSavedSearch.setQueryFormat(1);
         extraSavedSearch.setIncludeAccount(true);
         extraSavedSearch.setIncludeBusinessLinkedNotebooks(false);
@@ -233,8 +241,9 @@ void SavedSearchLocalStorageManagerAsyncTester::onUpdateSavedSearchCompleted(
         {
             errorDescription.setBase("Internal error in "
                                      "SavedSearchLocalStorageManagerAsyncTester: "
-                                     "search in onUpdateSavedSearchCompleted slot "
-                                     "doesn't match the original modified SavedSearch");
+                                     "search in onUpdateSavedSearchCompleted "
+                                     "slot doesn't match the original modified "
+                                     "SavedSearch");
             QNWARNING(errorDescription);
             Q_EMIT failure(errorDescription.nonLocalizedString());
             return;
@@ -268,8 +277,8 @@ void SavedSearchLocalStorageManagerAsyncTester::onFindSavedSearchCompleted(
     {
         if (search != m_initialSavedSearch)
         {
-            errorDescription.setBase("Added and found saved searches in the local "
-                                     "storage don't match");
+            errorDescription.setBase("Added and found saved searches in "
+                                     "the local storage don't match");
             QNWARNING(errorDescription
                       << ": SavedSearch added to the local storage: "
                       << m_initialSavedSearch
@@ -311,7 +320,8 @@ void SavedSearchLocalStorageManagerAsyncTester::onFindSavedSearchCompleted(
             m_initialSavedSearch.query() + QStringLiteral("_modified"));
 
         m_state = STATE_SENT_UPDATE_REQUEST;
-        Q_EMIT updateSavedSearchRequest(m_modifiedSavedSearch, QUuid::createUuid());
+        Q_EMIT updateSavedSearchRequest(m_modifiedSavedSearch,
+                                        QUuid::createUuid());
     }
     else if (m_state == STATE_SENT_FIND_AFTER_UPDATE_REQUEST)
     {
@@ -377,8 +387,9 @@ void SavedSearchLocalStorageManagerAsyncTester::onListAllSavedSearchesCompleted(
     ErrorString errorDescription;
 
     if (numInitialSearches != numFoundSearches) {
-        errorDescription.setBase("Number of found saved searches does not correspond "
-                                 "to the number of original added saved searches");
+        errorDescription.setBase("Number of found saved searches does not "
+                                 "correspond to the number of original added "
+                                 "saved searches");
         QNWARNING(errorDescription);
         Q_EMIT failure(errorDescription.nonLocalizedString());
         return;
@@ -424,7 +435,8 @@ void SavedSearchLocalStorageManagerAsyncTester::onExpungeSavedSearchCompleted(
         errorDescription.setBase("Internal error in "
                                  "SavedSearchLocalStorageManagerAsyncTester: "
                                  "search in onExpungeSavedSearchCompleted slot "
-                                 "doesn't match the original expunged SavedSearch");
+                                 "doesn't match the original expunged "
+                                 "SavedSearch");
         QNWARNING(errorDescription << ", requestId = " << requestId);
         Q_EMIT failure(errorDescription.nonLocalizedString());
         return;
@@ -453,15 +465,16 @@ void SavedSearchLocalStorageManagerAsyncTester::createConnections()
     QObject::connect(m_pLocalStorageManagerAsync,
                      QNSIGNAL(LocalStorageManagerAsync,initialized),
                      this,
-                     QNSLOT(SavedSearchLocalStorageManagerAsyncTester,initialize));
+                     QNSLOT(SavedSearchLocalStorageManagerAsyncTester,
+                            initialize));
 
     // Request --> slot connections
     QObject::connect(this,
                      QNSIGNAL(SavedSearchLocalStorageManagerAsyncTester,
                               getSavedSearchCountRequest,QUuid),
                      m_pLocalStorageManagerAsync,
-                     QNSLOT(LocalStorageManagerAsync,onGetSavedSearchCountRequest,
-                            QUuid));
+                     QNSLOT(LocalStorageManagerAsync,
+                            onGetSavedSearchCountRequest,QUuid));
     QObject::connect(this,
                      QNSIGNAL(SavedSearchLocalStorageManagerAsyncTester,
                               addSavedSearchRequest,SavedSearch,QUuid),
@@ -486,16 +499,16 @@ void SavedSearchLocalStorageManagerAsyncTester::createConnections()
                               LocalStorageManager::ListSavedSearchesOrder::type,
                               LocalStorageManager::OrderDirection::type,QUuid),
                      m_pLocalStorageManagerAsync,
-                     QNSLOT(LocalStorageManagerAsync,onListAllSavedSearchesRequest,
-                            size_t,size_t,
+                     QNSLOT(LocalStorageManagerAsync,
+                            onListAllSavedSearchesRequest,size_t,size_t,
                             LocalStorageManager::ListSavedSearchesOrder::type,
                             LocalStorageManager::OrderDirection::type,QUuid));
     QObject::connect(this,
                      QNSIGNAL(SavedSearchLocalStorageManagerAsyncTester,
                               expungeSavedSearchRequest,SavedSearch,QUuid),
                      m_pLocalStorageManagerAsync,
-                     QNSLOT(LocalStorageManagerAsync,onExpungeSavedSearchRequest,
-                            SavedSearch,QUuid));
+                     QNSLOT(LocalStorageManagerAsync,
+                            onExpungeSavedSearchRequest,SavedSearch,QUuid));
 
     // Slot <-- result connections
     QObject::connect(m_pLocalStorageManagerAsync,
@@ -505,8 +518,8 @@ void SavedSearchLocalStorageManagerAsyncTester::createConnections()
                      QNSLOT(SavedSearchLocalStorageManagerAsyncTester,
                             onGetSavedSearchCountCompleted,int,QUuid));
     QObject::connect(m_pLocalStorageManagerAsync,
-                     QNSIGNAL(LocalStorageManagerAsync,getSavedSearchCountFailed,
-                              ErrorString,QUuid),
+                     QNSIGNAL(LocalStorageManagerAsync,
+                              getSavedSearchCountFailed,ErrorString,QUuid),
                      this,
                      QNSLOT(SavedSearchLocalStorageManagerAsyncTester,
                             onGetSavedSearchCountFailed,ErrorString,QUuid));
@@ -521,10 +534,11 @@ void SavedSearchLocalStorageManagerAsyncTester::createConnections()
                               SavedSearch,ErrorString,QUuid),
                      this,
                      QNSLOT(SavedSearchLocalStorageManagerAsyncTester,
-                            onAddSavedSearchFailed,SavedSearch,ErrorString,QUuid));
+                            onAddSavedSearchFailed,SavedSearch,
+                            ErrorString,QUuid));
     QObject::connect(m_pLocalStorageManagerAsync,
-                     QNSIGNAL(LocalStorageManagerAsync,updateSavedSearchComplete,
-                              SavedSearch,QUuid),
+                     QNSIGNAL(LocalStorageManagerAsync,
+                              updateSavedSearchComplete,SavedSearch,QUuid),
                      this,
                      QNSLOT(SavedSearchLocalStorageManagerAsyncTester,
                             onUpdateSavedSearchCompleted,SavedSearch,QUuid));
@@ -533,7 +547,8 @@ void SavedSearchLocalStorageManagerAsyncTester::createConnections()
                               SavedSearch,ErrorString,QUuid),
                      this,
                      QNSLOT(SavedSearchLocalStorageManagerAsyncTester,
-                            onUpdateSavedSearchFailed,SavedSearch,ErrorString,QUuid));
+                            onUpdateSavedSearchFailed,SavedSearch,
+                            ErrorString,QUuid));
     QObject::connect(m_pLocalStorageManagerAsync,
                      QNSIGNAL(LocalStorageManagerAsync,findSavedSearchComplete,
                               SavedSearch,QUuid),
@@ -545,10 +560,11 @@ void SavedSearchLocalStorageManagerAsyncTester::createConnections()
                               SavedSearch,ErrorString,QUuid),
                      this,
                      QNSLOT(SavedSearchLocalStorageManagerAsyncTester,
-                            onFindSavedSearchFailed,SavedSearch,ErrorString,QUuid));
+                            onFindSavedSearchFailed,SavedSearch,
+                            ErrorString,QUuid));
     QObject::connect(m_pLocalStorageManagerAsync,
-                     QNSIGNAL(LocalStorageManagerAsync,listAllSavedSearchesComplete,
-                              size_t,size_t,
+                     QNSIGNAL(LocalStorageManagerAsync,
+                              listAllSavedSearchesComplete,size_t,size_t,
                               LocalStorageManager::ListSavedSearchesOrder::type,
                               LocalStorageManager::OrderDirection::type,
                               QList<SavedSearch>,QUuid),
@@ -559,8 +575,8 @@ void SavedSearchLocalStorageManagerAsyncTester::createConnections()
                             LocalStorageManager::OrderDirection::type,
                             QList<SavedSearch>,QUuid));
     QObject::connect(m_pLocalStorageManagerAsync,
-                     QNSIGNAL(LocalStorageManagerAsync,listAllSavedSearchesFailed,
-                              size_t,size_t,
+                     QNSIGNAL(LocalStorageManagerAsync,
+                              listAllSavedSearchesFailed,size_t,size_t,
                               LocalStorageManager::ListSavedSearchesOrder::type,
                               LocalStorageManager::OrderDirection::type,
                               ErrorString,QUuid),
@@ -571,8 +587,8 @@ void SavedSearchLocalStorageManagerAsyncTester::createConnections()
                             LocalStorageManager::OrderDirection::type,
                             ErrorString,QUuid));
     QObject::connect(m_pLocalStorageManagerAsync,
-                     QNSIGNAL(LocalStorageManagerAsync,expungeSavedSearchComplete,
-                              SavedSearch,QUuid),
+                     QNSIGNAL(LocalStorageManagerAsync,
+                              expungeSavedSearchComplete,SavedSearch,QUuid),
                      this,
                      QNSLOT(SavedSearchLocalStorageManagerAsyncTester,
                             onExpungeSavedSearchCompleted,SavedSearch,QUuid));
