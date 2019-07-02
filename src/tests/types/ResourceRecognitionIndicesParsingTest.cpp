@@ -28,14 +28,13 @@ namespace test {
 
 bool parseResourceRecognitionIndicesAndItemsTest(QString & error)
 {
-    QNDEBUG(QStringLiteral("parseResourceRecognitionIndicesAndItemsTest"));
+    QNDEBUG("parseResourceRecognitionIndicesAndItemsTest");
 
     QFile resource(QStringLiteral(":/tests/recoIndex-all-in-one-example.xml"));
     if (!resource.open(QIODevice::ReadOnly)) {
         error = QStringLiteral("Can't open test file ") + resource.fileName();
-        QNWARNING(error << QStringLiteral(", error: ") << resource.errorString()
-                  << QStringLiteral(" (error code ") << resource.error()
-                  << QStringLiteral(")"));
+        QNWARNING(error << ", error: " << resource.errorString()
+                  << " (error code " << resource.error() << ")");
         return false;
     }
 
@@ -49,14 +48,15 @@ bool parseResourceRecognitionIndicesAndItemsTest(QString & error)
         return false;
     }
 
-#define CHECK_INDICES_PROPERTY(accessor, expected, property) \
-    if (recoIndices.accessor() != QStringLiteral(expected)) { \
-        error = QStringLiteral("Incorrectly parsed reco indices " property ": " \
-                               "expected \"" expected "\", got \"") + \
-                recoIndices.accessor() + QStringLiteral("\""); \
-        QNWARNING(error << QStringLiteral("; reco indices: ") << recoIndices); \
-        return false; \
-    }
+#define CHECK_INDICES_PROPERTY(accessor, expected, property)                   \
+    if (recoIndices.accessor() != QStringLiteral(expected)) {                  \
+        error = QStringLiteral("Incorrectly parsed reco indices " property ": "\
+                               "expected \"" expected "\", got \"") +          \
+                recoIndices.accessor() + QStringLiteral("\"");                 \
+        QNWARNING(error << "; reco indices: " << recoIndices);                 \
+        return false;                                                          \
+    }                                                                          \
+// CHECK_INDICES_PROPERTY
 
     CHECK_INDICES_PROPERTY(docType, "picture", "doc type")
     CHECK_INDICES_PROPERTY(objectType, "ink", "object type")
@@ -70,7 +70,7 @@ bool parseResourceRecognitionIndicesAndItemsTest(QString & error)
         error = QStringLiteral("Incorrectly parsed reco indices object height: ") +
                 QStringLiteral("expected 2592, got ") +
                 QString::number(recoIndices.objectHeight());
-        QNWARNING(error << QStringLiteral("; reco indices: ") << recoIndices);
+        QNWARNING(error << "; reco indices: " << recoIndices);
         return false;
     }
 
@@ -78,7 +78,7 @@ bool parseResourceRecognitionIndicesAndItemsTest(QString & error)
         error = QStringLiteral("Incorrectly parsed reco indices object width: ") +
                 QStringLiteral("expected 1936, got ") +
                 QString::number(recoIndices.objectWidth());
-        QNWARNING(error << QStringLiteral("; reco indices: ") << recoIndices);
+        QNWARNING(error << "; reco indices: " << recoIndices);
         return false;
     }
 
@@ -87,18 +87,20 @@ bool parseResourceRecognitionIndicesAndItemsTest(QString & error)
     if (numItems != 2) {
         error = QStringLiteral("Incorrectly parsed reco indices items: expected ") +
                 QStringLiteral("2 items, got ") + QString::number(numItems);
-        QNWARNING(error << QStringLiteral("; reco indices: ") << recoIndices);
+        QNWARNING(error << "; reco indices: " << recoIndices);
         return false;
     }
 
-#define CHECK_ITEM_PROPERTY(item, accessor, expected, property) \
-    if (item.accessor() != expected) { \
-        error = QStringLiteral("Incorrectly parsed recognition item's " property ": " \
-                               "expected ") + QString::number(expected) + \
-                QStringLiteral(", got ") + QString::number(item.accessor()); \
-        QNWARNING(error << QStringLiteral("; reco indices: ") << recoIndices); \
-        return false; \
-    }
+#define CHECK_ITEM_PROPERTY(item, accessor, expected, property)                \
+    if (item.accessor() != expected) {                                         \
+        error = QStringLiteral("Incorrectly parsed recognition item's "        \
+                               property ": expected ") +                       \
+                QString::number(expected) +                                    \
+                QStringLiteral(", got ") + QString::number(item.accessor());   \
+        QNWARNING(error << "; reco indices: " << recoIndices);                 \
+        return false;                                                          \
+    }                                                                          \
+// CHECK_ITEM_PROPERTY
 
     const ResourceRecognitionIndexItem & item0 = items[0];
     CHECK_ITEM_PROPERTY(item0, x, 853, "x")
@@ -106,16 +108,18 @@ bool parseResourceRecognitionIndicesAndItemsTest(QString & error)
     CHECK_ITEM_PROPERTY(item0, w, 14, "w")
     CHECK_ITEM_PROPERTY(item0, h, 17, "h")
 
-    QVector<ResourceRecognitionIndexItem::ObjectItem> objectItems0 = item0.objectItems();
+    QVector<ResourceRecognitionIndexItem::ObjectItem> objectItems0 =
+        item0.objectItems();
     if (!objectItems0.empty()) {
         error = QStringLiteral("Incorrectly parsed recognition item's object ") +
                 QStringLiteral("items: expected none of them, got ") +
                 QString::number(objectItems0.size());
-        QNWARNING(error << QStringLiteral("; reco indices: ") << recoIndices);
+        QNWARNING(error << "; reco indices: " << recoIndices);
         return false;
     }
 
-    QVector<ResourceRecognitionIndexItem::ShapeItem> shapeItems0 = item0.shapeItems();
+    QVector<ResourceRecognitionIndexItem::ShapeItem> shapeItems0 =
+        item0.shapeItems();
     if (!shapeItems0.empty()) {
         error = QStringLiteral("Incorrectly parsed recognition item's shape items: ") +
                 QStringLiteral("expected none of them, got ") +
@@ -124,45 +128,49 @@ bool parseResourceRecognitionIndicesAndItemsTest(QString & error)
         return false;
     }
 
-    QVector<ResourceRecognitionIndexItem::BarcodeItem> barcodeItems0 = item0.barcodeItems();
+    QVector<ResourceRecognitionIndexItem::BarcodeItem> barcodeItems0 =
+        item0.barcodeItems();
     if (!barcodeItems0.empty()) {
         error = QStringLiteral("Incorrectly parsed recognition item's barcode ") +
                 QStringLiteral("items: expected none of them, got ") +
                 QString::number(barcodeItems0.size());
-        QNWARNING(error << QStringLiteral("; reco indices: ") << recoIndices);
+        QNWARNING(error << "; reco indices: " << recoIndices);
         return false;
     }
 
-    QVector<ResourceRecognitionIndexItem::TextItem> textItems0 = item0.textItems();
+    QVector<ResourceRecognitionIndexItem::TextItem> textItems0 =
+        item0.textItems();
     if (textItems0.size() != 4) {
         error = QStringLiteral("Incorrectly parsed recognition item's text items: ") +
                 QStringLiteral("expected 4 text items, got ") +
                 QString::number(textItems0.size());
-        QNWARNING(error << QStringLiteral("; reco indices: ") << recoIndices);
+        QNWARNING(error << "; reco indices: " << recoIndices);
         return false;
     }
 
-#define CHECK_TEXT_ITEM_TEXT(item, global_index, index, expected) \
-    const ResourceRecognitionIndexItem::TextItem & item##_textItem##index = \
-        textItems##global_index[index]; \
-    if (item##_textItem##index.m_text != QStringLiteral(expected)) \
-    { \
-        error = QStringLiteral("Incorrectly parsed recognition item's text " \
-                               "item's text: expected ") + \
-                QStringLiteral(expected) + QStringLiteral(", got ") + \
-                item##_textItem##index.m_text; \
-        QNWARNING(error << QStringLiteral("; reco indices: ") << recoIndices); \
-        return false; \
-    }
+#define CHECK_TEXT_ITEM_TEXT(item, global_index, index, expected)              \
+    const ResourceRecognitionIndexItem::TextItem & item##_textItem##index =    \
+        textItems##global_index[index];                                        \
+    if (item##_textItem##index.m_text != QStringLiteral(expected))             \
+    {                                                                          \
+        error = QStringLiteral("Incorrectly parsed recognition item's text "   \
+                               "item's text: expected ") +                     \
+                QStringLiteral(expected) + QStringLiteral(", got ") +          \
+                item##_textItem##index.m_text;                                 \
+        QNWARNING(error << "; reco indices: " << recoIndices);                 \
+        return false;                                                          \
+    }                                                                          \
+// CHECK_TEXT_ITEM_TEXT
 
-#define CHECK_TEXT_ITEM_WEIGHT(item, index, expected) \
-    if (item##_textItem##index.m_weight != expected) { \
-        error = QStringLiteral("Incorrectly parsed recognition item's text item's " \
-                               "text: expected " #expected ", got ") + \
-                QString::number(item##_textItem##index.m_weight); \
-        QNWARNING(error << QStringLiteral("; reco indices: ") << recoIndices); \
-        return false; \
-    }
+#define CHECK_TEXT_ITEM_WEIGHT(item, index, expected)                          \
+    if (item##_textItem##index.m_weight != expected) {                         \
+        error = QStringLiteral("Incorrectly parsed recognition item's text "   \
+                               "item's text: expected " #expected ", got ") +  \
+                QString::number(item##_textItem##index.m_weight);              \
+        QNWARNING(error << "; reco indices: " << recoIndices);                 \
+        return false;                                                          \
+    }                                                                          \
+// CHECK_TEXT_ITEM_WEIGHT
 
     CHECK_TEXT_ITEM_TEXT(item0, 0, 0, "II")
     CHECK_TEXT_ITEM_WEIGHT(item0, 0, 31)
@@ -189,7 +197,7 @@ bool parseResourceRecognitionIndicesAndItemsTest(QString & error)
         error = QStringLiteral("Incorrectly parsed recognition item's stroke list: ") +
                 QStringLiteral("expected 5 items in the list, got ") +
                 QString::number(strokeList.size());
-        QNWARNING(error << QStringLiteral("; reco indices: ") << recoIndices);
+        QNWARNING(error << "; reco indices: " << recoIndices);
         return false;
     }
 
@@ -199,102 +207,155 @@ bool parseResourceRecognitionIndicesAndItemsTest(QString & error)
     if (!strokeListOk) {
         error = QStringLiteral("Incorrectly parsed recognition item's stroke list: ") +
                 QStringLiteral("not all expected numbers are found within the list");
-        QNWARNING(error << QStringLiteral("; reco indices: ") << recoIndices);
+        QNWARNING(error << "; reco indices: " << recoIndices);
         return false;
     }
 
-    QVector<ResourceRecognitionIndexItem::ObjectItem> objectItems1 = item1.objectItems();
+    QVector<ResourceRecognitionIndexItem::ObjectItem> objectItems1 =
+        item1.objectItems();
     if (objectItems1.size() != 4) {
-        error = QStringLiteral("Incorrectly parsed recognition item's object items: ") +
-                QStringLiteral("expected 4, got ") + QString::number(objectItems1.size());
+        error = QStringLiteral("Incorrectly parsed recognition item's object ") +
+                QStringLiteral("items: expected 4, got ") +
+                QString::number(objectItems1.size());
         QNWARNING(error << QStringLiteral("; reco indices: ") << recoIndices);
         return false;
     }
 
-    QVector<ResourceRecognitionIndexItem::ShapeItem> shapeItems1 = item1.shapeItems();
+    QVector<ResourceRecognitionIndexItem::ShapeItem> shapeItems1 =
+        item1.shapeItems();
     if (shapeItems1.size() != 4) {
-        error = QStringLiteral("Incorrectly parsed recognition item's shape items: ") +
-                QStringLiteral("expected 4, got ") + QString::number(shapeItems1.size());
-        QNWARNING(error << QStringLiteral("; reco indices: ") << recoIndices);
+        error = QStringLiteral("Incorrectly parsed recognition item's shape ") +
+                QStringLiteral("items: expected 4, got ") +
+                QString::number(shapeItems1.size());
+        QNWARNING(error << "; reco indices: " << recoIndices);
         return false;
     }
 
-    QVector<ResourceRecognitionIndexItem::BarcodeItem> barcodeItems1 = item1.barcodeItems();
+    QVector<ResourceRecognitionIndexItem::BarcodeItem> barcodeItems1 =
+        item1.barcodeItems();
     if (barcodeItems1.size() != 3) {
-        error = QStringLiteral("Incorrectly parsed recognition item's barcode items: ") +
-                QStringLiteral("expected 3, got ") + QString::number(barcodeItems1.size());
-        QNWARNING(error << QStringLiteral("; reco indices: ") << recoIndices);
+        error = QStringLiteral("Incorrectly parsed recognition item's barcode ") +
+                QStringLiteral("items: expected 3, got ") +
+                QString::number(barcodeItems1.size());
+        QNWARNING(error << "; reco indices: " << recoIndices);
         return false;
     }
 
     QVector<ResourceRecognitionIndexItem::TextItem> textItems1 = item1.textItems();
     if (textItems1.size() != 11) {
-        error = QStringLiteral("Incorrectly parsed recognition item's barcode items: ") +
-                QStringLiteral("expected 11, got ") + QString::number(textItems1.size());
-        QNWARNING(error << QStringLiteral("; reco indices: ") << recoIndices);
+        error = QStringLiteral("Incorrectly parsed recognition item's barcode ") +
+                QStringLiteral("items: expected 11, got ") +
+                QString::number(textItems1.size());
+        QNWARNING(error << "; reco indices: " << recoIndices);
         return false;
     }
 
-#define CHECK_SUB_ITEM_PROPERTY(subItemType, subItems, index, property, expected, ...) \
-    { \
-        const ResourceRecognitionIndexItem::subItemType & checkedItem = subItems[index]; \
-        if (checkedItem.property != expected) { \
-            error = QStringLiteral("Incorrectly parsed recognition item's " \
-                                   #subItemType " " #property ": expected ") + \
-                                   QString(__VA_ARGS__(expected)) + \
-                    QStringLiteral(", got ") + __VA_ARGS__(checkedItem.property); \
-            QNWARNING(error << QStringLiteral("; reco indices: ") << recoIndices); \
-            return false; \
-        } \
-    }
+#define CHECK_SUB_ITEM_PROPERTY(type, items, index, property, expected, ...)   \
+    {                                                                          \
+        const ResourceRecognitionIndexItem::type & checkedItem = items[index]; \
+        if (checkedItem.property != expected) {                                \
+            error = QStringLiteral("Incorrectly parsed recognition item's "    \
+                                   #type " " #property ": expected ") +        \
+                    QString(__VA_ARGS__(expected)) +                           \
+                    QStringLiteral(", got ") +                                 \
+                    __VA_ARGS__(checkedItem.property);                         \
+            QNWARNING(error << "; reco indices: " << recoIndices);             \
+            return false;                                                      \
+        }                                                                      \
+    }                                                                          \
+// CHECK_SUB_ITEM_PROPERTY
 
-    CHECK_SUB_ITEM_PROPERTY(TextItem, textItems1, 0, m_text, QStringLiteral("LONG"))
-    CHECK_SUB_ITEM_PROPERTY(TextItem, textItems1, 0, m_weight, 32, QString::number)
-    CHECK_SUB_ITEM_PROPERTY(TextItem, textItems1, 1, m_text, QStringLiteral("LONG"))
-    CHECK_SUB_ITEM_PROPERTY(TextItem, textItems1, 1, m_weight, 25, QString::number)
-    CHECK_SUB_ITEM_PROPERTY(TextItem, textItems1, 2, m_text, QStringLiteral("GOV"))
-    CHECK_SUB_ITEM_PROPERTY(TextItem, textItems1, 2, m_weight, 23, QString::number)
-    CHECK_SUB_ITEM_PROPERTY(TextItem, textItems1, 3, m_text, QStringLiteral("NOV"))
-    CHECK_SUB_ITEM_PROPERTY(TextItem, textItems1, 3, m_weight, 23, QString::number)
-    CHECK_SUB_ITEM_PROPERTY(TextItem, textItems1, 4, m_text, QStringLiteral("Lang"))
-    CHECK_SUB_ITEM_PROPERTY(TextItem, textItems1, 4, m_weight, 19, QString::number)
-    CHECK_SUB_ITEM_PROPERTY(TextItem, textItems1, 5, m_text, QStringLiteral("lane"))
-    CHECK_SUB_ITEM_PROPERTY(TextItem, textItems1, 5, m_weight, 18, QString::number)
-    CHECK_SUB_ITEM_PROPERTY(TextItem, textItems1, 6, m_text, QStringLiteral("CONN"))
-    CHECK_SUB_ITEM_PROPERTY(TextItem, textItems1, 6, m_weight, 18, QString::number)
-    CHECK_SUB_ITEM_PROPERTY(TextItem, textItems1, 7, m_text, QStringLiteral("bono"))
-    CHECK_SUB_ITEM_PROPERTY(TextItem, textItems1, 7, m_weight, 17, QString::number)
-    CHECK_SUB_ITEM_PROPERTY(TextItem, textItems1, 8, m_text, QStringLiteral("mono"))
-    CHECK_SUB_ITEM_PROPERTY(TextItem, textItems1, 8, m_weight, 17, QString::number)
-    CHECK_SUB_ITEM_PROPERTY(TextItem, textItems1, 9, m_text, QStringLiteral("LONON"))
-    CHECK_SUB_ITEM_PROPERTY(TextItem, textItems1, 9, m_weight, 15, QString::number)
-    CHECK_SUB_ITEM_PROPERTY(TextItem, textItems1, 10, m_text, QStringLiteral("LONGE"))
-    CHECK_SUB_ITEM_PROPERTY(TextItem, textItems1, 10, m_weight, 15, QString::number)
+    CHECK_SUB_ITEM_PROPERTY(TextItem, textItems1, 0, m_text,
+                            QStringLiteral("LONG"))
+    CHECK_SUB_ITEM_PROPERTY(TextItem, textItems1, 0, m_weight, 32,
+                            QString::number)
+    CHECK_SUB_ITEM_PROPERTY(TextItem, textItems1, 1, m_text,
+                            QStringLiteral("LONG"))
+    CHECK_SUB_ITEM_PROPERTY(TextItem, textItems1, 1, m_weight, 25,
+                            QString::number)
+    CHECK_SUB_ITEM_PROPERTY(TextItem, textItems1, 2, m_text,
+                            QStringLiteral("GOV"))
+    CHECK_SUB_ITEM_PROPERTY(TextItem, textItems1, 2, m_weight, 23,
+                            QString::number)
+    CHECK_SUB_ITEM_PROPERTY(TextItem, textItems1, 3, m_text,
+                            QStringLiteral("NOV"))
+    CHECK_SUB_ITEM_PROPERTY(TextItem, textItems1, 3, m_weight, 23,
+                            QString::number)
+    CHECK_SUB_ITEM_PROPERTY(TextItem, textItems1, 4, m_text,
+                            QStringLiteral("Lang"))
+    CHECK_SUB_ITEM_PROPERTY(TextItem, textItems1, 4, m_weight, 19,
+                            QString::number)
+    CHECK_SUB_ITEM_PROPERTY(TextItem, textItems1, 5, m_text,
+                            QStringLiteral("lane"))
+    CHECK_SUB_ITEM_PROPERTY(TextItem, textItems1, 5, m_weight, 18,
+                            QString::number)
+    CHECK_SUB_ITEM_PROPERTY(TextItem, textItems1, 6, m_text,
+                            QStringLiteral("CONN"))
+    CHECK_SUB_ITEM_PROPERTY(TextItem, textItems1, 6, m_weight, 18,
+                            QString::number)
+    CHECK_SUB_ITEM_PROPERTY(TextItem, textItems1, 7, m_text,
+                            QStringLiteral("bono"))
+    CHECK_SUB_ITEM_PROPERTY(TextItem, textItems1, 7, m_weight, 17,
+                            QString::number)
+    CHECK_SUB_ITEM_PROPERTY(TextItem, textItems1, 8, m_text,
+                            QStringLiteral("mono"))
+    CHECK_SUB_ITEM_PROPERTY(TextItem, textItems1, 8, m_weight, 17,
+                            QString::number)
+    CHECK_SUB_ITEM_PROPERTY(TextItem, textItems1, 9, m_text,
+                            QStringLiteral("LONON"))
+    CHECK_SUB_ITEM_PROPERTY(TextItem, textItems1, 9, m_weight, 15,
+                            QString::number)
+    CHECK_SUB_ITEM_PROPERTY(TextItem, textItems1, 10, m_text,
+                            QStringLiteral("LONGE"))
+    CHECK_SUB_ITEM_PROPERTY(TextItem, textItems1, 10, m_weight, 15,
+                            QString::number)
 
-    CHECK_SUB_ITEM_PROPERTY(ObjectItem, objectItems1, 0, m_objectType, QStringLiteral("face"))
-    CHECK_SUB_ITEM_PROPERTY(ObjectItem, objectItems1, 0, m_weight, 31, QString::number)
-    CHECK_SUB_ITEM_PROPERTY(ObjectItem, objectItems1, 1, m_objectType, QStringLiteral("lake"))
-    CHECK_SUB_ITEM_PROPERTY(ObjectItem, objectItems1, 1, m_weight, 30, QString::number)
-    CHECK_SUB_ITEM_PROPERTY(ObjectItem, objectItems1, 2, m_objectType, QStringLiteral("snow"))
-    CHECK_SUB_ITEM_PROPERTY(ObjectItem, objectItems1, 2, m_weight, 29, QString::number)
-    CHECK_SUB_ITEM_PROPERTY(ObjectItem, objectItems1, 3, m_objectType, QStringLiteral("road"))
-    CHECK_SUB_ITEM_PROPERTY(ObjectItem, objectItems1, 3, m_weight, 32, QString::number)
+    CHECK_SUB_ITEM_PROPERTY(ObjectItem, objectItems1, 0, m_objectType,
+                            QStringLiteral("face"))
+    CHECK_SUB_ITEM_PROPERTY(ObjectItem, objectItems1, 0, m_weight, 31,
+                            QString::number)
+    CHECK_SUB_ITEM_PROPERTY(ObjectItem, objectItems1, 1, m_objectType,
+                            QStringLiteral("lake"))
+    CHECK_SUB_ITEM_PROPERTY(ObjectItem, objectItems1, 1, m_weight, 30,
+                            QString::number)
+    CHECK_SUB_ITEM_PROPERTY(ObjectItem, objectItems1, 2, m_objectType,
+                            QStringLiteral("snow"))
+    CHECK_SUB_ITEM_PROPERTY(ObjectItem, objectItems1, 2, m_weight, 29,
+                            QString::number)
+    CHECK_SUB_ITEM_PROPERTY(ObjectItem, objectItems1, 3, m_objectType,
+                            QStringLiteral("road"))
+    CHECK_SUB_ITEM_PROPERTY(ObjectItem, objectItems1, 3, m_weight, 32,
+                            QString::number)
 
-    CHECK_SUB_ITEM_PROPERTY(ShapeItem, shapeItems1, 0, m_shapeType, QStringLiteral("circle"))
-    CHECK_SUB_ITEM_PROPERTY(ShapeItem, shapeItems1, 0, m_weight, 31, QString::number)
-    CHECK_SUB_ITEM_PROPERTY(ShapeItem, shapeItems1, 1, m_shapeType, QStringLiteral("oval"))
-    CHECK_SUB_ITEM_PROPERTY(ShapeItem, shapeItems1, 1, m_weight, 29, QString::number)
-    CHECK_SUB_ITEM_PROPERTY(ShapeItem, shapeItems1, 2, m_shapeType, QStringLiteral("rectangle"))
-    CHECK_SUB_ITEM_PROPERTY(ShapeItem, shapeItems1, 2, m_weight, 30, QString::number)
-    CHECK_SUB_ITEM_PROPERTY(ShapeItem, shapeItems1, 3, m_shapeType, QStringLiteral("triangle"))
-    CHECK_SUB_ITEM_PROPERTY(ShapeItem, shapeItems1, 3, m_weight, 32, QString::number)
+    CHECK_SUB_ITEM_PROPERTY(ShapeItem, shapeItems1, 0, m_shapeType,
+                            QStringLiteral("circle"))
+    CHECK_SUB_ITEM_PROPERTY(ShapeItem, shapeItems1, 0, m_weight, 31,
+                            QString::number)
+    CHECK_SUB_ITEM_PROPERTY(ShapeItem, shapeItems1, 1, m_shapeType,
+                            QStringLiteral("oval"))
+    CHECK_SUB_ITEM_PROPERTY(ShapeItem, shapeItems1, 1, m_weight, 29,
+                            QString::number)
+    CHECK_SUB_ITEM_PROPERTY(ShapeItem, shapeItems1, 2, m_shapeType,
+                            QStringLiteral("rectangle"))
+    CHECK_SUB_ITEM_PROPERTY(ShapeItem, shapeItems1, 2, m_weight, 30,
+                            QString::number)
+    CHECK_SUB_ITEM_PROPERTY(ShapeItem, shapeItems1, 3, m_shapeType,
+                            QStringLiteral("triangle"))
+    CHECK_SUB_ITEM_PROPERTY(ShapeItem, shapeItems1, 3, m_weight, 32,
+                            QString::number)
 
-    CHECK_SUB_ITEM_PROPERTY(BarcodeItem, barcodeItems1, 0, m_barcode, QStringLiteral("5000600001"))
-    CHECK_SUB_ITEM_PROPERTY(BarcodeItem, barcodeItems1, 0, m_weight, 32, QString::number)
-    CHECK_SUB_ITEM_PROPERTY(BarcodeItem, barcodeItems1, 1, m_barcode, QStringLiteral("3000600001"))
-    CHECK_SUB_ITEM_PROPERTY(BarcodeItem, barcodeItems1, 1, m_weight, 25, QString::number)
-    CHECK_SUB_ITEM_PROPERTY(BarcodeItem, barcodeItems1, 2, m_barcode, QStringLiteral("2000600001"))
-    CHECK_SUB_ITEM_PROPERTY(BarcodeItem, barcodeItems1, 2, m_weight, 31, QString::number)
+    CHECK_SUB_ITEM_PROPERTY(BarcodeItem, barcodeItems1, 0, m_barcode,
+                            QStringLiteral("5000600001"))
+    CHECK_SUB_ITEM_PROPERTY(BarcodeItem, barcodeItems1, 0, m_weight, 32,
+                            QString::number)
+    CHECK_SUB_ITEM_PROPERTY(BarcodeItem, barcodeItems1, 1, m_barcode,
+                            QStringLiteral("3000600001"))
+    CHECK_SUB_ITEM_PROPERTY(BarcodeItem, barcodeItems1, 1, m_weight, 25,
+                            QString::number)
+    CHECK_SUB_ITEM_PROPERTY(BarcodeItem, barcodeItems1, 2, m_barcode,
+                            QStringLiteral("2000600001"))
+    CHECK_SUB_ITEM_PROPERTY(BarcodeItem, barcodeItems1, 2, m_weight, 31,
+                            QString::number)
 
     return true;
 }
