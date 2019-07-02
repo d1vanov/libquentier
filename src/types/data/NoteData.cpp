@@ -289,18 +289,18 @@ bool NoteData::checkParameters(ErrorString & errorDescription) const
                                             "Note attributes field "
                                             "has invalid size"));
 
-#define CHECK_NOTE_ATTRIBUTE(name) \
-    if (attributes.name.isSet()) { \
-        int name##Size = attributes.name->size(); \
-        \
-        if ( (name##Size < qevercloud::EDAM_ATTRIBUTE_LEN_MIN) || \
-             (name##Size > qevercloud::EDAM_ATTRIBUTE_LEN_MAX) ) \
-        { \
-            error.details() = QStringLiteral( #name ); \
-            errorDescription = error; \
-            return false; \
-        } \
-    }
+#define CHECK_NOTE_ATTRIBUTE(name)                                             \
+    if (attributes.name.isSet()) {                                             \
+        int name##Size = attributes.name->size();                              \
+        if ( (name##Size < qevercloud::EDAM_ATTRIBUTE_LEN_MIN) ||              \
+             (name##Size > qevercloud::EDAM_ATTRIBUTE_LEN_MAX) )               \
+        {                                                                      \
+            error.details() = QStringLiteral( #name );                         \
+            errorDescription = error;                                          \
+            return false;                                                      \
+        }                                                                      \
+    }                                                                          \
+// CHECK_NOTE_ATTRIBUTE
 
         CHECK_NOTE_ATTRIBUTE(author);
         CHECK_NOTE_ATTRIBUTE(source);
