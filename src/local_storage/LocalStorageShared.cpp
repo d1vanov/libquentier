@@ -17,7 +17,9 @@
  */
 
 #include "LocalStorageShared.h"
+
 #include <quentier/utility/Macros.h>
+
 #include <QMap>
 #include <QVariant>
 

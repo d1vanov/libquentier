@@ -17,6 +17,7 @@
  */
 
 #include <quentier/local_storage/NoteSearchQuery.h>
+
 #include "NoteSearchQueryData.h"
 
 namespace quentier {
