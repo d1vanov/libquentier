@@ -24,8 +24,8 @@
         __QNLOG_BASE(message, level);                                          \
     }                                                                          \
     else {                                                                     \
-        __QNLOG_BASE("[linked notebook " << m_linkedNotebookGuid               \
-                     << QStringLiteral("]: ") << message, level);              \
+        __QNLOG_BASE("[linked notebook " << m_linkedNotebookGuid << "]: "      \
+                     << message, level);                                       \
     }                                                                          \
 // __NCLOG_BASE
 

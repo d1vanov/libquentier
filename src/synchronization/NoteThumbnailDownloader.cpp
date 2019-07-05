@@ -50,18 +50,16 @@ NoteThumbnailDownloader::~NoteThumbnailDownloader()
 
 void NoteThumbnailDownloader::start()
 {
-    QNDEBUG(QStringLiteral("NoteThumbnailDownloader::start: host = ") << m_host
-            << QStringLiteral(", note guid = ") << m_noteGuid
-            << QStringLiteral(", is public = ")
-            << (m_noteFromPublicLinkedNotebook
-                ? QStringLiteral("true")
-                : QStringLiteral("false")));
+    QNDEBUG("NoteThumbnailDownloader::start: host = " << m_host
+            << ", note guid = " << m_noteGuid << ", is public = "
+            << (m_noteFromPublicLinkedNotebook ? "true" : "false"));
 
-#define SET_ERROR(error) \
-    ErrorString errorDescription(error); \
-    QNDEBUG(errorDescription); \
-    Q_EMIT finished(false, m_noteGuid, QByteArray(), errorDescription); \
-    return
+#define SET_ERROR(error)                                                       \
+    ErrorString errorDescription(error);                                       \
+    QNDEBUG(errorDescription);                                                 \
+    Q_EMIT finished(false, m_noteGuid, QByteArray(), errorDescription);        \
+    return                                                                     \
+// SET_ERROR
 
     if (Q_UNLIKELY(m_host.isEmpty())) {
         SET_ERROR(QT_TR_NOOP("host is empty"));
@@ -108,7 +106,7 @@ void NoteThumbnailDownloader::start()
 void NoteThumbnailDownloader::onDownloadFinished(
     QVariant result, QSharedPointer<EverCloudExceptionData> error)
 {
-    QNDEBUG(QStringLiteral("NoteThumbnailDownloader::onDownloadFinished"));
+    QNDEBUG("NoteThumbnailDownloader::onDownloadFinished");
 
     delete m_pThumbnail;
     m_pThumbnail = Q_NULLPTR;
