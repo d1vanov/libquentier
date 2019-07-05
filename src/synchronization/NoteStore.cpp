@@ -28,18 +28,21 @@
 
 namespace quentier {
 
-#define SET_EDAM_USER_EXCEPTION_ERROR(userException) \
-    errorDescription.setBase(QT_TRANSLATE_NOOP("NoteStore", \
+#define SET_EDAM_USER_EXCEPTION_ERROR(userException)                           \
+    errorDescription.setBase(QT_TRANSLATE_NOOP("NoteStore",                    \
                                                "caught EDAM user exception")); \
-    errorDescription.details() = QStringLiteral("error code"); \
-    errorDescription.details() += ToString(userException.errorCode); \
-    if (!userException.exceptionData().isNull()) { \
-        errorDescription.details() += QStringLiteral(": "); \
-        errorDescription.details() += userException.exceptionData()->errorMessage; \
-    }
+    errorDescription.details() = QStringLiteral("error code");                 \
+    errorDescription.details() += ToString(userException.errorCode);           \
+    if (!userException.exceptionData().isNull()) {                             \
+        errorDescription.details() += QStringLiteral(": ");                    \
+        errorDescription.details() +=                                          \
+            userException.exceptionData()->errorMessage;                       \
+    }                                                                          \
+// SET_EDAM_USER_EXCEPTION_ERROR
 
-NoteStore::NoteStore(const QSharedPointer<qevercloud::NoteStore> & pQecNoteStore,
-                     QObject * parent) :
+NoteStore::NoteStore(
+        const QSharedPointer<qevercloud::NoteStore> & pQecNoteStore,
+        QObject * parent) :
     INoteStore(pQecNoteStore, parent),
     m_noteGuidByAsyncResultPtr(),
     m_resourceGuidByAsyncResultPtr()
@@ -54,12 +57,13 @@ NoteStore::~NoteStore()
 
 INoteStore * NoteStore::create() const
 {
-    return new NoteStore(QSharedPointer<qevercloud::NoteStore>(new qevercloud::NoteStore));
+    return new NoteStore(
+        QSharedPointer<qevercloud::NoteStore>(new qevercloud::NoteStore));
 }
 
 void NoteStore::stop()
 {
-    QNDEBUG(QStringLiteral("NoteStore::stop"));
+    QNDEBUG("NoteStore::stop");
 
     for(auto it = m_noteGuidByAsyncResultPtr.begin(),
         end = m_noteGuidByAsyncResultPtr.end(); it != end; ++it)
@@ -168,7 +172,7 @@ qint32 NoteStore::createNote(Note & note,
         qevercloud::Note noteMetadata =
             m_pQecNoteStore->createNote(note.qevercloudNote(),
                                         linkedNotebookAuthToken);
-        QNDEBUG(QStringLiteral("Note metadata returned from createNote method: ")
+        QNDEBUG("Note metadata returned from createNote method: "
                 << noteMetadata);
 
         if (noteMetadata.guid.isSet()) {
@@ -207,7 +211,7 @@ qint32 NoteStore::updateNote(Note & note,
         qevercloud::Note noteMetadata =
             m_pQecNoteStore->updateNote(note.qevercloudNote(),
                                         linkedNotebookAuthToken);
-        QNDEBUG(QStringLiteral("Note metadata returned from updateNote method: ")
+        QNDEBUG("Note metadata returned from updateNote method: "
                 << noteMetadata);
 
         if (noteMetadata.guid.isSet()) {
@@ -331,7 +335,8 @@ qint32 NoteStore::updateSavedSearch(SavedSearch & savedSearch,
 {
     try
     {
-        qint32 usn = m_pQecNoteStore->updateSearch(savedSearch.qevercloudSavedSearch());
+        qint32 usn =
+            m_pQecNoteStore->updateSearch(savedSearch.qevercloudSavedSearch());
         savedSearch.setUpdateSequenceNumber(usn);
         return 0;
     }
@@ -385,9 +390,9 @@ qint32 NoteStore::getSyncChunk(const qint32 afterUSN, const qint32 maxEntries,
                                ErrorString & errorDescription,
                                qint32 & rateLimitSeconds)
 {
-    QNDEBUG(QStringLiteral("NoteStore::getSyncChunk: after USN = ") << afterUSN
-            << QStringLiteral(", max entries = ") << maxEntries
-            << QStringLiteral(", sync chunk filter = ") << filter);
+    QNDEBUG("NoteStore::getSyncChunk: after USN = " << afterUSN
+            << ", max entries = " << maxEntries
+            << ", sync chunk filter = " << filter);
 
     try
     {
@@ -455,11 +460,10 @@ qint32 NoteStore::getLinkedNotebookSyncChunk(
     const bool fullSyncOnly, qevercloud::SyncChunk & syncChunk,
     ErrorString & errorDescription, qint32 & rateLimitSeconds)
 {
-    QNDEBUG(QStringLiteral("NoteStore::getLinkedNotebookSyncChunk: linked notebook: ")
-            << linkedNotebook << QStringLiteral("\nAfter USN = ") << afterUSN
-            << QStringLiteral(", max entries = ") << maxEntries
-            << QStringLiteral(", full sync only = ")
-            << (fullSyncOnly ? QStringLiteral("true") : QStringLiteral("false")));
+    QNDEBUG("NoteStore::getLinkedNotebookSyncChunk: linked notebook: "
+            << linkedNotebook << "\nAfter USN = " << afterUSN
+            << ", max entries = " << maxEntries << ", full sync only = "
+            << (fullSyncOnly ? "true" : "false"));
 
     try
     {
@@ -525,22 +529,22 @@ qint32 NoteStore::getNote(const bool withContent, const bool withResourcesData,
                           Note & note, ErrorString & errorDescription,
                           qint32 & rateLimitSeconds)
 {
-    QNDEBUG(QStringLiteral("NoteStore::getNote: with content = ")
+    QNDEBUG("NoteStore::getNote: with content = "
             << (withContent
-                ? QStringLiteral("true")
-                : QStringLiteral("false"))
-            << QStringLiteral(", with resources data = ")
+                ? "true"
+                : "false")
+            << ", with resources data = "
             << (withResourcesData
-                ? QStringLiteral("true")
-                : QStringLiteral("false"))
-            << QStringLiteral(", with resources recognition = ")
+                ? "true"
+                : "false")
+            << ", with resources recognition = "
             << (withResourcesRecognition
-                ? QStringLiteral("true")
-                : QStringLiteral("false"))
-            << QStringLiteral(", with resources alternate data = ")
+                ? "true"
+                : "false")
+            << ", with resources alternate data = "
             << (withResourceAlternateData
-                ? QStringLiteral("true")
-                : QStringLiteral("false")));
+                ? "true"
+                : "false"));
 
     if (!note.hasGuid()) {
         errorDescription.setBase(QT_TR_NOOP("can't get note: note's guid is empty"));
@@ -589,39 +593,39 @@ bool NoteStore::getNoteAsync(const bool withContent,
                              const QString & authToken,
                              ErrorString & errorDescription)
 {
-    QNDEBUG(QStringLiteral("NoteStore::getNoteAsync: with content = ")
+    QNDEBUG("NoteStore::getNoteAsync: with content = "
             << (withContent
-                ? QStringLiteral("true")
-                : QStringLiteral("false"))
-            << QStringLiteral(", with resource data = ")
+                ? "true"
+                : "false")
+            << ", with resource data = "
             << (withResourceData
-                ? QStringLiteral("true")
-                : QStringLiteral("false"))
-            << QStringLiteral(", with resource recognition = ")
+                ? "true"
+                : "false")
+            << ", with resource recognition = "
             << (withResourcesRecognition
-                ? QStringLiteral("true")
-                : QStringLiteral("false"))
-            << QStringLiteral(", with resource alternate data = ")
+                ? "true"
+                : "false")
+            << ", with resource alternate data = "
             << (withResourceAlternateData
-                ? QStringLiteral("true")
-                : QStringLiteral("false"))
-            << QStringLiteral(", with shared notes = ")
+                ? "true"
+                : "false")
+            << ", with shared notes = "
             << (withSharedNotes
-                ? QStringLiteral("true")
-                : QStringLiteral("false"))
-            << QStringLiteral(", with note app data values = ")
+                ? "true"
+                : "false")
+            << ", with note app data values = "
             << (withNoteAppDataValues
-                ? QStringLiteral("true")
-                : QStringLiteral("false"))
-            << QStringLiteral(", with resource app data values = ")
+                ? "true"
+                : "false")
+            << ", with resource app data values = "
             << (withResourceAppDataValues
-                ? QStringLiteral("true")
-                : QStringLiteral("false"))
-            << QStringLiteral(", with note limits = ")
+                ? "true"
+                : "false")
+            << ", with note limits = "
             << (withNoteLimits
-                ? QStringLiteral("true")
-                : QStringLiteral("false"))
-            << QStringLiteral(", note guid = ") << noteGuid);
+                ? "true"
+                : "false")
+            << ", note guid = " << noteGuid);
 
     if (Q_UNLIKELY(noteGuid.isEmpty())) {
         errorDescription.setBase(QT_TR_NOOP("Detected the attempt to get full "
@@ -638,7 +642,7 @@ bool NoteStore::getNoteAsync(const bool withContent,
     noteResultSpec.includeNoteAppDataValues = withNoteAppDataValues;
     noteResultSpec.includeResourceAppDataValues = withResourceAppDataValues;
     noteResultSpec.includeAccountLimits = withNoteLimits;
-    QNTRACE(QStringLiteral("Note result spec: ") << noteResultSpec);
+    QNTRACE("Note result spec: " << noteResultSpec);
 
     qevercloud::AsyncResult * pAsyncResult =
         m_pQecNoteStore->getNoteWithResultSpecAsync(noteGuid, noteResultSpec,
@@ -671,23 +675,23 @@ qint32 NoteStore::getResource(const bool withDataBody,
                               ErrorString & errorDescription,
                               qint32 & rateLimitSeconds)
 {
-    QNDEBUG(QStringLiteral("NoteStore::getResource: with data body = ")
+    QNDEBUG("NoteStore::getResource: with data body = "
             << (withDataBody
-                ? QStringLiteral("true")
-                : QStringLiteral("false"))
-            << QStringLiteral(", with recognition data body = ")
+                ? "true"
+                : "false")
+            << ", with recognition data body = "
             << (withRecognitionDataBody
-                ? QStringLiteral("true")
-                : QStringLiteral("false"))
-            << QStringLiteral(", with alternate data body = ")
+                ? "true"
+                : "false")
+            << ", with alternate data body = "
             << (withAlternateDataBody
-                ? QStringLiteral("true")
-                : QStringLiteral("false"))
-            << QStringLiteral(", with attributes = ")
+                ? "true"
+                : "false")
+            << ", with attributes = "
             << (withAttributes
-                ? QStringLiteral("true")
-                : QStringLiteral("false"))
-            << QStringLiteral(", resource guid = ")
+                ? "true"
+                : "false")
+            << ", resource guid = "
             << (resource.hasGuid()
                 ? resource.guid()
                 : QStringLiteral("<not set>")));
@@ -737,23 +741,23 @@ bool NoteStore::getResourceAsync(const bool withDataBody,
                                  const QString & authToken,
                                  ErrorString & errorDescription)
 {
-    QNDEBUG(QStringLiteral("NoteStore::getResourceAsync: with data body = ")
+    QNDEBUG("NoteStore::getResourceAsync: with data body = "
             << (withDataBody
-                ? QStringLiteral("true")
-                : QStringLiteral("false"))
-            << QStringLiteral(", with recognition data body = ")
+                ? "true"
+                : "false")
+            << ", with recognition data body = "
             << (withRecognitionDataBody
-                ? QStringLiteral("true")
-                : QStringLiteral("false"))
-            << QStringLiteral(", with alternate data body = ")
+                ? "true"
+                : "false")
+            << ", with alternate data body = "
             << (withAlternateDataBody
-                ? QStringLiteral("true")
-                : QStringLiteral("false"))
-            << QStringLiteral(", with attributes = ")
+                ? "true"
+                : "false")
+            << ", with attributes = "
             << (withAttributes
-                ? QStringLiteral("true")
-                : QStringLiteral("false"))
-            << QStringLiteral(", resource guid = ") << resourceGuid);
+                ? "true"
+                : "false")
+            << ", resource guid = " << resourceGuid);
 
     if (Q_UNLIKELY(resourceGuid.isEmpty())) {
         errorDescription.setBase(QT_TR_NOOP("Detected the attempt to get full "
@@ -866,7 +870,7 @@ qint32 NoteStore::authenticateToSharedNotebook(
 void NoteStore::onGetNoteAsyncFinished(
     QVariant result, QSharedPointer<EverCloudExceptionData> exceptionData)
 {
-    QNDEBUG(QStringLiteral("NoteStore::onGetNoteAsyncFinished"));
+    QNDEBUG("NoteStore::onGetNoteAsyncFinished");
 
     QString noteGuid;
 
@@ -880,15 +884,14 @@ void NoteStore::onGetNoteAsyncFinished(
             Q_UNUSED(m_noteGuidByAsyncResultPtr.erase(it))
         }
         else {
-            QNDEBUG(QStringLiteral("Couldn't find the note guid by async result ptr"));
+            QNDEBUG("Couldn't find the note guid by async result ptr");
             return;
         }
     }
     else
     {
-        QNDEBUG(QStringLiteral("Couldn't get non-NULL pointer to AsyncResult, "
-                               "hence can't get the note guid to which the result "
-                               "corresponds"));
+        QNDEBUG("Couldn't get non-NULL pointer to AsyncResult, hence can't "
+                "get the note guid to which the result corresponds");
         return;
     }
 
@@ -901,7 +904,7 @@ void NoteStore::onGetNoteAsyncFinished(
 
     if (!exceptionData.isNull())
     {
-        QNDEBUG(QStringLiteral("Error: ") << exceptionData->errorMessage);
+        QNDEBUG("Error: " << exceptionData->errorMessage);
 
         try
         {
@@ -936,7 +939,7 @@ void NoteStore::onGetNoteAsyncFinished(
 void NoteStore::onGetResourceAsyncFinished(
     QVariant result, QSharedPointer<EverCloudExceptionData> exceptionData)
 {
-    QNDEBUG(QStringLiteral("NoteStore::onGetResourceAsyncFinished"));
+    QNDEBUG("NoteStore::onGetResourceAsyncFinished");
 
     QString resourceGuid;
 
@@ -950,16 +953,14 @@ void NoteStore::onGetResourceAsyncFinished(
             Q_UNUSED(m_resourceGuidByAsyncResultPtr.erase(it))
         }
         else {
-            QNDEBUG(QStringLiteral("Couldn't find the resource guid by async "
-                                   "result ptr"));
+            QNDEBUG("Couldn't find the resource guid by async result ptr");
             return;
         }
     }
     else
     {
-        QNDEBUG(QStringLiteral("Couldn't get non-NULL pointer to AsyncResult, "
-                               "hence can't get the resource guid "
-                               "to which the result corresponds"));
+        QNDEBUG("Couldn't get non-NULL pointer to AsyncResult, hence can't get "
+                "the resource guid to which the result corresponds");
         return;
     }
 
@@ -972,7 +973,7 @@ void NoteStore::onGetResourceAsyncFinished(
 
     if (!exceptionData.isNull())
     {
-        QNDEBUG(QStringLiteral("Error: ") << exceptionData->errorMessage);
+        QNDEBUG("Error: " << exceptionData->errorMessage);
 
         try
         {
@@ -1214,8 +1215,7 @@ qint32 NoteStore::processEdamUserExceptionForSavedSearch(
                 errorDescription.appendBase(QT_TR_NOOP("invalid length of saved "
                                                        "search's query"));
                 errorDescription.details() = QString::number(search.query().length());
-                QNWARNING(errorDescription << QStringLiteral(", query: ")
-                          << search.query());
+                QNWARNING(errorDescription << ", query: " << search.query());
             }
             else
             {
@@ -1698,7 +1698,7 @@ qint32 NoteStore::processEdamUserExceptionForNote(
                 errorDescription.appendBase(QT_TR_NOOP("invalid length for note's "
                                                        "ENML content"));
                 errorDescription.details() = QString::number(note.content().length());
-                QNWARNING(errorDescription << QStringLiteral(", note's content: ")
+                QNWARNING(errorDescription << ", note's content: "
                           << note.content());
             }
             else
@@ -1706,35 +1706,36 @@ qint32 NoteStore::processEdamUserExceptionForNote(
                 errorDescription.appendBase(QT_TR_NOOP("note has no content"));
             }
         }
-        else if (userException.parameter.ref().startsWith(QStringLiteral("NoteAttributes.")))
+        else if (userException.parameter.ref().startsWith(
+            QStringLiteral("NoteAttributes.")))
         {
             if (note.hasNoteAttributes()) {
                 errorDescription.appendBase(QT_TR_NOOP("invalid note attributes"));
-                QNWARNING(errorDescription << QStringLiteral(": ")
-                          << note.noteAttributes());
+                QNWARNING(errorDescription << ": " << note.noteAttributes());
             }
             else {
                 errorDescription.appendBase(QT_TR_NOOP("note has no attributes"));
             }
         }
-        else if (userException.parameter.ref().startsWith(QStringLiteral("ResourceAttributes.")))
+        else if (userException.parameter.ref().startsWith(
+            QStringLiteral("ResourceAttributes.")))
         {
             errorDescription.appendBase(QT_TR_NOOP("invalid resource attributes "
                                                    "for some of note's resources"));
-            QNWARNING(errorDescription << QStringLiteral(", note: ") << note);
+            QNWARNING(errorDescription << ", note: " << note);
         }
         else if (userException.parameter.ref() == QStringLiteral("Resource.mime"))
         {
             errorDescription.appendBase(QT_TR_NOOP("invalid mime type for some "
                                                    "of note's resources"));
-            QNWARNING(errorDescription << QStringLiteral(", note: ") << note);
+            QNWARNING(errorDescription << ", note: " << note);
         }
         else if (userException.parameter.ref() == QStringLiteral("Tag.name"))
         {
             errorDescription.appendBase(QT_TR_NOOP("Note.tagNames was provided "
                                                    "and one of the specified tags "
                                                    "had invalid length or pattern"));
-            QNWARNING(errorDescription << QStringLiteral(", note: ") << note);
+            QNWARNING(errorDescription << ", note: " << note);
         }
         else {
             errorDescription.appendBase(QT_TR_NOOP("unexpected parameter"));
@@ -1801,7 +1802,7 @@ qint32 NoteStore::processEdamUserExceptionForNote(
         if (userException.parameter.ref() == QStringLiteral("Resource.data")) {
             errorDescription.appendBase(QT_TR_NOOP("data body for some of note's "
                                                    "resources is missing"));
-            QNWARNING(errorDescription << QStringLiteral(", note: ") << note);
+            QNWARNING(errorDescription << ", note: " << note);
         }
         else {
             errorDescription.appendBase(QT_TR_NOOP("unexpected parameter"));
@@ -1866,26 +1867,29 @@ qint32 NoteStore::processEdamUserExceptionForNote(
         {
             errorDescription.appendBase(QT_TR_NOOP("too many tags on note"));
         }
-        else if (userException.parameter.ref() == QStringLiteral("Resource.data.size"))
+        else if (userException.parameter.ref() ==
+                 QStringLiteral("Resource.data.size"))
         {
             errorDescription.appendBase(QT_TR_NOOP("one of note's resource's data "
                                                    "is too large"));
         }
-        else if (userException.parameter.ref().startsWith(QStringLiteral("NoteAttribute.")))
+        else if (userException.parameter.ref().startsWith(
+            QStringLiteral("NoteAttribute.")))
         {
             errorDescription.appendBase(QT_TR_NOOP("note attributes string is "
                                                    "too large"));
             if (note.hasNoteAttributes()) {
-                QNWARNING(errorDescription << QStringLiteral(", note attributes: ")
+                QNWARNING(errorDescription << ", note attributes: "
                           << note.noteAttributes());
             }
         }
-        else if (userException.parameter.ref().startsWith(QStringLiteral("ResourceAttribute.")))
+        else if (userException.parameter.ref().startsWith(
+            QStringLiteral("ResourceAttribute.")))
         {
             errorDescription.appendBase(QT_TR_NOOP("one of note's resources has "
                                                    "too large resource attributes "
                                                    "string"));
-            QNWARNING(errorDescription << QStringLiteral(", note: ") << note);
+            QNWARNING(errorDescription << ", note: " << note);
         }
         else if (userException.parameter.ref() == QStringLiteral("Tag"))
         {
@@ -1893,7 +1897,7 @@ qint32 NoteStore::processEdamUserExceptionForNote(
                                                    "and the required new tags "
                                                    "would exceed the maximum "
                                                    "number per account"));
-            QNWARNING(errorDescription << QStringLiteral(", note: ") << note);
+            QNWARNING(errorDescription << ", note: " << note);
         }
         else
         {
@@ -1930,7 +1934,7 @@ qint32 NoteStore::processEdamUserExceptionForNote(
             errorDescription.appendBase(QT_TR_NOOP("note's notebook is not "
                                                    "owned by user"));
             if (note.hasNotebookGuid()) {
-                QNWARNING(errorDescription << QStringLiteral(", notebook guid: ")
+                QNWARNING(errorDescription << ", notebook guid: "
                           << note.notebookGuid());
             }
         }
