@@ -1942,7 +1942,7 @@ void SynchronizationManagerPrivate::authenticateToLinkedNotebooks()
         }
 
         // 2) Set up the job writing the shard id to the keychain
-        jobIt =
+        jobIt =                                                                         // clazy:exclude=rule-of-two-soft
             m_writeLinkedNotebookShardIdJobIdsWithLinkedNotebookGuids.left.find(guid);  // clazy:exclude=rule-of-two-soft
         if (jobIt ==
             m_writeLinkedNotebookShardIdJobIdsWithLinkedNotebookGuids.left.end())

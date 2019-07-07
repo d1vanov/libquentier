@@ -37,33 +37,41 @@
 #include <boost/multi_index/ordered_index.hpp>
 #endif
 
-#define SYNCHRONIZATION_PERSISTENCE_NAME \
-    QStringLiteral("SynchronizationPersistence")
+#define SYNCHRONIZATION_PERSISTENCE_NAME                                       \
+    QStringLiteral("SynchronizationPersistence")                               \
+// SYNCHRONIZATION_PERSISTENCE_NAME
 
 #define HALF_AN_HOUR_IN_MSEC (1800000)
 
 #define EXPIRATION_TIMESTAMP_KEY QStringLiteral("ExpirationTimestamp")
 
-#define LINKED_NOTEBOOK_EXPIRATION_TIMESTAMP_KEY_PREFIX \
-    QStringLiteral("LinkedNotebookExpirationTimestamp_")
+#define LINKED_NOTEBOOK_EXPIRATION_TIMESTAMP_KEY_PREFIX                        \
+    QStringLiteral("LinkedNotebookExpirationTimestamp_")                       \
+// LINKED_NOTEBOOK_EXPIRATION_TIMESTAMP_KEY_PREFIX
 
-#define LINKED_NOTEBOOK_AUTH_TOKEN_KEY_PART \
-    QStringLiteral("_LinkedNotebookAuthToken_")
+#define LINKED_NOTEBOOK_AUTH_TOKEN_KEY_PART                                    \
+    QStringLiteral("_LinkedNotebookAuthToken_")                                \
+// LINKED_NOTEBOOK_AUTH_TOKEN_KEY_PART
 
-#define LINKED_NOTEBOOK_SHARD_ID_KEY_PART \
-    QStringLiteral("_LinkedNotebookShardId_")
+#define LINKED_NOTEBOOK_SHARD_ID_KEY_PART                                      \
+    QStringLiteral("_LinkedNotebookShardId_")                                  \
+// LINKED_NOTEBOOK_SHARD_ID_KEY_PART
 
-#define READ_LINKED_NOTEBOOK_AUTH_TOKEN_JOB \
-    QStringLiteral("readLinkedNotebookAuthToken")
+#define READ_LINKED_NOTEBOOK_AUTH_TOKEN_JOB                                    \
+    QStringLiteral("readLinkedNotebookAuthToken")                              \
+// READ_LINKED_NOTEBOOK_AUTH_TOKEN_JOB
 
-#define READ_LINKED_NOTEBOOK_SHARD_ID_JOB \
-    QStringLiteral("readLinkedNotebookShardId")
+#define READ_LINKED_NOTEBOOK_SHARD_ID_JOB                                      \
+    QStringLiteral("readLinkedNotebookShardId")                                \
+// READ_LINKED_NOTEBOOK_SHARD_ID_JOB
 
-#define WRITE_LINKED_NOTEBOOK_AUTH_TOKEN_JOB \
-    QStringLiteral("writeLinkedNotebookAuthToken")
+#define WRITE_LINKED_NOTEBOOK_AUTH_TOKEN_JOB                                   \
+    QStringLiteral("writeLinkedNotebookAuthToken")                             \
+// WRITE_LINKED_NOTEBOOK_AUTH_TOKEN_JOB
 
-#define WRITE_LINKED_NOTEBOOK_SHARD_ID_JOB \
-    QStringLiteral("writeLinkedNotebookShardId")
+#define WRITE_LINKED_NOTEBOOK_SHARD_ID_JOB                                     \
+    QStringLiteral("writeLinkedNotebookShardId")                               \
+// WRITE_LINKED_NOTEBOOK_SHARD_ID_JOB
 
 #define NOTE_STORE_URL_KEY QStringLiteral("NoteStoreUrl")
 #define WEB_API_URL_PREFIX_KEY QStringLiteral("WebApiUrlPrefix")
@@ -72,33 +80,37 @@
 #define LAST_SYNC_UPDATE_COUNT_KEY QStringLiteral("last_sync_update_count")
 #define LAST_SYNC_TIME_KEY         QStringLiteral("last_sync_time")
 
-#define LAST_SYNC_LINKED_NOTEBOOKS_PARAMS \
-    QStringLiteral("last_sync_linked_notebooks_params")
+#define LAST_SYNC_LINKED_NOTEBOOKS_PARAMS                                      \
+    QStringLiteral("last_sync_linked_notebooks_params")                        \
+// LAST_SYNC_LINKED_NOTEBOOKS_PARAMS
 
 #define LINKED_NOTEBOOK_GUID_KEY QStringLiteral("linked_notebook_guid")
 
-#define LINKED_NOTEBOOK_LAST_UPDATE_COUNT_KEY \
-    QStringLiteral("linked_notebook_last_update_count")
+#define LINKED_NOTEBOOK_LAST_UPDATE_COUNT_KEY                                  \
+    QStringLiteral("linked_notebook_last_update_count")                        \
+// LINKED_NOTEBOOK_LAST_UPDATE_COUNT_KEY
 
-#define LINKED_NOTEBOOK_LAST_SYNC_TIME_KEY \
-    QStringLiteral("linked_notebook_last_sync_time")
+#define LINKED_NOTEBOOK_LAST_SYNC_TIME_KEY                                     \
+    QStringLiteral("linked_notebook_last_sync_time")                           \
+// LINKED_NOTEBOOK_LAST_SYNC_TIME_KEY
 
 #define AUTH_TOKEN_KEYCHAIN_KEY_PART QStringLiteral("_auth_token")
 #define SHARD_ID_KEYCHAIN_KEY_PART QStringLiteral("_shard_id")
 
-#define APPEND_NOTE_DETAILS(errorDescription, note) \
-   if (note.hasTitle()) \
-   { \
-       errorDescription.details() = note.title(); \
-   } \
-   else if (note.hasContent()) \
-   { \
-       QString previewText = note.plainText(); \
-       if (!previewText.isEmpty()) { \
-           previewText.truncate(30); \
-           errorDescription.details() = previewText; \
-       } \
-   }
+#define APPEND_NOTE_DETAILS(errorDescription, note)                            \
+   if (note.hasTitle())                                                        \
+   {                                                                           \
+       errorDescription.details() = note.title();                              \
+   }                                                                           \
+   else if (note.hasContent())                                                 \
+   {                                                                           \
+       QString previewText = note.plainText();                                 \
+       if (!previewText.isEmpty()) {                                           \
+           previewText.truncate(30);                                           \
+           errorDescription.details() = previewText;                           \
+       }                                                                       \
+   }                                                                           \
+// APPEND_NOTE_DETAILS
 
 namespace quentier {
 

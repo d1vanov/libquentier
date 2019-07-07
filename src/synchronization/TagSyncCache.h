@@ -37,7 +37,8 @@ public:
     void clear();
 
     /**
-     * @return True if the cache is already filled with up-to-moment data, false otherwise
+     * @return True if the cache is already filled with up-to-moment data,
+     * false otherwise
      */
     bool isFilled() const;
 
@@ -68,25 +69,29 @@ Q_SIGNALS:
 
 public Q_SLOTS:
     /**
-     * Start collecting the information about tags; does nothing if the information
-     * is already collected or is being collected at the moment, otherwise initiates
-     * the sequence of actions required to collect the tag information
+     * Start collecting the information about tags; does nothing if the
+     * information is already collected or is being collected at the moment,
+     * otherwise initiates the sequence of actions required to collect the tag
+     * information
      */
     void fill();
 
 private Q_SLOTS:
-    void onListTagsComplete(LocalStorageManager::ListObjectsOptions flag,
-                            size_t limit, size_t offset,
-                            LocalStorageManager::ListTagsOrder::type order,
-                            LocalStorageManager::OrderDirection::type orderDirection,
-                            QString linkedNotebookGuid, QList<Tag> foundTags,
-                            QUuid requestId);
-    void onListTagsFailed(LocalStorageManager::ListObjectsOptions flag,
-                          size_t limit, size_t offset,
-                          LocalStorageManager::ListTagsOrder::type order,
-                          LocalStorageManager::OrderDirection::type orderDirection,
-                          QString linkedNotebookGuid, ErrorString errorDescription,
-                          QUuid requestId);
+    void onListTagsComplete(
+        LocalStorageManager::ListObjectsOptions flag,
+        size_t limit, size_t offset,
+        LocalStorageManager::ListTagsOrder::type order,
+        LocalStorageManager::OrderDirection::type orderDirection,
+        QString linkedNotebookGuid, QList<Tag> foundTags,
+        QUuid requestId);
+
+    void onListTagsFailed(
+        LocalStorageManager::ListObjectsOptions flag,
+        size_t limit, size_t offset,
+        LocalStorageManager::ListTagsOrder::type order,
+        LocalStorageManager::OrderDirection::type orderDirection,
+        QString linkedNotebookGuid, ErrorString errorDescription,
+        QUuid requestId);
 
     void onAddTagComplete(Tag tag, QUuid requestId);
     void onUpdateTagComplete(Tag tag, QUuid requestId);

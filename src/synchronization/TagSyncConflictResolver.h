@@ -43,11 +43,12 @@ class Q_DECL_HIDDEN TagSyncConflictResolver: public QObject
 {
     Q_OBJECT
 public:
-    explicit TagSyncConflictResolver(const qevercloud::Tag & remoteTag,
-                                     const QString & remoteTagLinkedNotebookGuid,
-                                     const Tag & localConflict, TagSyncCache & cache,
-                                     LocalStorageManagerAsync & localStorageManagerAsync,
-                                     QObject * parent = Q_NULLPTR);
+    explicit TagSyncConflictResolver(
+        const qevercloud::Tag & remoteTag,
+        const QString & remoteTagLinkedNotebookGuid,
+        const Tag & localConflict, TagSyncCache & cache,
+        LocalStorageManagerAsync & localStorageManagerAsync,
+        QObject * parent = Q_NULLPTR);
 
     void start();
 
@@ -66,11 +67,14 @@ Q_SIGNALS:
 
 private Q_SLOTS:
     void onAddTagComplete(Tag tag, QUuid requestId);
-    void onAddTagFailed(Tag tag, ErrorString errorDescription, QUuid requestId);
+    void onAddTagFailed(Tag tag, ErrorString errorDescription,
+                        QUuid requestId);
     void onUpdateTagComplete(Tag tag, QUuid requestId);
-    void onUpdateTagFailed(Tag tag, ErrorString errorDescription, QUuid requestId);
+    void onUpdateTagFailed(Tag tag, ErrorString errorDescription,
+                           QUuid requestId);
     void onFindTagComplete(Tag tag, QUuid requestId);
-    void onFindTagFailed(Tag tag, ErrorString errorDescription, QUuid requestId);
+    void onFindTagFailed(Tag tag, ErrorString errorDescription,
+                         QUuid requestId);
 
     void onCacheFilled();
     void onCacheFailed(ErrorString errorDescription);
