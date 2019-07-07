@@ -30,19 +30,20 @@ INoteEditorBackend::INoteEditorBackend(NoteEditor * parent) :
     m_pNoteEditor(parent)
 {}
 
-QTextStream & operator<<(QTextStream & strm,
-                         const INoteEditorBackend::Rotation::type rotationDirection)
+QTextStream & operator<<(
+    QTextStream & strm,
+    const INoteEditorBackend::Rotation::type rotationDirection)
 {
     switch(rotationDirection)
     {
     case INoteEditorBackend::Rotation::Clockwise:
-        strm << QStringLiteral("Clockwise");
+        strm << "Clockwise";
         break;
     case INoteEditorBackend::Rotation::Counterclockwise:
-        strm << QStringLiteral("Counterclockwise");
+        strm << "Counterclockwise";
         break;
     default:
-        strm << QStringLiteral("Unknown");
+        strm << "Unknown (" << static_cast<qint64>(rotationDirection) << ")";
         break;
     }
 

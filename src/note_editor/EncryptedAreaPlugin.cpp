@@ -35,7 +35,7 @@ EncryptedAreaPlugin::EncryptedAreaPlugin(NoteEditorPrivate & noteEditor,
     m_keyLength(),
     m_id()
 {
-    QNDEBUG(QStringLiteral("EncryptedAreaPlugin: constructor"));
+    QNDEBUG("EncryptedAreaPlugin: constructor");
 
     m_pUI->setupUi(this);
 
@@ -55,7 +55,7 @@ EncryptedAreaPlugin::EncryptedAreaPlugin(NoteEditorPrivate & noteEditor,
 
 EncryptedAreaPlugin::~EncryptedAreaPlugin()
 {
-    QNDEBUG(QStringLiteral("EncryptedAreaPlugin: destructor"));
+    QNDEBUG("EncryptedAreaPlugin: destructor");
     delete m_pUI;
 }
 
@@ -64,9 +64,9 @@ bool EncryptedAreaPlugin::initialize(const QStringList & parameterNames,
                                      const NoteEditorPluginFactory & pluginFactory,
                                      ErrorString & errorDescription)
 {
-    QNDEBUG(QStringLiteral("EncryptedAreaPlugin::initialize: parameter names = ")
+    QNDEBUG("EncryptedAreaPlugin::initialize: parameter names = "
             << parameterNames.join(QStringLiteral(", "))
-            << QStringLiteral(", parameter values = ")
+            << ", parameter values = "
             << parameterValues.join(QStringLiteral(", ")));
 
     Q_UNUSED(pluginFactory)
@@ -97,9 +97,8 @@ bool EncryptedAreaPlugin::initialize(const QStringList & parameterNames,
     }
     else {
         m_keyLength = QStringLiteral("128");
-        QNDEBUG(QStringLiteral("Using the default value of key length = ")
-                << m_keyLength
-                << QStringLiteral(" instead of missing HTML attribute"));
+        QNDEBUG("Using the default value of key length = " << m_keyLength
+                << " instead of missing HTML attribute");
     }
 
     if (cipherIndex >= 0) {
@@ -107,9 +106,8 @@ bool EncryptedAreaPlugin::initialize(const QStringList & parameterNames,
     }
     else {
         m_cipher = QStringLiteral("AES");
-        QNDEBUG(QStringLiteral("Using the default value of cipher = ")
-                << m_cipher
-                << QStringLiteral(" instead of missing HTML attribute"));
+        QNDEBUG("Using the default value of cipher = " << m_cipher
+                << " instead of missing HTML attribute");
     }
 
     m_encryptedText = parameterValues[encryptedTextIndex];
@@ -130,11 +128,10 @@ bool EncryptedAreaPlugin::initialize(const QStringList & parameterNames,
         m_id = parameterValues[enCryptIndexIndex];
     }
 
-    QNTRACE(QStringLiteral("Initialized encrypted area plugin: cipher = ")
-            << m_cipher << QStringLiteral(", length = ") << m_keyLength
-            << QStringLiteral(", hint = ") << m_hint
-            << QStringLiteral(", en-crypt-id = ") << m_id
-            << QStringLiteral(", encrypted text = ") << m_encryptedText);
+    QNTRACE("Initialized encrypted area plugin: cipher = "
+            << m_cipher << ", length = " << m_keyLength
+            << ", hint = " << m_hint << ", en-crypt-id = " << m_id
+            << ", encrypted text = " << m_encryptedText);
     return true;
 }
 

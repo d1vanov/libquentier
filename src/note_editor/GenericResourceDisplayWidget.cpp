@@ -52,13 +52,12 @@ GenericResourceDisplayWidget::~GenericResourceDisplayWidget()
     delete m_pUI;
 }
 
-void GenericResourceDisplayWidget::initialize(const QIcon & icon,
-                                              const QString & name,
-                                              const QString & size,
-                                              const Resource & resource)
+void GenericResourceDisplayWidget::initialize(
+    const QIcon & icon, const QString & name, const QString & size,
+    const Resource & resource)
 {
-    QNDEBUG(QStringLiteral("GenericResourceDisplayWidget::initialize: name = ")
-            << name << QStringLiteral(", size = ") << size);
+    QNDEBUG("GenericResourceDisplayWidget::initialize: name = " << name
+            << ", size = " << size);
 
     m_resourceLocalUid = resource.localUid();
 
@@ -110,7 +109,8 @@ QString GenericResourceDisplayWidget::resourceLocalUid() const
     return m_resourceLocalUid;
 }
 
-void GenericResourceDisplayWidget::updateResourceName(const QString & resourceName)
+void GenericResourceDisplayWidget::updateResourceName(
+    const QString & resourceName)
 {
     m_pUI->resourceDisplayNameLabel->setText(
         QStringLiteral("<html><head/><body><p><span style=\" font-size:8pt;\">") +
@@ -127,11 +127,11 @@ void GenericResourceDisplayWidget::updateResourceSize(const QString & size)
 
 void GenericResourceDisplayWidget::onOpenResourceInExternalAppButtonPressed()
 {
-    QNDEBUG(QStringLiteral("GenericResourceDisplayWidget::"
-                           "onOpenResourceInExternalAppButtonPressed"));
+    QNDEBUG("GenericResourceDisplayWidget::"
+            "onOpenResourceInExternalAppButtonPressed");
 
     if (m_resourceHash.isEmpty()) {
-        QNDEBUG(QStringLiteral("Can't open resource: resource hash is empty"));
+        QNDEBUG("Can't open resource: resource hash is empty");
         return;
     }
 
@@ -140,11 +140,11 @@ void GenericResourceDisplayWidget::onOpenResourceInExternalAppButtonPressed()
 
 void GenericResourceDisplayWidget::onSaveResourceDataToFileButtonPressed()
 {
-    QNDEBUG(QStringLiteral("GenericResourceDisplayWidget::"
-                           "onSaveResourceDataToFileButtonPressed"));
+    QNDEBUG("GenericResourceDisplayWidget::"
+            "onSaveResourceDataToFileButtonPressed");
 
     if (m_resourceHash.isEmpty()) {
-        QNDEBUG(QStringLiteral("Can't save resource: resource hash is empty"));
+        QNDEBUG("Can't save resource: resource hash is empty");
         return;
     }
 
