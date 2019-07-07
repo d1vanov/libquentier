@@ -64,14 +64,16 @@ Q_SIGNALS:
 
 private Q_SLOTS:
     void onAddSavedSearchComplete(SavedSearch search, QUuid requestId);
-    void onAddSavedSearchFailed(SavedSearch search, ErrorString errorDescription,
+    void onAddSavedSearchFailed(SavedSearch search,
+                                ErrorString errorDescription,
                                 QUuid requestId);
     void onUpdateSavedSearchComplete(SavedSearch search, QUuid requestId);
     void onUpdateSavedSearchFailed(SavedSearch search,
                                    ErrorString errorDescription,
                                    QUuid requestId);
     void onFindSavedSearchComplete(SavedSearch search, QUuid requestId);
-    void onFindSavedSearchFailed(SavedSearch search, ErrorString errorDescription,
+    void onFindSavedSearchFailed(SavedSearch search,
+                                 ErrorString errorDescription,
                                  QUuid requestId);
 
     void onCacheFilled();
