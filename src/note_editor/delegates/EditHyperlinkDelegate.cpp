@@ -20,33 +20,35 @@
 #include "../NoteEditor_p.h"
 #include "../NoteEditorPage.h"
 #include "../dialogs/EditHyperlinkDialog.h"
+
 #include <quentier/logging/QuentierLogger.h>
+
 #include <QScopedPointer>
 #include <QStringList>
 
 namespace quentier {
 
-EditHyperlinkDelegate::EditHyperlinkDelegate(NoteEditorPrivate & noteEditor,
-                                             const quint64 hyperlinkId) :
+EditHyperlinkDelegate::EditHyperlinkDelegate(
+        NoteEditorPrivate & noteEditor, const quint64 hyperlinkId) :
     QObject(&noteEditor),
     m_noteEditor(noteEditor),
     m_hyperlinkId(hyperlinkId)
 {}
 
-#define GET_PAGE() \
-    NoteEditorPage * page = qobject_cast<NoteEditorPage*>(m_noteEditor.page()); \
-    if (Q_UNLIKELY(!page)) { \
-        ErrorString error(QT_TRANSLATE_NOOP("EditHyperlinkDelegate", \
-                                            "Can't edit hyperlink: no note "\
-                                            "editor page")); \
-        QNWARNING(error); \
-        Q_EMIT notifyError(error); \
-        return; \
+#define GET_PAGE()                                                             \
+    NoteEditorPage * page = qobject_cast<NoteEditorPage*>(m_noteEditor.page());\
+    if (Q_UNLIKELY(!page)) {                                                   \
+        ErrorString error(QT_TRANSLATE_NOOP("EditHyperlinkDelegate",           \
+                                            "Can't edit hyperlink: no note "   \
+                                            "editor page"));                   \
+        QNWARNING(error);                                                      \
+        Q_EMIT notifyError(error);                                             \
+        return;                                                                \
     }
 
 void EditHyperlinkDelegate::start()
 {
-    QNDEBUG(QStringLiteral("EditHyperlinkDelegate::start"));
+    QNDEBUG("EditHyperlinkDelegate::start");
 
     if (m_noteEditor.isEditorPageModified())
     {
@@ -65,7 +67,7 @@ void EditHyperlinkDelegate::start()
 
 void EditHyperlinkDelegate::onOriginalPageConvertedToNote(Note note)
 {
-    QNDEBUG(QStringLiteral("EditHyperlinkDelegate::onOriginalPageConvertedToNote"));
+    QNDEBUG("EditHyperlinkDelegate::onOriginalPageConvertedToNote");
 
     Q_UNUSED(note)
 
@@ -80,8 +82,7 @@ void EditHyperlinkDelegate::onOriginalPageConvertedToNote(Note note)
 
 void EditHyperlinkDelegate::onHyperlinkDataReceived(const QVariant & data)
 {
-    QNDEBUG(QStringLiteral("EditHyperlinkDelegate::onHyperlinkDataReceived: data = ")
-            << data);
+    QNDEBUG("EditHyperlinkDelegate::onHyperlinkDataReceived: data = " << data);
 
     QMap<QString,QVariant> resultMap = data.toMap();
 
@@ -138,7 +139,7 @@ void EditHyperlinkDelegate::onHyperlinkDataReceived(const QVariant & data)
     {
         ErrorString error(QT_TR_NOOP("Can't edit hyperlink: can't parse hyperlink "
                                      "text and link"));
-        QNWARNING(error << QStringLiteral("; hyperlink data: ")
+        QNWARNING(error << "; hyperlink data: "
                   << hyperlinkDataList.join(QStringLiteral(",")));
         Q_EMIT notifyError(error);
         return;
@@ -149,7 +150,7 @@ void EditHyperlinkDelegate::onHyperlinkDataReceived(const QVariant & data)
 
 void EditHyperlinkDelegate::doStart()
 {
-    QNDEBUG(QStringLiteral("EditHyperlinkDelegate::doStart"));
+    QNDEBUG("EditHyperlinkDelegate::doStart");
 
     QString javascript = QStringLiteral("hyperlinkManager.getHyperlinkData(") +
                          QString::number(m_hyperlinkId) + QStringLiteral(");");
@@ -160,11 +161,11 @@ void EditHyperlinkDelegate::doStart()
         JsCallback(*this, &EditHyperlinkDelegate::onHyperlinkDataReceived));
 }
 
-void EditHyperlinkDelegate::raiseEditHyperlinkDialog(const QString & startupHyperlinkText,
-                                                     const QString & startupHyperlinkUrl)
+void EditHyperlinkDelegate::raiseEditHyperlinkDialog(
+    const QString & startupHyperlinkText, const QString & startupHyperlinkUrl)
 {
-    QNDEBUG(QStringLiteral("EditHyperlinkDelegate::raiseEditHyperlinkDialog: original text = ")
-            << startupHyperlinkText << QStringLiteral(", original url: ")
+    QNDEBUG("EditHyperlinkDelegate::raiseEditHyperlinkDialog: original text = "
+            << startupHyperlinkText << ", original url: "
             << startupHyperlinkUrl);
 
     QScopedPointer<EditHyperlinkDialog> pEditHyperlinkDialog(
@@ -177,22 +178,21 @@ void EditHyperlinkDelegate::raiseEditHyperlinkDialog(const QString & startupHype
                      this,
                      QNSLOT(EditHyperlinkDelegate,onHyperlinkDataEdited,
                             QString,QUrl,quint64,bool));
-    QNTRACE(QStringLiteral("Will exec edit hyperlink dialog now"));
+    QNTRACE("Will exec edit hyperlink dialog now");
     int res = pEditHyperlinkDialog->exec();
     if (res == QDialog::Rejected) {
-        QNTRACE(QStringLiteral("Cancelled editing the hyperlink"));
+        QNTRACE("Cancelled editing the hyperlink");
         Q_EMIT cancelled();
         return;
     }
 }
 
-void EditHyperlinkDelegate::onHyperlinkDataEdited(QString text, QUrl url,
-                                                  quint64 hyperlinkId,
-                                                  bool startupUrlWasEmpty)
+void EditHyperlinkDelegate::onHyperlinkDataEdited(
+    QString text, QUrl url, quint64 hyperlinkId, bool startupUrlWasEmpty)
 {
-    QNDEBUG(QStringLiteral("EditHyperlinkDelegate::onHyperlinkDataEdited: text = ")
-            << text << QStringLiteral(", url = ") << url
-            << QStringLiteral(", hyperlink id = ") << hyperlinkId);
+    QNDEBUG("EditHyperlinkDelegate::onHyperlinkDataEdited: text = "
+            << text << ", url = " << url
+            << ", hyperlink id = " << hyperlinkId);
 
     Q_UNUSED(hyperlinkId)
     Q_UNUSED(startupUrlWasEmpty)
@@ -216,7 +216,7 @@ void EditHyperlinkDelegate::onHyperlinkDataEdited(QString text, QUrl url,
 
 void EditHyperlinkDelegate::onHyperlinkModified(const QVariant & data)
 {
-    QNDEBUG(QStringLiteral("EditHyperlinkDelegate::onHyperlinkModified"));
+    QNDEBUG("EditHyperlinkDelegate::onHyperlinkModified");
 
     QMap<QString,QVariant> resultMap = data.toMap();
 

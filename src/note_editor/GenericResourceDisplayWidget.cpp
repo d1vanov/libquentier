@@ -20,6 +20,7 @@
 #include "ui_GenericResourceDisplayWidget.h"
 #include "NoteEditorSettingsNames.h"
 #include "ResourceDataInTemporaryFileStorageManager.h"
+
 #include <quentier/utility/FileIOProcessorAsync.h>
 #include <quentier/utility/QuentierCheckPtr.h>
 #include <quentier/utility/Utility.h>
@@ -27,6 +28,7 @@
 #include <quentier/types/Resource.h>
 #include <quentier/logging/QuentierLogger.h>
 #include <quentier/utility/ApplicationSettings.h>
+
 #include <QHBoxLayout>
 #include <QVBoxLayout>
 #include <QLabel>

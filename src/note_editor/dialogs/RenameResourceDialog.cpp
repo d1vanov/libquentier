@@ -18,6 +18,7 @@
 
 #include "RenameResourceDialog.h"
 #include "ui_RenameResourceDialog.h"
+
 #include <quentier/logging/QuentierLogger.h>
 
 namespace quentier {
@@ -38,7 +39,7 @@ RenameResourceDialog::~RenameResourceDialog()
 
 void RenameResourceDialog::accept()
 {
-    QNDEBUG(QStringLiteral("RenameResourceDialog::accept"));
+    QNDEBUG("RenameResourceDialog::accept");
     Q_EMIT accepted(m_pUI->lineEdit->text());
     QDialog::accept();
 }

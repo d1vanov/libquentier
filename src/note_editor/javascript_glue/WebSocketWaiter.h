@@ -20,6 +20,7 @@
 #define LIB_QUENTIER_NOTE_EDITOR_JAVASCRIPT_GLUE_WEB_SOCKET_WAITER_H
 
 #include <quentier/utility/Macros.h>
+
 #include <QObject>
 
 namespace quentier {

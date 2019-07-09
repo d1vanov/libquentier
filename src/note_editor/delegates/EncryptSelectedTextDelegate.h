@@ -20,9 +20,11 @@
 #define LIB_QUENTIER_NOTE_EDITOR_DELEGATES_ENCRYPT_SELECTED_TEXT_DELEGATE_H
 
 #include "JsResultCallbackFunctor.hpp"
+
 #include <quentier/utility/Macros.h>
 #include <quentier/types/ErrorString.h>
 #include <quentier/types/Note.h>
+
 #include <QPointer>
 
 namespace quentier {

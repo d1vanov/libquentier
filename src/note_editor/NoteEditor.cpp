@@ -17,9 +17,11 @@
  */
 
 #include "NoteEditor_p.h"
+
 #include <quentier/note_editor/NoteEditor.h>
 #include <quentier/note_editor/INoteEditorBackend.h>
 #include <quentier/local_storage/LocalStorageManagerAsync.h>
+
 #include <QUndoStack>
 #include <QFont>
 #include <QColor>

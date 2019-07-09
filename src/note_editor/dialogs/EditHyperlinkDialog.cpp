@@ -18,6 +18,7 @@
 
 #include "EditHyperlinkDialog.h"
 #include "ui_EditHyperlinkDialog.h"
+
 #include <quentier/logging/QuentierLogger.h>
 
 namespace quentier {
@@ -61,7 +62,7 @@ EditHyperlinkDialog::~EditHyperlinkDialog()
 
 void EditHyperlinkDialog::accept()
 {
-    QNDEBUG(QStringLiteral("EditHyperlinkDialog::accept"));
+    QNDEBUG("EditHyperlinkDialog::accept");
 
     QUrl url;
     bool res = validateAndGetUrl(url);
@@ -89,12 +90,12 @@ void EditHyperlinkDialog::onUrlEditingFinished()
 
 bool EditHyperlinkDialog::validateAndGetUrl(QUrl & url)
 {
-    QNDEBUG(QStringLiteral("EditHyperlinkDialog::validateAndGetUrl"));
+    QNDEBUG("EditHyperlinkDialog::validateAndGetUrl");
 
     url = QUrl();
 
     QString enteredUrl = m_pUI->urlLineEdit->text();
-    QNTRACE(QStringLiteral("Entered URL string: ") << enteredUrl);
+    QNTRACE("Entered URL string: " << enteredUrl);
 
     if (enteredUrl.isEmpty()) {
         m_pUI->urlErrorLabel->setText(tr("No URL is entered"));
@@ -103,10 +104,10 @@ bool EditHyperlinkDialog::validateAndGetUrl(QUrl & url)
     }
 
     url = QUrl(enteredUrl, QUrl::TolerantMode);
-    QNTRACE(QStringLiteral("Parsed URL: ") << url << QStringLiteral(", is empty = ")
-            << (url.isEmpty() ? QStringLiteral("true") : QStringLiteral("false"))
-            << QStringLiteral(", is valid = ")
-            << (url.isValid() ? QStringLiteral("true") : QStringLiteral("false")));
+    QNTRACE("Parsed URL: " << url << ", is empty = "
+            << (url.isEmpty() ? "true" : "false")
+            << ", is valid = "
+            << (url.isValid() ? "true" : "false"));
 
     if (url.isEmpty()) {
         m_pUI->urlErrorLabel->setText(tr("Entered URL is empty"));

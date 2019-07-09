@@ -20,6 +20,7 @@
 #define LIB_QUENTIER_NOTE_EDITOR_NOTE_EDITOR_PLUGIN_FACTORY_H
 
 #include "INoteEditorResourcePlugin.h"
+
 #include <QWebPluginFactory>
 #include <QMimeDatabase>
 #include <QIcon>

@@ -20,7 +20,9 @@
 #include "ui_EncryptedAreaPlugin.h"
 #include "NoteEditorPluginFactory.h"
 #include "NoteEditor_p.h"
+
 #include <quentier/logging/QuentierLogger.h>
+
 #include <QAction>
 
 namespace quentier {

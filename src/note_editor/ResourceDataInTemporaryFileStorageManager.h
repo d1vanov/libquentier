@@ -22,6 +22,7 @@
 #include <quentier/utility/Macros.h>
 #include <quentier/utility/FileSystemWatcher.h>
 #include <quentier/types/ErrorString.h>
+
 #include <QObject>
 #include <QUuid>
 #include <QStringList>

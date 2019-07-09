@@ -19,10 +19,12 @@
 #include "EncryptionDialog.h"
 #include "ui_EncryptionDialog.h"
 #include "../NoteEditorSettingsNames.h"
+
 #include <quentier/enml/DecryptedTextManager.h>
 #include <quentier/utility/QuentierCheckPtr.h>
 #include <quentier/logging/QuentierLogger.h>
 #include <quentier/utility/ApplicationSettings.h>
+
 #include <QLineEdit>
 
 namespace quentier {
@@ -97,8 +99,8 @@ void EncryptionDialog::onRememberPassphraseStateChanged(int checked)
     ApplicationSettings appSettings(m_account, NOTE_EDITOR_SETTINGS_NAME);
     if (!appSettings.isWritable())
     {
-        QNINFO(QStringLiteral("Can't persist remember passphrase for session "
-                              "setting: settings are not writable"));
+        QNINFO("Can't persist remember passphrase for session "
+               "setting: settings are not writable");
     }
     else
     {
@@ -114,8 +116,8 @@ void EncryptionDialog::accept()
 
     if (passphrase.isEmpty())
     {
-        QNINFO(QStringLiteral("Attempted to press OK in EncryptionDialog without "
-                              "having a password set"));
+        QNINFO("Attempted to press OK in EncryptionDialog without "
+               "having a password set");
         ErrorString error(QT_TR_NOOP("Please choose the encryption password"));
         setError(error);
         return;

@@ -22,6 +22,7 @@
 #include <quentier/local_storage/LocalStorageManagerAsync.h>
 #include <quentier/types/Note.h>
 #include <quentier/utility/LRUCache.hpp>
+
 #include <QObject>
 #include <QHash>
 #include <QSet>

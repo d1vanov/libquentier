@@ -18,6 +18,7 @@
 
 #include "NoteEditorLocalStorageBroker.h"
 #include "../synchronization/SynchronizationShared.h"
+
 #include <quentier/logging/QuentierLogger.h>
 
 // 10 Mb

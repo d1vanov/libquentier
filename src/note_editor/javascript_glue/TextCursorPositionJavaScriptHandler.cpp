@@ -20,7 +20,8 @@
 
 namespace quentier {
 
-TextCursorPositionJavaScriptHandler::TextCursorPositionJavaScriptHandler(QObject * parent) :
+TextCursorPositionJavaScriptHandler::TextCursorPositionJavaScriptHandler(
+        QObject * parent) :
     QObject(parent)
 {}
 
@@ -29,15 +30,15 @@ void TextCursorPositionJavaScriptHandler::onTextCursorPositionChange()
     Q_EMIT textCursorPositionChanged();
 }
 
-void TextCursorPositionJavaScriptHandler::setOnImageResourceState(bool state,
-                                                                  QString resourceHash)
+void TextCursorPositionJavaScriptHandler::setOnImageResourceState(
+    bool state, QString resourceHash)
 {
     Q_EMIT textCursorPositionOnImageResourceState(
         state, QByteArray::fromHex(resourceHash.toLocal8Bit()));
 }
 
-void TextCursorPositionJavaScriptHandler::setOnNonImageResourceState(bool state,
-                                                                     QString resourceHash)
+void TextCursorPositionJavaScriptHandler::setOnNonImageResourceState(
+    bool state, QString resourceHash)
 {
     Q_EMIT textCursorPositionOnNonImageResourceState(
         state, QByteArray::fromHex(resourceHash.toLocal8Bit()));

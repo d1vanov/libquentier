@@ -22,6 +22,7 @@
 #include "GenericResourceImageManager.h"
 #include "NoteEditorSettingsNames.h"
 #include "ResourceDataInTemporaryFileStorageManager.h"
+
 #include "delegates/AddResourceDelegate.h"
 #include "delegates/RemoveResourceDelegate.h"
 #include "delegates/RenameResourceDelegate.h"
@@ -32,6 +33,7 @@
 #include "delegates/AddHyperlinkToSelectedTextDelegate.h"
 #include "delegates/EditHyperlinkDelegate.h"
 #include "delegates/RemoveHyperlinkDelegate.h"
+
 #include "javascript_glue/ActionsWatcher.h"
 #include "javascript_glue/ResourceInfoJavaScriptHandler.h"
 #include "javascript_glue/ResizableImageJavaScriptHandler.h"
@@ -42,6 +44,7 @@
 #include "javascript_glue/ToDoCheckboxAutomaticInsertionHandler.h"
 #include "javascript_glue/TableResizeJavaScriptHandler.h"
 #include "javascript_glue/SpellCheckerDynamicHelper.h"
+
 #include "undo_stack/NoteEditorContentEditUndoCommand.h"
 #include "undo_stack/EncryptUndoCommand.h"
 #include "undo_stack/DecryptUndoCommand.h"
@@ -64,6 +67,7 @@
 #include "undo_stack/SpellCheckIgnoreWordUndoCommand.h"
 #include "undo_stack/SpellCheckAddToUserWordListUndoCommand.h"
 #include "undo_stack/TableActionUndoCommand.h"
+
 #include <quentier/local_storage/LocalStorageManager.h>
 #include <quentier/utility/ApplicationSettings.h>
 #include <quentier/utility/EventLoopWithExitStatus.h>
@@ -89,8 +93,10 @@ typedef QWebSettings WebSettings;
 #include "javascript_glue/GenericResourceImageJavaScriptHandler.h"
 #include "javascript_glue/HyperlinkClickJavaScriptHandler.h"
 #include "javascript_glue/WebSocketWaiter.h"
+
 #include "WebSocketClientWrapper.h"
 #include "WebSocketTransport.h"
+
 #include <QPainter>
 #include <QIcon>
 #include <QFontMetrics>
@@ -116,6 +122,7 @@ typedef QWebEngineSettings WebSettings;
 #include <quentier/utility/FileIOProcessorAsync.h>
 #include <quentier/utility/QuentierCheckPtr.h>
 #include <quentier/utility/ShortcutManager.h>
+
 #include <QFile>
 #include <QFileInfo>
 #include <QByteArray>
@@ -137,6 +144,7 @@ typedef QWebEngineSettings WebSettings;
 #include <QTransform>
 #include <QTimer>
 #include <QCryptographicHash>
+
 #include <cmath>
 #include <algorithm>
 

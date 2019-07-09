@@ -20,6 +20,7 @@
 #define LIB_QUENTIER_NOTE_EDITOR_JAVA_SCRIPT_IN_ORDER_EXECUTOR_H
 
 #include <quentier/utility/Macros.h>
+
 #include <QObject>
 #include <QQueue>
 

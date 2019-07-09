@@ -20,6 +20,7 @@
 #define LIB_QUENTIER_NOTE_EDITOR_JAVASCRIPT_GLUE_GENERIC_RESOURCE_IMAGE_JAVA_SCRIPT_HANDLER_H
 
 #include <quentier/utility/Macros.h>
+
 #include <QObject>
 #include <QHash>
 

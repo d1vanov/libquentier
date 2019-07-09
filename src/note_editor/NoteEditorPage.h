@@ -20,6 +20,7 @@
 #define LIB_QUENTIER_NOTE_EDITOR_NOTE_EDITOR_PAGE_H
 
 #include "JavaScriptInOrderExecutor.h"
+
 #include <quentier/utility/Macros.h>
 
 #ifndef QUENTIER_USE_QT_WEB_ENGINE

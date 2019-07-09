@@ -19,7 +19,9 @@
 #include "AddHyperlinkToSelectedTextDelegate.h"
 #include "../NoteEditor_p.h"
 #include "../dialogs/EditHyperlinkDialog.h"
+
 #include <quentier/logging/QuentierLogger.h>
+
 #include <QScopedPointer>
 
 #ifndef QUENTIER_USE_QT_WEB_ENGINE
@@ -28,16 +30,18 @@
 
 namespace quentier {
 
-#define GET_PAGE() \
-    NoteEditorPage * page = qobject_cast<NoteEditorPage*>(m_noteEditor.page()); \
-    if (Q_UNLIKELY(!page)) { \
-        ErrorString error(QT_TRANSLATE_NOOP("AddHyperlinkToSelectedTextDelegate", \
-                                            "Can't add hyperlink to the selected "\
-                                            "text: no note editor page")); \
-        QNWARNING(error); \
-        Q_EMIT notifyError(error); \
-        return; \
-    }
+#define GET_PAGE()                                                             \
+    NoteEditorPage * page = qobject_cast<NoteEditorPage*>(m_noteEditor.page());\
+    if (Q_UNLIKELY(!page)) {                                                   \
+        ErrorString error(                                                     \
+            QT_TRANSLATE_NOOP("AddHyperlinkToSelectedTextDelegate",            \
+                              "Can't add hyperlink to the selected "           \
+                              "text: no note editor page"));                   \
+        QNWARNING(error);                                                      \
+        Q_EMIT notifyError(error);                                             \
+        return;                                                                \
+    }                                                                          \
+// GET_PAGE
 
 AddHyperlinkToSelectedTextDelegate::AddHyperlinkToSelectedTextDelegate(
         NoteEditorPrivate & noteEditor, const quint64 hyperlinkIdToAdd) :
@@ -51,7 +55,7 @@ AddHyperlinkToSelectedTextDelegate::AddHyperlinkToSelectedTextDelegate(
 
 void AddHyperlinkToSelectedTextDelegate::start()
 {
-    QNDEBUG(QStringLiteral("AddHyperlinkToSelectedTextDelegate::start"));
+    QNDEBUG("AddHyperlinkToSelectedTextDelegate::start");
 
     if (m_noteEditor.isEditorPageModified())
     {
@@ -71,9 +75,9 @@ void AddHyperlinkToSelectedTextDelegate::start()
 void AddHyperlinkToSelectedTextDelegate::startWithPresetHyperlink(
     const QString & presetHyperlink, const QString & replacementLinkText)
 {
-    QNDEBUG(QStringLiteral("AddHyperlinkToSelectedTextDelegate::")
-            << QStringLiteral("startWithPresetHyperlink: preset hyperlink = ")
-            << presetHyperlink << QStringLiteral(", replacement link text = ")
+    QNDEBUG("AddHyperlinkToSelectedTextDelegate::"
+            << "startWithPresetHyperlink: preset hyperlink = "
+            << presetHyperlink << ", replacement link text = "
             << replacementLinkText);
 
     m_shouldGetHyperlinkFromDialog = false;
@@ -85,8 +89,8 @@ void AddHyperlinkToSelectedTextDelegate::startWithPresetHyperlink(
 
 void AddHyperlinkToSelectedTextDelegate::onOriginalPageConvertedToNote(Note note)
 {
-    QNDEBUG(QStringLiteral("AddHyperlinkToSelectedTextDelegate::"
-                           "onOriginalPageConvertedToNote"));
+    QNDEBUG("AddHyperlinkToSelectedTextDelegate::"
+            "onOriginalPageConvertedToNote");
 
     Q_UNUSED(note)
 
@@ -101,8 +105,8 @@ void AddHyperlinkToSelectedTextDelegate::onOriginalPageConvertedToNote(Note note
 
 void AddHyperlinkToSelectedTextDelegate::addHyperlinkToSelectedText()
 {
-    QNDEBUG(QStringLiteral("AddHyperlinkToSelectedTextDelegate::"
-                           "addHyperlinkToSelectedText"));
+    QNDEBUG("AddHyperlinkToSelectedTextDelegate::"
+            "addHyperlinkToSelectedText");
 
     if (m_shouldGetHyperlinkFromDialog || m_replacementLinkText.isEmpty())
     {
@@ -123,8 +127,8 @@ void AddHyperlinkToSelectedTextDelegate::addHyperlinkToSelectedText()
 void AddHyperlinkToSelectedTextDelegate::onInitialHyperlinkDataReceived(
     const QVariant & data)
 {
-    QNDEBUG(QStringLiteral("AddHyperlinkToSelectedTextDelegate::")
-            << QStringLiteral("onInitialHyperlinkDataReceived: ") << data);
+    QNDEBUG("AddHyperlinkToSelectedTextDelegate::"
+            << "onInitialHyperlinkDataReceived: " << data);
 
     QString initialText = data.toString();
 
@@ -145,8 +149,8 @@ void AddHyperlinkToSelectedTextDelegate::onInitialHyperlinkDataReceived(
 void AddHyperlinkToSelectedTextDelegate::raiseAddHyperlinkDialog(
     const QString & initialText)
 {
-    QNDEBUG(QStringLiteral("AddHyperlinkToSelectedTextDelegate::")
-            << QStringLiteral("raiseAddHyperlinkDialog: initial text = ")
+    QNDEBUG("AddHyperlinkToSelectedTextDelegate::"
+            << "raiseAddHyperlinkDialog: initial text = "
             << initialText);
 
     QScopedPointer<EditHyperlinkDialog> pEditHyperlinkDialog(
@@ -160,10 +164,10 @@ void AddHyperlinkToSelectedTextDelegate::raiseAddHyperlinkDialog(
                      QNSLOT(AddHyperlinkToSelectedTextDelegate,
                             onAddHyperlinkDialogFinished,
                             QString,QUrl,quint64,bool));
-    QNTRACE(QStringLiteral("Will exec add hyperlink dialog now"));
+    QNTRACE("Will exec add hyperlink dialog now");
     int res = pEditHyperlinkDialog->exec();
     if (res == QDialog::Rejected) {
-        QNTRACE(QStringLiteral("Cancelled add hyperlink dialog"));
+        QNTRACE("Cancelled add hyperlink dialog");
         Q_EMIT cancelled();
     }
 }
@@ -171,9 +175,9 @@ void AddHyperlinkToSelectedTextDelegate::raiseAddHyperlinkDialog(
 void AddHyperlinkToSelectedTextDelegate::onAddHyperlinkDialogFinished(
     QString text, QUrl url, quint64 hyperlinkId, bool startupUrlWasEmpty)
 {
-    QNDEBUG(QStringLiteral("AddHyperlinkToSelectedTextDelegate::")
-            << QStringLiteral("onAddHyperlinkDialogFinished: text = ")
-            << text << QStringLiteral(", url = ") << url);
+    QNDEBUG("AddHyperlinkToSelectedTextDelegate::"
+            << "onAddHyperlinkDialogFinished: text = "
+            << text << ", url = " << url);
 
     Q_UNUSED(hyperlinkId);
     Q_UNUSED(startupUrlWasEmpty);
@@ -187,12 +191,12 @@ void AddHyperlinkToSelectedTextDelegate::onAddHyperlinkDialogFinished(
     setHyperlinkToSelection(urlString, text);
 }
 
-void AddHyperlinkToSelectedTextDelegate::setHyperlinkToSelection(const QString & url,
-                                                                 const QString & text)
+void AddHyperlinkToSelectedTextDelegate::setHyperlinkToSelection(
+    const QString & url, const QString & text)
 {
-    QNDEBUG(QStringLiteral("AddHyperlinkToSelectedTextDelegate::")
-            << QStringLiteral("setHyperlinkToSelection: url = ") << url
-            << QStringLiteral(", text = ") << text);
+    QNDEBUG("AddHyperlinkToSelectedTextDelegate::"
+            << "setHyperlinkToSelection: url = " << url
+            << ", text = " << text);
 
     QString javascript = QStringLiteral("hyperlinkManager.setHyperlinkToSelection('") +
                          text + QStringLiteral("', '") + url + QStringLiteral("', ") +
@@ -206,9 +210,10 @@ void AddHyperlinkToSelectedTextDelegate::setHyperlinkToSelection(const QString &
             &AddHyperlinkToSelectedTextDelegate::onHyperlinkSetToSelection));
 }
 
-void AddHyperlinkToSelectedTextDelegate::onHyperlinkSetToSelection(const QVariant & data)
+void AddHyperlinkToSelectedTextDelegate::onHyperlinkSetToSelection(
+    const QVariant & data)
 {
-    QNDEBUG(QStringLiteral("AddHyperlinkToSelectedTextDelegate::onHyperlinkSetToSelection"));
+    QNDEBUG("AddHyperlinkToSelectedTextDelegate::onHyperlinkSetToSelection");
 
     QMap<QString,QVariant> resultMap = data.toMap();
 

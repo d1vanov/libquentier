@@ -18,26 +18,31 @@
 
 #include "ImageResourceRotationDelegate.h"
 #include "../ResourceDataInTemporaryFileStorageManager.h"
+
 #include <quentier/types/Note.h>
 #include <quentier/types/Resource.h>
 #include <quentier/logging/QuentierLogger.h>
 #include <quentier/utility/Utility.h>
+
 #include <QDateTime>
 #include <QBuffer>
+
 #include <limits>
 
 namespace quentier {
 
-#define GET_PAGE() \
-    NoteEditorPage * page = qobject_cast<NoteEditorPage*>(m_noteEditor.page()); \
-    if (Q_UNLIKELY(!page)) { \
-        ErrorString error(QT_TRANSLATE_NOOP("ImageResourceRotationDelegate", \
-                                            "Can't rotate the image attachment: "\
-                                            "no note editor page")); \
-        QNWARNING(error); \
-        Q_EMIT notifyError(error); \
-        return; \
-    }
+#define GET_PAGE()                                                             \
+    NoteEditorPage * page = qobject_cast<NoteEditorPage*>(m_noteEditor.page());\
+    if (Q_UNLIKELY(!page)) {                                                   \
+        ErrorString error(                                                     \
+            QT_TRANSLATE_NOOP("ImageResourceRotationDelegate",                 \
+                              "Can't rotate the image attachment: "            \
+                              "no note editor page"));                         \
+        QNWARNING(error);                                                      \
+        Q_EMIT notifyError(error);                                             \
+        return;                                                                \
+    }                                                                          \
+// GET_PAGE
 
 ImageResourceRotationDelegate::ImageResourceRotationDelegate(
         const QByteArray & resourceHashBefore,
@@ -64,7 +69,7 @@ ImageResourceRotationDelegate::ImageResourceRotationDelegate(
 
 void ImageResourceRotationDelegate::start()
 {
-    QNDEBUG(QStringLiteral("ImageResourceRotationDelegate::start"));
+    QNDEBUG("ImageResourceRotationDelegate::start");
 
     if (m_noteEditor.isEditorPageModified())
     {
@@ -83,7 +88,7 @@ void ImageResourceRotationDelegate::start()
 
 void ImageResourceRotationDelegate::onOriginalPageConvertedToNote(Note note)
 {
-    QNDEBUG(QStringLiteral("ImageResourceRotationDelegate::onOriginalPageConvertedToNote"));
+    QNDEBUG("ImageResourceRotationDelegate::onOriginalPageConvertedToNote");
 
     Q_UNUSED(note)
 
@@ -98,7 +103,7 @@ void ImageResourceRotationDelegate::onOriginalPageConvertedToNote(Note note)
 
 void ImageResourceRotationDelegate::rotateImageResource()
 {
-    QNDEBUG(QStringLiteral("ImageResourceRotationDelegate::rotateImageResource"));
+    QNDEBUG("ImageResourceRotationDelegate::rotateImageResource");
 
     ErrorString error(QT_TR_NOOP("Can't rotate the image attachment"));
 
@@ -124,7 +129,7 @@ void ImageResourceRotationDelegate::rotateImageResource()
 
         if (Q_UNLIKELY(!resource.hasMime())) {
             error.appendBase(QT_TR_NOOP("The mime type is missing"));
-            QNWARNING(error << QStringLiteral(", resource: ") << resource);
+            QNWARNING(error << ", resource: " << resource);
             Q_EMIT notifyError(error);
             return;
         }
@@ -133,7 +138,7 @@ void ImageResourceRotationDelegate::rotateImageResource()
         {
             error.appendBase(QT_TR_NOOP("The mime type indicates the attachment "
                                         "is not an image"));
-            QNWARNING(error << QStringLiteral(", resource: ") << resource);
+            QNWARNING(error << ", resource: " << resource);
             Q_EMIT notifyError(error);
             return;
         }
@@ -201,8 +206,7 @@ void ImageResourceRotationDelegate::rotateImageResource()
 
     int height = resourceImage.height();
     int width = resourceImage.width();
-    QNTRACE(QStringLiteral("Rotated resource's height = ") << height
-            << QStringLiteral(", width = ") << width);
+    QNTRACE("Rotated resource's height = " << height << ", width = " << width);
 
     if ((height > 0) && (height <= std::numeric_limits<qint16>::max()) &&
         (width > 0) && (width <= std::numeric_limits<qint16>::max()))
@@ -241,12 +245,11 @@ void ImageResourceRotationDelegate::rotateImageResource()
                             onResourceDataSavedToTemporaryFile,
                             QUuid,QByteArray,ErrorString));
 
-    Q_EMIT saveResourceDataToTemporaryFile(m_rotatedResource.noteLocalUid(),
-                                           m_rotatedResource.localUid(),
-                                           m_rotatedResource.dataBody(),
-                                           QByteArray(),
-                                           m_saveResourceDataToTemporaryFileRequestId,
-                                           /* is image = */ true);
+    Q_EMIT saveResourceDataToTemporaryFile(
+        m_rotatedResource.noteLocalUid(), m_rotatedResource.localUid(),
+        m_rotatedResource.dataBody(), QByteArray(),
+        m_saveResourceDataToTemporaryFileRequestId,
+        /* is image = */ true);
 }
 
 void ImageResourceRotationDelegate::onResourceDataSavedToTemporaryFile(
@@ -256,9 +259,9 @@ void ImageResourceRotationDelegate::onResourceDataSavedToTemporaryFile(
         return;
     }
 
-    QNDEBUG(QStringLiteral("ImageResourceRotationDelegate::")
-            << QStringLiteral("onResourceDataSavedToTemporaryFile: hash = ")
-            << dataHash.toHex() << QStringLiteral(", error description = ")
+    QNDEBUG("ImageResourceRotationDelegate::"
+            << "onResourceDataSavedToTemporaryFile: hash = "
+            << dataHash.toHex() << ", error description = "
             << errorDescription);
 
     if (Q_UNLIKELY(!errorDescription.isEmpty()))
@@ -317,9 +320,9 @@ void ImageResourceRotationDelegate::onResourceDataSavedToTemporaryFile(
         return;
     }
 
-    QNTRACE(QStringLiteral("Created a link to the original file (")
+    QNTRACE("Created a link to the original file ("
             << QDir::toNativeSeparators(fileStoragePath)
-            << QStringLiteral("): ") << QDir::toNativeSeparators(linkFilePath));
+            << "): " << QDir::toNativeSeparators(linkFilePath));
 
     m_resourceFileStoragePathAfter = linkFilePath;
 
@@ -362,13 +365,12 @@ void ImageResourceRotationDelegate::onResourceDataSavedToTemporaryFile(
                 // NOTE: there appears to be a bug in Qt for Windows, QFile::remove
                 // returns false for any *.lnk files even though the files are
                 // actually getting removed
-                QNTRACE(QStringLiteral("Skipping the reported failure at "
-                                       "removing the .lnk file"));
+                QNTRACE("Skipping the reported failure at removing the .lnk file");
             }
             else {
 #endif
 
-            QNINFO(QStringLiteral("Can't remove stale resource file ")
+            QNINFO("Can't remove stale resource file "
                    << m_resourceFileStoragePathBefore);
 
 #ifdef Q_OS_WIN
@@ -389,9 +391,10 @@ void ImageResourceRotationDelegate::onResourceDataSavedToTemporaryFile(
         JsCallback(*this, &ImageResourceRotationDelegate::onResourceTagHashUpdated));
 }
 
-void ImageResourceRotationDelegate::onResourceTagHashUpdated(const QVariant & data)
+void ImageResourceRotationDelegate::onResourceTagHashUpdated(
+    const QVariant & data)
 {
-    QNDEBUG(QStringLiteral("ImageResourceRotationDelegate::onResourceTagHashUpdated"));
+    QNDEBUG("ImageResourceRotationDelegate::onResourceTagHashUpdated");
 
     Q_UNUSED(data)
 
@@ -414,9 +417,10 @@ void ImageResourceRotationDelegate::onResourceTagHashUpdated(const QVariant & da
         JsCallback(*this, &ImageResourceRotationDelegate::onResourceTagSrcUpdated));
 }
 
-void ImageResourceRotationDelegate::onResourceTagSrcUpdated(const QVariant & data)
+void ImageResourceRotationDelegate::onResourceTagSrcUpdated(
+    const QVariant & data)
 {
-    QNDEBUG(QStringLiteral("ImageResourceRotationDelegate::onResourceTagSrcUpdated"));
+    QNDEBUG("ImageResourceRotationDelegate::onResourceTagSrcUpdated");
 
     Q_UNUSED(data)
 

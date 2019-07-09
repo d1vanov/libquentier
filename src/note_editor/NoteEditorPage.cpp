@@ -19,8 +19,10 @@
 #include "NoteEditorPage.h"
 #include "JavaScriptInOrderExecutor.h"
 #include "NoteEditor_p.h"
+
 #include <quentier/utility/QuentierCheckPtr.h>
 #include <quentier/logging/QuentierLogger.h>
+
 #include <QMessageBox>
 #include <QApplication>
 #include <QAction>

@@ -21,6 +21,7 @@
 
 #include "ResourceInfo.h"
 #include "NoteEditorPage.h"
+
 #include <quentier/note_editor/INoteEditorBackend.h>
 #include <quentier/note_editor/NoteEditor.h>
 #include <quentier/enml/DecryptedTextManager.h>
@@ -30,6 +31,7 @@
 #include <quentier/types/ErrorString.h>
 #include <quentier/types/Notebook.h>
 #include <quentier/types/ResourceRecognitionIndices.h>
+
 #include <QObject>
 #include <QMimeType>
 #include <QFont>
@@ -47,6 +49,7 @@ typedef QWebEngineView WebView;
 typedef QWebEnginePage WebPage;
 #else
 #include "NoteEditorPluginFactory.h"
+
 #include <QWebView>
 typedef QWebView WebView;
 typedef QWebPage WebPage;

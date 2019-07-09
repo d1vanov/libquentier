@@ -22,6 +22,7 @@
 #include <quentier/utility/Macros.h>
 #include <quentier/types/ErrorString.h>
 #include <quentier/types/Note.h>
+
 #include <QObject>
 #include <QUuid>
 #include <QScopedPointer>

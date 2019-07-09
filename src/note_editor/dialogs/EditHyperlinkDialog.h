@@ -20,6 +20,7 @@
 #define LIB_QUENTIER_NOTE_EDITOR_EDIT_HYPERLINK_DIALOG_H
 
 #include <quentier/utility/Macros.h>
+
 #include <QDialog>
 #include <QUrl>
 

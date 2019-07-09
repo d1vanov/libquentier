@@ -20,6 +20,7 @@
 #include "../NoteEditor_p.h"
 #include "../NoteEditorPage.h"
 #include "../ResourceDataInTemporaryFileStorageManager.h"
+
 #include <quentier/enml/ENMLConverter.h>
 #include <quentier/types/Account.h>
 #include <quentier/types/Note.h>
@@ -27,6 +28,7 @@
 #include <quentier/utility/Utility.h>
 #include <quentier/logging/QuentierLogger.h>
 #include <quentier/enml/ENMLConverter.h>
+
 #include <QXmlStreamReader>
 #include <QXmlStreamWriter>
 #include <QSet>
@@ -37,6 +39,7 @@
 #include <QMimeType>
 #include <QMimeDatabase>
 #include <QTemporaryFile>
+
 #include <limits>
 
 namespace quentier {
@@ -69,7 +72,7 @@ InsertHtmlDelegate::InsertHtmlDelegate(
 
 void InsertHtmlDelegate::start()
 {
-    QNDEBUG(QStringLiteral("InsertHtmlDelegate::start"));
+    QNDEBUG("InsertHtmlDelegate::start");
 
     if (m_noteEditor.isEditorPageModified())
     {
@@ -88,7 +91,7 @@ void InsertHtmlDelegate::start()
 
 void InsertHtmlDelegate::onOriginalPageConvertedToNote(Note note)
 {
-    QNDEBUG(QStringLiteral("InsertHtmlDelegate::onOriginalPageConvertedToNote"));
+    QNDEBUG("InsertHtmlDelegate::onOriginalPageConvertedToNote");
 
     Q_UNUSED(note)
 
@@ -101,26 +104,25 @@ void InsertHtmlDelegate::onOriginalPageConvertedToNote(Note note)
     doStart();
 }
 
-void InsertHtmlDelegate::onResourceDataSavedToTemporaryFile(QUuid requestId,
-                                                            QByteArray dataHash,
-                                                            ErrorString errorDescription)
+void InsertHtmlDelegate::onResourceDataSavedToTemporaryFile(
+    QUuid requestId, QByteArray dataHash, ErrorString errorDescription)
 {
     auto it = m_resourceBySaveDataToTemporaryFileRequestId.find(requestId);
     if (it == m_resourceBySaveDataToTemporaryFileRequestId.end()) {
         return;
     }
 
-    QNDEBUG(QStringLiteral("InsertHtmlDelegate::onResourceDataSavedToTemporaryFile: ")
-            << QStringLiteral("request id = ") << requestId
-            << QStringLiteral(", data hash = ") << dataHash.toHex()
-            << QStringLiteral(", error description: ") << errorDescription);
+    QNDEBUG("InsertHtmlDelegate::onResourceDataSavedToTemporaryFile: "
+            << "request id = " << requestId
+            << ", data hash = " << dataHash.toHex()
+            << ", error description: " << errorDescription);
 
     Resource resource = it.value();
     Q_UNUSED(m_resourceBySaveDataToTemporaryFileRequestId.erase(it))
 
     if (Q_UNLIKELY(!errorDescription.isEmpty()))
     {
-        QNWARNING(QStringLiteral("Failed to save the resource to a temporary file: ")
+        QNWARNING("Failed to save the resource to a temporary file: "
                   << errorDescription);
 
         auto urlIt = m_sourceUrlByResourceLocalUid.find(resource.localUid());
@@ -181,7 +183,7 @@ void InsertHtmlDelegate::onResourceDataSavedToTemporaryFile(QUuid requestId,
 
 void InsertHtmlDelegate::onHtmlInserted(const QVariant & responseData)
 {
-    QNDEBUG(QStringLiteral("InsertHtmlDelegate::onHtmlInserted"));
+    QNDEBUG("InsertHtmlDelegate::onHtmlInserted");
 
     QMap<QString,QVariant> resultMap = responseData.toMap();
 
@@ -237,12 +239,12 @@ void InsertHtmlDelegate::onHtmlInserted(const QVariant & responseData)
 
         if (Q_UNLIKELY(!resource.hasDataHash()))
         {
-            QNDEBUG(QStringLiteral("One of added resources has no data hash"));
+            QNDEBUG("One of added resources has no data hash");
 
             if (Q_UNLIKELY(!resource.hasDataBody()))
             {
-                QNDEBUG(QStringLiteral("This resource has no data body as well, "
-                                       "will just skip it"));
+                QNDEBUG("This resource has no data body as well, "
+                        "will just skip it");
                 continue;
             }
 
@@ -253,12 +255,12 @@ void InsertHtmlDelegate::onHtmlInserted(const QVariant & responseData)
 
         if (Q_UNLIKELY(!resource.hasDataSize()))
         {
-            QNDEBUG(QStringLiteral("One of added resources has no data size"));
+            QNDEBUG("One of added resources has no data size");
 
             if (Q_UNLIKELY(!resource.hasDataBody()))
             {
-                QNDEBUG(QStringLiteral("This resource has no data body as well, "
-                                       "will just skip it"));
+                QNDEBUG("This resource has no data body as well, "
+                        "will just skip it");
                 continue;
             }
 
@@ -284,14 +286,14 @@ void InsertHtmlDelegate::onHtmlInserted(const QVariant & responseData)
         resourceFileStoragePaths << imgData.m_resourceFileStoragePath;
     }
 
-    QNDEBUG(QStringLiteral("Finished the html insertion, number of added image ")
-            << QStringLiteral("resources: ") << resources.size());
+    QNDEBUG("Finished the html insertion, number of added image "
+            << "resources: " << resources.size());
     Q_EMIT finished(resources, resourceFileStoragePaths);
 }
 
 void InsertHtmlDelegate::doStart()
 {
-    QNDEBUG(QStringLiteral("InsertHtmlDelegate::doStart"));
+    QNDEBUG("InsertHtmlDelegate::doStart");
 
     if (Q_UNLIKELY(m_inputHtml.isEmpty()))
     {
@@ -353,7 +355,7 @@ void InsertHtmlDelegate::doStart()
             lastElementName = reader.name().toString();
             lastElementAttributes = reader.attributes();
 
-            QNTRACE(QStringLiteral("Start element: ") << lastElementName);
+            QNTRACE("Start element: " << lastElementName);
 
             if ( (lastElementName == QStringLiteral("title")) ||
                  (lastElementName == QStringLiteral("head")) )
@@ -369,8 +371,8 @@ void InsertHtmlDelegate::doStart()
             else if (lastElementName == QStringLiteral("img"))
             {
                 if (!lastElementAttributes.hasAttribute(QStringLiteral("src"))) {
-                    QNDEBUG(QStringLiteral("Detected an img tag without src "
-                                           "attribute, will skip this tag"));
+                    QNDEBUG("Detected an img tag without src "
+                            "attribute, will skip this tag");
                     continue;
                 }
 
@@ -378,8 +380,8 @@ void InsertHtmlDelegate::doStart()
                     lastElementAttributes.value(QStringLiteral("src")).toString();
                 QUrl url(urlString);
                 if (Q_UNLIKELY(!url.isValid())) {
-                    QNDEBUG(QStringLiteral("Can't convert the img tag's src to a "
-                                           "valid URL, will skip this tag; url = ")
+                    QNDEBUG("Can't convert the img tag's src to a "
+                            << "valid URL, will skip this tag; url = "
                             << urlString);
                     continue;
                 }
@@ -389,9 +391,9 @@ void InsertHtmlDelegate::doStart()
             else if (lastElementName == QStringLiteral("a"))
             {
                 if (!lastElementAttributes.hasAttribute(QStringLiteral("href"))) {
-                    QNDEBUG(QStringLiteral("Detected an a tag without href attribute, "
-                                           "will skip the tag itself but preserving "
-                                           "its internal content"));
+                    QNDEBUG("Detected an a tag without href attribute, "
+                            "will skip the tag itself but preserving "
+                            "its internal content");
                     ++skippedElementWithPreservedContentsNestingCounter;
                     continue;
                 }
@@ -400,8 +402,8 @@ void InsertHtmlDelegate::doStart()
                     lastElementAttributes.value(QStringLiteral("href")).toString();
                 QUrl url(urlString);
                 if (Q_UNLIKELY(!url.isValid())) {
-                    QNDEBUG(QStringLiteral("Can't convert the a tag's href to "
-                                           "a valid URL, will skip this tag; url = ")
+                    QNDEBUG("Can't convert the a tag's href to "
+                            << "a valid URL, will skip this tag; url = "
                             << urlString);
                     ++skippedElementWithPreservedContentsNestingCounter;
                     continue;
@@ -411,8 +413,8 @@ void InsertHtmlDelegate::doStart()
             writer.writeStartElement(lastElementName);
             writer.writeAttributes(lastElementAttributes);
             ++writeElementCounter;
-            QNTRACE(QStringLiteral("Wrote element: name = ") << lastElementName
-                    << QStringLiteral(" and its attributes"));
+            QNTRACE("Wrote element: name = " << lastElementName
+                    << " and its attributes");
         }
 
         if ((writeElementCounter > 0) && reader.isCharacters())
@@ -421,17 +423,17 @@ void InsertHtmlDelegate::doStart()
 
             if (reader.isCDATA()) {
                 writer.writeCDATA(text);
-                QNTRACE(QStringLiteral("Wrote CDATA: ") << text);
+                QNTRACE("Wrote CDATA: " << text);
             }
             else {
                 writer.writeCharacters(text);
-                QNTRACE(QStringLiteral("Wrote characters: ") << text);
+                QNTRACE("Wrote characters: " << text);
             }
         }
 
         if (reader.isEndElement())
         {
-            QNTRACE(QStringLiteral("End element"));
+            QNTRACE("End element");
 
             if (writeElementCounter <= 0) {
                 continue;
@@ -452,20 +454,20 @@ void InsertHtmlDelegate::doStart()
         ErrorString errorDescription(QT_TR_NOOP("Can't insert HTML: unable to "
                                                 "analyze the HTML"));
         errorDescription.details() = reader.errorString();
-        QNWARNING(QStringLiteral("Error reading html: ") << errorDescription
-                  << QStringLiteral(", HTML: ") << m_cleanedUpHtml);
+        QNWARNING("Error reading html: " << errorDescription
+                  << ", HTML: " << m_cleanedUpHtml);
         Q_EMIT notifyError(errorDescription);
         return;
     }
 
     m_cleanedUpHtml = secondRoundCleanedUpHtml;
-    QNTRACE(QStringLiteral("HTML after cleaning up bad img and a tags: ")
+    QNTRACE("HTML after cleaning up bad img and a tags: "
             << m_cleanedUpHtml);
 
     if (m_imageUrls.isEmpty())
     {
-        QNDEBUG(QStringLiteral("Found no images within the input HTML, thus "
-                               "don't need to download them"));
+        QNDEBUG("Found no images within the input HTML, thus "
+                "don't need to download them");
         insertHtmlIntoEditor();
         return;
     }
@@ -473,7 +475,7 @@ void InsertHtmlDelegate::doStart()
     QNetworkAccessManager::NetworkAccessibility networkAccessibility =
         m_networkAccessManager.networkAccessible();
     if (networkAccessibility != QNetworkAccessManager::Accessible) {
-        QNDEBUG(QStringLiteral("The network is not accessible, can't load any image"));
+        QNDEBUG("The network is not accessible, can't load any image");
         m_failingImageUrls = m_imageUrls;
         checkImageResourcesReady();
         return;
@@ -495,19 +497,19 @@ void InsertHtmlDelegate::doStart()
         const QUrl & url = *it;
         QNetworkRequest request(url);
         Q_UNUSED(m_networkAccessManager.get(request))
-        QNTRACE(QStringLiteral("Issued get request for url " ) << url);
+        QNTRACE("Issued get request for url " << url);
     }
 }
 
 void InsertHtmlDelegate::onImageDataDownloadFinished(QNetworkReply * pReply)
 {
-    QNDEBUG(QStringLiteral("InsertHtmlDelegate::onImageDataDownloadFinished: url = ")
+    QNDEBUG("InsertHtmlDelegate::onImageDataDownloadFinished: url = "
             << (pReply ? pReply->url().toString() : QStringLiteral("<null>")));
 
     if (Q_UNLIKELY(!pReply))
     {
-        QNWARNING(QStringLiteral("Received null QNetworkReply while trying to "
-                                 "download the image from the pasted HTML"));
+        QNWARNING("Received null QNetworkReply while trying to "
+                  "download the image from the pasted HTML");
         checkImageResourcesReady();
         return;
     }
@@ -528,8 +530,7 @@ void InsertHtmlDelegate::onImageDataDownloadFinished(QNetworkReply * pReply)
 
         QNetworkRequest request(redirectUrl);
         Q_UNUSED(m_networkAccessManager.get(request))
-        QNTRACE(QStringLiteral("Issued get request for redirect url: ")
-                << redirectUrl);
+        QNTRACE("Issued get request for redirect url: " << redirectUrl);
 
         pReply->deleteLater();
         return;
@@ -541,10 +542,9 @@ void InsertHtmlDelegate::onImageDataDownloadFinished(QNetworkReply * pReply)
     QNetworkReply::NetworkError error = pReply->error();
     if (error != QNetworkReply::NoError)
     {
-        QNWARNING(QStringLiteral("Detected error when attempting to download ")
-                  << QStringLiteral("the image from pasted HTML: ")
-                  << pReply->errorString() << QStringLiteral(", error code = ")
-                  << error);
+        QNWARNING("Detected error when attempting to download "
+                  << "the image from pasted HTML: "
+                  << pReply->errorString() << ", error code = " << error);
         checkImageResourcesReady();
         pReply->deleteLater();
         return;
@@ -557,45 +557,44 @@ void InsertHtmlDelegate::onImageDataDownloadFinished(QNetworkReply * pReply)
     bool res = image.loadFromData(downloadedData);
     if (Q_UNLIKELY(!res))
     {
-        QNDEBUG(QStringLiteral("Wasn't able to load the image from the downloaded "
-                               "data without format specification"));
+        QNDEBUG("Wasn't able to load the image from the downloaded "
+                "data without format specification");
 
         QString format;
         QString urlString = url.toString();
-        int dotIndex = urlString.lastIndexOf(QStringLiteral("."), -1, Qt::CaseInsensitive);
+        int dotIndex = urlString.lastIndexOf(QStringLiteral("."), -1,
+                                             Qt::CaseInsensitive);
         if (dotIndex >= 0)
         {
             format = urlString.mid(dotIndex + 1, urlString.size() - dotIndex - 1);
-            QNTRACE(QStringLiteral("Trying to load the image with format ")
-                    << format);
+            QNTRACE("Trying to load the image with format " << format);
             res = image.loadFromData(downloadedData,
                                      format.toUpper().toLocal8Bit().constData());
         }
         else
         {
-            QNDEBUG(QStringLiteral("Can't find the last dot within the url, ")
-                    << QStringLiteral("can't deduce the image format; url = ")
-                    << urlString);
+            QNDEBUG("Can't find the last dot within the url, "
+                    << "can't deduce the image format; url = " << urlString);
         }
 
         if (!res)
         {
-            QNTRACE(QStringLiteral("Still can't load the image from the downloaded "
-                                   "data, trying to write it to the temporary file "
-                                   "first and load from there"));
+            QNTRACE("Still can't load the image from the downloaded "
+                    "data, trying to write it to the temporary file "
+                    "first and load from there");
 
             QTemporaryFile file;
             if (file.open())
             {
                 Q_UNUSED(file.write(downloadedData));
                 file.flush();
-                QNTRACE(QStringLiteral("Wrote the downloaded data into "
-                                       "the temporary file: ") << file.fileName());
+                QNTRACE("Wrote the downloaded data into the temporary file: "
+                        << file.fileName());
 
                 res = image.load(file.fileName());
                 if (!res) {
-                    QNTRACE(QStringLiteral("Could not load the image from temporary "
-                                           "file without format specification"));
+                    QNTRACE("Could not load the image from temporary "
+                            "file without format specification");
                 }
 
                 if (!res && !format.isEmpty())
@@ -603,9 +602,9 @@ void InsertHtmlDelegate::onImageDataDownloadFinished(QNetworkReply * pReply)
                     res = image.load(file.fileName(),
                                      format.toUpper().toLocal8Bit().constData());
                     if (!res) {
-                        QNTRACE(QStringLiteral("Could not load the image from "
-                                               "temporary file with the format "
-                                               "specification too: ") << format);
+                        QNTRACE("Could not load the image from "
+                                << "temporary file with the format "
+                                << "specification too: " << format);
                     }
                 }
             }
@@ -618,7 +617,7 @@ void InsertHtmlDelegate::onImageDataDownloadFinished(QNetworkReply * pReply)
         }
     }
 
-    QNDEBUG(QStringLiteral("Successfully loaded the image from the downloaded data"));
+    QNDEBUG("Successfully loaded the image from the downloaded data");
 
     QByteArray pngImageData;
     QBuffer buffer(&pngImageData);
@@ -627,8 +626,8 @@ void InsertHtmlDelegate::onImageDataDownloadFinished(QNetworkReply * pReply)
     res = image.save(&buffer, "PNG");
     if (Q_UNLIKELY(!res))
     {
-        QNDEBUG(QStringLiteral("Wasn't able to save the downloaded image to PNG "
-                               "format byte array"));
+        QNDEBUG("Wasn't able to save the downloaded image to PNG "
+                "format byte array");
         Q_UNUSED(m_failingImageUrls.insert(url))
         checkImageResourcesReady();
         return;
@@ -638,31 +637,30 @@ void InsertHtmlDelegate::onImageDataDownloadFinished(QNetworkReply * pReply)
 
     res = addResource(pngImageData, url);
     if (Q_UNLIKELY(!res)) {
-        QNDEBUG(QStringLiteral("Wasn't able to add the image to note as a resource"));
+        QNDEBUG("Wasn't able to add the image to note as a resource");
         Q_UNUSED(m_failingImageUrls.insert(url))
         checkImageResourcesReady();
         return;
     }
 
-    QNDEBUG(QStringLiteral("Successfully added the image to note as a resource"));
+    QNDEBUG("Successfully added the image to note as a resource");
     checkImageResourcesReady();
 }
 
 void InsertHtmlDelegate::checkImageResourcesReady()
 {
-    QNDEBUG(QStringLiteral("InsertHtmlDelegate::checkImageResourcesReady"));
+    QNDEBUG("InsertHtmlDelegate::checkImageResourcesReady");
 
     if (!m_pendingImageUrls.isEmpty()) {
-        QNDEBUG(QStringLiteral("Still pending the download of ")
-                << QString::number(m_pendingImageUrls.size())
-                << QStringLiteral(" images"));
+        QNDEBUG("Still pending the download of "
+                << QString::number(m_pendingImageUrls.size()) << " images");
         return;
     }
 
     if (!m_resourceBySaveDataToTemporaryFileRequestId.isEmpty()) {
-        QNDEBUG(QStringLiteral("Still pending saving of ")
+        QNDEBUG("Still pending saving of "
                 << QString::number(m_resourceBySaveDataToTemporaryFileRequestId.size())
-                << QStringLiteral(" images"));
+                << " images");
         return;
     }
 
@@ -676,7 +674,7 @@ void InsertHtmlDelegate::checkImageResourcesReady()
 
 bool InsertHtmlDelegate::adjustImgTagsInHtml()
 {
-    QNDEBUG(QStringLiteral("InsertHtmlDelegate::adjustImgTagsInHtml"));
+    QNDEBUG("InsertHtmlDelegate::adjustImgTagsInHtml");
 
     QString supplementedHtml = QStringLiteral("<html><body>");
     supplementedHtml += m_cleanedUpHtml;
@@ -714,7 +712,7 @@ bool InsertHtmlDelegate::adjustImgTagsInHtml()
             lastElementName = reader.name().toString();
             lastElementAttributes = reader.attributes();
 
-            QNTRACE(QStringLiteral("Start element: ") << lastElementName);
+            QNTRACE("Start element: " << lastElementName);
 
             if ( (lastElementName == QStringLiteral("title")) ||
                  (lastElementName == QStringLiteral("head")) )
@@ -730,8 +728,8 @@ bool InsertHtmlDelegate::adjustImgTagsInHtml()
             else if (lastElementName == QStringLiteral("img"))
             {
                 if (!lastElementAttributes.hasAttribute(QStringLiteral("src"))) {
-                    QNDEBUG(QStringLiteral("Detected an img tag without src "
-                                           "attribute, will skip this img tag"));
+                    QNDEBUG("Detected an img tag without src "
+                            "attribute, will skip this img tag");
                     continue;
                 }
 
@@ -739,42 +737,42 @@ bool InsertHtmlDelegate::adjustImgTagsInHtml()
                     lastElementAttributes.value(QStringLiteral("src")).toString();
                 QUrl url(urlString);
                 if (m_failingImageUrls.contains(url)) {
-                    QNDEBUG(QStringLiteral("The image url ") << url
-                            << QStringLiteral(" was marked as a failing one, ")
-                            << QStringLiteral(", will skip this img tag"));
+                    QNDEBUG("The image url " << url
+                            << " was marked as a failing one, "
+                            << ", will skip this img tag");
                     continue;
                 }
 
                 auto it = m_imgDataBySourceUrl.find(url);
                 if (Q_UNLIKELY(it == m_imgDataBySourceUrl.end()))
                 {
-                    QNDEBUG(QStringLiteral("Can't find the replacement data for ")
-                            << QStringLiteral("the image url ") << url
-                            << QStringLiteral(", see if it's due to redirect url usage"));
+                    QNDEBUG("Can't find the replacement data for "
+                            << "the image url " << url
+                            << ", see if it's due to redirect url usage");
 
                     auto rit = m_urlToRedirectUrl.find(url);
                     if (rit == m_urlToRedirectUrl.end()) {
-                        QNDEBUG(QStringLiteral("Couldn't find the redirect url for url ")
-                                << url << QStringLiteral(", will just skip this img tag"));
+                        QNDEBUG("Couldn't find the redirect url for url "
+                                << url << ", will just skip this img tag");
                         continue;
                     }
 
                     const QUrl & redirectUrl = rit.value();
-                    QNDEBUG(QStringLiteral("Found redirect url for url ") << url
-                            << QStringLiteral(": ") << redirectUrl);
+                    QNDEBUG("Found redirect url for url " << url
+                            << ": " << redirectUrl);
 
                     it = m_imgDataBySourceUrl.find(redirectUrl);
                     if (it == m_imgDataBySourceUrl.end()) {
-                        QNDEBUG(QStringLiteral("Couldn't find the replacement data ")
-                                << QStringLiteral("for the image's redirect url ")
+                        QNDEBUG("Couldn't find the replacement data "
+                                << "for the image's redirect url "
                                 << redirectUrl
-                                << QStringLiteral(", will just skip this img tag"));
+                                << ", will just skip this img tag");
                         continue;
                     }
                 }
 
-                QNDEBUG(QStringLiteral("Successfully found the replacement data "
-                                       "for the image url"));
+                QNDEBUG("Successfully found the replacement data "
+                        "for the image url");
                 const ImgData & imgData = it.value();
                 ErrorString resourceHtmlComposingError;
                 QString resourceHtml =
@@ -787,7 +785,7 @@ bool InsertHtmlDelegate::adjustImgTagsInHtml()
                         QT_TR_NOOP("Can't insert HTML: can't compose the HTML "
                                    "representation of a resource that replaced "
                                    "the external image link"));
-                    QNWARNING(errorDescription << QStringLiteral("; resource: ")
+                    QNWARNING(errorDescription << "; resource: "
                               << imgData.m_resource);
                     Q_EMIT notifyError(errorDescription);
                     return false;
@@ -828,8 +826,8 @@ bool InsertHtmlDelegate::adjustImgTagsInHtml()
                         QT_TR_NOOP("Can't insert HTML: failed to read the composed "
                                    "resource HTML"));
                     errorDescription.details() = resourceHtmlReader.errorString();
-                    QNWARNING(QStringLiteral("Error reading html: ") << errorDescription
-                              << QStringLiteral(", HTML: ") << m_cleanedUpHtml);
+                    QNWARNING("Error reading html: " << errorDescription
+                              << ", HTML: " << m_cleanedUpHtml);
                     Q_EMIT notifyError(errorDescription);
                     return false;
                 }
@@ -842,8 +840,8 @@ bool InsertHtmlDelegate::adjustImgTagsInHtml()
             writer.writeStartElement(lastElementName);
             writer.writeAttributes(lastElementAttributes);
             ++writeElementCounter;
-            QNTRACE(QStringLiteral("Wrote element: name = ") << lastElementName
-                    << QStringLiteral(" and its attributes"));
+            QNTRACE("Wrote element: name = " << lastElementName
+                    << " and its attributes");
         }
 
         if ((writeElementCounter > 0) && reader.isCharacters())
@@ -852,17 +850,17 @@ bool InsertHtmlDelegate::adjustImgTagsInHtml()
 
             if (reader.isCDATA()) {
                 writer.writeCDATA(text);
-                QNTRACE(QStringLiteral("Wrote CDATA: ") << text);
+                QNTRACE("Wrote CDATA: " << text);
             }
             else {
                 writer.writeCharacters(text);
-                QNTRACE(QStringLiteral("Wrote characters: ") << text);
+                QNTRACE("Wrote characters: " << text);
             }
         }
 
         if (reader.isEndElement())
         {
-            QNTRACE(QStringLiteral("End element"));
+            QNTRACE("End element");
 
             if (writeElementCounter <= 0) {
                 continue;
@@ -873,24 +871,26 @@ bool InsertHtmlDelegate::adjustImgTagsInHtml()
         }
     }
 
-    if (reader.hasError()) {
-        ErrorString errorDescription(QT_TR_NOOP("Can't insert HTML: failed to read "
-                                                "and recompose the cleaned up HTML"));
+    if (reader.hasError())
+    {
+        ErrorString errorDescription(
+            QT_TR_NOOP("Can't insert HTML: failed to read "
+                       "and recompose the cleaned up HTML"));
         errorDescription.details() = reader.errorString();
-        QNWARNING(QStringLiteral("Error reading html: ") << errorDescription
-                  << QStringLiteral(", HTML: ") << m_cleanedUpHtml);
+        QNWARNING("Error reading html: " << errorDescription
+                  << ", HTML: " << m_cleanedUpHtml);
         Q_EMIT notifyError(errorDescription);
         return false;
     }
 
     m_cleanedUpHtml = htmlWithAlteredImgTags;
-    QNTRACE(QStringLiteral("HTML after altering the img tags: ") << m_cleanedUpHtml);
+    QNTRACE("HTML after altering the img tags: " << m_cleanedUpHtml);
     return true;
 }
 
 void InsertHtmlDelegate::insertHtmlIntoEditor()
 {
-    QNDEBUG(QStringLiteral("InsertHtmlDelegate::insertHtmlIntoEditor"));
+    QNDEBUG("InsertHtmlDelegate::insertHtmlIntoEditor");
 
     NoteEditorPage * pPage = qobject_cast<NoteEditorPage*>(m_noteEditor.page());
     if (Q_UNLIKELY(!pPage)) {
@@ -902,9 +902,9 @@ void InsertHtmlDelegate::insertHtmlIntoEditor()
 
     ENMLConverter::escapeString(m_cleanedUpHtml, /* simplify = */ false);
     m_cleanedUpHtml = m_cleanedUpHtml.trimmed();
-    QNTRACE(QStringLiteral("Trimmed HTML: ") << m_cleanedUpHtml);
+    QNTRACE("Trimmed HTML: " << m_cleanedUpHtml);
     m_cleanedUpHtml.replace(QStringLiteral("\n"), QStringLiteral("\\n"));
-    QNTRACE(QStringLiteral("Trimmed HTML with escaped newlines: ") << m_cleanedUpHtml);
+    QNTRACE("Trimmed HTML with escaped newlines: " << m_cleanedUpHtml);
 
     pPage->executeJavaScript(
         QStringLiteral("htmlInsertionManager.insertHtml('") +
@@ -915,12 +915,12 @@ void InsertHtmlDelegate::insertHtmlIntoEditor()
 bool InsertHtmlDelegate::addResource(const QByteArray & resourceData,
                                      const QUrl & url)
 {
-    QNDEBUG(QStringLiteral("InsertHtmlDelegate::addResource"));
+    QNDEBUG("InsertHtmlDelegate::addResource");
 
     const Note * pNote = m_noteEditor.notePtr();
     if (Q_UNLIKELY(!pNote)) {
-        QNWARNING(QStringLiteral("Can't add image from inserted HTML: no note "
-                                 "is set to the editor"));
+        QNWARNING("Can't add image from inserted HTML: no note "
+                  "is set to the editor");
         return false;
     }
 
@@ -929,45 +929,45 @@ bool InsertHtmlDelegate::addResource(const QByteArray & resourceData,
     bool noteHasLimits = pNote->hasNoteLimits();
     if (noteHasLimits)
     {
-        QNTRACE(QStringLiteral("Note has its own limits, will use them to check "
-                               "the number of note resources"));
+        QNTRACE("Note has its own limits, will use them to check "
+                "the number of note resources");
 
         const qevercloud::NoteLimits & limits = pNote->noteLimits();
         if (limits.noteResourceCountMax.isSet() &&
             (limits.noteResourceCountMax.ref() == pNote->numResources()))
         {
-            QNINFO(QStringLiteral("Can't add image from inserted HTML: the note "
-                                  "is already at max allowed number of attachments "
-                                  "(judging by note limits)"));
+            QNINFO("Can't add image from inserted HTML: the note "
+                   "is already at max allowed number of attachments "
+                   "(judging by note limits)");
             return false;
         }
     }
     else if (pAccount)
     {
-        QNTRACE(QStringLiteral("Note has no limits of its own, will use "
-                               "the account-wise limits to check the number "
-                               "of note resources"));
+        QNTRACE("Note has no limits of its own, will use "
+                "the account-wise limits to check the number "
+                "of note resources");
 
         int numNoteResources = pNote->numResources();
         ++numNoteResources;
         if (numNoteResources > pAccount->noteResourceCountMax()) {
-            QNINFO(QStringLiteral("Can't add image from inserted HTML: the note "
-                                  "is already at max allowed number of attachments "
-                                  "(judging by account limits)"));
+            QNINFO("Can't add image from inserted HTML: the note "
+                   "is already at max allowed number of attachments "
+                   "(judging by account limits)");
             return false;
         }
     }
     else
     {
-        QNINFO(QStringLiteral("No account when adding image from inserted HTML "
-                              "to note, can't check the account-wise note limits"));
+        QNINFO("No account when adding image from inserted HTML "
+               "to note, can't check the account-wise note limits");
     }
 
     QMimeDatabase mimeDatabase;
     QMimeType mimeType = mimeDatabase.mimeTypeForData(resourceData);
     if (Q_UNLIKELY(!mimeType.isValid())) {
-        QNDEBUG(QStringLiteral("Could not deduce the resource data's mime type "
-                               "from the data, fallback to image/png"));
+        QNDEBUG("Could not deduce the resource data's mime type "
+                "from the data, fallback to image/png");
         mimeType = mimeDatabase.mimeTypeForName(QStringLiteral("image/png"));
     }
 
@@ -997,11 +997,11 @@ bool InsertHtmlDelegate::addResource(const QByteArray & resourceData,
     QUuid requestId = QUuid::createUuid();
     m_resourceBySaveDataToTemporaryFileRequestId[requestId] = resource;
 
-    QNTRACE(QStringLiteral("Emitting the request to save the image resource to ")
-            << QStringLiteral("a temporary file: request id = ") << requestId
-            << QStringLiteral(", resource local uid = ") << resource.localUid()
-            << QStringLiteral(", data hash = ") << dataHash.toHex()
-            << QStringLiteral(", mime type name = ") << mimeType.name());
+    QNTRACE("Emitting the request to save the image resource to "
+            << "a temporary file: request id = " << requestId
+            << ", resource local uid = " << resource.localUid()
+            << ", data hash = " << dataHash.toHex()
+            << ", mime type name = " << mimeType.name());
     Q_EMIT saveResourceDataToTemporaryFile(pNote->localUid(), resource.localUid(),
                                            resourceData, dataHash,
                                            requestId, /* is image = */ true);
@@ -1010,7 +1010,7 @@ bool InsertHtmlDelegate::addResource(const QByteArray & resourceData,
 
 void InsertHtmlDelegate::removeAddedResourcesFromNote()
 {
-    QNDEBUG(QStringLiteral("InsertHtmlDelegate::removeAddedResourcesFromNote"));
+    QNDEBUG("InsertHtmlDelegate::removeAddedResourcesFromNote");
 
     for(auto iit = m_imgDataBySourceUrl.constBegin(),
         iend = m_imgDataBySourceUrl.constEnd(); iit != iend; ++iit)

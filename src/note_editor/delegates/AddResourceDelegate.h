@@ -20,10 +20,12 @@
 #define LIB_QUENTIER_NOTE_EDITOR_DELEGATES_ADD_RESOURCE_DELEGATE_H
 
 #include "JsResultCallbackFunctor.hpp"
+
 #include <quentier/utility/Macros.h>
 #include <quentier/types/ErrorString.h>
 #include <quentier/types/Note.h>
 #include <quentier/types/Resource.h>
+
 #include <QObject>
 #include <QByteArray>
 #include <QUuid>
@@ -55,16 +57,14 @@ public:
      *                                      the resource data is located
      * @param noteEditor                    The note editor holding the note to
      *                                      which the resource is to be added
-     * @param pResourceDataInTemporaryFileStorageManager    The pointer to
-     *                                                      ResourceDataInTemporaryFileStorageManager
-     *                                                      which might be required
-     *                                                      for storing the new resource's
-     *                                                      data in a temporary file
-     *                                                      for the sake of note editor
-     *                                                      page's convenience; it is
-     *                                                      only actually required if
-     *                                                      the added resource is
-     *                                                      an image
+     * @param pResourceDataManager          The pointer to
+     *                                      ResourceDataInTemporaryFileStorageManager
+     *                                      which might be required for storing
+     *                                      the new resource's data in a
+     *                                      temporary file for the sake of note
+     *                                      editor page's convenience; it is
+     *                                      only actually required if the added
+     *                                      resource is an image
      * @param pFileIOThreadWorker           The pointer to FileIOProcessorAsync
      *                                      worker performing the actual IO of
      *                                      file data
@@ -80,7 +80,7 @@ public:
     explicit AddResourceDelegate(
         const QString & filePath,
         NoteEditorPrivate & noteEditor,
-        ResourceDataInTemporaryFileStorageManager * pResourceDataInTemporaryFileStorageManager,
+        ResourceDataInTemporaryFileStorageManager * pResourceDataManager,
         FileIOProcessorAsync * pFileIOThreadWorker,
         GenericResourceImageManager * pGenericResourceImageManager,
         QHash<QByteArray, QString> & genericResourceImageFilePathsByResourceHash);
@@ -94,17 +94,14 @@ public:
      * @param mimeType                      The mime type of resource data
      * @param noteEditor                    The note editor holding the note to
      *                                      which the resource is to be added
-     * @param pResourceDataInTemporaryFileStorageManager    The pointer to
-     *                                                      ResourceDataInTemporaryFileStorageManager
-     *                                                      which might be required
-     *                                                      for storing the new
-     *                                                      resource's data in
-     *                                                      a temporary file for
-     *                                                      the sake of note editor
-     *                                                      page's convenience;
-     *                                                      it is only actually
-     *                                                      required if the added
-     *                                                      resource is an image
+     * @param pResourceDataManager          The pointer to
+     *                                      ResourceDataInTemporaryFileStorageManager
+     *                                      which might be required for storing
+     *                                      the new resource's data in a
+     *                                      temporary file for the sake of note
+     *                                      editor page's convenience; it is
+     *                                      only actually required if the added
+     *                                      resource is an image
      * @param pFileIOThreadWorker           The pointer to FileIOProcessorAsync
      *                                      worker performing the actual IO of
      *                                      file data
@@ -120,7 +117,7 @@ public:
         const QByteArray & resourceData,
         const QString & mimeType,
         NoteEditorPrivate & noteEditor,
-        ResourceDataInTemporaryFileStorageManager * pResourceDataInTemporaryFileStorageManager,
+        ResourceDataInTemporaryFileStorageManager * pResourceDataManager,
         FileIOProcessorAsync * pFileIOThreadWorker,
         GenericResourceImageManager * pGenericResourceImageManager,
         QHash<QByteArray, QString> & genericResourceImageFilePathsByResourceHash);
@@ -139,9 +136,11 @@ Q_SIGNALS:
                                          QUuid requestId, bool isImage);
     void writeFile(QString filePath, QByteArray data, QUuid requestId);
 
-    void saveGenericResourceImageToFile(QString noteLocalUid, QString resourceLocalUid,
+    void saveGenericResourceImageToFile(QString noteLocalUid,
+                                        QString resourceLocalUid,
                                         QByteArray data, QString fileSuffix,
-                                        QByteArray dataHash, QString fileStoragePath,
+                                        QByteArray dataHash,
+                                        QString fileStoragePath,
                                         QUuid requestId);
 
 private Q_SLOTS:

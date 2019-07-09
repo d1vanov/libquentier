@@ -17,6 +17,7 @@
  */
 
 #include "ActionsWatcher.h"
+
 #include <quentier/logging/QuentierLogger.h>
 
 namespace quentier {
@@ -27,13 +28,13 @@ ActionsWatcher::ActionsWatcher(QObject * parent) :
 
 void ActionsWatcher::onCutActionToggled()
 {
-    QNDEBUG(QStringLiteral("ActionsWatcher::onCutActionToggled"));
+    QNDEBUG("ActionsWatcher::onCutActionToggled");
     Q_EMIT cutActionToggled();
 }
 
 void ActionsWatcher::onPasteActionToggled()
 {
-    QNDEBUG(QStringLiteral("ActionsWatcher::onPasteActionToggled"));
+    QNDEBUG("ActionsWatcher::onPasteActionToggled");
     Q_EMIT pasteActionToggled();
 }
 

@@ -20,6 +20,7 @@
 #include "GenericResourceDisplayWidget.h"
 #include "EncryptedAreaPlugin.h"
 #include "NoteEditor_p.h"
+
 #include <quentier/utility/EncryptionManager.h>
 #include <quentier/enml/DecryptedTextManager.h>
 #include <quentier/utility/QuentierCheckPtr.h>
@@ -28,9 +29,11 @@
 #include <quentier/logging/QuentierLogger.h>
 #include <quentier/types/Note.h>
 #include <quentier/types/Resource.h>
+
 #include <QFileIconProvider>
 #include <QDir>
 #include <QRegExp>
+
 #include <cmath>
 #include <algorithm>
 

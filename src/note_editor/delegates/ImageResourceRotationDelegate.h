@@ -21,7 +21,9 @@
 
 #include "../NoteEditor_p.h"
 #include "JsResultCallbackFunctor.hpp"
+
 #include <quentier/types/Resource.h>
+
 #include <QSize>
 
 namespace quentier {

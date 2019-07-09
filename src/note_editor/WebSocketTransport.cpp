@@ -17,7 +17,9 @@
  */
 
 #include "WebSocketTransport.h"
+
 #include <quentier/logging/QuentierLogger.h>
+
 #include <QtWebSockets/QWebSocket>
 #include <QJsonDocument>
 #include <QJsonObject>
@@ -50,15 +52,15 @@ void WebSocketTransport::textMessageReceived(const QString & messageData)
 
 bool WebSocketTransport::parseMessage(QByteArray messageData, QJsonObject & object)
 {
-    QNTRACE(QStringLiteral("WebSocketTransport::parseMessage: ") << messageData);
+    QNTRACE("WebSocketTransport::parseMessage: " << messageData);
 
     QJsonParseError error;
     QJsonDocument document = QJsonDocument::fromJson(messageData, &error);
     if (!error.error)
     {
         if (!document.isObject()) {
-            QNWARNING(QStringLiteral("Failed to parse JSON message that is not ")
-                      << QStringLiteral("an object: ") << messageData);
+            QNWARNING("Failed to parse JSON message that is not an object: "
+                      << messageData);
             return false;
         }
 
@@ -67,14 +69,13 @@ bool WebSocketTransport::parseMessage(QByteArray messageData, QJsonObject & obje
     }
 
     if (error.error != QJsonParseError::GarbageAtEnd) {
-        QNWARNING(QStringLiteral("Failed to parse text message as JSON object: ")
-                  << messageData << QStringLiteral("; error is: ")
-                  << error.errorString());
+        QNWARNING("Failed to parse text message as JSON object: "
+                  << messageData << "; error is: " << error.errorString());
         return false;
     }
 
-    QNTRACE(QStringLiteral("Detected \"garbage at the end\" JSON parsing error, ")
-            << QStringLiteral("trying to workaround; message data: ") << messageData);
+    QNTRACE("Detected \"garbage at the end\" JSON parsing error, "
+            << "trying to workaround; message data: " << messageData);
 
     /**
      * NOTE: for some reason which I can't fully comprehend yet the first part
@@ -86,8 +87,8 @@ bool WebSocketTransport::parseMessage(QByteArray messageData, QJsonObject & obje
      */
     int lastOpeningCurvyBraceIndex = messageData.lastIndexOf('{');
     if (lastOpeningCurvyBraceIndex <= 0) {
-        QNWARNING(QStringLiteral("Failed to workaround \"Garbage at the end\" ")
-                  << QStringLiteral("error, message data: ") << messageData);
+        QNWARNING("Failed to workaround \"Garbage at the end\" "
+                  << "error, message data: " << messageData);
         return false;
     }
 

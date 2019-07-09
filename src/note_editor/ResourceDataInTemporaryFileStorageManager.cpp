@@ -18,11 +18,13 @@
 
 #include "ResourceDataInTemporaryFileStorageManager.h"
 #include "NoteEditorLocalStorageBroker.h"
+
 #include <quentier/types/Note.h>
 #include <quentier/types/Resource.h>
 #include <quentier/logging/QuentierLogger.h>
 #include <quentier/utility/Utility.h>
 #include <quentier/utility/StandardPaths.h>
+
 #include <QWidget>
 #include <QFileInfo>
 #include <QDir>
@@ -30,6 +32,7 @@
 #include <QDesktopServices>
 #include <QCryptographicHash>
 #include <QThread>
+
 #include <cmath>
 #include <algorithm>
 #include <fstream>

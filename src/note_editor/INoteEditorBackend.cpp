@@ -19,6 +19,7 @@
 #include <quentier/note_editor/INoteEditorBackend.h>
 #include <quentier/note_editor/NoteEditor.h>
 #include <quentier/logging/QuentierLogger.h>
+
 #include <QUndoStack>
 
 namespace quentier {
