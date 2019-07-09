@@ -39,7 +39,8 @@ public:
     static NoteEditorLocalStorageBroker & instance();
 
     LocalStorageManagerAsync * localStorageManager();
-    void setLocalStorageManager(LocalStorageManagerAsync & localStorageManagerAsync);
+    void setLocalStorageManager(
+        LocalStorageManagerAsync & localStorageManagerAsync);
 
 Q_SIGNALS:
     void noteSavedToLocalStorage(QString noteLocalUid);
@@ -126,22 +127,24 @@ private Q_SLOTS:
 
 private:
     void createConnections(LocalStorageManagerAsync & localStorageManagerAsync);
-    void disconnectFromLocalStorage(LocalStorageManagerAsync & localStorageManagerAsync);
+    void disconnectFromLocalStorage(
+        LocalStorageManagerAsync & localStorageManagerAsync);
 
     void emitFindNoteRequest(const QString & noteLocalUid);
     void emitUpdateNoteRequest(const Note & note);
 
-    void emitFindNotebookForNoteByLocalUidRequest(const QString & notebookLocalUid,
-                                                  const Note & note);
-    void emitFindNotebookForNoteByGuidRequest(const QString & notebookGuid,
-                                              const Note & note);
+    void emitFindNotebookForNoteByLocalUidRequest(
+        const QString & notebookLocalUid, const Note & note);
+
+    void emitFindNotebookForNoteByGuidRequest(
+        const QString & notebookGuid, const Note & note);
 
     typedef QHash<QString, Note> NotesHash;
     typedef QHash<QString, NotesHash> NotesPendingNotebookFindingHash;
     void emitFindNotebookForNoteRequest(
-                    const Notebook & notebook,
-                    const Note & note,
-                    NotesPendingNotebookFindingHash & notesPendingNotebookFinding);
+        const Notebook & notebook,
+        const Note & note,
+        NotesPendingNotebookFindingHash & notesPendingNotebookFinding);
 
 
     void saveNoteToLocalStorageImpl(const Note & previousNoteVersion,

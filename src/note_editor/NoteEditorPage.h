@@ -101,16 +101,21 @@ private:
                                  const QString & message) Q_DECL_OVERRIDE;
     virtual bool javaScriptConfirm(QWebFrame * pFrame,
                                    const QString & message) Q_DECL_OVERRIDE;
-    virtual void javaScriptConsoleMessage(const QString & message, int lineNumber,
-                                          const QString & sourceID) Q_DECL_OVERRIDE;
+
+    virtual void javaScriptConsoleMessage(
+        const QString & message,
+        int lineNumber,
+        const QString & sourceID) Q_DECL_OVERRIDE;
 #else
     virtual void javaScriptAlert(const QUrl & securityOrigin,
                                  const QString & msg) Q_DECL_OVERRIDE;
     virtual bool javaScriptConfirm(const QUrl & securityOrigin,
                                    const QString & msg) Q_DECL_OVERRIDE;
-    virtual void javaScriptConsoleMessage(JavaScriptConsoleMessageLevel level,
-                                          const QString & message, int lineNumber,
-                                          const QString & sourceID) Q_DECL_OVERRIDE;
+
+    virtual void javaScriptConsoleMessage(
+        JavaScriptConsoleMessageLevel level,
+        const QString & message, int lineNumber,
+        const QString & sourceID) Q_DECL_OVERRIDE;
 #endif
 
 private:

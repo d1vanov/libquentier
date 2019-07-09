@@ -133,7 +133,8 @@ Q_SIGNALS:
 
     void noteLoaded();
 
-    // Signals to notify anyone interested of the formatting at the current cursor position
+    // Signals to notify anyone interested of the formatting at the current
+    // cursor position
     void textBoldState(bool state);
     void textItalicState(bool state);
     void textUnderlineState(bool state);
@@ -302,14 +303,16 @@ public Q_SLOTS:
     virtual void insertTableDialog() Q_DECL_OVERRIDE;
     virtual void insertFixedWidthTable(const int rows, const int columns,
                                        const int widthInPixels) Q_DECL_OVERRIDE;
-    virtual void insertRelativeWidthTable(const int rows, const int columns,
-                                          const double relativeWidth) Q_DECL_OVERRIDE;
+    virtual void insertRelativeWidthTable(
+        const int rows, const int columns,
+        const double relativeWidth) Q_DECL_OVERRIDE;
     virtual void insertTableRow() Q_DECL_OVERRIDE;
     virtual void insertTableColumn() Q_DECL_OVERRIDE;
     virtual void removeTableRow() Q_DECL_OVERRIDE;
     virtual void removeTableColumn() Q_DECL_OVERRIDE;
     virtual void addAttachmentDialog() Q_DECL_OVERRIDE;
-    virtual void saveAttachmentDialog(const QByteArray & resourceHash) Q_DECL_OVERRIDE;
+    virtual void saveAttachmentDialog(
+        const QByteArray & resourceHash) Q_DECL_OVERRIDE;
     virtual void saveAttachmentUnderCursor() Q_DECL_OVERRIDE;
     virtual void openAttachment(const QByteArray & resourceHash) Q_DECL_OVERRIDE;
     virtual void openAttachmentUnderCursor() Q_DECL_OVERRIDE;
@@ -319,8 +322,9 @@ public Q_SLOTS:
     virtual void removeAttachmentUnderCursor() Q_DECL_OVERRIDE;
     virtual void renameAttachment(const QByteArray & resourceHash) Q_DECL_OVERRIDE;
     virtual void renameAttachmentUnderCursor() Q_DECL_OVERRIDE;
-    virtual void rotateImageAttachment(const QByteArray & resourceHash,
-                                       const Rotation::type rotationDirection) Q_DECL_OVERRIDE;
+    virtual void rotateImageAttachment(
+        const QByteArray & resourceHash,
+        const Rotation::type rotationDirection) Q_DECL_OVERRIDE;
     virtual void rotateImageAttachmentUnderCursor(
         const Rotation::type rotationDirection) Q_DECL_OVERRIDE;
 
@@ -345,13 +349,15 @@ public Q_SLOTS:
 
     virtual void onNoteLoadCancelled() Q_DECL_OVERRIDE;
 
-    virtual bool print(QPrinter & printer, ErrorString & errorDescription) Q_DECL_OVERRIDE;
+    virtual bool print(QPrinter & printer,
+                       ErrorString & errorDescription) Q_DECL_OVERRIDE;
     virtual bool exportToPdf(const QString & absoluteFilePath,
                              ErrorString & errorDescription) Q_DECL_OVERRIDE;
     virtual bool exportToEnex(const QStringList & tagNames, QString & enex,
                               ErrorString & errorDescription) Q_DECL_OVERRIDE;
 
-    virtual void setCurrentNoteLocalUid(const QString & noteLocalUid) Q_DECL_OVERRIDE;
+    virtual void setCurrentNoteLocalUid(
+        const QString & noteLocalUid) Q_DECL_OVERRIDE;
     virtual void clear() Q_DECL_OVERRIDE;
     virtual void setFocusToEditor() Q_DECL_OVERRIDE;
     virtual void convertToNote() Q_DECL_OVERRIDE;
@@ -439,12 +445,16 @@ private Q_SLOTS:
     void onNoteLoadFinished(bool ok);
     void onContentChanged();
 
-    void onResourceFileChanged(QString resourceLocalUid, QString fileStoragePath,
-                               QByteArray resourceData, QByteArray resourceDataHash);
+    void onResourceFileChanged(QString resourceLocalUid,
+                               QString fileStoragePath,
+                               QByteArray resourceData,
+                               QByteArray resourceDataHash);
 
 #ifdef QUENTIER_USE_QT_WEB_ENGINE
-    void onGenericResourceImageSaved(bool success, QByteArray resourceActualHash,
-                                     QString filePath, ErrorString errorDescription,
+    void onGenericResourceImageSaved(bool success,
+                                     QByteArray resourceActualHash,
+                                     QString filePath,
+                                     ErrorString errorDescription,
                                      QUuid requestId);
 
     void onHyperlinkClicked(QString url);
@@ -523,17 +533,21 @@ private Q_SLOTS:
                                        QString resourceFileStoragePath);
     void onAddResourceDelegateError(ErrorString error);
     void onAddResourceUndoRedoFinished(
-        const QVariant & data, const QVector<QPair<QString,QString> > & extraData);
+        const QVariant & data,
+        const QVector<QPair<QString,QString> > & extraData);
 
-    void onRemoveResourceDelegateFinished(Resource removedResource, bool reversible);
+    void onRemoveResourceDelegateFinished(Resource removedResource,
+                                          bool reversible);
     void onRemoveResourceDelegateCancelled(QString resourceLocalUid);
     void onRemoveResourceDelegateError(ErrorString error);
     void onRemoveResourceUndoRedoFinished(
-        const QVariant & data, const QVector<QPair<QString,QString> > & extraData);
+        const QVariant & data,
+        const QVector<QPair<QString,QString> > & extraData);
 
     void onRenameResourceDelegateFinished(QString oldResourceName,
                                           QString newResourceName,
-                                          Resource resource, bool performingUndo);
+                                          Resource resource,
+                                          bool performingUndo);
     void onRenameResourceDelegateCancelled();
     void onRenameResourceDelegateError(ErrorString error);
 
@@ -547,16 +561,19 @@ private Q_SLOTS:
     void onImageResourceRotationDelegateError(ErrorString error);
 
     void onHideDecryptedTextFinished(
-        const QVariant & data, const QVector<QPair<QString,QString> > & extraData);
+        const QVariant & data,
+        const QVector<QPair<QString,QString> > & extraData);
 
     void onHideDecryptedTextUndoRedoFinished(
-        const QVariant & data, const QVector<QPair<QString,QString> > & extraData);
+        const QVariant & data,
+        const QVector<QPair<QString,QString> > & extraData);
 
     void onEncryptSelectedTextDelegateFinished();
     void onEncryptSelectedTextDelegateCancelled();
     void onEncryptSelectedTextDelegateError(ErrorString error);
     void onEncryptSelectedTextUndoRedoFinished(
-        const QVariant & data, const QVector<QPair<QString,QString> > & extraData);
+        const QVariant & data,
+        const QVector<QPair<QString,QString> > & extraData);
 
     void onDecryptEncryptedTextDelegateFinished(
         QString encryptedText, QString cipher, size_t length, QString hint,
@@ -565,33 +582,39 @@ private Q_SLOTS:
     void onDecryptEncryptedTextDelegateCancelled();
     void onDecryptEncryptedTextDelegateError(ErrorString error);
     void onDecryptEncryptedTextUndoRedoFinished(
-        const QVariant & data, const QVector<QPair<QString,QString> > & extraData);
+        const QVariant & data,
+        const QVector<QPair<QString,QString> > & extraData);
 
     void onAddHyperlinkToSelectedTextDelegateFinished();
     void onAddHyperlinkToSelectedTextDelegateCancelled();
     void onAddHyperlinkToSelectedTextDelegateError(ErrorString error);
     void onAddHyperlinkToSelectedTextUndoRedoFinished(
-        const QVariant & data, const QVector<QPair<QString,QString> > & extraData);
+        const QVariant & data,
+        const QVector<QPair<QString,QString> > & extraData);
 
     void onEditHyperlinkDelegateFinished();
     void onEditHyperlinkDelegateCancelled();
     void onEditHyperlinkDelegateError(ErrorString error);
     void onEditHyperlinkUndoRedoFinished(
-        const QVariant & data, const QVector<QPair<QString,QString> > & extraData);
+        const QVariant & data,
+        const QVector<QPair<QString,QString> > & extraData);
 
     void onRemoveHyperlinkDelegateFinished();
     void onRemoveHyperlinkDelegateError(ErrorString error);
     void onRemoveHyperlinkUndoRedoFinished(
-        const QVariant & data, const QVector<QPair<QString,QString> > & extraData);
+        const QVariant & data,
+        const QVector<QPair<QString,QString> > & extraData);
 
     void onInsertHtmlDelegateFinished(QList<Resource> addedResources,
                                       QStringList resourceFileStoragePaths);
     void onInsertHtmlDelegateError(ErrorString error);
     void onInsertHtmlUndoRedoFinished(
-        const QVariant & data, const QVector<QPair<QString,QString> > & extraData);
+        const QVariant & data,
+        const QVector<QPair<QString,QString> > & extraData);
 
     void onSourceCodeFormatUndoRedoFinished(
-        const QVariant & data, const QVector<QPair<QString,QString> > & extraData);
+        const QVariant & data,
+        const QVector<QPair<QString,QString> > & extraData);
 
     // Slots for undo command signals
     void onUndoCommandError(ErrorString error);
@@ -653,10 +676,13 @@ private:
 
     template <typename T>
     QString composeHtmlTable(const T width, const T singleColumnWidth,
-                             const int rows, const int columns, const bool relative);
+                             const int rows, const int columns,
+                             const bool relative);
 
     void onManagedPageActionFinished(
-        const QVariant & result, const QVector<QPair<QString, QString> > & extraData);
+        const QVariant & result,
+        const QVector<QPair<QString, QString> > & extraData);
+
     void updateJavaScriptBindings();
 
     void changeFontSize(const bool increase);
@@ -681,9 +707,9 @@ private:
              */
             Initial = 0,
             /**
-             * Blank page of "NoteNotFound" kind is displayed if no note corresponding
-             * to the local uid passed to setCurrentNoteLocalUid slot was found
-             * within the local storage
+             * Blank page of "NoteNotFound" kind is displayed if no note
+             * corresponding to the local uid passed to setCurrentNoteLocalUid
+             * slot was found * within the local storage
              */
             NoteNotFound,
             /**
@@ -710,11 +736,14 @@ private:
      * Reset the page displayed by the note editor to one of "blank" ones
      * not corresponding to any note
      *
-     * @param kind                  The kind of replacement page for the note editor
-     * @param errorDescription      The description of error used if kind is "InternalError"
+     * @param kind                  The kind of replacement page for the note
+     *                              editor
+     * @param errorDescription      The description of error used if kind is
+     *                              "InternalError"
      */
-    void clearEditorContent(const BlankPageKind::type kind = BlankPageKind::Initial,
-                            const ErrorString & errorDescription = ErrorString());
+    void clearEditorContent(
+        const BlankPageKind::type kind = BlankPageKind::Initial,
+        const ErrorString & errorDescription = ErrorString());
 
     void noteToEditorContent();
     void updateColResizableTableBindings();
@@ -781,14 +810,17 @@ private:
     bool checkContextMenuSequenceNumber(const quint64 sequenceNumber) const;
 
     void onPageHtmlReceived(
-        const QString & html, const QVector<QPair<QString,QString> > & extraData =
-        QVector<QPair<QString,QString> >());
+        const QString & html,
+        const QVector<QPair<QString,QString> > & extraData =
+            QVector<QPair<QString,QString> >());
 
     void onSelectedTextEncryptionDone(
-        const QVariant & dummy, const QVector<QPair<QString,QString> > & extraData);
+        const QVariant & dummy,
+        const QVector<QPair<QString,QString> > & extraData);
 
     void onTableActionDone(
-        const QVariant & dummy, const QVector<QPair<QString,QString> > & extraData);
+        const QVariant & dummy,
+        const QVector<QPair<QString,QString> > & extraData);
 
     int resourceIndexByHash(const QList<Resource> & resources,
                             const QByteArray & resourceHash) const;
@@ -811,28 +843,34 @@ private:
     void disableSpellCheck();
 
     void onSpellCheckSetOrCleared(
-        const QVariant & dummy, const QVector<QPair<QString,QString> > & extraData);
+        const QVariant & dummy,
+        const QVector<QPair<QString,QString> > & extraData);
 
     void replaceDefaultPalette();
-    void onDefaultPaletteReplaced(const QVariant & data, const QVector<QPair<QString,QString> > & extraData);
+    void onDefaultPaletteReplaced(
+        const QVariant & data,
+        const QVector<QPair<QString,QString> > & extraData);
 
     bool isNoteReadOnly() const;
 
-    void setupAddHyperlinkDelegate(const quint64 hyperlinkId,
-                                   const QString & presetHyperlink = QString(),
-                                   const QString & replacementLinkText = QString());
+    void setupAddHyperlinkDelegate(
+        const quint64 hyperlinkId,
+        const QString & presetHyperlink = QString(),
+        const QString & replacementLinkText = QString());
 
 #ifdef QUENTIER_USE_QT_WEB_ENGINE
     void onPageHtmlReceivedForPrinting(
-        const QString & html, const QVector<QPair<QString,QString> > & extraData =
-        QVector<QPair<QString,QString> >());
+        const QString & html,
+        const QVector<QPair<QString,QString> > & extraData =
+            QVector<QPair<QString,QString> >());
 #endif
 
     void clearCurrentNoteInfo();
     void reloadCurrentNote();
 
     void clearPrepareNoteImageResourcesProgressDialog();
-    void clearPrepareResourceForOpeningProgressDialog(const QString & resourceLocalUid);
+    void clearPrepareResourceForOpeningProgressDialog(
+        const QString & resourceLocalUid);
 
 private:
     // Overrides for some Qt's virtual methods
@@ -849,13 +887,16 @@ private:
     class Q_DECL_HIDDEN NoteEditorCallbackFunctor
     {
     public:
-        NoteEditorCallbackFunctor(NoteEditorPrivate * pNoteEditor,
-                                  void (NoteEditorPrivate::* method)(
-                                      const T & result,
-                                      const QVector<QPair<QString,QString> > & extraData),
-                                  const QVector<QPair<QString,QString> > & extraData =
-                                  QVector<QPair<QString,QString> >()) :
-            m_pNoteEditor(pNoteEditor), m_method(method), m_extraData(extraData)
+        NoteEditorCallbackFunctor(
+                NoteEditorPrivate * pNoteEditor,
+                void (NoteEditorPrivate::* method)(
+                    const T & result,
+                    const QVector<QPair<QString,QString> > & extraData),
+                const QVector<QPair<QString,QString> > & extraData =
+                QVector<QPair<QString,QString> >()) :
+            m_pNoteEditor(pNoteEditor),
+            m_method(method),
+            m_extraData(extraData)
         {}
 
         NoteEditorCallbackFunctor(const NoteEditorCallbackFunctor<T> & other) :
@@ -864,7 +905,8 @@ private:
             m_extraData(other.m_extraData)
         {}
 
-        NoteEditorCallbackFunctor & operator=(const NoteEditorCallbackFunctor<T> & other)
+        NoteEditorCallbackFunctor & operator=(
+            const NoteEditorCallbackFunctor<T> & other)
         {
             if (this != &other) {
                 m_pNoteEditor = other.m_pNoteEditor;
@@ -885,7 +927,8 @@ private:
     private:
         QPointer<NoteEditorPrivate> m_pNoteEditor;
         void (NoteEditorPrivate::* m_method)(
-            const T & result, const QVector<QPair<QString,QString> > & extraData);
+            const T & result,
+            const QVector<QPair<QString,QString> > & extraData);
         QVector<QPair<QString, QString> > m_extraData;
     };
 

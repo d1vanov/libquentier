@@ -29,10 +29,13 @@
 
 QT_FORWARD_DECLARE_CLASS(QRegExp)
 
-#define RESOURCE_PLUGIN_HTML_OBJECT_TYPE \
-        QStringLiteral("application/vnd.quentier.resource")
-#define ENCRYPTED_AREA_PLUGIN_OBJECT_TYPE \
-        QStringLiteral("application/vnd.quentier.encrypt")
+#define RESOURCE_PLUGIN_HTML_OBJECT_TYPE                                       \
+    QStringLiteral("application/vnd.quentier.resource")                        \
+// RESOURCE_PLUGIN_HTML_OBJECT_TYPE
+
+#define ENCRYPTED_AREA_PLUGIN_OBJECT_TYPE                                      \
+        QStringLiteral("application/vnd.quentier.encrypt")                     \
+// ENCRYPTED_AREA_PLUGIN_OBJECT_TYPE
 
 namespace quentier {
 
@@ -52,7 +55,8 @@ class Q_DECL_HIDDEN NoteEditorPluginFactory: public QWebPluginFactory
 {
     Q_OBJECT
 public:
-    explicit NoteEditorPluginFactory(NoteEditorPrivate & editor, QObject * parent = Q_NULLPTR);
+    explicit NoteEditorPluginFactory(NoteEditorPrivate & editor,
+                                     QObject * parent = Q_NULLPTR);
     virtual ~NoteEditorPluginFactory();
 
     /**
