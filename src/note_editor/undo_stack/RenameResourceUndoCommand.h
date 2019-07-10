@@ -20,7 +20,9 @@
 #define LIB_QUENTIER_NOTE_EDITOR_UNDO_STACK_RENAME_RESOURCE_UNDO_COMMAND_H
 
 #include "INoteEditorUndoCommand.h"
+
 #include <quentier/types/Resource.h>
+
 #include <QHash>
 
 namespace quentier {
@@ -32,14 +34,16 @@ class Q_DECL_HIDDEN RenameResourceUndoCommand: public INoteEditorUndoCommand
     Q_OBJECT
 public:
     RenameResourceUndoCommand(
-        const Resource & resource, const QString & previousResourceName,
+        const Resource & resource,
+        const QString & previousResourceName,
         NoteEditorPrivate & noteEditor,
         GenericResourceImageManager * pGenericResourceImageManager,
         QHash<QByteArray, QString> & genericResourceImageFilePathsByResourceHash,
         QUndoCommand * parent = Q_NULLPTR);
 
     RenameResourceUndoCommand(
-        const Resource & resource, const QString & previousResourceName,
+        const Resource & resource,
+        const QString & previousResourceName,
         NoteEditorPrivate & noteEditor,
         GenericResourceImageManager * pGenericResourceImageManager,
         QHash<QByteArray, QString> & genericResourceImageFilePathsByResourceHash,

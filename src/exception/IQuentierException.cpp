@@ -22,15 +22,16 @@
 
 namespace quentier {
 
-#define INIT_WHAT_MESSAGE() \
-    QByteArray bytes = m_message.nonLocalizedString().toLocal8Bit(); \
-    int size = bytes.size(); \
-    if (size >= 0) { \
-        size_t usize = static_cast<size_t>(size); \
-        m_whatMessage = new char[usize + 1]; \
-        Q_UNUSED(strncpy(m_whatMessage, bytes.constData(), usize)) \
-        m_whatMessage[usize] = '\0'; \
-    }
+#define INIT_WHAT_MESSAGE()                                                    \
+    QByteArray bytes = m_message.nonLocalizedString().toLocal8Bit();           \
+    int size = bytes.size();                                                   \
+    if (size >= 0) {                                                           \
+        size_t usize = static_cast<size_t>(size);                              \
+        m_whatMessage = new char[usize + 1];                                   \
+        Q_UNUSED(strncpy(m_whatMessage, bytes.constData(), usize))             \
+        m_whatMessage[usize] = '\0';                                           \
+    }                                                                          \
+// INIT_WHAT_MESSAGE
 
 IQuentierException::IQuentierException(const ErrorString & message) :
     Printable(),

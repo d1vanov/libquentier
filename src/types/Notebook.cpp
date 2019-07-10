@@ -307,13 +307,14 @@ const QString & Notebook::publishingUri() const
     return d->m_qecNotebook.publishing->uri;
 }
 
-#define CHECK_AND_SET_PUBLISHING \
-    if (!d->m_qecNotebook.publishing.isSet()) { \
-        d->m_qecNotebook.publishing = qevercloud::Publishing(); \
-    } \
-    if (!d->m_qecNotebook.published.isSet()) { \
-        d->m_qecNotebook.published = true; \
-    }
+#define CHECK_AND_SET_PUBLISHING                                               \
+    if (!d->m_qecNotebook.publishing.isSet()) {                                \
+        d->m_qecNotebook.publishing = qevercloud::Publishing();                \
+    }                                                                          \
+    if (!d->m_qecNotebook.published.isSet()) {                                 \
+        d->m_qecNotebook.published = true;                                     \
+    }                                                                          \
+// CHECK_AND_SET_PUBLISHING
 
 void Notebook::setPublishingUri(const QString & uri)
 {
@@ -515,10 +516,11 @@ const QString & Notebook::businessNotebookDescription() const
     return d->m_qecNotebook.businessNotebook->notebookDescription;
 }
 
-#define CHECK_AND_SET_BUSINESS_NOTEBOOK \
-    if (!d->m_qecNotebook.businessNotebook.isSet()) { \
-        d->m_qecNotebook.businessNotebook = qevercloud::BusinessNotebook(); \
-    }
+#define CHECK_AND_SET_BUSINESS_NOTEBOOK                                        \
+    if (!d->m_qecNotebook.businessNotebook.isSet()) {                          \
+        d->m_qecNotebook.businessNotebook = qevercloud::BusinessNotebook();    \
+    }                                                                          \
+// CHECK_AND_SET_BUSINESS_NOTEBOOK
 
 void Notebook::setBusinessNotebookDescription(const QString & businessNotebookDescription)
 {
@@ -608,10 +610,11 @@ bool Notebook::canReadNotes() const
              d->m_qecNotebook.restrictions->noReadNotes);
 }
 
-#define CHECK_AND_SET_NOTEBOOK_RESTRICTIONS \
-    if (!d->m_qecNotebook.restrictions.isSet()) { \
-        d->m_qecNotebook.restrictions = qevercloud::NotebookRestrictions(); \
-    }
+#define CHECK_AND_SET_NOTEBOOK_RESTRICTIONS                                    \
+    if (!d->m_qecNotebook.restrictions.isSet()) {                              \
+        d->m_qecNotebook.restrictions = qevercloud::NotebookRestrictions();    \
+    }                                                                          \
+// CHECK_AND_SET_NOTEBOOK_RESTRICTIONS
 
 void Notebook::setCanReadNotes(const bool canReadNotes)
 {
@@ -960,10 +963,12 @@ bool Notebook::recipientReminderNotifyEmail() const
     return d->m_qecNotebook.recipientSettings->reminderNotifyEmail;
 }
 
-#define CHECK_AND_SET_NOTEBOOK_RECIPIENT_SETTINGS \
-    if (!d->m_qecNotebook.recipientSettings.isSet()) { \
-        d->m_qecNotebook.recipientSettings = qevercloud::NotebookRecipientSettings(); \
-    }
+#define CHECK_AND_SET_NOTEBOOK_RECIPIENT_SETTINGS                              \
+    if (!d->m_qecNotebook.recipientSettings.isSet()) {                         \
+        d->m_qecNotebook.recipientSettings =                                   \
+            qevercloud::NotebookRecipientSettings();                           \
+    }                                                                          \
+// CHECK_AND_SET_NOTEBOOK_RECIPIENT_SETTINGS
 
 void Notebook::setRecipientReminderNotifyEmail(const bool notifyEmail)
 {

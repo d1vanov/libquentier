@@ -565,59 +565,63 @@ bool compareNoteContents(const Note & lhs, const Note & rhs, QString & error)
         const qevercloud::NoteAttributes & leftNoteAttributes = lhs.noteAttributes();
         const qevercloud::NoteAttributes & rightNoteAttributes = rhs.noteAttributes();
 
-#define CHECK_NOTE_ATTRIBUTE_PRESENCE(attrName) \
-        if (leftNoteAttributes.attrName.isSet() != \
-            rightNoteAttributes.attrName.isSet()) \
-        { \
-            error = QStringLiteral("left: has " #attrName " = ") + \
-                    (leftNoteAttributes.attrName.isSet() \
-                     ? QStringLiteral("true") \
-                     : QStringLiteral("false")) + \
-                    QStringLiteral(", right: has " #attrName " = ") + \
-                    (rightNoteAttributes.attrName.isSet() \
-                     ? QStringLiteral("true") \
-                     : QStringLiteral("false")); \
-            return false; \
-        }
+#define CHECK_NOTE_ATTRIBUTE_PRESENCE(attrName)                                \
+        if (leftNoteAttributes.attrName.isSet() !=                             \
+            rightNoteAttributes.attrName.isSet())                              \
+        {                                                                      \
+            error = QStringLiteral("left: has " #attrName " = ") +             \
+                    (leftNoteAttributes.attrName.isSet()                       \
+                     ? QStringLiteral("true")                                  \
+                     : QStringLiteral("false")) +                              \
+                    QStringLiteral(", right: has " #attrName " = ") +          \
+                    (rightNoteAttributes.attrName.isSet()                      \
+                     ? QStringLiteral("true")                                  \
+                     : QStringLiteral("false"));                               \
+            return false;                                                      \
+        }                                                                      \
+// CHECK_NOTE_ATTRIBUTE_PRESENCE
 
-#define CHECK_NOTE_DOUBLE_ATTRIBUTE(attrName) \
-        CHECK_NOTE_ATTRIBUTE_PRESENCE(attrName) \
-        if (leftNoteAttributes.attrName.isSet() && \
-            (std::fabs(leftNoteAttributes.attrName.ref() - \
-                       rightNoteAttributes.attrName.ref()) > 1.0e-9)) \
-        { \
-            error = QStringLiteral("left: " #attrName " = ") + \
-                    QString::number(leftNoteAttributes.attrName.ref()) + \
-                    QStringLiteral(", right: " #attrName " = ") + \
-                    QString::number(rightNoteAttributes.attrName.ref()); \
-            return false; \
-        }
+#define CHECK_NOTE_DOUBLE_ATTRIBUTE(attrName)                                  \
+        CHECK_NOTE_ATTRIBUTE_PRESENCE(attrName)                                \
+        if (leftNoteAttributes.attrName.isSet() &&                             \
+            (std::fabs(leftNoteAttributes.attrName.ref() -                     \
+                       rightNoteAttributes.attrName.ref()) > 1.0e-9))          \
+        {                                                                      \
+            error = QStringLiteral("left: " #attrName " = ") +                 \
+                    QString::number(leftNoteAttributes.attrName.ref()) +       \
+                    QStringLiteral(", right: " #attrName " = ") +              \
+                    QString::number(rightNoteAttributes.attrName.ref());       \
+            return false;                                                      \
+        }                                                                      \
+// CHECK_NOTE_DOUBLE_ATTRIBUTE
 
-#define CHECK_NOTE_STRING_ATTRIBUTE(attrName) \
-        CHECK_NOTE_ATTRIBUTE_PRESENCE(attrName) \
-        if (leftNoteAttributes.attrName.isSet() && \
-            (leftNoteAttributes.attrName.ref() != \
-             rightNoteAttributes.attrName.ref())) \
-        { \
-            error = QStringLiteral("left: " #attrName " = ") + \
-                    leftNoteAttributes.attrName.ref() + \
-                    QStringLiteral(", right: " #attrName " = ") + \
-                    rightNoteAttributes.attrName.ref(); \
-            return false; \
+#define CHECK_NOTE_STRING_ATTRIBUTE(attrName)                                  \
+        CHECK_NOTE_ATTRIBUTE_PRESENCE(attrName)                                \
+        if (leftNoteAttributes.attrName.isSet() &&                             \
+            (leftNoteAttributes.attrName.ref() !=                              \
+             rightNoteAttributes.attrName.ref()))                              \
+        {                                                                      \
+            error = QStringLiteral("left: " #attrName " = ") +                 \
+                    leftNoteAttributes.attrName.ref() +                        \
+                    QStringLiteral(", right: " #attrName " = ") +              \
+                    rightNoteAttributes.attrName.ref();                        \
+            return false;                                                      \
         }
+// CHECK_NOTE_STRING_ATTRIBUTE
 
-#define CHECK_NOTE_INTEGER_ATTRIBUTE(attrName) \
-        CHECK_NOTE_ATTRIBUTE_PRESENCE(attrName) \
-        if (leftNoteAttributes.attrName.isSet() && \
-            (leftNoteAttributes.attrName.ref() != \
-             rightNoteAttributes.attrName.ref())) \
-        { \
-            error = QStringLiteral("left: " #attrName " = ") + \
-                    QString::number(leftNoteAttributes.attrName.ref()) + \
-                    QStringLiteral(", right: " #attrName " = ") + \
-                    QString::number(rightNoteAttributes.attrName.ref()); \
-            return false; \
-        }
+#define CHECK_NOTE_INTEGER_ATTRIBUTE(attrName)                                 \
+        CHECK_NOTE_ATTRIBUTE_PRESENCE(attrName)                                \
+        if (leftNoteAttributes.attrName.isSet() &&                             \
+            (leftNoteAttributes.attrName.ref() !=                              \
+             rightNoteAttributes.attrName.ref()))                              \
+        {                                                                      \
+            error = QStringLiteral("left: " #attrName " = ") +                 \
+                    QString::number(leftNoteAttributes.attrName.ref()) +       \
+                    QStringLiteral(", right: " #attrName " = ") +              \
+                    QString::number(rightNoteAttributes.attrName.ref());       \
+            return false;                                                      \
+        }                                                                      \
+// CHECK_NOTE_INTEGER_ATTRIBUTE
 
         CHECK_NOTE_DOUBLE_ATTRIBUTE(latitude)
         CHECK_NOTE_DOUBLE_ATTRIBUTE(longitude)
@@ -847,72 +851,77 @@ bool compareNoteContents(const Note & lhs, const Note & rhs, QString & error)
                 const qevercloud::ResourceAttributes & rightResourceAttributes =
                     rightResource.resourceAttributes();
 
-#define CHECK_RESOURCE_ATTRIBUTE_PRESENCE(attrName) \
-        if (leftResourceAttributes.attrName.isSet() != \
-            rightResourceAttributes.attrName.isSet()) \
-        { \
-            error = QStringLiteral("left resource: has " #attrName " = ") + \
-                    (leftResourceAttributes.attrName.isSet() \
-                     ? QStringLiteral("true") \
-                     : QStringLiteral("false")) + \
+#define CHECK_RESOURCE_ATTRIBUTE_PRESENCE(attrName)                            \
+        if (leftResourceAttributes.attrName.isSet() !=                         \
+            rightResourceAttributes.attrName.isSet())                          \
+        {                                                                      \
+            error = QStringLiteral("left resource: has " #attrName " = ") +    \
+                    (leftResourceAttributes.attrName.isSet()                   \
+                     ? QStringLiteral("true")                                  \
+                     : QStringLiteral("false")) +                              \
                     QStringLiteral(", right resource: has " #attrName " = ") + \
-                    (rightResourceAttributes.attrName.isSet() \
-                     ? QStringLiteral("true") \
-                     : QStringLiteral("false")); \
-            return false; \
-        }
+                    (rightResourceAttributes.attrName.isSet()                  \
+                     ? QStringLiteral("true")                                  \
+                     : QStringLiteral("false"));                               \
+            return false;                                                      \
+        }                                                                      \
+// CHECK_RESOURCE_ATTRIBUTE_PRESENCE
 
-#define CHECK_RESOURCE_DOUBLE_ATTRIBUTE(attrName) \
-        CHECK_RESOURCE_ATTRIBUTE_PRESENCE(attrName) \
-        if (leftResourceAttributes.attrName.isSet() && \
-            (std::fabs(leftResourceAttributes.attrName.ref() - \
-                       rightResourceAttributes.attrName.ref()) > 1.0e-9)) \
-        { \
-            error = QStringLiteral("left resource: " #attrName " = ") + \
-                    QString::number(leftResourceAttributes.attrName.ref()) + \
-                    QStringLiteral(", right resource: " #attrName " = ") + \
-                    QString::number(rightResourceAttributes.attrName.ref()); \
-            return false; \
-        }
+#define CHECK_RESOURCE_DOUBLE_ATTRIBUTE(attrName)                              \
+        CHECK_RESOURCE_ATTRIBUTE_PRESENCE(attrName)                            \
+        if (leftResourceAttributes.attrName.isSet() &&                         \
+            (std::fabs(leftResourceAttributes.attrName.ref() -                 \
+                       rightResourceAttributes.attrName.ref()) > 1.0e-9))      \
+        {                                                                      \
+            error = QStringLiteral("left resource: " #attrName " = ") +        \
+                    QString::number(leftResourceAttributes.attrName.ref()) +   \
+                    QStringLiteral(", right resource: " #attrName " = ") +     \
+                    QString::number(rightResourceAttributes.attrName.ref());   \
+            return false;                                                      \
+        }                                                                      \
+// CHECK_RESOURCE_DOUBLE_ATTRIBUTE
 
-#define CHECK_RESOURCE_STRING_ATTRIBUTE(attrName) \
-        CHECK_RESOURCE_ATTRIBUTE_PRESENCE(attrName) \
-        if (leftResourceAttributes.attrName.isSet() && \
-            (leftResourceAttributes.attrName.ref() != \
-             rightResourceAttributes.attrName.ref())) \
-        { \
-            error = QStringLiteral("left resource: " #attrName " = ") + \
-                    leftResourceAttributes.attrName.ref() + \
-                    QStringLiteral(", right resource: " #attrName " = ") + \
-                    rightResourceAttributes.attrName.ref(); \
-            return false; \
-        }
+#define CHECK_RESOURCE_STRING_ATTRIBUTE(attrName)                              \
+        CHECK_RESOURCE_ATTRIBUTE_PRESENCE(attrName)                            \
+        if (leftResourceAttributes.attrName.isSet() &&                         \
+            (leftResourceAttributes.attrName.ref() !=                          \
+             rightResourceAttributes.attrName.ref()))                          \
+        {                                                                      \
+            error = QStringLiteral("left resource: " #attrName " = ") +        \
+                    leftResourceAttributes.attrName.ref() +                    \
+                    QStringLiteral(", right resource: " #attrName " = ") +     \
+                    rightResourceAttributes.attrName.ref();                    \
+            return false;                                                      \
+        }                                                                      \
+// CHECK_RESOURCE_STRING_ATTRIBUTE
 
-#define CHECK_RESOURCE_INTEGER_ATTRIBUTE(attrName) \
-        CHECK_RESOURCE_ATTRIBUTE_PRESENCE(attrName) \
-        if (leftResourceAttributes.attrName.isSet() && \
-            (leftResourceAttributes.attrName.ref() != \
-             rightResourceAttributes.attrName.ref())) \
-        { \
-            error = QStringLiteral("left resource: " #attrName " = ") + \
-                    QString::number(leftResourceAttributes.attrName.ref()) + \
-                    QStringLiteral(", right resource: " #attrName " = ") + \
-                    QString::number(rightResourceAttributes.attrName.ref()); \
-            return false; \
+#define CHECK_RESOURCE_INTEGER_ATTRIBUTE(attrName)                             \
+        CHECK_RESOURCE_ATTRIBUTE_PRESENCE(attrName)                            \
+        if (leftResourceAttributes.attrName.isSet() &&                         \
+            (leftResourceAttributes.attrName.ref() !=                          \
+             rightResourceAttributes.attrName.ref()))                          \
+        {                                                                      \
+            error = QStringLiteral("left resource: " #attrName " = ") +        \
+                    QString::number(leftResourceAttributes.attrName.ref()) +   \
+                    QStringLiteral(", right resource: " #attrName " = ") +     \
+                    QString::number(rightResourceAttributes.attrName.ref());   \
+            return false;                                                      \
         }
+// CHECK_RESOURCE_INTEGER_ATTRIBUTE
 
-#define CHECK_RESOURCE_BOOLEAN_ATTRIBUTE(attrName) \
-        CHECK_RESOURCE_ATTRIBUTE_PRESENCE(attrName) \
-        if (leftResourceAttributes.attrName.isSet() && \
-            (leftResourceAttributes.attrName.ref() != \
-             rightResourceAttributes.attrName.ref())) \
-        { \
-            error = QStringLiteral("left resource: " #attrName " = ") + \
-                    QString::number(leftResourceAttributes.attrName.ref()) + \
-                    QStringLiteral(", right resource: " #attrName " = ") + \
-                    QString::number(rightResourceAttributes.attrName.ref()); \
-            return false; \
-        }
+#define CHECK_RESOURCE_BOOLEAN_ATTRIBUTE(attrName)                             \
+        CHECK_RESOURCE_ATTRIBUTE_PRESENCE(attrName)                            \
+        if (leftResourceAttributes.attrName.isSet() &&                         \
+            (leftResourceAttributes.attrName.ref() !=                          \
+             rightResourceAttributes.attrName.ref()))                          \
+        {                                                                      \
+            error = QStringLiteral("left resource: " #attrName " = ") +        \
+                    QString::number(leftResourceAttributes.attrName.ref()) +   \
+                    QStringLiteral(", right resource: " #attrName " = ") +     \
+                    QString::number(rightResourceAttributes.attrName.ref());   \
+            return false;                                                      \
+        }                                                                      \
+// CHECK_RESOURCE_BOOLEAN_ATTRIBUTE
 
                 CHECK_RESOURCE_STRING_ATTRIBUTE(sourceURL)
                 CHECK_RESOURCE_INTEGER_ATTRIBUTE(timestamp)

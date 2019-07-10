@@ -18,14 +18,17 @@
 
 #include "SpellCheckIgnoreWordUndoCommand.h"
 #include "../NoteEditor_p.h"
+
 #include <quentier/note_editor/SpellChecker.h>
 #include <quentier/logging/QuentierLogger.h>
 
 namespace quentier {
 
 SpellCheckIgnoreWordUndoCommand::SpellCheckIgnoreWordUndoCommand(
-        NoteEditorPrivate & noteEditor, const QString & ignoredWord,
-        SpellChecker * pSpellChecker, QUndoCommand * parent) :
+        NoteEditorPrivate & noteEditor,
+        const QString & ignoredWord,
+        SpellChecker * pSpellChecker,
+        QUndoCommand * parent) :
     INoteEditorUndoCommand(noteEditor, parent),
     m_pSpellChecker(pSpellChecker),
     m_ignoredWord(ignoredWord)
@@ -34,8 +37,10 @@ SpellCheckIgnoreWordUndoCommand::SpellCheckIgnoreWordUndoCommand(
 }
 
 SpellCheckIgnoreWordUndoCommand::SpellCheckIgnoreWordUndoCommand(
-        NoteEditorPrivate & noteEditor, const QString & ignoredWord,
-        SpellChecker * pSpellChecker, const QString & text,
+        NoteEditorPrivate & noteEditor,
+        const QString & ignoredWord,
+        SpellChecker * pSpellChecker,
+        const QString & text,
         QUndoCommand * parent) :
     INoteEditorUndoCommand(noteEditor, text, parent),
     m_pSpellChecker(pSpellChecker),
@@ -47,10 +52,10 @@ SpellCheckIgnoreWordUndoCommand::~SpellCheckIgnoreWordUndoCommand()
 
 void SpellCheckIgnoreWordUndoCommand::redoImpl()
 {
-    QNDEBUG(QStringLiteral("SpellCheckIgnoreWordUndoCommand::redoImpl"));
+    QNDEBUG("SpellCheckIgnoreWordUndoCommand::redoImpl");
 
     if (Q_UNLIKELY(m_pSpellChecker.isNull())) {
-        QNTRACE(QStringLiteral("No spell checker"));
+        QNTRACE("No spell checker");
         return;
     }
 
@@ -64,10 +69,10 @@ void SpellCheckIgnoreWordUndoCommand::redoImpl()
 
 void SpellCheckIgnoreWordUndoCommand::undoImpl()
 {
-    QNDEBUG(QStringLiteral("SpellCheckIgnoreWordUndoCommand::undoImpl"));
+    QNDEBUG("SpellCheckIgnoreWordUndoCommand::undoImpl");
 
     if (Q_UNLIKELY(m_pSpellChecker.isNull())) {
-        QNTRACE(QStringLiteral("No spell checker"));
+        QNTRACE("No spell checker");
         return;
     }
 

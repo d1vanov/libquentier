@@ -225,10 +225,10 @@ void SynchronizationManagerSignalsCatcher::onLinkedNotebookSyncChunksDownloaded(
 void SynchronizationManagerSignalsCatcher::onSyncChunkDownloadProgress(
     qint32 highestDownloadedUsn, qint32 highestServerUsn, qint32 lastPreviousUsn)
 {
-    QNDEBUG(QStringLiteral("SynchronizationManagerSignalsCatcher::")
-            << QStringLiteral("onSyncChunkDownloadProgress: highest downloaded USN = ")
-            << highestDownloadedUsn << QStringLiteral(", highest server USN = ")
-            << highestServerUsn << QStringLiteral(", last previous USN = ")
+    QNDEBUG("SynchronizationManagerSignalsCatcher::"
+            << "onSyncChunkDownloadProgress: highest downloaded USN = "
+            << highestDownloadedUsn << ", highest server USN = "
+            << highestServerUsn << ", last previous USN = "
             << lastPreviousUsn);
 
     SyncChunkDownloadProgress progress;
@@ -243,12 +243,12 @@ void SynchronizationManagerSignalsCatcher::onLinkedNotebookSyncChunkDownloadProg
     qint32 highestDownloadedUsn, qint32 highestServerUsn,
     qint32 lastPreviousUsn, LinkedNotebook linkedNotebook)
 {
-    QNDEBUG(QStringLiteral("SynchronizationManagerSignalsCatcher::")
-            << QStringLiteral("onLinkedNotebookSyncChunkDownloadProgress: ")
-            << QStringLiteral("highest downloaded USN = ")
-            << highestDownloadedUsn << QStringLiteral(", highest server USN = ")
-            << highestServerUsn << QStringLiteral(", last previous USN = ")
-            << lastPreviousUsn << QStringLiteral(", linked notebook: ")
+    QNDEBUG("SynchronizationManagerSignalsCatcher::"
+            << "onLinkedNotebookSyncChunkDownloadProgress: "
+            << "highest downloaded USN = "
+            << highestDownloadedUsn << ", highest server USN = "
+            << highestServerUsn << ", last previous USN = "
+            << lastPreviousUsn << ", linked notebook: "
             << linkedNotebook);
 
     QVERIFY2(linkedNotebook.hasGuid(),

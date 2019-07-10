@@ -285,8 +285,9 @@ QTextStream & Tag::print(QTextStream & strm) const
 {
     strm << "Tag { \n";
 
-#define INSERT_DELIMITER \
-    strm << "; \n"
+#define INSERT_DELIMITER                                                       \
+    strm << "; \n"                                                             \
+// INSERT_DELIMITER
 
     const QString localUid_ = localUid();
     if (!localUid_.isEmpty()) {

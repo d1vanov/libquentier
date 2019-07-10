@@ -262,10 +262,11 @@ void SavedSearch::setQueryFormat(const qint8 queryFormat)
     }
 }
 
-#define CHECK_AND_SET_SCOPE() \
-    if (!d->m_qecSearch.scope.isSet()) { \
-        d->m_qecSearch.scope = SavedSearchScope(); \
-    }
+#define CHECK_AND_SET_SCOPE()                                                  \
+    if (!d->m_qecSearch.scope.isSet()) {                                       \
+        d->m_qecSearch.scope = SavedSearchScope();                             \
+    }                                                                          \
+// CHECK_AND_SET_SCOPE
 
 bool SavedSearch::hasIncludeAccount() const
 {

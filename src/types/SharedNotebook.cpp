@@ -273,12 +273,13 @@ bool SharedNotebook::reminderNotifyEmail() const
     return d->m_qecSharedNotebook.recipientSettings->reminderNotifyEmail.ref();
 }
 
-#define CHECK_AND_SET_RECIPIENT_SETTINGS \
-    qevercloud::SharedNotebook & sharedNotebook = d->m_qecSharedNotebook; \
-    if (!sharedNotebook.recipientSettings.isSet()) { \
-        sharedNotebook.recipientSettings = \
-            qevercloud::SharedNotebookRecipientSettings(); \
-    }
+#define CHECK_AND_SET_RECIPIENT_SETTINGS                                       \
+    qevercloud::SharedNotebook & sharedNotebook = d->m_qecSharedNotebook;      \
+    if (!sharedNotebook.recipientSettings.isSet()) {                           \
+        sharedNotebook.recipientSettings =                                     \
+            qevercloud::SharedNotebookRecipientSettings();                     \
+    }                                                                          \
+// CHECK_AND_SET_RECIPIENT_SETTINGS
 
 void SharedNotebook::setReminderNotifyEmail(const bool notifyEmail)
 {

@@ -25,14 +25,15 @@
 #include <QTextStream>
 #include <QtTest/QTest>
 
-#define CATCH_EXCEPTION() \
-    catch(const std::exception & exception) { \
-        SysInfo sysInfo; \
-        QFAIL(qPrintable(QStringLiteral("Caught exception: ") + \
-                         QString::fromUtf8(exception.what()) + \
-                         QStringLiteral(", backtrace: ") + \
-                         sysInfo.stackTrace())); \
-    }
+#define CATCH_EXCEPTION()                                                      \
+    catch(const std::exception & exception) {                                  \
+        SysInfo sysInfo;                                                       \
+        QFAIL(qPrintable(QStringLiteral("Caught exception: ") +                \
+                         QString::fromUtf8(exception.what()) +                 \
+                         QStringLiteral(", backtrace: ") +                     \
+                         sysInfo.stackTrace()));                               \
+    }                                                                          \
+// CATCH_EXCEPTION
 
 #if QT_VERSION >= 0x050000
 inline void nullMessageHandler(QtMsgType type, const QMessageLogContext &,

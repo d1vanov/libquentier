@@ -51,8 +51,9 @@
 
 namespace quentier {
 
-#define WRAP(x) \
-    << QStringLiteral(x)
+#define WRAP(x)                                                                \
+    << QStringLiteral(x)                                                       \
+// WRAP
 
 ENMLConverterPrivate::ENMLConverterPrivate(QObject * parent) :
     QObject(parent),
@@ -310,7 +311,7 @@ bool ENMLConverterPrivate::htmlToNoteContent(const QString & html,
                     writer.writeAttributes(enCryptAttributes);
                     writer.writeCharacters(attributes.value(QStringLiteral("encrypted_text")).toString());
                     ++writeElementCounter;
-                    QNTRACE(QStringLiteral("Started writing en-crypt tag"));
+                    QNTRACE("Started writing en-crypt tag");
                     insideEnCryptElement = true;
                     continue;
                 }
@@ -1607,14 +1608,14 @@ QString ENMLConverterPrivate::resourceHtml(const Resource & resource,
     if (Q_UNLIKELY(!resource.hasDataHash())) {
         errorDescription.setBase(QT_TR_NOOP("Can't compose the resource's html "
                                             "representation: no data hash is set"));
-        QNWARNING(errorDescription << QStringLiteral(", resource: ") << resource);
+        QNWARNING(errorDescription << ", resource: " << resource);
         return QString();
     }
 
     if (Q_UNLIKELY(!resource.hasMime())) {
         errorDescription.setBase(QT_TR_NOOP("Can't compose the resource's html "
                                             "representation: no mime type is set"));
-        QNWARNING(errorDescription << QStringLiteral(", resource: ") << resource);
+        QNWARNING(errorDescription << ", resource: " << resource);
         return QString();
     }
 
@@ -3918,10 +3919,10 @@ qint64 ENMLConverterPrivate::timestampFromDateTime(const QDateTime & dateTime) c
     return timestamp;
 }
 
-ShouldSkipElementResult::type
-ENMLConverterPrivate::shouldSkipElement(const QString & elementName,
-                                        const QXmlStreamAttributes & attributes,
-                                        const QVector<SkipHtmlElementRule> & skipRules) const
+ShouldSkipElementResult::type ENMLConverterPrivate::shouldSkipElement(
+    const QString & elementName,
+    const QXmlStreamAttributes & attributes,
+    const QVector<SkipHtmlElementRule> & skipRules) const
 {
     QNDEBUG("ENMLConverterPrivate::shouldSkipElement: element name = "
             << elementName << ", attributes = " << attributes);
@@ -3933,16 +3934,17 @@ ENMLConverterPrivate::shouldSkipElement(const QString & elementName,
     ShouldSkipElementResult::Types flags;
     flags |= ShouldSkipElementResult::ShouldNotSkip;
 
-#define CHECK_IF_SHOULD_SKIP() \
-    if (shouldSkip) \
-    { \
-        if (rule.m_includeElementContents) { \
-            flags |= ShouldSkipElementResult::SkipButPreserveContents; \
-        } \
-        else { \
-            return ShouldSkipElementResult::SkipWithContents; \
-        } \
-    }
+#define CHECK_IF_SHOULD_SKIP()                                                 \
+    if (shouldSkip)                                                            \
+    {                                                                          \
+        if (rule.m_includeElementContents) {                                   \
+            flags |= ShouldSkipElementResult::SkipButPreserveContents;         \
+        }                                                                      \
+        else {                                                                 \
+            return ShouldSkipElementResult::SkipWithContents;                  \
+        }                                                                      \
+    }                                                                          \
+// CHECK_IF_SHOULD_SKIP
 
     const int numAttributes = attributes.size();
 

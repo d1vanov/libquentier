@@ -18,51 +18,65 @@
 
 #include "InsertHtmlUndoCommand.h"
 #include "../NoteEditor_p.h"
+
 #include <quentier/logging/QuentierLogger.h>
 #include <quentier/utility/Utility.h>
+
 #include <QCryptographicHash>
 #include <QMimeDatabase>
 #include <QMimeType>
 
 namespace quentier {
 
-#define GET_PAGE() \
-    NoteEditorPage * page = \
-        qobject_cast<NoteEditorPage*>(m_noteEditorPrivate.page()); \
-    if (Q_UNLIKELY(!page)) { \
-        ErrorString error(QT_TRANSLATE_NOOP("InsertHtmlUndoCommand", \
-                                            "Can't undo/redo the html insertion: "\
-                                            "no note editor page")); \
-        QNWARNING(error); \
-        Q_EMIT notifyError(error); \
-        return; \
-    }
+#define GET_PAGE()                                                             \
+    NoteEditorPage * page =                                                    \
+        qobject_cast<NoteEditorPage*>(m_noteEditorPrivate.page());             \
+    if (Q_UNLIKELY(!page))                                                     \
+    {                                                                          \
+        ErrorString error(                                                     \
+            QT_TRANSLATE_NOOP("InsertHtmlUndoCommand",                         \
+                              "Can't undo/redo the html insertion: "           \
+                              "no note editor page"));                         \
+        QNWARNING(error);                                                      \
+        Q_EMIT notifyError(error);                                             \
+        return;                                                                \
+    }                                                                          \
+// GET_PAGE
 
 InsertHtmlUndoCommand::InsertHtmlUndoCommand(
-        QList<Resource> addedResources, QStringList resourceFileStoragePaths,
-        const Callback & callback, NoteEditorPrivate & noteEditor,
+        QList<Resource> addedResources,
+        QStringList resourceFileStoragePaths,
+        const Callback & callback,
+        NoteEditorPrivate & noteEditor,
         QHash<QString, QString> & resourceFileStoragePathsByResourceLocalUid,
-        ResourceInfo & resourceInfo, QUndoCommand * parent) :
+        ResourceInfo & resourceInfo,
+        QUndoCommand * parent) :
     INoteEditorUndoCommand(noteEditor, parent),
     m_addedResources(addedResources),
     m_resourceFileStoragePaths(resourceFileStoragePaths),
     m_callback(callback),
-    m_resourceFileStoragePathsByResourceLocalUid(resourceFileStoragePathsByResourceLocalUid),
+    m_resourceFileStoragePathsByResourceLocalUid(
+        resourceFileStoragePathsByResourceLocalUid),
     m_resourceInfo(resourceInfo)
 {
     setText(tr("Insert HTML"));
 }
 
 InsertHtmlUndoCommand::InsertHtmlUndoCommand(
-        QList<Resource> addedResources, QStringList resourceFileStoragePaths,
-        const Callback & callback, NoteEditorPrivate & noteEditor,
+        QList<Resource> addedResources,
+        QStringList resourceFileStoragePaths,
+        const Callback & callback,
+        NoteEditorPrivate & noteEditor,
         QHash<QString, QString> & resourceFileStoragePathsByResourceLocalUid,
-        ResourceInfo & resourceInfo, const QString & text, QUndoCommand * parent) :
+        ResourceInfo & resourceInfo,
+        const QString & text,
+        QUndoCommand * parent) :
     INoteEditorUndoCommand(noteEditor, text, parent),
     m_addedResources(addedResources),
     m_resourceFileStoragePaths(resourceFileStoragePaths),
     m_callback(callback),
-    m_resourceFileStoragePathsByResourceLocalUid(resourceFileStoragePathsByResourceLocalUid),
+    m_resourceFileStoragePathsByResourceLocalUid(
+        resourceFileStoragePathsByResourceLocalUid),
     m_resourceInfo(resourceInfo)
 {}
 
@@ -71,7 +85,7 @@ InsertHtmlUndoCommand::~InsertHtmlUndoCommand()
 
 void InsertHtmlUndoCommand::undoImpl()
 {
-    QNDEBUG(QStringLiteral("InsertHtmlUndoCommand::undoImpl"));
+    QNDEBUG("InsertHtmlUndoCommand::undoImpl");
 
     const QList<Resource> & addedResources = m_addedResources;
     int numResources = addedResources.size();
@@ -82,12 +96,10 @@ void InsertHtmlUndoCommand::undoImpl()
 
         if (Q_UNLIKELY(!pResource->hasDataHash()))
         {
-            QNDEBUG(QStringLiteral("One of added resources has no data hash: ")
-                    << *pResource);
+            QNDEBUG("One of added resources has no data hash: " << *pResource);
 
             if (!pResource->hasDataBody()) {
-                QNDEBUG(QStringLiteral("This resource has no data body as well, "
-                                       "just skipping it"));
+                QNDEBUG("This resource has no data body as well, skipping it");
                 continue;
             }
 
@@ -115,7 +127,7 @@ void InsertHtmlUndoCommand::undoImpl()
 
 void InsertHtmlUndoCommand::redoImpl()
 {
-    QNDEBUG(QStringLiteral("InsertHtmlUndoCommand::redoImpl"));
+    QNDEBUG("InsertHtmlUndoCommand::redoImpl");
 
     const QList<Resource> & addedResources = m_addedResources;
     int numResources = addedResources.size();
@@ -133,30 +145,26 @@ void InsertHtmlUndoCommand::redoImpl()
 
         if (Q_UNLIKELY(!mimeType.isValid()))
         {
-            QNDEBUG(QStringLiteral("Could not deduce the resource data's mime "
-                                   "type from the mime type name or resource has "
-                                   "no declared mime type"));
+            QNDEBUG("Could not deduce the resource data's mime type from the "
+                    "mime type name or resource has no declared mime type");
             if (pResource->hasDataBody()) {
-                QNDEBUG(QStringLiteral("Trying to deduce the mime type from "
-                                       "the resource's data"));
+                QNDEBUG("Trying to deduce the mime type from the resource data");
                 mimeType = mimeDatabase.mimeTypeForData(pResource->dataBody());
             }
         }
 
         if (Q_UNLIKELY(!mimeType.isValid())) {
-            QNDEBUG(QStringLiteral("All attempts to deduce the correct mime type "
-                                   "have failed, fallback to mime type of image/png"));
+            QNDEBUG("All attempts to deduce the correct mime type "
+                    "have failed, fallback to mime type of image/png");
             mimeType = mimeDatabase.mimeTypeForName(QStringLiteral("image/png"));
         }
 
         if (Q_UNLIKELY(!pResource->hasMime()))
         {
-            QNDEBUG(QStringLiteral("One of added resources has no mime type: ")
-                    << *pResource);
+            QNDEBUG("One of added resources has no mime type: " << *pResource);
 
             if (!pResource->hasDataBody()) {
-                QNDEBUG(QStringLiteral("This resource has no data body as well, "
-                                       "just skipping it"));
+                QNDEBUG("This resource has no data body as well, skipping it");
                 continue;
             }
 
@@ -169,12 +177,10 @@ void InsertHtmlUndoCommand::redoImpl()
 
         if (Q_UNLIKELY(!pResource->hasDataHash()))
         {
-            QNDEBUG(QStringLiteral("One of added resources has no data hash: ")
-                    << *pResource);
+            QNDEBUG("One of added resources has no data hash: " << *pResource);
 
             if (!pResource->hasDataBody()) {
-                QNDEBUG(QStringLiteral("This resource has no data body as well, "
-                                       "just skipping it"));
+                QNDEBUG("This resource has no data body as well, skipping it");
                 continue;
             }
 
@@ -188,12 +194,10 @@ void InsertHtmlUndoCommand::redoImpl()
 
         if (Q_UNLIKELY(!pResource->hasDataSize()))
         {
-            QNDEBUG(QStringLiteral("One of added resources has no data size: ")
-                    << *pResource);
+            QNDEBUG("One of added resources has no data size: " << *pResource);
 
             if (!pResource->hasDataBody()) {
-                QNDEBUG(QStringLiteral("This resource has no data body as well, "
-                                       "just skipping it"));
+                QNDEBUG("This resource has no data body as well, skipping it");
                 continue;
             }
 
@@ -223,12 +227,12 @@ void InsertHtmlUndoCommand::redoImpl()
         }
         else
         {
-            QNWARNING(QStringLiteral("Can't restore the resource file storage path ")
-                      << QStringLiteral("for one of resources: the number of ")
-                      << QStringLiteral("resource file storage path is less than ")
-                      << QStringLiteral("or equal to the index: paths = ")
+            QNWARNING("Can't restore the resource file storage path "
+                      << "for one of resources: the number of "
+                      << "resource file storage path is less than "
+                      << "or equal to the index: paths = "
                       << m_resourceFileStoragePaths.join(QStringLiteral(", "))
-                      << QStringLiteral("; resource: ") << pResource);
+                      << "; resource: " << pResource);
         }
 
     }

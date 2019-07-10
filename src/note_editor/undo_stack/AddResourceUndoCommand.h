@@ -31,12 +31,16 @@ class Q_DECL_HIDDEN AddResourceUndoCommand: public INoteEditorUndoCommand
     Q_OBJECT
     typedef NoteEditorPage::Callback Callback;
 public:
-    AddResourceUndoCommand(const Resource & resource, const Callback & callback,
-                           NoteEditorPrivate & noteEditorPrivate,
-                           QUndoCommand * parent = Q_NULLPTR);
-    AddResourceUndoCommand(const Resource & resource, const Callback & callback,
-                           NoteEditorPrivate & noteEditorPrivate,
-                           const QString & text, QUndoCommand * parent = Q_NULLPTR);
+    AddResourceUndoCommand(
+        const Resource & resource, const Callback & callback,
+        NoteEditorPrivate & noteEditorPrivate,
+        QUndoCommand * parent = Q_NULLPTR);
+
+    AddResourceUndoCommand(
+        const Resource & resource, const Callback & callback,
+        NoteEditorPrivate & noteEditorPrivate,
+        const QString & text, QUndoCommand * parent = Q_NULLPTR);
+
     virtual ~AddResourceUndoCommand();
 
     virtual void undoImpl() Q_DECL_OVERRIDE;

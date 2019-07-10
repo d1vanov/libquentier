@@ -159,25 +159,26 @@ bool ENMLConverter::importEnex(const QString & enex, QVector<Note> & notes,
 
 QTextStream & ENMLConverter::SkipHtmlElementRule::print(QTextStream & strm) const
 {
-#define PRINT_COMPARISON_RULE(rule) \
-    switch(rule) \
-    { \
-        case Equals: \
-            strm << "Equals"; \
-            break; \
-        case StartsWith: \
-            strm << "Starts with"; \
-            break; \
-        case EndsWith: \
-            strm << "Ends with"; \
-            break; \
-        case Contains: \
-            strm << "Contains"; \
-            break; \
-        default: \
-            strm << "unknown"; \
-            break; \
-    }
+#define PRINT_COMPARISON_RULE(rule)                                            \
+    switch(rule)                                                               \
+    {                                                                          \
+        case Equals:                                                           \
+            strm << "Equals";                                                  \
+            break;                                                             \
+        case StartsWith:                                                       \
+            strm << "Starts with";                                             \
+            break;                                                             \
+        case EndsWith:                                                         \
+            strm << "Ends with";                                               \
+            break;                                                             \
+        case Contains:                                                         \
+            strm << "Contains";                                                \
+            break;                                                             \
+        default:                                                               \
+            strm << "Unknown (" << static_cast<qint64>(rule) << ")";           \
+            break;                                                             \
+    }                                                                          \
+// PRINT_COMPARISON_RULE
 
     strm << "SkipHtmlElementRule: {\n";
     strm << "  element name to skip = " << m_elementNameToSkip << ", rule: ";

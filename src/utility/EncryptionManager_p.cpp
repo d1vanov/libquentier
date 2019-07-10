@@ -131,11 +131,12 @@ bool EncryptionManagerPrivate::encrypt(const QString & textToEncrypt,
 {
     QByteArray encryptedTextData(EN_IDENT, 4);
 
-#define GET_OPENSSL_ERROR \
-    unsigned long errorCode = ERR_get_error(); \
-    const char * errorLib = ERR_lib_error_string(errorCode); \
-    const char * errorFunc = ERR_func_error_string(errorCode); \
-    const char * errorReason = ERR_reason_error_string(errorCode)
+#define GET_OPENSSL_ERROR                                                      \
+    unsigned long errorCode = ERR_get_error();                                 \
+    const char * errorLib = ERR_lib_error_string(errorCode);                   \
+    const char * errorFunc = ERR_func_error_string(errorCode);                 \
+    const char * errorReason = ERR_reason_error_string(errorCode)              \
+// GET_OPENSSL_ERROR
 
     bool res = generateSalt(SaltKind::SALT, EN_AES_KEYSIZE, errorDescription);
     if (!res) {
@@ -714,8 +715,9 @@ QString EncryptionManagerPrivate::decryptRc2Chunk(const QByteArray & inputCharCo
 
     m_rc2_chunk_out.resize(8);
 
-#define APPEND_UNICODE_CHAR(code, i) \
-    m_rc2_chunk_out[i] = QChar(code)
+#define APPEND_UNICODE_CHAR(code, i)                                           \
+    m_rc2_chunk_out[i] = QChar(code)                                           \
+// APPEND_UNICODE_CHAR
 
     APPEND_UNICODE_CHAR(x10 & 255, 0);
     APPEND_UNICODE_CHAR((x10 >> 8) & 255, 1);

@@ -10253,7 +10253,7 @@ void NoteEditorPrivate::renameAttachment(const QByteArray & resourceHash)
     if (Q_UNLIKELY(!resource.hasDataHash())) {
         ErrorString error = errorPrefix;
         error.appendBase(QT_TR_NOOP("The resource doesn't have the data hash set"));
-        QNWARNING(error << QStringLiteral(", resource: ") << resource);
+        QNWARNING(error << ", resource: " << resource);
         Q_EMIT notifyError(error);
         return;
     }

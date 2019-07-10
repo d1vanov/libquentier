@@ -96,7 +96,7 @@
                           "Found a data item with empty "                      \
                           "name in the local storage"));                       \
     SET_ITEM_TYPE_TO_ERROR();                                                  \
-    QNWARNING(errorDescription << QStringLiteral(": ") << element)             \
+    QNWARNING(errorDescription << ": " << element)                             \
 // SET_CANT_FIND_BY_NAME_ERROR
 
 #define SET_CANT_FIND_BY_GUID_ERROR()                                          \
@@ -104,7 +104,7 @@
         QT_TRANSLATE_NOOP("RemoteToLocalSynchronizationManager",               \
                           "Found a data item with empty guid"));               \
     SET_ITEM_TYPE_TO_ERROR();                                                  \
-    QNWARNING(errorDescription << QStringLiteral(": ") << element)             \
+    QNWARNING(errorDescription << ": " << element)                             \
 // SET_CANT_FIND_BY_GUID_ERROR
 
 #define SET_EMPTY_PENDING_LIST_ERROR()                                         \
@@ -113,7 +113,7 @@
                           "Detected attempt to find a data item within "       \
                           "the list of remote items waiting for "              \
                           "processing but that list is empty"));               \
-    QNWARNING(errorDescription << QStringLiteral(": ") << element)             \
+    QNWARNING(errorDescription << ": " << element)                             \
 // SET_EMPTY_PENDING_LIST_ERROR
 
 #define SET_CANT_FIND_IN_PENDING_LIST_ERROR()                                  \
@@ -122,7 +122,7 @@
                           "can't find the data item within the list of remote "\
                           "elements waiting for processing"));                 \
     SET_ITEM_TYPE_TO_ERROR();                                                  \
-    QNWARNING(errorDescription << QStringLiteral(": ") << element)             \
+    QNWARNING(errorDescription << ": " << element)                             \
 // SET_CANT_FIND_IN_PENDING_LIST_ERROR
 
 namespace quentier {
@@ -5732,7 +5732,7 @@ void RemoteToLocalSynchronizationManager::launchDataElementSync<TagsContainer, T
                                                     expungedElements);
 
     if (container.empty()) {
-        QNDEBUG(QStringLiteral("No data items within the container"));
+        QNDEBUG("No data items within the container");
         return;
     }
 

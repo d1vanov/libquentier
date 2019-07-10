@@ -20,6 +20,7 @@
 #define LIB_QUENTIER_NOTE_EDITOR_UNDO_STACK_SPELL_CHECK_ADD_TO_USER_WORDLIST_UNDO_COMMAND_H
 
 #include "INoteEditorUndoCommand.h"
+
 #include <QPointer>
 
 namespace quentier {
@@ -30,15 +31,19 @@ class Q_DECL_HIDDEN SpellCheckAddToUserWordListUndoCommand: public INoteEditorUn
 {
     Q_OBJECT
 public:
-    SpellCheckAddToUserWordListUndoCommand(NoteEditorPrivate & noteEditor,
-                                           const QString & word,
-                                           SpellChecker * pSpellChecker,
-                                           QUndoCommand * parent = Q_NULLPTR);
-    SpellCheckAddToUserWordListUndoCommand(NoteEditorPrivate & noteEditor,
-                                           const QString & word,
-                                           SpellChecker * pSpellChecker,
-                                           const QString & text,
-                                           QUndoCommand * parent = Q_NULLPTR);
+    SpellCheckAddToUserWordListUndoCommand(
+        NoteEditorPrivate & noteEditor,
+        const QString & word,
+        SpellChecker * pSpellChecker,
+        QUndoCommand * parent = Q_NULLPTR);
+
+    SpellCheckAddToUserWordListUndoCommand(
+        NoteEditorPrivate & noteEditor,
+        const QString & word,
+        SpellChecker * pSpellChecker,
+        const QString & text,
+        QUndoCommand * parent = Q_NULLPTR);
+
     virtual ~SpellCheckAddToUserWordListUndoCommand();
 
     virtual void redoImpl() Q_DECL_OVERRIDE;

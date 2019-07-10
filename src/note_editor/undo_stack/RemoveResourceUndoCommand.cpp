@@ -18,21 +18,25 @@
 
 #include "RemoveResourceUndoCommand.h"
 #include "../NoteEditor_p.h"
+
 #include <quentier/logging/QuentierLogger.h>
 
 namespace quentier {
 
-#define GET_PAGE() \
-    NoteEditorPage * page = \
-        qobject_cast<NoteEditorPage*>(m_noteEditorPrivate.page()); \
-    if (Q_UNLIKELY(!page)) { \
-        ErrorString error(QT_TRANSLATE_NOOP("RemoveResourceUndoCommand", \
-                                            "Can't undo/redo remove attachment: "\
-                                            "can't get note editor page")); \
-        QNWARNING(error); \
-        Q_EMIT notifyError(error); \
-        return; \
-    }
+#define GET_PAGE()                                                             \
+    NoteEditorPage * page =                                                    \
+        qobject_cast<NoteEditorPage*>(m_noteEditorPrivate.page());             \
+    if (Q_UNLIKELY(!page))                                                     \
+    {                                                                          \
+        ErrorString error(                                                     \
+            QT_TRANSLATE_NOOP("RemoveResourceUndoCommand",                     \
+                              "Can't undo/redo remove attachment: "            \
+                              "can't get note editor page"));                  \
+        QNWARNING(error);                                                      \
+        Q_EMIT notifyError(error);                                             \
+        return;                                                                \
+    }                                                                          \
+// GET_PAGE
 
 RemoveResourceUndoCommand::RemoveResourceUndoCommand(
         const Resource & resource, const Callback & callback,
@@ -45,8 +49,10 @@ RemoveResourceUndoCommand::RemoveResourceUndoCommand(
 }
 
 RemoveResourceUndoCommand::RemoveResourceUndoCommand(
-        const Resource & resource, const Callback & callback,
-        NoteEditorPrivate & noteEditorPrivate, const QString & text,
+        const Resource & resource,
+        const Callback & callback,
+        NoteEditorPrivate & noteEditorPrivate,
+        const QString & text,
         QUndoCommand * parent) :
     INoteEditorUndoCommand(noteEditorPrivate, text, parent),
     m_resource(resource),
@@ -58,7 +64,7 @@ RemoveResourceUndoCommand::~RemoveResourceUndoCommand()
 
 void RemoveResourceUndoCommand::undoImpl()
 {
-    QNDEBUG(QStringLiteral("RemoveResourceUndoCommand::undoImpl"));
+    QNDEBUG("RemoveResourceUndoCommand::undoImpl");
 
     m_noteEditorPrivate.addResourceToNote(m_resource);
 
@@ -70,7 +76,7 @@ void RemoveResourceUndoCommand::undoImpl()
 
 void RemoveResourceUndoCommand::redoImpl()
 {
-    QNDEBUG(QStringLiteral("RemoveResourceUndoCommand::redoImpl"));
+    QNDEBUG("RemoveResourceUndoCommand::redoImpl");
 
     m_noteEditorPrivate.removeResourceFromNote(m_resource);
 

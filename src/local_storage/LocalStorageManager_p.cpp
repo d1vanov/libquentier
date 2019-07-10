@@ -1815,8 +1815,8 @@ int LocalStorageManagerPrivate::noteCountPerNotebook(
     }
 
     if (!query.next()) {
-        QNDEBUG(QStringLiteral("Found no notes per given notebook in the local "
-                               "storage database"));
+        QNDEBUG("Found no notes per given notebook in the local "
+                "storage database");
         return 0;
     }
 
@@ -1878,8 +1878,8 @@ int LocalStorageManagerPrivate::noteCountPerTag(
     }
 
     if (!query.next()) {
-        QNDEBUG(QStringLiteral("Found no notes per given tag "
-                               "in the local storage database"));
+        QNDEBUG("Found no notes per given tag "
+                "in the local storage database");
         return 0;
     }
 
@@ -2050,8 +2050,8 @@ int LocalStorageManagerPrivate::noteCountPerNotebooksAndTags(
     }
 
     if (!query.next()) {
-        QNDEBUG(QStringLiteral("Found no notes per given notebooks and tags "
-                               "in the local storage database"));
+        QNDEBUG("Found no notes per given notebooks and tags "
+                "in the local storage database");
         return 0;
     }
 
@@ -2097,7 +2097,7 @@ bool LocalStorageManagerPrivate::addNote(
         errorDescription.appendBase(error.base());
         errorDescription.appendBase(error.additionalBases());
         errorDescription.details() = error.details();
-        QNWARNING(errorDescription << QStringLiteral(", note: ") << note);
+        QNWARNING(errorDescription << ", note: " << note);
         return false;
     }
 
@@ -5024,8 +5024,8 @@ void LocalStorageManagerPrivate::unlockDatabaseFile()
     }
     catch(boost::interprocess::interprocess_exception & exc) {
         QNWARNING("Caught exception trying to unlock the database file: error = "
-                  << exc.get_error_code() << QStringLiteral(", error message = ")
-                  << exc.what() << QStringLiteral("; native error = ")
+                  << exc.get_error_code() << ", error message = "
+                  << exc.what() << "; native error = "
                   << exc.get_native_error());
     }
 #endif

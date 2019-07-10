@@ -27,8 +27,8 @@
 
 namespace quentier {
 
-EncryptedAreaPlugin::EncryptedAreaPlugin(NoteEditorPrivate & noteEditor,
-                                         QWidget * parent) :
+EncryptedAreaPlugin::EncryptedAreaPlugin(
+        NoteEditorPrivate & noteEditor, QWidget * parent) :
     QWidget(parent),
     m_pUI(new Ui::EncryptedAreaPlugin),
     m_noteEditor(noteEditor),

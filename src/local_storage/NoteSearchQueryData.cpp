@@ -568,36 +568,42 @@ QTextStream & NoteSearchQueryData::print(QTextStream & strm) const
 {
     const char * indent = "  ";
 
-    strm << QStringLiteral("NoteSearchQuery: { \n");
-    strm << indent << QStringLiteral("query string: ")
+    strm << "NoteSearchQuery: { \n";
+    strm << indent << "query string: "
          << (m_queryString.isEmpty() ? QStringLiteral("<empty>") : m_queryString)
-         << QStringLiteral("; \n");
-    strm << indent << QStringLiteral("notebookModifier: ")
+         << "; \n";
+    strm << indent << "notebookModifier: "
          << (m_notebookModifier.isEmpty() ? QStringLiteral("<empty>") : m_notebookModifier)
-         << QStringLiteral("; \n");
-    strm << indent << QStringLiteral("hasAnyModifier: ")
-         << (m_hasAnyModifier ? QStringLiteral("true") : QStringLiteral("false"))
-         << QStringLiteral("\n");
+         << "; \n";
+    strm << indent << "hasAnyModifier: "
+         << (m_hasAnyModifier ? "true" : "false")
+         << "\n";
 
-#define CHECK_AND_PRINT_ANY_ITEM(name) \
-    if (m_hasAny##name) { \
-        strm << indent << QStringLiteral("hasAny" #name " is true; \n"); \
-    } \
-    if (m_hasNegatedAny##name) { \
-        strm << indent << QStringLiteral("hasNegatedAny" #name "is true; \n"); \
-    }
+#define CHECK_AND_PRINT_ANY_ITEM(name)                                         \
+    if (m_hasAny##name) {                                                      \
+        strm << indent << "hasAny" #name " is true; \n";                       \
+    }                                                                          \
+    if (m_hasNegatedAny##name) {                                               \
+        strm << indent << "hasNegatedAny" #name "is true; \n";                 \
+    }                                                                          \
+// CHECK_AND_PRINT_ANY_ITEM
 
-#define CHECK_AND_PRINT_LIST(name, type, ...) \
-    if (m_##name.isEmpty()) { \
-        strm << indent << QStringLiteral( #name " is empty; \n"); \
-    } \
-    else { \
-        strm << indent << QStringLiteral( #name ": { \n"); \
-        for(auto it = m_##name.constBegin(), end = m_##name.constEnd(); it != end; ++it) { \
-            strm << indent << indent << __VA_ARGS__ (*it) << QStringLiteral("; \n"); \
-        } \
-        strm << indent << "}; \n"; \
-    }
+#define CHECK_AND_PRINT_LIST(name, type, ...)                                  \
+    if (m_##name.isEmpty())                                                    \
+    {                                                                          \
+        strm << indent <<  #name " is empty; \n";                              \
+    }                                                                          \
+    else                                                                       \
+    {                                                                          \
+        strm << indent <<  #name ": { \n";                                     \
+        for(auto it = m_##name.constBegin(),                                   \
+            end = m_##name.constEnd(); it != end; ++it)                        \
+        {                                                                      \
+            strm << indent << indent << __VA_ARGS__ (*it) << "; \n";           \
+        }                                                                      \
+        strm << indent << "}; \n";                                             \
+    }                                                                          \
+// CHECK_AND_PRINT_LIST
 
     CHECK_AND_PRINT_ANY_ITEM(Tag);
     CHECK_AND_PRINT_LIST(tagNames, QString);
@@ -671,46 +677,32 @@ QTextStream & NoteSearchQueryData::print(QTextStream & strm) const
     CHECK_AND_PRINT_LIST(reminderDoneTimes, qint64, QString::number);
     CHECK_AND_PRINT_LIST(negatedReminderDoneTimes, qint64, QString::number);
 
-    strm << indent << QStringLiteral("hasUnfinishedToDo: ")
-         << (m_hasUnfinishedToDo
-             ? QStringLiteral("true")
-             : QStringLiteral("false"))
-         << QStringLiteral("; \n");
-    strm << indent << QStringLiteral("hasNegatedUnfinishedToDo: ")
-         << (m_hasNegatedUnfinishedToDo
-             ? QStringLiteral("true")
-             : QStringLiteral("false"))
-         << QStringLiteral("; \n");
-    strm << indent << QStringLiteral("hasFinishedToDo: ")
-         << (m_hasFinishedToDo
-             ? QStringLiteral("true")
-             : QStringLiteral("false"))
-         << QStringLiteral("; \n");
-    strm << indent << QStringLiteral("hasNegatedFinishedToDo: ")
-         << (m_hasNegatedFinishedToDo
-             ? QStringLiteral("true")
-             : QStringLiteral("false"))
-         << QStringLiteral("; \n");
-    strm << indent << QStringLiteral("hasAnyToDo: ")
-         << (m_hasAnyToDo
-             ? QStringLiteral("true")
-             : QStringLiteral("false"))
-         << QStringLiteral("; \n");
-    strm << indent << QStringLiteral("hasNegatedAnyTodo: ")
+    strm << indent << "hasUnfinishedToDo: "
+         << (m_hasUnfinishedToDo ? "true" : "false")
+         << "; \n";
+    strm << indent << "hasNegatedUnfinishedToDo: "
+         << (m_hasNegatedUnfinishedToDo ? "true" : "false")
+         << "; \n";
+    strm << indent << "hasFinishedToDo: "
+         << (m_hasFinishedToDo ? "true" : "false")
+         << "; \n";
+    strm << indent << "hasNegatedFinishedToDo: "
+         << (m_hasNegatedFinishedToDo ? "true" : "false")
+         << "; \n";
+    strm << indent << "hasAnyToDo: "
+         << (m_hasAnyToDo ? "true" : "false")
+         << "; \n";
+    strm << indent << "hasNegatedAnyTodo: "
          << (m_hasNegatedAnyToDo
-             ? QStringLiteral("true")
-             : QStringLiteral("false"))
-         << QStringLiteral(" \n");
-    strm << indent << QStringLiteral("hasEncryption: ")
-         << (m_hasEncryption
-             ? QStringLiteral("true")
-             : QStringLiteral("false"))
-         << QStringLiteral("\n");
-    strm << indent << QStringLiteral("hasNegatedEncryption: ")
-         << (m_hasNegatedEncryption
-             ? QStringLiteral("true")
-             : QStringLiteral("false"))
-         << QStringLiteral(" \n");
+             ? "true"
+             : "false")
+         << " \n";
+    strm << indent << "hasEncryption: "
+         << (m_hasEncryption ? "true" : "false")
+         << "\n";
+    strm << indent << "hasNegatedEncryption: "
+         << (m_hasNegatedEncryption ? "true" : "false")
+         << " \n";
 
     CHECK_AND_PRINT_LIST(contentSearchTerms, QString);
     CHECK_AND_PRINT_LIST(negatedContentSearchTerms, QString);
@@ -718,7 +710,7 @@ QTextStream & NoteSearchQueryData::print(QTextStream & strm) const
 #undef CHECK_AND_PRINT_LIST
 #undef CHECK_AND_PRINT_ANY_ITEM
 
-    strm << QStringLiteral("}; \n");
+    strm << "}; \n";
 
     return strm;
 }

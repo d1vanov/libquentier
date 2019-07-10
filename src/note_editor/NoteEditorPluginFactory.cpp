@@ -385,8 +385,8 @@ QObject * NoteEditorPluginFactory::createResourcePlugin(
 
     const Account * pAccount = m_noteEditor.accountPtr();
     if (Q_UNLIKELY(!pAccount)) {
-        QNERROR(QStringLiteral("Can't create note editor resource plugin: "
-                               "no account is set to the note editor"));
+        QNERROR("Can't create note editor resource plugin: "
+                "no account is set to the note editor");
         return Q_NULLPTR;
     }
 

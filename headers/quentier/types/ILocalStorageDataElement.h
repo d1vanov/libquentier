@@ -37,30 +37,35 @@ public:
     virtual ~ILocalStorageDataElement() {}
 };
 
-#define DEFINE_LOCAL_UID_GETTER(type) \
-    const QString type::localUid() const { \
-        return UidGenerator::UidToString(d->m_localUid); \
-    }
+#define DEFINE_LOCAL_UID_GETTER(type)                                          \
+    const QString type::localUid() const {                                     \
+        return UidGenerator::UidToString(d->m_localUid);                       \
+    }                                                                          \
+// DEFINE_LOCAL_UID_GETTER
 
-#define DEFINE_LOCAL_UID_SETTER(type) \
-    void type::setLocalUid(const QString & uid) { \
-        d->m_localUid = uid; \
-    }
+#define DEFINE_LOCAL_UID_SETTER(type)                                          \
+    void type::setLocalUid(const QString & uid) {                              \
+        d->m_localUid = uid;                                                   \
+    }                                                                          \
+// DEFINE_LOCAL_UID_SETTER
 
-#define DEFINE_LOCAL_UID_UNSETTER(type) \
-    void type::unsetLocalUid() { \
-        d->m_localUid = QUuid(); \
-    }
+#define DEFINE_LOCAL_UID_UNSETTER(type)                                        \
+    void type::unsetLocalUid() {                                               \
+        d->m_localUid = QUuid();                                               \
+    }                                                                          \
+// DEFINE_LOCAL_UID_UNSETTER
 
-#define QN_DECLARE_LOCAL_UID \
-    virtual const QString localUid() const Q_DECL_OVERRIDE; \
-    virtual void setLocalUid(const QString & guid) Q_DECL_OVERRIDE; \
-    virtual void unsetLocalUid() Q_DECL_OVERRIDE;
+#define QN_DECLARE_LOCAL_UID                                                   \
+    virtual const QString localUid() const Q_DECL_OVERRIDE;                    \
+    virtual void setLocalUid(const QString & guid) Q_DECL_OVERRIDE;            \
+    virtual void unsetLocalUid() Q_DECL_OVERRIDE;                              \
+// QN_DECLARE_LOCAL_UID
 
-#define QN_DEFINE_LOCAL_UID(type) \
-    DEFINE_LOCAL_UID_GETTER(type) \
-    DEFINE_LOCAL_UID_SETTER(type) \
-    DEFINE_LOCAL_UID_UNSETTER(type)
+#define QN_DEFINE_LOCAL_UID(type)                                              \
+    DEFINE_LOCAL_UID_GETTER(type)                                              \
+    DEFINE_LOCAL_UID_SETTER(type)                                              \
+    DEFINE_LOCAL_UID_UNSETTER(type)                                            \
+// QN_DEFINE_LOCAL_UID
 
 } // namespace quentier
 

@@ -39,28 +39,29 @@
 #define MODIFIED_LOCALLY_SUFFIX QStringLiteral("_modified_locally")
 #define MODIFIED_REMOTELY_SUFFIX QStringLiteral("_modified_remotely")
 
-#define CATCH_EXCEPTION() \
-    catch(const std::exception & exception) { \
-        SysInfo sysInfo; \
-        QFAIL(qPrintable(QStringLiteral("Caught exception: ") +\
-                         QString::fromUtf8(exception.what()) + \
-                         QStringLiteral(", backtrace: ") +\
-                         sysInfo.stackTrace())); \
-    }
+#define CATCH_EXCEPTION()                                                      \
+    catch(const std::exception & exception) {                                  \
+        SysInfo sysInfo;                                                       \
+        QFAIL(qPrintable(QStringLiteral("Caught exception: ") +                \
+                         QString::fromUtf8(exception.what()) +                 \
+                         QStringLiteral(", backtrace: ") +                     \
+                         sysInfo.stackTrace()));                               \
+    }                                                                          \
+// CATCH_EXCEPTION
 
 #if QT_VERSION >= 0x050000
 inline void nullMessageHandler(QtMsgType type, const QMessageLogContext &,
                                const QString & message)
 {
     if (type != QtDebugMsg) {
-        QTextStream(stdout) << message << QStringLiteral("\n");
+        QTextStream(stdout) << message << "\n";
     }
 }
 #else
 inline void nullMessageHandler(QtMsgType type, const char * message)
 {
     if (type != QtDebugMsg) {
-        QTextStream(stdout) << message << QStringLiteral("\n");
+        QTextStream(stdout) << message << "\n";
     }
 }
 #endif
@@ -6391,29 +6392,28 @@ void SynchronizationTester::checkIdentityOfLocalAndRemoteItems()
         QString error;
         QTextStream strm(&error);
 
-        strm << QStringLiteral("The number of tags in local and remote storages "
-                               "doesn't match: ")
-             << localTags.size() << QStringLiteral(" local ones vs ")
-             << remoteTags.size() << QStringLiteral(" remote ones\nLocal tags:\n");
+        strm << "The number of tags in local and remote storages doesn't match: "
+             << localTags.size() << " local ones vs "
+             << remoteTags.size() << " remote ones\nLocal tags:\n";
         for(auto it = localTags.constBegin(),
             end = localTags.constEnd(); it != end; ++it)
         {
-            strm << it.value() << QStringLiteral("\n");
+            strm << it.value() << "\n";
         }
 
-        strm << QStringLiteral("\nRemote tags:\n");
+        strm << "\nRemote tags:\n";
         for(auto it = remoteTags.constBegin(),
             end = remoteTags.constEnd(); it != end; ++it)
         {
-            strm << it.value() << QStringLiteral("\n");
+            strm << it.value() << "\n";
         }
 
         QNWARNING(error);
     }
 
     QVERIFY2(localTags.size() == remoteTags.size(),
-             qPrintable(QString::fromUtf8("The number of tags in local and remote "
-                                          "storages doesn't match: ") +
+             qPrintable(QString::fromUtf8("The number of tags in local and "
+                                          "remote storages doesn't match: ") +
                         QString::number(localTags.size()) +
                         QString::fromUtf8(" local ones vs ") +
                         QString::number(remoteTags.size()) +

@@ -217,7 +217,7 @@ bool parseResourceRecognitionIndicesAndItemsTest(QString & error)
         error = QStringLiteral("Incorrectly parsed recognition item's object ") +
                 QStringLiteral("items: expected 4, got ") +
                 QString::number(objectItems1.size());
-        QNWARNING(error << QStringLiteral("; reco indices: ") << recoIndices);
+        QNWARNING(error << "; reco indices: " << recoIndices);
         return false;
     }
 

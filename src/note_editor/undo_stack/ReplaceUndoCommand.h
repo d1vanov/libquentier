@@ -29,13 +29,21 @@ class Q_DECL_HIDDEN ReplaceUndoCommand: public INoteEditorUndoCommand
     Q_OBJECT
     typedef NoteEditorPage::Callback Callback;
 public:
-    ReplaceUndoCommand(const QString & textToReplace, const bool matchCase,
-                       NoteEditorPrivate & noteEditorPrivate,
-                       Callback callback, QUndoCommand * parent = Q_NULLPTR);
-    ReplaceUndoCommand(const QString & textToReplace, const bool matchCase,
-                       NoteEditorPrivate & noteEditorPrivate,
-                       const QString & text, Callback callback,
-                       QUndoCommand * parent = Q_NULLPTR);
+    ReplaceUndoCommand(
+        const QString & textToReplace,
+        const bool matchCase,
+        NoteEditorPrivate & noteEditorPrivate,
+        Callback callback,
+        QUndoCommand * parent = Q_NULLPTR);
+
+    ReplaceUndoCommand(
+        const QString & textToReplace,
+        const bool matchCase,
+        NoteEditorPrivate & noteEditorPrivate,
+        const QString & text,
+        Callback callback,
+        QUndoCommand * parent = Q_NULLPTR);
+
     virtual ~ReplaceUndoCommand();
 
     virtual void redoImpl() Q_DECL_OVERRIDE;

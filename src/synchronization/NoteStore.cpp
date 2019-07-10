@@ -1824,7 +1824,7 @@ qint32 NoteStore::processEdamUserExceptionForNote(
 
         errorDescription.appendBase(QT_TR_NOOP("note's content doesn't validate "
                                                "against DTD"));
-        QNWARNING(errorDescription << QStringLiteral(", note: ") << note);
+        QNWARNING(errorDescription << ", note: " << note);
         return userException.errorCode;
     }
     else if (userException.errorCode == qevercloud::EDAMErrorCode::LIMIT_REACHED)

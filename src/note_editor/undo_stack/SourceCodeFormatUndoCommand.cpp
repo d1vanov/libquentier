@@ -18,21 +18,25 @@
 
 #include "SourceCodeFormatUndoCommand.h"
 #include "../NoteEditor_p.h"
+
 #include <quentier/logging/QuentierLogger.h>
 
 namespace quentier {
 
-#define GET_PAGE() \
-    NoteEditorPage * page = \
-        qobject_cast<NoteEditorPage*>(m_noteEditorPrivate.page()); \
-    if (Q_UNLIKELY(!page)) { \
-        ErrorString error(QT_TRANSLATE_NOOP("SourceCodeFormatUndoCommand", \
-                                            "Can't undo/redo source code "\
-                                            "formatting: no note editor page")); \
-        QNWARNING(error); \
-        Q_EMIT notifyError(error); \
-        return; \
-    }
+#define GET_PAGE()                                                             \
+    NoteEditorPage * page =                                                    \
+        qobject_cast<NoteEditorPage*>(m_noteEditorPrivate.page());             \
+    if (Q_UNLIKELY(!page))                                                     \
+    {                                                                          \
+        ErrorString error(                                                     \
+            QT_TRANSLATE_NOOP("SourceCodeFormatUndoCommand",                   \
+                              "Can't undo/redo source code "                   \
+                              "formatting: no note editor page"));             \
+        QNWARNING(error);                                                      \
+        Q_EMIT notifyError(error);                                             \
+        return;                                                                \
+    }                                                                          \
+// GET_PAGE
 
 SourceCodeFormatUndoCommand::SourceCodeFormatUndoCommand(
         NoteEditorPrivate & noteEditor,
@@ -58,7 +62,7 @@ SourceCodeFormatUndoCommand::~SourceCodeFormatUndoCommand()
 
 void SourceCodeFormatUndoCommand::redoImpl()
 {
-    QNDEBUG(QStringLiteral("SourceCodeFormatUndoCommand::redoImpl"));
+    QNDEBUG("SourceCodeFormatUndoCommand::redoImpl");
 
     GET_PAGE()
     page->executeJavaScript(QStringLiteral("sourceCodeFormatter.redo();"),
@@ -67,7 +71,7 @@ void SourceCodeFormatUndoCommand::redoImpl()
 
 void SourceCodeFormatUndoCommand::undoImpl()
 {
-    QNDEBUG(QStringLiteral("SourceCodeFormatUndoCommand::undoImpl"));
+    QNDEBUG("SourceCodeFormatUndoCommand::undoImpl");
 
     GET_PAGE()
     page->executeJavaScript(QStringLiteral("sourceCodeFormatter.undo();"),

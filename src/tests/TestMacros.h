@@ -23,25 +23,28 @@
 #include <QDebug>
 
 #if QT_VERSION >= QT_VERSION_CHECK(5, 4, 0)
-#define VERIFY_QDEBUG_HELPER() \
-    dbg.nospace(); \
-    dbg.noquote()
+#define VERIFY_QDEBUG_HELPER()                                                 \
+    dbg.nospace();                                                             \
+    dbg.noquote()                                                              \
+// VERIFY_QDEBUG_HELPER
 #else
-#define VERIFY_QDEBUG_HELPER() \
-    dbg.nospace()
+#define VERIFY_QDEBUG_HELPER()                                                 \
+    dbg.nospace()                                                              \
+// VERIFY_QDEBUG_HELPER
 #endif
 
-#define VERIFY2(condition, message) \
-    if (!(condition)) \
-    { \
-        QString msg; \
-        { \
-            QDebug dbg(&msg); \
-            VERIFY_QDEBUG_HELPER(); \
-            dbg << message; \
-        } \
-        QFAIL(qPrintable(msg)); \
-    }
+#define VERIFY2(condition, message)                                            \
+    if (!(condition))                                                          \
+    {                                                                          \
+        QString msg;                                                           \
+        {                                                                      \
+            QDebug dbg(&msg);                                                  \
+            VERIFY_QDEBUG_HELPER();                                            \
+            dbg << message;                                                    \
+        }                                                                      \
+        QFAIL(qPrintable(msg));                                                \
+    }                                                                          \
+// VERIFY2
 
 // 10 minutes should be enough
 #define MAX_ALLOWED_TEST_DURATION_MSEC 600000

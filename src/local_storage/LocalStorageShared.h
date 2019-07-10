@@ -23,14 +23,16 @@
 
 namespace quentier {
 
-#define DATABASE_CHECK_AND_SET_ERROR() \
-    if (!res) { \
-        errorDescription.base() = errorPrefix.base(); \
-        errorDescription.details() = query.lastError().text(); \
-        QNERROR(errorDescription << QStringLiteral(", last executed query: ") \
-                << lastExecutedQuery(query)); \
-        return false; \
-    }
+#define DATABASE_CHECK_AND_SET_ERROR()                                         \
+    if (!res)                                                                  \
+    {                                                                          \
+        errorDescription.base() = errorPrefix.base();                          \
+        errorDescription.details() = query.lastError().text();                 \
+        QNERROR(errorDescription << ", last executed query: "                  \
+                << lastExecutedQuery(query));                                  \
+        return false;                                                          \
+    }                                                                          \
+// DATABASE_CHECK_AND_SET_ERROR
 
 QString lastExecutedQuery(const QSqlQuery & query);
 

@@ -18,13 +18,16 @@
 
 #include "UpdateResourceUndoCommand.h"
 #include "../NoteEditor_p.h"
+
 #include <quentier/logging/QuentierLogger.h>
 
 namespace quentier {
 
 UpdateResourceUndoCommand::UpdateResourceUndoCommand(
-        const Resource & resourceBefore, const Resource & resourceAfter,
-        NoteEditorPrivate & noteEditorPrivate, QUndoCommand * parent) :
+        const Resource & resourceBefore,
+        const Resource & resourceAfter,
+        NoteEditorPrivate & noteEditorPrivate,
+        QUndoCommand * parent) :
     INoteEditorUndoCommand(noteEditorPrivate, parent),
     m_resourceBefore(resourceBefore),
     m_resourceAfter(resourceAfter)
@@ -33,8 +36,10 @@ UpdateResourceUndoCommand::UpdateResourceUndoCommand(
 }
 
 UpdateResourceUndoCommand::UpdateResourceUndoCommand(
-        const Resource & resourceBefore, const Resource & resourceAfter,
-        NoteEditorPrivate & noteEditorPrivate, const QString & text,
+        const Resource & resourceBefore,
+        const Resource & resourceAfter,
+        NoteEditorPrivate & noteEditorPrivate,
+        const QString & text,
         QUndoCommand * parent) :
     INoteEditorUndoCommand(noteEditorPrivate, text, parent),
     m_resourceBefore(resourceBefore),
@@ -48,7 +53,7 @@ UpdateResourceUndoCommand::~UpdateResourceUndoCommand()
 
 void UpdateResourceUndoCommand::undoImpl()
 {
-    QNDEBUG(QStringLiteral("UpdateResourceUndoCommand::undoImpl"));
+    QNDEBUG("UpdateResourceUndoCommand::undoImpl");
 
     m_noteEditorPrivate.replaceResourceInNote(m_resourceBefore);
     m_noteEditorPrivate.updateFromNote();
@@ -56,7 +61,7 @@ void UpdateResourceUndoCommand::undoImpl()
 
 void UpdateResourceUndoCommand::redoImpl()
 {
-    QNDEBUG(QStringLiteral("UpdateResourceUndoCommand::redoImpl"));
+    QNDEBUG("UpdateResourceUndoCommand::redoImpl");
 
     m_noteEditorPrivate.replaceResourceInNote(m_resourceAfter);
     m_noteEditorPrivate.updateFromNote();
