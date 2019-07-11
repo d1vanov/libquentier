@@ -115,55 +115,56 @@ void TestListSavedSearches()
         }
     }
 
-#define CHECK_LIST_SAVED_SEARCHES_BY_FLAG(flag, flag_name, true_condition, false_condition) \
-    errorMessage.clear(); \
+#define CHECK_LIST_SAVED_SEARCHES(flag, name, true_cond, false_cond)           \
+    errorMessage.clear();                                                      \
     foundSearches = localStorageManager.listSavedSearches(flag, errorMessage); \
-    QVERIFY2(errorMessage.isEmpty(), qPrintable(errorMessage.nonLocalizedString())); \
-    \
-    for(int i = 0; i < nSearches; ++i) \
-    { \
-        const SavedSearch & search = searches.at(i); \
-        bool res = foundSearches.contains(search); \
-        if ((true_condition) && !res) { \
-            QNWARNING(QStringLiteral("Not found saved search: ") << search); \
-            QFAIL("One of " flag_name " SavedSearches was not found by " \
-                  "LocalStorageManager::ListSavedSearches"); \
-        } \
-        else if ((false_condition) && res) { \
-            QNWARNING(QStringLiteral("Found irrelevant saved search: ") << search); \
-            QFAIL("LocalStorageManager::ListSavedSearches with flag " flag_name \
-                  " returned incorrect saved search"); \
-        } \
-    }
+    QVERIFY2(errorMessage.isEmpty(),                                           \
+             qPrintable(errorMessage.nonLocalizedString()));                   \
+    for(int i = 0; i < nSearches; ++i)                                         \
+    {                                                                          \
+        const SavedSearch & search = searches.at(i);                           \
+        bool res = foundSearches.contains(search);                             \
+        if ((true_cond) && !res) {                                             \
+            QNWARNING("Not found saved search: " << search);                   \
+            QFAIL("One of " name " SavedSearches was not found by "            \
+                  "LocalStorageManager::ListSavedSearches");                   \
+        }                                                                      \
+        else if ((false_cond) && res) {                                        \
+            QNWARNING("Found irrelevant saved search: " << search);            \
+            QFAIL("LocalStorageManager::ListSavedSearches with flag " name     \
+                  " returned incorrect saved search");                         \
+        }                                                                      \
+    }                                                                          \
+// CHECK_LIST_SAVED_SEARCHES
 
     // 2) Test method listing only dirty saved searches
-    CHECK_LIST_SAVED_SEARCHES_BY_FLAG(LocalStorageManager::ListDirty, "dirty",
-                                      i > 2, i <= 2);
+    CHECK_LIST_SAVED_SEARCHES(LocalStorageManager::ListDirty, "dirty",
+                              i > 2, i <= 2);
 
     // 3) Test method listing only local saved searches
-    CHECK_LIST_SAVED_SEARCHES_BY_FLAG(LocalStorageManager::ListLocal, "local",
-                                      i < 3, i >= 3);
+    CHECK_LIST_SAVED_SEARCHES(LocalStorageManager::ListLocal, "local",
+                              i < 3, i >= 3);
 
     // 4) Test method listing only saved searches without guid
-    CHECK_LIST_SAVED_SEARCHES_BY_FLAG(LocalStorageManager::ListElementsWithoutGuid,
-                                      "guidless", i <= 1, i > 1);
+    CHECK_LIST_SAVED_SEARCHES(LocalStorageManager::ListElementsWithoutGuid,
+                              "guidless", i <= 1, i > 1);
 
     // 5) Test method listing only favorited saved searches
-    CHECK_LIST_SAVED_SEARCHES_BY_FLAG(LocalStorageManager::ListFavoritedElements,
-                                      "favorited", (i == 0) || (i == 4),
-                                      (i != 0) && (i != 4));
+    CHECK_LIST_SAVED_SEARCHES(LocalStorageManager::ListFavoritedElements,
+                              "favorited", (i == 0) || (i == 4),
+                              (i != 0) && (i != 4));
 
     // 6) Test method listing dirty favorited saved searches with guid
-    CHECK_LIST_SAVED_SEARCHES_BY_FLAG(LocalStorageManager::ListDirty |
-                                      LocalStorageManager::ListElementsWithGuid |
-                                      LocalStorageManager::ListFavoritedElements,
-                                      "dirty, favorited, having guid",
-                                      i == 4, i != 4);
+    CHECK_LIST_SAVED_SEARCHES(LocalStorageManager::ListDirty |
+                              LocalStorageManager::ListElementsWithGuid |
+                              LocalStorageManager::ListFavoritedElements,
+                              "dirty, favorited, having guid",
+                              i == 4, i != 4);
 
     // 7) Test method listing local favorited saved searches
-    CHECK_LIST_SAVED_SEARCHES_BY_FLAG(LocalStorageManager::ListLocal |
-                                      LocalStorageManager::ListFavoritedElements,
-                                      "local, favorited", i == 0, i != 0);
+    CHECK_LIST_SAVED_SEARCHES(LocalStorageManager::ListLocal |
+                              LocalStorageManager::ListFavoritedElements,
+                              "local, favorited", i == 0, i != 0);
 
     // 8) Test method listing saved searches with guid set also specifying
     // limit, offset and order
@@ -309,13 +310,13 @@ void TestListLinkedNotebooks()
         const LinkedNotebook & linkedNotebook = linkedNotebooks.at(i);
         bool res = foundLinkedNotebooks.contains(linkedNotebook);
         if ((i > 2) && !res) {
-            QNWARNING(QStringLiteral("Not found linked notebook: ")
+            QNWARNING("Not found linked notebook: "
                       << linkedNotebook);
             QFAIL("One of dirty linked notebooks was not found by "
                   "LocalStorageManager::ListLinkedNotebooks");
         }
         else if ((i <= 2) && res) {
-            QNWARNING(QStringLiteral("Found irrelevant linked notebook: ")
+            QNWARNING("Found irrelevant linked notebook: "
                       << linkedNotebook);
             QFAIL("LocalStorageManager::ListLinkedNotebooks with flag "
                   "ListDirty returned incorrect linked notebook");
@@ -402,54 +403,55 @@ void TestListTags()
         }
     }
 
-#define CHECK_LIST_TAGS_BY_FLAG(flag, flag_name, true_condition, false_condition) \
-    errorMessage.clear(); \
-    foundTags = localStorageManager.listTags(flag, errorMessage); \
-    QVERIFY2(errorMessage.isEmpty(), qPrintable(errorMessage.nonLocalizedString())); \
-    \
-    for(int i = 0; i < nTags; ++i) \
-    { \
-        const Tag & tag = tags.at(i); \
-        bool res = foundTags.contains(tag); \
-        if ((true_condition) && !res) { \
-            QNWARNING(QStringLiteral("Not found tag: ") << tag); \
-            QFAIL("One of " flag_name " Tags was not found by " \
-                  "LocalStorageManager::ListTags"); \
-        } \
-        else if ((false_condition) && res) { \
-            QNWARNING(QStringLiteral("Found irrelevant tag: ") << tag); \
-            QFAIL("LocalStorageManager::ListTags with flag " flag_name \
-                  " returned incorrect tag"); \
-        } \
-    }
+#define CHECK_LIST_TAGS(flag, name, true_cond, false_cond)                     \
+    errorMessage.clear();                                                      \
+    foundTags = localStorageManager.listTags(flag, errorMessage);              \
+    QVERIFY2(errorMessage.isEmpty(),                                           \
+             qPrintable(errorMessage.nonLocalizedString()));                   \
+    for(int i = 0; i < nTags; ++i)                                             \
+    {                                                                          \
+        const Tag & tag = tags.at(i);                                          \
+        bool res = foundTags.contains(tag);                                    \
+        if ((true_cond) && !res) {                                             \
+            QNWARNING("Not found tag: " << tag);                               \
+            QFAIL("One of " name " Tags was not found by "                     \
+                  "LocalStorageManager::ListTags");                            \
+        }                                                                      \
+        else if ((false_cond) && res) {                                        \
+            QNWARNING("Found irrelevant tag: " << tag);                        \
+            QFAIL("LocalStorageManager::ListTags with flag " name              \
+                  " returned incorrect tag");                                  \
+        }                                                                      \
+    }                                                                          \
+// CHECK_LIST_TAGS
 
     // 2) Test method listing only dirty tags
-    CHECK_LIST_TAGS_BY_FLAG(LocalStorageManager::ListDirty, "dirty", i > 2, i <= 2);
+    CHECK_LIST_TAGS(LocalStorageManager::ListDirty, "dirty", i > 2, i <= 2);
 
     // 3) Test method listing only local tags
-    CHECK_LIST_TAGS_BY_FLAG(LocalStorageManager::ListLocal, "local", i < 3, i >= 3);
+    CHECK_LIST_TAGS(LocalStorageManager::ListLocal, "local", i < 3, i >= 3);
 
     // 4) Test method listing only tags without guid
-    CHECK_LIST_TAGS_BY_FLAG(LocalStorageManager::ListElementsWithoutGuid,
-                            "guidless", i <= 1, i > 1);
+    CHECK_LIST_TAGS(LocalStorageManager::ListElementsWithoutGuid,
+                    "guidless", i <= 1, i > 1);
 
     // 5) Test method listing only favorited tags
-    CHECK_LIST_TAGS_BY_FLAG(LocalStorageManager::ListFavoritedElements,
-                            "favorited", (i == 0) || (i == 4),
-                            (i != 0) && (i != 4));
+    CHECK_LIST_TAGS(LocalStorageManager::ListFavoritedElements,
+                    "favorited", (i == 0) || (i == 4),
+                    (i != 0) && (i != 4));
 
     // 6) Test method listing dirty favorited tags with guid
-    CHECK_LIST_TAGS_BY_FLAG(LocalStorageManager::ListDirty |
-                            LocalStorageManager::ListElementsWithGuid |
-                            LocalStorageManager::ListFavoritedElements,
-                            "dirty, favorited, having guid", i == 4, i != 4);
+    CHECK_LIST_TAGS(LocalStorageManager::ListDirty |
+                    LocalStorageManager::ListElementsWithGuid |
+                    LocalStorageManager::ListFavoritedElements,
+                    "dirty, favorited, having guid", i == 4, i != 4);
 
     // 7) Test method listing local favorited tags
-    CHECK_LIST_TAGS_BY_FLAG(LocalStorageManager::ListLocal |
-                            LocalStorageManager::ListFavoritedElements,
-                            "local, favorited", i == 0, i != 0);
+    CHECK_LIST_TAGS(LocalStorageManager::ListLocal |
+                    LocalStorageManager::ListFavoritedElements,
+                    "local, favorited", i == 0, i != 0);
 
-#undef CHECK_LIST_TAGS_BY_FLAG
+#undef CHECK_LIST_TAGS
 }
 
 void TestListTagsWithNoteLocalUids()
@@ -554,9 +556,10 @@ void TestListTagsWithNoteLocalUids()
             note.setFavorited(false);
         }
 
-#define APPEND_TAG_TO_NOTE(tagNum) \
-        note.addTagLocalUid(tags[tagNum].localUid()); \
-        noteLocalUidsByTagLocalUid[tags[tagNum].localUid()] << note.localUid()
+#define APPEND_TAG_TO_NOTE(tagNum)                                             \
+    note.addTagLocalUid(tags[tagNum].localUid());                              \
+    noteLocalUidsByTagLocalUid[tags[tagNum].localUid()] << note.localUid()     \
+// APPEND_TAG_TO_NOTE
 
         if (i == 0) {
             APPEND_TAG_TO_NOTE(1);
@@ -589,108 +592,122 @@ void TestListTagsWithNoteLocalUids()
 
     QList<std::pair<Tag, QStringList> > foundTagsWithNoteLocalUids;
 
-#define CHECK_LIST_TAGS_BY_FLAG(flag, flag_name, true_condition, false_condition) \
-    errorMessage.clear(); \
-    foundTagsWithNoteLocalUids = \
-    localStorageManager.listTagsWithNoteLocalUids(flag, errorMessage); \
-    QVERIFY2(errorMessage.isEmpty(), qPrintable(errorMessage.nonLocalizedString())); \
-    \
-    for(int i = 0; i < nTags; ++i) \
-    { \
-        const Tag & tag = tags.at(i); \
-        int tagIndex = 0; \
-        bool res = false; \
-        for(int size = foundTagsWithNoteLocalUids.size(); tagIndex < size; ++tagIndex) { \
-            if (foundTagsWithNoteLocalUids[tagIndex].first == tag) { \
-                res = true; \
-                break; \
-            } \
-        } \
-        if ((true_condition) && !res) { \
-            QNWARNING(QStringLiteral("Not found tag: ") << tag); \
-            QFAIL("One of " flag_name " Tags was not found by "\
-                  "LocalStorageManager::ListTags"); \
-        } \
-        else if ((false_condition) && res) { \
-            QNWARNING(QStringLiteral("Found irrelevant tag: ") << tag); \
-            QFAIL("LocalStorageManager::ListTags with flag " flag_name \
-                  " returned incorrect tag"); \
-        } \
-        else if (res) { \
-            auto noteIt = noteLocalUidsByTagLocalUid.find(tag.localUid()); \
-            if (noteIt == noteLocalUidsByTagLocalUid.end() && \
-                !foundTagsWithNoteLocalUids[tagIndex].second.isEmpty()) \
-            { \
-                QNWARNING(QStringLiteral("Found irrelevant list of note local "\
-                                         "uids for a tag: ") \
-                          << foundTagsWithNoteLocalUids[tagIndex].second.join(QStringLiteral(", "))); \
-                QFAIL("LocalStorageManager::ListTags with flag " flag_name \
-                      " returned redundant note local uids"); \
-            } \
-            else if (noteIt != noteLocalUidsByTagLocalUid.end()) \
-            { \
-                if (foundTagsWithNoteLocalUids[tagIndex].second.isEmpty()) \
-                { \
-                    QNWARNING(QStringLiteral("Found empty list of note local "\
-                                             "uids for a tag for which they "\
-                                             "were expected: ") \
-                              << noteIt.value().join(QStringLiteral(", "))); \
-                    QFAIL("LocalStorageManager::ListTags with flag " flag_name \
-                          " did not return proper note local uids"); \
-                } \
+#define CHECK_LIST_TAGS(flag, name, true_cond, false_cond)                     \
+    errorMessage.clear();                                                      \
+    foundTagsWithNoteLocalUids =                                               \
+    localStorageManager.listTagsWithNoteLocalUids(flag, errorMessage);         \
+    QVERIFY2(errorMessage.isEmpty(),                                           \
+             qPrintable(errorMessage.nonLocalizedString()));                   \
+    for(int i = 0; i < nTags; ++i)                                             \
+    {                                                                          \
+        const Tag & tag = tags.at(i);                                          \
+        int tagIndex = 0;                                                      \
+        bool res = false;                                                      \
+        for(int size = foundTagsWithNoteLocalUids.size();                      \
+            tagIndex < size; ++tagIndex)                                       \
+        {                                                                      \
+            if (foundTagsWithNoteLocalUids[tagIndex].first == tag) {           \
+                res = true;                                                    \
+                break;                                                         \
+            }                                                                  \
+        }                                                                      \
+        if ((true_cond) && !res) {                                             \
+            QNWARNING("Not found tag: " << tag);                               \
+            QFAIL("One of " name " Tags was not found by "                     \
+                  "LocalStorageManager::ListTags");                            \
+        }                                                                      \
+        else if ((false_cond) && res) {                                        \
+            QNWARNING("Found irrelevant tag: " << tag);                        \
+            QFAIL("LocalStorageManager::ListTags with flag " name              \
+                  " returned incorrect tag");                                  \
+        }                                                                      \
+        else if (res) {                                                        \
+            auto noteIt = noteLocalUidsByTagLocalUid.find(tag.localUid());     \
+            if (noteIt == noteLocalUidsByTagLocalUid.end() &&                  \
+                !foundTagsWithNoteLocalUids[tagIndex].second.isEmpty())        \
+            {                                                                  \
+                QNWARNING("Found irrelevant list of note local "               \
+                          "uids for a tag: "                                   \
+                          << foundTagsWithNoteLocalUids[tagIndex].second       \
+                             .join(QStringLiteral(", ")));                     \
+                QFAIL("LocalStorageManager::ListTags with flag " name          \
+                      " returned redundant note local uids");                  \
+            }                                                                  \
+            else if (noteIt != noteLocalUidsByTagLocalUid.end())               \
+            {                                                                  \
+                if (foundTagsWithNoteLocalUids[tagIndex].second.isEmpty())     \
+                {                                                              \
+                    QNWARNING("Found empty list of note local "                \
+                              "uids for a tag for which they "                 \
+                              "were expected: "                                \
+                              << noteIt.value().join(QStringLiteral(", ")));   \
+                    QFAIL("LocalStorageManager::ListTags with flag " name      \
+                          " did not return proper note local uids");           \
+                }                                                              \
                 else if (foundTagsWithNoteLocalUids[tagIndex].second.size() != \
-                         noteIt.value().size()) \
-                { \
-                    QNWARNING(QStringLiteral("Found list of note local uids " \
-                                             "for a tag with incorrect list size: ") \
-                              << foundTagsWithNoteLocalUids[tagIndex].second.join(QStringLiteral(", "))); \
-                    QFAIL("LocalStorageManager::ListTags with flag " flag_name \
+                         noteIt.value().size())                                \
+                {                                                              \
+                    QNWARNING("Found list of note local uids "                 \
+                              "for a tag with incorrect list size: "           \
+                              << foundTagsWithNoteLocalUids[tagIndex].second   \
+                                 .join(QStringLiteral(", ")));                 \
+                    QFAIL("LocalStorageManager::ListTags with flag " name      \
                           " did not return proper number of note local uids"); \
-                } \
-                else \
-                { \
-                    for(int j = 0; j < foundTagsWithNoteLocalUids[tagIndex].second.size(); ++j) { \
-                        if (!noteIt.value().contains(foundTagsWithNoteLocalUids[tagIndex].second[j])) { \
-                            QNWARNING(QStringLiteral("Found incorrect list of " \
-                                                     "note local uids for a tag: ") \
-                                      << foundTagsWithNoteLocalUids[tagIndex].second.join(QStringLiteral(", "))); \
-                            QFAIL("LocalStorageManager::ListTags with flag " flag_name \
-                                  " did not return correct set of note local uids"); \
-                        } \
-                    } \
-                } \
-            } \
-        } \
-    }
+                }                                                              \
+                else                                                           \
+                {                                                              \
+                    for(int j = 0;                                             \
+                        j < foundTagsWithNoteLocalUids[tagIndex].second.size();\
+                        ++j)                                                   \
+                    {                                                          \
+                        if (!noteIt.value().contains(                          \
+                                foundTagsWithNoteLocalUids[tagIndex]           \
+                                .second[j]))                                   \
+                        {                                                      \
+                            QNWARNING("Found incorrect list of "               \
+                                      "note local uids for a tag: "            \
+                                      << foundTagsWithNoteLocalUids[tagIndex]  \
+                                      .second.join(QStringLiteral(", ")));     \
+                            QFAIL("LocalStorageManager::ListTags with flag "   \
+                                  name                                         \
+                                  " did not return correct set of note local " \
+                                  "uids");                                     \
+                        }                                                      \
+                    }                                                          \
+                }                                                              \
+            }                                                                  \
+        }                                                                      \
+    }                                                                          \
+// CHECK_LIST_TAGS
 
     // 1) Test method listing all tags with note local uids
-    CHECK_LIST_TAGS_BY_FLAG(LocalStorageManager::ListAll, "all", true, false);
+    CHECK_LIST_TAGS(LocalStorageManager::ListAll, "all", true, false);
 
     // 2) Test method listing only dirty tags
-    CHECK_LIST_TAGS_BY_FLAG(LocalStorageManager::ListDirty, "dirty", i > 2, i <= 2);
+    CHECK_LIST_TAGS(LocalStorageManager::ListDirty, "dirty", i > 2, i <= 2);
 
     // 3) Test method listing only local tags
-    CHECK_LIST_TAGS_BY_FLAG(LocalStorageManager::ListLocal, "local", i < 3, i >= 3);
+    CHECK_LIST_TAGS(LocalStorageManager::ListLocal, "local", i < 3, i >= 3);
 
     // 4) Test method listing only tags without guid
-    CHECK_LIST_TAGS_BY_FLAG(LocalStorageManager::ListElementsWithoutGuid,
-                            "guidless", i <= 1, i > 1);
+    CHECK_LIST_TAGS(LocalStorageManager::ListElementsWithoutGuid,
+                    "guidless", i <= 1, i > 1);
 
     // 5) Test method listing only favorited tags
-    CHECK_LIST_TAGS_BY_FLAG(LocalStorageManager::ListFavoritedElements,
-                            "favorited", (i == 0) || (i == 4), (i != 0) && (i != 4));
+    CHECK_LIST_TAGS(LocalStorageManager::ListFavoritedElements,
+                    "favorited", (i == 0) || (i == 4), (i != 0) && (i != 4));
 
     // 6) Test method listing dirty favorited tags with guid
-    CHECK_LIST_TAGS_BY_FLAG(LocalStorageManager::ListDirty |
-                            LocalStorageManager::ListElementsWithGuid |
-                            LocalStorageManager::ListFavoritedElements,
-                            "dirty, favorited, having guid", i == 4, i != 4);
+    CHECK_LIST_TAGS(LocalStorageManager::ListDirty |
+                    LocalStorageManager::ListElementsWithGuid |
+                    LocalStorageManager::ListFavoritedElements,
+                    "dirty, favorited, having guid", i == 4, i != 4);
 
     // 7) Test method listing local favorited tags
-    CHECK_LIST_TAGS_BY_FLAG(LocalStorageManager::ListLocal |
-                            LocalStorageManager::ListFavoritedElements,
-                            "local, favorited", i == 0, i != 0);
-#undef CHECK_LIST_TAGS_BY_FLAG
+    CHECK_LIST_TAGS(LocalStorageManager::ListLocal |
+                    LocalStorageManager::ListFavoritedElements,
+                    "local, favorited", i == 0, i != 0);
+#undef CHECK_LIST_TAGS
 }
 
 void TestListAllSharedNotebooks()
@@ -1192,52 +1209,54 @@ void TestListNotes()
         }
     }
 
-#define CHECK_LIST_NOTES_BY_FLAG(flag, flag_name, true_condition, false_condition) \
-    errorMessage.clear(); \
-    foundNotes = localStorageManager.listNotes(flag, getNoteOptions, errorMessage); \
-    QVERIFY2(errorMessage.isEmpty(), qPrintable(errorMessage.nonLocalizedString())); \
-    \
-    for(int i = 0; i < numNotes; ++i) \
-    { \
-        const Note & note = notes[i]; \
-        bool res = foundNotes.contains(note); \
-        if ((true_condition) && !res) { \
-            QNWARNING(QStringLiteral("Not found note: ") << note); \
-            QFAIL("One of " flag_name " notes was not found by "\
-                  "LocalStorageManager::ListNotes"); \
-        } \
-        else if ((false_condition) && res) { \
-            QNWARNING(QStringLiteral("Found irrelevant note: ") << note); \
-            QFAIL("LocalStorageManager::ListNotes with flag " flag_name \
-                  " returned incorrect note"); \
-        } \
-    }
+#define CHECK_LIST_NOTES(flag, name, true_cond, false_cond)                    \
+    errorMessage.clear();                                                      \
+    foundNotes =                                                               \
+        localStorageManager.listNotes(flag, getNoteOptions, errorMessage);     \
+    QVERIFY2(errorMessage.isEmpty(),                                           \
+             qPrintable(errorMessage.nonLocalizedString()));                   \
+    for(int i = 0; i < numNotes; ++i)                                          \
+    {                                                                          \
+        const Note & note = notes[i];                                          \
+        bool res = foundNotes.contains(note);                                  \
+        if ((true_cond) && !res) {                                             \
+            QNWARNING("Not found note: " << note);                             \
+            QFAIL("One of " name " notes was not found by "                    \
+                  "LocalStorageManager::ListNotes");                           \
+        }                                                                      \
+        else if ((false_cond) && res) {                                        \
+            QNWARNING("Found irrelevant note: " << note);                      \
+            QFAIL("LocalStorageManager::ListNotes with flag " name             \
+                  " returned incorrect note");                                 \
+        }                                                                      \
+    }                                                                          \
+// CHECK_LIST_NOTES
 
     // 6) Test method listing only dirty notes
-    CHECK_LIST_NOTES_BY_FLAG(LocalStorageManager::ListDirty, "dirty", i > 2, i <= 2);
+    CHECK_LIST_NOTES(LocalStorageManager::ListDirty, "dirty", i > 2, i <= 2);
 
     // 7) Test method listing only local notes
-    CHECK_LIST_NOTES_BY_FLAG(LocalStorageManager::ListLocal, "local", i < 3, i >= 3);
+    CHECK_LIST_NOTES(LocalStorageManager::ListLocal, "local", i < 3, i >= 3);
 
     // 8) Test method listing only notes without guid
-    CHECK_LIST_NOTES_BY_FLAG(LocalStorageManager::ListElementsWithoutGuid,
-                             "guidless", i <= 1, i > 1);
+    CHECK_LIST_NOTES(LocalStorageManager::ListElementsWithoutGuid,
+                     "guidless", i <= 1, i > 1);
 
     // 9) Test method listing only favorited notes
-    CHECK_LIST_NOTES_BY_FLAG(LocalStorageManager::ListFavoritedElements,
-                             "favorited", (i == 0) || (i == 4),
-                             (i != 0) && (i != 4));
+    CHECK_LIST_NOTES(LocalStorageManager::ListFavoritedElements,
+                     "favorited", (i == 0) || (i == 4),
+                     (i != 0) && (i != 4));
 
     // 10) Test method listing dirty favorited notes with guid
-    CHECK_LIST_NOTES_BY_FLAG(LocalStorageManager::ListDirty |
-                             LocalStorageManager::ListElementsWithGuid |
-                             LocalStorageManager::ListFavoritedElements,
-                             "dirty, favorited, having guid", i == 4, i != 4);
+    CHECK_LIST_NOTES(LocalStorageManager::ListDirty |
+                     LocalStorageManager::ListElementsWithGuid |
+                     LocalStorageManager::ListFavoritedElements,
+                     "dirty, favorited, having guid", i == 4, i != 4);
 
     // 11) Test method listing local favorited notes
-    CHECK_LIST_NOTES_BY_FLAG(LocalStorageManager::ListLocal |
-                             LocalStorageManager::ListFavoritedElements,
-                             "local, favorited", i == 0, i != 0);
+    CHECK_LIST_NOTES(LocalStorageManager::ListLocal |
+                     LocalStorageManager::ListFavoritedElements,
+                     "local, favorited", i == 0, i != 0);
 
     // 12) Test method listing notes per notebook and tag local uids
     // using notebook local uids only as a filter
@@ -1352,7 +1371,9 @@ void TestListNotes()
                                           "method listing notes by local uids: "
                                           "expected %1 notes, got %2")
                         .arg(noteLocalUids.size(), foundNotes.size())));
-    for(auto it = foundNotes.constBegin(), end = foundNotes.constEnd(); it != end; ++it) {
+    for(auto it = foundNotes.constBegin(),
+        end = foundNotes.constEnd(); it != end; ++it)
+    {
         QVERIFY2(noteLocalUids.contains(it->localUid()),
                  "Detected note returned by method listing notes by local uids "
                  "which local uid is not present within the original list of "
@@ -1375,7 +1396,9 @@ void TestListNotes()
                                           "method listing notes by local uids: "
                                           "expected %1 notes, got %2")
                         .arg(originalNoteLocalUidsSize, foundNotes.size())));
-    for(auto it = foundNotes.constBegin(), end = foundNotes.constEnd(); it != end; ++it) {
+    for(auto it = foundNotes.constBegin(),
+        end = foundNotes.constEnd(); it != end; ++it)
+    {
         QVERIFY2(noteLocalUids.contains(it->localUid()),
                  "Detected note returned by method listing notes by local uids "
                  "which local uid is not present within the original list of "
@@ -1518,52 +1541,53 @@ void TestListNotebooks()
         }
     }
 
-#define CHECK_LIST_NOTEBOOKS_BY_FLAG(flag, flag_name, true_condition, false_condition) \
-    errorMessage.clear(); \
-    foundNotebooks = localStorageManager.listNotebooks(flag, errorMessage); \
-    QVERIFY2(errorMessage.isEmpty(), qPrintable(errorMessage.nonLocalizedString())); \
-    \
-    for(int i = 0; i < numNotebooks; ++i) \
-    { \
-        const Notebook & notebook = notebooks.at(i); \
-        bool res = foundNotebooks.contains(notebook); \
-        if ((true_condition) && !res) { \
-            QNWARNING(QStringLiteral("Not found notebook: ") << notebook); \
-            QFAIL("One of " flag_name " notebooks was not found by "\
-                  "LocalStorageManager::ListNotebooks"); \
-        } \
-        else if ((false_condition) && res) { \
-            QNWARNING(QStringLiteral("Found irrelevant notebook: ") << notebook); \
-            QFAIL("LocalStorageManager::ListNotebooks with flag " flag_name \
-                  " returned incorrect notebook"); \
-        } \
-    }
+#define CHECK_LIST_NOTEBOOKS(flag, name, true_cond, false_cond)                \
+    errorMessage.clear();                                                      \
+    foundNotebooks = localStorageManager.listNotebooks(flag, errorMessage);    \
+    QVERIFY2(errorMessage.isEmpty(),                                           \
+             qPrintable(errorMessage.nonLocalizedString()));                   \
+    for(int i = 0; i < numNotebooks; ++i)                                      \
+    {                                                                          \
+        const Notebook & notebook = notebooks.at(i);                           \
+        bool res = foundNotebooks.contains(notebook);                          \
+        if ((true_cond) && !res) {                                             \
+            QNWARNING("Not found notebook: " << notebook);                     \
+            QFAIL("One of " name " notebooks was not found by "                \
+                  "LocalStorageManager::ListNotebooks");                       \
+        }                                                                      \
+        else if ((false_cond) && res) {                                        \
+            QNWARNING("Found irrelevant notebook: " << notebook);              \
+            QFAIL("LocalStorageManager::ListNotebooks with flag " name         \
+                  " returned incorrect notebook");                             \
+        }                                                                      \
+    }                                                                          \
+// CHECK_LIST_NOTEBOOKS
 
     // 2) Test method listing only dirty notebooks
-    CHECK_LIST_NOTEBOOKS_BY_FLAG(LocalStorageManager::ListDirty, "dirty", i > 2, i <= 2);
+    CHECK_LIST_NOTEBOOKS(LocalStorageManager::ListDirty, "dirty", i > 2, i <= 2);
 
     // 3) Test method listing only local notebooks
-    CHECK_LIST_NOTEBOOKS_BY_FLAG(LocalStorageManager::ListLocal, "local", i < 3, i >= 3);
+    CHECK_LIST_NOTEBOOKS(LocalStorageManager::ListLocal, "local", i < 3, i >= 3);
 
     // 4) Test method listing only notebooks without guid
-    CHECK_LIST_NOTEBOOKS_BY_FLAG(LocalStorageManager::ListElementsWithoutGuid,
-                                 "guidless", i <= 1, i > 1);
+    CHECK_LIST_NOTEBOOKS(LocalStorageManager::ListElementsWithoutGuid,
+                         "guidless", i <= 1, i > 1);
 
     // 5) Test method listing only favorited notebooks
-    CHECK_LIST_NOTEBOOKS_BY_FLAG(LocalStorageManager::ListFavoritedElements,
-                                 "favorited", (i == 0) || (i == 4),
-                                 (i != 0) && (i != 4));
+    CHECK_LIST_NOTEBOOKS(LocalStorageManager::ListFavoritedElements,
+                         "favorited", (i == 0) || (i == 4),
+                         (i != 0) && (i != 4));
 
     // 6) Test method listing dirty favorited notebooks with guid
-    CHECK_LIST_NOTEBOOKS_BY_FLAG(LocalStorageManager::ListDirty |
-                                 LocalStorageManager::ListElementsWithGuid |
-                                 LocalStorageManager::ListFavoritedElements,
-                                 "dirty, favorited, having guid", i == 4, i != 4);
+    CHECK_LIST_NOTEBOOKS(LocalStorageManager::ListDirty |
+                         LocalStorageManager::ListElementsWithGuid |
+                         LocalStorageManager::ListFavoritedElements,
+                         "dirty, favorited, having guid", i == 4, i != 4);
 
     // 7) Test method listing local favorited notebooks
-    CHECK_LIST_NOTEBOOKS_BY_FLAG(LocalStorageManager::ListLocal |
-                                 LocalStorageManager::ListFavoritedElements,
-                                 "local, favorited", i == 0, i != 0);
+    CHECK_LIST_NOTEBOOKS(LocalStorageManager::ListLocal |
+                         LocalStorageManager::ListFavoritedElements,
+                         "local, favorited", i == 0, i != 0);
 }
 
 void TestExpungeNotelessTagsFromLinkedNotebooks()

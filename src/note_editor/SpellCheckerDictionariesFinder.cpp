@@ -17,15 +17,18 @@
  */
 
 #include "SpellCheckerDictionariesFinder.h"
+
 #include <quentier/logging/QuentierLogger.h>
+
 #include <QStringList>
 #include <QFileInfo>
 #include <QDirIterator>
 
 namespace quentier {
 
-#define WRAP(x) \
-    << QStringLiteral(x).toUpper()
+#define WRAP(x)                                                                \
+    << QStringLiteral(x).toUpper()                                             \
+// WRAP
 
 SpellCheckerDictionariesFinder::SpellCheckerDictionariesFinder(
         const QSharedPointer<QAtomicInt> & pStopFlag, QObject * parent) :
@@ -41,24 +44,26 @@ SpellCheckerDictionariesFinder::SpellCheckerDictionariesFinder(
 
 void SpellCheckerDictionariesFinder::run()
 {
-    QNDEBUG(QStringLiteral("SpellCheckerDictionariesFinder::run"));
+    QNDEBUG("SpellCheckerDictionariesFinder::run");
 
     m_files.clear();
     QStringList fileFilters;
     fileFilters << QStringLiteral("*.dic") << QStringLiteral("*.aff");
 
 #if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
-#define CHECK_AND_STOP() \
-    if (!m_pStopFlag.isNull() && (m_pStopFlag->load() != 0)) { \
-        QNDEBUG(QStringLiteral("Aborting the operation as stop flag is non-zero")); \
-        return; \
-    }
+#define CHECK_AND_STOP()                                                       \
+    if (!m_pStopFlag.isNull() && (m_pStopFlag->load() != 0)) {                 \
+        QNDEBUG("Aborting the operation as stop flag is non-zero");            \
+        return;                                                                \
+    }                                                                          \
+// CHECK_AND_STOP
 #else
-#define CHECK_AND_STOP() \
-    if (!m_pStopFlag.isNull() && (int(*m_pStopFlag) != 0)) { \
-        QNDEBUG(QStringLiteral("Aborting the operation as stop flag is non-zero")); \
-        return; \
-    }
+#define CHECK_AND_STOP()                                                       \
+    if (!m_pStopFlag.isNull() && (int(*m_pStopFlag) != 0)) {                   \
+        QNDEBUG("Aborting the operation as stop flag is non-zero");            \
+        return;                                                                \
+    }                                                                          \
+// CHECK_AND_STOP
 #endif
 
     QFileInfoList rootDirs = QDir::drives();
@@ -70,7 +75,7 @@ void SpellCheckerDictionariesFinder::run()
         const QFileInfo & rootDirInfo = rootDirs[i];
 
         if (Q_UNLIKELY(!rootDirInfo.isDir())) {
-            QNTRACE(QStringLiteral("Skipping non-dir ") << rootDirInfo.absoluteDir());
+            QNTRACE("Skipping non-dir " << rootDirInfo.absoluteDir());
             continue;
         }
 
@@ -81,11 +86,11 @@ void SpellCheckerDictionariesFinder::run()
             CHECK_AND_STOP()
 
             QString nextDirName = it.next();
-            QNTRACE(QStringLiteral("Next dir name = ") << nextDirName);
+            QNTRACE("Next dir name = " << nextDirName);
 
             QFileInfo fileInfo = it.fileInfo();
             if (!fileInfo.isReadable()) {
-                QNTRACE(QStringLiteral("Skipping non-readable file ")
+                QNTRACE("Skipping non-readable file "
                         << fileInfo.absoluteFilePath());
                 continue;
             }
@@ -96,30 +101,27 @@ void SpellCheckerDictionariesFinder::run()
                 isDicFile = true;
             }
             else if (fileNameSuffix != QStringLiteral("aff")) {
-                QNTRACE(QStringLiteral("Skipping file not actually matching ")
-                        << QStringLiteral("the filter: ") << fileInfo.absoluteFilePath());
+                QNTRACE("Skipping file not actually matching the filter: "
+                        << fileInfo.absoluteFilePath());
                 continue;
             }
 
             QString dictionaryName = fileInfo.baseName();
             if (!m_localeList.contains(dictionaryName.toUpper())) {
-                QNTRACE(QStringLiteral("Skipping dictionary which doesn't appear ")
-                        << QStringLiteral("to correspond to any locale: ")
-                        << dictionaryName);
+                QNTRACE("Skipping dictionary which doesn't appear to correspond "
+                        "to any locale: " << dictionaryName);
                 continue;
             }
 
             QPair<QString, QString> & pair = m_files[dictionaryName];
             if (isDicFile)
             {
-                QNTRACE(QStringLiteral("Adding dic file ")
-                        << fileInfo.absoluteFilePath());
+                QNTRACE("Adding dic file " << fileInfo.absoluteFilePath());
                 pair.first = fileInfo.absoluteFilePath();
             }
             else
             {
-                QNTRACE(QStringLiteral("Adding aff file ")
-                        << fileInfo.absoluteFilePath());
+                QNTRACE("Adding aff file " << fileInfo.absoluteFilePath());
                 pair.second = fileInfo.absoluteFilePath();
             }
         }
@@ -133,9 +135,9 @@ void SpellCheckerDictionariesFinder::run()
         const QPair<QString, QString> & pair = it.value();
         if (pair.first.isEmpty() || pair.second.isEmpty())
         {
-            QNTRACE(QStringLiteral("Skipping the incomplete pair of dic/aff files: ")
-                    << QStringLiteral("dic file path = ") << pair.first
-                    << QStringLiteral("; aff file path = ") << pair.second);
+            QNTRACE("Skipping the incomplete pair of dic/aff files: "
+                    << "dic file path = " << pair.first
+                    << "; aff file path = " << pair.second);
             it = m_files.erase(it);
             continue;
         }
@@ -143,8 +145,7 @@ void SpellCheckerDictionariesFinder::run()
         ++it;
     }
 
-    QNDEBUG(QStringLiteral("Found ") << m_files.size()
-            << QStringLiteral(" valid dictionaries"));
+    QNDEBUG("Found " << m_files.size() << " valid dictionaries");
     Q_EMIT foundDictionaries(m_files);
 }
 

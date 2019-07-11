@@ -19,6 +19,7 @@
 #include "DecryptionDialog.h"
 #include "ui_DecryptionDialog.h"
 #include "../NoteEditorSettingsNames.h"
+
 #include <quentier/enml/DecryptedTextManager.h>
 #include <quentier/utility/QuentierCheckPtr.h>
 #include <quentier/logging/QuentierLogger.h>
@@ -124,8 +125,8 @@ void DecryptionDialog::onRememberPassphraseStateChanged(int checked)
     ApplicationSettings appSettings(m_account, NOTE_EDITOR_SETTINGS_NAME);
     if (!appSettings.isWritable())
     {
-        QNINFO(QStringLiteral("Can't persist remember passphrase for session "
-                              "setting: settings are not writable"));
+        QNINFO("Can't persist remember passphrase for session "
+               "setting: settings are not writable");
     }
     else
     {
@@ -157,10 +158,10 @@ void DecryptionDialog::accept()
                                             errorDescription);
     if (!res && (m_cipher == QStringLiteral("AES")) && (m_keyLength == 128))
     {
-        QNDEBUG(QStringLiteral("The initial attempt to decrypt the text using "
-                               "AES cipher and 128 bit key has failed; checking "
-                               "whether it is old encrypted text area using RC2 "
-                               "encryption and 64 bit key"));
+        QNDEBUG("The initial attempt to decrypt the text using "
+                "AES cipher and 128 bit key has failed; checking "
+                "whether it is old encrypted text area using RC2 "
+                "encryption and 64 bit key");
         res = m_encryptionManager->decrypt(m_encryptedText, passphrase,
                                            QStringLiteral("RC2"), 64,
                                            m_cachedDecryptedText,
@@ -182,15 +183,11 @@ void DecryptionDialog::accept()
     m_decryptedTextManager->addEntry(m_encryptedText, m_cachedDecryptedText,
                                      rememberForSession, passphrase, m_cipher,
                                      m_keyLength);
-    QNTRACE(QStringLiteral("Cached decrypted text for encryptedText: ")
-            << m_encryptedText << QStringLiteral("; remember for session = ")
-            << (rememberForSession
-                ? QStringLiteral("true")
-                : QStringLiteral("false"))
-            << QStringLiteral("; decrypt permanently = ")
-            << (decryptPermanently
-                ? QStringLiteral("true")
-                : QStringLiteral("false")));
+    QNTRACE("Cached decrypted text for encryptedText: "
+            << m_encryptedText << "; remember for session = "
+            << (rememberForSession ? "true" : "false")
+            << "; decrypt permanently = "
+            << (decryptPermanently ? "true" : "false"));
 
     Q_EMIT accepted(m_cipher, m_keyLength, m_encryptedText, passphrase,
                     m_cachedDecryptedText, rememberForSession, decryptPermanently);

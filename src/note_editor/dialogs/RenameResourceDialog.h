@@ -20,6 +20,7 @@
 #define LIB_QUENTIER_NOTE_EDITOR_DIALOGS_RENAME_RESOURCE_DIALOG_H
 
 #include <quentier/utility/Macros.h>
+
 #include <QDialog>
 
 namespace Ui {

@@ -19,13 +19,15 @@
 #include <quentier/note_editor/SpellChecker.h>
 #include <quentier/utility/FileIOProcessorAsync.h>
 #include <quentier/types/Account.h>
+
 #include "SpellChecker_p.h"
 
 namespace quentier {
 
-SpellChecker::SpellChecker(FileIOProcessorAsync * pFileIOProcessorAsync,
-                           const Account & account, QObject * parent,
-                           const QString & userDictionaryPath) :
+SpellChecker::SpellChecker(
+        FileIOProcessorAsync * pFileIOProcessorAsync,
+        const Account & account, QObject * parent,
+        const QString & userDictionaryPath) :
     QObject(parent),
     d_ptr(new SpellCheckerPrivate(pFileIOProcessorAsync, account,
                                   this, userDictionaryPath))

@@ -23,6 +23,7 @@
 #include <quentier/utility/Macros.h>
 #include <quentier/types/ErrorString.h>
 #include <quentier/types/Account.h>
+
 #include <QDialog>
 #include <QSharedPointer>
 

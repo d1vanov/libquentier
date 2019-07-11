@@ -18,6 +18,7 @@
 
 #include "WebSocketClientWrapper.h"
 #include "WebSocketTransport.h"
+
 #include <QtWebSockets/QWebSocketServer>
 
 WebSocketClientWrapper::WebSocketClientWrapper(QWebSocketServer * server,

@@ -228,9 +228,8 @@ void FileSystemWatcherPrivate::timerEvent(QTimerEvent * pEvent)
         QFileInfo info(filePath);
         if (!info.isFile())
         {
-            QNTRACE(QStringLiteral("File ") << filePath
-                    << QStringLiteral(" doesn't exist after some time since "
-                                      "its removal"));
+            QNTRACE("File " << filePath
+                    << " doesn't exist after some time since its removal");
 
             auto it = m_watchedFiles.find(filePath);
             if (it != m_watchedFiles.end()) {
@@ -240,9 +239,8 @@ void FileSystemWatcherPrivate::timerEvent(QTimerEvent * pEvent)
         }
         else
         {
-            QNTRACE(QStringLiteral("File ") << filePath
-                    << QStringLiteral(" exists again after some time since "
-                                      "its removal"));
+            QNTRACE("File " << filePath
+                    << " exists again after some time since its removal");
             auto it = m_watchedFiles.find(filePath);
             if (it != m_watchedFiles.end()) {
                 m_watcher.addPath(filePath);
@@ -261,9 +259,8 @@ void FileSystemWatcherPrivate::timerEvent(QTimerEvent * pEvent)
         QFileInfo info(directoryPath);
         if (!info.isDir())
         {
-            QNTRACE(QStringLiteral("Directory ") << directoryPath
-                    << QStringLiteral(" doesn't exist after some time since "
-                                      "its removal"));
+            QNTRACE("Directory " << directoryPath
+                    << " doesn't exist after some time since its removal");
 
             auto it = m_watchedDirectories.find(directoryPath);
             if (it != m_watchedDirectories.end()) {
@@ -273,9 +270,8 @@ void FileSystemWatcherPrivate::timerEvent(QTimerEvent * pEvent)
         }
         else
         {
-            QNTRACE(QStringLiteral("Directory ") << directoryPath
-                    << QStringLiteral(" exists again after some time since "
-                                      "its removal"));
+            QNTRACE("Directory " << directoryPath
+                    << " exists again after some time since its removal");
             auto it = m_watchedDirectories.find(directoryPath);
             if (it != m_watchedDirectories.end()) {
                 m_watcher.addPath(directoryPath);

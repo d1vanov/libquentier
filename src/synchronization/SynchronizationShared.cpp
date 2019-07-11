@@ -28,11 +28,12 @@ LinkedNotebookAuthData::LinkedNotebookAuthData() :
     m_noteStoreUrl()
 {}
 
-LinkedNotebookAuthData::LinkedNotebookAuthData(const QString & guid,
-                                               const QString & shardId,
-                                               const QString & sharedNotebookGlobalId,
-                                               const QString & uri,
-                                               const QString & noteStoreUrl) :
+LinkedNotebookAuthData::LinkedNotebookAuthData(
+        const QString & guid,
+        const QString & shardId,
+        const QString & sharedNotebookGlobalId,
+        const QString & uri,
+        const QString & noteStoreUrl) :
     m_guid(guid),
     m_shardId(shardId),
     m_sharedNotebookGlobalId(sharedNotebookGlobalId),
@@ -42,14 +43,14 @@ LinkedNotebookAuthData::LinkedNotebookAuthData(const QString & guid,
 
 QTextStream & LinkedNotebookAuthData::print(QTextStream & strm) const
 {
-    strm << QStringLiteral("LinkedNotebookAuthData: {\n")
-         << QStringLiteral("    guid = ") << m_guid << QStringLiteral("\n")
-         << QStringLiteral("    shard id = ") << m_shardId << QStringLiteral("\n")
-         << QStringLiteral("    shared notebook global id = ")
-         << m_sharedNotebookGlobalId << QStringLiteral("\n")
-         << QStringLiteral("    uri = ") << m_uri << QStringLiteral("\n")
-         << QStringLiteral("    note store url = ") << m_noteStoreUrl
-         << QStringLiteral("\n") << QStringLiteral("};\n");
+    strm << "LinkedNotebookAuthData: {\n"
+         << "    guid = " << m_guid << "\n"
+         << "    shard id = " << m_shardId << "\n"
+         << "    shared notebook global id = "
+         << m_sharedNotebookGlobalId << "\n"
+         << "    uri = " << m_uri << "\n"
+         << "    note store url = " << m_noteStoreUrl
+         << "\n" << "};\n";
 
     return strm;
 }

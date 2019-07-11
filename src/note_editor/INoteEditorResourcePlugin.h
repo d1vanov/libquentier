@@ -21,6 +21,7 @@
 
 #include <quentier/utility/Macros.h>
 #include <quentier/types/ErrorString.h>
+
 #include <QWidget>
 
 namespace quentier {
@@ -77,13 +78,16 @@ public:
     /**
      * @brief mimeTypes         The method telling which are the mime types of
      *                          the resources the plugin can work with
-     * @return                  The list of resource mime types the plugin supports
+     * @return                  The list of resource mime types the plugin
+     *                          supports
      */
     virtual QStringList mimeTypes() const = 0;
 
     /**
-     * @brief fileExtensions is the method telling which file extensions of the data
-     * the plugin should be able to handle mapped to mime types the plugin supports as well
+     * @brief fileExtensions is the method telling which file extensions of
+     * the data the plugin should be able to handle mapped to mime types
+     * the plugin supports as well
+     *
      * @return                  The hash of file extensions the plugin supports
      *                          per mime types the plugin supports
      */

@@ -77,15 +77,15 @@ void UtilityTester::init()
 #endif
 }
 
-#define CATCH_EXCEPTION() \
-    catch(const std::exception & exception) { \
-        SysInfo sysInfo; \
-        QFAIL(qPrintable(QStringLiteral("Caught exception: ") + \
-                         QString::fromUtf8(exception.what()) + \
-                         QStringLiteral(", backtrace: ") + \
-                         sysInfo.stackTrace())); \
-    }
-
+#define CATCH_EXCEPTION()                                                      \
+    catch(const std::exception & exception) {                                  \
+        SysInfo sysInfo;                                                       \
+        QFAIL(qPrintable(QStringLiteral("Caught exception: ") +                \
+                         QString::fromUtf8(exception.what()) +                 \
+                         QStringLiteral(", backtrace: ") +                     \
+                         sysInfo.stackTrace()));                               \
+    }                                                                          \
+// CATCH_EXCEPTION
 
 void UtilityTester::encryptDecryptNoteTest()
 {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Dmitry Ivanov
+ * Copyright 2016-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -20,6 +20,7 @@
 #define LIB_QUENTIER_NOTE_EDITOR_JAVA_SCRIPT_IN_ORDER_EXECUTOR_H
 
 #include <quentier/utility/Macros.h>
+
 #include <QObject>
 #include <QQueue>
 
@@ -51,7 +52,8 @@ private:
 public:
     typedef boost::function<void (const QVariant&)> Callback;
 
-    explicit JavaScriptInOrderExecutor(WebView & view, QObject * parent = Q_NULLPTR);
+    explicit JavaScriptInOrderExecutor(WebView & view,
+                                       QObject * parent = Q_NULLPTR);
 
     void append(const QString & script, Callback callback = 0);
     int size() const { return m_javaScriptsQueue.size(); }

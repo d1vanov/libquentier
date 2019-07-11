@@ -52,7 +52,7 @@ AuthenticationManagerPrivate::AuthenticationManagerPrivate(
 
 void AuthenticationManagerPrivate::onAuthenticationRequest()
 {
-    QNDEBUG(QStringLiteral("AuthenticationManagerPrivate::onAuthenticationRequest"));
+    QNDEBUG("AuthenticationManagerPrivate::onAuthenticationRequest");
 
     QWidget * pParentWidget = qobject_cast<QWidget*>(parent());
     QScopedPointer<qevercloud::EvernoteOAuthDialog> pDialog(

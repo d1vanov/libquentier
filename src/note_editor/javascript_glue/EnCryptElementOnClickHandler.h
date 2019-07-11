@@ -20,6 +20,7 @@
 #define LIB_QUENTIER_NOTE_EDITOR_JAVASCRIPT_GLUE_EN_CRYPT_ELEMENT_ON_CLICK_HANDLER_H
 
 #include <quentier/utility/Macros.h>
+
 #include <QObject>
 
 namespace quentier {

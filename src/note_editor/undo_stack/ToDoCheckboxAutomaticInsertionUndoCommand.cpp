@@ -18,21 +18,25 @@
 
 #include "ToDoCheckboxAutomaticInsertionUndoCommand.h"
 #include "../NoteEditor_p.h"
+
 #include <quentier/logging/QuentierLogger.h>
 
 namespace quentier {
 
-#define GET_PAGE() \
-    NoteEditorPage * page = \
-        qobject_cast<NoteEditorPage*>(m_noteEditorPrivate.page()); \
-    if (Q_UNLIKELY(!page)) { \
-        ErrorString error(QT_TRANSLATE_NOOP("ToDoCheckboxAutomaticInsertionUndoCommand", \
-                                            "Can't undo/redo the automatic insertion " \
-                                            "of a TODO checkbox: no note editor page")); \
-        QNWARNING(error); \
-        Q_EMIT notifyError(error); \
-        return; \
-    }
+#define GET_PAGE()                                                             \
+    NoteEditorPage * page =                                                    \
+        qobject_cast<NoteEditorPage*>(m_noteEditorPrivate.page());             \
+    if (Q_UNLIKELY(!page))                                                     \
+    {                                                                          \
+        ErrorString error(                                                     \
+            QT_TRANSLATE_NOOP("ToDoCheckboxAutomaticInsertionUndoCommand",     \
+                              "Can't undo/redo the automatic insertion "       \
+                              "of a TODO checkbox: no note editor page"));     \
+        QNWARNING(error);                                                      \
+        Q_EMIT notifyError(error);                                             \
+        return;                                                                \
+    }                                                                          \
+// GET_PAGE
 
 ToDoCheckboxAutomaticInsertionUndoCommand::ToDoCheckboxAutomaticInsertionUndoCommand(
         NoteEditorPrivate & noteEditor,
@@ -58,7 +62,7 @@ ToDoCheckboxAutomaticInsertionUndoCommand::~ToDoCheckboxAutomaticInsertionUndoCo
 
 void ToDoCheckboxAutomaticInsertionUndoCommand::redoImpl()
 {
-    QNDEBUG(QStringLiteral("ToDoCheckboxAutomaticInsertionUndoCommand::redoImpl"));
+    QNDEBUG("ToDoCheckboxAutomaticInsertionUndoCommand::redoImpl");
 
     GET_PAGE()
     page->executeJavaScript(QStringLiteral("toDoCheckboxAutomaticInserter.redo()"),
@@ -67,7 +71,7 @@ void ToDoCheckboxAutomaticInsertionUndoCommand::redoImpl()
 
 void ToDoCheckboxAutomaticInsertionUndoCommand::undoImpl()
 {
-    QNDEBUG(QStringLiteral("ToDoCheckboxAutomaticInsertionUndoCommand::undoImpl"));
+    QNDEBUG("ToDoCheckboxAutomaticInsertionUndoCommand::undoImpl");
 
     GET_PAGE()
     page->executeJavaScript(QStringLiteral("toDoCheckboxAutomaticInserter.undo()"),

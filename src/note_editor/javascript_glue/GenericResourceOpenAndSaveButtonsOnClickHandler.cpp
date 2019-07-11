@@ -17,6 +17,7 @@
  */
 
 #include "GenericResourceOpenAndSaveButtonsOnClickHandler.h"
+
 #include <quentier/logging/QuentierLogger.h>
 
 namespace quentier {
@@ -29,16 +30,16 @@ GenericResourceOpenAndSaveButtonsOnClickHandler::GenericResourceOpenAndSaveButto
 void GenericResourceOpenAndSaveButtonsOnClickHandler::onOpenResourceButtonPressed(
     const QString & resourceHash)
 {
-    QNDEBUG(QStringLiteral("GenericResourceOpenAndSaveButtonsOnClickHandler::")
-            << QStringLiteral("onOpenResourceButtonPressed: ") << resourceHash);
+    QNDEBUG("GenericResourceOpenAndSaveButtonsOnClickHandler::"
+            << "onOpenResourceButtonPressed: " << resourceHash);
     Q_EMIT openResourceRequest(QByteArray::fromHex(resourceHash.toLocal8Bit()));
 }
 
 void GenericResourceOpenAndSaveButtonsOnClickHandler::onSaveResourceButtonPressed(
     const QString & resourceHash)
 {
-    QNDEBUG(QStringLiteral("GenericResourceOpenAndSaveButtonsOnClickHandler::")
-            << QStringLiteral("onSaveResourceButtonPressed: ") << resourceHash);
+    QNDEBUG("GenericResourceOpenAndSaveButtonsOnClickHandler::"
+            << "onSaveResourceButtonPressed: " << resourceHash);
     Q_EMIT saveResourceRequest(QByteArray::fromHex(resourceHash.toLocal8Bit()));
 }
 

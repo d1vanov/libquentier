@@ -401,21 +401,22 @@ bool NoteSearchQueryParsingTest(QString & error)
             queryString += QStringLiteral("-encryption: ");
         }
 
-#define ADD_LIST_TO_QUERY_STRING(keyword, list, type, ...) \
-    for(int i = 0, size = list.size(); i < size; ++i) { \
-        const type & item = list[i]; \
-        queryString += QStringLiteral(#keyword ":"); \
-        QString itemStr = __VA_ARGS__(item); \
-        bool itemContainsSpace = itemStr.contains(QStringLiteral(" ")); \
-        if (itemContainsSpace) { \
-            queryString += QStringLiteral("\""); \
-        } \
-        queryString += itemStr; \
-        if (itemContainsSpace) { \
-            queryString += QStringLiteral("\""); \
-        } \
-        queryString += QStringLiteral(" "); \
-    } \
+#define ADD_LIST_TO_QUERY_STRING(keyword, list, type, ...)                     \
+    for(int i = 0, size = list.size(); i < size; ++i) {                        \
+        const type & item = list[i];                                           \
+        queryString += QStringLiteral(#keyword ":");                           \
+        QString itemStr = __VA_ARGS__(item);                                   \
+        bool itemContainsSpace = itemStr.contains(QStringLiteral(" "));        \
+        if (itemContainsSpace) {                                               \
+            queryString += QStringLiteral("\"");                               \
+        }                                                                      \
+        queryString += itemStr;                                                \
+        if (itemContainsSpace) {                                               \
+            queryString += QStringLiteral("\"");                               \
+        }                                                                      \
+        queryString += QStringLiteral(" ");                                    \
+    }                                                                          \
+// ADD_LIST_TO_QUERY_STRING
 
         ADD_LIST_TO_QUERY_STRING(tag, tagNames, QString);
         ADD_LIST_TO_QUERY_STRING(-tag, negatedTagNames, QString);
@@ -866,24 +867,27 @@ bool NoteSearchQueryParsingTest(QString & error)
             }
         }
 
-#define CHECK_LIST(list, accessor, ...) \
-    auto noteSearchQueryList##list = noteSearchQuery.accessor(); \
-    if (noteSearchQueryList##list != list) { \
-    error = QStringLiteral("NoteSearchQuery: " #list " doesn't match the one "\
-                           "from the original list; original " #list ": "); \
-        for(int i = 0, size = list.size(); i < size; ++i) { \
-            const auto & item = list[i]; \
-            error += __VA_ARGS__(item); \
-            error += QStringLiteral("; "); \
-        } \
-        error += QStringLiteral("; \nNoteSearchQuery's list: "); \
-        for(int i = 0, size = noteSearchQueryList##list.size(); i < size; ++i) { \
-            const auto & item = noteSearchQueryList##list[i]; \
-            error += __VA_ARGS__(item); \
-            error += QStringLiteral("; "); \
-        } \
-        return false; \
-    }
+#define CHECK_LIST(list, accessor, ...)                                        \
+    auto noteSearchQueryList##list = noteSearchQuery.accessor();               \
+    if (noteSearchQueryList##list != list) {                                   \
+    error = QStringLiteral("NoteSearchQuery: " #list " doesn't match the one " \
+                           "from the original list; original " #list ": ");    \
+        for(int i = 0, size = list.size(); i < size; ++i) {                    \
+            const auto & item = list[i];                                       \
+            error += __VA_ARGS__(item);                                        \
+            error += QStringLiteral("; ");                                     \
+        }                                                                      \
+        error += QStringLiteral("; \nNoteSearchQuery's list: ");               \
+        for(int i = 0, size = noteSearchQueryList##list.size();                \
+            i < size; ++i)                                                     \
+        {                                                                      \
+            const auto & item = noteSearchQueryList##list[i];                  \
+            error += __VA_ARGS__(item);                                        \
+            error += QStringLiteral("; ");                                     \
+        }                                                                      \
+        return false;                                                          \
+    }                                                                          \
+// CHECK_LIST
 
         CHECK_LIST(tagNames, tagNames);
         CHECK_LIST(negatedTagNames, negatedTagNames);
@@ -914,31 +918,35 @@ bool NoteSearchQueryParsingTest(QString & error)
 
 #undef CHECK_LIST
 
-#define CHECK_DATETIME_LIST(list, accessor) \
-    auto noteSearchQuery##list = noteSearchQuery.accessor(); \
-    int size##list = noteSearchQuery##list.size() ; \
-    for(int i = 0; i < size##list; ++i) \
-    { \
-        const auto & item = noteSearchQuery##list[i]; \
-        const auto & strItem = list.at(i); \
-        \
-        if (!timestampForDateTimeString.contains(strItem)) { \
-            error = QStringLiteral("Internal error in test: unknown datetime argument "); \
-            error += strItem; \
-            return false; \
-        } \
-        \
-        if (item != timestampForDateTimeString[strItem]) { \
-            error = QStringLiteral("Timestamp from NoteSearchQuery is different "\
-                                   "from precalculated one for string item \""); \
-            error += strItem; \
-            error += QStringLiteral("\": precalculated timestamp = "); \
-            error += QString::number(timestampForDateTimeString[strItem]); \
-            error += QStringLiteral(", timestamp from NoteSearchQuery: "); \
-            error += QString::number(item); \
-            return false; \
-        } \
-    }
+#define CHECK_DATETIME_LIST(list, accessor)                                    \
+    auto noteSearchQuery##list = noteSearchQuery.accessor();                   \
+    int size##list = noteSearchQuery##list.size() ;                            \
+    for(int i = 0; i < size##list; ++i)                                        \
+    {                                                                          \
+        const auto & item = noteSearchQuery##list[i];                          \
+        const auto & strItem = list.at(i);                                     \
+                                                                               \
+        if (!timestampForDateTimeString.contains(strItem)) {                   \
+            error = QStringLiteral("Internal error in test: "                  \
+                                   "unknown datetime argument ");              \
+            error += strItem;                                                  \
+            return false;                                                      \
+        }                                                                      \
+                                                                               \
+        if (item != timestampForDateTimeString[strItem])                       \
+        {                                                                      \
+            error = QStringLiteral("Timestamp from NoteSearchQuery is "        \
+                                   "different from precalculated one for "     \
+                                   "string item \"");                          \
+            error += strItem;                                                  \
+            error += QStringLiteral("\": precalculated timestamp = ");         \
+            error += QString::number(timestampForDateTimeString[strItem]);     \
+            error += QStringLiteral(", timestamp from NoteSearchQuery: ");     \
+            error += QString::number(item);                                    \
+            return false;                                                      \
+        }                                                                      \
+    }                                                                          \
+// CHECK_DATETIME_LIST
 
         CHECK_DATETIME_LIST(created, creationTimestamps);
         CHECK_DATETIME_LIST(negatedCreated, negatedCreationTimestamps);
@@ -976,7 +984,8 @@ bool NoteSearchQueryParsingTest(QString & error)
         return false;
     }
 
-    const QStringList & contentSearchTermsFromQuery = noteSearchQuery.contentSearchTerms();
+    const QStringList & contentSearchTermsFromQuery =
+        noteSearchQuery.contentSearchTerms();
     const int numContentSearchTermsFromQuery = contentSearchTermsFromQuery.size();
 
     QRegExp asteriskFilter(QStringLiteral("[*]"));
@@ -1003,11 +1012,11 @@ bool NoteSearchQueryParsingTest(QString & error)
         error = QStringLiteral("Internal error: the number of content search "
                                "terms doesn't match the expected one after "
                                "parsing the note search query");
-        QNWARNING(error << QStringLiteral("; original content search terms: ")
+        QNWARNING(error << "; original content search terms: "
                   << contentSearchTerms.join(QStringLiteral("; "))
-                  << QStringLiteral("; filtered content search terms: ")
+                  << "; filtered content search terms: "
                   << filteredContentSearchTerms.join(QStringLiteral("; "))
-                  << QStringLiteral("; processed search query terms: ")
+                  << "; processed search query terms: "
                   << contentSearchTermsFromQuery.join(QStringLiteral("; ")));
         return false;
     }
@@ -1021,9 +1030,9 @@ bool NoteSearchQueryParsingTest(QString & error)
                                    "content search terms after parsing the note "
                                    "search query");
             QNWARNING(error
-                      << QStringLiteral("; filtered original content search terms: ")
+                      << "; filtered original content search terms: "
                       << filteredContentSearchTerms.join(QStringLiteral("; "))
-                      << QStringLiteral("; parsed content search terms: ")
+                      << "; parsed content search terms: "
                       << contentSearchTermsFromQuery.join(QStringLiteral("; ")));
             return false;
         }
@@ -1036,19 +1045,22 @@ bool NoteSearchQueryParsingTest(QString & error)
 
     QStringList filteredNegatedContentSearchTerms;
     filteredNegatedContentSearchTerms.reserve(numNegatedContentSearchTermsFromQuery);
-    for(int i = 0, numOriginalNegatedContentSearchTerms = negatedContentSearchTerms.size();
+    for(int i = 0,
+        numOriginalNegatedContentSearchTerms = negatedContentSearchTerms.size();
         i < numOriginalNegatedContentSearchTerms; ++i)
     {
         QString filteredNegatedSearchTerm = negatedContentSearchTerms[i];
 
         // Don't accept search terms consisting only of asterisks
-        QString filteredNegatedSearchTermWithoutAsterisks = filteredNegatedSearchTerm;
+        QString filteredNegatedSearchTermWithoutAsterisks =
+            filteredNegatedSearchTerm;
         filteredNegatedSearchTermWithoutAsterisks.remove(asteriskFilter);
         if (filteredNegatedSearchTermWithoutAsterisks.isEmpty()) {
             continue;
         }
 
-        filteredNegatedContentSearchTerms << filteredNegatedSearchTerm.simplified().toLower();
+        filteredNegatedContentSearchTerms
+            << filteredNegatedSearchTerm.simplified().toLower();
     }
 
     if (numNegatedContentSearchTermsFromQuery != filteredNegatedContentSearchTerms.size())
@@ -1057,27 +1069,30 @@ bool NoteSearchQueryParsingTest(QString & error)
                                "search terms doesn't match the expected one "
                                "after parsing the note search query");
         QNWARNING(error
-                  << QStringLiteral("; original negated content search terms: ")
+                  << "; original negated content search terms: "
                   << negatedContentSearchTerms.join(QStringLiteral(" "))
-                  << QStringLiteral("; filtered negated content search terms: ")
+                  << "; filtered negated content search terms: "
                   << filteredNegatedContentSearchTerms.join(QStringLiteral(" "))
-                  << QStringLiteral("; processed negated search query terms: ")
+                  << "; processed negated search query terms: "
                   << negatedContentSearchTermsFromQuery.join(QStringLiteral(" ")));
         return false;
     }
 
     for(int i = 0; i < numNegatedContentSearchTermsFromQuery; ++i)
     {
-        const QString & negatedContentSearchTermFromQuery = negatedContentSearchTermsFromQuery[i];
-        int index = filteredNegatedContentSearchTerms.indexOf(negatedContentSearchTermFromQuery);
-        if (index < 0) {
+        const QString & negatedContentSearchTermFromQuery =
+            negatedContentSearchTermsFromQuery[i];
+        int index = filteredNegatedContentSearchTerms.indexOf(
+            negatedContentSearchTermFromQuery);
+        if (index < 0)
+        {
             error = QStringLiteral("Internal error: can't find one of original "
                                    "negated content search terms after parsing "
                                    "the note search query");
             QNWARNING(error
-                      << QStringLiteral("; filtered original negated content search terms: ")
+                      << "; filtered original negated content search terms: "
                       << filteredNegatedContentSearchTerms.join(QStringLiteral(" "))
-                      << QStringLiteral("; parsed negated content search terms: ")
+                      << "; parsed negated content search terms: "
                       << negatedContentSearchTermsFromQuery.join(QStringLiteral(" ")));
             return false;
         }

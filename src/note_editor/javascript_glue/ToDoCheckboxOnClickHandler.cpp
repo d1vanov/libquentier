@@ -17,6 +17,7 @@
  */
 
 #include "ToDoCheckboxOnClickHandler.h"
+
 #include <quentier/logging/QuentierLogger.h>
 
 namespace quentier {
@@ -27,7 +28,7 @@ ToDoCheckboxOnClickHandler::ToDoCheckboxOnClickHandler(QObject * parent) :
 
 void ToDoCheckboxOnClickHandler::onToDoCheckboxClicked(QString enToDoCheckboxId)
 {
-    QNDEBUG(QStringLiteral("ToDoCheckboxOnClickHandler::onToDoCheckboxClicked: ")
+    QNDEBUG("ToDoCheckboxOnClickHandler::onToDoCheckboxClicked: "
             << enToDoCheckboxId);
 
     bool conversionResult = false;

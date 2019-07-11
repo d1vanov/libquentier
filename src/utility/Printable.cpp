@@ -52,53 +52,63 @@ QTextStream & operator <<(QTextStream & strm,
 
 } // namespace quentier
 
-#define PRINT_FIELD(obj, field, ...) \
-    strm << indent << QStringLiteral( #field " = ") \
-         << (obj.field.isSet() \
-             ? __VA_ARGS__(obj.field.ref()) \
-             : QStringLiteral("<empty>")) << QStringLiteral("; \n")
+#define PRINT_FIELD(obj, field, ...)                                           \
+    strm << indent <<  #field " = "                                            \
+         << (obj.field.isSet()                                                 \
+             ? __VA_ARGS__(obj.field.ref())                                    \
+             : QStringLiteral("<empty>")) << "; \n"                            \
+// PRINT_FIELD
 
-#define PRINT_LIST_FIELD(obj, field, ...) \
-    strm << indent << QStringLiteral( #field ); \
-    if (obj.field.isSet()) \
-    { \
-        strm << QStringLiteral(": { \n"); \
-        const auto & field##List = obj.field.ref(); \
-        const int num##field = field##List.size(); \
-        for(int i = 0; i < num##field; ++i) { \
-            strm << indent << indent << QStringLiteral("[") << i \
-                 << QStringLiteral("]: ") \
-                 << __VA_ARGS__(field##List[i]) << QStringLiteral(";\n"); \
-        } \
-        strm << indent << QStringLiteral("};\n"); \
-    } \
-    else \
-    { \
-        strm << QStringLiteral("<empty>;\n"); \
-    }
+#define PRINT_LIST_FIELD(obj, field, ...)                                      \
+    strm << indent <<  #field;                                                 \
+    if (obj.field.isSet())                                                     \
+    {                                                                          \
+        strm << ": { \n";                                                      \
+        const auto & field##List = obj.field.ref();                            \
+        const int num##field = field##List.size();                             \
+        for(int i = 0; i < num##field; ++i) {                                  \
+            strm << indent << indent << "[" << i                               \
+                 << "]: "                                                      \
+                 << __VA_ARGS__(field##List[i]) << ";\n";                      \
+        }                                                                      \
+        strm << indent << "};\n";                                              \
+    }                                                                          \
+    else                                                                       \
+    {                                                                          \
+        strm << "<empty>;\n";                                                  \
+    }                                                                          \
+// PRINT_LIST_FIELD
 
-#define PRINT_APPLICATION_DATA(obj) \
-    if (obj.applicationData.isSet()) \
-    { \
-        const qevercloud::LazyMap & applicationData = obj.applicationData; \
-        if (applicationData.keysOnly.isSet()) { \
-            const QSet<QString> & keysOnly = applicationData.keysOnly; \
-            strm << indent << QStringLiteral("applicationData: keys only: \n"); \
-            for(auto it = keysOnly.begin(), end = keysOnly.end(); it != end; ++it) { \
-                strm << *it << QStringLiteral("; "); \
-            } \
-            strm << QStringLiteral("\n"); \
-        } \
-        if (applicationData.fullMap.isSet()) { \
-            const QMap<QString, QString> & fullMap = applicationData.fullMap; \
-            strm << indent << QStringLiteral("applicationData: full map: \n"); \
-            for(auto it = fullMap.begin(), end = fullMap.end(); it != end; ++it) { \
-                strm << QStringLiteral("[") << it.key() << QStringLiteral("] = ") \
-                     << it.value() << QStringLiteral("; "); \
-            } \
-            strm << QStringLiteral("\n"); \
-        } \
-    }
+#define PRINT_APPLICATION_DATA(obj)                                            \
+    if (obj.applicationData.isSet())                                           \
+    {                                                                          \
+        const qevercloud::LazyMap & applicationData = obj.applicationData;     \
+        if (applicationData.keysOnly.isSet())                                  \
+        {                                                                      \
+            const QSet<QString> & keysOnly = applicationData.keysOnly;         \
+            strm << indent << "applicationData: keys only: \n";                \
+            for(auto it = keysOnly.begin(),                                    \
+                end = keysOnly.end(); it != end; ++it)                         \
+            {                                                                  \
+                strm << *it << "; ";                                           \
+            }                                                                  \
+            strm << "\n";                                                      \
+        }                                                                      \
+                                                                               \
+        if (applicationData.fullMap.isSet())                                   \
+        {                                                                      \
+            const QMap<QString, QString> & fullMap = applicationData.fullMap;  \
+            strm << indent << "applicationData: full map: \n";                 \
+            for(auto it = fullMap.begin(),                                     \
+                end = fullMap.end(); it != end; ++it)                          \
+            {                                                                  \
+                strm << "[" << it.key() << "] = "                              \
+                     << it.value() << "; ";                                    \
+            }                                                                  \
+            strm << "\n";                                                      \
+        }                                                                      \
+    }                                                                          \
+// PRINT_APPLICATION_DATA
 
 QString byteArrayToHex(const QByteArray & bytes)
 {
@@ -128,7 +138,7 @@ QString contactTypeToString(const qevercloud::ContactType::type & type)
 
 QTextStream & operator <<(QTextStream & strm, const qevercloud::Contact & contact)
 {
-    strm << QStringLiteral("qevercloud::Contact: {\n");
+    strm << "qevercloud::Contact: {\n";
     const char * indent = "  ";
 
     PRINT_FIELD(contact, name);
@@ -141,20 +151,21 @@ QTextStream & operator <<(QTextStream & strm, const qevercloud::Contact & contac
     PRINT_FIELD(contact, messagingPermitExpires,
                 quentier::printableDateTimeFromTimestamp);
 
-    strm << QStringLiteral("}; \n");
+    strm << "}; \n";
     return strm;
 }
 
 QString boolToString(const bool value)
-{ return (value ? QStringLiteral("true") : QStringLiteral("false")); }
+{
+    return (value ? QStringLiteral("true") : QStringLiteral("false"));
+}
 
 QTextStream & operator <<(QTextStream & strm, const qevercloud::Identity & identity)
 {
-    strm << QStringLiteral("qevercloud::Identity: {\n");
+    strm << "qevercloud::Identity: {\n";
     const char * indent = "  ";
 
-    strm << indent << QStringLiteral("id = ") << QString::number(identity.id)
-         << QStringLiteral(";\n");
+    strm << indent << "id = " << QString::number(identity.id) << ";\n";
 
     PRINT_FIELD(identity, contact, ToString);
     PRINT_FIELD(identity, userId, QString::number);
@@ -164,13 +175,13 @@ QTextStream & operator <<(QTextStream & strm, const qevercloud::Identity & ident
     PRINT_FIELD(identity, userConnected, boolToString);
     PRINT_FIELD(identity, eventId, QString::number);
 
-    strm << QStringLiteral("}; \n");
+    strm << "}; \n";
     return strm;
 }
 
 QTextStream & operator <<(QTextStream & strm, const qevercloud::BusinessUserInfo & info)
 {
-    strm << QStringLiteral("qevercloud::BusinessUserInfo: {\n");
+    strm << "qevercloud::BusinessUserInfo: {\n";
     const char * indent = "  ";
 
     PRINT_FIELD(info, businessId, QString::number);
@@ -179,7 +190,7 @@ QTextStream & operator <<(QTextStream & strm, const qevercloud::BusinessUserInfo
     PRINT_FIELD(info, email);
     PRINT_FIELD(info, updated, quentier::printableDateTimeFromTimestamp);
 
-    strm << QStringLiteral("}; \n");
+    strm << "}; \n";
     return strm;
 }
 
@@ -219,7 +230,7 @@ QString businessUserRoleToString(const qevercloud::BusinessUserRole::type & role
 
 QTextStream & operator <<(QTextStream & strm, const qevercloud::Accounting & accounting)
 {
-    strm << QStringLiteral("qevercloud::Accounting: { \n");
+    strm << "qevercloud::Accounting: { \n";
     const char * indent = "  ";
 
     PRINT_FIELD(accounting, uploadLimitEnd,
@@ -258,14 +269,14 @@ QTextStream & operator <<(QTextStream & strm, const qevercloud::Accounting & acc
     PRINT_FIELD(accounting, availablePoints,
                 QString::number);
 
-    strm << QStringLiteral("}; \n");
+    strm << "}; \n";
     return strm;
 }
 
 QTextStream & operator <<(QTextStream & strm,
                           const qevercloud::AccountLimits & limits)
 {
-    strm << QStringLiteral("qevercloud::AccountLimits: {\n");
+    strm << "qevercloud::AccountLimits: {\n";
     const char * indent = "  ";
 
     PRINT_FIELD(limits, userMailLimitDaily, QString::number);
@@ -300,7 +311,7 @@ QString reminderEmailConfigToString(
 QTextStream & operator <<(QTextStream & strm,
                           const qevercloud::UserAttributes & attributes)
 {
-    strm << QStringLiteral("qevercloud::UserAttributes: {\n");
+    strm << "qevercloud::UserAttributes: {\n";
     const char * indent = "  ";
 
     PRINT_FIELD(attributes, defaultLocationName);
@@ -340,14 +351,14 @@ QTextStream & operator <<(QTextStream & strm,
                 quentier::printableDateTimeFromTimestamp);
     PRINT_FIELD(attributes, salesforcePushEnabled, boolToString);
 
-    strm << QStringLiteral("};\n");
+    strm << "};\n";
     return strm;
 }
 
 QTextStream & operator <<(QTextStream & strm,
                           const qevercloud::NoteAttributes & attributes)
 {
-    strm << QStringLiteral("qevercloud::NoteAttributes: {\n");
+    strm << "qevercloud::NoteAttributes: {\n";
     const char * indent = "  ";
 
     PRINT_FIELD(attributes, subjectDate,
@@ -379,18 +390,18 @@ QTextStream & operator <<(QTextStream & strm,
 
     if (attributes.classifications.isSet())
     {
-        strm << indent << QStringLiteral("classifications: ");
+        strm << indent << "classifications: ";
         const QMap<QString, QString> & classifications = attributes.classifications;
         for(auto it = classifications.begin(),
             end = classifications.end(); it != end; ++it)
         {
-            strm << QStringLiteral("[") << it.key() << QStringLiteral("] = ")
-                 << it.value() << QStringLiteral("; ");
+            strm << "[" << it.key() << "] = "
+                 << it.value() << "; ";
         }
-        strm << QStringLiteral("\n");
+        strm << "\n";
     }
 
-    strm << QStringLiteral("};\n");
+    strm << "};\n";
     return strm;
 }
 
@@ -538,7 +549,7 @@ QTextStream & operator <<(QTextStream & strm,
 QTextStream & operator <<(QTextStream & strm,
                           const qevercloud::NotebookRestrictions & restrictions)
 {
-    strm << QStringLiteral("NotebookRestrictions: {\n");
+    strm << "NotebookRestrictions: {\n";
     const char * indent = "  ";
 
     PRINT_FIELD(restrictions, noReadNotes, boolToString);
@@ -566,7 +577,7 @@ QTextStream & operator <<(QTextStream & strm,
     PRINT_FIELD(restrictions, expungeWhichSharedNotebookRestrictions,
                 sharedNotebookInstanceRestrictionsToString);
 
-    strm << QStringLiteral("};\n");
+    strm << "};\n";
 
     return strm;
 }
@@ -582,7 +593,7 @@ QTextStream & operator<<(
 QTextStream & operator <<(QTextStream & strm,
                           const qevercloud::ResourceAttributes & attributes)
 {
-    strm << QStringLiteral("ResourceAttributes: {\n");
+    strm << "ResourceAttributes: {\n";
     const char * indent = "  ";
 
     PRINT_FIELD(attributes, sourceURL);
@@ -597,13 +608,13 @@ QTextStream & operator <<(QTextStream & strm,
     PRINT_FIELD(attributes, attachment, boolToString);
     PRINT_APPLICATION_DATA(attributes)
 
-    strm << QStringLiteral("};\n");
+    strm << "};\n";
     return strm;
 }
 
 QTextStream & operator <<(QTextStream & strm, const qevercloud::Resource & resource)
 {
-    strm << QStringLiteral("qevercloud::Resource {\n");
+    strm << "qevercloud::Resource {\n";
     const char * indent = "  ";
 
     PRINT_FIELD(resource, guid);
@@ -612,23 +623,23 @@ QTextStream & operator <<(QTextStream & strm, const qevercloud::Resource & resou
 
     if (resource.data.isSet())
     {
-        strm << indent << QStringLiteral("Data: {\n");
+        strm << indent << "Data: {\n";
 
         PRINT_FIELD(resource.data.ref(), size, QString::number);
         PRINT_FIELD(resource.data.ref(), bodyHash, byteArrayToHex);
 
-        strm << indent << QStringLiteral("body: ")
+        strm << indent << "body: "
              << (resource.data->body.isSet()
-                 ? QStringLiteral("is set")
-                 : QStringLiteral("is not set"))
-             << QStringLiteral(";\n");
+                 ? "is set"
+                 : "is not set")
+             << ";\n";
         if (resource.data->body.isSet() && (resource.data->body->size() < 4096))
         {
-            strm << indent << QStringLiteral("raw data body content: ")
-                 << resource.data->body.ref() << QStringLiteral(";\n");
+            strm << indent << "raw data body content: "
+                 << resource.data->body.ref() << ";\n";
         }
 
-        strm << indent << QStringLiteral("};\n");
+        strm << indent << "};\n";
     }
 
     PRINT_FIELD(resource, mime);
@@ -637,7 +648,7 @@ QTextStream & operator <<(QTextStream & strm, const qevercloud::Resource & resou
 
     if (resource.recognition.isSet())
     {
-        strm << indent << QStringLiteral("Recognition data: {\n");
+        strm << indent << "Recognition data: {\n";
 
         PRINT_FIELD(resource.recognition.ref(), size, QString::number);
         PRINT_FIELD(resource.recognition.ref(), bodyHash, byteArrayToHex);
@@ -646,68 +657,67 @@ QTextStream & operator <<(QTextStream & strm, const qevercloud::Resource & resou
         if (resource.recognition->body.isSet() &&
             (resource.recognition->body->size() < 4096))
         {
-            strm << indent << QStringLiteral("raw recognition body content: ")
-                 << resource.recognition->body.ref() << QStringLiteral(";\n");
+            strm << indent << "raw recognition body content: "
+                 << resource.recognition->body.ref() << ";\n";
         }
 
-        strm << indent << QStringLiteral("};\n");
+        strm << indent << "};\n";
     }
 
     if (resource.alternateData.isSet())
     {
-        strm << indent << QStringLiteral("Alternate data: {\n");
+        strm << indent << "Alternate data: {\n";
 
         PRINT_FIELD(resource.alternateData.ref(), size, QString::number);
         PRINT_FIELD(resource.alternateData.ref(), bodyHash, byteArrayToHex);
 
-        strm << indent << QStringLiteral("body: ")
+        strm << indent << "body: "
              << (resource.alternateData->body.isSet()
-                 ? QStringLiteral("is set")
-                 : QStringLiteral("is not set"))
-             << QStringLiteral(";\n");
+                 ? "is set"
+                 : "is not set")
+             << ";\n";
         if (resource.alternateData->body.isSet() &&
             (resource.alternateData->body->size() < 4096))
         {
-            strm << indent << QStringLiteral("raw alternate data body content: ")
-                 << resource.alternateData->body.ref() << QStringLiteral(";\n");
+            strm << indent << "raw alternate data body content: "
+                 << resource.alternateData->body.ref() << ";\n";
         }
 
-        strm << indent << QStringLiteral("};\n");
+        strm << indent << "};\n";
     }
 
     if (resource.attributes.isSet()) {
         strm << indent << resource.attributes.ref();
     }
 
-    strm << QStringLiteral("};\n");
+    strm << "};\n";
     return strm;
 }
 
 QTextStream & operator<<(QTextStream & strm, const qevercloud::SyncChunk & syncChunk)
 {
-    strm << QStringLiteral("qevercloud::SyncChunk: {\n");
+    strm << "qevercloud::SyncChunk: {\n";
     const char * indent = "  ";
 
     PRINT_FIELD(syncChunk, chunkHighUSN, QString::number);
 
-    strm << indent << QStringLiteral("currentTime = ")
+    strm << indent << "currentTime = "
          << quentier::printableDateTimeFromTimestamp(syncChunk.currentTime)
-         << QStringLiteral(";\n");
-    strm << indent << QStringLiteral("updateCount = ") << syncChunk.updateCount
-         << QStringLiteral(";\n");
+         << ";\n";
+    strm << indent << "updateCount = " << syncChunk.updateCount << ";\n";
 
     if (syncChunk.notes.isSet())
     {
         for(auto it = syncChunk.notes->constBegin(),
             end = syncChunk.notes->constEnd(); it != end; ++it)
         {
-            strm << indent << QStringLiteral("note: guid = ")
+            strm << indent << "note: guid = "
                  << (it->guid.isSet() ? it->guid.ref() : QStringLiteral("<empty>"))
-                 << QStringLiteral(", update sequence number = ")
+                 << ", update sequence number = "
                  << (it->updateSequenceNum.isSet()
                      ? QString::number(it->updateSequenceNum.ref())
                      : QStringLiteral("<empty>"))
-                 << QStringLiteral(";\n");
+                 << ";\n";
         }
     }
 
@@ -716,13 +726,13 @@ QTextStream & operator<<(QTextStream & strm, const qevercloud::SyncChunk & syncC
         for(auto it = syncChunk.notebooks->constBegin(),
             end = syncChunk.notebooks->constEnd(); it != end; ++it)
         {
-            strm << indent << QStringLiteral("notebook: guid = ")
+            strm << indent << "notebook: guid = "
                 << (it->guid.isSet() ? it->guid.ref() : QStringLiteral("<empty>"))
-                 << QStringLiteral(", update sequence number = ")
+                 << ", update sequence number = "
                  << (it->updateSequenceNum.isSet()
                      ? QString::number(it->updateSequenceNum.ref())
                      : QStringLiteral("<empty>"))
-                 << QStringLiteral(";\n");
+                 << ";\n";
         }
     }
 
@@ -731,13 +741,13 @@ QTextStream & operator<<(QTextStream & strm, const qevercloud::SyncChunk & syncC
         for(auto it = syncChunk.tags->constBegin(),
             end = syncChunk.tags->constEnd(); it != end; ++it)
         {
-            strm << indent << QStringLiteral("tag: guid = ")
+            strm << indent << "tag: guid = "
                  << (it->guid.isSet() ? it->guid.ref() : QStringLiteral("<empty>"))
-                 << QStringLiteral(", update sequence number = ")
+                 << ", update sequence number = "
                  << (it->updateSequenceNum.isSet()
                      ? QString::number(it->updateSequenceNum.ref())
                      : QStringLiteral("<empty>"))
-                 << QStringLiteral(";\n");
+                 << ";\n";
         }
     }
 
@@ -746,13 +756,13 @@ QTextStream & operator<<(QTextStream & strm, const qevercloud::SyncChunk & syncC
         for(auto it = syncChunk.searches->constBegin(),
             end = syncChunk.searches->constEnd(); it != end; ++it)
         {
-            strm << indent << QStringLiteral("saved search: guid = ")
+            strm << indent << "saved search: guid = "
                  << (it->guid.isSet() ? it->guid.ref() : QStringLiteral("<empty>"))
-                 << QStringLiteral(", update sequence number = ")
+                 << ", update sequence number = "
                  << (it->updateSequenceNum.isSet()
                      ? QString::number(it->updateSequenceNum.ref())
                      : QStringLiteral("<empty>"))
-                 << QStringLiteral(";\n");
+                 << ";\n";
         }
     }
 
@@ -761,17 +771,17 @@ QTextStream & operator<<(QTextStream & strm, const qevercloud::SyncChunk & syncC
         for(auto it = syncChunk.resources->constBegin(),
             end = syncChunk.resources->constEnd(); it != end; ++it)
         {
-            strm << indent << QStringLiteral("resource: guid = ")
+            strm << indent << "resource: guid = "
                  << (it->guid.isSet() ? it->guid.ref() : QStringLiteral("<empty>"))
-                 << QStringLiteral(", update sequence number = ")
+                 << ", update sequence number = "
                  << (it->updateSequenceNum.isSet()
                      ? QString::number(it->updateSequenceNum.ref())
                      : QStringLiteral("<empty>"))
-                 << QStringLiteral(", note guid = ")
+                 << ", note guid = "
                  << (it->noteGuid.isSet()
                      ? it->noteGuid.ref()
                      : QStringLiteral("<empty>"))
-                 << QStringLiteral(";\n");
+                 << ";\n";
         }
     }
 
@@ -780,13 +790,13 @@ QTextStream & operator<<(QTextStream & strm, const qevercloud::SyncChunk & syncC
         for(auto it = syncChunk.linkedNotebooks->constBegin(),
             end = syncChunk.linkedNotebooks->constEnd(); it != end; ++it)
         {
-            strm << indent << QStringLiteral("linked notebook: guid = ")
+            strm << indent << "linked notebook: guid = "
                  << (it->guid.isSet() ? it->guid.ref() : QStringLiteral("<empty>"))
-                 << QStringLiteral(", update sequence number = ")
+                 << ", update sequence number = "
                  << (it->updateSequenceNum.isSet()
                      ? QString::number(it->updateSequenceNum.ref())
                      : QStringLiteral("<empty>"))
-                 << QStringLiteral(";\n");
+                 << ";\n";
         }
     }
 
@@ -795,8 +805,7 @@ QTextStream & operator<<(QTextStream & strm, const qevercloud::SyncChunk & syncC
         for(auto it = syncChunk.expungedLinkedNotebooks->constBegin(),
             end = syncChunk.expungedLinkedNotebooks->constEnd(); it != end; ++it)
         {
-            strm << indent << QStringLiteral("expunged linked notebook guid = ")
-                 << *it << QStringLiteral(";\n");
+            strm << indent << "expunged linked notebook guid = " << *it << ";\n";
         }
     }
 
@@ -805,8 +814,7 @@ QTextStream & operator<<(QTextStream & strm, const qevercloud::SyncChunk & syncC
         for(auto it = syncChunk.expungedNotebooks->constBegin(),
             end = syncChunk.expungedNotebooks->constEnd(); it != end; ++it)
         {
-            strm << indent << QStringLiteral("expunged notebook guid = ")
-                 << *it << QStringLiteral(";\n");
+            strm << indent << "expunged notebook guid = " << *it << ";\n";
         }
     }
 
@@ -815,8 +823,7 @@ QTextStream & operator<<(QTextStream & strm, const qevercloud::SyncChunk & syncC
         for(auto it = syncChunk.expungedNotes->constBegin(),
             end = syncChunk.expungedNotes->constEnd(); it != end; ++it)
         {
-            strm << indent << QStringLiteral("expunged note guid = ")
-                 << *it << QStringLiteral(";\n");
+            strm << indent << "expunged note guid = " << *it << ";\n";
         }
     }
 
@@ -825,8 +832,7 @@ QTextStream & operator<<(QTextStream & strm, const qevercloud::SyncChunk & syncC
         for(auto it = syncChunk.expungedSearches->constBegin(),
             end = syncChunk.expungedSearches->constEnd(); it != end; ++it)
         {
-            strm << indent << QStringLiteral("expunged search guid = ")
-                 << *it << QStringLiteral(";\n");
+            strm << indent << "expunged search guid = " << *it << ";\n";
         }
     }
 
@@ -835,8 +841,7 @@ QTextStream & operator<<(QTextStream & strm, const qevercloud::SyncChunk & syncC
         for(auto it = syncChunk.expungedTags->constBegin(),
             end = syncChunk.expungedTags->constEnd(); it != end; ++it)
         {
-            strm << indent << QStringLiteral("expunged tag guid = ") << *it
-                 << QStringLiteral(";\n");
+            strm << indent << "expunged tag guid = " << *it << ";\n";
         }
     }
 
@@ -845,7 +850,7 @@ QTextStream & operator<<(QTextStream & strm, const qevercloud::SyncChunk & syncC
 
 QTextStream & operator<<(QTextStream & strm, const qevercloud::Tag & tag)
 {
-    strm << QStringLiteral("qevercloud::Tag: {\n");
+    strm << "qevercloud::Tag: {\n";
     const char * indent = "  ";
 
     PRINT_FIELD(tag, guid);
@@ -853,14 +858,14 @@ QTextStream & operator<<(QTextStream & strm, const qevercloud::Tag & tag)
     PRINT_FIELD(tag, parentGuid);
     PRINT_FIELD(tag, updateSequenceNum, QString::number);
 
-    strm << QStringLiteral("};\n");
+    strm << "};\n";
     return strm;
 }
 
 QTextStream & operator<<(QTextStream & strm,
                          const qevercloud::SavedSearch & savedSearch)
 {
-    strm << QStringLiteral("qevercloud::SavedSearch: {\n");
+    strm << "qevercloud::SavedSearch: {\n";
     const char * indent = "  ";
 
     PRINT_FIELD(savedSearch, guid);
@@ -869,45 +874,45 @@ QTextStream & operator<<(QTextStream & strm,
     PRINT_FIELD(savedSearch, format, queryFormatToString);
     PRINT_FIELD(savedSearch, updateSequenceNum, QString::number);
 
-    strm << indent << QStringLiteral("SavedSearchScope = ");
+    strm << indent << "SavedSearchScope = ";
     if (savedSearch.scope.isSet())
     {
-        strm << QStringLiteral("{\n");
-        strm << indent << indent << QStringLiteral("includeAccount = ")
+        strm << "{\n";
+        strm << indent << indent << "includeAccount = "
              << (savedSearch.scope->includeAccount.isSet()
                  ? (savedSearch.scope->includeAccount.ref()
-                    ? QStringLiteral("true")
-                    : QStringLiteral("false"))
-                 : QStringLiteral("<empty>")) << QStringLiteral(";\n");
+                    ? "true"
+                    : "false")
+                 : "<empty>") << ";\n";
         strm << indent << indent
-             << QStringLiteral("includePersonalLinkedNotebooks = ")
+             << "includePersonalLinkedNotebooks = "
              << (savedSearch.scope->includePersonalLinkedNotebooks.isSet()
                  ? (savedSearch.scope->includePersonalLinkedNotebooks.ref()
-                    ? QStringLiteral("true")
-                    : QStringLiteral("false"))
-                 : QStringLiteral("<empty>")) << QStringLiteral(";\n");
+                    ? "true"
+                    : "false")
+                 : "<empty>") << ";\n";
         strm << indent << indent
-             << QStringLiteral("includeBusinessLinkedNotebooks = ")
+             << "includeBusinessLinkedNotebooks = "
              << (savedSearch.scope->includeBusinessLinkedNotebooks.isSet()
                  ? (savedSearch.scope->includeBusinessLinkedNotebooks.ref()
-                    ? QStringLiteral("true")
-                    : QStringLiteral("false"))
-                 : QStringLiteral("<empty>")) << QStringLiteral(";\n");
-        strm << indent << QStringLiteral("};\n");
+                    ? "true"
+                    : "false")
+                 : "<empty>") << ";\n";
+        strm << indent << "};\n";
     }
     else
     {
-        strm << QStringLiteral("<empty>;\n");
+        strm << "<empty>;\n";
     }
 
-    strm << QStringLiteral("};\n");
+    strm << "};\n";
     return strm;
 }
 
 QTextStream & operator<<(QTextStream & strm,
                          const qevercloud::LinkedNotebook & linkedNotebook)
 {
-    strm << QStringLiteral("qevercloud::LinkedNotebook: {\n");
+    strm << "qevercloud::LinkedNotebook: {\n";
     const char * indent = "  ";
 
     PRINT_FIELD(linkedNotebook, shareName);
@@ -922,13 +927,13 @@ QTextStream & operator<<(QTextStream & strm,
     PRINT_FIELD(linkedNotebook, stack);
     PRINT_FIELD(linkedNotebook, businessId, QString::number);
 
-    strm << QStringLiteral("};\n");
+    strm << "};\n";
     return strm;
 }
 
 QTextStream & operator<<(QTextStream & strm, const qevercloud::Notebook & notebook)
 {
-    strm << QStringLiteral("qevercloud::Notebook: {\n");
+    strm << "qevercloud::Notebook: {\n";
     const char * indent = "  ";
 
     PRINT_FIELD(notebook, guid);
@@ -943,7 +948,7 @@ QTextStream & operator<<(QTextStream & strm, const qevercloud::Notebook & notebo
 
     if (notebook.sharedNotebooks.isSet())
     {
-        strm << indent << QStringLiteral("sharedNotebooks: {\n");
+        strm << indent << "sharedNotebooks: {\n";
 
         for(auto it = notebook.sharedNotebooks->begin(),
             end = notebook.sharedNotebooks->end(); it != end; ++it)
@@ -951,21 +956,21 @@ QTextStream & operator<<(QTextStream & strm, const qevercloud::Notebook & notebo
             strm << indent << indent << *it;
         }
 
-        strm << indent << QStringLiteral("};\n");
+        strm << indent << "};\n";
     }
 
     PRINT_FIELD(notebook, businessNotebook, ToString);
     PRINT_FIELD(notebook, contact, ToString);
     PRINT_FIELD(notebook, restrictions, ToString);
 
-    strm << QStringLiteral("};\n");
+    strm << "};\n";
     return strm;
 }
 
 QTextStream & operator<<(QTextStream & strm,
                          const qevercloud::Publishing & publishing)
 {
-    strm << QStringLiteral("qevercloud::Publishing: {\n");
+    strm << "qevercloud::Publishing: {\n";
     const char * indent = "  ";
 
     PRINT_FIELD(publishing, uri);
@@ -973,14 +978,14 @@ QTextStream & operator<<(QTextStream & strm,
     PRINT_FIELD(publishing, ascending, boolToString);
     PRINT_FIELD(publishing, publicDescription);
 
-    strm << QStringLiteral("};\n");
+    strm << "};\n";
     return strm;
 }
 
 QTextStream & operator<<(QTextStream & strm,
                          const qevercloud::SharedNotebook & sharedNotebook)
 {
-    strm << QStringLiteral("qevercloud::SharedNotebook: {\n");
+    strm << "qevercloud::SharedNotebook: {\n";
     const char * indent = "  ";
 
     PRINT_FIELD(sharedNotebook, id, QString::number);
@@ -1001,27 +1006,27 @@ QTextStream & operator<<(QTextStream & strm,
     PRINT_FIELD(sharedNotebook, serviceAssigned,
                 quentier::printableDateTimeFromTimestamp);
 
-    strm << QStringLiteral("};\n");
+    strm << "};\n";
     return strm;
 }
 
 QTextStream & operator<<(QTextStream & strm,
                          const qevercloud::BusinessNotebook & businessNotebook)
 {
-    strm << QStringLiteral("qevercloud::BusinessNotebook: {\n");
+    strm << "qevercloud::BusinessNotebook: {\n";
     const char * indent = "  ";
 
     PRINT_FIELD(businessNotebook, notebookDescription);
     PRINT_FIELD(businessNotebook, privilege, sharedNotebookPrivilegeLevelToString);
     PRINT_FIELD(businessNotebook, recommended, boolToString);
 
-    strm << QStringLiteral("};\n");
+    strm << "};\n";
     return strm;
 }
 
 QTextStream & operator<<(QTextStream & strm, const qevercloud::User & user)
 {
-    strm << QStringLiteral("qevercloud::User: {\n");
+    strm << "qevercloud::User: {\n";
     const char * indent = "  ";
 
     PRINT_FIELD(user, id, QString::number);
@@ -1038,20 +1043,20 @@ QTextStream & operator<<(QTextStream & strm, const qevercloud::User & user)
     PRINT_FIELD(user, accounting, ToString);
     PRINT_FIELD(user, businessUserInfo, ToString);
 
-    strm << QStringLiteral("};\n");
+    strm << "};\n";
     return strm;
 }
 
 QTextStream & operator<<(QTextStream & strm,
                          const qevercloud::SharedNotebookRecipientSettings & settings)
 {
-    strm << QStringLiteral("qevercloud::SharedNotebookRecipientSettings: {\n");
+    strm << "qevercloud::SharedNotebookRecipientSettings: {\n";
     const char * indent = "  ";
 
     PRINT_FIELD(settings, reminderNotifyEmail, boolToString);
     PRINT_FIELD(settings, reminderNotifyInApp, boolToString);
 
-    strm << QStringLiteral("};\n");
+    strm << "};\n";
     return strm;
 }
 
@@ -1079,21 +1084,21 @@ QTextStream & operator<<(QTextStream & strm,
 QTextStream & operator<<(QTextStream & strm,
                          const qevercloud::SponsoredGroupRole::type & role)
 {
-    strm << QStringLiteral("qevercloud::SponsoredGroupRole: ");
+    strm << "qevercloud::SponsoredGroupRole: ";
 
     switch (role)
     {
     case qevercloud::SponsoredGroupRole::GROUP_MEMBER:
-        strm << QStringLiteral("GROUP_MEMBER");
+        strm << "GROUP_MEMBER";
         break;
     case qevercloud::SponsoredGroupRole::GROUP_ADMIN:
-        strm << QStringLiteral("GROUP_ADMIN");
+        strm << "GROUP_ADMIN";
         break;
     case qevercloud::SponsoredGroupRole::GROUP_OWNER:
-        strm << QStringLiteral("GROUP_OWNER");
+        strm << "GROUP_OWNER";
         break;
     default:
-        strm << QStringLiteral("Unknown");
+        strm << "Unknown";
         break;
     }
 
@@ -1103,7 +1108,7 @@ QTextStream & operator<<(QTextStream & strm,
 QTextStream & operator<<(QTextStream & strm,
                          const qevercloud::NoteRestrictions & restrictions)
 {
-    strm << QStringLiteral("qevercloud::NoteRestrictions {\n");
+    strm << "qevercloud::NoteRestrictions {\n";
     const char * indent = "  ";
 
     PRINT_FIELD(restrictions, noUpdateTitle, boolToString);
@@ -1112,14 +1117,14 @@ QTextStream & operator<<(QTextStream & strm,
     PRINT_FIELD(restrictions, noShare, boolToString);
     PRINT_FIELD(restrictions, noSharePublicly, boolToString);
 
-    strm << QStringLiteral("};\n");
+    strm << "};\n";
     return strm;
 }
 
 QTextStream & operator<<(QTextStream & strm,
                          const qevercloud::NoteLimits & limits)
 {
-    strm << QStringLiteral("qevercloud::NoteLimits {\n");
+    strm << "qevercloud::NoteLimits {\n";
     const char * indent = "  ";
 
     PRINT_FIELD(limits, noteResourceCountMax, QString::number);
@@ -1128,13 +1133,13 @@ QTextStream & operator<<(QTextStream & strm,
     PRINT_FIELD(limits, noteSizeMax, QString::number);
     PRINT_FIELD(limits, uploaded, QString::number);
 
-    strm << QStringLiteral("};\n");
+    strm << "};\n";
     return strm;
 }
 
 QTextStream & operator<<(QTextStream & strm, const qevercloud::Note & note)
 {
-    strm << QStringLiteral("qevercloud::Note {\n");
+    strm << "qevercloud::Note {\n";
     const char * indent = "  ";
 
     PRINT_FIELD(note, guid);
@@ -1155,7 +1160,7 @@ QTextStream & operator<<(QTextStream & strm, const qevercloud::Note & note)
     PRINT_FIELD(note, restrictions, ToString);
     PRINT_FIELD(note, limits, ToString);
 
-    strm << QStringLiteral("};\n");
+    strm << "};\n";
     return strm;
 }
 
@@ -1178,7 +1183,7 @@ QString sharedNotePrivilegeLevelToString(
 QTextStream & operator<<(QTextStream & strm,
                          const qevercloud::SharedNote & sharedNote)
 {
-    strm << QStringLiteral("qevercloud::SharedNote: {\n");
+    strm << "qevercloud::SharedNote: {\n";
     const char * indent = "  ";
 
     PRINT_FIELD(sharedNote, sharerUserID, QString::number);
@@ -1191,76 +1196,76 @@ QTextStream & operator<<(QTextStream & strm,
     PRINT_FIELD(sharedNote, serviceAssigned,
                 quentier::printableDateTimeFromTimestamp);
 
-    strm << QStringLiteral("};\n");
+    strm << "};\n";
     return strm;
 }
 
 QTextStream & operator<<(QTextStream & strm,
                          const qevercloud::EDAMErrorCode::type & obj)
 {
-    strm << QStringLiteral("qevercloud::EDAMErrorCode: ");
+    strm << "qevercloud::EDAMErrorCode: ";
 
     switch(obj)
     {
     case qevercloud::EDAMErrorCode::UNKNOWN:
-        strm << QStringLiteral("UNKNOWN");
+        strm << "UNKNOWN";
         break;
     case qevercloud::EDAMErrorCode::BAD_DATA_FORMAT:
-        strm << QStringLiteral("BAD_DATA_FORMAT");
+        strm << "BAD_DATA_FORMAT";
         break;
     case qevercloud::EDAMErrorCode::PERMISSION_DENIED:
-        strm << QStringLiteral("PERMISSION_DENIED");
+        strm << "PERMISSION_DENIED";
         break;
     case qevercloud::EDAMErrorCode::INTERNAL_ERROR:
-        strm << QStringLiteral("INTERNAL_ERROR");
+        strm << "INTERNAL_ERROR";
         break;
     case qevercloud::EDAMErrorCode::DATA_REQUIRED:
-        strm << QStringLiteral("DATA_REQUIRED");
+        strm << "DATA_REQUIRED";
         break;
     case qevercloud::EDAMErrorCode::LIMIT_REACHED:
-        strm << QStringLiteral("LIMIT_REACHED");
+        strm << "LIMIT_REACHED";
         break;
     case qevercloud::EDAMErrorCode::QUOTA_REACHED:
-        strm << QStringLiteral("QUOTA_REACHED");
+        strm << "QUOTA_REACHED";
         break;
     case qevercloud::EDAMErrorCode::INVALID_AUTH:
-        strm << QStringLiteral("INVALID_AUTH");
+        strm << "INVALID_AUTH";
         break;
     case qevercloud::EDAMErrorCode::AUTH_EXPIRED:
-        strm << QStringLiteral("AUTH_EXPIRED");
+        strm << "AUTH_EXPIRED";
         break;
     case qevercloud::EDAMErrorCode::DATA_CONFLICT:
-        strm << QStringLiteral("DATA_CONFLICT");
+        strm << "DATA_CONFLICT";
         break;
     case qevercloud::EDAMErrorCode::ENML_VALIDATION:
-        strm << QStringLiteral("ENML_VALIDATION");
+        strm << "ENML_VALIDATION";
         break;
     case qevercloud::EDAMErrorCode::SHARD_UNAVAILABLE:
-        strm << QStringLiteral("SHARD_UNAVAILABLE");
+        strm << "SHARD_UNAVAILABLE";
         break;
     case qevercloud::EDAMErrorCode::LEN_TOO_SHORT:
-        strm << QStringLiteral("LEN_TOO_SHORT");
+        strm << "LEN_TOO_SHORT";
         break;
     case qevercloud::EDAMErrorCode::LEN_TOO_LONG:
-        strm << QStringLiteral("LEN_TOO_LONG");
+        strm << "LEN_TOO_LONG";
         break;
     case qevercloud::EDAMErrorCode::TOO_FEW:
-        strm << QStringLiteral("TOO_FEW");
+        strm << "TOO_FEW";
         break;
     case qevercloud::EDAMErrorCode::TOO_MANY:
-        strm << QStringLiteral("TOO_MANY");
+        strm << "TOO_MANY";
         break;
     case qevercloud::EDAMErrorCode::UNSUPPORTED_OPERATION:
-        strm << QStringLiteral("UNSUPPORTED_OPERATION");
+        strm << "UNSUPPORTED_OPERATION";
         break;
     case qevercloud::EDAMErrorCode::TAKEN_DOWN:
-        strm << QStringLiteral("TAKEN_DOWN");
+        strm << "TAKEN_DOWN";
         break;
     case qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED:
-        strm << QStringLiteral("RATE_LIMIT_REACHED");
+        strm << "RATE_LIMIT_REACHED";
         break;
     default:
-        strm << QStringLiteral("<unknown>");
+        strm << "<unknown>";
         break;
     }
 
@@ -1270,26 +1275,26 @@ QTextStream & operator<<(QTextStream & strm,
 QTextStream & operator<<(QTextStream & strm,
                          const qevercloud::SyncState & syncState)
 {
-    strm << QStringLiteral("qevercloud::SyncState {\n")
-         << QStringLiteral("  current time = ")
+    strm << "qevercloud::SyncState {\n"
+         << "  current time = "
          << quentier::printableDateTimeFromTimestamp(syncState.currentTime)
-         << QStringLiteral(";\n")
-         << QStringLiteral("  full sync before = ")
+         << ";\n"
+         << "  full sync before = "
          << quentier::printableDateTimeFromTimestamp(syncState.fullSyncBefore)
-         << QStringLiteral(";\n")
-         << QStringLiteral("  update count = ")
-         << QString::number(syncState.updateCount) << QStringLiteral(";\n")
-         << QStringLiteral("  uploaded = ")
+         << ";\n"
+         << "  update count = "
+         << QString::number(syncState.updateCount) << ";\n"
+         << "  uploaded = "
          << (syncState.uploaded.isSet()
              ? QString::number(syncState.uploaded.ref())
              : QStringLiteral("<not set>"))
-         << QStringLiteral(";\n")
-         << QStringLiteral("  user last updated = ")
+         << ";\n"
+         << "  user last updated = "
          << (syncState.userLastUpdated.isSet()
              ? quentier::printableDateTimeFromTimestamp(syncState.userLastUpdated)
              : QStringLiteral("<not set>"))
-         << QStringLiteral(";\n")
-         << QStringLiteral("};\n");
+         << ";\n"
+         << "};\n";
 
     return strm;
 }
@@ -1297,117 +1302,117 @@ QTextStream & operator<<(QTextStream & strm,
 QTextStream & operator<<(QTextStream & strm,
                          const qevercloud::SyncChunkFilter & filter)
 {
-    strm << QStringLiteral("qevercloud::SyncChunkFilter {\n")
-         << QStringLiteral("  include notes = ")
+    strm << "qevercloud::SyncChunkFilter {\n"
+         << "  include notes = "
          << (filter.includeNotes.isSet()
              ? (filter.includeNotes.ref()
-                ? QStringLiteral("true")
-                : QStringLiteral("false"))
-             : QStringLiteral("<not set>"))
-         << QStringLiteral(";\n")
-         << QStringLiteral("  include note resources = ")
+                ? "true"
+                : "false")
+             : "<not set>")
+         << ";\n"
+         << "  include note resources = "
          << (filter.includeNoteResources.isSet()
              ? (filter.includeNoteResources.ref()
-                ? QStringLiteral("true")
-                : QStringLiteral("false"))
-             : QStringLiteral("<not set>"))
-         << QStringLiteral(";\n")
-         << QStringLiteral("  include note attributes = ")
+                ? "true"
+                : "false")
+             : "<not set>")
+         << ";\n"
+         << "  include note attributes = "
          << (filter.includeNoteAttributes.isSet()
              ? (filter.includeNoteAttributes.ref()
-                ? QStringLiteral("true")
-                : QStringLiteral("false"))
-             : QStringLiteral("<not set>"))
-         << QStringLiteral(";\n")
-         << QStringLiteral("  include notebooks = ")
+                ? "true"
+                : "false")
+             : "<not set>")
+         << ";\n"
+         << "  include notebooks = "
          << (filter.includeNotebooks.isSet()
              ? (filter.includeNotebooks.ref()
-                ? QStringLiteral("true")
-                : QStringLiteral("false"))
-             : QStringLiteral("<not set>"))
-         << QStringLiteral(";\n")
-         << QStringLiteral("  include tags = ")
+                ? "true"
+                : "false")
+             : "<not set>")
+         << ";\n"
+         << "  include tags = "
          << (filter.includeTags.isSet()
              ? (filter.includeTags.ref()
-                ? QStringLiteral("true")
-                : QStringLiteral("false"))
-             : QStringLiteral("<not set>"))
-         << QStringLiteral(";\n")
-         << QStringLiteral("  include saved searches = ")
+                ? "true"
+                : "false")
+             : "<not set>")
+         << ";\n"
+         << "  include saved searches = "
          << (filter.includeSearches.isSet()
              ? (filter.includeSearches.ref()
-                ? QStringLiteral("true")
-                : QStringLiteral("false"))
-             : QStringLiteral("<not set>"))
-         << QStringLiteral(";\n")
-         << QStringLiteral("  include resources = ")
+                ? "true"
+                : "false")
+             : "<not set>")
+         << ";\n"
+         << "  include resources = "
          << (filter.includeResources.isSet()
              ? (filter.includeResources.ref()
-                ? QStringLiteral("true")
-                : QStringLiteral("false"))
-             : QStringLiteral("<not set>"))
-         << QStringLiteral(";\n")
-         << QStringLiteral("  include linked notebooks = ")
+                ? "true"
+                : "false")
+             : "<not set>")
+         << ";\n"
+         << "  include linked notebooks = "
          << (filter.includeLinkedNotebooks.isSet()
              ? (filter.includeLinkedNotebooks.ref()
-                ? QStringLiteral("true")
-                : QStringLiteral("false"))
-             : QStringLiteral("<not set>"))
-         << QStringLiteral(";\n")
-         << QStringLiteral("  include expunged = ")
+                ? "true"
+                : "false")
+             : "<not set>")
+         << ";\n"
+         << "  include expunged = "
          << (filter.includeExpunged.isSet()
              ? (filter.includeExpunged.ref()
-                ? QStringLiteral("true")
-                : QStringLiteral("false"))
-             : QStringLiteral("<not set>"))
-         << QStringLiteral(";\n")
-         << QStringLiteral("  include note application data full map = ")
+                ? "true"
+                : "false")
+             : "<not set>")
+         << ";\n"
+         << "  include note application data full map = "
          << (filter.includeNoteApplicationDataFullMap.isSet()
              ? (filter.includeNoteApplicationDataFullMap.ref()
-                ? QStringLiteral("true")
-                : QStringLiteral("false"))
-             : QStringLiteral("<not set>"))
-         << QStringLiteral(";\n")
-         << QStringLiteral("  include resource application data full map = ")
+                ? "true"
+                : "false")
+             : "<not set>")
+         << ";\n"
+         << "  include resource application data full map = "
          << (filter.includeResourceApplicationDataFullMap.isSet()
              ? (filter.includeResourceApplicationDataFullMap.ref()
-                ? QStringLiteral("true")
-                : QStringLiteral("false"))
-             : QStringLiteral("<not set>"))
-         << QStringLiteral(";\n")
-         << QStringLiteral("  include shared notes = ")
+                ? "true"
+                : "false")
+             : "<not set>")
+         << ";\n"
+         << "  include shared notes = "
          << (filter.includeSharedNotes.isSet()
              ? (filter.includeSharedNotes.ref()
-                ? QStringLiteral("true")
-                : QStringLiteral("false"))
-             : QStringLiteral("<not set>"))
-         << QStringLiteral(";\n")
-         << QStringLiteral("  omit shared notebooks = ")
+                ? "true"
+                : "false")
+             : "<not set>")
+         << ";\n"
+         << "  omit shared notebooks = "
          << (filter.omitSharedNotebooks.isSet()
               ? (filter.omitSharedNotebooks.ref()
-                 ? QStringLiteral("true")
-                 : QStringLiteral("false"))
-              : QStringLiteral("<not set>"))
-         << QStringLiteral(";\n")
-         << QStringLiteral("  require note content class = ")
+                 ? "true"
+                 : "false")
+              : "<not set>")
+         << ";\n"
+         << "  require note content class = "
          << (filter.requireNoteContentClass.isSet()
              ? filter.requireNoteContentClass.ref()
              : QStringLiteral("<not set>"))
-         << QStringLiteral(";\n");
+         << ";\n";
 
-    strm << QStringLiteral("  notebook guids: ");
+    strm << "  notebook guids: ";
     if (filter.notebookGuids.isSet())
     {
-        strm << QStringLiteral("\n");
+        strm << "\n";
         for(auto it = filter.notebookGuids->constBegin(),
             end = filter.notebookGuids->constEnd(); it != end; ++it)
         {
-            strm << QStringLiteral("    ") << *it << QStringLiteral("\n");
+            strm << "    " << *it << "\n";
         }
     }
     else
     {
-        strm << QStringLiteral("<not set>;\n");
+        strm << "<not set>;\n";
     }
 
     return strm;
@@ -1416,56 +1421,56 @@ QTextStream & operator<<(QTextStream & strm,
 QTextStream & operator<<(QTextStream & strm,
                          const qevercloud::NoteResultSpec & spec)
 {
-    strm << QStringLiteral("qevercloud::NoteResultSpec: {\n")
-         << QStringLiteral("  include content = ")
+    strm << "qevercloud::NoteResultSpec: {\n"
+         << "  include content = "
          << (spec.includeContent.isSet()
              ? (spec.includeContent.ref()
-                ? QStringLiteral("true")
-                : QStringLiteral("false"))
-             : QStringLiteral("<not set>"))
-         << QStringLiteral("\n  include resources data = ")
+                ? "true"
+                : "false")
+             : "<not set>")
+         << "\n  include resources data = "
          << (spec.includeResourcesData.isSet()
              ? (spec.includeResourcesData.ref()
-                ? QStringLiteral("true")
-                : QStringLiteral("false"))
-             : QStringLiteral("<not set>"))
-         << QStringLiteral("\n  include resources recognition = ")
+                ? "true"
+                : "false")
+             : "<not set>")
+         << "\n  include resources recognition = "
          << (spec.includeResourcesRecognition.isSet()
              ? (spec.includeResourcesRecognition.ref()
-                ? QStringLiteral("true")
-                : QStringLiteral("false"))
-             : QStringLiteral("<not set>"))
-         << QStringLiteral("\n  include resources alternate data = ")
+                ? "true"
+                : "false")
+             : "<not set>")
+         << "\n  include resources alternate data = "
          << (spec.includeResourcesAlternateData.isSet()
              ? (spec.includeResourcesAlternateData.ref()
-                ? QStringLiteral("true")
-                : QStringLiteral("false"))
-             : QStringLiteral("<not set>"))
-         << QStringLiteral("\n  include shared notes = ")
+                ? "true"
+                : "false")
+             : "<not set>")
+         << "\n  include shared notes = "
          << (spec.includeSharedNotes.isSet()
              ? (spec.includeSharedNotes.ref()
-                ? QStringLiteral("true")
-                : QStringLiteral("false"))
-             : QStringLiteral("<not set>"))
-         << QStringLiteral("\n  include note app data values = ")
+                ? "true"
+                : "false")
+             : "<not set>")
+         << "\n  include note app data values = "
          << (spec.includeNoteAppDataValues.isSet()
              ? (spec.includeNoteAppDataValues.ref()
-                ? QStringLiteral("true")
-                : QStringLiteral("false"))
-             : QStringLiteral("<not set>"))
-         << QStringLiteral("\n  include resource app data values = ")
+                ? "true"
+                : "false")
+             : "<not set>")
+         << "\n  include resource app data values = "
          << (spec.includeResourceAppDataValues.isSet()
              ? (spec.includeResourceAppDataValues.ref()
-                ? QStringLiteral("true")
-                : QStringLiteral("false"))
-             : QStringLiteral("<not set>"))
-         << QStringLiteral("\n  include account limits = ")
+                ? "true"
+                : "false")
+             : "<not set>")
+         << "\n  include account limits = "
          << (spec.includeAccountLimits.isSet()
              ? (spec.includeAccountLimits.ref()
-                ? QStringLiteral("true")
-                : QStringLiteral("false"))
-             : QStringLiteral("<not set>"))
-         << QStringLiteral("\n};\n");
+                ? "true"
+                : "false")
+             : "<not set>")
+         << "\n};\n";
     return strm;
 }
 
@@ -1473,25 +1478,24 @@ QTextStream & operator<<(QTextStream & strm,
 QTextStream & operator<<(QTextStream & strm,
                          const qevercloud::EvernoteOAuthWebView::OAuthResult & result)
 {
-    strm << QStringLiteral("qevercloud::EvernoteOAuthWebView::OAuthResult {\n");
+    strm << "qevercloud::EvernoteOAuthWebView::OAuthResult {\n";
 
-    strm << QStringLiteral("  noteStoreUrl = ") << result.noteStoreUrl
-         << QStringLiteral(";\n");
-    strm << QStringLiteral("  expires = ")
+    strm << "  noteStoreUrl = " << result.noteStoreUrl << ";\n";
+    strm << "  expires = "
          << quentier::printableDateTimeFromTimestamp(result.expires)
-         << QStringLiteral(";\n");
-    strm << QStringLiteral("  shardId = ") << result.shardId
-         << QStringLiteral(";\n");
-    strm << QStringLiteral("  userId = ") << QString::number(result.userId)
-         << QStringLiteral(";\n");
-    strm << QStringLiteral("  webApiUrlPrefix = ") << result.webApiUrlPrefix
-         << QStringLiteral(";\n");
-    strm << QStringLiteral("  authenticationToken ")
+         << ";\n";
+    strm << "  shardId = " << result.shardId
+         << ";\n";
+    strm << "  userId = " << QString::number(result.userId)
+         << ";\n";
+    strm << "  webApiUrlPrefix = " << result.webApiUrlPrefix
+         << ";\n";
+    strm << "  authenticationToken "
          << (result.authenticationToken.isEmpty()
-             ? QStringLiteral("is empty")
-             : QStringLiteral("is not empty")) << QStringLiteral(";\n");
+             ? "is empty"
+             : "is not empty") << ";\n";
 
-    strm << QStringLiteral("};\n");
+    strm << "};\n";
     return strm;
 }
 #endif

@@ -18,8 +18,10 @@
 
 #include "Transaction.h"
 #include "LocalStorageManager_p.h"
+
 #include <quentier/exception/DatabaseSqlErrorException.h>
 #include <quentier/logging/QuentierLogger.h>
+
 #include <QSqlQuery>
 #include <QSqlError>
 
@@ -90,7 +92,7 @@ bool Transaction::commit(ErrorString & errorDescription)
         errorDescription.setBase(
             QT_TRANSLATE_NOOP("Transaction", "Can't commit the SQL transaction"));
         errorDescription.details() = query.lastError().text();
-        QNWARNING(errorDescription << QStringLiteral(", full last query error: ")
+        QNWARNING(errorDescription << ", full last query error: "
                   << query.lastError());
         return false;
     }
@@ -115,7 +117,7 @@ bool Transaction::rollback(ErrorString & errorDescription)
         errorDescription.setBase(
             QT_TRANSLATE_NOOP("Transaction", "Can't rollback the SQL transaction"));
         errorDescription.details() = query.lastError().text();
-        QNWARNING(errorDescription << QStringLiteral(", full last query error: ")
+        QNWARNING(errorDescription << ", full last query error: "
                   << query.lastError());
         return false;
     }
@@ -142,7 +144,7 @@ bool Transaction::end(ErrorString & errorDescription)
         errorDescription.setBase(
             QT_TRANSLATE_NOOP("Transaction", "Can't end the SQL transaction"));
         errorDescription.details() = query.lastError().text();
-        QNWARNING(errorDescription << QStringLiteral(", full last query error: ")
+        QNWARNING(errorDescription << ", full last query error: "
                   << query.lastError());
         return false;
     }
@@ -164,8 +166,7 @@ void Transaction::init()
     QSqlQuery query(m_db);
     bool res = query.exec(queryString);
     if (!res) {
-        QNERROR(QStringLiteral("Error beginning the SQL transaction: ")
-                << query.lastError());
+        QNERROR("Error beginning the SQL transaction: " << query.lastError());
         ErrorString errorDescription(
             QT_TRANSLATE_NOOP("Transaction", "Can't begin the SQL transaction"));
         errorDescription.details() = query.lastError().text();

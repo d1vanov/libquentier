@@ -113,13 +113,15 @@ const QString ToString(const QSet<T> & object)
     return str;
 }
 
-#define QUENTIER_DECLARE_PRINTABLE(type, ...) \
-    QUENTIER_EXPORT QTextStream & operator << (QTextStream & strm, const type & obj); \
-    inline QDebug & operator << (QDebug & debug, const type & obj) \
-    { \
-        debug << ToString<type, ##__VA_ARGS__>(obj); \
-        return debug; \
-    }
+#define QUENTIER_DECLARE_PRINTABLE(type, ...)                                  \
+    QUENTIER_EXPORT QTextStream &                                              \
+    operator << (QTextStream & strm, const type & obj);                        \
+    inline QDebug & operator << (QDebug & debug, const type & obj)             \
+    {                                                                          \
+        debug << ToString<type, ##__VA_ARGS__>(obj);                           \
+        return debug;                                                          \
+    }                                                                          \
+// QUENTIER_DECLARE_PRINTABLE
 
 QUENTIER_DECLARE_PRINTABLE(qevercloud::Contact)
 QUENTIER_DECLARE_PRINTABLE(qevercloud::Identity)

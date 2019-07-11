@@ -20,6 +20,7 @@
 #define LIB_QUENTIER_NOTE_EDITOR_NOTE_EDITOR_PAGE_H
 
 #include "JavaScriptInOrderExecutor.h"
+
 #include <quentier/utility/Macros.h>
 
 #ifndef QUENTIER_USE_QT_WEB_ENGINE
@@ -101,16 +102,21 @@ private:
                                  const QString & message) Q_DECL_OVERRIDE;
     virtual bool javaScriptConfirm(QWebFrame * pFrame,
                                    const QString & message) Q_DECL_OVERRIDE;
-    virtual void javaScriptConsoleMessage(const QString & message, int lineNumber,
-                                          const QString & sourceID) Q_DECL_OVERRIDE;
+
+    virtual void javaScriptConsoleMessage(
+        const QString & message,
+        int lineNumber,
+        const QString & sourceID) Q_DECL_OVERRIDE;
 #else
     virtual void javaScriptAlert(const QUrl & securityOrigin,
                                  const QString & msg) Q_DECL_OVERRIDE;
     virtual bool javaScriptConfirm(const QUrl & securityOrigin,
                                    const QString & msg) Q_DECL_OVERRIDE;
-    virtual void javaScriptConsoleMessage(JavaScriptConsoleMessageLevel level,
-                                          const QString & message, int lineNumber,
-                                          const QString & sourceID) Q_DECL_OVERRIDE;
+
+    virtual void javaScriptConsoleMessage(
+        JavaScriptConsoleMessageLevel level,
+        const QString & message, int lineNumber,
+        const QString & sourceID) Q_DECL_OVERRIDE;
 #endif
 
 private:

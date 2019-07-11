@@ -20,7 +20,8 @@
 
 namespace quentier {
 
-ToDoCheckboxAutomaticInsertionHandler::ToDoCheckboxAutomaticInsertionHandler(QObject * parent) :
+ToDoCheckboxAutomaticInsertionHandler::ToDoCheckboxAutomaticInsertionHandler(
+        QObject * parent) :
     QObject(parent)
 {}
 

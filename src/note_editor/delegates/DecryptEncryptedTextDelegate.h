@@ -20,9 +20,11 @@
 #define LIB_QUENTIER_NOTE_EDITOR_DELEGATES_DECRYPT_ENCRYPTED_TEXT_DELEGATE_H
 
 #include "JsResultCallbackFunctor.hpp"
+
 #include <quentier/utility/Macros.h>
 #include <quentier/types/ErrorString.h>
 #include <quentier/types/Note.h>
+
 #include <QPointer>
 
 namespace quentier {
@@ -40,13 +42,14 @@ class Q_DECL_HIDDEN DecryptEncryptedTextDelegate: public QObject
 {
     Q_OBJECT
 public:
-    explicit DecryptEncryptedTextDelegate(const QString & encryptedTextId,
-                                          const QString & encryptedText,
-                                          const QString & cipher,
-                                          const QString & length, const QString & hint,
-                                          NoteEditorPrivate * pNoteEditor,
-                                          QSharedPointer<EncryptionManager> encryptionManager,
-                                          QSharedPointer<DecryptedTextManager> decryptedTextManager);
+    explicit DecryptEncryptedTextDelegate(
+        const QString & encryptedTextId,
+        const QString & encryptedText,
+        const QString & cipher,
+        const QString & length, const QString & hint,
+        NoteEditorPrivate * pNoteEditor,
+        QSharedPointer<EncryptionManager> encryptionManager,
+        QSharedPointer<DecryptedTextManager> decryptedTextManager);
 
     void start();
 

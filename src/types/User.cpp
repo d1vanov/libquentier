@@ -660,151 +660,141 @@ void User::setAccountLimits(qevercloud::AccountLimits && limits)
 
 QTextStream & User::print(QTextStream & strm) const
 {
-    strm << QStringLiteral("User { \n");
-    strm << QStringLiteral("isDirty = ")
-         << (d->m_isDirty ? QStringLiteral("true") : QStringLiteral("false"))
-         << QStringLiteral("; \n");
-    strm << QStringLiteral("isLocal = ")
-         << (d->m_isLocal ? QStringLiteral("true") : QStringLiteral("false"))
-         << QStringLiteral("; \n");
+    strm << "User { \n";
+    strm << "isDirty = "
+         << (d->m_isDirty ? "true" : "false")
+         << "; \n";
+    strm << "isLocal = "
+         << (d->m_isLocal ? "true" : "false")
+         << "; \n";
 
     const auto & enUser = d->m_qecUser;
 
     if (enUser.id.isSet()) {
-        strm << QStringLiteral("User ID = ") << QString::number(enUser.id)
-             << QStringLiteral("; \n");
+        strm << "User ID = " << QString::number(enUser.id) << "; \n";
     }
     else {
-        strm << QStringLiteral("User ID is not set; \n");
+        strm << "User ID is not set; \n";
     }
 
     if (enUser.username.isSet()) {
-        strm << QStringLiteral("username = ") << enUser.username
-             << QStringLiteral("; \n");
+        strm << "username = " << enUser.username << "; \n";
     }
     else {
-        strm << QStringLiteral("username is not set; \n");
+        strm << "username is not set; \n";
     }
 
     if (enUser.email.isSet()) {
-        strm << QStringLiteral("email = ") << enUser.email
-             << QStringLiteral("; \n");
+        strm << "email = " << enUser.email << "; \n";
     }
     else {
-        strm << QStringLiteral("email is not set; \n");
+        strm << "email is not set; \n";
     }
 
     if (enUser.name.isSet()) {
-        strm << QStringLiteral("name = ") << enUser.name
-             << QStringLiteral("; \n");
+        strm << "name = " << enUser.name << "; \n";
     }
     else {
-        strm << QStringLiteral("name is not set; \n");
+        strm << "name is not set; \n";
     }
 
     if (enUser.timezone.isSet()) {
-        strm << QStringLiteral("timezone = ") << enUser.timezone
-             << QStringLiteral("; \n");
+        strm << "timezone = " << enUser.timezone << "; \n";
     }
     else {
-        strm << QStringLiteral("timezone is not set; \n");
+        strm << "timezone is not set; \n";
     }
 
     if (enUser.privilege.isSet()) {
-        strm << QStringLiteral("privilege = ") << enUser.privilege
-             << QStringLiteral("; \n");
+        strm << "privilege = " << enUser.privilege << "; \n";
     }
     else {
-        strm << QStringLiteral("privilege is not set; \n");
+        strm << "privilege is not set; \n";
     }
 
     if (enUser.serviceLevel.isSet()) {
-        strm << QStringLiteral("service level = ") << enUser.serviceLevel
-             << QStringLiteral("; \n");
+        strm << "service level = " << enUser.serviceLevel << "; \n";
     }
     else {
-        strm << QStringLiteral("service level is not set; \n");
+        strm << "service level is not set; \n";
     }
 
     if (enUser.created.isSet()) {
-        strm << QStringLiteral("created = ")
-             << printableDateTimeFromTimestamp(enUser.created)
-             << QStringLiteral("; \n");
+        strm << "created = "
+             << printableDateTimeFromTimestamp(enUser.created) << "; \n";
     }
     else {
-        strm << QStringLiteral("created is not set; \n");
+        strm << "created is not set; \n";
     }
 
     if (enUser.updated.isSet()) {
-        strm << QStringLiteral("updated = ")
-             << printableDateTimeFromTimestamp(enUser.updated)
-             << QStringLiteral("; \n");
+        strm << "updated = "
+             << printableDateTimeFromTimestamp(enUser.updated) << "; \n";
     }
     else {
-        strm << QStringLiteral("updated is not set; \n");
+        strm << "updated is not set; \n";
     }
 
     if (enUser.deleted.isSet()) {
-        strm << QStringLiteral("deleted = ")
-             << printableDateTimeFromTimestamp(enUser.deleted)
-             << QStringLiteral("; \n");
+        strm << "deleted = "
+             << printableDateTimeFromTimestamp(enUser.deleted) << "; \n";
     }
     else {
-        strm << QStringLiteral("deleted is not set; \n");
+        strm << "deleted is not set; \n";
     }
 
     if (enUser.active.isSet()) {
-        strm << QStringLiteral("active = ")
-             << (enUser.active ? QStringLiteral("true") : QStringLiteral("false"))
-             << QStringLiteral("; \n");
+        strm << "active = "
+             << (enUser.active ? "true" : "false")
+             << "; \n";
     }
     else {
-        strm << QStringLiteral("active is not set; \n");
+        strm << "active is not set; \n";
     }
 
     if (enUser.attributes.isSet()) {
         strm << enUser.attributes;
     }
     else {
-        strm << QStringLiteral("attributes are not set; \n");
+        strm << "attributes are not set; \n";
     }
 
     if (enUser.accounting.isSet()) {
         strm << enUser.accounting;
     }
     else {
-        strm << QStringLiteral("accounting is not set; \n");
+        strm << "accounting is not set; \n";
     }
 
     if (enUser.businessUserInfo.isSet()) {
         strm << enUser.businessUserInfo;
     }
     else {
-        strm << QStringLiteral("business user info is not set; \n");
+        strm << "business user info is not set; \n";
     }
 
     if (enUser.photoUrl.isSet()) {
-        strm << QStringLiteral("photo url = ")
-             << enUser.photoUrl << QStringLiteral("; \n");
+        strm << "photo url = "
+             << enUser.photoUrl << "; \n";
     }
     else {
-        strm << QStringLiteral("photo url is not set; \n");
+        strm << "photo url is not set; \n";
     }
 
     if (enUser.photoLastUpdated.isSet()) {
-        strm << QStringLiteral("photo url last updated = ")
+        strm << "photo url last updated = "
              << printableDateTimeFromTimestamp(enUser.photoLastUpdated)
-             << QStringLiteral("; \n");
+             << "; \n";
     }
     else {
-        strm << QStringLiteral("photo url last updates is not set; \n");
+        strm << "photo url last updates is not set; \n";
     }
 
     if (enUser.accountLimits.isSet()) {
         strm << enUser.accountLimits;
     }
     else {
-        strm << QStringLiteral("account limits are not set; \n");
+        strm << "account limits are not set; \n";
     }
 
     return strm;

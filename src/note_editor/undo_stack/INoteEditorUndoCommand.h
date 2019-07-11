@@ -32,10 +32,14 @@ public:
     virtual ~INoteEditorUndoCommand();
 
 protected:
-    INoteEditorUndoCommand(NoteEditorPrivate & noteEditorPrivate,
-                           QUndoCommand * parent = Q_NULLPTR);
-    INoteEditorUndoCommand(NoteEditorPrivate & noteEditorPrivate,
-                           const QString & text, QUndoCommand * parent = Q_NULLPTR);
+    INoteEditorUndoCommand(
+        NoteEditorPrivate & noteEditorPrivate,
+        QUndoCommand * parent = Q_NULLPTR);
+
+    INoteEditorUndoCommand(
+        NoteEditorPrivate & noteEditorPrivate,
+        const QString & text,
+        QUndoCommand * parent = Q_NULLPTR);
 
     NoteEditorPrivate &    m_noteEditorPrivate;
 };

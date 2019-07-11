@@ -18,6 +18,7 @@
 
 #include "NoteEditorContentEditUndoCommand.h"
 #include "../NoteEditor_p.h"
+
 #include <quentier/logging/QuentierLogger.h>
 
 namespace quentier {
@@ -46,15 +47,15 @@ NoteEditorContentEditUndoCommand::~NoteEditorContentEditUndoCommand()
 
 void NoteEditorContentEditUndoCommand::redoImpl()
 {
-    QNDEBUG(QStringLiteral("NoteEditorContentEditUndoCommand::redoImpl (")
-            << text() << QStringLiteral(")"));
+    QNDEBUG("NoteEditorContentEditUndoCommand::redoImpl ("
+            << text() << ")");
     m_noteEditorPrivate.redoPageAction();
 }
 
 void NoteEditorContentEditUndoCommand::undoImpl()
 {
-    QNDEBUG(QStringLiteral("NoteEditorContentEditUndoCommand::undoImpl (")
-            << text() << QStringLiteral(")"));
+    QNDEBUG("NoteEditorContentEditUndoCommand::undoImpl ("
+            << text() << ")");
     m_noteEditorPrivate.undoPageAction();
     m_noteEditorPrivate.setNoteResources(m_resources);
 }

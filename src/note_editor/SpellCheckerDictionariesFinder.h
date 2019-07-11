@@ -20,6 +20,7 @@
 #define LIB_QUENTIER_NOTE_EDITOR_SPELL_CHECKER_DICTIONARIES_FINDER_H
 
 #include <quentier/utility/Macros.h>
+
 #include <QObject>
 #include <QRunnable>
 #include <QHash>

@@ -17,7 +17,9 @@
  */
 
 #include "ImageResourceRotationUndoCommand.h"
+
 #include <quentier/logging/QuentierLogger.h>
+
 #include <limits>
 
 namespace quentier {
@@ -72,12 +74,12 @@ ImageResourceRotationUndoCommand::~ImageResourceRotationUndoCommand()
 
 void ImageResourceRotationUndoCommand::redoImpl()
 {
-    QNDEBUG(QStringLiteral("ImageResourceRotationUndoCommand::redoImpl"));
+    QNDEBUG("ImageResourceRotationUndoCommand::redoImpl");
 
     const Note * pNote = m_noteEditorPrivate.notePtr();
     if (Q_UNLIKELY(!pNote)) {
-        QNDEBUG(QStringLiteral("Can't redo image resource rotation: no note "
-                               "is set to the editor"));
+        QNDEBUG("Can't redo image resource rotation: no note "
+                "is set to the editor");
         return;
     }
 
@@ -88,12 +90,12 @@ void ImageResourceRotationUndoCommand::redoImpl()
 
 void ImageResourceRotationUndoCommand::undoImpl()
 {
-    QNDEBUG(QStringLiteral("ImageResourceRotationUndoCommand::undoImpl"));
+    QNDEBUG("ImageResourceRotationUndoCommand::undoImpl");
 
     const Note * pNote = m_noteEditorPrivate.notePtr();
     if (Q_UNLIKELY(!pNote)) {
-        QNDEBUG(QStringLiteral("Can't undo image resource rotation: no note "
-                               "is set to the editor"));
+        QNDEBUG("Can't undo image resource rotation: no note "
+                "is set to the editor");
         return;
     }
 

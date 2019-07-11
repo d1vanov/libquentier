@@ -18,35 +18,40 @@
 
 #include "EditHyperlinkUndoCommand.h"
 #include "../NoteEditor_p.h"
+
 #include <quentier/logging/QuentierLogger.h>
 
 namespace quentier {
 
-#define GET_PAGE() \
-    NoteEditorPage * page = \
-        qobject_cast<NoteEditorPage*>(m_noteEditorPrivate.page()); \
-    if (Q_UNLIKELY(!page)) { \
-        ErrorString error(QT_TRANSLATE_NOOP("EditHyperlinkUndoCommand", \
-                                            "Can't undo/redo hyperlink edit: "\
-                                            "no note editor page")); \
-        QNWARNING(error); \
-        Q_EMIT notifyError(error); \
-        return; \
-    }
+#define GET_PAGE()                                                             \
+    NoteEditorPage * page =                                                    \
+        qobject_cast<NoteEditorPage*>(m_noteEditorPrivate.page());             \
+    if (Q_UNLIKELY(!page))                                                     \
+    {                                                                          \
+        ErrorString error(QT_TRANSLATE_NOOP("EditHyperlinkUndoCommand",        \
+                                            "Can't undo/redo hyperlink edit: " \
+                                            "no note editor page"));           \
+        QNWARNING(error);                                                      \
+        Q_EMIT notifyError(error);                                             \
+        return;                                                                \
+    }                                                                          \
+// GET_PAGE
 
-EditHyperlinkUndoCommand::EditHyperlinkUndoCommand(NoteEditorPrivate & noteEditorPrivate,
-                                                   const Callback & callback,
-                                                   QUndoCommand * parent) :
+EditHyperlinkUndoCommand::EditHyperlinkUndoCommand(
+        NoteEditorPrivate & noteEditorPrivate,
+        const Callback & callback,
+        QUndoCommand * parent) :
     INoteEditorUndoCommand(noteEditorPrivate, parent),
     m_callback(callback)
 {
     setText(tr("Edit hyperlink"));
 }
 
-EditHyperlinkUndoCommand::EditHyperlinkUndoCommand(NoteEditorPrivate & noteEditorPrivate,
-                                                   const Callback & callback,
-                                                   const QString & text,
-                                                   QUndoCommand * parent) :
+EditHyperlinkUndoCommand::EditHyperlinkUndoCommand(
+        NoteEditorPrivate & noteEditorPrivate,
+        const Callback & callback,
+        const QString & text,
+        QUndoCommand * parent) :
     INoteEditorUndoCommand(noteEditorPrivate, text, parent),
     m_callback(callback)
 {}
@@ -56,7 +61,7 @@ EditHyperlinkUndoCommand::~EditHyperlinkUndoCommand()
 
 void EditHyperlinkUndoCommand::redoImpl()
 {
-    QNDEBUG(QStringLiteral("EditHyperlinkUndoCommand::redoImpl"));
+    QNDEBUG("EditHyperlinkUndoCommand::redoImpl");
 
     GET_PAGE()
     page->executeJavaScript(QStringLiteral("hyperlinkManager.redo();"),
@@ -65,7 +70,7 @@ void EditHyperlinkUndoCommand::redoImpl()
 
 void EditHyperlinkUndoCommand::undoImpl()
 {
-    QNDEBUG(QStringLiteral("EditHyperlinkUndoCommand::undoImpl"));
+    QNDEBUG("EditHyperlinkUndoCommand::undoImpl");
 
     GET_PAGE()
     page->executeJavaScript(QStringLiteral("hyperlinkManager.undo();"),

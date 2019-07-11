@@ -18,35 +18,40 @@
 
 #include "TableActionUndoCommand.h"
 #include "../NoteEditor_p.h"
+
 #include <quentier/logging/QuentierLogger.h>
 
 namespace quentier {
 
-#define GET_PAGE() \
-    NoteEditorPage * page = \
-        qobject_cast<NoteEditorPage*>(m_noteEditorPrivate.page()); \
-    if (Q_UNLIKELY(!page)) { \
-        ErrorString error(QT_TRANSLATE_NOOP("TableActionUndoCommand", \
-                                            "Can't table action: can't get "\
-                                            "note editor page")); \
-        QNWARNING(error); \
-        Q_EMIT notifyError(error); \
-        return; \
-    }
+#define GET_PAGE()                                                             \
+    NoteEditorPage * page =                                                    \
+        qobject_cast<NoteEditorPage*>(m_noteEditorPrivate.page());             \
+    if (Q_UNLIKELY(!page))                                                     \
+    {                                                                          \
+        ErrorString error(QT_TRANSLATE_NOOP("TableActionUndoCommand",          \
+                                            "Can't table action: can't get "   \
+                                            "note editor page"));              \
+        QNWARNING(error);                                                      \
+        Q_EMIT notifyError(error);                                             \
+        return;                                                                \
+    }                                                                          \
+// GET_PAGE
 
-TableActionUndoCommand::TableActionUndoCommand(NoteEditorPrivate & noteEditorPrivate,
-                                               Callback callback,
-                                               QUndoCommand * parent) :
+TableActionUndoCommand::TableActionUndoCommand(
+        NoteEditorPrivate & noteEditorPrivate,
+        Callback callback,
+        QUndoCommand * parent) :
     INoteEditorUndoCommand(noteEditorPrivate, parent),
     m_callback(callback)
 {
     setText(tr("Table action"));
 }
 
-TableActionUndoCommand::TableActionUndoCommand(NoteEditorPrivate & noteEditorPrivate,
-                                               const QString & text,
-                                               Callback callback,
-                                               QUndoCommand * parent) :
+TableActionUndoCommand::TableActionUndoCommand(
+        NoteEditorPrivate & noteEditorPrivate,
+        const QString & text,
+        Callback callback,
+        QUndoCommand * parent) :
     INoteEditorUndoCommand(noteEditorPrivate, text, parent),
     m_callback(callback)
 {}
@@ -56,7 +61,7 @@ TableActionUndoCommand::~TableActionUndoCommand()
 
 void TableActionUndoCommand::redoImpl()
 {
-    QNDEBUG(QStringLiteral("TableActionUndoCommand::redoImpl"));
+    QNDEBUG("TableActionUndoCommand::redoImpl");
 
     GET_PAGE()
 
@@ -66,7 +71,7 @@ void TableActionUndoCommand::redoImpl()
 
 void TableActionUndoCommand::undoImpl()
 {
-    QNDEBUG(QStringLiteral("TableActionUndoCommand::undoImpl"));
+    QNDEBUG("TableActionUndoCommand::undoImpl");
 
     GET_PAGE()
 

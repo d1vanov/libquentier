@@ -52,53 +52,65 @@ public:
     virtual ~INoteStoreDataElement() {}
 };
 
-#define DECLARE_IS_DIRTY \
-    virtual bool isDirty() const Q_DECL_OVERRIDE;
+#define DECLARE_IS_DIRTY                                                       \
+    virtual bool isDirty() const Q_DECL_OVERRIDE;                              \
+// DECLARE_IS_DIRTY
 
-#define DECLARE_SET_DIRTY \
-    virtual void setDirty(const bool isDirty) Q_DECL_OVERRIDE;
+#define DECLARE_SET_DIRTY                                                      \
+    virtual void setDirty(const bool isDirty) Q_DECL_OVERRIDE;                 \
+// DECLARE_SET_DIRTY
 
-#define QN_DECLARE_DIRTY \
-    DECLARE_IS_DIRTY \
-    DECLARE_SET_DIRTY
+#define QN_DECLARE_DIRTY                                                       \
+    DECLARE_IS_DIRTY                                                           \
+    DECLARE_SET_DIRTY                                                          \
+// QN_DECLARE_DIRTY
 
-#define DEFINE_IS_DIRTY(type) \
-    bool type::isDirty() const { \
-        return d->m_isDirty; \
-    }
+#define DEFINE_IS_DIRTY(type)                                                  \
+    bool type::isDirty() const {                                               \
+        return d->m_isDirty;                                                   \
+    }                                                                          \
+// DEFINE_IS_DIRTY
 
-#define DEFINE_SET_DIRTY(type) \
-    void type::setDirty(const bool dirty) { \
-        d->m_isDirty = dirty; \
-    }
+#define DEFINE_SET_DIRTY(type)                                                 \
+    void type::setDirty(const bool dirty) {                                    \
+        d->m_isDirty = dirty;                                                  \
+    }                                                                          \
+// DEFINE_SET_DIRTY
 
-#define QN_DEFINE_DIRTY(type) \
-    DEFINE_IS_DIRTY(type) \
-    DEFINE_SET_DIRTY(type)
+#define QN_DEFINE_DIRTY(type)                                                  \
+    DEFINE_IS_DIRTY(type)                                                      \
+    DEFINE_SET_DIRTY(type)                                                     \
+// QN_DEFINE_DIRTY
 
-#define DECLARE_IS_LOCAL \
-    virtual bool isLocal() const Q_DECL_OVERRIDE;
+#define DECLARE_IS_LOCAL                                                       \
+    virtual bool isLocal() const Q_DECL_OVERRIDE;                              \
+// DECLARE_IS_LOCAL
 
-#define DECLARE_SET_LOCAL \
-    virtual void setLocal(const bool isLocal) Q_DECL_OVERRIDE;
+#define DECLARE_SET_LOCAL                                                      \
+    virtual void setLocal(const bool isLocal) Q_DECL_OVERRIDE;                 \
+// DECLARE_SET_LOCAL
 
-#define QN_DECLARE_LOCAL \
-    DECLARE_IS_LOCAL \
-    DECLARE_SET_LOCAL
+#define QN_DECLARE_LOCAL                                                       \
+    DECLARE_IS_LOCAL                                                           \
+    DECLARE_SET_LOCAL                                                          \
+// QN_DECLARE_LOCAL
 
-#define DEFINE_IS_LOCAL(type) \
-    bool type::isLocal() const { \
-        return d->m_isLocal; \
-    }
+#define DEFINE_IS_LOCAL(type)                                                  \
+    bool type::isLocal() const {                                               \
+        return d->m_isLocal;                                                   \
+    }                                                                          \
+// DEFINE_IS_LOCAL
 
-#define DEFINE_SET_LOCAL(type) \
-    void type::setLocal(const bool local) { \
-        d->m_isLocal = local; \
-    }
+#define DEFINE_SET_LOCAL(type)                                                 \
+    void type::setLocal(const bool local) {                                    \
+        d->m_isLocal = local;                                                  \
+    }                                                                          \
+// DEFINE_SET_LOCAL
 
-#define QN_DEFINE_LOCAL(type) \
-    DEFINE_IS_LOCAL(type) \
-    DEFINE_SET_LOCAL(type)
+#define QN_DEFINE_LOCAL(type)                                                  \
+    DEFINE_IS_LOCAL(type)                                                      \
+    DEFINE_SET_LOCAL(type)                                                     \
+// QN_DEFINE_LOCAL
 
 } // namespace quentier
 

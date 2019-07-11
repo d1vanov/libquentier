@@ -29,10 +29,17 @@ class Q_DECL_HIDDEN EncryptUndoCommand: public INoteEditorUndoCommand
     Q_OBJECT
     typedef NoteEditorPage::Callback Callback;
 public:
-    EncryptUndoCommand(NoteEditorPrivate & noteEditorPrivate, const Callback & callback,
-                       QUndoCommand * parent = Q_NULLPTR);
-    EncryptUndoCommand(NoteEditorPrivate & noteEditorPrivate, const Callback & callback,
-                       const QString & text, QUndoCommand * parent = Q_NULLPTR);
+    EncryptUndoCommand(
+        NoteEditorPrivate & noteEditorPrivate,
+        const Callback & callback,
+        QUndoCommand * parent = Q_NULLPTR);
+
+    EncryptUndoCommand(
+        NoteEditorPrivate & noteEditorPrivate,
+        const Callback & callback,
+        const QString & text,
+        QUndoCommand * parent = Q_NULLPTR);
+
     virtual ~EncryptUndoCommand();
 
     virtual void redoImpl() Q_DECL_OVERRIDE;

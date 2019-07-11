@@ -44,11 +44,13 @@ class Q_DECL_HIDDEN SynchronizationManagerPrivate: public QObject
 {
     Q_OBJECT
 public:
-    SynchronizationManagerPrivate(const QString & host,
-                                  LocalStorageManagerAsync & localStorageManagerAsync,
-                                  IAuthenticationManager & authenticationManager,
-                                  SynchronizationManagerDependencyInjector * pInjector,
-                                  QObject * parent);
+    SynchronizationManagerPrivate(
+        const QString & host,
+        LocalStorageManagerAsync & localStorageManagerAsync,
+        IAuthenticationManager & authenticationManager,
+        SynchronizationManagerDependencyInjector * pInjector,
+        QObject * parent);
+
     virtual ~SynchronizationManagerPrivate();
 
     bool active() const;
@@ -59,17 +61,21 @@ Q_SIGNALS:
     void notifyStop();
     void notifyError(ErrorString errorDescription);
     void notifyRemoteToLocalSyncDone(bool somethingDownloaded);
-    void notifyFinish(Account account, bool somethingDownloaded, bool somethingSent);
+    void notifyFinish(Account account, bool somethingDownloaded,
+                      bool somethingSent);
 
 // progress signals
     void syncChunksDownloadProgress(qint32 highestDownloadedUsn,
                                     qint32 highestServerUsn,
                                     qint32 lastPreviousUsn);
     void syncChunksDownloaded();
-    void linkedNotebookSyncChunksDownloadProgress(qint32 highestDownloadedUsn,
-                                                  qint32 highestServerUsn,
-                                                  qint32 lastPreviousUsn,
-                                                  LinkedNotebook linkedNotebook);
+
+    void linkedNotebookSyncChunksDownloadProgress(
+        qint32 highestDownloadedUsn,
+        qint32 highestServerUsn,
+        qint32 lastPreviousUsn,
+        LinkedNotebook linkedNotebook);
+
     void linkedNotebooksSyncChunksDownloaded();
 
     void notesDownloadProgress(quint32 notesDownloaded,
@@ -79,8 +85,10 @@ Q_SIGNALS:
 
     void resourcesDownloadProgress(quint32 resourcesDownloaded,
                                    quint32 totalResourcesToDownload);
-    void linkedNotebooksResourcesDownloadProgress(quint32 resourcesDownloaded,
-                                                  quint32 totalResourcesToDownload);
+
+    void linkedNotebooksResourcesDownloadProgress(
+        quint32 resourcesDownloaded,
+        quint32 totalResourcesToDownload);
 
     void preparedDirtyObjectsForSending();
     void preparedLinkedNotebooksDirtyObjectsForSending();
@@ -118,8 +126,8 @@ Q_SIGNALS:
     void sendAuthenticationTokenAndShardId(QString authToken, QString shardId,
                                            qevercloud::Timestamp expirationTime);
     void sendAuthenticationTokensForLinkedNotebooks(
-        QHash<QString,QPair<QString,QString> > authenticationTokensAndShardIdsByLinkedNotebookGuids,
-        QHash<QString,qevercloud::Timestamp> authenticatonTokenExpirationTimesByLinkedNotebookGuids);
+        QHash<QString,QPair<QString,QString> > authTokensAndShardIdsByLinkedNotebookGuids,
+        QHash<QString,qevercloud::Timestamp> authTokenExpirationByLinkedNotebookGuids);
 
     void sendLastSyncParameters(
         qint32 lastUpdateCount, qevercloud::Timestamp lastSyncTime,
@@ -135,15 +143,17 @@ private:
     typedef IKeychainService::ErrorCode ErrorCode;
 
 private Q_SLOTS:
-    void onOAuthResult(bool success, qevercloud::UserID userId, QString authToken,
-                       qevercloud::Timestamp authTokenExpirationTime, QString shardId,
-                       QString noteStoreUrl, QString webApiUrlPrefix,
-                       ErrorString errorDescription);
+    void onOAuthResult(bool success, qevercloud::UserID userId,
+                       QString authToken,
+                       qevercloud::Timestamp authTokenExpirationTime,
+                       QString shardId, QString noteStoreUrl,
+                       QString webApiUrlPrefix, ErrorString errorDescription);
 
     void onWritePasswordJobFinished(QUuid jobId, ErrorCode::type errorCode,
                                     ErrorString errorDescription);
     void onReadPasswordJobFinished(QUuid jobId, ErrorCode::type errorCode,
-                                   ErrorString errorDescription, QString password);
+                                   ErrorString errorDescription,
+                                   QString password);
     void onDeletePasswordJobFinished(QUuid jobId, ErrorCode::type errorCode,
                                      ErrorString errorDescription);
 
@@ -166,8 +176,10 @@ private Q_SLOTS:
     void onShouldRepeatIncrementalSync();
     void onConflictDetectedDuringLocalChangesSending();
 
-    void onLocalChangesSent(qint32 lastUpdateCount,
-                            QHash<QString,qint32> lastUpdateCountByLinkedNotebookGuid);
+    void onLocalChangesSent(
+        qint32 lastUpdateCount,
+        QHash<QString,qint32> lastUpdateCountByLinkedNotebookGuid);
+
     void onSendLocalChangesStopped();
     void onSendLocalChangesFailure(ErrorString errorDescription);
 
@@ -219,7 +231,10 @@ private:
     void clear();
 
     bool validAuthentication() const;
-    bool checkIfTimestampIsAboutToExpireSoon(const qevercloud::Timestamp timestamp) const;
+
+    bool checkIfTimestampIsAboutToExpireSoon(
+        const qevercloud::Timestamp timestamp) const;
+
     void authenticateToLinkedNotebooks();
 
     void onReadAuthTokenFinished(const IKeychainService::ErrorCode::type errorCode,

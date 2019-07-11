@@ -37,7 +37,7 @@ SavedSearchSyncCache::SavedSearchSyncCache(
 
 void SavedSearchSyncCache::clear()
 {
-    QNDEBUG(QStringLiteral("SavedSearchSyncCache::clear"));
+    QNDEBUG("SavedSearchSyncCache::clear");
 
     disconnectFromLocalStorage();
 
@@ -65,11 +65,11 @@ bool SavedSearchSyncCache::isFilled() const
 
 void SavedSearchSyncCache::fill()
 {
-    QNDEBUG(QStringLiteral("SavedSearchSyncCache::fill"));
+    QNDEBUG("SavedSearchSyncCache::fill");
 
     if (m_connectedToLocalStorage) {
-        QNDEBUG(QStringLiteral("Already connected to the local storage, no need "
-                               "to do anything"));
+        QNDEBUG("Already connected to the local storage, no need "
+                "to do anything");
         return;
     }
 
@@ -88,12 +88,10 @@ void SavedSearchSyncCache::onListSavedSearchesComplete(
         return;
     }
 
-    QNDEBUG(QStringLiteral("SavedSearchSyncCache::onListSavedSearchesComplete: ")
-            << QStringLiteral("flag = ") << flag << QStringLiteral(", limit = ")
-            << limit << QStringLiteral(", offset = ") << offset
-            << QStringLiteral(", order = ") << order
-            << QStringLiteral(", order direction = ")
-            << orderDirection << QStringLiteral(", request id = ") << requestId);
+    QNDEBUG("SavedSearchSyncCache::onListSavedSearchesComplete: "
+            << "flag = " << flag << ", limit = " << limit << ", offset = "
+            << offset << ", order = " << order << ", order direction = "
+            << orderDirection << ", request id = " << requestId);
 
     for(auto it = foundSearches.constBegin(),
         end = foundSearches.constEnd(); it != end; ++it)
@@ -104,9 +102,9 @@ void SavedSearchSyncCache::onListSavedSearchesComplete(
     m_listSavedSearchesRequestId = QUuid();
 
     if (foundSearches.size() == static_cast<int>(limit)) {
-        QNTRACE(QStringLiteral("The number of found saved searches matches "
-                               "the limit, requesting more saved searches "
-                               "from the local storage"));
+        QNTRACE("The number of found saved searches matches "
+                "the limit, requesting more saved searches "
+                "from the local storage");
         m_offset += limit;
         requestSavedSearchesList();
         return;
@@ -126,16 +124,16 @@ void SavedSearchSyncCache::onListSavedSearchesFailed(
         return;
     }
 
-    QNDEBUG(QStringLiteral("SavedSearchSyncCache::onListSavedSearchesFailed: ")
-            << QStringLiteral("flag = ") << flag << QStringLiteral(", limit = ")
-            << limit << QStringLiteral(", offset = ") << offset
-            << QStringLiteral(", order = ") << order
-            << QStringLiteral(", order direction = ") << orderDirection
-            << QStringLiteral(", error description = ") << errorDescription
-            << QStringLiteral(", request id = ") << requestId);
+    QNDEBUG("SavedSearchSyncCache::onListSavedSearchesFailed: "
+            << "flag = " << flag << ", limit = "
+            << limit << ", offset = " << offset
+            << ", order = " << order
+            << ", order direction = " << orderDirection
+            << ", error description = " << errorDescription
+            << ", request id = " << requestId);
 
-    QNWARNING(QStringLiteral("Failed to cache the saved search information "
-                             "required for the sync: ") << errorDescription);
+    QNWARNING("Failed to cache the saved search information "
+              << "required for the sync: " << errorDescription);
 
     m_savedSearchNameByLocalUid.clear();
     m_savedSearchNameByGuid.clear();
@@ -146,43 +144,43 @@ void SavedSearchSyncCache::onListSavedSearchesFailed(
     Q_EMIT failure(errorDescription);
 }
 
-void SavedSearchSyncCache::onAddSavedSearchComplete(SavedSearch search,
-                                                    QUuid requestId)
+void SavedSearchSyncCache::onAddSavedSearchComplete(
+    SavedSearch search, QUuid requestId)
 {
-    QNDEBUG(QStringLiteral("SavedSearchSyncCache::onAddSavedSearchComplete: ")
-            << QStringLiteral("request id = ") << requestId
-            << QStringLiteral(", saved search: ") << search);
+    QNDEBUG("SavedSearchSyncCache::onAddSavedSearchComplete: "
+            << "request id = " << requestId
+            << ", saved search: " << search);
 
     processSavedSearch(search);
 }
 
-void SavedSearchSyncCache::onUpdateSavedSearchComplete(SavedSearch search,
-                                                       QUuid requestId)
+void SavedSearchSyncCache::onUpdateSavedSearchComplete(
+    SavedSearch search, QUuid requestId)
 {
-    QNDEBUG(QStringLiteral("SavedSearchSyncCache::onUpdateSavedSearchComplete: ")
-            << QStringLiteral("request id = ") << requestId
-            << QStringLiteral(", saved search: ") << search);
+    QNDEBUG("SavedSearchSyncCache::onUpdateSavedSearchComplete: "
+            << "request id = " << requestId
+            << ", saved search: " << search);
 
     removeSavedSearch(search.localUid());
     processSavedSearch(search);
 }
 
-void SavedSearchSyncCache::onExpungeSavedSearchComplete(SavedSearch search,
-                                                        QUuid requestId)
+void SavedSearchSyncCache::onExpungeSavedSearchComplete(
+    SavedSearch search, QUuid requestId)
 {
-    QNDEBUG(QStringLiteral("SavedSearchSyncCache::onExpungeSavedSearchComplete: ")
-            << QStringLiteral("request id = ") << requestId
-            << QStringLiteral(", saved search: ") << search);
+    QNDEBUG("SavedSearchSyncCache::onExpungeSavedSearchComplete: "
+            << "request id = " << requestId
+            << ", saved search: " << search);
 
     removeSavedSearch(search.localUid());
 }
 
 void SavedSearchSyncCache::connectToLocalStorage()
 {
-    QNDEBUG(QStringLiteral("SavedSearchSyncCache::connectToLocalStorage"));
+    QNDEBUG("SavedSearchSyncCache::connectToLocalStorage");
 
     if (m_connectedToLocalStorage) {
-        QNDEBUG(QStringLiteral("Already connected to the local storage"));
+        QNDEBUG("Already connected to the local storage");
         return;
     }
 
@@ -259,10 +257,10 @@ void SavedSearchSyncCache::connectToLocalStorage()
 
 void SavedSearchSyncCache::disconnectFromLocalStorage()
 {
-    QNDEBUG(QStringLiteral("SavedSearchSyncCache::disconnectFromLocalStorage"));
+    QNDEBUG("SavedSearchSyncCache::disconnectFromLocalStorage");
 
     if (!m_connectedToLocalStorage) {
-        QNDEBUG(QStringLiteral("Not connected to local storage at the moment"));
+        QNDEBUG("Not connected to local storage at the moment");
         return;
     }
 
@@ -333,13 +331,13 @@ void SavedSearchSyncCache::disconnectFromLocalStorage()
 
 void SavedSearchSyncCache::requestSavedSearchesList()
 {
-    QNDEBUG(QStringLiteral("SavedSearchSyncCache::requestSavedSearchesList"));
+    QNDEBUG("SavedSearchSyncCache::requestSavedSearchesList");
 
     m_listSavedSearchesRequestId = QUuid::createUuid();
 
-    QNTRACE(QStringLiteral("Emitting the request to list saved searches: ")
-            << QStringLiteral("request id = ") << m_listSavedSearchesRequestId
-            << QStringLiteral(", offset = ") << m_offset);
+    QNTRACE("Emitting the request to list saved searches: "
+            << "request id = " << m_listSavedSearchesRequestId
+            << ", offset = " << m_offset);
 
     Q_EMIT listSavedSearches(LocalStorageManager::ListAll, m_limit, m_offset,
                              LocalStorageManager::ListSavedSearchesOrder::NoOrder,
@@ -349,13 +347,13 @@ void SavedSearchSyncCache::requestSavedSearchesList()
 
 void SavedSearchSyncCache::removeSavedSearch(const QString & savedSearchLocalUid)
 {
-    QNDEBUG(QStringLiteral("SavedSearchSyncCache::removeSavedSearch: local uid = ")
+    QNDEBUG("SavedSearchSyncCache::removeSavedSearch: local uid = "
             << savedSearchLocalUid);
 
     auto localUidIt = m_savedSearchNameByLocalUid.find(savedSearchLocalUid);
     if (Q_UNLIKELY(localUidIt == m_savedSearchNameByLocalUid.end())) {
-        QNDEBUG(QStringLiteral("The saved search name was not found in the cache "
-                               "by local uid"));
+        QNDEBUG("The saved search name was not found in the cache "
+                "by local uid");
         return;
     }
 
@@ -364,8 +362,8 @@ void SavedSearchSyncCache::removeSavedSearch(const QString & savedSearchLocalUid
 
     auto guidIt = m_savedSearchNameByGuid.find(name);
     if (Q_UNLIKELY(guidIt == m_savedSearchNameByGuid.end())) {
-        QNDEBUG(QStringLiteral("The saved search guid was not found in the cache "
-                               "by name"));
+        QNDEBUG("The saved search guid was not found in the cache "
+                "by name");
         return;
     }
 
@@ -379,8 +377,8 @@ void SavedSearchSyncCache::removeSavedSearch(const QString & savedSearchLocalUid
 
     auto nameIt = m_savedSearchNameByGuid.find(guid);
     if (Q_UNLIKELY(nameIt == m_savedSearchNameByGuid.end())) {
-        QNDEBUG(QStringLiteral("The saved search name was not found in the cache "
-                               "by guid"));
+        QNDEBUG("The saved search name was not found in the cache "
+                "by guid");
         return;
     }
 
@@ -389,7 +387,7 @@ void SavedSearchSyncCache::removeSavedSearch(const QString & savedSearchLocalUid
 
 void SavedSearchSyncCache::processSavedSearch(const SavedSearch & search)
 {
-    QNDEBUG(QStringLiteral("SavedSearchSyncCache::processSavedSearch: ") << search);
+    QNDEBUG("SavedSearchSyncCache::processSavedSearch: " << search);
 
     if (search.hasGuid())
     {
@@ -407,7 +405,7 @@ void SavedSearchSyncCache::processSavedSearch(const SavedSearch & search)
     }
 
     if (!search.hasName()) {
-        QNDEBUG(QStringLiteral("Skipping the saved search without a name"));
+        QNDEBUG("Skipping the saved search without a name");
         return;
     }
 

@@ -20,6 +20,7 @@
 #include "GenericResourceDisplayWidget.h"
 #include "EncryptedAreaPlugin.h"
 #include "NoteEditor_p.h"
+
 #include <quentier/utility/EncryptionManager.h>
 #include <quentier/enml/DecryptedTextManager.h>
 #include <quentier/utility/QuentierCheckPtr.h>
@@ -28,16 +29,18 @@
 #include <quentier/logging/QuentierLogger.h>
 #include <quentier/types/Note.h>
 #include <quentier/types/Resource.h>
+
 #include <QFileIconProvider>
 #include <QDir>
 #include <QRegExp>
+
 #include <cmath>
 #include <algorithm>
 
 namespace quentier {
 
-NoteEditorPluginFactory::NoteEditorPluginFactory(NoteEditorPrivate & noteEditor,
-                                                 QObject * parent) :
+NoteEditorPluginFactory::NoteEditorPluginFactory(
+        NoteEditorPrivate & noteEditor, QObject * parent) :
     QWebPluginFactory(parent),
     m_noteEditor(noteEditor),
     m_resourcePlugins(),
@@ -50,12 +53,12 @@ NoteEditorPluginFactory::NoteEditorPluginFactory(NoteEditorPrivate & noteEditor,
     m_genericResourceDisplayWidgetPlugins(),
     m_encryptedAreaPlugins()
 {
-    QNDEBUG(QStringLiteral("NoteEditorPluginFactory::NoteEditorPluginFactory"));
+    QNDEBUG("NoteEditorPluginFactory::NoteEditorPluginFactory");
 }
 
 NoteEditorPluginFactory::~NoteEditorPluginFactory()
 {
-    QNDEBUG(QStringLiteral("NoteEditorPluginFactory::~NoteEditorPluginFactory"));
+    QNDEBUG("NoteEditorPluginFactory::~NoteEditorPluginFactory");
 
     for(auto it = m_genericResourceDisplayWidgetPlugins.begin(),
         end = m_genericResourceDisplayWidgetPlugins.end(); it != end; ++it)
@@ -84,16 +87,15 @@ const NoteEditorPrivate & NoteEditorPluginFactory::noteEditor() const
 }
 
 NoteEditorPluginFactory::ResourcePluginIdentifier
-NoteEditorPluginFactory::addResourcePlugin(INoteEditorResourcePlugin * plugin,
-                                           ErrorString & errorDescription,
-                                           const bool forceOverrideTypeKeys)
+NoteEditorPluginFactory::addResourcePlugin(
+    INoteEditorResourcePlugin * plugin,
+    ErrorString & errorDescription,
+    const bool forceOverrideTypeKeys)
 {
-    QNDEBUG(QStringLiteral("NoteEditorPluginFactory::addResourcePlugin: ")
+    QNDEBUG("NoteEditorPluginFactory::addResourcePlugin: "
             << (plugin ? plugin->name() : QStringLiteral("<null>"))
-            << QStringLiteral(", force override type keys = ")
-            << (forceOverrideTypeKeys
-                ? QStringLiteral("true")
-                : QStringLiteral("false")));
+            << ", force override type keys = "
+            << (forceOverrideTypeKeys ? "true" : "false"));
 
     if (!plugin) {
         errorDescription.setBase(QT_TR_NOOP("Detected attempt to install null "
@@ -157,8 +159,8 @@ NoteEditorPluginFactory::addResourcePlugin(INoteEditorResourcePlugin * plugin,
 
     m_resourcePlugins[pluginId] = plugin;
 
-    QNTRACE(QStringLiteral("Assigned id ") << pluginId
-            << QStringLiteral(" to resource plugin ") << plugin->name());
+    QNTRACE("Assigned id " << pluginId << " to resource plugin "
+            << plugin->name());
     return pluginId;
 }
 
@@ -166,7 +168,7 @@ bool NoteEditorPluginFactory::removeResourcePlugin(
     const NoteEditorPluginFactory::ResourcePluginIdentifier id,
     ErrorString & errorDescription)
 {
-    QNDEBUG(QStringLiteral("NoteEditorPluginFactory::removeResourcePlugin: ") << id);
+    QNDEBUG("NoteEditorPluginFactory::removeResourcePlugin: " << id);
 
     auto it = m_resourcePlugins.find(id);
     if (it == m_resourcePlugins.end()) {
@@ -179,7 +181,7 @@ bool NoteEditorPluginFactory::removeResourcePlugin(
 
     INoteEditorResourcePlugin * plugin = it.value();
     QString pluginName = (plugin ? plugin->name() : QStringLiteral("<null>"));
-    QNTRACE(QStringLiteral("Plugin to remove: ") << pluginName);
+    QNTRACE("Plugin to remove: " << pluginName);
 
     delete plugin;
     plugin = Q_NULLPTR;
@@ -188,8 +190,8 @@ bool NoteEditorPluginFactory::removeResourcePlugin(
 
     QWebPluginFactory::refreshPlugins();
 
-    QNTRACE(QStringLiteral("Done removing resource plugin ") << id
-            << QStringLiteral(" (") << pluginName << QStringLiteral(")"));
+    QNTRACE("Done removing resource plugin " << id
+            << " (" << pluginName << ")");
     return true;
 }
 
@@ -200,9 +202,10 @@ bool NoteEditorPluginFactory::hasResourcePlugin(
     return (it != m_resourcePlugins.end());
 }
 
-bool NoteEditorPluginFactory::hasResourcePluginForMimeType(const QString & mimeType) const
+bool NoteEditorPluginFactory::hasResourcePluginForMimeType(
+    const QString & mimeType) const
 {
-    QNDEBUG(QStringLiteral("NoteEditorPluginFactory::hasResourcePluginForMimeType: ")
+    QNDEBUG("NoteEditorPluginFactory::hasResourcePluginForMimeType: "
             << mimeType);
 
     if (m_resourcePlugins.empty()) {
@@ -222,9 +225,10 @@ bool NoteEditorPluginFactory::hasResourcePluginForMimeType(const QString & mimeT
     return false;
 }
 
-bool NoteEditorPluginFactory::hasResourcePluginForMimeType(const QRegExp & mimeTypeRegex) const
+bool NoteEditorPluginFactory::hasResourcePluginForMimeType(
+    const QRegExp & mimeTypeRegex) const
 {
-    QNDEBUG(QStringLiteral("NoteEditorPluginFactory::hasResourcePluginForMimeType: ")
+    QNDEBUG("NoteEditorPluginFactory::hasResourcePluginForMimeType: "
             << mimeTypeRegex.pattern());
 
     if (m_resourcePlugins.empty()) {
@@ -246,7 +250,7 @@ bool NoteEditorPluginFactory::hasResourcePluginForMimeType(const QRegExp & mimeT
 
 void NoteEditorPluginFactory::setNote(const Note & note)
 {
-    QNDEBUG(QStringLiteral("NoteEditorPluginFactory::setNote: change current note to ")
+    QNDEBUG("NoteEditorPluginFactory::setNote: change current note to "
             << (note.hasTitle() ? note.title() : note.toString()));
     m_pCurrentNote = &note;
 }
@@ -258,7 +262,7 @@ void NoteEditorPluginFactory::setFallbackResourceIcon(const QIcon & icon)
 
 void NoteEditorPluginFactory::setInactive()
 {
-    QNDEBUG(QStringLiteral("NoteEditorPluginFactory::setInactive"));
+    QNDEBUG("NoteEditorPluginFactory::setInactive");
 
     for(auto it = m_genericResourceDisplayWidgetPlugins.begin(),
         end = m_genericResourceDisplayWidgetPlugins.end(); it != end; ++it)
@@ -281,7 +285,7 @@ void NoteEditorPluginFactory::setInactive()
 
 void NoteEditorPluginFactory::setActive()
 {
-    QNDEBUG(QStringLiteral("NoteEditorPluginFactory::setActive"));
+    QNDEBUG("NoteEditorPluginFactory::setActive");
 
     for(auto it = m_genericResourceDisplayWidgetPlugins.begin(),
         end = m_genericResourceDisplayWidgetPlugins.end(); it != end; ++it)
@@ -304,7 +308,7 @@ void NoteEditorPluginFactory::setActive()
 
 void NoteEditorPluginFactory::updateResource(const Resource & resource)
 {
-    QNDEBUG(QStringLiteral("NoteEditorPluginFactory::updateResource: ") << resource);
+    QNDEBUG("NoteEditorPluginFactory::updateResource: " << resource);
 
     auto it = std::find_if(m_genericResourceDisplayWidgetPlugins.begin(),
                            m_genericResourceDisplayWidgetPlugins.end(),
@@ -343,20 +347,19 @@ void NoteEditorPluginFactory::updateResource(const Resource & resource)
     pWidget->updateResourceSize(resourceDataSize);
 }
 
-QObject * NoteEditorPluginFactory::create(const QString & pluginType,
-                                          const QUrl & url,
-                                          const QStringList & argumentNames,
-                                          const QStringList & argumentValues) const
+QObject * NoteEditorPluginFactory::create(
+    const QString & pluginType, const QUrl & url,
+    const QStringList & argumentNames,
+    const QStringList & argumentValues) const
 {
-    QNDEBUG(QStringLiteral("NoteEditorPluginFactory::create: pluginType = ")
-            << pluginType << QStringLiteral(", url = ") << url.toString()
-            << QStringLiteral(", argument names: ")
-            << argumentNames.join(QStringLiteral(", "))
-            << QStringLiteral(", argument values: ")
+    QNDEBUG("NoteEditorPluginFactory::create: pluginType = "
+            << pluginType << ", url = " << url.toString()
+            << ", argument names: " << argumentNames.join(QStringLiteral(", "))
+            << ", argument values: "
             << argumentValues.join(QStringLiteral(", ")));
 
     if (!m_pCurrentNote) {
-        QNERROR(QStringLiteral("Can't create note editor plugin: no note specified"));
+        QNERROR("Can't create note editor plugin: no note specified");
         return Q_NULLPTR;
     }
 
@@ -367,39 +370,38 @@ QObject * NoteEditorPluginFactory::create(const QString & pluginType,
         return createEncryptedAreaPlugin(argumentNames, argumentValues);
     }
 
-    QNWARNING(QStringLiteral("Can't create note editor plugin: plugin type ")
-              << QStringLiteral("is not identified: ") << pluginType);
+    QNWARNING("Can't create note editor plugin: plugin type "
+              << "is not identified: " << pluginType);
     return Q_NULLPTR;
 }
 
 QObject * NoteEditorPluginFactory::createResourcePlugin(
     const QStringList & argumentNames, const QStringList & argumentValues) const
 {
-    QNDEBUG(QStringLiteral("NoteEditorPluginFactory::createResourcePlugin: ")
-            << QStringLiteral("argument names = ")
+    QNDEBUG("NoteEditorPluginFactory::createResourcePlugin: argument names = "
             << argumentNames.join(QStringLiteral(","))
-            << QStringLiteral("; argument values = ")
+            << "; argument values = "
             << argumentValues.join(QStringLiteral(",")));
 
     const Account * pAccount = m_noteEditor.accountPtr();
     if (Q_UNLIKELY(!pAccount)) {
-        QNERROR(QStringLiteral("Can't create note editor resource plugin: "
-                               "no account is set to the note editor"));
+        QNERROR("Can't create note editor resource plugin: "
+                "no account is set to the note editor");
         return Q_NULLPTR;
     }
 
     int resourceHashIndex = argumentNames.indexOf(QStringLiteral("hash"));
     if (resourceHashIndex < 0) {
-        QNERROR(QStringLiteral("Can't create note editor resource plugin: "
-                               "hash argument was not found"));
+        QNERROR("Can't create note editor resource plugin: "
+                "hash argument was not found");
         return Q_NULLPTR;
     }
 
     int resourceMimeTypeIndex =
         argumentNames.indexOf(QStringLiteral("resource-mime-type"));
     if (resourceMimeTypeIndex < 0) {
-        QNERROR(QStringLiteral("Can't create note editor resource plugin: "
-                               "resource-mime-type argument not found"));
+        QNERROR("Can't create note editor resource plugin: "
+                "resource-mime-type argument not found");
         return Q_NULLPTR;
     }
 
@@ -426,13 +428,13 @@ QObject * NoteEditorPluginFactory::createResourcePlugin(
     }
 
     if (!pCurrentResource) {
-        QNWARNING(QStringLiteral("Can't find resource in note by data hash: ")
+        QNWARNING("Can't find resource in note by data hash: "
                   << resourceHash.toHex() << QStringLiteral(", note: ")
                   << *m_pCurrentNote);
         return Q_NULLPTR;
     }
 
-    QNTRACE(QStringLiteral("Number of installed resource plugins: ")
+    QNTRACE("Number of installed resource plugins: "
             << m_resourcePlugins.size());
 
     if (!m_resourcePlugins.isEmpty())
@@ -455,22 +457,21 @@ QObject * NoteEditorPluginFactory::createResourcePlugin(
             const INoteEditorResourcePlugin * plugin = it.value();
 
             const QStringList mimeTypes = plugin->mimeTypes();
-            QNTRACE(QStringLiteral("Testing resource plugin ") << plugin->name()
-                    << QStringLiteral(" with id ") << it.key()
-                    << QStringLiteral(", mime types: ")
+            QNTRACE("Testing resource plugin " << plugin->name()
+                    << " with id " << it.key() << ", mime types: "
                     << mimeTypes.join(QStringLiteral("; ")));
 
             if (mimeTypes.contains(resourceMimeType))
             {
-                QNTRACE(QStringLiteral("Will use plugin ") << plugin->name());
+                QNTRACE("Will use plugin " << plugin->name());
                 INoteEditorResourcePlugin * newPlugin = plugin->clone();
                 ErrorString errorDescription;
                 bool res = newPlugin->initialize(resourceMimeType, argumentNames,
                                                  argumentValues, *this,
                                                  *pCurrentResource, errorDescription);
                 if (!res) {
-                    QNINFO(QStringLiteral("Can't initialize note editor resource plugin ")
-                           << plugin->name() << QStringLiteral(": ") << errorDescription);
+                    QNINFO("Can't initialize note editor resource plugin "
+                           << plugin->name() << ": " << errorDescription);
                     delete newPlugin;
                     continue;
                 }
@@ -480,9 +481,9 @@ QObject * NoteEditorPluginFactory::createResourcePlugin(
         }
     }
 
-    QNTRACE(QStringLiteral("Haven't found any installed resource plugin supporting mime type ")
+    QNTRACE("Haven't found any installed resource plugin supporting mime type "
             << resourceMimeType
-            << QStringLiteral(", will use generic resource display plugin for that"));
+            << ", will use generic resource display plugin for that");
 
     QString resourceDisplayName;
     if (pCurrentResource->hasResourceAttributes())
@@ -499,7 +500,8 @@ QObject * NoteEditorPluginFactory::createResourcePlugin(
 
     QString resourceDataSize;
     if (pCurrentResource->hasDataSize()) {
-        quint64 bytes = static_cast<quint64>(std::max(pCurrentResource->dataSize(), 0));
+        quint64 bytes = static_cast<quint64>(
+            std::max(pCurrentResource->dataSize(), 0));
         resourceDataSize = humanReadableSize(bytes);
     }
     else if (pCurrentResource->hasDataBody()) {
@@ -508,7 +510,8 @@ QObject * NoteEditorPluginFactory::createResourcePlugin(
         resourceDataSize = humanReadableSize(bytes);
     }
     else if (pCurrentResource->hasAlternateDataSize()) {
-        quint64 bytes = static_cast<quint64>(std::max(pCurrentResource->alternateDataSize(), 0));
+        quint64 bytes = static_cast<quint64>(
+            std::max(pCurrentResource->alternateDataSize(), 0));
         resourceDataSize = humanReadableSize(bytes);
     }
     else if (pCurrentResource->hasAlternateDataBody()) {
@@ -552,10 +555,11 @@ QObject * NoteEditorPluginFactory::createResourcePlugin(
      * the parent)
      */
 
-    pGenericResourceDisplayWidget->initialize(cachedIconIt.value(),
-                                              resourceDisplayName,
-                                              resourceDataSize,
-                                              *pCurrentResource);
+    pGenericResourceDisplayWidget->initialize(
+        cachedIconIt.value(),
+        resourceDisplayName,
+        resourceDataSize,
+        *pCurrentResource);
 
     m_genericResourceDisplayWidgetPlugins.push_back(
         QPointer<GenericResourceDisplayWidget>(pGenericResourceDisplayWidget));
@@ -566,21 +570,21 @@ QObject * NoteEditorPluginFactory::createEncryptedAreaPlugin(
     const QStringList & argumentNames, const QStringList & argumentValues) const
 {
     QWidget * pParentWidget = qobject_cast<QWidget*>(parent());
-    EncryptedAreaPlugin * pEncryptedAreaPlugin = new EncryptedAreaPlugin(m_noteEditor,
-                                                                         pParentWidget);
+    EncryptedAreaPlugin * pEncryptedAreaPlugin =
+        new EncryptedAreaPlugin(m_noteEditor, pParentWidget);
 
     ErrorString errorDescription;
     bool res = pEncryptedAreaPlugin->initialize(argumentNames, argumentValues,
                                                 *this, errorDescription);
     if (!res) {
-        QNINFO(QStringLiteral("Can't initialize note editor encrypted area plugin ")
-               << pEncryptedAreaPlugin->name()
-               << QStringLiteral(": ") << errorDescription);
+        QNINFO("Can't initialize note editor encrypted area plugin "
+               << pEncryptedAreaPlugin->name() << ": " << errorDescription);
         delete pEncryptedAreaPlugin;
         return Q_NULLPTR;
     }
 
-    m_encryptedAreaPlugins.push_back(QPointer<EncryptedAreaPlugin>(pEncryptedAreaPlugin));
+    m_encryptedAreaPlugins.push_back(
+        QPointer<EncryptedAreaPlugin>(pEncryptedAreaPlugin));
     return pEncryptedAreaPlugin;
 }
 
@@ -607,27 +611,28 @@ QList<QWebPluginFactory::Plugin> NoteEditorPluginFactory::plugins() const
     return plugins;
 }
 
-QIcon NoteEditorPluginFactory::getIconForMimeType(const QString & mimeTypeName) const
+QIcon NoteEditorPluginFactory::getIconForMimeType(
+    const QString & mimeTypeName) const
 {
-    QNDEBUG(QStringLiteral("NoteEditorPluginFactory::getIconForMimeType: mime type name = ")
+    QNDEBUG("NoteEditorPluginFactory::getIconForMimeType: mime type name = "
             << mimeTypeName);
 
     QMimeType mimeType = m_mimeDatabase.mimeTypeForName(mimeTypeName);
     if (!mimeType.isValid()) {
-        QNTRACE(QStringLiteral("Couldn't find valid mime type object for name/alias ")
-                << mimeTypeName << QStringLiteral(", will use \"unknown\" icon"));
+        QNTRACE("Couldn't find valid mime type object for name/alias "
+                << mimeTypeName << ", will use \"unknown\" icon");
         return m_fallbackResourceIcon;
     }
 
     QString iconName = mimeType.iconName();
     if (QIcon::hasThemeIcon(iconName)) {
-        QNTRACE(QStringLiteral("Found icon from theme, name = ") << iconName);
+        QNTRACE("Found icon from theme, name = " << iconName);
         return QIcon::fromTheme(iconName, m_fallbackResourceIcon);
     }
 
     iconName = mimeType.genericIconName();
     if (QIcon::hasThemeIcon(iconName)) {
-        QNTRACE(QStringLiteral("Found generic icon from theme, name = ") << iconName);
+        QNTRACE("Found generic icon from theme, name = " << iconName);
         return QIcon::fromTheme(iconName, m_fallbackResourceIcon);
     }
 
@@ -643,8 +648,8 @@ QIcon NoteEditorPluginFactory::getIconForMimeType(const QString & mimeTypeName) 
 
     const int numSuffixes = suffixes.size();
     if (numSuffixes == 0) {
-        QNDEBUG(QStringLiteral("Can't find any file suffix for mime type ")
-                << mimeTypeName << QStringLiteral(", will use \"unknown\" icon"));
+        QNDEBUG("Can't find any file suffix for mime type "
+                << mimeTypeName << ", will use \"unknown\" icon");
         return m_fallbackResourceIcon;
     }
 
@@ -653,7 +658,7 @@ QIcon NoteEditorPluginFactory::getIconForMimeType(const QString & mimeTypeName) 
     {
         const QString & suffix = suffixes[i];
         if (suffix.isEmpty()) {
-            QNTRACE(QStringLiteral("Found empty file suffix within suffixes, skipping it"));
+            QNTRACE("Found empty file suffix within suffixes, skipping it");
             continue;
         }
 
@@ -662,8 +667,8 @@ QIcon NoteEditorPluginFactory::getIconForMimeType(const QString & mimeTypeName) 
     }
 
     if (!hasNonEmptySuffix) {
-        QNDEBUG(QStringLiteral("All file suffixes for mime type ") << mimeTypeName
-                << QStringLiteral(" are empty, will use \"unknown\" icon"));
+        QNDEBUG("All file suffixes for mime type " << mimeTypeName
+                << " are empty, will use \"unknown\" icon");
         return m_fallbackResourceIcon;
     }
 
@@ -679,10 +684,10 @@ QIcon NoteEditorPluginFactory::getIconForMimeType(const QString & mimeTypeName) 
     QDir fakeFilesDir(fakeFilesStoragePath);
     if (!fakeFilesDir.exists())
     {
-        QNDEBUG(QStringLiteral("Fake files storage path doesn't exist yet, "
-                               "will attempt to create it"));
+        QNDEBUG("Fake files storage path doesn't exist yet, will attempt to "
+                "create it");
         if (!fakeFilesDir.mkpath(fakeFilesStoragePath)) {
-            QNWARNING(QStringLiteral("Can't create fake files storage path folder"));
+            QNWARNING("Can't create fake files storage path folder");
             return m_fallbackResourceIcon;
         }
     }
@@ -702,9 +707,8 @@ QIcon NoteEditorPluginFactory::getIconForMimeType(const QString & mimeTypeName) 
             if (!fakeFilesDir.rmpath(fakeFilesStoragePath + QStringLiteral("/") +
                                      filename + QStringLiteral(".") + suffix))
             {
-                QNWARNING(QStringLiteral("Can't remove directory ")
-                          << fileInfo.absolutePath()
-                          << QStringLiteral(" which should not be here in the first place..."));
+                QNWARNING("Can't remove directory " << fileInfo.absolutePath()
+                          << " which should not be here in the first place...");
                 continue;
             }
         }
@@ -714,9 +718,8 @@ QIcon NoteEditorPluginFactory::getIconForMimeType(const QString & mimeTypeName) 
             QFile fakeFile(fakeFilesStoragePath + QStringLiteral("/") + filename +
                            QStringLiteral(".") + suffix);
             if (!fakeFile.open(QIODevice::ReadWrite)) {
-                QNWARNING(QStringLiteral("Can't open file ") << fakeFilesStoragePath
-                          << QStringLiteral("/") << filename << QStringLiteral(".")
-                          << suffix << QStringLiteral(" for writing "));
+                QNWARNING("Can't open file " << fakeFilesStoragePath << "/"
+                          << filename << "." << suffix << " for writing ");
                 continue;
             }
         }
@@ -724,31 +727,30 @@ QIcon NoteEditorPluginFactory::getIconForMimeType(const QString & mimeTypeName) 
         QFileIconProvider fileIconProvider;
         QIcon icon = fileIconProvider.icon(fileInfo);
         if (icon.isNull()) {
-            QNTRACE(QStringLiteral("File icon provider returned null icon for ")
-                    << QStringLiteral("file with suffix ") << suffix);
+            QNTRACE("File icon provider returned null icon for "
+                    << "file with suffix " << suffix);
         }
 
-        QNTRACE(QStringLiteral("Returning the icon from file icon provider for mime type ")
+        QNTRACE("Returning the icon from file icon provider for mime type "
                 << mimeTypeName);
         return icon;
     }
 
-    QNTRACE(QStringLiteral("Couldn't find appropriate icon from either icon theme "
-                           "or fake file with QFileIconProvider, using \"unknown\" "
-                           "icon as a last resort"));
+    QNTRACE("Couldn't find appropriate icon from either icon theme or fake "
+            "file with QFileIconProvider, using \"unknown\" icon as a last "
+            "resort");
     return m_fallbackResourceIcon;
 }
 
 QStringList NoteEditorPluginFactory::getFileSuffixesForMimeType(
     const QString & mimeTypeName) const
 {
-    QNDEBUG(QStringLiteral("NoteEditorPluginFactory::")
-            << QStringLiteral("getFileSuffixesForMimeType: mime type name = ")
-            << mimeTypeName);
+    QNDEBUG("NoteEditorPluginFactory::getFileSuffixesForMimeType: "
+            << "mime type name = " << mimeTypeName);
 
     QMimeType mimeType = m_mimeDatabase.mimeTypeForName(mimeTypeName);
     if (!mimeType.isValid()) {
-        QNTRACE(QStringLiteral("Couldn't find valid mime type object for name/alias ")
+        QNTRACE("Couldn't find valid mime type object for name/alias "
                 << mimeTypeName);
         return QStringList();
     }
@@ -759,12 +761,12 @@ QStringList NoteEditorPluginFactory::getFileSuffixesForMimeType(
 QString NoteEditorPluginFactory::getFilterStringForMimeType(
     const QString & mimeTypeName) const
 {
-    QNDEBUG(QStringLiteral("NoteEditorPluginFactory::getFilterStringForMimeType: ")
-            << QStringLiteral("mime type name = ") << mimeTypeName);
+    QNDEBUG("NoteEditorPluginFactory::getFilterStringForMimeType: "
+            << "mime type name = " << mimeTypeName);
 
     QMimeType mimeType = m_mimeDatabase.mimeTypeForName(mimeTypeName);
     if (!mimeType.isValid()) {
-        QNTRACE(QStringLiteral("Couldn't find valid mime type object for name/alias ")
+        QNTRACE("Couldn't find valid mime type object for name/alias "
                 << mimeTypeName);
         return QString();
     }

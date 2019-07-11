@@ -46,10 +46,10 @@ TagSyncConflictResolver::TagSyncConflictResolver(
 
 void TagSyncConflictResolver::start()
 {
-    QNDEBUG(QStringLiteral("TagSyncConflictResolver::start"));
+    QNDEBUG("TagSyncConflictResolver::start");
 
     if (m_started) {
-        QNDEBUG(QStringLiteral("Already started"));
+        QNDEBUG("Already started");
         return;
     }
 
@@ -59,7 +59,7 @@ void TagSyncConflictResolver::start()
         ErrorString error(QT_TR_NOOP("Can't resolve the conflict between remote "
                                      "and local tags: the remote tag has no guid "
                                      "set"));
-        QNWARNING(error << QStringLiteral(": ") << m_remoteTag);
+        QNWARNING(error << ": " << m_remoteTag);
         Q_EMIT failure(m_remoteTag, error);
         return;
     }
@@ -68,7 +68,7 @@ void TagSyncConflictResolver::start()
         ErrorString error(QT_TR_NOOP("Can't resolve the conflict between remote "
                                      "and local tags: the remote tag has no guid "
                                      "set"));
-        QNWARNING(error << QStringLiteral(": ") << m_remoteTag);
+        QNWARNING(error << ": " << m_remoteTag);
         Q_EMIT failure(m_remoteTag, error);
         return;
     }
@@ -78,7 +78,7 @@ void TagSyncConflictResolver::start()
         ErrorString error(QT_TR_NOOP("Can't resolve the conflict between remote "
                                      "and local tags: the local conflicting tag "
                                      "has neither guid nor name set"));
-        QNWARNING(error << QStringLiteral(": ") << m_localConflict);
+        QNWARNING(error << ": " << m_localConflict);
         Q_EMIT failure(m_remoteTag, error);
         return;
     }
@@ -102,12 +102,12 @@ void TagSyncConflictResolver::onAddTagComplete(Tag tag, QUuid requestId)
         return;
     }
 
-    QNDEBUG(QStringLiteral("TagSyncConflictResolver::onAddTagComplete: request id = ")
-            << requestId << QStringLiteral(", tag: ") << tag);
+    QNDEBUG("TagSyncConflictResolver::onAddTagComplete: request id = "
+            << requestId << ", tag: " << tag);
 
     if (m_state == State::PendingRemoteTagAdoptionInLocalStorage)
     {
-        QNDEBUG(QStringLiteral("Successfully added the remote tag to the local storage"));
+        QNDEBUG("Successfully added the remote tag to the local storage");
         Q_EMIT finished(m_remoteTag);
     }
     else
@@ -115,21 +115,21 @@ void TagSyncConflictResolver::onAddTagComplete(Tag tag, QUuid requestId)
         ErrorString error(QT_TR_NOOP("Internal error: wrong state on receiving "
                                      "the confirmation about the tag addition "
                                      "from the local storage"));
-        QNWARNING(error << QStringLiteral(", tag: ") << tag);
+        QNWARNING(error << ", tag: " << tag);
         Q_EMIT failure(m_remoteTag, error);
     }
 }
 
-void TagSyncConflictResolver::onAddTagFailed(Tag tag, ErrorString errorDescription,
-                                             QUuid requestId)
+void TagSyncConflictResolver::onAddTagFailed(
+    Tag tag, ErrorString errorDescription, QUuid requestId)
 {
     if (requestId != m_addTagRequestId) {
         return;
     }
 
-    QNDEBUG(QStringLiteral("TagSyncConflictResolver::onAddTagFailed: request id = ")
-            << requestId << QStringLiteral(", error description = ")
-            << errorDescription << QStringLiteral("; tag: ") << tag);
+    QNDEBUG("TagSyncConflictResolver::onAddTagFailed: request id = "
+            << requestId << ", error description = "
+            << errorDescription << "; tag: " << tag);
 
     Q_EMIT failure(m_remoteTag, errorDescription);
 }
@@ -140,20 +140,20 @@ void TagSyncConflictResolver::onUpdateTagComplete(Tag tag, QUuid requestId)
         return;
     }
 
-    QNDEBUG(QStringLiteral("TagSyncConflictResolver::onUpdateTagComplete: request id = ")
-            << requestId << QStringLiteral(", tag: ") << tag);
+    QNDEBUG("TagSyncConflictResolver::onUpdateTagComplete: request id = "
+            << requestId << ", tag: " << tag);
 
     if (m_state == State::OverrideLocalChangesWithRemoteChanges)
     {
-        QNDEBUG(QStringLiteral("Successfully overridden the local changes with "
-                               "remote changes"));
+        QNDEBUG("Successfully overridden the local changes with "
+                "remote changes");
         Q_EMIT finished(m_remoteTag);
         return;
     }
     else if (m_state == State::PendingConflictingTagRenaming)
     {
-        QNDEBUG(QStringLiteral("Successfully renamed the local tag conflicting "
-                               "by name with the remote tag"));
+        QNDEBUG("Successfully renamed the local tag conflicting "
+                "by name with the remote tag");
 
         // Now need to find the duplicate of the remote tag by guid:
         // 1) if one exists, update it from the remote changes - notwithstanding
@@ -176,8 +176,8 @@ void TagSyncConflictResolver::onUpdateTagComplete(Tag tag, QUuid requestId)
         auto it = nameByGuidHash.find(m_remoteTag.guid.ref());
         if (it == nameByGuidHash.end())
         {
-            QNDEBUG(QStringLiteral("Found no duplicate of the remote tag by guid, "
-                                   "adding new tag to the local storage"));
+            QNDEBUG("Found no duplicate of the remote tag by guid, "
+                    "adding new tag to the local storage");
 
             Tag tag(m_remoteTag);
             tag.setLinkedNotebookGuid(m_remoteTagLinkedNotebookGuid);
@@ -185,15 +185,15 @@ void TagSyncConflictResolver::onUpdateTagComplete(Tag tag, QUuid requestId)
             tag.setLocal(false);
 
             m_addTagRequestId = QUuid::createUuid();
-            QNTRACE(QStringLiteral("Emitting the request to add tag: request id = ")
-                    << m_addTagRequestId << QStringLiteral(", tag: ") << tag);
+            QNTRACE("Emitting the request to add tag: request id = "
+                    << m_addTagRequestId << ", tag: " << tag);
             Q_EMIT addTag(tag, m_addTagRequestId);
         }
         else
         {
-            QNDEBUG(QStringLiteral("The duplicate by guid exists in the local "
-                                   "storage, updating it with the state of "
-                                   "the remote tag"));
+            QNDEBUG("The duplicate by guid exists in the local "
+                    "storage, updating it with the state of "
+                    "the remote tag");
 
             Tag tag(m_localConflict);
             tag.qevercloudTag() = m_remoteTag;
@@ -202,16 +202,16 @@ void TagSyncConflictResolver::onUpdateTagComplete(Tag tag, QUuid requestId)
             tag.setLocal(false);
 
             m_updateTagRequestId = QUuid::createUuid();
-            QNTRACE(QStringLiteral("Emitting the request to update tag: request id = ")
-                    << m_updateTagRequestId << QStringLiteral(", tag: ") << tag
-                    << QStringLiteral("\nLocal conflict: ") << m_localConflict);
+            QNTRACE("Emitting the request to update tag: request id = "
+                    << m_updateTagRequestId << ", tag: " << tag
+                    << "\nLocal conflict: " << m_localConflict);
             Q_EMIT updateTag(tag, m_updateTagRequestId);
         }
     }
     else if (m_state == State::PendingRemoteTagAdoptionInLocalStorage)
     {
-        QNDEBUG(QStringLiteral("Successfully finalized the sequence of actions "
-                               "required for resolving the conflict of tags"));
+        QNDEBUG("Successfully finalized the sequence of actions "
+                "required for resolving the conflict of tags");
         Q_EMIT finished(m_remoteTag);
     }
     else
@@ -219,22 +219,21 @@ void TagSyncConflictResolver::onUpdateTagComplete(Tag tag, QUuid requestId)
         ErrorString error(QT_TR_NOOP("Internal error: wrong state on receiving "
                                      "the confirmation about the tag update "
                                      "from the local storage"));
-        QNWARNING(error << QStringLiteral(", tag: ") << tag);
+        QNWARNING(error << ", tag: " << tag);
         Q_EMIT failure(m_remoteTag, error);
     }
 }
 
-void TagSyncConflictResolver::onUpdateTagFailed(Tag tag,
-                                                ErrorString errorDescription,
-                                                QUuid requestId)
+void TagSyncConflictResolver::onUpdateTagFailed(
+    Tag tag, ErrorString errorDescription, QUuid requestId)
 {
     if (requestId != m_updateTagRequestId) {
         return;
     }
 
-    QNDEBUG(QStringLiteral("TagSyncConflictResolver::onUpdateTagFailed: request id = ")
-            << requestId << QStringLiteral(", error description = ")
-            << errorDescription << QStringLiteral("; tag: ") << tag);
+    QNDEBUG("TagSyncConflictResolver::onUpdateTagFailed: request id = "
+            << requestId << ", error description = "
+            << errorDescription << "; tag: " << tag);
 
     Q_EMIT failure(m_remoteTag, errorDescription);
 }
@@ -245,8 +244,8 @@ void TagSyncConflictResolver::onFindTagComplete(Tag tag, QUuid requestId)
         return;
     }
 
-    QNDEBUG(QStringLiteral("TagSyncConflictResolver::onFindTagComplete: tag = ")
-            << tag << QStringLiteral("\nRequest id = ") << requestId);
+    QNDEBUG("TagSyncConflictResolver::onFindTagComplete: tag = "
+            << tag << "\nRequest id = " << requestId);
 
     m_findTagRequestId = QUuid();
 
@@ -254,16 +253,16 @@ void TagSyncConflictResolver::onFindTagComplete(Tag tag, QUuid requestId)
     processTagsConflictByName(tag);
 }
 
-void TagSyncConflictResolver::onFindTagFailed(Tag tag, ErrorString errorDescription,
-                                              QUuid requestId)
+void TagSyncConflictResolver::onFindTagFailed(
+    Tag tag, ErrorString errorDescription, QUuid requestId)
 {
     if (requestId != m_findTagRequestId) {
         return;
     }
 
-    QNDEBUG(QStringLiteral("TagSyncConflictResolver::onFindTagFailed: tag = ")
-            << tag << QStringLiteral("\nError description = ") << errorDescription
-            << QStringLiteral("; request id = ") << requestId);
+    QNDEBUG("TagSyncConflictResolver::onFindTagFailed: tag = "
+            << tag << "\nError description = " << errorDescription
+            << "; request id = " << requestId);
 
     m_findTagRequestId = QUuid();
 
@@ -274,10 +273,10 @@ void TagSyncConflictResolver::onFindTagFailed(Tag tag, ErrorString errorDescript
 
 void TagSyncConflictResolver::onCacheFilled()
 {
-    QNDEBUG(QStringLiteral("TagSyncConflictResolver::onCacheFilled"));
+    QNDEBUG("TagSyncConflictResolver::onCacheFilled");
 
     if (!m_pendingCacheFilling) {
-        QNDEBUG(QStringLiteral("Not pending the cache filling"));
+        QNDEBUG("Not pending the cache filling");
         return;
     }
 
@@ -291,18 +290,17 @@ void TagSyncConflictResolver::onCacheFilled()
     {
         ErrorString error(QT_TR_NOOP("Internal error: wrong state on receiving "
                                      "the tag info cache filling notification"));
-        QNWARNING(error << QStringLiteral(", state = ") << m_state);
+        QNWARNING(error << ", state = " << m_state);
         Q_EMIT failure(m_remoteTag, error);
     }
 }
 
 void TagSyncConflictResolver::onCacheFailed(ErrorString errorDescription)
 {
-    QNDEBUG(QStringLiteral("TagSyncConflictResolver::onCacheFailed: ")
-            << errorDescription);
+    QNDEBUG("TagSyncConflictResolver::onCacheFailed: " << errorDescription);
 
     if (!m_pendingCacheFilling) {
-        QNDEBUG(QStringLiteral("Not pending the cache filling"));
+        QNDEBUG("Not pending the cache filling");
         return;
     }
 
@@ -312,7 +310,7 @@ void TagSyncConflictResolver::onCacheFailed(ErrorString errorDescription)
 
 void TagSyncConflictResolver::connectToLocalStorage()
 {
-    QNDEBUG(QStringLiteral("TagSyncConflictResolver::connectToLocalStorage"));
+    QNDEBUG("TagSyncConflictResolver::connectToLocalStorage");
 
     // Connect local signals to local storage manager async's slots
     QObject::connect(this,
@@ -372,7 +370,7 @@ void TagSyncConflictResolver::connectToLocalStorage()
 
 void TagSyncConflictResolver::processTagsConflictByGuid()
 {
-    QNDEBUG(QStringLiteral("TagSyncConflictResolver::processTagsConflictByGuid"));
+    QNDEBUG("TagSyncConflictResolver::processTagsConflictByGuid");
 
     // Need to understand whether there's a duplicate by name in the local storage
     // for the new state of the remote tag
@@ -382,11 +380,11 @@ void TagSyncConflictResolver::processTagsConflictByGuid()
         const QHash<QString,QString> & guidByNameHash = m_cache.guidByNameHash();
         auto it = guidByNameHash.find(m_remoteTag.name.ref().toLower());
         if (it == guidByNameHash.end()) {
-            QNDEBUG(QStringLiteral("As deduced by the existing tag info cache, "
-                                   "there is no local tag with the same name "
-                                   "as the name from the new state of the remote "
-                                   "tag, can safely override the local changes "
-                                   "with the remote changes: ") << m_remoteTag);
+            QNDEBUG("As deduced by the existing tag info cache, "
+                    << "there is no local tag with the same name "
+                    << "as the name from the new state of the remote "
+                    << "tag, can safely override the local changes "
+                    << "with the remote changes: " << m_remoteTag);
             overrideLocalChangesWithRemoteChanges();
             return;
         }
@@ -398,27 +396,27 @@ void TagSyncConflictResolver::processTagsConflictByGuid()
     dummyTag.unsetLocalUid();
     dummyTag.setName(m_remoteTag.name.ref());
     m_findTagRequestId = QUuid::createUuid();
-    QNTRACE(QStringLiteral("Emitting the request to find tag by name: request id = ")
-            << m_findTagRequestId << QStringLiteral(", tag = ") << dummyTag);
+    QNTRACE("Emitting the request to find tag by name: request id = "
+            << m_findTagRequestId << ", tag = " << dummyTag);
     Q_EMIT findTag(dummyTag, m_findTagRequestId);
 }
 
-void TagSyncConflictResolver::processTagsConflictByName(const Tag & localConflict)
+void TagSyncConflictResolver::processTagsConflictByName(
+    const Tag & localConflict)
 {
-    QNDEBUG(QStringLiteral("TagSyncConflictResolver::processTagsConflictByName: "
-                           "local conflict = ") << localConflict);
+    QNDEBUG("TagSyncConflictResolver::processTagsConflictByName: "
+            << "local conflict = " << localConflict);
 
     if (localConflict.hasGuid() &&
         (localConflict.guid() == m_remoteTag.guid.ref()))
     {
-        QNDEBUG(QStringLiteral("The conflicting tags match by name and guid => "
-                               "the changes from the remote "
-                               "tag should just override the local changes"));
+        QNDEBUG("The conflicting tags match by name and guid => the changes "
+                "from the remote tag should just override the local changes");
         overrideLocalChangesWithRemoteChanges();
         return;
     }
 
-    QNDEBUG(QStringLiteral("The conflicting tags match by name but not by guid"));
+    QNDEBUG("The conflicting tags match by name but not by guid");
 
     QString localConflictLinkedNotebookGuid;
     if (localConflict.hasLinkedNotebookGuid()) {
@@ -427,11 +425,10 @@ void TagSyncConflictResolver::processTagsConflictByName(const Tag & localConflic
 
     if (localConflictLinkedNotebookGuid != m_remoteTagLinkedNotebookGuid)
     {
-        QNDEBUG(QStringLiteral("The tags conflicting by name don't have matching "
-                               "linked notebook guids => they are either from "
-                               "user's own account and a linked notebook or from "
-                               "two different linked notebooks => can just add "
-                               "the remote tag to the local storage"));
+        QNDEBUG("The tags conflicting by name don't have matching linked "
+                "notebook guids => they are either from user's own account and "
+                "a linked notebook or from two different linked notebooks => "
+                "can just add the remote tag to the local storage");
 
         m_state = State::PendingRemoteTagAdoptionInLocalStorage;
 
@@ -441,22 +438,21 @@ void TagSyncConflictResolver::processTagsConflictByName(const Tag & localConflic
         tag.setLocal(false);
 
         m_addTagRequestId = QUuid::createUuid();
-        QNTRACE(QStringLiteral("Emitting the request to add tag: request id = ")
-                << m_addTagRequestId << QStringLiteral(", tag: ") << tag);
+        QNTRACE("Emitting the request to add tag: request id = "
+                << m_addTagRequestId << ", tag: " << tag);
         Q_EMIT addTag(tag, m_addTagRequestId);
         return;
     }
 
-    QNDEBUG(QStringLiteral("Both conflicting tags are either from user's own "
-                           "account or from the same linked notebook => should "
-                           "rename the local conflicting tag to \"free\" "
-                           "the name it occupies"));
+    QNDEBUG("Both conflicting tags are either from user's own account or from "
+            "the same linked notebook => should rename the local conflicting "
+            "tag to \"free\" the name it occupies");
 
     m_state = State::PendingConflictingTagRenaming;
 
     if (!m_cache.isFilled())
     {
-        QNDEBUG(QStringLiteral("The cache of tag info has not been filled yet"));
+        QNDEBUG("The cache of tag info has not been filled yet");
 
         QObject::connect(&m_cache,
                          QNSIGNAL(TagSyncCache,filled),
@@ -473,19 +469,19 @@ void TagSyncConflictResolver::processTagsConflictByName(const Tag & localConflic
 
         m_pendingCacheFilling = true;
         m_tagToBeRenamed = localConflict;
-        QNTRACE(QStringLiteral("Emitting the request to fill the tags cache"));
+        QNTRACE("Emitting the request to fill the tags cache");
         Q_EMIT fillTagsCache();
         return;
     }
 
-    QNDEBUG(QStringLiteral("The cache of notebook info has already been filled"));
+    QNDEBUG("The cache of notebook info has already been filled");
     renameConflictingLocalTag(localConflict);
 }
 
 void TagSyncConflictResolver::overrideLocalChangesWithRemoteChanges()
 {
-    QNDEBUG(QStringLiteral("TagSyncConflictResolver::"
-                           "overrideLocalChangesWithRemoteChanges"));
+    QNDEBUG("TagSyncConflictResolver::"
+            "overrideLocalChangesWithRemoteChanges");
 
     m_state = State::OverrideLocalChangesWithRemoteChanges;
 
@@ -501,15 +497,16 @@ void TagSyncConflictResolver::overrideLocalChangesWithRemoteChanges()
     tag.setParentLocalUid(QString());
 
     m_updateTagRequestId = QUuid::createUuid();
-    QNTRACE(QStringLiteral("Emitting the request to update tag: request id = ")
-            << m_updateTagRequestId << QStringLiteral(", tag: ") << tag);
+    QNTRACE("Emitting the request to update tag: request id = "
+            << m_updateTagRequestId << ", tag: " << tag);
     Q_EMIT updateTag(tag, m_updateTagRequestId);
 }
 
-void TagSyncConflictResolver::renameConflictingLocalTag(const Tag & localConflict)
+void TagSyncConflictResolver::renameConflictingLocalTag(
+    const Tag & localConflict)
 {
-    QNDEBUG(QStringLiteral("TagSyncConflictResolver::renameConflictingLocalTag: ")
-            << QStringLiteral("local conflict = ") << localConflict);
+    QNDEBUG("TagSyncConflictResolver::renameConflictingLocalTag: "
+            << "local conflict = " << localConflict);
 
     QString name = (localConflict.hasName()
                     ? localConflict.name()
@@ -536,8 +533,8 @@ void TagSyncConflictResolver::renameConflictingLocalTag(const Tag & localConflic
     tag.setDirty(true);
 
     m_updateTagRequestId = QUuid::createUuid();
-    QNTRACE(QStringLiteral("Emitting the request to update tag: request id = ")
-            << m_updateTagRequestId << QStringLiteral(", tag: ") << tag);
+    QNTRACE("Emitting the request to update tag: request id = "
+            << m_updateTagRequestId << ", tag: " << tag);
     Q_EMIT updateTag(tag, m_updateTagRequestId);
 }
 

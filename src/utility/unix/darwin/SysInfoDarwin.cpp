@@ -120,6 +120,12 @@ QString SysInfo::platformName()
     else if (qstr.startsWith(QStringLiteral("16."))) {
         return QStringLiteral("macOS 10.12 Sierra");
     }
+    else if (qstr.startsWith(QStringLiteral("17."))) {
+        return QStringLiteral("macOS 10.13 High Sierra");
+    }
+    else if (qstr.startsWith(QStringLiteral("18."))) {
+        return QStringLiteral("macOS 10.14 Mojave");
+    }
 
     return QStringLiteral("Unknown Darwin");
 }

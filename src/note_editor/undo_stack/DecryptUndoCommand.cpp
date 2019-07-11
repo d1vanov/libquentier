@@ -18,21 +18,25 @@
 
 #include "DecryptUndoCommand.h"
 #include "../NoteEditor_p.h"
+
 #include <quentier/logging/QuentierLogger.h>
 
 namespace quentier {
 
-#define GET_PAGE() \
-    NoteEditorPage * page = \
-        qobject_cast<NoteEditorPage*>(m_noteEditorPrivate.page()); \
-    if (Q_UNLIKELY(!page)) { \
-        ErrorString error(QT_TRANSLATE_NOOP("DecryptUndoCommand", \
-                                            "Can't undo/redo the encrypted text "\
-                                            "decryption: no note editor page")); \
-        QNWARNING(error); \
-        Q_EMIT notifyError(error); \
-        return; \
-    }
+#define GET_PAGE()                                                             \
+    NoteEditorPage * page =                                                    \
+        qobject_cast<NoteEditorPage*>(m_noteEditorPrivate.page());             \
+    if (Q_UNLIKELY(!page))                                                     \
+    {                                                                          \
+        ErrorString error(                                                     \
+            QT_TRANSLATE_NOOP("DecryptUndoCommand",                            \
+                              "Can't undo/redo the encrypted text "            \
+                              "decryption: no note editor page"));             \
+        QNWARNING(error);                                                      \
+        Q_EMIT notifyError(error);                                             \
+        return;                                                                \
+    }                                                                          \
+// GET_PAGE
 
 DecryptUndoCommand::DecryptUndoCommand(
         const EncryptDecryptUndoCommandInfo & info,
@@ -63,7 +67,7 @@ DecryptUndoCommand::~DecryptUndoCommand()
 
 void DecryptUndoCommand::redoImpl()
 {
-    QNDEBUG(QStringLiteral("DecryptUndoCommand::redoImpl"));
+    QNDEBUG("DecryptUndoCommand::redoImpl");
 
     GET_PAGE()
 
@@ -80,7 +84,7 @@ void DecryptUndoCommand::redoImpl()
 
 void DecryptUndoCommand::undoImpl()
 {
-    QNDEBUG(QStringLiteral("DecryptUndoCommand::undoImpl"));
+    QNDEBUG("DecryptUndoCommand::undoImpl");
 
     GET_PAGE()
 

@@ -20,6 +20,7 @@
 #define LIB_QUENTIER_NOTE_EDITOR_DELEGATE_REMOVE_HYPERLINK_DELEGATE_H
 
 #include "JsResultCallbackFunctor.hpp"
+
 #include <quentier/types/Note.h>
 #include <quentier/types/ErrorString.h>
 

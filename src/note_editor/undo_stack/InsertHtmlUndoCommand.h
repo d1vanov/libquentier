@@ -21,8 +21,10 @@
 
 #include "INoteEditorUndoCommand.h"
 #include "../NoteEditorPage.h"
+
 #include <quentier/utility/Macros.h>
 #include <quentier/types/Resource.h>
+
 #include <QStringList>
 #include <QHash>
 

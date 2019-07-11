@@ -37,11 +37,11 @@ FileCopierPrivate::FileCopierPrivate(QObject * parent) :
 
 void FileCopierPrivate::copyFile(const QString & sourcePath, const QString & destPath)
 {
-    QNDEBUG(QStringLiteral("FileCopierPrivate::copyFile: source path = ") << sourcePath
-            << QStringLiteral(", dest path = ") << destPath);
+    QNDEBUG("FileCopierPrivate::copyFile: source path = " << sourcePath
+            << ", dest path = " << destPath);
 
     if ((m_sourcePath == sourcePath) && (m_destPath == destPath)) {
-        QNDEBUG(QStringLiteral("Paths haven't changed, nothing to do"));
+        QNDEBUG("Paths haven't changed, nothing to do");
         return;
     }
 
@@ -133,13 +133,13 @@ void FileCopierPrivate::copyFile(const QString & sourcePath, const QString & des
         totalBytesWritten += bytesWritten;
         m_currentProgress = static_cast<double>(totalBytesWritten) / fromFileSize;
 
-        QNTRACE(QStringLiteral("File copying progress update: progress = ")
+        QNTRACE("File copying progress update: progress = "
                 << m_currentProgress
-                << QStringLiteral(", total bytes written = ")
+                << ", total bytes written = "
                 << totalBytesWritten
-                << QStringLiteral(", source file size = ") << fromFileSize
-                << QStringLiteral(", source path = ") << sourcePath
-                << QStringLiteral(", dest path = ") << destPath);
+                << ", source file size = " << fromFileSize
+                << ", source path = " << sourcePath
+                << ", dest path = " << destPath);
 
         Q_EMIT progressUpdate(m_currentProgress);
 
@@ -148,8 +148,8 @@ void FileCopierPrivate::copyFile(const QString & sourcePath, const QString & des
         }
     }
 
-    QNDEBUG(QStringLiteral("File copying is complete: source path = ")
-            << sourcePath << QStringLiteral(", dest path = ") << destPath);
+    QNDEBUG("File copying is complete: source path = "
+            << sourcePath << ", dest path = " << destPath);
 
     clear();
     Q_EMIT finished(sourcePath, destPath);
@@ -157,10 +157,10 @@ void FileCopierPrivate::copyFile(const QString & sourcePath, const QString & des
 
 void FileCopierPrivate::cancel()
 {
-    QNDEBUG(QStringLiteral("FileCopierPrivate::cancel"));
+    QNDEBUG("FileCopierPrivate::cancel");
 
     if (m_idle) {
-        QNDEBUG(QStringLiteral("Idle, nothing to cancel"));
+        QNDEBUG("Idle, nothing to cancel");
         return;
     }
 
@@ -169,7 +169,7 @@ void FileCopierPrivate::cancel()
 
 void FileCopierPrivate::clear()
 {
-    QNDEBUG(QStringLiteral("FileCopierPrivate::clear"));
+    QNDEBUG("FileCopierPrivate::clear");
 
     m_sourcePath.clear();
     m_destPath.clear();

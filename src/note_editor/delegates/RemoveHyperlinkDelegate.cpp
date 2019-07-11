@@ -18,20 +18,22 @@
 
 #include "RemoveHyperlinkDelegate.h"
 #include "../NoteEditor_p.h"
+
 #include <quentier/logging/QuentierLogger.h>
 
 namespace quentier {
 
-#define GET_PAGE() \
-    NoteEditorPage * page = qobject_cast<NoteEditorPage*>(m_noteEditor.page()); \
-    if (Q_UNLIKELY(!page)) { \
-        ErrorString error(QT_TRANSLATE_NOOP("RemoveHyperlinkDelegate", \
-                                            "Can't remove hyperlink: no note "\
-                                            "editor's page")); \
-        QNWARNING(error); \
-        Q_EMIT notifyError(error); \
-        return; \
-    }
+#define GET_PAGE()                                                             \
+    NoteEditorPage * page = qobject_cast<NoteEditorPage*>(m_noteEditor.page());\
+    if (Q_UNLIKELY(!page)) {                                                   \
+        ErrorString error(QT_TRANSLATE_NOOP("RemoveHyperlinkDelegate",         \
+                                            "Can't remove hyperlink: no note " \
+                                            "editor's page"));                 \
+        QNWARNING(error);                                                      \
+        Q_EMIT notifyError(error);                                             \
+        return;                                                                \
+    }                                                                          \
+// GET_PAGE
 
 RemoveHyperlinkDelegate::RemoveHyperlinkDelegate(NoteEditorPrivate & noteEditor) :
     QObject(&noteEditor),
@@ -40,7 +42,7 @@ RemoveHyperlinkDelegate::RemoveHyperlinkDelegate(NoteEditorPrivate & noteEditor)
 
 void RemoveHyperlinkDelegate::start()
 {
-    QNDEBUG(QStringLiteral("RemoveHyperlinkDelegate::start"));
+    QNDEBUG("RemoveHyperlinkDelegate::start");
 
     if (m_noteEditor.isEditorPageModified())
     {
@@ -59,7 +61,7 @@ void RemoveHyperlinkDelegate::start()
 
 void RemoveHyperlinkDelegate::onOriginalPageConvertedToNote(Note note)
 {
-    QNDEBUG(QStringLiteral("RemoveHyperlinkDelegate::onOriginalPageConvertedToNote"));
+    QNDEBUG("RemoveHyperlinkDelegate::onOriginalPageConvertedToNote");
 
     Q_UNUSED(note)
 
@@ -74,7 +76,7 @@ void RemoveHyperlinkDelegate::onOriginalPageConvertedToNote(Note note)
 
 void RemoveHyperlinkDelegate::findIdOfHyperlinkUnderCursor()
 {
-    QNDEBUG(QStringLiteral("RemoveHyperlinkDelegate::findIdOfHyperlinkUnderCursor"));
+    QNDEBUG("RemoveHyperlinkDelegate::findIdOfHyperlinkUnderCursor");
 
     QString javascript = QStringLiteral("hyperlinkManager.findSelectedHyperlinkId();");
     GET_PAGE()
@@ -85,7 +87,7 @@ void RemoveHyperlinkDelegate::findIdOfHyperlinkUnderCursor()
 
 void RemoveHyperlinkDelegate::onHyperlinkIdFound(const QVariant & data)
 {
-    QNDEBUG(QStringLiteral("RemoveHyperlinkDelegate::onHyperlinkIdFound: ")
+    QNDEBUG("RemoveHyperlinkDelegate::onHyperlinkIdFound: "
             << data);
 
     QMap<QString,QVariant> resultMap = data.toMap();
@@ -138,7 +140,7 @@ void RemoveHyperlinkDelegate::onHyperlinkIdFound(const QVariant & data)
     {
         ErrorString error(QT_TR_NOOP("Can't remove hyperlink under cursor: "
                                      "can't convert hyperlink id to a number"));
-        QNWARNING(error << QStringLiteral(", data from JS: ") << data);
+        QNWARNING(error << ", data from JS: " << data);
         Q_EMIT notifyError(error);
         return;
     }
@@ -148,7 +150,7 @@ void RemoveHyperlinkDelegate::onHyperlinkIdFound(const QVariant & data)
 
 void RemoveHyperlinkDelegate::removeHyperlink(const quint64 hyperlinkId)
 {
-    QNDEBUG(QStringLiteral("RemoveHyperlinkDelegate::removeHyperlink"));
+    QNDEBUG("RemoveHyperlinkDelegate::removeHyperlink");
 
     QString javascript = QStringLiteral("hyperlinkManager.removeHyperlink(") +
                          QString::number(hyperlinkId) + QStringLiteral(", false);");
@@ -161,8 +163,7 @@ void RemoveHyperlinkDelegate::removeHyperlink(const quint64 hyperlinkId)
 
 void RemoveHyperlinkDelegate::onHyperlinkRemoved(const QVariant & data)
 {
-    QNDEBUG(QStringLiteral("RemoveHyperlinkDelegate::onHyperlinkRemoved: ")
-            << data);
+    QNDEBUG("RemoveHyperlinkDelegate::onHyperlinkRemoved: " << data);
 
     QMap<QString,QVariant> resultMap = data.toMap();
 

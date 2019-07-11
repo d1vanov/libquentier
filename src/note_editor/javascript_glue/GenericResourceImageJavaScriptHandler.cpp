@@ -17,6 +17,7 @@
  */
 
 #include "GenericResourceImageJavaScriptHandler.h"
+
 #include <quentier/logging/QuentierLogger.h>
 
 namespace quentier {
@@ -27,21 +28,20 @@ GenericResourceImageJavaScriptHandler::GenericResourceImageJavaScriptHandler(
     m_cache(cache)
 {}
 
-void GenericResourceImageJavaScriptHandler::findGenericResourceImage(QByteArray resourceHash)
+void GenericResourceImageJavaScriptHandler::findGenericResourceImage(
+    QByteArray resourceHash)
 {
-    QNDEBUG(QStringLiteral("GenericResourceImageJavaScriptHandler::")
-            << QStringLiteral("findGenericResourceImage: resource hash = ")
+    QNDEBUG("GenericResourceImageJavaScriptHandler::"
+            << "findGenericResourceImage: resource hash = "
             << resourceHash);
 
     auto it = m_cache.find(QByteArray::fromHex(resourceHash));
     if (it != m_cache.end()) {
-        QNTRACE(QStringLiteral("Found generic resouce image, path is ")
-                << it.value());
+        QNTRACE("Found generic resouce image, path is " << it.value());
         Q_EMIT genericResourceImageFound(resourceHash, it.value());
     }
     else {
-        QNINFO(QStringLiteral("Can't find generic resource image for hash ")
-               << resourceHash);
+        QNINFO("Can't find generic resource image for hash " << resourceHash);
     }
 }
 

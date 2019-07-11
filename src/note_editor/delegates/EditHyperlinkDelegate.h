@@ -20,9 +20,11 @@
 #define LIB_QUENTIER_NOTE_EDITOR_DELEGATES_EDIT_HYPERLINK_DELEGATE_H
 
 #include "JsResultCallbackFunctor.hpp"
+
 #include <quentier/utility/Macros.h>
 #include <quentier/types/ErrorString.h>
 #include <quentier/types/Note.h>
+
 #include <QObject>
 
 namespace quentier {

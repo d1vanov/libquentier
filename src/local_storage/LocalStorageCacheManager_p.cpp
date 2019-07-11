@@ -26,7 +26,8 @@
 
 namespace quentier {
 
-LocalStorageCacheManagerPrivate::LocalStorageCacheManagerPrivate(LocalStorageCacheManager & q) :
+LocalStorageCacheManagerPrivate::LocalStorageCacheManagerPrivate(
+        LocalStorageCacheManager & q) :
     q_ptr(&q),
     m_cacheExpiryChecker(new DefaultLocalStorageCacheExpiryChecker(q)),
     m_notesCache(),
@@ -60,12 +61,13 @@ bool LocalStorageCacheManagerPrivate::empty() const
             m_savedSearchesCache.empty());
 }
 
-#define NUM_CACHED_OBJECTS(type, method_name, cache_name, IndexType) \
-size_t LocalStorageCacheManagerPrivate::method_name() const \
-{ \
-    const auto & index = cache_name.get<type##Holder::IndexType>(); \
-    return index.size(); \
-}
+#define NUM_CACHED_OBJECTS(type, method_name, cache_name, IndexType)           \
+size_t LocalStorageCacheManagerPrivate::method_name() const                    \
+{                                                                              \
+    const auto & index = cache_name.get<type##Holder::IndexType>();            \
+    return index.size();                                                       \
+}                                                                              \
+// NUM_CACHED_OBJECTS
 
 NUM_CACHED_OBJECTS(Note, numCachedNotes, m_notesCache, ByLocalUid)
 NUM_CACHED_OBJECTS(Resource, numCachesResources, m_resourcesCache, ByLocalUid)
@@ -78,65 +80,54 @@ NUM_CACHED_OBJECTS(SavedSearch, numCachedSavedSearches,
 
 #undef NUM_CACHED_OBJECTS
 
-#define CACHE_OBJECT(Type, name, cache_type, cache_name, expiry_checker, \
-                     IndexType, IndexAccessor) \
-void LocalStorageCacheManagerPrivate::cache##Type(const Type & name) \
-{ \
-    QUENTIER_CHECK_PTR(m_cacheExpiryChecker.data()); \
-    \
-    typedef \
-    boost::multi_index::index<cache_type,Type##Holder::ByLastAccessTimestamp>::type \
-    LastAccessTimestampIndex; \
-    LastAccessTimestampIndex & latIndex = \
-        cache_name.get<Type##Holder::ByLastAccessTimestamp>(); \
-    \
-    if (Q_LIKELY(!m_cacheExpiryChecker.isNull())) \
-    {   \
-        bool res = false;   \
-        while(!res && !latIndex.empty()) \
-        { \
-            res = m_cacheExpiryChecker->expiry_checker(); \
-            if (Q_UNLIKELY(!res)) { \
-                auto latIndexBegin = latIndex.begin(); \
-                QNTRACE(QStringLiteral("Going to remove the object from the local "\
-                                       "storage cache: ") << *latIndexBegin); \
-                Q_UNUSED(latIndex.erase(latIndexBegin)); \
-                continue; \
-            } \
-        } \
-    } \
-    \
-    Type##Holder name##Holder; \
-    name##Holder.m_##name = name; \
-    name##Holder.m_lastAccessTimestamp = QDateTime::currentMSecsSinceEpoch(); \
-    \
-    /* See whether the item is already in the cache */ \
-    typedef \
-    boost::multi_index::index<cache_type,Type##Holder::IndexType>::type \
-    Index; \
-    Index & uniqueIndex = cache_name.get<Type##Holder::IndexType>(); \
-    Index::iterator it = uniqueIndex.find(name.IndexAccessor()); \
-    if (it != uniqueIndex.end()) { \
-        uniqueIndex.replace(it, name##Holder); \
-        QNTRACE(QStringLiteral("Updated " #name " in the local storage cache: ") \
-                << name); \
-        return; \
-    } \
-    \
-    /* If got here, no existing item was found in the cache */ \
-    auto insertionResult = cache_name.insert(name##Holder); \
-    if (Q_UNLIKELY(!insertionResult.second)) { \
-        QNWARNING(QStringLiteral("Failed to insert " #name " into the cache of "\
-                                 "local storage manager: ") << name); \
-        ErrorString error(QT_TRANSLATE_NOOP("LocalStorageCacheManagerPrivate", \
-                                            "Unable to insert the data item into "\
-                                            "the local storage cache")); \
-        error.details() = QStringLiteral( #name ); \
-        throw LocalStorageCacheManagerException(error); \
-    } \
-    \
-    QNTRACE(QStringLiteral("Added " #name " to the local storage cache: ") << name); \
-}
+#define CACHE_OBJECT(Type, name, cache_type, cache_name, expiry_checker,            \
+                     IndexType, IndexAccessor)                                      \
+void LocalStorageCacheManagerPrivate::cache##Type(const Type & name)                \
+{                                                                                   \
+    QUENTIER_CHECK_PTR(m_cacheExpiryChecker.data());                                \
+    auto & latIndex =                                                               \
+        cache_name.get<Type##Holder::ByLastAccessTimestamp>();                      \
+    if (Q_LIKELY(!m_cacheExpiryChecker.isNull()))                                   \
+    {                                                                               \
+        bool res = false;                                                           \
+        while(!res && !latIndex.empty())                                            \
+        {                                                                           \
+            res = m_cacheExpiryChecker->expiry_checker();                           \
+            if (Q_UNLIKELY(!res)) {                                                 \
+                auto latIndexBegin = latIndex.begin();                              \
+                QNTRACE("Going to remove the object from the local "                \
+                        << "storage cache: " << *latIndexBegin);                    \
+                Q_UNUSED(latIndex.erase(latIndexBegin));                            \
+                continue;                                                           \
+            }                                                                       \
+        }                                                                           \
+    }                                                                               \
+    Type##Holder name##Holder;                                                      \
+    name##Holder.m_##name = name;                                                   \
+    name##Holder.m_lastAccessTimestamp = QDateTime::currentMSecsSinceEpoch();       \
+    /* See whether the item is already in the cache */                              \
+    auto & uniqueIndex = cache_name.get<Type##Holder::IndexType>();                 \
+    auto it = uniqueIndex.find(name.IndexAccessor());                               \
+    if (it != uniqueIndex.end()) {                                                  \
+        uniqueIndex.replace(it, name##Holder);                                      \
+        QNTRACE("Updated " #name " in the local storage cache: " << name);          \
+        return;                                                                     \
+    }                                                                               \
+    /* If got here, no existing item was found in the cache */                      \
+    auto insertionResult = cache_name.insert(name##Holder);                         \
+    if (Q_UNLIKELY(!insertionResult.second))                                        \
+    {                                                                               \
+        QNWARNING("Failed to insert " #name " into the cache of "                   \
+                  << "local storage manager: " << name);                            \
+        ErrorString error(QT_TRANSLATE_NOOP("LocalStorageCacheManagerPrivate",      \
+                                            "Unable to insert the data item into "  \
+                                            "the local storage cache"));            \
+        error.details() = QStringLiteral( #name );                                  \
+        throw LocalStorageCacheManagerException(error);                             \
+    }                                                                               \
+    QNTRACE("Added " #name " to the local storage cache: " << name);                \
+}                                                                                   \
+// CACHE_OBJECT
 
 CACHE_OBJECT(Note, note, NotesCache, m_notesCache, checkNotes, ByLocalUid, localUid)
 CACHE_OBJECT(Resource, resource, ResourcesCache, m_resourcesCache,
@@ -151,39 +142,33 @@ CACHE_OBJECT(SavedSearch, savedSearch, SavedSearchesCache, m_savedSearchesCache,
 
 #undef CACHE_OBJECT
 
-#define EXPUNGE_OBJECT(Type, name, cache_type, cache_name) \
-void LocalStorageCacheManagerPrivate::expunge##Type(const Type & name) \
-{ \
-    bool name##HasGuid = name.hasGuid(); \
-    const QString uid = (name##HasGuid ? name.guid() : name.localUid()); \
-    \
-    if (name##HasGuid) \
-    { \
-        typedef \
-        boost::multi_index::index<cache_type,Type##Holder::ByGuid>::type \
-        UidIndex; \
-        UidIndex & index = cache_name.get<Type##Holder::ByGuid>(); \
-        UidIndex::iterator it = index.find(uid); \
-        if (it != index.end()) { \
-            index.erase(it); \
-            QNDEBUG(QStringLiteral("Expunged " #name " from the local storage "\
-                                   "cache: ") << name); \
-        } \
-    } \
-    else \
-    { \
-        typedef \
-        boost::multi_index::index<cache_type,Type##Holder::ByLocalUid>::type \
-        UidIndex; \
-        UidIndex & index = cache_name.get<Type##Holder::ByLocalUid>(); \
-        UidIndex::iterator it = index.find(uid); \
-        if (it != index.end()) { \
-            index.erase(it); \
-            QNDEBUG(QStringLiteral("Expunged " #name " from the local storage "\
-                                   "cache: ") << name); \
-        } \
-    } \
-}
+#define EXPUNGE_OBJECT(Type, name, cache_type, cache_name)                     \
+void LocalStorageCacheManagerPrivate::expunge##Type(const Type & name)         \
+{                                                                              \
+    bool name##HasGuid = name.hasGuid();                                       \
+    const QString uid = (name##HasGuid ? name.guid() : name.localUid());       \
+    if (name##HasGuid)                                                         \
+    {                                                                          \
+        auto & index = cache_name.get<Type##Holder::ByGuid>();                 \
+        auto it = index.find(uid);                                             \
+        if (it != index.end()) {                                               \
+            index.erase(it);                                                   \
+            QNDEBUG("Expunged " #name " from the local storage cache: "        \
+                    << name);                                                  \
+        }                                                                      \
+    }                                                                          \
+    else                                                                       \
+    {                                                                          \
+        auto & index = cache_name.get<Type##Holder::ByLocalUid>();             \
+        auto it = index.find(uid);                                             \
+        if (it != index.end()) {                                               \
+            index.erase(it);                                                   \
+            QNDEBUG("Expunged " #name " from the local storage cache: "        \
+                    << name);                                                  \
+        }                                                                      \
+    }                                                                          \
+}                                                                              \
+// EXPUNGE_OBJECT
 
 EXPUNGE_OBJECT(Note, note, NotesCache, m_notesCache)
 EXPUNGE_OBJECT(Resource, resource, ResourcesCache, m_resourcesCache)
@@ -197,29 +182,27 @@ void LocalStorageCacheManagerPrivate::expungeLinkedNotebook(
     const LinkedNotebook & linkedNotebook)
 {
     const QString guid = linkedNotebook.guid();
-
-    typedef boost::multi_index::index<LinkedNotebooksCache,
-                                      LinkedNotebookHolder::ByGuid>::type GuidIndex;
-    GuidIndex & index = m_linkedNotebooksCache.get<LinkedNotebookHolder::ByGuid>();
-    GuidIndex::iterator it = index.find(guid);
+    auto & index = m_linkedNotebooksCache.get<LinkedNotebookHolder::ByGuid>();
+    auto it = index.find(guid);
     if (it != index.end()) {
         index.erase(it);
-        QNDEBUG(QStringLiteral("Expunged linked notebook from the local storage cache: ")
+        QNDEBUG("Expunged linked notebook from the local storage cache: "
                 << linkedNotebook);
     }
 }
 
-#define FIND_OBJECT(Type, name, tag, cache_name) \
-const Type * LocalStorageCacheManagerPrivate::find##Type##tag(const QString & guid) const \
-{ \
-    const auto & index = cache_name.get<Type##Holder::tag>(); \
-    auto it = index.find(guid); \
-    if (it == index.end()) { \
-        return Q_NULLPTR; \
-    } \
-    \
-    return &(it->m_##name); \
-}
+#define FIND_OBJECT(Type, name, tag, cache_name)                               \
+const Type * LocalStorageCacheManagerPrivate::find##Type##tag(                 \
+    const QString & guid) const                                                \
+{                                                                              \
+    const auto & index = cache_name.get<Type##Holder::tag>();                  \
+    auto it = index.find(guid);                                                \
+    if (it == index.end()) {                                                   \
+        return Q_NULLPTR;                                                      \
+    }                                                                          \
+    return &(it->m_##name);                                                    \
+}                                                                              \
+// FIND_OBJECT
 
 FIND_OBJECT(Note, note, ByLocalUid, m_notesCache)
 FIND_OBJECT(Note, note, ByGuid, m_notesCache)
@@ -276,112 +259,97 @@ void LocalStorageCacheManagerPrivate::installCacheExpiryFunction(
 
 QTextStream & LocalStorageCacheManagerPrivate::print(QTextStream & strm) const
 {
-    strm << QStringLiteral("LocalStorageCacheManager: {\n");
-    strm << QStringLiteral("Notes cache: {\n");
+    strm << "LocalStorageCacheManager: {\n";
+    strm << "Notes cache: {\n";
 
-    const NotesCache::index<NoteHolder::ByLocalUid>::type & notesCacheIndex =
-        m_notesCache.get<NoteHolder::ByLocalUid>();
-    typedef NotesCache::index<NoteHolder::ByLocalUid>::type::const_iterator NotesConstIter;
-    NotesConstIter notesCacheEnd = notesCacheIndex.end();
-    for(NotesConstIter it = notesCacheIndex.begin(); it != notesCacheEnd; ++it) {
+    const auto & notesCacheIndex = m_notesCache.get<NoteHolder::ByLocalUid>();
+    auto notesCacheEnd = notesCacheIndex.end();
+    for(auto it = notesCacheIndex.begin(); it != notesCacheEnd; ++it) {
         strm << *it;
     }
 
-    strm << QStringLiteral("}; \n");
-    strm << QStringLiteral("Resources cache: {\n");
+    strm << "}; \n";
+    strm << "Resources cache: {\n";
 
-    const ResourcesCache::index<ResourceHolder::ByLocalUid>::type & resourcesCacheIndex =
+    const auto & resourcesCacheIndex =
         m_resourcesCache.get<ResourceHolder::ByLocalUid>();
-
-    typedef ResourcesCache::index<ResourceHolder::ByLocalUid>::type::const_iterator
-        ResourcesConstIter;
-
-    ResourcesConstIter resourcesCacheEnd = resourcesCacheIndex.end();
-    for(ResourcesConstIter it = resourcesCacheIndex.begin();
-        it != resourcesCacheEnd; ++it)
+    auto resourcesCacheEnd = resourcesCacheIndex.end();
+    for(auto it = resourcesCacheIndex.begin(); it != resourcesCacheEnd; ++it)
     {
         strm << *it;
     }
 
-    strm << QStringLiteral("}; \n");
-    strm << QStringLiteral("Notebooks cache: {\n");
+    strm << "}; \n";
+    strm << "Notebooks cache: {\n";
 
-    const NotebooksCache::index<NotebookHolder::ByLocalUid>::type & notebooksCacheIndex =
+    const auto & notebooksCacheIndex =
         m_notebooksCache.get<NotebookHolder::ByLocalUid>();
-
-    typedef NotebooksCache::index<NotebookHolder::ByLocalUid>::type::const_iterator
-        NotebooksConstIter;
-
-    NotebooksConstIter notebooksCacheEnd = notebooksCacheIndex.end();
-    for(NotebooksConstIter it = notebooksCacheIndex.begin();
+    auto notebooksCacheEnd = notebooksCacheIndex.end();
+    for(auto it = notebooksCacheIndex.begin();
         it != notebooksCacheEnd; ++it)
     {
         strm << *it;
     }
 
-    strm << QStringLiteral("}; \n");
-    strm << QStringLiteral("Tags cache: {\n");
+    strm << "}; \n";
+    strm << "Tags cache: {\n";
 
-    const TagsCache::index<TagHolder::ByLocalUid>::type & tagsCacheIndex =
-        m_tagsCache.get<TagHolder::ByLocalUid>();
-    typedef TagsCache::index<TagHolder::ByLocalUid>::type::const_iterator TagsConstIter;
-    TagsConstIter tagsCacheEnd = tagsCacheIndex.end();
-    for(TagsConstIter it = tagsCacheIndex.begin(); it != tagsCacheEnd; ++it) {
+    const auto & tagsCacheIndex = m_tagsCache.get<TagHolder::ByLocalUid>();
+    auto tagsCacheEnd = tagsCacheIndex.end();
+    for(auto it = tagsCacheIndex.begin(); it != tagsCacheEnd; ++it) {
         strm << *it;
     }
 
-    strm << QStringLiteral("}; \n");
-    strm << QStringLiteral("Linked notebooks cache: {\n");
+    strm << "}; \n";
+    strm << "Linked notebooks cache: {\n";
 
-    const LinkedNotebooksCache::index<LinkedNotebookHolder::ByGuid>::type & linkedNotebooksCacheIndex =
+    const auto & linkedNotebooksCacheIndex =
         m_linkedNotebooksCache.get<LinkedNotebookHolder::ByGuid>();
-    typedef LinkedNotebooksCache::index<LinkedNotebookHolder::ByGuid>::type::const_iterator
-        LinkedNotebooksConstIter;
-    LinkedNotebooksConstIter linkedNotebooksCacheEnd = linkedNotebooksCacheIndex.end();
-    for(LinkedNotebooksConstIter it = linkedNotebooksCacheIndex.begin();
+    auto linkedNotebooksCacheEnd = linkedNotebooksCacheIndex.end();
+    for(auto it = linkedNotebooksCacheIndex.begin();
         it != linkedNotebooksCacheEnd; ++it)
     {
         strm << *it;
     }
 
-    strm << QStringLiteral("}; \n");
-    strm << QStringLiteral("Saved searches cache: {\n");
+    strm << "}; \n";
+    strm << "Saved searches cache: {\n";
 
-    const SavedSearchesCache::index<SavedSearchHolder::ByLocalUid>::type & savedSearchesCacheIndex =
+    const auto & savedSearchesCacheIndex =
         m_savedSearchesCache.get<SavedSearchHolder::ByLocalUid>();
-    typedef SavedSearchesCache::index<SavedSearchHolder::ByLocalUid>::type::const_iterator
-        SavedSearchesConstIter;
-    SavedSearchesConstIter savedSearchesCacheEnd = savedSearchesCacheIndex.end();
-    for(SavedSearchesConstIter it = savedSearchesCacheIndex.begin();
+    auto savedSearchesCacheEnd = savedSearchesCacheIndex.end();
+    for(auto it = savedSearchesCacheIndex.begin();
         it != savedSearchesCacheEnd; ++it)
     {
         strm << *it;
     }
 
-    strm << QStringLiteral("}; \n");
+    strm << "}; \n";
 
     if (m_cacheExpiryChecker.isNull()) {
-        strm << QStringLiteral("Cache expiry checker is null! \n");
+        strm << "Cache expiry checker is null! \n";
     }
     else {
         strm << *m_cacheExpiryChecker;
     }
 
-    strm << QStringLiteral("}; \n");
+    strm << "}; \n";
     return strm;
 }
 
-#define GET_GUID(Type, name) \
-const QString LocalStorageCacheManagerPrivate::Type##Holder::guid() const \
-{ \
-    /* NOTE: This precaution is required for storage of local notes in the cache */ \
-    if (m_##name.hasGuid()) { \
-        return m_##name.guid(); \
-    } \
-    else { \
-        return QString(); \
-    } \
-}
+#define GET_GUID(Type, name)                                                   \
+const QString LocalStorageCacheManagerPrivate::Type##Holder::guid() const      \
+{                                                                              \
+    /* NOTE: This precaution is required for storage of local notes in the */  \
+    /* cache */                                                                \
+    if (m_##name.hasGuid()) {                                                  \
+        return m_##name.guid();                                                \
+    }                                                                          \
+    else {                                                                     \
+        return QString();                                                      \
+    }                                                                          \
+}                                                                              \
+// GET_GUID
 
 GET_GUID(Note, note)
 GET_GUID(Resource, resource)
@@ -392,57 +360,55 @@ GET_GUID(SavedSearch, savedSearch)
 
 #undef GET_GUID
 
-QTextStream & LocalStorageCacheManagerPrivate::NoteHolder::print(QTextStream & strm) const
+QTextStream & LocalStorageCacheManagerPrivate::NoteHolder::print(
+    QTextStream & strm) const
 {
-    strm << QStringLiteral("NoteHolder: note = ") << m_note
-         << QStringLiteral("last access timestamp = ")
-         << printableDateTimeFromTimestamp(m_lastAccessTimestamp)
-         << QStringLiteral("\n");
+    strm << "NoteHolder: note = " << m_note << "last access timestamp = "
+         << printableDateTimeFromTimestamp(m_lastAccessTimestamp) << "\n";
     return strm;
 }
 
-QTextStream & LocalStorageCacheManagerPrivate::ResourceHolder::print(QTextStream & strm) const
+QTextStream & LocalStorageCacheManagerPrivate::ResourceHolder::print(
+    QTextStream & strm) const
 {
-    strm << QStringLiteral("ResourceHolder: resource = ") << m_resource
-         << QStringLiteral(", last access timestamp = ")
-         << printableDateTimeFromTimestamp(m_lastAccessTimestamp)
-         << QStringLiteral("\n");
+    strm << "ResourceHolder: resource = " << m_resource
+         << ", last access timestamp = "
+         << printableDateTimeFromTimestamp(m_lastAccessTimestamp) << "\n";
     return strm;
 }
 
-QTextStream & LocalStorageCacheManagerPrivate::NotebookHolder::print(QTextStream & strm) const
+QTextStream & LocalStorageCacheManagerPrivate::NotebookHolder::print(
+    QTextStream & strm) const
 {
-    strm << QStringLiteral("NotebookHolder: notebook = ") << m_notebook
-         << QStringLiteral("last access timestamp = ")
-         << printableDateTimeFromTimestamp(m_lastAccessTimestamp)
-         << QStringLiteral("\n");
+    strm << "NotebookHolder: notebook = " << m_notebook
+         << "last access timestamp = "
+         << printableDateTimeFromTimestamp(m_lastAccessTimestamp) << "\n";
     return strm;
 }
 
-QTextStream & LocalStorageCacheManagerPrivate::TagHolder::print(QTextStream & strm) const
+QTextStream & LocalStorageCacheManagerPrivate::TagHolder::print(
+    QTextStream & strm) const
 {
-    strm << QStringLiteral("TagHolder: tag = ") << m_tag
-         << QStringLiteral("last access timestamp = ")
-         << printableDateTimeFromTimestamp(m_lastAccessTimestamp)
-         << QStringLiteral("\n");
+    strm << "TagHolder: tag = " << m_tag << "last access timestamp = "
+         << printableDateTimeFromTimestamp(m_lastAccessTimestamp) << "\n";
     return strm;
 }
 
-QTextStream & LocalStorageCacheManagerPrivate::LinkedNotebookHolder::print(QTextStream & strm) const
+QTextStream & LocalStorageCacheManagerPrivate::LinkedNotebookHolder::print(
+    QTextStream & strm) const
 {
-    strm << QStringLiteral("LinkedNotebookHolder: linked notebook = ")
-         << m_linkedNotebook << QStringLiteral("last access timestamp = ")
-         << printableDateTimeFromTimestamp(m_lastAccessTimestamp)
-         << QStringLiteral("\n");
+    strm << "LinkedNotebookHolder: linked notebook = "
+         << m_linkedNotebook << "last access timestamp = "
+         << printableDateTimeFromTimestamp(m_lastAccessTimestamp) << "\n";
     return strm;
 }
 
-QTextStream & LocalStorageCacheManagerPrivate::SavedSearchHolder::print(QTextStream & strm) const
+QTextStream & LocalStorageCacheManagerPrivate::SavedSearchHolder::print(
+    QTextStream & strm) const
 {
-    strm << QStringLiteral("SavedSearchHolder: saved search = ") << m_savedSearch
-         << QStringLiteral("last access timestamp = ")
-         << printableDateTimeFromTimestamp(m_lastAccessTimestamp)
-         << QStringLiteral("\n");
+    strm << "SavedSearchHolder: saved search = " << m_savedSearch
+         << "last access timestamp = "
+         << printableDateTimeFromTimestamp(m_lastAccessTimestamp) << "\n";
     return strm;
 }
 

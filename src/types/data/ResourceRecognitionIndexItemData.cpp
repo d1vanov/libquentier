@@ -40,7 +40,7 @@ bool ResourceRecognitionIndexItemData::isValid() const
     if (m_textItems.isEmpty() && m_objectItems.isEmpty() &&
         m_shapeItems.isEmpty() && m_barcodeItems.isEmpty())
     {
-        QNTRACE(QStringLiteral("Resource recognition index item is empty"));
+        QNTRACE("Resource recognition index item is empty");
         return false;
     }
 
@@ -51,9 +51,9 @@ bool ResourceRecognitionIndexItemData::isValid() const
 
         if (textItem.m_weight < 0)
         {
-            QNTRACE(QStringLiteral("Resource recognition index item contains ")
-                    << QStringLiteral("text item with weight less than 0: ")
-                    << textItem.m_text << QStringLiteral(", weight = ")
+            QNTRACE("Resource recognition index item contains "
+                    << "text item with weight less than 0: "
+                    << textItem.m_text << ", weight = "
                     << textItem.m_weight);
             return false;
         }
@@ -66,9 +66,9 @@ bool ResourceRecognitionIndexItemData::isValid() const
 
         if (objectItem.m_weight < 0)
         {
-            QNTRACE(QStringLiteral("Resource recognition index item contains ")
-                    << QStringLiteral("object item with weight less than 0: ")
-                    << objectItem.m_objectType << QStringLiteral(", weight = ")
+            QNTRACE("Resource recognition index item contains "
+                    << "object item with weight less than 0: "
+                    << objectItem.m_objectType << ", weight = "
                     << objectItem.m_weight);
             return false;
         }
@@ -88,9 +88,8 @@ bool ResourceRecognitionIndexItemData::isValid() const
             (objectItem.m_objectType != QStringLiteral("road")) &&
             (objectItem.m_objectType != QStringLiteral("car")))
         {
-            QNTRACE(QStringLiteral("Resource recognition index object item has ")
-                    << QStringLiteral("invalid object type: ")
-                    << objectItem.m_objectType);
+            QNTRACE("Resource recognition index object item has "
+                    << "invalid object type: " << objectItem.m_objectType);
             return false;
         }
     }
@@ -102,9 +101,9 @@ bool ResourceRecognitionIndexItemData::isValid() const
 
         if (shapeItem.m_weight < 0)
         {
-            QNTRACE(QStringLiteral("Resource recognition index item contains ")
-                    << QStringLiteral("shape item with weight less than 0: ")
-                    << shapeItem.m_shapeType << QStringLiteral(", weight = ")
+            QNTRACE("Resource recognition index item contains "
+                    << "shape item with weight less than 0: "
+                    << shapeItem.m_shapeType << ", weight = "
                     << shapeItem.m_weight);
             return false;
         }
@@ -117,8 +116,8 @@ bool ResourceRecognitionIndexItemData::isValid() const
             (shapeItem.m_shapeType != QStringLiteral("arrow")) &&
             (shapeItem.m_shapeType != QStringLiteral("polyline")))
         {
-            QNTRACE(QStringLiteral("Resource recognition index shape item has ")
-                    << QStringLiteral("invalid shape type: ") << shapeItem.m_shapeType);
+            QNTRACE("Resource recognition index shape item has "
+                    << "invalid shape type: " << shapeItem.m_shapeType);
             return false;
         }
     }
@@ -130,9 +129,9 @@ bool ResourceRecognitionIndexItemData::isValid() const
 
         if (barcodeItem.m_weight < 0)
         {
-            QNTRACE(QStringLiteral("Resource recognition index item contains ")
-                    << QStringLiteral("barcode item with weight less than 0: ")
-                    << barcodeItem.m_barcode << QStringLiteral(", weight = ")
+            QNTRACE("Resource recognition index item contains "
+                    << "barcode item with weight less than 0: "
+                    << barcodeItem.m_barcode << ", weight = "
                     << barcodeItem.m_weight);
             return false;
         }

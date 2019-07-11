@@ -39,18 +39,18 @@ QuentierUndoCommand::~QuentierUndoCommand()
 
 void QuentierUndoCommand::undo()
 {
-    QNTRACE(QStringLiteral("QuentierUndoCommand::undo"));
+    QNTRACE("QuentierUndoCommand::undo");
     m_onceUndoExecuted = true;
     undoImpl();
 }
 
 void QuentierUndoCommand::redo()
 {
-    QNTRACE(QStringLiteral("QuentierUndoCommand::redo"));
+    QNTRACE("QuentierUndoCommand::redo");
 
     if (Q_UNLIKELY(!m_onceUndoExecuted)) {
-        QNTRACE(QStringLiteral("Ignoring the attempt to execute redo for command ")
-                << text() << QStringLiteral(" as there was no previous undo"));
+        QNTRACE("Ignoring the attempt to execute redo for command "
+                << text() << " as there was no previous undo");
         return;
     }
 

@@ -79,8 +79,8 @@ public Q_SLOTS:
     void stop();
 
     void onAuthenticationTokensForLinkedNotebooksReceived(
-        QHash<QString,QPair<QString,QString> > authenticationTokensAndShardIdsByLinkedNotebookGuid,
-        QHash<QString,qevercloud::Timestamp> authenticationTokenExpirationTimesByLinkedNotebookGuid);
+        QHash<QString,QPair<QString,QString> > authTokensAndShardIdsByLinkedNotebookGuid,
+        QHash<QString,qevercloud::Timestamp> authTokenExpirationByLinkedNotebookGuid);
 
 // private signals:
 Q_SIGNALS:
@@ -240,7 +240,7 @@ private:
     void disconnectFromLocalStorage();
 
     bool requestStuffFromLocalStorage(const QString & linkedNotebookGuid =
-                                      QStringLiteral(""));
+                                      QLatin1String(""));
 
     void checkListLocalStorageObjectsCompletion();
 

@@ -21,6 +21,7 @@
 
 #include "INoteEditorUndoCommand.h"
 #include "../NoteEditorPage.h"
+
 #include <quentier/utility/Macros.h>
 #include <quentier/types/Resource.h>
 
@@ -31,12 +32,19 @@ class Q_DECL_HIDDEN RemoveResourceUndoCommand: public INoteEditorUndoCommand
     Q_OBJECT
     typedef NoteEditorPage::Callback Callback;
 public:
-    RemoveResourceUndoCommand(const Resource & resource, const Callback & callback,
-                              NoteEditorPrivate & noteEditorPrivate,
-                              QUndoCommand * parent = Q_NULLPTR);
-    RemoveResourceUndoCommand(const Resource & resource, const Callback & callback,
-                              NoteEditorPrivate & noteEditorPrivate,
-                              const QString & text, QUndoCommand * parent = Q_NULLPTR);
+    RemoveResourceUndoCommand(
+        const Resource & resource,
+        const Callback & callback,
+        NoteEditorPrivate & noteEditorPrivate,
+        QUndoCommand * parent = Q_NULLPTR);
+
+    RemoveResourceUndoCommand(
+        const Resource & resource,
+        const Callback & callback,
+        NoteEditorPrivate & noteEditorPrivate,
+        const QString & text,
+        QUndoCommand * parent = Q_NULLPTR);
+
     virtual ~RemoveResourceUndoCommand();
 
     virtual void undoImpl() Q_DECL_OVERRIDE;

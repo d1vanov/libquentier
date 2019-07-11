@@ -18,21 +18,25 @@
 
 #include "HideDecryptedTextUndoCommand.h"
 #include "../NoteEditor_p.h"
+
 #include <quentier/logging/QuentierLogger.h>
 
 namespace quentier {
 
-#define GET_PAGE() \
-    NoteEditorPage * page = \
-        qobject_cast<NoteEditorPage*>(m_noteEditorPrivate.page()); \
-    if (Q_UNLIKELY(!page)) { \
-        ErrorString error(QT_TRANSLATE_NOOP("HideDecryptedTextUndoCommand", \
-                                            "Can't undo/redo the decrypted text "\
-                                            "hiding: can't get note editor page")); \
-        QNWARNING(error); \
-        Q_EMIT notifyError(error); \
-        return; \
-    }
+#define GET_PAGE()                                                             \
+    NoteEditorPage * page =                                                    \
+        qobject_cast<NoteEditorPage*>(m_noteEditorPrivate.page());             \
+    if (Q_UNLIKELY(!page))                                                     \
+    {                                                                          \
+        ErrorString error(                                                     \
+            QT_TRANSLATE_NOOP("HideDecryptedTextUndoCommand",                  \
+                              "Can't undo/redo the decrypted text "            \
+                              "hiding: can't get note editor page"));          \
+        QNWARNING(error);                                                      \
+        Q_EMIT notifyError(error);                                             \
+        return;                                                                \
+    }                                                                          \
+// GET_PAGE
 
 HideDecryptedTextUndoCommand::HideDecryptedTextUndoCommand(
         NoteEditorPrivate & noteEditorPrivate,
@@ -55,7 +59,7 @@ HideDecryptedTextUndoCommand::~HideDecryptedTextUndoCommand()
 
 void HideDecryptedTextUndoCommand::redoImpl()
 {
-    QNDEBUG(QStringLiteral("HideDecryptedTextUndoCommand::redoImpl"));
+    QNDEBUG("HideDecryptedTextUndoCommand::redoImpl");
 
     GET_PAGE()
     page->executeJavaScript(QStringLiteral("encryptDecryptManager.redo();"),
@@ -64,7 +68,7 @@ void HideDecryptedTextUndoCommand::redoImpl()
 
 void HideDecryptedTextUndoCommand::undoImpl()
 {
-    QNDEBUG(QStringLiteral("HideDecryptedTextUndoCommand::undoImpl"));
+    QNDEBUG("HideDecryptedTextUndoCommand::undoImpl");
 
     GET_PAGE()
     page->executeJavaScript(QStringLiteral("encryptDecryptManager.undo();"),

@@ -20,7 +20,9 @@
 #define LIB_QUENTIER_NOTE_EDITOR_UNDO_STACK_NOTE_EDITOR_CONTENT_EDIT_UNDO_COMMAND_H
 
 #include "INoteEditorUndoCommand.h"
+
 #include <quentier/types/Resource.h>
+
 #include <QList>
 
 namespace quentier {
@@ -29,12 +31,16 @@ class Q_DECL_HIDDEN NoteEditorContentEditUndoCommand: public INoteEditorUndoComm
 {
     Q_OBJECT
 public:
-    NoteEditorContentEditUndoCommand(NoteEditorPrivate & noteEditorPrivate,
-                                     const QList<Resource> & resources,
-                                     QUndoCommand * parent = Q_NULLPTR);
-    NoteEditorContentEditUndoCommand(NoteEditorPrivate & noteEditorPrivate,
-                                     const QList<Resource> & resources,
-                                     const QString & text, QUndoCommand * parent = Q_NULLPTR);
+    NoteEditorContentEditUndoCommand(
+        NoteEditorPrivate & noteEditorPrivate,
+        const QList<Resource> & resources,
+        QUndoCommand * parent = Q_NULLPTR);
+
+    NoteEditorContentEditUndoCommand(
+        NoteEditorPrivate & noteEditorPrivate,
+        const QList<Resource> & resources,
+        const QString & text, QUndoCommand * parent = Q_NULLPTR);
+
     virtual ~NoteEditorContentEditUndoCommand();
 
     virtual void redoImpl() Q_DECL_OVERRIDE;

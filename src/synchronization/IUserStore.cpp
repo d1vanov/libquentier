@@ -21,7 +21,8 @@
 
 namespace quentier {
 
-IUserStore::IUserStore(const QSharedPointer<qevercloud::UserStore> & pQecUserStore) :
+IUserStore::IUserStore(
+        const QSharedPointer<qevercloud::UserStore> & pQecUserStore) :
     m_pQecUserStore(pQecUserStore)
 {}
 

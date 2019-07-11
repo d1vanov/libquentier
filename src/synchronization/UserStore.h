@@ -54,17 +54,21 @@ public:
     virtual qint32 getUser(User & user, ErrorString & errorDescription,
                            qint32 & rateLimitSeconds) Q_DECL_OVERRIDE;
 
-    virtual qint32 getAccountLimits(const qevercloud::ServiceLevel::type serviceLevel,
-                                    qevercloud::AccountLimits & limits,
-                                    ErrorString & errorDescription,
-                                    qint32 & rateLimitSeconds) Q_DECL_OVERRIDE;
+    virtual qint32 getAccountLimits(
+        const qevercloud::ServiceLevel::type serviceLevel,
+        qevercloud::AccountLimits & limits,
+        ErrorString & errorDescription,
+        qint32 & rateLimitSeconds) Q_DECL_OVERRIDE;
 
 private:
-    qint32 processEdamUserException(const qevercloud::EDAMUserException & userException,
-                                    ErrorString & errorDescription) const;
-    qint32 processEdamSystemException(const qevercloud::EDAMSystemException & systemException,
-                                      ErrorString & errorDescription,
-                                      qint32 & rateLimitSeconds) const;
+    qint32 processEdamUserException(
+        const qevercloud::EDAMUserException & userException,
+        ErrorString & errorDescription) const;
+
+    qint32 processEdamSystemException(
+        const qevercloud::EDAMSystemException & systemException,
+        ErrorString & errorDescription,
+        qint32 & rateLimitSeconds) const;
 
 private:
     UserStore(const UserStore & other) Q_DECL_EQ_DELETE;

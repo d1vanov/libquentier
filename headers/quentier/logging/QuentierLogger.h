@@ -60,48 +60,60 @@ void QUENTIER_EXPORT QuentierRestartLogging();
 } // namespace quentier
 
 #if QT_VERSION >= QT_VERSION_CHECK(5, 4, 0)
-#define __QNLOG_QDEBUG_HELPER() \
-    dbg.nospace(); \
-    dbg.noquote()
+#define __QNLOG_QDEBUG_HELPER()                                                \
+    dbg.nospace();                                                             \
+    dbg.noquote()                                                              \
+// __QNLOG_QDEBUG_HELPER
 #else
-#define __QNLOG_QDEBUG_HELPER() \
-    dbg.nospace()
+#define __QNLOG_QDEBUG_HELPER()                                                \
+    dbg.nospace()                                                              \
+// __QNLOG_QDEBUG_HELPER
 #endif
 
-#define __QNLOG_BASE(message, level) \
-    if (quentier::QuentierIsLogLevelActive(quentier::LogLevel::level##Level)) { \
-        QString msg; \
-        QDebug dbg(&msg); \
-        __QNLOG_QDEBUG_HELPER(); \
-        dbg << message; \
-        quentier::QuentierAddLogEntry(QStringLiteral(__FILE__), \
-                                      __LINE__, msg, \
-                                      quentier::LogLevel::level##Level); \
-    }
+#define __QNLOG_BASE(message, level)                                           \
+    if (quentier::QuentierIsLogLevelActive(quentier::LogLevel::level##Level))  \
+    {                                                                          \
+        QString msg;                                                           \
+        QDebug dbg(&msg);                                                      \
+        __QNLOG_QDEBUG_HELPER();                                               \
+        dbg << message;                                                        \
+        quentier::QuentierAddLogEntry(QStringLiteral(__FILE__),                \
+                                      __LINE__, msg,                           \
+                                      quentier::LogLevel::level##Level);       \
+    }                                                                          \
+// __QNLOG_BASE
 
-#define QNTRACE(message) \
-    __QNLOG_BASE(message, Trace)
+#define QNTRACE(message)                                                       \
+    __QNLOG_BASE(message, Trace)                                               \
+// QNTRACE
 
-#define QNDEBUG(message) \
-    __QNLOG_BASE(message, Debug)
+#define QNDEBUG(message)                                                       \
+    __QNLOG_BASE(message, Debug)                                               \
+// QNDEBUG
 
-#define QNINFO(message) \
-    __QNLOG_BASE(message, Info)
+#define QNINFO(message)                                                        \
+    __QNLOG_BASE(message, Info)                                                \
+// QNINFO
 
-#define QNWARNING(message) \
-    __QNLOG_BASE(message, Warn)
+#define QNWARNING(message)                                                     \
+    __QNLOG_BASE(message, Warn)                                                \
+// QNWARNING
 
-#define QNERROR(message) \
-    __QNLOG_BASE(message, Error)
+#define QNERROR(message)                                                       \
+    __QNLOG_BASE(message, Error)                                               \
+// QNERROR
 
-#define QUENTIER_SET_MIN_LOG_LEVEL(level) \
-    quentier::QuentierSetMinLogLevel(quentier::LogLevel::level##Level)
+#define QUENTIER_SET_MIN_LOG_LEVEL(level)                                      \
+    quentier::QuentierSetMinLogLevel(quentier::LogLevel::level##Level)         \
+// QUENTIER_SET_MIN_LOG_LEVEL
 
-#define QUENTIER_INITIALIZE_LOGGING() \
-    quentier::QuentierInitializeLogging()
+#define QUENTIER_INITIALIZE_LOGGING()                                          \
+    quentier::QuentierInitializeLogging()                                      \
+// QUENTIER_INITIALIZE_LOGGING
 
-#define QUENTIER_ADD_STDOUT_LOG_DESTINATION() \
-    quentier::QuentierAddStdOutLogDestination()
+#define QUENTIER_ADD_STDOUT_LOG_DESTINATION()                                  \
+    quentier::QuentierAddStdOutLogDestination()                                \
+// QUENTIER_ADD_STDOUT_LOG_DESTINATION
 
 #define QNLOG_FILE_LINENUMBER_DELIMITER ":"
 

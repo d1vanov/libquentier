@@ -29,13 +29,17 @@ class Q_DECL_HIDDEN ToDoCheckboxAutomaticInsertionUndoCommand: public INoteEdito
     Q_OBJECT
     typedef NoteEditorPage::Callback Callback;
 public:
-    ToDoCheckboxAutomaticInsertionUndoCommand(NoteEditorPrivate & noteEditor,
-                                              const Callback & callback,
-                                              QUndoCommand * parent = Q_NULLPTR);
-    ToDoCheckboxAutomaticInsertionUndoCommand(NoteEditorPrivate & noteEditor,
-                                              const Callback & callback,
-                                              const QString & text,
-                                              QUndoCommand * parent = Q_NULLPTR);
+    ToDoCheckboxAutomaticInsertionUndoCommand(
+        NoteEditorPrivate & noteEditor,
+        const Callback & callback,
+        QUndoCommand * parent = Q_NULLPTR);
+
+    ToDoCheckboxAutomaticInsertionUndoCommand(
+        NoteEditorPrivate & noteEditor,
+        const Callback & callback,
+        const QString & text,
+        QUndoCommand * parent = Q_NULLPTR);
+
     virtual ~ToDoCheckboxAutomaticInsertionUndoCommand();
 
     virtual void redoImpl() Q_DECL_OVERRIDE;

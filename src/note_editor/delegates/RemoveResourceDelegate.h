@@ -20,11 +20,13 @@
 #define LIB_QUENTIER_NOTE_EDITOR_DELEGATES_REMOVE_RESOURCE_DELEGATE_H
 
 #include "JsResultCallbackFunctor.hpp"
+
 #include <quentier/types/ErrorString.h>
 #include <quentier/types/Note.h>
 #include <quentier/types/Resource.h>
 #include <quentier/local_storage/LocalStorageManager.h>
 #include <quentier/utility/Macros.h>
+
 #include <QObject>
 
 namespace quentier {

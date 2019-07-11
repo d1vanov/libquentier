@@ -20,10 +20,12 @@
 #define LIB_QUENTIER_NOTE_EDITOR_DELEGATES_RENAME_RESOURCE_DELEGATE_H
 
 #include "JsResultCallbackFunctor.hpp"
+
 #include <quentier/utility/Macros.h>
 #include <quentier/types/ErrorString.h>
 #include <quentier/types/Note.h>
 #include <quentier/types/Resource.h>
+
 #include <QObject>
 #include <QUuid>
 #include <QHash>

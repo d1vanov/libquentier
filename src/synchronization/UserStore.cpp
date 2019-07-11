@@ -36,8 +36,10 @@ IUserStore * UserStore::create(const QString & host) const
             new qevercloud::UserStore(host)));
 }
 
-bool UserStore::checkVersion(const QString & clientName, qint16 edamVersionMajor,
-                             qint16 edamVersionMinor, ErrorString & errorDescription)
+bool UserStore::checkVersion(const QString & clientName,
+                             qint16 edamVersionMajor,
+                             qint16 edamVersionMinor,
+                             ErrorString & errorDescription)
 {
     try
     {
@@ -72,10 +74,11 @@ qint32 UserStore::getUser(User & user, ErrorString & errorDescription,
     return qevercloud::EDAMErrorCode::UNKNOWN;
 }
 
-qint32 UserStore::getAccountLimits(const qevercloud::ServiceLevel::type serviceLevel,
-                                   qevercloud::AccountLimits & limits,
-                                   ErrorString & errorDescription,
-                                   qint32 & rateLimitSeconds)
+qint32 UserStore::getAccountLimits(
+    const qevercloud::ServiceLevel::type serviceLevel,
+    qevercloud::AccountLimits & limits,
+    ErrorString & errorDescription,
+    qint32 & rateLimitSeconds)
 {
     try
     {

@@ -20,9 +20,11 @@
 #define LIB_QUENTIER_NOTE_EDITOR_SPELL_CHECKER_P_H
 
 #include "SpellCheckerDictionariesFinder.h"
+
 #include <quentier/utility/Macros.h>
 #include <quentier/types/ErrorString.h>
 #include <quentier/types/Account.h>
+
 #include <QObject>
 #include <QStringList>
 #include <QVector>
@@ -87,8 +89,11 @@ private:
 
     void checkUserDictionaryDataPendingWriting();
 
-    void onAppendUserDictionaryPartDone(bool success, ErrorString errorDescription);
-    void onUpdateUserDictionaryDone(bool success, ErrorString errorDescription);
+    void onAppendUserDictionaryPartDone(
+        bool success, ErrorString errorDescription);
+
+    void onUpdateUserDictionaryDone(
+        bool success, ErrorString errorDescription);
 
     void persistEnabledSystemDictionaries();
     void restoreSystemDictionatiesEnabledDisabledSettings();

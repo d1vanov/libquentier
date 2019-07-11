@@ -58,11 +58,12 @@ Q_SIGNALS:
     void failure(ErrorString errorDescription);
 
 // private signals
-    void listSavedSearches(LocalStorageManager::ListObjectsOptions flag,
-                           size_t limit, size_t offset,
-                           LocalStorageManager::ListSavedSearchesOrder::type order,
-                           LocalStorageManager::OrderDirection::type orderDirection,
-                           QUuid requestId);
+    void listSavedSearches(
+        LocalStorageManager::ListObjectsOptions flag,
+        size_t limit, size_t offset,
+        LocalStorageManager::ListSavedSearchesOrder::type order,
+        LocalStorageManager::OrderDirection::type orderDirection,
+        QUuid requestId);
 
 public Q_SLOTS:
     /**
@@ -74,16 +75,19 @@ public Q_SLOTS:
     void fill();
 
 private Q_SLOTS:
-    void onListSavedSearchesComplete(LocalStorageManager::ListObjectsOptions flag,
-                                     size_t limit, size_t offset,
-                                     LocalStorageManager::ListSavedSearchesOrder::type order,
-                                     LocalStorageManager::OrderDirection::type orderDirection,
-                                     QList<SavedSearch> foundSearches, QUuid requestId);
-    void onListSavedSearchesFailed(LocalStorageManager::ListObjectsOptions flag,
-                                   size_t limit, size_t offset,
-                                   LocalStorageManager::ListSavedSearchesOrder::type order,
-                                   LocalStorageManager::OrderDirection::type orderDirection,
-                                   ErrorString errorDescription, QUuid requestId);
+    void onListSavedSearchesComplete(
+        LocalStorageManager::ListObjectsOptions flag,
+        size_t limit, size_t offset,
+        LocalStorageManager::ListSavedSearchesOrder::type order,
+        LocalStorageManager::OrderDirection::type orderDirection,
+        QList<SavedSearch> foundSearches, QUuid requestId);
+
+    void onListSavedSearchesFailed(
+        LocalStorageManager::ListObjectsOptions flag,
+        size_t limit, size_t offset,
+        LocalStorageManager::ListSavedSearchesOrder::type order,
+        LocalStorageManager::OrderDirection::type orderDirection,
+        ErrorString errorDescription, QUuid requestId);
 
     void onAddSavedSearchComplete(SavedSearch search, QUuid requestId);
     void onUpdateSavedSearchComplete(SavedSearch search, QUuid requestId);

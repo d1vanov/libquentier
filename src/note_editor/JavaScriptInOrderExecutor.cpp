@@ -17,6 +17,7 @@
  */
 
 #include "JavaScriptInOrderExecutor.h"
+
 #include <quentier/logging/QuentierLogger.h>
 
 #ifndef QUENTIER_USE_QT_WEB_ENGINE
@@ -25,8 +26,8 @@
 
 namespace quentier {
 
-JavaScriptInOrderExecutor::JavaScriptInOrderExecutor(WebView & view,
-                                                     QObject * parent) :
+JavaScriptInOrderExecutor::JavaScriptInOrderExecutor(
+        WebView & view, QObject * parent) :
     QObject(parent),
     m_view(view),
     m_javaScriptsQueue(),
@@ -34,12 +35,12 @@ JavaScriptInOrderExecutor::JavaScriptInOrderExecutor(WebView & view,
     m_inProgress(false)
 {}
 
-void JavaScriptInOrderExecutor::append(const QString &script,
-                                       JavaScriptInOrderExecutor::Callback callback)
+void JavaScriptInOrderExecutor::append(
+    const QString &script, JavaScriptInOrderExecutor::Callback callback)
 {
     m_javaScriptsQueue.enqueue(QPair<QString, Callback>(script, callback));
-    QNTRACE(QStringLiteral("JavaScriptInOrderExecutor: appended new script, there are ")
-            << m_javaScriptsQueue.size() << QStringLiteral(" to execute now"));
+    QNTRACE("JavaScriptInOrderExecutor: appended new script, there are "
+            << m_javaScriptsQueue.size() << " to execute now");
 }
 
 void JavaScriptInOrderExecutor::start()
@@ -63,7 +64,7 @@ void JavaScriptInOrderExecutor::start()
 
 void JavaScriptInOrderExecutor::next(const QVariant & data)
 {
-    QNTRACE(QStringLiteral("JavaScriptInOrderExecutor::next"));
+    QNTRACE("JavaScriptInOrderExecutor::next");
 
     if (!m_currentPendingCallback.empty()) {
         m_currentPendingCallback(data);
@@ -71,19 +72,20 @@ void JavaScriptInOrderExecutor::next(const QVariant & data)
     }
 
     if (m_javaScriptsQueue.empty()) {
-        QNTRACE(QStringLiteral("JavaScriptInOrderExecutor: done"));
+        QNTRACE("JavaScriptInOrderExecutor: done");
         m_inProgress = false;
         Q_EMIT finished();
         return;
     }
 
-    QNTRACE(QStringLiteral("JavaScriptInOrderExecutor: ")
+    QNTRACE("JavaScriptInOrderExecutor: "
             << m_javaScriptsQueue.size()
-            << QStringLiteral(" more scripts to execute"));
+            << " more scripts to execute");
     start();
 }
 
-void JavaScriptInOrderExecutor::JavaScriptCallback::operator()(const QVariant & result)
+void JavaScriptInOrderExecutor::JavaScriptCallback::operator()(
+    const QVariant & result)
 {
     m_executor.next(result);
 }

@@ -170,12 +170,11 @@ bool SynchronizationManagerPrivate::downloadNoteThumbnailsOption() const
 
 void SynchronizationManagerPrivate::setAccount(const Account & account)
 {
-    QNDEBUG(QStringLiteral("SynchronizationManagerPrivate::setAccount: ")
-            << account);
+    QNDEBUG("SynchronizationManagerPrivate::setAccount: " << account);
 
     Account currentAccount = m_pRemoteToLocalSyncManager->account();
     if (currentAccount == account) {
-        QNDEBUG(QStringLiteral("The same account is already set, nothing to do"));
+        QNDEBUG("The same account is already set, nothing to do");
         return;
     }
 
@@ -195,22 +194,16 @@ void SynchronizationManagerPrivate::setAccount(const Account & account)
 
 void SynchronizationManagerPrivate::synchronize()
 {
-    QNDEBUG(QStringLiteral("SynchronizationManagerPrivate::synchronize"));
+    QNDEBUG("SynchronizationManagerPrivate::synchronize");
 
     if (m_authenticationInProgress || m_writingAuthToken || m_writingShardId) {
         ErrorString error(QT_TR_NOOP("Authentication is not finished yet, please wait"));
-        QNDEBUG(error << QStringLiteral(", authentication in progress = ")
-                << (m_authenticationInProgress
-                    ? QStringLiteral("true")
-                    : QStringLiteral("false"))
-                << QStringLiteral(", writing OAuth token = ")
-                << (m_writingAuthToken
-                    ? QStringLiteral("true")
-                    : QStringLiteral("false"))
-                << QStringLiteral(", writing shard id = ")
-                << (m_writingShardId
-                    ? QStringLiteral("true")
-                    : QStringLiteral("false")));
+        QNDEBUG(error << ", authentication in progress = "
+                << (m_authenticationInProgress ? "true" : "false")
+                << ", writing OAuth token = "
+                << (m_writingAuthToken ? "true" : "false")
+                << ", writing shard id = "
+                << (m_writingShardId ? "true" : "false"));
         Q_EMIT notifyError(error);
         return;
     }
@@ -221,24 +214,18 @@ void SynchronizationManagerPrivate::synchronize()
 
 void SynchronizationManagerPrivate::authenticate()
 {
-    QNDEBUG(QStringLiteral("SynchronizationManagerPrivate::authenticate"));
+    QNDEBUG("SynchronizationManagerPrivate::authenticate");
 
     if (m_authenticationInProgress || m_writingAuthToken || m_writingShardId)
     {
         ErrorString error(QT_TR_NOOP("Previous authentication is not finished "
                                      "yet, please wait"));
-        QNDEBUG(error << QStringLiteral(", authentication in progress = ")
-                << (m_authenticationInProgress
-                    ? QStringLiteral("true")
-                    : QStringLiteral("false"))
-                << QStringLiteral(", writing OAuth token = ")
-                << (m_writingAuthToken
-                    ? QStringLiteral("true")
-                    : QStringLiteral("false"))
-                << QStringLiteral(", writing shard id = ")
-                << (m_writingShardId
-                    ? QStringLiteral("true")
-                    : QStringLiteral("false")));
+        QNDEBUG(error << ", authentication in progress = "
+                << (m_authenticationInProgress ? "true" : "false")
+                << ", writing OAuth token = "
+                << (m_writingAuthToken ? "true" : "false")
+                << ", writing shard id = "
+                << (m_writingShardId ? "true" : "false"));
         Q_EMIT authenticationFinished(/* success = */ false, error, Account());
         return;
     }
@@ -248,24 +235,18 @@ void SynchronizationManagerPrivate::authenticate()
 
 void SynchronizationManagerPrivate::authenticateCurrentAccount()
 {
-    QNDEBUG(QStringLiteral("SynchronizationManagerPrivate::authenticateCurrentAccount"));
+    QNDEBUG("SynchronizationManagerPrivate::authenticateCurrentAccount");
 
     if (m_authenticationInProgress || m_writingAuthToken || m_writingShardId)
     {
         ErrorString error(QT_TR_NOOP("Previous authentication is not finished "
                                      "yet, please wait"));
-        QNDEBUG(error << QStringLiteral(", authentication in progress = ")
-                << (m_authenticationInProgress
-                    ? QStringLiteral("true")
-                    : QStringLiteral("false"))
-                << QStringLiteral(", writing OAuth token = ")
-                << (m_writingAuthToken
-                    ? QStringLiteral("true")
-                    : QStringLiteral("false"))
-                << QStringLiteral(", writing shard id = ")
-                << (m_writingShardId
-                    ? QStringLiteral("true")
-                    : QStringLiteral("false")));
+        QNDEBUG(error << ", authentication in progress = "
+                << (m_authenticationInProgress ? "true" : "false")
+                << ", writing OAuth token = "
+                << (m_writingAuthToken ? "true" : "false")
+                << ", writing shard id = "
+                << (m_writingShardId ? "true" : "false"));
         Q_EMIT authenticationFinished(/* success = */ false, error, Account());
         return;
     }
@@ -275,7 +256,7 @@ void SynchronizationManagerPrivate::authenticateCurrentAccount()
 
 void SynchronizationManagerPrivate::stop()
 {
-    QNDEBUG(QStringLiteral("SynchronizationManagerPrivate::stop"));
+    QNDEBUG("SynchronizationManagerPrivate::stop");
 
     tryUpdateLastSyncStatus();
 
@@ -283,10 +264,11 @@ void SynchronizationManagerPrivate::stop()
     Q_EMIT stopSendingLocalChanges();
 }
 
-void SynchronizationManagerPrivate::revokeAuthentication(const qevercloud::UserID userId)
+void SynchronizationManagerPrivate::revokeAuthentication(
+    const qevercloud::UserID userId)
 {
-    QNDEBUG(QStringLiteral("SynchronizationManagerPrivate::revokeAuthentication: ")
-            << QStringLiteral("user id = ") << userId);
+    QNDEBUG("SynchronizationManagerPrivate::revokeAuthentication: user id = "
+            << userId);
 
     m_lastRevokedAuthenticationUserId = userId;
 
@@ -333,12 +315,11 @@ void SynchronizationManagerPrivate::onOAuthResult(
     qevercloud::Timestamp authTokenExpirationTime, QString shardId,
     QString noteStoreUrl, QString webApiUrlPrefix, ErrorString errorDescription)
 {
-    QNDEBUG(QStringLiteral("SynchronizationManagerPrivate::onOAuthResult: ")
-            << (success ? QStringLiteral("success") : QStringLiteral("failure"))
-            << QStringLiteral(", user id = ") << userId
-            << QStringLiteral(", auth token expiration time = ")
+    QNDEBUG("SynchronizationManagerPrivate::onOAuthResult: "
+            << (success ? "success" : "failure")
+            << ", user id = " << userId << ", auth token expiration time = "
             << printableDateTimeFromTimestamp(authTokenExpirationTime)
-            << QStringLiteral(", error: ") << errorDescription);
+            << ", error: " << errorDescription);
 
     m_authenticationInProgress = false;
 
@@ -353,7 +334,7 @@ void SynchronizationManagerPrivate::onOAuthResult(
         authData.m_webApiUrlPrefix = webApiUrlPrefix;
 
         m_OAuthResult = authData;
-        QNDEBUG(QStringLiteral("OAuth result = ") << m_OAuthResult);
+        QNDEBUG("OAuth result = " << m_OAuthResult);
 
         Account previousAccount = m_pRemoteToLocalSyncManager->account();
 
@@ -364,13 +345,15 @@ void SynchronizationManagerPrivate::onOAuthResult(
         m_pUserStore->setAuthenticationToken(authToken);
 
         ErrorString error;
-        bool res = m_pRemoteToLocalSyncManager->syncUser(userId, error,
-                                                         /* write user data to
-                                                          * local storage = */ false);
+        bool res = m_pRemoteToLocalSyncManager->syncUser(
+            userId, error,
+            /* write user data to * local storage = */ false);
+
         if (Q_UNLIKELY(!res))
         {
-            errorDescription.setBase(QT_TR_NOOP("Can't switch to new Evernote "
-                                                "account: failed to sync user data"));
+            errorDescription.setBase(
+                QT_TR_NOOP("Can't switch to new Evernote "
+                           "account: failed to sync user data"));
             errorDescription.appendBase(error.base());
             errorDescription.appendBase(error.additionalBases());
             errorDescription.details() = error.details();
@@ -385,9 +368,9 @@ void SynchronizationManagerPrivate::onOAuthResult(
         const User & user = m_pRemoteToLocalSyncManager->user();
         if (Q_UNLIKELY(!user.hasUsername()))
         {
-            errorDescription.setBase(QT_TR_NOOP("Can't switch to new Evernote "
-                                                "account: the synched user data "
-                                                "lacks username"));
+            errorDescription.setBase(
+                QT_TR_NOOP("Can't switch to new Evernote account: the synched "
+                           "user data lacks username"));
             errorDescription.appendBase(error.base());
             errorDescription.appendBase(error.additionalBases());
             errorDescription.details() = error.details();
@@ -420,10 +403,10 @@ void SynchronizationManagerPrivate::onWritePasswordJobFinished(
     QUuid jobId, IKeychainService::ErrorCode::type errorCode,
     ErrorString errorDescription)
 {
-    QNDEBUG(QStringLiteral("SynchronizationManagerPrivate::")
-            << QStringLiteral("onWritePasswordJobFinished: job id = ") << jobId
-            << QStringLiteral(", error code = ") << errorCode
-            << QStringLiteral(", error description = ") << errorDescription);
+    QNDEBUG("SynchronizationManagerPrivate::"
+            << "onWritePasswordJobFinished: job id = " << jobId
+            << ", error code = " << errorCode
+            << ", error description = " << errorDescription);
 
     if (jobId == m_writeAuthTokenJobId) {
         onWriteAuthTokenFinished(errorCode, errorDescription);
@@ -435,14 +418,17 @@ void SynchronizationManagerPrivate::onWritePasswordJobFinished(
         return;
     }
 
-    auto writeAuthTokenIt = m_writeLinkedNotebookAuthTokenJobIdsWithLinkedNotebookGuids.right.find(jobId);
-    if (writeAuthTokenIt != m_writeLinkedNotebookAuthTokenJobIdsWithLinkedNotebookGuids.right.end())
+    auto writeAuthTokenIt =
+        m_writeLinkedNotebookAuthTokenJobIdsWithLinkedNotebookGuids.right.find(jobId);
+    if (writeAuthTokenIt !=
+        m_writeLinkedNotebookAuthTokenJobIdsWithLinkedNotebookGuids.right.end())
     {
-        QNDEBUG(QStringLiteral("Write linked notebook auth token job finished: ")
-                << QStringLiteral("linked notebook guid = ") << writeAuthTokenIt->second);
+        QNDEBUG("Write linked notebook auth token job finished: "
+                << "linked notebook guid = " << writeAuthTokenIt->second);
 
         QString guid = writeAuthTokenIt->second;
-        Q_UNUSED(m_writeLinkedNotebookAuthTokenJobIdsWithLinkedNotebookGuids.right.erase(writeAuthTokenIt))
+        Q_UNUSED(m_writeLinkedNotebookAuthTokenJobIdsWithLinkedNotebookGuids.right.erase(
+            writeAuthTokenIt))
 
         auto pendingItemIt = m_linkedNotebookAuthTokensPendingWritingByGuid.find(guid);
         if (pendingItemIt != m_linkedNotebookAuthTokensPendingWritingByGuid.end())
@@ -450,19 +436,18 @@ void SynchronizationManagerPrivate::onWritePasswordJobFinished(
             // NOTE: ignore the status of previous write job for this key,
             // it doesn't matter if we need to write another token
             QString token = pendingItemIt.value();
-            Q_UNUSED(m_linkedNotebookAuthTokensPendingWritingByGuid.erase(pendingItemIt))
-            QNDEBUG(QStringLiteral("Writing postponed auth token for linked "
-                                   "notebook guid ") << guid);
+            Q_UNUSED(m_linkedNotebookAuthTokensPendingWritingByGuid.erase(
+                pendingItemIt))
+            QNDEBUG("Writing postponed auth token for linked notebook guid "
+                    << guid);
             QString keyPrefix = QCoreApplication::applicationName() +
                                 QStringLiteral("_") + m_host +
                                 QStringLiteral("_") +
                                 QString::number(m_OAuthResult.m_userId);
-            QUuid jobId =
-                m_pKeychainService->startWritePasswordJob(WRITE_LINKED_NOTEBOOK_AUTH_TOKEN_JOB,
-                                                          keyPrefix +
-                                                          LINKED_NOTEBOOK_AUTH_TOKEN_KEY_PART +
-                                                          guid,
-                                                          token);
+            QUuid jobId = m_pKeychainService->startWritePasswordJob(
+                WRITE_LINKED_NOTEBOOK_AUTH_TOKEN_JOB,
+                keyPrefix + LINKED_NOTEBOOK_AUTH_TOKEN_KEY_PART + guid,
+                token);
             m_writeLinkedNotebookAuthTokenJobIdsWithLinkedNotebookGuids.insert(
                 JobIdWithGuidBimap::value_type(guid, jobId));
         }
@@ -486,14 +471,17 @@ void SynchronizationManagerPrivate::onWritePasswordJobFinished(
         return;
     }
 
-    auto writeShardIdIt = m_writeLinkedNotebookShardIdJobIdsWithLinkedNotebookGuids.right.find(jobId);
-    if (writeShardIdIt != m_writeLinkedNotebookShardIdJobIdsWithLinkedNotebookGuids.right.end())
+    auto writeShardIdIt =
+        m_writeLinkedNotebookShardIdJobIdsWithLinkedNotebookGuids.right.find(jobId);
+    if (writeShardIdIt !=
+        m_writeLinkedNotebookShardIdJobIdsWithLinkedNotebookGuids.right.end())
     {
-        QNDEBUG(QStringLiteral("Write linked notebook shard id job finished: ")
-                << QStringLiteral("linked notebook guid = ") << writeShardIdIt->second);
+        QNDEBUG("Write linked notebook shard id job finished: "
+                << "linked notebook guid = " << writeShardIdIt->second);
 
         QString guid = writeShardIdIt->second;
-        Q_UNUSED(m_writeLinkedNotebookShardIdJobIdsWithLinkedNotebookGuids.right.erase(writeShardIdIt))
+        Q_UNUSED(m_writeLinkedNotebookShardIdJobIdsWithLinkedNotebookGuids.right.erase(
+            writeShardIdIt))
 
         auto pendingItemIt = m_linkedNotebookShardIdsPendingWritingByGuid.find(guid);
         if (pendingItemIt != m_linkedNotebookShardIdsPendingWritingByGuid.end())
@@ -502,18 +490,16 @@ void SynchronizationManagerPrivate::onWritePasswordJobFinished(
             // it doesn't matter if we need to write another shard id
             QString shardId = pendingItemIt.value();
             Q_UNUSED(m_linkedNotebookShardIdsPendingWritingByGuid.erase(pendingItemIt))
-            QNDEBUG(QStringLiteral("Writing postponed shard id ") << shardId
-                    << QStringLiteral(" for linked notebook guid ") << guid);
+            QNDEBUG("Writing postponed shard id " << shardId
+                    << " for linked notebook guid " << guid);
             QString keyPrefix = QCoreApplication::applicationName() +
                                 QStringLiteral("_") + m_host +
                                 QStringLiteral("_") +
                                 QString::number(m_OAuthResult.m_userId);
-            QUuid jobId =
-                m_pKeychainService->startWritePasswordJob(WRITE_LINKED_NOTEBOOK_SHARD_ID_JOB,
-                                                          keyPrefix +
-                                                          LINKED_NOTEBOOK_SHARD_ID_KEY_PART +
-                                                          guid,
-                                                          shardId);
+            QUuid jobId = m_pKeychainService->startWritePasswordJob(
+                WRITE_LINKED_NOTEBOOK_SHARD_ID_JOB,
+                keyPrefix + LINKED_NOTEBOOK_SHARD_ID_KEY_PART + guid,
+                shardId);
             m_writeLinkedNotebookShardIdJobIdsWithLinkedNotebookGuids.insert(
                 JobIdWithGuidBimap::value_type(guid, jobId));
         }
@@ -537,17 +523,16 @@ void SynchronizationManagerPrivate::onWritePasswordJobFinished(
         return;
     }
 
-    QNDEBUG(QStringLiteral("Couldn't identify the write password from keychain job"));
+    QNDEBUG("Couldn't identify the write password from keychain job");
 }
 
 void SynchronizationManagerPrivate::onReadPasswordJobFinished(
     QUuid jobId, IKeychainService::ErrorCode::type errorCode,
     ErrorString errorDescription, QString password)
 {
-    QNDEBUG(QStringLiteral("SynchronizationManagerPrivate::onReadPasswordJobFinished: ")
-            << QStringLiteral("job id = ") << jobId
-            << QStringLiteral(", error code = ") << errorCode
-            << QStringLiteral(", error description = ") << errorDescription);
+    QNDEBUG("SynchronizationManagerPrivate::onReadPasswordJobFinished: "
+            << "job id = " << jobId << ", error code = " << errorCode
+            << ", error description = " << errorDescription);
 
     if (jobId == m_readAuthTokenJobId) {
         onReadAuthTokenFinished(errorCode, errorDescription, password);
@@ -559,50 +544,59 @@ void SynchronizationManagerPrivate::onReadPasswordJobFinished(
         return;
     }
 
-    auto readAuthTokenIt = m_readLinkedNotebookAuthTokenJobIdsWithLinkedNotebookGuids.right.find(jobId);
-    if (readAuthTokenIt != m_readLinkedNotebookAuthTokenJobIdsWithLinkedNotebookGuids.right.end())
+    auto readAuthTokenIt =
+        m_readLinkedNotebookAuthTokenJobIdsWithLinkedNotebookGuids.right.find(jobId);
+    if (readAuthTokenIt !=
+        m_readLinkedNotebookAuthTokenJobIdsWithLinkedNotebookGuids.right.end())
     {
-        QNDEBUG(QStringLiteral("Read linked notebook auth token job finished: ")
-                << QStringLiteral("linked notebook guid = ") << readAuthTokenIt->second);
+        QNDEBUG("Read linked notebook auth token job finished: "
+                << "linked notebook guid = " << readAuthTokenIt->second);
 
         if (errorCode == IKeychainService::ErrorCode::NoError)
         {
-            m_cachedLinkedNotebookAuthTokensAndShardIdsByGuid[readAuthTokenIt->second].first = password;
+            m_cachedLinkedNotebookAuthTokensAndShardIdsByGuid[readAuthTokenIt->second].first =
+                password;
         }
         else if (errorCode == IKeychainService::ErrorCode::EntryNotFound)
         {
-            Q_UNUSED(m_linkedNotebookGuidsWithoutLocalAuthData.insert(readAuthTokenIt->second))
+            Q_UNUSED(m_linkedNotebookGuidsWithoutLocalAuthData.insert(
+                readAuthTokenIt->second))
         }
         else
         {
-            QNWARNING(QStringLiteral("Failed to read linked notebook's authentication ")
-                      << QStringLiteral("token from the keychain: error code = ")
-                      << errorCode << QStringLiteral(", error description: ")
-                      << errorDescription);
+            QNWARNING("Failed to read linked notebook's authentication "
+                      << "token from the keychain: error code = " << errorCode
+                      << ", error description: " << errorDescription);
 
-            // Try to recover by making user to authenticate again in the blind hope that
-            // the next time the persistence of auth settings in the keychain would work
-            Q_UNUSED(m_linkedNotebookGuidsWithoutLocalAuthData.insert(readAuthTokenIt->second))
+            /**
+             * Try to recover by making user to authenticate again in the blind
+             * hope that the next time the persistence of auth settings in the
+             * keychain would work
+             */
+            Q_UNUSED(m_linkedNotebookGuidsWithoutLocalAuthData.insert(
+                readAuthTokenIt->second))
         }
 
-        Q_UNUSED(m_readLinkedNotebookAuthTokenJobIdsWithLinkedNotebookGuids.right.erase(readAuthTokenIt))
+        Q_UNUSED(m_readLinkedNotebookAuthTokenJobIdsWithLinkedNotebookGuids.right.erase(
+            readAuthTokenIt))
 
         if (m_readLinkedNotebookAuthTokenJobIdsWithLinkedNotebookGuids.empty() &&
             m_readLinkedNotebookShardIdJobIdsWithLinkedNotebookGuids.empty())
         {
-            QNDEBUG(QStringLiteral("No pending read linked notebook auth token "
-                                   "or shard id job"));
+            QNDEBUG("No pending read linked notebook auth token or shard id job");
             authenticateToLinkedNotebooks();
         }
 
         return;
     }
 
-    auto readShardIdIt = m_readLinkedNotebookShardIdJobIdsWithLinkedNotebookGuids.right.find(jobId);
-    if (readShardIdIt != m_readLinkedNotebookShardIdJobIdsWithLinkedNotebookGuids.right.end())
+    auto readShardIdIt =
+        m_readLinkedNotebookShardIdJobIdsWithLinkedNotebookGuids.right.find(jobId);
+    if (readShardIdIt !=
+        m_readLinkedNotebookShardIdJobIdsWithLinkedNotebookGuids.right.end())
     {
-        QNDEBUG(QStringLiteral("Read linked notebook shard id job finished: ")
-                << QStringLiteral("linked notebook guid = ") << readShardIdIt->second);
+        QNDEBUG("Read linked notebook shard id job finished: "
+                << "linked notebook guid = " << readShardIdIt->second);
 
         if (errorCode == IKeychainService::ErrorCode::NoError)
         {
@@ -614,23 +608,26 @@ void SynchronizationManagerPrivate::onReadPasswordJobFinished(
         }
         else
         {
-            QNWARNING(QStringLiteral("Failed to read linked notebook's authentication ")
-                      << QStringLiteral("token from the keychain: error code = ")
-                      << errorCode << QStringLiteral(", error description: ")
-                      << errorDescription);
+            QNWARNING("Failed to read linked notebook's authentication "
+                      << "token from the keychain: error code = " << errorCode
+                      << ", error description: " << errorDescription);
 
-            // Try to recover by making user to authenticate again in the blind hope that
-            // the next time the persistence of auth settings in the keychain would work
-            Q_UNUSED(m_linkedNotebookGuidsWithoutLocalAuthData.insert(readShardIdIt->second))
+            /**
+             * Try to recover by making user to authenticate again in the blind
+             * hope that the next time the persistence of auth settings in the
+             * keychain would work
+             */
+            Q_UNUSED(m_linkedNotebookGuidsWithoutLocalAuthData.insert(
+                readShardIdIt->second))
         }
 
-        Q_UNUSED(m_readLinkedNotebookShardIdJobIdsWithLinkedNotebookGuids.right.erase(readShardIdIt))
+        Q_UNUSED(m_readLinkedNotebookShardIdJobIdsWithLinkedNotebookGuids.right.erase(
+            readShardIdIt))
 
         if (m_readLinkedNotebookShardIdJobIdsWithLinkedNotebookGuids.empty() &&
             m_readLinkedNotebookAuthTokenJobIdsWithLinkedNotebookGuids.empty())
         {
-            QNDEBUG(QStringLiteral("No pending read linked notebook auth token "
-                                   "or shard id job"));
+            QNDEBUG("No pending read linked notebook auth token or shard id job");
             authenticateToLinkedNotebooks();
         }
 
@@ -642,10 +639,9 @@ void SynchronizationManagerPrivate::onDeletePasswordJobFinished(
     QUuid jobId, IKeychainService::ErrorCode::type errorCode,
     ErrorString errorDescription)
 {
-    QNDEBUG(QStringLiteral("SynchronizationManagerPrivate::onDeletePasswordJobFinished: ")
-            << QStringLiteral("job id = ") << jobId
-            << QStringLiteral(", error code = ") << errorCode
-            << QStringLiteral(", error description = ") << errorDescription);
+    QNDEBUG("SynchronizationManagerPrivate::onDeletePasswordJobFinished: "
+            << "job id = " << jobId << ", error code = " << errorCode
+            << ", error description = " << errorDescription);
 
     if (jobId == m_deleteAuthTokenJobId) {
         onDeleteAuthTokenFinished(errorCode, errorDescription);
@@ -657,15 +653,15 @@ void SynchronizationManagerPrivate::onDeletePasswordJobFinished(
         return;
     }
 
-    QNDEBUG(QStringLiteral("Couldn't identify the delete password from keychain job"));
+    QNDEBUG("Couldn't identify the delete password from keychain job");
 }
 
 void SynchronizationManagerPrivate::onRequestAuthenticationToken()
 {
-    QNDEBUG(QStringLiteral("SynchronizationManagerPrivate::onRequestAuthenticationToken"));
+    QNDEBUG("SynchronizationManagerPrivate::onRequestAuthenticationToken");
 
     if (validAuthentication()) {
-        QNDEBUG(QStringLiteral("Found valid auth token and shard id, returning them"));
+        QNDEBUG("Found valid auth token and shard id, returning them");
         Q_EMIT sendAuthenticationTokenAndShardId(m_OAuthResult.m_authToken,
                                                  m_OAuthResult.m_shardId,
                                                  m_OAuthResult.m_expirationTime);
@@ -678,8 +674,8 @@ void SynchronizationManagerPrivate::onRequestAuthenticationToken()
 void SynchronizationManagerPrivate::onRequestAuthenticationTokensForLinkedNotebooks(
     QVector<LinkedNotebookAuthData> linkedNotebookAuthData)
 {
-    QNDEBUG(QStringLiteral("SynchronizationManagerPrivate::"
-                           "onRequestAuthenticationTokensForLinkedNotebooks"));
+    QNDEBUG("SynchronizationManagerPrivate::"
+            "onRequestAuthenticationTokensForLinkedNotebooks");
     m_linkedNotebookAuthDataPendingAuthentication = linkedNotebookAuthData;
     authenticateToLinkedNotebooks();
 }
@@ -705,23 +701,18 @@ void SynchronizationManagerPrivate::onRemoteToLocalSyncFinished(
     QHash<QString,qint32> lastUpdateCountByLinkedNotebookGuid,
     QHash<QString,qevercloud::Timestamp> lastSyncTimeByLinkedNotebookGuid)
 {
-    QNDEBUG(QStringLiteral("SynchronizationManagerPrivate::onRemoteToLocalSyncFinished: ")
-            << QStringLiteral("lastUpdateCount = ") << lastUpdateCount
-            << QStringLiteral(", lastSyncTime = ")
-            << printableDateTimeFromTimestamp(lastSyncTime));
+    QNDEBUG("SynchronizationManagerPrivate::onRemoteToLocalSyncFinished: "
+            << "lastUpdateCount = " << lastUpdateCount
+            << ", lastSyncTime = " << printableDateTimeFromTimestamp(lastSyncTime));
 
     bool somethingDownloaded = (m_lastUpdateCount != lastUpdateCount) ||
                                (m_lastUpdateCount != m_previousUpdateCount) ||
                                (m_cachedLinkedNotebookLastUpdateCountByGuid !=
                                 lastUpdateCountByLinkedNotebookGuid);
-    QNTRACE(QStringLiteral("Something downloaded = ")
-            << (somethingDownloaded
-                ? QStringLiteral("true")
-                : QStringLiteral("false"))
-            << QStringLiteral(", m_lastUpdateCount = ")
-            << m_lastUpdateCount << QStringLiteral(", m_previousUpdateCount = ")
-            << m_previousUpdateCount
-            << QStringLiteral(", m_cachedLinkedNotebookLastUpdateCountByGuid = ")
+    QNTRACE("Something downloaded = " << (somethingDownloaded ? "true" : "false")
+            << ", m_lastUpdateCount = " << m_lastUpdateCount
+            << ", m_previousUpdateCount = " << m_previousUpdateCount
+            << ", m_cachedLinkedNotebookLastUpdateCountByGuid = "
             << m_cachedLinkedNotebookLastUpdateCountByGuid);
 
     m_lastUpdateCount = lastUpdateCount;
@@ -741,7 +732,7 @@ void SynchronizationManagerPrivate::onRemoteToLocalSyncFinished(
 
 void SynchronizationManagerPrivate::onRemoteToLocalSyncStopped()
 {
-    QNDEBUG(QStringLiteral("SynchronizationManagerPrivate::onRemoteToLocalSyncStopped"));
+    QNDEBUG("SynchronizationManagerPrivate::onRemoteToLocalSyncStopped");
     Q_EMIT remoteToLocalSyncStopped();
 
     if (!m_pSendLocalChangesManager->active()) {
@@ -752,7 +743,7 @@ void SynchronizationManagerPrivate::onRemoteToLocalSyncStopped()
 void SynchronizationManagerPrivate::onRemoteToLocalSyncFailure(
     ErrorString errorDescription)
 {
-    QNDEBUG(QStringLiteral("SynchronizationManagerPrivate::onRemoteToLocalSyncFailure: ")
+    QNDEBUG("SynchronizationManagerPrivate::onRemoteToLocalSyncFailure: "
             << errorDescription);
 
     Q_EMIT stopRemoteToLocalSync();
@@ -764,10 +755,10 @@ void SynchronizationManagerPrivate::onRemoteToLocalSynchronizedContentFromUsersO
     qint32 lastUpdateCount,
     qevercloud::Timestamp lastSyncTime)
 {
-    QNDEBUG(QStringLiteral("SynchronizationManagerPrivate::")
-            << QStringLiteral("onRemoteToLocalSynchronizedContentFromUsersOwnAccount: ")
-            << QStringLiteral("last update count = ") << lastUpdateCount
-            << QStringLiteral(", last sync time = ")
+    QNDEBUG("SynchronizationManagerPrivate::"
+            << "onRemoteToLocalSynchronizedContentFromUsersOwnAccount: "
+            << "last update count = " << lastUpdateCount
+            << ", last sync time = "
             << printableDateTimeFromTimestamp(lastSyncTime));
 
     m_lastUpdateCount = lastUpdateCount;
@@ -778,8 +769,7 @@ void SynchronizationManagerPrivate::onRemoteToLocalSynchronizedContentFromUsersO
 
 void SynchronizationManagerPrivate::onShouldRepeatIncrementalSync()
 {
-    QNDEBUG(QStringLiteral("SynchronizationManagerPrivate::"
-                           "onShouldRepeatIncrementalSync"));
+    QNDEBUG("SynchronizationManagerPrivate::onShouldRepeatIncrementalSync");
 
     m_shouldRepeatIncrementalSyncAfterSendingChanges = true;
     Q_EMIT willRepeatRemoteToLocalSyncAfterSendingChanges();
@@ -787,28 +777,31 @@ void SynchronizationManagerPrivate::onShouldRepeatIncrementalSync()
 
 void SynchronizationManagerPrivate::onConflictDetectedDuringLocalChangesSending()
 {
-    QNDEBUG(QStringLiteral("SynchronizationManagerPrivate::"
-                           "onConflictDetectedDuringLocalChangesSending"));
+    QNDEBUG("SynchronizationManagerPrivate::"
+            "onConflictDetectedDuringLocalChangesSending");
 
     Q_EMIT detectedConflictDuringLocalChangesSending();
 
     m_pSendLocalChangesManager->stop();
 
-    // NOTE: the detection of non-synchronized state with respect to remote
-    // service often precedes the actual conflict detection; need to drop this
-    // flag to prevent launching the incremental sync after sending the local
-    // changes after the incremental sync which we'd launch now
+    /**
+     * NOTE: the detection of non-synchronized state with respect to remote
+     * service often precedes the actual conflict detection; need to drop this
+     * flag to prevent launching the incremental sync after sending the local
+     * changes after the incremental sync which we'd launch now
+     */
     m_shouldRepeatIncrementalSyncAfterSendingChanges = false;
 
     launchIncrementalSync();
 }
 
 void SynchronizationManagerPrivate::onLocalChangesSent(
-    qint32 lastUpdateCount, QHash<QString,qint32> lastUpdateCountByLinkedNotebookGuid)
+    qint32 lastUpdateCount,
+    QHash<QString,qint32> lastUpdateCountByLinkedNotebookGuid)
 {
-    QNDEBUG(QStringLiteral("SynchronizationManagerPrivate::onLocalChangesSent: ")
-            << QStringLiteral("last update count = ") << lastUpdateCount
-            << QStringLiteral(", last update count per linked notebook guid: ")
+    QNDEBUG("SynchronizationManagerPrivate::onLocalChangesSent: "
+            << "last update count = " << lastUpdateCount
+            << ", last update count per linked notebook guid: "
             << lastUpdateCountByLinkedNotebookGuid);
 
     bool somethingSent = (m_lastUpdateCount != lastUpdateCount) ||
@@ -821,14 +814,13 @@ void SynchronizationManagerPrivate::onLocalChangesSent(
     updatePersistentSyncSettings();
 
     if (m_shouldRepeatIncrementalSyncAfterSendingChanges) {
-        QNDEBUG(QStringLiteral("Repeating the incremental sync after sending "
-                               "the changes"));
+        QNDEBUG("Repeating the incremental sync after sending the changes");
         m_shouldRepeatIncrementalSyncAfterSendingChanges = false;
         launchIncrementalSync();
         return;
     }
 
-    QNINFO(QStringLiteral("Finished the whole synchronization procedure!"));
+    QNINFO("Finished the whole synchronization procedure!");
 
     bool somethingDownloaded = m_somethingDownloaded;
     m_somethingDownloaded = false;
@@ -839,7 +831,7 @@ void SynchronizationManagerPrivate::onLocalChangesSent(
 
 void SynchronizationManagerPrivate::onSendLocalChangesStopped()
 {
-    QNDEBUG(QStringLiteral("SynchronizationManagerPrivate::onSendLocalChangesStopped"));
+    QNDEBUG("SynchronizationManagerPrivate::onSendLocalChangesStopped");
     Q_EMIT sendLocalChangesStopped();
 
     if (!m_pRemoteToLocalSyncManager->active()) {
@@ -850,7 +842,7 @@ void SynchronizationManagerPrivate::onSendLocalChangesStopped()
 void SynchronizationManagerPrivate::onSendLocalChangesFailure(
     ErrorString errorDescription)
 {
-    QNDEBUG(QStringLiteral("SynchronizationManagerPrivate::onSendLocalChangesFailure: ")
+    QNDEBUG("SynchronizationManagerPrivate::onSendLocalChangesFailure: "
             << errorDescription);
 
     stop();
@@ -859,18 +851,21 @@ void SynchronizationManagerPrivate::onSendLocalChangesFailure(
 
 void SynchronizationManagerPrivate::onRateLimitExceeded(qint32 secondsToWait)
 {
-    QNDEBUG(QStringLiteral("SynchronizationManagerPrivate::onRateLimitExceeded"));
+    QNDEBUG("SynchronizationManagerPrivate::onRateLimitExceeded");
 
-    // Before re-sending this signal to the outside world will attempt to collect
-    // the update sequence numbers for the next sync, either for user's own account
-    // or for each linked notebook - depending on what has been synced right before
-    // the Evernote API rate limit was exceeded. The collected update sequence numbers
-    // would be used to update the persistent sync settings. So that if the sync
-    // ends now before it's automatically restarted after the required waiting time
-    // (for example, user quits the app now), the next time we'll request the sync
-    // chunks after the last properly processed USN, either for user's own account
-    // or for linked notebooks, so that we won't re-download the same stuff over
-    // and over again and hit the rate limit at the very same sync stage
+    /**
+     * Before re-sending this signal to the outside world will attempt to
+     * collect the update sequence numbers for the next sync, either for user's
+     * own account or for each linked notebook - depending on what has been
+     * synced right before the Evernote API rate limit was exceeded. The
+     * collected update sequence numbers would be used to update the persistent
+     * sync settings. So that if the sync ends now before it's automatically
+     * restarted after the required waiting time (for example, user quits the
+     * app now), the next time we'll request the sync chunks after the last
+     * properly processed USN, either for user's own account or for linked
+     * notebooks, so that we won't re-download the same stuff over and over
+     * again and hit the rate limit at the very same sync stage
+     */
 
     tryUpdateLastSyncStatus();
     Q_EMIT rateLimitExceeded(secondsToWait);
@@ -1155,7 +1150,7 @@ void SynchronizationManagerPrivate::createConnections(
 
 void SynchronizationManagerPrivate::readLastSyncParameters()
 {
-    QNDEBUG(QStringLiteral("SynchronizationManagerPrivate::readLastSyncParameters"));
+    QNDEBUG("SynchronizationManagerPrivate::readLastSyncParameters");
 
     m_pSyncStatePersistenceManager->getPersistentSyncState(
         m_pRemoteToLocalSyncManager->account(),
@@ -1167,44 +1162,48 @@ void SynchronizationManagerPrivate::readLastSyncParameters()
     m_onceReadLastSyncParams = true;
 }
 
-void SynchronizationManagerPrivate::authenticateImpl(const AuthContext::type authContext)
+void SynchronizationManagerPrivate::authenticateImpl(
+    const AuthContext::type authContext)
 {
-    QNDEBUG(QStringLiteral("SynchronizationManagerPrivate::authenticateImpl: ")
-            << QStringLiteral("auth context = ") << authContext);
+    QNDEBUG("SynchronizationManagerPrivate::authenticateImpl: auth context = "
+            << authContext);
 
     m_authContext = authContext;
 
     if (m_authContext == AuthContext::NewUserRequest) {
-        QNDEBUG(QStringLiteral("Authentication of the new user is requested, "
-                               "proceeding to OAuth"));
+        QNDEBUG("Authentication of the new user is requested, "
+                "proceeding to OAuth");
         launchOAuth();
         return;
     }
 
     if (m_OAuthResult.m_userId < 0) {
-        QNDEBUG(QStringLiteral("No current user id, launching the OAuth procedure"));
+        QNDEBUG("No current user id, launching the OAuth procedure");
         launchOAuth();
         return;
     }
 
     if (validAuthentication()) {
-        QNDEBUG(QStringLiteral("Found already valid authentication info"));
+        QNDEBUG("Found already valid authentication info");
         finalizeAuthentication();
         return;
     }
 
-    QNTRACE(QStringLiteral("Trying to restore persistent authentication settings..."));
+    QNTRACE("Trying to restore persistent authentication settings...");
 
     ApplicationSettings appSettings(m_pRemoteToLocalSyncManager->account(),
                                     SYNCHRONIZATION_PERSISTENCE_NAME);
-    QString keyGroup = QStringLiteral("Authentication/") + m_host + QStringLiteral("/") +
-                       QString::number(m_OAuthResult.m_userId) + QStringLiteral("/");
+    QString keyGroup = QStringLiteral("Authentication/") + m_host +
+                       QStringLiteral("/") +
+                       QString::number(m_OAuthResult.m_userId) +
+                       QStringLiteral("/");
 
-    QVariant tokenExpirationValue = appSettings.value(keyGroup + EXPIRATION_TIMESTAMP_KEY);
+    QVariant tokenExpirationValue =
+        appSettings.value(keyGroup + EXPIRATION_TIMESTAMP_KEY);
     if (tokenExpirationValue.isNull()) {
-        QNINFO(QStringLiteral("Authentication token expiration timestamp was not "
-                              "found within application settings, assuming it has "
-                              "never been written & launching the OAuth procedure"));
+        QNINFO("Authentication token expiration timestamp was not "
+               "found within application settings, assuming it has "
+               "never been written & launching the OAuth procedure");
         launchOAuth();
         return;
     }
@@ -1212,26 +1211,29 @@ void SynchronizationManagerPrivate::authenticateImpl(const AuthContext::type aut
     bool conversionResult = false;
     qevercloud::Timestamp tokenExpirationTimestamp =
         tokenExpirationValue.toLongLong(&conversionResult);
-    if (!conversionResult) {
-        ErrorString error(QT_TR_NOOP("Internal error: failed to convert QVariant "
-                                     "with authentication token expiration "
-                                     "timestamp to the actual timestamp"));
+    if (!conversionResult)
+    {
+        ErrorString error(
+            QT_TR_NOOP("Internal error: failed to convert QVariant "
+                       "with authentication token expiration "
+                       "timestamp to the actual timestamp"));
         QNWARNING(error);
         Q_EMIT notifyError(error);
         return;
     }
 
-    if (checkIfTimestampIsAboutToExpireSoon(tokenExpirationTimestamp)) {
-        QNINFO(QStringLiteral("Authentication token stored in persistent "
-                              "application settings is about to expire soon "
-                              "enough, launching the OAuth procedure"));
+    if (checkIfTimestampIsAboutToExpireSoon(tokenExpirationTimestamp))
+    {
+        QNINFO("Authentication token stored in persistent "
+               "application settings is about to expire soon "
+               "enough, launching the OAuth procedure");
         launchOAuth();
         return;
     }
 
     m_OAuthResult.m_expirationTime = tokenExpirationTimestamp;
 
-    QNTRACE(QStringLiteral("Restoring persistent note store url"));
+    QNTRACE("Restoring persistent note store url");
 
     QVariant noteStoreUrlValue = appSettings.value(keyGroup + NOTE_STORE_URL_KEY);
     if (noteStoreUrlValue.isNull()) {
@@ -1253,9 +1255,10 @@ void SynchronizationManagerPrivate::authenticateImpl(const AuthContext::type aut
 
     m_OAuthResult.m_noteStoreUrl = noteStoreUrl;
 
-    QNDEBUG(QStringLiteral("Restoring persistent web api url prefix"));
+    QNDEBUG("Restoring persistent web api url prefix");
 
-    QVariant webApiUrlPrefixValue = appSettings.value(keyGroup + WEB_API_URL_PREFIX_KEY);
+    QVariant webApiUrlPrefixValue =
+        appSettings.value(keyGroup + WEB_API_URL_PREFIX_KEY);
     if (webApiUrlPrefixValue.isNull()) {
         ErrorString error(QT_TR_NOOP("Failed to find the web API url prefix "
                                      "within persistent application settings"));
@@ -1275,8 +1278,8 @@ void SynchronizationManagerPrivate::authenticateImpl(const AuthContext::type aut
 
     m_OAuthResult.m_webApiUrlPrefix = webApiUrlPrefix;
 
-    QNDEBUG(QStringLiteral("Trying to restore the authentication token and "
-                           "the shard id from the keychain"));
+    QNDEBUG("Trying to restore the authentication token and "
+            "the shard id from the keychain");
 
     m_readingAuthToken = true;
     QString readAuthTokenService = QCoreApplication::applicationName() +
@@ -1303,10 +1306,10 @@ void SynchronizationManagerPrivate::authenticateImpl(const AuthContext::type aut
 
 void SynchronizationManagerPrivate::launchOAuth()
 {
-    QNDEBUG(QStringLiteral("SynchronizationManagerPrivate::launchOAuth"));
+    QNDEBUG("SynchronizationManagerPrivate::launchOAuth");
 
     if (m_authenticationInProgress) {
-        QNDEBUG(QStringLiteral("Authentication is already in progress"));
+        QNDEBUG("Authentication is already in progress");
         return;
     }
 
@@ -1316,7 +1319,7 @@ void SynchronizationManagerPrivate::launchOAuth()
 
 void SynchronizationManagerPrivate::launchSync()
 {
-    QNDEBUG(QStringLiteral("SynchronizationManagerPrivate::launchSync"));
+    QNDEBUG("SynchronizationManagerPrivate::launchSync");
 
     if (!m_onceReadLastSyncParams) {
         readLastSyncParameters();
@@ -1329,19 +1332,19 @@ void SynchronizationManagerPrivate::launchSync()
     m_pUserStore->setAuthenticationToken(m_OAuthResult.m_authToken);
 
     if (m_lastUpdateCount <= 0) {
-        QNDEBUG(QStringLiteral("The client has never synchronized with "
-                               "the remote service, performing the full sync"));
+        QNDEBUG("The client has never synchronized with "
+                "the remote service, performing the full sync");
         launchFullSync();
         return;
     }
 
-    QNDEBUG(QStringLiteral("Performing incremental sync"));
+    QNDEBUG("Performing incremental sync");
     launchIncrementalSync();
 }
 
 void SynchronizationManagerPrivate::launchFullSync()
 {
-    QNDEBUG(QStringLiteral("SynchronizationManagerPrivate::launchFullSync"));
+    QNDEBUG("SynchronizationManagerPrivate::launchFullSync");
 
     m_somethingDownloaded = false;
     m_pRemoteToLocalSyncManager->start();
@@ -1349,8 +1352,8 @@ void SynchronizationManagerPrivate::launchFullSync()
 
 void SynchronizationManagerPrivate::launchIncrementalSync()
 {
-    QNDEBUG(QStringLiteral("SynchronizationManagerPrivate::launchIncrementalSync: ")
-            << QStringLiteral("m_lastUpdateCount = ") << m_lastUpdateCount);
+    QNDEBUG("SynchronizationManagerPrivate::launchIncrementalSync: "
+            << "m_lastUpdateCount = " << m_lastUpdateCount);
 
     m_somethingDownloaded = false;
     m_pRemoteToLocalSyncManager->start(m_lastUpdateCount);
@@ -1358,14 +1361,16 @@ void SynchronizationManagerPrivate::launchIncrementalSync()
 
 void SynchronizationManagerPrivate::sendChanges()
 {
-    QNDEBUG(QStringLiteral("SynchronizationManagerPrivate::sendChanges"));
-    m_pSendLocalChangesManager->start(m_lastUpdateCount,
-                                      m_cachedLinkedNotebookLastUpdateCountByGuid);
+    QNDEBUG("SynchronizationManagerPrivate::sendChanges");
+    m_pSendLocalChangesManager->start(
+        m_lastUpdateCount,
+        m_cachedLinkedNotebookLastUpdateCountByGuid);
 }
 
-void SynchronizationManagerPrivate::launchStoreOAuthResult(const AuthData & result)
+void SynchronizationManagerPrivate::launchStoreOAuthResult(
+    const AuthData & result)
 {
-    QNDEBUG(QStringLiteral("SynchronizationManagerPrivate::launchStoreOAuthResult"));
+    QNDEBUG("SynchronizationManagerPrivate::launchStoreOAuthResult");
 
     m_writtenOAuthResult = result;
 
@@ -1396,13 +1401,15 @@ void SynchronizationManagerPrivate::launchStoreOAuthResult(const AuthData & resu
 
 void SynchronizationManagerPrivate::finalizeStoreOAuthResult()
 {
-    QNDEBUG(QStringLiteral("SynchronizationManagerPrivate::finalizeStoreOAuthResult"));
+    QNDEBUG("SynchronizationManagerPrivate::finalizeStoreOAuthResult");
 
     ApplicationSettings appSettings(m_pRemoteToLocalSyncManager->account(),
                                     SYNCHRONIZATION_PERSISTENCE_NAME);
 
-    QString keyGroup = QStringLiteral("Authentication/") + m_host + QStringLiteral("/") +
-                       QString::number(m_writtenOAuthResult.m_userId) + QStringLiteral("/");
+    QString keyGroup = QStringLiteral("Authentication/") + m_host +
+                       QStringLiteral("/") +
+                       QString::number(m_writtenOAuthResult.m_userId) +
+                       QStringLiteral("/");
 
     appSettings.setValue(keyGroup + NOTE_STORE_URL_KEY,
                          m_writtenOAuthResult.m_noteStoreUrl);
@@ -1411,13 +1418,12 @@ void SynchronizationManagerPrivate::finalizeStoreOAuthResult()
     appSettings.setValue(keyGroup + WEB_API_URL_PREFIX_KEY,
                          m_writtenOAuthResult.m_webApiUrlPrefix);
 
-    QNDEBUG(QStringLiteral("Successfully wrote the authentication result info ")
-            << QStringLiteral("to the application settings for host ")
-            << m_host << QStringLiteral(", user id ")
-            << m_writtenOAuthResult.m_userId << QStringLiteral(": ")
-            << QStringLiteral(": auth token expiration timestamp = ")
+    QNDEBUG("Successfully wrote the authentication result info "
+            << "to the application settings for host " << m_host << ", user id "
+            << m_writtenOAuthResult.m_userId
+            << ": auth token expiration timestamp = "
             << printableDateTimeFromTimestamp(m_writtenOAuthResult.m_expirationTime)
-            << QStringLiteral(", web API url prefix = ")
+            << ", web API url prefix = "
             << m_writtenOAuthResult.m_webApiUrlPrefix);
 
     finalizeAuthentication();
@@ -1425,8 +1431,8 @@ void SynchronizationManagerPrivate::finalizeStoreOAuthResult()
 
 void SynchronizationManagerPrivate::finalizeAuthentication()
 {
-    QNDEBUG(QStringLiteral("SynchronizationManagerPrivate::finalizeAuthentication: ")
-            << QStringLiteral("result = ") << m_OAuthResult);
+    QNDEBUG("SynchronizationManagerPrivate::finalizeAuthentication: "
+            << "result = " << m_OAuthResult);
 
     switch(m_authContext)
     {
@@ -1446,9 +1452,11 @@ void SynchronizationManagerPrivate::finalizeAuthentication()
     case AuthContext::CurrentUserRequest:
     {
         Account account = m_pRemoteToLocalSyncManager->account();
-        QNDEBUG(QStringLiteral("Emitting the authenticationFinished signal: ")
-                << account);
-        Q_EMIT authenticationFinished(/* success = */ true, ErrorString(), account);
+        QNDEBUG("Emitting the authenticationFinished signal: " << account);
+        Q_EMIT authenticationFinished(
+            /* success = */ true,
+            ErrorString(),
+            account);
 
         m_writtenOAuthResult = AuthData();
         m_writtenOAuthResult.m_userId = -1;
@@ -1472,7 +1480,8 @@ void SynchronizationManagerPrivate::finalizeAuthentication()
 
 void SynchronizationManagerPrivate::timerEvent(QTimerEvent * pTimerEvent)
 {
-    if (Q_UNLIKELY(!pTimerEvent)) {
+    if (Q_UNLIKELY(!pTimerEvent))
+    {
         ErrorString errorDescription(QT_TR_NOOP("Qt error: detected null pointer "
                                                 "to QTimerEvent"));
         QNWARNING(errorDescription);
@@ -1483,20 +1492,21 @@ void SynchronizationManagerPrivate::timerEvent(QTimerEvent * pTimerEvent)
     int timerId = pTimerEvent->timerId();
     killTimer(timerId);
 
-    QNDEBUG(QStringLiteral("Timer event for timer id ") << timerId);
+    QNDEBUG("Timer event for timer id " << timerId);
 
     if (timerId == m_launchSyncPostponeTimerId)  {
-        QNDEBUG(QStringLiteral("Re-launching the sync procedure due to "
-                               "RATE_LIMIT_REACHED exception when trying to get "
-                               "the sync state the last time"));
+        QNDEBUG("Re-launching the sync procedure due to "
+                "RATE_LIMIT_REACHED exception when trying to get "
+                "the sync state the last time");
         launchSync();
         return;
     }
 
-    if (timerId == m_authenticateToLinkedNotebooksPostponeTimerId)  {
+    if (timerId == m_authenticateToLinkedNotebooksPostponeTimerId)
+    {
         m_authenticateToLinkedNotebooksPostponeTimerId = -1;
-        QNDEBUG(QStringLiteral("Re-attempting to authenticate to the remaining "
-                               "linked (shared) notebooks"));
+        QNDEBUG("Re-attempting to authenticate to the remaining "
+                "linked (shared) notebooks");
         onRequestAuthenticationTokensForLinkedNotebooks(
             m_linkedNotebookAuthDataPendingAuthentication);
         return;
@@ -1505,7 +1515,7 @@ void SynchronizationManagerPrivate::timerEvent(QTimerEvent * pTimerEvent)
 
 void SynchronizationManagerPrivate::clear()
 {
-    QNDEBUG(QStringLiteral("SynchronizationManagerPrivate::clear"));
+    QNDEBUG("SynchronizationManagerPrivate::clear");
 
     m_lastUpdateCount = -1;
     m_previousUpdateCount = -1;
@@ -1568,12 +1578,12 @@ bool SynchronizationManagerPrivate::validAuthentication() const
 bool SynchronizationManagerPrivate::checkIfTimestampIsAboutToExpireSoon(
     const qevercloud::Timestamp timestamp) const
 {
-    QNDEBUG(QStringLiteral("SynchronizationManagerPrivate::")
-            << QStringLiteral("checkIfTimestampIsAboutToExpireSoon: ")
+    QNDEBUG("SynchronizationManagerPrivate::"
+            << "checkIfTimestampIsAboutToExpireSoon: "
             << printableDateTimeFromTimestamp(timestamp));
 
     qevercloud::Timestamp currentTimestamp = QDateTime::currentMSecsSinceEpoch();
-    QNTRACE(QStringLiteral("Current datetime: ")
+    QNTRACE("Current datetime: "
             << printableDateTimeFromTimestamp(currentTimestamp));
 
     if ((timestamp - currentTimestamp) < HALF_AN_HOUR_IN_MSEC) {
@@ -1585,7 +1595,7 @@ bool SynchronizationManagerPrivate::checkIfTimestampIsAboutToExpireSoon(
 
 void SynchronizationManagerPrivate::authenticateToLinkedNotebooks()
 {
-    QNDEBUG(QStringLiteral("SynchronizationManagerPrivate::authenticateToLinkedNotebooks"));
+    QNDEBUG("SynchronizationManagerPrivate::authenticateToLinkedNotebooks");
 
     if (Q_UNLIKELY(m_OAuthResult.m_userId < 0)) {
         ErrorString error(QT_TR_NOOP("Detected attempt to authenticate to linked "
@@ -1598,9 +1608,9 @@ void SynchronizationManagerPrivate::authenticateToLinkedNotebooks()
 
     const int numLinkedNotebooks = m_linkedNotebookAuthDataPendingAuthentication.size();
     if (numLinkedNotebooks == 0) {
-        QNDEBUG(QStringLiteral("No linked notebooks waiting for authentication, "
-                               "sending the cached auth tokens, shard ids and "
-                               "expiration times"));
+        QNDEBUG("No linked notebooks waiting for authentication, "
+                "sending the cached auth tokens, shard ids and "
+                "expiration times");
         Q_EMIT sendAuthenticationTokensForLinkedNotebooks(
             m_cachedLinkedNotebookAuthTokensAndShardIdsByGuid,
             m_cachedLinkedNotebookAuthTokenExpirationTimeByGuid);
@@ -1609,8 +1619,10 @@ void SynchronizationManagerPrivate::authenticateToLinkedNotebooks()
 
     ApplicationSettings appSettings(m_pRemoteToLocalSyncManager->account(),
                                     SYNCHRONIZATION_PERSISTENCE_NAME);
-    QString keyGroup = QStringLiteral("Authentication/") + m_host + QStringLiteral("/") +
-                       QString::number(m_OAuthResult.m_userId) + QStringLiteral("/");
+    QString keyGroup = QStringLiteral("Authentication/") + m_host +
+                       QStringLiteral("/") +
+                       QString::number(m_OAuthResult.m_userId) +
+                       QStringLiteral("/");
 
     QHash<QString,QPair<QString,QString> >  authTokensAndShardIdsToCacheByGuid;
     QHash<QString,qevercloud::Timestamp>    authTokenExpirationTimestampsToCacheByGuid;
@@ -1631,11 +1643,11 @@ void SynchronizationManagerPrivate::authenticateToLinkedNotebooks()
         const QString & sharedNotebookGlobalId = authData.m_sharedNotebookGlobalId;
         const QString & uri = authData.m_uri;
         const QString & noteStoreUrl = authData.m_noteStoreUrl;
-        QNDEBUG(QStringLiteral("Processing linked notebook guid = ") << guid
-                << QStringLiteral(", shard id = ") << shardId
-                << QStringLiteral(", shared notebook global id = ")
-                << sharedNotebookGlobalId << QStringLiteral(", uri = ") << uri
-                << QStringLiteral(", note store URL = ") << noteStoreUrl);
+        QNDEBUG("Processing linked notebook guid = " << guid
+                << ", shard id = " << shardId
+                << ", shared notebook global id = "
+                << sharedNotebookGlobalId << ", uri = " << uri
+                << ", note store URL = " << noteStoreUrl);
 
         if (sharedNotebookGlobalId.isEmpty() && !uri.isEmpty())
         {
@@ -1655,7 +1667,8 @@ void SynchronizationManagerPrivate::authenticateToLinkedNotebooks()
         bool forceRemoteAuth = false;
         auto linkedNotebookAuthTokenIt =
             m_cachedLinkedNotebookAuthTokensAndShardIdsByGuid.find(guid);
-        if (linkedNotebookAuthTokenIt == m_cachedLinkedNotebookAuthTokensAndShardIdsByGuid.end())
+        if (linkedNotebookAuthTokenIt ==
+            m_cachedLinkedNotebookAuthTokensAndShardIdsByGuid.end())
         {
             auto noAuthDataIt = m_linkedNotebookGuidsWithoutLocalAuthData.find(guid);
             if (noAuthDataIt != m_linkedNotebookGuidsWithoutLocalAuthData.end())
@@ -1665,10 +1678,10 @@ void SynchronizationManagerPrivate::authenticateToLinkedNotebooks()
             }
             else
             {
-                QNDEBUG(QStringLiteral("Haven't found the authentication token ")
-                        << QStringLiteral("and shard id for linked notebook guid ")
-                        << guid << QStringLiteral(" in the local cache, will try "
-                                                  "to read them from the keychain"));
+                QNDEBUG("Haven't found the authentication token "
+                        << "and shard id for linked notebook guid " << guid
+                        << " in the local cache, will try to read them from "
+                        << "the keychain");
 
                 Q_UNUSED(linkedNotebookGuidsPendingReadAuthTokenAndShardIdInKeychain.insert(guid))
 
@@ -1699,48 +1712,49 @@ void SynchronizationManagerPrivate::authenticateToLinkedNotebooks()
                                 guid, expirationTime);
                     }
                     else {
-                        QNWARNING(QStringLiteral("Can't convert linked notebook's ")
-                                  << QStringLiteral("authentication token's expiration ")
-                                  << QStringLiteral("time from QVariant retrieved from ")
-                                  << QStringLiteral("app settings into timestamp: ")
-                                  << QStringLiteral("linked notebook guid = ") << guid
-                                  << QStringLiteral(", variant = ") << expirationTimeVariant);
+                        QNWARNING("Can't convert linked notebook's "
+                                  << "authentication token's expiration "
+                                  << "time from QVariant retrieved from "
+                                  << "app settings into timestamp: "
+                                  << "linked notebook guid = " << guid
+                                  << ", variant = " << expirationTimeVariant);
                     }
                 }
             }
 
             if ( (linkedNotebookAuthTokenExpirationIt !=
                   m_cachedLinkedNotebookAuthTokenExpirationTimeByGuid.end()) &&
-                 !checkIfTimestampIsAboutToExpireSoon(linkedNotebookAuthTokenExpirationIt.value()) )
+                 !checkIfTimestampIsAboutToExpireSoon(
+                     linkedNotebookAuthTokenExpirationIt.value()) )
             {
-                QNDEBUG(QStringLiteral("Found authentication data for linked ")
-                        << QStringLiteral("notebook guid ") << guid
-                        << QStringLiteral(" + verified its expiration timestamp"));
+                QNDEBUG("Found authentication data for linked "
+                        << "notebook guid " << guid
+                        << " + verified its expiration timestamp");
                 it = m_linkedNotebookAuthDataPendingAuthentication.erase(it);
                 continue;
             }
         }
 
-        QNDEBUG(QStringLiteral("Authentication data for linked notebook guid ")
-                << guid << QStringLiteral(" was either not found in local cache ")
-                << QStringLiteral("(and/or app settings / keychain) or has ")
-                << QStringLiteral("expired, need to receive that from remote ")
-                << QStringLiteral("Evernote service"));
+        QNDEBUG("Authentication data for linked notebook guid "
+                << guid << " was either not found in local cache "
+                << "(and/or app settings / keychain) or has "
+                << "expired, need to receive that from remote "
+                << "Evernote service");
 
         if (m_authenticateToLinkedNotebooksPostponeTimerId >= 0) {
-            QNDEBUG(QStringLiteral("Authenticate to linked notebook postpone timer "
-                                   "is active, will wait to preserve the breach "
-                                   "of Evernote rate API limit"));
+            QNDEBUG("Authenticate to linked notebook postpone timer "
+                    "is active, will wait to preserve the breach "
+                    "of Evernote rate API limit");
             ++it;
             continue;
         }
 
         if (m_authContext != AuthContext::Blank) {
-            QNDEBUG(QStringLiteral("Authentication context variable is not set ")
-                    << QStringLiteral("to blank which means that authentication ")
-                    << QStringLiteral("must be in progress: ") << m_authContext
-                    << QStringLiteral("; won't attempt to call remote Evernote "
-                                      "API at this time"));
+            QNDEBUG("Authentication context variable is not set "
+                    << "to blank which means that authentication "
+                    << "must be in progress: " << m_authContext
+                    << "; won't attempt to call remote Evernote "
+                    << "API at this time");
             ++it;
             continue;
         }
@@ -1750,10 +1764,12 @@ void SynchronizationManagerPrivate::authenticateToLinkedNotebooks()
         qint32 rateLimitSeconds = 0;
 
         INoteStore * pNoteStore = noteStoreForLinkedNotebookGuid(guid);
-        if (Q_UNLIKELY(!pNoteStore)) {
-            ErrorString error(QT_TR_NOOP("Can't sync the linked notebook contents: "
-                                         "can't find or create the note store "
-                                         "for the linked notebook"));
+        if (Q_UNLIKELY(!pNoteStore))
+        {
+            ErrorString error(
+                QT_TR_NOOP("Can't sync the linked notebook contents: "
+                           "can't find or create the note store "
+                           "for the linked notebook"));
             Q_EMIT notifyError(error);
             return;
         }
@@ -1802,20 +1818,20 @@ void SynchronizationManagerPrivate::authenticateToLinkedNotebooks()
         }
         else if (errorCode != 0)
         {
-            QNWARNING(QStringLiteral("Failed to authenticate to shared notebook: ")
-                      << errorDescription << QStringLiteral(" (error code = ")
-                      << errorCode << QStringLiteral(")"));
+            QNWARNING("Failed to authenticate to shared notebook: "
+                      << errorDescription << " (error code = "
+                      << errorCode << ")");
             Q_EMIT notifyError(errorDescription);
             return;
         }
 
-        QNDEBUG(QStringLiteral("Retrieved authentication: server-side result ")
-                << QStringLiteral("generation time (currentTime) = ")
+        QNDEBUG("Retrieved authentication: server-side result "
+                << "generation time (currentTime) = "
                 << printableDateTimeFromTimestamp(authResult.currentTime)
-                << QStringLiteral(", expiration time for the authentication result ")
-                << QStringLiteral("(expiration): ")
+                << ", expiration time for the authentication result "
+                << "(expiration): "
                 << printableDateTimeFromTimestamp(authResult.expiration)
-                << QStringLiteral(", user: ")
+                << ", user: "
                 << (authResult.user.isSet()
                     ? ToString(authResult.user.ref())
                     : QStringLiteral("<empty>")));
@@ -1839,8 +1855,8 @@ void SynchronizationManagerPrivate::authenticateToLinkedNotebooks()
 
     if (m_linkedNotebookAuthDataPendingAuthentication.isEmpty())
     {
-        QNDEBUG(QStringLiteral("Retrieved authentication data for all requested "
-                               "linked notebooks, sending the answer now"));
+        QNDEBUG("Retrieved authentication data for all requested "
+                "linked notebooks, sending the answer now");
 
         Q_EMIT sendAuthenticationTokensForLinkedNotebooks(
             m_cachedLinkedNotebookAuthTokensAndShardIdsByGuid,
@@ -1856,33 +1872,35 @@ void SynchronizationManagerPrivate::authenticateToLinkedNotebooks()
             const QString & guid = *it;
 
             // 1) Set up the job of reading the authentication token
-            auto readAuthTokenJobIt = m_readLinkedNotebookAuthTokenJobIdsWithLinkedNotebookGuids.left.find(guid);
-            if (readAuthTokenJobIt == m_readLinkedNotebookAuthTokenJobIdsWithLinkedNotebookGuids.left.end()) {
-                QUuid jobId =
-                    m_pKeychainService->startReadPasswordJob(READ_LINKED_NOTEBOOK_AUTH_TOKEN_JOB,
-                                                             keyPrefix +
-                                                             LINKED_NOTEBOOK_AUTH_TOKEN_KEY_PART +
-                                                             guid);
+            auto readAuthTokenJobIt =
+                m_readLinkedNotebookAuthTokenJobIdsWithLinkedNotebookGuids.left.find(guid);
+            if (readAuthTokenJobIt ==
+                m_readLinkedNotebookAuthTokenJobIdsWithLinkedNotebookGuids.left.end())
+            {
+                QUuid jobId = m_pKeychainService->startReadPasswordJob(
+                    READ_LINKED_NOTEBOOK_AUTH_TOKEN_JOB,
+                    keyPrefix + LINKED_NOTEBOOK_AUTH_TOKEN_KEY_PART + guid);
                 m_readLinkedNotebookAuthTokenJobIdsWithLinkedNotebookGuids.insert(
                     JobIdWithGuidBimap::value_type(guid, jobId));
             }
 
             // 2) Set up the job reading the shard id
-            auto readShardIdJobIt = m_readLinkedNotebookShardIdJobIdsWithLinkedNotebookGuids.left.find(guid);
-            if (readShardIdJobIt == m_readLinkedNotebookShardIdJobIdsWithLinkedNotebookGuids.left.end()) {
-                QUuid jobId =
-                    m_pKeychainService->startReadPasswordJob(READ_LINKED_NOTEBOOK_SHARD_ID_JOB,
-                                                             keyPrefix +
-                                                             LINKED_NOTEBOOK_SHARD_ID_KEY_PART +
-                                                             guid);
+            auto readShardIdJobIt =
+                m_readLinkedNotebookShardIdJobIdsWithLinkedNotebookGuids.left.find(guid);
+            if (readShardIdJobIt ==
+                m_readLinkedNotebookShardIdJobIdsWithLinkedNotebookGuids.left.end())
+            {
+                QUuid jobId = m_pKeychainService->startReadPasswordJob(
+                    READ_LINKED_NOTEBOOK_SHARD_ID_JOB,
+                    keyPrefix + LINKED_NOTEBOOK_SHARD_ID_KEY_PART + guid);
                 m_readLinkedNotebookShardIdJobIdsWithLinkedNotebookGuids.insert(
                     JobIdWithGuidBimap::value_type(guid, jobId));
             }
         }
 
-        QNDEBUG(QStringLiteral("Pending read auth tokens and shard ids from keychain for ")
+        QNDEBUG("Pending read auth tokens and shard ids from keychain for "
                 << linkedNotebookGuidsPendingReadAuthTokenAndShardIdInKeychain.size()
-                << QStringLiteral(" linked notebooks"));
+                << " linked notebooks");
         return;
     }
 
@@ -1907,13 +1925,15 @@ void SynchronizationManagerPrivate::authenticateToLinkedNotebooks()
         const QString & shardId = it.value().second;
 
         // 1) Set up the job writing the auth token to the keychain
-        auto jobIt = m_writeLinkedNotebookAuthTokenJobIdsWithLinkedNotebookGuids.left.find(guid);   // clazy:exclude=rule-of-two-soft
-        if (jobIt == m_writeLinkedNotebookAuthTokenJobIdsWithLinkedNotebookGuids.left.end())
+        auto jobIt =
+            m_writeLinkedNotebookAuthTokenJobIdsWithLinkedNotebookGuids.left.find(guid);   // clazy:exclude=rule-of-two-soft
+        if (jobIt ==
+            m_writeLinkedNotebookAuthTokenJobIdsWithLinkedNotebookGuids.left.end())
         {
             QString key = keyPrefix + LINKED_NOTEBOOK_AUTH_TOKEN_KEY_PART + guid;
-            QUuid jobId =
-                m_pKeychainService->startWritePasswordJob(WRITE_LINKED_NOTEBOOK_AUTH_TOKEN_JOB,
-                                                          key, token);
+            QUuid jobId = m_pKeychainService->startWritePasswordJob(
+                WRITE_LINKED_NOTEBOOK_AUTH_TOKEN_JOB,
+                key, token);
             m_writeLinkedNotebookAuthTokenJobIdsWithLinkedNotebookGuids.insert(
                 JobIdWithGuidBimap::value_type(guid, jobId));
         }
@@ -1922,13 +1942,15 @@ void SynchronizationManagerPrivate::authenticateToLinkedNotebooks()
         }
 
         // 2) Set up the job writing the shard id to the keychain
-        jobIt = m_writeLinkedNotebookShardIdJobIdsWithLinkedNotebookGuids.left.find(guid);  // clazy:exclude=rule-of-two-soft
-        if (jobIt == m_writeLinkedNotebookShardIdJobIdsWithLinkedNotebookGuids.left.end())
+        jobIt =                                                                         // clazy:exclude=rule-of-two-soft
+            m_writeLinkedNotebookShardIdJobIdsWithLinkedNotebookGuids.left.find(guid);  // clazy:exclude=rule-of-two-soft
+        if (jobIt ==
+            m_writeLinkedNotebookShardIdJobIdsWithLinkedNotebookGuids.left.end())
         {
             QString key = keyPrefix + LINKED_NOTEBOOK_SHARD_ID_KEY_PART + guid;
-            QUuid jobId =
-                m_pKeychainService->startWritePasswordJob(WRITE_LINKED_NOTEBOOK_SHARD_ID_JOB,
-                                                          key, shardId);
+            QUuid jobId = m_pKeychainService->startWritePasswordJob(
+                WRITE_LINKED_NOTEBOOK_SHARD_ID_JOB,
+                key, shardId);
             m_writeLinkedNotebookShardIdJobIdsWithLinkedNotebookGuids.insert(
                 JobIdWithGuidBimap::value_type(guid, jobId));
         }
@@ -1942,29 +1964,28 @@ void SynchronizationManagerPrivate::onReadAuthTokenFinished(
     const IKeychainService::ErrorCode::type errorCode,
     const ErrorString & errorDescription, const QString & password)
 {
-    QNDEBUG(QStringLiteral("SynchronizationManagerPrivate::onReadAuthTokenFinished: ")
-            << QStringLiteral("error code = ") << errorCode
-            << QStringLiteral(", error description = ") << errorDescription);
+    QNDEBUG("SynchronizationManagerPrivate::onReadAuthTokenFinished: "
+            << "error code = " << errorCode << ", error description = "
+            << errorDescription);
 
     m_readingAuthToken = false;
 
     if (errorCode == IKeychainService::ErrorCode::EntryNotFound) {
-        QNWARNING(QStringLiteral("Unexpectedly missing OAuth token in the keychain: ")
-                  << errorDescription << QStringLiteral("; fallback to explicit OAuth"));
+        QNWARNING("Unexpectedly missing OAuth token in the keychain: "
+                  << errorDescription << "; fallback to explicit OAuth");
         launchOAuth();
         return;
     }
 
     if (errorCode != IKeychainService::ErrorCode::NoError) {
-        QNWARNING(QStringLiteral("Attempt to read the auth token returned with ")
-                  << QStringLiteral("error: error code ") << errorCode
-                  << QStringLiteral(", ") << errorDescription
-                  << QStringLiteral(". Fallback to explicit OAuth"));
+        QNWARNING("Attempt to read the auth token returned with "
+                  << "error: error code " << errorCode
+                  << ", " << errorDescription << ". Fallback to explicit OAuth");
         launchOAuth();
         return;
     }
 
-    QNDEBUG(QStringLiteral("Successfully restored the authentication token"));
+    QNDEBUG("Successfully restored the authentication token");
     m_OAuthResult.m_authToken = password;
 
     if (!m_readingShardId && !m_authenticationInProgress && !m_writingShardId) {
@@ -1976,29 +1997,28 @@ void SynchronizationManagerPrivate::onReadShardIdFinished(
     const IKeychainService::ErrorCode::type errorCode,
     const ErrorString & errorDescription, const QString & password)
 {
-    QNDEBUG(QStringLiteral("SynchronizationManagerPrivate::onReadShardIdFinished: ")
-            << QStringLiteral("error code = ") << errorCode
-            << QStringLiteral(", error description = ") << errorDescription);
+    QNDEBUG("SynchronizationManagerPrivate::onReadShardIdFinished: "
+            << "error code = " << errorCode
+            << ", error description = " << errorDescription);
 
     m_readingShardId = false;
 
     if (errorCode == IKeychainService::ErrorCode::EntryNotFound) {
-        QNWARNING(QStringLiteral("Unexpectedly missing OAuth shard id in the keychain: ")
-                  << errorDescription << QStringLiteral("; fallback to explicit OAuth"));
+        QNWARNING("Unexpectedly missing OAuth shard id in the keychain: "
+                  << errorDescription << "; fallback to explicit OAuth");
         launchOAuth();
         return;
     }
 
     if (errorCode != IKeychainService::ErrorCode::NoError) {
-        QNWARNING(QStringLiteral("Attempt to read the shard id returned with error: ")
-                  << QStringLiteral("error code ") << errorCode
-                  << QStringLiteral(", ") << errorDescription
-                  << QStringLiteral(". Fallback to explicit OAuth"));
+        QNWARNING("Attempt to read the shard id returned with error: "
+                  << "error code " << errorCode << ", " << errorDescription
+                  << ". Fallback to explicit OAuth");
         launchOAuth();
         return;
     }
 
-    QNDEBUG(QStringLiteral("Successfully restored the shard id"));
+    QNDEBUG("Successfully restored the shard id");
     m_OAuthResult.m_shardId = password;
 
     if (!m_readingAuthToken && !m_authenticationInProgress && !m_writingAuthToken) {
@@ -2010,14 +2030,16 @@ void SynchronizationManagerPrivate::onWriteAuthTokenFinished(
     const IKeychainService::ErrorCode::type errorCode,
     const ErrorString & errorDescription)
 {
-    QNDEBUG(QStringLiteral("SynchronizationManagerPrivate::onWriteAuthTokenFinished: ")
-            << QStringLiteral("error code = ") << errorCode
-            << QStringLiteral(", error description = ") << errorDescription);
+    QNDEBUG("SynchronizationManagerPrivate::onWriteAuthTokenFinished: "
+            << "error code = " << errorCode
+            << ", error description = " << errorDescription);
 
     m_writingAuthToken = false;
 
-    if (errorCode != IKeychainService::ErrorCode::NoError) {
-        ErrorString error(QT_TR_NOOP("Failed to write the OAuth token to the keychain"));
+    if (errorCode != IKeychainService::ErrorCode::NoError)
+    {
+        ErrorString error(
+            QT_TR_NOOP("Failed to write the OAuth token to the keychain"));
         error.appendBase(errorDescription.base());
         error.appendBase(errorDescription.additionalBases());
         error.details() = errorDescription.details();
@@ -2026,7 +2048,7 @@ void SynchronizationManagerPrivate::onWriteAuthTokenFinished(
         return;
     }
 
-    QNDEBUG(QStringLiteral("Successfully stored the authentication token in the keychain"));
+    QNDEBUG("Successfully stored the authentication token in the keychain");
 
     if (!m_writingShardId && !m_authenticationInProgress && !m_readingShardId) {
         finalizeStoreOAuthResult();
@@ -2037,14 +2059,16 @@ void SynchronizationManagerPrivate::onWriteShardIdFinished(
     const IKeychainService::ErrorCode::type errorCode,
     const ErrorString & errorDescription)
 {
-    QNDEBUG(QStringLiteral("SynchronizationManagerPrivate::onWriteShardIdFinished: ")
-            << QStringLiteral("error code = ") << errorCode
-            << QStringLiteral(", error description = ") << errorDescription);
+    QNDEBUG("SynchronizationManagerPrivate::onWriteShardIdFinished: "
+            << "error code = " << errorCode << ", error description = "
+            << errorDescription);
 
     m_writingShardId = false;
 
-    if (errorCode != IKeychainService::ErrorCode::NoError) {
-        ErrorString error(QT_TR_NOOP("Failed to write the shard id to the keychain"));
+    if (errorCode != IKeychainService::ErrorCode::NoError)
+    {
+        ErrorString error(
+            QT_TR_NOOP("Failed to write the shard id to the keychain"));
         error.appendBase(errorDescription.base());
         error.appendBase(errorDescription.additionalBases());
         error.details() = errorDescription.details();
@@ -2053,7 +2077,7 @@ void SynchronizationManagerPrivate::onWriteShardIdFinished(
         return;
     }
 
-    QNDEBUG(QStringLiteral("Successfully stored the shard id in the keychain"));
+    QNDEBUG("Successfully stored the shard id in the keychain");
 
     if (!m_writingAuthToken && !m_authenticationInProgress && !m_readingAuthToken) {
         finalizeStoreOAuthResult();
@@ -2064,10 +2088,10 @@ void SynchronizationManagerPrivate::onDeleteAuthTokenFinished(
     const IKeychainService::ErrorCode::type errorCode,
     const ErrorString & errorDescription)
 {
-    QNDEBUG(QStringLiteral("SynchronizationManagerPrivate::onDeleteAuthTokenFinished: ")
-            << QStringLiteral("user id = ") << m_lastRevokedAuthenticationUserId
-            << QStringLiteral(", error code = ") << errorCode
-            << QStringLiteral(", error description = ") << errorDescription);
+    QNDEBUG("SynchronizationManagerPrivate::onDeleteAuthTokenFinished: "
+            << "user id = " << m_lastRevokedAuthenticationUserId
+            << ", error code = " << errorCode
+            << ", error description = " << errorDescription);
 
     m_deletingAuthToken = false;
 
@@ -2077,8 +2101,8 @@ void SynchronizationManagerPrivate::onDeleteAuthTokenFinished(
         m_deletingShardId = false;
         m_deleteShardIdJobId = QUuid();
 
-        QNWARNING(QStringLiteral("Attempt to delete the auth token returned ")
-                  << QStringLiteral("with error: ") << errorDescription);
+        QNWARNING("Attempt to delete the auth token returned "
+                  << "with error: " << errorDescription);
         ErrorString error(QT_TR_NOOP("Failed to delete authentication token "
                                      "from the keychain"));
         error.appendBase(errorDescription.base());
@@ -2099,10 +2123,10 @@ void SynchronizationManagerPrivate::onDeleteShardIdFinished(
     const IKeychainService::ErrorCode::type errorCode,
     const ErrorString & errorDescription)
 {
-    QNDEBUG(QStringLiteral("SynchronizationManagerPrivate::onDeleteShardIdFinished: ")
-            << QStringLiteral("user id = ") << m_lastRevokedAuthenticationUserId
-            << QStringLiteral(", error code = ") << errorCode
-            << QStringLiteral(", error description = ") << errorDescription);
+    QNDEBUG("SynchronizationManagerPrivate::onDeleteShardIdFinished: "
+            << "user id = " << m_lastRevokedAuthenticationUserId
+            << ", error code = " << errorCode
+            << ", error description = " << errorDescription);
 
     m_deletingShardId = false;
 
@@ -2112,9 +2136,10 @@ void SynchronizationManagerPrivate::onDeleteShardIdFinished(
         m_deletingAuthToken = false;
         m_deleteAuthTokenJobId = QUuid();
 
-        QNWARNING(QStringLiteral("Attempt to delete the shard id returned with error: ")
+        QNWARNING("Attempt to delete the shard id returned with error: "
                   << errorDescription);
-        ErrorString error(QT_TR_NOOP("Failed to delete shard id from the keychain"));
+        ErrorString error(
+            QT_TR_NOOP("Failed to delete shard id from the keychain"));
         error.appendBase(errorDescription.base());
         error.appendBase(errorDescription.additionalBases());
         error.details() = errorDescription.details();
@@ -2131,7 +2156,7 @@ void SynchronizationManagerPrivate::onDeleteShardIdFinished(
 
 void SynchronizationManagerPrivate::tryUpdateLastSyncStatus()
 {
-    QNDEBUG(QStringLiteral("SynchronizationManagerPrivate::tryUpdateLastSyncStatus"));
+    QNDEBUG("SynchronizationManagerPrivate::tryUpdateLastSyncStatus");
 
     qint32 updateCount = -1;
     QHash<QString,qint32> updateCountsByLinkedNotebookGuid;
@@ -2139,8 +2164,8 @@ void SynchronizationManagerPrivate::tryUpdateLastSyncStatus()
         updateCount, updateCountsByLinkedNotebookGuid);
 
     if ((updateCount < 0) && updateCountsByLinkedNotebookGuid.isEmpty()) {
-        QNDEBUG(QStringLiteral("Found no USNs for neither user's own account "
-                               "nor linked notebooks"));
+        QNDEBUG("Found no USNs for neither user's own account "
+                "nor linked notebooks");
         return;
     }
 
@@ -2152,9 +2177,9 @@ void SynchronizationManagerPrivate::tryUpdateLastSyncStatus()
     {
         m_lastUpdateCount = updateCount;
         m_lastSyncTime = lastSyncTime;
-        QNDEBUG(QStringLiteral("Got updated sync state for user's own account: ")
-                << QStringLiteral("update count = ") << m_lastUpdateCount
-                << QStringLiteral(", last sync time = ")
+        QNDEBUG("Got updated sync state for user's own account: "
+                << "update count = " << m_lastUpdateCount
+                << ", last sync time = "
                 << printableDateTimeFromTimestamp(m_lastSyncTime));
         shouldUpdatePersistentSyncSettings = true;
     }
@@ -2166,9 +2191,9 @@ void SynchronizationManagerPrivate::tryUpdateLastSyncStatus()
         {
             m_cachedLinkedNotebookLastUpdateCountByGuid[it.key()] = it.value();
             m_cachedLinkedNotebookLastSyncTimeByGuid[it.key()] = lastSyncTime;
-            QNDEBUG(QStringLiteral("Got updated sync state for linked notebook with guid ")
-                    << it.key() << QStringLiteral(", update count = ") << it.value()
-                    << QStringLiteral(", last sync time = ") << lastSyncTime);
+            QNDEBUG("Got updated sync state for linked notebook with guid "
+                    << it.key() << ", update count = " << it.value()
+                    << ", last sync time = " << lastSyncTime);
             shouldUpdatePersistentSyncSettings = true;
         }
     }
@@ -2180,23 +2205,24 @@ void SynchronizationManagerPrivate::tryUpdateLastSyncStatus()
 
 void SynchronizationManagerPrivate::updatePersistentSyncSettings()
 {
-    QNDEBUG(QStringLiteral("SynchronizationManagerPrivate::updatePersistentSyncSettings"));
+    QNDEBUG("SynchronizationManagerPrivate::updatePersistentSyncSettings");
 
-    m_pSyncStatePersistenceManager->persistSyncState(m_pRemoteToLocalSyncManager->account(),
-                                                     m_lastUpdateCount, m_lastSyncTime,
-                                                     m_cachedLinkedNotebookLastUpdateCountByGuid,
-                                                     m_cachedLinkedNotebookLastSyncTimeByGuid);
+    m_pSyncStatePersistenceManager->persistSyncState(
+        m_pRemoteToLocalSyncManager->account(),
+        m_lastUpdateCount, m_lastSyncTime,
+        m_cachedLinkedNotebookLastUpdateCountByGuid,
+        m_cachedLinkedNotebookLastSyncTimeByGuid);
 }
 
 INoteStore * SynchronizationManagerPrivate::noteStoreForLinkedNotebook(
     const LinkedNotebook & linkedNotebook)
 {
-    QNTRACE(QStringLiteral("SynchronizationManagerPrivate::noteStoreForLinkedNotebook: ")
+    QNTRACE("SynchronizationManagerPrivate::noteStoreForLinkedNotebook: "
             << linkedNotebook);
 
     if (Q_UNLIKELY(!linkedNotebook.hasGuid())) {
-        QNTRACE(QStringLiteral("Linked notebook has no guid, can't find or create "
-                               "note store for it"));
+        QNTRACE("Linked notebook has no guid, can't find or create "
+                "note store for it");
         return Q_NULLPTR;
     }
 
@@ -2206,8 +2232,8 @@ INoteStore * SynchronizationManagerPrivate::noteStoreForLinkedNotebook(
     }
 
     if (linkedNotebook.hasNoteStoreUrl()) {
-        QNTRACE(QStringLiteral("Setting note store URL to the created and/or ")
-                << QStringLiteral("found note store: ") << linkedNotebook.noteStoreUrl());
+        QNTRACE("Setting note store URL to the created and/or "
+                << "found note store: " << linkedNotebook.noteStoreUrl());
         pNoteStore->setNoteStoreUrl(linkedNotebook.noteStoreUrl());
     }
 
@@ -2217,28 +2243,27 @@ INoteStore * SynchronizationManagerPrivate::noteStoreForLinkedNotebook(
 INoteStore * SynchronizationManagerPrivate::noteStoreForLinkedNotebookGuid(
     const QString & guid)
 {
-    QNDEBUG(QStringLiteral("SynchronizationManagerPrivate::")
-            << QStringLiteral("noteStoreForLinkedNotebookGuid: guid = ") << guid);
+    QNDEBUG("SynchronizationManagerPrivate::"
+            << "noteStoreForLinkedNotebookGuid: guid = " << guid);
 
     if (Q_UNLIKELY(guid.isEmpty())) {
-        QNWARNING(QStringLiteral("Can't find or create the note store for empty "
-                                 "linked notebook guid"));
+        QNWARNING("Can't find or create the note store for empty "
+                  "linked notebook guid");
         return Q_NULLPTR;
     }
 
     auto it = m_noteStoresByLinkedNotebookGuids.find(guid);
     if (it != m_noteStoresByLinkedNotebookGuids.end()) {
-        QNDEBUG(QStringLiteral("Found existing note store for linked notebook guid ")
-                << guid);
+        QNDEBUG("Found existing note store for linked notebook guid " << guid);
         return it.value();
     }
 
-    QNDEBUG(QStringLiteral("Found no existing note store corresponding to "
-                           "linked notebook guid ") << guid);
+    QNDEBUG("Found no existing note store corresponding to "
+            << "linked notebook guid " << guid);
 
     if (m_authenticationInProgress) {
-        QNWARNING(QStringLiteral("Can't create the note store for a linked "
-                                 "notebook: the authentication is in progress"));
+        QNWARNING("Can't create the note store for a linked "
+                  "notebook: the authentication is in progress");
         return Q_NULLPTR;
     }
 
@@ -2313,16 +2338,14 @@ SynchronizationManagerPrivate::SendLocalChangesManagerController::noteStoreForLi
 
 QTextStream & SynchronizationManagerPrivate::AuthData::print(QTextStream & strm) const
 {
-    strm << QStringLiteral("AuthData: {\n")
-         << QStringLiteral("    user id = ") << m_userId << QStringLiteral(";\n")
-         << QStringLiteral("    auth token expiration time = ")
-         << printableDateTimeFromTimestamp(m_expirationTime) << QStringLiteral(";\n")
-         << QStringLiteral("    shard id = ") << m_shardId << QStringLiteral(";\n")
-         << QStringLiteral("    note store url = ") << m_noteStoreUrl
-         << QStringLiteral(";\n")
-         << QStringLiteral("    web API url prefix = ") << m_webApiUrlPrefix
-         << QStringLiteral(";\n")
-         << QStringLiteral("};\n");
+    strm << "AuthData: {\n"
+         << "    user id = " << m_userId << ";\n"
+         << "    auth token expiration time = "
+         << printableDateTimeFromTimestamp(m_expirationTime) << ";\n"
+         << "    shard id = " << m_shardId << ";\n"
+         << "    note store url = " << m_noteStoreUrl << ";\n"
+         << "    web API url prefix = " << m_webApiUrlPrefix << ";\n"
+         << "};\n";
     return strm;
 }
 

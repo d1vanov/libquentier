@@ -19,26 +19,29 @@
 #include "RemoveResourceDelegate.h"
 #include "../NoteEditor_p.h"
 #include "../NoteEditorSettingsNames.h"
+
 #include <quentier/local_storage/LocalStorageManagerAsync.h>
 #include <quentier/utility/ApplicationSettings.h>
 #include <quentier/utility/MessageBox.h>
 #include <quentier/utility/Utility.h>
 #include <quentier/logging/QuentierLogger.h>
+
 #include <cmath>
 #include <algorithm>
 
 namespace quentier {
 
-#define GET_PAGE() \
-    NoteEditorPage * page = qobject_cast<NoteEditorPage*>(m_noteEditor.page()); \
-    if (Q_UNLIKELY(!page)) { \
-        ErrorString error(QT_TRANSLATE_NOOP("RemoveResourceDelegate", \
-                                            "Can't remove the attachment: "\
-                                            "no note editor page")); \
-        QNWARNING(error); \
-        Q_EMIT notifyError(error); \
-        return; \
-    }
+#define GET_PAGE()                                                             \
+    NoteEditorPage * page = qobject_cast<NoteEditorPage*>(m_noteEditor.page());\
+    if (Q_UNLIKELY(!page)) {                                                   \
+        ErrorString error(QT_TRANSLATE_NOOP("RemoveResourceDelegate",          \
+                                            "Can't remove the attachment: "    \
+                                            "no note editor page"));           \
+        QNWARNING(error);                                                      \
+        Q_EMIT notifyError(error);                                             \
+        return;                                                                \
+    }                                                                          \
+// GET_PAGE
 
 RemoveResourceDelegate::RemoveResourceDelegate(
         const Resource & resourceToRemove,
@@ -53,7 +56,7 @@ RemoveResourceDelegate::RemoveResourceDelegate(
 
 void RemoveResourceDelegate::start()
 {
-    QNDEBUG(QStringLiteral("RemoveResourceDelegate::start"));
+    QNDEBUG("RemoveResourceDelegate::start");
 
     if (m_noteEditor.isEditorPageModified()) {
         QObject::connect(&m_noteEditor,
@@ -70,7 +73,7 @@ void RemoveResourceDelegate::start()
 
 void RemoveResourceDelegate::onOriginalPageConvertedToNote(Note note)
 {
-    QNDEBUG(QStringLiteral("RemoveResourceDelegate::onOriginalPageConvertedToNote"));
+    QNDEBUG("RemoveResourceDelegate::onOriginalPageConvertedToNote");
 
     Q_UNUSED(note)
 
@@ -91,8 +94,8 @@ void RemoveResourceDelegate::onFindResourceComplete(
         return;
     }
 
-    QNDEBUG(QStringLiteral("RemoveResourceDelegate::onFindResourceComplete: ")
-            << QStringLiteral("request id = ") << requestId);
+    QNDEBUG("RemoveResourceDelegate::onFindResourceComplete: request id = "
+            << requestId);
 
     Q_UNUSED(options)
     m_findResourceRequestId = QUuid();
@@ -109,9 +112,8 @@ void RemoveResourceDelegate::onFindResourceFailed(
         return;
     }
 
-    QNDEBUG(QStringLiteral("RemoveResourceDelegate::onFindResourceFailed: ")
-            << QStringLiteral("request id = ") << requestId
-            << QStringLiteral(", error description: ") << errorDescription);
+    QNDEBUG("RemoveResourceDelegate::onFindResourceFailed: request id = "
+            << requestId << ", error description: " << errorDescription);
 
     Q_UNUSED(resource)
     Q_UNUSED(options)
@@ -122,7 +124,7 @@ void RemoveResourceDelegate::onFindResourceFailed(
 
 void RemoveResourceDelegate::doStart()
 {
-    QNDEBUG(QStringLiteral("RemoveResourceDelegate::doStart"));
+    QNDEBUG("RemoveResourceDelegate::doStart");
 
     if (Q_UNLIKELY(!m_resource.hasDataHash())) {
         ErrorString error(QT_TR_NOOP("Can't remove the attachment: "
@@ -150,8 +152,8 @@ void RemoveResourceDelegate::doStart()
         bool conversionResult = false;
         resourceDataSizeThreshold = threshold.toInt(&conversionResult);
         if (!conversionResult) {
-            QNWARNING(QStringLiteral("Failed to convert resource undo data size "
-                                     "threshold from persistent settings to int: ")
+            QNWARNING("Failed to convert resource undo data size "
+                      << "threshold from persistent settings to int: "
                       << threshold);
             resourceDataSizeThreshold = -1;
         }
@@ -193,9 +195,9 @@ void RemoveResourceDelegate::doStart()
     {
         connectToLocalStorage();
         m_findResourceRequestId = QUuid::createUuid();
-        QNDEBUG(QStringLiteral("Emitting the request to find resource within ")
-                << QStringLiteral("the local storage: request id = ")
-                << m_findResourceRequestId << QStringLiteral(", resource local uid = ")
+        QNDEBUG("Emitting the request to find resource within "
+                << "the local storage: request id = "
+                << m_findResourceRequestId << ", resource local uid = "
                 << m_resource.localUid());
         LocalStorageManager::GetResourceOptions options(
             LocalStorageManager::GetResourceOption::WithBinaryData);
@@ -208,7 +210,7 @@ void RemoveResourceDelegate::doStart()
 
 void RemoveResourceDelegate::removeResourceFromNoteEditorPage()
 {
-    QNDEBUG(QStringLiteral("RemoveResourceDelegate::removeResourceFromNoteEditorPage"));
+    QNDEBUG("RemoveResourceDelegate::removeResourceFromNoteEditorPage");
 
     QString javascript = QStringLiteral("resourceManager.removeResource('") +
                          QString::fromLocal8Bit(m_resource.dataHash().toHex()) +
@@ -223,7 +225,7 @@ void RemoveResourceDelegate::removeResourceFromNoteEditorPage()
 
 void RemoveResourceDelegate::connectToLocalStorage()
 {
-    QNDEBUG(QStringLiteral("RemoveResourceDelegate::connectToLocalStorage"));
+    QNDEBUG("RemoveResourceDelegate::connectToLocalStorage");
 
     QObject::connect(this,
                      QNSIGNAL(RemoveResourceDelegate,findResource,
@@ -252,8 +254,8 @@ void RemoveResourceDelegate::connectToLocalStorage()
 void RemoveResourceDelegate::onResourceReferenceRemovedFromNoteContent(
     const QVariant & data)
 {
-    QNDEBUG(QStringLiteral("RemoveResourceDelegate::"
-                           "onResourceReferenceRemovedFromNoteContent"));
+    QNDEBUG("RemoveResourceDelegate::"
+            "onResourceReferenceRemovedFromNoteContent");
 
     QMap<QString,QVariant> resultMap = data.toMap();
 

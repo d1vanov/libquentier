@@ -24,7 +24,8 @@
 namespace quentier {
 
 RenameResourceUndoCommand::RenameResourceUndoCommand(
-        const Resource & resource, const QString & previousResourceName,
+        const Resource & resource,
+        const QString & previousResourceName,
         NoteEditorPrivate & noteEditor,
         GenericResourceImageManager * pGenericResourceImageManager,
         QHash<QByteArray, QString> & genericResourceImageFilePathsByResourceHash,
@@ -46,7 +47,8 @@ RenameResourceUndoCommand::RenameResourceUndoCommand(
         NoteEditorPrivate & noteEditor,
         GenericResourceImageManager * pGenericResourceImageManager,
         QHash<QByteArray, QString> & genericResourceImageFilePathsByResourceHash,
-        const QString & text, QUndoCommand * parent) :
+        const QString & text,
+        QUndoCommand * parent) :
     INoteEditorUndoCommand(noteEditor, text, parent),
     m_resource(resource),
     m_previousResourceName(previousResourceName),

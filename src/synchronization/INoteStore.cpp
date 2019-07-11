@@ -20,8 +20,9 @@
 
 namespace quentier {
 
-INoteStore::INoteStore(const QSharedPointer<qevercloud::NoteStore> & pQecNoteStore,
-                       QObject * parent) :
+INoteStore::INoteStore(
+        const QSharedPointer<qevercloud::NoteStore> & pQecNoteStore,
+        QObject * parent) :
     QObject(parent),
     m_pQecNoteStore(pQecNoteStore)
 {}

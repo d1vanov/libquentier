@@ -21,7 +21,9 @@
 
 #include "INoteEditorUndoCommand.h"
 #include "../NoteEditor_p.h"
+
 #include <quentier/types/Resource.h>
+
 #include <QSize>
 
 namespace quentier {

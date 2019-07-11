@@ -19,8 +19,10 @@
 #include "LocalStoragePatchManager.h"
 #include "LocalStorageManager_p.h"
 #include "patches/LocalStoragePatch1To2.h"
+
 #include <quentier/types/ErrorString.h>
 #include <quentier/logging/QuentierLogger.h>
+
 #include <iterator>
 
 namespace quentier {
@@ -43,10 +45,10 @@ LocalStoragePatchManager::patchesForCurrentVersion()
     ErrorString errorDescription;
     int version = m_localStorageManager.localStorageVersion(errorDescription);
     if (version <= 0) {
-        QNWARNING(QStringLiteral("LocalStoragePatchManager::"
-                                 "patchInfoForCurrentLocalStorageVersion: "
-                                 "unable to determine the current local "
-                                 "storage version"));
+        QNWARNING("LocalStoragePatchManager::"
+                  "patchInfoForCurrentLocalStorageVersion: "
+                  "unable to determine the current local "
+                  "storage version");
         return result;
     }
 

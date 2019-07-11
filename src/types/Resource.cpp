@@ -495,10 +495,8 @@ const QByteArray & Resource::dataBody() const
 
 void Resource::setDataBody(const QByteArray & body)
 {
-    QNTRACE(QStringLiteral("Resource::setDataBody: body to set is ")
-            << (body.isEmpty()
-                ? QStringLiteral("empty")
-                : QStringLiteral("not empty")));
+    QNTRACE("Resource::setDataBody: body to set is "
+            << (body.isEmpty() ? "empty" : "not empty"));
 
     qevercloud::Resource & enResource = d->m_qecResource;
 
@@ -882,36 +880,31 @@ QTextStream & Resource::print(QTextStream & strm) const
 {
     const qevercloud::Resource & enResource = d->m_qecResource;
 
-    strm << QStringLiteral("Resource: { \n");
+    strm << "Resource: { \n";
 
     QString indent = QStringLiteral("  ");
 
     const QString localUid_ = localUid();
     if (!localUid_.isEmpty()) {
-        strm << indent << QStringLiteral("local uid = ") << localUid_
-             << QStringLiteral("; \n");
+        strm << indent << "local uid = " << localUid_ << "; \n";
     }
     else {
-        strm << indent << QStringLiteral("localUid is empty; \n");
+        strm << indent << "localUid is empty; \n";
     }
 
-    strm << indent << QStringLiteral("isDirty = ")
-         << (isDirty()
-             ? QStringLiteral("true")
-             : QStringLiteral("false"))
-         << QStringLiteral("; \n");
-    strm << indent << QStringLiteral("indexInNote = ")
-         << QString::number(d->m_indexInNote) << QStringLiteral("; \n");
-    strm << indent << QStringLiteral("note local uid = ")
+    strm << indent << "isDirty = "
+         << (isDirty() ? "true" : "false") << "; \n";
+    strm << indent << "indexInNote = "
+         << QString::number(d->m_indexInNote) << "; \n";
+    strm << indent << "note local uid = "
          << (d->m_noteLocalUid.isSet()
              ? d->m_noteLocalUid.ref()
              : QStringLiteral("<not set>"))
-         << QStringLiteral("; \n");
+         << "; \n";
 
     strm << indent << enResource;
 
-    strm << QStringLiteral("}; \n");
-
+    strm << "}; \n";
     return strm;
 }
 

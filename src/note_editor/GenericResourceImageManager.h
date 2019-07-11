@@ -22,6 +22,7 @@
 #include <quentier/utility/Macros.h>
 #include <quentier/types/ErrorString.h>
 #include <quentier/types/Note.h>
+
 #include <QObject>
 #include <QUuid>
 #include <QScopedPointer>
@@ -44,8 +45,10 @@ public:
     void setStorageFolderPath(const QString & storageFolderPath);
 
 Q_SIGNALS:
-    void genericResourceImageWriteReply(bool success, QByteArray resourceHash,
-                                        QString filePath, ErrorString errorDescription,
+    void genericResourceImageWriteReply(bool success,
+                                        QByteArray resourceHash,
+                                        QString filePath,
+                                        ErrorString errorDescription,
                                         QUuid requestId);
 
 public Q_SLOTS:

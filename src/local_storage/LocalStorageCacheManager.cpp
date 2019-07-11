@@ -68,25 +68,24 @@ void LocalStorageCacheManager::clearAllNotes()
     d->clearAllNotes();
 }
 
-#define FIND_OBJECT(Type) \
-const Type * LocalStorageCacheManager::find##Type(\
-    const QString & uid, const LocalStorageCacheManager::WhichUid whichUid) const \
-{ \
-    Q_D(const LocalStorageCacheManager); \
-    \
-    switch(whichUid) {    \
-    case LocalUid: \
-        return d->find##Type##ByLocalUid(uid); \
-    case Guid: \
-        return d->find##Type##ByGuid(uid); \
-    default: \
-    { \
-        QNERROR(QStringLiteral("Detected incorrect local uid/remote guid qualifier "\
-                               "in local storage cache manager")); \
-        return Q_NULLPTR; \
-    } \
-    } \
-}
+#define FIND_OBJECT(Type)                                                      \
+const Type * LocalStorageCacheManager::find##Type(                             \
+    const QString & uid,                                                       \
+    const LocalStorageCacheManager::WhichUid whichUid) const                   \
+{                                                                              \
+    Q_D(const LocalStorageCacheManager);                                       \
+    switch(whichUid) {                                                         \
+    case LocalUid:                                                             \
+        return d->find##Type##ByLocalUid(uid);                                 \
+    case Guid:                                                                 \
+        return d->find##Type##ByGuid(uid);                                     \
+    default:                                                                   \
+        QNERROR("Detected incorrect local uid/remote guid "                    \
+                "qualifier in local storage cache manager");                   \
+        return Q_NULLPTR;                                                      \
+    }                                                                          \
+}                                                                              \
+// FIND_OBJECT
 
 FIND_OBJECT(Note)
 FIND_OBJECT(Resource)
@@ -208,7 +207,8 @@ void LocalStorageCacheManager::expungeLinkedNotebook(
     d->expungeLinkedNotebook(linkedNotebook);
 }
 
-const LinkedNotebook * LocalStorageCacheManager::findLinkedNotebook(const QString & guid) const
+const LinkedNotebook * LocalStorageCacheManager::findLinkedNotebook(
+    const QString & guid) const
 {
     Q_D(const LocalStorageCacheManager);
     return d->findLinkedNotebookByGuid(guid);
