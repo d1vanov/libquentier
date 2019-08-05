@@ -6176,6 +6176,13 @@ void NoteEditorPrivate::setupNoteEditorPageConnections(NoteEditorPage * page)
                      this, QNSLOT(NoteEditorPrivate,undo));
     QObject::connect(page, QNSIGNAL(NoteEditorPage,redoActionRequested),
                      this, QNSLOT(NoteEditorPrivate,redo));
+    QObject::connect(page, QNSIGNAL(NoteEditorPage,pasteActionRequested),
+                     this, QNSLOT(NoteEditorPrivate,paste));
+    QObject::connect(page,
+                     QNSIGNAL(NoteEditorPage,pasteAndMatchStyleActionRequested),
+                     this, QNSLOT(NoteEditorPrivate,pasteUnformatted));
+    QObject::connect(page, QNSIGNAL(NoteEditorPage,cutActionRequested),
+                     this, QNSLOT(NoteEditorPrivate,cut));
 }
 
 void NoteEditorPrivate::setupTextCursorPositionJavaScriptHandlerConnections()

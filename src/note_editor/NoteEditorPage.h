@@ -83,6 +83,10 @@ Q_SIGNALS:
     void undoActionRequested();
     void redoActionRequested();
 
+    void pasteActionRequested();
+    void pasteAndMatchStyleActionRequested();
+    void cutActionRequested();
+
 public Q_SLOTS:
 #if (QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)) && !defined(QUENTIER_USE_QT_WEB_ENGINE)
     virtual bool shouldInterruptJavaScript() Q_DECL_OVERRIDE;

@@ -196,11 +196,26 @@ void NoteEditorPage::triggerAction(WebPage::WebAction action, bool checked)
     QNDEBUG("NoteEditorPage::triggerAction: action = " << action
             << ", checked = " << (checked ? "true" : "false"));
 
-    if ( (action == WebPage::Paste) ||
-         (action == WebPage::Cut) ||
-         (action == WebPage::Back) )
-    {
-        QNDEBUG("Filtering the action away");
+    if (action == WebPage::Back) {
+        QNDEBUG("Filtering back action away");
+        return;
+    }
+
+    if (action == WebPage::Paste) {
+        QNDEBUG("Filtering paste action");
+        Q_EMIT pasteActionRequested();
+        return;
+    }
+
+    if (action == WebPage::PasteAndMatchStyle) {
+        QNDEBUG("Filtering paste and match style action");
+        Q_EMIT pasteAndMatchStyleActionRequested();
+        return;
+    }
+
+    if (action == WebPage::Cut) {
+        QNDEBUG("Filtering cut action");
+        Q_EMIT cutActionRequested();
         return;
     }
 
