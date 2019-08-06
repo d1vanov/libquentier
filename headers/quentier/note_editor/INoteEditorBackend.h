@@ -117,6 +117,9 @@ public:
     virtual QPalette defaultPalette() const = 0;
     virtual void setDefaultPalette(const QPalette & pal) = 0;
 
+    virtual const QFont * defaultFont() const = 0;
+    virtual void setDefaultFont(const QFont & font) = 0;
+
     virtual void insertHorizontalLine() = 0;
 
     virtual void increaseFontSize() = 0;

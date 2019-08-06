@@ -321,6 +321,16 @@ void NoteEditor::setDefaultPalette(const QPalette & pal)
     m_backend->setDefaultPalette(pal);
 }
 
+const QFont * NoteEditor::defaultFont() const
+{
+    return m_backend->defaultFont();
+}
+
+void NoteEditor::setDefaultFont(const QFont & font)
+{
+    m_backend->setDefaultFont(font);
+}
+
 void NoteEditor::insertHorizontalLine()
 {
     m_backend->insertHorizontalLine();

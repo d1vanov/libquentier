@@ -237,6 +237,8 @@ public:
 
     virtual QPalette defaultPalette() const Q_DECL_OVERRIDE;
 
+    virtual const QFont * defaultFont() const Q_DECL_OVERRIDE;
+
 public Q_SLOTS:
     // INoteEditorBackend interface
     virtual void initialize(LocalStorageManagerAsync & localStorageManager,
@@ -296,6 +298,7 @@ public Q_SLOTS:
     virtual void setFontColor(const QColor & color) Q_DECL_OVERRIDE;
     virtual void setBackgroundColor(const QColor & color) Q_DECL_OVERRIDE;
     virtual void setDefaultPalette(const QPalette & pal) Q_DECL_OVERRIDE;
+    virtual void setDefaultFont(const QFont & font) Q_DECL_OVERRIDE;
     virtual void insertHorizontalLine() Q_DECL_OVERRIDE;
     virtual void increaseFontSize() Q_DECL_OVERRIDE;
     virtual void decreaseFontSize() Q_DECL_OVERRIDE;
@@ -1203,6 +1206,7 @@ private:
 
     QString     m_noteLocalUid;
 
+    QScopedPointer<QFont>       m_pDefaultFont;
     QScopedPointer<QPalette>    m_pPalette;
 
     QScopedPointer<Note>        m_pNote;

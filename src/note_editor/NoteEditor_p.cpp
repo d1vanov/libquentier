@@ -296,6 +296,7 @@ NoteEditorPrivate::NoteEditorPrivate(NoteEditor & noteEditor) :
     m_pendingDefaultPaletteReplacement(false),
     m_skipPushingUndoCommandOnNextContentChange(false),
     m_noteLocalUid(),
+    m_pDefaultFont(),
     m_pPalette(),
     m_pNote(),
     m_pNotebook(),
@@ -6472,42 +6473,81 @@ QString NoteEditorPrivate::initialPageHtml() const
 
 QString NoteEditorPrivate::composeBlankPageHtml(const QString & rawText) const
 {
-    QString html = NOTE_EDITOR_PAGE_HEADER;
-    html += QStringLiteral("<style>"
-                           "body {"
-                           "background-color: ");
+    QString html;
+    QTextStream strm(&html);
+
+    strm << NOTE_EDITOR_PAGE_HEADER;
+    strm << "<style>"
+            "body {"
+            "background-color: ";
 
     QColor backgroundColor = palette().color(QPalette::Window).darker(115);
-    html += backgroundColor.name();
+    strm << backgroundColor.name();
 
-    html += QStringLiteral(";"
-                           "color: ");
+    strm << ";"
+            "color: ";
     QColor foregroundColor = palette().color(QPalette::WindowText);
-    html += foregroundColor.name();
+    strm << foregroundColor.name();
 
-    html += QStringLiteral(";"
-                           "-webkit-user-select: none;"
-                           "}"
-                           ".outer {"
-                           "    display: table;"
-                           "    position: absolute;"
-                           "    height: 95%;"
-                           "    width: 95%;"
-                           "}"
-                           ".middle {"
-                           "    display: table-cell;"
-                           "    vertical-align: middle;"
-                           "}"
-                           ".inner {"
-                           "    text-align: center;"
-                           "}"
-                           "</style><title></title></head>"
-                           "<body><div class=\"outer\"><div class=\"middle\">"
-                           "<div class=\"inner\">\n\n\n");
+    if (!m_pDefaultFont.isNull())
+    {
+        strm << ";"
+                "font: ";
 
-    html += rawText;
+        if (m_pDefaultFont->bold()) {
+            strm << "bold ";
+        }
 
-    html += QStringLiteral("</div></div></div></body></html>");
+        if (m_pDefaultFont->italic()) {
+            strm << "italic ";
+        }
+
+        QFontMetrics fontMetrics(*m_pDefaultFont);
+
+        int pointSize = m_pDefaultFont->pointSize();
+        if (pointSize >= 0) {
+            strm << pointSize << "pt";
+        }
+        else {
+            int pixelSize = m_pDefaultFont->pixelSize();
+            strm << pixelSize << "px";
+        }
+
+        strm << "/" << fontMetrics.height();
+        if (pointSize >= 0) {
+            strm << "pt ";
+        }
+        else {
+            strm << "px ";
+        }
+
+        strm << m_pDefaultFont->family();
+    }
+
+    strm << ";"
+            "-webkit-user-select: none;"
+            "}"
+            ".outer {"
+            "    display: table;"
+            "    position: absolute;"
+            "    height: 95%;"
+            "    width: 95%;"
+            "}"
+            ".middle {"
+            "    display: table-cell;"
+            "    vertical-align: middle;"
+            "}"
+            ".inner {"
+            "    text-align: center;"
+            "}"
+            "</style><title></title></head>"
+            "<body><div class=\"outer\"><div class=\"middle\">"
+            "<div class=\"inner\">\n\n\n";
+
+    strm << rawText;
+    strm << "</div></div></div></body></html>";
+
+    strm.flush();
     return html;
 }
 
@@ -9665,6 +9705,17 @@ void NoteEditorPrivate::setDefaultPalette(const QPalette & pal)
     }
 
     replaceDefaultPalette();
+}
+
+const QFont * NoteEditorPrivate::defaultFont() const
+{
+    return m_pDefaultFont.data();
+}
+
+void NoteEditorPrivate::setDefaultFont(const QFont & font)
+{
+    QNDEBUG("NoteEditorPrivate::setDefaultFont: " << font.toString());
+    m_pDefaultFont.reset(new QFont(font));
 }
 
 void NoteEditorPrivate::insertHorizontalLine()
