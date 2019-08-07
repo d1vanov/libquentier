@@ -293,7 +293,7 @@ NoteEditorPrivate::NoteEditorPrivate(NoteEditor & noteEditor) :
     m_pendingNextPageUrl(),
     m_pendingIndexHtmlWritingToFile(false),
     m_pendingJavaScriptExecution(false),
-    m_pendingDefaultPaletteReplacement(false),
+    m_pendingBodyStyleUpdate(false),
     m_skipPushingUndoCommandOnNextContentChange(false),
     m_noteLocalUid(),
     m_pDefaultFont(),
@@ -1059,9 +1059,9 @@ void NoteEditorPrivate::onJavaScriptLoaded()
         Q_EMIT noteLoaded();
     }
 
-    if (m_pendingDefaultPaletteReplacement) {
-        m_pendingDefaultPaletteReplacement = false;
-        replaceDefaultPalette();
+    if (m_pendingBodyStyleUpdate) {
+        m_pendingBodyStyleUpdate = false;
+        updateBodyStyle();
     }
 }
 
@@ -7208,9 +7208,9 @@ void NoteEditorPrivate::onSpellCheckSetOrCleared(
 #endif
 }
 
-void NoteEditorPrivate::replaceDefaultPalette()
+void NoteEditorPrivate::updateBodyStyle()
 {
-    QNDEBUG("NoteEditorPrivate::replaceDefaultPalette");
+    QNDEBUG("NoteEditorPrivate::updateBodyStyle");
 
     QString css = bodyStyleCss();
     escapeStringForJavaScript(css);
@@ -7222,13 +7222,13 @@ void NoteEditorPrivate::replaceDefaultPalette()
     page->executeJavaScript(javascript,
                             NoteEditorCallbackFunctor<QVariant>(
                                 this,
-                                &NoteEditorPrivate::onDefaultPaletteReplaced));
+                                &NoteEditorPrivate::onBodyStyleUpdated));
 }
 
-void NoteEditorPrivate::onDefaultPaletteReplaced(
+void NoteEditorPrivate::onBodyStyleUpdated(
     const QVariant & data, const QVector<QPair<QString,QString> > & extraData)
 {
-    QNDEBUG("NoteEditorPrivate::onDefaultPaletteReplaced: " << data);
+    QNDEBUG("NoteEditorPrivate::onBodyStyleUpdated: " << data);
 
     Q_UNUSED(extraData)
 
@@ -9700,11 +9700,11 @@ void NoteEditorPrivate::setDefaultPalette(const QPalette & pal)
     if (m_pendingNotePageLoad || m_pendingIndexHtmlWritingToFile ||
         m_pendingJavaScriptExecution)
     {
-        m_pendingDefaultPaletteReplacement = true;
+        m_pendingBodyStyleUpdate = true;
         return;
     }
 
-    replaceDefaultPalette();
+    updateBodyStyle();
 }
 
 const QFont * NoteEditorPrivate::defaultFont() const
@@ -9715,7 +9715,31 @@ const QFont * NoteEditorPrivate::defaultFont() const
 void NoteEditorPrivate::setDefaultFont(const QFont & font)
 {
     QNDEBUG("NoteEditorPrivate::setDefaultFont: " << font.toString());
-    m_pDefaultFont.reset(new QFont(font));
+
+    if (!m_pDefaultFont.isNull() && *m_pDefaultFont == font) {
+        QNDEBUG("Font is already set");
+        return;
+    }
+
+    if (m_pDefaultFont.isNull()) {
+        m_pDefaultFont.reset(new QFont(font));
+    }
+    else {
+        *m_pDefaultFont = font;
+    }
+
+    if (Q_UNLIKELY(m_pNote.isNull())) {
+        return;
+    }
+
+    if (m_pendingNotePageLoad || m_pendingIndexHtmlWritingToFile ||
+        m_pendingJavaScriptExecution)
+    {
+        m_pendingBodyStyleUpdate = true;
+        return;
+    }
+
+    updateBodyStyle();
 }
 
 void NoteEditorPrivate::insertHorizontalLine()

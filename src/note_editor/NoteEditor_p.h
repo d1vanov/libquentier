@@ -852,8 +852,8 @@ private:
         const QVariant & dummy,
         const QVector<QPair<QString,QString> > & extraData);
 
-    void replaceDefaultPalette();
-    void onDefaultPaletteReplaced(
+    void updateBodyStyle();
+    void onBodyStyleUpdated(
         const QVariant & data,
         const QVector<QPair<QString,QString> > & extraData);
 
@@ -1200,7 +1200,7 @@ private:
     bool        m_pendingIndexHtmlWritingToFile;
     bool        m_pendingJavaScriptExecution;
 
-    bool        m_pendingDefaultPaletteReplacement;
+    bool        m_pendingBodyStyleUpdate;
 
     bool        m_skipPushingUndoCommandOnNextContentChange;
 
