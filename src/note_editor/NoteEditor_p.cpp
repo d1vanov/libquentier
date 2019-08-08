@@ -6336,34 +6336,86 @@ void NoteEditorPrivate::setupTextCursorPositionJavaScriptHandlerConnections()
 
 QString NoteEditorPrivate::noteEditorPagePrefix() const
 {
-    QString prefix = NOTE_EDITOR_PAGE_HEADER;
-    prefix += NOTE_EDITOR_PAGE_CSS;
-    prefix += QStringLiteral(
-        "<title></title></head>"
-        "<style id=\"bodyStyleTag\" type=\"text/css\">");
-    prefix += bodyStyleCss();
-    prefix += QStringLiteral("</style>");
+    QString prefix;
+    QTextStream strm(&prefix);
 
+    strm << NOTE_EDITOR_PAGE_HEADER;
+    strm << NOTE_EDITOR_PAGE_CSS;
+    strm << "<title></title></head>"
+            "<style id=\"bodyStyleTag\" type=\"text/css\">";
+    strm << bodyStyleCss();
+    strm << "</style>";
+
+    strm.flush();
     return prefix;
 }
 
 QString NoteEditorPrivate::bodyStyleCss() const
 {
-    QString css = QStringLiteral("body { color: ");
+    QString css;
+    QTextStream strm(&css);
+
+    strm << "body { "
+            "color: ";
 
     QPalette pal = defaultPalette();
 
-    css += pal.color(QPalette::WindowText).name();
-    css += QStringLiteral("; background-color: ");
-    css += pal.color(QPalette::Base).name();
+    strm << pal.color(QPalette::WindowText).name();
+    strm << "; background-color: ";
+    strm << pal.color(QPalette::Base).name();
+    strm << ";";
 
-    css += QStringLiteral(";} ::selection { background: ");
-    css += pal.color(QPalette::Highlight).name();
-    css += QStringLiteral("; color: ");
-    css += pal.color(QPalette::HighlightedText).name();
+    appendDefaultFontInfoToCss(strm);
 
-    css += QStringLiteral("; }");
+    strm << "}"
+            "::selection { "
+            "background: ";
+    strm << pal.color(QPalette::Highlight).name();
+    strm << "; color: ";
+    strm << pal.color(QPalette::HighlightedText).name();
+
+    strm << ";} ";
+
+    strm.flush();
     return css;
+}
+
+void NoteEditorPrivate::appendDefaultFontInfoToCss(QTextStream& strm) const
+{
+    if (m_pDefaultFont.isNull()) {
+        return;
+    }
+
+    strm << "font: ";
+
+    if (m_pDefaultFont->bold()) {
+        strm << "bold ";
+    }
+
+    if (m_pDefaultFont->italic()) {
+        strm << "italic ";
+    }
+
+    QFontMetrics fontMetrics(*m_pDefaultFont);
+
+    int pointSize = m_pDefaultFont->pointSize();
+    if (pointSize >= 0) {
+        strm << pointSize << "pt";
+    }
+    else {
+        int pixelSize = m_pDefaultFont->pixelSize();
+        strm << pixelSize << "px";
+    }
+
+    strm << "/" << fontMetrics.height();
+    if (pointSize >= 0) {
+        strm << "pt ";
+    }
+    else {
+        strm << "px ";
+    }
+
+    strm << "\"" << m_pDefaultFont->family() << "\";";
 }
 
 void NoteEditorPrivate::setupSkipRulesForHtmlToEnmlConversion()
@@ -6487,44 +6539,11 @@ QString NoteEditorPrivate::composeBlankPageHtml(const QString & rawText) const
     strm << ";"
             "color: ";
     QColor foregroundColor = palette().color(QPalette::WindowText);
-    strm << foregroundColor.name();
+    strm << foregroundColor.name() << ";";
 
-    if (!m_pDefaultFont.isNull())
-    {
-        strm << ";"
-                "font: ";
+    appendDefaultFontInfoToCss(strm);
 
-        if (m_pDefaultFont->bold()) {
-            strm << "bold ";
-        }
-
-        if (m_pDefaultFont->italic()) {
-            strm << "italic ";
-        }
-
-        QFontMetrics fontMetrics(*m_pDefaultFont);
-
-        int pointSize = m_pDefaultFont->pointSize();
-        if (pointSize >= 0) {
-            strm << pointSize << "pt";
-        }
-        else {
-            int pixelSize = m_pDefaultFont->pixelSize();
-            strm << pixelSize << "px";
-        }
-
-        strm << "/" << fontMetrics.height();
-        if (pointSize >= 0) {
-            strm << "pt ";
-        }
-        else {
-            strm << "px ";
-        }
-
-        strm << m_pDefaultFont->family();
-    }
-
-    strm << ";"
+    strm << " "
             "-webkit-user-select: none;"
             "}"
             ".outer {"

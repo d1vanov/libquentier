@@ -804,7 +804,10 @@ private:
     QString noteDeletedPageHtml() const;
     QString noteLoadingPageHtml() const;
     QString noteEditorPagePrefix() const;
+
     QString bodyStyleCss() const;
+    void appendDefaultFontInfoToCss(QTextStream& strm) const;
+
     QString initialPageHtml() const;
     QString composeBlankPageHtml(const QString & rawText) const;
 
