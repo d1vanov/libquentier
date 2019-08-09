@@ -231,6 +231,7 @@ NoteEditorPrivate::NoteEditorPrivate(NoteEditor & noteEditor) :
     m_findAndReplaceDOMTextJs(),
     m_tabAndShiftTabIndentAndUnindentReplacerJs(),
     m_replaceStyleJs(),
+    m_setFontFamilyJs(),
 #ifndef QUENTIER_USE_QT_WEB_ENGINE
     m_qWebKitSetupJs(),
 #else
@@ -580,6 +581,7 @@ void NoteEditorPrivate::onNoteLoadFinished(bool ok)
     page->executeJavaScript(m_managedPageActionJs);
     page->executeJavaScript(m_findAndReplaceDOMTextJs);
     page->executeJavaScript(m_replaceStyleJs);
+    page->executeJavaScript(m_setFontFamilyJs);
 
     if (m_isPageEditable) {
         QNTRACE("Note page is editable");
@@ -5865,6 +5867,7 @@ void NoteEditorPrivate::setupScripts()
     SETUP_SCRIPT("javascript/scripts/tabAndShiftTabToIndentAndUnindentReplacer.js",
                  m_tabAndShiftTabIndentAndUnindentReplacerJs);
     SETUP_SCRIPT("javascript/scripts/replaceStyle.js", m_replaceStyleJs);
+    SETUP_SCRIPT("javascript/scripts/setFontFamily.js", m_setFontFamilyJs);
 
 #ifndef QUENTIER_USE_QT_WEB_ENGINE
     SETUP_SCRIPT("javascript/scripts/qWebKitSetup.js", m_qWebKitSetupJs);
@@ -7255,8 +7258,8 @@ void NoteEditorPrivate::onBodyStyleUpdated(
 
     auto statusIt = resultMap.find(QStringLiteral("status"));
     if (Q_UNLIKELY(statusIt == resultMap.end())) {
-        ErrorString error(QT_TR_NOOP("Can't parse the result of default "
-                                     "palette replacing from JavaScript"));
+        ErrorString error(QT_TR_NOOP("Can't parse the result of body "
+                                     "style replacement from JavaScript"));
         QNWARNING(error);
         Q_EMIT notifyError(error);
         return;
@@ -7269,11 +7272,11 @@ void NoteEditorPrivate::onBodyStyleUpdated(
 
         auto errorIt = resultMap.find(QStringLiteral("error"));
         if (Q_UNLIKELY(errorIt == resultMap.end())) {
-            error.setBase(QT_TR_NOOP("Can't parse the error of default "
-                                     "palette replacing from JavaScript"));
+            error.setBase(QT_TR_NOOP("Can't parse the error of body "
+                                     "style replacement from JavaScript"));
         }
         else {
-            error.setBase(QT_TR_NOOP("Can't replace default palette"));
+            error.setBase(QT_TR_NOOP("Can't replace body style"));
             error.details() = errorIt.value().toString();
         }
 
@@ -7281,6 +7284,68 @@ void NoteEditorPrivate::onBodyStyleUpdated(
         Q_EMIT notifyError(error);
         return;
     }
+}
+
+void NoteEditorPrivate::onFontFamilyUpdated(
+    const QVariant & data, const QVector<QPair<QString,QString> > & extraData)
+{
+    QNDEBUG("NoteEditorPrivate::onFontFamilyUpdated: " << data);
+
+    QMap<QString,QVariant> resultMap = data.toMap();
+
+    auto statusIt = resultMap.find(QStringLiteral("status"));
+    if (Q_UNLIKELY(statusIt == resultMap.end())) {
+        ErrorString error(QT_TR_NOOP("Can't parse the result of font family "
+                                     "update from JavaScript"));
+        QNWARNING(error);
+        Q_EMIT notifyError(error);
+        return;
+    }
+
+    bool res = statusIt.value().toBool();
+    if (!res)
+    {
+        ErrorString error;
+
+        auto errorIt = resultMap.find(QStringLiteral("error"));
+        if (Q_UNLIKELY(errorIt == resultMap.end())) {
+            error.setBase(QT_TR_NOOP("Can't parse the error of font family "
+                                     "update from JavaScript"));
+        }
+        else {
+            error.setBase(QT_TR_NOOP("Can't update font family"));
+            error.details() = errorIt.value().toString();
+        }
+
+        QNWARNING(error);
+        Q_EMIT notifyError(error);
+        return;
+    }
+
+    if (Q_UNLIKELY(extraData.empty())) {
+        QNWARNING("No font family in extra data in JavaScript callback after "
+                  "setting font family");
+        setModified();
+        return;
+    }
+
+    QString fontFamily = extraData[0].second;
+    Q_EMIT textFontFamilyChanged(fontFamily);
+
+    auto appliedToIt = resultMap.find(QStringLiteral("appliedTo"));
+    if (appliedToIt == resultMap.end()) {
+        QNWARNING("Can't figure out whether font family was applied to "
+                  "body style or to selection, assuming the latter option");
+        setModified();
+        return;
+    }
+
+    if (appliedToIt.value().toString() == QStringLiteral("bodyStyle")) {
+        QNDEBUG("Font family was set to the default body style");
+        return;
+    }
+
+    setModified();
 }
 
 bool NoteEditorPrivate::isNoteReadOnly() const
@@ -9585,13 +9650,20 @@ void NoteEditorPrivate::setFont(const QFont & font)
     CHECK_NOTE_EDITABLE(QT_TR_NOOP("Can't change font"))
 
     m_font = font;
-    QString fontName = font.family();
-    execJavascriptCommand(QStringLiteral("fontName"), fontName);
-    Q_EMIT textFontFamilyChanged(font.family());
+    QString fontFamily = font.family();
+    QString javascript = QString::fromUtf8("setFontFamily('%1');").arg(fontFamily);
+    QNTRACE("Script: " << javascript);
 
-    if (hasSelection()) {
-        setModified();
-    }
+    QVector<QPair<QString,QString> > extraData;
+    extraData.push_back(
+        QPair<QString,QString>(QStringLiteral("fontFamily"), fontFamily));
+
+    GET_PAGE()
+    page->executeJavaScript(javascript,
+                            NoteEditorCallbackFunctor<QVariant>(
+                                this,
+                                &NoteEditorPrivate::onFontFamilyUpdated,
+                                extraData));
 }
 
 void NoteEditorPrivate::setFontHeight(const int height)

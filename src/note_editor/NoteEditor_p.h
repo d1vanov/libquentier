@@ -860,6 +860,10 @@ private:
         const QVariant & data,
         const QVector<QPair<QString,QString> > & extraData);
 
+    void onFontFamilyUpdated(
+        const QVariant & data,
+        const QVector<QPair<QString,QString> > & extraData);
+
     bool isNoteReadOnly() const;
 
     void setupAddHyperlinkDelegate(
@@ -1097,6 +1101,7 @@ private:
     QString     m_findAndReplaceDOMTextJs;
     QString     m_tabAndShiftTabIndentAndUnindentReplacerJs;
     QString     m_replaceStyleJs;
+    QString     m_setFontFamilyJs;
 
 #ifndef QUENTIER_USE_QT_WEB_ENGINE
     QString     m_qWebKitSetupJs;

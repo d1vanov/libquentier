@@ -20,10 +20,16 @@ function setFontFamily(fontFamily) {
     console.log("setFontFamily: " + fontFamily);
 
     // First check if document body is empty, if so, apply the font family to body style
-    body = document.body;
+    body = document.body.innerHTML;
     body.replace(/ /g, "")
     if (body == "") {
-        document.body.style.fontFamily = fontFamily;
+        observer.stop();
+        try {
+            document.body.style.fontFamily = fontFamily;
+        }
+        finally {
+            observer.start();
+        }
         console.log("Applied font family to body style CSS");
         return {
             status:true,
@@ -42,6 +48,16 @@ function setFontFamily(fontFamily) {
         };
     }
 
+    if (selection.rangeCount) {
+        html = "<font face=\"" + fontFamily + "\">" + getSelectionHtml() + "</font>";
+        document.execCommand("insertHTML", false, html);
+        return {
+            status:true,
+            appliedTo:"selection",
+            error:""
+        };
+    }
+
     var anchorNode = selection.anchorNode;
     if (!anchorNode) {
         console.log("selection.anchorNode is null");
@@ -52,6 +68,13 @@ function setFontFamily(fontFamily) {
         }
     }
 
-    var element = anchorNode.parentNode;
-    // TODO: insert another div or font unless font family already matches
+    console.log("Anchor node type is " + anchorNode.nodeType);
+
+    // TODO: implement further
+
+    return {
+        status:false,
+        appliedTo:"",
+        error:"Not implemented yet"
+    };
 }

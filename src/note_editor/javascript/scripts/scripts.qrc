@@ -45,5 +45,6 @@
         <file>findAndReplaceDOMText.js</file>
         <file>tabAndShiftTabToIndentAndUnindentReplacer.js</file>
         <file>replaceStyle.js</file>
+        <file>setFontFamily.js</file>
     </qresource>
 </RCC>
