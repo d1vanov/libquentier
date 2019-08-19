@@ -7322,6 +7322,11 @@ void NoteEditorPrivate::onFontFamilyUpdated(
         return;
     }
 
+    page()->toHtml(
+        NoteEditorCallbackFunctor<QString>(
+            this,
+            &NoteEditorPrivate::onPageHtmlReceived));
+
     if (Q_UNLIKELY(extraData.empty())) {
         QNWARNING("No font family in extra data in JavaScript callback after "
                   "setting font family");
@@ -9768,7 +9773,7 @@ QPalette NoteEditorPrivate::defaultPalette() const
 
 void NoteEditorPrivate::setDefaultPalette(const QPalette & pal)
 {
-    QNINFO("NoteEditorPrivate::setDefaultPalette");
+    QNDEBUG("NoteEditorPrivate::setDefaultPalette");
 
     if (m_pPalette.isNull())
     {
