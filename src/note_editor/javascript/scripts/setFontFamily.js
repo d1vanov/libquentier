@@ -19,7 +19,8 @@
 function setFontFamily(fontFamily) {
     console.log("setFontFamily: " + fontFamily);
 
-    // First check if document body is empty, if so, apply the font family to body style
+    // First check if document body is empty, if so, apply the font family to
+    // the "default" body style
     body = document.body.innerHTML;
     body.replace(/ /g, "")
     if (body == "") {
@@ -48,8 +49,21 @@ function setFontFamily(fontFamily) {
         };
     }
 
-    if (selection.rangeCount) {
-        html = "<font face=\"" + fontFamily + "\">" + getSelectionHtml() + "</font>";
+    if (!selection.rangeCount) {
+        console.log("selection range count is 0");
+        return {
+            status:false,
+            appliedTo:"",
+            error:"selection range count is 0"
+        };
+    }
+
+    if (selection.rangeCount > 1 || !selection.getRangeAt(0).collapsed) {
+        // FIXME: apparently this doesn't really work - wrapping existing span
+        // with another span with different style doesn't really change the style
+        // of the displayed text
+        html = "<span style=\"font-family:&quot;" + fontFamily + "&quot;\">" +
+            getSelectionHtml() + "</span>";
         document.execCommand("insertHTML", false, html);
         return {
             status:true,
@@ -70,11 +84,34 @@ function setFontFamily(fontFamily) {
 
     console.log("Anchor node type is " + anchorNode.nodeType);
 
-    // TODO: implement further
+    if (anchorNode.nodeType != 1 || anchorNode.nodeName != "SPAN") {
+        var newSpan = document.createElement("SPAN");
+        newSpan.style.fontFamily = fontFamily;
+        if (anchorNode.nodeType != 1) {
+            anchorNode.parentNode.insertBefore(newSpan, anchorNode.nextSibling);
+        }
+        else {
+            anchorNode.appendChild(newSpan);
+        }
 
+        var range = document.createRange();
+        range.selectNodeContents(newSpan);
+        range.collapse(false);
+        selection.removeAllRanges();
+        selection.addRange(range);
+
+        return {
+            status:true,
+            appliedTo:"selection",
+            error:""
+        };
+    }
+
+    console.log("Selection's anchor node is at span element, changing its face attribute");
+    anchorNode.style.fontFamily = fontFamily;
     return {
-        status:false,
-        appliedTo:"",
-        error:"Not implemented yet"
+        status:true,
+        appliedTo:"span node",
+        error:""
     };
 }
