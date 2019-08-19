@@ -59,16 +59,11 @@ function setFontFamily(fontFamily) {
     }
 
     if (selection.rangeCount > 1 || !selection.getRangeAt(0).collapsed) {
-        // FIXME: apparently this doesn't really work - wrapping existing span
-        // with another span with different style doesn't really change the style
-        // of the displayed text
-        html = "<span style=\"font-family:&quot;" + fontFamily + "&quot;\">" +
-            getSelectionHtml() + "</span>";
-        document.execCommand("insertHTML", false, html);
+        var ret = managedPageAction("fontName", fontFamily);
         return {
-            status:true,
+            status:ret.status,
             appliedTo:"selection",
-            error:""
+            error:ret.error
         };
     }
 
@@ -95,10 +90,14 @@ function setFontFamily(fontFamily) {
         }
 
         var range = document.createRange();
-        range.selectNodeContents(newSpan);
-        range.collapse(false);
-        selection.removeAllRanges();
-        selection.addRange(range);
+
+        var setRange = function () {
+            range.setStart(newSpan, 0);
+            selection.removeAllRanges();
+            selection.addRange(range);
+        }
+
+        window.setTimeout(setRange, 1);
 
         return {
             status:true,
