@@ -39,78 +39,10 @@ function setFontFamily(fontFamily) {
         };
     }
 
-    var selection = window.getSelection();
-    if (!selection) {
-        console.log("selection is null");
-        return {
-            status:false,
-            appliedTo:"",
-            error:"selection is null"
-        };
-    }
-
-    if (!selection.rangeCount) {
-        console.log("selection range count is 0");
-        return {
-            status:false,
-            appliedTo:"",
-            error:"selection range count is 0"
-        };
-    }
-
-    if (selection.rangeCount > 1 || !selection.getRangeAt(0).collapsed) {
-        var ret = managedPageAction("fontName", fontFamily);
-        return {
-            status:ret.status,
-            appliedTo:"selection",
-            error:ret.error
-        };
-    }
-
-    var anchorNode = selection.anchorNode;
-    if (!anchorNode) {
-        console.log("selection.anchorNode is null");
-        return {
-            status:false,
-            appliedTo:"",
-            error:"selection.anchorNode is null"
-        }
-    }
-
-    console.log("Anchor node type is " + anchorNode.nodeType);
-
-    if (anchorNode.nodeType != 1 || anchorNode.nodeName != "SPAN") {
-        var newSpan = document.createElement("SPAN");
-        newSpan.style.fontFamily = fontFamily;
-        if (anchorNode.nodeType != 1) {
-            anchorNode.parentNode.insertBefore(newSpan, anchorNode.nextSibling);
-        }
-        else {
-            anchorNode.appendChild(newSpan);
-        }
-
-        var range = document.createRange();
-
-        var setRange = function () {
-            range.setStart(newSpan, 0);
-            selection.removeAllRanges();
-            selection.addRange(range);
-        }
-
-        window.setTimeout(setRange, 1);
-
-        return {
-            status:true,
-            appliedTo:"selection",
-            error:""
-        };
-    }
-
-    console.log("Selection's anchor node is at span element, changing its face attribute");
-    anchorNode.style.fontFamily = fontFamily;
+    var ret = managedPageAction("fontName", fontFamily);
     return {
-        status:true,
-        appliedTo:"span node",
-        error:""
+        status:ret.status,
+        appliedTo:"selection",
+        error:ret.error
     };
 }
