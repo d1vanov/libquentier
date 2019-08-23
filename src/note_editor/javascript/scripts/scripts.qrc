@@ -31,7 +31,6 @@
         <file>determineContextMenuEventTarget.js</file>
         <file>genericResourceOnClickHandler.js</file>
         <file>setupGenericResourceOnClickHandler.js</file>
-        <file>changeFontSizeForSelection.js</file>
         <file>flipEnToDoCheckboxState.js</file>
         <file>setupTextCursorPositionTracking.js</file>
         <file>clickInterceptor.js</file>
@@ -46,5 +45,6 @@
         <file>tabAndShiftTabToIndentAndUnindentReplacer.js</file>
         <file>replaceStyle.js</file>
         <file>setFontFamily.js</file>
+        <file>setFontSize.js</file>
     </qresource>
 </RCC>

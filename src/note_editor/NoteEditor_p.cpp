@@ -212,7 +212,6 @@ NoteEditorPrivate::NoteEditorPrivate(NoteEditor & noteEditor) :
     m_findInnermostElementJs(),
     m_determineStatesForCurrentTextCursorPositionJs(),
     m_determineContextMenuEventTargetJs(),
-    m_changeFontSizeForSelectionJs(),
     m_pageMutationObserverJs(),
     m_tableManagerJs(),
     m_resourceManagerJs(),
@@ -232,6 +231,7 @@ NoteEditorPrivate::NoteEditorPrivate(NoteEditor & noteEditor) :
     m_tabAndShiftTabIndentAndUnindentReplacerJs(),
     m_replaceStyleJs(),
     m_setFontFamilyJs(),
+    m_setFontSizeJs(),
 #ifndef QUENTIER_USE_QT_WEB_ENGINE
     m_qWebKitSetupJs(),
 #else
@@ -568,7 +568,6 @@ void NoteEditorPrivate::onNoteLoadFinished(bool ok)
     page->executeJavaScript(m_provideSrcForResourceImgTagsJs);
     page->executeJavaScript(m_determineStatesForCurrentTextCursorPositionJs);
     page->executeJavaScript(m_determineContextMenuEventTargetJs);
-    page->executeJavaScript(m_changeFontSizeForSelectionJs);
     page->executeJavaScript(m_tableManagerJs);
     page->executeJavaScript(m_resourceManagerJs);
     page->executeJavaScript(m_htmlInsertionManagerJs);
@@ -582,6 +581,7 @@ void NoteEditorPrivate::onNoteLoadFinished(bool ok)
     page->executeJavaScript(m_findAndReplaceDOMTextJs);
     page->executeJavaScript(m_replaceStyleJs);
     page->executeJavaScript(m_setFontFamilyJs);
+    page->executeJavaScript(m_setFontSizeJs);
 
     if (m_isPageEditable) {
         QNTRACE("Note page is editable");
@@ -5851,8 +5851,6 @@ void NoteEditorPrivate::setupScripts()
                  m_determineStatesForCurrentTextCursorPositionJs);
     SETUP_SCRIPT("javascript/scripts/determineContextMenuEventTarget.js",
                  m_determineContextMenuEventTargetJs);
-    SETUP_SCRIPT("javascript/scripts/changeFontSizeForSelection.js",
-                 m_changeFontSizeForSelectionJs);
     SETUP_SCRIPT("javascript/scripts/tableManager.js", m_tableManagerJs);
     SETUP_SCRIPT("javascript/scripts/resourceManager.js", m_resourceManagerJs);
     SETUP_SCRIPT("javascript/scripts/htmlInsertionManager.js",
@@ -5868,6 +5866,7 @@ void NoteEditorPrivate::setupScripts()
                  m_tabAndShiftTabIndentAndUnindentReplacerJs);
     SETUP_SCRIPT("javascript/scripts/replaceStyle.js", m_replaceStyleJs);
     SETUP_SCRIPT("javascript/scripts/setFontFamily.js", m_setFontFamilyJs);
+    SETUP_SCRIPT("javascript/scripts/setFontSize.js", m_setFontSizeJs);
 
 #ifndef QUENTIER_USE_QT_WEB_ENGINE
     SETUP_SCRIPT("javascript/scripts/qWebKitSetup.js", m_qWebKitSetupJs);
@@ -7331,6 +7330,7 @@ void NoteEditorPrivate::onFontFamilyUpdated(
         QNWARNING("No font family in extra data in JavaScript callback after "
                   "setting font family");
         setModified();
+        pushNoteContentEditUndoCommand();
         return;
     }
 
@@ -7342,6 +7342,7 @@ void NoteEditorPrivate::onFontFamilyUpdated(
         QNWARNING("Can't figure out whether font family was applied to "
                   "body style or to selection, assuming the latter option");
         setModified();
+        pushNoteContentEditUndoCommand();
         return;
     }
 
@@ -7351,6 +7352,77 @@ void NoteEditorPrivate::onFontFamilyUpdated(
     }
 
     setModified();
+    pushNoteContentEditUndoCommand();
+}
+
+void NoteEditorPrivate::onFontHeightUpdated(
+    const QVariant & data, const QVector<QPair<QString,QString> > & extraData)
+{
+    QNDEBUG("NoteEditorPrivate::onFontHeightUpdated: " << data);
+
+    QMap<QString,QVariant> resultMap = data.toMap();
+
+    auto statusIt = resultMap.find(QStringLiteral("status"));
+    if (Q_UNLIKELY(statusIt == resultMap.end())) {
+        ErrorString error(QT_TR_NOOP("Can't parse the result of font height "
+                                     "update from JavaScript"));
+        QNWARNING(error);
+        Q_EMIT notifyError(error);
+        return;
+    }
+
+    bool res = statusIt.value().toBool();
+    if (!res)
+    {
+        ErrorString error;
+
+        auto errorIt = resultMap.find(QStringLiteral("error"));
+        if (Q_UNLIKELY(errorIt == resultMap.end())) {
+            error.setBase(QT_TR_NOOP("Can't parse the error of font height "
+                                     "update from JavaScript"));
+        }
+        else {
+            error.setBase(QT_TR_NOOP("Can't update font height"));
+            error.details() = errorIt.value().toString();
+        }
+
+        QNWARNING(error);
+        Q_EMIT notifyError(error);
+        return;
+    }
+
+    page()->toHtml(
+        NoteEditorCallbackFunctor<QString>(
+            this,
+            &NoteEditorPrivate::onPageHtmlReceived));
+
+    if (Q_UNLIKELY(extraData.empty())) {
+        QNWARNING("No font height in extra data in JavaScript callback after "
+                  "setting font height");
+        setModified();
+        pushNoteContentEditUndoCommand();
+        return;
+    }
+
+    int height = extraData[0].second.toInt();
+    Q_EMIT textFontSizeChanged(height);
+
+    auto appliedToIt = resultMap.find(QStringLiteral("appliedTo"));
+    if (appliedToIt == resultMap.end()) {
+        QNWARNING("Can't figure out whether font height was applied to "
+                  "body style or to selection, assuming the latter option");
+        setModified();
+        pushNoteContentEditUndoCommand();
+        return;
+    }
+
+    if (appliedToIt.value().toString() == QStringLiteral("bodyStyle")) {
+        QNDEBUG("Font height was set to the default body style");
+        return;
+    }
+
+    setModified();
+    pushNoteContentEditUndoCommand();
 }
 
 bool NoteEditorPrivate::isNoteReadOnly() const
@@ -9686,14 +9758,20 @@ void NoteEditorPrivate::setFontHeight(const int height)
     CHECK_NOTE_EDITABLE(QT_TR_NOOP("Can't change the font height"))
 
     m_font.setPointSize(height);
-    GET_PAGE()
-    page->executeJavaScript(QStringLiteral("changeFontSizeForSelection(") +
-                            QString::number(height) + QStringLiteral(");"));
-    Q_EMIT textFontSizeChanged(height);
+    QString javascript = QString::fromUtf8("setFontSize('%1');").arg(height);
+    QNTRACE("Script: " << javascript);
 
-    if (hasSelection()) {
-        setModified();
-    }
+    QVector<QPair<QString,QString> > extraData;
+    extraData.push_back(QPair<QString,QString>(
+        QStringLiteral("fontSize"),
+        QString::number(height)));
+
+    GET_PAGE()
+    page->executeJavaScript(javascript,
+                            NoteEditorCallbackFunctor<QVariant>(
+                                this,
+                                &NoteEditorPrivate::onFontHeightUpdated,
+                                extraData));
 }
 
 void NoteEditorPrivate::setFontColor(const QColor & color)

@@ -21,7 +21,7 @@ function setFontFamily(fontFamily) {
 
     // First check if document body is empty, if so, apply the font family to
     // the "default" body style
-    body = document.body.innerHTML;
+    body = document.body.textContent;
     body.replace(/ /g, "")
     if (body == "") {
         observer.stop();

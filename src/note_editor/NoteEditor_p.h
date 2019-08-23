@@ -864,6 +864,10 @@ private:
         const QVariant & data,
         const QVector<QPair<QString,QString> > & extraData);
 
+    void onFontHeightUpdated(
+        const QVariant & data,
+        const QVector<QPair<QString,QString> > & extraData);
+
     bool isNoteReadOnly() const;
 
     void setupAddHyperlinkDelegate(
@@ -1082,7 +1086,6 @@ private:
     QString     m_findInnermostElementJs;
     QString     m_determineStatesForCurrentTextCursorPositionJs;
     QString     m_determineContextMenuEventTargetJs;
-    QString     m_changeFontSizeForSelectionJs;
     QString     m_pageMutationObserverJs;
     QString     m_tableManagerJs;
     QString     m_resourceManagerJs;
@@ -1102,6 +1105,7 @@ private:
     QString     m_tabAndShiftTabIndentAndUnindentReplacerJs;
     QString     m_replaceStyleJs;
     QString     m_setFontFamilyJs;
+    QString     m_setFontSizeJs;
 
 #ifndef QUENTIER_USE_QT_WEB_ENGINE
     QString     m_qWebKitSetupJs;
