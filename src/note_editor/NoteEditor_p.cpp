@@ -2585,20 +2585,7 @@ void NoteEditorPrivate::onInsertHtmlDelegateFinished(
         pDelegate->deleteLater();
     }
 
-    InsertHtmlUndoCommand * pCommand =
-        new InsertHtmlUndoCommand(addedResources, resourceFileStoragePaths,
-                                  NoteEditorCallbackFunctor<QVariant>(
-                                      this,
-                                      &NoteEditorPrivate::onInsertHtmlUndoRedoFinished),
-                                  *this, m_resourceFileStoragePathsByResourceLocalUid,
-                                  m_resourceInfo);
-
-    QObject::connect(pCommand,
-                     QNSIGNAL(InsertHtmlUndoCommand,notifyError,ErrorString),
-                     this,
-                     QNSLOT(NoteEditorPrivate,onUndoCommandError,ErrorString));
-    m_pUndoStack->push(pCommand);
-
+    pushInsertHtmlUndoCommand(addedResources, resourceFileStoragePaths);
     m_pendingConversionToNoteForSavingInLocalStorage = true;
     convertToNote();
 }
@@ -3924,6 +3911,25 @@ void NoteEditorPrivate::pushTableActionUndoCommand(const QString & name,
         new TableActionUndoCommand(*this, name, callback);
     QObject::connect(pCommand,
                      QNSIGNAL(TableActionUndoCommand,notifyError,ErrorString),
+                     this,
+                     QNSLOT(NoteEditorPrivate,onUndoCommandError,ErrorString));
+    m_pUndoStack->push(pCommand);
+}
+
+void NoteEditorPrivate::pushInsertHtmlUndoCommand(
+    const QList<Resource> & addedResources,
+    const QStringList & resourceFileStoragePaths)
+{
+    InsertHtmlUndoCommand * pCommand =
+        new InsertHtmlUndoCommand(NoteEditorCallbackFunctor<QVariant>(
+                                      this,
+                                      &NoteEditorPrivate::onInsertHtmlUndoRedoFinished),
+                                  *this, m_resourceFileStoragePathsByResourceLocalUid,
+                                  m_resourceInfo, addedResources,
+                                  resourceFileStoragePaths);
+
+    QObject::connect(pCommand,
+                     QNSIGNAL(InsertHtmlUndoCommand,notifyError,ErrorString),
                      this,
                      QNSLOT(NoteEditorPrivate,onUndoCommandError,ErrorString));
     m_pUndoStack->push(pCommand);
@@ -7321,10 +7327,15 @@ void NoteEditorPrivate::onFontFamilyUpdated(
         return;
     }
 
+#ifndef QUENTIER_USE_QT_WEB_ENGINE
+    m_htmlCachedMemory = page()->mainFrame()->toHtml();
+    onPageHtmlReceived(m_htmlCachedMemory);
+#else
     page()->toHtml(
         NoteEditorCallbackFunctor<QString>(
             this,
             &NoteEditorPrivate::onPageHtmlReceived));
+#endif
 
     if (Q_UNLIKELY(extraData.empty())) {
         QNWARNING("No font family in extra data in JavaScript callback after "
@@ -7391,16 +7402,21 @@ void NoteEditorPrivate::onFontHeightUpdated(
         return;
     }
 
+#ifndef QUENTIER_USE_QT_WEB_ENGINE
+    m_htmlCachedMemory = page()->mainFrame()->toHtml();
+    onPageHtmlReceived(m_htmlCachedMemory);
+#else
     page()->toHtml(
         NoteEditorCallbackFunctor<QString>(
             this,
             &NoteEditorPrivate::onPageHtmlReceived));
+#endif
 
     if (Q_UNLIKELY(extraData.empty())) {
         QNWARNING("No font height in extra data in JavaScript callback after "
                   "setting font height");
         setModified();
-        pushNoteContentEditUndoCommand();
+        pushInsertHtmlUndoCommand();
         return;
     }
 
@@ -7412,7 +7428,7 @@ void NoteEditorPrivate::onFontHeightUpdated(
         QNWARNING("Can't figure out whether font height was applied to "
                   "body style or to selection, assuming the latter option");
         setModified();
-        pushNoteContentEditUndoCommand();
+        pushInsertHtmlUndoCommand();
         return;
     }
 
@@ -7422,7 +7438,7 @@ void NoteEditorPrivate::onFontHeightUpdated(
     }
 
     setModified();
-    pushNoteContentEditUndoCommand();
+    pushInsertHtmlUndoCommand();
 }
 
 bool NoteEditorPrivate::isNoteReadOnly() const

@@ -679,6 +679,9 @@ private:
     void pushNoteContentEditUndoCommand();
     void pushTableActionUndoCommand(const QString & name,
                                     NoteEditorPage::Callback callback);
+    void pushInsertHtmlUndoCommand(
+        const QList<Resource> & addedResources = QList<Resource>(),
+        const QStringList & resourceFileStoragePaths = QStringList());
 
     template <typename T>
     QString composeHtmlTable(const T width, const T singleColumnWidth,
