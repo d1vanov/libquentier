@@ -112,7 +112,6 @@ typedef QWebEngineSettings WebSettings;
 #include <quentier/exception/NoteEditorPluginInitializationException.h>
 #include <quentier/types/Note.h>
 #include <quentier/types/Notebook.h>
-#include <quentier/types/Resource.h>
 #include <quentier/types/ResourceRecognitionIndexItem.h>
 #include <quentier/types/Account.h>
 #include <quentier/enml/ENMLConverter.h>

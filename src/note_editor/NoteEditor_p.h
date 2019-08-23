@@ -31,6 +31,7 @@
 #include <quentier/types/ErrorString.h>
 #include <quentier/types/Notebook.h>
 #include <quentier/types/ResourceRecognitionIndices.h>
+#include <quentier/types/Resource.h>
 
 #include <QObject>
 #include <QMimeType>
