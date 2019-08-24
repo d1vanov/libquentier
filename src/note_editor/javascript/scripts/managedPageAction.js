@@ -34,17 +34,17 @@ function managedPageAction(command, args) {
     }
 
     if (targetNode !== document.body) {
-	targetNode = targetNode.parentNode;
-	if (!targetNode) {
-	    return { status: false, error: "No target node's parent" };
-	}
+        targetNode = targetNode.parentNode;
+        if (!targetNode) {
+            return { status: false, error: "No target node's parent" };
+        }
     }
 
     if (targetNode !== document.body) {
-	targetNode = targetNode.parentNode;
-	if (!targetNode) {
-	    return { status: false, error: "No target node's grand parent" };
-	}
+        targetNode = targetNode.parentNode;
+        if (!targetNode) {
+            return { status: false, error: "No target node's grand parent" };
+        }
     }
 
     var targetNodeHtml = targetNode.innerHTML;

@@ -44,12 +44,12 @@ namespace quentier {
 // GET_PAGE
 
 InsertHtmlUndoCommand::InsertHtmlUndoCommand(
-        QList<Resource> addedResources,
-        QStringList resourceFileStoragePaths,
         const Callback & callback,
         NoteEditorPrivate & noteEditor,
         QHash<QString, QString> & resourceFileStoragePathsByResourceLocalUid,
         ResourceInfo & resourceInfo,
+        const QList<Resource> & addedResources,
+        const QStringList & resourceFileStoragePaths,
         QUndoCommand * parent) :
     INoteEditorUndoCommand(noteEditor, parent),
     m_addedResources(addedResources),
@@ -63,13 +63,13 @@ InsertHtmlUndoCommand::InsertHtmlUndoCommand(
 }
 
 InsertHtmlUndoCommand::InsertHtmlUndoCommand(
-        QList<Resource> addedResources,
-        QStringList resourceFileStoragePaths,
         const Callback & callback,
         NoteEditorPrivate & noteEditor,
         QHash<QString, QString> & resourceFileStoragePathsByResourceLocalUid,
         ResourceInfo & resourceInfo,
         const QString & text,
+        const QList<Resource> & addedResources,
+        const QStringList & resourceFileStoragePaths,
         QUndoCommand * parent) :
     INoteEditorUndoCommand(noteEditor, text, parent),
     m_addedResources(addedResources),

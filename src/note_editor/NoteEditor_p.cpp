@@ -112,7 +112,6 @@ typedef QWebEngineSettings WebSettings;
 #include <quentier/exception/NoteEditorPluginInitializationException.h>
 #include <quentier/types/Note.h>
 #include <quentier/types/Notebook.h>
-#include <quentier/types/Resource.h>
 #include <quentier/types/ResourceRecognitionIndexItem.h>
 #include <quentier/types/Account.h>
 #include <quentier/enml/ENMLConverter.h>
@@ -212,7 +211,6 @@ NoteEditorPrivate::NoteEditorPrivate(NoteEditor & noteEditor) :
     m_findInnermostElementJs(),
     m_determineStatesForCurrentTextCursorPositionJs(),
     m_determineContextMenuEventTargetJs(),
-    m_changeFontSizeForSelectionJs(),
     m_pageMutationObserverJs(),
     m_tableManagerJs(),
     m_resourceManagerJs(),
@@ -231,6 +229,8 @@ NoteEditorPrivate::NoteEditorPrivate(NoteEditor & noteEditor) :
     m_findAndReplaceDOMTextJs(),
     m_tabAndShiftTabIndentAndUnindentReplacerJs(),
     m_replaceStyleJs(),
+    m_setFontFamilyJs(),
+    m_setFontSizeJs(),
 #ifndef QUENTIER_USE_QT_WEB_ENGINE
     m_qWebKitSetupJs(),
 #else
@@ -293,9 +293,10 @@ NoteEditorPrivate::NoteEditorPrivate(NoteEditor & noteEditor) :
     m_pendingNextPageUrl(),
     m_pendingIndexHtmlWritingToFile(false),
     m_pendingJavaScriptExecution(false),
-    m_pendingDefaultPaletteReplacement(false),
+    m_pendingBodyStyleUpdate(false),
     m_skipPushingUndoCommandOnNextContentChange(false),
     m_noteLocalUid(),
+    m_pDefaultFont(),
     m_pPalette(),
     m_pNote(),
     m_pNotebook(),
@@ -566,7 +567,6 @@ void NoteEditorPrivate::onNoteLoadFinished(bool ok)
     page->executeJavaScript(m_provideSrcForResourceImgTagsJs);
     page->executeJavaScript(m_determineStatesForCurrentTextCursorPositionJs);
     page->executeJavaScript(m_determineContextMenuEventTargetJs);
-    page->executeJavaScript(m_changeFontSizeForSelectionJs);
     page->executeJavaScript(m_tableManagerJs);
     page->executeJavaScript(m_resourceManagerJs);
     page->executeJavaScript(m_htmlInsertionManagerJs);
@@ -579,6 +579,8 @@ void NoteEditorPrivate::onNoteLoadFinished(bool ok)
     page->executeJavaScript(m_managedPageActionJs);
     page->executeJavaScript(m_findAndReplaceDOMTextJs);
     page->executeJavaScript(m_replaceStyleJs);
+    page->executeJavaScript(m_setFontFamilyJs);
+    page->executeJavaScript(m_setFontSizeJs);
 
     if (m_isPageEditable) {
         QNTRACE("Note page is editable");
@@ -1058,9 +1060,9 @@ void NoteEditorPrivate::onJavaScriptLoaded()
         Q_EMIT noteLoaded();
     }
 
-    if (m_pendingDefaultPaletteReplacement) {
-        m_pendingDefaultPaletteReplacement = false;
-        replaceDefaultPalette();
+    if (m_pendingBodyStyleUpdate) {
+        m_pendingBodyStyleUpdate = false;
+        updateBodyStyle();
     }
 }
 
@@ -2582,20 +2584,7 @@ void NoteEditorPrivate::onInsertHtmlDelegateFinished(
         pDelegate->deleteLater();
     }
 
-    InsertHtmlUndoCommand * pCommand =
-        new InsertHtmlUndoCommand(addedResources, resourceFileStoragePaths,
-                                  NoteEditorCallbackFunctor<QVariant>(
-                                      this,
-                                      &NoteEditorPrivate::onInsertHtmlUndoRedoFinished),
-                                  *this, m_resourceFileStoragePathsByResourceLocalUid,
-                                  m_resourceInfo);
-
-    QObject::connect(pCommand,
-                     QNSIGNAL(InsertHtmlUndoCommand,notifyError,ErrorString),
-                     this,
-                     QNSLOT(NoteEditorPrivate,onUndoCommandError,ErrorString));
-    m_pUndoStack->push(pCommand);
-
+    pushInsertHtmlUndoCommand(addedResources, resourceFileStoragePaths);
     m_pendingConversionToNoteForSavingInLocalStorage = true;
     convertToNote();
 }
@@ -3921,6 +3910,25 @@ void NoteEditorPrivate::pushTableActionUndoCommand(const QString & name,
         new TableActionUndoCommand(*this, name, callback);
     QObject::connect(pCommand,
                      QNSIGNAL(TableActionUndoCommand,notifyError,ErrorString),
+                     this,
+                     QNSLOT(NoteEditorPrivate,onUndoCommandError,ErrorString));
+    m_pUndoStack->push(pCommand);
+}
+
+void NoteEditorPrivate::pushInsertHtmlUndoCommand(
+    const QList<Resource> & addedResources,
+    const QStringList & resourceFileStoragePaths)
+{
+    InsertHtmlUndoCommand * pCommand =
+        new InsertHtmlUndoCommand(NoteEditorCallbackFunctor<QVariant>(
+                                      this,
+                                      &NoteEditorPrivate::onInsertHtmlUndoRedoFinished),
+                                  *this, m_resourceFileStoragePathsByResourceLocalUid,
+                                  m_resourceInfo, addedResources,
+                                  resourceFileStoragePaths);
+
+    QObject::connect(pCommand,
+                     QNSIGNAL(InsertHtmlUndoCommand,notifyError,ErrorString),
                      this,
                      QNSLOT(NoteEditorPrivate,onUndoCommandError,ErrorString));
     m_pUndoStack->push(pCommand);
@@ -5848,8 +5856,6 @@ void NoteEditorPrivate::setupScripts()
                  m_determineStatesForCurrentTextCursorPositionJs);
     SETUP_SCRIPT("javascript/scripts/determineContextMenuEventTarget.js",
                  m_determineContextMenuEventTargetJs);
-    SETUP_SCRIPT("javascript/scripts/changeFontSizeForSelection.js",
-                 m_changeFontSizeForSelectionJs);
     SETUP_SCRIPT("javascript/scripts/tableManager.js", m_tableManagerJs);
     SETUP_SCRIPT("javascript/scripts/resourceManager.js", m_resourceManagerJs);
     SETUP_SCRIPT("javascript/scripts/htmlInsertionManager.js",
@@ -5864,6 +5870,8 @@ void NoteEditorPrivate::setupScripts()
     SETUP_SCRIPT("javascript/scripts/tabAndShiftTabToIndentAndUnindentReplacer.js",
                  m_tabAndShiftTabIndentAndUnindentReplacerJs);
     SETUP_SCRIPT("javascript/scripts/replaceStyle.js", m_replaceStyleJs);
+    SETUP_SCRIPT("javascript/scripts/setFontFamily.js", m_setFontFamilyJs);
+    SETUP_SCRIPT("javascript/scripts/setFontSize.js", m_setFontSizeJs);
 
 #ifndef QUENTIER_USE_QT_WEB_ENGINE
     SETUP_SCRIPT("javascript/scripts/qWebKitSetup.js", m_qWebKitSetupJs);
@@ -6335,34 +6343,86 @@ void NoteEditorPrivate::setupTextCursorPositionJavaScriptHandlerConnections()
 
 QString NoteEditorPrivate::noteEditorPagePrefix() const
 {
-    QString prefix = NOTE_EDITOR_PAGE_HEADER;
-    prefix += NOTE_EDITOR_PAGE_CSS;
-    prefix += QStringLiteral(
-        "<title></title></head>"
-        "<style id=\"bodyStyleTag\" type=\"text/css\">");
-    prefix += bodyStyleCss();
-    prefix += QStringLiteral("</style>");
+    QString prefix;
+    QTextStream strm(&prefix);
 
+    strm << NOTE_EDITOR_PAGE_HEADER;
+    strm << NOTE_EDITOR_PAGE_CSS;
+    strm << "<title></title></head>"
+            "<style id=\"bodyStyleTag\" type=\"text/css\">";
+    strm << bodyStyleCss();
+    strm << "</style>";
+
+    strm.flush();
     return prefix;
 }
 
 QString NoteEditorPrivate::bodyStyleCss() const
 {
-    QString css = QStringLiteral("body { color: ");
+    QString css;
+    QTextStream strm(&css);
+
+    strm << "body { "
+            "color: ";
 
     QPalette pal = defaultPalette();
 
-    css += pal.color(QPalette::WindowText).name();
-    css += QStringLiteral("; background-color: ");
-    css += pal.color(QPalette::Base).name();
+    strm << pal.color(QPalette::WindowText).name();
+    strm << "; background-color: ";
+    strm << pal.color(QPalette::Base).name();
+    strm << ";";
 
-    css += QStringLiteral(";} ::selection { background: ");
-    css += pal.color(QPalette::Highlight).name();
-    css += QStringLiteral("; color: ");
-    css += pal.color(QPalette::HighlightedText).name();
+    appendDefaultFontInfoToCss(strm);
 
-    css += QStringLiteral("; }");
+    strm << "}"
+            "::selection { "
+            "background: ";
+    strm << pal.color(QPalette::Highlight).name();
+    strm << "; color: ";
+    strm << pal.color(QPalette::HighlightedText).name();
+
+    strm << ";} ";
+
+    strm.flush();
     return css;
+}
+
+void NoteEditorPrivate::appendDefaultFontInfoToCss(QTextStream& strm) const
+{
+    if (m_pDefaultFont.isNull()) {
+        return;
+    }
+
+    strm << "font: ";
+
+    if (m_pDefaultFont->bold()) {
+        strm << "bold ";
+    }
+
+    if (m_pDefaultFont->italic()) {
+        strm << "italic ";
+    }
+
+    QFontMetrics fontMetrics(*m_pDefaultFont);
+
+    int pointSize = m_pDefaultFont->pointSize();
+    if (pointSize >= 0) {
+        strm << pointSize << "pt";
+    }
+    else {
+        int pixelSize = m_pDefaultFont->pixelSize();
+        strm << pixelSize << "px";
+    }
+
+    strm << "/" << fontMetrics.height();
+    if (pointSize >= 0) {
+        strm << "pt ";
+    }
+    else {
+        strm << "px ";
+    }
+
+    strm << "\"" << m_pDefaultFont->family() << "\";";
 }
 
 void NoteEditorPrivate::setupSkipRulesForHtmlToEnmlConversion()
@@ -6472,42 +6532,48 @@ QString NoteEditorPrivate::initialPageHtml() const
 
 QString NoteEditorPrivate::composeBlankPageHtml(const QString & rawText) const
 {
-    QString html = NOTE_EDITOR_PAGE_HEADER;
-    html += QStringLiteral("<style>"
-                           "body {"
-                           "background-color: ");
+    QString html;
+    QTextStream strm(&html);
+
+    strm << NOTE_EDITOR_PAGE_HEADER;
+    strm << "<style>"
+            "body {"
+            "background-color: ";
 
     QColor backgroundColor = palette().color(QPalette::Window).darker(115);
-    html += backgroundColor.name();
+    strm << backgroundColor.name();
 
-    html += QStringLiteral(";"
-                           "color: ");
+    strm << ";"
+            "color: ";
     QColor foregroundColor = palette().color(QPalette::WindowText);
-    html += foregroundColor.name();
+    strm << foregroundColor.name() << ";";
 
-    html += QStringLiteral(";"
-                           "-webkit-user-select: none;"
-                           "}"
-                           ".outer {"
-                           "    display: table;"
-                           "    position: absolute;"
-                           "    height: 95%;"
-                           "    width: 95%;"
-                           "}"
-                           ".middle {"
-                           "    display: table-cell;"
-                           "    vertical-align: middle;"
-                           "}"
-                           ".inner {"
-                           "    text-align: center;"
-                           "}"
-                           "</style><title></title></head>"
-                           "<body><div class=\"outer\"><div class=\"middle\">"
-                           "<div class=\"inner\">\n\n\n");
+    appendDefaultFontInfoToCss(strm);
 
-    html += rawText;
+    strm << " "
+            "-webkit-user-select: none;"
+            "}"
+            ".outer {"
+            "    display: table;"
+            "    position: absolute;"
+            "    height: 95%;"
+            "    width: 95%;"
+            "}"
+            ".middle {"
+            "    display: table-cell;"
+            "    vertical-align: middle;"
+            "}"
+            ".inner {"
+            "    text-align: center;"
+            "}"
+            "</style><title></title></head>"
+            "<body><div class=\"outer\"><div class=\"middle\">"
+            "<div class=\"inner\">\n\n\n";
 
-    html += QStringLiteral("</div></div></div></body></html>");
+    strm << rawText;
+    strm << "</div></div></div></body></html>";
+
+    strm.flush();
     return html;
 }
 
@@ -7168,9 +7234,9 @@ void NoteEditorPrivate::onSpellCheckSetOrCleared(
 #endif
 }
 
-void NoteEditorPrivate::replaceDefaultPalette()
+void NoteEditorPrivate::updateBodyStyle()
 {
-    QNDEBUG("NoteEditorPrivate::replaceDefaultPalette");
+    QNDEBUG("NoteEditorPrivate::updateBodyStyle");
 
     QString css = bodyStyleCss();
     escapeStringForJavaScript(css);
@@ -7182,13 +7248,13 @@ void NoteEditorPrivate::replaceDefaultPalette()
     page->executeJavaScript(javascript,
                             NoteEditorCallbackFunctor<QVariant>(
                                 this,
-                                &NoteEditorPrivate::onDefaultPaletteReplaced));
+                                &NoteEditorPrivate::onBodyStyleUpdated));
 }
 
-void NoteEditorPrivate::onDefaultPaletteReplaced(
+void NoteEditorPrivate::onBodyStyleUpdated(
     const QVariant & data, const QVector<QPair<QString,QString> > & extraData)
 {
-    QNDEBUG("NoteEditorPrivate::onDefaultPaletteReplaced: " << data);
+    QNDEBUG("NoteEditorPrivate::onBodyStyleUpdated: " << data);
 
     Q_UNUSED(extraData)
 
@@ -7196,8 +7262,8 @@ void NoteEditorPrivate::onDefaultPaletteReplaced(
 
     auto statusIt = resultMap.find(QStringLiteral("status"));
     if (Q_UNLIKELY(statusIt == resultMap.end())) {
-        ErrorString error(QT_TR_NOOP("Can't parse the result of default "
-                                     "palette replacing from JavaScript"));
+        ErrorString error(QT_TR_NOOP("Can't parse the result of body "
+                                     "style replacement from JavaScript"));
         QNWARNING(error);
         Q_EMIT notifyError(error);
         return;
@@ -7210,11 +7276,11 @@ void NoteEditorPrivate::onDefaultPaletteReplaced(
 
         auto errorIt = resultMap.find(QStringLiteral("error"));
         if (Q_UNLIKELY(errorIt == resultMap.end())) {
-            error.setBase(QT_TR_NOOP("Can't parse the error of default "
-                                     "palette replacing from JavaScript"));
+            error.setBase(QT_TR_NOOP("Can't parse the error of body "
+                                     "style replacement from JavaScript"));
         }
         else {
-            error.setBase(QT_TR_NOOP("Can't replace default palette"));
+            error.setBase(QT_TR_NOOP("Can't replace body style"));
             error.details() = errorIt.value().toString();
         }
 
@@ -7222,6 +7288,156 @@ void NoteEditorPrivate::onDefaultPaletteReplaced(
         Q_EMIT notifyError(error);
         return;
     }
+}
+
+void NoteEditorPrivate::onFontFamilyUpdated(
+    const QVariant & data, const QVector<QPair<QString,QString> > & extraData)
+{
+    QNDEBUG("NoteEditorPrivate::onFontFamilyUpdated: " << data);
+
+    QMap<QString,QVariant> resultMap = data.toMap();
+
+    auto statusIt = resultMap.find(QStringLiteral("status"));
+    if (Q_UNLIKELY(statusIt == resultMap.end())) {
+        ErrorString error(QT_TR_NOOP("Can't parse the result of font family "
+                                     "update from JavaScript"));
+        QNWARNING(error);
+        Q_EMIT notifyError(error);
+        return;
+    }
+
+    bool res = statusIt.value().toBool();
+    if (!res)
+    {
+        ErrorString error;
+
+        auto errorIt = resultMap.find(QStringLiteral("error"));
+        if (Q_UNLIKELY(errorIt == resultMap.end())) {
+            error.setBase(QT_TR_NOOP("Can't parse the error of font family "
+                                     "update from JavaScript"));
+        }
+        else {
+            error.setBase(QT_TR_NOOP("Can't update font family"));
+            error.details() = errorIt.value().toString();
+        }
+
+        QNWARNING(error);
+        Q_EMIT notifyError(error);
+        return;
+    }
+
+#ifndef QUENTIER_USE_QT_WEB_ENGINE
+    m_htmlCachedMemory = page()->mainFrame()->toHtml();
+    onPageHtmlReceived(m_htmlCachedMemory);
+#else
+    page()->toHtml(
+        NoteEditorCallbackFunctor<QString>(
+            this,
+            &NoteEditorPrivate::onPageHtmlReceived));
+#endif
+
+    if (Q_UNLIKELY(extraData.empty())) {
+        QNWARNING("No font family in extra data in JavaScript callback after "
+                  "setting font family");
+        setModified();
+        pushNoteContentEditUndoCommand();
+        return;
+    }
+
+    QString fontFamily = extraData[0].second;
+    Q_EMIT textFontFamilyChanged(fontFamily);
+
+    auto appliedToIt = resultMap.find(QStringLiteral("appliedTo"));
+    if (appliedToIt == resultMap.end()) {
+        QNWARNING("Can't figure out whether font family was applied to "
+                  "body style or to selection, assuming the latter option");
+        setModified();
+        pushNoteContentEditUndoCommand();
+        return;
+    }
+
+    if (appliedToIt.value().toString() == QStringLiteral("bodyStyle")) {
+        QNDEBUG("Font family was set to the default body style");
+        return;
+    }
+
+    setModified();
+    pushNoteContentEditUndoCommand();
+}
+
+void NoteEditorPrivate::onFontHeightUpdated(
+    const QVariant & data, const QVector<QPair<QString,QString> > & extraData)
+{
+    QNDEBUG("NoteEditorPrivate::onFontHeightUpdated: " << data);
+
+    QMap<QString,QVariant> resultMap = data.toMap();
+
+    auto statusIt = resultMap.find(QStringLiteral("status"));
+    if (Q_UNLIKELY(statusIt == resultMap.end())) {
+        ErrorString error(QT_TR_NOOP("Can't parse the result of font height "
+                                     "update from JavaScript"));
+        QNWARNING(error);
+        Q_EMIT notifyError(error);
+        return;
+    }
+
+    bool res = statusIt.value().toBool();
+    if (!res)
+    {
+        ErrorString error;
+
+        auto errorIt = resultMap.find(QStringLiteral("error"));
+        if (Q_UNLIKELY(errorIt == resultMap.end())) {
+            error.setBase(QT_TR_NOOP("Can't parse the error of font height "
+                                     "update from JavaScript"));
+        }
+        else {
+            error.setBase(QT_TR_NOOP("Can't update font height"));
+            error.details() = errorIt.value().toString();
+        }
+
+        QNWARNING(error);
+        Q_EMIT notifyError(error);
+        return;
+    }
+
+#ifndef QUENTIER_USE_QT_WEB_ENGINE
+    m_htmlCachedMemory = page()->mainFrame()->toHtml();
+    onPageHtmlReceived(m_htmlCachedMemory);
+#else
+    page()->toHtml(
+        NoteEditorCallbackFunctor<QString>(
+            this,
+            &NoteEditorPrivate::onPageHtmlReceived));
+#endif
+
+    if (Q_UNLIKELY(extraData.empty())) {
+        QNWARNING("No font height in extra data in JavaScript callback after "
+                  "setting font height");
+        setModified();
+        pushInsertHtmlUndoCommand();
+        return;
+    }
+
+    int height = extraData[0].second.toInt();
+    Q_EMIT textFontSizeChanged(height);
+
+    auto appliedToIt = resultMap.find(QStringLiteral("appliedTo"));
+    if (appliedToIt == resultMap.end()) {
+        QNWARNING("Can't figure out whether font height was applied to "
+                  "body style or to selection, assuming the latter option");
+        setModified();
+        pushInsertHtmlUndoCommand();
+        return;
+    }
+
+    if (appliedToIt.value().toString() == QStringLiteral("bodyStyle")) {
+        QNDEBUG("Font height was set to the default body style");
+        return;
+    }
+
+    setModified();
+    pushInsertHtmlUndoCommand();
 }
 
 bool NoteEditorPrivate::isNoteReadOnly() const
@@ -9526,13 +9742,20 @@ void NoteEditorPrivate::setFont(const QFont & font)
     CHECK_NOTE_EDITABLE(QT_TR_NOOP("Can't change font"))
 
     m_font = font;
-    QString fontName = font.family();
-    execJavascriptCommand(QStringLiteral("fontName"), fontName);
-    Q_EMIT textFontFamilyChanged(font.family());
+    QString fontFamily = font.family();
+    QString javascript = QString::fromUtf8("setFontFamily('%1');").arg(fontFamily);
+    QNTRACE("Script: " << javascript);
 
-    if (hasSelection()) {
-        setModified();
-    }
+    QVector<QPair<QString,QString> > extraData;
+    extraData.push_back(
+        QPair<QString,QString>(QStringLiteral("fontFamily"), fontFamily));
+
+    GET_PAGE()
+    page->executeJavaScript(javascript,
+                            NoteEditorCallbackFunctor<QVariant>(
+                                this,
+                                &NoteEditorPrivate::onFontFamilyUpdated,
+                                extraData));
 }
 
 void NoteEditorPrivate::setFontHeight(const int height)
@@ -9550,14 +9773,20 @@ void NoteEditorPrivate::setFontHeight(const int height)
     CHECK_NOTE_EDITABLE(QT_TR_NOOP("Can't change the font height"))
 
     m_font.setPointSize(height);
-    GET_PAGE()
-    page->executeJavaScript(QStringLiteral("changeFontSizeForSelection(") +
-                            QString::number(height) + QStringLiteral(");"));
-    Q_EMIT textFontSizeChanged(height);
+    QString javascript = QString::fromUtf8("setFontSize('%1');").arg(height);
+    QNTRACE("Script: " << javascript);
 
-    if (hasSelection()) {
-        setModified();
-    }
+    QVector<QPair<QString,QString> > extraData;
+    extraData.push_back(QPair<QString,QString>(
+        QStringLiteral("fontSize"),
+        QString::number(height)));
+
+    GET_PAGE()
+    page->executeJavaScript(javascript,
+                            NoteEditorCallbackFunctor<QVariant>(
+                                this,
+                                &NoteEditorPrivate::onFontHeightUpdated,
+                                extraData));
 }
 
 void NoteEditorPrivate::setFontColor(const QColor & color)
@@ -9637,7 +9866,7 @@ QPalette NoteEditorPrivate::defaultPalette() const
 
 void NoteEditorPrivate::setDefaultPalette(const QPalette & pal)
 {
-    QNINFO("NoteEditorPrivate::setDefaultPalette");
+    QNDEBUG("NoteEditorPrivate::setDefaultPalette");
 
     if (m_pPalette.isNull())
     {
@@ -9660,11 +9889,46 @@ void NoteEditorPrivate::setDefaultPalette(const QPalette & pal)
     if (m_pendingNotePageLoad || m_pendingIndexHtmlWritingToFile ||
         m_pendingJavaScriptExecution)
     {
-        m_pendingDefaultPaletteReplacement = true;
+        m_pendingBodyStyleUpdate = true;
         return;
     }
 
-    replaceDefaultPalette();
+    updateBodyStyle();
+}
+
+const QFont * NoteEditorPrivate::defaultFont() const
+{
+    return m_pDefaultFont.data();
+}
+
+void NoteEditorPrivate::setDefaultFont(const QFont & font)
+{
+    QNDEBUG("NoteEditorPrivate::setDefaultFont: " << font.toString());
+
+    if (!m_pDefaultFont.isNull() && *m_pDefaultFont == font) {
+        QNDEBUG("Font is already set");
+        return;
+    }
+
+    if (m_pDefaultFont.isNull()) {
+        m_pDefaultFont.reset(new QFont(font));
+    }
+    else {
+        *m_pDefaultFont = font;
+    }
+
+    if (Q_UNLIKELY(m_pNote.isNull())) {
+        return;
+    }
+
+    if (m_pendingNotePageLoad || m_pendingIndexHtmlWritingToFile ||
+        m_pendingJavaScriptExecution)
+    {
+        m_pendingBodyStyleUpdate = true;
+        return;
+    }
+
+    updateBodyStyle();
 }
 
 void NoteEditorPrivate::insertHorizontalLine()

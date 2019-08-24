@@ -170,13 +170,19 @@ public:
                       QString & enex, ErrorString & errorDescription);
 
     /**
-     * @return palette containing default fonts used by the editor; the palette
+     * @return palette containing default colors used by the editor; the palette
      * is composed of colors from note editor widget's native palette but some
      * of them might be overridden by colors from the palette specified
      * previously via setDefaultPalette method: those colors from the specified
      * palette which were valid
      */
     QPalette defaultPalette() const;
+
+    /**
+     * @return pointer to the default font used by the note editor; if no such
+     *         font was set to the editor previously, returns null pointer
+     */
+    const QFont * defaultFont() const;
 
 Q_SIGNALS:
     /**
@@ -385,6 +391,13 @@ public Q_SLOTS:
      *                      the editor
      */
     void setDefaultPalette(const QPalette & pal);
+
+    /**
+     * Sets the font which would be used by the editor by default
+     *
+     * @param font          The font to be used by the editor by default
+     */
+    void setDefaultFont(const QFont & font);
 
     void insertHorizontalLine();
 

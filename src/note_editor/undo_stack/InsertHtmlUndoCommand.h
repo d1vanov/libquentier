@@ -38,20 +38,20 @@ class Q_DECL_HIDDEN InsertHtmlUndoCommand: public INoteEditorUndoCommand
     typedef NoteEditorPage::Callback Callback;
 public:
     InsertHtmlUndoCommand(
-        QList<Resource> addedResources,
-        QStringList resourceFileStoragePaths,
         const Callback & callback, NoteEditorPrivate & noteEditor,
         QHash<QString, QString> & resourceFileStoragePathsByResourceLocalUid,
         ResourceInfo & resourceInfo,
+        const QList<Resource> & addedResources = QList<Resource>(),
+        const QStringList & resourceFileStoragePaths = QStringList(),
         QUndoCommand * parent = Q_NULLPTR);
 
     InsertHtmlUndoCommand(
-        QList<Resource> addedResources,
-        QStringList resourceFileStoragePaths,
         const Callback & callback, NoteEditorPrivate & noteEditor,
         QHash<QString, QString> & resourceFileStoragePathsByResourceLocalUid,
         ResourceInfo & resourceInfo,
         const QString & text,
+        const QList<Resource> & addedResources = QList<Resource>(),
+        const QStringList & resourceFileStoragePaths = QStringList(),
         QUndoCommand * parent = Q_NULLPTR);
 
     virtual ~InsertHtmlUndoCommand();

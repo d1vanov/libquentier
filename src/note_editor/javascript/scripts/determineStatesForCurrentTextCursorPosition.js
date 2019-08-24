@@ -30,13 +30,15 @@ function determineStatesForCurrentTextCursorPosition() {
         return;
     }
 
-    var anchorNode = selection.anchorNode;
-    if (!anchorNode) {
+    var node = selection.anchorNode;
+    if (!node) {
         console.log("selection.anchorNode is null");
         return;
     }
 
-    var element = anchorNode.parentNode;
+    console.log("Selection anchor node: type = " + node.nodeType +
+                ", name = " + node.nodeName + ", text content = " +
+                node.textContent + ", anchor offset = " + selection.anchorOffset);
 
     var foundBold = false;
     var foundItalic = false;
@@ -61,81 +63,94 @@ function determineStatesForCurrentTextCursorPosition() {
     var firstElement = true;
     var style;
 
-    while(element) {
-        if (Object.prototype.toString.call( element ) === '[object Array]') {
-            console.log("Found array of elements");
-            element = element[0];
-            if (!element) {
-                console.log("First element of the array is null");
+    while(node) {
+        console.log("Loop iteration: node type = " + node.nodeType + ", name = " +
+                    node.nodeName + ", text content = " + node.textContent);
+
+        if (Object.prototype.toString.call(node) === '[object Array]') {
+            console.log("Found array of nodes");
+            node = node[0];
+            if (!node) {
+                console.log("First node of the array is null");
                 break;
             }
+        }
+
+        while (node.nodeType != 1) {
+            console.log("Going up the DOM tree to get the source node");
+            node = node.parentNode;
+            if (!node) {
+                console.log("No further parent node");
+                break;
+            }
+        }
+
+        if (!node) {
+            break;
         }
 
         if (firstElement) {
-            var styleSource = (element.nodeType == 3 ? element.parentNode : element);
-            style = window.getComputedStyle(styleSource);
-            console.log("Got style: font family = " + style.fontFamily + ", font size = " + style.fontSize);
+            style = window.getComputedStyle(node);
+            console.log("Got style: font family = " + style.fontFamily +
+                        ", font size = " + style.fontSize +
+                        ", style source: " + node.outerHTML);
         }
 
-        console.log("element.nodeType = " + element.nodeType);
-        if (element.nodeType == 1) {
-            console.log("Found element with nodeType == 1");
-            var enTag = element.getAttribute("en-tag");
-            console.log("enTag = " + enTag + ", node name = " + element.nodeName);
-            if (enTag == "en-media") {
-                console.log("Found tag with en-tag = en-media");
-                if (element.nodeName == "IMG") {
-                    foundImageResource = true;
-                    console.log("Found image resource");
-                    break;
-                }
-                else if (element.nodeName == "DIV") {
-                    foundNonImageResource = true;
-                    console.log("Found non-image resource");
-                    break;
-                }
+        var enTag = node.getAttribute("en-tag");
+        console.log("enTag = " + enTag + ", node name = " + node.nodeName);
+        if (enTag == "en-media") {
+            console.log("Found tag with en-tag = en-media");
+            if (node.nodeName == "IMG") {
+                foundImageResource = true;
+                console.log("Found image resource: " + node.outerHTML);
+                break;
             }
-            else if (enTag == "en-crypt") {
-                foundEnCryptTag = true;
-                console.log("Found en-crypt tag");
+            else if (node.nodeName == "DIV") {
+                foundNonImageResource = true;
+                console.log("Found non-image resource: " + node.outerHTML);
                 break;
             }
         }
+        else if (enTag == "en-crypt") {
+            foundEnCryptTag = true;
+            console.log("Found en-crypt tag: " + node.outerHTML);
+            break;
+        }
 
-        if (element.nodeName == "B") {
+        if (node.nodeName == "B") {
             foundBold = true;
             console.log("Found bold");
         }
-        else if (element.nodeName == "I") {
+        else if (node.nodeName == "I") {
             foundItalic = true;
             console.log("Found italic");
         }
-        else if (element.nodeName == "U") {
+        else if (node.nodeName == "U") {
             foundUnderline = true;
             console.log("Fount underline");
         }
-        else if ((element.nodeName == "S") ||
-                 (element.nodeName == "DEL") ||
-                 (element.nodeName == "STRIKE")) {
+        else if ((node.nodeName == "S") ||
+                 (node.nodeName == "DEL") ||
+                 (node.nodeName == "STRIKE")) {
             foundStrikethrough = true;
             console.log("Found strikethrough");
         }
-        else if ((element.nodeName == "OL") && !foundUnorderedList) {
+        else if ((node.nodeName == "OL") && !foundUnorderedList) {
             foundOrderedList = true;
             console.log("Found ordered list");
         }
-        else if ((element.nodeName == "UL") && !foundOrderedList) {
+        else if ((node.nodeName == "UL") && !foundOrderedList) {
             foundUnorderedList = true;
             console.log("Found unordered list");
         }
-        else if (element.nodeName == "TBODY") {
+        else if (node.nodeName == "TBODY") {
             foundTable = true;
             console.log("Found table");
         }
 
         if (!foundAlignLeft && !foundAlignCenter && !foundAlignRight && !foundAlignFull)
         {
-            textAlign = element.style.textAlign;
+            textAlign = node.style.textAlign;
             if (textAlign) {
                 if (textAlign == "left") {
                     foundAlignLeft = true;
@@ -160,7 +175,7 @@ function determineStatesForCurrentTextCursorPosition() {
             }
         }
 
-        element = element.parentNode;
+        node = node.parentNode;
         firstElement = false;
         console.log("Checking the next parent");
     }

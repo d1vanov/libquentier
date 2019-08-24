@@ -31,6 +31,7 @@
 #include <quentier/types/ErrorString.h>
 #include <quentier/types/Notebook.h>
 #include <quentier/types/ResourceRecognitionIndices.h>
+#include <quentier/types/Resource.h>
 
 #include <QObject>
 #include <QMimeType>
@@ -237,6 +238,8 @@ public:
 
     virtual QPalette defaultPalette() const Q_DECL_OVERRIDE;
 
+    virtual const QFont * defaultFont() const Q_DECL_OVERRIDE;
+
 public Q_SLOTS:
     // INoteEditorBackend interface
     virtual void initialize(LocalStorageManagerAsync & localStorageManager,
@@ -296,6 +299,7 @@ public Q_SLOTS:
     virtual void setFontColor(const QColor & color) Q_DECL_OVERRIDE;
     virtual void setBackgroundColor(const QColor & color) Q_DECL_OVERRIDE;
     virtual void setDefaultPalette(const QPalette & pal) Q_DECL_OVERRIDE;
+    virtual void setDefaultFont(const QFont & font) Q_DECL_OVERRIDE;
     virtual void insertHorizontalLine() Q_DECL_OVERRIDE;
     virtual void increaseFontSize() Q_DECL_OVERRIDE;
     virtual void decreaseFontSize() Q_DECL_OVERRIDE;
@@ -676,6 +680,9 @@ private:
     void pushNoteContentEditUndoCommand();
     void pushTableActionUndoCommand(const QString & name,
                                     NoteEditorPage::Callback callback);
+    void pushInsertHtmlUndoCommand(
+        const QList<Resource> & addedResources = QList<Resource>(),
+        const QStringList & resourceFileStoragePaths = QStringList());
 
     template <typename T>
     QString composeHtmlTable(const T width, const T singleColumnWidth,
@@ -801,7 +808,10 @@ private:
     QString noteDeletedPageHtml() const;
     QString noteLoadingPageHtml() const;
     QString noteEditorPagePrefix() const;
+
     QString bodyStyleCss() const;
+    void appendDefaultFontInfoToCss(QTextStream& strm) const;
+
     QString initialPageHtml() const;
     QString composeBlankPageHtml(const QString & rawText) const;
 
@@ -849,8 +859,16 @@ private:
         const QVariant & dummy,
         const QVector<QPair<QString,QString> > & extraData);
 
-    void replaceDefaultPalette();
-    void onDefaultPaletteReplaced(
+    void updateBodyStyle();
+    void onBodyStyleUpdated(
+        const QVariant & data,
+        const QVector<QPair<QString,QString> > & extraData);
+
+    void onFontFamilyUpdated(
+        const QVariant & data,
+        const QVector<QPair<QString,QString> > & extraData);
+
+    void onFontHeightUpdated(
         const QVariant & data,
         const QVector<QPair<QString,QString> > & extraData);
 
@@ -1072,7 +1090,6 @@ private:
     QString     m_findInnermostElementJs;
     QString     m_determineStatesForCurrentTextCursorPositionJs;
     QString     m_determineContextMenuEventTargetJs;
-    QString     m_changeFontSizeForSelectionJs;
     QString     m_pageMutationObserverJs;
     QString     m_tableManagerJs;
     QString     m_resourceManagerJs;
@@ -1091,6 +1108,8 @@ private:
     QString     m_findAndReplaceDOMTextJs;
     QString     m_tabAndShiftTabIndentAndUnindentReplacerJs;
     QString     m_replaceStyleJs;
+    QString     m_setFontFamilyJs;
+    QString     m_setFontSizeJs;
 
 #ifndef QUENTIER_USE_QT_WEB_ENGINE
     QString     m_qWebKitSetupJs;
@@ -1197,12 +1216,13 @@ private:
     bool        m_pendingIndexHtmlWritingToFile;
     bool        m_pendingJavaScriptExecution;
 
-    bool        m_pendingDefaultPaletteReplacement;
+    bool        m_pendingBodyStyleUpdate;
 
     bool        m_skipPushingUndoCommandOnNextContentChange;
 
     QString     m_noteLocalUid;
 
+    QScopedPointer<QFont>       m_pDefaultFont;
     QScopedPointer<QPalette>    m_pPalette;
 
     QScopedPointer<Note>        m_pNote;

@@ -54,6 +54,7 @@ function HtmlInsertionManager() {
         }
 
         if (gotError) {
+            this.undo();
             return { status:false, error:errorText };
         }
 
@@ -62,7 +63,7 @@ function HtmlInsertionManager() {
 
     this.undo = function() {
         return this.undoRedoImpl(undoNodes, undoNodeInnerHtmls,
-                                 redoNodes, redoNodeInnerHtmls, true);
+                                redoNodes, redoNodeInnerHtmls, true);
 
     }
 
