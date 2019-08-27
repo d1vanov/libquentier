@@ -132,11 +132,29 @@ bool LocalStoragePatch1To2::backupLocalStorage(ErrorString & errorDescription)
 
     QString storagePath = accountPersistentStoragePath(m_account);
 
+    m_backupDirPath =
+        storagePath + QStringLiteral("/backup_") +
+        QDateTime::currentDateTime().toString(Qt::ISODate);
+    QDir backupDir(m_backupDirPath);
+    if (!backupDir.exists())
+    {
+        bool res = backupDir.mkpath(m_backupDirPath);
+        if (!res) {
+            errorDescription.setBase(QT_TR_NOOP("Can't backup local storage: "
+                                                "failed to create folder for "
+                                                "backup files"));
+            errorDescription.details() = QDir::toNativeSeparators(m_backupDirPath);
+            QNWARNING(errorDescription);
+            return false;
+        }
+    }
+
     QFileInfo shmDbFileInfo(storagePath + QStringLiteral("/qn.storage.sqlite-shm"));
     if (shmDbFileInfo.exists())
     {
-        QString shmDbFilePath = shmDbFileInfo.absoluteFilePath();
-        QString shmDbBackupFilePath = shmDbFilePath + QStringLiteral(".bak");
+        QString shmDbFileName = shmDbFileInfo.fileName();
+        QString shmDbBackupFilePath =
+            m_backupDirPath + QStringLiteral("/") + shmDbFileName;
 
         QFileInfo shmDbBackupFileInfo(shmDbBackupFilePath);
         if (shmDbBackupFileInfo.exists() && !removeFile(shmDbBackupFilePath))
@@ -149,6 +167,7 @@ bool LocalStoragePatch1To2::backupLocalStorage(ErrorString & errorDescription)
             return false;
         }
 
+        QString shmDbFilePath = shmDbFileInfo.absoluteFilePath();
         if (!QFile::copy(shmDbFilePath, shmDbBackupFilePath))
         {
             errorDescription.setBase(QT_TR_NOOP("Can't backup local storage: "
@@ -162,8 +181,9 @@ bool LocalStoragePatch1To2::backupLocalStorage(ErrorString & errorDescription)
     QFileInfo walDbFileInfo(storagePath + QStringLiteral("/qn.storage.sqlite-wal"));
     if (walDbFileInfo.exists())
     {
-        QString walDbFilePath = walDbFileInfo.absoluteFilePath();
-        QString walDbBackupFilePath = walDbFilePath + QStringLiteral(".bak");
+        QString walDbFileName = walDbFileInfo.fileName();
+        QString walDbBackupFilePath =
+            m_backupDirPath + QStringLiteral("/") + walDbFileName;
 
         QFileInfo walDbBackupFileInfo(walDbBackupFilePath);
         if (walDbBackupFileInfo.exists() && !removeFile(walDbBackupFilePath))
@@ -176,6 +196,7 @@ bool LocalStoragePatch1To2::backupLocalStorage(ErrorString & errorDescription)
             return false;
         }
 
+        QString walDbFilePath = walDbFileInfo.absoluteFilePath();
         if (!QFile::copy(walDbFilePath, walDbBackupFilePath))
         {
             errorDescription.setBase(QT_TR_NOOP("Can't backup local storage: "
@@ -247,13 +268,13 @@ bool LocalStoragePatch1To2::restoreLocalStorageFromBackup(ErrorString & errorDes
 
     QString storagePath = accountPersistentStoragePath(m_account);
 
-    QFileInfo shmDbBackupFileInfo(storagePath +
-                                  QStringLiteral("/qn.storage.sqlite-shm.bak"));
+    QString shmDbFileName = QStringLiteral("qn.storage.sqlite-shm");
+    QFileInfo shmDbBackupFileInfo(
+        m_backupDirPath + QStringLiteral("/") + shmDbFileName);
     if (shmDbBackupFileInfo.exists())
     {
         QString shmDbBackupFilePath = shmDbBackupFileInfo.absoluteFilePath();
-        QString shmDbFilePath = shmDbBackupFilePath;
-        shmDbFilePath.chop(4);
+        QString shmDbFilePath = storagePath + QStringLiteral("/") + shmDbFileName;
 
         QFileInfo shmDbFileInfo(shmDbFilePath);
         if (shmDbFileInfo.exists() && !removeFile(shmDbFilePath))
@@ -277,12 +298,13 @@ bool LocalStoragePatch1To2::restoreLocalStorageFromBackup(ErrorString & errorDes
         }
     }
 
-    QFileInfo walDbBackupFileInfo(storagePath + QStringLiteral("/qn.storage.sqlite-wal.bak"));
+    QString walDbFileName = QStringLiteral("qn.storage.sqlite-wal");
+    QFileInfo walDbBackupFileInfo(
+        m_backupDirPath + QStringLiteral("/") + walDbFileName);
     if (walDbBackupFileInfo.exists())
     {
         QString walDbBackupFilePath = walDbBackupFileInfo.absoluteFilePath();
-        QString walDbFilePath = walDbBackupFilePath;
-        walDbFilePath.chop(4);
+        QString walDbFilePath = storagePath + QStringLiteral("/") + walDbFileName;
 
         QFileInfo walDbFileInfo(walDbFilePath);
         if (walDbFileInfo.exists() && !removeFile(walDbFilePath))
@@ -366,11 +388,9 @@ bool LocalStoragePatch1To2::removeLocalStorageBackup(ErrorString & errorDescript
 {
     QNINFO("LocalStoragePatch1To2::removeLocalStorageBackup");
 
-    QString storagePath = accountPersistentStoragePath(m_account);
-
     bool removedShmDbBackup = true;
-    QFileInfo shmDbBackupFileInfo(storagePath +
-                                  QStringLiteral("/qn.storage.sqlite-shm.bak"));
+    QFileInfo shmDbBackupFileInfo(
+        m_backupDirPath + QStringLiteral("/qn.storage.sqlite-shm"));
     if (shmDbBackupFileInfo.exists() &&
         !removeFile(shmDbBackupFileInfo.absoluteFilePath()))
     {
@@ -380,8 +400,8 @@ bool LocalStoragePatch1To2::removeLocalStorageBackup(ErrorString & errorDescript
     }
 
     bool removedWalDbBackup = true;
-    QFileInfo walDbBackupFileInfo(storagePath +
-                                  QStringLiteral("/qn.storage.sqlite-wal.bak"));
+    QFileInfo walDbBackupFileInfo(
+        m_backupDirPath + QStringLiteral("/qn.storage.sqlite-wal"));
     if (walDbBackupFileInfo.exists() &&
         !removeFile(walDbBackupFileInfo.absoluteFilePath()))
     {
@@ -391,7 +411,8 @@ bool LocalStoragePatch1To2::removeLocalStorageBackup(ErrorString & errorDescript
     }
 
     bool removedDbBackup = true;
-    QFileInfo dbBackupFileInfo(storagePath + QStringLiteral("/qn.storage.sqlite.bak"));
+    QFileInfo dbBackupFileInfo(
+        m_backupDirPath + QStringLiteral("/qn.storage.sqlite"));
     if (dbBackupFileInfo.exists() &&
         !removeFile(dbBackupFileInfo.absoluteFilePath()))
     {
@@ -400,7 +421,16 @@ bool LocalStoragePatch1To2::removeLocalStorageBackup(ErrorString & errorDescript
         removedDbBackup = false;
     }
 
-    if (!removedShmDbBackup || !removedWalDbBackup || !removedDbBackup)
+    bool removedBackupDir = true;
+    QDir backupDir(m_backupDirPath);
+    if (!backupDir.rmdir(m_backupDirPath)) {
+        QNWARNING("Failed to remove the SQLite database's backup folder: "
+                  << m_backupDirPath);
+        removedBackupDir = false;
+    }
+
+    if (!removedShmDbBackup || !removedWalDbBackup ||
+        !removedDbBackup || !removedBackupDir)
     {
         errorDescription.setBase(QT_TR_NOOP("Failed to remove some of SQLite "
                                             "database's backups"));
@@ -860,9 +890,10 @@ void LocalStoragePatch1To2::startLocalStorageBackup()
     QNDEBUG("LocalStoragePatch1To2::startLocalStorageBackup");
 
     QString storagePath = accountPersistentStoragePath(m_account);
-    QString sourceDbFilePath = storagePath + QStringLiteral("/qn.storage.sqlite");
-    QString backupFilePath = sourceDbFilePath + QStringLiteral(".bak");
-    Q_EMIT copyDbFile(sourceDbFilePath, backupFilePath);
+    QString dbFileName = QStringLiteral("qn.storage.sqlite");
+    QString sourceDbFilePath = storagePath + QStringLiteral("/") + dbFileName;
+    QString backupDbFilePath = m_backupDirPath + QStringLiteral("/") + dbFileName;
+    Q_EMIT copyDbFile(sourceDbFilePath, backupDbFilePath);
 }
 
 void LocalStoragePatch1To2::startLocalStorageRestorationFromBackup()
@@ -870,8 +901,9 @@ void LocalStoragePatch1To2::startLocalStorageRestorationFromBackup()
     QNDEBUG("LocalStoragePatch1To2::startLocalStorageRestorationFromBackup");
 
     QString storagePath = accountPersistentStoragePath(m_account);
-    QString sourceDbFilePath = storagePath + QStringLiteral("/qn.storage.sqlite");
-    QString backupDbFilePath = sourceDbFilePath + QStringLiteral(".bak");
+    QString dbFileName = QStringLiteral("qn.storage.sqlite");
+    QString sourceDbFilePath = storagePath + QStringLiteral("/") + dbFileName;
+    QString backupDbFilePath = m_backupDirPath + QStringLiteral("/") + dbFileName;
     Q_EMIT copyDbFile(backupDbFilePath, sourceDbFilePath);
 }
 

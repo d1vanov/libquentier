@@ -75,6 +75,8 @@ private:
     Account                         m_account;
     LocalStorageManagerPrivate &    m_localStorageManager;
     QSqlDatabase &                  m_sqlDatabase;
+
+    QString     m_backupDirPath;
 };
 
 } // namespace quentier
