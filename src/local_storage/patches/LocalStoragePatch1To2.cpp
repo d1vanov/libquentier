@@ -133,7 +133,7 @@ bool LocalStoragePatch1To2::backupLocalStorage(ErrorString & errorDescription)
     QString storagePath = accountPersistentStoragePath(m_account);
 
     m_backupDirPath =
-        storagePath + QStringLiteral("/backup_") +
+        storagePath + QStringLiteral("/backup_upgrade_1_to_2_") +
         QDateTime::currentDateTime().toString(Qt::ISODate);
     QDir backupDir(m_backupDirPath);
     if (!backupDir.exists())
