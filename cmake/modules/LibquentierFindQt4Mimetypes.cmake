@@ -1,4 +1,4 @@
-if(NOT USE_QT5)
+if(BUILD_WITH_QT4)
   find_package(qt4-mimetypes QUIET REQUIRED)
 
   include_directories(${QT4-MIMETYPES_INCLUDE_DIRS}/qt4-mimetypes)

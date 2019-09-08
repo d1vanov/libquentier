@@ -12,14 +12,14 @@ Prebuilt versions of the library can be downloaded from the following locations:
      * [MSVC 2017 64 bit Qt 5.10](https://github.com/d1vanov/libquentier/releases/download/continuous-master/libquentier-windows-qt510-VS2017_x64.zip)
      * [MinGW 32 bit Qt 5.5](https://github.com/d1vanov/libquentier/releases/download/continuous-master/libquentier-windows-qt55-MinGW_x86.zip)
    * [Mac binary](https://github.com/d1vanov/libquentier/releases/download/continuous-master/libquentier_mac_x86_64.zip) built with latest Qt from Homebrew
-   * [Linux binary](https://github.com/d1vanov/libquentier/releases/download/continuous-master/libquentier_linux_qt_592_x86_64.zip) built on Ubuntu 14.04 with Qt 5.9.2
+   * [Linux binary](https://github.com/d1vanov/libquentier/releases/download/continuous-master/libquentier_linux_qt_5123_x86_64.zip) built on Ubuntu 14.04 with Qt 5.9.2
  * Unstable version:
    * Windows binaries:
      * [MSVC 2015 32 bit Qt 5.10](https://github.com/d1vanov/libquentier/releases/download/continuous-development/libquentier-windows-qt510-VS2015_x86.zip)
      * [MSVC 2017 64 bit Qt 5.10](https://github.com/d1vanov/libquentier/releases/download/continuous-development/libquentier-windows-qt510-VS2017_x64.zip)
      * [MinGW 32 bit Qt 5.5](https://github.com/d1vanov/libquentier/releases/download/continuous-development/libquentier-windows-qt55-MinGW_x86.zip)
    * [Mac binary](https://github.com/d1vanov/libquentier/releases/download/continuous-development/libquentier_mac_x86_64.zip) built with latest Qt from Homebrew
-   * [Linux binary](https://github.com/d1vanov/libquentier/releases/download/continuous-development/libquentier_linux_qt_592_x86_64.zip) built on Ubuntu 14.04 with Qt 5.9.2
+   * [Linux binary](https://github.com/d1vanov/libquentier/releases/download/continuous-development/libquentier_linux_qt_5123_x86_64.zip) built on Ubuntu 14.04 with Qt 5.9.2
 
 There are also repositories from which libquentier can be installed conveniently for several Linux distributions:
 
@@ -128,14 +128,14 @@ One other related option controls which of two Qt's web backends to use with Qt5
 cmake -DUSE_QT5_WEBKIT=YES <...>
 ```
 
-The Qt version being searched by default is Qt4. If you have both Qt4 and Qt5 installed and want to force the use of Qt5, use `USE_QT5` `CMake` option:
+The Qt version being searched/used by default is Qt5. If you want to build against Qt4, use `BUILD_WITH_QT4` `CMake` option:
 ```
-cmake -DUSE_QT5=YES <...>
+cmake -DBUILD_WITH_QT4=YES <...>
 ```
 
-If you don't have the Qt4 installation but only Qt5, there's no need to use this option, the Qt5 installation would be found automatically given that it is installed into one of standard locations on your system. Otherwise you'd need to point `CMake` to your Qt installation with `CMAKE_PREFIX_PATH` option:
+If you want to point `CMake` to some particular Qt installation in non-standard location, you can do it with `CMAKE_PREFIX_PATH` option:
 ```
-cmake -DCMAKE_PREFIX_PATH=<...path to Qt5 installation...> <...>
+cmake -DCMAKE_PREFIX_PATH=<...path to Qt installation...> <...>
 ```
 
 ### Translation
