@@ -3256,7 +3256,7 @@ void NoteEditorPrivate::onNoteResourceTemporaryFilesReady(QString noteLocalUid)
                                          resourceImageSize);
     }
 
-    if (!m_pendingNotePageLoad) {
+    if (!m_pendingNotePageLoad && !m_pendingIndexHtmlWritingToFile) {
         provideSrcForResourceImgTags();
         highlightRecognizedImageAreas(m_lastSearchHighlightedText,
                                       m_lastSearchHighlightedTextCaseSensitivity);
@@ -5294,6 +5294,8 @@ void NoteEditorPrivate::updateResource(const QString & resourceLocalUid,
     }
 
     updateHashForResourceTag(previousResourceHash, updatedResource.dataHash());
+
+    m_pendingNoteImageResourceTemporaryFiles = true;
 
     /**
      * Emitting this signal would cause the update of the temporary file
