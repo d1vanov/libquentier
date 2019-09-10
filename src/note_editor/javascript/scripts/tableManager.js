@@ -480,6 +480,7 @@ function TableManager() {
                 $(element).colResizable({
                     liveDrag:true,
                     draggingClass:"dragging",
+                    minWidth:3,
                     onResize:onTableResize
                 });
             }
@@ -488,6 +489,7 @@ function TableManager() {
                     liveDrag:true,
                     fixed:false,
                     draggingClass:"dragging",
+                    minWidth:3,
                     onResize:onTableResize
                 });
             }
