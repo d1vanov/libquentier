@@ -187,11 +187,17 @@ function SpellChecker(id, tag) {
     }
 
     this.setRegex = function(input) {
+        if (input == "") {
+            console.log("No input, setting empty search regex");
+            matchRegex = null;
+            return;
+        }
+
         input = input.replace(/\\([^u]|$)/g, "$1");
         input = input.replace(/'([.*+?^=!:${}()|[\]\/\\])/g, "\\$1");
         input = input.trim();
-        input = input.replace(/\s+/g, "|");
-        var re = "(?:^|[\\b\\s.,;:-=+-_><])" + "(" + input + ")" + "(?:[\\b\\s.,;:-=+-_><]|$)";
+        input = input.replace(/\s+/g, "\\b|\\b");
+        var re = "(?:^|[\\b\\s.,;:-=+-_><])" + "(\\b" + input + "\\b)" + "(?:[\\b\\s.,;:-=+-_><]|$)";
         var flags = "gi";
         console.log("Search regex: " + re + "; flags: " + flags);
         matchRegex = new RegExp(re, flags);
