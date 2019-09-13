@@ -217,7 +217,7 @@ function SpellChecker(id, tag) {
             }
         }
 
-        var nv = "";
+        var textContent = "";
         if (node.hasChildNodes()) {
             var childNode;
             for(var i = 0; i < node.childNodes.length; i++) {
@@ -231,7 +231,7 @@ function SpellChecker(id, tag) {
                     continue;
                 }
 
-                nv += childNode.nodeValue;
+                textContent += childNode.textContent;
             }
         }
         else {
@@ -240,16 +240,16 @@ function SpellChecker(id, tag) {
                 return;
             }
 
-            nv = node.nodeValue;
+            textContent = node.textContent;
         }
 
-        if (!nv || nv == "") {
-            console.log("No node value (cumulative or single) to highlight");
+        if (!textContent || textContent == "") {
+            console.log("No text content (cumulative or single) to highlight");
             return;
         }
 
         matchRegex.lastIndex = 0;
-        var regs = matchRegex.exec(nv);
+        var regs = matchRegex.exec(textContent);
         if (!regs) {
             console.log("No match");
             return;
@@ -260,7 +260,7 @@ function SpellChecker(id, tag) {
             return;
         }
 
-        console.log("Found misspelled word(s) within the text: " + nv + "; regs.length = " + regs.length +
+        console.log("Found misspelled word(s) within the text: " + textContent + "; regs.length = " + regs.length +
                     ", regs[0] = " + regs[0] + ", regs[1] = " + regs[1] + ", regs.index = " + regs.index +
                     ", matchRegex.lastIndex = " + matchRegex.lastIndex);
 
@@ -268,8 +268,11 @@ function SpellChecker(id, tag) {
         match.className = misspellTagClassName;
 
         var matchIndex = regs.index;
+        console.log("Match index: " + matchIndex);
+
         if(regs[0].match(/^\s/)) { // in case of leading whitespace
             ++matchIndex;
+            console.log("Promoted match index due to leading whitespace: " + matchIndex);
         }
 
         var targetNode;
@@ -287,14 +290,14 @@ function SpellChecker(id, tag) {
                     continue;
                 }
 
-                if (matchIndex >= childNode.length) {
-                    matchIndex -= childNode.length;
+                if (matchIndex >= childNode.textContent.length) {
+                    matchIndex -= childNode.textContent.length;
                     continue;
                 }
 
                 targetNode = childNode;
-                console.log("Found target text node for match: name = " + targetNode.nodeName + ", node value: " +
-                            targetNode.nodeValue + "; adjusted match index = " + matchIndex);
+                console.log("Found target text node for match: name = " + targetNode.nodeName + ", text content: " +
+                            targetNode.textContent + "; adjusted match index = " + matchIndex);
 
                 for(var nextNodeIndex = i + 1; nextNodeIndex < node.childNodes.length; ++nextNodeIndex) {
                     childNode = node.childNodes[nextNodeIndex];
@@ -307,8 +310,8 @@ function SpellChecker(id, tag) {
                     }
 
                     nextNode = childNode;
-                    console.log("Found target node's next text node: name = " + nextNode.nodeName + ", node value: " +
-                                nextNode.nodeValue);
+                    console.log("Found target node's next text node: name = " + nextNode.nodeName + ", text content: " +
+                                nextNode.textContent);
                     break;
                 }
 
@@ -319,28 +322,30 @@ function SpellChecker(id, tag) {
             targetNode = node;
         }
 
-        if (matchIndex >= targetNode.length) {
-            console.warn("Match index = " + matchIndex + " is larger than the target node's length: " + targetNode.length);
+        if (matchIndex >= targetNode.textContent.length) {
+            console.warn("Match index = " + matchIndex + " is larger than the target node's text content's length: " + targetNode.textContent.length);
             return;
         }
 
+        console.log("Match index: " + matchIndex + ", target node's text content: " + targetNode.textContent);
+
         var after = targetNode.splitText(matchIndex);
-        console.log("after: node value = " + after.nodeValue);
+        console.log("After splitting the target node: " + after.textContent);
 
         var wordPartInNextNode = regs[1].length - after.length;
         if (wordPartInNextNode > 0) {
-            after.nodeValue = "";
+            after.textContent = "";
             console.log("Erased after's node value");
         }
         else {
-            after.nodeValue = after.nodeValue.substring(regs[1].length);
-            console.log("after + substring " + regs[1].length + ": node value = " + after.nodeValue);
+            after.textContent = after.textContent.substring(regs[1].length);
+            console.log("After splitting: substring of " + regs[1].length + ": " + after.textContent);
         }
 
         // Part of the matched word might have got stuck in the next node, check for that
         if (nextNode && (wordPartInNextNode > 0)) {
-            nextNode.nodeValue = nextNode.nodeValue.substring(wordPartInNextNode);
-            console.log("Next node's node value after removing the part until the first whitespace: " + nextNode.nodeValue);
+            nextNode.textContent = nextNode.textContent.substring(wordPartInNextNode);
+            console.log("Next node's text content after removing the part until the first whitespace: " + nextNode.textContent);
 
             var middleIndex = regs[1].length - wordPartInNextNode;
             if (!currentHighlightingIsDynamic || !lastKeyCodeWasBackspace) {
