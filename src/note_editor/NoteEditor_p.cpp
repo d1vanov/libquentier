@@ -7142,7 +7142,7 @@ void NoteEditorPrivate::refreshMisSpelledWordsList()
             word = originalWord;
             m_stringUtils.removePunctuation(word);
             word = word.trimmed();
-            m_currentNoteMisSpelledWords << word;
+            Q_UNUSED(m_currentNoteMisSpelledWords.insert(word))
             QNTRACE("Word added to the list: " << word);
         }
     }
@@ -9034,7 +9034,7 @@ void NoteEditorPrivate::onSpellCheckIgnoreWordAction()
     }
 
     m_pSpellChecker->ignoreWord(m_lastMisSpelledWord);
-    m_currentNoteMisSpelledWords.removeAll(m_lastMisSpelledWord);
+    m_currentNoteMisSpelledWords.remove(m_lastMisSpelledWord);
     applySpellCheck();
 
     SpellCheckIgnoreWordUndoCommand * pCommand =
@@ -9064,7 +9064,7 @@ void NoteEditorPrivate::onSpellCheckAddWordToUserDictionaryAction()
     }
 
     m_pSpellChecker->addToUserWordlist(m_lastMisSpelledWord);
-    m_currentNoteMisSpelledWords.removeAll(m_lastMisSpelledWord);
+    m_currentNoteMisSpelledWords.remove(m_lastMisSpelledWord);
     applySpellCheck();
 
     SpellCheckAddToUserWordListUndoCommand * pCommand =
@@ -9201,13 +9201,10 @@ void NoteEditorPrivate::onSpellCheckerDynamicHelperUpdate(QStringList words)
             continue;
         }
 
-        if (!m_currentNoteMisSpelledWords.contains(word)) {
-            m_currentNoteMisSpelledWords << word;
-        }
+        Q_UNUSED(m_currentNoteMisSpelledWords.insert(word))
     }
 
-    QNTRACE("Current note's misspelled words: "
-            << m_currentNoteMisSpelledWords.join(QStringLiteral(", ")));
+    QNTRACE("Current note's misspelled words: " << m_currentNoteMisSpelledWords);
 
     applySpellCheck(/* apply to selection = */ true);
 }

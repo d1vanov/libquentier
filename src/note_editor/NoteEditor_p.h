@@ -1295,7 +1295,7 @@ private:
 
     SpellChecker *      m_pSpellChecker;
     bool                m_spellCheckerEnabled;
-    QStringList         m_currentNoteMisSpelledWords;
+    QSet<QString>       m_currentNoteMisSpelledWords;
     StringUtils         m_stringUtils;
 
     QString     m_lastSelectedHtml;
