@@ -3608,6 +3608,7 @@ void NoteEditorPrivate::onNoteUpdated(Note note)
     // either continue to edit the note or reload it
 
     QNDEBUG("Note has changed substantially, need to reload the editor");
+    *m_pNote = note;
     reloadCurrentNote();
 }
 
