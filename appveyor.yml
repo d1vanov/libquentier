@@ -56,7 +56,7 @@ init:
   - if %qt%==msvc2015 set PATH="C:\Program Files (x86)\MSBuild\14.0\Bin";%PATH%
 
 install:
-  - if not exist c:\dev\ciuploadtool md c:\dev\ciuploadtool else echo "Using cached version of ciuploadtool"
+  - if not exist c:\dev\ciuploadtool (md c:\dev\ciuploadtool) else (echo "Using cached version of ciuploadtool")
   - cd c:\dev\ciuploadtool
   - if not exist c:\dev\ciuploadtool\ciuploadtool.exe echo "Downloading ciuploadtool"
   - if not exist c:\dev\ciuploadtool\ciuploadtool.exe curl -fsSL https://github.com/d1vanov/ciuploadtool/releases/download/continuous-master/ciuploadtool_windows_x86.zip -o ciuploadtool_windows_x86.zip
@@ -64,8 +64,8 @@ install:
   - if %prepare_mode%==YES c:\dev\ciuploadtool\ciuploadtool.exe -preponly -suffix="%APPVEYOR_REPO_BRANCH%"
   - ps: if ($env:prepare_mode -eq "YES") { throw "Failing in order to stop the current build matrix job early" }
 # libiconv
-  - if not exist c:\dev\libiconv set SHOULD_DOWNLOAD_LIBICONV=1 else set SHOULD_DOWNLOAD_LIBICONV=0
-  - if %SHOULD_DOWNLOAD_LIBICONV%==1 md c:\dev\libiconv else echo "Using cached version of libiconv"
+  - if not exist c:\dev\libiconv (set SHOULD_DOWNLOAD_LIBICONV=1) else (set SHOULD_DOWNLOAD_LIBICONV=0)
+  - if %SHOULD_DOWNLOAD_LIBICONV%==1 (md c:\dev\libiconv) else (echo "Using cached version of libiconv")
   - cd c:\dev\libiconv
   - if %SHOULD_DOWNLOAD_LIBICONV%==1 echo "Downloading libiconv"
   - if %SHOULD_DOWNLOAD_LIBICONV%==1 if %qt%==msvc2015 curl -fsSL https://github.com/d1vanov/quentier-dependencies-windows/releases/download/continuous/libiconv-1.15-msvc2015_x86.zip -o libiconv-1.15-msvc2015_x86.zip
@@ -78,8 +78,8 @@ install:
   - set LIB=%cd%\lib;%LIB%
   - set INCLUDE=%cd%\include;%INCLUDE%
 # zlib
-  - if not exist c:\dev\zlib set SHOULD_DOWNLOAD_ZLIB=1 else set SHOULD_DOWNLOAD_ZLIB=0
-  - if %SHOULD_DOWNLOAD_ZLIB%==1 md c:\dev\zlib else echo "Using cached version of zlib"
+  - if not exist c:\dev\zlib (set SHOULD_DOWNLOAD_ZLIB=1) else (set SHOULD_DOWNLOAD_ZLIB=0)
+  - if %SHOULD_DOWNLOAD_ZLIB%==1 (md c:\dev\zlib) else (echo "Using cached version of zlib")
   - cd c:\dev\zlib
   - if %SHOULD_DOWNLOAD_ZLIB%==1 echo "Downloading zlib"
   - if %SHOULD_DOWNLOAD_ZLIB%==1 if %qt%==msvc2015 curl -fsSL https://github.com/d1vanov/quentier-dependencies-windows/releases/download/continuous/zlib-1.2.11-msvc2015_x86.zip -o zlib-1.2.11-msvc2015_x86.zip
@@ -92,8 +92,8 @@ install:
   - set LIB=%cd%\lib;%LIB%
   - set INCLUDE=%cd%\include;%INCLUDE%
 # libxml2
-  - if not exist c:\dev\libxml2 set SHOULD_DOWNLOAD_LIBXML2=1 else set SHOULD_DOWNLOAD_LIBXML2=0
-  - if %SHOULD_DOWNLOAD_LIBXML2%==1 md c:\dev\libxml2 else echo "Using cached version of libxml2"
+  - if not exist c:\dev\libxml2 (set SHOULD_DOWNLOAD_LIBXML2=1) else (set SHOULD_DOWNLOAD_LIBXML2=0)
+  - if %SHOULD_DOWNLOAD_LIBXML2%==1 (md c:\dev\libxml2) else (echo "Using cached version of libxml2")
   - cd c:\dev\libxml2
   - if %SHOULD_DOWNLOAD_LIBXML2%==1 echo "Downloading libxml2"
   - if %SHOULD_DOWNLOAD_LIBXML2%==1 if %qt%==msvc2015 curl -fsSL https://github.com/d1vanov/quentier-dependencies-windows/releases/download/continuous/libxml2-2.9.7-msvc2015_x86.zip -o libxml2-2.9.7-msvc2015_x86.zip
@@ -106,8 +106,8 @@ install:
   - set LIB=%cd%\lib;%LIB%
   - set INCLUDE=%cd%\include;%INCLUDE%
 # libhunspell
-  - if not exist c:\dev\libhunspell set SHOULD_DOWNLOAD_LIBHUNSPELL=1 else set SHOULD_DOWNLOAD_LIBHUNSPELL=0
-  - if %SHOULD_DOWNLOAD_LIBHUNSPELL%==1 md c:\dev\libhunspell else echo "Using cached version of libhunspell"
+  - if not exist c:\dev\libhunspell (set SHOULD_DOWNLOAD_LIBHUNSPELL=1) else (set SHOULD_DOWNLOAD_LIBHUNSPELL=0)
+  - if %SHOULD_DOWNLOAD_LIBHUNSPELL%==1 (md c:\dev\libhunspell) else (echo "Using cached version of libhunspell")
   - cd c:\dev\libhunspell
   - if %SHOULD_DOWNLOAD_LIBHUNSPELL%==1 echo "Downloading libhunspell"
   - if %SHOULD_DOWNLOAD_LIBHUNSPELL%==1 if %qt%==msvc2015 curl -fsSL https://github.com/d1vanov/quentier-dependencies-windows/releases/download/continuous/libhunspell-1.7.0-msvc2015_x86.zip -o libhunspell-1.7.0-msvc2015_x86.zip
@@ -120,8 +120,8 @@ install:
   - set LIB=%cd%\lib;%LIB%
   - set INCLUDE=%cd%\include;%INCLUDE%
 # tidy-html5
-  - if not exist c:\dev\tidy-html5 set SHOULD_DOWNLOAD_TIDY_HTML5=1 else set SHOULD_DOWNLOAD_TIDY_HTML5=0
-  - if %SHOULD_DOWNLOAD_TIDY_HTML5%==1 md c:\dev\tidy-html5 else echo "Using cached version of tidy-html5"
+  - if not exist c:\dev\tidy-html5 (set SHOULD_DOWNLOAD_TIDY_HTML5=1) else (set SHOULD_DOWNLOAD_TIDY_HTML5=0)
+  - if %SHOULD_DOWNLOAD_TIDY_HTML5%==1 (md c:\dev\tidy-html5) else (echo "Using cached version of tidy-html5")
   - cd c:\dev\tidy-html5
   - if %SHOULD_DOWNLOAD_TIDY_HTML5%==1 echo "Downloading tidy-html5"
   - if %SHOULD_DOWNLOAD_TIDY_HTML5%==1 if %qt%==msvc2015 curl -fsSL https://github.com/d1vanov/quentier-dependencies-windows/releases/download/continuous/tidy-html5-5.6.0-msvc2015_x86.zip -o tidy-html5-5.6.0-msvc2015_x86.zip
@@ -134,8 +134,8 @@ install:
   - set LIB=%cd%\lib;%LIB%
   - set INCLUDE=%cd%\include;%INCLUDE%
 # Boost
-  - if not exist c:\dev\boost set SHOULD_DOWNLOAD_BOOST=1 else set SHOULD_DOWNLOAD_BOOST=0
-  - if %SHOULD_DOWNLOAD_BOOST%==1 md c:\dev\boost else echo "Using cached version of boost"
+  - if not exist c:\dev\boost (set SHOULD_DOWNLOAD_BOOST=1) else (set SHOULD_DOWNLOAD_BOOST=0)
+  - if %SHOULD_DOWNLOAD_BOOST%==1 (md c:\dev\boost) else (echo "Using cached version of boost")
   - cd c:\dev\boost
   - if %SHOULD_DOWNLOAD_BOOST%==1 echo "Downloading boost"
   - if %SHOULD_DOWNLOAD_BOOST%==1 if %qt%==msvc2015 curl -fsSL https://github.com/d1vanov/quentier-dependencies-windows/releases/download/continuous/boost-1_65_0-msvc2015_x86.zip -o boost-1_65_0-msvc2015_x86.zip
@@ -149,8 +149,8 @@ install:
   - set INCLUDE=%cd%\include;%INCLUDE%
   - set BOOST_ROOT=%cd%
 # OpenSSL
-  - if not exist c:\dev\openssl set SHOULD_DOWNLOAD_OPENSSL=1 else set SHOULD_DOWNLOAD_OPENSSL=0
-  - if %SHOULD_DOWNLOAD_OPENSSL%==1 md c:\dev\openssl else echo "Using cached version of openssl"
+  - if not exist c:\dev\openssl (set SHOULD_DOWNLOAD_OPENSSL=1) else (set SHOULD_DOWNLOAD_OPENSSL=0)
+  - if %SHOULD_DOWNLOAD_OPENSSL%==1 (md c:\dev\openssl) else (echo "Using cached version of openssl")
   - cd c:\dev\openssl
   - if %SHOULD_DOWNLOAD_OPENSSL%==1 echo "Downloading OpenSSL"
   - if %SHOULD_DOWNLOAD_OPENSSL%==1 if %qt%==msvc2015 curl -fsSL https://github.com/d1vanov/quentier-dependencies-windows/releases/download/continuous/openssl-1_0_2r-msvc2015_x86.zip -o openssl-1_0_2r-msvc2015_x86.zip
@@ -164,8 +164,8 @@ install:
   - set INCLUDE=%cd%\include;%INCLUDE%
   - set OPENSSL_ROOT_DIR=%cd%
 # Qtkeychain
-  - if not exist c:\dev\qtkeychain set SHOULD_DOWNLOAD_QTKEYCHAIN=1 else set SHOULD_DOWNLOAD_QTKEYCHAIN=0
-  - if %SHOULD_DOWNLOAD_QTKEYCHAIN%==1 md c:\dev\qtkeychain else echo "Using cached version of qtkeychain"
+  - if not exist c:\dev\qtkeychain (set SHOULD_DOWNLOAD_QTKEYCHAIN=1) else (set SHOULD_DOWNLOAD_QTKEYCHAIN=0)
+  - if %SHOULD_DOWNLOAD_QTKEYCHAIN%==1 (md c:\dev\qtkeychain) else (echo "Using cached version of qtkeychain")
   - cd c:\dev\qtkeychain
   - if %SHOULD_DOWNLOAD_QTKEYCHAIN%==1 echo "Downloading qtkeychain"
   - if %SHOULD_DOWNLOAD_QTKEYCHAIN%==1 if %qt%==msvc2015 curl -fsSL https://github.com/d1vanov/quentier-dependencies-windows/releases/download/continuous/qtkeychain-0.9.1-msvc2015_x86.zip -o qtkeychain-0.9.1-msvc2015_x86.zip
@@ -178,14 +178,14 @@ install:
   - set LIB=%cd%\lib;%LIB%
   - set INCLUDE=%cd%\include;%INCLUDE%
 # QEverCloud
-  - if not exist c:\dev\qevercloud set SHOULD_DOWNLOAD_QEVERCLOUD=1 else set SHOULD_DOWNLOAD_QEVERCLOUD=0
-  - if %SHOULD_DOWNLOAD_QEVERCLOUD%==1 md c:\dev\qevercloud else echo "Using cached version of QEverCloud"
+  - if not exist c:\dev\qevercloud (set SHOULD_DOWNLOAD_QEVERCLOUD=1) else (set SHOULD_DOWNLOAD_QEVERCLOUD=0)
+  - if %SHOULD_DOWNLOAD_QEVERCLOUD%==1 (md c:\dev\qevercloud) else (echo "Using cached version of QEverCloud")
   - cd c:\dev\qevercloud
   - if %SHOULD_DOWNLOAD_QEVERCLOUD%==1 echo "Downloading QEverCloud"
 # First try to download the prebuilt binary to save the precious time as well as CPU cycles
   - md build\installdir
   - cd build\installdir
-  - if %SHOULD_DOWNLOAD_QEVERCLOUD%==1 set QEVERCLOUD_RECEIVED=0 else set QEVERCLOUD_RECEIVED=1
+  - if %SHOULD_DOWNLOAD_QEVERCLOUD%==1 (set QEVERCLOUD_RECEIVED=0) else (set QEVERCLOUD_RECEIVED=1)
   - if %SHOULD_DOWNLOAD_QEVERCLOUD%==1 if %qt%==msvc2015 if "%APPVEYOR_REPO_BRANCH%" == "development" curl -fsSL https://github.com/d1vanov/QEverCloud/releases/download/continuous-development/qevercloud-windows-qt510-VS2015_x86.zip -o qevercloud-windows-qt510-VS2015_x86.zip & set errorlevel=0
   - if %SHOULD_DOWNLOAD_QEVERCLOUD%==1 if %qt%==msvc2015 if not "%APPVEYOR_REPO_BRANCH%" == "development" curl -fsSL https://github.com/d1vanov/QEverCloud/releases/download/continuous-master/qevercloud-windows-qt510-VS2015_x86.zip -o qevercloud-windows-qt510-VS2015_x86.zip & set errorlevel=0
   - if %SHOULD_DOWNLOAD_QEVERCLOUD%==1 if %qt%==msvc2017_64 if "%APPVEYOR_REPO_BRANCH%" == "development" curl -fsSL https://github.com/d1vanov/QEverCloud/releases/download/continuous-development/qevercloud-windows-qt510-VS2017_x64.zip -o qevercloud-windows-qt510-VS2017_x64.zip & set errorlevel=0
