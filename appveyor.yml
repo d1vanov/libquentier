@@ -56,133 +56,142 @@ init:
   - if %qt%==msvc2015 set PATH="C:\Program Files (x86)\MSBuild\14.0\Bin";%PATH%
   
 install:
-  - echo "Downloading ciuploadtool"
-  - md c:\dev\ciuploadtool
+  - if not exist c:\dev\ciuploadtool md c:\dev\ciuploadtool else echo "Using cached version of ciuploadtool"
   - cd c:\dev\ciuploadtool
-  - curl -fsSL https://github.com/d1vanov/ciuploadtool/releases/download/continuous-master/ciuploadtool_windows_x86.zip -o ciuploadtool_windows_x86.zip
-  - 7z x ciuploadtool_windows_x86.zip
+  - if not exist c:\dev\ciuploadtool\ciuploadtool.exe echo "Downloading ciuploadtool"
+  - if not exist c:\dev\ciuploadtool\ciuploadtool.exe curl -fsSL https://github.com/d1vanov/ciuploadtool/releases/download/continuous-master/ciuploadtool_windows_x86.zip -o ciuploadtool_windows_x86.zip
+  - if not exist c:\dev\ciuploadtool\ciuploadtool.exe 7z x ciuploadtool_windows_x86.zip
   - if %prepare_mode%==YES c:\dev\ciuploadtool\ciuploadtool.exe -preponly -suffix="%APPVEYOR_REPO_BRANCH%"
   - ps: if ($env:prepare_mode -eq "YES") { throw "Failing in order to stop the current build matrix job early" }
 # libiconv
-  - echo "Downloading libiconv"
-  - md c:\dev\libiconv
+  - if not exist c:\dev\libiconv set should_download_libiconv=1 else set should_download_libiconv=0
+  - if should_download_libiconv md c:\dev\libiconv else echo "Using cached version of libiconv"
   - cd c:\dev\libiconv
-  - if %qt%==msvc2015 curl -fsSL https://github.com/d1vanov/quentier-dependencies-windows/releases/download/continuous/libiconv-1.15-msvc2015_x86.zip -o libiconv-1.15-msvc2015_x86.zip
+  - if should_download_libiconv echo "Downloading libiconv"
+  - if should_download_libiconv if %qt%==msvc2015 curl -fsSL https://github.com/d1vanov/quentier-dependencies-windows/releases/download/continuous/libiconv-1.15-msvc2015_x86.zip -o libiconv-1.15-msvc2015_x86.zip
   - if %qt%==msvc2015 7z x libiconv-1.15-msvc2015_x86.zip
-  - if %qt%==msvc2017_64 curl -fsSL https://github.com/d1vanov/quentier-dependencies-windows/releases/download/continuous/libiconv-1.15-msvc2017_x64.zip -o libiconv-1.15-msvc2017_x64.zip
+  - if should_download_libiconv if %qt%==msvc2017_64 curl -fsSL https://github.com/d1vanov/quentier-dependencies-windows/releases/download/continuous/libiconv-1.15-msvc2017_x64.zip -o libiconv-1.15-msvc2017_x64.zip
   - if %qt%==msvc2017_64 7z x libiconv-1.15-msvc2017_x64.zip
-  - if %qt%==mingw492_32 curl -fsSL https://github.com/d1vanov/quentier-dependencies-windows/releases/download/continuous/libiconv-1.15-mingw530_x86.zip -o libiconv-1.15-mingw530_x86.zip
+  - if should_download_libiconv if %qt%==mingw492_32 curl -fsSL https://github.com/d1vanov/quentier-dependencies-windows/releases/download/continuous/libiconv-1.15-mingw530_x86.zip -o libiconv-1.15-mingw530_x86.zip
   - if %qt%==mingw492_32 7z x libiconv-1.15-mingw530_x86.zip
   - set PATH=%cd%\bin;%PATH%
   - set LIB=%cd%\lib;%LIB%
   - set INCLUDE=%cd%\include;%INCLUDE%
 # zlib
-  - echo "Downloading zlib"
-  - md c:\dev\zlib
+  - if not exist c:\dev\zlib set should_download_zlib=1 else set should_download_zlib=0
+  - if should_download_zlib md c:\dev\zlib else echo "Using cached version of zlib"
   - cd c:\dev\zlib
-  - if %qt%==msvc2015 curl -fsSL https://github.com/d1vanov/quentier-dependencies-windows/releases/download/continuous/zlib-1.2.11-msvc2015_x86.zip -o zlib-1.2.11-msvc2015_x86.zip
+  - if should_download_zlib echo "Downloading zlib"
+  - if should_download_zlib if %qt%==msvc2015 curl -fsSL https://github.com/d1vanov/quentier-dependencies-windows/releases/download/continuous/zlib-1.2.11-msvc2015_x86.zip -o zlib-1.2.11-msvc2015_x86.zip
   - if %qt%==msvc2015 7z x zlib-1.2.11-msvc2015_x86.zip
-  - if %qt%==msvc2017_64 curl -fsSL https://github.com/d1vanov/quentier-dependencies-windows/releases/download/continuous/zlib-1.2.11-msvc2017_x64.zip -o zlib-1.2.11-msvc2017_x64.zip
+  - if should_download_zlib if %qt%==msvc2017_64 curl -fsSL https://github.com/d1vanov/quentier-dependencies-windows/releases/download/continuous/zlib-1.2.11-msvc2017_x64.zip -o zlib-1.2.11-msvc2017_x64.zip
   - if %qt%==msvc2017_64 7z x zlib-1.2.11-msvc2017_x64.zip
-  - if %qt%==mingw492_32 curl -fsSL https://github.com/d1vanov/quentier-dependencies-windows/releases/download/continuous/zlib-1.2.11-mingw530_x86.zip -o zlib-1.2.11-mingw530_x86.zip
+  - if should_download_zlib if %qt%==mingw492_32 curl -fsSL https://github.com/d1vanov/quentier-dependencies-windows/releases/download/continuous/zlib-1.2.11-mingw530_x86.zip -o zlib-1.2.11-mingw530_x86.zip
   - if %qt%==mingw492_32 7z x zlib-1.2.11-mingw530_x86.zip
   - set PATH=%cd%\bin;%PATH%
   - set LIB=%cd%\lib;%LIB%
   - set INCLUDE=%cd%\include;%INCLUDE%
 # libxml2
-  - echo "Downloading libxml2"
-  - md c:\dev\libxml2
+  - if not exist c:\dev\libxml2 set should_download_libxml2=1 else set should_download_libxml2=0
+  - if should_download_libxml2 md c:\dev\libxml2 else echo "Using cached version of libxml2"
   - cd c:\dev\libxml2
-  - if %qt%==msvc2015 curl -fsSL https://github.com/d1vanov/quentier-dependencies-windows/releases/download/continuous/libxml2-2.9.7-msvc2015_x86.zip -o libxml2-2.9.7-msvc2015_x86.zip
+  - if should_download_libxml2 echo "Downloading libxml2"
+  - if should_download_libxml2 if %qt%==msvc2015 curl -fsSL https://github.com/d1vanov/quentier-dependencies-windows/releases/download/continuous/libxml2-2.9.7-msvc2015_x86.zip -o libxml2-2.9.7-msvc2015_x86.zip
   - if %qt%==msvc2015 7z x libxml2-2.9.7-msvc2015_x86.zip
-  - if %qt%==msvc2017_64 curl -fsSL https://github.com/d1vanov/quentier-dependencies-windows/releases/download/continuous/libxml2-2.9.7-msvc2017_x64.zip -o libxml2-2.9.7-msvc2017_x64.zip
+  - if should_download_libxml2 if %qt%==msvc2017_64 curl -fsSL https://github.com/d1vanov/quentier-dependencies-windows/releases/download/continuous/libxml2-2.9.7-msvc2017_x64.zip -o libxml2-2.9.7-msvc2017_x64.zip
   - if %qt%==msvc2017_64 7z x libxml2-2.9.7-msvc2017_x64.zip
-  - if %qt%==mingw492_32 curl -fsSL https://github.com/d1vanov/quentier-dependencies-windows/releases/download/continuous/libxml2-2.9.7-mingw530_x86.zip -o libxml2-2.9.7-mingw530_x86.zip
+  - if should_download_libxml2 if %qt%==mingw492_32 curl -fsSL https://github.com/d1vanov/quentier-dependencies-windows/releases/download/continuous/libxml2-2.9.7-mingw530_x86.zip -o libxml2-2.9.7-mingw530_x86.zip
   - if %qt%==mingw492_32 7z x libxml2-2.9.7-mingw530_x86.zip
   - set PATH=%cd%\bin;%PATH%
   - set LIB=%cd%\lib;%LIB%
   - set INCLUDE=%cd%\include;%INCLUDE%
 # libhunspell
-  - echo "Downloading libhunspell"
-  - md c:\dev\libhunspell
+  - if not exist c:\dev\libhunspell set should_download_lihunspell=1 else set should_download_lihunspell=0
+  - if should_download_lihunspell md c:\dev\libhunspell else echo "Using cached version of libhunspell"
   - cd c:\dev\libhunspell
-  - if %qt%==msvc2015 curl -fsSL https://github.com/d1vanov/quentier-dependencies-windows/releases/download/continuous/libhunspell-1.7.0-msvc2015_x86.zip -o libhunspell-1.7.0-msvc2015_x86.zip
+  - if should_download_lihunspell echo "Downloading libhunspell"
+  - if should_download_lihunspell if %qt%==msvc2015 curl -fsSL https://github.com/d1vanov/quentier-dependencies-windows/releases/download/continuous/libhunspell-1.7.0-msvc2015_x86.zip -o libhunspell-1.7.0-msvc2015_x86.zip
   - if %qt%==msvc2015 7z x libhunspell-1.7.0-msvc2015_x86.zip
-  - if %qt%==msvc2017_64 curl -fsSL https://github.com/d1vanov/quentier-dependencies-windows/releases/download/continuous/libhunspell-1.7.0-msvc2017_x64.zip -o libhunspell-1.7.0-msvc2017_x64.zip
+  - if should_download_lihunspell if %qt%==msvc2017_64 curl -fsSL https://github.com/d1vanov/quentier-dependencies-windows/releases/download/continuous/libhunspell-1.7.0-msvc2017_x64.zip -o libhunspell-1.7.0-msvc2017_x64.zip
   - if %qt%==msvc2017_64 7z x libhunspell-1.7.0-msvc2017_x64.zip
-  - if %qt%==mingw492_32 curl -fsSL https://github.com/d1vanov/quentier-dependencies-windows/releases/download/continuous/libhunspell-1.6.2-mingw530_x86.zip -o libhunspell-1.6.2-mingw530_x86.zip
+  - if should_download_lihunspell if %qt%==mingw492_32 curl -fsSL https://github.com/d1vanov/quentier-dependencies-windows/releases/download/continuous/libhunspell-1.6.2-mingw530_x86.zip -o libhunspell-1.6.2-mingw530_x86.zip
   - if %qt%==mingw492_32 7z x libhunspell-1.6.2-mingw530_x86.zip
   - set PATH=%cd%\bin;%PATH%
   - set LIB=%cd%\lib;%LIB%
   - set INCLUDE=%cd%\include;%INCLUDE%
 # tidy-html5
-  - echo "Downloading tidy-html5"
-  - md c:\dev\tidy-html5
+  - if not exist c:\dev\tidy-html5 set should_download_tidy_html5=1 else set should_download_tidy_html5=0
+  - if should_download_tidy_html5 md c:\dev\tidy-html5 else echo "Using cached version of tidy-html5"
   - cd c:\dev\tidy-html5
-  - if %qt%==msvc2015 curl -fsSL https://github.com/d1vanov/quentier-dependencies-windows/releases/download/continuous/tidy-html5-5.6.0-msvc2015_x86.zip -o tidy-html5-5.6.0-msvc2015_x86.zip
+  - if should_download_tidy_html5 echo "Downloading tidy-html5"
+  - if should_download_tidy_html5 if %qt%==msvc2015 curl -fsSL https://github.com/d1vanov/quentier-dependencies-windows/releases/download/continuous/tidy-html5-5.6.0-msvc2015_x86.zip -o tidy-html5-5.6.0-msvc2015_x86.zip
   - if %qt%==msvc2015 7z x tidy-html5-5.6.0-msvc2015_x86.zip
-  - if %qt%==msvc2017_64 curl -fsSL https://github.com/d1vanov/quentier-dependencies-windows/releases/download/continuous/tidy-html5-5.6.0-msvc2017_x64.zip -o tidy-html5-5.6.0-msvc2017_x64.zip
+  - if should_download_tidy_html5 if %qt%==msvc2017_64 curl -fsSL https://github.com/d1vanov/quentier-dependencies-windows/releases/download/continuous/tidy-html5-5.6.0-msvc2017_x64.zip -o tidy-html5-5.6.0-msvc2017_x64.zip
   - if %qt%==msvc2017_64 7z x tidy-html5-5.6.0-msvc2017_x64.zip
-  - if %qt%==mingw492_32 curl -fsSL https://github.com/d1vanov/quentier-dependencies-windows/releases/download/continuous/tidy-html5-5.6.0-mingw530_x86.zip -o tidy-html5-5.6.0-mingw530_x86.zip
+  - if should_download_tidy_html5 if %qt%==mingw492_32 curl -fsSL https://github.com/d1vanov/quentier-dependencies-windows/releases/download/continuous/tidy-html5-5.6.0-mingw530_x86.zip -o tidy-html5-5.6.0-mingw530_x86.zip
   - if %qt%==mingw492_32 7z x tidy-html5-5.6.0-mingw530_x86.zip
   - set PATH=%cd%\bin;%PATH%
   - set LIB=%cd%\lib;%LIB%
   - set INCLUDE=%cd%\include;%INCLUDE%
 # Boost
-  - echo "Downloading boost"
-  - md c:\dev\boost
+  - if not exist c:\dev\boost set should_download_boost=1 else set should_download_boost=0
+  - if should_download_boost md c:\dev\boost else echo "Using cached version of boost"
   - cd c:\dev\boost
-  - if %qt%==msvc2015 curl -fsSL https://github.com/d1vanov/quentier-dependencies-windows/releases/download/continuous/boost-1_65_0-msvc2015_x86.zip -o boost-1_65_0-msvc2015_x86.zip
+  - if should_download_boost echo "Downloading boost"
+  - if should_download_boost if %qt%==msvc2015 curl -fsSL https://github.com/d1vanov/quentier-dependencies-windows/releases/download/continuous/boost-1_65_0-msvc2015_x86.zip -o boost-1_65_0-msvc2015_x86.zip
   - if %qt%==msvc2015 7z x boost-1_65_0-msvc2015_x86.zip
-  - if %qt%==msvc2017_64 curl -fsSL https://github.com/d1vanov/quentier-dependencies-windows/releases/download/continuous/boost-1_65_0-msvc2017_x64.zip -o boost-1_65_0-msvc2017_x64.zip
+  - if should_download_boost if %qt%==msvc2017_64 curl -fsSL https://github.com/d1vanov/quentier-dependencies-windows/releases/download/continuous/boost-1_65_0-msvc2017_x64.zip -o boost-1_65_0-msvc2017_x64.zip
   - if %qt%==msvc2017_64 7z x boost-1_65_0-msvc2017_x64.zip
-  - if %qt%==mingw492_32 curl -fsSL https://github.com/d1vanov/quentier-dependencies-windows/releases/download/continuous/boost-1_65_0-mingw530_x86.zip -o boost-1_65_0-mingw530_x86.zip
+  - if should_download_boost if %qt%==mingw492_32 curl -fsSL https://github.com/d1vanov/quentier-dependencies-windows/releases/download/continuous/boost-1_65_0-mingw530_x86.zip -o boost-1_65_0-mingw530_x86.zip
   - if %qt%==mingw492_32 7z x boost-1_65_0-mingw530_x86.zip
   - set PATH=%cd%\bin;%PATH%
   - set LIB=%cd%\lib;%LIB%
   - set INCLUDE=%cd%\include;%INCLUDE%
   - set BOOST_ROOT=%cd%
 # OpenSSL
-  - echo "Downloading OpenSSL"
-  - md c:\dev\openssl
+  - if not exist c:\dev\openssl set should_download_openssl=1 else set should_download_openssl=0
+  - if should_download_openssl md c:\dev\openssl else echo "Using cached version of openssl"
   - cd c:\dev\openssl
-  - if %qt%==msvc2015 curl -fsSL https://github.com/d1vanov/quentier-dependencies-windows/releases/download/continuous/openssl-1_0_2r-msvc2015_x86.zip -o openssl-1_0_2r-msvc2015_x86.zip
+  - if should_download_openssl echo "Downloading OpenSSL"
+  - if should_download_openssl if %qt%==msvc2015 curl -fsSL https://github.com/d1vanov/quentier-dependencies-windows/releases/download/continuous/openssl-1_0_2r-msvc2015_x86.zip -o openssl-1_0_2r-msvc2015_x86.zip
   - if %qt%==msvc2015 7z x openssl-1_0_2r-msvc2015_x86.zip
-  - if %qt%==msvc2017_64 curl -fsSL https://github.com/d1vanov/quentier-dependencies-windows/releases/download/continuous/openssl-1_0_2r-msvc2017_x64.zip -o openssl-1_0_2r-msvc2017_x64.zip
+  - if should_download_openssl if %qt%==msvc2017_64 curl -fsSL https://github.com/d1vanov/quentier-dependencies-windows/releases/download/continuous/openssl-1_0_2r-msvc2017_x64.zip -o openssl-1_0_2r-msvc2017_x64.zip
   - if %qt%==msvc2017_64 7z x openssl-1_0_2r-msvc2017_x64.zip
-  - if %qt%==mingw492_32 curl -fsSL https://github.com/d1vanov/quentier-dependencies-windows/releases/download/continuous/openssl-1_0_2r-mingw530_x86.zip -o openssl-1_0_2r-mingw530_x86.zip
+  - if should_download_openssl if %qt%==mingw492_32 curl -fsSL https://github.com/d1vanov/quentier-dependencies-windows/releases/download/continuous/openssl-1_0_2r-mingw530_x86.zip -o openssl-1_0_2r-mingw530_x86.zip
   - if %qt%==mingw492_32 7z x openssl-1_0_2r-mingw530_x86.zip
   - set PATH=%cd%\bin;%PATH%
   - set LIB=%cd%\lib;%LIB%
   - set INCLUDE=%cd%\include;%INCLUDE%
   - set OPENSSL_ROOT_DIR=%cd%
 # Qtkeychain
-  - echo "Downloading qtkeychain"
-  - md c:\dev\qtkeychain
+  - if not exist c:\dev\qtkeychain set should_download_qtkeychain=1 else set should_download_qtkeychain=0
+  - if should_download_qtkeychain md c:\dev\qtkeychain else echo "Using cached version of qtkeychain"
   - cd c:\dev\qtkeychain
-  - if %qt%==msvc2015 curl -fsSL https://github.com/d1vanov/quentier-dependencies-windows/releases/download/continuous/qtkeychain-0.9.1-msvc2015_x86.zip -o qtkeychain-0.9.1-msvc2015_x86.zip
+  - if should_download_qtkeychain echo "Downloading qtkeychain"
+  - if should_download_qtkeychain if %qt%==msvc2015 curl -fsSL https://github.com/d1vanov/quentier-dependencies-windows/releases/download/continuous/qtkeychain-0.9.1-msvc2015_x86.zip -o qtkeychain-0.9.1-msvc2015_x86.zip
   - if %qt%==msvc2015 7z x qtkeychain-0.9.1-msvc2015_x86.zip
-  - if %qt%==msvc2017_64 curl -fsSL https://github.com/d1vanov/quentier-dependencies-windows/releases/download/continuous/qtkeychain-0.9.1-msvc2017_x64.zip -o qtkeychain-0.9.1-msvc2017_x64.zip
+  - if should_download_qtkeychain if %qt%==msvc2017_64 curl -fsSL https://github.com/d1vanov/quentier-dependencies-windows/releases/download/continuous/qtkeychain-0.9.1-msvc2017_x64.zip -o qtkeychain-0.9.1-msvc2017_x64.zip
   - if %qt%==msvc2017_64 7z x qtkeychain-0.9.1-msvc2017_x64.zip
-  - if %qt%==mingw492_32 curl -fsSL https://github.com/d1vanov/quentier-dependencies-windows/releases/download/continuous/qtkeychain-0.9.1-mingw530_x86.zip -o qtkeychain-0.9.1-mingw530_x86.zip
+  - if should_download_qtkeychain if %qt%==mingw492_32 curl -fsSL https://github.com/d1vanov/quentier-dependencies-windows/releases/download/continuous/qtkeychain-0.9.1-mingw530_x86.zip -o qtkeychain-0.9.1-mingw530_x86.zip
   - if %qt%==mingw492_32 7z x qtkeychain-0.9.1-mingw530_x86.zip
   - set PATH=%cd%\bin;%PATH%
   - set LIB=%cd%\lib;%LIB%
   - set INCLUDE=%cd%\include;%INCLUDE%
 # QEverCloud
-  - echo "Downloading QEverCloud"
-  - md c:\dev\qevercloud
+  - if not exist c:\dev\qevercloud set should_download_qevercloud=1 else set should_download_qevercloud=0
+  - if should_download_qevercloud md c:\dev\qevercloud else echo "Using cached version of QEverCloud"
   - cd c:\dev\qevercloud
+  - if should_download_qevercloud echo "Downloading QEverCloud"
 # First try to download the prebuilt binary to save the precious time as well as CPU cycles
   - md build\installdir
   - cd build\installdir
-  - set QEVERCLOUD_DOWNLOADED=0
-  - if %qt%==msvc2015 if "%APPVEYOR_REPO_BRANCH%" == "development" curl -fsSL https://github.com/d1vanov/QEverCloud/releases/download/continuous-development/qevercloud-windows-qt510-VS2015_x86.zip -o qevercloud-windows-qt510-VS2015_x86.zip & set errorlevel=0
-  - if %qt%==msvc2015 if not "%APPVEYOR_REPO_BRANCH%" == "development" curl -fsSL https://github.com/d1vanov/QEverCloud/releases/download/continuous-master/qevercloud-windows-qt510-VS2015_x86.zip -o qevercloud-windows-qt510-VS2015_x86.zip & set errorlevel=0
-  - if %qt%==msvc2017_64 if "%APPVEYOR_REPO_BRANCH%" == "development" curl -fsSL https://github.com/d1vanov/QEverCloud/releases/download/continuous-development/qevercloud-windows-qt510-VS2017_x64.zip -o qevercloud-windows-qt510-VS2017_x64.zip & set errorlevel=0
-  - if %qt%==msvc2017_64 if not "%APPVEYOR_REPO_BRANCH%" == "development" curl -fsSL https://github.com/d1vanov/QEverCloud/releases/download/continuous-master/qevercloud-windows-qt510-VS2017_x64.zip -o qevercloud-windows-qt510-VS2017_x64.zip & set errorlevel=0
-  - if %qt%==mingw492_32 if "%APPVEYOR_REPO_BRANCH%" == "development" curl -fsSL https://github.com/d1vanov/QEverCloud/releases/download/continuous-development/qevercloud-windows-qt55-MinGW_x86.zip -o qevercloud-windows-qt55-MinGW_x86.zip & set errorlevel=0
-  - if %qt%==mingw492_32 if not "%APPVEYOR_REPO_BRANCH%" == "development" curl -fsSL https://github.com/d1vanov/QEverCloud/releases/download/continuous-master/qevercloud-windows-qt55-MinGW_x86.zip -o qevercloud-windows-qt55-MinGW_x86.zip & set errorlevel=0
+  - if should_download_qevercloud set QEVERCLOUD_DOWNLOADED=0 else set QEVERCLOUD_DOWNLOADED=1
+  - if should_download_qevercloud if %qt%==msvc2015 if "%APPVEYOR_REPO_BRANCH%" == "development" curl -fsSL https://github.com/d1vanov/QEverCloud/releases/download/continuous-development/qevercloud-windows-qt510-VS2015_x86.zip -o qevercloud-windows-qt510-VS2015_x86.zip & set errorlevel=0
+  - if should_download_qevercloud if %qt%==msvc2015 if not "%APPVEYOR_REPO_BRANCH%" == "development" curl -fsSL https://github.com/d1vanov/QEverCloud/releases/download/continuous-master/qevercloud-windows-qt510-VS2015_x86.zip -o qevercloud-windows-qt510-VS2015_x86.zip & set errorlevel=0
+  - if should_download_qevercloud if %qt%==msvc2017_64 if "%APPVEYOR_REPO_BRANCH%" == "development" curl -fsSL https://github.com/d1vanov/QEverCloud/releases/download/continuous-development/qevercloud-windows-qt510-VS2017_x64.zip -o qevercloud-windows-qt510-VS2017_x64.zip & set errorlevel=0
+  - if should_download_qevercloud if %qt%==msvc2017_64 if not "%APPVEYOR_REPO_BRANCH%" == "development" curl -fsSL https://github.com/d1vanov/QEverCloud/releases/download/continuous-master/qevercloud-windows-qt510-VS2017_x64.zip -o qevercloud-windows-qt510-VS2017_x64.zip & set errorlevel=0
+  - if should_download_qevercloud if %qt%==mingw492_32 if "%APPVEYOR_REPO_BRANCH%" == "development" curl -fsSL https://github.com/d1vanov/QEverCloud/releases/download/continuous-development/qevercloud-windows-qt55-MinGW_x86.zip -o qevercloud-windows-qt55-MinGW_x86.zip & set errorlevel=0
+  - if should_download_qevercloud if %qt%==mingw492_32 if not "%APPVEYOR_REPO_BRANCH%" == "development" curl -fsSL https://github.com/d1vanov/QEverCloud/releases/download/continuous-master/qevercloud-windows-qt55-MinGW_x86.zip -o qevercloud-windows-qt55-MinGW_x86.zip & set errorlevel=0
   - if %qt%==msvc2015 if exist qevercloud-windows-qt510-VS2015_x86.zip set QEVERCLOUD_DOWNLOADED=1
   - if %qt%==msvc2017_64 if exist qevercloud-windows-qt510-VS2017_x64.zip set QEVERCLOUD_DOWNLOADED=1
   - if %qt%==mingw492_32 if exist qevercloud-windows-qt55-MinGW_x86.zip set QEVERCLOUD_DOWNLOADED=1
@@ -192,7 +201,7 @@ install:
   - if %QEVERCLOUD_DOWNLOADED%==1 set PATH=%cd%\bin;%PATH%
   - if %QEVERCLOUD_DOWNLOADED%==1 set LIB=%cd%\lib;%LIB%
   - if %QEVERCLOUD_DOWNLOADED%==1 set INCLUDE=%cd%\lib;%INCLUDE%
-# In case of failure clone the QEverCloud repo and build the library from sources
+# In case of failure clone QEverCloud repo and build the library from sources
   - if not %QEVERCLOUD_DOWNLOADED%==1 cd c:\dev
   - if not %QEVERCLOUD_DOWNLOADED%==1 rd /s /q qevercloud
   - if not %QEVERCLOUD_DOWNLOADED%==1 git clone https://github.com/d1vanov/QEverCloud.git qevercloud
@@ -254,3 +263,33 @@ matrix:
   allow_failures:
     - prepare_mode: YES
   fast_finish: true
+
+cache:
+  - 'c:\dev\ciuploadtool\ciuploadtool.exe -> ci\appveyor\cache_versions\ciuploadtool.txt, ci\appveyor\cache_versions\global.txt'
+  - 'c:\dev\libiconv\libiconv-1.15-msvc2015_x86.zip -> ci\appveyor\cache_versions\libiconv-msvc2015_x86.txt, ci\appveyor\cache_versions\global.txt'
+  - 'c:\dev\libiconv\libiconv-1.15-msvc2017_x64.zip -> ci\appveyor\cache_versions\libiconv-msvc2017_x64.txt, ci\appveyor\cache_versions\global.txt'
+  - 'c:\dev\libiconv\libiconv-1.15-mingw530_x86.zip -> ci\appveyor\cache_versions\libiconv-mingw530_x86.txt, ci\appveyor\cache_versions\global.txt'
+  - 'c:\dev\zlib\zlib-1.2.11-msvc2015_x86.zip -> ci\appveyor\cache_versions\zlib-msvc2015_x86.txt, ci\appveyor\cache_versions\global.txt'
+  - 'c:\dev\zlib\zlib-1.2.11-msvc2017_x64.zip -> ci\appveyor\cache_versions\zlib-msvc2017_x64.txt, ci\appveyor\cache_versions\global.txt'
+  - 'c:\dev\zlib\zlib-1.2.11-mingw530_x86.zip -> ci\appveyor\cache_versions\zlib-mingw530_x86.txt, ci\appveyor\cache_versions\global.txt'
+  - 'c:\dev\libxml2\libxml2-2.9.7-msvc2015_x86.zip -> ci\appveyor\cache_versions\libxml2-msvc2015_x86.txt, ci\appveyor\cache_versions\global.txt'
+  - 'c:\dev\libxml2\libxml2-2.9.7-msvc2017_x64.zip -> ci\appveyor\cache_versions\libxml2-msvc2017_x64.txt, ci\appveyor\cache_versions\global.txt'
+  - 'c:\dev\libxml2\libxml2-2.9.7-mingw530_x86.zip -> ci\appveyor\cache_versions\libxml2-mingw530_x86.txt, ci\appveyor\cache_versions\global.txt'
+  - 'c:\dev\libhunspell\libhunspell-1.7.0-msvc2015_x86.zip -> ci\appveyor\cache_versions\libhunspell-msvc2015_x86.txt, ci\appveyor\cache_versions\global.txt'
+  - 'c:\dev\libhunspell\libhunspell-1.7.0-msvc2017_x64.zip -> ci\appveyor\cache_versions\libhunspell-msvc2017_x64.txt, ci\appveyor\cache_versions\global.txt'
+  - 'c:\dev\libhunspell\libhunspell-1.6.2-mingw_x86.zip -> ci\appveyor\cache_versions\libhunspell-mingw530_x86.txt, ci\appveyor\cache_versions\global.txt'
+  - 'c:\dev\tidy-html5\tidy-html5-5.6.0-msvc2015_x86.zip -> ci\appveyor\cache_versions\tidy-html5-msvc2015_x86.txt, ci\appveyor\cache_versions\global.txt'
+  - 'c:\dev\tidy-html5\tidy-html5-5.6.0-msvc2017_x64.zip -> ci\appveyor\cache_versions\tidy-html5-msvc2017_x64.txt, ci\appveyor\cache_versions\global.txt'
+  - 'c:\dev\tidy-html5\tidy-html5-5.6.0-mingw530_x86.zip -> ci\appveyor\cache_versions\tidy-html5-mingw530_x86.txt, ci\appveyor\cache_versions\global.txt'
+  - 'c:\dev\boost\boost-1_65_0-msvc2015_x86.zip -> ci\appveyor\cache_versions\boost-msvc2015_x86.txt, ci\appveyor\cache_versions\global.txt'
+  - 'c:\dev\boost\boost-1_65_0-msvc2017_x64.zip -> ci\appveyor\cache_versions\boost-msvc2017_x64.txt, ci\appveyor\cache_versions\global.txt'
+  - 'c:\dev\boost\boost-1_65_0-mingw530_x86.zip -> ci\appveyor\cache_versions\boost-mingw530_x86.txt, ci\appveyor\cache_versions\global.txt'
+  - 'c:\dev\openssl\openssl-1_0_2r-msvc2015_x86.zip -> ci\appveyor\cache_versions\openssl-msvc2015_x86.txt, ci\appveyor\cache_versions\global.txt'
+  - 'c:\dev\openssl\openssl-1_0_2r-msvc2017_x64.zip -> ci\appveyor\cache_versions\openssl-msvc2017_x64.txt, ci\appveyor\cache_versions\global.txt'
+  - 'c:\dev\openssl\openssl-1_0_2r-mingw530_x86.zip -> ci\appveyor\cache_versions\openssl-mingw530_x86.txt, ci\appveyor\cache_versions\global.txt'
+  - 'c:\dev\qtkeychain\qtkeychain-0.9.1-msvc2015_x86.zip -> ci\appveyor\cache_versions\qtkeychain-msvc2015_x86.txt, ci\appveyor\cache_versions\global.txt'
+  - 'c:\dev\qtkeychain\qtkeychain-0.9.1-msvc2017_x64.zip -> ci\appveyor\cache_versions\qtkeychain-msvc2017_x64.txt, ci\appveyor\cache_versions\global.txt'
+  - 'c:\dev\qtkeychain\qtkeychain-0.9.1-mingw530_x86.zip -> ci\appveyor\cache_versions\qtkeychain-mingw530_x86.txt, ci\appveyor\cache_versions\global.txt'
+  - 'c:\dev\qevercloud\qevercloud-windows-qt510-VS2015_x86.zip -> ci\appveyor\cache_versions\qevercloud-msvc2015_x86.txt, ci\appveyor\cache_versions\global.txt'
+  - 'c:\dev\qevercloud\qevercloud-windows-qt510-VS2017_x64.zip -> ci\appveyor\cache_versions\qevercloud-msvc2017_x64.txt, ci\appveyor\cache_versions\global.txt'
+  - 'c:\dev\qevercloud\qevercloud-windows-qt55-MinGW_x86.zip -> ci\appveyor\cache_versions\qevercloud-mingw530_x86.txt, ci\appveyor\cache_versions\global.txt'
