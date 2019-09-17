@@ -224,9 +224,9 @@ install:
   - if not %QEVERCLOUD_RECEIVED%==1 cmake --build . --target check
   - if not %QEVERCLOUD_RECEIVED%==1 cmake --build . --target install
   - if not %QEVERCLOUD_RECEIVED%==1 if %qt%==mingw492_32 set PATH=%PATH%;C:\Program Files\Git\usr\bin
-  - if not %QEVERCLOUD_RECEIVED%==1 set PATH=%PATH%;%cd%\%APPVEYOR_REPO_BRANCH%\installdir\bin
-  - if not %QEVERCLOUD_RECEIVED%==1 set LIB=%LIB%;%cd%\%APPVEYOR_REPO_BRANCH%\installdir\lib
-  - if not %QEVERCLOUD_RECEIVED%==1 set INCLUDE=%INCLUDE%;%cd%\%APPVEYOR_REPO_BRANCH%\installdir\include
+  - if not %QEVERCLOUD_RECEIVED%==1 set PATH=%PATH%;%cd%\installdir\bin
+  - if not %QEVERCLOUD_RECEIVED%==1 set LIB=%LIB%;%cd%\installdir\lib
+  - if not %QEVERCLOUD_RECEIVED%==1 set INCLUDE=%INCLUDE%;%cd%\installdir\include
   - cd c:\dev
 
 before_build:
@@ -238,8 +238,8 @@ build_script:
   - if %qt%==mingw492_32 set PATH=%PATH:C:\Program Files\Git\usr\bin;=%
   - if %qt%==mingw492_32 set PATH=C:\MinGW\bin;C:\Qt\5.5\%qt%\bin;%PATH%
   - if not %qt%==mingw492_32 C:\msys64\usr\bin\bash -lc "cd /c/dev/libquentier && echo 'install(FILES $<TARGET_PDB_FILE:${LIBNAME}> DESTINATION bin OPTIONAL)' >> CMakeLists.txt"
-  - if %qt%==mingw492_32 cmake .. -G %makefiles% -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX="c:/dev/libquentier/build/%APPVEYOR_REPO_BRANCH%/installdir" -DUSE_QT5_WEBKIT=1 -DCMAKE_PREFIX_PATH="C:/Qt/5.5/%qt%" -DOPENSSL_ROOT_DIR="c:/dev/openssl" -DBOOST_ROOT="c:/dev/boost"
-  - if not %qt%==mingw492_32 cmake .. -G %makefiles% -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX="c:/dev/libquentier/build/%APPVEYOR_REPO_BRANCH%/installdir" -DCMAKE_PREFIX_PATH="C:/Qt/5.10/%qt%" -DOPENSSL_ROOT_DIR="c:/dev/openssl" -DBOOST_ROOT="c:/dev/boost"
+  - if %qt%==mingw492_32 cmake .. -G %makefiles% -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX="c:/dev/libquentier/build/installdir" -DUSE_QT5_WEBKIT=1 -DCMAKE_PREFIX_PATH="C:/Qt/5.5/%qt%" -DOPENSSL_ROOT_DIR="c:/dev/openssl" -DBOOST_ROOT="c:/dev/boost"
+  - if not %qt%==mingw492_32 cmake .. -G %makefiles% -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX="c:/dev/libquentier/build/installdir" -DCMAKE_PREFIX_PATH="C:/Qt/5.10/%qt%" -DOPENSSL_ROOT_DIR="c:/dev/openssl" -DBOOST_ROOT="c:/dev/boost"
   - cmake --build . --target all
   - cmake --build . --target check
   - cmake --build . --target lupdate
@@ -255,7 +255,7 @@ test_script:
   - ps: if (Test-Path C:\dev\libquentier\build\crash_dump.7z -PathType Leaf) { throw "Test crashed" }
 
 after_build:
-  - cd c:\dev\libquentier\build\%APPVEYOR_REPO_BRANCH%\installdir
+  - cd c:\dev\libquentier\build\installdir
   - 7z a %DEPLOYMENT_TARGET% *
   - cp %DEPLOYMENT_TARGET% %APPVEYOR_BUILD_FOLDER%
   - cd %APPVEYOR_BUILD_FOLDER%
