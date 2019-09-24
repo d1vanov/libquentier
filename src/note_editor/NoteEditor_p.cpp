@@ -475,6 +475,14 @@ void NoteEditorPrivate::onNoteLoadFinished(bool ok)
             editable = false;
         }
     }
+    else if (m_pNote->hasNoteAttributes() &&
+             m_pNote->noteAttributes().contentClass.isSet() &&
+             !m_pNote->noteAttributes().contentClass->isEmpty())
+    {
+        QNDEBUG("Current note has non-empty content class, setting it to "
+                "read-only state");
+        editable = false;
+    }
 
     setPageEditable(editable);
 
