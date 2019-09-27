@@ -21,7 +21,7 @@ function SourceCodeFormatter() {
 
     var formatStyle = "font-family: Monaco, Menlo, Consolas, 'Courier New', monospace; " +
                       "font-size: 0.9em; border-radius: 4px; letter-spacing: 0.015em; padding: 1em; " +
-                      "border: 1px solid #cccccc; background-color: #f8f8f8; overflow-x: auto;";
+                      "border: 1px solid #cccccc; background-color: #f8f8f8; color: black; overflow-x: auto;";
     var lastError;
     var lastFeedback;
 
