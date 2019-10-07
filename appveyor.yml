@@ -226,7 +226,7 @@ install:
   - if not %QEVERCLOUD_RECEIVED%==1 if %qt%==mingw492_32 set PATH=C:\MinGW\bin;C:\Qt\5.5\%qt%\bin;%PATH%
   - if not %QEVERCLOUD_RECEIVED%==1 if not %qt%==mingw492_32 cmake .. -G %makefiles% -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX="c:\dev\qevercloud\build\installdir" -DCMAKE_PREFIX_PATH="C:/Qt/5.10/%qt%
   - if not %QEVERCLOUD_RECEIVED%==1 if %qt%==mingw492_32 cmake .. -G %makefiles% -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX="c:\dev\qevercloud\build\installdir" -DUSE_QT5_WEBKIT=1 -DCMAKE_PREFIX_PATH="C:/Qt/5.5/%qt%
-  - if not %QEVERCLOUD_RECEIVED%==1 cmake --build . --target all
+  - if not %QEVERCLOUD_RECEIVED%==1 cmake --build . --target all -j 4
   - if not %QEVERCLOUD_RECEIVED%==1 cmake --build . --target check
   - if not %QEVERCLOUD_RECEIVED%==1 cmake --build . --target install
   - if not %QEVERCLOUD_RECEIVED%==1 if %qt%==mingw492_32 set PATH=%PATH%;C:\Program Files\Git\usr\bin
@@ -246,7 +246,7 @@ build_script:
   - if not %qt%==mingw492_32 C:\msys64\usr\bin\bash -lc "cd /c/dev/libquentier && echo 'install(FILES $<TARGET_PDB_FILE:${LIBNAME}> DESTINATION bin OPTIONAL)' >> CMakeLists.txt"
   - if %qt%==mingw492_32 cmake .. -G %makefiles% -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX="c:/dev/libquentier/build/installdir" -DUSE_QT5_WEBKIT=1 -DCMAKE_PREFIX_PATH="C:/Qt/5.5/%qt%" -DOPENSSL_ROOT_DIR="c:/dev/openssl" -DBOOST_ROOT="c:/dev/boost"
   - if not %qt%==mingw492_32 cmake .. -G %makefiles% -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX="c:/dev/libquentier/build/installdir" -DCMAKE_PREFIX_PATH="C:/Qt/5.10/%qt%" -DOPENSSL_ROOT_DIR="c:/dev/openssl" -DBOOST_ROOT="c:/dev/boost"
-  - cmake --build . --target all
+  - cmake --build . --target all -j 4
   - cmake --build . --target check
   - cmake --build . --target lupdate
   - cmake --build . --target lrelease
