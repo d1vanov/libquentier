@@ -49,8 +49,8 @@ init:
   - if %build_tool%==mingw set tool=MinGW_x86
   - if %build_tool%==mingw set DEPLOYMENT_TARGET=libquentier-windows-qt55-%tool%.zip
   - if not %build_tool%==mingw set DEPLOYMENT_TARGET=libquentier-windows-qt513-%tool%.zip
-  - if %build_tool%==msvc2017_64 call "C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvars64.bat"
-  - if %build_tool%==msvc2017_32 call "C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvarsall.bat" x86
+  - if %build_suite%==msvc2017_64 call "C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvars64.bat"
+  - if %build_suite%==msvc2017_32 call "C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvarsall.bat" x86
   - if not %build_tool%==mingw (set makefiles="NMake Makefiles") else (set makefiles="MinGW Makefiles")
   - if %build_tool%==mingw (set use_webkit=1) else (set use_webkit=0)
   - if %build_tool%==mingw set PATH=C:\MinGW\bin;C:\Program Files (x86)\CMake\bin;%PATH%
