@@ -1363,8 +1363,8 @@ LocalStorageManagerPrivate::listEnSharedNotebooksPerNotebookGuid(
         }
     }
 
-    qSort(sharedNotebooks.begin(), sharedNotebooks.end(),
-          SharedNotebookCompareByIndex());
+    std::sort(sharedNotebooks.begin(), sharedNotebooks.end(),
+              SharedNotebookCompareByIndex());
 
     for(auto it = sharedNotebooks.constBegin(),
         end = sharedNotebooks.constEnd(); it != end; ++it)
@@ -2570,15 +2570,15 @@ bool LocalStorageManagerPrivate::findNote(
 
     int numResources = resources.size();
     if (numResources > 0) {
-        qSort(resources.begin(), resources.end(), ResourceCompareByIndex());
+        std::sort(resources.begin(), resources.end(), ResourceCompareByIndex());
         result.setResources(resources);
     }
 
     int numTagGuids = tagGuidsAndIndices.size();
     if (numTagGuids > 0)
     {
-        qSort(tagGuidsAndIndices.begin(), tagGuidsAndIndices.end(),
-              QStringIntPairCompareByInt());
+        std::sort(tagGuidsAndIndices.begin(), tagGuidsAndIndices.end(),
+                  QStringIntPairCompareByInt());
 
         QStringList tagGuids;
         tagGuids.reserve(numTagGuids);
@@ -2598,8 +2598,8 @@ bool LocalStorageManagerPrivate::findNote(
     int numTagLocalUids = tagLocalUidsAndIndices.size();
     if (numTagLocalUids > 0)
     {
-        qSort(tagLocalUidsAndIndices.begin(), tagLocalUidsAndIndices.end(),
-              QStringIntPairCompareByInt());
+        std::sort(tagLocalUidsAndIndices.begin(), tagLocalUidsAndIndices.end(),
+                  QStringIntPairCompareByInt());
 
         QStringList tagLocalUids;
         tagLocalUids.reserve(numTagLocalUids);
@@ -12001,8 +12001,8 @@ bool LocalStorageManagerPrivate::findAndSetTagIdsPerNote(
         tagLocalUidIndexPairs << QPair<QString, int>(it.value(), it.key());
     }
 
-    qSort(tagLocalUidIndexPairs.begin(), tagLocalUidIndexPairs.end(),
-          QStringIntPairCompareByInt());
+    std::sort(tagLocalUidIndexPairs.begin(), tagLocalUidIndexPairs.end(),
+              QStringIntPairCompareByInt());
     QStringList tagLocalUids;
     tagLocalUids.reserve(std::max(numTagLocalUids, 0));
     for(int i = 0; i < numTagLocalUids; ++i) {
@@ -12022,8 +12022,8 @@ bool LocalStorageManagerPrivate::findAndSetTagIdsPerNote(
         tagGuidIndexPairs << QPair<QString, int>(it.value(), it.key());
     }
 
-    qSort(tagGuidIndexPairs.begin(), tagGuidIndexPairs.end(),
-          QStringIntPairCompareByInt());
+    std::sort(tagGuidIndexPairs.begin(), tagGuidIndexPairs.end(),
+              QStringIntPairCompareByInt());
     QStringList tagGuids;
     tagGuids.reserve(std::max(numTagGuids, 0));
     for(int i = 0; i < numTagGuids; ++i)
@@ -12109,7 +12109,7 @@ bool LocalStorageManagerPrivate::findAndSetResourcesPerNote(
                 << " for note with local uid " << noteLocalUid);
     }
 
-    qSort(resources.begin(), resources.end(), ResourceCompareByIndex());
+    std::sort(resources.begin(), resources.end(), ResourceCompareByIndex());
     note.setResources(resources);
 
     return true;
@@ -12125,7 +12125,8 @@ void LocalStorageManagerPrivate::sortSharedNotebooks(Notebook & notebook) const
     // of comparison operators
     QList<SharedNotebook> sharedNotebooks = notebook.sharedNotebooks();
 
-    qSort(sharedNotebooks.begin(), sharedNotebooks.end(), SharedNotebookCompareByIndex());
+    std::sort(sharedNotebooks.begin(), sharedNotebooks.end(),
+              SharedNotebookCompareByIndex());
 }
 
 void LocalStorageManagerPrivate::sortSharedNotes(Note & note) const
@@ -12137,7 +12138,7 @@ void LocalStorageManagerPrivate::sortSharedNotes(Note & note) const
     // Sort shared notes to ensure the correct order for proper work of
     // comparison operators
     QList<SharedNote> sharedNotes = note.sharedNotes();
-    qSort(sharedNotes.begin(), sharedNotes.end(), SharedNoteCompareByIndex());
+    std::sort(sharedNotes.begin(), sharedNotes.end(), SharedNoteCompareByIndex());
     note.setSharedNotes(sharedNotes);
 }
 

@@ -183,6 +183,20 @@ typedef QWebEngineSettings WebSettings;
 
 namespace quentier {
 
+namespace {
+
+int fontMetricsWidth(
+    const QFontMetrics & fontMetrics, const QString & text, int len = -1)
+{
+#if QT_VERSION >= QT_VERSION_CHECK(5, 11, 0)
+    return fontMetrics.horizontalAdvance(text, len);
+#else
+    return fontMetrics.width(text, len);
+#endif
+}
+
+} // namespace
+
 NoteEditorPrivate::NoteEditorPrivate(NoteEditor & noteEditor) :
     INoteEditorBackend(&noteEditor),
     m_noteEditorPageFolderPath(),
@@ -4809,9 +4823,9 @@ QImage NoteEditorPrivate::buildGenericResourceImage(const Resource & resource)
 
     const int maxResourceDisplayNameWidth = 146;
     QFontMetrics fontMetrics(font);
-    int width = fontMetrics.width(resourceDisplayName);
-    int singleCharWidth = fontMetrics.width(QStringLiteral("n"));
-    int ellipsisWidth = fontMetrics.width(QStringLiteral("..."));
+    int width = fontMetricsWidth(fontMetrics, resourceDisplayName);
+    int singleCharWidth = fontMetricsWidth(fontMetrics, QStringLiteral("n"));
+    int ellipsisWidth = fontMetricsWidth(fontMetrics, QStringLiteral("..."));
 
     bool smartReplaceWorked = true;
     int previousWidth = width + 1;
@@ -4837,7 +4851,7 @@ QImage NoteEditorPrivate::buildGenericResourceImage(const Resource & resource)
             if (startSkipPos >= 0) {
                 resourceDisplayName.replace(startSkipPos, numCharsToSkip,
                                             QStringLiteral("..."));
-                width = fontMetrics.width(resourceDisplayName);
+                width = fontMetricsWidth(fontMetrics, resourceDisplayName);
                 continue;
             }
         }
@@ -4846,14 +4860,14 @@ QImage NoteEditorPrivate::buildGenericResourceImage(const Resource & resource)
         // without attempt to preserve the file extension
         resourceDisplayName.replace(resourceDisplayName.size() - numCharsToSkip,
                                     numCharsToSkip, QStringLiteral("..."));
-        width = fontMetrics.width(resourceDisplayName);
+        width = fontMetricsWidth(fontMetrics, resourceDisplayName);
     }
 
     if (!smartReplaceWorked)
     {
         QNTRACE("Wasn't able to shorten the resource name nicely, "
                 "will try to shorten it just somehow");
-        width = fontMetrics.width(originalResourceDisplayName);
+        width = fontMetricsWidth(fontMetrics, originalResourceDisplayName);
         int widthOverflow = width - maxResourceDisplayNameWidth;
         int numCharsToSkip = (widthOverflow + ellipsisWidth) / singleCharWidth + 1;
         resourceDisplayName = originalResourceDisplayName;
@@ -4869,7 +4883,7 @@ QImage NoteEditorPrivate::buildGenericResourceImage(const Resource & resource)
 
     QNTRACE("(possibly) shortened resource display name: "
             << resourceDisplayName << ", width = "
-            << fontMetrics.width(resourceDisplayName));
+            << fontMetricsWidth(fontMetrics, resourceDisplayName));
 
     QString resourceHumanReadableSize;
     if (resource.hasDataSize() || resource.hasAlternateDataSize())
