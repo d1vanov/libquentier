@@ -37,8 +37,8 @@ QT_FORWARD_DECLARE_CLASS(UserData)
 class QUENTIER_EXPORT User: public Printable
 {
 public:
-    typedef qevercloud::PrivilegeLevel::type    PrivilegeLevel;
-    typedef qevercloud::ServiceLevel::type      ServiceLevel;
+    using PrivilegeLevel = qevercloud::PrivilegeLevel;
+    using ServiceLevel = qevercloud::ServiceLevel;
 
 public:
     explicit User();

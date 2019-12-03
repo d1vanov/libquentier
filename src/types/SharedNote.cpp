@@ -243,13 +243,13 @@ bool SharedNote::hasRecipientIdentityContactType() const
            d->m_qecSharedNote.recipientIdentity->contact->type.isSet();
 }
 
-qevercloud::ContactType::type SharedNote::recipientIdentityContactType() const
+qevercloud::ContactType SharedNote::recipientIdentityContactType() const
 {
     return d->m_qecSharedNote.recipientIdentity->contact->type;
 }
 
 void SharedNote::setRecipientIdentityContactType(
-    const qevercloud::ContactType::type recipientIdentityContactType)
+    const qevercloud::ContactType recipientIdentityContactType)
 {
     if (!d->m_qecSharedNote.recipientIdentity.isSet()) {
         d->m_qecSharedNote.recipientIdentity = qevercloud::Identity();
@@ -271,7 +271,7 @@ void SharedNote::setRecipientIdentityContactType(
          (recipientIdentityContactType <=
           static_cast<qint32>(qevercloud::ContactType::LINKEDIN)) )
     {
-        setRecipientIdentityContactType(static_cast<qevercloud::ContactType::type>(
+        setRecipientIdentityContactType(static_cast<qevercloud::ContactType>(
                 recipientIdentityContactType));
     }
     else
@@ -609,7 +609,7 @@ void SharedNote::setPrivilegeLevel(const qint8 level)
         static_cast<qint8>(qevercloud::SharedNotePrivilegeLevel::FULL_ACCESS))
     {
         d->m_qecSharedNote.privilege =
-            static_cast<qevercloud::SharedNotePrivilegeLevel::type>(level);
+            static_cast<qevercloud::SharedNotePrivilegeLevel>(level);
     }
     else {
         d->m_qecSharedNote.privilege.clear();

@@ -42,8 +42,8 @@ public:
     QN_DECLARE_FAVORITED
 
 public:
-    typedef qevercloud::QueryFormat::type QueryFormat;
-    typedef qevercloud::SavedSearchScope  SavedSearchScope;
+    using QueryFormat = qevercloud::QueryFormat;
+    using SavedSearchScope = qevercloud::SavedSearchScope;
 
 public:
     explicit SavedSearch();

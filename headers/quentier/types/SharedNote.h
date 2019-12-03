@@ -37,8 +37,8 @@ QT_FORWARD_DECLARE_CLASS(SharedNoteData)
 class QUENTIER_EXPORT SharedNote: public Printable
 {
 public:
-    typedef qevercloud::SharedNotePrivilegeLevel::type SharedNotePrivilegeLevel;
-    typedef qevercloud::ContactType::type ContactType;
+    using SharedNotePrivilegeLevel = qevercloud::SharedNotePrivilegeLevel;
+    using ContactType = qevercloud::ContactType;
 
 public:
     explicit SharedNote();

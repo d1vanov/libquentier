@@ -27,24 +27,6 @@
 #include <QHash>
 #include <QSet>
 
-#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
-
-#include <qt5qevercloud/QEverCloud.h>
-
-#if QEVERCLOUD_HAS_OAUTH
-#include <qt5qevercloud/QEverCloudOAuth.h>
-#endif
-
-#else // Qt5
-
-#include <qt4qevercloud/QEverCloud.h>
-
-#if QEVERCLOUD_HAS_OAUTH
-#include <qt4qevercloud/QEverCloudOAuth.h>
-#endif
-
-#endif // Qt5
-
 namespace quentier {
 
 /**
@@ -59,10 +41,12 @@ public:
 
     virtual const QString toString() const;
 
-    friend QUENTIER_EXPORT QTextStream & operator << (QTextStream & strm,
-                                                      const Printable & printable);
-    friend QUENTIER_EXPORT QDebug & operator << (QDebug & debug,
-                                                 const Printable & printable);
+    friend QUENTIER_EXPORT QTextStream & operator << (
+        QTextStream & strm, const Printable & printable);
+
+    friend QUENTIER_EXPORT QDebug & operator << (
+        QDebug & debug, const Printable & printable);
+
 protected:
     Printable();
     Printable(const Printable & other);
@@ -122,48 +106,5 @@ const QString ToString(const QSet<T> & object)
         return debug;                                                          \
     }                                                                          \
 // QUENTIER_DECLARE_PRINTABLE
-
-QUENTIER_DECLARE_PRINTABLE(qevercloud::Contact)
-QUENTIER_DECLARE_PRINTABLE(qevercloud::Identity)
-QUENTIER_DECLARE_PRINTABLE(qevercloud::BusinessUserInfo)
-QUENTIER_DECLARE_PRINTABLE(qevercloud::Accounting)
-QUENTIER_DECLARE_PRINTABLE(qevercloud::AccountLimits)
-QUENTIER_DECLARE_PRINTABLE(qevercloud::UserAttributes)
-QUENTIER_DECLARE_PRINTABLE(qevercloud::NoteAttributes)
-QUENTIER_DECLARE_PRINTABLE(qevercloud::PrivilegeLevel::type)
-QUENTIER_DECLARE_PRINTABLE(qevercloud::ServiceLevel::type)
-QUENTIER_DECLARE_PRINTABLE(qevercloud::QueryFormat::type)
-QUENTIER_DECLARE_PRINTABLE(qevercloud::SharedNotebookPrivilegeLevel::type)
-QUENTIER_DECLARE_PRINTABLE(qevercloud::NoteSortOrder::type)
-QUENTIER_DECLARE_PRINTABLE(qevercloud::NotebookRestrictions)
-QUENTIER_DECLARE_PRINTABLE(qevercloud::SharedNotebookInstanceRestrictions::type)
-QUENTIER_DECLARE_PRINTABLE(qevercloud::ResourceAttributes)
-QUENTIER_DECLARE_PRINTABLE(qevercloud::Resource)
-QUENTIER_DECLARE_PRINTABLE(qevercloud::SyncChunk)
-QUENTIER_DECLARE_PRINTABLE(qevercloud::Tag)
-QUENTIER_DECLARE_PRINTABLE(qevercloud::SavedSearch)
-QUENTIER_DECLARE_PRINTABLE(qevercloud::LinkedNotebook)
-QUENTIER_DECLARE_PRINTABLE(qevercloud::Notebook)
-QUENTIER_DECLARE_PRINTABLE(qevercloud::Publishing)
-QUENTIER_DECLARE_PRINTABLE(qevercloud::SharedNotebook)
-QUENTIER_DECLARE_PRINTABLE(qevercloud::BusinessNotebook)
-QUENTIER_DECLARE_PRINTABLE(qevercloud::User)
-QUENTIER_DECLARE_PRINTABLE(qevercloud::SharedNotebookRecipientSettings)
-QUENTIER_DECLARE_PRINTABLE(qevercloud::ReminderEmailConfig::type)
-QUENTIER_DECLARE_PRINTABLE(qevercloud::PremiumOrderStatus::type)
-QUENTIER_DECLARE_PRINTABLE(qevercloud::BusinessUserRole::type)
-QUENTIER_DECLARE_PRINTABLE(qevercloud::SponsoredGroupRole::type)
-QUENTIER_DECLARE_PRINTABLE(qevercloud::SharedNote)
-QUENTIER_DECLARE_PRINTABLE(qevercloud::NoteRestrictions)
-QUENTIER_DECLARE_PRINTABLE(qevercloud::NoteLimits)
-QUENTIER_DECLARE_PRINTABLE(qevercloud::Note)
-QUENTIER_DECLARE_PRINTABLE(qevercloud::EDAMErrorCode::type)
-QUENTIER_DECLARE_PRINTABLE(qevercloud::SyncState)
-QUENTIER_DECLARE_PRINTABLE(qevercloud::SyncChunkFilter)
-QUENTIER_DECLARE_PRINTABLE(qevercloud::NoteResultSpec)
-
-#if QEVERCLOUD_HAS_OAUTH
-QUENTIER_DECLARE_PRINTABLE(qevercloud::EvernoteOAuthWebView::OAuthResult)
-#endif
 
 #endif // LIB_QUENTIER_UTILITY_PRINTABLE_H

@@ -36,7 +36,7 @@ QT_FORWARD_DECLARE_CLASS(SharedNotebookData)
 class QUENTIER_EXPORT SharedNotebook: public Printable
 {
 public:
-    typedef qevercloud::SharedNotebookPrivilegeLevel::type SharedNotebookPrivilegeLevel;
+    using SharedNotebookPrivilegeLevel = qevercloud::SharedNotebookPrivilegeLevel;
 
 public:
     explicit SharedNotebook();

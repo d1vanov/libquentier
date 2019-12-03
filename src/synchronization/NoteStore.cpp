@@ -41,7 +41,7 @@ namespace quentier {
 // SET_EDAM_USER_EXCEPTION_ERROR
 
 NoteStore::NoteStore(
-        const QSharedPointer<qevercloud::NoteStore> & pQecNoteStore,
+        const qevercloud::INoteStorePtr & pQecNoteStore,
         QObject * parent) :
     INoteStore(pQecNoteStore, parent),
     m_noteGuidByAsyncResultPtr(),
@@ -57,8 +57,7 @@ NoteStore::~NoteStore()
 
 INoteStore * NoteStore::create() const
 {
-    return new NoteStore(
-        QSharedPointer<qevercloud::NoteStore>(new qevercloud::NoteStore));
+    return new NoteStore(qevercloud::newNoteStore());
 }
 
 void NoteStore::stop()

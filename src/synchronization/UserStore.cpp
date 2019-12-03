@@ -24,7 +24,7 @@
 
 namespace quentier {
 
-UserStore::UserStore(const QSharedPointer<qevercloud::UserStore> & pQecUserStore) :
+UserStore::UserStore(const qevercloud::IUserStorePtr & pQecUserStore) :
     IUserStore(pQecUserStore)
 {
     QUENTIER_CHECK_PTR(m_pQecUserStore)
@@ -32,8 +32,8 @@ UserStore::UserStore(const QSharedPointer<qevercloud::UserStore> & pQecUserStore
 
 IUserStore * UserStore::create(const QString & host) const
 {
-    return new UserStore(QSharedPointer<qevercloud::UserStore>(
-            new qevercloud::UserStore(host)));
+    return new UserStore(
+        qevercloud::newUserStore(host + QStringLiteral("/edam/user"));
 }
 
 bool UserStore::checkVersion(const QString & clientName,
@@ -75,7 +75,7 @@ qint32 UserStore::getUser(User & user, ErrorString & errorDescription,
 }
 
 qint32 UserStore::getAccountLimits(
-    const qevercloud::ServiceLevel::type serviceLevel,
+    const qevercloud::ServiceLevel serviceLevel,
     qevercloud::AccountLimits & limits,
     ErrorString & errorDescription,
     qint32 & rateLimitSeconds)

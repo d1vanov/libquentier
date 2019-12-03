@@ -53,14 +53,14 @@ class QUENTIER_EXPORT INoteStore: public QObject
 {
     Q_OBJECT
 protected:
-    explicit INoteStore(const QSharedPointer<qevercloud::NoteStore> & pQecNoteStore,
+    explicit INoteStore(const qevercloud::INoteStorePtr & pQecNoteStore,
                         QObject * parent = Q_NULLPTR);
 
 public:
     virtual ~INoteStore();
 
-    QSharedPointer<qevercloud::NoteStore> getQecNoteStore();
-    void setQecNoteStore(const QSharedPointer<qevercloud::NoteStore> & pQecNoteStore);
+    qevercloud::INoteStorePtr getQecNoteStore();
+    void setQecNoteStore(const qevercloud::INoteStorePtr & pQecNoteStore);
 
     QString noteStoreUrl() const;
     void setNoteStoreUrl(const QString & noteStoreUrl);
@@ -98,7 +98,7 @@ public:
      *                                  would be created in user's own account
      * @return                  Error code, 0 in case of successful notebook
      *                          creation, other values corresponding to
-     *                          qevercloud::EDAMErrorCode::type enumeration instead
+     *                          qevercloud::EDAMErrorCode enumeration instead
      */
     virtual qint32 createNotebook(Notebook & notebook,
                                   ErrorString & errorDescription,
@@ -122,7 +122,7 @@ public:
      *                                  would be updated within user's own account
      * @return                  Error code, 0 in case of successful notebook
      *                          update, other values corresponding to
-     *                          qevercloud::EDAMErrorCode::type enumeration instead
+     *                          qevercloud::EDAMErrorCode enumeration instead
      */
     virtual qint32 updateNotebook(Notebook & notebook,
                                   ErrorString & errorDescription,
@@ -146,7 +146,7 @@ public:
      *                                  be created in user's own account
      * @return                  Error code, 0 in case of successful note creation,
      *                          other values corresponding to
-     *                          qevercloud::EDAMErrorCode::type enumeration instead
+     *                          qevercloud::EDAMErrorCode enumeration instead
      */
     virtual qint32 createNote(Note & note,
                               ErrorString & errorDescription,
@@ -170,7 +170,7 @@ public:
      *                                  would be updated within user's own account
      * @return                  Error code, 0 in case of successful note update,
      *                          other values corresponding to
-     *                          qevercloud::EDAMErrorCode::type enumeration instead
+     *                          qevercloud::EDAMErrorCode enumeration instead
      */
     virtual qint32 updateNote(Note & note,
                               ErrorString & errorDescription,
@@ -195,7 +195,7 @@ public:
      *                                  be created in user's own account
      * @return                  Error code, 0 in case of successful tag creation,
      *                          other values corresponding to
-     *                          qevercloud::EDAMErrorCode::type enumeration instead
+     *                          qevercloud::EDAMErrorCode enumeration instead
      */
     virtual qint32 createTag(Tag & tag,
                              ErrorString & errorDescription,
@@ -219,7 +219,7 @@ public:
      *                                  be updated within user's own account
      * @return                  Error code, 0 in case of successful tag update,
      *                          other values corresponding to
-     *                          qevercloud::EDAMErrorCode::type enumeration instead
+     *                          qevercloud::EDAMErrorCode enumeration instead
      */
     virtual qint32 updateTag(Tag & tag,
                              ErrorString & errorDescription,
@@ -240,7 +240,7 @@ public:
      *                          qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED
      * @return                  Error code, 0 in case of successful saved search
      *                          creation, other values corresponding to
-     *                          qevercloud::EDAMErrorCode::type enumeration instead
+     *                          qevercloud::EDAMErrorCode enumeration instead
      */
     virtual qint32 createSavedSearch(SavedSearch & savedSearch,
                                      ErrorString & errorDescription,
@@ -259,7 +259,7 @@ public:
      *                          qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED
      * @return                  Error code, 0 in case of successful saved search
      *                          update, other values corresponding to
-     *                          qevercloud::EDAMErrorCode::type enumeration instead
+     *                          qevercloud::EDAMErrorCode enumeration instead
      */
     virtual qint32 updateSavedSearch(SavedSearch & savedSearch,
                                      ErrorString & errorDescription,
@@ -278,7 +278,7 @@ public:
      *                          qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED
      * @return                  Error code, 0 in case of successful sync state
      *                          retrieval, other values corresponding to
-     *                          qevercloud::EDAMErrorCode::type enumeration instead
+     *                          qevercloud::EDAMErrorCode enumeration instead
      */
     virtual qint32 getSyncState(qevercloud::SyncState & syncState,
                                 ErrorString & errorDescription,
@@ -303,7 +303,7 @@ public:
      *                          qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED
      * @return                  Error code, 0 in case of successful sync chunk
      *                          retrieval, other values corresponding to
-     *                          qevercloud::EDAMErrorCode::type enumeration instead
+     *                          qevercloud::EDAMErrorCode enumeration instead
      */
     virtual qint32 getSyncChunk(const qint32 afterUSN, const qint32 maxEntries,
                                 const qevercloud::SyncChunkFilter & filter,
@@ -329,7 +329,7 @@ public:
      *                          qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED
      * @return                  Error code, 0 in case of successful linked notebook
      *                          sync state retrieval, other values corresponding to
-     *                          qevercloud::EDAMErrorCode::type enumeration instead
+     *                          qevercloud::EDAMErrorCode enumeration instead
      */
     virtual qint32 getLinkedNotebookSyncState(const qevercloud::LinkedNotebook & linkedNotebook,
                                               const QString & authToken,
@@ -369,7 +369,7 @@ public:
      * @return                          Error code, 0 in case of successful
      *                                  linked notebook sync chunk retrieval,
      *                                  other values corresponding to
-     *                                  qevercloud::EDAMErrorCode::type enumeration instead
+     *                                  qevercloud::EDAMErrorCode enumeration instead
      */
     virtual qint32 getLinkedNotebookSyncChunk(const qevercloud::LinkedNotebook & linkedNotebook,
                                               const qint32 afterUSN, const qint32 maxEntries,
@@ -405,7 +405,7 @@ public:
      *                                  qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED
      * @return                          Error code, 0 in case of successful note
      *                                  retrieval, other values corresponding to
-     *                                  qevercloud::EDAMErrorCode::type enumeration instead
+     *                                  qevercloud::EDAMErrorCode enumeration instead
      */
     virtual qint32 getNote(const bool withContent, const bool withResourcesData,
                            const bool withResourcesRecognition,
@@ -484,7 +484,7 @@ public:
      *                                  qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED
      * @return                          Error code, 0 in case of successful resource
      *                                  retrieval, other values corresponding to
-     *                                  qevercloud::EDAMErrorCode::type enumeration instead
+     *                                  qevercloud::EDAMErrorCode enumeration instead
      */
     virtual qint32 getResource(const bool withDataBody,
                                const bool withRecognitionDataBody,
@@ -541,7 +541,7 @@ public:
      *                          qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED
      * @return                  Error code, 0 in case of successful authentication
      *                          to shared notebook, other values corresponding to
-     *                          qevercloud::EDAMErrorCode::type enumeration instead
+     *                          qevercloud::EDAMErrorCode enumeration instead
      */
     virtual qint32 authenticateToSharedNotebook(const QString & shareKey,
                                                 qevercloud::AuthenticationResult & authResult,
@@ -558,7 +558,7 @@ private:
     Q_DISABLE_COPY(INoteStore)
 
 protected:
-    QSharedPointer<qevercloud::NoteStore>       m_pQecNoteStore;
+    qevercloud::INoteStorePtr   m_pQecNoteStore;
 };
 
 } // namespace quentier
