@@ -21,22 +21,23 @@
 namespace quentier {
 
 INoteStore::INoteStore(
-        const QSharedPointer<qevercloud::NoteStore> & pQecNoteStore,
+        const qevercloud::INoteStorePtr & pQecNoteStore,
         QObject * parent) :
     QObject(parent),
-    m_pQecNoteStore(pQecNoteStore)
+    m_pQecNoteStore(pQecNoteStore),
+    m_authenticationToken()
 {}
 
 INoteStore::~INoteStore()
 {}
 
-QSharedPointer<qevercloud::NoteStore> INoteStore::getQecNoteStore()
+qevercloud::INoteStorePtr INoteStore::getQecNoteStore()
 {
     return m_pQecNoteStore;
 }
 
 void INoteStore::setQecNoteStore(
-    const QSharedPointer<qevercloud::NoteStore> & pQecNoteStore)
+    const qevercloud::INoteStorePtr & pQecNoteStore)
 {
     m_pQecNoteStore = pQecNoteStore;
 }
@@ -59,18 +60,12 @@ void INoteStore::setNoteStoreUrl(const QString & noteStoreUrl)
 
 QString INoteStore::authenticationToken() const
 {
-    if (!m_pQecNoteStore.isNull()) {
-        return m_pQecNoteStore->authenticationToken();
-    }
-
-    return QString();
+    return m_authenticationToken;
 }
 
 void INoteStore::setAuthenticationToken(const QString & authToken)
 {
-    if (!m_pQecNoteStore.isNull()) {
-        m_pQecNoteStore->setAuthenticationToken(authToken);
-    }
+    m_authenticationToken = authToken;
 }
 
 } // namespace quentier

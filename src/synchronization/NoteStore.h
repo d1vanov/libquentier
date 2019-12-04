@@ -60,7 +60,7 @@ class Q_DECL_HIDDEN NoteStore: public INoteStore
 {
     Q_OBJECT
 public:
-    explicit NoteStore(const QSharedPointer<qevercloud::NoteStore> & pQecNoteStore,
+    explicit NoteStore(const qevercloud::INoteStorePtr & pQecNoteStore,
                        QObject * parent = Q_NULLPTR);
     virtual ~NoteStore();
 

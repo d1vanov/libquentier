@@ -254,7 +254,7 @@ SavedSearch::QueryFormat SavedSearch::queryFormat() const
 
 void SavedSearch::setQueryFormat(const qint8 queryFormat)
 {
-    if (queryFormat <= qevercloud::QueryFormat::SEXP) {
+    if (queryFormat <= static_cast<int>(qevercloud::QueryFormat::SEXP)) {
         d->m_qecSearch.format = static_cast<QueryFormat>(queryFormat);
     }
     else {

@@ -105,7 +105,7 @@ bool SavedSearchData::checkParameters(ErrorString & errorDescription) const
         errorDescription.setBase(QT_TRANSLATE_NOOP("SavedSearchData",
                                                    "Saved search has unsupported "
                                                    "query format"));
-        errorDescription.details() = QString::number(m_qecSearch.format.ref());
+        errorDescription.details() = ToString(m_qecSearch.format.ref());
         return false;
     }
 

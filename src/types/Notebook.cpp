@@ -333,7 +333,7 @@ bool Notebook::hasPublishingOrder() const
 
 qint8 Notebook::publishingOrder() const
 {
-    return static_cast<qint8>(d->m_qecNotebook.publishing->order);
+    return static_cast<qint8>(d->m_qecNotebook.publishing->order.ref());
 }
 
 void Notebook::setPublishingOrder(const qint8 order)
@@ -540,7 +540,7 @@ bool Notebook::hasBusinessNotebookPrivilegeLevel() const
 
 qint8 Notebook::businessNotebookPrivilegeLevel() const
 {
-    return static_cast<qint8>(d->m_qecNotebook.businessNotebook->privilege);
+    return static_cast<qint8>(d->m_qecNotebook.businessNotebook->privilege.ref());
 }
 
 void Notebook::setBusinessNotebookPrivilegeLevel(const qint8 privilegeLevel)
@@ -882,7 +882,7 @@ bool Notebook::hasUpdateWhichSharedNotebookRestrictions() const
 qint8 Notebook::updateWhichSharedNotebookRestrictions() const
 {
     return static_cast<qint8>(
-        d->m_qecNotebook.restrictions->updateWhichSharedNotebookRestrictions);
+        d->m_qecNotebook.restrictions->updateWhichSharedNotebookRestrictions.ref());
 }
 
 void Notebook::setUpdateWhichSharedNotebookRestrictions(const qint8 which)
@@ -911,7 +911,7 @@ bool Notebook::hasExpungeWhichSharedNotebookRestrictions() const
 qint8 Notebook::expungeWhichSharedNotebookRestrictions() const
 {
     return static_cast<qint8>(
-        d->m_qecNotebook.restrictions->expungeWhichSharedNotebookRestrictions);
+        d->m_qecNotebook.restrictions->expungeWhichSharedNotebookRestrictions.ref());
 }
 
 void Notebook::setExpungeWhichSharedNotebookRestrictions(const qint8 which)

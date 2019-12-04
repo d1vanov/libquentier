@@ -18,11 +18,7 @@
 
 #include "AccountData.h"
 
-#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
-#include <qt5qevercloud/generated/constants.h>
-#else
-#include <qt4qevercloud/generated/constants.h>
-#endif
+#include <qt5qevercloud/generated/Constants.h>
 
 #include <limits>
 

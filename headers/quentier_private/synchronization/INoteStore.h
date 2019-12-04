@@ -29,11 +29,7 @@
 #include <QObject>
 #include <QSharedPointer>
 
-#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
 #include <qt5qevercloud/QEverCloud.h>
-#else
-#include <qt4qevercloud/QEverCloud.h>
-#endif
 
 namespace quentier {
 
@@ -559,6 +555,7 @@ private:
 
 protected:
     qevercloud::INoteStorePtr   m_pQecNoteStore;
+    QString     m_authenticationToken;
 };
 
 } // namespace quentier

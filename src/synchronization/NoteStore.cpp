@@ -57,7 +57,7 @@ NoteStore::~NoteStore()
 
 INoteStore * NoteStore::create() const
 {
-    return new NoteStore(qevercloud::newNoteStore());
+    return new NoteStore(qevercloud::INoteStorePtr(qevercloud::newNoteStore()));
 }
 
 void NoteStore::stop()
@@ -108,9 +108,9 @@ qint32 NoteStore::createNotebook(Notebook & notebook,
 {
     try
     {
+        auto ctx = qevercloud::newRequestContext(linkedNotebookAuthToken);
         notebook.qevercloudNotebook() =
-            m_pQecNoteStore->createNotebook(notebook.qevercloudNotebook(),
-                                            linkedNotebookAuthToken);
+            m_pQecNoteStore->createNotebook(notebook.qevercloudNotebook(), ctx);
         return 0;
     }
     catch(const qevercloud::EDAMUserException & userException)
@@ -126,7 +126,8 @@ qint32 NoteStore::createNotebook(Notebook & notebook,
     }
     CATCH_GENERIC_EXCEPTIONS_NO_RET()
 
-    return qevercloud::EDAMErrorCode::UNKNOWN;
+    // FIXME: should actually return properly typed qevercloud::EDAMErrorCode
+    return static_cast<qint32>(qevercloud::EDAMErrorCode::UNKNOWN);
 }
 
 qint32 NoteStore::updateNotebook(Notebook & notebook,
@@ -136,8 +137,9 @@ qint32 NoteStore::updateNotebook(Notebook & notebook,
 {
     try
     {
-        qint32 usn = m_pQecNoteStore->updateNotebook(notebook.qevercloudNotebook(),
-                                                     linkedNotebookAuthToken);
+        auto ctx = qevercloud::newRequestContext(linkedNotebookAuthToken);
+        qint32 usn = m_pQecNoteStore->updateNotebook(
+            notebook.qevercloudNotebook(), ctx);
         notebook.setUpdateSequenceNumber(usn);
         return 0;
     }
@@ -158,7 +160,8 @@ qint32 NoteStore::updateNotebook(Notebook & notebook,
     }
     CATCH_GENERIC_EXCEPTIONS_NO_RET()
 
-    return qevercloud::EDAMErrorCode::UNKNOWN;
+    // FIXME: should actually return properly typed qevercloud::EDAMErrorCode
+    return static_cast<qint32>(qevercloud::EDAMErrorCode::UNKNOWN);
 }
 
 qint32 NoteStore::createNote(Note & note,
@@ -168,9 +171,9 @@ qint32 NoteStore::createNote(Note & note,
 {
     try
     {
+        auto ctx = qevercloud::newRequestContext(linkedNotebookAuthToken);
         qevercloud::Note noteMetadata =
-            m_pQecNoteStore->createNote(note.qevercloudNote(),
-                                        linkedNotebookAuthToken);
+            m_pQecNoteStore->createNote(note.qevercloudNote(), ctx);
         QNDEBUG("Note metadata returned from createNote method: "
                 << noteMetadata);
 
@@ -197,7 +200,8 @@ qint32 NoteStore::createNote(Note & note,
     }
     CATCH_GENERIC_EXCEPTIONS_NO_RET()
 
-    return qevercloud::EDAMErrorCode::UNKNOWN;
+    // FIXME: should actually return properly typed qevercloud::EDAMErrorCode
+    return static_cast<qint32>(qevercloud::EDAMErrorCode::UNKNOWN);
 }
 
 qint32 NoteStore::updateNote(Note & note,

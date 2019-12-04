@@ -22,35 +22,29 @@
 namespace quentier {
 
 IUserStore::IUserStore(
-        const QSharedPointer<qevercloud::UserStore> & pQecUserStore) :
+        const qevercloud::IUserStorePtr & pQecUserStore) :
     m_pQecUserStore(pQecUserStore)
 {}
 
-QSharedPointer<qevercloud::UserStore> IUserStore::getQecUserStore() const
+qevercloud::IUserStorePtr IUserStore::getQecUserStore() const
 {
     return m_pQecUserStore;
 }
 
 void IUserStore::setQecUserStore(
-    const QSharedPointer<qevercloud::UserStore> & pQecUserStore)
+    const qevercloud::IUserStorePtr & pQecUserStore)
 {
     m_pQecUserStore = pQecUserStore;
 }
 
 QString IUserStore::authenticationToken() const
 {
-    if (!m_pQecUserStore.isNull()) {
-        return m_pQecUserStore->authenticationToken();
-    }
-
-    return QString();
+    return m_authenticationToken;
 }
 
 void IUserStore::setAuthenticationToken(const QString & authToken)
 {
-    if (!m_pQecUserStore.isNull()) {
-        m_pQecUserStore->setAuthenticationToken(authToken);
-    }
+    m_authenticationToken = authToken;
 }
 
 } // namespace quentier
