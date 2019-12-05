@@ -42,7 +42,7 @@ namespace quentier {
 class Q_DECL_HIDDEN UserStore: public IUserStore
 {
 public:
-    UserStore(const QSharedPointer<qevercloud::UserStore> & pQecUserStore);
+    UserStore(const qevercloud::IUserStorePtr & pQecUserStore);
 
     virtual IUserStore * create(const QString & host) const Q_DECL_OVERRIDE;
 
@@ -55,7 +55,7 @@ public:
                            qint32 & rateLimitSeconds) Q_DECL_OVERRIDE;
 
     virtual qint32 getAccountLimits(
-        const qevercloud::ServiceLevel::type serviceLevel,
+        const qevercloud::ServiceLevel serviceLevel,
         qevercloud::AccountLimits & limits,
         ErrorString & errorDescription,
         qint32 & rateLimitSeconds) Q_DECL_OVERRIDE;
