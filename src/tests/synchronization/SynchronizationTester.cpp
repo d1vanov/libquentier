@@ -141,7 +141,7 @@ void SynchronizationTester::init()
     user.setName(m_testAccount.displayName());
     user.setCreationTimestamp(QDateTime::currentMSecsSinceEpoch());
     user.setModificationTimestamp(user.creationTimestamp());
-    user.setServiceLevel(qevercloud::ServiceLevel::BASIC);
+    user.setServiceLevel(static_cast<qint8>(qevercloud::ServiceLevel::BASIC));
     m_pFakeUserStore->setUser(m_testAccount.id(), user);
 
     qevercloud::AccountLimits limits;

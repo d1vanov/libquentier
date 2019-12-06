@@ -839,6 +839,12 @@ set(TEST_RESOURCES
 qt_add_resources(${PROJECT_NAME}_TEST_RESOURCES_RCC ${TEST_RESOURCES})
 
 add_executable(test_${PROJECT_NAME} ${TEST_HEADERS} ${TEST_SOURCES} ${${PROJECT_NAME}_TEST_RESOURCES_RCC})
+
+# test executable target properties
+set_target_properties(test_${PROJECT_NAME} PROPERTIES
+  CXX_STANDARD 17
+  CXX_EXTENSIONS OFF)
+
 add_sanitizers(test_${PROJECT_NAME})
 add_test(test_${PROJECT_NAME} test_${PROJECT_NAME})
 

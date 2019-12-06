@@ -38,8 +38,8 @@ public:
     void setEdamVersionMinor(const qint16 edamVersionMinor);
 
     const qevercloud::AccountLimits * findAccountLimits(
-        const qevercloud::ServiceLevel::type serviceLevel) const;
-    void setAccountLimits(const qevercloud::ServiceLevel::type serviceLevel,
+        const qevercloud::ServiceLevel serviceLevel) const;
+    void setAccountLimits(const qevercloud::ServiceLevel serviceLevel,
                           const qevercloud::AccountLimits & limits);
 
     const User * findUser(const qint32 id) const;
@@ -53,7 +53,7 @@ public:
                               ErrorString & errorDescription) Q_DECL_OVERRIDE;
     virtual qint32 getUser(User & user, ErrorString & errorDescription,
                            qint32 & rateLimitSeconds) Q_DECL_OVERRIDE;
-    virtual qint32 getAccountLimits(const qevercloud::ServiceLevel::type serviceLevel,
+    virtual qint32 getAccountLimits(const qevercloud::ServiceLevel serviceLevel,
                                     qevercloud::AccountLimits & limits,
                                     ErrorString & errorDescription,
                                     qint32 & rateLimitSeconds) Q_DECL_OVERRIDE;
@@ -62,7 +62,7 @@ private:
     qint16      m_edamVersionMajor;
     qint16      m_edamVersionMinor;
 
-    typedef QHash<qevercloud::ServiceLevel::type, qevercloud::AccountLimits>
+    typedef QHash<qevercloud::ServiceLevel, qevercloud::AccountLimits>
         AccountLimitsByServiceLevel;
 
     AccountLimitsByServiceLevel     m_accountLimits;

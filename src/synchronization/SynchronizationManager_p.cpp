@@ -89,12 +89,13 @@ SynchronizationManagerPrivate::SynchronizationManagerPrivate(
     m_onceReadLastSyncParams(false),
     m_pNoteStore((pInjector && pInjector->m_pNoteStore)
                  ? pInjector->m_pNoteStore
-                 : (new NoteStore(QSharedPointer<qevercloud::NoteStore>(
-                             new qevercloud::NoteStore), this))),
+                 : new NoteStore(qevercloud::INoteStorePtr(
+                        qevercloud::newNoteStore()))),
     m_pUserStore((pInjector && pInjector->m_pUserStore)
                  ? pInjector->m_pUserStore
-                 : (new UserStore(QSharedPointer<qevercloud::UserStore>(
-                             new qevercloud::UserStore(m_host))))),
+                 : new UserStore(qevercloud::IUserStorePtr(
+                        qevercloud::newUserStore(
+                        m_host + QStringLiteral("/edam/user"))))),
     m_authContext(AuthContext::Blank),
     m_launchSyncPostponeTimerId(-1),
     m_OAuthResult(),
@@ -1781,7 +1782,8 @@ void SynchronizationManagerPrivate::authenticateToLinkedNotebooks()
             pNoteStore->authenticateToSharedNotebook(sharedNotebookGlobalId,
                                                      authResult, errorDescription,
                                                      rateLimitSeconds);
-        if (errorCode == qevercloud::EDAMErrorCode::AUTH_EXPIRED)
+        if (errorCode ==
+            static_cast<qint32>(qevercloud::EDAMErrorCode::AUTH_EXPIRED))
         {
             if (validAuthentication()) {
                 ErrorString error(QT_TR_NOOP("Unexpected AUTH_EXPIRED error"));
@@ -1797,7 +1799,8 @@ void SynchronizationManagerPrivate::authenticateToLinkedNotebooks()
             ++it;
             continue;
         }
-        else if (errorCode == qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED)
+        else if (errorCode ==
+                 static_cast<qint32>(qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED))
         {
             if (rateLimitSeconds < 0) {
                 errorDescription.setBase(QT_TR_NOOP("Rate limit reached but "

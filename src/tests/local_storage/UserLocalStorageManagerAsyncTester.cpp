@@ -71,7 +71,7 @@ void UserLocalStorageManagerAsyncTester::initialize()
     m_initialUser.setEmail(QStringLiteral("Fake user email"));
     m_initialUser.setName(QStringLiteral("Fake user name"));
     m_initialUser.setTimezone(QStringLiteral("Europe/Moscow"));
-    m_initialUser.setPrivilegeLevel(qevercloud::PrivilegeLevel::NORMAL);
+    m_initialUser.setPrivilegeLevel(static_cast<qint8>(qevercloud::PrivilegeLevel::NORMAL));
     m_initialUser.setCreationTimestamp(3);
     m_initialUser.setModificationTimestamp(3);
     m_initialUser.setActive(true);

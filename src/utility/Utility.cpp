@@ -92,9 +92,6 @@ void initializeLibquentier()
     // Attempt to workaround https://bugreports.qt.io/browse/QTBUG-40765
     QCoreApplication::setAttribute(Qt::AA_DontCreateNativeWidgetSiblings);
 #endif
-
-    // Disable timeout for QEverCloud
-    qevercloud::setConnectionTimeout(-1);
 }
 
 bool checkUpdateSequenceNumber(const int32_t updateSequenceNumber)

@@ -66,13 +66,14 @@ FakeNoteStore::Data::Data() :
 {}
 
 FakeNoteStore::FakeNoteStore(QObject * parent) :
-    INoteStore(QSharedPointer<qevercloud::NoteStore>(
-            new qevercloud::NoteStore), parent),
+    INoteStore(qevercloud::INoteStorePtr(
+            qevercloud::newNoteStore()), parent),
     m_data(new Data)
 {}
 
 FakeNoteStore::FakeNoteStore(const QSharedPointer<Data> & data) :
-    INoteStore(QSharedPointer<qevercloud::NoteStore>(new qevercloud::NoteStore)),
+    INoteStore(qevercloud::INoteStorePtr(
+            qevercloud::newNoteStore())),
     m_data(data)
 {}
 
@@ -1689,12 +1690,12 @@ qint32 FakeNoteStore::createNotebook(Notebook & notebook,
         rateLimitSeconds = 0;
         storeCurrentMaxUsnsAsThoseBeforeRateLimitBreach();
         m_data->m_onceAPIRateLimitExceedingTriggered = true;
-        return qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED;
+        return static_cast<qint32>(qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED);
     }
 
     if (m_data->m_notebooks.size() + 1 > m_data->m_maxNumNotebooks) {
         errorDescription.setBase("Already at max number of notebooks");
-        return qevercloud::EDAMErrorCode::LIMIT_REACHED;
+        return static_cast<qint32>(qevercloud::EDAMErrorCode::LIMIT_REACHED);
     }
 
     qint32 checkRes = checkNotebookFields(notebook, errorDescription);
@@ -1717,13 +1718,13 @@ qint32 FakeNoteStore::createNotebook(Notebook & notebook,
         errorDescription.setBase("Notebook doesn't belong to "
                                  "a linked notebook but linked "
                                  "notebook auth token is not empty");
-        return qevercloud::EDAMErrorCode::INVALID_AUTH;
+        return static_cast<qint32>(qevercloud::EDAMErrorCode::INVALID_AUTH);
     }
 
     if (!linkedNotebookAuthToken.isEmpty() && notebook.isDefaultNotebook()) {
         errorDescription.setBase("Linked notebook cannot be set "
                                  "as default notebook");
-        return qevercloud::EDAMErrorCode::PERMISSION_DENIED;
+        return static_cast<qint32>(qevercloud::EDAMErrorCode::PERMISSION_DENIED);
     }
 
     NotebookDataByNameUpper & nameIndex =
@@ -1732,7 +1733,7 @@ qint32 FakeNoteStore::createNotebook(Notebook & notebook,
     if (nameIt != nameIndex.end()) {
         errorDescription.setBase("Notebook with the specified "
                                  "name already exists");
-        return qevercloud::EDAMErrorCode::DATA_CONFLICT;
+        return static_cast<qint32>(qevercloud::EDAMErrorCode::DATA_CONFLICT);
     }
 
     notebook.setGuid(UidGenerator::Generate());
@@ -1769,12 +1770,12 @@ qint32 FakeNoteStore::updateNotebook(Notebook & notebook,
         rateLimitSeconds = 0;
         storeCurrentMaxUsnsAsThoseBeforeRateLimitBreach();
         m_data->m_onceAPIRateLimitExceedingTriggered = true;
-        return qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED;
+        return static_cast<qint32>(qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED);
     }
 
     if (!notebook.hasGuid()) {
         errorDescription.setBase("Notebook guid is not set");
-        return qevercloud::EDAMErrorCode::UNKNOWN;
+        return static_cast<qint32>(qevercloud::EDAMErrorCode::UNKNOWN);
     }
 
     qint32 checkRes = checkNotebookFields(notebook, errorDescription);
@@ -1797,13 +1798,13 @@ qint32 FakeNoteStore::updateNotebook(Notebook & notebook,
         errorDescription.setBase("Notebook doesn't belong to "
                                  "a linked notebook but linked "
                                  "notebook auth token is not empty");
-        return qevercloud::EDAMErrorCode::INVALID_AUTH;
+        return static_cast<qint32>(qevercloud::EDAMErrorCode::INVALID_AUTH);
     }
 
     if (!linkedNotebookAuthToken.isEmpty() && notebook.isDefaultNotebook()) {
         errorDescription.setBase("Linked notebook cannot be set "
                                  "as default notebook");
-        return qevercloud::EDAMErrorCode::PERMISSION_DENIED;
+        return static_cast<qint32>(qevercloud::EDAMErrorCode::PERMISSION_DENIED);
     }
 
     NotebookDataByGuid & index = m_data->m_notebooks.get<NotebookByGuid>();
@@ -1811,13 +1812,13 @@ qint32 FakeNoteStore::updateNotebook(Notebook & notebook,
     if (it == index.end()) {
         errorDescription.setBase("Notebook with the specified "
                                  "guid doesn't exist");
-        return qevercloud::EDAMErrorCode::DATA_CONFLICT;
+        return static_cast<qint32>(qevercloud::EDAMErrorCode::DATA_CONFLICT);
     }
 
     const Notebook & originalNotebook = *it;
     if (!originalNotebook.canUpdateNotebook()) {
         errorDescription.setBase("No permission to update the notebook");
-        return qevercloud::EDAMErrorCode::PERMISSION_DENIED;
+        return static_cast<qint32>(qevercloud::EDAMErrorCode::PERMISSION_DENIED);
     }
 
     if (originalNotebook.name().toUpper() != notebook.name().toUpper())
@@ -1828,7 +1829,7 @@ qint32 FakeNoteStore::updateNotebook(Notebook & notebook,
         if (nameIt != nameIndex.end()) {
             errorDescription.setBase("Notebook with the specified "
                                      "name already exists");
-            return qevercloud::EDAMErrorCode::DATA_CONFLICT;
+            return static_cast<qint32>(qevercloud::EDAMErrorCode::DATA_CONFLICT);
         }
     }
 
@@ -1863,12 +1864,12 @@ qint32 FakeNoteStore::createNote(Note & note, ErrorString & errorDescription,
         rateLimitSeconds = 0;
         storeCurrentMaxUsnsAsThoseBeforeRateLimitBreach();
         m_data->m_onceAPIRateLimitExceedingTriggered = true;
-        return qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED;
+        return static_cast<qint32>(qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED);
     }
 
     if (m_data->m_notes.size() + 1 > m_data->m_maxNumNotes) {
         errorDescription.setBase("Already at max number of notes");
-        return qevercloud::EDAMErrorCode::LIMIT_REACHED;
+        return static_cast<qint32>(qevercloud::EDAMErrorCode::LIMIT_REACHED);
     }
 
     qint32 checkRes = checkNoteFields(note, CheckNoteFieldsPurpose::CreateNote,
@@ -1880,7 +1881,7 @@ qint32 FakeNoteStore::createNote(Note & note, ErrorString & errorDescription,
     const Notebook * pNotebook = findNotebook(note.notebookGuid());
     if (Q_UNLIKELY(!pNotebook)) {
         errorDescription.setBase("No notebook was found for note");
-        return qevercloud::EDAMErrorCode::DATA_CONFLICT;
+        return static_cast<qint32>(qevercloud::EDAMErrorCode::DATA_CONFLICT);
     }
 
     if (pNotebook->hasLinkedNotebookGuid())
@@ -1898,7 +1899,7 @@ qint32 FakeNoteStore::createNote(Note & note, ErrorString & errorDescription,
         errorDescription.setBase("Note's notebook doesn't belong "
                                  "to a linked notebook but linked "
                                  "notebook auth token is not empty");
-        return qevercloud::EDAMErrorCode::INVALID_AUTH;
+        return static_cast<qint32>(qevercloud::EDAMErrorCode::INVALID_AUTH);
     }
 
     note.setGuid(UidGenerator::Generate());
@@ -1931,7 +1932,7 @@ qint32 FakeNoteStore::createNote(Note & note, ErrorString & errorDescription,
             resource.setUpdateSequenceNumber(note.updateSequenceNumber());
 
             if (!setResource(resource, errorDescription)) {
-                return qevercloud::EDAMErrorCode::DATA_CONFLICT;
+                return static_cast<qint32>(qevercloud::EDAMErrorCode::DATA_CONFLICT);
             }
         }
 
@@ -1971,12 +1972,12 @@ qint32 FakeNoteStore::updateNote(Note & note, ErrorString & errorDescription,
         rateLimitSeconds = 0;
         storeCurrentMaxUsnsAsThoseBeforeRateLimitBreach();
         m_data->m_onceAPIRateLimitExceedingTriggered = true;
-        return qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED;
+        return static_cast<qint32>(qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED);
     }
 
     if (!note.hasGuid()) {
         errorDescription.setBase("Note.guid");
-        return qevercloud::EDAMErrorCode::UNKNOWN;
+        return static_cast<qint32>(qevercloud::EDAMErrorCode::UNKNOWN);
     }
 
     qint32 checkRes = checkNoteFields(note, CheckNoteFieldsPurpose::UpdateNote,
@@ -1990,13 +1991,13 @@ qint32 FakeNoteStore::updateNote(Note & note, ErrorString & errorDescription,
     if (it == index.end()) {
         errorDescription.setBase("Note with the specified guid "
                                  "doesn't exist");
-        return qevercloud::EDAMErrorCode::DATA_CONFLICT;
+        return static_cast<qint32>(qevercloud::EDAMErrorCode::DATA_CONFLICT);
     }
 
     const Notebook * pNotebook = findNotebook(note.notebookGuid());
     if (Q_UNLIKELY(!pNotebook)) {
         errorDescription.setBase("No notebook was found for note");
-        return qevercloud::EDAMErrorCode::DATA_CONFLICT;
+        return static_cast<qint32>(qevercloud::EDAMErrorCode::DATA_CONFLICT);
     }
 
     if (pNotebook->hasLinkedNotebookGuid())
@@ -2014,7 +2015,7 @@ qint32 FakeNoteStore::updateNote(Note & note, ErrorString & errorDescription,
         errorDescription.setBase("Note's notebook doesn't belong "
                                  "to a linked notebook but linked "
                                  "notebook auth token is not empty");
-        return qevercloud::EDAMErrorCode::INVALID_AUTH;
+        return static_cast<qint32>(qevercloud::EDAMErrorCode::INVALID_AUTH);
     }
 
     qint32 maxUsn = currentMaxUsn(pNotebook->hasLinkedNotebookGuid()
@@ -2048,7 +2049,7 @@ qint32 FakeNoteStore::updateNote(Note & note, ErrorString & errorDescription,
             }
 
             if (!setResource(resource, errorDescription)) {
-                return qevercloud::EDAMErrorCode::DATA_CONFLICT;
+                return static_cast<qint32>(qevercloud::EDAMErrorCode::DATA_CONFLICT);
             }
         }
 
@@ -2088,12 +2089,12 @@ qint32 FakeNoteStore::createTag(Tag & tag, ErrorString & errorDescription,
         rateLimitSeconds = 0;
         storeCurrentMaxUsnsAsThoseBeforeRateLimitBreach();
         m_data->m_onceAPIRateLimitExceedingTriggered = true;
-        return qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED;
+        return static_cast<qint32>(qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED);
     }
 
     if (m_data->m_tags.size() + 1 > m_data->m_maxNumTags) {
         errorDescription.setBase("Already at max number of tags");
-        return qevercloud::EDAMErrorCode::LIMIT_REACHED;
+        return static_cast<qint32>(qevercloud::EDAMErrorCode::LIMIT_REACHED);
     }
 
     qint32 checkRes = checkTagFields(tag, errorDescription);
@@ -2115,14 +2116,14 @@ qint32 FakeNoteStore::createTag(Tag & tag, ErrorString & errorDescription,
         errorDescription.setBase("Tag doesn't belong to a linked "
                                  "notebook but linked notebook "
                                  "auth token is not empty");
-        return qevercloud::EDAMErrorCode::INVALID_AUTH;
+        return static_cast<qint32>(qevercloud::EDAMErrorCode::INVALID_AUTH);
     }
 
     TagDataByNameUpper & nameIndex = m_data->m_tags.get<TagByNameUpper>();
     auto it = nameIndex.find(tag.name().toUpper());
     if (it != nameIndex.end()) {
         errorDescription.setBase("Tag name is already in use");
-        return qevercloud::EDAMErrorCode::DATA_CONFLICT;
+        return static_cast<qint32>(qevercloud::EDAMErrorCode::DATA_CONFLICT);
     }
 
     tag.setGuid(UidGenerator::Generate());
@@ -2159,12 +2160,12 @@ qint32 FakeNoteStore::updateTag(Tag & tag, ErrorString & errorDescription,
         rateLimitSeconds = 0;
         storeCurrentMaxUsnsAsThoseBeforeRateLimitBreach();
         m_data->m_onceAPIRateLimitExceedingTriggered = true;
-        return qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED;
+        return static_cast<qint32>(qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED);
     }
 
     if (!tag.hasGuid()) {
         errorDescription.setBase("Tag guid is not set");
-        return qevercloud::EDAMErrorCode::UNKNOWN;
+        return static_cast<qint32>(qevercloud::EDAMErrorCode::UNKNOWN);
     }
 
     qint32 checkRes = checkTagFields(tag, errorDescription);
@@ -2186,14 +2187,14 @@ qint32 FakeNoteStore::updateTag(Tag & tag, ErrorString & errorDescription,
         errorDescription.setBase("Tag doesn't belong to a linked "
                                  "notebook but linked notebook "
                                  "auth token is not empty");
-        return qevercloud::EDAMErrorCode::INVALID_AUTH;
+        return static_cast<qint32>(qevercloud::EDAMErrorCode::INVALID_AUTH);
     }
 
     TagDataByGuid & index = m_data->m_tags.get<TagByGuid>();
     auto it = index.find(tag.guid());
     if (it == index.end()) {
         errorDescription.setBase("Tag with the specified guid doesn't exist");
-        return qevercloud::EDAMErrorCode::DATA_CONFLICT;
+        return static_cast<qint32>(qevercloud::EDAMErrorCode::DATA_CONFLICT);
     }
 
     const Tag & originalTag = *it;
@@ -2204,7 +2205,7 @@ qint32 FakeNoteStore::updateTag(Tag & tag, ErrorString & errorDescription,
         if (nameIt != nameIndex.end()) {
             errorDescription.setBase("Tag with the specified name "
                                      "already exists");
-            return qevercloud::EDAMErrorCode::DATA_CONFLICT;
+            return static_cast<qint32>(qevercloud::EDAMErrorCode::DATA_CONFLICT);
         }
     }
 
@@ -2239,12 +2240,12 @@ qint32 FakeNoteStore::createSavedSearch(SavedSearch & savedSearch,
         rateLimitSeconds = 0;
         storeCurrentMaxUsnsAsThoseBeforeRateLimitBreach();
         m_data->m_onceAPIRateLimitExceedingTriggered = true;
-        return qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED;
+        return static_cast<qint32>(qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED);
     }
 
     if (m_data->m_savedSearches.size() + 1 > m_data->m_maxNumSavedSearches) {
         errorDescription.setBase("Already at max number of saved searches");
-        return qevercloud::EDAMErrorCode::LIMIT_REACHED;
+        return static_cast<qint32>(qevercloud::EDAMErrorCode::LIMIT_REACHED);
     }
 
     qint32 checkRes = checkSavedSearchFields(savedSearch, errorDescription);
@@ -2257,7 +2258,7 @@ qint32 FakeNoteStore::createSavedSearch(SavedSearch & savedSearch,
     auto it = nameIndex.find(savedSearch.name().toUpper());
     if (it != nameIndex.end()) {
         errorDescription.setBase("Saved search name is already in use");
-        return qevercloud::EDAMErrorCode::DATA_CONFLICT;
+        return static_cast<qint32>(qevercloud::EDAMErrorCode::DATA_CONFLICT);
     }
 
     savedSearch.setGuid(UidGenerator::Generate());
@@ -2287,12 +2288,12 @@ qint32 FakeNoteStore::updateSavedSearch(SavedSearch & savedSearch,
         rateLimitSeconds = 0;
         storeCurrentMaxUsnsAsThoseBeforeRateLimitBreach();
         m_data->m_onceAPIRateLimitExceedingTriggered = true;
-        return qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED;
+        return static_cast<qint32>(qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED);
     }
 
     if (!savedSearch.hasGuid()) {
         errorDescription.setBase("Saved search guid is not set");
-        return qevercloud::EDAMErrorCode::UNKNOWN;
+        return static_cast<qint32>(qevercloud::EDAMErrorCode::UNKNOWN);
     }
 
     qint32 checkRes = checkSavedSearchFields(savedSearch, errorDescription);
@@ -2305,7 +2306,7 @@ qint32 FakeNoteStore::updateSavedSearch(SavedSearch & savedSearch,
     if (it == index.end()) {
         errorDescription.setBase("Saved search with the specified "
                                  "guid doesn't exist");
-        return qevercloud::EDAMErrorCode::DATA_CONFLICT;
+        return static_cast<qint32>(qevercloud::EDAMErrorCode::DATA_CONFLICT);
     }
 
     const SavedSearch & originalSavedSearch = *it;
@@ -2317,7 +2318,7 @@ qint32 FakeNoteStore::updateSavedSearch(SavedSearch & savedSearch,
         if (nameIt != nameIndex.end()) {
             errorDescription.setBase("Saved search with the specified "
                                      "name already exists");
-            return qevercloud::EDAMErrorCode::DATA_CONFLICT;
+            return static_cast<qint32>(qevercloud::EDAMErrorCode::DATA_CONFLICT);
         }
     }
 
@@ -2346,7 +2347,7 @@ qint32 FakeNoteStore::getSyncState(qevercloud::SyncState & syncState,
         rateLimitSeconds = 0;
         storeCurrentMaxUsnsAsThoseBeforeRateLimitBreach();
         m_data->m_onceAPIRateLimitExceedingTriggered = true;
-        return qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED;
+        return static_cast<qint32>(qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED);
     }
 
     syncState = m_data->m_syncState;
@@ -2372,7 +2373,7 @@ qint32 FakeNoteStore::getSyncChunk(const qint32 afterUSN, const qint32 maxEntrie
         rateLimitSeconds = 0;
         storeCurrentMaxUsnsAsThoseBeforeRateLimitBreach();
         m_data->m_onceAPIRateLimitExceedingTriggered = true;
-        return qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED;
+        return static_cast<qint32>(qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED);
     }
 
     return getSyncChunkImpl(afterUSN, maxEntries, (afterUSN == 0), QString(),
@@ -2392,12 +2393,12 @@ qint32 FakeNoteStore::getLinkedNotebookSyncState(
         rateLimitSeconds = 0;
         storeCurrentMaxUsnsAsThoseBeforeRateLimitBreach();
         m_data->m_onceAPIRateLimitExceedingTriggered = true;
-        return qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED;
+        return static_cast<qint32>(qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED);
     }
 
-    if (m_pQecNoteStore->authenticationToken() != authToken) {
+    if (m_data->m_authenticationToken != authToken) {
         errorDescription.setBase("Wrong authentication token");
-        return qevercloud::EDAMErrorCode::PERMISSION_DENIED;
+        return static_cast<qint32>(qevercloud::EDAMErrorCode::PERMISSION_DENIED);
     }
 
     qint32 checkRes = checkLinkedNotebookFields(linkedNotebook, errorDescription);
@@ -2414,7 +2415,7 @@ qint32 FakeNoteStore::getLinkedNotebookSyncState(
                   << m_data->m_linkedNotebookSyncStates);
         errorDescription.setBase("Found no sync state for the given "
                                  "linked notebook owner");
-        return qevercloud::EDAMErrorCode::UNKNOWN;
+        return static_cast<qint32>(qevercloud::EDAMErrorCode::UNKNOWN);
     }
 
     syncState = *it;
@@ -2444,7 +2445,7 @@ qint32 FakeNoteStore::getLinkedNotebookSyncChunk(
         rateLimitSeconds = 0;
         storeCurrentMaxUsnsAsThoseBeforeRateLimitBreach();
         m_data->m_onceAPIRateLimitExceedingTriggered = true;
-        return qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED;
+        return static_cast<qint32>(qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED);
     }
 
     m_data->m_onceGetLinkedNotebookSyncChunkCalled = true;
@@ -2460,12 +2461,12 @@ qint32 FakeNoteStore::getLinkedNotebookSyncChunk(
     if (linkedNotebookIt == linkedNotebookUsernameIndex.end()) {
         errorDescription.setBase("Found no existing linked notebook "
                                  "by username");
-        return qevercloud::EDAMErrorCode::UNKNOWN;
+        return static_cast<qint32>(qevercloud::EDAMErrorCode::UNKNOWN);
     }
 
     if (linkedNotebookAuthToken != m_data->m_authenticationToken) {
         errorDescription.setBase("Wrong authentication token");
-        return qevercloud::EDAMErrorCode::PERMISSION_DENIED;
+        return static_cast<qint32>(qevercloud::EDAMErrorCode::PERMISSION_DENIED);
     }
 
     qevercloud::SyncChunkFilter filter;
@@ -2503,7 +2504,7 @@ qint32 FakeNoteStore::getNote(const bool withContent, const bool withResourcesDa
             rateLimitSeconds = 0;
             storeCurrentMaxUsnsAsThoseBeforeRateLimitBreach();
             m_data->m_onceAPIRateLimitExceedingTriggered = true;
-            return qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED;
+            return static_cast<qint32>(qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED);
         }
     }
     else
@@ -2516,20 +2517,20 @@ qint32 FakeNoteStore::getNote(const bool withContent, const bool withResourcesDa
             rateLimitSeconds = 0;
             storeCurrentMaxUsnsAsThoseBeforeRateLimitBreach();
             m_data->m_onceAPIRateLimitExceedingTriggered = true;
-            return qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED;
+            return static_cast<qint32>(qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED);
         }
     }
 
     if (!note.hasGuid()) {
         errorDescription.setBase("Note has no guid");
-        return qevercloud::EDAMErrorCode::UNKNOWN;
+        return static_cast<qint32>(qevercloud::EDAMErrorCode::UNKNOWN);
     }
 
     const NoteDataByGuid & noteGuidIndex = m_data->m_notes.get<NoteByGuid>();
     auto noteIt = noteGuidIndex.find(note.guid());
     if (noteIt == noteGuidIndex.end()) {
         errorDescription.setBase("Note was not found");
-        return qevercloud::EDAMErrorCode::UNKNOWN;
+        return static_cast<qint32>(qevercloud::EDAMErrorCode::UNKNOWN);
     }
 
     note = *noteIt;
@@ -2537,7 +2538,7 @@ qint32 FakeNoteStore::getNote(const bool withContent, const bool withResourcesDa
     const Notebook * pNotebook = findNotebook(note.notebookGuid());
     if (Q_UNLIKELY(!pNotebook)) {
         errorDescription.setBase("No notebook was found for note");
-        return qevercloud::EDAMErrorCode::DATA_CONFLICT;
+        return static_cast<qint32>(qevercloud::EDAMErrorCode::DATA_CONFLICT);
     }
 
     if (!withContent) {
@@ -2664,7 +2665,7 @@ qint32 FakeNoteStore::getResource(const bool withDataBody,
             rateLimitSeconds = 0;
             storeCurrentMaxUsnsAsThoseBeforeRateLimitBreach();
             m_data->m_onceAPIRateLimitExceedingTriggered = true;
-            return qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED;
+            return static_cast<qint32>(qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED);
         }
     }
     else
@@ -2677,13 +2678,13 @@ qint32 FakeNoteStore::getResource(const bool withDataBody,
             rateLimitSeconds = 0;
             storeCurrentMaxUsnsAsThoseBeforeRateLimitBreach();
             m_data->m_onceAPIRateLimitExceedingTriggered = true;
-            return qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED;
+            return static_cast<qint32>(qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED);
         }
     }
 
     if (!resource.hasGuid()) {
         errorDescription.setBase("Resource has no guid");
-        return qevercloud::EDAMErrorCode::UNKNOWN;
+        return static_cast<qint32>(qevercloud::EDAMErrorCode::UNKNOWN);
     }
 
     const ResourceDataByGuid & resourceGuidIndex =
@@ -2691,12 +2692,12 @@ qint32 FakeNoteStore::getResource(const bool withDataBody,
     auto resourceIt = resourceGuidIndex.find(resource.guid());
     if (resourceIt == resourceGuidIndex.end()) {
         errorDescription.setBase("Resource was not found");
-        return qevercloud::EDAMErrorCode::UNKNOWN;
+        return static_cast<qint32>(qevercloud::EDAMErrorCode::UNKNOWN);
     }
 
     if (Q_UNLIKELY(!resourceIt->hasNoteGuid())) {
         errorDescription.setBase("Found resource has no note guid");
-        return qevercloud::EDAMErrorCode::INTERNAL_ERROR;
+        return static_cast<qint32>(qevercloud::EDAMErrorCode::INTERNAL_ERROR);
     }
 
     const QString & noteGuid = resourceIt->noteGuid();
@@ -2704,12 +2705,12 @@ qint32 FakeNoteStore::getResource(const bool withDataBody,
     auto noteIt = noteGuidIndex.find(noteGuid);
     if (Q_UNLIKELY(noteIt == noteGuidIndex.end())) {
         errorDescription.setBase("Found no note containing the resource");
-        return qevercloud::EDAMErrorCode::INTERNAL_ERROR;
+        return static_cast<qint32>(qevercloud::EDAMErrorCode::INTERNAL_ERROR);
     }
 
     if (Q_UNLIKELY(!noteIt->hasNotebookGuid())) {
         errorDescription.setBase("Found note has no notebook guid");
-        return qevercloud::EDAMErrorCode::INTERNAL_ERROR;
+        return static_cast<qint32>(qevercloud::EDAMErrorCode::INTERNAL_ERROR);
     }
 
     const QString & notebookGuid = noteIt->notebookGuid();
@@ -2719,7 +2720,7 @@ qint32 FakeNoteStore::getResource(const bool withDataBody,
     if (Q_UNLIKELY(notebookIt == notebookGuidIndex.end())) {
         errorDescription.setBase("Found no notebook containing "
                                  "the note with the resource");
-        return qevercloud::EDAMErrorCode::INTERNAL_ERROR;
+        return static_cast<qint32>(qevercloud::EDAMErrorCode::INTERNAL_ERROR);
     }
 
     if (notebookIt->hasLinkedNotebookGuid())
@@ -2806,7 +2807,7 @@ qint32 FakeNoteStore::authenticateToSharedNotebook(
         rateLimitSeconds = 0;
         storeCurrentMaxUsnsAsThoseBeforeRateLimitBreach();
         m_data->m_onceAPIRateLimitExceedingTriggered = true;
-        return qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED;
+        return static_cast<qint32>(qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED);
     }
 
     const LinkedNotebookDataBySharedNotebookGlobalId & index =
@@ -2815,7 +2816,7 @@ qint32 FakeNoteStore::authenticateToSharedNotebook(
     if (it == index.end()) {
         errorDescription.setBase("Found no linked notebook corresponding "
                                  "to share key");
-        return qevercloud::EDAMErrorCode::INVALID_AUTH;
+        return static_cast<qint32>(qevercloud::EDAMErrorCode::INVALID_AUTH);
     }
 
     const LinkedNotebook & linkedNotebook = *it;
@@ -2823,7 +2824,7 @@ qint32 FakeNoteStore::authenticateToSharedNotebook(
         m_data->m_linkedNotebookAuthTokens.find(linkedNotebook.username());
     if (authTokenIt == m_data->m_linkedNotebookAuthTokens.end()) {
         errorDescription.setBase("No valid authentication token was provided");
-        return qevercloud::EDAMErrorCode::INVALID_AUTH;
+        return static_cast<qint32>(qevercloud::EDAMErrorCode::INVALID_AUTH);
     }
 
     authResult.authenticationToken = authTokenIt.value();
@@ -2865,7 +2866,7 @@ void FakeNoteStore::timerEvent(QTimerEvent * pEvent)
                 const Notebook * pNotebook = findNotebook(note.notebookGuid());
                 if (Q_UNLIKELY(!pNotebook)) {
                     errorDescription.setBase("No notebook was found for note");
-                    res = qevercloud::EDAMErrorCode::DATA_CONFLICT;
+                    res = static_cast<qint32>(qevercloud::EDAMErrorCode::DATA_CONFLICT);
                 }
                 else if (pNotebook->hasLinkedNotebookGuid())
                 {
@@ -2881,7 +2882,7 @@ void FakeNoteStore::timerEvent(QTimerEvent * pEvent)
                                              "notebook but linked "
                                              "notebook auth token "
                                              "is not empty");
-                    res = qevercloud::EDAMErrorCode::INVALID_AUTH;
+                    res = static_cast<qint32>(qevercloud::EDAMErrorCode::INVALID_AUTH);
                 }
             }
 
@@ -2939,24 +2940,24 @@ qint32 FakeNoteStore::checkNotebookFields(const Notebook & notebook,
 {
     if (!notebook.hasName()) {
         errorDescription.setBase("Notebook name is not set");
-        return qevercloud::EDAMErrorCode::BAD_DATA_FORMAT;
+        return static_cast<qint32>(qevercloud::EDAMErrorCode::BAD_DATA_FORMAT);
     }
 
     const QString & notebookName = notebook.name();
     if (notebookName.size() < qevercloud::EDAM_NOTEBOOK_NAME_LEN_MIN) {
         errorDescription.setBase("Notebook name length is too small");
-        return qevercloud::EDAMErrorCode::BAD_DATA_FORMAT;
+        return static_cast<qint32>(qevercloud::EDAMErrorCode::BAD_DATA_FORMAT);
     }
 
     if (notebookName.size() > qevercloud::EDAM_NOTEBOOK_NAME_LEN_MAX) {
         errorDescription.setBase("Notebook name length is too large");
-        return qevercloud::EDAMErrorCode::BAD_DATA_FORMAT;
+        return static_cast<qint32>(qevercloud::EDAMErrorCode::BAD_DATA_FORMAT);
     }
 
     if (notebookName != notebookName.trimmed()) {
         errorDescription.setBase("Notebook name cannot begin or "
                                  "end with whitespace");
-        return qevercloud::EDAMErrorCode::BAD_DATA_FORMAT;
+        return static_cast<qint32>(qevercloud::EDAMErrorCode::BAD_DATA_FORMAT);
     }
 
     // NOTE: tried to use qevercloud::EDAM_NOTEBOOK_NAME_REGEX to check the name
@@ -2971,19 +2972,19 @@ qint32 FakeNoteStore::checkNotebookFields(const Notebook & notebook,
         if (notebookStack.size() < qevercloud::EDAM_NOTEBOOK_STACK_LEN_MIN) {
             errorDescription.setBase("Notebook stack's length "
                                      "is too small");
-            return qevercloud::EDAMErrorCode::BAD_DATA_FORMAT;
+            return static_cast<qint32>(qevercloud::EDAMErrorCode::BAD_DATA_FORMAT);
         }
 
         if (notebookStack.size() > qevercloud::EDAM_NOTEBOOK_STACK_LEN_MAX) {
             errorDescription.setBase("Notebook stack's length "
                                      "is too large");
-            return qevercloud::EDAMErrorCode::BAD_DATA_FORMAT;
+            return static_cast<qint32>(qevercloud::EDAMErrorCode::BAD_DATA_FORMAT);
         }
 
         if (notebookStack != notebookStack.trimmed()) {
             errorDescription.setBase("Notebook stack should not "
                                      "begin or end with whitespace");
-            return qevercloud::EDAMErrorCode::BAD_DATA_FORMAT;
+            return static_cast<qint32>(qevercloud::EDAMErrorCode::BAD_DATA_FORMAT);
         }
 
         // NOTE: tried to use qevercloud::EDAM_NOTEBOOK_STACK_REGEX to check
@@ -3000,13 +3001,13 @@ qint32 FakeNoteStore::checkNotebookFields(const Notebook & notebook,
         if (publishingUri.size() < qevercloud::EDAM_PUBLISHING_URI_LEN_MIN) {
             errorDescription.setBase("Notebook publishing uri "
                                      "length is too small");
-            return qevercloud::EDAMErrorCode::BAD_DATA_FORMAT;
+            return static_cast<qint32>(qevercloud::EDAMErrorCode::BAD_DATA_FORMAT);
         }
 
         if (publishingUri.size() > qevercloud::EDAM_PUBLISHING_URI_LEN_MAX) {
             errorDescription.setBase("Notebook publising uri "
                                      "length is too large");
-            return qevercloud::EDAMErrorCode::BAD_DATA_FORMAT;
+            return static_cast<qint32>(qevercloud::EDAMErrorCode::BAD_DATA_FORMAT);
         }
 
         for(auto it = qevercloud::EDAM_PUBLISHING_URI_PROHIBITED.begin(),
@@ -3016,7 +3017,7 @@ qint32 FakeNoteStore::checkNotebookFields(const Notebook & notebook,
             if (publishingUri == *it) {
                 errorDescription.setBase("Prohibited publishing "
                                          "URI value is set");
-                return qevercloud::EDAMErrorCode::BAD_DATA_FORMAT;
+                return static_cast<qint32>(qevercloud::EDAMErrorCode::BAD_DATA_FORMAT);
             }
         }
 
@@ -3024,7 +3025,7 @@ qint32 FakeNoteStore::checkNotebookFields(const Notebook & notebook,
         if (!publishingUriRegExp.exactMatch(publishingUri)) {
             errorDescription.setBase("Publishing URI doesn't match "
                                      "the mandatory regex");
-            return qevercloud::EDAMErrorCode::BAD_DATA_FORMAT;
+            return static_cast<qint32>(qevercloud::EDAMErrorCode::BAD_DATA_FORMAT);
         }
     }
 
@@ -3035,20 +3036,20 @@ qint32 FakeNoteStore::checkNotebookFields(const Notebook & notebook,
         if (description.size() < qevercloud::EDAM_PUBLISHING_DESCRIPTION_LEN_MIN) {
             errorDescription.setBase("Publishing description length "
                                      "is too small");
-            return qevercloud::EDAMErrorCode::BAD_DATA_FORMAT;
+            return static_cast<qint32>(qevercloud::EDAMErrorCode::BAD_DATA_FORMAT);
         }
 
         if (description.size() > qevercloud::EDAM_PUBLISHING_DESCRIPTION_LEN_MAX) {
             errorDescription.setBase("Publishing description length "
                                      "is too large");
-            return qevercloud::EDAMErrorCode::BAD_DATA_FORMAT;
+            return static_cast<qint32>(qevercloud::EDAMErrorCode::BAD_DATA_FORMAT);
         }
 
         QRegExp publishingDescriptionRegExp(qevercloud::EDAM_PUBLISHING_DESCRIPTION_REGEX);
         if (!publishingDescriptionRegExp.exactMatch(description)) {
             errorDescription.setBase("Notebook description doesn't "
                                      "match the mandatory regex");
-            return qevercloud::EDAMErrorCode::BAD_DATA_FORMAT;
+            return static_cast<qint32>(qevercloud::EDAMErrorCode::BAD_DATA_FORMAT);
         }
     }
 
@@ -3061,7 +3062,7 @@ qint32 FakeNoteStore::checkNoteFields(const Note & note,
 {
     if (!note.hasNotebookGuid()) {
         errorDescription.setBase("Note has no notebook guid set");
-        return qevercloud::EDAMErrorCode::BAD_DATA_FORMAT;
+        return static_cast<qint32>(qevercloud::EDAMErrorCode::BAD_DATA_FORMAT);
     }
 
     const NotebookDataByGuid & notebookIndex =
@@ -3069,7 +3070,7 @@ qint32 FakeNoteStore::checkNoteFields(const Note & note,
     auto notebookIt = notebookIndex.find(note.notebookGuid());
     if (notebookIt == notebookIndex.end()) {
         errorDescription.setBase("Note.notebookGuid");
-        return qevercloud::EDAMErrorCode::UNKNOWN;
+        return static_cast<qint32>(qevercloud::EDAMErrorCode::UNKNOWN);
     }
 
     const Notebook & notebook = *notebookIt;
@@ -3078,7 +3079,7 @@ qint32 FakeNoteStore::checkNoteFields(const Note & note,
         if (!notebook.canCreateNotes()) {
             errorDescription.setBase("No permission to create "
                                      "notes within this notebook");
-            return qevercloud::EDAMErrorCode::PERMISSION_DENIED;
+            return static_cast<qint32>(qevercloud::EDAMErrorCode::PERMISSION_DENIED);
         }
     }
     else if (purpose == CheckNoteFieldsPurpose::UpdateNote)
@@ -3086,7 +3087,7 @@ qint32 FakeNoteStore::checkNoteFields(const Note & note,
         if (!notebook.canUpdateNotes()) {
             errorDescription.setBase("No permission to update notes "
                                      "within this notebook");
-            return qevercloud::EDAMErrorCode::PERMISSION_DENIED;
+            return static_cast<qint32>(qevercloud::EDAMErrorCode::PERMISSION_DENIED);
         }
     }
 
@@ -3096,12 +3097,12 @@ qint32 FakeNoteStore::checkNoteFields(const Note & note,
 
         if (title.size() < qevercloud::EDAM_NOTE_TITLE_LEN_MIN) {
             errorDescription.setBase("Note title length is too small");
-            return qevercloud::EDAMErrorCode::BAD_DATA_FORMAT;
+            return static_cast<qint32>(qevercloud::EDAMErrorCode::BAD_DATA_FORMAT);
         }
 
         if (title.size() > qevercloud::EDAM_NOTE_TITLE_LEN_MAX) {
             errorDescription.setBase("Note title length is too large");
-            return qevercloud::EDAMErrorCode::BAD_DATA_FORMAT;
+            return static_cast<qint32>(qevercloud::EDAMErrorCode::BAD_DATA_FORMAT);
         }
 
         // NOTE: tried to use qevercloud::EDAM_NOTE_TITLE_REGEX to check the name
@@ -3116,12 +3117,12 @@ qint32 FakeNoteStore::checkNoteFields(const Note & note,
 
         if (content.size() < qevercloud::EDAM_NOTE_CONTENT_LEN_MIN) {
             errorDescription.setBase("Note content length is too small");
-            return qevercloud::EDAMErrorCode::BAD_DATA_FORMAT;
+            return static_cast<qint32>(qevercloud::EDAMErrorCode::BAD_DATA_FORMAT);
         }
 
         if (content.size() > qevercloud::EDAM_NOTE_CONTENT_LEN_MAX) {
             errorDescription.setBase("Note content length is too large");
-            return qevercloud::EDAMErrorCode::BAD_DATA_FORMAT;
+            return static_cast<qint32>(qevercloud::EDAMErrorCode::BAD_DATA_FORMAT);
         }
     }
 
@@ -3152,7 +3153,8 @@ qint32 FakeNoteStore::checkNoteFields(const Note & note,
                 errorDescription.setBase(                                      \
                     QStringLiteral("Attribute length is too small: ") +        \
                     QString::fromUtf8( #attr ));                               \
-                return qevercloud::EDAMErrorCode::BAD_DATA_FORMAT;             \
+                return static_cast<qint32>(                                    \
+                    qevercloud::EDAMErrorCode::BAD_DATA_FORMAT);               \
             }                                                                  \
                                                                                \
             if (attributes.attr.ref().size() <                                 \
@@ -3161,7 +3163,8 @@ qint32 FakeNoteStore::checkNoteFields(const Note & note,
                 errorDescription.setBase(                                      \
                     QStringLiteral("Attribute length is too large: ") +        \
                     QString::fromUtf8( #attr ));                               \
-                return qevercloud::EDAMErrorCode::BAD_DATA_FORMAT;             \
+                return static_cast<qint32>(                                    \
+                    qevercloud::EDAMErrorCode::BAD_DATA_FORMAT);               \
             }                                                                  \
         }                                                                      \
 // CHECK_STRING_ATTRIBUTE
@@ -3196,20 +3199,20 @@ qint32 FakeNoteStore::checkResourceFields(const Resource & resource,
         if (mime.size() < qevercloud::EDAM_MIME_LEN_MIN) {
             errorDescription.setBase("Note's resource mime type "
                                      "length is too small");
-            return qevercloud::EDAMErrorCode::BAD_DATA_FORMAT;
+            return static_cast<qint32>(qevercloud::EDAMErrorCode::BAD_DATA_FORMAT);
         }
 
         if (mime.size() > qevercloud::EDAM_MIME_LEN_MAX) {
             errorDescription.setBase("Note's resource mime type "
                                      "length is too large");
-            return qevercloud::EDAMErrorCode::BAD_DATA_FORMAT;
+            return static_cast<qint32>(qevercloud::EDAMErrorCode::BAD_DATA_FORMAT);
         }
 
         QRegExp mimeRegExp(qevercloud::EDAM_MIME_REGEX);
         if (!mimeRegExp.exactMatch(mime)) {
             errorDescription.setBase("Note's resource mime type doesn't match "
                                      "the mandatory regex");
-            return qevercloud::EDAMErrorCode::BAD_DATA_FORMAT;
+            return static_cast<qint32>(qevercloud::EDAMErrorCode::BAD_DATA_FORMAT);
         }
     }
 
@@ -3240,18 +3243,18 @@ qint32 FakeNoteStore::checkTagFields(
 {
     if (!tag.hasName()) {
         errorDescription.setBase("Tag name is not set");
-        return qevercloud::EDAMErrorCode::BAD_DATA_FORMAT;
+        return static_cast<qint32>(qevercloud::EDAMErrorCode::BAD_DATA_FORMAT);
     }
 
     const QString & tagName = tag.name();
     if (tagName.size() < qevercloud::EDAM_TAG_NAME_LEN_MIN) {
         errorDescription.setBase("Tag name length is too small");
-        return qevercloud::EDAMErrorCode::BAD_DATA_FORMAT;
+        return static_cast<qint32>(qevercloud::EDAMErrorCode::BAD_DATA_FORMAT);
     }
 
     if (tagName.size() > qevercloud::EDAM_TAG_NAME_LEN_MAX) {
         errorDescription.setBase("Tag name length is too large");
-        return qevercloud::EDAMErrorCode::BAD_DATA_FORMAT;
+        return static_cast<qint32>(qevercloud::EDAMErrorCode::BAD_DATA_FORMAT);
     }
 
     // NOTE: tried to use qevercloud::EDAM_TAG_NAME_REGEX to check the name
@@ -3262,7 +3265,7 @@ qint32 FakeNoteStore::checkTagFields(
     if (tagName != tagName.trimmed()) {
         errorDescription.setBase("Tag name shouldn't start or "
                                  "end with whitespace");
-        return qevercloud::EDAMErrorCode::BAD_DATA_FORMAT;
+        return static_cast<qint32>(qevercloud::EDAMErrorCode::BAD_DATA_FORMAT);
     }
 
     if (tag.hasParentGuid())
@@ -3271,7 +3274,7 @@ qint32 FakeNoteStore::checkTagFields(
         auto it = index.find(tag.parentGuid());
         if (it == index.end()) {
             errorDescription.setBase("Parent tag doesn't exist");
-            return qevercloud::EDAMErrorCode::UNKNOWN;
+            return static_cast<qint32>(qevercloud::EDAMErrorCode::UNKNOWN);
         }
     }
 
@@ -3283,23 +3286,23 @@ qint32 FakeNoteStore::checkSavedSearchFields(
 {
     if (!savedSearch.hasName()) {
         errorDescription.setBase("Saved search name is not set");
-        return qevercloud::EDAMErrorCode::BAD_DATA_FORMAT;
+        return static_cast<qint32>(qevercloud::EDAMErrorCode::BAD_DATA_FORMAT);
     }
 
     if (!savedSearch.hasQuery()) {
         errorDescription.setBase("Saved search query is not set");
-        return qevercloud::EDAMErrorCode::BAD_DATA_FORMAT;
+        return static_cast<qint32>(qevercloud::EDAMErrorCode::BAD_DATA_FORMAT);
     }
 
     const QString & savedSearchName = savedSearch.name();
     if (savedSearchName.size() < qevercloud::EDAM_SAVED_SEARCH_NAME_LEN_MIN) {
         errorDescription.setBase("Saved search name length is too small");
-        return qevercloud::EDAMErrorCode::BAD_DATA_FORMAT;
+        return static_cast<qint32>(qevercloud::EDAMErrorCode::BAD_DATA_FORMAT);
     }
 
     if (savedSearchName.size() > qevercloud::EDAM_SAVED_SEARCH_NAME_LEN_MAX) {
         errorDescription.setBase("Saved search name length is too large");
-        return qevercloud::EDAMErrorCode::BAD_DATA_FORMAT;
+        return static_cast<qint32>(qevercloud::EDAMErrorCode::BAD_DATA_FORMAT);
     }
 
     // NOTE: tried to use qevercloud::EDAM_SAVED_SEARCH_NAME_REGEX to check
@@ -3310,18 +3313,18 @@ qint32 FakeNoteStore::checkSavedSearchFields(
     if (savedSearchName != savedSearchName.trimmed()) {
         errorDescription.setBase("Saved search name shouldn't "
                                  "start or end with whitespace");
-        return qevercloud::EDAMErrorCode::BAD_DATA_FORMAT;
+        return static_cast<qint32>(qevercloud::EDAMErrorCode::BAD_DATA_FORMAT);
     }
 
     const QString & savedSearchQuery = savedSearch.query();
     if (savedSearchQuery.size() < qevercloud::EDAM_SEARCH_QUERY_LEN_MIN) {
         errorDescription.setBase("Saved search query length is too small");
-        return qevercloud::EDAMErrorCode::BAD_DATA_FORMAT;
+        return static_cast<qint32>(qevercloud::EDAMErrorCode::BAD_DATA_FORMAT);
     }
 
     if (savedSearchQuery.size() > qevercloud::EDAM_SEARCH_QUERY_LEN_MAX) {
         errorDescription.setBase("Saved search query length is too large");
-        return qevercloud::EDAMErrorCode::BAD_DATA_FORMAT;
+        return static_cast<qint32>(qevercloud::EDAMErrorCode::BAD_DATA_FORMAT);
     }
 
     // NOTE: tried to use qevercloud::EDAM_SEARCH_QUERY_REGEX to check the name
@@ -3338,13 +3341,13 @@ qint32 FakeNoteStore::checkLinkedNotebookFields(
 {
     if (!linkedNotebook.username.isSet()) {
         errorDescription.setBase("Linked notebook owner is not set");
-        return qevercloud::EDAMErrorCode::DATA_REQUIRED;
+        return static_cast<qint32>(qevercloud::EDAMErrorCode::DATA_REQUIRED);
     }
 
     if (!linkedNotebook.shardId.isSet() && !linkedNotebook.uri.isSet()) {
         errorDescription.setBase("Neither linked notebook's shard "
                                  "id nor uri is set");
-        return qevercloud::EDAMErrorCode::DATA_REQUIRED;
+        return static_cast<qint32>(qevercloud::EDAMErrorCode::DATA_REQUIRED);
     }
 
     const LinkedNotebookDataByUsername & usernameIndex =
@@ -3353,7 +3356,7 @@ qint32 FakeNoteStore::checkLinkedNotebookFields(
     if (linkedNotebookIt == usernameIndex.end()) {
         errorDescription.setBase("Found no linked notebook "
                                  "corresponding to the owner");
-        return qevercloud::EDAMErrorCode::UNKNOWN;
+        return static_cast<qint32>(qevercloud::EDAMErrorCode::UNKNOWN);
     }
 
     const LinkedNotebook & existingLinkedNotebook = *linkedNotebookIt;
@@ -3362,13 +3365,13 @@ qint32 FakeNoteStore::checkLinkedNotebookFields(
         if (!existingLinkedNotebook.hasShardId()) {
             errorDescription.setBase("Linked notebook belonging "
                                      "to this owner has no shard id");
-            return qevercloud::EDAMErrorCode::SHARD_UNAVAILABLE;
+            return static_cast<qint32>(qevercloud::EDAMErrorCode::SHARD_UNAVAILABLE);
         }
 
         if (existingLinkedNotebook.shardId() != linkedNotebook.shardId.ref()) {
             errorDescription.setBase("Linked notebook belonging to "
                                      "this owner has another shard id");
-            return qevercloud::EDAMErrorCode::SHARD_UNAVAILABLE;
+            return static_cast<qint32>(qevercloud::EDAMErrorCode::SHARD_UNAVAILABLE);
         }
     }
     else if (linkedNotebook.uri.isSet())
@@ -3376,13 +3379,13 @@ qint32 FakeNoteStore::checkLinkedNotebookFields(
         if (!existingLinkedNotebook.hasUri()) {
             errorDescription.setBase("Linked notebook belonging to "
                                      "this owner has no uri");
-            return qevercloud::EDAMErrorCode::SHARD_UNAVAILABLE;
+            return static_cast<qint32>(qevercloud::EDAMErrorCode::SHARD_UNAVAILABLE);
         }
 
         if (existingLinkedNotebook.uri() != linkedNotebook.uri.ref()) {
             errorDescription.setBase("Linked notebook belonging to "
                                      "this owner has another uri");
-            return qevercloud::EDAMErrorCode::SHARD_UNAVAILABLE;
+            return static_cast<qint32>(qevercloud::EDAMErrorCode::SHARD_UNAVAILABLE);
         }
     }
 
@@ -3425,20 +3428,20 @@ qint32 FakeNoteStore::checkAppData(const qevercloud::LazyMap & appData,
                 errorDescription.setBase(
                     QStringLiteral("Resource app data value ") +
                     QStringLiteral("length is too small: ") + value);
-                return qevercloud::EDAMErrorCode::BAD_DATA_FORMAT;
+                return static_cast<qint32>(qevercloud::EDAMErrorCode::BAD_DATA_FORMAT);
             }
 
             if (value.size() > qevercloud::EDAM_APPLICATIONDATA_VALUE_LEN_MAX) {
                 errorDescription.setBase(
                     QStringLiteral("Resource app data value ") +
                     QStringLiteral("length is too large: ") + value);
-                return qevercloud::EDAMErrorCode::BAD_DATA_FORMAT;
+                return static_cast<qint32>(qevercloud::EDAMErrorCode::BAD_DATA_FORMAT);
             }
 
             if (!valueRegExp.exactMatch(value)) {
                 errorDescription.setBase("Resource app data value doesn't "
                                          "match the mandatory regex");
-                return qevercloud::EDAMErrorCode::BAD_DATA_FORMAT;
+                return static_cast<qint32>(qevercloud::EDAMErrorCode::BAD_DATA_FORMAT);
             }
         }
     }
@@ -3454,20 +3457,20 @@ qint32 FakeNoteStore::checkAppDataKey(const QString & key,
         errorDescription.setBase(
             QStringLiteral("Resource app data key length ") +
             QStringLiteral("is too small: ") + key);
-        return qevercloud::EDAMErrorCode::BAD_DATA_FORMAT;
+        return static_cast<qint32>(qevercloud::EDAMErrorCode::BAD_DATA_FORMAT);
     }
 
     if (key.size() > qevercloud::EDAM_APPLICATIONDATA_NAME_LEN_MAX) {
         errorDescription.setBase(
             QStringLiteral("Resource app data key length ") +
             QStringLiteral("is too large: ") + key);
-        return qevercloud::EDAMErrorCode::BAD_DATA_FORMAT;
+        return static_cast<qint32>(qevercloud::EDAMErrorCode::BAD_DATA_FORMAT);
     }
 
     if (!keyRegExp.exactMatch(key)) {
         errorDescription.setBase("Resource app data key doesn't "
                                  "match the mandatory regex");
-        return qevercloud::EDAMErrorCode::BAD_DATA_FORMAT;
+        return static_cast<qint32>(qevercloud::EDAMErrorCode::BAD_DATA_FORMAT);
     }
 
     return 0;
@@ -3483,7 +3486,7 @@ qint32 FakeNoteStore::checkLinkedNotebookAuthToken(
     if (authTokenIt == m_data->m_linkedNotebookAuthTokens.end()) {
         errorDescription.setBase("Found no auth token for the given "
                                  "linked notebook");
-        return qevercloud::EDAMErrorCode::PERMISSION_DENIED;
+        return static_cast<qint32>(qevercloud::EDAMErrorCode::PERMISSION_DENIED);
     }
 
     const QString & expectedLinkedNotebookAuthToken = authTokenIt.value();
@@ -3493,7 +3496,7 @@ qint32 FakeNoteStore::checkLinkedNotebookAuthToken(
                   << expectedLinkedNotebookAuthToken
                   << ", got: " << linkedNotebookAuthToken
                   << ", linked notebook: " << linkedNotebook);
-        return qevercloud::EDAMErrorCode::PERMISSION_DENIED;
+        return static_cast<qint32>(qevercloud::EDAMErrorCode::PERMISSION_DENIED);
     }
 
     return 0;
@@ -3509,21 +3512,21 @@ qint32 FakeNoteStore::checkLinkedNotebookAuthTokenForNotebook(
     auto notebookIt = notebookGuidIndex.find(notebookGuid);
     if (notebookIt == notebookGuidIndex.end()) {
         errorDescription.setBase("No notebook with specified guid was found");
-        return qevercloud::EDAMErrorCode::PERMISSION_DENIED;
+        return static_cast<qint32>(qevercloud::EDAMErrorCode::PERMISSION_DENIED);
     }
 
     const Notebook & notebook = *notebookIt;
     if (!notebook.hasLinkedNotebookGuid()) {
         errorDescription.setBase("Notebook doesn't belong to "
                                  "a linked notebook");
-        return qevercloud::EDAMErrorCode::PERMISSION_DENIED;
+        return static_cast<qint32>(qevercloud::EDAMErrorCode::PERMISSION_DENIED);
     }
 
     if (linkedNotebookAuthToken.isEmpty()) {
         errorDescription.setBase("Notebook belongs to a linked "
                                  "notebook but linked notebook "
                                  "auth token is empty");
-        return qevercloud::EDAMErrorCode::PERMISSION_DENIED;
+        return static_cast<qint32>(qevercloud::EDAMErrorCode::PERMISSION_DENIED);
     }
 
     const QString & linkedNotebookGuid = notebook.linkedNotebookGuid();
@@ -3533,7 +3536,7 @@ qint32 FakeNoteStore::checkLinkedNotebookAuthTokenForNotebook(
     if (linkedNotebookIt == linkedNotebookGuidIndex.end()) {
         errorDescription.setBase("Found no linked notebook "
                                  "corresponding to the notebook");
-        return qevercloud::EDAMErrorCode::PERMISSION_DENIED;
+        return static_cast<qint32>(qevercloud::EDAMErrorCode::PERMISSION_DENIED);
     }
 
     return checkLinkedNotebookAuthToken(*linkedNotebookIt,
@@ -3548,18 +3551,18 @@ qint32 FakeNoteStore::checkLinkedNotebookAuthTokenForTag(
 {
     if (!linkedNotebookAuthToken.isEmpty() && !tag.hasLinkedNotebookGuid()) {
         errorDescription.setBase("Excess linked notebook auth token");
-        return qevercloud::EDAMErrorCode::PERMISSION_DENIED;
+        return static_cast<qint32>(qevercloud::EDAMErrorCode::PERMISSION_DENIED);
     }
 
     if (!tag.hasLinkedNotebookGuid()) {
         errorDescription.setBase("Tag doesn't belong to a linked notebook");
-        return qevercloud::EDAMErrorCode::PERMISSION_DENIED;
+        return static_cast<qint32>(qevercloud::EDAMErrorCode::PERMISSION_DENIED);
     }
 
     if (linkedNotebookAuthToken.isEmpty()) {
         errorDescription.setBase("Tag belongs to a linked notebook "
                                  "but linked notebook auth token is empty");
-        return qevercloud::EDAMErrorCode::PERMISSION_DENIED;
+        return static_cast<qint32>(qevercloud::EDAMErrorCode::PERMISSION_DENIED);
     }
 
     const LinkedNotebookDataByGuid & linkedNotebookGuidIndex =
@@ -3568,7 +3571,7 @@ qint32 FakeNoteStore::checkLinkedNotebookAuthTokenForTag(
     if (it == linkedNotebookGuidIndex.end()) {
         errorDescription.setBase("Tag belongs to a linked notebook "
                                  "but it was not found by guid");
-        return qevercloud::EDAMErrorCode::PERMISSION_DENIED;
+        return static_cast<qint32>(qevercloud::EDAMErrorCode::PERMISSION_DENIED);
     }
 
     return checkLinkedNotebookAuthToken(*it, linkedNotebookAuthToken,
@@ -3603,12 +3606,12 @@ qint32 FakeNoteStore::getSyncChunkImpl(
 {
     if (afterUSN < 0) {
         errorDescription.setBase("After USN is negative");
-        return qevercloud::EDAMErrorCode::BAD_DATA_FORMAT;
+        return static_cast<qint32>(qevercloud::EDAMErrorCode::BAD_DATA_FORMAT);
     }
 
     if (maxEntries < 1) {
         errorDescription.setBase("Max entries is less than 1");
-        return qevercloud::EDAMErrorCode::BAD_DATA_FORMAT;
+        return static_cast<qint32>(qevercloud::EDAMErrorCode::BAD_DATA_FORMAT);
     }
 
     syncChunk = qevercloud::SyncChunk();
@@ -3619,7 +3622,7 @@ qint32 FakeNoteStore::getSyncChunkImpl(
     {
         errorDescription.setBase("Can't set notebook guids along "
                                  "with include expunged");
-        return qevercloud::EDAMErrorCode::DATA_CONFLICT;
+        return static_cast<qint32>(qevercloud::EDAMErrorCode::DATA_CONFLICT);
     }
 
     const SavedSearchDataByUSN & savedSearchUsnIndex =

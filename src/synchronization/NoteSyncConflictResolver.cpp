@@ -311,7 +311,8 @@ void NoteSyncConflictResolver::onGetNoteAsyncFinished(
 
     m_pendingFullRemoteNoteDataDownload = false;
 
-    if (errorCode == qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED)
+    if (errorCode ==
+        static_cast<qint32>(qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED))
     {
         if (rateLimitSeconds < 0)
         {
@@ -344,7 +345,8 @@ void NoteSyncConflictResolver::onGetNoteAsyncFinished(
         Q_EMIT rateLimitExceeded(rateLimitSeconds);
         return;
     }
-    else if (errorCode == qevercloud::EDAMErrorCode::AUTH_EXPIRED)
+    else if (errorCode ==
+             static_cast<qint32>(qevercloud::EDAMErrorCode::AUTH_EXPIRED))
     {
         if (m_manager.syncingLinkedNotebooksContent()) {
             m_pendingLinkedNotebookAuthDataUpdate = true;

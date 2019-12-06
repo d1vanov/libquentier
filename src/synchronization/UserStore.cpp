@@ -22,6 +22,8 @@
 #include <quentier/logging/QuentierLogger.h>
 #include <quentier/utility/QuentierCheckPtr.h>
 
+#define USER_STORE_REQUEST_TIMEOUT_MSEC (-1)
+
 namespace quentier {
 
 UserStore::UserStore(const qevercloud::IUserStorePtr & pQecUserStore) :
@@ -43,8 +45,12 @@ bool UserStore::checkVersion(const QString & clientName,
 {
     try
     {
+        auto ctx = qevercloud::newRequestContext(
+            m_authenticationToken,
+            USER_STORE_REQUEST_TIMEOUT_MSEC);
+
         return m_pQecUserStore->checkVersion(clientName, edamVersionMajor,
-                                             edamVersionMinor);
+                                             edamVersionMinor, ctx);
     }
     CATCH_GENERIC_EXCEPTIONS_NO_RET()
 
@@ -56,7 +62,10 @@ qint32 UserStore::getUser(User & user, ErrorString & errorDescription,
 {
     try
     {
-        auto ctx = qevercloud::newRequestContext(m_authenticationToken);
+        auto ctx = qevercloud::newRequestContext(
+            m_authenticationToken,
+            USER_STORE_REQUEST_TIMEOUT_MSEC);
+
         user.qevercloudUser() = m_pQecUserStore->getUser(ctx);
         return 0;
     }
@@ -83,7 +92,10 @@ qint32 UserStore::getAccountLimits(
 {
     try
     {
-        auto ctx = qevercloud::newRequestContext(m_authenticationToken);
+        auto ctx = qevercloud::newRequestContext(
+            m_authenticationToken,
+            USER_STORE_REQUEST_TIMEOUT_MSEC);
+
         limits = m_pQecUserStore->getAccountLimits(serviceLevel, ctx);
         return 0;
     }

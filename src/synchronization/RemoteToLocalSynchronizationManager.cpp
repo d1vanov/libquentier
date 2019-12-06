@@ -327,16 +327,16 @@ void RemoteToLocalSynchronizationManager::setAccount(const Account & account)
     switch(accountEnType)
     {
     case Account::EvernoteAccountType::Plus:
-        m_user.setServiceLevel(qevercloud::ServiceLevel::PLUS);
+        m_user.setServiceLevel(static_cast<qint8>(qevercloud::ServiceLevel::PLUS));
         break;
     case Account::EvernoteAccountType::Premium:
-        m_user.setServiceLevel(qevercloud::ServiceLevel::PREMIUM);
+        m_user.setServiceLevel(static_cast<qint8>(qevercloud::ServiceLevel::PREMIUM));
         break;
     case Account::EvernoteAccountType::Business:
-        m_user.setServiceLevel(qevercloud::ServiceLevel::BUSINESS);
+        m_user.setServiceLevel(static_cast<qint8>(qevercloud::ServiceLevel::BUSINESS));
         break;
     default:
-        m_user.setServiceLevel(qevercloud::ServiceLevel::BASIC);
+        m_user.setServiceLevel(static_cast<qint8>(qevercloud::ServiceLevel::BASIC));
         break;
     }
 
@@ -3122,7 +3122,8 @@ void RemoteToLocalSynchronizationManager::onGetNoteAsyncFinished(
         Q_UNUSED(m_notesPendingDownloadForUpdatingInLocalStorageByGuid.erase(updateIt))
     }
 
-    if (errorCode == qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED)
+    if (errorCode ==
+        static_cast<qint32>(qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED))
     {
         if (rateLimitSeconds < 0) {
             errorDescription.setBase(QT_TR_NOOP("QEverCloud or Evernote protocol "
@@ -3153,7 +3154,8 @@ void RemoteToLocalSynchronizationManager::onGetNoteAsyncFinished(
         Q_EMIT rateLimitExceeded(rateLimitSeconds);
         return;
     }
-    else if (errorCode == qevercloud::EDAMErrorCode::AUTH_EXPIRED)
+    else if (errorCode ==
+             static_cast<qint32>(qevercloud::EDAMErrorCode::AUTH_EXPIRED))
     {
         handleAuthExpiration();
         return;
@@ -3318,7 +3320,8 @@ void RemoteToLocalSynchronizationManager::onGetResourceAsyncFinished(
         return;
     }
 
-    if (errorCode == qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED)
+    if (errorCode ==
+        static_cast<qint32>(qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED))
     {
         if (rateLimitSeconds < 0) {
             errorDescription.setBase(
@@ -3353,7 +3356,8 @@ void RemoteToLocalSynchronizationManager::onGetResourceAsyncFinished(
         Q_EMIT rateLimitExceeded(rateLimitSeconds);
         return;
     }
-    else if (errorCode == qevercloud::EDAMErrorCode::AUTH_EXPIRED)
+    else if (errorCode ==
+             static_cast<qint32>(qevercloud::EDAMErrorCode::AUTH_EXPIRED))
     {
         handleAuthExpiration();
         return;
@@ -5153,7 +5157,8 @@ bool RemoteToLocalSynchronizationManager::syncUserImpl(
     qint32 rateLimitSeconds = 0;
     qint32 errorCode =
         m_manager.userStore().getUser(m_user, errorDescription, rateLimitSeconds);
-    if (errorCode == qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED)
+    if (errorCode ==
+        static_cast<qint32>(qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED))
     {
         if (rateLimitSeconds < 0)
         {
@@ -5190,7 +5195,8 @@ bool RemoteToLocalSynchronizationManager::syncUserImpl(
         Q_EMIT rateLimitExceeded(rateLimitSeconds);
         return false;
     }
-    else if (errorCode == qevercloud::EDAMErrorCode::AUTH_EXPIRED)
+    else if (errorCode ==
+             static_cast<qint32>(qevercloud::EDAMErrorCode::AUTH_EXPIRED))
     {
         ErrorString errorMessage(
             QT_TR_NOOP("unexpected AUTH_EXPIRED error when trying to download "
@@ -5314,7 +5320,8 @@ bool RemoteToLocalSynchronizationManager::syncAccountLimits(
         m_manager.userStore().getAccountLimits(m_user.serviceLevel(),
                                                m_accountLimits, errorDescription,
                                                rateLimitSeconds);
-    if (errorCode == qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED)
+    if (errorCode ==
+        static_cast<qint32>(qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED))
     {
         if (rateLimitSeconds < 0) {
             errorDescription.setBase(QT_TR_NOOP("Rate limit reached but the number "
@@ -5349,7 +5356,8 @@ bool RemoteToLocalSynchronizationManager::syncAccountLimits(
         Q_EMIT rateLimitExceeded(rateLimitSeconds);
         return false;
     }
-    else if (errorCode == qevercloud::EDAMErrorCode::AUTH_EXPIRED)
+    else if (errorCode ==
+             static_cast<qint32>(qevercloud::EDAMErrorCode::AUTH_EXPIRED))
     {
         ErrorString errorMessage(QT_TR_NOOP("unexpected AUTH_EXPIRED error when "
                                             "trying to sync the current user's "
@@ -6957,7 +6965,8 @@ void RemoteToLocalSynchronizationManager::getLinkedNotebookSyncState(
         authToken, syncState, errorDescription,
         rateLimitSeconds);
 
-    if (errorCode == qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED)
+    if (errorCode ==
+        static_cast<qint32>(qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED))
     {
         if (rateLimitSeconds < 0) {
             errorDescription.setBase(QT_TR_NOOP("Rate limit reached but the number "
@@ -6990,7 +6999,8 @@ void RemoteToLocalSynchronizationManager::getLinkedNotebookSyncState(
         asyncWait = true;
         return;
     }
-    else if (errorCode == qevercloud::EDAMErrorCode::AUTH_EXPIRED)
+    else if (errorCode ==
+             static_cast<qint32>(qevercloud::EDAMErrorCode::AUTH_EXPIRED))
     {
         ErrorString errorMessage(QT_TR_NOOP("Unexpected AUTH_EXPIRED error when "
                                             "trying to get the linked notebook "
@@ -7162,7 +7172,8 @@ bool RemoteToLocalSynchronizationManager::downloadLinkedNotebooksSyncChunks()
                 m_authenticationToken, fullSyncOnly, *pSyncChunk,
                 errorDescription, rateLimitSeconds);
 
-            if (errorCode == qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED)
+            if (errorCode ==
+                static_cast<qint32>(qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED))
             {
                 if (rateLimitSeconds < 0)
                 {
@@ -7197,7 +7208,8 @@ bool RemoteToLocalSynchronizationManager::downloadLinkedNotebooksSyncChunks()
                 Q_EMIT rateLimitExceeded(rateLimitSeconds);
                 return false;
             }
-            else if (errorCode == qevercloud::EDAMErrorCode::AUTH_EXPIRED)
+            else if (errorCode ==
+                     static_cast<qint32>(qevercloud::EDAMErrorCode::AUTH_EXPIRED))
             {
                 ErrorString errorMessage(QT_TR_NOOP("Unexpected AUTH_EXPIRED "
                                                     "error when trying to download "
@@ -8663,7 +8675,8 @@ void RemoteToLocalSynchronizationManager::downloadSyncChunksAndLaunchSync(
                                                   filter, *pSyncChunk,
                                                   errorDescription,
                                                   rateLimitSeconds);
-        if (errorCode == qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED)
+        if (errorCode ==
+            static_cast<qint32>(qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED))
         {
             if (rateLimitSeconds < 0) {
                 errorDescription.setBase(
@@ -8691,7 +8704,8 @@ void RemoteToLocalSynchronizationManager::downloadSyncChunksAndLaunchSync(
             Q_EMIT rateLimitExceeded(rateLimitSeconds);
             return;
         }
-        else if (errorCode == qevercloud::EDAMErrorCode::AUTH_EXPIRED)
+        else if (errorCode ==
+                 static_cast<qint32>(qevercloud::EDAMErrorCode::AUTH_EXPIRED))
         {
             handleAuthExpiration();
             return;
@@ -8792,7 +8806,8 @@ bool RemoteToLocalSynchronizationManager::checkUserAccountSyncState(
     qevercloud::SyncState state;
     qint32 errorCode = m_manager.noteStore().getSyncState(
         state, errorDescription, rateLimitSeconds);
-    if (errorCode == qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED)
+    if (errorCode ==
+        static_cast<qint32>(qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED))
     {
         if (rateLimitSeconds < 0)
         {
@@ -8822,7 +8837,8 @@ bool RemoteToLocalSynchronizationManager::checkUserAccountSyncState(
         Q_EMIT rateLimitExceeded(rateLimitSeconds);
         return false;
     }
-    else if (errorCode == qevercloud::EDAMErrorCode::AUTH_EXPIRED)
+    else if (errorCode ==
+             static_cast<qint32>(qevercloud::EDAMErrorCode::AUTH_EXPIRED))
     {
         handleAuthExpiration();
         asyncWait = true;
@@ -10168,7 +10184,8 @@ void RemoteToLocalSynchronizationManager::processResourceConflictAsNoteConflict(
                                                remoteNoteResource,
                                                errorDescription,
                                                rateLimitSeconds);
-    if (errorCode == qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED)
+    if (errorCode ==
+        static_cast<qint32>(qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED))
     {
         if (Q_UNLIKELY(rateLimitSeconds < 0))
         {
@@ -10201,7 +10218,8 @@ void RemoteToLocalSynchronizationManager::processResourceConflictAsNoteConflict(
         Q_EMIT rateLimitExceeded(rateLimitSeconds);
         return;
     }
-    else if (errorCode == qevercloud::EDAMErrorCode::AUTH_EXPIRED)
+    else if (errorCode ==
+             static_cast<qint32>(qevercloud::EDAMErrorCode::AUTH_EXPIRED))
     {
         handleAuthExpiration();
         return;

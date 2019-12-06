@@ -21,8 +21,8 @@
 namespace quentier {
 
 FakeUserStore::FakeUserStore() :
-    IUserStore(QSharedPointer<qevercloud::UserStore>(
-            new qevercloud::UserStore(QStringLiteral("127.0.0.1")))),
+    IUserStore(qevercloud::IUserStorePtr(
+            qevercloud::newUserStore(QStringLiteral("127.0.0.1/edam/user")))),
     m_edamVersionMajor(0),
     m_edamVersionMinor(0),
     m_accountLimits(),
@@ -50,7 +50,7 @@ void FakeUserStore::setEdamVersionMinor(const qint16 edamVersionMinor)
 }
 
 const qevercloud::AccountLimits * FakeUserStore::findAccountLimits(
-    const qevercloud::ServiceLevel::type serviceLevel) const
+    const qevercloud::ServiceLevel serviceLevel) const
 {
     auto it = m_accountLimits.find(serviceLevel);
     if (it != m_accountLimits.end()) {
@@ -60,7 +60,7 @@ const qevercloud::AccountLimits * FakeUserStore::findAccountLimits(
     return Q_NULLPTR;
 }
 
-void FakeUserStore::setAccountLimits(const qevercloud::ServiceLevel::type serviceLevel,
+void FakeUserStore::setAccountLimits(const qevercloud::ServiceLevel serviceLevel,
                                      const qevercloud::AccountLimits & limits)
 {
     m_accountLimits[serviceLevel] = limits;
@@ -114,20 +114,20 @@ qint32 FakeUserStore::getUser(User & user, ErrorString & errorDescription,
 
     if (!user.hasId()) {
         errorDescription.setBase(QStringLiteral("User has no id"));
-        return qevercloud::EDAMErrorCode::DATA_REQUIRED;
+        return static_cast<qint32>(qevercloud::EDAMErrorCode::DATA_REQUIRED);
     }
 
     auto it = m_users.find(user.id());
     if (it == m_users.end()) {
         errorDescription.setBase(QStringLiteral("User data was not found"));
-        return qevercloud::EDAMErrorCode::DATA_REQUIRED;
+        return static_cast<qint32>(qevercloud::EDAMErrorCode::DATA_REQUIRED);
     }
 
     user = it.value();
     return 0;
 }
 
-qint32 FakeUserStore::getAccountLimits(const qevercloud::ServiceLevel::type serviceLevel,
+qint32 FakeUserStore::getAccountLimits(const qevercloud::ServiceLevel serviceLevel,
                                        qevercloud::AccountLimits & limits,
                                        ErrorString & errorDescription,
                                        qint32 & rateLimitSeconds)
@@ -137,7 +137,7 @@ qint32 FakeUserStore::getAccountLimits(const qevercloud::ServiceLevel::type serv
     auto it = m_accountLimits.find(serviceLevel);
     if (it == m_accountLimits.end()) {
         errorDescription.setBase(QStringLiteral("Account limits were not found"));
-        return qevercloud::EDAMErrorCode::DATA_REQUIRED;
+        return static_cast<qint32>(qevercloud::EDAMErrorCode::DATA_REQUIRED);
     }
 
     limits = it.value();
