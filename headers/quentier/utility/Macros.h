@@ -23,54 +23,8 @@
 #include <QString>
 
 #if QT_VERSION < QT_VERSION_CHECK(5, 7, 0)
-#ifdef CPP11_COMPLIANT
 #include <type_traits>
-#else
-#include <boost/type_traits/add_const.hpp>
 #endif
-#endif //  QT_VERSION < 5.7.0
-
-
-#if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
-
-#ifndef Q_DECL_OVERRIDE
-#ifdef CPP11_COMPLIANT
-#define Q_DECL_OVERRIDE override
-#else
-#define Q_DECL_OVERRIDE
-#endif
-#endif // Q_DECL_OVERRIDE
-
-#ifndef Q_DECL_FINAL
-#ifdef CPP11_COMPLIANT
-#define Q_DECL_FINAL final
-#else
-#define Q_DECL_FINAL
-#endif
-#endif // Q_DECL_FINAL
-
-#ifndef Q_STATIC_ASSERT_X
-#ifdef CPP11_COMPLIANT
-#define Q_STATIC_ASSERT_X(x1,x2) static_assert(x1, x2)
-#else
-#define Q_STATIC_ASSERT_X(x1,x2)
-#endif
-#endif // Q_STATIC_ASSERT_X
-
-#ifndef QStringLiteral
-#define QStringLiteral(x) QString::fromUtf8(x, sizeof(x) - 1)
-#endif
-
-#ifndef Q_NULLPTR
-#ifdef CPP11_COMPLIANT
-#define Q_NULLPTR nullptr
-#else
-#define Q_NULLPTR NULL
-#endif
-#endif
-
-#endif // QT_VERSION < 5.0.0
-
 
 #ifndef Q_DECL_CONSTEXPR
 #define Q_DECL_CONSTEXPR
@@ -89,7 +43,6 @@
 #endif // Q_DECL_EQ_DELETE
 
 #if QT_VERSION < QT_VERSION_CHECK(5, 7, 0)
-#ifdef CPP11_COMPLIANT
 
 // this adds const to non-const objects (like std::as_const)
 template <typename T>
@@ -98,14 +51,7 @@ Q_DECL_CONSTEXPR typename std::add_const<T>::type &qAsConst(T &t) Q_DECL_NOTHROW
 template <typename T>
 void qAsConst(const T &&) Q_DECL_EQ_DELETE;
 
-#else // CPP11_COMPLIANT
-
-// this adds const to non-const objects (like std::as_const)
-template <typename T>
-Q_DECL_CONSTEXPR typename boost::add_const<T>::type &qAsConst(T &t) Q_DECL_NOTHROW { return t; }
-
-#endif // CPP11_COMPLIANT
-#endif // QT_VERSION < 5.7.0
+#endif
 
 #ifdef QNSIGNAL
 #undef QNSIGNAL
@@ -115,13 +61,8 @@ Q_DECL_CONSTEXPR typename boost::add_const<T>::type &qAsConst(T &t) Q_DECL_NOTHR
 #undef QNSLOT
 #endif
 
-#if (QT_VERSION < QT_VERSION_CHECK(5, 0, 0)) || (defined(_MSC_VER) && (_MSC_VER <= 1600))
-#define QNSIGNAL(className, methodName, ...) SIGNAL(methodName(__VA_ARGS__))
-#define QNSLOT(className, methodName, ...) SLOT(methodName(__VA_ARGS__))
-#else
 #define QNSIGNAL(className, methodName, ...) &className::methodName
 #define QNSLOT(className, methodName, ...) &className::methodName
-#endif
 
 #if defined(_MSC_VER) && (_MSC_VER <= 1800)
 #ifdef QStringLiteral

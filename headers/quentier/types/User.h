@@ -22,11 +22,7 @@
 #include <quentier/utility/Printable.h>
 #include <quentier/types/ErrorString.h>
 
-#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
 #include <qt5qevercloud/QEverCloud.h>
-#else
-#include <qt4qevercloud/QEverCloud.h>
-#endif
 
 #include <QtGlobal>
 

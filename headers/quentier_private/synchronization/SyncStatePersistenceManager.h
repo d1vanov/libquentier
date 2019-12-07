@@ -22,15 +22,13 @@
 #include <quentier/utility/Macros.h>
 #include <quentier/utility/Linkage.h>
 #include <quentier/types/Account.h>
+
+#include <qt5qevercloud/QEverCloud.h>
+
 #include <QObject>
 #include <QHash>
 #include <QString>
 
-#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
-#include <qt5qevercloud/QEverCloud.h>
-#else
-#include <qt4qevercloud/QEverCloud.h>
-#endif
 
 namespace quentier {
 
