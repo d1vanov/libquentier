@@ -7,6 +7,7 @@
  * and replaces each match (or node-separated portions of the match)
  * in the specified element.
  */
+
  (function (root, factory) {
      if (typeof module === 'object' && module.exports) {
          // Node/CommonJS

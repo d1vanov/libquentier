@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Dmitry Ivanov
+ * Copyright 2016-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -42,12 +42,12 @@ function snapSelectionToWord() {
 
         if (str.match(/\S/) != null) {
             startOffset++;
-        } 
+        }
         else {
             break;
         }
     }
-    
+
     if (startOffset > 0) {
         // Move one character forward from the leftmost whitespace
         startOffset--;
@@ -62,7 +62,7 @@ function snapSelectionToWord() {
 
         if (str.match(/\S/)) {
             endOffset++;
-        } 
+        }
         else {
             break;
         }

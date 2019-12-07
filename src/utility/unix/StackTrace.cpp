@@ -1,4 +1,6 @@
- /*
+/*
+ * Copyright 2016-2019 Dmitry Ivanov
+ *
  * This file is part of libquentier
  *
  * libquentier is free software; you can redistribute it and/or modify
