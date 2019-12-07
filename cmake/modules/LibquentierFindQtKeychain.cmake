@@ -1,8 +1,4 @@
-if(BUILD_WITH_QT4)
-  find_package(QtKeychain QUIET REQUIRED)
-else()
-  find_package(Qt5Keychain QUIET REQUIRED)
-endif()
+find_package(Qt5Keychain QUIET REQUIRED)
 
 include_directories(${QTKEYCHAIN_INCLUDE_DIRS})
 
