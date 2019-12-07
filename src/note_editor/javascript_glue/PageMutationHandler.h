@@ -43,7 +43,7 @@ class PageMutationHandler: public QObject
 {
     Q_OBJECT
 public:
-    explicit PageMutationHandler(QObject * parent = Q_NULLPTR);
+    explicit PageMutationHandler(QObject * parent = nullptr);
 
 Q_SIGNALS:
     void contentsChanged();

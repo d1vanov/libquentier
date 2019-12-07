@@ -39,26 +39,14 @@ class QUENTIER_EXPORT IQuentierException: public Printable,
 public:
     explicit IQuentierException(const ErrorString & message);
 
-#ifdef _MSC_VER
-    virtual ~IQuentierException();
-#elif __cplusplus >= 201103L
-    virtual ~IQuentierException() noexcept;
-#else
-    virtual ~IQuentierException() throw();
-#endif
+    virtual ~IQuentierException() noexcept override;
 
     QString localizedErrorMessage() const;
     QString nonLocalizedErrorMessage() const;
 
-#ifdef _MSC_VER
-    virtual const char * what() const Q_DECL_OVERRIDE;
-#elif __cplusplus >= 201103L
-    virtual const char * what() const noexcept Q_DECL_OVERRIDE;
-#else
-    virtual const char * what() const Q_DECL_OVERRIDE throw();
-#endif
+    virtual const char * what() const noexcept override;
 
-    virtual QTextStream & print(QTextStream & strm) const Q_DECL_OVERRIDE;
+    virtual QTextStream & print(QTextStream & strm) const override;
 
 protected:
     IQuentierException(const IQuentierException & other);
@@ -67,7 +55,7 @@ protected:
     virtual const QString exceptionDisplayName() const = 0;
 
 private:
-    IQuentierException() Q_DECL_EQ_DELETE;
+    IQuentierException()  = delete;
 
     ErrorString     m_message;
     char *          m_whatMessage;

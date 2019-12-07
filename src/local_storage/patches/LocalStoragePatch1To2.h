@@ -35,22 +35,22 @@ public:
     explicit LocalStoragePatch1To2(const Account & account,
                                    LocalStorageManagerPrivate & localStorageManager,
                                    QSqlDatabase & database,
-                                   QObject * parent = Q_NULLPTR);
+                                   QObject * parent = nullptr);
 
-    virtual int fromVersion() const Q_DECL_OVERRIDE { return 1; }
-    virtual int toVersion() const Q_DECL_OVERRIDE { return 2; }
+    virtual int fromVersion() const override { return 1; }
+    virtual int toVersion() const override { return 2; }
 
-    virtual QString patchShortDescription() const Q_DECL_OVERRIDE;
-    virtual QString patchLongDescription() const Q_DECL_OVERRIDE;
+    virtual QString patchShortDescription() const override;
+    virtual QString patchLongDescription() const override;
 
     virtual bool backupLocalStorage(
-        ErrorString & errorDescription) Q_DECL_OVERRIDE;
+        ErrorString & errorDescription) override;
     virtual bool restoreLocalStorageFromBackup(
-        ErrorString & errorDescription) Q_DECL_OVERRIDE;
+        ErrorString & errorDescription) override;
     virtual bool removeLocalStorageBackup(
-        ErrorString & errorDescription) Q_DECL_OVERRIDE;
+        ErrorString & errorDescription) override;
 
-    virtual bool apply(ErrorString & errorDescription) Q_DECL_OVERRIDE;
+    virtual bool apply(ErrorString & errorDescription) override;
 
 // private
 Q_SIGNALS:

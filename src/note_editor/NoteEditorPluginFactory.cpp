@@ -45,7 +45,7 @@ NoteEditorPluginFactory::NoteEditorPluginFactory(
     m_noteEditor(noteEditor),
     m_resourcePlugins(),
     m_lastFreeResourcePluginId(1),
-    m_pCurrentNote(Q_NULLPTR),
+    m_pCurrentNote(nullptr),
     m_fallbackResourceIcon(QIcon::fromTheme(QStringLiteral("unknown"))),
     m_mimeDatabase(),
     m_resourceIconCache(),
@@ -152,7 +152,7 @@ NoteEditorPluginFactory::addResourcePlugin(
         }
     }
 
-    plugin->setParent(Q_NULLPTR);
+    plugin->setParent(nullptr);
 
     ResourcePluginIdentifier pluginId = m_lastFreeResourcePluginId;
     ++m_lastFreeResourcePluginId;
@@ -184,7 +184,7 @@ bool NoteEditorPluginFactory::removeResourcePlugin(
     QNTRACE("Plugin to remove: " << pluginName);
 
     delete plugin;
-    plugin = Q_NULLPTR;
+    plugin = nullptr;
 
     Q_UNUSED(m_resourcePlugins.erase(it));
 
@@ -360,7 +360,7 @@ QObject * NoteEditorPluginFactory::create(
 
     if (!m_pCurrentNote) {
         QNERROR("Can't create note editor plugin: no note specified");
-        return Q_NULLPTR;
+        return nullptr;
     }
 
     if (pluginType == RESOURCE_PLUGIN_HTML_OBJECT_TYPE) {
@@ -372,7 +372,7 @@ QObject * NoteEditorPluginFactory::create(
 
     QNWARNING("Can't create note editor plugin: plugin type "
               << "is not identified: " << pluginType);
-    return Q_NULLPTR;
+    return nullptr;
 }
 
 QObject * NoteEditorPluginFactory::createResourcePlugin(
@@ -387,14 +387,14 @@ QObject * NoteEditorPluginFactory::createResourcePlugin(
     if (Q_UNLIKELY(!pAccount)) {
         QNERROR("Can't create note editor resource plugin: "
                 "no account is set to the note editor");
-        return Q_NULLPTR;
+        return nullptr;
     }
 
     int resourceHashIndex = argumentNames.indexOf(QStringLiteral("hash"));
     if (resourceHashIndex < 0) {
         QNERROR("Can't create note editor resource plugin: "
                 "hash argument was not found");
-        return Q_NULLPTR;
+        return nullptr;
     }
 
     int resourceMimeTypeIndex =
@@ -402,7 +402,7 @@ QObject * NoteEditorPluginFactory::createResourcePlugin(
     if (resourceMimeTypeIndex < 0) {
         QNERROR("Can't create note editor resource plugin: "
                 "resource-mime-type argument not found");
-        return Q_NULLPTR;
+        return nullptr;
     }
 
     QByteArray resourceHash =
@@ -411,7 +411,7 @@ QObject * NoteEditorPluginFactory::createResourcePlugin(
 
     QList<Resource> resources = m_pCurrentNote->resources();
 
-    const Resource * pCurrentResource = Q_NULLPTR;
+    const Resource * pCurrentResource = nullptr;
 
     const int numResources = resources.size();
     for(int i = 0; i < numResources; ++i)
@@ -431,7 +431,7 @@ QObject * NoteEditorPluginFactory::createResourcePlugin(
         QNWARNING("Can't find resource in note by data hash: "
                   << resourceHash.toHex() << QStringLiteral(", note: ")
                   << *m_pCurrentNote);
-        return Q_NULLPTR;
+        return nullptr;
     }
 
     QNTRACE("Number of installed resource plugins: "
@@ -580,7 +580,7 @@ QObject * NoteEditorPluginFactory::createEncryptedAreaPlugin(
         QNINFO("Can't initialize note editor encrypted area plugin "
                << pEncryptedAreaPlugin->name() << ": " << errorDescription);
         delete pEncryptedAreaPlugin;
-        return Q_NULLPTR;
+        return nullptr;
     }
 
     m_encryptedAreaPlugins.push_back(

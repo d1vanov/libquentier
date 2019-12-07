@@ -32,18 +32,18 @@ public:
     EncryptUndoCommand(
         NoteEditorPrivate & noteEditorPrivate,
         const Callback & callback,
-        QUndoCommand * parent = Q_NULLPTR);
+        QUndoCommand * parent = nullptr);
 
     EncryptUndoCommand(
         NoteEditorPrivate & noteEditorPrivate,
         const Callback & callback,
         const QString & text,
-        QUndoCommand * parent = Q_NULLPTR);
+        QUndoCommand * parent = nullptr);
 
     virtual ~EncryptUndoCommand();
 
-    virtual void redoImpl() Q_DECL_OVERRIDE;
-    virtual void undoImpl() Q_DECL_OVERRIDE;
+    virtual void redoImpl() override;
+    virtual void undoImpl() override;
 
 private:
     Callback    m_callback;

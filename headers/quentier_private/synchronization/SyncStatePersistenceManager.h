@@ -36,7 +36,7 @@ class QUENTIER_EXPORT SyncStatePersistenceManager: public QObject
 {
     Q_OBJECT
 public:
-    explicit SyncStatePersistenceManager(QObject * parent = Q_NULLPTR);
+    explicit SyncStatePersistenceManager(QObject * parent = nullptr);
 
     void getPersistentSyncState(
             const Account & account, qint32 & userOwnDataUpdateCount,

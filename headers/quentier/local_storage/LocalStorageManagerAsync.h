@@ -32,6 +32,7 @@
 #include <quentier/types/Tag.h>
 #include <quentier/types/Resource.h>
 #include <quentier/types/SavedSearch.h>
+
 #include <QObject>
 #include <QScopedPointer>
 
@@ -45,7 +46,7 @@ class QUENTIER_EXPORT LocalStorageManagerAsync: public QObject
 public:
     explicit LocalStorageManagerAsync(const Account & account,
                                       LocalStorageManager::StartupOptions options = 0,
-                                      QObject * parent = Q_NULLPTR);
+                                      QObject * parent = nullptr);
     virtual ~LocalStorageManagerAsync();
 
     void setUseCache(const bool useCache);
@@ -639,7 +640,7 @@ public Q_SLOTS:
     void onAccountHighUsnRequest(QString linkedNotebookGuid, QUuid requestId);
 
 private:
-    LocalStorageManagerAsync() Q_DECL_EQ_DELETE;
+    LocalStorageManagerAsync()  = delete;
     Q_DISABLE_COPY(LocalStorageManagerAsync)
 
     QScopedPointer<LocalStorageManagerAsyncPrivate> d_ptr;

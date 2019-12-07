@@ -52,7 +52,7 @@ public:
         ResourceDataInTemporaryFileStorageManager * pResourceFileStorageManager,
         QHash<QString, QString> & resourceFileStoragePathsByResourceLocalUid,
         ResourceInfo & resourceInfo,
-        QObject * parent = Q_NULLPTR);
+        QObject * parent = nullptr);
 
     void start();
 

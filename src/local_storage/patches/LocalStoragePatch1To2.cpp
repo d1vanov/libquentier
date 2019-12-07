@@ -713,7 +713,7 @@ bool LocalStoragePatch1To2::apply(ErrorString & errorDescription)
             Q_EMIT progress(lastProgress);
         }
 
-        pProcessedResourceLocalUidsDatabaseUpgradeInfoCloser.reset(Q_NULLPTR);
+        pProcessedResourceLocalUidsDatabaseUpgradeInfoCloser.reset(nullptr);
 
         QNDEBUG("Copied data bodies and alternate data bodies of "
                 "all resources from database to files");

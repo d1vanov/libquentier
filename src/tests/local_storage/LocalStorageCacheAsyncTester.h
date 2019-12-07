@@ -32,7 +32,7 @@ class LocalStorageCacheAsyncTester: public QObject
 {
     Q_OBJECT
 public:
-    explicit LocalStorageCacheAsyncTester(QObject * parent = Q_NULLPTR);
+    explicit LocalStorageCacheAsyncTester(QObject * parent = nullptr);
     virtual ~LocalStorageCacheAsyncTester();
 
 public Q_SLOTS:

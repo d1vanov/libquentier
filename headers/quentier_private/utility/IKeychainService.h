@@ -22,6 +22,7 @@
 #include <quentier/utility/Linkage.h>
 #include <quentier/utility/Macros.h>
 #include <quentier/types/ErrorString.h>
+
 #include <QObject>
 #include <QUuid>
 
@@ -31,7 +32,7 @@ class QUENTIER_EXPORT IKeychainService: public QObject
 {
     Q_OBJECT
 protected:
-    explicit IKeychainService(QObject * parent = Q_NULLPTR) : QObject(parent) {}
+    explicit IKeychainService(QObject * parent = nullptr) : QObject(parent) {}
 
 public:
     virtual ~IKeychainService() {}

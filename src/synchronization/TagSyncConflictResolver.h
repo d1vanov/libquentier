@@ -48,7 +48,7 @@ public:
         const QString & remoteTagLinkedNotebookGuid,
         const Tag & localConflict, TagSyncCache & cache,
         LocalStorageManagerAsync & localStorageManagerAsync,
-        QObject * parent = Q_NULLPTR);
+        QObject * parent = nullptr);
 
     void start();
 

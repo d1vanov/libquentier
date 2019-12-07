@@ -29,17 +29,17 @@ class Q_DECL_HIDDEN ImageResizeUndoCommand: public INoteEditorUndoCommand
 public:
     ImageResizeUndoCommand(
         NoteEditorPrivate & noteEditor,
-        QUndoCommand * parent = Q_NULLPTR);
+        QUndoCommand * parent = nullptr);
 
     ImageResizeUndoCommand(
         NoteEditorPrivate & noteEditor,
         const QString & text,
-        QUndoCommand * parent = Q_NULLPTR);
+        QUndoCommand * parent = nullptr);
 
     virtual ~ImageResizeUndoCommand();
 
-    virtual void redoImpl() Q_DECL_OVERRIDE;
-    virtual void undoImpl() Q_DECL_OVERRIDE;
+    virtual void redoImpl() override;
+    virtual void undoImpl() override;
 };
 
 } // namespace quentier

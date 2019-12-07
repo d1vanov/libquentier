@@ -34,7 +34,7 @@ class SavedSearchLocalStorageManagerAsyncTester: public QObject
 {
     Q_OBJECT
 public:
-    explicit SavedSearchLocalStorageManagerAsyncTester(QObject * parent = Q_NULLPTR);
+    explicit SavedSearchLocalStorageManagerAsyncTester(QObject * parent = nullptr);
     ~SavedSearchLocalStorageManagerAsyncTester();
 
 public Q_SLOTS:

@@ -134,7 +134,7 @@ public:
     const qevercloud::AccountLimits & accountLimits() const;
     void setAccountLimits(qevercloud::AccountLimits && limits);
 
-    virtual QTextStream & print(QTextStream & strm) const Q_DECL_OVERRIDE;
+    virtual QTextStream & print(QTextStream & strm) const override;
 
     friend class Notebook;
 

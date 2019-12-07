@@ -45,8 +45,8 @@ public:
     bool                m_isDirty;
 
 private:
-    UserData & operator=(const UserData & other) Q_DECL_EQ_DELETE;
-    UserData & operator=(UserData && other) Q_DECL_EQ_DELETE;
+    UserData & operator=(const UserData & other)  = delete;
+    UserData & operator=(UserData && other)  = delete;
 };
 
 } // namespace quentier

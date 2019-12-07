@@ -46,7 +46,7 @@ class ContextMenuEventJavaScriptHandler: public QObject
 {
     Q_OBJECT
 public:
-    explicit ContextMenuEventJavaScriptHandler(QObject * parent = Q_NULLPTR);
+    explicit ContextMenuEventJavaScriptHandler(QObject * parent = nullptr);
 
 Q_SIGNALS:
     void contextMenuEventReply(QString contentType, QString selectedHtml,

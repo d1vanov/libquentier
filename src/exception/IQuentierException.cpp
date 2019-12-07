@@ -36,7 +36,7 @@ namespace quentier {
 IQuentierException::IQuentierException(const ErrorString & message) :
     Printable(),
     m_message(message),
-    m_whatMessage(Q_NULLPTR)
+    m_whatMessage(nullptr)
 {
     INIT_WHAT_MESSAGE()
 }
@@ -83,7 +83,7 @@ QTextStream & IQuentierException::print(QTextStream & strm) const
 IQuentierException::IQuentierException(const IQuentierException & other) :
     Printable(other),
     m_message(other.m_message),
-    m_whatMessage(Q_NULLPTR)
+    m_whatMessage(nullptr)
 {
     INIT_WHAT_MESSAGE()
 }
@@ -95,7 +95,7 @@ IQuentierException & IQuentierException::operator =(const IQuentierException & o
         m_message = other.m_message;
 
         delete m_whatMessage;
-        m_whatMessage = Q_NULLPTR;
+        m_whatMessage = nullptr;
         INIT_WHAT_MESSAGE()
     }
 

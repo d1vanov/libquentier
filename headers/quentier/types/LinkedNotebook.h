@@ -52,17 +52,17 @@ public:
     bool operator==(const LinkedNotebook & other) const;
     bool operator!=(const LinkedNotebook & other) const;
 
-    virtual void clear() Q_DECL_OVERRIDE;
+    virtual void clear() override;
 
-    virtual bool hasGuid() const Q_DECL_OVERRIDE;
-    virtual const QString & guid() const Q_DECL_OVERRIDE;
-    virtual void setGuid(const QString & guid) Q_DECL_OVERRIDE;
+    virtual bool hasGuid() const override;
+    virtual const QString & guid() const override;
+    virtual void setGuid(const QString & guid) override;
 
-    virtual bool hasUpdateSequenceNumber() const Q_DECL_OVERRIDE;
-    virtual qint32 updateSequenceNumber() const Q_DECL_OVERRIDE;
-    virtual void setUpdateSequenceNumber(const qint32 usn) Q_DECL_OVERRIDE;
+    virtual bool hasUpdateSequenceNumber() const override;
+    virtual qint32 updateSequenceNumber() const override;
+    virtual void setUpdateSequenceNumber(const qint32 usn) override;
 
-    virtual bool checkParameters(ErrorString & errorDescription) const Q_DECL_OVERRIDE;
+    virtual bool checkParameters(ErrorString & errorDescription) const override;
 
     bool hasShareName() const;
     const QString & shareName() const;
@@ -100,16 +100,16 @@ public:
     qint32 businessId() const;
     void setBusinessId(const qint32 businessId);
 
-    virtual QTextStream & print(QTextStream & strm) const Q_DECL_OVERRIDE;
+    virtual QTextStream & print(QTextStream & strm) const override;
 
 private:
     // hide useless methods inherited from the base class from the public interface
-    virtual const QString localUid() const Q_DECL_OVERRIDE { return QString(); }
-    virtual void setLocalUid(const QString &) Q_DECL_OVERRIDE {}
-    virtual void unsetLocalUid() Q_DECL_OVERRIDE {}
+    virtual const QString localUid() const override { return QString(); }
+    virtual void setLocalUid(const QString &) override {}
+    virtual void unsetLocalUid() override {}
 
-    virtual bool isLocal() const Q_DECL_OVERRIDE { return false; }
-    virtual void setLocal(const bool) Q_DECL_OVERRIDE {}
+    virtual bool isLocal() const override { return false; }
+    virtual void setLocal(const bool) override {}
 
     QSharedDataPointer<LinkedNotebookData> d;
 };

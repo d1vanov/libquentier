@@ -41,11 +41,11 @@ public:
         LocalStorageManagerAsync & localStorageManagerAsync,
         SynchronizationManagerPrivate & syncManager);
 
-    virtual LocalStorageManagerAsync & localStorageManagerAsync() Q_DECL_OVERRIDE;
-    virtual INoteStore & noteStore() Q_DECL_OVERRIDE;
-    virtual IUserStore & userStore() Q_DECL_OVERRIDE;
+    virtual LocalStorageManagerAsync & localStorageManagerAsync() override;
+    virtual INoteStore & noteStore() override;
+    virtual IUserStore & userStore() override;
     virtual INoteStore * noteStoreForLinkedNotebook(
-        const LinkedNotebook & linkedNotebook) Q_DECL_OVERRIDE;
+        const LinkedNotebook & linkedNotebook) override;
 
 private:
     LocalStorageManagerAsync &          m_localStorageManagerAsync;
@@ -60,10 +60,10 @@ public:
         LocalStorageManagerAsync & localStorageManagerAsync,
         SynchronizationManagerPrivate & syncManager);
 
-    virtual LocalStorageManagerAsync & localStorageManagerAsync() Q_DECL_OVERRIDE;
-    virtual INoteStore & noteStore() Q_DECL_OVERRIDE;
+    virtual LocalStorageManagerAsync & localStorageManagerAsync() override;
+    virtual INoteStore & noteStore() override;
     virtual INoteStore * noteStoreForLinkedNotebook(
-        const LinkedNotebook & linkedNotebook) Q_DECL_OVERRIDE;
+        const LinkedNotebook & linkedNotebook) override;
 
 private:
     LocalStorageManagerAsync &          m_localStorageManagerAsync;
@@ -1536,7 +1536,7 @@ void SynchronizationManagerPrivate::clear()
     {
         INoteStore * pNoteStore = it.value();
         pNoteStore->stop();
-        pNoteStore->setParent(Q_NULLPTR);
+        pNoteStore->setParent(nullptr);
         pNoteStore->deleteLater();
     }
 
@@ -2226,12 +2226,12 @@ INoteStore * SynchronizationManagerPrivate::noteStoreForLinkedNotebook(
     if (Q_UNLIKELY(!linkedNotebook.hasGuid())) {
         QNTRACE("Linked notebook has no guid, can't find or create "
                 "note store for it");
-        return Q_NULLPTR;
+        return nullptr;
     }
 
     INoteStore * pNoteStore = noteStoreForLinkedNotebookGuid(linkedNotebook.guid());
     if (Q_UNLIKELY(!pNoteStore)) {
-        return Q_NULLPTR;
+        return nullptr;
     }
 
     if (linkedNotebook.hasNoteStoreUrl()) {
@@ -2252,7 +2252,7 @@ INoteStore * SynchronizationManagerPrivate::noteStoreForLinkedNotebookGuid(
     if (Q_UNLIKELY(guid.isEmpty())) {
         QNWARNING("Can't find or create the note store for empty "
                   "linked notebook guid");
-        return Q_NULLPTR;
+        return nullptr;
     }
 
     auto it = m_noteStoresByLinkedNotebookGuids.find(guid);
@@ -2267,7 +2267,7 @@ INoteStore * SynchronizationManagerPrivate::noteStoreForLinkedNotebookGuid(
     if (m_authenticationInProgress) {
         QNWARNING("Can't create the note store for a linked "
                   "notebook: the authentication is in progress");
-        return Q_NULLPTR;
+        return nullptr;
     }
 
     INoteStore * pNoteStore = m_pNoteStore->create();

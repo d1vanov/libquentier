@@ -43,7 +43,7 @@ public:
         const QString & textToEncrypt, const Account & account,
         QSharedPointer<EncryptionManager> encryptionManager,
         QSharedPointer<DecryptedTextManager> decryptedTextManager,
-        QWidget * parent = Q_NULLPTR);
+        QWidget * parent = nullptr);
     virtual ~EncryptionDialog();
 
     QString passphrase() const;
@@ -61,7 +61,7 @@ private Q_SLOTS:
     void setRememberPassphraseDefaultState(const bool checked);
     void onRememberPassphraseStateChanged(int checked);
 
-    virtual void accept() Q_DECL_OVERRIDE;
+    virtual void accept() override;
 
 private:
     void setError(const ErrorString & error);

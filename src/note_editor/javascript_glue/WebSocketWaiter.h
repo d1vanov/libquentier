@@ -29,7 +29,7 @@ class WebSocketWaiter: public QObject
 {
     Q_OBJECT
 public:
-    explicit WebSocketWaiter(QObject * parent = Q_NULLPTR);
+    explicit WebSocketWaiter(QObject * parent = nullptr);
 
 Q_SIGNALS:
     void ready();

@@ -158,7 +158,7 @@ const SavedSearch * FakeNoteStore::findSavedSearch(const QString & guid) const
         m_data->m_savedSearches.get<SavedSearchByGuid>();
     auto it = index.find(guid);
     if (it == index.end()) {
-        return Q_NULLPTR;
+        return nullptr;
     }
 
     const SavedSearch & search = *it;
@@ -303,7 +303,7 @@ const Tag * FakeNoteStore::findTag(const QString & guid) const
         return &(*it);
     }
 
-    return Q_NULLPTR;
+    return nullptr;
 }
 
 bool FakeNoteStore::removeTag(const QString & guid)
@@ -491,7 +491,7 @@ const Notebook * FakeNoteStore::findNotebook(const QString & guid) const
     const NotebookDataByGuid & index = m_data->m_notebooks.get<NotebookByGuid>();
     auto it = index.find(guid);
     if (it == index.end()) {
-        return Q_NULLPTR;
+        return nullptr;
     }
 
     const Notebook & notebook = *it;
@@ -678,7 +678,7 @@ const Note * FakeNoteStore::findNote(const QString & guid) const
     const NoteDataByGuid & index = m_data->m_notes.get<NoteByGuid>();
     auto it = index.find(guid);
     if (it == index.end()) {
-        return Q_NULLPTR;
+        return nullptr;
     }
 
     const Note & note = *it;
@@ -835,7 +835,7 @@ const Resource * FakeNoteStore::findResource(const QString & guid) const
     const ResourceDataByGuid & index = m_data->m_resources.get<ResourceByGuid>();
     auto it = index.find(guid);
     if (it == index.end()) {
-        return Q_NULLPTR;
+        return nullptr;
     }
 
     const Resource & resource = *it;
@@ -940,7 +940,7 @@ const LinkedNotebook * FakeNoteStore::findLinkedNotebook(const QString & guid) c
         m_data->m_linkedNotebooks.get<LinkedNotebookByGuid>();
     auto it = index.find(guid);
     if (it == index.end()) {
-        return Q_NULLPTR;
+        return nullptr;
     }
 
     const LinkedNotebook & linkedNotebook = *it;
@@ -1075,7 +1075,7 @@ const qevercloud::SyncState * FakeNoteStore::findLinkedNotebookSyncState(
         return &(it.value());
     }
 
-    return Q_NULLPTR;
+    return nullptr;
 }
 
 void FakeNoteStore::setLinkedNotebookSyncState(

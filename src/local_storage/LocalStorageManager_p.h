@@ -54,7 +54,7 @@ class Q_DECL_HIDDEN LocalStorageManagerPrivate: public QObject
 public:
     LocalStorageManagerPrivate(const Account & account,
                                const LocalStorageManager::StartupOptions options,
-                               QObject * parent = Q_NULLPTR);
+                               QObject * parent = nullptr);
     ~LocalStorageManagerPrivate();
 
 Q_SIGNALS:
@@ -306,7 +306,7 @@ public Q_SLOTS:
     void processPostTransactionException(ErrorString message, QSqlError error);
 
 private:
-    LocalStorageManagerPrivate() Q_DECL_EQ_DELETE;
+    LocalStorageManagerPrivate()  = delete;
     Q_DISABLE_COPY(LocalStorageManagerPrivate)
 
     void unlockDatabaseFile();

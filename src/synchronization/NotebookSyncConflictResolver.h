@@ -48,7 +48,7 @@ public:
         const QString & remoteNotebookLinkedNotebookGuid,
         const Notebook & localConflict, NotebookSyncCache & cache,
         LocalStorageManagerAsync & localStorageManagerAsync,
-        QObject * parent = Q_NULLPTR);
+        QObject * parent = nullptr);
 
     void start();
 

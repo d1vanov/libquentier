@@ -215,7 +215,7 @@ private:
         QString                 m_noteStoreUrl;
         QString                 m_webApiUrlPrefix;
 
-        virtual QTextStream & print(QTextStream & strm) const Q_DECL_OVERRIDE;
+        virtual QTextStream & print(QTextStream & strm) const override;
     };
 
     void launchStoreOAuthResult(const AuthData & result);

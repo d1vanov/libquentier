@@ -41,7 +41,7 @@ public:
         const Resource & resourceAfter,
         const INoteEditorBackend::Rotation::type rotationDirection,
         NoteEditorPrivate & noteEditor,
-        QUndoCommand * parent = Q_NULLPTR);
+        QUndoCommand * parent = nullptr);
 
     ImageResourceRotationUndoCommand(
         const QByteArray & resourceDataBefore,
@@ -52,12 +52,12 @@ public:
         const Resource & resourceAfter,
         const INoteEditorBackend::Rotation::type rotationDirection,
         NoteEditorPrivate & noteEditor, const QString & text,
-        QUndoCommand * parent = Q_NULLPTR);
+        QUndoCommand * parent = nullptr);
 
     virtual ~ImageResourceRotationUndoCommand();
 
-    virtual void redoImpl() Q_DECL_OVERRIDE;
-    virtual void undoImpl() Q_DECL_OVERRIDE;
+    virtual void redoImpl() override;
+    virtual void undoImpl() override;
 
 private:
     const QByteArray                            m_resourceDataBefore;

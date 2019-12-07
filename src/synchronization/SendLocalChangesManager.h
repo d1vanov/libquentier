@@ -49,7 +49,7 @@ public:
     };
 
     explicit SendLocalChangesManager(IManager & manager,
-                                     QObject * parent = Q_NULLPTR);
+                                     QObject * parent = nullptr);
 
     bool active() const;
 

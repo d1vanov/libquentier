@@ -31,7 +31,7 @@ class SpellCheckerDynamicHelper: public QObject
 {
     Q_OBJECT
 public:
-    explicit SpellCheckerDynamicHelper(QObject * parent = Q_NULLPTR);
+    explicit SpellCheckerDynamicHelper(QObject * parent = nullptr);
 
 Q_SIGNALS:
     void lastEnteredWords(QStringList words);

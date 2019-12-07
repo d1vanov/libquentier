@@ -38,10 +38,10 @@ public:
 
 private:
     LocalStorageDataElementData &
-    operator=(const LocalStorageDataElementData & other) Q_DECL_EQ_DELETE;
+    operator=(const LocalStorageDataElementData & other)  = delete;
 
     LocalStorageDataElementData &
-    operator=(LocalStorageDataElementData && other) Q_DECL_EQ_DELETE;
+    operator=(LocalStorageDataElementData && other)  = delete;
 };
 
 } // namespace quentier

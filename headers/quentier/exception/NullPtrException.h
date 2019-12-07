@@ -29,7 +29,7 @@ public:
     explicit NullPtrException(const ErrorString & message);
 
 protected:
-    virtual const QString exceptionDisplayName() const Q_DECL_OVERRIDE;
+    virtual const QString exceptionDisplayName() const override;
 };
 
 }

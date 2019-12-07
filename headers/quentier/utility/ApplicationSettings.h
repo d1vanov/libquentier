@@ -79,7 +79,7 @@ public:
     };
 
 public:
-    virtual QTextStream & print(QTextStream & strm) const Q_DECL_OVERRIDE;
+    virtual QTextStream & print(QTextStream & strm) const override;
 
 private:
     Q_DISABLE_COPY(ApplicationSettings)

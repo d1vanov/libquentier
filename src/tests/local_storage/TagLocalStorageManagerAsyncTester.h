@@ -34,7 +34,7 @@ class TagLocalStorageManagerAsyncTester: public QObject
 {
     Q_OBJECT
 public:
-    explicit TagLocalStorageManagerAsyncTester(QObject * parent = Q_NULLPTR);
+    explicit TagLocalStorageManagerAsyncTester(QObject * parent = nullptr);
     ~TagLocalStorageManagerAsyncTester();
 
 public Q_SLOTS:

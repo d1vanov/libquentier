@@ -29,8 +29,8 @@ NoteLocalStorageManagerAsyncTester::NoteLocalStorageManagerAsyncTester(
         QObject * parent) :
     QObject(parent),
     m_state(STATE_UNINITIALIZED),
-    m_pLocalStorageManagerAsync(Q_NULLPTR),
-    m_pLocalStorageManagerThread(Q_NULLPTR),
+    m_pLocalStorageManagerAsync(nullptr),
+    m_pLocalStorageManagerThread(nullptr),
     m_notebook(),
     m_extraNotebook(),
     m_initialNote(),
@@ -855,12 +855,12 @@ void NoteLocalStorageManagerAsyncTester::clear()
         m_pLocalStorageManagerThread->quit();
         m_pLocalStorageManagerThread->wait();
         m_pLocalStorageManagerThread->deleteLater();
-        m_pLocalStorageManagerThread = Q_NULLPTR;
+        m_pLocalStorageManagerThread = nullptr;
     }
 
     if (m_pLocalStorageManagerAsync) {
         m_pLocalStorageManagerAsync->deleteLater();
-        m_pLocalStorageManagerAsync = Q_NULLPTR;
+        m_pLocalStorageManagerAsync = nullptr;
     }
 
     m_state = STATE_UNINITIALIZED;

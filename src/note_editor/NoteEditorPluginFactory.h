@@ -57,7 +57,7 @@ class Q_DECL_HIDDEN NoteEditorPluginFactory: public QWebPluginFactory
     Q_OBJECT
 public:
     explicit NoteEditorPluginFactory(NoteEditorPrivate & editor,
-                                     QObject * parent = Q_NULLPTR);
+                                     QObject * parent = nullptr);
     virtual ~NoteEditorPluginFactory();
 
     /**

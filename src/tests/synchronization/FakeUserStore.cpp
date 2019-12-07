@@ -57,7 +57,7 @@ const qevercloud::AccountLimits * FakeUserStore::findAccountLimits(
         return &(it.value());
     }
 
-    return Q_NULLPTR;
+    return nullptr;
 }
 
 void FakeUserStore::setAccountLimits(const qevercloud::ServiceLevel serviceLevel,
@@ -73,7 +73,7 @@ const User * FakeUserStore::findUser(const qint32 id) const
         return &(it.value());
     }
 
-    return Q_NULLPTR;
+    return nullptr;
 }
 
 void FakeUserStore::setUser(const qint32 id, const User & user)

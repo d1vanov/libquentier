@@ -1182,7 +1182,7 @@ QStringList SpellCheckerPrivate::HunspellWrapper::suggestions(
         result << QString::fromStdString(res[i]);
     }
 #else
-    char **rawCorrectionSuggestions = Q_NULLPTR;
+    char **rawCorrectionSuggestions = nullptr;
     int numSuggestions = m_pHunspell->suggest(&rawCorrectionSuggestions,
                                               wordData.constData());
     result.reserve(std::max(numSuggestions, 0));

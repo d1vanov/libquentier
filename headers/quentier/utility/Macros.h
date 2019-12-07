@@ -26,22 +26,6 @@
 #include <type_traits>
 #endif
 
-#ifndef Q_DECL_CONSTEXPR
-#define Q_DECL_CONSTEXPR
-#endif
-
-#ifndef Q_DECL_NOTHROW
-#define Q_DECL_NOTHROW throw()
-#endif
-
-#ifndef Q_DECL_EQ_DELETE
-#ifdef CPP11_COMPLIANT
-#define Q_DECL_EQ_DELETE = delete
-#else
-#define Q_DECL_EQ_DELETE
-#endif
-#endif // Q_DECL_EQ_DELETE
-
 #if QT_VERSION < QT_VERSION_CHECK(5, 7, 0)
 
 // this adds const to non-const objects (like std::as_const)
@@ -49,7 +33,7 @@ template <typename T>
 Q_DECL_CONSTEXPR typename std::add_const<T>::type &qAsConst(T &t) Q_DECL_NOTHROW { return t; }
 // prevent rvalue arguments:
 template <typename T>
-void qAsConst(const T &&) Q_DECL_EQ_DELETE;
+void qAsConst(const T &&)  = delete;
 
 #endif
 
@@ -63,12 +47,5 @@ void qAsConst(const T &&) Q_DECL_EQ_DELETE;
 
 #define QNSIGNAL(className, methodName, ...) &className::methodName
 #define QNSLOT(className, methodName, ...) &className::methodName
-
-#if defined(_MSC_VER) && (_MSC_VER <= 1800)
-#ifdef QStringLiteral
-#undef QStringLiteral
-#define QStringLiteral(x) QString::fromUtf8(x, sizeof(x) - 1)
-#endif
-#endif
 
 #endif // LIB_QUENTIER_UTILITY_MACROS_H

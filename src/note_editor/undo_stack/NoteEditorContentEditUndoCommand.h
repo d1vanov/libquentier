@@ -34,17 +34,17 @@ public:
     NoteEditorContentEditUndoCommand(
         NoteEditorPrivate & noteEditorPrivate,
         const QList<Resource> & resources,
-        QUndoCommand * parent = Q_NULLPTR);
+        QUndoCommand * parent = nullptr);
 
     NoteEditorContentEditUndoCommand(
         NoteEditorPrivate & noteEditorPrivate,
         const QList<Resource> & resources,
-        const QString & text, QUndoCommand * parent = Q_NULLPTR);
+        const QString & text, QUndoCommand * parent = nullptr);
 
     virtual ~NoteEditorContentEditUndoCommand();
 
-    virtual void redoImpl() Q_DECL_OVERRIDE;
-    virtual void undoImpl() Q_DECL_OVERRIDE;
+    virtual void redoImpl() override;
+    virtual void undoImpl() override;
 
 private:
     void init();

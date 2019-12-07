@@ -31,7 +31,7 @@ class Q_DECL_HIDDEN SavedSearchSyncCache: public QObject
     Q_OBJECT
 public:
     SavedSearchSyncCache(LocalStorageManagerAsync & localStorageManagerAsync,
-                         QObject * parent = Q_NULLPTR);
+                         QObject * parent = nullptr);
 
     void clear();
 

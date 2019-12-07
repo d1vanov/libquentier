@@ -63,7 +63,7 @@ public:
     explicit NoteSyncConflictResolver(IManager & manager,
                                       const qevercloud::Note & remoteNote,
                                       const Note & localConflict,
-                                      QObject * parent = Q_NULLPTR);
+                                      QObject * parent = nullptr);
 
     void start();
 

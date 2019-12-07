@@ -39,7 +39,7 @@ public:
         NoteEditorPrivate & noteEditor,
         GenericResourceImageManager * pGenericResourceImageManager,
         QHash<QByteArray, QString> & genericResourceImageFilePathsByResourceHash,
-        QUndoCommand * parent = Q_NULLPTR);
+        QUndoCommand * parent = nullptr);
 
     RenameResourceUndoCommand(
         const Resource & resource,
@@ -47,12 +47,12 @@ public:
         NoteEditorPrivate & noteEditor,
         GenericResourceImageManager * pGenericResourceImageManager,
         QHash<QByteArray, QString> & genericResourceImageFilePathsByResourceHash,
-        const QString & text,  QUndoCommand * parent = Q_NULLPTR);
+        const QString & text,  QUndoCommand * parent = nullptr);
 
     virtual ~RenameResourceUndoCommand();
 
-    virtual void undoImpl() Q_DECL_OVERRIDE;
-    virtual void redoImpl() Q_DECL_OVERRIDE;
+    virtual void undoImpl() override;
+    virtual void redoImpl() override;
 
 private:
     Resource                        m_resource;

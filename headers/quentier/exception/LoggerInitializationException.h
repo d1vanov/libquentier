@@ -29,7 +29,7 @@ public:
     explicit LoggerInitializationException(const ErrorString & message);
 
 protected:
-    const QString exceptionDisplayName() const Q_DECL_OVERRIDE;
+    const QString exceptionDisplayName() const override;
 };
 
 } // namespace quentier

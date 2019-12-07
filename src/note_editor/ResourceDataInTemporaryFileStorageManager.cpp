@@ -190,7 +190,7 @@ void ResourceDataInTemporaryFileStorageManager::onOpenResourceRequest(
     QString noteLocalUid = m_pCurrentNote->localUid();
 
     QList<Resource> resources = m_pCurrentNote->resources();
-    const Resource * pResource = Q_NULLPTR;
+    const Resource * pResource = nullptr;
     for(auto it = resources.constBegin(),
         end = resources.constEnd(); it != end; ++it)
     {
@@ -938,7 +938,7 @@ ResourceDataInTemporaryFileStorageManager::partialUpdateResourceFilesForCurrentN
         const QString resourceLocalUid = resource.localUid();
         QNTRACE("Examining resource with local uid " << resourceLocalUid);
 
-        const Resource * pPreviousResource = Q_NULLPTR;
+        const Resource * pPreviousResource = nullptr;
         for(auto pit = previousResources.constBegin(),
             pend = previousResources.constEnd(); pit != pend; ++pit)
         {
@@ -1023,7 +1023,7 @@ ResourceDataInTemporaryFileStorageManager::partialUpdateResourceFilesForCurrentN
         const Resource & previousResource = *it;
         const QString resourceLocalUid = previousResource.localUid();
 
-        const Resource * pResource = Q_NULLPTR;
+        const Resource * pResource = nullptr;
         for(auto uit = resources.constBegin(),
             uend = resources.constEnd(); uit != uend; ++uit)
         {

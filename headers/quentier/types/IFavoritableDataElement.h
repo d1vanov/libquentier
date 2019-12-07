@@ -38,11 +38,11 @@ public:
 };
 
 #define DECLARE_IS_FAVORITED                                                   \
-    virtual bool isFavorited() const Q_DECL_OVERRIDE;                          \
+    virtual bool isFavorited() const override;                                 \
 // DECLARE_IS_FAVORITED
 
 #define DECLARE_SET_FAVORITED                                                  \
-    virtual void setFavorited(const bool favorited) Q_DECL_OVERRIDE;           \
+    virtual void setFavorited(const bool favorited) override;                  \
 // DECLARE_SET_FAVORITED
 
 #define QN_DECLARE_FAVORITED                                                   \

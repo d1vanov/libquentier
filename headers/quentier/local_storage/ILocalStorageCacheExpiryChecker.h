@@ -90,7 +90,7 @@ public:
     virtual QTextStream & print(QTextStream & strm) const = 0;
 
 private:
-    ILocalStorageCacheExpiryChecker() Q_DECL_EQ_DELETE;
+    ILocalStorageCacheExpiryChecker()  = delete;
     Q_DISABLE_COPY(ILocalStorageCacheExpiryChecker)
 };
 

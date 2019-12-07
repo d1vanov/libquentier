@@ -39,7 +39,7 @@ class Q_DECL_HIDDEN INoteEditorResourcePlugin: public QWidget
 {
     Q_OBJECT
 protected:
-    explicit INoteEditorResourcePlugin(QWidget * parent = Q_NULLPTR);
+    explicit INoteEditorResourcePlugin(QWidget * parent = nullptr);
 
 public:
     /**

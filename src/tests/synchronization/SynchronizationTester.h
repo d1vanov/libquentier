@@ -41,7 +41,7 @@ class SynchronizationTester: public QObject
 {
     Q_OBJECT
 public:
-    SynchronizationTester(QObject * parent = Q_NULLPTR);
+    SynchronizationTester(QObject * parent = nullptr);
     virtual ~SynchronizationTester();
 
 private Q_SLOTS:

@@ -34,8 +34,8 @@ public:
         m_account(),
         m_useCache(true),
         m_startupOptions(0),
-        m_pLocalStorageManager(Q_NULLPTR),
-        m_pLocalStorageCacheManager(Q_NULLPTR)
+        m_pLocalStorageManager(nullptr),
+        m_pLocalStorageCacheManager(nullptr)
     {}
 
     ~LocalStorageManagerAsyncPrivate()
@@ -141,7 +141,7 @@ LocalStorageManagerAsync::localStorageCacheManager() const
     Q_D(const LocalStorageManagerAsync);
 
     if (!d->m_useCache) {
-        return Q_NULLPTR;
+        return nullptr;
     }
     else {
         return d->m_pLocalStorageCacheManager;
@@ -1354,7 +1354,7 @@ void LocalStorageManagerAsync::onUpdateNoteRequest(
             bool foundNoteInCache = false;
             if (d->m_useCache)
             {
-                const Note * pNote = Q_NULLPTR;
+                const Note * pNote = nullptr;
 
                 if (note.hasGuid()) {
                     pNote = d->m_pLocalStorageCacheManager->findNote(

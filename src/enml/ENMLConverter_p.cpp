@@ -72,7 +72,7 @@ ENMLConverterPrivate::ENMLConverterPrivate(QObject * parent) :
     m_allowedEnMediaAttributes(QSet<QString>()
 #include "allowedEnMediaAttributes.inl"
     ),
-    m_pHtmlCleaner(Q_NULLPTR),
+    m_pHtmlCleaner(nullptr),
     m_cachedConvertedXml()
 {}
 

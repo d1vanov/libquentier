@@ -164,7 +164,7 @@ public:
 
     bool isMatcheable() const;
 
-    virtual QTextStream & print(QTextStream & strm) const Q_DECL_OVERRIDE;
+    virtual QTextStream & print(QTextStream & strm) const override;
 
 private:
     QSharedDataPointer<NoteSearchQueryData> d;

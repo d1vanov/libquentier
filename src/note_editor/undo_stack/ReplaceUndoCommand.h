@@ -34,7 +34,7 @@ public:
         const bool matchCase,
         NoteEditorPrivate & noteEditorPrivate,
         Callback callback,
-        QUndoCommand * parent = Q_NULLPTR);
+        QUndoCommand * parent = nullptr);
 
     ReplaceUndoCommand(
         const QString & textToReplace,
@@ -42,12 +42,12 @@ public:
         NoteEditorPrivate & noteEditorPrivate,
         const QString & text,
         Callback callback,
-        QUndoCommand * parent = Q_NULLPTR);
+        QUndoCommand * parent = nullptr);
 
     virtual ~ReplaceUndoCommand();
 
-    virtual void redoImpl() Q_DECL_OVERRIDE;
-    virtual void undoImpl() Q_DECL_OVERRIDE;
+    virtual void redoImpl() override;
+    virtual void undoImpl() override;
 
 private:
     QString     m_textToReplace;

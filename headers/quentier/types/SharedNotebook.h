@@ -117,7 +117,7 @@ public:
     qint64 assignmentTimestamp() const;
     void setAssignmentTimestamp(const qint64 timestamp);
 
-    virtual QTextStream & print(QTextStream & strm) const Q_DECL_OVERRIDE;
+    virtual QTextStream & print(QTextStream & strm) const override;
 
     friend class Notebook;
 

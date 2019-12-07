@@ -33,8 +33,8 @@ NoteThumbnailDownloader::NoteThumbnailDownloader(
     m_authToken(authToken),
     m_shardId(shardId),
     m_noteFromPublicLinkedNotebook(noteFromPublicLinkedNotebook),
-    m_pAsyncResult(Q_NULLPTR),
-    m_pThumbnail(Q_NULLPTR)
+    m_pAsyncResult(nullptr),
+    m_pThumbnail(nullptr)
 {}
 
 NoteThumbnailDownloader::~NoteThumbnailDownloader()
@@ -74,11 +74,11 @@ void NoteThumbnailDownloader::start()
     }
 
     delete m_pThumbnail;
-    m_pThumbnail = Q_NULLPTR;
+    m_pThumbnail = nullptr;
 
     if (m_pAsyncResult) {
         // NOTE: m_pAsyncResult deletes itself automatically
-        m_pAsyncResult = Q_NULLPTR;
+        m_pAsyncResult = nullptr;
     }
 
     m_pThumbnail = new qevercloud::Thumbnail(m_host, m_shardId, m_authToken);
@@ -105,11 +105,11 @@ void NoteThumbnailDownloader::onDownloadFinished(
     QNDEBUG("NoteThumbnailDownloader::onDownloadFinished");
 
     delete m_pThumbnail;
-    m_pThumbnail = Q_NULLPTR;
+    m_pThumbnail = nullptr;
 
     // NOTE: after AsyncResult finishes, it destroys itself so must lose
     // the pointer to it here
-    m_pAsyncResult = Q_NULLPTR;
+    m_pAsyncResult = nullptr;
 
     if (!error.isNull())
     {

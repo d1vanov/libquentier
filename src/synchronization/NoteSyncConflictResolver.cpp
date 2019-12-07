@@ -633,7 +633,7 @@ void NoteSyncConflictResolver::overrideLocalNoteWithRemoteChanges()
             continue;
         }
 
-        const Resource * pExistingResource = Q_NULLPTR;
+        const Resource * pExistingResource = nullptr;
         for(auto it = resources.constBegin(),
             end = resources.constEnd(); it != end; ++it)
         {

@@ -132,7 +132,7 @@ LocalStorageManagerPrivate::LocalStorageManagerPrivate(
     m_insertOrReplaceUserAttributesRecentMailedAddressesQueryPrepared(false),
     m_deleteUserQuery(),
     m_deleteUserQueryPrepared(false),
-    m_pLocalStoragePatchManager(Q_NULLPTR),
+    m_pLocalStoragePatchManager(nullptr),
     m_stringUtils(),
     m_preservedAsterisk()
 {
@@ -437,7 +437,7 @@ void LocalStorageManagerPrivate::switchUser(
 
     if (m_pLocalStoragePatchManager) {
         m_pLocalStoragePatchManager->deleteLater();
-        m_pLocalStoragePatchManager = Q_NULLPTR;
+        m_pLocalStoragePatchManager = nullptr;
     }
 
     m_currentAccount = account;

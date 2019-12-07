@@ -29,22 +29,26 @@ class KeychainService: public IKeychainService
 {
     Q_OBJECT
 public:
-    explicit KeychainService(QObject * parent = Q_NULLPTR);
+    explicit KeychainService(QObject * parent = nullptr);
     virtual ~KeychainService();
 
-    virtual QUuid startWritePasswordJob(const QString & service,
-                                        const QString & key,
-                                        const QString & password) Q_DECL_OVERRIDE;
-    virtual QUuid startReadPasswordJob(const QString & service,
-                                       const QString & key) Q_DECL_OVERRIDE;
-    virtual QUuid startDeletePasswordJob(const QString & service,
-                                         const QString & key) Q_DECL_OVERRIDE;
+    virtual QUuid startWritePasswordJob(
+        const QString & service, const QString & key,
+        const QString & password) override;
+
+    virtual QUuid startReadPasswordJob(
+        const QString & service, const QString & key) override;
+
+    virtual QUuid startDeletePasswordJob(
+        const QString & service, const QString & key) override;
 
 Q_SIGNALS:
     // private signals
-    void notifyStartWritePasswordJob(QUuid jobId, QString service,
-                                     QString key, QString password);
+    void notifyStartWritePasswordJob(
+        QUuid jobId, QString service, QString key, QString password);
+
     void notifyStartReadPasswordJob(QUuid jobId, QString service, QString key);
+
     void notifyStartDeletePasswordJob(QUuid jobId, QString service, QString key);
 
 private:

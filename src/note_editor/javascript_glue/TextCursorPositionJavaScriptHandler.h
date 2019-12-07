@@ -29,7 +29,7 @@ class TextCursorPositionJavaScriptHandler: public QObject
 {
     Q_OBJECT
 public:
-    explicit TextCursorPositionJavaScriptHandler(QObject * parent = Q_NULLPTR);
+    explicit TextCursorPositionJavaScriptHandler(QObject * parent = nullptr);
 
 Q_SIGNALS:
     void textCursorPositionChanged();

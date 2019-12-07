@@ -20,6 +20,7 @@
 #define LIB_QUENTIER_TYPES_ERROR_STRING_H
 
 #include <quentier/utility/Printable.h>
+
 #include <QSharedDataPointer>
 
 namespace quentier {
@@ -42,7 +43,7 @@ QT_FORWARD_DECLARE_CLASS(ErrorStringData)
 class QUENTIER_EXPORT ErrorString: public Printable
 {
 public:
-    explicit ErrorString(const char * error = Q_NULLPTR);
+    explicit ErrorString(const char * error = nullptr);
     explicit ErrorString(const QString & error);
     ErrorString(const ErrorString & other);
     ErrorString & operator=(const ErrorString & other);
@@ -73,7 +74,7 @@ public:
     QString localizedString() const;
     QString nonLocalizedString() const;
 
-    virtual QTextStream & print(QTextStream & strm) const Q_DECL_OVERRIDE;
+    virtual QTextStream & print(QTextStream & strm) const override;
 
 private:
     QSharedDataPointer<ErrorStringData> d;

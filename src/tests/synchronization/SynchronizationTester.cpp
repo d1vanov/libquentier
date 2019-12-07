@@ -91,13 +91,13 @@ SynchronizationTester::SynchronizationTester(QObject * parent) :
     QObject(parent),
     m_testAccount(QStringLiteral("SynchronizationTesterFakeUser"),
                   Account::Type::Evernote, qevercloud::UserID(1)),
-    m_pLocalStorageManagerAsync(Q_NULLPTR),
-    m_pFakeNoteStore(Q_NULLPTR),
-    m_pFakeUserStore(Q_NULLPTR),
-    m_pFakeAuthenticationManager(Q_NULLPTR),
-    m_pFakeKeychainService(Q_NULLPTR),
-    m_pSyncStatePersistenceManager(Q_NULLPTR),
-    m_pSynchronizationManager(Q_NULLPTR),
+    m_pLocalStorageManagerAsync(nullptr),
+    m_pFakeNoteStore(nullptr),
+    m_pFakeUserStore(nullptr),
+    m_pFakeAuthenticationManager(nullptr),
+    m_pFakeKeychainService(nullptr),
+    m_pSyncStatePersistenceManager(nullptr),
+    m_pSynchronizationManager(nullptr),
     m_detectedTestFailure(false),
     m_guidsOfUsersOwnRemoteItemsToModify(),
     m_guidsOfLinkedNotebookRemoteItemsToModify(),
@@ -178,30 +178,30 @@ void SynchronizationTester::cleanup()
 {
     m_pSynchronizationManager->disconnect();
     m_pSynchronizationManager->deleteLater();
-    m_pSynchronizationManager = Q_NULLPTR;
+    m_pSynchronizationManager = nullptr;
 
     m_pFakeNoteStore->disconnect();
     m_pFakeNoteStore->deleteLater();
-    m_pFakeNoteStore = Q_NULLPTR;
+    m_pFakeNoteStore = nullptr;
 
     // NOTE: not deleting FakeUserStore intentionally,
     // it is owned by SynchronizationManager
-    m_pFakeUserStore = Q_NULLPTR;
+    m_pFakeUserStore = nullptr;
 
     m_pFakeAuthenticationManager->disconnect();
     m_pFakeAuthenticationManager->deleteLater();
-    m_pFakeAuthenticationManager = Q_NULLPTR;
+    m_pFakeAuthenticationManager = nullptr;
 
     // NOTE: not deleting FakeKeychainService intentionally,
     // it is owned by SynchronizationManager
-    m_pFakeKeychainService = Q_NULLPTR;
+    m_pFakeKeychainService = nullptr;
 
     // NOTE: not deleting SyncStatePersistenceManager intentionally,
     // it is owned by SynchronizationManager
-    m_pSyncStatePersistenceManager = Q_NULLPTR;
+    m_pSyncStatePersistenceManager = nullptr;
 
     delete m_pLocalStorageManagerAsync;
-    m_pLocalStorageManagerAsync = Q_NULLPTR;
+    m_pLocalStorageManagerAsync = nullptr;
 
     m_expectedSavedSearchNamesByGuid.clear();
     m_expectedTagNamesByGuid.clear();
@@ -4523,7 +4523,7 @@ void SynchronizationTester::setNewUserOwnResourcesInExistingNotesToRemoteStorage
         it != end; ++it)
     {
         const Note * pNote = m_pFakeNoteStore->findNote(*it);
-        QVERIFY2(pNote != Q_NULLPTR,
+        QVERIFY2(pNote != nullptr,
                  "Detected unexpectedly missing note in fake note store");
 
         Resource newResource;
@@ -4561,13 +4561,13 @@ void SynchronizationTester::setNewResourcesInExistingNotesFromLinkedNotebooksToR
         it != end; ++it)
     {
         const Note * pNote = m_pFakeNoteStore->findNote(*it);
-        QVERIFY2(pNote != Q_NULLPTR,
+        QVERIFY2(pNote != nullptr,
                  "Detected unexpectedly missing note in fake note store");
         QVERIFY2(pNote->hasNotebookGuid(),
                  "Detected note without notebook guid in fake note store");
 
         const Notebook * pNotebook = m_pFakeNoteStore->findNotebook(pNote->notebookGuid());
-        QVERIFY2(pNotebook != Q_NULLPTR,
+        QVERIFY2(pNotebook != nullptr,
                  "Detected unexpectedly missing notebook in fake note store");
         QVERIFY2(pNotebook->hasLinkedNotebookGuid(),
                  "Internal error: the note to be added a new resource should "
@@ -4611,7 +4611,7 @@ void SynchronizationTester::setNewResourcesInExistingNotesFromLinkedNotebooksToR
 
         const LinkedNotebook * pLinkedNotebook =
             m_pFakeNoteStore->findLinkedNotebook(linkedNotebookGuid);
-        QVERIFY(pLinkedNotebook != Q_NULLPTR);
+        QVERIFY(pLinkedNotebook != nullptr);
         m_pFakeNoteStore->setLinkedNotebookSyncState(
             pLinkedNotebook->username(), syncState);
     }
@@ -4628,7 +4628,7 @@ void SynchronizationTester::setModifiedUserOwnItemsToRemoteStorage()
         it != end; ++it)
     {
         const SavedSearch * pSavedSearch = m_pFakeNoteStore->findSavedSearch(*it);
-        QVERIFY2(pSavedSearch != Q_NULLPTR,
+        QVERIFY2(pSavedSearch != nullptr,
                  "Detected unexpectedly missing saved search in fake note store");
 
         SavedSearch modifiedSavedSearch(*pSavedSearch);
@@ -4646,7 +4646,7 @@ void SynchronizationTester::setModifiedUserOwnItemsToRemoteStorage()
         end = m_guidsOfUsersOwnRemoteItemsToModify.m_tagGuids.constEnd(); it != end; ++it)
     {
         const Tag * pTag = m_pFakeNoteStore->findTag(*it);
-        QVERIFY2(pTag != Q_NULLPTR,
+        QVERIFY2(pTag != nullptr,
                  "Detected unexpectedly missing tag in fake note store");
         QVERIFY2(!pTag->hasLinkedNotebookGuid(),
                  "Detected broken test condition - the tag was supposed to be "
@@ -4667,7 +4667,7 @@ void SynchronizationTester::setModifiedUserOwnItemsToRemoteStorage()
         end = m_guidsOfUsersOwnRemoteItemsToModify.m_notebookGuids.constEnd(); it != end; ++it)
     {
         const Notebook * pNotebook = m_pFakeNoteStore->findNotebook(*it);
-        QVERIFY2(pNotebook != Q_NULLPTR,
+        QVERIFY2(pNotebook != nullptr,
                  "Detected unexpectedly missing notebook in fake note store");
         QVERIFY2(!pNotebook->hasLinkedNotebookGuid(),
                  "Detected broken test condition - the notebook was supposed to "
@@ -4688,7 +4688,7 @@ void SynchronizationTester::setModifiedUserOwnItemsToRemoteStorage()
         end = m_guidsOfUsersOwnRemoteItemsToModify.m_noteGuids.constEnd(); it != end; ++it)
     {
         const Note * pNote = m_pFakeNoteStore->findNote(*it);
-        QVERIFY2(pNote != Q_NULLPTR,
+        QVERIFY2(pNote != nullptr,
                  "Detected unexpectedly missing note in fake note store");
         QVERIFY2(pNote->hasNotebookGuid(),
                  "Detected note without notebook guid in fake note store");
@@ -4699,7 +4699,7 @@ void SynchronizationTester::setModifiedUserOwnItemsToRemoteStorage()
                  "Detected note without title in fake note store");
 
         const Notebook * pNotebook = m_pFakeNoteStore->findNotebook(pNote->notebookGuid());
-        QVERIFY2(pNotebook != Q_NULLPTR,
+        QVERIFY2(pNotebook != nullptr,
                  "Detected unexpectedly missing notebook in fake note store");
         QVERIFY2(!pNotebook->hasLinkedNotebookGuid(),
                  "Detected broken test condition - the note was supposed to be "
@@ -4729,7 +4729,7 @@ void SynchronizationTester::setModifiedUserOwnResourcesOnlyToRemoteStorage()
         it != end; ++it)
     {
         const Resource * pResource = m_pFakeNoteStore->findResource(*it);
-        QVERIFY2(pResource != Q_NULLPTR,
+        QVERIFY2(pResource != nullptr,
                  "Detected unexpectedly missing resource in fake note store");
         QVERIFY2(pResource->hasNoteGuid(),
                  "Detected resource without note guid in fake note store");
@@ -4737,7 +4737,7 @@ void SynchronizationTester::setModifiedUserOwnResourcesOnlyToRemoteStorage()
                  "Detected resource without data body in fake note store");
 
         const Note * pNote = m_pFakeNoteStore->findNote(pResource->noteGuid());
-        QVERIFY2(pNote != Q_NULLPTR,
+        QVERIFY2(pNote != nullptr,
                  "Detected unexpectedly missing note in fake note store");
         QVERIFY2(pNote->hasNotebookGuid(),
                  "Detected note without notebook guid in fake note store");
@@ -4746,7 +4746,7 @@ void SynchronizationTester::setModifiedUserOwnResourcesOnlyToRemoteStorage()
                  "have resources in fake note store");
 
         const Notebook * pNotebook = m_pFakeNoteStore->findNotebook(pNote->notebookGuid());
-        QVERIFY2(pNotebook != Q_NULLPTR,
+        QVERIFY2(pNotebook != nullptr,
                  "Detected unexpectedly missing notebook in fake note store");
         QVERIFY2(!pNotebook->hasLinkedNotebookGuid(),
                  "Detected broken test condition - the note was supposed to be "
@@ -4795,7 +4795,7 @@ void SynchronizationTester::setModifiedLinkedNotebookItemsToRemoteStorage()
         it != end; ++it)
     {
         const LinkedNotebook * pLinkedNotebook = m_pFakeNoteStore->findLinkedNotebook(*it);
-        QVERIFY2(pLinkedNotebook != Q_NULLPTR,
+        QVERIFY2(pLinkedNotebook != nullptr,
                  "Detected unexpectedly missing linked notebook in fake note store");
         QVERIFY2(pLinkedNotebook->hasShareName(),
                  "Detected linked notebook without share name in fake note store");
@@ -4817,7 +4817,7 @@ void SynchronizationTester::setModifiedLinkedNotebookItemsToRemoteStorage()
         it != end; ++it)
     {
         const Tag * pTag = m_pFakeNoteStore->findTag(*it);
-        QVERIFY2(pTag != Q_NULLPTR,
+        QVERIFY2(pTag != nullptr,
                  "Detected unexpectedly missing linked notebook's tag in fake note store");
         QVERIFY2(pTag->hasLinkedNotebookGuid(),
                  "Detected broken test condition - the tag was supposed to belong "
@@ -4843,7 +4843,7 @@ void SynchronizationTester::setModifiedLinkedNotebookItemsToRemoteStorage()
 
         const LinkedNotebook * pLinkedNotebook =
             m_pFakeNoteStore->findLinkedNotebook(pTag->linkedNotebookGuid());
-        QVERIFY(pLinkedNotebook != Q_NULLPTR);
+        QVERIFY(pLinkedNotebook != nullptr);
         m_pFakeNoteStore->setLinkedNotebookSyncState(
             pLinkedNotebook->username(), syncState);
     }
@@ -4854,7 +4854,7 @@ void SynchronizationTester::setModifiedLinkedNotebookItemsToRemoteStorage()
         it != end; ++it)
     {
         const Notebook * pNotebook = m_pFakeNoteStore->findNotebook(*it);
-        QVERIFY2(pNotebook != Q_NULLPTR,
+        QVERIFY2(pNotebook != nullptr,
                  "Detected unexpectedly missing linked notebook's notebook "
                  "in fake note store");
         QVERIFY2(pNotebook->hasLinkedNotebookGuid(),
@@ -4881,7 +4881,7 @@ void SynchronizationTester::setModifiedLinkedNotebookItemsToRemoteStorage()
 
         const LinkedNotebook * pLinkedNotebook =
             m_pFakeNoteStore->findLinkedNotebook(pNotebook->linkedNotebookGuid());
-        QVERIFY(pLinkedNotebook != Q_NULLPTR);
+        QVERIFY(pLinkedNotebook != nullptr);
         m_pFakeNoteStore->setLinkedNotebookSyncState(
             pLinkedNotebook->username(), syncState);
     }
@@ -4892,7 +4892,7 @@ void SynchronizationTester::setModifiedLinkedNotebookItemsToRemoteStorage()
         it != end; ++it)
     {
         const Note * pNote = m_pFakeNoteStore->findNote(*it);
-        QVERIFY2(pNote != Q_NULLPTR,
+        QVERIFY2(pNote != nullptr,
                  "Detected unexpectedly missing linked notebook's note in fake note store");
         QVERIFY2(pNote->hasNotebookGuid(),
                  "Detected note without notebook guid in fake note store");
@@ -4902,7 +4902,7 @@ void SynchronizationTester::setModifiedLinkedNotebookItemsToRemoteStorage()
         QVERIFY2(pNote->hasTitle(), "Detected note without title in fake note store");
 
         const Notebook * pNotebook = m_pFakeNoteStore->findNotebook(pNote->notebookGuid());
-        QVERIFY2(pNotebook != Q_NULLPTR,
+        QVERIFY2(pNotebook != nullptr,
                  "Detected unexpectedly missing linked notebook's note's notebook "
                  "in fake note store");
         QVERIFY2(pNotebook->hasLinkedNotebookGuid(),
@@ -4929,7 +4929,7 @@ void SynchronizationTester::setModifiedLinkedNotebookItemsToRemoteStorage()
 
         const LinkedNotebook * pLinkedNotebook =
             m_pFakeNoteStore->findLinkedNotebook(pNotebook->linkedNotebookGuid());
-        QVERIFY(pLinkedNotebook != Q_NULLPTR);
+        QVERIFY(pLinkedNotebook != nullptr);
         m_pFakeNoteStore->setLinkedNotebookSyncState(
             pLinkedNotebook->username(), syncState);
     }
@@ -4948,7 +4948,7 @@ void SynchronizationTester::setModifiedLinkedNotebookResourcesOnlyToRemoteStorag
         it != end; ++it)
     {
         const Resource * pResource = m_pFakeNoteStore->findResource(*it);
-        QVERIFY2(pResource != Q_NULLPTR,
+        QVERIFY2(pResource != nullptr,
                  "Detected unexpectedly missing linked notebook's resource "
                  "in fake note store");
         QVERIFY2(pResource->hasNoteGuid(),
@@ -4957,7 +4957,7 @@ void SynchronizationTester::setModifiedLinkedNotebookResourcesOnlyToRemoteStorag
                  "Detected resource without data body in fake note store");
 
         const Note * pNote = m_pFakeNoteStore->findNote(pResource->noteGuid());
-        QVERIFY2(pNote != Q_NULLPTR,
+        QVERIFY2(pNote != nullptr,
                  "Detected unexpectedly missing linked notebook's note in fake note store");
         QVERIFY2(pNote->hasNotebookGuid(),
                  "Detected note without notebook guid in fake note store");
@@ -4965,7 +4965,7 @@ void SynchronizationTester::setModifiedLinkedNotebookResourcesOnlyToRemoteStorag
                  "Detected broken test condition - the resource's note has no resources");
 
         const Notebook * pNotebook = m_pFakeNoteStore->findNotebook(pNote->notebookGuid());
-        QVERIFY2(pNotebook != Q_NULLPTR,
+        QVERIFY2(pNotebook != nullptr,
                  "Detected unexpectedly missing linked notebook's note's notebook "
                  "in fake note store");
         QVERIFY2(pNotebook->hasLinkedNotebookGuid(),
@@ -5013,7 +5013,7 @@ void SynchronizationTester::setModifiedLinkedNotebookResourcesOnlyToRemoteStorag
 
         const LinkedNotebook * pLinkedNotebook =
             m_pFakeNoteStore->findLinkedNotebook(pNotebook->linkedNotebookGuid());
-        QVERIFY(pLinkedNotebook != Q_NULLPTR);
+        QVERIFY(pLinkedNotebook != nullptr);
         m_pFakeNoteStore->setLinkedNotebookSyncState(
             pLinkedNotebook->username(), syncState);
     }
@@ -5807,7 +5807,7 @@ void SynchronizationTester::setConflictingSavedSearchesFromUserOwnDataToLocalAnd
         it != end; ++it)
     {
         const SavedSearch * pSavedSearch = m_pFakeNoteStore->findSavedSearch(*it);
-        QVERIFY2(pSavedSearch != Q_NULLPTR,
+        QVERIFY2(pSavedSearch != nullptr,
                  "Detected unexpectedly missing saved search in fake note store");
 
         QString originalName = pSavedSearch->name();
@@ -5896,7 +5896,7 @@ void SynchronizationTester::setConflictingTagsToLocalAndRemoteStoragesImpl(
         it != end; ++it)
     {
         const Tag * pRemoteTag = m_pFakeNoteStore->findTag(*it);
-        QVERIFY2(pRemoteTag != Q_NULLPTR,
+        QVERIFY2(pRemoteTag != nullptr,
                  "Detected unexpectedly missing tag in fake note store");
         QVERIFY(pRemoteTag->hasLinkedNotebookGuid() == shouldHaveLinkedNotebookGuid);
 
@@ -5949,7 +5949,7 @@ void SynchronizationTester::setConflictingTagsToLocalAndRemoteStoragesImpl(
 
         const LinkedNotebook * pLinkedNotebook =
             m_pFakeNoteStore->findLinkedNotebook(pRemoteTag->linkedNotebookGuid());
-        QVERIFY(pLinkedNotebook != Q_NULLPTR);
+        QVERIFY(pLinkedNotebook != nullptr);
         m_pFakeNoteStore->setLinkedNotebookSyncState(pLinkedNotebook->username(),
                                                      syncState);
     }
@@ -5965,7 +5965,7 @@ void SynchronizationTester::setConflictingNotebooksToLocalAndRemoteStoragesImpl(
         end = sourceNotebookGuids.constEnd(); it != end; ++it)
     {
         const Notebook * pNotebook = m_pFakeNoteStore->findNotebook(*it);
-        QVERIFY2(pNotebook != Q_NULLPTR,
+        QVERIFY2(pNotebook != nullptr,
                  "Detected unexpectedly missing notebook in fake note store");
         QVERIFY(pNotebook->hasLinkedNotebookGuid() == shouldHaveLinkedNotebookGuid);
 
@@ -6010,7 +6010,7 @@ void SynchronizationTester::setConflictingNotebooksToLocalAndRemoteStoragesImpl(
 
         const LinkedNotebook * pLinkedNotebook =
             m_pFakeNoteStore->findLinkedNotebook(pNotebook->linkedNotebookGuid());
-        QVERIFY(pLinkedNotebook != Q_NULLPTR);
+        QVERIFY(pLinkedNotebook != nullptr);
         m_pFakeNoteStore->setLinkedNotebookSyncState(pLinkedNotebook->username(),
                                                      syncState);
     }
@@ -6025,7 +6025,7 @@ void SynchronizationTester::setConflictingNotesToLocalAndRemoteStoragesImpl(
         end = sourceNoteGuids.constEnd(); it != end; ++it)
     {
         const Note * pNote = m_pFakeNoteStore->findNote(*it);
-        QVERIFY2(pNote != Q_NULLPTR,
+        QVERIFY2(pNote != nullptr,
                  "Detected unexpectedly missing note in fake note store");
 
         QString originalTitle = pNote->title();
@@ -6062,7 +6062,7 @@ void SynchronizationTester::setConflictingNotesToLocalAndRemoteStoragesImpl(
 
         const Notebook * pNotebook =
             m_pFakeNoteStore->findNotebook(pNote->notebookGuid());
-        QVERIFY(pNotebook != Q_NULLPTR);
+        QVERIFY(pNotebook != nullptr);
 
         if (!pNotebook->hasLinkedNotebookGuid()) {
             continue;
@@ -6079,7 +6079,7 @@ void SynchronizationTester::setConflictingNotesToLocalAndRemoteStoragesImpl(
 
         const LinkedNotebook * pLinkedNotebook =
             m_pFakeNoteStore->findLinkedNotebook(pNotebook->linkedNotebookGuid());
-        QVERIFY(pLinkedNotebook != Q_NULLPTR);
+        QVERIFY(pLinkedNotebook != nullptr);
         m_pFakeNoteStore->setLinkedNotebookSyncState(pLinkedNotebook->username(),
                                                      syncState);
     }
@@ -6484,7 +6484,7 @@ void SynchronizationTester::checkIdentityOfLocalAndRemoteItems()
                 QString resourceGuid = resIt->guid.ref();
                 const Resource * pResource =
                     m_pFakeNoteStore->findResource(resourceGuid);
-                QVERIFY2(pResource != Q_NULLPTR,
+                QVERIFY2(pResource != nullptr,
                          "One of remote note's resources was not found");
                 if (resIt->data.isSet()) {
                     resIt->data->body = pResource->dataBody();

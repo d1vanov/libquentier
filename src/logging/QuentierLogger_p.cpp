@@ -126,7 +126,7 @@ void QuentierFileLogWriter::restartLogging()
 {
     if (m_pStream) {
         m_pStream->flush();
-        m_pStream->setDevice(Q_NULLPTR);
+        m_pStream->setDevice(nullptr);
     }
 
     m_logFile.close();
@@ -194,7 +194,7 @@ void QuentierFileLogWriter::rotate()
 
     // 2) Rename the current log file
     if (m_pStream) {
-        m_pStream->setDevice(Q_NULLPTR);
+        m_pStream->setDevice(nullptr);
     }
     m_logFile.close();
     bool res = m_logFile.rename(logFileDirPath + QStringLiteral("/") +
@@ -275,7 +275,7 @@ QuentierLogger & QuentierLogger::instance()
 
 QuentierLogger::QuentierLogger(QObject * parent) :
     QObject(parent),
-    m_pImpl(Q_NULLPTR)
+    m_pImpl(nullptr)
 {
     // NOTE: since C++11 static construction is thread-safe so if we use C++11,
     // we don't need to lock anything ourselves
@@ -319,7 +319,7 @@ void QuentierLogger::addLogWriter(IQuentierLogWriter * pLogWriter)
                          Qt::QueuedConnection);
     }
 
-    pLogWriter->setParent(Q_NULLPTR);
+    pLogWriter->setParent(nullptr);
     pLogWriter->moveToThread(m_pImpl->m_pLogWriteThread);
 }
 

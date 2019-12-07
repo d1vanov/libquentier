@@ -22,6 +22,7 @@
 #include <quentier/utility/Macros.h>
 #include <quentier/utility/Linkage.h>
 #include <quentier/types/ErrorString.h>
+
 #include <QObject>
 #include <QString>
 #include <QUuid>
@@ -39,7 +40,7 @@ class QUENTIER_EXPORT EncryptionManager: public QObject
 {
     Q_OBJECT
 public:
-    explicit EncryptionManager(QObject * parent = Q_NULLPTR);
+    explicit EncryptionManager(QObject * parent = nullptr);
     virtual ~EncryptionManager();
 
     bool decrypt(const QString & encryptedText, const QString & passphrase,

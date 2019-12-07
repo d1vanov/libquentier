@@ -30,7 +30,7 @@ class FileCopierPrivate: public QObject
 {
     Q_OBJECT
 public:
-    explicit FileCopierPrivate(QObject * parent = Q_NULLPTR);
+    explicit FileCopierPrivate(QObject * parent = nullptr);
 
     bool isIdle() const { return m_idle; }
     bool isCancelled() const { return m_cancelled; }

@@ -28,7 +28,7 @@ namespace quentier {
 
 NoteEditorLocalStorageBroker::NoteEditorLocalStorageBroker() :
     QObject(),
-    m_pLocalStorageManagerAsync(Q_NULLPTR),
+    m_pLocalStorageManagerAsync(nullptr),
     m_findNoteRequestIds(),
     m_findNotebookRequestIds(),
     m_findResourceRequestIds(),

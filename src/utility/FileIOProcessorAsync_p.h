@@ -32,7 +32,7 @@ class Q_DECL_HIDDEN FileIOProcessorAsyncPrivate: public QObject
 {
     Q_OBJECT
 public:
-    explicit FileIOProcessorAsyncPrivate(QObject * parent = Q_NULLPTR);
+    explicit FileIOProcessorAsyncPrivate(QObject * parent = nullptr);
 
     void setIdleTimePeriod(const qint32 seconds);
 

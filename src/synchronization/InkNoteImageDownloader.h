@@ -36,9 +36,9 @@ public:
         const QString & noteGuid, const QString & authToken,
         const QString & shardId, const int height, const int width,
         const bool noteFromPublicLinkedNotebook,
-        const QString & storageFolderPath, QObject * parent = Q_NULLPTR);
+        const QString & storageFolderPath, QObject * parent = nullptr);
 
-    virtual void run() Q_DECL_OVERRIDE;
+    virtual void run() override;
 
 Q_SIGNALS:
     void finished(bool status, QString resourceGuid,

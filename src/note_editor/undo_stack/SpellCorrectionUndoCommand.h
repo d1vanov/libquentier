@@ -32,18 +32,18 @@ public:
     SpellCorrectionUndoCommand(
         NoteEditorPrivate & noteEditor,
         const Callback & callback,
-        QUndoCommand * parent = Q_NULLPTR);
+        QUndoCommand * parent = nullptr);
 
     SpellCorrectionUndoCommand(
         NoteEditorPrivate & noteEditor,
         const Callback & callback,
         const QString & text,
-        QUndoCommand * parent = Q_NULLPTR);
+        QUndoCommand * parent = nullptr);
 
     virtual ~SpellCorrectionUndoCommand();
 
-    virtual void redoImpl() Q_DECL_OVERRIDE;
-    virtual void undoImpl() Q_DECL_OVERRIDE;
+    virtual void redoImpl() override;
+    virtual void undoImpl() override;
 
 private:
     Callback    m_callback;

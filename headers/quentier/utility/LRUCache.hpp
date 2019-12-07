@@ -20,9 +20,11 @@
 #define LIB_QUENTIER_UTILITY_LRU_CACHE_HPP
 
 #include <quentier/utility/Macros.h>
+
+#include <QHash>
+
 #include <list>
 #include <cstddef>
-#include <QHash>
 
 namespace quentier {
 
@@ -94,12 +96,12 @@ public:
     {
         auto mapperIt = m_mapper.find(key);
         if (mapperIt == m_mapper.end()) {
-            return Q_NULLPTR;
+            return nullptr;
         }
 
         auto it = mapperIt.value();
         if (it == m_container.end()) {
-            return Q_NULLPTR;
+            return nullptr;
         }
 
         m_container.splice(m_container.begin(), m_container, it);

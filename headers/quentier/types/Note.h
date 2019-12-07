@@ -57,20 +57,20 @@ public:
     const qevercloud::Note & qevercloudNote() const;
     qevercloud::Note & qevercloudNote();
 
-    virtual bool hasGuid() const Q_DECL_OVERRIDE;
-    virtual const QString & guid() const Q_DECL_OVERRIDE;
-    virtual void setGuid(const QString & guid) Q_DECL_OVERRIDE;
+    virtual bool hasGuid() const override;
+    virtual const QString & guid() const override;
+    virtual void setGuid(const QString & guid) override;
 
-    virtual bool hasUpdateSequenceNumber() const Q_DECL_OVERRIDE;
-    virtual qint32 updateSequenceNumber() const Q_DECL_OVERRIDE;
-    virtual void setUpdateSequenceNumber(const qint32 usn) Q_DECL_OVERRIDE;
+    virtual bool hasUpdateSequenceNumber() const override;
+    virtual qint32 updateSequenceNumber() const override;
+    virtual void setUpdateSequenceNumber(const qint32 usn) override;
 
-    virtual void clear() Q_DECL_OVERRIDE;
+    virtual void clear() override;
 
-    static bool validateTitle(const QString & title,
-                              ErrorString * pErrorDescription = Q_NULLPTR);
+    static bool validateTitle(
+        const QString & title, ErrorString * pErrorDescription = nullptr);
 
-    virtual bool checkParameters(ErrorString & errorDescription) const Q_DECL_OVERRIDE;
+    virtual bool checkParameters(ErrorString & errorDescription) const override;
 
     bool hasTitle() const;
     const QString & title() const;
@@ -162,18 +162,18 @@ public:
 
     bool isInkNote() const;
 
-    QString plainText(ErrorString * pErrorMessage = Q_NULLPTR) const;
-    QStringList listOfWords(ErrorString * pErrorMessage = Q_NULLPTR) const;
+    QString plainText(ErrorString * pErrorMessage = nullptr) const;
+    QStringList listOfWords(ErrorString * pErrorMessage = nullptr) const;
 
     std::pair<QString, QStringList>
-    plainTextAndListOfWords(ErrorString * pErrorMessage = Q_NULLPTR) const;
+    plainTextAndListOfWords(ErrorString * pErrorMessage = nullptr) const;
 
     bool containsCheckedTodo() const;
     bool containsUncheckedTodo() const;
     bool containsTodo() const;
     bool containsEncryption() const;
 
-    virtual QTextStream & print(QTextStream & strm) const Q_DECL_OVERRIDE;
+    virtual QTextStream & print(QTextStream & strm) const override;
 
 private:
     QSharedDataPointer<NoteData> d;

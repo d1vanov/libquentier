@@ -29,7 +29,7 @@ class HyperlinkClickJavaScriptHandler: public QObject
 {
     Q_OBJECT
 public:
-    explicit HyperlinkClickJavaScriptHandler(QObject * parent = Q_NULLPTR);
+    explicit HyperlinkClickJavaScriptHandler(QObject * parent = nullptr);
 
 Q_SIGNALS:
     void hyperlinkClicked(QString url);

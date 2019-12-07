@@ -66,11 +66,11 @@ FullSyncStaleDataItemsExpungerTester::FullSyncStaleDataItemsExpungerTester(QObje
     QObject(parent),
     m_testAccount(QStringLiteral("FullSyncStaleDataItemsExpungerTesterFakeUser"),
                   Account::Type::Evernote, qevercloud::UserID(1)),
-    m_pLocalStorageManagerAsync(Q_NULLPTR),
+    m_pLocalStorageManagerAsync(nullptr),
     m_syncedGuids(),
-    m_pNotebookSyncCache(Q_NULLPTR),
-    m_pTagSyncCache(Q_NULLPTR),
-    m_pSavedSearchSyncCache(Q_NULLPTR)
+    m_pNotebookSyncCache(nullptr),
+    m_pTagSyncCache(nullptr),
+    m_pSavedSearchSyncCache(nullptr)
 {}
 
 FullSyncStaleDataItemsExpungerTester::~FullSyncStaleDataItemsExpungerTester()
@@ -98,16 +98,16 @@ void FullSyncStaleDataItemsExpungerTester::init()
 void FullSyncStaleDataItemsExpungerTester::cleanup()
 {
     delete m_pLocalStorageManagerAsync;
-    m_pLocalStorageManagerAsync = Q_NULLPTR;
+    m_pLocalStorageManagerAsync = nullptr;
 
     delete m_pNotebookSyncCache;
-    m_pNotebookSyncCache = Q_NULLPTR;
+    m_pNotebookSyncCache = nullptr;
 
     delete m_pTagSyncCache;
-    m_pTagSyncCache = Q_NULLPTR;
+    m_pTagSyncCache = nullptr;
 
     delete m_pSavedSearchSyncCache;
-    m_pSavedSearchSyncCache = Q_NULLPTR;
+    m_pSavedSearchSyncCache = nullptr;
 
     m_syncedGuids.m_syncedNotebookGuids.clear();
     m_syncedGuids.m_syncedTagGuids.clear();

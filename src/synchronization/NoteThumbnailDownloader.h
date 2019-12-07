@@ -42,7 +42,7 @@ public:
                                      const QString & authToken,
                                      const QString & shardId,
                                      const bool noteFromPublicLinkedNotebook,
-                                     QObject * parent = Q_NULLPTR);
+                                     QObject * parent = nullptr);
     virtual ~NoteThumbnailDownloader();
 
     void start();

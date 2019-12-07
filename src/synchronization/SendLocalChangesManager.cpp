@@ -1846,7 +1846,7 @@ void SendLocalChangesManager::sendTags()
             }
         }
 
-        INoteStore * pNoteStore = Q_NULLPTR;
+        INoteStore * pNoteStore = nullptr;
         if (tag.hasLinkedNotebookGuid())
         {
             LinkedNotebook linkedNotebook;
@@ -2041,7 +2041,7 @@ void SendLocalChangesManager::sendTags()
                 return;
             }
 
-            int * pLastUpdateCount = Q_NULLPTR;
+            int * pLastUpdateCount = nullptr;
             if (!tag.hasLinkedNotebookGuid())
             {
                 pLastUpdateCount = &m_lastUpdateCount;
@@ -2375,7 +2375,7 @@ void SendLocalChangesManager::sendNotebooks()
             }
         }
 
-        INoteStore * pNoteStore = Q_NULLPTR;
+        INoteStore * pNoteStore = nullptr;
         if (notebook.hasLinkedNotebookGuid())
         {
             LinkedNotebook linkedNotebook;
@@ -2559,7 +2559,7 @@ void SendLocalChangesManager::sendNotebooks()
                 return;
             }
 
-            int * pLastUpdateCount = Q_NULLPTR;
+            int * pLastUpdateCount = nullptr;
             if (!notebook.hasLinkedNotebookGuid())
             {
                 pLastUpdateCount = &m_lastUpdateCount;
@@ -2769,7 +2769,7 @@ void SendLocalChangesManager::sendNotes()
             }
         }
 
-        INoteStore * pNoteStore = Q_NULLPTR;
+        INoteStore * pNoteStore = nullptr;
         if (notebook.hasLinkedNotebookGuid())
         {
             LinkedNotebook linkedNotebook;
@@ -2994,7 +2994,7 @@ void SendLocalChangesManager::sendNotes()
                 return;
             }
 
-            int * pLastUpdateCount = Q_NULLPTR;
+            int * pLastUpdateCount = nullptr;
             if (!notebook.hasLinkedNotebookGuid())
             {
                 pLastUpdateCount = &m_lastUpdateCount;

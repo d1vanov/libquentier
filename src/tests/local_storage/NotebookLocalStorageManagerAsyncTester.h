@@ -35,7 +35,7 @@ class NotebookLocalStorageManagerAsyncTester : public QObject
 {
     Q_OBJECT
 public:
-    explicit NotebookLocalStorageManagerAsyncTester(QObject * parent = Q_NULLPTR);
+    explicit NotebookLocalStorageManagerAsyncTester(QObject * parent = nullptr);
     ~NotebookLocalStorageManagerAsyncTester();
 
 public Q_SLOTS:

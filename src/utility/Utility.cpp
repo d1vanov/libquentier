@@ -124,7 +124,7 @@ const QString printableDateTimeFromTimestamp(const qint64 timestamp,
     std::time_t t(timestamp / 1000);
     std::tm localTm;
     Q_UNUSED(localTm)
-    std::tm * tm = Q_NULLPTR;
+    std::tm * tm = nullptr;
 
 #ifdef _MSC_VER
 #if _MSC_VER >= 1400
@@ -191,7 +191,7 @@ QStyle * applicationStyle()
 
 #ifdef Q_OS_WIN
     // FIXME: figure out why QWindowsStyle doesn't compile
-    return Q_NULLPTR;
+    return nullptr;
 #else
 
 #if defined(Q_OS_MAC) && QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
@@ -209,7 +209,7 @@ QStyle * applicationStyle()
     const QString & firstStyle = styleNames.first();
     return QStyleFactory::create(firstStyle);
 #else
-    return Q_NULLPTR;
+    return nullptr;
 #endif // !defined(Q_OS_MAC) && (QT_VERSION < QT_VERSION_CHECK(5, 0, 0))
 
 #endif // defined(Q_OS_MAC) && QT_VERSION < QT_VERSION_CHECK(5, 0, 0)

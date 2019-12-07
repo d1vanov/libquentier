@@ -44,7 +44,7 @@ public:
         const QString & hint, const size_t keyLength, const Account & account,
         QSharedPointer<EncryptionManager> encryptionManager,
         QSharedPointer<DecryptedTextManager> decryptedTextManager,
-        QWidget * parent = Q_NULLPTR, bool decryptPermanentlyFlag = false);
+        QWidget * parent = nullptr, bool decryptPermanentlyFlag = false);
     virtual ~DecryptionDialog();
 
     QString passphrase() const;
@@ -66,7 +66,7 @@ private Q_SLOTS:
 
     void onDecryptPermanentlyStateChanged(int checked);
 
-    virtual void accept() Q_DECL_OVERRIDE;
+    virtual void accept() override;
 
 private:
     void setError(const ErrorString & error);

@@ -20,6 +20,7 @@
 #define LIB_QUENTIER_UTILITY_FILE_SYSTEM_WATCHER_PRIVATE_H
 
 #include <quentier/utility/FileSystemWatcher.h>
+
 #include <QFileSystemWatcher>
 #include <QSet>
 
@@ -34,11 +35,12 @@ class Q_DECL_HIDDEN FileSystemWatcherPrivate: public QObject
 {
     Q_OBJECT
 public:
-    explicit FileSystemWatcherPrivate(FileSystemWatcher & parent,
-                                      const int removalTimeoutMSec);
-    explicit FileSystemWatcherPrivate(FileSystemWatcher & parent,
-                                      const QStringList & paths,
-                                      const int removalTimeoutMSec);
+    explicit FileSystemWatcherPrivate(
+        FileSystemWatcher & parent, const int removalTimeoutMSec);
+
+    explicit FileSystemWatcherPrivate(
+        FileSystemWatcher & parent, const QStringList & paths,
+        const int removalTimeoutMSec);
 
     virtual ~FileSystemWatcherPrivate();
 
@@ -68,7 +70,7 @@ private:
     void processDirectoryRemoval(const QString & path);
 
 private:
-    virtual void timerEvent(QTimerEvent * pEvent) Q_DECL_OVERRIDE;
+    virtual void timerEvent(QTimerEvent * pEvent) override;
 
 private:
     Q_DISABLE_COPY(FileSystemWatcherPrivate)

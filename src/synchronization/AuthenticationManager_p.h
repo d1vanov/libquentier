@@ -30,7 +30,7 @@ public:
     explicit AuthenticationManagerPrivate(const QString & consumerKey,
                                           const QString & consumerSecret,
                                           const QString & host,
-                                          QObject * parent = Q_NULLPTR);
+                                          QObject * parent = nullptr);
 
 Q_SIGNALS:
     void sendAuthenticationResult(bool success,

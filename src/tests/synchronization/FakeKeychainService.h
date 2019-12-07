@@ -20,7 +20,9 @@
 #define LIB_QUENTIER_TESTS_SYNCHRONIZATION_FAKE_KEYCHAIN_SERVICE_H
 
 #include <quentier_private/utility/IKeychainService.h>
+
 #include <QHash>
+
 #include <utility>
 
 namespace quentier {
@@ -29,19 +31,21 @@ class FakeKeychainService: public IKeychainService
 {
     Q_OBJECT
 public:
-    explicit FakeKeychainService(QObject * parent = Q_NULLPTR);
+    explicit FakeKeychainService(QObject * parent = nullptr);
     virtual ~FakeKeychainService();
 
-    virtual QUuid startWritePasswordJob(const QString & service,
-                                        const QString & key,
-                                        const QString & password) Q_DECL_OVERRIDE;
-    virtual QUuid startReadPasswordJob(const QString & service,
-                                       const QString & key) Q_DECL_OVERRIDE;
-    virtual QUuid startDeletePasswordJob(const QString & service,
-                                         const QString & key) Q_DECL_OVERRIDE;
+    virtual QUuid startWritePasswordJob(
+        const QString & service, const QString & key,
+        const QString & password) override;
+
+    virtual QUuid startReadPasswordJob(
+        const QString & service, const QString & key) override;
+
+    virtual QUuid startDeletePasswordJob(
+        const QString & service, const QString & key) override;
 
 private:
-    virtual void timerEvent(QTimerEvent * pEvent) Q_DECL_OVERRIDE;
+    virtual void timerEvent(QTimerEvent * pEvent) override;
 
 private:
     QHash<int, QUuid>                       m_writePasswordRequestIdByTimerId;

@@ -29,7 +29,7 @@ class ResizableImageJavaScriptHandler: public QObject
 {
     Q_OBJECT
 public:
-    ResizableImageJavaScriptHandler(QObject * parent = Q_NULLPTR);
+    ResizableImageJavaScriptHandler(QObject * parent = nullptr);
 
 Q_SIGNALS:
     void imageResourceResized(bool pushUndoCommand);

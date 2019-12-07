@@ -28,7 +28,7 @@ class FullSyncStaleDataItemsExpungerTester: public QObject
 {
     Q_OBJECT
 public:
-    FullSyncStaleDataItemsExpungerTester(QObject * parent = Q_NULLPTR);
+    FullSyncStaleDataItemsExpungerTester(QObject * parent = nullptr);
     virtual ~FullSyncStaleDataItemsExpungerTester();
 
 private Q_SLOTS:

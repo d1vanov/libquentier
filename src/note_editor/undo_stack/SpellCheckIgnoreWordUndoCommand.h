@@ -35,19 +35,19 @@ public:
         NoteEditorPrivate & noteEditor,
         const QString & ignoredWord,
         SpellChecker * pSpellChecker,
-        QUndoCommand * parent = Q_NULLPTR);
+        QUndoCommand * parent = nullptr);
 
     SpellCheckIgnoreWordUndoCommand(
         NoteEditorPrivate & noteEditor,
         const QString & ignoredWord,
         SpellChecker * pSpellChecker,
         const QString & text,
-        QUndoCommand * parent = Q_NULLPTR);
+        QUndoCommand * parent = nullptr);
 
     virtual ~SpellCheckIgnoreWordUndoCommand();
 
-    virtual void redoImpl() Q_DECL_OVERRIDE;
-    virtual void undoImpl() Q_DECL_OVERRIDE;
+    virtual void redoImpl() override;
+    virtual void undoImpl() override;
 
 private:
     QPointer<SpellChecker>  m_pSpellChecker;

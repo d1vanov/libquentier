@@ -21,6 +21,7 @@
 
 #include <quentier/utility/Macros.h>
 #include <quentier/utility/Linkage.h>
+
 #include <QObject>
 #include <QVector>
 #include <QPair>
@@ -36,7 +37,7 @@ class QUENTIER_EXPORT SpellChecker : public QObject
     Q_OBJECT
 public:
     SpellChecker(FileIOProcessorAsync * pFileIOProcessorAsync,
-                 const Account & account, QObject * parent = Q_NULLPTR,
+                 const Account & account, QObject * parent = nullptr,
                  const QString & userDictionaryPath = QString());
 
     // The second bool in the pair indicates whether the dictionary

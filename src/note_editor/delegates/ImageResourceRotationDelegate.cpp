@@ -55,7 +55,7 @@ ImageResourceRotationDelegate::ImageResourceRotationDelegate(
     m_resourceDataInTemporaryFileStorageManager(resourceDataInTemporaryFileStorageManager),
     m_resourceFileStoragePathsByLocalUid(resourceFileStoragePathsByLocalUid),
     m_rotationDirection(rotationDirection),
-    m_pNote(Q_NULLPTR),
+    m_pNote(nullptr),
     m_resourceDataBefore(),
     m_resourceHashBefore(resourceHashBefore),
     m_resourceImageSizeBefore(),

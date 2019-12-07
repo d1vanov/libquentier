@@ -216,10 +216,10 @@ public:
     void enableDynamicSpellCheck();
     void disableDynamicSpellCheck();
 
-    virtual bool isNoteLoaded() const Q_DECL_OVERRIDE;
+    virtual bool isNoteLoaded() const override;
 
-    virtual QString selectedText() const Q_DECL_OVERRIDE;
-    virtual bool hasSelection() const Q_DECL_OVERRIDE;
+    virtual QString selectedText() const override;
+    virtual bool hasSelection() const override;
 
     bool searchHighlightEnabled() const;
     void setSearchHighlight(const QString & textToFind, const bool matchCase,
@@ -227,151 +227,151 @@ public:
     void highlightRecognizedImageAreas(const QString & textToFind,
                                        const bool matchCase) const;
 
-    virtual bool spellCheckEnabled() const Q_DECL_OVERRIDE;
+    virtual bool spellCheckEnabled() const override;
 
-    virtual bool isModified() const Q_DECL_OVERRIDE;
-    virtual bool isEditorPageModified() const Q_DECL_OVERRIDE;
+    virtual bool isModified() const override;
+    virtual bool isEditorPageModified() const override;
 
     qint64 noteResourcesSize() const;
     qint64 noteContentSize() const;
     qint64 noteSize() const;
 
-    virtual QPalette defaultPalette() const Q_DECL_OVERRIDE;
+    virtual QPalette defaultPalette() const override;
 
-    virtual const QFont * defaultFont() const Q_DECL_OVERRIDE;
+    virtual const QFont * defaultFont() const override;
 
 public Q_SLOTS:
     // INoteEditorBackend interface
     virtual void initialize(LocalStorageManagerAsync & localStorageManager,
                             SpellChecker & spellChecker, const Account & account,
-                            QThread * pBackgroundJobsThread) Q_DECL_OVERRIDE;
-    virtual QObject * object() Q_DECL_OVERRIDE { return this; }
-    virtual QWidget * widget() Q_DECL_OVERRIDE { return this; }
-    virtual void setAccount(const Account & account) Q_DECL_OVERRIDE;
-    virtual void setUndoStack(QUndoStack * pUndoStack) Q_DECL_OVERRIDE;
+                            QThread * pBackgroundJobsThread) override;
+    virtual QObject * object() override { return this; }
+    virtual QWidget * widget() override { return this; }
+    virtual void setAccount(const Account & account) override;
+    virtual void setUndoStack(QUndoStack * pUndoStack) override;
 
-    virtual void setInitialPageHtml(const QString & html) Q_DECL_OVERRIDE;
-    virtual void setNoteNotFoundPageHtml(const QString & html) Q_DECL_OVERRIDE;
-    virtual void setNoteDeletedPageHtml(const QString & html) Q_DECL_OVERRIDE;
-    virtual void setNoteLoadingPageHtml(const QString & html) Q_DECL_OVERRIDE;
+    virtual void setInitialPageHtml(const QString & html) override;
+    virtual void setNoteNotFoundPageHtml(const QString & html) override;
+    virtual void setNoteDeletedPageHtml(const QString & html) override;
+    virtual void setNoteLoadingPageHtml(const QString & html) override;
 
-    virtual void undo() Q_DECL_OVERRIDE;
-    virtual void redo() Q_DECL_OVERRIDE;
-    virtual void cut() Q_DECL_OVERRIDE;
-    virtual void copy() Q_DECL_OVERRIDE;
-    virtual void paste() Q_DECL_OVERRIDE;
-    virtual void pasteUnformatted() Q_DECL_OVERRIDE;
-    virtual void selectAll() Q_DECL_OVERRIDE;
-    virtual void formatSelectionAsSourceCode() Q_DECL_OVERRIDE;
-    virtual void fontMenu() Q_DECL_OVERRIDE;
-    virtual void textBold() Q_DECL_OVERRIDE;
-    virtual void textItalic() Q_DECL_OVERRIDE;
-    virtual void textUnderline() Q_DECL_OVERRIDE;
-    virtual void textStrikethrough() Q_DECL_OVERRIDE;
-    virtual void textHighlight() Q_DECL_OVERRIDE;
-    virtual void alignLeft() Q_DECL_OVERRIDE;
-    virtual void alignCenter() Q_DECL_OVERRIDE;
-    virtual void alignRight() Q_DECL_OVERRIDE;
-    virtual void alignFull() Q_DECL_OVERRIDE;
+    virtual void undo() override;
+    virtual void redo() override;
+    virtual void cut() override;
+    virtual void copy() override;
+    virtual void paste() override;
+    virtual void pasteUnformatted() override;
+    virtual void selectAll() override;
+    virtual void formatSelectionAsSourceCode() override;
+    virtual void fontMenu() override;
+    virtual void textBold() override;
+    virtual void textItalic() override;
+    virtual void textUnderline() override;
+    virtual void textStrikethrough() override;
+    virtual void textHighlight() override;
+    virtual void alignLeft() override;
+    virtual void alignCenter() override;
+    virtual void alignRight() override;
+    virtual void alignFull() override;
 
     virtual void findNext(const QString & text,
-                          const bool matchCase) const Q_DECL_OVERRIDE;
+                          const bool matchCase) const override;
     virtual void findPrevious(const QString & text,
-                              const bool matchCase) const Q_DECL_OVERRIDE;
+                              const bool matchCase) const override;
 
     virtual void replace(const QString & textToReplace,
                          const QString & replacementText,
-                         const bool matchCase) Q_DECL_OVERRIDE;
+                         const bool matchCase) override;
     virtual void replaceAll(const QString & textToReplace,
                             const QString & replacementText,
-                            const bool matchCase) Q_DECL_OVERRIDE;
+                            const bool matchCase) override;
 
     void onReplaceJavaScriptDone(const QVariant & data);
 
-    virtual void insertToDoCheckbox() Q_DECL_OVERRIDE;
+    virtual void insertToDoCheckbox() override;
     virtual void insertInAppNoteLink(const QString & userId,
                                      const QString & shardId,
                                      const QString & noteGuid,
-                                     const QString & linkText) Q_DECL_OVERRIDE;
-    virtual void setSpellcheck(const bool enabled) Q_DECL_OVERRIDE;
-    virtual void setFont(const QFont & font) Q_DECL_OVERRIDE;
-    virtual void setFontHeight(const int height) Q_DECL_OVERRIDE;
-    virtual void setFontColor(const QColor & color) Q_DECL_OVERRIDE;
-    virtual void setBackgroundColor(const QColor & color) Q_DECL_OVERRIDE;
-    virtual void setDefaultPalette(const QPalette & pal) Q_DECL_OVERRIDE;
-    virtual void setDefaultFont(const QFont & font) Q_DECL_OVERRIDE;
-    virtual void insertHorizontalLine() Q_DECL_OVERRIDE;
-    virtual void increaseFontSize() Q_DECL_OVERRIDE;
-    virtual void decreaseFontSize() Q_DECL_OVERRIDE;
-    virtual void increaseIndentation() Q_DECL_OVERRIDE;
-    virtual void decreaseIndentation() Q_DECL_OVERRIDE;
-    virtual void insertBulletedList() Q_DECL_OVERRIDE;
-    virtual void insertNumberedList() Q_DECL_OVERRIDE;
-    virtual void insertTableDialog() Q_DECL_OVERRIDE;
+                                     const QString & linkText) override;
+    virtual void setSpellcheck(const bool enabled) override;
+    virtual void setFont(const QFont & font) override;
+    virtual void setFontHeight(const int height) override;
+    virtual void setFontColor(const QColor & color) override;
+    virtual void setBackgroundColor(const QColor & color) override;
+    virtual void setDefaultPalette(const QPalette & pal) override;
+    virtual void setDefaultFont(const QFont & font) override;
+    virtual void insertHorizontalLine() override;
+    virtual void increaseFontSize() override;
+    virtual void decreaseFontSize() override;
+    virtual void increaseIndentation() override;
+    virtual void decreaseIndentation() override;
+    virtual void insertBulletedList() override;
+    virtual void insertNumberedList() override;
+    virtual void insertTableDialog() override;
     virtual void insertFixedWidthTable(const int rows, const int columns,
-                                       const int widthInPixels) Q_DECL_OVERRIDE;
+                                       const int widthInPixels) override;
     virtual void insertRelativeWidthTable(
         const int rows, const int columns,
-        const double relativeWidth) Q_DECL_OVERRIDE;
-    virtual void insertTableRow() Q_DECL_OVERRIDE;
-    virtual void insertTableColumn() Q_DECL_OVERRIDE;
-    virtual void removeTableRow() Q_DECL_OVERRIDE;
-    virtual void removeTableColumn() Q_DECL_OVERRIDE;
-    virtual void addAttachmentDialog() Q_DECL_OVERRIDE;
+        const double relativeWidth) override;
+    virtual void insertTableRow() override;
+    virtual void insertTableColumn() override;
+    virtual void removeTableRow() override;
+    virtual void removeTableColumn() override;
+    virtual void addAttachmentDialog() override;
     virtual void saveAttachmentDialog(
-        const QByteArray & resourceHash) Q_DECL_OVERRIDE;
-    virtual void saveAttachmentUnderCursor() Q_DECL_OVERRIDE;
-    virtual void openAttachment(const QByteArray & resourceHash) Q_DECL_OVERRIDE;
-    virtual void openAttachmentUnderCursor() Q_DECL_OVERRIDE;
-    virtual void copyAttachment(const QByteArray & resourceHash) Q_DECL_OVERRIDE;
-    virtual void copyAttachmentUnderCursor() Q_DECL_OVERRIDE;
-    virtual void removeAttachment(const QByteArray & resourceHash) Q_DECL_OVERRIDE;
-    virtual void removeAttachmentUnderCursor() Q_DECL_OVERRIDE;
-    virtual void renameAttachment(const QByteArray & resourceHash) Q_DECL_OVERRIDE;
-    virtual void renameAttachmentUnderCursor() Q_DECL_OVERRIDE;
+        const QByteArray & resourceHash) override;
+    virtual void saveAttachmentUnderCursor() override;
+    virtual void openAttachment(const QByteArray & resourceHash) override;
+    virtual void openAttachmentUnderCursor() override;
+    virtual void copyAttachment(const QByteArray & resourceHash) override;
+    virtual void copyAttachmentUnderCursor() override;
+    virtual void removeAttachment(const QByteArray & resourceHash) override;
+    virtual void removeAttachmentUnderCursor() override;
+    virtual void renameAttachment(const QByteArray & resourceHash) override;
+    virtual void renameAttachmentUnderCursor() override;
     virtual void rotateImageAttachment(
         const QByteArray & resourceHash,
-        const Rotation::type rotationDirection) Q_DECL_OVERRIDE;
+        const Rotation::type rotationDirection) override;
     virtual void rotateImageAttachmentUnderCursor(
-        const Rotation::type rotationDirection) Q_DECL_OVERRIDE;
+        const Rotation::type rotationDirection) override;
 
     void rotateImageAttachmentUnderCursorClockwise();
     void rotateImageAttachmentUnderCursorCounterclockwise();
 
-    virtual void encryptSelectedText() Q_DECL_OVERRIDE;
+    virtual void encryptSelectedText() override;
 
-    virtual void decryptEncryptedTextUnderCursor() Q_DECL_OVERRIDE;
+    virtual void decryptEncryptedTextUnderCursor() override;
     virtual void decryptEncryptedText(QString encryptedText, QString cipher,
                                       QString keyLength, QString hint,
-                                      QString enCryptIndex) Q_DECL_OVERRIDE;
+                                      QString enCryptIndex) override;
 
-    virtual void hideDecryptedTextUnderCursor() Q_DECL_OVERRIDE;
+    virtual void hideDecryptedTextUnderCursor() override;
     virtual void hideDecryptedText(QString encryptedText, QString decryptedText,
                                    QString cipher, QString keyLength, QString hint,
-                                   QString enDecryptedIndex) Q_DECL_OVERRIDE;
+                                   QString enDecryptedIndex) override;
 
-    virtual void editHyperlinkDialog() Q_DECL_OVERRIDE;
-    virtual void copyHyperlink() Q_DECL_OVERRIDE;
-    virtual void removeHyperlink() Q_DECL_OVERRIDE;
+    virtual void editHyperlinkDialog() override;
+    virtual void copyHyperlink() override;
+    virtual void removeHyperlink() override;
 
-    virtual void onNoteLoadCancelled() Q_DECL_OVERRIDE;
+    virtual void onNoteLoadCancelled() override;
 
     virtual bool print(QPrinter & printer,
-                       ErrorString & errorDescription) Q_DECL_OVERRIDE;
+                       ErrorString & errorDescription) override;
     virtual bool exportToPdf(const QString & absoluteFilePath,
-                             ErrorString & errorDescription) Q_DECL_OVERRIDE;
+                             ErrorString & errorDescription) override;
     virtual bool exportToEnex(const QStringList & tagNames, QString & enex,
-                              ErrorString & errorDescription) Q_DECL_OVERRIDE;
+                              ErrorString & errorDescription) override;
 
     virtual void setCurrentNoteLocalUid(
-        const QString & noteLocalUid) Q_DECL_OVERRIDE;
-    virtual void clear() Q_DECL_OVERRIDE;
-    virtual void setFocusToEditor() Q_DECL_OVERRIDE;
-    virtual void convertToNote() Q_DECL_OVERRIDE;
-    virtual void saveNoteToLocalStorage() Q_DECL_OVERRIDE;
-    virtual void setNoteTitle(const QString & noteTitle) Q_DECL_OVERRIDE;
+        const QString & noteLocalUid) override;
+    virtual void clear() override;
+    virtual void setFocusToEditor() override;
+    virtual void convertToNote() override;
+    virtual void saveNoteToLocalStorage() override;
+    virtual void setNoteTitle(const QString & noteTitle) override;
     virtual void setTagIds(const QStringList & tagLocalUids,
-                           const QStringList & tagGuids) Q_DECL_OVERRIDE;
+                           const QStringList & tagGuids) override;
 
     void undoPageAction();
     void redoPageAction();
@@ -379,7 +379,7 @@ public Q_SLOTS:
     void flipEnToDoCheckboxState(const quint64 enToDoIdNumber);
 
 public:
-    virtual QString currentNoteLocalUid() const Q_DECL_OVERRIDE;
+    virtual QString currentNoteLocalUid() const override;
 
 // private signals:
 Q_SIGNALS:
@@ -485,7 +485,7 @@ private Q_SLOTS:
     void onOpenResourceRequest(const QByteArray & resourceHash);
     void onSaveResourceRequest(const QByteArray & resourceHash);
 
-    void contextMenuEvent(QContextMenuEvent * pEvent) Q_DECL_OVERRIDE;
+    void contextMenuEvent(QContextMenuEvent * pEvent) override;
     void onContextMenuEventReply(QString contentType, QString selectedHtml,
                                  bool insideDecryptedTextFragment,
                                  QStringList extraData, quint64 sequenceNumber);
@@ -895,9 +895,9 @@ private:
 
 private:
     // Overrides for some Qt's virtual methods
-    virtual void timerEvent(QTimerEvent * pEvent) Q_DECL_OVERRIDE;
-    virtual void dragMoveEvent(QDragMoveEvent * pEvent) Q_DECL_OVERRIDE;
-    virtual void dropEvent(QDropEvent * pEvent) Q_DECL_OVERRIDE;
+    virtual void timerEvent(QTimerEvent * pEvent) override;
+    virtual void dragMoveEvent(QDragMoveEvent * pEvent) override;
+    virtual void dropEvent(QDropEvent * pEvent) override;
 
     void pasteImageData(const QMimeData & mimeData);
 

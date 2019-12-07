@@ -44,21 +44,21 @@ class Q_DECL_HIDDEN UserStore: public IUserStore
 public:
     UserStore(const qevercloud::IUserStorePtr & pQecUserStore);
 
-    virtual IUserStore * create(const QString & host) const Q_DECL_OVERRIDE;
+    virtual IUserStore * create(const QString & host) const override;
 
     virtual bool checkVersion(const QString & clientName,
                               qint16 edamVersionMajor,
                               qint16 edamVersionMinor,
-                              ErrorString & errorDescription) Q_DECL_OVERRIDE;
+                              ErrorString & errorDescription) override;
 
     virtual qint32 getUser(User & user, ErrorString & errorDescription,
-                           qint32 & rateLimitSeconds) Q_DECL_OVERRIDE;
+                           qint32 & rateLimitSeconds) override;
 
     virtual qint32 getAccountLimits(
         const qevercloud::ServiceLevel serviceLevel,
         qevercloud::AccountLimits & limits,
         ErrorString & errorDescription,
-        qint32 & rateLimitSeconds) Q_DECL_OVERRIDE;
+        qint32 & rateLimitSeconds) override;
 
 private:
     qint32 processEdamUserException(
@@ -71,8 +71,8 @@ private:
         qint32 & rateLimitSeconds) const;
 
 private:
-    UserStore(const UserStore & other) Q_DECL_EQ_DELETE;
-    UserStore & operator=(const UserStore & other) Q_DECL_EQ_DELETE;
+    UserStore(const UserStore & other)  = delete;
+    UserStore & operator=(const UserStore & other)  = delete;
 };
 
 } // namespace quentier

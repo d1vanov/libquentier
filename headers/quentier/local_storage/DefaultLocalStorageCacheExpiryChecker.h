@@ -39,53 +39,53 @@ public:
      * @return              A pointer to the newly allocated copy of the current
      *                      DefaultLocalStorageCacheExpiryChecker
      */
-    virtual DefaultLocalStorageCacheExpiryChecker * clone() const Q_DECL_OVERRIDE;
+    virtual DefaultLocalStorageCacheExpiryChecker * clone() const override;
 
     /**
      * @return              False if the current number of cached notes is higher
      *                      than a reasonable limit, true otherwise
      */
-    virtual bool checkNotes() const Q_DECL_OVERRIDE;
+    virtual bool checkNotes() const override;
 
     /**
      * @return              False if the current number of cached resource is
      *                      higher than a reasonable limit, true otherwise
      */
-    virtual bool checkResources() const Q_DECL_OVERRIDE;
+    virtual bool checkResources() const override;
 
     /**
      * @return              False if the current number of cached notebooks is
      *                      higher than a reasonable limit, true otherwise
      */
-    virtual bool checkNotebooks() const Q_DECL_OVERRIDE;
+    virtual bool checkNotebooks() const override;
 
     /**
      * @return              False if the current number of cached tags is higher
      *                      than a reasonable limit, true otherwise
      */
-    virtual bool checkTags() const Q_DECL_OVERRIDE;
+    virtual bool checkTags() const override;
 
     /**
      * @return              False if the current number of cached linked notebooks
      *                      is higher than a reasonable limit, true otherwise
      */
-    virtual bool checkLinkedNotebooks() const Q_DECL_OVERRIDE;
+    virtual bool checkLinkedNotebooks() const override;
 
     /**
      * @return              False if the current number of cached saved searches
      *                      is higher than a reasonable limit, true otherwise
      */
-    virtual bool checkSavedSearches() const Q_DECL_OVERRIDE;
+    virtual bool checkSavedSearches() const override;
 
     /**
      * @brief               Print the internal information about the current
      *                      DefaultLocalStorageCacheExpiryChecker instance
      *                      to the text stream
      */
-    virtual QTextStream & print(QTextStream & strm) const Q_DECL_OVERRIDE;
+    virtual QTextStream & print(QTextStream & strm) const override;
 
 private:
-    DefaultLocalStorageCacheExpiryChecker() Q_DECL_EQ_DELETE;
+    DefaultLocalStorageCacheExpiryChecker()  = delete;
     Q_DISABLE_COPY(DefaultLocalStorageCacheExpiryChecker)
 };
 

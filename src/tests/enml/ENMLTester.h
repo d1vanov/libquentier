@@ -29,7 +29,7 @@ class ENMLTester: public QObject
 {
     Q_OBJECT
 public:
-    ENMLTester(QObject * parent = Q_NULLPTR);
+    ENMLTester(QObject * parent = nullptr);
     virtual ~ENMLTester();
 
 private Q_SLOTS:

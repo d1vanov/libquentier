@@ -28,7 +28,7 @@ void EnCryptElementOnClickHandler::onEnCryptElementClicked(
     QString encryptedText, QString cipher,
     QString length, QString hint, QString enCryptIndex)
 {
-    Q_EMIT decrypt(encryptedText, cipher, length, hint, enCryptIndex, Q_NULLPTR);
+    Q_EMIT decrypt(encryptedText, cipher, length, hint, enCryptIndex, nullptr);
 }
 
 } // namespace quentier
