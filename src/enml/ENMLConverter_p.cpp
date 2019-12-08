@@ -819,7 +819,7 @@ bool ENMLConverterPrivate::htmlToQTextDocument(const QString & html, QTextDocume
                      * (main) thread, we should add the outline to the image
                      */
                     QApplication * pApp =
-                        dynamic_cast<QApplication*>(QCoreApplication::instance());
+                        qobject_cast<QApplication*>(QCoreApplication::instance());
                     if (pApp)
                     {
                         QThread * pCurrentThread = QThread::currentThread();
