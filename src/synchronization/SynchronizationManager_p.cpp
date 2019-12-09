@@ -95,7 +95,8 @@ SynchronizationManagerPrivate::SynchronizationManagerPrivate(
                  ? pInjector->m_pUserStore
                  : new UserStore(qevercloud::IUserStorePtr(
                         qevercloud::newUserStore(
-                        m_host + QStringLiteral("/edam/user"))))),
+                        QStringLiteral("https://") + m_host +
+                        QStringLiteral("/edam/user"))))),
     m_authContext(AuthContext::Blank),
     m_launchSyncPostponeTimerId(-1),
     m_OAuthResult(),
