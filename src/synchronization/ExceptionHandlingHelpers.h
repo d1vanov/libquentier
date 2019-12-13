@@ -45,7 +45,7 @@
         errorDescription.setBase(                                              \
             QT_TRANSLATE_NOOP("synchronization",                               \
                               "QEverCloud Evernote exception"));               \
-        if (!evernoteException.exceptionData().isNull()) {                     \
+        if (evernoteException.exceptionData()) {                               \
             errorDescription.details() =                                       \
                 evernoteException.exceptionData()->errorMessage;               \
         }                                                                      \

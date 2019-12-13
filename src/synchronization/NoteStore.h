@@ -19,18 +19,19 @@
 #ifndef LIB_QUENTIER_SYNCHRONIZATION_NOTE_STORE_H
 #define LIB_QUENTIER_SYNCHRONIZATION_NOTE_STORE_H
 
+#include "EverCloudException.h"
+#include "RequestContext.h"
 #include <quentier_private/synchronization/INoteStore.h>
 #include <quentier/utility/Macros.h>
 #include <quentier/types/ErrorString.h>
-#include <QSharedPointer>
-#include <QObject>
-#include <QHash>
 
-#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
+#include <QSharedPointer>
+#include <QHash>
+#include <QObject>
+#include <QPointer>
+#include <QUuid>
+
 #include <qt5qevercloud/QEverCloud.h>
-#else
-#include <qt4qevercloud/QEverCloud.h>
-#endif
 
 namespace quentier {
 
@@ -186,14 +187,19 @@ public:
         qint32 & rateLimitSeconds) override;
 
 private:
-    typedef qevercloud::EverCloudExceptionData EverCloudExceptionData;
+    using EverCloudExceptionDataPtr = qevercloud::EverCloudExceptionDataPtr;
+    using IRequestContextPtr = qevercloud::IRequestContextPtr;
 
 private Q_SLOTS:
     void onGetNoteAsyncFinished(
-        QVariant result, QSharedPointer<EverCloudExceptionData> exceptionData);
+        QVariant result,
+        EverCloudExceptionDataPtr exceptionData,
+        IRequestContextPtr ctx);
 
     void onGetResourceAsyncFinished(
-        QVariant result, QSharedPointer<EverCloudExceptionData> exceptionData);
+        QVariant result,
+        EverCloudExceptionDataPtr exceptionData,
+        IRequestContextPtr ctx);
 
 private:
     struct UserExceptionSource
@@ -263,8 +269,14 @@ private:
     Q_DISABLE_COPY(NoteStore)
 
 private:
-    QHash<qevercloud::AsyncResult*, QString>    m_noteGuidByAsyncResultPtr;
-    QHash<qevercloud::AsyncResult*, QString>    m_resourceGuidByAsyncResultPtr;
+    struct RequestData
+    {
+        QString     m_guid;
+        QPointer<qevercloud::AsyncResult>   m_asyncResult;
+    };
+
+    QHash<QUuid, RequestData>   m_noteRequestDataById;
+    QHash<QUuid, RequestData>   m_resourceRequestDataById;
 };
 
 } // namespace quentier

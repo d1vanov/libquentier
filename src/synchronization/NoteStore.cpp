@@ -18,6 +18,7 @@
 
 #include "NoteStore.h"
 #include "ExceptionHandlingHelpers.h"
+#include "Helpers.h"
 #include <quentier/types/Notebook.h>
 #include <quentier/types/Note.h>
 #include <quentier/types/Resource.h>
@@ -33,7 +34,7 @@ namespace quentier {
                                                "caught EDAM user exception")); \
     errorDescription.details() = QStringLiteral("error code");                 \
     errorDescription.details() += ToString(userException.errorCode);           \
-    if (!userException.exceptionData().isNull()) {                             \
+    if (userException.exceptionData()) {                                       \
         errorDescription.details() += QStringLiteral(": ");                    \
         errorDescription.details() +=                                          \
             userException.exceptionData()->errorMessage;                       \
@@ -45,9 +46,7 @@ namespace quentier {
 NoteStore::NoteStore(
         const qevercloud::INoteStorePtr & pQecNoteStore,
         QObject * parent) :
-    INoteStore(pQecNoteStore, parent),
-    m_noteGuidByAsyncResultPtr(),
-    m_resourceGuidByAsyncResultPtr()
+    INoteStore(pQecNoteStore, parent)
 {
     QUENTIER_CHECK_PTR(m_pQecNoteStore)
 }
@@ -66,41 +65,31 @@ void NoteStore::stop()
 {
     QNDEBUG("NoteStore::stop");
 
-    for(auto it = m_noteGuidByAsyncResultPtr.begin(),
-        end = m_noteGuidByAsyncResultPtr.end(); it != end; ++it)
+    for(const auto & it: qevercloud::toRange(m_noteRequestDataById))
     {
-        qevercloud::AsyncResult * pAsyncResult = it.key();
-        if (Q_UNLIKELY(!pAsyncResult)) {
-            continue;
+        const auto & requestData = it.value();
+        if (!requestData.m_asyncResult.isNull()) {
+            QObject::disconnect(requestData.m_asyncResult.data(),
+                                &qevercloud::AsyncResult::finished,
+                                this,
+                                &NoteStore::onGetNoteAsyncFinished);
         }
-
-        QObject::disconnect(pAsyncResult,
-                            QNSIGNAL(qevercloud::AsyncResult,finished,
-                                     QVariant,QSharedPointer<EverCloudExceptionData>),
-                            this,
-                            QNSLOT(NoteStore,onGetNoteAsyncFinished,
-                                   QVariant,QSharedPointer<EverCloudExceptionData>));
     }
 
-    m_noteGuidByAsyncResultPtr.clear();
+    m_noteRequestDataById.clear();
 
-    for(auto it = m_resourceGuidByAsyncResultPtr.begin(),
-        end = m_resourceGuidByAsyncResultPtr.end(); it != end; ++it)
+    for(const auto & it:qevercloud::toRange(m_resourceRequestDataById))
     {
-        qevercloud::AsyncResult * pAsyncResult = it.key();
-        if (Q_UNLIKELY(!pAsyncResult)) {
-            continue;
+        const auto & requestData = it.value();
+        if (!requestData.m_asyncResult.isNull()) {
+            QObject::disconnect(requestData.m_asyncResult.data(),
+                                &qevercloud::AsyncResult::finished,
+                                this,
+                                &NoteStore::onGetResourceAsyncFinished);
         }
-
-        QObject::disconnect(pAsyncResult,
-                            QNSIGNAL(qevercloud::AsyncResult,finished,
-                                     QVariant,QSharedPointer<EverCloudExceptionData>),
-                            this,
-                            QNSLOT(NoteStore,onGetResourceAsyncFinished,
-                                   QVariant,QSharedPointer<EverCloudExceptionData>));
     }
 
-    m_resourceGuidByAsyncResultPtr.clear();
+    m_resourceRequestDataById.clear();
 }
 
 qint32 NoteStore::createNotebook(Notebook & notebook,
@@ -489,7 +478,7 @@ qint32 NoteStore::getLinkedNotebookSyncState(
         errorDescription.setBase(QT_TR_NOOP("caught EDAM not found exception, "
                                             "could not find linked notebook to "
                                             "get the sync state for"));
-        if (!notFoundException.exceptionData().isNull()) {
+        if (notFoundException.exceptionData()) {
             errorDescription.details() +=
                 ToString(notFoundException.exceptionData()->errorMessage);
         }
@@ -540,7 +529,7 @@ qint32 NoteStore::getLinkedNotebookSyncChunk(
         errorDescription.setBase(QT_TR_NOOP("caught EDAM not found exception while "
                                             "attempting to download the sync chunk "
                                             "for linked notebook"));
-        if (!notFoundException.exceptionData().isNull())
+        if (notFoundException.exceptionData())
         {
             const QString & errorMessage =
                 notFoundException.exceptionData()->errorMessage;
@@ -723,14 +712,14 @@ bool NoteStore::getNoteAsync(const bool withContent,
         return false;
     }
 
-    m_noteGuidByAsyncResultPtr[pAsyncResult] = noteGuid;
+    auto & requestData = m_noteRequestDataById[ctx->requestId()];
+    requestData.m_guid = noteGuid;
+    requestData.m_asyncResult = pAsyncResult;
 
     QObject::connect(pAsyncResult,
-                     QNSIGNAL(qevercloud::AsyncResult,finished,
-                              QVariant,QSharedPointer<EverCloudExceptionData>),
+                     &qevercloud::AsyncResult::finished,
                      this,
-                     QNSLOT(NoteStore,onGetNoteAsyncFinished,
-                            QVariant,QSharedPointer<EverCloudExceptionData>),
+                     &NoteStore::onGetNoteAsyncFinished,
                      Qt::ConnectionType(Qt::UniqueConnection | Qt::DirectConnection));
     return true;
 }
@@ -853,14 +842,14 @@ bool NoteStore::getResourceAsync(const bool withDataBody,
         return false;
     }
 
-    m_resourceGuidByAsyncResultPtr[pAsyncResult] = resourceGuid;
+    auto & requestData = m_resourceRequestDataById[ctx->requestId()];
+    requestData.m_guid = resourceGuid;
+    requestData.m_asyncResult = pAsyncResult;
 
     QObject::connect(pAsyncResult,
-                     QNSIGNAL(qevercloud::AsyncResult,finished,
-                              QVariant,QSharedPointer<EverCloudExceptionData>),
+                     &qevercloud::AsyncResult::finished,
                      this,
-                     QNSLOT(NoteStore,onGetResourceAsyncFinished,
-                            QVariant,QSharedPointer<EverCloudExceptionData>),
+                     &NoteStore::onGetResourceAsyncFinished,
                      Qt::ConnectionType(Qt::UniqueConnection | Qt::DirectConnection));
     return true;
 }
@@ -950,41 +939,33 @@ qint32 NoteStore::authenticateToSharedNotebook(
 }
 
 void NoteStore::onGetNoteAsyncFinished(
-    QVariant result, QSharedPointer<EverCloudExceptionData> exceptionData)
+    QVariant result,
+    EverCloudExceptionDataPtr exceptionData,
+    IRequestContextPtr ctx)
 {
     QNDEBUG("NoteStore::onGetNoteAsyncFinished");
 
-    QString noteGuid;
-
-    qevercloud::AsyncResult * pAsyncResult =
-        qobject_cast<qevercloud::AsyncResult*>(sender());
-    if (pAsyncResult)
-    {
-        auto it = m_noteGuidByAsyncResultPtr.find(pAsyncResult);
-        if (it != m_noteGuidByAsyncResultPtr.end()) {
-            noteGuid = it.value();
-            Q_UNUSED(m_noteGuidByAsyncResultPtr.erase(it))
-        }
-        else {
-            QNDEBUG("Couldn't find the note guid by async result ptr");
-            return;
-        }
-    }
-    else
-    {
-        QNDEBUG("Couldn't get non-NULL pointer to AsyncResult, hence can't "
-                "get the note guid to which the result corresponds");
+    auto it = m_noteRequestDataById.find(ctx->requestId());
+    if (Q_UNLIKELY(it == m_noteRequestDataById.end())) {
+        QNWARNING("Received getNoteAsyncFinished event for unidentified "
+            << "request id: " << ctx->requestId());
         return;
     }
 
+    const auto & requestData = it.value();
     qevercloud::Note note;
-    note.guid = noteGuid;
+    note.guid = requestData.m_guid;
+    if (!requestData.m_asyncResult.isNull()) {
+        requestData.m_asyncResult.data()->disconnect(this);
+    }
+
+    m_noteRequestDataById.erase(it);
 
     ErrorString errorDescription;
     qint32 errorCode = 0;
     qint32 rateLimitSeconds = -1;
 
-    if (!exceptionData.isNull())
+    if (exceptionData)
     {
         QNDEBUG("Error: " << exceptionData->errorMessage);
 
@@ -1022,41 +1003,33 @@ void NoteStore::onGetNoteAsyncFinished(
 }
 
 void NoteStore::onGetResourceAsyncFinished(
-    QVariant result, QSharedPointer<EverCloudExceptionData> exceptionData)
+    QVariant result,
+    EverCloudExceptionDataPtr exceptionData,
+    IRequestContextPtr ctx)
 {
     QNDEBUG("NoteStore::onGetResourceAsyncFinished");
 
-    QString resourceGuid;
-
-    qevercloud::AsyncResult * pAsyncResult =
-        qobject_cast<qevercloud::AsyncResult*>(sender());
-    if (pAsyncResult)
-    {
-        auto it = m_resourceGuidByAsyncResultPtr.find(pAsyncResult);
-        if (it != m_resourceGuidByAsyncResultPtr.end()) {
-            resourceGuid = it.value();
-            Q_UNUSED(m_resourceGuidByAsyncResultPtr.erase(it))
-        }
-        else {
-            QNDEBUG("Couldn't find the resource guid by async result ptr");
-            return;
-        }
-    }
-    else
-    {
-        QNDEBUG("Couldn't get non-NULL pointer to AsyncResult, hence can't get "
-                "the resource guid to which the result corresponds");
+    auto it = m_resourceRequestDataById.find(ctx->requestId());
+    if (Q_UNLIKELY(it == m_resourceRequestDataById.end())) {
+        QNWARNING("Received getResourceAsyncFinished event for unidentified "
+            << "request id: " << ctx->requestId());
         return;
     }
 
+    const auto & requestData = it.value();
     qevercloud::Resource resource;
-    resource.guid = resourceGuid;
+    resource.guid = requestData.m_guid;
+    if (!requestData.m_asyncResult.isNull()) {
+        requestData.m_asyncResult.data()->disconnect(this);
+    }
+
+    m_resourceRequestDataById.erase(it);
 
     ErrorString errorDescription;
     qint32 errorCode = 0;
     qint32 rateLimitSeconds = -1;
 
-    if (!exceptionData.isNull())
+    if (exceptionData)
     {
         QNDEBUG("Error: " << exceptionData->errorMessage);
 
@@ -1117,7 +1090,7 @@ qint32 NoteStore::processEdamUserExceptionForTag(
 
         if (!userException.parameter.isSet())
         {
-            if (!exceptionData.isNull() && !exceptionData->errorMessage.isEmpty()) {
+            if (exceptionData && !exceptionData->errorMessage.isEmpty()) {
                 errorDescription.details() = exceptionData->errorMessage;
             }
 
@@ -1170,7 +1143,7 @@ qint32 NoteStore::processEdamUserExceptionForTag(
 
         if (!userException.parameter.isSet())
         {
-            if (!exceptionData.isNull() && !exceptionData->errorMessage.isEmpty()) {
+            if (exceptionData && !exceptionData->errorMessage.isEmpty()) {
                 errorDescription.details() = exceptionData->errorMessage;
             }
 
@@ -1281,9 +1254,7 @@ qint32 NoteStore::processEdamUserExceptionForSavedSearch(
 
         if (!userException.parameter.isSet())
         {
-            if (!exceptionData.isNull() &&
-                !exceptionData->errorMessage.isEmpty())
-            {
+            if (exceptionData && !exceptionData->errorMessage.isEmpty()) {
                 errorDescription.details() = exceptionData->errorMessage;
             }
 
@@ -1340,7 +1311,7 @@ qint32 NoteStore::processEdamUserExceptionForSavedSearch(
 
         if (!userException.parameter.isSet())
         {
-            if (!exceptionData.isNull() && !exceptionData->errorMessage.isEmpty()) {
+            if (exceptionData && !exceptionData->errorMessage.isEmpty()) {
                 errorDescription.details() = exceptionData->errorMessage;
             }
 
@@ -1406,9 +1377,7 @@ qint32 NoteStore::processEdamUserExceptionForGetSyncChunk(
 
         if (!userException.parameter.isSet())
         {
-            if (!exceptionData.isNull() &&
-                !exceptionData->errorMessage.isEmpty())
-            {
+            if (exceptionData && !exceptionData->errorMessage.isEmpty()) {
                 errorDescription.details() = exceptionData->errorMessage;
             }
 
@@ -1433,7 +1402,7 @@ qint32 NoteStore::processEdamUserExceptionForGetSyncChunk(
     {
         errorDescription.setBase(QT_TR_NOOP("Unknown EDAM user exception on "
                                             "attempt to get sync chunk"));
-        if (!exceptionData.isNull() && !exceptionData->errorMessage.isEmpty()) {
+        if (exceptionData && !exceptionData->errorMessage.isEmpty()) {
             errorDescription.details() = exceptionData->errorMessage;
         }
     }
@@ -1458,9 +1427,7 @@ qint32 NoteStore::processEdamUserExceptionForGetNote(
 
         if (!userException.parameter.isSet())
         {
-            if (!exceptionData.isNull() &&
-                !exceptionData->errorMessage.isEmpty())
-            {
+            if (exceptionData && !exceptionData->errorMessage.isEmpty()) {
                 errorDescription.details() = exceptionData->errorMessage;
             }
 
@@ -1486,7 +1453,7 @@ qint32 NoteStore::processEdamUserExceptionForGetNote(
 
         if (!userException.parameter.isSet())
         {
-            if (!exceptionData.isNull() && !exceptionData->errorMessage.isEmpty()) {
+            if (exceptionData && !exceptionData->errorMessage.isEmpty()) {
                 errorDescription.details() = exceptionData->errorMessage;
             }
 
@@ -1536,7 +1503,7 @@ qint32 NoteStore::processEdamUserExceptionForGetResource(
 
         if (!userException.parameter.isSet())
         {
-            if (!exceptionData.isNull() && !exceptionData->errorMessage.isEmpty()) {
+            if (exceptionData && !exceptionData->errorMessage.isEmpty()) {
                 errorDescription.details() = exceptionData->errorMessage;
             }
 
@@ -1562,9 +1529,7 @@ qint32 NoteStore::processEdamUserExceptionForGetResource(
 
         if (!userException.parameter.isSet())
         {
-            if (!exceptionData.isNull() &&
-                !exceptionData->errorMessage.isEmpty())
-            {
+            if (exceptionData && !exceptionData->errorMessage.isEmpty()) {
                 errorDescription.details() = exceptionData->errorMessage;
             }
 
@@ -1621,9 +1586,7 @@ qint32 NoteStore::processEdamUserExceptionForNotebook(
 
         if (!userException.parameter.isSet())
         {
-            if (!exceptionData.isNull() &&
-                !exceptionData->errorMessage.isEmpty())
-            {
+            if (exceptionData && !exceptionData->errorMessage.isEmpty()) {
                 errorDescription.details() = exceptionData->errorMessage;
             }
 
@@ -1700,9 +1663,7 @@ qint32 NoteStore::processEdamUserExceptionForNotebook(
 
         if (!userException.parameter.isSet())
         {
-            if (!exceptionData.isNull() &&
-                !exceptionData->errorMessage.isEmpty())
-            {
+            if (exceptionData && !exceptionData->errorMessage.isEmpty()) {
                 errorDescription.details() = exceptionData->errorMessage;
             }
 
@@ -1787,9 +1748,7 @@ qint32 NoteStore::processEdamUserExceptionForNote(
 
         if (!userException.parameter.isSet())
         {
-            if (!exceptionData.isNull() &&
-                !exceptionData->errorMessage.isEmpty())
-            {
+            if (exceptionData && !exceptionData->errorMessage.isEmpty()) {
                 errorDescription.details() = exceptionData->errorMessage;
             }
 
@@ -1875,9 +1834,7 @@ qint32 NoteStore::processEdamUserExceptionForNote(
 
         if (!userException.parameter.isSet())
         {
-            if (!exceptionData.isNull() &&
-                !exceptionData->errorMessage.isEmpty())
-            {
+            if (exceptionData && !exceptionData->errorMessage.isEmpty()) {
                 errorDescription.details() = exceptionData->errorMessage;
             }
 
@@ -1910,9 +1867,7 @@ qint32 NoteStore::processEdamUserExceptionForNote(
 
         if (!userException.parameter.isSet())
         {
-            if (!exceptionData.isNull() &&
-                !exceptionData->errorMessage.isEmpty())
-            {
+            if (exceptionData && !exceptionData->errorMessage.isEmpty()) {
                 errorDescription.details() = exceptionData->errorMessage;
             }
 
@@ -1963,9 +1918,7 @@ qint32 NoteStore::processEdamUserExceptionForNote(
 
         if (!userException.parameter.isSet())
         {
-            if (!exceptionData.isNull() &&
-                !exceptionData->errorMessage.isEmpty())
-            {
+            if (exceptionData && !exceptionData->errorMessage.isEmpty()) {
                 errorDescription.details() = exceptionData->errorMessage;
             }
 
@@ -2045,9 +1998,7 @@ qint32 NoteStore::processEdamUserExceptionForNote(
 
         if (!userException.parameter.isSet())
         {
-            if (!exceptionData.isNull() &&
-                !exceptionData->errorMessage.isEmpty())
-            {
+            if (exceptionData && !exceptionData->errorMessage.isEmpty()) {
                 errorDescription.details() = exceptionData->errorMessage;
             }
 
