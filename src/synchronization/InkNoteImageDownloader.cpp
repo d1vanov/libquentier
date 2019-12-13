@@ -92,7 +92,7 @@ void InkNoteImageDownloader::run()
                                                 "attempt to download the ink "
                                                 "note image data"));
         auto exceptionData = everCloudException.exceptionData();
-        if (!exceptionData.isNull()) {
+        if (exceptionData) {
             errorDescription.details() = exceptionData->errorMessage;
         }
 

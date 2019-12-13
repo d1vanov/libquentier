@@ -91,18 +91,20 @@ void NoteThumbnailDownloader::start()
     }
 
     QObject::connect(m_pAsyncResult,
-                     QNSIGNAL(qevercloud::AsyncResult,finished,
-                              QVariant,QSharedPointer<EverCloudExceptionData>),
+                     &qevercloud::AsyncResult::finished,
                      this,
-                     QNSLOT(NoteThumbnailDownloader,onDownloadFinished,
-                            QVariant,QSharedPointer<EverCloudExceptionData>),
+                     &NoteThumbnailDownloader::onDownloadFinished,
                      Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
 }
 
 void NoteThumbnailDownloader::onDownloadFinished(
-    QVariant result, QSharedPointer<EverCloudExceptionData> error)
+    QVariant result,
+    EverCloudExceptionDataPtr exceptionData,
+    IRequestContextPtr ctx)
 {
     QNDEBUG("NoteThumbnailDownloader::onDownloadFinished");
+
+    Q_UNUSED(ctx)
 
     delete m_pThumbnail;
     m_pThumbnail = nullptr;
@@ -111,11 +113,11 @@ void NoteThumbnailDownloader::onDownloadFinished(
     // the pointer to it here
     m_pAsyncResult = nullptr;
 
-    if (!error.isNull())
+    if (exceptionData)
     {
         ErrorString errorDescription(QT_TR_NOOP("failed to download the note "
                                                 "thumbnail"));
-        errorDescription.details() = error->errorMessage;
+        errorDescription.details() = exceptionData->errorMessage;
         QNDEBUG(errorDescription);
         Q_EMIT finished(false, m_noteGuid, QByteArray(), errorDescription);
         return;

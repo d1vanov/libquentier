@@ -19,13 +19,10 @@
 #ifndef LIB_QUENTIER_SYNCHRONIZATION_NOTE_STORE_H
 #define LIB_QUENTIER_SYNCHRONIZATION_NOTE_STORE_H
 
-#include "EverCloudException.h"
-#include "RequestContext.h"
 #include <quentier_private/synchronization/INoteStore.h>
 #include <quentier/utility/Macros.h>
 #include <quentier/types/ErrorString.h>
 
-#include <QSharedPointer>
 #include <QHash>
 #include <QObject>
 #include <QPointer>

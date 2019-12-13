@@ -18,7 +18,6 @@
 
 #include "NoteStore.h"
 #include "ExceptionHandlingHelpers.h"
-#include "Helpers.h"
 #include <quentier/types/Notebook.h>
 #include <quentier/types/Note.h>
 #include <quentier/types/Resource.h>

@@ -44,7 +44,7 @@ void INoteStore::setQecNoteStore(
 
 QString INoteStore::noteStoreUrl() const
 {
-    if (!m_pQecNoteStore.isNull()) {
+    if (m_pQecNoteStore) {
         return m_pQecNoteStore->noteStoreUrl();
     }
 
@@ -53,7 +53,7 @@ QString INoteStore::noteStoreUrl() const
 
 void INoteStore::setNoteStoreUrl(const QString & noteStoreUrl)
 {
-    if (!m_pQecNoteStore.isNull()) {
+    if (m_pQecNoteStore) {
         m_pQecNoteStore->setNoteStoreUrl(noteStoreUrl);
     }
 }

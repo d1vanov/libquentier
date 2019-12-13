@@ -159,7 +159,7 @@ qint32 UserStore::processEdamUserException(
         errorDescription.details() += userException.parameter.ref();
     }
 
-    if (!exceptionData.isNull() && !exceptionData->errorMessage.isEmpty()) {
+    if (exceptionData && !exceptionData->errorMessage.isEmpty()) {
         errorDescription.details() += QStringLiteral(", message: ");
         errorDescription.details() += exceptionData->errorMessage;
     }
