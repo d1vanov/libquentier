@@ -64,6 +64,10 @@ SendLocalChangesManager::SendLocalChangesManager(
     m_savedSearches(),
     m_notebooks(),
     m_notes(),
+    m_sendingTags(false),
+    m_sendingSavedSearches(false),
+    m_sendingNotebooks(false),
+    m_sendingNotes(false),
     m_linkedNotebookGuidsForWhichStuffWasRequestedFromLocalStorage(),
     m_linkedNotebookAuthData(),
     m_authenticationTokensAndShardIdsByLinkedNotebookGuid(),
@@ -1760,6 +1764,13 @@ void SendLocalChangesManager::sendTags()
 {
     QNDEBUG("SendLocalChangesManager::sendTags");
 
+    if (m_sendingTags) {
+        QNDEBUG("Sending tags is already in progress");
+        return;
+    }
+
+    FlagGuard guard(m_sendingTags);
+
     ErrorString errorDescription;
     bool res = sortTagsByParentChildRelations(m_tags, errorDescription);
     if (Q_UNLIKELY(!res)) {
@@ -2140,6 +2151,13 @@ void SendLocalChangesManager::sendSavedSearches()
 {
     QNDEBUG("SendLocalChangesManager::sendSavedSearches");
 
+    if (m_sendingSavedSearches) {
+        QNDEBUG("Sending saved searches is already in progress");
+        return;
+    }
+
+    FlagGuard guard(m_sendingSavedSearches);
+
     ErrorString errorDescription;
     INoteStore & noteStore = m_manager.noteStore();
     size_t numSentSavedSearches = 0;
@@ -2296,6 +2314,13 @@ void SendLocalChangesManager::sendSavedSearches()
 void SendLocalChangesManager::sendNotebooks()
 {
     QNDEBUG("SendLocalChangesManager::sendNotebooks");
+
+    if (m_sendingNotebooks) {
+        QNDEBUG("Sending notebooks is already in progress");
+        return;
+    }
+
+    FlagGuard guard(m_sendingNotebooks);
 
     ErrorString errorDescription;
 
@@ -2673,6 +2698,13 @@ void SendLocalChangesManager::checkAndSendNotes()
 void SendLocalChangesManager::sendNotes()
 {
     QNDEBUG("SendLocalChangesManager::sendNotes");
+
+    if (m_sendingNotes) {
+        QNDEBUG("Sending notes is already in progress");
+        return;
+    }
+
+    FlagGuard guard(m_sendingNotes);
 
     ErrorString errorDescription;
     size_t numSentNotes = 0;

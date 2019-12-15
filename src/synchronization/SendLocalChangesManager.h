@@ -281,6 +281,19 @@ private:
         QString m_guid;
     };
 
+    class Q_DECL_HIDDEN FlagGuard
+    {
+    public:
+        FlagGuard(bool & flag) : m_flag(flag) { m_flag = true; }
+        ~FlagGuard() { m_flag = false; }
+
+    private:
+        Q_DISABLE_COPY(FlagGuard)
+
+    private:
+        bool & m_flag;
+    };
+
 private:
     IManager &                              m_manager;
 
@@ -309,6 +322,11 @@ private:
     QList<SavedSearch>                      m_savedSearches;
     QList<Notebook>                         m_notebooks;
     QList<Note>                             m_notes;
+
+    bool                                    m_sendingTags;
+    bool                                    m_sendingSavedSearches;
+    bool                                    m_sendingNotebooks;
+    bool                                    m_sendingNotes;
 
     QSet<QString>                           m_linkedNotebookGuidsForWhichStuffWasRequestedFromLocalStorage;
 
