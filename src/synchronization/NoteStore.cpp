@@ -99,7 +99,9 @@ qint32 NoteStore::createNotebook(Notebook & notebook,
     try
     {
         auto ctx = qevercloud::newRequestContext(
-            linkedNotebookAuthToken,
+            linkedNotebookAuthToken.isEmpty()
+            ? m_authenticationToken
+            : linkedNotebookAuthToken,
             NOTE_STORE_REQUEST_TIMEOUT_MSEC);
 
         notebook.qevercloudNotebook() =
@@ -131,7 +133,9 @@ qint32 NoteStore::updateNotebook(Notebook & notebook,
     try
     {
         auto ctx = qevercloud::newRequestContext(
-            linkedNotebookAuthToken,
+            linkedNotebookAuthToken.isEmpty()
+            ? m_authenticationToken
+            : linkedNotebookAuthToken,
             NOTE_STORE_REQUEST_TIMEOUT_MSEC);
 
         qint32 usn = m_pQecNoteStore->updateNotebook(
@@ -168,7 +172,9 @@ qint32 NoteStore::createNote(Note & note,
     try
     {
         auto ctx = qevercloud::newRequestContext(
-            linkedNotebookAuthToken,
+            linkedNotebookAuthToken.isEmpty()
+            ? m_authenticationToken
+            : linkedNotebookAuthToken,
             NOTE_STORE_REQUEST_TIMEOUT_MSEC);
 
         qevercloud::Note noteMetadata =
@@ -211,7 +217,9 @@ qint32 NoteStore::updateNote(Note & note,
     try
     {
         auto ctx = qevercloud::newRequestContext(
-            linkedNotebookAuthToken,
+            linkedNotebookAuthToken.isEmpty()
+            ? m_authenticationToken
+            : linkedNotebookAuthToken,
             NOTE_STORE_REQUEST_TIMEOUT_MSEC);
 
         qevercloud::Note noteMetadata =
@@ -258,7 +266,9 @@ qint32 NoteStore::createTag(Tag & tag,
     try
     {
         auto ctx = qevercloud::newRequestContext(
-            linkedNotebookAuthToken,
+            linkedNotebookAuthToken.isEmpty()
+            ? m_authenticationToken
+            : linkedNotebookAuthToken,
             NOTE_STORE_REQUEST_TIMEOUT_MSEC);
 
         tag.qevercloudTag() = m_pQecNoteStore->createTag(
@@ -290,7 +300,9 @@ qint32 NoteStore::updateTag(Tag & tag,
     try
     {
         auto ctx = qevercloud::newRequestContext(
-            linkedNotebookAuthToken,
+            linkedNotebookAuthToken.isEmpty()
+            ? m_authenticationToken
+            : linkedNotebookAuthToken,
             NOTE_STORE_REQUEST_TIMEOUT_MSEC);
 
         qint32 usn = m_pQecNoteStore->updateTag(tag.qevercloudTag(), ctx);
