@@ -71,6 +71,8 @@
 #include <QDesktopServices>
 #include <QFile>
 
+#include <qt5qevercloud/QEverCloud.h>
+
 #include <limits>
 #include <ctime>
 #include <time.h>
@@ -83,6 +85,8 @@ namespace quentier {
 
 void initializeLibquentier()
 {
+    qevercloud::initializeQEverCloud();
+
     registerMetatypes();
 
     // Ensure the instance is created now and not later
