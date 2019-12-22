@@ -41,13 +41,7 @@ IQuentierException::IQuentierException(const ErrorString & message) :
     INIT_WHAT_MESSAGE()
 }
 
-#ifdef _MSC_VER
-IQuentierException::~IQuentierException()
-#elif __cplusplus >= 201103L
 IQuentierException::~IQuentierException() noexcept
-#else
-IQuentierException::~IQuentierException() throw()
-#endif
 {
     delete[] m_whatMessage;
 }
@@ -62,13 +56,7 @@ QString IQuentierException::nonLocalizedErrorMessage() const
     return m_message.nonLocalizedString();
 }
 
-#if defined(_MSC_VER)
-const char * IQuentierException::what() const
-#elif __cplusplus >= 201103L
 const char * IQuentierException::what() const noexcept
-#else
-const char * IQuentierException::what() const throw()
-#endif
 {
     return m_whatMessage;
 }
