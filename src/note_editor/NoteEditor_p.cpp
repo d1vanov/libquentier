@@ -2677,8 +2677,9 @@ void NoteEditorPrivate::onSourceCodeFormatUndoRedoFinished(
 
     Q_UNUSED(extraData)
 
-    QMap<QString,QVariant> resultMap = data.toMap();
+    setModified();
 
+    QMap<QString,QVariant> resultMap = data.toMap();
     auto statusIt = resultMap.find(QStringLiteral("status"));
     if (Q_UNLIKELY(statusIt == resultMap.end())) {
         ErrorString error(QT_TR_NOOP("Can't parse the result of source code "
@@ -2708,6 +2709,7 @@ void NoteEditorPrivate::onSourceCodeFormatUndoRedoFinished(
         return;
     }
 
+    m_pendingConversionToNoteForSavingInLocalStorage = true;
     convertToNote();
 }
 
