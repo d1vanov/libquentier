@@ -1645,6 +1645,9 @@ void NoteEditorPrivate::onSelectionFormattedAsSourceCode(
                      QNSLOT(NoteEditorPrivate,onUndoCommandError,ErrorString));
     m_pUndoStack->push(pCommand);
 
+    setModified();
+
+    m_pendingConversionToNoteForSavingInLocalStorage = true;
     convertToNote();
 }
 
