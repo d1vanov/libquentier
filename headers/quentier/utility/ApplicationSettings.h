@@ -56,22 +56,41 @@ public:
     /**
      * Destructor
      */
-    ~ApplicationSettings();
+    virtual ~ApplicationSettings() override;
 
 public:
     /**
      * Helper struct for RAII style of ensuring the array once began would be
-     * closed even in the fact of exceptions
+     * closed even if exception is thrown after beginning the array
      */
-    struct ApplicationSettingsArrayCloser
+    struct ArrayCloser
     {
-        ApplicationSettingsArrayCloser(ApplicationSettings & settings) :
+        ArrayCloser(ApplicationSettings & settings) :
             m_settings(settings)
         {}
 
-        ~ApplicationSettingsArrayCloser()
+        ~ArrayCloser()
         {
             m_settings.endArray();
+            m_settings.sync();
+        }
+
+        ApplicationSettings & m_settings;
+    };
+
+    /**
+     * Helper struct for RAII style of ensuring the group once opened would be
+     * closed even if exception is thrown after beginning the group
+     */
+    struct GroupCloser
+    {
+        GroupCloser(ApplicationSettings & settings) :
+            m_settings(settings)
+        {}
+
+        ~GroupCloser()
+        {
+            m_settings.endGroup();
             m_settings.sync();
         }
 

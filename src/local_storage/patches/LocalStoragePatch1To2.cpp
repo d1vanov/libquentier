@@ -478,9 +478,9 @@ bool LocalStoragePatch1To2::apply(ErrorString & errorDescription)
 
         // Part 3: copy the data for each resource local uid into the local file
         databaseUpgradeInfo.beginWriteArray(UPGRADE_1_TO_2_LOCAL_UIDS_FOR_RESOURCES_COPIED_TO_FILES_KEY);
-        QScopedPointer<ApplicationSettings::ApplicationSettingsArrayCloser>
+        QScopedPointer<ApplicationSettings::ArrayCloser>
             pProcessedResourceLocalUidsDatabaseUpgradeInfoCloser(
-                new ApplicationSettings::ApplicationSettingsArrayCloser(databaseUpgradeInfo));
+                new ApplicationSettings::ArrayCloser(databaseUpgradeInfo));
 
         int numResources = resourceLocalUids.size();
         double singleResourceProgressFraction =
