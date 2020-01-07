@@ -99,13 +99,13 @@ bool SavedSearchData::checkParameters(ErrorString & errorDescription) const
     }
 
     if (m_qecSearch.format.isSet() &&
-        (static_cast<qevercloud::QueryFormat::type>(m_qecSearch.format) !=
+        (static_cast<qevercloud::QueryFormat>(m_qecSearch.format) !=
          qevercloud::QueryFormat::USER))
     {
         errorDescription.setBase(QT_TRANSLATE_NOOP("SavedSearchData",
                                                    "Saved search has unsupported "
                                                    "query format"));
-        errorDescription.details() = QString::number(m_qecSearch.format.ref());
+        errorDescription.details() = ToString(m_qecSearch.format.ref());
         return false;
     }
 

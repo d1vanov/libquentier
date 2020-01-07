@@ -24,6 +24,7 @@
 #include <quentier/utility/Macros.h>
 #include <quentier/types/ErrorString.h>
 #include <quentier/types/Note.h>
+
 #include <QSet>
 #include <QString>
 #include <QHash>
@@ -79,7 +80,7 @@ public:
             m_includeElementContents(false)
         {}
 
-        virtual QTextStream & print(QTextStream & strm) const Q_DECL_OVERRIDE;
+        virtual QTextStream & print(QTextStream & strm) const override;
 
         QString             m_elementNameToSkip;
         ComparisonRule      m_elementNameComparisonRule;
@@ -160,7 +161,7 @@ public:
     static bool noteContentToListOfWords(const QString & noteContent,
                                          QStringList & listOfWords,
                                          ErrorString & errorMessage,
-                                         QString * plainText = Q_NULLPTR);
+                                         QString * plainText = nullptr);
 
     static QStringList plainTextToListOfWords(const QString & plainText);
 

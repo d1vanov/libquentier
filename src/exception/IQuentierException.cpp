@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Dmitry Ivanov
+ * Copyright 2016-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -36,18 +36,12 @@ namespace quentier {
 IQuentierException::IQuentierException(const ErrorString & message) :
     Printable(),
     m_message(message),
-    m_whatMessage(Q_NULLPTR)
+    m_whatMessage(nullptr)
 {
     INIT_WHAT_MESSAGE()
 }
 
-#ifdef _MSC_VER
-IQuentierException::~IQuentierException()
-#elif __cplusplus >= 201103L
 IQuentierException::~IQuentierException() noexcept
-#else
-IQuentierException::~IQuentierException() throw()
-#endif
 {
     delete[] m_whatMessage;
 }
@@ -62,13 +56,7 @@ QString IQuentierException::nonLocalizedErrorMessage() const
     return m_message.nonLocalizedString();
 }
 
-#if defined(_MSC_VER)
-const char * IQuentierException::what() const
-#elif __cplusplus >= 201103L
 const char * IQuentierException::what() const noexcept
-#else
-const char * IQuentierException::what() const throw()
-#endif
 {
     return m_whatMessage;
 }
@@ -83,7 +71,7 @@ QTextStream & IQuentierException::print(QTextStream & strm) const
 IQuentierException::IQuentierException(const IQuentierException & other) :
     Printable(other),
     m_message(other.m_message),
-    m_whatMessage(Q_NULLPTR)
+    m_whatMessage(nullptr)
 {
     INIT_WHAT_MESSAGE()
 }
@@ -95,7 +83,7 @@ IQuentierException & IQuentierException::operator =(const IQuentierException & o
         m_message = other.m_message;
 
         delete m_whatMessage;
-        m_whatMessage = Q_NULLPTR;
+        m_whatMessage = nullptr;
         INIT_WHAT_MESSAGE()
     }
 

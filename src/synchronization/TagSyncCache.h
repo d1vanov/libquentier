@@ -32,7 +32,7 @@ class Q_DECL_HIDDEN TagSyncCache: public QObject
 public:
     TagSyncCache(LocalStorageManagerAsync & localStorageManagerAsync,
                  const QString & linkedNotebookGuid,
-                 QObject * parent = Q_NULLPTR);
+                 QObject * parent = nullptr);
 
     void clear();
 

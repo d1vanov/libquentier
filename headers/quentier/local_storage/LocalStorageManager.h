@@ -25,11 +25,13 @@
 #include <quentier/utility/Linkage.h>
 #include <quentier/utility/Macros.h>
 #include <quentier/types/ErrorString.h>
+
 #include <QString>
 #include <QScopedPointer>
 #include <QSharedPointer>
 #include <QHash>
 #include <QVector>
+
 #include <cstdint>
 #include <utility>
 
@@ -95,9 +97,9 @@ public:
      *                          enabled by default
      * @param parent            Parent QObject
      */
-    explicit LocalStorageManager(const Account & account,
-                                 const StartupOptions options = 0,
-                                 QObject * parent = Q_NULLPTR);
+    explicit LocalStorageManager(
+        const Account & account, const StartupOptions options = 0,
+        QObject * parent = nullptr);
 
     virtual ~LocalStorageManager();
 
@@ -428,8 +430,8 @@ public:
      * @return                      True if the default or the last used notebook
      *                              were found, false otherwise
      */
-    bool findDefaultOrLastUsedNotebook(Notebook & notebook,
-                                       ErrorString & errorDescription) const;
+    bool findDefaultOrLastUsedNotebook(
+        Notebook & notebook, ErrorString & errorDescription) const;
 
     /**
      * @brief The OrderDirection struct is a C++98 style scoped enum which specifies
@@ -494,11 +496,12 @@ public:
      *                              error or no notebooks presence within
      *                              the account
      */
-    QList<Notebook> listAllNotebooks(ErrorString & errorDescription,
-                                     const size_t limit = 0, const size_t offset = 0,
-                                     const ListNotebooksOrder::type order = ListNotebooksOrder::NoOrder,
-                                     const OrderDirection::type orderDirection = OrderDirection::Ascending,
-                                     const QString & linkedNotebookGuid = QString()) const;
+    QList<Notebook> listAllNotebooks(
+        ErrorString & errorDescription,
+        const size_t limit = 0, const size_t offset = 0,
+        const ListNotebooksOrder::type order = ListNotebooksOrder::NoOrder,
+        const OrderDirection::type orderDirection = OrderDirection::Ascending,
+        const QString & linkedNotebookGuid = QString()) const;
 
     /**
      * @brief listNotebooks attempts to list notebooks within the account
@@ -530,12 +533,13 @@ public:
      *                              cases of error or no notebooks conforming
      *                              to the filter exist within the account
      */
-    QList<Notebook> listNotebooks(const ListObjectsOptions flag,
-                                  ErrorString & errorDescription,
-                                  const size_t limit = 0, const size_t offset = 0,
-                                  const ListNotebooksOrder::type order = ListNotebooksOrder::NoOrder,
-                                  const OrderDirection::type orderDirection = OrderDirection::Ascending,
-                                  const QString & linkedNotebookGuid = QString()) const;
+    QList<Notebook> listNotebooks(
+        const ListObjectsOptions flag,
+        ErrorString & errorDescription,
+        const size_t limit = 0, const size_t offset = 0,
+        const ListNotebooksOrder::type order = ListNotebooksOrder::NoOrder,
+        const OrderDirection::type orderDirection = OrderDirection::Ascending,
+        const QString & linkedNotebookGuid = QString()) const;
 
     /**
      * @brief listAllSharedNotebooks attempts to list all shared notebooks
@@ -565,8 +569,8 @@ public:
      *                              or no shared notebooks presence per given
      *                              notebook guid
      */
-    QList<SharedNotebook> listSharedNotebooksPerNotebookGuid(const QString & notebookGuid,
-                                                             ErrorString & errorDescription) const;
+    QList<SharedNotebook> listSharedNotebooksPerNotebookGuid(
+        const QString & notebookGuid, ErrorString & errorDescription) const;
 
     /**
      * @brief expungeNotebook permanently deletes the specified notebook from
@@ -616,8 +620,8 @@ public:
      * @return                      True if linked notebook was added successfully,
      *                              false otherwise
      */
-    bool addLinkedNotebook(const LinkedNotebook & linkedNotebook,
-                           ErrorString & errorDescription);
+    bool addLinkedNotebook(
+        const LinkedNotebook & linkedNotebook, ErrorString & errorDescription);
 
     /**
      * @brief updateLinkedNotebook updates passd in LinkedNotebook in the local
@@ -631,8 +635,8 @@ public:
      * @return                      True if linked notebook was updated successfully,
      *                              false otherwise
      */
-    bool updateLinkedNotebook(const LinkedNotebook & linkedNotebook,
-                              ErrorString & errorDescription);
+    bool updateLinkedNotebook(
+        const LinkedNotebook & linkedNotebook, ErrorString & errorDescription);
 
     /**
      * @brief findLinkedNotebook attempts to find and set all found fields for
@@ -649,8 +653,8 @@ public:
      * @return                      True if linked notebook was found,
      *                              false otherwise
      */
-    bool findLinkedNotebook(LinkedNotebook & linkedNotebook,
-                            ErrorString & errorDescription) const;
+    bool findLinkedNotebook(
+        LinkedNotebook & linkedNotebook, ErrorString & errorDescription) const;
 
     /**
      * @brief The ListLinkedNotebooksOrder struct is a C++98-style scoped enum
@@ -691,11 +695,11 @@ public:
      *                              list in case of error or no linked notebooks
      *                              presence within the account
      */
-    QList<LinkedNotebook> listAllLinkedNotebooks(ErrorString & errorDescription,
-                                                 const size_t limit = 0,
-                                                 const size_t offset = 0,
-                                                 const ListLinkedNotebooksOrder::type order = ListLinkedNotebooksOrder::NoOrder,
-                                                 const OrderDirection::type orderDirection = OrderDirection::Ascending) const;
+    QList<LinkedNotebook> listAllLinkedNotebooks(
+        ErrorString & errorDescription,
+        const size_t limit = 0, const size_t offset = 0,
+        const ListLinkedNotebooksOrder::type order = ListLinkedNotebooksOrder::NoOrder,
+        const OrderDirection::type orderDirection = OrderDirection::Ascending) const;
 
     /**
      * @brief listLinkedNotebooks attempts to list linked notebooks within
@@ -722,12 +726,11 @@ public:
      *                              list in cases of error or no linked notebooks
      *                              conforming to the filter exist within the account
      */
-    QList<LinkedNotebook> listLinkedNotebooks(const ListObjectsOptions flag,
-                                              ErrorString & errorDescription,
-                                              const size_t limit = 0,
-                                              const size_t offset = 0,
-                                              const ListLinkedNotebooksOrder::type order = ListLinkedNotebooksOrder::NoOrder,
-                                              const OrderDirection::type orderDirection = OrderDirection::Ascending) const;
+    QList<LinkedNotebook> listLinkedNotebooks(
+        const ListObjectsOptions flag, ErrorString & errorDescription,
+        const size_t limit = 0, const size_t offset = 0,
+        const ListLinkedNotebooksOrder::type order = ListLinkedNotebooksOrder::NoOrder,
+        const OrderDirection::type orderDirection = OrderDirection::Ascending) const;
 
     /**
      * @brief expungeLinkedNotebook permanently deletes specified linked notebook
@@ -746,8 +749,8 @@ public:
      * @return                      True if linked notebook was expunged
      *                              successfully, false otherwise
      */
-    bool expungeLinkedNotebook(const LinkedNotebook & linkedNotebook,
-                               ErrorString & errorDescription);
+    bool expungeLinkedNotebook(
+        const LinkedNotebook & linkedNotebook, ErrorString & errorDescription);
 
     /**
      * @brief The NoteCountOption struct is a C++98-style scoped enum
@@ -775,9 +778,9 @@ public:
      * @return                      Either non-negative value with the number
      *                              of notes or -1 which means some error occurred
      */
-    int noteCount(ErrorString & errorDescription,
-                  const NoteCountOptions options =
-                  NoteCountOption::IncludeNonDeletedNotes) const;
+    int noteCount(
+        ErrorString & errorDescription,
+        const NoteCountOptions options = NoteCountOption::IncludeNonDeletedNotes) const;
 
     /**
      * @brief noteCountPerNotebook returns the number of notes currently
@@ -795,10 +798,10 @@ public:
      *                              notes per given notebook or -1 which means
      *                              some error occurred
      */
-    int noteCountPerNotebook(const Notebook & notebook,
-                             ErrorString & errorDescription,
-                             const NoteCountOptions options =
-                             NoteCountOption::IncludeNonDeletedNotes) const;
+    int noteCountPerNotebook(
+        const Notebook & notebook,
+        ErrorString & errorDescription,
+        const NoteCountOptions options = NoteCountOption::IncludeNonDeletedNotes) const;
 
     /**
      * @brief noteCountPerTag returns the number of notes currently
@@ -816,10 +819,9 @@ public:
      *                              notes per given tag or -1 which means some
      *                              error occurred
      */
-    int noteCountPerTag(const Tag & tag,
-                        ErrorString & errorDescription,
-                        const NoteCountOptions options =
-                        NoteCountOption::IncludeNonDeletedNotes) const;
+    int noteCountPerTag(
+        const Tag & tag, ErrorString & errorDescription,
+        const NoteCountOptions options = NoteCountOption::IncludeNonDeletedNotes) const;
 
     /**
      * @brief noteCountsPerAllTags returns the number of notes
@@ -836,10 +838,10 @@ public:
      * @return                              True if note counts for all tags were
      *                                      computed successfully, false otherwise
      */
-    bool noteCountsPerAllTags(QHash<QString, int> & noteCountsPerTagLocalUid,
-                              ErrorString & errorDescription,
-                              const NoteCountOptions options =
-                              NoteCountOption::IncludeNonDeletedNotes) const;
+    bool noteCountsPerAllTags(
+        QHash<QString, int> & noteCountsPerTagLocalUid,
+        ErrorString & errorDescription,
+        const NoteCountOptions options = NoteCountOption::IncludeNonDeletedNotes) const;
 
     /**
      * @brief noteCountPerNotebooksAndTags returns the number of notes currently
@@ -859,11 +861,10 @@ public:
      *                              notes per given tag or -1 which means some
      *                              error occurred
      */
-    int noteCountPerNotebooksAndTags(const QStringList & notebookLocalUids,
-                                     const QStringList & tagLocalUids,
-                                     ErrorString & errorDescription,
-                                     const NoteCountOptions options =
-                                     NoteCountOption::IncludeNonDeletedNotes) const;
+    int noteCountPerNotebooksAndTags(
+        const QStringList & notebookLocalUids,
+        const QStringList & tagLocalUids, ErrorString & errorDescription,
+        const NoteCountOptions options = NoteCountOption::IncludeNonDeletedNotes) const;
 
     /**
      * @brief addNote adds passed in Note to the local storage database.
@@ -959,8 +960,9 @@ public:
      * @return                      True if note was updated successfully,
      *                              false otherwise
      */
-    bool updateNote(Note & note, const UpdateNoteOptions options,
-                    ErrorString & errorDescription);
+    bool updateNote(
+        Note & note, const UpdateNoteOptions options,
+        ErrorString & errorDescription);
 
     /**
      * @brief The GetNoteOption struct is a C++98 style scoped enum serving as
@@ -1003,8 +1005,9 @@ public:
      * @param errorDescription - error description if note could not be found
      * @return true if note was found successfully, false otherwise
      */
-    bool findNote(Note & note, const GetNoteOptions options,
-                  ErrorString & errorDescription) const;
+    bool findNote(
+        Note & note, const GetNoteOptions options,
+        ErrorString & errorDescription) const;
 
     /**
      * @brief The ListNotesOrder struct is a C++98-style scoped enum which allows
@@ -1226,8 +1229,9 @@ public:
      * @return                      The list of found notes' local uids or empty
      *                              list in case of error
      */
-    QStringList findNoteLocalUidsWithSearchQuery(const NoteSearchQuery & noteSearchQuery,
-                                                 ErrorString & errorDescription) const;
+    QStringList findNoteLocalUidsWithSearchQuery(
+        const NoteSearchQuery & noteSearchQuery,
+        ErrorString & errorDescription) const;
 
     /**
      * @brief findNotesWithSearchQuery attempts to find notes corresponding to
@@ -1242,9 +1246,9 @@ public:
      *                              empty list in case of error or no notes presence
      *                              for the given NoteSearchQuery
      */
-    NoteList findNotesWithSearchQuery(const NoteSearchQuery & noteSearchQuery,
-                                      const GetNoteOptions options,
-                                      ErrorString & errorDescription) const;
+    NoteList findNotesWithSearchQuery(
+        const NoteSearchQuery & noteSearchQuery,
+        const GetNoteOptions options, ErrorString & errorDescription) const;
 
     /**
      * @brief expungeNote permanently deletes note from local storage.
@@ -1372,11 +1376,12 @@ public:
      *                              ascending direction is used;
      * @return                      The list of found tags per note
      */
-    QList<Tag> listAllTagsPerNote(const Note & note, ErrorString & errorDescription,
-                                  const ListObjectsOptions & flag = ListAll,
-                                  const size_t limit = 0, const size_t offset = 0,
-                                  const ListTagsOrder::type & order = ListTagsOrder::NoOrder,
-                                  const OrderDirection::type & orderDirection = OrderDirection::Ascending) const;
+    QList<Tag> listAllTagsPerNote(
+        const Note & note, ErrorString & errorDescription,
+        const ListObjectsOptions & flag = ListAll,
+        const size_t limit = 0, const size_t offset = 0,
+        const ListTagsOrder::type & order = ListTagsOrder::NoOrder,
+        const OrderDirection::type & orderDirection = OrderDirection::Ascending) const;
 
     /**
      * @brief listAllTags lists all tags within the current user's account.
@@ -1404,11 +1409,12 @@ public:
      *                              to the certain linked notebook would be listed
      * @return                      The list of found tags within the account
      */
-    QList<Tag> listAllTags(ErrorString & errorDescription,
-                           const size_t limit = 0, const size_t offset = 0,
-                           const ListTagsOrder::type order = ListTagsOrder::NoOrder,
-                           const OrderDirection::type orderDirection = OrderDirection::Ascending,
-                           const QString & linkedNotebookGuid = QString()) const;
+    QList<Tag> listAllTags(
+        ErrorString & errorDescription,
+        const size_t limit = 0, const size_t offset = 0,
+        const ListTagsOrder::type order = ListTagsOrder::NoOrder,
+        const OrderDirection::type orderDirection = OrderDirection::Ascending,
+        const QString & linkedNotebookGuid = QString()) const;
 
     /**
      * @brief listTags attempts to list tags within the account according to
@@ -1439,12 +1445,13 @@ public:
      *                              or no tags conforming to the filter exist
      *                              within the account
      */
-    QList<Tag> listTags(const ListObjectsOptions flag,
-                        ErrorString & errorDescription,
-                        const size_t limit = 0, const size_t offset = 0,
-                        const ListTagsOrder::type & order = ListTagsOrder::NoOrder,
-                        const OrderDirection::type orderDirection = OrderDirection::Ascending,
-                        const QString & linkedNotebookGuid = QString()) const;
+    QList<Tag> listTags(
+        const ListObjectsOptions flag,
+        ErrorString & errorDescription,
+        const size_t limit = 0, const size_t offset = 0,
+        const ListTagsOrder::type & order = ListTagsOrder::NoOrder,
+        const OrderDirection::type orderDirection = OrderDirection::Ascending,
+        const QString & linkedNotebookGuid = QString()) const;
 
     /**
      * @brief listTagsWithNoteLocalUids attempts to list tags and their corresponding
@@ -1479,13 +1486,12 @@ public:
      *                              list in cases of error or no tags conforming
      *                              to the filter exist within the account
      */
-    QList<std::pair<Tag, QStringList> > listTagsWithNoteLocalUids(const ListObjectsOptions flag,
-                                                                  ErrorString & errorDescription,
-                                                                  const size_t limit = 0,
-                                                                  const size_t offset = 0,
-                                                                  const ListTagsOrder::type & order = ListTagsOrder::NoOrder,
-                                                                  const OrderDirection::type orderDirection = OrderDirection::Ascending,
-                                                                  const QString & linkedNotebookGuid = QString()) const;
+    QList<std::pair<Tag, QStringList> > listTagsWithNoteLocalUids(
+        const ListObjectsOptions flag, ErrorString & errorDescription,
+        const size_t limit = 0, const size_t offset = 0,
+        const ListTagsOrder::type & order = ListTagsOrder::NoOrder,
+        const OrderDirection::type orderDirection = OrderDirection::Ascending,
+        const QString & linkedNotebookGuid = QString()) const;
 
     /**
      * @brief expungeTag permanently deletes tag from the local storage
@@ -1510,8 +1516,9 @@ public:
      * @return                              True if tag was expunged successfully,
      *                                      false otherwise
      */
-    bool expungeTag(Tag & tag, QStringList & expungedChildTagLocalUids,
-                    ErrorString & errorDescription);
+    bool expungeTag(
+        Tag & tag, QStringList & expungedChildTagLocalUids,
+        ErrorString & errorDescription);
 
     /**
      * @brief expungeNotelessTagsFromLinkedNotebooks permanently deletes from
@@ -1608,8 +1615,9 @@ public:
      * @param errorDescription - error description if resource could not be found
      * @return true if resource was found successfully, false otherwise
      */
-    bool findEnResource(Resource & resource, const GetResourceOptions options,
-                        ErrorString & errorDescription) const;
+    bool findEnResource(
+        Resource & resource, const GetResourceOptions options,
+        ErrorString & errorDescription) const;
 
     /**
      * @brief expungeResource permanently deletes resource from the local storage
@@ -1724,11 +1732,11 @@ public:
      *                                  of error or if there are no saved searches
      *                                  within the account
      */
-    QList<SavedSearch> listAllSavedSearches(ErrorString & errorDescription,
-                                            const size_t limit = 0,
-                                            const size_t offset = 0,
-                                            const ListSavedSearchesOrder::type order = ListSavedSearchesOrder::NoOrder,
-                                            const OrderDirection::type orderDirection = OrderDirection::Ascending) const;
+    QList<SavedSearch> listAllSavedSearches(
+        ErrorString & errorDescription,
+        const size_t limit = 0, const size_t offset = 0,
+        const ListSavedSearchesOrder::type order = ListSavedSearchesOrder::NoOrder,
+        const OrderDirection::type orderDirection = OrderDirection::Ascending) const;
 
     /**
      * @brief listSavedSearches attempts to list saved searches within the account
@@ -1757,12 +1765,11 @@ public:
      *                                  searches conforming to the filter exist
      *                                  within the account
      */
-    QList<SavedSearch> listSavedSearches(const ListObjectsOptions flag,
-                                         ErrorString & errorDescription,
-                                         const size_t limit = 0,
-                                         const size_t offset = 0,
-                                         const ListSavedSearchesOrder::type order = ListSavedSearchesOrder::NoOrder,
-                                         const OrderDirection::type orderDirection = OrderDirection::Ascending) const;
+    QList<SavedSearch> listSavedSearches(
+        const ListObjectsOptions flag, ErrorString & errorDescription,
+        const size_t limit = 0, const size_t offset = 0,
+        const ListSavedSearchesOrder::type order = ListSavedSearchesOrder::NoOrder,
+        const OrderDirection::type orderDirection = OrderDirection::Ascending) const;
 
     /**
      * @brief expungeSavedSearch permanently deletes saved search from the local
@@ -1795,11 +1802,11 @@ public:
      *                                  a non-negative value - or a negative number
      * in case of error
      */
-    qint32 accountHighUsn(const QString & linkedNotebookGuid,
-                          ErrorString & errorDescription);
+    qint32 accountHighUsn(
+        const QString & linkedNotebookGuid, ErrorString & errorDescription);
 
 private:
-    LocalStorageManager() Q_DECL_EQ_DELETE;
+    LocalStorageManager()  = delete;
     Q_DISABLE_COPY(LocalStorageManager)
 
     QScopedPointer<LocalStorageManagerPrivate>  d_ptr;

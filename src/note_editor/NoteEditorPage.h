@@ -73,8 +73,8 @@ public:
      */
     void startJavaScriptAutoExecution();
 
-    virtual void triggerAction(WebPage::WebAction action,
-                               bool checked = false) Q_DECL_OVERRIDE;
+    virtual void triggerAction(
+        WebPage::WebAction action, bool checked = false) override;
 
 Q_SIGNALS:
     void javaScriptLoaded();
@@ -89,7 +89,7 @@ Q_SIGNALS:
 
 public Q_SLOTS:
 #if (QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)) && !defined(QUENTIER_USE_QT_WEB_ENGINE)
-    virtual bool shouldInterruptJavaScript() Q_DECL_OVERRIDE;
+    virtual bool shouldInterruptJavaScript() override;
 #else
     bool shouldInterruptJavaScript();
 #endif
@@ -103,24 +103,24 @@ private Q_SLOTS:
 private:
 #ifndef QUENTIER_USE_QT_WEB_ENGINE
     virtual void javaScriptAlert(QWebFrame * pFrame,
-                                 const QString & message) Q_DECL_OVERRIDE;
+                                 const QString & message) override;
     virtual bool javaScriptConfirm(QWebFrame * pFrame,
-                                   const QString & message) Q_DECL_OVERRIDE;
+                                   const QString & message) override;
 
     virtual void javaScriptConsoleMessage(
         const QString & message,
         int lineNumber,
-        const QString & sourceID) Q_DECL_OVERRIDE;
+        const QString & sourceID) override;
 #else
     virtual void javaScriptAlert(const QUrl & securityOrigin,
-                                 const QString & msg) Q_DECL_OVERRIDE;
+                                 const QString & msg) override;
     virtual bool javaScriptConfirm(const QUrl & securityOrigin,
-                                   const QString & msg) Q_DECL_OVERRIDE;
+                                   const QString & msg) override;
 
     virtual void javaScriptConsoleMessage(
         JavaScriptConsoleMessageLevel level,
         const QString & message, int lineNumber,
-        const QString & sourceID) Q_DECL_OVERRIDE;
+        const QString & sourceID) override;
 #endif
 
 private:

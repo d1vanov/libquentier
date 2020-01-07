@@ -24,11 +24,7 @@
 #include <QString>
 #include <QSharedDataPointer>
 
-#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
 #include <qt5qevercloud/QEverCloud.h>
-#else
-#include <qt4qevercloud/QEverCloud.h>
-#endif
 
 namespace quentier {
 
@@ -150,7 +146,7 @@ public:
     qint32 noteResourceCountMax() const;
     void setEvernoteAccountLimits(const qevercloud::AccountLimits & limits);
 
-    virtual QTextStream & print(QTextStream & strm) const Q_DECL_OVERRIDE;
+    virtual QTextStream & print(QTextStream & strm) const override;
 
 private:
     QSharedDataPointer<AccountData> d;

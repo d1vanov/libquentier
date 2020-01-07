@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Dmitry Ivanov
+ * Copyright 2016-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -164,7 +164,7 @@ public:
 
     bool isMatcheable() const;
 
-    virtual QTextStream & print(QTextStream & strm) const Q_DECL_OVERRIDE;
+    virtual QTextStream & print(QTextStream & strm) const override;
 
 private:
     QSharedDataPointer<NoteSearchQueryData> d;

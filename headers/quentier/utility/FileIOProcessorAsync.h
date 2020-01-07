@@ -22,6 +22,7 @@
 #include <quentier/utility/Linkage.h>
 #include <quentier/utility/Macros.h>
 #include <quentier/types/ErrorString.h>
+
 #include <QObject>
 #include <QString>
 #include <QUuid>
@@ -40,7 +41,7 @@ class QUENTIER_EXPORT FileIOProcessorAsync: public QObject
 {
     Q_OBJECT
 public:
-    explicit FileIOProcessorAsync(QObject * parent = Q_NULLPTR);
+    explicit FileIOProcessorAsync(QObject * parent = nullptr);
 
     /**
      * @brief setIdleTimePeriod sets time period defining the idle state of

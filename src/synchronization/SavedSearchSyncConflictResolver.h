@@ -42,7 +42,7 @@ public:
         const SavedSearch & localConflict,
         SavedSearchSyncCache & cache,
         LocalStorageManagerAsync & localStorageManagerAsync,
-        QObject * parent = Q_NULLPTR);
+        QObject * parent = nullptr);
 
     void start();
 

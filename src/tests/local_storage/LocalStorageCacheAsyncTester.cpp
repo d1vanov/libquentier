@@ -29,9 +29,9 @@ namespace test {
 LocalStorageCacheAsyncTester::LocalStorageCacheAsyncTester(QObject * parent) :
     QObject(parent),
     m_state(STATE_UNINITIALIZED),
-    m_pLocalStorageManagerAsync(Q_NULLPTR),
-    m_pLocalStorageCacheManager(Q_NULLPTR),
-    m_pLocalStorageManagerThread(Q_NULLPTR),
+    m_pLocalStorageManagerAsync(nullptr),
+    m_pLocalStorageCacheManager(nullptr),
+    m_pLocalStorageManagerThread(nullptr),
     m_firstNotebook(),
     m_secondNotebook(),
     m_currentNotebook(),
@@ -1043,7 +1043,7 @@ void LocalStorageCacheAsyncTester::clear()
 
     if (m_pLocalStorageManagerAsync) {
         m_pLocalStorageManagerAsync->deleteLater();
-        m_pLocalStorageManagerAsync = Q_NULLPTR;
+        m_pLocalStorageManagerAsync = nullptr;
     }
 
     m_state = STATE_UNINITIALIZED;

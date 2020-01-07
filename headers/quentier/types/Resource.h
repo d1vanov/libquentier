@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Dmitry Ivanov
+ * Copyright 2016-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -48,17 +48,17 @@ public:
     const qevercloud::Resource & qevercloudResource() const;
     qevercloud::Resource & qevercloudResource();
 
-    virtual void clear() Q_DECL_OVERRIDE;
+    virtual void clear() override;
 
-    virtual bool hasGuid() const Q_DECL_OVERRIDE;
-    virtual const QString & guid() const Q_DECL_OVERRIDE;
-    virtual void setGuid(const QString & guid) Q_DECL_OVERRIDE;
+    virtual bool hasGuid() const override;
+    virtual const QString & guid() const override;
+    virtual void setGuid(const QString & guid) override;
 
-    virtual bool hasUpdateSequenceNumber() const Q_DECL_OVERRIDE;
-    virtual qint32 updateSequenceNumber() const Q_DECL_OVERRIDE;
-    virtual void setUpdateSequenceNumber(const qint32 updateSequenceNumber) Q_DECL_OVERRIDE;
+    virtual bool hasUpdateSequenceNumber() const override;
+    virtual qint32 updateSequenceNumber() const override;
+    virtual void setUpdateSequenceNumber(const qint32 updateSequenceNumber) override;
 
-    virtual bool checkParameters(ErrorString & errorDescription) const Q_DECL_OVERRIDE;
+    virtual bool checkParameters(ErrorString & errorDescription) const override;
 
     QString displayName() const;
     void setDisplayName(const QString & displayName);
@@ -138,7 +138,7 @@ public:
 
     friend class Note;
 
-    virtual QTextStream & print(QTextStream & strm) const Q_DECL_OVERRIDE;
+    virtual QTextStream & print(QTextStream & strm) const override;
 
 private:
     QSharedDataPointer<ResourceData> d;

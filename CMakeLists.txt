@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.8)
+cmake_minimum_required(VERSION 3.5.1)
 
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules ${CMAKE_MODULE_PATH})
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules/sanitizers ${CMAKE_MODULE_PATH})
@@ -6,17 +6,7 @@ set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules/sanitizers ${CMA
 include(LibquentierCMakePolicies)
 SET_POLICIES()
 
-if("${CMAKE_MAJOR_VERSION}" GREATER "2")
-  project(libquentier
-          VERSION 0.5.0)
-else()
-  project(libquentier)
-  set(PROJECT_VERSION_MAJOR "0")
-  set(PROJECT_VERSION_MINOR "5")
-  set(PROJECT_VERSION_PATCH "0")
-  set(PROJECT_VERSION_COUNT 3)
-  set(PROJECT_VERSION "${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}.${PROJECT_VERSION_PATCH}")
-endif()
+project(libquentier VERSION 0.5.0)
 
 set(PROJECT_VENDOR "Dmitry Ivanov")
 set(PROJECT_COPYRIGHT_YEAR "2018")
@@ -26,7 +16,6 @@ set(PROJECT_DOMAIN "${PROJECT_DOMAIN_FIRST}.${PROJECT_DOMAIN_SECOND}")
 
 set(BUILD_WITH_AUTHENTICATION_MANAGER ON CACHE BOOL "If on, libquentier includes its own authentication manager, otherwise only the interface for it is included")
 set(BUILD_WITH_NOTE_EDITOR ON CACHE BOOL "If on, libquentier includes note editor UI component")
-set(BUILD_WITH_QT4 OFF CACHE BOOL "Build against Qt4 instead of Qt5")
 
 include(LibquentierCompilerSettings)
 include(LibquentierAdditionalCompilerWarnings)
@@ -39,7 +28,6 @@ include(LibquentierFindBoost)
 include(LibquentierFindHunspell)
 include(LibquentierFindQtKeychain)
 include(LibquentierFindQEverCloud)
-include(LibquentierFindQt4Mimetypes)
 include(LibquentierFindLibTidyHtml5)
 include(LibquentierSetupDoxygen)
 include(PrependPath)
@@ -55,9 +43,6 @@ list(APPEND THIRDPARTY_LIBS ${QTKEYCHAIN_LIBRARIES})
 list(APPEND THIRDPARTY_LIBS ${OPENSSL_LIBRARIES})
 list(APPEND THIRDPARTY_LIBS ${LIBXML2_LIBRARIES})
 list(APPEND THIRDPARTY_LIBS ${HUNSPELL_LIBRARIES})
-if(BUILD_WITH_QT4)
-  list(APPEND THIRDPARTY_LIBS ${QT4-MIMETYPES_LIBRARIES})
-endif()
 if(LIBCPP)
   list(APPEND THIRDPARTY_LIBS ${LIBCPP})
 endif()
@@ -77,9 +62,6 @@ list(APPEND THIRDPARTY_LIB_DIRS ${QTKEYCHAIN_LIB_DIR})
 list(APPEND THIRDPARTY_LIB_DIRS ${OPENSSL_LIB_DIRS})
 list(APPEND THIRDPARTY_LIB_DIRS ${LIBXML2_LIB_DIR})
 list(APPEND THIRDPARTY_LIB_DIRS ${HUNSPELL_LIB_DIR})
-if(BUILD_WITH_QT4)
-  list(APPEND THIRDPARTY_LIB_DIRS ${QT4-MIMETYPES_LIB_DIR})
-endif()
 if(LIBCPP)
   get_filename_component(LIBCPP_LIB_DIR "${LIBCPP}" PATH)
   list(APPEND THIRDPARTY_LIB_DIRS ${LIBCPP_LIB_DIR})
@@ -688,11 +670,7 @@ set(${PROJECT_NAME}_TR_FILES
 set(${PROJECT_NAME}_QM_FILES "")
 update_translation("${${PROJECT_NAME}_TR_SOURCES}" "${FORMS}" "${${PROJECT_NAME}_TR_FILES}")
 
-if(BUILD_WITH_QT4)
-  set(LIBQUENTIER_QT_VERSION "qt4")
-else()
-  set(LIBQUENTIER_QT_VERSION "qt5")
-endif()
+set(LIBQUENTIER_QT_VERSION "qt5")
 
 set(MAJOR_VERSION_LIB_NAME_SUFFIX OFF CACHE BOOL "If on, the project's major version would be added to the library's name as a suffix")
 
@@ -739,20 +717,19 @@ endif()
 
 # library target properties
 set_target_properties(${LIBNAME} PROPERTIES
-                      PREFIX ""
-                      VERSION "${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}.${PROJECT_VERSION_PATCH}"
-                      SOVERSION "${PROJECT_VERSION_MAJOR}"
-                      MACOSX_RPATH 1
-                      INSTALL_NAME_DIR "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}")
+  PREFIX ""
+  VERSION "${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}.${PROJECT_VERSION_PATCH}"
+  SOVERSION "${PROJECT_VERSION_MAJOR}"
+  CXX_STANDARD 14
+  CXX_EXTENSIONS OFF
+  MACOSX_RPATH 1
+  INSTALL_NAME_DIR "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}"
+  COMPILE_DEFINITIONS "BUILDING_QUENTIER_DLL=1")
 
 target_link_libraries(${LIBNAME} ${QT_LIBRARIES} ${THIRDPARTY_LIBS})
 
-set_target_properties(${LIBNAME} PROPERTIES COMPILE_DEFINITIONS "BUILDING_QUENTIER_DLL=1")
-
 add_definitions("-DQT_NO_CAST_FROM_ASCII -DQT_NO_CAST_TO_ASCII")
-if(NOT BUILD_WITH_QT4)
-  add_definitions("-DQT_NO_CAST_FROM_BYTEARRAY -DQT_NO_NARROWING_CONVERSIONS_IN_CONNECT")
-endif()
+add_definitions("-DQT_NO_CAST_FROM_BYTEARRAY -DQT_NO_NARROWING_CONVERSIONS_IN_CONNECT")
 
 set(TEST_HEADERS
     src/tests/enml/EnexExportImportTests.h
@@ -838,6 +815,12 @@ set(TEST_RESOURCES
 qt_add_resources(${PROJECT_NAME}_TEST_RESOURCES_RCC ${TEST_RESOURCES})
 
 add_executable(test_${PROJECT_NAME} ${TEST_HEADERS} ${TEST_SOURCES} ${${PROJECT_NAME}_TEST_RESOURCES_RCC})
+
+# test executable target properties
+set_target_properties(test_${PROJECT_NAME} PROPERTIES
+  CXX_STANDARD 14
+  CXX_EXTENSIONS OFF)
+
 add_sanitizers(test_${PROJECT_NAME})
 add_test(test_${PROJECT_NAME} test_${PROJECT_NAME})
 
@@ -886,35 +869,23 @@ configure_file(cmake/modules/LibquentierConfig.cmake.in
 configure_file(cmake/modules/LibquentierConfigVersion.cmake.in
                ${PROJECT_BINARY_DIR}/Libquentier-${LIBQUENTIER_QT_VERSION}ConfigVersion.cmake @ONLY)
 
-if(NOT BUILD_WITH_QT4)
-  if(BUILD_WITH_NOTE_EDITOR OR BUILD_WITH_AUTHENTICATION_MANAGER)
-    if(USE_QT5_WEBKIT OR (Qt5Core_VERSION VERSION_LESS "5.4.0"))
-      file(COPY cmake/modules/LibquentierFindQt5DependenciesWebKit.cmake DESTINATION ${PROJECT_BINARY_DIR})
-      file(RENAME ${PROJECT_BINARY_DIR}/LibquentierFindQt5DependenciesWebKit.cmake ${PROJECT_BINARY_DIR}/Libquentier-${LIBQUENTIER_QT_VERSION}FindQtDependencies.cmake)
-    elseif(Qt5Core_VERSION VERSION_LESS "5.6.0")
-      file(COPY cmake/modules/LibquentierFindQt5DependenciesWebEngineNoCore.cmake DESTINATION ${PROJECT_BINARY_DIR})
-      file(RENAME ${PROJECT_BINARY_DIR}/LibquentierFindQt5DependenciesWebEngineNoCore.cmake ${PROJECT_BINARY_DIR}/Libquentier-${LIBQUENTIER_QT_VERSION}FindQtDependencies.cmake)
-    else()
-      file(COPY cmake/modules/LibquentierFindQt5DependenciesWebEngineCore.cmake DESTINATION ${PROJECT_BINARY_DIR})
-      file(RENAME ${PROJECT_BINARY_DIR}/LibquentierFindQt5DependenciesWebEngineCore.cmake ${PROJECT_BINARY_DIR}/Libquentier-${LIBQUENTIER_QT_VERSION}FindQtDependencies.cmake)
-    endif()
+if(BUILD_WITH_NOTE_EDITOR OR BUILD_WITH_AUTHENTICATION_MANAGER)
+  if(USE_QT5_WEBKIT)
+    file(COPY cmake/modules/LibquentierFindQt5DependenciesWebKit.cmake DESTINATION ${PROJECT_BINARY_DIR})
+    file(RENAME ${PROJECT_BINARY_DIR}/LibquentierFindQt5DependenciesWebKit.cmake ${PROJECT_BINARY_DIR}/Libquentier-${LIBQUENTIER_QT_VERSION}FindQtDependencies.cmake)
+  elseif(Qt5Core_VERSION VERSION_LESS "5.6.0")
+    file(COPY cmake/modules/LibquentierFindQt5DependenciesWebEngineNoCore.cmake DESTINATION ${PROJECT_BINARY_DIR})
+    file(RENAME ${PROJECT_BINARY_DIR}/LibquentierFindQt5DependenciesWebEngineNoCore.cmake ${PROJECT_BINARY_DIR}/Libquentier-${LIBQUENTIER_QT_VERSION}FindQtDependencies.cmake)
   else()
-    file(COPY cmake/modules/LibquentierFindQt5DependenciesBase.cmake DESTINATION ${PROJECT_BINARY_DIR})
-    file(RENAME ${PROJECT_BINARY_DIR}/LibquentierFindQt5DependenciesBase.cmake ${PROJECT_BINARY_DIR}/Libquentier-${LIBQUENTIER_QT_VERSION}FindQtDependencies.cmake)
+    file(COPY cmake/modules/LibquentierFindQt5DependenciesWebEngineCore.cmake DESTINATION ${PROJECT_BINARY_DIR})
+    file(RENAME ${PROJECT_BINARY_DIR}/LibquentierFindQt5DependenciesWebEngineCore.cmake ${PROJECT_BINARY_DIR}/Libquentier-${LIBQUENTIER_QT_VERSION}FindQtDependencies.cmake)
   endif()
-  file(COPY cmake/modules/LibquentierFindOtherDependenciesQt5.cmake DESTINATION ${PROJECT_BINARY_DIR})
-  file(RENAME ${PROJECT_BINARY_DIR}/LibquentierFindOtherDependenciesQt5.cmake ${PROJECT_BINARY_DIR}/Libquentier-${LIBQUENTIER_QT_VERSION}FindOtherDependencies.cmake)
 else()
-  if(BUILD_WITH_NOTE_EDITOR OR BUILD_WITH_AUTHENTICATION_MANAGER)
-    file(COPY cmake/modules/LibquentierFindQt4Dependencies.cmake DESTINATION ${PROJECT_BINARY_DIR})
-    file(RENAME ${PROJECT_BINARY_DIR}/LibquentierFindQt4Dependencies.cmake ${PROJECT_BINARY_DIR}/Libquentier-${LIBQUENTIER_QT_VERSION}FindQtDependencies.cmake)
-  else()
-    file(COPY cmake/modules/LibquentierFindQt4DependenciesWebKit.cmake DESTINATION ${PROJECT_BINARY_DIR})
-    file(RENAME ${PROJECT_BINARY_DIR}/LibquentierFindQt4DependenciesWebKit.cmake ${PROJECT_BINARY_DIR}/Libquentier-${LIBQUENTIER_QT_VERSION}FindQtDependencies.cmake)
-  endif()
-  file(COPY cmake/modules/LibquentierFindOtherDependenciesQt4.cmake DESTINATION ${PROJECT_BINARY_DIR})
-  file(RENAME ${PROJECT_BINARY_DIR}/LibquentierFindOtherDependenciesQt4.cmake ${PROJECT_BINARY_DIR}/Libquentier-${LIBQUENTIER_QT_VERSION}FindOtherDependencies.cmake)
+  file(COPY cmake/modules/LibquentierFindQt5DependenciesBase.cmake DESTINATION ${PROJECT_BINARY_DIR})
+  file(RENAME ${PROJECT_BINARY_DIR}/LibquentierFindQt5DependenciesBase.cmake ${PROJECT_BINARY_DIR}/Libquentier-${LIBQUENTIER_QT_VERSION}FindQtDependencies.cmake)
 endif()
+file(COPY cmake/modules/LibquentierFindOtherDependenciesQt5.cmake DESTINATION ${PROJECT_BINARY_DIR})
+file(RENAME ${PROJECT_BINARY_DIR}/LibquentierFindOtherDependenciesQt5.cmake ${PROJECT_BINARY_DIR}/Libquentier-${LIBQUENTIER_QT_VERSION}FindOtherDependencies.cmake)
 
 # install shared library
 install(TARGETS ${LIBNAME}

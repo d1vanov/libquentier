@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Dmitry Ivanov
+ * Copyright 2018-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -29,7 +29,7 @@ class TypesTester: public QObject
 {
     Q_OBJECT
 public:
-    TypesTester(QObject * parent = Q_NULLPTR);
+    TypesTester(QObject * parent = nullptr);
     virtual ~TypesTester();
 
 private Q_SLOTS:

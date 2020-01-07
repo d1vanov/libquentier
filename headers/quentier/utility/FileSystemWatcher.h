@@ -21,6 +21,7 @@
 
 #include <quentier/utility/Macros.h>
 #include <quentier/utility/Linkage.h>
+
 #include <QObject>
 #include <QStringList>
 
@@ -36,11 +37,11 @@ class QUENTIER_EXPORT FileSystemWatcher: public QObject
 public:
     explicit FileSystemWatcher(const int removalTimeoutMSec =
                                FILE_SYSTEM_WATCHER_DEFAULT_REMOVAL_TIMEOUT_MSEC,
-                               QObject * parent = Q_NULLPTR);
+                               QObject * parent = nullptr);
     explicit FileSystemWatcher(const QStringList & paths,
                                const int removalTimeoutMSec =
                                FILE_SYSTEM_WATCHER_DEFAULT_REMOVAL_TIMEOUT_MSEC,
-                               QObject * parent = Q_NULLPTR);
+                               QObject * parent = nullptr);
 
     virtual ~FileSystemWatcher();
 

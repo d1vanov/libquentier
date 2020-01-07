@@ -32,18 +32,18 @@ public:
     TableActionUndoCommand(
         NoteEditorPrivate & noteEditorPrivate,
         Callback callback,
-        QUndoCommand * parent = Q_NULLPTR);
+        QUndoCommand * parent = nullptr);
 
     TableActionUndoCommand(
         NoteEditorPrivate & noteEditorPrivate,
         const QString & text,
         Callback callback,
-        QUndoCommand * parent = Q_NULLPTR);
+        QUndoCommand * parent = nullptr);
 
     virtual ~TableActionUndoCommand();
 
-    virtual void redoImpl() Q_DECL_OVERRIDE;
-    virtual void undoImpl() Q_DECL_OVERRIDE;
+    virtual void redoImpl() override;
+    virtual void undoImpl() override;
 
 private:
     Callback    m_callback;

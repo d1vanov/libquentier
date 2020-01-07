@@ -40,9 +40,9 @@ public:
 
 public:
     SpellCheckerDictionariesFinder(const QSharedPointer<QAtomicInt> & pStopFlag,
-                                   QObject * parent = Q_NULLPTR);
+                                   QObject * parent = nullptr);
 
-    virtual void run() Q_DECL_OVERRIDE;
+    virtual void run() override;
 
 Q_SIGNALS:
     void foundDictionaries(DicAndAffFilesByDictionaryName docAndAffFilesByDictionaryName);

@@ -19,11 +19,7 @@
 #include "NoteThumbnailDownloader.h"
 #include <quentier/logging/QuentierLogger.h>
 
-#if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
-#include <qt4qevercloud/thumbnail.h>
-#else
-#include <qt5qevercloud/thumbnail.h>
-#endif
+#include <qt5qevercloud/Thumbnail.h>
 
 namespace quentier {
 
@@ -37,8 +33,8 @@ NoteThumbnailDownloader::NoteThumbnailDownloader(
     m_authToken(authToken),
     m_shardId(shardId),
     m_noteFromPublicLinkedNotebook(noteFromPublicLinkedNotebook),
-    m_pAsyncResult(Q_NULLPTR),
-    m_pThumbnail(Q_NULLPTR)
+    m_pAsyncResult(nullptr),
+    m_pThumbnail(nullptr)
 {}
 
 NoteThumbnailDownloader::~NoteThumbnailDownloader()
@@ -78,11 +74,11 @@ void NoteThumbnailDownloader::start()
     }
 
     delete m_pThumbnail;
-    m_pThumbnail = Q_NULLPTR;
+    m_pThumbnail = nullptr;
 
     if (m_pAsyncResult) {
         // NOTE: m_pAsyncResult deletes itself automatically
-        m_pAsyncResult = Q_NULLPTR;
+        m_pAsyncResult = nullptr;
     }
 
     m_pThumbnail = new qevercloud::Thumbnail(m_host, m_shardId, m_authToken);
@@ -95,31 +91,33 @@ void NoteThumbnailDownloader::start()
     }
 
     QObject::connect(m_pAsyncResult,
-                     QNSIGNAL(qevercloud::AsyncResult,finished,
-                              QVariant,QSharedPointer<EverCloudExceptionData>),
+                     &qevercloud::AsyncResult::finished,
                      this,
-                     QNSLOT(NoteThumbnailDownloader,onDownloadFinished,
-                            QVariant,QSharedPointer<EverCloudExceptionData>),
+                     &NoteThumbnailDownloader::onDownloadFinished,
                      Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
 }
 
 void NoteThumbnailDownloader::onDownloadFinished(
-    QVariant result, QSharedPointer<EverCloudExceptionData> error)
+    QVariant result,
+    EverCloudExceptionDataPtr exceptionData,
+    IRequestContextPtr ctx)
 {
     QNDEBUG("NoteThumbnailDownloader::onDownloadFinished");
 
+    Q_UNUSED(ctx)
+
     delete m_pThumbnail;
-    m_pThumbnail = Q_NULLPTR;
+    m_pThumbnail = nullptr;
 
     // NOTE: after AsyncResult finishes, it destroys itself so must lose
     // the pointer to it here
-    m_pAsyncResult = Q_NULLPTR;
+    m_pAsyncResult = nullptr;
 
-    if (!error.isNull())
+    if (exceptionData)
     {
         ErrorString errorDescription(QT_TR_NOOP("failed to download the note "
                                                 "thumbnail"));
-        errorDescription.details() = error->errorMessage;
+        errorDescription.details() = exceptionData->errorMessage;
         QNDEBUG(errorDescription);
         Q_EMIT finished(false, m_noteGuid, QByteArray(), errorDescription);
         return;

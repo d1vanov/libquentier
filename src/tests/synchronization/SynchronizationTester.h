@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Dmitry Ivanov
+ * Copyright 2018-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -41,7 +41,7 @@ class SynchronizationTester: public QObject
 {
     Q_OBJECT
 public:
-    SynchronizationTester(QObject * parent = Q_NULLPTR);
+    SynchronizationTester(QObject * parent = nullptr);
     virtual ~SynchronizationTester();
 
 private Q_SLOTS:

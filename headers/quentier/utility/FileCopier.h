@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Dmitry Ivanov
+ * Copyright 2018-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -22,6 +22,7 @@
 #include <quentier/utility/Macros.h>
 #include <quentier/utility/Linkage.h>
 #include <quentier/types/ErrorString.h>
+
 #include <QObject>
 #include <QString>
 
@@ -33,7 +34,7 @@ class QUENTIER_EXPORT FileCopier: public QObject
 {
     Q_OBJECT
 public:
-    explicit FileCopier(QObject * parent = Q_NULLPTR);
+    explicit FileCopier(QObject * parent = nullptr);
 
     struct State
     {

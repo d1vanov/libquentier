@@ -23,6 +23,7 @@
 #include <quentier/utility/Macros.h>
 #include <quentier/types/ErrorString.h>
 #include <quentier/types/Note.h>
+
 #include <QtGlobal>
 #include <QStringList>
 #include <QFlag>
@@ -49,14 +50,14 @@ public:
 
     Q_DECLARE_FLAGS(Types, type)
 
-        virtual QTextStream & print(QTextStream & strm) const Q_DECL_OVERRIDE;
+    virtual QTextStream & print(QTextStream & strm) const override;
 };
 
 class Q_DECL_HIDDEN ENMLConverterPrivate: public QObject
 {
     Q_OBJECT
 public:
-    explicit ENMLConverterPrivate(QObject * parent = Q_NULLPTR);
+    explicit ENMLConverterPrivate(QObject * parent = nullptr);
     ~ENMLConverterPrivate();
 
     typedef ENMLConverter::NoteContentToHtmlExtraData NoteContentToHtmlExtraData;
@@ -91,7 +92,7 @@ public:
     static bool noteContentToListOfWords(const QString & noteContent,
                                          QStringList & listOfWords,
                                          ErrorString & errorMessage,
-                                         QString * plainText = Q_NULLPTR);
+                                         QString * plainText = nullptr);
 
     static QStringList plainTextToListOfWords(const QString & plainText);
 

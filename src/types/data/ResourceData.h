@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Dmitry Ivanov
+ * Copyright 2016-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -44,8 +44,8 @@ public:
     qevercloud::Optional<QString>   m_noteLocalUid;
 
 private:
-    ResourceData & operator=(const ResourceData & other) Q_DECL_EQ_DELETE;
-    ResourceData & operator=(ResourceData && other) Q_DECL_EQ_DELETE;
+    ResourceData & operator=(const ResourceData & other)  = delete;
+    ResourceData & operator=(ResourceData && other)  = delete;
 };
 
 } // namespace quentier

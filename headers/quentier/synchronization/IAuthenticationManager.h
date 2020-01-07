@@ -22,15 +22,13 @@
 #include <quentier/utility/Linkage.h>
 #include <quentier/utility/Macros.h>
 #include <quentier/types/ErrorString.h>
+
+#include <qt5qevercloud/QEverCloud.h>
+
 #include <QObject>
 #include <QHash>
 #include <QVector>
 
-#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
-#include <qt5qevercloud/QEverCloud.h>
-#else
-#include <qt4qevercloud/QEverCloud.h>
-#endif
 
 namespace quentier {
 
@@ -38,20 +36,17 @@ class QUENTIER_EXPORT IAuthenticationManager: public QObject
 {
     Q_OBJECT
 protected:
-    explicit IAuthenticationManager(QObject * parent = Q_NULLPTR);
+    explicit IAuthenticationManager(QObject * parent = nullptr);
 
 public:
     virtual ~IAuthenticationManager();
 
 Q_SIGNALS:
-    void sendAuthenticationResult(bool success,
-                                  qevercloud::UserID userId,
-                                  QString authToken,
-                                  qevercloud::Timestamp authTokenExpirationTime,
-                                  QString shardId,
-                                  QString noteStoreUrl,
-                                  QString webApiUrlPrefix,
-                                  ErrorString errorDescription);
+    void sendAuthenticationResult(
+        bool success, qevercloud::UserID userId,
+        QString authToken, qevercloud::Timestamp authTokenExpirationTime,
+        QString shardId, QString noteStoreUrl, QString webApiUrlPrefix,
+        ErrorString errorDescription);
 
 public Q_SLOTS:
     virtual void onAuthenticationRequest() = 0;

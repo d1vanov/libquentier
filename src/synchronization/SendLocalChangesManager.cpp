@@ -64,6 +64,10 @@ SendLocalChangesManager::SendLocalChangesManager(
     m_savedSearches(),
     m_notebooks(),
     m_notes(),
+    m_sendingTags(false),
+    m_sendingSavedSearches(false),
+    m_sendingNotebooks(false),
+    m_sendingNotes(false),
     m_linkedNotebookGuidsForWhichStuffWasRequestedFromLocalStorage(),
     m_linkedNotebookAuthData(),
     m_authenticationTokensAndShardIdsByLinkedNotebookGuid(),
@@ -1760,6 +1764,13 @@ void SendLocalChangesManager::sendTags()
 {
     QNDEBUG("SendLocalChangesManager::sendTags");
 
+    if (m_sendingTags) {
+        QNDEBUG("Sending tags is already in progress");
+        return;
+    }
+
+    FlagGuard guard(m_sendingTags);
+
     ErrorString errorDescription;
     bool res = sortTagsByParentChildRelations(m_tags, errorDescription);
     if (Q_UNLIKELY(!res)) {
@@ -1779,7 +1790,7 @@ void SendLocalChangesManager::sendTags()
 
         errorDescription.clear();
         qint32 rateLimitSeconds = 0;
-        qint32 errorCode = qevercloud::EDAMErrorCode::UNKNOWN;
+        qint32 errorCode = static_cast<qint32>(qevercloud::EDAMErrorCode::UNKNOWN);
 
         QString linkedNotebookAuthToken;
         QString linkedNotebookShardId;
@@ -1846,7 +1857,7 @@ void SendLocalChangesManager::sendTags()
             }
         }
 
-        INoteStore * pNoteStore = Q_NULLPTR;
+        INoteStore * pNoteStore = nullptr;
         if (tag.hasLinkedNotebookGuid())
         {
             LinkedNotebook linkedNotebook;
@@ -1896,7 +1907,8 @@ void SendLocalChangesManager::sendTags()
                                               linkedNotebookAuthToken);
         }
 
-        if (errorCode == qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED)
+        if (errorCode ==
+            static_cast<qint32>(qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED))
         {
             if (rateLimitSeconds < 0)
             {
@@ -1932,7 +1944,8 @@ void SendLocalChangesManager::sendTags()
             Q_EMIT rateLimitExceeded(rateLimitSeconds);
             return;
         }
-        else if (errorCode == qevercloud::EDAMErrorCode::AUTH_EXPIRED)
+        else if (errorCode ==
+                 static_cast<qint32>(qevercloud::EDAMErrorCode::AUTH_EXPIRED))
         {
             if (!tag.hasLinkedNotebookGuid())
             {
@@ -1966,7 +1979,8 @@ void SendLocalChangesManager::sendTags()
 
             return;
         }
-        else if (errorCode == qevercloud::EDAMErrorCode::DATA_CONFLICT)
+        else if (errorCode ==
+                 static_cast<qint32>(qevercloud::EDAMErrorCode::DATA_CONFLICT))
         {
             QNINFO("Encountered DATA_CONFLICT exception while trying to send "
                    "new and/or modified tags, it means the incremental sync "
@@ -2038,7 +2052,7 @@ void SendLocalChangesManager::sendTags()
                 return;
             }
 
-            int * pLastUpdateCount = Q_NULLPTR;
+            int * pLastUpdateCount = nullptr;
             if (!tag.hasLinkedNotebookGuid())
             {
                 pLastUpdateCount = &m_lastUpdateCount;
@@ -2137,6 +2151,13 @@ void SendLocalChangesManager::sendSavedSearches()
 {
     QNDEBUG("SendLocalChangesManager::sendSavedSearches");
 
+    if (m_sendingSavedSearches) {
+        QNDEBUG("Sending saved searches is already in progress");
+        return;
+    }
+
+    FlagGuard guard(m_sendingSavedSearches);
+
     ErrorString errorDescription;
     INoteStore & noteStore = m_manager.noteStore();
     size_t numSentSavedSearches = 0;
@@ -2147,7 +2168,7 @@ void SendLocalChangesManager::sendSavedSearches()
 
         errorDescription.clear();
         qint32 rateLimitSeconds = 0;
-        qint32 errorCode = qevercloud::EDAMErrorCode::UNKNOWN;
+        qint32 errorCode = static_cast<qint32>(qevercloud::EDAMErrorCode::UNKNOWN);
 
         bool creatingSearch = !search.hasUpdateSequenceNumber();
         if (creatingSearch) {
@@ -2161,7 +2182,8 @@ void SendLocalChangesManager::sendSavedSearches()
                                                     rateLimitSeconds);
         }
 
-        if (errorCode == qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED)
+        if (errorCode ==
+            static_cast<qint32>(qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED))
         {
             if (rateLimitSeconds < 0)
             {
@@ -2197,12 +2219,14 @@ void SendLocalChangesManager::sendSavedSearches()
             Q_EMIT rateLimitExceeded(rateLimitSeconds);
             return;
         }
-        else if (errorCode == qevercloud::EDAMErrorCode::AUTH_EXPIRED)
+        else if (errorCode ==
+                 static_cast<qint32>(qevercloud::EDAMErrorCode::AUTH_EXPIRED))
         {
             handleAuthExpiration();
             return;
         }
-        else if (errorCode == qevercloud::EDAMErrorCode::DATA_CONFLICT)
+        else if (errorCode ==
+                 static_cast<qint32>(qevercloud::EDAMErrorCode::DATA_CONFLICT))
         {
             QNINFO("Encountered DATA_CONFLICT exception while "
                    "trying to send new and/or modified saved searches, "
@@ -2291,6 +2315,13 @@ void SendLocalChangesManager::sendNotebooks()
 {
     QNDEBUG("SendLocalChangesManager::sendNotebooks");
 
+    if (m_sendingNotebooks) {
+        QNDEBUG("Sending notebooks is already in progress");
+        return;
+    }
+
+    FlagGuard guard(m_sendingNotebooks);
+
     ErrorString errorDescription;
 
     QHash<QString, QString> notebookGuidsByLocalUid;
@@ -2304,7 +2335,7 @@ void SendLocalChangesManager::sendNotebooks()
 
         errorDescription.clear();
         qint32 rateLimitSeconds = 0;
-        qint32 errorCode = qevercloud::EDAMErrorCode::UNKNOWN;
+        qint32 errorCode = static_cast<qint32>(qevercloud::EDAMErrorCode::UNKNOWN);
 
         QString linkedNotebookAuthToken;
         QString linkedNotebookShardId;
@@ -2369,7 +2400,7 @@ void SendLocalChangesManager::sendNotebooks()
             }
         }
 
-        INoteStore * pNoteStore = Q_NULLPTR;
+        INoteStore * pNoteStore = nullptr;
         if (notebook.hasLinkedNotebookGuid())
         {
             LinkedNotebook linkedNotebook;
@@ -2419,7 +2450,8 @@ void SendLocalChangesManager::sendNotebooks()
                                                    linkedNotebookAuthToken);
         }
 
-        if (errorCode == qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED)
+        if (errorCode ==
+            static_cast<qint32>(qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED))
         {
             if (rateLimitSeconds < 0)
             {
@@ -2454,7 +2486,8 @@ void SendLocalChangesManager::sendNotebooks()
             Q_EMIT rateLimitExceeded(rateLimitSeconds);
             return;
         }
-        else if (errorCode == qevercloud::EDAMErrorCode::AUTH_EXPIRED)
+        else if (errorCode ==
+                 static_cast<qint32>(qevercloud::EDAMErrorCode::AUTH_EXPIRED))
         {
             if (!notebook.hasLinkedNotebookGuid()) {
                 handleAuthExpiration();
@@ -2488,7 +2521,8 @@ void SendLocalChangesManager::sendNotebooks()
 
             return;
         }
-        else if (errorCode == qevercloud::EDAMErrorCode::DATA_CONFLICT)
+        else if (errorCode ==
+                 static_cast<qint32>(qevercloud::EDAMErrorCode::DATA_CONFLICT))
         {
             QNINFO("Encountered DATA_CONFLICT exception while "
                    "trying to send new and/or modified notebooks, "
@@ -2550,7 +2584,7 @@ void SendLocalChangesManager::sendNotebooks()
                 return;
             }
 
-            int * pLastUpdateCount = Q_NULLPTR;
+            int * pLastUpdateCount = nullptr;
             if (!notebook.hasLinkedNotebookGuid())
             {
                 pLastUpdateCount = &m_lastUpdateCount;
@@ -2665,6 +2699,13 @@ void SendLocalChangesManager::sendNotes()
 {
     QNDEBUG("SendLocalChangesManager::sendNotes");
 
+    if (m_sendingNotes) {
+        QNDEBUG("Sending notes is already in progress");
+        return;
+    }
+
+    FlagGuard guard(m_sendingNotes);
+
     ErrorString errorDescription;
     size_t numSentNotes = 0;
 
@@ -2674,7 +2715,7 @@ void SendLocalChangesManager::sendNotes()
 
         errorDescription.clear();
         qint32 rateLimitSeconds = 0;
-        qint32 errorCode = qevercloud::EDAMErrorCode::UNKNOWN;
+        qint32 errorCode = static_cast<qint32>(qevercloud::EDAMErrorCode::UNKNOWN);
 
         if (!note.hasNotebookGuid())
         {
@@ -2760,7 +2801,7 @@ void SendLocalChangesManager::sendNotes()
             }
         }
 
-        INoteStore * pNoteStore = Q_NULLPTR;
+        INoteStore * pNoteStore = nullptr;
         if (notebook.hasLinkedNotebookGuid())
         {
             LinkedNotebook linkedNotebook;
@@ -2869,7 +2910,8 @@ void SendLocalChangesManager::sendNotes()
                                                linkedNotebookAuthToken);
         }
 
-        if (errorCode == qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED)
+        if (errorCode ==
+            static_cast<qint32>(qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED))
         {
             if (rateLimitSeconds < 0)
             {
@@ -2904,7 +2946,8 @@ void SendLocalChangesManager::sendNotes()
             Q_EMIT rateLimitExceeded(rateLimitSeconds);
             return;
         }
-        else if (errorCode == qevercloud::EDAMErrorCode::AUTH_EXPIRED)
+        else if (errorCode ==
+                 static_cast<qint32>(qevercloud::EDAMErrorCode::AUTH_EXPIRED))
         {
             if (!notebook.hasLinkedNotebookGuid()) {
                 handleAuthExpiration();
@@ -2983,7 +3026,7 @@ void SendLocalChangesManager::sendNotes()
                 return;
             }
 
-            int * pLastUpdateCount = Q_NULLPTR;
+            int * pLastUpdateCount = nullptr;
             if (!notebook.hasLinkedNotebookGuid())
             {
                 pLastUpdateCount = &m_lastUpdateCount;

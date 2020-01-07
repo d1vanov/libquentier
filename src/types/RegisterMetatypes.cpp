@@ -57,13 +57,6 @@ void registerMetatypes()
     qRegisterMetaType<qevercloud::Notebook>("qevercloud::Notebook");
     qRegisterMetaType<qevercloud::Resource>("qevercloud::Resource");
 
-    qRegisterMetaType<QSharedPointer<qevercloud::EverCloudExceptionData> >(
-        "QSharedPointer<qevercloud::EverCloudExceptionData>");
-
-    typedef qevercloud::EverCloudExceptionData EverCloudExceptionData;
-    qRegisterMetaType<QSharedPointer<EverCloudExceptionData> >(
-        "QSharedPointer<EverCloudExceptionData>");
-
     qRegisterMetaType<QVector<LinkedNotebookAuthData> >(
         "QVector<LinkedNotebookAuthData>");
 

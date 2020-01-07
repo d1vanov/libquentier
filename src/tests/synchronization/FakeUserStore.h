@@ -20,8 +20,10 @@
 #define LIB_QUENTIER_TESTS_SYNCHRONIZATION_FAKE_USER_STORE_H
 
 #include <quentier_private/synchronization/IUserStore.h>
+
 #include <quentier/types/User.h>
 #include <quentier/utility/Macros.h>
+
 #include <QHash>
 
 namespace quentier {
@@ -38,31 +40,37 @@ public:
     void setEdamVersionMinor(const qint16 edamVersionMinor);
 
     const qevercloud::AccountLimits * findAccountLimits(
-        const qevercloud::ServiceLevel::type serviceLevel) const;
-    void setAccountLimits(const qevercloud::ServiceLevel::type serviceLevel,
-                          const qevercloud::AccountLimits & limits);
+        const qevercloud::ServiceLevel serviceLevel) const;
+
+    void setAccountLimits(
+        const qevercloud::ServiceLevel serviceLevel,
+        const qevercloud::AccountLimits & limits);
 
     const User * findUser(const qint32 id) const;
     void setUser(const qint32 id, const User & user);
 
 public:
     // IUserStore interface
-    virtual IUserStore * create(const QString & host) const Q_DECL_OVERRIDE;
-    virtual bool checkVersion(const QString & clientName,
-                              qint16 edamVersionMajor, qint16 edamVersionMinor,
-                              ErrorString & errorDescription) Q_DECL_OVERRIDE;
-    virtual qint32 getUser(User & user, ErrorString & errorDescription,
-                           qint32 & rateLimitSeconds) Q_DECL_OVERRIDE;
-    virtual qint32 getAccountLimits(const qevercloud::ServiceLevel::type serviceLevel,
-                                    qevercloud::AccountLimits & limits,
-                                    ErrorString & errorDescription,
-                                    qint32 & rateLimitSeconds) Q_DECL_OVERRIDE;
+    virtual IUserStore * create(const QString & host) const override;
+
+    virtual bool checkVersion(
+        const QString & clientName, qint16 edamVersionMajor,
+        qint16 edamVersionMinor, ErrorString & errorDescription) override;
+
+    virtual qint32 getUser(
+        User & user, ErrorString & errorDescription,
+        qint32 & rateLimitSeconds) override;
+
+    virtual qint32 getAccountLimits(
+        const qevercloud::ServiceLevel serviceLevel,
+        qevercloud::AccountLimits & limits,
+        ErrorString & errorDescription, qint32 & rateLimitSeconds) override;
 
 private:
     qint16      m_edamVersionMajor;
     qint16      m_edamVersionMinor;
 
-    typedef QHash<qevercloud::ServiceLevel::type, qevercloud::AccountLimits>
+    typedef QHash<qevercloud::ServiceLevel, qevercloud::AccountLimits>
         AccountLimitsByServiceLevel;
 
     AccountLimitsByServiceLevel     m_accountLimits;

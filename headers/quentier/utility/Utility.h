@@ -21,14 +21,10 @@
 
 #include <quentier/utility/Linkage.h>
 #include <quentier/types/ErrorString.h>
-#include <QtGlobal>
 
-#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
 #include <qt5qevercloud/QEverCloud.h>
-#else
-#include <qt4qevercloud/QEverCloud.h>
-#endif
 
+#include <QtGlobal>
 #include <QByteArray>
 #include <QString>
 #include <QUrl>
@@ -139,7 +135,7 @@ const QString QUENTIER_EXPORT printableDateTimeFromTimestamp(
                                 DateTimePrint::Options(DateTimePrint::IncludeNumericTimestamp |
                                                        DateTimePrint::IncludeMilliseconds |
                                                        DateTimePrint::IncludeTimezone),
-                                const char * customFormat = Q_NULLPTR);
+                                const char * customFormat = nullptr);
 
 /**
  * applicationStyle provides the current style of the application

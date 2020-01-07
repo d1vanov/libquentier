@@ -253,7 +253,7 @@ void SharedNotebook::setPrivilegeLevel(const qint8 privilegeLevel)
             qevercloud::SharedNotebookPrivilegeLevel::BUSINESS_FULL_ACCESS))
     {
         d->m_qecSharedNotebook.privilege =
-            static_cast<qevercloud::SharedNotebookPrivilegeLevel::type>(privilegeLevel);
+            static_cast<qevercloud::SharedNotebookPrivilegeLevel>(privilegeLevel);
     }
     else
     {

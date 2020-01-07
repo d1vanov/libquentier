@@ -40,7 +40,7 @@ namespace quentier {
  * by pNonStandardLocation (if any) is set to false
  */
 const QString QUENTIER_EXPORT applicationPersistentStoragePath(
-                                    bool * pNonStandardLocation = Q_NULLPTR);
+    bool * pNonStandardLocation = nullptr);
 
 /**
  * accountPersistentStoragePath returns the path to account-specific folder

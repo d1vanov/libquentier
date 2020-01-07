@@ -36,19 +36,19 @@ public:
         const Resource & resource,
         const Callback & callback,
         NoteEditorPrivate & noteEditorPrivate,
-        QUndoCommand * parent = Q_NULLPTR);
+        QUndoCommand * parent = nullptr);
 
     RemoveResourceUndoCommand(
         const Resource & resource,
         const Callback & callback,
         NoteEditorPrivate & noteEditorPrivate,
         const QString & text,
-        QUndoCommand * parent = Q_NULLPTR);
+        QUndoCommand * parent = nullptr);
 
     virtual ~RemoveResourceUndoCommand();
 
-    virtual void undoImpl() Q_DECL_OVERRIDE;
-    virtual void redoImpl() Q_DECL_OVERRIDE;
+    virtual void undoImpl() override;
+    virtual void redoImpl() override;
 
 private:
     Resource     m_resource;

@@ -31,7 +31,7 @@ class GenericResourceImageJavaScriptHandler: public QObject
     Q_OBJECT
 public:
     explicit GenericResourceImageJavaScriptHandler(
-        const QHash<QByteArray, QString> & cache, QObject * parent = Q_NULLPTR);
+        const QHash<QByteArray, QString> & cache, QObject * parent = nullptr);
 
 Q_SIGNALS:
     void genericResourceImageFound(QByteArray resourceHash,

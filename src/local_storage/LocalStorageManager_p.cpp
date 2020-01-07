@@ -132,7 +132,7 @@ LocalStorageManagerPrivate::LocalStorageManagerPrivate(
     m_insertOrReplaceUserAttributesRecentMailedAddressesQueryPrepared(false),
     m_deleteUserQuery(),
     m_deleteUserQueryPrepared(false),
-    m_pLocalStoragePatchManager(Q_NULLPTR),
+    m_pLocalStoragePatchManager(nullptr),
     m_stringUtils(),
     m_preservedAsterisk()
 {
@@ -437,7 +437,7 @@ void LocalStorageManagerPrivate::switchUser(
 
     if (m_pLocalStoragePatchManager) {
         m_pLocalStoragePatchManager->deleteLater();
-        m_pLocalStoragePatchManager = Q_NULLPTR;
+        m_pLocalStoragePatchManager = nullptr;
     }
 
     m_currentAccount = account;
@@ -5833,14 +5833,17 @@ bool LocalStorageManagerPrivate::insertOrReplaceNotebookRestrictions(
 
 #undef BIND_RESTRICTION
 
-    query.bindValue(QStringLiteral(":updateWhichSharedNotebookRestrictions"),
-                    notebookRestrictions.updateWhichSharedNotebookRestrictions.isSet()
-                    ? notebookRestrictions.updateWhichSharedNotebookRestrictions.ref()
-                    : nullValue);
-    query.bindValue(QStringLiteral(":expungeWhichSharedNotebookRestrictions"),
-                    notebookRestrictions.expungeWhichSharedNotebookRestrictions.isSet()
-                    ? notebookRestrictions.expungeWhichSharedNotebookRestrictions.ref()
-                    : nullValue);
+    query.bindValue(
+        QStringLiteral(":updateWhichSharedNotebookRestrictions"),
+        notebookRestrictions.updateWhichSharedNotebookRestrictions.isSet()
+        ? static_cast<int>(notebookRestrictions.updateWhichSharedNotebookRestrictions.ref())
+        : nullValue);
+
+    query.bindValue(
+        QStringLiteral(":expungeWhichSharedNotebookRestrictions"),
+        notebookRestrictions.expungeWhichSharedNotebookRestrictions.isSet()
+        ? static_cast<int>(notebookRestrictions.expungeWhichSharedNotebookRestrictions.ref())
+        : nullValue);
 
     res = query.exec();
     DATABASE_CHECK_AND_SET_ERROR()
@@ -5894,7 +5897,7 @@ bool LocalStorageManagerPrivate::insertOrReplaceSharedNotebook(
                      : nullValue));
     query.bindValue(QStringLiteral(":sharedNotebookPrivilegeLevel"),
                     (sharedNotebook.hasPrivilegeLevel()
-                     ? sharedNotebook.privilegeLevel()
+                     ? static_cast<int>(sharedNotebook.privilegeLevel())
                      : nullValue));
     query.bindValue(QStringLiteral(":sharedNotebookRecipientReminderNotifyEmail"),
                     (sharedNotebook.hasReminderNotifyEmail()
@@ -6014,11 +6017,11 @@ bool LocalStorageManagerPrivate::insertOrReplaceUser(
                          : nullValue));
         query.bindValue(QStringLiteral(":privilege"),
                         (user.hasPrivilegeLevel()
-                         ? user.privilegeLevel()
+                         ? static_cast<int>(user.privilegeLevel())
                          : nullValue));
         query.bindValue(QStringLiteral(":serviceLevel"),
                         (user.hasServiceLevel()
-                         ? user.serviceLevel()
+                         ? static_cast<int>(user.serviceLevel())
                          : nullValue));
         query.bindValue(QStringLiteral(":userCreationTimestamp"),
                         (user.hasCreationTimestamp()
@@ -6212,7 +6215,7 @@ bool LocalStorageManagerPrivate::insertOrReplaceBusinessUserInfo(
                      : nullValue));
     query.bindValue(QStringLiteral(":role"),
                     (info.role.isSet()
-                     ? info.role.ref()
+                     ? static_cast<int>(info.role.ref())
                      : nullValue));
     query.bindValue(QStringLiteral(":businessInfoEmail"),
                     (info.email.isSet()
@@ -6239,16 +6242,16 @@ bool LocalStorageManagerPrivate::insertOrReplaceAccounting(
 
     QVariant nullValue;
 
-#define CHECK_AND_BIND_VALUE(name)                                             \
+#define CHECK_AND_BIND_VALUE(name, ...)                                        \
     query.bindValue(QStringLiteral(":" #name),                                 \
                     accounting.name.isSet()                                    \
-                    ? accounting.name.ref()                                    \
+                    ? __VA_ARGS__(accounting.name.ref())                       \
                     : nullValue)                                               \
 // CHECK_AND_BIND_VALUE
 
     CHECK_AND_BIND_VALUE(uploadLimitEnd);
     CHECK_AND_BIND_VALUE(uploadLimitNextMonth);
-    CHECK_AND_BIND_VALUE(premiumServiceStatus);
+    CHECK_AND_BIND_VALUE(premiumServiceStatus, static_cast<int>);
     CHECK_AND_BIND_VALUE(premiumOrderNumber);
     CHECK_AND_BIND_VALUE(premiumCommerceService);
     CHECK_AND_BIND_VALUE(premiumServiceStart);
@@ -6333,10 +6336,10 @@ bool LocalStorageManagerPrivate::insertOrReplaceUserAttributes(
 
         query.bindValue(QStringLiteral(":id"), id);
 
-#define CHECK_AND_BIND_VALUE(name)                                             \
+#define CHECK_AND_BIND_VALUE(name, ...)                                        \
     query.bindValue(QStringLiteral(":" #name),                                 \
                     (attributes.name.isSet()                                   \
-                     ? attributes.name.ref()                                   \
+                     ? __VA_ARGS__(attributes.name.ref())                      \
                      : nullValue))                                             \
 // CHECK_AND_BIND_VALUE
 
@@ -6362,7 +6365,7 @@ bool LocalStorageManagerPrivate::insertOrReplaceUserAttributes(
         CHECK_AND_BIND_VALUE(recognitionLanguage);
         CHECK_AND_BIND_VALUE(referralProof);
         CHECK_AND_BIND_VALUE(businessAddress);
-        CHECK_AND_BIND_VALUE(reminderEmailConfig);
+        CHECK_AND_BIND_VALUE(reminderEmailConfig, static_cast<int>);
         CHECK_AND_BIND_VALUE(emailAddressLastConfirmed);
         CHECK_AND_BIND_VALUE(passwordUpdated);
 
@@ -8251,7 +8254,7 @@ bool LocalStorageManagerPrivate::insertOrReplaceSharedNote(
                      : nullValue));
     query.bindValue(QStringLiteral(":sharedNoteRecipientContactType"),
                     (sharedNote.hasRecipientIdentityContactType()
-                     ? sharedNote.recipientIdentityContactType()
+                     ? static_cast<int>(sharedNote.recipientIdentityContactType())
                      : nullValue));
     query.bindValue(QStringLiteral(":sharedNoteRecipientContactPhotoUrl"),
                     (sharedNote.hasRecipientIdentityContactPhotoUrl()
@@ -8295,7 +8298,7 @@ bool LocalStorageManagerPrivate::insertOrReplaceSharedNote(
                      : nullValue));
     query.bindValue(QStringLiteral(":sharedNotePrivilegeLevel"),
                     (sharedNote.hasPrivilegeLevel()
-                     ? sharedNote.privilegeLevel()
+                     ? static_cast<int>(sharedNote.privilegeLevel())
                      : nullValue));
     query.bindValue(QStringLiteral(":sharedNoteCreationTimestamp"),
                     (sharedNote.hasCreationTimestamp()
@@ -10068,7 +10071,7 @@ bool LocalStorageManagerPrivate::insertOrReplaceSavedSearch(
                      : nullValue));
     query.bindValue(QStringLiteral(":format"),
                     (search.hasQueryFormat()
-                     ? search.queryFormat()
+                     ? static_cast<int>(search.queryFormat())
                      : nullValue));
     query.bindValue(QStringLiteral(":updateSequenceNumber"),
                     (search.hasUpdateSequenceNumber()
@@ -11043,7 +11046,7 @@ bool LocalStorageManagerPrivate::fillUserFromSqlRecord(
     FIND_AND_SET_USER_ATTRIBUTE(hideSponsorBilling, hideSponsorBilling, int, bool);
     FIND_AND_SET_USER_ATTRIBUTE(useEmailAutoFiling, useEmailAutoFiling, int, bool);
     FIND_AND_SET_USER_ATTRIBUTE(reminderEmailConfig, reminderEmailConfig,
-                                int, qevercloud::ReminderEmailConfig::type);
+                                int, qevercloud::ReminderEmailConfig);
     FIND_AND_SET_USER_ATTRIBUTE(emailAddressLastConfirmed, emailAddressLastConfirmed,
                                 qint64, qevercloud::Timestamp);
     FIND_AND_SET_USER_ATTRIBUTE(passwordUpdated, passwordUpdated,
@@ -11079,7 +11082,7 @@ bool LocalStorageManagerPrivate::fillUserFromSqlRecord(
     FIND_AND_SET_ACCOUNTING_PROPERTY(uploadLimitNextMonth, uploadLimitNextMonth,
                                      qint64, qint64);
     FIND_AND_SET_ACCOUNTING_PROPERTY(premiumServiceStatus, premiumServiceStatus,
-                                     int, qevercloud::PremiumOrderStatus::type);
+                                     int, qevercloud::PremiumOrderStatus);
     FIND_AND_SET_ACCOUNTING_PROPERTY(premiumOrderNumber, premiumOrderNumber,
                                      QString, QString);
     FIND_AND_SET_ACCOUNTING_PROPERTY(premiumCommerceService, premiumCommerceService,
@@ -11172,7 +11175,7 @@ bool LocalStorageManagerPrivate::fillUserFromSqlRecord(
     FIND_AND_SET_BUSINESS_USER_INFO_PROPERTY(businessName, businessName,
                                              QString, QString);
     FIND_AND_SET_BUSINESS_USER_INFO_PROPERTY(role, role, int,
-                                             qevercloud::BusinessUserRole::type);
+                                             qevercloud::BusinessUserRole);
     FIND_AND_SET_BUSINESS_USER_INFO_PROPERTY(businessInfoEmail, email,
                                              QString, QString);
 

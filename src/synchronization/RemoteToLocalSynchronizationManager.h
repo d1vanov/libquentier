@@ -72,7 +72,7 @@ public:
 
     explicit RemoteToLocalSynchronizationManager(IManager & manager,
                                                  const QString & host,
-                                                 QObject * parent = Q_NULLPTR);
+                                                 QObject * parent = nullptr);
     ~RemoteToLocalSynchronizationManager();
 
     bool active() const;
@@ -727,7 +727,7 @@ private:
 
     // Infrastructure for processing of conflicts occurred during sync
     Note createConflictingNote(const Note & originalNote,
-                               const qevercloud::Note * pRemoteNote = Q_NULLPTR) const;
+                               const qevercloud::Note * pRemoteNote = nullptr) const;
     void overrideLocalNoteWithRemoteNote(Note & localNote,
                                          const qevercloud::Note & remoteNote) const;
     void processResourceConflictAsNoteConflict(Note & remoteNote,
@@ -828,7 +828,7 @@ private:
         Note        m_localConflictingNote;
         Resource    m_remoteNoteResourceWithoutFullData;
 
-        virtual QTextStream & print(QTextStream & strm) const Q_DECL_OVERRIDE;
+        virtual QTextStream & print(QTextStream & strm) const override;
     };
 
     struct SyncMode

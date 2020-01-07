@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Dmitry Ivanov
+ * Copyright 2016-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -50,8 +50,8 @@ public:
     qevercloud::Optional<QString>   m_parentLocalUid;
 
 private:
-    TagData & operator=(const TagData & other) Q_DECL_EQ_DELETE;
-    TagData & operator=(TagData && other) Q_DECL_EQ_DELETE;
+    TagData & operator=(const TagData & other)  = delete;
+    TagData & operator=(TagData && other)  = delete;
 };
 
 } // namespace quentier

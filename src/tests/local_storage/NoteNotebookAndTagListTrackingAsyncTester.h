@@ -30,7 +30,7 @@ class NoteNotebookAndTagListTrackingAsyncTester: public QObject
 {
     Q_OBJECT
 public:
-    explicit NoteNotebookAndTagListTrackingAsyncTester(QObject * parent = Q_NULLPTR);
+    explicit NoteNotebookAndTagListTrackingAsyncTester(QObject * parent = nullptr);
     ~NoteNotebookAndTagListTrackingAsyncTester();
 
 public Q_SLOTS:

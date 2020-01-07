@@ -29,7 +29,7 @@ class Q_DECL_HIDDEN WebSocketClientWrapper: public QObject
     Q_OBJECT
 public:
     explicit WebSocketClientWrapper(QWebSocketServer * server,
-                                    QObject * parent = Q_NULLPTR);
+                                    QObject * parent = nullptr);
 
 Q_SIGNALS:
     void clientConnected(WebSocketTransport * client);

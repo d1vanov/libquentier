@@ -29,7 +29,7 @@ class LocalStorageManagerTester: public QObject
 {
     Q_OBJECT
 public:
-    LocalStorageManagerTester(QObject * parent = Q_NULLPTR);
+    LocalStorageManagerTester(QObject * parent = nullptr);
     virtual ~LocalStorageManagerTester();
 
 private Q_SLOTS:

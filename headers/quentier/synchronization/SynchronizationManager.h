@@ -25,6 +25,7 @@
 #include <quentier/types/LinkedNotebook.h>
 #include <quentier/utility/Linkage.h>
 #include <quentier/utility/Macros.h>
+
 #include <QObject>
 
 namespace quentier {
@@ -61,10 +62,11 @@ public:
      *                                  SynchronizationManager; for clients of
      *                                  the library this pointer should stay nullptr
      */
-    SynchronizationManager(const QString & host,
-                           LocalStorageManagerAsync & localStorageManagerAsync,
-                           IAuthenticationManager & authenticationManager,
-                           SynchronizationManagerDependencyInjector * pInjector = Q_NULLPTR);
+    SynchronizationManager(
+        const QString & host,
+        LocalStorageManagerAsync & localStorageManagerAsync,
+        IAuthenticationManager & authenticationManager,
+        SynchronizationManagerDependencyInjector * pInjector = nullptr);
 
     virtual ~SynchronizationManager();
 
@@ -236,8 +238,8 @@ Q_SIGNALS:
      * @param userId            The ID of the user for which the revoke of
      *                          the authentication was requested
      */
-    void authenticationRevoked(bool success, ErrorString errorDescription,
-                               qevercloud::UserID userId);
+    void authenticationRevoked(
+        bool success, ErrorString errorDescription, qevercloud::UserID userId);
 
     /**
      * This signal is emitted in response to the explicit attempt to authenticate
@@ -252,8 +254,8 @@ Q_SIGNALS:
      *                          authenticate the new user
      * @param account           The account of the authenticated user
      */
-    void authenticationFinished(bool success, ErrorString errorDescription,
-                                Account account);
+    void authenticationFinished(
+        bool success, ErrorString errorDescription, Account account);
 
     /**
      * This signal is emitted when the "remote to local" synchronization step
@@ -331,9 +333,9 @@ Q_SIGNALS:
      *                                  sync; if current sync is the first one,
      *                                  this value is zero
      */
-    void syncChunksDownloadProgress(qint32 highestDownloadedUsn,
-                                    qint32 highestServerUsn,
-                                    qint32 lastPreviousUsn);
+    void syncChunksDownloadProgress(
+        qint32 highestDownloadedUsn, qint32 highestServerUsn,
+        qint32 lastPreviousUsn);
 
     /**
      * This signal is emitted when the sync chunks for the stuff from user's own
@@ -362,10 +364,9 @@ Q_SIGNALS:
      * @param linkedNotebook            The linked notebook which sync chunks
      *                                  download progress is reported
      */
-    void linkedNotebookSyncChunksDownloadProgress(qint32 highestDownloadedUsn,
-                                                  qint32 highestServerUsn,
-                                                  qint32 lastPreviousUsn,
-                                                  LinkedNotebook linkedNotebook);
+    void linkedNotebookSyncChunksDownloadProgress(
+        qint32 highestDownloadedUsn, qint32 highestServerUsn,
+        qint32 lastPreviousUsn, LinkedNotebook linkedNotebook);
 
     /**
      * This signal is emitted when the sync chunks for the stuff from linked
@@ -380,7 +381,8 @@ Q_SIGNALS:
      * @param notesDownloaded       The number of notes downloaded by the moment
      * @param totalNotesToDownload  The total number of notes that need to be downloaded
      */
-    void notesDownloadProgress(quint32 notesDownloaded, quint32 totalNotesToDownload);
+    void notesDownloadProgress(
+        quint32 notesDownloaded, quint32 totalNotesToDownload);
 
     /**
      * This signal is emitted on each successful download of full note data from
@@ -389,8 +391,8 @@ Q_SIGNALS:
      * @param notesDownloaded       The number of notes downloaded by the moment
      * @param totalNotesToDownload  The total number of notes that need to be downloaded
      */
-    void linkedNotebooksNotesDownloadProgress(quint32 notesDownloaded,
-                                              quint32 totalNotesToDownload);
+    void linkedNotebooksNotesDownloadProgress(
+        quint32 notesDownloaded, quint32 totalNotesToDownload);
 
     /**
      * This signal is emitted on each successful doenload of full resource data
@@ -402,8 +404,8 @@ Q_SIGNALS:
      * @param totalResourcesToDownload  The total number of resources that
      *                                  need to be downloaded
      */
-    void resourcesDownloadProgress(quint32 resourcesDownloaded,
-                                   quint32 totalResourcesToDownload);
+    void resourcesDownloadProgress(
+        quint32 resourcesDownloaded, quint32 totalResourcesToDownload);
 
     /**
      * This signal is emitted on each successful download of full resource data
@@ -415,8 +417,8 @@ Q_SIGNALS:
      * @param totalResourcesToDownload  The total number of resources that
      *                                  need to be downloaded
      */
-    void linkedNotebooksResourcesDownloadProgress(quint32 resourcesDownloaded,
-                                                  quint32 totalResourcesToDownload);
+    void linkedNotebooksResourcesDownloadProgress(
+        quint32 resourcesDownloaded, quint32 totalResourcesToDownload);
 
     /**
      * This signal is emitted during "send local changes" synchronization step
@@ -458,7 +460,7 @@ Q_SIGNALS:
     void setInkNoteImagesStoragePathDone(QString path);
 
 private:
-    SynchronizationManager() Q_DECL_EQ_DELETE;
+    SynchronizationManager()  = delete;
     Q_DISABLE_COPY(SynchronizationManager)
 
     SynchronizationManagerPrivate * d_ptr;

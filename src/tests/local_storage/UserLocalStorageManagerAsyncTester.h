@@ -34,7 +34,7 @@ class UserLocalStorageManagerAsyncTester : public QObject
 {
     Q_OBJECT
 public:
-    explicit UserLocalStorageManagerAsyncTester(QObject * parent = Q_NULLPTR);
+    explicit UserLocalStorageManagerAsyncTester(QObject * parent = nullptr);
     ~UserLocalStorageManagerAsyncTester();
 
 public Q_SLOTS:

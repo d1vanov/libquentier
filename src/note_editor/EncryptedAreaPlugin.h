@@ -38,7 +38,7 @@ class Q_DECL_HIDDEN EncryptedAreaPlugin: public QWidget
     Q_OBJECT
 public:
     explicit EncryptedAreaPlugin(NoteEditorPrivate & noteEditor,
-                                 QWidget * parent = Q_NULLPTR);
+                                 QWidget * parent = nullptr);
     virtual ~EncryptedAreaPlugin();
 
     bool initialize(const QStringList & parameterNames,

@@ -28,8 +28,8 @@ TagLocalStorageManagerAsyncTester::TagLocalStorageManagerAsyncTester(
         QObject * parent) :
     QObject(parent),
     m_state(STATE_UNINITIALIZED),
-    m_pLocalStorageManagerAsync(Q_NULLPTR),
-    m_pLocalStorageManagerThread(Q_NULLPTR),
+    m_pLocalStorageManagerAsync(nullptr),
+    m_pLocalStorageManagerThread(nullptr),
     m_initialTag(),
     m_foundTag(),
     m_modifiedTag(),
@@ -574,12 +574,12 @@ void TagLocalStorageManagerAsyncTester::clear()
         m_pLocalStorageManagerThread->quit();
         m_pLocalStorageManagerThread->wait();
         m_pLocalStorageManagerThread->deleteLater();
-        m_pLocalStorageManagerThread = Q_NULLPTR;
+        m_pLocalStorageManagerThread = nullptr;
     }
 
     if (m_pLocalStorageManagerAsync) {
         m_pLocalStorageManagerAsync->deleteLater();
-        m_pLocalStorageManagerAsync = Q_NULLPTR;
+        m_pLocalStorageManagerAsync = nullptr;
     }
 
     m_state = STATE_UNINITIALIZED;

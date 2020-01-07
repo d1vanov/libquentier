@@ -41,7 +41,7 @@ public:
         LocalStorageManagerAsync & localStorageManagerAsync,
         SynchronizationManager & synchronizationManager,
         SyncStatePersistenceManager & syncStatePersistenceManager,
-        QObject * parent = Q_NULLPTR);
+        QObject * parent = nullptr);
 
     bool receivedStartedSignal() const
     { return m_receivedStartedSignal; }

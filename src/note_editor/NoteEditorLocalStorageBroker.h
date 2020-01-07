@@ -161,7 +161,8 @@ private:
             m_pendingExpungeResourceRequests(0)
         {}
 
-        virtual QTextStream & print(QTextStream & strm) const Q_DECL_OVERRIDE;
+        virtual QTextStream & print(QTextStream & strm) const override;
+
         bool hasPendingResourceOperations() const;
 
         Note        m_notePendingSaving;

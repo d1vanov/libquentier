@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Dmitry Ivanov
+ * Copyright 2017-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -29,7 +29,7 @@ class ToDoCheckboxAutomaticInsertionHandler: public QObject
 {
     Q_OBJECT
 public:
-    explicit ToDoCheckboxAutomaticInsertionHandler(QObject * parent = Q_NULLPTR);
+    explicit ToDoCheckboxAutomaticInsertionHandler(QObject * parent = nullptr);
 
 Q_SIGNALS:
     void notifyToDoCheckboxInsertedAutomatically();

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Dmitry Ivanov
+ * Copyright 2016-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -40,7 +40,7 @@ class Q_DECL_HIDDEN GenericResourceDisplayWidget: public QWidget
 {
     Q_OBJECT
 public:
-    GenericResourceDisplayWidget(QWidget * parent = Q_NULLPTR);
+    GenericResourceDisplayWidget(QWidget * parent = nullptr);
     virtual ~GenericResourceDisplayWidget();
 
     void initialize(const QIcon & icon, const QString & name,

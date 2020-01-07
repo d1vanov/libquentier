@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Dmitry Ivanov
+ * Copyright 2018-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -22,6 +22,7 @@
 #include "INoteStore.h"
 #include "IUserStore.h"
 #include "SyncStatePersistenceManager.h"
+
 #include <quentier_private/utility/IKeychainService.h>
 
 namespace quentier {
@@ -30,10 +31,10 @@ class QUENTIER_EXPORT SynchronizationManagerDependencyInjector
 {
 public:
     SynchronizationManagerDependencyInjector() :
-        m_pNoteStore(Q_NULLPTR),
-        m_pUserStore(Q_NULLPTR),
-        m_pKeychainService(Q_NULLPTR),
-        m_pSyncStatePersistenceManager(Q_NULLPTR)
+        m_pNoteStore(nullptr),
+        m_pUserStore(nullptr),
+        m_pKeychainService(nullptr),
+        m_pSyncStatePersistenceManager(nullptr)
     {}
 
     INoteStore *        m_pNoteStore;

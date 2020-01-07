@@ -37,7 +37,7 @@ public:
         const QSharedPointer<DecryptedTextManager> & decryptedTextManager,
         NoteEditorPrivate & noteEditorPrivate,
         const Callback & callback,
-        QUndoCommand * parent = Q_NULLPTR);
+        QUndoCommand * parent = nullptr);
 
     DecryptUndoCommand(
         const EncryptDecryptUndoCommandInfo & info,
@@ -45,12 +45,12 @@ public:
         NoteEditorPrivate & noteEditorPrivate,
         const Callback & callback,
         const QString & text,
-        QUndoCommand * parent = Q_NULLPTR);
+        QUndoCommand * parent = nullptr);
 
     virtual ~DecryptUndoCommand();
 
-    virtual void redoImpl() Q_DECL_OVERRIDE;
-    virtual void undoImpl() Q_DECL_OVERRIDE;
+    virtual void redoImpl() override;
+    virtual void undoImpl() override;
 
 private:
     EncryptDecryptUndoCommandInfo           m_info;

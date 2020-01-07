@@ -19,11 +19,7 @@
 #include "InkNoteImageDownloader.h"
 #include <quentier/logging/QuentierLogger.h>
 
-#if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
-#include <qt4qevercloud/thumbnail.h>
-#else
-#include <qt5qevercloud/thumbnail.h>
-#endif
+#include <qt5qevercloud/InkNoteImageDownloader.h>
 
 #include <QFile>
 #include <QFileInfo>
@@ -96,7 +92,7 @@ void InkNoteImageDownloader::run()
                                                 "attempt to download the ink "
                                                 "note image data"));
         auto exceptionData = everCloudException.exceptionData();
-        if (!exceptionData.isNull()) {
+        if (exceptionData) {
             errorDescription.details() = exceptionData->errorMessage;
         }
 

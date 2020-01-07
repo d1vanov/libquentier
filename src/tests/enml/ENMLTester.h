@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Dmitry Ivanov
+ * Copyright 2018-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -29,7 +29,7 @@ class ENMLTester: public QObject
 {
     Q_OBJECT
 public:
-    ENMLTester(QObject * parent = Q_NULLPTR);
+    ENMLTester(QObject * parent = nullptr);
     virtual ~ENMLTester();
 
 private Q_SLOTS:

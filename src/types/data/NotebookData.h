@@ -52,8 +52,8 @@ public:
     qevercloud::Optional<QString>   m_linkedNotebookGuid;
 
 private:
-    NotebookData & operator=(const NotebookData & other) Q_DECL_EQ_DELETE;
-    NotebookData & operator=(NotebookData && other) Q_DECL_EQ_DELETE;
+    NotebookData & operator=(const NotebookData & other)  = delete;
+    NotebookData & operator=(NotebookData && other)  = delete;
 };
 
 } // namespace quentier

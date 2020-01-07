@@ -21,6 +21,7 @@
 
 #include <quentier/utility/Macros.h>
 #include <quentier/types/ErrorString.h>
+
 #include <QObject>
 #include <QUndoCommand>
 
@@ -56,12 +57,12 @@ class QuentierUndoCommand: public QObject,
 {
     Q_OBJECT
 public:
-    QuentierUndoCommand(QUndoCommand * parent = Q_NULLPTR);
-    QuentierUndoCommand(const QString & text, QUndoCommand * parent = Q_NULLPTR);
+    QuentierUndoCommand(QUndoCommand * parent = nullptr);
+    QuentierUndoCommand(const QString & text, QUndoCommand * parent = nullptr);
     virtual ~QuentierUndoCommand();
 
-    virtual void undo() Q_DECL_OVERRIDE Q_DECL_FINAL;
-    virtual void redo() Q_DECL_OVERRIDE Q_DECL_FINAL;
+    virtual void undo() override final;
+    virtual void redo() override final;
 
     bool onceUndoExecuted() const { return m_onceUndoExecuted; }
 

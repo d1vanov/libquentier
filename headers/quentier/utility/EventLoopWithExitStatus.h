@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Dmitry Ivanov
+ * Copyright 2016-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -22,6 +22,7 @@
 #include <quentier/utility/Macros.h>
 #include <quentier/utility/Linkage.h>
 #include <quentier/types/ErrorString.h>
+
 #include <QEventLoop>
 
 namespace quentier {
@@ -30,7 +31,7 @@ class QUENTIER_EXPORT EventLoopWithExitStatus : public QEventLoop
 {
     Q_OBJECT
 public:
-    explicit EventLoopWithExitStatus(QObject * parent = Q_NULLPTR);
+    explicit EventLoopWithExitStatus(QObject * parent = nullptr);
 
     struct ExitStatus
     {

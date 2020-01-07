@@ -59,16 +59,10 @@ void QUENTIER_EXPORT QuentierRestartLogging();
 
 } // namespace quentier
 
-#if QT_VERSION >= QT_VERSION_CHECK(5, 4, 0)
 #define __QNLOG_QDEBUG_HELPER()                                                \
     dbg.nospace();                                                             \
     dbg.noquote()                                                              \
 // __QNLOG_QDEBUG_HELPER
-#else
-#define __QNLOG_QDEBUG_HELPER()                                                \
-    dbg.nospace()                                                              \
-// __QNLOG_QDEBUG_HELPER
-#endif
 
 #define __QNLOG_BASE(message, level)                                           \
     if (quentier::QuentierIsLogLevelActive(quentier::LogLevel::level##Level))  \

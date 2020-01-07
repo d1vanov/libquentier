@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Dmitry Ivanov
+ * Copyright 2018-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -27,7 +27,7 @@ class FakeAuthenticationManager: public IAuthenticationManager
 {
     Q_OBJECT
 public:
-    FakeAuthenticationManager(QObject * parent = Q_NULLPTR);
+    FakeAuthenticationManager(QObject * parent = nullptr);
     virtual ~FakeAuthenticationManager();
 
     const QString & authToken() const;
@@ -39,7 +39,7 @@ public:
     void failNextRequest();
 
 public Q_SLOTS:
-    virtual void onAuthenticationRequest() Q_DECL_OVERRIDE;
+    virtual void onAuthenticationRequest() override;
 
 private:
     qevercloud::UserID  m_userId;

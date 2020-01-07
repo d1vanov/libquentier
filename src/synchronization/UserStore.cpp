@@ -22,9 +22,11 @@
 #include <quentier/logging/QuentierLogger.h>
 #include <quentier/utility/QuentierCheckPtr.h>
 
+#define USER_STORE_REQUEST_TIMEOUT_MSEC (-1)
+
 namespace quentier {
 
-UserStore::UserStore(const QSharedPointer<qevercloud::UserStore> & pQecUserStore) :
+UserStore::UserStore(const qevercloud::IUserStorePtr & pQecUserStore) :
     IUserStore(pQecUserStore)
 {
     QUENTIER_CHECK_PTR(m_pQecUserStore)
@@ -32,8 +34,8 @@ UserStore::UserStore(const QSharedPointer<qevercloud::UserStore> & pQecUserStore
 
 IUserStore * UserStore::create(const QString & host) const
 {
-    return new UserStore(QSharedPointer<qevercloud::UserStore>(
-            new qevercloud::UserStore(host)));
+    return new UserStore(qevercloud::IUserStorePtr(
+        qevercloud::newUserStore(host + QStringLiteral("/edam/user"))));
 }
 
 bool UserStore::checkVersion(const QString & clientName,
@@ -43,8 +45,12 @@ bool UserStore::checkVersion(const QString & clientName,
 {
     try
     {
+        auto ctx = qevercloud::newRequestContext(
+            m_authenticationToken,
+            USER_STORE_REQUEST_TIMEOUT_MSEC);
+
         return m_pQecUserStore->checkVersion(clientName, edamVersionMajor,
-                                             edamVersionMinor);
+                                             edamVersionMinor, ctx);
     }
     CATCH_GENERIC_EXCEPTIONS_NO_RET()
 
@@ -56,8 +62,11 @@ qint32 UserStore::getUser(User & user, ErrorString & errorDescription,
 {
     try
     {
-        user.qevercloudUser() =
-            m_pQecUserStore->getUser(m_pQecUserStore->authenticationToken());
+        auto ctx = qevercloud::newRequestContext(
+            m_authenticationToken,
+            USER_STORE_REQUEST_TIMEOUT_MSEC);
+
+        user.qevercloudUser() = m_pQecUserStore->getUser(ctx);
         return 0;
     }
     catch(const qevercloud::EDAMUserException & userException)
@@ -71,18 +80,23 @@ qint32 UserStore::getUser(User & user, ErrorString & errorDescription,
     }
     CATCH_GENERIC_EXCEPTIONS_NO_RET()
 
-    return qevercloud::EDAMErrorCode::UNKNOWN;
+    // FIXME: should actually return properly typed qevercloud::EDAMErrorCode
+    return static_cast<qint32>(qevercloud::EDAMErrorCode::UNKNOWN);
 }
 
 qint32 UserStore::getAccountLimits(
-    const qevercloud::ServiceLevel::type serviceLevel,
+    const qevercloud::ServiceLevel serviceLevel,
     qevercloud::AccountLimits & limits,
     ErrorString & errorDescription,
     qint32 & rateLimitSeconds)
 {
     try
     {
-        limits = m_pQecUserStore->getAccountLimits(serviceLevel);
+        auto ctx = qevercloud::newRequestContext(
+            m_authenticationToken,
+            USER_STORE_REQUEST_TIMEOUT_MSEC);
+
+        limits = m_pQecUserStore->getAccountLimits(serviceLevel, ctx);
         return 0;
     }
     catch(const qevercloud::EDAMUserException & userException)
@@ -96,7 +110,8 @@ qint32 UserStore::getAccountLimits(
     }
     CATCH_GENERIC_EXCEPTIONS_NO_RET()
 
-    return qevercloud::EDAMErrorCode::UNKNOWN;
+    // FIXME: should actually return properly typed qevercloud::EDAMErrorCode
+    return static_cast<qint32>(qevercloud::EDAMErrorCode::UNKNOWN);
 }
 
 qint32 UserStore::processEdamUserException(
@@ -133,7 +148,7 @@ qint32 UserStore::processEdamUserException(
         errorDescription.setBase(QT_TRANSLATE_NOOP("UserStore",
                                                    "Error"));
         errorDescription.details() = QStringLiteral("error code = ");
-        errorDescription.details() += QString::number(userException.errorCode);
+        errorDescription.details() += ToString(userException.errorCode);
         break;
     }
 
@@ -144,12 +159,13 @@ qint32 UserStore::processEdamUserException(
         errorDescription.details() += userException.parameter.ref();
     }
 
-    if (!exceptionData.isNull() && !exceptionData->errorMessage.isEmpty()) {
+    if (exceptionData && !exceptionData->errorMessage.isEmpty()) {
         errorDescription.details() += QStringLiteral(", message: ");
         errorDescription.details() += exceptionData->errorMessage;
     }
 
-    return userException.errorCode;
+    // FIXME: should actually return properly typed qevercloud::EDAMErrorCode
+    return static_cast<int>(userException.errorCode);
 }
 
 qint32 UserStore::processEdamSystemException(
@@ -190,7 +206,8 @@ qint32 UserStore::processEdamSystemException(
         }
     }
 
-    return systemException.errorCode;
+    // FIXME: should actually return properly typed qevercloud::EDAMErrorCode
+    return static_cast<int>(systemException.errorCode);
 }
 
 } // namespace quentier

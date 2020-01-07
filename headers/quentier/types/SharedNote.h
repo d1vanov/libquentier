@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Dmitry Ivanov
+ * Copyright 2016-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -22,11 +22,7 @@
 #include <quentier/utility/Printable.h>
 #include <quentier/utility/Linkage.h>
 
-#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
 #include <qt5qevercloud/QEverCloud.h>
-#else
-#include <qt4qevercloud/QEverCloud.h>
-#endif
 
 #include <QSharedDataPointer>
 
@@ -37,8 +33,8 @@ QT_FORWARD_DECLARE_CLASS(SharedNoteData)
 class QUENTIER_EXPORT SharedNote: public Printable
 {
 public:
-    typedef qevercloud::SharedNotePrivilegeLevel::type SharedNotePrivilegeLevel;
-    typedef qevercloud::ContactType::type ContactType;
+    using SharedNotePrivilegeLevel = qevercloud::SharedNotePrivilegeLevel;
+    using ContactType = qevercloud::ContactType;
 
 public:
     explicit SharedNote();
@@ -143,7 +139,7 @@ public:
     qint64 assignmentTimestamp() const;
     void setAssignmentTimestamp(const qint64 timestamp);
 
-    virtual QTextStream & print(QTextStream & strm) const Q_DECL_OVERRIDE;
+    virtual QTextStream & print(QTextStream & strm) const override;
 
 private:
     QSharedDataPointer<SharedNoteData> d;

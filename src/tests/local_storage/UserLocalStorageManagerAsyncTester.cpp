@@ -28,8 +28,8 @@ UserLocalStorageManagerAsyncTester::UserLocalStorageManagerAsyncTester(
         QObject * parent) :
     QObject(parent),
     m_state(STATE_UNINITIALIZED),
-    m_pLocalStorageManagerAsync(Q_NULLPTR),
-    m_pLocalStorageManagerThread(Q_NULLPTR),
+    m_pLocalStorageManagerAsync(nullptr),
+    m_pLocalStorageManagerThread(nullptr),
     m_userId(3),
     m_initialUser(),
     m_foundUser(),
@@ -71,7 +71,7 @@ void UserLocalStorageManagerAsyncTester::initialize()
     m_initialUser.setEmail(QStringLiteral("Fake user email"));
     m_initialUser.setName(QStringLiteral("Fake user name"));
     m_initialUser.setTimezone(QStringLiteral("Europe/Moscow"));
-    m_initialUser.setPrivilegeLevel(qevercloud::PrivilegeLevel::NORMAL);
+    m_initialUser.setPrivilegeLevel(static_cast<qint8>(qevercloud::PrivilegeLevel::NORMAL));
     m_initialUser.setCreationTimestamp(3);
     m_initialUser.setModificationTimestamp(3);
     m_initialUser.setActive(true);
@@ -477,12 +477,12 @@ void UserLocalStorageManagerAsyncTester::clear()
         m_pLocalStorageManagerThread->quit();
         m_pLocalStorageManagerThread->wait();
         m_pLocalStorageManagerThread->deleteLater();
-        m_pLocalStorageManagerThread = Q_NULLPTR;
+        m_pLocalStorageManagerThread = nullptr;
     }
 
     if (m_pLocalStorageManagerAsync) {
         m_pLocalStorageManagerAsync->deleteLater();
-        m_pLocalStorageManagerAsync = Q_NULLPTR;
+        m_pLocalStorageManagerAsync = nullptr;
     }
 
     m_state = STATE_UNINITIALIZED;

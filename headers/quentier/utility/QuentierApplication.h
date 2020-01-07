@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Dmitry Ivanov
+ * Copyright 2016-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -32,8 +32,8 @@ public:
     QuentierApplication(int & argc, char * argv[]);
     virtual ~QuentierApplication();
 
-    virtual bool notify(QObject * pObject, QEvent * pEvent) Q_DECL_OVERRIDE;
-    virtual bool event(QEvent * pEvent) Q_DECL_OVERRIDE;
+    virtual bool notify(QObject * pObject, QEvent * pEvent) override;
+    virtual bool event(QEvent * pEvent) override;
 };
 
 } // namespace quentier

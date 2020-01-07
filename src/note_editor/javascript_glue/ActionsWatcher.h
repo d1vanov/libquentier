@@ -34,7 +34,7 @@ class ActionsWatcher: public QObject
 {
     Q_OBJECT
 public:
-    explicit ActionsWatcher(QObject * parent = Q_NULLPTR);
+    explicit ActionsWatcher(QObject * parent = nullptr);
 
 Q_SIGNALS:
     void cutActionToggled();

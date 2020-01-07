@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Dmitry Ivanov
+ * Copyright 2016-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -56,9 +56,9 @@ public:
 // DEFINE_LOCAL_UID_UNSETTER
 
 #define QN_DECLARE_LOCAL_UID                                                   \
-    virtual const QString localUid() const Q_DECL_OVERRIDE;                    \
-    virtual void setLocalUid(const QString & guid) Q_DECL_OVERRIDE;            \
-    virtual void unsetLocalUid() Q_DECL_OVERRIDE;                              \
+    virtual const QString localUid() const override;                           \
+    virtual void setLocalUid(const QString & guid) override;                   \
+    virtual void unsetLocalUid() override;                                     \
 // QN_DECLARE_LOCAL_UID
 
 #define QN_DEFINE_LOCAL_UID(type)                                              \

@@ -76,8 +76,8 @@ public:
     QByteArray                      m_thumbnailData;
 
 private:
-    NoteData & operator=(const NoteData & other) Q_DECL_EQ_DELETE;
-    NoteData & operator=(NoteData && other) Q_DECL_EQ_DELETE;
+    NoteData & operator=(const NoteData & other)  = delete;
+    NoteData & operator=(NoteData && other)  = delete;
 };
 
 } // namespace quentier

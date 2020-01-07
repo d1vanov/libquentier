@@ -33,17 +33,17 @@ class QUENTIER_EXPORT AuthenticationManager: public IAuthenticationManager
 {
     Q_OBJECT
 public:
-    explicit AuthenticationManager(const QString & consumerKey,
-                                   const QString & consumerSecret,
-                                   const QString & host,
-                                   QObject * parent = Q_NULLPTR);
+    explicit AuthenticationManager(
+        const QString & consumerKey, const QString & consumerSecret,
+        const QString & host, QObject * parent = nullptr);
+
     virtual ~AuthenticationManager();
 
 public Q_SLOTS:
-    virtual void onAuthenticationRequest() Q_DECL_OVERRIDE;
+    virtual void onAuthenticationRequest() override;
 
 private:
-    AuthenticationManager() Q_DECL_EQ_DELETE;
+    AuthenticationManager()  = delete;
     Q_DISABLE_COPY(AuthenticationManager)
 
 private:

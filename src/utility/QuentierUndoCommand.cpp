@@ -22,14 +22,14 @@
 namespace quentier {
 
 QuentierUndoCommand::QuentierUndoCommand(QUndoCommand * parent) :
-    QObject(Q_NULLPTR),
+    QObject(nullptr),
     QUndoCommand(parent),
     m_onceUndoExecuted(false)
 {}
 
 QuentierUndoCommand::QuentierUndoCommand(const QString & text,
                                          QUndoCommand * parent) :
-    QObject(Q_NULLPTR),
+    QObject(nullptr),
     QUndoCommand(text, parent),
     m_onceUndoExecuted(false)
 {}

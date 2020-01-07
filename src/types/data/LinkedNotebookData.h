@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Dmitry Ivanov
+ * Copyright 2016-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -50,8 +50,8 @@ public:
     bool                          m_isDirty;
 
 private:
-    LinkedNotebookData & operator=(const LinkedNotebookData & other) Q_DECL_EQ_DELETE;
-    LinkedNotebookData & operator=(LinkedNotebookData && other) Q_DECL_EQ_DELETE;
+    LinkedNotebookData & operator=(const LinkedNotebookData & other)  = delete;
+    LinkedNotebookData & operator=(LinkedNotebookData && other)  = delete;
 };
 
 } // namespace quentier

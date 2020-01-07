@@ -72,7 +72,7 @@ ENMLConverterPrivate::ENMLConverterPrivate(QObject * parent) :
     m_allowedEnMediaAttributes(QSet<QString>()
 #include "allowedEnMediaAttributes.inl"
     ),
-    m_pHtmlCleaner(Q_NULLPTR),
+    m_pHtmlCleaner(nullptr),
     m_cachedConvertedXml()
 {}
 
@@ -819,7 +819,7 @@ bool ENMLConverterPrivate::htmlToQTextDocument(const QString & html, QTextDocume
                      * (main) thread, we should add the outline to the image
                      */
                     QApplication * pApp =
-                        dynamic_cast<QApplication*>(QCoreApplication::instance());
+                        qobject_cast<QApplication*>(QCoreApplication::instance());
                     if (pApp)
                     {
                         QThread * pCurrentThread = QThread::currentThread();

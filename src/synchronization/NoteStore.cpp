@@ -33,19 +33,19 @@ namespace quentier {
                                                "caught EDAM user exception")); \
     errorDescription.details() = QStringLiteral("error code");                 \
     errorDescription.details() += ToString(userException.errorCode);           \
-    if (!userException.exceptionData().isNull()) {                             \
+    if (userException.exceptionData()) {                                       \
         errorDescription.details() += QStringLiteral(": ");                    \
         errorDescription.details() +=                                          \
             userException.exceptionData()->errorMessage;                       \
     }                                                                          \
 // SET_EDAM_USER_EXCEPTION_ERROR
 
+#define NOTE_STORE_REQUEST_TIMEOUT_MSEC (-1)
+
 NoteStore::NoteStore(
-        const QSharedPointer<qevercloud::NoteStore> & pQecNoteStore,
+        const qevercloud::INoteStorePtr & pQecNoteStore,
         QObject * parent) :
-    INoteStore(pQecNoteStore, parent),
-    m_noteGuidByAsyncResultPtr(),
-    m_resourceGuidByAsyncResultPtr()
+    INoteStore(pQecNoteStore, parent)
 {
     QUENTIER_CHECK_PTR(m_pQecNoteStore)
 }
@@ -57,49 +57,38 @@ NoteStore::~NoteStore()
 
 INoteStore * NoteStore::create() const
 {
-    return new NoteStore(
-        QSharedPointer<qevercloud::NoteStore>(new qevercloud::NoteStore));
+    return new NoteStore(qevercloud::INoteStorePtr(qevercloud::newNoteStore()));
 }
 
 void NoteStore::stop()
 {
     QNDEBUG("NoteStore::stop");
 
-    for(auto it = m_noteGuidByAsyncResultPtr.begin(),
-        end = m_noteGuidByAsyncResultPtr.end(); it != end; ++it)
+    for(const auto & it: qevercloud::toRange(m_noteRequestDataById))
     {
-        qevercloud::AsyncResult * pAsyncResult = it.key();
-        if (Q_UNLIKELY(!pAsyncResult)) {
-            continue;
+        const auto & requestData = it.value();
+        if (!requestData.m_asyncResult.isNull()) {
+            QObject::disconnect(requestData.m_asyncResult.data(),
+                                &qevercloud::AsyncResult::finished,
+                                this,
+                                &NoteStore::onGetNoteAsyncFinished);
         }
-
-        QObject::disconnect(pAsyncResult,
-                            QNSIGNAL(qevercloud::AsyncResult,finished,
-                                     QVariant,QSharedPointer<EverCloudExceptionData>),
-                            this,
-                            QNSLOT(NoteStore,onGetNoteAsyncFinished,
-                                   QVariant,QSharedPointer<EverCloudExceptionData>));
     }
 
-    m_noteGuidByAsyncResultPtr.clear();
+    m_noteRequestDataById.clear();
 
-    for(auto it = m_resourceGuidByAsyncResultPtr.begin(),
-        end = m_resourceGuidByAsyncResultPtr.end(); it != end; ++it)
+    for(const auto & it:qevercloud::toRange(m_resourceRequestDataById))
     {
-        qevercloud::AsyncResult * pAsyncResult = it.key();
-        if (Q_UNLIKELY(!pAsyncResult)) {
-            continue;
+        const auto & requestData = it.value();
+        if (!requestData.m_asyncResult.isNull()) {
+            QObject::disconnect(requestData.m_asyncResult.data(),
+                                &qevercloud::AsyncResult::finished,
+                                this,
+                                &NoteStore::onGetResourceAsyncFinished);
         }
-
-        QObject::disconnect(pAsyncResult,
-                            QNSIGNAL(qevercloud::AsyncResult,finished,
-                                     QVariant,QSharedPointer<EverCloudExceptionData>),
-                            this,
-                            QNSLOT(NoteStore,onGetResourceAsyncFinished,
-                                   QVariant,QSharedPointer<EverCloudExceptionData>));
     }
 
-    m_resourceGuidByAsyncResultPtr.clear();
+    m_resourceRequestDataById.clear();
 }
 
 qint32 NoteStore::createNotebook(Notebook & notebook,
@@ -109,9 +98,14 @@ qint32 NoteStore::createNotebook(Notebook & notebook,
 {
     try
     {
+        auto ctx = qevercloud::newRequestContext(
+            linkedNotebookAuthToken.isEmpty()
+            ? m_authenticationToken
+            : linkedNotebookAuthToken,
+            NOTE_STORE_REQUEST_TIMEOUT_MSEC);
+
         notebook.qevercloudNotebook() =
-            m_pQecNoteStore->createNotebook(notebook.qevercloudNotebook(),
-                                            linkedNotebookAuthToken);
+            m_pQecNoteStore->createNotebook(notebook.qevercloudNotebook(), ctx);
         return 0;
     }
     catch(const qevercloud::EDAMUserException & userException)
@@ -127,7 +121,8 @@ qint32 NoteStore::createNotebook(Notebook & notebook,
     }
     CATCH_GENERIC_EXCEPTIONS_NO_RET()
 
-    return qevercloud::EDAMErrorCode::UNKNOWN;
+    // FIXME: should actually return properly typed qevercloud::EDAMErrorCode
+    return static_cast<qint32>(qevercloud::EDAMErrorCode::UNKNOWN);
 }
 
 qint32 NoteStore::updateNotebook(Notebook & notebook,
@@ -137,8 +132,14 @@ qint32 NoteStore::updateNotebook(Notebook & notebook,
 {
     try
     {
-        qint32 usn = m_pQecNoteStore->updateNotebook(notebook.qevercloudNotebook(),
-                                                     linkedNotebookAuthToken);
+        auto ctx = qevercloud::newRequestContext(
+            linkedNotebookAuthToken.isEmpty()
+            ? m_authenticationToken
+            : linkedNotebookAuthToken,
+            NOTE_STORE_REQUEST_TIMEOUT_MSEC);
+
+        qint32 usn = m_pQecNoteStore->updateNotebook(
+            notebook.qevercloudNotebook(), ctx);
         notebook.setUpdateSequenceNumber(usn);
         return 0;
     }
@@ -159,7 +160,8 @@ qint32 NoteStore::updateNotebook(Notebook & notebook,
     }
     CATCH_GENERIC_EXCEPTIONS_NO_RET()
 
-    return qevercloud::EDAMErrorCode::UNKNOWN;
+    // FIXME: should actually return properly typed qevercloud::EDAMErrorCode
+    return static_cast<qint32>(qevercloud::EDAMErrorCode::UNKNOWN);
 }
 
 qint32 NoteStore::createNote(Note & note,
@@ -169,9 +171,14 @@ qint32 NoteStore::createNote(Note & note,
 {
     try
     {
+        auto ctx = qevercloud::newRequestContext(
+            linkedNotebookAuthToken.isEmpty()
+            ? m_authenticationToken
+            : linkedNotebookAuthToken,
+            NOTE_STORE_REQUEST_TIMEOUT_MSEC);
+
         qevercloud::Note noteMetadata =
-            m_pQecNoteStore->createNote(note.qevercloudNote(),
-                                        linkedNotebookAuthToken);
+            m_pQecNoteStore->createNote(note.qevercloudNote(), ctx);
         QNDEBUG("Note metadata returned from createNote method: "
                 << noteMetadata);
 
@@ -198,7 +205,8 @@ qint32 NoteStore::createNote(Note & note,
     }
     CATCH_GENERIC_EXCEPTIONS_NO_RET()
 
-    return qevercloud::EDAMErrorCode::UNKNOWN;
+    // FIXME: should actually return properly typed qevercloud::EDAMErrorCode
+    return static_cast<qint32>(qevercloud::EDAMErrorCode::UNKNOWN);
 }
 
 qint32 NoteStore::updateNote(Note & note,
@@ -208,9 +216,14 @@ qint32 NoteStore::updateNote(Note & note,
 {
     try
     {
+        auto ctx = qevercloud::newRequestContext(
+            linkedNotebookAuthToken.isEmpty()
+            ? m_authenticationToken
+            : linkedNotebookAuthToken,
+            NOTE_STORE_REQUEST_TIMEOUT_MSEC);
+
         qevercloud::Note noteMetadata =
-            m_pQecNoteStore->updateNote(note.qevercloudNote(),
-                                        linkedNotebookAuthToken);
+            m_pQecNoteStore->updateNote(note.qevercloudNote(), ctx);
         QNDEBUG("Note metadata returned from updateNote method: "
                 << noteMetadata);
 
@@ -241,7 +254,8 @@ qint32 NoteStore::updateNote(Note & note,
     }
     CATCH_GENERIC_EXCEPTIONS_NO_RET()
 
-    return qevercloud::EDAMErrorCode::UNKNOWN;
+    // FIXME: should actually return properly typed qevercloud::EDAMErrorCode
+    return static_cast<qint32>(qevercloud::EDAMErrorCode::UNKNOWN);
 }
 
 qint32 NoteStore::createTag(Tag & tag,
@@ -251,8 +265,14 @@ qint32 NoteStore::createTag(Tag & tag,
 {
     try
     {
-        tag.qevercloudTag() = m_pQecNoteStore->createTag(tag.qevercloudTag(),
-                                                         linkedNotebookAuthToken);
+        auto ctx = qevercloud::newRequestContext(
+            linkedNotebookAuthToken.isEmpty()
+            ? m_authenticationToken
+            : linkedNotebookAuthToken,
+            NOTE_STORE_REQUEST_TIMEOUT_MSEC);
+
+        tag.qevercloudTag() = m_pQecNoteStore->createTag(
+            tag.qevercloudTag(), ctx);
         return 0;
     }
     catch(const qevercloud::EDAMUserException & userException)
@@ -268,7 +288,8 @@ qint32 NoteStore::createTag(Tag & tag,
     }
     CATCH_GENERIC_EXCEPTIONS_NO_RET()
 
-    return qevercloud::EDAMErrorCode::UNKNOWN;
+    // FIXME: should actually return properly typed qevercloud::EDAMErrorCode
+    return static_cast<qint32>(qevercloud::EDAMErrorCode::UNKNOWN);
 }
 
 qint32 NoteStore::updateTag(Tag & tag,
@@ -278,8 +299,13 @@ qint32 NoteStore::updateTag(Tag & tag,
 {
     try
     {
-        qint32 usn = m_pQecNoteStore->updateTag(tag.qevercloudTag(),
-                                                linkedNotebookAuthToken);
+        auto ctx = qevercloud::newRequestContext(
+            linkedNotebookAuthToken.isEmpty()
+            ? m_authenticationToken
+            : linkedNotebookAuthToken,
+            NOTE_STORE_REQUEST_TIMEOUT_MSEC);
+
+        qint32 usn = m_pQecNoteStore->updateTag(tag.qevercloudTag(), ctx);
         tag.setUpdateSequenceNumber(usn);
         return 0;
     }
@@ -300,7 +326,8 @@ qint32 NoteStore::updateTag(Tag & tag,
     }
     CATCH_GENERIC_EXCEPTIONS_NO_RET()
 
-    return qevercloud::EDAMErrorCode::UNKNOWN;
+    // FIXME: should actually return properly typed qevercloud::EDAMErrorCode
+    return static_cast<qint32>(qevercloud::EDAMErrorCode::UNKNOWN);
 }
 
 qint32 NoteStore::createSavedSearch(SavedSearch & savedSearch,
@@ -309,8 +336,12 @@ qint32 NoteStore::createSavedSearch(SavedSearch & savedSearch,
 {
     try
     {
-        savedSearch.qevercloudSavedSearch() =
-            m_pQecNoteStore->createSearch(savedSearch.qevercloudSavedSearch());
+        auto ctx = qevercloud::newRequestContext(
+            m_authenticationToken,
+            NOTE_STORE_REQUEST_TIMEOUT_MSEC);
+
+        savedSearch.qevercloudSavedSearch() = m_pQecNoteStore->createSearch(
+            savedSearch.qevercloudSavedSearch(), ctx);
         return 0;
     }
     catch(const qevercloud::EDAMUserException & userException)
@@ -326,7 +357,8 @@ qint32 NoteStore::createSavedSearch(SavedSearch & savedSearch,
     }
     CATCH_GENERIC_EXCEPTIONS_NO_RET()
 
-    return qevercloud::EDAMErrorCode::UNKNOWN;
+    // FIXME: should actually return properly typed qevercloud::EDAMErrorCode
+    return static_cast<qint32>(qevercloud::EDAMErrorCode::UNKNOWN);
 }
 
 qint32 NoteStore::updateSavedSearch(SavedSearch & savedSearch,
@@ -335,8 +367,12 @@ qint32 NoteStore::updateSavedSearch(SavedSearch & savedSearch,
 {
     try
     {
-        qint32 usn =
-            m_pQecNoteStore->updateSearch(savedSearch.qevercloudSavedSearch());
+        auto ctx = qevercloud::newRequestContext(
+            m_authenticationToken,
+            NOTE_STORE_REQUEST_TIMEOUT_MSEC);
+
+        qint32 usn = m_pQecNoteStore->updateSearch(
+            savedSearch.qevercloudSavedSearch(), ctx);
         savedSearch.setUpdateSequenceNumber(usn);
         return 0;
     }
@@ -357,7 +393,8 @@ qint32 NoteStore::updateSavedSearch(SavedSearch & savedSearch,
     }
     CATCH_GENERIC_EXCEPTIONS_NO_RET()
 
-    return qevercloud::EDAMErrorCode::UNKNOWN;
+    // FIXME: should actually return properly typed qevercloud::EDAMErrorCode
+    return static_cast<qint32>(qevercloud::EDAMErrorCode::UNKNOWN);
 }
 
 qint32 NoteStore::getSyncState(qevercloud::SyncState & syncState,
@@ -366,13 +403,18 @@ qint32 NoteStore::getSyncState(qevercloud::SyncState & syncState,
 {
     try
     {
-        syncState = m_pQecNoteStore->getSyncState();
+        auto ctx = qevercloud::newRequestContext(
+            m_authenticationToken,
+            NOTE_STORE_REQUEST_TIMEOUT_MSEC);
+
+        syncState = m_pQecNoteStore->getSyncState(ctx);
         return 0;
     }
     catch(const qevercloud::EDAMUserException & userException)
     {
         SET_EDAM_USER_EXCEPTION_ERROR(userException)
-        return userException.errorCode;
+        // FIXME: should actually return properly typed qevercloud::EDAMErrorCode
+        return static_cast<int>(userException.errorCode);
     }
     catch(const qevercloud::EDAMSystemException & systemException)
     {
@@ -381,7 +423,8 @@ qint32 NoteStore::getSyncState(qevercloud::SyncState & syncState,
     }
     CATCH_GENERIC_EXCEPTIONS_NO_RET()
 
-    return qevercloud::EDAMErrorCode::UNKNOWN;
+    // FIXME: should actually return properly typed qevercloud::EDAMErrorCode
+    return static_cast<qint32>(qevercloud::EDAMErrorCode::UNKNOWN);
 }
 
 qint32 NoteStore::getSyncChunk(const qint32 afterUSN, const qint32 maxEntries,
@@ -396,8 +439,12 @@ qint32 NoteStore::getSyncChunk(const qint32 afterUSN, const qint32 maxEntries,
 
     try
     {
-        syncChunk = m_pQecNoteStore->getFilteredSyncChunk(afterUSN, maxEntries,
-                                                          filter);
+        auto ctx = qevercloud::newRequestContext(
+            m_authenticationToken,
+            NOTE_STORE_REQUEST_TIMEOUT_MSEC);
+
+        syncChunk = m_pQecNoteStore->getFilteredSyncChunk(
+            afterUSN, maxEntries, filter, ctx);
         return 0;
     }
     catch(const qevercloud::EDAMUserException & userException)
@@ -412,7 +459,8 @@ qint32 NoteStore::getSyncChunk(const qint32 afterUSN, const qint32 maxEntries,
     }
     CATCH_GENERIC_EXCEPTIONS_NO_RET()
 
-    return qevercloud::EDAMErrorCode::UNKNOWN;
+    // FIXME: should actually return properly typed qevercloud::EDAMErrorCode
+    return static_cast<qint32>(qevercloud::EDAMErrorCode::UNKNOWN);
 }
 
 qint32 NoteStore::getLinkedNotebookSyncState(
@@ -422,26 +470,32 @@ qint32 NoteStore::getLinkedNotebookSyncState(
 {
     try
     {
-        syncState = m_pQecNoteStore->getLinkedNotebookSyncState(linkedNotebook,
-                                                                authToken);
+        auto ctx = qevercloud::newRequestContext(
+            authToken,
+            NOTE_STORE_REQUEST_TIMEOUT_MSEC);
+
+        syncState = m_pQecNoteStore->getLinkedNotebookSyncState(
+            linkedNotebook, ctx);
         return 0;
     }
     catch(const qevercloud::EDAMUserException & userException)
     {
         SET_EDAM_USER_EXCEPTION_ERROR(userException)
-        return userException.errorCode;
+        // FIXME: should actually return properly typed qevercloud::EDAMErrorCode
+        return static_cast<int>(userException.errorCode);
     }
     catch(const qevercloud::EDAMNotFoundException & notFoundException)
     {
         errorDescription.setBase(QT_TR_NOOP("caught EDAM not found exception, "
                                             "could not find linked notebook to "
                                             "get the sync state for"));
-        if (!notFoundException.exceptionData().isNull()) {
+        if (notFoundException.exceptionData()) {
             errorDescription.details() +=
                 ToString(notFoundException.exceptionData()->errorMessage);
         }
 
-        return qevercloud::EDAMErrorCode::UNKNOWN;
+        // FIXME: should actually return properly typed qevercloud::EDAMErrorCode
+        return static_cast<qint32>(qevercloud::EDAMErrorCode::UNKNOWN);
     }
     catch(const qevercloud::EDAMSystemException & systemException)
     {
@@ -450,7 +504,8 @@ qint32 NoteStore::getLinkedNotebookSyncState(
     }
     CATCH_GENERIC_EXCEPTIONS_NO_RET()
 
-    return qevercloud::EDAMErrorCode::UNKNOWN;
+    // FIXME: should actually return properly typed qevercloud::EDAMErrorCode
+    return static_cast<qint32>(qevercloud::EDAMErrorCode::UNKNOWN);
 }
 
 qint32 NoteStore::getLinkedNotebookSyncChunk(
@@ -467,10 +522,12 @@ qint32 NoteStore::getLinkedNotebookSyncChunk(
 
     try
     {
-        syncChunk =
-            m_pQecNoteStore->getLinkedNotebookSyncChunk(linkedNotebook, afterUSN,
-                                                        maxEntries, fullSyncOnly,
-                                                        linkedNotebookAuthToken);
+        auto ctx = qevercloud::newRequestContext(
+            linkedNotebookAuthToken,
+            NOTE_STORE_REQUEST_TIMEOUT_MSEC);
+
+        syncChunk = m_pQecNoteStore->getLinkedNotebookSyncChunk(
+            linkedNotebook, afterUSN, maxEntries, fullSyncOnly, ctx);
         return 0;
     }
     catch(const qevercloud::EDAMUserException & userException)
@@ -483,7 +540,7 @@ qint32 NoteStore::getLinkedNotebookSyncChunk(
         errorDescription.setBase(QT_TR_NOOP("caught EDAM not found exception while "
                                             "attempting to download the sync chunk "
                                             "for linked notebook"));
-        if (!notFoundException.exceptionData().isNull())
+        if (notFoundException.exceptionData())
         {
             const QString & errorMessage =
                 notFoundException.exceptionData()->errorMessage;
@@ -511,7 +568,8 @@ qint32 NoteStore::getLinkedNotebookSyncChunk(
             }
         }
 
-        return qevercloud::EDAMErrorCode::UNKNOWN;
+        // FIXME: should actually return properly typed qevercloud::EDAMErrorCode
+        return static_cast<qint32>(qevercloud::EDAMErrorCode::UNKNOWN);
     }
     catch(const qevercloud::EDAMSystemException & systemException)
     {
@@ -520,7 +578,8 @@ qint32 NoteStore::getLinkedNotebookSyncChunk(
     }
     CATCH_GENERIC_EXCEPTIONS_NO_RET()
 
-    return qevercloud::EDAMErrorCode::UNKNOWN;
+    // FIXME: should actually return properly typed qevercloud::EDAMErrorCode
+    return static_cast<qint32>(qevercloud::EDAMErrorCode::UNKNOWN);
 }
 
 qint32 NoteStore::getNote(const bool withContent, const bool withResourcesData,
@@ -547,16 +606,21 @@ qint32 NoteStore::getNote(const bool withContent, const bool withResourcesData,
                 : "false"));
 
     if (!note.hasGuid()) {
-        errorDescription.setBase(QT_TR_NOOP("can't get note: note's guid is empty"));
-        return qevercloud::EDAMErrorCode::UNKNOWN;
+        errorDescription.setBase(
+            QT_TR_NOOP("can't get note: note's guid is empty"));
+        // FIXME: should actually return properly typed qevercloud::EDAMErrorCode
+        return static_cast<int>(qevercloud::EDAMErrorCode::UNKNOWN);
     }
 
     try
     {
-        note.qevercloudNote() = m_pQecNoteStore->getNote(note.guid(), withContent,
-                                                         withResourcesData,
-                                                         withResourcesRecognition,
-                                                         withResourceAlternateData);
+        auto ctx = qevercloud::newRequestContext(
+            m_authenticationToken,
+            NOTE_STORE_REQUEST_TIMEOUT_MSEC);
+
+        note.qevercloudNote() = m_pQecNoteStore->getNote(
+            note.guid(), withContent, withResourcesData,
+            withResourcesRecognition, withResourceAlternateData, ctx);
         note.setLocal(false);
         note.setDirty(false);
         return 0;
@@ -578,7 +642,8 @@ qint32 NoteStore::getNote(const bool withContent, const bool withResourcesData,
     }
     CATCH_GENERIC_EXCEPTIONS_NO_RET()
 
-    return qevercloud::EDAMErrorCode::UNKNOWN;
+    // FIXME: should actually return properly typed qevercloud::EDAMErrorCode
+    return static_cast<qint32>(qevercloud::EDAMErrorCode::UNKNOWN);
 }
 
 bool NoteStore::getNoteAsync(const bool withContent,
@@ -644,9 +709,12 @@ bool NoteStore::getNoteAsync(const bool withContent,
     noteResultSpec.includeAccountLimits = withNoteLimits;
     QNTRACE("Note result spec: " << noteResultSpec);
 
+    auto ctx = qevercloud::newRequestContext(
+        authToken,
+        NOTE_STORE_REQUEST_TIMEOUT_MSEC);
+
     qevercloud::AsyncResult * pAsyncResult =
-        m_pQecNoteStore->getNoteWithResultSpecAsync(noteGuid, noteResultSpec,
-                                                    authToken);
+        m_pQecNoteStore->getNoteWithResultSpecAsync(noteGuid, noteResultSpec, ctx);
     if (Q_UNLIKELY(!pAsyncResult)) {
         errorDescription.setBase(QT_TR_NOOP("Can't get full note data: "
                                             "internal error, QEverCloud library "
@@ -655,14 +723,14 @@ bool NoteStore::getNoteAsync(const bool withContent,
         return false;
     }
 
-    m_noteGuidByAsyncResultPtr[pAsyncResult] = noteGuid;
+    auto & requestData = m_noteRequestDataById[ctx->requestId()];
+    requestData.m_guid = noteGuid;
+    requestData.m_asyncResult = pAsyncResult;
 
     QObject::connect(pAsyncResult,
-                     QNSIGNAL(qevercloud::AsyncResult,finished,
-                              QVariant,QSharedPointer<EverCloudExceptionData>),
+                     &qevercloud::AsyncResult::finished,
                      this,
-                     QNSLOT(NoteStore,onGetNoteAsyncFinished,
-                            QVariant,QSharedPointer<EverCloudExceptionData>),
+                     &NoteStore::onGetNoteAsyncFinished,
                      Qt::ConnectionType(Qt::UniqueConnection | Qt::DirectConnection));
     return true;
 }
@@ -699,16 +767,19 @@ qint32 NoteStore::getResource(const bool withDataBody,
     if (!resource.hasGuid()) {
         errorDescription.setBase(QT_TR_NOOP("can't get resource: resource's "
                                             "guid is empty"));
-        return qevercloud::EDAMErrorCode::UNKNOWN;
+        // FIXME: should actually return properly typed qevercloud::EDAMErrorCode
+        return static_cast<int>(qevercloud::EDAMErrorCode::UNKNOWN);
     }
 
     try
     {
-        resource.qevercloudResource() =
-            m_pQecNoteStore->getResource(resource.guid(), withDataBody,
-                                         withRecognitionDataBody,
-                                         withAttributes, withAlternateDataBody,
-                                         authToken);
+        auto ctx = qevercloud::newRequestContext(
+            authToken,
+            NOTE_STORE_REQUEST_TIMEOUT_MSEC);
+
+        resource.qevercloudResource() = m_pQecNoteStore->getResource(
+            resource.guid(), withDataBody, withRecognitionDataBody,
+            withAttributes, withAlternateDataBody, ctx);
         resource.setLocal(false);
         resource.setDirty(false);
         return 0;
@@ -730,7 +801,8 @@ qint32 NoteStore::getResource(const bool withDataBody,
     }
     CATCH_GENERIC_EXCEPTIONS_NO_RET()
 
-    return qevercloud::EDAMErrorCode::UNKNOWN;
+    // FIXME: should actually return properly typed qevercloud::EDAMErrorCode
+    return static_cast<qint32>(qevercloud::EDAMErrorCode::UNKNOWN);
 }
 
 bool NoteStore::getResourceAsync(const bool withDataBody,
@@ -766,11 +838,13 @@ bool NoteStore::getResourceAsync(const bool withDataBody,
         return false;
     }
 
-    qevercloud::AsyncResult * pAsyncResult =
-        m_pQecNoteStore->getResourceAsync(resourceGuid, withDataBody,
-                                          withRecognitionDataBody,
-                                          withAttributes, withAlternateDataBody,
-                                          authToken);
+    auto ctx = qevercloud::newRequestContext(
+        authToken,
+        NOTE_STORE_REQUEST_TIMEOUT_MSEC);
+
+    qevercloud::AsyncResult * pAsyncResult = m_pQecNoteStore->getResourceAsync(
+        resourceGuid, withDataBody, withRecognitionDataBody,
+        withAttributes, withAlternateDataBody, ctx);
     if (Q_UNLIKELY(!pAsyncResult)) {
         errorDescription.setBase(QT_TR_NOOP("Can't get full resource data: internal "
                                             "error, QEverCloud library returned "
@@ -779,14 +853,14 @@ bool NoteStore::getResourceAsync(const bool withDataBody,
         return false;
     }
 
-    m_resourceGuidByAsyncResultPtr[pAsyncResult] = resourceGuid;
+    auto & requestData = m_resourceRequestDataById[ctx->requestId()];
+    requestData.m_guid = resourceGuid;
+    requestData.m_asyncResult = pAsyncResult;
 
     QObject::connect(pAsyncResult,
-                     QNSIGNAL(qevercloud::AsyncResult,finished,
-                              QVariant,QSharedPointer<EverCloudExceptionData>),
+                     &qevercloud::AsyncResult::finished,
                      this,
-                     QNSLOT(NoteStore,onGetResourceAsyncFinished,
-                            QVariant,QSharedPointer<EverCloudExceptionData>),
+                     &NoteStore::onGetResourceAsyncFinished,
                      Qt::ConnectionType(Qt::UniqueConnection | Qt::DirectConnection));
     return true;
 }
@@ -797,7 +871,11 @@ qint32 NoteStore::authenticateToSharedNotebook(
 {
     try
     {
-        authResult = m_pQecNoteStore->authenticateToSharedNotebook(shareKey);
+        auto ctx = qevercloud::newRequestContext(
+            m_authenticationToken,
+            NOTE_STORE_REQUEST_TIMEOUT_MSEC);
+
+        authResult = m_pQecNoteStore->authenticateToSharedNotebook(shareKey, ctx);
         return 0;
     }
     catch(const qevercloud::EDAMUserException & userException)
@@ -817,7 +895,8 @@ qint32 NoteStore::authenticateToSharedNotebook(
             errorDescription.details() += ToString(userException.errorCode);
         }
 
-        return userException.errorCode;
+        // FIXME: should actually return properly typed qevercloud::EDAMErrorCode
+        return static_cast<int>(userException.errorCode);
     }
     catch(const qevercloud::EDAMNotFoundException & notFoundException)
     {
@@ -840,7 +919,8 @@ qint32 NoteStore::authenticateToSharedNotebook(
                                                     "RATE_LIMIT_REACHED exception "
                                                     "was caught but rateLimitDuration "
                                                     "is not set"));
-                return qevercloud::EDAMErrorCode::UNKNOWN;
+                // FIXME: should actually return properly typed qevercloud::EDAMErrorCode
+                return static_cast<int>(qevercloud::EDAMErrorCode::UNKNOWN);
             }
 
             rateLimitSeconds = systemException.rateLimitDuration;
@@ -860,49 +940,43 @@ qint32 NoteStore::authenticateToSharedNotebook(
             errorDescription.details() += ToString(systemException.errorCode);
         }
 
-        return systemException.errorCode;
+        // FIXME: should actually return properly typed qevercloud::EDAMErrorCode
+        return static_cast<int>(systemException.errorCode);
     }
     CATCH_GENERIC_EXCEPTIONS_NO_RET()
 
-    return qevercloud::EDAMErrorCode::UNKNOWN;
+    // FIXME: should actually return properly typed qevercloud::EDAMErrorCode
+    return static_cast<qint32>(qevercloud::EDAMErrorCode::UNKNOWN);
 }
 
 void NoteStore::onGetNoteAsyncFinished(
-    QVariant result, QSharedPointer<EverCloudExceptionData> exceptionData)
+    QVariant result,
+    EverCloudExceptionDataPtr exceptionData,
+    IRequestContextPtr ctx)
 {
     QNDEBUG("NoteStore::onGetNoteAsyncFinished");
 
-    QString noteGuid;
-
-    qevercloud::AsyncResult * pAsyncResult =
-        qobject_cast<qevercloud::AsyncResult*>(sender());
-    if (pAsyncResult)
-    {
-        auto it = m_noteGuidByAsyncResultPtr.find(pAsyncResult);
-        if (it != m_noteGuidByAsyncResultPtr.end()) {
-            noteGuid = it.value();
-            Q_UNUSED(m_noteGuidByAsyncResultPtr.erase(it))
-        }
-        else {
-            QNDEBUG("Couldn't find the note guid by async result ptr");
-            return;
-        }
-    }
-    else
-    {
-        QNDEBUG("Couldn't get non-NULL pointer to AsyncResult, hence can't "
-                "get the note guid to which the result corresponds");
+    auto it = m_noteRequestDataById.find(ctx->requestId());
+    if (Q_UNLIKELY(it == m_noteRequestDataById.end())) {
+        QNWARNING("Received getNoteAsyncFinished event for unidentified "
+            << "request id: " << ctx->requestId());
         return;
     }
 
+    const auto & requestData = it.value();
     qevercloud::Note note;
-    note.guid = noteGuid;
+    note.guid = requestData.m_guid;
+    if (!requestData.m_asyncResult.isNull()) {
+        requestData.m_asyncResult.data()->disconnect(this);
+    }
+
+    m_noteRequestDataById.erase(it);
 
     ErrorString errorDescription;
     qint32 errorCode = 0;
     qint32 rateLimitSeconds = -1;
 
-    if (!exceptionData.isNull())
+    if (exceptionData)
     {
         QNDEBUG("Error: " << exceptionData->errorMessage);
 
@@ -918,7 +992,8 @@ void NoteStore::onGetNoteAsyncFinished(
         catch(const qevercloud::EDAMNotFoundException & notFoundException)
         {
             processEdamNotFoundException(notFoundException, errorDescription);
-            errorCode = qevercloud::EDAMErrorCode::UNKNOWN;
+            // FIXME: should actually return properly typed qevercloud::EDAMErrorCode
+            errorCode = static_cast<int>(qevercloud::EDAMErrorCode::UNKNOWN);
         }
         catch(const qevercloud::EDAMSystemException & systemException)
         {
@@ -926,9 +1001,11 @@ void NoteStore::onGetNoteAsyncFinished(
                                                    errorDescription,
                                                    rateLimitSeconds);
         }
-        CATCH_GENERIC_EXCEPTIONS_IMPL(errorCode = qevercloud::EDAMErrorCode::UNKNOWN)
+        CATCH_GENERIC_EXCEPTIONS_IMPL(
+            errorCode = static_cast<int>(qevercloud::EDAMErrorCode::UNKNOWN))
 
-        Q_EMIT getNoteAsyncFinished(errorCode, note, rateLimitSeconds, errorDescription);
+        Q_EMIT getNoteAsyncFinished(
+            errorCode, note, rateLimitSeconds, errorDescription);
         return;
     }
 
@@ -937,41 +1014,33 @@ void NoteStore::onGetNoteAsyncFinished(
 }
 
 void NoteStore::onGetResourceAsyncFinished(
-    QVariant result, QSharedPointer<EverCloudExceptionData> exceptionData)
+    QVariant result,
+    EverCloudExceptionDataPtr exceptionData,
+    IRequestContextPtr ctx)
 {
     QNDEBUG("NoteStore::onGetResourceAsyncFinished");
 
-    QString resourceGuid;
-
-    qevercloud::AsyncResult * pAsyncResult =
-        qobject_cast<qevercloud::AsyncResult*>(sender());
-    if (pAsyncResult)
-    {
-        auto it = m_resourceGuidByAsyncResultPtr.find(pAsyncResult);
-        if (it != m_resourceGuidByAsyncResultPtr.end()) {
-            resourceGuid = it.value();
-            Q_UNUSED(m_resourceGuidByAsyncResultPtr.erase(it))
-        }
-        else {
-            QNDEBUG("Couldn't find the resource guid by async result ptr");
-            return;
-        }
-    }
-    else
-    {
-        QNDEBUG("Couldn't get non-NULL pointer to AsyncResult, hence can't get "
-                "the resource guid to which the result corresponds");
+    auto it = m_resourceRequestDataById.find(ctx->requestId());
+    if (Q_UNLIKELY(it == m_resourceRequestDataById.end())) {
+        QNWARNING("Received getResourceAsyncFinished event for unidentified "
+            << "request id: " << ctx->requestId());
         return;
     }
 
+    const auto & requestData = it.value();
     qevercloud::Resource resource;
-    resource.guid = resourceGuid;
+    resource.guid = requestData.m_guid;
+    if (!requestData.m_asyncResult.isNull()) {
+        requestData.m_asyncResult.data()->disconnect(this);
+    }
+
+    m_resourceRequestDataById.erase(it);
 
     ErrorString errorDescription;
     qint32 errorCode = 0;
     qint32 rateLimitSeconds = -1;
 
-    if (!exceptionData.isNull())
+    if (exceptionData)
     {
         QNDEBUG("Error: " << exceptionData->errorMessage);
 
@@ -988,7 +1057,8 @@ void NoteStore::onGetResourceAsyncFinished(
         catch(const qevercloud::EDAMNotFoundException & notFoundException)
         {
             processEdamNotFoundException(notFoundException, errorDescription);
-            errorCode = qevercloud::EDAMErrorCode::UNKNOWN;
+            // FIXME: should actually return properly typed qevercloud::EDAMErrorCode
+            errorCode = static_cast<int>(qevercloud::EDAMErrorCode::UNKNOWN);
         }
         catch(const qevercloud::EDAMSystemException & systemException)
         {
@@ -996,7 +1066,8 @@ void NoteStore::onGetResourceAsyncFinished(
                                                    errorDescription,
                                                    rateLimitSeconds);
         }
-        CATCH_GENERIC_EXCEPTIONS_IMPL(errorCode = qevercloud::EDAMErrorCode::UNKNOWN)
+        CATCH_GENERIC_EXCEPTIONS_IMPL(
+            errorCode = static_cast<int>(qevercloud::EDAMErrorCode::UNKNOWN))
 
         Q_EMIT getResourceAsyncFinished(errorCode, resource, rateLimitSeconds,
                                         errorDescription);
@@ -1030,11 +1101,12 @@ qint32 NoteStore::processEdamUserExceptionForTag(
 
         if (!userException.parameter.isSet())
         {
-            if (!exceptionData.isNull() && !exceptionData->errorMessage.isEmpty()) {
+            if (exceptionData && !exceptionData->errorMessage.isEmpty()) {
                 errorDescription.details() = exceptionData->errorMessage;
             }
 
-            return userException.errorCode;
+            // FIXME: should actually return properly typed qevercloud::EDAMErrorCode
+            return static_cast<int>(userException.errorCode);
         }
 
         if (userException.parameter.ref() == QStringLiteral("Tag.name"))
@@ -1066,7 +1138,8 @@ qint32 NoteStore::processEdamUserExceptionForTag(
             errorDescription.details() = userException.parameter.ref();
         }
 
-        return userException.errorCode;
+        // FIXME: should actually return properly typed qevercloud::EDAMErrorCode
+        return static_cast<int>(userException.errorCode);
     }
     else if (userException.errorCode == qevercloud::EDAMErrorCode::DATA_CONFLICT)
     {
@@ -1081,11 +1154,12 @@ qint32 NoteStore::processEdamUserExceptionForTag(
 
         if (!userException.parameter.isSet())
         {
-            if (!exceptionData.isNull() && !exceptionData->errorMessage.isEmpty()) {
+            if (exceptionData && !exceptionData->errorMessage.isEmpty()) {
                 errorDescription.details() = exceptionData->errorMessage;
             }
 
-            return userException.errorCode;
+            // FIXME: should actually return properly typed qevercloud::EDAMErrorCode
+            return static_cast<int>(userException.errorCode);
         }
 
         if (userException.parameter.ref() == QStringLiteral("Tag.name"))
@@ -1123,7 +1197,8 @@ qint32 NoteStore::processEdamUserExceptionForTag(
             errorDescription.details() = userException.parameter.ref();
         }
 
-        return userException.errorCode;
+        // FIXME: should actually return properly typed qevercloud::EDAMErrorCode
+        return static_cast<int>(userException.errorCode);
     }
     else if (thrownOnCreation &&
              (userException.errorCode == qevercloud::EDAMErrorCode::LIMIT_REACHED))
@@ -1138,7 +1213,8 @@ qint32 NoteStore::processEdamUserExceptionForTag(
                                                    "please remove some of them"));
         }
 
-        return userException.errorCode;
+        // FIXME: should actually return properly typed qevercloud::EDAMErrorCode
+        return static_cast<int>(userException.errorCode);
     }
     else if (!thrownOnCreation &&
              (userException.errorCode == qevercloud::EDAMErrorCode::PERMISSION_DENIED))
@@ -1156,7 +1232,8 @@ qint32 NoteStore::processEdamUserExceptionForTag(
             }
         }
 
-        return userException.errorCode;
+        // FIXME: should actually return properly typed qevercloud::EDAMErrorCode
+        return static_cast<int>(userException.errorCode);
     }
 
     return processUnexpectedEdamUserException(QStringLiteral("tag"), userException,
@@ -1188,13 +1265,12 @@ qint32 NoteStore::processEdamUserExceptionForSavedSearch(
 
         if (!userException.parameter.isSet())
         {
-            if (!exceptionData.isNull() &&
-                !exceptionData->errorMessage.isEmpty())
-            {
+            if (exceptionData && !exceptionData->errorMessage.isEmpty()) {
                 errorDescription.details() = exceptionData->errorMessage;
             }
 
-            return userException.errorCode;
+            // FIXME: should actually return properly typed qevercloud::EDAMErrorCode
+            return static_cast<int>(userException.errorCode);
         }
 
         if (userException.parameter.ref() == QStringLiteral("SavedSearch.name"))
@@ -1228,7 +1304,8 @@ qint32 NoteStore::processEdamUserExceptionForSavedSearch(
             errorDescription.details() = userException.parameter.ref();
         }
 
-        return userException.errorCode;
+        // FIXME: should actually return properly typed qevercloud::EDAMErrorCode
+        return static_cast<int>(userException.errorCode);
     }
     else if (userException.errorCode == qevercloud::EDAMErrorCode::DATA_CONFLICT)
     {
@@ -1245,11 +1322,12 @@ qint32 NoteStore::processEdamUserExceptionForSavedSearch(
 
         if (!userException.parameter.isSet())
         {
-            if (!exceptionData.isNull() && !exceptionData->errorMessage.isEmpty()) {
+            if (exceptionData && !exceptionData->errorMessage.isEmpty()) {
                 errorDescription.details() = exceptionData->errorMessage;
             }
 
-            return userException.errorCode;
+            // FIXME: should actually return properly typed qevercloud::EDAMErrorCode
+            return static_cast<int>(userException.errorCode);
         }
 
         if (userException.parameter.ref() == QStringLiteral("SavedSearch.name"))
@@ -1269,7 +1347,8 @@ qint32 NoteStore::processEdamUserExceptionForSavedSearch(
             errorDescription.details() = userException.parameter.ref();
         }
 
-        return userException.errorCode;
+        // FIXME: should actually return properly typed qevercloud::EDAMErrorCode
+        return static_cast<int>(userException.errorCode);
     }
     else if (thrownOnCreation &&
              (userException.errorCode == qevercloud::EDAMErrorCode::LIMIT_REACHED))
@@ -1277,7 +1356,8 @@ qint32 NoteStore::processEdamUserExceptionForSavedSearch(
         errorDescription.setBase(QT_TR_NOOP("LIMIT_REACHED exception during "
                                             "the attempt to create saved search: "
                                             "already at max number of saved searches"));
-        return userException.errorCode;
+        // FIXME: should actually return properly typed qevercloud::EDAMErrorCode
+        return static_cast<int>(userException.errorCode);
     }
     else if (!thrownOnCreation &&
              (userException.errorCode == qevercloud::EDAMErrorCode::PERMISSION_DENIED))
@@ -1285,7 +1365,8 @@ qint32 NoteStore::processEdamUserExceptionForSavedSearch(
         errorDescription.setBase(QT_TR_NOOP("PERMISSION_DENIED exception during "
                                             "the attempt to update saved search: "
                                             "user doesn't own saved search"));
-        return userException.errorCode;
+        // FIXME: should actually return properly typed qevercloud::EDAMErrorCode
+        return static_cast<int>(userException.errorCode);
     }
 
     return processUnexpectedEdamUserException(QStringLiteral("saved search"),
@@ -1307,13 +1388,12 @@ qint32 NoteStore::processEdamUserExceptionForGetSyncChunk(
 
         if (!userException.parameter.isSet())
         {
-            if (!exceptionData.isNull() &&
-                !exceptionData->errorMessage.isEmpty())
-            {
+            if (exceptionData && !exceptionData->errorMessage.isEmpty()) {
                 errorDescription.details() = exceptionData->errorMessage;
             }
 
-            return userException.errorCode;
+            // FIXME: should actually return properly typed qevercloud::EDAMErrorCode
+            return static_cast<int>(userException.errorCode);
         }
 
         if (userException.parameter.ref() == QStringLiteral("afterUSN")) {
@@ -1333,12 +1413,13 @@ qint32 NoteStore::processEdamUserExceptionForGetSyncChunk(
     {
         errorDescription.setBase(QT_TR_NOOP("Unknown EDAM user exception on "
                                             "attempt to get sync chunk"));
-        if (!exceptionData.isNull() && !exceptionData->errorMessage.isEmpty()) {
+        if (exceptionData && !exceptionData->errorMessage.isEmpty()) {
             errorDescription.details() = exceptionData->errorMessage;
         }
     }
 
-    return userException.errorCode;
+    // FIXME: should actually return properly typed qevercloud::EDAMErrorCode
+    return static_cast<int>(userException.errorCode);
 }
 
 qint32 NoteStore::processEdamUserExceptionForGetNote(
@@ -1357,13 +1438,12 @@ qint32 NoteStore::processEdamUserExceptionForGetNote(
 
         if (!userException.parameter.isSet())
         {
-            if (!exceptionData.isNull() &&
-                !exceptionData->errorMessage.isEmpty())
-            {
+            if (exceptionData && !exceptionData->errorMessage.isEmpty()) {
                 errorDescription.details() = exceptionData->errorMessage;
             }
 
-            return userException.errorCode;
+            // FIXME: should actually return properly typed qevercloud::EDAMErrorCode
+            return static_cast<int>(userException.errorCode);
         }
 
         if (userException.parameter.ref() == QStringLiteral("Note.guid")) {
@@ -1374,7 +1454,8 @@ qint32 NoteStore::processEdamUserExceptionForGetNote(
             errorDescription.details() = userException.parameter.ref();
         }
 
-        return userException.errorCode;
+        // FIXME: should actually return properly typed qevercloud::EDAMErrorCode
+        return static_cast<int>(userException.errorCode);
     }
     else if (userException.errorCode == qevercloud::EDAMErrorCode::PERMISSION_DENIED)
     {
@@ -1383,11 +1464,12 @@ qint32 NoteStore::processEdamUserExceptionForGetNote(
 
         if (!userException.parameter.isSet())
         {
-            if (!exceptionData.isNull() && !exceptionData->errorMessage.isEmpty()) {
+            if (exceptionData && !exceptionData->errorMessage.isEmpty()) {
                 errorDescription.details() = exceptionData->errorMessage;
             }
 
-            return userException.errorCode;
+            // FIXME: should actually return properly typed qevercloud::EDAMErrorCode
+            return static_cast<int>(userException.errorCode);
         }
 
         if (userException.parameter.ref() == QStringLiteral("Note")) {
@@ -1398,7 +1480,8 @@ qint32 NoteStore::processEdamUserExceptionForGetNote(
             errorDescription.details() = userException.parameter.ref();
         }
 
-        return userException.errorCode;
+        // FIXME: should actually return properly typed qevercloud::EDAMErrorCode
+        return static_cast<int>(userException.errorCode);
     }
 
     errorDescription.setBase(QT_TR_NOOP("Unexpected EDAM user exception "
@@ -1411,7 +1494,8 @@ qint32 NoteStore::processEdamUserExceptionForGetNote(
         errorDescription.details() += userException.parameter.ref();
     }
 
-    return userException.errorCode;
+    // FIXME: should actually return properly typed qevercloud::EDAMErrorCode
+    return static_cast<int>(userException.errorCode);
 }
 
 qint32 NoteStore::processEdamUserExceptionForGetResource(
@@ -1430,11 +1514,12 @@ qint32 NoteStore::processEdamUserExceptionForGetResource(
 
         if (!userException.parameter.isSet())
         {
-            if (!exceptionData.isNull() && !exceptionData->errorMessage.isEmpty()) {
+            if (exceptionData && !exceptionData->errorMessage.isEmpty()) {
                 errorDescription.details() = exceptionData->errorMessage;
             }
 
-            return userException.errorCode;
+            // FIXME: should actually return properly typed qevercloud::EDAMErrorCode
+            return static_cast<int>(userException.errorCode);
         }
 
         if (userException.parameter.ref() == QStringLiteral("Resource.guid")) {
@@ -1445,7 +1530,8 @@ qint32 NoteStore::processEdamUserExceptionForGetResource(
             errorDescription.details() = userException.parameter.ref();
         }
 
-        return userException.errorCode;
+        // FIXME: should actually return properly typed qevercloud::EDAMErrorCode
+        return static_cast<int>(userException.errorCode);
     }
     else if (userException.errorCode == qevercloud::EDAMErrorCode::PERMISSION_DENIED)
     {
@@ -1454,13 +1540,12 @@ qint32 NoteStore::processEdamUserExceptionForGetResource(
 
         if (!userException.parameter.isSet())
         {
-            if (!exceptionData.isNull() &&
-                !exceptionData->errorMessage.isEmpty())
-            {
+            if (exceptionData && !exceptionData->errorMessage.isEmpty()) {
                 errorDescription.details() = exceptionData->errorMessage;
             }
 
-            return userException.errorCode;
+            // FIXME: should actually return properly typed qevercloud::EDAMErrorCode
+            return static_cast<int>(userException.errorCode);
         }
 
         if (userException.parameter.ref() == QStringLiteral("Resource")) {
@@ -1471,7 +1556,8 @@ qint32 NoteStore::processEdamUserExceptionForGetResource(
             errorDescription.details() = userException.parameter.ref();
         }
 
-        return userException.errorCode;
+        // FIXME: should actually return properly typed qevercloud::EDAMErrorCode
+        return static_cast<int>(userException.errorCode);
     }
 
     errorDescription.setBase(QT_TR_NOOP("Unexpected EDAM user exception "
@@ -1484,7 +1570,8 @@ qint32 NoteStore::processEdamUserExceptionForGetResource(
         errorDescription.details() += userException.parameter.ref();
     }
 
-    return userException.errorCode;
+    // FIXME: should actually return properly typed qevercloud::EDAMErrorCode
+    return static_cast<int>(userException.errorCode);
 }
 
 qint32 NoteStore::processEdamUserExceptionForNotebook(
@@ -1510,13 +1597,12 @@ qint32 NoteStore::processEdamUserExceptionForNotebook(
 
         if (!userException.parameter.isSet())
         {
-            if (!exceptionData.isNull() &&
-                !exceptionData->errorMessage.isEmpty())
-            {
+            if (exceptionData && !exceptionData->errorMessage.isEmpty()) {
                 errorDescription.details() = exceptionData->errorMessage;
             }
 
-            return userException.errorCode;
+            // FIXME: should actually return properly typed qevercloud::EDAMErrorCode
+            return static_cast<int>(userException.errorCode);
         }
 
         if (userException.parameter.ref() == QStringLiteral("Notebook.name"))
@@ -1572,7 +1658,8 @@ qint32 NoteStore::processEdamUserExceptionForNotebook(
             errorDescription.details() = userException.parameter.ref();
         }
 
-        return userException.errorCode;
+        // FIXME: should actually return properly typed qevercloud::EDAMErrorCode
+        return static_cast<int>(userException.errorCode);
     }
     else if (userException.errorCode == qevercloud::EDAMErrorCode::DATA_CONFLICT)
     {
@@ -1587,13 +1674,12 @@ qint32 NoteStore::processEdamUserExceptionForNotebook(
 
         if (!userException.parameter.isSet())
         {
-            if (!exceptionData.isNull() &&
-                !exceptionData->errorMessage.isEmpty())
-            {
+            if (exceptionData && !exceptionData->errorMessage.isEmpty()) {
                 errorDescription.details() = exceptionData->errorMessage;
             }
 
-            return userException.errorCode;
+            // FIXME: should actually return properly typed qevercloud::EDAMErrorCode
+            return static_cast<int>(userException.errorCode);
         }
 
         if (userException.parameter.ref() == QStringLiteral("Notebook.name"))
@@ -1625,7 +1711,8 @@ qint32 NoteStore::processEdamUserExceptionForNotebook(
             errorDescription.details() = userException.parameter.ref();
         }
 
-        return userException.errorCode;
+        // FIXME: should actually return properly typed qevercloud::EDAMErrorCode
+        return static_cast<int>(userException.errorCode);
     }
     else if (thrownOnCreation &&
              (userException.errorCode == qevercloud::EDAMErrorCode::LIMIT_REACHED))
@@ -1641,7 +1728,8 @@ qint32 NoteStore::processEdamUserExceptionForNotebook(
                                                    "some of them"));
         }
 
-        return userException.errorCode;
+        // FIXME: should actually return properly typed qevercloud::EDAMErrorCode
+        return static_cast<int>(userException.errorCode);
     }
 
     return processUnexpectedEdamUserException(QStringLiteral("notebook"),
@@ -1671,13 +1759,12 @@ qint32 NoteStore::processEdamUserExceptionForNote(
 
         if (!userException.parameter.isSet())
         {
-            if (!exceptionData.isNull() &&
-                !exceptionData->errorMessage.isEmpty())
-            {
+            if (exceptionData && !exceptionData->errorMessage.isEmpty()) {
                 errorDescription.details() = exceptionData->errorMessage;
             }
 
-            return userException.errorCode;
+            // FIXME: should actually return properly typed qevercloud::EDAMErrorCode
+            return static_cast<int>(userException.errorCode);
         }
 
         if (userException.parameter.ref() == QStringLiteral("Note.title"))
@@ -1742,7 +1829,8 @@ qint32 NoteStore::processEdamUserExceptionForNote(
             errorDescription.details() = userException.parameter.ref();
         }
 
-        return userException.errorCode;
+        // FIXME: should actually return properly typed qevercloud::EDAMErrorCode
+        return static_cast<int>(userException.errorCode);
     }
     else if (userException.errorCode == qevercloud::EDAMErrorCode::DATA_CONFLICT)
     {
@@ -1757,13 +1845,12 @@ qint32 NoteStore::processEdamUserExceptionForNote(
 
         if (!userException.parameter.isSet())
         {
-            if (!exceptionData.isNull() &&
-                !exceptionData->errorMessage.isEmpty())
-            {
+            if (exceptionData && !exceptionData->errorMessage.isEmpty()) {
                 errorDescription.details() = exceptionData->errorMessage;
             }
 
-            return userException.errorCode;
+            // FIXME: should actually return properly typed qevercloud::EDAMErrorCode
+            return static_cast<int>(userException.errorCode);
         }
 
         if (userException.parameter.ref() == QStringLiteral("Note.deleted")) {
@@ -1775,7 +1862,8 @@ qint32 NoteStore::processEdamUserExceptionForNote(
             errorDescription.details() = userException.parameter.ref();
         }
 
-        return userException.errorCode;
+        // FIXME: should actually return properly typed qevercloud::EDAMErrorCode
+        return static_cast<int>(userException.errorCode);
     }
     else if (userException.errorCode == qevercloud::EDAMErrorCode::DATA_REQUIRED)
     {
@@ -1790,13 +1878,12 @@ qint32 NoteStore::processEdamUserExceptionForNote(
 
         if (!userException.parameter.isSet())
         {
-            if (!exceptionData.isNull() &&
-                !exceptionData->errorMessage.isEmpty())
-            {
+            if (exceptionData && !exceptionData->errorMessage.isEmpty()) {
                 errorDescription.details() = exceptionData->errorMessage;
             }
 
-            return userException.errorCode;
+            // FIXME: should actually return properly typed qevercloud::EDAMErrorCode
+            return static_cast<int>(userException.errorCode);
         }
 
         if (userException.parameter.ref() == QStringLiteral("Resource.data")) {
@@ -1809,7 +1896,8 @@ qint32 NoteStore::processEdamUserExceptionForNote(
             errorDescription.details() = userException.parameter.ref();
         }
 
-        return userException.errorCode;
+        // FIXME: should actually return properly typed qevercloud::EDAMErrorCode
+        return static_cast<int>(userException.errorCode);
     }
     else if (userException.errorCode == qevercloud::EDAMErrorCode::ENML_VALIDATION)
     {
@@ -1825,7 +1913,8 @@ qint32 NoteStore::processEdamUserExceptionForNote(
         errorDescription.appendBase(QT_TR_NOOP("note's content doesn't validate "
                                                "against DTD"));
         QNWARNING(errorDescription << ", note: " << note);
-        return userException.errorCode;
+        // FIXME: should actually return properly typed qevercloud::EDAMErrorCode
+        return static_cast<int>(userException.errorCode);
     }
     else if (userException.errorCode == qevercloud::EDAMErrorCode::LIMIT_REACHED)
     {
@@ -1840,13 +1929,12 @@ qint32 NoteStore::processEdamUserExceptionForNote(
 
         if (!userException.parameter.isSet())
         {
-            if (!exceptionData.isNull() &&
-                !exceptionData->errorMessage.isEmpty())
-            {
+            if (exceptionData && !exceptionData->errorMessage.isEmpty()) {
                 errorDescription.details() = exceptionData->errorMessage;
             }
 
-            return userException.errorCode;
+            // FIXME: should actually return properly typed qevercloud::EDAMErrorCode
+            return static_cast<int>(userException.errorCode);
         }
 
         if (thrownOnCreation &&
@@ -1905,7 +1993,8 @@ qint32 NoteStore::processEdamUserExceptionForNote(
             errorDescription.details() = userException.parameter.ref();
         }
 
-        return userException.errorCode;
+        // FIXME: should actually return properly typed qevercloud::EDAMErrorCode
+        return static_cast<int>(userException.errorCode);
     }
     else if (userException.errorCode == qevercloud::EDAMErrorCode::PERMISSION_DENIED)
     {
@@ -1920,13 +2009,12 @@ qint32 NoteStore::processEdamUserExceptionForNote(
 
         if (!userException.parameter.isSet())
         {
-            if (!exceptionData.isNull() &&
-                !exceptionData->errorMessage.isEmpty())
-            {
+            if (exceptionData && !exceptionData->errorMessage.isEmpty()) {
                 errorDescription.details() = exceptionData->errorMessage;
             }
 
-            return userException.errorCode;
+            // FIXME: should actually return properly typed qevercloud::EDAMErrorCode
+            return static_cast<int>(userException.errorCode);
         }
 
         if (userException.parameter.ref() == QStringLiteral("Note.notebookGuid"))
@@ -1949,7 +2037,8 @@ qint32 NoteStore::processEdamUserExceptionForNote(
             errorDescription.details() = userException.parameter.ref();
         }
 
-        return userException.errorCode;
+        // FIXME: should actually return properly typed qevercloud::EDAMErrorCode
+        return static_cast<int>(userException.errorCode);
     }
     else if (userException.errorCode == qevercloud::EDAMErrorCode::QUOTA_REACHED)
     {
@@ -1963,7 +2052,8 @@ qint32 NoteStore::processEdamUserExceptionForNote(
         }
 
         errorDescription.appendBase(QT_TR_NOOP("note exceeds upload quota limit"));
-        return userException.errorCode;
+        // FIXME: should actually return properly typed qevercloud::EDAMErrorCode
+        return static_cast<int>(userException.errorCode);
     }
 
     return processUnexpectedEdamUserException(QStringLiteral("note"),
@@ -1997,7 +2087,8 @@ qint32 NoteStore::processUnexpectedEdamUserException(
         errorDescription.details() += userException.parameter.ref();
     }
 
-    return userException.errorCode;
+    // FIXME: should actually return properly typed qevercloud::EDAMErrorCode
+    return static_cast<int>(userException.errorCode);
 }
 
 qint32 NoteStore::processEdamSystemException(
@@ -2038,7 +2129,8 @@ qint32 NoteStore::processEdamSystemException(
         }
     }
 
-    return systemException.errorCode;
+    // FIXME: should actually return properly typed qevercloud::EDAMErrorCode
+    return static_cast<int>(systemException.errorCode);
 }
 
 void NoteStore::processEdamNotFoundException(

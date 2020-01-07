@@ -274,13 +274,13 @@ NoteEditorPrivate::NoteEditorPrivate(NoteEditor & noteEditor) :
     m_pSpellCheckerDynamicHandler(new SpellCheckerDynamicHelper(this)),
     m_pTableResizeJavaScriptHandler(new TableResizeJavaScriptHandler(this)),
     m_pResizableImageJavaScriptHandler(new ResizableImageJavaScriptHandler(this)),
-    m_pGenericResourceImageManager(Q_NULLPTR),
+    m_pGenericResourceImageManager(nullptr),
     m_pToDoCheckboxClickHandler(new ToDoCheckboxOnClickHandler(this)),
     m_pToDoCheckboxAutomaticInsertionHandler(
         new ToDoCheckboxAutomaticInsertionHandler(this)),
     m_pPageMutationHandler(new PageMutationHandler(this)),
     m_pActionsWatcher(new ActionsWatcher(this)),
-    m_pUndoStack(Q_NULLPTR),
+    m_pUndoStack(nullptr),
     m_pAccount(),
     m_htmlForPrinting(),
     m_initialPageHtml(),
@@ -324,15 +324,15 @@ NoteEditorPrivate::NoteEditorPrivate(NoteEditor & noteEditor) :
     m_decryptedTextManager(new DecryptedTextManager),
     m_enmlConverter(),
 #ifndef QUENTIER_USE_QT_WEB_ENGINE
-    m_pPluginFactory(Q_NULLPTR),
+    m_pPluginFactory(nullptr),
 #endif
-    m_pPrepareNoteImageResourcesProgressDialog(Q_NULLPTR),
+    m_pPrepareNoteImageResourcesProgressDialog(nullptr),
     m_prepareResourceForOpeningProgressDialogs(),
-    m_pGenericTextContextMenu(Q_NULLPTR),
-    m_pImageResourceContextMenu(Q_NULLPTR),
-    m_pNonImageResourceContextMenu(Q_NULLPTR),
-    m_pEncryptedTextContextMenu(Q_NULLPTR),
-    m_pSpellChecker(Q_NULLPTR),
+    m_pGenericTextContextMenu(nullptr),
+    m_pImageResourceContextMenu(nullptr),
+    m_pNonImageResourceContextMenu(nullptr),
+    m_pEncryptedTextContextMenu(nullptr),
+    m_pSpellChecker(nullptr),
     m_spellCheckerEnabled(false),
     m_currentNoteMisSpelledWords(),
     m_stringUtils(),
@@ -346,7 +346,7 @@ NoteEditorPrivate::NoteEditorPrivate(NoteEditor & noteEditor) :
     m_htmlCachedMemory(),
     m_errorCachedMemory(),
     m_skipRulesForHtmlToEnmlConversion(),
-    m_pResourceDataInTemporaryFileStorageManager(Q_NULLPTR),
+    m_pResourceDataInTemporaryFileStorageManager(nullptr),
     m_pFileIOProcessorAsync(new FileIOProcessorAsync),
     m_resourceInfo(),
     m_pResourceInfoJavaScriptHandler(
@@ -1115,7 +1115,7 @@ void NoteEditorPrivate::onOpenResourceRequest(const QByteArray & resourceHash)
     const Resource & resource = resources[resourceIndex];
     const QString resourceLocalUid = resource.localUid();
 
-    QProgressDialog * pProgressDialog = Q_NULLPTR;
+    QProgressDialog * pProgressDialog = nullptr;
     for(auto pit = m_prepareResourceForOpeningProgressDialogs.constBegin(),
         pend = m_prepareResourceForOpeningProgressDialogs.constEnd();
         pit != pend; ++pit)
@@ -1645,6 +1645,9 @@ void NoteEditorPrivate::onSelectionFormattedAsSourceCode(
                      QNSLOT(NoteEditorPrivate,onUndoCommandError,ErrorString));
     m_pUndoStack->push(pCommand);
 
+    setModified();
+
+    m_pendingConversionToNoteForSavingInLocalStorage = true;
     convertToNote();
 }
 
@@ -2674,8 +2677,9 @@ void NoteEditorPrivate::onSourceCodeFormatUndoRedoFinished(
 
     Q_UNUSED(extraData)
 
-    QMap<QString,QVariant> resultMap = data.toMap();
+    setModified();
 
+    QMap<QString,QVariant> resultMap = data.toMap();
     auto statusIt = resultMap.find(QStringLiteral("status"));
     if (Q_UNLIKELY(statusIt == resultMap.end())) {
         ErrorString error(QT_TR_NOOP("Can't parse the result of source code "
@@ -2705,6 +2709,7 @@ void NoteEditorPrivate::onSourceCodeFormatUndoRedoFinished(
         return;
     }
 
+    m_pendingConversionToNoteForSavingInLocalStorage = true;
     convertToNote();
 }
 
@@ -2814,9 +2819,9 @@ void NoteEditorPrivate::clearCurrentNoteInfo()
 #ifdef QUENTIER_USE_QT_WEB_ENGINE
     m_webSocketServerPort = 0;
 #else
-    page()->setPluginFactory(Q_NULLPTR);
+    page()->setPluginFactory(nullptr);
     delete m_pPluginFactory;
-    m_pPluginFactory = Q_NULLPTR;
+    m_pPluginFactory = nullptr;
 #endif
 
     clearPrepareNoteImageResourcesProgressDialog();
@@ -2863,7 +2868,7 @@ void NoteEditorPrivate::clearPrepareNoteImageResourcesProgressDialog()
 
     m_pPrepareNoteImageResourcesProgressDialog->accept();
     m_pPrepareNoteImageResourcesProgressDialog->deleteLater();
-    m_pPrepareNoteImageResourcesProgressDialog = Q_NULLPTR;
+    m_pPrepareNoteImageResourcesProgressDialog = nullptr;
 }
 
 void NoteEditorPrivate::clearPrepareResourceForOpeningProgressDialog(
@@ -2891,7 +2896,7 @@ void NoteEditorPrivate::clearPrepareResourceForOpeningProgressDialog(
 
     progressDialogIt->second->accept();
     progressDialogIt->second->deleteLater();
-    progressDialogIt->second = Q_NULLPTR;
+    progressDialogIt->second = nullptr;
 
     m_prepareResourceForOpeningProgressDialogs.erase(progressDialogIt);
 }
@@ -3727,8 +3732,8 @@ void NoteEditorPrivate::onNoteDeleted(QString noteLocalUid)
     // FIXME: if the note editor has been marked as modified, need to offer the
     // option to the user to save their edits as a new note
 
-    m_pNote.reset(Q_NULLPTR);
-    m_pNotebook.reset(Q_NULLPTR);
+    m_pNote.reset(nullptr);
+    m_pNotebook.reset(nullptr);
     m_noteLocalUid = QString();
     clearCurrentNoteInfo();
     m_noteWasDeleted = true;
@@ -3751,8 +3756,8 @@ void NoteEditorPrivate::onNotebookDeleted(QString notebookLocalUid)
     // FIXME: if the note editor has been marked as modified, need to offer the
     // option to the user to save their edits as a new note
 
-    m_pNote.reset(Q_NULLPTR);
-    m_pNotebook.reset(Q_NULLPTR);
+    m_pNote.reset(nullptr);
+    m_pNotebook.reset(nullptr);
     m_noteLocalUid = QString();
     clearCurrentNoteInfo();
     m_noteWasDeleted = true;
@@ -4764,7 +4769,7 @@ void NoteEditorPrivate::manualSaveResourceToFile(const Resource & resource)
 
     QString * pSelectedFilter = (filterString.contains(resourcePreferredFilterString)
                                  ? &resourcePreferredFilterString
-                                 : Q_NULLPTR);
+                                 : nullptr);
 
     QString absoluteFilePath =
         QFileDialog::getSaveFileName(this, tr("Save as") + QStringLiteral("..."),
@@ -5687,7 +5692,7 @@ void NoteEditorPrivate::setupFileIO()
 
     if (m_pResourceDataInTemporaryFileStorageManager) {
         m_pResourceDataInTemporaryFileStorageManager->deleteLater();
-        m_pResourceDataInTemporaryFileStorageManager = Q_NULLPTR;
+        m_pResourceDataInTemporaryFileStorageManager = nullptr;
     }
 
     m_pResourceDataInTemporaryFileStorageManager =
@@ -5769,7 +5774,7 @@ void NoteEditorPrivate::setupFileIO()
 
     if (m_pGenericResourceImageManager) {
         m_pGenericResourceImageManager->deleteLater();
-        m_pGenericResourceImageManager = Q_NULLPTR;
+        m_pGenericResourceImageManager = nullptr;
     }
 
     m_pGenericResourceImageManager = new GenericResourceImageManager;
@@ -6878,7 +6883,7 @@ void NoteEditorPrivate::setupPasteGenericTextMenuActions()
 
     QClipboard * pClipboard = QApplication::clipboard();
     const QMimeData * pClipboardMimeData =
-        (pClipboard ? pClipboard->mimeData(QClipboard::Clipboard) : Q_NULLPTR);
+        (pClipboard ? pClipboard->mimeData(QClipboard::Clipboard) : nullptr);
     if (pClipboardMimeData)
     {
         if (pClipboardMimeData->hasHtml()) {
@@ -7796,7 +7801,7 @@ bool NoteEditorPrivate::print(QPrinter & printer, ErrorString & errorDescription
                 QNTRACE("Will look for resource with hash "
                         << hashAttrByteArray);
 
-                const Resource * pTargetResource = Q_NULLPTR;
+                const Resource * pTargetResource = nullptr;
                 for(auto it = resources.constBegin(),
                     end = resources.constEnd(); it != end; ++it)
                 {
@@ -7991,7 +7996,7 @@ bool NoteEditorPrivate::print(QPrinter & printer, ErrorString & errorDescription
     int result = eventLoop.exec(QEventLoop::ExcludeUserInputEvents);
 
     pConversionTimer->deleteLater();
-    pConversionTimer = Q_NULLPTR;
+    pConversionTimer = nullptr;
 
     if (result == EventLoopWithExitStatus::ExitStatus::Timeout) {
         errorDescription.setBase(QT_TR_NOOP("Can't print note: failed to get "
@@ -8183,8 +8188,8 @@ void NoteEditorPrivate::setCurrentNoteLocalUid(const QString & noteLocalUid)
         return;
     }
 
-    m_pNote.reset(Q_NULLPTR);
-    m_pNotebook.reset(Q_NULLPTR);
+    m_pNote.reset(nullptr);
+    m_pNotebook.reset(nullptr);
 
     clearCurrentNoteInfo();
 
@@ -8204,8 +8209,8 @@ void NoteEditorPrivate::clear()
 {
     QNDEBUG("NoteEditorPrivate::clear");
 
-    m_pNote.reset(Q_NULLPTR);
-    m_pNotebook.reset(Q_NULLPTR);
+    m_pNote.reset(nullptr);
+    m_pNotebook.reset(nullptr);
     clearCurrentNoteInfo();
     clearEditorContent();
 }

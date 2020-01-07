@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Dmitry Ivanov
+ * Copyright 2016-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -29,7 +29,7 @@ class TableResizeJavaScriptHandler: public QObject
 {
     Q_OBJECT
 public:
-    explicit TableResizeJavaScriptHandler(QObject * parent = Q_NULLPTR);
+    explicit TableResizeJavaScriptHandler(QObject * parent = nullptr);
 
 Q_SIGNALS:
     void tableResized();

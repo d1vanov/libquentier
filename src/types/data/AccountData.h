@@ -67,8 +67,8 @@ public:
     qint32 noteResourceCountMax() const;
 
 private:
-    AccountData & operator=(const AccountData & other) Q_DECL_EQ_DELETE;
-    AccountData & operator=(AccountData && other) Q_DECL_EQ_DELETE;
+    AccountData & operator=(const AccountData & other)  = delete;
+    AccountData & operator=(AccountData && other)  = delete;
 };
 
 } // namespace quentier

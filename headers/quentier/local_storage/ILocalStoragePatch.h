@@ -21,6 +21,7 @@
 
 #include <quentier/utility/Macros.h>
 #include <quentier/utility/Linkage.h>
+
 #include <QObject>
 
 namespace quentier {
@@ -38,7 +39,7 @@ class QUENTIER_EXPORT ILocalStoragePatch: public QObject
 {
     Q_OBJECT
 protected:
-    explicit ILocalStoragePatch(QObject * parent = Q_NULLPTR);
+    explicit ILocalStoragePatch(QObject * parent = nullptr);
 
 public:
     virtual ~ILocalStoragePatch();

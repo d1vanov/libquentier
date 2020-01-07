@@ -42,7 +42,7 @@ public:
                                      const QString & authToken,
                                      const QString & shardId,
                                      const bool noteFromPublicLinkedNotebook,
-                                     QObject * parent = Q_NULLPTR);
+                                     QObject * parent = nullptr);
     virtual ~NoteThumbnailDownloader();
 
     void start();
@@ -53,11 +53,14 @@ Q_SIGNALS:
                   ErrorString errorDescription);
 
 private:
-    typedef qevercloud::EverCloudExceptionData EverCloudExceptionData;
+    using EverCloudExceptionDataPtr = qevercloud::EverCloudExceptionDataPtr;
+    using IRequestContextPtr = qevercloud::IRequestContextPtr;
 
 private Q_SLOTS:
-    void onDownloadFinished(QVariant result,
-                            QSharedPointer<EverCloudExceptionData> error);
+    void onDownloadFinished(
+        QVariant result,
+        EverCloudExceptionDataPtr exceptionData,
+        IRequestContextPtr ctx);
 
 private:
     QString                     m_host;

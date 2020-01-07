@@ -22,6 +22,7 @@
 #include <quentier/utility/Linkage.h>
 #include <quentier/utility/Macros.h>
 #include <quentier/types/Account.h>
+
 #include <QObject>
 #include <QKeySequence>
 
@@ -33,7 +34,7 @@ class QUENTIER_EXPORT ShortcutManager: public QObject
 {
     Q_OBJECT
 public:
-    explicit ShortcutManager(QObject * parent = Q_NULLPTR);
+    explicit ShortcutManager(QObject * parent = nullptr);
 
     enum QuentierShortcutKey
     {

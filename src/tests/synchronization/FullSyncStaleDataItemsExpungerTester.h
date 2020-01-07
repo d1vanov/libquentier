@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Dmitry Ivanov
+ * Copyright 2017-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -28,7 +28,7 @@ class FullSyncStaleDataItemsExpungerTester: public QObject
 {
     Q_OBJECT
 public:
-    FullSyncStaleDataItemsExpungerTester(QObject * parent = Q_NULLPTR);
+    FullSyncStaleDataItemsExpungerTester(QObject * parent = nullptr);
     virtual ~FullSyncStaleDataItemsExpungerTester();
 
 private Q_SLOTS:

@@ -1793,7 +1793,7 @@ void TestUserAddFindUpdateDeleteExpungeInLocalStorage()
     modifiedUser.setEmail(user.email() + QStringLiteral("_modified"));
     modifiedUser.setName(user.name() + QStringLiteral("_modified"));
     modifiedUser.setTimezone(user.timezone() + QStringLiteral("_modified"));
-    modifiedUser.setPrivilegeLevel(user.privilegeLevel());
+    modifiedUser.setPrivilegeLevel(static_cast<qint8>(user.privilegeLevel()));
     modifiedUser.setCreationTimestamp(user.creationTimestamp());
     modifiedUser.setModificationTimestamp(user.modificationTimestamp() + 1);
     modifiedUser.setActive(true);
@@ -1911,7 +1911,7 @@ void TestSequentialUpdatesInLocalStorage()
     user.setUsername(QStringLiteral("checker"));
     user.setEmail(QStringLiteral("mail@checker.com"));
     user.setTimezone(QStringLiteral("Europe/Moscow"));
-    user.setPrivilegeLevel(qevercloud::PrivilegeLevel::NORMAL);
+    user.setPrivilegeLevel(static_cast<qint8>(qevercloud::PrivilegeLevel::NORMAL));
     user.setCreationTimestamp(QDateTime::currentMSecsSinceEpoch());
     user.setModificationTimestamp(QDateTime::currentMSecsSinceEpoch());
     user.setActive(true);
@@ -1967,7 +1967,7 @@ void TestSequentialUpdatesInLocalStorage()
     updatedUser.setId(1);
     updatedUser.setUsername(QStringLiteral("checker"));
     updatedUser.setEmail(QStringLiteral("mail@checker.com"));
-    updatedUser.setPrivilegeLevel(qevercloud::PrivilegeLevel::NORMAL);
+    updatedUser.setPrivilegeLevel(static_cast<qint8>(qevercloud::PrivilegeLevel::NORMAL));
     updatedUser.setCreationTimestamp(QDateTime::currentMSecsSinceEpoch());
     updatedUser.setModificationTimestamp(QDateTime::currentMSecsSinceEpoch());
     updatedUser.setActive(true);

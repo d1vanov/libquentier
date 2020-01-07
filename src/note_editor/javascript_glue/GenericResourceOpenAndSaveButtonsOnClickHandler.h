@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Dmitry Ivanov
+ * Copyright 2016-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -30,7 +30,7 @@ class GenericResourceOpenAndSaveButtonsOnClickHandler: public QObject
     Q_OBJECT
 public:
     explicit GenericResourceOpenAndSaveButtonsOnClickHandler(
-        QObject * parent = Q_NULLPTR);
+        QObject * parent = nullptr);
 
 Q_SIGNALS:
     void openResourceRequest(const QByteArray & resourceHash);

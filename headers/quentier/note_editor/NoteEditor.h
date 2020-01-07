@@ -24,6 +24,7 @@
 #include <quentier/utility/Macros.h>
 #include <quentier/utility/Linkage.h>
 #include <quentier/types/ErrorString.h>
+
 #include <QWidget>
 #include <QPrinter>
 #include <QStringList>
@@ -46,8 +47,8 @@ class QUENTIER_EXPORT NoteEditor: public QWidget
 {
     Q_OBJECT
 public:
-    explicit NoteEditor(QWidget * parent = Q_NULLPTR, Qt::WindowFlags flags = 0);
-    virtual ~NoteEditor() Q_DECL_OVERRIDE;
+    explicit NoteEditor(QWidget * parent = nullptr, Qt::WindowFlags flags = 0);
+    virtual ~NoteEditor() override;
 
     /**
      * NoteEditor requires LocalStorageManagerAsync, SpellChecker and
@@ -66,9 +67,10 @@ public:
      *                                      background jobs would take place in GUI
      *                                      thread
      */
-    void initialize(LocalStorageManagerAsync & localStorageManager,
-                    SpellChecker & spellChecker, const Account & account,
-                    QThread * pBackgroundJobsThread = Q_NULLPTR);
+    void initialize(
+        LocalStorageManagerAsync & localStorageManager,
+        SpellChecker & spellChecker, const Account & account,
+        QThread * pBackgroundJobsThread = nullptr);
 
     /**
      * This method can be used to set the backend to the note editor;
@@ -164,10 +166,13 @@ public:
     bool spellCheckEnabled() const;
 
     bool print(QPrinter & printer, ErrorString & errorDescription);
-    bool exportToPdf(const QString & absoluteFilePath,
-                     ErrorString & errorDescription);
-    bool exportToEnex(const QStringList & tagNames,
-                      QString & enex, ErrorString & errorDescription);
+
+    bool exportToPdf(
+        const QString & absoluteFilePath, ErrorString & errorDescription);
+
+    bool exportToEnex(
+        const QStringList & tagNames, QString & enex,
+        ErrorString & errorDescription);
 
     /**
      * @return palette containing default colors used by the editor; the palette
@@ -241,8 +246,8 @@ Q_SIGNALS:
      * performs the actual link insertion into the note. If the link text is empty,
      * the URL itself is used as the link text.
      */
-    void inAppNoteLinkPasteRequested(QString url, QString userId,
-                                     QString shardId, QString noteGuid);
+    void inAppNoteLinkPasteRequested(
+        QString url, QString userId, QString shardId, QString noteGuid);
 
     void convertedToNote(Note note);
     void cantConvertToNote(ErrorString error);
@@ -268,8 +273,8 @@ Q_SIGNALS:
      * @brief failedToSaveNoteToLocalStorage signal is emitted in case of
      * failure to save the note to local storage
      */
-    void failedToSaveNoteToLocalStorage(ErrorString errorDescription,
-                                        QString noteLocalUid);
+    void failedToSaveNoteToLocalStorage(
+        ErrorString errorDescription, QString noteLocalUid);
 
     // Signals to notify anyone interested of the formatting at the current
     // cursor position
@@ -356,17 +361,22 @@ public Q_SLOTS:
 
     void findNext(const QString & text, const bool matchCase) const;
     void findPrevious(const QString & text, const bool matchCase) const;
-    void replace(const QString & textToReplace,
-                 const QString & replacementText,
-                 const bool matchCase);
-    void replaceAll(const QString & textToReplace,
-                    const QString & replacementText,
-                    const bool matchCase);
+
+    void replace(
+        const QString & textToReplace,
+        const QString & replacementText,
+        const bool matchCase);
+
+    void replaceAll(
+        const QString & textToReplace,
+        const QString & replacementText,
+        const bool matchCase);
 
     void insertToDoCheckbox();
 
-    void insertInAppNoteLink(const QString & userId, const QString & shardId,
-                             const QString & noteGuid, const QString & linkText);
+    void insertInAppNoteLink(
+        const QString & userId, const QString & shardId,
+        const QString & noteGuid, const QString & linkText);
 
     void setSpellcheck(const bool enabled);
 
@@ -411,12 +421,13 @@ public Q_SLOTS:
     void insertNumberedList();
 
     void insertTableDialog();
-    void insertFixedWidthTable(const int rows,
-                               const int columns,
-                               const int widthInPixels);
-    void insertRelativeWidthTable(const int rows,
-                                  const int columns,
-                                  const double relativeWidth);
+
+    void insertFixedWidthTable(
+        const int rows, const int columns, const int widthInPixels);
+
+    void insertRelativeWidthTable(
+        const int rows, const int columns, const double relativeWidth);
+
     void insertTableRow();
     void insertTableColumn();
     void removeTableRow();
@@ -440,8 +451,8 @@ public Q_SLOTS:
     void onNoteLoadCancelled();
 
 protected:
-    virtual void dragMoveEvent(QDragMoveEvent * pEvent) Q_DECL_OVERRIDE;
-    virtual void dropEvent(QDropEvent * pEvent) Q_DECL_OVERRIDE;
+    virtual void dragMoveEvent(QDragMoveEvent * pEvent) override;
+    virtual void dropEvent(QDropEvent * pEvent) override;
 
 private:
     INoteEditorBackend * m_backend;

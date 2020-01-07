@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Dmitry Ivanov
+ * Copyright 2016-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -49,8 +49,8 @@ public:
     qevercloud::SavedSearch     m_qecSearch;
 
 private:
-    SavedSearchData & operator=(const SavedSearchData & other) Q_DECL_EQ_DELETE;
-    SavedSearchData & operator=(SavedSearchData && other) Q_DECL_EQ_DELETE;
+    SavedSearchData & operator=(const SavedSearchData & other)  = delete;
+    SavedSearchData & operator=(SavedSearchData && other)  = delete;
 };
 
 } // namespace quentier

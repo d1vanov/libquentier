@@ -20,6 +20,7 @@
 #define LIB_QUENTIER_UTILITY_LIMITED_STACK_H
 
 #include <quentier/utility/Macros.h>
+
 #include <QStack>
 
 namespace quentier {
@@ -34,7 +35,7 @@ template <class T>
 class LimitedStack: public QStack<T>
 {
 public:
-    LimitedStack(void (*deleter)(T&) = Q_NULLPTR) :
+    LimitedStack(void (*deleter)(T&) = nullptr) :
         m_limit(-1), m_deleter(deleter)
     {}
 

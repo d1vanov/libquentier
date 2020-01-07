@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Dmitry Ivanov
+ * Copyright 2016-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -30,7 +30,7 @@ class ToDoCheckboxOnClickHandler: public QObject
 {
     Q_OBJECT
 public:
-    explicit ToDoCheckboxOnClickHandler(QObject * parent = Q_NULLPTR);
+    explicit ToDoCheckboxOnClickHandler(QObject * parent = nullptr);
 
 Q_SIGNALS:
     void toDoCheckboxClicked(quint64 enToDoCheckboxId);

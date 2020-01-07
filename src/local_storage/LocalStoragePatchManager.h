@@ -43,7 +43,7 @@ public:
     explicit LocalStoragePatchManager(const Account & account,
                                       LocalStorageManagerPrivate & localStorageManager,
                                       QSqlDatabase & database,
-                                      QObject * parent = Q_NULLPTR);
+                                      QObject * parent = nullptr);
 
     /**
      * @return          The list of patches required to be applied to the

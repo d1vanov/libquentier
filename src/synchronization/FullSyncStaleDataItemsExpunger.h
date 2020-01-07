@@ -76,7 +76,7 @@ public:
                                             SavedSearchSyncCache & savedSearchSyncCache,
                                             const SyncedGuids & syncedGuids,
                                             const QString & linkedNotebookGuid,
-                                            QObject * parent = Q_NULLPTR);
+                                            QObject * parent = nullptr);
 
     const QString & linkedNotebookGuid() const { return m_linkedNotebookGuid; }
 

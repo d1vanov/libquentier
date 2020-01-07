@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Dmitry Ivanov
+ * Copyright 2016-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -22,11 +22,7 @@
 #include <quentier/utility/Printable.h>
 #include <quentier/types/ErrorString.h>
 
-#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
 #include <qt5qevercloud/QEverCloud.h>
-#else
-#include <qt4qevercloud/QEverCloud.h>
-#endif
 
 #include <QtGlobal>
 
@@ -37,8 +33,8 @@ QT_FORWARD_DECLARE_CLASS(UserData)
 class QUENTIER_EXPORT User: public Printable
 {
 public:
-    typedef qevercloud::PrivilegeLevel::type    PrivilegeLevel;
-    typedef qevercloud::ServiceLevel::type      ServiceLevel;
+    using PrivilegeLevel = qevercloud::PrivilegeLevel;
+    using ServiceLevel = qevercloud::ServiceLevel;
 
 public:
     explicit User();
@@ -138,7 +134,7 @@ public:
     const qevercloud::AccountLimits & accountLimits() const;
     void setAccountLimits(qevercloud::AccountLimits && limits);
 
-    virtual QTextStream & print(QTextStream & strm) const Q_DECL_OVERRIDE;
+    virtual QTextStream & print(QTextStream & strm) const override;
 
     friend class Notebook;
 

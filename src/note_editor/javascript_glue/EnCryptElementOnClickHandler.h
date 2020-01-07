@@ -35,7 +35,7 @@ class EnCryptElementOnClickHandler: public QObject
 {
     Q_OBJECT
 public:
-    explicit EnCryptElementOnClickHandler(QObject * parent = Q_NULLPTR);
+    explicit EnCryptElementOnClickHandler(QObject * parent = nullptr);
 
 Q_SIGNALS:
     void decrypt(QString encryptedText, QString cipher, QString length,

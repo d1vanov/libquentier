@@ -30,7 +30,7 @@
         errorDescription.setBase(QT_TRANSLATE_NOOP("synchronization",          \
                                                    "Thrift exception"));       \
         errorDescription.details() = QStringLiteral("type = ");                \
-        errorDescription.details() += QString::number(thriftException.type()); \
+        errorDescription.details() += ToString(thriftException.type());        \
         errorDescription.details() += QStringLiteral(": ");                    \
         errorDescription.details() +=                                          \
             QString::fromUtf8(thriftException.what());                         \
@@ -45,7 +45,7 @@
         errorDescription.setBase(                                              \
             QT_TRANSLATE_NOOP("synchronization",                               \
                               "QEverCloud Evernote exception"));               \
-        if (!evernoteException.exceptionData().isNull()) {                     \
+        if (evernoteException.exceptionData()) {                               \
             errorDescription.details() =                                       \
                 evernoteException.exceptionData()->errorMessage;               \
         }                                                                      \

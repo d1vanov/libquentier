@@ -132,13 +132,13 @@ class NoteSyncConflictResolverManager: public NoteSyncConflictResolver::IManager
 public:
     NoteSyncConflictResolverManager(RemoteToLocalSynchronizationManager & manager);
 
-    virtual LocalStorageManagerAsync & localStorageManagerAsync() Q_DECL_OVERRIDE;
+    virtual LocalStorageManagerAsync & localStorageManagerAsync() override;
 
     virtual INoteStore * noteStoreForNote(
         const Note & note, QString & authToken,
-        ErrorString & errorDescription) Q_DECL_OVERRIDE;
+        ErrorString & errorDescription) override;
 
-    virtual bool syncingLinkedNotebooksContent() const Q_DECL_OVERRIDE;
+    virtual bool syncingLinkedNotebooksContent() const override;
 
 private:
     RemoteToLocalSynchronizationManager &   m_manager;
@@ -268,7 +268,7 @@ RemoteToLocalSynchronizationManager::RemoteToLocalSynchronizationManager(
     m_resourcesPendingDownloadForAddingToLocalStorageWithNotesByResourceGuid(),
     m_resourcesPendingDownloadForUpdatingInLocalStorageWithNotesByResourceGuid(),
     m_fullSyncStaleDataItemsSyncedGuids(),
-    m_pFullSyncStaleDataItemsExpunger(Q_NULLPTR),
+    m_pFullSyncStaleDataItemsExpunger(nullptr),
     m_fullSyncStaleDataItemsExpungersByLinkedNotebookGuid(),
     m_notesToAddPerAPICallPostponeTimerId(),
     m_notesToUpdatePerAPICallPostponeTimerId(),
@@ -327,16 +327,16 @@ void RemoteToLocalSynchronizationManager::setAccount(const Account & account)
     switch(accountEnType)
     {
     case Account::EvernoteAccountType::Plus:
-        m_user.setServiceLevel(qevercloud::ServiceLevel::PLUS);
+        m_user.setServiceLevel(static_cast<qint8>(qevercloud::ServiceLevel::PLUS));
         break;
     case Account::EvernoteAccountType::Premium:
-        m_user.setServiceLevel(qevercloud::ServiceLevel::PREMIUM);
+        m_user.setServiceLevel(static_cast<qint8>(qevercloud::ServiceLevel::PREMIUM));
         break;
     case Account::EvernoteAccountType::Business:
-        m_user.setServiceLevel(qevercloud::ServiceLevel::BUSINESS);
+        m_user.setServiceLevel(static_cast<qint8>(qevercloud::ServiceLevel::BUSINESS));
         break;
     default:
-        m_user.setServiceLevel(qevercloud::ServiceLevel::BASIC);
+        m_user.setServiceLevel(static_cast<qint8>(qevercloud::ServiceLevel::BASIC));
         break;
     }
 
@@ -2472,7 +2472,7 @@ void RemoteToLocalSynchronizationManager::onExpungeLinkedNotebookCompleted(
         NotebookSyncCache * pNotebookSyncCache = notebookSyncCacheIt.value();
         if (pNotebookSyncCache) {
             pNotebookSyncCache->disconnect();
-            pNotebookSyncCache->setParent(Q_NULLPTR);
+            pNotebookSyncCache->setParent(nullptr);
             pNotebookSyncCache->deleteLater();
         }
 
@@ -2485,7 +2485,7 @@ void RemoteToLocalSynchronizationManager::onExpungeLinkedNotebookCompleted(
         TagSyncCache * pTagSyncCache = tagSyncCacheIt.value();
         if (pTagSyncCache) {
             pTagSyncCache->disconnect();
-            pTagSyncCache->setParent(Q_NULLPTR);
+            pTagSyncCache->setParent(nullptr);
             pTagSyncCache->deleteLater();
         }
 
@@ -3122,7 +3122,8 @@ void RemoteToLocalSynchronizationManager::onGetNoteAsyncFinished(
         Q_UNUSED(m_notesPendingDownloadForUpdatingInLocalStorageByGuid.erase(updateIt))
     }
 
-    if (errorCode == qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED)
+    if (errorCode ==
+        static_cast<qint32>(qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED))
     {
         if (rateLimitSeconds < 0) {
             errorDescription.setBase(QT_TR_NOOP("QEverCloud or Evernote protocol "
@@ -3153,7 +3154,8 @@ void RemoteToLocalSynchronizationManager::onGetNoteAsyncFinished(
         Q_EMIT rateLimitExceeded(rateLimitSeconds);
         return;
     }
-    else if (errorCode == qevercloud::EDAMErrorCode::AUTH_EXPIRED)
+    else if (errorCode ==
+             static_cast<qint32>(qevercloud::EDAMErrorCode::AUTH_EXPIRED))
     {
         handleAuthExpiration();
         return;
@@ -3178,7 +3180,7 @@ void RemoteToLocalSynchronizationManager::onGetNoteAsyncFinished(
      * otherwise, it just won't be updated
      */
 
-    const Notebook * pNotebook = Q_NULLPTR;
+    const Notebook * pNotebook = nullptr;
 
     /**
      * Since the downloaded note includes the whole content for each of their
@@ -3318,7 +3320,8 @@ void RemoteToLocalSynchronizationManager::onGetResourceAsyncFinished(
         return;
     }
 
-    if (errorCode == qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED)
+    if (errorCode ==
+        static_cast<qint32>(qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED))
     {
         if (rateLimitSeconds < 0) {
             errorDescription.setBase(
@@ -3353,7 +3356,8 @@ void RemoteToLocalSynchronizationManager::onGetResourceAsyncFinished(
         Q_EMIT rateLimitExceeded(rateLimitSeconds);
         return;
     }
-    else if (errorCode == qevercloud::EDAMErrorCode::AUTH_EXPIRED)
+    else if (errorCode ==
+             static_cast<qint32>(qevercloud::EDAMErrorCode::AUTH_EXPIRED))
     {
         handleAuthExpiration();
         return;
@@ -3461,7 +3465,7 @@ void RemoteToLocalSynchronizationManager::onNotebookSyncConflictResolverFinished
         qobject_cast<NotebookSyncConflictResolver*>(sender());
     if (pResolver) {
         pResolver->disconnect(this);
-        pResolver->setParent(Q_NULLPTR);
+        pResolver->setParent(nullptr);
         pResolver->deleteLater();
     }
 
@@ -3483,7 +3487,7 @@ void RemoteToLocalSynchronizationManager::onNotebookSyncConflictResolverFailure(
         qobject_cast<NotebookSyncConflictResolver*>(sender());
     if (pResolver) {
         pResolver->disconnect(this);
-        pResolver->setParent(Q_NULLPTR);
+        pResolver->setParent(nullptr);
         pResolver->deleteLater();
     }
 
@@ -3500,7 +3504,7 @@ void RemoteToLocalSynchronizationManager::onTagSyncConflictResolverFinished(
         qobject_cast<TagSyncConflictResolver*>(sender());
     if (pResolver) {
         pResolver->disconnect(this);
-        pResolver->setParent(Q_NULLPTR);
+        pResolver->setParent(nullptr);
         pResolver->deleteLater();
     }
 
@@ -3521,7 +3525,7 @@ void RemoteToLocalSynchronizationManager::onTagSyncConflictResolverFailure(
         qobject_cast<TagSyncConflictResolver*>(sender());
     if (pResolver) {
         pResolver->disconnect(this);
-        pResolver->setParent(Q_NULLPTR);
+        pResolver->setParent(nullptr);
         pResolver->deleteLater();
     }
 
@@ -3539,7 +3543,7 @@ void RemoteToLocalSynchronizationManager::onSavedSearchSyncConflictResolverFinis
         qobject_cast<SavedSearchSyncConflictResolver*>(sender());
     if (pResolver) {
         pResolver->disconnect(this);
-        pResolver->setParent(Q_NULLPTR);
+        pResolver->setParent(nullptr);
         pResolver->deleteLater();
     }
 
@@ -3559,7 +3563,7 @@ void RemoteToLocalSynchronizationManager::onSavedSearchSyncConflictResolverFailu
         qobject_cast<SavedSearchSyncConflictResolver*>(sender());
     if (pResolver) {
         pResolver->disconnect(this);
-        pResolver->setParent(Q_NULLPTR);
+        pResolver->setParent(nullptr);
         pResolver->deleteLater();
     }
 
@@ -3577,7 +3581,7 @@ void RemoteToLocalSynchronizationManager::onNoteSyncConflictResolverFinished(
         qobject_cast<NoteSyncConflictResolver*>(sender());
     if (pResolver) {
         pResolver->disconnect(this);
-        pResolver->setParent(Q_NULLPTR);
+        pResolver->setParent(nullptr);
         pResolver->deleteLater();
     }
 
@@ -3598,7 +3602,7 @@ void RemoteToLocalSynchronizationManager::onNoteSyncConflictResolvedFailure(
         qobject_cast<NoteSyncConflictResolver*>(sender());
     if (pResolver) {
         pResolver->disconnect(this);
-        pResolver->setParent(Q_NULLPTR);
+        pResolver->setParent(nullptr);
         pResolver->deleteLater();
     }
 
@@ -3671,7 +3675,7 @@ void RemoteToLocalSynchronizationManager::onFullSyncStaleDataItemsExpungerFinish
 
         if (m_pFullSyncStaleDataItemsExpunger == pExpunger)
         {
-            m_pFullSyncStaleDataItemsExpunger = Q_NULLPTR;
+            m_pFullSyncStaleDataItemsExpunger = nullptr;
         }
         else
         {
@@ -3723,7 +3727,7 @@ void RemoteToLocalSynchronizationManager::onFullSyncStaleDataItemsExpungerFailur
 
         if (m_pFullSyncStaleDataItemsExpunger == pExpunger)
         {
-            m_pFullSyncStaleDataItemsExpunger = Q_NULLPTR;
+            m_pFullSyncStaleDataItemsExpunger = nullptr;
         }
         else
         {
@@ -5153,7 +5157,8 @@ bool RemoteToLocalSynchronizationManager::syncUserImpl(
     qint32 rateLimitSeconds = 0;
     qint32 errorCode =
         m_manager.userStore().getUser(m_user, errorDescription, rateLimitSeconds);
-    if (errorCode == qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED)
+    if (errorCode ==
+        static_cast<qint32>(qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED))
     {
         if (rateLimitSeconds < 0)
         {
@@ -5190,7 +5195,8 @@ bool RemoteToLocalSynchronizationManager::syncUserImpl(
         Q_EMIT rateLimitExceeded(rateLimitSeconds);
         return false;
     }
-    else if (errorCode == qevercloud::EDAMErrorCode::AUTH_EXPIRED)
+    else if (errorCode ==
+             static_cast<qint32>(qevercloud::EDAMErrorCode::AUTH_EXPIRED))
     {
         ErrorString errorMessage(
             QT_TR_NOOP("unexpected AUTH_EXPIRED error when trying to download "
@@ -5314,7 +5320,8 @@ bool RemoteToLocalSynchronizationManager::syncAccountLimits(
         m_manager.userStore().getAccountLimits(m_user.serviceLevel(),
                                                m_accountLimits, errorDescription,
                                                rateLimitSeconds);
-    if (errorCode == qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED)
+    if (errorCode ==
+        static_cast<qint32>(qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED))
     {
         if (rateLimitSeconds < 0) {
             errorDescription.setBase(QT_TR_NOOP("Rate limit reached but the number "
@@ -5349,7 +5356,8 @@ bool RemoteToLocalSynchronizationManager::syncAccountLimits(
         Q_EMIT rateLimitExceeded(rateLimitSeconds);
         return false;
     }
-    else if (errorCode == qevercloud::EDAMErrorCode::AUTH_EXPIRED)
+    else if (errorCode ==
+             static_cast<qint32>(qevercloud::EDAMErrorCode::AUTH_EXPIRED))
     {
         ErrorString errorMessage(QT_TR_NOOP("unexpected AUTH_EXPIRED error when "
                                             "trying to sync the current user's "
@@ -5954,7 +5962,7 @@ void RemoteToLocalSynchronizationManager::launchFullSyncStaleDataItemsExpunger()
 
     if (m_pFullSyncStaleDataItemsExpunger) {
         junkFullSyncStaleDataItemsExpunger(*m_pFullSyncStaleDataItemsExpunger);
-        m_pFullSyncStaleDataItemsExpunger = Q_NULLPTR;
+        m_pFullSyncStaleDataItemsExpunger = nullptr;
     }
 
     m_pFullSyncStaleDataItemsExpunger =
@@ -6957,7 +6965,8 @@ void RemoteToLocalSynchronizationManager::getLinkedNotebookSyncState(
         authToken, syncState, errorDescription,
         rateLimitSeconds);
 
-    if (errorCode == qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED)
+    if (errorCode ==
+        static_cast<qint32>(qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED))
     {
         if (rateLimitSeconds < 0) {
             errorDescription.setBase(QT_TR_NOOP("Rate limit reached but the number "
@@ -6990,7 +6999,8 @@ void RemoteToLocalSynchronizationManager::getLinkedNotebookSyncState(
         asyncWait = true;
         return;
     }
-    else if (errorCode == qevercloud::EDAMErrorCode::AUTH_EXPIRED)
+    else if (errorCode ==
+             static_cast<qint32>(qevercloud::EDAMErrorCode::AUTH_EXPIRED))
     {
         ErrorString errorMessage(QT_TR_NOOP("Unexpected AUTH_EXPIRED error when "
                                             "trying to get the linked notebook "
@@ -7019,7 +7029,7 @@ bool RemoteToLocalSynchronizationManager::downloadLinkedNotebooksSyncChunks()
     QNDEBUG("RemoteToLocalSynchronizationManager::"
             "downloadLinkedNotebooksSyncChunks");
 
-    qevercloud::SyncChunk * pSyncChunk = Q_NULLPTR;
+    qevercloud::SyncChunk * pSyncChunk = nullptr;
 
     const int numAllLinkedNotebooks = m_allLinkedNotebooks.size();
     for(int i = 0; i < numAllLinkedNotebooks; ++i)
@@ -7162,7 +7172,8 @@ bool RemoteToLocalSynchronizationManager::downloadLinkedNotebooksSyncChunks()
                 m_authenticationToken, fullSyncOnly, *pSyncChunk,
                 errorDescription, rateLimitSeconds);
 
-            if (errorCode == qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED)
+            if (errorCode ==
+                static_cast<qint32>(qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED))
             {
                 if (rateLimitSeconds < 0)
                 {
@@ -7197,7 +7208,8 @@ bool RemoteToLocalSynchronizationManager::downloadLinkedNotebooksSyncChunks()
                 Q_EMIT rateLimitExceeded(rateLimitSeconds);
                 return false;
             }
-            else if (errorCode == qevercloud::EDAMErrorCode::AUTH_EXPIRED)
+            else if (errorCode ==
+                     static_cast<qint32>(qevercloud::EDAMErrorCode::AUTH_EXPIRED))
             {
                 ErrorString errorMessage(QT_TR_NOOP("Unexpected AUTH_EXPIRED "
                                                     "error when trying to download "
@@ -7297,7 +7309,7 @@ bool RemoteToLocalSynchronizationManager::downloadLinkedNotebooksSyncChunks()
                         linkedNotebook.guid()))
         }
 
-        pSyncChunk = Q_NULLPTR;
+        pSyncChunk = nullptr;
     }
 
     QNDEBUG("Done. Processing content pointed to by linked notebooks "
@@ -7728,7 +7740,7 @@ void RemoteToLocalSynchronizationManager::clear()
         }
 
         pResolver->disconnect();
-        pResolver->setParent(Q_NULLPTR);
+        pResolver->setParent(nullptr);
         pResolver->deleteLater();
     }
 
@@ -7743,7 +7755,7 @@ void RemoteToLocalSynchronizationManager::clear()
         }
 
         pCache->disconnect();
-        pCache->setParent(Q_NULLPTR);
+        pCache->setParent(nullptr);
         pCache->deleteLater();
     }
 
@@ -7773,7 +7785,7 @@ void RemoteToLocalSynchronizationManager::clear()
         }
 
         pResolver->disconnect();
-        pResolver->setParent(Q_NULLPTR);
+        pResolver->setParent(nullptr);
         pResolver->deleteLater();
     }
 
@@ -7837,7 +7849,7 @@ void RemoteToLocalSynchronizationManager::clear()
         }
 
         pResolver->disconnect();
-        pResolver->setParent(Q_NULLPTR);
+        pResolver->setParent(nullptr);
         pResolver->deleteLater();
     }
 
@@ -7852,7 +7864,7 @@ void RemoteToLocalSynchronizationManager::clear()
         }
 
         pCache->disconnect();
-        pCache->setParent(Q_NULLPTR);
+        pCache->setParent(nullptr);
         pCache->deleteLater();
     }
 
@@ -7909,7 +7921,7 @@ void RemoteToLocalSynchronizationManager::clear()
 
     if (m_pFullSyncStaleDataItemsExpunger) {
         junkFullSyncStaleDataItemsExpunger(*m_pFullSyncStaleDataItemsExpunger);
-        m_pFullSyncStaleDataItemsExpunger = Q_NULLPTR;
+        m_pFullSyncStaleDataItemsExpunger = nullptr;
     }
 
     for(auto it = m_fullSyncStaleDataItemsExpungersByLinkedNotebookGuid.begin(),
@@ -8029,7 +8041,7 @@ void RemoteToLocalSynchronizationManager::clear()
                             QNSLOT(RemoteToLocalSynchronizationManager,
                                    onNoteThumbnailDownloadingFinished,
                                    bool,QString,QByteArray,ErrorString));
-        pDownloader->setParent(Q_NULLPTR);
+        pDownloader->setParent(nullptr);
         pDownloader->deleteLater();
     }
 
@@ -8050,7 +8062,7 @@ void RemoteToLocalSynchronizationManager::clear()
                             QNSLOT(RemoteToLocalSynchronizationManager,
                                    onInkNoteImageDownloadFinished,
                                    bool,QString,QString,ErrorString));
-        pDownloader->setParent(Q_NULLPTR);
+        pDownloader->setParent(nullptr);
         pDownloader->deleteLater();
     }
 }
@@ -8422,7 +8434,7 @@ void RemoteToLocalSynchronizationManager::getFullResourceDataAsync(
     // account or the one for the stuff from some linked notebook
 
     QString authToken;
-    INoteStore * pNoteStore = Q_NULLPTR;
+    INoteStore * pNoteStore = nullptr;
     auto linkedNotebookGuidIt = m_linkedNotebookGuidsByResourceGuids.find(
         resource.guid());
     if (linkedNotebookGuidIt == m_linkedNotebookGuidsByResourceGuids.end())
@@ -8623,7 +8635,7 @@ void RemoteToLocalSynchronizationManager::downloadSyncChunksAndLaunchSync(
             << "downloadSyncChunksAndLaunchSync: after USN = " << afterUsn);
 
     INoteStore & noteStore = m_manager.noteStore();
-    qevercloud::SyncChunk * pSyncChunk = Q_NULLPTR;
+    qevercloud::SyncChunk * pSyncChunk = nullptr;
 
     qint32 lastPreviousUsn = std::max(m_lastUpdateCount, 0);
     QNDEBUG("Last previous USN: " << lastPreviousUsn);
@@ -8663,7 +8675,8 @@ void RemoteToLocalSynchronizationManager::downloadSyncChunksAndLaunchSync(
                                                   filter, *pSyncChunk,
                                                   errorDescription,
                                                   rateLimitSeconds);
-        if (errorCode == qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED)
+        if (errorCode ==
+            static_cast<qint32>(qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED))
         {
             if (rateLimitSeconds < 0) {
                 errorDescription.setBase(
@@ -8691,7 +8704,8 @@ void RemoteToLocalSynchronizationManager::downloadSyncChunksAndLaunchSync(
             Q_EMIT rateLimitExceeded(rateLimitSeconds);
             return;
         }
-        else if (errorCode == qevercloud::EDAMErrorCode::AUTH_EXPIRED)
+        else if (errorCode ==
+                 static_cast<qint32>(qevercloud::EDAMErrorCode::AUTH_EXPIRED))
         {
             handleAuthExpiration();
             return;
@@ -8746,7 +8760,7 @@ const Notebook * RemoteToLocalSynchronizationManager::getNotebookPerNote(
     QPair<QString,QString> key(noteGuid, noteLocalUid);
     auto it = m_notebooksPerNoteIds.find(key);
     if (it == m_notebooksPerNoteIds.end()) {
-        return Q_NULLPTR;
+        return nullptr;
     }
     else {
         return &(it.value());
@@ -8792,7 +8806,8 @@ bool RemoteToLocalSynchronizationManager::checkUserAccountSyncState(
     qevercloud::SyncState state;
     qint32 errorCode = m_manager.noteStore().getSyncState(
         state, errorDescription, rateLimitSeconds);
-    if (errorCode == qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED)
+    if (errorCode ==
+        static_cast<qint32>(qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED))
     {
         if (rateLimitSeconds < 0)
         {
@@ -8822,7 +8837,8 @@ bool RemoteToLocalSynchronizationManager::checkUserAccountSyncState(
         Q_EMIT rateLimitExceeded(rateLimitSeconds);
         return false;
     }
-    else if (errorCode == qevercloud::EDAMErrorCode::AUTH_EXPIRED)
+    else if (errorCode ==
+             static_cast<qint32>(qevercloud::EDAMErrorCode::AUTH_EXPIRED))
     {
         handleAuthExpiration();
         asyncWait = true;
@@ -10113,7 +10129,7 @@ void RemoteToLocalSynchronizationManager::overrideLocalNoteWithRemoteNote(
             continue;
         }
 
-        const Resource * pExistingResource = Q_NULLPTR;
+        const Resource * pExistingResource = nullptr;
         for(auto it = resources.constBegin(),
             end = resources.constEnd(); it != end; ++it)
         {
@@ -10168,7 +10184,8 @@ void RemoteToLocalSynchronizationManager::processResourceConflictAsNoteConflict(
                                                remoteNoteResource,
                                                errorDescription,
                                                rateLimitSeconds);
-    if (errorCode == qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED)
+    if (errorCode ==
+        static_cast<qint32>(qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED))
     {
         if (Q_UNLIKELY(rateLimitSeconds < 0))
         {
@@ -10201,7 +10218,8 @@ void RemoteToLocalSynchronizationManager::processResourceConflictAsNoteConflict(
         Q_EMIT rateLimitExceeded(rateLimitSeconds);
         return;
     }
-    else if (errorCode == qevercloud::EDAMErrorCode::AUTH_EXPIRED)
+    else if (errorCode ==
+             static_cast<qint32>(qevercloud::EDAMErrorCode::AUTH_EXPIRED))
     {
         handleAuthExpiration();
         return;
@@ -10349,7 +10367,7 @@ void RemoteToLocalSynchronizationManager::junkFullSyncStaleDataItemsExpunger(
                         this,
                         QNSLOT(RemoteToLocalSynchronizationManager,
                                onFullSyncStaleDataItemsExpungerFailure,ErrorString));
-    expunger.setParent(Q_NULLPTR);
+    expunger.setParent(nullptr);
     expunger.deleteLater();
 }
 
@@ -10365,7 +10383,7 @@ INoteStore * RemoteToLocalSynchronizationManager::noteStoreForNote(
                        "note's data for a note without guid"));
         APPEND_NOTE_DETAILS(errorDescription, note)
         QNWARNING(errorDescription << ": " << note);
-        return Q_NULLPTR;
+        return nullptr;
     }
 
     if (!note.hasNotebookGuid())
@@ -10375,13 +10393,13 @@ INoteStore * RemoteToLocalSynchronizationManager::noteStoreForNote(
                        "data for a note without notebook guid"));
         APPEND_NOTE_DETAILS(errorDescription, note)
         QNWARNING(errorDescription << ": " << note);
-        return Q_NULLPTR;
+        return nullptr;
     }
 
     // Need to find out which note store is required - the one for user's own
     // account or the one for the stuff from some linked notebook
 
-    INoteStore * pNoteStore = Q_NULLPTR;
+    INoteStore * pNoteStore = nullptr;
     auto linkedNotebookGuidIt =
         m_linkedNotebookGuidsByNotebookGuids.find(note.notebookGuid());
     if (linkedNotebookGuidIt == m_linkedNotebookGuidsByNotebookGuids.end())
@@ -10406,7 +10424,7 @@ INoteStore * RemoteToLocalSynchronizationManager::noteStoreForNote(
                                             "corresponding to the linked notebook"));
         APPEND_NOTE_DETAILS(errorDescription, note)
         QNWARNING(errorDescription << ": " << note);
-        return Q_NULLPTR;
+        return nullptr;
     }
 
     authToken = authTokenIt.value().first;
@@ -10429,7 +10447,7 @@ INoteStore * RemoteToLocalSynchronizationManager::noteStoreForNote(
                                             "corresponding to the linked notebook"));
         APPEND_NOTE_DETAILS(errorDescription, note)
         QNWARNING(errorDescription << ": " << note);
-        return Q_NULLPTR;
+        return nullptr;
     }
 
     LinkedNotebook linkedNotebook;
@@ -10441,7 +10459,7 @@ INoteStore * RemoteToLocalSynchronizationManager::noteStoreForNote(
         errorDescription.setBase(QT_TR_NOOP("Can't find or create note store for "));
         APPEND_NOTE_DETAILS(errorDescription, note)
         QNWARNING(errorDescription << ": " << note);
-        return Q_NULLPTR;
+        return nullptr;
     }
 
     if (Q_UNLIKELY(pNoteStore->noteStoreUrl().isEmpty()))
@@ -10451,7 +10469,7 @@ INoteStore * RemoteToLocalSynchronizationManager::noteStoreForNote(
                        "for the linked notebook's note store"));
         APPEND_NOTE_DETAILS(errorDescription, note)
         QNWARNING(errorDescription << ": " << note);
-        return Q_NULLPTR;
+        return nullptr;
     }
 
     QObject::connect(pNoteStore,
@@ -11672,7 +11690,7 @@ RemoteToLocalSynchronizationManager::resolveSyncConflict(
         return ResolveSyncConflictStatus::Pending;
     }
 
-    NotebookSyncCache * pCache = Q_NULLPTR;
+    NotebookSyncCache * pCache = nullptr;
     if (localConflict.hasLinkedNotebookGuid())
     {
         const QString & linkedNotebookGuid = localConflict.linkedNotebookGuid();
@@ -11786,7 +11804,7 @@ RemoteToLocalSynchronizationManager::resolveSyncConflict(
         return ResolveSyncConflictStatus::Pending;
     }
 
-    TagSyncCache * pCache = Q_NULLPTR;
+    TagSyncCache * pCache = nullptr;
     if (localConflict.hasLinkedNotebookGuid())
     {
         const QString & linkedNotebookGuid = localConflict.linkedNotebookGuid();
@@ -12050,7 +12068,7 @@ INoteStore * NoteSyncConflictResolverManager::noteStoreForNote(
     INoteStore * pNoteStore =
         m_manager.noteStoreForNote(note, authToken, errorDescription);
     if (Q_UNLIKELY(!pNoteStore)) {
-        return Q_NULLPTR;
+        return nullptr;
     }
 
     if (authToken.isEmpty()) {

@@ -34,12 +34,12 @@ public:
 protected:
     INoteEditorUndoCommand(
         NoteEditorPrivate & noteEditorPrivate,
-        QUndoCommand * parent = Q_NULLPTR);
+        QUndoCommand * parent = nullptr);
 
     INoteEditorUndoCommand(
         NoteEditorPrivate & noteEditorPrivate,
         const QString & text,
-        QUndoCommand * parent = Q_NULLPTR);
+        QUndoCommand * parent = nullptr);
 
     NoteEditorPrivate &    m_noteEditorPrivate;
 };

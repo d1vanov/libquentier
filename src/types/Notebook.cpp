@@ -333,7 +333,7 @@ bool Notebook::hasPublishingOrder() const
 
 qint8 Notebook::publishingOrder() const
 {
-    return static_cast<qint8>(d->m_qecNotebook.publishing->order);
+    return static_cast<qint8>(d->m_qecNotebook.publishing->order.ref());
 }
 
 void Notebook::setPublishingOrder(const qint8 order)
@@ -342,7 +342,7 @@ void Notebook::setPublishingOrder(const qint8 order)
     {
         CHECK_AND_SET_PUBLISHING;
         d->m_qecNotebook.publishing->order =
-            static_cast<qevercloud::NoteSortOrder::type>(order);
+            static_cast<qevercloud::NoteSortOrder>(order);
     }
     else if (d->m_qecNotebook.publishing.isSet())
     {
@@ -540,7 +540,7 @@ bool Notebook::hasBusinessNotebookPrivilegeLevel() const
 
 qint8 Notebook::businessNotebookPrivilegeLevel() const
 {
-    return static_cast<qint8>(d->m_qecNotebook.businessNotebook->privilege);
+    return static_cast<qint8>(d->m_qecNotebook.businessNotebook->privilege.ref());
 }
 
 void Notebook::setBusinessNotebookPrivilegeLevel(const qint8 privilegeLevel)
@@ -551,7 +551,7 @@ void Notebook::setBusinessNotebookPrivilegeLevel(const qint8 privilegeLevel)
     {
         CHECK_AND_SET_BUSINESS_NOTEBOOK;
         d->m_qecNotebook.businessNotebook->privilege =
-            static_cast<qevercloud::SharedNotebookPrivilegeLevel::type>(privilegeLevel);
+            static_cast<qevercloud::SharedNotebookPrivilegeLevel>(privilegeLevel);
     }
     else if (d->m_qecNotebook.businessNotebook.isSet())
     {
@@ -882,7 +882,7 @@ bool Notebook::hasUpdateWhichSharedNotebookRestrictions() const
 qint8 Notebook::updateWhichSharedNotebookRestrictions() const
 {
     return static_cast<qint8>(
-        d->m_qecNotebook.restrictions->updateWhichSharedNotebookRestrictions);
+        d->m_qecNotebook.restrictions->updateWhichSharedNotebookRestrictions.ref());
 }
 
 void Notebook::setUpdateWhichSharedNotebookRestrictions(const qint8 which)
@@ -893,7 +893,7 @@ void Notebook::setUpdateWhichSharedNotebookRestrictions(const qint8 which)
     {
         CHECK_AND_SET_NOTEBOOK_RESTRICTIONS;
         d->m_qecNotebook.restrictions->updateWhichSharedNotebookRestrictions =
-            static_cast<qevercloud::SharedNotebookInstanceRestrictions::type>(which);
+            static_cast<qevercloud::SharedNotebookInstanceRestrictions>(which);
     }
     else if (d->m_qecNotebook.restrictions.isSet() &&
              d->m_qecNotebook.restrictions->updateWhichSharedNotebookRestrictions.isSet())
@@ -911,7 +911,7 @@ bool Notebook::hasExpungeWhichSharedNotebookRestrictions() const
 qint8 Notebook::expungeWhichSharedNotebookRestrictions() const
 {
     return static_cast<qint8>(
-        d->m_qecNotebook.restrictions->expungeWhichSharedNotebookRestrictions);
+        d->m_qecNotebook.restrictions->expungeWhichSharedNotebookRestrictions.ref());
 }
 
 void Notebook::setExpungeWhichSharedNotebookRestrictions(const qint8 which)
@@ -922,7 +922,7 @@ void Notebook::setExpungeWhichSharedNotebookRestrictions(const qint8 which)
     {
         CHECK_AND_SET_NOTEBOOK_RESTRICTIONS;
         d->m_qecNotebook.restrictions->expungeWhichSharedNotebookRestrictions =
-            static_cast<qevercloud::SharedNotebookInstanceRestrictions::type>(which);
+            static_cast<qevercloud::SharedNotebookInstanceRestrictions>(which);
     }
     else if (d->m_qecNotebook.restrictions.isSet() &&
              d->m_qecNotebook.restrictions->expungeWhichSharedNotebookRestrictions.isSet())

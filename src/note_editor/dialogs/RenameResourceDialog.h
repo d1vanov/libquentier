@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Dmitry Ivanov
+ * Copyright 2016-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -34,14 +34,14 @@ class Q_DECL_HIDDEN RenameResourceDialog: public QDialog
     Q_OBJECT
 public:
     explicit RenameResourceDialog(const QString & initialResourceName,
-                                  QWidget * parent = Q_NULLPTR);
+                                  QWidget * parent = nullptr);
     virtual ~RenameResourceDialog();
 
 Q_SIGNALS:
     void accepted(QString newResourceName);
 
 private Q_SLOTS:
-    virtual void accept() Q_DECL_OVERRIDE;
+    virtual void accept() override;
 
 private:
     Ui::RenameResourceDialog * m_pUI;

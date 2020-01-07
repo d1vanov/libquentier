@@ -22,15 +22,13 @@
 #include <quentier/utility/Macros.h>
 #include <quentier/utility/Linkage.h>
 #include <quentier/types/Account.h>
+
+#include <qt5qevercloud/QEverCloud.h>
+
 #include <QObject>
 #include <QHash>
 #include <QString>
 
-#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
-#include <qt5qevercloud/QEverCloud.h>
-#else
-#include <qt4qevercloud/QEverCloud.h>
-#endif
 
 namespace quentier {
 
@@ -38,7 +36,7 @@ class QUENTIER_EXPORT SyncStatePersistenceManager: public QObject
 {
     Q_OBJECT
 public:
-    explicit SyncStatePersistenceManager(QObject * parent = Q_NULLPTR);
+    explicit SyncStatePersistenceManager(QObject * parent = nullptr);
 
     void getPersistentSyncState(
             const Account & account, qint32 & userOwnDataUpdateCount,

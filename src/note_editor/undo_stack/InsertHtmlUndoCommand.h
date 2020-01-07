@@ -43,7 +43,7 @@ public:
         ResourceInfo & resourceInfo,
         const QList<Resource> & addedResources = QList<Resource>(),
         const QStringList & resourceFileStoragePaths = QStringList(),
-        QUndoCommand * parent = Q_NULLPTR);
+        QUndoCommand * parent = nullptr);
 
     InsertHtmlUndoCommand(
         const Callback & callback, NoteEditorPrivate & noteEditor,
@@ -52,12 +52,12 @@ public:
         const QString & text,
         const QList<Resource> & addedResources = QList<Resource>(),
         const QStringList & resourceFileStoragePaths = QStringList(),
-        QUndoCommand * parent = Q_NULLPTR);
+        QUndoCommand * parent = nullptr);
 
     virtual ~InsertHtmlUndoCommand();
 
-    virtual void undoImpl() Q_DECL_OVERRIDE;
-    virtual void redoImpl() Q_DECL_OVERRIDE;
+    virtual void undoImpl() override;
+    virtual void redoImpl() override;
 
 private:
     QList<Resource>     m_addedResources;

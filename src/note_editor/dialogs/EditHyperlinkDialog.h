@@ -34,7 +34,7 @@ class Q_DECL_HIDDEN EditHyperlinkDialog: public QDialog
 {
     Q_OBJECT
 public:
-    explicit EditHyperlinkDialog(QWidget * parent = Q_NULLPTR,
+    explicit EditHyperlinkDialog(QWidget * parent = nullptr,
                                  const QString & startupText = QString(),
                                  const QString & startupUrl = QString(),
                                  const quint64 idNumber = 0);
@@ -45,7 +45,7 @@ Q_SIGNALS:
                   quint64 idNumber, bool startupUrlWasEmpty);
 
 private Q_SLOTS:
-    virtual void accept() Q_DECL_OVERRIDE;
+    virtual void accept() override;
 
     void onUrlEdited(QString url);
     void onUrlEditingFinished();

@@ -53,7 +53,7 @@ public:
     typedef boost::function<void (const QVariant&)> Callback;
 
     explicit JavaScriptInOrderExecutor(WebView & view,
-                                       QObject * parent = Q_NULLPTR);
+                                       QObject * parent = nullptr);
 
     void append(const QString & script, Callback callback = 0);
     int size() const { return m_javaScriptsQueue.size(); }

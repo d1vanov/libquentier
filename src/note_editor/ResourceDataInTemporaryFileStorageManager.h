@@ -53,7 +53,7 @@ class Q_DECL_HIDDEN ResourceDataInTemporaryFileStorageManager: public QObject
 {
     Q_OBJECT
 public:
-    explicit ResourceDataInTemporaryFileStorageManager(QObject * parent = Q_NULLPTR);
+    explicit ResourceDataInTemporaryFileStorageManager(QObject * parent = nullptr);
 
     struct Errors
     {

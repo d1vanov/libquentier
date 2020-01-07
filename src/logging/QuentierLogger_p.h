@@ -47,7 +47,7 @@ class Q_DECL_HIDDEN IQuentierLogWriter: public QObject
 {
     Q_OBJECT
 public:
-    IQuentierLogWriter(QObject * parent = Q_NULLPTR) :
+    IQuentierLogWriter(QObject * parent = nullptr) :
         QObject(parent)
     {}
 
@@ -98,11 +98,11 @@ class Q_DECL_HIDDEN QuentierFileLogWriter: public IQuentierLogWriter
     Q_OBJECT
 public:
     explicit QuentierFileLogWriter(const MaxSizeBytes & maxSizeBytes, const MaxOldLogFilesCount & maxOldLogFilesCount,
-                                   QObject * parent = Q_NULLPTR);
+                                   QObject * parent = nullptr);
     ~QuentierFileLogWriter();
 
 public Q_SLOTS:
-    virtual void write(QString message) Q_DECL_OVERRIDE;
+    virtual void write(QString message) override;
     void restartLogging();
 
 private:
@@ -123,10 +123,10 @@ class Q_DECL_HIDDEN QuentierConsoleLogWriter: public IQuentierLogWriter
 {
     Q_OBJECT
 public:
-    explicit QuentierConsoleLogWriter(QObject * parent = Q_NULLPTR);
+    explicit QuentierConsoleLogWriter(QObject * parent = nullptr);
 
 public Q_SLOTS:
-    virtual void write(QString message) Q_DECL_OVERRIDE;
+    virtual void write(QString message) override;
 };
 
 QT_FORWARD_DECLARE_CLASS(QuentierLoggerImpl)
@@ -154,7 +154,7 @@ Q_SIGNALS:
     void sendRestartLoggingRequest();
 
 private:
-    QuentierLogger(QObject * parent = Q_NULLPTR);
+    QuentierLogger(QObject * parent = nullptr);
     Q_DISABLE_COPY(QuentierLogger)
 
 private:
@@ -169,7 +169,7 @@ class Q_DECL_HIDDEN QuentierLoggerImpl: public QObject
 {
     Q_OBJECT
 public:
-    QuentierLoggerImpl(QObject * parent = Q_NULLPTR);
+    QuentierLoggerImpl(QObject * parent = nullptr);
 
     QVector<QPointer<IQuentierLogWriter> >  m_logWriterPtrs;
     QAtomicInt          m_minLogLevel;

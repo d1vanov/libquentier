@@ -71,9 +71,9 @@ bool testNonEmptyLRUCacheConsistency(QString & error)
     QString secondItemName = QStringLiteral("My second item");
     QString thirdItemName = QStringLiteral("My third item");
 
-    if ( Q_UNLIKELY((cache.get(firstItemName) != Q_NULLPTR) ||
-                    (cache.get(secondItemName) != Q_NULLPTR) ||
-                    (cache.get(thirdItemName) != Q_NULLPTR)) )
+    if ( Q_UNLIKELY((cache.get(firstItemName) != nullptr) ||
+                    (cache.get(secondItemName) != nullptr) ||
+                    (cache.get(thirdItemName) != nullptr)) )
     {
         error = QStringLiteral("Empty LRUCache's get method returned non-null "
                                "pointer to item");
@@ -108,9 +108,9 @@ bool testNonEmptyLRUCacheConsistency(QString & error)
     const int * pSecondItemValue = cache.get(secondItemName);
     const int * pThirdItemValue = cache.get(thirdItemName);
 
-    if ( Q_UNLIKELY((pFirstItemValue == Q_NULLPTR) ||
-                    (pSecondItemValue == Q_NULLPTR) ||
-                    (pThirdItemValue == Q_NULLPTR)) )
+    if ( Q_UNLIKELY((pFirstItemValue == nullptr) ||
+                    (pSecondItemValue == nullptr) ||
+                    (pThirdItemValue == nullptr)) )
     {
         error = QStringLiteral("One or some of items inserted into LRU cache "
                                "were not found in it");
@@ -125,7 +125,7 @@ bool testNonEmptyLRUCacheConsistency(QString & error)
         return false;
     }
 
-    if (Q_UNLIKELY(cache.get(QStringLiteral("Nonexisting item")) != Q_NULLPTR)) {
+    if (Q_UNLIKELY(cache.get(QStringLiteral("Nonexisting item")) != nullptr)) {
         error = QStringLiteral("LRUCache's get method returns non-null pointer "
                                "for nonexisting item");
         return false;
@@ -217,21 +217,21 @@ bool testRemovalFromLRUCache(QString & error)
     const int * pSecondItemValue = cache.get(secondItemName);
     const int * pThirdItemValue = cache.get(thirdItemName);
 
-    if (Q_UNLIKELY(pFirstItemValue != Q_NULLPTR)) {
+    if (Q_UNLIKELY(pFirstItemValue != nullptr)) {
         error = QStringLiteral("LRUCache's get method returned non-null pointer "
                                "for item removed from the cache");
         return false;
     }
 
-    if ( Q_UNLIKELY((pSecondItemValue == Q_NULLPTR) ||
-                    (pThirdItemValue == Q_NULLPTR)) )
+    if ( Q_UNLIKELY((pSecondItemValue == nullptr) ||
+                    (pThirdItemValue == nullptr)) )
     {
         error = QStringLiteral("One or some of items inserted into LRU cache and "
                                "not removed from it were not found in it");
         return false;
     }
 
-    if (Q_UNLIKELY(cache.get(QStringLiteral("Nonexisting item")) != Q_NULLPTR)) {
+    if (Q_UNLIKELY(cache.get(QStringLiteral("Nonexisting item")) != nullptr)) {
         error = QStringLiteral("LRUCache's get method returns non-null pointer "
                                "for nonexisting item");
         return false;
@@ -272,19 +272,19 @@ bool testRemovalFromLRUCache(QString & error)
     pSecondItemValue = cache.get(secondItemName);
     pThirdItemValue = cache.get(thirdItemName);
 
-    if (Q_UNLIKELY(pFirstItemValue != Q_NULLPTR)) {
+    if (Q_UNLIKELY(pFirstItemValue != nullptr)) {
         error = QStringLiteral("LRUCache's get method returned non-null pointer "
                                "for item removed from the cache");
         return false;
     }
 
-    if (Q_UNLIKELY(pSecondItemValue != Q_NULLPTR)) {
+    if (Q_UNLIKELY(pSecondItemValue != nullptr)) {
         error = QStringLiteral("LRUCache's get method returned non-null pointer "
                                "for item removed from the cache");
         return false;
     }
 
-    if (Q_UNLIKELY(pThirdItemValue == Q_NULLPTR)) {
+    if (Q_UNLIKELY(pThirdItemValue == nullptr)) {
         error = QStringLiteral("LRUCache's get method returned null pointer for "
                                "the single item which should have been left "
                                "in the cache");
@@ -471,7 +471,7 @@ bool testItemsAdditionToLRUCacheBeforeReachingMaxSize(QString & error)
     }
 
     const int * pSecondItemValue = cache.get(secondItemName);
-    if (Q_UNLIKELY(pSecondItemValue == Q_NULLPTR)) {
+    if (Q_UNLIKELY(pSecondItemValue == nullptr)) {
         error = QStringLiteral("LRUCache's get method returned null pointer to "
                                "item which was added to it before");
         return false;
@@ -489,7 +489,7 @@ bool testItemsAdditionToLRUCacheBeforeReachingMaxSize(QString & error)
     }
 
     const int * pFirstItemValue = cache.get(firstItemName);
-    if (Q_UNLIKELY(pFirstItemValue == Q_NULLPTR)) {
+    if (Q_UNLIKELY(pFirstItemValue == nullptr)) {
         error = QStringLiteral("LRUCache's get method returned null pointer to "
                                "item which was added to it before");
         return false;
@@ -594,7 +594,7 @@ bool testItemsAdditionToLRUCacheAfterReachingMaxSize(QString & error)
     }
 
     const int * pFirstItemValue = cache.get(firstItemName);
-    if (Q_UNLIKELY(pFirstItemValue != Q_NULLPTR)) {
+    if (Q_UNLIKELY(pFirstItemValue != nullptr)) {
         error = QStringLiteral("LRUCache's get method returned non-null pointer "
                                "for item which should have been automatically "
                                "removed from the cache");
@@ -607,11 +607,11 @@ bool testItemsAdditionToLRUCacheAfterReachingMaxSize(QString & error)
     const int * pFifthItemValue = cache.get(fifthItemName);
     const int * pSixthItemValue = cache.get(sixthItemName);
 
-    if ( Q_UNLIKELY((pSecondItemValue == Q_NULLPTR) ||
-                    (pThirdItemValue == Q_NULLPTR) ||
-                    (pFourthItemValue == Q_NULLPTR) ||
-                    (pFifthItemValue == Q_NULLPTR) ||
-                    (pSixthItemValue == Q_NULLPTR)) )
+    if ( Q_UNLIKELY((pSecondItemValue == nullptr) ||
+                    (pThirdItemValue == nullptr) ||
+                    (pFourthItemValue == nullptr) ||
+                    (pFifthItemValue == nullptr) ||
+                    (pSixthItemValue == nullptr)) )
     {
         error = QStringLiteral("One or some of items inserted into LRU cache and "
                                "not removed from it were not found in it");
@@ -663,8 +663,8 @@ bool testItemsAdditionToLRUCacheAfterReachingMaxSize(QString & error)
     pSixthItemValue = cache.get(sixthItemName);
     const int * pSeventhItemValue = cache.get(seventhItemName);
 
-    if ( Q_UNLIKELY((pFirstItemValue != Q_NULLPTR) ||
-                    (pSecondItemValue != Q_NULLPTR)) )
+    if ( Q_UNLIKELY((pFirstItemValue != nullptr) ||
+                    (pSecondItemValue != nullptr)) )
     {
         error = QStringLiteral("LRUCache's get method returned non-null pointer "
                                "for items which should have been automatically "
@@ -672,11 +672,11 @@ bool testItemsAdditionToLRUCacheAfterReachingMaxSize(QString & error)
         return false;
     }
 
-    if ( Q_UNLIKELY((pThirdItemValue == Q_NULLPTR) ||
-                    (pFourthItemValue == Q_NULLPTR) ||
-                    (pFifthItemValue == Q_NULLPTR) ||
-                    (pSixthItemValue == Q_NULLPTR) ||
-                    (pSeventhItemValue == Q_NULLPTR)) )
+    if ( Q_UNLIKELY((pThirdItemValue == nullptr) ||
+                    (pFourthItemValue == nullptr) ||
+                    (pFifthItemValue == nullptr) ||
+                    (pSixthItemValue == nullptr) ||
+                    (pSeventhItemValue == nullptr)) )
     {
         error = QStringLiteral("One or some of items inserted into LRU cache and "
                                "not removed from it were not found in it");

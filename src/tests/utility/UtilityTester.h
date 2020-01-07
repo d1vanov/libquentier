@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Dmitry Ivanov
+ * Copyright 2016-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -29,7 +29,7 @@ class UtilityTester: public QObject
 {
     Q_OBJECT
 public:
-    explicit UtilityTester(QObject * parent = Q_NULLPTR);
+    explicit UtilityTester(QObject * parent = nullptr);
     virtual ~UtilityTester();
 
 private Q_SLOTS:
@@ -44,8 +44,8 @@ private Q_SLOTS:
     void lruCacheTests();
 
 private:
-    UtilityTester(const UtilityTester & other) Q_DECL_EQ_DELETE;
-    UtilityTester & operator=(const UtilityTester & other) Q_DECL_EQ_DELETE;
+    UtilityTester(const UtilityTester & other)  = delete;
+    UtilityTester & operator=(const UtilityTester & other)  = delete;
 
 };
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Dmitry Ivanov
+ * Copyright 2016-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -36,8 +36,8 @@ public:
     bool    m_isLocal;
 
 private:
-    NoteStoreDataElementData & operator=(const NoteStoreDataElementData & other) Q_DECL_EQ_DELETE;
-    NoteStoreDataElementData & operator=(NoteStoreDataElementData && other) Q_DECL_EQ_DELETE;
+    NoteStoreDataElementData & operator=(const NoteStoreDataElementData & other)  = delete;
+    NoteStoreDataElementData & operator=(NoteStoreDataElementData && other)  = delete;
 };
 
 } // namespace quentier

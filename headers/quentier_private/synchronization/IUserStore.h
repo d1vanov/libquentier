@@ -23,11 +23,7 @@
 #include <quentier/utility/Linkage.h>
 #include <QSharedPointer>
 
-#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
 #include <qt5qevercloud/QEverCloud.h>
-#else
-#include <qt4qevercloud/QEverCloud.h>
-#endif
 
 namespace quentier {
 
@@ -48,13 +44,13 @@ QT_FORWARD_DECLARE_CLASS(User)
 class QUENTIER_EXPORT IUserStore
 {
 protected:
-    IUserStore(const QSharedPointer<qevercloud::UserStore> & pQecUserStore);
+    IUserStore(const qevercloud::IUserStorePtr & pQecUserStore);
 
 public:
     virtual ~IUserStore() {}
 
-    QSharedPointer<qevercloud::UserStore> getQecUserStore() const;
-    void setQecUserStore(const QSharedPointer<qevercloud::UserStore> & pQecUserStore);
+    qevercloud::IUserStorePtr getQecUserStore() const;
+    void setQecUserStore(const qevercloud::IUserStorePtr & pQecUserStore);
 
     QString authenticationToken() const;
     void setAuthenticationToken(const QString & authToken);
@@ -99,7 +95,7 @@ public:
      *                          qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED
      * @return                  Error code, 0 in case of successful retrieval
      *                          of full user information, other values corresponding
-     *                          to qevercloud::EDAMErrorCode::type enumeration instead
+     *                          to qevercloud::EDAMErrorCode enumeration instead
      */
     virtual qint32 getUser(User & user,
                            ErrorString & errorDescription,
@@ -123,13 +119,14 @@ public:
      *                          other values corresponding to
      *                          qevercoud::EDAMErrorCode::type enumeration instead
      */
-    virtual qint32 getAccountLimits(const qevercloud::ServiceLevel::type serviceLevel,
+    virtual qint32 getAccountLimits(const qevercloud::ServiceLevel serviceLevel,
                                     qevercloud::AccountLimits & limits,
                                     ErrorString & errorDescription,
                                     qint32 & rateLimitSeconds) = 0;
 
 protected:
-    QSharedPointer<qevercloud::UserStore> m_pQecUserStore;
+    qevercloud::IUserStorePtr   m_pQecUserStore;
+    QString     m_authenticationToken;
 };
 
 } // namespace quentier

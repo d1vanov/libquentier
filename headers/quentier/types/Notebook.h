@@ -21,11 +21,7 @@
 
 #include "IFavoritableDataElement.h"
 
-#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
 #include <qt5qevercloud/QEverCloud.h>
-#else
-#include <qt4qevercloud/QEverCloud.h>
-#endif
 
 #include <QSharedDataPointer>
 
@@ -63,20 +59,20 @@ public:
     const qevercloud::Notebook & qevercloudNotebook() const;
     qevercloud::Notebook & qevercloudNotebook();
 
-    virtual void clear() Q_DECL_OVERRIDE;
+    virtual void clear() override;
 
-    static bool validateName(const QString & name,
-                             ErrorString * pErrorDescription = Q_NULLPTR);
+    static bool validateName(
+        const QString & name, ErrorString * pErrorDescription = nullptr);
 
-    virtual bool hasGuid() const Q_DECL_OVERRIDE;
-    virtual const QString & guid() const Q_DECL_OVERRIDE;
-    virtual void setGuid(const QString & guid) Q_DECL_OVERRIDE;
+    virtual bool hasGuid() const override;
+    virtual const QString & guid() const override;
+    virtual void setGuid(const QString & guid) override;
 
-    virtual bool hasUpdateSequenceNumber() const Q_DECL_OVERRIDE;
-    virtual qint32 updateSequenceNumber() const Q_DECL_OVERRIDE;
-    virtual void setUpdateSequenceNumber(const qint32 usn) Q_DECL_OVERRIDE;
+    virtual bool hasUpdateSequenceNumber() const override;
+    virtual qint32 updateSequenceNumber() const override;
+    virtual void setUpdateSequenceNumber(const qint32 usn) override;
 
-    virtual bool checkParameters(ErrorString & errorDescription) const Q_DECL_OVERRIDE;
+    virtual bool checkParameters(ErrorString & errorDescription) const override;
 
     bool hasName() const;
     const QString & name() const;
@@ -242,7 +238,7 @@ public:
     const qevercloud::NotebookRecipientSettings & recipientSettings() const;
     void setNotebookRecipientSettings(qevercloud::NotebookRecipientSettings && settings);
 
-    virtual QTextStream & print(QTextStream & strm) const Q_DECL_OVERRIDE;
+    virtual QTextStream & print(QTextStream & strm) const override;
 
 private:
     QSharedDataPointer<NotebookData> d;

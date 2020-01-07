@@ -41,11 +41,11 @@ public:
         LocalStorageManagerAsync & localStorageManagerAsync,
         SynchronizationManagerPrivate & syncManager);
 
-    virtual LocalStorageManagerAsync & localStorageManagerAsync() Q_DECL_OVERRIDE;
-    virtual INoteStore & noteStore() Q_DECL_OVERRIDE;
-    virtual IUserStore & userStore() Q_DECL_OVERRIDE;
+    virtual LocalStorageManagerAsync & localStorageManagerAsync() override;
+    virtual INoteStore & noteStore() override;
+    virtual IUserStore & userStore() override;
     virtual INoteStore * noteStoreForLinkedNotebook(
-        const LinkedNotebook & linkedNotebook) Q_DECL_OVERRIDE;
+        const LinkedNotebook & linkedNotebook) override;
 
 private:
     LocalStorageManagerAsync &          m_localStorageManagerAsync;
@@ -60,10 +60,10 @@ public:
         LocalStorageManagerAsync & localStorageManagerAsync,
         SynchronizationManagerPrivate & syncManager);
 
-    virtual LocalStorageManagerAsync & localStorageManagerAsync() Q_DECL_OVERRIDE;
-    virtual INoteStore & noteStore() Q_DECL_OVERRIDE;
+    virtual LocalStorageManagerAsync & localStorageManagerAsync() override;
+    virtual INoteStore & noteStore() override;
     virtual INoteStore * noteStoreForLinkedNotebook(
-        const LinkedNotebook & linkedNotebook) Q_DECL_OVERRIDE;
+        const LinkedNotebook & linkedNotebook) override;
 
 private:
     LocalStorageManagerAsync &          m_localStorageManagerAsync;
@@ -89,12 +89,14 @@ SynchronizationManagerPrivate::SynchronizationManagerPrivate(
     m_onceReadLastSyncParams(false),
     m_pNoteStore((pInjector && pInjector->m_pNoteStore)
                  ? pInjector->m_pNoteStore
-                 : (new NoteStore(QSharedPointer<qevercloud::NoteStore>(
-                             new qevercloud::NoteStore), this))),
+                 : new NoteStore(qevercloud::INoteStorePtr(
+                        qevercloud::newNoteStore()))),
     m_pUserStore((pInjector && pInjector->m_pUserStore)
                  ? pInjector->m_pUserStore
-                 : (new UserStore(QSharedPointer<qevercloud::UserStore>(
-                             new qevercloud::UserStore(m_host))))),
+                 : new UserStore(qevercloud::IUserStorePtr(
+                        qevercloud::newUserStore(
+                        QStringLiteral("https://") + m_host +
+                        QStringLiteral("/edam/user"))))),
     m_authContext(AuthContext::Blank),
     m_launchSyncPostponeTimerId(-1),
     m_OAuthResult(),
@@ -1535,7 +1537,7 @@ void SynchronizationManagerPrivate::clear()
     {
         INoteStore * pNoteStore = it.value();
         pNoteStore->stop();
-        pNoteStore->setParent(Q_NULLPTR);
+        pNoteStore->setParent(nullptr);
         pNoteStore->deleteLater();
     }
 
@@ -1781,7 +1783,8 @@ void SynchronizationManagerPrivate::authenticateToLinkedNotebooks()
             pNoteStore->authenticateToSharedNotebook(sharedNotebookGlobalId,
                                                      authResult, errorDescription,
                                                      rateLimitSeconds);
-        if (errorCode == qevercloud::EDAMErrorCode::AUTH_EXPIRED)
+        if (errorCode ==
+            static_cast<qint32>(qevercloud::EDAMErrorCode::AUTH_EXPIRED))
         {
             if (validAuthentication()) {
                 ErrorString error(QT_TR_NOOP("Unexpected AUTH_EXPIRED error"));
@@ -1797,7 +1800,8 @@ void SynchronizationManagerPrivate::authenticateToLinkedNotebooks()
             ++it;
             continue;
         }
-        else if (errorCode == qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED)
+        else if (errorCode ==
+                 static_cast<qint32>(qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED))
         {
             if (rateLimitSeconds < 0) {
                 errorDescription.setBase(QT_TR_NOOP("Rate limit reached but "
@@ -2223,12 +2227,12 @@ INoteStore * SynchronizationManagerPrivate::noteStoreForLinkedNotebook(
     if (Q_UNLIKELY(!linkedNotebook.hasGuid())) {
         QNTRACE("Linked notebook has no guid, can't find or create "
                 "note store for it");
-        return Q_NULLPTR;
+        return nullptr;
     }
 
     INoteStore * pNoteStore = noteStoreForLinkedNotebookGuid(linkedNotebook.guid());
     if (Q_UNLIKELY(!pNoteStore)) {
-        return Q_NULLPTR;
+        return nullptr;
     }
 
     if (linkedNotebook.hasNoteStoreUrl()) {
@@ -2249,7 +2253,7 @@ INoteStore * SynchronizationManagerPrivate::noteStoreForLinkedNotebookGuid(
     if (Q_UNLIKELY(guid.isEmpty())) {
         QNWARNING("Can't find or create the note store for empty "
                   "linked notebook guid");
-        return Q_NULLPTR;
+        return nullptr;
     }
 
     auto it = m_noteStoresByLinkedNotebookGuids.find(guid);
@@ -2264,7 +2268,7 @@ INoteStore * SynchronizationManagerPrivate::noteStoreForLinkedNotebookGuid(
     if (m_authenticationInProgress) {
         QNWARNING("Can't create the note store for a linked "
                   "notebook: the authentication is in progress");
-        return Q_NULLPTR;
+        return nullptr;
     }
 
     INoteStore * pNoteStore = m_pNoteStore->create();

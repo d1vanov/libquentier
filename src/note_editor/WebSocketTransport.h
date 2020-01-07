@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Dmitry Ivanov
+ * Copyright 2016-2019 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -31,7 +31,7 @@ public:
     explicit WebSocketTransport(QWebSocket * socket);
     virtual ~WebSocketTransport();
 
-    virtual void sendMessage(const QJsonObject & message) Q_DECL_OVERRIDE;
+    virtual void sendMessage(const QJsonObject & message) override;
 
 private Q_SLOTS:
     void textMessageReceived(const QString & message);

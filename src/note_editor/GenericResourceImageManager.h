@@ -40,7 +40,7 @@ class Q_DECL_HIDDEN GenericResourceImageManager: public QObject
 {
     Q_OBJECT
 public:
-    explicit GenericResourceImageManager(QObject * parent = Q_NULLPTR);
+    explicit GenericResourceImageManager(QObject * parent = nullptr);
 
     void setStorageFolderPath(const QString & storageFolderPath);
 

@@ -190,8 +190,8 @@ bool EncryptionManagerPrivate::generateSalt(
     const EncryptionManagerPrivate::SaltKind::type saltKind,
     const size_t saltSize, ErrorString & errorDescription)
 {
-    unsigned char * salt = Q_NULLPTR;
-    const char * saltText = Q_NULLPTR;
+    unsigned char * salt = nullptr;
+    const char * saltText = nullptr;
 
     switch (saltKind)
     {
