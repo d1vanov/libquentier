@@ -17,7 +17,9 @@
  */
 
 #include <quentier/enml/ENMLConverter.h>
+
 #include "ENMLConverter_p.h"
+
 #include <quentier/types/Resource.h>
 
 namespace quentier {
@@ -31,69 +33,85 @@ ENMLConverter::~ENMLConverter()
     delete d_ptr;
 }
 
-bool ENMLConverter::htmlToNoteContent(const QString & html, QString & noteContent,
-                                      DecryptedTextManager & decryptedTextManager,
-                                      ErrorString & errorDescription,
-                                      const QVector<SkipHtmlElementRule> & skipRules) const
+bool ENMLConverter::htmlToNoteContent(
+    const QString & html, QString & noteContent,
+    DecryptedTextManager & decryptedTextManager,
+    ErrorString & errorDescription,
+    const QVector<SkipHtmlElementRule> & skipRules) const
 {
     Q_D(const ENMLConverter);
-    return d->htmlToNoteContent(html, skipRules, noteContent,
-                                decryptedTextManager, errorDescription);
+    return d->htmlToNoteContent(
+        html,
+        skipRules,
+        noteContent,
+        decryptedTextManager,
+        errorDescription);
 }
 
-bool ENMLConverter::cleanupExternalHtml(const QString & inputHtml,
-                                        QString & cleanedUpHtml,
-                                        ErrorString & errorDescription) const
+bool ENMLConverter::cleanupExternalHtml(
+    const QString & inputHtml, QString & cleanedUpHtml,
+    ErrorString & errorDescription) const
 {
     Q_D(const ENMLConverter);
     return d->cleanupExternalHtml(inputHtml, cleanedUpHtml, errorDescription);
 }
 
-bool ENMLConverter::htmlToQTextDocument(const QString & html, QTextDocument & doc,
-                                        ErrorString & errorDescription,
-                                        const QVector<SkipHtmlElementRule> & skipRules) const
+bool ENMLConverter::htmlToQTextDocument(
+    const QString & html, QTextDocument & doc,
+    ErrorString & errorDescription,
+    const QVector<SkipHtmlElementRule> & skipRules) const
 {
     Q_D(const ENMLConverter);
     return d->htmlToQTextDocument(html, doc, errorDescription, skipRules);
 }
 
-bool ENMLConverter::noteContentToHtml(const QString & noteContent, QString & html,
-                                      ErrorString & errorDescription,
-                                      DecryptedTextManager & decryptedTextManager,
-                                      NoteContentToHtmlExtraData & extraData) const
+bool ENMLConverter::noteContentToHtml(
+    const QString & noteContent, QString & html, ErrorString & errorDescription,
+    DecryptedTextManager & decryptedTextManager,
+    NoteContentToHtmlExtraData & extraData) const
 {
     Q_D(const ENMLConverter);
-    return d->noteContentToHtml(noteContent, html, errorDescription,
-                                decryptedTextManager, extraData);
+    return d->noteContentToHtml(
+        noteContent,
+        html,
+        errorDescription,
+        decryptedTextManager,
+        extraData);
 }
 
-bool ENMLConverter::validateEnml(const QString & enml, ErrorString & errorDescription) const
+bool ENMLConverter::validateEnml(
+    const QString & enml, ErrorString & errorDescription) const
 {
     Q_D(const ENMLConverter);
     return d->validateEnml(enml, errorDescription);
 }
 
-bool ENMLConverter::validateAndFixupEnml(QString & enml, ErrorString & errorDescription) const
+bool ENMLConverter::validateAndFixupEnml(
+    QString & enml, ErrorString & errorDescription) const
 {
     Q_D(const ENMLConverter);
     return d->validateAndFixupEnml(enml, errorDescription);
 }
 
-bool ENMLConverter::noteContentToPlainText(const QString & noteContent,
-                                           QString & plainText,
-                                           ErrorString & errorMessage)
+bool ENMLConverter::noteContentToPlainText(
+    const QString & noteContent, QString & plainText,
+    ErrorString & errorMessage)
 {
-    return ENMLConverterPrivate::noteContentToPlainText(noteContent, plainText,
-                                                        errorMessage);
+    return ENMLConverterPrivate::noteContentToPlainText(
+        noteContent,
+        plainText,
+        errorMessage);
 }
 
-bool ENMLConverter::noteContentToListOfWords(const QString & noteContent,
-                                             QStringList & listOfWords,
-                                             ErrorString & errorMessage,
-                                             QString * plainText)
+bool ENMLConverter::noteContentToListOfWords(
+    const QString & noteContent, QStringList & listOfWords,
+    ErrorString & errorMessage, QString * plainText)
 {
-    return ENMLConverterPrivate::noteContentToListOfWords(noteContent, listOfWords,
-                                                          errorMessage, plainText);
+    return ENMLConverterPrivate::noteContentToListOfWords(
+        noteContent,
+        listOfWords,
+        errorMessage,
+        plainText);
 }
 
 QStringList ENMLConverter::plainTextToListOfWords(const QString & plainText)
@@ -101,34 +119,39 @@ QStringList ENMLConverter::plainTextToListOfWords(const QString & plainText)
     return ENMLConverterPrivate::plainTextToListOfWords(plainText);
 }
 
-QString ENMLConverter::toDoCheckboxHtml(const bool checked, const quint64 idNumber)
+QString ENMLConverter::toDoCheckboxHtml(
+    const bool checked, const quint64 idNumber)
 {
     return ENMLConverterPrivate::toDoCheckboxHtml(checked, idNumber);
 }
 
-QString ENMLConverter::encryptedTextHtml(const QString & encryptedText,
-                                         const QString & hint,
-                                         const QString & cipher,
-                                         const size_t keyLength,
-                                         const quint64 enCryptIndex)
+QString ENMLConverter::encryptedTextHtml(
+    const QString & encryptedText, const QString & hint,
+    const QString & cipher, const size_t keyLength,
+    const quint64 enCryptIndex)
 {
-    return ENMLConverterPrivate::encryptedTextHtml(encryptedText, hint, cipher,
-                                                   keyLength, enCryptIndex);
+    return ENMLConverterPrivate::encryptedTextHtml(
+        encryptedText,
+        hint,
+        cipher,
+        keyLength,
+        enCryptIndex);
 }
 
-QString ENMLConverter::decryptedTextHtml(const QString & decryptedText,
-                                         const QString & encryptedText,
-                                         const QString & hint, const QString & cipher,
-                                         const size_t keyLength,
-                                         const quint64 enDecryptedIndex)
+QString ENMLConverter::decryptedTextHtml(
+    const QString & decryptedText, const QString & encryptedText,
+    const QString & hint, const QString & cipher, const size_t keyLength,
+    const quint64 enDecryptedIndex)
 {
-    return ENMLConverterPrivate::decryptedTextHtml(decryptedText, encryptedText,
-                                                   hint, cipher, keyLength,
-                                                   enDecryptedIndex);
+    return ENMLConverterPrivate::decryptedTextHtml(
+        decryptedText,
+        encryptedText,
+        hint, cipher, keyLength,
+        enDecryptedIndex);
 }
 
-QString ENMLConverter::resourceHtml(const Resource & resource,
-                                    ErrorString & errorDescription)
+QString ENMLConverter::resourceHtml(
+    const Resource & resource, ErrorString & errorDescription)
 {
     return ENMLConverterPrivate::resourceHtml(resource, errorDescription);
 }
@@ -138,20 +161,27 @@ void ENMLConverter::escapeString(QString & string, const bool simplify)
     ENMLConverterPrivate::escapeString(string, simplify);
 }
 
-bool ENMLConverter::exportNotesToEnex(const QVector<Note> & notes,
-                                      const QHash<QString, QString> & tagNamesByTagLocalUids,
-                                      const EnexExportTags::type exportTagsOption,
-                                      QString & enex, ErrorString & errorDescription,
-                                      const QString & version) const
+bool ENMLConverter::exportNotesToEnex(
+    const QVector<Note> & notes,
+    const QHash<QString, QString> & tagNamesByTagLocalUids,
+    const EnexExportTags::type exportTagsOption,
+    QString & enex, ErrorString & errorDescription,
+    const QString & version) const
 {
     Q_D(const ENMLConverter);
-    return d->exportNotesToEnex(notes, tagNamesByTagLocalUids, exportTagsOption,
-                                enex, errorDescription, version);
+    return d->exportNotesToEnex(
+        notes,
+        tagNamesByTagLocalUids,
+        exportTagsOption,
+        enex,
+        errorDescription,
+        version);
 }
 
-bool ENMLConverter::importEnex(const QString & enex, QVector<Note> & notes,
-                               QHash<QString, QStringList> & tagNamesByNoteLocalUid,
-                               ErrorString & errorDescription) const
+bool ENMLConverter::importEnex(
+    const QString & enex, QVector<Note> & notes,
+    QHash<QString, QStringList> & tagNamesByNoteLocalUid,
+    ErrorString & errorDescription) const
 {
     Q_D(const ENMLConverter);
     return d->importEnex(enex, notes, tagNamesByNoteLocalUid, errorDescription);

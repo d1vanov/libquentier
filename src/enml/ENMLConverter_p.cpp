@@ -23,7 +23,9 @@
 #include <quentier/logging/QuentierLogger.h>
 #include <quentier/utility/UidGenerator.h>
 #include <quentier/utility/Utility.h>
+
 #include <libxml/xmlreader.h>
+
 #include <QString>
 #include <QXmlStreamReader>
 #include <QXmlStreamWriter>

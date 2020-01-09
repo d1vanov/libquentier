@@ -18,9 +18,11 @@
 
 #include <quentier/enml/HTMLCleaner.h>
 #include <quentier/logging/QuentierLogger.h>
+
 #include <QXmlStreamReader>
 #include <QXmlStreamWriter>
 #include <QBuffer>
+
 #include <tidy.h>
 #include <tidyenum.h>
 #include <tidybuffio.h>
@@ -46,8 +48,9 @@ public:
         tidyRelease(m_tidyDoc);
     }
 
-    bool convertHtml(const QString & html, const TidyOptionId outputFormat,
-                     QString & output, QString & errorDescription);
+    bool convertHtml(
+        const QString & html, const TidyOptionId outputFormat,
+        QString & output, QString & errorDescription);
 
     TidyBuffer  m_tidyOutput;
     TidyBuffer  m_tidyErrorBuffer;
@@ -63,8 +66,8 @@ HTMLCleaner::~HTMLCleaner()
     delete m_impl;
 }
 
-bool HTMLCleaner::htmlToXml(const QString & html, QString & output,
-                            QString & errorDescription)
+bool HTMLCleaner::htmlToXml(
+    const QString & html, QString & output, QString & errorDescription)
 {
     QNDEBUG("HTMLCleaner::htmlToXml");
     QNTRACE("html = " << html);
@@ -72,8 +75,8 @@ bool HTMLCleaner::htmlToXml(const QString & html, QString & output,
     return m_impl->convertHtml(html, TidyXmlOut, output, errorDescription);
 }
 
-bool HTMLCleaner::htmlToXhtml(const QString & html, QString & output,
-                              QString & errorDescription)
+bool HTMLCleaner::htmlToXhtml(
+    const QString & html, QString & output, QString & errorDescription)
 {
     QNDEBUG("HTMLCleaner::htmlToXhtml");
     QNTRACE("html = " << html);
@@ -89,9 +92,9 @@ bool HTMLCleaner::cleanupHtml(QString & html, QString & errorDescription)
     return m_impl->convertHtml(html, TidyHtmlOut, html, errorDescription);
 }
 
-bool HTMLCleaner::Impl::convertHtml(const QString & html,
-                                    const TidyOptionId outputFormat,
-                                    QString & output, QString & errorDescription)
+bool HTMLCleaner::Impl::convertHtml(
+    const QString & html, const TidyOptionId outputFormat,
+    QString & output, QString & errorDescription)
 {
     // Clear buffers from the previous run, if any
     tidyBufClear(&m_tidyOutput);
@@ -229,13 +232,15 @@ bool HTMLCleaner::Impl::convertHtml(const QString & html,
 
     if (rc > 0) {
         QNTRACE("Tidy diagnostics: "
-                << QByteArray(reinterpret_cast<const char*>(m_tidyErrorBuffer.bp),
-                              static_cast<int>(m_tidyErrorBuffer.size)));
+            << QByteArray(reinterpret_cast<const char*>(m_tidyErrorBuffer.bp),
+                          static_cast<int>(m_tidyErrorBuffer.size)));
     }
 
     output.resize(0);
-    output.append(QString::fromUtf8(QByteArray(reinterpret_cast<const char*>(m_tidyOutput.bp),
-                                               static_cast<int>(m_tidyOutput.size))));
+    output.append(
+        QString::fromUtf8(
+            QByteArray(reinterpret_cast<const char*>(m_tidyOutput.bp),
+                       static_cast<int>(m_tidyOutput.size))));
 
     QString nbspEntityDeclaration =
         QStringLiteral("<!DOCTYPE doctypeName [<!ENTITY nbsp \"&#160;\">]>");
