@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -21,6 +21,7 @@
 
 #include <quentier/utility/Linkage.h>
 #include <quentier/utility/Macros.h>
+
 #include <QString>
 
 namespace quentier {
@@ -31,10 +32,12 @@ public:
     HTMLCleaner();
     virtual ~HTMLCleaner();
 
-    bool htmlToXml(const QString & html, QString & output,
-                   QString & errorDescription);
-    bool htmlToXhtml(const QString & html, QString & output,
-                     QString & errorDescription);
+    bool htmlToXml(
+        const QString & html, QString & output, QString & errorDescription);
+
+    bool htmlToXhtml(
+        const QString & html, QString & output, QString & errorDescription);
+
     bool cleanupHtml(QString & html, QString & errorDescription);
 
 private:

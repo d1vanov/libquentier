@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2019 Dmitry Ivanov
+ * Copyright 2017-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -33,19 +33,25 @@ namespace quentier {
 namespace test {
 
 bool compareNoteContents(const Note & lhs, const Note & rhs, QString & error);
-bool compareNotes(const QVector<Note> & originalNotes,
-                  const QVector<Note> & importedNotes,
-                  QString & error);
+
+bool compareNotes(
+    const QVector<Note> & originalNotes,
+    const QVector<Note> & importedNotes,
+    QString & error);
 
 void setupSampleNote(Note & note);
 void setupSampleNoteV2(Note & note);
 
-void setupNoteTags(Note & note, QHash<QString, QString> & tagNamesByTagLocalUids);
-void setupNoteTagsV2(Note & note, QHash<QString, QString> & tagNamesByTagLocalUids);
+void setupNoteTags(
+    Note & note, QHash<QString, QString> & tagNamesByTagLocalUids);
 
-void bindTagsWithNotes(QVector<Note> & importedNotes,
-                       const QHash<QString, QStringList> & tagNamesByNoteLocalUid,
-                       const QHash<QString, QString> & tagNamesByTagLocalUids);
+void setupNoteTagsV2(
+    Note & note, QHash<QString, QString> & tagNamesByTagLocalUids);
+
+void bindTagsWithNotes(
+    QVector<Note> & importedNotes,
+    const QHash<QString, QStringList> & tagNamesByNoteLocalUid,
+    const QHash<QString, QString> & tagNamesByTagLocalUids);
 
 bool setupNoteResources(Note & note, QString & error);
 void setupNoteResourcesV2(Note & note);
@@ -64,11 +70,12 @@ bool exportSingleNoteWithoutTagsAndResourcesToEnexAndImportBack(QString & error)
     QString enex;
 
     ENMLConverter converter;
-    ENMLConverter::EnexExportTags::type exportTagsOption =
-        ENMLConverter::EnexExportTags::Yes;
-    bool res = converter.exportNotesToEnex(notes, tagNamesByTagLocalUids,
-                                           exportTagsOption, enex,
-                                           errorDescription);
+    bool res = converter.exportNotesToEnex(
+        notes,
+        tagNamesByTagLocalUids,
+        ENMLConverter::EnexExportTags::Yes,
+        enex,
+        errorDescription);
     if (Q_UNLIKELY(!res)) {
         error = errorDescription.nonLocalizedString();
         return false;
@@ -77,9 +84,11 @@ bool exportSingleNoteWithoutTagsAndResourcesToEnexAndImportBack(QString & error)
     QVector<Note> importedNotes;
     QHash<QString, QStringList> tagNamesByNoteLocalUid;
 
-    res = converter.importEnex(enex, importedNotes,
-                               tagNamesByNoteLocalUid,
-                               errorDescription);
+    res = converter.importEnex(
+        enex,
+        importedNotes,
+        tagNamesByNoteLocalUid,
+        errorDescription);
     if (Q_UNLIKELY(!res)) {
         error = errorDescription.nonLocalizedString();
         return false;
@@ -103,11 +112,12 @@ bool exportSingleNoteWithTagsButNoResourcesToEnexAndImportBack(QString & error)
     QString enex;
 
     ENMLConverter converter;
-    ENMLConverter::EnexExportTags::type exportTagsOption =
-        ENMLConverter::EnexExportTags::Yes;
-    bool res = converter.exportNotesToEnex(notes, tagNamesByTagLocalUids,
-                                           exportTagsOption, enex,
-                                           errorDescription);
+    bool res = converter.exportNotesToEnex(
+        notes,
+        tagNamesByTagLocalUids,
+        ENMLConverter::EnexExportTags::Yes,
+        enex,
+        errorDescription);
     if (Q_UNLIKELY(!res)) {
         error = errorDescription.nonLocalizedString();
         return false;
@@ -116,16 +126,21 @@ bool exportSingleNoteWithTagsButNoResourcesToEnexAndImportBack(QString & error)
     QVector<Note> importedNotes;
     QHash<QString, QStringList> tagNamesByNoteLocalUid;
 
-    res = converter.importEnex(enex, importedNotes,
-                               tagNamesByNoteLocalUid,
-                               errorDescription);
+    res = converter.importEnex(
+        enex,
+        importedNotes,
+        tagNamesByNoteLocalUid,
+        errorDescription);
     if (Q_UNLIKELY(!res)) {
         error = errorDescription.nonLocalizedString();
         return false;
     }
 
-    bindTagsWithNotes(importedNotes, tagNamesByNoteLocalUid,
-                      tagNamesByTagLocalUids);
+    bindTagsWithNotes(
+        importedNotes,
+        tagNamesByNoteLocalUid,
+        tagNamesByTagLocalUids);
+
     return compareNotes(notes, importedNotes, error);
 }
 
@@ -148,11 +163,12 @@ bool exportSingleNoteWithResourcesButNoTagsToEnexAndImportBack(QString & error)
     QString enex;
 
     ENMLConverter converter;
-    ENMLConverter::EnexExportTags::type exportTagsOption =
-        ENMLConverter::EnexExportTags::Yes;
-    res = converter.exportNotesToEnex(notes, tagNamesByTagLocalUids,
-                                      exportTagsOption, enex,
-                                      errorDescription);
+    res = converter.exportNotesToEnex(
+        notes,
+        tagNamesByTagLocalUids,
+        ENMLConverter::EnexExportTags::Yes,
+        enex,
+        errorDescription);
     if (Q_UNLIKELY(!res)) {
         error = errorDescription.nonLocalizedString();
         return false;
@@ -161,9 +177,11 @@ bool exportSingleNoteWithResourcesButNoTagsToEnexAndImportBack(QString & error)
     QVector<Note> importedNotes;
     QHash<QString, QStringList> tagNamesByNoteLocalUid;
 
-    res = converter.importEnex(enex, importedNotes,
-                               tagNamesByNoteLocalUid,
-                               errorDescription);
+    res = converter.importEnex(
+        enex,
+        importedNotes,
+        tagNamesByNoteLocalUid,
+        errorDescription);
     if (Q_UNLIKELY(!res)) {
         error = errorDescription.nonLocalizedString();
         return false;
@@ -192,11 +210,12 @@ bool exportSingleNoteWithTagsAndResourcesToEnexAndImportBack(QString & error)
     QString enex;
 
     ENMLConverter converter;
-    ENMLConverter::EnexExportTags::type exportTagsOption =
-        ENMLConverter::EnexExportTags::Yes;
-    res = converter.exportNotesToEnex(notes, tagNamesByTagLocalUids,
-                                      exportTagsOption, enex,
-                                      errorDescription);
+    res = converter.exportNotesToEnex(
+        notes,
+        tagNamesByTagLocalUids,
+        ENMLConverter::EnexExportTags::Yes,
+        enex,
+        errorDescription);
     if (Q_UNLIKELY(!res)) {
         error = errorDescription.nonLocalizedString();
         return false;
@@ -205,16 +224,21 @@ bool exportSingleNoteWithTagsAndResourcesToEnexAndImportBack(QString & error)
     QVector<Note> importedNotes;
     QHash<QString, QStringList> tagNamesByNoteLocalUid;
 
-    res = converter.importEnex(enex, importedNotes,
-                               tagNamesByNoteLocalUid,
-                               errorDescription);
+    res = converter.importEnex(
+        enex,
+        importedNotes,
+        tagNamesByNoteLocalUid,
+        errorDescription);
     if (Q_UNLIKELY(!res)) {
         error = errorDescription.nonLocalizedString();
         return false;
     }
 
-    bindTagsWithNotes(importedNotes, tagNamesByNoteLocalUid,
-                      tagNamesByTagLocalUids);
+    bindTagsWithNotes(
+        importedNotes,
+        tagNamesByNoteLocalUid,
+        tagNamesByTagLocalUids);
+
     return compareNotes(notes, importedNotes, error);
 }
 
@@ -233,11 +257,12 @@ bool exportSingleNoteWithTagsToEnexButSkipTagsAndImportBack(QString & error)
     QString enex;
 
     ENMLConverter converter;
-    ENMLConverter::EnexExportTags::type exportTagsOption =
-        ENMLConverter::EnexExportTags::No;
-    bool res = converter.exportNotesToEnex(notes, tagNamesByTagLocalUids,
-                                           exportTagsOption, enex,
-                                           errorDescription);
+    bool res = converter.exportNotesToEnex(
+        notes,
+        tagNamesByTagLocalUids,
+        ENMLConverter::EnexExportTags::No,
+        enex,
+        errorDescription);
     if (Q_UNLIKELY(!res)) {
         error = errorDescription.nonLocalizedString();
         return false;
@@ -246,9 +271,11 @@ bool exportSingleNoteWithTagsToEnexButSkipTagsAndImportBack(QString & error)
     QVector<Note> importedNotes;
     QHash<QString, QStringList> tagNamesByNoteLocalUid;
 
-    res = converter.importEnex(enex, importedNotes,
-                               tagNamesByNoteLocalUid,
-                               errorDescription);
+    res = converter.importEnex(
+        enex,
+        importedNotes,
+        tagNamesByNoteLocalUid,
+        errorDescription);
     if (Q_UNLIKELY(!res)) {
         error = errorDescription.nonLocalizedString();
         return false;
@@ -274,7 +301,8 @@ bool exportMultipleNotesWithTagsAndResourcesAndImportBack(QString & error)
     setupSampleNoteV2(secondNote);
 
     Note thirdNote;
-    thirdNote.setContent(QStringLiteral("<en-note><h1>Quick note</h1></en-note>"));
+    thirdNote.setContent(
+        QStringLiteral("<en-note><h1>Quick note</h1></en-note>"));
 
     QHash<QString, QString> tagNamesByTagLocalUids;
     setupNoteTags(firstNote, tagNamesByTagLocalUids);
@@ -296,11 +324,12 @@ bool exportMultipleNotesWithTagsAndResourcesAndImportBack(QString & error)
     QString enex;
 
     ENMLConverter converter;
-    ENMLConverter::EnexExportTags::type exportTagsOption =
-        ENMLConverter::EnexExportTags::Yes;
-    res = converter.exportNotesToEnex(notes, tagNamesByTagLocalUids,
-                                      exportTagsOption, enex,
-                                      errorDescription);
+    res = converter.exportNotesToEnex(
+        notes,
+        tagNamesByTagLocalUids,
+        ENMLConverter::EnexExportTags::Yes,
+        enex,
+        errorDescription);
     if (Q_UNLIKELY(!res)) {
         error = errorDescription.nonLocalizedString();
         return false;
@@ -309,16 +338,21 @@ bool exportMultipleNotesWithTagsAndResourcesAndImportBack(QString & error)
     QVector<Note> importedNotes;
     QHash<QString, QStringList> tagNamesByNoteLocalUid;
 
-    res = converter.importEnex(enex, importedNotes,
-                               tagNamesByNoteLocalUid,
-                               errorDescription);
+    res = converter.importEnex(
+        enex,
+        importedNotes,
+        tagNamesByNoteLocalUid,
+        errorDescription);
     if (Q_UNLIKELY(!res)) {
         error = errorDescription.nonLocalizedString();
         return false;
     }
 
-    bindTagsWithNotes(importedNotes, tagNamesByNoteLocalUid,
-                      tagNamesByTagLocalUids);
+    bindTagsWithNotes(
+        importedNotes,
+        tagNamesByNoteLocalUid,
+        tagNamesByTagLocalUids);
+
     return compareNotes(notes, importedNotes, error);
 }
 
@@ -366,9 +400,11 @@ bool importRealWorldEnex(QString & error)
     importedNotes.clear();
     tagNamesByNoteLocalUid.clear();
 
-    res = converter.importEnex(sampleEnex2, importedNotes,
-                               tagNamesByNoteLocalUid,
-                               errorDescription);
+    res = converter.importEnex(
+        sampleEnex2,
+        importedNotes,
+        tagNamesByNoteLocalUid,
+        errorDescription);
     if (!res) {
         error = errorDescription.nonLocalizedString();
         return false;
@@ -393,9 +429,11 @@ bool importRealWorldEnex(QString & error)
     importedNotes.clear();
     tagNamesByNoteLocalUid.clear();
 
-    res = converter.importEnex(sampleEnex3, importedNotes,
-                               tagNamesByNoteLocalUid,
-                               errorDescription);
+    res = converter.importEnex(
+        sampleEnex3,
+        importedNotes,
+        tagNamesByNoteLocalUid,
+        errorDescription);
     if (!res) {
         error = errorDescription.nonLocalizedString();
         return false;
@@ -972,9 +1010,9 @@ bool compareNoteContents(const Note & lhs, const Note & rhs, QString & error)
     return true;
 }
 
-bool compareNotes(const QVector<Note> & notes,
-                  const QVector<Note> & importedNotes,
-                  QString & error)
+bool compareNotes(
+    const QVector<Note> & notes, const QVector<Note> & importedNotes,
+    QString & error)
 {
     int numNotes = notes.size();
 
@@ -1052,14 +1090,20 @@ void setupSampleNoteV2(Note & note)
     noteAttributes.applicationData = qevercloud::LazyMap();
 
     noteAttributes.applicationData->keysOnly = QSet<QString>();
-    Q_UNUSED(noteAttributes.applicationData->keysOnly->insert(QStringLiteral("key1")))
-    Q_UNUSED(noteAttributes.applicationData->keysOnly->insert(QStringLiteral("key2")))
-    Q_UNUSED(noteAttributes.applicationData->keysOnly->insert(QStringLiteral("key3")))
+    Q_UNUSED(noteAttributes.applicationData->keysOnly->insert(
+        QStringLiteral("key1")))
+    Q_UNUSED(noteAttributes.applicationData->keysOnly->insert(
+        QStringLiteral("key2")))
+    Q_UNUSED(noteAttributes.applicationData->keysOnly->insert(
+        QStringLiteral("key3")))
 
     noteAttributes.applicationData->fullMap = QMap<QString, QString>();
-    noteAttributes.applicationData->fullMap.ref()[QStringLiteral("key1")] = QStringLiteral("value1");
-    noteAttributes.applicationData->fullMap.ref()[QStringLiteral("key2")] = QStringLiteral("value2");
-    noteAttributes.applicationData->fullMap.ref()[QStringLiteral("key3")] = QStringLiteral("value3");
+    noteAttributes.applicationData->fullMap.ref()[QStringLiteral("key1")] =
+        QStringLiteral("value1");
+    noteAttributes.applicationData->fullMap.ref()[QStringLiteral("key2")] =
+        QStringLiteral("value2");
+    noteAttributes.applicationData->fullMap.ref()[QStringLiteral("key3")] =
+        QStringLiteral("value3");
 }
 
 void setupNoteTags(Note & note, QHash<QString, QString> & tagNamesByTagLocalUids)
@@ -1091,11 +1135,13 @@ void setupNoteTagsV2(Note & note, QHash<QString, QString> & tagNamesByTagLocalUi
     tagNamesByTagLocalUids[tag2.localUid()] = tag2.name();
 }
 
-void bindTagsWithNotes(QVector<Note> & importedNotes,
-                       const QHash<QString, QStringList> & tagNamesByNoteLocalUid,
-                       const QHash<QString, QString> & tagNamesByTagLocalUids)
+void bindTagsWithNotes(
+    QVector<Note> & importedNotes,
+    const QHash<QString, QStringList> & tagNamesByNoteLocalUid,
+    const QHash<QString, QString> & tagNamesByTagLocalUids)
 {
-    for(auto it = importedNotes.begin(), end = importedNotes.end(); it != end; ++it)
+    for(auto it = importedNotes.begin(), end = importedNotes.end();
+        it != end; ++it)
     {
         Note & note = *it;
         auto tagIt = tagNamesByNoteLocalUid.find(note.localUid());
@@ -1105,7 +1151,8 @@ void bindTagsWithNotes(QVector<Note> & importedNotes,
 
         const QStringList & tagNames = tagIt.value();
         for(auto tagNameIt = tagNames.constBegin(),
-            tagNameEnd = tagNames.constEnd(); tagNameIt != tagNameEnd; ++tagNameIt)
+            tagNameEnd = tagNames.constEnd();
+            tagNameIt != tagNameEnd; ++tagNameIt)
         {
             const QString & tagName = *tagNameIt;
 
@@ -1192,8 +1239,8 @@ bool setupNoteResources(Note & note, QString & error)
     QByteArray recognitionDataBody = fakeRecognitionDataFile.readAll();
 
     secondResource.setRecognitionDataBody(recognitionDataBody);
-    secondResource.setRecognitionDataHash(QCryptographicHash::hash(recognitionDataBody,
-                                                                   QCryptographicHash::Md5));
+    secondResource.setRecognitionDataHash(
+        QCryptographicHash::hash(recognitionDataBody, QCryptographicHash::Md5));
     secondResource.setRecognitionDataSize(recognitionDataBody.size());
 
     QList<Resource> resources;
@@ -1238,16 +1285,24 @@ void setupNoteResourcesV2(Note & note)
     resourceAttributes.applicationData = qevercloud::LazyMap();
 
     resourceAttributes.applicationData->keysOnly = QSet<QString>();
-    Q_UNUSED(resourceAttributes.applicationData->keysOnly->insert(QStringLiteral("resKey1")))
-    Q_UNUSED(resourceAttributes.applicationData->keysOnly->insert(QStringLiteral("resKey2")))
-    Q_UNUSED(resourceAttributes.applicationData->keysOnly->insert(QStringLiteral("resKey3")))
-    Q_UNUSED(resourceAttributes.applicationData->keysOnly->insert(QStringLiteral("resKey4")))
+    Q_UNUSED(resourceAttributes.applicationData->keysOnly->insert(
+        QStringLiteral("resKey1")))
+    Q_UNUSED(resourceAttributes.applicationData->keysOnly->insert(
+        QStringLiteral("resKey2")))
+    Q_UNUSED(resourceAttributes.applicationData->keysOnly->insert(
+        QStringLiteral("resKey3")))
+    Q_UNUSED(resourceAttributes.applicationData->keysOnly->insert(
+        QStringLiteral("resKey4")))
 
     resourceAttributes.applicationData->fullMap = QMap<QString, QString>();
-    resourceAttributes.applicationData->fullMap.ref()[QStringLiteral("resKey1")] = QStringLiteral("resVal1");
-    resourceAttributes.applicationData->fullMap.ref()[QStringLiteral("resKey2")] = QStringLiteral("resVal2");
-    resourceAttributes.applicationData->fullMap.ref()[QStringLiteral("resKey3")] = QStringLiteral("resVal3");
-    resourceAttributes.applicationData->fullMap.ref()[QStringLiteral("resKey4")] = QStringLiteral("resVal4");
+    resourceAttributes.applicationData->fullMap.ref()[QStringLiteral("resKey1")] =
+        QStringLiteral("resVal1");
+    resourceAttributes.applicationData->fullMap.ref()[QStringLiteral("resKey2")] =
+        QStringLiteral("resVal2");
+    resourceAttributes.applicationData->fullMap.ref()[QStringLiteral("resKey3")] =
+        QStringLiteral("resVal3");
+    resourceAttributes.applicationData->fullMap.ref()[QStringLiteral("resKey4")] =
+        QStringLiteral("resVal4");
 
     note.addResource(resource);
 }

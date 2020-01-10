@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -95,7 +95,8 @@ bool DecryptedTextManagerPrivate::findDecryptedTextByEncryptedText(
     auto dataIt = m_dataHash.find(encryptedText);
     if (dataIt == m_dataHash.end())
     {
-        QNTRACE("Can't find entry in the up to date data hash, trying the stale hash");
+        QNTRACE("Can't find entry in the up to date data hash, trying the stale "
+            << "hash");
 
         // Try the stale data hash
         dataIt = m_staleDataHash.find(encryptedText);

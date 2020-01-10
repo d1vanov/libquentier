@@ -8164,13 +8164,17 @@ bool NoteEditorPrivate::exportToEnex(
         tagNamesByTagLocalUid[fakeTagLocalUid] = *it;
     }
 
-    ENMLConverter::EnexExportTags::type exportTagsOption =
+    ENMLConverter::EnexExportTags exportTagsOption =
         (tagNames.isEmpty()
          ? ENMLConverter::EnexExportTags::No
          : ENMLConverter::EnexExportTags::Yes);
-    return m_enmlConverter.exportNotesToEnex(notes, tagNamesByTagLocalUid,
-                                             exportTagsOption, enex,
-                                             errorDescription);
+
+    return m_enmlConverter.exportNotesToEnex(
+        notes,
+        tagNamesByTagLocalUid,
+        exportTagsOption,
+        enex,
+        errorDescription);
 }
 
 QString NoteEditorPrivate::currentNoteLocalUid() const

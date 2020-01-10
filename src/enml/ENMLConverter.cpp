@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -164,7 +164,7 @@ void ENMLConverter::escapeString(QString & string, const bool simplify)
 bool ENMLConverter::exportNotesToEnex(
     const QVector<Note> & notes,
     const QHash<QString, QString> & tagNamesByTagLocalUids,
-    const EnexExportTags::type exportTagsOption,
+    const EnexExportTags exportTagsOption,
     QString & enex, ErrorString & errorDescription,
     const QString & version) const
 {

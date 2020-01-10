@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -122,7 +122,7 @@ public:
     bool exportNotesToEnex(
         const QVector<Note> & notes,
         const QHash<QString, QString> & tagNamesByTagLocalUids,
-        const ENMLConverter::EnexExportTags::type exportTagsOption,
+        const ENMLConverter::EnexExportTags exportTagsOption,
         QString & enex, ErrorString & errorDescription,
         const QString & version) const;
 
