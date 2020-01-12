@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -232,9 +232,9 @@ void LinkedNotebookLocalStorageManagerAsyncTester::onAddLinkedNotebookCompleted(
 
         m_state = STATE_SENT_LIST_LINKED_NOTEBOOKS_REQUEST;
         size_t limit = 0, offset = 0;
-        LocalStorageManager::ListLinkedNotebooksOrder::type order =
+        LocalStorageManager::ListLinkedNotebooksOrder order =
             LocalStorageManager::ListLinkedNotebooksOrder::NoOrder;
-        LocalStorageManager::OrderDirection::type orderDirection =
+        LocalStorageManager::OrderDirection orderDirection =
             LocalStorageManager::OrderDirection::Ascending;
         Q_EMIT listAllLinkedNotebooksRequest(limit, offset, order,
                                              orderDirection, QUuid::createUuid());
@@ -369,8 +369,8 @@ void LinkedNotebookLocalStorageManagerAsyncTester::onFindLinkedNotebookFailed(
 
 void LinkedNotebookLocalStorageManagerAsyncTester::onListAllLinkedNotebooksCompleted(
     size_t limit, size_t offset,
-    LocalStorageManager::ListLinkedNotebooksOrder::type order,
-    LocalStorageManager::OrderDirection::type orderDirection,
+    LocalStorageManager::ListLinkedNotebooksOrder order,
+    LocalStorageManager::OrderDirection orderDirection,
     QList<LinkedNotebook> linkedNotebooks, QUuid requestId)
 {
     Q_UNUSED(limit)
@@ -408,8 +408,8 @@ void LinkedNotebookLocalStorageManagerAsyncTester::onListAllLinkedNotebooksCompl
 
 void LinkedNotebookLocalStorageManagerAsyncTester::onListAllLinkedNotebooksFailed(
     size_t limit, size_t offset,
-    LocalStorageManager::ListLinkedNotebooksOrder::type order,
-    LocalStorageManager::OrderDirection::type orderDirection,
+    LocalStorageManager::ListLinkedNotebooksOrder order,
+    LocalStorageManager::OrderDirection orderDirection,
     ErrorString errorDescription, QUuid requestId)
 {
     Q_UNUSED(limit)
@@ -490,13 +490,13 @@ void LinkedNotebookLocalStorageManagerAsyncTester::createConnections()
     QObject::connect(this,
                      QNSIGNAL(LinkedNotebookLocalStorageManagerAsyncTester,
                               listAllLinkedNotebooksRequest,size_t,size_t,
-                              LocalStorageManager::ListLinkedNotebooksOrder::type,
-                              LocalStorageManager::OrderDirection::type,QUuid),
+                              LocalStorageManager::ListLinkedNotebooksOrder,
+                              LocalStorageManager::OrderDirection,QUuid),
                      m_pLocalStorageManagerAsync,
                      QNSLOT(LocalStorageManagerAsync,onListAllLinkedNotebooksRequest,
                             size_t,size_t,
-                            LocalStorageManager::ListLinkedNotebooksOrder::type,
-                            LocalStorageManager::OrderDirection::type,QUuid));
+                            LocalStorageManager::ListLinkedNotebooksOrder,
+                            LocalStorageManager::OrderDirection,QUuid));
     QObject::connect(this,
                      QNSIGNAL(LinkedNotebookLocalStorageManagerAsyncTester,
                               expungeLinkedNotebookRequest,LinkedNotebook,QUuid),
@@ -565,26 +565,26 @@ void LinkedNotebookLocalStorageManagerAsyncTester::createConnections()
     QObject::connect(m_pLocalStorageManagerAsync,
                      QNSIGNAL(LocalStorageManagerAsync,
                               listAllLinkedNotebooksComplete,size_t,size_t,
-                              LocalStorageManager::ListLinkedNotebooksOrder::type,
-                              LocalStorageManager::OrderDirection::type,
+                              LocalStorageManager::ListLinkedNotebooksOrder,
+                              LocalStorageManager::OrderDirection,
                               QList<LinkedNotebook>,QUuid),
                      this,
                      QNSLOT(LinkedNotebookLocalStorageManagerAsyncTester,
                             onListAllLinkedNotebooksCompleted,size_t,size_t,
-                            LocalStorageManager::ListLinkedNotebooksOrder::type,
-                            LocalStorageManager::OrderDirection::type,
+                            LocalStorageManager::ListLinkedNotebooksOrder,
+                            LocalStorageManager::OrderDirection,
                             QList<LinkedNotebook>,QUuid));
     QObject::connect(m_pLocalStorageManagerAsync,
                      QNSIGNAL(LocalStorageManagerAsync,
                               listAllLinkedNotebooksFailed,size_t,size_t,
-                              LocalStorageManager::ListLinkedNotebooksOrder::type,
-                              LocalStorageManager::OrderDirection::type,
+                              LocalStorageManager::ListLinkedNotebooksOrder,
+                              LocalStorageManager::OrderDirection,
                               ErrorString,QUuid),
                      this,
                      QNSLOT(LinkedNotebookLocalStorageManagerAsyncTester,
                             onListAllLinkedNotebooksFailed,size_t,size_t,
-                            LocalStorageManager::ListLinkedNotebooksOrder::type,
-                            LocalStorageManager::OrderDirection::type,
+                            LocalStorageManager::ListLinkedNotebooksOrder,
+                            LocalStorageManager::OrderDirection,
                             ErrorString,QUuid));
     QObject::connect(m_pLocalStorageManagerAsync,
                      QNSIGNAL(LocalStorageManagerAsync,

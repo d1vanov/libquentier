@@ -9,7 +9,7 @@ SET_POLICIES()
 project(libquentier VERSION 0.5.0)
 
 set(PROJECT_VENDOR "Dmitry Ivanov")
-set(PROJECT_COPYRIGHT_YEAR "2018")
+set(PROJECT_COPYRIGHT_YEAR "2020")
 set(PROJECT_DOMAIN_FIRST "quentier")
 set(PROJECT_DOMAIN_SECOND "org")
 set(PROJECT_DOMAIN "${PROJECT_DOMAIN_FIRST}.${PROJECT_DOMAIN_SECOND}")
@@ -127,7 +127,7 @@ set(EXCEPTION_HEADERS
     headers/quentier/exception/DatabaseLockedException.h
     headers/quentier/exception/DatabaseLockFailedException.h
     headers/quentier/exception/DatabaseOpeningException.h
-    headers/quentier/exception/DatabaseSqlErrorException.h
+    headers/quentier/exception/DatabaseRequestException.h
     headers/quentier/exception/EmptyDataElementException.h
     headers/quentier/exception/IQuentierException.h
     headers/quentier/exception/LocalStorageCacheManagerException.h
@@ -405,7 +405,7 @@ set(${PROJECT_NAME}_SOURCES
     src/exception/DatabaseLockedException.cpp
     src/exception/DatabaseLockFailedException.cpp
     src/exception/DatabaseOpeningException.cpp
-    src/exception/DatabaseSqlErrorException.cpp
+    src/exception/DatabaseRequestException.cpp
     src/exception/IQuentierException.cpp
     src/exception/NoteEditorInitializationException.cpp
     src/exception/NoteEditorPluginInitializationException.cpp

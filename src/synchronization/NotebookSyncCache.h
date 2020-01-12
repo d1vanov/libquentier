@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2019 Dmitry Ivanov
+ * Copyright 2017-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -72,8 +72,8 @@ Q_SIGNALS:
 // private signals
     void listNotebooks(LocalStorageManager::ListObjectsOptions flag,
                        size_t limit, size_t offset,
-                       LocalStorageManager::ListNotebooksOrder::type order,
-                       LocalStorageManager::OrderDirection::type orderDirection,
+                       LocalStorageManager::ListNotebooksOrder order,
+                       LocalStorageManager::OrderDirection orderDirection,
                        QString linkedNotebookGuid, QUuid requestId);
 
 public Q_SLOTS:
@@ -89,8 +89,8 @@ private Q_SLOTS:
     void onListNotebooksComplete(
         LocalStorageManager::ListObjectsOptions flag,
         size_t limit, size_t offset,
-        LocalStorageManager::ListNotebooksOrder::type order,
-        LocalStorageManager::OrderDirection::type orderDirection,
+        LocalStorageManager::ListNotebooksOrder order,
+        LocalStorageManager::OrderDirection orderDirection,
         QString linkedNotebookGuid,
         QList<Notebook> foundNotebooks,
         QUuid requestId);
@@ -98,8 +98,8 @@ private Q_SLOTS:
     void onListNotebooksFailed(
         LocalStorageManager::ListObjectsOptions flag,
         size_t limit, size_t offset,
-        LocalStorageManager::ListNotebooksOrder::type order,
-        LocalStorageManager::OrderDirection::type orderDirection,
+        LocalStorageManager::ListNotebooksOrder order,
+        LocalStorageManager::OrderDirection orderDirection,
         QString linkedNotebookGuid, ErrorString errorDescription,
         QUuid requestId);
 

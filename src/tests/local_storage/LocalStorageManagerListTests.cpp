@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Dmitry Ivanov
+ * Copyright 2019-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -137,45 +137,47 @@ void TestListSavedSearches()
     }                                                                          \
 // CHECK_LIST_SAVED_SEARCHES
 
+    using ListObjectsOption = LocalStorageManager::ListObjectsOption;
+
     // 2) Test method listing only dirty saved searches
-    CHECK_LIST_SAVED_SEARCHES(LocalStorageManager::ListDirty, "dirty",
+    CHECK_LIST_SAVED_SEARCHES(ListObjectsOption::ListDirty, "dirty",
                               i > 2, i <= 2);
 
     // 3) Test method listing only local saved searches
-    CHECK_LIST_SAVED_SEARCHES(LocalStorageManager::ListLocal, "local",
+    CHECK_LIST_SAVED_SEARCHES(ListObjectsOption::ListLocal, "local",
                               i < 3, i >= 3);
 
     // 4) Test method listing only saved searches without guid
-    CHECK_LIST_SAVED_SEARCHES(LocalStorageManager::ListElementsWithoutGuid,
+    CHECK_LIST_SAVED_SEARCHES(ListObjectsOption::ListElementsWithoutGuid,
                               "guidless", i <= 1, i > 1);
 
     // 5) Test method listing only favorited saved searches
-    CHECK_LIST_SAVED_SEARCHES(LocalStorageManager::ListFavoritedElements,
+    CHECK_LIST_SAVED_SEARCHES(ListObjectsOption::ListFavoritedElements,
                               "favorited", (i == 0) || (i == 4),
                               (i != 0) && (i != 4));
 
     // 6) Test method listing dirty favorited saved searches with guid
-    CHECK_LIST_SAVED_SEARCHES(LocalStorageManager::ListDirty |
-                              LocalStorageManager::ListElementsWithGuid |
-                              LocalStorageManager::ListFavoritedElements,
+    CHECK_LIST_SAVED_SEARCHES(ListObjectsOption::ListDirty |
+                              ListObjectsOption::ListElementsWithGuid |
+                              ListObjectsOption::ListFavoritedElements,
                               "dirty, favorited, having guid",
                               i == 4, i != 4);
 
     // 7) Test method listing local favorited saved searches
-    CHECK_LIST_SAVED_SEARCHES(LocalStorageManager::ListLocal |
-                              LocalStorageManager::ListFavoritedElements,
+    CHECK_LIST_SAVED_SEARCHES(ListObjectsOption::ListLocal |
+                              ListObjectsOption::ListFavoritedElements,
                               "local, favorited", i == 0, i != 0);
 
     // 8) Test method listing saved searches with guid set also specifying
     // limit, offset and order
     size_t limit = 2;
     size_t offset = 1;
-    LocalStorageManager::ListSavedSearchesOrder::type order =
+    auto order =
         LocalStorageManager::ListSavedSearchesOrder::ByUpdateSequenceNumber;
 
     errorMessage.clear();
     foundSearches =
-        localStorageManager.listSavedSearches(LocalStorageManager::ListElementsWithGuid,
+        localStorageManager.listSavedSearches(ListObjectsOption::ListElementsWithGuid,
                                               errorMessage, limit, offset, order);
     QVERIFY2(errorMessage.isEmpty(), qPrintable(errorMessage.nonLocalizedString()));
 
@@ -300,9 +302,9 @@ void TestListLinkedNotebooks()
 
     // 2) Test method listing only dirty linked notebooks
     errorMessage.clear();
-    foundLinkedNotebooks =
-        localStorageManager.listLinkedNotebooks(LocalStorageManager::ListDirty,
-                                                errorMessage);
+    foundLinkedNotebooks = localStorageManager.listLinkedNotebooks(
+        LocalStorageManager::ListObjectsOption::ListDirty,
+        errorMessage);
     QVERIFY2(errorMessage.isEmpty(), qPrintable(errorMessage.nonLocalizedString()));
 
     for(int i = 0; i < nLinkedNotebooks; ++i)
@@ -425,30 +427,32 @@ void TestListTags()
     }                                                                          \
 // CHECK_LIST_TAGS
 
+    using ListObjectsOption = LocalStorageManager::ListObjectsOption;
+
     // 2) Test method listing only dirty tags
-    CHECK_LIST_TAGS(LocalStorageManager::ListDirty, "dirty", i > 2, i <= 2);
+    CHECK_LIST_TAGS(ListObjectsOption::ListDirty, "dirty", i > 2, i <= 2);
 
     // 3) Test method listing only local tags
-    CHECK_LIST_TAGS(LocalStorageManager::ListLocal, "local", i < 3, i >= 3);
+    CHECK_LIST_TAGS(ListObjectsOption::ListLocal, "local", i < 3, i >= 3);
 
     // 4) Test method listing only tags without guid
-    CHECK_LIST_TAGS(LocalStorageManager::ListElementsWithoutGuid,
+    CHECK_LIST_TAGS(ListObjectsOption::ListElementsWithoutGuid,
                     "guidless", i <= 1, i > 1);
 
     // 5) Test method listing only favorited tags
-    CHECK_LIST_TAGS(LocalStorageManager::ListFavoritedElements,
+    CHECK_LIST_TAGS(ListObjectsOption::ListFavoritedElements,
                     "favorited", (i == 0) || (i == 4),
                     (i != 0) && (i != 4));
 
     // 6) Test method listing dirty favorited tags with guid
-    CHECK_LIST_TAGS(LocalStorageManager::ListDirty |
-                    LocalStorageManager::ListElementsWithGuid |
-                    LocalStorageManager::ListFavoritedElements,
+    CHECK_LIST_TAGS(ListObjectsOption::ListDirty |
+                    ListObjectsOption::ListElementsWithGuid |
+                    ListObjectsOption::ListFavoritedElements,
                     "dirty, favorited, having guid", i == 4, i != 4);
 
     // 7) Test method listing local favorited tags
-    CHECK_LIST_TAGS(LocalStorageManager::ListLocal |
-                    LocalStorageManager::ListFavoritedElements,
+    CHECK_LIST_TAGS(ListObjectsOption::ListLocal |
+                    ListObjectsOption::ListFavoritedElements,
                     "local, favorited", i == 0, i != 0);
 
 #undef CHECK_LIST_TAGS
@@ -680,32 +684,34 @@ void TestListTagsWithNoteLocalUids()
     }                                                                          \
 // CHECK_LIST_TAGS
 
+    using ListObjectsOption = LocalStorageManager::ListObjectsOption;
+
     // 1) Test method listing all tags with note local uids
-    CHECK_LIST_TAGS(LocalStorageManager::ListAll, "all", true, false);
+    CHECK_LIST_TAGS(ListObjectsOption::ListAll, "all", true, false);
 
     // 2) Test method listing only dirty tags
-    CHECK_LIST_TAGS(LocalStorageManager::ListDirty, "dirty", i > 2, i <= 2);
+    CHECK_LIST_TAGS(ListObjectsOption::ListDirty, "dirty", i > 2, i <= 2);
 
     // 3) Test method listing only local tags
-    CHECK_LIST_TAGS(LocalStorageManager::ListLocal, "local", i < 3, i >= 3);
+    CHECK_LIST_TAGS(ListObjectsOption::ListLocal, "local", i < 3, i >= 3);
 
     // 4) Test method listing only tags without guid
-    CHECK_LIST_TAGS(LocalStorageManager::ListElementsWithoutGuid,
+    CHECK_LIST_TAGS(ListObjectsOption::ListElementsWithoutGuid,
                     "guidless", i <= 1, i > 1);
 
     // 5) Test method listing only favorited tags
-    CHECK_LIST_TAGS(LocalStorageManager::ListFavoritedElements,
+    CHECK_LIST_TAGS(ListObjectsOption::ListFavoritedElements,
                     "favorited", (i == 0) || (i == 4), (i != 0) && (i != 4));
 
     // 6) Test method listing dirty favorited tags with guid
-    CHECK_LIST_TAGS(LocalStorageManager::ListDirty |
-                    LocalStorageManager::ListElementsWithGuid |
-                    LocalStorageManager::ListFavoritedElements,
+    CHECK_LIST_TAGS(ListObjectsOption::ListDirty |
+                    ListObjectsOption::ListElementsWithGuid |
+                    ListObjectsOption::ListFavoritedElements,
                     "dirty, favorited, having guid", i == 4, i != 4);
 
     // 7) Test method listing local favorited tags
-    CHECK_LIST_TAGS(LocalStorageManager::ListLocal |
-                    LocalStorageManager::ListFavoritedElements,
+    CHECK_LIST_TAGS(ListObjectsOption::ListLocal |
+                    ListObjectsOption::ListFavoritedElements,
                     "local, favorited", i == 0, i != 0);
 #undef CHECK_LIST_TAGS
 }
@@ -896,10 +902,10 @@ void TestListAllTagsPerNote()
     const size_t limit = 2;
     const size_t offset = 1;
     const LocalStorageManager::ListObjectsOptions flag =
-        LocalStorageManager::ListDirty;
-    const LocalStorageManager::ListTagsOrder::type order =
+        LocalStorageManager::ListObjectsOption::ListDirty;
+    const LocalStorageManager::ListTagsOrder order =
         LocalStorageManager::ListTagsOrder::ByUpdateSequenceNumber;
-    const LocalStorageManager::OrderDirection::type orderDirection =
+    const LocalStorageManager::OrderDirection orderDirection =
         LocalStorageManager::OrderDirection::Descending;
     foundTags = localStorageManager.listAllTagsPerNote(note, errorMessage,
                                                        flag, limit, offset,
@@ -1104,16 +1110,16 @@ void TestListNotes()
     errorMessage.clear();
     size_t limit = 2;
     size_t offset = 0;
-    LocalStorageManager::ListNotesOrder::type order =
+    LocalStorageManager::ListNotesOrder order =
         LocalStorageManager::ListNotesOrder::ByUpdateSequenceNumber;
-    LocalStorageManager::OrderDirection::type orderDirection =
+    LocalStorageManager::OrderDirection orderDirection =
         LocalStorageManager::OrderDirection::Descending;
     getNoteOptions = LocalStorageManager::GetNoteOptions(
         LocalStorageManager::GetNoteOption::WithResourceMetadata |
         LocalStorageManager::GetNoteOption::WithResourceBinaryData);
     foundNotes = localStorageManager.listNotesPerNotebook(
         notebook, getNoteOptions, errorMessage,
-        LocalStorageManager::ListElementsWithGuid,
+        LocalStorageManager::ListObjectsOption::ListElementsWithGuid,
         limit, offset, order, orderDirection);
     if (foundNotes.size() != static_cast<int>(limit)) {
         QFAIL(qPrintable(QStringLiteral("Found unexpected amount of notes: "
@@ -1151,8 +1157,8 @@ void TestListNotes()
 
     foundNotes = localStorageManager.listNotesPerTag(
         firstTestTag, getNoteOptions, errorMessage,
-        LocalStorageManager::ListElementsWithGuid, limit, offset, order,
-        orderDirection);
+        LocalStorageManager::ListObjectsOption::ListElementsWithGuid, limit,
+        offset, order, orderDirection);
 
     if (foundNotes.size() != static_cast<int>(limit)) {
         QFAIL(qPrintable(QStringLiteral("Found unexpected amount of notes: "
@@ -1185,8 +1191,10 @@ void TestListNotes()
     // 5) Test method listing all notes
     errorMessage.clear();
     getNoteOptions = LocalStorageManager::GetNoteOptions(0);
-    foundNotes = localStorageManager.listNotes(LocalStorageManager::ListAll,
-                                               getNoteOptions, errorMessage);
+    foundNotes = localStorageManager.listNotes(
+        LocalStorageManager::ListObjectsOption::ListAll,
+        getNoteOptions,
+        errorMessage);
     QVERIFY2(errorMessage.isEmpty(), qPrintable(errorMessage.nonLocalizedString()));
 
     numFoundNotes = foundNotes.size();
@@ -1232,30 +1240,32 @@ void TestListNotes()
     }                                                                          \
 // CHECK_LIST_NOTES
 
+    using ListObjectsOption = LocalStorageManager::ListObjectsOption;
+
     // 6) Test method listing only dirty notes
-    CHECK_LIST_NOTES(LocalStorageManager::ListDirty, "dirty", i > 2, i <= 2);
+    CHECK_LIST_NOTES(ListObjectsOption::ListDirty, "dirty", i > 2, i <= 2);
 
     // 7) Test method listing only local notes
-    CHECK_LIST_NOTES(LocalStorageManager::ListLocal, "local", i < 3, i >= 3);
+    CHECK_LIST_NOTES(ListObjectsOption::ListLocal, "local", i < 3, i >= 3);
 
     // 8) Test method listing only notes without guid
-    CHECK_LIST_NOTES(LocalStorageManager::ListElementsWithoutGuid,
+    CHECK_LIST_NOTES(ListObjectsOption::ListElementsWithoutGuid,
                      "guidless", i <= 1, i > 1);
 
     // 9) Test method listing only favorited notes
-    CHECK_LIST_NOTES(LocalStorageManager::ListFavoritedElements,
+    CHECK_LIST_NOTES(ListObjectsOption::ListFavoritedElements,
                      "favorited", (i == 0) || (i == 4),
                      (i != 0) && (i != 4));
 
     // 10) Test method listing dirty favorited notes with guid
-    CHECK_LIST_NOTES(LocalStorageManager::ListDirty |
-                     LocalStorageManager::ListElementsWithGuid |
-                     LocalStorageManager::ListFavoritedElements,
+    CHECK_LIST_NOTES(ListObjectsOption::ListDirty |
+                     ListObjectsOption::ListElementsWithGuid |
+                     ListObjectsOption::ListFavoritedElements,
                      "dirty, favorited, having guid", i == 4, i != 4);
 
     // 11) Test method listing local favorited notes
-    CHECK_LIST_NOTES(LocalStorageManager::ListLocal |
-                     LocalStorageManager::ListFavoritedElements,
+    CHECK_LIST_NOTES(ListObjectsOption::ListLocal |
+                     ListObjectsOption::ListFavoritedElements,
                      "local, favorited", i == 0, i != 0);
 
     // 12) Test method listing notes per notebook and tag local uids
@@ -1264,7 +1274,7 @@ void TestListNotes()
     QStringList tagLocalUids;
     foundNotes = localStorageManager.listNotesPerNotebooksAndTags(
         notebookLocalUids, tagLocalUids, getNoteOptions, errorMessage,
-        LocalStorageManager::ListAll);
+        LocalStorageManager::ListObjectsOption::ListAll);
     numFoundNotes = foundNotes.size();
     if (numFoundNotes != (numNotes-1)) {
         QFAIL(qPrintable(QStringLiteral("Error: number of notes in the result "
@@ -1298,7 +1308,7 @@ void TestListNotes()
     tagLocalUids << firstTestTag.localUid();
     foundNotes = localStorageManager.listNotesPerNotebooksAndTags(
         notebookLocalUids, tagLocalUids, getNoteOptions, errorMessage,
-        LocalStorageManager::ListAll);
+        LocalStorageManager::ListObjectsOption::ListAll);
     numFoundNotes = foundNotes.size();
     if (numFoundNotes != 3) {
         QFAIL(qPrintable(QStringLiteral("Error: number of notes in the result "
@@ -1333,7 +1343,7 @@ void TestListNotes()
     tagLocalUids << secondTestTag.localUid();
     foundNotes = localStorageManager.listNotesPerNotebooksAndTags(
         notebookLocalUids, tagLocalUids, getNoteOptions, errorMessage,
-        LocalStorageManager::ListAll);
+        LocalStorageManager::ListObjectsOption::ListAll);
     numFoundNotes = foundNotes.size();
     if (numFoundNotes != 1) {
         QFAIL(qPrintable(QStringLiteral("Error: number of notes in the result "
@@ -1563,30 +1573,32 @@ void TestListNotebooks()
     }                                                                          \
 // CHECK_LIST_NOTEBOOKS
 
+    using ListObjectsOption = LocalStorageManager::ListObjectsOption;
+
     // 2) Test method listing only dirty notebooks
-    CHECK_LIST_NOTEBOOKS(LocalStorageManager::ListDirty, "dirty", i > 2, i <= 2);
+    CHECK_LIST_NOTEBOOKS(ListObjectsOption::ListDirty, "dirty", i > 2, i <= 2);
 
     // 3) Test method listing only local notebooks
-    CHECK_LIST_NOTEBOOKS(LocalStorageManager::ListLocal, "local", i < 3, i >= 3);
+    CHECK_LIST_NOTEBOOKS(ListObjectsOption::ListLocal, "local", i < 3, i >= 3);
 
     // 4) Test method listing only notebooks without guid
-    CHECK_LIST_NOTEBOOKS(LocalStorageManager::ListElementsWithoutGuid,
+    CHECK_LIST_NOTEBOOKS(ListObjectsOption::ListElementsWithoutGuid,
                          "guidless", i <= 1, i > 1);
 
     // 5) Test method listing only favorited notebooks
-    CHECK_LIST_NOTEBOOKS(LocalStorageManager::ListFavoritedElements,
+    CHECK_LIST_NOTEBOOKS(ListObjectsOption::ListFavoritedElements,
                          "favorited", (i == 0) || (i == 4),
                          (i != 0) && (i != 4));
 
     // 6) Test method listing dirty favorited notebooks with guid
-    CHECK_LIST_NOTEBOOKS(LocalStorageManager::ListDirty |
-                         LocalStorageManager::ListElementsWithGuid |
-                         LocalStorageManager::ListFavoritedElements,
+    CHECK_LIST_NOTEBOOKS(ListObjectsOption::ListDirty |
+                         ListObjectsOption::ListElementsWithGuid |
+                         ListObjectsOption::ListFavoritedElements,
                          "dirty, favorited, having guid", i == 4, i != 4);
 
     // 7) Test method listing local favorited notebooks
-    CHECK_LIST_NOTEBOOKS(LocalStorageManager::ListLocal |
-                         LocalStorageManager::ListFavoritedElements,
+    CHECK_LIST_NOTEBOOKS(ListObjectsOption::ListLocal |
+                         ListObjectsOption::ListFavoritedElements,
                          "local, favorited", i == 0, i != 0);
 }
 

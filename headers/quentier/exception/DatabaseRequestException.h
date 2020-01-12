@@ -16,23 +16,26 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LIB_QUENTIER_EXCEPTION_LOCAL_STORAGE_CACHE_MANAGER_EXCEPTION_H
-#define LIB_QUENTIER_EXCEPTION_LOCAL_STORAGE_CACHE_MANAGER_EXCEPTION_H
+#ifndef LIB_QUENTIER_EXCEPTION_DATABASE_SQL_ERROR_EXCEPTION_H
+#define LIB_QUENTIER_EXCEPTION_DATABASE_SQL_ERROR_EXCEPTION_H
 
 #include <quentier/exception/IQuentierException.h>
 
 namespace quentier {
 
-class QUENTIER_EXPORT LocalStorageCacheManagerException:
-    public IQuentierException
+/**
+ * @brief The DatabaseRequestException is thrown when the local storage
+ * database encounters some internal error during the attemt to serve a request
+ */
+class QUENTIER_EXPORT DatabaseRequestException: public IQuentierException
 {
 public:
-    explicit LocalStorageCacheManagerException(const ErrorString & message);
+    explicit DatabaseRequestException(const ErrorString & message);
 
 protected:
     virtual const QString exceptionDisplayName() const override;
 };
 
-} // namespace quentier
+}
 
-#endif // LIB_QUENTIER_EXCEPTION_LOCAL_STORAGE_CACHE_MANAGER_EXCEPTION_H
+#endif // LIB_QUENTIER_EXCEPTION_DATABASE_SQL_ERROR_EXCEPTION_H

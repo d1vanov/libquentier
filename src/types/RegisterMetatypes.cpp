@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -72,18 +72,18 @@ void registerMetatypes()
 
     qRegisterMetaType<LocalStorageManager::ListObjectsOptions>(
         "LocalStorageManager::ListObjectsOptions");
-    qRegisterMetaType<LocalStorageManager::ListNotesOrder::type>(
-        "LocalStorageManager::ListNotesOrder::type");
-    qRegisterMetaType<LocalStorageManager::ListNotebooksOrder::type>(
-        "LocalStorageManager::ListNotebooksOrder::type");
-    qRegisterMetaType<LocalStorageManager::ListLinkedNotebooksOrder::type>(
-        "LocalStorageManager::ListLinkedNotebooksOrder::type");
-    qRegisterMetaType<LocalStorageManager::ListTagsOrder::type>(
-        "LocalStorageManager::ListTagsOrder::type");
-    qRegisterMetaType<LocalStorageManager::ListSavedSearchesOrder::type>(
-        "LocalStorageManager::ListSavedSearchesOrder::type");
-    qRegisterMetaType<LocalStorageManager::OrderDirection::type>(
-        "LocalStorageManager::OrderDirection::type");
+    qRegisterMetaType<LocalStorageManager::ListNotesOrder>(
+        "LocalStorageManager::ListNotesOrder");
+    qRegisterMetaType<LocalStorageManager::ListNotebooksOrder>(
+        "LocalStorageManager::ListNotebooksOrder");
+    qRegisterMetaType<LocalStorageManager::ListLinkedNotebooksOrder>(
+        "LocalStorageManager::ListLinkedNotebooksOrder");
+    qRegisterMetaType<LocalStorageManager::ListTagsOrder>(
+        "LocalStorageManager::ListTagsOrder");
+    qRegisterMetaType<LocalStorageManager::ListSavedSearchesOrder>(
+        "LocalStorageManager::ListSavedSearchesOrder");
+    qRegisterMetaType<LocalStorageManager::OrderDirection>(
+        "LocalStorageManager::OrderDirection");
     qRegisterMetaType<LocalStorageManager::UpdateNoteOptions>(
         "LocalStorageManager::UpdateNoteOptions");
     qRegisterMetaType<LocalStorageManager::GetNoteOptions>(

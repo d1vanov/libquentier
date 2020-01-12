@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -638,8 +638,8 @@ void LocalStorageManagerAsync::onFindDefaultOrLastUsedNotebookRequest(
 
 void LocalStorageManagerAsync::onListAllNotebooksRequest(
     size_t limit, size_t offset,
-    LocalStorageManager::ListNotebooksOrder::type order,
-    LocalStorageManager::OrderDirection::type orderDirection,
+    LocalStorageManager::ListNotebooksOrder order,
+    LocalStorageManager::OrderDirection orderDirection,
     QString linkedNotebookGuid,
     QUuid requestId)
 {
@@ -714,8 +714,8 @@ void LocalStorageManagerAsync::onListAllSharedNotebooksRequest(QUuid requestId)
 void LocalStorageManagerAsync::onListNotebooksRequest(
     LocalStorageManager::ListObjectsOptions flag,
     size_t limit, size_t offset,
-    LocalStorageManager::ListNotebooksOrder::type order,
-    LocalStorageManager::OrderDirection::type orderDirection,
+    LocalStorageManager::ListNotebooksOrder order,
+    LocalStorageManager::OrderDirection orderDirection,
     QString linkedNotebookGuid, QUuid requestId)
 {
     Q_D(LocalStorageManagerAsync);
@@ -974,8 +974,8 @@ void LocalStorageManagerAsync::onFindLinkedNotebookRequest(
 
 void LocalStorageManagerAsync::onListAllLinkedNotebooksRequest(
     size_t limit, size_t offset,
-    LocalStorageManager::ListLinkedNotebooksOrder::type order,
-    LocalStorageManager::OrderDirection::type orderDirection,
+    LocalStorageManager::ListLinkedNotebooksOrder order,
+    LocalStorageManager::OrderDirection orderDirection,
     QUuid requestId)
 {
     Q_D(LocalStorageManagerAsync);
@@ -1024,8 +1024,8 @@ void LocalStorageManagerAsync::onListAllLinkedNotebooksRequest(
 void LocalStorageManagerAsync::onListLinkedNotebooksRequest(
     LocalStorageManager::ListObjectsOptions flag,
     size_t limit, size_t offset,
-    LocalStorageManager::ListLinkedNotebooksOrder::type order,
-    LocalStorageManager::OrderDirection::type orderDirection,
+    LocalStorageManager::ListLinkedNotebooksOrder order,
+    LocalStorageManager::OrderDirection orderDirection,
     QUuid requestId)
 {
     Q_D(LocalStorageManagerAsync);
@@ -1657,8 +1657,8 @@ void LocalStorageManagerAsync::onFindNoteRequest(
 void LocalStorageManagerAsync::onListNotesPerNotebookRequest(
     Notebook notebook, LocalStorageManager::GetNoteOptions options,
     LocalStorageManager::ListObjectsOptions flag, size_t limit, size_t offset,
-    LocalStorageManager::ListNotesOrder::type order,
-    LocalStorageManager::OrderDirection::type orderDirection,
+    LocalStorageManager::ListNotesOrder order,
+    LocalStorageManager::OrderDirection orderDirection,
     QUuid requestId)
 {
     Q_D(LocalStorageManagerAsync);
@@ -1700,8 +1700,8 @@ void LocalStorageManagerAsync::onListNotesPerNotebookRequest(
 void LocalStorageManagerAsync::onListNotesPerTagRequest(
     Tag tag, LocalStorageManager::GetNoteOptions options,
     LocalStorageManager::ListObjectsOptions flag, size_t limit, size_t offset,
-    LocalStorageManager::ListNotesOrder::type order,
-    LocalStorageManager::OrderDirection::type orderDirection,
+    LocalStorageManager::ListNotesOrder order,
+    LocalStorageManager::OrderDirection orderDirection,
     QUuid requestId)
 {
     Q_D(LocalStorageManagerAsync);
@@ -1742,8 +1742,8 @@ void LocalStorageManagerAsync::onListNotesPerNotebooksAndTagsRequest(
     QStringList notebookLocalUids, QStringList tagLocalUids,
     LocalStorageManager::GetNoteOptions options,
     LocalStorageManager::ListObjectsOptions flag, size_t limit, size_t offset,
-    LocalStorageManager::ListNotesOrder::type order,
-    LocalStorageManager::OrderDirection::type orderDirection,
+    LocalStorageManager::ListNotesOrder order,
+    LocalStorageManager::OrderDirection orderDirection,
     QUuid requestId)
 {
     Q_D(LocalStorageManagerAsync);
@@ -1784,8 +1784,8 @@ void LocalStorageManagerAsync::onListNotesByLocalUidsRequest(
     QStringList noteLocalUids,
     LocalStorageManager::GetNoteOptions options,
     LocalStorageManager::ListObjectsOptions flag, size_t limit, size_t offset,
-    LocalStorageManager::ListNotesOrder::type order,
-    LocalStorageManager::OrderDirection::type orderDirection,
+    LocalStorageManager::ListNotesOrder order,
+    LocalStorageManager::OrderDirection orderDirection,
     QUuid requestId)
 {
     Q_D(LocalStorageManagerAsync);
@@ -1824,8 +1824,8 @@ void LocalStorageManagerAsync::onListNotesByLocalUidsRequest(
 void LocalStorageManagerAsync::onListNotesRequest(
     LocalStorageManager::ListObjectsOptions flag,
     LocalStorageManager::GetNoteOptions options, size_t limit, size_t offset,
-    LocalStorageManager::ListNotesOrder::type order,
-    LocalStorageManager::OrderDirection::type orderDirection,
+    LocalStorageManager::ListNotesOrder order,
+    LocalStorageManager::OrderDirection orderDirection,
     QString linkedNotebookGuid, QUuid requestId)
 {
     Q_D(LocalStorageManagerAsync);
@@ -2090,8 +2090,8 @@ void LocalStorageManagerAsync::onFindTagRequest(Tag tag, QUuid requestId)
 void LocalStorageManagerAsync::onListAllTagsPerNoteRequest(
     Note note, LocalStorageManager::ListObjectsOptions flag,
     size_t limit, size_t offset,
-    LocalStorageManager::ListTagsOrder::type order,
-    LocalStorageManager::OrderDirection::type orderDirection,
+    LocalStorageManager::ListTagsOrder order,
+    LocalStorageManager::OrderDirection orderDirection,
     QUuid requestId)
 {
     Q_D(LocalStorageManagerAsync);
@@ -2136,8 +2136,8 @@ void LocalStorageManagerAsync::onListAllTagsPerNoteRequest(
 }
 
 void LocalStorageManagerAsync::onListAllTagsRequest(
-    size_t limit, size_t offset, LocalStorageManager::ListTagsOrder::type order,
-    LocalStorageManager::OrderDirection::type orderDirection,
+    size_t limit, size_t offset, LocalStorageManager::ListTagsOrder order,
+    LocalStorageManager::OrderDirection orderDirection,
     QString linkedNotebookGuid, QUuid requestId)
 {
     Q_D(LocalStorageManagerAsync);
@@ -2183,8 +2183,8 @@ void LocalStorageManagerAsync::onListAllTagsRequest(
 
 void LocalStorageManagerAsync::onListTagsRequest(
     LocalStorageManager::ListObjectsOptions flag, size_t limit, size_t offset,
-    LocalStorageManager::ListTagsOrder::type order,
-    LocalStorageManager::OrderDirection::type orderDirection,
+    LocalStorageManager::ListTagsOrder order,
+    LocalStorageManager::OrderDirection orderDirection,
     QString linkedNotebookGuid, QUuid requestId)
 {
     Q_D(LocalStorageManagerAsync);
@@ -2227,8 +2227,8 @@ void LocalStorageManagerAsync::onListTagsRequest(
 
 void LocalStorageManagerAsync::onListTagsWithNoteLocalUidsRequest(
     LocalStorageManager::ListObjectsOptions flag, size_t limit, size_t offset,
-    LocalStorageManager::ListTagsOrder::type order,
-    LocalStorageManager::OrderDirection::type orderDirection,
+    LocalStorageManager::ListTagsOrder order,
+    LocalStorageManager::OrderDirection orderDirection,
     QString linkedNotebookGuid, QUuid requestId)
 {
     Q_D(LocalStorageManagerAsync);
@@ -2710,8 +2710,8 @@ void LocalStorageManagerAsync::onFindSavedSearchRequest(SavedSearch search,
 
 void LocalStorageManagerAsync::onListAllSavedSearchesRequest(
     size_t limit, size_t offset,
-    LocalStorageManager::ListSavedSearchesOrder::type order,
-    LocalStorageManager::OrderDirection::type orderDirection,
+    LocalStorageManager::ListSavedSearchesOrder order,
+    LocalStorageManager::OrderDirection orderDirection,
     QUuid requestId)
 {
     Q_D(LocalStorageManagerAsync);
@@ -2756,8 +2756,8 @@ void LocalStorageManagerAsync::onListAllSavedSearchesRequest(
 void LocalStorageManagerAsync::onListSavedSearchesRequest(
     LocalStorageManager::ListObjectsOptions flag,
     size_t limit, size_t offset,
-    LocalStorageManager::ListSavedSearchesOrder::type order,
-    LocalStorageManager::OrderDirection::type orderDirection,
+    LocalStorageManager::ListSavedSearchesOrder order,
+    LocalStorageManager::OrderDirection orderDirection,
     QUuid requestId)
 {
     Q_D(LocalStorageManagerAsync);

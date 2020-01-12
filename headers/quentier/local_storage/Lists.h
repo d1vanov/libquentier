@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -33,14 +33,14 @@ QT_FORWARD_DECLARE_CLASS(Tag)
 QT_FORWARD_DECLARE_CLASS(Resource)
 QT_FORWARD_DECLARE_CLASS(SavedSearch)
 
-typedef QList<User>                   UserList;
-typedef QList<Notebook>               NotebookList;
-typedef QList<SharedNotebook>         SharedNotebookList;
-typedef QList<LinkedNotebook>         LinkedNotebookList;
-typedef QList<Note>                   NoteList;
-typedef QList<Tag>                    TagList;
-typedef QList<Resource>               ResourceList;
-typedef QList<SavedSearch>            SavedSearchList;
+using UserList = QList<User>;
+using NotebookList = QList<Notebook>;
+using SharedNotebookList = QList<SharedNotebook>;
+using LinkedNotebookList = QList<LinkedNotebook>;
+using NoteList = QList<Note>;
+using TagList = QList<Tag>;
+using ResourceList = QList<Resource>;
+using SavedSearchList = QList<SavedSearch>;
 
 } // namespace quentier
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -192,9 +192,9 @@ void TagLocalStorageManagerAsyncTester::onAddTagCompleted(Tag tag, QUuid request
 
         m_state = STATE_SENT_LIST_TAGS_REQUEST;
         size_t limit = 0, offset = 0;
-        LocalStorageManager::ListTagsOrder::type order =
+        LocalStorageManager::ListTagsOrder order =
             LocalStorageManager::ListTagsOrder::NoOrder;
-        LocalStorageManager::OrderDirection::type orderDirection =
+        LocalStorageManager::OrderDirection orderDirection =
             LocalStorageManager::OrderDirection::Ascending;
         QString linkedNotebookGuid;
         Q_EMIT listAllTagsRequest(limit, offset, order, orderDirection,
@@ -339,8 +339,8 @@ void TagLocalStorageManagerAsyncTester::onFindTagFailed(
 
 void TagLocalStorageManagerAsyncTester::onListAllTagsCompleted(
     size_t limit, size_t offset,
-    LocalStorageManager::ListTagsOrder::type order,
-    LocalStorageManager::OrderDirection::type orderDirection,
+    LocalStorageManager::ListTagsOrder order,
+    LocalStorageManager::OrderDirection orderDirection,
     QString linkedNotebookGuid, QList<Tag> tags, QUuid requestId)
 {
     Q_UNUSED(limit)
@@ -380,8 +380,8 @@ void TagLocalStorageManagerAsyncTester::onListAllTagsCompleted(
 
 void TagLocalStorageManagerAsyncTester::onListAllTagsFailed(
     size_t limit, size_t offset,
-    LocalStorageManager::ListTagsOrder::type order,
-    LocalStorageManager::OrderDirection::type orderDirection,
+    LocalStorageManager::ListTagsOrder order,
+    LocalStorageManager::OrderDirection orderDirection,
     QString linkedNotebookGuid, ErrorString errorDescription, QUuid requestId)
 {
     Q_UNUSED(limit)
@@ -463,14 +463,14 @@ void TagLocalStorageManagerAsyncTester::createConnections()
                      QNSIGNAL(TagLocalStorageManagerAsyncTester,
                               listAllTagsRequest,
                               size_t,size_t,
-                              LocalStorageManager::ListTagsOrder::type,
-                              LocalStorageManager::OrderDirection::type,
+                              LocalStorageManager::ListTagsOrder,
+                              LocalStorageManager::OrderDirection,
                               QString,QUuid),
                      m_pLocalStorageManagerAsync,
                      QNSLOT(LocalStorageManagerAsync,onListAllTagsRequest,
                             size_t,size_t,
-                            LocalStorageManager::ListTagsOrder::type,
-                            LocalStorageManager::OrderDirection::type,
+                            LocalStorageManager::ListTagsOrder,
+                            LocalStorageManager::OrderDirection,
                             QString,QUuid));
     QObject::connect(this,
                      QNSIGNAL(TagLocalStorageManagerAsyncTester,
@@ -529,28 +529,28 @@ void TagLocalStorageManagerAsyncTester::createConnections()
     QObject::connect(m_pLocalStorageManagerAsync,
                      QNSIGNAL(LocalStorageManagerAsync,listAllTagsComplete,
                               size_t,size_t,
-                              LocalStorageManager::ListTagsOrder::type,
-                              LocalStorageManager::OrderDirection::type,QString,
+                              LocalStorageManager::ListTagsOrder,
+                              LocalStorageManager::OrderDirection,QString,
                               QList<Tag>,QUuid),
                      this,
                      QNSLOT(TagLocalStorageManagerAsyncTester,
                             onListAllTagsCompleted,
                             size_t,size_t,
-                            LocalStorageManager::ListTagsOrder::type,
-                            LocalStorageManager::OrderDirection::type,QString,
+                            LocalStorageManager::ListTagsOrder,
+                            LocalStorageManager::OrderDirection,QString,
                             QList<Tag>,QUuid));
     QObject::connect(m_pLocalStorageManagerAsync,
                      QNSIGNAL(LocalStorageManagerAsync,listAllTagsFailed,
                               size_t,size_t,
-                              LocalStorageManager::ListTagsOrder::type,
-                              LocalStorageManager::OrderDirection::type,
+                              LocalStorageManager::ListTagsOrder,
+                              LocalStorageManager::OrderDirection,
                               QString,ErrorString,QUuid),
                      this,
                      QNSLOT(TagLocalStorageManagerAsyncTester,
                             onListAllTagsFailed,
                             size_t,size_t,
-                            LocalStorageManager::ListTagsOrder::type,
-                            LocalStorageManager::OrderDirection::type,
+                            LocalStorageManager::ListTagsOrder,
+                            LocalStorageManager::OrderDirection,
                             QString,ErrorString,QUuid));
     QObject::connect(m_pLocalStorageManagerAsync,
                      QNSIGNAL(LocalStorageManagerAsync,expungeTagComplete,

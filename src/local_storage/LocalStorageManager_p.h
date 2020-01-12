@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -88,16 +88,16 @@ public:
     QList<Notebook> listAllNotebooks(
         ErrorString & errorDescription,
         const size_t limit, const size_t offset,
-        const LocalStorageManager::ListNotebooksOrder::type & order,
-        const LocalStorageManager::OrderDirection::type & orderDirection,
+        const LocalStorageManager::ListNotebooksOrder & order,
+        const LocalStorageManager::OrderDirection & orderDirection,
         const QString & linkedNotebookGuid) const;
 
     QList<Notebook> listNotebooks(
         const LocalStorageManager::ListObjectsOptions flag,
         ErrorString & errorDescription,
         const size_t limit, const size_t offset,
-        const LocalStorageManager::ListNotebooksOrder::type & order,
-        const LocalStorageManager::OrderDirection::type & orderDirection,
+        const LocalStorageManager::ListNotebooksOrder & order,
+        const LocalStorageManager::OrderDirection & orderDirection,
         const QString & linkedNotebookGuid) const;
 
     QList<SharedNotebook> listAllSharedNotebooks(ErrorString & errorDescription) const;
@@ -118,15 +118,15 @@ public:
     QList<LinkedNotebook> listAllLinkedNotebooks(
         ErrorString & errorDescription,
         const size_t limit, const size_t offset,
-        const LocalStorageManager::ListLinkedNotebooksOrder::type order,
-        const LocalStorageManager::OrderDirection::type & orderDirection) const;
+        const LocalStorageManager::ListLinkedNotebooksOrder order,
+        const LocalStorageManager::OrderDirection & orderDirection) const;
 
     QList<LinkedNotebook> listLinkedNotebooks(
         const LocalStorageManager::ListObjectsOptions flag,
         ErrorString & errorDescription,
         const size_t limit, const size_t offset,
-        const LocalStorageManager::ListLinkedNotebooksOrder::type & order,
-        const LocalStorageManager::OrderDirection::type & orderDirection) const;
+        const LocalStorageManager::ListLinkedNotebooksOrder & order,
+        const LocalStorageManager::OrderDirection & orderDirection) const;
 
     bool expungeLinkedNotebook(const LinkedNotebook & linkedNotebook,
                                ErrorString & errorDescription);
@@ -164,8 +164,8 @@ public:
         ErrorString & errorDescription,
         const LocalStorageManager::ListObjectsOptions & flag,
         const size_t limit, const size_t offset,
-        const LocalStorageManager::ListNotesOrder::type & order,
-        const LocalStorageManager::OrderDirection::type & orderDirection) const;
+        const LocalStorageManager::ListNotesOrder & order,
+        const LocalStorageManager::OrderDirection & orderDirection) const;
 
     QList<Note> listNotesPerTag(
         const Tag & tag,
@@ -173,8 +173,8 @@ public:
         ErrorString & errorDescription,
         const LocalStorageManager::ListObjectsOptions & flag,
         const size_t limit, const size_t offset,
-        const LocalStorageManager::ListNotesOrder::type & order,
-        const LocalStorageManager::OrderDirection::type & orderDirection) const;
+        const LocalStorageManager::ListNotesOrder & order,
+        const LocalStorageManager::OrderDirection & orderDirection) const;
 
     QList<Note> listNotesPerNotebooksAndTags(
         const QStringList & notebookLocalUids,
@@ -183,8 +183,8 @@ public:
         ErrorString & errorDescription,
         const LocalStorageManager::ListObjectsOptions & flag,
         const size_t limit, const size_t offset,
-        const LocalStorageManager::ListNotesOrder::type & order,
-        const LocalStorageManager::OrderDirection::type & orderDirection) const;
+        const LocalStorageManager::ListNotesOrder & order,
+        const LocalStorageManager::OrderDirection & orderDirection) const;
 
     QList<Note> listNotesByLocalUids(
         const QStringList & noteLocalUids,
@@ -192,16 +192,16 @@ public:
         ErrorString & errorDescription,
         const LocalStorageManager::ListObjectsOptions & flag,
         const size_t limit, const size_t offset,
-        const LocalStorageManager::ListNotesOrder::type order,
-        const LocalStorageManager::OrderDirection::type & orderDirection) const;
+        const LocalStorageManager::ListNotesOrder order,
+        const LocalStorageManager::OrderDirection & orderDirection) const;
 
     QList<Note> listNotes(
         const LocalStorageManager::ListObjectsOptions flag,
         const LocalStorageManager::GetNoteOptions options,
         ErrorString & errorDescription,
         const size_t limit, const size_t offset,
-        const LocalStorageManager::ListNotesOrder::type & order,
-        const LocalStorageManager::OrderDirection::type & orderDirection,
+        const LocalStorageManager::ListNotesOrder & order,
+        const LocalStorageManager::OrderDirection & orderDirection,
         const QString & linkedNotebookGuid) const;
 
     QList<Note> listNotesImpl(
@@ -211,8 +211,8 @@ public:
         const LocalStorageManager::GetNoteOptions options,
         ErrorString & errorDescription,
         const size_t limit, const size_t offset,
-        const LocalStorageManager::ListNotesOrder::type & order,
-        const LocalStorageManager::OrderDirection::type & orderDirection) const;
+        const LocalStorageManager::ListNotesOrder & order,
+        const LocalStorageManager::OrderDirection & orderDirection) const;
 
     bool expungeNote(Note & note, ErrorString & errorDescription);
 
@@ -232,30 +232,30 @@ public:
         const Note & note, ErrorString & errorDescription,
         const LocalStorageManager::ListObjectsOptions & flag,
         const size_t limit, const size_t offset,
-        const LocalStorageManager::ListTagsOrder::type & order,
-        const LocalStorageManager::OrderDirection::type & orderDirection) const;
+        const LocalStorageManager::ListTagsOrder & order,
+        const LocalStorageManager::OrderDirection & orderDirection) const;
 
     QList<Tag> listAllTags(
         ErrorString & errorDescription,
         const size_t limit, const size_t offset,
-        const LocalStorageManager::ListTagsOrder::type & order,
-        const LocalStorageManager::OrderDirection::type & orderDirection,
+        const LocalStorageManager::ListTagsOrder & order,
+        const LocalStorageManager::OrderDirection & orderDirection,
         const QString & linkedNotebookGuid) const;
 
     QList<Tag> listTags(
         const LocalStorageManager::ListObjectsOptions flag,
         ErrorString & errorDescription,
         const size_t limit, const size_t offset,
-        const LocalStorageManager::ListTagsOrder::type & order,
-        const LocalStorageManager::OrderDirection::type & orderDirection,
+        const LocalStorageManager::ListTagsOrder & order,
+        const LocalStorageManager::OrderDirection & orderDirection,
         const QString & linkedNotebookGuid) const;
 
     QList<std::pair<Tag, QStringList> > listTagsWithNoteLocalUids(
         const LocalStorageManager::ListObjectsOptions flag,
         ErrorString & errorDescription,
         const size_t limit, const size_t offset,
-        const LocalStorageManager::ListTagsOrder::type & order,
-        const LocalStorageManager::OrderDirection::type & orderDirection,
+        const LocalStorageManager::ListTagsOrder & order,
+        const LocalStorageManager::OrderDirection & orderDirection,
         const QString & linkedNotebookGuid) const;
 
     bool expungeTag(Tag & tag,
@@ -280,15 +280,15 @@ public:
     QList<SavedSearch> listAllSavedSearches(
         ErrorString & errorDescription,
         const size_t limit, const size_t offset,
-        const LocalStorageManager::ListSavedSearchesOrder::type & order,
-        const LocalStorageManager::OrderDirection::type & orderDirection) const;
+        const LocalStorageManager::ListSavedSearchesOrder & order,
+        const LocalStorageManager::OrderDirection & orderDirection) const;
 
     QList<SavedSearch> listSavedSearches(
         const LocalStorageManager::ListObjectsOptions flag,
         ErrorString & errorDescription,
         const size_t limit, const size_t offset,
-        const LocalStorageManager::ListSavedSearchesOrder::type & order,
-        const LocalStorageManager::OrderDirection::type & orderDirection) const;
+        const LocalStorageManager::ListSavedSearchesOrder & order,
+        const LocalStorageManager::OrderDirection & orderDirection) const;
 
     bool expungeSavedSearch(SavedSearch & search, ErrorString & errorDescription);
 
@@ -471,22 +471,20 @@ private:
     bool checkAndPrepareExpungeSavedSearchQuery();
 
     bool complementTagsWithNoteLocalUids(
-        QList<std::pair<Tag, QStringList> > & tagsWithNoteLocalUids,
+        QList<std::pair<Tag, QStringList>> & tagsWithNoteLocalUids,
         ErrorString & errorDescription) const;
-
-    struct ReadResourceBinaryDataFromFileStatus
-    {
-        enum type
-        {
-            Success = 0,
-            FileNotFound,
-            Failure
-        };
-    };
 
     bool readResourceBinaryDataFromFiles(Resource & resource,
                                          ErrorString & errorDescription) const;
-    ReadResourceBinaryDataFromFileStatus::type
+
+    enum class ReadResourceBinaryDataFromFileStatus
+    {
+        Success = 0,
+        FileNotFound,
+        Failure
+    };
+
+    ReadResourceBinaryDataFromFileStatus
     readResourceBinaryDataFromFile(const QString & resourceLocalUid,
                                    const QString & noteLocalUid,
                                    const bool isAlternateDataBody,
@@ -598,7 +596,7 @@ private:
         const LocalStorageManager::ListObjectsOptions & flag,
         ErrorString & errorDescription, const size_t limit,
         const size_t offset, const TOrderBy & orderBy,
-        const LocalStorageManager::OrderDirection::type & orderDirection,
+        const LocalStorageManager::OrderDirection & orderDirection,
         const QString & additionalSqlQueryCondition = QString()) const;
 
     template <class T>

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -19,7 +19,7 @@
 #include "Transaction.h"
 #include "LocalStorageManager_p.h"
 
-#include <quentier/exception/DatabaseSqlErrorException.h>
+#include <quentier/exception/DatabaseRequestException.h>
 #include <quentier/logging/QuentierLogger.h>
 
 #include <QSqlQuery>
@@ -170,7 +170,7 @@ void Transaction::init()
         ErrorString errorDescription(
             QT_TRANSLATE_NOOP("Transaction", "Can't begin the SQL transaction"));
         errorDescription.details() = query.lastError().text();
-        throw DatabaseSqlErrorException(errorDescription);
+        throw DatabaseRequestException(errorDescription);
     }
 }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2019 Dmitry Ivanov
+ * Copyright 2017-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -202,8 +202,8 @@ Q_SIGNALS:
     void findLinkedNotebook(LinkedNotebook linkedNotebook, QUuid requestId);
     void expungeLinkedNotebook(LinkedNotebook notebook, QUuid requestId);
     void listAllLinkedNotebooks(size_t limit, size_t offset,
-                                LocalStorageManager::ListLinkedNotebooksOrder::type,
-                                LocalStorageManager::OrderDirection::type orderDirection,
+                                LocalStorageManager::ListLinkedNotebooksOrder,
+                                LocalStorageManager::OrderDirection orderDirection,
                                 QUuid requestId);
 
     void addSavedSearch(SavedSearch savedSearch, QUuid requestId);
@@ -292,13 +292,13 @@ private Q_SLOTS:
 
     void onListAllLinkedNotebooksCompleted(
             size_t limit, size_t offset,
-            LocalStorageManager::ListLinkedNotebooksOrder::type order,
-            LocalStorageManager::OrderDirection::type orderDirection,
+            LocalStorageManager::ListLinkedNotebooksOrder order,
+            LocalStorageManager::OrderDirection orderDirection,
             QList<LinkedNotebook> linkedNotebooks, QUuid requestId);
     void onListAllLinkedNotebooksFailed(
             size_t limit, size_t offset,
-            LocalStorageManager::ListLinkedNotebooksOrder::type order,
-            LocalStorageManager::OrderDirection::type orderDirection,
+            LocalStorageManager::ListLinkedNotebooksOrder order,
+            LocalStorageManager::OrderDirection orderDirection,
             ErrorString errorDescription, QUuid requestId);
 
     void onAddNotebookCompleted(Notebook notebook, QUuid requestId);
@@ -437,24 +437,22 @@ private:
     bool notesSyncInProgress() const;
     bool resourcesSyncInProgress() const;
 
-    struct ContentSource
+    enum class ContentSource
     {
-        enum type
-        {
-            UserAccount,
-            LinkedNotebook
-        };
+        UserAccount,
+        LinkedNotebook
     };
 
-    friend QTextStream & operator<<(QTextStream & strm, const ContentSource::type & obj);
+    friend QTextStream & operator<<(QTextStream & strm, const ContentSource & obj);
+    friend QDebug & operator<<(QDebug & dbg, const ContentSource & obj);
 
     template <class ContainerType, class LocalType>
-    void launchDataElementSync(const ContentSource::type contentSource,
+    void launchDataElementSync(const ContentSource contentSource,
                                const QString & typeName, ContainerType & container,
                                QList<QString> & expungedElements);
 
     template <class ContainerType, class LocalType>
-    void launchDataElementSyncCommon(const ContentSource::type contentSource,
+    void launchDataElementSyncCommon(const ContentSource contentSource,
                                      ContainerType & container,
                                      QList<QString> & expungedElements);
 
@@ -467,17 +465,14 @@ private:
     template <class ElementType>
     QString checkAndAddLinkedNotebookBinding(ElementType & targetElement);
 
-    struct ResolveSyncConflictStatus
+    enum class ResolveSyncConflictStatus
     {
-        enum type
-        {
-            Ready = 0,
-            Pending
-        };
+        Ready = 0,
+        Pending
     };
 
     template <class RemoteElementType, class ElementType>
-    ResolveSyncConflictStatus::type resolveSyncConflict(
+    ResolveSyncConflictStatus resolveSyncConflict(
         const RemoteElementType & remoteElement,
         const ElementType & localConflict);
 
@@ -611,10 +606,10 @@ private:
 
     // ========= Helpers launching the sync of dependent data elements ==========
     void checkNotebooksAndTagsSyncCompletionAndLaunchNotesAndResourcesSync();
-    void launchNotesSync(const ContentSource::type & contentSource);
+    void launchNotesSync(const ContentSource & contentSource);
 
     void checkNotesSyncCompletionAndLaunchResourcesSync();
-    void launchResourcesSync(const ContentSource::type & contentSource);
+    void launchResourcesSync(const ContentSource & contentSource);
 
     /**
      * Helpers launching the sync of content from someone else's shared notebooks,
@@ -831,16 +826,14 @@ private:
         virtual QTextStream & print(QTextStream & strm) const override;
     };
 
-    struct SyncMode
+    enum class SyncMode
     {
-        enum type
-        {
-            FullSync = 0,
-            IncrementalSync
-        };
+        FullSync = 0,
+        IncrementalSync
     };
 
-    friend QTextStream & operator<<(QTextStream & strm, const SyncMode::type & obj);
+    friend QTextStream & operator<<(QTextStream & strm, const SyncMode & obj);
+    friend QDebug & operator<<(QDebug & dbg, const SyncMode & obj);
 
     friend class NoteSyncConflictResolverManager;
 
@@ -851,7 +844,7 @@ private:
     QString                                 m_host;
 
     qint32                                  m_maxSyncChunksPerOneDownload;
-    SyncMode::type                          m_lastSyncMode;
+    SyncMode                                m_lastSyncMode;
 
     qint32                                  m_lastUpdateCount;
     qevercloud::Timestamp                   m_lastSyncTime;

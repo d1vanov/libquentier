@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -36,6 +36,7 @@
 #include <utility>
 
 namespace qevercloud {
+
 QT_FORWARD_DECLARE_STRUCT(ResourceAttributes)
 QT_FORWARD_DECLARE_STRUCT(NoteAttributes)
 QT_FORWARD_DECLARE_STRUCT(UserAttributes)
@@ -44,7 +45,8 @@ QT_FORWARD_DECLARE_STRUCT(PremiumInfo)
 QT_FORWARD_DECLARE_STRUCT(BusinessUserInfo)
 QT_FORWARD_DECLARE_STRUCT(SharedNotebook)
 QT_FORWARD_DECLARE_STRUCT(NotebookRestrictions)
-}
+
+} // namespace qevercloud
 
 namespace quentier {
 
@@ -56,35 +58,43 @@ class QUENTIER_EXPORT LocalStorageManager: public QObject
     Q_OBJECT
 public:
     /**
-     * @brief The StartupOption struct is a C++98 style scoped enum serving as
-     * the base enum for QFlags which allows to specify some options to be
-     * applied to the local storage database on startup or on call to
-     * switchUser method.
+     * @brief The StartupOption enum is a QFlags enum which allows to specify
+     * some options to be applied to the local storage database on startup or
+     * on call to switchUser method.
      */
-    struct StartupOption
+    enum class StartupOption
     {
-        enum type
-        {
-            /**
-             * If ClearDatabase flag is active, LocalStorageManager
-             * would wipe any existing database contents; the net effect
-             * would be as if no database existed for the given user before
-             * the creation of LocalStorageManager or before the call to
-             * its switchUser method
-             */
-            ClearDatabase   = 1,
-            /**
-             * If OverrideLock flag is active, LocalStorageManager would ignore
-             * the existing advisory lock (if any) put on the database file;
-             * if this flag is not active, the attempt to create
-             * LocalStorageManager (or the attempt to call its switchUser
-             * method) with the advisory lock on the database file put by
-             * someone else would cause the throwing of DatabaseLockedException
-             */
-            OverrideLock    = 2
-        };
+        /**
+         * If ClearDatabase flag is active, LocalStorageManager
+         * would wipe any existing database contents; the net effect
+         * would be as if no database existed for the given user before
+         * the creation of LocalStorageManager or before the call to
+         * its switchUser method
+         */
+        ClearDatabase = 1,
+        /**
+         * If OverrideLock flag is active, LocalStorageManager would ignore
+         * the existing advisory lock (if any) put on the database file;
+         * if this flag is not active, the attempt to create
+         * LocalStorageManager (or the attempt to call its switchUser
+         * method) with the advisory lock on the database file put by
+         * someone else would cause the throwing of DatabaseLockedException
+         */
+        OverrideLock = 2
     };
-    Q_DECLARE_FLAGS(StartupOptions, StartupOption::type)
+    Q_DECLARE_FLAGS(StartupOptions, StartupOption)
+
+    friend QUENTIER_EXPORT QTextStream & operator<<(
+        QTextStream & strm, const StartupOption option);
+
+    friend QUENTIER_EXPORT QDebug & operator<<(
+        QDebug & dbg, const StartupOption option);
+
+    friend QUENTIER_EXPORT QTextStream & operator<<(
+        QTextStream & strm, const StartupOptions options);
+
+    friend QUENTIER_EXPORT QDebug & operator<<(
+        QDebug & dbg, const StartupOptions options);
 
     /**
      * @brief LocalStorageManager - constructor. Takes in the account for which
@@ -101,11 +111,11 @@ public:
         const Account & account, const StartupOptions options = 0,
         QObject * parent = nullptr);
 
-    virtual ~LocalStorageManager();
+    virtual ~LocalStorageManager() override;
 
 Q_SIGNALS:
     /**
-     * @brief LocalStorageManager is capable of performing the automatic database
+     * @brief LocalStorageManager is capable of performing automatic database
      * upgrades if/when it is necessary
      *
      * As the database upgrade can be a lengthy operation, this signal is meant
@@ -118,16 +128,16 @@ Q_SIGNALS:
 
 public:
     /**
-     * @brief The ListObjectsOption enum is the base enum for QFlags which allows
-     * to specify the desired local storage elements in calls to methods listing
-     * them from the database
+     * @brief The ListObjectsOption enum is a QFlags enum which allows to
+     * specify the desired local storage elements in calls to methods listing
+     * them from the database.
      *
      * For example, one can either list all available elements of certain type
      * from local storage or only elements marked as dirty (modified locally,
-     * not yet synchronized) or elements never synchronized with the remote storage
-     * or elements which are synchronizable with the remote storage etc.
+     * not yet synchronized) or elements never synchronized with the remote
+     * storage or elements which are synchronizable with the remote storage etc.
      */
-    enum ListObjectsOption {
+    enum class ListObjectsOption {
         ListAll                      = 0,
         ListDirty                    = 1,
         ListNonDirty                 = 2,
@@ -140,9 +150,21 @@ public:
     };
     Q_DECLARE_FLAGS(ListObjectsOptions, ListObjectsOption)
 
+    friend QUENTIER_EXPORT QTextStream & operator<<(
+        QTextStream & strm, const ListObjectsOption option);
+
+    friend QUENTIER_EXPORT QDebug & operator<<(
+        QDebug & dbg, const ListObjectsOption option);
+
+    friend QUENTIER_EXPORT QTextStream & operator<<(
+        QTextStream & strm, const ListObjectsOptions options);
+
+    friend QUENTIER_EXPORT QDebug & operator<<(
+        QDebug & dbg, const ListObjectsOptions options);
+
     /**
-     * @brief switchUser - switches to another local storage database file associated
-     * with the passed in account
+     * @brief switchUser - switches to another local storage database file
+     * associated with the passed in account
      *
      * If optional "startFromScratch" parameter is set to true (it is false
      * by default), the database file would be erased and only then - opened.
@@ -159,10 +181,10 @@ public:
     void switchUser(const Account & account, const StartupOptions options = 0);
 
     /**
-     * isLocalStorageVersionTooHigh method checks whether the existing local storage
-     * persistence has version which is too high for the currenly run version
-     * of libquentier to work with i.e. whether the local storage has already
-     * been upgraded using a new version of libquentier.
+     * isLocalStorageVersionTooHigh method checks whether the existing local
+     * storage persistence has version which is too high for the currenly run
+     * version of libquentier to work with i.e. whether the local storage has
+     * already been upgraded using a new version of libquentier.
      *
      * NOTE: it is libquentier client code's responsibility to call this method
      * and/or localStorageRequiresUpgrade method, libquentier won't call any of
@@ -171,11 +193,12 @@ public:
      * fail in most mysterious way, so the client code is obliged to call these
      * methods to ensure the local storage version is checked properly.
      *
-     * @param errorDescription      Textual description of the error if the method
-     *                              was unable to determine whether the local storage
-     *                              version is too high for the currently run version
-     *                              of libquentier to work with, otherwise this
-     *                              parameter is not touched by the method
+     * @param errorDescription      Textual description of the error if
+     *                              the method was unable to determine whether
+     *                              the local storage version is too high for
+     *                              the currently run version of libquentier
+     *                              to work with, otherwise this parameter
+     *                              is not touched by the method
      * @return                      True if local storage version is too high
      *                              for the currently run version of libquentier
      *                              to work with, false otherwise
@@ -183,13 +206,13 @@ public:
     bool isLocalStorageVersionTooHigh(ErrorString & errorDescription);
 
     /**
-     * localStorageRequiresUpgrade method checks whether the existing local storage
-     * persistence requires to be upgraded. The upgrades may be required sometimes
-     * when new version of libquentier is rolled out which changes something
-     * in the internals of local storage organization. This method only checks
-     * for changes which are backwards incompatible i.e. once the local storage
-     * is upgraded, previous version of libquentier won't be able to work with
-     * it properly!
+     * localStorageRequiresUpgrade method checks whether the existing local
+     * storage persistence requires to be upgraded. The upgrades may be required
+     * sometimes when new version of libquentier is rolled out which changes
+     * something in the internals of local storage organization. This method
+     * only checks for changes which are backwards incompatible i.e. once
+     * the local storage is upgraded, previous version of libquentier won't be
+     * able to work with it properly!
      *
      * NOTE: it is libquentier client code's responsibility to call this method
      * and/or isLocalStorageVersionTooHigh method, libquentier won't call any
@@ -198,10 +221,11 @@ public:
      * fail in most mysterious way, so the client code is obliged to call these
      * methods to ensure the local storage version is checked properly.
      *
-     * @param errorDescription      Textual description of the error if the method
-     *                              was unable to determine whether the local storage
-     *                              requires upgrade, otherwise this parameter is
-     *                              not touched by the method
+     * @param errorDescription      Textual description of the error if
+     *                              the method was unable to determine whether
+     *                              the local storage requires upgrade,
+     *                              otherwise this parameter is not touched by
+     *                              the method
      * @return                      True if local storage requires upgrade,
      *                              false otherwise
      */
@@ -219,15 +243,16 @@ public:
      * @return                      The vector of patches required to be applied
      *                              to the current local storage version
      */
-    QVector<QSharedPointer<ILocalStoragePatch> > requiredLocalStoragePatches();
+    QVector<QSharedPointer<ILocalStoragePatch>> requiredLocalStoragePatches();
 
     /**
      * localStorageVersion method fetches the current version of local storage
      * persistence which can be used for informational purposes.
      *
-     * @param errorDescription      Textual description of the error if the method
-     *                              was unable to determine the current version
-     *                              of local storage persistence
+     * @param errorDescription      Textual description of the error if
+     *                              the method was unable to determine
+     *                              the current version of local storage
+     *                              persistence
      * @return                      Positive number indication local storage
      *                              version or negative number in case of error
      *                              retrieving the local storage version
@@ -250,32 +275,40 @@ public:
      * @param errorDescription      Error description if the number of users
      *                              could not be returned
      * @return                      Either non-negative value with the number of
-     *                              users or -1 which means some error has occurred
+     *                              users or -1 which means some error has
+     *                              occurred
      */
     int userCount(ErrorString & errorDescription) const;
 
     /**
-     * @brief addUser adds the passed in User object to the local storage database
+     * @brief addUser adds the passed in User object to the local storage
+     * database
      *
      * The table with Users is only involved in operations with notebooks which
      * have "contact" field set which in turn is used with business accounts
      *
-     * @param user                  The user to be added to the local storage database
-     * @param errorDescription      Error description if the user could not be added
+     * @param user                  The user to be added to the local storage
+     *                              database
+     * @param errorDescription      Error description if the user could not be
+     *                              added
      * @return                      True if the user was added successfully,
      *                              false otherwise
      */
     bool addUser(const User & user, ErrorString & errorDescription);
 
     /**
-     * @brief updateUser updates the passed in User object in the local storage database
+     * @brief updateUser updates the passed in User object in the local storage
+     * database
      *
      * The table with Users is only involved in operations with notebooks which
      * have "contact" field set which in turn is used with business accounts
      *
-     * @param user - the user to be updated in the local storage database
-     * @param errorDescription - error description if the user could not be updated
-     * @return true if the user was updated successfully, false otherwise
+     * @param user                  The user to be updated in the local storage
+     *                              database
+     * @param errorDescription      Error description if the user could not be
+     *                              updated
+     * @return                      True if the user was updated successfully,
+     *                              false otherwise
      */
     bool updateUser(const User & user, ErrorString & errorDescription);
 
@@ -284,8 +317,10 @@ public:
      * User object which must have "id" field set as this value is used as
      * the identifier of User objects in the local storage database
      *
-     * @param user                  The user to be found. Must have "id" field set
-     * @param errorDescription      Error description if the user could not be found
+     * @param user                  The user to be found. Must have "id" field
+     *                              set
+     * @param errorDescription      Error description if the user could not be
+     *                              found
      * @return                      True if the user was found successfully,
      *                              false otherwise
      */
@@ -327,17 +362,19 @@ public:
     int notebookCount(ErrorString & errorDescription) const;
 
     /**
-     * @brief addNotebook adds the passed in Notebook to the local storage database
+     * @brief addNotebook adds the passed in Notebook to the local storage
+     * database
      *
-     * If the notebook has "remote" Evernote service's guid set, it is identified
-     * by this guid in the local storage database. Otherwise it is identified
-     * by the local uid
+     * If the notebook has "remote" Evernote service's guid set, it is
+     * identified by this guid in the local storage database. Otherwise it is
+     * identified by the local uid
      *
-     * @param notebook              The notebook to be added to the local storage
-     *                              database; the object is passed by reference
-     *                              and may be changed as a result of the call
-     *                              (filled with autocompleted fields like local
-     *                              uid if it was empty before the call)
+     * @param notebook              The notebook to be added to the local
+     *                              storage database; the object is passed by
+     *                              reference and may be changed as a result of
+     *                              the call (filled with autocompleted fields
+     *                              like local uid if it was empty before
+     *                              the call)
      * @param errorDescription      Error description if the notebook could not
      *                              be added
      * @return                      True if the notebook was added successfully,
@@ -349,9 +386,9 @@ public:
      * @brief updateNotebook updates the passed in Notebook in the local storage
      * database
      *
-     * If the notebook has "remote" Evernote service's guid set, it is identified
-     * by this guid in the local storage database. Otherwise it is identified
-     * by the local uid.
+     * If the notebook has "remote" Evernote service's guid set, it is
+     * identified by this guid in the local storage database. Otherwise it is
+     * identified by the local uid.
      *
      * @param notebook              Notebook to be updated in the local storage
      *                              database; the object is passed by reference
@@ -360,8 +397,8 @@ public:
      *                              uid if it was empty before the call)
      * @param errorDescription      Error description if the notebook could not
      *                              be updated
-     * @return                      True if the notebook was updated successfully,
-     *                              false otherwise
+     * @return                      True if the notebook was updated
+     *                              successfully, false otherwise
      */
     bool updateNotebook(Notebook & notebook, ErrorString & errorDescription);
 
@@ -381,17 +418,18 @@ public:
      * Important! Due to the fact that the notebook name is only unique within
      * the users's own account as well as within each linked notebook, the
      * result of the search by name depends on the notebook's linked notebook
-     * guid: if it is not set, the search by name would only search for the notebook
-     * with the specified name within the user's own account. If it is set, the
-     * search would only consider the linked notebook with the corresponding
-     * guid.
+     * guid: if it is not set, the search by name would only search for
+     * the notebook with the specified name within the user's own account.
+     * If it is set, the search would only consider the linked notebook with
+     * the corresponding guid.
      *
      * @param notebook              The notebook to be found. Must have either
      *                              "remote" or local uid or name or linked
      *                              notebook guid set
      * @param errorDescription      Error description if the notebook could not
      *                              be found
-     * @return                      True if the notebook was found, false otherwise
+     * @return                      True if the notebook was found, false
+     *                              otherwise
      */
     bool findNotebook(Notebook & notebook, ErrorString & errorDescription) const;
 
@@ -405,7 +443,8 @@ public:
      * @return                      True if the default notebook was found,
      *                              false otherwise
      */
-    bool findDefaultNotebook(Notebook & notebook, ErrorString & errorDescription) const;
+    bool findDefaultNotebook(
+        Notebook & notebook, ErrorString & errorDescription) const;
 
     /**
      * @brief findLastUsedNotebook attempts to find the last used notebook
@@ -417,7 +456,8 @@ public:
      * @return                      True if the last used notebook was found,
      *                              false otherwise
      */
-    bool findLastUsedNotebook(Notebook & notebook, ErrorString & errorDescription) const;
+    bool findLastUsedNotebook(
+        Notebook & notebook, ErrorString & errorDescription) const;
 
     /**
      * @brief findDefaultOrLastUsedNotebook attempts to find either the default
@@ -427,42 +467,47 @@ public:
      *                              to be found
      * @param errorDescription      Error description if the default or the last
      *                              used notebook could not be found
-     * @return                      True if the default or the last used notebook
-     *                              were found, false otherwise
+     * @return                      True if the default or the last used
+     *                              notebook were found, false otherwise
      */
     bool findDefaultOrLastUsedNotebook(
         Notebook & notebook, ErrorString & errorDescription) const;
 
     /**
-     * @brief The OrderDirection struct is a C++98 style scoped enum which specifies
-     * the direction of ordering of the results for methods listing the objects
-     * from the local storage database
+     * @brief The OrderDirection enum specifies the direction of ordering of
+     * the results for methods listing the objects from the local storage
+     * database
      */
-    struct OrderDirection
+    enum class OrderDirection
     {
-        enum type
-        {
-            Ascending = 0,
-            Descending
-        };
+        Ascending = 0,
+        Descending
     };
 
+    friend QUENTIER_EXPORT QTextStream & operator<<(
+        QTextStream & strm, const OrderDirection orderDirection);
+
+    friend QUENTIER_EXPORT QDebug & operator<<(
+        QDebug & dbg, const OrderDirection orderDirection);
+
     /**
-     * @brief The ListNotebooksOrder struct is a C++98 style scoped enum which
-     * allows to specify the ordering of the results for methods listing
-     * the notebooks from the local storage database
+     * @brief The ListNotebooksOrder allows to specify the results ordering for
+     * methods listing notebooks from the local storage database
      */
-    struct ListNotebooksOrder
+    enum class ListNotebooksOrder
     {
-        enum type
-        {
-            ByUpdateSequenceNumber = 0,
-            ByNotebookName,
-            ByCreationTimestamp,
-            ByModificationTimestamp,
-            NoOrder
-        };
+        ByUpdateSequenceNumber = 0,
+        ByNotebookName,
+        ByCreationTimestamp,
+        ByModificationTimestamp,
+        NoOrder
     };
+
+    friend QUENTIER_EXPORT QTextStream & operator<<(
+        QTextStream & strm, const ListNotebooksOrder order);
+
+    friend QUENTIER_EXPORT QDebug & operator<<(
+        QDebug & dbg, const ListNotebooksOrder order);
 
     /**
      * @brief listAllNotebooks attempts to list all notebooks within the current
@@ -478,7 +523,8 @@ public:
      *                              in the beginning of the result, zero
      *                              by default
      * @param order                 Allows to specify a particular ordering
-     *                              of notebooks in the result, NoOrder by default
+     *                              of notebooks in the result, NoOrder by
+     *                              default
      * @param orderDirection        Specifies the direction of ordering,
      *                              by default ascending direction is used;
      *                              this parameter has no meaning if order
@@ -499,8 +545,8 @@ public:
     QList<Notebook> listAllNotebooks(
         ErrorString & errorDescription,
         const size_t limit = 0, const size_t offset = 0,
-        const ListNotebooksOrder::type order = ListNotebooksOrder::NoOrder,
-        const OrderDirection::type orderDirection = OrderDirection::Ascending,
+        const ListNotebooksOrder order = ListNotebooksOrder::NoOrder,
+        const OrderDirection orderDirection = OrderDirection::Ascending,
         const QString & linkedNotebookGuid = QString()) const;
 
     /**
@@ -515,30 +561,33 @@ public:
      * @param limit                 The limit for the max number of notebooks
      *                              in the result, zero by default which means
      *                              no limit is set
-     * @param offset                The number of notebooks to skip in the beginning
-     *                              of the result, zero by default
+     * @param offset                The number of notebooks to skip in the
+     *                              beginning of the result, zero by default
      * @param order                 Allows to specify a particular ordering of
      *                              notebooks in the result, NoOrder by default
-     * @param orderDirection        Specifies the direction of ordering, by default
-     *                              ascending direction is used; this parameter
-     *                              has no meaning if order is equal to NoOrder
-     * @param linkedNotebookGuid    If it's null, the method would list the notebooks
-     *                              ignoring their belonging to the current account
-     *                              or to some linked notebook; if it's empty,
-     *                              only the non-linked notebooks would be listed;
-     *                              otherwise, the only one notebook from
-     *                              the corresponding linked notebook would be listed
-     * @return                      Either the list of notebooks within the account
-     *                              conforming to the filter or empty list in
-     *                              cases of error or no notebooks conforming
-     *                              to the filter exist within the account
+     * @param orderDirection        Specifies the direction of ordering, by
+     *                              default ascending direction is used; this
+     *                              parameter has no meaning if order is equal
+     *                              to NoOrder
+     * @param linkedNotebookGuid    If it's null, the method would list
+     *                              notebooks ignoring their belonging to
+     *                              the current account or to some linked
+     *                              notebook; if it's empty, only the non-linked
+     *                              notebooks would be listed; otherwise,
+     *                              the only one notebook from the corresponding
+     *                              linked notebook would be listed
+     * @return                      Either the list of notebooks within
+     *                              the account conforming to the filter or
+     *                              empty list in cases of error or no notebooks
+     *                              conforming to the filter exist within
+     *                              the account
      */
     QList<Notebook> listNotebooks(
         const ListObjectsOptions flag,
         ErrorString & errorDescription,
         const size_t limit = 0, const size_t offset = 0,
-        const ListNotebooksOrder::type order = ListNotebooksOrder::NoOrder,
-        const OrderDirection::type orderDirection = OrderDirection::Ascending,
+        const ListNotebooksOrder order = ListNotebooksOrder::NoOrder,
+        const OrderDirection orderDirection = OrderDirection::Ascending,
         const QString & linkedNotebookGuid = QString()) const;
 
     /**
@@ -553,17 +602,20 @@ public:
      *                              error or no shared notebooks presence
      *                              within the account
      */
-    QList<SharedNotebook> listAllSharedNotebooks(ErrorString & errorDescription) const;
+    QList<SharedNotebook> listAllSharedNotebooks(
+        ErrorString & errorDescription) const;
 
     /**
      * @brief listSharedNotebooksPerNotebookGuid - attempts to list all shared
-     * notebooks per given notebook's remote guid (not local uid, it's important).
+     * notebooks per given notebook's remote guid (not local uid, it's
+     * important).
      *
-     * @param notebookGuid          Remote Evernote service's guid of the notebook
-     *                              for which the shared notebooks are requested
+     * @param notebookGuid          Remote Evernote service's guid of
+     *                              the notebook for which the shared notebooks
+     *                              are requested
      * @param errorDescription      Error description if shared notebooks per
-     *                              notebook guid could not be listed; if no error
-     *                              happens, this parameter is untouched
+     *                              notebook guid could not be listed; if no
+     *                              error happens, this parameter is untouched
      * @return                      Either the list of shared notebooks per
      *                              notebook guid or empty list in case of error
      *                              or no shared notebooks presence per given
@@ -576,23 +628,24 @@ public:
      * @brief expungeNotebook permanently deletes the specified notebook from
      * the local storage database.
      *
-     * Evernote API doesn't allow to delete the notebooks from the remote storage,
-     * it can only be done by the official desktop Evernote client or via its web
-     * client. So this method should be called only during the synchronization
-     * with the remote storage, when some notebook is found to be deleted via
-     * either the official desktop client or via the web client; also, this
-     * method can be called for local notebooks not synchronized with Evernote
-     * at all.
+     * Evernote API doesn't allow to delete the notebooks from the remote
+     * storage, it can only be done by the official desktop Evernote client or
+     * via its web client. So this method should be called only during
+     * the synchronization with the remote storage, when some notebook is found
+     * to be deleted via either the official desktop client or via the web
+     * client; also, this method can be called for local notebooks not
+     * synchronized with Evernote at all.
      *
-     * @param notebook              The notebook to be expunged. Must have either
-     *                              "remote" guid or local uid set; the object
-     *                              is passed by reference and may be changed
-     *                              as a result of the call (filled with local
-     *                              uid if it was empty before the call)
+     * @param notebook              The notebook to be expunged. Must have
+     *                              either "remote" guid or local uid set;
+     *                              the object is passed by reference and may
+     *                              be changed as a result of the call (filled
+     *                              with local uid if it was empty before
+     *                              the call)
      * @param errorDescription      Error description if the notebook could
      *                              not be expunged
-     * @return                      True if the notebook was expunged successfully,
-     *                              false otherwise
+     * @return                      True if the notebook was expunged
+     *                              successfully, false otherwise
      */
     bool expungeNotebook(Notebook & notebook, ErrorString & errorDescription);
 
@@ -602,8 +655,8 @@ public:
      *
      * @param errorDescription      Error description if the number of linked
      *                              notebooks count not be returned
-     * @return                      Either non-negative number of linked notebooks
-     *                              or -1 if some error has occurred
+     * @return                      Either non-negative number of linked
+     *                              notebooks or -1 if some error has occurred
      */
     int linkedNotebookCount(ErrorString & errorDescription) const;
 
@@ -617,23 +670,23 @@ public:
      *                              storage database
      * @param errorDescription      Error description if linked notebook could
      *                              not be added
-     * @return                      True if linked notebook was added successfully,
-     *                              false otherwise
+     * @return                      True if linked notebook was added
+     *                              successfully, false otherwise
      */
     bool addLinkedNotebook(
         const LinkedNotebook & linkedNotebook, ErrorString & errorDescription);
 
     /**
      * @brief updateLinkedNotebook updates passd in LinkedNotebook in the local
-     * storage database; LinkedNotebook must have "remote" Evernote service's guid
-     * set.
+     * storage database; LinkedNotebook must have "remote" Evernote service's
+     * guid set.
      *
      * @param linkedNotebook        LinkedNotebook to be updated in the local
      *                              storage database
      * @param errorDescription      Error description if linked notebook could
      *                              not be updated
-     * @return                      True if linked notebook was updated successfully,
-     *                              false otherwise
+     * @return                      True if linked notebook was updated
+     *                              successfully, false otherwise
      */
     bool updateLinkedNotebook(
         const LinkedNotebook & linkedNotebook, ErrorString & errorDescription);
@@ -642,9 +695,9 @@ public:
      * @brief findLinkedNotebook attempts to find and set all found fields for
      * passed in by reference LinkedNotebook object. For LinkedNotebook local
      * uid doesn't mean anything because it can only be considered valid if it
-     * has "remote" Evernote service's guid set. So this passed in LinkedNotebook
-     * object must have guid set to identify the linked notebook in the local
-     * storage database.
+     * has "remote" Evernote service's guid set. So this passed in
+     * LinkedNotebook object must have guid set to identify the linked notebook
+     * in the local storage database.
      *
      * @param linkedNotebook        Linked notebook to be found. Must have
      *                              "remote" guid set
@@ -657,20 +710,22 @@ public:
         LinkedNotebook & linkedNotebook, ErrorString & errorDescription) const;
 
     /**
-     * @brief The ListLinkedNotebooksOrder struct is a C++98-style scoped enum
-     * which allows to specify ordering of the results of methods listing linked
-     * notebooks from local storage
+     * @brief The ListLinkedNotebooksOrder enum allows to specify the results
+     * ordering for methods listing linked notebooks from local storage
      */
-    struct ListLinkedNotebooksOrder
+    enum class ListLinkedNotebooksOrder
     {
-        enum type
-        {
-            ByUpdateSequenceNumber = 0,
-            ByShareName,
-            ByUsername,
-            NoOrder
-        };
+        ByUpdateSequenceNumber = 0,
+        ByShareName,
+        ByUsername,
+        NoOrder
     };
+
+    friend QUENTIER_EXPORT QTextStream & operator<<(
+        QTextStream & strm, const ListLinkedNotebooksOrder order);
+
+    friend QUENTIER_EXPORT QDebug & operator<<(
+        QDebug & strm, const ListLinkedNotebooksOrder order);
 
     /**
      * @brief listAllLinkedNotebooks - attempts to list all linked notebooks
@@ -698,8 +753,8 @@ public:
     QList<LinkedNotebook> listAllLinkedNotebooks(
         ErrorString & errorDescription,
         const size_t limit = 0, const size_t offset = 0,
-        const ListLinkedNotebooksOrder::type order = ListLinkedNotebooksOrder::NoOrder,
-        const OrderDirection::type orderDirection = OrderDirection::Ascending) const;
+        const ListLinkedNotebooksOrder order = ListLinkedNotebooksOrder::NoOrder,
+        const OrderDirection orderDirection = OrderDirection::Ascending) const;
 
     /**
      * @brief listLinkedNotebooks attempts to list linked notebooks within
@@ -718,29 +773,31 @@ public:
      * @param order                 Allows to specify particular ordering of
      *                              linked notebooks in the result, NoOrder
      *                              by default
-     * @param orderDirection        Specifies the direction of ordering, by default
-     *                              ascending direction is used; this parameter
-     *                              has no meaning if order is equal to NoOrder
+     * @param orderDirection        Specifies the direction of ordering, by
+     *                              default ascending direction is used; this
+     *                              parameter has no meaning if order is equal
+     *                              to NoOrder
      * @return                      Either list of linked notebooks within
-     *                              the account conforming to the filter or empty
-     *                              list in cases of error or no linked notebooks
-     *                              conforming to the filter exist within the account
+     *                              the account conforming to the filter or
+     *                              empty list in cases of error or no linked
+     *                              notebooks conforming to the filter exist
+     *                              within the account
      */
     QList<LinkedNotebook> listLinkedNotebooks(
         const ListObjectsOptions flag, ErrorString & errorDescription,
         const size_t limit = 0, const size_t offset = 0,
-        const ListLinkedNotebooksOrder::type order = ListLinkedNotebooksOrder::NoOrder,
-        const OrderDirection::type orderDirection = OrderDirection::Ascending) const;
+        const ListLinkedNotebooksOrder order = ListLinkedNotebooksOrder::NoOrder,
+        const OrderDirection orderDirection = OrderDirection::Ascending) const;
 
     /**
-     * @brief expungeLinkedNotebook permanently deletes specified linked notebook
-     * from the local storage database.
+     * @brief expungeLinkedNotebook permanently deletes specified linked
+     * notebook from the local storage database.
      *
-     * Evernote API doesn't allow to delete linked notebooks from the remote storage,
-     * it can only be done by official desktop client or web client. So this method
-     * should be called only during the synchronization with remote database,
-     * when some linked notebook is found to be deleted via either official
-     * desktop client or web cient.
+     * Evernote API doesn't allow to delete linked notebooks from the remote
+     * storage, it can only be done by official desktop client or web client.
+     * So this method should be called only during the synchronization with
+     * remote service, when some linked notebook is found to be deleted via
+     * either official desktop client or web cient.
      *
      * @param linkedNotebook        Linked notebook to be expunged. Must have
      *                              "remote" guid set
@@ -753,19 +810,27 @@ public:
         const LinkedNotebook & linkedNotebook, ErrorString & errorDescription);
 
     /**
-     * @brief The NoteCountOption struct is a C++98-style scoped enum
-     * which allows to specify ordering of the results of methods returning
-     * note counts from local storage
+     * @brief The NoteCountOption enum is a QFlags enum which allows to specify
+     * some options for methods returning note counts from local storage
      */
-    struct NoteCountOption
+    enum class NoteCountOption
     {
-        enum type
-        {
-            IncludeNonDeletedNotes = 1,
-            IncludeDeletedNotes    = 2
-        };
+        IncludeNonDeletedNotes = 1,
+        IncludeDeletedNotes    = 2
     };
-    Q_DECLARE_FLAGS(NoteCountOptions, NoteCountOption::type)
+    Q_DECLARE_FLAGS(NoteCountOptions, NoteCountOption)
+
+    friend QUENTIER_EXPORT QTextStream & operator<<(
+        QTextStream & strm, const NoteCountOption option);
+
+    friend QUENTIER_EXPORT QDebug & operator<<(
+        QDebug & dbg, const NoteCountOption option);
+
+    friend QUENTIER_EXPORT QTextStream & operator<<(
+        QTextStream & strm, const NoteCountOptions options);
+
+    friend QUENTIER_EXPORT QDebug & operator<<(
+        QDebug & strm, const NoteCountOptions options);
 
     /**
      * @brief noteCount returns the number of notes currently
@@ -776,11 +841,13 @@ public:
      * @param options               Options clarifying which notes to list;
      *                              by default only non-deleted notes are listed
      * @return                      Either non-negative value with the number
-     *                              of notes or -1 which means some error occurred
+     *                              of notes or -1 which means some error
+     *                              occurred
      */
     int noteCount(
         ErrorString & errorDescription,
-        const NoteCountOptions options = NoteCountOption::IncludeNonDeletedNotes) const;
+        const NoteCountOptions options =
+        NoteCountOption::IncludeNonDeletedNotes) const;
 
     /**
      * @brief noteCountPerNotebook returns the number of notes currently
@@ -788,8 +855,8 @@ public:
      *
      * @param notebook              Notebook for which the number of notes is
      *                              requested. If its guid is set, it is used to
-     *                              identify the notebook, otherwise its local uid
-     *                              is used
+     *                              identify the notebook, otherwise its local
+     *                              uid is used
      * @param errorDescription      Error description if the number of notes per
      *                              given notebook could not be returned
      * @param options               Options clarifying which notes to list;
@@ -801,7 +868,8 @@ public:
     int noteCountPerNotebook(
         const Notebook & notebook,
         ErrorString & errorDescription,
-        const NoteCountOptions options = NoteCountOption::IncludeNonDeletedNotes) const;
+        const NoteCountOptions options =
+        NoteCountOption::IncludeNonDeletedNotes) const;
 
     /**
      * @brief noteCountPerTag returns the number of notes currently
@@ -821,7 +889,8 @@ public:
      */
     int noteCountPerTag(
         const Tag & tag, ErrorString & errorDescription,
-        const NoteCountOptions options = NoteCountOption::IncludeNonDeletedNotes) const;
+        const NoteCountOptions options =
+        NoteCountOption::IncludeNonDeletedNotes) const;
 
     /**
      * @brief noteCountsPerAllTags returns the number of notes
@@ -831,17 +900,20 @@ public:
      * @param noteCountsPerTagLocalUid      The result hash: note counts by tag
      *                                      local uids
      * @param errorDescription              Error description if the number of
-     *                                      notes per all tags could not be returned
-     * @param options                       Options clarifying which notes to list;
-     *                                      by default only non-deleted notes
-     *                                      are listed
-     * @return                              True if note counts for all tags were
-     *                                      computed successfully, false otherwise
+     *                                      notes per all tags could not be
+     *                                      returned
+     * @param options                       Options clarifying which notes to
+     *                                      list; by default only non-deleted
+     *                                      notes are listed
+     * @return                              True if note counts for all tags
+     *                                      were computed successfully, false
+     *                                      otherwise
      */
     bool noteCountsPerAllTags(
         QHash<QString, int> & noteCountsPerTagLocalUid,
         ErrorString & errorDescription,
-        const NoteCountOptions options = NoteCountOption::IncludeNonDeletedNotes) const;
+        const NoteCountOptions options =
+        NoteCountOption::IncludeNonDeletedNotes) const;
 
     /**
      * @brief noteCountPerNotebooksAndTags returns the number of notes currently
@@ -864,7 +936,8 @@ public:
     int noteCountPerNotebooksAndTags(
         const QStringList & notebookLocalUids,
         const QStringList & tagLocalUids, ErrorString & errorDescription,
-        const NoteCountOptions options = NoteCountOption::IncludeNonDeletedNotes) const;
+        const NoteCountOptions options =
+        NoteCountOption::IncludeNonDeletedNotes) const;
 
     /**
      * @brief addNote adds passed in Note to the local storage database.
@@ -872,12 +945,13 @@ public:
      * @param note                  Note to be added to local storage database;
      *                              required to contain either "remote" notebook
      *                              guid or local notebook uid; may be changed
-     *                              as a result of the call, filled with autogenerated
-     *                              fields like local uid if it was empty before
-     *                              the call; also tag guids are filled if
-     *                              the note passed in contained only tag local
-     *                              uids and tag local uids are filled if the note
-     *                              passed in contained only tag guids
+     *                              as a result of the call, filled with
+     *                              autogenerated fields like local uid if it
+     *                              was empty before the call; also tag guids
+     *                              are filled if the note passed in contained
+     *                              only tag local uids and tag local uids are
+     *                              filled if the note passed in contained only
+     *                              tag guids
      * @param errorDescription      Error description if note could not be added
      * @return                      True if note was added successfully,
      *                              false otherwise
@@ -885,39 +959,47 @@ public:
     bool addNote(Note & note, ErrorString & errorDescription);
 
     /**
-     * @brief The UpdateNoteOption is a C++98 style scoped enum serving as
-     * the base enum for QFlags which allows to specify which note fields should
-     * be updated when updateNote method is called
+     * @brief The UpdateNoteOption enum is a QFlags enum which allows to specify
+     * which note fields should be updated when updateNote method is called
      *
-     * Most note data is updated unconditionally - note title, content, attributes
-     * (if any) etc. However, some specific data can be chosen to not update -
-     * notably, metadata of resources, binary data of resources or lists of
-     * note's tags
+     * Most note data is updated unconditionally - note title, content,
+     * attributes (if any) etc. However, some specific data can be chosen to
+     * not update - notably, metadata of resources, binary data of resources or
+     * lists of note's tags
      */
-    struct UpdateNoteOption
+    enum class UpdateNoteOption
     {
-        enum type
-        {
-            /**
-             * UpdateResourceMetadata value specifies that fields aside dataBody,
-             * dataSize, dataHash, alternateDataBody, alternateDataSize,
-             * alternateDataHash for each note's resource should be updated
-             */
-            UpdateResourceMetadata      = 1,
-            /**
-             * UpdateResourceBinaryData value specifies that dataBody, its size
-             * and hash and alternateDataBody, its size and hash should be updated
-             * for each of note's resources; this value only has effect if flags
-             * also have UpdateResourceMetadata value enabled!
-             */
-            UpdateResourceBinaryData    = 2,
-            /**
-             * UpdateTags value specifies that note's tag lists should be updated
-             */
-            UpdateTags                  = 4
-        };
+        /**
+         * UpdateResourceMetadata value specifies that fields aside dataBody,
+         * dataSize, dataHash, alternateDataBody, alternateDataSize,
+         * alternateDataHash for each note's resource should be updated
+         */
+        UpdateResourceMetadata      = 1,
+        /**
+         * UpdateResourceBinaryData value specifies that dataBody, its size
+         * and hash and alternateDataBody, its size and hash should be updated
+         * for each of note's resources; this value only has effect if flags
+         * also have UpdateResourceMetadata value enabled!
+         */
+        UpdateResourceBinaryData    = 2,
+        /**
+         * UpdateTags value specifies that note's tag lists should be updated
+         */
+        UpdateTags                  = 4
     };
-    Q_DECLARE_FLAGS(UpdateNoteOptions, UpdateNoteOption::type)
+    Q_DECLARE_FLAGS(UpdateNoteOptions, UpdateNoteOption)
+
+    friend QUENTIER_EXPORT QTextStream & operator<<(
+        QTextStream & strm, const UpdateNoteOption option);
+
+    friend QUENTIER_EXPORT QDebug & operator<<(
+        QDebug & strm, const UpdateNoteOption option);
+
+    friend QUENTIER_EXPORT QTextStream & operator<<(
+        QTextStream & strm, const UpdateNoteOptions options);
+
+    friend QUENTIER_EXPORT QDebug & operator<<(
+        QDebug & strm, const UpdateNoteOptions options);
 
     /**
      * @brief updateNote updates passed in Note in the local storage database.
@@ -930,33 +1012,37 @@ public:
      *
      * A special way in which this method might be used is the update of a note
      * which clears note's guid. This way is special because it imposes certain
-     * requirements onto the resources which the note might have.  However, it is
-     * only relevant if options input parameter has UpdateResourceMetadata flag
-     * enabled. The requirements for this special case are as follows:
+     * requirements onto the resources which the note might have.  However, it
+     * is only relevant if options input parameter has UpdateResourceMetadata
+     * flag enabled. The requirements for this special case are as follows:
      *   - each resource should not have noteGuid field set to a non-empty value
      *   - each resource should not have guid field set to a non-empty value as
      *     it makes no sense for note without guid i.e. note not synchronized
      *     with Evernote to own a resource which has guid i.e. is synchronized
      *     with Evernote
      *
-     * @param note                  Note to be updated in the local storage database;
-     *                              required to contain either "remote" notebook
-     *                              guid or local notebook uid; may be changed
-     *                              as a result of the call, filled with fields
-     *                              like local uid or notebook guid or local uid
-     *                              if any of these were empty before the call;
-     *                              also tag guids are filled if the note passed
-     *                              in contained only tag local uids and tag local
-     *                              uids are filled if the note passed in contained
-     *                              only tag guids. Bear in mind that after
-     *                              the call the note may not have the representative
-     *                              resources if "updateNoteOptions" input parameter
+     * @param note                  Note to be updated in the local storage
+     *                              database; required to contain either "remote"
+     *                              notebook guid or local notebook uid; may be
+     *                              changed as a result of the call, filled with
+     *                              fields like local uid or notebook guid or
+     *                              local uid if any of these were empty before
+     *                              the call; also tag guids are filled if
+     *                              the note passed in contained only tag local
+     *                              uids and tag local uids are filled if
+     *                              the note passed in contained only tag guids.
+     *                              Bear in mind that after the call the note
+     *                              may not have the representative resources if
+     *                              "updateNoteOptions" input parameter
      *                              contained no "UpdateResourceMetadata" flag
-     *                              as well as it may not have the representative
-     *                              tags if "UpdateTags" flag was not set
-     * @param options               Options specifying which optionally updatable
-     *                              fields of the note should actually be updated
-     * @param errorDescription      Error description if note could not be updated
+     *                              as well as it may not have
+     *                              the representative tags if "UpdateTags" flag
+     *                              was not set
+     * @param options               Options specifying which optionally
+     *                              updatable fields of the note should actually
+     *                              be updated
+     * @param errorDescription      Error description if note could not be
+     *                              updated
      * @return                      True if note was updated successfully,
      *                              false otherwise
      */
@@ -965,36 +1051,45 @@ public:
         ErrorString & errorDescription);
 
     /**
-     * @brief The GetNoteOption struct is a C++98 style scoped enum serving as
-     * the base enum for QFlags which allows to specify which note fields should
-     * be included when findNote or one of listNote* methods is called
+     * @brief The GetNoteOption enum is a QFlags enum which allows to specify
+     * which note fields should be included when findNote or one of listNote*
+     * methods is called
      *
-     * Most note data is included unconditionally - note title, content, attributes
-     * (if any) etc. However, some specific data can be opted to not be included
-     * into the returned note data - notably, metadata of resources and binary
-     * data of resources. If these are omitted, findNote or any of listNote*
-     * methods might work faster than otherwise
+     * Most note data is included unconditionally - note title, content,
+     * attributes (if any) etc. However, some specific data can be opted to not
+     * be included into the returned note data - notably, metadata of resources
+     * and binary data of resources. If these are omitted, findNote or any of
+     * listNote* methods might work faster than otherwise
      */
-    struct GetNoteOption
+    enum class GetNoteOption
     {
-        enum type
-        {
-            /**
-             * WithResourceMetadata value specifies that fields aside dataBody,
-             * dataSize, dataHash, alternateDataBody, alternateDataSize,
-             * alternateDataHash for each note's resource should be included
-             */
-            WithResourceMetadata    = 1,
-            /**
-             * WithResourceBinaryData value specifies that dataBody, its size
-             * and hash and alternateDataBody, its size and hash should be included
-             * into each of note's resources; this value only has effect if flags
-             * also have WithResourceMetadata value enabled!
-             */
-            WithResourceBinaryData  = 2
-        };
+        /**
+         * WithResourceMetadata value specifies that fields aside dataBody,
+         * dataSize, dataHash, alternateDataBody, alternateDataSize,
+         * alternateDataHash for each note's resource should be included
+         */
+        WithResourceMetadata    = 1,
+        /**
+         * WithResourceBinaryData value specifies that dataBody, its size
+         * and hash and alternateDataBody, its size and hash should be included
+         * into each of note's resources; this value only has effect if flags
+         * also have WithResourceMetadata value enabled!
+         */
+        WithResourceBinaryData  = 2
     };
-    Q_DECLARE_FLAGS(GetNoteOptions, GetNoteOption::type)
+    Q_DECLARE_FLAGS(GetNoteOptions, GetNoteOption)
+
+    friend QUENTIER_EXPORT QTextStream & operator<<(
+        QTextStream & strm, const GetNoteOption option);
+
+    friend QUENTIER_EXPORT QDebug & operator<<(
+        QDebug & dbg, const GetNoteOption option);
+
+    friend QUENTIER_EXPORT QTextStream & operator<<(
+        QTextStream & strm, const GetNoteOptions options);
+
+    friend QUENTIER_EXPORT QDebug & operator<<(
+        QDebug & strm, const GetNoteOptions options);
 
     /**
      * @brief findNote - attempts to find note in the local storage database
@@ -1010,27 +1105,29 @@ public:
         ErrorString & errorDescription) const;
 
     /**
-     * @brief The ListNotesOrder struct is a C++98-style scoped enum which allows
-     * to specify the ordering of the results of methods listing notes from
-     * the local storage database
+     * @brief The ListNotesOrder enum allows to specify the results ordering for
+     * methods listing notes from the local storage database
      */
-    struct ListNotesOrder
+    enum class ListNotesOrder
     {
-        enum type
-        {
-            ByUpdateSequenceNumber = 0,
-            ByTitle,
-            ByCreationTimestamp,
-            ByModificationTimestamp,
-            ByDeletionTimestamp,
-            ByAuthor,
-            BySource,
-            BySourceApplication,
-            ByReminderTime,
-            ByPlaceName,
-            NoOrder
-        };
+        ByUpdateSequenceNumber = 0,
+        ByTitle,
+        ByCreationTimestamp,
+        ByModificationTimestamp,
+        ByDeletionTimestamp,
+        ByAuthor,
+        BySource,
+        BySourceApplication,
+        ByReminderTime,
+        ByPlaceName,
+        NoOrder
     };
+
+    friend QUENTIER_EXPORT QTextStream & operator<<(
+        QTextStream & strm, const ListNotesOrder order);
+
+    friend QUENTIER_EXPORT QDebug & operator<<(
+        QDebug & strm, const ListNotesOrder order);
 
     /**
      * @brief listNotesPerNotebook attempts to list notes per given notebook
@@ -1038,20 +1135,24 @@ public:
      *                              requested. If it has the "remote" Evernote
      *                              service's guid set, it would be used to
      *                              identify the notebook in the local storage
-     *                              database, otherwise its local uid would be used
-     * @param options               Options specifying which optionally includable
-     *                              fields of the note should actually be included
-     * @param errorDescription      Error description in case notes could not be listed
+     *                              database, otherwise its local uid would be
+     *                              used
+     * @param options               Options specifying which optionally
+     *                              includable fields of the note should
+     *                              actually be included
+     * @param errorDescription      Error description in case notes could not
+     *                              be listed
      * @param flag                  Input parameter used to set the filter for
      *                              the desired notes to be listed
-     * @param limit                 Limit for the max number of notes in the result,
-     *                              zero by default which means no limit is set
+     * @param limit                 Limit for the max number of notes in
+     *                              the result, zero by default which means no
+     *                              limit is set
      * @param offset                Number of notes to skip in the beginning
      *                              of the result, zero by default
-     * @param order                 Allows to specify particular ordering of notes
-     *                              in the result, NoOrder by default
-     * @param orderDirection        Specifies the direction of ordering, by default
-     *                              ascending direction is used;
+     * @param order                 Allows to specify particular ordering of
+     *                              notes in the result, NoOrder by default
+     * @param orderDirection        Specifies the direction of ordering, by
+     *                              default ascending direction is used;
      * @return                      Either list of notes per notebook or empty
      *                              list in case of error or no notes presence
      *                              in the given notebook
@@ -1060,32 +1161,34 @@ public:
         const Notebook & notebook,
         const GetNoteOptions options,
         ErrorString & errorDescription,
-        const ListObjectsOptions & flag = ListAll,
+        const ListObjectsOptions & flag = ListObjectsOption::ListAll,
         const size_t limit = 0, const size_t offset = 0,
-        const ListNotesOrder::type & order = ListNotesOrder::NoOrder,
-        const OrderDirection::type & orderDirection = OrderDirection::Ascending) const;
+        const ListNotesOrder & order = ListNotesOrder::NoOrder,
+        const OrderDirection & orderDirection = OrderDirection::Ascending) const;
 
     /**
      * @brief listNotesPerTag attempts to list notes labeled with a given tag
      * @param tag                   Tag for which the list of notes labeled with
-     *                              it is requested. If it has the "remote" Evernote
-     *                              service's guid set, it is used to
-     *                              identify the tag in the local storage database,
-     *                              otherwise its local uid is used
-     * @param options               Options specifying which optionally includable
-     *                              fields of the note should actually be included
+     *                              it is requested. If it has the "remote"
+     *                              Evernote service's guid set, it is used to
+     *                              identify the tag in the local storage
+     *                              database, otherwise its local uid is used
+     * @param options               Options specifying which optionally
+     *                              includable fields of the note should
+     *                              actually be included
      * @param errorDescription      Error description in case notes could not
      *                              be listed
      * @param flag                  Input parameter used to set the filter for
      *                              the desired notes to be listed
-     * @param limit                 Limit for the max number of notes in the result,
-     *                              zero by default which means no limit is set
+     * @param limit                 Limit for the max number of notes in
+     *                              the result, zero by default which means no
+     *                              limit is set
      * @param offset                Number of notes to skip in the beginning of
      *                              the result, zero by default
-     * @param order                 Allows to specify particular ordering of notes
-     *                              in the result, NoOrder by default
-     * @param orderDirection        Specifies the direction of ordering, by default
-     *                              ascending direction is used;
+     * @param order                 Allows to specify particular ordering of
+     *                              notes in the result, NoOrder by default
+     * @param orderDirection        Specifies the direction of ordering, by
+     *                              default ascending direction is used;
      * @return                      Either list of notes per tag or empty list
      *                              in case of error or no notes labeled with
      *                              the given tag presence
@@ -1093,12 +1196,10 @@ public:
     QList<Note> listNotesPerTag(
         const Tag & tag, const GetNoteOptions options,
         ErrorString & errorDescription,
-        const LocalStorageManager::ListObjectsOptions & flag = ListAll,
+        const ListObjectsOptions & flag = ListObjectsOption::ListAll,
         const size_t limit = 0, const size_t offset = 0,
-        const LocalStorageManager::ListNotesOrder::type & order =
-        ListNotesOrder::NoOrder,
-        const LocalStorageManager::OrderDirection::type & orderDirection =
-        OrderDirection::Ascending) const;
+        const ListNotesOrder & order = ListNotesOrder::NoOrder,
+        const OrderDirection & orderDirection = OrderDirection::Ascending) const;
 
     /**
      * @brief listNotesPerNotebooksAndTags attempts to list notes which are
@@ -1109,20 +1210,22 @@ public:
      *                              notes might belong
      * @param tagLocalUids          Local uids of tags with which the listed
      *                              notes might be labeled
-     * @param options               Options specifying which optionally includable
-     *                              fields of the note should actually be included
+     * @param options               Options specifying which optionally
+     *                              includable fields of the note should
+     *                              actually be included
      * @param errorDescription      Error description in case notes could not
      *                              be listed
      * @param flag                  Input parameter used to set the filter for
      *                              the desired notes to be listed
-     * @param limit                 Limit for the max number of notes in the result,
-     *                              zero by default which means no limit is set
+     * @param limit                 Limit for the max number of notes in
+     *                              the result, zero by default which means no
+     *                              limit is set
      * @param offset                Number of notes to skip in the beginning of
      *                              the result, zero by default
-     * @param order                 Allows to specify particular ordering of notes
-     *                              in the result, NoOrder by default
-     * @param orderDirection        Specifies the direction of ordering, by default
-     *                              ascending direction is used;
+     * @param order                 Allows to specify particular ordering of
+     *                              notes in the result, NoOrder by default
+     * @param orderDirection        Specifies the direction of ordering, by
+     *                              default ascending direction is used;
      * @return                      Either list of notes per notebooks and tags
      *                              or empty list in case of error or no notes
      *                              corresponding to given notebooks and tags
@@ -1131,14 +1234,12 @@ public:
     QList<Note> listNotesPerNotebooksAndTags(
         const QStringList & notebookLocalUids,
         const QStringList & tagLocalUids,
-        const LocalStorageManager::GetNoteOptions options,
+        const GetNoteOptions options,
         ErrorString & errorDescription,
-        const LocalStorageManager::ListObjectsOptions & flag = ListAll,
+        const ListObjectsOptions & flag = ListObjectsOption::ListAll,
         const size_t limit = 0, const size_t offset = 0,
-        const LocalStorageManager::ListNotesOrder::type & order =
-        ListNotesOrder::NoOrder,
-        const LocalStorageManager::OrderDirection::type & orderDirection =
-        OrderDirection::Ascending) const;
+        const ListNotesOrder & order = ListNotesOrder::NoOrder,
+        const OrderDirection & orderDirection = OrderDirection::Ascending) const;
 
     /**
      * @brief listNotesByLocalUids attempts to list notes given their local uids
@@ -1151,34 +1252,34 @@ public:
      * Notes within the result can be additionally filtered with flag parameter
      *
      * @param noteLocalUids         Local uids of notes to be listed
-     * @param options               Options specifying which optionally includable
-     *                              fields of the note should actually be included
+     * @param options               Options specifying which optionally
+     *                              includable fields of the note should
+     *                              actually be included
      * @param errorDescription      Error description in case notes could not
      *                              be listed
      * @param flag                  Input parameter used to set the filter for
      *                              the desired notes to be listed
-     * @param limit                 Limit for the max number of notes in the result,
-     *                              zero by default which means no limit is set
+     * @param limit                 Limit for the max number of notes in
+     *                              the result, zero by default which means no
+     *                              limit is set
      * @param offset                Number of notes to skip in the beginning of
      *                              the result, zero by default
-     * @param order                 Allows to specify particular ordering of notes
-     *                              in the result, NoOrder by default
-     * @param orderDirection        Specifies the direction of ordering, by default
-     *                              ascending direction is used;
+     * @param order                 Allows to specify particular ordering of
+     *                              notes in the result, NoOrder by default
+     * @param orderDirection        Specifies the direction of ordering, by
+     *                              default ascending direction is used;
      * @return                      Either list of notes by local uids or empty
-     *                              list in case of error or no notes corresponding
-     *                              to given local uids presence
+     *                              list in case of error or no notes
+     *                              corresponding to given local uids presence
      */
     QList<Note> listNotesByLocalUids(
         const QStringList & noteLocalUids,
-        const LocalStorageManager::GetNoteOptions options,
+        const GetNoteOptions options,
         ErrorString & errorDescription,
-        const LocalStorageManager::ListObjectsOptions & flag = ListAll,
+        const ListObjectsOptions & flag = ListObjectsOption::ListAll,
         const size_t limit = 0, const size_t offset = 0,
-        const LocalStorageManager::ListNotesOrder::type & order =
-        ListNotesOrder::NoOrder,
-        const LocalStorageManager::OrderDirection::type & orderDirection =
-        OrderDirection::Ascending) const;
+        const ListNotesOrder & order = ListNotesOrder::NoOrder,
+        const OrderDirection & orderDirection = OrderDirection::Ascending) const;
 
     /**
      * @brief listNotes attempts to list notes within the account according to
@@ -1186,36 +1287,40 @@ public:
      *
      * @param flag                  Input parameter used to set the filter for
      *                              the desired notes to be listed
-     * @param options               Options specifying which optionally includable
-     *                              fields of the note should actually be included
-     * @param errorDescription      Error description if notes within the account
-     *                              could not be listed; if no error happens,
-     *                              this parameter is untouched
-     * @param limit                 Limit for the max number of notes in the result,
-     *                              zero by default which means no limit is set
+     * @param options               Options specifying which optionally
+     *                              includable fields of the note should
+     *                              actually be included
+     * @param errorDescription      Error description if notes within
+     *                              the account could not be listed; if no error
+     *                              happens, this parameter is untouched
+     * @param limit                 Limit for the max number of notes in
+     *                              the result, zero by default which means no
+     *                              limit is set
      * @param offset                Number of notes to skip in the beginning
      *                              of the result, zero by default
-     * @param order                 Allows to specify particular ordering of notes
-     *                              in the result, NoOrder by default
-     * @param orderDirection        Specifies the direction of ordering, by default
-     *                              ascending direction is used; this parameter
-     *                              has no meaning if order is equal to NoOrder
-     * @param linkedNotebookGuid    If it's null, notes from both user's own notebooks
-     *                              and linked notebooks would be listed; if it's
-     *                              empty, only the notes from non-linked notebooks
-     *                              would be listed; otherwise, only the notes
-     *                              from the specified linked notebook would be listed
-     * @return                      Either list of notes within the account conforming
-     *                              to the filter or empty list in cases of error
-     *                              or no notes conforming to the filter exist
-     *                              within the account
+     * @param order                 Allows to specify particular ordering of
+     *                              notes in the result, NoOrder by default
+     * @param orderDirection        Specifies the direction of ordering, by
+     *                              default ascending direction is used; this
+     *                              parameter has no meaning if order is equal
+     *                              to NoOrder
+     * @param linkedNotebookGuid    If it's null, notes from both user's own
+     *                              notebooks and linked notebooks would be
+     *                              listed; if it's empty, only the notes from
+     *                              non-linked notebooks would be listed;
+     *                              otherwise, only the notes from the specified
+     *                              linked notebook would be listed
+     * @return                      Either list of notes within the account
+     *                              conforming to the filter or empty list in
+     *                              cases of error or no notes conforming to
+     *                              the filter exist within the account
      */
     QList<Note> listNotes(
         const ListObjectsOptions flag, const GetNoteOptions options,
         ErrorString & errorDescription,
         const size_t limit = 0, const size_t offset = 0,
-        const ListNotesOrder::type order = ListNotesOrder::NoOrder,
-        const OrderDirection::type orderDirection = OrderDirection::Ascending,
+        const ListNotesOrder order = ListNotesOrder::NoOrder,
+        const OrderDirection orderDirection = OrderDirection::Ascending,
         const QString & linkedNotebookGuid = QString()) const;
 
     /**
@@ -1239,12 +1344,14 @@ public:
      *
      * @param noteSearchQuery       Filled NoteSearchQuery object used to filter
      *                              the notes
-     * @param options               Options specifying which optionally includable
-     *                              fields of the note should actually be included
-     * @param errorDescription      Error description in case notes could not be listed
+     * @param options               Options specifying which optionally
+     *                              includable fields of the note should
+     *                              actually be included
+     * @param errorDescription      Error description in case notes could not
+     *                              be listed
      * @return                      Either list of notes per NoteSearchQuery or
-     *                              empty list in case of error or no notes presence
-     *                              for the given NoteSearchQuery
+     *                              empty list in case of error or no notes
+     *                              presence for the given NoteSearchQuery
      */
     NoteList findNotesWithSearchQuery(
         const NoteSearchQuery & noteSearchQuery,
@@ -1253,8 +1360,8 @@ public:
     /**
      * @brief expungeNote permanently deletes note from local storage.
      *
-     * Evernote API doesn't allow to delete notes from the remote storage, it can
-     * only be done by official desktop client or web client. So this method
+     * Evernote API doesn't allow to delete notes from the remote storage, it
+     * can only be done by official desktop client or web client. So this method
      * should be called only during the synchronization with remote database,
      * when some note is found to be deleted via either official desktop client
      * or web client.
@@ -1262,7 +1369,8 @@ public:
      * @param note                  Note to be expunged; may be changed as a
      *                              result of the call, filled with fields like
      *                              local uid or notebook guid or local uid
-     * @param errorDescription      Error description if note could not be expunged
+     * @param errorDescription      Error description if note could not be
+     *                              expunged
      * @return                      True if note was expunged successfully,
      *                              false otherwise
      */
@@ -1280,9 +1388,9 @@ public:
     int tagCount(ErrorString & errorDescription) const;
 
     /**
-     * @brief addTag adds passed in Tag to the local storage database. If tag has
-     * "remote" Evernote service's guid set, it is identified in the database
-     * by this guid. Otherwise it is identified by local uid.
+     * @brief addTag adds passed in Tag to the local storage database. If tag
+     * has "remote" Evernote service's guid set, it is identified in
+     * the database by this guid. Otherwise it is identified by local uid.
      *
      * @param tag                   Tag to be added to the local storage; may be
      *                              changed as a result of the call, filled with
@@ -1306,82 +1414,90 @@ public:
      *                              can be changed * as a result of the call:
      *                              automatically filled with local uid if it
      *                              was empty before the call
-     * @param errorDescription      Error description if tag could not be updated
+     * @param errorDescription      Error description if tag could not be
+     *                              updated
      * @return                      True if tag was updated successfully,
      *                              false otherwise
      */
     bool updateTag(Tag & tag, ErrorString & errorDescription);
 
     /**
-     * @brief findTag attempts to find and fill the fields of passed in tag object.
+     * @brief findTag attempts to find and fill the fields of passed in tag
+     * object.
      *
      * If "remote" Evernote service's guid for the tag is set, it would be used
-     * to identify the tag in the local storage database. Otherwise the local uid
-     * would be used. If neither guid nor local uid are set, tag's name would
-     * be used. If the name is also not set, the search would fail.
+     * to identify the tag in the local storage database. Otherwise the local
+     * uid would be used. If neither guid nor local uid are set, tag's name
+     * would * be used. If the name is also not set, the search would fail.
      *
      * Important! Due to the fact that the tag name is only unique within
      * the users's own account as well as within each linked notebook, the
      * result of the search by name depends on the tag's linked notebook
      * guid: if it is not set, the search by name would only search for the tag
-     * with the specified name within the user's own account. If it is set, the
-     * search would only consider tags from a linked notebook with the corresponding
-     * guid.
+     * with the specified name within the user's own account. If it is set,
+     * the search would only consider tags from a linked notebook with
+     * the corresponding guid.
      *
-     * @param tag                   Tag to be found in the local storage database;
-     *                              must have either guid, local uid or name set
-     * @param errorDescription      Error description in case tag could not be found
+     * @param tag                   Tag to be found in the local storage
+     *                              database; must have either guid, local uid
+     *                              or name set
+     * @param errorDescription      Error description in case tag could not be
+     *                              found
      * @return                      True if tag was found, false otherwise
      */
     bool findTag(Tag & tag, ErrorString & errorDescription) const;
 
     /**
-     * @brief The ListTagsOrder struct is a C++98 style scoped enum which allows
-     * to specify the ordering of the results of methods listing tags from
-     * the local storage database
+     * @brief The ListTagsOrder enum allows to specify the results ordering for
+     * methods listing tags from the local storage database
      */
-    struct ListTagsOrder
+    enum class ListTagsOrder
     {
-        enum type
-        {
-            ByUpdateSequenceNumber,
-            ByName,
-            NoOrder
-        };
+        ByUpdateSequenceNumber,
+        ByName,
+        NoOrder
     };
 
+    friend QUENTIER_EXPORT QTextStream & operator<<(
+        QTextStream & strm, const ListTagsOrder order);
+
+    friend QUENTIER_EXPORT QDebug & operator<<(
+        QDebug & strm, const ListTagsOrder order);
+
     /**
-     * @brief listAllTagsPerNote  lists all tags per given note
-     * @param note                  Note for which the list of tags is requested.
-     *                              If it has "remote" Evernote service's guid set,
-     *                              it is used to identify the note in the local
-     *                              storage database. Otherwise its local uid is
-     *                              used for that.
+     * @brief listAllTagsPerNote lists all tags per given note
+     * @param note                  Note for which the list of tags is
+     *                              requested. If it has "remote" Evernote
+     *                              service's guid set, it is used to identify
+     *                              the note in the local storage database.
+     *                              Otherwise its local uid is used for that.
      * @param errorDescription      Error description if tags were not listed
-     *                              successfully.  In such case the returned list
-     *                              of tags would be empty and error description
-     *                              won't be empty. However, if, for example,
-     *                              the list of tags is empty and error description
-     *                              is empty too, it means the provided note does
-     *                              not have any tags assigned to it.
+     *                              successfully.  In such case the returned
+     *                              list of tags would be empty and error
+     *                              description won't be empty. However, if,
+     *                              for example, the list of tags is empty and
+     *                              error description is empty too, it means
+     *                              the provided note does not have any tags
+     *                              assigned to it.
      * @param flag                  Input parameter used to set the filter for
      *                              the desired tags to be listed
-     * @param limit                 Limit for the max number of tags in the result,
-     *                              zero by default which means no limit is set
+     * @param limit                 Limit for the max number of tags in
+     *                              the result, zero by default which means no
+     *                              limit is set
      * @param offset                Number of tags to skip in the beginning of
      *                              the result, zero by default
-     * @param order                 Allows to specify particular ordering of tags
-     *                              in the result, NoOrder by default
-     * @param orderDirection        Specifies the direction of ordering, by default
-     *                              ascending direction is used;
+     * @param order                 Allows to specify particular ordering of
+     *                              tags in the result, NoOrder by default
+     * @param orderDirection        Specifies the direction of ordering, by
+     *                              default ascending direction is used;
      * @return                      The list of found tags per note
      */
     QList<Tag> listAllTagsPerNote(
         const Note & note, ErrorString & errorDescription,
-        const ListObjectsOptions & flag = ListAll,
+        const ListObjectsOptions & flag = ListObjectsOption::ListAll,
         const size_t limit = 0, const size_t offset = 0,
-        const ListTagsOrder::type & order = ListTagsOrder::NoOrder,
-        const OrderDirection::type & orderDirection = OrderDirection::Ascending) const;
+        const ListTagsOrder & order = ListTagsOrder::NoOrder,
+        const OrderDirection & orderDirection = OrderDirection::Ascending) const;
 
     /**
      * @brief listAllTags lists all tags within the current user's account.
@@ -1389,31 +1505,35 @@ public:
      *                              successfully. In such case the returned list
      *                              of tags would be empty and error description
      *                              won't be empty. However, if, for example,
-     *                              the list of tags is empty and error description
-     *                              is empty too, it means the current account
-     *                              does not have any tags created.
-     * @param limit                 Limit for the max number of tags in the result,
-     *                              zero by default which means no limit is set
+     *                              the list of tags is empty and error
+     *                              description is empty too, it means
+     *                              the current account does not have any tags
+     *                              created.
+     * @param limit                 Limit for the max number of tags in
+     *                              the result, zero by default which means no
+     *                              limit is set
      * @param offset                Number of tags to skip in the beginning
      *                              of the result, zero by default
-     * @param order                 Allows to specify particular ordering of tags
-     *                              in the result, NoOrder by default
-     * @param orderDirection        Specifies the direction of ordering, by default
-     *                              ascending direction is used; this parameter
-     *                              has no meaning if order is equal to NoOrder
+     * @param order                 Allows to specify particular ordering of
+     *                              tags in the result, NoOrder by default
+     * @param orderDirection        Specifies the direction of ordering, by
+     *                              default ascending direction is used; this
+     *                              parameter has no meaning if order is equal
+     *                              to NoOrder
      * @param linkedNotebookGuid    If it's null, the method would list tags
-     *                              ignoring their belonging to the current account
-     *                              or to some linked notebook; if it's empty,
-     *                              only the tags from user's own account would
-     *                              be listed; otherwise, only the tags corresponding
-     *                              to the certain linked notebook would be listed
+     *                              ignoring their belonging to the current
+     *                              account or to some linked notebook; if it's
+     *                              empty, only the tags from user's own account
+     *                              would be listed; otherwise, only the tags
+     *                              corresponding to the certain linked notebook
+     *                              would be listed
      * @return                      The list of found tags within the account
      */
     QList<Tag> listAllTags(
         ErrorString & errorDescription,
         const size_t limit = 0, const size_t offset = 0,
-        const ListTagsOrder::type order = ListTagsOrder::NoOrder,
-        const OrderDirection::type orderDirection = OrderDirection::Ascending,
+        const ListTagsOrder order = ListTagsOrder::NoOrder,
+        const OrderDirection orderDirection = OrderDirection::Ascending,
         const QString & linkedNotebookGuid = QString()) const;
 
     /**
@@ -1422,75 +1542,83 @@ public:
      *
      * @param flag                  Input parameter used to set the filter for
      *                              the desired tags to be listed
-     * @param errorDescription      Error description if notes within the account
-     *                              could not be listed; if no error happens,
-     *                              this parameter is untouched
-     * @param limit                 Limit for the max number of tags in the result,
-     *                              zero by default which means no limit is set
+     * @param errorDescription      Error description if notes within
+     *                              the account could not be listed; if no error
+     *                              happens, this parameter is untouched
+     * @param limit                 Limit for the max number of tags in
+     *                              the result, zero by default which means no
+     *                              limit is set
      * @param offset                Number of tags to skip in the beginning
      *                              of the result, zero by default
-     * @param order                 Allows to specify particular ordering of tags
-     *                              in the result, NoOrder by default
-     * @param orderDirection        Specifies the direction of ordering, by default
-     *                              ascending direction is used; this parameter
-     *                              has no meaning if order is equal to NoOrder
+     * @param order                 Allows to specify particular ordering of
+     *                              tags in the result, NoOrder by default
+     * @param orderDirection        Specifies the direction of ordering, by
+     *                              default ascending direction is used; this
+     *                              parameter has no meaning if order is equal
+     *                              to NoOrder
      * @param linkedNotebookGuid    If it's null, the method would list tags
-     *                              ignoring their belonging to the current account
-     *                              or to some linked notebook; if it's empty,
-     *                              only the tags from user's own account would
-     *                              be listed; otherwise, only the tags corresponding
-     *                              to the certain linked notebook would be listed
-     * @return                      Either list of tags within the account conforming
-     *                              to the filter or empty list in cases of error
-     *                              or no tags conforming to the filter exist
-     *                              within the account
+     *                              ignoring their belonging to the current
+     *                              account or to some linked notebook; if it's
+     *                              empty, only the tags from user's own account
+     *                              would be listed; otherwise, only the tags
+     *                              corresponding to the certain linked notebook
+     *                              would be listed
+     * @return                      Either list of tags within the account
+     *                              conforming to the filter or empty list in
+     *                              cases of error or no tags conforming to
+     *                              the filter exist within the account
      */
     QList<Tag> listTags(
         const ListObjectsOptions flag,
         ErrorString & errorDescription,
         const size_t limit = 0, const size_t offset = 0,
-        const ListTagsOrder::type & order = ListTagsOrder::NoOrder,
-        const OrderDirection::type orderDirection = OrderDirection::Ascending,
+        const ListTagsOrder & order = ListTagsOrder::NoOrder,
+        const OrderDirection orderDirection = OrderDirection::Ascending,
         const QString & linkedNotebookGuid = QString()) const;
 
     /**
-     * @brief listTagsWithNoteLocalUids attempts to list tags and their corresponding
-     * local uids within the account according to the specified input flag
+     * @brief listTagsWithNoteLocalUids attempts to list tags and their
+     * corresponding local uids within the account according to the specified
+     * input flag
      *
-     * The method is very similar to listTags only for each listed tag it returns
-     * the list of note local uids corresponding to notes labeled with the respective
-     * tag.
+     * The method is very similar to listTags only for each listed tag it
+     * returns the list of note local uids corresponding to notes labeled with
+     * the respective tag.
      *
      * @param flag                  Input parameter used to set the filter for
      *                              the desired tags to be listed
-     * @param errorDescription      Error description if notes within the account
-     *                              could not be listed; if no error happens,
-     *                              this parameter is untouched
-     * @param limit                 Limit for the max number of tags in the result,
-     *                              zero by default which means no limit is set
+     * @param errorDescription      Error description if notes within
+     *                              the account could not be listed; if no error
+     *                              happens, this parameter is untouched
+     * @param limit                 Limit for the max number of tags in
+     *                              the result, zero by default which means no
+     *                              limit is set
      * @param offset                Number of tags to skip in the beginning
      *                              of the result, zero by default
-     * @param order                 Allows to specify particular ordering of tags
-     *                              in the result, NoOrder by default
-     * @param orderDirection        Specifies the direction of ordering, by default
-     *                              ascending direction is used; this parameter
-     *                              has no meaning if order is equal to NoOrder
+     * @param order                 Allows to specify particular ordering of
+     *                              tags in the result, NoOrder by default
+     * @param orderDirection        Specifies the direction of ordering, by
+     *                              default ascending direction is used; this
+     *                              parameter has no meaning if order is equal
+     *                              to NoOrder
      * @param linkedNotebookGuid    If it's null, the method would list tags
-     *                              ignoring their belonging to the current account
-     *                              or to some linked notebook; if it's empty,
-     *                              only the tags from user's own account would
-     *                              be listed; otherwise, only the tags corresponding
-     *                              to the certain linked notebook would be listed
-     * @return                      Either list of tags and note local uids within
-     *                              the account conforming to the filter or empty
-     *                              list in cases of error or no tags conforming
-     *                              to the filter exist within the account
+     *                              ignoring their belonging to the current
+     *                              account or to some linked notebook; if it's
+     *                              empty, only the tags from user's own account
+     *                              would be listed; otherwise, only the tags
+     *                              corresponding to the certain linked notebook
+     *                              would be listed
+     * @return                      Either list of tags and note local uids
+     *                              within the account conforming to the filter
+     *                              or empty list in cases of error or no tags
+     *                              conforming to the filter exist within
+     *                              the account
      */
-    QList<std::pair<Tag, QStringList> > listTagsWithNoteLocalUids(
+    QList<std::pair<Tag, QStringList>> listTagsWithNoteLocalUids(
         const ListObjectsOptions flag, ErrorString & errorDescription,
         const size_t limit = 0, const size_t offset = 0,
-        const ListTagsOrder::type & order = ListTagsOrder::NoOrder,
-        const OrderDirection::type orderDirection = OrderDirection::Ascending,
+        const ListTagsOrder & order = ListTagsOrder::NoOrder,
+        const OrderDirection orderDirection = OrderDirection::Ascending,
         const QString & linkedNotebookGuid = QString()) const;
 
     /**
@@ -1504,17 +1632,18 @@ public:
      * or web client.
      *
      * @param tag                           Tag to be expunged; may be changed
-     *                                      as a result of the call, automatically
-     *                                      filled with local uid if it was empty
-     *                                      before the call
+     *                                      as a result of the call,
+     *                                      automatically filled with local uid
+     *                                      if it was empty before the call
      * @param expungedChildTagLocalUids     If the expunged tag was a parent of
      *                                      some other tags, these were expunged
-     *                                      as well; this parameter would contain
-     *                                      the local uids of expunged child tags
+     *                                      as well; this parameter would
+     *                                      contain the local uids of expunged
+     *                                      child tags
      * @param errorDescription              Error description if tag could not
      *                                      be expunged
-     * @return                              True if tag was expunged successfully,
-     *                                      false otherwise
+     * @return                              True if tag was expunged
+     *                                      successfully, false otherwise
      */
     bool expungeTag(
         Tag & tag, QStringList & expungedChildTagLocalUids,
@@ -1522,8 +1651,8 @@ public:
 
     /**
      * @brief expungeNotelessTagsFromLinkedNotebooks permanently deletes from
-     * the local storage database those tags which belong to some linked notebook
-     * and are not linked with any notes.
+     * the local storage database those tags which belong to some linked
+     * notebook and are not linked with any notes.
      *
      * @param errorDescription          Error description if tag could not
      *                                  be expunged
@@ -1534,25 +1663,28 @@ public:
 
     /**
      * @brief enResourceCount (the name is not Resource to prevent problems with
-     * macro defined on some versions of Windows) returns the number of resources
-     * currently stored in the local storage database.
+     * macro defined on some versions of Windows) returns the number of
+     * resources currently stored in the local storage database.
      *
-     * @param errorDescription          Error description if the number of resources
-     *                                  could not be returned
-     * @return                          Either non-negative value with the number
-     *                                  of resources or -1 which means some error
-     *                                  occurred
+     * @param errorDescription          Error description if the number of
+     *                                  resources could not be returned
+     * @return                          Either non-negative value with
+     *                                  the number of resources or -1 which
+     *                                  means some error occurred
      */
     int enResourceCount(ErrorString & errorDescription) const;
 
     /**
-     * @brief addEnResource adds passed in resource to the local storage database.
+     * @brief addEnResource adds passed in resource to the local storage
+     * database.
+     *
      * @param resource                  Resource to be added to the database,
      *                                  must have either note's local uid set
-     *                                  or note's "remote" Evernote service's guid
-     *                                  set; may be changed as a result of the call,
-     *                                  filled with autogenerated fields like local
-     *                                  uid if it was empty before the call
+     *                                  or note's "remote" Evernote service's
+     *                                  guid set; may be changed as a result of
+     *                                  the call, filled with autogenerated
+     *                                  fields like local uid if it was empty
+     *                                  before the call
      * @param errorDescription          Error description if resource could
      *                                  not be added
      * @return                          True if resource was added successfully,
@@ -1564,11 +1696,11 @@ public:
      * @brief updateEnResource updates passed in resource in the local storage
      * database.
      *
-     * If the resource has "remote" Evernote service's guid set, it is identified
-     * by this guid in the local storage database. If no resource with such guid
-     * is found, the local uid is used to identify the resource in the local storage
-     * database. If the resource has no guid, the local uid is used to identify
-     * it in the local storage database.
+     * If the resource has "remote" Evernote service's guid set, it is
+     * identified by this guid in the local storage database. If no resource
+     * with such guid is found, the local uid is used to identify the resource
+     * in the local storage database. If the resource has no guid, the local
+     * uid is used to identify it in the local storage database.
      *
      * @param resource                  Resource to be updated; may be changed
      *                                  as a result of the call, automatically
@@ -1577,61 +1709,78 @@ public:
      *                                  the call
      * @param errorDescription          Error description if resource could not
      *                                  be updated
-     * @return                          True if resource was updated successfully,
-     *                                  false otherwise
+     * @return                          True if resource was updated
+     *                                  successfully, false otherwise
      */
     bool updateEnResource(Resource & resource, ErrorString & errorDescription);
 
     /**
-     * @brief The GetResourceOption struct is a C++98 style scoped enum serving
-     * as the base enum for QFlags which allows to specofy which resource fields
-     * should be included when findEnResource method is called
+     * @brief The GetResourceOption enum is a QFlags enum which allows to
+     * specify which resource fields should be included when findEnResource
+     * method is called.
      *
      * Most resource data is included unconditionally but some specific data can
      * be opted to not be included into the returned resource data - notably,
      * binary data of the resource. If it is omitted, findEnResource method
      * might work faster than otherwise
      */
-    struct GetResourceOption
+    enum class GetResourceOption
     {
-        enum type
-        {
-            /**
-             * WithBinaryData value specifies than dataBody and alternateDataBody
-             * should be included into the returned resource
-             */
-            WithBinaryData = 1
-        };
+        /**
+         * WithBinaryData value specifies than dataBody and alternateDataBody
+         * should be included into the returned resource
+         */
+        WithBinaryData = 1
     };
-    Q_DECLARE_FLAGS(GetResourceOptions, GetResourceOption::type)
+    Q_DECLARE_FLAGS(GetResourceOptions, GetResourceOption)
+
+    friend QUENTIER_EXPORT QTextStream & operator<<(
+        QTextStream & strm, const GetResourceOption option);
+
+    friend QUENTIER_EXPORT QDebug & operator<<(
+        QDebug & strm, const GetResourceOption option);
+
+    friend QUENTIER_EXPORT QTextStream & operator<<(
+        QTextStream & strm, const GetResourceOptions options);
+
+    friend QUENTIER_EXPORT QDebug & operator<<(
+        QDebug & strm, const GetResourceOptions options);
 
     /**
-     * @brief findEnResource - attempts to find resource in the local storage database
-     * @param resource - resource to be found in the local storage database. If it has
-     * "remote" Evernote service's guid set, this guid is used to identify the resource
-     * in the local storage database. Otherwise resource's local uid is used
-     * @param options - options specifying which optionally includable fields
-     * of the resource should actually be included
-     * @param errorDescription - error description if resource could not be found
-     * @return true if resource was found successfully, false otherwise
+     * @brief findEnResource method attempts to find resource in the local
+     * storage database
+     *
+     * @param resource              Resource to be found in the local storage
+     *                              database. If it has the "remote" Evernote
+     *                              service's guid set, this guid is used to
+     *                              identify the resource in the local storage
+     *                              database. Otherwise resource's local uid is
+     *                              used
+     * @param options               Options specifying which optionally
+     *                              includable fields of the resource should
+     *                              actually be included
+     * @param errorDescription      Error description if resource could not be
+     *                              found
+     * @return                      True if resource was found successfully,
+     *                              false otherwise
      */
     bool findEnResource(
         Resource & resource, const GetResourceOptions options,
         ErrorString & errorDescription) const;
 
     /**
-     * @brief expungeResource permanently deletes resource from the local storage
-     * database.
+     * @brief expungeResource permanently deletes resource from the local
+     * storage database.
      *
      * @param resource                  Resource to be expunged; may be changed
      *                                  as a result of the call, automatically
-     *                                  filled with local uid and note local uid
-     *                                  and/or guid if these were empty before
-     *                                  the call
+     *                                  filled with local uid and note local
+     *                                  uid and/or guid if these were empty
+     *                                  before the call
      * @param errorDescription          Error description if resource could not
      *                                  be expunged
-     * @return                          True if resource was expunged successfully,
-     *                                  false otherwise
+     * @return                          True if resource was expunged
+     *                                  successfully, false otherwise
      */
     bool expungeEnResource(Resource & resource, ErrorString & errorDescription);
 
@@ -1640,9 +1789,9 @@ public:
      * stored in local storage database.
      * @param errorDescription          Error description if the number of saved
      *                                  seacrhes could not be returned
-     * @return                          Either non-negative value with the number
-     *                                  of saved seacrhes or -1 which means some
-     *                                  error occurred
+     * @return                          Either non-negative value with the
+     *                                  number of saved seacrhes or -1 which
+     *                                  means some error occurred
      */
     int savedSearchCount(ErrorString & errorDescription) const;
 
@@ -1652,104 +1801,116 @@ public:
      * identified in the database by this guid. Otherwise it is identified by
      * local uid.
      *
-     * @param search                    SavedSearch to be added to the local storage;
-     *                                  may be changed as a result of the call,
-     *                                  filled with autogenerated fields like
-     *                                  local uid if it was empty before the call
+     * @param search                    SavedSearch to be added to the local
+     *                                  storage; may be changed as a result of
+     *                                  the call, filled with autogenerated
+     *                                  fields like local uid if it was empty
+     *                                  before the call
      * @param errorDescription          Error description if SavedSearch could
      *                                  not be added
-     * @return                          True if SavedSearch was added successfully,
-     *                                  false otherwise
+     * @return                          True if SavedSearch was added
+     *                                  successfully, false otherwise
      */
     bool addSavedSearch(SavedSearch & search, ErrorString & errorDescription);
 
     /**
-     * @brief updateSavedSearch updates passed in SavedSearch in th local storage
-     * database.
+     * @brief updateSavedSearch updates passed in SavedSearch in the local
+     * storage database.
      *
      * If search has "remote" Evernote service's guid set, it is identified
      * in the database by this guid. If the saved search has no guid,
      * the local uid is used to identify it in the local storage database.
      *
-     * @param search                    SavedSearch filled with values to be updated
-     *                                  in the local storage database; may be changed
-     *                                  as a result of the call filled local uid
-     *                                  if it was empty before the call
+     * @param search                    SavedSearch filled with values to be
+     *                                  updated in the local storage database;
+     *                                  may be changed as a result of the call
+     *                                  filled local uid if it was empty before
+     *                                  the call
      * @param errorDescription          Error description if SavedSearch could
      *                                  not be updated
-     * @return                          True if SavedSearch was updated successfully,
-     *                                  false otherwise
+     * @return                          True if SavedSearch was updated
+     *                                  successfully, false otherwise
      */
     bool updateSavedSearch(SavedSearch & search, ErrorString & errorDescription);
 
     /**
-     * @brief findSavedSearch attempts to find SavedSearch in the local storage database.
-     * @param search                    SavedSearch to be found in the local storage
-     *                                  database. If it has "remote" Evernote service's
-     *                                  guid set, it is used to identify the search
-     *                                  in the local storage database. Otherwise
-     *                                  its local uid is used.
+     * @brief findSavedSearch attempts to find SavedSearch in the local storage
+     * database.
+     *
+     * @param search                    SavedSearch to be found in the local
+     *                                  storage database. If it has "remote"
+     *                                  Evernote service's guid set, it is used
+     *                                  to identify the search in the local
+     *                                  storage database. Otherwise its local
+     *                                  uid is used.
      * @param errorDescription          Error description if SavedSearch could
      *                                  not be found
-     * @return                          True if SavedSearch was found, false otherwise
+     * @return                          True if SavedSearch was found, false
+     *                                  otherwise
      */
-    bool findSavedSearch(SavedSearch & search, ErrorString & errorDescription) const;
+    bool findSavedSearch(
+        SavedSearch & search, ErrorString & errorDescription) const;
 
     /**
-     * @brief The ListSavedSearchesOrder struct is a C++98-style scoped enum
-     * which allows to specify the ordering of the results of methods listing
-     * saved searches from local storage
+     * @brief The ListSavedSearchesOrder enum allows to specify the results
+     * ordering for methods listing saved searches from local storage
      */
-    struct ListSavedSearchesOrder
+    enum class ListSavedSearchesOrder
     {
-        enum type
-        {
-            ByUpdateSequenceNumber = 0,
-            ByName,
-            ByFormat,
-            NoOrder
-        };
+        ByUpdateSequenceNumber = 0,
+        ByName,
+        ByFormat,
+        NoOrder
     };
+
+    friend QUENTIER_EXPORT QTextStream & operator<<(
+        QTextStream & strm, const ListSavedSearchesOrder order);
+
+    friend QUENTIER_EXPORT QDebug & operator<<(
+        QDebug & strm, const ListSavedSearchesOrder order);
 
     /**
      * @brief listAllSavedSearches lists all saved searches within the account.
      * @param errorDescription          Error description if all saved searches
-     *                                  could not be listed; otherwise this parameter
-     *                                  is untouched
-     * @param limit                     Limit for the max number of saved searches
-     *                                  in the result, zero by default which means
-     *                                  no limit is set
+     *                                  could not be listed; otherwise this
+     *                                  parameter is untouched
+     * @param limit                     Limit for the max number of saved
+     *                                  searches in the result, zero by default
+     *                                  which means no limit is set
      * @param offset                    Number of saved searches to skip in the
      *                                  beginning of the result, zero by default
      * @param order                     Allows to specify particular ordering of
-     *                                  saved searches in the result, NoOrder by default
+     *                                  saved searches in the result, NoOrder by
+     *                                  default
      * @param orderDirection            Specifies the direction of ordering,
      *                                  by default ascending direction is used;
      *                                  this parameter has no meaning if order
      *                                  is equal to NoOrder
      * @return                          Either the list of all saved searches
      *                                  within the account or empty list in case
-     *                                  of error or if there are no saved searches
-     *                                  within the account
+     *                                  of error or if there are no saved
+     *                                  searches within the account
      */
     QList<SavedSearch> listAllSavedSearches(
         ErrorString & errorDescription,
         const size_t limit = 0, const size_t offset = 0,
-        const ListSavedSearchesOrder::type order = ListSavedSearchesOrder::NoOrder,
-        const OrderDirection::type orderDirection = OrderDirection::Ascending) const;
+        const ListSavedSearchesOrder order = ListSavedSearchesOrder::NoOrder,
+        const OrderDirection orderDirection = OrderDirection::Ascending) const;
 
     /**
-     * @brief listSavedSearches attempts to list saved searches within the account
-     * according to the specified input flag.
+     * @brief listSavedSearches attempts to list saved searches within
+     * the account according to the specified input flag.
      *
      * @param flag                      Input parameter used to set the filter
-     *                                  for the desired saved searches to be listed
-     * @param errorDescription          Error description if saved searches within
-     *                                  the account could not be listed; if no error
-     *                                  happens, this parameter is untouched
-     * @param limit                     Limit for the max number of saved searches
-     *                                  in the result, zero by default which means
-     *                                  no limit is set
+     *                                  for the desired saved searches to be
+     *                                  listed
+     * @param errorDescription          Error description if saved searches
+     *                                  within the account could not be listed;
+     *                                  if no error happens, this parameter is
+     *                                  untouched
+     * @param limit                     Limit for the max number of saved
+     *                                  searches in the result, zero by default
+     *                                  which means no limit is set
      * @param offset                    Number of saved searches to skip in the
      *                                  beginning of the result, zero by default
      * @param order                     Allows to specify particular ordering of
@@ -1768,39 +1929,41 @@ public:
     QList<SavedSearch> listSavedSearches(
         const ListObjectsOptions flag, ErrorString & errorDescription,
         const size_t limit = 0, const size_t offset = 0,
-        const ListSavedSearchesOrder::type order = ListSavedSearchesOrder::NoOrder,
-        const OrderDirection::type orderDirection = OrderDirection::Ascending) const;
+        const ListSavedSearchesOrder order = ListSavedSearchesOrder::NoOrder,
+        const OrderDirection orderDirection = OrderDirection::Ascending) const;
 
     /**
      * @brief expungeSavedSearch permanently deletes saved search from the local
      * storage database.
      *
-     * @param search                    Saved search to be expunged; may be changed
-     *                                  as a result of the call filled local uid
-     *                                  if it was empty before the call
+     * @param search                    Saved search to be expunged; may be
+     *                                  changed as a result of the call filled
+     *                                  local uid if it was empty before
+     *                                  the call
      * @param errorDescription          Error description if saved search could
      *                                  not be expunged
      * @return                          True if saved search was expunged
      *                                  successfully, false otherwise
      */
-    bool expungeSavedSearch(SavedSearch & search, ErrorString & errorDescription);
+    bool expungeSavedSearch(
+        SavedSearch & search, ErrorString & errorDescription);
 
     /**
      * @brief accountHighUsn returns the highest update sequence number within
      * the data elements stored in the local storage database, either for user's
      * own account or for some linked notebook.
      *
-     * @param linkedNotebookGuid        The guid of the linked notebook for which
-     *                                  the highest update sequence number is
-     *                                  requested; if null or empty, the highest
-     *                                  update sequence number for user's own
-     *                                  account is returned
+     * @param linkedNotebookGuid        The guid of the linked notebook for
+     *                                  which the highest update sequence number
+     *                                  is requested; if null or empty,
+     *                                  the highest update sequence number for
+     *                                  user's own account is returned
      * @param errorDescription          Error description if account's highest
      *                                  update sequence number could not be
      *                                  returned
-     * @return                          Either the highest update sequence number -
-     *                                  a non-negative value - or a negative number
-     * in case of error
+     * @return                          Either the highest update sequence
+     *                                  number - a non-negative value - or
+     *                                  a negative number in case of error
      */
     qint32 accountHighUsn(
         const QString & linkedNotebookGuid, ErrorString & errorDescription);
@@ -1813,7 +1976,10 @@ private:
     Q_DECLARE_PRIVATE(LocalStorageManager)
 };
 
+Q_DECLARE_OPERATORS_FOR_FLAGS(LocalStorageManager::GetNoteOptions)
 Q_DECLARE_OPERATORS_FOR_FLAGS(LocalStorageManager::ListObjectsOptions)
+Q_DECLARE_OPERATORS_FOR_FLAGS(LocalStorageManager::StartupOptions)
+Q_DECLARE_OPERATORS_FOR_FLAGS(LocalStorageManager::UpdateNoteOptions)
 
 } // namespace quentier
 

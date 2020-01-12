@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2019 Dmitry Ivanov
+ * Copyright 2017-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -102,8 +102,8 @@ void TagSyncCache::fill()
 void TagSyncCache::onListTagsComplete(
     LocalStorageManager::ListObjectsOptions flag,
     size_t limit, size_t offset,
-    LocalStorageManager::ListTagsOrder::type order,
-    LocalStorageManager::OrderDirection::type orderDirection,
+    LocalStorageManager::ListTagsOrder order,
+    LocalStorageManager::OrderDirection orderDirection,
     QString linkedNotebookGuid,
     QList<Tag> foundTags, QUuid requestId)
 {
@@ -140,8 +140,8 @@ void TagSyncCache::onListTagsComplete(
 void TagSyncCache::onListTagsFailed(
     LocalStorageManager::ListObjectsOptions flag,
     size_t limit, size_t offset,
-    LocalStorageManager::ListTagsOrder::type order,
-    LocalStorageManager::OrderDirection::type orderDirection,
+    LocalStorageManager::ListTagsOrder order,
+    LocalStorageManager::OrderDirection orderDirection,
     QString linkedNotebookGuid, ErrorString errorDescription,
     QUuid requestId)
 {
@@ -215,41 +215,41 @@ void TagSyncCache::connectToLocalStorage()
     QObject::connect(this,
                      QNSIGNAL(TagSyncCache,listTags,
                               LocalStorageManager::ListObjectsOptions,
-                              size_t,size_t,LocalStorageManager::ListTagsOrder::type,
-                              LocalStorageManager::OrderDirection::type,
+                              size_t,size_t,LocalStorageManager::ListTagsOrder,
+                              LocalStorageManager::OrderDirection,
                               QString,QUuid),
                      &m_localStorageManagerAsync,
                      QNSLOT(LocalStorageManagerAsync,onListTagsRequest,
                             LocalStorageManager::ListObjectsOptions,
-                            size_t,size_t,LocalStorageManager::ListTagsOrder::type,
-                            LocalStorageManager::OrderDirection::type,QString,QUuid),
+                            size_t,size_t,LocalStorageManager::ListTagsOrder,
+                            LocalStorageManager::OrderDirection,QString,QUuid),
                      Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
 
     // Connect local storage manager async's signals to local slots
     QObject::connect(&m_localStorageManagerAsync,
                      QNSIGNAL(LocalStorageManagerAsync,
                               listTagsComplete,LocalStorageManager::ListObjectsOptions,
-                              size_t,size_t,LocalStorageManager::ListTagsOrder::type,
-                              LocalStorageManager::OrderDirection::type,
+                              size_t,size_t,LocalStorageManager::ListTagsOrder,
+                              LocalStorageManager::OrderDirection,
                               QString,QList<Tag>,QUuid),
                      this,
                      QNSLOT(TagSyncCache,onListTagsComplete,
                             LocalStorageManager::ListObjectsOptions,
-                            size_t,size_t,LocalStorageManager::ListTagsOrder::type,
-                            LocalStorageManager::OrderDirection::type,
+                            size_t,size_t,LocalStorageManager::ListTagsOrder,
+                            LocalStorageManager::OrderDirection,
                             QString,QList<Tag>,QUuid),
                      Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
     QObject::connect(&m_localStorageManagerAsync,
                      QNSIGNAL(LocalStorageManagerAsync,listTagsFailed,
                               LocalStorageManager::ListObjectsOptions,
-                              size_t,size_t, LocalStorageManager::ListTagsOrder::type,
-                              LocalStorageManager::OrderDirection::type,
+                              size_t,size_t, LocalStorageManager::ListTagsOrder,
+                              LocalStorageManager::OrderDirection,
                               QString,ErrorString,QUuid),
                      this,
                      QNSLOT(TagSyncCache,onListTagsFailed,
                             LocalStorageManager::ListObjectsOptions,
-                            size_t,size_t, LocalStorageManager::ListTagsOrder::type,
-                            LocalStorageManager::OrderDirection::type,
+                            size_t,size_t, LocalStorageManager::ListTagsOrder,
+                            LocalStorageManager::OrderDirection,
                             QString,ErrorString,QUuid),
                      Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
     QObject::connect(&m_localStorageManagerAsync,
@@ -286,14 +286,14 @@ void TagSyncCache::disconnectFromLocalStorage()
     QObject::disconnect(this,
                         QNSIGNAL(TagSyncCache,listTags,
                                  LocalStorageManager::ListObjectsOptions,
-                                 size_t,size_t,LocalStorageManager::ListTagsOrder::type,
-                                 LocalStorageManager::OrderDirection::type,
+                                 size_t,size_t,LocalStorageManager::ListTagsOrder,
+                                 LocalStorageManager::OrderDirection,
                                  QString,QUuid),
                         &m_localStorageManagerAsync,
                         QNSLOT(LocalStorageManagerAsync,onListTagsRequest,
                                LocalStorageManager::ListObjectsOptions,
-                               size_t,size_t,LocalStorageManager::ListTagsOrder::type,
-                               LocalStorageManager::OrderDirection::type,
+                               size_t,size_t,LocalStorageManager::ListTagsOrder,
+                               LocalStorageManager::OrderDirection,
                                QString,QUuid));
 
     // Disconnect local storage manager async's signals from local slots
@@ -301,29 +301,29 @@ void TagSyncCache::disconnectFromLocalStorage()
                         QNSIGNAL(LocalStorageManagerAsync,listTagsComplete,
                                  LocalStorageManager::ListObjectsOptions,
                                  size_t,size_t,
-                                 LocalStorageManager::ListTagsOrder::type,
-                                 LocalStorageManager::OrderDirection::type,
+                                 LocalStorageManager::ListTagsOrder,
+                                 LocalStorageManager::OrderDirection,
                                  QString,QList<Tag>,QUuid),
                         this,
                         QNSLOT(TagSyncCache,onListTagsComplete,
                                LocalStorageManager::ListObjectsOptions,
                                size_t,size_t,
-                               LocalStorageManager::ListTagsOrder::type,
-                               LocalStorageManager::OrderDirection::type,
+                               LocalStorageManager::ListTagsOrder,
+                               LocalStorageManager::OrderDirection,
                                QString,QList<Tag>,QUuid));
     QObject::disconnect(&m_localStorageManagerAsync,
                         QNSIGNAL(LocalStorageManagerAsync,listTagsFailed,
                                  LocalStorageManager::ListObjectsOptions,
                                  size_t,size_t,
-                                 LocalStorageManager::ListTagsOrder::type,
-                                 LocalStorageManager::OrderDirection::type,
+                                 LocalStorageManager::ListTagsOrder,
+                                 LocalStorageManager::OrderDirection,
                                  QString,ErrorString,QUuid),
                         this,
                         QNSLOT(TagSyncCache,onListTagsFailed,
                                LocalStorageManager::ListObjectsOptions,
                                size_t,size_t,
-                               LocalStorageManager::ListTagsOrder::type,
-                               LocalStorageManager::OrderDirection::type,
+                               LocalStorageManager::ListTagsOrder,
+                               LocalStorageManager::OrderDirection,
                                QString,ErrorString,QUuid));
     QObject::disconnect(&m_localStorageManagerAsync,
                         QNSIGNAL(LocalStorageManagerAsync,addTagComplete,Tag,QUuid),
@@ -351,10 +351,14 @@ void TagSyncCache::requestTagsList()
 
     TCTRACE("Emitting the request to list tags: request id = "
             << m_listTagsRequestId << ", offset = " << m_offset);
-    Q_EMIT listTags(LocalStorageManager::ListAll,
-                    m_limit, m_offset, LocalStorageManager::ListTagsOrder::NoOrder,
-                    LocalStorageManager::OrderDirection::Ascending,
-                    m_linkedNotebookGuid, m_listTagsRequestId);
+    Q_EMIT listTags(
+        LocalStorageManager::ListObjectsOption::ListAll,
+        m_limit,
+        m_offset,
+        LocalStorageManager::ListTagsOrder::NoOrder,
+        LocalStorageManager::OrderDirection::Ascending,
+        m_linkedNotebookGuid,
+        m_listTagsRequestId);
 }
 
 void TagSyncCache::removeTag(const QString & tagLocalUid)

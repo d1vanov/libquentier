@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -22,7 +22,7 @@
 #include <quentier/exception/DatabaseLockedException.h>
 #include <quentier/exception/DatabaseLockFailedException.h>
 #include <quentier/exception/DatabaseOpeningException.h>
-#include <quentier/exception/DatabaseSqlErrorException.h>
+#include <quentier/exception/DatabaseRequestException.h>
 #include "Transaction.h"
 #include <quentier/local_storage/NoteSearchQuery.h>
 #include <quentier/logging/QuentierLogger.h>
@@ -458,7 +458,7 @@ void LocalStorageManagerPrivate::switchUser(
                                        QStringLiteral("} "));
         }
 
-        throw DatabaseSqlErrorException(error);
+        throw DatabaseRequestException(error);
     }
 
     m_sqlDatabase.close();
@@ -600,7 +600,7 @@ void LocalStorageManagerPrivate::switchUser(
         ErrorString error(QT_TR_NOOP("Can't set foreign_keys = ON pragma for "
                                      "the local storage database"));
         error.details() = lastErrorText;
-        throw DatabaseSqlErrorException(error);
+        throw DatabaseRequestException(error);
     }
 
     SysInfo sysInfo;
@@ -612,7 +612,7 @@ void LocalStorageManagerPrivate::switchUser(
         ErrorString error(QT_TR_NOOP("Can't set page_size pragma for the local "
                                      "storage database"));
         error.details() = lastErrorText;
-        throw DatabaseSqlErrorException(error);
+        throw DatabaseRequestException(error);
     }
 
     QString writeAheadLoggingQuery = QStringLiteral("PRAGMA journal_mode=WAL");
@@ -621,7 +621,7 @@ void LocalStorageManagerPrivate::switchUser(
         ErrorString error(QT_TR_NOOP("Can't set journal_mode pragma to WAL for "
                                      "the local storage database"));
         error.details() = lastErrorText;
-        throw DatabaseSqlErrorException(error);
+        throw DatabaseRequestException(error);
     }
 
     ErrorString errorDescription;
@@ -631,7 +631,7 @@ void LocalStorageManagerPrivate::switchUser(
         error.appendBase(errorDescription.base());
         error.appendBase(errorDescription.additionalBases());
         error.details() = errorDescription.details();
-        throw DatabaseSqlErrorException(error);
+        throw DatabaseRequestException(error);
     }
 
     clearCachedQueries();
@@ -1188,21 +1188,27 @@ bool LocalStorageManagerPrivate::findDefaultOrLastUsedNotebook(
 QList<Notebook> LocalStorageManagerPrivate::listAllNotebooks(
     ErrorString & errorDescription,
     const size_t limit, const size_t offset,
-    const LocalStorageManager::ListNotebooksOrder::type & order,
-    const LocalStorageManager::OrderDirection::type & orderDirection,
+    const LocalStorageManager::ListNotebooksOrder & order,
+    const LocalStorageManager::OrderDirection & orderDirection,
     const QString & linkedNotebookGuid) const
 {
     QNDEBUG("LocalStorageManagerPrivate::listAllNotebooks");
-    return listNotebooks(LocalStorageManager::ListAll, errorDescription, limit,
-                         offset, order, orderDirection, linkedNotebookGuid);
+    return listNotebooks(
+        LocalStorageManager::ListObjectsOption::ListAll,
+        errorDescription,
+        limit,
+        offset,
+        order,
+        orderDirection,
+        linkedNotebookGuid);
 }
 
 QList<Notebook> LocalStorageManagerPrivate::listNotebooks(
     const LocalStorageManager::ListObjectsOptions flag,
     ErrorString & errorDescription,
     const size_t limit, const size_t offset,
-    const LocalStorageManager::ListNotebooksOrder::type & order,
-    const LocalStorageManager::OrderDirection::type & orderDirection,
+    const LocalStorageManager::ListNotebooksOrder & order,
+    const LocalStorageManager::OrderDirection & orderDirection,
     const QString & linkedNotebookGuid) const
 {
     QNDEBUG("LocalStorageManagerPrivate::listNotebooks: flag = " << flag);
@@ -1221,7 +1227,7 @@ QList<Notebook> LocalStorageManagerPrivate::listNotebooks(
         }
     }
 
-    return listObjects<Notebook, LocalStorageManager::ListNotebooksOrder::type>(
+    return listObjects<Notebook, LocalStorageManager::ListNotebooksOrder>(
                 flag, errorDescription, limit,
                 offset, order, orderDirection,
                 linkedNotebookGuidSqlQueryCondition);
@@ -1652,22 +1658,27 @@ bool LocalStorageManagerPrivate::findLinkedNotebook(
 
 QList<LinkedNotebook> LocalStorageManagerPrivate::listAllLinkedNotebooks(
     ErrorString & errorDescription, const size_t limit, const size_t offset,
-    const LocalStorageManager::ListLinkedNotebooksOrder::type order,
-    const LocalStorageManager::OrderDirection::type & orderDirection) const
+    const LocalStorageManager::ListLinkedNotebooksOrder order,
+    const LocalStorageManager::OrderDirection & orderDirection) const
 {
     QNDEBUG("LocalStorageManagerPrivate::listAllLinkedNotebooks");
-    return listLinkedNotebooks(LocalStorageManager::ListAll, errorDescription,
-                               limit, offset, order, orderDirection);
+    return listLinkedNotebooks(
+        LocalStorageManager::ListObjectsOption::ListAll,
+        errorDescription,
+        limit,
+        offset,
+        order,
+        orderDirection);
 }
 
 QList<LinkedNotebook> LocalStorageManagerPrivate::listLinkedNotebooks(
     const LocalStorageManager::ListObjectsOptions flag,
     ErrorString & errorDescription, const size_t limit, const size_t offset,
-    const LocalStorageManager::ListLinkedNotebooksOrder::type & order,
-    const LocalStorageManager::OrderDirection::type & orderDirection) const
+    const LocalStorageManager::ListLinkedNotebooksOrder & order,
+    const LocalStorageManager::OrderDirection & orderDirection) const
 {
     QNDEBUG("LocalStorageManagerPrivate::listLinkedNotebooks: flag = " << flag);
-    return listObjects<LinkedNotebook, LocalStorageManager::ListLinkedNotebooksOrder::type>(
+    return listObjects<LinkedNotebook, LocalStorageManager::ListLinkedNotebooksOrder>(
                 flag, errorDescription, limit, offset, order, orderDirection);
 }
 
@@ -2633,8 +2644,8 @@ QList<Note> LocalStorageManagerPrivate::listNotesPerNotebook(
     ErrorString & errorDescription,
     const LocalStorageManager::ListObjectsOptions & flag,
     const size_t limit, const size_t offset,
-    const LocalStorageManager::ListNotesOrder::type & order,
-    const LocalStorageManager::OrderDirection::type & orderDirection) const
+    const LocalStorageManager::ListNotesOrder & order,
+    const LocalStorageManager::OrderDirection & orderDirection) const
 {
     QNDEBUG("LocalStorageManagerPrivate::listNotesPerNotebook: notebook = "
             << notebook << "\nWith resource metadata = "
@@ -2688,8 +2699,8 @@ QList<Note> LocalStorageManagerPrivate::listNotesPerTag(
     ErrorString & errorDescription,
     const LocalStorageManager::ListObjectsOptions & flag,
     const size_t limit, const size_t offset,
-    const LocalStorageManager::ListNotesOrder::type & order,
-    const LocalStorageManager::OrderDirection::type & orderDirection) const
+    const LocalStorageManager::ListNotesOrder & order,
+    const LocalStorageManager::OrderDirection & orderDirection) const
 {
     QNDEBUG("LocalStorageManagerPrivate::listNotesPerTag: tag = "
             << tag << "\nWith resource metadata = "
@@ -2746,8 +2757,8 @@ QList<Note> LocalStorageManagerPrivate::listNotesPerNotebooksAndTags(
     ErrorString & errorDescription,
     const LocalStorageManager::ListObjectsOptions & flag,
     const size_t limit, const size_t offset,
-    const LocalStorageManager::ListNotesOrder::type & order,
-    const LocalStorageManager::OrderDirection::type & orderDirection) const
+    const LocalStorageManager::ListNotesOrder & order,
+    const LocalStorageManager::OrderDirection & orderDirection) const
 {
     QNDEBUG("LocalStorageManagerPrivate::listNotesPerNotebooksAndTags: "
             << "flag = " << flag
@@ -2832,8 +2843,8 @@ QList<Note> LocalStorageManagerPrivate::listNotesByLocalUids(
     ErrorString & errorDescription,
     const LocalStorageManager::ListObjectsOptions & flag,
     const size_t limit, const size_t offset,
-    const LocalStorageManager::ListNotesOrder::type order,
-    const LocalStorageManager::OrderDirection::type & orderDirection) const
+    const LocalStorageManager::ListNotesOrder order,
+    const LocalStorageManager::OrderDirection & orderDirection) const
 {
     QNDEBUG("LocalStorageManagerPrivate::listNotesByLocalUids: "
             << "flag = " << flag << ", with resource metadata = "
@@ -2873,8 +2884,8 @@ QList<Note> LocalStorageManagerPrivate::listNotes(
     const LocalStorageManager::GetNoteOptions options,
     ErrorString & errorDescription,
     const size_t limit, const size_t offset,
-    const LocalStorageManager::ListNotesOrder::type & order,
-    const LocalStorageManager::OrderDirection::type & orderDirection,
+    const LocalStorageManager::ListNotesOrder & order,
+    const LocalStorageManager::OrderDirection & orderDirection,
     const QString & linkedNotebookGuid) const
 {
     QNDEBUG("LocalStorageManagerPrivate::listNotes: flag = " << flag
@@ -2920,8 +2931,8 @@ QList<Note> LocalStorageManagerPrivate::listNotesImpl(
     const LocalStorageManager::GetNoteOptions options,
     ErrorString & errorDescription,
     const size_t limit, const size_t offset,
-    const LocalStorageManager::ListNotesOrder::type & order,
-    const LocalStorageManager::OrderDirection::type & orderDirection) const
+    const LocalStorageManager::ListNotesOrder & order,
+    const LocalStorageManager::OrderDirection & orderDirection) const
 {
     bool withResourceMetadata =
         (options & LocalStorageManager::GetNoteOption::WithResourceMetadata);
@@ -2938,7 +2949,7 @@ QList<Note> LocalStorageManagerPrivate::listNotesImpl(
     Q_UNUSED(transaction)
 
     ErrorString error;
-    QList<Note> notes = listObjects<Note, LocalStorageManager::ListNotesOrder::type>(
+    QList<Note> notes = listObjects<Note, LocalStorageManager::ListNotesOrder>(
         flag, error, limit, offset, order, orderDirection, sqlQueryCondition);
 
     if (notes.isEmpty() && !error.isEmpty()) {
@@ -3639,8 +3650,8 @@ QList<Tag> LocalStorageManagerPrivate::listAllTagsPerNote(
     const Note & note, ErrorString & errorDescription,
     const LocalStorageManager::ListObjectsOptions & flag,
     const size_t limit, const size_t offset,
-    const LocalStorageManager::ListTagsOrder::type & order,
-    const LocalStorageManager::OrderDirection::type & orderDirection) const
+    const LocalStorageManager::ListTagsOrder & order,
+    const LocalStorageManager::OrderDirection & orderDirection) const
 {
     QNDEBUG("LocalStorageManagerPrivate::listAllTagsPerNote");
 
@@ -3728,7 +3739,7 @@ QList<Tag> LocalStorageManagerPrivate::listAllTagsPerNote(
     noteGuidSqlQueryCondition += QStringLiteral(")");
 
     ErrorString error;
-    tags = listObjects<Tag, LocalStorageManager::ListTagsOrder::type>(
+    tags = listObjects<Tag, LocalStorageManager::ListTagsOrder>(
         flag, error, limit, offset, order, orderDirection,
         noteGuidSqlQueryCondition);
 
@@ -3745,20 +3756,26 @@ QList<Tag> LocalStorageManagerPrivate::listAllTagsPerNote(
 
 QList<Tag> LocalStorageManagerPrivate::listAllTags(
     ErrorString & errorDescription, const size_t limit, const size_t offset,
-    const LocalStorageManager::ListTagsOrder::type & order,
-    const LocalStorageManager::OrderDirection::type & orderDirection,
+    const LocalStorageManager::ListTagsOrder & order,
+    const LocalStorageManager::OrderDirection & orderDirection,
     const QString & linkedNotebookGuid) const
 {
     QNDEBUG("LocalStorageManagerPrivate::listAllTags");
-    return listTags(LocalStorageManager::ListAll, errorDescription, limit,
-                    offset, order, orderDirection, linkedNotebookGuid);
+    return listTags(
+        LocalStorageManager::ListObjectsOption::ListAll,
+        errorDescription,
+        limit,
+        offset,
+        order,
+        orderDirection,
+        linkedNotebookGuid);
 }
 
 QList<Tag> LocalStorageManagerPrivate::listTags(
     const LocalStorageManager::ListObjectsOptions flag,
     ErrorString & errorDescription, const size_t limit, const size_t offset,
-    const LocalStorageManager::ListTagsOrder::type & order,
-    const LocalStorageManager::OrderDirection::type & orderDirection,
+    const LocalStorageManager::ListTagsOrder & order,
+    const LocalStorageManager::OrderDirection & orderDirection,
     const QString & linkedNotebookGuid) const
 {
     QNDEBUG("LocalStorageManagerPrivate::listTags: flag = " << flag);
@@ -3772,17 +3789,22 @@ QList<Tag> LocalStorageManagerPrivate::listTags(
               .arg(sqlEscapeString(linkedNotebookGuid)));
     }
 
-    return listObjects<Tag, LocalStorageManager::ListTagsOrder::type>(
-                flag, errorDescription, limit, offset, order,
-                orderDirection, linkedNotebookGuidSqlQueryCondition);
+    return listObjects<Tag, LocalStorageManager::ListTagsOrder>(
+        flag,
+        errorDescription,
+        limit,
+        offset,
+        order,
+        orderDirection,
+        linkedNotebookGuidSqlQueryCondition);
 }
 
 QList<std::pair<Tag, QStringList> >
 LocalStorageManagerPrivate::listTagsWithNoteLocalUids(
     const LocalStorageManager::ListObjectsOptions flag,
     ErrorString & errorDescription, const size_t limit, const size_t offset,
-    const LocalStorageManager::ListTagsOrder::type & order,
-    const LocalStorageManager::OrderDirection::type & orderDirection,
+    const LocalStorageManager::ListTagsOrder & order,
+    const LocalStorageManager::OrderDirection & orderDirection,
     const QString & linkedNotebookGuid) const
 {
     QNDEBUG("LocalStorageManagerPrivate::listTagsWithNoteLocalUids: flag = "
@@ -3797,9 +3819,16 @@ LocalStorageManagerPrivate::listTagsWithNoteLocalUids(
               .arg(sqlEscapeString(linkedNotebookGuid)));
     }
 
-    return listObjects<std::pair<Tag, QStringList>, LocalStorageManager::ListTagsOrder::type>(
-                flag, errorDescription, limit, offset, order,
-                orderDirection, linkedNotebookGuidSqlQueryCondition);
+    using ListTagsOrder = LocalStorageManager::ListTagsOrder;
+
+    return listObjects<std::pair<Tag, QStringList>, ListTagsOrder>(
+        flag,
+        errorDescription,
+        limit,
+        offset,
+        order,
+        orderDirection,
+        linkedNotebookGuidSqlQueryCondition);
 }
 
 bool LocalStorageManagerPrivate::expungeTag(
@@ -3808,8 +3837,8 @@ bool LocalStorageManagerPrivate::expungeTag(
 {
     QNDEBUG("LocalStorageManagerPrivate::expungeTag: " << tag);
 
-    ErrorString errorPrefix(QT_TR_NOOP("Can't expunge tag from "
-                                       "the local storage database"));
+    ErrorString errorPrefix(
+        QT_TR_NOOP("Can't expunge tag from the local storage database"));
 
     expungedChildTagLocalUids.clear();
 
@@ -4473,33 +4502,44 @@ bool LocalStorageManagerPrivate::findSavedSearch(
 
 QList<SavedSearch> LocalStorageManagerPrivate::listAllSavedSearches(
     ErrorString & errorDescription, const size_t limit, const size_t offset,
-    const LocalStorageManager::ListSavedSearchesOrder::type & order,
-    const LocalStorageManager::OrderDirection::type & orderDirection) const
+    const LocalStorageManager::ListSavedSearchesOrder & order,
+    const LocalStorageManager::OrderDirection & orderDirection) const
 {
     QNDEBUG("LocalStorageManagerPrivate::listAllSavedSearches");
-    return listSavedSearches(LocalStorageManager::ListAll, errorDescription,
-                             limit, offset, order, orderDirection);
+    return listSavedSearches(
+        LocalStorageManager::ListObjectsOption::ListAll,
+        errorDescription,
+        limit,
+        offset,
+        order,
+        orderDirection);
 }
 
 QList<SavedSearch> LocalStorageManagerPrivate::listSavedSearches(
     const LocalStorageManager::ListObjectsOptions flag,
     ErrorString & errorDescription, const size_t limit, const size_t offset,
-    const LocalStorageManager::ListSavedSearchesOrder::type & order,
-    const LocalStorageManager::OrderDirection::type & orderDirection) const
+    const LocalStorageManager::ListSavedSearchesOrder & order,
+    const LocalStorageManager::OrderDirection & orderDirection) const
 {
     QNDEBUG("LocalStorageManagerPrivate::listSavedSearches: flag = " << flag);
-    return listObjects<SavedSearch, LocalStorageManager::ListSavedSearchesOrder::type>(
-                flag, errorDescription, limit, offset, order, orderDirection);
+    using ListSavedSearchesOrder = LocalStorageManager::ListSavedSearchesOrder;
+    return listObjects<SavedSearch, ListSavedSearchesOrder>(
+        flag,
+        errorDescription,
+        limit,
+        offset,
+        order,
+        orderDirection);
 }
 
 bool LocalStorageManagerPrivate::expungeSavedSearch(
     SavedSearch & search, ErrorString & errorDescription)
 {
     QNDEBUG("LocalStorageManagerPrivate::expungeSavedSearch: saved search = "
-            << search);
+        << search);
 
-    ErrorString errorPrefix(QT_TR_NOOP("Can't expunge saved search from "
-                                       "the local storage database"));
+    ErrorString errorPrefix(
+        QT_TR_NOOP("Can't expunge saved search from the local storage database"));
 
     ErrorString error;
     bool res = search.checkParameters(error);
@@ -4748,7 +4788,7 @@ void LocalStorageManagerPrivate::processPostTransactionException(
 {
     QNERROR(message << ": " << error);
     message.details() += error.text();
-    throw DatabaseSqlErrorException(message);
+    throw DatabaseRequestException(message);
 }
 
 bool LocalStorageManagerPrivate::addEnResource(
@@ -10273,11 +10313,12 @@ bool LocalStorageManagerPrivate::readResourceBinaryDataFromFiles(
     {
         QByteArray dataBody;
         ErrorString error;
-        ReadResourceBinaryDataFromFileStatus::type status =
-            readResourceBinaryDataFromFile(resource.localUid(),
-                                           resource.noteLocalUid(),
-                                           /* is alternate data body = */ false,
-                                           dataBody, error);
+        auto status = readResourceBinaryDataFromFile(
+            resource.localUid(),
+            resource.noteLocalUid(),
+            /* is alternate data body = */ false,
+            dataBody,
+            error);
         if (status != ReadResourceBinaryDataFromFileStatus::Success)
         {
             if (status == ReadResourceBinaryDataFromFileStatus::FileNotFound) {
@@ -10305,11 +10346,12 @@ bool LocalStorageManagerPrivate::readResourceBinaryDataFromFiles(
     {
         QByteArray alternateDataBody;
         ErrorString error;
-        ReadResourceBinaryDataFromFileStatus::type status =
-            readResourceBinaryDataFromFile(resource.localUid(),
-                                           resource.noteLocalUid(),
-                                           /* is alternate data body = */ true,
-                                           alternateDataBody, error);
+        auto status = readResourceBinaryDataFromFile(
+            resource.localUid(),
+            resource.noteLocalUid(),
+            /* is alternate data body = */ true,
+            alternateDataBody,
+            error);
         if (status != ReadResourceBinaryDataFromFileStatus::Success)
         {
             if (status == ReadResourceBinaryDataFromFileStatus::FileNotFound) {
@@ -10336,7 +10378,7 @@ bool LocalStorageManagerPrivate::readResourceBinaryDataFromFiles(
     return true;
 }
 
-LocalStorageManagerPrivate::ReadResourceBinaryDataFromFileStatus::type
+LocalStorageManagerPrivate::ReadResourceBinaryDataFromFileStatus
 LocalStorageManagerPrivate::readResourceBinaryDataFromFile(
     const QString & resourceLocalUid, const QString & noteLocalUid,
     const bool isAlternateDataBody, QByteArray & dataBody,
@@ -13687,23 +13729,25 @@ QString LocalStorageManagerPrivate::listObjectsOptionsToSqlQueryConditions(
     QString result;
     errorDescription.clear();
 
-    bool listAll = options.testFlag(LocalStorageManager::ListAll);
+    using ListObjectsOption = LocalStorageManager::ListObjectsOption;
 
-    bool listDirty = options.testFlag(LocalStorageManager::ListDirty);
-    bool listNonDirty = options.testFlag(LocalStorageManager::ListNonDirty);
+    bool listAll = options.testFlag(ListObjectsOption::ListAll);
+
+    bool listDirty = options.testFlag(ListObjectsOption::ListDirty);
+    bool listNonDirty = options.testFlag(ListObjectsOption::ListNonDirty);
 
     bool listElementsWithoutGuid =
-        options.testFlag(LocalStorageManager::ListElementsWithoutGuid);
+        options.testFlag(ListObjectsOption::ListElementsWithoutGuid);
     bool listElementsWithGuid =
-        options.testFlag(LocalStorageManager::ListElementsWithGuid);
+        options.testFlag(ListObjectsOption::ListElementsWithGuid);
 
-    bool listLocal = options.testFlag(LocalStorageManager::ListLocal);
-    bool listNonLocal = options.testFlag(LocalStorageManager::ListNonLocal);
+    bool listLocal = options.testFlag(ListObjectsOption::ListLocal);
+    bool listNonLocal = options.testFlag(ListObjectsOption::ListNonLocal);
 
     bool listFavoritedElements =
-        options.testFlag(LocalStorageManager::ListFavoritedElements);
+        options.testFlag(ListObjectsOption::ListFavoritedElements);
     bool listNonFavoritedElements =
-        options.testFlag(LocalStorageManager::ListNonFavoritedElements);
+        options.testFlag(ListObjectsOption::ListNonFavoritedElements);
 
     if (!listAll && !listDirty && !listNonDirty && !listElementsWithoutGuid &&
         !listElementsWithGuid && !listLocal && !listNonLocal &&
@@ -13771,9 +13815,11 @@ QString LocalStorageManagerPrivate::listObjectsOptionsToSqlQueryConditions<Linke
     QString result;
     errorDescription.clear();
 
-    bool listAll = flag.testFlag(LocalStorageManager::ListAll);
-    bool listDirty = flag.testFlag(LocalStorageManager::ListDirty);
-    bool listNonDirty = flag.testFlag(LocalStorageManager::ListNonDirty);
+    using ListObjectsOption = LocalStorageManager::ListObjectsOption;
+
+    bool listAll = flag.testFlag(ListObjectsOption::ListAll);
+    bool listDirty = flag.testFlag(ListObjectsOption::ListDirty);
+    bool listNonDirty = flag.testFlag(ListObjectsOption::ListNonDirty);
 
     if (!listAll && !listDirty && !listNonDirty) {
         errorDescription.setBase(QT_TRANSLATE_NOOP("LocalStorageManagerPrivate",
@@ -13865,8 +13911,8 @@ QString LocalStorageManagerPrivate::listObjectsGenericSqlQuery<Note>() const
 }
 
 template <>
-QString LocalStorageManagerPrivate::orderByToSqlTableColumn<LocalStorageManager::ListNotesOrder::type>(
-    const LocalStorageManager::ListNotesOrder::type & order) const
+QString LocalStorageManagerPrivate::orderByToSqlTableColumn<LocalStorageManager::ListNotesOrder>(
+    const LocalStorageManager::ListNotesOrder & order) const
 {
     QString result;
 
@@ -13910,8 +13956,8 @@ QString LocalStorageManagerPrivate::orderByToSqlTableColumn<LocalStorageManager:
 }
 
 template <>
-QString LocalStorageManagerPrivate::orderByToSqlTableColumn<LocalStorageManager::ListNotebooksOrder::type>(
-    const LocalStorageManager::ListNotebooksOrder::type & order) const
+QString LocalStorageManagerPrivate::orderByToSqlTableColumn<LocalStorageManager::ListNotebooksOrder>(
+    const LocalStorageManager::ListNotebooksOrder & order) const
 {
     QString result;
 
@@ -13937,8 +13983,8 @@ QString LocalStorageManagerPrivate::orderByToSqlTableColumn<LocalStorageManager:
 }
 
 template <>
-QString LocalStorageManagerPrivate::orderByToSqlTableColumn<LocalStorageManager::ListLinkedNotebooksOrder::type>(
-    const LocalStorageManager::ListLinkedNotebooksOrder::type & order) const
+QString LocalStorageManagerPrivate::orderByToSqlTableColumn<LocalStorageManager::ListLinkedNotebooksOrder>(
+    const LocalStorageManager::ListLinkedNotebooksOrder & order) const
 {
     QString result;
 
@@ -13961,8 +14007,8 @@ QString LocalStorageManagerPrivate::orderByToSqlTableColumn<LocalStorageManager:
 }
 
 template <>
-QString LocalStorageManagerPrivate::orderByToSqlTableColumn<LocalStorageManager::ListTagsOrder::type>(
-    const LocalStorageManager::ListTagsOrder::type & order) const
+QString LocalStorageManagerPrivate::orderByToSqlTableColumn<LocalStorageManager::ListTagsOrder>(
+    const LocalStorageManager::ListTagsOrder & order) const
 {
     QString result;
 
@@ -13982,8 +14028,8 @@ QString LocalStorageManagerPrivate::orderByToSqlTableColumn<LocalStorageManager:
 }
 
 template <>
-QString LocalStorageManagerPrivate::orderByToSqlTableColumn<LocalStorageManager::ListSavedSearchesOrder::type>(
-    const LocalStorageManager::ListSavedSearchesOrder::type & order) const
+QString LocalStorageManagerPrivate::orderByToSqlTableColumn<LocalStorageManager::ListSavedSearchesOrder>(
+    const LocalStorageManager::ListSavedSearchesOrder & order) const
 {
     QString result;
 
@@ -14202,7 +14248,7 @@ QList<T> LocalStorageManagerPrivate::listObjects(
     const LocalStorageManager::ListObjectsOptions & flag,
     ErrorString & errorDescription, const size_t limit, const size_t offset,
     const TOrderBy & orderBy,
-    const LocalStorageManager::OrderDirection::type & orderDirection,
+    const LocalStorageManager::OrderDirection & orderDirection,
     const QString & additionalSqlQueryCondition) const
 {
     ErrorString flagError;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2019 Dmitry Ivanov
+ * Copyright 2017-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -2058,9 +2058,9 @@ void FullSyncStaleDataItemsExpungerTester::doTest(
     //        actually preserved ======
 
     ErrorString errorDescription;
-    QList<Notebook> remainingNotebooks =
-        pLocalStorageManager->listNotebooks(LocalStorageManager::ListAll,
-                                            errorDescription);
+    QList<Notebook> remainingNotebooks = pLocalStorageManager->listNotebooks(
+        LocalStorageManager::ListObjectsOption::ListAll,
+        errorDescription);
     if (remainingNotebooks.isEmpty() && !errorDescription.isEmpty()) {
         QFAIL(qPrintable(errorDescription.nonLocalizedString()));
     }
@@ -2141,9 +2141,9 @@ void FullSyncStaleDataItemsExpungerTester::doTest(
     //        verify all of tags intended to be preserved were actually preserved
 
     errorDescription.clear();
-    QList<Tag> remainingTags =
-        pLocalStorageManager->listTags(LocalStorageManager::ListAll,
-                                       errorDescription);
+    QList<Tag> remainingTags = pLocalStorageManager->listTags(
+        LocalStorageManager::ListObjectsOption::ListAll,
+        errorDescription);
     if (remainingTags.isEmpty() && !errorDescription.isEmpty()) {
         QFAIL(qPrintable(errorDescription.nonLocalizedString()));
     }
@@ -2223,8 +2223,9 @@ void FullSyncStaleDataItemsExpungerTester::doTest(
 
     errorDescription.clear();
     QList<SavedSearch> remainingSavedSearches =
-        pLocalStorageManager->listSavedSearches(LocalStorageManager::ListAll,
-                                                errorDescription);
+        pLocalStorageManager->listSavedSearches(
+            LocalStorageManager::ListObjectsOption::ListAll,
+            errorDescription);
     if (remainingSavedSearches.isEmpty() && !errorDescription.isEmpty()) {
         QFAIL(qPrintable(errorDescription.nonLocalizedString()));
     }
@@ -2297,9 +2298,9 @@ void FullSyncStaleDataItemsExpungerTester::doTest(
     errorDescription.clear();
     LocalStorageManager::GetNoteOptions getNoteOptions(
         LocalStorageManager::GetNoteOption::WithResourceMetadata);
-    QList<Note> remainingNotes =
-        pLocalStorageManager->listNotes(LocalStorageManager::ListAll,
-                                        getNoteOptions, errorDescription);
+    QList<Note> remainingNotes = pLocalStorageManager->listNotes(
+        LocalStorageManager::ListObjectsOption::ListAll,
+        getNoteOptions, errorDescription);
     if (remainingNotes.isEmpty() && !errorDescription.isEmpty()) {
         QFAIL(qPrintable(errorDescription.nonLocalizedString()));
     }

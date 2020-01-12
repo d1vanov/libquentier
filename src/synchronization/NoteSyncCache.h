@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2019 Dmitry Ivanov
+ * Copyright 2017-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -67,8 +67,8 @@ Q_SIGNALS:
 // private signals
     void listNotes(LocalStorageManager::ListObjectsOptions flag,
                    LocalStorageManager::GetNoteOptions options, size_t limit,
-                   size_t offset, LocalStorageManager::ListNotesOrder::type order,
-                   LocalStorageManager::OrderDirection::type orderDirection,
+                   size_t offset, LocalStorageManager::ListNotesOrder order,
+                   LocalStorageManager::OrderDirection orderDirection,
                    QString linkedNotebookGuid, QUuid requestId);
 
 public Q_SLOTS:
@@ -83,15 +83,15 @@ private Q_SLOTS:
     void onListNotesComplete(LocalStorageManager::ListObjectsOptions flag,
                              LocalStorageManager::GetNoteOptions options,
                              size_t limit, size_t offset,
-                             LocalStorageManager::ListNotesOrder::type order,
-                             LocalStorageManager::OrderDirection::type orderDirection,
+                             LocalStorageManager::ListNotesOrder order,
+                             LocalStorageManager::OrderDirection orderDirection,
                              QString linkedNotebookGuid, QList<Note> foundNotes,
                              QUuid requestId);
     void onListNotesFailed(LocalStorageManager::ListObjectsOptions flag,
                            LocalStorageManager::GetNoteOptions options,
                            size_t limit, size_t offset,
-                           LocalStorageManager::ListNotesOrder::type order,
-                           LocalStorageManager::OrderDirection::type orderDirection,
+                           LocalStorageManager::ListNotesOrder order,
+                           LocalStorageManager::OrderDirection orderDirection,
                            QString linkedNotebookGuid, ErrorString errorDescription,
                            QUuid requestId);
     void onAddNoteComplete(Note note, QUuid requestId);

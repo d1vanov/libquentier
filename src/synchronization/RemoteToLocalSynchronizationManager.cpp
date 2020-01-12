@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -2512,8 +2512,8 @@ void RemoteToLocalSynchronizationManager::onExpungeLinkedNotebookFailed(
 
 void RemoteToLocalSynchronizationManager::onListAllLinkedNotebooksCompleted(
     size_t limit, size_t offset,
-    LocalStorageManager::ListLinkedNotebooksOrder::type order,
-    LocalStorageManager::OrderDirection::type orderDirection,
+    LocalStorageManager::ListLinkedNotebooksOrder order,
+    LocalStorageManager::OrderDirection orderDirection,
     QList<LinkedNotebook> linkedNotebooks, QUuid requestId)
 {
     if (requestId != m_listAllLinkedNotebooksRequestId) {
@@ -2535,8 +2535,8 @@ void RemoteToLocalSynchronizationManager::onListAllLinkedNotebooksCompleted(
 
 void RemoteToLocalSynchronizationManager::onListAllLinkedNotebooksFailed(
     size_t limit, size_t offset,
-    LocalStorageManager::ListLinkedNotebooksOrder::type order,
-    LocalStorageManager::OrderDirection::type orderDirection,
+    LocalStorageManager::ListLinkedNotebooksOrder order,
+    LocalStorageManager::OrderDirection orderDirection,
     ErrorString errorDescription, QUuid requestId)
 {
     if (requestId != m_listAllLinkedNotebooksRequestId) {
@@ -3912,13 +3912,13 @@ void RemoteToLocalSynchronizationManager::connectToLocalStorage()
     QObject::connect(this,
                      QNSIGNAL(RemoteToLocalSynchronizationManager,
                               listAllLinkedNotebooks,size_t,size_t,
-                              LocalStorageManager::ListLinkedNotebooksOrder::type,
-                              LocalStorageManager::OrderDirection::type,QUuid),
+                              LocalStorageManager::ListLinkedNotebooksOrder,
+                              LocalStorageManager::OrderDirection,QUuid),
                      &localStorageManagerAsync,
                      QNSLOT(LocalStorageManagerAsync,onListAllLinkedNotebooksRequest,
                             size_t,size_t,
-                            LocalStorageManager::ListLinkedNotebooksOrder::type,
-                            LocalStorageManager::OrderDirection::type,QUuid),
+                            LocalStorageManager::ListLinkedNotebooksOrder,
+                            LocalStorageManager::OrderDirection,QUuid),
                      Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
 
     QObject::connect(this,
@@ -4258,27 +4258,27 @@ void RemoteToLocalSynchronizationManager::connectToLocalStorage()
     QObject::connect(&localStorageManagerAsync,
                      QNSIGNAL(LocalStorageManagerAsync,listAllLinkedNotebooksComplete,
                               size_t,size_t,
-                              LocalStorageManager::ListLinkedNotebooksOrder::type,
-                              LocalStorageManager::OrderDirection::type,
+                              LocalStorageManager::ListLinkedNotebooksOrder,
+                              LocalStorageManager::OrderDirection,
                               QList<LinkedNotebook>,QUuid),
                      this,
                      QNSLOT(RemoteToLocalSynchronizationManager,
                             onListAllLinkedNotebooksCompleted,size_t,size_t,
-                            LocalStorageManager::ListLinkedNotebooksOrder::type,
-                            LocalStorageManager::OrderDirection::type,
+                            LocalStorageManager::ListLinkedNotebooksOrder,
+                            LocalStorageManager::OrderDirection,
                             QList<LinkedNotebook>,QUuid),
                      Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
     QObject::connect(&localStorageManagerAsync,
                      QNSIGNAL(LocalStorageManagerAsync,listAllLinkedNotebooksFailed,
                               size_t,size_t,
-                              LocalStorageManager::ListLinkedNotebooksOrder::type,
-                              LocalStorageManager::OrderDirection::type,
+                              LocalStorageManager::ListLinkedNotebooksOrder,
+                              LocalStorageManager::OrderDirection,
                               ErrorString,QUuid),
                      this,
                      QNSLOT(RemoteToLocalSynchronizationManager,
                             onListAllLinkedNotebooksFailed,size_t,size_t,
-                            LocalStorageManager::ListLinkedNotebooksOrder::type,
-                            LocalStorageManager::OrderDirection::type,
+                            LocalStorageManager::ListLinkedNotebooksOrder,
+                            LocalStorageManager::OrderDirection,
                             ErrorString,QUuid),
                      Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
 
@@ -4577,13 +4577,13 @@ void RemoteToLocalSynchronizationManager::disconnectFromLocalStorage()
     QObject::disconnect(this,
                         QNSIGNAL(RemoteToLocalSynchronizationManager,
                                  listAllLinkedNotebooks,size_t,size_t,
-                                 LocalStorageManager::ListLinkedNotebooksOrder::type,
-                                 LocalStorageManager::OrderDirection::type,QUuid),
+                                 LocalStorageManager::ListLinkedNotebooksOrder,
+                                 LocalStorageManager::OrderDirection,QUuid),
                         &localStorageManagerAsync,
                         QNSLOT(LocalStorageManagerAsync,onListAllLinkedNotebooksRequest,
                                size_t,size_t,
-                               LocalStorageManager::ListLinkedNotebooksOrder::type,
-                               LocalStorageManager::OrderDirection::type,QUuid));
+                               LocalStorageManager::ListLinkedNotebooksOrder,
+                               LocalStorageManager::OrderDirection,QUuid));
 
     QObject::disconnect(this,
                         QNSIGNAL(RemoteToLocalSynchronizationManager,addSavedSearch,
@@ -4857,26 +4857,26 @@ void RemoteToLocalSynchronizationManager::disconnectFromLocalStorage()
     QObject::disconnect(&localStorageManagerAsync,
                         QNSIGNAL(LocalStorageManagerAsync,
                                  listAllLinkedNotebooksComplete,size_t,size_t,
-                                 LocalStorageManager::ListLinkedNotebooksOrder::type,
-                                 LocalStorageManager::OrderDirection::type,
+                                 LocalStorageManager::ListLinkedNotebooksOrder,
+                                 LocalStorageManager::OrderDirection,
                                  QList<LinkedNotebook>,QUuid),
                         this,
                         QNSLOT(RemoteToLocalSynchronizationManager,
                                onListAllLinkedNotebooksCompleted,size_t,size_t,
-                               LocalStorageManager::ListLinkedNotebooksOrder::type,
-                               LocalStorageManager::OrderDirection::type,
+                               LocalStorageManager::ListLinkedNotebooksOrder,
+                               LocalStorageManager::OrderDirection,
                                QList<LinkedNotebook>,QUuid));
     QObject::disconnect(&localStorageManagerAsync,
                         QNSIGNAL(LocalStorageManagerAsync,listAllLinkedNotebooksFailed,
                                  size_t,size_t,
-                                 LocalStorageManager::ListLinkedNotebooksOrder::type,
-                                 LocalStorageManager::OrderDirection::type,
+                                 LocalStorageManager::ListLinkedNotebooksOrder,
+                                 LocalStorageManager::OrderDirection,
                                  ErrorString,QUuid),
                         this,
                         QNSLOT(RemoteToLocalSynchronizationManager,
                                onListAllLinkedNotebooksFailed,size_t,size_t,
-                               LocalStorageManager::ListLinkedNotebooksOrder::type,
-                               LocalStorageManager::OrderDirection::type,
+                               LocalStorageManager::ListLinkedNotebooksOrder,
+                               LocalStorageManager::OrderDirection,
                                ErrorString,QUuid));
 
     QObject::disconnect(&localStorageManagerAsync,
@@ -5664,7 +5664,7 @@ void RemoteToLocalSynchronizationManager::writeAccountLimitsToAppSettings()
 
 template <class ContainerType, class ElementType>
 void RemoteToLocalSynchronizationManager::launchDataElementSyncCommon(
-    const ContentSource::type contentSource, ContainerType & container,
+    const ContentSource contentSource, ContainerType & container,
     QList<QString> & expungedElements)
 {
     bool syncingUserAccountData = (contentSource == ContentSource::UserAccount);
@@ -5688,7 +5688,7 @@ void RemoteToLocalSynchronizationManager::launchDataElementSyncCommon(
 
 template <class ContainerType, class ElementType>
 void RemoteToLocalSynchronizationManager::launchDataElementSync(
-    const ContentSource::type contentSource, const QString & typeName,
+    const ContentSource contentSource, const QString & typeName,
     ContainerType & container, QList<QString> & expungedElements)
 {
     QNDEBUG("RemoteToLocalSynchronizationManager::launchDataElementSync: "
@@ -5729,7 +5729,7 @@ void RemoteToLocalSynchronizationManager::launchDataElementSync(
 
 template <>
 void RemoteToLocalSynchronizationManager::launchDataElementSync<TagsContainer, Tag>(
-    const ContentSource::type contentSource, const QString & typeName,
+    const ContentSource contentSource, const QString & typeName,
     TagsContainer & container, QList<QString> & expungedElements)
 {
     QNDEBUG("RemoteToLocalSynchronizationManager::launchDataElementSync: "
@@ -6403,25 +6403,32 @@ bool RemoteToLocalSynchronizationManager::resourcesSyncInProgress() const
             !m_postponedConflictingResourceDataPerAPICallPostponeTimerId.isEmpty());
 }
 
-QTextStream & operator<<(
-    QTextStream & strm,
-    const RemoteToLocalSynchronizationManager::ContentSource::type & obj)
-{
-    switch(obj)
-    {
-    case RemoteToLocalSynchronizationManager::ContentSource::UserAccount:
-        strm << "UserAccount";
-        break;
-    case RemoteToLocalSynchronizationManager::ContentSource::LinkedNotebook:
-        strm << "LinkedNotebook";
-        break;
-    default:
-        strm << "Unknown";
-        break;
-    }
+#define PRINT_CONTENT_SOURCE(StreamType)                                       \
+StreamType & operator<<(                                                       \
+    StreamType & strm,                                                         \
+    const RemoteToLocalSynchronizationManager::ContentSource & obj)            \
+{                                                                              \
+    switch(obj)                                                                \
+    {                                                                          \
+    case RemoteToLocalSynchronizationManager::ContentSource::UserAccount:      \
+        strm << "UserAccount";                                                 \
+        break;                                                                 \
+    case RemoteToLocalSynchronizationManager::ContentSource::LinkedNotebook:   \
+        strm << "LinkedNotebook";                                              \
+        break;                                                                 \
+    default:                                                                   \
+        strm << "Unknown";                                                     \
+        break;                                                                 \
+    }                                                                          \
+                                                                               \
+    return strm;                                                               \
+}                                                                              \
+// PRINT_CONTENT_SOURCE
 
-    return strm;
-}
+PRINT_CONTENT_SOURCE(QTextStream)
+PRINT_CONTENT_SOURCE(QDebug)
+
+#undef PRINT_CONTENT_SOURCE
 
 void RemoteToLocalSynchronizationManager::checkNotebooksAndTagsSyncCompletionAndLaunchNotesAndResourcesSync()
 {
@@ -6442,9 +6449,9 @@ void RemoteToLocalSynchronizationManager::checkNotebooksAndTagsSyncCompletionAnd
         return;
     }
 
-    ContentSource::type contentSource = (syncingLinkedNotebooksContent()
-                                         ? ContentSource::LinkedNotebook
-                                         : ContentSource::UserAccount);
+    ContentSource contentSource = (syncingLinkedNotebooksContent()
+                                   ? ContentSource::LinkedNotebook
+                                   : ContentSource::UserAccount);
 
     launchNotesSync(contentSource);
 
@@ -6479,7 +6486,7 @@ void RemoteToLocalSynchronizationManager::checkNotebooksAndTagsSyncCompletionAnd
 }
 
 void RemoteToLocalSynchronizationManager::launchNotesSync(
-    const ContentSource::type & contentSource)
+    const ContentSource & contentSource)
 {
     launchDataElementSync<NotesList, Note>(contentSource, QStringLiteral("Note"),
                                            m_notes, m_expungedNotes);
@@ -6519,7 +6526,7 @@ void RemoteToLocalSynchronizationManager::checkNotesSyncCompletionAndLaunchResou
 }
 
 void RemoteToLocalSynchronizationManager::launchResourcesSync(
-    const ContentSource::type & contentSource)
+    const ContentSource & contentSource)
 {
     QNDEBUG("RemoteToLocalSynchronizationManager::"
             << "launchResourcesSync: content source = "
@@ -6913,9 +6920,9 @@ void RemoteToLocalSynchronizationManager::requestAllLinkedNotebooks()
     QNDEBUG("RemoteToLocalSynchronizationManager::requestAllLinkedNotebooks");
 
     size_t limit = 0, offset = 0;
-    LocalStorageManager::ListLinkedNotebooksOrder::type order =
+    LocalStorageManager::ListLinkedNotebooksOrder order =
         LocalStorageManager::ListLinkedNotebooksOrder::NoOrder;
-    LocalStorageManager::OrderDirection::type orderDirection =
+    LocalStorageManager::OrderDirection orderDirection =
         LocalStorageManager::OrderDirection::Ascending;
 
     m_listAllLinkedNotebooksRequestId = QUuid::createUuid();
@@ -10561,24 +10568,32 @@ void RemoteToLocalSynchronizationManager::startFeedingDownloadedTagsToLocalStora
     syncNextTagPendingProcessing();
 }
 
-QTextStream & operator<<(
-    QTextStream & strm, const RemoteToLocalSynchronizationManager::SyncMode::type & obj)
-{
-    switch(obj)
-    {
-    case RemoteToLocalSynchronizationManager::SyncMode::FullSync:
-        strm << "FullSync";
-        break;
-    case RemoteToLocalSynchronizationManager::SyncMode::IncrementalSync:
-        strm << "IncrementalSync";
-        break;
-    default:
-        strm << "<unknown>";
-        break;
-    }
+#define PRINT_SYNC_MODE(StreamType)                                            \
+StreamType & operator<<(                                                       \
+    StreamType & strm,                                                         \
+    const RemoteToLocalSynchronizationManager::SyncMode & obj)                 \
+{                                                                              \
+    switch(obj)                                                                \
+    {                                                                          \
+    case RemoteToLocalSynchronizationManager::SyncMode::FullSync:              \
+        strm << "FullSync";                                                    \
+        break;                                                                 \
+    case RemoteToLocalSynchronizationManager::SyncMode::IncrementalSync:       \
+        strm << "IncrementalSync";                                             \
+        break;                                                                 \
+    default:                                                                   \
+        strm << "<unknown>";                                                   \
+        break;                                                                 \
+    }                                                                          \
+                                                                               \
+    return strm;                                                               \
+}                                                                              \
+// PRINT_SYNC_MODE
 
-    return strm;
-}
+PRINT_SYNC_MODE(QTextStream)
+PRINT_SYNC_MODE(QDebug)
+
+#undef PRINT_SYNC_MODE
 
 template <>
 void RemoteToLocalSynchronizationManager::appendDataElementsFromSyncChunkToContainer
@@ -11432,9 +11447,7 @@ bool RemoteToLocalSynchronizationManager::onFoundDuplicateByName(
         return true;
     }
 
-    ResolveSyncConflictStatus::type status =
-        resolveSyncConflict(remoteElement, element);
-
+    auto status = resolveSyncConflict(remoteElement, element);
     if (status == ResolveSyncConflictStatus::Pending)
     {
         typename PendingContainerType::iterator pendingItemIt =
@@ -11501,7 +11514,7 @@ bool RemoteToLocalSynchronizationManager::onFoundDuplicateByGuid(
         return true;
     }
 
-    ResolveSyncConflictStatus::type status =
+    ResolveSyncConflictStatus status =
         resolveSyncConflict(remoteElement, element);
 
     if (status == ResolveSyncConflictStatus::Pending)
@@ -11630,7 +11643,7 @@ bool RemoteToLocalSynchronizationManager::onNoDuplicateByName(
 }
 
 template <>
-RemoteToLocalSynchronizationManager::ResolveSyncConflictStatus::type
+RemoteToLocalSynchronizationManager::ResolveSyncConflictStatus
 RemoteToLocalSynchronizationManager::resolveSyncConflict(
     const qevercloud::Notebook & remoteNotebook, const Notebook & localConflict)
 {
@@ -11745,7 +11758,7 @@ RemoteToLocalSynchronizationManager::resolveSyncConflict(
 }
 
 template <>
-RemoteToLocalSynchronizationManager::ResolveSyncConflictStatus::type
+RemoteToLocalSynchronizationManager::ResolveSyncConflictStatus
 RemoteToLocalSynchronizationManager::resolveSyncConflict(
     const qevercloud::Tag & remoteTag, const Tag & localConflict)
 {
@@ -11855,7 +11868,7 @@ RemoteToLocalSynchronizationManager::resolveSyncConflict(
 }
 
 template <>
-RemoteToLocalSynchronizationManager::ResolveSyncConflictStatus::type
+RemoteToLocalSynchronizationManager::ResolveSyncConflictStatus
 RemoteToLocalSynchronizationManager::resolveSyncConflict(
     const qevercloud::SavedSearch & remoteSavedSearch,
     const SavedSearch & localConflict)
@@ -11948,7 +11961,7 @@ RemoteToLocalSynchronizationManager::resolveSyncConflict(
 }
 
 template <>
-RemoteToLocalSynchronizationManager::ResolveSyncConflictStatus::type
+RemoteToLocalSynchronizationManager::ResolveSyncConflictStatus
 RemoteToLocalSynchronizationManager::resolveSyncConflict(
     const qevercloud::Note & remoteNote, const Note & localConflict)
 {
@@ -11992,7 +12005,7 @@ RemoteToLocalSynchronizationManager::resolveSyncConflict(
 }
 
 template <>
-RemoteToLocalSynchronizationManager::ResolveSyncConflictStatus::type
+RemoteToLocalSynchronizationManager::ResolveSyncConflictStatus
 RemoteToLocalSynchronizationManager::resolveSyncConflict(
     const qevercloud::LinkedNotebook & remoteLinkedNotebook,
     const LinkedNotebook & localConflict)

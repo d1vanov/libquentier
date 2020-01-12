@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -50,8 +50,8 @@ Q_SIGNALS:
     void updateSavedSearchRequest(SavedSearch search, QUuid requestId);
     void findSavedSearchRequest(SavedSearch search, QUuid requestId);
     void listAllSavedSearchesRequest(size_t limit, size_t offset,
-                                     LocalStorageManager::ListSavedSearchesOrder::type order,
-                                     LocalStorageManager::OrderDirection::type orderDirection,
+                                     LocalStorageManager::ListSavedSearchesOrder order,
+                                     LocalStorageManager::OrderDirection orderDirection,
                                      QUuid requestId);
     void expungeSavedSearchRequest(SavedSearch search, QUuid requestId);
 
@@ -72,13 +72,13 @@ private Q_SLOTS:
                                  ErrorString errorDescription,
                                  QUuid requestId);
     void onListAllSavedSearchesCompleted(size_t limit, size_t offset,
-                                         LocalStorageManager::ListSavedSearchesOrder::type order,
-                                         LocalStorageManager::OrderDirection::type orderDirection,
+                                         LocalStorageManager::ListSavedSearchesOrder order,
+                                         LocalStorageManager::OrderDirection orderDirection,
                                          QList<SavedSearch> searches,
                                          QUuid requestId);
     void onListAllSavedSearchedFailed(size_t limit, size_t offset,
-                                      LocalStorageManager::ListSavedSearchesOrder::type order,
-                                      LocalStorageManager::OrderDirection::type orderDirection,
+                                      LocalStorageManager::ListSavedSearchesOrder order,
+                                      LocalStorageManager::OrderDirection orderDirection,
                                       ErrorString errorDescription,
                                       QUuid requestId);
     void onExpungeSavedSearchCompleted(SavedSearch search, QUuid requestId);

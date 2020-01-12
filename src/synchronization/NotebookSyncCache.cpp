@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2019 Dmitry Ivanov
+ * Copyright 2017-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -104,8 +104,8 @@ void NotebookSyncCache::fill()
 void NotebookSyncCache::onListNotebooksComplete(
     LocalStorageManager::ListObjectsOptions flag,
     size_t limit, size_t offset,
-    LocalStorageManager::ListNotebooksOrder::type order,
-    LocalStorageManager::OrderDirection::type orderDirection,
+    LocalStorageManager::ListNotebooksOrder order,
+    LocalStorageManager::OrderDirection orderDirection,
     QString linkedNotebookGuid, QList<Notebook> foundNotebooks,
     QUuid requestId)
 {
@@ -141,8 +141,8 @@ void NotebookSyncCache::onListNotebooksComplete(
 void NotebookSyncCache::onListNotebooksFailed(
     LocalStorageManager::ListObjectsOptions flag,
     size_t limit, size_t offset,
-    LocalStorageManager::ListNotebooksOrder::type order,
-    LocalStorageManager::OrderDirection::type orderDirection,
+    LocalStorageManager::ListNotebooksOrder order,
+    LocalStorageManager::OrderDirection orderDirection,
     QString linkedNotebookGuid, ErrorString errorDescription,
     QUuid requestId)
 {
@@ -211,15 +211,15 @@ void NotebookSyncCache::connectToLocalStorage()
                      QNSIGNAL(NotebookSyncCache,listNotebooks,
                               LocalStorageManager::ListObjectsOptions,
                               size_t,size_t,
-                              LocalStorageManager::ListNotebooksOrder::type,
-                              LocalStorageManager::OrderDirection::type,
+                              LocalStorageManager::ListNotebooksOrder,
+                              LocalStorageManager::OrderDirection,
                               QString,QUuid),
                      &m_localStorageManagerAsync,
                      QNSLOT(LocalStorageManagerAsync,onListNotebooksRequest,
                             LocalStorageManager::ListObjectsOptions,
                             size_t,size_t,
-                            LocalStorageManager::ListNotebooksOrder::type,
-                            LocalStorageManager::OrderDirection::type,
+                            LocalStorageManager::ListNotebooksOrder,
+                            LocalStorageManager::OrderDirection,
                             QString,QUuid),
                      Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
 
@@ -228,30 +228,30 @@ void NotebookSyncCache::connectToLocalStorage()
                      QNSIGNAL(LocalStorageManagerAsync,listNotebooksComplete,
                               LocalStorageManager::ListObjectsOptions,
                               size_t,size_t,
-                              LocalStorageManager::ListNotebooksOrder::type,
-                              LocalStorageManager::OrderDirection::type,
+                              LocalStorageManager::ListNotebooksOrder,
+                              LocalStorageManager::OrderDirection,
                               QString,QList<Notebook>,QUuid),
                      this,
                      QNSLOT(NotebookSyncCache,onListNotebooksComplete,
                             LocalStorageManager::ListObjectsOptions,
                             size_t,size_t,
-                            LocalStorageManager::ListNotebooksOrder::type,
-                            LocalStorageManager::OrderDirection::type,
+                            LocalStorageManager::ListNotebooksOrder,
+                            LocalStorageManager::OrderDirection,
                             QString,QList<Notebook>,QUuid),
                      Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
     QObject::connect(&m_localStorageManagerAsync,
                      QNSIGNAL(LocalStorageManagerAsync,listNotebooksFailed,
                               LocalStorageManager::ListObjectsOptions,
                               size_t,size_t,
-                              LocalStorageManager::ListNotebooksOrder::type,
-                              LocalStorageManager::OrderDirection::type,
+                              LocalStorageManager::ListNotebooksOrder,
+                              LocalStorageManager::OrderDirection,
                               QString,ErrorString,QUuid),
                      this,
                      QNSLOT(NotebookSyncCache,onListNotebooksFailed,
                             LocalStorageManager::ListObjectsOptions,
                             size_t,size_t,
-                            LocalStorageManager::ListNotebooksOrder::type,
-                            LocalStorageManager::OrderDirection::type,
+                            LocalStorageManager::ListNotebooksOrder,
+                            LocalStorageManager::OrderDirection,
                             QString,ErrorString,QUuid),
                      Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
     QObject::connect(&m_localStorageManagerAsync,
@@ -293,15 +293,15 @@ void NotebookSyncCache::disconnectFromLocalStorage()
                         QNSIGNAL(NotebookSyncCache,listNotebooks,
                                  LocalStorageManager::ListObjectsOptions,
                                  size_t,size_t,
-                                 LocalStorageManager::ListNotebooksOrder::type,
-                                 LocalStorageManager::OrderDirection::type,
+                                 LocalStorageManager::ListNotebooksOrder,
+                                 LocalStorageManager::OrderDirection,
                                  QString,QUuid),
                         &m_localStorageManagerAsync,
                         QNSLOT(LocalStorageManagerAsync,onListNotebooksRequest,
                                LocalStorageManager::ListObjectsOptions,
                                size_t,size_t,
-                               LocalStorageManager::ListNotebooksOrder::type,
-                               LocalStorageManager::OrderDirection::type,
+                               LocalStorageManager::ListNotebooksOrder,
+                               LocalStorageManager::OrderDirection,
                                QString,QUuid));
 
     // Disconnect local storage manager async's signals from local slots
@@ -309,29 +309,29 @@ void NotebookSyncCache::disconnectFromLocalStorage()
                         QNSIGNAL(LocalStorageManagerAsync,listNotebooksComplete,
                                  LocalStorageManager::ListObjectsOptions,
                                  size_t,size_t,
-                                 LocalStorageManager::ListNotebooksOrder::type,
-                                 LocalStorageManager::OrderDirection::type,
+                                 LocalStorageManager::ListNotebooksOrder,
+                                 LocalStorageManager::OrderDirection,
                                  QString,QList<Notebook>,QUuid),
                         this,
                         QNSLOT(NotebookSyncCache,onListNotebooksComplete,
                                LocalStorageManager::ListObjectsOptions,
                                size_t,size_t,
-                               LocalStorageManager::ListNotebooksOrder::type,
-                               LocalStorageManager::OrderDirection::type,
+                               LocalStorageManager::ListNotebooksOrder,
+                               LocalStorageManager::OrderDirection,
                                QString,QList<Notebook>,QUuid));
     QObject::disconnect(&m_localStorageManagerAsync,
                         QNSIGNAL(LocalStorageManagerAsync,listNotebooksFailed,
                                  LocalStorageManager::ListObjectsOptions,
                                  size_t,size_t,
-                                 LocalStorageManager::ListNotebooksOrder::type,
-                                 LocalStorageManager::OrderDirection::type,
+                                 LocalStorageManager::ListNotebooksOrder,
+                                 LocalStorageManager::OrderDirection,
                                  QString,ErrorString,QUuid),
                         this,
                         QNSLOT(NotebookSyncCache,onListNotebooksFailed,
                                LocalStorageManager::ListObjectsOptions,
                                size_t,size_t,
-                               LocalStorageManager::ListNotebooksOrder::type,
-                               LocalStorageManager::OrderDirection::type,
+                               LocalStorageManager::ListNotebooksOrder,
+                               LocalStorageManager::OrderDirection,
                                QString,ErrorString,QUuid));
     QObject::disconnect(&m_localStorageManagerAsync,
                         QNSIGNAL(LocalStorageManagerAsync,addNotebookComplete,
@@ -363,11 +363,14 @@ void NotebookSyncCache::requestNotebooksList()
 
     NCTRACE("Emitting the request to list notebooks: request id = "
             << m_listNotebooksRequestId << ", offset = " << m_offset);
-    Q_EMIT listNotebooks(LocalStorageManager::ListAll,
-                       m_limit, m_offset,
-                       LocalStorageManager::ListNotebooksOrder::NoOrder,
-                       LocalStorageManager::OrderDirection::Ascending,
-                       m_linkedNotebookGuid, m_listNotebooksRequestId);
+    Q_EMIT listNotebooks(
+        LocalStorageManager::ListObjectsOption::ListAll,
+        m_limit,
+        m_offset,
+        LocalStorageManager::ListNotebooksOrder::NoOrder,
+        LocalStorageManager::OrderDirection::Ascending,
+        m_linkedNotebookGuid,
+        m_listNotebooksRequestId);
 
 }
 

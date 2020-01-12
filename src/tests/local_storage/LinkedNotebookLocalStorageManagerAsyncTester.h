@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -51,8 +51,8 @@ Q_SIGNALS:
     void findLinkedNotebookRequest(LinkedNotebook notebook, QUuid requestId);
     void listAllLinkedNotebooksRequest(
             size_t limit, size_t offset,
-            LocalStorageManager::ListLinkedNotebooksOrder::type order,
-            LocalStorageManager::OrderDirection::type orderDirection,
+            LocalStorageManager::ListLinkedNotebooksOrder order,
+            LocalStorageManager::OrderDirection orderDirection,
             QUuid requestId);
     void expungeLinkedNotebookRequest(LinkedNotebook notebook, QUuid requestId);
 
@@ -76,13 +76,13 @@ private Q_SLOTS:
                                     QUuid requestId);
     void onListAllLinkedNotebooksCompleted(
             size_t limit, size_t offset,
-            LocalStorageManager::ListLinkedNotebooksOrder::type order,
-            LocalStorageManager::OrderDirection::type orderDirection,
+            LocalStorageManager::ListLinkedNotebooksOrder order,
+            LocalStorageManager::OrderDirection orderDirection,
             QList<LinkedNotebook> linkedNotebooks, QUuid requestId);
     void onListAllLinkedNotebooksFailed(
             size_t limit, size_t offset,
-            LocalStorageManager::ListLinkedNotebooksOrder::type order,
-            LocalStorageManager::OrderDirection::type orderDirection,
+            LocalStorageManager::ListLinkedNotebooksOrder order,
+            LocalStorageManager::OrderDirection orderDirection,
             ErrorString errorDescription, QUuid requestId);
     void onExpungeLinkedNotebookCompleted(LinkedNotebook notebook,
                                           QUuid requestId);
