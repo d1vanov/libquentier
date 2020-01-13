@@ -49,92 +49,7 @@ LocalStorageManagerPrivate::LocalStorageManagerPrivate(
         const LocalStorageManager::StartupOptions options,
         QObject * parent) :
     QObject(parent),
-    // NOTE: don't initialize these! Otherwise SwitchUser won't work right
-    m_currentAccount(account),
-    m_databaseFilePath(),
-    m_sqlDatabase(),
-    m_databaseFileLock(),
-    m_insertOrReplaceSavedSearchQuery(),
-    m_insertOrReplaceSavedSearchQueryPrepared(false),
-    m_getSavedSearchCountQuery(),
-    m_getSavedSearchCountQueryPrepared(false),
-    m_insertOrReplaceResourceMetadataWithDataPropertiesQuery(),
-    m_insertOrReplaceResourceMetadataWithDataPropertiesQueryPrepared(false),
-    m_updateResourceMetadataWithoutDataPropertiesQuery(),
-    m_updateResourceMetadataWithoutDataPropertiesQueryPrepared(false),
-    m_insertOrReplaceNoteResourceQuery(),
-    m_insertOrReplaceNoteResourceQueryPrepared(false),
-    m_deleteResourceFromResourceRecognitionTypesQuery(),
-    m_deleteResourceFromResourceRecognitionTypesQueryPrepared(false),
-    m_insertOrReplaceIntoResourceRecognitionDataQuery(),
-    m_insertOrReplaceIntoResourceRecognitionDataQueryPrepared(false),
-    m_deleteResourceFromResourceAttributesQuery(),
-    m_deleteResourceFromResourceAttributesQueryPrepared(false),
-    m_deleteResourceFromResourceAttributesApplicationDataKeysOnlyQuery(),
-    m_deleteResourceFromResourceAttributesApplicationDataKeysOnlyQueryPrepared(false),
-    m_deleteResourceFromResourceAttributesApplicationDataFullMapQuery(),
-    m_deleteResourceFromResourceAttributesApplicationDataFullMapQueryPrepared(false),
-    m_insertOrReplaceResourceAttributesQuery(),
-    m_insertOrReplaceResourceAttributesQueryPrepared(false),
-    m_insertOrReplaceResourceAttributeApplicationDataKeysOnlyQuery(),
-    m_insertOrReplaceResourceAttributeApplicationDataKeysOnlyQueryPrepared(false),
-    m_insertOrReplaceResourceAttributeApplicationDataFullMapQuery(),
-    m_insertOrReplaceResourceAttributeApplicationDataFullMapQueryPrepared(false),
-    m_getResourceCountQuery(),
-    m_getResourceCountQueryPrepared(false),
-    m_getTagCountQuery(),
-    m_getTagCountQueryPrepared(false),
-    m_insertOrReplaceTagQuery(),
-    m_insertOrReplaceTagQueryPrepared(false),
-    m_insertOrReplaceNoteQuery(),
-    m_insertOrReplaceNoteQueryPrepared(false),
-    m_insertOrReplaceSharedNoteQuery(),
-    m_insertOrReplaceSharedNoteQueryPrepared(false),
-    m_insertOrReplaceNoteRestrictionsQuery(),
-    m_insertOrReplaceNoteRestrictionsQueryPrepared(false),
-    m_insertOrReplaceNoteLimitsQuery(),
-    m_insertOrReplaceNoteLimitsQueryPrepared(false),
-    m_canAddNoteToNotebookQuery(),
-    m_canAddNoteToNotebookQueryPrepared(false),
-    m_canUpdateNoteInNotebookQuery(),
-    m_canUpdateNoteInNotebookQueryPrepared(false),
-    m_canExpungeNoteInNotebookQuery(),
-    m_canExpungeNoteInNotebookQueryPrepared(false),
-    m_insertOrReplaceNoteIntoNoteTagsQuery(),
-    m_insertOrReplaceNoteIntoNoteTagsQueryPrepared(false),
-    m_getLinkedNotebookCountQuery(),
-    m_getLinkedNotebookCountQueryPrepared(false),
-    m_insertOrReplaceLinkedNotebookQuery(),
-    m_insertOrReplaceLinkedNotebookQueryPrepared(false),
-    m_getNotebookCountQuery(),
-    m_getNotebookCountQueryPrepared(false),
-    m_insertOrReplaceNotebookQuery(),
-    m_insertOrReplaceNotebookQueryPrepared(false),
-    m_insertOrReplaceNotebookRestrictionsQuery(),
-    m_insertOrReplaceNotebookRestrictionsQueryPrepared(false),
-    m_insertOrReplaceSharedNotebookQuery(),
-    m_insertOrReplaceSharedNotebookQueryPrepared(false),
-    m_getUserCountQuery(),
-    m_getUserCountQueryPrepared(false),
-    m_insertOrReplaceUserQuery(),
-    m_insertOrReplaceUserQueryPrepared(false),
-    m_insertOrReplaceUserAttributesQuery(),
-    m_insertOrReplaceUserAttributesQueryPrepared(false),
-    m_insertOrReplaceAccountingQuery(),
-    m_insertOrReplaceAccountingQueryPrepared(false),
-    m_insertOrReplaceAccountLimitsQuery(),
-    m_insertOrReplaceAccountLimitsQueryPrepared(false),
-    m_insertOrReplaceBusinessUserInfoQuery(),
-    m_insertOrReplaceBusinessUserInfoQueryPrepared(false),
-    m_insertOrReplaceUserAttributesViewedPromotionsQuery(),
-    m_insertOrReplaceUserAttributesViewedPromotionsQueryPrepared(false),
-    m_insertOrReplaceUserAttributesRecentMailedAddressesQuery(),
-    m_insertOrReplaceUserAttributesRecentMailedAddressesQueryPrepared(false),
-    m_deleteUserQuery(),
-    m_deleteUserQueryPrepared(false),
-    m_pLocalStoragePatchManager(nullptr),
-    m_stringUtils(),
-    m_preservedAsterisk()
+    m_currentAccount(account)
 {
     m_preservedAsterisk.reserve(1);
     m_preservedAsterisk.push_back(QChar::fromLatin1('*'));
@@ -151,11 +66,11 @@ LocalStorageManagerPrivate::~LocalStorageManagerPrivate()
     unlockDatabaseFile();
 }
 
-bool LocalStorageManagerPrivate::addUser(const User & user,
-                                         ErrorString & errorDescription)
+bool LocalStorageManagerPrivate::addUser(
+    const User & user, ErrorString & errorDescription)
 {
-    ErrorString errorPrefix(QT_TR_NOOP("Can't insert user data into "
-                                       "the local storage database"));
+    ErrorString errorPrefix(
+        QT_TR_NOOP("Can't insert user data into the local storage database"));
 
     ErrorString error;
     bool res = user.checkParameters(error);
@@ -169,10 +84,15 @@ bool LocalStorageManagerPrivate::addUser(const User & user,
     }
 
     QString userId = QString::number(user.id());
-    bool exists = rowExists(QStringLiteral("Users"), QStringLiteral("id"), userId);
-    if (exists) {
+    bool exists = rowExists(
+        QStringLiteral("Users"),
+        QStringLiteral("id"),
+        userId);
+    if (exists)
+    {
         errorDescription.base() = errorPrefix.base();
-        errorDescription.appendBase(QT_TR_NOOP("user with the same id already exists"));
+        errorDescription.appendBase(
+            QT_TR_NOOP("user with the same id already exists"));
         errorDescription.details() = userId;
         QNWARNING(errorDescription << ", id: " << userId);
         return false;
@@ -180,7 +100,8 @@ bool LocalStorageManagerPrivate::addUser(const User & user,
 
     error.clear();
     res = insertOrReplaceUser(user, error);
-    if (!res) {
+    if (!res)
+    {
         errorDescription.base() = errorPrefix.base();
         errorDescription.appendBase(error.base());
         errorDescription.appendBase(error.additionalBases());
@@ -192,29 +113,34 @@ bool LocalStorageManagerPrivate::addUser(const User & user,
     return true;
 }
 
-bool LocalStorageManagerPrivate::updateUser(const User & user,
-                                            ErrorString & errorDescription)
+bool LocalStorageManagerPrivate::updateUser(
+    const User & user, ErrorString & errorDescription)
 {
-    ErrorString errorPrefix(QT_TR_NOOP("Can't update user data in "
-                                       "the local storage database"));
+    ErrorString errorPrefix(
+        QT_TR_NOOP("Can't update user data in the local storage database"));
 
     ErrorString error;
     bool res = user.checkParameters(error);
-    if (!res) {
+    if (!res)
+    {
         errorDescription.base() = errorPrefix.base();
         errorDescription.appendBase(error.base());
         errorDescription.appendBase(error.additionalBases());
         errorDescription.details() = error.details();
-        QNWARNING("Found invalid user: " << user
-                  << "\nError: " << error);
+        QNWARNING("Found invalid user: " << user << "\nError: " << error);
         return false;
     }
 
     QString userId = QString::number(user.id());
-    bool exists = rowExists(QStringLiteral("Users"), QStringLiteral("id"), userId);
-    if (!exists) {
+    bool exists = rowExists(
+        QStringLiteral("Users"),
+        QStringLiteral("id"),
+        userId);
+    if (!exists)
+    {
         errorDescription.base() = errorPrefix.base();
-        errorDescription.appendBase(QT_TR_NOOP("user with the specified id was not found"));
+        errorDescription.appendBase(
+            QT_TR_NOOP("user with the specified id was not found"));
         errorDescription.details() = userId;
         QNWARNING(errorDescription << ", id: " << userId);
         return false;
@@ -222,7 +148,8 @@ bool LocalStorageManagerPrivate::updateUser(const User & user,
 
     error.clear();
     res = insertOrReplaceUser(user, error);
-    if (!res) {
+    if (!res)
+    {
         errorDescription.base() = errorPrefix.base();
         errorDescription.appendBase(error.base());
         errorDescription.appendBase(error.additionalBases());
@@ -234,12 +161,13 @@ bool LocalStorageManagerPrivate::updateUser(const User & user,
     return true;
 }
 
-bool LocalStorageManagerPrivate::findUser(User & user,
-                                          ErrorString & errorDescription) const
+bool LocalStorageManagerPrivate::findUser(
+    User & user, ErrorString & errorDescription) const
 {
     QNDEBUG("LocalStorageManagerPrivate::findUser");
 
-    ErrorString errorPrefix(QT_TR_NOOP("Can't find user data in the local storage database"));
+    ErrorString errorPrefix(
+        QT_TR_NOOP("Can't find user data in the local storage database"));
 
     if (!user.hasId()) {
         errorDescription.base() = errorPrefix.base();
@@ -252,17 +180,18 @@ bool LocalStorageManagerPrivate::findUser(User & user,
     QString userId = QString::number(id);
     QNDEBUG("Looking for user with id = " << userId);
 
-    QString queryString =
-        QStringLiteral("SELECT * FROM Users LEFT OUTER JOIN UserAttributes "
-                       "ON Users.id = UserAttributes.id "
-                       "LEFT OUTER JOIN UserAttributesViewedPromotions "
-                       "ON Users.id = UserAttributesViewedPromotions.id "
-                       "LEFT OUTER JOIN UserAttributesRecentMailedAddresses "
-                       "ON Users.id = UserAttributesRecentMailedAddresses.id "
-                       "LEFT OUTER JOIN Accounting ON Users.id = Accounting.id "
-                       "LEFT OUTER JOIN AccountLimits ON Users.id = AccountLimits.id "
-                       "LEFT OUTER JOIN BusinessUserInfo ON Users.id = BusinessUserInfo.id "
-                       "WHERE Users.id = :id");
+    QString queryString = QStringLiteral(
+        "SELECT * FROM Users LEFT OUTER JOIN UserAttributes "
+        "ON Users.id = UserAttributes.id "
+        "LEFT OUTER JOIN UserAttributesViewedPromotions "
+        "ON Users.id = UserAttributesViewedPromotions.id "
+        "LEFT OUTER JOIN UserAttributesRecentMailedAddresses "
+        "ON Users.id = UserAttributesRecentMailedAddresses.id "
+        "LEFT OUTER JOIN Accounting ON Users.id = Accounting.id "
+        "LEFT OUTER JOIN AccountLimits ON Users.id = AccountLimits.id "
+        "LEFT OUTER JOIN BusinessUserInfo ON Users.id = BusinessUserInfo.id "
+        "WHERE Users.id = :id");
+
     QSqlQuery query(m_sqlDatabase);
     bool res = query.prepare(queryString);
     DATABASE_CHECK_AND_SET_ERROR()
@@ -290,15 +219,18 @@ bool LocalStorageManagerPrivate::findUser(User & user,
     return true;
 }
 
-bool LocalStorageManagerPrivate::deleteUser(const User & user,
-                                            ErrorString & errorDescription)
+bool LocalStorageManagerPrivate::deleteUser(
+    const User & user, ErrorString & errorDescription)
 {
-    ErrorString errorPrefix(QT_TR_NOOP("Can't mark the user data as deleted "
-                                       "in the local storage database"));
+    ErrorString errorPrefix(
+        QT_TR_NOOP("Can't mark user data as deleted in the local storage "
+                   "database"));
 
-    if (!user.hasDeletionTimestamp()) {
+    if (!user.hasDeletionTimestamp())
+    {
         errorDescription.base() = errorPrefix.base();
-        errorDescription.appendBase(QT_TR_NOOP("deletion timestamp is not set"));
+        errorDescription.appendBase(
+            QT_TR_NOOP("deletion timestamp is not set"));
         QNWARNING(errorDescription);
         return false;
     }
@@ -325,11 +257,11 @@ bool LocalStorageManagerPrivate::deleteUser(const User & user,
     return true;
 }
 
-bool LocalStorageManagerPrivate::expungeUser(const User & user,
-                                             ErrorString & errorDescription)
+bool LocalStorageManagerPrivate::expungeUser(
+    const User & user, ErrorString & errorDescription)
 {
-    ErrorString errorPrefix(QT_TR_NOOP("Can't expunge user data from "
-                                       "the local storage database"));
+    ErrorString errorPrefix(
+        QT_TR_NOOP("Can't expunge user data from the local storage database"));
 
     if (!user.hasId()) {
         errorDescription.base() = errorPrefix.base();
@@ -369,16 +301,18 @@ bool LocalStorageManagerPrivate::expungeUser(const User & user,
 
 #define SET_NO_DATA_FOUND()                                                    \
     errorDescription.base() = errorPrefix.base();                              \
-    errorDescription.appendBase(QT_TRANSLATE_NOOP("LocalStorageManagerPrivate",\
-                                                  "no data found"));           \
+    errorDescription.appendBase(                                               \
+        QT_TRANSLATE_NOOP("LocalStorageManagerPrivate",                        \
+                          "no data found"));                                   \
     QNDEBUG(errorDescription)                                                  \
 // SET_NO_DATA_FOUND
 
 int LocalStorageManagerPrivate::notebookCount(
     ErrorString & errorDescription) const
 {
-    ErrorString errorPrefix(QT_TR_NOOP("Can't get the number of notebooks from "
-                                       "the local storage database"));
+    ErrorString errorPrefix(
+        QT_TR_NOOP("Can't get the number of notebooks from the local storage "
+                   "database"));
 
     bool res = checkAndPrepareNotebookCountQuery();
     QSqlQuery & query = m_getNotebookCountQuery;
@@ -413,14 +347,14 @@ void LocalStorageManagerPrivate::switchUser(
     const Account & account, const LocalStorageManager::StartupOptions options)
 {
     QNDEBUG("LocalStorageManagerPrivate::switchUser: " << account.name()
-            << ", clear database = "
-            << ((options & LocalStorageManager::StartupOption::ClearDatabase)
-                ? "true"
-                : "false")
-            << ", override lock = "
-            << ((options & LocalStorageManager::StartupOption::OverrideLock)
-                ? "true"
-                : "false"));
+        << ", clear database = "
+        << ((options & LocalStorageManager::StartupOption::ClearDatabase)
+            ? "true"
+            : "false")
+        << ", override lock = "
+        << ((options & LocalStorageManager::StartupOption::OverrideLock)
+            ? "true"
+            : "false"));
     QNTRACE("Account: " << account);
 
     if (!m_databaseFilePath.isEmpty() &&
@@ -475,8 +409,8 @@ void LocalStorageManagerPrivate::switchUser(
 
     QString accountName = account.name();
     if (Q_UNLIKELY(accountName.isEmpty())) {
-        ErrorString error(QT_TR_NOOP("Can't initialize local storage: account "
-                                     "name is empty"));
+        ErrorString error(
+            QT_TR_NOOP("Can't initialize local storage: account name is empty"));
         throw DatabaseOpeningException(error);
     }
 
@@ -489,7 +423,8 @@ void LocalStorageManagerPrivate::switchUser(
 
     m_databaseFilePath +=
         QStringLiteral("/") + QStringLiteral(QUENTIER_DATABASE_NAME);
-    QNDEBUG("Attempting to open or create database file: " << m_databaseFilePath);
+    QNDEBUG("Attempting to open or create database file: "
+        << m_databaseFilePath);
 
     QFileInfo databaseFileInfo(m_databaseFilePath);
 
@@ -498,8 +433,9 @@ void LocalStorageManagerPrivate::switchUser(
     {
         bool res = databaseFileDir.mkpath(databaseFileDir.absolutePath());
         if (!res) {
-            ErrorString error(QT_TR_NOOP("Can't create folder for the local "
-                                         "storage database file"));
+            ErrorString error(
+                QT_TR_NOOP("Can't create folder for the local storage database "
+                           "file"));
             throw DatabaseOpeningException(error);
         }
     }
@@ -507,15 +443,15 @@ void LocalStorageManagerPrivate::switchUser(
     if (databaseFileInfo.exists())
     {
         if (Q_UNLIKELY(!databaseFileInfo.isReadable())) {
-            ErrorString error(QT_TR_NOOP("Local storage database file is not "
-                                         "readable"));
+            ErrorString error(
+                QT_TR_NOOP("Local storage database file is not readable"));
             error.details() = m_databaseFilePath;
             throw DatabaseOpeningException(error);
         }
 
         if (Q_UNLIKELY(!databaseFileInfo.isWritable())) {
-            ErrorString error(QT_TR_NOOP("Local storage database file is not "
-                                         "writable"));
+            ErrorString error(
+                QT_TR_NOOP("Local storage database file is not writable"));
             error.details() = m_databaseFilePath;
             throw DatabaseOpeningException(error);
         }
@@ -537,19 +473,20 @@ void LocalStorageManagerPrivate::switchUser(
 #ifndef Q_OS_WIN
     /**
      * WARNING: something strange is going on here: if no call is made to the
-     * below method, boost::interprocess::file_lock occasionally and sporadically
-     * thinks "there is no such file or directory"; that's what its exception
-     * message says
+     * below method, boost::interprocess::file_lock occasionally and
+     * sporadically thinks "there is no such file or directory"; that's what
+     * its exception message says
      */
     bool databaseFileExists = databaseFileInfo.exists();
     QNDEBUG("Database file exists before locking: "
-            << (databaseFileExists ? "true" : "false"));
+        << (databaseFileExists ? "true" : "false"));
 
     bool lockResult = false;
 
     try {
         boost::interprocess::file_lock databaseLock(
             databaseFileInfo.canonicalFilePath().toUtf8().constData());
+
         m_databaseFileLock.swap(databaseLock);
         lockResult = m_databaseFileLock.try_lock();
     }
@@ -564,21 +501,24 @@ void LocalStorageManagerPrivate::switchUser(
 
     if (!lockResult)
     {
-        if (!(options & LocalStorageManager::StartupOption::OverrideLock)) {
-            ErrorString error(QT_TR_NOOP("Local storage database file is locked"));
+        if (!(options & LocalStorageManager::StartupOption::OverrideLock))
+        {
+            ErrorString error(
+                QT_TR_NOOP("Local storage database file is locked"));
             error.details() = m_databaseFilePath;
             throw DatabaseLockedException(error);
         }
-        else {
+        else
+        {
             QNINFO("Local storage database file " << m_databaseFilePath
-                   << " is locked but nobody cares");
+                << " is locked but nobody cares");
         }
     }
 #endif // Q_OS_WIN
 
     if (options & LocalStorageManager::StartupOption::ClearDatabase) {
         QNDEBUG("Cleaning up the whole database for account: "
-                << m_currentAccount);
+            << m_currentAccount);
         clearDatabaseFile();
     }
 
@@ -587,18 +527,22 @@ void LocalStorageManagerPrivate::switchUser(
     m_sqlDatabase.setPassword(accountName);
     m_sqlDatabase.setDatabaseName(m_databaseFilePath);
 
-    if (!m_sqlDatabase.open()) {
+    if (!m_sqlDatabase.open())
+    {
         QString lastErrorText = m_sqlDatabase.lastError().text();
-        ErrorString error(QT_TR_NOOP("Can't connect to the local storage database"));
+        ErrorString error(
+            QT_TR_NOOP("Can't connect to the local storage database"));
         error.details() = lastErrorText;
         throw DatabaseOpeningException(error);
     }
 
     QSqlQuery query(m_sqlDatabase);
-    if (!query.exec(QStringLiteral("PRAGMA foreign_keys = ON"))) {
+    if (!query.exec(QStringLiteral("PRAGMA foreign_keys = ON")))
+    {
         QString lastErrorText = m_sqlDatabase.lastError().text();
-        ErrorString error(QT_TR_NOOP("Can't set foreign_keys = ON pragma for "
-                                     "the local storage database"));
+        ErrorString error(
+            QT_TR_NOOP("Can't set foreign_keys = ON pragma for "
+                       "the local storage database"));
         error.details() = lastErrorText;
         throw DatabaseRequestException(error);
     }
@@ -606,28 +550,34 @@ void LocalStorageManagerPrivate::switchUser(
     SysInfo sysInfo;
     qint64 pageSize = sysInfo.pageSize();
     QString pageSizeQuery =
-        QString::fromUtf8("PRAGMA page_size = %1").arg(QString::number(pageSize));
-    if (!query.exec(pageSizeQuery)) {
+        QString::fromUtf8("PRAGMA page_size = %1")
+        .arg(QString::number(pageSize));
+    if (!query.exec(pageSizeQuery))
+    {
         QString lastErrorText = m_sqlDatabase.lastError().text();
-        ErrorString error(QT_TR_NOOP("Can't set page_size pragma for the local "
-                                     "storage database"));
+        ErrorString error(
+            QT_TR_NOOP("Can't set page_size pragma for the local storage "
+                       "database"));
         error.details() = lastErrorText;
         throw DatabaseRequestException(error);
     }
 
     QString writeAheadLoggingQuery = QStringLiteral("PRAGMA journal_mode=WAL");
-    if (!query.exec(writeAheadLoggingQuery)) {
+    if (!query.exec(writeAheadLoggingQuery))
+    {
         QString lastErrorText = m_sqlDatabase.lastError().text();
-        ErrorString error(QT_TR_NOOP("Can't set journal_mode pragma to WAL for "
-                                     "the local storage database"));
+        ErrorString error(
+            QT_TR_NOOP("Can't set journal_mode pragma to WAL for the local "
+                       "storage database"));
         error.details() = lastErrorText;
         throw DatabaseRequestException(error);
     }
 
     ErrorString errorDescription;
-    if (!createTables(errorDescription)) {
-        ErrorString error(QT_TR_NOOP("Can't initialize tables in the local "
-                                     "storage database"));
+    if (!createTables(errorDescription))
+    {
+        ErrorString error(
+            QT_TR_NOOP("Can't initialize tables in the local storage database"));
         error.appendBase(errorDescription.base());
         error.appendBase(errorDescription.additionalBases());
         error.details() = errorDescription.details();
@@ -665,9 +615,11 @@ QVector<QSharedPointer<ILocalStoragePatch> >
 LocalStorageManagerPrivate::requiredLocalStoragePatches()
 {
     if (!m_pLocalStoragePatchManager) {
-        m_pLocalStoragePatchManager =
-            new LocalStoragePatchManager(m_currentAccount, *this,
-                                         m_sqlDatabase, this);
+        m_pLocalStoragePatchManager = new LocalStoragePatchManager(
+            m_currentAccount,
+            *this,
+            m_sqlDatabase,
+            this);
     }
 
     return m_pLocalStoragePatchManager->patchesForCurrentVersion();
@@ -678,13 +630,15 @@ qint32 LocalStorageManagerPrivate::localStorageVersion(
 {
     QNDEBUG("LocalStorageManagerPrivate::localStorageVersion");
 
-    QString queryString = QStringLiteral("SELECT version FROM Auxiliary LIMIT 1");
+    QString queryString =
+        QStringLiteral("SELECT version FROM Auxiliary LIMIT 1");
     QSqlQuery query(m_sqlDatabase);
     bool res = query.exec(queryString);
-    if (Q_UNLIKELY(!res)) {
-        errorDescription.setBase(QT_TR_NOOP("failed to execute SQL query "
-                                            "checking whether the database "
-                                            "requires an upgrade"));
+    if (Q_UNLIKELY(!res))
+    {
+        errorDescription.setBase(
+            QT_TR_NOOP("failed to execute SQL query checking whether "
+                       "the database requires an upgrade"));
         errorDescription.details() = query.lastError().text();
         QNWARNING(errorDescription);
         return -1;
@@ -692,7 +646,7 @@ qint32 LocalStorageManagerPrivate::localStorageVersion(
 
     if (!query.next()) {
         QNDEBUG("No version was found within the local storage database, "
-                "assuming version 1");
+            << "assuming version 1");
         return 1;
     }
 
@@ -701,8 +655,8 @@ qint32 LocalStorageManagerPrivate::localStorageVersion(
     bool conversionResult = false;
     int version = value.toInt(&conversionResult);
     if (Q_UNLIKELY(!conversionResult)) {
-        errorDescription.setBase(QT_TR_NOOP("failed to decode the current "
-                                            "database version"));
+        errorDescription.setBase(
+            QT_TR_NOOP("failed to decode the current database version"));
         QNWARNING(errorDescription << ", value = " << value);
         return -1;
     }
@@ -718,8 +672,9 @@ qint32 LocalStorageManagerPrivate::highestSupportedLocalStorageVersion() const
 
 int LocalStorageManagerPrivate::userCount(ErrorString & errorDescription) const
 {
-    ErrorString errorPrefix(QT_TR_NOOP("Can't get the number of users within "
-                                       "the local storage database"));
+    ErrorString errorPrefix(
+        QT_TR_NOOP("Can't get the number of users within the local storage "
+                   "database"));
 
     bool res = checkAndPrepareUserCountQuery();
     QSqlQuery & query = m_getUserCountQuery;
@@ -750,11 +705,12 @@ int LocalStorageManagerPrivate::userCount(ErrorString & errorDescription) const
     return count;
 }
 
-bool LocalStorageManagerPrivate::addNotebook(Notebook & notebook,
-                                             ErrorString & errorDescription)
+bool LocalStorageManagerPrivate::addNotebook(
+    Notebook & notebook, ErrorString & errorDescription)
 {
-    ErrorString errorPrefix(QT_TR_NOOP("Can't insert notebook data into "
-                                       "the local storage database"));
+    ErrorString errorPrefix(
+        QT_TR_NOOP("Can't insert notebook data into the local storage "
+                   "database"));
 
     ErrorString error;
     bool res = notebook.checkParameters(error);
@@ -763,7 +719,8 @@ bool LocalStorageManagerPrivate::addNotebook(Notebook & notebook,
         errorDescription.appendBase(error.base());
         errorDescription.appendBase(error.additionalBases());
         errorDescription.details() = error.details();
-        QNWARNING("Found invalid notebook: " << notebook << "\nError: " << error);
+        QNWARNING("Found invalid notebook: " << notebook << "\nError: "
+            << error);
         return false;
     }
 
@@ -790,11 +747,12 @@ bool LocalStorageManagerPrivate::addNotebook(Notebook & notebook,
         {
             ErrorString error;
             bool res = getNotebookLocalUidForGuid(uid, localUid, error);
-            if (res || !localUid.isEmpty()) {
+            if (res || !localUid.isEmpty())
+            {
                 errorDescription.base() = errorPrefix.base();
-                errorDescription.appendBase(QT_TR_NOOP("found existing notebook "
-                                                       "corresponding to the "
-                                                       "added notebook by guid"));
+                errorDescription.appendBase(
+                    QT_TR_NOOP("found existing notebook corresponding to "
+                               "the added notebook by guid"));
                 errorDescription.details() = uid;
                 QNWARNING(errorDescription);
                 return false;
@@ -825,7 +783,8 @@ bool LocalStorageManagerPrivate::addNotebook(Notebook & notebook,
 
     error.clear();
     res = insertOrReplaceNotebook(notebook, error);
-    if (!res) {
+    if (!res)
+    {
         errorDescription.base() = errorPrefix.base();
         errorDescription.appendBase(error.base());
         errorDescription.appendBase(error.additionalBases());
@@ -837,20 +796,22 @@ bool LocalStorageManagerPrivate::addNotebook(Notebook & notebook,
     return true;
 }
 
-bool LocalStorageManagerPrivate::updateNotebook(Notebook & notebook,
-                                                ErrorString & errorDescription)
+bool LocalStorageManagerPrivate::updateNotebook(
+    Notebook & notebook, ErrorString & errorDescription)
 {
-    ErrorString errorPrefix(QT_TR_NOOP("Can't update notebook data "
-                                       "in the local storage database"));
+    ErrorString errorPrefix(
+        QT_TR_NOOP("Can't update notebook data in the local storage database"));
 
     ErrorString error;
     bool res = notebook.checkParameters(error);
-    if (!res) {
+    if (!res)
+    {
         errorDescription.base() = errorPrefix.base();
         errorDescription.appendBase(error.base());
         errorDescription.appendBase(error.additionalBases());
         errorDescription.details() = error.details();
-        QNWARNING("Found invalid notebook: " << notebook << "\nError: " << error);
+        QNWARNING("Found invalid notebook: " << notebook << "\nError: "
+            << error);
         return false;
     }
 
@@ -865,7 +826,8 @@ bool LocalStorageManagerPrivate::updateNotebook(Notebook & notebook,
         column = QStringLiteral("guid");
         uid = notebook.guid();
 
-        if (!checkGuid(uid)) {
+        if (!checkGuid(uid))
+        {
             errorDescription.base() = errorPrefix.base();
             errorDescription.appendBase(QT_TR_NOOP("notebook guid is invalid"));
             errorDescription.details() = uid;
@@ -877,7 +839,8 @@ bool LocalStorageManagerPrivate::updateNotebook(Notebook & notebook,
         {
             ErrorString error;
             res = getNotebookLocalUidForGuid(uid, localUid, error);
-            if (!res || localUid.isEmpty()) {
+            if (!res || localUid.isEmpty())
+            {
                 errorDescription.base() = errorPrefix.base();
                 errorDescription.appendBase(error.base());
                 errorDescription.appendBase(error.additionalBases());
@@ -901,19 +864,24 @@ bool LocalStorageManagerPrivate::updateNotebook(Notebook & notebook,
     {
         bool foundByOtherColumn = false;
 
-        if (notebookHasGuid) {
+        if (notebookHasGuid)
+        {
             QNDEBUG("Failed to find the notebook by guid within "
-                    "the local storage, trying to find it by local uid");
+                << "the local storage, trying to find it by local uid");
             column = QStringLiteral("localUid");
             uid = localUid;
-            foundByOtherColumn =
-                rowExists(QStringLiteral("Notebooks"), column, uid);
+            foundByOtherColumn = rowExists(
+                QStringLiteral("Notebooks"),
+                column,
+                uid);
         }
 
-        if (!foundByOtherColumn) {
+        if (!foundByOtherColumn)
+        {
             errorDescription.base() = errorPrefix.base();
-            errorDescription.appendBase(QT_TR_NOOP("notebook to be updated was "
-                                                   "not found in local storage"));
+            errorDescription.appendBase(
+                QT_TR_NOOP("notebook to be updated was not found in the local "
+                           "storage"));
             errorDescription.details() = column;
             errorDescription.details() += QStringLiteral(" = ");
             errorDescription.details() += uid;
@@ -924,7 +892,8 @@ bool LocalStorageManagerPrivate::updateNotebook(Notebook & notebook,
 
     error.clear();
     res = insertOrReplaceNotebook(notebook, error);
-    if (!res) {
+    if (!res)
+    {
         errorDescription.base() = errorPrefix.base();
         errorDescription.appendBase(error.base());
         errorDescription.appendBase(error.additionalBases());
@@ -940,10 +909,10 @@ bool LocalStorageManagerPrivate::findNotebook(
     Notebook & notebook, ErrorString & errorDescription) const
 {
     QNDEBUG("LocalStorageManagerPrivate::findNotebook: notebook = "
-            << notebook);
+        << notebook);
 
-    ErrorString errorPrefix(QT_TR_NOOP("Can't find notebook in the local "
-                                       "storage database"));
+    ErrorString errorPrefix(
+        QT_TR_NOOP("Can't find notebook in the local storage database"));
 
     bool searchingByName = false;
 
@@ -971,7 +940,6 @@ bool LocalStorageManagerPrivate::findNotebook(
         column = QStringLiteral("notebookNameUpper");
         value = notebook.name().toUpper();
         searchingByName = true;
-
     }
     else if (notebook.hasLinkedNotebookGuid())
     {
@@ -981,46 +949,49 @@ bool LocalStorageManagerPrivate::findNotebook(
     else
     {
         errorDescription.base() = errorPrefix.base();
-        errorDescription.appendBase(QT_TR_NOOP("need either guid or local uid or "
-                                               "name or linked notebook guid as "
-                                               "search criteria"));
+        errorDescription.appendBase(
+            QT_TR_NOOP("need either guid or local uid or name or linked "
+                       "notebook guid as search criteria"));
         QNWARNING(errorDescription);
         return false;
     }
 
     value = sqlEscapeString(value);
 
-    QString queryString =
-        QString::fromUtf8("SELECT * FROM Notebooks "
-                          "LEFT OUTER JOIN NotebookRestrictions ON "
-                          "Notebooks.localUid = NotebookRestrictions.localUid "
-                          "LEFT OUTER JOIN SharedNotebooks ON "
-                          "Notebooks.guid = SharedNotebooks.sharedNotebookNotebookGuid "
-                          "LEFT OUTER JOIN Users ON "
-                          "Notebooks.contactId = Users.id "
-                          "LEFT OUTER JOIN UserAttributes ON "
-                          "Notebooks.contactId = UserAttributes.id "
-                          "LEFT OUTER JOIN UserAttributesViewedPromotions ON "
-                          "Notebooks.contactId = UserAttributesViewedPromotions.id "
-                          "LEFT OUTER JOIN UserAttributesRecentMailedAddresses ON "
-                          "Notebooks.contactId = UserAttributesRecentMailedAddresses.id "
-                          "LEFT OUTER JOIN Accounting ON "
-                          "Notebooks.contactId = Accounting.id "
-                          "LEFT OUTER JOIN AccountLimits ON "
-                          "Notebooks.contactId = AccountLimits.id "
-                          "LEFT OUTER JOIN BusinessUserInfo ON "
-                          "Notebooks.contactId = BusinessUserInfo.id "
-                          "WHERE (Notebooks.%1 = '%2'").arg(column,value);
+    QString queryString = QString::fromUtf8(
+        "SELECT * FROM Notebooks "
+        "LEFT OUTER JOIN NotebookRestrictions ON "
+        "Notebooks.localUid = NotebookRestrictions.localUid "
+        "LEFT OUTER JOIN SharedNotebooks ON "
+        "Notebooks.guid = SharedNotebooks.sharedNotebookNotebookGuid "
+        "LEFT OUTER JOIN Users ON "
+        "Notebooks.contactId = Users.id "
+        "LEFT OUTER JOIN UserAttributes ON "
+        "Notebooks.contactId = UserAttributes.id "
+        "LEFT OUTER JOIN UserAttributesViewedPromotions ON "
+        "Notebooks.contactId = UserAttributesViewedPromotions.id "
+        "LEFT OUTER JOIN UserAttributesRecentMailedAddresses ON "
+        "Notebooks.contactId = UserAttributesRecentMailedAddresses.id "
+        "LEFT OUTER JOIN Accounting ON "
+        "Notebooks.contactId = Accounting.id "
+        "LEFT OUTER JOIN AccountLimits ON "
+        "Notebooks.contactId = AccountLimits.id "
+        "LEFT OUTER JOIN BusinessUserInfo ON "
+        "Notebooks.contactId = BusinessUserInfo.id "
+        "WHERE (Notebooks.%1 = '%2'").arg(column,value);
 
     if (searchingByName)
     {
-        if (notebook.hasLinkedNotebookGuid()) {
-            QString linkedNotebookGuid = sqlEscapeString(notebook.linkedNotebookGuid());
+        if (notebook.hasLinkedNotebookGuid())
+        {
+            QString linkedNotebookGuid = sqlEscapeString(
+                notebook.linkedNotebookGuid());
             queryString +=
                 QString::fromUtf8(" AND Notebooks.linkedNotebookGuid = '%1')")
                 .arg(linkedNotebookGuid);
         }
-        else {
+        else
+        {
             queryString += QStringLiteral(" AND Notebooks.linkedNotebookGuid IS NULL)");
         }
     }
@@ -1041,7 +1012,8 @@ bool LocalStorageManagerPrivate::findNotebook(
         QSqlRecord rec = query.record();
         ErrorString error;
         res = fillNotebookFromSqlRecord(rec, result, error);
-        if (!res) {
+        if (!res)
+        {
             errorDescription.base() = errorPrefix.base();
             errorDescription.appendBase(error.base());
             errorDescription.appendBase(error.additionalBases());
@@ -1066,31 +1038,33 @@ bool LocalStorageManagerPrivate::findNotebook(
 bool LocalStorageManagerPrivate::findDefaultNotebook(
     Notebook & notebook, ErrorString & errorDescription) const
 {
-    ErrorString errorPrefix(QT_TR_NOOP("Can't find the default notebook in "
-                                       "the local storage database"));
+    ErrorString errorPrefix(
+        QT_TR_NOOP("Can't find the default notebook in the local storage "
+                   "database"));
 
     QSqlQuery query(m_sqlDatabase);
     bool res =
-        query.exec(QStringLiteral("SELECT * FROM Notebooks "
-                                  "LEFT OUTER JOIN NotebookRestrictions ON "
-                                  "Notebooks.localUid = NotebookRestrictions.localUid "
-                                  "LEFT OUTER JOIN SharedNotebooks ON "
-                                  "Notebooks.guid = SharedNotebooks.sharedNotebookNotebookGuid "
-                                  "LEFT OUTER JOIN Users ON "
-                                  "Notebooks.contactId = Users.id "
-                                  "LEFT OUTER JOIN UserAttributes ON "
-                                  "Notebooks.contactId = UserAttributes.id "
-                                  "LEFT OUTER JOIN UserAttributesViewedPromotions ON "
-                                  "Notebooks.contactId = UserAttributesViewedPromotions.id "
-                                  "LEFT OUTER JOIN UserAttributesRecentMailedAddresses ON "
-                                  "Notebooks.contactId = UserAttributesRecentMailedAddresses.id "
-                                  "LEFT OUTER JOIN Accounting ON "
-                                  "Notebooks.contactId = Accounting.id "
-                                  "LEFT OUTER JOIN AccountLimits ON "
-                                  "Notebooks.contactId = AccountLimits.id "
-                                  "LEFT OUTER JOIN BusinessUserInfo ON "
-                                  "Notebooks.contactId = BusinessUserInfo.id "
-                                  "WHERE isDefault = 1 LIMIT 1"));
+        query.exec(QStringLiteral(
+            "SELECT * FROM Notebooks "
+            "LEFT OUTER JOIN NotebookRestrictions ON "
+            "Notebooks.localUid = NotebookRestrictions.localUid "
+            "LEFT OUTER JOIN SharedNotebooks ON "
+            "Notebooks.guid = SharedNotebooks.sharedNotebookNotebookGuid "
+            "LEFT OUTER JOIN Users ON "
+            "Notebooks.contactId = Users.id "
+            "LEFT OUTER JOIN UserAttributes ON "
+            "Notebooks.contactId = UserAttributes.id "
+            "LEFT OUTER JOIN UserAttributesViewedPromotions ON "
+            "Notebooks.contactId = UserAttributesViewedPromotions.id "
+            "LEFT OUTER JOIN UserAttributesRecentMailedAddresses ON "
+            "Notebooks.contactId = UserAttributesRecentMailedAddresses.id "
+            "LEFT OUTER JOIN Accounting ON "
+            "Notebooks.contactId = Accounting.id "
+            "LEFT OUTER JOIN AccountLimits ON "
+            "Notebooks.contactId = AccountLimits.id "
+            "LEFT OUTER JOIN BusinessUserInfo ON "
+            "Notebooks.contactId = BusinessUserInfo.id "
+            "WHERE isDefault = 1 LIMIT 1"));
     DATABASE_CHECK_AND_SET_ERROR()
 
     if (!query.next()) {
@@ -1104,7 +1078,8 @@ bool LocalStorageManagerPrivate::findDefaultNotebook(
     QSqlRecord rec = query.record();
     ErrorString error;
     res = fillNotebookFromSqlRecord(rec, result, error);
-    if (!res) {
+    if (!res)
+    {
         errorDescription.base() = errorPrefix.base();
         errorDescription.appendBase(error.base());
         errorDescription.appendBase(error.additionalBases());

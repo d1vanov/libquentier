@@ -31,10 +31,11 @@ LocalStorageManager::LocalStorageManager(
     QObject(parent),
     d_ptr(new LocalStorageManagerPrivate(account, options, this))
 {
-    QObject::connect(d_ptr.data(),
-                     QNSIGNAL(LocalStorageManagerPrivate,upgradeProgress,double),
-                     this,
-                     QNSIGNAL(LocalStorageManager,upgradeProgress,double));
+    QObject::connect(
+        d_ptr.data(),
+        &LocalStorageManagerPrivate::upgradeProgress,
+        this,
+        &LocalStorageManager::upgradeProgress);
 }
 
 LocalStorageManager::~LocalStorageManager()
@@ -218,7 +219,9 @@ LocalStorageManager::listSharedNotebooksPerNotebookGuid(
     const QString & notebookGuid, ErrorString & errorDescription) const
 {
     Q_D(const LocalStorageManager);
-    return d->listSharedNotebooksPerNotebookGuid(notebookGuid, errorDescription);
+    return d->listSharedNotebooksPerNotebookGuid(
+        notebookGuid,
+        errorDescription);
 }
 
 bool LocalStorageManager::expungeNotebook(
@@ -331,8 +334,8 @@ bool LocalStorageManager::noteCountsPerAllTags(
 }
 
 int LocalStorageManager::noteCountPerNotebooksAndTags(
-    const QStringList & notebookLocalUids,
-    const QStringList & tagLocalUids, ErrorString & errorDescription,
+    const QStringList & notebookLocalUids, const QStringList & tagLocalUids,
+    ErrorString & errorDescription,
     const LocalStorageManager::NoteCountOptions options) const
 {
     Q_D(const LocalStorageManager);
@@ -402,8 +405,7 @@ QList<Note> LocalStorageManager::listNotesPerTag(
 }
 
 QList<Note> LocalStorageManager::listNotesPerNotebooksAndTags(
-    const QStringList & notebookLocalUids,
-    const QStringList & tagLocalUids,
+    const QStringList & notebookLocalUids, const QStringList & tagLocalUids,
     const LocalStorageManager::GetNoteOptions options,
     ErrorString & errorDescription,
     const LocalStorageManager::ListObjectsOptions & flag,
@@ -735,7 +737,8 @@ T & printStartupOption(T & t, const LocalStorageManager::StartupOption option)
 }
 
 template <typename T>
-T & printStartupOptions(T & t, const LocalStorageManager::StartupOptions options)
+T & printStartupOptions(
+    T & t, const LocalStorageManager::StartupOptions options)
 {
     using StartupOption = LocalStorageManager::StartupOption;
 
@@ -930,8 +933,7 @@ QTextStream & operator<<(
 }
 
 QDebug & operator<<(
-    QDebug & dbg,
-    const LocalStorageManager::OrderDirection orderDirection)
+    QDebug & dbg, const LocalStorageManager::OrderDirection orderDirection)
 {
     return printOrderDirection(dbg, orderDirection);
 }
@@ -974,15 +976,13 @@ T & printListNotebooksOrder(
 } // namespace
 
 QTextStream & operator<<(
-    QTextStream & strm,
-    const LocalStorageManager::ListNotebooksOrder order)
+    QTextStream & strm, const LocalStorageManager::ListNotebooksOrder order)
 {
     return printListNotebooksOrder(strm, order);
 }
 
 QDebug & operator<<(
-    QDebug & dbg,
-    const LocalStorageManager::ListNotebooksOrder order)
+    QDebug & dbg, const LocalStorageManager::ListNotebooksOrder order)
 {
     return printListNotebooksOrder(dbg, order);
 }
@@ -993,8 +993,7 @@ namespace {
 
 template <typename T>
 T & printListLinkedNotebooksOrder(
-    T & t,
-    const LocalStorageManager::ListLinkedNotebooksOrder order)
+    T & t, const LocalStorageManager::ListLinkedNotebooksOrder order)
 {
     using ListLinkedNotebooksOrder =
         LocalStorageManager::ListLinkedNotebooksOrder;
@@ -1031,8 +1030,7 @@ QTextStream & operator<<(
 }
 
 QDebug & operator<<(
-    QDebug & dbg,
-    const LocalStorageManager::ListLinkedNotebooksOrder order)
+    QDebug & dbg, const LocalStorageManager::ListLinkedNotebooksOrder order)
 {
     return printListLinkedNotebooksOrder(dbg, order);
 }
@@ -1043,8 +1041,7 @@ namespace {
 
 template <typename T>
 T & printUpdateNoteOption(
-    T & t,
-    const LocalStorageManager::UpdateNoteOption option)
+    T & t, const LocalStorageManager::UpdateNoteOption option)
 {
     using UpdateNoteOption = LocalStorageManager::UpdateNoteOption;
 
@@ -1069,8 +1066,7 @@ T & printUpdateNoteOption(
 
 template <typename T>
 T & printUpdateNoteOptions(
-    T & t,
-    const LocalStorageManager::UpdateNoteOptions options)
+    T & t, const LocalStorageManager::UpdateNoteOptions options)
 {
     using UpdateNoteOption = LocalStorageManager::UpdateNoteOption;
 
@@ -1092,29 +1088,25 @@ T & printUpdateNoteOptions(
 } // namespace
 
 QTextStream & operator<<(
-    QTextStream & strm,
-    const LocalStorageManager::UpdateNoteOption option)
+    QTextStream & strm, const LocalStorageManager::UpdateNoteOption option)
 {
     return printUpdateNoteOption(strm, option);
 }
 
 QDebug & operator<<(
-    QDebug & dbg,
-    const LocalStorageManager::UpdateNoteOption option)
+    QDebug & dbg, const LocalStorageManager::UpdateNoteOption option)
 {
     return printUpdateNoteOption(dbg, option);
 }
 
 QTextStream & operator<<(
-    QTextStream & strm,
-    const LocalStorageManager::UpdateNoteOptions options)
+    QTextStream & strm, const LocalStorageManager::UpdateNoteOptions options)
 {
     return printUpdateNoteOptions(strm, options);
 }
 
 QDebug & operator<<(
-    QDebug & dbg,
-    const LocalStorageManager::UpdateNoteOptions options)
+    QDebug & dbg, const LocalStorageManager::UpdateNoteOptions options)
 {
     return printUpdateNoteOptions(dbg, options);
 }
@@ -1125,8 +1117,7 @@ namespace {
 
 template <typename T>
 T & printGetNoteOption(
-    T & t,
-    const LocalStorageManager::GetNoteOption option)
+    T & t, const LocalStorageManager::GetNoteOption option)
 {
     using GetNoteOption = LocalStorageManager::GetNoteOption;
 
@@ -1148,8 +1139,7 @@ T & printGetNoteOption(
 
 template <typename T>
 T & printGetNoteOptions(
-    T & t,
-    const LocalStorageManager::GetNoteOptions options)
+    T & t, const LocalStorageManager::GetNoteOptions options)
 {
     using GetNoteOption = LocalStorageManager::GetNoteOption;
 
@@ -1167,29 +1157,25 @@ T & printGetNoteOptions(
 } // namespace
 
 QTextStream & operator<<(
-    QTextStream & strm,
-    const LocalStorageManager::GetNoteOption option)
+    QTextStream & strm, const LocalStorageManager::GetNoteOption option)
 {
     return printGetNoteOption(strm, option);
 }
 
 QDebug & operator<<(
-    QDebug & dbg,
-    const LocalStorageManager::GetNoteOption option)
+    QDebug & dbg, const LocalStorageManager::GetNoteOption option)
 {
     return printGetNoteOption(dbg, option);
 }
 
 QTextStream & operator<<(
-    QTextStream & strm,
-    const LocalStorageManager::GetNoteOptions options)
+    QTextStream & strm, const LocalStorageManager::GetNoteOptions options)
 {
     return printGetNoteOptions(strm, options);
 }
 
 QDebug & operator<<(
-    QDebug & dbg,
-    const LocalStorageManager::GetNoteOptions options)
+    QDebug & dbg, const LocalStorageManager::GetNoteOptions options)
 {
     return printGetNoteOptions(dbg, options);
 }
@@ -1200,8 +1186,7 @@ namespace {
 
 template <typename T>
 T & printListNotesOrder(
-    T & t,
-    const LocalStorageManager::ListNotesOrder order)
+    T & t, const LocalStorageManager::ListNotesOrder order)
 {
     using ListNotesOrder = LocalStorageManager::ListNotesOrder;
 
@@ -1268,8 +1253,7 @@ namespace {
 
 template <typename T>
 T & printGetResourceOption(
-    T & t,
-    const LocalStorageManager::GetResourceOption option)
+    T & t, const LocalStorageManager::GetResourceOption option)
 {
     using GetResourceOption = LocalStorageManager::GetResourceOption;
 
@@ -1288,8 +1272,7 @@ T & printGetResourceOption(
 
 template <typename T>
 T & printGetResourceOptions(
-    T & t,
-    const LocalStorageManager::GetResourceOptions options)
+    T & t, const LocalStorageManager::GetResourceOptions options)
 {
     using GetResourceOption = LocalStorageManager::GetResourceOption;
 
@@ -1303,29 +1286,25 @@ T & printGetResourceOptions(
 } // namespace
 
 QTextStream & operator<<(
-    QTextStream & strm,
-    const LocalStorageManager::GetResourceOption option)
+    QTextStream & strm, const LocalStorageManager::GetResourceOption option)
 {
     return printGetResourceOption(strm, option);
 }
 
 QDebug & operator<<(
-    QDebug & dbg,
-    const LocalStorageManager::GetResourceOption option)
+    QDebug & dbg, const LocalStorageManager::GetResourceOption option)
 {
     return printGetResourceOption(dbg, option);
 }
 
 QTextStream & operator<<(
-    QTextStream & strm,
-    const LocalStorageManager::GetResourceOptions options)
+    QTextStream & strm, const LocalStorageManager::GetResourceOptions options)
 {
     return printGetResourceOptions(strm, options);
 }
 
 QDebug & operator<<(
-    QDebug & dbg,
-    const LocalStorageManager::GetResourceOptions options)
+    QDebug & dbg, const LocalStorageManager::GetResourceOptions options)
 {
     return printGetResourceOptions(dbg, options);
 }
@@ -1425,8 +1404,7 @@ namespace {
 
 template <typename T>
 T & printNoteCountOption(
-    T & t,
-    const LocalStorageManager::NoteCountOption option)
+    T & t, const LocalStorageManager::NoteCountOption option)
 {
     using NoteCountOption = LocalStorageManager::NoteCountOption;
 
@@ -1448,8 +1426,7 @@ T & printNoteCountOption(
 
 template <typename T>
 T & printNoteCountOptions(
-    T & t,
-    const LocalStorageManager::NoteCountOptions options)
+    T & t, const LocalStorageManager::NoteCountOptions options)
 {
     using NoteCountOption = LocalStorageManager::NoteCountOption;
 
@@ -1467,29 +1444,25 @@ T & printNoteCountOptions(
 } // namespace
 
 QTextStream & operator<<(
-    QTextStream & strm,
-    const LocalStorageManager::NoteCountOption option)
+    QTextStream & strm, const LocalStorageManager::NoteCountOption option)
 {
     return printNoteCountOption(strm, option);
 }
 
 QDebug & operator<<(
-    QDebug & dbg,
-    const LocalStorageManager::NoteCountOption option)
+    QDebug & dbg, const LocalStorageManager::NoteCountOption option)
 {
     return printNoteCountOption(dbg, option);
 }
 
 QTextStream & operator<<(
-    QTextStream & strm,
-    const LocalStorageManager::NoteCountOptions options)
+    QTextStream & strm, const LocalStorageManager::NoteCountOptions options)
 {
     return printNoteCountOptions(strm, options);
 }
 
 QDebug & operator<<(
-    QDebug & dbg,
-    const LocalStorageManager::NoteCountOptions options)
+    QDebug & dbg, const LocalStorageManager::NoteCountOptions options)
 {
     return printNoteCountOptions(dbg, options);
 }
