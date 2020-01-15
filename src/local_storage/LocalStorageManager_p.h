@@ -488,16 +488,16 @@ private:
 
     void setNoteIdsToNoteResources(Note & note) const;
 
-    bool removeResourceBinaryDataFiles(
+    bool removeResourceDataFiles(
         const Resource & resource, ErrorString & errorDescription);
 
-    bool removeResourceBinaryDataFilesForNote(
+    bool removeResourceDataFilesForNote(
         const QString & noteLocalUid, ErrorString & errorDescription);
 
-    bool removeResourceBinaryDataFilesForNotebook(
+    bool removeResourceDataFilesForNotebook(
         const Notebook & notebook, ErrorString & errorDescription);
 
-    bool removeResourceBinaryDataFilesForLinkedNotebook(
+    bool removeResourceDataFilesForLinkedNotebook(
         const LinkedNotebook & linkedNotebook, ErrorString & errorDescription);
 
     bool checkAndPrepareInsertOrReplaceResourceMetadataWithDataPropertiesQuery();
@@ -524,7 +524,7 @@ private:
         QList<std::pair<Tag, QStringList>> & tagsWithNoteLocalUids,
         ErrorString & errorDescription) const;
 
-    bool readResourceBinaryDataFromFiles(
+    bool readResourceDataFromFiles(
         Resource & resource, ErrorString & errorDescription) const;
 
     enum class ReadResourceBinaryDataFromFileStatus
