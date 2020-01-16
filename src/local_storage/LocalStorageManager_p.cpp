@@ -4627,12 +4627,13 @@ bool LocalStorageManagerPrivate::findSavedSearch(
 
     value = sqlEscapeString(value);
 
-    QString queryString =
-        QString::fromUtf8("SELECT localUid, guid, name, query, format, "
-                          "updateSequenceNumber, isDirty, isLocal, "
-                          "includeAccount, includePersonalLinkedNotebooks, "
-                          "includeBusinessLinkedNotebooks, isFavorited FROM "
-                          "SavedSearches WHERE %1 = '%2'").arg(column,value);
+    QString queryString = QString::fromUtf8(
+        "SELECT localUid, guid, name, query, format, "
+        "updateSequenceNumber, isDirty, isLocal, "
+        "includeAccount, includePersonalLinkedNotebooks, "
+        "includeBusinessLinkedNotebooks, isFavorited FROM "
+        "SavedSearches WHERE %1 = '%2'").arg(column,value);
+
     QSqlQuery query(m_sqlDatabase);
     bool res = query.exec(queryString);
     DATABASE_CHECK_AND_SET_ERROR()
@@ -4646,7 +4647,8 @@ bool LocalStorageManagerPrivate::findSavedSearch(
     QSqlRecord rec = query.record();
     ErrorString error;
     res = fillSavedSearchFromSqlRecord(rec, result, error);
-    if (!res) {
+    if (!res)
+    {
         errorDescription.base() = errorPrefix.base();
         errorDescription.appendBase(error.base());
         errorDescription.appendBase(error.additionalBases());
@@ -4702,13 +4704,14 @@ bool LocalStorageManagerPrivate::expungeSavedSearch(
 
     ErrorString error;
     bool res = search.checkParameters(error);
-    if (!res) {
+    if (!res)
+    {
         errorDescription.base() = errorPrefix.base();
         errorDescription.appendBase(error.base());
         errorDescription.appendBase(error.additionalBases());
         errorDescription.details() = error.details();
         QNWARNING("Found invalid SavedSearch: " << search << "\nError: "
-                  << error);
+            << error);
         return false;
     }
 
@@ -4756,9 +4759,9 @@ bool LocalStorageManagerPrivate::expungeSavedSearch(
         !rowExists(QStringLiteral("SavedSearches"), column, uid))
     {
         errorDescription.base() = errorPrefix.base();
-        errorDescription.appendBase(QT_TR_NOOP("saved search to be expunged was "
-                                               "not found in the local storage "
-                                               "database"));
+        errorDescription.appendBase(
+            QT_TR_NOOP("saved search to be expunged was not found in the local "
+                       "storage database"));
         errorDescription.details() = column;
         errorDescription.details() += QStringLiteral(" = ");
         errorDescription.details() += uid;
@@ -4766,8 +4769,8 @@ bool LocalStorageManagerPrivate::expungeSavedSearch(
         return false;
     }
 
-    QString queryString =
-        QString::fromUtf8("DELETE FROM SavedSearches WHERE %1='%2'").arg(column,uid);
+    QString queryString = QString::fromUtf8(
+        "DELETE FROM SavedSearches WHERE %1='%2'").arg(column,uid);
     QSqlQuery query(m_sqlDatabase);
     res = query.exec(queryString);
     DATABASE_CHECK_AND_SET_ERROR()
@@ -4779,7 +4782,7 @@ qint32 LocalStorageManagerPrivate::accountHighUsn(
     const QString & linkedNotebookGuid, ErrorString & errorDescription)
 {
     QNDEBUG("LocalStorageManagerPrivate::accountHighUsn: linked notebook guid = "
-            << linkedNotebookGuid);
+        << linkedNotebookGuid);
 
     qint32 updateSequenceNumber = 0;
 
@@ -4805,15 +4808,18 @@ qint32 LocalStorageManagerPrivate::accountHighUsn(
         << HighUsnRequestData(tableName, usnColumnName, queryCondition)        \
 // ADD_TABLE_AND_USN_COLUMN
 
-    ADD_TABLE_AND_USN_COLUMN(QStringLiteral("Notebooks"),
-                             QStringLiteral("updateSequenceNumber"));
-    ADD_TABLE_AND_USN_COLUMN(QStringLiteral("Tags"),
-                             QStringLiteral("updateSequenceNumber"));
+    ADD_TABLE_AND_USN_COLUMN(
+        QStringLiteral("Notebooks"),
+        QStringLiteral("updateSequenceNumber"));
+
+    ADD_TABLE_AND_USN_COLUMN(
+        QStringLiteral("Tags"),
+        QStringLiteral("updateSequenceNumber"));
 
     // Separate query condition is required for notes table
-    queryCondition =
-        QStringLiteral("WHERE notebookLocalUid IN (SELECT DISTINCT localUid "
-                       "FROM Notebooks WHERE linkedNotebookGuid");
+    queryCondition = QStringLiteral(
+        "WHERE notebookLocalUid IN (SELECT DISTINCT localUid "
+        "FROM Notebooks WHERE linkedNotebookGuid");
     if (linkedNotebookGuid.isEmpty()) {
         queryCondition += QStringLiteral(" IS NULL)");
     }
@@ -4822,8 +4828,9 @@ qint32 LocalStorageManagerPrivate::accountHighUsn(
             QString::fromUtf8("='%1')").arg(sqlEscapeString(linkedNotebookGuid));
     }
 
-    ADD_TABLE_AND_USN_COLUMN(QStringLiteral("Notes"),
-                             QStringLiteral("updateSequenceNumber"));
+    ADD_TABLE_AND_USN_COLUMN(
+        QStringLiteral("Notes"),
+        QStringLiteral("updateSequenceNumber"));
 
     // Separate query condition is required for resources table
     queryCondition =
@@ -4839,8 +4846,10 @@ qint32 LocalStorageManagerPrivate::accountHighUsn(
         queryCondition +=
             QString::fromUtf8("='%1'))").arg(sqlEscapeString(linkedNotebookGuid));
     }
-    ADD_TABLE_AND_USN_COLUMN(QStringLiteral("Resources"),
-                             QStringLiteral("resourceUpdateSequenceNumber"));
+
+    ADD_TABLE_AND_USN_COLUMN(
+        QStringLiteral("Resources"),
+        QStringLiteral("resourceUpdateSequenceNumber"));
 
     /**
      * No query condition is required for linked notebooks and saved searches
@@ -4851,31 +4860,36 @@ qint32 LocalStorageManagerPrivate::accountHighUsn(
     if (linkedNotebookGuid.isEmpty())
     {
         queryCondition.clear();
-        ADD_TABLE_AND_USN_COLUMN(QStringLiteral("LinkedNotebooks"),
-                                 QStringLiteral("updateSequenceNumber"));
-        ADD_TABLE_AND_USN_COLUMN(QStringLiteral("SavedSearches"),
-                                 QStringLiteral("updateSequenceNumber"));
+
+        ADD_TABLE_AND_USN_COLUMN(
+            QStringLiteral("LinkedNotebooks"),
+            QStringLiteral("updateSequenceNumber"));
+
+        ADD_TABLE_AND_USN_COLUMN(
+            QStringLiteral("SavedSearches"),
+            QStringLiteral("updateSequenceNumber"));
     }
 
 #undef ADD_TABLE_AND_USN_COLUMN
 
-    for(auto it = tablesAndUsnColumns.constBegin(),
-        end = tablesAndUsnColumns.constEnd(); it != end; ++it)
+    for(const auto & requestData: tablesAndUsnColumns)
     {
         qint32 usn = 0;
-        bool res = updateSequenceNumberFromTable(it->m_tableName,
-                                                 it->m_usnColumnName,
-                                                 it->m_queryCondition,
-                                                 usn, errorDescription);
+        bool res = updateSequenceNumberFromTable(
+            requestData.m_tableName,
+            requestData.m_usnColumnName,
+            requestData.m_queryCondition,
+            usn, errorDescription);
         if (!res) {
             return -1;
         }
 
         updateSequenceNumber = std::max(updateSequenceNumber, usn);
 
-        QNTRACE("Max update sequence number from table " << it->m_tableName
-                << ": " << usn << ", overall max USN so far: "
-                << updateSequenceNumber);
+        QNTRACE("Max update sequence number from table "
+            << requestData.m_tableName
+            << ": " << usn << ", overall max USN so far: "
+            << updateSequenceNumber);
     }
 
     QNDEBUG("Max USN = " << updateSequenceNumber);
@@ -4887,14 +4901,16 @@ bool LocalStorageManagerPrivate::updateSequenceNumberFromTable(
     const QString & queryCondition, qint32 & usn, ErrorString & errorDescription)
 {
     QNDEBUG("LocalStorageManagerPrivate::updateSequenceNumberFromTable: "
-            << tableName << ", usn column name = " << usnColumnName
-            << ", query condition = " << queryCondition);
+        << tableName << ", usn column name = " << usnColumnName
+        << ", query condition = " << queryCondition);
 
-    ErrorString errorPrefix(QT_TR_NOOP("failed to get the update sequence number "
-                                       "from one of local storage database tables"));
+    ErrorString errorPrefix(
+        QT_TR_NOOP("failed to get the update sequence number "
+                   "from one of local storage database tables"));
 
     QString queryString = QStringLiteral("SELECT MAX(") + usnColumnName +
-                          QStringLiteral(") FROM ") + tableName;
+        QStringLiteral(") FROM ") + tableName;
+
     if (!queryCondition.isEmpty()) {
         queryString += QStringLiteral(" ") + queryCondition;
     }
@@ -4913,10 +4929,11 @@ bool LocalStorageManagerPrivate::updateSequenceNumberFromTable(
     bool conversionResult = false;
     QVariant value = query.value(0);
     usn = value.toInt(&conversionResult);
-    if (Q_UNLIKELY(!conversionResult)) {
+    if (Q_UNLIKELY(!conversionResult))
+    {
         QNDEBUG("Failed to convert the query result to int");
         /**
-         * NOTE: surprising but this seems to happen when the table on which
+         * NOTE: surprisingly, this also seems to happen when the table on which
          * the query runs is empty, so need to handle it gently: don't return
          * error, return zero instead
          */
@@ -4953,11 +4970,12 @@ void LocalStorageManagerPrivate::processPostTransactionException(
 bool LocalStorageManagerPrivate::addEnResource(
     Resource & resource, ErrorString & errorDescription)
 {
-    ErrorString errorPrefix(QT_TR_NOOP("Can't add resource to "
-                                       "the local storage database"));
+    ErrorString errorPrefix(
+        QT_TR_NOOP("Can't add resource to the local storage database"));
 
     ErrorString error;
-    if (!resource.checkParameters(error)) {
+    if (!resource.checkParameters(error))
+    {
         errorDescription.base() = errorPrefix.base();
         errorDescription.appendBase(error.base());
         errorDescription.appendBase(error.additionalBases());
@@ -4966,10 +4984,12 @@ bool LocalStorageManagerPrivate::addEnResource(
         return false;
     }
 
-    if (!resource.hasNoteGuid() && !resource.hasNoteLocalUid()) {
+    if (!resource.hasNoteGuid() && !resource.hasNoteLocalUid())
+    {
         errorDescription.base() = errorPrefix.base();
-        errorDescription.appendBase(QT_TR_NOOP("both resource's note local uid "
-                                               "and note guid are empty"));
+        errorDescription.appendBase(
+            QT_TR_NOOP("both resource's note local uid and note guid are "
+                       "empty"));
         QNWARNING(errorDescription << ", resource: " << resource);
         return false;
     }
@@ -4977,11 +4997,11 @@ bool LocalStorageManagerPrivate::addEnResource(
     /**
      * NOTE: since adding the resource is essentially the update of a note
      * containing the resource, we might need to check if the notebook in which
-     * this note resides allows one to update the notes; however, there is no such
-     * check here because the request to update the note might come from
-     * the synchronization i.e. the note might have been updated via the official
-     * Evernote client which doesn't account for such minor issues as the notebooks'
-     * restriction to update the note
+     * this note resides allows one to update its notes; however, there is no
+     * such check here because the request to update the note might come from
+     * the synchronization i.e. the note might have been updated via
+     * the official Evernote client which doesn't account for such minor issues
+     * as the notebooks' restriction to update the note
      */
 
     // Now can continue with adding the resource
@@ -4996,8 +5016,8 @@ bool LocalStorageManagerPrivate::addEnResource(
     QString noteLocalUid = resource.noteLocalUid();
     noteLocalUid = sqlEscapeString(noteLocalUid);
 
-    QString queryString =
-        QString::fromUtf8("SELECT COUNT(*) FROM NoteResources WHERE localNote = '%1'")
+    QString queryString = QString::fromUtf8(
+        "SELECT COUNT(*) FROM NoteResources WHERE localNote = '%1'")
         .arg(noteLocalUid);
 
     QSqlQuery query(m_sqlDatabase);
@@ -5035,9 +5055,11 @@ bool LocalStorageManagerPrivate::addEnResource(
         {
             error.clear();
             bool res = getResourceLocalUidForGuid(uid, resourceLocalUid, error);
-            if (res || !resourceLocalUid.isEmpty()) {
+            if (res || !resourceLocalUid.isEmpty())
+            {
                 errorDescription.base() = errorPrefix.base();
-                errorDescription.appendBase(QT_TR_NOOP("resource already exists"));
+                errorDescription.appendBase(
+                    QT_TR_NOOP("resource already exists"));
                 errorDescription.details() = column;
                 errorDescription.details() += QStringLiteral(" = ");
                 errorDescription.details() += uid;
@@ -5070,7 +5092,8 @@ bool LocalStorageManagerPrivate::addEnResource(
 
     error.clear();
     res = insertOrReplaceResource(resource, error);
-    if (!res) {
+    if (!res)
+    {
         errorDescription.base() = errorPrefix.base();
         errorDescription.appendBase(error.base());
         errorDescription.appendBase(error.additionalBases());
@@ -5085,11 +5108,12 @@ bool LocalStorageManagerPrivate::addEnResource(
 bool LocalStorageManagerPrivate::updateEnResource(
     Resource & resource, ErrorString & errorDescription)
 {
-    ErrorString errorPrefix(QT_TR_NOOP("Can't update resource "
-                                       "in the local storage database"));
+    ErrorString errorPrefix(
+        QT_TR_NOOP("Can't update resource in the local storage database"));
 
     ErrorString error;
-    if (!resource.checkParameters(error)) {
+    if (!resource.checkParameters(error))
+    {
         errorDescription.base() = errorPrefix.base();
         errorDescription.appendBase(error.base());
         errorDescription.appendBase(error.additionalBases());
@@ -5098,10 +5122,11 @@ bool LocalStorageManagerPrivate::updateEnResource(
         return false;
     }
 
-    if (!resource.hasNoteGuid() && !resource.hasNoteLocalUid()) {
+    if (!resource.hasNoteGuid() && !resource.hasNoteLocalUid())
+    {
         errorDescription.base() = errorPrefix.base();
-        errorDescription.appendBase(QT_TR_NOOP("both resource's note local uid "
-                                               "and note guid are empty"));
+        errorDescription.appendBase(
+            QT_TR_NOOP("both resource's note local uid and note guid are empty"));
         QNWARNING(errorDescription << ", resource: " << resource);
         return false;
     }
@@ -5109,17 +5134,18 @@ bool LocalStorageManagerPrivate::updateEnResource(
     /**
      * NOTE: since updating the resource is essentially the update of a note
      * containing the resource, we might need to check if the notebook in which
-     * this note resides allows one to update the notes; however, there is no such
-     * check here because the request to update the note might come from
-     * the synchronization i.e. the note might have been updated via the official
-     * Evernote client which doesn't account for such minor issues as the notebooks'
-     * restriction to update the note
+     * this note resides allows one to update its notes; however, there is no
+     * such check here because the request to update the note might come from
+     * the synchronization i.e. the note might have been updated via
+     * the official Evernote client which doesn't account for such minor issues
+     * as the notebooks' restriction to update the note
      */
 
     // Now can continue with updating the resource
     error.clear();
     bool res = complementResourceNoteIds(resource, error);
-    if (!res) {
+    if (!res)
+    {
         errorDescription.base() = errorPrefix.base();
         errorDescription.appendBase(error.base());
         errorDescription.appendBase(error.additionalBases());
@@ -5143,11 +5169,12 @@ bool LocalStorageManagerPrivate::updateEnResource(
         {
             error.clear();
             bool res = getResourceLocalUidForGuid(uid, resourceLocalUid, error);
-            if (!res || resourceLocalUid.isEmpty()) {
+            if (!res || resourceLocalUid.isEmpty())
+            {
                 errorDescription.base() = errorPrefix.base();
-                errorDescription.appendBase(QT_TR_NOOP("resource to be updated "
-                                                       "was not found in the local "
-                                                       "storage database"));
+                errorDescription.appendBase(
+                    QT_TR_NOOP("resource to be updated was not found in "
+                               "the local storage database"));
                 errorDescription.details() = column;
                 errorDescription.details() += QStringLiteral(" = ");
                 errorDescription.details() += uid;
@@ -5170,13 +5197,16 @@ bool LocalStorageManagerPrivate::updateEnResource(
     {
         bool foundByOtherColumn = false;
 
-        if (resourceHasGuid) {
+        if (resourceHasGuid)
+        {
             QNDEBUG("Failed to find the resource by guid within "
-                    "the local storage, trying to find it by local uid");
+                << "the local storage, trying to find it by local uid");
             column = QStringLiteral("resourceLocalUid");
             uid = resource.localUid();
-            foundByOtherColumn =
-                rowExists(QStringLiteral("Resources"), column, uid);
+            foundByOtherColumn = rowExists(
+                QStringLiteral("Resources"),
+                column,
+                uid);
         }
 
         if (!foundByOtherColumn)
@@ -5195,7 +5225,8 @@ bool LocalStorageManagerPrivate::updateEnResource(
 
     error.clear();
     res = insertOrReplaceResource(resource, error);
-    if (!res) {
+    if (!res)
+    {
         errorDescription.base() = errorPrefix.base();
         errorDescription.appendBase(error.base());
         errorDescription.appendBase(error.additionalBases());
@@ -5210,7 +5241,7 @@ bool LocalStorageManagerPrivate::updateEnResource(
 void LocalStorageManagerPrivate::unlockDatabaseFile()
 {
     QNDEBUG("LocalStorageManagerPrivate::unlockDatabaseFile: "
-            << m_databaseFilePath);
+        << m_databaseFilePath);
 
 #ifndef Q_OS_WIN
     if (m_databaseFilePath.isEmpty()) {
@@ -5223,9 +5254,8 @@ void LocalStorageManagerPrivate::unlockDatabaseFile()
     }
     catch(boost::interprocess::interprocess_exception & exc) {
         QNWARNING("Caught exception trying to unlock the database file: error = "
-                  << exc.get_error_code() << ", error message = "
-                  << exc.what() << "; native error = "
-                  << exc.get_native_error());
+            << exc.get_error_code() << ", error message = " << exc.what()
+            << "; native error = " << exc.get_native_error());
     }
 #endif
 }
@@ -5236,748 +5266,825 @@ bool LocalStorageManagerPrivate::createTables(ErrorString & errorDescription)
     bool res;
 
     // Checking whether auxiliary table exists
-    res = query.exec(
-        QStringLiteral("SELECT name FROM sqlite_master WHERE name='Auxiliary'"));
-    ErrorString errorPrefix(QT_TR_NOOP("Can't check whether Auxiliary table exists"));
+    res = query.exec(QStringLiteral(
+        "SELECT name FROM sqlite_master WHERE name='Auxiliary'"));
+
+    ErrorString errorPrefix(
+        QT_TR_NOOP("Can't check whether Auxiliary table exists"));
+
     DATABASE_CHECK_AND_SET_ERROR()
     bool auxiliaryTableExists = query.next();
     QNDEBUG("Auxiliary table " <<
-            (auxiliaryTableExists
-             ? "already exists"
-             : "doesn't exist yet"));
+        (auxiliaryTableExists
+         ? "already exists"
+         : "doesn't exist yet"));
 
     if (!auxiliaryTableExists)
     {
-        res = query.exec(QStringLiteral("CREATE TABLE Auxiliary("
-                                        "  lock    CHAR(1) PRIMARY KEY  NOT NULL DEFAULT 'X' CHECK (lock='X'), "
-                                        "  version INTEGER              NOT NULL DEFAULT 2"
-                                        ")"));
+        res = query.exec(QStringLiteral(
+            "CREATE TABLE Auxiliary("
+            "  lock    CHAR(1) PRIMARY KEY  NOT NULL DEFAULT 'X' CHECK (lock='X'), "
+            "  version INTEGER              NOT NULL DEFAULT 2"
+            ")"));
         errorPrefix.setBase(QT_TR_NOOP("Can't create Auxiliary table"));
         DATABASE_CHECK_AND_SET_ERROR()
 
-        res = query.exec(QStringLiteral("INSERT INTO Auxiliary (version) VALUES(2)"));
+        res = query.exec(QStringLiteral(
+            "INSERT INTO Auxiliary (version) VALUES(2)"));
         errorPrefix.setBase(QT_TR_NOOP("Can't set version to Auxiliary table"));
         DATABASE_CHECK_AND_SET_ERROR()
     }
 
-    res = query.exec(QStringLiteral("CREATE TABLE IF NOT EXISTS Users("
-                                    "  id                           INTEGER PRIMARY KEY NOT NULL UNIQUE, "
-                                    "  username                     TEXT                DEFAULT NULL, "
-                                    "  email                        TEXT                DEFAULT NULL, "
-                                    "  name                         TEXT                DEFAULT NULL, "
-                                    "  timezone                     TEXT                DEFAULT NULL, "
-                                    "  privilege                    INTEGER             DEFAULT NULL, "
-                                    "  serviceLevel                 INTEGER             DEFAULT NULL, "
-                                    "  userCreationTimestamp        INTEGER             DEFAULT NULL, "
-                                    "  userModificationTimestamp    INTEGER             DEFAULT NULL, "
-                                    "  userIsDirty                  INTEGER             NOT NULL, "
-                                    "  userIsLocal                  INTEGER             NOT NULL, "
-                                    "  userDeletionTimestamp        INTEGER             DEFAULT NULL, "
-                                    "  userIsActive                 INTEGER             DEFAULT NULL, "
-                                    "  userShardId                  TEXT                DEFAULT NULL, "
-                                    "  userPhotoUrl                 TEXT                DEFAULT NULL, "
-                                    "  userPhotoLastUpdateTimestamp INTEGER             DEFAULT NULL"
-                                    ")"));
+    res = query.exec(QStringLiteral(
+        "CREATE TABLE IF NOT EXISTS Users("
+        "  id                           INTEGER PRIMARY KEY NOT NULL UNIQUE, "
+        "  username                     TEXT                DEFAULT NULL, "
+        "  email                        TEXT                DEFAULT NULL, "
+        "  name                         TEXT                DEFAULT NULL, "
+        "  timezone                     TEXT                DEFAULT NULL, "
+        "  privilege                    INTEGER             DEFAULT NULL, "
+        "  serviceLevel                 INTEGER             DEFAULT NULL, "
+        "  userCreationTimestamp        INTEGER             DEFAULT NULL, "
+        "  userModificationTimestamp    INTEGER             DEFAULT NULL, "
+        "  userIsDirty                  INTEGER             NOT NULL, "
+        "  userIsLocal                  INTEGER             NOT NULL, "
+        "  userDeletionTimestamp        INTEGER             DEFAULT NULL, "
+        "  userIsActive                 INTEGER             DEFAULT NULL, "
+        "  userShardId                  TEXT                DEFAULT NULL, "
+        "  userPhotoUrl                 TEXT                DEFAULT NULL, "
+        "  userPhotoLastUpdateTimestamp INTEGER             DEFAULT NULL"
+        ")"));
     errorPrefix.setBase(QT_TR_NOOP("Can't create Users table"));
     DATABASE_CHECK_AND_SET_ERROR()
 
-    res = query.exec(QStringLiteral("CREATE TABLE IF NOT EXISTS UserAttributes("
-                                    "  id REFERENCES Users(id) ON UPDATE CASCADE, "
-                                    "  defaultLocationName        TEXT                  DEFAULT NULL, "
-                                    "  defaultLatitude            REAL                  DEFAULT NULL, "
-                                    "  defaultLongitude           REAL                  DEFAULT NULL, "
-                                    "  preactivation              INTEGER               DEFAULT NULL, "
-                                    "  incomingEmailAddress       TEXT                  DEFAULT NULL, "
-                                    "  comments                   TEXT                  DEFAULT NULL, "
-                                    "  dateAgreedToTermsOfService INTEGER               DEFAULT NULL, "
-                                    "  maxReferrals               INTEGER               DEFAULT NULL, "
-                                    "  referralCount              INTEGER               DEFAULT NULL, "
-                                    "  refererCode                TEXT                  DEFAULT NULL, "
-                                    "  sentEmailDate              INTEGER               DEFAULT NULL, "
-                                    "  sentEmailCount             INTEGER               DEFAULT NULL, "
-                                    "  dailyEmailLimit            INTEGER               DEFAULT NULL, "
-                                    "  emailOptOutDate            INTEGER               DEFAULT NULL, "
-                                    "  partnerEmailOptInDate      INTEGER               DEFAULT NULL, "
-                                    "  preferredLanguage          TEXT                  DEFAULT NULL, "
-                                    "  preferredCountry           TEXT                  DEFAULT NULL, "
-                                    "  clipFullPage               INTEGER               DEFAULT NULL, "
-                                    "  twitterUserName            TEXT                  DEFAULT NULL, "
-                                    "  twitterId                  TEXT                  DEFAULT NULL, "
-                                    "  groupName                  TEXT                  DEFAULT NULL, "
-                                    "  recognitionLanguage        TEXT                  DEFAULT NULL, "
-                                    "  referralProof              TEXT                  DEFAULT NULL, "
-                                    "  educationalDiscount        INTEGER               DEFAULT NULL, "
-                                    "  businessAddress            TEXT                  DEFAULT NULL, "
-                                    "  hideSponsorBilling         INTEGER               DEFAULT NULL, "
-                                    "  useEmailAutoFiling         INTEGER               DEFAULT NULL, "
-                                    "  reminderEmailConfig        INTEGER               DEFAULT NULL, "
-                                    "  emailAddressLastConfirmed  INTEGER               DEFAULT NULL, "
-                                    "  passwordUpdated            INTEGER               DEFAULT NULL, "
-                                    "  salesforcePushEnabled      INTEGER               DEFAULT NULL, "
-                                    "  shouldLogClientEvent       INTEGER               DEFAULT NULL)"));
+    res = query.exec(QStringLiteral(
+        "CREATE TABLE IF NOT EXISTS UserAttributes("
+        "  id REFERENCES Users(id) ON UPDATE CASCADE, "
+        "  defaultLocationName        TEXT                  DEFAULT NULL, "
+        "  defaultLatitude            REAL                  DEFAULT NULL, "
+        "  defaultLongitude           REAL                  DEFAULT NULL, "
+        "  preactivation              INTEGER               DEFAULT NULL, "
+        "  incomingEmailAddress       TEXT                  DEFAULT NULL, "
+        "  comments                   TEXT                  DEFAULT NULL, "
+        "  dateAgreedToTermsOfService INTEGER               DEFAULT NULL, "
+        "  maxReferrals               INTEGER               DEFAULT NULL, "
+        "  referralCount              INTEGER               DEFAULT NULL, "
+        "  refererCode                TEXT                  DEFAULT NULL, "
+        "  sentEmailDate              INTEGER               DEFAULT NULL, "
+        "  sentEmailCount             INTEGER               DEFAULT NULL, "
+        "  dailyEmailLimit            INTEGER               DEFAULT NULL, "
+        "  emailOptOutDate            INTEGER               DEFAULT NULL, "
+        "  partnerEmailOptInDate      INTEGER               DEFAULT NULL, "
+        "  preferredLanguage          TEXT                  DEFAULT NULL, "
+        "  preferredCountry           TEXT                  DEFAULT NULL, "
+        "  clipFullPage               INTEGER               DEFAULT NULL, "
+        "  twitterUserName            TEXT                  DEFAULT NULL, "
+        "  twitterId                  TEXT                  DEFAULT NULL, "
+        "  groupName                  TEXT                  DEFAULT NULL, "
+        "  recognitionLanguage        TEXT                  DEFAULT NULL, "
+        "  referralProof              TEXT                  DEFAULT NULL, "
+        "  educationalDiscount        INTEGER               DEFAULT NULL, "
+        "  businessAddress            TEXT                  DEFAULT NULL, "
+        "  hideSponsorBilling         INTEGER               DEFAULT NULL, "
+        "  useEmailAutoFiling         INTEGER               DEFAULT NULL, "
+        "  reminderEmailConfig        INTEGER               DEFAULT NULL, "
+        "  emailAddressLastConfirmed  INTEGER               DEFAULT NULL, "
+        "  passwordUpdated            INTEGER               DEFAULT NULL, "
+        "  salesforcePushEnabled      INTEGER               DEFAULT NULL, "
+        "  shouldLogClientEvent       INTEGER               DEFAULT NULL)"));
     errorPrefix.setBase(QT_TR_NOOP("Can't create UserAttributes table"));
     DATABASE_CHECK_AND_SET_ERROR()
 
-    res = query.exec(QStringLiteral("CREATE TABLE IF NOT EXISTS UserAttributesViewedPromotions("
-                                    "  id REFERENCES Users(id) ON UPDATE CASCADE, "
-                                    "  promotion               TEXT                    DEFAULT NULL)"));
-    errorPrefix.setBase(QT_TR_NOOP("Can't create UserAttributesViewedPromotions table"));
+    res = query.exec(QStringLiteral(
+        "CREATE TABLE IF NOT EXISTS UserAttributesViewedPromotions("
+        "  id REFERENCES Users(id) ON UPDATE CASCADE, "
+        "  promotion               TEXT                    DEFAULT NULL)"));
+    errorPrefix.setBase(
+        QT_TR_NOOP("Can't create UserAttributesViewedPromotions table"));
     DATABASE_CHECK_AND_SET_ERROR()
 
-    res = query.exec(QStringLiteral("CREATE TABLE IF NOT EXISTS UserAttributesRecentMailedAddresses("
-                                    "  id REFERENCES Users(id) ON UPDATE CASCADE, "
-                                    "  address                 TEXT                    DEFAULT NULL)"));
-    errorPrefix.setBase(QT_TR_NOOP("Can't create UserAttributesRecentMailedAddresses table"));
+    res = query.exec(QStringLiteral(
+        "CREATE TABLE IF NOT EXISTS UserAttributesRecentMailedAddresses("
+        "  id REFERENCES Users(id) ON UPDATE CASCADE, "
+        "  address                 TEXT                    DEFAULT NULL)"));
+    errorPrefix.setBase(
+        QT_TR_NOOP("Can't create UserAttributesRecentMailedAddresses table"));
     DATABASE_CHECK_AND_SET_ERROR()
 
-    res = query.exec(QStringLiteral("CREATE TABLE IF NOT EXISTS Accounting("
-                                    "  id REFERENCES Users(id) ON UPDATE CASCADE, "
-                                    "  uploadLimitEnd              INTEGER             DEFAULT NULL, "
-                                    "  uploadLimitNextMonth        INTEGER             DEFAULT NULL, "
-                                    "  premiumServiceStatus        INTEGER             DEFAULT NULL, "
-                                    "  premiumOrderNumber          TEXT                DEFAULT NULL, "
-                                    "  premiumCommerceService      TEXT                DEFAULT NULL, "
-                                    "  premiumServiceStart         INTEGER             DEFAULT NULL, "
-                                    "  premiumServiceSKU           TEXT                DEFAULT NULL, "
-                                    "  lastSuccessfulCharge        INTEGER             DEFAULT NULL, "
-                                    "  lastFailedCharge            INTEGER             DEFAULT NULL, "
-                                    "  lastFailedChargeReason      TEXT                DEFAULT NULL, "
-                                    "  nextPaymentDue              INTEGER             DEFAULT NULL, "
-                                    "  premiumLockUntil            INTEGER             DEFAULT NULL, "
-                                    "  updated                     INTEGER             DEFAULT NULL, "
-                                    "  premiumSubscriptionNumber   TEXT                DEFAULT NULL, "
-                                    "  lastRequestedCharge         INTEGER             DEFAULT NULL, "
-                                    "  currency                    TEXT                DEFAULT NULL, "
-                                    "  unitPrice                   INTEGER             DEFAULT NULL, "
-                                    "  unitDiscount                INTEGER             DEFAULT NULL, "
-                                    "  nextChargeDate              INTEGER             DEFAULT NULL, "
-                                    "  availablePoints             INTEGER             DEFAULT NULL)"));
+    res = query.exec(QStringLiteral(
+        "CREATE TABLE IF NOT EXISTS Accounting("
+        "  id REFERENCES Users(id) ON UPDATE CASCADE, "
+        "  uploadLimitEnd              INTEGER             DEFAULT NULL, "
+        "  uploadLimitNextMonth        INTEGER             DEFAULT NULL, "
+        "  premiumServiceStatus        INTEGER             DEFAULT NULL, "
+        "  premiumOrderNumber          TEXT                DEFAULT NULL, "
+        "  premiumCommerceService      TEXT                DEFAULT NULL, "
+        "  premiumServiceStart         INTEGER             DEFAULT NULL, "
+        "  premiumServiceSKU           TEXT                DEFAULT NULL, "
+        "  lastSuccessfulCharge        INTEGER             DEFAULT NULL, "
+        "  lastFailedCharge            INTEGER             DEFAULT NULL, "
+        "  lastFailedChargeReason      TEXT                DEFAULT NULL, "
+        "  nextPaymentDue              INTEGER             DEFAULT NULL, "
+        "  premiumLockUntil            INTEGER             DEFAULT NULL, "
+        "  updated                     INTEGER             DEFAULT NULL, "
+        "  premiumSubscriptionNumber   TEXT                DEFAULT NULL, "
+        "  lastRequestedCharge         INTEGER             DEFAULT NULL, "
+        "  currency                    TEXT                DEFAULT NULL, "
+        "  unitPrice                   INTEGER             DEFAULT NULL, "
+        "  unitDiscount                INTEGER             DEFAULT NULL, "
+        "  nextChargeDate              INTEGER             DEFAULT NULL, "
+        "  availablePoints             INTEGER             DEFAULT NULL)"));
     errorPrefix.setBase(QT_TR_NOOP("Can't create Accounting table"));
     DATABASE_CHECK_AND_SET_ERROR()
 
-    res = query.exec(QStringLiteral("CREATE TABLE IF NOT EXISTS AccountLimits("
-                                    "  id REFERENCES Users(id) ON UPDATE CASCADE, "
-                                    "  userMailLimitDaily          INTEGER             DEFAULT NULL, "
-                                    "  noteSizeMax                 INTEGER             DEFAULT NULL, "
-                                    "  resourceSizeMax             INTEGER             DEFAULT NULL, "
-                                    "  userLinkedNotebookMax       INTEGER             DEFAULT NULL, "
-                                    "  uploadLimit                 INTEGER             DEFAULT NULL, "
-                                    "  userNoteCountMax            INTEGER             DEFAULT NULL, "
-                                    "  userNotebookCountMax        INTEGER             DEFAULT NULL, "
-                                    "  userTagCountMax             INTEGER             DEFAULT NULL, "
-                                    "  noteTagCountMax             INTEGER             DEFAULT NULL, "
-                                    "  userSavedSearchesMax        INTEGER             DEFAULT NULL, "
-                                    "  noteResourceCountMax        INTEGER             DEFAULT NULL)"));
+    res = query.exec(QStringLiteral(
+        "CREATE TABLE IF NOT EXISTS AccountLimits("
+        "  id REFERENCES Users(id) ON UPDATE CASCADE, "
+        "  userMailLimitDaily          INTEGER             DEFAULT NULL, "
+        "  noteSizeMax                 INTEGER             DEFAULT NULL, "
+        "  resourceSizeMax             INTEGER             DEFAULT NULL, "
+        "  userLinkedNotebookMax       INTEGER             DEFAULT NULL, "
+        "  uploadLimit                 INTEGER             DEFAULT NULL, "
+        "  userNoteCountMax            INTEGER             DEFAULT NULL, "
+        "  userNotebookCountMax        INTEGER             DEFAULT NULL, "
+        "  userTagCountMax             INTEGER             DEFAULT NULL, "
+        "  noteTagCountMax             INTEGER             DEFAULT NULL, "
+        "  userSavedSearchesMax        INTEGER             DEFAULT NULL, "
+        "  noteResourceCountMax        INTEGER             DEFAULT NULL)"));
     errorPrefix.setBase(QT_TR_NOOP("Can't create AccountLimits table"));
     DATABASE_CHECK_AND_SET_ERROR()
 
-    res = query.exec(QStringLiteral("CREATE TABLE IF NOT EXISTS BusinessUserInfo("
-                                    "  id REFERENCES Users(id) ON UPDATE CASCADE, "
-                                    "  businessId              INTEGER                 DEFAULT NULL, "
-                                    "  businessName            TEXT                    DEFAULT NULL, "
-                                    "  role                    INTEGER                 DEFAULT NULL, "
-                                    "  businessInfoEmail       TEXT                    DEFAULT NULL)"));
+    res = query.exec(QStringLiteral(
+        "CREATE TABLE IF NOT EXISTS BusinessUserInfo("
+        "  id REFERENCES Users(id) ON UPDATE CASCADE, "
+        "  businessId              INTEGER                 DEFAULT NULL, "
+        "  businessName            TEXT                    DEFAULT NULL, "
+        "  role                    INTEGER                 DEFAULT NULL, "
+        "  businessInfoEmail       TEXT                    DEFAULT NULL)"));
     errorPrefix.setBase(QT_TR_NOOP("Can't create BusinessUserInfo table"));
     DATABASE_CHECK_AND_SET_ERROR()
 
-    res = query.exec(QStringLiteral("CREATE TRIGGER IF NOT EXISTS on_user_delete_trigger "
-                                    "BEFORE DELETE ON Users "
-                                    "BEGIN "
-                                    "DELETE FROM UserAttributes WHERE id=OLD.id; "
-                                    "DELETE FROM UserAttributesViewedPromotions WHERE id=OLD.id; "
-                                    "DELETE FROM UserAttributesRecentMailedAddresses WHERE id=OLD.id; "
-                                    "DELETE FROM Accounting WHERE id=OLD.id; "
-                                    "DELETE FROM AccountLimits WHERE id=OLD.id; "
-                                    "DELETE FROM BusinessUserInfo WHERE id=OLD.id; "
-                                    "END"));
-    errorPrefix.setBase(QT_TR_NOOP("Can't create trigger to fire on deletion from users table"));
+    res = query.exec(QStringLiteral(
+        "CREATE TRIGGER IF NOT EXISTS on_user_delete_trigger "
+        "BEFORE DELETE ON Users "
+        "BEGIN "
+        "DELETE FROM UserAttributes WHERE id=OLD.id; "
+        "DELETE FROM UserAttributesViewedPromotions WHERE id=OLD.id; "
+        "DELETE FROM UserAttributesRecentMailedAddresses WHERE id=OLD.id; "
+        "DELETE FROM Accounting WHERE id=OLD.id; "
+        "DELETE FROM AccountLimits WHERE id=OLD.id; "
+        "DELETE FROM BusinessUserInfo WHERE id=OLD.id; "
+        "END"));
+    errorPrefix.setBase(
+        QT_TR_NOOP("Can't create trigger to fire on deletion from users table"));
     DATABASE_CHECK_AND_SET_ERROR()
 
-    res = query.exec(QStringLiteral("CREATE TABLE IF NOT EXISTS LinkedNotebooks("
-                                    "  guid                            TEXT PRIMARY KEY  NOT NULL UNIQUE, "
-                                    "  updateSequenceNumber            INTEGER           DEFAULT NULL, "
-                                    "  isDirty                         INTEGER           DEFAULT NULL, "
-                                    "  shareName                       TEXT              DEFAULT NULL, "
-                                    "  username                        TEXT              DEFAULT NULL, "
-                                    "  shardId                         TEXT              DEFAULT NULL, "
-                                    "  sharedNotebookGlobalId          TEXT              DEFAULT NULL, "
-                                    "  uri                             TEXT              DEFAULT NULL, "
-                                    "  noteStoreUrl                    TEXT              DEFAULT NULL, "
-                                    "  webApiUrlPrefix                 TEXT              DEFAULT NULL, "
-                                    "  stack                           TEXT              DEFAULT NULL, "
-                                    "  businessId                      INTEGER           DEFAULT NULL"
-                                    ")"));
+    res = query.exec(QStringLiteral(
+        "CREATE TABLE IF NOT EXISTS LinkedNotebooks("
+        "  guid                            TEXT PRIMARY KEY  NOT NULL UNIQUE, "
+        "  updateSequenceNumber            INTEGER           DEFAULT NULL, "
+        "  isDirty                         INTEGER           DEFAULT NULL, "
+        "  shareName                       TEXT              DEFAULT NULL, "
+        "  username                        TEXT              DEFAULT NULL, "
+        "  shardId                         TEXT              DEFAULT NULL, "
+        "  sharedNotebookGlobalId          TEXT              DEFAULT NULL, "
+        "  uri                             TEXT              DEFAULT NULL, "
+        "  noteStoreUrl                    TEXT              DEFAULT NULL, "
+        "  webApiUrlPrefix                 TEXT              DEFAULT NULL, "
+        "  stack                           TEXT              DEFAULT NULL, "
+        "  businessId                      INTEGER           DEFAULT NULL"
+        ")"));
     errorPrefix.setBase(QT_TR_NOOP("Can't create LinkedNotebooks table"));
     DATABASE_CHECK_AND_SET_ERROR()
 
-    res = query.exec(QStringLiteral("CREATE TABLE IF NOT EXISTS Notebooks("
-                                    "  localUid                        TEXT PRIMARY KEY  NOT NULL UNIQUE, "
-                                    "  guid                            TEXT              DEFAULT NULL UNIQUE, "
-                                    "  linkedNotebookGuid REFERENCES LinkedNotebooks(guid) ON UPDATE CASCADE, "
-                                    "  updateSequenceNumber            INTEGER           DEFAULT NULL, "
-                                    "  notebookName                    TEXT              DEFAULT NULL, "
-                                    "  notebookNameUpper               TEXT              DEFAULT NULL, "
-                                    "  creationTimestamp               INTEGER           DEFAULT NULL, "
-                                    "  modificationTimestamp           INTEGER           DEFAULT NULL, "
-                                    "  isDirty                         INTEGER           NOT NULL, "
-                                    "  isLocal                         INTEGER           NOT NULL, "
-                                    "  isDefault                       INTEGER           DEFAULT NULL UNIQUE, "
-                                    "  isLastUsed                      INTEGER           DEFAULT NULL UNIQUE, "
-                                    "  isFavorited                     INTEGER           DEFAULT NULL, "
-                                    "  publishingUri                   TEXT              DEFAULT NULL, "
-                                    "  publishingNoteSortOrder         INTEGER           DEFAULT NULL, "
-                                    "  publishingAscendingSort         INTEGER           DEFAULT NULL, "
-                                    "  publicDescription               TEXT              DEFAULT NULL, "
-                                    "  isPublished                     INTEGER           DEFAULT NULL, "
-                                    "  stack                           TEXT              DEFAULT NULL, "
-                                    "  businessNotebookDescription     TEXT              DEFAULT NULL, "
-                                    "  businessNotebookPrivilegeLevel  INTEGER           DEFAULT NULL, "
-                                    "  businessNotebookIsRecommended   INTEGER           DEFAULT NULL, "
-                                    "  contactId                       INTEGER           DEFAULT NULL, "
-                                    "  recipientReminderNotifyEmail    INTEGER           DEFAULT NULL, "
-                                    "  recipientReminderNotifyInApp    INTEGER           DEFAULT NULL, "
-                                    "  recipientInMyList               INTEGER           DEFAULT NULL, "
-                                    "  recipientStack                  TEXT              DEFAULT NULL, "
-                                    "  UNIQUE(localUid, guid), "
-                                    "  UNIQUE(notebookNameUpper, linkedNotebookGuid) "
-                                    ")"));
+    res = query.exec(QStringLiteral(
+        "CREATE TABLE IF NOT EXISTS Notebooks("
+        "  localUid                        TEXT PRIMARY KEY  NOT NULL UNIQUE, "
+        "  guid                            TEXT              DEFAULT NULL UNIQUE, "
+        "  linkedNotebookGuid REFERENCES LinkedNotebooks(guid) ON UPDATE CASCADE, "
+        "  updateSequenceNumber            INTEGER           DEFAULT NULL, "
+        "  notebookName                    TEXT              DEFAULT NULL, "
+        "  notebookNameUpper               TEXT              DEFAULT NULL, "
+        "  creationTimestamp               INTEGER           DEFAULT NULL, "
+        "  modificationTimestamp           INTEGER           DEFAULT NULL, "
+        "  isDirty                         INTEGER           NOT NULL, "
+        "  isLocal                         INTEGER           NOT NULL, "
+        "  isDefault                       INTEGER           DEFAULT NULL UNIQUE, "
+        "  isLastUsed                      INTEGER           DEFAULT NULL UNIQUE, "
+        "  isFavorited                     INTEGER           DEFAULT NULL, "
+        "  publishingUri                   TEXT              DEFAULT NULL, "
+        "  publishingNoteSortOrder         INTEGER           DEFAULT NULL, "
+        "  publishingAscendingSort         INTEGER           DEFAULT NULL, "
+        "  publicDescription               TEXT              DEFAULT NULL, "
+        "  isPublished                     INTEGER           DEFAULT NULL, "
+        "  stack                           TEXT              DEFAULT NULL, "
+        "  businessNotebookDescription     TEXT              DEFAULT NULL, "
+        "  businessNotebookPrivilegeLevel  INTEGER           DEFAULT NULL, "
+        "  businessNotebookIsRecommended   INTEGER           DEFAULT NULL, "
+        "  contactId                       INTEGER           DEFAULT NULL, "
+        "  recipientReminderNotifyEmail    INTEGER           DEFAULT NULL, "
+        "  recipientReminderNotifyInApp    INTEGER           DEFAULT NULL, "
+        "  recipientInMyList               INTEGER           DEFAULT NULL, "
+        "  recipientStack                  TEXT              DEFAULT NULL, "
+        "  UNIQUE(localUid, guid), "
+        "  UNIQUE(notebookNameUpper, linkedNotebookGuid) "
+        ")"));
     errorPrefix.setBase(QT_TR_NOOP("Can't create Notebooks table"));
     DATABASE_CHECK_AND_SET_ERROR()
 
-    res = query.exec(QStringLiteral("CREATE VIRTUAL TABLE IF NOT EXISTS NotebookFTS "
-                                    "USING FTS4(content=\"Notebooks\", "
-                                    "localUid, guid, notebookName)"));
-    errorPrefix.setBase(QT_TR_NOOP("Can't create virtual FTS4 NotebookFTS table"));
+    res = query.exec(QStringLiteral(
+        "CREATE VIRTUAL TABLE IF NOT EXISTS NotebookFTS "
+        "USING FTS4(content=\"Notebooks\", "
+        "localUid, guid, notebookName)"));
+    errorPrefix.setBase(
+        QT_TR_NOOP("Can't create virtual FTS4 NotebookFTS table"));
     DATABASE_CHECK_AND_SET_ERROR()
 
-    res = query.exec(QStringLiteral("CREATE TRIGGER IF NOT EXISTS "
-                                    "NotebookFTS_BeforeDeleteTrigger "
-                                    "BEFORE DELETE ON Notebooks "
-                                    "BEGIN "
-                                    "DELETE FROM NotebookFTS WHERE localUid=old.localUid; "
-                                    "END"));
-    errorPrefix.setBase(QT_TR_NOOP("Can't create NotebookFTS_BeforeDeleteTrigger"));
+    res = query.exec(QStringLiteral(
+        "CREATE TRIGGER IF NOT EXISTS "
+        "NotebookFTS_BeforeDeleteTrigger "
+        "BEFORE DELETE ON Notebooks "
+        "BEGIN "
+        "DELETE FROM NotebookFTS WHERE localUid=old.localUid; "
+        "END"));
+    errorPrefix.setBase(
+        QT_TR_NOOP("Can't create NotebookFTS_BeforeDeleteTrigger"));
     DATABASE_CHECK_AND_SET_ERROR()
 
-    res = query.exec(QStringLiteral("CREATE TRIGGER IF NOT EXISTS "
-                                    "NotebookFTS_AfterInsertTrigger "
-                                    "AFTER INSERT ON Notebooks "
-                                    "BEGIN "
-                                    "INSERT INTO NotebookFTS(NotebookFTS) VALUES('rebuild'); "
-                                    "END"));
-    errorPrefix.setBase(QT_TR_NOOP("Can't create NotebookFTS_AfterInsertTrigger"));
+    res = query.exec(QStringLiteral(
+        "CREATE TRIGGER IF NOT EXISTS "
+        "NotebookFTS_AfterInsertTrigger "
+        "AFTER INSERT ON Notebooks "
+        "BEGIN "
+        "INSERT INTO NotebookFTS(NotebookFTS) VALUES('rebuild'); "
+        "END"));
+    errorPrefix.setBase(
+        QT_TR_NOOP("Can't create NotebookFTS_AfterInsertTrigger"));
     DATABASE_CHECK_AND_SET_ERROR()
 
-    res = query.exec(QStringLiteral("CREATE TABLE IF NOT EXISTS NotebookRestrictions("
-                                    "  localUid REFERENCES Notebooks(localUid) ON UPDATE CASCADE, "
-                                    "  noReadNotes                 INTEGER      DEFAULT NULL, "
-                                    "  noCreateNotes               INTEGER      DEFAULT NULL, "
-                                    "  noUpdateNotes               INTEGER      DEFAULT NULL, "
-                                    "  noExpungeNotes              INTEGER      DEFAULT NULL, "
-                                    "  noShareNotes                INTEGER      DEFAULT NULL, "
-                                    "  noEmailNotes                INTEGER      DEFAULT NULL, "
-                                    "  noSendMessageToRecipients   INTEGER      DEFAULT NULL, "
-                                    "  noUpdateNotebook            INTEGER      DEFAULT NULL, "
-                                    "  noExpungeNotebook           INTEGER      DEFAULT NULL, "
-                                    "  noSetDefaultNotebook        INTEGER      DEFAULT NULL, "
-                                    "  noSetNotebookStack          INTEGER      DEFAULT NULL, "
-                                    "  noPublishToPublic           INTEGER      DEFAULT NULL, "
-                                    "  noPublishToBusinessLibrary  INTEGER      DEFAULT NULL, "
-                                    "  noCreateTags                INTEGER      DEFAULT NULL, "
-                                    "  noUpdateTags                INTEGER      DEFAULT NULL, "
-                                    "  noExpungeTags               INTEGER      DEFAULT NULL, "
-                                    "  noSetParentTag              INTEGER      DEFAULT NULL, "
-                                    "  noCreateSharedNotebooks     INTEGER      DEFAULT NULL, "
-                                    "  noShareNotesWithBusiness    INTEGER      DEFAULT NULL, "
-                                    "  noRenameNotebook            INTEGER      DEFAULT NULL, "
-                                    "  updateWhichSharedNotebookRestrictions    INTEGER     DEFAULT NULL, "
-                                    "  expungeWhichSharedNotebookRestrictions   INTEGER     DEFAULT NULL "
-                                    ")"));
+    res = query.exec(QStringLiteral(
+        "CREATE TABLE IF NOT EXISTS NotebookRestrictions("
+        "  localUid REFERENCES Notebooks(localUid) ON UPDATE CASCADE, "
+        "  noReadNotes                 INTEGER      DEFAULT NULL, "
+        "  noCreateNotes               INTEGER      DEFAULT NULL, "
+        "  noUpdateNotes               INTEGER      DEFAULT NULL, "
+        "  noExpungeNotes              INTEGER      DEFAULT NULL, "
+        "  noShareNotes                INTEGER      DEFAULT NULL, "
+        "  noEmailNotes                INTEGER      DEFAULT NULL, "
+        "  noSendMessageToRecipients   INTEGER      DEFAULT NULL, "
+        "  noUpdateNotebook            INTEGER      DEFAULT NULL, "
+        "  noExpungeNotebook           INTEGER      DEFAULT NULL, "
+        "  noSetDefaultNotebook        INTEGER      DEFAULT NULL, "
+        "  noSetNotebookStack          INTEGER      DEFAULT NULL, "
+        "  noPublishToPublic           INTEGER      DEFAULT NULL, "
+        "  noPublishToBusinessLibrary  INTEGER      DEFAULT NULL, "
+        "  noCreateTags                INTEGER      DEFAULT NULL, "
+        "  noUpdateTags                INTEGER      DEFAULT NULL, "
+        "  noExpungeTags               INTEGER      DEFAULT NULL, "
+        "  noSetParentTag              INTEGER      DEFAULT NULL, "
+        "  noCreateSharedNotebooks     INTEGER      DEFAULT NULL, "
+        "  noShareNotesWithBusiness    INTEGER      DEFAULT NULL, "
+        "  noRenameNotebook            INTEGER      DEFAULT NULL, "
+        "  updateWhichSharedNotebookRestrictions    INTEGER     DEFAULT NULL, "
+        "  expungeWhichSharedNotebookRestrictions   INTEGER     DEFAULT NULL "
+        ")"));
     errorPrefix.setBase(QT_TR_NOOP("Can't create NotebookRestrictions table"));
     DATABASE_CHECK_AND_SET_ERROR()
 
-    res = query.exec(QStringLiteral("CREATE TABLE IF NOT EXISTS SharedNotebooks("
-                                    "  sharedNotebookShareId                             INTEGER PRIMARY KEY   NOT NULL UNIQUE, "
-                                    "  sharedNotebookUserId                              INTEGER    DEFAULT NULL, "
-                                    "  sharedNotebookNotebookGuid REFERENCES Notebooks(guid) ON UPDATE CASCADE, "
-                                    "  sharedNotebookEmail                               TEXT       DEFAULT NULL, "
-                                    "  sharedNotebookIdentityId                          INTEGER    DEFAULT NULL, "
-                                    "  sharedNotebookCreationTimestamp                   INTEGER    DEFAULT NULL, "
-                                    "  sharedNotebookModificationTimestamp               INTEGER    DEFAULT NULL, "
-                                    "  sharedNotebookGlobalId                            TEXT       DEFAULT NULL, "
-                                    "  sharedNotebookUsername                            TEXT       DEFAULT NULL, "
-                                    "  sharedNotebookPrivilegeLevel                      INTEGER    DEFAULT NULL, "
-                                    "  sharedNotebookRecipientReminderNotifyEmail        INTEGER    DEFAULT NULL, "
-                                    "  sharedNotebookRecipientReminderNotifyInApp        INTEGER    DEFAULT NULL, "
-                                    "  sharedNotebookSharerUserId                        INTEGER    DEFAULT NULL, "
-                                    "  sharedNotebookRecipientUsername                   TEXT       DEFAULT NULL, "
-                                    "  sharedNotebookRecipientUserId                     INTEGER    DEFAULT NULL, "
-                                    "  sharedNotebookRecipientIdentityId                 INTEGER    DEFAULT NULL, "
-                                    "  sharedNotebookAssignmentTimestamp                 INTEGER    DEFAULT NULL, "
-                                    "  indexInNotebook                                   INTEGER    DEFAULT NULL, "
-                                    "  UNIQUE(sharedNotebookShareId, sharedNotebookNotebookGuid) ON CONFLICT REPLACE"
-                                    ")"));
+    res = query.exec(QStringLiteral(
+        "CREATE TABLE IF NOT EXISTS SharedNotebooks("
+        "  sharedNotebookShareId                      INTEGER PRIMARY KEY   NOT NULL UNIQUE, "
+        "  sharedNotebookUserId                       INTEGER    DEFAULT NULL, "
+        "  sharedNotebookNotebookGuid REFERENCES Notebooks(guid) ON UPDATE CASCADE, "
+        "  sharedNotebookEmail                        TEXT       DEFAULT NULL, "
+        "  sharedNotebookIdentityId                   INTEGER    DEFAULT NULL, "
+        "  sharedNotebookCreationTimestamp            INTEGER    DEFAULT NULL, "
+        "  sharedNotebookModificationTimestamp        INTEGER    DEFAULT NULL, "
+        "  sharedNotebookGlobalId                     TEXT       DEFAULT NULL, "
+        "  sharedNotebookUsername                     TEXT       DEFAULT NULL, "
+        "  sharedNotebookPrivilegeLevel               INTEGER    DEFAULT NULL, "
+        "  sharedNotebookRecipientReminderNotifyEmail INTEGER    DEFAULT NULL, "
+        "  sharedNotebookRecipientReminderNotifyInApp INTEGER    DEFAULT NULL, "
+        "  sharedNotebookSharerUserId                 INTEGER    DEFAULT NULL, "
+        "  sharedNotebookRecipientUsername            TEXT       DEFAULT NULL, "
+        "  sharedNotebookRecipientUserId              INTEGER    DEFAULT NULL, "
+        "  sharedNotebookRecipientIdentityId          INTEGER    DEFAULT NULL, "
+        "  sharedNotebookAssignmentTimestamp          INTEGER    DEFAULT NULL, "
+        "  indexInNotebook                            INTEGER    DEFAULT NULL, "
+        "  UNIQUE(sharedNotebookShareId, sharedNotebookNotebookGuid) ON CONFLICT REPLACE)"));
     errorPrefix.setBase(QT_TR_NOOP("Can't create SharedNotebooks table"));
     DATABASE_CHECK_AND_SET_ERROR()
 
-    res = query.exec(QStringLiteral("CREATE TABLE IF NOT EXISTS Notes("
-                                    "  localUid                        TEXT PRIMARY KEY     NOT NULL UNIQUE, "
-                                    "  guid                            TEXT                 DEFAULT NULL UNIQUE, "
-                                    "  updateSequenceNumber            INTEGER              DEFAULT NULL, "
-                                    "  isDirty                         INTEGER              NOT NULL, "
-                                    "  isLocal                         INTEGER              NOT NULL, "
-                                    "  isFavorited                     INTEGER              NOT NULL, "
-                                    "  title                           TEXT                 DEFAULT NULL, "
-                                    "  titleNormalized                 TEXT                 DEFAULT NULL, "
-                                    "  content                         TEXT                 DEFAULT NULL, "
-                                    "  contentLength                   INTEGER              DEFAULT NULL, "
-                                    "  contentHash                     TEXT                 DEFAULT NULL, "
-                                    "  contentPlainText                TEXT                 DEFAULT NULL, "
-                                    "  contentListOfWords              TEXT                 DEFAULT NULL, "
-                                    "  contentContainsFinishedToDo     INTEGER              DEFAULT NULL, "
-                                    "  contentContainsUnfinishedToDo   INTEGER              DEFAULT NULL, "
-                                    "  contentContainsEncryption       INTEGER              DEFAULT NULL, "
-                                    "  creationTimestamp               INTEGER              DEFAULT NULL, "
-                                    "  modificationTimestamp           INTEGER              DEFAULT NULL, "
-                                    "  deletionTimestamp               INTEGER              DEFAULT NULL, "
-                                    "  isActive                        INTEGER              DEFAULT NULL, "
-                                    "  hasAttributes                   INTEGER              NOT NULL, "
-                                    "  thumbnail                       BLOB                 DEFAULT NULL, "
-                                    "  notebookLocalUid REFERENCES Notebooks(localUid) ON UPDATE CASCADE, "
-                                    "  notebookGuid REFERENCES Notebooks(guid) ON UPDATE CASCADE, "
-                                    "  subjectDate                     INTEGER              DEFAULT NULL, "
-                                    "  latitude                        REAL                 DEFAULT NULL, "
-                                    "  longitude                       REAL                 DEFAULT NULL, "
-                                    "  altitude                        REAL                 DEFAULT NULL, "
-                                    "  author                          TEXT                 DEFAULT NULL, "
-                                    "  source                          TEXT                 DEFAULT NULL, "
-                                    "  sourceURL                       TEXT                 DEFAULT NULL, "
-                                    "  sourceApplication               TEXT                 DEFAULT NULL, "
-                                    "  shareDate                       INTEGER              DEFAULT NULL, "
-                                    "  reminderOrder                   INTEGER              DEFAULT NULL, "
-                                    "  reminderDoneTime                INTEGER              DEFAULT NULL, "
-                                    "  reminderTime                    INTEGER              DEFAULT NULL, "
-                                    "  placeName                       TEXT                 DEFAULT NULL, "
-                                    "  contentClass                    TEXT                 DEFAULT NULL, "
-                                    "  lastEditedBy                    TEXT                 DEFAULT NULL, "
-                                    "  creatorId                       INTEGER              DEFAULT NULL, "
-                                    "  lastEditorId                    INTEGER              DEFAULT NULL, "
-                                    "  sharedWithBusiness              INTEGER              DEFAULT NULL, "
-                                    "  conflictSourceNoteGuid          TEXT                 DEFAULT NULL, "
-                                    "  noteTitleQuality                INTEGER              DEFAULT NULL, "
-                                    "  applicationDataKeysOnly         TEXT                 DEFAULT NULL, "
-                                    "  applicationDataKeysMap          TEXT                 DEFAULT NULL, "
-                                    "  applicationDataValues           TEXT                 DEFAULT NULL, "
-                                    "  classificationKeys              TEXT                 DEFAULT NULL, "
-                                    "  classificationValues            TEXT                 DEFAULT NULL, "
-                                    "  UNIQUE(localUid, guid)"
-                                    ")"));
+    res = query.exec(QStringLiteral(
+        "CREATE TABLE IF NOT EXISTS Notes("
+        "  localUid                        TEXT PRIMARY KEY     NOT NULL UNIQUE, "
+        "  guid                            TEXT                 DEFAULT NULL UNIQUE, "
+        "  updateSequenceNumber            INTEGER              DEFAULT NULL, "
+        "  isDirty                         INTEGER              NOT NULL, "
+        "  isLocal                         INTEGER              NOT NULL, "
+        "  isFavorited                     INTEGER              NOT NULL, "
+        "  title                           TEXT                 DEFAULT NULL, "
+        "  titleNormalized                 TEXT                 DEFAULT NULL, "
+        "  content                         TEXT                 DEFAULT NULL, "
+        "  contentLength                   INTEGER              DEFAULT NULL, "
+        "  contentHash                     TEXT                 DEFAULT NULL, "
+        "  contentPlainText                TEXT                 DEFAULT NULL, "
+        "  contentListOfWords              TEXT                 DEFAULT NULL, "
+        "  contentContainsFinishedToDo     INTEGER              DEFAULT NULL, "
+        "  contentContainsUnfinishedToDo   INTEGER              DEFAULT NULL, "
+        "  contentContainsEncryption       INTEGER              DEFAULT NULL, "
+        "  creationTimestamp               INTEGER              DEFAULT NULL, "
+        "  modificationTimestamp           INTEGER              DEFAULT NULL, "
+        "  deletionTimestamp               INTEGER              DEFAULT NULL, "
+        "  isActive                        INTEGER              DEFAULT NULL, "
+        "  hasAttributes                   INTEGER              NOT NULL, "
+        "  thumbnail                       BLOB                 DEFAULT NULL, "
+        "  notebookLocalUid REFERENCES Notebooks(localUid) ON UPDATE CASCADE, "
+        "  notebookGuid REFERENCES Notebooks(guid) ON UPDATE CASCADE, "
+        "  subjectDate                     INTEGER              DEFAULT NULL, "
+        "  latitude                        REAL                 DEFAULT NULL, "
+        "  longitude                       REAL                 DEFAULT NULL, "
+        "  altitude                        REAL                 DEFAULT NULL, "
+        "  author                          TEXT                 DEFAULT NULL, "
+        "  source                          TEXT                 DEFAULT NULL, "
+        "  sourceURL                       TEXT                 DEFAULT NULL, "
+        "  sourceApplication               TEXT                 DEFAULT NULL, "
+        "  shareDate                       INTEGER              DEFAULT NULL, "
+        "  reminderOrder                   INTEGER              DEFAULT NULL, "
+        "  reminderDoneTime                INTEGER              DEFAULT NULL, "
+        "  reminderTime                    INTEGER              DEFAULT NULL, "
+        "  placeName                       TEXT                 DEFAULT NULL, "
+        "  contentClass                    TEXT                 DEFAULT NULL, "
+        "  lastEditedBy                    TEXT                 DEFAULT NULL, "
+        "  creatorId                       INTEGER              DEFAULT NULL, "
+        "  lastEditorId                    INTEGER              DEFAULT NULL, "
+        "  sharedWithBusiness              INTEGER              DEFAULT NULL, "
+        "  conflictSourceNoteGuid          TEXT                 DEFAULT NULL, "
+        "  noteTitleQuality                INTEGER              DEFAULT NULL, "
+        "  applicationDataKeysOnly         TEXT                 DEFAULT NULL, "
+        "  applicationDataKeysMap          TEXT                 DEFAULT NULL, "
+        "  applicationDataValues           TEXT                 DEFAULT NULL, "
+        "  classificationKeys              TEXT                 DEFAULT NULL, "
+        "  classificationValues            TEXT                 DEFAULT NULL, "
+        "  UNIQUE(localUid, guid)"
+        ")"));
     errorPrefix.setBase(QT_TR_NOOP("Can't create Notes table"));
     DATABASE_CHECK_AND_SET_ERROR()
 
-    res = query.exec(QStringLiteral("CREATE TABLE IF NOT EXISTS SharedNotes("
-                                    "  sharedNoteNoteGuid REFERENCES Notes(guid) ON UPDATE CASCADE, "
-                                    "  sharedNoteSharerUserId                               INTEGER     DEFAULT NULL, "
-                                    "  sharedNoteRecipientIdentityId                        INTEGER     DEFAULT NULL UNIQUE, "
-                                    "  sharedNoteRecipientContactName                       TEXT        DEFAULT NULL, "
-                                    "  sharedNoteRecipientContactId                         TEXT        DEFAULT NULL, "
-                                    "  sharedNoteRecipientContactType                       INTEGER     DEFAULT NULL, "
-                                    "  sharedNoteRecipientContactPhotoUrl                   TEXT        DEFAULT NULL, "
-                                    "  sharedNoteRecipientContactPhotoLastUpdated           INTEGER     DEFAULT NULL, "
-                                    "  sharedNoteRecipientContactMessagingPermit            BLOB        DEFAULT NULL, "
-                                    "  sharedNoteRecipientContactMessagingPermitExpires     INTEGER     DEFAULT NULL, "
-                                    "  sharedNoteRecipientUserId                            INTEGER     DEFAULT NULL, "
-                                    "  sharedNoteRecipientDeactivated                       INTEGER     DEFAULT NULL, "
-                                    "  sharedNoteRecipientSameBusiness                      INTEGER     DEFAULT NULL, "
-                                    "  sharedNoteRecipientBlocked                           INTEGER     DEFAULT NULL, "
-                                    "  sharedNoteRecipientUserConnected                     INTEGER     DEFAULT NULL, "
-                                    "  sharedNoteRecipientEventId                           INTEGER     DEFAULT NULL, "
-                                    "  sharedNotePrivilegeLevel                             INTEGER     DEFAULT NULL, "
-                                    "  sharedNoteCreationTimestamp                          INTEGER     DEFAULT NULL, "
-                                    "  sharedNoteModificationTimestamp                      INTEGER     DEFAULT NULL, "
-                                    "  sharedNoteAssignmentTimestamp                        INTEGER     DEFAULT NULL, "
-                                    "  indexInNote                                          INTEGER     DEFAULT NULL, "
-                                    "  UNIQUE(sharedNoteNoteGuid, sharedNoteRecipientIdentityId) ON CONFLICT REPLACE)"));
+    res = query.exec(QStringLiteral(
+        "CREATE TABLE IF NOT EXISTS SharedNotes("
+        "  sharedNoteNoteGuid REFERENCES Notes(guid) ON UPDATE CASCADE, "
+        "  sharedNoteSharerUserId                           INTEGER DEFAULT NULL, "
+        "  sharedNoteRecipientIdentityId                    INTEGER DEFAULT NULL UNIQUE, "
+        "  sharedNoteRecipientContactName                   TEXT    DEFAULT NULL, "
+        "  sharedNoteRecipientContactId                     TEXT    DEFAULT NULL, "
+        "  sharedNoteRecipientContactType                   INTEGER DEFAULT NULL, "
+        "  sharedNoteRecipientContactPhotoUrl               TEXT    DEFAULT NULL, "
+        "  sharedNoteRecipientContactPhotoLastUpdated       INTEGER DEFAULT NULL, "
+        "  sharedNoteRecipientContactMessagingPermit        BLOB    DEFAULT NULL, "
+        "  sharedNoteRecipientContactMessagingPermitExpires INTEGER DEFAULT NULL, "
+        "  sharedNoteRecipientUserId                        INTEGER DEFAULT NULL, "
+        "  sharedNoteRecipientDeactivated                   INTEGER DEFAULT NULL, "
+        "  sharedNoteRecipientSameBusiness                  INTEGER DEFAULT NULL, "
+        "  sharedNoteRecipientBlocked                       INTEGER DEFAULT NULL, "
+        "  sharedNoteRecipientUserConnected                 INTEGER DEFAULT NULL, "
+        "  sharedNoteRecipientEventId                       INTEGER DEFAULT NULL, "
+        "  sharedNotePrivilegeLevel                         INTEGER DEFAULT NULL, "
+        "  sharedNoteCreationTimestamp                      INTEGER DEFAULT NULL, "
+        "  sharedNoteModificationTimestamp                  INTEGER DEFAULT NULL, "
+        "  sharedNoteAssignmentTimestamp                    INTEGER DEFAULT NULL, "
+        "  indexInNote                                      INTEGER DEFAULT NULL, "
+        "  UNIQUE(sharedNoteNoteGuid, sharedNoteRecipientIdentityId) ON CONFLICT REPLACE)"));
     errorPrefix.setBase(QT_TR_NOOP("Can't create SharedNotes table"));
     DATABASE_CHECK_AND_SET_ERROR()
 
-    res = query.exec(QStringLiteral("CREATE TABLE IF NOT EXISTS NoteRestrictions("
-                                    "  noteLocalUid REFERENCES Notes(localUid) ON UPDATE CASCADE, "
-                                    "  noUpdateNoteTitle                INTEGER             DEFAULT NULL, "
-                                    "  noUpdateNoteContent              INTEGER             DEFAULT NULL, "
-                                    "  noEmailNote                      INTEGER             DEFAULT NULL, "
-                                    "  noShareNote                      INTEGER             DEFAULT NULL, "
-                                    "  noShareNotePublicly              INTEGER             DEFAULT NULL)"));
+    res = query.exec(QStringLiteral(
+        "CREATE TABLE IF NOT EXISTS NoteRestrictions("
+        "  noteLocalUid REFERENCES Notes(localUid) ON UPDATE CASCADE, "
+        "  noUpdateNoteTitle                INTEGER             DEFAULT NULL, "
+        "  noUpdateNoteContent              INTEGER             DEFAULT NULL, "
+        "  noEmailNote                      INTEGER             DEFAULT NULL, "
+        "  noShareNote                      INTEGER             DEFAULT NULL, "
+        "  noShareNotePublicly              INTEGER             DEFAULT NULL)"));
     errorPrefix.setBase(QT_TR_NOOP("Can't create NoteRestrictions table"));
     DATABASE_CHECK_AND_SET_ERROR()
 
-    res = query.exec(QStringLiteral("CREATE INDEX IF NOT EXISTS "
-                                    "NoteRestrictionsByNoteLocalUid ON "
-                                    "NoteRestrictions(noteLocalUid)"));
-    errorPrefix.setBase(QT_TR_NOOP("Can't create index NoteRestrictionsByNoteLocalUid"));
+    res = query.exec(QStringLiteral(
+        "CREATE INDEX IF NOT EXISTS "
+        "NoteRestrictionsByNoteLocalUid ON "
+        "NoteRestrictions(noteLocalUid)"));
+    errorPrefix.setBase(
+        QT_TR_NOOP("Can't create index NoteRestrictionsByNoteLocalUid"));
     DATABASE_CHECK_AND_SET_ERROR()
 
-    res = query.exec(QStringLiteral("CREATE TABLE IF NOT EXISTS NoteLimits("
-                                    "  noteLocalUid REFERENCES Notes(localUid) ON UPDATE CASCADE, "
-                                    "  noteResourceCountMax             INTEGER             DEFAULT NULL, "
-                                    "  uploadLimit                      INTEGER             DEFAULT NULL, "
-                                    "  resourceSizeMax                  INTEGER             DEFAULT NULL, "
-                                    "  noteSizeMax                      INTEGER             DEFAULT NULL, "
-                                    "  uploaded                         INTEGER             DEFAULT NULL)"));
+    res = query.exec(QStringLiteral(
+        "CREATE TABLE IF NOT EXISTS NoteLimits("
+        "  noteLocalUid REFERENCES Notes(localUid) ON UPDATE CASCADE, "
+        "  noteResourceCountMax             INTEGER             DEFAULT NULL, "
+        "  uploadLimit                      INTEGER             DEFAULT NULL, "
+        "  resourceSizeMax                  INTEGER             DEFAULT NULL, "
+        "  noteSizeMax                      INTEGER             DEFAULT NULL, "
+        "  uploaded                         INTEGER             DEFAULT NULL)"));
     errorPrefix.setBase(QT_TR_NOOP("Can't create NoteLimits table"));
     DATABASE_CHECK_AND_SET_ERROR()
 
-    res = query.exec(QStringLiteral("CREATE INDEX IF NOT EXISTS NotesNotebooks "
-                                    "ON Notes(notebookLocalUid)"));
+    res = query.exec(QStringLiteral(
+        "CREATE INDEX IF NOT EXISTS NotesNotebooks ON Notes(notebookLocalUid)"));
     errorPrefix.setBase(QT_TR_NOOP("Can't create index NotesNotebooks"));
     DATABASE_CHECK_AND_SET_ERROR()
 
-    res = query.exec(QStringLiteral("CREATE VIRTUAL TABLE IF NOT EXISTS NoteFTS "
-                                    "USING FTS4(content=\"Notes\", localUid, "
-                                    "titleNormalized, contentListOfWords, "
-                                    "contentContainsFinishedToDo, "
-                                    "contentContainsUnfinishedToDo, "
-                                    "contentContainsEncryption, creationTimestamp, "
-                                    "modificationTimestamp, isActive, "
-                                    "notebookLocalUid, notebookGuid, subjectDate, "
-                                    "latitude, longitude, altitude, author, source, "
-                                    "sourceApplication, reminderOrder, reminderDoneTime, "
-                                    "reminderTime, placeName, contentClass, "
-                                    "applicationDataKeysOnly, "
-                                    "applicationDataKeysMap, applicationDataValues)"));
+    res = query.exec(QStringLiteral(
+        "CREATE VIRTUAL TABLE IF NOT EXISTS NoteFTS "
+        "USING FTS4(content=\"Notes\", localUid, "
+        "titleNormalized, contentListOfWords, "
+        "contentContainsFinishedToDo, "
+        "contentContainsUnfinishedToDo, "
+        "contentContainsEncryption, creationTimestamp, "
+        "modificationTimestamp, isActive, "
+        "notebookLocalUid, notebookGuid, subjectDate, "
+        "latitude, longitude, altitude, author, source, "
+        "sourceApplication, reminderOrder, reminderDoneTime, "
+        "reminderTime, placeName, contentClass, "
+        "applicationDataKeysOnly, "
+        "applicationDataKeysMap, applicationDataValues)"));
     errorPrefix.setBase(QT_TR_NOOP("Can't create virtual FTS4 table NoteFTS"));
     DATABASE_CHECK_AND_SET_ERROR()
 
-    res = query.exec(QStringLiteral("CREATE TRIGGER IF NOT EXISTS "
-                                    "NoteFTS_BeforeDeleteTrigger "
-                                    "BEFORE DELETE ON Notes "
-                                    "BEGIN "
-                                    "DELETE FROM NoteFTS WHERE localUid=old.localUid; "
-                                    "END"));
-    errorPrefix.setBase(QT_TR_NOOP("Can't create trigger NoteFTS_BeforeDeleteTrigger"));
+    res = query.exec(QStringLiteral(
+        "CREATE TRIGGER IF NOT EXISTS "
+        "NoteFTS_BeforeDeleteTrigger "
+        "BEFORE DELETE ON Notes "
+        "BEGIN "
+        "DELETE FROM NoteFTS WHERE localUid=old.localUid; "
+        "END"));
+    errorPrefix.setBase(
+        QT_TR_NOOP("Can't create trigger NoteFTS_BeforeDeleteTrigger"));
     DATABASE_CHECK_AND_SET_ERROR()
 
-    res = query.exec(QStringLiteral("CREATE TRIGGER IF NOT EXISTS "
-                                    "NoteFTS_AfterInsertTrigger "
-                                    "AFTER INSERT ON Notes "
-                                    "BEGIN "
-                                    "INSERT INTO NoteFTS(NoteFTS) VALUES('rebuild'); "
-                                    "END"));
-    errorPrefix.setBase(QT_TR_NOOP("Can't create trigger NoteFTS_AfterInsertTrigger"));
+    res = query.exec(QStringLiteral(
+        "CREATE TRIGGER IF NOT EXISTS "
+        "NoteFTS_AfterInsertTrigger "
+        "AFTER INSERT ON Notes "
+        "BEGIN "
+        "INSERT INTO NoteFTS(NoteFTS) VALUES('rebuild'); "
+        "END"));
+    errorPrefix.setBase(
+        QT_TR_NOOP("Can't create trigger NoteFTS_AfterInsertTrigger"));
     DATABASE_CHECK_AND_SET_ERROR()
 
-    res = query.exec(QStringLiteral("CREATE TRIGGER IF NOT EXISTS "
-                                    "on_notebook_delete_trigger "
-                                    "BEFORE DELETE ON Notebooks "
-                                    "BEGIN "
-                                    "DELETE FROM NotebookRestrictions WHERE "
-                                    "NotebookRestrictions.localUid=OLD.localUid; "
-                                    "DELETE FROM SharedNotebooks WHERE "
-                                    "SharedNotebooks.sharedNotebookNotebookGuid=OLD.guid; "
-                                    "DELETE FROM Notes WHERE "
-                                    "Notes.notebookLocalUid=OLD.localUid; "
-                                    "END"));
-    errorPrefix.setBase(QT_TR_NOOP("Can't create trigger to fire on notebook deletion"));
+    res = query.exec(QStringLiteral(
+        "CREATE TRIGGER IF NOT EXISTS "
+        "on_notebook_delete_trigger "
+        "BEFORE DELETE ON Notebooks "
+        "BEGIN "
+        "DELETE FROM NotebookRestrictions WHERE "
+        "NotebookRestrictions.localUid=OLD.localUid; "
+        "DELETE FROM SharedNotebooks WHERE "
+        "SharedNotebooks.sharedNotebookNotebookGuid=OLD.guid; "
+        "DELETE FROM Notes WHERE "
+        "Notes.notebookLocalUid=OLD.localUid; "
+        "END"));
+    errorPrefix.setBase(
+        QT_TR_NOOP("Can't create trigger to fire on notebook deletion"));
     DATABASE_CHECK_AND_SET_ERROR()
 
-    res = query.exec(QStringLiteral("CREATE TABLE IF NOT EXISTS Resources("
-                                    "  resourceLocalUid                TEXT PRIMARY KEY     NOT NULL UNIQUE, "
-                                    "  resourceGuid                    TEXT                 DEFAULT NULL UNIQUE, "
-                                    "  noteLocalUid REFERENCES Notes(localUid) ON UPDATE CASCADE, "
-                                    "  noteGuid REFERENCES Notes(guid) ON UPDATE CASCADE, "
-                                    "  resourceUpdateSequenceNumber    INTEGER              DEFAULT NULL, "
-                                    "  resourceIsDirty                 INTEGER              NOT NULL, "
-                                    "  dataSize                        INTEGER              DEFAULT NULL, "
-                                    "  dataHash                        TEXT                 DEFAULT NULL, "
-                                    "  mime                            TEXT                 DEFAULT NULL, "
-                                    "  width                           INTEGER              DEFAULT NULL, "
-                                    "  height                          INTEGER              DEFAULT NULL, "
-                                    "  recognitionDataBody             TEXT                 DEFAULT NULL, "
-                                    "  recognitionDataSize             INTEGER              DEFAULT NULL, "
-                                    "  recognitionDataHash             TEXT                 DEFAULT NULL, "
-                                    "  alternateDataSize               INTEGER              DEFAULT NULL, "
-                                    "  alternateDataHash               TEXT                 DEFAULT NULL, "
-                                    "  resourceIndexInNote             INTEGER              DEFAULT NULL, "
-                                    "  UNIQUE(resourceLocalUid, resourceGuid)"
-                                    ")"));
+    res = query.exec(QStringLiteral(
+        "CREATE TABLE IF NOT EXISTS Resources("
+        "  resourceLocalUid                TEXT PRIMARY KEY     NOT NULL UNIQUE, "
+        "  resourceGuid                    TEXT                 DEFAULT NULL UNIQUE, "
+        "  noteLocalUid REFERENCES Notes(localUid) ON UPDATE CASCADE, "
+        "  noteGuid REFERENCES Notes(guid) ON UPDATE CASCADE, "
+        "  resourceUpdateSequenceNumber    INTEGER              DEFAULT NULL, "
+        "  resourceIsDirty                 INTEGER              NOT NULL, "
+        "  dataSize                        INTEGER              DEFAULT NULL, "
+        "  dataHash                        TEXT                 DEFAULT NULL, "
+        "  mime                            TEXT                 DEFAULT NULL, "
+        "  width                           INTEGER              DEFAULT NULL, "
+        "  height                          INTEGER              DEFAULT NULL, "
+        "  recognitionDataBody             TEXT                 DEFAULT NULL, "
+        "  recognitionDataSize             INTEGER              DEFAULT NULL, "
+        "  recognitionDataHash             TEXT                 DEFAULT NULL, "
+        "  alternateDataSize               INTEGER              DEFAULT NULL, "
+        "  alternateDataHash               TEXT                 DEFAULT NULL, "
+        "  resourceIndexInNote             INTEGER              DEFAULT NULL, "
+        "  UNIQUE(resourceLocalUid, resourceGuid)"
+        ")"));
     errorPrefix.setBase(QT_TR_NOOP("Can't create Resources table"));
     DATABASE_CHECK_AND_SET_ERROR()
 
-    res = query.exec(QStringLiteral("CREATE INDEX IF NOT EXISTS ResourceMimeIndex "
-                                    "ON Resources(mime)"));
+    res = query.exec(QStringLiteral(
+        "CREATE INDEX IF NOT EXISTS ResourceMimeIndex ON Resources(mime)"));
     errorPrefix.setBase(QT_TR_NOOP("Can't create ResourceMimeIndex index"));
     DATABASE_CHECK_AND_SET_ERROR()
 
-    res = query.exec(QStringLiteral("CREATE TABLE IF NOT EXISTS ResourceRecognitionData("
-                                    "  resourceLocalUid REFERENCES Resources(resourceLocalUid)     ON UPDATE CASCADE, "
-                                    "  noteLocalUid REFERENCES Notes(localUid)                     ON UPDATE CASCADE, "
-                                    "  recognitionData                 TEXT                        DEFAULT NULL)"));
+    res = query.exec(QStringLiteral(
+        "CREATE TABLE IF NOT EXISTS ResourceRecognitionData("
+        "  resourceLocalUid REFERENCES Resources(resourceLocalUid) ON UPDATE CASCADE, "
+        "  noteLocalUid REFERENCES Notes(localUid)                 ON UPDATE CASCADE, "
+        "  recognitionData                 TEXT                    DEFAULT NULL)"));
     errorPrefix.setBase(QT_TR_NOOP("Can't create ResourceRecognitionData table"));
     DATABASE_CHECK_AND_SET_ERROR()
 
-    res = query.exec(QStringLiteral("CREATE INDEX IF NOT EXISTS "
-                                    "ResourceRecognitionDataIndex "
-                                    "ON ResourceRecognitionData(recognitionData)"));
-    errorPrefix.setBase(QT_TR_NOOP("Can't create ResourceRecognitionDataIndex index"));
+    res = query.exec(QStringLiteral(
+        "CREATE INDEX IF NOT EXISTS "
+        "ResourceRecognitionDataIndex "
+        "ON ResourceRecognitionData(recognitionData)"));
+    errorPrefix.setBase(
+        QT_TR_NOOP("Can't create ResourceRecognitionDataIndex index"));
     DATABASE_CHECK_AND_SET_ERROR()
 
-    res = query.exec(QStringLiteral("CREATE VIRTUAL TABLE IF NOT EXISTS "
-                                    "ResourceRecognitionDataFTS USING FTS4"
-                                    "(content=\"ResourceRecognitionData\", "
-                                    "resourceLocalUid, noteLocalUid, recognitionData)"));
-    errorPrefix.setBase(QT_TR_NOOP("Can't create virtual FTS4 ResourceRecognitionDataFTS table"));
+    res = query.exec(QStringLiteral(
+        "CREATE VIRTUAL TABLE IF NOT EXISTS "
+        "ResourceRecognitionDataFTS USING FTS4"
+        "(content=\"ResourceRecognitionData\", "
+        "resourceLocalUid, noteLocalUid, recognitionData)"));
+    errorPrefix.setBase(
+        QT_TR_NOOP("Can't create virtual FTS4 ResourceRecognitionDataFTS table"));
     DATABASE_CHECK_AND_SET_ERROR()
 
-    res = query.exec(QStringLiteral("CREATE TRIGGER IF NOT EXISTS "
-                                    "ResourceRecognitionDataFTS_BeforeDeleteTrigger "
-                                    "BEFORE DELETE ON ResourceRecognitionData "
-                                    "BEGIN "
-                                    "DELETE FROM ResourceRecognitionDataFTS "
-                                    "WHERE recognitionData=old.recognitionData; "
-                                    "END"));
-    errorPrefix.setBase(QT_TR_NOOP("Can't create trigger "
-                                   "ResourceRecognitionDataFTS_BeforeDeleteTrigger"));
+    res = query.exec(QStringLiteral(
+        "CREATE TRIGGER IF NOT EXISTS "
+        "ResourceRecognitionDataFTS_BeforeDeleteTrigger "
+        "BEFORE DELETE ON ResourceRecognitionData "
+        "BEGIN "
+        "DELETE FROM ResourceRecognitionDataFTS "
+        "WHERE recognitionData=old.recognitionData; "
+        "END"));
+    errorPrefix.setBase(
+        QT_TR_NOOP("Can't create trigger "
+                   "ResourceRecognitionDataFTS_BeforeDeleteTrigger"));
     DATABASE_CHECK_AND_SET_ERROR()
 
-    res = query.exec(QStringLiteral("CREATE TRIGGER IF NOT EXISTS "
-                                    "ResourceRecognitionDataFTS_AfterInsertTrigger "
-                                    "AFTER INSERT ON ResourceRecognitionData "
-                                    "BEGIN "
-                                    "INSERT INTO ResourceRecognitionDataFTS("
-                                    "ResourceRecognitionDataFTS) VALUES('rebuild'); "
-                                    "END"));
-    errorPrefix.setBase(QT_TR_NOOP("Can't create trigger "
-                                   "ResourceRecognitionDataFTS_AfterInsertTrigger"));
+    res = query.exec(QStringLiteral(
+        "CREATE TRIGGER IF NOT EXISTS "
+        "ResourceRecognitionDataFTS_AfterInsertTrigger "
+        "AFTER INSERT ON ResourceRecognitionData "
+        "BEGIN "
+        "INSERT INTO ResourceRecognitionDataFTS("
+        "ResourceRecognitionDataFTS) VALUES('rebuild'); "
+        "END"));
+    errorPrefix.setBase(
+        QT_TR_NOOP("Can't create trigger "
+                   "ResourceRecognitionDataFTS_AfterInsertTrigger"));
     DATABASE_CHECK_AND_SET_ERROR()
 
-    res = query.exec(QStringLiteral("CREATE VIRTUAL TABLE IF NOT EXISTS "
-                                    "ResourceMimeFTS USING FTS4(content=\"Resources\", "
-                                    "resourceLocalUid, mime)"));
-    errorPrefix.setBase(QT_TR_NOOP("Can't create virtual FTS4 ResourceMimeFTS table"));
+    res = query.exec(QStringLiteral(
+        "CREATE VIRTUAL TABLE IF NOT EXISTS "
+        "ResourceMimeFTS USING FTS4(content=\"Resources\", "
+        "resourceLocalUid, mime)"));
+    errorPrefix.setBase(
+        QT_TR_NOOP("Can't create virtual FTS4 ResourceMimeFTS table"));
     DATABASE_CHECK_AND_SET_ERROR()
 
-    res = query.exec(QStringLiteral("CREATE TRIGGER IF NOT EXISTS "
-                                    "ResourceMimeFTS_BeforeDeleteTrigger "
-                                    "BEFORE DELETE ON Resources "
-                                    "BEGIN "
-                                    "DELETE FROM ResourceMimeFTS WHERE mime=old.mime; "
-                                    "END"));
-    errorPrefix.setBase(QT_TR_NOOP("Can't create trigger "
-                                   "ResourceMimeFTS_BeforeDeleteTrigger"));
+    res = query.exec(QStringLiteral(
+        "CREATE TRIGGER IF NOT EXISTS "
+        "ResourceMimeFTS_BeforeDeleteTrigger "
+        "BEFORE DELETE ON Resources "
+        "BEGIN "
+        "DELETE FROM ResourceMimeFTS WHERE mime=old.mime; "
+        "END"));
+    errorPrefix.setBase(
+        QT_TR_NOOP("Can't create trigger "
+                   "ResourceMimeFTS_BeforeDeleteTrigger"));
     DATABASE_CHECK_AND_SET_ERROR()
 
-    res = query.exec(QStringLiteral("CREATE TRIGGER IF NOT EXISTS "
-                                    "ResourceMimeFTS_AfterInsertTrigger "
-                                    "AFTER INSERT ON Resources "
-                                    "BEGIN "
-                                    "INSERT INTO ResourceMimeFTS(ResourceMimeFTS) "
-                                    "VALUES('rebuild'); "
-                                    "END"));
-    errorPrefix.setBase(QT_TR_NOOP("Can't create trigger "
-                                   "ResourceMimeFTS_AfterInsertTrigger"));
+    res = query.exec(QStringLiteral(
+        "CREATE TRIGGER IF NOT EXISTS "
+        "ResourceMimeFTS_AfterInsertTrigger "
+        "AFTER INSERT ON Resources "
+        "BEGIN "
+        "INSERT INTO ResourceMimeFTS(ResourceMimeFTS) "
+        "VALUES('rebuild'); "
+        "END"));
+    errorPrefix.setBase(
+        QT_TR_NOOP("Can't create trigger ResourceMimeFTS_AfterInsertTrigger"));
     DATABASE_CHECK_AND_SET_ERROR()
 
-    res = query.exec(QStringLiteral("CREATE INDEX IF NOT EXISTS ResourceNote "
-                                    "ON Resources(noteLocalUid)"));
+    res = query.exec(QStringLiteral(
+        "CREATE INDEX IF NOT EXISTS ResourceNote ON Resources(noteLocalUid)"));
     errorPrefix.setBase(QT_TR_NOOP("Can't create ResourceNote index"));
     DATABASE_CHECK_AND_SET_ERROR()
 
-    res = query.exec(QStringLiteral("CREATE TABLE IF NOT EXISTS ResourceAttributes("
-                                    "  resourceLocalUid REFERENCES Resources(resourceLocalUid) ON UPDATE CASCADE, "
-                                    "  resourceSourceURL       TEXT                DEFAULT NULL, "
-                                    "  timestamp               INTEGER             DEFAULT NULL, "
-                                    "  resourceLatitude        REAL                DEFAULT NULL, "
-                                    "  resourceLongitude       REAL                DEFAULT NULL, "
-                                    "  resourceAltitude        REAL                DEFAULT NULL, "
-                                    "  cameraMake              TEXT                DEFAULT NULL, "
-                                    "  cameraModel             TEXT                DEFAULT NULL, "
-                                    "  clientWillIndex         INTEGER             DEFAULT NULL, "
-                                    "  fileName                TEXT                DEFAULT NULL, "
-                                    "  attachment              INTEGER             DEFAULT NULL, "
-                                    "  UNIQUE(resourceLocalUid) "
-                                    ")"));
+    res = query.exec(QStringLiteral(
+        "CREATE TABLE IF NOT EXISTS ResourceAttributes("
+        "  resourceLocalUid REFERENCES Resources(resourceLocalUid) ON UPDATE CASCADE, "
+        "  resourceSourceURL       TEXT                DEFAULT NULL, "
+        "  timestamp               INTEGER             DEFAULT NULL, "
+        "  resourceLatitude        REAL                DEFAULT NULL, "
+        "  resourceLongitude       REAL                DEFAULT NULL, "
+        "  resourceAltitude        REAL                DEFAULT NULL, "
+        "  cameraMake              TEXT                DEFAULT NULL, "
+        "  cameraModel             TEXT                DEFAULT NULL, "
+        "  clientWillIndex         INTEGER             DEFAULT NULL, "
+        "  fileName                TEXT                DEFAULT NULL, "
+        "  attachment              INTEGER             DEFAULT NULL, "
+        "  UNIQUE(resourceLocalUid) "
+        ")"));
     errorPrefix.setBase(QT_TR_NOOP("Can't create ResourceAttributes table"));
     DATABASE_CHECK_AND_SET_ERROR()
 
-    res = query.exec(QStringLiteral("CREATE TABLE IF NOT EXISTS ResourceAttributesApplicationDataKeysOnly("
-                                    "  resourceLocalUid REFERENCES Resources(resourceLocalUid) ON UPDATE CASCADE, "
-                                    "  resourceKey             TEXT                DEFAULT NULL, "
-                                    "  UNIQUE(resourceLocalUid, resourceKey)"
-                                    ")"));
-    errorPrefix.setBase(QT_TR_NOOP("Can't create ResourceAttributesApplicationDataKeysOnly table"));
+    res = query.exec(QStringLiteral(
+        "CREATE TABLE IF NOT EXISTS ResourceAttributesApplicationDataKeysOnly("
+        "  resourceLocalUid REFERENCES Resources(resourceLocalUid) ON UPDATE CASCADE, "
+        "  resourceKey             TEXT                DEFAULT NULL, "
+        "  UNIQUE(resourceLocalUid, resourceKey)"
+        ")"));
+    errorPrefix.setBase(
+        QT_TR_NOOP("Can't create ResourceAttributesApplicationDataKeysOnly table"));
     DATABASE_CHECK_AND_SET_ERROR()
 
-    res = query.exec(QStringLiteral("CREATE TABLE IF NOT EXISTS ResourceAttributesApplicationDataFullMap("
-                                    "  resourceLocalUid REFERENCES Resources(resourceLocalUid) ON UPDATE CASCADE, "
-                                    "  resourceMapKey          TEXT                DEFAULT NULL, "
-                                    "  resourceValue           TEXT                DEFAULT NULL, "
-                                    "  UNIQUE(resourceLocalUid, resourceMapKey) ON CONFLICT REPLACE"
-                                    ")"));
-    errorPrefix.setBase(QT_TR_NOOP("Can't create ResourceAttributesApplicationDataFullMap table"));
+    res = query.exec(QStringLiteral(
+        "CREATE TABLE IF NOT EXISTS ResourceAttributesApplicationDataFullMap("
+        "  resourceLocalUid REFERENCES Resources(resourceLocalUid) ON UPDATE CASCADE, "
+        "  resourceMapKey          TEXT                DEFAULT NULL, "
+        "  resourceValue           TEXT                DEFAULT NULL, "
+        "  UNIQUE(resourceLocalUid, resourceMapKey) ON CONFLICT REPLACE"
+        ")"));
+    errorPrefix.setBase(
+        QT_TR_NOOP("Can't create ResourceAttributesApplicationDataFullMap table"));
     DATABASE_CHECK_AND_SET_ERROR()
 
-    res = query.exec(QStringLiteral("CREATE TABLE IF NOT EXISTS Tags("
-                                    "  localUid              TEXT PRIMARY KEY     NOT NULL UNIQUE, "
-                                    "  guid                  TEXT                 DEFAULT NULL UNIQUE, "
-                                    "  linkedNotebookGuid REFERENCES LinkedNotebooks(guid) ON UPDATE CASCADE, "
-                                    "  updateSequenceNumber  INTEGER              DEFAULT NULL, "
-                                    "  name                  TEXT                 DEFAULT NULL, "
-                                    "  nameLower             TEXT                 DEFAULT NULL, "
-                                    "  parentGuid REFERENCES Tags(guid)           ON UPDATE CASCADE DEFAULT NULL, "
-                                    "  parentLocalUid REFERENCES Tags(localUid)   ON UPDATE CASCADE DEFAULT NULL, "
-                                    "  isDirty               INTEGER              NOT NULL, "
-                                    "  isLocal               INTEGER              NOT NULL, "
-                                    "  isFavorited           INTEGER              NOT NULL, "
-                                    "  UNIQUE(localUid, guid), "
-                                    "  UNIQUE(nameLower, linkedNotebookGuid) "
-                                    ")"));
+    res = query.exec(QStringLiteral(
+        "CREATE TABLE IF NOT EXISTS Tags("
+        "  localUid              TEXT PRIMARY KEY     NOT NULL UNIQUE, "
+        "  guid                  TEXT                 DEFAULT NULL UNIQUE, "
+        "  linkedNotebookGuid REFERENCES LinkedNotebooks(guid) ON UPDATE CASCADE, "
+        "  updateSequenceNumber  INTEGER              DEFAULT NULL, "
+        "  name                  TEXT                 DEFAULT NULL, "
+        "  nameLower             TEXT                 DEFAULT NULL, "
+        "  parentGuid REFERENCES Tags(guid)           ON UPDATE CASCADE DEFAULT NULL, "
+        "  parentLocalUid REFERENCES Tags(localUid)   ON UPDATE CASCADE DEFAULT NULL, "
+        "  isDirty               INTEGER              NOT NULL, "
+        "  isLocal               INTEGER              NOT NULL, "
+        "  isFavorited           INTEGER              NOT NULL, "
+        "  UNIQUE(localUid, guid), "
+        "  UNIQUE(nameLower, linkedNotebookGuid) "
+        ")"));
     errorPrefix.setBase(QT_TR_NOOP("Can't create Tags table"));
     DATABASE_CHECK_AND_SET_ERROR()
 
-    res = query.exec(QStringLiteral("CREATE INDEX IF NOT EXISTS TagNameUpperIndex "
-                                    "ON Tags(nameLower)"));
+    res = query.exec(QStringLiteral(
+        "CREATE INDEX IF NOT EXISTS TagNameUpperIndex ON Tags(nameLower)"));
     errorPrefix.setBase(QT_TR_NOOP("Can't create TagNameUpperIndex index"));
     DATABASE_CHECK_AND_SET_ERROR()
 
-    res = query.exec(QStringLiteral("CREATE VIRTUAL TABLE IF NOT EXISTS TagFTS "
-                                    "USING FTS4(content=\"Tags\", localUid, guid, nameLower)"));
+    res = query.exec(QStringLiteral(
+        "CREATE VIRTUAL TABLE IF NOT EXISTS TagFTS "
+        "USING FTS4(content=\"Tags\", localUid, guid, nameLower)"));
     errorPrefix.setBase(QT_TR_NOOP("Can't create virtual FTS4 table TagFTS"));
     DATABASE_CHECK_AND_SET_ERROR()
 
-    res = query.exec(QStringLiteral("CREATE TRIGGER IF NOT EXISTS "
-                                    "TagFTS_BeforeDeleteTrigger "
-                                    "BEFORE DELETE ON Tags "
-                                    "BEGIN "
-                                    "DELETE FROM TagFTS WHERE localUid=old.localUid; "
-                                    "END"));
-    errorPrefix.setBase(QT_TR_NOOP("Can't create trigger TagFTS_BeforeDeleteTrigger"));
+    res = query.exec(QStringLiteral(
+        "CREATE TRIGGER IF NOT EXISTS "
+        "TagFTS_BeforeDeleteTrigger "
+        "BEFORE DELETE ON Tags "
+        "BEGIN "
+        "DELETE FROM TagFTS WHERE localUid=old.localUid; "
+        "END"));
+    errorPrefix.setBase(
+        QT_TR_NOOP("Can't create trigger TagFTS_BeforeDeleteTrigger"));
     DATABASE_CHECK_AND_SET_ERROR()
 
-    res = query.exec(QStringLiteral("CREATE TRIGGER IF NOT EXISTS "
-                                    "TagFTS_AfterInsertTrigger AFTER INSERT ON Tags "
-                                    "BEGIN "
-                                    "INSERT INTO TagFTS(TagFTS) VALUES('rebuild'); "
-                                    "END"));
-    errorPrefix.setBase(QT_TR_NOOP("Can't create trigger TagFTS_AfterInsertTrigger"));
+    res = query.exec(QStringLiteral(
+        "CREATE TRIGGER IF NOT EXISTS "
+        "TagFTS_AfterInsertTrigger AFTER INSERT ON Tags "
+        "BEGIN "
+        "INSERT INTO TagFTS(TagFTS) VALUES('rebuild'); "
+        "END"));
+    errorPrefix.setBase(
+        QT_TR_NOOP("Can't create trigger TagFTS_AfterInsertTrigger"));
     DATABASE_CHECK_AND_SET_ERROR()
 
-    res = query.exec(QStringLiteral("CREATE INDEX IF NOT EXISTS TagsSearchName "
-                                    "ON Tags(nameLower)"));
+    res = query.exec(QStringLiteral(
+        "CREATE INDEX IF NOT EXISTS TagsSearchName "
+        "ON Tags(nameLower)"));
     errorPrefix.setBase(QT_TR_NOOP("Can't create TagsSearchName index"));
     DATABASE_CHECK_AND_SET_ERROR()
 
-    res = query.exec(QStringLiteral("CREATE TABLE IF NOT EXISTS NoteTags("
-                                    "  localNote REFERENCES Notes(localUid) ON UPDATE CASCADE, "
-                                    "  note REFERENCES Notes(guid)          ON UPDATE CASCADE, "
-                                    "  localTag REFERENCES Tags(localUid)   ON UPDATE CASCADE, "
-                                    "  tag  REFERENCES Tags(guid)           ON UPDATE CASCADE, "
-                                    "  tagIndexInNote        INTEGER        DEFAULT NULL, "
-                                    "  UNIQUE(localNote, localTag) ON CONFLICT REPLACE"
-                                    ")"));
+    res = query.exec(QStringLiteral(
+        "CREATE TABLE IF NOT EXISTS NoteTags("
+        "  localNote REFERENCES Notes(localUid) ON UPDATE CASCADE, "
+        "  note REFERENCES Notes(guid)          ON UPDATE CASCADE, "
+        "  localTag REFERENCES Tags(localUid)   ON UPDATE CASCADE, "
+        "  tag  REFERENCES Tags(guid)           ON UPDATE CASCADE, "
+        "  tagIndexInNote        INTEGER        DEFAULT NULL, "
+        "  UNIQUE(localNote, localTag) ON CONFLICT REPLACE"
+        ")"));
     errorPrefix.setBase(QT_TR_NOOP("Can't create NoteTags table"));
     DATABASE_CHECK_AND_SET_ERROR()
 
-    res = query.exec(QStringLiteral("CREATE INDEX IF NOT EXISTS NoteTagsNote "
-                                    "ON NoteTags(localNote)"));
+    res = query.exec(QStringLiteral(
+        "CREATE INDEX IF NOT EXISTS NoteTagsNote "
+        "ON NoteTags(localNote)"));
     errorPrefix.setBase(QT_TR_NOOP("Can't create NoteTagsNote index"));
     DATABASE_CHECK_AND_SET_ERROR()
 
-    res = query.exec(QStringLiteral("CREATE TABLE IF NOT EXISTS NoteResources("
-                                    "  localNote     REFERENCES Notes(localUid)             ON UPDATE CASCADE, "
-                                    "  note          REFERENCES Notes(guid)                 ON UPDATE CASCADE, "
-                                    "  localResource REFERENCES Resources(resourceLocalUid) ON UPDATE CASCADE, "
-                                    "  resource      REFERENCES Resources(resourceGuid)     ON UPDATE CASCADE, "
-                                    "  UNIQUE(localNote, localResource) ON CONFLICT REPLACE)"));
+    res = query.exec(QStringLiteral(
+        "CREATE TABLE IF NOT EXISTS NoteResources("
+        "  localNote     REFERENCES Notes(localUid)             ON UPDATE CASCADE, "
+        "  note          REFERENCES Notes(guid)                 ON UPDATE CASCADE, "
+        "  localResource REFERENCES Resources(resourceLocalUid) ON UPDATE CASCADE, "
+        "  resource      REFERENCES Resources(resourceGuid)     ON UPDATE CASCADE, "
+        "  UNIQUE(localNote, localResource) ON CONFLICT REPLACE)"));
     errorPrefix.setBase(QT_TR_NOOP("Can't create NoteResources table"));
     DATABASE_CHECK_AND_SET_ERROR()
 
-    res = query.exec(QStringLiteral("CREATE INDEX IF NOT EXISTS NoteResourcesNote "
-                                    "ON NoteResources(localNote)"));
+    res = query.exec(QStringLiteral(
+        "CREATE INDEX IF NOT EXISTS NoteResourcesNote ON NoteResources(localNote)"));
     errorPrefix.setBase(QT_TR_NOOP("Can't create NoteResourcesNote index"));
     DATABASE_CHECK_AND_SET_ERROR()
 
-    // NOTE: reasoning for existence and unique constraint for nameLower, citing Evernote API reference:
-    // "The account may only contain one search with a given name (case-insensitive compare)"
+    // NOTE: reasoning for existence and unique constraint for nameLower,
+    // citing Evernote API reference: "The account may only contain one search
+    // with a given name (case-insensitive compare)"
 
-    res = query.exec(QStringLiteral("CREATE TRIGGER IF NOT EXISTS "
-                                    "on_linked_notebook_delete_trigger "
-                                    "BEFORE DELETE ON LinkedNotebooks "
-                                    "BEGIN "
-                                    "DELETE FROM Notebooks WHERE "
-                                    "Notebooks.linkedNotebookGuid=OLD.guid; "
-                                    "DELETE FROM Tags WHERE "
-                                    "Tags.linkedNotebookGuid=OLD.guid; "
-                                    "END"));
-    errorPrefix.setBase(QT_TR_NOOP("Can't create trigger to fire on linked notebook deletion"));
+    res = query.exec(QStringLiteral(
+        "CREATE TRIGGER IF NOT EXISTS "
+        "on_linked_notebook_delete_trigger "
+        "BEFORE DELETE ON LinkedNotebooks "
+        "BEGIN "
+        "DELETE FROM Notebooks WHERE "
+        "Notebooks.linkedNotebookGuid=OLD.guid; "
+        "DELETE FROM Tags WHERE "
+        "Tags.linkedNotebookGuid=OLD.guid; "
+        "END"));
+    errorPrefix.setBase(
+        QT_TR_NOOP("Can't create trigger to fire on linked notebook deletion"));
     DATABASE_CHECK_AND_SET_ERROR()
 
-    res = query.exec(QStringLiteral("CREATE TRIGGER IF NOT EXISTS "
-                                    "on_note_delete_trigger "
-                                    "BEFORE DELETE ON Notes "
-                                    "BEGIN "
-                                    "DELETE FROM Resources WHERE "
-                                    "Resources.noteLocalUid=OLD.localUid; "
-                                    "DELETE FROM ResourceRecognitionData WHERE "
-                                    "ResourceRecognitionData.noteLocalUid=OLD.localUid; "
-                                    "DELETE FROM NoteTags WHERE "
-                                    "NoteTags.localNote=OLD.localUid; "
-                                    "DELETE FROM NoteResources WHERE "
-                                    "NoteResources.localNote=OLD.localUid; "
-                                    "DELETE FROM SharedNotes WHERE "
-                                    "SharedNotes.sharedNoteNoteGuid=OLD.guid; "
-                                    "DELETE FROM NoteRestrictions WHERE "
-                                    "NoteRestrictions.noteLocalUid=OLD.localUid; "
-                                    "DELETE FROM NoteLimits WHERE "
-                                    "NoteLimits.noteLocalUid=OLD.localUid; "
-                                    "END"));
-    errorPrefix.setBase(QT_TR_NOOP("Can't create trigger to fire on note deletion"));
+    res = query.exec(QStringLiteral(
+        "CREATE TRIGGER IF NOT EXISTS "
+        "on_note_delete_trigger "
+        "BEFORE DELETE ON Notes "
+        "BEGIN "
+        "DELETE FROM Resources WHERE "
+        "Resources.noteLocalUid=OLD.localUid; "
+        "DELETE FROM ResourceRecognitionData WHERE "
+        "ResourceRecognitionData.noteLocalUid=OLD.localUid; "
+        "DELETE FROM NoteTags WHERE "
+        "NoteTags.localNote=OLD.localUid; "
+        "DELETE FROM NoteResources WHERE "
+        "NoteResources.localNote=OLD.localUid; "
+        "DELETE FROM SharedNotes WHERE "
+        "SharedNotes.sharedNoteNoteGuid=OLD.guid; "
+        "DELETE FROM NoteRestrictions WHERE "
+        "NoteRestrictions.noteLocalUid=OLD.localUid; "
+        "DELETE FROM NoteLimits WHERE "
+        "NoteLimits.noteLocalUid=OLD.localUid; "
+        "END"));
+    errorPrefix.setBase(
+        QT_TR_NOOP("Can't create trigger to fire on note deletion"));
     DATABASE_CHECK_AND_SET_ERROR()
 
-    res = query.exec(QStringLiteral("CREATE TRIGGER IF NOT EXISTS "
-                                    "on_resource_delete_trigger "
-                                    "BEFORE DELETE ON Resources "
-                                    "BEGIN "
-                                    "DELETE FROM ResourceRecognitionData "
-                                    "WHERE ResourceRecognitionData.resourceLocalUid="
-                                    "OLD.resourceLocalUid; "
-                                    "DELETE FROM ResourceAttributes WHERE "
-                                    "ResourceAttributes.resourceLocalUid=OLD.resourceLocalUid; "
-                                    "DELETE FROM ResourceAttributesApplicationDataKeysOnly WHERE "
-                                    "ResourceAttributesApplicationDataKeysOnly.resourceLocalUid="
-                                    "OLD.resourceLocalUid; "
-                                    "DELETE FROM ResourceAttributesApplicationDataFullMap WHERE "
-                                    "ResourceAttributesApplicationDataFullMap.resourceLocalUid="
-                                    "OLD.resourceLocalUid; "
-                                    "DELETE FROM NoteResources WHERE "
-                                    "NoteResources.localResource=OLD.resourceLocalUid; "
-                                    "END"));
-    errorPrefix.setBase(QT_TR_NOOP("Can't create trigger to fire on resource deletion"));
+    res = query.exec(QStringLiteral(
+        "CREATE TRIGGER IF NOT EXISTS "
+        "on_resource_delete_trigger "
+        "BEFORE DELETE ON Resources "
+        "BEGIN "
+        "DELETE FROM ResourceRecognitionData "
+        "WHERE ResourceRecognitionData.resourceLocalUid="
+        "OLD.resourceLocalUid; "
+        "DELETE FROM ResourceAttributes WHERE "
+        "ResourceAttributes.resourceLocalUid=OLD.resourceLocalUid; "
+        "DELETE FROM ResourceAttributesApplicationDataKeysOnly WHERE "
+        "ResourceAttributesApplicationDataKeysOnly.resourceLocalUid="
+        "OLD.resourceLocalUid; "
+        "DELETE FROM ResourceAttributesApplicationDataFullMap WHERE "
+        "ResourceAttributesApplicationDataFullMap.resourceLocalUid="
+        "OLD.resourceLocalUid; "
+        "DELETE FROM NoteResources WHERE "
+        "NoteResources.localResource=OLD.resourceLocalUid; "
+        "END"));
+    errorPrefix.setBase(
+        QT_TR_NOOP("Can't create trigger to fire on resource deletion"));
     DATABASE_CHECK_AND_SET_ERROR()
 
-    res = query.exec(QStringLiteral("CREATE TRIGGER IF NOT EXISTS on_tag_delete_trigger "
-                                    "BEFORE DELETE ON Tags "
-                                    "BEGIN "
-                                    "DELETE FROM NoteTags WHERE "
-                                    "NoteTags.localTag=OLD.localUid; "
-                                    "END"));
+    res = query.exec(QStringLiteral(
+        "CREATE TRIGGER IF NOT EXISTS on_tag_delete_trigger "
+        "BEFORE DELETE ON Tags "
+        "BEGIN "
+        "DELETE FROM NoteTags WHERE "
+        "NoteTags.localTag=OLD.localUid; "
+        "END"));
     errorPrefix.setBase(QT_TR_NOOP("Can't create trigger to fire on tag deletion"));
     DATABASE_CHECK_AND_SET_ERROR()
 
-    res = query.exec(QStringLiteral("CREATE TABLE IF NOT EXISTS SavedSearches("
-                                    "  localUid                        TEXT PRIMARY KEY    NOT NULL UNIQUE, "
-                                    "  guid                            TEXT                DEFAULT NULL UNIQUE, "
-                                    "  name                            TEXT                DEFAULT NULL, "
-                                    "  nameLower                       TEXT                DEFAULT NULL UNIQUE, "
-                                    "  query                           TEXT                DEFAULT NULL, "
-                                    "  format                          INTEGER             DEFAULT NULL, "
-                                    "  updateSequenceNumber            INTEGER             DEFAULT NULL, "
-                                    "  isDirty                         INTEGER             NOT NULL, "
-                                    "  isLocal                         INTEGER             NOT NULL, "
-                                    "  includeAccount                  INTEGER             DEFAULT NULL, "
-                                    "  includePersonalLinkedNotebooks  INTEGER             DEFAULT NULL, "
-                                    "  includeBusinessLinkedNotebooks  INTEGER             DEFAULT NULL, "
-                                    "  isFavorited                     INTEGER             NOT NULL, "
-                                    "  UNIQUE(localUid, guid))"));
+    res = query.exec(QStringLiteral(
+        "CREATE TABLE IF NOT EXISTS SavedSearches("
+        "  localUid                        TEXT PRIMARY KEY    NOT NULL UNIQUE, "
+        "  guid                            TEXT                DEFAULT NULL UNIQUE, "
+        "  name                            TEXT                DEFAULT NULL, "
+        "  nameLower                       TEXT                DEFAULT NULL UNIQUE, "
+        "  query                           TEXT                DEFAULT NULL, "
+        "  format                          INTEGER             DEFAULT NULL, "
+        "  updateSequenceNumber            INTEGER             DEFAULT NULL, "
+        "  isDirty                         INTEGER             NOT NULL, "
+        "  isLocal                         INTEGER             NOT NULL, "
+        "  includeAccount                  INTEGER             DEFAULT NULL, "
+        "  includePersonalLinkedNotebooks  INTEGER             DEFAULT NULL, "
+        "  includeBusinessLinkedNotebooks  INTEGER             DEFAULT NULL, "
+        "  isFavorited                     INTEGER             NOT NULL, "
+        "  UNIQUE(localUid, guid))"));
     errorPrefix.setBase(QT_TR_NOOP("Can't create SavedSearches table"));
     DATABASE_CHECK_AND_SET_ERROR()
 
