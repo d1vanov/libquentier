@@ -66,7 +66,7 @@ public:
 
     bool isLocalStorageVersionTooHigh(ErrorString & errorDescription);
     bool localStorageRequiresUpgrade(ErrorString & errorDescription);
-    QVector<QSharedPointer<ILocalStoragePatch> > requiredLocalStoragePatches();
+    QVector<QSharedPointer<ILocalStoragePatch>> requiredLocalStoragePatches();
     qint32 localStorageVersion(ErrorString & errorDescription);
     qint32 highestSupportedLocalStorageVersion() const;
 
@@ -271,7 +271,7 @@ public:
         const LocalStorageManager::OrderDirection & orderDirection,
         const QString & linkedNotebookGuid) const;
 
-    QList<std::pair<Tag, QStringList> > listTagsWithNoteLocalUids(
+    QList<std::pair<Tag, QStringList>> listTagsWithNoteLocalUids(
         const LocalStorageManager::ListObjectsOptions flag,
         ErrorString & errorDescription,
         const size_t limit, const size_t offset,
@@ -580,7 +580,7 @@ private:
 
     bool fillNoteTagIdFromSqlRecord(
         const QSqlRecord & record, const QString & column,
-        QList<QPair<QString, int> > & tagIdsAndIndices,
+        QList<std::pair<QString, int>> & tagIdsAndIndices,
         QHash<QString, int> & tagIndexPerId,
         ErrorString & errorDescription) const;
 
@@ -701,8 +701,8 @@ private:
     struct QStringIntPairCompareByInt
     {
         bool operator()(
-            const QPair<QString, int> & lhs,
-            const QPair<QString, int> & rhs) const;
+            const std::pair<QString, int> & lhs,
+            const std::pair<QString, int> & rhs) const;
     };
 
     struct HighUsnRequestData
