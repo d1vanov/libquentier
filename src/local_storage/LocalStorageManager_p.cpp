@@ -420,12 +420,9 @@ void LocalStorageManagerPrivate::switchUser(
         error.details() = QStringLiteral("Available SQL drivers: ");
 
         QStringList drivers = QSqlDatabase::drivers();
-        for(auto it = drivers.constBegin(),
-            end = drivers.constEnd(); it != end; ++it)
-        {
-            const QString & driver = *it;
-            error.details() += QString(QStringLiteral("{") + driver +
-                                       QStringLiteral("} "));
+        for(const auto & driver: drivers) {
+            error.details() +=
+                QStringLiteral("{") + driver + QStringLiteral("} ");
         }
 
         throw DatabaseRequestException(error);
@@ -1325,10 +1322,8 @@ LocalStorageManagerPrivate::listSharedNotebooksPerNotebookGuid(
 
     sharedNotebooks.reserve(qMax(enSharedNotebooks.size(), 0));
 
-    for(auto it = enSharedNotebooks.constBegin(),
-        end = enSharedNotebooks.constEnd(); it != end; ++it)
-    {
-        sharedNotebooks << SharedNotebook(*it);
+    for(const auto & sharedNotebook: enSharedNotebooks) {
+        sharedNotebooks << SharedNotebook(sharedNotebook);
     }
 
     return sharedNotebooks;
@@ -6108,12 +6103,13 @@ bool LocalStorageManagerPrivate::insertOrReplaceNotebookRestrictions(
     query.bindValue(QStringLiteral(":localUid"), localUid);
 
 #define BIND_RESTRICTION(name)                                                 \
-    query.bindValue(QStringLiteral(":" #name),                                 \
-                    (notebookRestrictions.name.isSet()                         \
-                     ? (notebookRestrictions.name.ref()                        \
-                        ? 1                                                    \
-                        : 0)                                                   \
-                     : nullValue))                                             \
+    query.bindValue(                                                           \
+        QStringLiteral(":" #name),                                             \
+        (notebookRestrictions.name.isSet()                                     \
+         ? (notebookRestrictions.name.ref()                                    \
+            ? 1                                                                \
+            : 0)                                                               \
+         : nullValue))                                                         \
 // BIND_RESTRICTION
 
     BIND_RESTRICTION(noReadNotes);
@@ -6142,13 +6138,15 @@ bool LocalStorageManagerPrivate::insertOrReplaceNotebookRestrictions(
     query.bindValue(
         QStringLiteral(":updateWhichSharedNotebookRestrictions"),
         notebookRestrictions.updateWhichSharedNotebookRestrictions.isSet()
-        ? static_cast<int>(notebookRestrictions.updateWhichSharedNotebookRestrictions.ref())
+        ? static_cast<int>(
+            notebookRestrictions.updateWhichSharedNotebookRestrictions.ref())
         : nullValue);
 
     query.bindValue(
         QStringLiteral(":expungeWhichSharedNotebookRestrictions"),
         notebookRestrictions.expungeWhichSharedNotebookRestrictions.isSet()
-        ? static_cast<int>(notebookRestrictions.expungeWhichSharedNotebookRestrictions.ref())
+        ? static_cast<int>(
+            notebookRestrictions.expungeWhichSharedNotebookRestrictions.ref())
         : nullValue);
 
     res = query.exec();
@@ -6163,7 +6161,8 @@ bool LocalStorageManagerPrivate::insertOrReplaceSharedNotebook(
     // NOTE: this method is expected to be called after the sanity check of
     // sharedNotebook object!
 
-    ErrorString errorPrefix(QT_TR_NOOP("can't insert or replace shared notebook"));
+    ErrorString errorPrefix(
+        QT_TR_NOOP("can't insert or replace shared notebook"));
 
     bool res = checkAndPrepareInsertOrReplaceSharedNotebookQuery();
     QSqlQuery & query = m_insertOrReplaceSharedNotebookQuery;
@@ -6171,76 +6170,109 @@ bool LocalStorageManagerPrivate::insertOrReplaceSharedNotebook(
 
     QVariant nullValue;
 
-    query.bindValue(QStringLiteral(":sharedNotebookShareId"),
-                    sharedNotebook.id());
-    query.bindValue(QStringLiteral(":sharedNotebookUserId"),
-                    (sharedNotebook.hasUserId()
-                     ? sharedNotebook.userId()
-                     : nullValue));
-    query.bindValue(QStringLiteral(":sharedNotebookNotebookGuid"),
-                    (sharedNotebook.hasNotebookGuid()
-                     ? sharedNotebook.notebookGuid()
-                     : nullValue));
-    query.bindValue(QStringLiteral(":sharedNotebookEmail"),
-                    (sharedNotebook.hasEmail()
-                     ? sharedNotebook.email()
-                     : nullValue));
-    query.bindValue(QStringLiteral(":sharedNotebookCreationTimestamp"),
-                    (sharedNotebook.hasCreationTimestamp()
-                     ? sharedNotebook.creationTimestamp()
-                     : nullValue));
-    query.bindValue(QStringLiteral(":sharedNotebookModificationTimestamp"),
-                    (sharedNotebook.hasModificationTimestamp()
-                     ? sharedNotebook.modificationTimestamp()
-                     : nullValue));
-    query.bindValue(QStringLiteral(":sharedNotebookGlobalId"),
-                    (sharedNotebook.hasGlobalId()
-                     ? sharedNotebook.globalId()
-                     : nullValue));
-    query.bindValue(QStringLiteral(":sharedNotebookUsername"),
-                    (sharedNotebook.hasUsername()
-                     ? sharedNotebook.username()
-                     : nullValue));
-    query.bindValue(QStringLiteral(":sharedNotebookPrivilegeLevel"),
-                    (sharedNotebook.hasPrivilegeLevel()
-                     ? static_cast<int>(sharedNotebook.privilegeLevel())
-                     : nullValue));
-    query.bindValue(QStringLiteral(":sharedNotebookRecipientReminderNotifyEmail"),
-                    (sharedNotebook.hasReminderNotifyEmail()
-                     ? (sharedNotebook.reminderNotifyEmail()
-                        ? 1
-                        : 0)
-                     : nullValue));
-    query.bindValue(QStringLiteral(":sharedNotebookRecipientReminderNotifyInApp"),
-                    (sharedNotebook.hasReminderNotifyApp()
-                     ? (sharedNotebook.reminderNotifyApp()
-                        ? 1
-                        : 0)
-                     : nullValue));
-    query.bindValue(QStringLiteral(":sharedNotebookSharerUserId"),
-                    (sharedNotebook.hasSharerUserId()
-                     ? sharedNotebook.sharerUserId()
-                     : nullValue));
-    query.bindValue(QStringLiteral(":sharedNotebookRecipientUsername"),
-                    (sharedNotebook.hasRecipientUsername()
-                     ? sharedNotebook.recipientUsername()
-                     : nullValue));
-    query.bindValue(QStringLiteral(":sharedNotebookRecipientUserId"),
-                    (sharedNotebook.hasRecipientUserId()
-                     ? sharedNotebook.recipientUserId()
-                     : nullValue));
-    query.bindValue(QStringLiteral(":sharedNotebookRecipientIdentityId"),
-                    (sharedNotebook.hasRecipientIdentityId()
-                     ? sharedNotebook.recipientIdentityId()
-                     : nullValue));
-    query.bindValue(QStringLiteral(":sharedNotebookAssignmentTimestamp"),
-                    (sharedNotebook.hasAssignmentTimestamp()
-                     ? sharedNotebook.assignmentTimestamp()
-                     : nullValue));
-    query.bindValue(QStringLiteral(":indexInNotebook"),
-                    ((sharedNotebook.indexInNotebook() >= 0)
-                     ? sharedNotebook.indexInNotebook()
-                     : nullValue));
+    query.bindValue(
+        QStringLiteral(":sharedNotebookShareId"),
+        sharedNotebook.id());
+
+    query.bindValue(
+        QStringLiteral(":sharedNotebookUserId"),
+        (sharedNotebook.hasUserId()
+         ? sharedNotebook.userId()
+         : nullValue));
+
+    query.bindValue(
+        QStringLiteral(":sharedNotebookNotebookGuid"),
+        (sharedNotebook.hasNotebookGuid()
+         ? sharedNotebook.notebookGuid()
+         : nullValue));
+
+    query.bindValue(
+        QStringLiteral(":sharedNotebookEmail"),
+        (sharedNotebook.hasEmail()
+         ? sharedNotebook.email()
+         : nullValue));
+
+    query.bindValue(
+        QStringLiteral(":sharedNotebookCreationTimestamp"),
+        (sharedNotebook.hasCreationTimestamp()
+         ? sharedNotebook.creationTimestamp()
+         : nullValue));
+
+    query.bindValue(
+        QStringLiteral(":sharedNotebookModificationTimestamp"),
+        (sharedNotebook.hasModificationTimestamp()
+         ? sharedNotebook.modificationTimestamp()
+         : nullValue));
+
+    query.bindValue(
+        QStringLiteral(":sharedNotebookGlobalId"),
+        (sharedNotebook.hasGlobalId()
+         ? sharedNotebook.globalId()
+         : nullValue));
+
+    query.bindValue(
+        QStringLiteral(":sharedNotebookUsername"),
+        (sharedNotebook.hasUsername()
+         ? sharedNotebook.username()
+         : nullValue));
+
+    query.bindValue(
+        QStringLiteral(":sharedNotebookPrivilegeLevel"),
+        (sharedNotebook.hasPrivilegeLevel()
+         ? static_cast<int>(sharedNotebook.privilegeLevel())
+         : nullValue));
+
+    query.bindValue(
+        QStringLiteral(":sharedNotebookRecipientReminderNotifyEmail"),
+        (sharedNotebook.hasReminderNotifyEmail()
+         ? (sharedNotebook.reminderNotifyEmail()
+            ? 1
+            : 0)
+         : nullValue));
+
+    query.bindValue(
+        QStringLiteral(":sharedNotebookRecipientReminderNotifyInApp"),
+        (sharedNotebook.hasReminderNotifyApp()
+         ? (sharedNotebook.reminderNotifyApp()
+            ? 1
+            : 0)
+         : nullValue));
+
+    query.bindValue(
+        QStringLiteral(":sharedNotebookSharerUserId"),
+        (sharedNotebook.hasSharerUserId()
+         ? sharedNotebook.sharerUserId()
+         : nullValue));
+
+    query.bindValue(
+        QStringLiteral(":sharedNotebookRecipientUsername"),
+        (sharedNotebook.hasRecipientUsername()
+         ? sharedNotebook.recipientUsername()
+         : nullValue));
+
+    query.bindValue(
+        QStringLiteral(":sharedNotebookRecipientUserId"),
+        (sharedNotebook.hasRecipientUserId()
+         ? sharedNotebook.recipientUserId()
+         : nullValue));
+
+    query.bindValue(
+        QStringLiteral(":sharedNotebookRecipientIdentityId"),
+        (sharedNotebook.hasRecipientIdentityId()
+         ? sharedNotebook.recipientIdentityId()
+         : nullValue));
+
+    query.bindValue(
+        QStringLiteral(":sharedNotebookAssignmentTimestamp"),
+        (sharedNotebook.hasAssignmentTimestamp()
+         ? sharedNotebook.assignmentTimestamp()
+         : nullValue));
+
+    query.bindValue(
+        QStringLiteral(":indexInNotebook"),
+        ((sharedNotebook.indexInNotebook() >= 0)
+         ? sharedNotebook.indexInNotebook()
+         : nullValue));
 
     res = query.exec();
     DATABASE_CHECK_AND_SET_ERROR()
@@ -6260,14 +6292,11 @@ bool LocalStorageManagerPrivate::rowExists(
 
     QSqlQuery query(m_sqlDatabase);
     bool res = query.exec(queryString);
-    if (!res)
-    {
+    if (!res) {
         QNWARNING("Unable to check the existence of row with key name "
-                  << uniqueKeyName << ", value = " << key
-                  << " in table " << tableName
-                  << ": unable to execute SQL statement: "
-                  << query.lastError().text()
-                  << "; assuming no such row exists");
+            << uniqueKeyName << ", value = " << key << " in table " << tableName
+            << ": unable to execute SQL statement: " << query.lastError().text()
+            << "; assuming no such row exists");
         return false;
     }
 
@@ -6278,6 +6307,7 @@ bool LocalStorageManagerPrivate::rowExists(
         if (!conversionResult) {
             return false;
         }
+
         return (count != 0);
     }
 
@@ -6290,8 +6320,9 @@ bool LocalStorageManagerPrivate::insertOrReplaceUser(
     // NOTE: this method is expected to be called after the check of user object
     // for sanity of its parameters!
 
-    ErrorString errorPrefix(QT_TR_NOOP("can't insert or replace User into "
-                                       "the local storage database"));
+    ErrorString errorPrefix(
+        QT_TR_NOOP("can't insert or replace User into the local storage "
+                   "database"));
 
     Transaction transaction(m_sqlDatabase, *this, Transaction::Exclusive);
 
@@ -6305,68 +6336,94 @@ bool LocalStorageManagerPrivate::insertOrReplaceUser(
         DATABASE_CHECK_AND_SET_ERROR()
 
         query.bindValue(QStringLiteral(":id"), userId);
-        query.bindValue(QStringLiteral(":username"),
-                        (user.hasUsername()
-                         ? user.username()
-                         : nullValue));
-        query.bindValue(QStringLiteral(":email"),
-                        (user.hasEmail()
-                         ? user.email()
-                         : nullValue));
-        query.bindValue(QStringLiteral(":name"),
-                        (user.hasName()
-                         ? user.name()
-                         : nullValue));
-        query.bindValue(QStringLiteral(":timezone"),
-                        (user.hasTimezone()
-                         ? user.timezone()
-                         : nullValue));
-        query.bindValue(QStringLiteral(":privilege"),
-                        (user.hasPrivilegeLevel()
-                         ? static_cast<int>(user.privilegeLevel())
-                         : nullValue));
-        query.bindValue(QStringLiteral(":serviceLevel"),
-                        (user.hasServiceLevel()
-                         ? static_cast<int>(user.serviceLevel())
-                         : nullValue));
-        query.bindValue(QStringLiteral(":userCreationTimestamp"),
-                        (user.hasCreationTimestamp()
-                         ? user.creationTimestamp()
-                         : nullValue));
-        query.bindValue(QStringLiteral(":userModificationTimestamp"),
-                        (user.hasModificationTimestamp()
-                         ? user.modificationTimestamp()
-                         : nullValue));
-        query.bindValue(QStringLiteral(":userIsDirty"),
-                        (user.isDirty()
-                         ? 1
-                         : 0));
-        query.bindValue(QStringLiteral(":userIsLocal"),
-                        (user.isLocal()
-                         ? 1
-                         : 0));
-        query.bindValue(QStringLiteral(":userDeletionTimestamp"),
-                        (user.hasDeletionTimestamp()
-                         ? user.deletionTimestamp()
-                         : nullValue));
-        query.bindValue(QStringLiteral(":userIsActive"),
-                        (user.hasActive()
-                         ? (user.active()
-                            ? 1
-                            : 0)
-                         : nullValue));
-        query.bindValue(QStringLiteral(":userShardId"),
-                        (user.hasShardId()
-                         ? user.shardId()
-                         : nullValue));
-        query.bindValue(QStringLiteral(":userPhotoUrl"),
-                        (user.hasPhotoUrl()
-                         ? user.photoUrl()
-                         : nullValue));
-        query.bindValue(QStringLiteral(":userPhotoLastUpdateTimestamp"),
-                        (user.hasPhotoLastUpdateTimestamp()
-                         ? user.photoLastUpdateTimestamp()
-                         : nullValue));
+
+        query.bindValue(
+            QStringLiteral(":username"),
+            (user.hasUsername()
+             ? user.username()
+             : nullValue));
+
+        query.bindValue(
+            QStringLiteral(":email"),
+            (user.hasEmail()
+             ? user.email()
+             : nullValue));
+
+        query.bindValue(
+            QStringLiteral(":name"),
+            (user.hasName()
+             ? user.name()
+             : nullValue));
+
+        query.bindValue(
+            QStringLiteral(":timezone"),
+            (user.hasTimezone()
+             ? user.timezone()
+             : nullValue));
+
+        query.bindValue(
+            QStringLiteral(":privilege"),
+            (user.hasPrivilegeLevel()
+             ? static_cast<int>(user.privilegeLevel())
+             : nullValue));
+
+        query.bindValue(
+            QStringLiteral(":serviceLevel"),
+            (user.hasServiceLevel()
+             ? static_cast<int>(user.serviceLevel())
+             : nullValue));
+
+        query.bindValue(
+            QStringLiteral(":userCreationTimestamp"),
+            (user.hasCreationTimestamp()
+             ? user.creationTimestamp()
+             : nullValue));
+
+        query.bindValue(
+            QStringLiteral(":userModificationTimestamp"),
+            (user.hasModificationTimestamp()
+             ? user.modificationTimestamp()
+             : nullValue));
+
+        query.bindValue(
+            QStringLiteral(":userIsDirty"),
+            (user.isDirty() ? 1 : 0));
+
+        query.bindValue(
+            QStringLiteral(":userIsLocal"),
+            (user.isLocal() ? 1 : 0));
+
+        query.bindValue(
+            QStringLiteral(":userDeletionTimestamp"),
+            (user.hasDeletionTimestamp()
+             ? user.deletionTimestamp()
+             : nullValue));
+
+        query.bindValue(
+            QStringLiteral(":userIsActive"),
+            (user.hasActive()
+             ? (user.active()
+                ? 1
+                : 0)
+             : nullValue));
+
+        query.bindValue(
+            QStringLiteral(":userShardId"),
+            (user.hasShardId()
+             ? user.shardId()
+             : nullValue));
+
+        query.bindValue(
+            QStringLiteral(":userPhotoUrl"),
+            (user.hasPhotoUrl()
+             ? user.photoUrl()
+             : nullValue));
+
+        query.bindValue(
+            QStringLiteral(":userPhotoLastUpdateTimestamp"),
+            (user.hasPhotoLastUpdateTimestamp()
+             ? user.photoLastUpdateTimestamp()
+             : nullValue));
 
         res = query.exec();
         DATABASE_CHECK_AND_SET_ERROR()
@@ -6375,9 +6432,10 @@ bool LocalStorageManagerPrivate::insertOrReplaceUser(
     if (user.hasUserAttributes())
     {
         ErrorString error;
-        bool res = insertOrReplaceUserAttributes(user.id(),
-                                                 user.userAttributes(),
-                                                 error);
+        bool res = insertOrReplaceUserAttributes(
+            user.id(),
+            user.userAttributes(),
+            error);
         if (!res) {
             errorDescription.base() = errorPrefix.base();
             errorDescription.appendBase(error.base());
@@ -6390,9 +6448,9 @@ bool LocalStorageManagerPrivate::insertOrReplaceUser(
     {
         // Clean entries from UserAttributesViewedPromotions table
         {
-            QString queryString =
-                QString::fromUtf8("DELETE FROM UserAttributesViewedPromotions "
-                                  "WHERE id=%1").arg(userId);
+            QString queryString = QString::fromUtf8(
+                "DELETE FROM UserAttributesViewedPromotions WHERE id=%1")
+                .arg(userId);
 
             QSqlQuery query(m_sqlDatabase);
             bool res = query.exec(queryString);
@@ -6401,10 +6459,9 @@ bool LocalStorageManagerPrivate::insertOrReplaceUser(
 
         // Clean entries from UserAttributesRecentMailedAddresses table
         {
-            QString queryString =
-                QString::fromUtf8("DELETE FROM "
-                                  "UserAttributesRecentMailedAddresses "
-                                  "WHERE id=%1").arg(userId);
+            QString queryString = QString::fromUtf8(
+                "DELETE FROM UserAttributesRecentMailedAddresses WHERE id=%1")
+                .arg(userId);
 
             QSqlQuery query(m_sqlDatabase);
             bool res = query.exec(queryString);
@@ -6413,9 +6470,8 @@ bool LocalStorageManagerPrivate::insertOrReplaceUser(
 
         // Clean entries from UserAttributes table
         {
-            QString queryString =
-                QString::fromUtf8("DELETE FROM UserAttributes WHERE id=%1")
-                .arg(userId);
+            QString queryString = QString::fromUtf8(
+                "DELETE FROM UserAttributes WHERE id=%1").arg(userId);
 
             QSqlQuery query(m_sqlDatabase);
             bool res = query.exec(queryString);
@@ -6426,7 +6482,10 @@ bool LocalStorageManagerPrivate::insertOrReplaceUser(
     if (user.hasAccounting())
     {
         ErrorString error;
-        bool res = insertOrReplaceAccounting(user.id(), user.accounting(), error);
+        bool res = insertOrReplaceAccounting(
+            user.id(),
+            user.accounting(),
+            error);
         if (!res) {
             errorDescription.base() = errorPrefix.base();
             errorDescription.appendBase(error.base());
@@ -6447,9 +6506,10 @@ bool LocalStorageManagerPrivate::insertOrReplaceUser(
     if (user.hasAccountLimits())
     {
         ErrorString error;
-        bool res = insertOrReplaceAccountLimits(user.id(),
-                                                user.accountLimits(),
-                                                error);
+        bool res = insertOrReplaceAccountLimits(
+            user.id(),
+            user.accountLimits(),
+            error);
         if (!res) {
             errorDescription.base() = errorPrefix.base();
             errorDescription.appendBase(error.base());
@@ -6460,9 +6520,8 @@ bool LocalStorageManagerPrivate::insertOrReplaceUser(
     }
     else
     {
-        QString queryString =
-            QString::fromUtf8("DELETE FROM AccountLimits WHERE id=%1")
-            .arg(userId);
+        QString queryString = QString::fromUtf8(
+            "DELETE FROM AccountLimits WHERE id=%1").arg(userId);
 
         QSqlQuery query(m_sqlDatabase);
         bool res = query.exec(queryString);
@@ -6472,9 +6531,10 @@ bool LocalStorageManagerPrivate::insertOrReplaceUser(
     if (user.hasBusinessUserInfo())
     {
         ErrorString error;
-        bool res = insertOrReplaceBusinessUserInfo(user.id(),
-                                                   user.businessUserInfo(),
-                                                   error);
+        bool res = insertOrReplaceBusinessUserInfo(
+            user.id(),
+            user.businessUserInfo(),
+            error);
         if (!res) {
             errorDescription.base() = errorPrefix.base();
             errorDescription.appendBase(error.base());
@@ -6485,9 +6545,8 @@ bool LocalStorageManagerPrivate::insertOrReplaceUser(
     }
     else
     {
-        QString queryString =
-            QString::fromUtf8("DELETE FROM BusinessUserInfo WHERE id=%1")
-            .arg(userId);
+        QString queryString = QString::fromUtf8(
+            "DELETE FROM BusinessUserInfo WHERE id=%1").arg(userId);
 
         QSqlQuery query(m_sqlDatabase);
         bool res = query.exec(queryString);
@@ -6511,22 +6570,30 @@ bool LocalStorageManagerPrivate::insertOrReplaceBusinessUserInfo(
     QVariant nullValue;
 
     query.bindValue(QStringLiteral(":id"), id);
-    query.bindValue(QStringLiteral(":businessId"),
-                    (info.businessId.isSet()
-                     ? info.businessId.ref()
-                     : nullValue));
-    query.bindValue(QStringLiteral(":businessName"),
-                    (info.businessName.isSet()
-                     ? info.businessName.ref()
-                     : nullValue));
-    query.bindValue(QStringLiteral(":role"),
-                    (info.role.isSet()
-                     ? static_cast<int>(info.role.ref())
-                     : nullValue));
-    query.bindValue(QStringLiteral(":businessInfoEmail"),
-                    (info.email.isSet()
-                     ? info.email.ref()
-                     : nullValue));
+
+    query.bindValue(
+        QStringLiteral(":businessId"),
+        (info.businessId.isSet()
+         ? info.businessId.ref()
+         : nullValue));
+
+    query.bindValue(
+        QStringLiteral(":businessName"),
+        (info.businessName.isSet()
+         ? info.businessName.ref()
+         : nullValue));
+
+    query.bindValue(
+        QStringLiteral(":role"),
+        (info.role.isSet()
+         ? static_cast<int>(info.role.ref())
+         : nullValue));
+
+    query.bindValue(
+        QStringLiteral(":businessInfoEmail"),
+        (info.email.isSet()
+         ? info.email.ref()
+         : nullValue));
 
     res = query.exec();
     DATABASE_CHECK_AND_SET_ERROR()
@@ -6549,10 +6616,11 @@ bool LocalStorageManagerPrivate::insertOrReplaceAccounting(
     QVariant nullValue;
 
 #define CHECK_AND_BIND_VALUE(name, ...)                                        \
-    query.bindValue(QStringLiteral(":" #name),                                 \
-                    accounting.name.isSet()                                    \
-                    ? __VA_ARGS__(accounting.name.ref())                       \
-                    : nullValue)                                               \
+    query.bindValue(                                                           \
+        QStringLiteral(":" #name),                                             \
+        accounting.name.isSet()                                                \
+        ? __VA_ARGS__(accounting.name.ref())                                   \
+        : nullValue)                                                           \
 // CHECK_AND_BIND_VALUE
 
     CHECK_AND_BIND_VALUE(uploadLimitEnd);
@@ -6589,7 +6657,8 @@ bool LocalStorageManagerPrivate::insertOrReplaceAccountLimits(
     const qevercloud::AccountLimits & accountLimits,
     ErrorString & errorDescription)
 {
-    ErrorString errorPrefix(QT_TR_NOOP("can't insert or replace account limits"));
+    ErrorString errorPrefix(
+        QT_TR_NOOP("can't insert or replace account limits"));
 
     bool res = checkAndPrepareInsertOrReplaceAccountLimitsQuery();
     QSqlQuery & query = m_insertOrReplaceAccountLimitsQuery;
@@ -6600,10 +6669,11 @@ bool LocalStorageManagerPrivate::insertOrReplaceAccountLimits(
     QVariant nullValue;
 
 #define CHECK_AND_BIND_VALUE(name)                                             \
-    query.bindValue(QStringLiteral(":" #name),                                 \
-                    accountLimits.name.isSet()                                 \
-                    ? accountLimits.name.ref()                                 \
-                    : nullValue)                                               \
+    query.bindValue(                                                           \
+        QStringLiteral(":" #name),                                             \
+        accountLimits.name.isSet()                                             \
+        ? accountLimits.name.ref()                                             \
+        : nullValue)                                                           \
 // CHECK_AND_BIND_VALUE
 
     CHECK_AND_BIND_VALUE(userMailLimitDaily);
@@ -6630,7 +6700,8 @@ bool LocalStorageManagerPrivate::insertOrReplaceUserAttributes(
     const qevercloud::UserID id, const qevercloud::UserAttributes & attributes,
     ErrorString & errorDescription)
 {
-    ErrorString errorPrefix(QT_TR_NOOP("can't insert or replace user attributes"));
+    ErrorString errorPrefix(
+        QT_TR_NOOP("can't insert or replace user attributes"));
 
     QVariant nullValue;
 
@@ -6643,10 +6714,11 @@ bool LocalStorageManagerPrivate::insertOrReplaceUserAttributes(
         query.bindValue(QStringLiteral(":id"), id);
 
 #define CHECK_AND_BIND_VALUE(name, ...)                                        \
-    query.bindValue(QStringLiteral(":" #name),                                 \
-                    (attributes.name.isSet()                                   \
-                     ? __VA_ARGS__(attributes.name.ref())                      \
-                     : nullValue))                                             \
+    query.bindValue(                                                           \
+        QStringLiteral(":" #name),                                             \
+        (attributes.name.isSet()                                               \
+         ? __VA_ARGS__(attributes.name.ref())                                  \
+         : nullValue))                                                         \
 // CHECK_AND_BIND_VALUE
 
         CHECK_AND_BIND_VALUE(defaultLocationName);
@@ -6678,10 +6750,11 @@ bool LocalStorageManagerPrivate::insertOrReplaceUserAttributes(
 #undef CHECK_AND_BIND_VALUE
 
 #define CHECK_AND_BIND_BOOLEAN_VALUE(name)                                     \
-    query.bindValue(QStringLiteral(":" #name),                                 \
-                    (attributes.name.isSet()                                   \
-                     ? (attributes.name.ref() ? 1 : 0)                         \
-                     : nullValue))                                             \
+    query.bindValue(                                                           \
+        QStringLiteral(":" #name),                                             \
+        (attributes.name.isSet()                                               \
+         ? (attributes.name.ref() ? 1 : 0)                                     \
+         : nullValue))                                                         \
 // CHECK_AND_BIND_BOOLEAN_VALUE
 
         CHECK_AND_BIND_BOOLEAN_VALUE(preactivation);
@@ -6700,9 +6773,8 @@ bool LocalStorageManagerPrivate::insertOrReplaceUserAttributes(
 
     // Clean viewed promotions first, then re-insert
     {
-        QString queryString =
-            QString::fromUtf8("DELETE FROM UserAttributesViewedPromotions "
-                              "WHERE id=%1").arg(id);
+        QString queryString = QString::fromUtf8(
+            "DELETE FROM UserAttributesViewedPromotions WHERE id=%1").arg(id);
 
         QSqlQuery query(m_sqlDatabase);
         bool res = query.exec(queryString);
@@ -6719,10 +6791,8 @@ bool LocalStorageManagerPrivate::insertOrReplaceUserAttributes(
         query.bindValue(QStringLiteral(":id"), id);
 
         const auto & viewedPromotions = attributes.viewedPromotions.ref();
-        for(auto it = viewedPromotions.constBegin(),
-            end = viewedPromotions.constEnd(); it != end; ++it)
-        {
-            query.bindValue(QStringLiteral(":promotion"), *it);
+        for(const auto & viewedPromotion: viewedPromotions) {
+            query.bindValue(QStringLiteral(":promotion"), viewedPromotion);
             res = query.exec();
             DATABASE_CHECK_AND_SET_ERROR()
         }
@@ -6730,9 +6800,9 @@ bool LocalStorageManagerPrivate::insertOrReplaceUserAttributes(
 
     // Clean recent mailed addresses first, then re-insert
     {
-        QString queryString =
-            QString::fromUtf8("DELETE FROM UserAttributesRecentMailedAddresses "
-                              "WHERE id=%1").arg(id);
+        QString queryString = QString::fromUtf8(
+            "DELETE FROM UserAttributesRecentMailedAddresses WHERE id=%1")
+            .arg(id);
 
         QSqlQuery query(m_sqlDatabase);
         bool res = query.exec(queryString);
@@ -6743,16 +6813,16 @@ bool LocalStorageManagerPrivate::insertOrReplaceUserAttributes(
     {
         bool res =
             checkAndPrepareInsertOrReplaceUserAttributesRecentMailedAddressesQuery();
-        QSqlQuery & query = m_insertOrReplaceUserAttributesRecentMailedAddressesQuery;
+        QSqlQuery & query =
+            m_insertOrReplaceUserAttributesRecentMailedAddressesQuery;
         DATABASE_CHECK_AND_SET_ERROR()
 
         query.bindValue(QStringLiteral(":id"), id);
 
-        const auto & recentMailedAddresses = attributes.recentMailedAddresses.ref();
-        for(auto it = recentMailedAddresses.constBegin(),
-            end = recentMailedAddresses.constEnd(); it != end; ++it)
-        {
-            query.bindValue(QStringLiteral(":address"), *it);
+        const auto & recentMailedAddresses =
+            attributes.recentMailedAddresses.ref();
+        for(const auto & recentMailedAddress: recentMailedAddresses) {
+            query.bindValue(QStringLiteral(":address"), recentMailedAddress);
             res = query.exec();
             DATABASE_CHECK_AND_SET_ERROR()
         }
@@ -6770,9 +6840,9 @@ bool LocalStorageManagerPrivate::checkAndPrepareUserCountQuery() const
     QNDEBUG("Preparing SQL query to get the count of users");
 
     m_getUserCountQuery = QSqlQuery(m_sqlDatabase);
-    QString queryString = QStringLiteral("SELECT COUNT(*) FROM Users "
-                                         "WHERE userDeletionTimestamp "
-                                         "IS NULL");
+    QString queryString = QStringLiteral(
+        "SELECT COUNT(*) FROM Users WHERE userDeletionTimestamp IS NULL");
+
     bool res = m_getUserCountQuery.prepare(queryString);
     if (res) {
         m_getUserCountQueryPrepared = true;
@@ -6790,18 +6860,18 @@ bool LocalStorageManagerPrivate::checkAndPrepareInsertOrReplaceUserQuery()
     QNDEBUG("Preparing SQL query to insert or replace user");
 
     m_insertOrReplaceUserQuery = QSqlQuery(m_sqlDatabase);
-    QString queryString =
-        QStringLiteral("INSERT OR REPLACE INTO Users"
-                       "(id, username, email, name, timezone, privilege, "
-                       "serviceLevel, userCreationTimestamp, "
-                       "userModificationTimestamp, userIsDirty, "
-                       "userIsLocal, userDeletionTimestamp, userIsActive, "
-                       "userShardId, userPhotoUrl, userPhotoLastUpdateTimestamp) "
-                       "VALUES(:id, :username, :email, :name, :timezone, "
-                       ":privilege, :serviceLevel, :userCreationTimestamp, "
-                       ":userModificationTimestamp, :userIsDirty, :userIsLocal, "
-                       ":userDeletionTimestamp, :userIsActive, :userShardId, "
-                       ":userPhotoUrl, :userPhotoLastUpdateTimestamp)");
+    QString queryString = QStringLiteral(
+        "INSERT OR REPLACE INTO Users"
+        "(id, username, email, name, timezone, privilege, "
+        "serviceLevel, userCreationTimestamp, "
+        "userModificationTimestamp, userIsDirty, "
+        "userIsLocal, userDeletionTimestamp, userIsActive, "
+        "userShardId, userPhotoUrl, userPhotoLastUpdateTimestamp) "
+        "VALUES(:id, :username, :email, :name, :timezone, "
+        ":privilege, :serviceLevel, :userCreationTimestamp, "
+        ":userModificationTimestamp, :userIsDirty, :userIsLocal, "
+        ":userDeletionTimestamp, :userIsActive, :userShardId, "
+        ":userPhotoUrl, :userPhotoLastUpdateTimestamp)");
     bool res = m_insertOrReplaceUserQuery.prepare(queryString);
     if (res) {
         m_insertOrReplaceUserQueryPrepared = true;
@@ -6819,25 +6889,25 @@ bool LocalStorageManagerPrivate::checkAndPrepareInsertOrReplaceAccountingQuery()
     QNDEBUG("Preparing SQL query to insert or replace accounting");
 
     m_insertOrReplaceAccountingQuery = QSqlQuery(m_sqlDatabase);
-    QString queryString =
-        QStringLiteral("INSERT OR REPLACE INTO Accounting"
-                       "(id, uploadLimitEnd, uploadLimitNextMonth, "
-                       "premiumServiceStatus, premiumOrderNumber, "
-                       "premiumCommerceService, premiumServiceStart, "
-                       "premiumServiceSKU, lastSuccessfulCharge, "
-                       "lastFailedCharge, lastFailedChargeReason, nextPaymentDue, "
-                       "premiumLockUntil, updated, premiumSubscriptionNumber, "
-                       "lastRequestedCharge, currency, unitPrice, unitDiscount, "
-                       "nextChargeDate, availablePoints) "
-                       "VALUES(:id, :uploadLimitEnd, :uploadLimitNextMonth, "
-                       ":premiumServiceStatus, :premiumOrderNumber, "
-                       ":premiumCommerceService, :premiumServiceStart, "
-                       ":premiumServiceSKU, :lastSuccessfulCharge, "
-                       ":lastFailedCharge, :lastFailedChargeReason, "
-                       ":nextPaymentDue, :premiumLockUntil, :updated, "
-                       ":premiumSubscriptionNumber, :lastRequestedCharge, "
-                       ":currency, :unitPrice, :unitDiscount, :nextChargeDate, "
-                       ":availablePoints)");
+    QString queryString = QStringLiteral(
+        "INSERT OR REPLACE INTO Accounting"
+        "(id, uploadLimitEnd, uploadLimitNextMonth, "
+        "premiumServiceStatus, premiumOrderNumber, "
+        "premiumCommerceService, premiumServiceStart, "
+        "premiumServiceSKU, lastSuccessfulCharge, "
+        "lastFailedCharge, lastFailedChargeReason, nextPaymentDue, "
+        "premiumLockUntil, updated, premiumSubscriptionNumber, "
+        "lastRequestedCharge, currency, unitPrice, unitDiscount, "
+        "nextChargeDate, availablePoints) "
+        "VALUES(:id, :uploadLimitEnd, :uploadLimitNextMonth, "
+        ":premiumServiceStatus, :premiumOrderNumber, "
+        ":premiumCommerceService, :premiumServiceStart, "
+        ":premiumServiceSKU, :lastSuccessfulCharge, "
+        ":lastFailedCharge, :lastFailedChargeReason, "
+        ":nextPaymentDue, :premiumLockUntil, :updated, "
+        ":premiumSubscriptionNumber, :lastRequestedCharge, "
+        ":currency, :unitPrice, :unitDiscount, :nextChargeDate, "
+        ":availablePoints)");
     bool res = m_insertOrReplaceAccountingQuery.prepare(queryString);
     if (res) {
         m_insertOrReplaceAccountingQueryPrepared = true;
@@ -6855,17 +6925,17 @@ bool LocalStorageManagerPrivate::checkAndPrepareInsertOrReplaceAccountLimitsQuer
     QNDEBUG("Preparing SQL query to insert or replace account limits");
 
     m_insertOrReplaceAccountLimitsQuery = QSqlQuery(m_sqlDatabase);
-    QString queryString =
-        QStringLiteral("INSERT OR REPLACE INTO AccountLimits"
-                       "(id, userMailLimitDaily, noteSizeMax, resourceSizeMax, "
-                       "userLinkedNotebookMax, uploadLimit, userNoteCountMax, "
-                       "userNotebookCountMax, userTagCountMax, noteTagCountMax, "
-                       "userSavedSearchesMax, noteResourceCountMax) "
-                       "VALUES(:id, :userMailLimitDaily, :noteSizeMax, "
-                       ":resourceSizeMax, :userLinkedNotebookMax, :uploadLimit, "
-                       ":userNoteCountMax, :userNotebookCountMax, "
-                       ":userTagCountMax, :noteTagCountMax, "
-                       ":userSavedSearchesMax, :noteResourceCountMax)");
+    QString queryString = QStringLiteral(
+        "INSERT OR REPLACE INTO AccountLimits"
+        "(id, userMailLimitDaily, noteSizeMax, resourceSizeMax, "
+        "userLinkedNotebookMax, uploadLimit, userNoteCountMax, "
+        "userNotebookCountMax, userTagCountMax, noteTagCountMax, "
+        "userSavedSearchesMax, noteResourceCountMax) "
+        "VALUES(:id, :userMailLimitDaily, :noteSizeMax, "
+        ":resourceSizeMax, :userLinkedNotebookMax, :uploadLimit, "
+        ":userNoteCountMax, :userNotebookCountMax, "
+        ":userTagCountMax, :noteTagCountMax, "
+        ":userSavedSearchesMax, :noteResourceCountMax)");
     bool res = m_insertOrReplaceAccountLimitsQuery.prepare(queryString);
     if (res) {
         m_insertOrReplaceAccountLimitsQueryPrepared = true;
@@ -6883,11 +6953,10 @@ bool LocalStorageManagerPrivate::checkAndPrepareInsertOrReplaceBusinessUserInfoQ
     QNDEBUG("Preparing SQl query to insert or replace business user info");
 
     m_insertOrReplaceBusinessUserInfoQuery = QSqlQuery(m_sqlDatabase);
-    QString queryString =
-        QStringLiteral("INSERT OR REPLACE INTO BusinessUserInfo"
-                       "(id, businessId, businessName, role, businessInfoEmail) "
-                       "VALUES(:id, :businessId, :businessName, :role, "
-                       ":businessInfoEmail)");
+    QString queryString = QStringLiteral(
+        "INSERT OR REPLACE INTO BusinessUserInfo"
+        "(id, businessId, businessName, role, businessInfoEmail) "
+        "VALUES(:id, :businessId, :businessName, :role, :businessInfoEmail)");
     bool res = m_insertOrReplaceBusinessUserInfoQuery.prepare(queryString);
     if (res) {
         m_insertOrReplaceBusinessUserInfoQueryPrepared = true;
@@ -6905,38 +6974,38 @@ bool LocalStorageManagerPrivate::checkAndPrepareInsertOrReplaceUserAttributesQue
     QNDEBUG("Preparing SQL query to insert or replace user attributes");
 
     m_insertOrReplaceUserAttributesQuery = QSqlQuery(m_sqlDatabase);
-    QString queryString =
-        QStringLiteral("INSERT OR REPLACE INTO UserAttributes"
-                       "(id, defaultLocationName, defaultLatitude, "
-                       "defaultLongitude, preactivation, "
-                       "incomingEmailAddress, comments, "
-                       "dateAgreedToTermsOfService, maxReferrals, "
-                       "referralCount, refererCode, sentEmailDate, "
-                       "sentEmailCount, dailyEmailLimit, "
-                       "emailOptOutDate, partnerEmailOptInDate, "
-                       "preferredLanguage, preferredCountry, "
-                       "clipFullPage, twitterUserName, twitterId, "
-                       "groupName, recognitionLanguage, "
-                       "referralProof, educationalDiscount, "
-                       "businessAddress, hideSponsorBilling, "
-                       "useEmailAutoFiling, reminderEmailConfig, "
-                       "emailAddressLastConfirmed, passwordUpdated, "
-                       "salesforcePushEnabled, shouldLogClientEvent) "
-                       "VALUES(:id, :defaultLocationName, :defaultLatitude, "
-                       ":defaultLongitude, :preactivation, "
-                       ":incomingEmailAddress, :comments, "
-                       ":dateAgreedToTermsOfService, :maxReferrals, "
-                       ":referralCount, :refererCode, :sentEmailDate, "
-                       ":sentEmailCount, :dailyEmailLimit, "
-                       ":emailOptOutDate, :partnerEmailOptInDate, "
-                       ":preferredLanguage, :preferredCountry, "
-                       ":clipFullPage, :twitterUserName, :twitterId, "
-                       ":groupName, :recognitionLanguage, "
-                       ":referralProof, :educationalDiscount, "
-                       ":businessAddress, :hideSponsorBilling, "
-                       ":useEmailAutoFiling, :reminderEmailConfig, "
-                       ":emailAddressLastConfirmed, :passwordUpdated, "
-                       ":salesforcePushEnabled, :shouldLogClientEvent)");
+    QString queryString = QStringLiteral(
+        "INSERT OR REPLACE INTO UserAttributes"
+        "(id, defaultLocationName, defaultLatitude, "
+        "defaultLongitude, preactivation, "
+        "incomingEmailAddress, comments, "
+        "dateAgreedToTermsOfService, maxReferrals, "
+        "referralCount, refererCode, sentEmailDate, "
+        "sentEmailCount, dailyEmailLimit, "
+        "emailOptOutDate, partnerEmailOptInDate, "
+        "preferredLanguage, preferredCountry, "
+        "clipFullPage, twitterUserName, twitterId, "
+        "groupName, recognitionLanguage, "
+        "referralProof, educationalDiscount, "
+        "businessAddress, hideSponsorBilling, "
+        "useEmailAutoFiling, reminderEmailConfig, "
+        "emailAddressLastConfirmed, passwordUpdated, "
+        "salesforcePushEnabled, shouldLogClientEvent) "
+        "VALUES(:id, :defaultLocationName, :defaultLatitude, "
+        ":defaultLongitude, :preactivation, "
+        ":incomingEmailAddress, :comments, "
+        ":dateAgreedToTermsOfService, :maxReferrals, "
+        ":referralCount, :refererCode, :sentEmailDate, "
+        ":sentEmailCount, :dailyEmailLimit, "
+        ":emailOptOutDate, :partnerEmailOptInDate, "
+        ":preferredLanguage, :preferredCountry, "
+        ":clipFullPage, :twitterUserName, :twitterId, "
+        ":groupName, :recognitionLanguage, "
+        ":referralProof, :educationalDiscount, "
+        ":businessAddress, :hideSponsorBilling, "
+        ":useEmailAutoFiling, :reminderEmailConfig, "
+        ":emailAddressLastConfirmed, :passwordUpdated, "
+        ":salesforcePushEnabled, :shouldLogClientEvent)");
     bool res = m_insertOrReplaceUserAttributesQuery.prepare(queryString);
     if (res) {
         m_insertOrReplaceUserAttributesQueryPrepared = true;
@@ -6951,13 +7020,16 @@ bool LocalStorageManagerPrivate::checkAndPrepareInsertOrReplaceUserAttributesVie
         return true;
     }
 
-    QNDEBUG("Preparing SQL query to insert or replace user "
-            "attributes viewed promotions");
+    QNDEBUG("Preparing SQL query to insert or replace user attributes viewed "
+        << "promotions");
 
-    m_insertOrReplaceUserAttributesViewedPromotionsQuery = QSqlQuery(m_sqlDatabase);
-    QString queryString =
-        QStringLiteral("INSERT OR REPLACE INTO UserAttributesViewedPromotions"
-                       "(id, promotion) VALUES(:id, :promotion)");
+    m_insertOrReplaceUserAttributesViewedPromotionsQuery = QSqlQuery(
+        m_sqlDatabase);
+
+    QString queryString = QStringLiteral(
+        "INSERT OR REPLACE INTO UserAttributesViewedPromotions"
+        "(id, promotion) VALUES(:id, :promotion)");
+
     bool res = m_insertOrReplaceUserAttributesViewedPromotionsQuery.prepare(queryString);
     if (res) {
         m_insertOrReplaceUserAttributesViewedPromotionsQueryPrepared = true;
@@ -6973,14 +7045,17 @@ bool LocalStorageManagerPrivate::checkAndPrepareInsertOrReplaceUserAttributesRec
     }
 
     QNDEBUG("Preparing SQL query to insert or replace user "
-            "attributes recent mailed addresses");
+        << "attributes recent mailed addresses");
 
-    m_insertOrReplaceUserAttributesRecentMailedAddressesQuery =
-        QSqlQuery(m_sqlDatabase);
-    QString queryString =
-        QStringLiteral("INSERT OR REPLACE INTO UserAttributesRecentMailedAddresses"
-                       "(id, address) VALUES(:id, :address)");
-    bool res = m_insertOrReplaceUserAttributesRecentMailedAddressesQuery.prepare(queryString);
+    m_insertOrReplaceUserAttributesRecentMailedAddressesQuery = QSqlQuery(
+        m_sqlDatabase);
+
+    QString queryString = QStringLiteral(
+        "INSERT OR REPLACE INTO UserAttributesRecentMailedAddresses"
+        "(id, address) VALUES(:id, :address)");
+
+    bool res = m_insertOrReplaceUserAttributesRecentMailedAddressesQuery.prepare(
+        queryString);
     if (res) {
         m_insertOrReplaceUserAttributesRecentMailedAddressesQueryPrepared = true;
     }
@@ -6997,10 +7072,11 @@ bool LocalStorageManagerPrivate::checkAndPrepareDeleteUserQuery()
     QNDEBUG("Preparing SQL query to mark user deleted");
 
     m_deleteUserQuery = QSqlQuery(m_sqlDatabase);
-    QString queryString =
-        QStringLiteral("UPDATE Users SET userDeletionTimestamp = "
-                       ":userDeletionTimestamp, userIsLocal = "
-                       ":userIsLocal WHERE id = :id");
+
+    QString queryString = QStringLiteral(
+        "UPDATE Users SET userDeletionTimestamp = :userDeletionTimestamp, "
+        "userIsLocal = :userIsLocal WHERE id = :id");
+
     bool res = m_deleteUserQuery.prepare(queryString);
     if (res) {
         m_deleteUserQueryPrepared = true;
@@ -7028,126 +7104,157 @@ bool LocalStorageManagerPrivate::insertOrReplaceNotebook(
         QSqlQuery & query = m_insertOrReplaceNotebookQuery;
         DATABASE_CHECK_AND_SET_ERROR()
 
-        query.bindValue(QStringLiteral(":localUid"),
-                        (localUid.isEmpty()
-                         ? nullValue
-                         : localUid));
-        query.bindValue(QStringLiteral(":guid"),
-                        (notebook.hasGuid()
-                         ? notebook.guid()
-                         : nullValue));
-        query.bindValue(QStringLiteral(":linkedNotebookGuid"),
-                        (notebook.hasLinkedNotebookGuid()
-                         ? notebook.linkedNotebookGuid()
-                         : nullValue));
-        query.bindValue(QStringLiteral(":updateSequenceNumber"),
-                        (notebook.hasUpdateSequenceNumber()
-                         ? notebook.updateSequenceNumber()
-                         : nullValue));
-        query.bindValue(QStringLiteral(":notebookName"),
-                        (notebook.hasName()
-                         ? notebook.name()
-                         : nullValue));
-        query.bindValue(QStringLiteral(":notebookNameUpper"),
-                        (notebook.hasName()
-                         ? notebook.name().toUpper()
-                         : nullValue));
-        query.bindValue(QStringLiteral(":creationTimestamp"),
-                        (notebook.hasCreationTimestamp()
-                         ? notebook.creationTimestamp()
-                         : nullValue));
-        query.bindValue(QStringLiteral(":modificationTimestamp"),
-                        (notebook.hasModificationTimestamp()
-                         ? notebook.modificationTimestamp()
-                         : nullValue));
-        query.bindValue(QStringLiteral(":isDirty"),
-                        (notebook.isDirty()
-                         ? 1
-                         : 0));
-        query.bindValue(QStringLiteral(":isLocal"),
-                        (notebook.isLocal()
-                         ? 1
-                         : 0));
-        query.bindValue(QStringLiteral(":isDefault"),
-                        (notebook.isDefaultNotebook()
-                         ? 1
-                         : nullValue));
-        query.bindValue(QStringLiteral(":isLastUsed"),
-                        (notebook.isLastUsed()
-                         ? 1
-                         : nullValue));
-        query.bindValue(QStringLiteral(":isFavorited"),
-                        (notebook.isFavorited()
-                         ? 1
-                         : 0));
-        query.bindValue(QStringLiteral(":publishingUri"),
-                        (notebook.hasPublishingUri()
-                         ? notebook.publishingUri()
-                         : nullValue));
-        query.bindValue(QStringLiteral(":publishingNoteSortOrder"),
-                        (notebook.hasPublishingOrder()
-                         ? notebook.publishingOrder()
-                         : nullValue));
-        query.bindValue(QStringLiteral(":publishingAscendingSort"),
-                        (notebook.hasPublishingAscending()
-                         ? (notebook.isPublishingAscending()
-                            ? 1
-                            : 0)
-                         : nullValue));
-        query.bindValue(QStringLiteral(":publicDescription"),
-                        (notebook.hasPublishingPublicDescription()
-                         ? notebook.publishingPublicDescription()
-                         : nullValue));
-        query.bindValue(QStringLiteral(":isPublished"),
-                        (notebook.hasPublished()
-                         ? (notebook.isPublished()
-                            ? 1
-                            : 0)
-                         : nullValue));
-        query.bindValue(QStringLiteral(":stack"),
-                        (notebook.hasStack()
-                         ? notebook.stack()
-                         : nullValue));
-        query.bindValue(QStringLiteral(":businessNotebookDescription"),
-                        (notebook.hasBusinessNotebookDescription()
-                         ? notebook.businessNotebookDescription()
-                         : nullValue));
-        query.bindValue(QStringLiteral(":businessNotebookPrivilegeLevel"),
-                        (notebook.hasBusinessNotebookPrivilegeLevel()
-                         ? notebook.businessNotebookPrivilegeLevel()
-                         : nullValue));
-        query.bindValue(QStringLiteral(":businessNotebookIsRecommended"),
-                        (notebook.hasBusinessNotebookRecommended()
-                         ? (notebook.isBusinessNotebookRecommended()
-                            ? 1
-                            : 0)
-                         : nullValue));
-        query.bindValue(QStringLiteral(":contactId"),
-                        ((notebook.hasContact() && notebook.contact().hasId())
-                         ? notebook.contact().id()
-                         : nullValue));
-        query.bindValue(QStringLiteral(":recipientReminderNotifyEmail"),
-                        (notebook.hasRecipientReminderNotifyEmail()
-                         ? (notebook.recipientReminderNotifyEmail()
-                            ? 1
-                            : 0)
-                         : nullValue));
-        query.bindValue(QStringLiteral(":recipientReminderNotifyInApp"),
-                        (notebook.hasRecipientReminderNotifyInApp()
-                         ? (notebook.recipientReminderNotifyInApp()
-                            ? 1
-                            : 0)
-                         : nullValue));
-        query.bindValue(QStringLiteral(":recipientInMyList"),
-                        (notebook.hasRecipientInMyList()
-                         ? (notebook.recipientInMyList()
-                            ? 1
-                            : 0)
-                         : nullValue));
-        query.bindValue(QStringLiteral(":recipientStack"),
-                        (notebook.hasRecipientStack()
-                         ? notebook.recipientStack()
-                         : nullValue));
+        query.bindValue(
+            QStringLiteral(":localUid"),
+            (localUid.isEmpty()
+             ? nullValue
+             : localUid));
+
+        query.bindValue(
+            QStringLiteral(":guid"),
+            (notebook.hasGuid()
+             ? notebook.guid()
+             : nullValue));
+
+        query.bindValue(
+            QStringLiteral(":linkedNotebookGuid"),
+            (notebook.hasLinkedNotebookGuid()
+             ? notebook.linkedNotebookGuid()
+             : nullValue));
+
+        query.bindValue(
+            QStringLiteral(":updateSequenceNumber"),
+            (notebook.hasUpdateSequenceNumber()
+             ? notebook.updateSequenceNumber()
+             : nullValue));
+
+        query.bindValue(
+            QStringLiteral(":notebookName"),
+            (notebook.hasName()
+             ? notebook.name()
+             : nullValue));
+
+        query.bindValue(
+            QStringLiteral(":notebookNameUpper"),
+            (notebook.hasName()
+             ? notebook.name().toUpper()
+             : nullValue));
+
+        query.bindValue(
+            QStringLiteral(":creationTimestamp"),
+            (notebook.hasCreationTimestamp()
+             ? notebook.creationTimestamp()
+             : nullValue));
+
+        query.bindValue(
+            QStringLiteral(":modificationTimestamp"),
+            (notebook.hasModificationTimestamp()
+             ? notebook.modificationTimestamp()
+             : nullValue));
+
+        query.bindValue(
+            QStringLiteral(":isDirty"),
+            (notebook.isDirty() ? 1 : 0));
+
+        query.bindValue(
+            QStringLiteral(":isLocal"),
+            (notebook.isLocal() ? 1 : 0));
+
+        query.bindValue(
+            QStringLiteral(":isDefault"),
+            (notebook.isDefaultNotebook() ? 1 : nullValue));
+
+        query.bindValue(
+            QStringLiteral(":isLastUsed"),
+            (notebook.isLastUsed() ? 1 : nullValue));
+
+        query.bindValue(
+            QStringLiteral(":isFavorited"),
+            (notebook.isFavorited() ? 1 : 0));
+
+        query.bindValue(
+            QStringLiteral(":publishingUri"),
+            (notebook.hasPublishingUri()
+             ? notebook.publishingUri()
+             : nullValue));
+
+        query.bindValue(
+            QStringLiteral(":publishingNoteSortOrder"),
+            (notebook.hasPublishingOrder()
+             ? notebook.publishingOrder()
+             : nullValue));
+
+        query.bindValue(
+            QStringLiteral(":publishingAscendingSort"),
+            (notebook.hasPublishingAscending()
+             ? (notebook.isPublishingAscending() ? 1 : 0)
+             : nullValue));
+
+        query.bindValue(
+            QStringLiteral(":publicDescription"),
+            (notebook.hasPublishingPublicDescription()
+             ? notebook.publishingPublicDescription()
+             : nullValue));
+
+        query.bindValue(
+            QStringLiteral(":isPublished"),
+            (notebook.hasPublished()
+             ? (notebook.isPublished() ? 1 : 0)
+             : nullValue));
+
+        query.bindValue(
+            QStringLiteral(":stack"),
+            (notebook.hasStack()
+             ? notebook.stack()
+             : nullValue));
+
+        query.bindValue(
+            QStringLiteral(":businessNotebookDescription"),
+            (notebook.hasBusinessNotebookDescription()
+             ? notebook.businessNotebookDescription()
+             : nullValue));
+
+        query.bindValue(
+            QStringLiteral(":businessNotebookPrivilegeLevel"),
+            (notebook.hasBusinessNotebookPrivilegeLevel()
+             ? notebook.businessNotebookPrivilegeLevel()
+             : nullValue));
+
+        query.bindValue(
+            QStringLiteral(":businessNotebookIsRecommended"),
+            (notebook.hasBusinessNotebookRecommended()
+             ? (notebook.isBusinessNotebookRecommended() ? 1 : 0)
+             : nullValue));
+
+        query.bindValue(
+            QStringLiteral(":contactId"),
+            ((notebook.hasContact() && notebook.contact().hasId())
+             ? notebook.contact().id()
+             : nullValue));
+
+        query.bindValue(
+            QStringLiteral(":recipientReminderNotifyEmail"),
+            (notebook.hasRecipientReminderNotifyEmail()
+             ? (notebook.recipientReminderNotifyEmail() ? 1 : 0)
+             : nullValue));
+
+        query.bindValue(
+            QStringLiteral(":recipientReminderNotifyInApp"),
+            (notebook.hasRecipientReminderNotifyInApp()
+             ? (notebook.recipientReminderNotifyInApp() ? 1 : 0)
+             : nullValue));
+
+        query.bindValue(
+            QStringLiteral(":recipientInMyList"),
+            (notebook.hasRecipientInMyList()
+             ? (notebook.recipientInMyList() ? 1 : 0)
+             : nullValue));
+
+        query.bindValue(
+            QStringLiteral(":recipientStack"),
+            (notebook.hasRecipientStack()
+             ? notebook.recipientStack()
+             : nullValue));
 
         res = query.exec();
         DATABASE_CHECK_AND_SET_ERROR()
@@ -7156,9 +7263,10 @@ bool LocalStorageManagerPrivate::insertOrReplaceNotebook(
     if (notebook.hasRestrictions())
     {
         ErrorString error;
-        bool res = insertOrReplaceNotebookRestrictions(localUid,
-                                                       notebook.restrictions(),
-                                                       error);
+        bool res = insertOrReplaceNotebookRestrictions(
+            localUid,
+            notebook.restrictions(),
+            error);
         if (!res) {
             errorDescription.base() = errorPrefix.base();
             errorDescription.appendBase(error.base());
@@ -7169,9 +7277,9 @@ bool LocalStorageManagerPrivate::insertOrReplaceNotebook(
     }
     else
     {
-        QString queryString =
-            QString::fromUtf8("DELETE FROM NotebookRestrictions "
-                              "WHERE localUid='%1'").arg(localUid);
+        QString queryString = QString::fromUtf8(
+            "DELETE FROM NotebookRestrictions WHERE localUid='%1'")
+            .arg(localUid);
 
         QSqlQuery query(m_sqlDatabase);
         bool res = query.exec(queryString);
@@ -7181,9 +7289,9 @@ bool LocalStorageManagerPrivate::insertOrReplaceNotebook(
     if (notebook.hasGuid())
     {
         QString guid = sqlEscapeString(notebook.guid());
-        QString queryString =
-            QString::fromUtf8("DELETE FROM SharedNotebooks WHERE "
-                              "sharedNotebookNotebookGuid='%1'").arg(guid);
+        QString queryString = QString::fromUtf8(
+            "DELETE FROM SharedNotebooks WHERE sharedNotebookNotebookGuid='%1'")
+            .arg(guid);
 
         QSqlQuery query(m_sqlDatabase);
         bool res = query.exec(queryString);
@@ -7195,8 +7303,8 @@ bool LocalStorageManagerPrivate::insertOrReplaceNotebook(
             const SharedNotebook & sharedNotebook = sharedNotebooks[i];
             if (!sharedNotebook.hasId()) {
                 QNWARNING("Found shared notebook without primary "
-                          << "identifier of the share set, skipping it: "
-                          << sharedNotebook);
+                    << "identifier of the share set, skipping it: "
+                    << sharedNotebook);
                 continue;
             }
 
@@ -7242,31 +7350,31 @@ bool LocalStorageManagerPrivate::checkAndPrepareInsertOrReplaceNotebookQuery()
     QNDEBUG("Preparing SQL query to insert or replace notebook");
 
     m_insertOrReplaceNotebookQuery = QSqlQuery(m_sqlDatabase);
-    QString queryString =
-        QStringLiteral("INSERT OR REPLACE INTO Notebooks"
-                       "(localUid, guid, linkedNotebookGuid, "
-                       "updateSequenceNumber, notebookName, notebookNameUpper, "
-                       "creationTimestamp, modificationTimestamp, isDirty, "
-                       "isLocal, isDefault, isLastUsed, isFavorited, "
-                       "publishingUri, publishingNoteSortOrder, "
-                       "publishingAscendingSort, publicDescription, isPublished, "
-                       "stack, businessNotebookDescription, "
-                       "businessNotebookPrivilegeLevel, "
-                       "businessNotebookIsRecommended, contactId, "
-                       "recipientReminderNotifyEmail, recipientReminderNotifyInApp, "
-                       "recipientInMyList, recipientStack) "
-                       "VALUES(:localUid, :guid, :linkedNotebookGuid, "
-                       ":updateSequenceNumber, :notebookName, :notebookNameUpper, "
-                       ":creationTimestamp, :modificationTimestamp, :isDirty, "
-                       ":isLocal, :isDefault, :isLastUsed, :isFavorited, "
-                       ":publishingUri, :publishingNoteSortOrder, "
-                       ":publishingAscendingSort, :publicDescription, "
-                       ":isPublished, :stack, :businessNotebookDescription, "
-                       ":businessNotebookPrivilegeLevel, "
-                       ":businessNotebookIsRecommended, :contactId, "
-                       ":recipientReminderNotifyEmail, "
-                       ":recipientReminderNotifyInApp, :recipientInMyList, "
-                       ":recipientStack)");
+    QString queryString = QStringLiteral(
+        "INSERT OR REPLACE INTO Notebooks"
+        "(localUid, guid, linkedNotebookGuid, "
+        "updateSequenceNumber, notebookName, notebookNameUpper, "
+        "creationTimestamp, modificationTimestamp, isDirty, "
+        "isLocal, isDefault, isLastUsed, isFavorited, "
+        "publishingUri, publishingNoteSortOrder, "
+        "publishingAscendingSort, publicDescription, isPublished, "
+        "stack, businessNotebookDescription, "
+        "businessNotebookPrivilegeLevel, "
+        "businessNotebookIsRecommended, contactId, "
+        "recipientReminderNotifyEmail, recipientReminderNotifyInApp, "
+        "recipientInMyList, recipientStack) "
+        "VALUES(:localUid, :guid, :linkedNotebookGuid, "
+        ":updateSequenceNumber, :notebookName, :notebookNameUpper, "
+        ":creationTimestamp, :modificationTimestamp, :isDirty, "
+        ":isLocal, :isDefault, :isLastUsed, :isFavorited, "
+        ":publishingUri, :publishingNoteSortOrder, "
+        ":publishingAscendingSort, :publicDescription, "
+        ":isPublished, :stack, :businessNotebookDescription, "
+        ":businessNotebookPrivilegeLevel, "
+        ":businessNotebookIsRecommended, :contactId, "
+        ":recipientReminderNotifyEmail, "
+        ":recipientReminderNotifyInApp, :recipientInMyList, "
+        ":recipientStack)");
     bool res = m_insertOrReplaceNotebookQuery.prepare(queryString);
     if (res) {
         m_insertOrReplaceNotebookQueryPrepared = true;
@@ -7284,27 +7392,27 @@ bool LocalStorageManagerPrivate::checkAndPrepareInsertOrReplaceNotebookRestricti
     QNDEBUG("Preparing SQL query to insert or replace notebook restrictions");
 
     m_insertOrReplaceNotebookRestrictionsQuery = QSqlQuery(m_sqlDatabase);
-    QString queryString =
-        QStringLiteral("INSERT OR REPLACE INTO NotebookRestrictions"
-                       "(localUid, noReadNotes, noCreateNotes, noUpdateNotes, "
-                       "noExpungeNotes, noShareNotes, noEmailNotes, "
-                       "noSendMessageToRecipients, noUpdateNotebook, "
-                       "noExpungeNotebook, noSetDefaultNotebook, "
-                       "noSetNotebookStack, noPublishToPublic, "
-                       "noPublishToBusinessLibrary, noCreateTags, noUpdateTags, "
-                       "noExpungeTags, noSetParentTag, noCreateSharedNotebooks, "
-                       "updateWhichSharedNotebookRestrictions, "
-                       "expungeWhichSharedNotebookRestrictions) "
-                       "VALUES(:localUid, :noReadNotes, :noCreateNotes, "
-                       ":noUpdateNotes, :noExpungeNotes, :noShareNotes, "
-                       ":noEmailNotes, :noSendMessageToRecipients, "
-                       ":noUpdateNotebook, :noExpungeNotebook, "
-                       ":noSetDefaultNotebook, :noSetNotebookStack, "
-                       ":noPublishToPublic, :noPublishToBusinessLibrary, "
-                       ":noCreateTags, :noUpdateTags, :noExpungeTags, "
-                       ":noSetParentTag, :noCreateSharedNotebooks, "
-                       ":updateWhichSharedNotebookRestrictions, "
-                       ":expungeWhichSharedNotebookRestrictions)");
+    QString queryString = QStringLiteral(
+        "INSERT OR REPLACE INTO NotebookRestrictions"
+        "(localUid, noReadNotes, noCreateNotes, noUpdateNotes, "
+        "noExpungeNotes, noShareNotes, noEmailNotes, "
+        "noSendMessageToRecipients, noUpdateNotebook, "
+        "noExpungeNotebook, noSetDefaultNotebook, "
+        "noSetNotebookStack, noPublishToPublic, "
+        "noPublishToBusinessLibrary, noCreateTags, noUpdateTags, "
+        "noExpungeTags, noSetParentTag, noCreateSharedNotebooks, "
+        "updateWhichSharedNotebookRestrictions, "
+        "expungeWhichSharedNotebookRestrictions) "
+        "VALUES(:localUid, :noReadNotes, :noCreateNotes, "
+        ":noUpdateNotes, :noExpungeNotes, :noShareNotes, "
+        ":noEmailNotes, :noSendMessageToRecipients, "
+        ":noUpdateNotebook, :noExpungeNotebook, "
+        ":noSetDefaultNotebook, :noSetNotebookStack, "
+        ":noPublishToPublic, :noPublishToBusinessLibrary, "
+        ":noCreateTags, :noUpdateTags, :noExpungeTags, "
+        ":noSetParentTag, :noCreateSharedNotebooks, "
+        ":updateWhichSharedNotebookRestrictions, "
+        ":expungeWhichSharedNotebookRestrictions)");
     bool res = m_insertOrReplaceNotebookRestrictionsQuery.prepare(queryString);
     if (res) {
         m_insertOrReplaceNotebookRestrictionsQueryPrepared = true;
