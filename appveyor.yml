@@ -44,6 +44,14 @@ environment:
 clone_folder: c:\dev\libquentier
 
 init:
+# remove AppVeyor provided OpenSSL as it seems to interfere
+  - rd /s /q C:\OpenSSL-Win32
+  - rd /s /q C:\OpenSSL-Win64
+  - rd /s /q C:\OpenSSL-v11-Win32
+  - rd /s /q C:\OpenSSL-v11-Win64
+  - rd /s /q C:\OpenSSL-v111-Win32
+  - rd /s /q C:\OpenSSL-v111-Win64
+# init environment variables
   - if not %build_tool%==mingw set PATH=C:\Qt\5.13\%qt%\bin;%PATH%
   - if %build_tool%==mingw set PATH=C:\Qt\5.5\%qt%\bin;%PATH%
   - set ORIGPATH=%PATH%
