@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -17,18 +17,17 @@
  */
 
 #include "QuentierLogger_p.h"
+
 #include <quentier/exception/LoggerInitializationException.h>
 #include <quentier/utility/StandardPaths.h>
 #include <quentier/utility/Utility.h>
+
 #include <QCoreApplication>
+#include <QDir>
 #include <QFileInfo>
 #include <QTextCodec>
-#include <QDir>
-#include <iostream>
 
-#if __cplusplus < 201103L
-#include <QMutexLocker>
-#endif
+#include <iostream>
 
 #if defined Q_OS_WIN
 #include <Windows.h>
@@ -60,15 +59,20 @@ QuentierFileLogWriter::QuentierFileLogWriter(
         }
     }
 
-    QString logFileName = logFileDirPath + QStringLiteral("/") +
-                          QCoreApplication::applicationName() +
-                          QStringLiteral("-log.txt");
+    QString logFileName =
+        logFileDirPath + QStringLiteral("/") +
+        QCoreApplication::applicationName() +
+        QStringLiteral("-log.txt");
+
     m_logFile.setFileName(logFileName);
 
-    bool opened = m_logFile.open(QIODevice::WriteOnly | QIODevice::Append |
-                                 QIODevice::Unbuffered | QIODevice::Text);
-    if (Q_UNLIKELY(!opened)) {
-        ErrorString error(QT_TR_NOOP("Can't open the log file for writing/appending"));
+    bool opened = m_logFile.open(
+        QIODevice::WriteOnly | QIODevice::Append |
+        QIODevice::Unbuffered | QIODevice::Text);
+    if (Q_UNLIKELY(!opened))
+    {
+        ErrorString error(
+            QT_TR_NOOP("Can't open the log file for writing/appending"));
         error.details() = m_logFile.errorString();
         error.details() += QStringLiteral(", error code = ");
         error.details() += QString::number(m_logFile.error());
@@ -81,10 +85,12 @@ QuentierFileLogWriter::QuentierFileLogWriter(
     // count the existing ones
     for(int i = 1; i < m_maxOldLogFilesCount; ++i)
     {
-        const QString previousLogFilePath = logFileDirPath + QStringLiteral("/") +
-                                            QCoreApplication::applicationName() +
-                                            QStringLiteral("-log.") +
-                                            QString::number(i) + QStringLiteral(".txt");
+        const QString previousLogFilePath =
+            logFileDirPath + QStringLiteral("/") +
+            QCoreApplication::applicationName() +
+            QStringLiteral("-log.") +
+            QString::number(i) + QStringLiteral(".txt");
+
         if (QFile::exists(previousLogFilePath)) {
             ++m_currentOldLogFilesCount;
         }
@@ -99,8 +105,10 @@ QuentierFileLogWriter::~QuentierFileLogWriter()
 
 void QuentierFileLogWriter::write(QString message)
 {
-    DateTimePrint::Options options(DateTimePrint::IncludeMilliseconds |
-                                   DateTimePrint::IncludeTimezone);
+    DateTimePrint::Options options(
+        DateTimePrint::IncludeMilliseconds |
+        DateTimePrint::IncludeTimezone);
+
     message.prepend(printableDateTimeFromTimestamp(
         QDateTime::currentMSecsSinceEpoch(),
         options) + QStringLiteral(" "));
@@ -136,15 +144,19 @@ void QuentierFileLogWriter::restartLogging()
     bool res = QFile::remove(logFilePath);
     if (Q_UNLIKELY(!res))
     {
-        std::cerr << "Can't restart logging: failed to remove the existing log file: " << qPrintable(logFilePath) << "\n";
+        std::cerr << "Can't restart logging: failed to remove the existing "
+            << "log file: " << qPrintable(logFilePath) << "\n";
     }
     else
     {
         m_logFile.setFileName(logFilePath);
-        bool opened = m_logFile.open(QIODevice::WriteOnly | QIODevice::Append | QIODevice::Unbuffered | QIODevice::Text);
+        bool opened = m_logFile.open(
+            QIODevice::WriteOnly | QIODevice::Append |
+            QIODevice::Unbuffered | QIODevice::Text);
         if (Q_UNLIKELY(!opened)) {
-            std::cerr << "Can't open the new libquentier log file, error: " << qPrintable(m_logFile.errorString())
-                << " (error code " << qPrintable(QString::number(m_logFile.error())) << ")\n";
+            std::cerr << "Can't open the new libquentier log file, error: "
+                << qPrintable(m_logFile.errorString()) << " (error code "
+                << qPrintable(QString::number(m_logFile.error())) << ")\n";
             return;
         }
     }
@@ -164,27 +176,32 @@ void QuentierFileLogWriter::rotate()
     // 1) Rename all the existing old log files
     for(int i = m_currentOldLogFilesCount; i >= 1; --i)
     {
-        const QString previousLogFilePath = logFileDirPath + QStringLiteral("/") +
-                                            QCoreApplication::applicationName() +
-                                            QStringLiteral("-log.") +
-                                            QString::number(i) + QStringLiteral(".txt");
+        const QString previousLogFilePath =
+            logFileDirPath + QStringLiteral("/") +
+            QCoreApplication::applicationName() +
+            QStringLiteral("-log.") +
+            QString::number(i) + QStringLiteral(".txt");
+
         QFile previousLogFile(previousLogFilePath);
         if (Q_UNLIKELY(!previousLogFile.exists())) {
             continue;
         }
 
-        const QString newLogFilePath = logFileDirPath + QStringLiteral("/") +
-                                       QCoreApplication::applicationName() +
-                                       QStringLiteral("-log.") +
-                                       QString::number(i + 1) + QStringLiteral(".txt");
+        const QString newLogFilePath =
+            logFileDirPath + QStringLiteral("/") +
+            QCoreApplication::applicationName() +
+            QStringLiteral("-log.") +
+            QString::number(i + 1) + QStringLiteral(".txt");
 
-        // Just-in-case check, shouldn't really do anything in normal circumstances
+        // Just-in-case check, shouldn't really do anything in normal
+        // circumstances
         Q_UNUSED(QFile::remove(newLogFilePath))
 
         bool res = previousLogFile.rename(newLogFilePath);
-        if (Q_UNLIKELY(!res)) {
-            std::cerr << "Can't rename one of previous libquentier log files for "
-                << "log file rotation: attempted to rename from "
+        if (Q_UNLIKELY(!res))
+        {
+            std::cerr << "Can't rename one of previous libquentier log files "
+                << "for log file rotation: attempted to rename from "
                 << qPrintable(previousLogFilePath) << " to "
                 << qPrintable(newLogFilePath) << ", error: "
                 << qPrintable(previousLogFile.errorString()) << " (error code "
@@ -197,9 +214,12 @@ void QuentierFileLogWriter::rotate()
         m_pStream->setDevice(nullptr);
     }
     m_logFile.close();
-    bool res = m_logFile.rename(logFileDirPath + QStringLiteral("/") +
-                                QCoreApplication::applicationName() +
-                                QStringLiteral("-log.1.txt"));
+
+    bool res = m_logFile.rename(
+        logFileDirPath + QStringLiteral("/") +
+        QCoreApplication::applicationName() +
+        QStringLiteral("-log.1.txt"));
+
     if (Q_UNLIKELY(!res)) {
         std::cerr << "Can't rename the current libquentier log file for log file "
             << "rotation, error: " << qPrintable(m_logFile.errorString())
@@ -209,15 +229,19 @@ void QuentierFileLogWriter::rotate()
     }
 
     // 3) Open the new file
-    m_logFile.setFileName(logFileDirPath + QStringLiteral("/") +
-                          QCoreApplication::applicationName() +
-                          QStringLiteral("-log.txt"));
-    bool opened = m_logFile.open(QIODevice::WriteOnly | QIODevice::Append |
-                                 QIODevice::Unbuffered | QIODevice::Text);
+    m_logFile.setFileName(
+        logFileDirPath + QStringLiteral("/") +
+        QCoreApplication::applicationName() +
+        QStringLiteral("-log.txt"));
+
+    bool opened = m_logFile.open(
+        QIODevice::WriteOnly | QIODevice::Append |
+        QIODevice::Unbuffered | QIODevice::Text);
     if (Q_UNLIKELY(!opened)) {
-        std::cerr << "Can't open the renamed/rotated libquentier log file, error: "
-            << qPrintable(m_logFile.errorString()) << " (error code "
-            << qPrintable(QString::number(m_logFile.error())) << ")\n";
+        std::cerr << "Can't open the renamed/rotated libquentier log file, "
+            << "error: " << qPrintable(m_logFile.errorString())
+            << " (error code " << qPrintable(QString::number(m_logFile.error()))
+            << ")\n";
         return;
     }
 
@@ -235,12 +259,15 @@ void QuentierFileLogWriter::rotate()
         return;
     }
 
-    // 5) If got here, there are too many old log files, need to remove the oldest one
-    QString oldestLogFilePath = logFileDirPath + QStringLiteral("/") +
-                                QCoreApplication::applicationName() +
-                                QStringLiteral("-log.") +
-                                QString::number(m_currentOldLogFilesCount) +
-                                QStringLiteral(".txt");
+    // 5) If got here, there are too many old log files, need to remove
+    // the oldest one
+    QString oldestLogFilePath =
+        logFileDirPath + QStringLiteral("/") +
+        QCoreApplication::applicationName() +
+        QStringLiteral("-log.") +
+        QString::number(m_currentOldLogFilesCount) +
+        QStringLiteral(".txt");
+
     res = QFile::remove(oldestLogFilePath);
     if (Q_UNLIKELY(!res)) {
         std::cerr << "Can't remove the oldest previous libquentier log file: "
@@ -269,6 +296,7 @@ void QuentierConsoleLogWriter::write(QString message)
 
 QuentierLogger & QuentierLogger::instance()
 {
+    // NOTE: since C++11 static construction is thread-safe
     static QuentierLogger instance;
     return instance;
 }
@@ -277,16 +305,13 @@ QuentierLogger::QuentierLogger(QObject * parent) :
     QObject(parent),
     m_pImpl(nullptr)
 {
-    // NOTE: since C++11 static construction is thread-safe so if we use C++11,
-    // we don't need to lock anything ourselves
-#if __cplusplus < 201103L
-    QMutexLocker locker(&m_constructionMutex);
-#endif
-
-    if (!m_pImpl) {
+    if (!m_pImpl)
+    {
         m_pImpl = new QuentierLoggerImpl(this);
-        addLogWriter(new QuentierFileLogWriter(MaxSizeBytes(104857600),
-                                               MaxOldLogFilesCount(2)));
+        addLogWriter(
+            new QuentierFileLogWriter(
+                MaxSizeBytes(104857600),
+                MaxOldLogFilesCount(2)));
     }
 }
 
@@ -297,26 +322,31 @@ QString QuentierLogger::logFilesDirPath()
 
 void QuentierLogger::addLogWriter(IQuentierLogWriter * pLogWriter)
 {
-    for(auto it = m_pImpl->m_logWriterPtrs.constBegin(),
-        end = m_pImpl->m_logWriterPtrs.constEnd(); it != end; ++it)
+    for(auto & pLogExistingWriter: m_pImpl->m_logWriterPtrs)
     {
-        if (Q_UNLIKELY(it->data() == pLogWriter)) {
+        if (Q_UNLIKELY(pLogExistingWriter == pLogWriter)) {
             return;
         }
     }
 
     m_pImpl->m_logWriterPtrs << QPointer<IQuentierLogWriter>(pLogWriter);
 
-    QObject::connect(this, QNSIGNAL(QuentierLogger,sendLogMessage,QString),
-                     pLogWriter, QNSLOT(IQuentierLogWriter,write,QString),
-                     Qt::QueuedConnection);
+    QObject::connect(
+        this,
+        &QuentierLogger::sendLogMessage,
+        pLogWriter,
+        &IQuentierLogWriter::write,
+        Qt::QueuedConnection);
 
-    QuentierFileLogWriter * pFileLogWriter =
-        qobject_cast<QuentierFileLogWriter*>(pLogWriter);
-    if (pFileLogWriter) {
-        QObject::connect(this, QNSIGNAL(QuentierLogger,sendRestartLoggingRequest),
-                         pFileLogWriter, QNSLOT(QuentierFileLogWriter,restartLogging),
-                         Qt::QueuedConnection);
+    auto * pFileLogWriter = qobject_cast<QuentierFileLogWriter*>(pLogWriter);
+    if (pFileLogWriter)
+    {
+        QObject::connect(
+            this,
+            &QuentierLogger::sendRestartLoggingRequest,
+            pFileLogWriter,
+            &QuentierFileLogWriter::restartLogging,
+            Qt::QueuedConnection);
     }
 
     pLogWriter->setParent(nullptr);
@@ -342,8 +372,11 @@ void QuentierLogger::removeLogWriter(IQuentierLogWriter * pLogWriter)
         return;
     }
 
-    QObject::disconnect(this, QNSIGNAL(QuentierLogger,sendLogMessage,QString),
-                        pLogWriter, QNSLOT(IQuentierLogWriter,write,QString));
+    QObject::disconnect(
+        this,
+        &QuentierLogger::sendLogMessage,
+        pLogWriter,
+        &IQuentierLogWriter::write);
 
     pLogWriter->moveToThread(thread());
     pLogWriter->deleteLater();
@@ -354,9 +387,10 @@ void QuentierLogger::write(QString message)
     Q_EMIT sendLogMessage(message);
 }
 
-void QuentierLogger::setMinLogLevel(const LogLevel::type minLogLevel)
+void QuentierLogger::setMinLogLevel(const LogLevel minLogLevel)
 {
-    Q_UNUSED(m_pImpl->m_minLogLevel.fetchAndStoreOrdered(static_cast<int>(minLogLevel)))
+    Q_UNUSED(m_pImpl->m_minLogLevel.fetchAndStoreOrdered(
+        static_cast<int>(minLogLevel)))
 }
 
 void QuentierLogger::restartLogging()
@@ -364,28 +398,33 @@ void QuentierLogger::restartLogging()
     Q_EMIT sendRestartLoggingRequest();
 }
 
-LogLevel::type QuentierLogger::minLogLevel() const
+LogLevel QuentierLogger::minLogLevel() const
 {
-    return static_cast<LogLevel::type>(
-#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
-                                       m_pImpl->m_minLogLevel.load()
-#else
-                                       static_cast<int>(m_pImpl->m_minLogLevel)
-#endif
-                                      );
+    return static_cast<LogLevel>(
+        m_pImpl->m_minLogLevel.load());
 }
 
 QuentierLoggerImpl::QuentierLoggerImpl(QObject * parent) :
     QObject(parent),
     m_logWriterPtrs(),
-    m_minLogLevel(static_cast<int>(LogLevel::InfoLevel)),
+    m_minLogLevel(static_cast<int>(LogLevel::Info)),
     m_pLogWriteThread(new QThread)
 {
-    QObject::connect(m_pLogWriteThread, QNSIGNAL(QThread,finished),
-                     m_pLogWriteThread, QNSLOT(QThread,deleteLater));
-    QObject::connect(this, QNSIGNAL(QuentierLoggerImpl,destroyed),
-                     m_pLogWriteThread, QNSLOT(QThread,quit));
-    m_pLogWriteThread->setObjectName(QStringLiteral("Libquentier-logger-thread"));
+    QObject::connect(
+        m_pLogWriteThread,
+        &QThread::finished,
+        m_pLogWriteThread,
+        &QThread::deleteLater);
+
+    QObject::connect(
+        this,
+        &QuentierLoggerImpl::destroyed,
+        m_pLogWriteThread,
+        &QThread::quit);
+
+    m_pLogWriteThread->setObjectName(
+        QStringLiteral("Libquentier-logger-thread"));
+
     m_pLogWriteThread->start(QThread::LowPriority);
 }
 

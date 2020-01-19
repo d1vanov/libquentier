@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -2587,7 +2587,7 @@ void NoteEditorPrivate::onInsertHtmlDelegateFinished(
 
     setModified();
 
-    if (QuentierIsLogLevelActive(LogLevel::TraceLevel))
+    if (QuentierIsLogLevelActive(LogLevel::Trace))
     {
         QNTRACE("Added resources: ");
         for(auto it = addedResources.constBegin(),

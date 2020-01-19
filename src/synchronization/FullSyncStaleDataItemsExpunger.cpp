@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2019 Dmitry Ivanov
+ * Copyright 2017-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -29,7 +29,7 @@
     }                                                                          \
     else {                                                                     \
         __QNLOG_BASE("[linked notebook " << m_linkedNotebookGuid               \
-                     << "]: " << message, level);                              \
+            << "]: " << message, level);                                       \
     }                                                                          \
 // __FELOG_BASE
 
@@ -42,7 +42,7 @@
 // FEDEBUG
 
 #define FEWARNING(message)                                                     \
-    __FELOG_BASE(message, Warn)                                                \
+    __FELOG_BASE(message, Warning)                                             \
 // FEWARNING
 
 namespace quentier {

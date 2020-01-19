@@ -25,7 +25,7 @@
     }                                                                          \
     else {                                                                     \
         __QNLOG_BASE("[linked notebook " << m_linkedNotebookGuid << "]: "      \
-                     << message, level);                                       \
+            << message, level);                                                \
     }                                                                          \
 // __NCLOG_BASE
 
@@ -38,7 +38,7 @@
 // NCDEBUG
 
 #define NCWARNING(message)                                                     \
-    __NCLOG_BASE(message, Warn)                                                \
+    __NCLOG_BASE(message, Warning)                                             \
 // NCWARNING
 
 namespace quentier {
@@ -151,14 +151,14 @@ void NotebookSyncCache::onListNotebooksFailed(
     }
 
     NCDEBUG("NotebookSyncCache::onListNotebooksFailed: flag = "
-            << flag << ", limit = " << limit << ", offset = " << offset
-            << ", order = " << order << ", order direction = " << orderDirection
-            << ", linked notebook guid = " << linkedNotebookGuid
-            << ", error description = " << errorDescription
-            << ", request id = " << requestId);
+        << flag << ", limit = " << limit << ", offset = " << offset
+        << ", order = " << order << ", order direction = " << orderDirection
+        << ", linked notebook guid = " << linkedNotebookGuid
+        << ", error description = " << errorDescription
+        << ", request id = " << requestId);
 
     NCWARNING("Failed to cache the notebook information required "
-              << "for the sync: " << errorDescription);
+        << "for the sync: " << errorDescription);
 
     m_notebookNameByLocalUid.clear();
     m_notebookNameByGuid.clear();

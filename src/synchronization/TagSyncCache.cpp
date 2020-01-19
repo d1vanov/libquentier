@@ -25,7 +25,7 @@
     }                                                                          \
     else {                                                                     \
         __QNLOG_BASE("[linked notebook " << m_linkedNotebookGuid << "]: "      \
-                     << message, level);                                       \
+            << message, level);                                                \
     }                                                                          \
 // __TCLOG_BASE
 
@@ -38,7 +38,7 @@
 // TCDEBUG
 
 #define TCWARNING(message)                                                     \
-    __TCLOG_BASE(message, Warn)                                                \
+    __TCLOG_BASE(message, Warning)                                             \
 // TCWARNING
 
 namespace quentier {

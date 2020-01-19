@@ -1370,7 +1370,7 @@ bool ENMLConverterPrivate::validateAndFixupEnml(
         }
     }
 
-    if (QuentierIsLogLevelActive(LogLevel::TraceLevel))
+    if (QuentierIsLogLevelActive(LogLevel::Trace))
     {
         QNTRACE("Parsed forbidden attributes per element: ");
         for(auto it = elementToForbiddenAttributes.constBegin(),

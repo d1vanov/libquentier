@@ -7668,7 +7668,7 @@ void RemoteToLocalSynchronizationManager::finalize()
             << ", last sync time = "
             << printableDateTimeFromTimestamp(m_lastSyncTime));
 
-    if (QuentierIsLogLevelActive(LogLevel::TraceLevel))
+    if (QuentierIsLogLevelActive(LogLevel::Trace))
     {
         QNTRACE("Last update counts by linked notebook guids: ");
         for(auto it = m_lastUpdateCountByLinkedNotebookGuid.constBegin(),

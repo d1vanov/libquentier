@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2019 Dmitry Ivanov
+ * Copyright 2017-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -23,10 +23,10 @@
 namespace quentier {
 
 template <class T>
-bool sortTagsByParentChildRelationsImpl(QList<T> & tagList,
-                                        ErrorString & errorDescription)
+bool sortTagsByParentChildRelationsImpl(
+    QList<T> & tagList, ErrorString & errorDescription)
 {
-    if (QuentierIsLogLevelActive(LogLevel::TraceLevel))
+    if (QuentierIsLogLevelActive(LogLevel::Trace))
     {
         QString log;
         QTextStream strm(&log);
@@ -160,7 +160,7 @@ bool sortTagsByParentChildRelationsImpl(QList<T> & tagList,
 
     tagList = resultList;
 
-    if (QuentierIsLogLevelActive(LogLevel::TraceLevel))
+    if (QuentierIsLogLevelActive(LogLevel::Trace))
     {
         QString log;
         QTextStream strm(&log);

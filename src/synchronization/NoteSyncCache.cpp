@@ -25,7 +25,7 @@
     }                                                                          \
     else {                                                                     \
         __QNLOG_BASE("[linked notebook " << m_linkedNotebookGuid               \
-                     << "]: " << message, level);                              \
+            << "]: " << message, level);                                       \
     }                                                                          \
 // __NSLOG_BASE
 
@@ -38,7 +38,7 @@
 // NSDEBUG
 
 #define NSWARNING(message)                                                     \
-    __NSLOG_BASE(message, Warn)                                                \
+    __NSLOG_BASE(message, Warning)                                             \
 // NSWARNING
 
 namespace quentier {
