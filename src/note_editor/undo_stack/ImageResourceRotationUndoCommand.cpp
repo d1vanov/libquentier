@@ -31,7 +31,7 @@ ImageResourceRotationUndoCommand::ImageResourceRotationUndoCommand(
         const QByteArray & resourceRecognitionDataHashBefore,
         const QSize & resourceImageSizeBefore,
         const Resource & resourceAfter,
-        const INoteEditorBackend::Rotation::type rotationDirection,
+        const INoteEditorBackend::Rotation rotationDirection,
         NoteEditorPrivate & noteEditor, QUndoCommand * parent) :
     INoteEditorUndoCommand(noteEditor, parent),
     m_resourceDataBefore(resourceDataBefore),
@@ -55,7 +55,7 @@ ImageResourceRotationUndoCommand::ImageResourceRotationUndoCommand(
         const QByteArray & resourceRecognitionDataHashBefore,
         const QSize & resourceImageSizeBefore,
         const Resource & resourceAfter,
-        const INoteEditorBackend::Rotation::type rotationDirection,
+        const INoteEditorBackend::Rotation rotationDirection,
         NoteEditorPrivate & noteEditor,
         const QString & text,
         QUndoCommand * parent) :

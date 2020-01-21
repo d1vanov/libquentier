@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -34,7 +34,7 @@ class Q_DECL_HIDDEN ImageResourceRotationDelegate: public QObject
 public:
     explicit ImageResourceRotationDelegate(
         const QByteArray & resourceHashBefore,
-        const INoteEditorBackend::Rotation::type rotationDirection,
+        const INoteEditorBackend::Rotation rotationDirection,
         NoteEditorPrivate & noteEditor, ResourceInfo & resourceInfo,
         ResourceDataInTemporaryFileStorageManager & resourceDataInTemporaryFileStorageManager,
         QHash<QString, QString> & resourceFileStoragePathsByLocalUid);
@@ -45,7 +45,7 @@ Q_SIGNALS:
                   QByteArray resourceRecognitionDataBefore,
                   QByteArray resourceRecognitionDataHashBefore,
                   QSize resourceImageSizeBefore, Resource resourceAfter,
-                  INoteEditorBackend::Rotation::type rotationDirection);
+                  INoteEditorBackend::Rotation rotationDirection);
     void notifyError(ErrorString error);
 
 // private signals
@@ -73,7 +73,7 @@ private:
     ResourceDataInTemporaryFileStorageManager &    m_resourceDataInTemporaryFileStorageManager;
     QHash<QString, QString> &       m_resourceFileStoragePathsByLocalUid;
 
-    INoteEditorBackend::Rotation::type  m_rotationDirection;
+    INoteEditorBackend::Rotation    m_rotationDirection;
 
     Note *                          m_pNote;
 

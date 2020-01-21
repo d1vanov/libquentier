@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -39,7 +39,7 @@ public:
         const QByteArray & resourceRecognitionDataHashBefore,
         const QSize & resourceImageSizeBefore,
         const Resource & resourceAfter,
-        const INoteEditorBackend::Rotation::type rotationDirection,
+        const INoteEditorBackend::Rotation rotationDirection,
         NoteEditorPrivate & noteEditor,
         QUndoCommand * parent = nullptr);
 
@@ -50,7 +50,7 @@ public:
         const QByteArray & resourceRecognitionDataHashBefore,
         const QSize & resourceImageSizeBefore,
         const Resource & resourceAfter,
-        const INoteEditorBackend::Rotation::type rotationDirection,
+        const INoteEditorBackend::Rotation rotationDirection,
         NoteEditorPrivate & noteEditor, const QString & text,
         QUndoCommand * parent = nullptr);
 
@@ -66,7 +66,7 @@ private:
     const QByteArray                            m_resourceRecognitionDataHashBefore;
     const QSize                                 m_resourceImageSizeBefore;
     const Resource                              m_resourceAfter;
-    const INoteEditorBackend::Rotation::type    m_rotationDirection;
+    const INoteEditorBackend::Rotation          m_rotationDirection;
 };
 
 } // namespace quentier

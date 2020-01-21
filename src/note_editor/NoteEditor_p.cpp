@@ -1928,7 +1928,7 @@ void NoteEditorPrivate::onImageResourceRotationDelegateFinished(
     QByteArray resourceRecognitionDataBefore,
     QByteArray resourceRecognitionDataHashBefore,
     QSize resourceImageSizeBefore, Resource resourceAfter,
-    INoteEditorBackend::Rotation::type rotationDirection)
+    INoteEditorBackend::Rotation rotationDirection)
 {
     QNDEBUG("NoteEditorPrivate::onImageResourceRotationDelegateFinished: "
             << "previous resource hash = " << resourceHashBefore.toHex()
@@ -3040,7 +3040,7 @@ void NoteEditorPrivate::onFoundResourceData(Resource resource)
                 << "resource local uid = " << resourceLocalUid);
         QNTRACE(resource);
 
-        Rotation::type rotationDirection = iit.value();
+        Rotation rotationDirection = iit.value();
         Q_UNUSED(m_rotationTypeByResourceLocalUidsPendingFindDataInLocalStorage.erase(iit))
 
         if (Q_UNLIKELY(m_pNote.isNull())) {
@@ -10572,7 +10572,7 @@ void NoteEditorPrivate::renameAttachment(const QByteArray & resourceHash)
 }
 
 void NoteEditorPrivate::rotateImageAttachment(
-    const QByteArray & resourceHash, const Rotation::type rotationDirection)
+    const QByteArray & resourceHash, const Rotation rotationDirection)
 {
     QNDEBUG("NoteEditorPrivate::rotateImageAttachment: resource hash = "
             << resourceHash.toHex() << ", rotation: "
@@ -10663,11 +10663,11 @@ void NoteEditorPrivate::rotateImageAttachment(
     QObject::connect(delegate,
                      QNSIGNAL(ImageResourceRotationDelegate,finished,
                               QByteArray,QByteArray,QByteArray,QByteArray,
-                              QSize,Resource,INoteEditorBackend::Rotation::type),
+                              QSize,Resource,INoteEditorBackend::Rotation),
                      this,
                      QNSLOT(NoteEditorPrivate,onImageResourceRotationDelegateFinished,
                             QByteArray,QByteArray,QByteArray,QByteArray,
-                            QSize,Resource,INoteEditorBackend::Rotation::type));
+                            QSize,Resource,INoteEditorBackend::Rotation));
     QObject::connect(delegate,
                      QNSIGNAL(ImageResourceRotationDelegate,notifyError,ErrorString),
                      this,
@@ -10678,7 +10678,7 @@ void NoteEditorPrivate::rotateImageAttachment(
 }
 
 void NoteEditorPrivate::rotateImageAttachmentUnderCursor(
-    const Rotation::type rotationDirection)
+    const Rotation rotationDirection)
 {
     QNDEBUG("NoteEditorPrivate::rotateImageAttachmentUnderCursor: "
             << "rotation: " << rotationDirection);

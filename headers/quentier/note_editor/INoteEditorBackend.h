@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -19,33 +19,35 @@
 #ifndef LIB_QUENTIER_NOTE_EDITOR_I_NOTE_EDITOR_BACKEND_H
 #define LIB_QUENTIER_NOTE_EDITOR_I_NOTE_EDITOR_BACKEND_H
 
-#include <quentier/utility/Macros.h>
-#include <quentier/utility/Linkage.h>
-#include <quentier/utility/Printable.h>
 #include <quentier/types/Note.h>
-#include <QWidget>
+#include <quentier/utility/Linkage.h>
+#include <quentier/utility/Macros.h>
+#include <quentier/utility/Printable.h>
+
+#include <QPalette>
 #include <QPrinter>
 #include <QStringList>
 #include <QThread>
-#include <QPalette>
+#include <QWidget>
 
 QT_FORWARD_DECLARE_CLASS(QUndoStack)
 
 namespace quentier {
 
 QT_FORWARD_DECLARE_CLASS(Account)
+QT_FORWARD_DECLARE_CLASS(LocalStorageManagerAsync)
 QT_FORWARD_DECLARE_CLASS(NoteEditor)
 QT_FORWARD_DECLARE_CLASS(SpellChecker)
-QT_FORWARD_DECLARE_CLASS(LocalStorageManagerAsync)
 
 class QUENTIER_EXPORT INoteEditorBackend
 {
 public:
     virtual ~INoteEditorBackend();
 
-    virtual void initialize(LocalStorageManagerAsync & localStorageManager,
-                            SpellChecker & spellChecker, const Account & account,
-                            QThread * pBackgroundJobsThread) = 0;
+    virtual void initialize(
+        LocalStorageManagerAsync & localStorageManager,
+        SpellChecker & spellChecker, const Account & account,
+        QThread * pBackgroundJobsThread) = 0;
 
     virtual QObject * object() = 0;   // provide QObject interface
     virtual QWidget * widget() = 0;   // provide QWidget interface
@@ -63,8 +65,11 @@ public:
     virtual void convertToNote() = 0;
     virtual void saveNoteToLocalStorage() = 0;
     virtual void setNoteTitle(const QString & noteTitle) = 0;
-    virtual void setTagIds(const QStringList & tagLocalUids,
-                           const QStringList & tagGuids) = 0;
+
+    virtual void setTagIds(
+        const QStringList & tagLocalUids,
+        const QStringList & tagGuids) = 0;
+
     virtual void undo() = 0;
     virtual void redo() = 0;
     virtual void cut() = 0;
@@ -91,20 +96,23 @@ public:
     virtual bool hasSelection() const = 0;
 
     virtual void findNext(const QString & text, const bool matchCase) const = 0;
-    virtual void findPrevious(const QString & text, const bool matchCase) const = 0;
-    virtual void replace(const QString & textToReplace,
-                         const QString & replacementText,
-                         const bool matchCase) = 0;
-    virtual void replaceAll(const QString & textToReplace,
-                            const QString & replacementText,
-                            const bool matchCase) = 0;
+
+    virtual void findPrevious(
+        const QString & text, const bool matchCase) const = 0;
+
+    virtual void replace(
+        const QString & textToReplace, const QString & replacementText,
+        const bool matchCase) = 0;
+
+    virtual void replaceAll(
+        const QString & textToReplace, const QString & replacementText,
+        const bool matchCase) = 0;
 
     virtual void insertToDoCheckbox() = 0;
 
-    virtual void insertInAppNoteLink(const QString & userId,
-                                     const QString & shardId,
-                                     const QString & noteGuid,
-                                     const QString & linkText) = 0;
+    virtual void insertInAppNoteLink(
+        const QString & userId, const QString & shardId,
+        const QString & noteGuid, const QString & linkText) = 0;
 
     virtual void setSpellcheck(const bool enabled) = 0;
     virtual bool spellCheckEnabled() const = 0;
@@ -132,10 +140,13 @@ public:
     virtual void insertNumberedList() = 0;
 
     virtual void insertTableDialog() = 0;
-    virtual void insertFixedWidthTable(const int rows, const int columns,
-                                       const int widthInPixels) = 0;
-    virtual void insertRelativeWidthTable(const int rows, const int columns,
-                                          const double relativeWidth) = 0;
+
+    virtual void insertFixedWidthTable(
+        const int rows, const int columns, const int widthInPixels) = 0;
+
+    virtual void insertRelativeWidthTable(
+        const int rows, const int columns, const double relativeWidth) = 0;
+
     virtual void insertTableRow() = 0;
     virtual void insertTableColumn() = 0;
     virtual void removeTableRow() = 0;
@@ -153,32 +164,38 @@ public:
     virtual void renameAttachment(const QByteArray & resourceHash) = 0;
     virtual void renameAttachmentUnderCursor() = 0;
 
-    struct Rotation
+    enum class Rotation
     {
-        enum type
-        {
-            Clockwise = 0,
-            Counterclockwise
-        };
-
-        friend QTextStream & operator<<(QTextStream & strm, const type & rotation);
+        Clockwise = 0,
+        Counterclockwise
     };
 
-    virtual void rotateImageAttachment(const QByteArray & resourceHash,
-                                       const Rotation::type rotationDirection) = 0;
-    virtual void rotateImageAttachmentUnderCursor(const Rotation::type rotationDirection) = 0;
+    friend QUENTIER_EXPORT QTextStream & operator<<(
+        QTextStream & strm, const Rotation rotation);
+
+    friend QUENTIER_EXPORT QDebug & operator<<(
+        QDebug & dbg, const Rotation rotation);
+
+    virtual void rotateImageAttachment(
+        const QByteArray & resourceHash,
+        const Rotation rotationDirection) = 0;
+
+    virtual void rotateImageAttachmentUnderCursor(
+        const Rotation rotationDirection) = 0;
 
     virtual void encryptSelectedText() = 0;
 
     virtual void decryptEncryptedTextUnderCursor() = 0;
-    virtual void decryptEncryptedText(QString encryptedText, QString cipher,
-                                      QString keyLength, QString hint,
-                                      QString enCryptIndex) = 0;
+
+    virtual void decryptEncryptedText(
+        QString encryptedText, QString cipher, QString keyLength, QString hint,
+        QString enCryptIndex) = 0;
 
     virtual void hideDecryptedTextUnderCursor() = 0;
-    virtual void hideDecryptedText(QString encryptedText, QString decryptedText,
-                                   QString cipher, QString keyLength,
-                                   QString hint, QString enDecryptedIndex) = 0;
+
+    virtual void hideDecryptedText(
+        QString encryptedText, QString decryptedText, QString cipher,
+        QString keyLength, QString hint, QString enDecryptedIndex) = 0;
 
     virtual void editHyperlinkDialog() = 0;
     virtual void copyHyperlink() = 0;
@@ -187,10 +204,13 @@ public:
     virtual void onNoteLoadCancelled() = 0;
 
     virtual bool print(QPrinter & printer, ErrorString & errorDescription) = 0;
-    virtual bool exportToPdf(const QString & absoluteFilePath,
-                             ErrorString & errorDescription) = 0;
-    virtual bool exportToEnex(const QStringList & tagNames,
-                              QString & enex, ErrorString & errorDescription) = 0;
+
+    virtual bool exportToPdf(
+        const QString & absoluteFilePath, ErrorString & errorDescription) = 0;
+
+    virtual bool exportToEnex(
+        const QStringList & tagNames, QString & enex,
+        ErrorString & errorDescription) = 0;
 
     virtual QString currentNoteLocalUid() const = 0;
     virtual void setCurrentNoteLocalUid(const QString & noteLocalUid) = 0;

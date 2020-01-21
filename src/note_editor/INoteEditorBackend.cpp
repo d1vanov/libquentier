@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -24,6 +24,33 @@
 
 namespace quentier {
 
+namespace {
+
+////////////////////////////////////////////////////////////////////////////////
+
+template <typename T>
+T & printRotation(T & t, const INoteEditorBackend::Rotation rotation)
+{
+    switch(rotation)
+    {
+    case INoteEditorBackend::Rotation::Clockwise:
+        t << "Clockwise";
+        break;
+    case INoteEditorBackend::Rotation::Counterclockwise:
+        t << "Counterclockwise";
+        break;
+    default:
+        t << "Unknown (" << static_cast<qint64>(rotation) << ")";
+        break;
+    }
+
+    return t;
+}
+
+} // namespace
+
+////////////////////////////////////////////////////////////////////////////////
+
 INoteEditorBackend::~INoteEditorBackend()
 {}
 
@@ -33,22 +60,16 @@ INoteEditorBackend::INoteEditorBackend(NoteEditor * parent) :
 
 QTextStream & operator<<(
     QTextStream & strm,
-    const INoteEditorBackend::Rotation::type rotationDirection)
+    const INoteEditorBackend::Rotation rotationDirection)
 {
-    switch(rotationDirection)
-    {
-    case INoteEditorBackend::Rotation::Clockwise:
-        strm << "Clockwise";
-        break;
-    case INoteEditorBackend::Rotation::Counterclockwise:
-        strm << "Counterclockwise";
-        break;
-    default:
-        strm << "Unknown (" << static_cast<qint64>(rotationDirection) << ")";
-        break;
-    }
+    return printRotation(strm, rotationDirection);
+}
 
-    return strm;
+QDebug & operator<<(
+    QDebug & dbg,
+    const INoteEditorBackend::Rotation rotationDirection)
+{
+    return printRotation(dbg, rotationDirection);
 }
 
 } // namespace quentier

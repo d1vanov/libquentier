@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -46,7 +46,7 @@ namespace quentier {
 
 ImageResourceRotationDelegate::ImageResourceRotationDelegate(
         const QByteArray & resourceHashBefore,
-        const INoteEditorBackend::Rotation::type rotationDirection,
+        const INoteEditorBackend::Rotation rotationDirection,
         NoteEditorPrivate & noteEditor, ResourceInfo & resourceInfo,
         ResourceDataInTemporaryFileStorageManager & resourceDataInTemporaryFileStorageManager,
         QHash<QString, QString> & resourceFileStoragePathsByLocalUid) :
