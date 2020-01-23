@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -21,31 +21,34 @@
 
 #include <quentier/utility/Macros.h>
 
+#include <QAtomicInt>
+#include <QHash>
 #include <QObject>
 #include <QRunnable>
-#include <QHash>
 #include <QSet>
-#include <QString>
-#include <QAtomicInt>
 #include <QSharedPointer>
+#include <QString>
 
 namespace quentier {
 
-class Q_DECL_HIDDEN SpellCheckerDictionariesFinder: public QObject,
-                                                    public QRunnable
+class Q_DECL_HIDDEN SpellCheckerDictionariesFinder:
+    public QObject, public QRunnable
 {
     Q_OBJECT
 public:
-    typedef QHash<QString, QPair<QString, QString> > DicAndAffFilesByDictionaryName;
+    using DicAndAffFilesByDictionaryName =
+        QHash<QString, std::pair<QString, QString>>;
 
 public:
-    SpellCheckerDictionariesFinder(const QSharedPointer<QAtomicInt> & pStopFlag,
-                                   QObject * parent = nullptr);
+    SpellCheckerDictionariesFinder(
+        const QSharedPointer<QAtomicInt> & pStopFlag,
+        QObject * parent = nullptr);
 
     virtual void run() override;
 
 Q_SIGNALS:
-    void foundDictionaries(DicAndAffFilesByDictionaryName docAndAffFilesByDictionaryName);
+    void foundDictionaries(
+        DicAndAffFilesByDictionaryName docAndAffFilesByDictionaryName);
 
 private:
     QSharedPointer<QAtomicInt>      m_pStopFlag;

@@ -17,33 +17,34 @@
  */
 
 #include "NoteEditor_p.h"
-#include "NoteEditorPrivateMacros.h"
-#include "NoteEditorLocalStorageBroker.h"
+
 #include "GenericResourceImageManager.h"
+#include "NoteEditorLocalStorageBroker.h"
+#include "NoteEditorPrivateMacros.h"
 #include "NoteEditorSettingsNames.h"
 #include "ResourceDataInTemporaryFileStorageManager.h"
 
+#include "delegates/AddHyperlinkToSelectedTextDelegate.h"
 #include "delegates/AddResourceDelegate.h"
-#include "delegates/RemoveResourceDelegate.h"
-#include "delegates/RenameResourceDelegate.h"
+#include "delegates/DecryptEncryptedTextDelegate.h"
+#include "delegates/EditHyperlinkDelegate.h"
+#include "delegates/EncryptSelectedTextDelegate.h"
 #include "delegates/ImageResourceRotationDelegate.h"
 #include "delegates/InsertHtmlDelegate.h"
-#include "delegates/EncryptSelectedTextDelegate.h"
-#include "delegates/DecryptEncryptedTextDelegate.h"
-#include "delegates/AddHyperlinkToSelectedTextDelegate.h"
-#include "delegates/EditHyperlinkDelegate.h"
 #include "delegates/RemoveHyperlinkDelegate.h"
+#include "delegates/RemoveResourceDelegate.h"
+#include "delegates/RenameResourceDelegate.h"
 
 #include "javascript_glue/ActionsWatcher.h"
+#include "javascript_glue/ContextMenuEventJavaScriptHandler.h"
 #include "javascript_glue/ResourceInfoJavaScriptHandler.h"
 #include "javascript_glue/ResizableImageJavaScriptHandler.h"
+#include "javascript_glue/SpellCheckerDynamicHelper.h"
 #include "javascript_glue/TextCursorPositionJavaScriptHandler.h"
-#include "javascript_glue/ContextMenuEventJavaScriptHandler.h"
 #include "javascript_glue/PageMutationHandler.h"
 #include "javascript_glue/ToDoCheckboxOnClickHandler.h"
 #include "javascript_glue/ToDoCheckboxAutomaticInsertionHandler.h"
 #include "javascript_glue/TableResizeJavaScriptHandler.h"
-#include "javascript_glue/SpellCheckerDynamicHelper.h"
 
 #include "undo_stack/NoteEditorContentEditUndoCommand.h"
 #include "undo_stack/EncryptUndoCommand.h"
@@ -915,7 +916,7 @@ void NoteEditorPrivate::onToDoCheckboxClickHandlerError(ErrorString error)
 }
 
 void NoteEditorPrivate::onToDoCheckboxInserted(
-    const QVariant & data, const QVector<QPair<QString,QString> > & extraData)
+    const QVariant & data, const QVector<std::pair<QString,QString>> & extraData)
 {
     QNDEBUG("NoteEditorPrivate::onToDoCheckboxInserted: " << data);
 
@@ -994,7 +995,7 @@ void NoteEditorPrivate::onToDoCheckboxAutomaticInsertion()
 }
 
 void NoteEditorPrivate::onToDoCheckboxAutomaticInsertionUndoRedoFinished(
-    const QVariant & data, const QVector<QPair<QString,QString> > & extraData)
+    const QVariant & data, const QVector<std::pair<QString,QString>> & extraData)
 {
     QNDEBUG("NoteEditorPrivate::onToDoCheckboxAutomaticInsertion"
             << "UndoRedoFinished: " << data);
@@ -1570,7 +1571,7 @@ void NoteEditorPrivate::onWriteFileRequestProcessed(
 }
 
 void NoteEditorPrivate::onSelectionFormattedAsSourceCode(
-    const QVariant & response, const QVector<QPair<QString,QString> > & extraData)
+    const QVariant & response, const QVector<std::pair<QString,QString>> & extraData)
 {
     QNDEBUG("NoteEditorPrivate::onSelectionFormattedAsSourceCode");
 
@@ -1736,7 +1737,7 @@ void NoteEditorPrivate::onAddResourceDelegateError(ErrorString error)
 }
 
 void NoteEditorPrivate::onAddResourceUndoRedoFinished(
-    const QVariant & data, const QVector<QPair<QString,QString> > & extraData)
+    const QVariant & data, const QVector<std::pair<QString,QString>> & extraData)
 {
     QNDEBUG("NoteEditorPrivate::onAddResourceUndoRedoFinished: " << data);
 
@@ -1840,7 +1841,7 @@ void NoteEditorPrivate::onRemoveResourceDelegateError(ErrorString error)
 }
 
 void NoteEditorPrivate::onRemoveResourceUndoRedoFinished(
-    const QVariant & data, const QVector<QPair<QString,QString> > & extraData)
+    const QVariant & data, const QVector<std::pair<QString,QString>> & extraData)
 {
     QNDEBUG("NoteEditorPrivate::onRemoveResourceUndoRedoFinished: " << data);
 
@@ -1980,7 +1981,7 @@ void NoteEditorPrivate::onImageResourceRotationDelegateError(ErrorString error)
 }
 
 void NoteEditorPrivate::onHideDecryptedTextFinished(
-    const QVariant & data, const QVector<QPair<QString,QString> > & extraData)
+    const QVariant & data, const QVector<std::pair<QString,QString>> & extraData)
 {
     QNDEBUG("NoteEditorPrivate::onHideDecryptedTextFinished: " << data);
 
@@ -2037,7 +2038,7 @@ void NoteEditorPrivate::onHideDecryptedTextFinished(
 }
 
 void NoteEditorPrivate::onHideDecryptedTextUndoRedoFinished(
-    const QVariant & data, const QVector<QPair<QString,QString> > & extraData)
+    const QVariant & data, const QVector<std::pair<QString,QString>> & extraData)
 {
     QNDEBUG("NoteEditorPrivate::onHideDecryptedTextUndoRedoFinished: " << data);
 
@@ -2135,7 +2136,7 @@ void NoteEditorPrivate::onEncryptSelectedTextDelegateError(ErrorString error)
 }
 
 void NoteEditorPrivate::onEncryptSelectedTextUndoRedoFinished(
-    const QVariant & data, const QVector<QPair<QString,QString> > & extraData)
+    const QVariant & data, const QVector<std::pair<QString,QString>> & extraData)
 {
     QNDEBUG("NoteEditorPrivate::onEncryptSelectedTextUndoRedoFinished: " << data);
 
@@ -2200,8 +2201,8 @@ void NoteEditorPrivate::onDecryptEncryptedTextDelegateFinished(
     info.m_rememberForSession = rememberForSession;
     info.m_decryptPermanently = decryptPermanently;
 
-    QVector<QPair<QString, QString> > extraData;
-    extraData << QPair<QString, QString>(QStringLiteral("decryptPermanently"),
+    QVector<std::pair<QString, QString>> extraData;
+    extraData << std::pair<QString, QString>(QStringLiteral("decryptPermanently"),
                                          (decryptPermanently
                                           ? QStringLiteral("true")
                                           : QStringLiteral("false")));
@@ -2257,7 +2258,7 @@ void NoteEditorPrivate::onDecryptEncryptedTextDelegateError(ErrorString error)
 }
 
 void NoteEditorPrivate::onDecryptEncryptedTextUndoRedoFinished(
-    const QVariant & data, const QVector<QPair<QString,QString> > & extraData)
+    const QVariant & data, const QVector<std::pair<QString,QString>> & extraData)
 {
     QNDEBUG("NoteEditorPrivate::onDecryptEncryptedTextUndoRedoFinished: " << data);
 
@@ -2296,7 +2297,7 @@ void NoteEditorPrivate::onDecryptEncryptedTextUndoRedoFinished(
     bool shouldConvertToNote = true;
     if (!extraData.isEmpty())
     {
-        const QPair<QString, QString> & pair = extraData[0];
+        const std::pair<QString, QString> & pair = extraData[0];
         if (pair.second == QStringLiteral("false")) {
             shouldConvertToNote = false;
         }
@@ -2361,7 +2362,7 @@ void NoteEditorPrivate::onAddHyperlinkToSelectedTextDelegateError(
 }
 
 void NoteEditorPrivate::onAddHyperlinkToSelectedTextUndoRedoFinished(
-    const QVariant & data, const QVector<QPair<QString,QString> > & extraData)
+    const QVariant & data, const QVector<std::pair<QString,QString>> & extraData)
 {
     QNDEBUG("NoteEditorPrivate::onAddHyperlinkToSelectedTextUndoRedoFinished: "
             << data);
@@ -2456,7 +2457,7 @@ void NoteEditorPrivate::onEditHyperlinkDelegateError(ErrorString error)
 }
 
 void NoteEditorPrivate::onEditHyperlinkUndoRedoFinished(
-    const QVariant & data, const QVector<QPair<QString,QString> > & extraData)
+    const QVariant & data, const QVector<std::pair<QString,QString>> & extraData)
 {
     QNDEBUG("NoteEditorPrivate::onEditHyperlinkUndoRedoFinished: " << data);
 
@@ -2537,7 +2538,7 @@ void NoteEditorPrivate::onRemoveHyperlinkDelegateError(ErrorString error)
 }
 
 void NoteEditorPrivate::onRemoveHyperlinkUndoRedoFinished(
-    const QVariant & data, const QVector<QPair<QString,QString> > & extraData)
+    const QVariant & data, const QVector<std::pair<QString,QString>> & extraData)
 {
     QNDEBUG("NoteEditorPrivate::onRemoveHyperlinkUndoRedoFinished: " << data);
 
@@ -2627,7 +2628,7 @@ void NoteEditorPrivate::onInsertHtmlDelegateError(ErrorString error)
 }
 
 void NoteEditorPrivate::onInsertHtmlUndoRedoFinished(
-    const QVariant & data, const QVector<QPair<QString,QString> > & extraData)
+    const QVariant & data, const QVector<std::pair<QString,QString>> & extraData)
 {
     QNDEBUG("NoteEditorPrivate::onInsertHtmlUndoRedoFinished: " << data);
 
@@ -2671,7 +2672,7 @@ void NoteEditorPrivate::onInsertHtmlUndoRedoFinished(
 }
 
 void NoteEditorPrivate::onSourceCodeFormatUndoRedoFinished(
-    const QVariant & data, const QVector<QPair<QString,QString> > & extraData)
+    const QVariant & data, const QVector<std::pair<QString,QString>> & extraData)
 {
     QNDEBUG("NoteEditorPrivate::onSourceCodeFormatUndoRedoFinished: " << data);
 
@@ -2769,7 +2770,7 @@ void NoteEditorPrivate::onSpellCheckerDictionaryEnabledOrDisabled(bool checked)
 
 #ifdef QUENTIER_USE_QT_WEB_ENGINE
 void NoteEditorPrivate::onPageHtmlReceivedForPrinting(
-    const QString & html, const QVector<QPair<QString, QString> > & extraData)
+    const QString & html, const QVector<std::pair<QString, QString>> & extraData)
 {
     QNDEBUG("NoteEditorPrivate::onPageHtmlReceivedForPrinting: " << html);
 
@@ -3963,7 +3964,7 @@ void NoteEditorPrivate::pushInsertHtmlUndoCommand(
 }
 
 void NoteEditorPrivate::onManagedPageActionFinished(
-    const QVariant & result, const QVector<QPair<QString, QString> > & extraData)
+    const QVariant & result, const QVector<std::pair<QString, QString>> & extraData)
 {
     QNDEBUG("NoteEditorPrivate::onManagedPageActionFinished: " << result);
     Q_UNUSED(extraData)
@@ -6667,7 +6668,7 @@ bool NoteEditorPrivate::checkContextMenuSequenceNumber(
 }
 
 void NoteEditorPrivate::onPageHtmlReceived(
-    const QString & html, const QVector<QPair<QString, QString> > & extraData)
+    const QString & html, const QVector<std::pair<QString, QString>> & extraData)
 {
     QNDEBUG("NoteEditorPrivate::onPageHtmlReceived");
     Q_UNUSED(extraData)
@@ -6770,7 +6771,7 @@ void NoteEditorPrivate::onPageHtmlReceived(
 }
 
 void NoteEditorPrivate::onSelectedTextEncryptionDone(
-    const QVariant & dummy, const QVector<QPair<QString,QString> > & extraData)
+    const QVariant & dummy, const QVector<std::pair<QString,QString>> & extraData)
 {
     QNDEBUG("NoteEditorPrivate::onSelectedTextEncryptionDone");
 
@@ -6793,7 +6794,7 @@ void NoteEditorPrivate::onSelectedTextEncryptionDone(
 }
 
 void NoteEditorPrivate::onTableActionDone(
-    const QVariant & dummy, const QVector<QPair<QString,QString> > & extraData)
+    const QVariant & dummy, const QVector<std::pair<QString,QString>> & extraData)
 {
     QNDEBUG("NoteEditorPrivate::onTableActionDone");
 
@@ -6998,7 +6999,7 @@ void NoteEditorPrivate::setupStyleSubMenuForGenericTextMenu()
 void NoteEditorPrivate::setupSpellCheckerDictionariesSubMenuForGenericTextMenu()
 {
     QNDEBUG("NoteEditorPrivate::"
-            "setupSpellCheckerDictionariesSubMenuForGenericTextMenu");
+        << "setupSpellCheckerDictionariesSubMenuForGenericTextMenu");
 
     if (Q_UNLIKELY(!m_pGenericTextContextMenu)) {
         QNDEBUG("No generic text context menu, nothing to do");
@@ -7010,7 +7011,7 @@ void NoteEditorPrivate::setupSpellCheckerDictionariesSubMenuForGenericTextMenu()
         return;
     }
 
-    QVector<QPair<QString,bool> > availableDictionaries =
+    QVector<std::pair<QString,bool>> availableDictionaries =
         m_pSpellChecker->listAvailableDictionaries();
     if (Q_UNLIKELY(availableDictionaries.isEmpty())) {
         QNDEBUG("The list of available dictionaries is empty");
@@ -7246,7 +7247,7 @@ void NoteEditorPrivate::disableDynamicSpellCheck()
 }
 
 void NoteEditorPrivate::onSpellCheckSetOrCleared(
-    const QVariant & dummy, const QVector<QPair<QString, QString> > & extraData)
+    const QVariant & dummy, const QVector<std::pair<QString, QString>> & extraData)
 {
     QNDEBUG("NoteEditorPrivate::onSpellCheckSetOrCleared");
 
@@ -7282,7 +7283,7 @@ void NoteEditorPrivate::updateBodyStyle()
 }
 
 void NoteEditorPrivate::onBodyStyleUpdated(
-    const QVariant & data, const QVector<QPair<QString,QString> > & extraData)
+    const QVariant & data, const QVector<std::pair<QString,QString>> & extraData)
 {
     QNDEBUG("NoteEditorPrivate::onBodyStyleUpdated: " << data);
 
@@ -7321,7 +7322,7 @@ void NoteEditorPrivate::onBodyStyleUpdated(
 }
 
 void NoteEditorPrivate::onFontFamilyUpdated(
-    const QVariant & data, const QVector<QPair<QString,QString> > & extraData)
+    const QVariant & data, const QVector<std::pair<QString,QString>> & extraData)
 {
     QNDEBUG("NoteEditorPrivate::onFontFamilyUpdated: " << data);
 
@@ -7396,7 +7397,7 @@ void NoteEditorPrivate::onFontFamilyUpdated(
 }
 
 void NoteEditorPrivate::onFontHeightUpdated(
-    const QVariant & data, const QVector<QPair<QString,QString> > & extraData)
+    const QVariant & data, const QVector<std::pair<QString,QString>> & extraData)
 {
     QNDEBUG("NoteEditorPrivate::onFontHeightUpdated: " << data);
 
@@ -9111,7 +9112,7 @@ void NoteEditorPrivate::onSpellCheckAddWordToUserDictionaryAction()
 }
 
 void NoteEditorPrivate::onSpellCheckCorrectionActionDone(
-    const QVariant & data, const QVector<QPair<QString,QString> > & extraData)
+    const QVariant & data, const QVector<std::pair<QString,QString>> & extraData)
 {
     QNDEBUG("NoteEditorPrivate::onSpellCheckCorrectionActionDone: " << data);
 
@@ -9166,7 +9167,7 @@ void NoteEditorPrivate::onSpellCheckCorrectionActionDone(
 }
 
 void NoteEditorPrivate::onSpellCheckCorrectionUndoRedoFinished(
-    const QVariant & data, const QVector<QPair<QString,QString> > & extraData)
+    const QVariant & data, const QVector<std::pair<QString,QString>> & extraData)
 {
     QNDEBUG("NoteEditorPrivate::onSpellCheckCorrectionUndoRedoFinished");
 
@@ -9777,9 +9778,9 @@ void NoteEditorPrivate::setFont(const QFont & font)
     QString javascript = QString::fromUtf8("setFontFamily('%1');").arg(fontFamily);
     QNTRACE("Script: " << javascript);
 
-    QVector<QPair<QString,QString> > extraData;
+    QVector<std::pair<QString,QString>> extraData;
     extraData.push_back(
-        QPair<QString,QString>(QStringLiteral("fontFamily"), fontFamily));
+        std::pair<QString,QString>(QStringLiteral("fontFamily"), fontFamily));
 
     GET_PAGE()
     page->executeJavaScript(javascript,
@@ -9807,8 +9808,8 @@ void NoteEditorPrivate::setFontHeight(const int height)
     QString javascript = QString::fromUtf8("setFontSize('%1');").arg(height);
     QNTRACE("Script: " << javascript);
 
-    QVector<QPair<QString,QString> > extraData;
-    extraData.push_back(QPair<QString,QString>(
+    QVector<std::pair<QString,QString>> extraData;
+    extraData.push_back(std::pair<QString,QString>(
         QStringLiteral("fontSize"),
         QString::number(height)));
 
@@ -10967,7 +10968,7 @@ void NoteEditorPrivate::onTableResized()
 
 void NoteEditorPrivate::onFoundSelectedHyperlinkId(
     const QVariant & hyperlinkData,
-    const QVector<QPair<QString, QString> > & extraData)
+    const QVector<std::pair<QString, QString>> & extraData)
 {
     QNDEBUG("NoteEditorPrivate::onFoundSelectedHyperlinkId: " << hyperlinkData);
     Q_UNUSED(extraData)
@@ -11039,7 +11040,7 @@ void NoteEditorPrivate::onFoundSelectedHyperlinkId(
 
 void NoteEditorPrivate::onFoundHyperlinkToCopy(
     const QVariant & hyperlinkData,
-    const QVector<QPair<QString, QString> > & extraData)
+    const QVector<std::pair<QString, QString>> & extraData)
 {
     QNDEBUG("NoteEditorPrivate::onFoundHyperlinkToCopy: "
             << hyperlinkData);

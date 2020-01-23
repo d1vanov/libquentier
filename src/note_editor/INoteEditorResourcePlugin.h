@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -68,12 +68,11 @@ public:
      * @return                  True if initialization was successful,
      *                          false otherwise
      */
-    virtual bool initialize(const QString & mimeType,
-                            const QStringList & parameterNames,
-                            const QStringList & parameterValues,
-                            const NoteEditorPluginFactory & pluginFactory,
-                            const Resource & resource,
-                            ErrorString & errorDescription) = 0;
+    virtual bool initialize(
+        const QString & mimeType, const QStringList & parameterNames,
+        const QStringList & parameterValues,
+        const NoteEditorPluginFactory & pluginFactory,
+        const Resource & resource, ErrorString & errorDescription) = 0;
 
     /**
      * @brief mimeTypes         The method telling which are the mime types of

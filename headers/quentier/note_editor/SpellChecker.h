@@ -23,8 +23,9 @@
 #include <quentier/utility/Macros.h>
 
 #include <QObject>
-#include <QPair>
 #include <QVector>
+
+#include <utility>
 
 namespace quentier {
 
@@ -43,7 +44,7 @@ public:
 
     // The second bool in the pair indicates whether the dictionary
     // is enabled or disabled
-    QVector<QPair<QString,bool>> listAvailableDictionaries() const;
+    QVector<std::pair<QString,bool>> listAvailableDictionaries() const;
 
     void setAccount(const Account & account);
 

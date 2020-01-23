@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -44,13 +44,15 @@ NoteEditor::NoteEditor(QWidget * parent, Qt::WindowFlags flags) :
 NoteEditor::~NoteEditor()
 {}
 
-void NoteEditor::initialize(LocalStorageManagerAsync & localStorageManager,
-                            SpellChecker & spellChecker,
-                            const Account & account,
-                            QThread * pBackgroundJobsThread)
+void NoteEditor::initialize(
+    LocalStorageManagerAsync & localStorageManager, SpellChecker & spellChecker,
+    const Account & account, QThread * pBackgroundJobsThread)
 {
-    m_backend->initialize(localStorageManager, spellChecker,
-                          account, pBackgroundJobsThread);
+    m_backend->initialize(
+        localStorageManager,
+        spellChecker,
+        account,
+        pBackgroundJobsThread);
 }
 
 void NoteEditor::setBackend(INoteEditorBackend * backend)
@@ -138,8 +140,8 @@ void NoteEditor::setNoteTitle(const QString & noteTitle)
     m_backend->setNoteTitle(noteTitle);
 }
 
-void NoteEditor::setTagIds(const QStringList & tagLocalUids,
-                           const QStringList & tagGuids)
+void NoteEditor::setTagIds(
+    const QStringList & tagLocalUids, const QStringList & tagGuids)
 {
     m_backend->setTagIds(tagLocalUids, tagGuids);
 }
@@ -254,16 +256,16 @@ void NoteEditor::findPrevious(const QString & text, const bool matchCase) const
     m_backend->findPrevious(text, matchCase);
 }
 
-void NoteEditor::replace(const QString & textToReplace,
-                         const QString & replacementText,
-                         const bool matchCase)
+void NoteEditor::replace(
+    const QString & textToReplace, const QString & replacementText,
+    const bool matchCase)
 {
     m_backend->replace(textToReplace, replacementText, matchCase);
 }
 
-void NoteEditor::replaceAll(const QString & textToReplace,
-                            const QString & replacementText,
-                            const bool matchCase)
+void NoteEditor::replaceAll(
+    const QString & textToReplace, const QString & replacementText,
+    const bool matchCase)
 {
     m_backend->replaceAll(textToReplace, replacementText, matchCase);
 }
@@ -273,10 +275,9 @@ void NoteEditor::insertToDoCheckbox()
     m_backend->insertToDoCheckbox();
 }
 
-void NoteEditor::insertInAppNoteLink(const QString & userId,
-                                     const QString & shardId,
-                                     const QString & noteGuid,
-                                     const QString & linkText)
+void NoteEditor::insertInAppNoteLink(
+    const QString & userId, const QString & shardId, const QString & noteGuid,
+    const QString & linkText)
 {
     m_backend->insertInAppNoteLink(userId, shardId, noteGuid, linkText);
 }
@@ -371,16 +372,14 @@ void NoteEditor::insertTableDialog()
     m_backend->insertTableDialog();
 }
 
-void NoteEditor::insertFixedWidthTable(const int rows,
-                                       const int columns,
-                                       const int widthInPixels)
+void NoteEditor::insertFixedWidthTable(
+    const int rows, const int columns, const int widthInPixels)
 {
     m_backend->insertFixedWidthTable(rows, columns, widthInPixels);
 }
 
-void NoteEditor::insertRelativeWidthTable(const int rows,
-                                          const int columns,
-                                          const double relativeWidth)
+void NoteEditor::insertRelativeWidthTable(
+    const int rows, const int columns, const double relativeWidth)
 {
     m_backend->insertRelativeWidthTable(rows, columns, relativeWidth);
 }
@@ -475,14 +474,15 @@ bool NoteEditor::print(QPrinter & printer, ErrorString & errorDescription)
     return m_backend->print(printer, errorDescription);
 }
 
-bool NoteEditor::exportToPdf(const QString & absoluteFilePath,
-                             ErrorString & errorDescription)
+bool NoteEditor::exportToPdf(
+    const QString & absoluteFilePath, ErrorString & errorDescription)
 {
     return m_backend->exportToPdf(absoluteFilePath, errorDescription);
 }
 
-bool NoteEditor::exportToEnex(const QStringList & tagNames, QString & enex,
-                              ErrorString & errorDescription)
+bool NoteEditor::exportToEnex(
+    const QStringList & tagNames, QString & enex,
+    ErrorString & errorDescription)
 {
     return m_backend->exportToEnex(tagNames, enex, errorDescription);
 }
