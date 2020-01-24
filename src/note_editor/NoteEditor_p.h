@@ -59,8 +59,8 @@ typedef QWebPage WebPage;
 #include <utility>
 
 QT_FORWARD_DECLARE_CLASS(QByteArray)
-QT_FORWARD_DECLARE_CLASS(QMimeType)
 QT_FORWARD_DECLARE_CLASS(QImage)
+QT_FORWARD_DECLARE_CLASS(QMimeType)
 QT_FORWARD_DECLARE_CLASS(QThread)
 
 #ifdef QUENTIER_USE_QT_WEB_ENGINE
@@ -71,23 +71,23 @@ QT_FORWARD_DECLARE_CLASS(WebSocketClientWrapper)
 
 namespace quentier {
 
-QT_FORWARD_DECLARE_CLASS(ResourceInfoJavaScriptHandler)
-QT_FORWARD_DECLARE_CLASS(ResourceDataInTemporaryFileStorageManager)
 QT_FORWARD_DECLARE_CLASS(FileIOProcessorAsync)
 QT_FORWARD_DECLARE_CLASS(LocalStorageManagerAsync)
+QT_FORWARD_DECLARE_CLASS(ResourceDataInTemporaryFileStorageManager)
+QT_FORWARD_DECLARE_CLASS(ResourceInfoJavaScriptHandler)
 
-QT_FORWARD_DECLARE_CLASS(TextCursorPositionJavaScriptHandler)
+QT_FORWARD_DECLARE_CLASS(ActionsWatcher)
 QT_FORWARD_DECLARE_CLASS(ContextMenuEventJavaScriptHandler)
-QT_FORWARD_DECLARE_CLASS(TableResizeJavaScriptHandler)
-QT_FORWARD_DECLARE_CLASS(PageMutationHandler)
-QT_FORWARD_DECLARE_CLASS(ToDoCheckboxOnClickHandler)
-QT_FORWARD_DECLARE_CLASS(ToDoCheckboxAutomaticInsertionHandler)
 QT_FORWARD_DECLARE_CLASS(GenericResourceImageManager)
+QT_FORWARD_DECLARE_CLASS(PageMutationHandler)
 QT_FORWARD_DECLARE_CLASS(RenameResourceDelegate)
+QT_FORWARD_DECLARE_CLASS(ResizableImageJavaScriptHandler)
 QT_FORWARD_DECLARE_CLASS(SpellChecker)
 QT_FORWARD_DECLARE_CLASS(SpellCheckerDynamicHelper)
-QT_FORWARD_DECLARE_CLASS(ResizableImageJavaScriptHandler)
-QT_FORWARD_DECLARE_CLASS(ActionsWatcher)
+QT_FORWARD_DECLARE_CLASS(TableResizeJavaScriptHandler)
+QT_FORWARD_DECLARE_CLASS(TextCursorPositionJavaScriptHandler)
+QT_FORWARD_DECLARE_CLASS(ToDoCheckboxOnClickHandler)
+QT_FORWARD_DECLARE_CLASS(ToDoCheckboxAutomaticInsertionHandler)
 
 #ifdef QUENTIER_USE_QT_WEB_ENGINE
 QT_FORWARD_DECLARE_CLASS(EnCryptElementOnClickHandler)
@@ -781,40 +781,40 @@ private:
      * it displays some "replacement" or "blank" page.
      * This page can be different depending on the state of the editor
      */
-    struct BlankPageKind
+    enum class BlankPageKind
     {
-        enum type
-        {
-            /**
-             * Blank page of "Initial" kind is displayed before the note is set
-             * to the editor
-             */
-            Initial = 0,
-            /**
-             * Blank page of "NoteNotFound" kind is displayed if no note
-             * corresponding to the local uid passed to setCurrentNoteLocalUid
-             * slot was found * within the local storage
-             */
-            NoteNotFound,
-            /**
-             * Blank page of "NoteDeleted" kind is displayed if the note which
-             * was displayed by the editor was deleted (either marked as "deleted"
-             * or deleted permanently (expunged) from the local storage
-             */
-            NoteDeleted,
-            /**
-             * Blank page of "NoteLoading" kind is displayed after the note
-             * local uid is set to the editor but before the editor is ready
-             * to display the note
-             */
-            NoteLoading,
-            /**
-             * Blank page of "InternalError" kind is displayed if the note editor
-             * cannot display the note for some reason
-             */
-            InternalError
-        };
+        /**
+         * Blank page of "Initial" kind is displayed before the note is set
+         * to the editor
+         */
+        Initial = 0,
+        /**
+         * Blank page of "NoteNotFound" kind is displayed if no note
+         * corresponding to the local uid passed to setCurrentNoteLocalUid
+         * slot was found * within the local storage
+         */
+        NoteNotFound,
+        /**
+         * Blank page of "NoteDeleted" kind is displayed if the note which
+         * was displayed by the editor was deleted (either marked as "deleted"
+         * or deleted permanently (expunged) from the local storage
+         */
+        NoteDeleted,
+        /**
+         * Blank page of "NoteLoading" kind is displayed after the note
+         * local uid is set to the editor but before the editor is ready
+         * to display the note
+         */
+        NoteLoading,
+        /**
+         * Blank page of "InternalError" kind is displayed if the note editor
+         * cannot display the note for some reason
+         */
+        InternalError
     };
+
+    friend QDebug & operator<<(
+        QDebug & dbg, const BlankPageKind kind);
 
     /**
      * Reset the page displayed by the note editor to one of "blank" ones
@@ -826,7 +826,7 @@ private:
      *                              "InternalError"
      */
     void clearEditorContent(
-        const BlankPageKind::type kind = BlankPageKind::Initial,
+        const BlankPageKind kind = BlankPageKind::Initial,
         const ErrorString & errorDescription = ErrorString());
 
     void noteToEditorContent();
@@ -1177,22 +1177,24 @@ private:
     HyperlinkClickJavaScriptHandler * m_pHyperlinkClickJavaScriptHandler;
     WebSocketWaiter * m_pWebSocketWaiter;
 
-    bool        m_setUpJavaScriptObjects;
+    bool        m_setUpJavaScriptObjects = false;
 
-    bool        m_webSocketReady;
-    quint16     m_webSocketServerPort;
+    bool        m_webSocketReady = false;
+    quint16     m_webSocketServerPort = 0;
 #endif
+
+    GenericResourceImageManager * m_pGenericResourceImageManager = nullptr;
 
     SpellCheckerDynamicHelper *             m_pSpellCheckerDynamicHandler;
     TableResizeJavaScriptHandler *          m_pTableResizeJavaScriptHandler;
     ResizableImageJavaScriptHandler *       m_pResizableImageJavaScriptHandler;
-    GenericResourceImageManager *           m_pGenericResourceImageManager;
     ToDoCheckboxOnClickHandler *            m_pToDoCheckboxClickHandler;
     ToDoCheckboxAutomaticInsertionHandler * m_pToDoCheckboxAutomaticInsertionHandler;
     PageMutationHandler *                   m_pPageMutationHandler;
+
     ActionsWatcher *                        m_pActionsWatcher;
 
-    QUndoStack * m_pUndoStack;
+    QUndoStack * m_pUndoStack = nullptr;
 
     QScopedPointer<Account>     m_pAccount;
 
@@ -1203,10 +1205,10 @@ private:
     QString     m_noteDeletedPageHtml;
     QString     m_noteLoadingPageHtml;
 
-    bool        m_noteWasNotFound;
-    bool        m_noteWasDeleted;
+    bool        m_noteWasNotFound = false;
+    bool        m_noteWasDeleted = false;
 
-    quint64     m_contextMenuSequenceNumber;
+    quint64     m_contextMenuSequenceNumber = 1;    // NOTE: must start from 1 as JavaScript treats 0 as null!
     QPoint      m_lastContextMenuEventGlobalPos;
     QPoint      m_lastContextMenuEventPagePos;
     ContextMenuEventJavaScriptHandler * m_pContextMenuEventJavaScriptHandler;
@@ -1217,16 +1219,16 @@ private:
 
     QUuid       m_writeNoteHtmlToFileRequestId;
 
-    bool        m_isPageEditable;
-    bool        m_pendingConversionToNote;
-    bool        m_pendingConversionToNoteForSavingInLocalStorage;
-    bool        m_pendingNoteSavingInLocalStorage;
-    bool        m_shouldRepeatSavingNoteInLocalStorage;
-    bool        m_pendingNotePageLoad;
-    bool        m_pendingNoteImageResourceTemporaryFiles;
+    bool        m_isPageEditable = false;
+    bool        m_pendingConversionToNote = false;
+    bool        m_pendingConversionToNoteForSavingInLocalStorage = false;
+    bool        m_pendingNoteSavingInLocalStorage = false;
+    bool        m_shouldRepeatSavingNoteInLocalStorage = false;
+    bool        m_pendingNotePageLoad = false;
+    bool        m_pendingNoteImageResourceTemporaryFiles = false;
 
     /**
-     * The two following variables deserve a special explanation. Since Qt 5.9
+     * Two following variables deserve special explanation. Since Qt 5.9
      * QWebEnginePage::load method started to behave really weirdly: it seems
      * when it's called for the first time, the method blocks the event loop
      * until the page is actually loaded. I.e. when the page got loaded,
@@ -1248,21 +1250,21 @@ private:
      * to learn this on your own, the hard way. Thank you, Qt devs, you are
      * the best... not.
      *
-     * Working around this issue using the special boolean flag indicating whether
+     * Working around this issue using a special boolean flag indicating whether
      * the method is currently blocked in at least one event loop. If yes, won't
      * attempt to call QWebEnginePage::load (or QWebEnginePage::setUrl) until
      * the blocked method returns, instead will just save the next URL to load
      * and will load it later
      */
-    bool        m_pendingNotePageLoadMethodExit;
+    bool        m_pendingNotePageLoadMethodExit = false;
     QUrl        m_pendingNextPageUrl;
 
-    bool        m_pendingIndexHtmlWritingToFile;
-    bool        m_pendingJavaScriptExecution;
+    bool        m_pendingIndexHtmlWritingToFile = false;
+    bool        m_pendingJavaScriptExecution = false;
 
-    bool        m_pendingBodyStyleUpdate;
+    bool        m_pendingBodyStyleUpdate = false;
 
-    bool        m_skipPushingUndoCommandOnNextContentChange;
+    bool        m_skipPushingUndoCommandOnNextContentChange = false;
 
     QString     m_noteLocalUid;
 
@@ -1278,17 +1280,17 @@ private:
      * m_pNote object; when m_pNote's ENML becomes actual with the note editor
      * page's content, this flag is dropped back to false
      */
-    bool        m_needConversionToNote;
+    bool        m_needConversionToNote = false;
 
     /**
-     * This flag is set to true when then note editor page's content gets
+     * This flag is set to true when the note editor page's content gets
      * changed and thus needs to be converted to HTML and then ENML and then put
-     * into m_pNote object which then needs to be saved in local storage. Or
+     * into m_pNote object which then needs to be saved in the local storage. Or
      * when m_pNote object changes via some other way and needs to be saved in
-     * local storage. This flag is dropped back to false after the note has been
-     * saved to local storage.
+     * the local storage. This flag is dropped back to false after the note has
+     * been saved to the local storage.
      */
-    bool        m_needSavingNoteInLocalStorage;
+    bool        m_needSavingNoteInLocalStorage = false;
 
     /**
      * These two bools implement a cheap scheme of watching
@@ -1306,12 +1308,12 @@ private:
      * if there were no further edits during N seconds, convert note editor's page
      * to ENML
      */
-    bool        m_watchingForContentChange;
-    bool        m_contentChangedSinceWatchingStart;
+    bool        m_watchingForContentChange = false;
+    bool        m_contentChangedSinceWatchingStart = false;
 
-    int         m_secondsToWaitBeforeConversionStart;
+    int         m_secondsToWaitBeforeConversionStart = 30;
 
-    int         m_pageToNoteContentPostponeTimerId;
+    int         m_pageToNoteContentPostponeTimerId = 0;
 
     QSharedPointer<EncryptionManager>       m_encryptionManager;
     QSharedPointer<DecryptedTextManager>    m_decryptedTextManager;
@@ -1319,7 +1321,7 @@ private:
     ENMLConverter                           m_enmlConverter;
 
 #ifndef QUENTIER_USE_QT_WEB_ENGINE
-    NoteEditorPluginFactory *               m_pPluginFactory;
+    NoteEditorPluginFactory *               m_pPluginFactory = nullptr;
 #endif
 
     /**
@@ -1327,18 +1329,18 @@ private:
      * temporary files for the sake of being displayed within the note editor
      * page
      */
-    QProgressDialog *   m_pPrepareNoteImageResourcesProgressDialog;
+    QProgressDialog *   m_pPrepareNoteImageResourcesProgressDialog = nullptr;
 
     // Progress dialogs for note resources requested to be opened
     QVector<std::pair<QString, QProgressDialog*>>  m_prepareResourceForOpeningProgressDialogs;
 
-    QMenu *             m_pGenericTextContextMenu;
-    QMenu *             m_pImageResourceContextMenu;
-    QMenu *             m_pNonImageResourceContextMenu;
-    QMenu *             m_pEncryptedTextContextMenu;
+    QMenu *             m_pGenericTextContextMenu = nullptr;
+    QMenu *             m_pImageResourceContextMenu = nullptr;
+    QMenu *             m_pNonImageResourceContextMenu = nullptr;
+    QMenu *             m_pEncryptedTextContextMenu = nullptr;
 
-    SpellChecker *      m_pSpellChecker;
-    bool                m_spellCheckerEnabled;
+    SpellChecker *      m_pSpellChecker = nullptr;
+    bool                m_spellCheckerEnabled = false;
     QSet<QString>       m_currentNoteMisSpelledWords;
     StringUtils         m_stringUtils;
 
@@ -1349,7 +1351,7 @@ private:
     QString     m_lastMisSpelledWord;
 
     mutable QString   m_lastSearchHighlightedText;
-    mutable bool      m_lastSearchHighlightedTextCaseSensitivity;
+    mutable bool      m_lastSearchHighlightedTextCaseSensitivity = false;
 
     QString     m_enmlCachedMemory;   // Cached memory for HTML to ENML conversions
     QString     m_htmlCachedMemory;   // Cached memory for ENML from Note -> HTML conversions
@@ -1357,7 +1359,7 @@ private:
 
     QVector<ENMLConverter::SkipHtmlElementRule>     m_skipRulesForHtmlToEnmlConversion;
 
-    ResourceDataInTemporaryFileStorageManager *     m_pResourceDataInTemporaryFileStorageManager;
+    ResourceDataInTemporaryFileStorageManager *     m_pResourceDataInTemporaryFileStorageManager = nullptr;
     FileIOProcessorAsync *          m_pFileIOProcessorAsync;
 
     ResourceInfo                    m_resourceInfo;
@@ -1384,10 +1386,10 @@ private:
     QSet<QUuid>     m_resourceLocalUidsPendingFindDataInLocalStorageForSavingToFile;
     QHash<QUuid, Rotation>    m_rotationTypeByResourceLocalUidsPendingFindDataInLocalStorage;
 
-    quint64     m_lastFreeEnToDoIdNumber;
-    quint64     m_lastFreeHyperlinkIdNumber;
-    quint64     m_lastFreeEnCryptIdNumber;
-    quint64     m_lastFreeEnDecryptedIdNumber;
+    quint64     m_lastFreeEnToDoIdNumber = 1;
+    quint64     m_lastFreeHyperlinkIdNumber = 1;
+    quint64     m_lastFreeEnCryptIdNumber = 1;
+    quint64     m_lastFreeEnDecryptedIdNumber = 1;
 
     NoteEditor * const q_ptr;
     Q_DECLARE_PUBLIC(NoteEditor)

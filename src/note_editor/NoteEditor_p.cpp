@@ -46,35 +46,35 @@
 #include "javascript_glue/ToDoCheckboxAutomaticInsertionHandler.h"
 #include "javascript_glue/TableResizeJavaScriptHandler.h"
 
-#include "undo_stack/NoteEditorContentEditUndoCommand.h"
-#include "undo_stack/EncryptUndoCommand.h"
-#include "undo_stack/DecryptUndoCommand.h"
-#include "undo_stack/HideDecryptedTextUndoCommand.h"
 #include "undo_stack/AddHyperlinkUndoCommand.h"
-#include "undo_stack/SourceCodeFormatUndoCommand.h"
-#include "undo_stack/EditHyperlinkUndoCommand.h"
-#include "undo_stack/RemoveHyperlinkUndoCommand.h"
-#include "undo_stack/ToDoCheckboxUndoCommand.h"
-#include "undo_stack/ToDoCheckboxAutomaticInsertionUndoCommand.h"
 #include "undo_stack/AddResourceUndoCommand.h"
+#include "undo_stack/DecryptUndoCommand.h"
+#include "undo_stack/EditHyperlinkUndoCommand.h"
+#include "undo_stack/EncryptUndoCommand.h"
+#include "undo_stack/HideDecryptedTextUndoCommand.h"
+#include "undo_stack/ImageResizeUndoCommand.h"
+#include "undo_stack/ImageResourceRotationUndoCommand.h"
+#include "undo_stack/InsertHtmlUndoCommand.h"
+#include "undo_stack/NoteEditorContentEditUndoCommand.h"
+#include "undo_stack/RemoveHyperlinkUndoCommand.h"
 #include "undo_stack/RemoveResourceUndoCommand.h"
 #include "undo_stack/RenameResourceUndoCommand.h"
-#include "undo_stack/InsertHtmlUndoCommand.h"
-#include "undo_stack/ImageResourceRotationUndoCommand.h"
-#include "undo_stack/ImageResizeUndoCommand.h"
-#include "undo_stack/ReplaceUndoCommand.h"
 #include "undo_stack/ReplaceAllUndoCommand.h"
-#include "undo_stack/SpellCorrectionUndoCommand.h"
-#include "undo_stack/SpellCheckIgnoreWordUndoCommand.h"
+#include "undo_stack/ReplaceUndoCommand.h"
+#include "undo_stack/SourceCodeFormatUndoCommand.h"
+#include "undo_stack/ToDoCheckboxAutomaticInsertionUndoCommand.h"
+#include "undo_stack/ToDoCheckboxUndoCommand.h"
 #include "undo_stack/SpellCheckAddToUserWordListUndoCommand.h"
+#include "undo_stack/SpellCheckIgnoreWordUndoCommand.h"
+#include "undo_stack/SpellCorrectionUndoCommand.h"
 #include "undo_stack/TableActionUndoCommand.h"
 
 #include <quentier/local_storage/LocalStorageManager.h>
+#include <quentier/note_editor/SpellChecker.h>
 #include <quentier/utility/ApplicationSettings.h>
 #include <quentier/utility/EventLoopWithExitStatus.h>
 #include <quentier/utility/StandardPaths.h>
 #include <quentier/utility/Utility.h>
-#include <quentier/note_editor/SpellChecker.h>
 
 #ifndef QUENTIER_USE_QT_WEB_ENGINE
 #include <QWebFrame>
@@ -98,55 +98,55 @@ typedef QWebSettings WebSettings;
 #include "WebSocketClientWrapper.h"
 #include "WebSocketTransport.h"
 
-#include <QPainter>
-#include <QIcon>
 #include <QFontMetrics>
+#include <QIcon>
+#include <QPageLayout>
+#include <QPainter>
+#include <QTimer>
+#include <QWebEngineSettings>
+
 #include <QtWebSockets/QWebSocketServer>
 #include <QtWebChannel>
-#include <QWebEngineSettings>
-#include <QTimer>
-#include <QPageLayout>
 typedef QWebEngineSettings WebSettings;
 #endif // QUENTIER_USE_QT_WEB_ENGINE
 
+#include <quentier/enml/ENMLConverter.h>
+#include <quentier/enml/HTMLCleaner.h>
 #include <quentier/exception/NoteEditorInitializationException.h>
 #include <quentier/exception/NoteEditorPluginInitializationException.h>
+#include <quentier/logging/QuentierLogger.h>
+#include <quentier/types/Account.h>
 #include <quentier/types/Note.h>
 #include <quentier/types/Notebook.h>
 #include <quentier/types/ResourceRecognitionIndexItem.h>
-#include <quentier/types/Account.h>
-#include <quentier/enml/ENMLConverter.h>
-#include <quentier/enml/HTMLCleaner.h>
-#include <quentier/utility/Utility.h>
-#include <quentier/logging/QuentierLogger.h>
 #include <quentier/utility/FileIOProcessorAsync.h>
 #include <quentier/utility/QuentierCheckPtr.h>
 #include <quentier/utility/ShortcutManager.h>
+#include <quentier/utility/Utility.h>
 
+#include <QApplication>
+#include <QBuffer>
+#include <QByteArray>
+#include <QClipboard>
+#include <QContextMenuEvent>
+#include <QCryptographicHash>
+#include <QDesktopWidget>
+#include <QDropEvent>
 #include <QFile>
 #include <QFileInfo>
-#include <QByteArray>
-#include <QDropEvent>
-#include <QMimeDatabase>
-#include <QThread>
-#include <QApplication>
-#include <QClipboard>
-#include <QMenu>
-#include <QKeySequence>
-#include <QContextMenuEvent>
-#include <QDesktopWidget>
 #include <QFontDialog>
 #include <QFontDatabase>
-#include <QPixmap>
-#include <QBuffer>
+#include <QKeySequence>
 #include <QImage>
-#include <QBuffer>
-#include <QTransform>
+#include <QMenu>
+#include <QMimeDatabase>
+#include <QPixmap>
+#include <QThread>
 #include <QTimer>
-#include <QCryptographicHash>
+#include <QTransform>
 
-#include <cmath>
 #include <algorithm>
+#include <cmath>
 
 #define NOTE_EDITOR_PAGE_HEADER                                                \
     QStringLiteral("<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01//EN\" "      \
@@ -200,177 +200,49 @@ int fontMetricsWidth(
 
 NoteEditorPrivate::NoteEditorPrivate(NoteEditor & noteEditor) :
     INoteEditorBackend(&noteEditor),
-    m_noteEditorPageFolderPath(),
-    m_genericResourceImageFileStoragePath(),
-    m_font(),
-    m_jQueryJs(),
-    m_jQueryUiJs(),
-    m_resizableTableColumnsJs(),
-    m_resizableImageManagerJs(),
-    m_debounceJs(),
-    m_rangyCoreJs(),
-    m_rangySelectionSaveRestoreJs(),
-    m_onTableResizeJs(),
-    m_nodeUndoRedoManagerJs(),
-    m_selectionManagerJs(),
-    m_textEditingUndoRedoManagerJs(),
-    m_getSelectionHtmlJs(),
-    m_snapSelectionToWordJs(),
-    m_replaceSelectionWithHtmlJs(),
-    m_updateResourceHashJs(),
-    m_updateImageResourceSrcJs(),
-    m_provideSrcForResourceImgTagsJs(),
-    m_setupEnToDoTagsJs(),
-    m_flipEnToDoCheckboxStateJs(),
-    m_onResourceInfoReceivedJs(),
-    m_findInnermostElementJs(),
-    m_determineStatesForCurrentTextCursorPositionJs(),
-    m_determineContextMenuEventTargetJs(),
-    m_pageMutationObserverJs(),
-    m_tableManagerJs(),
-    m_resourceManagerJs(),
-    m_htmlInsertionManagerJs(),
-    m_sourceCodeFormatterJs(),
-    m_hyperlinkManagerJs(),
-    m_encryptDecryptManagerJs(),
-    m_hilitorJs(),
-    m_imageAreasHilitorJs(),
-    m_findReplaceManagerJs(),
-    m_spellCheckerJs(),
-    m_managedPageActionJs(),
-    m_setInitialCaretPositionJs(),
-    m_toDoCheckboxAutomaticInsertionJs(),
-    m_disablePasteJs(),
-    m_findAndReplaceDOMTextJs(),
-    m_tabAndShiftTabIndentAndUnindentReplacerJs(),
-    m_replaceStyleJs(),
-    m_setFontFamilyJs(),
-    m_setFontSizeJs(),
-#ifndef QUENTIER_USE_QT_WEB_ENGINE
-    m_qWebKitSetupJs(),
-#else
-    m_provideSrcForGenericResourceImagesJs(),
-    m_onGenericResourceImageReceivedJs(),
-    m_provideSrcAndOnClickScriptForEnCryptImgTagsJs(),
-    m_qWebChannelJs(),
-    m_qWebChannelSetupJs(),
-    m_notifyTextCursorPositionChangedJs(),
-    m_setupTextCursorPositionTrackingJs(),
-    m_genericResourceOnClickHandlerJs(),
-    m_setupGenericResourceOnClickHandlerJs(),
-    m_clickInterceptorJs(),
-    m_pWebSocketServer(new QWebSocketServer(QStringLiteral("QWebChannel server"),
-                                            QWebSocketServer::NonSecureMode, this)),
-    m_pWebSocketClientWrapper(new WebSocketClientWrapper(m_pWebSocketServer, this)),
+#ifdef QUENTIER_USE_QT_WEB_ENGINE
+    m_pWebSocketServer(new QWebSocketServer(
+        QStringLiteral("QWebChannel server"),
+        QWebSocketServer::NonSecureMode,
+        this)),
+    m_pWebSocketClientWrapper(new WebSocketClientWrapper(
+        m_pWebSocketServer,
+        this)),
     m_pWebChannel(new QWebChannel(this)),
     m_pEnCryptElementClickHandler(new EnCryptElementOnClickHandler(this)),
     m_pGenericResourceOpenAndSaveButtonsOnClickHandler(
         new GenericResourceOpenAndSaveButtonsOnClickHandler(this)),
-    m_pHyperlinkClickJavaScriptHandler(new HyperlinkClickJavaScriptHandler(this)),
+    m_pHyperlinkClickJavaScriptHandler(
+        new HyperlinkClickJavaScriptHandler(this)),
     m_pWebSocketWaiter(new WebSocketWaiter(this)),
-    m_setUpJavaScriptObjects(false),
-    m_webSocketReady(false),
-    m_webSocketServerPort(0),
 #endif
     m_pSpellCheckerDynamicHandler(new SpellCheckerDynamicHelper(this)),
     m_pTableResizeJavaScriptHandler(new TableResizeJavaScriptHandler(this)),
-    m_pResizableImageJavaScriptHandler(new ResizableImageJavaScriptHandler(this)),
-    m_pGenericResourceImageManager(nullptr),
+    m_pResizableImageJavaScriptHandler(
+        new ResizableImageJavaScriptHandler(this)),
     m_pToDoCheckboxClickHandler(new ToDoCheckboxOnClickHandler(this)),
     m_pToDoCheckboxAutomaticInsertionHandler(
         new ToDoCheckboxAutomaticInsertionHandler(this)),
     m_pPageMutationHandler(new PageMutationHandler(this)),
     m_pActionsWatcher(new ActionsWatcher(this)),
-    m_pUndoStack(nullptr),
-    m_pAccount(),
-    m_htmlForPrinting(),
-    m_initialPageHtml(),
-    m_noteNotFoundPageHtml(),
-    m_noteDeletedPageHtml(),
-    m_noteLoadingPageHtml(),
-    m_noteWasNotFound(false),
-    m_noteWasDeleted(false),
-    m_contextMenuSequenceNumber(1),     // NOTE: must start from 1 as JavaScript treats 0 as null!
-    m_lastContextMenuEventGlobalPos(),
-    m_lastContextMenuEventPagePos(),
-    m_pContextMenuEventJavaScriptHandler(new ContextMenuEventJavaScriptHandler(this)),
-    m_pTextCursorPositionJavaScriptHandler(new TextCursorPositionJavaScriptHandler(this)),
-    m_currentTextFormattingState(),
-    m_writeNoteHtmlToFileRequestId(),
-    m_isPageEditable(false),
-    m_pendingConversionToNote(false),
-    m_pendingConversionToNoteForSavingInLocalStorage(false),
-    m_pendingNoteSavingInLocalStorage(false),
-    m_shouldRepeatSavingNoteInLocalStorage(false),
-    m_pendingNotePageLoad(false),
-    m_pendingNoteImageResourceTemporaryFiles(false),
-    m_pendingNotePageLoadMethodExit(false),
-    m_pendingNextPageUrl(),
-    m_pendingIndexHtmlWritingToFile(false),
-    m_pendingJavaScriptExecution(false),
-    m_pendingBodyStyleUpdate(false),
-    m_skipPushingUndoCommandOnNextContentChange(false),
-    m_noteLocalUid(),
-    m_pDefaultFont(),
-    m_pPalette(),
-    m_pNote(),
-    m_pNotebook(),
-    m_needConversionToNote(false),
-    m_needSavingNoteInLocalStorage(false),
-    m_watchingForContentChange(false),
-    m_contentChangedSinceWatchingStart(false),
-    m_secondsToWaitBeforeConversionStart(30),
-    m_pageToNoteContentPostponeTimerId(0),
+    m_pContextMenuEventJavaScriptHandler(
+        new ContextMenuEventJavaScriptHandler(this)),
+    m_pTextCursorPositionJavaScriptHandler(
+        new TextCursorPositionJavaScriptHandler(this)),
     m_encryptionManager(new EncryptionManager),
     m_decryptedTextManager(new DecryptedTextManager),
-    m_enmlConverter(),
-#ifndef QUENTIER_USE_QT_WEB_ENGINE
-    m_pPluginFactory(nullptr),
-#endif
-    m_pPrepareNoteImageResourcesProgressDialog(nullptr),
-    m_prepareResourceForOpeningProgressDialogs(),
-    m_pGenericTextContextMenu(nullptr),
-    m_pImageResourceContextMenu(nullptr),
-    m_pNonImageResourceContextMenu(nullptr),
-    m_pEncryptedTextContextMenu(nullptr),
-    m_pSpellChecker(nullptr),
-    m_spellCheckerEnabled(false),
-    m_currentNoteMisSpelledWords(),
-    m_stringUtils(),
-    m_lastSelectedHtml(),
-    m_lastSelectedHtmlForEncryption(),
-    m_lastSelectedHtmlForHyperlink(),
-    m_lastMisSpelledWord(),
-    m_lastSearchHighlightedText(),
-    m_lastSearchHighlightedTextCaseSensitivity(false),
     m_enmlCachedMemory(),
     m_htmlCachedMemory(),
     m_errorCachedMemory(),
     m_skipRulesForHtmlToEnmlConversion(),
-    m_pResourceDataInTemporaryFileStorageManager(nullptr),
     m_pFileIOProcessorAsync(new FileIOProcessorAsync),
-    m_resourceInfo(),
     m_pResourceInfoJavaScriptHandler(
         new ResourceInfoJavaScriptHandler(m_resourceInfo, this)),
-    m_resourceFileStoragePathsByResourceLocalUid(),
-    m_manualSaveResourceToFileRequestIds(),
-    m_fileSuffixesForMimeType(),
-    m_fileFilterStringForMimeType(),
-    m_genericResourceImageFilePathsByResourceHash(),
 #ifdef QUENTIER_USE_QT_WEB_ENGINE
     m_pGenericResoureImageJavaScriptHandler(
         new GenericResourceImageJavaScriptHandler(
             m_genericResourceImageFilePathsByResourceHash, this)),
 #endif
-    m_saveGenericResourceImageToFileRequestIds(),
-    m_recognitionIndicesByResourceHash(),
-    m_currentContextMenuExtraData(),
-    m_resourceLocalUidsPendingFindDataInLocalStorageForSavingToFile(),
-    m_rotationTypeByResourceLocalUidsPendingFindDataInLocalStorage(),
-    m_lastFreeEnToDoIdNumber(1),
-    m_lastFreeHyperlinkIdNumber(1),
-    m_lastFreeEnCryptIdNumber(1),
-    m_lastFreeEnDecryptedIdNumber(1),
     q_ptr(&noteEditor)
 {
     setupSkipRulesForHtmlToEnmlConversion();
@@ -432,14 +304,14 @@ bool NoteEditorPrivate::isNoteLoaded() const
     }
 
     return !m_pendingNotePageLoad &&
-           !m_pendingJavaScriptExecution &&
-           !m_pendingNoteImageResourceTemporaryFiles;
+        !m_pendingJavaScriptExecution &&
+        !m_pendingNoteImageResourceTemporaryFiles;
 }
 
 void NoteEditorPrivate::onNoteLoadFinished(bool ok)
 {
     QNDEBUG("NoteEditorPrivate::onNoteLoadFinished: ok = "
-            << (ok ? "true" : "false"));
+        << (ok ? "true" : "false"));
 
     if (!ok) {
         QNDEBUG("Note page was not loaded successfully");
@@ -470,23 +342,21 @@ void NoteEditorPrivate::onNoteLoadFinished(bool ok)
 
     bool editable = true;
     if (m_pNote->hasActive() && !m_pNote->active()) {
-        QNDEBUG("Current note is not active, setting it to "
-                "read-only state");
+        QNDEBUG("Current note is not active, setting it to read-only state");
         editable = false;
     }
     else if (m_pNote->isInkNote()) {
-        QNDEBUG("Current note is an ink note, setting it to "
-                "read-only state");
+        QNDEBUG("Current note is an ink note, setting it to read-only state");
         editable = false;
     }
     else if (m_pNotebook->hasRestrictions())
     {
-        const qevercloud::NotebookRestrictions & restrictions =
-            m_pNotebook->restrictions();
-        if (restrictions.noUpdateNotes.isSet() && restrictions.noUpdateNotes.ref())
+        const auto & restrictions = m_pNotebook->restrictions();
+        if (restrictions.noUpdateNotes.isSet() &&
+            restrictions.noUpdateNotes.ref())
         {
             QNDEBUG("Notebook restrictions forbid the note modification, "
-                    "setting note's content to read-only state");
+                << "setting note's content to read-only state");
             editable = false;
         }
     }
@@ -495,7 +365,7 @@ void NoteEditorPrivate::onNoteLoadFinished(bool ok)
              !m_pNote->noteAttributes().contentClass->isEmpty())
     {
         QNDEBUG("Current note has non-empty content class, setting it to "
-                "read-only state");
+            << "read-only state");
         editable = false;
     }
 
@@ -513,39 +383,55 @@ void NoteEditorPrivate::onNoteLoadFinished(bool ok)
         return;
     }
 
-    frame->addToJavaScriptWindowObject(QStringLiteral("pageMutationObserver"),
-                                       m_pPageMutationHandler,
-                                       OwnershipNamespace::QtOwnership);
-    frame->addToJavaScriptWindowObject(QStringLiteral("resourceCache"),
-                                       m_pResourceInfoJavaScriptHandler,
-                                       OwnershipNamespace::QtOwnership);
-    frame->addToJavaScriptWindowObject(QStringLiteral("textCursorPositionHandler"),
-                                       m_pTextCursorPositionJavaScriptHandler,
-                                       OwnershipNamespace::QtOwnership);
-    frame->addToJavaScriptWindowObject(QStringLiteral("contextMenuEventHandler"),
-                                       m_pContextMenuEventJavaScriptHandler,
-                                       OwnershipNamespace::QtOwnership);
-    frame->addToJavaScriptWindowObject(QStringLiteral("toDoCheckboxClickHandler"),
-                                       m_pToDoCheckboxClickHandler,
-                                       OwnershipNamespace::QtOwnership);
+    frame->addToJavaScriptWindowObject(
+        QStringLiteral("pageMutationObserver"),
+        m_pPageMutationHandler,
+        OwnershipNamespace::QtOwnership);
+
+    frame->addToJavaScriptWindowObject(
+        QStringLiteral("resourceCache"),
+        m_pResourceInfoJavaScriptHandler,
+        OwnershipNamespace::QtOwnership);
+
+    frame->addToJavaScriptWindowObject(
+        QStringLiteral("textCursorPositionHandler"),
+        m_pTextCursorPositionJavaScriptHandler,
+        OwnershipNamespace::QtOwnership);
+
+    frame->addToJavaScriptWindowObject(
+        QStringLiteral("contextMenuEventHandler"),
+        m_pContextMenuEventJavaScriptHandler,
+        OwnershipNamespace::QtOwnership);
+
+    frame->addToJavaScriptWindowObject(
+        QStringLiteral("toDoCheckboxClickHandler"),
+        m_pToDoCheckboxClickHandler,
+        OwnershipNamespace::QtOwnership);
 
     frame->addToJavaScriptWindowObject(
         QStringLiteral("toDoCheckboxAutomaticInsertionHandler"),
         m_pToDoCheckboxAutomaticInsertionHandler,
         OwnershipNamespace::QtOwnership);
 
-    frame->addToJavaScriptWindowObject(QStringLiteral("tableResizeHandler"),
-                                       m_pTableResizeJavaScriptHandler,
-                                       OwnershipNamespace::QtOwnership);
-    frame->addToJavaScriptWindowObject(QStringLiteral("resizableImageHandler"),
-                                       m_pResizableImageJavaScriptHandler,
-                                       OwnershipNamespace::QtOwnership);
-    frame->addToJavaScriptWindowObject(QStringLiteral("spellCheckerDynamicHelper"),
-                                       m_pSpellCheckerDynamicHandler,
-                                       OwnershipNamespace::QtOwnership);
-    frame->addToJavaScriptWindowObject(QStringLiteral("actionsWatcher"),
-                                       m_pActionsWatcher,
-                                       OwnershipNamespace::QtOwnership);
+    frame->addToJavaScriptWindowObject(
+        QStringLiteral("tableResizeHandler"),
+        m_pTableResizeJavaScriptHandler,
+        OwnershipNamespace::QtOwnership);
+
+    frame->addToJavaScriptWindowObject(
+        QStringLiteral("resizableImageHandler"),
+        m_pResizableImageJavaScriptHandler,
+        OwnershipNamespace::QtOwnership);
+
+    frame->addToJavaScriptWindowObject(
+        QStringLiteral("spellCheckerDynamicHelper"),
+        m_pSpellCheckerDynamicHandler,
+        OwnershipNamespace::QtOwnership);
+
+    frame->addToJavaScriptWindowObject(
+        QStringLiteral("actionsWatcher"),
+        m_pActionsWatcher,
+        OwnershipNamespace::QtOwnership);
 
     page->executeJavaScript(m_onResourceInfoReceivedJs);
     page->executeJavaScript(m_qWebKitSetupJs);
@@ -561,6 +447,7 @@ void NoteEditorPrivate::onNoteLoadFinished(bool ok)
         page->executeJavaScript(
             QStringLiteral("(function(){window.websocketserverport = ") +
             QString::number(m_webSocketServerPort) + QStringLiteral("})();"));
+
         page->executeJavaScript(m_qWebChannelSetupJs);
         page->startJavaScriptAutoExecution();
         return;
@@ -622,10 +509,13 @@ void NoteEditorPrivate::onNoteLoadFinished(bool ok)
     setupGenericResourceImages();
 #endif
 
-    if (!m_pendingNoteImageResourceTemporaryFiles) {
+    if (!m_pendingNoteImageResourceTemporaryFiles)
+    {
         provideSrcForResourceImgTags();
-        highlightRecognizedImageAreas(m_lastSearchHighlightedText,
-                                      m_lastSearchHighlightedTextCaseSensitivity);
+
+        highlightRecognizedImageAreas(
+            m_lastSearchHighlightedText,
+            m_lastSearchHighlightedTextCaseSensitivity);
     }
 
     // Set the caret position to the end of the body
@@ -656,15 +546,15 @@ void NoteEditorPrivate::onContentChanged()
         m_pendingJavaScriptExecution)
     {
         QNTRACE("Skipping the content change as the note page "
-                "has not fully loaded yet");
+            << "has not fully loaded yet");
         return;
     }
 
     if (m_skipPushingUndoCommandOnNextContentChange)
     {
         m_skipPushingUndoCommandOnNextContentChange = false;
-        QNTRACE("Skipping the push of edit undo command on "
-                "this content change");
+        QNTRACE("Skipping the push of edit undo command on this content "
+            << "change");
     }
     else
     {
@@ -680,28 +570,30 @@ void NoteEditorPrivate::onContentChanged()
 
     m_pageToNoteContentPostponeTimerId =
         startTimer(SEC_TO_MSEC(m_secondsToWaitBeforeConversionStart));
+
     m_watchingForContentChange = true;
     m_contentChangedSinceWatchingStart = false;
+
     QNTRACE("Started timer to postpone note editor page's content "
-            << "to ENML conversion: timer id = "
-            << m_pageToNoteContentPostponeTimerId);
+        << "to ENML conversion: timer id = "
+        << m_pageToNoteContentPostponeTimerId);
 }
 
-void NoteEditorPrivate::onResourceFileChanged(QString resourceLocalUid,
-                                              QString fileStoragePath,
-                                              QByteArray resourceData,
-                                              QByteArray resourceDataHash)
+void NoteEditorPrivate::onResourceFileChanged(
+    QString resourceLocalUid, QString fileStoragePath, QByteArray resourceData,
+    QByteArray resourceDataHash)
 {
     QNDEBUG("NoteEditorPrivate::onResourceFileChanged: "
-            << "resource local uid = " << resourceLocalUid
-            << ", file storage path: " << fileStoragePath
-            << ", new resource data size = "
-            << humanReadableSize(static_cast<quint64>(std::max(resourceData.size(), 0)))
-            << ", resource data hash = " << resourceDataHash.toHex());
+        << "resource local uid = " << resourceLocalUid
+        << ", file storage path: " << fileStoragePath
+        << ", new resource data size = "
+        << humanReadableSize(
+            static_cast<quint64>(std::max(resourceData.size(), 0)))
+        << ", resource data hash = " << resourceDataHash.toHex());
 
     if (Q_UNLIKELY(m_pNote.isNull())) {
         QNDEBUG("Can't process resource file change: no note is "
-                "set to the editor");
+            << "set to the editor");
         return;
     }
 
@@ -719,14 +611,15 @@ void NoteEditorPrivate::onResourceFileChanged(QString resourceLocalUid,
 
     if (Q_UNLIKELY(targetResourceIndex < 0)) {
         QNDEBUG("Can't process resource file change: can't find "
-                "the resource by local uid within note's resources");
+            << "the resource by local uid within note's resources");
         return;
     }
 
     Resource resource = qAsConst(resources)[targetResourceIndex];
-    QByteArray previousResourceHash = (resource.hasDataHash()
-                                       ? resource.dataHash()
-                                       : QByteArray());
+
+    QByteArray previousResourceHash =
+        (resource.hasDataHash() ? resource.dataHash() : QByteArray());
+
     QNTRACE("Previous resource hash = " << previousResourceHash.toHex());
 
     if (!previousResourceHash.isEmpty() &&
@@ -735,7 +628,7 @@ void NoteEditorPrivate::onResourceFileChanged(QString resourceLocalUid,
         (resource.dataSize() == resourceData.size()))
     {
         QNDEBUG("Neither resource hash nor binary data size has changed -> "
-                "the resource data has not actually changed, nothing to do");
+            << "the resource data has not actually changed, nothing to do");
         return;
     }
 
@@ -749,9 +642,9 @@ void NoteEditorPrivate::onResourceFileChanged(QString resourceLocalUid,
     resource.setRecognitionDataHash(QByteArray());
     resource.setRecognitionDataSize(-1);
 
-    QString resourceMimeTypeName = (resource.hasMime()
-                                    ? resource.mime()
-                                    : QString());
+    QString resourceMimeTypeName =
+        (resource.hasMime() ? resource.mime() : QString());
+
     QString resourceDisplayName = resource.displayName();
     QString resourceDisplaySize =
         humanReadableSize(static_cast<quint64>(resourceData.size()));
@@ -771,9 +664,14 @@ void NoteEditorPrivate::onResourceFileChanged(QString resourceLocalUid,
         }
 
         m_resourceInfo.removeResourceInfo(previousResourceHash);
-        m_resourceInfo.cacheResourceInfo(resourceDataHash, resourceDisplayName,
-                                         resourceDisplaySize, fileStoragePath,
-                                         resourceImageSize);
+
+        m_resourceInfo.cacheResourceInfo(
+            resourceDataHash,
+            resourceDisplayName,
+            resourceDisplaySize,
+            fileStoragePath,
+            resourceImageSize);
+
         updateHashForResourceTag(previousResourceHash, resourceDataHash);
     }
 
@@ -782,16 +680,19 @@ void NoteEditorPrivate::onResourceFileChanged(QString resourceLocalUid,
         removeSymlinksToImageResourceFile(resourceLocalUid);
 
         ErrorString errorDescription;
-        QString linkFilePath = createSymlinkToImageResourceFile(fileStoragePath,
-                                                                resourceLocalUid,
-                                                                errorDescription);
+        QString linkFilePath = createSymlinkToImageResourceFile(
+            fileStoragePath,
+            resourceLocalUid,
+            errorDescription);
+
         if (linkFilePath.isEmpty()) {
             QNWARNING(errorDescription);
             Q_EMIT notifyError(errorDescription);
             return;
         }
 
-        m_resourceFileStoragePathsByResourceLocalUid[resourceLocalUid] = linkFilePath;
+        m_resourceFileStoragePathsByResourceLocalUid[resourceLocalUid] =
+            linkFilePath;
 
         QSize resourceImageSize;
         if (resource.hasHeight() && resource.hasWidth()) {
@@ -799,9 +700,12 @@ void NoteEditorPrivate::onResourceFileChanged(QString resourceLocalUid,
             resourceImageSize.setWidth(resource.width());
         }
 
-        m_resourceInfo.cacheResourceInfo(resourceDataHash, resourceDisplayName,
-                                         resourceDisplaySize, linkFilePath,
-                                         resourceImageSize);
+        m_resourceInfo.cacheResourceInfo(
+            resourceDataHash,
+            resourceDisplayName,
+            resourceDisplaySize,
+            linkFilePath,
+            resourceImageSize);
 
         if (!m_pendingNotePageLoad)
         {
@@ -810,13 +714,11 @@ void NoteEditorPrivate::onResourceFileChanged(QString resourceLocalUid,
                 QStringLiteral("updateImageResourceSrc('") +
                 QString::fromLocal8Bit(resourceDataHash.toHex()) +
                 QStringLiteral("', '") + linkFilePath + QStringLiteral("', ") +
-                QString::number(resource.hasHeight()
-                                ? resource.height()
-                                : qint16(0)) +
+                QString::number(
+                    resource.hasHeight() ? resource.height() : qint16(0)) +
                 QStringLiteral(", ") +
-                QString::number(resource.hasWidth()
-                                ? resource.width()
-                                : qint16(0)) +
+                QString::number(
+                    resource.hasWidth() ? resource.width() : qint16(0)) +
                 QStringLiteral(");"));
         }
     }
@@ -839,11 +741,11 @@ void NoteEditorPrivate::onGenericResourceImageSaved(
     ErrorString errorDescription, QUuid requestId)
 {
     QNDEBUG("NoteEditorPrivate::onGenericResourceImageSaved: success = "
-            << (success ? "true" : "false")
-            << ", resource actual hash = " << resourceActualHash.toHex()
-            << ", file path = " << filePath
-            << ", error description = " << errorDescription
-            << ", requestId = " << requestId);
+        << (success ? "true" : "false")
+        << ", resource actual hash = " << resourceActualHash.toHex()
+        << ", file path = " << filePath
+        << ", error description = " << errorDescription
+        << ", requestId = " << requestId);
 
     auto it = m_saveGenericResourceImageToFileRequestIds.find(requestId);
     if (it == m_saveGenericResourceImageToFileRequestIds.end()) {
@@ -853,8 +755,11 @@ void NoteEditorPrivate::onGenericResourceImageSaved(
 
     Q_UNUSED(m_saveGenericResourceImageToFileRequestIds.erase(it));
 
-    if (Q_UNLIKELY(!success)) {
-        ErrorString error(QT_TR_NOOP("Can't save the generic resource image to file"));
+    if (Q_UNLIKELY(!success))
+    {
+        ErrorString error(
+            QT_TR_NOOP("Can't save the generic resource image to file"));
+
         error.appendBase(errorDescription.base());
         error.appendBase(errorDescription.additionalBases());
         error.details() = errorDescription.details();
@@ -862,9 +767,11 @@ void NoteEditorPrivate::onGenericResourceImageSaved(
         return;
     }
 
-    m_genericResourceImageFilePathsByResourceHash[resourceActualHash] = filePath;
+    m_genericResourceImageFilePathsByResourceHash[resourceActualHash] =
+        filePath;
+
     QNDEBUG("Cached generic resource image file path " << filePath
-            << " for resource hash " << resourceActualHash.toHex());
+        << " for resource hash " << resourceActualHash.toHex());
 
     if (m_saveGenericResourceImageToFileRequestIds.empty()) {
         provideSrcForGenericResourceImages();
@@ -902,10 +809,13 @@ void NoteEditorPrivate::onToDoCheckboxClicked(quint64 enToDoCheckboxId)
 
     ToDoCheckboxUndoCommand * pCommand =
         new ToDoCheckboxUndoCommand(enToDoCheckboxId, *this);
-    QObject::connect(pCommand,
-                     QNSIGNAL(ToDoCheckboxUndoCommand,notifyError,ErrorString),
-                     this,
-                     QNSLOT(NoteEditorPrivate,onUndoCommandError,ErrorString));
+
+    QObject::connect(
+        pCommand,
+        &ToDoCheckboxUndoCommand::notifyError,
+        this,
+        &NoteEditorPrivate::onUndoCommandError);
+
     m_pUndoStack->push(pCommand);
 }
 
@@ -916,7 +826,8 @@ void NoteEditorPrivate::onToDoCheckboxClickHandlerError(ErrorString error)
 }
 
 void NoteEditorPrivate::onToDoCheckboxInserted(
-    const QVariant & data, const QVector<std::pair<QString,QString>> & extraData)
+    const QVariant & data,
+    const QVector<std::pair<QString,QString>> & extraData)
 {
     QNDEBUG("NoteEditorPrivate::onToDoCheckboxInserted: " << data);
 
@@ -925,9 +836,11 @@ void NoteEditorPrivate::onToDoCheckboxInserted(
     QMap<QString,QVariant> resultMap = data.toMap();
 
     auto statusIt = resultMap.find(QStringLiteral("status"));
-    if (Q_UNLIKELY(statusIt == resultMap.end())) {
-        ErrorString error(QT_TR_NOOP("Can't parse the result of ToDo checkbox "
-                                     "insertion undo/redo from JavaScript"));
+    if (Q_UNLIKELY(statusIt == resultMap.end()))
+    {
+        ErrorString error(
+            QT_TR_NOOP("Can't parse the result of ToDo checkbox "
+                       "insertion undo/redo from JavaScript"));
         QNWARNING(error);
         Q_EMIT notifyError(error);
         return;
@@ -944,7 +857,8 @@ void NoteEditorPrivate::onToDoCheckboxInserted(
                                      "insertion undo/redo from JavaScript"));
         }
         else {
-            error.setBase(QT_TR_NOOP("Can't undo/redo the ToDo checkbox insertion"));
+            error.setBase(
+                QT_TR_NOOP("Can't undo/redo the ToDo checkbox insertion"));
             error.details() = errorIt.value().toString();
         }
 
@@ -960,11 +874,11 @@ void NoteEditorPrivate::onToDoCheckboxInserted(
                 this,
                 &NoteEditorPrivate::onToDoCheckboxAutomaticInsertionUndoRedoFinished));
 
-    QObject::connect(pCommand,
-                     QNSIGNAL(ToDoCheckboxAutomaticInsertionUndoCommand,notifyError,
-                              ErrorString),
-                     this,
-                     QNSLOT(NoteEditorPrivate,onUndoCommandError,ErrorString));
+    QObject::connect(
+        pCommand,
+        &ToDoCheckboxAutomaticInsertionUndoCommand::notifyError,
+        this,
+        &NoteEditorPrivate::onUndoCommandError);
 
     m_pUndoStack->push(pCommand);
 
@@ -982,11 +896,11 @@ void NoteEditorPrivate::onToDoCheckboxAutomaticInsertion()
                 this,
                 &NoteEditorPrivate::onToDoCheckboxAutomaticInsertionUndoRedoFinished));
 
-    QObject::connect(pCommand,
-                     QNSIGNAL(ToDoCheckboxAutomaticInsertionUndoCommand,notifyError,
-                              ErrorString),
-                     this,
-                     QNSLOT(NoteEditorPrivate,onUndoCommandError,ErrorString));
+    QObject::connect(
+        pCommand,
+        &ToDoCheckboxAutomaticInsertionUndoCommand::notifyError,
+        this,
+        &NoteEditorPrivate::onUndoCommandError);
 
     m_pUndoStack->push(pCommand);
 
@@ -995,19 +909,22 @@ void NoteEditorPrivate::onToDoCheckboxAutomaticInsertion()
 }
 
 void NoteEditorPrivate::onToDoCheckboxAutomaticInsertionUndoRedoFinished(
-    const QVariant & data, const QVector<std::pair<QString,QString>> & extraData)
+    const QVariant & data,
+    const QVector<std::pair<QString,QString>> & extraData)
 {
     QNDEBUG("NoteEditorPrivate::onToDoCheckboxAutomaticInsertion"
-            << "UndoRedoFinished: " << data);
+        << "UndoRedoFinished: " << data);
 
     Q_UNUSED(extraData)
 
     QMap<QString,QVariant> resultMap = data.toMap();
 
     auto statusIt = resultMap.find(QStringLiteral("status"));
-    if (Q_UNLIKELY(statusIt == resultMap.end())) {
-        ErrorString error(QT_TR_NOOP("Can't parse the result of ToDo checkbox "
-                                     "automatic insertion undo/redo from JavaScript"));
+    if (Q_UNLIKELY(statusIt == resultMap.end()))
+    {
+        ErrorString error(
+            QT_TR_NOOP("Can't parse the result of ToDo checkbox "
+                       "automatic insertion undo/redo from JavaScript"));
         QNWARNING(error);
         Q_EMIT notifyError(error);
         return;
@@ -1020,12 +937,14 @@ void NoteEditorPrivate::onToDoCheckboxAutomaticInsertionUndoRedoFinished(
 
         auto errorIt = resultMap.find(QStringLiteral("error"));
         if (Q_UNLIKELY(errorIt == resultMap.end())) {
-            error.setBase(QT_TR_NOOP("Can't parse the error of ToDo checkbox "
-                                     "automatic insertion undo/redo from JavaScript"));
+            error.setBase(
+                QT_TR_NOOP("Can't parse the error of ToDo checkbox "
+                           "automatic insertion undo/redo from JavaScript"));
         }
         else {
-            error.setBase(QT_TR_NOOP("Can't undo/redo the ToDo checkbox automatic "
-                                     "insertion"));
+            error.setBase(
+                QT_TR_NOOP("Can't undo/redo the ToDo checkbox automatic "
+                           "insertion"));
             error.details() = errorIt.value().toString();
         }
 
@@ -1044,14 +963,14 @@ void NoteEditorPrivate::onJavaScriptLoaded()
     NoteEditorPage * pSenderPage = qobject_cast<NoteEditorPage*>(sender());
     if (Q_UNLIKELY(!pSenderPage)) {
         QNWARNING("Can't get the pointer to NoteEditor page from "
-                  "which the event of JavaScrupt loading came in");
+            << "which the event of JavaScrupt loading came in");
         return;
     }
 
     GET_PAGE()
     if (page != pSenderPage) {
         QNDEBUG("Skipping JavaScript loaded event from page "
-                "which is not the currently set one");
+            << "which is not the currently set one");
         return;
     }
 
@@ -1061,13 +980,13 @@ void NoteEditorPrivate::onJavaScriptLoaded()
 
         if (Q_UNLIKELY(!m_pNote)) {
             QNDEBUG("No note is set to the editor, won't retrieve "
-                    "the editor content's html");
+                << "the editor content's html");
             return;
         }
 
         if (Q_UNLIKELY(!m_pNotebook)) {
             QNDEBUG("No notebook is set to the editor, won't "
-                    "retrieve the editor content's html");
+                << "retrieve the editor content's html");
             return;
         }
 
@@ -1075,8 +994,10 @@ void NoteEditorPrivate::onJavaScriptLoaded()
         m_htmlCachedMemory = page->mainFrame()->toHtml();
         onPageHtmlReceived(m_htmlCachedMemory);
 #else
-        page->toHtml(NoteEditorCallbackFunctor<QString>(
-                this, &NoteEditorPrivate::onPageHtmlReceived));
+        page->toHtml(
+            NoteEditorCallbackFunctor<QString>(
+                this,
+                &NoteEditorPrivate::onPageHtmlReceived));
 #endif
 
         QNTRACE("Emitting noteLoaded signal");
@@ -4281,10 +4202,10 @@ void NoteEditorPrivate::highlightRecognizedImageAreas(
 }
 
 void NoteEditorPrivate::clearEditorContent(
-    const BlankPageKind::type kind, const ErrorString & errorDescription)
+    const BlankPageKind kind, const ErrorString & errorDescription)
 {
     QNDEBUG("NoteEditorPrivate::clearEditorContent: blank page kind = "
-            << kind << ", error description = " << errorDescription);
+        << kind << ", error description = " << errorDescription);
 
     if (m_pageToNoteContentPostponeTimerId != 0) {
         killTimer(m_pageToNoteContentPostponeTimerId);
@@ -11142,7 +11063,41 @@ void NoteEditorPrivate::escapeStringForJavaScript(QString & str) const
     ENMLConverter::escapeString(str, /* simplify = */ false);
 }
 
+////////////////////////////////////////////////////////////////////////////////
+
+QDebug & operator<<(
+    QDebug & dbg, const NoteEditorPrivate::BlankPageKind kind)
+{
+    using BlankPageKind = NoteEditorPrivate::BlankPageKind;
+
+    switch(kind)
+    {
+        case BlankPageKind::Initial:
+            dbg << "Initial";
+            break;
+        case BlankPageKind::NoteNotFound:
+            dbg << "Note not found";
+            break;
+        case BlankPageKind::NoteDeleted:
+            dbg << "Note deleted";
+            break;
+        case BlankPageKind::NoteLoading:
+            dbg << "Note loading";
+            break;
+        case BlankPageKind::InternalError:
+            dbg << "Internal error";
+            break;
+        default:
+            dbg << "Unknown (" << static_cast<qint64>(kind) << ")";
+            break;
+    }
+
+    return dbg;
+}
+
 } // namespace quentier
+
+////////////////////////////////////////////////////////////////////////////////
 
 void initNoteEditorResources()
 {
