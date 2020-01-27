@@ -56,6 +56,7 @@ typedef QWebView WebView;
 typedef QWebPage WebPage;
 #endif
 
+#include <vector>
 #include <utility>
 
 QT_FORWARD_DECLARE_CLASS(QByteArray)
@@ -1332,7 +1333,7 @@ private:
     QProgressDialog *   m_pPrepareNoteImageResourcesProgressDialog = nullptr;
 
     // Progress dialogs for note resources requested to be opened
-    QVector<std::pair<QString, QProgressDialog*>>  m_prepareResourceForOpeningProgressDialogs;
+    std::vector<std::pair<QString, QProgressDialog*>>  m_prepareResourceForOpeningProgressDialogs;
 
     QMenu *             m_pGenericTextContextMenu = nullptr;
     QMenu *             m_pImageResourceContextMenu = nullptr;
