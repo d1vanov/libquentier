@@ -5815,7 +5815,7 @@ void NoteEditorPrivate::setupImageResourceContextMenu(
     const QByteArray & resourceHash)
 {
     QNDEBUG("NoteEditorPrivate::setupImageResourceContextMenu: "
-            << "resource hash = " << resourceHash.toHex());
+        << "resource hash = " << resourceHash.toHex());
 
     m_currentContextMenuExtraData.m_resourceHash = resourceHash;
 
@@ -5824,39 +5824,53 @@ void NoteEditorPrivate::setupImageResourceContextMenu(
 
     bool enabled = true;
 
-    ADD_ACTION_WITH_SHORTCUT(ShortcutManager::CopyAttachment, tr("Copy"),
-                             m_pImageResourceContextMenu,
-                             copyAttachmentUnderCursor, enabled);
+    ADD_ACTION_WITH_SHORTCUT(
+        ShortcutManager::CopyAttachment,
+        tr("Copy"),
+        m_pImageResourceContextMenu,
+        copyAttachmentUnderCursor, enabled);
 
-    bool canRemoveResource =
-        m_isPageEditable &&
-        (m_pAccount
-         ? (m_pAccount->type() != Account::Type::Evernote)
-         : false);
-    ADD_ACTION_WITH_SHORTCUT(ShortcutManager::RemoveAttachment, tr("Remove"),
-                             m_pImageResourceContextMenu,
-                             removeAttachmentUnderCursor,
-                             canRemoveResource);
+    bool canRemoveResource = m_isPageEditable && m_pAccount &&
+        (m_pAccount->type() != Account::Type::Evernote);
 
-    Q_UNUSED(m_pImageResourceContextMenu->addSeparator());
-
-    ADD_ACTION_WITH_SHORTCUT(ShortcutManager::ImageRotateClockwise,
-                             tr("Rotate clockwise"), m_pImageResourceContextMenu,
-                             rotateImageAttachmentUnderCursorClockwise, m_isPageEditable);
-    ADD_ACTION_WITH_SHORTCUT(ShortcutManager::ImageRotateCounterClockwise,
-                             tr("Rotate countercloskwise"), m_pImageResourceContextMenu,
-                             rotateImageAttachmentUnderCursorCounterclockwise,
-                             m_isPageEditable);
+    ADD_ACTION_WITH_SHORTCUT(
+        ShortcutManager::RemoveAttachment,
+        tr("Remove"),
+        m_pImageResourceContextMenu,
+        removeAttachmentUnderCursor,
+        canRemoveResource);
 
     Q_UNUSED(m_pImageResourceContextMenu->addSeparator());
 
-    ADD_ACTION_WITH_SHORTCUT(ShortcutManager::OpenAttachment, tr("Open"),
-                             m_pImageResourceContextMenu,
-                             openAttachmentUnderCursor, m_isPageEditable);
-    ADD_ACTION_WITH_SHORTCUT(ShortcutManager::SaveAttachment,
-                             tr("Save as") + QStringLiteral("..."),
-                             m_pImageResourceContextMenu,
-                             saveAttachmentUnderCursor, enabled);
+    ADD_ACTION_WITH_SHORTCUT(
+        ShortcutManager::ImageRotateClockwise,
+        tr("Rotate clockwise"),
+        m_pImageResourceContextMenu,
+        rotateImageAttachmentUnderCursorClockwise,
+        m_isPageEditable);
+
+    ADD_ACTION_WITH_SHORTCUT(
+        ShortcutManager::ImageRotateCounterClockwise,
+        tr("Rotate countercloskwise"),
+        m_pImageResourceContextMenu,
+        rotateImageAttachmentUnderCursorCounterclockwise,
+        m_isPageEditable);
+
+    Q_UNUSED(m_pImageResourceContextMenu->addSeparator());
+
+    ADD_ACTION_WITH_SHORTCUT(
+        ShortcutManager::OpenAttachment,
+        tr("Open"),
+        m_pImageResourceContextMenu,
+        openAttachmentUnderCursor,
+        m_isPageEditable);
+
+    ADD_ACTION_WITH_SHORTCUT(
+        ShortcutManager::SaveAttachment,
+        tr("Save as") + QStringLiteral("..."),
+        m_pImageResourceContextMenu,
+        saveAttachmentUnderCursor,
+        enabled);
 
     m_pImageResourceContextMenu->exec(m_lastContextMenuEventGlobalPos);
 }
@@ -5865,7 +5879,7 @@ void NoteEditorPrivate::setupNonImageResourceContextMenu(
     const QByteArray & resourceHash)
 {
     QNDEBUG("NoteEditorPrivate::setupNonImageResourceContextMenu: "
-            << "resource hash = " << resourceHash.toHex());
+        << "resource hash = " << resourceHash.toHex());
 
     m_currentContextMenuExtraData.m_resourceHash = resourceHash;
 
@@ -5874,29 +5888,41 @@ void NoteEditorPrivate::setupNonImageResourceContextMenu(
 
     bool enabled = true;
 
-    ADD_ACTION_WITH_SHORTCUT(QKeySequence::Copy, tr("Copy"),
-                             m_pNonImageResourceContextMenu, copy, enabled);
+    ADD_ACTION_WITH_SHORTCUT(
+        QKeySequence::Copy,
+        tr("Copy"),
+        m_pNonImageResourceContextMenu,
+        copy,
+        enabled);
 
-    bool canRemoveResource =
-        m_isPageEditable &&
-        (m_pAccount
-         ? (m_pAccount->type() != Account::Type::Evernote)
-         : false);
-    ADD_ACTION_WITH_SHORTCUT(ShortcutManager::RemoveAttachment, tr("Remove"),
-                             m_pNonImageResourceContextMenu,
-                             removeAttachmentUnderCursor, canRemoveResource);
+    bool canRemoveResource = m_isPageEditable && m_pAccount &&
+        (m_pAccount->type() != Account::Type::Evernote);
 
-    ADD_ACTION_WITH_SHORTCUT(ShortcutManager::RenameAttachment, tr("Rename"),
-                             m_pNonImageResourceContextMenu,
-                             renameAttachmentUnderCursor, m_isPageEditable);
+    ADD_ACTION_WITH_SHORTCUT(
+        ShortcutManager::RemoveAttachment,
+        tr("Remove"),
+        m_pNonImageResourceContextMenu,
+        removeAttachmentUnderCursor,
+        canRemoveResource);
+
+    ADD_ACTION_WITH_SHORTCUT(
+        ShortcutManager::RenameAttachment,
+        tr("Rename"),
+        m_pNonImageResourceContextMenu,
+        renameAttachmentUnderCursor,
+        m_isPageEditable);
 
     QClipboard * pClipboard = QApplication::clipboard();
     if (pClipboard && pClipboard->mimeData(QClipboard::Clipboard))
     {
         QNTRACE("Clipboard buffer has something, adding paste action");
-        ADD_ACTION_WITH_SHORTCUT(QKeySequence::Paste, tr("Paste"),
-                                 m_pNonImageResourceContextMenu, paste,
-                                 m_isPageEditable);
+
+        ADD_ACTION_WITH_SHORTCUT(
+            QKeySequence::Paste,
+            tr("Paste"),
+            m_pNonImageResourceContextMenu,
+            paste,
+            m_isPageEditable);
     }
 
     m_pNonImageResourceContextMenu->exec(m_lastContextMenuEventGlobalPos);
@@ -5908,9 +5934,9 @@ void NoteEditorPrivate::setupEncryptedTextContextMenu(
     const QString & id)
 {
     QNDEBUG("NoteEditorPrivate::setupEncryptedTextContextMenu: "
-            << "cipher = " << cipher << ", key length = " << keyLength
-            << ", encrypted text = " << encryptedText << ", hint = " << hint
-            << ", en-crypt-id = " << id);
+        << "cipher = " << cipher << ", key length = " << keyLength
+        << ", encrypted text = " << encryptedText << ", hint = " << hint
+        << ", en-crypt-id = " << id);
 
     m_currentContextMenuExtraData.m_encryptedText = encryptedText;
     m_currentContextMenuExtraData.m_keyLength = keyLength;
@@ -5921,10 +5947,12 @@ void NoteEditorPrivate::setupEncryptedTextContextMenu(
     delete m_pEncryptedTextContextMenu;
     m_pEncryptedTextContextMenu = new QMenu(this);
 
-    ADD_ACTION_WITH_SHORTCUT(ShortcutManager::Decrypt,
-                             tr("Decrypt") + QStringLiteral("..."),
-                             m_pEncryptedTextContextMenu,
-                             decryptEncryptedTextUnderCursor, m_isPageEditable);
+    ADD_ACTION_WITH_SHORTCUT(
+        ShortcutManager::Decrypt,
+        tr("Decrypt") + QStringLiteral("..."),
+        m_pEncryptedTextContextMenu,
+        decryptEncryptedTextUnderCursor,
+        m_isPageEditable);
 
     m_pEncryptedTextContextMenu->exec(m_lastContextMenuEventGlobalPos);
 }
@@ -5934,7 +5962,7 @@ void NoteEditorPrivate::setupActionShortcut(
 {
     if (Q_UNLIKELY(!m_pAccount)) {
         QNDEBUG("Can't set shortcut to the action: no account "
-                "is set to the note editor");
+            << "is set to the note editor");
         return;
     }
 
@@ -5942,8 +5970,8 @@ void NoteEditorPrivate::setupActionShortcut(
     QKeySequence shortcut = shortcutManager.shortcut(key, *m_pAccount, context);
     if (!shortcut.isEmpty()) {
         QNTRACE("Setting shortcut " << shortcut
-                << " for action " << action.objectName()
-                << " (" << action.text() << ")");
+            << " for action " << action.objectName()
+            << " (" << action.text() << ")");
         action.setShortcut(shortcut);
     }
 }
@@ -5952,24 +5980,23 @@ void NoteEditorPrivate::setupFileIO()
 {
     QNDEBUG("NoteEditorPrivate::setupFileIO");
 
-    QObject::connect(this,
-                     QNSIGNAL(NoteEditorPrivate,writeNoteHtmlToFile,
-                              QString,QByteArray,QUuid,bool),
-                     m_pFileIOProcessorAsync,
-                     QNSLOT(FileIOProcessorAsync,onWriteFileRequest,
-                            QString,QByteArray,QUuid,bool));
-    QObject::connect(this,
-                     QNSIGNAL(NoteEditorPrivate,saveResourceToFile,
-                              QString,QByteArray,QUuid,bool),
-                     m_pFileIOProcessorAsync,
-                     QNSLOT(FileIOProcessorAsync,onWriteFileRequest,
-                            QString,QByteArray,QUuid,bool));
-    QObject::connect(m_pFileIOProcessorAsync,
-                     QNSIGNAL(FileIOProcessorAsync,writeFileRequestProcessed,
-                              bool,ErrorString,QUuid),
-                     this,
-                     QNSLOT(NoteEditorPrivate,onWriteFileRequestProcessed,
-                            bool,ErrorString,QUuid));
+    QObject::connect(
+        this,
+        &NoteEditorPrivate::writeNoteHtmlToFile,
+        m_pFileIOProcessorAsync,
+        &FileIOProcessorAsync::onWriteFileRequest);
+
+    QObject::connect(
+        this,
+        &NoteEditorPrivate::saveResourceToFile,
+        m_pFileIOProcessorAsync,
+        &FileIOProcessorAsync::onWriteFileRequest);
+
+    QObject::connect(
+        m_pFileIOProcessorAsync,
+        &FileIOProcessorAsync::writeFileRequestProcessed,
+        this,
+        &NoteEditorPrivate::onWriteFileRequestProcessed);
 
     if (m_pResourceDataInTemporaryFileStorageManager) {
         m_pResourceDataInTemporaryFileStorageManager->deleteLater();
@@ -5981,77 +6008,71 @@ void NoteEditorPrivate::setupFileIO()
     m_pResourceDataInTemporaryFileStorageManager->moveToThread(
         m_pFileIOProcessorAsync->thread());
 
-    QObject::connect(this,
-                     QNSIGNAL(NoteEditorPrivate,currentNoteChanged,Note),
-                     m_pResourceDataInTemporaryFileStorageManager,
-                     QNSLOT(ResourceDataInTemporaryFileStorageManager,
-                            onCurrentNoteChanged,Note));
-    QObject::connect(this,
-                     QNSIGNAL(NoteEditorPrivate,convertedToNote,Note),
-                     m_pResourceDataInTemporaryFileStorageManager,
-                     QNSLOT(ResourceDataInTemporaryFileStorageManager,
-                            onCurrentNoteChanged,Note));
+    QObject::connect(
+        this,
+        &NoteEditorPrivate::currentNoteChanged,
+        m_pResourceDataInTemporaryFileStorageManager,
+        &ResourceDataInTemporaryFileStorageManager::onCurrentNoteChanged);
 
-    QObject::connect(m_pResourceDataInTemporaryFileStorageManager,
-                     QNSIGNAL(ResourceDataInTemporaryFileStorageManager,
-                              failedToPutResourceDataIntoTemporaryFile,
-                              QString,QString,ErrorString),
-                     this,
-                     QNSLOT(NoteEditorPrivate,onFailedToPutResourceDataInTemporaryFile,
-                            QString,QString,ErrorString));
-    QObject::connect(m_pResourceDataInTemporaryFileStorageManager,
-                     QNSIGNAL(ResourceDataInTemporaryFileStorageManager,
-                              noteResourcesPreparationProgress,double,QString),
-                     this,
-                     QNSLOT(NoteEditorPrivate,
-                            onNoteResourceTemporaryFilesPreparationProgress,
-                            double,QString));
-    QObject::connect(m_pResourceDataInTemporaryFileStorageManager,
-                     QNSIGNAL(ResourceDataInTemporaryFileStorageManager,
-                              noteResourcesPreparationError,QString,ErrorString),
-                     this,
-                     QNSLOT(NoteEditorPrivate,
-                            onNoteResourceTemporaryFilesPreparationError,
-                            QString,ErrorString));
-    QObject::connect(m_pResourceDataInTemporaryFileStorageManager,
-                     QNSIGNAL(ResourceDataInTemporaryFileStorageManager,
-                              noteResourcesReady,QString),
-                     this,
-                     QNSLOT(NoteEditorPrivate,onNoteResourceTemporaryFilesReady,
-                            QString));
-    QObject::connect(m_pResourceDataInTemporaryFileStorageManager,
-                     QNSIGNAL(ResourceDataInTemporaryFileStorageManager,
-                              openResourcePreparationProgress,
-                              double,QString,QString),
-                     this,
-                     QNSLOT(NoteEditorPrivate,
-                            onOpenResourceInExternalEditorPreparationProgress,
-                            double,QString,QString));
-    QObject::connect(m_pResourceDataInTemporaryFileStorageManager,
-                     QNSIGNAL(ResourceDataInTemporaryFileStorageManager,
-                              failedToOpenResource,QString,QString,ErrorString),
-                     this,
-                     QNSLOT(NoteEditorPrivate,onFailedToOpenResourceInExternalEditor,
-                            QString,QString,ErrorString));
-    QObject::connect(m_pResourceDataInTemporaryFileStorageManager,
-                     QNSIGNAL(ResourceDataInTemporaryFileStorageManager,
-                              openedResource,QString,QString),
-                     this,
-                     QNSLOT(NoteEditorPrivate,onOpenedResourceInExternalEditor,
-                            QString,QString));
+    QObject::connect(
+        this,
+        &NoteEditorPrivate::convertedToNote,
+        m_pResourceDataInTemporaryFileStorageManager,
+        &ResourceDataInTemporaryFileStorageManager::onCurrentNoteChanged);
 
-    QObject::connect(this,
-                     QNSIGNAL(NoteEditorPrivate,openResourceFile,QString),
-                     m_pResourceDataInTemporaryFileStorageManager,
-                     QNSLOT(ResourceDataInTemporaryFileStorageManager,
-                            onOpenResourceRequest,QString));
-    QObject::connect(m_pResourceDataInTemporaryFileStorageManager,
-                     QNSIGNAL(ResourceDataInTemporaryFileStorageManager,
-                              resourceFileChanged,
-                              QString,QString,QByteArray,QByteArray),
-                     this,
-                     QNSLOT(NoteEditorPrivate,onResourceFileChanged,
-                            QString,QString,QByteArray,QByteArray));
+    QObject::connect(
+        m_pResourceDataInTemporaryFileStorageManager,
+        &ResourceDataInTemporaryFileStorageManager::failedToPutResourceDataIntoTemporaryFile,
+        this,
+        &NoteEditorPrivate::onFailedToPutResourceDataInTemporaryFile);
+
+    QObject::connect(
+        m_pResourceDataInTemporaryFileStorageManager,
+        &ResourceDataInTemporaryFileStorageManager::noteResourcesPreparationProgress,
+        this,
+        &NoteEditorPrivate::onNoteResourceTemporaryFilesPreparationProgress);
+
+    QObject::connect(
+        m_pResourceDataInTemporaryFileStorageManager,
+        &ResourceDataInTemporaryFileStorageManager::noteResourcesPreparationError,
+        this,
+        &NoteEditorPrivate::onNoteResourceTemporaryFilesPreparationError);
+
+    QObject::connect(
+        m_pResourceDataInTemporaryFileStorageManager,
+        &ResourceDataInTemporaryFileStorageManager::noteResourcesReady,
+        this,
+        &NoteEditorPrivate::onNoteResourceTemporaryFilesReady);
+
+    QObject::connect(
+        m_pResourceDataInTemporaryFileStorageManager,
+        &ResourceDataInTemporaryFileStorageManager::openResourcePreparationProgress,
+        this,
+        &NoteEditorPrivate::onOpenResourceInExternalEditorPreparationProgress);
+
+    QObject::connect(
+        m_pResourceDataInTemporaryFileStorageManager,
+        &ResourceDataInTemporaryFileStorageManager::failedToOpenResource,
+        this,
+        &NoteEditorPrivate::onFailedToOpenResourceInExternalEditor);
+
+    QObject::connect(
+        m_pResourceDataInTemporaryFileStorageManager,
+        &ResourceDataInTemporaryFileStorageManager::openedResource,
+        this,
+        &NoteEditorPrivate::onOpenedResourceInExternalEditor);
+
+    QObject::connect(
+        this,
+        &NoteEditorPrivate::openResourceFile,
+        m_pResourceDataInTemporaryFileStorageManager,
+        &ResourceDataInTemporaryFileStorageManager::onOpenResourceRequest);
+
+    QObject::connect(
+        m_pResourceDataInTemporaryFileStorageManager,
+        &ResourceDataInTemporaryFileStorageManager::resourceFileChanged,
+        this,
+        &NoteEditorPrivate::onResourceFileChanged);
 
     if (m_pGenericResourceImageManager) {
         m_pGenericResourceImageManager->deleteLater();
@@ -6061,29 +6082,27 @@ void NoteEditorPrivate::setupFileIO()
     m_pGenericResourceImageManager = new GenericResourceImageManager;
     m_pGenericResourceImageManager->setStorageFolderPath(
         m_genericResourceImageFileStoragePath);
-    m_pGenericResourceImageManager->moveToThread(m_pFileIOProcessorAsync->thread());
+    m_pGenericResourceImageManager->moveToThread(
+        m_pFileIOProcessorAsync->thread());
 
 #ifdef QUENTIER_USE_QT_WEB_ENGINE
-    QObject::connect(this,
-                     QNSIGNAL(NoteEditorPrivate,saveGenericResourceImageToFile,
-                              QString,QString,QByteArray,QString,
-                              QByteArray,QString,QUuid),
-                     m_pGenericResourceImageManager,
-                     QNSLOT(GenericResourceImageManager,
-                            onGenericResourceImageWriteRequest,
-                            QString,QString,QByteArray,QString,
-                            QByteArray,QString,QUuid));
-    QObject::connect(m_pGenericResourceImageManager,
-                     QNSIGNAL(GenericResourceImageManager,
-                              genericResourceImageWriteReply,
-                              bool,QByteArray,QString,ErrorString,QUuid),
-                     this,
-                     QNSLOT(NoteEditorPrivate,onGenericResourceImageSaved,
-                            bool,QByteArray,QString,ErrorString,QUuid));
-    QObject::connect(this,
-                     QNSIGNAL(NoteEditorPrivate,currentNoteChanged,Note),
-                     m_pGenericResourceImageManager,
-                     QNSLOT(GenericResourceImageManager,onCurrentNoteChanged,Note));
+    QObject::connect(
+        this,
+        &NoteEditorPrivate::saveGenericResourceImageToFile,
+        m_pGenericResourceImageManager,
+        &GenericResourceImageManager::onGenericResourceImageWriteRequest);
+
+    QObject::connect(
+        m_pGenericResourceImageManager,
+        &GenericResourceImageManager::genericResourceImageWriteReply,
+        this,
+        &NoteEditorPrivate::onGenericResourceImageSaved);
+
+    QObject::connect(
+        this,
+        &NoteEditorPrivate::currentNoteChanged,
+        m_pGenericResourceImageManager,
+        &GenericResourceImageManager::onCurrentNoteChanged);
 #endif
 }
 
@@ -6091,14 +6110,20 @@ void NoteEditorPrivate::setupSpellChecker()
 {
     QNDEBUG("NoteEditorPrivate::setupSpellChecker");
 
-    QUENTIER_CHECK_PTR(m_pSpellChecker, QStringLiteral("no spell checker was "
-                                                       "passed to note editor"));
+    QUENTIER_CHECK_PTR(
+        m_pSpellChecker,
+        QStringLiteral("no spell checker was passed to note editor"));
 
-    if (!m_pSpellChecker->isReady()) {
-        QObject::connect(m_pSpellChecker, QNSIGNAL(SpellChecker,ready),
-                         this, QNSLOT(NoteEditorPrivate,onSpellCheckerReady));
+    if (!m_pSpellChecker->isReady())
+    {
+        QObject::connect(
+            m_pSpellChecker,
+            &SpellChecker::ready,
+            this,
+            &NoteEditorPrivate::onSpellCheckerReady);
     }
-    else {
+    else
+    {
         onSpellCheckerReady();
     }
 }
@@ -6120,66 +6145,138 @@ void NoteEditorPrivate::setupScripts()
 
     SETUP_SCRIPT("javascript/jquery/jquery-2.1.3.min.js", m_jQueryJs);
     SETUP_SCRIPT("javascript/jquery/jquery-ui.min.js", m_jQueryUiJs);
-    SETUP_SCRIPT("javascript/scripts/pageMutationObserver.js",
-                 m_pageMutationObserverJs);
-    SETUP_SCRIPT("javascript/colResizable/colResizable-1.5.min.js",
-                 m_resizableTableColumnsJs);
-    SETUP_SCRIPT("javascript/scripts/resizableImageManager.js",
-                 m_resizableImageManagerJs);
+
+    SETUP_SCRIPT(
+        "javascript/scripts/pageMutationObserver.js",
+        m_pageMutationObserverJs);
+
+    SETUP_SCRIPT(
+        "javascript/colResizable/colResizable-1.5.min.js",
+        m_resizableTableColumnsJs);
+
+    SETUP_SCRIPT(
+        "javascript/scripts/resizableImageManager.js",
+        m_resizableImageManagerJs);
+
     SETUP_SCRIPT("javascript/debounce/jquery.debounce-1.0.5.js", m_debounceJs);
     SETUP_SCRIPT("javascript/rangy/rangy-core.js", m_rangyCoreJs);
-    SETUP_SCRIPT("javascript/rangy/rangy-selectionsaverestore.js",
-                 m_rangySelectionSaveRestoreJs);
+
+    SETUP_SCRIPT(
+        "javascript/rangy/rangy-selectionsaverestore.js",
+        m_rangySelectionSaveRestoreJs);
+
     SETUP_SCRIPT("javascript/hilitor/hilitor-utf8.js", m_hilitorJs);
-    SETUP_SCRIPT("javascript/scripts/imageAreasHilitor.js",
-                 m_imageAreasHilitorJs);
+
+    SETUP_SCRIPT(
+        "javascript/scripts/imageAreasHilitor.js",
+        m_imageAreasHilitorJs);
+
     SETUP_SCRIPT("javascript/scripts/onTableResize.js", m_onTableResizeJs);
-    SETUP_SCRIPT("javascript/scripts/nodeUndoRedoManager.js",
-                 m_nodeUndoRedoManagerJs);
-    SETUP_SCRIPT("javascript/scripts/selectionManager.js", m_selectionManagerJs);
-    SETUP_SCRIPT("javascript/scripts/textEditingUndoRedoManager.js",
-                 m_textEditingUndoRedoManagerJs);
-    SETUP_SCRIPT("javascript/scripts/getSelectionHtml.js", m_getSelectionHtmlJs);
-    SETUP_SCRIPT("javascript/scripts/snapSelectionToWord.js",
-                 m_snapSelectionToWordJs);
-    SETUP_SCRIPT("javascript/scripts/replaceSelectionWithHtml.js",
-                 m_replaceSelectionWithHtmlJs);
-    SETUP_SCRIPT("javascript/scripts/findReplaceManager.js",
-                 m_findReplaceManagerJs);
+
+    SETUP_SCRIPT(
+        "javascript/scripts/nodeUndoRedoManager.js",
+        m_nodeUndoRedoManagerJs);
+
+    SETUP_SCRIPT(
+        "javascript/scripts/selectionManager.js",
+        m_selectionManagerJs);
+
+    SETUP_SCRIPT(
+        "javascript/scripts/textEditingUndoRedoManager.js",
+        m_textEditingUndoRedoManagerJs);
+
+    SETUP_SCRIPT(
+        "javascript/scripts/getSelectionHtml.js",
+        m_getSelectionHtmlJs);
+
+    SETUP_SCRIPT(
+        "javascript/scripts/snapSelectionToWord.js",
+        m_snapSelectionToWordJs);
+
+    SETUP_SCRIPT(
+        "javascript/scripts/replaceSelectionWithHtml.js",
+        m_replaceSelectionWithHtmlJs);
+
+    SETUP_SCRIPT(
+        "javascript/scripts/findReplaceManager.js",
+        m_findReplaceManagerJs);
+
     SETUP_SCRIPT("javascript/scripts/spellChecker.js", m_spellCheckerJs);
-    SETUP_SCRIPT("javascript/scripts/managedPageAction.js", m_managedPageActionJs);
-    SETUP_SCRIPT("javascript/scripts/setInitialCaretPosition.js",
-                 m_setInitialCaretPositionJs);
-    SETUP_SCRIPT("javascript/scripts/toDoCheckboxAutomaticInserter.js",
-                 m_toDoCheckboxAutomaticInsertionJs);
+
+    SETUP_SCRIPT(
+        "javascript/scripts/managedPageAction.js",
+        m_managedPageActionJs);
+
+    SETUP_SCRIPT(
+        "javascript/scripts/setInitialCaretPosition.js",
+        m_setInitialCaretPositionJs);
+
+    SETUP_SCRIPT(
+        "javascript/scripts/toDoCheckboxAutomaticInserter.js",
+        m_toDoCheckboxAutomaticInsertionJs);
+
     SETUP_SCRIPT("javascript/scripts/disablePaste.js", m_disablePasteJs);
-    SETUP_SCRIPT("javascript/scripts/updateResourceHash.js",
-                 m_updateResourceHashJs);
-    SETUP_SCRIPT("javascript/scripts/updateImageResourceSrc.js",
-                 m_updateImageResourceSrcJs);
-    SETUP_SCRIPT("javascript/scripts/provideSrcForResourceImgTags.js",
-                 m_provideSrcForResourceImgTagsJs);
-    SETUP_SCRIPT("javascript/scripts/onResourceInfoReceived.js",
-                 m_onResourceInfoReceivedJs);
-    SETUP_SCRIPT("javascript/scripts/findInnermostElement.js",
-                 m_findInnermostElementJs);
-    SETUP_SCRIPT("javascript/scripts/determineStatesForCurrentTextCursorPosition.js",
-                 m_determineStatesForCurrentTextCursorPositionJs);
-    SETUP_SCRIPT("javascript/scripts/determineContextMenuEventTarget.js",
-                 m_determineContextMenuEventTargetJs);
-    SETUP_SCRIPT("javascript/scripts/tableManager.js", m_tableManagerJs);
-    SETUP_SCRIPT("javascript/scripts/resourceManager.js", m_resourceManagerJs);
-    SETUP_SCRIPT("javascript/scripts/htmlInsertionManager.js",
-                 m_htmlInsertionManagerJs);
-    SETUP_SCRIPT("javascript/scripts/sourceCodeFormatter.js",
-                 m_sourceCodeFormatterJs);
-    SETUP_SCRIPT("javascript/scripts/hyperlinkManager.js", m_hyperlinkManagerJs);
-    SETUP_SCRIPT("javascript/scripts/encryptDecryptManager.js",
-                 m_encryptDecryptManagerJs);
-    SETUP_SCRIPT("javascript/scripts/findAndReplaceDOMText.js",
-                 m_findAndReplaceDOMTextJs);
-    SETUP_SCRIPT("javascript/scripts/tabAndShiftTabToIndentAndUnindentReplacer.js",
-                 m_tabAndShiftTabIndentAndUnindentReplacerJs);
+
+    SETUP_SCRIPT(
+        "javascript/scripts/updateResourceHash.js",
+        m_updateResourceHashJs);
+
+    SETUP_SCRIPT(
+        "javascript/scripts/updateImageResourceSrc.js",
+        m_updateImageResourceSrcJs);
+
+    SETUP_SCRIPT(
+        "javascript/scripts/provideSrcForResourceImgTags.js",
+        m_provideSrcForResourceImgTagsJs);
+
+    SETUP_SCRIPT(
+        "javascript/scripts/onResourceInfoReceived.js",
+        m_onResourceInfoReceivedJs);
+
+    SETUP_SCRIPT(
+        "javascript/scripts/findInnermostElement.js",
+        m_findInnermostElementJs);
+
+    SETUP_SCRIPT(
+        "javascript/scripts/determineStatesForCurrentTextCursorPosition.js",
+        m_determineStatesForCurrentTextCursorPositionJs);
+
+    SETUP_SCRIPT(
+        "javascript/scripts/determineContextMenuEventTarget.js",
+        m_determineContextMenuEventTargetJs);
+
+    SETUP_SCRIPT(
+        "javascript/scripts/tableManager.js",
+        m_tableManagerJs);
+
+    SETUP_SCRIPT(
+        "javascript/scripts/resourceManager.js",
+        m_resourceManagerJs);
+
+    SETUP_SCRIPT(
+        "javascript/scripts/htmlInsertionManager.js",
+        m_htmlInsertionManagerJs);
+
+    SETUP_SCRIPT(
+        "javascript/scripts/sourceCodeFormatter.js",
+        m_sourceCodeFormatterJs);
+
+    SETUP_SCRIPT(
+        "javascript/scripts/hyperlinkManager.js",
+        m_hyperlinkManagerJs);
+
+    SETUP_SCRIPT(
+        "javascript/scripts/encryptDecryptManager.js",
+        m_encryptDecryptManagerJs);
+
+    SETUP_SCRIPT(
+        "javascript/scripts/findAndReplaceDOMText.js",
+        m_findAndReplaceDOMTextJs);
+
+    SETUP_SCRIPT(
+        "javascript/scripts/tabAndShiftTabToIndentAndUnindentReplacer.js",
+        m_tabAndShiftTabIndentAndUnindentReplacerJs);
+
     SETUP_SCRIPT("javascript/scripts/replaceStyle.js", m_replaceStyleJs);
     SETUP_SCRIPT("javascript/scripts/setFontFamily.js", m_setFontFamilyJs);
     SETUP_SCRIPT("javascript/scripts/setFontSize.js", m_setFontSizeJs);
@@ -6188,29 +6285,51 @@ void NoteEditorPrivate::setupScripts()
     SETUP_SCRIPT("javascript/scripts/qWebKitSetup.js", m_qWebKitSetupJs);
 #else
     SETUP_SCRIPT("qtwebchannel/qwebchannel.js", m_qWebChannelJs);
-    SETUP_SCRIPT("javascript/scripts/qWebChannelSetup.js", m_qWebChannelSetupJs);
-#endif
+
+    SETUP_SCRIPT(
+        "javascript/scripts/qWebChannelSetup.js",
+        m_qWebChannelSetupJs);
+#endif // QUENTIER_USE_QT_WEB_ENGINE
 
     SETUP_SCRIPT("javascript/scripts/enToDoTagsSetup.js", m_setupEnToDoTagsJs);
-    SETUP_SCRIPT("javascript/scripts/flipEnToDoCheckboxState.js",
-                 m_flipEnToDoCheckboxStateJs);
+
+    SETUP_SCRIPT(
+        "javascript/scripts/flipEnToDoCheckboxState.js",
+        m_flipEnToDoCheckboxStateJs);
+
 #ifdef QUENTIER_USE_QT_WEB_ENGINE
-    SETUP_SCRIPT("javascript/scripts/provideSrcAndOnClickScriptForEnCryptImgTags.js",
-                 m_provideSrcAndOnClickScriptForEnCryptImgTagsJs);
-    SETUP_SCRIPT("javascript/scripts/provideSrcForGenericResourceImages.js",
-                 m_provideSrcForGenericResourceImagesJs);
-    SETUP_SCRIPT("javascript/scripts/onGenericResourceImageReceived.js",
-                 m_onGenericResourceImageReceivedJs);
-    SETUP_SCRIPT("javascript/scripts/genericResourceOnClickHandler.js",
-                 m_genericResourceOnClickHandlerJs);
-    SETUP_SCRIPT("javascript/scripts/setupGenericResourceOnClickHandler.js",
-                 m_setupGenericResourceOnClickHandlerJs);
-    SETUP_SCRIPT("javascript/scripts/clickInterceptor.js", m_clickInterceptorJs);
-    SETUP_SCRIPT("javascript/scripts/notifyTextCursorPositionChanged.js",
-                 m_notifyTextCursorPositionChangedJs);
-    SETUP_SCRIPT("javascript/scripts/setupTextCursorPositionTracking.js",
-                 m_setupTextCursorPositionTrackingJs);
-#endif
+    SETUP_SCRIPT(
+        "javascript/scripts/provideSrcAndOnClickScriptForEnCryptImgTags.js",
+        m_provideSrcAndOnClickScriptForEnCryptImgTagsJs);
+
+    SETUP_SCRIPT(
+        "javascript/scripts/provideSrcForGenericResourceImages.js",
+        m_provideSrcForGenericResourceImagesJs);
+
+    SETUP_SCRIPT(
+        "javascript/scripts/onGenericResourceImageReceived.js",
+        m_onGenericResourceImageReceivedJs);
+
+    SETUP_SCRIPT(
+        "javascript/scripts/genericResourceOnClickHandler.js",
+        m_genericResourceOnClickHandlerJs);
+
+    SETUP_SCRIPT(
+        "javascript/scripts/setupGenericResourceOnClickHandler.js",
+        m_setupGenericResourceOnClickHandlerJs);
+
+    SETUP_SCRIPT(
+        "javascript/scripts/clickInterceptor.js",
+        m_clickInterceptorJs);
+
+    SETUP_SCRIPT(
+        "javascript/scripts/notifyTextCursorPositionChanged.js",
+        m_notifyTextCursorPositionChangedJs);
+
+    SETUP_SCRIPT(
+        "javascript/scripts/setupTextCursorPositionTracking.js",
+        m_setupTextCursorPositionTrackingJs);
+#endif // QUENTIER_USE_QT_WEB_ENGINE
 
 #undef SETUP_SCRIPT
 }
@@ -6219,183 +6338,272 @@ void NoteEditorPrivate::setupGeneralSignalSlotConnections()
 {
     QNDEBUG("NoteEditorPrivate::setupGeneralSignalSlotConnections");
 
-    QObject::connect(m_pTableResizeJavaScriptHandler,
-                     QNSIGNAL(TableResizeJavaScriptHandler,tableResized),
-                     this,
-                     QNSLOT(NoteEditorPrivate,onTableResized));
-    QObject::connect(m_pResizableImageJavaScriptHandler,
-                     QNSIGNAL(ResizableImageJavaScriptHandler,
-                              imageResourceResized,bool),
-                     this,
-                     QNSLOT(NoteEditorPrivate,onImageResourceResized,bool));
-    QObject::connect(m_pSpellCheckerDynamicHandler,
-                     QNSIGNAL(SpellCheckerDynamicHelper,
-                              lastEnteredWords,QStringList),
-                     this,
-                     QNSLOT(NoteEditorPrivate,onSpellCheckerDynamicHelperUpdate,
-                            QStringList));
-    QObject::connect(m_pToDoCheckboxClickHandler,
-                     QNSIGNAL(ToDoCheckboxOnClickHandler,toDoCheckboxClicked,quint64),
-                     this,
-                     QNSLOT(NoteEditorPrivate,onToDoCheckboxClicked,quint64));
-    QObject::connect(m_pToDoCheckboxAutomaticInsertionHandler,
-                     QNSIGNAL(ToDoCheckboxAutomaticInsertionHandler,
-                              notifyToDoCheckboxInsertedAutomatically),
-                     this,
-                     QNSLOT(NoteEditorPrivate,onToDoCheckboxAutomaticInsertion));
-    QObject::connect(m_pToDoCheckboxClickHandler,
-                     QNSIGNAL(ToDoCheckboxOnClickHandler,notifyError,ErrorString),
-                     this,
-                     QNSLOT(NoteEditorPrivate,onToDoCheckboxClickHandlerError,ErrorString));
-    QObject::connect(m_pPageMutationHandler,
-                     QNSIGNAL(PageMutationHandler,contentsChanged),
-                     this,
-                     QNSIGNAL(NoteEditorPrivate,contentChanged));
-    QObject::connect(m_pPageMutationHandler,
-                     QNSIGNAL(PageMutationHandler,contentsChanged),
-                     this,
-                     QNSIGNAL(NoteEditorPrivate,noteModified));
-    QObject::connect(m_pPageMutationHandler,
-                     QNSIGNAL(PageMutationHandler,contentsChanged),
-                     this,
-                     QNSLOT(NoteEditorPrivate,onContentChanged));
-    QObject::connect(m_pContextMenuEventJavaScriptHandler,
-                     QNSIGNAL(ContextMenuEventJavaScriptHandler,contextMenuEventReply,
-                              QString,QString,bool,QStringList,quint64),
-                     this,
-                     QNSLOT(NoteEditorPrivate,onContextMenuEventReply,
-                            QString,QString,bool,QStringList,quint64));
-    QObject::connect(m_pActionsWatcher,
-                     QNSIGNAL(ActionsWatcher,cutActionToggled),
-                     this,
-                     QNSLOT(NoteEditorPrivate,cut));
-    QObject::connect(m_pActionsWatcher,
-                     QNSIGNAL(ActionsWatcher,pasteActionToggled),
-                     this,
-                     QNSLOT(NoteEditorPrivate,paste));
+    QObject::connect(
+        m_pTableResizeJavaScriptHandler,
+        &TableResizeJavaScriptHandler::tableResized,
+        this,
+        &NoteEditorPrivate::onTableResized);
 
-    NoteEditorLocalStorageBroker & noteEditorLocalStorageBroker =
+    QObject::connect(
+        m_pResizableImageJavaScriptHandler,
+        &ResizableImageJavaScriptHandler::imageResourceResized,
+        this,
+        &NoteEditorPrivate::onImageResourceResized);
+
+    QObject::connect(
+        m_pSpellCheckerDynamicHandler,
+        &SpellCheckerDynamicHelper::lastEnteredWords,
+        this,
+        &NoteEditorPrivate::onSpellCheckerDynamicHelperUpdate);
+
+    QObject::connect(
+        m_pToDoCheckboxClickHandler,
+        &ToDoCheckboxOnClickHandler::toDoCheckboxClicked,
+        this,
+        &NoteEditorPrivate::onToDoCheckboxClicked);
+
+    QObject::connect(
+        m_pToDoCheckboxAutomaticInsertionHandler,
+        &ToDoCheckboxAutomaticInsertionHandler::notifyToDoCheckboxInsertedAutomatically,
+        this,
+        &NoteEditorPrivate::onToDoCheckboxAutomaticInsertion);
+
+    QObject::connect(
+        m_pToDoCheckboxClickHandler,
+        &ToDoCheckboxOnClickHandler::notifyError,
+        this,
+        &NoteEditorPrivate::onToDoCheckboxClickHandlerError);
+
+    QObject::connect(
+        m_pPageMutationHandler,
+        &PageMutationHandler::contentsChanged,
+        this,
+        &NoteEditorPrivate::contentChanged);
+
+    QObject::connect(
+        m_pPageMutationHandler,
+        &PageMutationHandler::contentsChanged,
+        this,
+        &NoteEditorPrivate::noteModified);
+
+    QObject::connect(
+        m_pPageMutationHandler,
+        &PageMutationHandler::contentsChanged,
+        this,
+        &NoteEditorPrivate::onContentChanged);
+
+    QObject::connect(
+        m_pContextMenuEventJavaScriptHandler,
+        &ContextMenuEventJavaScriptHandler::contextMenuEventReply,
+        this,
+        &NoteEditorPrivate::onContextMenuEventReply);
+
+    QObject::connect(
+        m_pActionsWatcher,
+        &ActionsWatcher::cutActionToggled,
+        this,
+        &NoteEditorPrivate::cut);
+
+    QObject::connect(
+        m_pActionsWatcher,
+        &ActionsWatcher::pasteActionToggled,
+        this,
+        &NoteEditorPrivate::paste);
+
+    // Connect with NoteEditorLocalStorageBroker
+
+    auto & noteEditorLocalStorageBroker =
         NoteEditorLocalStorageBroker::instance();
-    QObject::connect(this,
-                     QNSIGNAL(NoteEditorPrivate,findNoteAndNotebook,QString),
-                     &noteEditorLocalStorageBroker,
-                     QNSLOT(NoteEditorLocalStorageBroker,
-                            findNoteAndNotebook,QString));
-    QObject::connect(this,
-                     QNSIGNAL(NoteEditorPrivate,
-                              saveNoteToLocalStorageRequest,Note),
-                     &noteEditorLocalStorageBroker,
-                     QNSLOT(NoteEditorLocalStorageBroker,
-                            saveNoteToLocalStorage,Note));
-    QObject::connect(this,
-                     QNSIGNAL(NoteEditorPrivate,findResourceData,QString),
-                     &noteEditorLocalStorageBroker,
-                     QNSLOT(NoteEditorLocalStorageBroker,
-                            findResourceData,QString));
-    QObject::connect(&noteEditorLocalStorageBroker,
-                     QNSIGNAL(NoteEditorLocalStorageBroker,
-                              noteSavedToLocalStorage,QString),
-                     this,
-                     QNSLOT(NoteEditorPrivate,onNoteSavedToLocalStorage,QString));
-    QObject::connect(&noteEditorLocalStorageBroker,
-                     QNSIGNAL(NoteEditorLocalStorageBroker,
-                              failedToSaveNoteToLocalStorage,QString,ErrorString),
-                     this,
-                     QNSLOT(NoteEditorPrivate,onFailedToSaveNoteToLocalStorage,
-                            QString,ErrorString));
-    QObject::connect(&noteEditorLocalStorageBroker,
-                     QNSIGNAL(NoteEditorLocalStorageBroker,foundNoteAndNotebook,
-                              Note,Notebook),
-                     this,
-                     QNSLOT(NoteEditorPrivate,onFoundNoteAndNotebook,
-                            Note,Notebook));
-    QObject::connect(&noteEditorLocalStorageBroker,
-                     QNSIGNAL(NoteEditorLocalStorageBroker,
-                              failedToFindNoteOrNotebook,QString,ErrorString),
-                     this,
-                     QNSLOT(NoteEditorPrivate,onFailedToFindNoteOrNotebook,
-                            QString,ErrorString));
-    QObject::connect(&noteEditorLocalStorageBroker,
-                     QNSIGNAL(NoteEditorLocalStorageBroker,noteUpdated,Note),
-                     this,
-                     QNSLOT(NoteEditorPrivate,onNoteUpdated,Note));
-    QObject::connect(&noteEditorLocalStorageBroker,
-                     QNSIGNAL(NoteEditorLocalStorageBroker,notebookUpdated,Notebook),
-                     this,
-                     QNSLOT(NoteEditorPrivate,onNotebookUpdated,Notebook));
-    QObject::connect(&noteEditorLocalStorageBroker,
-                     QNSIGNAL(NoteEditorLocalStorageBroker,noteDeleted,QString),
-                     this,
-                     QNSLOT(NoteEditorPrivate,onNoteDeleted,QString));
-    QObject::connect(&noteEditorLocalStorageBroker,
-                     QNSIGNAL(NoteEditorLocalStorageBroker,notebookDeleted,QString),
-                     this,
-                     QNSLOT(NoteEditorPrivate,onNotebookDeleted,QString));
-    QObject::connect(&noteEditorLocalStorageBroker,
-                     QNSIGNAL(NoteEditorLocalStorageBroker,foundResourceData,Resource),
-                     this,
-                     QNSLOT(NoteEditorPrivate,onFoundResourceData,Resource));
-    QObject::connect(&noteEditorLocalStorageBroker,
-                     QNSIGNAL(NoteEditorLocalStorageBroker,failedToFindResourceData,
-                              QString,ErrorString),
-                     this,
-                     QNSLOT(NoteEditorPrivate,onFailedToFindResourceData,
-                            QString,ErrorString));
+
+    QObject::connect(
+        this,
+        &NoteEditorPrivate::findNoteAndNotebook,
+        &noteEditorLocalStorageBroker,
+        &NoteEditorLocalStorageBroker::findNoteAndNotebook);
+
+    QObject::connect(
+        this,
+        &NoteEditorPrivate::saveNoteToLocalStorageRequest,
+        &noteEditorLocalStorageBroker,
+        &NoteEditorLocalStorageBroker::saveNoteToLocalStorage);
+
+    QObject::connect(
+        this,
+        &NoteEditorPrivate::findResourceData,
+        &noteEditorLocalStorageBroker,
+        &NoteEditorLocalStorageBroker::findResourceData);
+
+    QObject::connect(
+        &noteEditorLocalStorageBroker,
+        &NoteEditorLocalStorageBroker::noteSavedToLocalStorage,
+        this,
+        &NoteEditorPrivate::onNoteSavedToLocalStorage);
+
+    QObject::connect(
+        &noteEditorLocalStorageBroker,
+        &NoteEditorLocalStorageBroker::failedToSaveNoteToLocalStorage,
+        this,
+        &NoteEditorPrivate::onFailedToSaveNoteToLocalStorage);
+
+    QObject::connect(
+        &noteEditorLocalStorageBroker,
+        &NoteEditorLocalStorageBroker::foundNoteAndNotebook,
+        this,
+        &NoteEditorPrivate::onFoundNoteAndNotebook);
+
+    QObject::connect(
+        &noteEditorLocalStorageBroker,
+        &NoteEditorLocalStorageBroker::failedToFindNoteOrNotebook,
+        this,
+        &NoteEditorPrivate::onFailedToFindNoteOrNotebook);
+
+    QObject::connect(
+        &noteEditorLocalStorageBroker,
+        &NoteEditorLocalStorageBroker::noteUpdated,
+        this,
+        &NoteEditorPrivate::onNoteUpdated);
+
+    QObject::connect(
+        &noteEditorLocalStorageBroker,
+        &NoteEditorLocalStorageBroker::notebookUpdated,
+        this,
+        &NoteEditorPrivate::onNotebookUpdated);
+
+    QObject::connect(
+        &noteEditorLocalStorageBroker,
+        &NoteEditorLocalStorageBroker::noteDeleted,
+        this,
+        &NoteEditorPrivate::onNoteDeleted);
+
+    QObject::connect(
+        &noteEditorLocalStorageBroker,
+        &NoteEditorLocalStorageBroker::notebookDeleted,
+        this,
+        &NoteEditorPrivate::onNotebookDeleted);
+
+    QObject::connect(
+        &noteEditorLocalStorageBroker,
+        &NoteEditorLocalStorageBroker::foundResourceData,
+        this,
+        &NoteEditorPrivate::onFoundResourceData);
+
+    QObject::connect(
+        &noteEditorLocalStorageBroker,
+        &NoteEditorLocalStorageBroker::failedToFindResourceData,
+        this,
+        &NoteEditorPrivate::onFailedToFindResourceData);
+
+    // Connect with public NoteEditor class signals
 
     Q_Q(NoteEditor);
-    QObject::connect(this, QNSIGNAL(NoteEditorPrivate,notifyError,ErrorString),
-                     q, QNSIGNAL(NoteEditor,notifyError,ErrorString));
-    QObject::connect(this,
-                     QNSIGNAL(NoteEditorPrivate,inAppNoteLinkClicked,
-                              QString,QString,QString),
-                     q,
-                     QNSIGNAL(NoteEditor,inAppNoteLinkClicked,
-                              QString,QString,QString));
-    QObject::connect(this,
-                     QNSIGNAL(NoteEditorPrivate,inAppNoteLinkPasteRequested,
-                              QString,QString,QString,QString),
-                     q,
-                     QNSIGNAL(NoteEditor,inAppNoteLinkPasteRequested,
-                              QString,QString,QString,QString));
-    QObject::connect(this, QNSIGNAL(NoteEditorPrivate,convertedToNote,Note),
-                     q, QNSIGNAL(NoteEditor,convertedToNote,Note));
-    QObject::connect(this, QNSIGNAL(NoteEditorPrivate,cantConvertToNote,ErrorString),
-                     q, QNSIGNAL(NoteEditor,cantConvertToNote,ErrorString));
-    QObject::connect(this, QNSIGNAL(NoteEditorPrivate,noteEditorHtmlUpdated,QString),
-                     q, QNSIGNAL(NoteEditor,noteEditorHtmlUpdated,QString));
-    QObject::connect(this, QNSIGNAL(NoteEditorPrivate,currentNoteChanged,Note),
-                     q, QNSIGNAL(NoteEditor,currentNoteChanged,Note));
-    QObject::connect(this, QNSIGNAL(NoteEditorPrivate,contentChanged),
-                     q, QNSIGNAL(NoteEditor,contentChanged));
-    QObject::connect(this,
-                     QNSIGNAL(NoteEditorPrivate,noteAndNotebookFoundInLocalStorage,
-                              Note,Notebook),
-                     q,
-                     QNSIGNAL(NoteEditor,noteAndNotebookFoundInLocalStorage,
-                              Note,Notebook));
-    QObject::connect(this, QNSIGNAL(NoteEditorPrivate,noteNotFound,QString),
-                     q, QNSIGNAL(NoteEditor,noteNotFound,QString));
-    QObject::connect(this, QNSIGNAL(NoteEditorPrivate,noteDeleted,QString),
-                     q, QNSIGNAL(NoteEditor,noteDeleted,QString));
-    QObject::connect(this, QNSIGNAL(NoteEditorPrivate,noteModified),
-                     q, QNSIGNAL(NoteEditor,noteModified));
-    QObject::connect(this, QNSIGNAL(NoteEditorPrivate,spellCheckerNotReady),
-                     q, QNSIGNAL(NoteEditor,spellCheckerNotReady));
-    QObject::connect(this, QNSIGNAL(NoteEditorPrivate,spellCheckerReady),
-                     q, QNSIGNAL(NoteEditor,spellCheckerReady));
-    QObject::connect(this, QNSIGNAL(NoteEditorPrivate,noteLoaded),
-                     q, QNSIGNAL(NoteEditor,noteLoaded));
-    QObject::connect(this,
-                     QNSIGNAL(NoteEditorPrivate,noteSavedToLocalStorage,QString),
-                     q, QNSIGNAL(NoteEditor,noteSavedToLocalStorage,QString));
-    QObject::connect(this,
-                     QNSIGNAL(NoteEditorPrivate,failedToSaveNoteToLocalStorage,
-                              ErrorString,QString),
-                     q,
-                     QNSIGNAL(NoteEditor,failedToSaveNoteToLocalStorage,
-                              ErrorString,QString));
-    QObject::connect(this, QNSIGNAL(NoteEditorPrivate,insertTableDialogRequested),
-                     q, QNSIGNAL(NoteEditor,insertTableDialogRequested));
+
+    QObject::connect(
+        this,
+        &NoteEditorPrivate::notifyError,
+        q,
+        &NoteEditor::notifyError);
+
+    QObject::connect(
+        this,
+        &NoteEditorPrivate::inAppNoteLinkClicked,
+        q,
+        &NoteEditor::inAppNoteLinkClicked);
+
+    QObject::connect(
+        this,
+        &NoteEditorPrivate::inAppNoteLinkPasteRequested,
+        q,
+        &NoteEditor::inAppNoteLinkPasteRequested);
+
+    QObject::connect(
+        this,
+        &NoteEditorPrivate::convertedToNote,
+        q,
+        &NoteEditor::convertedToNote);
+
+    QObject::connect(
+        this,
+        &NoteEditorPrivate::cantConvertToNote,
+        q,
+        &NoteEditor::cantConvertToNote);
+
+    QObject::connect(
+        this,
+        &NoteEditorPrivate::noteEditorHtmlUpdated,
+        q,
+        &NoteEditor::noteEditorHtmlUpdated);
+
+    QObject::connect(
+        this,
+        &NoteEditorPrivate::currentNoteChanged,
+        q,
+        &NoteEditor::currentNoteChanged);
+
+    QObject::connect(
+        this,
+        &NoteEditorPrivate::contentChanged,
+        q,
+        &NoteEditor::contentChanged);
+
+    QObject::connect(
+        this,
+        &NoteEditorPrivate::noteAndNotebookFoundInLocalStorage,
+        q,
+        &NoteEditor::noteAndNotebookFoundInLocalStorage);
+
+    QObject::connect(
+        this,
+        &NoteEditorPrivate::noteNotFound,
+        q,
+        &NoteEditor::noteNotFound);
+
+    QObject::connect(
+        this,
+        &NoteEditorPrivate::noteDeleted,
+        q,
+        &NoteEditor::noteDeleted);
+
+    QObject::connect(
+        this,
+        &NoteEditorPrivate::noteModified,
+        q,
+        &NoteEditor::noteModified);
+
+    QObject::connect(
+        this,
+        &NoteEditorPrivate::spellCheckerNotReady,
+        q,
+        &NoteEditor::spellCheckerNotReady);
+
+    QObject::connect(
+        this,
+        &NoteEditorPrivate::spellCheckerReady,
+        q,
+        &NoteEditor::spellCheckerReady);
+
+    QObject::connect(
+        this,
+        &NoteEditorPrivate::noteLoaded,
+        q,
+        &NoteEditor::noteLoaded);
+
+    QObject::connect(
+        this,
+        &NoteEditorPrivate::noteSavedToLocalStorage,
+        q,
+        &NoteEditor::noteSavedToLocalStorage);
+
+    QObject::connect(
+        this,
+        &NoteEditorPrivate::failedToSaveNoteToLocalStorage,
+        q,
+        &NoteEditor::failedToSaveNoteToLocalStorage);
+
+    QObject::connect(
+        this,
+        &NoteEditorPrivate::insertTableDialogRequested,
+        q,
+        &NoteEditor::insertTableDialogRequested);
 }
 
 void NoteEditorPrivate::setupNoteEditorPage()
@@ -6404,12 +6612,16 @@ void NoteEditorPrivate::setupNoteEditorPage()
 
     NoteEditorPage * page = new NoteEditorPage(*this);
 
-    page->settings()->setAttribute(WebSettings::LocalContentCanAccessFileUrls, true);
-    page->settings()->setAttribute(WebSettings::LocalContentCanAccessRemoteUrls, false);
+    page->settings()->setAttribute(
+        WebSettings::LocalContentCanAccessFileUrls, true);
+
+    page->settings()->setAttribute(
+        WebSettings::LocalContentCanAccessRemoteUrls, false);
 
 #ifndef QUENTIER_USE_QT_WEB_ENGINE
     page->settings()->setAttribute(QWebSettings::PluginsEnabled, true);
     page->settings()->setAttribute(QWebSettings::DeveloperExtrasEnabled, true);
+
     page->setLinkDelegationPolicy(QWebPage::DelegateExternalLinks);
     page->setContentEditable(true);
 
@@ -6417,38 +6629,47 @@ void NoteEditorPrivate::setupNoteEditorPage()
         QStringLiteral("pageMutationObserver"),
         m_pPageMutationHandler,
         OwnershipNamespace::QtOwnership);
+
     page->mainFrame()->addToJavaScriptWindowObject(
         QStringLiteral("resourceCache"),
         m_pResourceInfoJavaScriptHandler,
         OwnershipNamespace::QtOwnership);
+
     page->mainFrame()->addToJavaScriptWindowObject(
         QStringLiteral("textCursorPositionHandler"),
         m_pTextCursorPositionJavaScriptHandler,
         OwnershipNamespace::QtOwnership);
+
     page->mainFrame()->addToJavaScriptWindowObject(
         QStringLiteral("contextMenuEventHandler"),
         m_pContextMenuEventJavaScriptHandler,
         OwnershipNamespace::QtOwnership);
+
     page->mainFrame()->addToJavaScriptWindowObject(
         QStringLiteral("toDoCheckboxClickHandler"),
         m_pToDoCheckboxClickHandler,
         OwnershipNamespace::QtOwnership);
+
     page->mainFrame()->addToJavaScriptWindowObject(
         QStringLiteral("toDoCheckboxAutomaticInsertionHandler"),
         m_pToDoCheckboxAutomaticInsertionHandler,
         OwnershipNamespace::QtOwnership);
+
     page->mainFrame()->addToJavaScriptWindowObject(
         QStringLiteral("tableResizeHandler"),
         m_pTableResizeJavaScriptHandler,
         OwnershipNamespace::QtOwnership);
+
     page->mainFrame()->addToJavaScriptWindowObject(
         QStringLiteral("resizableImageHandler"),
         m_pResizableImageJavaScriptHandler,
         OwnershipNamespace::QtOwnership);
+
     page->mainFrame()->addToJavaScriptWindowObject(
         QStringLiteral("spellCheckerDynamicHelper"),
         m_pSpellCheckerDynamicHandler,
         OwnershipNamespace::QtOwnership);
+
     page->mainFrame()->addToJavaScriptWindowObject(
         QStringLiteral("actionsWatcher"),
         m_pActionsWatcher,
@@ -6462,7 +6683,7 @@ void NoteEditorPrivate::setupNoteEditorPage()
     QNDEBUG("Setting note editor plugin factory to the page");
     page->setPluginFactory(m_pPluginFactory);
 
-#endif
+#endif // QUENTIER_USE_QT_WEB_ENGINE
 
     setupNoteEditorPageConnections(page);
     setPage(page);
