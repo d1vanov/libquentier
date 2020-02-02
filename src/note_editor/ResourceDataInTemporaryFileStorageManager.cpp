@@ -1324,7 +1324,7 @@ bool ResourceDataInTemporaryFileStorageManager::writeResourceDataToTemporaryFile
     const QString & noteLocalUid, const QString & resourceLocalUid,
     const QByteArray & data, const QByteArray & dataHash,
     const ResourceType resourceType, ErrorString & errorDescription,
-    const CheckResourceFileActualityOption::type checkActualityOption,
+    const CheckResourceFileActualityOption checkActualityOption,
     WriteResourceDataCallback callback)
 {
     QNDEBUG("ResourceDataInTemporaryFileStorageManager::"

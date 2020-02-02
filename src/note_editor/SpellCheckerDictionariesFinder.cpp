@@ -101,19 +101,22 @@ void SpellCheckerDictionariesFinder::run()
 
             QString fileNameSuffix = fileInfo.completeSuffix();
             bool isDicFile = false;
-            if (fileNameSuffix == QStringLiteral("dic")) {
+            if (fileNameSuffix == QStringLiteral("dic"))
+            {
                 isDicFile = true;
             }
-            else if (fileNameSuffix != QStringLiteral("aff")) {
+            else if (fileNameSuffix != QStringLiteral("aff"))
+            {
                 QNTRACE("Skipping file not actually matching the filter: "
                     << fileInfo.absoluteFilePath());
                 continue;
             }
 
             QString dictionaryName = fileInfo.baseName();
-            if (!m_localeList.contains(dictionaryName.toUpper())) {
-                QNTRACE("Skipping dictionary which doesn't appear to correspond "
-                        "to any locale: " << dictionaryName);
+            if (!m_localeList.contains(dictionaryName.toUpper()))
+            {
+                QNTRACE("Skipping dictionary which doesn't appear to "
+                    << "correspond to any locale: " << dictionaryName);
                 continue;
             }
 

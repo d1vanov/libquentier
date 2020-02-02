@@ -405,13 +405,10 @@ private:
         NonImage
     };
 
-    struct CheckResourceFileActualityOption
+    enum class CheckResourceFileActualityOption
     {
-        enum type
-        {
-            On = 0,
-            Off
-        };
+        On = 0,
+        Off
     };
 
     using WriteResourceDataCallback = std::function<void(const double)> ;
@@ -420,7 +417,7 @@ private:
         const QString & noteLocalUid, const QString & resourceLocalUid,
         const QByteArray & data, const QByteArray & dataHash,
         const ResourceType resourceType, ErrorString & errorDescription,
-        const CheckResourceFileActualityOption::type checkActualityOption =
+        const CheckResourceFileActualityOption checkActualityOption =
         CheckResourceFileActualityOption::On, WriteResourceDataCallback = 0);
 
 private:

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -18,34 +18,34 @@
 
 #include "DecryptionDialog.h"
 #include "ui_DecryptionDialog.h"
+
 #include "../NoteEditorSettingsNames.h"
 
 #include <quentier/enml/DecryptedTextManager.h>
-#include <quentier/utility/QuentierCheckPtr.h>
 #include <quentier/logging/QuentierLogger.h>
 #include <quentier/utility/ApplicationSettings.h>
+#include <quentier/utility/QuentierCheckPtr.h>
 
 namespace quentier {
 
 DecryptionDialog::DecryptionDialog(
-        const QString & encryptedText, const QString & cipher, const QString & hint,
-        const size_t keyLength, const Account & account,
-        QSharedPointer<EncryptionManager> encryptionManager,
-        QSharedPointer<DecryptedTextManager> decryptedTextManager,
+        const QString & encryptedText, const QString & cipher,
+        const QString & hint, const size_t keyLength, const Account & account,
+        std::shared_ptr<EncryptionManager> encryptionManager,
+        std::shared_ptr<DecryptedTextManager> decryptedTextManager,
         QWidget * parent, bool decryptPermanentlyFlag) :
     QDialog(parent),
     m_pUI(new Ui::DecryptionDialog),
     m_encryptedText(encryptedText),
     m_cipher(cipher),
     m_hint(hint),
-    m_cachedDecryptedText(),
     m_account(account),
-    m_encryptionManager(encryptionManager),
-    m_decryptedTextManager(decryptedTextManager),
+    m_encryptionManager(std::move(encryptionManager)),
+    m_decryptedTextManager(std::move(decryptedTextManager)),
     m_keyLength(keyLength)
 {
     m_pUI->setupUi(this);
-    QUENTIER_CHECK_PTR(encryptionManager.data())
+    QUENTIER_CHECK_PTR(encryptionManager.get())
 
     m_pUI->decryptPermanentlyCheckBox->setChecked(decryptPermanentlyFlag);
 
@@ -53,27 +53,35 @@ DecryptionDialog::DecryptionDialog(
 
     bool rememberPassphraseForSessionDefault = false;
     ApplicationSettings appSettings(m_account, NOTE_EDITOR_SETTINGS_NAME);
+
     QVariant rememberPassphraseForSessionSetting =
         appSettings.value(NOTE_EDITOR_ENCRYPTION_REMEMBER_PASSWORD_FOR_SESSION);
+
     if (!rememberPassphraseForSessionSetting.isNull()) {
-        rememberPassphraseForSessionDefault = rememberPassphraseForSessionSetting.toBool();
+        rememberPassphraseForSessionDefault =
+            rememberPassphraseForSessionSetting.toBool();
     }
 
     setRememberPassphraseDefaultState(rememberPassphraseForSessionDefault);
     m_pUI->onErrorTextLabel->setVisible(false);
 
-    QObject::connect(m_pUI->showPasswordCheckBox,
-                     QNSIGNAL(QCheckBox,stateChanged,int),
-                     this,
-                     QNSLOT(DecryptionDialog,onShowPasswordStateChanged,int));
-    QObject::connect(m_pUI->rememberPasswordCheckBox,
-                     QNSIGNAL(QCheckBox,stateChanged,int),
-                     this,
-                     QNSLOT(DecryptionDialog,onRememberPassphraseStateChanged,int));
-    QObject::connect(m_pUI->decryptPermanentlyCheckBox,
-                     QNSIGNAL(QCheckBox,stateChanged,int),
-                     this,
-                     QNSLOT(DecryptionDialog,onDecryptPermanentlyStateChanged,int));
+    QObject::connect(
+        m_pUI->showPasswordCheckBox,
+        &QCheckBox::stateChanged,
+        this,
+        &DecryptionDialog::onShowPasswordStateChanged);
+
+    QObject::connect(
+        m_pUI->rememberPasswordCheckBox,
+        &QCheckBox::stateChanged,
+        this,
+        &DecryptionDialog::onRememberPassphraseStateChanged);
+
+    QObject::connect(
+        m_pUI->decryptPermanentlyCheckBox,
+        &QCheckBox::stateChanged,
+        this,
+        &DecryptionDialog::onDecryptPermanentlyStateChanged);
 }
 
 DecryptionDialog::~DecryptionDialog()
@@ -109,8 +117,9 @@ void DecryptionDialog::setError(const ErrorString & error)
 
 void DecryptionDialog::setHint(const QString & hint)
 {
-    m_pUI->hintLabel->setText(tr("Hint: ") +
-                              (hint.isEmpty() ? tr("No hint available") : hint));
+    m_pUI->hintLabel->setText(
+        tr("Hint: ") +
+        (hint.isEmpty() ? tr("No hint available") : hint));
 }
 
 void DecryptionDialog::setRememberPassphraseDefaultState(const bool checked)
@@ -126,20 +135,21 @@ void DecryptionDialog::onRememberPassphraseStateChanged(int checked)
     if (!appSettings.isWritable())
     {
         QNINFO("Can't persist remember passphrase for session "
-               "setting: settings are not writable");
+            << "setting: settings are not writable");
     }
     else
     {
-        appSettings.setValue(NOTE_EDITOR_ENCRYPTION_REMEMBER_PASSWORD_FOR_SESSION,
-                             QVariant(m_pUI->rememberPasswordCheckBox->isChecked()));
+        appSettings.setValue(
+            NOTE_EDITOR_ENCRYPTION_REMEMBER_PASSWORD_FOR_SESSION,
+            QVariant(m_pUI->rememberPasswordCheckBox->isChecked()));
     }
 }
 
 void DecryptionDialog::onShowPasswordStateChanged(int checked)
 {
-    m_pUI->passwordLineEdit->setEchoMode(checked
-                                         ? QLineEdit::Normal
-                                         : QLineEdit::Password);
+    m_pUI->passwordLineEdit->setEchoMode(
+        checked ? QLineEdit::Normal : QLineEdit::Password);
+
     m_pUI->passwordLineEdit->setFocus();
 }
 
@@ -153,22 +163,32 @@ void DecryptionDialog::accept()
     QString passphrase = m_pUI->passwordLineEdit->text();
 
     ErrorString errorDescription;
-    bool res = m_encryptionManager->decrypt(m_encryptedText, passphrase, m_cipher,
-                                            m_keyLength, m_cachedDecryptedText,
-                                            errorDescription);
+    bool res = m_encryptionManager->decrypt(
+        m_encryptedText,
+        passphrase,
+        m_cipher,
+        m_keyLength,
+        m_cachedDecryptedText,
+        errorDescription);
+
     if (!res && (m_cipher == QStringLiteral("AES")) && (m_keyLength == 128))
     {
         QNDEBUG("The initial attempt to decrypt the text using "
-                "AES cipher and 128 bit key has failed; checking "
-                "whether it is old encrypted text area using RC2 "
-                "encryption and 64 bit key");
-        res = m_encryptionManager->decrypt(m_encryptedText, passphrase,
-                                           QStringLiteral("RC2"), 64,
-                                           m_cachedDecryptedText,
-                                           errorDescription);
+            << "AES cipher and 128 bit key has failed; checking "
+            << "whether it is old encrypted text area using RC2 "
+            << "encryption and 64 bit key");
+
+        res = m_encryptionManager->decrypt(
+            m_encryptedText,
+            passphrase,
+            QStringLiteral("RC2"),
+            64,
+            m_cachedDecryptedText,
+            errorDescription);
     }
 
-    if (!res) {
+    if (!res)
+    {
         ErrorString error(QT_TR_NOOP("Failed to decrypt the text"));
         error.appendBase(errorDescription.base());
         error.appendBase(errorDescription.additionalBases());
@@ -180,17 +200,29 @@ void DecryptionDialog::accept()
     bool rememberForSession = m_pUI->rememberPasswordCheckBox->isChecked();
     bool decryptPermanently = m_pUI->decryptPermanentlyCheckBox->isChecked();
 
-    m_decryptedTextManager->addEntry(m_encryptedText, m_cachedDecryptedText,
-                                     rememberForSession, passphrase, m_cipher,
-                                     m_keyLength);
-    QNTRACE("Cached decrypted text for encryptedText: "
-            << m_encryptedText << "; remember for session = "
-            << (rememberForSession ? "true" : "false")
-            << "; decrypt permanently = "
-            << (decryptPermanently ? "true" : "false"));
+    m_decryptedTextManager->addEntry(
+        m_encryptedText,
+        m_cachedDecryptedText,
+        rememberForSession,
+        passphrase,
+        m_cipher,
+        m_keyLength);
 
-    Q_EMIT accepted(m_cipher, m_keyLength, m_encryptedText, passphrase,
-                    m_cachedDecryptedText, rememberForSession, decryptPermanently);
+    QNTRACE("Cached decrypted text for encryptedText: "
+        << m_encryptedText << "; remember for session = "
+        << (rememberForSession ? "true" : "false")
+        << "; decrypt permanently = "
+        << (decryptPermanently ? "true" : "false"));
+
+    Q_EMIT accepted(
+        m_cipher,
+        m_keyLength,
+        m_encryptedText,
+        passphrase,
+        m_cachedDecryptedText,
+        rememberForSession,
+        decryptPermanently);
+
     QDialog::accept();
 }
 

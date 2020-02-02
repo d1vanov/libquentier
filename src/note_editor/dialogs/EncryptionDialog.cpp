@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -18,12 +18,13 @@
 
 #include "EncryptionDialog.h"
 #include "ui_EncryptionDialog.h"
+
 #include "../NoteEditorSettingsNames.h"
 
 #include <quentier/enml/DecryptedTextManager.h>
-#include <quentier/utility/QuentierCheckPtr.h>
 #include <quentier/logging/QuentierLogger.h>
 #include <quentier/utility/ApplicationSettings.h>
+#include <quentier/utility/QuentierCheckPtr.h>
 
 #include <QLineEdit>
 
@@ -31,35 +32,39 @@ namespace quentier {
 
 EncryptionDialog::EncryptionDialog(
         const QString & textToEncrypt, const Account & account,
-        QSharedPointer<EncryptionManager> encryptionManager,
-        QSharedPointer<DecryptedTextManager> decryptedTextManager,
+        std::shared_ptr<EncryptionManager> encryptionManager,
+        std::shared_ptr<DecryptedTextManager> decryptedTextManager,
         QWidget * parent) :
     QDialog(parent),
     m_pUI(new Ui::EncryptionDialog),
     m_textToEncrypt(textToEncrypt),
     m_cachedEncryptedText(),
     m_account(account),
-    m_encryptionManager(encryptionManager),
-    m_decryptedTextManager(decryptedTextManager)
+    m_encryptionManager(std::move(encryptionManager)),
+    m_decryptedTextManager(std::move(decryptedTextManager))
 {
     m_pUI->setupUi(this);
-    QUENTIER_CHECK_PTR(encryptionManager.data())
+    QUENTIER_CHECK_PTR(encryptionManager.get())
 
     bool rememberPassphraseForSessionDefault = false;
     ApplicationSettings appSettings(m_account, NOTE_EDITOR_SETTINGS_NAME);
+
     QVariant rememberPassphraseForSessionSetting =
         appSettings.value(NOTE_EDITOR_ENCRYPTION_REMEMBER_PASSWORD_FOR_SESSION);
+
     if (!rememberPassphraseForSessionSetting.isNull()) {
-        rememberPassphraseForSessionDefault = rememberPassphraseForSessionSetting.toBool();
+        rememberPassphraseForSessionDefault =
+            rememberPassphraseForSessionSetting.toBool();
     }
 
     setRememberPassphraseDefaultState(rememberPassphraseForSessionDefault);
     m_pUI->onErrorTextLabel->setVisible(false);
 
-    QObject::connect(m_pUI->rememberPasswordForSessionCheckBox,
-                     QNSIGNAL(QCheckBox,stateChanged,int),
-                     this,
-                     QNSLOT(EncryptionDialog,onRememberPassphraseStateChanged,int));
+    QObject::connect(
+        m_pUI->rememberPasswordForSessionCheckBox,
+        &QCheckBox::stateChanged,
+        this,
+        &EncryptionDialog::onRememberPassphraseStateChanged);
 }
 
 EncryptionDialog::~EncryptionDialog()
@@ -100,12 +105,13 @@ void EncryptionDialog::onRememberPassphraseStateChanged(int checked)
     if (!appSettings.isWritable())
     {
         QNINFO("Can't persist remember passphrase for session "
-               "setting: settings are not writable");
+            << "setting: settings are not writable");
     }
     else
     {
-        appSettings.setValue(NOTE_EDITOR_ENCRYPTION_REMEMBER_PASSWORD_FOR_SESSION,
-                             QVariant(m_pUI->rememberPasswordForSessionCheckBox->isChecked()));
+        appSettings.setValue(
+            NOTE_EDITOR_ENCRYPTION_REMEMBER_PASSWORD_FOR_SESSION,
+            QVariant(m_pUI->rememberPasswordForSessionCheckBox->isChecked()));
     }
 }
 
@@ -117,7 +123,7 @@ void EncryptionDialog::accept()
     if (passphrase.isEmpty())
     {
         QNINFO("Attempted to press OK in EncryptionDialog without "
-               "having a password set");
+            << "having a password set");
         ErrorString error(QT_TR_NOOP("Please choose the encryption password"));
         setError(error);
         return;
@@ -125,8 +131,9 @@ void EncryptionDialog::accept()
 
     if (passphrase != repeatedPassphrase)
     {
-        ErrorString error(QT_TR_NOOP("Can't encrypt: password and repeated "
-                                     "password do not match"));
+        ErrorString error(
+            QT_TR_NOOP("Can't encrypt: password and repeated "
+                       "password do not match"));
         QNINFO(error);
         setError(error);
         return;
@@ -136,9 +143,15 @@ void EncryptionDialog::accept()
     ErrorString errorDescription;
     QString cipher = QStringLiteral("AES");
     size_t keyLength = 128;
-    bool res = m_encryptionManager->encrypt(m_textToEncrypt, passphrase, cipher,
-                                            keyLength, m_cachedEncryptedText,
-                                            errorDescription);
+
+    bool res = m_encryptionManager->encrypt(
+        m_textToEncrypt,
+        passphrase,
+        cipher,
+        keyLength,
+        m_cachedEncryptedText,
+        errorDescription);
+
     if (!res) {
         QNINFO(errorDescription);
         setError(errorDescription);
@@ -147,12 +160,22 @@ void EncryptionDialog::accept()
 
     bool rememberForSession = m_pUI->rememberPasswordForSessionCheckBox->isChecked();
 
-    m_decryptedTextManager->addEntry(m_cachedEncryptedText, m_textToEncrypt,
-                                     rememberForSession, passphrase, cipher,
-                                     keyLength);
+    m_decryptedTextManager->addEntry(
+        m_cachedEncryptedText,
+        m_textToEncrypt,
+        rememberForSession,
+        passphrase,
+        cipher,
+        keyLength);
 
-    Q_EMIT accepted(m_textToEncrypt, m_cachedEncryptedText, cipher, keyLength,
-                    m_pUI->hintLineEdit->text(), rememberForSession);
+    Q_EMIT accepted(
+        m_textToEncrypt,
+        m_cachedEncryptedText,
+        cipher,
+        keyLength,
+        m_pUI->hintLineEdit->text(),
+        rememberForSession);
+
     QDialog::accept();
 }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -21,9 +21,9 @@
 
 #include "JsResultCallbackFunctor.hpp"
 
-#include <quentier/utility/Macros.h>
 #include <quentier/types/ErrorString.h>
 #include <quentier/types/Note.h>
+#include <quentier/utility/Macros.h>
 
 #include <QObject>
 #include <QUuid>
@@ -42,11 +42,14 @@ class Q_DECL_HIDDEN AddHyperlinkToSelectedTextDelegate: public QObject
 {
     Q_OBJECT
 public:
-    explicit AddHyperlinkToSelectedTextDelegate(NoteEditorPrivate & noteEditor,
-                                                const quint64 hyperlinkIdToAdd);
+    explicit AddHyperlinkToSelectedTextDelegate(
+        NoteEditorPrivate & noteEditor, const quint64 hyperlinkIdToAdd);
+
     void start();
-    void startWithPresetHyperlink(const QString & presetHyperlink,
-                                  const QString & replacementLinkText = QString());
+
+    void startWithPresetHyperlink(
+        const QString & presetHyperlink,
+        const QString & replacementLinkText = {});
 
 Q_SIGNALS:
     void finished();
@@ -57,9 +60,8 @@ private Q_SLOTS:
     void onOriginalPageConvertedToNote(Note note);
     void onInitialHyperlinkDataReceived(const QVariant & data);
 
-    void onAddHyperlinkDialogFinished(QString text, QUrl url,
-                                      quint64 hyperlinkId,
-                                      bool startupUrlWasEmpty);
+    void onAddHyperlinkDialogFinished(
+        QString text, QUrl url, quint64 hyperlinkId, bool startupUrlWasEmpty);
 
     void onHyperlinkSetToSelection(const QVariant & data);
 
@@ -70,12 +72,13 @@ private:
     void setHyperlinkToSelection(const QString & url, const QString & text);
 
 private:
-    typedef JsResultCallbackFunctor<AddHyperlinkToSelectedTextDelegate> JsCallback;
+    using JsCallback =
+        JsResultCallbackFunctor<AddHyperlinkToSelectedTextDelegate>;
 
 private:
     NoteEditorPrivate &     m_noteEditor;
 
-    bool                    m_shouldGetHyperlinkFromDialog;
+    bool                    m_shouldGetHyperlinkFromDialog = true;
     QString                 m_presetHyperlink;
     QString                 m_replacementLinkText;
 

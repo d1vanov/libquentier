@@ -136,7 +136,7 @@ void SpellCheckerPrivate::disableDictionary(const QString & language)
     auto it = m_systemDictionaries.find(language);
     if (it == m_systemDictionaries.end()) {
         QNINFO("Can't disable dictionary: no dictionary was found for language "
-               << language);
+            << language);
         return;
     }
 
@@ -323,11 +323,22 @@ void SpellCheckerPrivate::onDictionariesFound(
     int index = 0;
     for(auto it = files.constBegin(), end = files.constEnd(); it != end; ++it)
     {
-        const std::pair<QString, QString> & pair = it.value();
+        const auto & pair = it.value();
+
         settings.setArrayIndex(index);
-        settings.setValue(SPELL_CHECKER_FOUND_DICTIONARIES_LANGUAGE_KEY, it.key());
-        settings.setValue(SPELL_CHECKER_FOUND_DICTIONARIES_DIC_FILE_ITEM, pair.first);
-        settings.setValue(SPELL_CHECKER_FOUND_DICTIONARIES_AFF_FILE_ITEM, pair.second);
+
+        settings.setValue(
+            SPELL_CHECKER_FOUND_DICTIONARIES_LANGUAGE_KEY,
+            it.key());
+
+        settings.setValue(
+            SPELL_CHECKER_FOUND_DICTIONARIES_DIC_FILE_ITEM,
+            pair.first);
+
+        settings.setValue(
+            SPELL_CHECKER_FOUND_DICTIONARIES_AFF_FILE_ITEM,
+            pair.second);
+
         ++index;
     }
     settings.endArray();
@@ -349,21 +360,26 @@ void SpellCheckerPrivate::checkAndScanSystemDictionaries()
     m_systemDictionaries.clear();
 
     SpellCheckerDictionariesFinder::DicAndAffFilesByDictionaryName existingDictionaries;
-    int size = appSettings.beginReadArray(SPELL_CHECKER_FOUND_DICTIONARIES_ARRAY);
+
+    int size = appSettings.beginReadArray(
+        SPELL_CHECKER_FOUND_DICTIONARIES_ARRAY);
+
     existingDictionaries.reserve(size);
     for(int i = 0; i < size; ++i)
     {
         appSettings.setArrayIndex(i);
 
-        QString languageKey =
-            appSettings.value(SPELL_CHECKER_FOUND_DICTIONARIES_LANGUAGE_KEY).toString();
+        QString languageKey = appSettings.value(
+            SPELL_CHECKER_FOUND_DICTIONARIES_LANGUAGE_KEY).toString();
+
         if (languageKey.isEmpty()) {
             QNTRACE("No language key, skipping");
             continue;
         }
 
-        QString dicFile =
-            appSettings.value(SPELL_CHECKER_FOUND_DICTIONARIES_DIC_FILE_ITEM).toString();
+        QString dicFile = appSettings.value(
+            SPELL_CHECKER_FOUND_DICTIONARIES_DIC_FILE_ITEM).toString();
+
         QFileInfo dicFileInfo(dicFile);
         if (!dicFileInfo.exists() || !dicFileInfo.isReadable()) {
             QNTRACE("Skipping non-existing or unreadable dic file: "
@@ -371,8 +387,9 @@ void SpellCheckerPrivate::checkAndScanSystemDictionaries()
             continue;
         }
 
-        QString affFile =
-            appSettings.value(SPELL_CHECKER_FOUND_DICTIONARIES_AFF_FILE_ITEM).toString();
+        QString affFile = appSettings.value(
+            SPELL_CHECKER_FOUND_DICTIONARIES_AFF_FILE_ITEM).toString();
+
         QFileInfo affFileInfo(affFile);
         if (!affFileInfo.exists() || !affFileInfo.isReadable()) {
             QNTRACE("Skipping non-existing or unreadable aff file: "
@@ -777,10 +794,12 @@ void SpellCheckerPrivate::initializeUserDictionary(
             applicationPersistentStoragePath() +
             QStringLiteral("/spellcheck/user_dictionary.txt");
         bool res = checkUserDictionaryPath(fallbackUserDictionaryPath);
-        if (!res) {
+        if (!res)
+        {
             QNINFO("Can't accept even the fallback default path");
         }
-        else {
+        else
+        {
             m_userDictionaryPath = fallbackUserDictionaryPath;
             QNDEBUG("Set user dictionary path to "
                 << fallbackUserDictionaryPath);
@@ -837,7 +856,8 @@ bool SpellCheckerPrivate::checkUserDictionaryPath(
         {
             QFile file(userDictionaryPath);
             bool res = file.setPermissions(QFile::WriteUser | QFile::ReadUser);
-            if (!res) {
+            if (!res)
+            {
                 QNTRACE("User dictionary path candidate is a file "
                     << "with insufficient permissions and "
                     << "attempt to fix that has failed: readable ="
@@ -1197,7 +1217,8 @@ QStringList SpellCheckerPrivate::HunspellWrapper::suggestions(
 
     size_t size = res.size();
     result.reserve(
-        static_cast<int>(std::min(size, size_t(std::numeric_limits<int>::max()))));
+        static_cast<int>(
+            std::min(size, size_t(std::numeric_limits<int>::max()))));
     for(size_t i = 0; i < size; ++i) {
         result << QString::fromStdString(res[i]);
     }

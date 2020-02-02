@@ -41,7 +41,6 @@
 #include <QObject>
 #include <QPointer>
 #include <QProgressDialog>
-#include <QScopedPointer>
 #include <QUndoStack>
 
 #ifdef QUENTIER_USE_QT_WEB_ENGINE
@@ -56,6 +55,7 @@ typedef QWebView WebView;
 typedef QWebPage WebPage;
 #endif
 
+#include <memory>
 #include <vector>
 #include <utility>
 
@@ -1052,14 +1052,12 @@ private:
         QPointer<NoteEditorPrivate>     m_pNoteEditor;
     };
 
-    struct Q_DECL_HIDDEN Alignment
+    enum class Alignment
     {
-        enum type {
-            Left = 0,
-            Center,
-            Right,
-            Full
-        };
+        Left = 0,
+        Center,
+        Right,
+        Full
     };
 
     struct Q_DECL_HIDDEN TextFormattingState
@@ -1069,7 +1067,7 @@ private:
         bool m_underline = false;
         bool m_strikethrough = false;
 
-        Alignment::type m_alignment = Alignment::Left;
+        Alignment m_alignment = Alignment::Left;
 
         bool m_insideOrderedList = false;
         bool m_insideUnorderedList = false;
@@ -1316,8 +1314,8 @@ private:
 
     int         m_pageToNoteContentPostponeTimerId = 0;
 
-    QSharedPointer<EncryptionManager>       m_encryptionManager;
-    QSharedPointer<DecryptedTextManager>    m_decryptedTextManager;
+    std::shared_ptr<EncryptionManager>      m_encryptionManager;
+    std::shared_ptr<DecryptedTextManager>   m_decryptedTextManager;
 
     ENMLConverter                           m_enmlConverter;
 

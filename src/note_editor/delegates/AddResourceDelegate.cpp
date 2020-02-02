@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -17,22 +17,23 @@
  */
 
 #include "AddResourceDelegate.h"
+
+#include "../GenericResourceImageManager.h"
 #include "../NoteEditor_p.h"
 #include "../NoteEditorPage.h"
-#include "../GenericResourceImageManager.h"
 #include "../ResourceDataInTemporaryFileStorageManager.h"
 
+#include <quentier/types/Account.h>
+#include <quentier/types/Resource.h>
+#include <quentier/logging/QuentierLogger.h>
 #include <quentier/utility/FileIOProcessorAsync.h>
 #include <quentier/utility/Utility.h>
-#include <quentier/logging/QuentierLogger.h>
-#include <quentier/types/Resource.h>
-#include <quentier/types/Account.h>
 
-#include <QImage>
 #include <QBuffer>
-#include <QFileInfo>
-#include <QMimeDatabase>
 #include <QCryptographicHash>
+#include <QFileInfo>
+#include <QImage>
+#include <QMimeDatabase>
 
 #ifndef QUENTIER_USE_QT_WEB_ENGINE
 #include <QWebFrame>
@@ -42,10 +43,11 @@ namespace quentier {
 
 #define GET_PAGE()                                                             \
     NoteEditorPage * page = qobject_cast<NoteEditorPage*>(m_noteEditor.page());\
-    if (Q_UNLIKELY(!page)) {                                                   \
-        ErrorString error(QT_TRANSLATE_NOOP("AddResourceDelegate",             \
-                                            "Can't add attachment: no note "   \
-                                            "editor page"));                   \
+    if (Q_UNLIKELY(!page))                                                     \
+    {                                                                          \
+        ErrorString error(                                                     \
+            QT_TRANSLATE_NOOP("AddResourceDelegate",                           \
+                              "Can't add attachment: no note editor page"));   \
         QNWARNING(error);                                                      \
         Q_EMIT notifyError(error);                                             \
         return;                                                                \
@@ -57,7 +59,7 @@ AddResourceDelegate::AddResourceDelegate(
         ResourceDataInTemporaryFileStorageManager * pResourceFileStorageManager,
         FileIOProcessorAsync * pFileIOProcessorAsync,
         GenericResourceImageManager * pGenericResourceImageManager,
-        QHash<QByteArray, QString> & genericResourceImageFilePathsByResourceHash) :
+        QHash<QByteArray,QString> & genericResourceImageFilePathsByResourceHash) :
     QObject(&noteEditor),
     m_noteEditor(noteEditor),
     m_pResourceDataInTemporaryFileStorageManager(pResourceFileStorageManager),
@@ -65,14 +67,7 @@ AddResourceDelegate::AddResourceDelegate(
     m_genericResourceImageFilePathsByResourceHash(
         genericResourceImageFilePathsByResourceHash),
     m_pGenericResourceImageManager(pGenericResourceImageManager),
-    m_saveResourceImageRequestId(),
-    m_filePath(filePath),
-    m_data(),
-    m_resourceMimeType(),
-    m_resource(),
-    m_resourceFileStoragePath(),
-    m_readResourceFileRequestId(),
-    m_saveResourceDataToTemporaryFileRequestId()
+    m_filePath(filePath)
 {}
 
 AddResourceDelegate::AddResourceDelegate(
@@ -81,7 +76,7 @@ AddResourceDelegate::AddResourceDelegate(
         ResourceDataInTemporaryFileStorageManager * pResourceFileStorageManager,
         FileIOProcessorAsync * pFileIOProcessorAsync,
         GenericResourceImageManager * pGenericResourceImageManager,
-        QHash<QByteArray, QString> & genericResourceImageFilePathsByResourceHash) :
+        QHash<QByteArray,QString> & genericResourceImageFilePathsByResourceHash) :
     QObject(&noteEditor),
     m_noteEditor(noteEditor),
     m_pResourceDataInTemporaryFileStorageManager(pResourceFileStorageManager),
@@ -89,14 +84,7 @@ AddResourceDelegate::AddResourceDelegate(
     m_genericResourceImageFilePathsByResourceHash(
         genericResourceImageFilePathsByResourceHash),
     m_pGenericResourceImageManager(pGenericResourceImageManager),
-    m_saveResourceImageRequestId(),
-    m_filePath(),
-    m_data(resourceData),
-    m_resourceMimeType(),
-    m_resource(),
-    m_resourceFileStoragePath(),
-    m_readResourceFileRequestId(),
-    m_saveResourceDataToTemporaryFileRequestId()
+    m_data(resourceData)
 {
     QMimeDatabase mimeDatabase;
     m_resourceMimeType = mimeDatabase.mimeTypeForName(mimeType);
@@ -104,12 +92,12 @@ AddResourceDelegate::AddResourceDelegate(
     if (!m_resourceMimeType.isValid())
     {
         QNDEBUG("Mime type deduced from the mime type name " << mimeType
-                << " is invalid, trying to deduce mime type from the raw data");
+            << " is invalid, trying to deduce mime type from the raw data");
 
         m_resourceMimeType = mimeDatabase.mimeTypeForData(m_data);
 
         QNDEBUG("Mime type deduced from the data is "
-                << (m_resourceMimeType.isValid() ? "valid" : "invalid"));
+            << (m_resourceMimeType.isValid() ? "valid" : "invalid"));
     }
 }
 
@@ -119,11 +107,12 @@ void AddResourceDelegate::start()
 
     if (m_noteEditor.isEditorPageModified())
     {
-        QObject::connect(&m_noteEditor,
-                         QNSIGNAL(NoteEditorPrivate,convertedToNote,Note),
-                         this,
-                         QNSLOT(AddResourceDelegate,onOriginalPageConvertedToNote,
-                                Note));
+        QObject::connect(
+            &m_noteEditor,
+            &NoteEditorPrivate::convertedToNote,
+            this,
+            &AddResourceDelegate::onOriginalPageConvertedToNote);
+
         m_noteEditor.convertToNote();
     }
     else
@@ -138,11 +127,11 @@ void AddResourceDelegate::onOriginalPageConvertedToNote(Note note)
 
     Q_UNUSED(note)
 
-    QObject::disconnect(&m_noteEditor,
-                        QNSIGNAL(NoteEditorPrivate,convertedToNote,Note),
-                        this,
-                        QNSLOT(AddResourceDelegate,onOriginalPageConvertedToNote,
-                               Note));
+    QObject::disconnect(
+        &m_noteEditor,
+        &NoteEditorPrivate::convertedToNote,
+        this,
+        &AddResourceDelegate::onOriginalPageConvertedToNote);
 
     doStart();
 }
@@ -152,9 +141,10 @@ void AddResourceDelegate::doStart()
     QNDEBUG("AddResourceDelegate::doStart");
 
     const Note * pNote = m_noteEditor.notePtr();
-    if (Q_UNLIKELY(!pNote)) {
-        ErrorString error(QT_TR_NOOP("Can't add attachment: no note is set "
-                                     "to the editor"));
+    if (Q_UNLIKELY(!pNote))
+    {
+        ErrorString error(
+            QT_TR_NOOP("Can't add attachment: no note is set to the editor"));
         QNWARNING(error);
         Q_EMIT notifyError(error);
         return;
@@ -162,17 +152,18 @@ void AddResourceDelegate::doStart()
 
     if (m_filePath.isEmpty() && m_data.isEmpty())
     {
-        ErrorString error(QT_TR_NOOP("Can't add attachment: the file path of "
-                                     "the data to be added is empty "
-                                     "and the raw data is empty as well"));
+        ErrorString error(
+            QT_TR_NOOP("Can't add attachment: the file path of the data to be "
+                       "added is empty and the raw data is empty as well"));
         QNWARNING(error);
         Q_EMIT notifyError(error);
         return;
     }
     else if (m_filePath.isEmpty() && !m_resourceMimeType.isValid())
     {
-        ErrorString error(QT_TR_NOOP("Can't add attachment: the mime type of "
-                                     "the data to be added is invalid"));
+        ErrorString error(
+            QT_TR_NOOP("Can't add attachment: the mime type of "
+                       "the data to be added is invalid"));
         QNWARNING(error);
         Q_EMIT notifyError(error);
         return;
@@ -184,14 +175,15 @@ void AddResourceDelegate::doStart()
     if (noteHasLimits)
     {
         QNTRACE("Note has its own limits, will use them to check "
-                "the number of note resources");
+            << "the number of note resources");
 
-        const qevercloud::NoteLimits & limits = pNote->noteLimits();
+        const auto & limits = pNote->noteLimits();
         if (limits.noteResourceCountMax.isSet() &&
             (limits.noteResourceCountMax.ref() == pNote->numResources()))
         {
-            ErrorString error(QT_TR_NOOP("Can't add attachment: the note is already "
-                                         "at max allowed number of attachments"));
+            ErrorString error(
+                QT_TR_NOOP("Can't add attachment: the note is already "
+                           "at max allowed number of attachments"));
             error.details() = QString::number(pNote->numResources());
             Q_EMIT notifyError(error);
             return;
@@ -200,14 +192,15 @@ void AddResourceDelegate::doStart()
     else if (pAccount)
     {
         QNTRACE("Note has no limits of its own, will use account-wise limits "
-                "to check the number of note resources");
+            << "to check the number of note resources");
 
         int numNoteResources = pNote->numResources();
         ++numNoteResources;
         if (numNoteResources > pAccount->noteResourceCountMax())
         {
-            ErrorString error(QT_TR_NOOP("Can't add attachment: the note is already "
-                                         "at max allowed number of attachments"));
+            ErrorString error(
+                QT_TR_NOOP("Can't add attachment: the note is already "
+                           "at max allowed number of attachments"));
             error.details() = QString::number(numNoteResources - 1);
             Q_EMIT notifyError(error);
             return;
@@ -216,7 +209,7 @@ void AddResourceDelegate::doStart()
     else
     {
         QNINFO("No account when adding the resource to note, "
-               "can't check account-wise note limits");
+            << "can't check account-wise note limits");
     }
 
     if (!m_filePath.isEmpty()) {
@@ -235,21 +228,22 @@ void AddResourceDelegate::doStartUsingFile()
     if (!fileInfo.isFile())
     {
         QNINFO("Detected attempt to drop something else rather than file: "
-               << m_filePath);
+            << m_filePath);
         return;
     }
 
     if (!fileInfo.isReadable())
     {
         QNINFO("Detected attempt to drop file which is not readable: "
-               << m_filePath);
+            << m_filePath);
         return;
     }
 
     const Note * pNote = m_noteEditor.notePtr();
-    if (Q_UNLIKELY(!pNote)) {
-        ErrorString error(QT_TR_NOOP("Can't add attachment: no note is set to "
-                                     "the editor"));
+    if (Q_UNLIKELY(!pNote))
+    {
+        ErrorString error(
+            QT_TR_NOOP("Can't add attachment: no note is set to the editor"));
         QNWARNING(error);
         Q_EMIT notifyError(error);
         return;
@@ -265,8 +259,9 @@ void AddResourceDelegate::doStartUsingFile()
     m_resourceMimeType = mimeDatabase.mimeTypeForFile(fileInfo);
     if (Q_UNLIKELY(!m_resourceMimeType.isValid()))
     {
-        ErrorString error(QT_TR_NOOP("Can't add attachment: the mime type of "
-                                     "the resource file is invalid"));
+        ErrorString error(
+            QT_TR_NOOP("Can't add attachment: the mime type of "
+                       "the resource file is invalid"));
         error.details() = QStringLiteral("file: ");
         error.details() += m_filePath;
         Q_EMIT notifyError(error);
@@ -275,16 +270,17 @@ void AddResourceDelegate::doStartUsingFile()
 
     m_readResourceFileRequestId = QUuid::createUuid();
 
-    QObject::connect(this,
-                     QNSIGNAL(AddResourceDelegate,readFileData,QString,QUuid),
-                     m_pFileIOProcessorAsync,
-                     QNSLOT(FileIOProcessorAsync,onReadFileRequest,QString,QUuid));
-    QObject::connect(m_pFileIOProcessorAsync,
-                     QNSIGNAL(FileIOProcessorAsync,readFileRequestProcessed,
-                              bool,ErrorString,QByteArray,QUuid),
-                     this,
-                     QNSLOT(AddResourceDelegate,onResourceFileRead,
-                            bool,ErrorString,QByteArray,QUuid));
+    QObject::connect(
+        this,
+        &AddResourceDelegate::readFileData,
+        m_pFileIOProcessorAsync,
+        &FileIOProcessorAsync::onReadFileRequest);
+
+    QObject::connect(
+        m_pFileIOProcessorAsync,
+        &FileIOProcessorAsync::readFileRequestProcessed,
+        this,
+        &AddResourceDelegate::onResourceFileRead);
 
     Q_EMIT readFileData(m_filePath, m_readResourceFileRequestId);
 }
@@ -298,23 +294,24 @@ void AddResourceDelegate::onResourceFileRead(
     }
 
     QNDEBUG("AddResourceDelegate::onResourceFileRead: success = "
-            << (success ? "true" : "false"));
+        << (success ? "true" : "false"));
 
-    QObject::disconnect(this,
-                        QNSIGNAL(AddResourceDelegate,readFileData,
-                                 QString,QUuid),
-                        m_pFileIOProcessorAsync,
-                        QNSLOT(FileIOProcessorAsync,onReadFileRequest,
-                               QString,QUuid));
-    QObject::disconnect(m_pFileIOProcessorAsync,
-                        QNSIGNAL(FileIOProcessorAsync,readFileRequestProcessed,
-                                 bool,ErrorString,QByteArray,QUuid),
-                        this,
-                        QNSLOT(AddResourceDelegate,onResourceFileRead,
-                               bool,ErrorString,QByteArray,QUuid));
+    QObject::disconnect(
+        this,
+        &AddResourceDelegate::readFileData,
+        m_pFileIOProcessorAsync,
+        &FileIOProcessorAsync::onReadFileRequest);
 
-    if (Q_UNLIKELY(!success)) {
-        ErrorString error(QT_TR_NOOP("can't read the attachment file contents"));
+    QObject::disconnect(
+        m_pFileIOProcessorAsync,
+        &FileIOProcessorAsync::readFileRequestProcessed,
+        this,
+        &AddResourceDelegate::onResourceFileRead);
+
+    if (Q_UNLIKELY(!success))
+    {
+        ErrorString error(
+            QT_TR_NOOP("can't read the attachment file contents"));
         error.appendBase(errorDescription.base());
         error.appendBase(errorDescription.additionalBases());
         error.details() = errorDescription.details();
@@ -339,8 +336,8 @@ void AddResourceDelegate::doStartUsingData()
     const Note * pNote = m_noteEditor.notePtr();
     if (Q_UNLIKELY(!pNote))
     {
-        ErrorString error(QT_TR_NOOP("Can't add attachment: no note is set "
-                                     "to the editor"));
+        ErrorString error(
+            QT_TR_NOOP("Can't add attachment: no note is set to the editor"));
         QNWARNING(error);
         Q_EMIT notifyError(error);
         return;
@@ -361,8 +358,12 @@ void AddResourceDelegate::doStartUsingData()
         return;
     }
 
-    const Account * pAccount = m_noteEditor.accountPtr();
-    if (!checkResourceDataSize(*pNote, pAccount, static_cast<qint64>(m_data.size()))) {
+    bool res = checkResourceDataSize(
+        *pNote,
+        m_noteEditor.accountPtr(),
+        static_cast<qint64>(m_data.size()));
+
+    if (!res) {
         return;
     }
 
@@ -378,14 +379,14 @@ void AddResourceDelegate::doSaveResourceDataToTemporaryFile(
     const QByteArray & data, QString resourceName)
 {
     QNDEBUG("AddResourceDelegate::doSaveResourceDataToTemporaryFile: "
-            << "resource name = " << resourceName);
+        << "resource name = " << resourceName);
 
     const Note * pNote = m_noteEditor.notePtr();
     if (!pNote)
     {
-        ErrorString errorDescription(QT_TR_NOOP("Can't save the added resource "
-                                                "to a temporary file: no note is "
-                                                "set to the editor"));
+        ErrorString errorDescription(
+            QT_TR_NOOP("Can't save the added resource to a temporary file: "
+                       "no note is set to the editor"));
         QNWARNING(errorDescription);
         Q_EMIT notifyError(errorDescription);
         return;
@@ -395,10 +396,16 @@ void AddResourceDelegate::doSaveResourceDataToTemporaryFile(
         resourceName = tr("Attachment");
     }
 
-    QByteArray dataHash = QCryptographicHash::hash(data, QCryptographicHash::Md5);
-    m_resource = m_noteEditor.attachResourceToNote(data, dataHash,
-                                                   m_resourceMimeType,
-                                                   resourceName);
+    QByteArray dataHash = QCryptographicHash::hash(
+        data,
+        QCryptographicHash::Md5);
+
+    m_resource = m_noteEditor.attachResourceToNote(
+        data,
+        dataHash,
+        m_resourceMimeType,
+        resourceName);
+
     QNTRACE("Attached resource to note: " << m_resource);
 
     QString resourceLocalUid = m_resource.localUid();
@@ -410,31 +417,32 @@ void AddResourceDelegate::doSaveResourceDataToTemporaryFile(
 
     m_saveResourceDataToTemporaryFileRequestId = QUuid::createUuid();
 
-    QObject::connect(this,
-                     QNSIGNAL(AddResourceDelegate,saveResourceDataToTemporaryFile,
-                              QString,QString,QByteArray,QByteArray,QUuid,bool),
-                     m_pResourceDataInTemporaryFileStorageManager,
-                     QNSLOT(ResourceDataInTemporaryFileStorageManager,
-                            onSaveResourceDataToTemporaryFileRequest,
-                            QString,QString,QByteArray,QByteArray,QUuid,bool));
-    QObject::connect(m_pResourceDataInTemporaryFileStorageManager,
-                     QNSIGNAL(ResourceDataInTemporaryFileStorageManager,
-                              saveResourceDataToTemporaryFileCompleted,
-                              QUuid,QByteArray,ErrorString),
-                     this,
-                     QNSLOT(AddResourceDelegate,onResourceDataSavedToTemporaryFile,
-                            QUuid,QByteArray,ErrorString));
+    QObject::connect(
+        this,
+        &AddResourceDelegate::saveResourceDataToTemporaryFile,
+        m_pResourceDataInTemporaryFileStorageManager,
+        &ResourceDataInTemporaryFileStorageManager::onSaveResourceDataToTemporaryFileRequest);
+
+    QObject::connect(
+        m_pResourceDataInTemporaryFileStorageManager,
+        &ResourceDataInTemporaryFileStorageManager::saveResourceDataToTemporaryFileCompleted,
+        this,
+        &AddResourceDelegate::onResourceDataSavedToTemporaryFile);
 
     QNTRACE("Emitting the request to save the dropped/pasted resource "
-            << "to a temporary file: generated local uid = "
-            << resourceLocalUid << ", data hash = " << dataHash.toHex()
-            << ", request id = "
-            << m_saveResourceDataToTemporaryFileRequestId
-            << ", mime type name = " << m_resourceMimeType.name());
-    Q_EMIT saveResourceDataToTemporaryFile(pNote->localUid(), resourceLocalUid,
-                                           data, dataHash,
-                                           m_saveResourceDataToTemporaryFileRequestId,
-                                           /* is image = */ true);
+        << "to a temporary file: generated local uid = "
+        << resourceLocalUid << ", data hash = " << dataHash.toHex()
+        << ", request id = "
+        << m_saveResourceDataToTemporaryFileRequestId
+        << ", mime type name = " << m_resourceMimeType.name());
+
+    Q_EMIT saveResourceDataToTemporaryFile(
+        pNote->localUid(),
+        resourceLocalUid,
+        data,
+        dataHash,
+        m_saveResourceDataToTemporaryFileRequestId,
+        /* is image = */ true);
 }
 
 void AddResourceDelegate::onResourceDataSavedToTemporaryFile(
@@ -445,7 +453,7 @@ void AddResourceDelegate::onResourceDataSavedToTemporaryFile(
     }
 
     QNDEBUG("AddResourceDelegate::onResourceDataSavedToTemporaryFile: "
-            << "error description = " << errorDescription);
+        << "error description = " << errorDescription);
 
     const Note * pNote = m_noteEditor.notePtr();
     if (!pNote)
@@ -460,31 +468,28 @@ void AddResourceDelegate::onResourceDataSavedToTemporaryFile(
 
     m_resourceFileStoragePath =
         ResourceDataInTemporaryFileStorageManager::imageResourceFileStorageFolderPath();
-    m_resourceFileStoragePath += QStringLiteral("/") + pNote->localUid() +
-                                 QStringLiteral("/") + m_resource.localUid() +
-                                 QStringLiteral(".dat");
 
-    QObject::disconnect(this,
-                        QNSIGNAL(AddResourceDelegate,saveResourceDataToTemporaryFile,
-                                 QString,QString,QByteArray,QByteArray,QString,
-                                 QUuid,bool),
-                        m_pResourceDataInTemporaryFileStorageManager,
-                        QNSLOT(ResourceDataInTemporaryFileStorageManager,
-                               onSaveResourceDataToTemporaryFileRequest,
-                               QString,QString,QByteArray,QByteArray,QString,
-                               QUuid,bool));
-    QObject::disconnect(m_pResourceDataInTemporaryFileStorageManager,
-                        QNSIGNAL(ResourceDataInTemporaryFileStorageManager,
-                                 saveResourceDataToTemporaryFileCompleted,QUuid,
-                                 QByteArray,QString),
-                        this,
-                        QNSLOT(AddResourceDelegate,onResourceDataSavedToTemporaryFile,
-                               QUuid,QByteArray,QString));
+    m_resourceFileStoragePath +=
+        QStringLiteral("/") + pNote->localUid() +
+        QStringLiteral("/") + m_resource.localUid() +
+        QStringLiteral(".dat");
+
+    QObject::disconnect(
+        this,
+        &AddResourceDelegate::saveResourceDataToTemporaryFile,
+        m_pResourceDataInTemporaryFileStorageManager,
+        &ResourceDataInTemporaryFileStorageManager::onSaveResourceDataToTemporaryFileRequest);
+
+    QObject::disconnect(
+        m_pResourceDataInTemporaryFileStorageManager,
+        &ResourceDataInTemporaryFileStorageManager::saveResourceDataToTemporaryFileCompleted,
+        this,
+        &AddResourceDelegate::onResourceDataSavedToTemporaryFile);
 
     if (Q_UNLIKELY(!errorDescription.isEmpty()))
     {
-        ErrorString error(QT_TR_NOOP("Can't write the resource data to "
-                                     "a temporary file"));
+        ErrorString error(
+            QT_TR_NOOP("Can't write the resource data to a temporary file"));
         error.appendBase(errorDescription.base());
         error.appendBase(errorDescription.additionalBases());
         error.details() = errorDescription.details();
@@ -500,7 +505,8 @@ void AddResourceDelegate::onResourceDataSavedToTemporaryFile(
     }
 
     QNTRACE("Done adding the image resource to the note, moving "
-            "on to adding it to the page");
+        << "on to adding it to the page");
+
     insertNewResourceHtml();
 }
 
@@ -513,34 +519,34 @@ void AddResourceDelegate::onGenericResourceImageSaved(
         return;
     }
 
-    QObject::disconnect(this,
-                        QNSIGNAL(AddResourceDelegate,saveGenericResourceImageToFile,
-                                 QString,QString,QByteArray,QByteArray,QString,QUuid),
-                        m_pGenericResourceImageManager,
-                        QNSLOT(GenericResourceImageManager,
-                               onGenericResourceImageWriteRequest,
-                               QString,QString,QByteArray,QByteArray,QString,QUuid));
-    QObject::disconnect(m_pGenericResourceImageManager,
-                        QNSIGNAL(GenericResourceImageManager,
-                                 genericResourceImageWriteReply,
-                                 bool,QByteArray,QString,ErrorString,QUuid),
-                        this,
-                        QNSLOT(AddResourceDelegate,onGenericResourceImageSaved,
-                               bool,QByteArray,QString,ErrorString,QUuid));
+    QObject::disconnect(
+        this,
+        &AddResourceDelegate::saveGenericResourceImageToFile,
+        m_pGenericResourceImageManager,
+        &GenericResourceImageManager::onGenericResourceImageWriteRequest);
+
+    QObject::disconnect(
+        m_pGenericResourceImageManager,
+        &GenericResourceImageManager::genericResourceImageWriteReply,
+        this,
+        &AddResourceDelegate::onGenericResourceImageSaved);
 
     QNDEBUG("AddResourceDelegate::onGenericResourceImageSaved: success = "
-            << (success ? "true" : "false") << ", file path = " << filePath);
+        << (success ? "true" : "false") << ", file path = " << filePath);
 
-    m_genericResourceImageFilePathsByResourceHash[m_resource.dataHash()] = filePath;
+    m_genericResourceImageFilePathsByResourceHash[m_resource.dataHash()] =
+        filePath;
+
     QNDEBUG("Cached generic resource image file path " << filePath
-            << " for resource hash " << m_resource.dataHash().toHex());
+        << " for resource hash " << m_resource.dataHash().toHex());
 
     Q_UNUSED(resourceImageDataHash);
 
     if (Q_UNLIKELY(!success))
     {
-        ErrorString error(QT_TR_NOOP("Can't write the image representing "
-                                     "the resource to a temporary file"));
+        ErrorString error(
+            QT_TR_NOOP("Can't write the image representing "
+                       "the resource to a temporary file"));
         error.appendBase(errorDescription.base());
         error.appendBase(errorDescription.additionalBases());
         error.details() = errorDescription.details();
@@ -571,18 +577,26 @@ void AddResourceDelegate::doGenerateGenericResourceImage(
 
     m_resourceFileStoragePath =
         ResourceDataInTemporaryFileStorageManager::nonImageResourceFileStorageFolderPath();
-    m_resourceFileStoragePath += QStringLiteral("/") + pNote->localUid() +
-                                 QStringLiteral("/") + m_resource.localUid() +
-                                 QStringLiteral(".dat");
+
+    m_resourceFileStoragePath +=
+        QStringLiteral("/") + pNote->localUid() +
+        QStringLiteral("/") + m_resource.localUid() +
+        QStringLiteral(".dat");
 
     if (resourceName.isEmpty()) {
         resourceName = tr("Attachment");
     }
 
-    QByteArray dataHash = QCryptographicHash::hash(data, QCryptographicHash::Md5);
-    m_resource = m_noteEditor.attachResourceToNote(data, dataHash,
-                                                   m_resourceMimeType,
-                                                   resourceName);
+    QByteArray dataHash = QCryptographicHash::hash(
+        data,
+        QCryptographicHash::Md5);
+
+    m_resource = m_noteEditor.attachResourceToNote(
+        data,
+        dataHash,
+        m_resourceMimeType,
+        resourceName);
+
     QString resourceLocalUid = m_resource.localUid();
     if (Q_UNLIKELY(resourceLocalUid.isEmpty())) {
         return;
@@ -597,32 +611,32 @@ void AddResourceDelegate::doGenerateGenericResourceImage(
 
     m_saveResourceImageRequestId = QUuid::createUuid();
 
-    QObject::connect(this,
-                     QNSIGNAL(AddResourceDelegate,saveGenericResourceImageToFile,
-                              QString,QString,QByteArray,QString,QByteArray,
-                              QString,QUuid),
-                     m_pGenericResourceImageManager,
-                     QNSLOT(GenericResourceImageManager,
-                            onGenericResourceImageWriteRequest,
-                            QString,QString,QByteArray,QString,QByteArray,
-                            QString,QUuid));
-    QObject::connect(m_pGenericResourceImageManager,
-                     QNSIGNAL(GenericResourceImageManager,
-                              genericResourceImageWriteReply,
-                              bool,QByteArray,QString,ErrorString,QUuid),
-                     this,
-                     QNSLOT(AddResourceDelegate,onGenericResourceImageSaved,
-                            bool,QByteArray,QString,ErrorString,QUuid));
+    QObject::connect(
+        this,
+        &AddResourceDelegate::saveGenericResourceImageToFile,
+        m_pGenericResourceImageManager,
+        &GenericResourceImageManager::onGenericResourceImageWriteRequest);
+
+    QObject::connect(
+        m_pGenericResourceImageManager,
+        &GenericResourceImageManager::genericResourceImageWriteReply,
+        this,
+        &AddResourceDelegate::onGenericResourceImageSaved);
 
     QNDEBUG("Emitting request to write generic resource image "
-            << "for new resource with local uid "
-            << m_resource.localUid() << ", request id "
-            << m_saveResourceImageRequestId << ", note local uid = "
-            << pNote->localUid());
-    Q_EMIT saveGenericResourceImageToFile(pNote->localUid(), m_resource.localUid(),
-                                          resourceImageData, QStringLiteral("png"),
-                                          dataHash, m_resourceFileStoragePath,
-                                          m_saveResourceImageRequestId);
+        << "for new resource with local uid "
+        << m_resource.localUid() << ", request id "
+        << m_saveResourceImageRequestId << ", note local uid = "
+        << pNote->localUid());
+
+    Q_EMIT saveGenericResourceImageToFile(
+        pNote->localUid(),
+        m_resource.localUid(),
+        resourceImageData,
+        QStringLiteral("png"),
+        dataHash,
+        m_resourceFileStoragePath,
+        m_saveResourceImageRequestId);
 }
 
 void AddResourceDelegate::insertNewResourceHtml()
@@ -630,11 +644,15 @@ void AddResourceDelegate::insertNewResourceHtml()
     QNDEBUG("AddResourceDelegate::insertNewResourceHtml");
 
     ErrorString errorDescription;
-    QString resourceHtml = ENMLConverter::resourceHtml(m_resource, errorDescription);
+    QString resourceHtml = ENMLConverter::resourceHtml(
+        m_resource,
+        errorDescription);
+
     if (Q_UNLIKELY(resourceHtml.isEmpty()))
     {
-        ErrorString error(QT_TR_NOOP("Can't compose the html representation of "
-                                     "the attachment"));
+        ErrorString error(
+            QT_TR_NOOP("Can't compose the html representation of "
+                       "the attachment"));
         error.appendBase(errorDescription.base());
         error.appendBase(errorDescription.additionalBases());
         error.details() = errorDescription.details();
@@ -657,13 +675,14 @@ void AddResourceDelegate::onNewResourceHtmlInserted(const QVariant & data)
 {
     QNDEBUG("AddResourceDelegate::onNewResourceHtmlInserted");
 
-    QMap<QString,QVariant> resultMap = data.toMap();
+    auto resultMap = data.toMap();
 
     auto statusIt = resultMap.find(QStringLiteral("status"));
     if (Q_UNLIKELY(statusIt == resultMap.end()))
     {
-        ErrorString error(QT_TR_NOOP("Can't parse the result of new resource "
-                                     "html insertion from JavaScript"));
+        ErrorString error(
+            QT_TR_NOOP("Can't parse the result of new resource "
+                       "html insertion from JavaScript"));
         QNWARNING(error);
         Q_EMIT notifyError(error);
         return;
@@ -677,13 +696,14 @@ void AddResourceDelegate::onNewResourceHtmlInserted(const QVariant & data)
         auto errorIt = resultMap.find(QStringLiteral("error"));
         if (Q_UNLIKELY(errorIt == resultMap.end()))
         {
-            error.setBase(QT_TR_NOOP("Can't parse the error of new resource html "
-                                     "insertion from JavaScript"));
+            error.setBase(
+                QT_TR_NOOP("Can't parse the error of new resource html "
+                           "insertion from JavaScript"));
         }
         else
         {
-            error.setBase(QT_TR_NOOP("Can't insert resource html into "
-                                     "the note editor"));
+            error.setBase(
+                QT_TR_NOOP("Can't insert resource html into the note editor"));
             error.details() = errorIt.value().toString();
         }
 
@@ -699,20 +719,21 @@ bool AddResourceDelegate::checkResourceDataSize(
     const Note & note, const Account * pAccount, const qint64 size)
 {
     QNDEBUG("AddResourceDelegate::checkResourceDataSize: size = "
-            << humanReadableSize(static_cast<quint64>(std::max(size, qint64(0)))));
+        << humanReadableSize(static_cast<quint64>(std::max(size, qint64(0)))));
 
     bool noteHasLimits = note.hasNoteLimits();
     if (noteHasLimits)
     {
-        const qevercloud::NoteLimits & limits = note.noteLimits();
-        bool violatesNoteResourceSizeMax = limits.resourceSizeMax.isSet() &&
-                                           (size > limits.resourceSizeMax.ref());
+        const auto & limits = note.noteLimits();
+        bool violatesNoteResourceSizeMax =
+            limits.resourceSizeMax.isSet() &&
+            (size > limits.resourceSizeMax.ref());
 
         if (Q_UNLIKELY(violatesNoteResourceSizeMax))
         {
-            ErrorString error(QT_TR_NOOP("Can't add attachment: the resource "
-                                         "to be added is too large, max "
-                                         "resource size allowed is"));
+            ErrorString error(
+                QT_TR_NOOP("Can't add attachment: the resource to be added is "
+                           "too large, max resource size allowed is"));
             error.details() = humanReadableSize(
                 static_cast<quint64>(note.noteLimits().resourceSizeMax.ref()));
             Q_EMIT notifyError(error);
@@ -720,13 +741,15 @@ bool AddResourceDelegate::checkResourceDataSize(
         }
 
         const qint64 previousNoteSize = m_noteEditor.noteSize();
-        bool violatesNoteSizeMax = limits.noteSizeMax.isSet() &&
-                                   (limits.noteSizeMax.ref() > (previousNoteSize + size));
+        bool violatesNoteSizeMax =
+            limits.noteSizeMax.isSet() &&
+            (limits.noteSizeMax.ref() > (previousNoteSize + size));
+
         if (violatesNoteSizeMax)
         {
-            ErrorString error(QT_TR_NOOP("Can't add attachment: the addition "
-                                         "of the resource would violate the max "
-                                         "resource size which is"));
+            ErrorString error(
+                QT_TR_NOOP("Can't add attachment: the addition of the resource :"
+                           "would violate the max resource size which is"));
             error.details() = humanReadableSize(
                 static_cast<quint64>(note.noteLimits().noteSizeMax.ref()));
             Q_EMIT notifyError(error);
@@ -739,8 +762,9 @@ bool AddResourceDelegate::checkResourceDataSize(
 
         if (Q_UNLIKELY(violatesNoteResourceSizeMax))
         {
-            ErrorString error(QT_TR_NOOP("Can't add attachment: the resource is "
-                                         "too large, max resource size allowed is"));
+            ErrorString error(
+                QT_TR_NOOP("Can't add attachment: the resource is "
+                           "too large, max resource size allowed is"));
             error.details() = humanReadableSize(
                 static_cast<quint64>(pAccount->resourceSizeMax()));
             Q_EMIT notifyError(error);

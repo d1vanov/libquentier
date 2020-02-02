@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -17,6 +17,7 @@
  */
 
 #include "DecryptUndoCommand.h"
+
 #include "../NoteEditor_p.h"
 
 #include <quentier/logging/QuentierLogger.h>
@@ -40,12 +41,12 @@ namespace quentier {
 
 DecryptUndoCommand::DecryptUndoCommand(
         const EncryptDecryptUndoCommandInfo & info,
-        const QSharedPointer<DecryptedTextManager> & decryptedTextManager,
+        std::shared_ptr<DecryptedTextManager> decryptedTextManager,
         NoteEditorPrivate & noteEditorPrivate, const Callback & callback,
         QUndoCommand * parent) :
     INoteEditorUndoCommand(noteEditorPrivate, parent),
     m_info(info),
-    m_decryptedTextManager(decryptedTextManager),
+    m_decryptedTextManager(std::move(decryptedTextManager)),
     m_callback(callback)
 {
     setText(tr("Decrypt text"));
@@ -53,12 +54,12 @@ DecryptUndoCommand::DecryptUndoCommand(
 
 DecryptUndoCommand::DecryptUndoCommand(
         const EncryptDecryptUndoCommandInfo & info,
-        const QSharedPointer<DecryptedTextManager> & decryptedTextManager,
+        std::shared_ptr<DecryptedTextManager> decryptedTextManager,
         NoteEditorPrivate & noteEditorPrivate, const Callback & callback,
         const QString & text, QUndoCommand * parent) :
     INoteEditorUndoCommand(noteEditorPrivate, text, parent),
     m_info(info),
-    m_decryptedTextManager(decryptedTextManager),
+    m_decryptedTextManager(std::move(decryptedTextManager)),
     m_callback(callback)
 {}
 
@@ -71,15 +72,20 @@ void DecryptUndoCommand::redoImpl()
 
     GET_PAGE()
 
-    if (!m_info.m_decryptPermanently) {
+    if (!m_info.m_decryptPermanently)
+    {
         m_decryptedTextManager->addEntry(
-            m_info.m_encryptedText, m_info.m_decryptedText,
-            m_info.m_rememberForSession, m_info.m_passphrase,
-            m_info.m_cipher, m_info.m_keyLength);
+            m_info.m_encryptedText,
+            m_info.m_decryptedText,
+            m_info.m_rememberForSession,
+            m_info.m_passphrase,
+            m_info.m_cipher,
+            m_info.m_keyLength);
     }
 
-    page->executeJavaScript(QStringLiteral("encryptDecryptManager.redo();"),
-                            m_callback);
+    page->executeJavaScript(
+        QStringLiteral("encryptDecryptManager.redo();"),
+        m_callback);
 }
 
 void DecryptUndoCommand::undoImpl()
@@ -92,8 +98,9 @@ void DecryptUndoCommand::undoImpl()
         m_decryptedTextManager->removeEntry(m_info.m_encryptedText);
     }
 
-    page->executeJavaScript(QStringLiteral("encryptDecryptManager.undo();"),
-                            m_callback);
+    page->executeJavaScript(
+        QStringLiteral("encryptDecryptManager.undo();"),
+        m_callback);
 }
 
 } // namespace quentier
