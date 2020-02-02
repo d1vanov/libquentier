@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -28,29 +28,31 @@
 // GET_PAGE
 
 #define CHECK_NOTE_EDITABLE(message)                                           \
-    if (Q_UNLIKELY(!isPageEditable())) {                                       \
+    if (Q_UNLIKELY(!isPageEditable()))                                         \
+    {                                                                          \
         ErrorString error(message);                                            \
-        error.appendBase(QT_TRANSLATE_NOOP("NoteEditorPrivate",                \
-                                           "Note is not editable"));           \
+        error.appendBase(                                                      \
+            QT_TRANSLATE_NOOP("NoteEditorPrivate", "Note is not editable"));   \
         QNINFO(error << ", note: "                                             \
-               << (m_pNote.isNull()                                            \
-                   ? QStringLiteral("<null>")                                  \
-                   : m_pNote->toString())                                      \
-               << "\nNotebook: "                                               \
-               << (m_pNotebook.isNull()                                        \
-                   ? QStringLiteral("<null>")                                  \
-                   : m_pNotebook->toString()));                                \
+            << (m_pNote.isNull()                                               \
+                ? QStringLiteral("<null>")                                     \
+                : m_pNote->toString())                                         \
+            << "\nNotebook: "                                                  \
+            << (m_pNotebook.isNull()                                           \
+                ? QStringLiteral("<null>")                                     \
+                : m_pNotebook->toString()));                                   \
         Q_EMIT notifyError(error);                                             \
         return;                                                                \
     }                                                                          \
 // CHECK_NOTE_EDITABLE
 
 #define CHECK_ACCOUNT(message, ...)                                            \
-    if (Q_UNLIKELY(m_pAccount.isNull())) {                                     \
+    if (Q_UNLIKELY(m_pAccount.isNull()))                                       \
+    {                                                                          \
         ErrorString error(message);                                            \
-        error.appendBase(QT_TRANSLATE_NOOP("NoteEditorPrivate",                \
-                                           "No account is associated with "    \
-                                           "the note editor"));                \
+        error.appendBase(                                                      \
+            QT_TRANSLATE_NOOP("NoteEditorPrivate",                             \
+                              "No account is set to the note editor"));        \
         QNWARNING(error);                                                      \
         Q_EMIT notifyError(error);                                             \
         return __VA_ARGS__;                                                    \

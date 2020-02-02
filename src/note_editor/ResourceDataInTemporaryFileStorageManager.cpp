@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -17,24 +17,25 @@
  */
 
 #include "ResourceDataInTemporaryFileStorageManager.h"
+
 #include "NoteEditorLocalStorageBroker.h"
 
+#include <quentier/logging/QuentierLogger.h>
 #include <quentier/types/Note.h>
 #include <quentier/types/Resource.h>
-#include <quentier/logging/QuentierLogger.h>
-#include <quentier/utility/Utility.h>
 #include <quentier/utility/StandardPaths.h>
+#include <quentier/utility/Utility.h>
 
-#include <QWidget>
-#include <QFileInfo>
+#include <QCryptographicHash>
+#include <QDesktopServices>
 #include <QDir>
 #include <QDirIterator>
-#include <QDesktopServices>
-#include <QCryptographicHash>
+#include <QFileInfo>
 #include <QThread>
+#include <QWidget>
 
-#include <cmath>
 #include <algorithm>
+#include <cmath>
 #include <fstream>
 #include <string>
 
@@ -47,24 +48,21 @@ ResourceDataInTemporaryFileStorageManager::ResourceDataInTemporaryFileStorageMan
         QObject * parent) :
     QObject(parent),
     m_nonImageResourceFileStorageLocation(nonImageResourceFileStorageFolderPath()),
-    m_imageResourceFileStorageLocation(imageResourceFileStorageFolderPath()),
-    m_pCurrentNote(),
-    m_resourceLocalUidsPendingFindInLocalStorage(),
-    m_resourceLocalUidsPendingFindInLocalStorageForWritingToFileForOpening(),
-    m_resourceLocalUidByFilePath(),
-    m_fileSystemWatcher()
+    m_imageResourceFileStorageLocation(imageResourceFileStorageFolderPath())
 {
     createConnections();
 }
 
 QString ResourceDataInTemporaryFileStorageManager::imageResourceFileStorageFolderPath()
 {
-    return applicationTemporaryStoragePath() + QStringLiteral("/resources/image");
+    return applicationTemporaryStoragePath() +
+        QStringLiteral("/resources/image");
 }
 
 QString ResourceDataInTemporaryFileStorageManager::nonImageResourceFileStorageFolderPath()
 {
-    return applicationTemporaryStoragePath() + QStringLiteral("/resources/non-image");
+    return applicationTemporaryStoragePath() +
+        QStringLiteral("/resources/non-image");
 }
 
 void ResourceDataInTemporaryFileStorageManager::onSaveResourceDataToTemporaryFileRequest(
@@ -72,52 +70,63 @@ void ResourceDataInTemporaryFileStorageManager::onSaveResourceDataToTemporaryFil
     QByteArray dataHash, QUuid requestId, bool isImage)
 {
     QNDEBUG("ResourceDataInTemporaryFileStorageManager::"
-            << "onSaveResourceDataToTemporaryFileRequest: "
-            << "note local uid = " << noteLocalUid
-            << ", resource local uid = " << resourceLocalUid
-            << ", request id = " << requestId
-            << ", data hash = " << dataHash.toHex()
-            << ", is image = " << (isImage ? "true" : "false"));
+        << "onSaveResourceDataToTemporaryFileRequest: "
+        << "note local uid = " << noteLocalUid
+        << ", resource local uid = " << resourceLocalUid
+        << ", request id = " << requestId
+        << ", data hash = " << dataHash.toHex()
+        << ", is image = " << (isImage ? "true" : "false"));
 
     if (dataHash.isEmpty()) {
         dataHash = calculateHash(data);
     }
 
     ErrorString errorDescription;
-    bool res = writeResourceDataToTemporaryFile(noteLocalUid, resourceLocalUid,
-                                                data, dataHash,
-                                                (isImage
-                                                 ? ResourceType::Image
-                                                 : ResourceType::NonImage),
-                                                errorDescription);
+    bool res = writeResourceDataToTemporaryFile(
+        noteLocalUid,
+        resourceLocalUid,
+        data,
+        dataHash,
+        (isImage ? ResourceType::Image : ResourceType::NonImage),
+        errorDescription);
+
     if (!res) {
-        Q_EMIT saveResourceDataToTemporaryFileCompleted(requestId, dataHash,
-                                                        errorDescription);
+        Q_EMIT saveResourceDataToTemporaryFileCompleted(
+            requestId,
+            dataHash,
+            errorDescription);
         return;
     }
 
     QNDEBUG("Successfully wrote resource data to file: "
-            << "resource local uid = " << resourceLocalUid);
-    Q_EMIT saveResourceDataToTemporaryFileCompleted(requestId, dataHash,
-                                                    ErrorString());
+        << "resource local uid = " << resourceLocalUid);
+
+    Q_EMIT saveResourceDataToTemporaryFileCompleted(
+        requestId,
+        dataHash,
+        ErrorString());
 }
 
 void ResourceDataInTemporaryFileStorageManager::onReadResourceFromFileRequest(
     QString fileStoragePath, QString resourceLocalUid, QUuid requestId)
 {
     QNDEBUG("ResourceDataInTemporaryFileStorageManager::"
-            << "onReadResourceFromFileRequest: resource local uid = "
-            << resourceLocalUid << ", request id = " << requestId);
+        << "onReadResourceFromFileRequest: resource local uid = "
+        << resourceLocalUid << ", request id = " << requestId);
 
     if (Q_UNLIKELY(m_nonImageResourceFileStorageLocation.isEmpty()))
     {
         ErrorString errorDescription(
             QT_TR_NOOP("Resource file storage location is empty"));
+
         QNWARNING(errorDescription << ", resource local uid = "
-                  << resourceLocalUid << ", request id = " << requestId);
+            << resourceLocalUid << ", request id = " << requestId);
+
         Q_EMIT readResourceFromFileCompleted(
-            requestId, QByteArray(), QByteArray(),
-            Errors::NoResourceFileStorageLocation,
+            requestId,
+            QByteArray(),
+            QByteArray(),
+            static_cast<int>(Error::NoResourceFileStorageLocation),
             errorDescription);
         return;
     }
@@ -128,34 +137,47 @@ void ResourceDataInTemporaryFileStorageManager::onReadResourceFromFileRequest(
     {
         ErrorString errorDescription(
             QT_TR_NOOP("Can't open resource file for reading"));
+
         errorDescription.details() = resourceFile.errorString();
         int errorCode = resourceFile.error();
         QNWARNING(errorDescription << ", error code = " << errorCode
-                  << ", resource local uid = " << resourceLocalUid
-                  << ", request id = " << requestId);
+            << ", resource local uid = " << resourceLocalUid
+            << ", request id = " << requestId);
+
         Q_EMIT readResourceFromFileCompleted(
-            requestId, QByteArray(), QByteArray(),
-            errorCode, errorDescription);
+            requestId,
+            QByteArray(),
+            QByteArray(),
+            errorCode,
+            errorDescription);
         return;
     }
 
     QFileInfo resourceFileInfo(fileStoragePath);
-    QFile resourceHashFile(resourceFileInfo.absolutePath() +
-                           QStringLiteral("/") + resourceLocalUid +
-                           QStringLiteral(".hash"));
+
+    QFile resourceHashFile(
+        resourceFileInfo.absolutePath() +
+        QStringLiteral("/") + resourceLocalUid +
+        QStringLiteral(".hash"));
+
     open = resourceHashFile.open(QIODevice::ReadOnly);
     if (Q_UNLIKELY(!open))
     {
-        ErrorString errorDescription(QT_TR_NOOP("Can't open resource hash file "
-                                                "for reading"));
+        ErrorString errorDescription(
+            QT_TR_NOOP("Can't open resource hash file for reading"));
+
         errorDescription.details() = resourceHashFile.errorString();
         int errorCode = resourceHashFile.error();
         QNWARNING(errorDescription << ", error code = " << errorCode
-                  << ", resource local uid = " << resourceLocalUid
-                  << ", request id = " << requestId);
+            << ", resource local uid = " << resourceLocalUid
+            << ", request id = " << requestId);
+
         Q_EMIT readResourceFromFileCompleted(
-            requestId, QByteArray(), QByteArray(),
-            errorCode, errorDescription);
+            requestId,
+            QByteArray(),
+            QByteArray(),
+            errorCode,
+            errorDescription);
         return;
     }
 
@@ -163,16 +185,20 @@ void ResourceDataInTemporaryFileStorageManager::onReadResourceFromFileRequest(
     QByteArray dataHash = resourceHashFile.readAll();
 
     QNDEBUG("Successfully read resource data and hash from files");
-    Q_EMIT readResourceFromFileCompleted(requestId, data, dataHash,
-                                         0, ErrorString());
+    Q_EMIT readResourceFromFileCompleted(
+        requestId,
+        data,
+        dataHash,
+        0,
+        ErrorString());
 }
 
 void ResourceDataInTemporaryFileStorageManager::onOpenResourceRequest(
     QString resourceLocalUid)
 {
     QNDEBUG("ResourceDataInTemporaryFileStorageManager::"
-            << "onOpenResourceRequest: resource local uid = "
-            << resourceLocalUid);
+        << "onOpenResourceRequest: resource local uid = "
+        << resourceLocalUid);
 
     if (Q_UNLIKELY(m_pCurrentNote.isNull()))
     {
@@ -180,10 +206,17 @@ void ResourceDataInTemporaryFileStorageManager::onOpenResourceRequest(
             QT_TR_NOOP("Can't open the resource in external editor: internal "
                        "error, no note is set to "
                        "ResourceDataInTemporaryFileStorageManager"));
-        errorDescription.details() = QStringLiteral("resource local uid = ") +
-                                     resourceLocalUid;
+
+        errorDescription.details() =
+            QStringLiteral("resource local uid = ") + resourceLocalUid;
+
         QNWARNING(errorDescription);
-        Q_EMIT failedToOpenResource(resourceLocalUid, QString(), errorDescription);
+
+        Q_EMIT failedToOpenResource(
+            resourceLocalUid,
+            QString(),
+            errorDescription);
+
         return;
     }
 
@@ -191,10 +224,8 @@ void ResourceDataInTemporaryFileStorageManager::onOpenResourceRequest(
 
     QList<Resource> resources = m_pCurrentNote->resources();
     const Resource * pResource = nullptr;
-    for(auto it = resources.constBegin(),
-        end = resources.constEnd(); it != end; ++it)
+    for(const auto & resource: qAsConst(resources))
     {
-        const Resource & resource = *it;
         if (resource.localUid() == resourceLocalUid) {
             pResource = &resource;
             break;
@@ -206,11 +237,16 @@ void ResourceDataInTemporaryFileStorageManager::onOpenResourceRequest(
         ErrorString errorDescription(
             QT_TR_NOOP("Can't open the resource in external editor: internal "
                        "error, failed to find the resource within the note"));
-        errorDescription.details() = QStringLiteral("resource local uid = ") +
-                                     resourceLocalUid;
+
+        errorDescription.details() =
+            QStringLiteral("resource local uid = ") + resourceLocalUid;
+
         QNWARNING(errorDescription);
-        Q_EMIT failedToOpenResource(resourceLocalUid, noteLocalUid,
-                                    errorDescription);
+
+        Q_EMIT failedToOpenResource(
+            resourceLocalUid,
+            noteLocalUid,
+            errorDescription);
         return;
     }
 
@@ -219,28 +255,40 @@ void ResourceDataInTemporaryFileStorageManager::onOpenResourceRequest(
         ErrorString errorDescription(
             QT_TR_NOOP("Can't open the resource in external editor: "
                        "resource has no mime type"));
-        errorDescription.details() = QStringLiteral("resource local uid = ") +
-                                     resourceLocalUid;
+
+        errorDescription.details() =
+            QStringLiteral("resource local uid = ") + resourceLocalUid;
+
         QNWARNING(errorDescription << ", resource: " << *pResource);
-        Q_EMIT failedToOpenResource(resourceLocalUid, noteLocalUid, errorDescription);
+
+        Q_EMIT failedToOpenResource(
+            resourceLocalUid,
+            noteLocalUid,
+            errorDescription);
         return;
     }
 
     const QString & mime = pResource->mime();
     bool isImageResource = mime.startsWith(QStringLiteral("image"));
-    QString fileStoragePath = (isImageResource
-                               ? m_imageResourceFileStorageLocation
-                               : m_nonImageResourceFileStorageLocation);
-    fileStoragePath += QStringLiteral("/") + noteLocalUid + QStringLiteral("/") +
-                       resourceLocalUid + QStringLiteral(".dat");
+
+    QString fileStoragePath =
+        (isImageResource
+         ? m_imageResourceFileStorageLocation
+         : m_nonImageResourceFileStorageLocation);
+
+    fileStoragePath +=
+        QStringLiteral("/") + noteLocalUid + QStringLiteral("/") +
+        resourceLocalUid + QStringLiteral(".dat");
 
     if (pResource->hasDataHash() &&
-        checkIfResourceFileExistsAndIsActual(noteLocalUid, resourceLocalUid,
-                                             fileStoragePath,
-                                             pResource->dataHash()))
+        checkIfResourceFileExistsAndIsActual(
+            noteLocalUid,
+            resourceLocalUid,
+            fileStoragePath,
+            pResource->dataHash()))
     {
         QNDEBUG("Temporary file for resource local uid " << resourceLocalUid
-                << " already exists and is actual");
+            << " already exists and is actual");
 
         m_resourceLocalUidByFilePath[fileStoragePath] = resourceLocalUid;
         watchResourceFileForChanges(resourceLocalUid, fileStoragePath);
@@ -256,24 +304,30 @@ void ResourceDataInTemporaryFileStorageManager::onOpenResourceRequest(
         return;
     }
 
-    QByteArray dataHash = (pResource->hasDataHash()
-                           ? pResource->dataHash()
-                           : calculateHash(pResource->dataBody()));
+    QByteArray dataHash =
+        (pResource->hasDataHash()
+         ? pResource->dataHash()
+         : calculateHash(pResource->dataBody()));
 
     WriteResourceDataCallback callback =
         OpenResourcePreparationProgressFunctor(resourceLocalUid, *this);
 
     ErrorString errorDescription;
-    bool res = writeResourceDataToTemporaryFile(noteLocalUid, resourceLocalUid,
-                                                pResource->dataBody(), dataHash,
-                                                (isImageResource
-                                                 ? ResourceType::Image
-                                                 : ResourceType::NonImage),
-                                                errorDescription,
-                                                CheckResourceFileActualityOption::On,
-                                                callback);
+    bool res = writeResourceDataToTemporaryFile(
+        noteLocalUid,
+        resourceLocalUid,
+        pResource->dataBody(),
+        dataHash,
+        (isImageResource ? ResourceType::Image : ResourceType::NonImage),
+        errorDescription,
+        CheckResourceFileActualityOption::On,
+        callback);
+
     if (!res) {
-        Q_EMIT failedToOpenResource(resourceLocalUid, noteLocalUid, errorDescription);
+        Q_EMIT failedToOpenResource(
+            resourceLocalUid,
+            noteLocalUid,
+            errorDescription);
         return;
     }
 
@@ -285,37 +339,41 @@ void ResourceDataInTemporaryFileStorageManager::onOpenResourceRequest(
 void ResourceDataInTemporaryFileStorageManager::onCurrentNoteChanged(Note note)
 {
     QNDEBUG("ResourceDataInTemporaryFileStorageManager::"
-            << "onCurrentNoteChanged; new note local uid = "
-            << note.localUid() << ", previous note local uid = "
-            << (m_pCurrentNote.isNull()
-                ? QStringLiteral("<null>")
-                : m_pCurrentNote->localUid()));
+        << "onCurrentNoteChanged; new note local uid = "
+        << note.localUid() << ", previous note local uid = "
+        << (m_pCurrentNote.isNull()
+            ? QStringLiteral("<null>")
+            : m_pCurrentNote->localUid()));
 
-    if (!m_pCurrentNote.isNull() && (m_pCurrentNote->localUid() == note.localUid()))
+    if (!m_pCurrentNote.isNull() &&
+        (m_pCurrentNote->localUid() == note.localUid()))
     {
         QNTRACE("The current note is the same, only the note "
-                "object might have changed");
+            << "object might have changed");
 
         QList<Resource> previousResources = m_pCurrentNote->resources();
         *m_pCurrentNote = note;
 
         ErrorString errorDescription;
-        ResultType::type res =
-            partialUpdateResourceFilesForCurrentNote(previousResources,
-                                                     errorDescription);
-        if (res == ResultType::Error) {
-            Q_EMIT noteResourcesPreparationError(m_pCurrentNote->localUid(),
-                                                 errorDescription);
+        ResultType res = partialUpdateResourceFilesForCurrentNote(
+            previousResources,
+            errorDescription);
+        if (res == ResultType::Error)
+        {
+            Q_EMIT noteResourcesPreparationError(
+                m_pCurrentNote->localUid(),
+                errorDescription);
         }
-        else if (res == ResultType::Ready) {
+        else if (res == ResultType::Ready)
+        {
             Q_EMIT noteResourcesReady(m_pCurrentNote->localUid());
         }
 
         return;
     }
 
-    for(auto it = m_resourceLocalUidByFilePath.constBegin(),
-        end = m_resourceLocalUidByFilePath.constEnd(); it != end; ++it)
+    for(const auto & it:
+        qevercloud::toRange(qAsConst(m_resourceLocalUidByFilePath)))
     {
         m_fileSystemWatcher.removePath(it.key());
         QNTRACE("Stopped watching for file " << it.key());
@@ -331,17 +389,15 @@ void ResourceDataInTemporaryFileStorageManager::onCurrentNoteChanged(Note note)
 
     if (!m_pCurrentNote->hasResources()) {
         QNTRACE("Current note has no resources, emitting "
-                "noteResourcesReady signal");
+            << "noteResourcesReady signal");
         Q_EMIT noteResourcesReady(m_pCurrentNote->localUid());
         return;
     }
 
     QList<Resource> imageResources;
     QList<Resource> resources = m_pCurrentNote->resources();
-    for(auto it = resources.constBegin(),
-        end = resources.constEnd(); it != end; ++it)
+    for(const auto & resource: qAsConst(resources))
     {
-        const Resource & resource = *it;
         if (!resource.hasMime() ||
             !resource.mime().startsWith(QStringLiteral("image")))
         {
@@ -359,13 +415,18 @@ void ResourceDataInTemporaryFileStorageManager::onCurrentNoteChanged(Note note)
     }
 
     ErrorString errorDescription;
-    ResultType::type res = putResourcesDataToTemporaryFiles(imageResources,
-                                                            errorDescription);
-    if (res == ResultType::Error) {
-        Q_EMIT noteResourcesPreparationError(m_pCurrentNote->localUid(),
-                                             errorDescription);
+    ResultType res = putResourcesDataToTemporaryFiles(
+        imageResources,
+        errorDescription);
+
+    if (res == ResultType::Error)
+    {
+        Q_EMIT noteResourcesPreparationError(
+            m_pCurrentNote->localUid(),
+            errorDescription);
     }
-    else if (res == ResultType::Ready) {
+    else if (res == ResultType::Ready)
+    {
         Q_EMIT noteResourcesReady(m_pCurrentNote->localUid());
     }
 }
@@ -374,7 +435,7 @@ void ResourceDataInTemporaryFileStorageManager::onRequestDiagnostics(
     QUuid requestId)
 {
     QNDEBUG("ResourceDataInTemporaryFileStorageManager::"
-            << "onRequestDiagnostics: request id = " << requestId);
+        << "onRequestDiagnostics: request id = " << requestId);
 
     QString diagnostics;
     QTextStream strm(&diagnostics);
@@ -382,8 +443,8 @@ void ResourceDataInTemporaryFileStorageManager::onRequestDiagnostics(
     strm << "ResourceDataInTemporaryFileStorageManager diagnostics: {\n";
 
     strm << "  Resource local uids by file paths: \n";
-    for(auto it = m_resourceLocalUidByFilePath.constBegin(),
-        end = m_resourceLocalUidByFilePath.constEnd(); it != end; ++it)
+    for(const auto & it:
+        qevercloud::toRange(qAsConst(m_resourceLocalUidByFilePath)))
     {
         strm << "    [" << it.key() << "]: " << it.value() << "\n";
     }
@@ -405,7 +466,7 @@ void ResourceDataInTemporaryFileStorageManager::onFileChanged(
     const QString & path)
 {
     QNDEBUG("ResourceDataInTemporaryFileStorageManager::onFileChanged: "
-            << path);
+        << path);
 
     auto it = m_resourceLocalUidByFilePath.find(path);
 
@@ -424,8 +485,8 @@ void ResourceDataInTemporaryFileStorageManager::onFileChanged(
 
     if (Q_UNLIKELY(it == m_resourceLocalUidByFilePath.end())) {
         QNWARNING("Can't process resource local file change "
-                  << "properly: can't find resource local uid by file path: "
-                  << path << "; stopped watching for that file's changes");
+            << "properly: can't find resource local uid by file path: "
+            << path << "; stopped watching for that file's changes");
         m_fileSystemWatcher.removePath(path);
         return;
     }
@@ -439,19 +500,24 @@ void ResourceDataInTemporaryFileStorageManager::onFileChanged(
     }
 
     QNTRACE("Size of new resource data: "
-            << humanReadableSize(static_cast<quint64>(std::max(data.size(), 0))));
+        << humanReadableSize(static_cast<quint64>(std::max(data.size(), 0))));
 
     QByteArray dataHash = calculateHash(data);
 
     int errorCode = 0;
-    bool res = updateResourceHashHelperFile(it.value(), dataHash,
-                                            resourceFileInfo.absolutePath(),
-                                            errorCode, errorDescription);
+    bool res = updateResourceHashHelperFile(
+        it.value(),
+        dataHash,
+        resourceFileInfo.absolutePath(),
+        errorCode,
+        errorDescription);
+
     if (Q_UNLIKELY(!res))
     {
         QNWARNING("Can't process resource local file change properly: can't "
-                  << "update the hash for resource file: error code = "
-                  << errorCode << ", error description: " << errorDescription);
+            << "update the hash for resource file: error code = "
+            << errorCode << ", error description: " << errorDescription);
+
         m_fileSystemWatcher.removePath(path);
         return;
     }
@@ -463,7 +529,7 @@ void ResourceDataInTemporaryFileStorageManager::onFileRemoved(
     const QString & path)
 {
     QNDEBUG("ResourceDataInTemporaryFileStorageManager::onFileRemoved: "
-            << path);
+        << path);
 
     auto it = m_resourceLocalUidByFilePath.find(path);
     if (it != m_resourceLocalUidByFilePath.end()) {
@@ -476,52 +542,60 @@ void ResourceDataInTemporaryFileStorageManager::onFoundResourceData(
 {
     QString resourceLocalUid = resource.localUid();
 
-    auto fit = m_resourceLocalUidsPendingFindInLocalStorage.find(resourceLocalUid);
+    auto fit = m_resourceLocalUidsPendingFindInLocalStorage.find(
+        resourceLocalUid);
+
     if (fit != m_resourceLocalUidsPendingFindInLocalStorage.end())
     {
         QNDEBUG("ResourceDataInTemporaryFileStorageManager::"
-                << "onFoundResourceData: " << resource);
+            << "onFoundResourceData: " << resource);
 
         m_resourceLocalUidsPendingFindInLocalStorage.erase(fit);
 
         if (Q_UNLIKELY(m_pCurrentNote.isNull())) {
             QNWARNING("Received resource data from the local storage "
-                      "but no note is set to "
-                      "ResourceDataInTemporaryFileStorageManager");
+                << "but no note is set to "
+                << "ResourceDataInTemporaryFileStorageManager");
             return;
         }
 
         QString noteLocalUid = m_pCurrentNote->localUid();
 
-        QByteArray dataHash = (resource.hasDataHash()
-                               ? resource.dataHash()
-                               : calculateHash(resource.dataBody()));
+        QByteArray dataHash =
+            (resource.hasDataHash()
+             ? resource.dataHash()
+             : calculateHash(resource.dataBody()));
 
         ErrorString errorDescription;
         bool res = writeResourceDataToTemporaryFile(
-            noteLocalUid, resourceLocalUid,
-            resource.dataBody(), dataHash,
-            ResourceType::Image, errorDescription,
+            noteLocalUid,
+            resourceLocalUid,
+            resource.dataBody(),
+            dataHash,
+            ResourceType::Image,
+            errorDescription,
             CheckResourceFileActualityOption::Off);
 
-        if (!res) {
-            Q_EMIT failedToPutResourceDataIntoTemporaryFile(resourceLocalUid,
-                                                            noteLocalUid,
-                                                            errorDescription);
+        if (!res)
+        {
+            Q_EMIT failedToPutResourceDataIntoTemporaryFile(
+                resourceLocalUid,
+                noteLocalUid,
+                errorDescription);
         }
 
         if (m_resourceLocalUidsPendingFindInLocalStorage.empty())
         {
             QNDEBUG("Received and processed all image resources data for the "
-                    << "current note, emitting noteResourcesReady signal: note "
-                    << "local uid = " << noteLocalUid);
+                << "current note, emitting noteResourcesReady signal: note "
+                << "local uid = " << noteLocalUid);
             Q_EMIT noteResourcesReady(noteLocalUid);
         }
         else
         {
             QNDEBUG("Still pending "
-                    << m_resourceLocalUidsPendingFindInLocalStorage.size()
-                    << " resources data to be found within the local storage");
+                << m_resourceLocalUidsPendingFindInLocalStorage.size()
+                << " resources data to be found within the local storage");
         }
 
         return;
@@ -529,26 +603,30 @@ void ResourceDataInTemporaryFileStorageManager::onFoundResourceData(
 
     auto oit = m_resourceLocalUidsPendingFindInLocalStorageForWritingToFileForOpening.find(
         resourceLocalUid);
-    if (oit != m_resourceLocalUidsPendingFindInLocalStorageForWritingToFileForOpening.end())
+
+    if (oit !=
+        m_resourceLocalUidsPendingFindInLocalStorageForWritingToFileForOpening.end())
     {
         QNDEBUG("ResourceDataInTemporaryFileStorageManager::"
-                << "onFoundResourceData (for resource file opening): "
-                << resource);
+            << "onFoundResourceData (for resource file opening): "
+            << resource);
 
-        m_resourceLocalUidsPendingFindInLocalStorageForWritingToFileForOpening.erase(oit);
+        m_resourceLocalUidsPendingFindInLocalStorageForWritingToFileForOpening.erase(
+            oit);
 
         if (Q_UNLIKELY(m_pCurrentNote.isNull())) {
             QNWARNING("Received resource data from the local storage "
-                      "(for resource file opening) but no note is "
-                      "set to ResourceDataInTemporaryFileStorageManager");
+                << "(for resource file opening) but no note is "
+                << "set to ResourceDataInTemporaryFileStorageManager");
             return;
         }
 
         QString noteLocalUid = m_pCurrentNote->localUid();
 
-        QByteArray dataHash = (resource.hasDataHash()
-                               ? resource.dataHash()
-                               : calculateHash(resource.dataBody()));
+        QByteArray dataHash =
+            (resource.hasDataHash()
+             ? resource.dataHash()
+             : calculateHash(resource.dataBody()));
 
         WriteResourceDataCallback callback =
             OpenResourcePreparationProgressFunctor(resourceLocalUid, *this);
@@ -556,30 +634,38 @@ void ResourceDataInTemporaryFileStorageManager::onFoundResourceData(
         bool isImageResource =
             (resource.hasMime() &&
              resource.mime().startsWith(QStringLiteral("image")));
-        ResourceType::type resourceType = (isImageResource
-                                           ? ResourceType::Image
-                                           : ResourceType::NonImage);
+        ResourceType resourceType =
+            (isImageResource ? ResourceType::Image : ResourceType::NonImage);
 
         ErrorString errorDescription;
         bool res = writeResourceDataToTemporaryFile(
-            noteLocalUid, resourceLocalUid,
-            resource.dataBody(), dataHash,
-            resourceType, errorDescription,
+            noteLocalUid,
+            resourceLocalUid,
+            resource.dataBody(),
+            dataHash,
+            resourceType,
+            errorDescription,
             CheckResourceFileActualityOption::Off,
             callback);
 
-        if (!res) {
-            Q_EMIT failedToOpenResource(resourceLocalUid, noteLocalUid,
-                                        errorDescription);
+        if (!res)
+        {
+            Q_EMIT failedToOpenResource(
+                resourceLocalUid,
+                noteLocalUid,
+                errorDescription);
             return;
         }
 
-        QString fileStoragePath = (isImageResource
-                                   ? m_imageResourceFileStorageLocation
-                                   : m_nonImageResourceFileStorageLocation);
+        QString fileStoragePath =
+            (isImageResource
+             ? m_imageResourceFileStorageLocation
+             : m_nonImageResourceFileStorageLocation);
+
         fileStoragePath += QStringLiteral("/") + noteLocalUid +
                            QStringLiteral("/") + resourceLocalUid +
                            QStringLiteral(".dat");
+
         watchResourceFileForChanges(resourceLocalUid, fileStoragePath);
         QDesktopServices::openUrl(QUrl::fromLocalFile(fileStoragePath));
         Q_EMIT openedResource(resourceLocalUid, noteLocalUid);
@@ -589,35 +675,37 @@ void ResourceDataInTemporaryFileStorageManager::onFoundResourceData(
 void ResourceDataInTemporaryFileStorageManager::onFailedToFindResourceData(
     QString resourceLocalUid, ErrorString errorDescription)
 {
-    auto fit = m_resourceLocalUidsPendingFindInLocalStorage.find(resourceLocalUid);
+    auto fit = m_resourceLocalUidsPendingFindInLocalStorage.find(
+        resourceLocalUid);
     if (fit != m_resourceLocalUidsPendingFindInLocalStorage.end())
     {
         QNDEBUG("ResourceDataInTemporaryFileStorageManager::"
-                << "onFailedToFindResourceData: resource local uid = "
-                << resourceLocalUid << ", error description = "
-                << errorDescription);
+            << "onFailedToFindResourceData: resource local uid = "
+            << resourceLocalUid << ", error description = "
+            << errorDescription);
 
         m_resourceLocalUidsPendingFindInLocalStorage.erase(fit);
 
         if (Q_UNLIKELY(m_pCurrentNote.isNull())) {
             QNWARNING("Received failure to locate resource data "
-                      << "within the local storage but no note "
-                      << "is set to ResourceDataInTemporaryFileStorageManager");
+                << "within the local storage but no note "
+                << "is set to ResourceDataInTemporaryFileStorageManager");
             return;
         }
 
         QString noteLocalUid = m_pCurrentNote->localUid();
-        Q_EMIT failedToPutResourceDataIntoTemporaryFile(resourceLocalUid,
-                                                        noteLocalUid,
-                                                        errorDescription);
+        Q_EMIT failedToPutResourceDataIntoTemporaryFile(
+            resourceLocalUid,
+            noteLocalUid,
+            errorDescription);
 
         if (m_resourceLocalUidsPendingFindInLocalStorage.empty()) {
             Q_EMIT noteResourcesReady(noteLocalUid);
         }
         else {
             QNDEBUG("Still pending "
-                    << m_resourceLocalUidsPendingFindInLocalStorage.size()
-                    << " resources data to be found within the local storage");
+                << m_resourceLocalUidsPendingFindInLocalStorage.size()
+                << " resources data to be found within the local storage");
         }
 
         return;
@@ -625,59 +713,63 @@ void ResourceDataInTemporaryFileStorageManager::onFailedToFindResourceData(
 
     auto oit = m_resourceLocalUidsPendingFindInLocalStorageForWritingToFileForOpening.find(
         resourceLocalUid);
-    if (oit != m_resourceLocalUidsPendingFindInLocalStorageForWritingToFileForOpening.end())
+    if (oit !=
+        m_resourceLocalUidsPendingFindInLocalStorageForWritingToFileForOpening.end())
     {
         QNDEBUG("ResourceDataInTemporaryFileStorageManager::"
-                << "onFailedToFindResourceData (for resource file "
-                << "opening): resource local uid = "
-                << resourceLocalUid << ", error description = "
-                << errorDescription);
+            << "onFailedToFindResourceData (for resource file "
+            << "opening): resource local uid = "
+            << resourceLocalUid << ", error description = "
+            << errorDescription);
 
         m_resourceLocalUidsPendingFindInLocalStorage.erase(oit);
 
         if (Q_UNLIKELY(m_pCurrentNote.isNull()))
         {
             QNWARNING("Received failure to locate resource data within the "
-                      "local storage (for resource file opening) but no note "
-                      "is set to ResourceDataInTemporaryFileStorageManager");
+                << "local storage (for resource file opening) but no note "
+                << "is set to ResourceDataInTemporaryFileStorageManager");
 
             return;
         }
 
         QString noteLocalUid = m_pCurrentNote->localUid();
-        Q_EMIT failedToOpenResource(resourceLocalUid, noteLocalUid,
-                                    errorDescription);
+        Q_EMIT failedToOpenResource(
+            resourceLocalUid,
+            noteLocalUid,
+            errorDescription);
         return;
     }
 }
 
 void ResourceDataInTemporaryFileStorageManager::createConnections()
 {
-    QObject::connect(&m_fileSystemWatcher,
-                     QNSIGNAL(FileSystemWatcher,fileChanged,QString),
-                     this,
-                     QNSLOT(ResourceDataInTemporaryFileStorageManager,
-                            onFileChanged,QString));
+    QObject::connect(
+        &m_fileSystemWatcher,
+        &FileSystemWatcher::fileChanged,
+        this,
+        &ResourceDataInTemporaryFileStorageManager::onFileChanged);
 
-    NoteEditorLocalStorageBroker & noteEditorLocalStorageBroker =
+    auto & noteEditorLocalStorageBroker =
         NoteEditorLocalStorageBroker::instance();
-    QObject::connect(this,
-                     QNSIGNAL(ResourceDataInTemporaryFileStorageManager,
-                              findResourceData,QString),
-                     &noteEditorLocalStorageBroker,
-                     QNSLOT(NoteEditorLocalStorageBroker,findResourceData,QString));
-    QObject::connect(&noteEditorLocalStorageBroker,
-                     QNSIGNAL(NoteEditorLocalStorageBroker,
-                              foundResourceData,Resource),
-                     this,
-                     QNSLOT(ResourceDataInTemporaryFileStorageManager,
-                            onFoundResourceData,Resource));
-    QObject::connect(&noteEditorLocalStorageBroker,
-                     QNSIGNAL(NoteEditorLocalStorageBroker,
-                              failedToFindResourceData,QString,ErrorString),
-                     this,
-                     QNSLOT(ResourceDataInTemporaryFileStorageManager,
-                            onFailedToFindResourceData,QString,ErrorString));
+
+    QObject::connect(
+        this,
+        &ResourceDataInTemporaryFileStorageManager::findResourceData,
+        &noteEditorLocalStorageBroker,
+        &NoteEditorLocalStorageBroker::findResourceData);
+
+    QObject::connect(
+        &noteEditorLocalStorageBroker,
+        &NoteEditorLocalStorageBroker::foundResourceData,
+        this,
+        &ResourceDataInTemporaryFileStorageManager::onFoundResourceData);
+
+    QObject::connect(
+        &noteEditorLocalStorageBroker,
+        &NoteEditorLocalStorageBroker::failedToFindResourceData,
+        this,
+        &ResourceDataInTemporaryFileStorageManager::onFailedToFindResourceData);
 }
 
 QByteArray ResourceDataInTemporaryFileStorageManager::calculateHash(
@@ -691,9 +783,9 @@ bool ResourceDataInTemporaryFileStorageManager::checkIfResourceFileExistsAndIsAc
     const QString & fileStoragePath, const QByteArray & dataHash) const
 {
     QNDEBUG("ResourceDataInTemporaryFileStorageManager::"
-            << "checkIfResourceFileExistsAndIsActual: note local uid = "
-            << noteLocalUid << ", resource local uid = "
-            << resourceLocalUid << ", data hash = " << dataHash.toHex());
+        << "checkIfResourceFileExistsAndIsActual: note local uid = "
+        << noteLocalUid << ", resource local uid = "
+        << resourceLocalUid << ", data hash = " << dataHash.toHex());
 
     if (Q_UNLIKELY(fileStoragePath.isEmpty())) {
         QNWARNING("Resource file storage location is empty");
@@ -703,19 +795,19 @@ bool ResourceDataInTemporaryFileStorageManager::checkIfResourceFileExistsAndIsAc
     QFileInfo resourceFileInfo(fileStoragePath);
     if (!resourceFileInfo.exists()) {
         QNTRACE("Resource file for note local uid " << noteLocalUid
-                << " and resource local uid " << resourceLocalUid
-                << " does not exist");
+            << " and resource local uid " << resourceLocalUid
+            << " does not exist");
         return false;
     }
 
-    QFileInfo resourceHashFileInfo(resourceFileInfo.absolutePath() +
-                                   QStringLiteral("/") +
-                                   resourceFileInfo.baseName() +
-                                   QStringLiteral(".hash"));
+    QFileInfo resourceHashFileInfo(
+        resourceFileInfo.absolutePath() + QStringLiteral("/") +
+        resourceFileInfo.baseName() + QStringLiteral(".hash"));
+
     if (!resourceHashFileInfo.exists()) {
         QNTRACE("Resource hash file for note local uid "
-                << noteLocalUid << " and resource local uid "
-                << resourceLocalUid << " does not exist");
+            << noteLocalUid << " and resource local uid "
+            << resourceLocalUid << " does not exist");
         return false;
     }
 
@@ -729,7 +821,7 @@ bool ResourceDataInTemporaryFileStorageManager::checkIfResourceFileExistsAndIsAc
     QByteArray storedHash = resourceHashFile.readAll();
     if (storedHash != dataHash) {
         QNTRACE("Resource must be stale, the stored hash " << storedHash.toHex()
-                << " does not match the actual hash " << dataHash.toHex());
+            << " does not match the actual hash " << dataHash.toHex());
         return false;
     }
 
@@ -739,30 +831,33 @@ bool ResourceDataInTemporaryFileStorageManager::checkIfResourceFileExistsAndIsAc
 
 bool ResourceDataInTemporaryFileStorageManager::updateResourceHashHelperFile(
     const QString & resourceLocalUid, const QByteArray & dataHash,
-    const QString & storageFolderPath, int & errorCode, ErrorString & errorDescription)
+    const QString & storageFolderPath, int & errorCode,
+    ErrorString & errorDescription)
 {
     QNDEBUG("ResourceDataInTemporaryFileStorageManager::"
-            << "updateResourceHashHelperFile: resource local uid = "
-            << resourceLocalUid << ", data hash = "
-            << dataHash.toHex() << ", storage folder path = "
-            << storageFolderPath);
+        << "updateResourceHashHelperFile: resource local uid = "
+        << resourceLocalUid << ", data hash = "
+        << dataHash.toHex() << ", storage folder path = "
+        << storageFolderPath);
 
     QFile file(storageFolderPath + QStringLiteral("/") + resourceLocalUid +
-               QStringLiteral(".hash"));
+        QStringLiteral(".hash"));
 
     bool open = file.open(QIODevice::WriteOnly);
-    if (Q_UNLIKELY(!open)) {
-        errorDescription.setBase(QT_TR_NOOP("Can't open the file with resource's "
-                                            "hash for writing"));
+    if (Q_UNLIKELY(!open))
+    {
+        errorDescription.setBase(
+            QT_TR_NOOP("Can't open the file with resource's hash for writing"));
         errorDescription.details() = file.errorString();
         errorCode = file.error();
         return false;
     }
 
     qint64 writeRes = file.write(dataHash);
-    if (Q_UNLIKELY(writeRes < 0)) {
-        errorDescription.setBase(QT_TR_NOOP("Can't write resource data hash "
-                                            "to the separate file"));
+    if (Q_UNLIKELY(writeRes < 0))
+    {
+        errorDescription.setBase(
+            QT_TR_NOOP("Can't write resource data hash to the separate file"));
         errorDescription.details() = file.errorString();
         errorCode = file.error();
         return false;
@@ -776,9 +871,8 @@ void ResourceDataInTemporaryFileStorageManager::watchResourceFileForChanges(
     const QString & resourceLocalUid, const QString & fileStoragePath)
 {
     QNDEBUG("ResourceDataInTemporaryFileStorageManager::"
-            << "watchResourceFileForChanges: resource local uid = "
-            << resourceLocalUid << ", file storage path = "
-            << fileStoragePath);
+        << "watchResourceFileForChanges: resource local uid = "
+        << resourceLocalUid << ", file storage path = " << fileStoragePath);
 
     m_fileSystemWatcher.addPath(fileStoragePath);
     QNINFO("Start watching for resource file " << fileStoragePath);
@@ -788,7 +882,7 @@ void ResourceDataInTemporaryFileStorageManager::stopWatchingResourceFile(
     const QString & filePath)
 {
     QNDEBUG("ResourceDataInTemporaryFileStorageManager::"
-            << "stopWatchingResourceFile: " << filePath);
+        << "stopWatchingResourceFile: " << filePath);
 
     auto it = m_resourceLocalUidByFilePath.find(filePath);
     if (it == m_resourceLocalUidByFilePath.end()) {
@@ -803,7 +897,7 @@ void ResourceDataInTemporaryFileStorageManager::stopWatchingResourceFile(
 void ResourceDataInTemporaryFileStorageManager::removeStaleResourceFilesFromCurrentNote()
 {
     QNDEBUG("ResourceDataInTemporaryFileStorageManager::"
-            "removeStaleResourceFilesFromCurrentNote");
+        << "removeStaleResourceFilesFromCurrentNote");
 
     if (m_pCurrentNote.isNull()) {
         QNDEBUG("No current note, nothing to do");
@@ -818,27 +912,34 @@ void ResourceDataInTemporaryFileStorageManager::removeStaleResourceFilesFromCurr
     QFileInfoList fileInfoList;
     int numFiles = -1;
 
-    QDir imageResourceFilesFolder(m_imageResourceFileStorageLocation +
-                                  QStringLiteral("/") + m_pCurrentNote->localUid());
+    QDir imageResourceFilesFolder(
+        m_imageResourceFileStorageLocation + QStringLiteral("/") +
+        m_pCurrentNote->localUid());
+
     if (imageResourceFilesFolder.exists())
     {
         fileInfoList = imageResourceFilesFolder.entryInfoList(QDir::Files);
         numFiles = fileInfoList.size();
         QNTRACE("Found " << numFiles
-                << " files wihin the image resource files folder "
-                << "for note with local uid " << m_pCurrentNote->localUid());
+            << " files wihin the image resource files folder "
+            << "for note with local uid " << m_pCurrentNote->localUid());
     }
 
-    QDir genericResourceImagesFolder(m_nonImageResourceFileStorageLocation +
-                                     QStringLiteral("/") + m_pCurrentNote->localUid());
+    QDir genericResourceImagesFolder(
+        m_nonImageResourceFileStorageLocation +
+        QStringLiteral("/") + m_pCurrentNote->localUid());
+
     if (genericResourceImagesFolder.exists())
     {
         QFileInfoList genericResourceImageFileInfos =
             genericResourceImagesFolder.entryInfoList(QDir::Files);
-        int numGenericResourceImageFileInfos = genericResourceImageFileInfos.size();
+
+        int numGenericResourceImageFileInfos =
+            genericResourceImageFileInfos.size();
+
         QNTRACE("Found " << numGenericResourceImageFileInfos
-                << " files within the generic resource files "
-                << "folder for note with local uid " << m_pCurrentNote->localUid());
+            << " files within the generic resource files "
+            << "folder for note with local uid " << m_pCurrentNote->localUid());
 
         fileInfoList.append(genericResourceImageFileInfos);
         numFiles = fileInfoList.size();
@@ -871,12 +972,12 @@ void ResourceDataInTemporaryFileStorageManager::removeStaleResourceFilesFromCurr
         for(int j = 0; j < numResources; ++j)
         {
             QNTRACE("checking against resource with local uid "
-                    << resources[j].localUid());
+                << resources[j].localUid());
             if (baseName.startsWith(resources[j].localUid()))
             {
                 QNTRACE("File " << fileInfo.fileName()
-                        << " appears to correspond to resource "
-                        << resources[j].localUid());
+                    << " appears to correspond to resource "
+                    << resources[j].localUid());
                 resourceIndex = j;
                 break;
             }
@@ -892,15 +993,15 @@ void ResourceDataInTemporaryFileStorageManager::removeStaleResourceFilesFromCurr
                     filePath, resource.dataHash());
                 if (actual) {
                     QNTRACE("The resource file " << filePath
-                            << " is still actual, will keep it");
+                        << " is still actual, will keep it");
                     continue;
                 }
             }
             else
             {
                 QNTRACE("Resource at index " << resourceIndex
-                        << " doesn't have the data hash, will "
-                        << "remove its resource file just in case");
+                    << " doesn't have the data hash, will "
+                    << "remove its resource file just in case");
             }
         }
 
@@ -910,17 +1011,18 @@ void ResourceDataInTemporaryFileStorageManager::removeStaleResourceFilesFromCurr
 
         // Need to also remove the helper .hash file
         stopWatchingResourceFile(filePath);
-        Q_UNUSED(removeFile(fileInfo.absolutePath() + QStringLiteral("/") +
-                            baseName + QStringLiteral(".hash")));
+        Q_UNUSED(removeFile(
+            fileInfo.absolutePath() + QStringLiteral("/") +
+            baseName + QStringLiteral(".hash")));
     }
 }
 
-ResourceDataInTemporaryFileStorageManager::ResultType::type
+ResourceDataInTemporaryFileStorageManager::ResultType
 ResourceDataInTemporaryFileStorageManager::partialUpdateResourceFilesForCurrentNote(
     const QList<Resource> & previousResources, ErrorString & errorDescription)
 {
     QNDEBUG("ResourceDataInTemporaryFileStorageManager::"
-            "partialUpdateResourceFilesForCurrentNote");
+        << "partialUpdateResourceFilesForCurrentNote");
 
     if (Q_UNLIKELY(m_pCurrentNote.isNull())) {
         QNDEBUG("No current note, nothing to do");
@@ -931,18 +1033,14 @@ ResourceDataInTemporaryFileStorageManager::partialUpdateResourceFilesForCurrentN
     QStringList removedAndStaleResourceLocalUids;
 
     QList<Resource> resources = m_pCurrentNote->resources();
-    for(auto it = resources.constBegin(),
-        end = resources.constEnd(); it != end; ++it)
+    for(const auto & resource: qAsConst(resources))
     {
-        const Resource & resource = *it;
         const QString resourceLocalUid = resource.localUid();
         QNTRACE("Examining resource with local uid " << resourceLocalUid);
 
         const Resource * pPreviousResource = nullptr;
-        for(auto pit = previousResources.constBegin(),
-            pend = previousResources.constEnd(); pit != pend; ++pit)
+        for(const auto & previousResource: qAsConst(previousResources))
         {
-            const Resource & previousResource = *pit;
             if (previousResource.localUid() == resourceLocalUid) {
                 pPreviousResource = &previousResource;
                 break;
@@ -952,14 +1050,14 @@ ResourceDataInTemporaryFileStorageManager::partialUpdateResourceFilesForCurrentN
         if (!pPreviousResource)
         {
             QNTRACE("No previous resource, considering "
-                    << "the resource new: local uid = " << resourceLocalUid);
+                << "the resource new: local uid = " << resourceLocalUid);
 
             if (!resource.hasMime() ||
                 !resource.mime().startsWith(QStringLiteral("image")))
             {
                 QNTRACE("Resource has no mime type or mime type "
-                        "is not an image one, won't add "
-                        "the resource to the list of new ones");
+                    << "is not an image one, won't add "
+                    << "the resource to the list of new ones");
             }
             else {
                 newAndUpdatedResources << resource;
@@ -969,21 +1067,21 @@ ResourceDataInTemporaryFileStorageManager::partialUpdateResourceFilesForCurrentN
         }
 
         QNTRACE("Previous resource's data size = "
-                << (pPreviousResource->hasDataSize()
-                    ? pPreviousResource->dataSize()
-                    : 0)
-                << ", updated resource's data size = "
-                << (resource.hasDataSize()
-                    ? resource.dataSize()
-                    : 0)
-                << "; previous resource's data hash = "
-                << (pPreviousResource->hasDataHash()
-                    ? pPreviousResource->dataHash().toHex()
-                    : QByteArray())
-                << ", updated resource's data hash = "
-                << (resource.hasDataHash()
-                    ? resource.dataHash().toHex()
-                    : QByteArray()));
+            << (pPreviousResource->hasDataSize()
+                ? pPreviousResource->dataSize()
+                : 0)
+            << ", updated resource's data size = "
+            << (resource.hasDataSize()
+                ? resource.dataSize()
+                : 0)
+            << "; previous resource's data hash = "
+            << (pPreviousResource->hasDataHash()
+                ? pPreviousResource->dataHash().toHex()
+                : QByteArray())
+            << ", updated resource's data hash = "
+            << (resource.hasDataHash()
+                ? resource.dataHash().toHex()
+                : QByteArray()));
 
         bool dataHashIsDifferent =
             (!pPreviousResource->hasDataHash() ||
@@ -998,15 +1096,15 @@ ResourceDataInTemporaryFileStorageManager::partialUpdateResourceFilesForCurrentN
         if (dataHashIsDifferent || dataSizeIsDifferent)
         {
             QNTRACE("Different or missing data hash or size, "
-                    << "considering the resource updated: local uid = "
-                    << resourceLocalUid);
+                << "considering the resource updated: local uid = "
+                << resourceLocalUid);
 
             if (!resource.hasMime() ||
                 !resource.mime().startsWith(QStringLiteral("image")))
             {
                 QNTRACE("Resource has no mime type or mime type is not an "
-                        "image one, will remove the resource instead of adding "
-                        "it to the list of updated resources");
+                    << "image one, will remove the resource instead of adding "
+                    << "it to the list of updated resources");
                 removedAndStaleResourceLocalUids << resourceLocalUid;
             }
             else {
@@ -1017,10 +1115,8 @@ ResourceDataInTemporaryFileStorageManager::partialUpdateResourceFilesForCurrentN
         }
     }
 
-    for(auto it = previousResources.constBegin(),
-        end = previousResources.constEnd(); it != end; ++it)
+    for(const auto & previousResource: qAsConst(previousResources))
     {
-        const Resource & previousResource = *it;
         const QString resourceLocalUid = previousResource.localUid();
 
         const Resource * pResource = nullptr;
@@ -1037,8 +1133,8 @@ ResourceDataInTemporaryFileStorageManager::partialUpdateResourceFilesForCurrentN
         if (!pResource)
         {
             QNTRACE("Found no resource with local uid " << resourceLocalUid
-                    << " within the list of new/updated resources, "
-                    << "considering it stale");
+                << " within the list of new/updated resources, "
+                << "considering it stale");
             removedAndStaleResourceLocalUids << resourceLocalUid;
         }
     }
@@ -1052,10 +1148,9 @@ ResourceDataInTemporaryFileStorageManager::partialUpdateResourceFilesForCurrentN
     dirsToCheck << (m_nonImageResourceFileStorageLocation +
                     QStringLiteral("/") + noteLocalUid);
 
-    for(auto dit = dirsToCheck.constBegin(),
-        dend = dirsToCheck.constEnd(); dit != dend; ++dit)
+    for(const auto & dirPath: qAsConst(dirsToCheck))
     {
-        QDir dir(*dit);
+        QDir dir(dirPath);
         if (!dir.exists()) {
             continue;
         }
@@ -1069,10 +1164,9 @@ ResourceDataInTemporaryFileStorageManager::partialUpdateResourceFilesForCurrentN
                 continue;
             }
 
-            for(auto it = removedAndStaleResourceLocalUids.constBegin(),
-                end = removedAndStaleResourceLocalUids.constEnd(); it != end; ++it)
+            for(const auto & localUid: qAsConst(removedAndStaleResourceLocalUids))
             {
-                if (!entry.startsWith(*it) ||
+                if (!entry.startsWith(localUid) ||
                     (entryInfo.completeSuffix() == (QStringLiteral("hash"))))
                 {
                     continue;
@@ -1114,26 +1208,26 @@ void ResourceDataInTemporaryFileStorageManager::emitPartialUpdateResourceFilesFo
     const double progress)
 {
     QNDEBUG("ResourceDataInTemporaryFileStorageManager::"
-            << "emitPartialUpdateResourceFilesForCurrentNoteProgress: "
-            << "progress = " << progress);
+        << "emitPartialUpdateResourceFilesForCurrentNoteProgress: "
+        << "progress = " << progress);
 
     if (Q_UNLIKELY(m_pCurrentNote.isNull())) {
         QNWARNING("Detected attempt to emit partial update resource "
-                  << "files for current note progress but no current "
-                  << "note is set; progress = " << progress);
+            << "files for current note progress but no current "
+            << "note is set; progress = " << progress);
         return;
     }
 
     Q_EMIT noteResourcesPreparationProgress(progress, m_pCurrentNote->localUid());
 }
 
-ResourceDataInTemporaryFileStorageManager::ResultType::type
+ResourceDataInTemporaryFileStorageManager::ResultType
 ResourceDataInTemporaryFileStorageManager::putResourcesDataToTemporaryFiles(
     const QList<Resource> & resources, ErrorString & errorDescription)
 {
     QNDEBUG("ResourceDataInTemporaryFileStorageManager::"
-            << "putResourcesDataToTemporaryFiles: "
-            << resources.size() << " resources");
+        << "putResourcesDataToTemporaryFiles: "
+        << resources.size() << " resources");
 
     if (Q_UNLIKELY(m_pCurrentNote.isNull()))
     {
@@ -1148,14 +1242,12 @@ ResourceDataInTemporaryFileStorageManager::putResourcesDataToTemporaryFiles(
     size_t numResourcesPendingDataFromLocalStorage = 0;
     const int numNewAndUpdatedResources = resources.size();
     int newOrUpdatedResourceIndex = 0;
-    for(auto it = resources.constBegin(),
-        end = resources.constEnd(); it != end; ++it)
+    for(const auto & resource: qAsConst(resources))
     {
-        const Resource & resource = *it;
         if (!resource.hasDataBody())
         {
             Q_UNUSED(m_resourceLocalUidsPendingFindInLocalStorage.insert(
-                    resource.localUid()))
+                resource.localUid()))
             requestResourceDataFromLocalStorage(resource);
             ++numResourcesPendingDataFromLocalStorage;
             continue;
@@ -1167,12 +1259,15 @@ ResourceDataInTemporaryFileStorageManager::putResourcesDataToTemporaryFiles(
 
         WriteResourceDataCallback callback =
             PartialUpdateResourceFilesForCurrentNoteProgressFunctor(
-                newOrUpdatedResourceIndex, numNewAndUpdatedResources, *this);
+                newOrUpdatedResourceIndex,
+                numNewAndUpdatedResources,
+                *this);
 
         bool res = writeResourceDataToTemporaryFile(
             m_pCurrentNote->localUid(),
             resource.localUid(),
-            resource.dataBody(), dataHash,
+            resource.dataBody(),
+            dataHash,
             ResourceType::Image,
             errorDescription,
             CheckResourceFileActualityOption::On,
@@ -1199,70 +1294,79 @@ void ResourceDataInTemporaryFileStorageManager::emitOpenResourcePreparationProgr
     const double progress, const QString & resourceLocalUid)
 {
     QNDEBUG("ResourceDataInTemporaryFileStorageManager::"
-            << "emitOpenResourcePreparationProgress: resource local uid = "
-            << resourceLocalUid << ", progress = " << progress);
+        << "emitOpenResourcePreparationProgress: resource local uid = "
+        << resourceLocalUid << ", progress = " << progress);
 
     if (Q_UNLIKELY(m_pCurrentNote.isNull())) {
         QNWARNING("Detected attempt to emit open resource preparation "
-                  << "progress but no current note is set; resource local uid = "
-                  << resourceLocalUid << ", progress = " << progress);
+            << "progress but no current note is set; resource local uid = "
+            << resourceLocalUid << ", progress = " << progress);
         return;
     }
 
-    Q_EMIT openResourcePreparationProgress(progress, resourceLocalUid,
-                                           m_pCurrentNote->localUid());
+    Q_EMIT openResourcePreparationProgress(
+        progress,
+        resourceLocalUid,
+        m_pCurrentNote->localUid());
 }
 
 void ResourceDataInTemporaryFileStorageManager::requestResourceDataFromLocalStorage(
     const Resource & resource)
 {
     QNDEBUG("ResourceDataInTemporaryFileStorageManager::"
-            << "requestResourceDataFromLocalStorage: resource local uid = "
-            << resource.localUid());
+        << "requestResourceDataFromLocalStorage: resource local uid = "
+        << resource.localUid());
+
     Q_EMIT findResourceData(resource.localUid());
 }
 
 bool ResourceDataInTemporaryFileStorageManager::writeResourceDataToTemporaryFile(
     const QString & noteLocalUid, const QString & resourceLocalUid,
     const QByteArray & data, const QByteArray & dataHash,
-    const ResourceType::type resourceType, ErrorString & errorDescription,
+    const ResourceType resourceType, ErrorString & errorDescription,
     const CheckResourceFileActualityOption::type checkActualityOption,
     WriteResourceDataCallback callback)
 {
     QNDEBUG("ResourceDataInTemporaryFileStorageManager::"
-            << "writeResourceDataToTemporaryFile: note local uid = "
-            << noteLocalUid << ", resource local uid = " << resourceLocalUid);
+        << "writeResourceDataToTemporaryFile: note local uid = "
+        << noteLocalUid << ", resource local uid = " << resourceLocalUid);
 
-    if (Q_UNLIKELY(noteLocalUid.isEmpty())) {
-        errorDescription.setBase(QT_TR_NOOP("Detected attempt to write resource "
-                                            "data for empty note local uid to "
-                                            "local file"));
+    if (Q_UNLIKELY(noteLocalUid.isEmpty()))
+    {
+        errorDescription.setBase(
+            QT_TR_NOOP("Detected attempt to write resource data for empty "
+                       "note local uid to local file"));
         QNWARNING(errorDescription);
         return false;
     }
 
-    if (Q_UNLIKELY(resourceLocalUid.isEmpty())) {
-        errorDescription.setBase(QT_TR_NOOP("Detected attempt to write data for "
-                                            "empty resource local uid to local "
-                                            "file"));
+    if (Q_UNLIKELY(resourceLocalUid.isEmpty()))
+    {
+        errorDescription.setBase(
+            QT_TR_NOOP("Detected attempt to write data for empty resource "
+                       "local uid to local file"));
         QNWARNING(errorDescription << ", note local uid = " << noteLocalUid);
         return false;
     }
 
-    if (Q_UNLIKELY(data.isEmpty())) {
-        errorDescription.setBase(QT_TR_NOOP("Detected attempt to write empty "
-                                            "resource data to local file"));
+    if (Q_UNLIKELY(data.isEmpty()))
+    {
+        errorDescription.setBase(
+            QT_TR_NOOP("Detected attempt to write empty "
+                       "resource data to local file"));
         QNWARNING(errorDescription << ", note local uid = "
-                  << noteLocalUid << ", resource local uid = "
-                  << resourceLocalUid);
+            << noteLocalUid << ", resource local uid = "
+            << resourceLocalUid);
         return false;
     }
 
     QString fileStoragePath = ((resourceType == ResourceType::Image)
                                ? m_imageResourceFileStorageLocation
                                : m_nonImageResourceFileStorageLocation);
-    fileStoragePath += QStringLiteral("/") + noteLocalUid + QStringLiteral("/") +
-                       resourceLocalUid + QStringLiteral(".dat");
+
+    fileStoragePath +=
+        QStringLiteral("/") + noteLocalUid + QStringLiteral("/") +
+        resourceLocalUid + QStringLiteral(".dat");
 
     QFileInfo fileStoragePathInfo(fileStoragePath);
     QDir fileStorageDir(fileStoragePathInfo.absoluteDir());
@@ -1271,11 +1375,13 @@ bool ResourceDataInTemporaryFileStorageManager::writeResourceDataToTemporaryFile
         bool createdDir = fileStorageDir.mkpath(fileStorageDir.absolutePath());
         if (!createdDir)
         {
-            errorDescription.setBase(QT_TR_NOOP("Can't create folder to write "
-                                                "the resource into"));
+            errorDescription.setBase(
+                QT_TR_NOOP("Can't create folder to write "
+                           "the resource into"));
+
             QNWARNING(errorDescription << ", note local uid = "
-                      << noteLocalUid << ", resource local uid = "
-                      << resourceLocalUid);
+                << noteLocalUid << ", resource local uid = "
+                << resourceLocalUid);
             return false;
         }
     }
@@ -1290,8 +1396,8 @@ bool ResourceDataInTemporaryFileStorageManager::writeResourceDataToTemporaryFile
 
         if (actual) {
             QNTRACE("Skipping writing the resource to file as it "
-                    "is not necessary, the file already exists "
-                    "and is actual");
+                << "is not necessary, the file already exists "
+                << "and is actual");
             return true;
         }
     }
@@ -1300,13 +1406,16 @@ bool ResourceDataInTemporaryFileStorageManager::writeResourceDataToTemporaryFile
     bool open = file.open(QIODevice::WriteOnly);
     if (Q_UNLIKELY(!open))
     {
-        errorDescription.setBase(QT_TR_NOOP("Can't open resource file for writing"));
+        errorDescription.setBase(
+            QT_TR_NOOP("Can't open resource file for writing"));
+
         errorDescription.details() = file.errorString();
         int errorCode = file.error();
         QNWARNING(errorDescription << ", error code = "
-                  << errorCode << ", note local uid = "
-                  << noteLocalUid << ", resource local uid = "
-                  << resourceLocalUid);
+            << errorCode << ", note local uid = "
+            << noteLocalUid << ", resource local uid = "
+            << resourceLocalUid);
+
         return false;
     }
 
@@ -1315,13 +1424,14 @@ bool ResourceDataInTemporaryFileStorageManager::writeResourceDataToTemporaryFile
         qint64 writeRes = file.write(data);
         if (Q_UNLIKELY(writeRes < 0))
         {
-            errorDescription.setBase(QT_TR_NOOP("Can't write data to resource file"));
+            errorDescription.setBase(
+                QT_TR_NOOP("Can't write data to resource file"));
             errorDescription.details() = file.errorString();
             int errorCode = file.error();
             QNWARNING(errorDescription << ", error code = "
-                      << errorCode << ", note local uid = "
-                      << noteLocalUid << ", resource local uid = "
-                      << resourceLocalUid);
+                << errorCode << ", note local uid = "
+                << noteLocalUid << ", resource local uid = "
+                << resourceLocalUid);
             return false;
         }
     }
@@ -1332,15 +1442,21 @@ bool ResourceDataInTemporaryFileStorageManager::writeResourceDataToTemporaryFile
         double progress = 0;
         while(true)
         {
-            qint64 writeRes = file.write(rawData, RESOURCE_DATA_BATCH_SIZE_IN_BYTES);
-            if (Q_UNLIKELY(writeRes < 0)) {
-                errorDescription.setBase(QT_TR_NOOP("Can't write data to resource file"));
+            qint64 writeRes = file.write(
+                rawData,
+                RESOURCE_DATA_BATCH_SIZE_IN_BYTES);
+
+            if (Q_UNLIKELY(writeRes < 0))
+            {
+                errorDescription.setBase(
+                    QT_TR_NOOP("Can't write data to resource file"));
+
                 errorDescription.details() = file.errorString();
                 int errorCode = file.error();
                 QNWARNING(errorDescription << ", error code = "
-                          << errorCode << ", note local uid = "
-                          << noteLocalUid << ", resource local uid = "
-                          << resourceLocalUid);
+                    << errorCode << ", note local uid = "
+                    << noteLocalUid << ", resource local uid = "
+                    << resourceLocalUid);
                 return false;
             }
 
@@ -1363,18 +1479,24 @@ bool ResourceDataInTemporaryFileStorageManager::writeResourceDataToTemporaryFile
     m_resourceLocalUidByFilePath[fileStoragePath] = resourceLocalUid;
 
     int errorCode = 0;
-    bool res = updateResourceHashHelperFile(resourceLocalUid, dataHash,
-                                            fileStoragePathInfo.absolutePath(),
-                                            errorCode, errorDescription);
-    if (Q_UNLIKELY(!res)) {
+    bool res = updateResourceHashHelperFile(
+        resourceLocalUid,
+        dataHash,
+        fileStoragePathInfo.absolutePath(),
+        errorCode,
+        errorDescription);
+
+    if (Q_UNLIKELY(!res))
+    {
         QNWARNING(errorDescription << ", error code = " << errorCode
-                  << ", resource local uid = " << resourceLocalUid);
+            << ", resource local uid = " << resourceLocalUid);
         return false;
     }
 
     QNDEBUG("Successfully wrote resource data to file: "
-            << "resource local uid = " << resourceLocalUid
-            << ", file path = " << fileStoragePath);
+        << "resource local uid = " << resourceLocalUid
+        << ", file path = " << fileStoragePath);
+
     return true;
 }
 

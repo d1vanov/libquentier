@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -19,20 +19,17 @@
 #ifndef LIB_QUENTIER_NOTE_EDITOR_RESOURCE_DATA_IN_TEMPORARY_FILE_STORAGE_MANAGER_H
 #define LIB_QUENTIER_NOTE_EDITOR_RESOURCE_DATA_IN_TEMPORARY_FILE_STORAGE_MANAGER_H
 
-#include <quentier/utility/Macros.h>
-#include <quentier/utility/FileSystemWatcher.h>
 #include <quentier/types/ErrorString.h>
+#include <quentier/utility/FileSystemWatcher.h>
+#include <quentier/utility/Macros.h>
 
-#include <QObject>
-#include <QUuid>
-#include <QStringList>
 #include <QHash>
+#include <QObject>
 #include <QScopedPointer>
+#include <QStringList>
+#include <QUuid>
 
-// NOTE: Workaround a bug in Qt4 which may prevent building with some boost versions
-#ifndef Q_MOC_RUN
-#include <boost/function.hpp>
-#endif
+#include <functional>
 
 QT_FORWARD_DECLARE_CLASS(QWidget)
 
@@ -43,44 +40,43 @@ QT_FORWARD_DECLARE_CLASS(Resource)
 
 /**
  * @brief The ResourceDataInTemporaryFileStorageManager class is intended to
- * provide the service of reading and writing the resource data from/to temporary
- * files. The purpose of having a separate class for that is to encapsulate
- * the logics around the checks for resource temporary files existence and
- * actuality and also to make it possible to move all the resource file IO
- * into a separate thread.
+ * provide the service of reading and writing the resource data from/to
+ * temporary files. The purpose of having a separate class for that is to
+ * encapsulate the logics around the checks for resource temporary files
+ * existence and actuality and also to make it possible to move all the resource
+ * file IO into a separate thread.
  */
 class Q_DECL_HIDDEN ResourceDataInTemporaryFileStorageManager: public QObject
 {
     Q_OBJECT
 public:
-    explicit ResourceDataInTemporaryFileStorageManager(QObject * parent = nullptr);
+    explicit ResourceDataInTemporaryFileStorageManager(
+        QObject * parent = nullptr);
 
-    struct Errors
+    enum class Error
     {
-        enum type
-        {
-            EmptyLocalUid = -1,
-            EmptyRequestId = -2,
-            EmptyData = -3,
-            NoResourceFileStorageLocation = -4
-        };
+        EmptyLocalUid = -1,
+        EmptyRequestId = -2,
+        EmptyData = -3,
+        NoResourceFileStorageLocation = -4
     };
 
     static QString imageResourceFileStorageFolderPath();
     static QString nonImageResourceFileStorageFolderPath();
 
 Q_SIGNALS:
-    void saveResourceDataToTemporaryFileCompleted(QUuid requestId,
-                                                  QByteArray dataHash,
-                                                  ErrorString errorDescription);
-    void readResourceFromFileCompleted(QUuid requestId, QByteArray data,
-                                       QByteArray dataHash, int errorCode,
-                                       ErrorString errorDescription);
+    void saveResourceDataToTemporaryFileCompleted(
+        QUuid requestId, QByteArray dataHash, ErrorString errorDescription);
 
-    void resourceFileChanged(QString resourceLocalUid, QString fileStoragePath,
-                             QByteArray resourceData, QByteArray resourceDataHash);
+    void readResourceFromFileCompleted(
+        QUuid requestId, QByteArray data, QByteArray dataHash, int errorCode,
+        ErrorString errorDescription);
 
-    // 1) ==== Signals notifying about the state after changing the current note ====
+    void resourceFileChanged(
+        QString resourceLocalUid, QString fileStoragePath,
+        QByteArray resourceData, QByteArray resourceDataHash);
+
+    // 1) Signals notifying about the state after changing the current note
 
     /**
      * @brief failedToPutResourceDataIntoTemporaryFile signal is emitted when
@@ -88,17 +84,18 @@ Q_SIGNALS:
      * temporary file for the sake of safe display within note editor's page
      *
      * @param resourceLocalUid      The local uid of the resource which data was
-     *                              not successfully written into a temporary file
-     * @param noteLocalUid          The local uid of the note one of which resource's
-     *                              data was not successfully
+     *                              not successfully written into a temporary
+     *                              file
+     * @param noteLocalUid          The local uid of the note one of which
+     *                              resource's data was not successfully
      *                              written into a temporary file
      * @param errorDescription      The textual description of the error which
      *                              occurred on attempt to write resource data
      *                              to a temporary file
      */
-    void failedToPutResourceDataIntoTemporaryFile(QString resourceLocalUid,
-                                                  QString noteLocalUid,
-                                                  ErrorString errorDescription);
+    void failedToPutResourceDataIntoTemporaryFile(
+        QString resourceLocalUid, QString noteLocalUid,
+        ErrorString errorDescription);
 
     /**
      * @brief noteResourcesPreparationProgress signal is emitted to notify the
@@ -113,16 +110,16 @@ Q_SIGNALS:
     void noteResourcesPreparationProgress(double progress, QString noteLocalUid);
 
     /**
-     * @brief noteResourcesPreparationError signal is emitted when some error occurs
-     * which leads to incorrect or incomplete preparation of note's image resources
-     * for note editor page's loading
+     * @brief noteResourcesPreparationError signal is emitted when some error
+     * occurs which leads to incorrect or incomplete preparation of note's image
+     * resources for note editor page's loading
      *
      * @param noteLocalUid          The local uid of the note which resources
      *                              preparation errored
      * @param errorDescription      The textual description of the error
      */
-    void noteResourcesPreparationError(QString noteLocalUid,
-                                       ErrorString errorDescription);
+    void noteResourcesPreparationError(
+        QString noteLocalUid, ErrorString errorDescription);
 
     /**
      * @brief noteResourcesReady signal is emitted when all image resources for
@@ -135,7 +132,7 @@ Q_SIGNALS:
      */
     void noteResourcesReady(QString noteLocalUid);
 
-    // 2) ==== Signals notifying about the state of open resource operation ====
+    // 2) Signals notifying about the state of open resource operation
 
     /**
      * @brief openResourcePreparationProgress signal is emitted to notify the
@@ -143,15 +140,15 @@ Q_SIGNALS:
      * opened in some external program for viewing/editing
      *
      * @param progress              Progress value, between 0 and 1
-     * @param resourceLocalUid      The local uid of the resource which temporary
-     *                              file is being prepared for being opened
+     * @param resourceLocalUid      The local uid of the resource which
+     *                              temporary file is being prepared for being
+     *                              opened
      * @param noteLocalUid          The local uid of the note which resource
      *                              temporary file is being prepared for being
      *                              opened
      */
-    void openResourcePreparationProgress(double progress,
-                                         QString resourceLocalUid,
-                                         QString noteLocalUid);
+    void openResourcePreparationProgress(
+        double progress, QString resourceLocalUid, QString noteLocalUid);
 
     /**
      * @brief failedToOpenResource signal is emitted if opening the temporary
@@ -162,8 +159,9 @@ Q_SIGNALS:
      * @param noteLocalUid          The local uid of the note which resource
      *                              temporary file failed to be opened
      */
-    void failedToOpenResource(QString resourceLocalUid, QString noteLocalUid,
-                              ErrorString errorDescription);
+    void failedToOpenResource(
+        QString resourceLocalUid, QString noteLocalUid,
+        ErrorString errorDescription);
 
     /**
      * @brief openedResource signal is emitted after the successful opening of
@@ -176,7 +174,7 @@ Q_SIGNALS:
      */
     void openedResource(QString resourceLocalUid, QString noteLocalUid);
 
-    // 3) ======== Auxiliary signals ========
+    // 3) Auxiliary signals
 
     /**
      * @brief diagnosticsCollected signal is emitted in response to the previous
@@ -200,23 +198,22 @@ public Q_SLOTS:
      * @param resourceLocalUid      The local uid of the resource for which
      *                              the data is written to file
      * @param data                  The resource data to be written to file
-     * @param dataHash              The hash of the resource data; if it's empty,
-     *                              it would be calculated by the method itself
-     * @param requestId             Request identifier for writing the data to file
+     * @param dataHash              The hash of the resource data; if it's
+     *                              empty, it would be calculated by the method
+     *                              itself
+     * @param requestId             Request identifier for writing the data to
+     *                              file
      * @param isImage               Indicates whether the resource is the image
      *                              which can be displayed inline
      *                              in the note editor page
      */
-    void onSaveResourceDataToTemporaryFileRequest(QString noteLocalUid,
-                                                  QString resourceLocalUid,
-                                                  QByteArray data,
-                                                  QByteArray dataHash,
-                                                  QUuid requestId,
-                                                  bool isImage);
+    void onSaveResourceDataToTemporaryFileRequest(
+        QString noteLocalUid, QString resourceLocalUid, QByteArray data,
+        QByteArray dataHash, QUuid requestId, bool isImage);
 
     /**
-     * @brief onReadResourceFromFileRequest - slot being called when the resource
-     * data and hash need to be read from local file
+     * @brief onReadResourceFromFileRequest - slot being called when
+     * the resource data and hash need to be read from local file
      *
      * @param fileStoragePath       The path at which the resource is stored
      * @param resourceLocalUid      The local uid of the resource for which
@@ -224,18 +221,18 @@ public Q_SLOTS:
      * @param requestId             Request identifier for reading the resource
      *                              data and hash from file
      */
-    void onReadResourceFromFileRequest(QString fileStoragePath,
-                                       QString resourceLocalUid,
-                                       QUuid requestId);
+    void onReadResourceFromFileRequest(
+        QString fileStoragePath, QString resourceLocalUid, QUuid requestId);
 
     /**
      * @brief onOpenResourceRequest slot should be invoked when the temporary
-     * file containing the resource data is requested to be opened in some external
-     * program for viewing and/or editing; if the resource data hasn't been written
-     * into the temporary file yet, it will be written when the slot is called.
-     * The resource data in temporary file storage manager would watch for
-     * the changes of the opened resource file until the current note in the note
-     * editor is changed
+     * file containing the resource data is requested to be opened in some
+     * external program for viewing and/or editing.
+     *
+     * If the resource data hasn't been written into the temporary file yet, it
+     * will be written when the slot is invoked. The resource data in temporary
+     * file storage manager would watch for the changes of the opened resource
+     * file until the current note in the note editor is changed
      *
      * @param resourceLocalUid      The local uid of the resource corresponding
      *                              to the temporary file which is requested
@@ -244,20 +241,23 @@ public Q_SLOTS:
     void onOpenResourceRequest(QString resourceLocalUid);
 
     /**
-     * @brief onCurrentNoteChanged - slot which should be called when the current
-     * note in the note editor is changed; when the note is changed, this object
-     * stops watching for the changes of resource files belonging to the previously
-     * edited note in the note editor; it is due to the performance cost and OS
-     * limitations for the number of files which can be monitored for changes
-     * simultaneously by one process
+     * @brief onCurrentNoteChanged is a slot which should be called when
+     * the current note in the note editor is changed.
+     *
+     * When the note is changed, this object stops watching for the changes of
+     * resource files belonging to the previously edited note in the note
+     * editor; it is due to the performance cost and OS limitations for
+     * the number of files which can be monitored for changes simultaneously by
+     * one process
      */
     void onCurrentNoteChanged(Note note);
 
     /**
-     * @brief onRequestDiagnostics - slot which initiates the collection of
+     * @brief onRequestDiagnostics is a slot which initiates the collection of
      * diagnostics regarding the internal state of
-     * ResourceDataInTemporaryFileStorageManager; intended primarily for
-     * troubleshooting purposes
+     * ResourceDataInTemporaryFileStorageManager.
+     *
+     * This slot is intended primarily for troubleshooting purposes
      */
     void onRequestDiagnostics(QUuid requestId);
 
@@ -270,36 +270,36 @@ private Q_SLOTS:
     void onFileRemoved(const QString & path);
 
     // Slots for dealing with NoteEditorLocalStorageBroker
+
     void onFoundResourceData(Resource resource);
-    void onFailedToFindResourceData(QString resourceLocalUid,
-                                    ErrorString errorDescription);
+
+    void onFailedToFindResourceData(
+        QString resourceLocalUid, ErrorString errorDescription);
 
 private:
     void createConnections();
     QByteArray calculateHash(const QByteArray & data) const;
-    bool checkIfResourceFileExistsAndIsActual(const QString & noteLocalUid,
-                                              const QString & resourceLocalUid,
-                                              const QString & fileStoragePath,
-                                              const QByteArray & dataHash) const;
 
-    bool updateResourceHashHelperFile(const QString & resourceLocalUid,
-                                      const QByteArray & dataHash,
-                                      const QString & storageFolderPath,
-                                      int & errorCode,
-                                      ErrorString & errorDescription);
-    void watchResourceFileForChanges(const QString & resourceLocalUid,
-                                     const QString & fileStoragePath);
+    bool checkIfResourceFileExistsAndIsActual(
+        const QString & noteLocalUid, const QString & resourceLocalUid,
+        const QString & fileStoragePath, const QByteArray & dataHash) const;
+
+    bool updateResourceHashHelperFile(
+        const QString & resourceLocalUid, const QByteArray & dataHash,
+        const QString & storageFolderPath, int & errorCode,
+        ErrorString & errorDescription);
+
+    void watchResourceFileForChanges(
+        const QString & resourceLocalUid, const QString & fileStoragePath);
+
     void stopWatchingResourceFile(const QString & filePath);
     void removeStaleResourceFilesFromCurrentNote();
 
-    struct ResultType
+    enum class ResultType
     {
-        enum type
-        {
-            Ready = 0,
-            Error,
-            AsyncPending
-        };
+        Ready = 0,
+        Error,
+        AsyncPending
     };
 
     /**
@@ -310,14 +310,16 @@ private:
      * might not have binary data set which means it needs to be queried from
      * the local storage.
      */
-    ResultType::type partialUpdateResourceFilesForCurrentNote(
-        const QList<Resource> & previousResources, ErrorString & errorDescription);
+    ResultType partialUpdateResourceFilesForCurrentNote(
+        const QList<Resource> & previousResources,
+        ErrorString & errorDescription);
 
     /**
      * Callback for writeResourceDataToTemporaryFile which emits
      * noteResourcesPreparationProgress signal with the given progress value
      */
-    void emitPartialUpdateResourceFilesForCurrentNoteProgress(const double progress);
+    void emitPartialUpdateResourceFilesForCurrentNoteProgress(
+        const double progress);
 
     /**
      * Wrapper around emitPartialUpdateResourceFilesForCurrentNoteProgress
@@ -357,7 +359,7 @@ private:
      * some resources might not have binary data set which means it needs
      * to be queried from the local storage.
      */
-    ResultType::type putResourcesDataToTemporaryFiles(
+    ResultType putResourcesDataToTemporaryFiles(
         const QList<Resource> & resources, ErrorString & errorDescription);
 
     /**
@@ -365,8 +367,8 @@ private:
      * openResourcePreparationProgress with the given progress value for
      * the given resource
      */
-    void emitOpenResourcePreparationProgress(const double progress,
-                                             const QString & resourceLocalUid);
+    void emitOpenResourcePreparationProgress(
+        const double progress, const QString & resourceLocalUid);
 
     /**
      * Wrapper around emitOpenResourcePreparationProgress
@@ -385,8 +387,9 @@ private:
 
         void operator()(const double progress)
         {
-            m_manager.emitOpenResourcePreparationProgress(progress,
-                                                          m_resourceLocalUid);
+            m_manager.emitOpenResourcePreparationProgress(
+                progress,
+                m_resourceLocalUid);
         }
 
     private:
@@ -396,13 +399,10 @@ private:
 
     void requestResourceDataFromLocalStorage(const Resource & resource);
 
-    struct ResourceType
+    enum class ResourceType
     {
-        enum type
-        {
-            Image = 0,
-            NonImage
-        };
+        Image = 0,
+        NonImage
     };
 
     struct CheckResourceFileActualityOption
@@ -414,12 +414,12 @@ private:
         };
     };
 
-    typedef boost::function<void (const double)> WriteResourceDataCallback;
+    using WriteResourceDataCallback = std::function<void(const double)> ;
 
     bool writeResourceDataToTemporaryFile(
         const QString & noteLocalUid, const QString & resourceLocalUid,
         const QByteArray & data, const QByteArray & dataHash,
-        const ResourceType::type resourceType, ErrorString & errorDescription,
+        const ResourceType resourceType, ErrorString & errorDescription,
         const CheckResourceFileActualityOption::type checkActualityOption =
         CheckResourceFileActualityOption::On, WriteResourceDataCallback = 0);
 
