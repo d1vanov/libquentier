@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -2438,15 +2438,17 @@ void TestAccountHighUsnInLocalStorage()
     thirdNoteResource.setGuid(UidGenerator::Generate());
     thirdNoteResource.setNoteGuid(thirdNote.guid());
     thirdNoteResource.setNoteLocalUid(thirdNote.localUid());
-#if QT_VERSION > QT_VERSION_CHECK(5, 4, 0)
-    thirdNoteResource.setDataBody(QByteArray::fromStdString(std::string("Something")));
-#else
-    thirdNoteResource.setDataBody(QByteArray("Something"));
-#endif
+
+    thirdNoteResource.setDataBody(
+        QByteArray::fromStdString(std::string("Something")));
+
     thirdNoteResource.setDataSize(thirdNoteResource.dataBody().size());
+
     thirdNoteResource.setDataHash(
-        QCryptographicHash::hash(thirdNoteResource.dataBody(),
-                                 QCryptographicHash::Md5));
+        QCryptographicHash::hash(
+            thirdNoteResource.dataBody(),
+            QCryptographicHash::Md5));
+
     thirdNoteResource.setMime(QStringLiteral("text/plain"));
     thirdNoteResource.setUpdateSequenceNumber(currentUsn++);
 
@@ -2591,13 +2593,8 @@ void TestAccountHighUsnInLocalStorage()
         secondNoteFromLinkedNotebook.guid());
     secondNoteFromLinkedNotebookResource.setNoteLocalUid(
         secondNoteFromLinkedNotebook.localUid());
-#if QT_VERSION > QT_VERSION_CHECK(5, 4, 0)
     secondNoteFromLinkedNotebookResource.setDataBody(
         QByteArray::fromStdString(std::string("Other something")));
-#else
-    secondNoteFromLinkedNotebookResource.setDataBody(
-        QByteArray("Other something"));
-#endif
     secondNoteFromLinkedNotebookResource.setDataSize(
         secondNoteFromLinkedNotebookResource.dataBody().size());
     secondNoteFromLinkedNotebookResource.setDataHash(
@@ -2745,11 +2742,7 @@ void TestAddingNoteWithoutLocalUid()
     Resource resource;
     resource.setGuid(UidGenerator::Generate());
     resource.setNoteGuid(thirdNote.guid());
-#if QT_VERSION > QT_VERSION_CHECK(5, 4, 0)
     QByteArray dataBody = QByteArray::fromStdString(std::string("Data"));
-#else
-    QByteArray dataBody = QByteArray("Data");
-#endif
     resource.setDataBody(dataBody);
     resource.setDataSize(dataBody.size());
     resource.setDataHash(QCryptographicHash::hash(dataBody, QCryptographicHash::Md5));

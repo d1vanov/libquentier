@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -439,15 +439,11 @@ QString ShortcutManagerPrivate::keyToString(const int key) const
         PRINT_ITEM(WhatsThis);
         PRINT_ITEM(ZoomIn);
         PRINT_ITEM(ZoomOut);
-#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
         PRINT_ITEM(FullScreen);
         PRINT_ITEM(DeleteCompleteLine);
         PRINT_ITEM(Delete);
         PRINT_ITEM(Deselect);
-#if QT_VERSION >= QT_VERSION_CHECK(5, 5, 0)
         PRINT_ITEM(Backspace);
-#endif
-#endif
             default:
             {
                 QNDEBUG("The key " << key << " doesn't correspond to any of "

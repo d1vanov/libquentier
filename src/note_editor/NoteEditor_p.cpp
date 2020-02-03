@@ -79,12 +79,9 @@
 #ifndef QUENTIER_USE_QT_WEB_ENGINE
 #include <QWebFrame>
 #include <QWebPage>
-typedef QWebSettings WebSettings;
-#if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
-    typedef QScriptEngine OwnershipNamespace;
-#else
-    typedef QWebFrame OwnershipNamespace;
-#endif
+
+using WebSettings = QWebSettings;
+using OwnershipNamespace = QWebFrame;
 
 #include <QXmlStreamReader>
 #include <QXmlStreamWriter>
@@ -10309,11 +10306,7 @@ void NoteEditorPrivate::paste()
         return;
     }
 
-#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
     textToPaste = url.toString(QUrl::FullyEncoded);
-#else
-    textToPaste = url.toString(QUrl::None);
-#endif
 
     quint64 hyperlinkId = m_lastFreeHyperlinkIdNumber++;
     setupAddHyperlinkDelegate(hyperlinkId, textToPaste);

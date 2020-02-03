@@ -21,9 +21,7 @@
 #include <quentier/logging/QuentierLogger.h>
 #include <quentier/utility/SysInfo.h>
 
-#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
 #include <QMetaMethod>
-#endif
 
 namespace quentier {
 
@@ -1319,7 +1317,6 @@ void LocalStorageManagerAsync::onUpdateNoteRequest(
         bool shouldCheckForNotebookChange = false;
         bool shouldCheckForTagListUpdate = false;
 
-#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
         static const QMetaMethod noteMovedToAnotherNotebookSignal =
             QMetaMethod::fromSignal(
                 &LocalStorageManagerAsync::noteMovedToAnotherNotebook);
@@ -1336,17 +1333,6 @@ void LocalStorageManagerAsync::onUpdateNoteRequest(
                 shouldCheckForTagListUpdate = true;
             }
         }
-#else
-        if (receivers(SIGNAL(noteMovedToAnotherNotebook(QString,QString,QString))) > 0) {
-            shouldCheckForNotebookChange = true;
-        }
-
-        if ((options & LocalStorageManager::UpdateNoteOption::UpdateTags) &&
-            (receivers(SIGNAL(noteTagListChanged(QString,QStringList,QStringList))) > 0))
-        {
-            shouldCheckForTagListUpdate = true;
-        }
-#endif
 
         Note previousNoteVersion;
         if (shouldCheckForNotebookChange || shouldCheckForTagListUpdate)

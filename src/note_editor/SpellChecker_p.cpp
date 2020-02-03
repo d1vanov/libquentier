@@ -1176,15 +1176,7 @@ bool SpellCheckerPrivate::HunspellWrapper::spell(
     }
 
 #ifdef HUNSPELL_NEW_API_AVAILABLE
-
-#if QT_VERSION >= QT_VERSION_CHECK(5, 4, 0)
     return m_pHunspell->spell(wordData.toStdString());
-#else
-    return m_pHunspell->spell(std::string(
-        wordData.constData(),
-        static_cast<size_t>(std::max(wordData.size(), 0))));
-#endif
-
 #else
     return m_pHunspell->spell(wordData.constData());
 #endif
@@ -1207,13 +1199,7 @@ QStringList SpellCheckerPrivate::HunspellWrapper::suggestions(
 
 #ifdef HUNSPELL_NEW_API_AVAILABLE
     std::vector<std::string> res =
-#if QT_VERSION >= QT_VERSION_CHECK(5, 4, 0)
         m_pHunspell->suggest(wordData.toStdString());
-#else
-        m_pHunspell->suggest(std::string(
-            wordData.constData(),
-            static_cast<size_t>(std::max(wordData.size(), 0))));
-#endif
 
     size_t size = res.size();
     result.reserve(
@@ -1263,15 +1249,7 @@ void SpellCheckerPrivate::HunspellWrapper::add(const QByteArray & wordData)
     }
 
 #ifdef HUNSPELL_NEW_API_AVAILABLE
-
-#if QT_VERSION >= QT_VERSION_CHECK(5, 4, 0)
     m_pHunspell->add(wordData.toStdString());
-#else
-    m_pHunspell->add(std::string(
-        wordData.constData(),
-        static_cast<size_t>(std::max(wordData.size(), 0))));
-#endif
-
 #else
     m_pHunspell->add(wordData.constData());
 #endif
@@ -1297,15 +1275,7 @@ void SpellCheckerPrivate::HunspellWrapper::remove(const QByteArray & wordData)
     }
 
 #ifdef HUNSPELL_NEW_API_AVAILABLE
-
-#if QT_VERSION >= QT_VERSION_CHECK(5, 4, 0)
     m_pHunspell->remove(wordData.toStdString());
-#else
-    m_pHunspell->remove(std::string(
-        wordData.constData(),
-        static_cast<size_t>(std::max(wordData.size(), 0))));
-#endif
-
 #else
     m_pHunspell->remove(wordData.constData());
 #endif

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,16 +16,18 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <quentier/utility/Utility.h>
+#include "../note_editor/NoteEditorLocalStorageBroker.h"
+
 #include <quentier/logging/QuentierLogger.h>
 #include <quentier/types/RegisterMetatypes.h>
-#include "../note_editor/NoteEditorLocalStorageBroker.h"
-#include <QStyleFactory>
+#include <quentier/utility/Utility.h>
+
 #include <QApplication>
-#include <QScopedPointer>
-#include <QUrl>
 #include <QDir>
 #include <QFileInfoList>
+#include <QScopedPointer>
+#include <QStyleFactory>
+#include <QUrl>
 
 #ifdef Q_OS_WIN
 
@@ -47,16 +49,6 @@
 #else // defined Q_OS_WIN
 
 #include <cstdio>
-
-#if defined Q_OS_MAC
-#if (QT_VERSION < QT_VERSION_CHECK(5, 0, 0))
-#include <QMacStyle>
-#endif // QT_VERSION
-#else // defined Q_OS_MAC
-#if (QT_VERSION < QT_VERSION_CHECK(5, 0, 0))
-#include <QPlastiqueStyle>
-#endif
-#endif // defined Q_OS_MAX
 
 #include <unistd.h>
 #include <sys/types.h>
@@ -186,38 +178,7 @@ const QString printableDateTimeFromTimestamp(const qint64 timestamp,
 
 QStyle * applicationStyle()
 {
-    QStyle * appStyle = QApplication::style();
-    if (appStyle) {
-        return appStyle;
-    }
-
-    QNINFO("Application style is empty, will try to deduce some default style");
-
-#ifdef Q_OS_WIN
-    // FIXME: figure out why QWindowsStyle doesn't compile
-    return nullptr;
-#else
-
-#if defined(Q_OS_MAC) && QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
-    return new QMacStyle;
-#else
-
-    const QStringList styleNames = QStyleFactory::keys();
-#if !defined(Q_OS_MAC) && (QT_VERSION < QT_VERSION_CHECK(5, 0, 0))
-    if (styleNames.isEmpty()) {
-        QNINFO("No valid styles were found in QStyleFactory! "
-               "Fallback to the last resort of plastique style");
-        return new QPlastiqueStyle;
-    }
-
-    const QString & firstStyle = styleNames.first();
-    return QStyleFactory::create(firstStyle);
-#else
-    return nullptr;
-#endif // !defined(Q_OS_MAC) && (QT_VERSION < QT_VERSION_CHECK(5, 0, 0))
-
-#endif // defined(Q_OS_MAC) && QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
-#endif // Q_OS_WIN
+    return QApplication::style();
 }
 
 const QString humanReadableSize(const quint64 bytes)

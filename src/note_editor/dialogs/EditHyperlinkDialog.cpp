@@ -46,11 +46,7 @@ EditHyperlinkDialog::EditHyperlinkDialog(QWidget * parent,
 
     if (!startupUrl.isEmpty()) {
         QUrl url(startupUrl, QUrl::TolerantMode);
-#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
         m_pUI->urlLineEdit->setText(url.toString(QUrl::FullyEncoded));
-#else
-        m_pUI->urlLineEdit->setText(url.toString(QUrl::None));
-#endif
         onUrlEditingFinished();
     }
 }

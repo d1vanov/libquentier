@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -269,11 +269,7 @@ void ResourceRecognitionIndicesData::parseRecoIndexAttributes(
         else if (name == QStringLiteral("objHeight"))
         {
             bool conversionResult = false;
-#if QT_VERSION >= QT_VERSION_CHECK(5, 1, 0)
             int objectHeight = value.toInt(&conversionResult);
-#else
-            int objectHeight = value.toString().toInt(&conversionResult);
-#endif
             if (conversionResult) {
                 m_objectHeight = objectHeight;
             }
@@ -281,11 +277,7 @@ void ResourceRecognitionIndicesData::parseRecoIndexAttributes(
         else if (name == QStringLiteral("objWidth"))
         {
             bool conversionResult = false;
-#if QT_VERSION >= QT_VERSION_CHECK(5, 1, 0)
             int objectWidth = value.toInt(&conversionResult);
-#else
-            int objectWidth = value.toString().toInt(&conversionResult);
-#endif
             if (conversionResult) {
                 m_objectWidth = objectWidth;
             }
@@ -311,11 +303,7 @@ void ResourceRecognitionIndicesData::parseCommonItemAttributes(
         if (name == QStringLiteral("x"))
         {
             bool conversionResult = false;
-#if QT_VERSION >= QT_VERSION_CHECK(5, 1, 0)
             int x = value.toInt(&conversionResult);
-#else
-            int x = value.toString().toInt(&conversionResult);
-#endif
             if (conversionResult) {
                 item.setX(x);
             }
@@ -323,11 +311,7 @@ void ResourceRecognitionIndicesData::parseCommonItemAttributes(
         else if (name == QStringLiteral("y"))
         {
             bool conversionResult = false;
-#if QT_VERSION >= QT_VERSION_CHECK(5, 1, 0)
             int y = value.toInt(&conversionResult);
-#else
-            int y = value.toString().toInt(&conversionResult);
-#endif
             if (conversionResult) {
                 item.setY(y);
             }
@@ -335,11 +319,7 @@ void ResourceRecognitionIndicesData::parseCommonItemAttributes(
         else if (name == QStringLiteral("h"))
         {
             bool conversionResult = false;
-#if QT_VERSION >= QT_VERSION_CHECK(5, 1, 0)
             int h = value.toInt(&conversionResult);
-#else
-            int h = value.toString().toInt(&conversionResult);
-#endif
             if (conversionResult) {
                 item.setH(h);
             }
@@ -347,11 +327,7 @@ void ResourceRecognitionIndicesData::parseCommonItemAttributes(
         else if (name == QStringLiteral("w"))
         {
             bool conversionResult = false;
-#if QT_VERSION >= QT_VERSION_CHECK(5, 1, 0)
             int w = value.toInt(&conversionResult);
-#else
-            int w = value.toString().toInt(&conversionResult);
-#endif
             if (conversionResult) {
                 item.setW(w);
             }
@@ -359,11 +335,7 @@ void ResourceRecognitionIndicesData::parseCommonItemAttributes(
         else if (name == QStringLiteral("offset"))
         {
             bool conversionResult = false;
-#if QT_VERSION >= QT_VERSION_CHECK(5, 1, 0)
             int offset = value.toInt(&conversionResult);
-#else
-            int offset = value.toString().toInt(&conversionResult);
-#endif
             if (conversionResult) {
                 item.setOffset(offset);
             }
@@ -371,11 +343,7 @@ void ResourceRecognitionIndicesData::parseCommonItemAttributes(
         else if (name == QStringLiteral("duration"))
         {
             bool conversionResult = false;
-#if QT_VERSION >= QT_VERSION_CHECK(5, 1, 0)
             int duration = value.toInt(&conversionResult);
-#else
-            int duration = value.toString().toInt(&conversionResult);
-#endif
             if (conversionResult) {
                 item.setDuration(duration);
             }
@@ -419,11 +387,7 @@ void ResourceRecognitionIndicesData::parseTextItemAttributesAndData(
         if (name == QStringLiteral("w"))
         {
             bool conversionResult = false;
-#if QT_VERSION >= QT_VERSION_CHECK(5, 1, 0)
             int parsedWeight = value.toInt(&conversionResult);
-#else
-            int parsedWeight = value.toString().toInt(&conversionResult);
-#endif
             if (conversionResult) {
                 weight = parsedWeight;
             }
@@ -467,11 +431,7 @@ void ResourceRecognitionIndicesData::parseObjectItemAttributes(
         else if (name == QStringLiteral("w"))
         {
             bool conversionResult = false;
-#if QT_VERSION >= QT_VERSION_CHECK(5, 1, 0)
-            int parsedWeight = value.toInt(&conversionResult);
-#else
             int parsedWeight = value.toString().toInt(&conversionResult);
-#endif
             if (conversionResult) {
                 weight = parsedWeight;
             }
@@ -514,11 +474,7 @@ void ResourceRecognitionIndicesData::parseShapeItemAttributes(
         else if (name == QStringLiteral("w"))
         {
             bool conversionResult = false;
-#if QT_VERSION >= QT_VERSION_CHECK(5, 1, 0)
             int parsedWeight = value.toInt(&conversionResult);
-#else
-            int parsedWeight = value.toString().toInt(&conversionResult);
-#endif
             if (conversionResult) {
                 weight = parsedWeight;
             }
@@ -556,11 +512,7 @@ void ResourceRecognitionIndicesData::parseBarcodeItemAttributesAndData(
         if (name == QStringLiteral("w"))
         {
             bool conversionResult = false;
-#if QT_VERSION >= QT_VERSION_CHECK(5, 1, 0)
             int parsedWeight = value.toInt(&conversionResult);
-#else
-            int parsedWeight = value.toString().toInt(&conversionResult);
-#endif
             if (conversionResult) {
                 weight = parsedWeight;
             }

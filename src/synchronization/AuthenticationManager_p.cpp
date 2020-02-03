@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2019 Dmitry Ivanov
+ * Copyright 2017-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -17,25 +17,14 @@
  */
 
 #include "AuthenticationManager_p.h"
-#include <quentier/logging/QuentierLogger.h>
 
-#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
+#include <quentier/logging/QuentierLogger.h>
 
 #if !QEVERCLOUD_HAS_OAUTH
 #error "The used QEverCloud library has no OAuth support"
 #endif
 
 #include <qt5qevercloud/QEverCloudOAuth.h>
-
-#else // QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
-
-#if !QEVERCLOUD_HAS_OAUTH
-#error "The used QEverCloud library has no OAuth support"
-#endif
-
-#include <qt4qevercloud/QEverCloudOAuth.h>
-
-#endif // QT_VERSION
 
 #include <QScopedPointer>
 

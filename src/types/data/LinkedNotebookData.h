@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -19,14 +19,12 @@
 #ifndef LIB_QUENTIER_TYPES_DATA_LINKED_NOTEBOOK_DATA_H
 #define LIB_QUENTIER_TYPES_DATA_LINKED_NOTEBOOK_DATA_H
 
-#include <QSharedData>
+
 #include <quentier/types/ErrorString.h>
 
-#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
 #include <qt5qevercloud/QEverCloud.h>
-#else
-#include <qt4qevercloud/QEverCloud.h>
-#endif
+
+#include <QSharedData>
 
 namespace quentier {
 

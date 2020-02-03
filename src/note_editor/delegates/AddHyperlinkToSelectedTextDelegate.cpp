@@ -184,12 +184,7 @@ void AddHyperlinkToSelectedTextDelegate::onAddHyperlinkDialogFinished(
     Q_UNUSED(hyperlinkId);
     Q_UNUSED(startupUrlWasEmpty);
 
-#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
     QString urlString = url.toString(QUrl::FullyEncoded);
-#else
-    QString urlString = url.toString(QUrl::None);
-#endif
-
     setHyperlinkToSelection(urlString, text);
 }
 

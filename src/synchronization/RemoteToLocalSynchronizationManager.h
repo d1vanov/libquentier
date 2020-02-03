@@ -27,6 +27,7 @@
 #include "SavedSearchSyncConflictResolver.h"
 #include "SavedSearchSyncCache.h"
 #include "SynchronizationShared.h"
+
 #include <quentier/types/Account.h>
 #include <quentier/types/ErrorString.h>
 #include <quentier/utility/Macros.h>
@@ -41,13 +42,10 @@
 #include <quentier_private/synchronization/INoteStore.h>
 #include <quentier_private/synchronization/IUserStore.h>
 
-#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
 #include <qt5qevercloud/QEverCloud.h>
-#else
-#include <qt4qevercloud/QEverCloud.h>
-#endif
 
 #include <QMultiHash>
+
 #include <utility>
 
 namespace quentier {
