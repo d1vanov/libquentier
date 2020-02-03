@@ -1153,14 +1153,14 @@ bool SpellCheckerPrivate::Dictionary::isEmpty() const
 void SpellCheckerPrivate::HunspellWrapper::initialize(
     const QString & affFilePath, const QString & dicFilePath)
 {
-    m_pHunspell = QSharedPointer<Hunspell>(new Hunspell(
+    m_pHunspell = std::make_shared<Hunspell>(
         affFilePath.toLocal8Bit().constData(),
-        dicFilePath.toLocal8Bit().constData()));
+        dicFilePath.toLocal8Bit().constData());
 }
 
 bool SpellCheckerPrivate::HunspellWrapper::isEmpty() const
 {
-    return m_pHunspell.isNull();
+    return !m_pHunspell;
 }
 
 bool SpellCheckerPrivate::HunspellWrapper::spell(const QString & word) const
@@ -1171,7 +1171,7 @@ bool SpellCheckerPrivate::HunspellWrapper::spell(const QString & word) const
 bool SpellCheckerPrivate::HunspellWrapper::spell(
     const QByteArray & wordData) const
 {
-    if (Q_UNLIKELY(m_pHunspell.isNull())) {
+    if (Q_UNLIKELY(!m_pHunspell)) {
         return false;
     }
 
@@ -1193,7 +1193,7 @@ QStringList SpellCheckerPrivate::HunspellWrapper::suggestions(
 {
     QStringList result;
 
-    if (Q_UNLIKELY(m_pHunspell.isNull())) {
+    if (Q_UNLIKELY(!m_pHunspell)) {
         return result;
     }
 
@@ -1232,7 +1232,7 @@ QStringList SpellCheckerPrivate::HunspellWrapper::suggestions(
 void SpellCheckerPrivate::HunspellWrapper::add(const QString & word)
 {
 #ifdef HUNSPELL_NEW_API_AVAILABLE
-    if (Q_UNLIKELY(m_pHunspell.isNull())) {
+    if (Q_UNLIKELY(!m_pHunspell)) {
         return;
     }
 
@@ -1244,7 +1244,7 @@ void SpellCheckerPrivate::HunspellWrapper::add(const QString & word)
 
 void SpellCheckerPrivate::HunspellWrapper::add(const QByteArray & wordData)
 {
-    if (Q_UNLIKELY(m_pHunspell.isNull())) {
+    if (Q_UNLIKELY(!m_pHunspell)) {
         return;
     }
 
@@ -1258,7 +1258,7 @@ void SpellCheckerPrivate::HunspellWrapper::add(const QByteArray & wordData)
 void SpellCheckerPrivate::HunspellWrapper::remove(const QString & word)
 {
 #ifdef HUNSPELL_NEW_API_AVAILABLE
-    if (Q_UNLIKELY(m_pHunspell.isNull())) {
+    if (Q_UNLIKELY(!m_pHunspell)) {
         return;
     }
 
@@ -1270,7 +1270,7 @@ void SpellCheckerPrivate::HunspellWrapper::remove(const QString & word)
 
 void SpellCheckerPrivate::HunspellWrapper::remove(const QByteArray & wordData)
 {
-    if (Q_UNLIKELY(m_pHunspell.isNull())) {
+    if (Q_UNLIKELY(!m_pHunspell)) {
         return;
     }
 

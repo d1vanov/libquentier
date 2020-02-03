@@ -31,9 +31,9 @@ namespace quentier {
 // WRAP
 
 SpellCheckerDictionariesFinder::SpellCheckerDictionariesFinder(
-        const QSharedPointer<QAtomicInt> & pStopFlag, QObject * parent) :
+        std::shared_ptr<QAtomicInt> pStopFlag, QObject * parent) :
     QObject(parent),
-    m_pStopFlag(pStopFlag),
+    m_pStopFlag(std::move(pStopFlag)),
     m_files(),
     m_localeList(QSet<QString>()
 #include "localeList.inl"
@@ -51,7 +51,7 @@ void SpellCheckerDictionariesFinder::run()
     fileFilters << QStringLiteral("*.dic") << QStringLiteral("*.aff");
 
 #define CHECK_AND_STOP()                                                       \
-    if (!m_pStopFlag.isNull() && (m_pStopFlag->load() != 0)) {                 \
+    if (m_pStopFlag && (m_pStopFlag->load() != 0)) {                           \
         QNDEBUG("Aborting the operation as stop flag is non-zero");            \
         return;                                                                \
     }                                                                          \

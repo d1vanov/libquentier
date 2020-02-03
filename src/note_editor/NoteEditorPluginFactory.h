@@ -25,7 +25,6 @@
 #include <QIcon>
 #include <QMimeDatabase>
 #include <QPointer>
-#include <QSharedPointer>
 #include <QWebPluginFactory>
 
 QT_FORWARD_DECLARE_CLASS(QRegExp)

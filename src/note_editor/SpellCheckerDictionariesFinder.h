@@ -26,8 +26,9 @@
 #include <QObject>
 #include <QRunnable>
 #include <QSet>
-#include <QSharedPointer>
 #include <QString>
+
+#include <memory>
 
 namespace quentier {
 
@@ -41,7 +42,7 @@ public:
 
 public:
     SpellCheckerDictionariesFinder(
-        const QSharedPointer<QAtomicInt> & pStopFlag,
+        std::shared_ptr<QAtomicInt> pStopFlag,
         QObject * parent = nullptr);
 
     virtual void run() override;
@@ -51,7 +52,7 @@ Q_SIGNALS:
         DicAndAffFilesByDictionaryName docAndAffFilesByDictionaryName);
 
 private:
-    QSharedPointer<QAtomicInt>      m_pStopFlag;
+    std::shared_ptr<QAtomicInt>     m_pStopFlag;
     DicAndAffFilesByDictionaryName  m_files;
     const QSet<QString>             m_localeList;
 };

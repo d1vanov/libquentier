@@ -28,11 +28,11 @@
 #include <QAtomicInt>
 #include <QHash>
 #include <QObject>
-#include <QSharedPointer>
 #include <QStringList>
 #include <QUuid>
 #include <QVector>
 
+#include <memory>
 #include <utility>
 
 QT_FORWARD_DECLARE_CLASS(Hunspell)
@@ -136,7 +136,7 @@ private:
         void remove(const QByteArray & wordData);
 
     private:
-        QSharedPointer<Hunspell>    m_pHunspell;
+        std::shared_ptr<Hunspell>   m_pHunspell;
     };
 
     class Q_DECL_HIDDEN Dictionary
@@ -157,7 +157,7 @@ private:
 
     Account                     m_currentAccount;
 
-    QSharedPointer<QAtomicInt>  m_pDictionariesFinderStopFlag;
+    std::shared_ptr<QAtomicInt> m_pDictionariesFinderStopFlag;
 
     // Hashed by the language code
     QHash<QString, Dictionary>  m_systemDictionaries;
