@@ -255,7 +255,6 @@ if(BUILD_WITH_NOTE_EDITOR)
        src/note_editor/dialogs/EditHyperlinkDialog.h
        src/note_editor/dialogs/RenameResourceDialog.h
        src/note_editor/delegates/JsResultCallbackFunctor.hpp
-       src/note_editor/delegates/HtmlCallbackFunctor.hpp
        src/note_editor/delegates/InsertHtmlDelegate.h
        src/note_editor/delegates/ImageResourceRotationDelegate.h
        src/note_editor/delegates/AddResourceDelegate.h
