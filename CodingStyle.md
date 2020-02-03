@@ -1,10 +1,12 @@
-This document outlines some coding style rules used in libquentier project.
+This document outlines some coding style rules used in libquentier project. The consistent coding style is meant to make the codebase more readable and cohesive. Please adhere to these rules when making pull requests to ensure their successful adoption.
 
 ## Use common sense
 
-This is the absolute number one rule which *might* override any of the below mentioned rules should the need for that arise. Follow the rules mentioned below *unless* they don’t seem to play nicely with some specific piece of code. You’d need common sense to identify such a piece of code.
+This is the absolute number one rule which *might* override any of the below mentioned rules should the need for that arise. Follow the rules mentioned below *unless* they don’t seem to play nice with some specific piece of code. You’d need common sense to identify such pieces of code.
 
-Also note that some of these rules are not applied to some existing places of libquentier codebase for various legacy reasons. Some of them are easily fixable, others are not.
+Also note that some of these rules are not applied to some existing places of libquentier codebase due to various legacy reasons. Fixing the coding style in places where it improves code's readability is welcome.
+
+When in doubt about how to format some piece of code, look at the code around to try and find a similar piece to use as an example.
 
 ## Indentation
 
@@ -12,12 +14,12 @@ Libquentier uses spaces for indentation, not tabs. Tabs width and shift width sh
 
 ## Curly braces usage
 
-**Always** use curly braces in conditional and loop operators, even if their bodies occupy just the single line of code. The rationale is to avoid the possibility of mistakes when extending the loop or conditional operator body in future: suppose you had `if` operator like this:
+**Always** use curly braces in conditional and loop operators, even if their bodies occupy just a single line of code. The rationale is to avoid the possibility of mistakes when extending the loop or conditional operator body in future. For example, suppose you have an `if` operator written like this:
 
     if (a > b)
         a = b;
 
-Then suppose in future some additional action becomes needed. It’s unfortunately quite common to make a mistake like this:
+Then suppose in future some additional action within the operator's body is needed. It’s unfortunately quite common to make a mistake like this:
 
     if (a > b)
         a = b;
@@ -41,20 +43,49 @@ In order to avoid that, please **always** use curly braces to clearly define the
         b = c;
     }
 
-Another point about curly braces usage is where to put the opening curly brace: at the end of the first line of the conditional operator or loop operator or at the beginning of the next line. The best approach seems to be using both options as appropriate: for small enough operator bodies it seems better to leave the opening curly brace at the end of the operator' first line. However, if the operator's body involves many lines, say, more than 6 or 7, it looks better with the opening curly brace put at the beginning of the next line.
+Another point about curly braces usage is where to put the opening curly brace: at the end of the first line of the conditional operator or loop operator or at the beginning of the next line. The best approach seems to be using both options as appropriate: for small enough operator bodies without inner indentation level changes it seems better to leave the opening curly brace at the end of the operator's first line as it makes the code be aligned more compactly while staying perfectly readable. However, if the operator's body involves many lines, say, more than 6 or 7, or has multiple inner indentation level changes within it, it looks better with the opening curly brace put at the beginning of the next line.
 
-One exception from this rule is the one for class declarations: please always put the opening curvy brace for the class content on the next line after the class declaration:
+Examples:
+
+    if (a > b) {
+        something(a, b);
+        somethingElse(a, b);
+    }
+
+    if (c > d)
+    {
+        thingOne(c);
+        thingTwo(d);
+        thingThree(c, d);
+        if (d > e) {
+            thingFour(d, e);
+        }
+    }
+
+    if (d > e)
+    {
+        if (f < e) {
+            thingFive(f, e);
+        }
+    }
+
+In class declarations the opening curly brace should always be placed on the next line after the declaration:
 
     class MyClass
     {
         // < class contents >
     };
 
-Another exception is for function/method implementations: please always put the opening curvy brace for the function/method content on the next line after the function/method definition:
+In function/method implementations the opening curly brace should also always be placed on the next line after the function/method definition:
 
-    void MyClass::myFunction
+    void MyClass::myMethod()
     {
         // < method implementation contents >
+    }
+
+    void myFunction()
+    {
+        // < function implementation contents >
     }
 
 Finally, please let the closing curly brace fully occupy its line of code, don’t append anything to it. For example, do this:
@@ -78,9 +109,108 @@ but not this:
 
 Try to lay out the code in such a way that any single line of code is no longer than 80 columns. It is a rather hard boundary and it's not always possible to satisfy this requirement. It is understandable but still *try* to stick to it. If 80 columns are absolutely not enough for some specific line, ok, let it take 85-90 columns. Maybe even 100 if there's no other way. The point is to have the majority of code written in a compact enough way.
 
+## Separate multi-line statements with blank lines
+
+Multi-line statements generally read better when they are separated from other statements with blank lines. Example:
+
+    bool res = myFunctionCall(
+        myFirstParam,
+        mySecondParam,
+        myThirdParam);
+
+    if (res) {
+        // do something
+    }
+
+Note the blank line between the function call and the `if` operator. It's easier to grasp the boundary between the two when there is a blank line between them.
+
+Exceptions from this rule can be made for logging macros. For example:
+
+    QNDEBUG("Some long logging message which continues on the next line: "
+        << someValueToLog);
+    return true;
+
+## Grouping and sorting of includes
+
+`#include` statements should be split into groups separated by blank lines. Includes within each group should be sorted alphabetically. The order of include groups should be roughly the following:
+
+ * For `.cpp` files: the primary header inclusion (i.e for `MyClass.cpp` `#include "MyClass.h"` should go first)
+ * Local includes (i.e those using `""` instead of `<>`)
+ * Global includes from libquentier's public headers (i.e. those like `<quentier/utility/Printable.h>` or `<quentier/types/Note.h>` and such)
+ * Global includes from Qt's headers (i.e. those like `<QApplication>`, `<QWidget>` and such)
+ * Global includes from other 3rd party libraries i.e. boost
+ * Global includes from the standard library (i.e. `<iostream>`, `<algorithm>` and such)
+
+Example:
+
+    #include "MyClass.h"
+
+    #include "AnotherClass.h"
+    #include "SomeOtherClass.h"
+    #include "YetAnotherClass.h"
+
+    #include <quentier/types/Account.h>
+    #include <quentier/types/Notebook.h>
+    #include <quentier/types/SavedSearch.h>
+    #include <quentier/types/User.h>
+
+    #include <QApplication>
+    #include <QTextEdit>
+    #include <QWidget>
+
+    #include <boost/bimap.hpp>
+    #include <boost/multi_index.hpp>
+
+    #include <algorithm>
+    #include <iostream>
+    #include <utility>
+
+## Function/method/constructor/operator parameters
+
+When *declaring* functions, methods, class constructors or operators their parameters should be laid out in either of two ways:
+
+ * If the whole line with declaration and parameters (and keywords like `const`, `override`, `noexcept` and others) fits into 80 columns, let it be the single line. Example:
+```
+    void myFunction(const QString & paramOne, const QString & param2);
+```
+ * If the whole line with declaration and parameters (and keywords like `const`, `override`, `noexcept` and others) does not fit into 80 columns, the parameters list should start on the next line after the declaration and be indented with extra 4 spaces; the parameters should be laid out in such a way that each line fits into 80 columns. Example:
+```
+    void myOtherFunction(
+        const QString & paramOne, const QString & paramTwo,
+        const int paramThree, const bool paramFour);
+```
+Same rules apply for functions, methods, class constructors and operators *definitions* i.e. implementations:
+
+    void myFunction(const QString & paramOne, const QString & param2)
+    {
+        // < function implementation contents >
+    }
+
+    void myOtherFunction(
+        const QString & paramOne, const QString & paramTwo,
+        const int paramThree, const bool paramFour)
+    {
+        // < function implementation contents >
+    }
+
+However, when calling functions, methods or class constructors another rule applies: if the list of variables passed into the function/method/constructor doesn't fit into 80 columns, the list of parameters should start after a line break and each variable should occupy its own line besides the last one which is followed by closing paren and semicolon on the same line. Example:
+
+    QString myFunctionParam1 = QStringLiteral("param1");
+    QString myFunctionParam2 = QStringLiteral("param2");
+    int myFunctionParam3 = 1;
+    bool myFunctionParam4 = true;
+
+    myFunction(myFunctionParam1, myFunctionParams2);
+
+    myOtherFunction(
+        myFunctionParam1,
+        myFunctionParams2,
+        myFunctionParam3,
+        myFunctionParams4);
+
 ## Line endings
 
-The «native» line endings for headers and sources of libquentier are considered to be Unix-style single LFs. If you are using Windows or OS X / macOS and want to contribute some code changes to libquentier, please [configure git](https://help.github.com/articles/dealing-with-line-endings/) to convert the line endings to LF on commit or on push.
+The native line endings for headers and sources of libquentier are considered to be Unix-style single LFs. If you are using Windows or macOS and want to contribute some code changes to libquentier, please [configure git](https://help.github.com/articles/dealing-with-line-endings/) to convert the line endings to LF on commit or on push.
 
 ## Source file names
 
@@ -90,7 +220,7 @@ C++ header files have `.h` extension and source files have `.cpp` extension.
 
 ## Namespace
 
-All of the public code of libquentier code should reside in `quentier` namespace. It’s also a good rule of thumb to keep the library’s private code in the same namespace as well.
+All the public code of libquentier (i.e. the declarations found in `headers/quentier` folder) should reside in `quentier` namespace. The library’s private code should reside in the same namespace as well, for convenience. It's OK to create nested namespaces in private code, if needed. Library's test code is located in `test` namespace nested into `quentier` namespace.
 
 ## Class names
 
@@ -103,7 +233,7 @@ Class names should be capitalized. If the class name consists of several words, 
 
 ## Class/struct member variable naming
 
-Private class/struct member variable names should start with `m_` followed by a word in the lower case. If the name of the member variable consists of multiple words, all the words but the first one should be capitalized, without underscores in between. For example:
+Private and protected class/struct member variable names should start with `m_` followed by a word in the lower case. If the name of the member variable consists of multiple words, all the words but the first one should be capitalized, without underscores in between. For example:
 
     class MyClass
     {
@@ -112,13 +242,13 @@ Private class/struct member variable names should start with `m_` followed by a 
         bool     m_countingEnabled;
     };
 
-Public class/struct member variables may skip this convention.
+Public class/struct member variables may skip `m_` prefix.
 
-Also, not a strict rule but a rule of thumb: use tabular indentation to keep the names of several member variables starting at the same column. That makes them slightly more readable.
+Also, not a strict rule but a rule of thumb: use tabular indentation to keep the names of several member variables starting at the same column. It makes them slightly more readable.
 
 ## Class methods / functions naming
 
-The first word in the name of a class method or a function should start from the lower case. If the name of method/function consists of just one word, the entire word should appear in the lower case. If the name of the method/function consists of several words, all the words but the first one should be capitalized, without underscores in between. For example:
+The first word in the name of a class method or a function should start from lower case. If the name of a method/function consists of just one word, the entire word should appear in the lower case. If the name of the method/function consists of several words, all the words but the first one should be capitalized, without underscores in between. For example:
 
     class MyClass
     {
@@ -129,48 +259,61 @@ The first word in the name of a class method or a function should start from the
 
     };
 
-The obvious exceptions from this rule are constructors and destructor of the class, since their names must match the class names in which the first word is capitalized.
+The obvious exceptions from this rule are class constructors and destructors, since their names must match the class names in which the first word is capitalized.
 
 ## Doxygen documentation for public class methods and functions
 
-For all public class methods or functions of libquentier the Doxygen documentation is required. If you add new classes or class methods or functions, please document them in Doxygen format and ensure the documentation can be built properly: first do `make doc` in your build directory and **then** go to `doc/latex` folder inside it and do `make` there. That would attempt to build a pdf from latex documentation. It can fail if, for example, there is some non-ASCII symbol within the Doxygen comments.
+For all public class methods or functions of libquentier Doxygen documentation is required. If you add new classes or class methods or functions, please document them in Doxygen format and ensure the documentation can be built properly: first do `make doc` in your build directory and **then** go to `doc/latex` folder inside it and do `make` there. That would attempt to build a pdf from latex documentation. It can fail if, for example, there is some non-ASCII symbol within the Doxygen comments.
 
 ## Comments inside the source code
 
 This paragraph is about non-Doxygen comments inside the source code. A good rule of thumb is to try making the code so explicit that it doesn’t require commenting. However, it is not always possible/feasible due to various reasons: optimization, workarounds for some framework bugs etc. In such cases the tricky code should have a comment nearby explaining what it does and why does it have to be so incomprehensible.
 
-Also, please don’t comment out portions of code «just in case, to have it around should it ever be needed again». Having the unused code around is the task of the version control system.
+Also, don’t comment out portions of code «just in case, to have it around should it ever be needed again». Having unused code around is the task of the version control system, not the source code itself.
 
-## Classes layout
+## Class declarations layout
 
-Try to stick with the following layout of class contents:
+Try to stick with the following layout of class declarations:
 
 - `Q_OBJECT` macro, if required for the class
-- inner classes, if any
-- typedefs, if any
-- constructors - the default one, if present, comes first, then non-default constructors, if any, then copy-constructor, if present.
+- inner classes
+- public typedefs (defined with `using` keyword of modern C++ instead of actual `typedef` keyword)
+- constructors - the default one, if present, comes first, then non-default constructors, then copy-constructor.
 - assignment operators, if any
-- destructor, if present
-- Qt signals, if any
-- public methods, including Qt slots
-- protected methods, including Qt slots
-- private methods, including Qt slots
-- member variables
+- destructor, if manually defined
+- public member variables, if any
+- Qt signals
+- public Qt slots
+- public methods
+- protected Qt slots
+- protected methods
+- private Qt slots
+- private methods
+- protected typedefs (defined with `using` keyword of modern C++ instead of actual `typedef` keyword)
+- private typedefs (defined with `using` keyword of modern C++ instead of actual `typedef` keyword)
+- protected member variables
+- privare member variables
 
 ## Preferred method/function implementation layout
 
-- In the beginning of the method/function implementation it is wise to check the validity of input parameters values and possibly any other conditions and return with error if something is wrong and the method cannot do its job. Try to avoid multiple return points from the method/function unless these are the returns with error in the beginning of the method/function body.
+- In the beginning of the method/function implementation it is wise to check the validity of input parameters values and possibly any other conditions and return with error if something is wrong and the method cannot do its job. Try to avoid multiple return points from the method/function unless these are returns with error in the beginning of the method/function body.
 - Try to make the bodies of methods/functions as small as possible. Ideally, the body of a method/function should fit a single screen or at least 2-3 screens. If it’s larger, consider refactoring the single method into a series of methods.
 
 ## Signal/slot signatures
 
-- Use `Q_SIGNALS` macro instead of `signals`, `Q_SLOTS` instead of `slots` and `Q_EMIT` instead of `emit`, especially in the public interfaces of libquentier. The reason is that there are 3rdparty libraries which use `signals`, `slots` and `emit` keywords in their own code and interfaces and the name clashing can create problems for library users.
-- Pass signal/slot parameters by value, not by const reference, unless you are certain that the objects interacting via the particular signals/slots would live in the same thread. The power and convenience of Qt’s signals/slots comes from their flexibility to the thread affinity of the connected objects but unless you pass parameters by value in signals/slots, it would be your job to provide the proper thread safety guarantees. There’s no reason to do this yourself when Qt can do it for you.
+- Use `Q_SIGNALS` macro instead of `signals`, `Q_SLOTS` instead of `slots` and `Q_EMIT` instead of `emit`, especially in the public interfaces of libquentier. The reason is that there are 3rdparty libraries which use `signals`, `slots` and `emit` keywords in their own code and the name clashing can create problems for libquentier users.
+- Pass signal/slot parameters by value, not by const reference, unless you are certain that the objects interacting via these signals/slots would live in the same thread. The power and convenience of Qt’s signals/slots comes from their flexibility to the thread affinity of connected objects but unless you pass parameters by value in signals/slots, it would be your job to provide the proper thread safety guarantees. There’s no reason to do this yourself when Qt can do it for you.
 
-## C++11/14/17 features and Qt4 support
+## C++ standard used
 
-The library does not use any C++11/14/17 features directly but only through macros such as `Q_DECL_OVERRIDE`, `Q_STATIC_ASSERT_X`, `QStringLiteral` and the like. These macros expand to proper C++ features if the compiler supports it or to nothing otherwise.
+Libquentier uses C++14 standard so usage of any features from that standard version is allowed. However, from practical perspective libquentier's code should be written in such a way that major supported compilers would have no problems building this code. At the time of this writing the oldest supported compilers are g++ 5.4.1 on Linux (the default compiler of Ubuntu Xenial, oldest still supported LTS release of Ubuntu) and Visual Studio 2017 on Windows.
 
-As long as most of these macros exist only in Qt5 but not in Qt4, libquentier defines them on its own when building with Qt4.
+# Qt versions supported
 
-Building with Qt4 is still supported by libquentier. Yes, Qt4 may be dead and unsupported by the upstream. However, there are still LTS Linux distributions around which use and ship Qt4 and libquentier strives to be compatible with them.
+Libquentier supports building with Qt no older than 5.5.1. Be careful with features relevant only for the most recent versions of Qt which can break backward compatibility with older versions of the framework. Either don't use such bleeding edge features or use ifdefs to isolate the code using them. Example:
+
+    #if QT_VERSION >= QT_VERSION_CHECK(5, 7, 0)
+    // use feature first appeared in Qt 5.7
+    #else
+    // use some replacement for older versions of Qt
+    #endif
