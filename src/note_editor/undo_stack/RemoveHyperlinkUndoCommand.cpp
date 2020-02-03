@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -24,8 +24,7 @@
 namespace quentier {
 
 #define GET_PAGE()                                                             \
-    NoteEditorPage * page =                                                    \
-        qobject_cast<NoteEditorPage*>(m_noteEditorPrivate.page());             \
+    auto * page = qobject_cast<NoteEditorPage*>(m_noteEditorPrivate.page());   \
     if (Q_UNLIKELY(!page))                                                     \
     {                                                                          \
         ErrorString error(                                                     \
@@ -39,8 +38,7 @@ namespace quentier {
 // GET_PAGE
 
 RemoveHyperlinkUndoCommand::RemoveHyperlinkUndoCommand(
-        NoteEditorPrivate & noteEditor,
-        const Callback & callback,
+        NoteEditorPrivate & noteEditor, const Callback & callback,
         QUndoCommand * parent) :
     INoteEditorUndoCommand(noteEditor, parent),
     m_callback(callback)
@@ -49,10 +47,8 @@ RemoveHyperlinkUndoCommand::RemoveHyperlinkUndoCommand(
 }
 
 RemoveHyperlinkUndoCommand::RemoveHyperlinkUndoCommand(
-        NoteEditorPrivate & noteEditor,
-        const Callback & callback,
-        const QString & text,
-        QUndoCommand * parent) :
+        NoteEditorPrivate & noteEditor, const Callback & callback,
+        const QString & text, QUndoCommand * parent) :
     INoteEditorUndoCommand(noteEditor, text, parent),
     m_callback(callback)
 {}
@@ -65,8 +61,9 @@ void RemoveHyperlinkUndoCommand::redoImpl()
     QNDEBUG("RemoveHyperlinkUndoCommand::redoImpl");
 
     GET_PAGE()
-    page->executeJavaScript(QStringLiteral("hyperlinkManager.redo();"),
-                            m_callback);
+    page->executeJavaScript(
+        QStringLiteral("hyperlinkManager.redo();"),
+        m_callback);
 }
 
 void RemoveHyperlinkUndoCommand::undoImpl()
@@ -74,8 +71,9 @@ void RemoveHyperlinkUndoCommand::undoImpl()
     QNDEBUG("RemoveHyperlinkUndoCommand::undoImpl");
 
     GET_PAGE()
-    page->executeJavaScript(QStringLiteral("hyperlinkManager.undo();"),
-                            m_callback);
+    page->executeJavaScript(
+        QStringLiteral("hyperlinkManager.undo();"),
+        m_callback);
 }
 
 } // namespace quentier

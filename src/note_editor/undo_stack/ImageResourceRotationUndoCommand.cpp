@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -42,10 +42,11 @@ ImageResourceRotationUndoCommand::ImageResourceRotationUndoCommand(
     m_resourceAfter(resourceAfter),
     m_rotationDirection(rotationDirection)
 {
-    setText(QObject::tr("Image resource rotation") + QStringLiteral(" ") +
-            ((m_rotationDirection == INoteEditorBackend::Rotation::Clockwise)
-             ? QObject::tr("clockwise")
-             : QObject::tr("counterclockwise")));
+    setText(
+        QObject::tr("Image resource rotation") + QStringLiteral(" ") +
+        ((m_rotationDirection == INoteEditorBackend::Rotation::Clockwise)
+         ? QObject::tr("clockwise")
+         : QObject::tr("counterclockwise")));
 }
 
 ImageResourceRotationUndoCommand::ImageResourceRotationUndoCommand(
@@ -79,13 +80,14 @@ void ImageResourceRotationUndoCommand::redoImpl()
     const Note * pNote = m_noteEditorPrivate.notePtr();
     if (Q_UNLIKELY(!pNote)) {
         QNDEBUG("Can't redo image resource rotation: no note "
-                "is set to the editor");
+            << "is set to the editor");
         return;
     }
 
-    m_noteEditorPrivate.updateResource(m_resourceAfter.localUid(),
-                                       m_resourceHashBefore,
-                                       m_resourceAfter);
+    m_noteEditorPrivate.updateResource(
+        m_resourceAfter.localUid(),
+        m_resourceHashBefore,
+        m_resourceAfter);
 }
 
 void ImageResourceRotationUndoCommand::undoImpl()
@@ -122,9 +124,10 @@ void ImageResourceRotationUndoCommand::undoImpl()
         resource.setRecognitionDataSize(m_resourceRecognitionDataBefore.size());
     }
 
-    m_noteEditorPrivate.updateResource(resource.localUid(),
-                                       m_resourceAfter.dataHash(),
-                                       resource);
+    m_noteEditorPrivate.updateResource(
+        resource.localUid(),
+        m_resourceAfter.dataHash(),
+        resource);
 }
 
 } // namespace quentier

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -30,19 +30,14 @@ class Q_DECL_HIDDEN ReplaceUndoCommand: public INoteEditorUndoCommand
     typedef NoteEditorPage::Callback Callback;
 public:
     ReplaceUndoCommand(
-        const QString & textToReplace,
-        const bool matchCase,
-        NoteEditorPrivate & noteEditorPrivate,
-        Callback callback,
+        const QString & textToReplace, const bool matchCase,
+        NoteEditorPrivate & noteEditorPrivate, Callback callback,
         QUndoCommand * parent = nullptr);
 
     ReplaceUndoCommand(
-        const QString & textToReplace,
-        const bool matchCase,
-        NoteEditorPrivate & noteEditorPrivate,
-        const QString & text,
-        Callback callback,
-        QUndoCommand * parent = nullptr);
+        const QString & textToReplace, const bool matchCase,
+        NoteEditorPrivate & noteEditorPrivate, const QString & text,
+        Callback callback, QUndoCommand * parent = nullptr);
 
     virtual ~ReplaceUndoCommand();
 

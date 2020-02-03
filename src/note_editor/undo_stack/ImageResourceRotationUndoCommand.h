@@ -60,13 +60,13 @@ public:
     virtual void undoImpl() override;
 
 private:
-    const QByteArray                            m_resourceDataBefore;
-    const QByteArray                            m_resourceHashBefore;
-    const QByteArray                            m_resourceRecognitionDataBefore;
-    const QByteArray                            m_resourceRecognitionDataHashBefore;
-    const QSize                                 m_resourceImageSizeBefore;
-    const Resource                              m_resourceAfter;
-    const INoteEditorBackend::Rotation          m_rotationDirection;
+    const QByteArray                        m_resourceDataBefore;
+    const QByteArray                        m_resourceHashBefore;
+    const QByteArray                        m_resourceRecognitionDataBefore;
+    const QByteArray                        m_resourceRecognitionDataHashBefore;
+    const QSize                             m_resourceImageSizeBefore;
+    const Resource                          m_resourceAfter;
+    const INoteEditorBackend::Rotation      m_rotationDirection;
 };
 
 } // namespace quentier

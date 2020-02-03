@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -30,9 +30,9 @@ struct Q_DECL_HIDDEN EncryptDecryptUndoCommandInfo
     QString     m_passphrase;
     QString     m_cipher;
     QString     m_hint;
-    size_t      m_keyLength;
-    bool        m_rememberForSession;
-    bool        m_decryptPermanently;
+    size_t      m_keyLength = 0;
+    bool        m_rememberForSession = false;
+    bool        m_decryptPermanently = false;
 };
 
 } // namespace quentier

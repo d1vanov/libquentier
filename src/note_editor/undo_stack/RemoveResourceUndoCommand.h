@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -22,8 +22,8 @@
 #include "INoteEditorUndoCommand.h"
 #include "../NoteEditorPage.h"
 
-#include <quentier/utility/Macros.h>
 #include <quentier/types/Resource.h>
+#include <quentier/utility/Macros.h>
 
 namespace quentier {
 
@@ -33,16 +33,13 @@ class Q_DECL_HIDDEN RemoveResourceUndoCommand: public INoteEditorUndoCommand
     typedef NoteEditorPage::Callback Callback;
 public:
     RemoveResourceUndoCommand(
-        const Resource & resource,
-        const Callback & callback,
+        const Resource & resource, const Callback & callback,
         NoteEditorPrivate & noteEditorPrivate,
         QUndoCommand * parent = nullptr);
 
     RemoveResourceUndoCommand(
-        const Resource & resource,
-        const Callback & callback,
-        NoteEditorPrivate & noteEditorPrivate,
-        const QString & text,
+        const Resource & resource, const Callback & callback,
+        NoteEditorPrivate & noteEditorPrivate, const QString & text,
         QUndoCommand * parent = nullptr);
 
     virtual ~RemoveResourceUndoCommand();

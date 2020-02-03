@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -28,12 +28,10 @@ class Q_DECL_HIDDEN ImageResizeUndoCommand: public INoteEditorUndoCommand
     Q_OBJECT
 public:
     ImageResizeUndoCommand(
-        NoteEditorPrivate & noteEditor,
-        QUndoCommand * parent = nullptr);
+        NoteEditorPrivate & noteEditor, QUndoCommand * parent = nullptr);
 
     ImageResizeUndoCommand(
-        NoteEditorPrivate & noteEditor,
-        const QString & text,
+        NoteEditorPrivate & noteEditor, const QString & text,
         QUndoCommand * parent = nullptr);
 
     virtual ~ImageResizeUndoCommand();

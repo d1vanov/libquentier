@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2019 Dmitry Ivanov
+ * Copyright 2017-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -30,15 +30,12 @@ class Q_DECL_HIDDEN ToDoCheckboxAutomaticInsertionUndoCommand: public INoteEdito
     typedef NoteEditorPage::Callback Callback;
 public:
     ToDoCheckboxAutomaticInsertionUndoCommand(
-        NoteEditorPrivate & noteEditor,
-        const Callback & callback,
+        NoteEditorPrivate & noteEditor, const Callback & callback,
         QUndoCommand * parent = nullptr);
 
     ToDoCheckboxAutomaticInsertionUndoCommand(
-        NoteEditorPrivate & noteEditor,
-        const Callback & callback,
-        const QString & text,
-        QUndoCommand * parent = nullptr);
+        NoteEditorPrivate & noteEditor, const Callback & callback,
+        const QString & text, QUndoCommand * parent = nullptr);
 
     virtual ~ToDoCheckboxAutomaticInsertionUndoCommand();
 

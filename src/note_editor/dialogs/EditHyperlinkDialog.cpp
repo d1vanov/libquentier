@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -23,10 +23,9 @@
 
 namespace quentier {
 
-EditHyperlinkDialog::EditHyperlinkDialog(QWidget * parent,
-                                         const QString & startupText,
-                                         const QString & startupUrl,
-                                         const quint64 idNumber) :
+EditHyperlinkDialog::EditHyperlinkDialog(
+        QWidget * parent, const QString & startupText,
+        const QString & startupUrl, const quint64 idNumber) :
     QDialog(parent),
     m_pUI(new Ui::EditHyperlinkDialog),
     m_idNumber(idNumber),
@@ -35,10 +34,17 @@ EditHyperlinkDialog::EditHyperlinkDialog(QWidget * parent,
     m_pUI->setupUi(this);
     m_pUI->urlErrorLabel->setVisible(false);
 
-    QObject::connect(m_pUI->urlLineEdit, QNSIGNAL(QLineEdit,textEdited,QString),
-                     this, QNSLOT(EditHyperlinkDialog,onUrlEdited,QString));
-    QObject::connect(m_pUI->urlLineEdit, QNSIGNAL(QLineEdit,editingFinished),
-                     this, QNSLOT(EditHyperlinkDialog,onUrlEditingFinished));
+    QObject::connect(
+        m_pUI->urlLineEdit,
+        &QLineEdit::textEdited,
+        this,
+        &EditHyperlinkDialog::onUrlEdited);
+
+    QObject::connect(
+        m_pUI->urlLineEdit,
+        &QLineEdit::editingFinished,
+        this,
+        &EditHyperlinkDialog::onUrlEditingFinished);
 
     if (!startupText.isEmpty()) {
         m_pUI->textLineEdit->setText(startupText);
@@ -66,8 +72,12 @@ void EditHyperlinkDialog::accept()
         return;
     }
 
-    Q_EMIT accepted(m_pUI->textLineEdit->text(), url,
-                    m_idNumber, m_startupUrlWasEmpty);
+    Q_EMIT accepted(
+        m_pUI->textLineEdit->text(),
+        url,
+        m_idNumber,
+        m_startupUrlWasEmpty);
+
     QDialog::accept();
 }
 
@@ -101,9 +111,9 @@ bool EditHyperlinkDialog::validateAndGetUrl(QUrl & url)
 
     url = QUrl(enteredUrl, QUrl::TolerantMode);
     QNTRACE("Parsed URL: " << url << ", is empty = "
-            << (url.isEmpty() ? "true" : "false")
-            << ", is valid = "
-            << (url.isValid() ? "true" : "false"));
+        << (url.isEmpty() ? "true" : "false")
+        << ", is valid = "
+        << (url.isValid() ? "true" : "false"));
 
     if (url.isEmpty()) {
         m_pUI->urlErrorLabel->setText(tr("Entered URL is empty"));

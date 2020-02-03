@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -24,8 +24,7 @@
 namespace quentier {
 
 #define GET_PAGE()                                                             \
-    NoteEditorPage * page =                                                    \
-        qobject_cast<NoteEditorPage*>(m_noteEditorPrivate.page());             \
+    auto * page = qobject_cast<NoteEditorPage*>(m_noteEditorPrivate.page());   \
     if (Q_UNLIKELY(!page))                                                     \
     {                                                                          \
         ErrorString error(                                                     \
@@ -39,8 +38,8 @@ namespace quentier {
 // GET_PAGE
 
 HideDecryptedTextUndoCommand::HideDecryptedTextUndoCommand(
-        NoteEditorPrivate & noteEditorPrivate,
-        const Callback & callback, QUndoCommand * parent) :
+        NoteEditorPrivate & noteEditorPrivate, const Callback & callback,
+        QUndoCommand * parent) :
     INoteEditorUndoCommand(noteEditorPrivate, parent),
     m_callback(callback)
 {
@@ -62,8 +61,9 @@ void HideDecryptedTextUndoCommand::redoImpl()
     QNDEBUG("HideDecryptedTextUndoCommand::redoImpl");
 
     GET_PAGE()
-    page->executeJavaScript(QStringLiteral("encryptDecryptManager.redo();"),
-                            m_callback);
+    page->executeJavaScript(
+        QStringLiteral("encryptDecryptManager.redo();"),
+        m_callback);
 }
 
 void HideDecryptedTextUndoCommand::undoImpl()
@@ -71,8 +71,9 @@ void HideDecryptedTextUndoCommand::undoImpl()
     QNDEBUG("HideDecryptedTextUndoCommand::undoImpl");
 
     GET_PAGE()
-    page->executeJavaScript(QStringLiteral("encryptDecryptManager.undo();"),
-                            m_callback);
+    page->executeJavaScript(
+        QStringLiteral("encryptDecryptManager.undo();"),
+        m_callback);
 }
 
 } // namespace quentier

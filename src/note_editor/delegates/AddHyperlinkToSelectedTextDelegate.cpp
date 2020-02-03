@@ -32,7 +32,7 @@
 namespace quentier {
 
 #define GET_PAGE()                                                             \
-    NoteEditorPage * page = qobject_cast<NoteEditorPage*>(m_noteEditor.page());\
+    auto * page = qobject_cast<NoteEditorPage*>(m_noteEditor.page());          \
     if (Q_UNLIKELY(!page)) {                                                   \
         ErrorString error(                                                     \
             QT_TRANSLATE_NOOP("AddHyperlinkToSelectedTextDelegate",            \

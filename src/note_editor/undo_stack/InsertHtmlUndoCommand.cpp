@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2019 Dmitry Ivanov
+ * Copyright 2017-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -29,8 +29,7 @@
 namespace quentier {
 
 #define GET_PAGE()                                                             \
-    NoteEditorPage * page =                                                    \
-        qobject_cast<NoteEditorPage*>(m_noteEditorPrivate.page());             \
+    auto * page = qobject_cast<NoteEditorPage*>(m_noteEditorPrivate.page());   \
     if (Q_UNLIKELY(!page))                                                     \
     {                                                                          \
         ErrorString error(                                                     \
@@ -103,16 +102,21 @@ void InsertHtmlUndoCommand::undoImpl()
                 continue;
             }
 
-            QByteArray hash = QCryptographicHash::hash(pResource->dataBody(),
-                                                       QCryptographicHash::Md5);
+            QByteArray hash = QCryptographicHash::hash(
+                pResource->dataBody(),
+                QCryptographicHash::Md5);
+
             m_addedResources[i].setDataHash(hash);
-            // This might have caused detach, need to update the pointer to the resource
+            // This might have caused detach, need to update the pointer to
+            // the resource
             pResource = &(addedResources.at(i));
         }
 
         m_noteEditorPrivate.removeResourceFromNote(*pResource);
 
-        auto rit = m_resourceFileStoragePathsByResourceLocalUid.find(pResource->localUid());
+        auto rit = m_resourceFileStoragePathsByResourceLocalUid.find(
+            pResource->localUid());
+
         if (Q_LIKELY(rit != m_resourceFileStoragePathsByResourceLocalUid.end())) {
             Q_UNUSED(m_resourceFileStoragePathsByResourceLocalUid.erase(rit))
         }
@@ -121,8 +125,9 @@ void InsertHtmlUndoCommand::undoImpl()
     }
 
     GET_PAGE()
-    page->executeJavaScript(QStringLiteral("htmlInsertionManager.undo();"),
-                            m_callback);
+    page->executeJavaScript(
+        QStringLiteral("htmlInsertionManager.undo();"),
+        m_callback);
 }
 
 void InsertHtmlUndoCommand::redoImpl()
@@ -146,7 +151,7 @@ void InsertHtmlUndoCommand::redoImpl()
         if (Q_UNLIKELY(!mimeType.isValid()))
         {
             QNDEBUG("Could not deduce the resource data's mime type from the "
-                    "mime type name or resource has no declared mime type");
+                << "mime type name or resource has no declared mime type");
             if (pResource->hasDataBody()) {
                 QNDEBUG("Trying to deduce the mime type from the resource data");
                 mimeType = mimeDatabase.mimeTypeForData(pResource->dataBody());
@@ -155,7 +160,7 @@ void InsertHtmlUndoCommand::redoImpl()
 
         if (Q_UNLIKELY(!mimeType.isValid())) {
             QNDEBUG("All attempts to deduce the correct mime type "
-                    "have failed, fallback to mime type of image/png");
+                << "have failed, fallback to mime type of image/png");
             mimeType = mimeDatabase.mimeTypeForName(QStringLiteral("image/png"));
         }
 
@@ -228,18 +233,19 @@ void InsertHtmlUndoCommand::redoImpl()
         else
         {
             QNWARNING("Can't restore the resource file storage path "
-                      << "for one of resources: the number of "
-                      << "resource file storage path is less than "
-                      << "or equal to the index: paths = "
-                      << m_resourceFileStoragePaths.join(QStringLiteral(", "))
-                      << "; resource: " << pResource);
+                << "for one of resources: the number of "
+                << "resource file storage path is less than "
+                << "or equal to the index: paths = "
+                << m_resourceFileStoragePaths.join(QStringLiteral(", "))
+                << "; resource: " << pResource);
         }
 
     }
 
     GET_PAGE()
-    page->executeJavaScript(QStringLiteral("htmlInsertionManager.redo();"),
-                            m_callback);
+    page->executeJavaScript(
+        QStringLiteral("htmlInsertionManager.redo();"),
+        m_callback);
 }
 
 } // namespace quentier

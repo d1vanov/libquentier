@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -24,8 +24,7 @@
 namespace quentier {
 
 #define GET_PAGE()                                                             \
-    NoteEditorPage * page =                                                    \
-        qobject_cast<NoteEditorPage*>(m_noteEditorPrivate.page());             \
+    auto * page = qobject_cast<NoteEditorPage*>(m_noteEditorPrivate.page());   \
     if (Q_UNLIKELY(!page))                                                     \
     {                                                                          \
         ErrorString error(                                                     \
@@ -65,8 +64,9 @@ void EncryptUndoCommand::redoImpl()
     QNDEBUG("EncryptUndoCommand::redoImpl");
 
     GET_PAGE()
-    page->executeJavaScript(QStringLiteral("encryptDecryptManager.redo();"),
-                            m_callback);
+    page->executeJavaScript(
+        QStringLiteral("encryptDecryptManager.redo();"),
+        m_callback);
 }
 
 void EncryptUndoCommand::undoImpl()
@@ -74,8 +74,9 @@ void EncryptUndoCommand::undoImpl()
     QNDEBUG("EncryptUndoCommand::undoImpl");
 
     GET_PAGE()
-    page->executeJavaScript(QStringLiteral("encryptDecryptManager.undo();"),
-                            m_callback);
+    page->executeJavaScript(
+        QStringLiteral("encryptDecryptManager.undo();"),
+        m_callback);
 }
 
 } // namespace quentier

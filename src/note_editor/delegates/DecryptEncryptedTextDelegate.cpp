@@ -58,8 +58,7 @@ namespace quentier {
 
 #define GET_PAGE()                                                             \
     CHECK_NOTE_EDITOR()                                                        \
-    NoteEditorPage * page =                                                    \
-        qobject_cast<NoteEditorPage*>(m_pNoteEditor->page());                  \
+    auto * page = qobject_cast<NoteEditorPage*>(m_pNoteEditor->page());        \
     if (Q_UNLIKELY(!page))                                                     \
     {                                                                          \
         ErrorString error(                                                     \

@@ -38,7 +38,6 @@ EncryptionDialog::EncryptionDialog(
     QDialog(parent),
     m_pUI(new Ui::EncryptionDialog),
     m_textToEncrypt(textToEncrypt),
-    m_cachedEncryptedText(),
     m_account(account),
     m_encryptionManager(std::move(encryptionManager)),
     m_decryptedTextManager(std::move(decryptedTextManager))
@@ -158,7 +157,8 @@ void EncryptionDialog::accept()
         return;
     }
 
-    bool rememberForSession = m_pUI->rememberPasswordForSessionCheckBox->isChecked();
+    bool rememberForSession =
+        m_pUI->rememberPasswordForSessionCheckBox->isChecked();
 
     m_decryptedTextManager->addEntry(
         m_cachedEncryptedText,

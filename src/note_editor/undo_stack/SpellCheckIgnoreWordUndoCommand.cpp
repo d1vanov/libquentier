@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -25,10 +25,8 @@
 namespace quentier {
 
 SpellCheckIgnoreWordUndoCommand::SpellCheckIgnoreWordUndoCommand(
-        NoteEditorPrivate & noteEditor,
-        const QString & ignoredWord,
-        SpellChecker * pSpellChecker,
-        QUndoCommand * parent) :
+        NoteEditorPrivate & noteEditor, const QString & ignoredWord,
+        SpellChecker * pSpellChecker, QUndoCommand * parent) :
     INoteEditorUndoCommand(noteEditor, parent),
     m_pSpellChecker(pSpellChecker),
     m_ignoredWord(ignoredWord)
@@ -37,10 +35,8 @@ SpellCheckIgnoreWordUndoCommand::SpellCheckIgnoreWordUndoCommand(
 }
 
 SpellCheckIgnoreWordUndoCommand::SpellCheckIgnoreWordUndoCommand(
-        NoteEditorPrivate & noteEditor,
-        const QString & ignoredWord,
-        SpellChecker * pSpellChecker,
-        const QString & text,
+        NoteEditorPrivate & noteEditor, const QString & ignoredWord,
+        SpellChecker * pSpellChecker, const QString & text,
         QUndoCommand * parent) :
     INoteEditorUndoCommand(noteEditor, text, parent),
     m_pSpellChecker(pSpellChecker),

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -33,12 +33,10 @@ public:
 
 protected:
     INoteEditorUndoCommand(
-        NoteEditorPrivate & noteEditorPrivate,
-        QUndoCommand * parent = nullptr);
+        NoteEditorPrivate & noteEditorPrivate, QUndoCommand * parent = nullptr);
 
     INoteEditorUndoCommand(
-        NoteEditorPrivate & noteEditorPrivate,
-        const QString & text,
+        NoteEditorPrivate & noteEditorPrivate, const QString & text,
         QUndoCommand * parent = nullptr);
 
     NoteEditorPrivate &    m_noteEditorPrivate;

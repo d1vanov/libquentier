@@ -48,13 +48,13 @@ namespace quentier {
 
 #define GET_PAGE()                                                             \
     CHECK_NOTE_EDITOR()                                                        \
-    NoteEditorPage * page =                                                    \
-        qobject_cast<NoteEditorPage*>(m_pNoteEditor->page());                  \
+    auto * page = qobject_cast<NoteEditorPage*>(m_pNoteEditor->page());        \
     if (Q_UNLIKELY(!page))                                                     \
     {                                                                          \
-        ErrorString error(QT_TRANSLATE_NOOP("EncryptSelectedTextDelegate",     \
-                                            "Can't encrypt the selected text: "\
-                                            "no note editor page"));           \
+        ErrorString error(                                                     \
+            QT_TRANSLATE_NOOP("EncryptSelectedTextDelegate",                   \
+                              "Can't encrypt the selected text: "              \
+                              "no note editor page"));                         \
         QNWARNING(error);                                                      \
         Q_EMIT notifyError(error);                                             \
         return;                                                                \
@@ -111,8 +111,10 @@ void EncryptSelectedTextDelegate::raiseEncryptionDialog()
         &EncryptSelectedTextDelegate::onSelectedTextEncrypted);
 
     int res = pEncryptionDialog->exec();
+
     QNTRACE("Executed encryption dialog: "
         << (res == QDialog::Accepted ? "accepted" : "rejected"));
+
     if (res == QDialog::Rejected) {
         Q_EMIT cancelled();
         return;
@@ -150,8 +152,10 @@ void EncryptSelectedTextDelegate::onSelectedTextEncrypted(
     else
     {
         m_encryptedTextHtml = ENMLConverter::encryptedTextHtml(
-            encryptedText, hint,
-            cipher, keyLength,
+            encryptedText,
+            hint,
+            cipher,
+            keyLength,
             m_pNoteEditor->GetFreeEncryptedTextId());
 
         ENMLConverter::escapeString(m_encryptedTextHtml);
