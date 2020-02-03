@@ -30,9 +30,7 @@
 namespace quentier {
 
 GenericResourceImageManager::GenericResourceImageManager(QObject * parent) :
-    QObject(parent),
-    m_storageFolderPath(),
-    m_pCurrentNote()
+    QObject(parent)
 {}
 
 void GenericResourceImageManager::setStorageFolderPath(
@@ -247,11 +245,11 @@ void GenericResourceImageManager::onCurrentNoteChanged(Note note)
     QNDEBUG("GenericResourceImageManager::onCurrentNoteChanged: "
         << "new note local uid = " << note.localUid()
         << ", previous note local uid = "
-        << (m_pCurrentNote.isNull()
-            ? QStringLiteral("<null>")
-            : m_pCurrentNote->localUid()));
+        << (m_pCurrentNote
+            ? m_pCurrentNote->localUid()
+            : QStringLiteral("<null>")));
 
-    if (!m_pCurrentNote.isNull() && (m_pCurrentNote->localUid() == note.localUid()))
+    if (m_pCurrentNote && (m_pCurrentNote->localUid() == note.localUid()))
     {
         QNTRACE("The current note is the same, only the note "
             << "object might have changed");
@@ -262,7 +260,7 @@ void GenericResourceImageManager::onCurrentNoteChanged(Note note)
 
     removeStaleGenericResourceImageFilesFromCurrentNote();
 
-    if (m_pCurrentNote.isNull()) {
+    if (!m_pCurrentNote) {
         m_pCurrentNote.reset(new Note(note));
     }
     else {
@@ -275,7 +273,7 @@ void GenericResourceImageManager::removeStaleGenericResourceImageFilesFromCurren
     QNDEBUG("GenericResourceImageManager::"
         << "removeStaleGenericResourceImageFilesFromCurrentNote");
 
-    if (m_pCurrentNote.isNull()) {
+    if (!m_pCurrentNote) {
         QNDEBUG("No current note, nothing to do");
         return;
     }

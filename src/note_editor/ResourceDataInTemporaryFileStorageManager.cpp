@@ -200,7 +200,7 @@ void ResourceDataInTemporaryFileStorageManager::onOpenResourceRequest(
         << "onOpenResourceRequest: resource local uid = "
         << resourceLocalUid);
 
-    if (Q_UNLIKELY(m_pCurrentNote.isNull()))
+    if (Q_UNLIKELY(!m_pCurrentNote))
     {
         ErrorString errorDescription(
             QT_TR_NOOP("Can't open the resource in external editor: internal "
@@ -341,12 +341,11 @@ void ResourceDataInTemporaryFileStorageManager::onCurrentNoteChanged(Note note)
     QNDEBUG("ResourceDataInTemporaryFileStorageManager::"
         << "onCurrentNoteChanged; new note local uid = "
         << note.localUid() << ", previous note local uid = "
-        << (m_pCurrentNote.isNull()
-            ? QStringLiteral("<null>")
-            : m_pCurrentNote->localUid()));
+        << (m_pCurrentNote
+            ? m_pCurrentNote->localUid()
+            : QStringLiteral("<null>")));
 
-    if (!m_pCurrentNote.isNull() &&
-        (m_pCurrentNote->localUid() == note.localUid()))
+    if (m_pCurrentNote && (m_pCurrentNote->localUid() == note.localUid()))
     {
         QNTRACE("The current note is the same, only the note "
             << "object might have changed");
@@ -380,7 +379,7 @@ void ResourceDataInTemporaryFileStorageManager::onCurrentNoteChanged(Note note)
     }
     m_resourceLocalUidByFilePath.clear();
 
-    if (m_pCurrentNote.isNull()) {
+    if (!m_pCurrentNote) {
         m_pCurrentNote.reset(new Note(note));
     }
     else {
@@ -552,7 +551,7 @@ void ResourceDataInTemporaryFileStorageManager::onFoundResourceData(
 
         m_resourceLocalUidsPendingFindInLocalStorage.erase(fit);
 
-        if (Q_UNLIKELY(m_pCurrentNote.isNull())) {
+        if (Q_UNLIKELY(!m_pCurrentNote)) {
             QNWARNING("Received resource data from the local storage "
                 << "but no note is set to "
                 << "ResourceDataInTemporaryFileStorageManager");
@@ -614,7 +613,7 @@ void ResourceDataInTemporaryFileStorageManager::onFoundResourceData(
         m_resourceLocalUidsPendingFindInLocalStorageForWritingToFileForOpening.erase(
             oit);
 
-        if (Q_UNLIKELY(m_pCurrentNote.isNull())) {
+        if (Q_UNLIKELY(!m_pCurrentNote)) {
             QNWARNING("Received resource data from the local storage "
                 << "(for resource file opening) but no note is "
                 << "set to ResourceDataInTemporaryFileStorageManager");
@@ -686,7 +685,7 @@ void ResourceDataInTemporaryFileStorageManager::onFailedToFindResourceData(
 
         m_resourceLocalUidsPendingFindInLocalStorage.erase(fit);
 
-        if (Q_UNLIKELY(m_pCurrentNote.isNull())) {
+        if (Q_UNLIKELY(!m_pCurrentNote)) {
             QNWARNING("Received failure to locate resource data "
                 << "within the local storage but no note "
                 << "is set to ResourceDataInTemporaryFileStorageManager");
@@ -724,7 +723,7 @@ void ResourceDataInTemporaryFileStorageManager::onFailedToFindResourceData(
 
         m_resourceLocalUidsPendingFindInLocalStorage.erase(oit);
 
-        if (Q_UNLIKELY(m_pCurrentNote.isNull()))
+        if (Q_UNLIKELY(!m_pCurrentNote))
         {
             QNWARNING("Received failure to locate resource data within the "
                 << "local storage (for resource file opening) but no note "
@@ -899,7 +898,7 @@ void ResourceDataInTemporaryFileStorageManager::removeStaleResourceFilesFromCurr
     QNDEBUG("ResourceDataInTemporaryFileStorageManager::"
         << "removeStaleResourceFilesFromCurrentNote");
 
-    if (m_pCurrentNote.isNull()) {
+    if (!m_pCurrentNote) {
         QNDEBUG("No current note, nothing to do");
         return;
     }
@@ -1024,7 +1023,7 @@ ResourceDataInTemporaryFileStorageManager::partialUpdateResourceFilesForCurrentN
     QNDEBUG("ResourceDataInTemporaryFileStorageManager::"
         << "partialUpdateResourceFilesForCurrentNote");
 
-    if (Q_UNLIKELY(m_pCurrentNote.isNull())) {
+    if (Q_UNLIKELY(!m_pCurrentNote)) {
         QNDEBUG("No current note, nothing to do");
         return ResultType::Ready;
     }
@@ -1211,7 +1210,7 @@ void ResourceDataInTemporaryFileStorageManager::emitPartialUpdateResourceFilesFo
         << "emitPartialUpdateResourceFilesForCurrentNoteProgress: "
         << "progress = " << progress);
 
-    if (Q_UNLIKELY(m_pCurrentNote.isNull())) {
+    if (Q_UNLIKELY(!m_pCurrentNote)) {
         QNWARNING("Detected attempt to emit partial update resource "
             << "files for current note progress but no current "
             << "note is set; progress = " << progress);
@@ -1229,7 +1228,7 @@ ResourceDataInTemporaryFileStorageManager::putResourcesDataToTemporaryFiles(
         << "putResourcesDataToTemporaryFiles: "
         << resources.size() << " resources");
 
-    if (Q_UNLIKELY(m_pCurrentNote.isNull()))
+    if (Q_UNLIKELY(!m_pCurrentNote))
     {
         errorDescription.setBase(
             QT_TR_NOOP("Can't put resources data into temporary files: internal "
@@ -1297,7 +1296,7 @@ void ResourceDataInTemporaryFileStorageManager::emitOpenResourcePreparationProgr
         << "emitOpenResourcePreparationProgress: resource local uid = "
         << resourceLocalUid << ", progress = " << progress);
 
-    if (Q_UNLIKELY(m_pCurrentNote.isNull())) {
+    if (Q_UNLIKELY(!m_pCurrentNote)) {
         QNWARNING("Detected attempt to emit open resource preparation "
             << "progress but no current note is set; resource local uid = "
             << resourceLocalUid << ", progress = " << progress);

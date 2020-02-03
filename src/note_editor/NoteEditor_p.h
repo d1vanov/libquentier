@@ -195,7 +195,7 @@ public:
         const QByteArray & previousResourceHash,
         Resource updatedResource);
 
-    Note * notePtr() { return m_pNote.data(); }
+    Note * notePtr() { return m_pNote.get(); }
     void setModified();
 
     bool isPageEditable() const { return m_isPageEditable; }
@@ -1195,7 +1195,7 @@ private:
 
     QUndoStack * m_pUndoStack = nullptr;
 
-    QScopedPointer<Account>     m_pAccount;
+    std::unique_ptr<Account>    m_pAccount;
 
     QString     m_htmlForPrinting;
 
@@ -1267,11 +1267,11 @@ private:
 
     QString     m_noteLocalUid;
 
-    QScopedPointer<QFont>       m_pDefaultFont;
-    QScopedPointer<QPalette>    m_pPalette;
+    std::unique_ptr<QFont>      m_pDefaultFont;
+    std::unique_ptr<QPalette>   m_pPalette;
 
-    QScopedPointer<Note>        m_pNote;
-    QScopedPointer<Notebook>    m_pNotebook;
+    std::unique_ptr<Note>       m_pNote;
+    std::unique_ptr<Notebook>   m_pNotebook;
 
     /**
      * This flag is set to true when the note editor page's content gets changed

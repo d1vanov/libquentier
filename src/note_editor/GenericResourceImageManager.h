@@ -24,8 +24,9 @@
 #include <quentier/utility/Macros.h>
 
 #include <QObject>
-#include <QScopedPointer>
 #include <QUuid>
+
+#include <memory>
 
 namespace quentier {
 
@@ -63,7 +64,7 @@ private:
 
 private:
     QString                 m_storageFolderPath;
-    QScopedPointer<Note>    m_pCurrentNote;
+    std::unique_ptr<Note>   m_pCurrentNote;
 };
 
 } // namespace quentier

@@ -588,7 +588,7 @@ void NoteEditorPrivate::onResourceFileChanged(
             static_cast<quint64>(std::max(resourceData.size(), 0)))
         << ", resource data hash = " << resourceDataHash.toHex());
 
-    if (Q_UNLIKELY(m_pNote.isNull())) {
+    if (Q_UNLIKELY(!m_pNote)) {
         QNDEBUG("Can't process resource file change: no note is "
             << "set to the editor");
         return;
@@ -1012,7 +1012,7 @@ void NoteEditorPrivate::onOpenResourceRequest(const QByteArray & resourceHash)
     QNDEBUG("NoteEditorPrivate::onOpenResourceRequest: "
         << resourceHash.toHex());
 
-    if (Q_UNLIKELY(m_pNote.isNull()))
+    if (Q_UNLIKELY(!m_pNote))
     {
         ErrorString error(
             QT_TR_NOOP("Can't open the resource: no note is set "
@@ -1071,7 +1071,7 @@ void NoteEditorPrivate::onSaveResourceRequest(const QByteArray & resourceHash)
     QNDEBUG("NoteEditorPrivate::onSaveResourceRequest: "
         << resourceHash.toHex());
 
-    if (Q_UNLIKELY(m_pNote.isNull()))
+    if (Q_UNLIKELY(!m_pNote))
     {
         ErrorString error(
             QT_TR_NOOP("Can't save the resource to file: no note "
@@ -2816,7 +2816,7 @@ void NoteEditorPrivate::clearCurrentNoteInfo()
     QNDEBUG("NoteEditorPrivate::clearCurrentNoteInfo");
 
     // Remove the no longer needed html file with the note editor page
-    if (!m_pNote.isNull())
+    if (m_pNote)
     {
         QFileInfo noteEditorPageFileInfo(noteEditorPagePath());
         if (noteEditorPageFileInfo.exists() && noteEditorPageFileInfo.isFile()) {
@@ -3021,7 +3021,7 @@ void NoteEditorPrivate::onFoundResourceData(Resource resource)
         Q_UNUSED(m_resourceLocalUidsPendingFindDataInLocalStorageForSavingToFile.erase(
             sit))
 
-        if (Q_UNLIKELY(m_pNote.isNull())) {
+        if (Q_UNLIKELY(!m_pNote)) {
             QNDEBUG("No note is set to the editor");
             return;
         }
@@ -3069,7 +3069,7 @@ void NoteEditorPrivate::onFoundResourceData(Resource resource)
         Q_UNUSED(m_rotationTypeByResourceLocalUidsPendingFindDataInLocalStorage.erase(
             iit))
 
-        if (Q_UNLIKELY(m_pNote.isNull())) {
+        if (Q_UNLIKELY(!m_pNote)) {
             QNDEBUG("No note is set to the editor");
             return;
         }
@@ -3133,7 +3133,7 @@ void NoteEditorPrivate::onFailedToFindResourceData(
         Q_UNUSED(m_resourceLocalUidsPendingFindDataInLocalStorageForSavingToFile.erase(
             sit))
 
-        if (Q_UNLIKELY(m_pNote.isNull())) {
+        if (Q_UNLIKELY(!m_pNote)) {
             QNDEBUG("No note is set to the editor");
             return;
         }
@@ -3159,7 +3159,7 @@ void NoteEditorPrivate::onFailedToFindResourceData(
         Q_UNUSED(m_rotationTypeByResourceLocalUidsPendingFindDataInLocalStorage.erase(
             iit))
 
-        if (Q_UNLIKELY(m_pNote.isNull())) {
+        if (Q_UNLIKELY(!m_pNote)) {
             QNDEBUG("No note is set to the editor");
             return;
         }
@@ -3178,7 +3178,7 @@ void NoteEditorPrivate::onFailedToFindResourceData(
 void NoteEditorPrivate::onFailedToPutResourceDataInTemporaryFile(
     QString resourceLocalUid, QString noteLocalUid, ErrorString errorDescription)
 {
-    if (m_pNote.isNull() || (m_pNote->localUid() != noteLocalUid)) {
+    if (!m_pNote || (m_pNote->localUid() != noteLocalUid)) {
         return;
     }
 
@@ -3193,7 +3193,7 @@ void NoteEditorPrivate::onFailedToPutResourceDataInTemporaryFile(
 void NoteEditorPrivate::onNoteResourceTemporaryFilesPreparationProgress(
     double progress, QString noteLocalUid)
 {
-    if (m_pNote.isNull() || (m_pNote->localUid() != noteLocalUid)) {
+    if (!m_pNote || (m_pNote->localUid() != noteLocalUid)) {
         return;
     }
 
@@ -3218,7 +3218,7 @@ void NoteEditorPrivate::onNoteResourceTemporaryFilesPreparationProgress(
 void NoteEditorPrivate::onNoteResourceTemporaryFilesPreparationError(
     QString noteLocalUid, ErrorString errorDescription)
 {
-    if (m_pNote.isNull() || (m_pNote->localUid() != noteLocalUid)) {
+    if (!m_pNote || (m_pNote->localUid() != noteLocalUid)) {
         return;
     }
 
@@ -3232,7 +3232,7 @@ void NoteEditorPrivate::onNoteResourceTemporaryFilesPreparationError(
 
 void NoteEditorPrivate::onNoteResourceTemporaryFilesReady(QString noteLocalUid)
 {
-    if (m_pNote.isNull() || (m_pNote->localUid() != noteLocalUid)) {
+    if (!m_pNote || (m_pNote->localUid() != noteLocalUid)) {
         return;
     }
 
@@ -3331,7 +3331,7 @@ void NoteEditorPrivate::onNoteResourceTemporaryFilesReady(QString noteLocalUid)
 void NoteEditorPrivate::onOpenResourceInExternalEditorPreparationProgress(
     double progress, QString resourceLocalUid, QString noteLocalUid)
 {
-    if (m_pNote.isNull() || (m_pNote->localUid() != noteLocalUid)) {
+    if (!m_pNote || (m_pNote->localUid() != noteLocalUid)) {
         return;
     }
 
@@ -3366,7 +3366,7 @@ void NoteEditorPrivate::onFailedToOpenResourceInExternalEditor(
     QString resourceLocalUid,
     QString noteLocalUid, ErrorString errorDescription)
 {
-    if (m_pNote.isNull() || (m_pNote->localUid() != noteLocalUid)) {
+    if (!m_pNote || (m_pNote->localUid() != noteLocalUid)) {
         return;
     }
 
@@ -3382,7 +3382,7 @@ void NoteEditorPrivate::onFailedToOpenResourceInExternalEditor(
 void NoteEditorPrivate::onOpenedResourceInExternalEditor(
     QString resourceLocalUid, QString noteLocalUid)
 {
-    if (m_pNote.isNull() || (m_pNote->localUid() != noteLocalUid)) {
+    if (!m_pNote || (m_pNote->localUid() != noteLocalUid)) {
         return;
     }
 
@@ -3896,7 +3896,7 @@ bool NoteEditorPrivate::checkNoteSize(
 {
     QNDEBUG("NoteEditorPrivate::checkNoteSize");
 
-    if (Q_UNLIKELY(m_pNote.isNull()))
+    if (Q_UNLIKELY(!m_pNote))
     {
         errorDescription.setBase(
             QT_TR_NOOP("Internal error: can't check the note size on note "
@@ -3967,7 +3967,7 @@ void NoteEditorPrivate::pushNoteContentEditUndoCommand()
         m_pUndoStack,
         QStringLiteral("Undo stack for note editor wasn't initialized"));
 
-    if (Q_UNLIKELY(m_pNote.isNull())) {
+    if (Q_UNLIKELY(!m_pNote)) {
         QNINFO("Ignoring the content changed signal as the note pointer is null");
         return;
     }
@@ -4400,7 +4400,7 @@ void NoteEditorPrivate::noteToEditorContent()
 {
     QNDEBUG("NoteEditorPrivate::noteToEditorContent");
 
-    if (m_pNote.isNull()) {
+    if (!m_pNote) {
         QNDEBUG("No note has been set yet");
         clearEditorContent();
         return;
@@ -4608,7 +4608,7 @@ bool NoteEditorPrivate::htmlToNoteContent(ErrorString & errorDescription)
 {
     QNDEBUG("NoteEditorPrivate::htmlToNoteContent");
 
-    if (m_pNote.isNull()) {
+    if (!m_pNote) {
         errorDescription.setBase(QT_TR_NOOP("No note was set to note editor"));
         QNWARNING(errorDescription);
         Q_EMIT cantConvertToNote(errorDescription);
@@ -4635,7 +4635,7 @@ bool NoteEditorPrivate::htmlToNoteContent(ErrorString & errorDescription)
         return false;
     }
 
-    if (!m_pNotebook.isNull() && m_pNotebook->hasRestrictions())
+    if (m_pNotebook && m_pNotebook->hasRestrictions())
     {
         const auto & restrictions = m_pNotebook->restrictions();
         if (restrictions.noUpdateNotes.isSet() && restrictions.noUpdateNotes.ref())
@@ -5438,7 +5438,7 @@ void NoteEditorPrivate::updateResource(
         << previousResourceHash.toHex() << ", updated resource: "
         << updatedResource);
 
-    if (Q_UNLIKELY(m_pNote.isNull()))
+    if (Q_UNLIKELY(!m_pNote))
     {
         ErrorString error(
             QT_TR_NOOP("Can't update the resource: no note "
@@ -6674,7 +6674,7 @@ void NoteEditorPrivate::setupNoteEditorPage()
         OwnershipNamespace::QtOwnership);
 
     m_pPluginFactory = new NoteEditorPluginFactory(*this, page);
-    if (Q_LIKELY(!m_pNote.isNull())) {
+    if (Q_LIKELY(m_pNote)) {
         m_pPluginFactory->setNote(*m_pNote);
     }
 
@@ -6988,7 +6988,7 @@ QString NoteEditorPrivate::bodyStyleCss() const
 
 void NoteEditorPrivate::appendDefaultFontInfoToCss(QTextStream& strm) const
 {
-    if (m_pDefaultFont.isNull()) {
+    if (!m_pDefaultFont) {
         return;
     }
 
@@ -7282,7 +7282,7 @@ void NoteEditorPrivate::onPageHtmlReceived(
         return;
     }
 
-    if (Q_UNLIKELY(m_pNote.isNull()))
+    if (Q_UNLIKELY(!m_pNote))
     {
         m_pendingConversionToNote = false;
         ErrorString error(QT_TR_NOOP("No current note is set to note editor"));
@@ -7741,7 +7741,7 @@ void NoteEditorPrivate::rebuildRecognitionIndicesCache()
 
     m_recognitionIndicesByResourceHash.clear();
 
-    if (Q_UNLIKELY(m_pNote.isNull())) {
+    if (Q_UNLIKELY(!m_pNote)) {
         QNTRACE("No note is set");
         return;
     }
@@ -7805,7 +7805,7 @@ void NoteEditorPrivate::refreshMisSpelledWordsList()
 {
     QNDEBUG("NoteEditorPrivate::refreshMisSpelledWordsList");
 
-    if (m_pNote.isNull()) {
+    if (!m_pNote) {
         QNDEBUG("No note is set to the editor");
         return;
     }
@@ -8195,7 +8195,7 @@ bool NoteEditorPrivate::isNoteReadOnly() const
 {
     QNDEBUG("NoteEditorPrivate::isNoteReadOnly");
 
-    if (m_pNote.isNull()) {
+    if (!m_pNote) {
         QNTRACE("No note is set to the editor");
         return true;
     }
@@ -8211,7 +8211,7 @@ bool NoteEditorPrivate::isNoteReadOnly() const
         }
     }
 
-    if (m_pNotebook.isNull()) {
+    if (!m_pNotebook) {
         QNTRACE("No notebook is set to the editor");
         return true;
     }
@@ -8367,7 +8367,7 @@ void NoteEditorPrivate::setAccount(const Account & account)
 {
     QNDEBUG("NoteEditorPrivate::setAccount: " << account.name());
 
-    if (!m_pAccount.isNull() && (m_pAccount->type() == account.type()) &&
+    if (m_pAccount && (m_pAccount->type() == account.type()) &&
         (m_pAccount->name() == account.name()) &&
         (m_pAccount->id() == account.id()))
     {
@@ -8380,7 +8380,7 @@ void NoteEditorPrivate::setAccount(const Account & account)
 
     clear();
 
-    if (m_pAccount.isNull()) {
+    if (!m_pAccount) {
         m_pAccount.reset(new Account(account));
     }
     else {
@@ -8394,8 +8394,10 @@ void NoteEditorPrivate::setUndoStack(QUndoStack * pUndoStack)
 {
     QNDEBUG("NoteEditorPrivate::setUndoStack");
 
-    QUENTIER_CHECK_PTR(pUndoStack,
-                       QStringLiteral("null undo stack passed to note editor"));
+    QUENTIER_CHECK_PTR(
+        pUndoStack,
+        QStringLiteral("null undo stack passed to note editor"));
+
     m_pUndoStack = pUndoStack;
 }
 
@@ -9084,7 +9086,7 @@ void NoteEditorPrivate::setNoteTitle(const QString & noteTitle)
 {
     QNDEBUG("NoteEditorPrivate::setNoteTitle: " << noteTitle);
 
-    if (Q_UNLIKELY(m_pNote.isNull()))
+    if (Q_UNLIKELY(!m_pNote))
     {
         ErrorString error(
             QT_TR_NOOP("Can't set title to the note: no note "
@@ -9122,7 +9124,7 @@ void NoteEditorPrivate::setTagIds(
         << "; tag guids: "
         << tagGuids.join(QStringLiteral(", ")));
 
-    if (Q_UNLIKELY(m_pNote.isNull()))
+    if (Q_UNLIKELY(!m_pNote))
     {
         ErrorString error(
             QT_TR_NOOP("Can't set tags to the note: no note "
@@ -9231,7 +9233,7 @@ void NoteEditorPrivate::addResourceToNote(const Resource & resource)
     QNDEBUG("NoteEditorPrivate::addResourceToNote");
     QNTRACE(resource);
 
-    if (Q_UNLIKELY(m_pNote.isNull()))
+    if (Q_UNLIKELY(!m_pNote))
     {
         ErrorString error(
             QT_TR_NOOP("Can't add the resource to note: no note "
@@ -9263,7 +9265,7 @@ void NoteEditorPrivate::removeResourceFromNote(const Resource & resource)
     QNDEBUG("NoteEditorPrivate::removeResourceFromNote");
     QNTRACE(resource);
 
-    if (Q_UNLIKELY(m_pNote.isNull()))
+    if (Q_UNLIKELY(!m_pNote))
     {
         ErrorString error(
             QT_TR_NOOP("Can't remove the resource from note: "
@@ -9301,7 +9303,7 @@ void NoteEditorPrivate::replaceResourceInNote(const Resource & resource)
     QNDEBUG("NoteEditorPrivate::replaceResourceInNote");
     QNTRACE(resource);
 
-    if (Q_UNLIKELY(m_pNote.isNull()))
+    if (Q_UNLIKELY(!m_pNote))
     {
         ErrorString error(
             QT_TR_NOOP("Can't replace the resource within note: "
@@ -9356,7 +9358,7 @@ void NoteEditorPrivate::setNoteResources(const QList<Resource> & resources)
 {
     QNDEBUG("NoteEditorPrivate::setNoteResources");
 
-    if (Q_UNLIKELY(m_pNote.isNull()))
+    if (Q_UNLIKELY(!m_pNote))
     {
         ErrorString error(
             QT_TR_NOOP("Can't set the resources to the note: "
@@ -9447,13 +9449,13 @@ QString NoteEditorPrivate::noteEditorPagePath() const
 {
     QNDEBUG("NoteEditorPrivate::noteEditorPagePath");
 
-    if (m_pNote.isNull()) {
+    if (!m_pNote) {
         QNDEBUG("No note is set to the editor");
         return m_noteEditorPageFolderPath + QStringLiteral("/index.html");
     }
 
     return m_noteEditorPageFolderPath + QStringLiteral("/") +
-           m_pNote->localUid() + QStringLiteral(".html");
+        m_pNote->localUid() + QStringLiteral(".html");
 }
 
 void NoteEditorPrivate::setRenameResourceDelegateSubscriptions(
@@ -9484,7 +9486,7 @@ void NoteEditorPrivate::removeSymlinksToImageResourceFile(
     QNDEBUG("NoteEditorPrivate::removeSymlinksToImageResourceFile: "
         << "resource local uid = " << resourceLocalUid);
 
-    if (Q_UNLIKELY(m_pNote.isNull())) {
+    if (Q_UNLIKELY(!m_pNote)) {
         QNDEBUG("Can't remove symlinks to resource image file: "
             << "no note is set to the editor");
         return;
@@ -9601,7 +9603,7 @@ void NoteEditorPrivate::onDropEvent(QDropEvent * pEvent)
 
 const Account * NoteEditorPrivate::accountPtr() const
 {
-    return m_pAccount.data();
+    return m_pAccount.get();
 }
 
 const Resource NoteEditorPrivate::attachResourceToNote(
@@ -9620,7 +9622,7 @@ const Resource NoteEditorPrivate::attachResourceToNote(
     // Force the resource to have empty local uid for now
     resource.setLocalUid(QString());
 
-    if (Q_UNLIKELY(m_pNote.isNull())) {
+    if (Q_UNLIKELY(!m_pNote)) {
         QNINFO("Can't attach resource to note editor: no actual "
             << "note was selected");
         return resource;
@@ -10766,7 +10768,7 @@ QPalette NoteEditorPrivate::defaultPalette() const
 {
     QPalette pal = palette();
 
-    if (!m_pPalette.isNull())
+    if (m_pPalette)
     {
         QColor fontColor = m_pPalette->color(QPalette::WindowText);
         if (fontColor.isValid()) {
@@ -10798,7 +10800,7 @@ void NoteEditorPrivate::setDefaultPalette(const QPalette & pal)
 {
     QNDEBUG("NoteEditorPrivate::setDefaultPalette");
 
-    if (m_pPalette.isNull())
+    if (!m_pPalette)
     {
         m_pPalette.reset(new QPalette(pal));
     }
@@ -10812,7 +10814,7 @@ void NoteEditorPrivate::setDefaultPalette(const QPalette & pal)
         *m_pPalette = pal;
     }
 
-    if (Q_UNLIKELY(m_pNote.isNull())) {
+    if (Q_UNLIKELY(!m_pNote)) {
         return;
     }
 
@@ -10828,26 +10830,26 @@ void NoteEditorPrivate::setDefaultPalette(const QPalette & pal)
 
 const QFont * NoteEditorPrivate::defaultFont() const
 {
-    return m_pDefaultFont.data();
+    return m_pDefaultFont.get();
 }
 
 void NoteEditorPrivate::setDefaultFont(const QFont & font)
 {
     QNDEBUG("NoteEditorPrivate::setDefaultFont: " << font.toString());
 
-    if (!m_pDefaultFont.isNull() && *m_pDefaultFont == font) {
+    if (m_pDefaultFont && *m_pDefaultFont == font) {
         QNDEBUG("Font is already set");
         return;
     }
 
-    if (m_pDefaultFont.isNull()) {
+    if (!m_pDefaultFont) {
         m_pDefaultFont.reset(new QFont(font));
     }
     else {
         *m_pDefaultFont = font;
     }
 
-    if (Q_UNLIKELY(m_pNote.isNull())) {
+    if (Q_UNLIKELY(!m_pNote)) {
         return;
     }
 
@@ -11249,7 +11251,7 @@ void NoteEditorPrivate::openAttachmentUnderCursor()
 
 void NoteEditorPrivate::copyAttachment(const QByteArray & resourceHash)
 {
-    if (Q_UNLIKELY(m_pNote.isNull()))
+    if (Q_UNLIKELY(!m_pNote))
     {
         ErrorString error(
             QT_TR_NOOP("Can't copy the attachment: no note "
@@ -11342,7 +11344,7 @@ void NoteEditorPrivate::removeAttachment(const QByteArray & resourceHash)
     QNDEBUG("NoteEditorPrivate::removeAttachment: hash = "
             << resourceHash.toHex());
 
-    if (Q_UNLIKELY(m_pNote.isNull()))
+    if (Q_UNLIKELY(!m_pNote))
     {
         ErrorString error(QT_TR_NOOP("Can't remove the attachment by hash: "
                                      "no note is set to the editor"));
@@ -11472,7 +11474,7 @@ void NoteEditorPrivate::renameAttachment(const QByteArray & resourceHash)
     ErrorString errorPrefix(QT_TR_NOOP("Can't rename the attachment"));
     CHECK_NOTE_EDITABLE(errorPrefix)
 
-    if (Q_UNLIKELY(m_pNote.isNull())) {
+    if (Q_UNLIKELY(!m_pNote)) {
         ErrorString error = errorPrefix;
         error.appendBase(QT_TR_NOOP("No note is set to the editor"));
         QNWARNING(error);
@@ -11541,7 +11543,7 @@ void NoteEditorPrivate::rotateImageAttachment(
     ErrorString errorPrefix(QT_TR_NOOP("Can't rotate the image attachment"));
     CHECK_NOTE_EDITABLE(errorPrefix)
 
-    if (Q_UNLIKELY(m_pNote.isNull())) {
+    if (Q_UNLIKELY(!m_pNote)) {
         ErrorString error = errorPrefix;
         error.appendBase(QT_TR_NOOP("No note is set to the editor"));
         QNWARNING(error);

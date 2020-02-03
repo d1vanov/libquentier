@@ -25,11 +25,11 @@
 
 #include <QHash>
 #include <QObject>
-#include <QScopedPointer>
 #include <QStringList>
 #include <QUuid>
 
 #include <functional>
+#include <memory>
 
 QT_FORWARD_DECLARE_CLASS(QWidget)
 
@@ -427,7 +427,7 @@ private:
     QString     m_nonImageResourceFileStorageLocation;
     QString     m_imageResourceFileStorageLocation;
 
-    QScopedPointer<Note>        m_pCurrentNote;
+    std::unique_ptr<Note>       m_pCurrentNote;
 
     /**
      * Local uids of image resources from current note which are pending full

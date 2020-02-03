@@ -34,20 +34,20 @@
         error.appendBase(                                                      \
             QT_TRANSLATE_NOOP("NoteEditorPrivate", "Note is not editable"));   \
         QNINFO(error << ", note: "                                             \
-            << (m_pNote.isNull()                                               \
-                ? QStringLiteral("<null>")                                     \
-                : m_pNote->toString())                                         \
+            << (m_pNote                                                        \
+                ? m_pNote->toString()                                          \
+                : QStringLiteral("<null>"))                                    \
             << "\nNotebook: "                                                  \
-            << (m_pNotebook.isNull()                                           \
-                ? QStringLiteral("<null>")                                     \
-                : m_pNotebook->toString()));                                   \
+            << (m_pNotebook                                                    \
+                ? m_pNotebook->toString()                                      \
+                : QStringLiteral("<null>")));                                  \
         Q_EMIT notifyError(error);                                             \
         return;                                                                \
     }                                                                          \
 // CHECK_NOTE_EDITABLE
 
 #define CHECK_ACCOUNT(message, ...)                                            \
-    if (Q_UNLIKELY(m_pAccount.isNull()))                                       \
+    if (Q_UNLIKELY(!m_pAccount))                                               \
     {                                                                          \
         ErrorString error(message);                                            \
         error.appendBase(                                                      \
