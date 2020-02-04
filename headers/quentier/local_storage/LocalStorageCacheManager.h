@@ -115,7 +115,7 @@ public:
 private:
     Q_DISABLE_COPY(LocalStorageCacheManager)
 
-    std::unique_ptr<LocalStorageCacheManagerPrivate>    d_ptr;
+    LocalStorageCacheManagerPrivate * const d_ptr;
     Q_DECLARE_PRIVATE(LocalStorageCacheManager)
 };
 

@@ -1970,7 +1970,7 @@ public:
 private:
     Q_DISABLE_COPY(LocalStorageManager)
 
-    std::unique_ptr<LocalStorageManagerPrivate>  d_ptr;
+    LocalStorageManagerPrivate * const d_ptr;
     Q_DECLARE_PRIVATE(LocalStorageManager)
 };
 

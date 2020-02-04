@@ -32,14 +32,16 @@ LocalStorageManager::LocalStorageManager(
     d_ptr(new LocalStorageManagerPrivate(account, options, this))
 {
     QObject::connect(
-        d_ptr.get(),
+        d_ptr,
         &LocalStorageManagerPrivate::upgradeProgress,
         this,
         &LocalStorageManager::upgradeProgress);
 }
 
 LocalStorageManager::~LocalStorageManager()
-{}
+{
+    delete d_ptr;
+}
 
 bool LocalStorageManager::addUser(
     const User & user, ErrorString & errorDescription)
