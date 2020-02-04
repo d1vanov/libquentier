@@ -5096,7 +5096,7 @@ void NoteEditorPrivate::saveGenericResourceImage(
     QNDEBUG("NoteEditorPrivate::saveGenericResourceImage: "
             << "resource local uid = " << resource.localUid());
 
-    if (Q_UNLIKELY(m_pNote.isNull()))
+    if (Q_UNLIKELY(!m_pNote))
     {
         ErrorString error(
             QT_TR_NOOP("Can't save the generic resource image: "
@@ -5144,7 +5144,7 @@ void NoteEditorPrivate::provideSrcAndOnClickScriptForImgEnCryptTags()
 {
     QNDEBUG("NoteEditorPrivate::provideSrcAndOnClickScriptForImgEnCryptTags");
 
-    if (Q_UNLIKELY(m_pNote.isNull())) {
+    if (Q_UNLIKELY(!m_pNote)) {
         QNTRACE("No note is set for the editor");
         return;
     }
@@ -5164,7 +5164,7 @@ void NoteEditorPrivate::setupGenericResourceImages()
 {
     QNDEBUG("NoteEditorPrivate::setupGenericResourceImages");
 
-    if (m_pNote.isNull()) {
+    if (!m_pNote) {
         QNDEBUG("No note to build generic resource images for");
         return;
     }
