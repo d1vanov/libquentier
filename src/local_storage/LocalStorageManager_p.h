@@ -21,19 +21,20 @@
 
 #include <quentier/local_storage/Lists.h>
 #include <quentier/local_storage/LocalStorageManager.h>
-#include <quentier/types/User.h>
-#include <quentier/types/Notebook.h>
-#include <quentier/types/SharedNotebook.h>
+#include <quentier/types/LinkedNotebook.h>
 #include <quentier/types/Note.h>
+#include <quentier/types/Notebook.h>
+#include <quentier/types/SavedSearch.h>
+#include <quentier/types/SharedNotebook.h>
 #include <quentier/types/Tag.h>
 #include <quentier/types/Resource.h>
-#include <quentier/types/LinkedNotebook.h>
-#include <quentier/types/SavedSearch.h>
+#include <quentier/types/User.h>
 #include <quentier/utility/Macros.h>
 #include <quentier/utility/StringUtils.h>
+
 #include <QSqlDatabase>
-#include <QSqlQuery>
 #include <QSqlError>
+#include <QSqlQuery>
 
 // Prevent boost::interprocess from automatic linkage to boost::datetime
 #define BOOST_DATE_TIME_NO_LIB
@@ -66,7 +67,7 @@ public:
 
     bool isLocalStorageVersionTooHigh(ErrorString & errorDescription);
     bool localStorageRequiresUpgrade(ErrorString & errorDescription);
-    QVector<QSharedPointer<ILocalStoragePatch>> requiredLocalStoragePatches();
+    QVector<std::shared_ptr<ILocalStoragePatch>> requiredLocalStoragePatches();
     qint32 localStorageVersion(ErrorString & errorDescription);
     qint32 highestSupportedLocalStorageVersion() const;
 

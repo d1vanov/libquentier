@@ -28,11 +28,11 @@
 #include <quentier/local_storage/NoteSearchQuery.h>
 #include <quentier/logging/QuentierLogger.h>
 #include <quentier/types/ResourceRecognitionIndices.h>
-#include <quentier/utility/StringUtils.h>
-#include <quentier/utility/Utility.h>
 #include <quentier/utility/StandardPaths.h>
+#include <quentier/utility/StringUtils.h>
 #include <quentier/utility/SysInfo.h>
 #include <quentier/utility/UidGenerator.h>
+#include <quentier/utility/Utility.h>
 
 #include <QBuffer>
 #include <QDir>
@@ -42,6 +42,7 @@
 
 #include <algorithm>
 #include <cstdio>
+#include <memory>
 
 namespace quentier {
 
@@ -649,10 +650,11 @@ bool LocalStorageManagerPrivate::localStorageRequiresUpgrade(
     return currentVersion < highestSupportedVersion;
 }
 
-QVector<QSharedPointer<ILocalStoragePatch>>
+QVector<std::shared_ptr<ILocalStoragePatch>>
 LocalStorageManagerPrivate::requiredLocalStoragePatches()
 {
-    if (!m_pLocalStoragePatchManager) {
+    if (!m_pLocalStoragePatchManager)
+    {
         m_pLocalStoragePatchManager = new LocalStoragePatchManager(
             m_currentAccount,
             *this,
@@ -9356,7 +9358,7 @@ bool LocalStorageManagerPrivate::insertOrReplaceResource(
         QT_TR_NOOP("can't insert or replace resource into the local storage "
                    "database"));
 
-    QScopedPointer<Transaction> pTransaction;
+    std::unique_ptr<Transaction> pTransaction;
     if (useSeparateTransaction) {
         pTransaction.reset(new Transaction(
             m_sqlDatabase,
@@ -9500,7 +9502,7 @@ bool LocalStorageManagerPrivate::insertOrReplaceResource(
         }
     }
 
-    if (!pTransaction.isNull())
+    if (pTransaction)
     {
         if (!pTransaction->commit(errorDescription)) {
             return false;

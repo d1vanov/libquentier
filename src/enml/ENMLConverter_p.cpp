@@ -20,31 +20,30 @@
 
 #include <quentier/enml/DecryptedTextManager.h>
 #include <quentier/enml/HTMLCleaner.h>
-#include <quentier/types/Resource.h>
 #include <quentier/logging/QuentierLogger.h>
+#include <quentier/types/Resource.h>
 #include <quentier/utility/UidGenerator.h>
 #include <quentier/utility/Utility.h>
 
-#include <libxml/xmlreader.h>
-
-#include <QString>
-#include <QXmlStreamReader>
-#include <QXmlStreamWriter>
-#include <QScopedPointer>
-#include <QDomDocument>
+#include <QApplication>
+#include <QBrush>
+#include <QBuffer>
 #include <QCryptographicHash>
-#include <QRegExp>
 #include <QDateTime>
+#include <QDomDocument>
 #include <QFile>
 #include <QFileInfo>
 #include <QImage>
-#include <QPixmap>
 #include <QPainter>
-#include <QBrush>
 #include <QPen>
+#include <QPixmap>
+#include <QRegExp>
+#include <QString>
 #include <QThread>
-#include <QApplication>
-#include <QBuffer>
+#include <QXmlStreamReader>
+#include <QXmlStreamWriter>
+
+#include <libxml/xmlreader.h>
 
 // 25 Mb in bytes
 #define ENEX_MAX_RESOURCE_DATA_SIZE (26214400)

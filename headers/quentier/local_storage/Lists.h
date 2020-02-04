@@ -20,27 +20,26 @@
 #define LIB_QUENTIER_LOCAL_STORAGE_LISTS_H
 
 #include <QVector>
-#include <QSharedPointer>
 
 namespace quentier {
 
-QT_FORWARD_DECLARE_CLASS(User)
-QT_FORWARD_DECLARE_CLASS(Notebook)
-QT_FORWARD_DECLARE_CLASS(SharedNotebook)
 QT_FORWARD_DECLARE_CLASS(LinkedNotebook)
 QT_FORWARD_DECLARE_CLASS(Note)
-QT_FORWARD_DECLARE_CLASS(Tag)
+QT_FORWARD_DECLARE_CLASS(Notebook)
 QT_FORWARD_DECLARE_CLASS(Resource)
 QT_FORWARD_DECLARE_CLASS(SavedSearch)
+QT_FORWARD_DECLARE_CLASS(SharedNotebook)
+QT_FORWARD_DECLARE_CLASS(Tag)
+QT_FORWARD_DECLARE_CLASS(User)
 
-using UserList = QList<User>;
-using NotebookList = QList<Notebook>;
-using SharedNotebookList = QList<SharedNotebook>;
 using LinkedNotebookList = QList<LinkedNotebook>;
 using NoteList = QList<Note>;
-using TagList = QList<Tag>;
+using NotebookList = QList<Notebook>;
 using ResourceList = QList<Resource>;
 using SavedSearchList = QList<SavedSearch>;
+using SharedNotebookList = QList<SharedNotebook>;
+using TagList = QList<Tag>;
+using UserList = QList<User>;
 
 } // namespace quentier
 

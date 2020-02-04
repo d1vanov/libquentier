@@ -19,32 +19,31 @@
 #ifndef LIB_QUENTIER_LOCAL_STORAGE_LOCAL_STORAGE_MANAGER_H
 #define LIB_QUENTIER_LOCAL_STORAGE_LOCAL_STORAGE_MANAGER_H
 
-#include <quentier/types/Account.h>
 #include <quentier/local_storage/Lists.h>
 #include <quentier/local_storage/NoteSearchQuery.h>
+#include <quentier/types/Account.h>
+#include <quentier/types/ErrorString.h>
 #include <quentier/utility/Linkage.h>
 #include <quentier/utility/Macros.h>
-#include <quentier/types/ErrorString.h>
 
-#include <QString>
-#include <QScopedPointer>
-#include <QSharedPointer>
 #include <QHash>
+#include <QString>
 #include <QVector>
 
 #include <cstdint>
+#include <memory>
 #include <utility>
 
 namespace qevercloud {
 
-QT_FORWARD_DECLARE_STRUCT(ResourceAttributes)
-QT_FORWARD_DECLARE_STRUCT(NoteAttributes)
-QT_FORWARD_DECLARE_STRUCT(UserAttributes)
 QT_FORWARD_DECLARE_STRUCT(Accounting)
-QT_FORWARD_DECLARE_STRUCT(PremiumInfo)
 QT_FORWARD_DECLARE_STRUCT(BusinessUserInfo)
-QT_FORWARD_DECLARE_STRUCT(SharedNotebook)
+QT_FORWARD_DECLARE_STRUCT(NoteAttributes)
 QT_FORWARD_DECLARE_STRUCT(NotebookRestrictions)
+QT_FORWARD_DECLARE_STRUCT(ResourceAttributes)
+QT_FORWARD_DECLARE_STRUCT(PremiumInfo)
+QT_FORWARD_DECLARE_STRUCT(SharedNotebook)
+QT_FORWARD_DECLARE_STRUCT(UserAttributes)
 
 } // namespace qevercloud
 
@@ -243,7 +242,7 @@ public:
      * @return                      The vector of patches required to be applied
      *                              to the current local storage version
      */
-    QVector<QSharedPointer<ILocalStoragePatch>> requiredLocalStoragePatches();
+    QVector<std::shared_ptr<ILocalStoragePatch>> requiredLocalStoragePatches();
 
     /**
      * localStorageVersion method fetches the current version of local storage
@@ -1969,10 +1968,9 @@ public:
         const QString & linkedNotebookGuid, ErrorString & errorDescription);
 
 private:
-    LocalStorageManager()  = delete;
     Q_DISABLE_COPY(LocalStorageManager)
 
-    QScopedPointer<LocalStorageManagerPrivate>  d_ptr;
+    std::unique_ptr<LocalStorageManagerPrivate>  d_ptr;
     Q_DECLARE_PRIVATE(LocalStorageManager)
 };
 

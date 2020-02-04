@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -17,7 +17,9 @@
  */
 
 #include <quentier/local_storage/LocalStorageCacheManager.h>
+
 #include "LocalStorageCacheManager_p.h"
+
 #include <quentier/local_storage/ILocalStorageCacheExpiryChecker.h>
 #include <quentier/logging/QuentierLogger.h>
 
@@ -28,9 +30,7 @@ LocalStorageCacheManager::LocalStorageCacheManager() :
 {}
 
 LocalStorageCacheManager::~LocalStorageCacheManager()
-{
-    delete d_ptr;
-}
+{}
 
 void LocalStorageCacheManager::clear()
 {

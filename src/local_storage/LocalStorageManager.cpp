@@ -32,7 +32,7 @@ LocalStorageManager::LocalStorageManager(
     d_ptr(new LocalStorageManagerPrivate(account, options, this))
 {
     QObject::connect(
-        d_ptr.data(),
+        d_ptr.get(),
         &LocalStorageManagerPrivate::upgradeProgress,
         this,
         &LocalStorageManager::upgradeProgress);
@@ -103,7 +103,7 @@ bool LocalStorageManager::localStorageRequiresUpgrade(
     return d->localStorageRequiresUpgrade(errorDescription);
 }
 
-QVector<QSharedPointer<ILocalStoragePatch> >
+QVector<std::shared_ptr<ILocalStoragePatch> >
 LocalStorageManager::requiredLocalStoragePatches()
 {
     Q_D(LocalStorageManager);
@@ -173,8 +173,7 @@ bool LocalStorageManager::findDefaultOrLastUsedNotebook(
 QList<Notebook>
 LocalStorageManager::listAllNotebooks(
     ErrorString & errorDescription, const size_t limit, const size_t offset,
-    const ListNotebooksOrder order,
-    const OrderDirection orderDirection,
+    const ListNotebooksOrder order, const OrderDirection orderDirection,
     const QString & linkedNotebookGuid) const
 {
     Q_D(const LocalStorageManager);
@@ -190,8 +189,7 @@ LocalStorageManager::listAllNotebooks(
 QList<Notebook>
 LocalStorageManager::listNotebooks(
     const ListObjectsOptions flag, ErrorString & errorDescription,
-    const size_t limit, const size_t offset,
-    const ListNotebooksOrder order,
+    const size_t limit, const size_t offset, const ListNotebooksOrder order,
     const OrderDirection orderDirection,
     const QString & linkedNotebookGuid) const
 {

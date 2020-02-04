@@ -20,16 +20,17 @@
 #define LIB_QUENTIER_LOCAL_STORAGE_LOCAL_STORAGE_CACHE_MANAGER_H
 
 #include <quentier/utility/Printable.h>
-#include <QScopedPointer>
+
+#include <memory>
 
 namespace quentier {
 
-QT_FORWARD_DECLARE_CLASS(Note)
-QT_FORWARD_DECLARE_CLASS(Resource)
-QT_FORWARD_DECLARE_CLASS(Notebook)
-QT_FORWARD_DECLARE_CLASS(Tag)
 QT_FORWARD_DECLARE_CLASS(LinkedNotebook)
+QT_FORWARD_DECLARE_CLASS(Note)
+QT_FORWARD_DECLARE_CLASS(Notebook)
+QT_FORWARD_DECLARE_CLASS(Resource)
 QT_FORWARD_DECLARE_CLASS(SavedSearch)
+QT_FORWARD_DECLARE_CLASS(Tag)
 
 QT_FORWARD_DECLARE_CLASS(ILocalStorageCacheExpiryChecker)
 
@@ -114,7 +115,7 @@ public:
 private:
     Q_DISABLE_COPY(LocalStorageCacheManager)
 
-    LocalStorageCacheManagerPrivate *   d_ptr;
+    std::unique_ptr<LocalStorageCacheManagerPrivate>    d_ptr;
     Q_DECLARE_PRIVATE(LocalStorageCacheManager)
 };
 
