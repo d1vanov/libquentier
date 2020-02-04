@@ -115,7 +115,9 @@ LocalStorageManagerAsync::LocalStorageManagerAsync(
 }
 
 LocalStorageManagerAsync::~LocalStorageManagerAsync()
-{}
+{
+    delete d_ptr;
+}
 
 void LocalStorageManagerAsync::setUseCache(const bool useCache)
 {

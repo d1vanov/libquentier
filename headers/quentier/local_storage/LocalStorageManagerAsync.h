@@ -811,7 +811,7 @@ private:
     LocalStorageManagerAsync()  = delete;
     Q_DISABLE_COPY(LocalStorageManagerAsync)
 
-    std::unique_ptr<LocalStorageManagerAsyncPrivate>    d_ptr;
+    LocalStorageManagerAsyncPrivate * const d_ptr;
     Q_DECLARE_PRIVATE(LocalStorageManagerAsync)
 };
 
