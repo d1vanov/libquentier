@@ -43,7 +43,8 @@ class Q_DECL_HIDDEN LocalStorageCacheManagerPrivate: public Printable
     Q_DECLARE_PUBLIC(LocalStorageCacheManager)
 public:
     LocalStorageCacheManagerPrivate(LocalStorageCacheManager & q);
-    virtual ~LocalStorageCacheManagerPrivate();
+
+    virtual ~LocalStorageCacheManagerPrivate() override;
 
     void clear();
     bool empty() const;
@@ -138,7 +139,7 @@ private:
         virtual QTextStream & print(QTextStream & strm) const override;
     };
 
-    typedef boost::multi_index_container<
+    using NotesCache = boost::multi_index_container<
         NoteHolder,
         boost::multi_index::indexed_by<
             boost::multi_index::ordered_non_unique<
@@ -158,7 +159,7 @@ private:
                                                   &NoteHolder::guid>
             >
         >
-    > NotesCache;
+    >;
 
     class ResourceHolder: public Printable
     {
@@ -178,7 +179,7 @@ private:
         virtual QTextStream & print(QTextStream & strm) const override;
     };
 
-    typedef boost::multi_index_container<
+    using ResourcesCache = boost::multi_index_container<
         ResourceHolder,
         boost::multi_index::indexed_by<
             boost::multi_index::ordered_non_unique<
@@ -198,7 +199,7 @@ private:
                     ResourceHolder,const QString,&ResourceHolder::guid>
             >
         >
-    > ResourcesCache;
+    >;
 
     class NotebookHolder: public Printable
     {
@@ -226,7 +227,7 @@ private:
         virtual QTextStream & print(QTextStream & strm) const override;
     };
 
-    typedef boost::multi_index_container<
+    using NotebooksCache = boost::multi_index_container<
         NotebookHolder,
         boost::multi_index::indexed_by<
             boost::multi_index::ordered_non_unique<
@@ -253,7 +254,7 @@ private:
                     NotebookHolder,const QString,&NotebookHolder::nameUpper>
             >
         >
-    > NotebooksCache;
+    >;
 
     class TagHolder: public Printable
     {
@@ -279,7 +280,7 @@ private:
         virtual QTextStream & print(QTextStream & strm) const override;
     };
 
-    typedef boost::multi_index_container<
+    using TagsCache = boost::multi_index_container<
         TagHolder,
         boost::multi_index::indexed_by<
             boost::multi_index::ordered_non_unique<
@@ -306,7 +307,7 @@ private:
                     TagHolder,const QString,&TagHolder::nameUpper>
             >
         >
-    > TagsCache;
+    >;
 
     class LinkedNotebookHolder: public Printable
     {
@@ -324,7 +325,7 @@ private:
         virtual QTextStream & print(QTextStream & strm) const override;
     };
 
-    typedef boost::multi_index_container<
+    using LinkedNotebooksCache = boost::multi_index_container<
         LinkedNotebookHolder,
         boost::multi_index::indexed_by<
             boost::multi_index::ordered_non_unique<
@@ -340,7 +341,7 @@ private:
                     &LinkedNotebookHolder::guid>
             >
         >
-    > LinkedNotebooksCache;
+    >;
 
     class SavedSearchHolder: public Printable
     {
@@ -368,7 +369,7 @@ private:
         virtual QTextStream & print(QTextStream & strm) const override;
     };
 
-    typedef boost::multi_index_container<
+    using SavedSearchesCache = boost::multi_index_container<
         SavedSearchHolder,
         boost::multi_index::indexed_by<
             boost::multi_index::ordered_non_unique<
@@ -397,7 +398,7 @@ private:
                     &SavedSearchHolder::nameUpper>
             >
         >
-    > SavedSearchesCache;
+    >;
 
 private:
     Q_DISABLE_COPY(LocalStorageCacheManagerPrivate)

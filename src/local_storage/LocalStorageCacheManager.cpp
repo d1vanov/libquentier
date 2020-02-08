@@ -234,7 +234,8 @@ void LocalStorageCacheManager::cacheSavedSearch(const SavedSearch & savedSearch)
     d->cacheSavedSearch(savedSearch);
 }
 
-void LocalStorageCacheManager::expungeSavedSearch(const SavedSearch & savedSearch)
+void LocalStorageCacheManager::expungeSavedSearch(
+    const SavedSearch & savedSearch)
 {
     Q_D(LocalStorageCacheManager);
     d->expungeSavedSearch(savedSearch);
