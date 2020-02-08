@@ -20,23 +20,23 @@
 #define LIB_QUENTIER_ENML_ENML_CONVERTER_P_H
 
 #include <quentier/enml/ENMLConverter.h>
-#include <quentier/utility/Macros.h>
 #include <quentier/types/ErrorString.h>
 #include <quentier/types/Note.h>
+#include <quentier/utility/Macros.h>
 
-#include <QtGlobal>
-#include <QStringList>
 #include <QFlag>
+#include <QStringList>
+#include <QtGlobal>
 
+QT_FORWARD_DECLARE_CLASS(QXmlStreamAttributes)
 QT_FORWARD_DECLARE_CLASS(QXmlStreamReader)
 QT_FORWARD_DECLARE_CLASS(QXmlStreamWriter)
-QT_FORWARD_DECLARE_CLASS(QXmlStreamAttributes)
 
 namespace quentier {
 
-QT_FORWARD_DECLARE_CLASS(Resource)
 QT_FORWARD_DECLARE_CLASS(DecryptedTextManager)
 QT_FORWARD_DECLARE_CLASS(HTMLCleaner)
+QT_FORWARD_DECLARE_CLASS(Resource)
 
 class Q_DECL_HIDDEN ShouldSkipElementResult: public Printable
 {
@@ -58,16 +58,17 @@ class Q_DECL_HIDDEN ENMLConverterPrivate: public QObject
     Q_OBJECT
 public:
     explicit ENMLConverterPrivate(QObject * parent = nullptr);
-    ~ENMLConverterPrivate();
 
-    typedef ENMLConverter::NoteContentToHtmlExtraData NoteContentToHtmlExtraData;
-    typedef ENMLConverter::SkipHtmlElementRule SkipHtmlElementRule;
+    virtual ~ENMLConverterPrivate() override;
+
+    using NoteContentToHtmlExtraData =
+        ENMLConverter::NoteContentToHtmlExtraData;
+
+    using SkipHtmlElementRule = ENMLConverter::SkipHtmlElementRule;
 
     bool htmlToNoteContent(
-        const QString & html,
-        const QVector<SkipHtmlElementRule> & skipRules,
-        QString & noteContent,
-        DecryptedTextManager & decryptedTextManager,
+        const QString & html, const QVector<SkipHtmlElementRule> & skipRules,
+        QString & noteContent, DecryptedTextManager & decryptedTextManager,
         ErrorString & errorDescription) const;
 
     bool cleanupExternalHtml(

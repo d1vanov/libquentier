@@ -187,7 +187,8 @@ bool ENMLConverter::importEnex(
     return d->importEnex(enex, notes, tagNamesByNoteLocalUid, errorDescription);
 }
 
-QTextStream & ENMLConverter::SkipHtmlElementRule::print(QTextStream & strm) const
+QTextStream & ENMLConverter::SkipHtmlElementRule::print(
+    QTextStream & strm) const
 {
 #define PRINT_COMPARISON_RULE(rule)                                            \
     switch(rule)                                                               \

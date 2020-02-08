@@ -22,12 +22,6 @@
 
 namespace quentier {
 
-DecryptedTextManagerPrivate::DecryptedTextManagerPrivate() :
-    m_dataHash(),
-    m_staleDataHash(),
-    m_encryptionManager()
-{}
-
 void DecryptedTextManagerPrivate::addEntry(
     const QString & hash, const QString & decryptedText,
     const bool rememberForSession, const QString & passphrase,
@@ -95,8 +89,8 @@ bool DecryptedTextManagerPrivate::findDecryptedTextByEncryptedText(
     auto dataIt = m_dataHash.find(encryptedText);
     if (dataIt == m_dataHash.end())
     {
-        QNTRACE("Can't find entry in the up to date data hash, trying the stale "
-            << "hash");
+        QNTRACE("Can't find entry in the up to date data hash, trying "
+            << "the stale hash");
 
         // Try the stale data hash
         dataIt = m_staleDataHash.find(encryptedText);
@@ -135,6 +129,7 @@ bool DecryptedTextManagerPrivate::modifyDecryptedText(
 
     Data & entry = it.value();
     const QString & passphrase = entry.m_passphrase;
+
     ErrorString errorDescription;
     bool res = m_encryptionManager.encrypt(
         newDecryptedText,
@@ -143,6 +138,7 @@ bool DecryptedTextManagerPrivate::modifyDecryptedText(
         entry.m_keyLength,
         newEncryptedText,
         errorDescription);
+
     if (!res) {
         QNWARNING("Could not re-encrypt the decrypted text: "
             << errorDescription);

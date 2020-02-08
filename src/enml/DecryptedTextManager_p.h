@@ -29,7 +29,7 @@ namespace quentier {
 class Q_DECL_HIDDEN DecryptedTextManagerPrivate
 {
 public:
-    DecryptedTextManagerPrivate();
+    DecryptedTextManagerPrivate() = default;
 
     void addEntry(
         const QString & hash, const QString & decryptedText,
