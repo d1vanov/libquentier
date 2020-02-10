@@ -27,8 +27,8 @@
 #include <QFlag>
 #include <QStringList>
 #include <QtGlobal>
+#include <QXmlStreamAttributes>
 
-QT_FORWARD_DECLARE_CLASS(QXmlStreamAttributes)
 QT_FORWARD_DECLARE_CLASS(QXmlStreamReader)
 QT_FORWARD_DECLARE_CLASS(QXmlStreamWriter)
 
@@ -185,6 +185,33 @@ private:
         const QString & elementName,
         const QXmlStreamAttributes & attributes,
         const QVector<SkipHtmlElementRule> & skipRules) const;
+
+    struct ConversionState
+    {
+        int         m_writeElementCounter = 0;
+        QString     m_lastElementName;
+        QXmlStreamAttributes    m_lastElementAttributes;
+
+        bool m_insideEnCryptElement = false;
+        bool m_insideEnMediaElement = false;
+
+        QXmlStreamAttributes    m_enMediaAttributes;
+
+        size_t  m_skippedElementNestingCounter = 0;
+        size_t  m_skippedElementWithPreservedContentsNestingCounter = 0;
+    };
+
+    enum class ProcessElementStatus
+    {
+        ProcessedPartially = 0,
+        ProcessedFully,
+        Error
+    };
+
+    ProcessElementStatus processElementForHtmlToNoteContentConversion(
+        const QVector<SkipHtmlElementRule> & skipRules, ConversionState & state,
+        DecryptedTextManager & decryptedTextManager, QXmlStreamReader & reader,
+        QXmlStreamWriter & writer, ErrorString & errorDescription) const;
 
 private:
     Q_DISABLE_COPY(ENMLConverterPrivate)

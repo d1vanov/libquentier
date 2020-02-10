@@ -144,17 +144,7 @@ bool ENMLConverterPrivate::htmlToNoteContent(
         QStringLiteral("<!DOCTYPE en-note SYSTEM "
                        "\"http://xml.evernote.com/pub/enml2.dtd\">"));
 
-    int writeElementCounter = 0;
-    QString lastElementName;
-    QXmlStreamAttributes lastElementAttributes;
-
-    bool insideEnCryptElement = false;
-
-    bool insideEnMediaElement = false;
-    QXmlStreamAttributes enMediaAttributes;
-
-    size_t skippedElementNestingCounter = 0;
-    size_t skippedElementWithPreservedContentsNestingCounter = 0;
+    ConversionState state;
 
     while(!reader.atEnd())
     {
@@ -174,293 +164,34 @@ bool ENMLConverterPrivate::htmlToNoteContent(
 
         if (reader.isStartElement())
         {
-            if (skippedElementNestingCounter) {
-                QNTRACE("Skipping everything inside element skipped "
-                    << "together with its contents by the rules");
-                ++skippedElementNestingCounter;
+            auto status = processElementForHtmlToNoteContentConversion(
+                skipRules,
+                state,
+                decryptedTextManager,
+                reader,
+                writer,
+                errorDescription);
+
+            if (status == ProcessElementStatus::Error) {
+                return false;
+            }
+
+            if (status == ProcessElementStatus::ProcessedFully) {
                 continue;
             }
-
-            lastElementName = reader.name().toString();
-            if (lastElementName == QStringLiteral("form")) {
-                QNTRACE("Skipping <form> tag");
-                continue;
-            }
-            else if (lastElementName == QStringLiteral("html")) {
-                QNTRACE("Skipping <html> tag");
-                continue;
-            }
-            else if (lastElementName == QStringLiteral("title")) {
-                QNTRACE("Skipping <title> tag");
-                continue;
-            }
-            else if (lastElementName == QStringLiteral("body")) {
-                lastElementName = QStringLiteral("en-note");
-                QNTRACE("Found \"body\" HTML tag, will replace it "
-                    << "with \"en-note\" tag for written ENML");
-            }
-
-            QSet<QString>::const_iterator tagIt =
-                m_forbiddenXhtmlTags.find(lastElementName);
-            if ((tagIt != m_forbiddenXhtmlTags.constEnd()) &&
-                (lastElementName != QStringLiteral("object")))
-            {
-                QNTRACE("Skipping forbidden XHTML tag: " << lastElementName);
-                continue;
-            }
-
-            tagIt = m_allowedXhtmlTags.find(lastElementName);
-            if (tagIt == m_allowedXhtmlTags.end())
-            {
-                tagIt = m_evernoteSpecificXhtmlTags.find(lastElementName);
-                if (tagIt == m_evernoteSpecificXhtmlTags.end())
-                {
-                    QNTRACE("Haven't found tag " << lastElementName
-                        << " within the list of allowed XHTML tags or within "
-                        << "Evernote-specific tags, skipping it");
-                    continue;
-                }
-            }
-
-            lastElementAttributes = reader.attributes();
-
-            auto shouldSkip = shouldSkipElement(
-                lastElementName,
-                lastElementAttributes,
-                skipRules);
-            if (shouldSkip != ShouldSkipElementResult::ShouldNotSkip)
-            {
-                QNTRACE("Skipping element " << lastElementName
-                    << " per skip rules; the contents would be "
-                    << (shouldSkip == ShouldSkipElementResult::SkipWithContents
-                        ? "skipped"
-                        : "preserved"));
-
-                if (shouldSkip == ShouldSkipElementResult::SkipWithContents)
-                {
-                    ++skippedElementNestingCounter;
-                }
-                else if (shouldSkip ==
-                         ShouldSkipElementResult::SkipButPreserveContents)
-                {
-                    ++skippedElementWithPreservedContentsNestingCounter;
-                }
-
-                continue;
-            }
-
-            if ( ((lastElementName == QStringLiteral("img")) ||
-                  (lastElementName == QStringLiteral("object")) ||
-                  (lastElementName == QStringLiteral("div"))) &&
-                 lastElementAttributes.hasAttribute(QStringLiteral("en-tag")) )
-            {
-                const QString enTag = lastElementAttributes.value(
-                    QStringLiteral("en-tag")).toString();
-
-                if (enTag == QStringLiteral("en-decrypted"))
-                {
-                    QNTRACE("Found decrypted text area, need to "
-                        << "convert it back to en-crypt form");
-
-                    bool res = decryptedTextToEnml(
-                        reader,
-                        decryptedTextManager,
-                        writer,
-                        errorDescription);
-
-                    if (!res) {
-                        return false;
-                    }
-
-                    continue;
-                }
-                else if (enTag == QStringLiteral("en-todo"))
-                {
-                    if (!lastElementAttributes.hasAttribute(
-                            QStringLiteral("src")))
-                    {
-                        QNWARNING("Found en-todo tag without src attribute");
-                        continue;
-                    }
-
-                    QStringRef srcValue = lastElementAttributes.value(
-                        QStringLiteral("src"));
-                    if (srcValue.contains(
-                        QStringLiteral("qrc:/checkbox_icons/checkbox_no.png")))
-                    {
-                        writer.writeStartElement(QStringLiteral("en-todo"));
-                        ++writeElementCounter;
-                        continue;
-                    }
-                    else if (srcValue.contains(
-                        QStringLiteral("qrc:/checkbox_icons/checkbox_yes.png")))
-                    {
-                        writer.writeStartElement(QStringLiteral("en-todo"));
-
-                        writer.writeAttribute(
-                            QStringLiteral("checked"),
-                            QStringLiteral("true"));
-
-                        ++writeElementCounter;
-                        continue;
-                    }
-                }
-                else if (enTag == QStringLiteral("en-crypt"))
-                {
-                    const QXmlStreamAttributes attributes = reader.attributes();
-                    QXmlStreamAttributes enCryptAttributes;
-
-                    if (attributes.hasAttribute(QStringLiteral("cipher")))
-                    {
-                        enCryptAttributes.append(
-                            QStringLiteral("cipher"),
-                            attributes.value(
-                                QStringLiteral("cipher")).toString());
-                    }
-
-                    if (attributes.hasAttribute(QStringLiteral("length")))
-                    {
-                        enCryptAttributes.append(
-                            QStringLiteral("length"),
-                            attributes.value(
-                                QStringLiteral("length")).toString());
-                    }
-
-                    if (!attributes.hasAttribute(
-                            QStringLiteral("encrypted_text")))
-                    {
-                        errorDescription.setBase(
-                            QT_TR_NOOP("Found en-crypt tag without "
-                                       "encrypted_text attribute"));
-                        QNDEBUG(errorDescription);
-                        return false;
-                    }
-
-                    if (attributes.hasAttribute(QStringLiteral("hint")))
-                    {
-                        enCryptAttributes.append(
-                            QStringLiteral("hint"),
-                            attributes.value(
-                                QStringLiteral("hint")).toString());
-                    }
-
-                    writer.writeStartElement(QStringLiteral("en-crypt"));
-                    writer.writeAttributes(enCryptAttributes);
-
-                    writer.writeCharacters(
-                        attributes.value(
-                            QStringLiteral("encrypted_text")).toString());
-
-                    ++writeElementCounter;
-                    QNTRACE("Started writing en-crypt tag");
-                    insideEnCryptElement = true;
-                    continue;
-                }
-                else if (enTag == QStringLiteral("en-media"))
-                {
-                    bool isImage = (lastElementName == QStringLiteral("img"));
-                    lastElementName = QStringLiteral("en-media");
-                    writer.writeStartElement(lastElementName);
-                    ++writeElementCounter;
-                    enMediaAttributes.clear();
-                    insideEnMediaElement = true;
-
-                    const int numAttributes = lastElementAttributes.size();
-                    for(int i = 0; i < numAttributes; ++i)
-                    {
-                        const auto & attribute = lastElementAttributes[i];
-
-                        const QString attributeQualifiedName =
-                            attribute.qualifiedName().toString();
-
-                        const QString attributeValue =
-                            attribute.value().toString();
-
-                        if (!isImage)
-                        {
-                            if (attributeQualifiedName ==
-                                QStringLiteral("resource-mime-type"))
-                            {
-                                enMediaAttributes.append(
-                                    QStringLiteral("type"),
-                                    attributeValue);
-                            }
-                            else
-                            {
-                                bool contains =
-                                    m_allowedEnMediaAttributes.contains(
-                                        attributeQualifiedName);
-
-                                if (contains &&
-                                    (attributeQualifiedName !=
-                                     QStringLiteral("type")))
-                                {
-                                    enMediaAttributes.append(
-                                        attributeQualifiedName,
-                                        attributeValue);
-                                }
-                            }
-                        }
-                        else if (m_allowedEnMediaAttributes.contains(
-                            attributeQualifiedName))
-                        {
-                            // img
-                            enMediaAttributes.append(
-                                attributeQualifiedName,
-                                attributeValue);
-                        }
-                    }
-
-                    writer.writeAttributes(enMediaAttributes);
-                    enMediaAttributes.clear();
-                    QNTRACE("Wrote en-media element from img element in HTML");
-
-                    continue;
-                }
-            }
-
-            // Erasing forbidden attributes
-            for(auto it = lastElementAttributes.begin();
-                it != lastElementAttributes.end(); )
-            {
-                QStringRef attributeName = it->name();
-                if (isForbiddenXhtmlAttribute(attributeName.toString()))
-                {
-                    QNTRACE("Erasing forbidden attribute "
-                        << attributeName);
-                    it = lastElementAttributes.erase(it);
-                    continue;
-                }
-
-                if ((lastElementName == QStringLiteral("a")) &&
-                    (attributeName == QStringLiteral("en-hyperlink-id")))
-                {
-                    QNTRACE("Erasing custom attribute en-hyperlink-id");
-                    it = lastElementAttributes.erase(it);
-                    continue;
-                }
-
-                ++it;
-            }
-
-            writer.writeStartElement(lastElementName);
-            writer.writeAttributes(lastElementAttributes);
-            ++writeElementCounter;
-            QNTRACE("Wrote element: name = " << lastElementName
-                << " and its attributes");
         }
 
-        if ((writeElementCounter > 0) && reader.isCharacters())
+        if ((state.m_writeElementCounter > 0) && reader.isCharacters())
         {
-            if (skippedElementNestingCounter) {
+            if (state.m_skippedElementNestingCounter) {
                 continue;
             }
 
-            if (insideEnMediaElement) {
+            if (state.m_insideEnMediaElement) {
                 continue;
             }
 
-            if (insideEnCryptElement) {
+            if (state.m_insideEnCryptElement) {
                 continue;
             }
 
@@ -478,30 +209,30 @@ bool ENMLConverterPrivate::htmlToNoteContent(
 
         if (reader.isEndElement())
         {
-            if (skippedElementNestingCounter) {
-                --skippedElementNestingCounter;
+            if (state.m_skippedElementNestingCounter) {
+                --state.m_skippedElementNestingCounter;
                 continue;
             }
 
-            if (skippedElementWithPreservedContentsNestingCounter) {
-                --skippedElementWithPreservedContentsNestingCounter;
+            if (state.m_skippedElementWithPreservedContentsNestingCounter) {
+                --state.m_skippedElementWithPreservedContentsNestingCounter;
                 continue;
             }
 
-            if (writeElementCounter <= 0) {
+            if (state.m_writeElementCounter <= 0) {
                 continue;
             }
 
-            if (insideEnMediaElement) {
-                insideEnMediaElement = false;
+            if (state.m_insideEnMediaElement) {
+                state.m_insideEnMediaElement = false;
             }
 
-            if (insideEnCryptElement) {
-                insideEnCryptElement = false;
+            if (state.m_insideEnCryptElement) {
+                state.m_insideEnCryptElement = false;
             }
 
             writer.writeEndElement();
-            --writeElementCounter;
+            --state.m_writeElementCounter;
         }
     }
 
@@ -4572,6 +4303,295 @@ ShouldSkipElementResult::type ENMLConverterPrivate::shouldSkipElement(
     }
 
     return ShouldSkipElementResult::ShouldNotSkip;
+}
+
+ENMLConverterPrivate::ProcessElementStatus
+ENMLConverterPrivate::processElementForHtmlToNoteContentConversion(
+    const QVector<SkipHtmlElementRule> & skipRules, ConversionState & state,
+    DecryptedTextManager & decryptedTextManager, QXmlStreamReader & reader,
+    QXmlStreamWriter & writer, ErrorString & errorDescription) const
+{
+    if (state.m_skippedElementNestingCounter) {
+        QNTRACE("Skipping everything inside element skipped "
+            << "together with its contents by the rules");
+        ++state.m_skippedElementNestingCounter;
+        return ProcessElementStatus::ProcessedFully;
+    }
+
+    state.m_lastElementName = reader.name().toString();
+    if (state.m_lastElementName == QStringLiteral("form")) {
+        QNTRACE("Skipping <form> tag");
+        return ProcessElementStatus::ProcessedFully;
+    }
+
+    if (state.m_lastElementName == QStringLiteral("html")) {
+        QNTRACE("Skipping <html> tag");
+        return ProcessElementStatus::ProcessedFully;
+    }
+
+    if (state.m_lastElementName == QStringLiteral("title")) {
+        QNTRACE("Skipping <title> tag");
+        return ProcessElementStatus::ProcessedFully;
+    }
+
+    if (state.m_lastElementName == QStringLiteral("body")) {
+        state.m_lastElementName = QStringLiteral("en-note");
+        QNTRACE("Found \"body\" HTML tag, will replace it "
+            << "with \"en-note\" tag for written ENML");
+    }
+
+    auto tagIt = m_forbiddenXhtmlTags.find(state.m_lastElementName);
+    if ((tagIt != m_forbiddenXhtmlTags.constEnd()) &&
+        (state.m_lastElementName != QStringLiteral("object")))
+    {
+        QNTRACE("Skipping forbidden XHTML tag: " << state.m_lastElementName);
+        return ProcessElementStatus::ProcessedFully;
+    }
+
+    tagIt = m_allowedXhtmlTags.find(state.m_lastElementName);
+    if (tagIt == m_allowedXhtmlTags.end())
+    {
+        tagIt = m_evernoteSpecificXhtmlTags.find(state.m_lastElementName);
+        if (tagIt == m_evernoteSpecificXhtmlTags.end())
+        {
+            QNTRACE("Haven't found tag " << state.m_lastElementName
+                << " within the list of allowed XHTML tags or within "
+                << "Evernote-specific tags, skipping it");
+            return ProcessElementStatus::ProcessedFully;
+        }
+    }
+
+    state.m_lastElementAttributes = reader.attributes();
+
+    auto shouldSkip = shouldSkipElement(
+        state.m_lastElementName,
+        state.m_lastElementAttributes,
+        skipRules);
+
+    if (shouldSkip != ShouldSkipElementResult::ShouldNotSkip)
+    {
+        QNTRACE("Skipping element " << state.m_lastElementName
+            << " per skip rules; the contents would be "
+            << (shouldSkip == ShouldSkipElementResult::SkipWithContents
+                ? "skipped"
+                : "preserved"));
+
+        if (shouldSkip == ShouldSkipElementResult::SkipWithContents)
+        {
+            ++state.m_skippedElementNestingCounter;
+        }
+        else if (shouldSkip ==
+                 ShouldSkipElementResult::SkipButPreserveContents)
+        {
+            ++state.m_skippedElementWithPreservedContentsNestingCounter;
+        }
+
+        return ProcessElementStatus::ProcessedFully;
+    }
+
+    if ( ((state.m_lastElementName == QStringLiteral("img")) ||
+          (state.m_lastElementName == QStringLiteral("object")) ||
+          (state.m_lastElementName == QStringLiteral("div"))) &&
+         state.m_lastElementAttributes.hasAttribute(QStringLiteral("en-tag")) )
+    {
+        const QString enTag = state.m_lastElementAttributes.value(
+            QStringLiteral("en-tag")).toString();
+
+        if (enTag == QStringLiteral("en-decrypted"))
+        {
+            QNTRACE("Found decrypted text area, need to "
+                << "convert it back to en-crypt form");
+
+            bool res = decryptedTextToEnml(
+                reader,
+                decryptedTextManager,
+                writer,
+                errorDescription);
+
+            if (!res) {
+                return ProcessElementStatus::Error;
+            }
+
+            return ProcessElementStatus::ProcessedFully;
+        }
+
+        if (enTag == QStringLiteral("en-todo"))
+        {
+            if (!state.m_lastElementAttributes.hasAttribute(
+                    QStringLiteral("src")))
+            {
+                QNWARNING("Found en-todo tag without src attribute");
+                return ProcessElementStatus::ProcessedFully;
+            }
+
+            QStringRef srcValue = state.m_lastElementAttributes.value(
+                QStringLiteral("src"));
+            if (srcValue.contains(
+                    QStringLiteral("qrc:/checkbox_icons/checkbox_no.png")))
+            {
+                writer.writeStartElement(QStringLiteral("en-todo"));
+                ++state.m_writeElementCounter;
+                return ProcessElementStatus::ProcessedFully;
+            }
+
+            if (srcValue.contains(
+                    QStringLiteral("qrc:/checkbox_icons/checkbox_yes.png")))
+            {
+                writer.writeStartElement(QStringLiteral("en-todo"));
+
+                writer.writeAttribute(
+                    QStringLiteral("checked"),
+                    QStringLiteral("true"));
+
+                ++state.m_writeElementCounter;
+                return ProcessElementStatus::ProcessedFully;
+            }
+        }
+        else if (enTag == QStringLiteral("en-crypt"))
+        {
+            const QXmlStreamAttributes attributes = reader.attributes();
+            QXmlStreamAttributes enCryptAttributes;
+
+            if (attributes.hasAttribute(QStringLiteral("cipher")))
+            {
+                enCryptAttributes.append(
+                    QStringLiteral("cipher"),
+                    attributes.value(
+                        QStringLiteral("cipher")).toString());
+            }
+
+            if (attributes.hasAttribute(QStringLiteral("length")))
+            {
+                enCryptAttributes.append(
+                    QStringLiteral("length"),
+                    attributes.value(
+                        QStringLiteral("length")).toString());
+            }
+
+            if (!attributes.hasAttribute(
+                    QStringLiteral("encrypted_text")))
+            {
+                errorDescription.setBase(
+                    QT_TR_NOOP("Found en-crypt tag without "
+                               "encrypted_text attribute"));
+                QNDEBUG(errorDescription);
+                return ProcessElementStatus::Error;
+            }
+
+            if (attributes.hasAttribute(QStringLiteral("hint")))
+            {
+                enCryptAttributes.append(
+                    QStringLiteral("hint"),
+                    attributes.value(
+                        QStringLiteral("hint")).toString());
+            }
+
+            writer.writeStartElement(QStringLiteral("en-crypt"));
+            writer.writeAttributes(enCryptAttributes);
+
+            writer.writeCharacters(
+                attributes.value(
+                    QStringLiteral("encrypted_text")).toString());
+
+            ++state.m_writeElementCounter;
+            QNTRACE("Started writing en-crypt tag");
+            state.m_insideEnCryptElement = true;
+            return ProcessElementStatus::ProcessedFully;
+        }
+        else if (enTag == QStringLiteral("en-media"))
+        {
+            bool isImage = (state.m_lastElementName == QStringLiteral("img"));
+            state.m_lastElementName = QStringLiteral("en-media");
+            writer.writeStartElement(state.m_lastElementName);
+            ++state.m_writeElementCounter;
+            state.m_enMediaAttributes.clear();
+            state.m_insideEnMediaElement = true;
+
+            const int numAttributes = state.m_lastElementAttributes.size();
+            for(int i = 0; i < numAttributes; ++i)
+            {
+                const auto & attribute = state.m_lastElementAttributes[i];
+
+                const QString attributeQualifiedName =
+                    attribute.qualifiedName().toString();
+
+                const QString attributeValue =
+                    attribute.value().toString();
+
+                if (!isImage)
+                {
+                    if (attributeQualifiedName ==
+                        QStringLiteral("resource-mime-type"))
+                    {
+                        state.m_enMediaAttributes.append(
+                            QStringLiteral("type"),
+                            attributeValue);
+                    }
+                    else
+                    {
+                        bool contains =
+                            m_allowedEnMediaAttributes.contains(
+                                attributeQualifiedName);
+
+                        if (contains &&
+                            (attributeQualifiedName !=
+                             QStringLiteral("type")))
+                        {
+                            state.m_enMediaAttributes.append(
+                                attributeQualifiedName,
+                                attributeValue);
+                        }
+                    }
+                }
+                else if (m_allowedEnMediaAttributes.contains(
+                        attributeQualifiedName))
+                {
+                    // img
+                    state.m_enMediaAttributes.append(
+                        attributeQualifiedName,
+                        attributeValue);
+                }
+            }
+
+            writer.writeAttributes(state.m_enMediaAttributes);
+            state.m_enMediaAttributes.clear();
+            QNTRACE("Wrote en-media element from img element in HTML");
+
+            return ProcessElementStatus::ProcessedFully;
+        }
+    }
+
+    // Erasing forbidden attributes
+    for(auto it = state.m_lastElementAttributes.begin();
+        it != state.m_lastElementAttributes.end(); )
+    {
+        QStringRef attributeName = it->name();
+        if (isForbiddenXhtmlAttribute(attributeName.toString()))
+        {
+            QNTRACE("Erasing forbidden attribute "
+                    << attributeName);
+            it = state.m_lastElementAttributes.erase(it);
+            continue;
+        }
+
+        if ((state.m_lastElementName == QStringLiteral("a")) &&
+            (attributeName == QStringLiteral("en-hyperlink-id")))
+        {
+            QNTRACE("Erasing custom attribute en-hyperlink-id");
+            it = state.m_lastElementAttributes.erase(it);
+            continue;
+        }
+
+        ++it;
+    }
+
+    writer.writeStartElement(state.m_lastElementName);
+    writer.writeAttributes(state.m_lastElementAttributes);
+    ++state.m_writeElementCounter;
+    QNTRACE("Wrote element: name = " << state.m_lastElementName
+        << " and its attributes");
+
+    return ProcessElementStatus::ProcessedPartially;
 }
 
 } // namespace quentier
