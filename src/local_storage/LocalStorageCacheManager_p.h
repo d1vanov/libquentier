@@ -60,7 +60,7 @@ public:
     void clearAllNotes();
 
     // Resources cache
-    size_t numCachesResources() const;
+    size_t numCachedResources() const;
     void cacheResource(const Resource & resource);
     void expungeResource(const Resource & resource);
 
@@ -126,10 +126,10 @@ private:
     public:
         NoteHolder & operator=(const NoteHolder & other);
 
-        Note    m_note;
+        Note    m_value;
         qint64  m_lastAccessTimestamp;
 
-        const QString localUid() const { return m_note.localUid(); }
+        const QString localUid() const { return m_value.localUid(); }
         const QString guid() const;
 
         struct ByLastAccessTimestamp{};
@@ -166,10 +166,10 @@ private:
     public:
         ResourceHolder & operator=(const ResourceHolder & other);
 
-        Resource    m_resource;
+        Resource    m_value;
         qint64      m_lastAccessTimestamp;
 
-        const QString localUid() const { return m_resource.localUid(); }
+        const QString localUid() const { return m_value.localUid(); }
         const QString guid() const;
 
         struct ByLastAccessTimestamp{};
@@ -206,16 +206,16 @@ private:
     public:
         NotebookHolder & operator=(const NotebookHolder & other);
 
-        Notebook    m_notebook;
+        Notebook    m_value;
         qint64      m_lastAccessTimestamp;
 
-        const QString localUid() const { return m_notebook.localUid(); }
+        const QString localUid() const { return m_value.localUid(); }
         const QString guid() const;
 
         const QString nameUpper() const
         {
-            return (m_notebook.hasName()
-                ? m_notebook.name().toUpper()
+            return (m_value.hasName()
+                ? m_value.name().toUpper()
                 : QString());
         }
 
@@ -261,15 +261,15 @@ private:
     public:
         TagHolder & operator=(const TagHolder & other);
 
-        Tag     m_tag;
+        Tag     m_value;
         qint64  m_lastAccessTimestamp;
 
-        const QString localUid() const { return m_tag.localUid(); }
+        const QString localUid() const { return m_value.localUid(); }
         const QString guid() const;
 
         const QString nameUpper() const
         {
-            return (m_tag.hasName() ? m_tag.name().toUpper() : QString());
+            return (m_value.hasName() ? m_value.name().toUpper() : QString());
         }
 
         struct ByLastAccessTimestamp{};
@@ -314,7 +314,7 @@ private:
     public:
         LinkedNotebookHolder & operator=(const LinkedNotebookHolder & other);
 
-        LinkedNotebook  m_linkedNotebook;
+        LinkedNotebook  m_value;
         qint64          m_lastAccessTimestamp;
 
         const QString guid() const;
@@ -348,16 +348,16 @@ private:
     public:
         SavedSearchHolder & operator=(const SavedSearchHolder & other);
 
-        SavedSearch     m_savedSearch;
+        SavedSearch     m_value;
         qint64          m_lastAccessTimestamp;
 
-        const QString localUid() const { return m_savedSearch.localUid(); }
+        const QString localUid() const { return m_value.localUid(); }
         const QString guid() const;
 
         const QString nameUpper() const
         {
-            return (m_savedSearch.hasName()
-                ? m_savedSearch.name().toUpper()
+            return (m_value.hasName()
+                ? m_value.name().toUpper()
                 : QString());
         }
 
