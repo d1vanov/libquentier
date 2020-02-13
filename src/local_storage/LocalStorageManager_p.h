@@ -43,8 +43,8 @@
 
 namespace quentier {
 
-QT_FORWARD_DECLARE_CLASS(NoteSearchQuery)
 QT_FORWARD_DECLARE_CLASS(LocalStoragePatchManager)
+QT_FORWARD_DECLARE_CLASS(NoteSearchQuery)
 
 class Q_DECL_HIDDEN LocalStorageManagerPrivate: public QObject
 {
@@ -81,7 +81,9 @@ public:
     int notebookCount(ErrorString & errorDescription) const;
     bool addNotebook(Notebook & notebook, ErrorString & errorDescription);
     bool updateNotebook(Notebook & notebook, ErrorString & errorDescription);
-    bool findNotebook(Notebook & notebook, ErrorString & errorDescription) const;
+
+    bool findNotebook(
+        Notebook & notebook, ErrorString & errorDescription) const;
 
     bool findDefaultNotebook(
         Notebook & notebook, ErrorString & errorDescription) const;
@@ -93,16 +95,14 @@ public:
         Notebook & notebook, ErrorString & errorDescription) const;
 
     QList<Notebook> listAllNotebooks(
-        ErrorString & errorDescription,
-        const size_t limit, const size_t offset,
+        ErrorString & errorDescription, const size_t limit, const size_t offset,
         const LocalStorageManager::ListNotebooksOrder & order,
         const LocalStorageManager::OrderDirection & orderDirection,
         const QString & linkedNotebookGuid) const;
 
     QList<Notebook> listNotebooks(
         const LocalStorageManager::ListObjectsOptions flag,
-        ErrorString & errorDescription,
-        const size_t limit, const size_t offset,
+        ErrorString & errorDescription, const size_t limit, const size_t offset,
         const LocalStorageManager::ListNotebooksOrder & order,
         const LocalStorageManager::OrderDirection & orderDirection,
         const QString & linkedNotebookGuid) const;
@@ -127,15 +127,13 @@ public:
         LinkedNotebook & linkedNotebook, ErrorString & errorDescription) const;
 
     QList<LinkedNotebook> listAllLinkedNotebooks(
-        ErrorString & errorDescription,
-        const size_t limit, const size_t offset,
+        ErrorString & errorDescription, const size_t limit, const size_t offset,
         const LocalStorageManager::ListLinkedNotebooksOrder order,
         const LocalStorageManager::OrderDirection & orderDirection) const;
 
     QList<LinkedNotebook> listLinkedNotebooks(
         const LocalStorageManager::ListObjectsOptions flag,
-        ErrorString & errorDescription,
-        const size_t limit, const size_t offset,
+        ErrorString & errorDescription, const size_t limit, const size_t offset,
         const LocalStorageManager::ListLinkedNotebooksOrder & order,
         const LocalStorageManager::OrderDirection & orderDirection) const;
 
@@ -160,8 +158,7 @@ public:
         const LocalStorageManager::NoteCountOptions options) const;
 
     int noteCountPerNotebooksAndTags(
-        const QStringList & notebookLocalUids,
-        const QStringList & tagLocalUids,
+        const QStringList & notebookLocalUids, const QStringList & tagLocalUids,
         ErrorString & errorDescription,
         const LocalStorageManager::NoteCountOptions options) const;
 
@@ -188,8 +185,7 @@ public:
         const LocalStorageManager::OrderDirection & orderDirection) const;
 
     QList<Note> listNotesPerTag(
-        const Tag & tag,
-        const LocalStorageManager::GetNoteOptions options,
+        const Tag & tag, const LocalStorageManager::GetNoteOptions options,
         ErrorString & errorDescription,
         const LocalStorageManager::ListObjectsOptions & flag,
         const size_t limit, const size_t offset,
@@ -197,8 +193,7 @@ public:
         const LocalStorageManager::OrderDirection & orderDirection) const;
 
     QList<Note> listNotesPerNotebooksAndTags(
-        const QStringList & notebookLocalUids,
-        const QStringList & tagLocalUids,
+        const QStringList & notebookLocalUids, const QStringList & tagLocalUids,
         const LocalStorageManager::GetNoteOptions options,
         ErrorString & errorDescription,
         const LocalStorageManager::ListObjectsOptions & flag,
@@ -218,8 +213,7 @@ public:
     QList<Note> listNotes(
         const LocalStorageManager::ListObjectsOptions flag,
         const LocalStorageManager::GetNoteOptions options,
-        ErrorString & errorDescription,
-        const size_t limit, const size_t offset,
+        ErrorString & errorDescription, const size_t limit, const size_t offset,
         const LocalStorageManager::ListNotesOrder & order,
         const LocalStorageManager::OrderDirection & orderDirection,
         const QString & linkedNotebookGuid) const;
@@ -229,8 +223,7 @@ public:
         const QString & sqlQueryCondition,
         const LocalStorageManager::ListObjectsOptions flag,
         const LocalStorageManager::GetNoteOptions options,
-        ErrorString & errorDescription,
-        const size_t limit, const size_t offset,
+        ErrorString & errorDescription, const size_t limit, const size_t offset,
         const LocalStorageManager::ListNotesOrder & order,
         const LocalStorageManager::OrderDirection & orderDirection) const;
 
@@ -258,24 +251,21 @@ public:
         const LocalStorageManager::OrderDirection & orderDirection) const;
 
     QList<Tag> listAllTags(
-        ErrorString & errorDescription,
-        const size_t limit, const size_t offset,
+        ErrorString & errorDescription, const size_t limit, const size_t offset,
         const LocalStorageManager::ListTagsOrder & order,
         const LocalStorageManager::OrderDirection & orderDirection,
         const QString & linkedNotebookGuid) const;
 
     QList<Tag> listTags(
         const LocalStorageManager::ListObjectsOptions flag,
-        ErrorString & errorDescription,
-        const size_t limit, const size_t offset,
+        ErrorString & errorDescription, const size_t limit, const size_t offset,
         const LocalStorageManager::ListTagsOrder & order,
         const LocalStorageManager::OrderDirection & orderDirection,
         const QString & linkedNotebookGuid) const;
 
     QList<std::pair<Tag, QStringList>> listTagsWithNoteLocalUids(
         const LocalStorageManager::ListObjectsOptions flag,
-        ErrorString & errorDescription,
-        const size_t limit, const size_t offset,
+        ErrorString & errorDescription, const size_t limit, const size_t offset,
         const LocalStorageManager::ListTagsOrder & order,
         const LocalStorageManager::OrderDirection & orderDirection,
         const QString & linkedNotebookGuid) const;
@@ -364,11 +354,13 @@ private:
         ErrorString & errorDescription);
 
     bool insertOrReplaceAccountLimits(
-        const qevercloud::UserID id, const qevercloud::AccountLimits & accountLimits,
+        const qevercloud::UserID id,
+        const qevercloud::AccountLimits & accountLimits,
         ErrorString & errorDescription);
 
     bool insertOrReplaceUserAttributes(
-        const qevercloud::UserID id, const qevercloud::UserAttributes & attributes,
+        const qevercloud::UserID id,
+        const qevercloud::UserAttributes & attributes,
         ErrorString & errorDescription);
 
     bool checkAndPrepareUserCountQuery() const;
@@ -708,19 +700,15 @@ private:
 
     struct HighUsnRequestData
     {
-        HighUsnRequestData() :
-            m_tableName(),
-            m_usnColumnName(),
-            m_queryCondition()
-        {}
+        HighUsnRequestData() = default;
 
         HighUsnRequestData(
-                const QString & tableName,
-                const QString & usnColumnName,
-                const QString & queryCondition) :
-            m_tableName(tableName),
-            m_usnColumnName(usnColumnName),
-            m_queryCondition(queryCondition)
+                QString tableName,
+                QString usnColumnName,
+                QString queryCondition) :
+            m_tableName(std::move(tableName)),
+            m_usnColumnName(std::move(usnColumnName)),
+            m_queryCondition(std::move(queryCondition))
         {}
 
         QString     m_tableName;
