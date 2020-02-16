@@ -26,7 +26,7 @@
 
 #include <qt5qevercloud/QEverCloudOAuth.h>
 
-#include <QScopedPointer>
+#include <memory>
 
 namespace quentier {
 
@@ -44,28 +44,43 @@ void AuthenticationManagerPrivate::onAuthenticationRequest()
     QNDEBUG("AuthenticationManagerPrivate::onAuthenticationRequest");
 
     QWidget * pParentWidget = qobject_cast<QWidget*>(parent());
-    QScopedPointer<qevercloud::EvernoteOAuthDialog> pDialog(
-        new qevercloud::EvernoteOAuthDialog(m_consumerKey, m_consumerSecret,
-                                            m_host, pParentWidget));
+
+    auto pDialog = std::make_unique<qevercloud::EvernoteOAuthDialog>(
+        m_consumerKey,
+        m_consumerSecret,
+        m_host,
+        pParentWidget);
     pDialog->setWindowModality(Qt::WindowModal);
 
     auto res = pDialog->exec();
     if (res == QDialog::Accepted)
     {
-        qevercloud::EvernoteOAuthDialog::OAuthResult result = pDialog->oauthResult();
-        Q_EMIT sendAuthenticationResult(/* success = */ true, result.userId,
-                                        result.authenticationToken, result.expires,
-                                        result.shardId, result.noteStoreUrl,
-                                        result.webApiUrlPrefix, ErrorString());
+        auto result = pDialog->oauthResult();
+        Q_EMIT sendAuthenticationResult(
+            /* success = */ true,
+            result.userId,
+            result.authenticationToken,
+            result.expires,
+            result.shardId,
+            result.noteStoreUrl,
+            result.webApiUrlPrefix,
+            ErrorString());
     }
     else
     {
-        ErrorString errorDescription(QT_TR_NOOP("Can't authenticate to Evernote"));
+        ErrorString errorDescription(
+            QT_TR_NOOP("Can't authenticate to Evernote"));
         errorDescription.details() = pDialog->oauthError();
-        Q_EMIT sendAuthenticationResult(/* success = */ false,
-                                        qevercloud::UserID(-1), QString(),
-                                        qevercloud::Timestamp(0), QString(),
-                                        QString(), QString(), errorDescription);
+
+        Q_EMIT sendAuthenticationResult(
+            /* success = */ false,
+            qevercloud::UserID(-1),
+            {},
+            qevercloud::Timestamp(0),
+            {},
+            {},
+            {},
+            errorDescription);
     }
 }
 

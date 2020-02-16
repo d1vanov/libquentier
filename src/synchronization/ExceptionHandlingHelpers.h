@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2019 Dmitry Ivanov
+ * Copyright 2017-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -27,8 +27,9 @@
 #define CATCH_THRIFT_EXCEPTION_IMPL(...)                                       \
     catch(const qevercloud::ThriftException & thriftException)                 \
     {                                                                          \
-        errorDescription.setBase(QT_TRANSLATE_NOOP("synchronization",          \
-                                                   "Thrift exception"));       \
+        errorDescription.setBase(                                              \
+            QT_TRANSLATE_NOOP("synchronization",                               \
+                              "Thrift exception"));                            \
         errorDescription.details() = QStringLiteral("type = ");                \
         errorDescription.details() += ToString(thriftException.type());        \
         errorDescription.details() += QStringLiteral(": ");                    \
@@ -57,8 +58,9 @@
 #define CATCH_EVER_CLOUD_EXCEPTION_IMPL(...)                                   \
     catch(const qevercloud::EverCloudException & everCloudException)           \
     {                                                                          \
-        errorDescription.setBase(QT_TRANSLATE_NOOP("synchronization",          \
-                                                   "QEverCloud exception"));   \
+        errorDescription.setBase(                                              \
+            QT_TRANSLATE_NOOP("synchronization",                               \
+                              "QEverCloud exception"));                        \
         errorDescription.details() =                                           \
             QString::fromUtf8(everCloudException.what());                      \
         QNWARNING(errorDescription);                                           \
@@ -69,8 +71,9 @@
 #define CATCH_STD_EXCEPTION_IMPL(...)                                          \
     catch(const std::exception & e)                                            \
     {                                                                          \
-        errorDescription.setBase(QT_TRANSLATE_NOOP("synchronization",          \
-                                                   "std::exception"));         \
+        errorDescription.setBase(                                              \
+            QT_TRANSLATE_NOOP("synchronization",                               \
+                              "std::exception"));                              \
         errorDescription.details() = QString::fromUtf8(e.what());              \
         QNWARNING(errorDescription);                                           \
         __VA_ARGS__ ;                                                          \
