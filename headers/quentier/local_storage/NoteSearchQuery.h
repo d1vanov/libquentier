@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -20,6 +20,7 @@
 #define LIB_QUENTIER_LOCAL_STORAGE_NOTE_SEARCH_QUERY_H
 
 #include <quentier/types/ErrorString.h>
+
 #include <QSharedDataPointer>
 
 namespace quentier {

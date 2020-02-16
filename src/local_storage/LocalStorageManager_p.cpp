@@ -3046,7 +3046,7 @@ QList<Note> LocalStorageManagerPrivate::listNotesImpl(
     // Will run all the queries from this method and its sub-methods within
     // a single transaction to prevent multiple drops and re-obtainings of
     // shared lock
-    Transaction transaction(m_sqlDatabase, *this, Transaction::Selection);
+    Transaction transaction(m_sqlDatabase, *this, Transaction::Type::Selection);
     Q_UNUSED(transaction)
 
     ErrorString error;
@@ -3261,7 +3261,7 @@ QStringList LocalStorageManagerPrivate::findNoteLocalUidsWithSearchQuery(
      * a single transaction to prevent multiple drops and re-obtainings of
      * the shared lock
      */
-    Transaction transaction(m_sqlDatabase, *this, Transaction::Selection);
+    Transaction transaction(m_sqlDatabase, *this, Transaction::Type::Selection);
     Q_UNUSED(transaction)
 
     ErrorString errorPrefix(
@@ -3816,7 +3816,7 @@ QList<Tag> LocalStorageManagerPrivate::listAllTagsPerNote(
      * a single transaction to prevent multiple drops and re-obtainings of
      * the shared lock
      */
-    Transaction transaction(m_sqlDatabase, *this, Transaction::Selection);
+    Transaction transaction(m_sqlDatabase, *this, Transaction::Type::Selection);
     Q_UNUSED(transaction)
 
     uid = sqlEscapeString(uid);
@@ -4901,7 +4901,8 @@ qint32 LocalStorageManagerPrivate::accountHighUsn(
 
 bool LocalStorageManagerPrivate::updateSequenceNumberFromTable(
     const QString & tableName, const QString & usnColumnName,
-    const QString & queryCondition, qint32 & usn, ErrorString & errorDescription)
+    const QString & queryCondition, qint32 & usn,
+    ErrorString & errorDescription)
 {
     QNDEBUG("LocalStorageManagerPrivate::updateSequenceNumberFromTable: "
         << tableName << ", usn column name = " << usnColumnName
@@ -6332,7 +6333,7 @@ bool LocalStorageManagerPrivate::insertOrReplaceUser(
         QT_TR_NOOP("can't insert or replace User into the local storage "
                    "database"));
 
-    Transaction transaction(m_sqlDatabase, *this, Transaction::Exclusive);
+    Transaction transaction(m_sqlDatabase, *this, Transaction::Type::Exclusive);
 
     QString userId = QString::number(user.id());
     QVariant nullValue;
@@ -7038,7 +7039,8 @@ bool LocalStorageManagerPrivate::checkAndPrepareInsertOrReplaceUserAttributesVie
         "INSERT OR REPLACE INTO UserAttributesViewedPromotions"
         "(id, promotion) VALUES(:id, :promotion)");
 
-    bool res = m_insertOrReplaceUserAttributesViewedPromotionsQuery.prepare(queryString);
+    bool res = m_insertOrReplaceUserAttributesViewedPromotionsQuery.prepare(
+        queryString);
     if (res) {
         m_insertOrReplaceUserAttributesViewedPromotionsQueryPrepared = true;
     }
@@ -7101,7 +7103,7 @@ bool LocalStorageManagerPrivate::insertOrReplaceNotebook(
 
     ErrorString errorPrefix(QT_TR_NOOP("can't insert or replace notebook"));
 
-    Transaction transaction(m_sqlDatabase, *this, Transaction::Exclusive);
+    Transaction transaction(m_sqlDatabase, *this, Transaction::Type::Exclusive);
 
     QString localUid = sqlEscapeString(notebook.localUid());
     QVariant nullValue;
@@ -8034,7 +8036,7 @@ bool LocalStorageManagerPrivate::insertOrReplaceNote(
 
     ErrorString errorPrefix(QT_TR_NOOP("can't insert or replace note"));
 
-    Transaction transaction(m_sqlDatabase, *this, Transaction::Exclusive);
+    Transaction transaction(m_sqlDatabase, *this, Transaction::Type::Exclusive);
 
     QVariant nullValue;
     QString localUid = sqlEscapeString(note.localUid());
@@ -9372,7 +9374,7 @@ bool LocalStorageManagerPrivate::insertOrReplaceResource(
         pTransaction.reset(new Transaction(
             m_sqlDatabase,
             *this,
-            Transaction::Exclusive));
+            Transaction::Type::Exclusive));
     }
 
     QString resourceLocalUid = resource.localUid();
@@ -9621,15 +9623,16 @@ bool LocalStorageManagerPrivate::writeResourceBinaryDataToFiles(
      *    without that suffix
      * 3) rename/move the data file with ".new" suffix to the file without
      *    that suffix (i.e. replace the old file with the new one)
-     * 4) remove the alternate data file with additional ".old" suffix if it exists
+     * 4) remove the alternate data file with additional ".old" suffix if it
+     *    exists
      *
      * Each of these actions is atomic. If alternate data file existed and the
      * process crashed after 1 but before 2, 3 and 4 the logic reading
      * the alternate data from file would handle the case of nonexisting file
      * with existing file with additional ".old" suffix. If the process crashed
      * after 2 but before 3 and 4, it is still possible to recover because
-     * the situation is unambiguous - the alternate data file with ".old" extension
-     * should not exist unless something went wrong. The logic reading
+     * the situation is unambiguous - the alternate data file with ".old"
+     * extension should not exist unless something went wrong. The logic reading
      * the alternate data from file would handle it. Same goes for the case of
      * crash after 3 but before 4 - it is only different by the existence of
      * two data body files - the "usual" one and the one with ".new" suffix.
