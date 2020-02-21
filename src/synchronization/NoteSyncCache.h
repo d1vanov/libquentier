@@ -20,15 +20,13 @@
 #define LIB_QUENTIER_SYNCHRONIZATION_NOTE_SYNC_CACHE_H
 
 #include <quentier/local_storage/LocalStorageManagerAsync.h>
-#include <QObject>
+
 #include <QHash>
+#include <QObject>
 #include <QSet>
 #include <QUuid>
 
-// NOTE: Workaround a bug in Qt4 which may prevent building with some boost versions
-#ifndef Q_MOC_RUN
 #include <boost/bimap.hpp>
-#endif
 
 namespace quentier {
 
@@ -36,8 +34,9 @@ class Q_DECL_HIDDEN NoteSyncCache: public QObject
 {
     Q_OBJECT
 public:
-    NoteSyncCache(LocalStorageManagerAsync & localStorageManagerAsync,
-                  const QString & linkedNotebookGuid, QObject * parent = nullptr);
+    NoteSyncCache(
+        LocalStorageManagerAsync & localStorageManagerAsync,
+        const QString & linkedNotebookGuid, QObject * parent = nullptr);
 
     void clear();
 
@@ -49,27 +48,34 @@ public:
      */
     bool isFilled() const;
 
-    typedef boost::bimap<QString, QString> NoteGuidToLocalUidBimap;
+    using NoteGuidToLocalUidBimap = boost::bimap<QString, QString>;
 
     const NoteGuidToLocalUidBimap & noteGuidToLocalUidBimap() const
-    { return m_noteGuidToLocalUidBimap; }
+    {
+        return m_noteGuidToLocalUidBimap;
+    }
 
     const QHash<QString,Note> & dirtyNotesByGuid() const
-    { return m_dirtyNotesByGuid; }
+    {
+        return m_dirtyNotesByGuid;
+    }
 
     const QHash<QString,QString> & notebookGuidByNoteGuid() const
-    { return m_notebookGuidByNoteGuid; }
+    {
+        return m_notebookGuidByNoteGuid;
+    }
 
 Q_SIGNALS:
     void filled();
     void failure(ErrorString errorDescription);
 
 // private signals
-    void listNotes(LocalStorageManager::ListObjectsOptions flag,
-                   LocalStorageManager::GetNoteOptions options, size_t limit,
-                   size_t offset, LocalStorageManager::ListNotesOrder order,
-                   LocalStorageManager::OrderDirection orderDirection,
-                   QString linkedNotebookGuid, QUuid requestId);
+    void listNotes(
+        LocalStorageManager::ListObjectsOptions flag,
+        LocalStorageManager::GetNoteOptions options, size_t limit,
+        size_t offset, LocalStorageManager::ListNotesOrder order,
+        LocalStorageManager::OrderDirection orderDirection,
+        QString linkedNotebookGuid, QUuid requestId);
 
 public Q_SLOTS:
     /**
@@ -80,24 +86,30 @@ public Q_SLOTS:
     void fill();
 
 private Q_SLOTS:
-    void onListNotesComplete(LocalStorageManager::ListObjectsOptions flag,
-                             LocalStorageManager::GetNoteOptions options,
-                             size_t limit, size_t offset,
-                             LocalStorageManager::ListNotesOrder order,
-                             LocalStorageManager::OrderDirection orderDirection,
-                             QString linkedNotebookGuid, QList<Note> foundNotes,
-                             QUuid requestId);
-    void onListNotesFailed(LocalStorageManager::ListObjectsOptions flag,
-                           LocalStorageManager::GetNoteOptions options,
-                           size_t limit, size_t offset,
-                           LocalStorageManager::ListNotesOrder order,
-                           LocalStorageManager::OrderDirection orderDirection,
-                           QString linkedNotebookGuid, ErrorString errorDescription,
-                           QUuid requestId);
+    void onListNotesComplete(
+        LocalStorageManager::ListObjectsOptions flag,
+        LocalStorageManager::GetNoteOptions options,
+        size_t limit, size_t offset,
+        LocalStorageManager::ListNotesOrder order,
+        LocalStorageManager::OrderDirection orderDirection,
+        QString linkedNotebookGuid, QList<Note> foundNotes,
+        QUuid requestId);
+
+    void onListNotesFailed(
+        LocalStorageManager::ListObjectsOptions flag,
+        LocalStorageManager::GetNoteOptions options,
+        size_t limit, size_t offset,
+        LocalStorageManager::ListNotesOrder order,
+        LocalStorageManager::OrderDirection orderDirection,
+        QString linkedNotebookGuid, ErrorString errorDescription,
+        QUuid requestId);
+
     void onAddNoteComplete(Note note, QUuid requestId);
-    void onUpdateNoteComplete(Note note,
-                              LocalStorageManager::UpdateNoteOptions options,
-                              QUuid requestId);
+
+    void onUpdateNoteComplete(
+        Note note, LocalStorageManager::UpdateNoteOptions options,
+        QUuid requestId);
+
     void onExpungeNoteComplete(Note note, QUuid requestId);
 
 private:

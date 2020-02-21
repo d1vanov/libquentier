@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -32,9 +32,7 @@ NoteThumbnailDownloader::NoteThumbnailDownloader(
     m_noteGuid(noteGuid),
     m_authToken(authToken),
     m_shardId(shardId),
-    m_noteFromPublicLinkedNotebook(noteFromPublicLinkedNotebook),
-    m_pAsyncResult(nullptr),
-    m_pThumbnail(nullptr)
+    m_noteFromPublicLinkedNotebook(noteFromPublicLinkedNotebook)
 {}
 
 NoteThumbnailDownloader::~NoteThumbnailDownloader()
@@ -47,8 +45,8 @@ NoteThumbnailDownloader::~NoteThumbnailDownloader()
 void NoteThumbnailDownloader::start()
 {
     QNDEBUG("NoteThumbnailDownloader::start: host = " << m_host
-            << ", note guid = " << m_noteGuid << ", is public = "
-            << (m_noteFromPublicLinkedNotebook ? "true" : "false"));
+        << ", note guid = " << m_noteGuid << ", is public = "
+        << (m_noteFromPublicLinkedNotebook ? "true" : "false"));
 
 #define SET_ERROR(error)                                                       \
     ErrorString errorDescription(error);                                       \
@@ -82,19 +80,23 @@ void NoteThumbnailDownloader::start()
     }
 
     m_pThumbnail = new qevercloud::Thumbnail(m_host, m_shardId, m_authToken);
-    m_pAsyncResult =
-        m_pThumbnail->downloadAsync(m_noteGuid, m_noteFromPublicLinkedNotebook,
-                                    /* is resource guid = */ false);
+    m_pAsyncResult = m_pThumbnail->downloadAsync(
+        m_noteGuid,
+        m_noteFromPublicLinkedNotebook,
+        /* is resource guid = */ false);
+
     if (Q_UNLIKELY(!m_pAsyncResult)) {
-        SET_ERROR(QT_TR_NOOP("failed to download the note thumbnail, QEverCloud "
-                             "returned null pointer to AsyncResult"));
+        SET_ERROR(
+            QT_TR_NOOP("failed to download the note thumbnail, QEverCloud "
+                       "returned null pointer to AsyncResult"));
     }
 
-    QObject::connect(m_pAsyncResult,
-                     &qevercloud::AsyncResult::finished,
-                     this,
-                     &NoteThumbnailDownloader::onDownloadFinished,
-                     Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
+    QObject::connect(
+        m_pAsyncResult,
+        &qevercloud::AsyncResult::finished,
+        this,
+        &NoteThumbnailDownloader::onDownloadFinished,
+        Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
 }
 
 void NoteThumbnailDownloader::onDownloadFinished(
@@ -115,8 +117,8 @@ void NoteThumbnailDownloader::onDownloadFinished(
 
     if (exceptionData)
     {
-        ErrorString errorDescription(QT_TR_NOOP("failed to download the note "
-                                                "thumbnail"));
+        ErrorString errorDescription(
+            QT_TR_NOOP("failed to download the note thumbnail"));
         errorDescription.details() = exceptionData->errorMessage;
         QNDEBUG(errorDescription);
         Q_EMIT finished(false, m_noteGuid, QByteArray(), errorDescription);
