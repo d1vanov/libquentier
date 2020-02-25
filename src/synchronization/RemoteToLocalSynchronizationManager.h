@@ -45,6 +45,7 @@
 
 #include <qt5qevercloud/QEverCloud.h>
 
+#include <QMap>
 #include <QMultiHash>
 
 #include <utility>
@@ -1058,7 +1059,7 @@ private:
 
     QScopedPointer<NoteSyncConflictResolverManager> m_pNoteSyncConflictResolverManager;
 
-    QHash<std::pair<QString,QString>,Notebook>  m_notebooksPerNoteIds;
+    QMap<std::pair<QString,QString>,Notebook>  m_notebooksPerNoteIds;
 
     ResourcesList               m_resources;
     ResourcesList               m_resourcesPendingAddOrUpdate;
