@@ -161,7 +161,7 @@ public Q_SLOTS:
         QString authToken, QString shardId, qevercloud::Timestamp expirationTime);
 
     void onAuthenticationTokensForLinkedNotebooksReceived(
-        QHash<QString,QPair<QString,QString>> authTokensAndShardIdsByLinkedNotebookGuid,
+        QHash<QString,std::pair<QString,QString>> authTokensAndShardIdsByLinkedNotebookGuid,
         QHash<QString,qevercloud::Timestamp> authTokenExpirationTimesByLinkedNotebookGuid);
 
     void onLastSyncParametersReceived(
@@ -233,7 +233,7 @@ Q_SIGNALS:
         qevercloud::Timestamp expirationTime);
 
     void linkedNotebookAuthDataUpdated(
-        QHash<QString,QPair<QString,QString>> authTokensAndShardIdsByLinkedNotebookGuid,
+        QHash<QString,std::pair<QString,QString>> authTokensAndShardIdsByLinkedNotebookGuid,
         QHash<QString,qevercloud::Timestamp> authTokenExpirationTimesByLinkedNotebookGuid);
 
 private Q_SLOTS:
@@ -931,7 +931,7 @@ private:
     QString         m_host;
 
     qint32          m_maxSyncChunksPerOneDownload = 50;
-    SyncMode        m_lastSyncMode;
+    SyncMode        m_lastSyncMode = SyncMode::FullSync;
 
     qint32          m_lastUpdateCount = 0;
     qevercloud::Timestamp       m_lastSyncTime = 0;
@@ -1011,7 +1011,7 @@ private:
     QUuid       m_addOrUpdateUserRequestId;
     bool        m_onceAddedOrUpdatedUserInLocalStorage = false;
 
-    QHash<QString,QPair<QString,QString>>   m_authenticationTokensAndShardIdsByLinkedNotebookGuid;
+    QHash<QString,std::pair<QString,QString>>   m_authenticationTokensAndShardIdsByLinkedNotebookGuid;
     QHash<QString,qevercloud::Timestamp>    m_authenticationTokenExpirationTimesByLinkedNotebookGuid;
     bool        m_pendingAuthenticationTokensForLinkedNotebooks = false;
 
@@ -1053,12 +1053,12 @@ private:
     QSet<QUuid>                 m_expungeNoteRequestIds;
     QSet<QString>               m_guidsOfProcessedNonExpungedNotes;
 
-    using NoteDataPerFindNotebookRequestId = QHash<QUuid,QPair<Note,QUuid>>;
+    using NoteDataPerFindNotebookRequestId = QHash<QUuid,std::pair<Note,QUuid>>;
     NoteDataPerFindNotebookRequestId    m_notesWithFindRequestIdsPerFindNotebookRequestId;
 
     QScopedPointer<NoteSyncConflictResolverManager> m_pNoteSyncConflictResolverManager;
 
-    QHash<QPair<QString,QString>,Notebook>  m_notebooksPerNoteIds;
+    QHash<std::pair<QString,QString>,Notebook>  m_notebooksPerNoteIds;
 
     ResourcesList               m_resources;
     ResourcesList               m_resourcesPendingAddOrUpdate;

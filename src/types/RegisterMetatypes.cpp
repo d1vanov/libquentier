@@ -117,7 +117,10 @@ void registerMetatypes()
     qRegisterMetaType<QList<std::pair<Tag, QStringList> > >(
         "QList<std::pair<Tag, QStringList> >");
 
-    typedef IKeychainService::ErrorCode ErrorCode;
+    qRegisterMetaType<QHash<QString,std::pair<QString,QString> > >(
+        "QHash<QString,std::pair<QString,QString> >");
+
+    using ErrorCode = IKeychainService::ErrorCode;
     qRegisterMetaType<ErrorCode::type>("ErrorCode::type");
 }
 

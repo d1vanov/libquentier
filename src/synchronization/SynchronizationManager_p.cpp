@@ -1052,12 +1052,12 @@ void SynchronizationManagerPrivate::createConnections(
     QObject::connect(this,
                      QNSIGNAL(SynchronizationManagerPrivate,
                               sendAuthenticationTokensForLinkedNotebooks,
-                              QHash<QString,QPair<QString,QString> >,
+                              QHash<QString,std::pair<QString,QString>>,
                               QHash<QString,qevercloud::Timestamp>),
                      m_pRemoteToLocalSyncManager,
                      QNSLOT(RemoteToLocalSynchronizationManager,
                             onAuthenticationTokensForLinkedNotebooksReceived,
-                            QHash<QString,QPair<QString,QString> >,
+                            QHash<QString,std::pair<QString,QString>>,
                             QHash<QString,qevercloud::Timestamp>),
                      Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
     QObject::connect(this,
@@ -1135,12 +1135,12 @@ void SynchronizationManagerPrivate::createConnections(
     QObject::connect(this,
                      QNSIGNAL(SynchronizationManagerPrivate,
                               sendAuthenticationTokensForLinkedNotebooks,
-                              QHash<QString,QPair<QString,QString> >,
+                              QHash<QString,std::pair<QString,QString>>,
                               QHash<QString,qevercloud::Timestamp>),
                      m_pSendLocalChangesManager,
                      QNSLOT(SendLocalChangesManager,
                             onAuthenticationTokensForLinkedNotebooksReceived,
-                            QHash<QString,QPair<QString,QString> >,
+                            QHash<QString,std::pair<QString,QString>>,
                             QHash<QString,qevercloud::Timestamp>),
                      Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
     QObject::connect(this,
@@ -1626,7 +1626,7 @@ void SynchronizationManagerPrivate::authenticateToLinkedNotebooks()
                        QString::number(m_OAuthResult.m_userId) +
                        QStringLiteral("/");
 
-    QHash<QString,QPair<QString,QString> >  authTokensAndShardIdsToCacheByGuid;
+    QHash<QString,std::pair<QString,QString>>  authTokensAndShardIdsToCacheByGuid;
     QHash<QString,qevercloud::Timestamp>    authTokenExpirationTimestampsToCacheByGuid;
 
     QString keyPrefix = QCoreApplication::applicationName() + QStringLiteral("_") +
@@ -1658,7 +1658,7 @@ void SynchronizationManagerPrivate::authenticateToLinkedNotebooks()
             // it doesn't need the authentication token at all so will use
             // empty string for its authentication token
             m_cachedLinkedNotebookAuthTokensAndShardIdsByGuid[guid] =
-                QPair<QString, QString>(QString(), shardId);
+                std::make_pair(QString(), shardId);
             m_cachedLinkedNotebookAuthTokenExpirationTimeByGuid[guid] =
                 std::numeric_limits<qint64>::max();
 
@@ -1841,14 +1841,12 @@ void SynchronizationManagerPrivate::authenticateToLinkedNotebooks()
                     : QStringLiteral("<empty>")));
 
         m_cachedLinkedNotebookAuthTokensAndShardIdsByGuid[guid] =
-            QPair<QString, QString>(authResult.authenticationToken, shardId);
+            std::make_pair(authResult.authenticationToken, shardId);
 
         m_cachedLinkedNotebookAuthTokenExpirationTimeByGuid[guid] =
             authResult.expiration;
 
-        QPair<QString,QString> & authTokenAndShardId =
-            authTokensAndShardIdsToCacheByGuid[guid];
-
+        auto & authTokenAndShardId = authTokensAndShardIdsToCacheByGuid[guid];
         authTokenAndShardId.first = authResult.authenticationToken;
         authTokenAndShardId.second = shardId;
 

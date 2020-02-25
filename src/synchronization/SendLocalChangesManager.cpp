@@ -122,7 +122,7 @@ void SendLocalChangesManager::stop()
 }
 
 void SendLocalChangesManager::onAuthenticationTokensForLinkedNotebooksReceived(
-    QHash<QString,QPair<QString,QString> > authTokensByLinkedNotebookGuid,
+    QHash<QString,std::pair<QString,QString>> authTokensByLinkedNotebookGuid,
     QHash<QString,qevercloud::Timestamp> authTokenExpirationByLinkedNotebookGuid)
 {
     QNDEBUG("SendLocalChangesManager::"

@@ -33,6 +33,8 @@
 #include <QObject>
 #include <QScopedPointer>
 
+#include <utility>
+
 namespace quentier {
 
 QT_FORWARD_DECLARE_CLASS(SynchronizationManagerDependencyInjector)
@@ -126,7 +128,7 @@ Q_SIGNALS:
     void sendAuthenticationTokenAndShardId(QString authToken, QString shardId,
                                            qevercloud::Timestamp expirationTime);
     void sendAuthenticationTokensForLinkedNotebooks(
-        QHash<QString,QPair<QString,QString> > authTokensAndShardIdsByLinkedNotebookGuids,
+        QHash<QString,std::pair<QString,QString>> authTokensAndShardIdsByLinkedNotebookGuids,
         QHash<QString,qevercloud::Timestamp> authTokenExpirationByLinkedNotebookGuids);
 
     void sendLastSyncParameters(
@@ -301,7 +303,7 @@ private:
     QScopedPointer<SendLocalChangesManagerController>   m_pSendLocalChangesManagerController;
     SendLocalChangesManager *               m_pSendLocalChangesManager;
 
-    QHash<QString,QPair<QString,QString> >  m_cachedLinkedNotebookAuthTokensAndShardIdsByGuid;
+    QHash<QString,std::pair<QString,QString>>   m_cachedLinkedNotebookAuthTokensAndShardIdsByGuid;
     QHash<QString,qevercloud::Timestamp>    m_cachedLinkedNotebookAuthTokenExpirationTimeByGuid;
 
     QVector<LinkedNotebookAuthData>         m_linkedNotebookAuthDataPendingAuthentication;

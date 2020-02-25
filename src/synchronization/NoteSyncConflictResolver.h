@@ -26,6 +26,8 @@
 
 #include <QObject>
 
+#include <utility>
+
 namespace quentier {
 
 QT_FORWARD_DECLARE_CLASS(INoteStore)
@@ -75,7 +77,7 @@ public Q_SLOTS:
         qevercloud::Timestamp expirationTime);
 
     void onLinkedNotebooksAuthDataUpdated(
-        QHash<QString,QPair<QString,QString>> authTokensAndShardIdsByLinkedNotebookGuid,
+        QHash<QString,std::pair<QString,QString>> authTokensAndShardIdsByLinkedNotebookGuid,
         QHash<QString,qevercloud::Timestamp> authTokenExpirationTimesByLinkedNotebookGuid);
 
 Q_SIGNALS:

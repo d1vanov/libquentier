@@ -77,7 +77,7 @@ void NoteSyncConflictResolver::onAuthDataUpdated(
 }
 
 void NoteSyncConflictResolver::onLinkedNotebooksAuthDataUpdated(
-    QHash<QString,QPair<QString,QString>> authTokensAndShardIdsByLinkedNotebookGuid,
+    QHash<QString,std::pair<QString,QString>> authTokensAndShardIdsByLinkedNotebookGuid,
     QHash<QString,qevercloud::Timestamp> authTokenExpirationTimesByLinkedNotebookGuid)
 {
     QNDEBUG("NoteSyncConflictResolver::onLinkedNotebooksAuthDataUpdated");

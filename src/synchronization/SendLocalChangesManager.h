@@ -30,6 +30,8 @@
 #include <quentier_private/synchronization/INoteStore.h>
 #include <QObject>
 
+#include <utility>
+
 namespace quentier {
 
 QT_FORWARD_DECLARE_CLASS(LocalStorageManagerAsync)
@@ -79,7 +81,7 @@ public Q_SLOTS:
     void stop();
 
     void onAuthenticationTokensForLinkedNotebooksReceived(
-        QHash<QString,QPair<QString,QString> > authTokensAndShardIdsByLinkedNotebookGuid,
+        QHash<QString,std::pair<QString,QString>> authTokensAndShardIdsByLinkedNotebookGuid,
         QHash<QString,qevercloud::Timestamp> authTokenExpirationByLinkedNotebookGuid);
 
 // private signals:
@@ -332,7 +334,7 @@ private:
 
     QVector<LinkedNotebookAuthData>         m_linkedNotebookAuthData;
 
-    QHash<QString,QPair<QString,QString> >  m_authenticationTokensAndShardIdsByLinkedNotebookGuid;
+    QHash<QString,std::pair<QString,QString>>   m_authenticationTokensAndShardIdsByLinkedNotebookGuid;
     QHash<QString,qevercloud::Timestamp>    m_authenticationTokenExpirationTimesByLinkedNotebookGuid;
     bool                                    m_pendingAuthenticationTokensForLinkedNotebooks;
 
