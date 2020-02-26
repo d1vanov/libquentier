@@ -10287,12 +10287,11 @@ void RemoteToLocalSynchronizationManager::processResourceConflictAsNoteConflict(
             return;
         }
 
-        PostponedConflictingResourceData data;
+        PostponedConflictingResourceData & data =
+            m_postponedConflictingResourceDataPerAPICallPostponeTimerId[timerId];
         data.m_remoteNote = remoteNote;
         data.m_localConflictingNote = localConflictingNote;
         data.m_remoteNoteResourceWithoutFullData = remoteNoteResource;
-        m_postponedConflictingResourceDataPerAPICallPostponeTimerId[timerId] =
-            data;
 
         Q_EMIT rateLimitExceeded(rateLimitSeconds);
         return;
