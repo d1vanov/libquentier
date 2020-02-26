@@ -35,6 +35,11 @@ Printable::Printable()
 Printable::Printable(const Printable &)
 {}
 
+Printable & Printable::operator=(const Printable &)
+{
+    return *this;
+}
+
 Printable::~Printable()
 {}
 

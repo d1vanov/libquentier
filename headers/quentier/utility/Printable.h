@@ -50,6 +50,7 @@ public:
 protected:
     Printable();
     Printable(const Printable & other);
+    Printable & operator=(const Printable & other);
     virtual ~Printable();
 };
 
