@@ -43,7 +43,7 @@ EncryptionDialog::EncryptionDialog(
     m_decryptedTextManager(std::move(decryptedTextManager))
 {
     m_pUI->setupUi(this);
-    QUENTIER_CHECK_PTR(encryptionManager.get())
+    QUENTIER_CHECK_PTR(m_encryptionManager.get())
 
     bool rememberPassphraseForSessionDefault = false;
     ApplicationSettings appSettings(m_account, NOTE_EDITOR_SETTINGS_NAME);

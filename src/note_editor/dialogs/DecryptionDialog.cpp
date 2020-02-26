@@ -45,7 +45,7 @@ DecryptionDialog::DecryptionDialog(
     m_keyLength(keyLength)
 {
     m_pUI->setupUi(this);
-    QUENTIER_CHECK_PTR(encryptionManager.get())
+    QUENTIER_CHECK_PTR(m_encryptionManager.get())
 
     m_pUI->decryptPermanentlyCheckBox->setChecked(decryptPermanentlyFlag);
 
