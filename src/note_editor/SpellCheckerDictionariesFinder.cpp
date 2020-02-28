@@ -50,12 +50,21 @@ void SpellCheckerDictionariesFinder::run()
     QStringList fileFilters;
     fileFilters << QStringLiteral("*.dic") << QStringLiteral("*.aff");
 
+#if QT_VERSION >= QT_VERSION_CHECK(5, 14, 0)
+#define CHECK_AND_STOP()                                                       \
+    if (m_pStopFlag && (m_pStopFlag->loadAcquire() != 0)) {                    \
+        QNDEBUG("Aborting the operation as stop flag is non-zero");            \
+        return;                                                                \
+    }                                                                          \
+// CHECK_AND_STOP
+#else
 #define CHECK_AND_STOP()                                                       \
     if (m_pStopFlag && (m_pStopFlag->load() != 0)) {                           \
         QNDEBUG("Aborting the operation as stop flag is non-zero");            \
         return;                                                                \
     }                                                                          \
 // CHECK_AND_STOP
+#endif
 
     QFileInfoList rootDirs = QDir::drives();
     const int numRootDirs = rootDirs.size();
