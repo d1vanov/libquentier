@@ -5980,7 +5980,7 @@ void RemoteToLocalSynchronizationManager::collectSyncedGuidsForFullSyncStaleData
     m_fullSyncStaleDataItemsSyncedGuids.m_syncedTagGuids.reserve(static_cast<int>(
         m_tags.size()));
 #if QT_VERSION < QT_VERSION_CHECK(5, 7, 0)
-    for(auto it = m_tags.constBegin(), end = m_tags.constEnd();
+    for(auto it = m_tags.begin(), end = m_tags.end();
         it != end; ++it)
     {
         const auto & tag = *it;
