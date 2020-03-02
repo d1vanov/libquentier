@@ -5962,8 +5962,15 @@ void RemoteToLocalSynchronizationManager::collectSyncedGuidsForFullSyncStaleData
 
     m_fullSyncStaleDataItemsSyncedGuids.m_syncedNotebookGuids.reserve(
         m_notebooks.size());
+#if QT_VERSION < QT_VERSION_CHECK(5, 7, 0)
+    for(auto it = m_notebooks.constBegin(), end = m_notebooks.constEnd();
+        it != end; ++it)
+    {
+        const auto & notebook = *it;
+#else
     for(const auto & notebook: qAsConst(m_notebooks))
     {
+#endif
         if (notebook.guid.isSet()) {
             Q_UNUSED(m_fullSyncStaleDataItemsSyncedGuids.m_syncedNotebookGuids.insert(
                 notebook.guid.ref()))
@@ -5972,8 +5979,15 @@ void RemoteToLocalSynchronizationManager::collectSyncedGuidsForFullSyncStaleData
 
     m_fullSyncStaleDataItemsSyncedGuids.m_syncedTagGuids.reserve(static_cast<int>(
         m_tags.size()));
+#if QT_VERSION < QT_VERSION_CHECK(5, 7, 0)
+    for(auto it = m_tags.constBegin(), end = m_tags.constEnd();
+        it != end; ++it)
+    {
+        const auto & tag = *it;
+#else
     for(const auto & tag: qAsConst(m_tags))
     {
+#endif
         if (tag.guid.isSet()) {
             Q_UNUSED(m_fullSyncStaleDataItemsSyncedGuids.m_syncedTagGuids.insert(
                 tag.guid.ref()))
@@ -5981,8 +5995,15 @@ void RemoteToLocalSynchronizationManager::collectSyncedGuidsForFullSyncStaleData
     }
 
     m_fullSyncStaleDataItemsSyncedGuids.m_syncedNoteGuids.reserve(m_notes.size());
+#if QT_VERSION < QT_VERSION_CHECK(5, 7, 0)
+    for(auto it = m_notes.constBegin(), end = m_notes.constEnd();
+        it != end; ++it)
+    {
+        const auto & note = *it;
+#else
     for(const auto & note: qAsConst(m_notes))
     {
+#endif
         if (note.guid.isSet()) {
             Q_UNUSED(m_fullSyncStaleDataItemsSyncedGuids.m_syncedNoteGuids.insert(
                 note.guid.ref()))
@@ -5991,8 +6012,15 @@ void RemoteToLocalSynchronizationManager::collectSyncedGuidsForFullSyncStaleData
 
     m_fullSyncStaleDataItemsSyncedGuids.m_syncedSavedSearchGuids.reserve(
         m_savedSearches.size());
+#if QT_VERSION < QT_VERSION_CHECK(5, 7, 0)
+    for(auto it = m_savedSearches.constBegin(), end = m_savedSearches.constEnd();
+        it != end; ++it)
+    {
+        const auto & savedSearch = *it;
+#else
     for(const auto & savedSearch: qAsConst(m_savedSearches))
     {
+#endif
         if (savedSearch.guid.isSet()) {
             Q_UNUSED(m_fullSyncStaleDataItemsSyncedGuids.m_syncedSavedSearchGuids.insert(
                 savedSearch.guid.ref()))
@@ -6093,8 +6121,15 @@ bool RemoteToLocalSynchronizationManager::launchFullSyncStaleDataItemsExpungersF
             const QString & notebookGuid = nit.key();
             Q_UNUSED(syncedGuids.m_syncedNotebookGuids.insert(notebookGuid))
 
+#if QT_VERSION < QT_VERSION_CHECK(5, 7, 0)
+            for(auto it = m_notes.constBegin(), end = m_notes.constEnd();
+                it != end; ++it)
+            {
+                const auto & note = *it;
+#else
             for(const auto & note: qAsConst(m_notes))
             {
+#endif
                 if (note.guid.isSet() &&
                     note.notebookGuid.isSet() &&
                     (note.notebookGuid.ref() == notebookGuid))
@@ -6644,8 +6679,14 @@ bool RemoteToLocalSynchronizationManager::mapContainerElementsWithLinkedNotebook
         const QString & linkedNotebookGuid,
         const RemoteToLocalSynchronizationManager::TagsList & tags)
 {
+#if QT_VERSION < QT_VERSION_CHECK(5, 7, 0)
+    for(auto it = tags.constBegin(), end = tags.constEnd(); it != end; ++it)
+    {
+        const auto & tag = *it;
+#else
     for(const auto & tag: qAsConst(tags))
     {
+#endif
         if (!tag.guid.isSet())
         {
             ErrorString error(
@@ -6674,8 +6715,14 @@ bool RemoteToLocalSynchronizationManager::mapContainerElementsWithLinkedNotebook
         const QString & linkedNotebookGuid,
         const RemoteToLocalSynchronizationManager::NotebooksList & notebooks)
 {
+#if QT_VERSION < QT_VERSION_CHECK(5, 7, 0)
+    for(auto it = notebooks.constBegin(), end = notebooks.constEnd(); it != end; ++it)
+    {
+        const auto & notebook = *it;
+#else
     for(const auto & notebook: qAsConst(notebooks))
     {
+#endif
         if (!notebook.guid.isSet())
         {
             ErrorString error(
@@ -6705,8 +6752,14 @@ bool RemoteToLocalSynchronizationManager::mapContainerElementsWithLinkedNotebook
         const QString & linkedNotebookGuid,
         const RemoteToLocalSynchronizationManager::NotesList & notes)
 {
+#if QT_VERSION < QT_VERSION_CHECK(5, 7, 0)
+    for(auto it = notes.constBegin(), end = notes.constEnd(); it != end; ++it)
+    {
+        const auto & note = *it;
+#else
     for(const auto & note: qAsConst(notes))
     {
+#endif
         if (!note.notebookGuid.isSet())
         {
             ErrorString error(
@@ -6735,8 +6788,14 @@ bool RemoteToLocalSynchronizationManager::mapContainerElementsWithLinkedNotebook
         const QString & linkedNotebookGuid,
         const RemoteToLocalSynchronizationManager::ResourcesList & resources)
 {
+#if QT_VERSION < QT_VERSION_CHECK(5, 7, 0)
+    for(auto it = resources.constBegin(), end = resources.constEnd(); it != end; ++it)
+    {
+        const auto & resource = *it;
+#else
     for(const auto & resource: qAsConst(resources))
     {
+#endif
         if (!resource.guid.isSet())
         {
             ErrorString error(
