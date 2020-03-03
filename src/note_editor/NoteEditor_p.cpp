@@ -127,6 +127,7 @@ typedef QWebEngineSettings WebSettings;
 #include <QClipboard>
 #include <QContextMenuEvent>
 #include <QCryptographicHash>
+#include <QDateTime>
 #include <QDesktopWidget>
 #include <QDropEvent>
 #include <QFile>
@@ -303,6 +304,15 @@ bool NoteEditorPrivate::isNoteLoaded() const
     return !m_pendingNotePageLoad &&
         !m_pendingJavaScriptExecution &&
         !m_pendingNoteImageResourceTemporaryFiles;
+}
+
+qint64 NoteEditorPrivate::idleTime() const
+{
+    if (!isNoteLoaded()) {
+        return -1;
+    }
+
+    return m_lastInteractionTimestamp;
 }
 
 void NoteEditorPrivate::onNoteLoadFinished(bool ok)
@@ -2848,6 +2858,8 @@ void NoteEditorPrivate::clearCurrentNoteInfo()
 
     m_pendingNoteImageResourceTemporaryFiles = false;
 
+    m_lastInteractionTimestamp = -1;
+
 #ifdef QUENTIER_USE_QT_WEB_ENGINE
     m_webSocketServerPort = 0;
 #else
@@ -3449,6 +3461,11 @@ void NoteEditorPrivate::onNoteSavedToLocalStorage(QString noteLocalUid)
 
     m_needSavingNoteInLocalStorage = false;
     m_pendingNoteSavingInLocalStorage = false;
+
+    // NOTE: although saving the note to local storage might not be due to
+    // an explicit user's interaction, it is still considered a kind of thing
+    // which should bump the last interaction timestamp
+    updateLastInteractionTimestamp();
 
     if (m_shouldRepeatSavingNoteInLocalStorage) {
         m_shouldRepeatSavingNoteInLocalStorage = false;
@@ -9432,10 +9449,12 @@ void NoteEditorPrivate::setModified()
 {
     QNDEBUG("NoteEditorPrivate::setModified");
 
-    if (!m_pNote) {
+    if (Q_UNLIKELY(!m_pNote)) {
         QNDEBUG("No note is set to the editor");
         return;
     }
+
+    updateLastInteractionTimestamp();
 
     if (!m_needConversionToNote && !m_needSavingNoteInLocalStorage ) {
         m_needConversionToNote = true;
@@ -9791,6 +9810,11 @@ void NoteEditorPrivate::flipEnToDoCheckboxState(const quint64 enToDoIdNumber)
 
     page->executeJavaScript(javascript);
     setModified();
+}
+
+void NoteEditorPrivate::updateLastInteractionTimestamp()
+{
+    m_lastInteractionTimestamp = QDateTime::currentMSecsSinceEpoch();
 }
 
 qint64 NoteEditorPrivate::noteResourcesSize() const

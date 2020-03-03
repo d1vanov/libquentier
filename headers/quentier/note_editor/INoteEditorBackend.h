@@ -61,6 +61,7 @@ public:
     virtual void setNoteLoadingPageHtml(const QString & html) = 0;
 
     virtual bool isNoteLoaded() const = 0;
+    virtual qint64 idleTime() const = 0;
 
     virtual void convertToNote() = 0;
     virtual void saveNoteToLocalStorage() = 0;

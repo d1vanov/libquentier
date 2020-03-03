@@ -227,6 +227,7 @@ public:
     void disableDynamicSpellCheck();
 
     virtual bool isNoteLoaded() const override;
+    virtual qint64 idleTime() const override;
 
     virtual QString selectedText() const override;
     virtual bool hasSelection() const override;
@@ -413,6 +414,8 @@ public Q_SLOTS:
     void redoPageAction();
 
     void flipEnToDoCheckboxState(const quint64 enToDoIdNumber);
+
+    void updateLastInteractionTimestamp();
 
 public:
     virtual QString currentNoteLocalUid() const override;
@@ -1313,6 +1316,12 @@ private:
     int         m_secondsToWaitBeforeConversionStart = 30;
 
     int         m_pageToNoteContentPostponeTimerId = 0;
+
+    /**
+     * Timestamp corresponding to the last user's interaction with the note
+     * editor
+     */
+    qint64      m_lastInteractionTimestamp = -1;
 
     std::shared_ptr<EncryptionManager>      m_encryptionManager;
     std::shared_ptr<DecryptedTextManager>   m_decryptedTextManager;
