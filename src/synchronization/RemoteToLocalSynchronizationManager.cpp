@@ -9783,7 +9783,11 @@ void RemoteToLocalSynchronizationManager::checkNonSyncedItemsContainerForSmalles
         const QString & linkedNotebookGuid,
         qint32 & smallestUsn) const
 {
+#if QT_VERSION < QT_VERSION_CHECK(5, 7, 0)
+    for(auto it = notes.constBegin(), end = notes.constEnd(); it != end; ++it) {
+#else
     for(const auto & it: qevercloud::toRange(qAsConst(notes))) {
+#endif
         checkNonSyncedItemForSmallestUsn(
             it.value(),
             linkedNotebookGuid,
@@ -9798,7 +9802,11 @@ void RemoteToLocalSynchronizationManager::checkNonSyncedItemsContainerForSmalles
         const QString & linkedNotebookGuid,
         qint32 & smallestUsn) const
 {
+#if QT_VERSION < QT_VERSION_CHECK(5, 7, 0)
+    for(auto it = resources.constBegin(), end = resources.constEnd(); it != end; ++it) {
+#else
     for(const auto & it: qevercloud::toRange(qAsConst(resources))) {
+#endif
         checkNonSyncedItemForSmallestUsn(
             it.value().first.qevercloudResource(),
             linkedNotebookGuid,
@@ -9873,8 +9881,15 @@ qint32 RemoteToLocalSynchronizationManager::findSmallestUsnOfNonSyncedItems(
              ? m_syncChunks
              : m_linkedNotebookSyncChunks);
 
+#if QT_VERSION < QT_VERSION_CHECK(5, 7, 0)
+        for(auto it = syncChunks.constBegin(), end = syncChunks.constEnd();
+            it != end; ++it)
+        {
+            const auto & syncChunk = *it;
+#else
         for(const auto & syncChunk: qAsConst(syncChunks))
         {
+#endif
             if (!syncChunk.notes.isSet()) {
                 continue;
             }
@@ -9991,8 +10006,15 @@ qint32 RemoteToLocalSynchronizationManager::findSmallestUsnOfNonSyncedItems(
              ? m_syncChunks
              : m_linkedNotebookSyncChunks);
 
+#if QT_VERSION < QT_VERSION_CHECK(5, 7, 0)
+        for(auto it = syncChunks.constBegin(), end = syncChunks.constEnd();
+            it != end; ++it)
+        {
+            const auto & syncChunk = *it;
+#else
         for(const auto & syncChunk: qAsConst(syncChunks))
         {
+#endif
             if (!syncChunk.resources.isSet()) {
                 continue;
             }
