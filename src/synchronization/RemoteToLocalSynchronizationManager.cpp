@@ -10356,8 +10356,15 @@ void RemoteToLocalSynchronizationManager::overrideLocalNoteWithRemoteNote(
         }
 
         bool foundResource = false;
+#if QT_VERSION < QT_VERSION_CHECK(5, 7, 0)
+        for(auto uit = updatedResources.constBegin(),
+            uend = updatedResources.constEnd(); uit != uend; ++uit)
+        {
+            const auto & updatedResource = *uit;
+#else
         for(const auto & updatedResource: qAsConst(updatedResources))
         {
+#endif
             if (!updatedResource.guid.isSet()) {
                 continue;
             }
@@ -10380,8 +10387,15 @@ void RemoteToLocalSynchronizationManager::overrideLocalNoteWithRemoteNote(
     }
 
     // Then account for new resources
+#if QT_VERSION < QT_VERSION_CHECK(5, 7, 0)
+    for(auto uit = updatedResources.constBegin(),
+        uend = updatedResources.constEnd(); uit != uend; ++uit)
+    {
+        const auto & updatedResource = *uit;
+#else
     for(const auto & updatedResource: qAsConst(updatedResources))
     {
+#endif
         if (Q_UNLIKELY(!updatedResource.guid.isSet())) {
             QNWARNING("Skipping resource from remote note without guid: "
                 << updatedResource);
@@ -10389,8 +10403,15 @@ void RemoteToLocalSynchronizationManager::overrideLocalNoteWithRemoteNote(
         }
 
         const Resource * pExistingResource = nullptr;
+#if QT_VERSION < QT_VERSION_CHECK(5, 7, 0)
+        for(auto it = resources.constBegin(),
+            end = resources.constEnd(); it != end; ++it)
+        {
+            const auto & resource = *it;
+#else
         for(const auto & resource: qAsConst(resources))
         {
+#endif
             if (resource.hasGuid() &&
                 (resource.guid() == updatedResource.guid.ref()))
             {
