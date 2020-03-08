@@ -10884,7 +10884,15 @@ void RemoteToLocalSynchronizationManager::appendDataElementsFromSyncChunkToConta
     {
         const auto & tags = syncChunk.tags.ref();
         QNDEBUG("Appending " << tags.size() << " tags");
+
+#if QT_VERSION < QT_VERSION_CHECK(5, 7, 0)
+        for(auto it = tags.constBegin(),
+            end = tags.constEnd(); it != end; ++it)
+        {
+            const auto & tag = *it;
+#else
         for(const auto & tag: qAsConst(tags)) {
+#endif
             container.insert(tag);
         }
 
