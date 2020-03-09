@@ -7916,7 +7916,7 @@ void RemoteToLocalSynchronizationManager::clear()
 
     m_tagSyncCache.clear();
 
-    for(auto * pCache: m_tagSyncCachesByLinkedNotebookGuids)
+    for(auto * pCache: m_tagSyncCachesByLinkedNotebookGuids)    // clazy:exclude=range-loop
     {
         if (Q_UNLIKELY(!pCache)) {
             continue;
@@ -8019,7 +8019,7 @@ void RemoteToLocalSynchronizationManager::clear()
 
     m_notebookSyncCache.clear();
 
-    for(auto * pCache: m_notebookSyncCachesByLinkedNotebookGuids)
+    for(auto * pCache: m_notebookSyncCachesByLinkedNotebookGuids)   // clazy:exclude=range-loop
     {
         if (Q_UNLIKELY(!pCache)) {
             continue;
@@ -8086,7 +8086,7 @@ void RemoteToLocalSynchronizationManager::clear()
         m_pFullSyncStaleDataItemsExpunger = nullptr;
     }
 
-    for(auto * pExpunger: m_fullSyncStaleDataItemsExpungersByLinkedNotebookGuid)
+    for(auto * pExpunger: m_fullSyncStaleDataItemsExpungersByLinkedNotebookGuid)    // clazy:exclude=range-loop
     {
         if (pExpunger) {
             junkFullSyncStaleDataItemsExpunger(*pExpunger);

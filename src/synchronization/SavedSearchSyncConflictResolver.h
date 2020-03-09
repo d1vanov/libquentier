@@ -25,6 +25,8 @@
 
 #include <QObject>
 
+QT_FORWARD_DECLARE_CLASS(QDebug)
+
 namespace quentier {
 
 QT_FORWARD_DECLARE_CLASS(SavedSearchSyncCache)
@@ -61,17 +63,19 @@ Q_SIGNALS:
 
 private Q_SLOTS:
     void onAddSavedSearchComplete(SavedSearch search, QUuid requestId);
-    void onAddSavedSearchFailed(SavedSearch search,
-                                ErrorString errorDescription,
-                                QUuid requestId);
+
+    void onAddSavedSearchFailed(
+        SavedSearch search, ErrorString errorDescription, QUuid requestId);
+
     void onUpdateSavedSearchComplete(SavedSearch search, QUuid requestId);
-    void onUpdateSavedSearchFailed(SavedSearch search,
-                                   ErrorString errorDescription,
-                                   QUuid requestId);
+
+    void onUpdateSavedSearchFailed(
+        SavedSearch search, ErrorString errorDescription, QUuid requestId);
+
     void onFindSavedSearchComplete(SavedSearch search, QUuid requestId);
-    void onFindSavedSearchFailed(SavedSearch search,
-                                 ErrorString errorDescription,
-                                 QUuid requestId);
+
+    void onFindSavedSearchFailed(
+        SavedSearch search, ErrorString errorDescription, QUuid requestId);
 
     void onCacheFilled();
     void onCacheFailed(ErrorString errorDescription);
@@ -83,16 +87,15 @@ private:
     void overrideLocalChangesWithRemoteChanges();
     void renameConflictingLocalSavedSearch(const SavedSearch & localConflict);
 
-    struct State
+    enum class State
     {
-        enum type
-        {
-            Undefined = 0,
-            OverrideLocalChangesWithRemoteChanges,
-            PendingConflictingSavedSearchRenaming,
-            PendingRemoteSavedSearchAdoptionInLocalStorage
-        };
+        Undefined = 0,
+        OverrideLocalChangesWithRemoteChanges,
+        PendingConflictingSavedSearchRenaming,
+        PendingRemoteSavedSearchAdoptionInLocalStorage
     };
+
+    friend QDebug & operator<<(QDebug & dbg, const State state);
 
 private:
     SavedSearchSyncCache &          m_cache;
@@ -103,14 +106,14 @@ private:
 
     SavedSearch                     m_savedSearchToBeRenamed;
 
-    State::type                     m_state;
+    State                           m_state = State::Undefined;
 
     QUuid                           m_addSavedSearchRequestId;
     QUuid                           m_updateSavedSearchRequestId;
     QUuid                           m_findSavedSearchRequestId;
 
-    bool                            m_started;
-    bool                            m_pendingCacheFilling;
+    bool                            m_started = false;
+    bool                            m_pendingCacheFilling = false;
 };
 
 } // namespace quentier
