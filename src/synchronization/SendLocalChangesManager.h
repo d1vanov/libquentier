@@ -20,14 +20,17 @@
 #define LIB_QUENTIER_SYNCHRONIZATION_SEND_LOCAL_CHANGES_MANAGER_H
 
 #include "SynchronizationShared.h"
-#include <quentier/utility/Macros.h>
-#include <quentier/types/ErrorString.h>
+
 #include <quentier/local_storage/LocalStorageManager.h>
-#include <quentier/types/Tag.h>
-#include <quentier/types/SavedSearch.h>
+#include <quentier/types/ErrorString.h>
 #include <quentier/types/Notebook.h>
 #include <quentier/types/Note.h>
+#include <quentier/types/Tag.h>
+#include <quentier/types/SavedSearch.h>
+#include <quentier/utility/Macros.h>
+
 #include <quentier_private/synchronization/INoteStore.h>
+
 #include <QObject>
 
 #include <utility>
@@ -45,21 +48,25 @@ public:
     public:
         virtual LocalStorageManagerAsync & localStorageManagerAsync() = 0;
         virtual INoteStore & noteStore() = 0;
+
         virtual INoteStore * noteStoreForLinkedNotebook(
             const LinkedNotebook & linkedNotebook) = 0;
+
         virtual ~IManager() {}
     };
 
-    explicit SendLocalChangesManager(IManager & manager,
-                                     QObject * parent = nullptr);
+    explicit SendLocalChangesManager(
+        IManager & manager,
+        QObject * parent = nullptr);
 
     bool active() const;
 
 Q_SIGNALS:
     void failure(ErrorString errorDescription);
 
-    void finished(qint32 lastUpdateCount,
-                  QHash<QString,qint32> lastUpdateCountByLinkedNotebookGuid);
+    void finished(
+        qint32 lastUpdateCount,
+        QHash<QString,qint32> lastUpdateCountByLinkedNotebookGuid);
 
     void rateLimitExceeded(qint32 secondsToWait);
     void conflictDetected();
@@ -128,8 +135,10 @@ Q_SIGNALS:
     void updateTag(Tag tag, QUuid requestId);
     void updateSavedSearch(SavedSearch savedSearch, QUuid requestId);
     void updateNotebook(Notebook notebook, QUuid requestId);
-    void updateNote(Note note, LocalStorageManager::UpdateNoteOptions options,
-                    QUuid requestId);
+
+    void updateNote(
+        Note note, LocalStorageManager::UpdateNoteOptions options,
+        QUuid requestId);
 
     void findNotebook(Notebook notebook, QUuid requestId);
 
@@ -214,35 +223,38 @@ private Q_SLOTS:
                            QUuid requestId);
 
     void onUpdateSavedSearchCompleted(SavedSearch savedSearch, QUuid requestId);
-    void onUpdateSavedSearchFailed(SavedSearch savedSearch,
-                                   ErrorString errorDescription,
-                                   QUuid requestId);
+
+    void onUpdateSavedSearchFailed(
+        SavedSearch savedSearch, ErrorString errorDescription,
+        QUuid requestId);
 
     void onUpdateNotebookCompleted(Notebook notebook, QUuid requestId);
-    void onUpdateNotebookFailed(Notebook notebook,
-                                ErrorString errorDescription,
-                                QUuid requestId);
 
-    void onUpdateNoteCompleted(Note note,
-                               LocalStorageManager::UpdateNoteOptions options,
-                               QUuid requestId);
-    void onUpdateNoteFailed(Note note,
-                            LocalStorageManager::UpdateNoteOptions options,
-                            ErrorString errorDescription, QUuid requestId);
+    void onUpdateNotebookFailed(
+        Notebook notebook, ErrorString errorDescription, QUuid requestId);
+
+    void onUpdateNoteCompleted(
+        Note note, LocalStorageManager::UpdateNoteOptions options,
+        QUuid requestId);
+
+    void onUpdateNoteFailed(
+        Note note, LocalStorageManager::UpdateNoteOptions options,
+        ErrorString errorDescription, QUuid requestId);
 
     void onFindNotebookCompleted(Notebook notebook, QUuid requestId);
-    void onFindNotebookFailed(Notebook notebook, ErrorString errorDescription,
-                              QUuid requestId);
+
+    void onFindNotebookFailed(
+        Notebook notebook, ErrorString errorDescription, QUuid requestId);
 
 private:
-    virtual void timerEvent(QTimerEvent * pEvent);
+    virtual void timerEvent(QTimerEvent * pEvent) override;
 
 private:
     void connectToLocalStorage();
     void disconnectFromLocalStorage();
 
-    bool requestStuffFromLocalStorage(const QString & linkedNotebookGuid =
-                                      QLatin1String(""));
+    bool requestStuffFromLocalStorage(
+        const QString & linkedNotebookGuid = QLatin1String(""));
 
     void checkListLocalStorageObjectsCompletion();
 
@@ -272,7 +284,9 @@ private:
     class Q_DECL_HIDDEN CompareLinkedNotebookAuthDataByGuid
     {
     public:
-        CompareLinkedNotebookAuthDataByGuid(const QString & guid) : m_guid(guid) {}
+        CompareLinkedNotebookAuthDataByGuid(const QString & guid) :
+            m_guid(guid)
+        {}
 
         bool operator()(const LinkedNotebookAuthData & authData) const
         {
@@ -297,59 +311,59 @@ private:
     };
 
 private:
-    IManager &                              m_manager;
+    IManager &              m_manager;
 
-    qint32                                  m_lastUpdateCount;
-    QHash<QString,qint32>                   m_lastUpdateCountByLinkedNotebookGuid;
+    qint32                  m_lastUpdateCount = 0;
+    QHash<QString,qint32>   m_lastUpdateCountByLinkedNotebookGuid;
 
-    bool                                    m_shouldRepeatIncrementalSync;
+    bool                    m_shouldRepeatIncrementalSync = false;
 
-    bool                                    m_active;
+    bool                    m_active = false;
 
-    bool                                    m_connectedToLocalStorage;
-    bool                                    m_receivedDirtyLocalStorageObjectsFromUsersAccount;
-    bool                                    m_receivedAllDirtyLocalStorageObjects;
+    bool                    m_connectedToLocalStorage = false;
+    bool                    m_receivedDirtyLocalStorageObjectsFromUsersAccount = false;
+    bool                    m_receivedAllDirtyLocalStorageObjects = false;
 
-    QUuid                                   m_listDirtyTagsRequestId;
-    QUuid                                   m_listDirtySavedSearchesRequestId;
-    QUuid                                   m_listDirtyNotebooksRequestId;
-    QUuid                                   m_listDirtyNotesRequestId;
-    QUuid                                   m_listLinkedNotebooksRequestId;
+    QUuid                   m_listDirtyTagsRequestId;
+    QUuid                   m_listDirtySavedSearchesRequestId;
+    QUuid                   m_listDirtyNotebooksRequestId;
+    QUuid                   m_listDirtyNotesRequestId;
+    QUuid                   m_listLinkedNotebooksRequestId;
 
-    QSet<QUuid>                             m_listDirtyTagsFromLinkedNotebooksRequestIds;
-    QSet<QUuid>                             m_listDirtyNotebooksFromLinkedNotebooksRequestIds;
-    QSet<QUuid>                             m_listDirtyNotesFromLinkedNotebooksRequestIds;
+    QSet<QUuid>             m_listDirtyTagsFromLinkedNotebooksRequestIds;
+    QSet<QUuid>             m_listDirtyNotebooksFromLinkedNotebooksRequestIds;
+    QSet<QUuid>             m_listDirtyNotesFromLinkedNotebooksRequestIds;
 
-    QList<Tag>                              m_tags;
-    QList<SavedSearch>                      m_savedSearches;
-    QList<Notebook>                         m_notebooks;
-    QList<Note>                             m_notes;
+    QList<Tag>              m_tags;
+    QList<SavedSearch>      m_savedSearches;
+    QList<Notebook>         m_notebooks;
+    QList<Note>             m_notes;
 
-    bool                                    m_sendingTags;
-    bool                                    m_sendingSavedSearches;
-    bool                                    m_sendingNotebooks;
-    bool                                    m_sendingNotes;
+    bool                    m_sendingTags = false;
+    bool                    m_sendingSavedSearches = false;
+    bool                    m_sendingNotebooks = false;
+    bool                    m_sendingNotes = false;
 
-    QSet<QString>                           m_linkedNotebookGuidsForWhichStuffWasRequestedFromLocalStorage;
+    QSet<QString>           m_linkedNotebookGuidsForWhichStuffWasRequestedFromLocalStorage;
 
-    QVector<LinkedNotebookAuthData>         m_linkedNotebookAuthData;
+    QVector<LinkedNotebookAuthData>     m_linkedNotebookAuthData;
 
     QHash<QString,std::pair<QString,QString>>   m_authenticationTokensAndShardIdsByLinkedNotebookGuid;
     QHash<QString,qevercloud::Timestamp>    m_authenticationTokenExpirationTimesByLinkedNotebookGuid;
-    bool                                    m_pendingAuthenticationTokensForLinkedNotebooks;
+    bool                    m_pendingAuthenticationTokensForLinkedNotebooks = false;
 
-    QSet<QUuid>                             m_updateTagRequestIds;
-    QSet<QUuid>                             m_updateSavedSearchRequestIds;
-    QSet<QUuid>                             m_updateNotebookRequestIds;
-    QSet<QUuid>                             m_updateNoteRequestIds;
+    QSet<QUuid>             m_updateTagRequestIds;
+    QSet<QUuid>             m_updateSavedSearchRequestIds;
+    QSet<QUuid>             m_updateNotebookRequestIds;
+    QSet<QUuid>             m_updateNoteRequestIds;
 
-    QSet<QUuid>                             m_findNotebookRequestIds;
-    QHash<QString, Notebook>                m_notebooksByGuidsCache;
+    QSet<QUuid>             m_findNotebookRequestIds;
+    QHash<QString, Notebook>    m_notebooksByGuidsCache;
 
-    int                                     m_sendTagsPostponeTimerId;
-    int                                     m_sendSavedSearchesPostponeTimerId;
-    int                                     m_sendNotebooksPostponeTimerId;
-    int                                     m_sendNotesPostponeTimerId;
+    int                     m_sendTagsPostponeTimerId = 0;
+    int                     m_sendSavedSearchesPostponeTimerId = 0;
+    int                     m_sendNotebooksPostponeTimerId = 0;
+    int                     m_sendNotesPostponeTimerId = 0;
 };
 
 } // namespace quentier
