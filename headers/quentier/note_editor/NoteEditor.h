@@ -157,6 +157,13 @@ public:
     bool isNoteLoaded() const;
 
     /**
+     * @return the number of milliseconds since the last user's interaction
+     * with the note editor or -1 if there was no interaction or if no note
+     * is loaded at the moment
+     */
+    qint64 idleTime() const;
+
+    /**
      * Sets the focus to the backend note editor widget
      */
     void setFocus();

@@ -120,6 +120,11 @@ bool NoteEditor::isNoteLoaded() const
     return m_backend->isNoteLoaded();
 }
 
+qint64 NoteEditor::idleTime() const
+{
+    return m_backend->idleTime();
+}
+
 void NoteEditor::setFocus()
 {
     m_backend->setFocusToEditor();
