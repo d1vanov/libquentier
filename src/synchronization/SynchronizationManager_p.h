@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -21,25 +21,26 @@
 
 #include "RemoteToLocalSynchronizationManager.h"
 #include "SendLocalChangesManager.h"
+
 #include <quentier/synchronization/IAuthenticationManager.h>
 #include <quentier/types/Account.h>
+
 #include <quentier_private/utility/IKeychainService.h>
 
-// NOTE: Workaround a bug in Qt4 which may prevent building with some boost versions
-#ifndef Q_MOC_RUN
 #include <boost/bimap.hpp>
-#endif
 
 #include <QObject>
-#include <QScopedPointer>
 
+#include <memory>
 #include <utility>
+
+QT_FORWARD_DECLARE_CLASS(QDebug)
 
 namespace quentier {
 
-QT_FORWARD_DECLARE_CLASS(SynchronizationManagerDependencyInjector)
 QT_FORWARD_DECLARE_CLASS(INoteStore)
 QT_FORWARD_DECLARE_CLASS(IUserStore)
+QT_FORWARD_DECLARE_CLASS(SynchronizationManagerDependencyInjector)
 QT_FORWARD_DECLARE_CLASS(SyncStatePersistenceManager)
 
 class Q_DECL_HIDDEN SynchronizationManagerPrivate: public QObject
@@ -58,39 +59,52 @@ public:
     bool active() const;
     bool downloadNoteThumbnailsOption() const;
 
+    // Only public because otherwise can't implement printing
+    enum class AuthContext
+    {
+        Blank = 0,
+        SyncLaunch,
+        NewUserRequest,
+        CurrentUserRequest,
+        AuthToLinkedNotebooks,
+    };
+
+    friend QDebug & operator<<(QDebug & dbg, const AuthContext ctx);
+    friend QTextStream & operator<<(QTextStream & dbg, const AuthContext ctx);
+
 Q_SIGNALS:
     void notifyStart();
     void notifyStop();
     void notifyError(ErrorString errorDescription);
     void notifyRemoteToLocalSyncDone(bool somethingDownloaded);
-    void notifyFinish(Account account, bool somethingDownloaded,
-                      bool somethingSent);
+
+    void notifyFinish(
+        Account account, bool somethingDownloaded, bool somethingSent);
 
 // progress signals
-    void syncChunksDownloadProgress(qint32 highestDownloadedUsn,
-                                    qint32 highestServerUsn,
-                                    qint32 lastPreviousUsn);
+    void syncChunksDownloadProgress(
+        qint32 highestDownloadedUsn, qint32 highestServerUsn,
+        qint32 lastPreviousUsn);
+
     void syncChunksDownloaded();
 
     void linkedNotebookSyncChunksDownloadProgress(
-        qint32 highestDownloadedUsn,
-        qint32 highestServerUsn,
-        qint32 lastPreviousUsn,
-        LinkedNotebook linkedNotebook);
+        qint32 highestDownloadedUsn, qint32 highestServerUsn,
+        qint32 lastPreviousUsn, LinkedNotebook linkedNotebook);
 
     void linkedNotebooksSyncChunksDownloaded();
 
-    void notesDownloadProgress(quint32 notesDownloaded,
-                               quint32 totalNotesToDownload);
-    void linkedNotebooksNotesDownloadProgress(quint32 notesDownloaded,
-                                              quint32 totalNotesToDownload);
+    void notesDownloadProgress(
+        quint32 notesDownloaded, quint32 totalNotesToDownload);
 
-    void resourcesDownloadProgress(quint32 resourcesDownloaded,
-                                   quint32 totalResourcesToDownload);
+    void linkedNotebooksNotesDownloadProgress(
+        quint32 notesDownloaded, quint32 totalNotesToDownload);
+
+    void resourcesDownloadProgress(
+        quint32 resourcesDownloaded, quint32 totalResourcesToDownload);
 
     void linkedNotebooksResourcesDownloadProgress(
-        quint32 resourcesDownloaded,
-        quint32 totalResourcesToDownload);
+        quint32 resourcesDownloaded, quint32 totalResourcesToDownload);
 
     void preparedDirtyObjectsForSending();
     void preparedLinkedNotebooksDirtyObjectsForSending();
@@ -99,10 +113,11 @@ Q_SIGNALS:
     void remoteToLocalSyncStopped();
     void sendLocalChangesStopped();
 
-    void authenticationFinished(bool success, ErrorString errorDescription,
-                                Account account);
-    void authenticationRevoked(bool success, ErrorString errorDescription,
-                               qevercloud::UserID userId);
+    void authenticationFinished(
+        bool success, ErrorString errorDescription, Account account);
+
+    void authenticationRevoked(
+        bool success, ErrorString errorDescription, qevercloud::UserID userId);
 
 // other informative signals
     void willRepeatRemoteToLocalSyncAfterSendingChanges();
@@ -125,8 +140,11 @@ public Q_SLOTS:
 Q_SIGNALS:
 // private signals
     void requestAuthentication();
-    void sendAuthenticationTokenAndShardId(QString authToken, QString shardId,
-                                           qevercloud::Timestamp expirationTime);
+
+    void sendAuthenticationTokenAndShardId(
+        QString authToken, QString shardId,
+        qevercloud::Timestamp expirationTime);
+
     void sendAuthenticationTokensForLinkedNotebooks(
         QHash<QString,std::pair<QString,QString>> authTokensAndShardIdsByLinkedNotebookGuids,
         QHash<QString,qevercloud::Timestamp> authTokenExpirationByLinkedNotebookGuids);
@@ -142,22 +160,24 @@ Q_SIGNALS:
 private:
     // NOTE: this is required for Qt4 connection syntax, it won't properly
     // understand IKeychainService::ErrorCode::type
-    typedef IKeychainService::ErrorCode ErrorCode;
+    using ErrorCode = IKeychainService::ErrorCode;
 
 private Q_SLOTS:
-    void onOAuthResult(bool success, qevercloud::UserID userId,
-                       QString authToken,
-                       qevercloud::Timestamp authTokenExpirationTime,
-                       QString shardId, QString noteStoreUrl,
-                       QString webApiUrlPrefix, ErrorString errorDescription);
+    void onOAuthResult(
+        bool success, qevercloud::UserID userId,
+        QString authToken, qevercloud::Timestamp authTokenExpirationTime,
+        QString shardId, QString noteStoreUrl,
+        QString webApiUrlPrefix, ErrorString errorDescription);
 
-    void onWritePasswordJobFinished(QUuid jobId, ErrorCode::type errorCode,
-                                    ErrorString errorDescription);
-    void onReadPasswordJobFinished(QUuid jobId, ErrorCode::type errorCode,
-                                   ErrorString errorDescription,
-                                   QString password);
-    void onDeletePasswordJobFinished(QUuid jobId, ErrorCode::type errorCode,
-                                     ErrorString errorDescription);
+    void onWritePasswordJobFinished(
+        QUuid jobId, ErrorCode::type errorCode, ErrorString errorDescription);
+
+    void onReadPasswordJobFinished(
+        QUuid jobId, ErrorCode::type errorCode, ErrorString errorDescription,
+        QString password);
+
+    void onDeletePasswordJobFinished(
+        QUuid jobId, ErrorCode::type errorCode, ErrorString errorDescription);
 
     void onRequestAuthenticationToken();
     void onRequestAuthenticationTokensForLinkedNotebooks(
@@ -172,6 +192,7 @@ private Q_SLOTS:
 
     void onRemoteToLocalSyncStopped();
     void onRemoteToLocalSyncFailure(ErrorString errorDescription);
+
     void onRemoteToLocalSynchronizedContentFromUsersOwnAccount(
         qint32 lastUpdateCount, qevercloud::Timestamp lastSyncTime);
 
@@ -192,19 +213,8 @@ private:
 
     void readLastSyncParameters();
 
-    struct AuthContext
-    {
-        enum type {
-            Blank = 0,
-            SyncLaunch,
-            NewUserRequest,
-            CurrentUserRequest,
-            AuthToLinkedNotebooks,
-        };
-    };
-
     void launchOAuth();
-    void authenticateImpl(const AuthContext::type authContext);
+    void authenticateImpl(const AuthContext authContext);
     void finalizeAuthentication();
 
     class AuthData: public Printable
@@ -239,25 +249,36 @@ private:
 
     void authenticateToLinkedNotebooks();
 
-    void onReadAuthTokenFinished(const IKeychainService::ErrorCode::type errorCode,
-                                 const ErrorString & errorDescription,
-                                 const QString & password);
-    void onReadShardIdFinished(const IKeychainService::ErrorCode::type errorCode,
-                               const ErrorString & errorDescription,
-                               const QString & password);
-    void onWriteAuthTokenFinished(const IKeychainService::ErrorCode::type errorCode,
-                                  const ErrorString & errorDescription);
-    void onWriteShardIdFinished(const IKeychainService::ErrorCode::type errorCode,
-                                const ErrorString & errorDescription);
-    void onDeleteAuthTokenFinished(const IKeychainService::ErrorCode::type errorCode,
-                                   const ErrorString & errorDescription);
-    void onDeleteShardIdFinished(const IKeychainService::ErrorCode::type errorCode,
-                                 const ErrorString & errorDescription);
+    void onReadAuthTokenFinished(
+        const IKeychainService::ErrorCode::type errorCode,
+        const ErrorString & errorDescription, const QString & password);
+
+    void onReadShardIdFinished(
+        const IKeychainService::ErrorCode::type errorCode,
+        const ErrorString & errorDescription, const QString & password);
+
+    void onWriteAuthTokenFinished(
+        const IKeychainService::ErrorCode::type errorCode,
+        const ErrorString & errorDescription);
+
+    void onWriteShardIdFinished(
+        const IKeychainService::ErrorCode::type errorCode,
+        const ErrorString & errorDescription);
+
+    void onDeleteAuthTokenFinished(
+        const IKeychainService::ErrorCode::type errorCode,
+        const ErrorString & errorDescription);
+
+    void onDeleteShardIdFinished(
+        const IKeychainService::ErrorCode::type errorCode,
+        const ErrorString & errorDescription);
 
     void tryUpdateLastSyncStatus();
     void updatePersistentSyncSettings();
 
-    INoteStore * noteStoreForLinkedNotebook(const LinkedNotebook & linkedNotebook);
+    INoteStore * noteStoreForLinkedNotebook(
+        const LinkedNotebook & linkedNotebook);
+
     INoteStore * noteStoreForLinkedNotebookGuid(const QString & guid);
 
 private:
@@ -267,40 +288,40 @@ private:
     class RemoteToLocalSynchronizationManagerController;
     friend class RemoteToLocalSynchronizationManagerController;
 
+    using JobIdWithGuidBimap = boost::bimap<QString,QUuid>;
+
 private:
     Q_DISABLE_COPY(SynchronizationManagerPrivate)
 
 private:
     QString                                 m_host;
 
-    qint32                                  m_maxSyncChunkEntries;
-
     SyncStatePersistenceManager *           m_pSyncStatePersistenceManager;
-    qint32                                  m_previousUpdateCount;
-    qint32                                  m_lastUpdateCount;
-    qevercloud::Timestamp                   m_lastSyncTime;
+    qint32                                  m_previousUpdateCount = -1;
+    qint32                                  m_lastUpdateCount = -1;
+    qevercloud::Timestamp                   m_lastSyncTime = -1;
     QHash<QString,qint32>                   m_cachedLinkedNotebookLastUpdateCountByGuid;
     QHash<QString,qevercloud::Timestamp>    m_cachedLinkedNotebookLastSyncTimeByGuid;
-    bool                                    m_onceReadLastSyncParams;
+    bool                                    m_onceReadLastSyncParams = false;
 
     INoteStore *                            m_pNoteStore;
-    QScopedPointer<IUserStore>              m_pUserStore;
+    std::unique_ptr<IUserStore>             m_pUserStore;
 
-    AuthContext::type                       m_authContext;
+    AuthContext                             m_authContext = AuthContext::Blank;
 
-    int                                     m_launchSyncPostponeTimerId;
+    int                                     m_launchSyncPostponeTimerId = -1;
 
     AuthData                                m_OAuthResult;
-    bool                                    m_authenticationInProgress;
+    bool                                    m_authenticationInProgress = false;
 
-    QScopedPointer<RemoteToLocalSynchronizationManagerController>   m_pRemoteToLocalSyncManagerController;
+    std::unique_ptr<RemoteToLocalSynchronizationManagerController>   m_pRemoteToLocalSyncManagerController;
     RemoteToLocalSynchronizationManager *   m_pRemoteToLocalSyncManager;
 
     // The flag coming from RemoteToLocalSynchronizationManager and telling
     // whether something was downloaded during the last remote to local sync
     bool                                    m_somethingDownloaded;
 
-    QScopedPointer<SendLocalChangesManagerController>   m_pSendLocalChangesManagerController;
+    std::unique_ptr<SendLocalChangesManagerController>   m_pSendLocalChangesManagerController;
     SendLocalChangesManager *               m_pSendLocalChangesManager;
 
     QHash<QString,std::pair<QString,QString>>   m_cachedLinkedNotebookAuthTokensAndShardIdsByGuid;
@@ -310,28 +331,26 @@ private:
 
     QHash<QString, INoteStore*>             m_noteStoresByLinkedNotebookGuids;
 
-    int                                     m_authenticateToLinkedNotebooksPostponeTimerId;
+    int                                     m_authenticateToLinkedNotebooksPostponeTimerId = -1;
 
     IKeychainService *                      m_pKeychainService;
 
     QUuid                                   m_readAuthTokenJobId;
     QUuid                                   m_readShardIdJobId;
-    bool                                    m_readingAuthToken;
-    bool                                    m_readingShardId;
+    bool                                    m_readingAuthToken = false;
+    bool                                    m_readingShardId = false;
 
     QUuid                                   m_writeAuthTokenJobId;
     QUuid                                   m_writeShardIdJobId;
-    bool                                    m_writingAuthToken;
-    bool                                    m_writingShardId;
+    bool                                    m_writingAuthToken = false;
+    bool                                    m_writingShardId = false;
     AuthData                                m_writtenOAuthResult;
 
     QUuid                                   m_deleteAuthTokenJobId;
     QUuid                                   m_deleteShardIdJobId;
-    bool                                    m_deletingAuthToken;
-    bool                                    m_deletingShardId;
-    qevercloud::UserID                      m_lastRevokedAuthenticationUserId;
-
-    typedef boost::bimap<QString,QUuid> JobIdWithGuidBimap;
+    bool                                    m_deletingAuthToken = false;
+    bool                                    m_deletingShardId = false;
+    qevercloud::UserID                      m_lastRevokedAuthenticationUserId = -1;
 
     JobIdWithGuidBimap                      m_readLinkedNotebookAuthTokenJobIdsWithLinkedNotebookGuids;
     JobIdWithGuidBimap                      m_readLinkedNotebookShardIdJobIdsWithLinkedNotebookGuids;
@@ -343,7 +362,7 @@ private:
 
     QSet<QString>                           m_linkedNotebookGuidsWithoutLocalAuthData;
 
-    bool                                    m_shouldRepeatIncrementalSyncAfterSendingChanges;
+    bool                                    m_shouldRepeatIncrementalSyncAfterSendingChanges = false;
 };
 
 } // namespace quentier
