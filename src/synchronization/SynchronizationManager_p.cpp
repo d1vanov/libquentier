@@ -2007,7 +2007,7 @@ void SynchronizationManagerPrivate::authenticateToLinkedNotebooks()
         const QString & shardId = it.value().second;
 
         // 1) Set up the job writing the auth token to the keychain
-        auto jobIt =
+        auto jobIt =                                                                       // clazy:exclude=rule-of-two-soft
             m_writeLinkedNotebookAuthTokenJobIdsWithLinkedNotebookGuids.left.find(guid);   // clazy:exclude=rule-of-two-soft
         if (jobIt ==
             m_writeLinkedNotebookAuthTokenJobIdsWithLinkedNotebookGuids.left.end())
@@ -2026,7 +2026,7 @@ void SynchronizationManagerPrivate::authenticateToLinkedNotebooks()
         }
 
         // 2) Set up the job writing the shard id to the keychain
-        jobIt =
+        jobIt =                                                                         // clazy:exclude=rule-of-two-soft
             m_writeLinkedNotebookShardIdJobIdsWithLinkedNotebookGuids.left.find(guid);  // clazy:exclude=rule-of-two-soft
         if (jobIt ==
             m_writeLinkedNotebookShardIdJobIdsWithLinkedNotebookGuids.left.end())

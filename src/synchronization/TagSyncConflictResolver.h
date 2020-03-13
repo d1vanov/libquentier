@@ -42,7 +42,7 @@ class Q_DECL_HIDDEN TagSyncConflictResolver: public QObject
 public:
     explicit TagSyncConflictResolver(
         const qevercloud::Tag & remoteTag,
-        const QString & remoteTagLinkedNotebookGuid,
+        QString remoteTagLinkedNotebookGuid,
         const Tag & localConflict, TagSyncCache & cache,
         LocalStorageManagerAsync & localStorageManagerAsync,
         QObject * parent = nullptr);
@@ -64,14 +64,19 @@ Q_SIGNALS:
 
 private Q_SLOTS:
     void onAddTagComplete(Tag tag, QUuid requestId);
-    void onAddTagFailed(Tag tag, ErrorString errorDescription,
-                        QUuid requestId);
+
+    void onAddTagFailed(
+        Tag tag, ErrorString errorDescription, QUuid requestId);
+
     void onUpdateTagComplete(Tag tag, QUuid requestId);
-    void onUpdateTagFailed(Tag tag, ErrorString errorDescription,
-                           QUuid requestId);
+
+    void onUpdateTagFailed(
+        Tag tag, ErrorString errorDescription, QUuid requestId);
+
     void onFindTagComplete(Tag tag, QUuid requestId);
-    void onFindTagFailed(Tag tag, ErrorString errorDescription,
-                         QUuid requestId);
+
+    void onFindTagFailed(
+        Tag tag, ErrorString errorDescription, QUuid requestId);
 
     void onCacheFilled();
     void onCacheFailed(ErrorString errorDescription);
@@ -83,16 +88,15 @@ private:
     void overrideLocalChangesWithRemoteChanges();
     void renameConflictingLocalTag(const Tag & localConflict);
 
-    struct State
+    enum class State
     {
-        enum type
-        {
-            Undefined = 0,
-            OverrideLocalChangesWithRemoteChanges,
-            PendingConflictingTagRenaming,
-            PendingRemoteTagAdoptionInLocalStorage
-        };
+        Undefined = 0,
+        OverrideLocalChangesWithRemoteChanges,
+        PendingConflictingTagRenaming,
+        PendingRemoteTagAdoptionInLocalStorage
     };
+
+    friend QDebug & operator<<(QDebug & dbg, const State state);
 
 private:
     TagSyncCache &              m_cache;
@@ -105,14 +109,14 @@ private:
 
     Tag                         m_tagToBeRenamed;
 
-    State::type                 m_state;
+    State                       m_state = State::Undefined;
 
     QUuid                       m_addTagRequestId;
     QUuid                       m_updateTagRequestId;
     QUuid                       m_findTagRequestId;
 
-    bool                        m_started;
-    bool                        m_pendingCacheFilling;
+    bool                        m_started = false;
+    bool                        m_pendingCacheFilling = false;
 };
 
 } // namespace quentier
