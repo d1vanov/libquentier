@@ -1120,8 +1120,16 @@ QTextStream & Note::print(QTextStream & strm) const
 
         int resourceIndex = 0;
         int resourcesAdditionalInfoSize = d->m_resourcesAdditionalInfo.size();
+
+#if QT_VERSION < QT_VERSION_CHECK(5, 7, 0)
+        for(auto it = resources.constBegin(), end = resources.constEnd();
+            it != end; ++it)
+        {
+            const auto & resource = *it;
+#else
         for(const auto & resource: qAsConst(resources))
         {
+#endif
             strm << resource << "; \n";
 
             if (resourceIndex < resourcesAdditionalInfoSize) {
