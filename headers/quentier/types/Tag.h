@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -47,7 +47,7 @@ public:
     explicit Tag(const qevercloud::Tag & other);
     explicit Tag(qevercloud::Tag && other);
 
-    virtual ~Tag();
+    virtual ~Tag() override;
 
     bool operator==(const Tag & other) const;
     bool operator!=(const Tag & other) const;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -43,7 +43,7 @@ public:
     explicit SharedNote(const qevercloud::SharedNote & sharedNote);
     SharedNote & operator=(const SharedNote & other);
     SharedNote & operator=(SharedNote && other);
-    virtual ~SharedNote();
+    virtual ~SharedNote() override;
 
     bool operator==(const SharedNote & other) const;
     bool operator!=(const SharedNote & other) const;
@@ -67,32 +67,48 @@ public:
 
     bool hasRecipientIdentityContactName() const;
     const QString & recipientIdentityContactName() const;
-    void setRecipientIdentityContactName(const QString & recipientIdentityContactName);
+
+    void setRecipientIdentityContactName(
+        const QString & recipientIdentityContactName);
 
     bool hasRecipientIdentityContactId() const;
     const QString & recipientIdentityContactId() const;
-    void setRecipientIdentityContactId(const QString & recipientIdentityContactId);
+
+    void setRecipientIdentityContactId(
+        const QString & recipientIdentityContactId);
 
     bool hasRecipientIdentityContactType() const;
     ContactType recipientIdentityContactType() const;
-    void setRecipientIdentityContactType(const ContactType recipientIdentityContactType);
-    void setRecipientIdentityContactType(const qint32 recipientIdentityContactType);
+
+    void setRecipientIdentityContactType(
+        const ContactType recipientIdentityContactType);
+
+    void setRecipientIdentityContactType(
+        const qint32 recipientIdentityContactType);
 
     bool hasRecipientIdentityContactPhotoUrl() const;
     const QString & recipientIdentityContactPhotoUrl() const;
-    void setRecipientIdentityContactPhotoUrl(const QString & recipientIdentityPhotoUrl);
+
+    void setRecipientIdentityContactPhotoUrl(
+        const QString & recipientIdentityPhotoUrl);
 
     bool hasRecipientIdentityContactPhotoLastUpdated() const;
     qint64 recipientIdentityContactPhotoLastUpdated() const;
-    void setRecipientIdentityContactPhotoLastUpdated(const qint64 recipientIdentityPhotoLastUpdated);
+
+    void setRecipientIdentityContactPhotoLastUpdated(
+        const qint64 recipientIdentityPhotoLastUpdated);
 
     bool hasRecipientIdentityContactMessagingPermit() const;
     const QByteArray & recipientIdentityContactMessagingPermit() const;
-    void setRecipientIdentityContactMessagingPermit(const QByteArray & messagingPermit);
+
+    void setRecipientIdentityContactMessagingPermit(
+        const QByteArray & messagingPermit);
 
     bool hasRecipientIdentityContactMessagingPermitExpires() const;
     qint64 recipientIdentityContactMessagingPermitExpires() const;
-    void setRecipientIdentityContactMessagingPermitExpires(const qint64 timestamp);
+
+    void setRecipientIdentityContactMessagingPermitExpires(
+        const qint64 timestamp);
 
     bool hasRecipientIdentityUserId() const;
     qint32 recipientIdentityUserId() const;

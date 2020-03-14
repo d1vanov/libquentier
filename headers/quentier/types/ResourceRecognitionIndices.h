@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -20,6 +20,7 @@
 #define LIB_QUENTIER_TYPES_RESOURCE_RECOGNITION_INDICES_H
 
 #include <quentier/types/ResourceRecognitionIndexItem.h>
+
 #include <QByteArray>
 #include <QSharedDataPointer>
 #include <QVector>
@@ -33,9 +34,14 @@ class QUENTIER_EXPORT ResourceRecognitionIndices: public Printable
 public:
     explicit ResourceRecognitionIndices();
     ResourceRecognitionIndices(const ResourceRecognitionIndices & other);
-    explicit ResourceRecognitionIndices(const QByteArray & rawRecognitionIndicesData);
-    ResourceRecognitionIndices & operator=(const ResourceRecognitionIndices & other);
-    virtual ~ResourceRecognitionIndices();
+
+    explicit ResourceRecognitionIndices(
+        const QByteArray & rawRecognitionIndicesData);
+
+    ResourceRecognitionIndices & operator=(
+        const ResourceRecognitionIndices & other);
+
+    virtual ~ResourceRecognitionIndices() override;
 
     bool isNull() const;
     bool isValid() const;

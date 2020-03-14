@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -32,16 +32,21 @@ QT_FORWARD_DECLARE_CLASS(SharedNotebookData)
 class QUENTIER_EXPORT SharedNotebook: public Printable
 {
 public:
-    using SharedNotebookPrivilegeLevel = qevercloud::SharedNotebookPrivilegeLevel;
+    using SharedNotebookPrivilegeLevel =
+        qevercloud::SharedNotebookPrivilegeLevel;
 
 public:
     explicit SharedNotebook();
     SharedNotebook(const SharedNotebook & other);
     SharedNotebook(SharedNotebook && other);
-    explicit SharedNotebook(const qevercloud::SharedNotebook & qecSharedNotebook);
+
+    explicit SharedNotebook(
+        const qevercloud::SharedNotebook & qecSharedNotebook);
+
     SharedNotebook & operator=(const SharedNotebook & other);
     SharedNotebook & operator=(SharedNotebook && other);
-    virtual ~SharedNotebook();
+
+    virtual ~SharedNotebook() override;
 
     bool operator==(const SharedNotebook & other) const;
     bool operator!=(const SharedNotebook & other) const;

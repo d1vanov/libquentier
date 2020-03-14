@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2019 Dmitry Ivanov
+ * Copyright 2017-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -47,7 +47,7 @@ public:
     explicit ErrorString(const QString & error);
     ErrorString(const ErrorString & other);
     ErrorString & operator=(const ErrorString & other);
-    virtual ~ErrorString();
+    virtual ~ErrorString() override;
 
     const QString & base() const;
     QString & base();
