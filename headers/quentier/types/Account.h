@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -19,56 +19,62 @@
 #ifndef LIB_QUENTIER_TYPES_ACCOUNT_H
 #define LIB_QUENTIER_TYPES_ACCOUNT_H
 
-#include <quentier/utility/Printable.h>
 #include <quentier/utility/Macros.h>
-#include <QString>
-#include <QSharedDataPointer>
+#include <quentier/utility/Printable.h>
 
 #include <qt5qevercloud/QEverCloud.h>
+
+#include <QSharedDataPointer>
+#include <QString>
 
 namespace quentier {
 
 QT_FORWARD_DECLARE_CLASS(AccountData)
 
 /**
- * @brief The Account class encapsulates some details about the account: its name,
- * whether it is local or synchronized to Evernote and for the latter case -
- * some additional details like upload limit etc.
+ * @brief The Account class encapsulates some details about the account: its
+ * name, whether it is local or synchronized to Evernote and for the latter
+ * case - some additional details like upload limit etc.
  */
 class QUENTIER_EXPORT Account: public Printable
 {
 public:
-    struct Type
+    enum class Type
     {
-        enum type
-        {
-            Local = 0,
-            Evernote
-        };
+        Local = 0,
+        Evernote
     };
 
-    struct EvernoteAccountType
+    friend QTextStream & operator<<(QTextStream & strm, const Type type);
+    friend QDebug & operator<<(QDebug & dbg, const Type type);
+
+    enum class EvernoteAccountType
     {
-        enum type
-        {
-            Free = 0,
-            Plus,
-            Premium,
-            Business
-        };
+        Free = 0,
+        Plus,
+        Premium,
+        Business
     };
+
+    friend QTextStream & operator<<(
+        QTextStream & strm, const EvernoteAccountType type);
+
+    friend QDebug & operator<<(QDebug & dbg, const EvernoteAccountType type);
 
 public:
     explicit Account();
-    explicit Account(const QString & name, const Type::type type,
-                     const qevercloud::UserID userId = -1,
-                     const EvernoteAccountType::type evernoteAccountType =
-                     EvernoteAccountType::Free,
-                     const QString & evernoteHost = QString(),
-                     const QString & shardId = QString());
+
+    explicit Account(
+        QString name, const Type type,
+        const qevercloud::UserID userId = -1,
+        const EvernoteAccountType evernoteAccountType =
+            EvernoteAccountType::Free,
+        QString evernoteHost = {},
+        QString shardId = {});
+
     Account(const Account & other);
     Account & operator=(const Account & other);
-    virtual ~Account();
+    virtual ~Account() override;
 
     bool operator==(const Account & other) const;
     bool operator!=(const Account & other) const;
@@ -88,7 +94,7 @@ public:
     /**
      * @brief setName sets the username to the account
      */
-    void setName(const QString & name);
+    void setName(QString name);
 
     /**
      * @return      Printable user's name that is not used to uniquely identify
@@ -100,39 +106,42 @@ public:
     /**
      * Set the printable name of the account
      */
-    void setDisplayName(const QString & displayName);
+    void setDisplayName(QString displayName);
 
     /**
      * @return      The type of the account: either local of Evernote
      */
-    Type::type type() const;
+    Type type() const;
 
     /**
      * @return      User id for Evernote accounts, -1 for local accounts
-     *              (as the concept of user id is not defined for local accounts)
+     *              (as the concept of user id is not defined for local
+     *              accounts)
      */
     qevercloud::UserID id() const;
 
     /**
-     * @return      The type of the Evernote account; if applied to free account,
-     *              returns "Free"
+     * @return      The type of the Evernote account; if applied to free
+     *              account, returns "Free"
      */
-    EvernoteAccountType::type evernoteAccountType() const;
+    EvernoteAccountType evernoteAccountType() const;
 
     /**
-     * @return      The Evernote server host with which the account is associated
+     * @return      The Evernote server host with which the account is
+     *              associated
      */
     QString evernoteHost() const;
 
     /**
-     * @return      Shard id for Evernote accounts, empty string for local accounts
-     *              (as the concept of shard id is not defined for local accounts)
+     * @return      Shard id for Evernote accounts, empty string for local
+     *              accounts (as the concept of shard id is not defined for
+     *              local accounts)
      */
     QString shardId() const;
 
-    void setEvernoteAccountType(const EvernoteAccountType::type evernoteAccountType);
-    void setEvernoteHost(const QString & evernoteHost);
-    void setShardId(const QString & shardId);
+    void setEvernoteAccountType(const EvernoteAccountType evernoteAccountType);
+    void setEvernoteHost(QString evernoteHost);
+    void setShardId(QString shardId);
 
     qint32 mailLimitDaily() const;
     qint64 noteSizeMax() const;
