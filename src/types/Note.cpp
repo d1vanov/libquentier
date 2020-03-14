@@ -737,8 +737,16 @@ QList<SharedNote> Note::sharedNotes() const
     result.reserve(d->m_qecNote.sharedNotes->size());
 
     int noteIndex = 0;
+
+#if QT_VERSION < QT_VERSION_CHECK(5, 7, 0)
+    for(auto it = d->m_qecNote.sharedNotes->constBegin(),
+        end = d->m_qecNote.sharedNotes->constEnd(); it != end; ++it)
+    {
+        const auto & qecSharedNote = *it;
+#else
     for(const auto & qecSharedNote: qAsConst(d->m_qecNote.sharedNotes.ref()))
     {
+#endif
         SharedNote sharedNote(qecSharedNote);
         if (hasGuid()) {
             sharedNote.setNoteGuid(guid());
@@ -1146,7 +1154,14 @@ QTextStream & Note::print(QTextStream & strm) const
     {
         strm << "shared notes:\n";
 
+#if QT_VERSION < QT_VERSION_CHECK(5, 7, 0)
+        for(auto it = d->m_qecNote.sharedNotes->constBegin(),
+            end = d->m_qecNote.sharedNotes->constEnd(); it != end; ++it)
+        {
+            const auto & sharedNote = *it;
+#else
         for(const auto & sharedNote: qAsConst(d->m_qecNote.sharedNotes.ref())) {
+#endif
             strm << sharedNote << "\n";
         }
     }
