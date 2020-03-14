@@ -45,8 +45,10 @@ public:
         Evernote
     };
 
-    friend QTextStream & operator<<(QTextStream & strm, const Type type);
-    friend QDebug & operator<<(QDebug & dbg, const Type type);
+    friend QUENTIER_EXPORT QTextStream & operator<<(
+        QTextStream & strm, const Type type);
+
+    friend QUENTIER_EXPORT QDebug & operator<<(QDebug & dbg, const Type type);
 
     enum class EvernoteAccountType
     {
@@ -56,10 +58,11 @@ public:
         Business
     };
 
-    friend QTextStream & operator<<(
+    friend QUENTIER_EXPORT QTextStream & operator<<(
         QTextStream & strm, const EvernoteAccountType type);
 
-    friend QDebug & operator<<(QDebug & dbg, const EvernoteAccountType type);
+    friend QUENTIER_EXPORT QDebug & operator<<(
+        QDebug & dbg, const EvernoteAccountType type);
 
 public:
     explicit Account();
